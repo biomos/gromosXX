@@ -348,6 +348,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   std::cout << "PERFORMING MD SIMULATION\n";
   std::cout << "========================\n";
 
+  m_trajectory->print_title(title);
+
   if (time == -1) time = m_time;
   
   double end_time = m_simulation.time() + time;
@@ -362,7 +364,6 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     
 
     DEBUG(8, "md: print trajectory");
-    m_trajectory->print_title(title);
     (*m_trajectory) << m_simulation;
 
     // integrate

@@ -8,20 +8,20 @@ lib_LTLIBRARIES =
 
 bin_PROGRAMS =			
 
-check_PROGRAMS = 		simple
+#check_PROGRAMS = 		simple
 
-simple_SOURCES = 		simple.cc
+#simple_SOURCES = 		simple.cc
 
-simple_LDADD =			../src/simulation/libsimulation.la \
-				../src/algorithm/libalgorithm.la \
-				../src/interaction/libinteraction.la \
-				../src/math/libmath.la \
-				../src/io/libio.la
+#simple_LDADD =			../src/simulation/libsimulation.la \
+#				../src/algorithm/libalgorithm.la \
+#				../src/interaction/libinteraction.la \
+#				../src/math/libmath.la \
+#				../src/io/libio.la
 
 
-simple_CXXFLAGS =
+#simple_CXXFLAGS =
 
-TESTS =				simple
+#TESTS =				simple
 
 EXTRA_DIST =			data/rasn.topo  data/rasn.coord data/rasn.in \
 				data/rasn.hbond data/rasn.qbond data/rasn.angle \

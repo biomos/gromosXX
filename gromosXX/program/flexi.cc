@@ -164,6 +164,7 @@ int main(int argc, char *argv[])
 	std::cout << "writing flexible constraints data\n\n";
 	std::ofstream constr_file(args["trc"].c_str());
 	io::OutFlexibleConstraints flexout(constr_file);
+	flexout.write_title(the_MD.title);
 	flexout.write_FLEXCON(the_MD.distance_constraint_algorithm().vel(),
 			      the_MD.simulation().topology());
 
