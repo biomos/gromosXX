@@ -454,6 +454,72 @@ center_of_mass(Atom_Iterator start, Atom_Iterator end,
   
 }
 
+template<math::boundary_enum b>
+void simulation::System<b>::
+molecular_translational_ekin(Atom_Iterator start, Atom_Iterator end,
+			     math::SArray const &mass, 
+			     math::Vec &com_v, double &com_e_kin,
+			     double &e_kin, bool mean)
+{
+
+  com_v = 0.0;
+  com_e_kin = 0.0;
+  e_kin = 0.0;
+  
+  double m;
+  double tot_mass = 0.0;
+  math::Vec v;
+
+  DEBUG(9, "mol trans ekin: first atom: " << *start);  
+
+  for( ; start != end; ++start){
+	
+    assert(unsigned(mass.size()) > *start && 
+	   unsigned(vel().size()) > *start &&
+	   unsigned(old_vel().size()) > *start);
+
+    m = mass(*start);
+    tot_mass += m;
+
+    if (mean)
+      v = 0.5 * (vel()(*start) + old_vel()(*start));
+    else
+      v = old_vel()(*start);
+    
+    com_v += m * v;
+    e_kin += m * dot(v,v);
+  }
+
+  com_v /= tot_mass;
+      
+  com_e_kin = 0.5 * tot_mass * dot(com_v, com_v);
+  e_kin *= 0.5;
+
+  DEBUG(9, "com_e_kin: " << com_e_kin << " e_kin: " << e_kin);
+  
+}
+
+
+template<math::boundary_enum b>
+void simulation::System<b>::
+generate_velocities(double const temp, math::SArray const &mass,
+		    unsigned int const seed)
+{
+
+  math::NormalUnit<double> n;
+  n.seed(seed);
+
+  for(int i=0; i<vel().size(); ++i){
+    const double sd = sqrt(k_Boltzmann * temp / mass(i));
+    for(int d=0; d<3; ++d){
+      old_vel()(i)(d) = sd * n.random();
+      vel()(i)(d) = old_vel()(i)(d);
+    }
+  }
+}
+
+
+
 namespace simulation
 {
   template<math::boundary_enum b>

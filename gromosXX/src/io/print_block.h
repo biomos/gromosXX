@@ -12,7 +12,8 @@ namespace io
    * Print the MULTIBATH block.
    */
   inline std::ostream & 
-  print_MULTIBATH(std::ostream &os,simulation::Multibath const &bath);
+  print_MULTIBATH(std::ostream &os,simulation::Multibath const &bath,
+		  simulation::Energy const &energy);
   
   /**
    * Print the PRESSURE block.

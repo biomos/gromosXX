@@ -77,6 +77,11 @@ namespace io {
      */
     void read_PERTURB(int &ntg, double &rlam, double &dlamt, double &alphlj, 
 		      double &alphc, int &nlam);
+
+    /**
+     * read START block.
+     */
+    void read_START(int &ntx, int &init, double &tempi, unsigned int &ig);
         
   };
   

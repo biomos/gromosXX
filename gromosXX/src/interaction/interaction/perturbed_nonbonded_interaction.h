@@ -57,6 +57,11 @@ namespace interaction
     virtual void do_perturbed_RF_excluded_interactions(t_simulation &sim);
 
     /**
+     * calculate the perturbed pair contributions.
+     */
+    void do_perturbed_pair_interactions(t_simulation &sim);
+    
+    /**
      * the nonbonded interaction
      */
     interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop> 

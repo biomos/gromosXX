@@ -168,7 +168,7 @@ template<typename t_topo, typename t_system>
 inline void simulation::Simulation<t_topo, t_system>::calculate_degrees_of_freedom()
 {
   multibath().calculate_degrees_of_freedom(topology());
-  system().energies().kinetic_energy.resize(multibath().size());
+  system().energies().resize(0, multibath().size());
 }
 
 /**
@@ -245,6 +245,45 @@ calculate_mol_com()
       system().periodicity().nearest_image(pos(*a_it), com_pos, 
 					   system().rel_mol_com_pos()(*a_it));
     }
+
+  }
+}
+
+/**
+ * calculate molecular kinetic energies
+ * (translational and rotational+internal)
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>::
+calculate_mol_ekin(bool mean)
+{  
+  Molecule_Iterator m_it = topology().molecule_begin(),
+    m_to = topology().molecule_end();
+  
+  math::Vec com_v;
+  double com_ekin, ekin;
+  
+  // assume zero energies has been called!
+
+  for( ; m_it != m_to; ++m_it){
+    system().molecular_translational_ekin(m_it.begin(), m_it.end(),
+					  topology().mass(),
+					  com_v, com_ekin, ekin,
+					  mean);
+
+    const unsigned int bath = multibath().in_bath(*m_it.begin());
+    DEBUG(7, "adding to bath: " << bath);
+    DEBUG(10, "number of baths: energy " 
+	  << system().energies().kinetic_energy.size()
+	  << " com ekin "
+	  << system().energies().com_kinetic_energy.size()
+	  << " ir ekin "
+	  << system().energies().ir_kinetic_energy.size()
+	  );
+    
+    system().energies().kinetic_energy[bath] += ekin;
+    system().energies().com_kinetic_energy[bath] += com_ekin;
+    system().energies().ir_kinetic_energy[bath] += ekin - com_ekin;
 
   }
 }

@@ -14,11 +14,15 @@ template<typename t_topology>
 inline void 
 io::InTopology::read_TOPOLOGY(t_topology& topo){
 
+  DEBUG(7, "reading in topology");
+  
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
   
   { // BONDH
+    DEBUG(10, "BONDH block");
+
     buffer.clear();
     buffer = m_block["BONDH"];
   
@@ -50,6 +54,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // BONDH
 
   { // BOND
+    DEBUG(10, "BOND block");
     buffer = m_block["BOND"];
   
     it = buffer.begin() + 1;
@@ -79,6 +84,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // BOND
 
   { // BONDANGLE
+    DEBUG(10, "BONDANGLE block");
     buffer = m_block["BONDANGLE"];
   
     it = buffer.begin() + 1;
@@ -108,6 +114,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // BONDANGLE
 
   { // BONDANGLEH
+    DEBUG(10, "BONDANGLEH block");
     buffer.clear();
     buffer = m_block["BONDANGLEH"];
   
@@ -139,6 +146,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // BONDANGLEH
 
   { // IMPDIHEDRAL
+    DEBUG(10, "IMPDIHEDRAL block");
     buffer = m_block["IMPDIHEDRAL"];
   
     it = buffer.begin() + 1;
@@ -169,6 +177,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // IMPDIHEDRAL
 
   { // IMPDIHEDRALH
+    DEBUG(10, "IMPDIHEDRALH block");
     buffer.clear();
     buffer = m_block["IMPDIHEDRALH"];
   
@@ -201,6 +210,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // IMPDIHEDRALH
 
   { // DIHEDRAL
+    DEBUG(10, "DIHEDRAL block");    
     buffer = m_block["DIHEDRAL"];
   
     it = buffer.begin() + 1;
@@ -231,6 +241,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // DIHEDRAL
 
   { // DIHEDRALH
+    DEBUG(10, "DIHEDRALH block");
     buffer.clear();
     buffer = m_block["DIHEDRALH"];
   
@@ -265,6 +276,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // DIHEDRALH
   
   { // RESNAME
+    DEBUG(10, "RESNAME block");
     buffer = m_block["RESNAME"];
     it = buffer.begin()+1;
     int n, num;
@@ -292,6 +304,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   } // RESNAME
   
   { // SOLUTEATOM
+    DEBUG(10, "SOLUTEATOM block");
     buffer = m_block["SOLUTEATOM"];
   
     it = buffer.begin() + 1;
@@ -345,6 +358,7 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
   { // SOLVENTATOM and SOLVENTCONSTR
     // give it a number (SOLVENTATOM1, SOLVENTATOM2) for multiple
     // solvents...
+    DEBUG(10, "SOLVENTATOM block");
     buffer = m_block["SOLVENTATOM"];
     
     int res_nr = topo.residue_name().size();
@@ -419,6 +433,8 @@ template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi){
 
+  DEBUG(10, "BONDTYPE block");
+
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
@@ -452,6 +468,8 @@ io::InTopology &io::InTopology
 template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(algorithm::Shake<t_simulation> &shake){
+
+  DEBUG(10, "BONDTYPE block");
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -488,6 +506,8 @@ template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::Quartic_bond_interaction<t_simulation> &qbi){
 
+  DEBUG(10, "BONDTYPE block");
+
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
@@ -519,6 +539,8 @@ template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::angle_interaction<t_simulation> &ai){
 
+  DEBUG(10, "BONDANGLETYPE block");
+
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
@@ -548,6 +570,8 @@ template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::Improper_dihedral_interaction<t_simulation> &ii){
 
+  DEBUG(10, "IMPDIHEDRALTYPE block");
+
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
@@ -575,6 +599,8 @@ io::InTopology &io::InTopology
 template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::Dihedral_interaction<t_simulation> &di){
+
+  DEBUG(10, "DIHEDRALTYPE block");
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -609,6 +635,8 @@ io::InTopology &io::InTopology
 ::operator>>(interaction
 	     ::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop> &nbi){
 
+  DEBUG(10, "TOPPHYSCON block");
+  
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
@@ -627,6 +655,8 @@ io::InTopology &io::InTopology
   } // TOPPHYSCON
 
   { // LJPARAMETERS
+    
+    DEBUG(10, "LJPARAMETERS block");
     
     buffer = m_block["LJPARAMETERS"];
     

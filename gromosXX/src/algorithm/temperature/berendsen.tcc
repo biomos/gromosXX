@@ -23,6 +23,9 @@ inline void algorithm::Berendsen_Thermostat
   math::VArray const & old_vel = sim.system().old_vel();
   math::SArray const & mass = sim.topology().mass();
 
+  // calculate the old kinetic energies
+  sim.calculate_mol_ekin(false);
+
   // loop over the baths
   std::vector<simulation::bath_struct>::iterator
     it = sim.multibath().begin(),
@@ -30,7 +33,7 @@ inline void algorithm::Berendsen_Thermostat
   
   size_t last = 0;
   
-  for( ; it != to; ++it){
+  for(size_t num=0; it != to; ++it, ++num){
     // get a range
     // math::Range bath_range(last, it->last_atom);
 
@@ -42,6 +45,11 @@ inline void algorithm::Berendsen_Thermostat
       for(size_t i=last; i<=it->last_atom; ++i){
 	ekin += mass(i) * math::dot(old_vel(i), old_vel(i));
       }
+
+      assert(sim.system().energies().kinetic_energy.size() > num);
+      
+      DEBUG(7, "pre-scale ekin: " << 0.5*ekin 
+	    << "\tnew: " << sim.system().energies().kinetic_energy[num]);
       
       double free_temp = ekin / (it->dof * math::k_Boltzmann);
       double scale = sqrt(1.0 + dt / it->tau *
@@ -72,6 +80,11 @@ template<typename t_simulation>
 inline void algorithm::Berendsen_Thermostat
 ::calculate_kinetic_energy(t_simulation &sim)
 {
+  // get rid of previous (temperature scaling) energies
+  sim.system().energies().zero(false, true);
+  sim.calculate_mol_ekin();
+  
+  /*
   math::VArray &vel = sim.system().vel();
   math::VArray const & old_vel = sim.system().old_vel();
   math::SArray const & mass = sim.topology().mass();
@@ -97,7 +110,7 @@ inline void algorithm::Berendsen_Thermostat
     last = it->last_atom + 1;
     
   } // baths
-    
+  */
 }
   
 template<typename t_simulation>

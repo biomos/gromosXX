@@ -3,49 +3,66 @@
  * implements the energy methods.
  */
 
-inline void simulation::Energy::zero()
+inline void simulation::Energy::zero(bool potential, bool kinetic)
 {
-  total = 0.0;
-  kinetic_total = 0.0;
-  potential_total = 0.0;
-  bond_total = 0.0;
-  angle_total = 0.0;
-  improper_total = 0.0;
-  dihedral_total = 0.0;
-  bonded_total = 0.0;
-  nonbonded_total = 0.0;
-  lj_total = 0.0;
-  crf_total = 0.0;
-  special_total = 0.0;
- 
-  kinetic_energy.assign(kinetic_energy.size(), 0.0);
-  bond_energy.assign(bond_energy.size(), 0.0);
-  angle_energy.assign(angle_energy.size(), 0.0);
-  improper_energy.assign(improper_energy.size(), 0.0);
-  dihedral_energy.assign(dihedral_energy.size(), 0.0);
-  
-  lj_energy.assign(lj_energy.size(), 
-		   std::vector<double>(lj_energy.size(), 0.0));
-  crf_energy.assign(crf_energy.size(), 
-		    std::vector<double>(crf_energy.size(), 0.0));
+  if (potential){
+    total = 0.0;
+    potential_total = 0.0;
+    bond_total = 0.0;
+    angle_total = 0.0;
+    improper_total = 0.0;
+    dihedral_total = 0.0;
+    bonded_total = 0.0;
+    nonbonded_total = 0.0;
+    lj_total = 0.0;
+    crf_total = 0.0;
+    special_total = 0.0;
+    
+    bond_energy.assign(bond_energy.size(), 0.0);
+    angle_energy.assign(angle_energy.size(), 0.0);
+    improper_energy.assign(improper_energy.size(), 0.0);
+    dihedral_energy.assign(dihedral_energy.size(), 0.0);
+    
+    lj_energy.assign(lj_energy.size(), 
+		     std::vector<double>(lj_energy.size(), 0.0));
+    crf_energy.assign(crf_energy.size(), 
+		      std::vector<double>(crf_energy.size(), 0.0));
+  }
+
+  if (kinetic){
+
+    kinetic_total = 0.0;
+
+    kinetic_energy.assign(kinetic_energy.size(), 0.0);
+    com_kinetic_energy.assign(com_kinetic_energy.size(), 0.0);
+    ir_kinetic_energy.assign(ir_kinetic_energy.size(), 0.0);
+
+  }
 }
+
 
 inline void simulation::Energy::resize(size_t const energy_groups, size_t const multi_baths)
 {
-  bond_energy.resize(energy_groups);
-  angle_energy.resize(energy_groups);
-  improper_energy.resize(energy_groups);
-  dihedral_energy.resize(energy_groups);
+  if (energy_groups){
+    bond_energy.resize(energy_groups);
+    angle_energy.resize(energy_groups);
+    improper_energy.resize(energy_groups);
+    dihedral_energy.resize(energy_groups);
   
-  lj_energy.resize(energy_groups);
-  crf_energy.resize(energy_groups);
+    lj_energy.resize(energy_groups);
+    crf_energy.resize(energy_groups);
 
-  for(size_t i=0; i<energy_groups; ++i){
-    lj_energy[i].resize(energy_groups);
-    crf_energy[i].resize(energy_groups);  
+    for(size_t i=0; i<energy_groups; ++i){
+      lj_energy[i].resize(energy_groups);
+      crf_energy[i].resize(energy_groups);  
+    }
   }
 
-  if (multi_baths) kinetic_energy.resize(multi_baths);
+  if (multi_baths){
+    kinetic_energy.resize(multi_baths);
+    com_kinetic_energy.resize(multi_baths);
+    ir_kinetic_energy.resize(multi_baths);
+  }
 
   zero();  
 }

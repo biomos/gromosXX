@@ -647,3 +647,38 @@ inline void io::InInput::read_FORCE(int &do_bond, int &do_angle,
 		       "InInput", io::message::warning);
 }
 
+/**
+ * read START block.
+ */
+inline void io::InInput::read_START(int &ntx, int &init, double &tempi, unsigned int &ig)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  DEBUG(10, "reading START block");
+  buffer = m_block["START"];
+
+  if (!buffer.size()){
+    ntx = 1;
+    init = 1;
+    tempi = 0;
+    ig = 0;
+    return;
+  }
+  
+  it = buffer.begin()+1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  double heat;
+  int ntxo;
+  double boltz;
+  
+  _lineStream >> ntx >> init >> ig >> tempi >> heat >> ntxo >> boltz;
+  _lineStream.clear();
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in START block",
+		     "InInput", io::message::error);
+  
+}

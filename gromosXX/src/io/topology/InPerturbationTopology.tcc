@@ -81,6 +81,7 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
     } // if block present
     
   } // PERTBOND03
+
   { // PERtBANGLE03
     buffer = m_block["PERTBANGLE03"];
     if (buffer.size()){
@@ -134,6 +135,67 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
     } // if block present
     
   } // PERTANGLE03
+
+  { // PERTATOMPAIR03
+    // has to be read in before(!!) PERTATOM03
+    // because the exclusions and 1,4 exclusions have to be adapted...
+
+    buffer = m_block["PERTATOMPAIR03"];
+    if (buffer.size()){
+      std::cout << "\tPERTATOMPAIRS\n";
+
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+
+      int i, j, A, B;
+      for(n = 0; it != buffer.end() - 1; ++it, ++n){
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> i >> j >> A >> B;
+	
+	if (_lineStream.fail() || ! _lineStream.eof())
+	  throw std::runtime_error("bad line in PERTATOMPAIR03 block\n\t"+ *it);
+	
+	--i;
+	--j;
+
+	simulation::Perturbed_Atompair ap(i,j,A,B);
+
+	std::cout << std::setw(10) << ap.i+1
+		  << std::setw(10) << ap.j+1
+		  << std::setw(10) << ap.A_interaction
+		  << std::setw(10) << ap.B_interaction
+		  << std::endl;
+	
+	topo.perturbed_solute().atompairs().push_back(ap);
+
+	// make sure it's excluded
+	if (topo.all_exclusion(ap.i).count(ap.j) != 1){
+	  topo.all_exclusion(ap.i).insert(ap.j);
+	}
+	else{
+	  // it was already excluded, let's remove it from the
+	  // exclusions or 1,4 pairs...
+	  
+	  // is it in the exclusions
+	  if (topo.exclusion(ap.i).count(ap.j))
+	    topo.exclusion(ap.i).erase(ap.j);
+	  if (topo.one_four_pair(ap.i).count(ap.j))
+	    topo.one_four_pair(ap.i).erase(ap.j);
+	}
+      }
+      
+      if (n != num)
+	throw std::runtime_error("error in PERTATOM03 block (n != num)");
+      else if (_lineStream.fail())
+	throw std::runtime_error("error in PERTATOM03 block (fail)");
+      
+    } // if block present
+  } // PERTATOMPAIR03
   
   { // PERTATOM03
     
@@ -231,50 +293,6 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
     } // if block present
     
   } // PERTATOM03
-  { // PERTATOMPAIR03
-    buffer = m_block["PERTATOMPAIR03"];
-    if (buffer.size()){
-      std::cout << "\tPERTATOMPAIRS\n";
-
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      int i, j, A, B;
-      for(n = 0; it != buffer.end() - 1; ++it, ++n){
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> A >> B;
-	
-	if (_lineStream.fail() || ! _lineStream.eof())
-	  throw std::runtime_error("bad line in PERTATOMPAIR03 block\n\t"+ *it);
-	
-	--i;
-	--j;
-
-	simulation::Perturbed_Atompair ap(i,j,A,B);
-
-	std::cout << std::setw(10) << ap.i+1
-		  << std::setw(10) << ap.j+1
-		  << std::setw(10) << ap.A_interaction
-		  << std::setw(10) << ap.B_interaction
-		  << std::endl;
-	
-	topo.perturbed_solute().atompairs().push_back(ap);
-      }
-      
-      if (n != num)
-	throw std::runtime_error("error in PERTATOM03 block (n != num)");
-      else if (_lineStream.fail())
-	throw std::runtime_error("error in PERTATOM03 block (fail)");
-      
-    } // if block present
-  } // PERTATOMPAIR03
-  
-
     
   std::cout << "END\n";
   

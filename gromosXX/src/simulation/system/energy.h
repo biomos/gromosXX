@@ -31,6 +31,8 @@ namespace simulation
     
     // this should be size of bath
     std::vector<double> kinetic_energy;
+    std::vector<double> com_kinetic_energy;
+    std::vector<double> ir_kinetic_energy;
 
     std::vector<double> bond_energy;
     std::vector<double> angle_energy;
@@ -42,7 +44,7 @@ namespace simulation
     
     std::vector<std::string> group_name;
     
-    void zero();
+    void zero(bool potential = true, bool kinetic = true);
     void resize(size_t const energy_groups, size_t const multi_baths = 0);
     void calculate_totals();
     

@@ -85,7 +85,8 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   m_simulation.calculate_degrees_of_freedom();
   temperature_algorithm().calculate_kinetic_energy(m_simulation);
   std::cout << "initial temperature:\n";
-  io::print_MULTIBATH(std::cout, m_simulation.multibath());
+  io::print_MULTIBATH(std::cout, m_simulation.multibath(),
+		      m_simulation.system().energies());
 
   // initialize the energy fluctuations
   m_simulation.system().energy_averages().
@@ -504,7 +505,55 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   topo.read_TOPOLOGY(m_simulation.topology());
   
   DEBUG(7, "read system");
+  // decide whether we need velocities or not
+  int ntx, init;
+  unsigned int ig;
+  double tempi;
+  input.read_START(ntx, init, tempi, ig);  
+
+  if (tempi != 0 || (tempi == 0 && ntx == 1)){
+    sys.read_velocity = false;
+    DEBUG(7, "not reading initial velocities from file");
+  }
+
+  int ntb, nrdbox;
+  input.read_BOUNDARY(ntb, nrdbox);
+
+  if (!nrdbox){
+    switch(ntb){
+      case 0:
+	m_simulation.system().periodicity().boundary_condition(math::vacuum);
+	io::messages.add("boundary conditions set to VACUUM", "InTrajectory", 
+			 io::message::notice);
+	break;
+      case 1:
+      case 2:
+	m_simulation.system().periodicity().boundary_condition(math::triclinic);
+	io::messages.add("boundary conditions set to TRICLINIC", "InTrajectory",
+			 io::message::notice);
+	break;
+      default:
+	throw std::runtime_error("bad boundary conditions in BOUNDARY block");
+    }
+
+    sys.read_box = false;
+  }
+  
   sys >> m_simulation.system();
+
+  if (tempi != 0){
+    DEBUG(7, "generating initial velocities with T=" << tempi);
+    m_simulation.system().generate_velocities(tempi, 
+					      m_simulation.topology().mass(),
+					      ig);
+  }
+
+  else if (ntx == 1){
+    DEBUG(7, "setting initial velocities to 0");
+    m_simulation.system().vel() = 0.0;
+    m_simulation.system().exchange_vel();
+    m_simulation.system().vel() = 0.0;
+  }
   
 }
 
@@ -682,7 +731,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   m_simulation.system().energy_averages().update(m_simulation.system().energies(), m_dt);
   
   if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
-    io::print_MULTIBATH(std::cout, m_simulation.multibath());
+    io::print_MULTIBATH(std::cout, m_simulation.multibath(),
+			m_simulation.system().energies());
     io::print_ENERGY(std::cout, m_simulation.system().energies(),
 		     m_simulation.topology().energy_groups());
     if (m_calculate_pressure)

@@ -11,6 +11,8 @@
 #include <blitz/tinyvec-et.h>
 #include <blitz/tinymat.h>
 
+#include <random/normal.h>
+
 #include <vector>
 #include <map>
 #include <set>
@@ -26,6 +28,8 @@ namespace math
 
   using namespace blitz;
   BZ_USING_NAMESPACE(blitz)
+
+  using namespace ranlib;
 
   /**
    * 3 dimensional vector.

@@ -116,10 +116,9 @@ int algorithm::Perturbation_MD<t_simulation, t_temperature,
 
   // resize the energy derivative array
   m_simulation.system().lambda_energies().
-    resize(m_simulation.system().energies().bond_energy.size());
+    resize(m_simulation.system().energies().bond_energy.size(),
+	   m_simulation.system().energies().kinetic_energy.size());
   DEBUG(7, "lambda baths: " << m_simulation.system().energies().kinetic_energy.size());
-  m_simulation.system().lambda_energies().
-    kinetic_energy.resize(m_simulation.system().energies().kinetic_energy.size());
     
   // initialize topology for lambda = ??
   m_simulation.topology().update_for_lambda();

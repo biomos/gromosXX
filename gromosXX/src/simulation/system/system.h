@@ -211,6 +211,12 @@ namespace simulation
     simulation::Energy & lambda_energies();
 
     /**
+     * generate initial velocities.
+     */
+    void generate_velocities(double const temp, math::SArray const &mass,
+			     unsigned int const seed);
+
+    /**
      * check state
      */
     int check_state()const;
@@ -237,6 +243,11 @@ namespace simulation
 			math::SArray const &mass, 
 			math::Vec &com_pos, math::Matrix &com_e_kin);
     
+    void molecular_translational_ekin(Atom_Iterator start, Atom_Iterator end,
+				      math::SArray const &mass, 
+				      math::Vec &mol_v, double &com_e_kin,
+				      double &e_kin,
+				      bool mean = true);
     
   protected:
     /**

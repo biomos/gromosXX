@@ -61,7 +61,10 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation,
   if(sim.nonbonded().RF_exclusion()){
     do_perturbed_RF_excluded_interactions(sim);
   }
-  
+
+  // do the perturbed pairs
+  do_perturbed_pair_interactions(sim);
+
 }
 
 /**
@@ -234,3 +237,308 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_pairlis
   */
 }  
 
+/**
+ * helper function to calculate the forces and energies from the
+ * RF contribution of excluded atoms and self term
+ */
+template<typename t_simulation, typename t_pairlist, typename t_innerloop>
+inline void interaction::
+Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
+::do_perturbed_pair_interactions(t_simulation &sim)
+{
+
+  std::vector<simulation::Perturbed_Atompair>::const_iterator
+    it = sim.topology().perturbed_solute().atompairs().begin(),
+    to = sim.topology().perturbed_solute().atompairs().end();
+  
+  math::Vec r, f, A_f, B_f;
+  double A_e_lj, A_e_crf, A_de_lj, A_de_crf, 
+    B_e_lj, B_e_crf, B_de_lj, B_de_crf;
+  double e_lj, e_crf, de_lj, de_crf;
+  lj_parameter_struct const *A_lj;
+  lj_parameter_struct const *B_lj;
+  double A_q, B_q;
+  const double l = sim.topology().lambda();
+  DEBUG(7, "lambda: " << l);
+  bool is_perturbed;
+  
+  for(; it != to; ++it){
+
+    DEBUG(7, "\tperturbed-pair\t" << it->i << "\t" << it->j);
+    
+    sim.system().periodicity().nearest_image(sim.system().pos()(it->i), 
+					     sim.system().pos()(it->j), r);
+
+    // is i perturbed?
+    if (sim.topology().perturbed_atom()[it->i] == true){
+      assert(sim.topology().perturbed_solute().atoms().count(it->i) == 1);
+
+      is_perturbed = true;
+      
+      // is j perturbed as well?
+      if(sim.topology().perturbed_atom()[it->j] == true){
+	assert(sim.topology().perturbed_solute().atoms().count(it->j) == 1);
+	
+	A_lj =  &m_nonbonded_interaction.lj_parameter(
+		sim.topology().perturbed_solute().atoms()[it->i].A_IAC(),
+		sim.topology().perturbed_solute().atoms()[it->j].A_IAC());
+	B_lj = &m_nonbonded_interaction.lj_parameter(
+	        sim.topology().perturbed_solute().atoms()[it->i].B_IAC(),
+		sim.topology().perturbed_solute().atoms()[it->j].B_IAC());
+
+	A_q = sim.topology().perturbed_solute().atoms()[it->i].A_charge() * 
+	  sim.topology().perturbed_solute().atoms()[it->j].A_charge();
+	B_q = sim.topology().perturbed_solute().atoms()[it->i].B_charge() *
+	  sim.topology().perturbed_solute().atoms()[it->j].B_charge();
+      
+      }
+      else{ // only i perturbed
+	A_lj = &m_nonbonded_interaction.lj_parameter(
+	       sim.topology().perturbed_solute().atoms()[it->i].A_IAC(),
+	       sim.topology().iac(it->j));
+	B_lj = &m_nonbonded_interaction.lj_parameter(
+	       sim.topology().perturbed_solute().atoms()[it->i].B_IAC(),
+	       sim.topology().iac(it->j));
+	A_q = sim.topology().perturbed_solute().atoms()[it->i].A_charge() * 
+	  sim.topology().charge()(it->j);
+	B_q = sim.topology().perturbed_solute().atoms()[it->i].B_charge() *
+	  sim.topology().charge()(it->j);
+      }
+    }
+    else{ // i unperturbed
+      // is j perturbed
+      if(sim.topology().perturbed_atom()[it->j] == true){
+	assert(sim.topology().perturbed_solute().atoms().count(it->j) == 1);
+	
+	is_perturbed = true;
+
+	A_lj =  &m_nonbonded_interaction.lj_parameter(
+		sim.topology().iac(it->i),
+		sim.topology().perturbed_solute().atoms()[it->j].A_IAC());
+	B_lj = &m_nonbonded_interaction.lj_parameter(
+	        sim.topology().iac(it->i),
+		sim.topology().perturbed_solute().atoms()[it->j].B_IAC());
+
+	A_q = sim.topology().charge()(it->i) *
+	  sim.topology().perturbed_solute().atoms()[it->j].A_charge();
+	B_q = sim.topology().charge()(it->j) *
+	  sim.topology().perturbed_solute().atoms()[it->j].B_charge();
+      
+      }
+      else{
+	// both unperturbed
+
+	is_perturbed = false;
+	
+	A_lj = &m_nonbonded_interaction.lj_parameter(
+						     sim.topology().iac(it->i),
+						     sim.topology().iac(it->j));
+	B_lj = A_lj;
+      
+	A_q = sim.topology().charge()(it->i) *
+	  sim.topology().charge()(it->j);
+	B_q = A_q;
+      }
+      
+      
+    }
+
+    // interaction in state A
+    // ======================
+    switch(it->A_interaction){
+      // --------------------------
+      case 0: // excluded
+	A_e_lj = A_e_crf = A_de_lj = A_de_crf = 0.0;
+	A_f = 0.0;
+	
+	break;
+	// --------------------------
+      case 1: // normal interaction
+	DEBUG(7, "\tlj-parameter state A c6=" << A_lj->c6 
+	      << " c12=" << A_lj->c12);
+	DEBUG(7, "\tcharges state A i*j = " << A_q);
+    
+	if (is_perturbed){
+	  m_nonbonded_interaction.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+							  A_q, sim.topology().lambda(),
+							  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+	}
+	else{
+	  m_nonbonded_interaction.lj_crf_interaction(r, A_lj->c6, A_lj->c12,
+						     A_q, A_f, A_e_lj, 
+						     A_e_crf);
+	  A_de_lj = A_de_crf = 0.0;
+	}
+ 
+	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
+	      << A_f << " e_lj: " 
+	      << A_e_lj << " e_crf: " << A_e_crf 
+	      << " de_lj: " << A_de_lj 
+	      << " de_crf: " << A_de_crf);
+
+	break;
+      case 2: // 1,4 interaction
+	DEBUG(7, "\tlj-parameter state A cs6=" << A_lj->cs6 
+	      << " cs12=" << A_lj->cs12);
+	DEBUG(7, "\tcharges state A i*j = " << A_q);
+    
+	if (is_perturbed){
+	  m_nonbonded_interaction.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
+							  A_q, sim.topology().lambda(),
+							  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+	}
+	else{
+	  m_nonbonded_interaction.lj_crf_interaction(r, A_lj->cs6, A_lj->cs12,
+						     A_q, A_f, A_e_lj, 
+						     A_e_crf);
+	  A_de_lj = A_de_crf = 0.0;
+	}
+ 
+	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
+	      << A_f << " e_lj: " 
+	      << A_e_lj << " e_crf: " << A_e_crf 
+	      << " de_lj: " << A_de_lj 
+	      << " de_crf: " << A_de_crf);
+
+	break;
+	// --------------------------
+    }
+
+    // interaction in state B
+    // ======================
+    switch(it->B_interaction){
+      // --------------------------
+      case 0: // excluded
+	B_e_lj = B_e_crf = B_de_lj = B_de_crf = 0.0;
+	B_f = 0.0;
+	
+	break;
+	// --------------------------
+      case 1: // normal interaction
+	DEBUG(7, "\tlj-parameter state B c6=" << B_lj->c6 
+	      << " c12=" << B_lj->c12);
+	DEBUG(7, "\tcharges state B i*j = " << B_q);
+    
+	if (is_perturbed){
+	  m_nonbonded_interaction.
+	    lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
+				    B_q, sim.topology().lambda(),
+				    B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+	}
+	else{
+	  m_nonbonded_interaction.lj_crf_interaction(r, B_lj->c6, B_lj->c12,
+						     B_q, B_f, B_e_lj, 
+						     B_e_crf);
+	  B_de_lj = B_de_crf = 0.0;
+	  
+	}
+ 
+	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: "
+	      << B_f << " e_lj: " 
+	      << B_e_lj << " e_crf: " << B_e_crf 
+	      << " de_lj: " << B_de_lj 
+	      << " de_crf: " << B_de_crf);
+
+	break;
+      case 2: // 1,4 interaction
+	DEBUG(7, "\tlj-parameter state B cs6=" << B_lj->cs6 
+	      << " cs12=" << B_lj->cs12);
+	DEBUG(7, "\tcharges state B i*j = " << B_q);
+    
+	if (is_perturbed){
+	  m_nonbonded_interaction.
+	    lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
+				    B_q, sim.topology().lambda(),
+				    B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+	}
+	else{
+	  m_nonbonded_interaction.lj_crf_interaction(r, B_lj->cs6, B_lj->cs12,
+						     B_q, B_f, B_e_lj, 
+						     B_e_crf);
+	  B_de_lj = B_de_crf = 0.0;
+	}
+	
+	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: "
+	      << B_f << " e_lj: " 
+	      << B_e_lj << " e_crf: " << B_e_crf 
+	      << " de_lj: " << B_de_lj 
+	      << " de_crf: " << B_de_crf);
+
+	break;
+	// --------------------------
+    }
+    
+    // now combine everything
+    const double B_l = sim.topology().lambda();
+    const double B_ln = pow(B_l, sim.topology().nlam());
+    const double B_lnm = pow(B_l, sim.topology().nlam()-1);
+    
+    const double A_l = 1.0 - sim.topology().lambda();
+    const double A_ln = pow(A_l, sim.topology().nlam());
+    const double A_lnm = pow(A_l, sim.topology().nlam()-1);
+    
+    DEBUG(10, "B_l: " << B_l <<
+	  " B_ln: " << B_ln <<
+	  " A_l: " << A_l <<
+	  " A_ln: " << A_ln);
+
+    f      = B_ln * B_f      + A_ln * A_f;
+    e_lj   = B_ln * B_e_lj   + A_ln * A_e_lj;
+    e_crf  = B_ln * B_e_crf  + A_ln * A_e_crf;
+    de_lj  = B_ln * B_de_lj  + A_ln * A_de_lj  
+      + sim.topology().nlam() * B_lnm * B_e_lj  
+      - sim.topology().nlam() * A_lnm * A_e_lj;
+
+    de_crf = B_ln * B_de_crf + A_ln * A_de_crf 
+      + sim.topology().nlam() * B_lnm * B_e_crf 
+      - sim.topology().nlam() * A_lnm * A_e_crf;
+        
+    sim.system().force()(it->i) += f;
+    sim.system().force()(it->j) -= f;
+
+    DEBUG(7, "A_lnm: " << A_lnm << " B_lnm: " << B_lnm);
+    DEBUG(7, "\tcalculated interaction:\n\t\tf: " << f << " e_lj: " 
+	  << e_lj << " e_crf: " << e_crf << " de_lj: " << de_lj 
+	  << " de_crf: " << de_crf);
+    
+    // energy
+    //assert(m_storage.energies().lj_energy.size() > 
+    //   sim.topology().atom_energy_group(i));
+    //assert(m_storage.energies().lj_energy.size() >
+    //   sim.topology().atom_energy_group(j));
+    //assert(m_storage.energies().crf_energy.size() > 
+    //   sim.topology().atom_energy_group(i));
+    //assert(m_storage.energies().crf_energy.size() >
+    //   sim.topology().atom_energy_group(j));
+
+    sim.system().energies().lj_energy[sim.topology().atom_energy_group(it->i)]
+      [sim.topology().atom_energy_group(it->j)] += e_lj;
+    
+    sim.system().energies().crf_energy[sim.topology().atom_energy_group(it->i)]
+      [sim.topology().atom_energy_group(it->j)] += e_crf;
+    
+    DEBUG(7, "\tenergy i and j " << sim.topology().atom_energy_group(it->i)
+	  << " " << sim.topology().atom_energy_group(it->j));
+
+    //assert(m_storage.lambda_energies().lj_energy.size() > 
+    //   sim.topology().atom_energy_group(i));
+    //assert(m_storage.lambda_energies().lj_energy.size() >
+    //   sim.topology().atom_energy_group(j));
+    //assert(m_storage.lambda_energies().crf_energy.size() > 
+    //   sim.topology().atom_energy_group(i));
+    //assert(m_storage.lambda_energies().crf_energy.size() >
+    //   sim.topology().atom_energy_group(j));
+        
+    sim.system().lambda_energies().
+      lj_energy[sim.topology().atom_energy_group(it->i)]
+      [sim.topology().atom_energy_group(it->j)]
+      += de_lj;
+
+    sim.system().lambda_energies().
+      crf_energy[sim.topology().atom_energy_group(it->i)]
+      [sim.topology().atom_energy_group(it->j)]
+      += de_crf;
+
+  }
+  
+}

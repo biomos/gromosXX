@@ -31,6 +31,10 @@ include_HEADERS = 		interaction.h \
 				interaction/nonbonded_inner_loop.tcc \
 				interaction/nonbonded_inner_loop_virial.h \
 				interaction/nonbonded_inner_loop_virial.tcc \
+				interaction/perturbed_nonbonded_inner_loop.h \
+				interaction/perturbed_nonbonded_inner_loop.tcc \
+				interaction/perturbed_nonbonded_inner_loop_virial.h \
+				interaction/perturbed_nonbonded_inner_loop_virial.tcc \
 				pairlist/basic_pairlist.h \
 				pairlist/basic_pairlist.tcc \
 				pairlist/basic_pairlist_algorithm.h \

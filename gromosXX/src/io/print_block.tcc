@@ -10,7 +10,8 @@ namespace io
    * Print the MULTIBATH block.
    */
   inline std::ostream & print_MULTIBATH(std::ostream &os,
-					simulation::Multibath const &bath)
+					simulation::Multibath const &bath,
+					simulation::Energy const &energy)
   {
     os << "\nMULTIBATH\n";
   
@@ -34,7 +35,9 @@ namespace io
       it = bath.begin(),
       to = bath.end();
   
-    for( ; it != to; ++it){
+    for(size_t i=0; it != to; ++it, ++i){
+      const double ekin = energy.kinetic_energy[i];
+      
       os << std::setw(10) << it->last_atom + 1
 	 << std::setw( 8) << it->temperature
 	 << std::setw( 8) << it->tau
@@ -42,13 +45,14 @@ namespace io
 	 << std::setw(10) << it->solute_constr_dof
 	 << std::setw(10) << it->solvent_constr_dof
 	 << std::setw(12) << std::setprecision(4) << std::scientific 
-	 << it->kinetic_energy << std::setprecision(2) << std::fixed;
-      if (it->kinetic_energy == 0){
+	//	 << it->kinetic_energy << std::setprecision(2) << std::fixed;
+	 << ekin << std::setprecision(2) << std::fixed;
+      if (ekin == 0){
 	os << std::setw(10) << 0;
       }
       else{
 	os << std::setw(10) 
-	   << 2 * it->kinetic_energy / (math::k_Boltzmann * it->dof);
+	   << 2 * ekin / (math::k_Boltzmann * it->dof);
       }
       if (it->tau != -1){
 	tau_dof += it->dof;
@@ -58,7 +62,7 @@ namespace io
       sum_dof += it->dof;
       sum_soluc += it->solute_constr_dof;
       sum_solvc += it->solvent_constr_dof;
-      sum_ekin += it->kinetic_energy;
+      sum_ekin += ekin;
     
       os << "\n";
 
