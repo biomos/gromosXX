@@ -181,32 +181,6 @@ int algorithm::Perturbed_Flexible_Constraint<t_simulation>
 
 }
 
-/*
-template<typename t_simulation>
-inline std::vector<double> const &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::A_r0()const
-{
-  return m_A_r0;
-}
-template<typename t_simulation>
-inline std::vector<double> &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::A_r0()
-{
-  return m_A_r0;
-}
-template<typename t_simulation>
-inline std::vector<double> const &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::B_r0()const
-{
-  return m_B_r0;
-}
-template<typename t_simulation>
-inline std::vector<double> &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::B_r0()
-{
-  return m_B_r0;
-}
-*/
 template<typename t_simulation>
 inline std::vector<double> const &
 algorithm::Perturbed_Flexible_Constraint<t_simulation>::A_K()const
@@ -232,90 +206,6 @@ algorithm::Perturbed_Flexible_Constraint<t_simulation>::B_K()
 {
   return m_B_K;
 }
-
-
-/*
-template<typename t_simulation>
-void algorithm::Perturbed_Flexible_Constraint<t_simulation>
-::calc_distance(typename simulation_type::topology_type const &topo,
-		typename simulation_type::system_type &sys,
-		int const first,
-		std::vector<simulation::compound::distance_constraint_struct>
-		& constr, double const dt)
-{
-     
-  unsigned int k=0;//index of flex_constraint_distance
-   
-  
-  //loop over all constraints
-  for(std::vector<simulation::compound::distance_constraint_struct>
-	::iterator
-	it = constr.begin(),
-	to = constr.end();
-      it != to;
-      ++it, ++k){
-    
-    // the position
-    math::Vec &pos_i = sys.pos()(first+it->i);
-    math::Vec &pos_j = sys.pos()(first+it->j);
-	
-    math::Vec r;
-    sys.periodicity().nearest_image(pos_i, pos_j, r);
-    double dist2 = dot(r, r);// actual bond length at (t+Dt) 
-    
-
-    const math::Vec &ref_i = sys.old_pos()(first+it->i);
-    const math::Vec &ref_j = sys.old_pos()(first+it->j);
-      
-    math::Vec ref_r;
-    sys.periodicity().nearest_image(ref_i, ref_j, ref_r);
-
-    double ref_dist2 = dot(ref_r, ref_r);// reference bond length at t 
-
-    // standard formula with velocity along contsraints correction
-    // (not the velocityless formula):
-    // !!!! still have to check whether the masses are updated !!!!
-    double red_mass = 1 / (1/topo.mass()(first+it->i) + 1/topo.mass()(first+it->j));
-    double dt2 = dt * dt;
-      
-    // calculate the force on constraint k
-    const double force_on_constraint  = (red_mass / dt2) * 
-      (sqrt(dist2) - sqrt(ref_dist2) - m_vel[k] * dt);
-
-    // zero energy distance
-
-    // =================================================
-    // it->b0: actual flexible constraint distance
-    // m_r0:   ideal bond length (no outside force)
-    // =================================================
-
-    // double constr_length2 = it->b0 * it->b0;
-    double l = topo.lambda();
-    
-    const double constr_length2 = (1 - l) * m_A_r0 + l * m_B_r0;
-    constr_length2 *= constr_length2;// why first square it and then take the sqrt??????
-    
- 
-     // calculate the flexible constraint distance 
-    //coupling param. lambda dependent   
-    it->b0 = force_on_constraint /((1 - l) * m_A_K[k] + l * m_B_K[k]) + sqrt(constr_length2);
-
-    // update the velocity array
-    m_vel[k] = (it->b0 - sqrt(ref_dist2)) / dt;
-    
-    // calculate Ekin along the constraints
-    Ekin += 0.5 * red_mass * m_vel[k] * m_vel[k];
-
-    // calculate Epot in the bond length constraints
-    Epot += 0.5 * ((1 - l) * m_A_K[k] + l * m_B_K[k])  * pow(it->b0 - sqrt(constr_length2),2);
-      
-    // sys.flex_constraint_distance()(k) *= sys.flex_constraint_distance()(k);
-    DEBUG(5, "flex_constraint_distance: " << it->b0) ;
-        
-    } // loop over all constraints
-    
-}
-*/
 
 /**
  * add all bonds to the solute constraint vector and
@@ -345,9 +235,6 @@ algorithm::Perturbed_Flexible_Constraint<t_simulation>
     // store in flexible constraints
     m_A_K.push_back(m_bond_parameter[it->type].K);
     m_B_K.push_back(m_bond_parameter[it->B_type].K);
-
-    // m_A_r0.push_back(m_bond_parameter[it->type].A_r0);
-    // m_A_r0.push_back(m_bond_parameter[it->type].A_r0);
 
   }
   solute.bonds().clear();
@@ -483,5 +370,11 @@ algorithm::Perturbed_Flexible_Constraint<t_simulation>
 		  distance_constraints().size() + 
 		  sim.topology().perturbed_solute().
 		  distance_constraints().size());
+
+  // also add the kinetic energies of the perturbed constraints...
+  initial_ekin(sim.topology(), sim.system(),
+	       0,
+	       sim.topology().perturbed_solute().distance_constraints(),
+	       sim.topology().solute().distance_constraints().size());
 
 }

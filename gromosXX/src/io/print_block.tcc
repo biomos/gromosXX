@@ -210,7 +210,7 @@ namespace io
 
     }
 
-    os << "    --------------------------------------------------------------------------\n";
+    os << "    --------------------------------------------------------------------------------------\n";
     os << std::setw(10) << "Avg"
        << std::setw(12) << std::setprecision(4) << std::scientific
        << sum_ekin
@@ -262,6 +262,10 @@ namespace io
        << (sys.pressure()(0,0)+sys.pressure()(1,1)+sys.pressure()(2,2))/3 
        << "\n";
 
+    os << "\n\tvolume: "
+       << sys.periodicity().volume()
+       << "\n";
+    
     os << "\nEND\n";
     
     return os;

@@ -106,16 +106,6 @@ namespace simulation
     math::VArray &constraint_force();
     
     /**
-     * const flex_constraint_distance
-     */
-    math::VArray const &flex_constraint_distance()const;
-
-    /**
-     * flex_constraint_distance
-     */
-    math::VArray &flex_constraint_distance();
-
-    /**
      * exchange positions
      */
     void exchange_pos();

@@ -79,6 +79,13 @@ namespace algorithm
 		       std::vector<t_distance_struct>
 		       & constr, double const dt, size_t offset = 0);
 
+    template<typename t_distance_struct>
+    void initial_ekin(typename simulation_type::topology_type const &topo, 
+		      typename simulation_type::system_type &sys, 
+		      int const first,
+		      std::vector<t_distance_struct>
+		      & constr, size_t offset = 0);
+
     std::vector<double> force_on_constraint;
     double Ekin;
     double Epot;

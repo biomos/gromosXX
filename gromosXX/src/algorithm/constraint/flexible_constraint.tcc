@@ -335,5 +335,64 @@ algorithm::Flexible_Constraint<t_simulation>
 
 
   m_bath = &sim.multibath();
+  
+  initial_ekin(sim.topology(), sim.system(),
+	       0,
+	       sim.topology().solute().distance_constraints(),
+	       0);
 
+}
+
+template<typename t_simulation>
+template<typename t_distance_struct>
+void algorithm::Flexible_Constraint<t_simulation>
+::initial_ekin(typename simulation_type::topology_type const &topo,
+	       typename simulation_type::system_type &sys,
+	       int const first,
+	       std::vector<t_distance_struct>
+	       & constr, size_t offset)
+{
+     
+  unsigned int k=offset; //index of flex_constraint_distance
+   
+  DEBUG(10, "offset: " << k);
+  DEBUG(10, "sizes:\n\tvel: " << m_vel.size()
+	<< "\n\tK:   " << m_K.size()
+	<< "\n\tF:   " << sys.constraint_force().size());
+
+  size_t com, ir;
+  sys.energies().flexible_constraints_ir_kinetic_energy.
+    assign(sys.energies().kinetic_energy.size(), 0.0);
+
+  //loop over all constraints
+  for(typename std::vector<t_distance_struct>
+	::iterator
+	it = constr.begin(),
+	to = constr.end();
+      it != to;
+      ++it, ++k){
+    
+    assert(topo.mass().size() > first+it->i);
+    assert(topo.mass().size() > first+it->j);
+    double red_mass = 1 / (1/topo.mass()(first+it->i) + 1/topo.mass()(first+it->j));
+      
+    assert(m_vel.size() > k);
+
+    // now we have to store the kinetic energy of the constraint
+    // length change in the correct temperature bath...
+    assert(m_bath);
+    m_bath->in_bath(it->i, com, ir);
+
+    if (sys.energies().flexible_constraints_ir_kinetic_energy.size() <= ir)
+      sys.energies().flexible_constraints_ir_kinetic_energy.resize(ir+1);
+    
+    sys.energies().flexible_constraints_ir_kinetic_energy[ir] +=
+      0.5 * red_mass * m_vel[k] * m_vel[k];
+
+    DEBUG(8, "constr " << it->i << " bath " << ir << " ekin " 
+	  << 0.5 * red_mass * m_vel[k] * m_vel[k]
+	  << " tot ekin " << sys.energies().flexible_constraints_ir_kinetic_energy[ir]);
+        
+  } // loop over all constraints
+    
 }

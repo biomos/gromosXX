@@ -85,6 +85,22 @@ int main(int argc, char *argv[])
 	return 1;
       }
 
+      if (args.count("trc") > 0){
+	
+	std::ofstream fc(args["trc"].c_str());
+	io::OutFlexibleConstraints ofc(fc);
+
+	ofc.write_title(the_MD.title + 
+			"\nflexible constraints positions and velocities");
+
+	ofc.write_FLEXCON(the_MD.distance_constraint_algorithm().vel(),
+			  the_MD.simulation().topology());
+      }
+      else{
+	io::messages.add("Final flexible constraints velocities not written out",
+			 "flexi", io::message::warning);
+      }
+
     }
     else{ // leap frog, no perturbation
 
@@ -95,6 +111,22 @@ int main(int argc, char *argv[])
       
       if (the_MD.do_md(args)){
 	return 1;
+      }
+
+      if (args.count("trc") > 0){
+	
+	std::ofstream fc(args["trc"].c_str());
+	io::OutFlexibleConstraints ofc(fc);
+
+	ofc.write_title(the_MD.title + 
+			"\nflexible constraints positions and velocities");
+
+	ofc.write_FLEXCON(the_MD.distance_constraint_algorithm().vel(),
+			  the_MD.simulation().topology());
+      }
+      else{
+	io::messages.add("Final flexible constraints velocities not written out",
+			 "flexi", io::message::warning);
       }
       
     }
