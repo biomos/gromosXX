@@ -4,6 +4,7 @@
  */
 
 #include "topology/perturbed_bond.h"
+#include "topology/perturbed_angle.h"
 #include "topology/perturbed_atom.h"
 #include "topology/perturbed_solute.h"
 #include "topology/perturbation_topology.h"

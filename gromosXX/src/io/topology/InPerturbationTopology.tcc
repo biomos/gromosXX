@@ -80,6 +80,59 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
     } // if block present
     
   } // PERTBOND03
+  { // PERtBANGLE03
+    buffer = m_block["PERTBANGLE03"];
+    if (buffer.size()){
+      std::cout << "\tPERTANGLES\n";
+
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+      
+      for(n=0; it != buffer.end() -1; ++it, ++n){
+	int i, j, k, t_A, t_B;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> i >> j >> k >> t_A >> t_B;
+	
+	if (_lineStream.fail() || ! _lineStream.eof())
+	  throw std::runtime_error("bad line in PERTBANGLE03 block");
+	
+	simulation::Angle a(i-1, j-1, k-1, t_A-1);
+	std::vector<simulation::Angle>::iterator a_it
+	  = std::find(topo.solute().angles().begin(), 
+		      topo.solute().angles().end(), 
+		      a);
+	
+	if (a_it == topo.solute().angles().end())
+	  {
+	    throw std::runtime_error("trying to perturb non-existing angle");
+	  }
+	
+	topo.solute().angles().erase(a_it);
+	simulation::Perturbed_Angle pa(a, t_B-1);
+
+	std::cout << std::setw(10) << pa.i+1 
+		  << std::setw(10) << pa.j+1
+		  << std::setw(10) << pa.k+1
+		  << std::setw(10) << pa.type+1 
+		  << std::setw(10) << pa.B_type+1 
+		  << "\n";
+	
+	topo.perturbed_solute().angles().push_back(pa);
+      }
+      
+      if (n != num)
+	throw std::runtime_error("error in PERTBANGLE03 block (n != num)");
+      else if (_lineStream.fail())
+    	throw std::runtime_error("error in PERTBANGLE03 block (fail)");
+
+    } // if block present
+    
+  } // PERTANGLE03
   
   { // PERTATOM03
     

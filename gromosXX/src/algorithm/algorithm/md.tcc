@@ -24,7 +24,8 @@ algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_print_pairlist(0),
     m_print_force(0),
     m_calculate_pressure(0),
-    m_qbond_interaction(NULL)
+    m_qbond_interaction(NULL),
+    m_angle_interaction(NULL)
 {
 }
 
@@ -224,13 +225,12 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 
   if (do_angle){
     // angles
-    interaction::angle_interaction<t_simulation>
-      *the_angle_interaction = 
+    m_angle_interaction = 
       new interaction::angle_interaction<t_simulation>;
     
-    topo >> *the_angle_interaction;
-  
-    m_forcefield.push_back(the_angle_interaction);
+    topo >> *m_angle_interaction;
+ 
+    m_forcefield.push_back(m_angle_interaction);
   }
   
   if (do_improper){

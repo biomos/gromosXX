@@ -27,6 +27,16 @@ namespace simulation
     std::vector<Perturbed_Bond> & bonds();
 
     /**
+     * const perturbed angles.
+     */
+    std::vector<Perturbed_Angle> const & angles()const;
+    
+    /**
+     * perturbed angles.
+     */
+    std::vector<Perturbed_Angle> & angles();
+    
+    /**
      * perturbed atoms accessor.
      */
     std::map<size_t, Perturbed_Atom> & atoms();
@@ -42,6 +52,11 @@ namespace simulation
      */
     std::vector<Perturbed_Bond> m_bond;
 
+    /**
+     * the perturbed angles.
+     */
+    std::vector<Perturbed_Angle> m_angle;
+    
     /**
      * the perturbed atoms.
      */

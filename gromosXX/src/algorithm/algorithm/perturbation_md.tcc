@@ -144,6 +144,15 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     (*m_qbond_interaction);
 
   m_forcefield.push_back(the_perturbed_qbond_interaction);
+  
+  assert(m_angle_interaction != NULL);
+  
+  interaction::Perturbed_Angle_Interaction<t_simulation>
+    *the_perturbed_angle_interaction = 
+    new interaction::Perturbed_Angle_Interaction<t_simulation>
+    (*m_angle_interaction);
+  
+  m_forcefield.push_back(the_perturbed_angle_interaction);
 }
 
 

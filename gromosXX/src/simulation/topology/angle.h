@@ -21,6 +21,12 @@ namespace simulation
     int j;
     int k;
     int type;
+
+    bool operator==(Angle const &a)
+    {
+      return (i==a.i && j==a.j && k==a.k && type==a.type);
+    };
+    
   };
 	  
   
