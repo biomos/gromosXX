@@ -16,5 +16,6 @@ namespace interaction
   int pairlist_debug_level = 0;
   int filter_debug_level = 0;
   int nonbonded_debug_level = 0;
+  int special_debug_level = 0;
 #endif
 }

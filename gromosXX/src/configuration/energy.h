@@ -28,6 +28,7 @@ namespace configuration
     double lj_total;
     double crf_total;
     double special_total;
+    double posrest_total;
 
     // this should be size of bath
     std::vector<double> kinetic_energy;
@@ -41,6 +42,8 @@ namespace configuration
 
     std::vector<std::vector<double> > lj_energy;
     std::vector<std::vector<double> > crf_energy;
+
+    std::vector<double> posrest_energy;
     
     std::vector<std::string> group_name;
     

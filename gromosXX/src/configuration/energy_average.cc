@@ -115,6 +115,10 @@ configuration::Energy_Average::update(configuration::Energy const &e,
   m_average.special_total = av.m_average.special_total + dt * e.special_total;
   m_square_average.special_total = av.m_square_average.special_total +
     dt * e.special_total * e.special_total;
+
+  m_average.posrest_total = av.m_average.posrest_total + dt * e.posrest_total;
+  m_square_average.posrest_total = av.m_square_average.posrest_total +
+    dt * e.posrest_total * e.posrest_total;
   
   // kinetic energies of the baths
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
@@ -182,6 +186,12 @@ configuration::Energy_Average::update(configuration::Energy const &e,
       
     }
   
+    // special energies
+    m_average.posrest_energy[i] = av.m_average.posrest_energy[i] + dt * e.posrest_energy[i];
+    m_square_average.posrest_energy[i] = av.m_square_average.posrest_energy[i] +
+      dt * e.posrest_energy[i] * e.posrest_energy[i];
+   
+
   }
 
   m_time = av.m_time + dt;
@@ -306,6 +316,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.crf_total = 0.0;
 
+  // special energies
   e.special_total = m_average.special_total / m_time;
   diff = m_square_average.special_total -
     m_average.special_total * m_average.special_total / m_time;
@@ -313,6 +324,14 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     f.special_total = sqrt(diff / m_time);
   else
     f.special_total = 0.0;
+
+  e.posrest_total = m_average.posrest_total / m_time;
+  diff = m_square_average.posrest_total -
+    m_average.posrest_total * m_average.posrest_total / m_time;
+  if (diff > 0.0)
+    f.posrest_total = sqrt(diff / m_time);
+  else
+    f.posrest_total = 0.0;
   
   // kinetic energies of the baths
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
@@ -396,6 +415,15 @@ configuration::Energy_Average::average(configuration::Energy &energy,
       else
 	f.crf_energy[i][j] = 0.0;
     }
+
+    e.posrest_energy[i] = m_average.posrest_energy[i] / m_time;
+    diff = m_square_average.posrest_energy[i]
+      - m_average.posrest_energy[i] * m_average.posrest_energy[i] / m_time;
+    if (diff > 0.0)
+      f.posrest_energy[i] = sqrt(diff / m_time);
+    else
+      f.posrest_energy[i] = 0.0;
+
   
   }
 

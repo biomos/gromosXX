@@ -322,6 +322,22 @@ namespace topology
      */
     std::map<std::pair<int, int>, std::pair<double, double> > &
     energy_group_scaling() { return m_energy_group_scaling;}
+
+    /**
+     * position restraints accessor.
+     */
+    std::vector<position_restraint_struct> & position_restraints()
+    {
+      return m_position_restraint;
+    }
+
+    /**
+     * const position restraints accessor.
+     */
+    std::vector<position_restraint_struct> const & position_restraints()const
+    {
+      return m_position_restraint;
+    }
     
   private:
     /**
@@ -430,6 +446,12 @@ namespace topology
      */
     std::map<std::pair<int, int>, std::pair<double, double> > 
     m_energy_group_scaling;
+
+    /**
+     * position restraints / constraints
+     */
+    std::vector<position_restraint_struct> m_position_restraint;
+    
     
   }; // topology
   

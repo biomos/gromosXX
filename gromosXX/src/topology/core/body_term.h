@@ -250,6 +250,30 @@ namespace topology
       return (perturbed_three_body_term_struct::operator==(b) && b.l==l);
     }
   };
+
+  struct position_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    position_restraint_struct(size_t seq, math::Vec pos, 
+			       double bfactor = 1.0)
+      : seq(seq), pos(pos), bfactor(bfactor)
+    {}
+    
+    /**
+     * sequence number.
+     */
+    size_t seq;
+    /**
+     * position.
+     */
+    math::Vec pos;
+    /**
+     * atomic b-factor.
+     */
+    double bfactor;
+  };
     
 }
 

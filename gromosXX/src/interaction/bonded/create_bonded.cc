@@ -50,7 +50,6 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
 			       simulation::Parameter const &param,
 			       io::In_Topology &it)
 {
-  std::cout << "Forcefield\n";
   
   if (param.force.bond == 1){
     std::cout <<"\tquartic bonds\n";

@@ -53,9 +53,12 @@ include_HEADERS =		interaction.h \
 				nonbonded/pairlist/pairlist.tcc \
 				nonbonded/pairlist/pairlist_algorithm.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.h \
-				nonbonded/pairlist/standard_pairlist_algorithm.tcc
+				nonbonded/pairlist/standard_pairlist_algorithm.tcc \
+				special/create_special.h \
+				special/position_restraint_interaction.h \
+				special/position_restraint_interaction.tcc
 
-lib_LTLIBRARIES	=			libinteraction.la
+lib_LTLIBRARIES	=		libinteraction.la
 
 libinteraction_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
@@ -63,7 +66,8 @@ libinteraction_la_SOURCES =	interaction.cc \
 				forcefield/forcefield.cc \
 				forcefield/create_forcefield.cc \
 				bonded/create_bonded.cc \
-				nonbonded/create_nonbonded.cc
+				nonbonded/create_nonbonded.cc \
+				special/create_special.cc
 
 
 bin_PROGRAMS =			

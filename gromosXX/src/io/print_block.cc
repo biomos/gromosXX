@@ -413,6 +413,7 @@ namespace io
     os << "Vdw        : " << std::setw(39) << e.lj_total << "\n";
     os << "El (RF)    : " << std::setw(39) << e.crf_total  << "\n";
     os << "Special    : " << std::setw(21) << e.special_total << "\n";
+    os << "Posrest    : " << std::setw(30) << e.posrest_total << "\n";
     os << "\n";
 
     os << std::setw(10) << "COV";
@@ -462,8 +463,7 @@ namespace io
     os << std::setw(10) << "SPECIAL";
 
     os << "\n" << std::setw(12) << "Posrest";
-    // for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.energy_posrest[i];
-
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];
 
     os << "\nEND\n";
     

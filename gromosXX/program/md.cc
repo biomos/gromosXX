@@ -17,6 +17,7 @@
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
 #include <io/read_input.h>
+#include <io/read_special.h>
 
 #include <io/configuration/out_configuration.h>
 
@@ -26,10 +27,11 @@ int main(int argc, char *argv[]){
     char *knowns[] = 
       {
         "topo", "conf", "input", "verb", "alg", "pttopo",
-        "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp"
+        "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
+	"posres"
       };
     
-    int nknowns = 14;
+    int nknowns = 15;
     
     std::string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
@@ -42,6 +44,7 @@ int main(int argc, char *argv[]){
     usage += "\t[@trf    <force trajectory>]\n";
     usage += "\t[@tre    <energy trajectory>]\n";
     usage += "\t[@trg    <free energy trajectory>]\n";
+    usage += "\t[@posres <position restraints data>]\n";
     usage += "\t[@alg    <RK|LF>]\n";
     usage += "\t[@print  <pairlist/force>]\n";
     usage += "\t[@trp    <print file>]\n";
@@ -57,10 +60,11 @@ int main(int argc, char *argv[]){
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
-    
-    io::read_input(args, topo, conf, sim,  md);
 
     io::Out_Configuration traj("GromosXX");
+    
+    io::read_input(args, topo, conf, sim,  md);
+    io::read_special(args, topo, conf, sim);
 
     if (args.count("fin") > 0)
       traj.final_configuration(args["fin"]);

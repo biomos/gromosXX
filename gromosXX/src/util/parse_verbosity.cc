@@ -99,6 +99,8 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
 	interaction::forcefield_debug_level = level;
       else if (submodule == "filter") 
 	interaction::filter_debug_level = level;
+      else if (submodule == "special") 
+	interaction::special_debug_level = level;
       else throw std::string("unknown submodule");	  
     }
     else if (module == "io"){

@@ -40,6 +40,7 @@ io::Out_Configuration::Out_Configuration(std::string title,
     m_force_width(18),
     m_title(title)
 {
+  _print_title(m_title, "output file", os);
 }
 
 io::Out_Configuration::~Out_Configuration()
@@ -758,7 +759,7 @@ void io::Out_Configuration
   int index=0;
   
   for(int i=0; i<numenergygroups; i++){
-    for(int j=0; j<numenergygroups; j++, index++){
+    for(int j=i; j<numenergygroups; j++, index++){
       enerlj[index] = e.lj_energy[i][j];
       enercl[index] = e.crf_energy[i][j];
     }

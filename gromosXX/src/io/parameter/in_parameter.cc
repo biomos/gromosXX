@@ -1368,8 +1368,8 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param)
 		     "In_Parameter", io::message::warning);
   */
 
-  if(param.posrest.posrest != 0) {
-    io::messages.add("Position restraining / constraining currently not supported",
+  if(param.posrest.posrest == 3) {
+    io::messages.add("Position constraining currently not supported",
 		     "In_Parameter", 
 		     io::message::warning);
   }

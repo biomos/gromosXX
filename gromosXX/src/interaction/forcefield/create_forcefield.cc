@@ -24,6 +24,7 @@
 #include "create_forcefield.h"
 #include <interaction/bonded/create_bonded.h>
 #include <interaction/nonbonded/create_nonbonded.h>
+#include <interaction/special/create_special.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -38,6 +39,8 @@ void interaction::create_g96_forcefield(interaction::Forcefield & ff,
 					simulation::Parameter const & param,
 					io::In_Topology & it)
 {
+  std::cout << "FORCEFIELD\n";
+  
   // the bonded
   DEBUG(8, "creating the bonded terms");
   create_g96_bonded(ff, topo, param, it);
@@ -47,6 +50,10 @@ void interaction::create_g96_forcefield(interaction::Forcefield & ff,
   create_g96_nonbonded(ff, topo, param, it);
   
   // the special
+  DEBUG(8, "creating the special terms");
+  create_special(ff, topo, param);
+
+  std::cout << "END\n";
 
 }
 
