@@ -10,16 +10,16 @@
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>
-::lj_crf_innerloop
-(topology::Topology & topo, configuration::Configuration & conf,
- unsigned int i, unsigned int j,
+interaction::Nonbonded_Innerloop::lj_crf_innerloop
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i,
+ unsigned int j,
  Storage & storage,
- Periodicity_type const & periodicity,
- int pc)
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+ )
 {
-  // storage.energies.bond_energy[0] += j;
-  
   DEBUG(8, "\tpair\t" << i << "\t" << j);
   
   math::Vec r;
@@ -88,14 +88,173 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   
 }
 
+inline void 
+interaction::Nonbonded_Innerloop::lj_crf_innerloop_central
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i,
+ unsigned int j,
+ Storage & storage
+ )
+{
+  DEBUG(8, "\tpair\t" << i << "\t" << j);
+  
+  double f;
+  double e_lj, e_crf;
+  
+  const math::Vec r = conf.current().pos(i) - conf.current().pos(j);
+  
+  const lj_parameter_struct &lj = 
+    m_param->lj_parameter(topo.iac(i),
+			  topo.iac(j));
+  
+  DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+  DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+  
+  lj_crf_interaction(r, lj.c6, lj.c12,
+		     topo.charge()(i) * 
+		     topo.charge()(j),
+		     f, e_lj, e_crf);
+  
+  // most common case
+  // if (t_nonbonded_spec::do_virial == math::molecular_virial){
+  math::Vec rf = f * r;
+  storage.force(i) += rf;
+  storage.force(j) -= rf;
+  
+  for(int b=0; b<3; ++b){
+    const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+
+  /*
+  }
+  else{
+    for (int a=0; a<3; ++a){
+      
+      const double term = f * r(a);
+      storage.force(i)(a) += term;
+      storage.force(j)(a) -= term;
+      
+      if (t_nonbonded_spec::do_virial == math::atomic_virial){
+	for(int b=0; b<3; ++b){
+	  storage.virial_tensor(b, a) += 
+	    r(b) * term;
+	}
+      }
+    }
+  }
+  */
+  
+  // energy
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
+
+  assert(storage.energies.lj_energy.size() > 
+	 topo.atom_energy_group(i));
+  assert(storage.energies.lj_energy.size() >
+	 topo.atom_energy_group(j));
+  
+  storage.energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
+  
+  storage.energies.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_crf;
+  
+}
+
+inline void 
+interaction::Nonbonded_Innerloop::lj_crf_innerloop_shift
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i,
+ unsigned int j,
+ Storage & storage,
+ math::Vec const & shift
+ )
+{
+  DEBUG(8, "\tpair\t" << i << "\t" << j);
+  
+  double f;
+  double e_lj, e_crf;
+  
+  math::Vec r = conf.current().pos(i) - conf.current().pos(j);
+  r -= shift;
+  
+  const lj_parameter_struct &lj = 
+    m_param->lj_parameter(topo.iac(i),
+			  topo.iac(j));
+  
+  DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+  DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+  
+  lj_crf_interaction(r, lj.c6, lj.c12,
+		     topo.charge()(i) * 
+		     topo.charge()(j),
+		     f, e_lj, e_crf);
+  
+  // most common case
+  // if (t_nonbonded_spec::do_virial == math::molecular_virial){
+  math::Vec rf = f * r;
+  storage.force(i) += rf;
+  storage.force(j) -= rf;
+  
+  for(int b=0; b<3; ++b){
+    const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+
+  /*
+  }
+  else{
+    for (int a=0; a<3; ++a){
+      
+      const double term = f * r(a);
+      storage.force(i)(a) += term;
+      storage.force(j)(a) -= term;
+      
+      if (t_nonbonded_spec::do_virial == math::atomic_virial){
+	for(int b=0; b<3; ++b){
+	  storage.virial_tensor(b, a) += 
+	    r(b) * term;
+	}
+      }
+    }
+  }
+  */
+  
+  // energy
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
+
+  assert(storage.energies.lj_energy.size() > 
+	 topo.atom_energy_group(i));
+  assert(storage.energies.lj_energy.size() >
+	 topo.atom_energy_group(j));
+  
+  storage.energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
+  
+  storage.energies.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_crf;
+  
+}
+
 
 template<typename t_nonbonded_spec>
-void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
-::one_four_interaction_innerloop
-(topology::Topology & topo,
+void interaction::Nonbonded_Innerloop::one_four_interaction_innerloop
+(
+ topology::Topology & topo,
  configuration::Configuration & conf,
- unsigned int i, unsigned int j,
- Periodicity_type const & periodicity)
+ int i,
+ int j,
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
 {
   DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
   
@@ -146,12 +305,12 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>
-::RF_excluded_interaction_innerloop
-(topology::Topology & topo,
+interaction::Nonbonded_Innerloop::RF_excluded_interaction_innerloop
+(
+ topology::Topology & topo,
  configuration::Configuration & conf,
- unsigned int i,
- Periodicity_type const & periodicity)
+ int i,
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
 {
   math::Vec r, f;
   double e_crf;
@@ -207,12 +366,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>
-::RF_solvent_interaction_innerloop
-(topology::Topology & topo,
+interaction::Nonbonded_Innerloop::RF_solvent_interaction_innerloop
+(
+ topology::Topology & topo,
  configuration::Configuration & conf,
  topology::Chargegroup_Iterator const & cg_it,
- Periodicity_type const & periodicity)
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+ )
 {
   math::Vec r;
   double e_crf;
@@ -253,14 +413,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>
-::spc_innerloop
+interaction::Nonbonded_Innerloop::spc_innerloop
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
- int i, int j,
+ int i,
+ int j,
  Storage & storage,
- Periodicity_type const & periodicity
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
  )
 {
   math::Vec r;

@@ -80,7 +80,7 @@ _update_atomic(topology::Topology & topo,
   const double update_start = util::now();
   
   // create the innerloop
-  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
+  Nonbonded_Innerloop innerloop(*m_param);
   innerloop.init(sim);
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
@@ -122,7 +122,7 @@ _update_atomic(topology::Topology & topo,
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
 	DEBUG(11, "\t\tlongrange");
 	// the interactions
-	innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	innerloop.lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2, storage, periodicity);
 
 	continue;
       } // longrange
@@ -159,7 +159,7 @@ _update_atomic(topology::Topology & topo,
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
 	DEBUG(11, "\t\tlongrange");
 	// the interactions
-	innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	innerloop.lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2, storage, periodicity);
 
 	continue;
       } // longrange
@@ -210,7 +210,7 @@ _update_atomic(topology::Topology & topo,
 	if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
 	  DEBUG(11, "\t\tlongrange");	  
 	  // the interactions
-	  innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	  innerloop.lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2, storage, periodicity);
 	  
 	  continue;
 	} // longrange
@@ -265,7 +265,7 @@ _update_pert_atomic(topology::Topology & topo,
   // create the innerloops
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   
-  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
+  Nonbonded_Innerloop innerloop(*m_param);
   innerloop.init(sim);
   
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details>
@@ -333,8 +333,8 @@ _update_pert_atomic(topology::Topology & topo,
 					   storage, periodicity);
 	    else
 	      innerloop.
-		lj_crf_innerloop(topo, conf, a1, a2,
-				 storage, periodicity);
+		lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2,
+						     storage, periodicity);
 	  } // perturb scaled interactions only
 	  else{
 	    perturbed_innerloop.
@@ -359,8 +359,8 @@ _update_pert_atomic(topology::Topology & topo,
 					   storage, periodicity);
 	    else
 	      innerloop.
-		lj_crf_innerloop(topo, conf, a1, a2,
-				 storage, periodicity);
+		lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2,
+						     storage, periodicity);
 	  } // perturb scaled interactions only
 	  else{
 	    perturbed_innerloop.
@@ -370,7 +370,7 @@ _update_pert_atomic(topology::Topology & topo,
 	}
 	else{
 	  DEBUG(11, "\t\tnot perturbed");
-	  innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	  innerloop.lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2, storage, periodicity);
 	}
 	
 	continue;
@@ -468,7 +468,7 @@ _update_pert_atomic(topology::Topology & topo,
 		perturbed_lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
 	    else
 	      innerloop.
-		lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+		lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2, storage, periodicity);
 
 	  } // scaling
 	  else{
@@ -478,7 +478,7 @@ _update_pert_atomic(topology::Topology & topo,
 	}
 	else{
 	  DEBUG(11, "\t\tnot perturbed");
-	  innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	  innerloop.lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2, storage, periodicity);
 	}
 	
 	continue;
@@ -558,7 +558,7 @@ _update_pert_atomic(topology::Topology & topo,
 	  DEBUG(11, "\t\tlongrange");	  
 
 	  // the interactions
-	  innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	  innerloop.lj_crf_innerloop<t_interaction_spec>(topo, conf, a1, a2, storage, periodicity);
 	  
 	  continue;
 	} // longrange

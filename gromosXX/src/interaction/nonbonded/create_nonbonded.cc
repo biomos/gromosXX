@@ -58,8 +58,6 @@ int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
     else{
       cout << "\t" << setw(20) << left << "PairlistAlgorithm" << setw(30) 
 	   << left << "Grid_Pairlist_Algorithm" << right << "\n";
-      cout << "\t" << setw(20) << left << "bekker" << setw(30) 
-	   << left << "bekker_off" << right << "\n";
     }
     
     if (sim.param().pairlist.atomic_cutoff)

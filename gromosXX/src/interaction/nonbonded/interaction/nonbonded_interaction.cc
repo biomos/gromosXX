@@ -338,6 +338,13 @@ void interaction::Nonbonded_Interaction::check_spc_loop
       std::cout << "\tusing standard solvent loops (user request)\n";
     return;
   }
+
+  if (sim.param().pairlist.grid){
+    sim.param().force.spc_loop = 0;
+    if (!quiet)
+      std::cout << "\tusing standard solvent loops (grid based pairlist)\n";
+    return;
+  }
   
   if (topo.num_solvents() != 1 || topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) != 3 ||
       topo.num_solvent_molecules(0) < 1){

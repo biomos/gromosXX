@@ -17,7 +17,6 @@ namespace interaction
   class Storage;
   class Pairlist;
  
-  template<typename t_interaction_spec>
   class Nonbonded_Innerloop;
   
   template<typename t_interaction_spec, typename t_perturbation_details>
@@ -136,7 +135,7 @@ namespace interaction
      simulation::Simulation & sim,
      interaction::Storage & storage,
      interaction::Pairlist & pairlist,
-     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+     Nonbonded_Innerloop & innerloop,
      int cg1, int stride,
      math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
      );
@@ -149,7 +148,7 @@ namespace interaction
      simulation::Simulation & sim,
      interaction::Storage & storage,
      interaction::Pairlist & pairlist,
-     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+     Nonbonded_Innerloop & innerloop,
      int cg1, int stride,
      math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
      );
@@ -159,7 +158,7 @@ namespace interaction
 		     configuration::Configuration & conf,
 		     interaction::Storage & storage,
 		     interaction::Pairlist & pairlist,
-		     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+		     Nonbonded_Innerloop & innerloop,
 		     topology::Chargegroup_Iterator const & cg1,
 		     int cg1_index,
 		     int const num_solute_cg,
@@ -221,7 +220,7 @@ namespace interaction
      topology::Topology & topo,
      configuration::Configuration & conf,
      interaction::Storage & storage,
-     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+     Nonbonded_Innerloop & innerloop,
      Perturbed_Nonbonded_Innerloop
      <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
      int a1, int a2,
