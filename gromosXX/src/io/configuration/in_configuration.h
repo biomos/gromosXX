@@ -61,7 +61,16 @@ namespace io {
      * read BOX block.
      */
     bool _read_g96_box(math::Box &box, std::vector<std::string> &buffer);
+
+    /**
+     * read FLEXV block.
+     */
+    bool _read_flexv(std::vector<double> &flexv,
+		     std::vector<std::string> &buffer,
+		     std::vector<topology::two_body_term_struct>
+		     const & constr);
     
+
   };
   
 

@@ -136,6 +136,10 @@ void io::Out_Configuration::write(configuration::Configuration const &conf,
       _print_velocity(conf, topo, m_final_conf);
     _print_box(conf, m_final_conf);
 
+    if(sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+      _print_flexv(conf, topo, m_final_conf);
+    }
+
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0){
       _print_old_timestep(sim, m_force_traj);
@@ -1012,4 +1016,27 @@ void io::Out_Configuration
     print_MATRIX(m_output, pf, "PRESSURE FLUCTUATION");
   }
   m_output << "\n\n";    
+}
+
+void io::Out_Configuration::_print_flexv(configuration::Configuration const &conf,
+					 topology::Topology const &topo,
+					 std::ostream &os)
+{
+  DEBUG(10, "FLEXV");
+  
+  std::vector<double>::const_iterator flexv_it = conf.special().flexible_vel.begin();
+  std::vector<topology::two_body_term_struct>::const_iterator
+    constr_it = topo.solute().distance_constraints().begin(),
+    constr_to = topo.solute().distance_constraints().end();
+  
+  os << "FLEXV\n";
+  for( ; constr_it != constr_to; ++constr_it, ++flexv_it){
+    
+    os << std::setw(15) << constr_it->i+1
+       << std::setw(10) << constr_it->j+1
+       << std::setw(20) << *flexv_it
+       << "\n";
+  }
+  os << "END\n";
+
 }

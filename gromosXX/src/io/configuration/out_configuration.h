@@ -179,6 +179,10 @@ namespace io {
     void _print_box(configuration::Configuration const &conf, 
 		    std::ostream &os);
 
+    void _print_flexv(configuration::Configuration const &conf,
+		      topology::Topology const &topo,
+		      std::ostream &os);
+
   };
   
 } // io

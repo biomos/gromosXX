@@ -18,6 +18,7 @@
 #include <io/configuration/inframe.h>
 
 #include <util/generate_velocities.h>
+#include <math/volume.h>
 
 #include "in_configuration.h"
 
@@ -35,6 +36,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 				topology::Topology const &topo, 
 				simulation::Parameter const &param)
 {
+  std::cout << "\nCONFIGURATION\n";
+  
   // resize the configuration
   conf.resize(topo.num_atoms());
 
@@ -58,12 +61,14 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   // read positions
   buffer = m_block["POSITION"];
   if (buffer.size()){
+    std::cout << "\treading POSITION...\n";
     _read_position(conf.current().pos, buffer, topo.num_atoms());
     block_read.insert("POSITION");
   }
   else{
     buffer = m_block["POSITIONRED"];
     if (buffer.size()){
+      std::cout << "\treading POSITIONRED...\n";
       _read_positionred(conf.current().pos, buffer, topo.num_atoms());
       block_read.insert("POSITIONRED");
     }
@@ -78,12 +83,14 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if(!param.start.generate_velocities){
     buffer = m_block["VELOCITY"];
     if (buffer.size()){
+      std::cout << "\treading VELOCITY...\n";
       _read_velocity(conf.current().vel, buffer, topo.num_atoms());
       block_read.insert("VELOCITY");
     }
     else{
       buffer = m_block["VELOCITYRED"];
       if (buffer.size()){
+	std::cout << "\treading VELOCITYRED...\n";
 	_read_velocityred(conf.current().vel, buffer, topo.num_atoms());
 	block_read.insert("VELOCITYRED");
       }
@@ -110,6 +117,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if(param.boundary.boundary != math::vacuum){
     buffer = m_block["TRICLINICBOX"];
     if (buffer.size()){
+      std::cout << "\treading TRICLINICBOX...\n";
       _read_box(conf.current().box, buffer, param.boundary.boundary);
       conf.old().box = conf.current().box;
       block_read.insert("TRICLINICBOX");
@@ -117,6 +125,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     else{
       buffer = m_block["BOX"];
       if (buffer.size() && param.boundary.boundary == math::rectangular){
+	std::cout << "\treading BOX...\n";
 	_read_g96_box(conf.current().box, buffer);
 	conf.old().box = conf.current().box;
 	block_read.insert("BOX");
@@ -165,6 +174,52 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   // resize some special data
   conf.special().rel_mol_com_pos.resize(topo.num_atoms());
+
+  // print some information
+  std::cout << "\n\t";
+  switch(conf.boundary_type){
+    case math::vacuum:
+      std::cout << "PBC            = vacuum\n";
+      break;
+    case math::rectangular:
+      std::cout << "PBC            = rectangular\n";
+      break;
+    case math::triclinic:
+      std::cout << "PBC            = triclinic\n";
+      break;
+    default:
+      std::cout << "wrong periodic boundary conditions!";
+      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+  }
+
+  std::cout << "\ttotal mass     = " << math::sum(topo.mass()) << "\n"
+	    << "\tvolume         = " << math::volume(conf.current().box, conf.boundary_type);
+  if (conf.boundary_type != math::vacuum)
+    std::cout << "\n\tdensity        = " 
+	      << math::sum(topo.mass()) / math::volume(conf.current().box,
+						       conf.boundary_type);
+  
+  std::cout << "\n\n";
+
+  if (param.constraint.solute.algorithm == simulation::constr_flexshake){
+    conf.special().flexible_vel.resize(topo.solute().distance_constraints().size());
+    conf.special().flexible_ekin.resize(numb);
+    conf.special().flexible_epot.resize(num);
+
+    buffer = m_block["FLEXV"];
+    if (buffer.size()){
+      std::cout << "\treading FLEXV...\n";
+      _read_flexv(conf.special().flexible_vel, buffer, topo.solute().distance_constraints());
+      block_read.insert("FLEXV");
+    }
+    else{
+      io::messages.add("no FLEXV block found, assuming SHAKE'n positions (and velocities)",
+		       "in_configuration",
+		       io::message::notice);
+    }
+  }
+
+  std::cout << "END\n\n";
 
 }
 
@@ -431,6 +486,53 @@ bool io::In_Configuration::_read_g96_box(math::Box &box, std::vector<std::string
     DEBUG(10, msg);
   }
 
+  return true;
+  
+}
+
+bool io::In_Configuration::_read_flexv(std::vector<double> &flexv,
+				       std::vector<std::string> &buffer,
+				       std::vector<topology::two_body_term_struct> const & constr)
+{
+  DEBUG(8, "read flexv");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  std::vector<topology::two_body_term_struct>::const_iterator constr_it = constr.begin();
+  std::vector<double>::iterator flexv_it = flexv.begin();
+
+  int i, j, c;
+  double v;
+  
+  for(c=0; it != to; ++it, ++constr_it, ++flexv_it, ++c){
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> i >> j >> v;
+    
+    --i;
+    --j;
+    
+    if(_lineStream.fail())
+      throw std::runtime_error("bad line in FLEXV block");
+    if (!_lineStream.eof()) {
+      std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
+      DEBUG(10, msg);
+    }
+
+    if (i != int(constr_it->i) || j != int(constr_it->j))
+      io::messages.add("wrong order in FLEXV block, constraints do not match",
+		       "In_Configuration",
+		       io::message::error);
+    *flexv_it = v;
+
+  }
+  
+  std::cout << "\tvelocities for " << c << " flexible constraints read in\n";
+  
   return true;
   
 }

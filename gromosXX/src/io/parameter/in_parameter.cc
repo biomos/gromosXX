@@ -1255,15 +1255,19 @@ void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param)
     param.longrange.rf_excluded=true;
     param.longrange.rf_cutoff = -param.longrange.rf_cutoff;
     
+    /**
     io::messages.add("Reaction field contribution of excluded atoms is " 
 		     "taken into account", "In_Parameter", 
 		     io::message::notice);
+    */
   }
   else{
     param.longrange.rf_excluded=false;
+    /**
     io::messages.add("Reaction field contribution of excluded atoms is " 
 		     "NOT taken into account", "In_Parameter", 
 		     io::message::notice);
+    */
   }
   if(param.longrange.rf_epsilon!=0 && param.longrange.rf_epsilon<1)
     io::messages.add("Illegal value for EPSRF in LONGRANGE block (0  / >=1)", 

@@ -19,6 +19,12 @@ void util::generate_velocities(double const temp, math::SArray const &mass,
   NormalUnit<double> n;
   n.seed(seed);
 
+  std::cout << "generating initial velocities\n"
+	    << "\ttemperature         = " << temp << "\n"
+	    << "\trandom number seed  = " << seed
+	    << "\n\n";
+  
+
   for(int i=0; i<vel.size(); ++i){
     const double sd = sqrt(math::k_Boltzmann * temp / mass(i));
     for(int d=0; d<3; ++d){

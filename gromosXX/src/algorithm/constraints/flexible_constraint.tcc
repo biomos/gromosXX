@@ -59,6 +59,9 @@ static int _flexible_shake(topology::Topology const &topo,
   size_t k = 0;
   double const dt2 = dt * dt;
   
+  conf.special().flexible_ekin.assign(conf.special().flexible_ekin.size(), 0.0);
+  conf.special().flexible_epot.assign(conf.special().flexible_epot.size(), 0.0);
+
   // and constraints
   for(typename std::vector<topology::two_body_term_struct>
 	::const_iterator
@@ -272,7 +275,7 @@ static void _calc_distance(topology::Topology const &topo,
 
 
     // calculate Epot in the bond length constraints
-    conf.special().flexible_epot += 
+    conf.special().flexible_epot[topo.atom_energy_group()[it->i]] += 
       0.5 * param[it->type].K * (param[it->type].r0 - new_len) * 
       (param[it->type].r0 - new_len);
       

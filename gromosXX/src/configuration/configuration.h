@@ -114,7 +114,7 @@ namespace configuration
       /**
        * flexible constraints potential energy.
        */
-      double flexible_epot;
+      std::vector<double> flexible_epot;
       
     };
     
