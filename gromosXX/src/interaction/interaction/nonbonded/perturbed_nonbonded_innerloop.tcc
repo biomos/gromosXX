@@ -47,7 +47,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     double A_q, B_q;
     double alpha_lj=0, alpha_crf=0;
     
-    // const double l = sim.topology().lambda();
+    const double l = sim.topology().lambda();
     
     if(sim.topology().perturbed_atom()[j] ==true){
       A_lj =  &m_base.lj_parameter(
@@ -140,10 +140,10 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
     e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
     e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
-    de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
+    de_lj  = - m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
       + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_lj  
       - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_lj;
-    de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
+    de_crf = - m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
       + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_crf 
       - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_crf;
     
@@ -217,7 +217,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     double A_q, B_q;
     double alpha_lj=0, alpha_crf=0;
     
-    // const double l = sim.topology().lambda();
+    const double l = sim.topology().lambda();
     
     if(sim.topology().perturbed_atom()[j] ==true){
       A_lj =  & m_base.lj_parameter(
@@ -312,10 +312,10 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
     e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
     e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
-    de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
+    de_lj  = - m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
       + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_lj  
       - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_lj;
-    de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
+    de_crf = - m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
       + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_crf 
       - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_crf;
 
@@ -369,7 +369,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
 
   math::Vec r, f_rf, A_f_rf, B_f_rf, f_old_A;
   double e_rf, A_e_rf, B_e_rf, de_rf, A_de_rf, B_de_rf, e_crf_old_A;
-  // const double l=sim.topology().lambda();
+  const double l=sim.topology().lambda();
   
   std::set<int>::const_iterator it, to;
   
@@ -423,7 +423,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
   
   // (1-l)^n * A + l^n *B - A 
   e_rf  = m_base.B_lambda_n() * B_e_rf  + m_base.A_lambda_n() * A_e_rf - e_crf_old_A;
-  de_rf = m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
+  de_rf = - m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
     + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_rf 
     - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_rf;
   
@@ -483,7 +483,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
 	  << A_e_rf << " B: " << B_e_rf);
     
     e_rf  = m_base.B_lambda_n() * B_e_rf  + m_base.A_lambda_n() * A_e_rf;
-    de_rf = m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
+    de_rf = - m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
       + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_rf 
       - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_rf;
     f_rf = m_base.B_lambda_n() * B_f_rf + m_base.A_lambda_n() * A_f_rf;
@@ -856,11 +856,11 @@ interaction::Perturbed_Nonbonded_Innerloop<
   f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
   e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
   e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
-  de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
+  de_lj  = - m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
     + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_lj  
     - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_lj;
   
-  de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
+  de_crf = - m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
     + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_crf 
     - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_crf;
   
