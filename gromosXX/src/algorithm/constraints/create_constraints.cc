@@ -23,7 +23,7 @@
 #include <configuration/energy_average.h>
 #include <configuration/configuration.h>
 #include <algorithm/algorithm.h>
-#include <algorithm/algorithm_sequence.h>
+#include <algorithm/algorithm/algorithm_sequence.h>
 
 #include <interaction/interaction.h>
 #include <interaction/interaction_types.h>

@@ -28,7 +28,7 @@
 #include <io/topology/in_topology.h>
 
 #include <algorithm/algorithm.h>
-#include <algorithm/algorithm_sequence.h>
+#include <algorithm/algorithm/algorithm_sequence.h>
 #include <algorithm/integration/leap_frog.h>
 #include <algorithm/temperature/temperature_calculation.h>
 #include <algorithm/temperature/berendsen_thermostat.h>
@@ -48,7 +48,7 @@
 
 #include <io/print_block.h>
 
-#include "create_md_sequence.h"
+#include <algorithm/create_md_sequence.h>
 
 
 #undef MODULE

@@ -22,7 +22,7 @@
 #include <configuration/configuration.h>
 #include <algorithm/algorithm.h>
 
-#include "algorithm_sequence.h"
+#include <algorithm/algorithm/algorithm_sequence.h>
 
 #undef MODULE
 #undef SUBMODULE
