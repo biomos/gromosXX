@@ -16,7 +16,7 @@ namespace simulation
   {
   public:
     /**
-     * @struct isystem_struct
+     * @struct system_struct
      * system block
      */
     struct system_struct
@@ -31,6 +31,34 @@ namespace simulation
       int nsm;
     } system;
     
+    /**
+     * @struct minimise_struct
+     * minimise block
+     */
+    struct minimise_struct
+    {
+      /**
+       * minimisation method.
+       */
+      int ntem;
+      /**
+       * cycle numbers.
+       */
+      int ncyc;
+      /**
+       * minimum energy criterion.
+       */
+      double dele;
+      /**
+       * starting step size.
+       */
+      double dx0;
+      /**
+       * maximum step size.
+       */
+      double dxm;
+    } minimise;
+
     /**
      * @struct istart_struct
      * start block

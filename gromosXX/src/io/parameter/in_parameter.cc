@@ -30,6 +30,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
 {
   DEBUG(7, "reading input");
 
+  read_MINIMISE(param);
   read_SYSTEM(param);
   read_START(param); // and CENTREOFMASS
   read_STEP(param);
@@ -108,6 +109,60 @@ void io::In_Parameter::read_SYSTEM(simulation::Parameter &param)
 		     "io::In_Parameter::read_SYSTEM",
 		     io::message::error);
 
+} 
+
+/**
+ * read the MINIMISE block.
+ */
+void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
+{
+  DEBUG(8, "reading MINIMISE");
+
+  std::vector<std::string> buffer;
+  buffer = m_block["MINIMISE"];
+  std::string s;
+  
+  if (!buffer.size()){
+    // no minimisation
+    param.minimise.ntem = 0;
+    return;
+  }
+
+  block_read.insert("MINIMISE");
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+  
+  _lineStream >> param.minimise.ntem 
+	      >> param.minimise.ncyc
+	      >> param.minimise.dele
+	      >> param.minimise.dx0
+	      >> param.minimise.dxm;
+ 
+  if (_lineStream.fail())
+    io::messages.add("bad line in MINIMISE block",
+		       "In_Parameter", io::message::error);
+
+  if (param.minimise.ntem != 0 && param.minimise.ntem != 1)
+    io::messages.add("MINIMISE: currently only steepest descent implemented",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::error);
+  if(param.minimise.ncyc < 0)
+    io::messages.add("MINIMISE: NCYC should be >0",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::error);
+  if(param.minimise.dele < 0)
+    io::messages.add("MINIMISE: DELE should be >0",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::error);
+  if(param.minimise.dx0 < 0)
+    io::messages.add("MINIMISE: DX0 should be >0",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::error);
+  if(param.minimise.dxm < param.minimise.dx0)
+    io::messages.add("MINIMISE: DXM should be > DX0",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::error);
 } 
 
 /**

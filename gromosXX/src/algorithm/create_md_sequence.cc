@@ -36,6 +36,7 @@
 #include <algorithm/constraints/shake.h>
 #include <algorithm/constraints/remove_com_motion.h>
 #include <algorithm/integration/slow_growth.h>
+#include <algorithm/integration/steepest_descent.h>
 
 #include <io/print_block.h>
 
@@ -71,9 +72,15 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   md_seq.push_back(ff);
-  md_seq.push_back(new algorithm::Leap_Frog_Velocity);
-  md_seq.push_back(new algorithm::Leap_Frog_Position);
 
+  if (sim.param().minimise.ntem == 1){
+    md_seq.push_back(new algorithm::Steepest_Descent);
+  }
+  else{
+    md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+    md_seq.push_back(new algorithm::Leap_Frog_Position);
+  }
+  
   // SHAKE
   DEBUG(7, "SHAKE?");
   if (sim.param().system.nsm || sim.param().shake.ntc > 1){

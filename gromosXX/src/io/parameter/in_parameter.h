@@ -31,6 +31,11 @@ namespace io {
     void read(simulation::Parameter &param);
     
     /**
+     * read minimise block.
+     */
+    void read_MINIMISE(simulation::Parameter &param);
+
+    /**
      * read step block.
      */
     void read_STEP(simulation::Parameter &param);

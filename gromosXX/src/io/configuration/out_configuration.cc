@@ -132,7 +132,8 @@ void io::Out_Configuration::write(configuration::Configuration const &conf,
   else if(form == final && m_final){
     _print_timestep(sim, m_final_conf);
     _print_position(conf, topo, m_final_conf);
-    _print_velocity(conf, topo, m_final_conf);
+    if(sim.param().minimise.ntem == 0)
+      _print_velocity(conf, topo, m_final_conf);
     _print_box(conf, m_final_conf);
 
     // forces and energies still go to their trajectories

@@ -11,7 +11,8 @@ include_HEADERS =	algorithm.h \
 			constraints/shake.h \
 			constraints/shake.tcc \
 			constraints/remove_com_motion.h \
-			integration/slow_growth.h
+			integration/slow_growth.h \
+			integration/steepest_descent.h
 
 lib_LTLIBRARIES	=	libalgorithm.la
 
@@ -26,7 +27,8 @@ libalgorithm_la_SOURCES =	algorithm.cc \
 				pressure/pressure_calculation.cc \
 				pressure/berendsen_barostat.cc \
 				constraints/remove_com_motion.cc \
-				integration/slow_growth.cc
+				integration/slow_growth.cc \
+				integration/steepest_descent.cc
 
 bin_PROGRAMS =			
 

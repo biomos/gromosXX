@@ -73,6 +73,11 @@ namespace simulation
      */
     double time()const { return m_time; }
     
+    /**
+     * minimisation step size.
+     */
+    double & minimisation_step_size() { return m_minimisation_step_size; }
+    
   private:
 
     /**
@@ -94,6 +99,11 @@ namespace simulation
      * the simulation time.
      */
     double m_time;
+
+    /**
+     * minimisation step size.
+     */
+    double m_minimisation_step_size;
     
   };
   

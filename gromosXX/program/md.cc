@@ -16,6 +16,8 @@
 
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
+#include <util/error.h>
+
 #include <io/read_input.h>
 #include <io/read_special.h>
 
@@ -106,13 +108,21 @@ int main(int argc, char *argv[]){
 
     std::cout << "MD loop\n\tstart t=" << sim.time() 
 	      << "\tend t=" << end_time << "\n" << std::endl;
+
+    int error;
     
     while(sim.time() < end_time){
       std::cout << "\tmd step " << sim.time() << std::endl;
       
       traj.write(conf, topo, sim, io::reduced);
 
-      if (md.run(topo, conf, sim)){
+      if ((error = md.run(topo, conf, sim))){
+
+	if (error == E_MINIMUM_REACHED){
+	  error = 0; // clear error condition
+	  break;
+	}
+	
 	std::cout << "\nError during MD run!\n\n";
 	// try to save the final structures...
 	break;
@@ -148,6 +158,9 @@ int main(int argc, char *argv[]){
     std::cout << "\nMESSAGES FROM SIMULATION\n";
     io::messages.display(std::cout);
 
+    if (error)
+      std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
+    else
     std::cout << "\nGromosXX finished successfully\n" << std::endl;
     
   }
