@@ -391,7 +391,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::B_lambda_n_1()const
 inline void interaction::Perturbed_Nonbonded_Term::set_lambda(double const l, 
 						    int const n)
 {
-  DEBUG(5, "initializing lambdas");
+  DEBUG(9, "initializing lambdas");
   m_A_lambda = 1-l;
   m_A_lambda2 = m_A_lambda * m_A_lambda;
 
@@ -403,10 +403,10 @@ inline void interaction::Perturbed_Nonbonded_Term::set_lambda(double const l,
   m_A_lambda_n_1 = pow(m_A_lambda, n-1);
   m_B_lambda_n_1 = pow(m_B_lambda, n-1);
   
-  DEBUG(7, "\tA:     " << m_A_lambda);
-  DEBUG(7, "\tB:     " << m_B_lambda);
-  DEBUG(7, "\tA^n:   " << m_A_lambda_n);
-  DEBUG(7, "\tB^n:   " << m_B_lambda_n);
-  DEBUG(7, "\tA^n-1: " << m_A_lambda_n_1);
-  DEBUG(7, "\tB^n-1: " << m_B_lambda_n_1);
+  DEBUG(11, "\tA:     " << m_A_lambda);
+  DEBUG(11, "\tB:     " << m_B_lambda);
+  DEBUG(11, "\tA^n:   " << m_A_lambda_n);
+  DEBUG(11, "\tB^n:   " << m_B_lambda_n);
+  DEBUG(11, "\tA^n-1: " << m_A_lambda_n_1);
+  DEBUG(11, "\tB^n-1: " << m_B_lambda_n_1);
 }

@@ -18,7 +18,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   Periodicity_type const & periodicity,
   int pc)
 {
-  DEBUG(7, "\tperturbed pair\t" << i << "\t" << j << " (inner loop)");
+  DEBUG(8, "\tperturbed pair\t" << i << "\t" << j << " (inner loop)");
 
   math::Vec r, f;
   double f1, f6, f12;
@@ -83,10 +83,10 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
   }
   
-  DEBUG(7, "\tlj-parameter state A c6=" << A_lj->c6 << " c12=" << A_lj->c12);
-  DEBUG(7, "\tlj-parameter state B c6=" << B_lj->c6 << " c12=" << B_lj->c12);
-  DEBUG(7, "\tcharges state A i*j = " << A_q);
-  DEBUG(7, "\tcharges state B i*j = " << B_q);
+  DEBUG(8, "\tlj-parameter state A c6=" << A_lj->c6 << " c12=" << A_lj->c12);
+  DEBUG(8, "\tlj-parameter state B c6=" << B_lj->c6 << " c12=" << B_lj->c12);
+  DEBUG(8, "\tcharges state A i*j = " << A_q);
+  DEBUG(8, "\tcharges state B i*j = " << B_q);
     
 
   if (t_perturbation_details::do_scaling){
@@ -153,7 +153,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 			    e_lj, e_crf, de_lj, de_crf);
   }
   
-  DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
+  DEBUG(8, "\tcalculated interaction state A:\n\t\tf: " 
 	<< f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
 	<< " e_crf: " << e_crf 
 	<< " de_lj: " << de_lj << " de_crf: " << de_crf);
@@ -164,7 +164,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   storage.force(i) += f;
   storage.force(j) -= f;
   
-  DEBUG(7, "\tforces stored");
+  DEBUG(8, "\tforces stored");
   
   if (t_interaction_spec::do_virial == math::molecular_virial){
     for(int a=0; a<3; ++a)
@@ -173,7 +173,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	  (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
 	   conf.special().rel_mol_com_pos(j)(a)) * f(b);
     
-    DEBUG(7, "\tvirial done");
+    DEBUG(8, "\tvirial done");
   }
   
   if (t_interaction_spec::do_virial == math::atomic_virial){
@@ -182,7 +182,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	storage.virial_tensor(a, b) += 
 	  r(a) * f(b);
     
-    DEBUG(7, "\tatomic virial done");
+    DEBUG(8, "\tatomic virial done");
   }
   
   // energy
@@ -197,9 +197,29 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   storage.energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
   
-  DEBUG(7, "\tenergy gropu: i and j " << topo.atom_energy_group(i)
+  DEBUG(8, "\tenergy gropu: i and j " << topo.atom_energy_group(i)
 	<< " " << topo.atom_energy_group(j)
 	<< " pert der index = " << energy_derivative_index);
+  
+  if (storage.perturbed_energy_derivatives.size() <=
+      energy_derivative_index){
+    std::cerr << "energy_derivative_index = "
+	      << energy_derivative_index
+	      << std::endl
+	      << "perturbed_energy_derivatives.size() = "
+	      << storage.perturbed_energy_derivatives.size()
+	      << std::endl;
+  }
+
+  assert(storage.perturbed_energy_derivatives.size() > 
+	 energy_derivative_index);
+  assert(storage.perturbed_energy_derivatives[energy_derivative_index].
+	 lj_energy.size() > max(topo.atom_energy_group(i),
+				topo.atom_energy_group(j)));
+  assert(storage.perturbed_energy_derivatives[energy_derivative_index].
+	 lj_energy[topo.atom_energy_group(i)].size() 
+	 > max(topo.atom_energy_group(i),
+	       topo.atom_energy_group(j)));
   
   storage.perturbed_energy_derivatives[energy_derivative_index].lj_energy
     [topo.atom_energy_group(i)]
@@ -209,7 +229,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     [topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += de_crf;
 
-  DEBUG(8, "\tperturbed lj_crf_innerloop " << i << " - " << j << " done!");
+  DEBUG(7, "\tperturbed lj_crf_innerloop " << i << " - " << j << " done!");
   
 }
 

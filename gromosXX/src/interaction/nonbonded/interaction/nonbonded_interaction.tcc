@@ -63,6 +63,7 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
     {
       tid = omp_get_thread_num();
       // calculate the corresponding interactions
+      assert(m_nonbonded_set.size() > tid);
       m_nonbonded_set[tid].calculate_interactions(topo, conf, sim,
 						  tid, m_omp_num_threads);
     }
