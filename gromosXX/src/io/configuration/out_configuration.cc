@@ -67,6 +67,8 @@ io::Out_Configuration::Out_Configuration(std::string title,
 
 io::Out_Configuration::~Out_Configuration()
 {
+  // std::cout << "out_configuration destructor" << std::endl;
+  
   if (m_every_pos){
     m_pos_traj.flush();
     m_pos_traj.close();
@@ -333,11 +335,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   else if(form == final && m_final){
     _print_timestep(sim, m_final_conf);
     _print_position(conf, topo, m_final_conf);
+
     if(sim.param().minimise.ntem == 0)
       _print_velocity(conf, topo, m_final_conf);
+
     _print_box(conf, m_final_conf);
 
-    if(sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+    if(sim.param().constraint.solute.algorithm
+       == simulation::constr_flexshake){
       _print_flexv(conf, topo, m_final_conf);
     }
 
@@ -348,7 +353,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if(sim.param().pscale.jrest){
       _print_pscale_jrest(conf, topo, m_final_conf);
     }
-
+    
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0){
       _print_old_timestep(sim, m_force_traj);
@@ -957,6 +962,8 @@ void io::Out_Configuration
 			topology::Topology const &topo,
 			std::ostream &os)
 {
+  // assert(m_free_energy_traj.is_open());
+  
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_precision);
 
@@ -965,7 +972,7 @@ void io::Out_Configuration
      << std::setw(18) << topo.old_lambda() << "\n";
 
   _print_energyred_helper(os, conf.old().perturbed_energy_derivatives);
-  
+
   os << "END\n";
 
 }
