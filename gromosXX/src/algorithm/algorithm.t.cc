@@ -17,10 +17,6 @@
 #include "integration/leap_frog.h"
 #include "integration/runge_kutta.h"
 
-#include <boost/test/unit_test_suite.hpp>
-#include <boost/test/test_tools.hpp>
-
-using namespace boost::unit_test_framework;
 using namespace math;
 
 /**
@@ -212,19 +208,6 @@ int runge_kutta_test()
 
   return result;
 }
-
-
-/*
-test_suite*
-init_unit_test_suite(int argc, char*argv[])
-{
-  test_suite* test=BOOST_TEST_SUITE("algorithm test");
-  test->add(BOOST_TEST_CASE( &leap_frog_test));
-  test->add(BOOST_TEST_CASE( &runge_kutta_test));
-  
-  return test;
-}
-*/
 
 int main()
 {
