@@ -91,9 +91,11 @@ PLIST03
 #	algorithm: standard (gromos96 like pairlist)
 #		       grid (bekker like pairlist)
 #	SIZE:	   grid cell size (or auto = 0.5 * RCUTP)
+#	TYPE:	   chargegoup (chargegroup based cutoff)
+#			   atomic (atom based cutoff)
 #
-#	algorithm	NSNB	RCUTP	RCUTL	SIZE
-	grid		5	0.8	1.4	auto
+#	algorithm	NSNB	RCUTP	RCUTL	SIZE	TYPE
+	grid		5	0.8	1.4	auto	chargegroup
 END
 
 PERTURB03
