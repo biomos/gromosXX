@@ -43,7 +43,8 @@ inline void interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
 
   DEBUG(5, "perturbed quartic bond interaction");
   DEBUG(7, "using the bond interaction: " << m_bond_interaction.name);
-
+  DEBUG(7, setprecision(5));
+  
   // loop over the bonds
   std::vector<simulation::Perturbed_Bond>::iterator b_it =
     sim.topology().perturbed_solute().bonds().begin(),
@@ -80,18 +81,19 @@ inline void interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
     
     DEBUG(7, "K: " << K);
 
-    const double r02 = (1-sim.topology().lambda()) *
-      m_bond_interaction.parameter()[b_it->type].r0 *
-      m_bond_interaction.parameter()[b_it->type].r0 +
-      sim.topology().lambda() *
-      m_bond_interaction.parameter()[b_it->B_type].r0 *
-      m_bond_interaction.parameter()[b_it->B_type].r0;
+    const double r0 = ((1-sim.topology().lambda()) *
+		       m_bond_interaction.parameter()[b_it->type].r0 +
+		       sim.topology().lambda() *
+		       m_bond_interaction.parameter()[b_it->B_type].r0);
+    const double r02 = r0 * r0;
 
     DEBUG(7, "r02: " << r02);
     
     DEBUG(7, "DF " << K * (dist2 - r02) << "\n" << v);
     
-    f = v * K * (dist2 - r02);
+    f = v * (-K) * (dist2 - r02);
+
+    DEBUG(7, "FORCE: " << f);
     
     force(b_it->i) += f;
     force(b_it->j) -= f;

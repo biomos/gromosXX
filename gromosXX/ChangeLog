@@ -45,3 +45,7 @@
 	
 	putting chargegroups into the box during the simulation.
 
+19. 06. 2003: (markus)
+	bond perturbation
+	preparing the energy arrays to also calculate fluctuations.
+

@@ -40,12 +40,36 @@ inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
 template<typename t_simulation>
 io::OutTrajectory<t_simulation>::~OutTrajectory()
 {
+  // std::cerr << "DESTRUCTOR: OutTrajectory" << std::endl;
+  
   if (m_auto_delete){
-    if (m_pos) delete m_pos_traj;
+    if (m_pos){
+      m_pos_traj->flush();
+      // m_pos_traj->close();
+      delete m_pos_traj;
+    }
+    m_final_traj->flush();
+    // m_final_traj->close();
     delete m_final_traj;
-    if (m_vel) delete m_vel_traj;
-    if (m_force) delete m_force_traj;
-    if (m_energy) delete m_energy_traj;
+
+    if (m_vel){
+      m_vel_traj->flush();
+      // m_vel_traj->close();
+      delete m_vel_traj;
+    }
+    
+    if (m_force){
+      m_force_traj->flush();
+      // m_force_traj->close();
+      delete m_force_traj;
+    }
+    
+    if (m_energy){
+      m_energy_traj->flush();
+      // m_energy_traj->close();
+      delete m_energy_traj;
+    }
+    
   }
 }
 
@@ -91,8 +115,7 @@ template<typename t_simulation>
 inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
 ::operator<<(t_simulation &sim)
 {
-  DEBUG(11, "print energy " << m_energy << " " << m_every_energy );
-  
+
   if (m_format == reduced){
 
     if((sim.steps() % m_every_pos) == 0){
@@ -207,7 +230,6 @@ inline void io::OutTrajectory<t_simulation>
   assert(m_every_energy > 0);
 }
 
-
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
 ::_print_timestep(t_simulation &sim, std::ostream &os)
@@ -221,6 +243,7 @@ inline void io::OutTrajectory<t_simulation>
      << "\nEND\n";
   
 }
+
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
 ::_print_old_timestep(t_simulation &sim, std::ostream &os)

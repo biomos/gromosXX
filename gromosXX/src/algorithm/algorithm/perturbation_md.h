@@ -49,6 +49,11 @@ namespace algorithm
      * initialize the perturbation parameters.
      */
     int init_perturbation(io::Argument &args, io::InInput &input);
+
+    /**
+     * energy calculation.
+     */
+    virtual void do_energies();
     
   };
   

@@ -129,12 +129,11 @@ namespace io
   /**
    * Print the ENERGY block.
    */
-  template<typename t_simulation>
   inline std::ostream &print_ENERGY(std::ostream &os,
-				    t_simulation const &sim)
+				    simulation::Energy const &e,
+				    std::vector<size_t> const &energy_groups,
+				    std::string const title)
   {
-
-    simulation::Energy const & e = sim.system().energies();
 
     int numenergygroups=e.bond_energy.size();
  
@@ -145,78 +144,78 @@ namespace io
     for(int i=0; i<numenergygroups; i++){
 
       std::ostringstream ostring;
-      ostring << b << "-" << sim.topology().energy_groups()[i]+1;
+      ostring << b << "-" << energy_groups[i]+1;
       energroup.push_back(ostring.str());
-      b=sim.topology().energy_groups()[i]+2;
+      b = energy_groups[i]+2;
     }
         
-    os << "ENERGIES\n";
+    os << title << "\n";
 
     os.precision(4);
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
-    os << "Total      : " << setw(12) << e.total << endl;
-    os << "Kinetic    : " << setw(21) << e.kinetic_total << endl;
-    // os << "Temperature: " << setw(21) << v_kin/(0.5*k_Boltzmann*Ndf) << endl;
-    os << "Potential  : " << setw(21) << e.potential_total << endl;
-    os << "Covalent   : " << setw(30) << e.bonded_total << endl;
-    os << "Bonds      : " << setw(39) << e.bond_total << endl;
-    os << "Angles     : " << setw(39) << e.angle_total << endl;
-    os << "Improper   : " << setw(39) << e.improper_total << endl;
-    os << "Dihedral   : " << setw(39) << e.dihedral_total << endl;
-    os << "Non-bonded : " << setw(30) << e.nonbonded_total  << endl;
-    os << "Vdw        : " << setw(39) << e.lj_total << endl;
-    os << "El (RF)    : " << setw(39) << e.crf_total  << endl;
-    os << "Special    : " << setw(21) << e.special_total << endl;
-    os << endl;
+    os << "Total      : " << std::setw(12) << e.total << "\n";
+    os << "Kinetic    : " << std::setw(21) << e.kinetic_total << "\n";
+    // os << "Temperature: " << std::setw(21) << v_kin/(0.5*k_Boltzmann*Ndf) << "\n";
+    os << "Potential  : " << std::setw(21) << e.potential_total << "\n";
+    os << "Covalent   : " << std::setw(30) << e.bonded_total << "\n";
+    os << "Bonds      : " << std::setw(39) << e.bond_total << "\n";
+    os << "Angles     : " << std::setw(39) << e.angle_total << "\n";
+    os << "Improper   : " << std::setw(39) << e.improper_total << "\n";
+    os << "Dihedral   : " << std::setw(39) << e.dihedral_total << "\n";
+    os << "Non-bonded : " << std::setw(30) << e.nonbonded_total  << "\n";
+    os << "Vdw        : " << std::setw(39) << e.lj_total << "\n";
+    os << "El (RF)    : " << std::setw(39) << e.crf_total  << "\n";
+    os << "Special    : " << std::setw(21) << e.special_total << "\n";
+    os << "\n";
 
-    os << setw(10) << "COV";
+    os << std::setw(10) << "COV";
     
-    for(int i=0; i < numenergygroups; i++) os << setw(12) << energroup[i];
-    os << endl << setw(12) << "bonds";
-    for(int i=0; i < numenergygroups; i++) os << setw(12) << e.bond_energy[i];
-    os << endl << setw(12) << "angles";
-    for(int i=0; i < numenergygroups; i++) os << setw(12) << e.angle_energy[i];
-    os << endl << setw(12) << "dihedrals";
-    for(int i=0; i < numenergygroups; i++) os << setw(12) << e.dihedral_energy[i];
-    os << endl << setw(12) << "impropers";
-    for(int i=0; i < numenergygroups; i++) os << setw(12) << e.improper_energy[i];
-    os << endl << endl;
-    os << setw(10) << "VDW";
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n" << std::setw(12) << "bonds";
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.bond_energy[i];
+    os << "\n" << std::setw(12) << "angles";
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.angle_energy[i];
+    os << "\n" << std::setw(12) << "dihedrals";
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihedral_energy[i];
+    os << "\n" << std::setw(12) << "impropers";
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.improper_energy[i];
+    os << "\n" << "\n";
+    os << std::setw(10) << "VDW";
     
-    for(int i=0; i < numenergygroups; i++) os << setw(12) << energroup[i];
-    os << endl;
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
     for(int j=0; j < numenergygroups; j++) {
-      os << setw(12) << energroup[j];
-      for(int i=0; i<j; i++) os << setw(12) << " ";
+      os << std::setw(12) << energroup[j];
+      for(int i=0; i<j; i++) os << std::setw(12) << " ";
       for(int i=j; i < numenergygroups; i++){
 	if(i==j)
-	  os << setw(12) << e.lj_energy[i][j];
+	  os << std::setw(12) << e.lj_energy[i][j];
 	else 
-	  os << setw(12) << e.lj_energy[i][j] + e.lj_energy[j][i] ;
+	  os << std::setw(12) << e.lj_energy[i][j] + e.lj_energy[j][i] ;
       }
-      os << endl;
+      os << "\n";
     }
-    os << endl << setw(10) << "CRF";
+    os << "\n" << std::setw(10) << "CRF";
     
-    for(int i=0; i < numenergygroups; i++) os << setw(12) << energroup[i];
-    os << endl;
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
     for(int j=0; j < numenergygroups; j++) {
-      os << setw(12) << energroup[j];
-      for(int i=0; i<j; i++) os << setw(12) << " ";
+      os << std::setw(12) << energroup[j];
+      for(int i=0; i<j; i++) os << std::setw(12) << " ";
       for(int i=j; i < numenergygroups; i++){
 	if(i==j)
-	  os << setw(12) << e.crf_energy[i][j];
+	  os << std::setw(12) << e.crf_energy[i][j];
 	else
-	  os << setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
+	  os << std::setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
       }
-      os << endl;
+      os << "\n";
     }
 
-    os << endl << endl;
-    os << setw(10) << "SPECIAL";
+    os << "\n" << "\n";
+    os << std::setw(10) << "SPECIAL";
 
-    os << endl << setw(12) << "Posrest";
-    // for(int i=0; i < numenergygroups; i++) os << setw(12) << e.energy_posrest[i];
+    os << "\n" << std::setw(12) << "Posrest";
+    // for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.energy_posrest[i];
 
 
     os << "\nEND\n";
@@ -224,5 +223,19 @@ namespace io
   
     return os;
   }
+
+  inline std::ostream & print_TIMESTEP(std::ostream &os, double const steps, double const time)
+  {
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.precision(9);
+    
+    os << "TIMESTEP\n"
+       << std::setw(15) << steps
+       << std::setw(15) << time
+       << "\nEND\n";
+
+    return os;
+  }
+
   
 } // io

@@ -37,8 +37,12 @@ algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint,
 	      t_integration>
 ::~MD()
 {
-  if (m_print_file != &std::cout)
+  if (m_print_file != &std::cout){
+    m_print_file->flush();
     delete m_print_file;
+  }
+  if (m_trajectory)
+    delete m_trajectory;
 }
 
 template<typename t_simulation,
@@ -349,6 +353,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
   while(m_simulation.time() < end_time){
 
+    io::print_TIMESTEP(std::cout, m_simulation.steps(), m_simulation.time());
+    
     DEBUG(8, "md: put chargegroups into box");
     simulation().system().periodicity().
       put_chargegroups_into_box(simulation());
@@ -362,31 +368,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_integration.step(m_simulation, m_forcefield, m_dt);
     
     if (m_print_pairlist && m_simulation.steps() % m_print_pairlist == 0){
-
-      typename std::vector<typename interaction::Interaction<simulation_type> *>
-	::const_iterator it = m_forcefield.begin(),
-	to = m_forcefield.end();
-	
-      for( ; it != to; ++it){
-	  
-	if ((*it)->name == "NonBonded"){
-
-	  (*m_print_file) << "shortrange\n" 
-			  << dynamic_cast<interaction::Nonbonded_Interaction
-	    <simulation_type, pairlist_type> *>
-	    (*it)->pairlist().short_range()
-			  << std::endl;
-
-	  (*m_print_file) << "longrange\n" 
-			  << dynamic_cast<interaction::Nonbonded_Interaction
-	    <simulation_type, pairlist_type> *>
-	    (*it)->pairlist().long_range()
-			  << std::endl;
-	
-	}
-	  
-      }
-	
+      print_pairlists();
     }
       
     DEBUG(8, "md: shake");
@@ -402,6 +384,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 		<< "\n";
     }
     catch(std::runtime_error e){
+      // go back to positions before SHAKE
       m_simulation.system().exchange_pos();
       (*m_trajectory) << m_simulation;
       throw;
@@ -412,17 +395,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       m_pressure.apply(m_simulation, m_dt);
     }
     
-    // calculate the kinetic energy now (velocities adjusted for constraints)
-    temperature_algorithm().calculate_kinetic_energy(m_simulation);
-    // and sum up the energy arrays
-    m_simulation.system().energies().calculate_totals();
-    
-    if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
-      io::print_MULTIBATH(std::cout, m_simulation.multibath());
-      io::print_ENERGY(std::cout, m_simulation);
-      if (m_calculate_pressure)
-	io::print_PRESSURE(std::cout, m_simulation.system());
-    }
+    DEBUG(8, "md: calculate and print the energies");
+    do_energies();
     
     DEBUG(8, "md: increase time");
     m_simulation.increase_time(m_dt);
@@ -571,8 +545,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   input.read_BOUNDARY(ntb, nrdbox);
   DEBUG(8, "md: boundary read");
   
-  if (nrdbox != 1){
-    io::messages.add("nrdbox!=1 not supported","md.tcc",
+  if (nrdbox != 1 && ntb != 0){
+    io::messages.add("nrdbox!=1 only for vacuum runs supported","md.tcc",
 		     io::message::error);
   }
   if (abs(ntb) == 2)
@@ -665,4 +639,63 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   }
   // std::cerr << "init output done" << std::endl;
   
+}
+
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
+void algorithm::MD<t_simulation, t_temperature, t_pressure, 
+		   t_distance_constraint, t_integration>
+::print_pairlists()
+{
+  
+  typename std::vector<typename interaction::Interaction<simulation_type> *>
+    ::const_iterator it = m_forcefield.begin(),
+    to = m_forcefield.end();
+	
+  for( ; it != to; ++it){
+	  
+    if ((*it)->name == "NonBonded"){
+
+      (*m_print_file) << "shortrange\n" 
+		      << dynamic_cast<interaction::Nonbonded_Interaction
+	<simulation_type, pairlist_type> *>
+	(*it)->pairlist().short_range()
+		      << std::endl;
+
+      (*m_print_file) << "longrange\n" 
+		      << dynamic_cast<interaction::Nonbonded_Interaction
+	<simulation_type, pairlist_type> *>
+	(*it)->pairlist().long_range()
+		      << std::endl;
+	
+    }
+	  
+  }
+  
+}
+
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
+void algorithm::MD<t_simulation, t_temperature, t_pressure, 
+		   t_distance_constraint, t_integration>
+::do_energies()
+{
+  // calculate the kinetic energy now (velocities adjusted for constraints)
+  temperature_algorithm().calculate_kinetic_energy(m_simulation);
+  // and sum up the energy arrays
+  m_simulation.system().energies().calculate_totals();
+  
+  if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
+    io::print_MULTIBATH(std::cout, m_simulation.multibath());
+    io::print_ENERGY(std::cout, m_simulation.system().energies(),
+		     m_simulation.topology().energy_groups());
+    if (m_calculate_pressure)
+      io::print_PRESSURE(std::cout, m_simulation.system());
+  }
 }

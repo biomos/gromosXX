@@ -3,6 +3,9 @@
  * routines to print out the various blocks.
  */
 
+#ifndef INCLUDED_PRINT_BLOCK_H
+#define INCLUDED_PRINT_BLOCK_H
+
 namespace io
 {
   /** 
@@ -21,13 +24,19 @@ namespace io
   /**
    * Print the ENERGY block.
    */
-  template<typename t_simulation>
   inline std::ostream &
-  print_ENERGY(std::ostream &os, t_simulation const &sim);
+  print_ENERGY(std::ostream &os, simulation::Energy const &e,
+	       std::vector<size_t> const & energy_groups,
+	       std::string const title = "ENERGIES");
   
+  /**
+   * Print the TIMESTEP block.
+   */
+  inline std::ostream &
+  print_TIMESTEP(std::ostream &os, double const steps, double const time);
+
 } // io
 
 #include "print_block.tcc"
 
-
-  
+#endif

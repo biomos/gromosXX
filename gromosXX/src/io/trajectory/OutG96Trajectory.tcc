@@ -28,13 +28,16 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
   if (m_format == reduced){
 
     if((sim.steps() % m_every_pos) == 0){
+      // std::cerr << "print trajectory" << std::endl;
+
       DEBUG(7, "print timestep positionred");
       _print_timestep(sim, *m_pos_traj);
       DEBUG(7, "print positionred");
       _print_positionred(sim.system(), sim.topology(), *m_pos_traj);
-      if (sim.system().periodicity().boundary_condition() != math::vacuum)
+      if (sim.system().periodicity().boundary_condition() != math::vacuum){
 	DEBUG(7, "print box");
 	_print_box(sim.system(), *m_pos_traj);
+      }
     }
     
     if (m_vel && (sim.steps() % m_every_vel) == 0){

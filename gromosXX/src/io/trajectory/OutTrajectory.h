@@ -106,6 +106,7 @@ namespace io {
     bool m_auto_delete;
 
     void _print_timestep(t_simulation &sim, std::ostream &os);
+
     void _print_old_timestep(t_simulation &sim, std::ostream &os);
 
     void _print_position(typename t_simulation::system_type &sys,

@@ -111,12 +111,10 @@ int algorithm::Perturbation_MD<t_simulation, t_temperature,
   pert_topo >> m_simulation.topology();
 
   // resize the energy array
-  std::cerr << "energy size: " 
-	    << m_simulation.system().energies().bond_energy.size()
-	    << std::endl;
-  
   m_simulation.system().lambda_energies().
     resize(m_simulation.system().energies().bond_energy.size());
+  m_simulation.system().lambda_energies().
+    kinetic_energy.resize(m_simulation.system().energies().kinetic_energy.size());
     
   return 0;
 
@@ -148,3 +146,25 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
   m_forcefield.push_back(the_perturbed_qbond_interaction);
 }
 
+
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
+void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure, 
+		   t_distance_constraint, t_integration>
+::do_energies()
+{
+  // do the normal energies
+  MD<t_simulation, t_temperature, t_pressure,
+    t_distance_constraint, t_integration>::do_energies();
+
+  // and sum up the energy lambda derivative arrays
+  m_simulation.system().lambda_energies().calculate_totals();
+  
+  if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
+    io::print_ENERGY(std::cout, m_simulation.system().lambda_energies(),
+		     m_simulation.topology().energy_groups(), "dE/dLAMBDA");
+  }
+}

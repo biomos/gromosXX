@@ -115,83 +115,77 @@ namespace algorithm
      * integration algorithm.
      */
     t_integration m_integration;
-    
     /**
      * trajecorty file
      */
     io::OutG96Trajectory<t_simulation> *m_trajectory;
-
     /**
      * additional output file.
      */
     std::ostream * m_print_file;
-
     /**
      * the time step.
      */
     double m_dt;
-
     /**
      * simulation time.
      */
     double m_time;
-
     /**
      * print energy every .. steps.
      */
     int m_print_energy;
-    
     /**
      * print pairlist every .. steps.
      */
     int m_print_pairlist;
-
     /**
      * print the force every .. steps.
      */
     int m_print_force;
-
     /**
      * calculate the pressure?
      * which kind of virial?
      */
     int m_calculate_pressure;
-    
     /**
      * the interactions:
      * quartic bond interaction.
      */
     interaction::Quartic_bond_interaction<t_simulation> * m_qbond_interaction;
-
     /**
      * parse the print argument
      * for pairlist and force that
      * are not present in the input file...
      */
     void parse_print_argument(io::Argument &args);
-
     /**
      * open the input files.
      */
     void open_files(io::Argument &args, io::InTopology &topo,
 		    io::InTrajectory &sys, io::InInput &input);
-
     /**
      * initialize the input.
      */
     virtual void init_input(io::Argument &args, io::InTopology &topo,
 			    io::InTrajectory &sys, io::InInput &input);
-
     /**
      * read the input and setup a standard simulation.
      */
     virtual void read_input(io::Argument &args, io::InTopology &topo,
 			    io::InTrajectory &sys, io::InInput &input);
-
     /**
      * initialize the output.
      */
     virtual void init_output(io::Argument &args, io::InInput &input);
+    /**
+     * print pairlists.
+     */
+    virtual void print_pairlists();
+    /**
+     * calculate and print the energies.
+     */
+    virtual void do_energies();
     
   };
   
