@@ -13,7 +13,7 @@
 
 inline
 interaction::Pairlist
-::iterator::iterator(std::vector<std::vector<size_t> > &pl)
+::iterator::iterator(std::vector<std::vector<unsigned int> > &pl)
   : m_pairlist(pl)
 {
 
@@ -67,7 +67,7 @@ interaction::Pairlist::iterator
 
 inline void
 interaction::Pairlist::iterator
-::row(size_t i)
+::row(unsigned int i)
 {
   DEBUG(7, "pairlist iterator row() " << i);
 
@@ -77,7 +77,7 @@ interaction::Pairlist::iterator
   }
 }
 
-inline size_t
+inline unsigned int
 interaction::Pairlist::iterator
 ::i()
 {
@@ -85,7 +85,7 @@ interaction::Pairlist::iterator
   return (m_i - m_pairlist.begin());
 }
 
-inline size_t
+inline unsigned int
 interaction::Pairlist::iterator
 ::j()
 {
@@ -93,7 +93,7 @@ interaction::Pairlist::iterator
   return *m_j;
 }
 
-inline size_t
+inline unsigned int
 interaction::Pairlist::iterator
 ::operator*()
 {
@@ -133,7 +133,7 @@ namespace interaction
 	it = pl.begin(),
 	to = pl.end();
 
-      size_t ii = 999999999;
+      unsigned int ii = 999999999;
 
       int ind = 1;
       while (it != to) {

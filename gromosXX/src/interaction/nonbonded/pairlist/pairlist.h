@@ -13,7 +13,7 @@ namespace interaction
    * holds a Pairlist and provides an iterator.
    */
   class Pairlist :
-    public std::vector< std::vector<size_t> >
+    public std::vector< std::vector<unsigned int> >
   {
   public:
     /**
@@ -26,7 +26,7 @@ namespace interaction
       /**
        * Constructor.
        */
-      iterator(std::vector< std::vector<size_t> > &pl);      
+      iterator(std::vector< std::vector<unsigned int> > &pl);      
       /**
        * next entry.
        */
@@ -44,33 +44,33 @@ namespace interaction
       /**
        * the pair: i
        */
-      size_t i();
+      unsigned int i();
       /**
        * the pair: j
        */
-      size_t j();
+      unsigned int j();
       /**
        * also the pair: j
        */
-      size_t operator*();
+      unsigned int operator*();
       /**
        * the row.
        */
-      void row(size_t i);
+      void row(unsigned int i);
       
     protected:
       /** 
        * iterator over the atoms i of atom pairs i - j.
        */
-      std::vector<std::vector<size_t> >::iterator m_i;
+      std::vector<std::vector<unsigned int> >::iterator m_i;
       /**
        * iterator over the atoms j of atom pairs i - j.
        */
-      std::vector<size_t>::iterator m_j;
+      std::vector<unsigned int>::iterator m_j;
       /**
        * reference to the pairlist.
        */
-      std::vector<std::vector<size_t> > &m_pairlist;
+      std::vector<std::vector<unsigned int> > &m_pairlist;
 
     };
     

@@ -44,7 +44,7 @@ namespace interaction
 		configuration::Configuration & conf,
 		simulation::Simulation & sim,
 		Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
-		size_t begin, size_t end, size_t stride);
+		unsigned int begin, unsigned int end, unsigned int stride);
     
   private:
 
