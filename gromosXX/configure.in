@@ -188,7 +188,8 @@ case "$compiler" in
        echo "Configuring for SUN C++"
        dnl CXX_PICKY_FLAGS="+w2 -xcheck -xsb"
        CXX_PICKY_FLAGS="+w2"
-       CXX_OPTIMIZE_FLAGS="-fast -xdepend -xvector -DNDEBUG"
+       dnl CXX_OPTIMIZE_FLAGS="-fast -xdepend -xvector -DNDEBUG"
+       CXX_OPTIMIZE_FLAGS="-fast -DNDEBUG"
        CXX_DEBUG_FLAGS="-g"
        CXXLD="$CXX"
 
