@@ -70,8 +70,6 @@ int algorithm::Remove_COM_Motion
   DEBUG(7, "com_r " << math::v2s(com_r));
   DEBUG(7, "com_Ekin " << ekin_trans);
 
-
-  
   math::Vec com_L(0.0);
   math::Matrix com_I;
   com_I = 0.0;
@@ -132,7 +130,10 @@ int algorithm::Remove_COM_Motion
   
   // get the angular velocity around the COM
   math::Vec com_O;
-  com_O = math::product(com_II, com_L) / denom;
+  if (denom < math::epsilon)
+    com_O = math::Vec(0.0, 0.0, 0.0);
+  else
+    com_O = math::product(com_II, com_L) / denom;
   
   DEBUG(7, " angular velocity " << math::v2s(com_O));
 

@@ -160,6 +160,8 @@ int main(int argc, char *argv[]){
     // update the energies
     if (conf.old().energies.calculate_totals()){
       std::cout << "\nError during MD run!\n" << std::endl;
+      error = E_NAN;
+      
       // try to save the final structures...
       break;	
     }
@@ -184,7 +186,7 @@ int main(int argc, char *argv[]){
   traj.print_final(topo, conf, sim);
     
   std::cout << "\nMESSAGES FROM SIMULATION\n";
-  io::messages.display(std::cout);
+  io::message::severity_enum err_msg = io::messages.display(std::cout);
 
   std::cout << "\n\n";
     
@@ -198,9 +200,16 @@ int main(int argc, char *argv[]){
     
   if (error)
     std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
-  else
-    std::cout << "\nGromosXX finished successfully\n" << std::endl;
+  else if(err_msg > io::message::notice){
+    std::cout << "\nGromosXX finished. "
+	      << "Check the messages for possible problems during the run."
+	      << std::endl;
+  }
+  else{
     
+    std::cout << "\nGromosXX finished successfully\n" << std::endl;
+  }
+  
   return 0;
 }
 
