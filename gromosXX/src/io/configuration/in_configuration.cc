@@ -521,7 +521,7 @@ bool io::In_Configuration::_read_box(math::Box &box, std::vector<std::string> &b
   for(i=0; it != to; ++i, ++it){
 
     if (i>=3){
-      io::messages.add("bad line in BOX block","In_Configuration", io::message::error);
+      io::messages.add("bad line in TRICLINICBOX block","In_Configuration", io::message::error);
       throw std::runtime_error("bad line in TRICLINICBOX block");
     }
     
@@ -539,18 +539,11 @@ bool io::In_Configuration::_read_box(math::Box &box, std::vector<std::string> &b
   }
   
   // and check the boundary condition...
-  if (bound == 0 && boundary != math::vacuum){
-    io::messages.add("Boundary condition from input file and from TRICLINICBOX do not match!",
+  if (math::boundary_enum(bound) != boundary){
+    io::messages.add("Boundary condition from input file and from TRICLINICBOX do not match!"
+		     " - using input file",
 		     "In_Configuration", io::message::warning);
   }
-  else if (bound > 0 && boundary != math::rectangular){
-    io::messages.add("Boundary condition from input file and from TRICLINICBOX do not match!",
-		     "In_Configuration", io::message::warning);
-  }
-  else if (bound < 0 && boundary != math::triclinic){
-    io::messages.add("Boundary condition from input file and from TRICLINICBOX do not match!",
-		     "In_Configuration", io::message::warning);
-  }    
 
   return true;
   
