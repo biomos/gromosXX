@@ -162,7 +162,7 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
 
   if (!(_lineStream >> param.minimise.nmin >> param.minimise.flim)){
     // support standard input format...
-    param.minimise.nmin = 0;
+    param.minimise.nmin = 1;
     param.minimise.flim = 0.0;
     _lineStream.clear();
   }
@@ -188,7 +188,7 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
 
-  if(param.minimise.nmin < 0)
+  if(param.minimise.nmin <= 0)
     io::messages.add("MINIMISE: NMIN should be >= 0",
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
