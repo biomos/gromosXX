@@ -56,7 +56,7 @@ Release 0.1.0
 	ok	position restraints
 		position constraints
 	ok 	EM: steepest descent
-		slow growth
+	ok	slow growth
 		perturbed shake
 		dihedral angle monitoring
 	ok	atomic virial
