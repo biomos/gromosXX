@@ -158,7 +158,9 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   // prepare temperature calculation
   DEBUG(7, "md: degrees of freedom");
   m_simulation.calculate_degrees_of_freedom();
-  std::cout << m_simulation.multibath();
+  temperature_algorithm().calculate_kinetic_energy(m_simulation);
+  std::cout << "initial temperature:\n";
+  io::print_MULTIBATH(std::cout, m_simulation.multibath());
   
   // time to simulate
   int num_steps;
@@ -452,10 +454,6 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     DEBUG(8, "md: integrate");
     m_integration.step(m_simulation, m_forcefield, m_dt);
     
-    if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
-      std::cout << m_simulation.multibath();
-    }
-
     if (m_print_pairlist && m_simulation.steps() % m_print_pairlist == 0){
 
       typename std::vector<typename interaction::Interaction<simulation_type> *>
@@ -502,12 +500,16 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       throw;
     }
 
-    if (m_print_energy && m_simulation.steps() % m_print_energy == 0)
-      io::print_ENERGY(std::cout, m_simulation);
-
     DEBUG(8, "md: calculate pressure");
     if (m_calculate_pressure){
       m_pressure.apply(m_simulation, m_dt);
+    }
+    
+    // calculate the kinetic energy now (velocities adjusted for constraints)
+    temperature_algorithm().calculate_kinetic_energy(m_simulation);
+    if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
+      io::print_MULTIBATH(std::cout, m_simulation.multibath());
+      io::print_ENERGY(std::cout, m_simulation);
       io::print_PRESSURE(std::cout, m_simulation.system());
     }
     

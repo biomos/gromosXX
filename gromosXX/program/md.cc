@@ -93,7 +93,10 @@ int main(int argc, char *argv[])
 	algorithm::runge_kutta<simulation_type> >
 	the_MD(the_simulation);
       
-      the_MD.initialize(args);
+      if (the_MD.initialize(args)){
+	return 1;
+      }
+      
       the_MD.run();
 
       std::cout << "\nwriting final structure" << std::endl;
@@ -109,7 +112,9 @@ int main(int argc, char *argv[])
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
     
-      the_MD.initialize(args);
+      if(the_MD.initialize(args)){
+	return 1;
+      }
 
       the_MD.run();
 

@@ -185,7 +185,7 @@ inline io::InInput & io::InInput
 	
 	_lineStream >> last >> temp >> tau;
 
-	sim.multibath().add_bath(last, temp, tau);
+	sim.multibath().add_bath(last-1, temp, tau);
 	
       }
       

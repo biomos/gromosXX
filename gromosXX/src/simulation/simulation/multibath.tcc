@@ -76,7 +76,7 @@ inline void simulation::Multibath
   // loop over the baths
   for(size_t last=0; it != to; ++it){
     it->dof = (it->last_atom - last + 1) * 3;
-    last = it->last_atom;
+    last = it->last_atom + 1;
   }
 
   // substract constraints
@@ -133,7 +133,7 @@ inline int simulation::Multibath::check_state(size_t const num_atoms)const
 		       io::message::error);
       ++result;
     }
-    if (it->last_atom <= num_atoms){
+    if (it->last_atom > num_atoms){
       io::messages.add("Multibath last atom index too large",
 		       "Multibath::check_state",
 		       io::message::error);

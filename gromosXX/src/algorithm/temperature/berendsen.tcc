@@ -39,34 +39,55 @@ inline void algorithm::Berendsen_Thermostat
       double scale = sqrt(1.0 + dt / it->tau *
 		      (it->temperature / free_temp -1));
 
-      it->kinetic_energy = 0.0;
+      // do not calculate the kinetic energy here
+      // because SHAKE will be called later on...
+      // it->kinetic_energy = 0.0;
       for(size_t i=last; i<=it->last_atom; ++i){
 	vel(i) *= scale;
-	math::Vec v = 0.5 * (vel(i) + old_vel(i));
-	it->kinetic_energy += mass(i) * math::dot(v, v);
+	// math::Vec v = 0.5 * (vel(i) + old_vel(i));
+	// it->kinetic_energy += mass(i) * math::dot(v, v);
       }
       
-      it->kinetic_energy *= 0.5;
+      // it->kinetic_energy *= 0.5;
 
     }
-    else{
-      // only calculate kinetic energy
-      // it is the average over the velocities before and after
-      // the old position
+    // otherwise just do nothing, kinetic energy is calculated later
+    // (after SHAKE)
 
-      it->kinetic_energy = 0.0;
-      for(size_t i=last; i<=it->last_atom; ++i){
-	
-	math::Vec v = 0.5 * (vel(i) + old_vel(i));
-
-	it->kinetic_energy += mass(i) * math::dot(v, v);
-      }
-      it->kinetic_energy *= 0.5;
-
-    }
-
-    last = it->last_atom;
+    last = it->last_atom + 1;
 
   }
   
 }
+
+template<typename t_simulation>
+inline void algorithm::Berendsen_Thermostat
+::calculate_kinetic_energy(t_simulation &sim)
+{
+  math::VArray &vel = sim.system().vel();
+  math::VArray const & old_vel = sim.system().old_vel();
+  math::SArray const & mass = sim.topology().mass();
+
+  // loop over the baths
+  std::vector<simulation::bath_struct>::iterator
+    it = sim.multibath().begin(),
+    to = sim.multibath().end();
+  
+  size_t last = 0;
+  
+  for( ; it != to; ++it){
+    it->kinetic_energy = 0.0;
+    for(size_t i=last; i<=it->last_atom; ++i){
+      math::Vec v = 0.5 * (vel(i) + old_vel(i));
+      
+      it->kinetic_energy += mass(i) * math::dot(v, v);
+    } // atoms in bath
+    
+    it->kinetic_energy *= 0.5;
+    
+    last = it->last_atom + 1;
+    
+  } // baths
+    
+}
+  

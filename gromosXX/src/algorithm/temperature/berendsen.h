@@ -22,12 +22,21 @@ namespace algorithm
     Berendsen_Thermostat();
     /**
      * apply the temperature scaling
-     * or just calculate the temperature (if tau=-1).
+     * if tau=-1 nothing is done.
+     * the kinetic energy can not be calculated here, because
+     * later on SHAKE might be applied.
      * @param sim the simulation.
      * @param dt the time step.
      */
     template<typename t_simulation>
     void apply(t_simulation &sim, double const dt);
+
+    /**
+     * calculate the kinetic energy.
+     * @param sim the simulation.
+     */
+    template<typename t_simulation>
+    void calculate_kinetic_energy(t_simulation &sim);
     
   private:
 

@@ -11,6 +11,86 @@ std::ostream & operator<<(std::ostream &os, simulation::Multibath &bath);
 
 namespace io
 {
+  /** 
+   * Print the MULTIBATH block.
+   */
+  inline std::ostream & print_MULTIBATH(std::ostream &os,
+					simulation::Multibath const &bath)
+  {
+    os << "\nMULTIBATH\n";
+  
+    os.precision(2);
+    os.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  
+    os << std::setw(10) << "LAST"
+       << std::setw( 8) << "TEMP0"
+       << std::setw( 8) << "TAU"
+       << std::setw(10) << "DOF"
+       << std::setw(10) << "SOLUC"
+       << std::setw(10) << "SOLVC"
+       << std::setw(10) << "EKIN"
+       << std::setw(10) << "TEMP"
+       << "\n";
+  
+    double avg_temp0 = 0, avg_tau = 0, sum_dof = 0, sum_soluc = 0,
+      sum_solvc = 0, sum_ekin = 0, tau_dof = 0;
+
+    std::vector<simulation::bath_struct>::const_iterator
+      it = bath.begin(),
+      to = bath.end();
+  
+    for( ; it != to; ++it){
+      os << std::setw(10) << it->last_atom + 1
+	 << std::setw( 8) << it->temperature
+	 << std::setw( 8) << it->tau
+	 << std::setw(10) << it->dof
+	 << std::setw(10) << it->solute_constr_dof
+	 << std::setw(10) << it->solvent_constr_dof
+	 << std::setw(10) << std::setprecision(4) 
+	 << it->kinetic_energy << std::setprecision(2);
+      if (it->kinetic_energy == 0){
+	os << std::setw(10) << 0;
+      }
+      else{
+	os << std::setw(10) 
+	   << 2 * it->kinetic_energy / (math::k_Boltzmann * it->dof);
+      }
+      if (it->tau != -1){
+	tau_dof += it->tau;
+	avg_temp0 += it->temperature * it->dof;
+	avg_tau += it->tau * it->dof;
+      }
+      sum_dof += it->dof;
+      sum_soluc += it->solute_constr_dof;
+      sum_solvc += it->solvent_constr_dof;
+      sum_ekin += it->kinetic_energy;
+    
+      os << "\n";
+
+    }
+
+    os << "    ------------------------------------------------------------------------\n";
+    os << std::setw(10) << "Avg";
+    if (tau_dof)
+      os << std::setw( 8) << avg_temp0 / tau_dof
+	 << std::setw( 8) << avg_tau / tau_dof;
+    else
+      os << std::setw( 8) << "-"
+	 << std::setw( 8) << "-";
+
+    os << std::setw(10) << sum_dof
+       << std::setw(10) << sum_soluc
+       << std::setw(10) << sum_solvc
+       << std::setw(10) << std::setprecision(4) << sum_ekin
+       << std::setprecision(2)
+       << std::setw(10) << 2 * sum_ekin / (math::k_Boltzmann * sum_dof)
+       << "\n";
+    
+    os << "END\n";
+    return os;
+  }
+    
+
   
   /**
    * Print the PRESSURE block.

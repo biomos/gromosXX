@@ -10,7 +10,7 @@ Release 0.0.2
 	ok	energy calculation
 	-	energy trajectory
 	ok	excluded atoms reaction field contribution
-	-	check kinetic energy at printout
+	ok	check kinetic energy at printout
 
 -------------
 
