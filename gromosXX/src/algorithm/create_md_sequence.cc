@@ -35,6 +35,7 @@
 #include <math/periodicity.h>
 #include <algorithm/constraints/shake.h>
 #include <algorithm/constraints/remove_com_motion.h>
+#include <algorithm/integration/slow_growth.h>
 
 #include <io/print_block.h>
 
@@ -60,8 +61,15 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   // construct the md algorithm
   algorithm::Remove_COM_Motion * rcom =
     new algorithm::Remove_COM_Motion;
-  md_seq.push_back(rcom);
-
+  
+  if (sim.param().centreofmass.remove_trans ||
+      sim.param().centreofmass.remove_trans)
+    md_seq.push_back(rcom);
+  else{
+    rcom->apply(topo, conf, sim);
+    delete rcom;
+  }
+  
   md_seq.push_back(ff);
   md_seq.push_back(new algorithm::Leap_Frog_Velocity);
   md_seq.push_back(new algorithm::Leap_Frog_Position);
@@ -143,12 +151,21 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(pcalc);
   }
 
+  //  pressure scaling
   if (sim.param().pcouple.scale != math::pcouple_off){
     algorithm::Berendsen_Barostat * pcoup =
       new algorithm::Berendsen_Barostat;
     md_seq.push_back(pcoup);
   }
 
+  // slow growth
+  if (sim.param().perturbation.perturbation &&
+      sim.param().perturbation.dlamt){
+    algorithm::Slow_Growth *sg =
+      new algorithm::Slow_Growth;
+    md_seq.push_back(sg);
+  }
+  
   return 0;
 
 }
