@@ -2,10 +2,13 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 include_HEADERS =
 
-bin_PROGRAMS =			md
+bin_PROGRAMS =			md script
 
 md_SOURCES =			md.cc
-md_LDADD = 			../src/libgroxx.la
+
+script_SOURCES =		script.cc
+
+LDADD = ../src/libgroxx.la
 
 EXTRA_DIST =			BUILD_NUMBER
 
