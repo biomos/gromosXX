@@ -18,14 +18,17 @@ namespace interaction
     public t_pairlist_algorithm
   {
   public:
+    /**
+     * @class iterator
+     * provide an iterator over the pairlist.
+     */
     class iterator
     {
     public:
       /**
        * Constructor.
        */
-      iterator(basic_pairlist_type &pl);
-      
+      iterator(basic_pairlist_type &pl);      
       /**
        * next entry.
        */
@@ -52,12 +55,23 @@ namespace interaction
        * also the pair: j
        */
       size_t operator*();
-      
+      /**
+       * the row.
+       */
       void row(size_t i);
       
     protected:
+      /** 
+       * iterator over the atoms i of atom pairs i - j.
+       */
       std::vector<std::vector<size_t> >::iterator m_i;
+      /**
+       * iterator over the atoms j of atom pairs i - j.
+       */
       std::vector<size_t>::iterator m_j;
+      /**
+       * reference to the pairlist.
+       */
       basic_pairlist_type &m_pairlist;
 
     };
@@ -67,20 +81,45 @@ namespace interaction
      */
     Basic_Pairlist(interaction::Nonbonded_Base &base);
 
+    /**
+     * @returns an iterator over the pairlist.
+     */
     Basic_Pairlist::iterator begin();
+    /**
+     * @returns an iterator to the end of the pairlist.
+     */
     Basic_Pairlist::iterator end();
-
+    
+    /**
+     * @returns an iterator over the perturbed pairlist.
+     */
     Basic_Pairlist::iterator perturbed_begin();
+    /**
+     * @returns an iterator to the end of the perturbed pairlist.
+     */
     Basic_Pairlist::iterator perturbed_end();
     
+    /**
+     * the perturbed pairlist.
+     */
     basic_pairlist_type & perturbed();
+    /**
+     * const accessor to the perturbed pairlist.
+     */
     basic_pairlist_type const & perturbed()const;
     
   protected:
+    /**
+     * the perturbed pairlist.
+     * the nonperturbed one is implemented through inheritance...
+     */
     basic_pairlist_type m_perturbed_pairlist;
     
   };
 
+  /**
+   * print the pairlist.
+   */
   template<typename t_simulation, typename t_pairlist_algorithm>
   std::ostream & 
   operator<<(std::ostream &os, Basic_Pairlist<t_simulation, 

@@ -32,13 +32,29 @@ namespace interaction
      */
     Twinrange_Filter(t_base &base);
 
+    /**
+     * prepare the filter.
+     */
     void prepare(t_simulation &sim);
     
+    /**
+     * filter a pair for the twin-range.
+     * atoms outside the outer range are ignored,
+     * if the pair is inside the inner range, false is returned,
+     * otherwise the interaction is calculated and the longrange forces
+     * and energies stored in the filter.
+     */
     bool range_pair(t_simulation const &sim, size_t const i,
 		     size_t const j);
     
   protected:
+    /**
+     * the longrange cutoff.
+     */
     double m_cutoff_short_2;
+    /**
+     * the shortrange cutoff.
+     */
     double m_cutoff_long_2;
     
   };

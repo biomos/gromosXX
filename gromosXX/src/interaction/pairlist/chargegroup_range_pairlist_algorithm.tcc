@@ -1,5 +1,5 @@
 /**
- * @file twinrange_pairlist_algorithm.tcc
+ * @file chargegroup_range_pairlist_algorithm.tcc
  * implement methods of Twinrange_Pairlist_Algorithm.
  */
 

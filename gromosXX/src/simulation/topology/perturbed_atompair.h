@@ -9,7 +9,7 @@
 namespace simulation
 {
   /**
-   * @class Perturbed_Atom
+   * @class Perturbed_Atompair
    * holds the perturbed atom information.
    */
   class Perturbed_Atompair
@@ -27,10 +27,10 @@ namespace simulation
 
     /**
      * Constructor.
-     * @param IEB atom sequence number.
-     * @param JEB atom sequence number.
-     * @param IETA interaction mode in state A.
-     * @param IETB interaction mode in state B.
+     * @param ieb atom sequence number.
+     * @param jeb atom sequence number.
+     * @param ieta interaction mode in state A.
+     * @param ietb interaction mode in state B.
      */
     Perturbed_Atompair(int ieb, int jeb, int ieta, int ietb)
       : i(ieb),
@@ -39,9 +39,27 @@ namespace simulation
         B_interaction(ietb)
       {};
     
+    /**
+     * atom i sequence number.
+     */
     int i;
+    /**
+     * atom j sequence number.
+     */
     int j;
+    /**
+     * interaction in state A:
+     * - 0: excluded
+     * - 1: 1,4 pair
+     * - 2: normal interaction.
+     */
     int A_interaction;
+    /**
+     * interaction in state B:
+     * - 0: excluded
+     * - 1: 1,4 pair
+     * - 2: normal interaction.
+     */
     int B_interaction;
   };
   

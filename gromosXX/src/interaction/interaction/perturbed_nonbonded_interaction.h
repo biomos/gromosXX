@@ -22,6 +22,7 @@ namespace interaction
      * Constructor.
      * @param sim where to store forces and energies
      * (and virial contribution).
+     * @param nonbonded_interaction which interaction functions to use.
      */
     Perturbed_Nonbonded_Interaction(t_simulation &sim, 
     interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>

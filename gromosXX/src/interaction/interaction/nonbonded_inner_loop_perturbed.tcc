@@ -1,6 +1,6 @@
 /**
- * @file nonbonded_inner_loop.tcc
- * template methods of Nonbonded_Inner_Loop
+ * @file nonbonded_inner_loop_perturbed.tcc
+ * template methods of Nonbonded_Inner_Loop_Perturbed
  */
 
 #undef MODULE

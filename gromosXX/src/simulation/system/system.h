@@ -23,12 +23,26 @@ namespace simulation
      * @struct index_struct
      * struct to hold the box indices for
      * the atoms.
+     * @TODO would allow for Phil's method to gather
+     * -- not implemented --
      */
     struct index_struct
     {
+      /**
+       * Constructor.
+       */
       index_struct() : k(0), l(0), m(0) {};
+      /**
+       * box index k.
+       */
       int k;
+      /**
+       * box index l.
+       */
       int l;
+      /**
+       * box index m.
+       */
       int m;
     };
     
@@ -207,9 +221,9 @@ namespace simulation
      * atoms.
      * @param start begin of a group of atoms.
      * @param end of a group of atoms.
-     * @mass the masses of (all) atoms.
-     * @com_pos returns the center of mass.
-     * @com_e_kin returns the tranlational kinetic energy tensor.
+     * @param mass the masses of (all) atoms.
+     * @param com_pos returns the center of mass.
+     * @param com_e_kin returns the tranlational kinetic energy tensor.
      * 
      * @TODO the gathering of the molecule is hardcoded in here.
      * Maybe this should be changed to a generic implementation.
