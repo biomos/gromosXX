@@ -3,10 +3,8 @@
  * definition of the message class.
  */
 
-#include <map>
-#include <string>
-#include <iostream>
-#include <iomanip>
+#include <stdheader.h>
+
 #include "message.h"
 
 namespace io

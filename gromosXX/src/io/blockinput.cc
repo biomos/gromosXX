@@ -3,7 +3,7 @@
  * defines blockinput functions.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 #include "blockinput.h"
 
 std::istream& 

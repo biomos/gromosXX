@@ -3,7 +3,7 @@
  * read in an Interaction Function Parameter file
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <interaction/interaction_types.h>
 
@@ -257,8 +257,9 @@ void io::In_IFP
     sc12[2].resize(atom_types);
     
     std::vector<std::vector<int> >    pl(atom_types);
-    for(int i=0; i<atom_types; ++i)
-      pl[i].resize(atom_types);
+	for(int ii=0; ii<atom_types; ++ii){
+      pl[ii].resize(atom_types);
+	}
     
     // get the whole thing in one...
     std::string ljblock;
@@ -267,7 +268,7 @@ void io::In_IFP
     _lineStream.clear();
     _lineStream.str(ljblock);
 
-    int i;
+    int num;
     std::string s;
     
     DEBUG(10, "read in sc6, sc12, scs6, scs12");
@@ -275,7 +276,7 @@ void io::In_IFP
 
       DEBUG(15, "atom type: " << n);
 
-      _lineStream >> i >> s >> sc6[n]>> sc12[0][n] >> sc12[1][n] >> sc12[2][n]
+      _lineStream >> num >> s >> sc6[n]>> sc12[0][n] >> sc12[1][n] >> sc12[2][n]
 		  >> scs6[n] >> scs12[n];
 
       if (_lineStream.fail()){
@@ -289,7 +290,7 @@ void io::In_IFP
       }
       */
 
-      if(i != n+1){
+      if(num != n+1){
 	io::messages.add("atom types not sequential in SINGLEATOMLJPAIR block",
 			 "In_IFP", io::message::error);
       }

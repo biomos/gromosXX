@@ -3,7 +3,7 @@
  * implementation of the Argument class.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include "argument.h"
 #include "blockinput.h"
@@ -13,8 +13,8 @@ namespace io{
   typedef std::multimap<std::string,std::string>::value_type argType;
 
   // checks if an argument is known
-  static int isKnown(const std::string str, std::set<std::string> known_args){
-    return known_args.count(str);
+  static unsigned int isKnown(const std::string str, std::set<std::string> known_args){
+    return unsigned(known_args.count(str));
   }
 
   Argument::Argument(int argc, char **argv, int nknown, 

@@ -3,7 +3,7 @@
  * routines to print out the various blocks.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 #include <fstream>
 
 
@@ -95,7 +95,7 @@ namespace io
       it = bath.begin(),
       to = bath.end();
   
-    for(size_t i=0; it != to; ++it, ++i){
+    for(unsigned int i=0; it != to; ++it, ++i){
       
       os << std::setw(10) << i
 	 << std::setw( 8) << it->temperature
@@ -176,7 +176,7 @@ namespace io
       it = bath.begin(),
       to = bath.end();
   
-    for(size_t i=0; it != to; ++it, ++i){
+    for(unsigned int i=0; it != to; ++it, ++i){
       
       const double e_kin = energy.kinetic_energy[i];
       const double e_kin_com = energy.com_kinetic_energy[i];
@@ -190,23 +190,23 @@ namespace io
 	 << std::setw(12) 
 	 << e_kin_ir
 	 << std::setprecision(2) << std::fixed;
-      if (e_kin == 0){
+      if (it->dof == 0){
 	os << std::setw(10) << 0;
       }
       else{
 	os << std::setw(10) 
 	   << 2 * e_kin / (math::k_Boltzmann * it->dof);
       }
-      if (e_kin_com == 0){
-	os << std::setw(10) << 0;
+      if (it->com_dof == 0){
+	os << std::setw(10) << "-";
       }
       else{
 	os << std::setw(10) 
 	   << 2 * e_kin_com / 
 	  (math::k_Boltzmann * it->com_dof);
       }
-      if (e_kin_ir == 0){
-	os << std::setw(10) << 0;
+      if (it->ir_dof == 0){
+	os << std::setw(10) << "-";
       }
       else{
 	os << std::setw(10) 
@@ -252,10 +252,16 @@ namespace io
        << sum_ekin
        << std::setw(12) << sum_com_ekin
        << std::setw(12) << sum_ir_ekin
-       << std::setprecision(2) << std::fixed
-       << std::setw(10) << 2 * sum_ekin / (math::k_Boltzmann * sum_dof)
-       << std::setw(10) << 2 * sum_com_ekin / (math::k_Boltzmann * sum_com_dof)
-       << std::setw(10) << 2 * sum_ir_ekin / (math::k_Boltzmann * sum_ir_dof);
+	   << std::setprecision(2) << std::fixed;
+	if (sum_dof)
+       os << std::setw(10) << 2 * sum_ekin / (math::k_Boltzmann * sum_dof);
+	else os << std::setw(10) << "-";
+	if (sum_com_dof)
+		os << std::setw(10) << 2 * sum_com_ekin / (math::k_Boltzmann * sum_com_dof);
+	else os << std::setw(10) << "-";
+	if (sum_ir_dof)
+		os << std::setw(10) << 2 * sum_ir_ekin / (math::k_Boltzmann * sum_ir_dof);
+	else os << std::setw(10) << "-";
     if (tau_dof)
       os << std::setw(10) << std::setprecision(7) << avg_scale / tau_dof;
     else
@@ -394,18 +400,18 @@ namespace io
    */
   void print_ENERGY(std::ostream &os,
 		    configuration::Energy const &e,
-		    std::vector<size_t> const &energy_groups,
+		    std::vector<unsigned int> const &energy_groups,
 		    std::string const title,
 		    std::string const type)
   {
 
-    int numenergygroups=e.bond_energy.size();
+    unsigned int numenergygroups = unsigned(e.bond_energy.size());
  
     std::vector<std::string> energroup;
    
     int b=1;
     
-    for(int i=0; i<numenergygroups; i++){
+    for(unsigned int i=0; i<numenergygroups; i++){
 
       std::ostringstream ostring;
       ostring << b << "-" << energy_groups[i]+1;
@@ -435,25 +441,25 @@ namespace io
 
     os << std::setw(20) << "COV";
     
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n" << std::setw(20) << type + "bonds";
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.bond_energy[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.bond_energy[i];
     os << "\n" << std::setw(20) << type + "angles";
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.angle_energy[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.angle_energy[i];
     os << "\n" << std::setw(20) << type + "impropers";
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.improper_energy[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.improper_energy[i];
     os << "\n" << std::setw(20) << type + "dihedrals";
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihedral_energy[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihedral_energy[i];
 
     os << "\n" << "\n";
     os << std::setw(20) << type + "VDW";
     
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n";
-    for(int j=0; j < numenergygroups; j++) {
+    for(unsigned int j=0; j < numenergygroups; j++) {
       os << std::setw(20) << energroup[j];
-      for(int i=0; i<j; i++) os << std::setw(12) << " ";
-      for(int i=j; i < numenergygroups; i++){
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
 	if(i==j)
 	  os << std::setw(12) << e.lj_energy[i][j];
 	else 
@@ -463,12 +469,12 @@ namespace io
     }
     os << "\n" << std::setw(20) << type + "CRF";
     
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n";
-    for(int j=0; j < numenergygroups; j++) {
+    for(unsigned int j=0; j < numenergygroups; j++) {
       os << std::setw(20) << energroup[j];
-      for(int i=0; i<j; i++) os << std::setw(12) << " ";
-      for(int i=j; i < numenergygroups; i++){
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
 	if(i==j)
 	  os << std::setw(12) << e.crf_energy[i][j];
 	else
@@ -480,12 +486,12 @@ namespace io
     os << "\n" << "\n";
     os << std::setw(20) << type + "SPECIAL";
 
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n" << std::setw(20) << type + "Constraints";
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.constraints_energy[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.constraints_energy[i];
 
     os << "\n" << std::setw(20) << type + "Posrest";
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];
 
     os << "\nEND\n";
     

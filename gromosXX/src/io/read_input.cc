@@ -3,7 +3,7 @@
  * implementation of function read_input
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 #include <fstream>
 
 #include <algorithm/algorithm.h>

@@ -42,7 +42,7 @@ namespace io
    * Print the ENERGY block.
    */
   void print_ENERGY(std::ostream &os, configuration::Energy const &e,
-		    std::vector<size_t> const & energy_groups,
+		    std::vector<unsigned int> const & energy_groups,
 		    std::string const title = "ENERGIES",
 		    std::string const type = "E_");
   

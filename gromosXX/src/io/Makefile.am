@@ -16,6 +16,7 @@ xxinclude_HEADERS = 	argument.h \
 			configuration/in_configuration.h \
 			configuration/out_configuration.h \
 			topology/in_posres.h \
+			ifp.h \
 			forcefield/in_ifp.h
 
 noinst_LTLIBRARIES =	libgroio.la
