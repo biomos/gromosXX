@@ -28,6 +28,8 @@ namespace topology
     /**
      * @struct lincs_struct
      * lincs constraints information.
+     * if a topology is multiplied (or copied)
+     * lincs has to be reinitialized!
      */
     struct lincs_struct
     {
