@@ -57,14 +57,9 @@ int util::create_simulation(std::string topo,
   
   // if we got a parameter file, try to read it...
   if (param != ""){
-    try{
-      input_file.open(param.c_str());
-    }
-    catch(std::string s){
-      io::messages.add("opening input failed", "read_input",
-		       io::message::error);
-      return -1;
-    }
+
+    input_file.open(param.c_str());
+    
     if (!input_file.is_open()){
       std::cout << "\n\ncould not open " << param << "!\n" << std::endl;
       io::messages.add("opening input failed", "read_input",
@@ -82,14 +77,8 @@ int util::create_simulation(std::string topo,
   }
   
   
-  try{
-    topo_file.open(topo.c_str());
-  }
-  catch(std::string s){
-    io::messages.add("opening topology failed", "read_input",
-		     io::message::error);
-    return -1;
-  }
+  topo_file.open(topo.c_str());
+
   if (!topo_file.is_open()){
     std::cout << "\n\ncould not open " << topo << "!\n" << std::endl;
     io::messages.add("opening topology failed", "read_input",
@@ -104,14 +93,8 @@ int util::create_simulation(std::string topo,
 
   if(pttopo != ""){
     
-    try{
-      pttopo_file.open(pttopo.c_str());
-    }
-    catch(std::string s){
-      io::messages.add("opening perturbation topology failed", "read_input",
-		       io::message::error);
-      return -1;
-    }
+    pttopo_file.open(pttopo.c_str());
+
     if (!pttopo_file.is_open()){
       std::cout << "\n\ncould not open " << pttopo << "!\n" << std::endl;
       io::messages.add("opening perturbation topology failed", "read_input",
@@ -130,14 +113,9 @@ int util::create_simulation(std::string topo,
 						   sim.sim.param().rottrans.rottrans);
 
   if (conf != ""){
-    try{
-      conf_file.open(conf.c_str());
-    }
-    catch(std::string s){
-      io::messages.add("opening configuration failed", "read_input",
-		       io::message::error);
-      return -1;
-    }
+
+    conf_file.open(conf.c_str());
+
     if (!conf_file.is_open()){
       std::cout << "\n\ncould not open " << conf << "!\n" << std::endl;
       io::messages.add("opening configuration failed", "read_input",

@@ -109,11 +109,11 @@ case "$compiler" in
 	   dnl consider adding -xP, -xN or -xW for Intel processors
 	   dnl maybe some inline control: -Qoption,c,-ip_ninl_max_stats=2000
 	   dnl or maybe -ipo if your lucky...
-       CXX_OPTIMIZE_FLAGS="-O3 -ip -static -restrict -align -DNDEBUG -fno-exceptions -vec_report"
+       dnl CXX_OPTIMIZE_FLAGS="-O3 -ip -static -restrict -align -DNDEBUG -fno-exceptions -vec_report"
+       CXX_OPTIMIZE_FLAGS="-O3 -ip -static -restrict -align -DNDEBUG -vec_report"
        CXX_DEBUG_FLAGS="-g -pch"
        CXXLD="$CXX"
 
-#      openmp support...       
        if eval "test x$enable_openmp = xyes"; then
 	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -openmp -openmp_report -DOMP"
 	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -openmp -openmp_report -DOMP"
@@ -121,16 +121,16 @@ case "$compiler" in
 
        if eval "test x$enable_debug = xyes"; then
 		CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS $CXX_PICKY_FLAGS"
-	    AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_DEBUG_FLAGS")
-	    echo "configuring for debug build"
-	else
-	    AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_OPTIMIZE_FLAGS")
-	    echo "configuring for release build"
-	fi
+	        AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_DEBUG_FLAGS")
+	        echo "configuring for debug build"
+       else
+	        AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_OPTIMIZE_FLAGS")
+	        echo "configuring for release build"
+       fi
 
-	dnl extra_lib="$extra_lib -lstdc++"
+       dnl extra_lib="$extra_lib -lstdc++"
 
-	   AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
+       AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
      ;;
      sgi*)               # SGI C++  http://www.sgi.com
        echo "Configuring for SGI C++"

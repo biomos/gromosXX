@@ -64,7 +64,7 @@ make sure the bin directory of the Intel C++
 compiler is added to your path and the
 lib directory to the library search path.
 
-export CC=icc
+export CC=icpc
 export CXX=icc
 export LD=xild
 export AR=xiar
@@ -73,7 +73,6 @@ export AR=xiar
       --enable-openmp configure option
 
 * GSL has to be compiled with the same compiler
-      (mordor: /troll2/markus/programs/gsl-icc)
 
 
 WINDOWS (Visual Studio 2003 (NET)

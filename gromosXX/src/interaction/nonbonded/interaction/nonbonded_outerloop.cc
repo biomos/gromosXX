@@ -99,12 +99,14 @@ void interaction::Nonbonded_Outerloop
 	++j_it){
       
       DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
-      // printf("nb pair %d - %d\n", i, *j_it);
       
       // shortrange, therefore store in simulation.system()
-      innerloop.lj_crf_innerloop<t_interaction_spec>(topo, conf, i, *j_it, storage, periodicity);
-      
-      // storage.energies.bond_energy[0] += *j_it;
+      innerloop.lj_crf_innerloop<t_interaction_spec>
+	(
+	 topo, conf, 
+	 i, *j_it,
+	 storage, periodicity
+	 );
       
     }
   }
@@ -120,9 +122,13 @@ void interaction::Nonbonded_Outerloop
       DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
       
       // shortrange, therefore store in simulation.system()
-      innerloop.spc_innerloop<t_interaction_spec>(topo, conf, cg1, *j_it, storage, periodicity);
+      innerloop.spc_innerloop<t_interaction_spec>
+	(
+	 topo, conf,
+	 cg1, *j_it,
+	 storage, periodicity
+	 );
     }
-    
   }
 }
 
