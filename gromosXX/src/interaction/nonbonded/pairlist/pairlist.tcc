@@ -67,7 +67,7 @@ interaction::Pairlist::iterator
 
 inline void
 interaction::Pairlist::iterator
-::row(unsigned int i)
+::row(size_t i)
 {
   DEBUG(7, "pairlist iterator row() " << i);
 
@@ -77,7 +77,7 @@ interaction::Pairlist::iterator
   }
 }
 
-inline unsigned int
+inline size_t
 interaction::Pairlist::iterator
 ::i()
 {
@@ -85,7 +85,7 @@ interaction::Pairlist::iterator
   return (m_i - m_pairlist.begin());
 }
 
-inline unsigned int
+inline size_t
 interaction::Pairlist::iterator
 ::j()
 {
@@ -93,7 +93,7 @@ interaction::Pairlist::iterator
   return *m_j;
 }
 
-inline unsigned int
+inline size_t
 interaction::Pairlist::iterator
 ::operator*()
 {

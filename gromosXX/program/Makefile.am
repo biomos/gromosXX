@@ -5,13 +5,14 @@ include_HEADERS =
 bin_PROGRAMS =			md
 
 md_SOURCES =			md.cc
-md_LDADD =			../src/util/libutil.la \
+md_LDADD = \
 				../src/topology/libtopology.la \
-				../src/configuration/libconfiguration.la \
+				../src/io/libio.la \
 				../src/algorithm/libalgorithm.la \
+				../src/configuration/libconfiguration.la \
 				../src/interaction/libinteraction.la \
 				../src/math/libmath.la \
-				../src/io/libio.la \
-				../src/simulation/libsimulation.la
+				../src/simulation/libsimulation.la \
+				../src/util/libutil.la
 
 
