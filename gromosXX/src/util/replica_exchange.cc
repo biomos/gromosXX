@@ -304,9 +304,6 @@ int util::Replica_Exchange_Slave::run
 {
   m_ID = tid;
   
-  // use local copy
-  io::Argument my_args(args);
-
   // prepare output file
   std::ostringstream oss;
   oss << "repex_" << tid << ".out";
@@ -319,7 +316,7 @@ int util::Replica_Exchange_Slave::run
   simulation::Simulation sim;
 
   // read the files (could also be copied from the master)
-  io::read_input(my_args, topo, conf, sim,  md, os);
+  io::read_input(args, topo, conf, sim,  md, os);
 
   // initialises everything
   md.init(topo, conf, sim, os);
@@ -330,16 +327,26 @@ int util::Replica_Exchange_Slave::run
   std::ostringstream suff;
   suff << "." << m_ID;
   
-  my_args["trj"] = my_args["trj"] + suff.str();
-  my_args["tre"] = my_args["tre"] + suff.str();
-  my_args["trg"] = my_args["trg"] + suff.str();
-  my_args["bae"] = my_args["bae"] + suff.str();
-  my_args["bag"] = my_args["bag"] + suff.str();
-  my_args["trv"] = my_args["trv"] + suff.str();
+  std::string fin = "";
+  if (args.count("fin")) fin = args["fin"] + suff.str();
+  std::string trj = "";
+  if (args.count("trj")) trj = args["trj"] + suff.str();
+  std::string tre = "";
+  if (args.count("tre")) tre = args["tre"] + suff.str();
+  std::string trg = "";
+  if (args.count("trg")) trg = args["trg"] + suff.str();
+  std::string bae = "";
+  if (args.count("bae")) bae = args["bae"] + suff.str();
+  std::string bag = "";
+  if (args.count("bag")) bag = args["bag"] + suff.str();
+  std::string trv = "";
+  if (args.count("trv")) trv = args["trv"] + suff.str();
+  std::string trf = "";
+  if (args.count("trf")) trf = args["trf"] + suff.str();
 
   io::Out_Configuration traj("GromosXX\n", os);
   traj.title("GromosXX\n" + sim.param().title);
-  traj.init(my_args, sim.param());
+  traj.init(fin, trj, trv, trf, tre, trg, bae, bag, sim.param());
 
   // should be the same as from master...
   os << "\nMESSAGES FROM INITIALIZATION\n";

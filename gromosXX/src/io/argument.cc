@@ -142,17 +142,6 @@ namespace io{
     else return find(str)->second;
   }
 
-  std::string &Argument::operator[](const std::string &str)
-  {
-    const_iterator f = find(str);
-    if(f == end()){
-      (*this)[str] = "";
-    }
-  
-    return find(str)->second;
-    
-  }
-
   int Argument::check(const std::string &str, int num_args)const
   {
     if(find(str) == end())

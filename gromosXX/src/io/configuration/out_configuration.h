@@ -53,6 +53,14 @@ namespace io {
     void init(io::Argument & args, simulation::Parameter const & param);
     
     /**
+     * initialise the files.
+     */
+    void init(std::string fin, std::string trj, std::string trv, 
+	      std::string trf, std::string tre, std::string trg,
+	      std::string bae, std::string bag,
+	      simulation::Parameter const & param);
+
+    /**
      * write out a timestep.
      */
     void write(configuration::Configuration & conf,

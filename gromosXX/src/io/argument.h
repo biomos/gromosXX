@@ -20,8 +20,9 @@ namespace io{
    */
 
   class Argument: public std::multimap<std::string,std::string>{
-    // Argument(const Argument &);
-    // Argument &operator=(const Argument &);
+    // not implemented
+    Argument(const Argument &);
+    Argument &operator=(const Argument &);
   public:
     /**
      * Argument constructor.
@@ -70,11 +71,6 @@ namespace io{
      */
     const std::string &operator[](const std::string &str)const;
 
-    /**
-     * non const access (should be used with care...
-     */
-    std::string & operator[](const std::string &str);
-    
   private:
     std::string d_usage;
     std::string d_prog;

@@ -190,6 +190,83 @@ void io::Out_Configuration::init(io::Argument & args,
   
 }
 
+void io::Out_Configuration::init
+(
+ std::string fin, std::string trj, std::string trv, 
+ std::string trf, std::string tre, std::string trg,
+ std::string bae, std::string bag,
+ simulation::Parameter const & param
+ )
+{
+  if (fin != "")
+    final_configuration(fin);
+  else io::messages.add("argument fin for final configuration required!",
+			"Out_Configuration",
+			io::message::error);
+
+  if (trj != "")
+    trajectory(trj, param.write.position);
+  else if (param.write.position)
+    io::messages.add("write trajectory but no trj argument",
+		     "Out_Configuration",
+		     io::message::error);
+
+  if (trv != "")
+    velocity_trajectory(trv, param.write.velocity);
+  else if (param.write.velocity)
+    io::messages.add("write velocity trajectory but no trv argument",
+		     "Out_Configuration",
+		     io::message::error);
+
+  // use same step as position writing
+  if (trf != "")
+    force_trajectory(trf, param.write.position);
+
+  if (tre != "")
+    energy_trajectory(tre, param.write.energy);
+  else if (param.write.energy)
+    io::messages.add("write energy trajectory but no tre argument",
+		     "Out_Configuration",
+		     io::message::error);
+
+  if (trg != "")
+    free_energy_trajectory(trg, param.write.free_energy);
+  else if (param.write.free_energy)
+    io::messages.add("write free energy trajectory but no trg argument",
+		     "Out_Configuration",
+		     io::message::error);
+
+  if (bae != "")
+    block_averaged_energy(bae, param.write.block_average);
+  else if (param.write.block_average && param.write.energy)
+    io::messages.add("write block averaged energy but no bae argument",
+		     "Out_Configuration",
+		     io::message::error);
+
+  if (param.perturbation.perturbation){
+    if (bag != "")
+      block_averaged_free_energy(bag, param.write.block_average);
+    else if (param.write.block_average && param.write.free_energy)
+      io::messages.add("write block averaged free energy "
+			"but no bag argument",
+		       "Out_Configuration",
+		       io::message::error);
+  }
+
+  /*
+    // deprecated ...
+  if (args.count("rep") > 0){
+    m_replica = true;
+    m_replica_data.open(args["rep"].c_str());
+    if (!m_replica_data)
+      io::messages.add("could not open replica exchange final data file!",
+		       "Out_Configuration",
+		       io::message::error);
+  }
+  */
+  
+}
+
 void io::Out_Configuration::write(configuration::Configuration &conf,
 				  topology::Topology const &topo,
 				  simulation::Simulation const &sim,
