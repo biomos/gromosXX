@@ -14,7 +14,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   t_interaction_spec, t_perturbation_details>
 ::perturbed_lj_crf_innerloop
 ( topology::Topology & topo, configuration::Configuration & conf,
-  size_t const i, size_t const j, Storage &storage,
+  unsigned int i, unsigned int j, Storage &storage,
   Periodicity_type const & periodicity,
   int pc)
 {
@@ -230,6 +230,10 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     // lambda dependent energy derivatives, add
     // additional d lambda prime / d lambda factor
 
+    DEBUG(9, "dl'/dl = " 
+	  << topo.lambda_prime_derivative()[energy_derivative_index]);
+    DEBUG(9, "de_lj = " << de_lj << "\tde_crf = " << de_crf);
+
     storage.perturbed_energy_derivatives.lj_energy
       [topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += 
@@ -265,119 +269,209 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 ::perturbed_one_four_interaction_innerloop
 ( topology::Topology & topo,
   configuration::Configuration & conf,
-  size_t const i, size_t const j,
+  unsigned int i, unsigned int j,
   Periodicity_type const & periodicity)
 {
-    DEBUG(7, "\tone four pair\t" << i << "\t" << j);
+  DEBUG(7, "\tone four pair\t" << i << "\t" << j);
+  
+  math::Vec r, f;
 
-    math::Vec r, f;
-
-    double e_lj, e_crf, de_lj, de_crf;
-    double f1, f6, f12;
+  double e_lj, e_crf, de_lj, de_crf;
+  double f1, f6, f12;
     
-    periodicity.nearest_image(conf.current().pos(i), 
-			      conf.current().pos(j), r);
+  int energy_derivative_index = -1;
+  
+  periodicity.nearest_image(conf.current().pos(i), 
+			    conf.current().pos(j), r);
 
-    lj_parameter_struct const * A_lj;
-    lj_parameter_struct const * B_lj;
-    double A_q, B_q;
-    double alpha_lj=0, alpha_crf=0;
+  lj_parameter_struct const * A_lj;
+  lj_parameter_struct const * B_lj;
+  double A_q, B_q;
+  double alpha_lj=0, alpha_crf=0;
     
-    // const double l = topo.lambda();
+  // const double l = topo.lambda();
     
-    if(topo.is_perturbed(j) ==true){
-      A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				   topo.perturbed_solute().atoms()[j].A_IAC());
-      B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				   topo.perturbed_solute().atoms()[j].B_IAC());
-      A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-	    topo.perturbed_solute().atoms()[j].A_charge();
-      B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-	    topo.perturbed_solute().atoms()[j].B_charge();
+  if(topo.is_perturbed(j) ==true){
+    A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				  topo.perturbed_solute().atoms()[j].A_IAC());
+    B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				  topo.perturbed_solute().atoms()[j].B_IAC());
+    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
+      topo.perturbed_solute().atoms()[j].A_charge();
+    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
+      topo.perturbed_solute().atoms()[j].B_charge();
 
-      alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
-		  topo.perturbed_solute().atoms()[j].LJ_softcore()) /
-	2.0;
-      alpha_crf = (topo.perturbed_solute().atoms()[i].CRF_softcore() +
-		   topo.perturbed_solute().atoms()[j].CRF_softcore()) /
-	2.0;
+    alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
+		topo.perturbed_solute().atoms()[j].LJ_softcore()) /
+      2.0;
+    alpha_crf = (topo.perturbed_solute().atoms()[i].CRF_softcore() +
+		 topo.perturbed_solute().atoms()[j].CRF_softcore()) /
+      2.0;
       
+  }
+  else{
+    A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				  topo.iac(j));
+    B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				  topo.iac(j));
+    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
+      topo.charge()(j);
+    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
+      topo.charge()(j);
+
+    alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
+    alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
+
+  }
+    
+  DEBUG(7, "\tlj-parameter state A c6=" << A_lj->cs6 
+	<< " c12=" << A_lj->cs12);
+  DEBUG(7, "\tlj-parameter state B c6=" << B_lj->cs6 
+	<< " c12=" << B_lj->cs12);
+  DEBUG(7, "\tcharges state A i*j = " << A_q);
+  DEBUG(7, "\tcharges state B i*j = " << B_q);
+
+  if (t_perturbation_details::do_scaling){
+    // SCALING ON
+
+    // check whether we need to do scaling
+    // based on energy groups
+    
+    std::pair<int, int> 
+      energy_group_pair(topo.atom_energy_group(i),
+			topo.atom_energy_group(j));
+    bool reset_lambda = false;
+
+    // check whether we have changing lambda dependencies
+    if (topo.energy_group_lambdadep().count(energy_group_pair)){
+      
+      energy_derivative_index = topo.energy_group_lambdadep()[energy_group_pair].first;
+
+      DEBUG(8, "energy_derivative_index=" << energy_derivative_index);
+      assert(energy_derivative_index >= 0);
+
+      assert(energy_derivative_index < int(topo.lambda_prime().size()));
+      assert(energy_derivative_index < int(topo.lambda_prime_derivative().size()));
+
+      // set lambdas
+      DEBUG(8, "lambda dep l=" << topo.lambda() 
+	    << " alpha=" << topo.energy_group_lambdadep()[energy_group_pair].second
+	    << " lp=" << topo.lambda_prime()[energy_derivative_index]);
+      
+
+      set_lambda(topo.lambda_prime()[energy_derivative_index], topo.lambda_exp());
+      reset_lambda = true;
+
+    }
+
+    if (topo.energy_group_scaling().count(energy_group_pair)){
+    
+      // YES, we do scale the interactions!
+      lj_crf_scaled_interaction(r, A_lj->cs6, A_lj->cs12,
+				B_lj->cs6, B_lj->cs12,
+				A_q, B_q,
+				alpha_lj, alpha_crf,
+				topo.energy_group_scaling()[energy_group_pair].first,
+				topo.energy_group_scaling()[energy_group_pair].second,
+				f1, f6, f12,
+				e_lj, e_crf, de_lj, de_crf);
     }
     else{
-      A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				   topo.iac(j));
-      B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				   topo.iac(j));
-      A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-	    topo.charge()(j);
-      B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-	    topo.charge()(j);
-
-      alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
-      alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
-
-   }
+      // no scaling
+      lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
+			      B_lj->cs6, B_lj->cs12,
+			      A_q, B_q,
+			      alpha_lj, alpha_crf,
+			      f1, f6, f12,
+			      e_lj, e_crf, de_lj, de_crf);
+    }
     
-    DEBUG(7, "\tlj-parameter state A c6=" << A_lj->cs6 
-	  << " c12=" << A_lj->cs12);
-    DEBUG(7, "\tlj-parameter state B c6=" << B_lj->cs6 
-	  << " c12=" << B_lj->cs12);
-    DEBUG(7, "\tcharges state A i*j = " << A_q);
-    DEBUG(7, "\tcharges state B i*j = " << B_q);
-    
+    if (reset_lambda)
+      set_lambda(topo.lambda(), topo.lambda_exp());
+
+  } 
+  // END OF SCALING ON ---
+  //
+  else{
+
     lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
 			    B_lj->cs6, B_lj->cs12,
 			    A_q, B_q,
 			    alpha_lj, alpha_crf,
 			    f1, f6, f12, 
 			    e_lj, e_crf, de_lj, de_crf);
-    
-    DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	  << f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
-	  << " e_crf: " << e_crf 
-	  << " de_lj: " << de_lj  << " de_crf: " << de_crf);
-    
-    // now combine everything
-    f      = (f1 + f6 + f12) * r;
+  }
+  //--------------------------------------------------
+  // interactions have been calculated
+  //--------------------------------------------------
 
-    conf.current().force(i) += f;
-    conf.current().force(j) -= f;
-
-    DEBUG(7, "\tforces stored");
     
-    if (t_interaction_spec::do_virial == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  conf.current().virial_tensor(a, b) += 
-	    r(a) * f(b);
-
-      DEBUG(7, "\tatomic virial done");
-    }
-
-    // energy
-    assert(conf.current().energies.lj_energy.size() > 
-	   topo.atom_energy_group(i));
-    assert(conf.current().energies.lj_energy.size() >
-	   topo.atom_energy_group(j));
-
-    conf.current().energies.lj_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_lj;
     
-    conf.current().energies.crf_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_crf;
+  DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
+	<< f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
+	<< " e_crf: " << e_crf 
+	<< " de_lj: " << de_lj  << " de_crf: " << de_crf);
     
-    DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
-	  << " " << topo.atom_energy_group(j));
-    DEBUG(20,"de_lj tot (before) " 
-	  << conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
-	  [topo.atom_energy_group(j)]);
+  // now combine everything
+  f      = (f1 + f6 + f12) * r;
+
+  conf.current().force(i) += f;
+  conf.current().force(j) -= f;
+
+  DEBUG(7, "\tforces stored");
     
+  if (t_interaction_spec::do_virial == math::atomic_virial){
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+	conf.current().virial_tensor(a, b) += 
+	  r(a) * f(b);
+
+    DEBUG(7, "\tatomic virial done");
+  }
+
+  // energy
+  assert(conf.current().energies.lj_energy.size() > 
+	 topo.atom_energy_group(i));
+  assert(conf.current().energies.lj_energy.size() >
+	 topo.atom_energy_group(j));
+
+  conf.current().energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
+    
+  conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_crf;
+    
+  if (t_perturbation_details::do_scaling &&
+      energy_derivative_index != -1){
+
+    // lambda dependent energy derivatives, add
+    // additional d lambda prime / d lambda factor
+
+    DEBUG(9, "dl'/dl = " 
+	  << topo.lambda_prime_derivative()[energy_derivative_index]);
+    DEBUG(9, "de_lj = " << de_lj << "\tde_crf = " << de_crf);
+      
+    conf.current().perturbed_energy_derivatives.lj_energy
+      [topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += 
+      de_lj * topo.lambda_prime_derivative()[energy_derivative_index];
+      
+    conf.current().perturbed_energy_derivatives.crf_energy
+      [topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += 
+      de_crf * topo.lambda_prime_derivative()[energy_derivative_index];
+  }
+  else{
+    // standard...
+      
     conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_lj;
     conf.current().perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_crf;
-
+      
+  }
 }
+
 
 template<typename t_interaction_spec,
 	 typename t_perturbation_details>
@@ -386,7 +480,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
   t_interaction_spec, t_perturbation_details>
 ::perturbed_RF_excluded_interaction_innerloop
 (topology::Topology & topo, configuration::Configuration & conf,
- std::map<size_t, topology::Perturbed_Atom>::const_iterator const & mit,
+ std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
  Periodicity_type const & periodicity)
 {
 
