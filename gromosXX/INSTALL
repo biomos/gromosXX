@@ -1,15 +1,17 @@
 
-GromosXX install instructions
------------------------------
+GromosXX installation instructions
+==================================================
 
-To install the package type
+to install the source tarball
+--------------------------------------------------
 
-1. ./Config.sh
-2. mkdir ARCHITECTURE
-3. cd ARCHITECTURE
-4. ../configure
-5. make
-6. make install
+1. tar zxvf gromosXX-x.y.z.tar.gz
+2. cd gromosXX-x.y.z
+3. mkdir ARCHITECTURE
+4. cd ARCHITECTURE
+5. ../configure
+6. make
+7. make install
 
 (this will install GromosXX in ARCHITECTURE/bin ARCHITECTURE/lib OBJ/include.
 you can change this by specifying the --prefix=PATH option to
@@ -17,8 +19,17 @@ configure.)
 If you follow this setup, you can compile the same source tree on different
 architectures by repeating from step 2 with another directory name.
 
+you will probably want to add --disable-debug to ../configure to get a
+release build.
+
 If you do not type make install, the programs will be in
 ARCHITECTURE/program/.
+
+to install from cvs:
+--------------------------------------------------
+
+create the configure script:
+2b. ./Config.sh
 
 ./Config.sh is a wrapper of the following commands:
 1. mkdir -p config
@@ -27,37 +38,60 @@ ARCHITECTURE/program/.
 4. autoconf
 5. automake --add-missing --copy
 
-
 necessary libraries
--------------------
+--------------------------------------------------
 
-Blitz++ (http://www.oonumerics.org/blitz/)
+GNU Scientific Library (tested with version 1.5)
 
-	on igc installed in
-			/usr/local/blitz-0.6/
-	on isengard installed in
-			/orc/markus/machines/isengard/programs/
-	on troll installed in
-			/troll2/markus/programs
-	on shepherd installed in
-			/goat7/markus/programs
+if the gsl installation directory is not in your standard search
+path for header files and libraries, you can use
 
-if this directory is not in your standard search path for
-header files and libraries, you can use
-
-../configure --with-blitz=/troll2/markus/programs
+../configure --with-gsl-prefix=/usr/local
 
 
 optimization flags
-------------------
+--------------------------------------------------
 
-CXXFLAGS -fno-exceptions -fomit-frame-pointer
+most optimization flags for GNU C++ and Intel C++ compiler are
+set automatically. If you want to set additional flags you can
+set CXXFLAGS or LDFLAGS accordingly.
 
-=========================================================================
+
+Intel C++ Compiler
+--------------------------------------------------
+
+export CC=/opt/intel/compiler70/ia32/bin/icc
+export CXX=/opt/intel/compiler70/ia32/bin/icc
+export LD=/opt/intel/compiler70/ia32/bin/icc
+
+
+* OpenMP parallelization available:
+      --enable-openmp configure option
+
+* GSL has to be compiled with the same compiler
+      (mordor: /troll2/markus/programs/gsl-icc)
+
+
+WINDOWS (Visual Studio 2003 (NET)
+--------------------------------------------------
+
+1. copy config.h.windows to config.h
+
+2. open the solution in MS Visual Studio.net
+
+3. add project dependency to GSL
+   there is only commercial support to compile
+   GSL under windows (but this at least means
+   its possible)
+
+4. build the solution...
+
+
+===========================================================================
 
 
 if it does not work
--------------------
+--------------------------------------------------
 
 check the version number of the autotools:
 (in brackets the versions known to work)
@@ -65,45 +99,12 @@ check the version number of the autotools:
 autoconf --version [autoconf (GNU Autoconf) 2.58]
 automake --version [automake (GNU automake) 1.7.9]
 libtoolize --version [libtoolize (GNU libtool) 1.5]
+GNU make --version [GNU Make version 3.79]
 
-compiling with Intel C++ Compiler (7.1 or 8.0 beta)
----------------------------------------------------
+send mail to
+gromosXX@igc.phys.chem.ethz.ch
 
-export CC=/opt/intel/compiler70/ia32/bin/icc
-export CXX=/opt/intel/compiler70/ia32/bin/icc
-export LD=/opt/intel/compiler70/ia32/bin/icc
-
-normal ./Config.sh; mkdir obj; cd obj; 
-       ../configure --disable-shared; make
-
-note: OpenMP parallelization available:
-      --enable-openmp configure option
-
-      use a Blitz++ library compiled with the intel compiler
-      (mordor: /troll2/markus/programs/Blitz-intel)
-
--------------------------------------------------------------------------------
-
-===============================================================================
-
-WINDOWS (Visual Studio 2003 (NET)
----------------------------------
-
-1. split up the nonbonded if necessary
-   (normally you would rather start from a distribution with all
-	the files already prepared)
-
-2. copy config.h.windows to config.h
-
-3. open the solution in MS Visual Studio.net
-
-4. adjust include paths in Projects/Options/
-   (you need Blitz headers, not compiled or installed ;-)
-
-4. build the solution...
-
-
-===============================================================================
+===========================================================================
 
 
 Copyright 1994, 1995, 1996, 1999, 2000, 2001, 2002 Free Software

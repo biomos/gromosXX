@@ -221,12 +221,12 @@ void print_title(bool color)
 #else
     std::cout << "\033[1;31m";
 #endif
-    std::cout << "\n\nGromosXX 0.2.0 development\033[22;0m\n\n"
-	      << "1st June 2004\n";
+    std::cout << "\n\nGromosXX 0.3.0 development\033[22;0m\n\n"
+	      << "7th September 2004\n";
   }
   else
-    std::cout << "\n\nGromosXX 0.2.0 development\n\n"
-	      << "20. January 2004\n";
+    std::cout << "\n\nGromosXX 0.3.0 development\n\n"
+	      << "7th September 2004\n";
   
   std::cout << "build date    " << BUILD_DATE << "\n"
 	    << "build number  " << BUILD_NUMBER << "\n\n";
@@ -235,11 +235,6 @@ void print_title(bool color)
   std::cout << "standard library debugging disabled.\n";
 #else
   std::cout << "standard library debugging enabled.\n";
-#endif
-#ifdef BZDEBUG
-  std::cout << "Blitz debugging enabled.\n";
-#else
-  std::cout << "Blitz debugging disabled.\n";
 #endif
 
   // some omp stuff
