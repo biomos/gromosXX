@@ -61,6 +61,10 @@ namespace interaction
      topology::Chargegroup_Iterator const & cg_it,
      Periodicity_type const &periodicity);
     
+    /**
+     * make the hessian available
+     */
+    using Nonbonded_Term::lj_crf_hessian;
  
   protected:
     Nonbonded_Parameter * m_param;

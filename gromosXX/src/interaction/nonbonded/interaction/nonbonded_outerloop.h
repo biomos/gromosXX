@@ -50,6 +50,16 @@ namespace interaction
 			       simulation::Simulation & sim,
 			       Storage & storage);
     
+    /**
+     * make the innerloop available to the set
+     */
+    using Nonbonded_Innerloop<t_interaction_spec>::lj_crf_innerloop;
+
+    /**
+     * make the hessian available to the set
+     */
+    using Nonbonded_Innerloop<t_interaction_spec>::lj_crf_hessian;
+
   };
   
 } // interaction

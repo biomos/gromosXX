@@ -20,8 +20,8 @@ namespace interaction
    */
   template<typename t_interaction_spec, typename t_perturbation_spec>
   class Nonbonded_Set : 
-    public Nonbonded_Outerloop<t_interaction_spec>,  
-    public Perturbed_Nonbonded_Outerloop<t_interaction_spec, 
+    private Nonbonded_Outerloop<t_interaction_spec>,  
+    private Perturbed_Nonbonded_Outerloop<t_interaction_spec, 
 					 typename t_perturbation_spec::perturbation_details>,
     public Perturbed_Nonbonded_Pair<t_interaction_spec, typename t_perturbation_spec::perturbation_details>
   {
