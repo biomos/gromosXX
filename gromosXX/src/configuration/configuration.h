@@ -40,6 +40,10 @@ namespace configuration
      * copy constructor
      */
     Configuration(Configuration const & conf);
+    /**
+     * assignment
+     */
+    Configuration & operator=(Configuration const & conf);
     
     /**
      * @struct state_struct

@@ -110,6 +110,72 @@ configuration::Configuration::Configuration
 
 }
 
+/**
+ * copy constructor
+ */
+configuration::Configuration & configuration::Configuration::operator=
+(
+ configuration::Configuration const & conf
+ )
+{
+  m_current = &m_state1;
+  m_old = &m_state2;
+
+  for(int i=0; i<3; ++i){
+    for(int j=0; j<3; ++j){
+      current().virial_tensor(i,j) =
+	conf.current().virial_tensor(i,j);
+      old().virial_tensor(i,j) =
+	conf.old().virial_tensor(i,j);
+
+      current().kinetic_energy_tensor(i,j) = 
+	conf.current().kinetic_energy_tensor(i,j);
+      old().kinetic_energy_tensor(i,j) = 
+	conf.old().kinetic_energy_tensor(i,j);
+
+      current().pressure_tensor(i,j) = 
+	conf.current().pressure_tensor(i,j);
+      old().pressure_tensor(i,j) = 
+	conf.old().pressure_tensor(i,j);
+    }
+  }
+  
+  current().pos = conf.current().pos;
+  old().pos = conf.old().pos;
+  current().vel = conf.current().vel;
+  old().vel = conf.old().vel;
+  current().force = conf.current().force;
+  old().force = conf.old().force;
+  
+  current().box = conf.current().box;
+  old().box = conf.old().box;
+  
+  current().energies = conf.current().energies;
+  old().energies = conf.old().energies;
+  current().averages = conf.current().averages;
+  old().averages = conf.old().averages;
+  
+  current().perturbed_energy_derivatives =
+    conf.current().perturbed_energy_derivatives;
+  old().perturbed_energy_derivatives =
+    conf.old().perturbed_energy_derivatives;
+  
+  special().rel_mol_com_pos = conf.special().rel_mol_com_pos;
+  special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
+  special().flexible_constraint = conf.special().flexible_constraint;
+  
+  special().jvalue_av = conf.special().jvalue_av;
+  special().jvalue_curr = conf.special().jvalue_curr;
+
+  special().pscale = conf.special().pscale;
+  
+  special().rottrans_constr = conf.special().rottrans_constr;
+  
+  boundary_type = conf.boundary_type;
+
+  return *this;
+}
+
 void configuration::Configuration::initialise(topology::Topology const & topo,
 					      simulation::Parameter const & param,
 					      bool gather)
