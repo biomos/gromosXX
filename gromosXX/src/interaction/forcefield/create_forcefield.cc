@@ -13,9 +13,7 @@
 #include <interaction/interaction_types.h>
 #include <interaction/forcefield/forcefield.h>
 
-#include <io/instream.h>
-#include <io/topology/in_topology.h>
-
+#include <io/ifp.h>
 
 #include "create_forcefield.h"
 #include <interaction/bonded/create_bonded.h>
@@ -34,7 +32,7 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 				       topology::Topology const & topo,
 				       simulation::Simulation const & sim,
 				       configuration::Configuration const & conf,
-				       io::In_Topology & it, bool quiet)
+				       io::IFP & it, bool quiet)
 {
   if (!quiet)
     std::cout << "FORCEFIELD\n";

@@ -18,7 +18,7 @@
 #include <math/periodicity.h>
 
 #include <io/instream.h>
-#include <io/topology/in_topology.h>
+#include <io/ifp.h>
 #include <io/message.h>
 
 // general

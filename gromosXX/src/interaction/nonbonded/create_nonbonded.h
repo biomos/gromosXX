@@ -12,7 +12,7 @@ namespace interaction
 			   topology::Topology const & topo,
 			   simulation::Simulation const & sim,
 			   configuration::Configuration const & conf,
-			   io::In_Topology & it,
+			   io::IFP & it,
 			   bool quiet = false);
 
 } // interaction

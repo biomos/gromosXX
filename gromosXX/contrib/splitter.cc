@@ -243,7 +243,7 @@ void write_solution(map<string, string> &current)
     "\tconfiguration::Configuration const & conf,\n"
     "\tsimulation::Simulation const & sim,\n"
     "\tinteraction::Forcefield & ff,\n"
-    "\tio::In_Topology & it,\n"
+    "\tio::IFP & it,\n"
     "\tbool quiet)";
   
   header.push_back(decl + ";\n\n");
@@ -434,7 +434,7 @@ void write_code()
      << "\t\ttopology::Topology const & topo,\n"
      << "\t\tsimulation::Simulation const & sim,\n"
      << "\t\tconfiguration::Configuration const & conf,\n"
-     << "\t\tio::In_Topology & it,\n"
+     << "\t\tio::IFP & it,\n"
      << "\t\tbool quiet)\n"
      << "{\n"
      << indent << "if (sim.param().force.nonbonded == 0) return 0;"
