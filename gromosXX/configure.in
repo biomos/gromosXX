@@ -1,0 +1,184 @@
+dnl configure.in for GromosXX
+dnl written by Markus Christen
+dnl april, 2003
+
+AC_INIT(src/Makefile.am)
+AC_CONFIG_AUX_DIR(config)
+AC_CANONICAL_HOST
+
+AC_LANG(C++)
+
+MD_MAJOR_VERSION=0
+MD_MINOR_VERSION=0
+MD_MICRO_VERSION=1
+
+MD_VERSION=$MD_MAJOR_VERSION.$MD_MINOR_VERSION.$MD_MICRO_VERSION
+AC_DEFINE_UNQUOTED(MD_VERSION, "$MD_VERSION", [MD version info])
+
+CONF_DATE=`date`
+AC_DEFINE_UNQUOTED(MD_DATE, "$CONF_DATE", [MD date (configure)])
+
+echo ""
+echo "GromosXX molecular dynamics program"
+echo "simple molecular dynamics simulations"
+echo "version ${MD_MAJOR_VERSION}.${MD_MINOR_VERSION}.${MD_MICRO_VERSION}"
+echo "design test by Markus Christen"
+echo "${CONF_DATE}, ETH Zuerich"
+echo ""
+echo ""
+
+AM_INIT_AUTOMAKE(md, $MD_VERSION, no-define)
+AM_CONFIG_HEADER(config.h)
+dnl AC_CONFIG_HEADERS(config.h)
+
+dnl initialise libtool
+AM_PROG_LIBTOOL
+
+# AM_MAINTAINER_MODE
+
+dnl check for required programs
+# AC_PROG_C
+AC_PROG_CXX
+AC_PROG_MAKE_SET
+
+# C++ requirements
+dnl AC_CXX_REQUIRE_STL
+dnl AC_CXX_NAMESPACES
+
+AC_MSG_CHECKING(blitz++ scientific computing library)
+AC_CHECK_HEADER(blitz/array.h, , 
+[AC_MSG_ERROR([header files for blitz++
+ not found. Add the path to blitz++ to your CPPFLAGS])])
+AC_SEARCH_LIBS(_blitz_id, blitz, , [AC_MSG_ERROR(
+[lib blitz not found. make sure to include it in your
+CXXFLAGS, CFLAGS and LDFLAGS])])
+
+AC_MSG_CHECKING(boost test library)
+AC_CHECK_HEADER(boost/test/unit_test_suite.hpp, ,
+[AC_MSG_ERROR([header files for boost test library not found. Add the include
+directory to your CPPFLAGS and CXXFLAGS.])])
+AC_SEARCH_LIBS(main, boost_unit_test_framework, , [AC_MSG_ERROR(
+[libboost_unit_test_framework not found. Add the library path to your LDFLAGS])])
+
+dnl possibly create sym links
+# AC_LINK_FILES(source-list, dest-list)
+
+# AC_MSG_CHECKING(gnu scientific library (libgsl))
+# AC_CHECK_HEADER(gsl/gsl_rng.h, , AC_MSG_ERROR([header files for libgsl not found
+#     install the gnu scientific library and
+#     add the path to your CPPFLAGS]))
+
+# AC_CHECK_LIB(gsl, gsl_rng_alloc)
+# AC_SEARCH_LIBS(cblas_daxpy, gslcblas, ,[AC_MSG_ERROR([libgsl not found. make sure libgsl is installed if necessary add it to CXXFLAGS, CFLAGS and LDFLAGS])])
+# AC_SEARCH_LIBS(gsl_rng_alloc, gsl, , [AC_MSG_ERROR([libgsl not found. make sure libgsl is installed if necessary add it to CXXFLAGS, CFLAGS and LDFLAGS])])
+# AC_MSG_RESULT(yes)
+
+dnl check header files
+AC_HEADER_STDC
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_SIZE_T
+dnl AC_C_ASSERT
+
+AC_CHECK_FUNCS(hypot)
+AC_CHECK_FUNCS(expm1)
+AC_CHECK_FUNCS(acosh)
+AC_CHECK_FUNCS(asinh)
+AC_CHECK_FUNCS(atanh)
+
+AC_CHECK_FUNCS(isinf, ,[
+    AC_MSG_CHECKING([for isinf with <math.h>])
+    AC_TRY_LINK([#include <math.h>], [float f = 0.0; isinf(f)],[
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_ISINF)],
+        AC_MSG_RESULT(no))])
+
+AC_CHECK_FUNCS(finite, ,[
+    AC_MSG_CHECKING([for finite with <math.h>])
+    AC_TRY_LINK([#include <math.h>], [float f = 0.0; finite(f)],[
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_FINITE)
+        ac_cv_func_finite=yes],
+        AC_MSG_RESULT(no))])
+
+if test "x${ac_cv_func_finite}" != "xyes" ; then
+  AC_CHECK_FUNCS(isfinite, ,[
+      AC_MSG_CHECKING([for isfinite with <math.h>])
+      AC_TRY_LINK([#include <math.h>], [float f = 0.0; isfinite(f)],[
+          AC_MSG_RESULT(yes)
+          AC_DEFINE(HAVE_ISFINITE)],
+          AC_MSG_RESULT(no))])
+fi
+
+AC_CHECK_FUNCS(isnan, ,[
+    AC_MSG_CHECKING([for isnan with <math.h>])
+    AC_TRY_LINK([#include <math.h>], [float f = 0.0; isnan(f)],[
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_ISNAN)],
+        AC_MSG_RESULT(no))])
+
+dnl OpenBSD has a broken implementation of log1p.
+case "$host" in
+    *-*-*openbsd*)
+       AC_MSG_RESULT([avoiding OpenBSD system log1p - using gsl version])
+       ;;
+    *)
+       AC_CHECK_FUNCS(log1p)
+       ;;
+esac
+
+dnl
+dnl FIXME: on Solaris we will need a prototype for hypot, since it is
+dnl missing from their math.h according to Jerry.
+dnl
+dnl extern double hypot(double, double);
+dnl
+
+
+dnl set some defaults to CXXFLAGS and LDFLAGS
+dnl to compile with blitz -Wno-unused-variable is added to the CXXFLAGS
+dnl i hope this will not be necessary in the future.
+dnl before finalising some code, maybe a build w/o this option might be
+dnl a good idea...
+if test ! -n "${CXXFLAGS}"  ; then
+  CXXFLAGS=${CFLAGS}
+fi
+
+if eval "test x$GCC = xyes"; then
+  if echo "$CXXFLAGS" | grep "\-Wall" > /dev/null 2> /dev/null; then
+    CXXFLAGS="$XXCFLAGS"
+  else
+    CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-variable"
+  fi
+fi
+
+AC_PREFIX_DEFAULT(`pwd`)
+
+dnl Checks for libraries.
+dnl Replace `main' with a function in -lm:
+AC_CHECK_LIB(m, sqrt)
+
+dnl check if full STL support
+AC_CV_CXX_VERSION_OK
+if test "$ac_cv_cxx_version_ok" = no; then
+  echo "Your C++ compiler does not support the STL"
+  echo "to the right extent. Check your C++ comipler..."
+  exit
+fi
+
+AC_CACHE_SAVE
+
+AC_SUBST(MD_MAJOR_VERSION)
+AC_SUBST(MD_MINOR_VERSION)
+AC_SUBST(MD_MICRO_VERSION)
+AC_SUBST(MD_VERSION)
+
+AC_OUTPUT(
+src/Makefile
+src/math/Makefile
+src/simulation/Makefile
+src/algorithm/Makefile
+src/interaction/Makefile
+program/Makefile
+Makefile)
+
