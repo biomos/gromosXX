@@ -54,8 +54,8 @@ int algorithm::Perturbed_Flexible_Constraint<t_simulation>
   // not bothering about submolecules...
   
   // check whether we shake
-  if ((topo.solute().distance_constraints().size()) &&
-      (topo.perturbed_solute().distance_constraints().size()))
+  if ((topo.solute().distance_constraints().size() == 0) &&
+      (topo.perturbed_solute().distance_constraints().size() == 0))
     return 0;
   
   sys.constraint_force() = 0.0;
@@ -154,10 +154,10 @@ int algorithm::Perturbed_Flexible_Constraint<t_simulation>
     else dm2 = 0;
 
     sys.lambda_energies().constraint_energy +=
-      2 * m_lambda(k) * it->b0 *
-      (it->B_b0 - it->A_b0 + it->b0 *
-       ((dm1 + dm2) / (m1 * m2 * mu * m_K[k]) - 
-	dm2 / m2 + dm1 / m1 - 
+      2 * m_lambda(k) * it->b0  *
+      (it->B_b0 - it->A_b0 +( it->b0 - m_r0[k] ) *
+       ((dm1 + dm2) / (m1 * m2 * mu) - 
+	dm2 / m2 - dm1 / m1 - 
 	(m_B_K[k] - m_A_K[k]) / m_K[k]
 	)
        );
