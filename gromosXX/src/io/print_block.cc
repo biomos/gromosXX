@@ -167,12 +167,14 @@ namespace io
        << std::setw(10) << "TEMP"
        << std::setw(10) << "TEMP-MOL"
        << std::setw(10) << "TEMP-IR"
+       << std::setw(10) << "SCALE"
        << "\n";
   
     double avg_temp0 = 0, avg_tau = 0, sum_dof = 0, sum_soluc = 0,
       sum_solvc = 0, sum_ekin = 0, tau_dof = 0,
       sum_com_ekin = 0, sum_ir_ekin = 0,
-      sum_ir_dof = 0, sum_com_dof = 0;
+      sum_ir_dof = 0, sum_com_dof = 0,
+      avg_scale = 0;
 
     std::vector<simulation::bath_struct>::const_iterator
       it = bath.begin(),
@@ -215,11 +217,21 @@ namespace io
 	   << 2 * e_kin_ir / 
 	  (math::k_Boltzmann * it->ir_dof);
       }
-
+      if (it->tau != -1){
+	os << std::setw(10)
+	<< std::setprecision(7)
+	   << it->scale;
+      }
+      else{
+	os << std::setw(10)
+	   << "-";
+      }
+	  
       if (it->tau != -1){
 	tau_dof += it->dof;
 	avg_temp0 += it->temperature * it->dof;
 	avg_tau += it->tau * it->dof;
+	avg_scale += it->scale * it->dof;
       }
 
       sum_dof += it->dof;
@@ -237,7 +249,7 @@ namespace io
     }
 
     os << "    ---------------------------------------------"
-       << "-----------------------------\n";
+       << "---------------------------------------\n";
 
     os << std::setw(10) << "Avg"
        << std::setw(12) << std::setprecision(4) << std::scientific
@@ -248,6 +260,7 @@ namespace io
        << std::setw(10) << 2 * sum_ekin / (math::k_Boltzmann * sum_dof)
        << std::setw(10) << 2 * sum_com_ekin / (math::k_Boltzmann * sum_com_dof)
        << std::setw(10) << 2 * sum_ir_ekin / (math::k_Boltzmann * sum_ir_dof)
+       << std::setw(10) << std::setprecision(7) << avg_scale / tau_dof
        << "\n";
     
     os << "END\n";

@@ -9,6 +9,8 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
+#include <util/error.h>
+
 /**
  * Constructor.
  */
@@ -199,7 +201,8 @@ static int solute(topology::Topology const & topo,
       io::messages.add("SHAKE error. too many iterations",
 		       "Shake::solute",
 		       io::message::critical);
-      throw std::runtime_error("SHAKE failure in solute");
+      // throw std::runtime_error("SHAKE failure in solute");
+      return E_SHAKE_FAILURE;
     }
 
     skip_now = skip_next;
@@ -216,7 +219,7 @@ static int solute(topology::Topology const & topo,
   }
   */
 
-  return num_iterations;
+  return 0;
 
 } // solute
 
@@ -268,7 +271,8 @@ static int solvent(topology::Topology const & topo,
 	  io::messages.add("SHAKE error. too many iterations",
 			   "Shake::solvent",
 			   io::message::critical);
-	  throw std::runtime_error("SHAKE failure in solvent");
+	  // throw std::runtime_error("SHAKE failure in solvent");
+	  return E_SHAKE_FAILURE;
 	}
 
 	skip_now = skip_next;
@@ -282,7 +286,7 @@ static int solvent(topology::Topology const & topo,
     
   } // solvents
 
-  return tot_iterations;
+  return 0;
   
 } // shake solvent
 
@@ -300,7 +304,7 @@ int algorithm::Shake<do_virial>
 {
   DEBUG(7, "applying SHAKE");
   bool do_vel = false;
-  int iterations = 0;
+  int error = 0;
   
   // check whether we shake
   if (topo.solute().distance_constraints().size() && 
@@ -309,52 +313,58 @@ int algorithm::Shake<do_virial>
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	iterations = solute<do_virial, math::vacuum>
+	error = solute<do_virial, math::vacuum>
 	  (topo, conf, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance);
 	break;
       case math::rectangular:
-	iterations = solute<do_virial, math::rectangular>
+	error = solute<do_virial, math::rectangular>
 	  (topo, conf, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance);
 	break;
       case math::triclinic:
-	iterations = solute<do_virial, math::triclinic>
+	error = solute<do_virial, math::triclinic>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance);
 	break;
       default:
 	throw std::string("wrong boundary type");
+	
     }
   }
+  
+  if (error) return E_SHAKE_FAILURE_SOLUTE;
 
   if (sim.param().system.nsm){
     DEBUG(8, "\twe need to shake SOLVENT");
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	iterations += 
+	error = 
 	  solvent<do_virial, math::vacuum>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance);
 	break;
       case math::rectangular:
-	iterations += 
+	error = 
 	  solvent<do_virial, math::rectangular>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance);
 	break;
       case math::triclinic:
-	iterations += 
+	error = 
 	  solvent<do_virial, math::triclinic>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance);
 	break;
       default:
 	throw std::string("wrong boundary type");
+	
     }
   }
   
+  if (error) return E_SHAKE_FAILURE_SOLVENT;
+
   // shaken velocity
   conf.current().vel = (conf.current().pos - conf.old().pos) / 
     sim.time_step_size();
@@ -376,7 +386,8 @@ int algorithm::Shake<do_virial>
 
     // old and current pos and vel are the same...
     // shake the current ones
-    apply(topo, conf, sim);
+    if (apply(topo, conf, sim))
+      return E_SHAKE_FAILURE;
 
     // restore the velocities
     conf.current().vel = conf.old().vel;
@@ -391,7 +402,8 @@ int algorithm::Shake<do_virial>
 	sim.time_step_size() * conf.old().vel;
     
       // shake again
-      apply(topo, conf, sim);
+      if (apply(topo, conf, sim))
+	return E_SHAKE_FAILURE;
     
       // restore the positions
       conf.current().pos = conf.old().pos;

@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
     int error;
     
     while(sim.time() < end_time){
-      std::cout << "\tmd step " << sim.time() << std::endl;
+      // std::cout << "\tmd step " << sim.time() << std::endl;
       
       traj.write(conf, topo, sim, io::reduced);
 
