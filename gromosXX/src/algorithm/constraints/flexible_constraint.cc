@@ -195,6 +195,138 @@ static int _flexible_shake(topology::Topology const &topo,
 
 }    
 
+//================================================================================
+//================================================================================
+// 
+// exact interation
+//
+//================================================================================
+//================================================================================
+
+template<math::virial_enum do_virial, math::boundary_enum b>
+static int _exact_flexible_shake(topology::Topology const &topo,
+				 configuration::Configuration & conf,
+				 bool & convergence,
+				 std::vector<double> & flex_len,
+				 std::vector<std::vector<math::Vec> > & force,
+				 double const dt,
+				 math::Periodicity<b> const & periodicity,
+				 double const tolerance)
+{
+  convergence = true;
+
+  // index for force...
+  unsigned int k = 0;
+  double const dt2 = dt * dt;
+  
+  // and constraints
+  for(typename std::vector<topology::two_body_term_struct>
+	::const_iterator
+	it = topo.solute().distance_constraints().begin(),
+	to = topo.solute().distance_constraints().end();
+      it != to;
+      ++it, ++k ){
+	
+    // no skipping for the exact algorithm
+    // ('cause every constraint changes ALL positions)
+
+    DEBUG(8, "i: " << it->i << " j: " << it->j);
+
+    // the position
+    math::Vec &pos_i = conf.current().pos(it->i);
+    math::Vec &pos_j = conf.current().pos(it->j);
+
+    DEBUG(10, "\ni: " << math::v2s(pos_i) << "\nj: " << math::v2s(pos_j));
+    
+    math::Vec r;
+    periodicity.nearest_image(pos_i, pos_j, r);
+    double dist2 = dot(r, r);
+    
+    double constr_length2 = flex_len[k] * flex_len[k];
+    double diff = constr_length2 - dist2;
+
+    DEBUG(12, "constr: " << constr_length2 << " dist2: " << dist2);
+    
+    if(fabs(diff) >= constr_length2 * tolerance * 2.0){
+      // we have to shake
+      DEBUG(10, "exact flexible shaking");
+      
+      // the undetermined constraint forces
+      // (as function of the reference position...)
+      const math::Vec &f_i = force[k][it->i];
+      const math::Vec &f_j = force[k][it->j];
+      
+      math::Vec ud_f = 
+	1.0 / topo.mass()(it->i) * f_i -
+	1.0 / topo.mass()(it->j) * f_j;
+
+      double sp = dot(r, ud_f);
+	  
+      if(sp < constr_length2 * math::epsilon){
+
+	DEBUG(5, "f(ud) i " << f_i << " f(ud) j " << f_j);
+	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
+	DEBUG(5, "ud_f " << ud_f);
+	DEBUG(5, "r " << r);
+
+	std::cout << "EXACT FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
+		  << "\tatom i    : " << it->i << "\n"
+		  << "\tatom j    : " << it->j << "\n"
+		  << "\tf i       : " << math::v2s(f_i) << "\n"
+		  << "\tf j       : " << math::v2s(f_j) << "\n"
+		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
+		  << "\tfree j    : " << math::v2s(pos_j) << "\n"
+		  << "\tud f      : " << math::v2s(ud_f) << "\n"
+		  << "\tr         : " << math::v2s(r) << "\n"
+		  << "\tsp        : " << sp << "\n"
+		  << "\tconstr    : " << constr_length2 << "\n"
+		  << "\tdiff      : " << diff << "\n"
+		  << "\tforce i   : " << math::v2s(conf.old().force(it->i)) << "\n"
+		  << "\tforce j   : " << math::v2s(conf.old().force(it->j)) << "\n"
+		  << "\tvel i     : " << math::v2s(conf.current().vel(it->i)) << "\n"
+		  << "\tvel j     : " << math::v2s(conf.current().vel(it->j)) << "\n"
+		  << "\told vel i : " << math::v2s(conf.old().vel(it->i)) << "\n"
+		  << "\told vel j : " << math::v2s(conf.old().vel(it->j)) << "\n\n";
+	
+	return E_SHAKE_FAILURE;
+      }
+	  
+      // lagrange multiplier
+      const double lambda = diff / (- 4 * dt2 * sp);
+      DEBUG(10, "lagrange multiplier " << lambda);
+
+      if (do_virial == math::atomic_virial){
+	/*
+	for(int a=0; a<3; ++a){
+	  for(int aa=0; aa<3; ++aa){
+	    conf.old().virial_tensor(a,aa) +=
+	      ref_r(a) * ref_r(aa) * lambda / dt2;
+	  }
+	}
+	DEBUG(12, "\tatomic virial done");
+	*/
+	// not implemented
+	assert(false);
+      }
+      
+      // update positions
+      for(unsigned int a=0; a<topo.num_atoms(); ++a){
+	conf.current().pos(a) -= 2 * dt2 / topo.mass()(a) * lambda * force[k][a];
+      }
+	  
+      convergence = false;
+      
+    } // we have to shake
+  } // constraints
+      
+  
+  return 0;
+
+}    
+
+//================================================================================
+//================================================================================
+
 template<math::virial_enum do_virial, math::boundary_enum b>
 static void _calc_distance(topology::Topology const &topo,
 			   configuration::Configuration & conf,
@@ -202,6 +334,8 @@ static void _calc_distance(topology::Topology const &topo,
 			   std::vector<interaction::bond_type_struct> const & param,
 			   std::vector<double> & flex_len, double const dt)
 {
+  DEBUG(7, "FLEXIBLE CONSTRAINTS: _calc_distance");
+  
   flex_len.clear();
 
   math::Periodicity<b> periodicity(conf.current().box);
@@ -218,21 +352,6 @@ static void _calc_distance(topology::Topology const &topo,
     
     DEBUG(8, "flexible constraint " << k);
 
-    // the position
-    assert(conf.current().pos.size() > int(it->i));
-    assert(conf.current().pos.size() > int(it->j));
-    
-    math::Vec const & pos_i = conf.current().pos(it->i);
-    math::Vec const & pos_j = conf.current().pos(it->j);
-	
-    math::Vec r;
-    periodicity.nearest_image(pos_i, pos_j, r);
-
-    // unconstrained distance
-    const double dist2 = dot(r, r);
-
-    DEBUG(10, "unconstrained distance = " << dist2);
-    
     assert(conf.old().pos.size() > int(it->i));
     assert(conf.old().pos.size() > int(it->j));
 
@@ -245,8 +364,6 @@ static void _calc_distance(topology::Topology const &topo,
     // reference distance
     const double ref_dist2 = dot(ref_r, ref_r);
 
-    // standard formula with velocity along contsraints correction
-    // (not the velocityless formula):
     assert(topo.mass().size() > int(it->i));
     assert(topo.mass().size() > int(it->j));
 
@@ -256,19 +373,53 @@ static void _calc_distance(topology::Topology const &topo,
     DEBUG(10, "red mass = " << red_mass << "   dt2 = " << dt2);
       
     // calculate the force on constraint k
-    assert(conf.special().flexible_vel.size() > k);
-
-    DEBUG(10, "flexible constraint velocity =  "
-	  << conf.special().flexible_vel[k]);
     
     double force_on_constraint;
+
+    //**************************************************
+    // velocities along constraints ???
+    //**************************************************
     
-    if (true){
+    if (sim.param().constraint.solute.flexshake_mode == 0 ||
+	sim.param().constraint.solute.flexshake_mode == 2){
+      // the position
+      assert(conf.current().pos.size() > int(it->i));
+      assert(conf.current().pos.size() > int(it->j));
+      
+      math::Vec const & pos_i = conf.current().pos(it->i);
+      math::Vec const & pos_j = conf.current().pos(it->j);
+      
+      math::Vec r;
+      periodicity.nearest_image(pos_i, pos_j, r);
+      
+      // unconstrained distance
+      const double dist2 = dot(r, r);
+      DEBUG(10, "unconstrained distance = " << dist2);
+      
       // take out velocities along constraint from previous step...
+      assert(conf.special().flexible_vel.size() > k);
+      DEBUG(10, "flexible constraint velocity =  "
+	    << conf.special().flexible_vel[k]);
+
       force_on_constraint = (red_mass / dt2) * 
 	(sqrt(dist2) - sqrt(ref_dist2) - conf.special().flexible_vel[k] * dt);
     }
     else{
+      // only the potenital energy
+      // or in other words
+      // the forces on the constraint, no velocities
+      math::Vec pos_i = conf.old().pos(it->i) +
+	dt2 / topo.mass()(it->i) * conf.old().force(it->i);
+      math::Vec pos_j = conf.old().pos(it->j) +
+	dt2 / topo.mass()(it->j) * conf.old().force(it->j);
+
+      math::Vec r;
+      periodicity.nearest_image(pos_i, pos_j, r);
+
+      // unconstrained distance
+      const double dist2 = dot(r, r);
+      DEBUG(10, "unconstrained distance = " << dist2);
+
       // ignore velocities along constraints
       force_on_constraint = (red_mass / dt2) * 
 	(sqrt(dist2) - sqrt(ref_dist2));
@@ -320,14 +471,184 @@ static void _calc_distance(topology::Topology const &topo,
   
 }
 
+template<math::virial_enum do_virial, math::boundary_enum b>
+static void _calc_undetermined_forces(topology::Topology &topo,
+				      configuration::Configuration & conf,
+				      simulation::Simulation & sim,
+				      std::vector<interaction::bond_type_struct> const & param,
+				      std::vector<double> & flex_len, 
+				      std::vector<std::vector<math::Vec> > & force,
+				      interaction::Interaction * ni,
+				      double const dt)
+{
+  DEBUG(7, "FLEXIBLE CONSTRAINTS: _calc_undetermined_forces");
+  
+  // resize to number of constraints
+  force.resize(topo.solute().distance_constraints().size());
+
+  math::Periodicity<b> periodicity(conf.current().box);
+
+  const double dt2 = dt * dt;
+
+  //loop over all constraints
+  unsigned int k = 0;
+  for(std::vector<topology::two_body_term_struct>::const_iterator
+	it = topo.solute().distance_constraints().begin(),
+	to = topo.solute().distance_constraints().end();
+      it != to;
+      ++it, ++k){
+
+    DEBUG(8, "\tconstraint " << k);
+    
+    force[k].assign(topo.num_atoms(), 0);
+    for(unsigned int a=0; a<topo.num_atoms(); ++a){
+
+      assert(conf.current().pos.size() > int(it->i));
+      assert(conf.current().pos.size() > int(it->j));
+    
+      // r_k^nc(t+dt) vector
+      math::Vec r_nc;
+
+      if (sim.param().constraint.solute.flexshake_mode == 2){
+	// with velocities => use conf.current()
+        math::Vec const & pos_i = conf.current().pos(it->i);
+        math::Vec const & pos_j = conf.current().pos(it->j);
+      
+        periodicity.nearest_image(pos_i, pos_j, r_nc);
+      }
+      else{
+	math::Vec pos_i = conf.old().pos(it->i) +
+	  dt2 * conf.old().force(it->i) / topo.mass()(it->i);
+	math::Vec pos_j = conf.old().pos(it->j) +
+	  dt2 * conf.old().force(it->j) / topo.mass()(it->j);
+	
+	periodicity.nearest_image(pos_i, pos_j, r_nc);
+      }
+
+      DEBUG(10, "r_nc = " << math::v2s(r_nc));
+
+      // unconstrained distance
+      const double dist = sqrt(math::dot(r_nc, r_nc));
+      // normalise
+      r_nc /= dist;
+      
+      // flexible constraint length
+      assert(flex_len.size() > k);
+      const double dk = flex_len[k];
+      // reduced mass
+      const double mu = 1.0 / (1.0 / topo.mass()(it->i) + 1.0 / topo.mass()(it->j));
+
+      if (a == it->i){
+	DEBUG(12, "\tforces on constraint - atoms");
+
+	// constraint forces on atom i (k1) of constraint k
+	math::Vec const & ref_i = conf.old().pos(it->i);
+	math::Vec const & ref_j = conf.old().pos(it->j);
+      
+	// r_k(t) vector
+	math::Vec r;
+	periodicity.nearest_image(ref_i, ref_j, r);
+
+	// last step (constrained) distance
+	const double r_dist = sqrt(math::dot(r, r));
+
+	math::Matrix h1, h2, u1, u2;
+	for(unsigned int d1=0; d1<3; ++d1){
+	  for(unsigned int d2=0; d2<3; ++d2){
+	    u1(d1,d2) = u2(d1,d2) = 0;
+	  }
+	}
+	
+	// loop over all other atoms
+	for(unsigned int a2=0; a2<topo.num_atoms(); ++a2){
+	  
+	  // no self (nonbonded) interaction
+	  if (a2 == it->i || a2 == it->j) continue;
+
+	  DEBUG(13, "\t\thessian " << it->i << " - " << a2);
+	  ni->calculate_hessian(topo, conf, sim, it->i, a2, h1);
+
+	  DEBUG(13, "\t\thessian " << it->j << " - " << a2);
+	  ni->calculate_hessian(topo, conf, sim, it->j, a2, h2);
+
+	  for(unsigned int d1=0; d1<3; ++d1){
+	    for(unsigned int d2=0; d2<3; ++d2){
+	      u1(d1,d2) += h1(d1,d2);
+	      u2(d1,d2) += h2(d1,d2);
+	    }
+	  }
+	} // all hessians
+
+	for(unsigned int d1=0; d1<3; ++d1){
+	  for(unsigned int d2=0; d2<3; ++d2){
+	    u1(d1,d2) /= topo.mass()(it->i);
+	    u2(d1,d2) /= topo.mass()(it->j);
+	  }
+	}
+
+	math::Vec f1 =  r - math::product(u1, r_nc) * dk * mu / param[it->type].K;
+	math::Vec f2 = -r + math::product(u2, r_nc) * dk * mu / param[it->type].K;
+	
+	f1 += (r_nc - r / r_dist) * dk * mu / param[it->type].K / dt2;
+	f2 -= (r_nc - r / r_dist) * dk * mu / param[it->type].K / dt2;
+	
+	assert(force.size() > k && force[k].size() > it->i && force[k].size() > it->j);
+	force[k][it->i] = f1;
+	force[k][it->j] = f2;
+
+	DEBUG(8, "\t\tr =  " << math::v2s(r));
+	DEBUG(8, "\t\tf1 = " << math::v2s(f1));
+	DEBUG(8, "\t\tf2 = " << math::v2s(f2));
+
+      }
+      else if (a == it->j){
+	// already handled...
+	continue;
+      }
+      else{
+	DEBUG(12, "\tforces on all other atoms");
+	// constraint forces on all other atoms
+
+	// THE SIGN IS THE QUESTION ...
+
+	DEBUG(13, "\t\thessian " << a << " - " << it->i);
+	math::Matrix h1;
+	ni->calculate_hessian(topo, conf, sim, a, it->i, h1);
+
+	DEBUG(13, "\t\thessian " << a << " - " << it->i);
+	math::Matrix h2;
+	ni->calculate_hessian(topo, conf, sim, a, it->j, h2);
+	
+	for(unsigned int d1 = 0; d1 < 3; ++d1){
+	  for(unsigned int d2 = 0; d2 < 3; ++d2){
+	    h1(d1,d2) /= topo.mass()(it->i);
+	    h2(d1,d2) /= topo.mass()(it->j);
+
+	    h1(d1,d2) -= h2(d1,d2);
+	  }
+	}
+
+	assert(force.size() > k && force[k].size() > a);
+	force[k][a] = - math::product(h1, r_nc) * dk * mu / param[it->type].K;
+
+	DEBUG(12, "f(" << a << ") = " << math::v2s(force[k][a]));
+
+      }
+    }
+  }
+  
+}
+
 /**
  * shake solute
  */
 template<math::virial_enum do_virial, math::boundary_enum b>
-static int _flexible_solute(topology::Topology const & topo,
+static int _flexible_solute(topology::Topology & topo,
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
 			    std::vector<interaction::bond_type_struct> const & param,
+			    std::vector<std::vector<math::Vec> > & force,
+			    interaction::Interaction * ni,
 			    double dt, int const max_iterations,
 			    double const tolerance,
 			    double & timing)
@@ -343,7 +664,16 @@ static int _flexible_solute(topology::Topology const & topo,
   
   std::vector<double> flex_len;
   _calc_distance<do_virial, b>(topo, conf, sim, param, flex_len, dt);
+  // exact solution
 
+  if (sim.param().constraint.solute.flexshake_mode == 2 ||
+      sim.param().constraint.solute.flexshake_mode == 3){
+    
+    _calc_undetermined_forces<do_virial, b>(topo, conf, sim, 
+					    param, flex_len, 
+					    force, ni, dt);
+  }
+  
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
 
@@ -358,16 +688,36 @@ static int _flexible_solute(topology::Topology const & topo,
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    if(_flexible_shake<do_virial, b>
-       (topo, conf, convergence, flex_len, skip_now, skip_next,
-	dt,
-	periodicity, tolerance, true)
-       ){
-      io::messages.add("Flexible SHAKE error. vectors orthogonal",
-		       "Flexible_Constraint::solute",
-		       io::message::error);
-      std::cout << "Flexible SHAKE failure in solute!" << std::endl;
-      return E_SHAKE_FAILURE_SOLUTE;
+    //--------------------------------------------------------------------------------
+    // do an iteration
+    //--------------------------------------------------------------------------------
+    if (sim.param().constraint.solute.flexshake_mode == 0 ||
+	sim.param().constraint.solute.flexshake_mode == 1){
+      // standard algorithm
+      if(_flexible_shake<do_virial, b>
+	 (topo, conf, convergence, flex_len, skip_now, skip_next,
+	  dt,
+	  periodicity, tolerance, true)
+	 ){
+	io::messages.add("Flexible SHAKE error. vectors orthogonal",
+			 "Flexible_Constraint::solute",
+			 io::message::error);
+	std::cout << "Flexible SHAKE failure in solute!" << std::endl;
+	return E_SHAKE_FAILURE_SOLUTE;
+      }
+    }
+    else{
+      // exact algorithm
+      if(_exact_flexible_shake<do_virial, b>
+	 (topo, conf, convergence, flex_len, force,
+	  dt, periodicity, tolerance)
+	 ){
+	io::messages.add("Exact Flexible SHAKE error. vectors orthogonal",
+			 "Flexible_Constraint::solute",
+			 io::message::error);
+	std::cout << "Exact Flexible SHAKE failure in solute!" << std::endl;
+	return E_SHAKE_FAILURE_SOLUTE;
+      }
     }
     
     if(++num_iterations > max_iterations){
@@ -383,13 +733,6 @@ static int _flexible_solute(topology::Topology const & topo,
   } // convergence?
 
   // constraint_force
-  /*
-  for (unsigned int i=0; i < topo.solute().distance_constraints().size();++i){
-    conf.constraint_force()(i) *= 1 /(dt * dt);
-    DEBUG(5, "constraint_force " << sqrt(dot(conf.constraint_force()(i),
-					     conf.constraint_force()(i)) ));
-  }
-  */
 
   timing += util::now() - start;
 
@@ -424,17 +767,20 @@ int algorithm::Flexible_Constraint<do_virial>
     switch(conf.boundary_type){
       case math::vacuum:
 	error = _flexible_solute<do_virial, math::vacuum>
-	  (topo, conf, sim, parameter(), sim.time_step_size(), 
+	  (topo, conf, sim, parameter(), m_force, m_nonbonded,
+	   sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::rectangular:
 	error = _flexible_solute<do_virial, math::rectangular>
-	  (topo, conf, sim, parameter(), sim.time_step_size(), 
+	  (topo, conf, sim, parameter(), m_force, m_nonbonded,
+	   sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::triclinic:
 	error = _flexible_solute<do_virial, math::triclinic>
-	  (topo, conf, sim, parameter(), sim.time_step_size(),
+	  (topo, conf, sim, parameter(), m_force, m_nonbonded,
+	   sim.time_step_size(),
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       default:
@@ -475,6 +821,17 @@ int algorithm::Flexible_Constraint<do_virial>
 		<< sim.param().constraint.solute.shake_tolerance << "\n";
       if (sim.param().constraint.solute.flexshake_readin)
 	std::cout << "\t\treading velocities along constraints from file\n";
+      if (sim.param().constraint.solute.flexshake_mode == 2 ||
+	  sim.param().constraint.solute.flexshake_mode == 3)
+	std::cout << "\t\tusing the exact algorithm\n";
+      else
+	std::cout << "\t\tusing the approximate algorithm\n";
+      if (sim.param().constraint.solute.flexshake_mode == 0 ||
+	  sim.param().constraint.solute.flexshake_mode == 2)
+	std::cout << "\t\tusing potential and kinetic energy\n";
+      else
+	std::cout << "\t\tusing potentialenergy only\n";
+      
     }
     else std::cout << "OFF\n";
   

@@ -94,6 +94,11 @@ namespace algorithm
      */
     interaction::Interaction * m_nonbonded;
 
+    /**
+     * the (undetermined) constrained forces (without the lambda factor)
+     */
+    std::vector<std::vector<math::Vec> > m_force;
+
   };
   
 } // algorithm
