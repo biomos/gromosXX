@@ -158,8 +158,7 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim, 
 		     size_t const i, size_t const j,
-		     math::Periodicity<t_interaction_spec::boundary_type>
-		     const & periodicity)
+		     Periodicity_type const & periodicity)
 {
   interaction_innerloop(topo, conf, i, j, *this, periodicity);
 }
@@ -174,8 +173,7 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
 		     size_t const i, size_t const j,
-		     math::Periodicity<t_interaction_spec::boundary_type>
-		     const & periodicity, int pc)
+		     Periodicity_type const & periodicity, int pc)
 {
   DEBUG(10, "\tadding long range pair i=" << i << " j=" << j << " pc=" << pc);
 
@@ -203,8 +201,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
 {  
   DEBUG(7, "\tcalculate interactions");  
 
-  math::Periodicity<t_interaction_spec::boundary_type> 
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
 
   if (t_interaction_spec::do_bekker){
 
@@ -256,8 +253,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
 {
   DEBUG(7, "\tcalculate 1,4-interactions");
 
-  math::Periodicity<t_interaction_spec::boundary_type> 
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
 
   std::set<int>::const_iterator it, to;
   
@@ -286,8 +282,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
   
   DEBUG(7, "\tcalculate RF excluded interactions");
 
-  math::Periodicity<t_interaction_spec::boundary_type> 
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
   
   for(size_t i=0; i<topo.num_solute_atoms(); ++i){
     

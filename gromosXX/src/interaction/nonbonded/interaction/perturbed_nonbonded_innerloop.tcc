@@ -24,7 +24,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 ::perturbed_interaction_innerloop
 ( topology::Topology & topo, configuration::Configuration & conf,
   size_t const i, size_t const j, t_storage &storage,
-  math::Periodicity<t_interaction_spec::boundary_type> const & periodicity,
+  Periodicity_type const & periodicity,
   int pc)
 {
     DEBUG(7, "\tperturbed pair\t" << i << "\t" << j);
@@ -203,7 +203,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 ( topology::Topology & topo,
   configuration::Configuration & conf,
   size_t const i, size_t const j,
-  math::Periodicity<t_interaction_spec::boundary_type> const & periodicity)
+  Periodicity_type const & periodicity)
 {
     DEBUG(7, "\tpair\t" << i << "\t" << j);
 
@@ -366,7 +366,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
 ::perturbed_RF_excluded_interaction_innerloop
 (topology::Topology & topo, configuration::Configuration & conf,
  std::map<size_t, topology::Perturbed_Atom>::const_iterator const & mit,
- math::Periodicity<t_interaction_spec::boundary_type> const & periodicity)
+ Periodicity_type const & periodicity)
 {
 
   math::VArray &pos   = conf.current().pos;
@@ -526,7 +526,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
   simulation::Simulation & sim,
   std::vector<topology::perturbed_two_body_term_struct>
   ::const_iterator const &it,
-  math::Periodicity<t_interaction_spec::boundary_type> const & periodicity)
+  Periodicity_type const & periodicity)
 {
 
   // NO RANGE FILTER FOR PERTURBED PAIRS ??

@@ -227,8 +227,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
 		     size_t const i, size_t const j,
-		     math::Periodicity<t_interaction_spec::boundary_type>
-		     const & periodicity)
+		     Periodicity_type const & periodicity)
 {
   if (perturbed_atom(topo, conf, sim, i)){
     perturbed_interaction_innerloop(topo, conf, i, j, *this, periodicity);
@@ -251,8 +250,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
 		     size_t const i, size_t const j,
-		     math::Periodicity<t_interaction_spec::boundary_type>
-		     const & periodicity, int pc)
+		     Periodicity_type const & periodicity, int pc)
 {
   if (perturbed_atom(topo, conf, sim, i)){
     perturbed_interaction_innerloop(topo, conf, i, j, *this, periodicity, pc);
@@ -289,8 +287,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 {  
   DEBUG(7, "\tcalculate perturbed interactions");  
 
-  math::Periodicity<t_interaction_spec::boundary_type>
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
 
   if (t_interaction_spec::do_bekker){
 
@@ -337,8 +334,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 {
   DEBUG(7, "\tcalculate perturbed 1,4-interactions");
 
-  math::Periodicity<t_interaction_spec::boundary_type>
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
 
   std::set<int>::const_iterator it, to;
   std::map<size_t, topology::Perturbed_Atom>::const_iterator 
@@ -372,8 +368,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 
   DEBUG(7, "\tcalculate perturbed excluded RF interactions");
 
-  math::Periodicity<t_interaction_spec::boundary_type>
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
 
   std::map<size_t, topology::Perturbed_Atom>::const_iterator
     mit=topo.perturbed_solute().atoms().begin(),
@@ -401,8 +396,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 {
   DEBUG(8, "perturbed pairs");
   
-  math::Periodicity<t_interaction_spec::boundary_type>
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
   
   std::vector<topology::perturbed_two_body_term_struct>::const_iterator
     it = topo.perturbed_solute().atompairs().begin(),

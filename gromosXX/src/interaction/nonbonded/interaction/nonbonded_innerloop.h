@@ -16,6 +16,8 @@ namespace interaction
   class Nonbonded_Innerloop
   {
   public:
+    typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
+    
     /**
      * copy constructor.
      */
@@ -34,7 +36,7 @@ namespace interaction
     (topology::Topology & topo, configuration::Configuration & conf,
      size_t const i, size_t const j,
      t_storage & storage,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+     Periodicity_type const & periodicity,
      int pc = -1);
 
     /**
@@ -44,7 +46,7 @@ namespace interaction
     void one_four_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      size_t const i, size_t const j,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity);
+     Periodicity_type const &periodicity);
     
     /**
      * RF interaction (solute).
@@ -53,7 +55,7 @@ namespace interaction
     void RF_excluded_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      size_t const i,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity);
+     Periodicity_type const & periodicity);
 
     /**
      * RF solvent interaction.
@@ -62,7 +64,7 @@ namespace interaction
     void RF_solvent_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      topology::Chargegroup_Iterator const & cg_it,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity);
+     Periodicity_type const &periodicity);
     
  
   protected:

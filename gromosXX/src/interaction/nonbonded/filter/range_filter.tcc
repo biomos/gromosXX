@@ -71,7 +71,7 @@ interaction::Range_Filter<t_nonbonded_spec>
 ::grid_cog(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
-	   Chargegroup_Grid<t_nonbonded_spec::boundary_type> & grid)
+	   Chargegroup_Grid_type & grid)
 {
   math::Periodicity<t_nonbonded_spec::boundary_type>
     periodicity(conf.current().box);
@@ -102,8 +102,7 @@ interaction::Range_Filter<t_nonbonded_spec>
 			 size_t const i, size_t const j,
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
-			 math::Periodicity<t_nonbonded_spec::boundary_type>
-			 const & periodicity)
+			 Periodicity_type const & periodicity)
 {
   DEBUG(10, "Range_Filter::range_chargegroup_pair " << i << " - " << j);
   
@@ -164,8 +163,7 @@ interaction::Range_Filter<t_nonbonded_spec>
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
 			 int pc,
-			 math::Periodicity<t_nonbonded_spec::boundary_type>
-			 const & periodicity)
+			 Periodicity_type const & periodicity)
 {
   DEBUG(11, "Range_Filter::range_chargegroup_pair (shift) " << i << " - " << j);
   
@@ -221,8 +219,7 @@ interaction::Range_Filter<t_nonbonded_spec>
 		  simulation::Simulation & sim,
 		  t_nonbonded_interaction &nonbonded_interaction,
 		  size_t const i, size_t const j,
-		  math::Periodicity<t_nonbonded_spec::boundary_type>
-		  const & periodicity)
+		  Periodicity_type const & periodicity)
 {
 
   DEBUG(11, "Range_Filter::range_atom_pair " << i << " - " << j);
@@ -265,8 +262,7 @@ interaction::Range_Filter<t_nonbonded_spec>
 		  t_nonbonded_interaction &nonbonded_interaction,
 		  size_t const i, size_t const j,
 		  int pc,
-		  math::Periodicity<t_nonbonded_spec::boundary_type>
-		  const & periodicity)
+		  Periodicity_type const & periodicity)
 {
 
   DEBUG(11, "Range_Filter::range_atom_pair " << i << " - " << j);

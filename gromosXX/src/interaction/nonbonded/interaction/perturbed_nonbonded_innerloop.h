@@ -16,6 +16,9 @@ namespace interaction
   class Perturbed_Nonbonded_Innerloop
   {
   public:
+
+    typedef math::Periodicity<t_interaction_spec::boundary_type> Periodicity_type;
+    
     /**
      * Constructor
      */
@@ -28,7 +31,7 @@ namespace interaction
     void perturbed_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      size_t const i, size_t const j, t_storage &storage,
-     math::Periodicity<t_interaction_spec::boundary_type> const & periodicity,
+     Periodicity_type const & periodicity,
      int pc = -1);
 
     /**
@@ -38,7 +41,7 @@ namespace interaction
     void perturbed_one_four_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      size_t const i, size_t const j,
-     math::Periodicity<t_interaction_spec::boundary_type> const & periodicity);
+     Periodicity_type const & periodicity);
     
     /**
      * perturbed RF interaction (solute).
@@ -48,7 +51,7 @@ namespace interaction
     ( topology::Topology & topo,
       configuration::Configuration & conf,
       std::map<size_t, topology::Perturbed_Atom>::const_iterator const & mit,
-      math::Periodicity<t_interaction_spec::boundary_type> const & periodicity);
+      Periodicity_type const & periodicity);
     /**
      * perturbed pairs.
      * (always shortrange)
@@ -61,7 +64,7 @@ namespace interaction
       simulation::Simulation & sim,
       std::vector<topology::perturbed_two_body_term_struct>
       ::const_iterator const &it,
-      math::Periodicity<t_interaction_spec::boundary_type> const & periodicity);
+      Periodicity_type const & periodicity);
  
   protected:
     Nonbonded_Base &m_base;

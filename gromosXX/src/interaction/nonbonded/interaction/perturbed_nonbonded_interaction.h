@@ -20,6 +20,9 @@ namespace interaction
     public t_interaction_spec::perturbed_nonbonded_innerloop_type
   {
   public:    
+
+    typedef math::Periodicity<t_interaction_spec::boundary_type> Periodicity_type;
+
     /**
      * Constructor.
      * @param sim where to store forces and energies
@@ -63,8 +66,7 @@ namespace interaction
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
 			    size_t const i, size_t const j,
-			    math::Periodicity<t_interaction_spec::boundary_type>
-			    const & periodicity);
+			    Periodicity_type const & periodicity);
 
     /**
      * add a longrange interaction.
@@ -73,8 +75,7 @@ namespace interaction
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
 			    size_t const i, size_t const j,
-			    math::Periodicity<t_interaction_spec::boundary_type>
-			    const & periodicity, int pc);
+			    Periodicity_type const & periodicity, int pc);
 
   protected:
     /**

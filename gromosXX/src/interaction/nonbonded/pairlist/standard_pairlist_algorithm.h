@@ -20,6 +20,8 @@ namespace interaction
     public t_nonbonded_spec::range_filter_type
   {
   public:
+    typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
+
     /**
      * Constructor.
      */
@@ -43,8 +45,7 @@ namespace interaction
 			   t_nonbonded_interaction &nonbonded_interaction,
 			   topology::Chargegroup_Iterator const &cg1,
 			   topology::Chargegroup_Iterator const &cg2,
-			   math::Periodicity<t_nonbonded_spec::boundary_type>
-			   const & periodicity, int const pc = -1);
+			   Periodicity_type const & periodicity, int const pc = -1);
     
     template<typename t_nonbonded_interaction>
     void do_cg_interaction_excl(topology::Topology & topo,
@@ -53,8 +54,7 @@ namespace interaction
 				t_nonbonded_interaction &nonbonded_interaction,
 				topology::Chargegroup_Iterator const &cg1,
 				topology::Chargegroup_Iterator const &cg2,
-				math::Periodicity<t_nonbonded_spec::boundary_type>
-				const & periodicity, int const pc = -1);
+				Periodicity_type const & periodicity, int const pc = -1);
 
     template<typename t_nonbonded_interaction>
     void do_cg_interaction_inv_excl(topology::Topology & topo,
@@ -63,8 +63,7 @@ namespace interaction
 				    t_nonbonded_interaction &nonbonded_interaction,
 				    topology::Chargegroup_Iterator const &cg1,
 				    topology::Chargegroup_Iterator const &cg2,
-				    math::Periodicity<t_nonbonded_spec::boundary_type>
-				    const & periodicity, int const pc = -1);
+				    Periodicity_type const & periodicity, int const pc = -1);
 
     template<typename t_nonbonded_interaction>
     void do_cg_interaction_intra(topology::Topology & topo,
@@ -72,8 +71,7 @@ namespace interaction
 				 simulation::Simulation & sim,
 				 t_nonbonded_interaction &nonbonded_interaction,
 				 topology::Chargegroup_Iterator const &cg1,
-				 math::Periodicity<t_nonbonded_spec::boundary_type>
-				 const & periodicity, int const pc = -1);
+				 Periodicity_type const & periodicity, int const pc = -1);
 
   };
 } // interaction

@@ -18,7 +18,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 (topology::Topology & topo, configuration::Configuration & conf,
  size_t const i, size_t const j,
  t_storage &storage,
- math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+ Periodicity_type const & periodicity,
  int pc)
 {
     DEBUG(8, "\tpair\t" << i << "\t" << j);
@@ -100,7 +100,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 (topology::Topology & topo,
  configuration::Configuration & conf,
  size_t const i, size_t const j,
- math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
+ Periodicity_type const & periodicity)
 {
     DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
 
@@ -152,7 +152,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 (topology::Topology & topo,
  configuration::Configuration & conf,
  size_t const i,
- math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
+ Periodicity_type const & periodicity)
 {
   math::Vec r, f;
   double e_crf;
@@ -213,7 +213,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 (topology::Topology & topo,
  configuration::Configuration & conf,
  topology::Chargegroup_Iterator const & cg_it,
- math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
+ Periodicity_type const & periodicity)
 {
   math::Vec r;
   double e_crf;

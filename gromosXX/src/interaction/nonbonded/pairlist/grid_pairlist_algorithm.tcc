@@ -47,15 +47,14 @@ update(topology::Topology & topo,
   set_cutoff(sim.param().pairlist.cutoff_short,
 	     sim.param().pairlist.cutoff_long);
   
-  math::Periodicity<t_nonbonded_spec::boundary_type> 
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
 
   // prepare the range filter (center of geometries)    
   prepare_cog(topo, conf, sim);
   DEBUG(7, "range filter prepared (cog)");
 
   DEBUG(7, "create a grid");
-  Chargegroup_Grid<t_nonbonded_spec::boundary_type> 
+  Chargegroup_Grid_type 
     a_grid(periodicity, 0.5*m_cutoff_short, m_cutoff_long);
 
   DEBUG(7, "grid the cog's");
@@ -122,8 +121,7 @@ intra_cell(topology::Topology & topo,
 	   t_nonbonded_interaction & nonbonded_interaction,
 	   std::vector<size_t>::const_iterator &cg_st, 
 	   std::vector<size_t>::const_iterator &cg_to,
-	   math::Periodicity<t_nonbonded_spec::boundary_type>
-	   const & periodicity)
+	   Periodicity_type const & periodicity)
 {
 
   DEBUG(12, "intra cell");
@@ -181,9 +179,9 @@ inter_cell(topology::Topology & topo,
 	   t_nonbonded_interaction & nonbonded_interaction,
 	   std::vector<size_t>::const_iterator &cg_st, 
 	   std::vector<size_t>::const_iterator &cg_to,
-	   Chargegroup_Grid<t_nonbonded_spec::boundary_type> & grid,
+	   Chargegroup_Grid_type & grid,
 	   int cell[3],
-	   math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
+	   Periodicity_type const & periodicity)
 {
  
   DEBUG(12, "inter cell");

@@ -19,6 +19,9 @@ namespace interaction
     public Standard_Pairlist_Algorithm<t_nonbonded_spec>
   {
   public:
+    typedef Chargegroup_Grid<t_nonbonded_spec::boundary_type> Chargegroup_Grid_type;
+    typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
+    
     /**
      * Constructor.
      */
@@ -42,8 +45,7 @@ namespace interaction
 		    t_nonbonded_interaction & nonbonded_interaction,
 		    std::vector<size_t>::const_iterator &cg_st, 
 		    std::vector<size_t>::const_iterator &cg_to,
-		    math::Periodicity<t_nonbonded_spec::boundary_type> 
-		    const & periodicity);
+		    Periodicity_type const & periodicity);
 
     template<typename t_nonbonded_interaction, bool periodic>
     void inter_cell(topology::Topology & topo,
@@ -52,10 +54,9 @@ namespace interaction
 		    t_nonbonded_interaction & nonbonded_interaction,
 		    std::vector<size_t>::const_iterator &cg_st, 
 		    std::vector<size_t>::const_iterator &cg_to,
-		    Chargegroup_Grid<t_nonbonded_spec::boundary_type> &grid,
+		    Chargegroup_Grid_type &grid,
 		    int cell[3],
-		    math::Periodicity<t_nonbonded_spec::boundary_type> 
-		    const & periodicity);
+		    Periodicity_type const & periodicity);
 
   };
 } // interaction

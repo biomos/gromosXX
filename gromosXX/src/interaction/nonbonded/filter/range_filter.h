@@ -19,6 +19,9 @@ namespace interaction
     : public Filter<t_nonbonded_spec>
   {
   public:
+    typedef Chargegroup_Grid<t_nonbonded_spec::boundary_type> Chargegroup_Grid_type;
+    typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
+    
     /**
      * Constructor.
      */
@@ -49,7 +52,7 @@ namespace interaction
      size_t const i, size_t const j,
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity);
+     Periodicity_type const & periodicity);
 
     /**
      * check the distance of a chargegroup pair.
@@ -68,7 +71,7 @@ namespace interaction
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
      int pc,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity);
+     Periodicity_type const & periodicity);
 
     /**
      * check the distance between two atoms.
@@ -80,7 +83,7 @@ namespace interaction
      simulation::Simulation & sim,
      t_nonbonded_interaction &nonbonded_interaction,
      size_t const i, size_t const j,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity);
+     Periodicity_type const & periodicity);
 
     /**
      * check the distance between two atoms.
@@ -92,7 +95,7 @@ namespace interaction
      simulation::Simulation & sim,
      t_nonbonded_interaction &nonbonded_interaction,
      size_t const i, size_t const j, int pc,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity);
+     Periodicity_type const & periodicity);
     
     /**
      * put the chargegroup center of geometries
@@ -101,7 +104,7 @@ namespace interaction
     void grid_cog(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
-		  Chargegroup_Grid<t_nonbonded_spec::boundary_type> & grid);
+		  Chargegroup_Grid_type & grid);
 
   protected:
 

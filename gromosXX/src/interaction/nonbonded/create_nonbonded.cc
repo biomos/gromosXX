@@ -65,10 +65,12 @@
 // DECLARATIONS
 //==================================================
 
+/*
 void interaction::create_g96_nonbonded(interaction::Forcefield & ff,
 				       topology::Topology const & topo,
 				       simulation::Parameter const & param,
 				       io::In_Topology & it);
+*/
 
 template<math::boundary_enum t_boundary>
 void _select_virial(interaction::Forcefield & ff,

@@ -32,8 +32,7 @@ update(topology::Topology & topo,
 {
   DEBUG(7, "pairlist update");
 
-  math::Periodicity<t_nonbonded_spec::boundary_type>
-    periodicity(conf.current().box);
+  Periodicity_type periodicity(conf.current().box);
    
   // empty the pairlist
   nonbonded_interaction.pairlist().clear();
@@ -119,8 +118,7 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 		    t_nonbonded_interaction &nonbonded_interaction,
 		    topology::Chargegroup_Iterator const &cg1,
 		    topology::Chargegroup_Iterator const &cg2,
-		    math::Periodicity<t_nonbonded_spec::boundary_type>
-		    const & periodicity,
+		    Periodicity_type const & periodicity,
 		    int const pc)
 {
 
@@ -172,8 +170,7 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 			 t_nonbonded_interaction &nonbonded_interaction,
 			 topology::Chargegroup_Iterator const & cg1,
 			 topology::Chargegroup_Iterator const & cg2,
-			 math::Periodicity<t_nonbonded_spec::boundary_type>
-			 const & periodicity,
+			 Periodicity_type const & periodicity,
 			 int const pc)
 {
   topology::Atom_Iterator a1 = cg1.begin(),
@@ -228,8 +225,7 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 			     t_nonbonded_interaction &nonbonded_interaction,
 			     topology::Chargegroup_Iterator const & cg1,
 			     topology::Chargegroup_Iterator const & cg2,
-			     math::Periodicity<t_nonbonded_spec::boundary_type>
-			     const & periodicity, int const pc)
+			     Periodicity_type const & periodicity, int const pc)
 {
   topology::Atom_Iterator a1 = cg1.begin(),
     a1_to = cg1.end();
@@ -281,8 +277,7 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 			  simulation::Simulation & sim,
 			  t_nonbonded_interaction & nonbonded_interaction,
 			  topology::Chargegroup_Iterator const & cg1,
-			  math::Periodicity<t_nonbonded_spec::boundary_type>
-			  const & periodicity, int const pc)
+			  Periodicity_type const & periodicity, int const pc)
 {
   topology::Atom_Iterator a1 = cg1.begin(),
     a1_to = cg1.end();
