@@ -8,9 +8,6 @@
 #define MODULE simulation
 #define SUBMODULE topology
 
-// put this into a better place, needed for set_union
-#include <algorithm>
-
 #include "../../debug.h"
 
 /**

@@ -53,7 +53,10 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
   sim.system().molecular_kinetic_energy() = 0.0;
 
   for( ; m_it != m_to; ++m_it){
-    m_it.com(sim.system(), sim.topology().mass(), com_pos, com_ekin);
+    // m_it.com(sim.system(), sim.topology().mass(), com_pos, com_ekin);
+    sim.system().center_of_mass(m_it.begin(), m_it.end(),
+				sim.topology().mass(),
+				com_pos, com_ekin);
 
     for(int i=0; i<3; ++i)
       for(int j=0; j<3; ++j)

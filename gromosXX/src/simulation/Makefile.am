@@ -25,16 +25,17 @@ include_HEADERS = 		simulation.h \
 				topology/solvent.tcc \
 				topology/topology.h \
 				topology/topology.tcc \
-				topology/atom_iterator.h \
-				topology/atom_group_iterator.h \
-				topology/molecule_iterator.h \
-				topology/chargegroup_iterator.h
+				core/atom_iterator.h \
+				core/atom_group_iterator.h \
+				core/molecule_iterator.h \
+				core/chargegroup_iterator.h \
+				core/parameter.h
 
 lib_LTLIBRARIES	= 		libsimulation.la
 
 libsimulation_la_LDFLAGS = 	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
-libsimulation_la_SOURCES =	simulation.cc
+libsimulation_la_SOURCES =	simulation.cc core.cc
 
 bin_PROGRAMS =
 

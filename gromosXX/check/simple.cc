@@ -10,6 +10,7 @@
 #include <fstream>
 #include <stdexcept>
 
+// check macros and functions
 #include "check.h"
 
 // include all headers here (once and for all...)
@@ -17,7 +18,8 @@
 
 #include <math/gmath.h>
 #include <io/message.h>
-
+#include <simulation/core.h>
+#include <math/periodicity.h>
 #include <simulation/simulation.h>
 #include <interaction/interaction.h>
 #include <io/io.h>
@@ -26,6 +28,7 @@
 // sppecial includes
 #include <algorithm/integration/runge_kutta.h>
 
+// gloabl variables for debug
 #include "../src/debug.cc"
 
 using namespace math;

@@ -149,6 +149,29 @@ namespace simulation
      * check state
      */
     int check_state()const;
+
+    /**
+     * calculate the center of mass and the
+     * translational kinetic energy of a group of
+     * atoms.
+     * @param start begin of a group of atoms.
+     * @param end of a group of atoms.
+     * @mass the masses of (all) atoms.
+     * @com_pos returns the center of mass.
+     * @com_e_kin returns the tranlational kinetic energy tensor.
+     * 
+     * @TODO the gathering of the molecule is hardcoded in here.
+     * Maybe this should be changed to a generic implementation.
+     * Gathering is done in respect to the previous atom. An idea would
+     * be to gather as default with respect to the previous atom but
+     * letting the user override this (GATHER block).
+     * This does not yield the same answer as Phils approach for all cases
+     * but maybe for the practical ones???
+     */
+    void center_of_mass(Atom_Iterator start, Atom_Iterator end,
+			math::SArray const &mass, 
+			math::Vec &com_pos, math::Matrix &com_e_kin);
+    
     
   protected:
     /**

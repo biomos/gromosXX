@@ -302,6 +302,61 @@ simulation::System<b>::check_state()const
 }
 
 
+/**
+ * calculate the center of mass and the
+ * translational kinetic energy of a group of
+ * atoms.
+ * @param start begin of a group of atoms.
+ * @param end of a group of atoms.
+ * @mass the masses of (all) atoms.
+ * @com_pos returns the center of mass.
+ * @com_e_kin returns the tranlational kinetic energy tensor.
+ * 
+ * @TODO the gathering of the molecule is hardcoded in here.
+ * Maybe this should be changed to a generic implementation.
+ * Gathering is done in respect to the previous atom. An idea would
+ * be to gather as default with respect to the previous atom but
+ * letting the user override this (GATHER block).
+ * This does not yield the same answer as Phils approach for all cases
+ * but maybe for the practical ones???
+ */
+template<math::boundary_enum b>
+void simulation::System<b>::
+center_of_mass(Atom_Iterator start, Atom_Iterator end,
+	       math::SArray const &mass, 
+	       math::Vec &com_pos, math::Matrix &com_e_kin)
+{
+
+  com_pos = 0.0;
+  double m;
+  double tot_mass = 0.0;
+
+  math::Vec p;
+  math::Vec prev;
+  math::Vec v = 0.0;
+
+  prev = pos()(*start);
+
+  for( ; start != end; ++start){
+	
+    assert(unsigned(mass.size()) > *start && 
+	   unsigned(pos().size()) > *start);
+
+    m = mass(*start);
+    tot_mass += m;
+    periodicity().nearest_image(pos()(*start), prev, p);
+    com_pos += m * (p + prev);
+    v += m * vel()(*start);
+    prev += p;
+  }
+  com_pos /= tot_mass;
+      
+  for(int i=0; i<3; ++i)
+    for(int j=0; j<3; ++j)
+      com_e_kin(i,j) = 0.5 * v(i) * v(j) / tot_mass;
+  
+}
+
 namespace simulation
 {
   template<math::boundary_enum b>

@@ -3,7 +3,6 @@ INCLUDES = -I$(top_srcdir)/src
 include_HEADERS = 		interaction.h \
 				forcefield/forcefield.h \
 				forcefield/forcefield.tcc \
-				forcefield/parameter.h \
 				interaction/interaction.h \
 				interaction/nonbonded_interaction.h \
 				interaction/nonbonded_interaction.tcc \

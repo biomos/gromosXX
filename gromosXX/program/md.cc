@@ -3,6 +3,7 @@
  * the md program.
  */
 
+#include <config.h>
 
 #include <iostream>
 #include <iomanip>
@@ -13,6 +14,8 @@
 
 #include <math/gmath.h>
 #include <io/message.h>
+#include <simulation/core.h>
+#include <math/periodicity.h>
 #include <simulation/simulation.h>
 #include <interaction/interaction.h>
 #include <io/io.h>
@@ -21,6 +24,7 @@
 // sppecial includes
 #include <algorithm/integration/runge_kutta.h>
 
+// global variables for debug
 #include "../src/debug.cc"
 
 using namespace math;

@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <algorithm>
 
 /**
  * @namespace math
@@ -47,6 +48,25 @@ namespace math
    * Box.
    */
   typedef blitz::TinyVector< blitz::TinyVector<double, 3>, 3> Box;
+
+  /**
+   * @enum boundary_enum
+   * boundary condition
+   */
+  enum boundary_enum{
+    /**
+     * vacuum.
+     */
+    vacuum = 0,
+    /**
+     * triclinic box
+     */
+    triclinic = 1,
+    /**
+     * non-specialized version
+     */
+    any = 2
+  };
   
   /**
    * a small number.
@@ -115,9 +135,6 @@ inline T abs2(TinyVector<T,N> v)
 BZ_DECLARE_FUNCTION_RET(abs2, double);
 
 } // math
-
-#include "boundary_implementation.h"
-#include "periodicity.h"
 
 #endif
 

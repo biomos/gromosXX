@@ -26,9 +26,10 @@ Release 0.0.3
 
 -------------
 
-	-	reorganise iterators (and utility classes) -> avoid circular includes, use stl
+	ok	reorganise iterators (and utility classes) -> avoid circular includes, use stl
 	-	atomic virial
 	-	center of mass motion removal (constraining)
+	-	options for different compilers (see blitz)
 	
 
 

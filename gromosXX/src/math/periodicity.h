@@ -6,7 +6,7 @@
 #ifndef INCLUDED_PERIODICITY_H
 #define INCLUDED_PERIODICITY_H
 
-#include "math.h"
+#include "boundary_implementation.h"
 
 namespace math
 {

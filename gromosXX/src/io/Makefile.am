@@ -16,7 +16,8 @@ include_HEADERS = 		io.h \
 				input/InInput.h \
 				input/InInput.tcc \
 				argument.h \
-				print_block.h
+				print_block.h \
+				print_block.tcc
 
 lib_LTLIBRARIES	= 		libio.la
 
@@ -25,8 +26,7 @@ libio_la_LDFLAGS =	 	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 libio_la_SOURCES =		io.cc \
 				message.cc \
 				GInStream.cc \
-				argument.cc \
-				print_block.cc
+				argument.cc
 
 bin_PROGRAMS =			
 

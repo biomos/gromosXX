@@ -10,25 +10,6 @@
 namespace math
 {
   /**
-   * @enum boundary_enum
-   * boundary condition
-   */
-  enum boundary_enum{
-    /**
-     * vacuum.
-     */
-    vacuum = 0,
-    /**
-     * triclinic box
-     */
-    triclinic = 1,
-    /**
-     * non-specialized version
-     */
-    any = 2
-  };
-
-  /**
    * @class Boundary_Implementation
    * implements the specific functions of
    * the Periodicity class.

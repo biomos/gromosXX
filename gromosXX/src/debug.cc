@@ -61,6 +61,7 @@ void parse_verbosity(io::Argument &args, std::string flag = "verb", std::ostream
       else if (submodule == "simulation") simulation::simulation_debug_level = level;
       else if (submodule == "system") simulation::system_debug_level = level;
       else if (submodule == "topology") simulation::topology_debug_level = level;
+      else if (submodule == "core") simulation::core_debug_level = level;
       else throw std::string("unknown submodule");
     }
     else if (module == "algorithm"){

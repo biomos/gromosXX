@@ -8,9 +8,6 @@
 #define MODULE math
 
 #include "../debug.h"
-#include "../simulation/topology/atom_iterator.h"
-#include "../simulation/topology/atom_group_iterator.h"
-#include "../simulation/topology/chargegroup_iterator.h"
 
 template<math::boundary_enum b>
 math::Periodicity<b>::Periodicity(boundary_enum boundary)
