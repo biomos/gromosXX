@@ -2,18 +2,26 @@
 TODO list of gromosXX
 =====================
 
-	-	change OutGTrajectory: gather chargegroups on first atom, not on cog
+Release 0.0.2
+
+	ok	change OutGTrajectory: gather chargegroups on first atom, not on cog
 	-	write check_state methods for Simulation, Topology and System (and maybe others)
-	-	autoconf flag to create production code
-	-	energy calculation
+	ok	autoconf flag to create production code
+	ok	energy calculation
 	-	energy trajectory
 	-	excluded atoms reaction field contribution
 
-Release 0.0.2
+-------------
 
+Release 0.0.3
+
+	-	gather chargegroups during simulation
 	-	handle the GENBOX block
 	-	perturbation
 	-	check the triclinic computational box
+
+-------------
+
 	-	atomic virial
 	-	center of mass motion removal (constraining)
 	
@@ -23,3 +31,6 @@ Release 0.0.2
 	-	path integral
 	-	SD, (MC?)
 	-	special forces
+	-	perturbation & Tim / Bekker algorithm:
+		no perturbed atom in bins => 1. normal, 2. perturbed &
+		bins, 3. perturbed & perturbed
