@@ -23,12 +23,12 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Leap_Frog_Position() : Algorithm("Leap_Frog_Position") {};
+    Leap_Frog_Position() : Algorithm("Leap_Frog_Position") {}
 
     /**
      * Destructor.
      */
-    virtual ~Leap_Frog_Position(){};
+    virtual ~Leap_Frog_Position(){}
     
     /**
      * Leap frog step.

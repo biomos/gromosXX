@@ -24,6 +24,8 @@
 #include <algorithm/algorithm.h>
 #include <algorithm/algorithm_sequence.h>
 #include <algorithm/integration/leap_frog.h>
+#include <algorithm/temperature/temperature_calculation.h>
+#include <algorithm/temperature/berendsen.h>
 
 #include <interaction/forcefield/forcefield.h>
 #include <interaction/forcefield/create_forcefield.h>
@@ -41,13 +43,14 @@
 
 int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 				  topology::Topology &topo,
-				  simulation::Parameter &param,
+				  configuration::Configuration & conf,
+				  simulation::Simulation & sim,
 				  io::In_Topology &it)
 {
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
-  interaction::create_g96_forcefield(*ff, topo, param, it);
+  interaction::create_g96_forcefield(*ff, topo, sim.param(), it);
 
   // construct the md algorithm
   md_seq.push_back(ff);
@@ -56,16 +59,16 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // SHAKE
   DEBUG(7, "SHAKE?");
-  if (param.system.nsm || param.shake.ntc > 1){
+  if (sim.param().system.nsm || sim.param().shake.ntc > 1){
     DEBUG(8, "\tyes, we need it");
-    switch(param.pcouple.virial){
+    switch(sim.param().pcouple.virial){
       case math::no_virial:
       case math::molecular_virial:
 	{
 	  DEBUG(8, "\twith no virial");
 	  algorithm::Shake<math::no_virial> * s = 
 	    new algorithm::Shake<math::no_virial>
-	    (param.shake.tolerance);
+	    (sim.param().shake.tolerance);
 	  it.read_harmonic_bonds(s->parameter());
 	  md_seq.push_back(s);
 	  break;
@@ -74,11 +77,22 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	DEBUG(8, "\twith atomic virial");
 	  algorithm::Shake<math::atomic_virial> * s = 
 	    new algorithm::Shake<math::atomic_virial>
-	    (param.shake.tolerance);
+	    (sim.param().shake.tolerance);
 	  it.read_harmonic_bonds(s->parameter());
 	  md_seq.push_back(s);
 	break;
     }
+  }
+
+  // temperature calculation
+  {
+    algorithm::Temperature_Calculation * tcalc =
+      new algorithm::Temperature_Calculation;
+    // calculate initial temperature
+    tcalc->apply(topo, conf, sim);
+
+    md_seq.push_back(tcalc);
+    
   }
   
   return 0;
