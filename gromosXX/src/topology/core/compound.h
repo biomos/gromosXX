@@ -26,6 +26,17 @@ namespace topology
   {
   public:
     /**
+     * @struct lincs_struct
+     * lincs constraints information.
+     */
+    struct lincs_struct
+    {
+      std::vector<std::vector<size_t> > coupled_constr;
+      std::vector<std::vector<double> > coef;
+      std::vector<double> sdiag;
+    };
+    
+    /**
      * Constructor.
      */
     explicit Compound() : m_num_atoms(0){}
@@ -38,7 +49,7 @@ namespace topology
      * const accessor to the distance constraints.
      */
     std::vector<two_body_term_struct> const & distance_constraints()const{return m_distance_constraint;}
-
+    
     /**
      * accessor to a single distance constraint.
      */
@@ -48,14 +59,40 @@ namespace topology
      * add a distance constraint.
      */
     void add_distance_constraint(two_body_term_struct const s) {m_distance_constraint.push_back(s);}
-    
+
+    /**
+     * accessor to the coupled distance constraints.
+     */
+    lincs_struct & lincs() 
+    { return m_lincs;
+    }
+
+    /**
+     * const accessor to the lincs struct
+     */
+    lincs_struct const & lincs() const
+    { return m_lincs; 
+    }
+
     /**
      * number of atoms in the compound.
      */
     size_t num_atoms()const {return m_num_atoms;}
 
   protected:
+    /**
+     * the distance constraints.
+     */
     std::vector<two_body_term_struct> m_distance_constraint;
+
+    /**
+     * the lincs information
+     */
+    lincs_struct m_lincs;
+    
+    /**
+     * the number of atoms in the compound.
+     */
     size_t m_num_atoms;
   };
   

@@ -40,7 +40,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_PCOUPLE(param);
   read_PRINT(param);
   read_WRITE(param);
-  read_SHAKE(param);
+  read_CONSTRAINTS(param); // read_SHAKE if no CONSTRAINTS
   read_FORCE(param); // and FORCEFIELD
   read_PLIST(param);
   read_LONGRANGE(param);
@@ -267,6 +267,86 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
     io::messages.add("tolerance in SHAKE block should be > 0",
 		       "In_Parameter", io::message::error);
 }
+
+/**
+ * the CONSTRAINTS block.
+ */
+void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
+{
+  DEBUG(8, "read CONSTRAINTS");
+
+  std::vector<std::string> buffer;
+  std::string s, salg;
+  
+  buffer = m_block["CONSTRAINTS"];
+
+  if (!buffer.size()){
+    param.shake.lincs = false;
+    // try reading a shake block
+    read_SHAKE(param);
+    return;
+  }
+  
+  block_read.insert("CONSTRAINTS");
+  
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+
+  _lineStream >> salg;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in CONSTRAINTS block",
+		     "In_Parameter", io::message::error);
+
+  std::transform(salg.begin(), salg.end(), salg.begin(), tolower);
+
+  if (salg == "shake"){
+    std::string sntc;
+    _lineStream >> sntc >> param.shake.tolerance;
+
+    param.shake.lincs = false;
+    
+    if(sntc=="solvent") param.shake.ntc=1;
+    else if(sntc=="hydrogen") param.shake.ntc=2;
+    else if(sntc=="all") param.shake.ntc=3;
+    else if(sntc=="specified") param.shake.ntc=4;
+    else param.shake.ntc=atoi(sntc.c_str());
+
+    if(errno)
+      io::messages.add("NTC not understood in SHAKE block",
+		       "In_Parameter", io::message::error);
+    if(param.shake.ntc<1 || param.shake.ntc > 4)
+      io::messages.add("NTC not understood in SHAKE block",
+		       "In_Parameter", io::message::error);
+    if(param.shake.tolerance <= 0.0)
+      io::messages.add("tolerance in SHAKE block should be > 0",
+		       "In_Parameter", io::message::error);
+  }
+  else if (salg == "lincs"){
+    io::messages.add("using LINCS", "in_parameter",
+		     io::message::notice);
+    param.shake.lincs = true;
+    std::string sntc;
+    
+    _lineStream >> sntc >> param.shake.lincs_order;
+
+    if(sntc=="solvent") param.shake.ntc=1;
+    else if(sntc=="hydrogen") param.shake.ntc=2;
+    else if(sntc=="all") param.shake.ntc=3;
+    else if(sntc=="specified") param.shake.ntc=4;
+    else param.shake.ntc=atoi(sntc.c_str());
+
+    if(errno)
+      io::messages.add("NTC not understood in SHAKE block",
+		       "In_Parameter", io::message::error);
+    if(param.shake.ntc<1 || param.shake.ntc > 4)
+      io::messages.add("NTC not understood in SHAKE block",
+		       "In_Parameter", io::message::error);
+
+  }
+
+}
+
 
 /**
  * the FLEXCON block.

@@ -35,6 +35,7 @@
 #include <math/periodicity.h>
 #include <algorithm/constraints/shake.h>
 #include <algorithm/constraints/perturbed_shake.h>
+#include <algorithm/constraints/lincs.h>
 #include <algorithm/constraints/remove_com_motion.h>
 
 #include <algorithm/integration/slow_growth.h>
@@ -101,20 +102,32 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       case math::molecular_virial:
 	{
 	  DEBUG(8, "\twith no virial");
-	  algorithm::Shake<math::no_virial> * s = 
-	    new algorithm::Shake<math::no_virial>
-	    (sim.param().shake.tolerance);
-	  it.read_harmonic_bonds(s->parameter());
-	  s->init(topo, conf, sim);
-	  md_seq.push_back(s);
-	  
-	  if (sim.param().perturbation.perturbation){
-	    algorithm::Perturbed_Shake<math::no_virial> * ps =
-	      new algorithm::Perturbed_Shake<math::no_virial>(*s);
-	    ps->init(topo, conf, sim);
-	    md_seq.push_back(ps);
+	  if (sim.param().shake.lincs){
+	    // LINCS
+	    DEBUG(8, "trying LINCS");
+	    algorithm::Lincs<math::no_virial> * s =
+	      new algorithm::Lincs<math::no_virial>;
+	    it.read_harmonic_bonds(s->parameter());
+	    s->init(topo, conf, sim);
+	    md_seq.push_back(s);
 	  }
-	      
+	  else{
+	    // SHAKE
+	    algorithm::Shake<math::no_virial> * s = 
+	      new algorithm::Shake<math::no_virial>
+	      (sim.param().shake.tolerance);
+	    it.read_harmonic_bonds(s->parameter());
+	    s->init(topo, conf, sim);
+	    md_seq.push_back(s);
+	  
+	    if (sim.param().perturbation.perturbation){
+	      algorithm::Perturbed_Shake<math::no_virial> * ps =
+		new algorithm::Perturbed_Shake<math::no_virial>(*s);
+	      ps->init(topo, conf, sim);
+	      md_seq.push_back(ps);
+	    }
+	  }
+	  
 	  break;
 	}
       case math::atomic_virial:

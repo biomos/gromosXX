@@ -296,6 +296,10 @@ namespace simulation
     struct shake_struct
     {
       /**
+       * shake or lincs?
+       */
+      bool lincs;
+      /**
        * NTC parameter (off=1, hydrogens=2, all=3, specified=4)
        * specified shakes everything in the constraint block in the topology.
        * hydrogens or all add the bonds containing hydrogens or all bonds to
@@ -306,6 +310,11 @@ namespace simulation
        * SHAKE tolerance
        */
       double tolerance;
+      /**
+       * LINCS order.
+       */
+      int lincs_order;
+
     } shake;
 
     /**

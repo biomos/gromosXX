@@ -932,6 +932,9 @@ void io::Out_Configuration
 	simulation::Simulation const & sim)
 {
   if ((sim.steps() % sim.param().print.stepblock) == 0){
+
+    m_output << "\n---------------------------------------------------"
+	     << "-----------------------------\n";
     
     _print_timestep(sim, m_output);
     
@@ -956,9 +959,9 @@ void io::Out_Configuration
 	      configuration::Configuration & conf,
 	      simulation::Simulation const & sim)
 {
-  m_output << "\n==================================================\n";
+  m_output << "\n============================================================\n";
   m_output << "FINAL DATA\n";
-  m_output << "==================================================\n";
+  m_output << "============================================================\n";
   
   _print_timestep(sim, m_output);
   
