@@ -18,90 +18,76 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
  Periodicity_type const & periodicity,
  int pc)
 {
-    storage.energies.bond_energy[0] += j;
+  // storage.energies.bond_energy[0] += j;
 
-    DEBUG(8, "\tpair\t" << i << "\t" << j);
-
+  DEBUG(8, "\tpair\t" << i << "\t" << j);
+  
+  math::Vec r;
+  double f;
+  double e_lj, e_crf;
+  
+  if (t_nonbonded_spec::do_bekker){
+    r = conf.current().pos(i) + periodicity.shift(pc).pos
+      - conf.current().pos(j);
+    DEBUG(10, "\tpc=" << pc << " shift = " << periodicity.shift(pc).pos(0)
+	  << " / " << periodicity.shift(pc).pos(1) 
+	  << " / " << periodicity.shift(pc).pos(2));
+    DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+  }
+  else{
+    periodicity.nearest_image(conf.current().pos(i), 
+			      conf.current().pos(j), r);
+    DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
     
-    math::Vec r;
-    double f;
-    double e_lj, e_crf;
+  }
+    
+  const lj_parameter_struct &lj = 
+    m_param->lj_parameter(topo.iac(i),
+			  topo.iac(j));
+  
+  DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+  DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+  
+  lj_crf_interaction(r, lj.c6, lj.c12,
+		     topo.charge()(i) * 
+		     topo.charge()(j),
+		     f, e_lj, e_crf);
+  
+  for (int a=0; a<3; ++a){
+    
+    const double term = f * r(a);
+    storage.force(i)(a) += term;
+    storage.force(j)(a) -= term;
 
-    if (t_nonbonded_spec::do_bekker){
-      r = conf.current().pos(i) + periodicity.shift(pc).pos
-	- conf.current().pos(j);
-      DEBUG(10, "\tpc=" << pc << " shift = " << periodicity.shift(pc).pos(0)
-	    << " / " << periodicity.shift(pc).pos(1) 
-	    << " / " << periodicity.shift(pc).pos(2));
-      DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+    if (t_nonbonded_spec::do_virial == math::molecular_virial){
+      for(int b=0; b<3; ++b){
+	storage.virial_tensor(b, a) += 
+	  (r(b) - conf.special().rel_mol_com_pos(i)(b) + 
+	   conf.special().rel_mol_com_pos(j)(b)) * term;
+      }
     }
-    else{
-      periodicity.nearest_image(conf.current().pos(i), 
-				conf.current().pos(j), r);
-      DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-
-      /*
-	for(int d=0; d<3; ++d){
-	r(d) = conf.current().pos(i)(d) 
-	- conf.current().pos(i)(d);
-	
-	if (fabs(r(d) + r(d)) >= conf.current().box(d)(d)){
-	r(d) -= conf.current().box(d)(d) * 
-	rint(r(d)/conf.current().box(d)(d));
-	
-	}
-	}
-      */
+    if (t_nonbonded_spec::do_virial == math::atomic_virial){
+      for(int b=0; b<3; ++b){
+	storage.virial_tensor(b, a) += 
+	  r(b) * term;
+      }
     }
-    
-    const lj_parameter_struct &lj = 
-      m_param->lj_parameter(topo.iac(i),
-			    topo.iac(j));
+  }
 
-
-    DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
-    DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-    
-    lj_crf_interaction(r, lj.c6, lj.c12,
-		       topo.charge()(i) * 
-		       topo.charge()(j),
-		       f, e_lj, e_crf);
-
-    for (int a=0; a<3; ++a){
-
-	const double term = f * r(a);
-	storage.force(i)(a) += term;
-	storage.force(j)(a) -= term;
-
-	if (t_nonbonded_spec::do_virial == math::molecular_virial){
-	    for(int b=0; b<3; ++b){
-		storage.virial_tensor(b, a) += 
-		    (r(b) - conf.special().rel_mol_com_pos(i)(b) + 
-		     conf.special().rel_mol_com_pos(j)(b)) * term;
-	    }
-	}
-	if (t_nonbonded_spec::do_virial == math::atomic_virial){
-	    for(int b=0; b<3; ++b){
-		storage.virial_tensor(b, a) += 
-		    r(b) * term;
-	    }
-	}
-    }
-
-    // energy
-    assert(storage.energies.lj_energy.size() > 
-	   topo.atom_energy_group(i));
-    assert(storage.energies.lj_energy.size() >
-	   topo.atom_energy_group(j));
-
-    storage.energies.lj_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_lj;
-    
-    storage.energies.crf_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_crf;
-    
-    DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
-	  << " j " << topo.atom_energy_group(j));
+  // energy
+  assert(storage.energies.lj_energy.size() > 
+	 topo.atom_energy_group(i));
+  assert(storage.energies.lj_energy.size() >
+	 topo.atom_energy_group(j));
+  
+  storage.energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
+  
+  storage.energies.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_crf;
+  
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
 }
 
 
@@ -113,50 +99,50 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
  size_t const i, size_t const j,
  Periodicity_type const & periodicity)
 {
-    DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
+  DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
+  
+  math::Vec r;
+  double f, e_lj, e_crf;
+  
+  periodicity.nearest_image(conf.current().pos(i), 
+			    conf.current().pos(j), r);
 
-    math::Vec r;
-    double f, e_lj, e_crf;
-    
-    periodicity.nearest_image(conf.current().pos(i), 
-			      conf.current().pos(j), r);
-
-    const lj_parameter_struct &lj = 
-      m_param->lj_parameter(topo.iac(i),
+  const lj_parameter_struct &lj = 
+    m_param->lj_parameter(topo.iac(i),
 			  topo.iac(j));
+  
+  DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+  
+  lj_crf_interaction(r, lj.cs6, lj.cs12,
+		     topo.charge()(i) * 
+		     topo.charge()(j),
+		     f, e_lj, e_crf);
+  
+  for (int a=0; a<3; ++a){
 
-    DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
-
-    lj_crf_interaction(r, lj.cs6, lj.cs12,
-			      topo.charge()(i) * 
-			      topo.charge()(j),
-			      f, e_lj, e_crf);
-
-    for (int a=0; a<3; ++a){
-
-	const double term = f * r(a);
-	// storage.force(i)(a) += term;
-	// storage.force(j)(a) -= term;
-	conf.current().force(i)(a) += term;
-	conf.current().force(j)(a) -= term;
-
-	if (t_nonbonded_spec::do_virial == math::atomic_virial){
-	    for(int b=0; b<3; ++b){
-		conf.current().virial_tensor(b, a) += 
-		    r(b) * term;
-	    }
-	}
+    const double term = f * r(a);
+    // storage.force(i)(a) += term;
+    // storage.force(j)(a) -= term;
+    conf.current().force(i)(a) += term;
+    conf.current().force(j)(a) -= term;
+    
+    if (t_nonbonded_spec::do_virial == math::atomic_virial){
+      for(int b=0; b<3; ++b){
+	conf.current().virial_tensor(b, a) += 
+	  r(b) * term;
+      }
     }
-
-    // energy
-    conf.current().energies.lj_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_lj;
+  }
+  
+  // energy
+  conf.current().energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
     
-    conf.current().energies.crf_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_crf;
+  conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_crf;
     
-    DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
-	  << " j " << topo.atom_energy_group(j));
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
     
 }
 
@@ -184,7 +170,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   
   // this will only contribute in the energy, the force should be zero.
   rf_interaction(r,topo.charge()(i) * topo.charge()(i),
-			f, e_crf);
+		 f, e_crf);
   conf.current().energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(i)] += 0.5 * e_crf;
   DEBUG(11, "\tcontribution " << 0.5*e_crf);
