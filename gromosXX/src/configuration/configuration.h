@@ -114,16 +114,29 @@ namespace configuration
        */
       std::vector<double> dihedral_angle_minimum;
 
+      //////////////////////////////////////////////////
       /**
-       * flexible constraints velocity.
+       * @struct flexible_constraint
+       * flexible constraint data
        */
-      std::vector<double> flexible_vel;
+      struct flexible_constraint_struct
+      {
+	/**
+	 * flexible constraints velocity.
+	 */
+	std::vector<double> flexible_vel;
+	/**
+	 * flexible constraints kinetic energy.
+	 */
+	std::vector<double> flexible_ekin;
+	/**
+	 * flexible constraint lengths
+	 */
+	std::vector<double> flex_len;
+	
+      } /** flexible constraint data */ flexible_constraint;
       
-      /**
-       * flexible constraints kinetic energy.
-       */
-      std::vector<double> flexible_ekin;
-      
+      //////////////////////////////////////////////////
       /**
        * j value average
        */
@@ -133,6 +146,7 @@ namespace configuration
        */
       std::vector<double> jvalue_curr;
 
+      //////////////////////////////////////////////////
       /**
        * @struct pscale struct
        * stores periodic scaling information
@@ -162,6 +176,7 @@ namespace configuration
 	
       } /** periodic scaling information */ pscale;
 
+      //////////////////////////////////////////////////
       /**
        * roto-translational constraints
        * @struct rottrans_constr_struct
@@ -183,6 +198,10 @@ namespace configuration
       } /** roto-translational constraints information */ rottrans_constr;
 
     }; // special
+
+    //////////////////////////////////////////////////////////////////////
+    // accessors
+    //////////////////////////////////////////////////////////////////////
     
     /**
      * get the current state
@@ -240,6 +259,10 @@ namespace configuration
     void initialise(topology::Topology & topo,
 		    simulation::Parameter const & param,
 		    bool gather = true);
+
+    //////////////////////////////////////////////////////////////////////
+    // data
+    //////////////////////////////////////////////////////////////////////
 
   protected:
 

@@ -1,3 +1,60 @@
+2004-09-07 15:38  markus
+
+	* INSTALL, VERSION, doc/doxygen.conf, program/BUILD_NUMBER,
+	  program/md.cc: version / build number
+
+2004-09-07 15:38  markus
+
+	* src/stdheader.h: blitz clean-up
+
+2004-09-07 15:37  markus
+
+	* acinclude.m4, configure.in, src/Makefile.am: GSL provided m4
+	  macro
+
+2004-09-07 15:37  markus
+
+	* src/algorithm/create_md_sequence.cc: clean up
+
+2004-09-07 15:36  markus
+
+	* src/check/check_forcefield.cc: debug messages
+
+2004-09-07 15:36  markus
+
+	* src/algorithm/integration/: steepest_descent.cc,
+	  steepest_descent.h: initialization bug: init not called
+
+2004-09-07 15:30  markus
+
+	* src/io/: argument.cc, argument.h: reference to local variable
+	  fixes
+
+2004-09-07 15:30  markus
+
+	* src/io/: read_input.cc, read_special.cc: try catch fixes
+
+2004-09-07 15:30  markus
+
+	*
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc:
+	  atomic cutoff, OpenMP fixes
+
+2004-09-07 15:29  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_innerloop.cc,
+	  nonbonded_interaction.cc, perturbed_nonbonded_set.cc: OpenMP
+	  fixes
+
+2004-09-06 17:12  markus
+
+	* src/interaction/special/jvalue_restraint_interaction.cc: forward
+	  declaration missing
+
+2004-09-06 09:08  markus
+
+	* ChangeLog, program/BUILD_NUMBER: build 93
+
 2004-09-06 09:02  markus
 
 	* acinclude.m4, configure.in, src/Makefile.am, src/stdheader.h,

@@ -240,6 +240,55 @@ void interaction::Nonbonded_Outerloop
 }  
 
 /**
+ * calculate the interaction for a given atom pair.
+ * SLOW! as it has to create the periodicity...
+ */
+int interaction::Nonbonded_Outerloop::calculate_interaction
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ unsigned int atom_i, unsigned int atom_j,
+ math::Vec & force, 
+ double &e_lj, double &e_crf
+ )
+{
+  SPLIT_INNERLOOP(_calculate_interaction, topo, conf, sim, atom_i, atom_j, force, e_lj, e_crf);
+  return 0;
+}
+
+template<typename t_interaction_spec>
+int interaction::Nonbonded_Outerloop
+::_calculate_interaction(topology::Topology & topo,
+			 configuration::Configuration & conf,
+			 simulation::Simulation & sim,
+			 unsigned int atom_i, unsigned int atom_j,
+			 math::Vec & force,
+			 double & e_lj, double & e_crf)
+{
+  math::Vec r;
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  
+  Nonbonded_Term term;
+  term.init(sim);
+
+  const lj_parameter_struct &lj = 
+    m_param.lj_parameter(topo.iac(atom_i),
+			 topo.iac(atom_j));
+  
+  periodicity.nearest_image(conf.current().pos(atom_i), conf.current().pos(atom_j), r);
+
+  double f;
+  term.lj_crf_interaction(r, lj.c6, lj.c12,
+			  topo.charge()(atom_i) * topo.charge()(atom_j),
+			  f, e_lj, e_crf);
+  force = f * r;
+
+  return 0;
+}
+
+
+/**
  * calculate the hessian for a given atom.
  * this will be VERY SLOW !
  */
@@ -288,8 +337,10 @@ int interaction::Nonbonded_Outerloop
       j_it != j_to;
       ++j_it){
 
+    DEBUG(8, "\thessian: checking pairlist[" << atom_i << "] : " << *j_it);
+
     if (*j_it != atom_j) continue;
-    DEBUG(12, "\thessian pair in pairlist: " << atom_i << " - " << atom_j);
+    DEBUG(8, "\thessian pair in pairlist: " << atom_i << " - " << atom_j);
 
     periodicity.nearest_image(conf.current().pos(atom_i),
 			      conf.current().pos(atom_j),
@@ -317,7 +368,7 @@ int interaction::Nonbonded_Outerloop
       ++j_it){
     
     if (*j_it != atom_i) continue;
-    DEBUG(12, "\thessian pair in pairlist: " << atom_j << " - " << atom_i);
+    DEBUG(9, "\thessian pair in pairlist: " << atom_j << " - " << atom_i);
 
     periodicity.nearest_image(conf.current().pos(atom_i),
 			      conf.current().pos(atom_j),

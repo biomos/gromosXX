@@ -193,18 +193,19 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   }
   
   if (param.constraint.solute.algorithm == simulation::constr_flexshake){
-    conf.special().flexible_vel.resize(topo.solute().distance_constraints().size()+
-				       topo.perturbed_solute().distance_constraints().size());
+    conf.special().flexible_constraint.flexible_vel.
+      resize(topo.solute().distance_constraints().size()+
+	     topo.perturbed_solute().distance_constraints().size());
     const unsigned int numb = unsigned(param.multibath.multibath.size());
 
-    conf.special().flexible_ekin.resize(numb);
+    conf.special().flexible_constraint.flexible_ekin.resize(numb);
 
     buffer = m_block["FLEXV"];
     if (buffer.size() && param.constraint.solute.flexshake_readin){
       block_read.insert("FLEXV");
       if (!quiet)
 	std::cout << "\treading FLEXV...\n";
-      _read_flexv(conf.special().flexible_vel, buffer, 
+      _read_flexv(conf.special().flexible_constraint.flexible_vel, buffer, 
 		  topo.solute().distance_constraints(),
 		  topo.perturbed_solute().distance_constraints());
 

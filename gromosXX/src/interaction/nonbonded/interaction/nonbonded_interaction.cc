@@ -195,6 +195,26 @@ calculate_interactions(topology::Topology & topo,
 }
 
 /**
+ * calculate the interaction for a given atom pair.
+ * SLOW! as it has to create the periodicity...
+ */
+int interaction::Nonbonded_Interaction::calculate_interaction
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ unsigned int atom_i, unsigned int atom_j,
+ math::Vec & force, 
+ double &e_lj, double &e_crf
+ )
+{
+  assert(m_nonbonded_set.size() >= 1);
+  return m_nonbonded_set[0]->calculate_interaction(topo, conf, sim,
+						   atom_i, atom_j,
+						   force, e_lj, e_crf);
+}
+
+/**
  * calculate the hessian for a given atom.
  */
 int interaction::Nonbonded_Interaction::calculate_hessian(topology::Topology & topo,

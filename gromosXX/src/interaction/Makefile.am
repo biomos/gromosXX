@@ -1,18 +1,13 @@
-INCLUDES = -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special
+
 
 xxincludedir = 			$(includedir)/gromosXX/interaction
-xxffincludedir = 		$(includedir)/gromosXX/interaction/forcefield
-xxbincludedir =			$(includedir)/gromosXX/interaction/bonded
-xxnbincludedir =		$(includedir)/gromosXX/interaction/nonbonded
-xxspincludedir =		$(includedir)/gromosXX/interaction/special
 
 xxinclude_HEADERS =		interaction.h \
-				interaction_types.h
-
-xxffinclude_HEADERS =		forcefield/forcefield.h \
-				forcefield/create_forcefield.h
-
-xxbinclude_HEADERS =		bonded/create_bonded.h \
+				interaction_types.h \
+				forcefield/forcefield.h \
+				forcefield/create_forcefield.h \
+				bonded/create_bonded.h \
 				bonded/quartic_bond_interaction.h \
 				bonded/harmonic_bond_interaction.h \
 				bonded/angle_interaction.h \
@@ -22,9 +17,8 @@ xxbinclude_HEADERS =		bonded/create_bonded.h \
 				bonded/perturbed_harmonic_bond_interaction.h \
 				bonded/perturbed_angle_interaction.h \
 				bonded/perturbed_improper_dihedral_interaction.h \
-				bonded/perturbed_dihedral_interaction.h
-
-xxnbinclude_HEADERS =		nonbonded/create_nonbonded.h \
+				bonded/perturbed_dihedral_interaction.h \
+				nonbonded/create_nonbonded.h \
 				nonbonded/interaction_spec.h \
 				nonbonded/interaction/nonbonded_parameter.h \
 				nonbonded/interaction/nonbonded_term.h \
@@ -44,9 +38,8 @@ xxnbinclude_HEADERS =		nonbonded/create_nonbonded.h \
 				nonbonded/interaction/storage.h \
 				nonbonded/pairlist/pairlist.h \
 				nonbonded/pairlist/pairlist_algorithm.h \
-				nonbonded/pairlist/standard_pairlist_algorithm.h
-
-xxspinclude_HEADERS =		special/create_special.h \
+				nonbonded/pairlist/standard_pairlist_algorithm.h \
+				special/create_special.h \
 				special/position_restraint_interaction.h \
 				special/jvalue_restraint_interaction.h \
 				special/pscale.h

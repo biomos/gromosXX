@@ -79,12 +79,12 @@ void configuration::Configuration::initialise(topology::Topology & topo,
   }
   
   if (param.constraint.solute.algorithm == simulation::constr_flexshake &&
-      special().flexible_vel.size() == 0){
+      special().flexible_constraint.flexible_vel.size() == 0){
 
-    special().flexible_vel.resize(topo.solute().distance_constraints().size() +
+    special().flexible_constraint.flexible_vel.resize(topo.solute().distance_constraints().size() +
 				  topo.perturbed_solute().distance_constraints().size());
 
-    special().flexible_ekin.resize(numb);
+    special().flexible_constraint.flexible_ekin.resize(numb);
   }
   
   // resize the arrays

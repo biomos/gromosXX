@@ -1001,9 +1001,9 @@ void io::Out_Configuration
     if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
       m_output << "FLEXSHAKE\n";
       m_output << "\tflex_ekin";
-      for(unsigned int i=0; i < conf.special().flexible_ekin.size(); ++i)
+      for(unsigned int i=0; i < conf.special().flexible_constraint.flexible_ekin.size(); ++i)
 	m_output << std::setw(12) << std::setprecision(4) << std::scientific
-		 << conf.special().flexible_ekin[i];
+		 << conf.special().flexible_constraint.flexible_ekin[i];
       m_output << "\nEND\n";
     }
     
@@ -1203,7 +1203,7 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
 {
   DEBUG(10, "FLEXV");
   
-  std::vector<double>::const_iterator flexv_it = conf.special().flexible_vel.begin();
+  std::vector<double>::const_iterator flexv_it = conf.special().flexible_constraint.flexible_vel.begin();
   std::vector<topology::two_body_term_struct>::const_iterator
     constr_it = topo.solute().distance_constraints().begin(),
     constr_to = topo.solute().distance_constraints().end();

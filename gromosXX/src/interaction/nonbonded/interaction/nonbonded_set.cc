@@ -148,6 +148,26 @@ int interaction::Nonbonded_Set
 }
 
 /**
+ * calculate the interaction for a given atom pair.
+ * SLOW! as it has to create the periodicity...
+ */
+int interaction::Nonbonded_Set::calculate_interaction
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ unsigned int atom_i, unsigned int atom_j,
+ math::Vec & force, 
+ double &e_lj, double &e_crf
+ )
+{
+  return m_outerloop.calculate_interaction(topo, conf, sim,
+					   atom_i, atom_j,
+					   force, e_lj, e_crf);
+}
+
+
+/**
  * calculate the hessian for a given atom.
  * this will be VERY SLOW !
  */

@@ -126,7 +126,7 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       {
 	// let's try to get the forcefield
 	interaction::Forcefield * ff = NULL;
-
+	
 	for(size_t i=0; i < md_seq.size(); ++i){
 	  if (md_seq[i]->name == "Forcefield"){
 	    DEBUG(8, "flexible shake: forcefield found");
@@ -139,35 +139,30 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  io::messages.add("no forcefield found", "create_constraints",
 			   io::message::error);
 	}
+	
+	if (!sim.param().perturbation.perturbation){
 
-	algorithm::Flexible_Constraint * fs = 
-	  new algorithm::Flexible_Constraint
-	  (sim.param().constraint.solute.shake_tolerance, 1000, ff);
+	  algorithm::Flexible_Constraint * fs = 
+	    new algorithm::Flexible_Constraint
+	    (sim.param().constraint.solute.shake_tolerance, 1000, ff);
 
-	it.read_harmonic_bonds(fs->parameter());
-	// fs->init(topo, conf, sim, quiet);
-	md_seq.push_back(fs);
+	  it.read_harmonic_bonds(fs->parameter());
 
-	if (sim.param().perturbation.perturbation){
+	  md_seq.push_back(fs);
 	  
-	  io::messages.add("perturbed flexible constraints uncoupled!",
-			   "create_constraints",
-			   io::message::error);
+	}
+	else{
 
 	  algorithm::Perturbed_Flexible_Constraint * pfc =
-	    new algorithm::Perturbed_Flexible_Constraint(*fs);
-	  // pfc->init(topo, conf, sim, quiet);
+	    new algorithm::Perturbed_Flexible_Constraint
+	    (sim.param().constraint.solute.shake_tolerance, 1000, ff);
+
 	  md_seq.push_back(pfc);
 
 	}
 
-	/*
-	io::messages.add("flexible constraints disabled",
-			 "create_constraints",
-			 io::message::error);
-	*/
-
 	break;
+
       }
     default:
       {

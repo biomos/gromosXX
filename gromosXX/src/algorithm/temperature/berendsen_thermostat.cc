@@ -69,7 +69,7 @@ void algorithm::Berendsen_Thermostat
       // small flexible constraints hack!
       if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
 	free_temp = 2 *
-	  (b_it->ekin - conf.special().flexible_ekin[num]) / (b_it->dof * math::k_Boltzmann);
+	  (b_it->ekin - conf.special().flexible_constraint.flexible_ekin[num]) / (b_it->dof * math::k_Boltzmann);
       }
       else{
 	free_temp = 2 * 

@@ -58,16 +58,20 @@ void algorithm::Shake
  * do one iteration
  */
 template<math::boundary_enum B, math::virial_enum V>
-int algorithm::Shake::shake_iteration(topology::Topology const &topo,
-				      configuration::Configuration & conf,
-				      bool & convergence,
-				      int first,
-				      std::vector<bool> &skip_now,
-				      std::vector<bool> &skip_next,
-				      std::vector<topology::two_body_term_struct> const & constr,
-				      double dt,
-				      math::Periodicity<B> const & periodicity,
-				      bool do_constraint_force, unsigned int force_offset)
+int algorithm::Shake::shake_iteration
+(
+ topology::Topology const &topo,
+ configuration::Configuration & conf,
+ bool & convergence,
+ int first,
+ std::vector<bool> &skip_now,
+ std::vector<bool> &skip_next,
+ std::vector<topology::two_body_term_struct> const & constr,
+ double dt,
+ math::Periodicity<B> const & periodicity,
+ bool do_constraint_force, unsigned int force_offset
+ )
+
 {
   convergence = true;
 

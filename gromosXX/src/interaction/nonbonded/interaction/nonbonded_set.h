@@ -8,8 +8,28 @@
 #ifndef INCLUDED_NONBONDED_SET_H
 #define INCLUDED_NONBONDED_SET_H
 
+#include "pairlist.h"
+#include "storage.h"
+#include "nonbonded_outerloop.h"
+
+namespace topology
+{
+  class Topology;
+}
+namespace configuration
+{
+  class Configuration;
+}
+namespace simulation
+{
+  class Simulation;
+}
+
 namespace interaction
 {
+  class Pairlist_Algorithm;
+  class Nonbonded_Parameter;
+  
   /**
    * @class Nonbonded_Set
    * calculates the nonbonded interactions.
@@ -43,6 +63,17 @@ namespace interaction
 				       simulation::Simulation & sim,
 				       int tid = 0, int num_threads = 1);
 
+    /**
+     * calculate the interaction for a given atom pair.
+     * SLOW! as it has to create the periodicity...
+     */
+    int calculate_interaction(topology::Topology & topo,
+			      configuration::Configuration & conf,
+			      simulation::Simulation & sim,
+			      unsigned int atom_i, unsigned int atom_j,
+			      math::Vec & force, 
+			      double &e_lj, double &e_crf);
+    
     /**
      * calculate the hessian for a given atom.
      */
