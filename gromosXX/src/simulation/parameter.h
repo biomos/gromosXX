@@ -206,6 +206,15 @@ namespace simulation
        * NSCM parameter
        */
       int skip_step;
+      /**
+       * remove angular momentum.
+       */
+      bool remove_rot;
+      /**
+       * remove translational momentum.
+       */
+      bool remove_trans;
+      
     } centreofmass;
 
     /**

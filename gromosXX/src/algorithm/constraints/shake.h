@@ -48,7 +48,14 @@ namespace algorithm
     {
       return m_parameter;
     }
-    
+
+    /**
+     * initialize startup positions and velocities
+     * if required.
+     */
+    int init(topology::Topology & topo,
+	     configuration::Configuration & conf,
+	     simulation::Simulation & sim);
 
   protected:
 

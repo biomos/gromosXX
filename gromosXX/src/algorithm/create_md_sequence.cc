@@ -34,6 +34,7 @@
 
 #include <math/periodicity.h>
 #include <algorithm/constraints/shake.h>
+#include <algorithm/constraints/remove_com_motion.h>
 
 #include <io/print_block.h>
 
@@ -57,6 +58,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   interaction::create_g96_forcefield(*ff, topo, sim.param(), it);
 
   // construct the md algorithm
+  algorithm::Remove_COM_Motion * rcom =
+    new algorithm::Remove_COM_Motion;
+  md_seq.push_back(rcom);
+
   md_seq.push_back(ff);
   md_seq.push_back(new algorithm::Leap_Frog_Velocity);
   md_seq.push_back(new algorithm::Leap_Frog_Position);
@@ -74,6 +79,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Shake<math::no_virial>
 	    (sim.param().shake.tolerance);
 	  it.read_harmonic_bonds(s->parameter());
+	  s->init(topo, conf, sim);
 	  md_seq.push_back(s);
 	  break;
 	}
@@ -83,9 +89,16 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Shake<math::atomic_virial>
 	    (sim.param().shake.tolerance);
 	  it.read_harmonic_bonds(s->parameter());
+	  s->init(topo, conf, sim);
 	  md_seq.push_back(s);
 	break;
     }
+  }
+  else if (sim.param().start.shake_pos || sim.param().start.shake_vel){
+    io::messages.add("Shaking initial positions / velocities without "
+		     "using shake during the simulation illegal.",
+		     "create md sequence",
+		     io::message::error);
   }
 
   // temperature calculation (always!)

@@ -364,3 +364,48 @@ int algorithm::Shake<do_virial>
 		   
 }
 
+template<math::virial_enum do_virial>
+int algorithm::Shake<do_virial>
+::init(topology::Topology & topo,
+       configuration::Configuration & conf,
+       simulation::Simulation & sim)
+{
+
+  if (sim.param().start.shake_pos){
+    std::cout << "shaking initial positions\n";
+
+    // old and current pos and vel are the same...
+    // shake the current ones
+    apply(topo, conf, sim);
+
+    // restore the velocities
+    conf.current().vel = conf.old().vel;
+    
+    // take a step back
+    conf.old().pos = conf.current().pos;
+    
+    if (sim.param().start.shake_vel){
+      std::cout << "shaking initial velocities\n";
+
+      conf.current().pos = conf.old().pos - 
+	sim.time_step_size() * conf.old().vel;
+    
+      // shake again
+      apply(topo, conf, sim);
+    
+      // restore the positions
+      conf.current().pos = conf.old().pos;
+    
+      // velocities are in opposite direction (in time)
+      conf.current().vel = -1.0 * conf.current().vel;
+      conf.old().vel = conf.current().vel;
+    }
+    
+  }
+  else if (sim.param().start.shake_vel){
+    io::messages.add("shaking velocities without shaking positions illegal.",
+		     "shake", io::message::error);
+  }
+  
+  return 0;
+}

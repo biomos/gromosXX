@@ -932,6 +932,8 @@ void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param)
     param.centreofmass.ndfmin = 0;
     param.start.remove_com=false;
     param.centreofmass.skip_step = 0;
+    param.centreofmass.remove_rot = false;
+    param.centreofmass.remove_trans = false;
     return;
   }
 
@@ -944,7 +946,16 @@ void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param)
   _lineStream >> param.centreofmass.ndfmin 
 	      >> ntcm 
 	      >> param.centreofmass.skip_step;
-  
+
+  if (param.centreofmass.skip_step){
+    param.centreofmass.remove_rot = true;
+    param.centreofmass.remove_trans = true;
+  }
+  else{
+    param.centreofmass.remove_rot = false;
+    param.centreofmass.remove_trans = false;
+  }
+
   if (_lineStream.fail())
     io::messages.add("bad line in CENTREOFMASS block",
 		     "In_Parameter", io::message::error);

@@ -9,7 +9,8 @@ include_HEADERS =	algorithm.h \
 			pressure/berendsen_barostat.h \
 			create_md_sequence.h \
 			constraints/shake.h \
-			constraints/shake.tcc
+			constraints/shake.tcc \
+			constraints/remove_com_motion.h
 
 lib_LTLIBRARIES	=	libalgorithm.la
 
@@ -22,7 +23,8 @@ libalgorithm_la_SOURCES =	algorithm.cc \
 				temperature/temperature_calculation.cc \
 				temperature/berendsen_thermostat.cc \
 				pressure/pressure_calculation.cc \
-				pressure/berendsen_barostat.cc
+				pressure/berendsen_barostat.cc \
+				constraints/remove_com_motion.cc
 
 bin_PROGRAMS =			
 
