@@ -92,8 +92,7 @@ namespace interaction
     /**
      * calculate the 1,4-interactions.
      */
-    void do_14_interactions(typename t_simulation::topology_type &topo,
-			    typename t_simulation::system_type &sys);
+    void do_14_interactions(t_simulation &sim);
 
   };
   

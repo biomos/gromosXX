@@ -128,7 +128,7 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
   sim.system().force() += m_longrange_force;
 
   // add 1,4 - interactions
-  do_14_interactions(sim.topology(), sim.system());
+  do_14_interactions(sim);
 
 }
 
@@ -190,43 +190,55 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
  */
 template<typename t_simulation, typename t_pairlist>
 inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
-::do_14_interactions(typename t_simulation::topology_type &topo,
-		     typename t_simulation::system_type &sys)
+::do_14_interactions(t_simulation &sim)
 {
   math::Vec v;
-  math::VArray &pos = sys.pos();
-  math::VArray &force = sys.force();
+  math::VArray &pos   = sim.system().pos();
+  math::VArray &force = sim.system().force();
   
   DEBUG(7, "\tcalculate 1,4-interactions");
-  
+  const double crf_2 = sim.nonbonded().RF_constant() / 2;
+  const double crf_di = (1 - crf_2)
+          / ( sim.nonbonded().RF_cutoff() 
+	    * sim.nonbonded().RF_cutoff() 
+	    * sim.nonbonded().RF_cutoff());
+
   std::set<int>::const_iterator it, to;
   
-  for(size_t i=0; i<topo.num_solute_atoms(); ++i){
-    it = topo.one_four_pair(i).begin();
-    to = topo.one_four_pair(i).end();
+  for(size_t i=0; i<sim.topology().num_solute_atoms(); ++i){
+    it = sim.topology().one_four_pair(i).begin();
+    to = sim.topology().one_four_pair(i).end();
     
     for( ; it != to; ++it){
       DEBUG(10, "\tpair " << i << " - " << *it);
       
-      sys.periodicity().nearest_image(pos(i), pos(*it), v);
+      sim.system().periodicity().nearest_image(pos(i), pos(*it), v);
       const double dist2 = dot(v, v);
-
+      const double dist = sqrt(dist2);
+      
       DEBUG(10, "\tdist2 = " << dist2);
       assert(dist2 != 0.0);
 
       const lj_parameter_struct &lj = 
-	lj_parameter(topo.iac(i),
-		     topo.iac(*it));
+	lj_parameter(sim.topology().iac(i),
+		     sim.topology().iac(*it));
 
       DEBUG(10, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
 
+      const double q = sim.topology().charge()(i) 
+	* sim.topology().charge()(*it);
+
+      DEBUG(10, "\tcharge product: " << q);
+
       const double dist6i = 1.0 / (dist2 * dist2 * dist2);
     
-      math::Vec f = v * ((2 * lj.cs12 * dist6i - lj.cs6)
-			 * 6 * dist6i / dist2);
+      const double f_vdw = (2 * lj.cs12 * dist6i - lj.cs6)
+		  	   * 6 * dist6i / dist2;
+      const double f_el = q * coulomb_constant() 
+			  * ( 1.0/(dist*dist2) + crf_di );
 
-      force(i) += f;
-      force(*it) -= f;
+      force(i) += v * (f_vdw + f_el);
+      force(*it) -= v * (f_vdw + f_el);
     } // loop over 1,4 pairs
   } // loop over solute atoms
 }  
