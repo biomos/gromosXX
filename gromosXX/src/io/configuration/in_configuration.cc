@@ -90,7 +90,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   }
   
   // read velocities
-  if(!param.start.generate_velocities){
+  if(!param.start.generate_velocities || param.minimise.ntem){
     buffer = m_block["VELOCITY"];
     if (buffer.size()){
       if (!quiet)
