@@ -4,3 +4,4 @@
  */
 
 #include "blockinput.h"
+#include "message.h"

@@ -130,7 +130,7 @@ io::InTopology &io::InTopology
 
   buffer = m_block["BONDTYPE"];
 
-  
+  io::messages.add("converting bond force constants from quartic to harmonic form", "InTopology::bondtype", io::message::notice);
 
   // 1. BONDTYPE 2. number of types
   for (it = buffer.begin() + 2; 
