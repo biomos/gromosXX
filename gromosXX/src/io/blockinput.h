@@ -75,8 +75,8 @@ namespace io {
    */
   inline
   std::string& concatenate(
-			   std::vector<std::string>::iterator begin,
-			   std::vector<std::string>::iterator end,
+			   std::vector<std::string>::const_iterator begin,
+			   std::vector<std::string>::const_iterator end,
 			   std::string& s,
 			   const char& sep = '\n'
 			   );
