@@ -14,6 +14,7 @@
 #include <configuration/energy.h>
 
 #include <util/error.h>
+#include <config.h>
 
 void configuration::Energy::zero(bool potential, bool kinetic)
 {
