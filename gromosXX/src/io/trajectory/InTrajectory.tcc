@@ -176,10 +176,10 @@ inline bool io::InTrajectory::_read_box(simulation::system &sys, std::vector<std
   _lineStream >> i;
   switch(i){
     case 0:
-      sys.boundary_condition(simulation::vacuum);
+      sys.boundary_condition(math::vacuum);
       break;
     case 1:
-      sys.boundary_condition(simulation::triclinic);
+      sys.boundary_condition(math::triclinic);
       break;
     default:
       throw std::runtime_error("bad boundary conditions in TRICLINICBOX block");

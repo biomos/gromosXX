@@ -13,6 +13,38 @@ inline interaction::nonbonded_interaction<t_simulation>
 }
 
 /**
+ * add a lj parameter struct.
+ */
+template<typename t_simulation>
+inline void interaction::nonbonded_interaction<t_simulation>
+::add_lj_parameter(int i, int j, lj_parameter_struct lj)
+{
+  assert(i < m_lj_parameter.size());
+  assert(j < m_lj_parameter.size());
+  assert(i < m_lj_parameter[j].size());
+  assert(j < m_lj_parameter[i].size());
+  
+  m_lj_parameter[i][j] = lj;
+  m_lj_parameter[j][i] = lj;
+}
+
+/**
+ * resize the matrix.
+ */
+template<typename t_simulation>
+inline void interaction::nonbonded_interaction<t_simulation>
+::resize(size_t i)
+{
+  m_lj_parameter.resize(i);
+  typename std::vector< std::vector<lj_parameter_struct> >::iterator
+    it = m_lj_parameter.begin(),
+    to = m_lj_parameter.end();
+  
+  for(; it!=to; ++it)
+    it->resize(i);
+}
+
+/**
  * calculate nonbonded forces and energies.
  */
 template<typename t_simulation>

@@ -47,5 +47,7 @@ namespace math
 
 } // math
 
+#include "periodicity.h"
+
 #endif
 

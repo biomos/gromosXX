@@ -12,6 +12,28 @@
 using namespace math;
 
 /**
+ * provide comparision operators for the blitz TinyVector.
+ * they should be implemented by blitz, but i cannot get
+ * them to work?!
+ */
+bool operator==(math::Vec &t1, math::Vec &t2)
+{
+  bool b = true;
+  for(int i=0; i<3; ++i)
+    if (t1(i) != t2(i)) b = false;
+  return b;
+}
+
+/**
+ * != operator
+ */
+bool operator!=(math::Vec &t1, math::Vec &t2)
+{
+  return !(t1 == t2);
+}
+
+
+/**
  * testing math thingies
  */
 int math_test()
@@ -45,13 +67,49 @@ int math_test()
   return result;
 }
 
+int periodicity_test()
+{
+  int result = 0;
+  
+  Matrix box(Vec(10.0, 0.0, 0.0),
+	     Vec(0.0, 5.0, 0.0),
+	     Vec(0.0, 0.0, 5.0));
+  
+  periodicity<vacuum> pv(box);
+  
+  Vec v1(1.0, 2.5, 2.5);
+  Vec v2(9.0, 2.5, 2.5);
+  Vec v3;
+  
+  pv.nearest_image(v1, v2, v3);
+  
+  // std::cout << "nearest image(vacuum): " << v3 << std::endl;
+
+  Vec rv(-8.0, 0.0, 0.0);
+  if (v3 != rv) ++result;
+  
+  periodicity<triclinic> pi(box);
+  pi.nearest_image(v1, v2, v3);
+
+  // std::cout << "nearest image(triclinic): " << v3 << std::endl;
+  
+  Vec ri(2.0, 0.0, 0.0);
+  if (v3 != ri) ++result;
+
+  return 0;
+}
+
+
 int main()
 {
   int r1;
   if ((r1 = math_test()))
     std::cout << "math_test failed" << std::endl;
+  int r2;
+  if ((r2 = periodicity_test()))
+    std::cout << "periodicity_test failed" << std::endl;
   
-  return r1;
+  return r1 + r2;
 
 }
 

@@ -232,7 +232,7 @@ io::InTopology &io::InTopology
     _lineStream >> k >> r;
 
     if (_lineStream.fail() || ! _lineStream.eof())
-      throw std::runtime_error("bad line in bond type block");
+      throw std::runtime_error("bad line in BONDTYPE block");
 
     // we are reading into harmonic bond term, so convert k
     k *= 2 * r * r;
@@ -244,6 +244,56 @@ io::InTopology &io::InTopology
   
 
   return *this;
+}
+
+template<typename t_simulation>
+io::InTopology &io::InTopology
+::operator>>(interaction::nonbonded_interaction<t_simulation> &nbi){
+
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  buffer = m_block["LJPARAMETERS"];
+
+  int num, n;
+  
+  it = buffer.begin() + 1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  _lineStream >> num;
+
+  // calculate the matrix size from: x = n*(n+1)/2
+  size_t sz = (sqrt(8*num+1)-1)/2;
+  nbi.resize(sz);
+
+  ++it;
+  
+  for (n=0; it != buffer.end() - 1; ++it, ++n) {
+
+    typename interaction::nonbonded_interaction<t_simulation>::lj_parameter_struct s;
+    int i, j;
+    
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> i >> j >> s.c12 >> s.c6 >> s.cs12 >> s.cs6;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+      throw std::runtime_error("bad line in LJPARAMETERS block");
+
+    // and add...
+    nbi.add_lj_parameter(i-1, j-1, s);
+
+  }
+
+  if (num != n){
+    io::messages.add("Reading the LJPARAMETERS failed (n != num)",
+		     "InTopology",
+		     io::message::critical);
+    throw std::runtime_error("bad LJPARAMETERS block (n != num)");
+  }
+
+  return *this;  
 }
 
 inline void io::InTopology::read_stream()

@@ -29,6 +29,11 @@ namespace io {
      */
     template<typename t_simulation>
     InTopology & operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi);
+    /**
+     * Read in the nonbonded interaction types (lennard-jones).
+     */
+    template<typename t_simulation>
+    InTopology & operator >>(interaction::nonbonded_interaction<t_simulation> &nbi);
 
   private:
     /**

@@ -1,6 +1,8 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS = 		gmath.h
+include_HEADERS = 		gmath.h \
+				periodicity.h \
+				periodicity.tcc
 
 lib_LTLIBRARIES	= 		libmath.la
 

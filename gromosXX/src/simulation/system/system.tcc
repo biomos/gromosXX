@@ -125,7 +125,7 @@ inline math::Matrix & simulation::system::box()
 /**
  * boundary condition accessor.
  */
-inline simulation::boundary_enum simulation::system::boundary_condition()
+inline math::boundary_enum simulation::system::boundary_condition()
 {
   return m_boundary_condition;
 }
@@ -133,7 +133,7 @@ inline simulation::boundary_enum simulation::system::boundary_condition()
 /**
  * set boundary condition.
  */
-inline void simulation::system::boundary_condition(boundary_enum b)
+inline void simulation::system::boundary_condition(math::boundary_enum b)
 {
   m_boundary_condition = b;
 }

@@ -9,21 +9,6 @@
 namespace simulation
 {
   /**
-   * @enum boundary_enum
-   * boundary condition
-   */
-  enum boundary_enum{
-    /**
-     * vacuum.
-     */
-    vacuum = 0,
-    /**
-     * triclinic box
-     */
-    triclinic = 1
-  };
-
-  /**
    * @class system
    * holds the state information of
    * the simulated system.
@@ -84,11 +69,11 @@ namespace simulation
     /**
      * the boundary condition.
      */
-    boundary_enum boundary_condition();
+    math::boundary_enum boundary_condition();
     /**
      * set the boundary condition.
      */
-    void boundary_condition(boundary_enum b);
+    void boundary_condition(math::boundary_enum b);
     
   protected:
     /**
@@ -146,7 +131,7 @@ namespace simulation
     /**
      * the boundary condition.
      */
-    boundary_enum m_boundary_condition;
+    math::boundary_enum m_boundary_condition;
     
   }; // system
   
