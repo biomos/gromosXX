@@ -432,6 +432,39 @@ io::InTopology &io::InTopology
 
   return *this;
 }
+template<typename t_simulation>
+io::InTopology &io::InTopology
+::operator>>(interaction::Quartic_bond_interaction<t_simulation> &qbi){
+
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  buffer = m_block["BONDTYPE"];
+
+  io::messages.add("storing squares of the minimum bond length distances", 
+		   "InTopology::bondtype", io::message::notice);
+
+  // 1. BONDTYPE 2. number of types
+  for (it = buffer.begin() + 2; 
+   it != buffer.end() - 1; ++it) {
+
+    double k, r;
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> k >> r;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+      throw std::runtime_error("bad line in BONDTYPE block");
+
+    // and add...
+    qbi.add(k, r*r);
+
+  }
+  
+
+  return *this;
+}
 
 template<typename t_simulation>
 io::InTopology &io::InTopology

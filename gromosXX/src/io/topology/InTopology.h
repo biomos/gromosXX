@@ -30,6 +30,12 @@ namespace io {
     template<typename t_simulation>
     InTopology & operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi);
     /**
+     * Read in the quartic bond parameters.
+     */
+    template<typename t_simulation>
+      InTopology & operator>>(interaction::Quartic_bond_interaction<t_simulation> &qbi);
+    
+    /**
      * Read in the angle parameters.
      */
     template<typename t_simulation>

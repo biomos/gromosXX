@@ -131,9 +131,9 @@ int main(int argc, char *argv[])
     interaction::forcefield<simulation_type> the_forcefield;
 
     // bonds
-    interaction::harmonic_bond_interaction<simulation_type> 
+    interaction::Quartic_bond_interaction<simulation_type> 
       *the_bond_interaction =
-      new interaction::harmonic_bond_interaction<simulation_type>;
+      new interaction::Quartic_bond_interaction<simulation_type>;
 
     // angles
     interaction::angle_interaction<simulation_type>
