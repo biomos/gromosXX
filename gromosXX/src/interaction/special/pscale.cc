@@ -60,7 +60,7 @@ int interaction::Periodic_Scaling<t_interaction_spec>
       // check whether the average ( = current value for instantaneous restraints )
       // is too far off
       if (conf.special().pscale.scaling[n] == 0 && // no scaling right now
-	  fabs(it->J0 - conf.special().jvalue_curr[n]) > sim.param().pscale.difference && // current diff too large
+	  // fabs(it->J0 - conf.special().jvalue_curr[n]) > sim.param().pscale.difference && // current diff too large
 	  fabs(it->J0 - conf.special().jvalue_av[n]) > sim.param().pscale.difference && // difference too large
 	  conf.special().pscale.t[n] > sim.param().pscale.ratio * sim.param().pscale.T // long enough w/o scaling
 	  ){
