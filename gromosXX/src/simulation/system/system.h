@@ -145,6 +145,10 @@ namespace simulation
      */
     simulation::Energy & energies();
     
+    /**
+     * check state
+     */
+    int check_state()const;
     
   protected:
     /**

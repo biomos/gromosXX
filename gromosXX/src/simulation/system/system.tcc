@@ -290,6 +290,17 @@ simulation::System<b>::energies()
   return m_energy;
 }
 
+/**
+ * check state
+ */
+template<math::boundary_enum b>
+inline int
+simulation::System<b>::check_state()const
+{
+  int result = 0;
+  return result;
+}
+
 
 namespace simulation
 {

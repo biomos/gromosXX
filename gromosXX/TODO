@@ -34,3 +34,7 @@ Release 0.0.3
 	-	perturbation & Tim / Bekker algorithm:
 		no perturbed atom in bins => 1. normal, 2. perturbed &
 		bins, 3. perturbed & perturbed
+
+	-	rotating the box w/o rotating coordinates is NOT OK.
+		translation ok, splitting by lattice vectors ok.
+		look into lattice reduction...

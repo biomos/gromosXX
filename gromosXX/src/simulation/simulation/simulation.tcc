@@ -164,7 +164,33 @@ inline void simulation::Simulation<t_topo, t_system>::calculate_degrees_of_freed
 template<typename t_topo, typename t_system>
 inline void simulation::Simulation<t_topo, t_system>::put_chargegroups_into_box()
 {
+  io::messages.add("not implemented","Simulation: put_chargegroups_into_box",
+		   io::message::error);
+}
 
+template<typename t_topo, typename t_system>
+inline int simulation::Simulation<t_topo, t_system>::check_state()const
+{
+  DEBUG(7, "checking state of Simulation");
+
+  int result = 0;
+
+  // check associated classes
+  result += m_topology.check_state();
+  result += m_system.check_state();
+
+  result += m_nonbonded.check_state();
+  result += m_multibath.check_state(m_topology.num_atoms());
+
+  if (m_time < 0)
+    io::messages.add("Simulation time < 0", "Simulation::check_state",
+		     io::message::warning);
+  if (m_steps < 0){
+    io::messages.add("Simulation steps < 0", "Simulation::check_state",
+		     io::message::error);
+    ++result;
+  }
+  
 }
 
 namespace simulation

@@ -119,7 +119,51 @@ inline void simulation::Multibath
     
   }
   
-  
 }
 
+inline int simulation::Multibath::check_state(size_t const num_atoms)const
+{
+  int result = 0;
+  int last_atom = 0;
+  std::vector<bath_struct>::const_iterator it = begin(),
+    to = end();
+  for( ; it!=to; ++it){
+    if (unsigned(it->last_atom) < last_atom){
+      io::messages.add("Multibath not sorted", "Multibath::check_state",
+		       io::message::error);
+      ++result;
+    }
+    if (it->last_atom <= num_atoms){
+      io::messages.add("Multibath last atom index too large",
+		       "Multibath::check_state",
+		       io::message::error);
+      ++result;
+    }
+    if (it->dof == 0)
+      io::messages.add("Multibath: bath with 0 degrees of freedom?",
+		       "Multibath::check_state",
+		       io::message::warning);
+    if (it->solute_constr_dof < 0 || it->solvent_constr_dof < 0){
+      io::messages.add("Multibath: constrained degrees of freedom negative",
+		       "Multibath::check_state",
+		       io::message::error);
+      ++result;
+    }
+    if (it->tau < 0 && it->tau != -1){
+      io::messages.add("Multibath: tau < 0 && tau != -1",
+		       "Multibath::check_state",
+		       io::message::error);
+      ++result;
+    }
+    if (it->temperature < 0){
+      io::messages.add("Multibath: temperature < 0",
+		       "Multibath::check_state",
+		       io::message::error);
+      ++result;
+    }
+    
+  }
   
+  return result;
+
+}

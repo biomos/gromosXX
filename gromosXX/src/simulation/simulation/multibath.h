@@ -66,6 +66,11 @@ namespace simulation
     template<typename t_topology>
     void calculate_degrees_of_freedom(t_topology &topo);
     
+    /**
+     * check the state.
+     */
+    int check_state(size_t const num_atoms)const;
+
   private:
     
   };

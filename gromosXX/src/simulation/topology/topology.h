@@ -186,6 +186,11 @@ namespace simulation
      */
     const size_t atom_energy_group(size_t i)const;
     
+    /**
+     * check state
+     */
+    int check_state()const;
+
   private:
     /**
      * the soluteatoms.

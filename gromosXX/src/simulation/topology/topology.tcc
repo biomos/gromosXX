@@ -388,6 +388,16 @@ simulation::Topology::atom_energy_group(size_t i)const
   return m_atom_energy_group[i];
 }
 
+/**
+ * check state
+ */
+inline int 
+simulation::Topology::check_state()const
+{
+  int result = 0;
+  return result;
+}
+
 namespace simulation
 {
   /**

@@ -119,3 +119,14 @@ double simulation::Nonbonded::RF_cutoff()const
   return m_RF_cutoff;
 }
 
+/**
+ * check state
+ */
+inline
+int simulation::Nonbonded::check_state(math::Box const &box)const
+{
+  int result = 0;
+
+  // check if the box is large enough...
+  return result;
+}

@@ -102,6 +102,12 @@ namespace simulation
      */
     void put_chargegroups_into_box();
 
+    /**
+     * check the state of the class (class invariant)
+     * @return 0 if ok.
+     */
+    int check_state()const;
+    
   private:
     /**
      * the topology.

@@ -67,6 +67,11 @@ namespace simulation
      * get reaction field cutoff
      */
     double RF_cutoff()const;
+
+    /**
+     * check state.
+     */
+    int check_state(math::Box const &box)const;
     
   private:      
     /**
@@ -103,6 +108,7 @@ namespace simulation
      * nonbonded reaction field constant
      */
     double m_RF_constant;
+
   };
 	  
   
