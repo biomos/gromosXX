@@ -82,7 +82,8 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
   unsigned int i;
   unsigned int size_i = unsigned(pairlist.size());
-
+  DEBUG(10, "outerloop pairlist size " << size_i);
+  
   unsigned int end = size_i;
 
   if (sim.param().force.spc_loop){

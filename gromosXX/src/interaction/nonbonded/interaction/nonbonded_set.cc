@@ -192,8 +192,10 @@ int interaction::Nonbonded_Set
   // ?????
   // m_outerloop.initialize(sim);
 
-  m_shortrange_storage.force.resize(conf.current().force.size());
-  m_longrange_storage.force.resize(conf.current().force.size());
+  const int num_atoms = topo.num_atoms();
+
+  m_shortrange_storage.force.resize(num_atoms);
+  m_longrange_storage.force.resize(num_atoms);
 
   m_shortrange_storage.energies.
     resize(unsigned(conf.current().energies.bond_energy.size()),
@@ -202,18 +204,9 @@ int interaction::Nonbonded_Set
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()));
   
-  /*
-  m_shortrange_storage.perturbed_energy_derivatives.resize
-    (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
-     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
-
-  m_longrange_storage.perturbed_energy_derivatives.resize
-    (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
-     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
-  */
-
   // and the pairlists
-  pairlist().resize(topo.num_atoms());
+  DEBUG(10, "pairlist size: " << num_atoms);
+  pairlist().resize(num_atoms);
 
   // check if we can guess the number of pairs
   const double vol = math::volume(conf.current().box, conf.boundary_type);
@@ -223,17 +216,18 @@ int interaction::Nonbonded_Set
       sim.param().pairlist.cutoff_short;
     
     const unsigned int pairs = 
-      int(1.3 * topo.num_atoms() / vol * 4.0 / 3.0 * math::Pi * c3);
+      int(1.3 * num_atoms / vol * 4.0 / 3.0 * math::Pi * c3);
 
     if (!quiet)
       std::cout << "\n\testimated pairlist size (per atom) : "
 		<< pairs << "\n\n";
     
-    for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    for(unsigned int i=0; i<num_atoms; ++i)
       pairlist()[i].reserve(pairs);
     
   }
 
   return 0;
+
 }
 

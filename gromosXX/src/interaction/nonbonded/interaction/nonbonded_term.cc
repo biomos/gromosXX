@@ -53,6 +53,8 @@ inline void interaction::Nonbonded_Term
 		     double const q,
 		     double &force, double &e_lj, double &e_crf)
 {
+  DEBUG(14, "\t\tnonbonded term");
+  
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
   const double dist2i = 1.0 / dist2;
@@ -69,7 +71,7 @@ inline void interaction::Nonbonded_Term
   force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i + 
       q_eps * (disti * dist2i + m_crf_cut3i);
 
-  DEBUG(15, "q=" << q << " 4pie=" << math::four_pi_eps_i 
+  DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i 
 	<< " crf_cut2i=" << m_crf_cut3i);
   
 }

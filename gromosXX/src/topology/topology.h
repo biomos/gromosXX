@@ -61,6 +61,14 @@ namespace topology
     math::SArray const & mass()const {return m_mass;}
 
     /**
+     * mass of atom i
+     */
+    double mass(int i)const 
+    {
+      return m_mass(i);
+    }
+    
+    /**
      * charge accessor
      */
     math::SArray &charge() {return m_charge;}
@@ -69,6 +77,11 @@ namespace topology
      * charge const accessor
      */
     math::SArray const & charge()const{return m_charge;}
+
+    double charge(int i)const
+    {
+      return m_charge(i);
+    }
     
     /**
      * solute accessor.
@@ -217,6 +230,12 @@ namespace topology
      */
     std::vector<int> const & chargegroups()const { return m_chargegroup; }
     
+    int chargegroup(int i)const 
+    {
+      assert(m_chargegroup.size() > i);
+      return m_chargegroup[i];
+    }
+
     /**
      * the number of chargegroups present.
      */
@@ -441,6 +460,7 @@ namespace topology
      */
     Topology & multicell_topo()
     {
+      assert(m_multicell_topo != NULL);
       return *m_multicell_topo;
     }
 

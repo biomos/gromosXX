@@ -52,6 +52,7 @@ template<math::boundary_enum b>
 static void _prepare_cog(configuration::Configuration & conf,
 			 topology::Topology & topo)
 {
+  DEBUG(10, "putting chargegroups into box");
   math::Periodicity<b> periodicity(conf.current().box);
   periodicity.put_chargegroups_into_box(conf, topo);
 }
@@ -75,20 +76,22 @@ prepare(topology::Topology & topo,
     SPLIT_BOUNDARY(_prepare_cog, conf, topo);
 
     // calculate cg cog's
+    DEBUG(10, "calculating cg cog (" << topo.num_solute_chargegroups() << ")");
     m_cg_cog.resize(topo.num_solute_chargegroups());
     math::VArray const &pos = conf.current().pos;
+    DEBUG(10, "pos.size() = " << pos.size());
 
-    // calculate all center of geometries
+    // calculate solute center of geometries
     topology::Chargegroup_Iterator
       cg1 =   topo.chargegroup_begin(),
       cg_to = topo.chargegroup_end();
     
     unsigned int i, num_cg = topo.num_solute_chargegroups();
     
-    // solute
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, m_cg_cog(i));
     }
+
   } // chargegroup based cutoff
   
 }
@@ -169,8 +172,10 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   // solute -
   for(cg1 = begin; cg1 < num_solute_cg; cg1+=stride){
     
-    for(int a1 = topo.chargegroups()[cg1],
-	  a_to = topo.chargegroups()[cg1+1];
+    DEBUG(10, "cg1 = " << cg1);
+    
+    for(int a1 = topo.chargegroup(cg1),
+	  a_to = topo.chargegroup(cg1+1);
 	a1 < a_to; ++a1){
       for(int a2 = a1+1; a2 < a_to; ++a2){
 	
@@ -178,14 +183,19 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 	if (excluded_solute_pair(topo, a1, a2))
 	  continue;
 	
+	assert(pairlist.size() > a1);
 	pairlist[a1].push_back(a2);
 	
       }
     }
     
     // solute - solute
+    DEBUG(10, "solute - solute");
+    
     for(cg2 = cg1+1; cg2 < num_solute_cg; ++cg2){
 
+      DEBUG(10, "cg2 = " << cg2);
+      
       assert(m_cg_cog.size() > unsigned(cg1) &&
 	     m_cg_cog.size() > unsigned(cg2));
     
@@ -200,11 +210,11 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
       
-	for(int a1 = topo.chargegroups()[cg1],
-	      a1_to = topo.chargegroups()[cg1+1];
+	for(int a1 = topo.chargegroup(cg1),
+	      a1_to = topo.chargegroup(cg1+1);
 	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroups()[cg2],
-		a2_to = topo.chargegroups()[cg2+1];
+	  for(int a2 = topo.chargegroup(cg2),
+		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 
 	    // the interactions
@@ -217,46 +227,65 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
       } // longrange
 
       // SHORTRANGE : at least the second cg is solvent => no exclusions
-	for(int a1 = topo.chargegroups()[cg1],
-	      a1_to = topo.chargegroups()[cg1+1];
-	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroups()[cg2],
-		a2_to = topo.chargegroups()[cg2+1];
-	      a2 != a2_to; ++a2){
+      DEBUG(15, "a1=" << topo.chargegroup(cg1) << " a1_to=" << topo.chargegroup(cg1+1));
+      DEBUG(15, "a2=" << topo.chargegroup(cg2) << " a2_to=" << topo.chargegroup(cg2+1));
 
-	    if (excluded_solute_pair(topo, a1, a2))
-	      continue;
+      for(int a1 = topo.chargegroup(cg1),
+	    a1_to = topo.chargegroup(cg1+1);
+	  a1 != a1_to; ++a1){
 
-	    pairlist[a1].push_back(a2);
-
-	  } // loop over atom of cg2
-	} // loop over atom of cg1
+	assert(a1 < topo.num_solute_atoms());
+	
+	for(int a2 = topo.chargegroup(cg2),
+	      a2_to = topo.chargegroup(cg2+1);
+	    a2 != a2_to; ++a2){
+	  
+	  assert(a2 < topo.num_solute_atoms());
+	  DEBUG(16, "checking excl " << a1 << " - " << a2);
+	  
+	  if (excluded_solute_pair(topo, a1, a2)){
+	    DEBUG(16, "->excluded (continue)");
+	    continue;
+	  }
+	  
+	  assert(pairlist.size() > a1);
+	  DEBUG(16, "push back a1=" << a1 << " in a pairlist " << pairlist.size());
+	  pairlist[a1].push_back(a2);
+	  DEBUG(16, "a2=" << a2 << " done");
+	  
+	} // loop over atom of cg2
+	DEBUG(16, "a2 for a1=" << a1 << " done");
+      } // loop over atom of cg1
       
     }
 
     // solute - solvent
+    DEBUG(10, "solute - solvent");
+    
     for( ; cg2 < num_cg; ++cg2){
 
+      DEBUG(10, "cg2 = " << cg2);
+      
       assert(m_cg_cog.size() > unsigned(cg1));
     
       periodicity.nearest_image(m_cg_cog(cg1), 
-				conf.current().pos(topo.chargegroups()[cg2]),
+				conf.current().pos(topo.chargegroup(cg2)),
 				r);
     
       // the distance
       const double d = math::abs2(r);
-    
+      
       if (d > m_cutoff_long_2){        // OUTSIDE
 	continue;
       }
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
 	
-	for(int a1 = topo.chargegroups()[cg1],
-	      a1_to = topo.chargegroups()[cg1+1];
+	for(int a1 = topo.chargegroup(cg1),
+	      a1_to = topo.chargegroup(cg1+1);
 	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroups()[cg2],
-		a2_to = topo.chargegroups()[cg2+1];
+	  for(int a2 = topo.chargegroup(cg2),
+		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 	    
 	    // the interactions
@@ -269,21 +298,22 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
       } // longrange
       
       // SHORTRANGE : at least the second cg is solvent => no exclusions
-      for(int a1 = topo.chargegroups()[cg1],
-	    a1_to = topo.chargegroups()[cg1+1];
+      for(int a1 = topo.chargegroup(cg1),
+	    a1_to = topo.chargegroup(cg1+1);
 	  a1 != a1_to; ++a1){
-	for(int a2 = topo.chargegroups()[cg2],
-	      a2_to = topo.chargegroups()[cg2+1];
+	for(int a2 = topo.chargegroup(cg2),
+	      a2_to = topo.chargegroup(cg2+1);
 	    a2 != a2_to; ++a2){
 	  
 	  pairlist[a1].push_back(a2);
 	  
 	} // loop over atom of cg2
       } // loop over atom of cg1
-      
     }
     
   } // cg1
+
+  DEBUG(10, "solvent - solvent");
 
   // solvent - solvent
   if (sim.param().force.spc_loop)
@@ -318,8 +348,8 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 
     for(int cg2 = cg1+1; cg2 < num_cg; ++cg2){
 
-      periodicity.nearest_image(conf.current().pos(topo.chargegroups()[cg1]),
-				conf.current().pos(topo.chargegroups()[cg2]),
+      periodicity.nearest_image(conf.current().pos(topo.chargegroup(cg1)),
+				conf.current().pos(topo.chargegroup(cg2)),
 				r);
     
       // the distance
@@ -331,11 +361,11 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
 	
-	for(int a1 = topo.chargegroups()[cg1],
-	      a1_to = topo.chargegroups()[cg1+1];
+	for(int a1 = topo.chargegroup(cg1),
+	      a1_to = topo.chargegroup(cg1+1);
 	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroups()[cg2],
-		a2_to = topo.chargegroups()[cg2+1];
+	  for(int a2 = topo.chargegroup(cg2),
+		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 	    
 	    // the interactions
@@ -348,11 +378,11 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
       } // longrange
       
       // SHORTRANGE : at least the second cg is solvent => no exclusions
-      for(int a1 = topo.chargegroups()[cg1],
-	    a1_to = topo.chargegroups()[cg1+1];
+      for(int a1 = topo.chargegroup(cg1),
+	    a1_to = topo.chargegroup(cg1+1);
 	  a1 != a1_to; ++a1){
-	for(int a2 = topo.chargegroups()[cg2],
-	      a2_to = topo.chargegroups()[cg2+1];
+	for(int a2 = topo.chargegroup(cg2),
+	      a2_to = topo.chargegroup(cg2+1);
 	    a2 != a2_to; ++a2){
 	  
 	  pairlist[a1].push_back(a2);
@@ -396,8 +426,8 @@ void interaction::Standard_Pairlist_Algorithm::_spc_loop
 
     for(int cg2 = cg1+1; cg2 < num_cg; ++cg2){
 
-      periodicity.nearest_image(conf.current().pos(topo.chargegroups()[cg1]),
-				conf.current().pos(topo.chargegroups()[cg2]),
+      periodicity.nearest_image(conf.current().pos(topo.chargegroup(cg1)),
+				conf.current().pos(topo.chargegroup(cg2)),
 				r);
     
       // the distance
@@ -505,8 +535,8 @@ _update_pert_cg(topology::Topology & topo,
   // solute -
   for(cg1 = begin; cg1 < num_solute_cg; cg1+=stride){
     
-    for(int a1 = topo.chargegroups()[cg1],
-	  a_to = topo.chargegroups()[cg1+1];
+    for(int a1 = topo.chargegroup(cg1),
+	  a_to = topo.chargegroup(cg1+1);
 	a1 < a_to; ++a1){
       for(int a2 = a1+1; a2 < a_to; ++a2){
 	
@@ -543,11 +573,11 @@ _update_pert_cg(topology::Topology & topo,
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
       
-	for(int a1 = topo.chargegroups()[cg1],
-	      a1_to = topo.chargegroups()[cg1+1];
+	for(int a1 = topo.chargegroup(cg1),
+	      a1_to = topo.chargegroup(cg1+1);
 	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroups()[cg2],
-		a2_to = topo.chargegroups()[cg2+1];
+	  for(int a2 = topo.chargegroup(cg2),
+		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 
 	    if (calculate_pair<t_interaction_spec, t_perturbation_details>
@@ -568,11 +598,11 @@ _update_pert_cg(topology::Topology & topo,
       } // longrange
 
       // SHORTRANGE : at least the second cg is solvent => no exclusions
-	for(int a1 = topo.chargegroups()[cg1],
-	      a1_to = topo.chargegroups()[cg1+1];
+	for(int a1 = topo.chargegroup(cg1),
+	      a1_to = topo.chargegroup(cg1+1);
 	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroups()[cg2],
-		a2_to = topo.chargegroups()[cg2+1];
+	  for(int a2 = topo.chargegroup(cg2),
+		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 
 	    if (excluded_solute_pair(topo, a1, a2))
@@ -598,7 +628,7 @@ _update_pert_cg(topology::Topology & topo,
       assert(m_cg_cog.size() > unsigned(cg1));
     
       periodicity.nearest_image(m_cg_cog(cg1), 
-				conf.current().pos(topo.chargegroups()[cg2]),
+				conf.current().pos(topo.chargegroup(cg2)),
 				r);
     
       // the distance
@@ -610,11 +640,11 @@ _update_pert_cg(topology::Topology & topo,
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
 	
-	for(int a1 = topo.chargegroups()[cg1],
-	      a1_to = topo.chargegroups()[cg1+1];
+	for(int a1 = topo.chargegroup(cg1),
+	      a1_to = topo.chargegroup(cg1+1);
 	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroups()[cg2],
-		a2_to = topo.chargegroups()[cg2+1];
+	  for(int a2 = topo.chargegroup(cg2),
+		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 	    
 	    // the interactions
@@ -632,11 +662,11 @@ _update_pert_cg(topology::Topology & topo,
       } // longrange
       
       // SHORTRANGE : at least the second cg is solvent => no exclusions
-      for(int a1 = topo.chargegroups()[cg1],
-	    a1_to = topo.chargegroups()[cg1+1];
+      for(int a1 = topo.chargegroup(cg1),
+	    a1_to = topo.chargegroup(cg1+1);
 	  a1 != a1_to; ++a1){
-	for(int a2 = topo.chargegroups()[cg2],
-	      a2_to = topo.chargegroups()[cg2+1];
+	for(int a2 = topo.chargegroup(cg2),
+	      a2_to = topo.chargegroup(cg2+1);
 	    a2 != a2_to; ++a2){
 	  
 	  if (insert_pair<t_perturbation_details>(topo, pairlist, perturbed_pairlist,

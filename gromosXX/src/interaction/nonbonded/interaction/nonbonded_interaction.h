@@ -116,12 +116,29 @@ namespace interaction
     Nonbonded_Parameter & parameter() { return m_parameter; }
 
   protected:
+    /**
+     * check whether "fast" spc loops
+     * should be used
+     */
     void check_spc_loop
     (
      topology::Topology const & topo,
      configuration::Configuration const & conf,
      simulation::Simulation & sim,
      bool quiet);
+
+    /**
+     * expand a configuration for
+     * multiple unit cell
+     * simulations
+     */
+    void expand_configuration
+    (
+     topology::Topology const & topo,
+     configuration::Configuration const & conf,
+     simulation::Simulation const & sim,
+     configuration::Configuration & exp_conf
+     );
 
     /**
      * the pairlist update algorithm.

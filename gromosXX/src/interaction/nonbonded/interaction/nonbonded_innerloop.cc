@@ -40,8 +40,8 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop
   switch(t_nonbonded_spec::interaction_func){
     case simulation::lj_crf_func :
       lj_crf_interaction(r, lj.c6, lj.c12,
-			 topo.charge()(i) * 
-			 topo.charge()(j),
+			 topo.charge(i) * 
+			 topo.charge(j),
 			 f, e_lj, e_crf);
       break;
     default:
@@ -52,9 +52,14 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop
   
   // most common case
   if (t_nonbonded_spec::do_virial == math::molecular_virial){
+    DEBUG(10, "\t\tmolecular virial");
+
     math::Vec rf = f * r;
     storage.force(i) += rf;
     storage.force(j) -= rf;
+    
+    assert(conf.special().rel_mol_com_pos.size() > i &&
+	   conf.special().rel_mol_com_pos.size() > j);
     
     for(int b=0; b<3; ++b){
       const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) 
@@ -65,8 +70,8 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop
     }
   }
   else{
+    DEBUG(10, "\t\tatomic / no virial");
     for (int a=0; a<3; ++a){
-      
       const double term = f * r(a);
       storage.force(i)(a) += term;
       storage.force(j)(a) -= term;
@@ -81,13 +86,13 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop
   }
   
   // energy
-  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
-	<< " j " << topo.atom_energy_group(j));
-
   assert(storage.energies.lj_energy.size() > 
 	 topo.atom_energy_group(i));
   assert(storage.energies.lj_energy.size() >
 	 topo.atom_energy_group(j));
+
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
   
   storage.energies.lj_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_lj;

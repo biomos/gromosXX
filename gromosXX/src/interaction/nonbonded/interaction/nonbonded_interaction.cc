@@ -86,39 +86,85 @@ calculate_interactions(topology::Topology & topo,
 
   const double nonbonded_start = util::now();
 
-  // shared memory do this only once
-  m_pairlist_algorithm->prepare(topo, conf, sim);
-
   std::vector<Nonbonded_Set *>::iterator
     it = m_nonbonded_set.begin(),
     to = m_nonbonded_set.end();
 
-#ifdef OMP
-  int tid;
-#pragma omp parallel private(tid)
-  {
-    tid = omp_get_thread_num();
-    // calculate the corresponding interactions
-    assert(m_nonbonded_set.size() > tid);
-    DEBUG(8, "calculating nonbonded interactions (thread " 
-	  << tid << " of " << m_omp_num_threads << ")");
+  // multiple unit cell
+  if (sim.param().multicell.multicell){
     
-    m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim,
-						 tid, m_omp_num_threads);
-  }
-  
+    DEBUG(6, "nonbonded: MULTICELL");
+    
+    configuration::Configuration exp_conf;
+
+    expand_configuration(topo, conf, sim, exp_conf);
+
+    DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
+    
+    // shared memory do this only once
+    m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim);
+
+#ifdef OMP
+    int tid;
+#pragma omp parallel private(tid)
+    {
+      tid = omp_get_thread_num();
+      // calculate the corresponding interactions
+      assert(m_nonbonded_set.size() > tid);
+      DEBUG(8, "calculating nonbonded interactions (thread " 
+	    << tid << " of " << m_omp_num_threads << ")");
+
+      m_nonbonded_set[tid]->calculate_interactions(topo.multicell_topo(), 
+						   exp_conf, sim,
+						   tid, m_omp_num_threads);
+    }
+    
 #else
-  
-  // have to do all from here (probably it's only one, could unite this,
-  // but then maybe it's clearer like it is...
-  
-  for(int i=0; i < m_omp_num_threads; ++i){
-    m_nonbonded_set[i]->calculate_interactions(topo, conf, sim, 
-					       i, m_omp_num_threads);
-  }
+    
+    // have to do all from here (probably it's only one, could unite this,
+    // but then maybe it's clearer like it is...
+    
+    for(int i=0; i < m_omp_num_threads; ++i){
+      m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
+						 exp_conf, sim, 
+						 i, m_omp_num_threads);
+    }
 
+    
 #endif
-
+  }
+  else{ // no MULTICELL
+    
+    // shared memory do this only once
+    m_pairlist_algorithm->prepare(topo, conf, sim);
+    
+#ifdef OMP
+    int tid;
+#pragma omp parallel private(tid)
+    {
+      tid = omp_get_thread_num();
+      // calculate the corresponding interactions
+      assert(m_nonbonded_set.size() > tid);
+      DEBUG(8, "calculating nonbonded interactions (thread " 
+	    << tid << " of " << m_omp_num_threads << ")");
+      
+      m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim,
+						   tid, m_omp_num_threads);
+    }
+    
+#else
+    
+    // have to do all from here (probably it's only one, could unite this,
+    // but then maybe it's clearer like it is...
+    
+    for(int i=0; i < m_omp_num_threads; ++i){
+      m_nonbonded_set[i]->calculate_interactions(topo, conf, sim, 
+						 i, m_omp_num_threads);
+    }
+    
+#endif
+  }
+  
   DEBUG(6, "sets are done, adding things up...");
 
   // add the forces, energies, virial...
@@ -192,6 +238,8 @@ calculate_interactions(topology::Topology & topo,
       }
     } // sets
   } // perturbation
+
+  DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
 
   m_timing += util::now() - nonbonded_start;
 
@@ -292,7 +340,10 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
     to = m_nonbonded_set.end();
   
   for( ; it != to; ++it){
-    (*it)->init(topo, conf, sim, quiet);
+    if (sim.param().multicell.multicell)
+      (*it)->init(topo.multicell_topo(), conf, sim, quiet);
+    else
+      (*it)->init(topo, conf, sim, quiet);
   }
 
   check_spc_loop(topo, conf, sim, quiet);
@@ -422,3 +473,94 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     return;
     
 }
+
+/**
+ * expand a configuration for
+ * multiple unit cell
+ * simulations
+ */
+void interaction::Nonbonded_Interaction::expand_configuration
+(
+ topology::Topology const & topo,
+ configuration::Configuration const & conf,
+ simulation::Simulation const & sim,
+ configuration::Configuration & exp_conf
+ )
+{
+
+  DEBUG(7, "expanding configuration");
+  
+  const int mul = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
+  DEBUG(8, "\tmul=" << mul);
+  
+  assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * mul);
+  // resize the configuration
+  // exp_conf.resize(topo.multicell_topo().num_atoms());
+
+  exp_conf.initialise(topo.multicell_topo(), sim.param(), false);
+  DEBUG(10, "\texp_conf initialised");
+  
+  math::Vec shift(0.0);
+  int exp_i=0;
+
+  // SOLUTE
+  DEBUG(10, "\tsolute");
+  for(int z=0; z<sim.param().multicell.z; ++z){
+    for(int y=0; y<sim.param().multicell.y; ++y){
+      for(int x=0; x<sim.param().multicell.x; ++x){
+
+	shift = x * conf.current().box(0) + 
+	  y * conf.current().box(1) + 
+	  z * conf.current().box(2);
+
+	// this should be the NORMAL topo!
+	for(int i=0; i<topo.num_solute_atoms(); ++i, ++exp_i){
+	  
+	  assert(exp_conf.current().pos.size() > exp_i);
+	  assert(conf.current().pos.size() > i);
+	  
+	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
+	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
+	}
+      }
+    }
+  }
+
+  // SOLVENT
+  for(int z=0; z<sim.param().multicell.z; ++z){
+    for(int y=0; y<sim.param().multicell.y; ++y){
+      for(int x=0; x<sim.param().multicell.x; ++x){
+
+	shift = x * conf.current().box(0) + 
+	  y * conf.current().box(1) + 
+	  z * conf.current().box(2);
+
+	for(int i=topo.num_solute_atoms(); i<topo.num_atoms(); ++i, ++exp_i){
+	  
+	  assert(exp_conf.current().pos.size() > exp_i);
+	  assert(conf.current().pos.size() > i);
+	  
+	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
+	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
+	}
+      }
+    }
+  }
+
+  exp_conf.current().box(0) = sim.param().multicell.x * conf.current().box(0);
+  exp_conf.current().box(1) = sim.param().multicell.y * conf.current().box(1);
+  exp_conf.current().box(2) = sim.param().multicell.z * conf.current().box(2);
+  
+  exp_conf.current().energies.zero();
+  exp_conf.current().perturbed_energy_derivatives.zero();
+  exp_conf.boundary_type = conf.boundary_type;
+
+  for(int m=0; m<mul; ++m){
+    exp_conf.special().rel_mol_com_pos.insert(exp_conf.special().rel_mol_com_pos.end(), 
+					      conf.special().rel_mol_com_pos.begin(),
+					      conf.special().rel_mol_com_pos.end());
+  }
+  
+}
+
+

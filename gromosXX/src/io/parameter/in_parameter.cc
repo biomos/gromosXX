@@ -1653,7 +1653,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
     
     for(int i=0; i<num; ++i){
       _lineStream >> last >> com_bath >> ir_bath;
-      param.multibath.multibath.add_bath_index(last - 1, 0, com_bath, ir_bath);
+      param.multibath.multibath.add_bath_index(last - 1, 0, com_bath - 1, ir_bath - 1);
     }
     
     if (_lineStream.fail()){

@@ -54,6 +54,9 @@ topology::Topology::~Topology()
 topology::Topology::Topology(topology::Topology const & topo, int mul_solute, int mul_solvent)
   : m_multicell_topo(NULL)
 {
+
+  DEBUG(7, "multiplying topology");
+  
   if (mul_solvent == -1) mul_solvent = mul_solute;
   
   const int num_solute = topo.num_solute_atoms();
@@ -70,6 +73,10 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_chargegroup.clear();
   m_chargegroup.push_back(0);
   
+  DEBUG(10, "solute chargegrous = " << topo.num_solute_chargegroups());
+  
+  m_num_solute_chargegroups = topo.num_solute_chargegroups() * mul_solute;
+
   m_molecule.clear();
   m_molecule.push_back(0);
   
@@ -78,7 +85,11 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   solute().improper_dihedrals().clear();
   solute().dihedrals().clear();
 
+  DEBUG(8, "\tmultiplying solute");
+  
   for(int m=0; m<mul_solute; ++m){
+    DEBUG(10, "\tmul " << m);
+
     m_is_perturbed.insert(m_is_perturbed.end(), topo.m_is_perturbed.begin(), topo.m_is_perturbed.end());
 
     for(int i=0; i<num_solute; ++i){
@@ -94,20 +105,33 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
 
     }
 
-    for(int i=1; i<topo.num_solute_chargegroups(); ++i){
+    DEBUG(10, "\tcg");
+    for(int i=1; i<=topo.num_solute_chargegroups(); ++i){
       m_chargegroup.push_back(topo.m_chargegroup[i] + m * num_solute);
     }
 
+    DEBUG(10, "\tmol");
     for(int i=1; i<topo.molecules().size() - topo.num_solvent_molecules(0); ++i){
       m_molecule.push_back(topo.molecules()[i] + m * num_solute);
     }
 
+    DEBUG(10, "\tbonds");
     for(int i=0; i<topo.solute().bonds().size(); ++i){
       solute().bonds().push_back
 	(two_body_term_struct(topo.solute().bonds()[i].i + m * num_solute,
 			      topo.solute().bonds()[i].j + m * num_solute,
 			      topo.solute().bonds()[i].type));
     }
+
+    DEBUG(10, "\tdistance constraints");
+    for(int i=0; i<topo.solute().distance_constraints().size(); ++i){
+      solute().add_distance_constraint
+	(two_body_term_struct(topo.solute().distance_constraints()[i].i + m * num_solute,
+			      topo.solute().distance_constraints()[i].j + m * num_solute,
+			      topo.solute().distance_constraints()[i].type));
+    }
+
+    DEBUG(10, "\tangles");
     for(int i=0; i<topo.solute().angles().size(); ++i){
       solute().angles().push_back
 	(three_body_term_struct(topo.solute().angles()[i].i + m * num_solute,
@@ -115,6 +139,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
 				topo.solute().angles()[i].k + m * num_solute,
 				topo.solute().angles()[i].type));
     }
+
+    DEBUG(10, "\timps");
     for(int i=0; i<topo.solute().improper_dihedrals().size(); ++i){
       solute().improper_dihedrals().push_back
 	(four_body_term_struct(topo.solute().improper_dihedrals()[i].i + m * num_solute,
@@ -123,6 +149,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
 			       topo.solute().improper_dihedrals()[i].l + m * num_solute,
 			       topo.solute().improper_dihedrals()[i].type));
     }
+
+    DEBUG(10, "\tdihedrals");
     for(int i=0; i<topo.solute().dihedrals().size(); ++i){
       solute().dihedrals().push_back
 	(four_body_term_struct(topo.solute().dihedrals()[i].i + m * num_solute,
@@ -133,28 +161,33 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     // perturbed solute
-
+    DEBUG(10, "\tperturbed solute: MISSING");
+    
   }
   
+  DEBUG(10, "\tegroups");
   m_energy_group = topo.m_energy_group;
+
+  DEBUG(10, "\tperturbation param");
   m_lambda = topo.m_lambda;
   m_old_lambda = topo.m_old_lambda;
   m_lambda_exp = topo.m_lambda_exp;
   m_energy_group_scaling = topo.m_energy_group_scaling;
   m_energy_group_lambdadep = topo.m_energy_group_lambdadep;
-  
   m_lambda_prime = topo.m_lambda_prime;
   m_lambda_prime_derivative = topo.m_lambda_prime_derivative;
   m_perturbed_energy_derivative_alpha =   topo.m_perturbed_energy_derivative_alpha;
   
+  DEBUG(10, "\tspecial");
   m_position_restraint = topo.m_position_restraint;
   m_jvalue_restraint = topo.m_jvalue_restraint;
 
   // solvent
+  DEBUG(8, "\tmultiplying solvent");
+  
   assert(topo.num_solvents() == 1);
   add_solvent(topo.solvent(0));
   solvate(0, topo.num_solvent_atoms() * mul_solvent);
-  
 
 }
 
