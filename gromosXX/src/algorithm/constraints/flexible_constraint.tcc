@@ -169,7 +169,7 @@ static int _flexible_shake(topology::Topology const &topo,
       if (do_virial == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
-	    conf.current().virial_tensor(a,aa) +=
+	    conf.old().virial_tensor(a,aa) +=
 	      ref_r(a) * ref_r(aa) * lambda / dt2;
 	  }
 	}
@@ -651,7 +651,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
       if (do_virial == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
-	    conf.current().virial_tensor(a,aa) +=
+	    conf.old().virial_tensor(a,aa) +=
 	      ref_r(a) * ref_r(aa) * lambda / dt2;
 	  }
 	}
