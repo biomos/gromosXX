@@ -29,10 +29,8 @@ int io::In_Frame::read_frame()
     // set the blockname
     DEBUG(8, "reading block " << _next_block);
     
-    try{
-      io::getblock(GInStream::stream(), buffer);
-    }
-    catch(std::runtime_error e){
+    if(!io::getblock(GInStream::stream(), buffer)){
+
       if (buffer.size() && buffer[0] != ""){
 	std::string s = "error while reading frame : " + buffer[0];
 	io::messages.add(s, "inframe", io::message::error);
@@ -40,6 +38,13 @@ int io::In_Frame::read_frame()
       }
       
       break;
+    }
+    
+    // no title...
+    if (buffer.size() < 2){
+      io::messages.add("Block with size < 3 detected while reading frame!",
+		       "InFrame", io::message::error);
+      return E_INPUT_ERROR;
     }
 
     trimblock(buffer);

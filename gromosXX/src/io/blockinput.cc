@@ -7,6 +7,22 @@
 #include <io/message.h>
 #include "blockinput.h"
 
+template<class size_type>
+inline std::basic_string<size_type>&
+trim_right( std::basic_string<size_type>& str )
+{
+    return( str = str.substr( 0, str.find_last_not_of( ' ' ) + 1 ) );
+}
+
+template<class size_type>
+inline std::basic_string<size_type>&
+trim( std::basic_string<size_type>& str )
+{
+  if (str.find_first_not_of( ' ' ) == std::string::npos) return (str = "");
+  return( trim_right( str ) );
+}
+
+
 std::istream& 
 io::getline(
 	    std::istream& is, 
@@ -43,7 +59,9 @@ io::getblock(
     b.push_back("");
   std::vector<std::string>::iterator dest = b.begin();
 
-  while (1) {
+  bool first = true;
+  
+  while (true) {
 
     if (dest == b.end()) {
       b.push_back("");
@@ -52,12 +70,18 @@ io::getblock(
     
     getline(is, *dest);
 
-    // if (*dest == sep)
     if (dest->find(sep) == 0)
       break;
 
     if (!is.good()){
       return false;
+    }
+
+    if (first){
+      // first has to be a valid blockname
+      // otherwise try next line
+      if (trim(*dest) == "") continue;
+      first = false;
     }
 
     ++dest;
