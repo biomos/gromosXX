@@ -67,8 +67,8 @@ interaction::simple_pairlist<t_simulation>::begin()
 }
 
 template<typename t_simulation>
-inline interaction::simple_pairlist<t_simulation>::iterator::iterator
-(std::vector< std::vector<int> > &pl)
+inline interaction::simple_pairlist<t_simulation>::iterator
+::iterator(std::vector< std::vector<int> > &pl)
   : m_pairlist(pl),
     m_atom(0)
 {

@@ -38,9 +38,10 @@ inline void interaction::nonbonded_interaction<t_simulation>
 
     double dist6i = 1.0 / (dist2 * dist2 * dist2);
     
-    double f = (2 * C12 * dist6i - C6) * 6 * dist6i;
-    force(it.i()) += f * v;
-    force(it.j()) -= f * v;
+    math::Vec f = v * ((2 * C12 * dist6i - C6) * 6 * dist6i);
+
+    force(it.i()) += f;
+    force(it.j()) -= f;
   }
   
 }

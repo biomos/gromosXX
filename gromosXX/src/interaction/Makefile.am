@@ -5,6 +5,8 @@ include_HEADERS = 		forcefield/forcefield.h \
 				interaction/interaction.h \
 				interaction/nonbonded_interaction.h \
 				interaction/nonbonded_interaction.tcc \
+				interaction/harmonic_bond_interaction.h \
+				interaction/harmonic_bond_interaction.tcc \
 				pairlist/simple_pairlist.h \
 				pairlist/simple_pairlist.tcc
 

@@ -51,13 +51,13 @@ void algorithm::runge_kutta<t_simulation>
   sim.system().pos() = sim.system().old_pos() + dt * dx3;
   ff.calculate_interactions(sim);
   dv4 = sim.system().force() / sim.topology().mass();
-  
+    
   // get the new positions / velocities by averageing (simpsons rule)
   sim.system().pos() = sim.system().old_pos() +
     dt/6.0 * (dx1 + 2*(dx2 + dx3) + dx4);
   
   sim.system().vel() = sim.system().old_vel() +
-    dt/6.0 * (dv1 * 2*(dv2 + dv3) + dv4);
+    dt/6.0 * (dv1 + 2*(dv2 + dv3) + dv4);
   
   // that's it
 }

@@ -33,6 +33,9 @@ template<typename t_simulation>
 inline void interaction::forcefield<t_simulation>
 ::calculate_interactions(t_simulation &simu)
 {
+
+  simu.system().force() = 0.0;
+
   for(typename std::vector<interaction<t_simulation> *>::iterator 
 	it = m_interaction.begin(),
 	to = m_interaction.end();
