@@ -8,7 +8,7 @@ Release 0.0.2
 	ok	write check_state methods for Simulation, Topology and System (and maybe others)
 	ok	autoconf flag to create production code
 	ok	energy calculation
-	-	energy trajectory
+	ok	energy trajectory
 	ok	excluded atoms reaction field contribution
 	ok	check kinetic energy at printout
 
@@ -16,7 +16,7 @@ Release 0.0.2
 
 Release 0.0.3
 
-	-	check SHAKE for non-gathered bonds
+	ok	check SHAKE for non-gathered bonds
 	-	gather chargegroups during simulation
 	-	handle the GENBOX block
 	-	perturbation

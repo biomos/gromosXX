@@ -20,9 +20,26 @@
 08. 06. 2003: (markus)
 	reorganization of the test programs
 	helper class to perform an MD run
-	temperature calculation and berendsen temperature coupling to any number of temperature baths
+	temperature calculation and berendsen temperature coupling to any
+	number of temperature baths
 	pressure calculation and berendsen pressure coupling
-	OutG96Trajectory: gather chargegroups on first atom (not on center of geometry).
+	OutG96Trajectory: gather chargegroups on first atom (not on center
+	of geometry).
 	Energies for the physical interactions.
 	build option for release builds (--disable-debug) added to configure.in
 
+11.06.2003:
+	change OutGTrajectory: gather chargegroups on first atom, not on
+	cog
+	write check_state methods for Simulation, Topology and System (and
+	maybe others)
+	autoconf flag to create production code
+	energy calculation
+	energy trajectory
+	excluded atoms reaction field contribution
+	check kinetic energy at printout
+	check SHAKE for non-gathered bonds
+
+	version_0_0_2
+	STABLE
+	
