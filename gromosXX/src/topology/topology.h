@@ -402,6 +402,22 @@ namespace topology
     }
 
     /**
+     * j value restraints accessor.
+     */
+    std::vector<jvalue_restraint_struct> & jvalue_restraints()
+    {
+      return m_jvalue_restraint;
+    }
+
+    /**
+     * const jvalue restraints accessor.
+     */
+    std::vector<jvalue_restraint_struct> const & jvalue_restraints()const
+    {
+      return m_jvalue_restraint;
+    }
+
+    /**
      * initialise the topology.
      * - adjust submolecules if empty
      */
@@ -546,6 +562,11 @@ namespace topology
      * position restraints / constraints
      */
     std::vector<position_restraint_struct> m_position_restraint;
+
+    /**
+     * jvalue restraints / constraints
+     */
+    std::vector<jvalue_restraint_struct> m_jvalue_restraint;
     
     
   }; // topology

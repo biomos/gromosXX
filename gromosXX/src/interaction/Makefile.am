@@ -80,7 +80,9 @@ xxnbinclude_HEADERS =		nonbonded/create_nonbonded.h \
 
 xxspinclude_HEADERS =		special/create_special.h \
 				special/position_restraint_interaction.h \
-				special/position_restraint_interaction.cc
+				special/position_restraint_interaction.cc \
+				special/jvalue_restraint_interaction.h \
+				special/jvalue_restraint_interaction.cc
 
 noinst_LTLIBRARIES =		libgrointeraction.la
 

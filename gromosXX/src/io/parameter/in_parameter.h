@@ -118,7 +118,7 @@ namespace io {
     void read_PLIST(simulation::Parameter &param);
 
     /**
-     * read PARAM block.
+     * read POSRES block.
      */
     void read_POSREST(simulation::Parameter &param);
 
@@ -136,6 +136,11 @@ namespace io {
      * read MULTIBATH block.
      */
     void read_MULTIBATH(simulation::Parameter &param);
+
+    /**
+     * read J-VAL block.
+     */
+    void read_JVALUE(simulation::Parameter &param);
     
   };
   

@@ -74,6 +74,12 @@ namespace io {
 		     std::vector<topology::perturbed_two_body_term_struct>
 		     const & pert_constr);
     
+    /**
+     * read JVALUE averages.
+     */
+    bool _read_jvalue_av(std::vector<std::string> &buffer,
+			 std::vector<double> & jvalue_av,
+			 std::vector<topology::jvalue_restraint_struct> const & jval_res);
 
   };
   

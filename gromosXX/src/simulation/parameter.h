@@ -13,12 +13,51 @@ namespace simulation
    * constraints enumeration.
    */
   enum constr_enum{
+    /**
+     * no constraints
+     */
     constr_off,
+    /**
+     * shake
+     */
     constr_shake,
+    /**
+     * lincs
+     */
     constr_lincs,
+    /**
+     * flexible shake
+     */
     constr_flexshake
   };
   
+  /**
+   * @enum restr_enum
+   * restraints enumeration
+   */
+  enum restr_enum{
+    /**
+     * no restraints
+     */
+    restr_off = 0,
+    /**
+     * instantaneous restraints
+     */
+    restr_inst = 1,
+    /**
+     * time averaged restraints
+     */
+    restr_av = 2,
+    /**
+     * biquadratic (time averaged & instantaneous) restraints
+     */
+    restr_biq = 3,
+    /**
+     * scaled biquadratic restraints
+     */
+    restr_sc = 4
+  };
+
   /**
    * @class Parameter
    * input parameters.
@@ -730,6 +769,39 @@ namespace simulation
       bool scaled_only;
       
     } /** Perturbation parameters */ perturbation;
+
+    /**
+     * @struct jvalue_struct
+     * j-value restraint parameters.
+     */
+    struct jvalue_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - mode restr_off
+       * - tau 0
+       * - read_av false
+       */
+      jvalue_struct()
+	: mode(restr_off),
+	  tau(0.0),
+	  read_av(false)
+      {
+      }
+      /**
+       * restraining mode.
+       */
+      restr_enum mode;
+      /**
+       * coupling time.
+       */
+      double tau;
+      /**
+       * read averages.
+       */
+      bool read_av;
+    } /** jvalue-parameters */ jvalue;
     
   };
   

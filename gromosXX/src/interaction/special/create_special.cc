@@ -17,6 +17,7 @@
 // special interactions
 #include <interaction/interaction_types.h>
 #include <interaction/special/position_restraint_interaction.h>
+#include <interaction/special/jvalue_restraint_interaction.h>
 
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
@@ -38,6 +39,7 @@ static void _create_special(interaction::Forcefield & ff,
   if (!quiet)
     std::cout << "SPECIAL\n";
   
+  // Position restraints / constraints
   if (param.posrest.posrest == 1 || 
       param.posrest.posrest == 2){
 
@@ -59,6 +61,16 @@ static void _create_special(interaction::Forcefield & ff,
   else if (param.posrest.posrest == 3){
     io::messages.add("Position constraints not implemented",
 		     "create_special", io::message::error);
+  }
+
+  // J-Value restraints
+  if (param.jvalue.mode != simulation::restr_off){
+    if(!quiet)
+      std::cout << "\tJ-Value restraints\n";
+    interaction::Jvalue_Restraint_Interaction<t_interaction_spec> *jr =
+      new interaction::Jvalue_Restraint_Interaction<t_interaction_spec>();
+    
+    ff.push_back(jr);
   }
   
 }

@@ -252,6 +252,9 @@ namespace topology
     }
   };
 
+  /**
+   * Position restraints information.
+   */
   struct position_restraint_struct
   {
     /**
@@ -275,7 +278,66 @@ namespace topology
      */
     double bfactor;
   };
+  
+  /**
+   * @enum restr_func_enum
+   * restraint function enum
+   */
+  enum restr_func_enum{
+    harmonic,
+    attractive,
+    repulsive
+  };
+  
+  /**
+   * J-Value restraints.
+   */
+  struct jvalue_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    jvalue_restraint_struct(int i, int j, int k, int l,
+			    double K, double J0,
+			    double a, double b, double c,
+			    double delta,
+			    restr_func_enum H_inst, restr_func_enum H_av)
+      : i(i), j(j), k(k), l(l),
+	K(K), J0(J0),
+	a(a), b(b), c(c), delta(delta),
+	H_inst(H_inst), H_av(H_av)
+    {
+    }
     
+    /**
+     * atom sequence numbers.
+     */
+    int i, j, k, l;
+    /**
+     * force constant
+     */
+    double K;
+    /**
+     * J0
+     */
+    double J0;
+    /**
+     * Karplus parameter.
+     */
+    double a, b, c;
+    /**
+     * phase shift
+     */
+    double delta;
+    /**
+     * functional form.
+     * half harmonic attractive,
+     * half harmonic repulsive,
+     * harmonic
+     */
+    int H_inst, H_av;
+  };
+
 }
 
 #endif

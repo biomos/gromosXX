@@ -59,6 +59,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_LONGRANGE(param);
   read_POSREST(param);
   read_PERTURB(param);
+  read_JVALUE(param);
   
   DEBUG(7, "input read...");
 
@@ -1697,3 +1698,61 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param)
 
 } // POSREST
 
+/**
+ * read the JVALUE block.
+ */
+void io::In_Parameter::read_JVALUE(simulation::Parameter &param)
+{
+  DEBUG(8, "read J-VAL");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["J-VAL"];
+  if (buffer.size()){
+
+    block_read.insert("J-VAL");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+
+    std::string s1;
+    _lineStream >> s1 
+		>> param.jvalue.tau
+		>> param.jvalue.read_av;
+    
+    if (_lineStream.fail())
+      io::messages.add("bad line in J-VAL block",
+		       "In_Parameter", io::message::error);
+    
+    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    
+    if (s1 == "off") param.jvalue.mode = simulation::restr_off;
+    else if (s1 == "instantaneous") param.jvalue.mode = simulation::restr_inst;
+    else if (s1 == "averaged") param.jvalue.mode = simulation::restr_av;
+    else if (s1 == "biquadratic") param.jvalue.mode = simulation::restr_biq;
+    else if (s1 == "scaled") param.jvalue.mode = simulation::restr_sc;
+    else{
+      std::istringstream css;
+      css.str(s1);
+      
+      int i;
+      css >> i;
+      if(css.fail()){
+	io::messages.add("bad value for MODE in J-VAL block:"+s1+"\n"
+			 "off, instantaneous, averaged, biquadratic, scaled (0-4)",
+			 "In_Parameter", io::message::error);
+	param.jvalue.mode = simulation::restr_off;
+	return;
+      }
+      param.jvalue.mode = simulation::restr_enum(i);
+    }
+    if (param.jvalue.tau < 0 ||
+	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
+				   param.jvalue.mode != simulation::restr_inst))){
+      io::messages.add("bad value for TAU in J-VAL block\n"
+		       "should be > 0.0",
+		       "In_Parameter", io::message::error);
+    }
+  }
+} // JVALUE

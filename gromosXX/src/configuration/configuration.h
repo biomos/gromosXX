@@ -124,6 +124,11 @@ namespace configuration
        */
       std::vector<double> flexible_ekin;
       
+      /**
+       * j value average
+       */
+      std::vector<double> jvalue_av;
+
     };
     
     /**

@@ -189,11 +189,36 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 			 "in_configuration",
 			 io::message::error);
       else
-	io::messages.add("no FLEXV block found, assuming SHAKE'n positions (and velocities)",
+	io::messages.add("no FLEXV block found, assuming SHAKEd positions (and velocities)",
 			 "in_configuration",
 			 io::message::notice);
     }
   }
+
+  if (param.jvalue.mode != simulation::restr_off){
+    if (param.jvalue.mode == simulation::restr_inst){
+      io::messages.add("instantaneous jvalue restraints, ignoring reading of averages",
+		       "in_configuration",
+		       io::message::warning);
+    }
+    else if (!param.jvalue.read_av){
+      io::messages.add("re-initialising J-Value averages, non-continuous simulation",
+		       "in_configuration",
+		       io::message::warning);
+    }
+    else {
+      buffer = m_block["JVALRESEXPAVE"];
+      if (buffer.size())
+      {
+	_read_jvalue_av(buffer, conf.special().jvalue_av, topo.jvalue_restraints());
+      }
+      else{
+	io::messages.add("reading in of J-Value averages requested but JVALRESEXPAVE block not found",
+			  "in_configuration",
+			  io::message::error);
+      }
+    }
+  } // jvalue averages
 
   // warn for unread input data
   for(std::map<std::string, std::vector<std::string> >::const_iterator
@@ -569,3 +594,57 @@ bool io::In_Configuration::_read_flexv
   return true;
   
 }
+
+
+bool io::In_Configuration::
+_read_jvalue_av(std::vector<std::string> &buffer,
+		std::vector<double> & jval_av,
+		std::vector<topology::jvalue_restraint_struct> const & jval_res)
+{
+  DEBUG(8, "read jvalue averages");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  std::vector<topology::jvalue_restraint_struct>::const_iterator 
+    jval_it = jval_res.begin(),
+    jval_to = jval_res.end();
+
+  jval_av.clear();
+  
+  int i, j, k, l;
+  double av;
+  
+  for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> i >> j >> k >> l >> av;
+    
+    if (jval_it->i != i-1 ||
+	jval_it->j != j-1 ||
+	jval_it->k != k-1 ||
+	jval_it->l != l-1){
+
+      io::messages.add("Wrong J-Value in JVALAVERAGE block",
+		       "In_Configuration",
+		       io::message::error);
+      return false;
+
+    }
+    
+    jval_av.push_back(av);
+  }
+  
+  if (jval_it != jval_to || it != to){
+    io::messages.add("Wrong number of J-Values in JVALAVERAGE block",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  return true;
+}
+
