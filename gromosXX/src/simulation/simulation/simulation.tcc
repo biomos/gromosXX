@@ -279,15 +279,18 @@ calculate_atom_ekin()
  */
 template<typename t_topo, typename t_system>
 inline void simulation::Simulation<t_topo, t_system>::
-calculate_mol_ekin(int mean)
+calculate_mol_ekin()
 {  
   Molecule_Iterator m_it = topology().molecule_begin(),
     m_to = topology().molecule_end();
   
-  math::Vec com_v;
-  double com_ekin, ekin;
+  math::Vec com_v, new_com_v;
+  double com_ekin, ekin, new_com_ekin, new_ekin;
   
   // assume zero energies has been called!
+  // but not in the multibath structs...
+  for(size_t i=0; i < multibath().size(); ++i)
+    multibath().bath(i).ekin = 0.0;
 
   size_t ir_bath, com_bath;
   
@@ -295,7 +298,7 @@ calculate_mol_ekin(int mean)
     system().molecular_translational_ekin(m_it.begin(), m_it.end(),
 					  topology().mass(),
 					  com_v, com_ekin, ekin,
-					  mean);
+					  new_com_v, new_com_ekin, new_ekin);
 
     
     multibath().in_bath(*m_it.begin(), com_bath, ir_bath);
@@ -310,6 +313,11 @@ calculate_mol_ekin(int mean)
 	  << system().energies().ir_kinetic_energy.size()
 	  );
     
+    // store the new ones in multibath (velocity scaling for next step)
+    multibath().bath(com_bath).ekin += new_com_ekin;
+    multibath().bath(ir_bath).ekin += new_ekin - new_com_ekin;
+
+    // and the averages in the energies
     system().energies().com_kinetic_energy[com_bath] += com_ekin;
     system().energies().ir_kinetic_energy[ir_bath] += ekin - com_ekin;
 

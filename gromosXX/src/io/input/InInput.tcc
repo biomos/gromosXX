@@ -118,7 +118,6 @@ inline io::InInput & io::InInput
     
       size_t num;
       _lineStream >> num;
-      // std::cerr << "num: " << num << std::endl;
       
       size_t m;
 
@@ -598,7 +597,7 @@ inline bool io::InInput::read_PCOUPLE(bool &calc, int &ntp,
   // read the boundary block
   int ntb, nrdbox;
   read_BOUNDARY(ntb, nrdbox);
-
+  
   // first try for a PCOUPLE03 block
   buffer = m_block["PCOUPLE03"];
 
@@ -727,6 +726,7 @@ inline bool io::InInput::read_PCOUPLE(bool &calc, int &ntp,
     }
     else{
       vir = interaction::no_virial;
+      calc = false;
     }
     
   }

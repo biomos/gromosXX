@@ -21,7 +21,7 @@ inline void algorithm::Berendsen_Thermostat
 {
   
   // calculate the old kinetic energies
-  sim.calculate_mol_ekin(-1);
+  // sim.calculate_mol_ekin(-1);
   
   math::VArray &vel = sim.system().vel();
   simulation::Energy &e = sim.system().energies();
@@ -35,12 +35,12 @@ inline void algorithm::Berendsen_Thermostat
     // do temperature coupling for that bath?
     if (b_it->tau != -1){
 
-      assert(e.kinetic_energy.size() > num);
+      assert(e.flexible_constraints_ir_kinetic_energy.size() > num);
       DEBUG(7, "pre-scale ekin: " << 
-	    e.kinetic_energy[num] - e.flexible_constraints_ir_kinetic_energy[num]);
+	    b_it->ekin - e.flexible_constraints_ir_kinetic_energy[num]);
 
       const double free_temp = 2 * 
-	(e.kinetic_energy[num] - e.flexible_constraints_ir_kinetic_energy[num]) / 
+	(b_it->ekin - e.flexible_constraints_ir_kinetic_energy[num]) / 
 	(b_it->dof * math::k_Boltzmann);
 
       b_it->scale = sqrt(1.0 + dt / b_it->tau *
@@ -97,8 +97,8 @@ inline void algorithm::Berendsen_Thermostat
       DEBUG(8, "scaling from mol " << last_mol << " to "
 	    << r_it->last_molecule);
 
-      math::Vec com_v, ir_v;
-      double com_ekin, ekin;
+      math::Vec com_v, new_com_v, ir_v;
+      double com_ekin, ekin, new_com_ekin, new_ekin;
       size_t ir_bath, com_bath;
 
       // which bathes?
@@ -110,7 +110,7 @@ inline void algorithm::Berendsen_Thermostat
 	  molecular_translational_ekin(m_it.begin(), m_it.end(),
 				       sim.topology().mass(),
 				       com_v, com_ekin, ekin,
-				       1);
+				       new_com_v, new_com_ekin, new_ekin);
 
 	simulation::Atom_Iterator start = m_it.begin(),
 	  end = m_it.end();
@@ -119,9 +119,9 @@ inline void algorithm::Berendsen_Thermostat
 	for( ; start != end; ++start){
     
 	  assert(unsigned(vel.size()) > *start);
-	  ir_v = vel(*start) - com_v;
+	  ir_v = vel(*start) - new_com_v;
 	  vel(*start) =
-	    sim.multibath()[com_bath].scale * com_v +
+	    sim.multibath()[com_bath].scale * new_com_v +
 	    sim.multibath()[ir_bath].scale * ir_v;
 	} // loop over atoms
       } // loop over molecules of bath

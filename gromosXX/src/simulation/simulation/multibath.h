@@ -22,6 +22,7 @@ namespace simulation
     double solute_constr_dof;
     double solvent_constr_dof;
     double scale;
+    double ekin;
   };
 
   /**

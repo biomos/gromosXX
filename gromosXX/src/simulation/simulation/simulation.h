@@ -132,7 +132,7 @@ namespace simulation
      * calculate molecular kinetic energies.
      * internal and rotational and translational.
      */
-    void calculate_mol_ekin(int mean = 0);
+    void calculate_mol_ekin();
 
     /**
      * remove COM motion.

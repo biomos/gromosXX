@@ -102,7 +102,8 @@ inline void interaction::Nonbonded_Base
   // Perturbation
   m_crf_2 = sim.nonbonded().RF_constant() / 2.0;
   m_cut2 = sim.nonbonded().RF_cutoff() * sim.nonbonded().RF_cutoff();
-  set_lambda(sim.topology().lambda(), sim.topology().nlam());
+  // redo it at every step...
+  // set_lambda(sim.topology().lambda(), sim.topology().nlam());
 }
 
 /**

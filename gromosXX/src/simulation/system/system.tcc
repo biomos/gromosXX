@@ -460,16 +460,20 @@ void simulation::System<b>::
 molecular_translational_ekin(Atom_Iterator start, Atom_Iterator end,
 			     math::SArray const &mass, 
 			     math::Vec &com_v, double &com_e_kin,
-			     double &e_kin, int mean)
+			     double &e_kin, math::Vec &new_com_v,
+			     double &new_com_e_kin, double &new_e_kin)
 {
 
   com_v = 0.0;
   com_e_kin = 0.0;
   e_kin = 0.0;
+  new_com_v = 0.0;
+  new_com_e_kin = 0.0;
+  new_e_kin = 0.0;
   
   double m;
   double tot_mass = 0.0;
-  math::Vec v;
+  math::Vec v, new_v;
 
   DEBUG(9, "mol trans ekin: first atom: " << *start);  
 
@@ -482,23 +486,28 @@ molecular_translational_ekin(Atom_Iterator start, Atom_Iterator end,
     m = mass(*start);
     tot_mass += m;
 
-    if (mean == 0)
-      v = 0.5 * (vel()(*start) + old_vel()(*start));
-    else if (mean == -1)
-      v = old_vel()(*start);
-    else
-      v = vel()(*start);
+    v = 0.5 * (vel()(*start) + old_vel()(*start));
+    // v = old_vel()(*start);
+    new_v = vel()(*start);
     
     com_v += m * v;
     e_kin += m * dot(v,v);
+    new_com_v += m * new_v;
+    new_e_kin += m * dot(new_v, new_v);
+
   }
 
   com_v /= tot_mass;
-      
+  new_com_v /= tot_mass;
+  
   com_e_kin = 0.5 * tot_mass * dot(com_v, com_v);
   e_kin *= 0.5;
+  
+  new_com_e_kin = 0.5 * tot_mass * dot(new_com_v, new_com_v);
+  new_e_kin *= 0.5;
 
   DEBUG(9, "com_e_kin: " << com_e_kin << " e_kin: " << e_kin);
+  DEBUG(9, "new com_e_kin: " << new_com_e_kin << " new e_kin: " << new_e_kin);
   
 }
 

@@ -50,6 +50,9 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
   if (!sim.steps())
     initialize(sim);
 
+  // allow for slow growth (do it every step...)
+  set_lambda(sim.topology().lambda(), sim.topology().nlam());
+
   // need to update pairlist?
   if(!(sim.steps() % sim.nonbonded().update())){
     // create a pairlist
