@@ -6,7 +6,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE interaction
+#define SUBMODULE bonded
 
 #include <util/debug.h>
 

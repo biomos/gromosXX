@@ -100,6 +100,8 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
       if (submodule == "") interaction::debug_level = level;
       else if (submodule == "interaction") 
 	interaction::interaction_debug_level = level;
+      else if (submodule == "bonded") 
+	interaction::bonded_debug_level = level;
       else if (submodule == "nonbonded") 
 	interaction::nonbonded_debug_level = level;
       else if (submodule == "pairlist") 

@@ -60,6 +60,7 @@ namespace interaction
   extern int interaction_debug_level;
   extern int pairlist_debug_level;
   extern int filter_debug_level;
+  extern int bonded_debug_level;
   extern int nonbonded_debug_level;
   extern int special_debug_level;
 }

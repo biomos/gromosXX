@@ -6,7 +6,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE interaction
+#define SUBMODULE bonded
 
 /**
  * calculate quartic bond forces and energies.
