@@ -86,7 +86,7 @@ case "$compiler" in
 	   AC_DEFINE_UNQUOTED(COMPILER_KAI, 1, [KAI C++ compiler])
      ;;
     intel*)             # Intel C++.  tested with version 5.00
-       echo "Configuring for Intell C++"
+       echo "Configuring for Intel C++"
        CXX_PICKY_FLAGS="-w1 -DBZDEBUG"
        AC_BZ_SET_COMPILER($withval, "$CXX", "$CXX_PICKY_FLAGS")
        CXX_OPTIMIZE_FLAGS="-O3 -ip -DNDEBUG"
