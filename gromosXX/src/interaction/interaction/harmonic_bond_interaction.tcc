@@ -20,7 +20,7 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
 ::calculate_interactions(t_simulation &simu)
 {
   // loop over the bonds
-  typename t_simulation::topology_type::bond::iterator b_it =
+  simulation::bond::iterator b_it =
     simu.topology().bonds().begin();
 
   math::VArray &pos   = simu.system().pos();

@@ -9,6 +9,7 @@
 #include "../math/gmath.h"
 
 #include "simulation/simulation.h"
+#include "topology/bond.h"
 #include "topology/topology.h"
 #include "system/system.h"
 
@@ -62,7 +63,7 @@ void construct_test()
 
   // try to add a bond
   the_simulation.topology().bonds().add(1, 2, 1);
-  simulation::topology::bond::iterator b_it = 
+  simulation::bond::iterator b_it = 
     the_simulation.topology().bonds().begin();
   
   for( ; !b_it.eol(); ++b_it)

@@ -2,6 +2,7 @@ INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		io.h \
 				blockinput.h \
+				blockinput.tcc \
 				GInStream.h \
 				topology/InTopology.h \
 				topology/InTopology.tcc

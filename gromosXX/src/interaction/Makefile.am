@@ -1,6 +1,7 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS = 		forcefield/forcefield.h \
+include_HEADERS = 		interaction.h \
+				forcefield/forcefield.h \
 				forcefield/forcefield.tcc \
 				interaction/interaction.h \
 				interaction/nonbonded_interaction.h \

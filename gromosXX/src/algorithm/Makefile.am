@@ -1,6 +1,7 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS = 		integration/leap_frog.h \
+include_HEADERS = 		algorithm.h \
+				integration/leap_frog.h \
 				integration/leap_frog.tcc \
 				integration/runge_kutta.h \
 				integration/runge_kutta.tcc

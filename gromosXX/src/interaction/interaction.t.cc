@@ -9,6 +9,7 @@
 #include "../math/gmath.h"
 
 #include "../simulation/simulation/simulation.h"
+#include "../simulation/topology/bond.h"
 #include "../simulation/topology/topology.h"
 #include "../simulation/system/system.h"
 

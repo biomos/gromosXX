@@ -34,50 +34,6 @@ namespace simulation
     math::SArray const & mass()const;
 
     /**
-     * @class bond
-     * holds bond information.
-     */
-    class bond
-    {
-    private:
-      /**
-       * @struct bond
-       * bond information.
-       */
-      struct bond_struct
-      {
-	int i;
-	int j;
-	int type;
-      };
-    public:
-      /**
-       * @class iterator
-       * iterator over the bonds.
-       */
-      class iterator
-      {
-      public:
-	iterator(std::vector<bond_struct> &bi);
-	bool eol();
-	void operator++();
-	int i();
-	int j();
-	int type();
-      protected:
-	std::vector<bond_struct>::const_iterator m_bond_it;
-	std::vector<bond_struct>::const_iterator m_bond_end;
-      };
-      
-      iterator begin();
-      void add(int i, int j, int type);
-
-    private:      
-      std::vector<bond_struct> m_bond_information;
-      
-    };
-	
-    /**
      * bond accessor.
      */
     bond & bonds();

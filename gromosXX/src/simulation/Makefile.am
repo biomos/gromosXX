@@ -1,9 +1,12 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS = 		simulation/simulation.h \
+include_HEADERS = 		simulation.h \
+				simulation/simulation.h \
 				simulation/simulation.tcc \
 				system/system.h \
 				system/system.tcc \
+				topology/bond.h \
+				topology/bond.tcc \
 				topology/topology.h \
 				topology/topology.tcc
 
