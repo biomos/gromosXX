@@ -160,9 +160,14 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
     io::messages.add("bad line in MINIMISE block",
 		       "In_Parameter", io::message::error);
 
-  if (!(_lineStream >> param.minimise.nmin >> param.minimise.flim)){
+  if (!(_lineStream >> param.minimise.nmin)){
     // support standard input format...
     param.minimise.nmin = 1;
+    param.minimise.flim = 0.0;
+    _lineStream.clear();
+  }
+  else if (!(_lineStream >> param.minimise.flim)){
+    // or only number of steps...
     param.minimise.flim = 0.0;
     _lineStream.clear();
   }
