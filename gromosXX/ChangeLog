@@ -1,3 +1,212 @@
+2004-09-06 09:02  markus
+
+	* acinclude.m4, configure.in, src/Makefile.am, src/stdheader.h,
+	  src/algorithm/constraints/flexible_constraint.cc,
+	  src/algorithm/constraints/lincs.cc,
+	  src/algorithm/constraints/perturbed_flexible_constraint.cc,
+	  src/algorithm/constraints/perturbed_shake.cc,
+	  src/algorithm/constraints/remove_com_motion.cc,
+	  src/algorithm/constraints/rottrans.cc,
+	  src/algorithm/constraints/shake.cc,
+	  src/algorithm/integration/leap_frog.cc,
+	  src/algorithm/integration/steepest_descent.cc,
+	  src/algorithm/pressure/berendsen_barostat.cc,
+	  src/algorithm/temperature/berendsen_thermostat.cc,
+	  src/algorithm/temperature/temperature_calculation.cc,
+	  src/check/check_state.cc, src/configuration/configuration.cc,
+	  src/configuration/configuration.h,
+	  src/configuration/state_properties.cc,
+	  src/interaction/bonded/angle_interaction.cc,
+	  src/interaction/bonded/dihedral_interaction.cc,
+	  src/interaction/bonded/harmonic_bond_interaction.cc,
+	  src/interaction/bonded/improper_dihedral_interaction.cc,
+	  src/interaction/bonded/perturbed_angle_interaction.cc,
+	  src/interaction/bonded/perturbed_dihedral_interaction.cc,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.cc,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.cc,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.cc,
+	  src/interaction/bonded/quartic_bond_interaction.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_innerloop.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_term.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_pair.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_term.cc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  src/interaction/special/jvalue_restraint_interaction.cc,
+	  src/interaction/special/position_restraint_interaction.cc,
+	  src/math/gmath.h, src/topology/topology.cc,
+	  src/util/generate_velocities.cc, src/util/prepare_virial.cc:
+	  replacing Blitz++ by flat types, code changes are only cleanup,
+	  would still work with blitz
+
+2004-09-05 10:58  markus
+
+	* INSTALL, program/md.cc, program/script.cc,
+	  src/algorithm/constraints/perturbed_shake.cc,
+	  src/algorithm/constraints/shake.cc, src/check/aladip.t.cc,
+	  src/check/aladip_atomic.t.cc, src/check/rasn.t.cc,
+	  src/check/scaling.t.cc,
+	  src/interaction/bonded/dihedral_interaction.cc,
+	  src/interaction/bonded/perturbed_dihedral_interaction.cc,
+	  src/interaction/special/jvalue_restraint_interaction.cc,
+	  src/io/argument.cc, src/io/argument.h, src/io/blockinput.cc,
+	  src/io/blockinput.h, src/io/instream.cc, src/io/read_input.cc,
+	  src/io/read_special.cc, src/io/configuration/in_configuration.cc,
+	  src/io/configuration/inframe.cc, src/io/configuration/inframe.h,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/forcefield/in_ifp.cc, src/io/parameter/in_parameter.cc,
+	  src/io/topology/in_jvalue.cc, src/io/topology/in_perturbation.cc,
+	  src/io/topology/in_posres.cc, src/io/topology/in_topology.cc,
+	  src/simulation/multibath.cc, src/util/error.h,
+	  src/util/parse_verbosity.cc, src/util/parse_verbosity.h,
+	  src/util/template_split.h: removed all exceptions - compiles with
+	  -fno-exceptions
+
+2004-09-05 10:56  markus
+
+	* acinclude.m4: honor CXXFLAGS
+
+2004-08-27 13:26  markus
+
+	* src/: check/scaling.t.cc, check/data/scaling.lambdadep.pttopo,
+	  interaction/Makefile.am,
+	  interaction/nonbonded/pairlist/perturbed_standard_pairlist_algorithm.cc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.h:
+	  fixed missing scaled_only check in perturbed pairlist
+
+2004-08-27 13:26  markus
+
+	*
+	  src/interaction/nonbonded/pairlist/perturbed_standard_pairlist_algorithm.cc:
+	  fixed scaled only problem
+
+2004-08-24 16:38  markus
+
+	* src/io/configuration/in_configuration.cc: boundary condition
+	  check
+
+2004-08-16 13:37  markus
+
+	* program/BUILD_NUMBER: [no log message]
+
+2004-08-13 18:55  markus
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/constraints/create_constraints.cc,
+	  src/algorithm/constraints/flexible_constraint.cc,
+	  src/algorithm/constraints/flexible_constraint.h,
+	  src/algorithm/constraints/lincs.cc,
+	  src/algorithm/constraints/lincs.h,
+	  src/algorithm/constraints/perturbed_flexible_constraint.cc,
+	  src/algorithm/constraints/perturbed_flexible_constraint.h,
+	  src/algorithm/constraints/perturbed_shake.cc,
+	  src/algorithm/constraints/perturbed_shake.h,
+	  src/algorithm/constraints/remove_com_motion.cc,
+	  src/algorithm/constraints/rottrans.cc,
+	  src/algorithm/constraints/rottrans.h,
+	  src/algorithm/constraints/shake.cc,
+	  src/algorithm/constraints/shake.h,
+	  src/algorithm/temperature/berendsen_thermostat.cc,
+	  src/algorithm/temperature/berendsen_thermostat.h,
+	  src/configuration/configuration.cc,
+	  src/configuration/state_properties.cc,
+	  src/interaction/Makefile.am,
+	  src/interaction/bonded/angle_interaction.cc,
+	  src/interaction/bonded/angle_interaction.h,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/bonded/dihedral_interaction.cc,
+	  src/interaction/bonded/dihedral_interaction.h,
+	  src/interaction/bonded/harmonic_bond_interaction.cc,
+	  src/interaction/bonded/harmonic_bond_interaction.h,
+	  src/interaction/bonded/improper_dihedral_interaction.cc,
+	  src/interaction/bonded/improper_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_angle_interaction.cc,
+	  src/interaction/bonded/perturbed_angle_interaction.h,
+	  src/interaction/bonded/perturbed_dihedral_interaction.cc,
+	  src/interaction/bonded/perturbed_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.cc,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.h,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.cc,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.cc,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.h,
+	  src/interaction/bonded/quartic_bond_interaction.cc,
+	  src/interaction/bonded/quartic_bond_interaction.h,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/special/create_special.cc,
+	  src/interaction/special/jvalue_restraint_interaction.cc,
+	  src/interaction/special/jvalue_restraint_interaction.h,
+	  src/interaction/special/position_restraint_interaction.cc,
+	  src/interaction/special/position_restraint_interaction.h,
+	  src/interaction/special/pscale.cc,
+	  src/interaction/special/pscale.h, src/io/read_input.cc,
+	  src/io/configuration/in_configuration.cc,
+	  src/io/configuration/in_configuration.h,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/parameter/in_parameter.h,
+	  src/math/boundary_implementation.cc,
+	  src/math/boundary_implementation.h, src/math/gmath.h,
+	  src/math/periodicity.cc, src/math/volume.cc,
+	  src/simulation/Makefile.am, src/simulation/multibath.cc,
+	  src/simulation/multibath.h, src/simulation/parameter.h,
+	  src/util/create_simulation.cc, src/util/prepare_virial.cc,
+	  src/util/template_split.h: template split macro in bonded /
+	  special interactions. truncoct. replica exchange.
+
+2004-08-11 10:05  markus
+
+	* src/: check/aladip.t.cc, check/check_forcefield.cc,
+	  check/check_forcefield.h, check/data/aladip.in,
+	  check/data/aladip_atomic.in, check/data/rasn.in,
+	  check/data/scaling.in, check/data/scaling.lambdadep.in,
+	  interaction/nonbonded/create_nonbonded.cc,
+	  interaction/nonbonded/pairlist/perturbed_standard_pairlist_algorithm.cc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc:
+	  checking atomic cutoff in standard pairlist algorithm
+
+2004-08-09 14:18  markus
+
+	* ChangeLog, Config.sh, INSTALL, VERSION, doc/doxygen.conf,
+	  src/interaction/Makefile.am,
+	  src/interaction/nonbonded/create_header.h,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/interaction_spec.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_outerloop.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_outerloop.h,
+	  src/interaction/nonbonded/interaction/nonbonded_set.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_set.h,
+	  src/interaction/nonbonded/interaction/nonbonded_term.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_term.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_pair.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_pair.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_set.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_set.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_term.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_term.h,
+	  src/interaction/nonbonded/interaction/storage.h,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/pairlist.cc,
+	  src/interaction/nonbonded/pairlist/pairlist.h,
+	  src/interaction/nonbonded/pairlist/pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/perturbed_standard_pairlist_algorithm.cc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm2.cc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm2.h,
+	  src/util/Makefile.am, src/util/template_split.h: template
+	  instantiation moved to outerloop and pairlist_algorithm
+
 2004-08-09 11:38  markus
 
 	* src/interaction/nonbonded/interaction/: nonbonded_innerloop.h,
@@ -119,15 +328,6 @@
 	* src/: io/parameter/in_parameter.cc, simulation/parameter.h:
 	  flexible shake parameters
 
-2004-06-27 10:20  markus
-
-	* contrib/splitter.cc: better error handling
-
-2004-06-27 10:18  markus
-
-	* src/interaction/nonbonded/filter/exclusion_filter.cc: signed /
-	  unsigned mismatch
-
 2004-06-27 10:17  markus
 
 	* src/: util/debug.h, util/parse_verbosity.cc,
@@ -158,7 +358,7 @@
 
 2004-06-01 19:58  markus
 
-	* VERSION, contrib/split_develop.dat: version update: 0.1.3.pre1
+	* VERSION: version update: 0.1.3.pre1
 
 2004-06-01 19:58  markus
 
@@ -242,21 +442,14 @@
 
 2004-06-01 19:47  markus
 
-	* src/interaction/nonbonded/: create_nonbonded.h,
-	  split/nonbonded_split.h: comment & stdheader
+	* src/interaction/nonbonded/create_nonbonded.h: comment & stdheader
 
 2004-06-01 19:46  markus
 
-	* src/interaction/nonbonded/: filter/chargegroup_grid.cc,
-	  filter/chargegroup_grid.h, filter/exclusion_filter.cc,
-	  filter/exclusion_filter.h, filter/perturbation_filter.cc,
-	  filter/perturbation_filter.h, filter/range_filter.cc,
-	  filter/range_filter.h, pairlist/grid_pairlist_algorithm.cc,
-	  pairlist/grid_pairlist_algorithm.h, pairlist/pairlist.cc,
-	  pairlist/pairlist_algorithm.h,
-	  pairlist/standard_pairlist_algorithm.cc,
-	  pairlist/standard_pairlist_algorithm2.cc,
-	  pairlist/standard_pairlist_algorithm2.h: size_t
+	* src/interaction/nonbonded/pairlist/: grid_pairlist_algorithm.cc,
+	  grid_pairlist_algorithm.h, pairlist.cc, pairlist_algorithm.h,
+	  standard_pairlist_algorithm.cc, standard_pairlist_algorithm2.cc,
+	  standard_pairlist_algorithm2.h: size_t
 
 2004-06-01 19:46  markus
 
@@ -361,14 +554,6 @@
 	  standard_pairlist_algorithm2.h, standard_pairlist_algorithm2.tcc:
 	  name change: tcc -> cc
 
-2004-05-22 14:26  markus
-
-	* src/interaction/nonbonded/filter/: chargegroup_grid.cc,
-	  chargegroup_grid.h, chargegroup_grid.tcc, exclusion_filter.cc,
-	  exclusion_filter.h, exclusion_filter.tcc, perturbation_filter.cc,
-	  perturbation_filter.h, perturbation_filter.tcc, range_filter.cc,
-	  range_filter.h, range_filter.tcc: name change: tcc -> cc
-
 2004-05-22 14:04  markus
 
 	* src/interaction/bonded/: angle_interaction.cc,
@@ -456,11 +641,9 @@
 
 2004-05-21 18:10  markus
 
-	* contrib/splitter.cc,
-	  src/interaction/forcefield/create_forcefield.cc,
-	  src/interaction/forcefield/create_forcefield.h,
-	  src/interaction/nonbonded/create_header.h,
-	  src/interaction/nonbonded/create_nonbonded.h: interface change in
+	* src/interaction/: forcefield/create_forcefield.cc,
+	  forcefield/create_forcefield.h, nonbonded/create_header.h,
+	  nonbonded/create_nonbonded.h: interface change in
 	  create_forcefield
 
 2004-05-20 20:15  markus
@@ -554,7 +737,6 @@
 	  interaction/forcefield/create_forcefield.cc,
 	  interaction/forcefield/forcefield.cc,
 	  interaction/nonbonded/create_header.h,
-	  interaction/nonbonded/split/nonbonded_split.h,
 	  interaction/special/create_special.cc, io/print_block.cc,
 	  io/read_special.cc, io/configuration/in_configuration.cc,
 	  io/parameter/in_parameter.cc, io/topology/in_perturbation.cc,
@@ -741,24 +923,14 @@
 
 	* Makefile.am, program/Makefile.am: make build support
 
-2004-04-09 16:09  markus
-
-	* contrib/splitter.cc: atomic virial testing support
-
-2004-04-09 16:08  markus
-
-	* contrib/Makefile: simple make support
-
 2004-04-09 16:08  markus
 
 	* doc/newinput.txt: minor corrections
 
 2004-04-09 16:07  markus
 
-	* contrib/split_develop.dat, src/check/Makefile.am,
-	  src/check/aladip_atomic.t.cc, src/check/check_state.cc,
-	  src/check/check_state.h, src/check/data/aladip_atomic.in: atomic
-	  virial checks
+	* src/check/: Makefile.am, aladip_atomic.t.cc, check_state.cc,
+	  check_state.h, data/aladip_atomic.in: atomic virial checks
 
 2004-02-26 17:09  markus
 
@@ -812,10 +984,8 @@
 
 2004-02-21 20:09  markus
 
-	* configure.in, contrib/splitter.cc, program/md.cc,
-	  src/interaction/nonbonded/split/nonbonded_split.h,
-	  src/util/parse_verbosity.cc: adding precompiled header support
-	  (icc 8.0)
+	* configure.in, program/md.cc, src/util/parse_verbosity.cc: adding
+	  precompiled header support (icc 8.0)
 
 2004-02-21 14:38  markus
 
@@ -881,11 +1051,6 @@
 	* doc/newinput.txt, program/BUILD_NUMBER, program/md.cc: lambda
 	  dependency added --markus
 
-2004-02-19 14:14  developer
-
-	* contrib/: split_develop.dat, splitter.cc: quiet option added,
-	  additional output from create_nonbonded --markus
-
 2004-02-19 14:12  developer
 
 	* src/: algorithm/constraints/perturbed_flexible_constraint.tcc,
@@ -898,7 +1063,6 @@
 	  interaction/bonded/perturbed_improper_dihedral_interaction.tcc,
 	  interaction/bonded/perturbed_quartic_bond_interaction.tcc,
 	  interaction/forcefield/forcefield.cc,
-	  interaction/nonbonded/filter/exclusion_filter.tcc,
 	  interaction/nonbonded/interaction/nonbonded_interaction.tcc,
 	  interaction/nonbonded/interaction/nonbonded_set.tcc,
 	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
@@ -991,74 +1155,50 @@
 
 2004-02-08 19:19  developer
 
-	* contrib/splitter.cc,
-	  src/algorithm/constraints/create_constraints.cc,
-	  src/interaction/nonbonded/filter/range_filter.tcc,
-	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
-	  src/interaction/nonbonded/interaction/nonbonded_set.tcc,
-	  src/interaction/nonbonded/pairlist/pairlist_algorithm.h,
-	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
-	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
-	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm2.h,
-	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm2.tcc,
-	  src/interaction/nonbonded/split/nonbonded_split.h,
-	  src/io/configuration/in_configuration.cc,
-	  src/io/configuration/in_configuration.h, src/math/periodicity.h,
-	  src/math/periodicity.tcc: gathering in the beginning! numerical
+	* src/: algorithm/constraints/create_constraints.cc,
+	  interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  interaction/nonbonded/pairlist/pairlist_algorithm.h,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm2.h,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm2.tcc,
+	  io/configuration/in_configuration.cc,
+	  io/configuration/in_configuration.h, math/periodicity.h,
+	  math/periodicity.tcc: gathering in the beginning! numerical
 	  stability in nonbonded term. new standard pairlist algorithm
 	  --markus&chris
 
 2004-02-08 09:40  developer
 
-	* configure.in, contrib/split_develop.dat,
-	  src/algorithm/constraints/create_constraints.cc,
-	  src/interaction/nonbonded/filter/exclusion_filter.tcc,
+	* configure.in, src/algorithm/constraints/create_constraints.cc,
 	  src/interaction/nonbonded/interaction/nonbonded_set.tcc,
 	  src/interaction/nonbonded/interaction/nonbonded_term.h,
 	  src/interaction/nonbonded/interaction/nonbonded_term.tcc,
 	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.tcc,
 	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
 	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
-	  src/interaction/nonbonded/split/nonbonded_split.h,
 	  src/topology/core/atomgroup_iterator.h,
 	  src/topology/core/chargegroup_iterator.h: nonbonded term,
 	  standard pairlist optimizations --markus
 
-2004-02-07 19:21  developer
-
-	* contrib/splitter.cc: do not create nonbonded if not required
-	  --markus
-
 2004-02-07 18:12  developer
 
-	* contrib/splitter.cc, src/interaction/Makefile.am: adding makefile
-	  include to splitter
-
-2004-02-06 18:11  developer
-
-	* contrib/splitter.cc: output fix --markus
+	* src/interaction/Makefile.am: adding makefile include to splitter
 
 2004-02-06 15:34  developer
 
-	* VERSION, configure.in, contrib/splitter.cc, doc/doxygen.conf,
-	  program/md.cc, src/check/Makefile.am,
-	  src/interaction/Makefile.am,
+	* VERSION, configure.in, doc/doxygen.conf, program/md.cc,
+	  src/check/Makefile.am, src/interaction/Makefile.am,
 	  src/interaction/nonbonded/create_header.h,
-	  src/interaction/nonbonded/split/nonbonded_split.h,
 	  src/io/parameter/in_parameter.cc,
 	  src/math/boundary_implementation.tcc: splitted up the nonbonded
 	  --markus
 
-2004-02-06 15:29  developer
-
-	* contrib/: split_complete.dat, split_develop.dat, splitter.cc:
-	  contrib splitting --markus
-
 2004-02-06 14:14  developer
 
-	* src/interaction/nonbonded/: create_header.h,
-	  split/nonbonded_split.h: adding needed files for auto-split up
-	  --markus
+	* src/interaction/nonbonded/create_header.h: adding needed files
+	  for auto-split up --markus
 
 2004-02-06 14:12  developer
 
@@ -1106,8 +1246,6 @@
 	  src/interaction/nonbonded/create_unperturbed.cc,
 	  src/interaction/nonbonded/create_unperturbed_grid.cc,
 	  src/interaction/nonbonded/interaction_spec.h,
-	  src/interaction/nonbonded/filter/range_filter.h,
-	  src/interaction/nonbonded/filter/range_filter.tcc,
 	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
 	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
 	  src/interaction/nonbonded/interaction/nonbonded_set.h,
@@ -1173,11 +1311,6 @@
 	  interaction/nonbonded/create_unperturbed.cc,
 	  interaction/nonbonded/create_unperturbed_grid.cc,
 	  interaction/nonbonded/interaction_spec.h,
-	  interaction/nonbonded/filter/exclusion_filter.h,
-	  interaction/nonbonded/filter/exclusion_filter.tcc,
-	  interaction/nonbonded/filter/filter.h,
-	  interaction/nonbonded/filter/range_filter.h,
-	  interaction/nonbonded/filter/range_filter.tcc,
 	  interaction/nonbonded/interaction/nonbonded_innerloop.h,
 	  interaction/nonbonded/interaction/nonbonded_innerloop.tcc,
 	  interaction/nonbonded/interaction/nonbonded_interaction.h,
@@ -1281,7 +1414,6 @@
 	  src/algorithm/constraints/perturbed_shake.tcc,
 	  src/algorithm/temperature/temperature_calculation.cc,
 	  src/interaction/nonbonded/create_perturbed.cc,
-	  src/interaction/nonbonded/filter/perturbation_filter.tcc,
 	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
 	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
 	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
@@ -1307,7 +1439,6 @@
 	  src/interaction/nonbonded/create_perturbed_grid.cc,
 	  src/interaction/nonbonded/create_unperturbed.cc,
 	  src/interaction/nonbonded/create_unperturbed_grid.cc,
-	  src/interaction/nonbonded/filter/range_filter.h,
 	  src/interaction/nonbonded/interaction/nonbonded_innerloop.h,
 	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
 	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.tcc,
@@ -1657,7 +1788,6 @@
 2003-11-01 15:52  developer
 
 	* src/interaction/nonbonded/: create_nonbonded.cc,
-	  filter/range_filter.h, filter/range_filter.tcc,
 	  interaction/nonbonded_innerloop.h,
 	  interaction/nonbonded_innerloop.tcc,
 	  interaction/nonbonded_interaction.h,
@@ -1795,12 +1925,7 @@
 	  interaction/nonbonded_interaction.h,
 	  interaction/perturbed_nonbonded_innerloop.h,
 	  interaction/perturbed_nonbonded_interaction.h,
-	  interaction/storage.h, filter/chargegroup_grid.h,
-	  filter/chargegroup_grid.tcc, filter/exclusion_filter.h,
-	  filter/exclusion_filter.tcc, filter/filter.h,
-	  filter/perturbation_filter.h, filter/perturbation_filter.tcc,
-	  filter/range_filter.h, filter/range_filter.tcc,
-	  pairlist/grid_pairlist_algorithm.h,
+	  interaction/storage.h, pairlist/grid_pairlist_algorithm.h,
 	  pairlist/grid_pairlist_algorithm.tcc, pairlist/pairlist.h,
 	  pairlist/pairlist.tcc, pairlist/pairlist_algorithm.h,
 	  pairlist/standard_pairlist_algorithm.h,
