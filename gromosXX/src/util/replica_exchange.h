@@ -77,7 +77,8 @@ namespace util
       /**
        * Constructor
        */
-      Slave_Data(state_enum state, int replica) : state(state), replica(replica) 
+      Slave_Data(state_enum state, int replica) 
+	: state(state), replica(replica) 
       {
       }
       
@@ -138,7 +139,19 @@ namespace util
      */
     std::vector<int>        neighbour_pos;
 
+    /**
+     * run the thread
+     */
     virtual int run(io::Argument & args, int tid, int num_threads);
+    
+    /**
+     * configuration accessor
+     */
+    configuration::Configuration & conf(int i)
+    {
+      assert(i < m_conf.size() && i >= 0);
+      return m_conf[i];
+    }
     
   private:
     /**
@@ -205,7 +218,22 @@ namespace util
      * update replica data on master
      */
     int update_replica_data();
-    
+    /**
+     * get configuration from master
+     */
+    int get_configuration(topology::Topology const & topo,
+			  configuration::Configuration & conf);
+    /**
+     * update configuration on master
+     */
+    int update_configuration(topology::Topology const & topo,
+			     configuration::Configuration & conf);
+    /**
+     * initialise run (coordinates, time, temperature, lambda)
+     */
+    int init_replica(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim);
     /**
      * run the replica
      */

@@ -59,7 +59,7 @@ util::Replica_Exchange_Master::Replica_Exchange_Master()
   gsl_rng_env_setup();
   const gsl_rng_type * rng_type = gsl_rng_default;
 
-  // get the rundom number generator
+  // get the random number generator
   m_rng = gsl_rng_alloc(rng_type);
 
   // master
@@ -387,10 +387,13 @@ int util::Replica_Exchange_Slave::run
 		<< " (run = " << replica_data.run << ")"
 		<< std::endl;
 
+      // init replica parameters (t, conf, T, lambda)
+      init_replica(topo, conf, sim);
+      // run it
       run_md(topo, conf, sim, md, traj);
-
-      // simulations pretty fast - remove!!!
-      sleep(3);
+      // store configuration on master
+      // (only necessary if more replicas than threads...)
+      update_configuration(topo, conf);
 
       ++replica_data.run;
       replica_data.state = waiting;
@@ -516,4 +519,72 @@ int util::Replica_Exchange_Slave::update_replica_data()
   return 0;
 }
 
+int util::Replica_Exchange_Slave::get_configuration
+(
+ topology::Topology const & topo,
+ configuration::Configuration & conf
+ )
+{
+  // for OMP the master is set in a variable
+  // MPI would use messages to 0 for that
 
+  assert(replica_master != NULL);
+  
+  conf = replica_master->conf(slave_data.replica);
+  
+  // std::cerr << "slave " << m_ID 
+  //           << " got replica configuration" << std::endl;
+  return 0;
+  
+}
+
+int util::Replica_Exchange_Slave::update_configuration
+(
+ topology::Topology const & topo,
+ configuration::Configuration & conf
+ )
+{
+  // for OMP the master is set in a variable
+  // MPI would use messages to 0 for that
+
+  assert(replica_master != NULL);
+  
+  replica_master->conf(slave_data.replica) = conf;
+  
+  // std::cerr << "slave " << m_ID 
+  //           << " replica configuration updated" << std::endl;
+  return 0;
+  
+}
+
+int util::Replica_Exchange_Slave::init_replica
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim
+ )
+{
+  // get configuration from master
+  get_configuration(topo, conf);
+  
+  // change all the temperature coupling temperatures
+  for(int i=0; i<sim.multibath().size(); ++i){
+    sim.multibath()[i].temperature = replica_data.temperature;
+  }
+  
+  // change the lambda value
+  sim.param().perturbation.lambda = replica_data.lambda;
+  topo.lambda(replica_data.lambda);
+  topo.update_for_lambda();
+  
+  // change simulation time
+  sim.time() = replica_data.run * 
+    sim.param().step.number_of_steps * sim.param().step.dt +
+    sim.param().step.t0;
+  
+  sim.steps() = replica_data.run * sim.param().step.number_of_steps;
+
+  // ready to run ???
+
+  return 0;
+}
