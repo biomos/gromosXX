@@ -5,7 +5,6 @@
 
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE interaction
 #define SUBMODULE pairlist
 
@@ -17,7 +16,7 @@ interaction::Pairlist
   : m_pairlist(pl)
 {
 
-  DEBUG(7, "Pairlist size @iteractor construction " << pl.size());
+  DEBUG(7, "Pairlist size @iteractor construction " << unsigned(pl.size()));
   
   m_i = pl.begin();
   // go to the first pair
@@ -82,7 +81,7 @@ interaction::Pairlist::iterator
 ::i()
 {
   DEBUG(10, "Pairlist::i()");
-  return (m_i - m_pairlist.begin());
+  return unsigned((m_i - m_pairlist.begin()));
 }
 
 inline unsigned int
@@ -117,7 +116,7 @@ inline interaction::Pairlist::iterator
 interaction::Pairlist::end()
 {
   iterator it(*this);
-  it.row(size());
+  it.row(unsigned(size()));
   return it;
 }
 

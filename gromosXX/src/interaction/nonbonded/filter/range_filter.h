@@ -48,7 +48,7 @@ namespace interaction
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim, 
      Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
-     size_t const i, size_t const j,
+     unsigned int i, unsigned int j,
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
      Periodicity_type const & periodicity);
@@ -65,7 +65,7 @@ namespace interaction
     (topology::Topology & topo,	configuration::Configuration & conf,
      simulation::Simulation & sim, 
      Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
-     size_t const i, size_t const j,
+     unsigned int i, unsigned int j,
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
      int pc,
@@ -79,7 +79,7 @@ namespace interaction
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim,
      Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
-     size_t const i, size_t const j,
+     unsigned int i, unsigned int j,
      Periodicity_type const & periodicity);
 
     /**
@@ -90,7 +90,7 @@ namespace interaction
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim,
      Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
-     size_t const i, size_t const j, int pc,
+     unsigned int i, unsigned int j, int pc,
      Periodicity_type const & periodicity);
     
     /**

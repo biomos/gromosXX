@@ -3,6 +3,11 @@
  * filter for perturbed atoms.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE filter
+
 template<typename t_nonbonded_spec>
 inline
 interaction::Perturbation_Filter<t_nonbonded_spec>
@@ -17,7 +22,7 @@ interaction::Perturbation_Filter<t_nonbonded_spec>
 ::perturbed_atom(topology::Topology & topo,
 		 configuration::Configuration & conf,
 		 simulation::Simulation & sim,
-		 size_t const i)
+		 unsigned int i)
 {
   if (t_nonbonded_spec::do_perturbation){
     if (i < topo.num_solute_atoms() &&

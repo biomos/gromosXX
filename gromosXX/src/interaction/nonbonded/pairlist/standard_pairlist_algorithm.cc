@@ -57,12 +57,12 @@ update(topology::Topology & topo,
   // empty the pairlist
   // to be general, we anyway empty the COMPLETE pairlist
   // (changing begin, end, stride during simulation possible)
-  for(size_t i=0; i<topo.num_atoms(); ++i)
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
     nbs.pairlist()[i].clear();
 
   if(t_perturbation_spec::do_perturbation){
     // and the perturbed pairlist
-    for(size_t i=0; i<topo.num_atoms(); ++i)
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
       nbs.perturbed_pairlist()[i].clear();
 
   }

@@ -84,12 +84,12 @@ namespace interaction
     /**
      * the (chargegroup) grid.
      */
-    std::vector<std::vector<std::vector<std::vector<size_t> > > > & grid();
+    std::vector<std::vector<std::vector<std::vector<unsigned int> > > > & grid();
 
     /**
      * add a point to the grid
      */
-    void add(math::Vec & v, size_t i);
+    void add(math::Vec & v, unsigned int i);
  
     /**
      * print the mask
@@ -109,7 +109,7 @@ namespace interaction
     /**
      * the grid.
      */
-    std::vector<std::vector<std::vector<std::vector<size_t> > > > m_grid;
+    std::vector<std::vector<std::vector<std::vector<unsigned int> > > > m_grid;
     /**
      * the real sizes of the cells.
      */
@@ -117,7 +117,7 @@ namespace interaction
     /**
      * the number of cells in every direction.
      */
-    size_t m_num_cells[3];
+    unsigned int m_num_cells[3];
     /**
      * the MASK!
      */
@@ -141,7 +141,7 @@ namespace interaction
     
     bool operator++();
     
-    size_t operator*();
+    unsigned int operator*();
 
   protected:
     Chargegroup_Grid<b> & m_grid;
@@ -152,8 +152,8 @@ namespace interaction
     int m;
     bool m_outside;
 
-    std::vector<size_t>::const_iterator it;
-    std::vector<size_t>::const_iterator to;
+    std::vector<unsigned int>::const_iterator it;
+    std::vector<unsigned int>::const_iterator to;
 
   };
   

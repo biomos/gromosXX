@@ -52,8 +52,8 @@ namespace interaction
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
 		    Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
-		    std::vector<size_t>::const_iterator &cg_st, 
-		    std::vector<size_t>::const_iterator &cg_to,
+		    std::vector<unsigned int>::const_iterator &cg_st, 
+		    std::vector<unsigned int>::const_iterator &cg_to,
 		    Periodicity_type const & periodicity);
 
     template<bool periodic>
@@ -61,8 +61,8 @@ namespace interaction
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim, 
 		    Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
-		    std::vector<size_t>::const_iterator &cg_st, 
-		    std::vector<size_t>::const_iterator &cg_to,
+		    std::vector<unsigned int>::const_iterator &cg_st, 
+		    std::vector<unsigned int>::const_iterator &cg_to,
 		    Chargegroup_Grid_type &grid,
 		    int cell[3],
 		    Periodicity_type const & periodicity);

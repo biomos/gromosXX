@@ -53,10 +53,11 @@ interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
     cg1 =   topo.chargegroup_begin(),
     cg_to = topo.chargegroup_end();
 
-  size_t i;
+  unsigned int i,
+		num_cg = topo.num_solute_chargegroups();
 
   // solute
-  for(i=0; i < topo.num_solute_chargegroups(); ++cg1, ++i){
+  for(i=0; i < num_cg; ++cg1, ++i){
     cg1.cog(pos, m_cg_cog(i));
   }
   // solvent
@@ -86,7 +87,7 @@ interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 	<< "\t" << periodicity.box()(2)(1)
 	<< "\t" << periodicity.box()(2)(2));
 	
-  for(size_t i = 0, i_to = m_cg_cog.size(); i != i_to; ++i)
+  for(unsigned int i = 0, i_to = unsigned(m_cg_cog.size()); i != i_to; ++i)
     grid.add(m_cg_cog(i), i);
   
 }
@@ -98,7 +99,7 @@ interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
 			 Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
-			 size_t const i, size_t const j,
+			 unsigned int i, unsigned int j,
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
 			 Periodicity_type const & periodicity)
@@ -157,7 +158,7 @@ interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
 			 Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
-			 size_t const i, size_t const j,
+			 unsigned int i, unsigned int j,
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
 			 int pc,
@@ -215,7 +216,7 @@ interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
 		  Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
-		  size_t const i, size_t const j,
+		  unsigned int i, unsigned int j,
 		  Periodicity_type const & periodicity)
 {
 
@@ -256,7 +257,7 @@ interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
 		  Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
-		  size_t const i, size_t const j,
+		  unsigned int i, unsigned int j,
 		  int pc,
 		  Periodicity_type const & periodicity)
 {

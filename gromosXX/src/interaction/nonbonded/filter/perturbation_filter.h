@@ -26,7 +26,7 @@ namespace interaction
      */
     bool perturbed_atom(topology::Topology & topo,
 			configuration::Configuration & conf,
-			simulation::Simulation & sim, size_t const i);
+			simulation::Simulation & sim, unsigned int i);
   };
   
 } // interaction

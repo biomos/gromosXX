@@ -39,7 +39,7 @@ update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim, 
        Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
-       size_t begin, size_t end, size_t stride)
+       unsigned int begin, unsigned int end, unsigned int stride)
 {
   DEBUG(7, "standard pairlist update");
   const double update_start = util::now();
@@ -47,12 +47,12 @@ update(topology::Topology & topo,
   Periodicity_type periodicity(conf.current().box);
 
   // empty the pairlist
-  for(size_t i=0; i<topo.num_atoms(); ++i)
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
     nbs.pairlist()[i].clear();
 
   if(t_perturbation_spec::do_perturbation){
     // and the perturbed pairlist
-    for(size_t i=0; i<topo.num_atoms(); ++i)
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
       nbs.perturbed_pairlist()[i].clear();
 
   }
@@ -60,11 +60,11 @@ update(topology::Topology & topo,
   // exclusion iterators
   std::set<int>::const_reverse_iterator e, e_to;
 
-  size_t cg1 = 0, cg2;
+  unsigned int cg1 = 0, cg2;
   int cg1_atom, cg2_atom, cg2_end;
 
-  const size_t num_cg = topo.num_chargegroups();
-  const size_t num_solute_cg = topo.num_solute_chargegroups();
+  const unsigned int num_cg = topo.num_chargegroups();
+  const unsigned int num_solute_cg = topo.num_solute_chargegroups();
   
   math::Vec r;
 
@@ -219,12 +219,12 @@ calc_cg_cog(topology::Topology & topo,
   
   periodicity.put_chargegroups_into_box(conf, topo);
 
-  const size_t num_cg = topo.num_chargegroups();
-  const size_t num_solute_cg = topo.num_solute_chargegroups();
+  const unsigned int num_cg = topo.num_chargegroups();
+  const unsigned int num_solute_cg = topo.num_solute_chargegroups();
   
   m_cog.resize(num_cg);
   
-  size_t cg = 0, atom = 0;
+  unsigned int cg = 0, atom = 0;
   std::vector<int>::const_iterator
     cg_end = topo.chargegroups().begin() + 1;
 
@@ -233,7 +233,7 @@ calc_cg_cog(topology::Topology & topo,
   for( ; cg < num_solute_cg; ++cg, ++cg_end){
 
     double x=0, y=0, z=0;
-    size_t c = 0;
+    unsigned int c = 0;
     
     for( ; atom < unsigned(*cg_end); ++atom, ++c){
       

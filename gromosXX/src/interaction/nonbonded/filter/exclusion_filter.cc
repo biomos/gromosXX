@@ -3,6 +3,11 @@
  * filter for exclusions.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE filter
+
 template<typename t_interaction_spec>
 inline
 interaction::Exclusion_Filter<t_interaction_spec>
@@ -17,7 +22,7 @@ interaction::Exclusion_Filter<t_interaction_spec>
 ::excluded_solute_pair(topology::Topology & topo,
 		       configuration::Configuration & conf,
 		       simulation::Simulation & sim,
-		       size_t const i, size_t const j)
+		       unsigned int i, unsigned int j)
 {
   if (t_interaction_spec::do_exclusion){
     assert(i<j);
@@ -52,7 +57,7 @@ interaction::Exclusion_Filter<t_interaction_spec>
 ::inverse_excluded_solute_pair(topology::Topology & topo,
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
-			       size_t const i, size_t const j)
+			       unsigned int i, unsigned int j)
 {
   if (t_interaction_spec::do_exclusion){
     assert(j<i);

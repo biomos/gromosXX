@@ -27,12 +27,12 @@ namespace interaction
     bool excluded_solute_pair(topology::Topology & topo,
 			      configuration::Configuration & conf,
 			      simulation::Simulation & sim,
-			      size_t const i, size_t const j);
+			      unsigned int i, unsigned int j);
 
     bool inverse_excluded_solute_pair(topology::Topology & topo,
 				      configuration::Configuration & conf,
 				      simulation::Simulation & sim,
-				      size_t const i, size_t const j);
+				      unsigned int i, unsigned int j);
   };
   
 } // interaction

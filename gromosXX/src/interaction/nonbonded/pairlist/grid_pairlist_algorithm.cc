@@ -51,12 +51,12 @@ update(topology::Topology & topo,
   const double update_start = util::now();
 
   // empty the pairlist
-  for(size_t i=0; i<topo.num_atoms(); ++i)
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
     nbs.pairlist()[i].clear();
 
   if(t_perturbation_spec::do_perturbation){
     // and the perturbed pairlist
-    for(size_t i=0; i<topo.num_atoms(); ++i)
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
       nbs.perturbed_pairlist()[i].clear();
 
   }
@@ -85,7 +85,7 @@ update(topology::Topology & topo,
   
   a_grid.num_cells(num_cells);
   
-  std::vector<size_t>::const_iterator cg_st, cg_to;
+  std::vector<unsigned int>::const_iterator cg_st, cg_to;
 
   // loop over all cells
   DEBUG(8, "num_cell: " << num_cells[0] << " " 
@@ -142,14 +142,14 @@ intra_cell(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
 	   Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
-	   std::vector<size_t>::const_iterator &cg_st, 
-	   std::vector<size_t>::const_iterator &cg_to,
+	   std::vector<unsigned int>::const_iterator &cg_st, 
+	   std::vector<unsigned int>::const_iterator &cg_to,
 	   Periodicity_type const & periodicity)
 {
 
   DEBUG(12, "intra cell");
 
-  std::vector<size_t>::const_iterator cg_it, cg_it2;
+  std::vector<unsigned int>::const_iterator cg_it, cg_it2;
   
   // do the intra - cell
   for(cg_it = cg_st; cg_it != cg_to; ++cg_it){
@@ -197,8 +197,8 @@ inter_cell(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
 	   Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
-	   std::vector<size_t>::const_iterator &cg_st, 
-	   std::vector<size_t>::const_iterator &cg_to,
+	   std::vector<unsigned int>::const_iterator &cg_st, 
+	   std::vector<unsigned int>::const_iterator &cg_to,
 	   Chargegroup_Grid_type & grid,
 	   int cell[3],
 	   Periodicity_type const & periodicity)
@@ -206,7 +206,7 @@ inter_cell(topology::Topology & topo,
  
   DEBUG(12, "inter cell");
   
-  std::vector<size_t>::const_iterator cg_it;
+  std::vector<unsigned int>::const_iterator cg_it;
   
   int start = 13;
   int end = 13;

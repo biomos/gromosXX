@@ -22,7 +22,7 @@ interaction::Chargegroup_Grid<b>
 
   DEBUG(8, "initialize grid");
   DEBUG(8, "\tcells\t\tsize");
-  for(size_t d=0; d<3; ++d){
+  for(unsigned int d=0; d<3; ++d){
     double const length = sqrt(dot(periodicity.box()(d), 
 				   periodicity.box()(d)));
 
@@ -32,9 +32,9 @@ interaction::Chargegroup_Grid<b>
   }  
   
   m_grid.resize(m_num_cells[0]);
-  for(size_t d=0; d<m_num_cells[0]; ++d){
+  for(unsigned int d=0; d<m_num_cells[0]; ++d){
     m_grid[d].resize(m_num_cells[1]);
-    for(size_t e=0; e<m_num_cells[1]; ++e)
+    for(unsigned int e=0; e<m_num_cells[1]; ++e)
       m_grid[d][e].resize(m_num_cells[2]);
   }
 
@@ -237,7 +237,7 @@ interaction::Chargegroup_Grid<b>
 }
 
 template<math::boundary_enum b>
-inline std::vector<std::vector<std::vector<std::vector<size_t> > > > &
+inline std::vector<std::vector<std::vector<std::vector<unsigned int> > > > &
 interaction::Chargegroup_Grid<b>
 ::grid()
 {
@@ -256,7 +256,7 @@ interaction::Chargegroup_Grid<b>
 template<math::boundary_enum b>
 inline void
 interaction::Chargegroup_Grid<b>
-::add(math::Vec & v, size_t i)
+::add(math::Vec & v, unsigned int i)
 {
   math::Vec n;
   m_periodicity.box_components(v, n);
@@ -426,7 +426,7 @@ interaction::Cell_Cell_Iterator<b, periodic>
 }
 
 template<math::boundary_enum b, bool periodic>
-inline size_t
+inline unsigned int
 interaction::Cell_Cell_Iterator<b, periodic>
 ::operator*()
 {
