@@ -19,13 +19,30 @@ Release 0.0.3
 	ok	check SHAKE for non-gathered bonds
 	ok	gather chargegroups during simulation
 	-	handle the GENBOX block
-	-	read in perturbation topology
+	ok	read in perturbation topology
 		PERTBOND03 : ok
-	-	perturbed interactions
+		PERTANGLE03 : ok
+		PERTIMPDIHEDRAL03 : ok
+		PERTDIHEDRAL03 : ok
+		PERTATOM03 : ok
+		PERTATOMPAIR03 : ok
+		SCALEDINTERACTIONS : ok
+	ok	perturbed interactions
 		PERTBOND03 : ok
+        PERTANGLE03 : ok
+        PERTIMPDIHEDRAL03 : ok
+        PERTDIHEDRAL03 : ok
+        PERTATOM03 : ok
+        PERTATOMPAIR03 : ok
+        SCALEDINTERACTIONS : ok
 	-	check the triclinic computational box
 	-	add checks to the check_state() methods
 	ok	energy fluctuations
+	ok	RF contribution for excluded atoms and self term (+perturbation)
+	ok	lambda derivative averages, fluctuations
+	ok	free energy trajectory
+	ok	flexible shake
+	ok	perturbed shake
 
 -------------
 
