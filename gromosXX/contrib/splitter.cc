@@ -391,6 +391,8 @@ void write_code()
     exit(1);
   }
 
+  string indent="  ";  
+
   cd << "/**\n"
      << " * @file create_nonbonded.cc\n"
      << " * create the nonbonded interaction.\n"
@@ -410,10 +412,10 @@ void write_code()
      << "\t\tconfiguration::Configuration const & conf,\n"
      << "\t\tio::In_Topology & it,\n"
      << "\t\tbool quiet)\n"
-     << "{\n\n ";
+     << "{\n"
+     << indent << "if (sim.param().force.nonbonded == 0) return 0;"
+     << "\n\n ";
   
-  
-  string indent="  ";
   
   for(size_t i=0; i < code.size(); ++i){
     cd << code[i];
