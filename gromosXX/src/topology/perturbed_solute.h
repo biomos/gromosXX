@@ -77,10 +77,10 @@ namespace topology
     std::map<size_t, Perturbed_Atom> const & atoms()const {return m_atom;}
 
     /**
-     * const perturbed atom accessor
+     * perturbed atom accessor
      */
     Perturbed_Atom & atom(const size_t i) {return m_atom[i];}
-    
+
     /**
      * perturbed atompairs.
      */

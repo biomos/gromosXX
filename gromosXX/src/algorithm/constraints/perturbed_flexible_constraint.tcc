@@ -36,7 +36,7 @@ algorithm::Perturbed_Flexible_Constraint<do_virial>
 template<math::virial_enum do_virial, math::boundary_enum b>
 static int _perturbed_flexible_shake
 (
- topology::Topology const &topo,
+ topology::Topology &topo,
  configuration::Configuration & conf,
  bool & convergence,
  std::vector<double> & flex_len,
@@ -165,6 +165,44 @@ static int _perturbed_flexible_shake
 
       */      
 
+      // and the lambda derivative
+      assert(topo.mass().size() > int(it->i));
+      assert(topo.mass().size() > int(it->j));
+    
+      const double m1 = topo.mass()(it->i);
+      const double m2 = topo.mass()(it->j);
+      const double mu = (m1*m2)/(m1+m2);
+      double dm1, dm2;
+
+      assert(topo.perturbed_solute().atoms().size() > it->i);
+
+      if(topo.is_perturbed(it->i)){
+	dm1 = topo.perturbed_solute().atom(it->i).B_mass() -
+	  topo.perturbed_solute().atom(it->i).A_mass();
+      }
+      else dm1 = 0;
+
+      if(topo.is_perturbed(it->j)){
+	dm2 = topo.perturbed_solute().atom(it->j).B_mass() -
+	  topo.perturbed_solute().atom(it->j).A_mass();
+      }
+      else dm2 = 0;
+
+      conf.old().perturbed_energy_derivatives.constraints_energy
+	[topo.atom_energy_group()[it->i]] -=
+	2 * lambda * flex_len[k] *
+	(param[it->B_type].r0 - param[it->A_type].r0 +
+	 (flex_len[k] - (topo.lambda() * param[it->B_type].r0 + 
+			 (1.0 - topo.lambda()) * param[it->A_type].r0) *
+	  ((dm1 + dm2) / (m1 * m2 * mu) - 
+	   dm2 / m2 - dm1 / m1 - 
+	   (param[it->B_type].K - param[it->A_type].K) / 
+	   ((1.0 - topo.lambda()) * param[it->A_type].K +
+	    topo.lambda() * param[it->B_type].K)
+	   )
+	  )
+	 );
+	 
       // update positions
       ref_r *= lambda;
       pos_i += ref_r / topo.mass()(it->i);
@@ -300,7 +338,7 @@ static void _calc_perturbed_distance
 template<math::virial_enum do_virial, math::boundary_enum b>
 static int _perturbed_flexible_solute
 (
- topology::Topology const & topo,
+ topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
  std::vector<interaction::bond_type_struct> const & param,
