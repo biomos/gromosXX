@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
     std::cout << the_simulation.multibath();
 
     std::cout << "Messages (startup)\n";
-    if (io::messages.display(std::cout) > io::message::notice)
+    if (io::messages.display(std::cout) > io::message::warning)
       return 1;
     std::cout << "\n";
     io::messages.clear();

@@ -78,10 +78,14 @@ inline io::InInput & io::InInput
     
     _lineStream >> epsilon >> kappa >> cutoff;
 
-    if (_lineStream.fail() || ! _lineStream.eof())
-
+    if (_lineStream.fail())
       io::messages.add("bad line in LONGRANGE block",
 		       "InInput", io::message::error);
+
+    if (!_lineStream.eof())
+      io::messages.add("End of line not reached, but should have been: \n" + *it +  "\n",
+		       "InInput", io::message::warning);
+
 
     sim.nonbonded().RF_constant(epsilon, kappa, cutoff);
 
@@ -248,8 +252,14 @@ inline void io::InInput::read_SYSTEM(int &nsm)
   int npm;
   _lineStream >> npm >> nsm;
  
-  if (_lineStream.fail() || ! _lineStream.eof())
-    throw std::runtime_error("bad line in SYSTEM block");
+  if (_lineStream.fail())
+    io::messages.add("bad line in SYSTEM block",
+		       "InInput", io::message::error);
+
+  if (!_lineStream.eof())
+    io::messages.add("End of line not reached in SYSTEM block, but should have been: \n" + _lineStream.str() +  "\n",
+		       "InInput", io::message::warning);
+
   
   if (npm != 1)
     io::messages.add("SYSTEM: only NPM=1 allowed",
@@ -274,9 +284,13 @@ inline void io::InInput::read_STEP(int &num_steps, double &t0, double &dt)
   
   _lineStream >> num_steps >> t0 >> dt;
   
-  if (_lineStream.fail() || ! _lineStream.eof())
-    throw std::runtime_error("bad line in STEP block");
-  
+  if (_lineStream.fail())
+    io::messages.add("bad line in STEP block",
+		       "InInput", io::message::error);
+
+  if (!_lineStream.eof())
+    io::messages.add("End of line not reached in STEP block, but should have been: \n" + *it +  "\n",
+		       "InInput", io::message::warning);
 }
 
 /**
@@ -295,9 +309,13 @@ inline void io::InInput::read_SHAKE(int &ntc, double &tolerance)
   
   _lineStream >> ntc >> tolerance;
   
-  if (_lineStream.fail() || ! _lineStream.eof())
-    throw std::runtime_error("bad line in SHAKE block");
+  if (_lineStream.fail())
+    io::messages.add("bad line in SHAKE block",
+		       "InInput", io::message::error);
 
+  if (!_lineStream.eof())
+    io::messages.add("End of line not reached in SHAKE block, but should have been: \n" + *it +  "\n",
+		       "InInput", io::message::warning);
 }
 
 /**
@@ -317,9 +335,14 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
   
   int com, dih_monitoring;
   _lineStream >> print_energy >> com >> dih_monitoring;
-  
-  if (_lineStream.fail() || ! _lineStream.eof())
-    throw std::runtime_error("bad line in PRINT block");
+
+  if (_lineStream.fail())
+    io::messages.add("bad line in PRINT block",
+		       "InInput", io::message::error);
+
+  if (!_lineStream.eof())
+    io::messages.add("End of line not reached in PRINT, but should have been: \n" + *it +  "\n",
+		       "InInput", io::message::warning);
 
   buffer = m_block["WRITE"];
   it = buffer.begin() + 1;
@@ -330,8 +353,13 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
   _lineStream >> print_trajectory >> selection >> print_velocity
 	      >> energy >> free_energy >> format;
   
-  if (_lineStream.fail() || ! _lineStream.eof())
-    throw std::runtime_error("bad line in WRITE block");
+  if (_lineStream.fail())
+    io::messages.add("bad line in WRITE block",
+		       "InInput", io::message::error);
+
+  if (!_lineStream.eof())
+    io::messages.add("End of line not reached in WRITE block, but should have been: \n" + *it +  "\n",
+		       "InInput", io::message::warning);
     
 }
 
@@ -376,8 +404,12 @@ inline void io::InInput::read_FORCE(int &do_bond, int &do_angle,
     io::messages.add("Force switch for lj and charge has to be equal",
 		     "InInput", io::message::error);
 
-  if (_lineStream.fail() || ! _lineStream.eof())
-    throw std::runtime_error("bad line in FORCE block");
+  if (_lineStream.fail())
+    io::messages.add("bad line in FORCE block",
+		       "InInput", io::message::error);
 
+  if (!_lineStream.eof())
+    io::messages.add("End of line not reached in FORCE block, but should have been: \n" + *it +  "\n",
+		       "InInput", io::message::warning);
 }
 
