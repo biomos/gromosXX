@@ -10,6 +10,7 @@
 #include <map>
 
 #include "argument.h"
+#include "blockinput.h"
 
 namespace io{
 
@@ -17,13 +18,6 @@ namespace io{
 
   // checks if an argument is known
   static int isKnown(const std::string str, std::set<std::string> known_args){
-    /*
-      std::set<std::string>::const_iterator fr, to=known_args.end();
-      for(fr=known_args.begin();fr!=to; fr++)
-      if(*fr==str)break;
-      if(fr==to)return 0;
-      return 1;
-    */
     return known_args.count(str);
   }
 
@@ -69,16 +63,15 @@ namespace io{
   std::istream &io::operator>>(std::istream &istr, Argument &args)
   {
     // get away the comments
-    char buff[1000];
+    std::string buff;
     std::string s("");
   
-    while(istr.good()&&istr.getline(buff,1000)){
-      s+=std::string(buff);
-      if(s.find("#")<=s.length())s=s.erase(s.find("#"));
-      s+='\n';
-    }
-    std::istringstream is(s.c_str());
-  
+    do {
+      s += buff;
+      s += '\n';
+    } while(io::getline(istr, buff));
+    std::istringstream is(s);
+
     std::string str, last;
   
     if(!(is>>last))
