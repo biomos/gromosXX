@@ -211,6 +211,15 @@ namespace simulation
     simulation::Energy & lambda_energies();
 
     /**
+     * lambda derivative averages.
+     */
+    simulation::Energy_Average & lambda_derivative_averages();
+    /**
+     * const lambda derivative averages.
+     */
+    simulation::Energy_Average const & lambda_derivative_averages()const;
+
+    /**
      * generate initial velocities.
      */
     void generate_velocities(double const temp, math::SArray const &mass,
@@ -352,6 +361,11 @@ namespace simulation
      * the lambda derivative of the energy.
      */
     Energy m_lambda_energy;
+
+    /**
+     * the lambda derivative averages.
+     */
+    Energy_Average m_lambda_derivative_average;
 
   }; // System
   

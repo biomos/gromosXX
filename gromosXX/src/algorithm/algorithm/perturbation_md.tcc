@@ -79,6 +79,10 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature,
       resize(m_simulation.system().energies().bond_energy.size(),
 	   m_simulation.system().energies().kinetic_energy.size());
     
+    // initialize the lambda derivative fluctuations
+    m_simulation.system().lambda_derivative_averages().
+      resize(m_simulation.system().energies().bond_energy.size(),
+	     m_simulation.system().energies().kinetic_energy.size());
   }
   
 }
@@ -123,8 +127,13 @@ int algorithm::Perturbation_MD<t_simulation, t_temperature,
   m_simulation.system().lambda_energies().
     resize(m_simulation.system().energies().bond_energy.size(),
 	   m_simulation.system().energies().kinetic_energy.size());
-  DEBUG(7, "lambda baths: " << m_simulation.system().energies().kinetic_energy.size());
+
     
+  // initialize the lambda derivative fluctuations
+  m_simulation.system().lambda_derivative_averages().
+    resize(m_simulation.system().energies().bond_energy.size(),
+	   m_simulation.system().energies().kinetic_energy.size());
+  
   // initialize topology for lambda = ??
   m_simulation.topology().update_for_lambda();
   
@@ -363,13 +372,21 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     t_distance_constraint, t_integration>::do_energies();
 
   // and calculate the kinetic energy lamba derivative
-  m_temperature.calculate_kinetic_energy_lambda_derivative(m_simulation);
+  m_temperature.
+    calculate_kinetic_energy_lambda_derivative(m_simulation);
   
   // and sum up the energy lambda derivative arrays
   m_simulation.system().lambda_energies().calculate_totals();
   
-  if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
-    io::print_ENERGY(std::cout, m_simulation.system().lambda_energies(),
-		     m_simulation.topology().energy_groups(), "dE/dLAMBDA");
+  // calculate averages
+  m_simulation.system().lambda_derivative_averages().
+    update(m_simulation.system().lambda_energies(), m_dt);
+
+  if (m_print_energy && 
+      m_simulation.steps() % m_print_energy == 0){
+    io::print_ENERGY(std::cout, 
+		     m_simulation.system().lambda_energies(),
+		     m_simulation.topology().energy_groups(),
+		     "dE/dLAMBDA");
   }
 }

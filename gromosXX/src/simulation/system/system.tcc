@@ -388,6 +388,26 @@ simulation::System<b>::lambda_energies()
 }
 
 /**
+ * const lambda derivative averages accessor.
+ */
+template<math::boundary_enum b>
+inline simulation::Energy_Average const & 
+simulation::System<b>::lambda_derivative_averages()const
+{
+  return m_lambda_derivative_average;
+}
+
+/**
+ * lambda derivative averages accessor.
+ */
+template<math::boundary_enum b>
+inline simulation::Energy_Average & 
+simulation::System<b>::lambda_derivative_averages()
+{
+  return m_lambda_derivative_average;
+}
+
+/**
  * check state
  */
 template<math::boundary_enum b>

@@ -149,14 +149,23 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage>
     DEBUG(7, "\tenergy i and j " << sim.topology().atom_energy_group(i)
 	  << " " << sim.topology().atom_energy_group(j));
 
-    //assert(m_storage.lambda_energies().lj_energy.size() > 
-    //   sim.topology().atom_energy_group(i));
-    //assert(m_storage.lambda_energies().lj_energy.size() >
-    //   sim.topology().atom_energy_group(j));
-    //assert(m_storage.lambda_energies().crf_energy.size() > 
-    //   sim.topology().atom_energy_group(i));
-    //assert(m_storage.lambda_energies().crf_energy.size() >
-    //   sim.topology().atom_energy_group(j));
+    assert(unsigned(m_storage.lambda_energies().lj_energy.size()) > 
+	   sim.topology().atom_energy_group(i));
+    assert(unsigned(m_storage.lambda_energies().lj_energy.size()) >
+	   sim.topology().atom_energy_group(j));
+    assert(unsigned(m_storage.lambda_energies().crf_energy.size()) > 
+	   sim.topology().atom_energy_group(i));
+    assert(unsigned(m_storage.lambda_energies().crf_energy.size()) >
+	   sim.topology().atom_energy_group(j));
+
+    DEBUG(11, "lj dE/dLAMBDA: " << 
+	  m_storage.lambda_energies().lj_energy
+	  [sim.topology().atom_energy_group(i)]    
+	  [sim.topology().atom_energy_group(j)]);
+    DEBUG(11, "crf dE/dLAMBDA: " << 
+	  m_storage.lambda_energies().crf_energy
+	  [sim.topology().atom_energy_group(i)]    
+	  [sim.topology().atom_energy_group(j)]);
         
     m_storage.lambda_energies().lj_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += de_lj;
@@ -248,18 +257,33 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage>
     // now combine everything
     const double B_l = sim.topology().lambda();
     const double B_ln = pow(B_l, sim.topology().nlam());
+    const double B_lnm = pow(B_l, sim.topology().nlam()-1);
+
     const double A_l = 1.0 - sim.topology().lambda();
     const double A_ln = pow(A_l, sim.topology().nlam());
+    const double A_lnm = pow(A_l, sim.topology().nlam()-1);
     
     f      = B_ln * B_f      + A_ln * A_f;
     e_lj   = B_ln * B_e_lj   + A_ln * A_e_lj;
     e_crf  = B_ln * B_e_crf  + A_ln * A_e_crf;
     de_lj  = B_ln * B_de_lj  + A_ln * A_de_lj  
-      + sim.topology().nlam() * B_ln / B_l * B_e_lj  
-      - sim.topology().nlam() * A_ln / A_l * A_e_lj;
+      + sim.topology().nlam() * B_lnm * B_e_lj  
+      - sim.topology().nlam() * A_lnm * A_e_lj;
     de_crf = B_ln * B_de_crf + A_ln * A_de_crf 
-      + sim.topology().nlam() * B_ln / B_l * B_e_crf 
-      - sim.topology().nlam() * A_ln / A_l * A_e_crf;
+      + sim.topology().nlam() * B_lnm * B_e_crf 
+      - sim.topology().nlam() * A_lnm * A_e_crf;
+
+    DEBUG(11, "B_ln " << B_ln << " B_de_lj " << B_de_lj
+	  << " A_ln " << A_ln << " A_de_lj " << A_de_lj
+	  << " nlam " << sim.topology().nlam()
+	  << " B_l " << B_l << " B_e_lj " << B_e_lj
+	  << " A_l " << A_l << " A_e_lj " << A_e_lj);
+    DEBUG(11, "B_ln " << B_ln << " B_de_crf " << B_de_crf
+	  << " A_ln " << A_ln << " A_de_crf " << A_de_crf
+	  << " nlam " << sim.topology().nlam()
+	  << " B_l " << B_l << " B_e_crf " << B_e_crf
+	  << " A_l " << A_l << " A_e_crf " << A_e_crf);
+    
 
     //assert(m_storage.force().size() > i &&
     //	   m_storage.force().size() > j);
@@ -289,14 +313,25 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage>
     DEBUG(7, "\ti and j " << sim.topology().atom_energy_group(i)
 	  << " " << sim.topology().atom_energy_group(j));
 
-    //assert(m_storage.lambda_energies().lj_energy.size() > 
-    //	   sim.topology().atom_energy_group(i));
-    //assert(m_storage.lambda_energies().lj_energy.size() >
-    //	   sim.topology().atom_energy_group(j));
-    //assert(m_storage.lambda_energies().crf_energy.size() > 
-    //	   sim.topology().atom_energy_group(i));
-    //assert(m_storage.lambda_energies().crf_energy.size() >
-    //	   sim.topology().atom_energy_group(j));
+    assert(unsigned(m_storage.lambda_energies().lj_energy.size()) > 
+    	   sim.topology().atom_energy_group(i));
+    assert(unsigned(m_storage.lambda_energies().lj_energy.size()) >
+    	   sim.topology().atom_energy_group(j));
+    assert(unsigned(m_storage.lambda_energies().crf_energy.size()) > 
+    	   sim.topology().atom_energy_group(i));
+    assert(unsigned(m_storage.lambda_energies().crf_energy.size()) >
+    	   sim.topology().atom_energy_group(j));
+
+    DEBUG(11, "lj dE/dLAMBDA: " << 
+	  m_storage.lambda_energies().lj_energy
+	  [sim.topology().atom_energy_group(i)]    
+	  [sim.topology().atom_energy_group(j)]
+	  << "\t\tde_lj: " << de_lj);
+    DEBUG(11, "crf dE/dLAMBDA: " << 
+	  m_storage.lambda_energies().crf_energy
+	  [sim.topology().atom_energy_group(i)]    
+	  [sim.topology().atom_energy_group(j)]
+	  << "\t\tde_crf: " << de_crf);
     
     m_storage.lambda_energies().lj_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += de_lj;

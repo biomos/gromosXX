@@ -89,22 +89,22 @@ void interaction::Perturbed_Nonbonded_Inner_Loop_Virial<t_simulation, t_storage>
     // now combine everything
     const double B_l = sim.topology().lambda();
     const double B_ln = pow(B_l, sim.topology().nlam());
+    const double B_lnm = pow(B_l, sim.topology().nlam()-1);
+
     const double A_l = 1.0 - sim.topology().lambda();
     const double A_ln = pow(A_l, sim.topology().nlam());
+    const double A_lnm = pow(A_l, sim.topology().nlam()-1);
     
     f      = B_ln * B_f      + A_ln * A_f;
     e_lj   = B_ln * B_e_lj   + A_ln * A_e_lj;
     e_crf  = B_ln * B_e_crf  + A_ln * A_e_crf;
     de_lj  = B_ln * B_de_lj  + A_ln * A_de_lj  
-      + sim.topology().nlam() * B_ln / B_l * B_e_lj  
-      - sim.topology().nlam() * A_ln / A_l * A_e_lj;
+      + sim.topology().nlam() * B_lnm * B_e_lj  
+      - sim.topology().nlam() * A_lnm * A_e_lj;
     de_crf = B_ln * B_de_crf + A_ln * A_de_crf 
-      + sim.topology().nlam() * B_ln / B_l * B_e_crf 
-      - sim.topology().nlam() * A_ln / A_l * A_e_crf;
+      + sim.topology().nlam() * B_lnm * B_e_crf 
+      - sim.topology().nlam() * A_lnm * A_e_crf;
     
-    
-
-
 
     m_storage.force()(i) += f;
     m_storage.force()(j) -= f;
@@ -213,22 +213,21 @@ void interaction::Perturbed_Nonbonded_Inner_Loop_Virial<t_simulation,
     // now combine everything
     const double B_l = sim.topology().lambda();
     const double B_ln = pow(B_l, sim.topology().nlam());
+    const double B_lnm = pow(B_l, sim.topology().nlam()-1);
+
     const double A_l = 1.0 - sim.topology().lambda();
     const double A_ln = pow(A_l, sim.topology().nlam());
+    const double A_lnm = pow(A_l, sim.topology().nlam()-1);
     
     f      = B_ln * B_f      + A_ln * A_f;
     e_lj   = B_ln * B_e_lj   + A_ln * A_e_lj;
     e_crf  = B_ln * B_e_crf  + A_ln * A_e_crf;
     de_lj  = B_ln * B_de_lj  + A_ln * A_de_lj  
-      + sim.topology().nlam() * B_ln / B_l * B_e_lj  
-      - sim.topology().nlam() * A_ln / A_l * A_e_lj;
+      + sim.topology().nlam() * B_lnm * B_e_lj  
+      - sim.topology().nlam() * A_lnm * A_e_lj;
     de_crf = B_ln * B_de_crf + A_ln * A_de_crf 
-      + sim.topology().nlam() * B_ln / B_l * B_e_crf 
-      - sim.topology().nlam() * A_ln / A_l * A_e_crf;
-    
-    
-
-
+      + sim.topology().nlam() * B_lnm * B_e_crf 
+      - sim.topology().nlam() * A_lnm * A_e_crf;
 
     m_storage.force()(i) += f;
     m_storage.force()(j) -= f;
