@@ -252,7 +252,7 @@ void write_solution(map<string, string> &current)
     
   for( ; sol_it != sol_to; ++sol_it){
 
-    splitf << indent << "cout << setw(40) << left << \"" 
+    splitf << indent << "cout << \"\t\" << setw(20) << left << \"" 
 	   << sol_it->first.substr(2, string::npos)
 	   << "\" << setw(30) << left << \""
 	   << sol_it->second

@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
       std::cout << "\033[1;31m";
 #endif
       
-      std::cout << "\n\nGromosXX 0.1.0\033[22;0m\n\n"
+      std::cout << "\n\nGromosXX 0.1.2 development\033[22;0m\n\n"
 		<< "20. January 2004\n";
 #ifdef NDEBUG
       std::cout << "standard library debugging disabled.\n";

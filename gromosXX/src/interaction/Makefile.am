@@ -1,5 +1,10 @@
 INCLUDES = -I$(top_srcdir)/src
 
+split_files = \
+        nonbonded/split/split_1.cc \
+        nonbonded/split/split_2.cc
+
+
 xxincludedir = $(includedir)/gromosXX
 
 xxinclude_HEADERS =		interaction.h \
@@ -76,11 +81,8 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				forcefield/create_forcefield.cc \
 				bonded/create_bonded.cc \
 				nonbonded/create_nonbonded.cc \
-				nonbonded/create_perturbed.cc \
-				nonbonded/create_perturbed_grid.cc \
-				nonbonded/create_unperturbed.cc \
-				nonbonded/create_unperturbed_grid.cc \
-				special/create_special.cc
+				special/create_special.cc \
+				$(split_files)
 
 
 bin_PROGRAMS =			

@@ -29,6 +29,7 @@
 
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
+#include <io/message.h>
 
 // general
 #include <interaction/interaction.h>

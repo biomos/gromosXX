@@ -117,8 +117,8 @@ void io::In_Parameter::read_SYSTEM(simulation::Parameter &param)
   */
   
   // we might need to also allow for 0...
-  if (param.system.npm != 1)
-    io::messages.add("SYSTEM: currently only NPM=1 allowed",
+  if (param.system.npm != 1 && param.system.npm != 0)
+    io::messages.add("SYSTEM: currently only NPM=1 allowed (NPM=0 experimental)",
 		     "io::In_Parameter::read_SYSTEM",
 		     io::message::error);
   if(param.system.nsm < 0)

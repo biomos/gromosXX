@@ -33,8 +33,6 @@
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
 
-#include "create_nonbonded.h"
-
 // nonbonded base
 #include <interaction/nonbonded/interaction/storage.h>
 #include <interaction/nonbonded/interaction/nonbonded_parameter.h>

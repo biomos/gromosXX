@@ -56,13 +56,14 @@ inline void math::Boundary_Implementation<math::rectangular>
 ::nearest_image(Vec const &v1, Vec const &v2,
 		Vec &nim)const
 {
-  nim = v1 - v2;
+  // nim = v1 - v2;
 
   for(int d=0; d<3; ++d){
-    // i think the if statement might be wrong for really 
-    // triclinic cases!
-    if (fabs(nim(d)) >= m_box(d)(d) * 0.5){
+    nim(d) = v1(d) - v2(d);
+
+    if (fabs(nim(d) + nim(d)) >= m_box(d)(d)){
       nim(d) -= m_box(d)(d) * rint(nim(d)/m_box(d)(d));
+
     }
   }
 }      
@@ -72,8 +73,11 @@ inline void math::Boundary_Implementation<math::triclinic>
 		Vec const &v2,
 		Vec &nim)const
 {
+  // nim has to be out of the loop here!
   nim = v1 - v2;
   for(int d=0; d<3; ++d){
+    // i think the if statement might be wrong for really 
+    // triclinic cases!
     if (fabs(nim(d)) >= m_box(d)(d) * 0.5)
       nim += m_box(d) * rint(dot(m_cross_K_L_M(d), nim));
   }

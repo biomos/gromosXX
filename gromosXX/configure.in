@@ -128,7 +128,7 @@ case "$compiler" in
      gnu*)              # EGCS  http://egcs.cygnus.com/
        echo "Configuring for GNU C++"
        CXX_PICKY_FLAGS="-Wall -DBZDEBUG -ftemplate-depth-40"
-       CXX_OPTIMIZE_FLAGS="-O2 -funroll-loops -fstrict-aliasing -fno-gcse -ftemplate-depth-40 -DNDEBUG -g"
+       CXX_OPTIMIZE_FLAGS="-O6 -finline-limit=2500 -funroll-loops -fstrict-aliasing -fno-gcse -ftemplate-depth-40 -DNDEBUG -g"
        CXX_DEBUG_FLAGS="-g -DBZ_DEBUG -DBZDEBUG -ftemplate-depth-40"
        CXXLD="$CXX"
 
