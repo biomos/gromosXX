@@ -91,6 +91,13 @@ WINDOWS (Visual Studio 2003 (NET)
 4. build the solution...
 
 
+building static-only executables
+--------------------------------------------------
+
+use the following configure options:
+configure --disable-shared --enable-static --enable-allstatic
+
+
 ===========================================================================
 
 
