@@ -14,6 +14,7 @@
 #include "steepest_descent.h"
 
 #include <util/error.h>
+#include <config.h>
 
 #undef MODULE
 #undef SUBMODULE
