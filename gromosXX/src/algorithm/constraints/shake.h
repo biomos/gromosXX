@@ -35,6 +35,15 @@ namespace algorithm
     void tolerance(double const tol);
 
     /**
+     * tolerance.
+     */
+    double const tolerance()const {return m_tolerance;}
+    /**
+     * max iterations.
+     */
+    int const max_iterations()const {return m_max_iterations;}
+
+    /**
      * the const bond type parameter.
      */
     std::vector<interaction::bond_type_struct> const &parameter()const
@@ -60,7 +69,7 @@ namespace algorithm
   protected:
 
     double m_tolerance;
-    const int max_iterations;
+    const int m_max_iterations;
     
     std::vector<interaction::bond_type_struct> m_parameter;
 

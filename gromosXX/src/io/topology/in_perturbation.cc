@@ -80,6 +80,19 @@ io::In_Perturbation::read(topology::Topology &topo,
       _lineStream >> num;
       ++it;
       
+      if (param.shake.ntc == 2){
+	io::messages.add("No perturbed distance constraints for "
+			 "NTC = 2 from perturbed bonds",
+			 "in_perturbation",
+			 io::message::warning);
+      }
+      else if (param.shake.ntc == 3){
+	std::cout << "\n\t\t"
+		  << num
+		  << " perturbed bonds from PERTBOND03 block added to "
+		  << "perturbed distance constraints.";
+      }
+
       std::cout << "\t"
 		<< std::setw(10) << "atom i"
 		<< std::setw(10) << "atom j"
@@ -101,27 +114,58 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	topology::two_body_term_struct b(i-1, j-1, t_A-1);
 
-	std::vector<topology::two_body_term_struct>::iterator b_it
-	  = std::find(topo.solute().bonds().begin(), 
-		      topo.solute().bonds().end(), 
-		      b);
+	if (param.shake.ntc != 3){
+	  std::vector<topology::two_body_term_struct>::iterator b_it
+	    = std::find(topo.solute().bonds().begin(), 
+			topo.solute().bonds().end(), 
+			b);
 	
-	if (b_it == topo.solute().bonds().end()){
-	  io::messages.add("Perturbation of a non-existing bond in PERTBOND03 block.",
-			   "InTopology", io::message::error);
-	}
+	  if (b_it == topo.solute().bonds().end()){
+	    io::messages.add("Perturbation of a non-existing bond "
+			     "in PERTBOND03 block.",
+			     "InTopology", io::message::error);
+	  }
 	
-	topo.solute().bonds().erase(b_it);
-	topology::perturbed_two_body_term_struct pb(i-1, j-1, t_A-1, t_B-1);
+	  topo.solute().bonds().erase(b_it);
+	  topology::perturbed_two_body_term_struct 
+	    pb(i-1, j-1, t_A-1, t_B-1);
 
-	std::cout << "\t" 
-		  << std::setw(10) << pb.i+1 
-		  << std::setw(10) << pb.j+1
-		  << std::setw(10) << pb.A_type+1 
-		  << std::setw(10) << pb.B_type+1 
-		  << "\n";
+	  std::cout << "\t" 
+		    << std::setw(10) << pb.i+1 
+		    << std::setw(10) << pb.j+1
+		    << std::setw(10) << pb.A_type+1 
+		    << std::setw(10) << pb.B_type+1 
+		    << "\n";
+	  
+	  topo.perturbed_solute().bonds().push_back(pb);
+	}
+	else{
+	  std::vector<topology::two_body_term_struct>::iterator b_it
+	    = std::find(topo.solute().distance_constraints().begin(), 
+			topo.solute().distance_constraints().end(), 
+			b);
+	  
+	  if (b_it == topo.solute().distance_constraints().end()){
+	    io::messages.add("Perturbation of a non-existing distance "
+			     "constraint in PERTBOND03 block.",
+			     "InTopology", io::message::error);
+	  }
 	
-	topo.perturbed_solute().bonds().push_back(pb);
+	  topo.solute().distance_constraints().erase(b_it);
+	  topology::perturbed_two_body_term_struct 
+	    pb(i-1, j-1, t_A-1, t_B-1);
+
+	  std::cout << "\t" 
+		    << std::setw(10) << pb.i+1 
+		    << std::setw(10) << pb.j+1
+		    << std::setw(10) << pb.A_type+1 
+		    << std::setw(10) << pb.B_type+1 
+		    << "\n";
+	  
+	  topo.perturbed_solute().distance_constraints().push_back(pb);
+
+	}
+
       }
       
       if (n != num){
@@ -140,6 +184,92 @@ io::In_Perturbation::read(topology::Topology &topo,
     } // if block present
     
   } // PERTBOND03
+
+  { // PERTCONSTRAINT03
+    DEBUG(10, "PERTCONSTRAINT03 block");
+    buffer = m_block["PERTCONSTRAINT03"];
+  
+    if (buffer.size() && param.shake.ntc != 1){
+      
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+
+      std::cout << "\tPERTCONSTRAINT03\n\t\t"
+		<< num
+		<< " bonds in PERTCONSTRAINT03 block."
+		<< "\n\t\ttotal of perturbed constraint bonds : " 
+		<< num + topo.perturbed_solute().distance_constraints().size()
+		<< "\n";
+  
+      std::cout << "\t"
+		<< std::setw(10) << "atom i"
+		<< std::setw(10) << "atom j"
+		<< std::setw(10) << "type A"
+		<< std::setw(10) << "type B"
+		<< "\n";
+    
+      for(n=0; it != buffer.end() - 1; ++it, ++n){
+	int i, j, t_A, t_B;
+	
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> i >> j >> t_A >> t_B;
+	
+	if (_lineStream.fail() || ! _lineStream.eof()){
+	  io::messages.add("Bad line in PERTCONSTRAINT03 block",
+			   "In_Topology", io::message::error);
+	  throw std::runtime_error("bad line in PERTCONSTRAINT03 block");
+	}
+      
+	if (i > int(topo.num_solute_atoms()) || 
+	    j > int(topo.num_solute_atoms()) ||
+	    i < 1 || j < 1){
+	  io::messages.add("Atom number out of range in PERTCONSTRAINT03 "
+			   " block", "In_Topology", io::message::error);
+	}
+      
+	topology::two_body_term_struct b(i-1, j-1, t_A-1);
+	
+	std::vector<topology::two_body_term_struct>::iterator b_it
+	  = std::find(topo.solute().distance_constraints().begin(), 
+		      topo.solute().distance_constraints().end(), 
+		      b);
+	  
+	if (b_it == topo.solute().distance_constraints().end()){
+	  io::messages.add("Perturbation of a non-existing distance "
+			   "constraint in PERTCONSTRAINT03 block.",
+			   "In_Perturbation", io::message::error);
+	  
+	}
+	
+	topo.solute().distance_constraints().erase(b_it);
+	topology::perturbed_two_body_term_struct 
+	  pb(i-1, j-1, t_A-1, t_B-1);
+
+	topo.perturbed_solute().distance_constraints().push_back(pb);
+
+	std::cout << "\t" 
+		  << std::setw(10) << pb.i+1 
+		  << std::setw(10) << pb.j+1
+		  << std::setw(10) << pb.A_type+1 
+		  << std::setw(10) << pb.B_type+1 
+		  << "\n";
+	
+      }
+    
+      if(n != num){
+	io::messages.add("Wrong number of bonds in PERTCONSTRAINT03 block",
+			 "In_Perturbation", io::message::error);
+	throw std::runtime_error("error in PERTCONSTRAINT03 block "
+				 "(n != num)");
+      }
+    }
+    
+  } // PERTCONSTRAINT03
 
   { // PERTBANGLE03
     buffer = m_block["PERTBANGLE03"];

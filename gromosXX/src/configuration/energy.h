@@ -29,7 +29,8 @@ namespace configuration
     double crf_total;
     double special_total;
     double posrest_total;
-
+    double constraints_total;
+    
     // this should be size of bath
     std::vector<double> kinetic_energy;
     std::vector<double> com_kinetic_energy;
@@ -44,6 +45,7 @@ namespace configuration
     std::vector<std::vector<double> > crf_energy;
 
     std::vector<double> posrest_energy;
+    std::vector<double> constraints_energy;
     
     std::vector<std::string> group_name;
     

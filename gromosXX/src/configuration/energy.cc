@@ -31,12 +31,15 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     crf_total = 0.0;
     special_total = 0.0;
     posrest_total = 0.0;
+    constraints_total = 0.0;
+    
     
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
     improper_energy.assign(improper_energy.size(), 0.0);
     dihedral_energy.assign(dihedral_energy.size(), 0.0);
     posrest_energy.assign(posrest_energy.size(), 0.0);
+    constraints_energy.assign(constraints_energy.size(), 0.0);
 
     DEBUG(15, "energy groups: " << lj_energy.size() << " - " << crf_energy.size());
 
@@ -78,6 +81,7 @@ void configuration::Energy::resize(size_t const energy_groups, size_t const mult
     crf_energy.resize(energy_groups);
 
     posrest_energy.resize(energy_groups);
+    constraints_energy.resize(energy_groups);
     
     for(size_t i=0; i<energy_groups; ++i){
       lj_energy[i].resize(energy_groups);
@@ -120,11 +124,12 @@ void configuration::Energy::calculate_totals()
       crf_total  += crf_energy[i][j];
     }
 
-    bond_total     += bond_energy[i];
-    angle_total    += angle_energy[i];
-    improper_total += improper_energy[i];
-    dihedral_total += dihedral_energy[i];
-    posrest_total += posrest_energy[i];
+    bond_total        += bond_energy[i];
+    angle_total       += angle_energy[i];
+    improper_total    += improper_energy[i];
+    dihedral_total    += dihedral_energy[i];
+    posrest_total     += posrest_energy[i];
+    constraints_total += constraints_energy[i];
   }
 
   nonbonded_total = lj_total + crf_total;
@@ -132,7 +137,7 @@ void configuration::Energy::calculate_totals()
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;
   
-  special_total = posrest_total;
+  special_total = posrest_total + constraints_total;
 
   total = potential_total + kinetic_total + special_total;
 

@@ -10,6 +10,8 @@ include_HEADERS =	algorithm.h \
 			create_md_sequence.h \
 			constraints/shake.h \
 			constraints/shake.tcc \
+			constraints/perturbed_shake.h \
+			constraints/perturbed_shake.tcc \
 			constraints/remove_com_motion.h \
 			integration/slow_growth.h \
 			integration/steepest_descent.h

@@ -119,6 +119,11 @@ configuration::Energy_Average::update(configuration::Energy const &e,
   m_average.posrest_total = av.m_average.posrest_total + dt * e.posrest_total;
   m_square_average.posrest_total = av.m_square_average.posrest_total +
     dt * e.posrest_total * e.posrest_total;
+
+  m_average.constraints_total = 
+    av.m_average.constraints_total + dt * e.constraints_total;
+  m_square_average.constraints_total = av.m_square_average.constraints_total +
+    dt * e.constraints_total * e.constraints_total;
   
   // kinetic energies of the baths
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
@@ -187,9 +192,16 @@ configuration::Energy_Average::update(configuration::Energy const &e,
     }
   
     // special energies
-    m_average.posrest_energy[i] = av.m_average.posrest_energy[i] + dt * e.posrest_energy[i];
+    m_average.posrest_energy[i] = av.m_average.posrest_energy[i] +
+      dt * e.posrest_energy[i];
     m_square_average.posrest_energy[i] = av.m_square_average.posrest_energy[i] +
       dt * e.posrest_energy[i] * e.posrest_energy[i];
+
+    m_average.constraints_energy[i] = av.m_average.constraints_energy[i] +
+      dt * e.constraints_energy[i];
+    m_square_average.constraints_energy[i] = 
+      av.m_square_average.constraints_energy[i] +
+      dt * e.constraints_energy[i] * e.constraints_energy[i];
    
 
   }
@@ -332,6 +344,14 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     f.posrest_total = sqrt(diff / m_time);
   else
     f.posrest_total = 0.0;
+
+  e.constraints_total = m_average.constraints_total / m_time;
+  diff = m_square_average.constraints_total -
+    m_average.constraints_total * m_average.constraints_total / m_time;
+  if (diff > 0.0)
+    f.constraints_total = sqrt(diff / m_time);
+  else
+    f.constraints_total = 0.0;
   
   // kinetic energies of the baths
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
@@ -423,6 +443,15 @@ configuration::Energy_Average::average(configuration::Energy &energy,
       f.posrest_energy[i] = sqrt(diff / m_time);
     else
       f.posrest_energy[i] = 0.0;
+
+    e.constraints_energy[i] = m_average.constraints_energy[i] / m_time;
+    diff = m_square_average.constraints_energy[i]
+      - m_average.constraints_energy[i] * m_average.constraints_energy[i] 
+      / m_time;
+    if (diff > 0.0)
+      f.constraints_energy[i] = sqrt(diff / m_time);
+    else
+      f.constraints_energy[i] = 0.0;
 
   
   }

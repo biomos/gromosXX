@@ -34,7 +34,9 @@
 
 #include <math/periodicity.h>
 #include <algorithm/constraints/shake.h>
+#include <algorithm/constraints/perturbed_shake.h>
 #include <algorithm/constraints/remove_com_motion.h>
+
 #include <algorithm/integration/slow_growth.h>
 #include <algorithm/integration/steepest_descent.h>
 
@@ -96,6 +98,14 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	  it.read_harmonic_bonds(s->parameter());
 	  s->init(topo, conf, sim);
 	  md_seq.push_back(s);
+	  
+	  if (sim.param().perturbation.perturbation){
+	    algorithm::Perturbed_Shake<math::no_virial> * ps =
+	      new algorithm::Perturbed_Shake<math::no_virial>(*s);
+	    ps->init(topo, conf, sim);
+	    md_seq.push_back(ps);
+	  }
+	      
 	  break;
 	}
       case math::atomic_virial:
@@ -106,6 +116,14 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	  it.read_harmonic_bonds(s->parameter());
 	  s->init(topo, conf, sim);
 	  md_seq.push_back(s);
+
+	  if (sim.param().perturbation.perturbation){
+	    algorithm::Perturbed_Shake<math::atomic_virial> * ps =
+	      new algorithm::Perturbed_Shake<math::atomic_virial>(*s);
+	    ps->init(topo, conf, sim);
+	    md_seq.push_back(ps);
+	  }
+
 	break;
     }
   }
