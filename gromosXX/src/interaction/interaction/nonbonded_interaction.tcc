@@ -47,6 +47,9 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_inner
   if (!sim.steps())
     initialize(sim);
 
+  if(sim.pressure_calculation())
+    sim.calculate_mol_com();
+
   // need to update pairlist?
   DEBUG(7, "steps " << sim.steps() << " upd " << sim.nonbonded().update());
 

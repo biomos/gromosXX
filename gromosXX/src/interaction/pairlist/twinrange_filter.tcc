@@ -28,8 +28,6 @@ interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
   energies().resize(sim.system().energies().bond_energy.size());
   virial() = 0.0;
   
-  if(sim.pressure_calculation())
-    sim.calculate_mol_com();
 }
 
 template<typename t_simulation, typename t_base, typename t_innerloop>
