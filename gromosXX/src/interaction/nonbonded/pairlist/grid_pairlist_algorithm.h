@@ -16,7 +16,11 @@ namespace interaction
 {
   class Storage;
   class Pairlist;
- 
+  class Nonbonded_Parameter;
+  class Nonbonded_Innerloop;
+  template<typename t_interaction_spec, typename t_perturbation_details>
+  class Perturbed_Nonbonded_Innerloop;
+  
   /**
    * @class Grid_Pairlist_Algorithm
    * create an atomic pairlist with a
@@ -87,7 +91,7 @@ namespace interaction
      unsigned int begin,
      unsigned int end, 
      unsigned int stride
-     ) {}
+     );
     
   protected:
 
@@ -253,6 +257,46 @@ namespace interaction
      std::vector<int> & cell_start
      );
 
+    template<typename t_interaction_spec, typename t_perturbation_details>
+    void _update_perturbed
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     interaction::Storage & storage,
+     interaction::Pairlist & pairlist,
+     interaction::Pairlist & perturbed_pairlist,
+     unsigned int begin,
+     unsigned int end, 
+     unsigned int stride
+     );
+
+    // copied from standard pairlist algorithm...
+    template<typename t_interaction_spec, typename t_perturbation_details>
+    bool calculate_pair
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     interaction::Storage & storage,
+     Nonbonded_Innerloop & innerloop,
+     Perturbed_Nonbonded_Innerloop
+     <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
+     int a1, int a2,
+     math::Vec const & shift,
+     bool scaled_only
+     );
+    
+    // copied from standard pairlist algorithm...
+    template<typename t_perturbation_details>
+    bool insert_pair
+    (
+     topology::Topology & topo,
+     interaction::Pairlist & pairlist,
+     interaction::Pairlist & perturbed_pairlist,
+     int a1, int a2,
+     bool scaled_only
+     );
+
     bool excluded_solute_pair
     (
      topology::Topology & topo,
@@ -286,6 +330,11 @@ namespace interaction
      * periodic shifts
      */
     std::vector<math::Vec> m_shift_vector;
+
+    /**
+     * periodic shifts for interchanged atoms (second perturbed)
+     */
+    std::vector<math::Vec> m_reverse_shift_vector;
   };
 } // interaction
 

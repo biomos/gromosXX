@@ -30,10 +30,26 @@ namespace interaction
      * perturbed interaction
      */
     void perturbed_lj_crf_innerloop
-    (topology::Topology & topo, configuration::Configuration & conf,
-     unsigned int i, unsigned int j, Storage &storage,
-     Periodicity_type const & periodicity,
-     int pc = -1);
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, unsigned int j,
+     Storage &storage,
+     Periodicity_type const & periodicity
+     );
+
+    /**
+     * perturbed interaction,
+     * nearest image free (shift vector)
+     */
+    void perturbed_lj_crf_innerloop_shift
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, unsigned int j,
+     Storage &storage,
+     math::Vec const & shift
+     );
 
     /**
      * perturbed 1-4 interaction

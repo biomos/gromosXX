@@ -53,31 +53,18 @@ namespace interaction
     /**
      * calculate the perturbed interactions.
      */
-    template<typename t_perturbation_spec>
+    template<typename t_interaction_spec, typename t_perturbation_spec>
     void _perturbed_lj_crf_outerloop(topology::Topology & topo,
 				     configuration::Configuration & conf,
 				     simulation::Simulation & sim,
 				     Pairlist const & pairlist,
 				     Storage & storage);
-
-    template<typename t_interaction_spec, typename t_perturbation_spec>
-    void _split_perturbed_lj_crf_outerloop(topology::Topology & topo,
-					   configuration::Configuration & conf,
-					   simulation::Simulation & sim,
-					   Pairlist const & pairlist,
-					   Storage & storage);
     
     /**
      * calculate the perturbed 1,4-interactions.
      */
-    template<typename t_perturbation_spec>
-    void _perturbed_one_four_outerloop(topology::Topology & topo,
-				       configuration::Configuration & conf,
-				       simulation::Simulation & sim,
-				       Storage & storage);
-
     template<typename t_interaction_spec, typename t_perturbation_spec>
-    void _split_perturbed_one_four_outerloop(topology::Topology & topo,
+    void _perturbed_one_four_outerloop(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim,
 				       Storage & storage);
@@ -85,17 +72,11 @@ namespace interaction
     /**
      * calculate the perturbed RF contributions for excluded atoms.
      */
-    template<typename t_perturbation_spec>
+    template<typename t_interaction_spec, typename t_perturbation_spec>
     void _perturbed_RF_excluded_outerloop(topology::Topology & topo,
 					  configuration::Configuration & conf,
 					  simulation::Simulation & sim,
 					  Storage & storage);
-
-    template<typename t_interaction_spec, typename t_perturbation_spec>
-    void _split_perturbed_RF_excluded_outerloop(topology::Topology & topo,
-						configuration::Configuration & conf,
-						simulation::Simulation & sim,
-						Storage & storage);
 
   };
   

@@ -97,16 +97,6 @@ namespace interaction
 		   unsigned int begin, unsigned int end,
 		   unsigned int stride);
 
-    template<typename t_perturbation_details>
-    void update_pert_cg(topology::Topology & topo,
-			configuration::Configuration & conf,
-			simulation::Simulation & sim,
-			interaction::Storage & storage,
-			interaction::Pairlist & pairlist,
-			interaction::Pairlist & perturbed_pairlist,
-			unsigned int begin, unsigned int end,
-			unsigned int stride);
-
     template<typename t_interaction_spec>
     void _update_cg(topology::Topology & topo,
 		    configuration::Configuration & conf,
@@ -183,16 +173,6 @@ namespace interaction
 			unsigned int begin, unsigned int end,
 			unsigned int stride);
     
-    template<typename t_perturbation_details>
-    void update_pert_atomic(topology::Topology & topo,
-			    configuration::Configuration & conf,
-			    simulation::Simulation & sim,
-			    interaction::Storage & storage,
-			    interaction::Pairlist & pairlist,
-			    interaction::Pairlist & perturbed_pairlist,
-			    unsigned int begin, unsigned int end,
-			    unsigned int stride);
-
     template<typename t_interaction_spec, typename t_perturbation_details>
     void _update_pert_atomic(topology::Topology & topo,
 			     configuration::Configuration & conf,

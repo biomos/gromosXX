@@ -54,6 +54,7 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				nonbonded/create_nonbonded.cc \
 				nonbonded/pairlist/pairlist.cc \
 				nonbonded/pairlist/standard_pairlist_algorithm.cc \
+				nonbonded/pairlist/grid.cc \
 				nonbonded/pairlist/grid_pairlist_algorithm.cc \
 				nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc \
 				nonbonded/interaction/nonbonded_interaction.cc \

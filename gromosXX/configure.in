@@ -30,8 +30,8 @@ echo ""
 echo ""
 
 AM_INIT_AUTOMAKE(gromosXX, $MD_VERSION, no-define)
-dnl AM_CONFIG_HEADER(config.h)
-AC_CONFIG_HEADERS(config.h)
+AM_CONFIG_HEADER(config.h)
+dnl AC_CONFIG_HEADERS(config.h)
 
 AM_PROG_LIBTOOL
 

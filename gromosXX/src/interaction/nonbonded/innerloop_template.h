@@ -75,11 +75,11 @@
  * boundary, virial and interaction term function to construct a
  * Nonbonded_Innerloop : split the interaction term function
  */
-#define PERT_SPLIT_INTERACTION_FUNC(f, bound, vir, ...) \
+#define PERT_SPLIT_INTERACTION_FUNC(f, pertspec, bound, vir, ...) \
   switch(sim.param().force.interaction_function){ \
     case simulation::lj_crf_func : \
-      f<Interaction_Spec<bound, vir, simulation::lj_crf_func>, \
-        t_perturbation_details> (__VA_ARGS__); break; \
+      f< Interaction_Spec<bound, vir, simulation::lj_crf_func>, \
+         pertspec > (__VA_ARGS__); break; \
       break; \
     default: \
       io::messages.add("wrong interaction function", "innerloop_template", io::message::error); \
@@ -93,16 +93,16 @@
  * boundary, virial and interaction term function to construct a
  * Nonbonded_Innerloop : split the virial
  */
-#define PERT_SPLIT_VIRIAL(f, bound, ...) \
+#define PERT_SPLIT_VIRIAL(f, pertspec, bound, ...) \
   switch(sim.param().pcouple.virial){ \
     case math::no_virial : \
-      PERT_SPLIT_INTERACTION_FUNC(f, bound, math::no_virial, __VA_ARGS__); \
+      PERT_SPLIT_INTERACTION_FUNC(f, pertspec, bound, math::no_virial, __VA_ARGS__); \
       break; \
     case math::molecular_virial : \
-      PERT_SPLIT_INTERACTION_FUNC(f, bound, math::molecular_virial, __VA_ARGS__); \
+      PERT_SPLIT_INTERACTION_FUNC(f, pertspec, bound, math::molecular_virial, __VA_ARGS__); \
       break; \
     case math::atomic_virial : \
-      PERT_SPLIT_INTERACTION_FUNC(f, bound, math::atomic_virial, __VA_ARGS__); \
+      PERT_SPLIT_INTERACTION_FUNC(f, pertspec, bound, math::atomic_virial, __VA_ARGS__); \
       break; \
     default: \
       io::messages.add("wrong virial type", "template_split", io::message::error); \
@@ -111,26 +111,39 @@
 
 
 /**
- * @define PERT_SPLIT_PERT_INNERLOOP
+ * @define PERT_SPLIT_PERT_BOUNDARY
  * call a function with a Interaction_Spec using the correct values for
  * boundary, virial and interaction term function for a
- * nonbonded innerloop.
- * the function also gets a second template typename, t_perturbation_details.
- * that has to be defined already (you should use SPLIT_PERTURBATION before).
+ * Nonbonded_Innerloop : split the boundary
  */
-#define SPLIT_PERT_INNERLOOP(f, ...) \
+#define PERT_SPLIT_BOUNDARY(f, pertspec, ...) \
   switch(conf.boundary_type){ \
     case math::vacuum : \
-      PERT_SPLIT_INTERACTION_FUNC(f, math::vacuum, math::no_virial, __VA_ARGS__); \
+      PERT_SPLIT_INTERACTION_FUNC(f, pertspec, math::vacuum, math::no_virial, __VA_ARGS__); \
       break; \
     case math::rectangular : \
-      PERT_SPLIT_VIRIAL(f, math::rectangular, __VA_ARGS__); \
+      PERT_SPLIT_VIRIAL(f, pertspec, math::rectangular, __VA_ARGS__); \
       break; \
     case math::truncoct : \
-      PERT_SPLIT_VIRIAL(f, math::truncoct, __VA_ARGS__); \
+      PERT_SPLIT_VIRIAL(f, pertspec, math::truncoct, __VA_ARGS__); \
       break; \
     default: \
       io::messages.add("wrong boundary type", "template_split", io::message::error); \
+  } \
+
+/**
+ * @define SPLIT_PERT_INNERLOOP
+ * call a function with a Interaction_Spec using the correct values for
+ * boundary, virial and interaction term function for a
+ * Nonbonded_Innerloop : split perturbation
+ */
+#define SPLIT_PERT_INNERLOOP(f, ...) \
+  assert(sim.param().perturbation.perturbation); \
+  if (sim.param().perturbation.scaling){ \
+    PERT_SPLIT_BOUNDARY(f, Perturbation_Spec<scaling_on>, __VA_ARGS__); \
+    } \
+  else { \
+    PERT_SPLIT_BOUNDARY(f, Perturbation_Spec<scaling_off>, __VA_ARGS__); \
   } \
 
 

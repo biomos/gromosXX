@@ -450,28 +450,11 @@ update_perturbed(topology::Topology & topo,
 			    begin, end, stride);
   }
   else{
-    SPLIT_PERTURBATION(update_pert_cg,
-		       topo, conf, sim, storage,
-		       pairlist, perturbed_pairlist, 
-		       begin, end, stride);
+    SPLIT_PERT_INNERLOOP(_update_pert_cg,
+			 topo, conf, sim, storage,
+			 pairlist, perturbed_pairlist, 
+			 begin, end, stride);
   }
-}
-
-template<typename t_perturbation_details>
-void interaction::Standard_Pairlist_Algorithm::
-update_pert_cg(topology::Topology & topo,
-	       configuration::Configuration & conf,
-	       simulation::Simulation & sim, 
-	       interaction::Storage & storage,
-	       interaction::Pairlist & pairlist,
-	       interaction::Pairlist & perturbed_pairlist,
-	       unsigned int begin, unsigned int end,
-	       unsigned int stride)
-{
-  SPLIT_PERT_INNERLOOP(_update_pert_cg,
-		       topo, conf, sim, storage,
-		       pairlist, perturbed_pairlist, 
-		       begin, end, stride);
 }
 
 template<typename t_interaction_spec, typename t_perturbation_details>

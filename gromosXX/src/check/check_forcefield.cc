@@ -15,6 +15,10 @@
 #include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 #include <interaction/forcefield/forcefield.h>
 
+#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
+
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
 #include <util/error.h>
@@ -143,9 +147,15 @@ int check_lambda_derivative(topology::Topology & topo,
 
   if (term.name == "NonBonded"){
     if (sim.param().force.spc_loop == 1)
-      name += " (spc loop)";
+      if (sim.param().pairlist.grid)
+	name += " (grid, spc loop)";
+      else
+	name += " (std, spc loop)";
     else
-      name += " (std loop)";
+      if (sim.param().pairlist.grid)
+	name += " (grid, std loop)";
+      else
+	name += " (std, std loop)";
   }
 
   CHECKING(name + " energy lambda derivative", res);
@@ -220,9 +230,15 @@ int check_interaction(topology::Topology & topo,
 
   if (term.name == "NonBonded"){
     if (sim.param().force.spc_loop == 1)
-      name += " (spc loop)";
+      if (sim.param().pairlist.grid)
+	name += " (grid, spc loop)";
+      else
+	name += " (std, spc loop)";
     else
-      name += " (std loop)";
+      if (sim.param().pairlist.grid)
+	name += " (grid, std loop)";
+      else
+	name += " (std, std loop)";
   }
 
   CHECKING(name + " interaction energy", res);
@@ -333,6 +349,48 @@ int check::check_forcefield(topology::Topology & topo,
       sim.param().force.spc_loop = 0;
       total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
+      if (sim.param().pairlist.grid){
+	// construct a "non-grid" pairlist algorithm
+	interaction::Pairlist_Algorithm * pa = new interaction::Standard_Pairlist_Algorithm;
+	interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
+
+	pa->set_parameter(&ni->parameter());
+	interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
+	ni->pairlist_algorithm(pa);
+	
+	sim.param().pairlist.grid = false;
+
+	ni->init(topo, conf, sim, true);
+
+	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
+
+	sim.param().pairlist.grid = true;
+	ni->pairlist_algorithm(old_pa);
+	ni->init(topo, conf, sim, true);
+	delete pa;
+      }
+      else{
+	// construct a "grid" pairlist algorithm
+	interaction::Pairlist_Algorithm * pa = new interaction::Grid_Pairlist_Algorithm;
+	interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
+	
+	pa->set_parameter(&ni->parameter());
+	interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
+	ni->pairlist_algorithm(pa);
+
+	sim.param().pairlist.grid = true;
+	sim.param().pairlist.grid_size = 0.1;
+	ni->init(topo, conf, sim, true);
+	
+	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
+
+	sim.param().pairlist.grid = false;
+	ni->pairlist_algorithm(old_pa);
+	ni->init(topo, conf, sim, true);
+	delete pa;
+      }
     }
     else {
       CHECKING((*it)->name << " no check implemented!", res);
@@ -361,6 +419,8 @@ int check::check_atomic_cutoff(topology::Topology & topo,
   
       CHECKING((*it)->name + ": atomic cutoff", res);
 
+      sim.param().force.spc_loop = 0;
+      
       conf.current().force = 0;
       conf.current().energies.zero();
 

@@ -56,7 +56,7 @@ int interaction::Nonbonded_Set
 
   // need to update pairlist?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
-    DEBUG(7, "\tdoing longrange...");
+    DEBUG(6, "\tdoing longrange...");
     
     //====================
     // create a pairlist
@@ -92,7 +92,7 @@ int interaction::Nonbonded_Set
   }
 
   // calculate forces / energies
-  DEBUG(7, "\tshort range interactions");
+  DEBUG(6, "\tshort range interactions");
 
   //  double shortrange_start = now();
 
@@ -101,7 +101,7 @@ int interaction::Nonbonded_Set
   
   // add 1,4 - interactions
   if (tid == 0){
-    DEBUG(7, "\t1,4 - interactions");
+    DEBUG(6, "\t1,4 - interactions");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
   
     // possibly do the RF contributions due to excluded atoms
@@ -112,12 +112,12 @@ int interaction::Nonbonded_Set
   }
   
   // add long-range force
-  DEBUG(7, "\t(set) add long range forces");
+  DEBUG(6, "\t(set) add long range forces");
 
   m_shortrange_storage.force += m_longrange_storage.force;
   
   // and long-range energies
-  DEBUG(7, "\t(set) add long range energies");
+  DEBUG(6, "\t(set) add long range energies");
   const unsigned int lj_e_size = unsigned(m_shortrange_storage.energies.lj_energy.size());
   
   for(unsigned int i = 0; i < lj_e_size; ++i){
@@ -131,7 +131,7 @@ int interaction::Nonbonded_Set
 
   // add longrange virial
   if (sim.param().pcouple.virial){
-    DEBUG(7, "\t(set) add long range virial");
+    DEBUG(6, "\t(set) add long range virial");
     for(unsigned int i=0; i<3; ++i){
       for(unsigned int j=0; j<3; ++j){
 

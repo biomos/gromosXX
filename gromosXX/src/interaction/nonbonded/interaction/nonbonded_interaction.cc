@@ -81,6 +81,9 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
+  assert((!sim.param().force.spc_loop) || 
+	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
+
   const double nonbonded_start = util::now();
 
   // shared memory do this only once
@@ -115,6 +118,8 @@ calculate_interactions(topology::Topology & topo,
   }
 
 #endif
+
+  DEBUG(6, "sets are done, adding things up...");
 
   // add the forces, energies, virial...
   it = m_nonbonded_set.begin();
@@ -267,6 +272,8 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 
   DEBUG(15, "nonbonded_interaction::initialize");
 
+  m_nonbonded_set.clear();
+  
   if (sim.param().perturbation.perturbation){
 
     for(int i=0; i<m_omp_num_threads; ++i)

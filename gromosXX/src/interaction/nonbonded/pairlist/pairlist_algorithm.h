@@ -13,6 +13,7 @@ namespace interaction
 {
   class Storage;
   class Pairlist;
+  class Nonbonded_Parameter;
   
   /**
    * @class Pairlist_Algorithm

@@ -63,6 +63,7 @@ int interaction::Perturbed_Nonbonded_Set
   const double l = topo.lambda();
   
   if (sim.param().perturbation.scaling){
+    DEBUG(6, "scaling preparation");
     // calculate lambda primes and d lambda prime / d lambda derivatives
     std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
       it = topo.energy_group_lambdadep().begin(),
@@ -101,7 +102,7 @@ int interaction::Perturbed_Nonbonded_Set
 
   // need to update pairlist?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
-    DEBUG(7, "\tdoing longrange...");
+    DEBUG(6, "\tdoing longrange...");
     
     //====================
     // create a pairlist
@@ -114,6 +115,7 @@ int interaction::Perturbed_Nonbonded_Set
     // chargegroup based pairlist can only use this one!!!!
     // TODO:
     // move decision to pairlist!!!
+    DEBUG(6, "create a pairlist");
     m_pairlist_alg.update_perturbed(topo, conf, sim, 
 				    longrange_storage(),
 				    pairlist(), perturbed_pairlist(),
@@ -138,47 +140,47 @@ int interaction::Perturbed_Nonbonded_Set
   }
 
   // calculate forces / energies
-  DEBUG(7, "\tshort range interactions");
+  DEBUG(6, "\tshort range interactions");
 
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist, m_shortrange_storage);
 
-  DEBUG(7, "\tperturbed short range");
+  DEBUG(6, "\tperturbed short range");
   m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim, 
 						   m_perturbed_pairlist,
 						   m_shortrange_storage);
   // add 1,4 - interactions
   if (tid == 0){
-    DEBUG(7, "\t1,4 - interactions");
+    DEBUG(6, "\t1,4 - interactions");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
 
-    DEBUG(7, "\tperturbed 1,4 - interactions");
+    DEBUG(6, "\tperturbed 1,4 - interactions");
     m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
 						       m_shortrange_storage);
   
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
-      DEBUG(7, "\tRF excluded interactions and self term");
+      DEBUG(6, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
 
-      DEBUG(7, "\tperturbed RF excluded interactions and self term");
+      DEBUG(6, "\tperturbed RF excluded interactions and self term");
       m_perturbed_outerloop.perturbed_RF_excluded_outerloop(topo, conf, sim,
 							    m_shortrange_storage);
 
     }
 
-    DEBUG(7, "\tperturbed pairs");
+    DEBUG(6, "\tperturbed pairs");
     m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
 
   }
   
   // add long-range force
-  DEBUG(7, "\t(set) add long range forces");
+  DEBUG(6, "\t(set) add long range forces");
 
   m_shortrange_storage.force += m_longrange_storage.force;
   
   // and long-range energies
-  DEBUG(7, "\t(set) add long range energies");
+  DEBUG(6, "\t(set) add long range energies");
   const unsigned int lj_e_size = unsigned(m_shortrange_storage.energies.lj_energy.size());
   
   for(unsigned int i = 0; i < lj_e_size; ++i){

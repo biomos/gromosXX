@@ -61,32 +61,18 @@ void interaction::Perturbed_Nonbonded_Outerloop
 			     Pairlist const & pairlist,
 			     Storage & storage)
 {
-  SPLIT_PERTURBATION(_perturbed_lj_crf_outerloop,
-		     topo, conf, sim,
-		     pairlist, storage);
+  SPLIT_PERT_INNERLOOP(_perturbed_lj_crf_outerloop,
+		       topo, conf, sim,
+		       pairlist, storage);
 }
 
-template<typename t_perturbation_details>
+template<typename t_interaction_spec, typename  t_perturbation_details>
 void interaction::Perturbed_Nonbonded_Outerloop
 ::_perturbed_lj_crf_outerloop(topology::Topology & topo,
 			      configuration::Configuration & conf,
 			      simulation::Simulation & sim,
 			      Pairlist const & pairlist,
 			      Storage & storage)
-{
-  SPLIT_PERT_INNERLOOP(_split_perturbed_lj_crf_outerloop,
-		       topo, conf, sim,
-		       pairlist, storage);
-}
-
-
-template<typename t_interaction_spec, typename  t_perturbation_details>
-void interaction::Perturbed_Nonbonded_Outerloop
-::_split_perturbed_lj_crf_outerloop(topology::Topology & topo,
-				    configuration::Configuration & conf,
-				    simulation::Simulation & sim,
-				    Pairlist const & pairlist,
-				    Storage & storage)
 {  
   DEBUG(7, "\tcalculate perturbed interactions");  
 
@@ -99,6 +85,8 @@ void interaction::Perturbed_Nonbonded_Outerloop
   unsigned int i;
   unsigned int size_i = unsigned(pairlist.size());
 
+  DEBUG(6, "pert sr: " << size_i);
+
   for(i=0; i < size_i; ++i){
     
     for(j_it = pairlist[i].begin(),
@@ -109,7 +97,6 @@ void interaction::Perturbed_Nonbonded_Outerloop
       DEBUG(10, "\tperturbed nonbonded_interaction: i "
 	    << i << " j " << *j_it);
       
-      // shortrange, therefore store in simulation.system()
       innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
     
@@ -128,27 +115,16 @@ void interaction::Perturbed_Nonbonded_Outerloop
 			       simulation::Simulation & sim,
 			       Storage & storage)
 {
-  SPLIT_PERTURBATION(_perturbed_one_four_outerloop,
-		     topo, conf, sim, storage);
-}
-
-template<typename t_perturbation_details>
-void interaction::Perturbed_Nonbonded_Outerloop
-::_perturbed_one_four_outerloop(topology::Topology & topo,
-				configuration::Configuration & conf,
-				simulation::Simulation & sim,
-				Storage & storage)
-{
-  SPLIT_PERT_INNERLOOP(_split_perturbed_one_four_outerloop,
+  SPLIT_PERT_INNERLOOP(_perturbed_one_four_outerloop,
 		       topo, conf, sim, storage);
 }
 
 template<typename t_interaction_spec, typename  t_perturbation_details>
 void interaction::Perturbed_Nonbonded_Outerloop
-::_split_perturbed_one_four_outerloop(topology::Topology & topo,
-				      configuration::Configuration & conf,
-				      simulation::Simulation & sim,
-				      Storage & storage)
+::_perturbed_one_four_outerloop(topology::Topology & topo,
+				configuration::Configuration & conf,
+				simulation::Simulation & sim,
+				Storage & storage)
 {
   DEBUG(7, "\tcalculate perturbed 1,4-interactions");
   
@@ -186,27 +162,16 @@ void interaction::Perturbed_Nonbonded_Outerloop
 				  simulation::Simulation & sim,
 				  Storage & storage)
 {
-  SPLIT_PERTURBATION(_perturbed_RF_excluded_outerloop,
-		     topo, conf, sim, storage);
-}
-
-template<typename  t_perturbation_details>
-void interaction::Perturbed_Nonbonded_Outerloop
-::_perturbed_RF_excluded_outerloop(topology::Topology & topo,
-				   configuration::Configuration & conf,
-				   simulation::Simulation & sim,
-				   Storage & storage)
-{
-  SPLIT_PERT_INNERLOOP(_split_perturbed_RF_excluded_outerloop,
+  SPLIT_PERT_INNERLOOP(_perturbed_RF_excluded_outerloop,
 		       topo, conf, sim, storage);
 }
 
 template<typename t_interaction_spec, typename  t_perturbation_details>
 void interaction::Perturbed_Nonbonded_Outerloop
-::_split_perturbed_RF_excluded_outerloop(topology::Topology & topo,
-					 configuration::Configuration & conf,
-					 simulation::Simulation & sim,
-					 Storage & storage)
+::_perturbed_RF_excluded_outerloop(topology::Topology & topo,
+				   configuration::Configuration & conf,
+				   simulation::Simulation & sim,
+				   Storage & storage)
 {
 
   DEBUG(7, "\tcalculate perturbed excluded RF interactions");
