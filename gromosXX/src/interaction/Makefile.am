@@ -26,8 +26,6 @@ interaction_t_SOURCES =		interaction.t.cc
 interaction_t_LDADD = 		libinteraction.la \
 				../simulation/libsimulation.la
 
-interaction_t_LDFLAGS =		-lboost_unit_test_framework
-
-interaction_t_CXXFLAGS =	-DBZ_DEBUG -Wno-unused
+interaction_t_CXXFLAGS =	-DBZ_DEBUG
 
 TESTS = interaction.t

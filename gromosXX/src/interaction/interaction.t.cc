@@ -18,10 +18,6 @@
 
 #include "forcefield/forcefield.h"
 
-#include <boost/test/unit_test_suite.hpp>
-#include <boost/test/test_tools.hpp>
-
-using namespace boost::unit_test_framework;
 using namespace math;
 
 /**
@@ -47,8 +43,10 @@ bool operator!=(math::Vec &t1, math::Vec &t2)
 /**
  * Testing the forcefield
  */
-void forcefield_test()
+int forcefield_test()
 {
+  int result = 0;
+  
   const int SIZE = 10;
   
   simulation::system the_system;
@@ -67,11 +65,10 @@ void forcefield_test()
   
   the_topology.mass() = 1.0;
 
-  simulation::simulation<simulation::topology, simulation::system>
-    the_simulation(the_topology, the_system);
-
   typedef simulation::simulation<simulation::topology, simulation::system>
     simulation_type;  
+
+  simulation_type the_simulation(the_topology, the_system);
 
   interaction::simple_pairlist<simulation_type> the_pairlist;
   the_pairlist.make_pairlist(the_simulation);
@@ -80,12 +77,6 @@ void forcefield_test()
   
   interaction::simple_pairlist<simulation_type>::iterator it =
     the_pairlist.begin();
-  
-  /*
-  for( ; !it.eol(); ++it){
-    std::cout << std::setw(6) << it.i() << setw(6) << it.j() << std::endl;
-  }
-  */
   
   // let's create a forcefield...
 
@@ -106,15 +97,17 @@ void forcefield_test()
   if (v == t) b=true;
   else b = false;
 
-  BOOST_CHECK_EQUAL(b, true);
+  if (!b) ++result;
 
+  return result;
 }
 
-test_suite*
-init_unit_test_suite(int argc, char*argv[])
+int main()
 {
-  test_suite* test=BOOST_TEST_SUITE("interaction test");
-  test->add(BOOST_TEST_CASE( &forcefield_test));
+  int r1;
+  if ((r1 = forcefield_test()))
+    std::cout << "forcefield_test failed" << std::endl;
   
-  return test;
+  return r1;
 }
+

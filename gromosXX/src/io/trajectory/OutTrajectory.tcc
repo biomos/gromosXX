@@ -156,7 +156,7 @@ inline void io::OutTrajectory<t_simulation>
 
   os << "# first 24 chars ignored\n";
   
-  for(int i=0,to = pos.size(); i<to; ++i){
+  for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
     os << std::setw(6)  << soluteatom(i).residue_nr+1
        << std::setw(5)  << residue_name[soluteatom(i).residue_nr]
@@ -168,6 +168,27 @@ inline void io::OutTrajectory<t_simulation>
        << "\n";
   }
   
+  int index = topo.num_solute_atoms();
+  int res_num = soluteatom(topo.num_solute_atoms()-1).residue_nr + 2;
+  
+  for(size_t s=0; s < topo.num_solvents(); ++s){
+
+    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
+      
+      for(size_t a=0; a < topo.solvents(s).num_atoms(); ++a, ++index){
+	
+	os << std::setw(6)  << res_num
+	   << std::setw(5)  << "SOLV"
+	   << std::setw(6)  << topo.solvents(s).atom(a).name
+	   << std::setw(8)  << index + 1
+	   << std::setw(15) << pos(index)(0)
+	   << std::setw(15) << pos(index)(1)
+	   << std::setw(15) << pos(index)(2)
+	   << "\n";
+      }
+    }
+  }
+
   os << "END\n";
   
 }
@@ -211,7 +232,7 @@ inline void io::OutTrajectory<t_simulation>
 
   os << "# first 24 chars ignored\n";
   
-  for(int i=0,to = vel.size(); i<to; ++i){
+  for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
     os << std::setw(6)  << soluteatom(i).residue_nr+1
        << std::setw(5)  << residue_name[soluteatom(i).residue_nr]
@@ -223,6 +244,27 @@ inline void io::OutTrajectory<t_simulation>
        << "\n";
   }
   
+  int index = topo.num_solute_atoms();
+  int res_num = soluteatom(topo.num_solute_atoms()-1).residue_nr + 2;
+  
+  for(size_t s=0; s < topo.num_solvents(); ++s){
+
+    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
+      
+      for(size_t a=0; a < topo.solvents(s).num_atoms(); ++a, ++index){
+	
+	os << std::setw(6)  << res_num
+	   << std::setw(5)  << "SOLV"
+	   << std::setw(6)  << topo.solvents(s).atom(a).name
+	   << std::setw(8)  << index + 1
+	   << std::setw(15) << vel(index)(0)
+	   << std::setw(15) << vel(index)(1)
+	   << std::setw(15) << vel(index)(2)
+	   << "\n";
+      }
+    }
+  }
+
   os << "END\n";
   
 }

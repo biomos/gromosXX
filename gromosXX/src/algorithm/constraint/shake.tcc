@@ -11,7 +11,7 @@ template<typename t_simulation>
 algorithm::shake<t_simulation>
 ::shake()
   : tolerance(0.0001),
-    max_iterations(1000)
+    max_iterations(5)
 {
 }
 
@@ -44,7 +44,8 @@ int algorithm::shake<t_simulation>
       int num_iterations = 0;
       bool convergence = false;
       while(!convergence){
-      
+	convergence = true;
+	
 	// and constraints
 	for(std::vector<simulation::solvent::solventconstraint_struct>
 	      ::const_iterator
@@ -56,6 +57,9 @@ int algorithm::shake<t_simulation>
 	  // check whether we can skip this constraint
 	  if (skip_now[it->i] && skip_now[it->j]) continue;
 
+	  // std::cout << "mol: " << nm << " i: " << it->i << " j: " << it->j
+	  // << " first: " << first << std::endl;
+
 	  // the position
 	  math::Vec &pos_i = sys.pos()(first+it->i);
 	  math::Vec &pos_j = sys.pos()(first+it->j);
@@ -65,12 +69,15 @@ int algorithm::shake<t_simulation>
 	
 	  double constr_length2 = it->b0 * it->b0;
 	  double diff = constr_length2 - dist2;
+
+	  // std::cout << "constr: " << constr_length2 << " dist2: " << dist2 << std::endl;
+	  
 	  if(fabs(diff) >= constr_length2 * tolerance * 2.0){
 	    // we have to shake
 
 	    // the reference position
-	    math::Vec &ref_i = sys.old_pos()(first+it->i);
-	    math::Vec &ref_j = sys.old_pos()(first+it->j);
+	    const math::Vec &ref_i = sys.old_pos()(first+it->i);
+	    const math::Vec &ref_j = sys.old_pos()(first+it->j);
 
 	    math::Vec ref_r = ref_i - ref_j;
 	    double sp = dot(ref_r, r);
@@ -101,14 +108,16 @@ int algorithm::shake<t_simulation>
 	} // constraints
       
 	skip_now = skip_next;
-	skip_next.assign(topo.solvents(i).num_atoms, true);
+	skip_next.assign(topo.solvents(i).num_atoms(), true);
       
+	// std::cout << num_iterations+1 << std::endl;
 	if(++num_iterations > max_iterations){
-	  io::messges.add("SHAKE error. too many iterations",
+	  io::messages.add("SHAKE error. too many iterations",
 			  "shake::solvent",
 			  io::message::critical);
 	  throw std::runtime_error("SHAKE failure in solvent");
 	}
+	
       } // while(!convergence)
       
       tot_iterations += num_iterations;

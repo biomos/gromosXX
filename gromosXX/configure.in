@@ -22,7 +22,6 @@ echo ""
 echo "GromosXX molecular dynamics program"
 echo "simple molecular dynamics simulations"
 echo "version ${MD_MAJOR_VERSION}.${MD_MINOR_VERSION}.${MD_MICRO_VERSION}"
-echo "design test by Markus Christen"
 echo "${CONF_DATE}, ETH Zuerich"
 echo ""
 echo ""
@@ -53,12 +52,12 @@ AC_SEARCH_LIBS(_blitz_id, blitz, , [AC_MSG_ERROR(
 [lib blitz not found. make sure to include it in your
 CXXFLAGS, CFLAGS and LDFLAGS])])
 
-AC_MSG_CHECKING(boost test library)
-AC_CHECK_HEADER(boost/test/unit_test_suite.hpp, ,
-[AC_MSG_ERROR([header files for boost test library not found. Add the include
-directory to your CPPFLAGS and CXXFLAGS.])])
-AC_SEARCH_LIBS(main, boost_unit_test_framework, , [AC_MSG_ERROR(
-[libboost_unit_test_framework not found. Add the library path to your LDFLAGS])])
+dnl AC_MSG_CHECKING(boost test library)
+dnl AC_CHECK_HEADER(boost/test/unit_test_suite.hpp, ,
+dnl [AC_MSG_ERROR([header files for boost test library not found. Add the include
+dnl directory to your CPPFLAGS and CXXFLAGS.])])
+dnl AC_SEARCH_LIBS(main, boost_unit_test_framework, , [AC_MSG_ERROR(
+dnl [libboost_unit_test_framework not found. Add the library path to your LDFLAGS])])
 
 dnl possibly create sym links
 # AC_LINK_FILES(source-list, dest-list)

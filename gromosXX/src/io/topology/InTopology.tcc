@@ -70,11 +70,27 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
   
   { // RESNAME
     buffer = m_block["RESNAME"];
-    buffer.erase(buffer.begin());
-    buffer.erase(buffer.begin());
-    buffer.erase(buffer.end()-1);
+    it = buffer.begin()+1;
+    int n, num;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> num;
+    ++it;
     
-    topo.residue_name() = buffer;
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      std::string s;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> s;
+      
+      topo.residue_name().push_back(s);
+    }
+
+    if (n != num){
+      io::messages.add("Error in RESNAME block: n!=num.",
+		       "InTopology", io::message::critical);
+      throw std::runtime_error("error in RESNAME block (n != num)");
+    }
     
   } // RESNAME
   
@@ -155,7 +171,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in SOLVENTATOM block");
 
-      s.add_atom(name, iac, mass, charge);
+      s.add_atom(name, iac-1, mass, charge);
     }
     
     if (n!=num)
@@ -182,7 +198,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in SOLVENTCONSTR block");
  
-      s.add_constraint(i, j, b0);
+      s.add_constraint(i-1, j-1, b0);
     }
 
     if (n!=num)

@@ -28,8 +28,6 @@ simulation_t_SOURCES =		simulation.t.cc
 
 simulation_t_LDADD = 		libsimulation.la
 
-simulation_t_LDFLAGS =		-lboost_unit_test_framework
-
-simulation_t_CXXFLAGS =		-DBZ_DEBUG -Wno-unused-variable
+simulation_t_CXXFLAGS =		-DBZ_DEBUG
 
 TESTS = simulation.t

@@ -47,8 +47,10 @@ bool operator!=(math::Vec &t1, math::Vec &t2)
 /**
  * Testing leap-frog
  */
-void leap_frog_test()
+int leap_frog_test()
 {
+  int result = 0;
+  
   const int SIZE = 10;
   
   simulation::system the_system;
@@ -59,7 +61,7 @@ void leap_frog_test()
   the_topology.num_solute_atoms(SIZE);
   
   // initialize everything with zero
-  blitz::TinyVector<double, 3> t(0.0, 0.0, 0.0), t2(1, 1, 1);
+  math::Vec t(0.0, 0.0, 0.0), t2(1, 1, 1);
 
   the_system.pos() = 0.0;
   the_system.vel() = 0.0;
@@ -67,11 +69,10 @@ void leap_frog_test()
   
   the_topology.mass() = 1.0;
 
-  simulation::simulation<simulation::topology, simulation::system>
-    the_simulation(the_topology, the_system);
-
   typedef simulation::simulation<simulation::topology, simulation::system>
     simulation_type;  
+
+  simulation_type the_simulation(the_topology, the_system);
 
   // i need an empty forcefield
   interaction::forcefield<simulation_type> the_forcefield;
@@ -86,11 +87,7 @@ void leap_frog_test()
   for(int i=0; i<SIZE; ++i)
     if (!(the_system.pos()(i) == t)) b = false;
 
-  //firstIndex i;
-  //_bz_bool bb = all((the_system.pos() == t), i);
-  
-
-  BOOST_CHECK(b);
+  if (!b) ++result;
 
   // set initial positions
   for(int i=0; i<SIZE; ++i)
@@ -104,7 +101,7 @@ void leap_frog_test()
   // check
   for(int i=0; i<SIZE; ++i)
     for(int j=0; j<3; ++j)
-      BOOST_CHECK_EQUAL(the_system.pos()(i)(j),i*3+j);
+      if(the_system.pos()(i)(j) != i*3+j) ++result;
 
   // add some velocities
   for(int i=0; i<SIZE; ++i)
@@ -118,7 +115,7 @@ void leap_frog_test()
   // check
   for(int i=0; i<SIZE; ++i)
     for(int j=0; j<3; ++j)
-      BOOST_CHECK_EQUAL(the_system.pos()(i)(j),i*3+j + i*1.0);
+      if (the_system.pos()(i)(j) != i*3+j + i*1.0) ++result;
   
   // set a constant force
   // this only works as long as
@@ -147,15 +144,19 @@ void leap_frog_test()
   // check
   for(int i=0; i<SIZE; ++i)
     for(int j=0; j<3; ++j)
-      BOOST_CHECK_EQUAL(the_system.pos()(i)(j), 0.0);
+      if(the_system.pos()(i)(j) != 0.0) ++result;
 
+
+  return result;
 }
 
 /**
  * Testing Runge-Kutta
  */
-void runge_kutta_test()
+int runge_kutta_test()
 {
+  int result = 0;
+  
   const int SIZE = 5;
   
   simulation::system the_system;
@@ -172,11 +173,10 @@ void runge_kutta_test()
   
   the_topology.mass() = 1.0;
 
-  simulation::simulation<simulation::topology, simulation::system>
-    the_simulation(the_topology, the_system);
-
   typedef simulation::simulation<simulation::topology, simulation::system>
     simulation_type;  
+
+  simulation_type the_simulation(the_topology, the_system);
 
   // i need an empty forcefield
   interaction::forcefield<simulation_type> the_forcefield;
@@ -200,9 +200,6 @@ void runge_kutta_test()
   for(int i=0; i<10; ++i)
     the_step.step(the_simulation, the_forcefield, 1.0);
   
-  // std::cout << p_fin << std::endl;
-  // std::cout << the_system.pos() << std::endl;
-
   // check whether leap-frog and runge-kutta
   // give the same result for constant velocity
   // system.
@@ -211,11 +208,13 @@ void runge_kutta_test()
   for(int i=0; i<SIZE; ++i)
     if (p_fin(i) != the_system.pos()(i)) b = false;
 
-  BOOST_CHECK_EQUAL(b, true);
+  if (!b) ++result;
 
+  return result;
 }
 
 
+/*
 test_suite*
 init_unit_test_suite(int argc, char*argv[])
 {
@@ -225,3 +224,19 @@ init_unit_test_suite(int argc, char*argv[])
   
   return test;
 }
+*/
+
+int main()
+{
+  int r1;
+  if ((r1 = leap_frog_test())){
+    std::cout << "leap_frog_test failed" << std::endl;
+  }
+  int r2;
+  if ((r2 = runge_kutta_test())){
+    std::cout << "runge_kutta_test failed" << std::endl;
+  }
+  
+  return r1 + r2;
+}
+

@@ -169,7 +169,7 @@ inline simulation::solvent & simulation::topology::solvents(size_t i)
  */
 inline size_t simulation::topology::num_solvents()const
 {
-  return m_solvents.size();
+  return m_num_solvent_molecules.size();
 }
 
 /**
@@ -183,10 +183,11 @@ inline void simulation::topology::add_solvent(solvent solv)
 /**
  * add solvent to the simulation.
  */
-inline void simulation::topology::solvate(int solv, int num_molecules)
+inline void simulation::topology::solvate(size_t solv, size_t num_molecules)
 {
   // only add in the correct order!
-  assert(solv = m_num_solvent_atoms.size());
+  assert(solv == m_num_solvent_atoms.size());
+  assert(solv < m_solvents.size());
 
   int n = num_solute_atoms() + num_solvent_atoms();
 
@@ -196,7 +197,7 @@ inline void simulation::topology::solvate(int solv, int num_molecules)
   resize(num_solute_atoms() + num_solvent_atoms());
 
   // add to iac, mass, charge
-  for(int i=0; i<num_molecules; ++i){
+  for(size_t i=0; i<num_molecules; ++i){
     for(size_t j=0; j<m_solvents[solv].num_atoms(); ++j, ++n){
       m_iac.push_back(m_solvents[solv].atom(j).iac);
       m_mass(n) = m_solvents[solv].atom(j).mass;
@@ -205,6 +206,15 @@ inline void simulation::topology::solvate(int solv, int num_molecules)
     }
   }
   
+}
+
+/**
+ * number of solvent molecules.
+ */
+inline size_t simulation::topology::num_solvent_molecules(size_t i)const
+{
+  assert(i < m_num_solvent_molecules.size());
+  return m_num_solvent_molecules[i];
 }
 
 /**

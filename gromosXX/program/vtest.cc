@@ -27,6 +27,10 @@ int main(int argc, char *argv[])
   if (argc < 4){
     std::cout << "usage: " << argv[0] << " topology structure input "
       "[RungeKutta]\n\n";
+    io::messages.add("wrong number of arguments.", 
+		     "vtest", 
+		     io::message::critical);
+    
     throw std::runtime_error("wrong arguments");
   }
   
@@ -85,14 +89,17 @@ int main(int argc, char *argv[])
   
   // create the algorithm
   algorithm::runge_kutta<simulation_type> RK;
+  algorithm::shake<simulation_type> shake;
 
   // prepare for the output
   std::ofstream trap("vtest.trj");
   std::ofstream trav("vtest.trv");
+  std::ofstream traf("vtest.trf");
   std::ofstream final("vtest.fin");
   
   io::OutTrajectory<simulation_type> traj(trap, final);
   traj.velocity_trajectory(trav);
+  traj.force_trajectory(traf);
 
   traj.print_title("\tvtest(gromosXX) MD simulation");
 
@@ -121,6 +128,15 @@ int main(int argc, char *argv[])
       algorithm::leap_frog<simulation_type>
 	::step(the_simulation, the_forcefield, dt);
   
+    try{
+      shake.solvent(the_topology, the_system, dt);
+    }
+    catch(std::runtime_error e){
+      the_system.exchange_pos();
+      traj << the_simulation;
+      throw;
+    }
+    
     the_simulation.increase_time(dt);
     
   }

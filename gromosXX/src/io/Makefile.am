@@ -31,15 +31,13 @@ blockinput_t_SOURCES =		blockinput.t.cc
 
 blockinput_t_CXXFLAGS =     	-DBZ_DEBUG
 
-blockinput_t_LDFLAGS =		-lboost_unit_test_framework
-
 blockinput_t_LDADD =		libio.la \
 				../simulation/libsimulation.la \
 				../interaction/libinteraction.la
 
 message_t_SOURCES = 		message.t.cc
 
-message_t_LDFLAGS =		-lboost_unit_test_framework
+message_t_CXXFLAGS =		-DBZ_DEBUG
 
 message_t_LDADD =		libio.la
 

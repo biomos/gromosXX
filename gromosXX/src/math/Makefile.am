@@ -14,9 +14,7 @@ check_PROGRAMS = 		math.t
 
 math_t_SOURCES =		math.t.cc
 
-math_t_LDFLAGS =		-lboost_unit_test_framework
-
-math_t_CXXFLAGS =		-DBZ_DEBUG -Wno-unused
+math_t_CXXFLAGS =		-DBZ_DEBUG
 
 TESTS = math.t
 

@@ -23,8 +23,6 @@ algorithm_t_SOURCES =		algorithm.t.cc
 algorithm_t_LDADD = 		libalgorithm.la \
 				../simulation/libsimulation.la
 
-algorithm_t_LDFLAGS =		-lboost_unit_test_framework
-
-algorithm_t_CXXFLAGS =		-DBZ_DEBUG -Wno-unused
+algorithm_t_CXXFLAGS =		-DBZ_DEBUG
 
 TESTS = algorithm.t

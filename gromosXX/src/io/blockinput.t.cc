@@ -16,16 +16,13 @@
 
 #include "io.h"
 
-#include <boost/test/unit_test_suite.hpp>
-#include <boost/test/test_tools.hpp>
-
-using namespace boost::unit_test_framework;
-
 /**
  * test the io.
  */
-void test_blockio()
+int test_blockio()
 {
+  int result = 0;
+
   simulation::system the_system;
   simulation::topology the_topology;
   
@@ -50,22 +47,27 @@ void test_blockio()
 
   sys >> the_system;
 
-  BOOST_CHECK_EQUAL(io::message::notice, io::messages.display());
+  if (io::message::notice != io::messages.display()) ++result;
 
   // output
   std::ofstream final("blockinput.t.fin");
-  io::OutTrajectory<simulation_type> traj(std::cout, final);
+  std::ofstream trj("blockinput.t.trj");
+  
+  io::OutTrajectory<simulation_type> traj(trj, final);
   traj << the_simulation;
   // traj << io::decorated << the_simulation;
   traj << io::final << the_simulation;
 
+  return result;
+
 }
 
-test_suite*
-init_unit_test_suite(int argc, char* argv[])
+int main()
 {
-  test_suite* test=BOOST_TEST_SUITE("blockio test");
-  test->add(BOOST_TEST_CASE( &test_blockio));
-
-  return test;
+  int r1;
+  if ((r1 = test_blockio()))
+    std::cout << "test_blockio failed" << std::endl;
+  
+  return r1;
 }
+

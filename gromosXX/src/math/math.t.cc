@@ -9,17 +9,15 @@
 
 #include "gmath.h"
 
-#include <boost/test/unit_test_suite.hpp>
-#include <boost/test/test_tools.hpp>
-
-using namespace boost::unit_test_framework;
 using namespace math;
 
 /**
  * testing math thingies
  */
-void math_test()
+int math_test()
 {
+  int result = 0;
+  
   const int SIZE = 10;
   
   // Vector expressions
@@ -43,13 +41,17 @@ void math_test()
   x = 1; // constant
   y = v1; // 5 v1 vectors
   VArray z(x + y);
+
+  return result;
 }
 
-test_suite*
-init_unit_test_suite(int argc, char*argv[])
+int main()
 {
-  test_suite* test=BOOST_TEST_SUITE("math test");
-  test->add(BOOST_TEST_CASE( &math_test));
+  int r1;
+  if ((r1 = math_test()))
+    std::cout << "math_test failed" << std::endl;
   
-  return test;
+  return r1;
+
 }
+

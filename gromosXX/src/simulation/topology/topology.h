@@ -79,7 +79,7 @@ namespace simulation
      * @param solv the solvent (multiple solvents).
      * @param num_molecules the number of solvent molecules to add.
      */
-    void solvate(int solv, int num_molecules);
+    void solvate(size_t solv, size_t num_molecules);
     
     /**
      * set the capacity of solute atoms
@@ -100,6 +100,11 @@ namespace simulation
      * get the total number of solvent atoms.
      */
     size_t num_solvent_atoms()const;
+
+    /**
+     * get the number of solvent molecules.
+     */
+    size_t num_solvent_molecules(size_t i)const;
     
     /**
      * get the number of solvent atoms.
