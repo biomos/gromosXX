@@ -40,7 +40,9 @@ int configuration::Average::apply(topology::Topology &topo,
   DEBUG(7, "averaging...");
   
   m_sim_avg.update(conf.old().averages.simulation(), topo, conf, sim);
-  m_block_avg.update(conf.old().averages.block(), topo, conf, sim);
+
+  if (sim.param().write.block_average)
+    m_block_avg.update(conf.old().averages.block(), topo, conf, sim);
   
   return 0;
 
@@ -92,6 +94,9 @@ void configuration::Average::Block_Average::zero()
   
   volume_avg = 0.0;
   volume_fluct = 0.0;
+
+  lambda_avg = 0.0;
+  lambda_fluct = 0.0;
   
 }
 
@@ -150,6 +155,10 @@ update(Block_Average const & old,
 		    old.energy_derivative_fluct,
 		    dt,
 		    dlamt);
+    
+    lambda_avg = old.lambda_avg + topo.old_lambda() * dt;
+    lambda_fluct = old.lambda_fluct + topo.old_lambda() * topo.old_lambda() * dt;
+
   }
   
 
@@ -176,6 +185,8 @@ void configuration::Average::Block_Average
 void configuration::Average::Block_Average
 ::energy_derivative_average(configuration::Energy &energy, 
 			    configuration::Energy &fluctuation,
+			    double & lambda,
+			    double & lambda_fluct,
 			    double const dlamt)const
 {
   energy_average_helper(energy_derivative_avg,
@@ -183,6 +194,12 @@ void configuration::Average::Block_Average
 			energy,
 			fluctuation,
 			dlamt);
+  
+  lambda = lambda_avg / time;
+  const double diff = this->lambda_fluct - lambda_avg * lambda_avg / time;
+  if (diff > 0.0) lambda_fluct = sqrt(diff / time);
+  else lambda_fluct = 0.0;
+  
 }
 
 void configuration::Average::Block_Average
@@ -231,7 +248,7 @@ void configuration::Average::Block_Average
 	      double & volume, double & volume_fluctuations,
 	      math::Box & box, math::Box & box_fluctuations,
 	      std::vector<double> & scaling,
-	      std::vector<double> & scaling_fluctuations)
+	      std::vector<double> & scaling_fluctuations)const
 {
   double diff;
   

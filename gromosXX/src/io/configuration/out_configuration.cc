@@ -24,6 +24,21 @@
 #define MODULE io
 #define SUBMODULE configuration
 
+// declarations
+static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
+
+static void _print_volumepressurered_helper(std::ostream &os,
+					    double mass,
+					    simulation::Multibath const & m,
+					    std::vector<double> const & s,
+					    configuration::Energy const & e,
+					    math::Box const & b,
+					    math::boundary_enum t,
+					    math::Matrix const & p,
+					    math::Matrix const & v,
+					    math::Matrix const & k);
+
+
 io::Out_Configuration::Out_Configuration(std::string title,
 					 std::ostream & os)
   : m_output(os),
@@ -88,7 +103,7 @@ void io::Out_Configuration::_print_title(std::string title,
      << "\nEND\n";
 }
 
-void io::Out_Configuration::write(configuration::Configuration const &conf,
+void io::Out_Configuration::write(configuration::Configuration &conf,
 				  topology::Topology const &topo,
 				  simulation::Simulation const &sim,
 				  output_format const form)
@@ -130,21 +145,26 @@ void io::Out_Configuration::write(configuration::Configuration const &conf,
       }
     }
 
-    if(m_write_blockaverage_energy && (sim.steps() % m_every_blockaverage) == 0){
-      if(sim.steps()){
-	_print_old_timestep(sim, m_blockaveraged_energy);
-	_print_blockaveraged_energyred(conf, m_blockaveraged_energy);
-	_print_blockaveraged_volumepressurered(conf, m_blockaveraged_energy);
+    if (m_every_blockaverage && (sim.steps() % m_every_blockaverage) == 0){
+      
+      if(m_write_blockaverage_energy){
+	if(sim.steps()){
+	  _print_old_timestep(sim, m_blockaveraged_energy);
+	  _print_blockaveraged_energyred(conf, m_blockaveraged_energy);
+	  _print_blockaveraged_volumepressurered(conf, sim, m_blockaveraged_energy);
+	}
       }
-    }
 
-    if(m_write_blockaverage_free_energy && (sim.steps() % m_every_blockaverage) == 0){
-      if(sim.steps()){
-	_print_old_timestep(sim, m_blockaveraged_free_energy);
-	_print_blockaveraged_free_energyred(conf, m_blockaveraged_free_energy);
+      if(m_write_blockaverage_free_energy){
+	if(sim.steps()){
+	  _print_old_timestep(sim, m_blockaveraged_free_energy);
+	  _print_blockaveraged_free_energyred(conf, sim.param().perturbation.dlamt,
+					      m_blockaveraged_free_energy);
+	}
       }
+      conf.current().averages.block().zero();
     }
-
+    
   }
   else if(form == final && m_final){
     _print_timestep(sim, m_final_conf);
@@ -777,74 +797,8 @@ void io::Out_Configuration
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_precision);
   
-  configuration::Energy const & e = conf.old().energies;
-
-  const int numenergygroups = e.bond_energy.size();
-  const int numbaths = e.kinetic_energy.size();
-  const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
-
-  DEBUG(11, "numenergygroups " << numenergygroups 
-	<< " energy_group_size " << energy_group_size );
-
-  os << "ENERGY03\n"
-     << "# totals\n";
-  
-  os << std::setw(18) << e.total << "\n"
-     << std::setw(18) << e.kinetic_total << "\n"
-     << std::setw(18) << e.potential_total << "\n"
-     << std::setw(18) << e.bond_total << "\n"
-     << std::setw(18) << e.angle_total << "\n"
-     << std::setw(18) << e.improper_total << "\n"
-     << std::setw(18) << e.dihedral_total << "\n"
-     << std::setw(18) << e.lj_total << "\n"
-     << std::setw(18) << e.crf_total << "\n"
-     << std::setw(18) << e.constraints_total << "\n"
-     << std::setw(18) << e.posrest_total << "\n"
-     << std::setw(18) << 0.0 << "\n" // disres
-     << std::setw(18) << 0.0 << "\n" // dihedral res
-     << std::setw(18) << 0.0 << "\n" // jval
-     << std::setw(18) << 0.0 << "\n" // local elevation
-     << std::setw(18) << 0.0 << "\n"; // path integral
-  
-  os << "# baths\n";
-  os << numbaths << "\n";
-
-  for(int i=0; i < numbaths; ++i){
-    os << std::setw(18) << e.kinetic_energy[i]
-       << std::setw(18) << e.com_kinetic_energy[i]
-       << std::setw(18) << e.ir_kinetic_energy[i] << "\n";
-  }
-
-  os << "# bonded\n";
-  os << numenergygroups << "\n";
-  for(int i=0; i<numenergygroups; i++){
-    os << std::setw(18) << e.bond_energy[i] 
-       << std::setw(18) << e.angle_energy[i] 
-       << std::setw(18) << e.improper_energy[i] 
-       << std::setw(18) << e.dihedral_energy[i] << "\n";
-  }
-
-  os << "# nonbonded\n";
-  for(int i=0; i<numenergygroups; i++){
-    for(int j=i; j<numenergygroups; j++){
-
-      os << std::setw(18) << e.lj_energy[i][j]
-	 << std::setw(18) << e.crf_energy[i][j] << "\n";
-
-    }
-  }
-
-  os << "# special\n";
-  for(int i=0; i<numenergygroups; i++){
-    os << std::setw(18) << e.constraints_energy[i] 
-       << std::setw(18) << e.posrest_energy[i] 
-       << std::setw(18) << 0.0 // disres
-       << std::setw(18) << 0.0 // dihedral res
-       << std::setw(18) << 0.0 // jval
-       << std::setw(18) << 0.0 // local elevation
-       << std::setw(18) << 0.0 << "\n"; // path integral
-  }
-  
+  os << "ENERGY03\n";
+  _print_energyred_helper(os, conf.old().energies);
   os << "END\n";
   
 }
@@ -857,75 +811,11 @@ void io::Out_Configuration
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_precision);
 
-  const int numenergygroups = conf.old().perturbed_energy_derivatives.bond_energy.size();
-  const int numbaths = conf.old().perturbed_energy_derivatives.kinetic_energy.size();
-  const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
-
-  DEBUG(11, "numenergygroups " << numenergygroups 
-	<< " energy_group_size " << energy_group_size );
-
-  configuration::Energy const & e = conf.old().perturbed_energy_derivatives;
-
   os << "FREEENERDERIVS03\n"
      << "# lambda\n"
      << std::setw(18) << topo.old_lambda() << "\n";
 
-  os << "# totals\n";
-  os << std::setw(18) << e.total << "\n"
-     << std::setw(18) << e.kinetic_total << "\n"
-     << std::setw(18) << e.potential_total << "\n"
-     << std::setw(18) << e.bond_total << "\n"
-     << std::setw(18) << e.angle_total << "\n"
-     << std::setw(18) << e.improper_total << "\n"
-     << std::setw(18) << e.dihedral_total << "\n"
-     << std::setw(18) << e.lj_total << "\n"
-     << std::setw(18) << e.crf_total << "\n"
-     << std::setw(18) << e.constraints_total << "\n"
-     << std::setw(18) << e.posrest_total << "\n"
-     << std::setw(18) << 0.0 << "\n" // disres
-     << std::setw(18) << 0.0 << "\n" // dihedral res
-     << std::setw(18) << 0.0 << "\n" // jval
-     << std::setw(18) << 0.0 << "\n" // local elevation
-     << std::setw(18) << 0.0 << "\n"; // path integral
-  
-  os << "# baths\n";
-  os << numbaths << "\n";
-  
-  for(int i=0; i < numbaths; ++i){
-    os << std::setw(18) << e.kinetic_energy[i] 
-       << std::setw(18) << e.com_kinetic_energy[i]
-       << std::setw(18) << e.ir_kinetic_energy[i] << "\n";
-  }
-  
-  os << "# bonded\n";
-  os << numenergygroups << "\n";
-  for(int i=0; i<numenergygroups; i++){
-    os << std::setw(18) << e.bond_energy[i] 
-       << std::setw(18) << e.angle_energy[i] 
-       << std::setw(18) << e.improper_energy[i] 
-       << std::setw(18) << e.dihedral_energy[i] << "\n";
-  }
-  
-  os << "# nonbonded\n";
-  for(int i=0; i<numenergygroups; i++){
-    for(int j=i; j<numenergygroups; j++){
-      
-      os << std::setw(18) << e.lj_energy[i][j] 
-	 << std::setw(18) << e.crf_energy[i][j] << "\n";
-      
-    }
-  }
-  
-  os << "# special\n";
-  for(int i=0; i<numenergygroups; i++){
-    os << std::setw(18) << e.constraints_energy[i] 
-       << std::setw(18) << e.posrest_energy[i] 
-       << std::setw(18) << 0.0 // disres
-       << std::setw(18) << 0.0 // dihedral res
-       << std::setw(18) << 0.0 // jval
-       << std::setw(18) << 0.0 // local elevation
-       << std::setw(18) << 0.0 << "\n"; // path integral
-  }
+  _print_energyred_helper(os, conf.old().perturbed_energy_derivatives);
   
   os << "END\n";
 
@@ -937,69 +827,23 @@ void io::Out_Configuration
 			   simulation::Simulation const &sim,
 			   std::ostream &os)
 {
+  std::vector<double> const s;
+
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_precision);
-  
-  configuration::Energy const & e = conf.old().energies;
-  simulation::Multibath const & m = sim.multibath();
-
-  const int numbaths = m.size();
 
   os << "VOLUMEPRESSURE03\n";
 
-  os << "# mass\n";
-  os << std::setw(18) << math::sum(topo.mass()) << "\n";
-  
-  os << "# temperature\n";
-  os << numbaths << "\n";
-  
-  for(int i=0; i < numbaths; ++i){
-    if (m[i].dof)
-      os << std::setw(18) << 2 * e.kinetic_energy[i] / math::k_Boltzmann / m[i].dof;
-    else
-      os << std::setw(18) << 0.0;
-    if (m[i].com_dof)
-      os << std::setw(18) << 2 * e.com_kinetic_energy[i] / math::k_Boltzmann / m[i].com_dof;
-    else
-      os << std::setw(18) << 0.0;
-    if (m[i].ir_dof)
-      os << std::setw(18) << 2 * e.ir_kinetic_energy[i] / math::k_Boltzmann / m[i].ir_dof;
-    else
-      os << std::setw(18) << 0.0;
-    
-    os << std::setw(18) << m[i].scale << "\n";
-  }
-
-  math::Box const & b = conf.old().box;
-
-  os << "# volume\n";
-  os << std::setw(18) << math::volume(b, conf.boundary_type) << "\n";
-
-  os << std::setw(18) << b(0)(0) << std::setw(18) << b(0)(1) << std::setw(18) << b(0)(2) << "\n"
-     << std::setw(18) << b(1)(0) << std::setw(18) << b(1)(1) << std::setw(18) << b(1)(2) << "\n"
-     << std::setw(18) << b(2)(0) << std::setw(18) << b(2)(1) << std::setw(18) << b(2)(2) << "\n";
-  
-  os << "# pressure\n";
-  math::Matrix const & p = conf.old().pressure_tensor;
-  os << std::setw(18) << (p(0,0) + p(1,1) + p(2,2)) / 3.0 << "\n";
-
-  math::Matrix const & v = conf.old().virial_tensor;
-  os << std::setw(18) << (v(0,0) + v(1,1) + v(2,2)) / 3.0 << "\n";
-
-  math::Matrix const & k = conf.old().kinetic_energy_tensor;
-  os << std::setw(18) << (k(0,0) + k(1,1) + k(2,2)) / 3.0 << "\n";
-
-  os << std::setw(18) << p(0,0) << std::setw(18) << p(0,1) << std::setw(18) << p(0,2) << "\n"
-     << std::setw(18) << p(1,0) << std::setw(18) << p(1,1) << std::setw(18) << p(1,2) << "\n"
-     << std::setw(18) << p(2,0) << std::setw(18) << p(2,1) << std::setw(18) << p(2,2) << "\n";
-
-  os << std::setw(18) << v(0,0) << std::setw(18) << v(0,1) << std::setw(18) << v(0,2) << "\n"
-     << std::setw(18) << v(1,0) << std::setw(18) << v(1,1) << std::setw(18) << v(1,2) << "\n"
-     << std::setw(18) << v(2,0) << std::setw(18) << v(2,1) << std::setw(18) << v(2,2) << "\n";
-
-  os << std::setw(18) << k(0,0) << std::setw(18) << k(0,1) << std::setw(18) << k(0,2) << "\n"
-     << std::setw(18) << k(1,0) << std::setw(18) << k(1,1) << std::setw(18) << k(1,2) << "\n"
-     << std::setw(18) << k(2,0) << std::setw(18) << k(2,1) << std::setw(18) << k(2,2) << "\n";
+  _print_volumepressurered_helper(os,
+				  math::sum(topo.mass()),
+				  sim.multibath(),
+				  s,
+				  conf.old().energies,
+				  conf.old().box,
+				  conf.boundary_type,
+				  conf.old().pressure_tensor,
+				  conf.old().virial_tensor,
+				  conf.old().kinetic_energy_tensor);
   
   os << "END\n";
   
@@ -1140,17 +984,12 @@ void io::Out_Configuration
 
   if (sim.param().perturbation.perturbation){
 
+    double lambda, lambda_fluct;
     conf.current().averages.simulation().
-      energy_derivative_average(e, ef, sim.param().perturbation.dlamt);
+      energy_derivative_average(e, ef, lambda, lambda_fluct, sim.param().perturbation.dlamt);
 
     if (sim.param().perturbation.dlamt){
 	
-      /*
-      conf.current().perturbed_energy_derivative_averages.
-	average(e, ef, p, pf,
-		sim.param().perturbation.dlamt);
-      */
-
       print_ENERGY(m_output, e, topo.energy_groups(), "CUMULATIVE DG", "DG_");
       m_output << "\n";
 
@@ -1163,8 +1002,6 @@ void io::Out_Configuration
       std::ostringstream ss, pre;
       ss << "dE/dLAMBDA ";
       pre << "dE/dl";
-      
-      // conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf);
       
       print_ENERGY(m_output, e, topo.energy_groups(),
 		   ss.str() + "AVERAGES", "<" + pre.str() + ">_");
@@ -1187,17 +1024,135 @@ void io::Out_Configuration
   os.precision(m_precision);
   
   configuration::Energy e, ef;
-  conf.old().averages.block().energy_average(e, ef);
+  // energies are in old(), but averages in current()!
+  conf.current().averages.block().energy_average(e, ef);
+
+  os << "BAENERGY03\n";
+  _print_energyred_helper(os, e);
+  os << "END\n";
+
+  os << "BAEFLUCT03\n";
+  _print_energyred_helper(os, ef);
+  os << "END\n";
+  
+}
+
+void io::Out_Configuration
+::_print_blockaveraged_volumepressurered(configuration::Configuration const & conf,
+					 simulation::Simulation const & sim,
+					 std::ostream &os)
+{
+  double mass, massf, vol, volf;
+  std::vector<double> s, sf;
+  configuration::Energy e, ef;
+  math::Box b, bf;
+  math::Matrix p, pf, v, vf, k, kf;
+  
+  // needed again. do in 1 function (energyred && volumepressurered)
+  // energies in old(), but averages in current()!
+  conf.current().averages.block().energy_average(e, ef);
+  conf.current().averages.block().pressure_average(p, pf, v, vf, k, kf);
+  conf.current().averages.block().mbs_average(mass, massf, vol, volf, b, bf, s, sf);
+
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+
+  os << "BAVOLUMEPRESSURE03\n";
+
+  _print_volumepressurered_helper(os,
+				  mass,
+				  sim.multibath(),
+				  s,
+				  e,
+				  b,
+				  conf.boundary_type,
+				  p,
+				  v,
+				  k);
+  
+  os << "END\n";
+
+  os << "BAVPFLUCT03\n";
+
+  _print_volumepressurered_helper(os,
+				  massf,
+				  sim.multibath(),
+				  sf,
+				  ef,
+				  bf,
+				  conf.boundary_type,
+				  pf,
+				  vf,
+				  kf);
+  
+  os << "END\n";
+
+}
+
+void io::Out_Configuration
+::_print_blockaveraged_free_energyred(configuration::Configuration const &conf,
+				      double dlamt,
+				      std::ostream &os)
+{
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+
+  configuration::Energy e, ef;
+  double lambda, lambda_fluct;
+  
+  // energies in old(), but averages in current()!
+  conf.current().averages.block().energy_derivative_average(e, ef, lambda, lambda_fluct, dlamt);
+
+  os << "BAFREEENERDERIVS03\n"
+     << "# lambda\n"
+     << std::setw(18) << lambda << "\n";
+
+  _print_energyred_helper(os, e);
+
+  os << "END\n";
+
+  os << "BAFREEEFLUCTS03\n"
+     << "# lambda\n"
+     << std::setw(18) << lambda_fluct << "\n";
+
+  _print_energyred_helper(os, ef);
+
+  os << "END\n";
+
+}
+
+void io::Out_Configuration::_print_flexv(configuration::Configuration const &conf,
+					 topology::Topology const &topo,
+					 std::ostream &os)
+{
+  DEBUG(10, "FLEXV");
+  
+  std::vector<double>::const_iterator flexv_it = conf.special().flexible_vel.begin();
+  std::vector<topology::two_body_term_struct>::const_iterator
+    constr_it = topo.solute().distance_constraints().begin(),
+    constr_to = topo.solute().distance_constraints().end();
+  
+  os << "FLEXV\n";
+  for( ; constr_it != constr_to; ++constr_it, ++flexv_it){
+    
+    os << std::setw(15) << constr_it->i+1
+       << std::setw(10) << constr_it->j+1
+       << std::setw(20) << *flexv_it
+       << "\n";
+  }
+  os << "END\n";
+
+}
+
+
+static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e)
+{
 
   const int numenergygroups = e.bond_energy.size();
   const int numbaths = e.kinetic_energy.size();
-  const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
+  // const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
 
-  DEBUG(11, "numenergygroups " << numenergygroups 
-	<< " energy_group_size " << energy_group_size );
-
-  os << "BAENERGY03\n"
-     << "# totals\n";
+  os << "# totals\n";
   
   os << std::setw(18) << e.total << "\n"
      << std::setw(18) << e.kinetic_total << "\n"
@@ -1254,42 +1209,70 @@ void io::Out_Configuration
        << std::setw(18) << 0.0 // local elevation
        << std::setw(18) << 0.0 << "\n"; // path integral
   }
-  
-  os << "END\n";
-  
 }
 
-void io::Out_Configuration
-::_print_blockaveraged_volumepressurered(configuration::Configuration const &conf,
-				 std::ostream &os)
+static void _print_volumepressurered_helper(std::ostream &os,
+					    double mass,
+					    simulation::Multibath const & m,
+					    std::vector<double> const & s,
+					    configuration::Energy const & e,
+					    math::Box const & b,
+					    math::boundary_enum t,
+					    math::Matrix const & p,
+					    math::Matrix const & v,
+					    math::Matrix const & k)
 {
-}
+  const int numbaths = m.size();
 
-void io::Out_Configuration
-::_print_blockaveraged_free_energyred(configuration::Configuration const &conf,
-				 std::ostream &os)
-{
-}
-
-void io::Out_Configuration::_print_flexv(configuration::Configuration const &conf,
-					 topology::Topology const &topo,
-					 std::ostream &os)
-{
-  DEBUG(10, "FLEXV");
+  os << "# mass\n";
+  os << std::setw(18) << mass << "\n";
   
-  std::vector<double>::const_iterator flexv_it = conf.special().flexible_vel.begin();
-  std::vector<topology::two_body_term_struct>::const_iterator
-    constr_it = topo.solute().distance_constraints().begin(),
-    constr_to = topo.solute().distance_constraints().end();
+  os << "# temperature\n";
+  os << numbaths << "\n";
   
-  os << "FLEXV\n";
-  for( ; constr_it != constr_to; ++constr_it, ++flexv_it){
+  for(int i=0; i < numbaths; ++i){
+    if (m[i].dof)
+      os << std::setw(18) << 2 * e.kinetic_energy[i] / math::k_Boltzmann / m[i].dof;
+    else
+      os << std::setw(18) << 0.0;
+    if (m[i].com_dof)
+      os << std::setw(18) << 2 * e.com_kinetic_energy[i] / math::k_Boltzmann / m[i].com_dof;
+    else
+      os << std::setw(18) << 0.0;
+    if (m[i].ir_dof)
+      os << std::setw(18) << 2 * e.ir_kinetic_energy[i] / math::k_Boltzmann / m[i].ir_dof;
+    else
+      os << std::setw(18) << 0.0;
     
-    os << std::setw(15) << constr_it->i+1
-       << std::setw(10) << constr_it->j+1
-       << std::setw(20) << *flexv_it
-       << "\n";
+    if (s.size())
+      os << std::setw(18) << s[i] << "\n";
+    else
+      os << std::setw(18) << m[i].scale << "\n";
+    
   }
-  os << "END\n";
 
+  os << "# volume\n";
+  os << std::setw(18) << math::volume(b, t) << "\n";
+
+  os << std::setw(18) << b(0)(0) << std::setw(18) << b(0)(1) << std::setw(18) << b(0)(2) << "\n"
+     << std::setw(18) << b(1)(0) << std::setw(18) << b(1)(1) << std::setw(18) << b(1)(2) << "\n"
+     << std::setw(18) << b(2)(0) << std::setw(18) << b(2)(1) << std::setw(18) << b(2)(2) << "\n";
+  
+  os << "# pressure\n";
+  os << std::setw(18) << (p(0,0) + p(1,1) + p(2,2)) / 3.0 << "\n";
+  os << std::setw(18) << (v(0,0) + v(1,1) + v(2,2)) / 3.0 << "\n";
+  os << std::setw(18) << (k(0,0) + k(1,1) + k(2,2)) / 3.0 << "\n";
+
+  os << std::setw(18) << p(0,0) << std::setw(18) << p(0,1) << std::setw(18) << p(0,2) << "\n"
+     << std::setw(18) << p(1,0) << std::setw(18) << p(1,1) << std::setw(18) << p(1,2) << "\n"
+     << std::setw(18) << p(2,0) << std::setw(18) << p(2,1) << std::setw(18) << p(2,2) << "\n";
+
+  os << std::setw(18) << v(0,0) << std::setw(18) << v(0,1) << std::setw(18) << v(0,2) << "\n"
+     << std::setw(18) << v(1,0) << std::setw(18) << v(1,1) << std::setw(18) << v(1,2) << "\n"
+     << std::setw(18) << v(2,0) << std::setw(18) << v(2,1) << std::setw(18) << v(2,2) << "\n";
+
+  os << std::setw(18) << k(0,0) << std::setw(18) << k(0,1) << std::setw(18) << k(0,2) << "\n"
+     << std::setw(18) << k(1,0) << std::setw(18) << k(1,1) << std::setw(18) << k(1,2) << "\n"
+     << std::setw(18) << k(2,0) << std::setw(18) << k(2,1) << std::setw(18) << k(2,2) << "\n";
+  
 }

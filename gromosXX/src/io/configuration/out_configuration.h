@@ -48,7 +48,7 @@ namespace io {
     /**
      * write out a timestep.
      */
-    void write(configuration::Configuration const & conf,
+    void write(configuration::Configuration & conf,
 	       topology::Topology const & topo,
 	       simulation::Simulation const &sim,
 	       output_format const form = reduced);
@@ -223,14 +223,16 @@ namespace io {
 		      topology::Topology const &topo,
 		      std::ostream &os);
 
-    void _print_blockaveraged_energyred(configuration::Configuration const &conf, 
-					std::ostream &os);
+    void _print_blockaveraged_energyred(configuration::Configuration const & conf,
+					std::ostream & os);
 
-    void _print_blockaveraged_volumepressurered(configuration::Configuration const &conf, 
-						std::ostream &os);
+    void _print_blockaveraged_volumepressurered(configuration::Configuration const & conf, 
+						simulation::Simulation const & sim,
+						std::ostream & os);
 
-    void _print_blockaveraged_free_energyred(configuration::Configuration const &conf, 
-					     std::ostream &os);
+    void _print_blockaveraged_free_energyred(configuration::Configuration const & conf,
+					     double dlamt,
+					     std::ostream & os);
 
   };
   

@@ -61,13 +61,21 @@ namespace configuration
     }
     
     /**
-     * block averages accessor.
+     * const block averages accessor.
      */
     Block_Average const & block()const
     {
       return m_block_avg;
     }
 
+    /**
+     * block averages accessor.
+     */
+    Block_Average & block()
+    {
+      return m_block_avg;
+    }
+    
     class Block_Average 
     {
     public:
@@ -113,6 +121,7 @@ namespace configuration
        * if dlamt != 0 the integrated energy lambda derivative is returned.
        */
       void energy_derivative_average(Energy &energy, Energy &fluctuation,
+				     double & lambda, double & lambda_fluct,
 				     double const dlamt)const;
       
       /**
@@ -142,7 +151,7 @@ namespace configuration
 		       double & volume, double & volume_fluctuations,
 		       math::Box & box, math::Box & box_fluctuations,
 		       std::vector<double> & scaling,
-		       std::vector<double> & scaling_fluctuations);
+		       std::vector<double> & scaling_fluctuations)const;
 
     private:
       /**
@@ -221,6 +230,14 @@ namespace configuration
        * box fluctuations.
        */
       math::Box box_fluct;
+      /**
+       * lambda average
+       */
+      double lambda_avg;
+      /**
+       * lambda fluctutaitons.
+       */
+      double lambda_fluct;
 
       ////////////////////////////////////////////////////
 
