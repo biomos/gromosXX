@@ -1,5 +1,7 @@
 /**
- * @file create_nonbonded.h
+ * @file create_perturbed.cc
+ * create perturbed nonbonded interactions
+ * with standard pairlist.
  */
 
 #include <util/stdheader.h>

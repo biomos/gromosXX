@@ -16,11 +16,6 @@ namespace interaction
 {
 }
 
-/**
- * @namespace math
- * namespace that contains mathematical functions
- * using Blitz++ (www.oonumerics.org/blitz)
- */
 namespace math
 {
 

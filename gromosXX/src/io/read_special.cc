@@ -1,6 +1,6 @@
 /**
- * @file read_input.cc
- * implementation of function read_input
+ * @file read_special.cc
+ * implementation of function read_special
  */
 
 #include <util/stdheader.h>

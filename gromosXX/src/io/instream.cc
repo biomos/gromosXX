@@ -1,5 +1,5 @@
 /**
- * @file GInStream.cc
+ * @file instream.cc
  * basic input stream class definition.
  */
 

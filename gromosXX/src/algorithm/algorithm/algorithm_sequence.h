@@ -1,17 +1,11 @@
 /**
- * @file algorithm.h
+ * @file algorithm_sequence.h
  * the Algorithm class.
  */
 
 #ifndef INCLUDED_ALGORITHM_ALGORITHM_H
 #define INCLUDED_ALGORITHM_ALGORITHM_H
 
-/**
- * @namespace algorithm
- * namespace that contains the classes to
- * handle the interactions between the particles.
- * (energies, forces).
- */
 namespace algorithm
 {
   /**

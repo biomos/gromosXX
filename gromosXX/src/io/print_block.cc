@@ -39,7 +39,7 @@
 namespace io
 {
 
-  /** 
+  /* 
    * Print the DOF COUPLING table of MULTIBATH block.
    */
   void print_MULTIBATH_COUPLING(std::ostream &os,
@@ -70,7 +70,7 @@ namespace io
     
   }
 
-  /**
+  /*
    * Print DEGREESOFFREEDOM block.
    */
   void print_DEGREESOFFREEDOM(std::ostream &os,
@@ -147,7 +147,7 @@ namespace io
     
   }
   
-  /** 
+  /* 
    * Print the MULTIBATH block.
    */
   void print_MULTIBATH(std::ostream &os,
@@ -271,7 +271,7 @@ namespace io
 
   }
 
-  /**
+  /*
    * Print the PCOUPLE block.
    */
   void print_PCOUPLE(std::ostream &os, bool calc, 
@@ -344,7 +344,7 @@ namespace io
 
   }
 
-  /**
+  /*
    * Print the PRESSURE block.
    */
   void print_PRESSURE(std::ostream &os,
@@ -393,7 +393,7 @@ namespace io
     
   }
 
-  /**
+  /*
    * Print the ENERGY block.
    */
   void print_ENERGY(std::ostream &os,
@@ -495,7 +495,7 @@ namespace io
     
   }
 
-  /**
+  /*
    * Print a matrix.
    */
   void print_MATRIX(std::ostream &os, math::Matrix const &m,

@@ -1,5 +1,8 @@
 /**
- * @file create_md_sequence.cc
+ * @file create_constraints.cc
+ * create the constraint algorithm
+ * choosing from SHAKE, LINCS
+ * and enabling or disabling perturbation
  */
 
 #include <util/stdheader.h>

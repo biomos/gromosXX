@@ -1,6 +1,6 @@
 /**
- * @file harmonic_bond_interaction.tcc
- * template methods of harmonic_bond_interaction.
+ * @file position_restraint_interaction.tcc
+ * template methods of Position_Restraint_Interaction
  */
 
 #undef MODULE

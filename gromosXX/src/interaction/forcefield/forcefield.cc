@@ -1,5 +1,5 @@
 /**
- * @file forcefield.tcc
+ * @file forcefield.cc
  * contains the inline functions for
  * forcefield.
  */

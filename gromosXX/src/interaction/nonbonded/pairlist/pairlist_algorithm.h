@@ -1,5 +1,5 @@
 /**
- * pairlist_algorithm.tcc
+ * @file pairlist_algorithm.h
  * base class for the pairlist(s) generating
  * algorithms.
  */

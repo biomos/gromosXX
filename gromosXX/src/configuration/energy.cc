@@ -1,5 +1,5 @@
 /**
- * @file energy.tcc
+ * @file energy.cc
  * implements the energy methods.
  */
 

@@ -1,6 +1,7 @@
 /**
  * @file body_term.h
- * define the structures to hold topology information.
+ * define the structures to hold topology information
+ * of the n-body terms (like bonds, angles, dihedrals).
  */
 
 #ifndef INCLUDED_BODY_TERM_H

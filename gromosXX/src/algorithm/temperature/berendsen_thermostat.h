@@ -1,5 +1,5 @@
 /**
- * @file temperature/berendsen_thermostat.h
+ * @file berendsen_thermostat.h
  * berendsen thermostat.
  */
 
@@ -28,11 +28,12 @@ namespace algorithm
     
     /**
      * apply the temperature scaling
-     * if tau=-1 nothing is done.
+     * for baths with tau=-1 nothing is done.
      * the kinetic energy can not be calculated here, because
      * later on SHAKE might be applied.
-     * @param sim the simulation.
-     * @param dt the time step.
+     * @param topo the Topology
+     * @param conf the Configuration
+     * @param sim the Simulation
      */
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,

@@ -12,6 +12,7 @@ namespace math
   
   /**
    * @class Boundary_Implementation
+   * implements periodic boundary conditions.
    */
   template<math::boundary_enum b>
   class Boundary_Implementation;
@@ -24,8 +25,17 @@ namespace math
   class Boundary_Implementation<vacuum>
   {
   public:
+    /**
+     * K index into the box.
+     */
     static int const K = 0;
+    /**
+     * L index into the box.
+     */
     static int const L = 1;
+    /**
+     * M index into the box.
+     */
     static int const M = 2;
 
     /**
@@ -40,7 +50,6 @@ namespace math
 
     /**
      * Constructor.
-     * @param boundary is the boundary condition.
      */
     Boundary_Implementation(math::Box const & b);
     /**
@@ -96,7 +105,7 @@ namespace math
 
   };
 
-  /**
+  /*
    * @class Boundary_Implementation
    * implements the specific functions of
    * the Periodicity class.
@@ -120,7 +129,6 @@ namespace math
 
     /**
      * Constructor.
-     * @param boundary is the boundary condition.
      */
     Boundary_Implementation(Box const & b);
     /**
@@ -200,7 +208,6 @@ namespace math
 
     /**
      * Constructor.
-     * @param boundary is the boundary condition.
      */
     Boundary_Implementation(Box const & b);
     /**

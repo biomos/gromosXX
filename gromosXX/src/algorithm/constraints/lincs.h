@@ -1,6 +1,6 @@
 /**
- * @file shake.h
- * the shake algorithm.
+ * @file lincs.h
+ * the LINCS algorithm.
  */
 
 #ifndef INCLUDED_LINCS_H

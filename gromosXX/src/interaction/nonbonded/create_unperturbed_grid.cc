@@ -1,5 +1,7 @@
 /**
- * @file create_nonbonded.h
+ * @file create_unperturbed_grid.cc
+ * create the non-perturbed nonbonded interaction
+ * using a grid based pairlist algorithm.
  */
 
 #include <util/stdheader.h>

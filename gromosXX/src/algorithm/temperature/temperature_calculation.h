@@ -1,6 +1,6 @@
 /**
- * @file temperature/berendsen.h
- * berendsen thermostat.
+ * @file temperature/temperature_calculation.h
+ * calculate the temperature.
  */
 
 #ifndef INCLUDED_TEMPERATURE_CALCULATION_H

@@ -1,5 +1,5 @@
 /**
- * @file calculate_temperature.cc
+ * @file temperature_calculation.cc
  * calculates the temperature.
  */
 

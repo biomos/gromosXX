@@ -17,7 +17,6 @@ namespace interaction
   /**
    * @class Forcefield
    * contains the specific interactions.
-   * @TODO are the destructors called? properly?
    * clear does not call them (i guess).
    */
   class Forcefield : public std::vector<Interaction *>,

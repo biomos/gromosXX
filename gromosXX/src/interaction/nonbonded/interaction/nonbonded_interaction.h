@@ -26,8 +26,6 @@ namespace interaction
 
     /**
      * Constructor.
-     * @param sim where to store forces and energies
-     * (and virial contribution).
      */
     Nonbonded_Interaction();
     

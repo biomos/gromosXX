@@ -1,5 +1,6 @@
 /**
- * @file create_nonbonded.h
+ * @file create_nonbonded.cc
+ * create the nonbonded interaction.
  */
 
 #include <util/stdheader.h>

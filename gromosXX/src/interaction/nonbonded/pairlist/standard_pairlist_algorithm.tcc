@@ -62,7 +62,7 @@ update(topology::Topology & topo,
     cg_to = topo.chargegroup_end();
   
   /**
-   * @TODO rewrite into two loops (one solute, one solvent)
+   * @todo rewrite into two loops (one solute, one solvent)
    */
   for(int cg1_index=0; cg1 != cg_to; ++cg1, ++cg1_index) {
     // add intra cg (if not solvent...)

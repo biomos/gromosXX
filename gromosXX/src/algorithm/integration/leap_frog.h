@@ -6,11 +6,6 @@
 #ifndef INCLUDED_LEAP_FROG_H
 #define INCLUDED_LEAP_FROG_H
 
-/**
- * @namespace algorithm
- * namespace that contains the implementations of
- * the various algorithms.
- */
 namespace algorithm
 {
   /**

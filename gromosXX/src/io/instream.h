@@ -1,5 +1,5 @@
 /**
- * @file GInStream.h
+ * @file instream.h
  * basic input stream class.
  */
 

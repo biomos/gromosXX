@@ -1,5 +1,5 @@
 /**
- * @file configuration.cc
+ * @file configuration_global.cc
  * globals of the configuration library
  */
 

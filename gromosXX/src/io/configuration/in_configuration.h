@@ -1,5 +1,5 @@
 /**
- * @file InTrajectory.h
+ * @file in_configuration.h
  * read in a G96 trajectory file.
  */
 

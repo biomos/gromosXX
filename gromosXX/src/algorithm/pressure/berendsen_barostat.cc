@@ -1,5 +1,5 @@
 /**
- * @file pressure/berendsen_barostat.cc
+ * @file berendsen_barostat.cc
  * methods of the berendsen barostat.
  */
 

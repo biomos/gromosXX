@@ -1,5 +1,5 @@
 /**
- * @file pressure/berendsen_barostat.h
+ * @file berendsen_barostat.h
  * berendsen barostat
  */
 
@@ -26,10 +26,7 @@ namespace algorithm
     virtual ~Berendsen_Barostat() {}
     
     /**
-     * apply the pressure scaling (weak coupling)
-     * or just calculate the pressure (if tau=-1).
-     * @param sim the simulation.
-     * @param dt the time step.
+     * apply weak coupling.
      */
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,

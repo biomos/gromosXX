@@ -9,18 +9,27 @@
 
 #include <util/debug.h>
 
+/**
+ * Constructor.
+ */
 inline math::Boundary_Implementation<math::vacuum>
 ::Boundary_Implementation(math::Box const & b)
   : m_box(b)
 {
 }
 
+/**
+ * Constructor.
+ */
 inline math::Boundary_Implementation<math::rectangular>
 ::Boundary_Implementation(math::Box const & b)
  : m_box(b)
 {
 }
 
+/**
+ * Constructor.
+ */
 inline math::Boundary_Implementation<math::triclinic>
 ::Boundary_Implementation(math::Box const & b)
   : m_box(b)

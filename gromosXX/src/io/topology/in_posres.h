@@ -9,7 +9,7 @@
 namespace io {
 
   /**
-   * @class In_Topology
+   * @class In_Posres
    * reads in a position restraining file
    */
   class In_Posres : public GInStream {

@@ -1,5 +1,5 @@
 /**
- * @file energy_average.tcc
+ * @file energy_average.cc
  * implements member methods.
  */
 

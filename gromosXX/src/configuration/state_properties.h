@@ -27,7 +27,7 @@ namespace configuration
      * @param com_pos returns the center of mass.
      * @param com_e_kin returns the tranlational kinetic energy tensor.
      * 
-     * @TODO the gathering of the molecule is hardcoded in here.
+     * @todo the gathering of the molecule is hardcoded in here.
      * Maybe this should be changed to a generic implementation.
      * Gathering is done in respect to the previous atom. An idea would
      * be to gather as default with respect to the previous atom but
@@ -45,15 +45,21 @@ namespace configuration
      * @param start begin of molecule.
      * @param end end of molecule.
      * @param mass the atomic masses.
-     * @param mol_v delivered with molecular center of mass velocity (-dt/2).
-     * @param com_e_kin delivered with molecular center of mass kinetic energy (-dt/2).
-     * @param new_mol_v delivered with molecular center of mass velocity (+dt/2).
+     * @param mol_v delivered with the average 
+     *        molecular center of mass velocity.
+     * @param com_e_kin delivered with molecular center of mass 
+     *        kinetic energy (-dt/2).
+     * @param e_kin average kinetic energy
+     * @param new_mol_v delivered with molecular center 
+     *        of mass velocity (+dt/2).
      * @param new_com_e_kin delivered with molecular center of mass kinetic energy (+dt/2).
+     * @param new_e_kin the kinetic energy at (+dt/2).
      */
     void molecular_translational_ekin(topology::Atom_Iterator start, 
 				      topology::Atom_Iterator end,
 				      math::SArray const &mass, 
-				      math::Vec &mol_v, double &com_e_kin,
+				      math::Vec &mol_v, 
+				      double &com_e_kin,
 				      double &e_kin,
 				      math::Vec &new_mol_v,
 				      double &new_com_e_kin,

@@ -1,5 +1,5 @@
 /**
- * @file blockinput.tcc
+ * @file blockinput.cc
  * defines blockinput functions.
  */
 
