@@ -47,7 +47,7 @@ namespace interaction
     /**
      * calculate nearest minimum
      */
-    double _calculate_nearest_minimum(double phi, int m, double pd);
+    // double _calculate_nearest_minimum(double phi, int m, double pd);
     
   };
   

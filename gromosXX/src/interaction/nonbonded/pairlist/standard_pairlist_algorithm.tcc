@@ -31,7 +31,7 @@ prepare(topology::Topology & topo,
   
   if (!t_interaction_spec::do_atomic_cutoff){
 
-    prepare_cog(topo, conf, sim);
+    this->prepare_cog(topo, conf, sim);
     DEBUG(7, "range filter prepared (cog)");
 
   }
@@ -111,7 +111,7 @@ update(topology::Topology & topo,
     
   } // cg1
 
-  m_timing += util::now() - update_start;
+  this->m_timing += util::now() - update_start;
   
   DEBUG(7, "pairlist done");
 
@@ -144,8 +144,9 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
     if (!t_interaction_spec::do_atomic_cutoff){
       // filter out interactions based on chargegroup distances
       
-      if (range_chargegroup_pair(topo, conf, sim, nbs,
-				 cg1_index, cg2_index, cg1, cg2, periodicity))
+      if (this->range_chargegroup_pair(topo, conf, sim, nbs,
+				       cg1_index, cg2_index, cg1, cg2,
+				       periodicity))
 	
 	continue;
       
@@ -163,8 +164,9 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
     if (!t_interaction_spec::do_atomic_cutoff){
       // filter out interactions based on chargegroup distances
       
-      if (range_chargegroup_pair(topo, conf, sim, nbs,
-				 cg1_index, cg2_index, cg1, cg2, periodicity))
+      if (this->range_chargegroup_pair(topo, conf, sim, nbs,
+				       cg1_index, cg2_index, cg1, cg2,
+				       periodicity))
 	continue;
       
     }
@@ -207,15 +209,15 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
       if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on chargegroup distances
 	if (t_interaction_spec::do_bekker){
-	  if (range_atom_pair(topo, conf, sim, 
-			      nbs, *a1, *a2,
-			      pc, periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, 
+				    nbs, *a1, *a2,
+				    pc, periodicity))
 	    continue;
 	}
 	else {
-	  if (range_atom_pair(topo, conf, sim, 
-			      nbs, *a1, *a2,
-			      periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, 
+				    nbs, *a1, *a2,
+				    periodicity))
 	    continue;
 
 	}
@@ -256,19 +258,19 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
       if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on atom distances
 	if (t_interaction_spec::do_bekker){
-	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2,
-			      pc, periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, nbs, *a1, *a2,
+				    pc, periodicity))
 	    continue;
 	}
 	else{
-	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2,
-			      periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, nbs, *a1, *a2,
+				    periodicity))
 	    continue;
 	}
       }
       
       // check it is not excluded
-      if (excluded_solute_pair(topo, conf, sim, *a1, *a2)){
+      if (this->excluded_solute_pair(topo, conf, sim, *a1, *a2)){
 	continue;
       }
 
@@ -305,19 +307,19 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
       if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on chargegroup distances
 	if (t_interaction_spec::do_bekker){
-	  if (range_atom_pair(topo, conf, sim, nbs, 
-			      *a1, *a2, pc, periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, nbs, 
+				    *a1, *a2, pc, periodicity))
 	    continue;
 	}
 	else{
-	  if (range_atom_pair(topo, conf, sim, nbs, 
-			      *a1, *a2, periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, nbs, 
+				    *a1, *a2, periodicity))
 	    continue;
 	}
       }
 
       // check it is not excluded
-      if (inverse_excluded_solute_pair(topo, conf, sim, *a1, *a2)){
+      if (this->inverse_excluded_solute_pair(topo, conf, sim, *a1, *a2)){
 	continue;
       }
 
@@ -351,17 +353,19 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
 	a2 != a1_to; ++a2){
 
       // check it is not excluded
-      if (excluded_solute_pair(topo, conf, sim, *a1, *a2))
+      if (this->excluded_solute_pair(topo, conf, sim, *a1, *a2))
 	continue;
 
       if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on chargegroup distances
 	if (t_interaction_spec::do_bekker){
-	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2, pc, periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, nbs,
+				    *a1, *a2, pc, periodicity))
 	    continue;
 	}
 	else{
-	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2, periodicity))
+	  if (this->range_atom_pair(topo, conf, sim, nbs,
+				    *a1, *a2, periodicity))
 	    continue;
 	}
       }

@@ -200,7 +200,7 @@ update(topology::Topology & topo,
 
   } // loop over chargegroups ==> cg1
 
-  m_timing += util::now() - update_start;
+  this->m_timing += util::now() - update_start;
   
   DEBUG(7, "pairlist done");
 }

@@ -33,7 +33,7 @@ prepare(topology::Topology & topo,
 	     sim.param().pairlist.cutoff_long);
 
   // prepare the range filter (center of geometries)    
-  prepare_cog(topo, conf, sim);
+  this->prepare_cog(topo, conf, sim);
   DEBUG(7, "range filter prepared (cog)");
 }
 
@@ -75,7 +75,7 @@ update(topology::Topology & topo,
 
   DEBUG(7, "create a grid");
   Chargegroup_Grid_type 
-    a_grid(periodicity, 0.5*m_cutoff_short, m_cutoff_long);
+    a_grid(periodicity, 0.5*this->m_cutoff_short, this->m_cutoff_long);
 
   DEBUG(7, "grid the cog's");
   grid_cog(topo, conf, sim, a_grid);
@@ -130,7 +130,7 @@ update(topology::Topology & topo,
   }
   
   // and that's it...
-  m_timing += util::now() - update_start;
+  this->m_timing += util::now() - update_start;
 
   DEBUG(7, "pairlist done");
 }

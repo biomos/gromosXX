@@ -12,7 +12,7 @@ namespace algorithm
    * @class Flexible_Constraint
    * calculates the flexible constraint distance
    */
-  template<typename math::virial_enum do_virial>
+  template<math::virial_enum do_virial>
   class Flexible_Constraint : public Algorithm
   {
   public:

@@ -10,6 +10,8 @@
 
 #include <util/debug.h>
 
+double _calculate_nearest_minimum(double phi, int m, double pd);
+
 /**
  * calculate dihedral forces and energies.
  */

@@ -98,38 +98,40 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 
   //  double shortrange_start = now();
 
-  lj_crf_outerloop(topo, conf, sim,
-		   m_pairlist, m_shortrange_storage);
+  this->lj_crf_outerloop(topo, conf, sim,
+			 m_pairlist, m_shortrange_storage);
 
   if (t_perturbation_spec::do_perturbation){
     DEBUG(7, "\tperturbed short range");
-    perturbed_lj_crf_outerloop(topo, conf, sim, 
-			       m_perturbed_pairlist,
-			       m_shortrange_storage);
+    this->perturbed_lj_crf_outerloop(topo, conf, sim, 
+				     m_perturbed_pairlist,
+				     m_shortrange_storage);
   }
   
   // add 1,4 - interactions
   if (tid == 0){
     DEBUG(7, "\t1,4 - interactions");
-    one_four_outerloop(topo, conf, sim, m_shortrange_storage);
+    this->one_four_outerloop(topo, conf, sim, m_shortrange_storage);
     if(t_perturbation_spec::do_perturbation){
       DEBUG(7, "\tperturbed 1,4 - interactions");
-      perturbed_one_four_outerloop(topo, conf, sim, m_shortrange_storage);
+      this->perturbed_one_four_outerloop(topo, conf, sim, 
+					 m_shortrange_storage);
     }
   
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
-      RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+      this->RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
       if(t_perturbation_spec::do_perturbation){
 	DEBUG(7, "\tperturbed RF excluded interactions and self term");
-	perturbed_RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+	this->perturbed_RF_excluded_outerloop(topo, conf, sim,
+					      m_shortrange_storage);
       }
     }
 
     if(t_perturbation_spec::do_perturbation){
       DEBUG(7, "\tperturbed pairs");
-      perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
+      this->perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
     }
   }
   

@@ -80,19 +80,19 @@ int algorithm::Perturbed_Shake<do_virial>
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = dot(r, r);
 	
-    double r0 = (1.0 - topo.lambda()) * parameter()[it->A_type].r0 + 
-      topo.lambda() * parameter()[it->B_type].r0;
+    double r0 = (1.0 - topo.lambda()) * this->parameter()[it->A_type].r0 + 
+      topo.lambda() * this->parameter()[it->B_type].r0;
 
     DEBUG(10, "constraint length: " << r0);
-    DEBUG(10, "r0(A) = " << parameter()[it->A_type].r0);
-    DEBUG(10, "r0(B) = " << parameter()[it->B_type].r0);    
+    DEBUG(10, "r0(A) = " << this->parameter()[it->A_type].r0);
+    DEBUG(10, "r0(B) = " << this->parameter()[it->B_type].r0);    
 
     double constr_length2 = r0 * r0;
     double diff = constr_length2 - dist2;
 
     DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
 	  
-    if(fabs(diff) >= constr_length2 * tolerance() * 2.0){
+    if(fabs(diff) >= constr_length2 * this->tolerance() * 2.0){
       // we have to shake
       DEBUG(10, "shaking");
       
@@ -169,7 +169,7 @@ int algorithm::Perturbed_Shake<do_virial>
       conf.old().perturbed_energy_derivatives[0].
 	constraints_energy[topo.atom_energy_group()[it->i]] +=
 	lambda / dt2 * sqrt(constr_length2) *
-	(parameter()[it->B_type].r0 - parameter()[it->A_type].r0);
+	(this->parameter()[it->B_type].r0 - this->parameter()[it->A_type].r0);
 
       // update positions
       ref_r *= lambda;
@@ -279,7 +279,7 @@ int algorithm::Perturbed_Shake<do_virial>
   }
   */
 
-  m_timing += util::now() - start;
+  this->m_timing += util::now() - start;
 
   return 0;
 
@@ -357,7 +357,7 @@ int algorithm::Perturbed_Shake<do_virial>
     
   } // solvents
 
-  m_solvent_timing += util::now() - start;
+  this->m_solvent_timing += util::now() - start;
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
   return 0;
   
@@ -392,17 +392,17 @@ int algorithm::Perturbed_Shake<do_virial>
       case math::vacuum:
 	error += perturbed_solute<math::vacuum>
 	  (topo, conf, sim.time_step_size(), 
-	   max_iterations());
+	   this->max_iterations());
 	break;
       case math::rectangular:
 	error += perturbed_solute<math::rectangular>
 	  (topo, conf, sim.time_step_size(), 
-	   max_iterations());
+	   this->max_iterations());
 	break;
       case math::triclinic:
 	error += perturbed_solute<math::triclinic>
 	  (topo, conf, sim.time_step_size(),
-	   max_iterations());
+	   this->max_iterations());
 	break;
       default:
 	throw std::string("wrong boundary type");
@@ -427,19 +427,19 @@ int algorithm::Perturbed_Shake<do_virial>
 	error = 
 	  solvent<math::rectangular>(topo, conf, 
 				     sim.time_step_size(),
-				     m_max_iterations);
+				     this->m_max_iterations);
 	break;
       case math::rectangular:
 	error = 
 	  solvent<math::rectangular>
 	  (topo, conf, sim.time_step_size(),
-	   m_max_iterations);
+	   this->m_max_iterations);
 	break;
       case math::triclinic:
 	error = 
 	  solvent<math::triclinic>
 	  (topo, conf, sim.time_step_size(),
-	   m_max_iterations);
+	   this->m_max_iterations);
 	break;
       default:
 	throw std::string("wrong boundary type");

@@ -18,15 +18,15 @@ template<math::boundary_enum b>
 void math::Periodicity<b>::put_into_box(math::Vec &v)const
 {
   Vec o(0, 0, 0);
-  nearest_image(v, o, v);
+  this->nearest_image(v, o, v);
 }
 
 template<math::boundary_enum b>
 void math::Periodicity<b>::put_into_positive_box(math::Vec &v)const
 {
-  Vec o(m_box(0)(0), m_box(1)(1), m_box(2)(2));
+  Vec o(this->m_box(0)(0), this->m_box(1)(1), this->m_box(2)(2));
   o /= 2;
-  nearest_image(v, o, v);
+  this->nearest_image(v, o, v);
   v += o;  
 }
 
@@ -94,7 +94,7 @@ void math::Periodicity<b>
     cog = conf.current().pos(topo.molecules()[i]);
       
     // put into box
-    nearest_image(cog, o, trans);
+    this->nearest_image(cog, o, trans);
     // cog = o + trans;
     cog = trans;
     

@@ -1,8 +1,7 @@
-SUBDIRS = simulation util math topology configuration algorithm interaction io check .
+SUBDIRS = util simulation math topology configuration algorithm interaction io check .
 
 lib_LTLIBRARIES = 	libgroxx.la
 
-libgroxx_la_CPPFLAGS = $(BLITZ_CPPFLAGS)
 libgroxx_la_LDFLAGS =	-no-undefined -version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0 $(BLITZ_LDFLAGS)
 
 libgroxx_la_SOURCES =	

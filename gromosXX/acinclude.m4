@@ -224,13 +224,13 @@ x = blitz::tensor::i;
 
 	if test "$ac_cxx_lib_blitz" = yes ; then
 		if test "$withval" != yes ; then
-			BLITZ_CPPFLAGS="-I$withval/include"
+			CPPFLAGS="-I$withval/include"
 			BLITZ_LDFLAGS="-L$withval/lib"
-			AC_SUBST(BLITZ_CPPFLAGS)
+dnl			AC_SUBST(BLITZ_CPPFLAGS)
 			AC_SUBST(BLITZ_LDFLAGS)
 		fi
 		BLITZ_LIB="-lblitz"
-		AC_SUBST(BLITz_LIB)
+		AC_SUBST(BLITZ_LIB)
 	else
 		if test "$1" = required ; then
 			AC_MSG_ERROR_BLITZ

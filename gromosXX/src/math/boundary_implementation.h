@@ -110,6 +110,7 @@ namespace math
    * implements the specific functions of
    * the Periodicity class.
    */
+  template<>
   class Boundary_Implementation<math::rectangular>
   {
   public:
