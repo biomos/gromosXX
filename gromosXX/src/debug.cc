@@ -9,12 +9,10 @@ int debug_level = 0;
 
 void parse_verbosity(io::Argument &args, std::string flag = "verb", std::ostream &os = std::cout)
 {
+#ifndef NDEBUG
   // parse the verbosity
   if (args.count(flag) == -1) return;
 
-#ifdef NDEBUG
-  throw std::string("@verb not supported with non-debug compilation");
-#endif
   io::Argument::const_iterator it = args.lower_bound(flag),
     to = args.upper_bound(flag);
 
@@ -95,5 +93,7 @@ void parse_verbosity(io::Argument &args, std::string flag = "verb", std::ostream
 
   }
       
+#endif
+
 }
 

@@ -36,7 +36,7 @@
 #define STR(s) TOSTRING(s)
 
 #ifdef NDEBUG
-#define DEBUG
+#define DEBUG(level, s)
 #else
 #define DEBUG(level, s) \
   if (level <= ::debug_level + MODULE::debug_level + \

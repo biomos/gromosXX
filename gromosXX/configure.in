@@ -41,6 +41,10 @@ AM_PROG_LIBTOOL
 
 # AM_MAINTAINER_MODE
 
+dnl option for production builds
+AC_ARG_ENABLE(debug, [  --disable-debug  compile without debug options],
+	,enable_debug=yes)
+
 dnl check for required programs
 # AC_PROG_C
 AC_PROG_CXX
@@ -146,7 +150,14 @@ dnl i hope this will not be necessary in the future.
 dnl before finalising some code, maybe a build w/o this option might be
 dnl a good idea...
 if eval "test x$GXX = xyes"; then
-  CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-variable"
+  CXXFLAGS="$CXXFLAGS -DBZDEBUG -Wall -Wno-unused-variable -ftemplate-depth-30"
+fi
+
+if eval "test x$enable_debug = xno"; then
+  CXXFLAGS="-O3 -ftemplate-depth-30 -Wno-unused-variable -DNDEBUG"
+  echo "setting flags for production compilation"
+else
+  echo "setting flags for debug compilation"
 fi
 
 AC_PREFIX_DEFAULT(`pwd`)

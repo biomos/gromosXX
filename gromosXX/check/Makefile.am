@@ -19,7 +19,7 @@ simple_LDADD =			../src/simulation/libsimulation.la \
 				../src/io/libio.la
 
 
-simple_CXXFLAGS =		-DBZ_DEBUG
+simple_CXXFLAGS =
 
 TESTS =				simple
 
