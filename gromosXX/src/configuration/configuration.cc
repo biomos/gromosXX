@@ -46,7 +46,8 @@ configuration::Configuration::Configuration()
 }
 
 void configuration::Configuration::initialise(topology::Topology & topo,
-					      simulation::Parameter const & param)
+					      simulation::Parameter const & param,
+					      bool gather)
 {
   // resize the energy arrays
   const size_t num = topo.energy_groups().size();
@@ -86,29 +87,34 @@ void configuration::Configuration::initialise(topology::Topology & topo,
     special().flexible_ekin.resize(numb);
   }
   
+  // resize the arrays
+  // to make scripting easier...
+  resize(topo.num_atoms());
+
   // gather the molecules!
-  switch(boundary_type){
-    case math::vacuum:
-      break;
-    case math::rectangular:
-      {
-	math::Periodicity<math::rectangular> periodicity(current().box);
-	periodicity.gather_molecules_into_box(*this, topo);
+  if (gather){
+    switch(boundary_type){
+      case math::vacuum:
 	break;
-      }
-    case math::triclinic:
-      {
-	math::Periodicity<math::triclinic> periodicity(current().box);
-	periodicity.gather_molecules_into_box(*this, topo);
-	break;
-      }
-    default:
-      std::cout << "wrong periodic boundary conditions!";
-      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+      case math::rectangular:
+	{
+	  math::Periodicity<math::rectangular> periodicity(current().box);
+	  periodicity.gather_molecules_into_box(*this, topo);
+	  break;
+	}
+      case math::triclinic:
+	{
+	  math::Periodicity<math::triclinic> periodicity(current().box);
+	  periodicity.gather_molecules_into_box(*this, topo);
+	  break;
+	}
+      default:
+	std::cout << "wrong periodic boundary conditions!";
+	io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+    }
   }
-
-
 }
+
 
 
 /**

@@ -59,6 +59,15 @@ void topology::Topology::resize(unsigned int const atoms)
   // chargegroups???
 }
 
+void topology::Topology::initialise()
+{
+  if (!m_molecule.size()){
+    m_molecule.push_back(0);
+    // do it gromos++ like and determine by bonds???
+    m_molecule.push_back(num_solute_atoms());
+  }
+}
+
 /**
  * add a solute atom to the topology.
  * if the arrays are too small they will be increased.
