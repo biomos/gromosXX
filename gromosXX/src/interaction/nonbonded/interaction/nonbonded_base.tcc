@@ -7,7 +7,7 @@
 #undef SUBMODULE
 
 #define MODULE interaction
-#define SUBMODULE interaction
+#define SUBMODULE nonbonded
 
 #include <util/debug.h>
 
