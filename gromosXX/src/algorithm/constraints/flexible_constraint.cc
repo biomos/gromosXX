@@ -490,6 +490,9 @@ void algorithm::Flexible_Constraint::calc_distance
     
     // calculate the flexible constraint distance
     DEBUG(10, "F(c) = " << force_on_constraint);
+    DEBUG(10, "it->type = " << it->type << " of " << m_parameter.size());
+    
+    assert(m_parameter.size() > it->type);
     DEBUG(10, "K = " << m_parameter[it->type].K << "     r0 = " << m_parameter[it->type].r0);
 
     const double new_len = force_on_constraint / m_parameter[it->type].K + 

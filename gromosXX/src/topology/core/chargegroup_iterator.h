@@ -6,6 +6,12 @@
 #ifndef INCLUDED_CHARGEGROUP_ITERATOR_H
 #define INCLUDED_CHARGEGROUP_ITERATOR_H
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE topology
+#define SUBMODULE topology
+
+
 namespace topology
 {
   /**
@@ -27,9 +33,13 @@ namespace topology
 
     void cog(const math::VArray &pos, math::Vec &v)const
     {
+      DEBUG(10, "cog: " << *begin() << " - " << *end() << " of " << pos.size());
       v = 0.0;
-      for(Atom_Iterator it=begin(), to=end(); it!=to; ++it)
-		v += pos(int(*it));
+      for(Atom_Iterator it=begin(), to=end(); it!=to; ++it){
+	assert(pos.size() > *it);
+	v += pos(int(*it));
+      }
+      
       v /= num_atoms();
     }
       
