@@ -7,7 +7,7 @@
  * @namespace math
  * mathematical library
  *
- * Content
+ * @section mathoverview Overview
  * - standard mathematical functions, mainly concerned with vector
  *   and matrix manipulations.
  *    @sa math::Vec
@@ -43,6 +43,7 @@ namespace util
  * @namespace algorithm
  * Collects the algorithm implemented in GromosXX.
  *
+ * @section algorithmoverview Overview
  * this namespace contains the following subgroups:
  * - algorithm: the md simulation which is a sequence 
  *   of algorithms which are in turn applied.
@@ -62,6 +63,8 @@ namespace algorithm
 /**
  * @namespace configuration
  * the configurational properties of the simulated system.
+ *
+ * @section configurationoverview Overview
  * properties stored here include
  * - positions, velocities, forces
  * - energies
@@ -119,7 +122,7 @@ namespace io
   // emtpy here...
 }
 
-/**
+/*
  * @namespace ranlib
  * gcc namespace to access template type information.
  */
@@ -128,3 +131,11 @@ namespace ranlib
   // empty here...
 }
 
+/**
+ * @namespace check
+ * test programs to check correctness of code.
+ */
+namespace check
+{
+  // empty here
+}

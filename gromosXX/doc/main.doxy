@@ -13,20 +13,20 @@
  * - @ref output "output file"
  *
  * <h3>Modules</h3>
- * - @ref algorithm 
+ * - @ref algorithmoverview "algorithm"
  * - @ref simulation
  * - @ref topology
- * - @ref configuration
+ * - @ref configurationoverview "configuration"
  * - @ref interaction
+ * - @ref mathoverview "math"
  * - @ref io
  * - @ref util
  * - @ref check
  *
  * <h3>Installation</h3>
- * - binary packages (debian, statically linked; .tar.gz statically linked)
- * - documentation (.tar.gz)
- * - compiling
- *   - configure arguments
- *   - compiler support
+ * - @ref release "release notes" 
+ * - @ref install "installation instructions"
  *
+ * <h3>Bug reports</h3>
+ * - <a href="release.html#bugreport">Bugzilla server</a>
  */
