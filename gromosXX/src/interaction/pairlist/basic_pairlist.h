@@ -72,7 +72,14 @@ namespace interaction
     Basic_Pairlist::iterator begin();
     Basic_Pairlist::iterator end();
 
-    //basic_pairlist_type m_pairlist;
+    Basic_Pairlist::iterator perturbed_begin();
+    Basic_Pairlist::iterator perturbed_end();
+    
+    basic_pairlist_type & perturbed();
+    basic_pairlist_type const & perturbed()const;
+    
+  protected:
+    basic_pairlist_type m_perturbed_pairlist;
     
   };
 

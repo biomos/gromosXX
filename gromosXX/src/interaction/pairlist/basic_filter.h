@@ -17,14 +17,33 @@ namespace interaction
   class Basic_Filter
   {
   public:
+    /**
+     * Constructor.
+     */
     Basic_Filter(t_base &base);
 
+    /**
+     * prepare the filter.
+     */
     void prepare(t_simulation &sim);
     
+    /**
+     * solute exclusion.
+     */
     bool exclusion_solute_pair(t_simulation const &sim, size_t const i,
 			       size_t const j);
+    /**
+     * solvent exclusion.
+     */
     bool exclusion_solvent_pair(t_simulation const &sim, size_t const i,
 				size_t const j);
+
+    /**
+     * no perturbation here.
+     */
+    bool perturbed_pair(t_simulation const &sim, size_t const i,
+			size_t const j) { return false; }
+    
 
   protected:
     t_base &m_base;

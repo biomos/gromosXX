@@ -137,6 +137,46 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>::end()
   return it;
 }
 
+template<typename t_simulation, typename t_pairlist_algorithm>
+inline typename 
+interaction::Basic_Pairlist<t_simulation,
+			    t_pairlist_algorithm>::iterator
+interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
+::perturbed_begin()
+{
+  DEBUG(7, "\tsize ot perturbed pairlist : " 
+	<< m_perturbed_pairlist->size());
+  
+  return iterator(m_perturbed_pairlist);
+}
+
+template<typename t_simulation, typename t_pairlist_algorithm>
+inline typename interaction::Basic_Pairlist<t_simulation,
+					    t_pairlist_algorithm>::iterator
+interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
+::perturbed_end()
+{
+  iterator it(m_perturbed);
+  it.row(size());
+  return it;
+}
+
+template<typename t_simulation, typename t_pairlist_algorithm>
+inline basic_pairlist_type &
+interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
+::perturbed()
+{
+  return m_perturbed_pairlist;
+}
+
+template<typename t_simulation, typename t_pairlist_algorithm>
+inline basic_pairlist_type const &
+interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
+::perturbed()const
+{
+  return m_perturbed_pairlist;
+}
+
 namespace interaction
 {
   template<typename t_simulation, typename t_pairlist_algorithm>

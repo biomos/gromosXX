@@ -12,7 +12,8 @@ namespace interaction
    * @class Perturbation_Filter
    * provide filtering for perturbation
    */
-  template<typename t_simulation, typename t_base, bool do_perturbation>
+  template<typename t_simulation, typename t_base, 
+	   bool do_perturbation = false>
   class Perturbation_Filter
     : public Basic_Filter<t_simulation, t_base>
   {

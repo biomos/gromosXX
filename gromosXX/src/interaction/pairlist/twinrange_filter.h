@@ -12,9 +12,17 @@ namespace interaction
    * @class Twinrange_Filter
    * provide filtering using a twinrange cutoff.
    */
-  template<typename t_simulation, typename t_base, typename t_innerloop>
+  template<
+    typename t_simulation,
+    /** interaction parameter */
+    typename t_base,
+    /** the force-field loop */
+    typename t_innerloop,
+    /** to enable perturbation */
+    typename t_basic_filter = Basic_Filter<t_simulation, t_base> >
+
   class Twinrange_Filter
-    : public Basic_Filter<t_simulation, t_base>,
+    : public t_basic_filter,
       public t_innerloop,
       public Storage
   {
