@@ -44,12 +44,6 @@ Standard_Pairlist_Algorithm()
 {
 }
 
-void interaction::Standard_Pairlist_Algorithm::
-set_parameter(Nonbonded_Parameter * param)
-{
-  Pairlist_Algorithm::init(param);
-}
-
 /**
  * put the chargegroups into the box
  */
@@ -132,8 +126,8 @@ void interaction::Standard_Pairlist_Algorithm::update_cg
  unsigned int stride
  )
 {
-  SPLIT_INNERLOOP_NO_GRID(_update_cg, topo, conf, sim, storage,
-			  pairlist, begin, end, stride);
+  SPLIT_INNERLOOP(_update_cg, topo, conf, sim, storage,
+		  pairlist, begin, end, stride);
 }
 
 template<typename t_interaction_spec>

@@ -46,7 +46,7 @@ update_atomic(topology::Topology & topo,
 	      unsigned int begin, unsigned int end,
 	      unsigned int stride)
 {
-  SPLIT_INNERLOOP_NO_GRID(_update_atomic, topo, conf, sim, storage, pairlist, begin, end, stride);
+  SPLIT_INNERLOOP(_update_atomic, topo, conf, sim, storage, pairlist, begin, end, stride);
 }
 
 void interaction::Standard_Pairlist_Algorithm::

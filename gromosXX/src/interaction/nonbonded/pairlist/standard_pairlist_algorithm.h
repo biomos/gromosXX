@@ -44,11 +44,6 @@ namespace interaction
     virtual ~Standard_Pairlist_Algorithm() {}
 
     /**
-     * init pairlist
-     */
-    void set_parameter(Nonbonded_Parameter * param);
-    
-    /**
      * prepare the pairlists
      */    
     virtual void prepare(topology::Topology & topo,

@@ -248,7 +248,10 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 					     simulation::Simulation & sim,
 					     bool quiet)
 {
+  // initialise the pairlist...
+  m_pairlist_algorithm->init(topo, conf, sim, quiet);
 
+  // OpenMP parallelization
 #ifdef OMP
   int tid;
 #pragma omp parallel private(tid)
