@@ -92,6 +92,10 @@ namespace interaction
      * To not count double, the pairlist contains only
      * interactions with particles with higher sequence
      * number.
+     * Exclusions are checked. But be aware that the exclusions need to
+     * be added to the topology (all_exclusions) vector. Currently
+     * this is not done for solvent (as exclusions for solvent are
+     * normally handled directly).
      */
     void update(t_simulation &sim);
     /**
