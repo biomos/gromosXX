@@ -1,3 +1,1 @@
-SUBDIRS = math simulation algorithm interaction
-
-
+SUBDIRS = math simulation algorithm interaction io
