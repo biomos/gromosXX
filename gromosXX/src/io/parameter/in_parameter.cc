@@ -1062,6 +1062,8 @@ void io::In_Parameter::read_SUBMOLECULES(simulation::Parameter &param)
   size_t m;
   size_t old_m=0;
   
+  param.submolecules.submolecules.push_back(0);
+
   for(int i=0; i<num; ++i){
     _lineStream >> m;
     param.submolecules.submolecules.push_back(m);
@@ -1218,6 +1220,8 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
   
   DEBUG(10, "TEMPERATURE COUPLING block");
   
+  param.multibath.couple = false;
+
   // is there a MULTIBATH block
   buffer = m_block["MULTIBATH"];
   
@@ -1245,8 +1249,14 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
     
     for(int i=0; i<num; ++i){
       _lineStream >> temp >> tau;
+
+      if (temp < 0.0 || (tau <= 0.0 && tau != -1)){
+	io::messages.add("illegal value for temp or tau in MULTIBATH block",
+			 "In_Parameter", io::message::error);
+      }
       
       param.multibath.multibath.add_bath(temp, tau);
+      if (tau != -1) param.multibath.couple = true;
     }
     
     if (_lineStream.fail()){

@@ -32,6 +32,9 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 1 && 
 	   param.multibath.tcouple.ntt[1] == 0 && 
 	   param.multibath.tcouple.ntt[2] == 0){
+
+    param.multibath.couple = true;
+    
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
 			     param.multibath.tcouple.tau[0]);
@@ -47,6 +50,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 0 && 
 	   param.multibath.tcouple.ntt[1] == 1 && 
 	   param.multibath.tcouple.ntt[2] == 0){
+    param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[1], 
 			     param.multibath.tcouple.tau[1]);
@@ -62,6 +66,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 0 && 
 	   param.multibath.tcouple.ntt[1] == 0 && 
 	   param.multibath.tcouple.ntt[2] == 1){
+    param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[2], 
 			     param.multibath.tcouple.tau[2]);
@@ -74,6 +79,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 1 && 
 	   param.multibath.tcouple.ntt[1] == 1 && 
 	   param.multibath.tcouple.ntt[2] == 0){
+    param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
 			     param.multibath.tcouple.tau[0]);
@@ -93,6 +99,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 1 && 
 	   param.multibath.tcouple.ntt[1] == 1 && 
 	   param.multibath.tcouple.ntt[2] == 1){
+    param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
 			     param.multibath.tcouple.tau[0]);
@@ -108,6 +115,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 2 && 
 	   param.multibath.tcouple.ntt[1] == -2 && 
 	   param.multibath.tcouple.ntt[2] == 0){
+    param.multibath.couple = true;
     // the bath
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
 			     param.multibath.tcouple.tau[0]);
@@ -124,6 +132,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 2 && 
 	   param.multibath.tcouple.ntt[1] == -2 && 
 	   param.multibath.tcouple.ntt[2] == 1){
+    param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
 			     param.multibath.tcouple.tau[0]);
@@ -137,6 +146,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 3 && 
 	   param.multibath.tcouple.ntt[1] == -3 && 
 	   param.multibath.tcouple.ntt[2] == -3){
+    param.multibath.couple = true;
     // the bath
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
 			     param.multibath.tcouple.tau[0]);

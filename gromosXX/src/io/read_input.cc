@@ -102,6 +102,9 @@ int io::read_input(io::Argument const & args,
 
   }
 
+  // do this after reading in a perturbation topology
+  sim.multibath().calculate_degrees_of_freedom(topo);
+
   try{
     conf_file.open(args["conf"].c_str());
   }
@@ -117,9 +120,6 @@ int io::read_input(io::Argument const & args,
   io::In_Configuration ic(conf_file);
   ic.read(conf, topo, sim.param());
   
-  // do this after reading in a perturbation topology
-  sim.multibath().calculate_degrees_of_freedom(topo);
-
   // and create the algorithms
   // (among them the forcefield!)
   algorithm::create_md_sequence(md_seq, topo, conf, sim, it);

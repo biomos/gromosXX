@@ -225,13 +225,13 @@ namespace topology
     /**
      * iterator over the molecules.
      */
-    Molecule_Iterator molecule_begin(){
+    Molecule_Iterator molecule_begin()const{
       return Molecule_Iterator(m_molecule.begin());};
     /**
      * end of molecule iterator.
      */
-    Molecule_Iterator molecule_end(){
-      return Molecule_Iterator(m_molecule.end());}
+    Molecule_Iterator molecule_end()const{
+      return Molecule_Iterator(m_molecule.end()-1);}
 
     /**
      * const energy group accessor.

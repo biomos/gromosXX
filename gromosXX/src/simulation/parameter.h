@@ -56,7 +56,7 @@ namespace simulation
       /**
        * Random number seed
        */
-      double ig;
+      unsigned int ig;
       /**
        * Initial temperature
        */
@@ -112,6 +112,10 @@ namespace simulation
      */
     struct multibath_struct
     {
+      /**
+       * do temperature coupling?
+       */
+      bool couple;
       /**
        * ready made multibath
        */

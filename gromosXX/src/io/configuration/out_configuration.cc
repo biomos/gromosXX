@@ -16,6 +16,8 @@
 
 #include <math/periodicity.h>
 
+#include <io/print_block.h>
+
 #include "out_configuration.h"
 
 #undef MODULE
@@ -24,7 +26,7 @@
 #define SUBMODULE configuration
 
 io::Out_Configuration::Out_Configuration(std::string title,
-					 std::ostream const & os)
+					 std::ostream & os)
   : m_output(os),
     m_final(false),
     m_every_pos(0),
@@ -919,4 +921,23 @@ int io::Out_Configuration
 ::force_precision()
 {
   return m_force_precision;
+}
+
+
+void io::Out_Configuration
+::print(topology::Topology const & topo,
+	configuration::Configuration & conf,
+	simulation::Simulation const & sim)
+{
+  if ((sim.steps() % sim.param().print.stepblock) == 0){
+    
+    _print_timestep(sim, m_output);
+    
+    conf.old().energies.calculate_totals();
+    print_ENERGY(m_output, conf.old().energies, topo.energy_groups());
+    
+    print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
+    
+  }
+  
 }

@@ -359,7 +359,8 @@ int algorithm::Shake<do_virial>
   conf.current().vel = (conf.current().pos - conf.old().pos) / 
     sim.time_step_size();
 
-  return iterations;
+  // return success!
+  return 0;
 		   
 }
 

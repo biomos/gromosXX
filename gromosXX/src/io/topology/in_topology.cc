@@ -887,6 +887,9 @@ io::In_Topology::read(topology::Topology& topo,
 		     "In_Topology", io::message::error);
   }
 
+  // add the submolecules
+  topo.molecules() = param.submolecules.submolecules;
+
   // energy group check
   if (param.force.energy_group[param.force.energy_group.size()-1]
       != topo.num_atoms()-1){

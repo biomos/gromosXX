@@ -73,6 +73,7 @@ namespace io
 namespace configuration
 {
   extern int debug_level;
+  extern int configuration_debug_level;
 }
 
 namespace topology
@@ -94,11 +95,13 @@ namespace algorithm
 namespace simulation
 {
   extern int debug_level;
+  extern int simulation_debug_level;
 }
 
 namespace util
 {
   extern int debug_level;
+  extern int util_debug_level;
 }
 
   

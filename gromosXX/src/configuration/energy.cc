@@ -31,10 +31,6 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     crf_total = 0.0;
     special_total = 0.0;
 
-    constraint_energy = 0.0;
-    
-    DEBUG(15, "totals done");
-    
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
     improper_energy.assign(improper_energy.size(), 0.0);
@@ -44,11 +40,9 @@ void configuration::Energy::zero(bool potential, bool kinetic)
 
     lj_energy.assign(lj_energy.size(), 
 		     std::vector<double>(lj_energy.size(), 0.0));
-    DEBUG(15, "lj assigned");
     
     crf_energy.assign(crf_energy.size(), 
 		      std::vector<double>(crf_energy.size(), 0.0));
-    DEBUG(15, "crf assigned");
     
   }
 
@@ -91,7 +85,6 @@ void configuration::Energy::resize(size_t const energy_groups, size_t const mult
     kinetic_energy.resize(multi_baths);
     com_kinetic_energy.resize(multi_baths);
     ir_kinetic_energy.resize(multi_baths);
-    flexible_constraints_ir_kinetic_energy.resize(multi_baths);
   }
 
   zero();  
@@ -114,12 +107,8 @@ void configuration::Energy::calculate_totals()
   crf_total = 0.0;
   special_total = 0.0;
     
-  flexible_constraints_kinetic_total = 0;
-
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     kinetic_total += kinetic_energy[i];
-    flexible_constraints_kinetic_total +=
-      flexible_constraints_ir_kinetic_energy[i];
   }
 
 
@@ -139,8 +128,6 @@ void configuration::Energy::calculate_totals()
   bonded_total    = bond_total + angle_total + 
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;
-
-  special_total   += constraint_energy;
 
   total = potential_total + kinetic_total + special_total;
 

@@ -276,6 +276,12 @@ void _add_nonbonded(interaction::Forcefield & ff,
     nonbonded_type * the_nonbonded = new nonbonded_type;
     
     it.read_lj_parameter(the_nonbonded->lj_parameter());
+
+    the_nonbonded->energies.resize(param.force.energy_group.size(),
+				  param.multibath.multibath.size());
+    the_nonbonded->perturbed_energy_derivatives.
+      resize(param.force.energy_group.size(),
+	     param.multibath.multibath.size());
     
     ff.push_back(the_nonbonded);
   }
@@ -296,6 +302,12 @@ void _add_nonbonded(interaction::Forcefield & ff,
     nonbonded_type * the_nonbonded = new nonbonded_type;
     
     it.read_lj_parameter(the_nonbonded->lj_parameter());
+
+    the_nonbonded->energies.resize(param.force.energy_group.size(),
+				  param.multibath.multibath.size());
+    the_nonbonded->perturbed_energy_derivatives.
+      resize(param.force.energy_group.size(),
+	     param.multibath.multibath.size());
     
     ff.push_back(the_nonbonded);
   }
@@ -332,6 +344,12 @@ void _add_grid_nonbonded(interaction::Forcefield & ff,
     nonbonded_type * the_nonbonded = new nonbonded_type;
     
     it.read_lj_parameter(the_nonbonded->lj_parameter());
+
+    the_nonbonded->energies.resize(param.force.energy_group.size(),
+				param.multibath.multibath.size());
+    the_nonbonded->perturbed_energy_derivatives.
+      resize(param.force.energy_group.size(),
+	     param.multibath.multibath.size());
     
     ff.push_back(the_nonbonded);
   }
@@ -353,6 +371,12 @@ void _add_grid_nonbonded(interaction::Forcefield & ff,
     nonbonded_type * the_nonbonded = new nonbonded_type;
     
     it.read_lj_parameter(the_nonbonded->lj_parameter());
+
+    the_nonbonded->energies.resize(param.force.energy_group.size(),
+				  param.multibath.multibath.size());
+    the_nonbonded->perturbed_energy_derivatives.
+      resize(param.force.energy_group.size(),
+	     param.multibath.multibath.size());
     
     ff.push_back(the_nonbonded);
   }

@@ -34,7 +34,7 @@ int algorithm::Temperature_Calculation
   DEBUG(7, "Temperature calculation");
   
   // zero previous (temperature scaling) energies
-  conf.current().energies.zero(false, true);
+  conf.old().energies.zero(false, true);
   // zero the energies in the multibath
   DEBUG(8, "\tbaths: " << sim.multibath().size());
   
@@ -64,11 +64,11 @@ int algorithm::Temperature_Calculation
     DEBUG(9, "adding to bath: com: "
 	  << com_bath << " ir: " << ir_bath);
     DEBUG(10, "number of baths: energy " 
-	  << conf.current().energies.kinetic_energy.size()
+	  << conf.old().energies.kinetic_energy.size()
 	  << " com ekin "
-	  << conf.current().energies.com_kinetic_energy.size()
+	  << conf.old().energies.com_kinetic_energy.size()
 	  << " ir ekin "
-	  << conf.current().energies.ir_kinetic_energy.size()
+	  << conf.old().energies.ir_kinetic_energy.size()
 	  );
     
     // store the new ones in multibath (velocity scaling for next step)
@@ -76,20 +76,20 @@ int algorithm::Temperature_Calculation
     sim.multibath().bath(ir_bath).ekin += new_ekin - new_com_ekin;
 
     // and the averages in the energies
-    conf.current().energies.com_kinetic_energy[com_bath] += com_ekin;
-    conf.current().energies.ir_kinetic_energy[ir_bath] += ekin - com_ekin;
+    conf.old().energies.com_kinetic_energy[com_bath] += com_ekin;
+    conf.old().energies.ir_kinetic_energy[ir_bath] += ekin - com_ekin;
 
   }
 
   // loop over the bath kinetic energies
-  for(size_t i=0; i<conf.current().energies.kinetic_energy.size(); ++i)
-    conf.current().energies.kinetic_energy[i] =
-      conf.current().energies.com_kinetic_energy[i] +
-      conf.current().energies.ir_kinetic_energy[i];
+  for(size_t i=0; i<conf.old().energies.kinetic_energy.size(); ++i)
+    conf.old().energies.kinetic_energy[i] =
+      conf.old().energies.com_kinetic_energy[i] +
+      conf.old().energies.ir_kinetic_energy[i];
 
   // and the perturbed energy derivatives (if there are any)
   if (sim.param().perturbation.perturbation){
-    math::VArray &vel = conf.current().vel;
+    math::VArray &vel = conf.old().vel;
 
     // loop over the baths
     std::vector<simulation::bath_index_struct>::iterator
@@ -98,17 +98,17 @@ int algorithm::Temperature_Calculation
   
     size_t last = 0;
     std::vector<double> &e_kin = 
-      conf.current().perturbed_energy_derivatives.kinetic_energy;
+      conf.old().perturbed_energy_derivatives.kinetic_energy;
 
     // !!!FIXME!!!
-    assert(e_kin.size() == conf.current().energies.kinetic_energy.size());
+    assert(e_kin.size() == conf.old().energies.kinetic_energy.size());
     /*
-      e_kin.resize(conf.current().energies().kinetic_energy.size());
-      conf.current().lambda_energies().com_kinetic_energy.
+      e_kin.resize(conf.old().energies().kinetic_energy.size());
+      conf.old().lambda_energies().com_kinetic_energy.
       resize(e_kin.size());
-      conf.current().lambda_energies().ir_kinetic_energy.
+      conf.old().lambda_energies().ir_kinetic_energy.
       resize(e_kin.size());
-      conf.current().lambda_energies().flexible_constraints_ir_kinetic_energy.
+      conf.old().lambda_energies().flexible_constraints_ir_kinetic_energy.
       resize(e_kin.size());
     */
 

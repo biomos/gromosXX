@@ -123,12 +123,6 @@ configuration::Energy_Average::update(configuration::Energy const &e, double con
     m_square_average.ir_kinetic_energy[i] +=
       dt * e.ir_kinetic_energy[i] * e.ir_kinetic_energy[i];
     
-    m_average.flexible_constraints_ir_kinetic_energy[i] += 
-      dt * e.flexible_constraints_ir_kinetic_energy[i];
-    m_square_average.flexible_constraints_ir_kinetic_energy[i] += 
-      dt * e.flexible_constraints_ir_kinetic_energy[i] 
-      * e.flexible_constraints_ir_kinetic_energy[i];
-
   }
   
   // the energy groups
@@ -312,16 +306,6 @@ configuration::Energy_Average::average(configuration::Energy &energy,
       f.ir_kinetic_energy[i] = sqrt(diff / m_time);
     else
       f.ir_kinetic_energy[i] = 0.0;
-
-    e.flexible_constraints_ir_kinetic_energy[i] =
-      m_average.flexible_constraints_ir_kinetic_energy[i] / m_time;
-    diff = m_square_average.flexible_constraints_ir_kinetic_energy[i] -
-      m_average.flexible_constraints_ir_kinetic_energy[i] *
-      m_average.flexible_constraints_ir_kinetic_energy[i] / m_time;
-    if (diff > 0.0)
-      f.flexible_constraints_ir_kinetic_energy[i] = sqrt(diff / m_time);
-    else  
-      f.flexible_constraints_ir_kinetic_energy[i] = 0.0;
     
   }
   

@@ -4,6 +4,7 @@ include_HEADERS = 	argument.h \
 			blockinput.h \
 			instream.h \
 			message.h \
+			print_block.h \
 			read_input.h \
 			parameter/in_parameter.h \
 			topology/in_topology.h \
@@ -21,6 +22,7 @@ libio_la_SOURCES =	io.cc \
 			blockinput.cc \
 			instream.cc \
 			message.cc \
+			print_block.cc \
 			read_input.cc \
 			parameter/in_parameter.cc \
 			topology/in_topology.cc \

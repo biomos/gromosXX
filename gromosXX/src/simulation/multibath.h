@@ -6,6 +6,13 @@
 #ifndef INCLUDED_MULTIBATH_H
 #define INCLUDED_MULTIBATH_H
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE simulation
+#define SUBMODULE simulation
+
+#include <util/debug.h>
+
 namespace simulation
 {
   /**
@@ -192,23 +199,37 @@ inline void simulation::Multibath
   std::vector<bath_index_struct>::iterator it = m_bath_index.begin(),
     to = m_bath_index.end();
 
+  DEBUG(8, "number of baths: " << size());
+  DEBUG(8, "molecules " << topo.molecules().size());
+  
   for(int last=-1; it != to; ++it){
     // get the number of molecules in the range
     int num_mol = 0;
     int mol = 0;
+
+    DEBUG(8, "last atom: " << it->last_atom);
+    DEBUG(8, "end of last group: " << last);
+
     for(topology::Molecule_Iterator m_it = topo.molecule_begin(),
 	  m_to = topo.molecule_end();
 	m_it != m_to;
 	++m_it, ++mol){
-      if (*(m_it.begin()) > it->last_atom){
+
+      DEBUG(8, "current mol begins: " << (*m_it.begin()));
+      
+      if ((*(m_it.begin())) > it->last_atom){
 	break;
       }
       
       if (int(*(m_it.begin())) > last)
 	++num_mol;
     }
+
     // add the last molecule
+    DEBUG(8, "last molecule is " << mol - 1);
     it->last_molecule = mol - 1;
+
+    DEBUG(8, "num molecules is " << num_mol);
     // add the molecular translational dof
     (*this)[it->com_bath].dof += num_mol * 3;
     (*this)[it->com_bath].com_dof += num_mol * 3;

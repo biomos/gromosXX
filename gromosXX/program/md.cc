@@ -90,6 +90,9 @@ int main(int argc, char *argv[]){
     io::messages.display(std::cout);
     io::messages.clear();
 
+    std::cout.precision(5);
+    std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+    
     std::cout << "\nenter the next level of molecular "
 	      << "dynamics simulations\n" << std::endl;
 
@@ -98,17 +101,23 @@ int main(int argc, char *argv[]){
     
 
     std::cout << "MD loop\n\tstart t=" << sim.time() 
-	      << "\tend t=" << end_time << std::endl;
+	      << "\tend t=" << end_time << "\n" << std::endl;
     
     while(sim.time() < end_time){
-      std::cout << "md step " << sim.time() << std::endl;
+      std::cout << "\tmd step " << sim.time() << std::endl;
       
       traj.write(conf, topo, sim, io::reduced);
 
-      md.run(topo, conf, sim);
+      if (md.run(topo, conf, sim)){
+	std::cout << "\nError during MD run!\n\n";
+	// try to save the final structures...
+	break;
+      }
 
       sim.time() += sim.time_step_size();
       ++sim.steps();
+
+      traj.print(topo, conf, sim);
       
     }
     

@@ -17,6 +17,8 @@
 #include <algorithm/algorithm.h>
 #include <interaction/interaction.h>
 
+#include <util/prepare_virial.h>
+
 #include "forcefield.h"
 
 #undef MODULE
@@ -48,18 +50,9 @@ int interaction::Forcefield
   conf.current().perturbed_energy_derivatives.zero();
   conf.current().virial_tensor = 0.0;
 
-  /*
   // prepare for the virial
-  if (t_interaction_spec::do_virial == interaction::molecular_virial){
-    if(sim.pressure_calculation())
-      sim.calculate_mol_com();
-  }
-  if (t_interaction_spec::do_virial == interaction::atomic_virial){
-    if (sim.pressure_calculation())
-      sim.calculate_atom_ekin();
-  }
-  */
-
+  util::prepare_virial(topo, conf, sim);
+  
   for(iterator it = begin(), to = end();
       it != to;
       ++it){

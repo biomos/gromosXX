@@ -33,6 +33,8 @@
 #include <math/periodicity.h>
 #include <algorithm/constraints/shake.h>
 
+#include <io/print_block.h>
+
 #include "create_md_sequence.h"
 
 
@@ -84,15 +86,32 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     }
   }
 
-  // temperature calculation
+  // temperature calculation (always!)
   {
     algorithm::Temperature_Calculation * tcalc =
       new algorithm::Temperature_Calculation;
     // calculate initial temperature
     tcalc->apply(topo, conf, sim);
 
+    io::print_MULTIBATH_COUPLING(std::cout, sim.multibath());
+
+    io::print_DEGREESOFFREEDOM(std::cout, sim.multibath());
+    
+    io::print_MULTIBATH(std::cout, sim.multibath(),
+			conf.old().energies);
+
+
+    DEBUG(7, tcalc->name);
     md_seq.push_back(tcalc);
     
+  }
+  
+  // temperature scaling?
+  if (sim.param().multibath.couple){
+    
+    algorithm::Berendsen_Thermostat * tcoup =
+      new algorithm::Berendsen_Thermostat;
+    md_seq.push_back(tcoup);
   }
   
   return 0;

@@ -38,7 +38,7 @@ namespace io {
      * Constructor.
      */
     Out_Configuration(std::string title,
-		      std::ostream const & os = std::cout);
+		      std::ostream & os = std::cout);
 
     /**
      * Destructor.
@@ -52,6 +52,13 @@ namespace io {
 	       topology::Topology const & topo,
 	       simulation::Simulation const &sim,
 	       output_format const form = reduced);
+
+    /**
+     * print out data (per time step).
+     */
+    void print(topology::Topology const & topo,
+	       configuration::Configuration & conf,
+	       simulation::Simulation const & sim);
 
     /**
      * final structure.
@@ -77,7 +84,6 @@ namespace io {
      * write a free energy trajectory
      */
     void free_energy_trajectory(std::string const name, int every=1);
-    
     /**
      * precision of output.
      */
@@ -94,7 +100,7 @@ namespace io {
     std::ofstream m_force_traj;
     std::ofstream m_energy_traj;
     std::ofstream m_free_energy_traj;
-    std::ostream const & m_output;
+    std::ostream & m_output;
     
     bool m_final;
     

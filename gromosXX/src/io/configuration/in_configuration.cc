@@ -17,6 +17,8 @@
 #include <io/instream.h>
 #include <io/configuration/inframe.h>
 
+#include <util/generate_velocities.h>
+
 #include "in_configuration.h"
 
 #undef MODULE
@@ -80,8 +82,19 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 	io::messages.add("no VELOCITY / VELOCITYRED block found in input configuration",
 			 "in_configuration",
 			 io::message::error);
+	conf.current().vel = 0.0;
       }
-    }    
+    }
+    // store also in old velocities (for initial temperature calculation)
+    conf.old().vel = conf.current().vel;
+  }
+  else{
+    // generate initial velocities
+    util::generate_velocities(param.start.tempi, 
+			      topo.mass(),
+			      conf.current().vel,
+			      conf.old().vel,
+			      param.start.ig);
   }
   
   // read box
@@ -128,6 +141,9 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   const size_t num = topo.energy_groups().size();
   const size_t numb = param.multibath.multibath.size();
 
+  DEBUG(5, "number of energy groups: " << num 
+	<< "\nnumber of baths: " << numb);
+
   conf.current().energies.resize(num, numb);
   conf.current().energy_averages.resize(num, numb);
   conf.current().perturbed_energy_derivatives.resize(num, numb);
@@ -137,6 +153,9 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   conf.old().energy_averages.resize(num, numb);
   conf.old().perturbed_energy_derivatives.resize(num, numb);
   conf.old().perturbed_energy_derivative_averages.resize(num, numb);
+
+  // resize some special data
+  conf.special().rel_mol_com_pos.resize(topo.num_atoms());
 
 }
 

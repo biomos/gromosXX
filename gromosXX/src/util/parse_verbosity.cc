@@ -76,7 +76,13 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
       else if (submodule == "algorithm") 
 	algorithm::algorithm_debug_level = level;
       else if (submodule == "constraints") 
-	algorithm::algorithm_debug_level = level;
+	algorithm::constraints_debug_level = level;
+      else if (submodule == "integration") 
+	algorithm::integration_debug_level = level;
+      else if (submodule == "temperature") 
+	algorithm::temperature_debug_level = level;
+      else if (submodule == "pressure") 
+	algorithm::pressure_debug_level = level;
       else throw std::string("unknown submodule");	  
     }
     else if (module == "interaction"){
@@ -98,6 +104,12 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
       else if (submodule == "parameter") io::parameter_debug_level = level;
       else if (submodule == "topology") io::topology_debug_level = level;
       else if (submodule == "configuration") io::configuration_debug_level = level;
+      else throw std::string("unknown submodule");	  
+    }
+    else if (module == "simulation"){
+      if (submodule == "") simulation::debug_level = level;
+      else if (submodule == "simulation")
+	simulation::simulation_debug_level = level;
       else throw std::string("unknown submodule");	  
     }
     else if (module == "math"){
