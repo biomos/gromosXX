@@ -21,6 +21,10 @@ namespace topology
     {
     }
 
+    Chargegroup_Iterator()
+    {
+    }
+
     void cog(const math::VArray &pos, math::Vec &v)const
     {
       v = 0.0;

@@ -33,13 +33,14 @@ update(topology::Topology & topo,
   Periodicity_type periodicity(conf.current().box);
    
   // empty the pairlist
-  nbs.pairlist().clear();
-  nbs.pairlist().resize(topo.num_atoms());
+  for(size_t i=0; i<topo.num_atoms(); ++i)
+    nbs.pairlist()[i].clear();
 
   if(t_perturbation_spec::do_perturbation){
     // and the perturbed pairlist
-    nbs.perturbed_pairlist().clear();
-    nbs.perturbed_pairlist().resize(topo.num_atoms());
+    for(size_t i=0; i<topo.num_atoms(); ++i)
+      nbs.perturbed_pairlist()[i].clear();
+
   }
   
   DEBUG(7, "pairlist(s) resized");
@@ -65,12 +66,30 @@ update(topology::Topology & topo,
   const int num_solute_cg = topo.num_solute_chargegroups();
   int cg1_index, cg1_to;
 
+  topology::Chargegroup_Iterator cg1;
+
   cg1_index = 0;
   cg1_to = num_cg;
-  for( ; cg1_index < cg1_to; ++cg1_index) {
-    // add intra cg (if not solvent...)
+  for( ; cg1_index < num_solute_cg; ++cg1_index) {
+
+    cg1 = topo.chargegroup_it(cg1_index);
+
+    do_cg_interaction_intra(topo, conf, sim, nbs, 
+			    cg1, periodicity);
+
     
-    do_cg1_loop(topo, conf, sim, nbs, 
+    do_cg1_loop(topo, conf, sim, nbs, cg1, 
+		cg1_index, num_solute_cg, num_cg,
+		periodicity);
+    
+  } // cg1
+
+  for( ; cg1_index < num_cg; ++cg1_index) {
+
+    cg1 = topo.chargegroup_it(cg1_index);
+
+    
+    do_cg1_loop(topo, conf, sim, nbs, cg1, 
 		cg1_index, num_solute_cg, num_cg,
 		periodicity);
     
@@ -92,24 +111,19 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
 	      configuration::Configuration & conf,
 	      simulation::Simulation & sim,
 	      Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
+	      topology::Chargegroup_Iterator const & cg1,
 	      int cg1_index,
 	      int const num_solute_cg,
 	      int const num_cg,
 	      Periodicity_type const & periodicity)
 {
-  topology::Chargegroup_Iterator cg1 = topo.chargegroup_it(cg1_index);
-  
-  if (cg1_index < num_solute_cg){
-    do_cg_interaction_intra(topo, conf, sim, nbs, 
-			    cg1, periodicity);
-  }
   
   // inter chargegroup
   topology::Chargegroup_Iterator cg2 = *cg1+1;
 
   // solute...
   int cg2_index;
-  for(cg2_index = cg1_index + 1; cg2_index < num_solute_cg; ++cg2, ++cg2_index) {
+  for(cg2_index = cg1_index + 1; cg2_index < num_solute_cg; ++cg2, ++cg2_index){
     
     if (!t_interaction_spec::do_atomic_cutoff){
       // filter out interactions based on chargegroup distances
@@ -224,7 +238,7 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec
 	a2 != a2_to; ++a2){
 
       if (t_interaction_spec::do_atomic_cutoff){
-	// filter out interactions based on chargegroup distances
+	// filter out interactions based on atom distances
 	if (t_interaction_spec::do_bekker){
 	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2,
 			      pc, periodicity))

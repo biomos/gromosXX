@@ -50,6 +50,7 @@ namespace interaction
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
 		     Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
+		     topology::Chargegroup_Iterator const & cg1,
 		     int cg1_index, int num_solute_cg, int num_cg,
 		     Periodicity_type const & periodicity);
 

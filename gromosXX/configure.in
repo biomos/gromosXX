@@ -95,7 +95,7 @@ case "$compiler" in
        echo "Configuring for Intel C++"
        CXX_PICKY_FLAGS="-w1 -DBZDEBUG"
 
-       CXX_OPTIMIZE_FLAGS="-O3 -ip -restrict -DNDEBUG -g -w2 -align"
+       CXX_OPTIMIZE_FLAGS="-O3 -tpp7 -xW -ipo -ipo_obj -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -w2 -align"
        CXX_DEBUG_FLAGS="-g -DBZDEBUG"
        CXXLD="$CXX"
 

@@ -31,6 +31,7 @@
 #include <interaction/forcefield/forcefield.h>
 
 #include <math/periodicity.h>
+#include <math/volume.h>
 
 #include <io/argument.h>
 #include <io/blockinput.h>

@@ -23,7 +23,11 @@ namespace topology
       : m_it(it)
     {
     }
-  
+
+    Atomgroup_Iterator()
+    {
+    }
+    
     bool operator==(Atomgroup_Iterator const &it)const
     {
       return m_it == it.m_it;

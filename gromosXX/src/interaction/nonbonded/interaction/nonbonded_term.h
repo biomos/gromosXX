@@ -37,12 +37,12 @@ namespace interaction
 			    double const c6, double const c12,
 			    double const q,
 			    math::Vec & force, double & e_lj,
-			    double & e_crf)const;
+			    double & e_crf);
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
     void rf_interaction(math::Vec const &r, double const q,
-			math::Vec & force, double & e_rf)const;
+			math::Vec & force, double & e_rf);
 
     /**
      * calculate the hessian of the lj crf term.
@@ -50,7 +50,7 @@ namespace interaction
     void lj_crf_hessian(math::Vec const &r,
 			double const c6, double const c12,
 			double const q,
-			math::Matrix &hess)const;
+			math::Matrix &hess);
 
     /**
      * a constant.

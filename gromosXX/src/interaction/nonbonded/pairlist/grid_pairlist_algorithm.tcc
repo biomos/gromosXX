@@ -51,8 +51,15 @@ update(topology::Topology & topo,
   const double update_start = util::now();
 
   // empty the pairlist
-  nbs.pairlist().clear();
-  nbs.pairlist().resize(topo.num_atoms());
+  for(size_t i=0; i<topo.num_atoms(); ++i)
+    nbs.pairlist()[i].clear();
+
+  if(t_perturbation_spec::do_perturbation){
+    // and the perturbed pairlist
+    for(size_t i=0; i<topo.num_atoms(); ++i)
+      nbs.perturbed_pairlist()[i].clear();
+
+  }
 
   if(t_perturbation_spec::do_perturbation){
     // and the perturbed pairlist

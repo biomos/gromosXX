@@ -177,64 +177,67 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   assert(!t_interaction_spec::do_bekker || (pc >= 0 && pc < 27));
   assert(pairlist().size() > i);
 
-  if (t_perturbation_spec::do_perturbation && topo.is_perturbed(i)){
-
-    if (t_perturbation_spec::perturbation_details::do_scaling){
-      // check whether we need to do scaling
-      // based on energy groups
-      if (sim.param().perturbation.scaled_only){
-	std::pair<int, int> 
-	  energy_group_pair(topo.atom_energy_group(i),
-			    topo.atom_energy_group(j));
-	
-	if (topo.energy_group_scaling().count(energy_group_pair))
-	  if(t_interaction_spec::do_bekker)
-	    perturbed_pairlist()[i].push_back((pc << 26) + j);
+  if (t_perturbation_spec::do_perturbation){
+    if (topo.is_perturbed(i)){
+      
+      if (t_perturbation_spec::perturbation_details::do_scaling){
+	// check whether we need to do scaling
+	// based on energy groups
+	if (sim.param().perturbation.scaled_only){
+	  std::pair<int, int> 
+	    energy_group_pair(topo.atom_energy_group(i),
+			      topo.atom_energy_group(j));
+	  
+	  if (topo.energy_group_scaling().count(energy_group_pair))
+	    if(t_interaction_spec::do_bekker)
+	      perturbed_pairlist()[i].push_back((pc << 26) + j);
+	    else
+	      perturbed_pairlist()[i].push_back(j);
 	  else
-	    perturbed_pairlist()[i].push_back(j);
-	else
-	  if(t_interaction_spec::do_bekker)
-	    pairlist()[i].push_back((pc << 26) + j);
-	  else
-	    pairlist()[i].push_back(j);
-	return;
+	    if(t_interaction_spec::do_bekker)
+	      pairlist()[i].push_back((pc << 26) + j);
+	    else
+	      pairlist()[i].push_back(j);
+	  return;
+	}
       }
+      
+      if(t_interaction_spec::do_bekker)
+	perturbed_pairlist()[i].push_back((pc << 26) + j);
+      else 
+	perturbed_pairlist()[i].push_back(j);
     }
+    else if (topo.is_perturbed(j)){
 
-    if(t_interaction_spec::do_bekker)
-      perturbed_pairlist()[i].push_back((pc << 26) + j);
-    else 
-      perturbed_pairlist()[i].push_back(j);
-  }
-  else if (t_perturbation_spec::do_perturbation && topo.is_perturbed(j)){
-
-    if (t_perturbation_spec::perturbation_details::do_scaling){
-      // check whether we need to do scaling
-      // based on energy groups
-      if (sim.param().perturbation.scaled_only){
-	std::pair<int, int> 
-	  energy_group_pair(topo.atom_energy_group(i),
-			    topo.atom_energy_group(j));
-	
-	if (topo.energy_group_scaling().count(energy_group_pair))
-	  if(t_interaction_spec::do_bekker)
-	    perturbed_pairlist()[j].push_back(((26 - pc) << 26) + i);
+      if (t_perturbation_spec::perturbation_details::do_scaling){
+	// check whether we need to do scaling
+	// based on energy groups
+	if (sim.param().perturbation.scaled_only){
+	  std::pair<int, int> 
+	    energy_group_pair(topo.atom_energy_group(i),
+			      topo.atom_energy_group(j));
+	  
+	  if (topo.energy_group_scaling().count(energy_group_pair))
+	    if(t_interaction_spec::do_bekker)
+	      perturbed_pairlist()[j].push_back(((26 - pc) << 26) + i);
+	    else
+	      perturbed_pairlist()[j].push_back(i);
 	  else
-	    perturbed_pairlist()[j].push_back(i);
-	else
-	  if(t_interaction_spec::do_bekker)
-	    pairlist()[i].push_back((pc << 26) + j);
-	  else
-	    pairlist()[i].push_back(j);
-
-	return;      
+	    if(t_interaction_spec::do_bekker)
+	      pairlist()[i].push_back((pc << 26) + j);
+	    else
+	      pairlist()[i].push_back(j);
+	  
+	  return;      
+	}
       }
+      if(t_interaction_spec::do_bekker)
+	perturbed_pairlist()[j].push_back(((26 - pc) << 26) + i);
+      else
+	perturbed_pairlist()[j].push_back(i);
     }
-    if(t_interaction_spec::do_bekker)
-      perturbed_pairlist()[j].push_back(((26 - pc) << 26) + i);
-    else
-      perturbed_pairlist()[j].push_back(i);
   }
+  
   else
     if(t_interaction_spec::do_bekker)
       pairlist()[i].push_back((pc << 26) + j);
@@ -257,55 +260,58 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 {
   const double longrange_start = util::now();
 
-  if (t_perturbation_spec::do_perturbation && topo.is_perturbed(i)){
+  if (t_perturbation_spec::do_perturbation){
+    if (topo.is_perturbed(i)){
 
-    if (t_perturbation_spec::perturbation_details::do_scaling){
-      // check whether we need to do scaling
-      // based on energy groups
-      if (sim.param().perturbation.scaled_only){
-	std::pair<int, int> 
-	  energy_group_pair(topo.atom_energy_group(i),
-			    topo.atom_energy_group(j));
-	
-	if (topo.energy_group_scaling().count(energy_group_pair))
-	  perturbed_lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
-	else
-	  lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
-	m_nonbonded_interaction->longrange_timing() += 
-	  util::now() - longrange_start;
-
-	return;      
+      if (t_perturbation_spec::perturbation_details::do_scaling){
+	// check whether we need to do scaling
+	// based on energy groups
+	if (sim.param().perturbation.scaled_only){
+	  std::pair<int, int> 
+	    energy_group_pair(topo.atom_energy_group(i),
+			      topo.atom_energy_group(j));
+	  
+	  if (topo.energy_group_scaling().count(energy_group_pair))
+	    perturbed_lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
+	  else
+	    lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
+	  m_nonbonded_interaction->longrange_timing() += 
+	    util::now() - longrange_start;
+	  
+	  return;      
+	}
       }
+      
+      perturbed_lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
+      
     }
-    
-    perturbed_lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
-
-  }
-  else if (t_perturbation_spec::do_perturbation && topo.is_perturbed(j)){
-
-    if (t_perturbation_spec::perturbation_details::do_scaling){
-      // check whether we need to do scaling
-      // based on energy groups
-      if (sim.param().perturbation.scaled_only){
-	std::pair<int, int> 
-	  energy_group_pair(topo.atom_energy_group(i),
-			    topo.atom_energy_group(j));
-	
-	if (topo.energy_group_scaling().count(energy_group_pair))
-	  perturbed_lj_crf_innerloop(topo, conf, j, i, m_longrange_storage, periodicity, pc);
-	else
-	  lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
-
-	m_nonbonded_interaction->longrange_timing() += 
-	  util::now() - longrange_start;
-
-	return;      
+    else if (topo.is_perturbed(j)){
+      
+      if (t_perturbation_spec::perturbation_details::do_scaling){
+	// check whether we need to do scaling
+	// based on energy groups
+	if (sim.param().perturbation.scaled_only){
+	  std::pair<int, int> 
+	    energy_group_pair(topo.atom_energy_group(i),
+			      topo.atom_energy_group(j));
+	  
+	  if (topo.energy_group_scaling().count(energy_group_pair))
+	    perturbed_lj_crf_innerloop(topo, conf, j, i, m_longrange_storage, periodicity, pc);
+	  else
+	    lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
+	  
+	  m_nonbonded_interaction->longrange_timing() += 
+	    util::now() - longrange_start;
+	  
+	  return;      
+	}
       }
+      
+      perturbed_lj_crf_innerloop(topo, conf, j, i, m_longrange_storage, periodicity, pc);
+      
     }
-    
-    perturbed_lj_crf_innerloop(topo, conf, j, i, m_longrange_storage, periodicity, pc);
-
   }
+  
   else
     lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
 
@@ -341,5 +347,30 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   m_longrange_storage.perturbed_energy_derivatives.resize
     (conf.current().perturbed_energy_derivatives.bond_energy.size(),
      conf.current().perturbed_energy_derivatives.kinetic_energy.size());
+
+  // and the pairlists
+  pairlist().resize(topo.num_atoms());
+  if(t_perturbation_spec::do_perturbation){
+    perturbed_pairlist().resize(topo.num_atoms());
+  }
+
+  // check if we can guess the number of pairs
+  const double vol = math::volume(conf.current().box, conf.boundary_type);
+  if (vol){
+    const double c3 = sim.param().pairlist.cutoff_short *
+      sim.param().pairlist.cutoff_short *
+      sim.param().pairlist.cutoff_short;
+    
+    const size_t pairs = 
+      int(1.3 * topo.num_atoms() / vol * 4.0 / 3.0 * math::Pi * c3);
+
+    std::cout << "\n\testimated pairlist size (per atom) : "
+	      << pairs << "\n\n";
+    
+    for(size_t i=0; i<topo.num_atoms(); ++i)
+      pairlist()[i].reserve(pairs);
+    
+  }
+
 }
 

@@ -52,35 +52,29 @@ inline void interaction::Nonbonded_Term
 ::lj_crf_interaction(math::Vec const &r,
 		     double const c6, double const c12,
 		     double const q,
-		     math::Vec &force, double &e_lj, double &e_crf)const
+		     math::Vec &force, double &e_lj, double &e_crf)
 {
   assert(dot(r,r) != 0);
   const double dist2 = dot(r, r);
   const double dist2i = 1.0 / dist2;
+  const double q_eps = q * math::four_pi_eps_i;
   const double dist6i = dist2i * dist2i * dist2i;
   const double disti = sqrt(dist2i);
-  const double q_eps = q * math::four_pi_eps_i;
+  const double c12_dist6i = c12 * dist6i;
   
-  e_lj = (c12 * dist6i - c6) * dist6i;
-  e_crf = q_eps * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  e_lj = (c12_dist6i - c6) * dist6i;
+  e_crf = q_eps * 
+    (disti - m_crf_2cut3i * dist2 - m_crf_cut);
 
-  const double f = (e_lj + e_lj + c6 * dist6i) * 6 * dist2i +
-    q_eps * (disti * dist2i +  m_crf_cut3i);
-  
-  // force = f * r;
+  const double f = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i + 
+    q_eps * (disti * dist2i + m_crf_cut3i);
 
   force[0] = f * r[0];
   force[1] = f * r[1];
   force[2] = f * r[2];
 
-  /*
-  force = ((2 * c12 * dist6i - c6) * 6.0 * dist6i * dist2i + 
-    q_eps * (disti * dist2i + m_crf_cut3i)) * r;
-  */
-
-  DEBUG(15, "q=" << q << " 4pie=" << math::four_pi_eps_i 
-	<< " crf_cut2i=" << m_crf_cut3i);
-
+  DEBUG(15, "q=" << q << " 4pie=" << math::four_pi_eps_i << " crf_cut2i=" << m_crf_cut3i);
+  
 }
 
 /**
@@ -89,7 +83,7 @@ inline void interaction::Nonbonded_Term
  */
 inline void interaction::Nonbonded_Term
 ::rf_interaction(math::Vec const &r,double const q,
-		 math::Vec &force, double &e_crf)const
+		 math::Vec &force, double &e_crf)
 {
   const double dist2 = dot(r, r);
   
@@ -113,7 +107,7 @@ inline void
 interaction::Nonbonded_Term::lj_crf_hessian(math::Vec const &r,
 				    double const c6, double const c12,
 				    double const q,
-				    math::Matrix &hess)const
+				    math::Matrix &hess)
 {
   const double r2 = math::dot(r,r);
   

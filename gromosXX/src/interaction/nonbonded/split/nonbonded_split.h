@@ -29,6 +29,7 @@
 
 #include <interaction/interaction_types.h>
 #include <math/periodicity.h>
+#include <math/volume.h>
 
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
