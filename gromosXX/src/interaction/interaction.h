@@ -20,11 +20,13 @@ namespace interaction
 #include "pairlist/filter/filter.h"
 #include "pairlist/filter/exclusion_filter.h"
 #include "pairlist/filter/perturbation_filter.h"
+#include "pairlist/filter/chargegroup_grid.h"
 #include "pairlist/filter/range_filter.h"
 
 // nonbonded pairlist algorithm
 #include "pairlist/pairlist_algorithm.h"
 #include "pairlist/standard_pairlist_algorithm.h"
+#include "pairlist/grid_pairlist_algorithm.h"
 
 // nonbonded pairlist
 #include "pairlist/pairlist.h"

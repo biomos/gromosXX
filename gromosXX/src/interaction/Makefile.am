@@ -35,6 +35,8 @@ include_HEADERS = 		interaction.h \
 				pairlist/filter/filter.h \
 				pairlist/filter/exclusion_filter.h \
 				pairlist/filter/exclusion_filter.tcc \
+				pairlist/filter/chargegroup_grid.h \
+				pairlist/filter/chargegroup_grid.tcc \
 				pairlist/filter/range_filter.h \
 				pairlist/filter/range_filter.tcc \
 				pairlist/filter/perturbation_filter.h \

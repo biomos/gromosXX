@@ -4,6 +4,13 @@
  * chargegroup or an atom based cut-off criterion.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE pairlist
+
+#include "../../debug.h"
+
 template<typename t_simulation, typename t_nonbonded_spec>
 inline
 interaction::Standard_Pairlist_Algorithm<t_simulation, t_nonbonded_spec>::
@@ -41,6 +48,7 @@ update(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction)
     // prepare the range filter (center of geometries)    
     prepare_cog(sim);
     DEBUG(7, "range filter prepared (cog)");
+
   }
   
   // loop over the chargegroups

@@ -31,7 +31,7 @@ namespace interaction
     template<typename t_nonbonded_interaction>
     void update(t_simulation &sim, t_nonbonded_interaction &nonbonded_interaction);
     
-  private:
+  protected:
 
     template<typename t_nonbonded_interaction>
     void do_cg_interaction(t_simulation & sim,
