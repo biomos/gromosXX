@@ -2,8 +2,26 @@
  * @file debug.h
  * define debug macros.
  */
- /**
- * @page debug Debug Levels
+
+/**
+ * @page debug Debug
+ *
+ * @section Verbosity
+ * To get debug messages a verbosity arguments has to be specified.
+ * It is possible to set specific verbosity levels for each different
+ * module and submodule.
+ * The verbosity specified for a module is added to the general verbosity,
+ * the one for a submodule to the verbosity of its parent module.
+ * Negative verbosities are allowed.
+ * 
+ * <span style="font-size:larger"><b>
+ * @verbatim  @verb 5 interaction:2 interaction:pairlist:-5 @endverbatim
+ * </b></span><br>
+ * This generally enables all debug messages with a level of less or equal to 5.
+ * In the interaction module, debug messages with a level of less or equal to 7 are printed,
+ * but for the submodule interaction:pairlist only the ones with a level of less or equal to 2.
+ *
+ * @section deblevels Debug Levels
  *  -  0: no output
  *  -  1: important program decisions
  *  -  2: important program path
@@ -17,14 +35,49 @@
  *  - 10 : everything
  *  - 15 : even the ridiculous
  *
- * every file that uses it has to first
- * #define MODULE to the namespace name
- * #define SUBMODULE to the subdirectory in the namespace
- * #include debug.h (../../debug.h usually)
- * add the appropriate variables to namespace.h, namespace.cc
- * add the external statements to debug.h
+ * @section debmodules Debug Modules
+ * - math
+ * - interaction
+ *   - forcefield
+ *   - interaction
+ *   - pairlist
+ *   - bonded
+ *   - nonbonded
+ *   - special
+ * - io
+ *   - configuration
+ *   - parameter
+ *   - topology
+ *   - forcefield
+ * - configuration
+ *   - configuration
+ *   - energy
+ * - topology
+ * - algorithm
+ *   - algorithm
+ *   - constraints
+ *   - temperature
+ *   - pressure
+ *   - integration
+ * - simulation
+ * - util
  *
- * all the programs have to #include debug.cc.
+ * @section Coding
+ * in every file MODULE and SUBMODULE have to be defined
+ * 
+ * <span style="font-size:larger"><b>
+ @verbatim #define MODULE module_name
+ #define SUBMODULE submodule_name @endverbatim
+ * </b></span><br>
+ * and debug.h has to be included.
+ *
+ * To print out a debug message (if the appropriate verbosity
+ * is selected), just use:<br>
+ * <span style="font-size:larger"><b>
+ @verbatim  DEBUG(level, "message var=" << var); @endverbatim
+ * </b></span>
+ * <br>
+ *
  */
 
 #undef DEBUG
