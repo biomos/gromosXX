@@ -30,6 +30,28 @@ interaction::Forcefield::~Forcefield()
   }
 }
 
+interaction::Interaction * interaction::Forcefield
+::interaction(std::string name)
+{
+  for(iterator it = begin(), to = end();
+      it != to;
+      ++it){
+    if ((*it)->name == name) return *it;
+  }
+  return NULL;
+}
+
+interaction::Interaction const * interaction::Forcefield
+::interaction(std::string name)const
+{
+  for(const_iterator it = begin(), to = end();
+      it != to;
+      ++it){
+    if ((*it)->name == name) return *it;
+  }
+  return NULL;
+}
+
 int interaction::Forcefield
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,

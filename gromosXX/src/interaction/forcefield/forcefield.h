@@ -53,6 +53,16 @@ namespace interaction
     
     virtual void print_timing(std::ostream & os);
 
+    /**
+     * const interaction accessor.
+     */
+    Interaction const * interaction(std::string name)const;
+
+    /**
+     * interaction accessor.
+     */
+    Interaction * interaction(std::string name);
+    
   protected:
 
   };
