@@ -5,6 +5,8 @@ include_HEADERS = 		simulation.h \
 				simulation/simulation.tcc \
 				simulation/nonbonded.h \
 				simulation/nonbonded.tcc \
+				simulation/multibath.h \
+				simulation/multibath.tcc \
 				system/system.h \
 				system/system.tcc \
 				topology/bond.h \

@@ -84,6 +84,21 @@ inline bool operator!=(math::Vec &t1, math::Vec &t2)
   return !(t1 == t2);
 }
 
+/**
+ * dot product of two arrays
+ */
+/*
+inline SArray dot(VArray const &v1, VArray const &v2)
+{
+ assert(v1.size() == v2.size());
+ SArray s(v1.size());
+ for(int i=0; i<v1.size(); ++i)
+   s(i) = dot(v1(i), v2(i));
+ 
+ return s;
+}
+*/
+
 } // math
 
 #include "boundary_implementation.h"

@@ -6,7 +6,9 @@ include_HEADERS = 		algorithm.h \
 				integration/runge_kutta.h \
 				integration/runge_kutta.tcc \
 				constraint/shake.h \
-				constraint/shake.tcc
+				constraint/shake.tcc \
+				temperature/berendsen.h \
+				temperature/berendsen.tcc
 
 lib_LTLIBRARIES	= 		libalgorithm.la
 

@@ -79,10 +79,19 @@ inline math::VArray & simulation::System<b>::vel()
 }
 
 /**
- * old velocity accessor
+ * const old velocity accessor
  */
 template<math::boundary_enum b>
 inline math::VArray const & simulation::System<b>::old_vel()const
+{
+  return *m_old_vel;
+}
+
+/**
+ * old velocity accessor
+ */
+template<math::boundary_enum b>
+inline math::VArray & simulation::System<b>::old_vel()
 {
   return *m_old_vel;
 }

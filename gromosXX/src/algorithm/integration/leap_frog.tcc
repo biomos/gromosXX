@@ -5,10 +5,20 @@
  */
 
 /**
+ * Constructor.
+ */
+template<typename t_simulation, typename t_thermostat>
+algorithm::Leap_Frog<t_simulation, t_thermostat>
+::Leap_Frog()
+  : m_thermostat()
+{
+}
+
+/**
  * Leap frog step.
  */
-template<typename t_simulation>
-void algorithm::leap_frog<t_simulation>
+template<typename t_simulation, typename t_thermostat>
+void algorithm::Leap_Frog<t_simulation, t_thermostat>
 ::step(t_simulation &sim,
        interaction::Forcefield<t_simulation> &ff,
        double const dt)
@@ -18,6 +28,9 @@ void algorithm::leap_frog<t_simulation>
   ff.calculate_interactions(sim);
   
   velocities(sim.system(), sim.topology(), dt);
+
+  m_thermostat.apply(sim, dt);
+
   positions(sim.system(), dt);
   
 }
@@ -25,8 +38,8 @@ void algorithm::leap_frog<t_simulation>
 /**
  * Leap frog velocities
  */
-template<typename t_simulation>
-void algorithm::leap_frog<t_simulation>
+template<typename t_simulation, typename t_thermostat>
+void algorithm::Leap_Frog<t_simulation, t_thermostat>
 ::velocities(typename t_simulation::system_type &sys,
 	     typename t_simulation::topology_type &topo,
 	     double const dt)
@@ -39,8 +52,8 @@ void algorithm::leap_frog<t_simulation>
 /**
  * Leap frog positions
  */
-template<typename t_simulation>
-void algorithm::leap_frog<t_simulation>
+template<typename t_simulation, typename t_thermostat>
+void algorithm::Leap_Frog<t_simulation, t_thermostat>
 ::positions(typename t_simulation::system_type &sys,
 	    double const dt)
 {

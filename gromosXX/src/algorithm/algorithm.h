@@ -3,6 +3,7 @@
  * gathers common include directives for algorithm
  */
 
+#include "temperature/berendsen.h"
 #include "integration/leap_frog.h"
 #include "constraint/shake.h"
 

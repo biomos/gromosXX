@@ -17,32 +17,43 @@ namespace algorithm
    * @class leap_frog
    * implements the leap frog algorithm.
    */
-  template<typename t_simulation>
-  class leap_frog
+  template<typename t_simulation,
+	   typename t_thermostat = algorithm::Berendsen_Thermostat>
+  class Leap_Frog
   {
   public:
     typedef t_simulation simulation_type;
     
     /**
+     * Constructor.
+     */
+    Leap_Frog();
+    
+    /**
      * Leap frog step.
      */
-    static void step(t_simulation &sim,
-		     interaction::Forcefield<t_simulation> &ff, 
-		     double const dt);
+    void step(t_simulation &sim,
+	      interaction::Forcefield<t_simulation> &ff, 
+	      double const dt);
 
   protected:
     /**
      * Leap frog velocities.
      */
-    static void velocities(typename t_simulation::system_type &sys,
-			   typename t_simulation::topology_type &topo,
-			   double const dt);
+    void velocities(typename t_simulation::system_type &sys,
+		    typename t_simulation::topology_type &topo,
+		    double const dt);
     
     /**
      * Leap frog positions.
      */
-    static void positions(typename t_simulation::system_type &sys,
-			  double const dt);
+    void positions(typename t_simulation::system_type &sys,
+		   double const dt);
+    
+    /**
+     * The thermostat.
+     */
+    t_thermostat m_thermostat;
 
   };
   

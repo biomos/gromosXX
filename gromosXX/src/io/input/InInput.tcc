@@ -158,8 +158,8 @@ inline io::InInput & io::InInput
 	int nsm;
 	read_SYSTEM(nsm);
 
-	// the last solute atom
-	int last_solute = sim.topology().num_solute_atoms();
+	// the last solute atom (and really the last index)
+	int last_solute = sim.topology().num_solute_atoms() - 1;
 	// the last solvent atom
 	int last_solvent = sim.topology().solvent(0).num_atoms() * nsm + last_solute;
 
@@ -168,8 +168,8 @@ inline io::InInput & io::InInput
 	if (ntt[0] == 0 && ntt[1] == 0 && ntt[2] == 0){
 	  // nothing
 	}
-	// 2 2 0
-	else if (ntt[0] == 2 && ntt[1] == 2 && ntt[2] == 0){
+	// 2 -2 0
+	else if (ntt[0] == 2 && ntt[1] == -2 && ntt[2] == 0){
 	  sim.multibath().add_bath(last_solute, temp[0], tau[0]);
 	}
 	// 2 -2 1

@@ -40,9 +40,13 @@ namespace simulation
      */
     math::VArray &vel();
     /**
-     * old velocity
+     * const old velocity
      */
     math::VArray const &old_vel()const;
+    /**
+     * old velocity
+     */
+    math::VArray & old_vel();
     /**
      * force accessor
      */

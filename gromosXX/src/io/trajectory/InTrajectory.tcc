@@ -81,6 +81,8 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       vel_read = _read_velocity(sys.vel(), buffer);
+      sys.old_vel() = sys.vel();
+
       DEBUG(10, "\tVELOCITY read");
     }
     
@@ -90,6 +92,8 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       vel_read = _read_velocityred(sys.vel(), buffer);
+      sys.old_vel() = sys.vel();
+      
       DEBUG(10, "\tVELOCITYRED read");
     }
 

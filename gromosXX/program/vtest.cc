@@ -147,6 +147,7 @@ int main(int argc, char *argv[])
     input.read_SHAKE(ntc, tolerance);
 
     algorithm::runge_kutta<simulation_type> RK;
+    algorithm::Leap_Frog<simulation_type> LF;
     algorithm::Shake<simulation_type> shake(tolerance);
 
     // prepare for the run
@@ -206,9 +207,8 @@ int main(int argc, char *argv[])
 
       if (runge_kutta)
 	RK.step(the_simulation, the_forcefield, dt);
-      else
-	algorithm::leap_frog<simulation_type>
-	  ::step(the_simulation, the_forcefield, dt);
+      else // leap frog
+	LF.step(the_simulation, the_forcefield, dt);
   
       if (print_energy && the_simulation.steps() % print_energy == 0){
 	std::cout << the_simulation.multibath();
