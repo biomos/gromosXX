@@ -61,29 +61,36 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   interaction::Forcefield *ff = new interaction::Forcefield;
   interaction::create_g96_forcefield(*ff, topo, sim.param(), it);
 
+  //==================================================
   // construct the md algorithm
+  //==================================================
+
+  // center of mass removal
   algorithm::Remove_COM_Motion * rcom =
     new algorithm::Remove_COM_Motion;
   
   if (sim.param().centreofmass.remove_trans ||
-      sim.param().centreofmass.remove_trans)
+      sim.param().centreofmass.remove_rot)
     md_seq.push_back(rcom);
   else{
     rcom->apply(topo, conf, sim);
     delete rcom;
   }
   
+  // add the forcefield
   md_seq.push_back(ff);
 
+  // energy minimisation or MD?
   if (sim.param().minimise.ntem == 1){
-    md_seq.push_back(new algorithm::Steepest_Descent);
+    algorithm::Steepest_Descent * sd = new algorithm::Steepest_Descent;
+    sd->init(topo, conf, sim);
+    md_seq.push_back(sd);
   }
   else{
     md_seq.push_back(new algorithm::Leap_Frog_Velocity);
 
     // temperature scaling? -> has to be done before temperature calculation!!!
     if (sim.param().multibath.couple){
-      
       algorithm::Berendsen_Thermostat * tcoup =
 	new algorithm::Berendsen_Thermostat;
       md_seq.push_back(tcoup);
@@ -107,7 +114,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     io::print_DEGREESOFFREEDOM(std::cout, sim.multibath());
     
     io::print_MULTIBATH(std::cout, sim.multibath(),
-			conf.old().energies);
+			conf.old().energies,
+			"INITIAL TEMPERATURES");
 
 
     DEBUG(7, tcalc->name);
@@ -137,12 +145,31 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
 
   // slow growth
-  if (sim.param().perturbation.perturbation &&
-      sim.param().perturbation.dlamt){
-    algorithm::Slow_Growth *sg =
-      new algorithm::Slow_Growth;
-    md_seq.push_back(sg);
+  if (sim.param().perturbation.perturbation){
+    if (sim.param().perturbation.dlamt){
+      algorithm::Slow_Growth *sg =
+	new algorithm::Slow_Growth;
+      md_seq.push_back(sg);
+    }
+    
+    std::cout << "PERTURBATION\n"
+	      << "\tlambda         : " << sim.param().perturbation.lambda << "\n"
+	      << "\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
+	      << "\tdlambda        : " << sim.param().perturbation.dlamt << "\n"
+	      << "\tscaling        : ";
+
+    if (sim.param().perturbation.scaling){
+      if (sim.param().perturbation.scaled_only)
+	std::cout << "perturbing only scaled interactions\n";
+      else
+	std::cout << "on\n";
+    }
+    else
+      std::cout << "off\n";
+    std::cout << "END\n";
   }
+  else
+    std::cout << "PERTURATION OFF\n";
   
   return 0;
 

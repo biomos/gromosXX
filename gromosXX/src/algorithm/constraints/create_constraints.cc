@@ -89,8 +89,29 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	it.read_harmonic_bonds(s->parameter());
 	s->init(topo, conf, sim);
 	md_seq.push_back(s);
-	
+
+	if (sim.param().perturbation.perturbation){
+	  io::messages.add("no free energy derivatives for LINCS, so you better don't "
+			   "change constrained bond lengths", "create_constraints",
+			   io::message::warning);
+	}
 	break;
+      }
+    case simulation::constr_flexshake:
+      {
+	algorithm::Flexible_Constraint<do_virial> * fs = 
+	  new algorithm::Flexible_Constraint<do_virial>
+	  (sim.param().constraint.solute.shake_tolerance);
+	it.read_harmonic_bonds(fs->parameter());
+	fs->init(topo, conf, sim);
+	md_seq.push_back(fs);
+
+	if (sim.param().perturbation.perturbation){
+	  io::messages.add("no free energy derivatives for flexible Constraints, "
+			   "so you better don't change constrained bond lengths", 
+			   "create_constraints",
+			   io::message::warning);
+	}
       }
     default:
       {
@@ -114,12 +135,6 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	s->init(topo, conf, sim);
 	md_seq.push_back(s);
 	
-	if (sim.param().perturbation.perturbation){
-	  algorithm::Perturbed_Shake<do_virial> * ps =
-	    new algorithm::Perturbed_Shake<do_virial>(*s);
-	  ps->init(topo, conf, sim);
-	  md_seq.push_back(ps);
-	}
 	break;
       }
     case simulation::constr_lincs:
@@ -130,6 +145,12 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	s->init(topo, conf, sim);
 	md_seq.push_back(s);
 	
+	break;
+      }
+    case simulation::constr_flexshake:
+      {
+	io::messages.add("Flexible Shake not implemented for solvent",
+			 "create_constraints", io::message::error);
 	break;
       }
     default:
@@ -165,6 +186,12 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence & md_seq,
     case math::atomic_virial:
       {
 	DEBUG(8, "\twith atomic virial");
+
+	if (sim.param().constraint.solute.algorithm == simulation::constr_lincs){
+	  io::messages.add("atomic virial not implemented for lincs",
+			   "create_constraints",
+			   io::message::error);
+	}
 	
 	return _create_constraints<math::atomic_virial>(md_seq, topo, conf, sim, it);
       }

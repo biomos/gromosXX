@@ -185,6 +185,43 @@ static void _add_nonbonded(interaction::Forcefield & ff,
   DEBUG(9, "\t\tperturbation : on");
   DEBUG(9, "\t\tscaling : " << param.perturbation.scaling);
   DEBUG(9, "\t\tstandard pairlist");
+
+  std::cout << "\tnonbonded interaction\n"
+	    << "\t\tperturbation      : on\n"
+	    << "\t\tscaling           : ";
+  if (param.perturbation.scaling)
+    std::cout << "on\n";
+  else
+    std::cout << "off\n";
+  
+  std::cout << "\t\tvirial            : ";
+  
+  switch(t_virial){
+    case math::no_virial:
+      std::cout << "off\n";
+      break;
+    case math::molecular_virial:
+      std::cout << "molecular\n";
+      break;
+    case math::atomic_virial:
+      std::cout << "atomic\n";
+      break;
+  }
+
+  std::cout << "\t\tcutoff            : ";
+  if(t_cutoff)
+    std::cout << "atomic\n";
+  else
+    std::cout << "chargegroup\n";
+
+  if (param.longrange.rf_excluded)
+    std::cout << "\t\treaction field contributions from excluded atoms added\n";
+  else
+    std::cout << "\t\tno reaction field contributions from excluded atoms\n";
+
+  std::cout << "\t\tstandard pairlist\n";
+
+  std::cout << "\n";
   
   if (param.perturbation.scaling){
     typedef interaction::Perturbed_Nonbonded_Interaction

@@ -963,7 +963,7 @@ void io::Out_Configuration
 {
   m_output << "\n============================================================\n";
   m_output << "FINAL DATA\n";
-  m_output << "============================================================\n";
+  m_output << "============================================================\n\n\n";
   
   m_output << "\tsimulation time  :" << std::setw(10) << sim.time() << "\n"
 	   << "\tsimulation steps :" << std::setw(10) << sim.steps() << "\n\n";

@@ -90,10 +90,12 @@ io::In_Topology::read(topology::Topology& topo,
     _lineStream >> num;
     ++it;
     
-    for(n=0; n<10; ++n)
-      std::cout << std::setw(8) << n+1;
-    std::cout << "\n\t";
-
+    if (num > 10){
+      for(n=0; n<10; ++n)
+	std::cout << std::setw(8) << n+1;
+      std::cout << "\n\t";
+    }
+    
     for(n=0; it != buffer.end() - 1; ++it, ++n){
       std::string s;
       _lineStream.clear();

@@ -83,9 +83,9 @@ void interaction::create_g96_nonbonded(interaction::Forcefield & ff,
     else{
 
       if (param.pairlist.grid)
-	create_g96_perturbed_grid(ff, topo, param, it);
+	create_g96_unperturbed_grid(ff, topo, param, it);
       else
-	create_g96_perturbed(ff, topo, param, it);
+	create_g96_unperturbed(ff, topo, param, it);
 
     }
   }

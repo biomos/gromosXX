@@ -34,6 +34,15 @@ namespace algorithm
 		      configuration::Configuration &conf,
 		      simulation::Simulation &sim);
 
+    /**
+     * init an algorithm
+     * print out input parameter, what it does...
+     */
+    virtual int init(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim);
+    
+
   };
   
 } // algorithm

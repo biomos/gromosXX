@@ -30,6 +30,23 @@
  * steepest descent step.
  */
 int algorithm::Steepest_Descent
+::init(topology::Topology & topo,
+       configuration::Configuration & conf,
+       simulation::Simulation &sim)
+{
+  std::cout << "ENERGY MINIMISATION\n"
+	    << "\tsteepest descent\n"
+	    << "\tminimum energy criterion : " << sim.param().minimise.dele << "\n"
+	    << "\tstarting step size       : " << sim.param().minimise.dx0 << "\n"
+	    << "\tmaximum step size        : " << sim.param().minimise.dxm << "\n"
+	    << "END\n";
+  return 0;
+}
+
+/**
+ * steepest descent step.
+ */
+int algorithm::Steepest_Descent
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation &sim)

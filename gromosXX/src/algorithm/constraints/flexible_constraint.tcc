@@ -6,7 +6,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
-#define SUBMODULE constraint
+#define SUBMODULE constraints
 
 #include <util/debug.h>
 
@@ -45,9 +45,9 @@ template<math::virial_enum do_virial, math::boundary_enum b>
 static int _flexible_shake(topology::Topology const &topo,
 			   configuration::Configuration & conf,
 			   bool & convergence,
-			   std::vector<double> flex_len,
-			   std::vector<bool> &skip_now,
-			   std::vector<bool> &skip_next,
+			   std::vector<double> & flex_len,
+			   std::vector<bool> & skip_now,
+			   std::vector<bool> & skip_next,
 			   double const dt,
 			   math::Periodicity<b> const & periodicity,
 			   double const tolerance,
@@ -70,11 +70,11 @@ static int _flexible_shake(topology::Topology const &topo,
     // check whether we can skip this constraint
     if (skip_now[it->i] && skip_now[it->j]) continue;
 
-    DEBUG(10, "i: " << it->i << " j: " << it->j << " first: " << first);
+    DEBUG(10, "i: " << it->i << " j: " << it->j);
 
     // the position
-    math::Vec &pos_i = conf.current().pos(first+it->i);
-    math::Vec &pos_j = conf.current().pos(first+it->j);
+    math::Vec &pos_i = conf.current().pos(it->i);
+    math::Vec &pos_j = conf.current().pos(it->j);
 
     DEBUG(10, "\ni: " << pos_i << "\nj: " << pos_j);
 	
@@ -92,8 +92,8 @@ static int _flexible_shake(topology::Topology const &topo,
       DEBUG(10, "flexible shaking");
       
       // the reference position
-      const math::Vec &ref_i = conf.old().pos(first+it->i);
-      const math::Vec &ref_j = conf.old().pos(first+it->j);
+      const math::Vec &ref_i = conf.old().pos(it->i);
+      const math::Vec &ref_j = conf.old().pos(it->j);
       
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
@@ -114,7 +114,6 @@ static int _flexible_shake(topology::Topology const &topo,
 	std::cout << "FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
 		  << "\tatom i    : " << it->i << "\n"
 		  << "\tatom j    : " << it->j << "\n"
-		  << "\tfirst     : " << first << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
 		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
@@ -124,20 +123,20 @@ static int _flexible_shake(topology::Topology const &topo,
 		  << "\tsp        : " << sp << "\n"
 		  << "\tconstr    : " << constr_length2 << "\n"
 		  << "\tdiff      : " << diff << "\n"
-		  << "\tforce i   : " << math::v2s(conf.old().force(first+it->i)) << "\n"
-		  << "\tforce j   : " << math::v2s(conf.old().force(first+it->j)) << "\n"
-		  << "\tvel i     : " << math::v2s(conf.current().vel(first+it->i)) << "\n"
-		  << "\tvel j     : " << math::v2s(conf.current().vel(first+it->j)) << "\n"
-		  << "\told vel i : " << math::v2s(conf.old().vel(first+it->i)) << "\n"
-		  << "\told vel j : " << math::v2s(conf.old().vel(first+it->j)) << "\n\n";
+		  << "\tforce i   : " << math::v2s(conf.old().force(it->i)) << "\n"
+		  << "\tforce j   : " << math::v2s(conf.old().force(it->j)) << "\n"
+		  << "\tvel i     : " << math::v2s(conf.current().vel(it->i)) << "\n"
+		  << "\tvel j     : " << math::v2s(conf.current().vel(it->j)) << "\n"
+		  << "\told vel i : " << math::v2s(conf.old().vel(it->i)) << "\n"
+		  << "\told vel j : " << math::v2s(conf.old().vel(it->j)) << "\n\n";
 	
 	return E_SHAKE_FAILURE;
       }
 	  
       // lagrange multiplier
       double lambda = diff / (sp * 2 *
-			      (1.0 / topo.mass()(first+it->i) +
-			       1.0 / topo.mass()(first+it->j) ));      
+			      (1.0 / topo.mass()(it->i) +
+			       1.0 / topo.mass()(it->j) ));      
 
       DEBUG(10, "lagrange multiplier " << lambda);
 
@@ -163,8 +162,8 @@ static int _flexible_shake(topology::Topology const &topo,
       
       // update positions
       ref_r *= lambda;
-      pos_i += ref_r / topo.mass()(first+it->i);
-      pos_j -= ref_r / topo.mass()(first+it->j);
+      pos_i += ref_r / topo.mass()(it->i);
+      pos_j -= ref_r / topo.mass()(it->j);
 	  
       convergence = false;
 
@@ -182,9 +181,10 @@ static int _flexible_shake(topology::Topology const &topo,
 
 template<math::virial_enum do_virial, math::boundary_enum b>
 static void _calc_distance(topology::Topology const &topo,
-			   configuration::Configuration const & conf,
+			   configuration::Configuration & conf,
 			   simulation::Simulation const & sim,
-			   std::vector<double> & flex_len)
+			   std::vector<interaction::bond_type_struct> const & param,
+			   std::vector<double> & flex_len, double const dt)
 {
   flex_len.clear();
 
@@ -192,6 +192,8 @@ static void _calc_distance(topology::Topology const &topo,
 
   //loop over all constraints
   size_t k = 0;
+  size_t com, ir;
+  
   for(std::vector<topology::two_body_term_struct>::const_iterator
 	it = topo.solute().distance_constraints().begin(),
 	to = topo.solute().distance_constraints().end();
@@ -199,11 +201,11 @@ static void _calc_distance(topology::Topology const &topo,
       ++it, ++k){
     
     // the position
-    assert(conf.current().pos.size() > it->i);
-    assert(conf.current().pos.size() > it->j);
+    assert(conf.current().pos.size() > int(it->i));
+    assert(conf.current().pos.size() > int(it->j));
     
-    math::Vec &pos_i = conf.current().pos(it->i);
-    math::Vec &pos_j = conf.current().pos(it->j);
+    math::Vec const & pos_i = conf.current().pos(it->i);
+    math::Vec const & pos_j = conf.current().pos(it->j);
 	
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
@@ -211,8 +213,8 @@ static void _calc_distance(topology::Topology const &topo,
     // unconstrained distance
     const double dist2 = dot(r, r);
     
-    assert(conf.old().pos.size() > it->i);
-    assert(conf.old().pos.size() > it->j);
+    assert(conf.old().pos.size() > int(it->i));
+    assert(conf.old().pos.size() > int(it->j));
 
     const math::Vec &ref_i = conf.old().pos(it->i);
     const math::Vec &ref_j = conf.old().pos(it->j);
@@ -225,8 +227,8 @@ static void _calc_distance(topology::Topology const &topo,
 
     // standard formula with velocity along contsraints correction
     // (not the velocityless formula):
-    assert(topo.mass().size() > it->i);
-    assert(topo.mass().size() > it->j);
+    assert(topo.mass().size() > int(it->i));
+    assert(topo.mass().size() > int(it->j));
 
     const double red_mass = 1 / (1/topo.mass()(it->i) + 1/topo.mass()(it->j));
     const double dt2 = dt * dt;
@@ -247,7 +249,8 @@ static void _calc_distance(topology::Topology const &topo,
     // const double constr_length2 = param(it->type).r0 * param(it->type).r0;
     
     // calculate the flexible constraint distance
-    const double new_len = force_on_constraint / param(it->type).K + param(it->type).r0;
+    const double new_len = force_on_constraint / param[it->type].K + 
+      param[it->type].r0;
     
     // store for shake
     flex_len.push_back(new_len);
@@ -259,7 +262,7 @@ static void _calc_distance(topology::Topology const &topo,
     // length change in the correct temperature bath...
     sim.multibath().in_bath(it->i, com, ir);
 
-    conf.special().flex_ekin[ir] +=
+    conf.special().flexible_ekin[ir] +=
       0.5 * red_mass * conf.special().flexible_vel[k] *
       conf.special().flexible_vel[k];
 
@@ -270,8 +273,8 @@ static void _calc_distance(topology::Topology const &topo,
 
     // calculate Epot in the bond length constraints
     conf.special().flexible_epot += 
-      0.5 * param(it->type).K * (param(it->type).r0 - new_len) * 
-      (param(it->type).r0 - new_len);
+      0.5 * param[it->type].K * (param[it->type].r0 - new_len) * 
+      (param[it->type].r0 - new_len);
       
     DEBUG(5, "flex_constraint_distance: " << new_len);
     
@@ -285,6 +288,7 @@ static void _calc_distance(topology::Topology const &topo,
 template<math::virial_enum do_virial, math::boundary_enum b>
 static int _flexible_solute(topology::Topology const & topo,
 			    configuration::Configuration & conf,
+			    simulation::Simulation & sim,
 			    std::vector<interaction::bond_type_struct> const & param,
 			    double dt, int const max_iterations,
 			    double const tolerance,
@@ -297,7 +301,7 @@ static int _flexible_solute(topology::Topology const & topo,
   math::Periodicity<b> periodicity(conf.current().box);
   
   std::vector<double> flex_len;
-  _calc_distance(topo, conf, sim, flex_len);
+  _calc_distance<do_virial, b>(topo, conf, sim, param, flex_len, dt);
 
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
@@ -308,8 +312,6 @@ static int _flexible_solute(topology::Topology const & topo,
   std::vector<bool> skip_next;
   int num_iterations = 0;
 
-  int first = 0;
-
   skip_now.assign(topo.solute().num_atoms(), false);
   skip_next.assign(topo.solute().num_atoms(), true);
   
@@ -318,8 +320,8 @@ static int _flexible_solute(topology::Topology const & topo,
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
     if(_flexible_shake<do_virial, b>
-       (topo, conf, convergence, first, skip_now, skip_next,
-	topo.solute().distance_constraints(), param, dt,
+       (topo, conf, convergence, flex_len, skip_now, skip_next,
+	dt,
 	periodicity, tolerance, true)
        ){
       io::messages.add("Flexible SHAKE error. vectors orthogonal",
@@ -371,23 +373,24 @@ int algorithm::Flexible_Constraint<do_virial>
   
   // check whether we shake
   if (topo.solute().distance_constraints().size() && 
-      sim.param().shake.ntc > 1){
+      sim.param().constraint.solute.algorithm == simulation::constr_flexshake &&
+      sim.param().constraint.ntc > 1){
     DEBUG(8, "\twe need to flexible shake SOLUTE");
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
 	error = _flexible_solute<do_virial, math::vacuum>
-	  (topo, conf, parameter(), sim.time_step_size(), 
+	  (topo, conf, sim, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::rectangular:
 	error = _flexible_solute<do_virial, math::rectangular>
-	  (topo, conf, parameter(), sim.time_step_size(), 
+	  (topo, conf, sim, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::triclinic:
 	error = _flexible_solute<do_virial, math::triclinic>
-	  (topo, conf, parameter(), sim.time_step_size(),
+	  (topo, conf, sim, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       default:

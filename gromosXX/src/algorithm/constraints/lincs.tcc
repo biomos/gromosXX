@@ -251,6 +251,7 @@ int algorithm::Lincs<do_virial>
     }
   }
 
+  // SOLVENT
   if (sim.param().system.nsm &&
       sim.param().constraint.solvent.algorithm == simulation::constr_lincs){
 
@@ -351,6 +352,20 @@ int algorithm::Lincs<do_virial>
        configuration::Configuration & conf,
        simulation::Simulation & sim)
 {
+  std::cout << "LINCS\n"
+	    << "\tsolute\t";
+  if (sim.param().constraint.solute.algorithm == simulation::constr_lincs)
+    std::cout << "ON\n";
+  else std::cout << "OFF\n";
+  
+  std::cout << "\t\torder = " << sim.param().constraint.solute.lincs_order << "\n";
+  
+  std::cout << "\tsolvent\t";
+  if (sim.param().constraint.solvent.algorithm == simulation::constr_lincs)
+    std::cout << "ON\n";
+  else std::cout << "OFF\n";
+  
+  std::cout << "\t\torder = " << sim.param().constraint.solvent.lincs_order << "\n";
 
   // setup lincs
   DEBUG(8, "setting up lincs");
@@ -375,7 +390,7 @@ int algorithm::Lincs<do_virial>
   //================================================================================
 
   if (sim.param().start.shake_pos){
-    std::cout << "shaking (lincs) initial positions\n";
+    std::cout << "\n\tshaking (lincs) initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -391,7 +406,7 @@ int algorithm::Lincs<do_virial>
     conf.old().pos = conf.current().pos;
     
     if (sim.param().start.shake_vel){
-      std::cout << "shaking(lincs) initial velocities\n";
+      std::cout << "\tshaking(lincs) initial velocities\n";
 
       conf.current().pos = conf.old().pos - 
 	sim.time_step_size() * conf.old().vel;
@@ -413,6 +428,8 @@ int algorithm::Lincs<do_virial>
 		     "lincs", io::message::error);
   }
   
+  std::cout << "END\n";
+
   return 0;
 }
 

@@ -18,7 +18,7 @@ namespace io
    */
   void print_MULTIBATH(std::ostream &os, simulation::Multibath const &bath,
 		       configuration::Energy const &energy,
-		       std::string title="MULTIBATH");
+		       std::string title="TEMPERATURES");
 
   /** 
    * Print the DEGREES OF FREEDOM block.

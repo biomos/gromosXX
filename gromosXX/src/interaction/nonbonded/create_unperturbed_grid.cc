@@ -186,6 +186,38 @@ static void _add_grid_nonbonded(interaction::Forcefield & ff,
   DEBUG(9, "\t\tscaling      : off");
   DEBUG(9, "\t\tgrid based pairlist");
 
+  std::cout << "\tnonbonded interaction\n"
+	    << "\t\tperturbation      : off\n"
+	    << "\t\tscaling           : off\n"
+	    << "\t\tvirial            : ";
+  
+  switch(t_virial){
+    case math::no_virial:
+      std::cout << "off\n";
+      break;
+    case math::molecular_virial:
+      std::cout << "molecular\n";
+      break;
+    case math::atomic_virial:
+      std::cout << "atomic\n";
+      break;
+  }
+
+  std::cout << "\t\tcutoff            : ";
+  if(t_cutoff)
+    std::cout << "atomic\n";
+  else
+    std::cout << "chargegroup\n";
+
+  if (param.longrange.rf_excluded)
+    std::cout << "\t\treaction field contributions from excluded atoms added\n";
+  else
+    std::cout << "\t\tno reaction field contributions from excluded atoms\n";
+
+  std::cout << "\t\tgrid based pairlist\n";
+
+  std::cout << "\n";
+
   typedef interaction::Nonbonded_Interaction
     < 
     interaction::Grid_Interaction_Spec

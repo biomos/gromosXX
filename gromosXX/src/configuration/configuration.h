@@ -95,15 +95,26 @@ namespace configuration
        * relative molecular com position
        */
       math::VArray rel_mol_com_pos;
-      /**
-       * the molecular kinetic energy.
-       */
-      // math::Matrix molecular_kinetic_energy;
 
       /**
        * the dihedral angle minima for monitoring
        */
       std::vector<double> dihedral_angle_minimum;
+
+      /**
+       * flexible constraints velocity.
+       */
+      std::vector<double> flexible_vel;
+      
+      /**
+       * flexible constraints kinetic energy.
+       */
+      std::vector<double> flexible_ekin;
+      
+      /**
+       * flexible constraints potential energy.
+       */
+      double flexible_epot;
       
     };
     

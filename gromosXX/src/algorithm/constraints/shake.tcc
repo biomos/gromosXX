@@ -337,9 +337,6 @@ static int solvent(topology::Topology const & topo,
   
 } // shake solvent
 
-
-
-
 /**
  * apply the SHAKE algorithm
  */
@@ -441,9 +438,23 @@ int algorithm::Shake<do_virial>
        configuration::Configuration & conf,
        simulation::Simulation & sim)
 {
+  std::cout << "SHAKE\n"
+	    << "\tsolute\t";
+  if (sim.param().constraint.solute.algorithm == simulation::constr_shake)
+    std::cout << "ON\n";
+  else std::cout << "OFF\n";
+  
+  std::cout << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
+  
+  std::cout << "\tsolvent\t";
+  if (sim.param().constraint.solvent.algorithm == simulation::constr_shake)
+    std::cout << "ON\n";
+  else std::cout << "OFF\n";
+  
+  std::cout << "\t\ttolerance = " << sim.param().constraint.solvent.shake_tolerance << "\n";
 
   if (sim.param().start.shake_pos){
-    std::cout << "shaking initial positions\n";
+    std::cout << "\n\tshaking initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -460,7 +471,7 @@ int algorithm::Shake<do_virial>
     conf.old().pos = conf.current().pos;
     
     if (sim.param().start.shake_vel){
-      std::cout << "shaking initial velocities\n";
+      std::cout << "\tshaking initial velocities\n";
 
       conf.current().pos = conf.old().pos - 
 	sim.time_step_size() * conf.old().vel;
@@ -482,6 +493,8 @@ int algorithm::Shake<do_virial>
     io::messages.add("shaking velocities without shaking positions illegal.",
 		     "shake", io::message::error);
   }
+  
+  std::cout << "END\n";
   
   return 0;
 }
