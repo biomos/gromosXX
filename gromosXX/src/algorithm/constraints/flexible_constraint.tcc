@@ -21,25 +21,12 @@ algorithm::Flexible_Constraint<do_virial>
     m_tolerance(tolerance),
     m_max_iterations(max_iterations)
 {
-  typedef interaction::Nonbonded_Interaction
-    < 
-    interaction::Interaction_Spec
-    < 
-    math::rectangular,
-    math::molecular_virial,
-    interaction::bekker_off
-    >,
-    interaction::Perturbation_Spec<
-    interaction::perturbation_off,
-    interaction::scaling_off>
-    >
-    nonbonded_type;
-  
+
   if (ff){
     for(size_t i=0; i<ff->size(); ++i){
       if ((*ff)[i]->name == "NonBonded"){
 	// we have a nonbonded, try to cast it
-	m_nonbonded = dynamic_cast<nonbonded_type *>((*ff)[i]);
+	m_nonbonded = (*ff)[i];
       }
     }
     
@@ -48,9 +35,7 @@ algorithm::Flexible_Constraint<do_virial>
 		       "Flexible_Constraint::Constructor",
 		       io::message::error);
     }
-    
   }
-
 }
 
 /**
@@ -563,13 +548,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
 				 double const dt,
 				 math::Periodicity<b> const & periodicity,
 				 double const tolerance,
-				 interaction::Nonbonded_Interaction
-				 <interaction::Interaction_Spec<
-				 math::rectangular, math::molecular_virial,
-				 interaction::bekker_off>, 
-				 interaction::Perturbation_Spec<interaction::perturbation_off,
-				 interaction::scaling_off> 
-				 > * nonbonded,
+				 interaction::Interaction * nonbonded,
 				 bool do_constraint_force = false)
 {
   convergence = true;

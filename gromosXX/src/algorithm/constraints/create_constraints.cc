@@ -38,47 +38,11 @@
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
 
-/*
-// nonbonded base
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
-
-// nonbonded pairlist
-#include <interaction/nonbonded/pairlist/pairlist.h>
-
-// nonbonded interaction
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
-#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
-#include <interaction/nonbonded/interaction/nonbonded_set.h>
-#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
-
-// nonbonded filter
-#include <interaction/nonbonded/filter/filter.h>
-#include <interaction/nonbonded/filter/exclusion_filter.h>
-#include <interaction/nonbonded/filter/chargegroup_grid.h>
-#include <interaction/nonbonded/filter/range_filter.h>
-
-// nonbonded pairlist algorithm
-#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
-
-
-// and the specs...
-#include <interaction/nonbonded/interaction_spec.h>
-*/
-
-
 #include <algorithm/constraints/shake.h>
 #include <algorithm/constraints/perturbed_shake.h>
 #include <algorithm/constraints/lincs.h>
-// #include <algorithm/constraints/flexible_constraint.h>
-// #include <algorithm/constraints/perturbed_flexible_constraint.h>
+#include <algorithm/constraints/flexible_constraint.h>
+#include <algorithm/constraints/perturbed_flexible_constraint.h>
 
 #include <io/print_block.h>
 
@@ -159,7 +123,6 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
       }
     case simulation::constr_flexshake:
       {
-	/*
 	// let's try to get the forcefield
 	interaction::Forcefield * ff = NULL;
 
@@ -172,7 +135,8 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	}
 
 	if (!ff){
-	  io::messages.add("no forcefield found", "create_constraints", io::message::error);
+	  io::messages.add("no forcefield found", "create_constraints",
+			   io::message::error);
 	}
 
 	algorithm::Flexible_Constraint<do_virial> * fs = 
@@ -191,11 +155,12 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  md_seq.push_back(pfc);
 
 	}
-	*/
 
+	/*
 	io::messages.add("flexible constraints disabled",
 			 "create_constraints",
 			 io::message::error);
+	*/
 
 	break;
       }

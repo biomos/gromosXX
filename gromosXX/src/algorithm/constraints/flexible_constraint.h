@@ -90,11 +90,9 @@ namespace algorithm
      * the nonbonded's for exact algorithm...
      * (only implemented for diatomic molecules...
      *  no bonded terms!)
+     * luckily only interface needed... (i sincerely hope so!)
      */
-    interaction::Nonbonded_Interaction<interaction::Interaction_Spec<
-      math::rectangular, math::molecular_virial, interaction::bekker_off>, 
-				       interaction::Perturbation_Spec<interaction::perturbation_off, interaction::scaling_off> 
-				       > * m_nonbonded;
+    interaction::Interaction * m_nonbonded;
 
   };
   
