@@ -34,7 +34,6 @@ namespace algorithm
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
-    
     /**
      * set the tolerance.
      */
@@ -125,6 +124,6 @@ namespace algorithm
 } //algorithm
 
 // template methods
-#include "shake.tcc"
+#include "shake.cc"
 
 #endif

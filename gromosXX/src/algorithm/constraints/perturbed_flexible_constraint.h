@@ -50,6 +50,6 @@ namespace algorithm
 } //algorithm
 
 // template methods
-#include "perturbed_flexible_constraint.tcc"
+#include "perturbed_flexible_constraint.cc"
 
 #endif

@@ -68,6 +68,6 @@ namespace algorithm
 } //algorithm
 
 // template methods
-#include "lincs.tcc"
+#include "lincs.cc"
 
 #endif

@@ -27,6 +27,10 @@ namespace algorithm
      */
     virtual ~Perturbed_Shake();
         
+    /**
+     * apply perturbed SHAKE
+     * (also calls SHAKE for the unperturbed bonds)
+     */
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
@@ -42,6 +46,9 @@ namespace algorithm
 
   protected:
 
+    /**
+     * do one iteration
+     */
     template<math::boundary_enum b>
     int perturbed_shake_iteration(topology::Topology const &topo,
 				  configuration::Configuration & conf,
@@ -57,23 +64,28 @@ namespace algorithm
 				  size_t force_offset = 0);
     
 
+    /**
+     * shake (perturbed) solute
+     */
     template<math::boundary_enum b>
     int perturbed_solute(topology::Topology const & topo,
 			 configuration::Configuration & conf,
 			 double dt, int const max_iterations);
 
     // overwrites the other one, as g++ seems unable to compile this...!!!
+    /**
+     * shake solvent (not perturbed)
+     */
     template<math::boundary_enum b>
     int solvent(topology::Topology const & topo,
 		configuration::Configuration & conf,
 		double dt, int const max_iterations);
-    
 
   };
   
 } //algorithm
 
 // template methods
-#include "perturbed_shake.tcc"
+#include "perturbed_shake.cc"
 
 #endif

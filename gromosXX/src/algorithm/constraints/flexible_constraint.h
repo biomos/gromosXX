@@ -96,9 +96,8 @@ namespace algorithm
 
   };
   
-  
 } // algorithm
 
-#include "flexible_constraint.tcc"
+#include "flexible_constraint.cc"
 
 #endif
