@@ -38,12 +38,17 @@ void math::Periodicity<b>
   math::VArray &pos = conf.current().pos;
   math::Vec v, v_box, trans;
 
+  DEBUG(10, "num cg = " << topo.num_chargegroups());
+  DEBUG(10, "num atoms = " << topo.num_atoms());
+  DEBUG(10, "pos.size() = " << pos.size());
+  
   topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
     cg_to = topo.chargegroup_end();
 
   // solute chargegroups...
   unsigned int i = 0;
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
+    DEBUG(11, "cg cog " << i);
     cg_it.cog(pos, v);
     // gather on first atom...
     // v = pos(*cg_it.begin());
@@ -55,6 +60,7 @@ void math::Periodicity<b>
     topology::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
     for( ; at_it != at_to; ++at_it){
+      assert(pos.size() > *at_it);
       pos(*at_it) += trans;
     } // loop over atoms
   } // loop over solute cg's
@@ -71,6 +77,7 @@ void math::Periodicity<b>
     topology::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
     for( ; at_it != at_to; ++at_it){
+      assert(pos.size() > *at_it);
       pos(*at_it) += trans;
     } // atoms
   } // solvent cg's
@@ -80,7 +87,7 @@ void math::Periodicity<b>
 template<math::boundary_enum b>
 void math::Periodicity<b>
 ::gather_molecules_into_box(configuration::Configuration & conf, 
-			    topology::Topology & topo)const
+			    topology::Topology const & topo)const
 {
   Vec cog, o, trans;
   o = 0.0;
@@ -101,6 +108,11 @@ void math::Periodicity<b>
     // using nearest image with respect to the previous atom!
     for(unsigned int a=topo.molecules()[i] + 1;
 	a < topo.molecules()[i+1]; ++a){
+
+      if (a > topo.num_atoms()){
+	io::messages.add("Periodicity", "(SUB)MOLECULE information wrong", io::message::critical);
+	exit(1);
+      }
 
       nearest_image(conf.current().pos(a), conf.current().pos(a-1), trans);
       DEBUG(12, "atom " << a << " pos " << math::v2s(conf.current().pos(a)));

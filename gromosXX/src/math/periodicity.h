@@ -40,7 +40,7 @@ namespace math
 				   topology::Topology const & topo )const;
 
     void gather_molecules_into_box(configuration::Configuration & conf, 
-				   topology::Topology & topo)const;
+				   topology::Topology const & topo)const;
     
   private:
     
