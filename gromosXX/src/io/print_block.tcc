@@ -51,7 +51,7 @@ namespace io
 	   << 2 * it->kinetic_energy / (math::k_Boltzmann * it->dof);
       }
       if (it->tau != -1){
-	tau_dof += it->tau;
+	tau_dof += it->dof;
 	avg_temp0 += it->temperature * it->dof;
 	avg_tau += it->tau * it->dof;
       }
@@ -64,7 +64,7 @@ namespace io
 
     }
 
-    os << "    ------------------------------------------------------------------------\n";
+    os << "    --------------------------------------------------------------------------\n";
     os << std::setw(10) << "Avg";
     if (tau_dof)
       os << std::setw( 8) << avg_temp0 / tau_dof
@@ -137,58 +137,36 @@ namespace io
     simulation::Energy const & e = sim.system().energies();
 
     int numenergygroups=e.bond_energy.size();
-    double tot_vdw=0.0, tot_es=0.0, tot_bond=0.0, tot_angle=0.0,
-      tot_dih=0.0, tot_imp=0.0, tot_nb=0.0, tot_b=0.0, tot_pot=0.0, 
-      tot_posrest=0.0, tot_special=0.0, tot=0.0;
-    double tot_kin=0.0;
-
-    for(unsigned int i=0; i<sim.multibath().size(); i++)
-      tot_kin += sim.multibath()[i].kinetic_energy;
  
     std::vector<std::string> energroup;
    
     int b=1;
     
     for(int i=0; i<numenergygroups; i++){
-      for(int j=0; j<numenergygroups; j++){
-	tot_vdw+=e.lj_energy[i][j];
-	tot_es +=e.crf_energy[i][j];
-      }
-      tot_bond +=e.bond_energy[i];
-      tot_angle+=e.angle_energy[i];
-      tot_imp  +=e.improper_energy[i];
-      tot_dih  +=e.dihedral_energy[i];
-      // tot_posrest += e.posrest_energy[i];
-      
+
       std::ostringstream ostring;
       ostring << b << "-" << sim.topology().energy_groups()[i]+1;
       energroup.push_back(ostring.str());
       b=sim.topology().energy_groups()[i]+2;
     }
-    tot_nb = tot_vdw + tot_es;
-    tot_b  = tot_bond + tot_angle + tot_dih + tot_imp;
-    tot_pot= tot_nb + tot_b;
-    tot_special = tot_posrest;
-
-    tot    = tot_pot + tot_kin + tot_special;
         
     os << "ENERGIES\n";
 
     os.precision(4);
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
-    os << "Total      : " << setw(12) << tot << endl;
-    os << "Kinetic    : " << setw(21) << tot_kin << endl;
+    os << "Total      : " << setw(12) << e.total << endl;
+    os << "Kinetic    : " << setw(21) << e.kinetic_total << endl;
     // os << "Temperature: " << setw(21) << v_kin/(0.5*k_Boltzmann*Ndf) << endl;
-    os << "Potential  : " << setw(21) << tot_pot << endl;
-    os << "Covalent   : " << setw(30) << tot_b << endl;
-    os << "Bonds      : " << setw(39) << tot_bond << endl;
-    os << "Angles     : " << setw(39) << tot_angle << endl;
-    os << "Improper   : " << setw(39) << tot_imp << endl;
-    os << "Dihedral   : " << setw(39) << tot_dih << endl;
-    os << "Non-bonded : " << setw(30) << tot_nb  << endl;
-    os << "Vdw        : " << setw(39) << tot_vdw << endl;
-    os << "El (RF)    : " << setw(39) << tot_es  << endl;
-    os << "Special    : " << setw(21) << tot_special << endl;
+    os << "Potential  : " << setw(21) << e.potential_total << endl;
+    os << "Covalent   : " << setw(30) << e.bonded_total << endl;
+    os << "Bonds      : " << setw(39) << e.bond_total << endl;
+    os << "Angles     : " << setw(39) << e.angle_total << endl;
+    os << "Improper   : " << setw(39) << e.improper_total << endl;
+    os << "Dihedral   : " << setw(39) << e.dihedral_total << endl;
+    os << "Non-bonded : " << setw(30) << e.nonbonded_total  << endl;
+    os << "Vdw        : " << setw(39) << e.lj_total << endl;
+    os << "El (RF)    : " << setw(39) << e.crf_total  << endl;
+    os << "Special    : " << setw(21) << e.special_total << endl;
     os << endl;
 
     os << setw(10) << "COV";

@@ -12,8 +12,8 @@
 template<typename t_simulation>
 inline io::OutG96Trajectory<t_simulation>::OutG96Trajectory(std::ostream &os,
 						      std::ostream &final,
-						      int every)
-  : OutTrajectory<t_simulation>(os, final, every)
+						      int every, bool auto_delete)
+  : OutTrajectory<t_simulation>(os, final, every, auto_delete)
 {
 }
 

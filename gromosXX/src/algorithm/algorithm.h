@@ -8,6 +8,7 @@
 #include "integration/leap_frog.h"
 #include "constraint/shake.h"
 #include "algorithm/md.h"
+#include "algorithm/perturbation_md.h"
 
 #ifndef NDEBUG
 namespace algorithm

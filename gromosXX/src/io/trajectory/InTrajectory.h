@@ -17,6 +17,11 @@ namespace io {
 
   public:
     /**
+     * Default Constructor.
+     */
+    InTrajectory();
+
+    /**
      * Constructor.
      */
     InTrajectory(std::istream& is);

@@ -197,16 +197,16 @@ END
 #                                      		4d harm osc
 #       0       0       0       1       0       1
 #END
-#PERTURB
+PERTURB
 # NTG: 0 no perturbation is applied
 #    : 1 calculate dV/dRLAM perturbation
 #    : 2 calculate dV/dRMU perturbation
 #    : 3 calculate both derivatives
 #      NTG     NRDGL     RLAM     DLAMT        RMU   DMUT
-#         1         0      0.5   0.00000    0.00000   0.00
+         1         0      0.5   0.00000    0.00000   0.00
 #   ALPHLJ     ALPHC     NLAM       MMU
-#       2.0    0.0005        1         1
-#END
+       0.0       0.0        1         1
+END
 #-------
 #PATHINT
 # restrictions for PI

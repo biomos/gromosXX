@@ -1,6 +1,6 @@
 /**
  * @file quartic_bond_interaction.tcc
- * template methods of quartic_bond_interaction.
+ * template methods of Quartic_bond_interaction.
  */
 
 #undef MODULE
@@ -57,10 +57,12 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
     const double r02 = m_bond_parameter[b_it->type].r0 *
       m_bond_parameter[b_it->type].r0;
 
-    DEBUG(7, "bond " << b_it->i << "-" << b_it->j << " type " << b_it->type);
-    DEBUG(10, "K " << m_bond_parameter[b_it->type].K << " r02 " << r02);
-    DEBUG(10, "DF " << (-m_bond_parameter[b_it->type].K * (dist2 - r02))
-	  << "\n" << v);
+    DEBUG(7, "bond " << b_it->i << "-" << b_it->j
+	  << " type " << b_it->type);
+    DEBUG(10, "K " << m_bond_parameter[b_it->type].K
+	  << " r02 " << r02);
+    DEBUG(10, "DF " << (-m_bond_parameter[b_it->type].K *
+			(dist2 - r02)) << "\n" << v);
 
     f = v * (-m_bond_parameter[b_it->type].K *
 	     (dist2 - r02));
@@ -68,13 +70,15 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
     force(b_it->i) += f;
     force(b_it->j) -= f;
 
-    e = 0.25 * m_bond_parameter[b_it->type].K * (dist2 -r02) * (dist2 - r02);
+    e = 0.25 * m_bond_parameter[b_it->type].K *
+      (dist2 -r02) * (dist2 - r02);
 
     assert(sim.system().energies().bond_energy.size() >
 	   sim.topology().atom_energy_group()[b_it->i]);
     
-    sim.system().energies().bond_energy[sim.topology().atom_energy_group()
-					[b_it->i]] += e;
+    sim.system().energies().
+      bond_energy[sim.topology().atom_energy_group()
+		  [b_it->i]] += e;
   }
     
 }

@@ -31,3 +31,16 @@ simulation::Perturbation_Topology::perturbed_solute()
 {
   return m_perturbed_solute;
 }
+
+inline double
+simulation::Perturbation_Topology::lambda()
+{
+  return m_lambda;
+}
+
+inline void
+simulation::Perturbation_Topology::lambda(double const l)
+{
+  m_lambda = l;
+}
+

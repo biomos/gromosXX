@@ -12,6 +12,18 @@
 #include "../../debug.h"
 
 /**
+ * Default Constructor.
+ */
+inline io::InTrajectory::InTrajectory()
+  : GInStream(),
+    read_position(true),
+    read_velocity(true),
+    read_box(true),
+    read_boxindices(false)
+{
+}
+
+/**
  * Constructor.
  */
 inline io::InTrajectory::InTrajectory(std::istream &is)

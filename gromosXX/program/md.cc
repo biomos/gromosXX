@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
   
       simulation_type the_simulation(the_topology, the_system);
       
-      algorithm::MD<simulation_type,
+      algorithm::Perturbation_MD<simulation_type,
 	algorithm::Berendsen_Thermostat,
 	algorithm::Berendsen_Barostat,
 	algorithm::Shake<simulation_type>,
@@ -139,9 +139,6 @@ int main(int argc, char *argv[])
 	the_MD(the_simulation);
     
       if(the_MD.initialize(args)){
-	return 1;
-      }
-      if(the_MD.init_perturbation(args)){
 	return 1;
       }
 

@@ -638,21 +638,3 @@ io::InTopology &io::InTopology
   return *this;  
 }
 
-inline void io::InTopology::read_stream()
-{
-  std::vector<std::string> buffer;
-  
-  while(!stream().eof()){
-
-    try{
-      io::getblock(stream(), buffer);
-    }
-    catch(std::runtime_error e){
-      break;
-    }
-    
-    m_block[buffer[0]] = buffer;    
-    buffer.clear();
-    
-  }
-}

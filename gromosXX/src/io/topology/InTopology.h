@@ -18,9 +18,13 @@ namespace io {
 
   public:
     /**
+     * Default constructor.
+     */
+    InTopology() {}
+    /**
      * Constructor.
      */
-    InTopology(std::istream& is) : GInStream(is) { read_stream(); };
+    InTopology(std::istream& is) : GInStream(is) { readStream(); };
     /**
      * Read in a G96 topology into the topology.
      */
@@ -64,14 +68,6 @@ namespace io {
 			     Nonbonded_Interaction<t_simulation, t_pairlist>
 			     &nbi);
 
-  private:
-    /**
-     * read the entire stream and store the blocks in the map.
-     */
-    void read_stream();
-
-    std::map<std::string, std::vector<std::string> > m_block;
-    
   };
   
 

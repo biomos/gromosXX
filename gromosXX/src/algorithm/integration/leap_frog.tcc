@@ -4,6 +4,12 @@
  * for the class leap_frog.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE algorithm
+#define SUBMODULE integration
+#include "../../debug.h"
+
 /**
  * Constructor.
  */
@@ -24,13 +30,19 @@ void algorithm::Leap_Frog<t_simulation, t_thermostat>
        double const dt)
 {
   // one force calculation per step
+  DEBUG(5, "Leap frog step");
+  
   sim.system().exchange_force();
+  DEBUG(7, "Leap frog: calculate interactions");
   ff.calculate_interactions(sim);
   
+  DEBUG(7, "Leap frog: velocities");
   velocities(sim.system(), sim.topology(), dt);
 
+  DEBUG(7, "Leap frog: thermostat");
   m_thermostat.apply(sim, dt);
 
+  DEBUG(7, "Leap frog: positions");
   positions(sim.system(), dt);
   
 }

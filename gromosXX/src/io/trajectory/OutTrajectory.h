@@ -38,7 +38,14 @@ namespace io {
     /**
      * Constructor.
      */
-    OutTrajectory(std::ostream &os, std::ostream &final, int every=1);
+    OutTrajectory(std::ostream &os, std::ostream &final, 
+		  int every=1, bool auto_delete = false);
+
+    /**
+     * Destructor.
+     */
+    ~OutTrajectory();
+    
     /**
      * write out the title block.
      */
@@ -95,6 +102,8 @@ namespace io {
     
     int m_width;
     int m_force_width;
+
+    bool m_auto_delete;
 
     void _print_timestep(t_simulation &sim, std::ostream &os);
     void _print_old_timestep(t_simulation &sim, std::ostream &os);

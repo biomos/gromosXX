@@ -28,7 +28,8 @@ namespace io
     /**
      * Constructor.
      */
-    OutG96Trajectory(std::ostream &os, std::ostream &final, int every=1);
+    OutG96Trajectory(std::ostream &os, std::ostream &final, int every=1, 
+		     bool auto_delete = false);
     /**
      * write out a timestep.
      */

@@ -35,7 +35,17 @@ namespace simulation
      * perturbed solute accessor.
      */
     Perturbed_Solute &perturbed_solute();
-    
+
+    /**
+     * lambda accessor.
+     */
+    double lambda();
+
+    /**
+     * lambda accessor.
+     */
+    void lambda(double const l);
+
   private:
     /**
      * is the atom perturbed?
@@ -46,6 +56,11 @@ namespace simulation
      * the perturbed solute information.
      */
     Perturbed_Solute m_perturbed_solute;
+
+    /**
+     * lambda.
+     */
+    double m_lambda;
     
   };
 

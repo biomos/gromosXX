@@ -27,16 +27,6 @@ namespace io
     InPerturbationTopology & 
     operator>>(simulation::Perturbation_Topology &topo);
     
-  private:
-    /**
-     * read the stream.
-     */
-    void read_stream();
-    
-    /**
-     * store the blocks.
-     */
-    std::map<std::string, std::vector<std::string> > m_block;
   };
   
 } // io

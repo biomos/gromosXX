@@ -11,7 +11,8 @@
 
 template<typename t_simulation>
 inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
-						      std::ostream &final, int every)
+						      std::ostream &final, 
+						      int every, bool auto_delete)
   : m_format(reduced),
     m_old_format(reduced),
     m_pos_traj(&os),
@@ -30,9 +31,22 @@ inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
     m_precision(9),
     m_force_precision(9),
     m_width(15),
-    m_force_width(18)
+    m_force_width(18),
+    m_auto_delete(auto_delete)
 {
   assert(m_every_pos > 0);
+}
+
+template<typename t_simulation>
+io::OutTrajectory<t_simulation>::~OutTrajectory()
+{
+  if (m_auto_delete){
+    if (m_pos) delete m_pos_traj;
+    delete m_final_traj;
+    if (m_vel) delete m_vel_traj;
+    if (m_force) delete m_force_traj;
+    if (m_energy) delete m_energy_traj;
+  }
 }
 
 template<typename t_simulation>

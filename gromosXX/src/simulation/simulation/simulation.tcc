@@ -168,6 +168,7 @@ template<typename t_topo, typename t_system>
 inline void simulation::Simulation<t_topo, t_system>::calculate_degrees_of_freedom()
 {
   multibath().calculate_degrees_of_freedom(topology());
+  system().energies().kinetic_energy.resize(multibath().size());
 }
 
 /**

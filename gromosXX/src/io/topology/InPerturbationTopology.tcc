@@ -17,7 +17,7 @@ io::InPerturbationTopology::InPerturbationTopology(std::istream &is)
   : GInStream(is) 
 {
   // read the whole file at beginning
-  read_stream();
+  readStream();
 };
 
 inline io::InPerturbationTopology &
@@ -27,7 +27,7 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
   std::vector<std::string>::const_iterator it;
 
   std::cout << "PERTURBATION\n";
-  
+
   { // PERTBOND03
     buffer = m_block["PERTBOND03"];
     if (buffer.size()){
@@ -86,21 +86,3 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
   return *this;
 }
 
-inline void io::InPerturbationTopology::read_stream()
-{
-  std::vector<std::string> buffer;
-  
-  while(!stream().eof()){
-
-    try{
-      io::getblock(stream(), buffer);
-    }
-    catch(std::runtime_error e){
-      break;
-    }
-    
-    m_block[buffer[0]] = buffer;    
-    buffer.clear();
-    
-  }
-}

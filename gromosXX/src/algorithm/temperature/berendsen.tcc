@@ -75,7 +75,7 @@ inline void algorithm::Berendsen_Thermostat
   
   size_t last = 0;
   
-  for( ; it != to; ++it){
+  for(int bath=0; it != to; ++it, ++bath){
     it->kinetic_energy = 0.0;
     for(size_t i=last; i<=it->last_atom; ++i){
       math::Vec v = 0.5 * (vel(i) + old_vel(i));
@@ -84,6 +84,7 @@ inline void algorithm::Berendsen_Thermostat
     } // atoms in bath
     
     it->kinetic_energy *= 0.5;
+    sim.system().energies().kinetic_energy[bath] = it->kinetic_energy;
     
     last = it->last_atom + 1;
     

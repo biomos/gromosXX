@@ -13,11 +13,20 @@ namespace io {
   public:
 
     /*
-     * Default constructor opens the GInStream with stdin.
+     * default constructor
      */
-    GInStream(std::istream& is = std::cin) { stream(is); } 
+    GInStream() : _auto_delete(false) {} 
 
+    /*
+     * Constructor
+     */
+    GInStream(std::istream& is) : _auto_delete(false) { stream(is); } 
 
+    /**
+     * Destructor.
+     */
+    ~GInStream() { if (_auto_delete) delete _is; }
+    
     /*
      * Accessors to the input stream
      */
@@ -30,12 +39,32 @@ namespace io {
      */
     void readTitle();
     std::string title;
+    /**
+     * read the entire stream and store the blocks in the map.
+     */
+    void readStream();
+    /**
+     * auto delete accessor.
+     */
+    void auto_delete(bool b) { _auto_delete = b; }
 
   protected:
     std::istringstream _lineStream;
+    /**
+     * stores the blocks if read_stream is called.
+     */
+    std::map<std::string, std::vector<std::string> > m_block;
 
-  private:   
+  private:
+    /**
+     * the stream.
+     */
     std::istream* _is;
+    /**
+     * delete the stream in the end?
+     */
+    bool _auto_delete;
+    
   };
 
 } // io

@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <map>
 
 #include "blockinput.h"
 #include "GInStream.h"
@@ -20,3 +22,23 @@ void io::GInStream::readTitle() {
     throw std::runtime_error("TITLE block expected. Found: " + _b[0]);
   title = io::concatenate(_b.begin() + 1, _b.end() - 1, title);
 }
+
+void io::GInStream::readStream()
+{
+  std::vector<std::string> buffer;
+  
+  while(!stream().eof()){
+
+    try{
+      io::getblock(stream(), buffer);
+    }
+    catch(std::runtime_error e){
+      break;
+    }
+    
+    m_block[buffer[0]] = buffer;    
+    buffer.clear();
+    
+  }
+}
+

@@ -146,6 +146,11 @@ namespace simulation
     simulation::Energy & energies();
     
     /**
+     * lambda derivative of the energies.
+     */
+    simulation::Energy & lambda_energies();
+
+    /**
      * check state
      */
     int check_state()const;
@@ -255,6 +260,11 @@ namespace simulation
      * the energies.
      */
     Energy m_energy;
+
+    /**
+     * the lambda derivative of the energy.
+     */
+    Energy m_lambda_energy;
 
   }; // System
   

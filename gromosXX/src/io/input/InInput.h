@@ -16,10 +16,14 @@ namespace io {
 
   public:
     /**
+     * Default Constructor.
+     */
+    InInput() {};
+    /**
      * Constructor.
      * read in the complete file at once.
      */
-    InInput(std::istream& is) : GInStream(is) { read_stream(); };
+    InInput(std::istream& is) : GInStream(is) { readStream(); };
 
     /**
      * Store standard parameters in the simulation.
@@ -62,14 +66,11 @@ namespace io {
      */
     void read_BOUNDARY(int &ntb, int &nrdbox);
 
-  private:
     /**
-     * read the entire stream and store the blocks in the map.
+     * read the PERTURB block.
      */
-    void read_stream();
-
-    std::map<std::string, std::vector<std::string> > m_block;
-    
+    void read_PERTURB(int &ntg, double &rlam, double &dlamt);
+        
   };
   
 } // io

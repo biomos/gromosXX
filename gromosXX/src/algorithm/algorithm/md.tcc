@@ -17,7 +17,14 @@ algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_pressure(),
     m_distance_constraint(),
     m_trajectory(),
-    m_print_file(&std::cout)
+    m_print_file(&std::cout),
+    m_dt(0),
+    m_time(0),
+    m_print_energy(1),
+    m_print_pairlist(0),
+    m_print_force(0),
+    m_calculate_pressure(0),
+    m_qbond_interaction(NULL)
 {
 }
 
@@ -30,6 +37,8 @@ algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint,
 	      t_integration>
 ::~MD()
 {
+  if (m_print_file != &std::cout)
+    delete m_print_file;
 }
 
 template<typename t_simulation,
@@ -40,141 +49,30 @@ template<typename t_simulation,
 int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint, t_integration>::initialize(io::Argument &args)
 {
 
-  parse_print_argument(args);
-
-  // read in the files - those are necessary
-  std::ifstream topo_file(args["topo"].c_str());
-  if (!topo_file.good())
-    io::messages.add("unable to open topology file: " + args["topo"], "md.tcc",
-		     io::message::error);
-  else 
-    io::messages.add("parsing topology file: " + args["topo"], "md.tcc",
-		     io::message::notice);
-  io::InTopology topo(topo_file);
+  //----------------------------------------------------------------------------
+  // read input
+  io::InTopology topo;
+  io::InTrajectory sys;
+  io::InInput input;
   
-  std::ifstream sys_file(args["struct"].c_str());
-  if (!sys_file.good())
-    io::messages.add("unable to open initial structure file: " + args["struct"], 
-                     "md.tcc",
-		     io::message::error);
-  else
-    io::messages.add("parsing initial structure file: " + args["struct"], "md.tcc",
-		     io::message::notice);
-  io::InTrajectory sys(sys_file);
-
-  std::ifstream input_file(args["input"].c_str());
-  if (!input_file.good())
-    io::messages.add("unable to open input file: " + args["input"], 
-                     "md.tcc",
-		     io::message::error);
-  else
-    io::messages.add("parsing input file: " + args["input"], "md.tcc",
-		     io::message::notice);
-  io::InInput input(input_file);
-
-  topo >> m_simulation.topology();
-  sys >> m_simulation.system();
+  init_input(args, topo, sys, input);
   
   //----------------------------------------------------------------------------
   // prepare for the output
-  int print_trajectory, print_velocity, print_energy_traj;
-  input.read_PRINT(print_trajectory, print_velocity, m_print_energy);
-
-  m_trajectory_file.open(args["trj"].c_str());  // trajectory is required
-  m_final_file.open(args["fin"].c_str()); // final structure is required
-
-  // use a G96 trajectory
-  m_trajectory = 
-    new io::OutG96Trajectory<simulation_type>(m_trajectory_file, 
-					      m_final_file, print_trajectory);
-
-  // optional files
-  // velocity trajectory
-  if (args.count("trv") == 1){
-    m_velocity_file.open(args["trv"].c_str());
-    m_trajectory->velocity_trajectory(m_velocity_file, print_velocity);
-  }
-    
-  // force trajectory
-  if (args.count("trf") == 1){
-    m_force_file.open(args["trf"].c_str());
-    m_trajectory->force_trajectory(m_force_file, m_print_force);
-  }
-
-  if (args.count("tre") == 1){
-    m_energy_file.open(args["tre"].c_str());
-    m_trajectory->energy_trajectory(m_energy_file, m_print_energy);
-  }
-  
-  if (args.count("trp") == 1){
-    m_print_file = new std::ofstream(args["trp"].c_str());
-  }
+  init_output(args, input);
 
   //----------------------------------------------------------------------------
   // prepare for the run
 
-  // read in the input (has to be before solvate,
-  // 'cause the submolecules need to be added in order...
-  DEBUG(7, "md: read input");
-  input >> m_simulation;
+  // read in the input
+  read_input(args, topo, sys, input);
 
-  // add solvent
-  DEBUG(7, "md: add solvent");
-  int nsm;
-  input.read_SYSTEM(nsm);
-  if (nsm) m_simulation.solvate(0, nsm);
-
-  // initialize SHAKE / ??
-  DEBUG(7, "md init shake");
-  int ntc;
-  double tolerance;
-  input.read_SHAKE(ntc, tolerance);
-  m_distance_constraint.tolerance(tolerance);
-
-  // pressure calculation
-  DEBUG(7, "md: init pressure");
-  int ntb, nrdbox;
-  input.read_BOUNDARY(ntb, nrdbox);
-  DEBUG(8, "md: boundary read");
-  
-  if (nrdbox != 1){
-    io::messages.add("nrdbox!=1 not supported","md.tcc",
-		     io::message::error);
-  }
-  if (abs(ntb) == 2)
-    m_calculate_pressure = 1;
-  else
-    m_calculate_pressure = 0;
-
-  // pressure coupling (has to be done before 
-  // constructing the forcefield!)
-  int ntp;
-  double pres0, comp, tau;
-  DEBUG(8, "md: read PCOUPLE");
-  input.read_PCOUPLE(ntp, pres0, comp, tau);
-  DEBUG(8, "md: PCOUPLE read");
-  
-  m_pressure.initialize(ntp, pres0, comp, tau);
-
-  // create the forcefield
+  // and create the forcefield
   DEBUG(7, "md: create forcefield");
-  G96Forcefield(topo, input, m_simulation.topology());
-
-  // prepare temperature calculation
-  DEBUG(7, "md: degrees of freedom");
-  m_simulation.calculate_degrees_of_freedom();
-  temperature_algorithm().calculate_kinetic_energy(m_simulation);
-  std::cout << "initial temperature:\n";
-  io::print_MULTIBATH(std::cout, m_simulation.multibath());
+  G96Forcefield(topo, input);
   
-  // time to simulate
-  int num_steps;
-  double t0;
-  input.read_STEP(num_steps, t0, m_dt);
-
-  m_time = num_steps * m_dt;
-  m_simulation.time(t0);
-
+  //----------------------------------------------------------------------------
+  // see whether everything is all right  
   m_simulation.check_state();
 
   // messages?
@@ -189,48 +87,6 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
 
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint, t_integration>::init_perturbation(io::Argument &args)
-{
-  if (args.count("pert") != 1){
-    // migh also be an error...
-    io::messages.add("init_perturbation called but no perturbation topology",
-		     "algorithm::md",
-		     io::message::warning);
-    return 0;
-  }
-  std::ifstream pert_file(args["pert"].c_str());
-  if (!pert_file.good()){
-    io::messages.add("unable to open perturbation topology: "
-		     + args["pert"],
-		     "algorithm::md",
-		     io::message::error);
-    return 1;
-  }
-  else
-    io::messages.add("parsing perturbation topology file: "
-		     + args["pert"], "algorithm::md",
-		     io::message::notice);
-
-  io::InPerturbationTopology pert_topo(pert_file);
-
-  // it'd better be a perturbation topology!
-  pert_topo >> m_simulation.topology();
-
-  // messages?
-  std::cout << "Messages (perturbation)\n";
-  if (io::messages.display(std::cout) > io::message::warning)
-    return 1;
-  std::cout << "\n";
-  io::messages.clear();
-  
-  return 0;
-
-}
 
 template<typename t_simulation,
 	 typename t_temperature,
@@ -326,8 +182,7 @@ template<typename t_simulation,
 void algorithm::MD<t_simulation, t_temperature, t_pressure, 
 		   t_distance_constraint, t_integration>
 ::G96Forcefield(io::InTopology &topo,
-		io::InInput &input,
-		typename t_simulation::topology_type &the_topology)
+		io::InInput &input)
 {
 
   DEBUG(7, "md: create forcefield");
@@ -341,14 +196,13 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   if (do_bond == 1){
     io::messages.add("using Gromos96 quartic bond term", "vtest", io::message::notice);
     // bonds: quartic
-    interaction::Quartic_bond_interaction<t_simulation> 
-      *the_qbond_interaction =
+    m_qbond_interaction =
       new interaction::Quartic_bond_interaction<t_simulation>;
     
-    topo >> *the_qbond_interaction;
-    bond_param = &the_qbond_interaction->parameter();
+    topo >> *m_qbond_interaction;
+    bond_param = &m_qbond_interaction->parameter();
 
-    m_forcefield.push_back(the_qbond_interaction);
+    m_forcefield.push_back(m_qbond_interaction);
   }
 
   if (do_bond == 2){
@@ -454,14 +308,14 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       break;
     case 2: 
       std::cout << "SHAKE bonds containing hydrogen atoms" << std::endl;
-      the_topology.solute().
+      m_simulation.topology().solute().
 	add_bond_length_constraints(1.0,
-				    the_topology.mass(),
+				    m_simulation.topology().mass(),
 				    *bond_param);
       break;
     case 3: 
       std::cout << "SHAKE all bonds" << std::endl;
-      the_topology.solute().
+      m_simulation.topology().solute().
 	add_bond_length_constraints(*bond_param);
       break;
     default:
@@ -560,6 +414,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     
     // calculate the kinetic energy now (velocities adjusted for constraints)
     temperature_algorithm().calculate_kinetic_energy(m_simulation);
+    // and sum up the energy arrays
+    m_simulation.system().energies().calculate_totals();
+    
     if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
       io::print_MULTIBATH(std::cout, m_simulation.multibath());
       io::print_ENERGY(std::cout, m_simulation);
@@ -609,4 +466,203 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       else throw std::string("unknown @print argument");
     }
   }
+}
+
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
+void algorithm::MD<t_simulation, t_temperature, t_pressure, 
+		   t_distance_constraint, t_integration>
+::open_files(io::Argument &args, io::InTopology &topo,
+	     io::InTrajectory &sys, io::InInput &input)
+{
+  // std::cerr << "read in files" << std::endl;
+
+  // read in the files - those are necessary
+  std::ifstream *topo_file = new std::ifstream(args["topo"].c_str());
+  if (!topo_file->good())
+    io::messages.add("unable to open topology file: " + args["topo"], "md.tcc",
+		     io::message::error);
+  else 
+    io::messages.add("parsing topology file: " + args["topo"], "md.tcc",
+		     io::message::notice);
+  topo.stream(*topo_file);
+  topo.readStream();
+  topo.auto_delete(true);
+  
+  std::ifstream *sys_file = new std::ifstream(args["struct"].c_str());
+  if (!sys_file->good())
+    io::messages.add("unable to open initial structure file: " + args["struct"], 
+                     "md.tcc",
+		     io::message::error);
+  else
+    io::messages.add("parsing initial structure file: " + args["struct"], "md.tcc",
+		     io::message::notice);
+  sys.stream(*sys_file);
+  sys.auto_delete(true);
+
+  std::ifstream *input_file = new std::ifstream(args["input"].c_str());
+  if (!input_file->good())
+    io::messages.add("unable to open input file: " + args["input"], 
+                     "md.tcc",
+		     io::message::error);
+  else
+    io::messages.add("parsing input file: " + args["input"], "md.tcc",
+		     io::message::notice);
+  input.stream(*input_file);
+  input.readStream();
+  input.auto_delete(true);
+  
+}
+
+  
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
+void algorithm::MD<t_simulation, t_temperature, t_pressure, 
+		   t_distance_constraint, t_integration>
+::init_input(io::Argument &args, io::InTopology &topo,
+	     io::InTrajectory &sys, io::InInput &input)
+{
+  // std::cerr << "init input" << std::endl;
+  
+  parse_print_argument(args);
+
+  open_files(args, topo, sys, input);
+
+  topo >> m_simulation.topology();
+  sys >> m_simulation.system();
+  
+}
+
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
+void algorithm::MD<t_simulation, t_temperature, t_pressure, 
+		   t_distance_constraint, t_integration>
+::read_input(io::Argument &args, io::InTopology &topo,
+	     io::InTrajectory &sys, io::InInput &input)
+{
+  DEBUG(7, "md: read input");
+  input >> m_simulation;
+
+  // add solvent
+  DEBUG(7, "md: add solvent");
+  int nsm;
+  input.read_SYSTEM(nsm);
+  if (nsm) m_simulation.solvate(0, nsm);
+
+  // initialize SHAKE / ??
+  DEBUG(7, "md init shake");
+  int ntc;
+  double tolerance;
+  input.read_SHAKE(ntc, tolerance);
+  m_distance_constraint.tolerance(tolerance);
+
+  // pressure calculation
+  DEBUG(7, "md: init pressure");
+  int ntb, nrdbox;
+  input.read_BOUNDARY(ntb, nrdbox);
+  DEBUG(8, "md: boundary read");
+  
+  if (nrdbox != 1){
+    io::messages.add("nrdbox!=1 not supported","md.tcc",
+		     io::message::error);
+  }
+  if (abs(ntb) == 2)
+    m_calculate_pressure = 1;
+  else
+    m_calculate_pressure = 0;
+
+  // prepare temperature calculation
+  DEBUG(7, "md: degrees of freedom");
+  m_simulation.calculate_degrees_of_freedom();
+  temperature_algorithm().calculate_kinetic_energy(m_simulation);
+  std::cout << "initial temperature:\n";
+  io::print_MULTIBATH(std::cout, m_simulation.multibath());
+
+  // pressure coupling (has to be done before 
+  // constructing the forcefield!)
+  int ntp;
+  double pres0, comp, tau;
+  DEBUG(8, "md: read PCOUPLE");
+  input.read_PCOUPLE(ntp, pres0, comp, tau);
+  DEBUG(8, "md: PCOUPLE read");
+  
+  m_pressure.initialize(ntp, pres0, comp, tau);
+
+  // time to simulate
+  int num_steps;
+  double t0;
+  input.read_STEP(num_steps, t0, m_dt);
+
+  m_time = num_steps * m_dt;
+  m_simulation.time(t0);
+
+}
+
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
+void algorithm::MD<t_simulation, t_temperature, t_pressure, 
+		   t_distance_constraint, t_integration>
+::init_output(io::Argument &args, io::InInput &input)
+{
+  // std::cerr << "init_output" << std::endl;
+  
+  int print_trajectory, print_velocity, print_energy_traj;
+  input.read_PRINT(print_trajectory, print_velocity, m_print_energy);
+
+  // std::cerr << "PRINT read" << std::endl;
+  
+  std::ofstream *traj_file = new std::ofstream(args["trj"].c_str());
+  std::ofstream *fin_file = new std::ofstream(args["fin"].c_str());
+
+  // std::cerr << "traj + fin file open" << std::endl;
+
+  // use a G96 trajectory
+  m_trajectory = 
+    new io::OutG96Trajectory<simulation_type>(*traj_file, *fin_file, 
+					      print_trajectory, true);
+
+  // std::cerr << "OutG96Trajectory generated" << std::endl;  
+
+  // optional files
+  // velocity trajectory
+  if (args.count("trv") == 1){
+    // m_velocity_file.open(args["trv"].c_str());
+    std::ofstream *vel_file = new std::ofstream(args["trv"].c_str());
+    m_trajectory->velocity_trajectory(*vel_file, print_velocity);
+    // std::cerr << "trv added" << std::endl;
+  }
+
+  // force trajectory
+  if (args.count("trf") == 1){
+    // m_force_file.open(args["trf"].c_str());
+    std::ofstream *force_file = new std::ofstream(args["trf"].c_str());
+    m_trajectory->force_trajectory(*force_file, m_print_force);
+    // std::cerr << "trf added" << std::endl;
+  }
+
+  if (args.count("tre") == 1){
+    // m_energy_file.open(args["tre"].c_str());
+    std::ofstream *energy_file = new std::ofstream(args["tre"].c_str());
+    m_trajectory->energy_trajectory(*energy_file, m_print_energy);
+    // std::cerr << "tre added" << std::endl;
+  }
+  
+  if (args.count("trp") == 1){
+    m_print_file = new std::ofstream(args["trp"].c_str());
+    // std::cerr << "trp added" << std::endl;
+  }
+  // std::cerr << "init output done" << std::endl;
+  
 }

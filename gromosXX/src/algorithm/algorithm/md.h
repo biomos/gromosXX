@@ -76,11 +76,6 @@ namespace algorithm
      * initialization.
      */
     int initialize(io::Argument &args);
-
-    /**
-     * initialize the perturbation parameters.
-     */
-    int init_perturbation(io::Argument &args);
     
     /**
      * run the system.
@@ -92,10 +87,7 @@ namespace algorithm
      * create a Gromos96 like forcefield.
      */
     virtual void G96Forcefield(io::InTopology &topo,
-			       io::InInput &input,
-			       typename t_simulation::topology_type
-			       &the_topology);
-
+			       io::InInput &input);
 
   protected:
 
@@ -128,30 +120,6 @@ namespace algorithm
      * trajecorty file
      */
     io::OutG96Trajectory<t_simulation> *m_trajectory;
-    /**
-     * velocity trajectory
-     */
-    std::ofstream m_velocity_file;
-
-    /**
-     * force trajectory
-     */
-    std::ofstream m_force_file;
-    
-    /**
-     * energy trajectory
-     */
-    std::ofstream m_energy_file;
-  
-    /**
-     * trajectory file
-     */
-    std::ofstream m_trajectory_file;
-    
-    /**
-     * final file
-     */
-    std::ofstream m_final_file;
 
     /**
      * additional output file.
@@ -190,11 +158,40 @@ namespace algorithm
     int m_calculate_pressure;
     
     /**
+     * the interactions:
+     * quartic bond interaction.
+     */
+    interaction::Quartic_bond_interaction<t_simulation> * m_qbond_interaction;
+
+    /**
      * parse the print argument
      * for pairlist and force that
      * are not present in the input file...
      */
     void parse_print_argument(io::Argument &args);
+
+    /**
+     * open the input files.
+     */
+    void open_files(io::Argument &args, io::InTopology &topo,
+		    io::InTrajectory &sys, io::InInput &input);
+
+    /**
+     * initialize the input.
+     */
+    virtual void init_input(io::Argument &args, io::InTopology &topo,
+			    io::InTrajectory &sys, io::InInput &input);
+
+    /**
+     * read the input and setup a standard simulation.
+     */
+    virtual void read_input(io::Argument &args, io::InTopology &topo,
+			    io::InTrajectory &sys, io::InInput &input);
+
+    /**
+     * initialize the output.
+     */
+    virtual void init_output(io::Argument &args, io::InInput &input);
     
   };
   

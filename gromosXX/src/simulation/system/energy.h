@@ -15,6 +15,23 @@ namespace simulation
   class Energy
   {
   public:
+    double total;
+    double kinetic_total;
+    double potential_total;
+    
+    double bond_total;
+    double angle_total;
+    double improper_total;
+    double dihedral_total;
+    double bonded_total;
+    double nonbonded_total;
+    double lj_total;
+    double crf_total;
+    double special_total;
+    
+    // this should be size of bath
+    std::vector<double> kinetic_energy;
+
     std::vector<double> bond_energy;
     std::vector<double> angle_energy;
     std::vector<double> improper_energy;
@@ -23,8 +40,11 @@ namespace simulation
     std::vector<std::vector<double> > lj_energy;
     std::vector<std::vector<double> > crf_energy;
     
+    std::vector<std::string> group_name;
+    
     void zero();
     void resize(size_t s);
+    void calculate_totals();
     
   };
 

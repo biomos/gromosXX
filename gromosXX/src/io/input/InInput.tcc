@@ -11,28 +11,6 @@
 #include "../../debug.h"
 
 /**
- * read the stream into blocks.
- */
-inline void io::InInput::read_stream()
-{
-  std::vector<std::string> buffer;
-  
-  while(!stream().eof()){
-
-    try{
-      io::getblock(stream(), buffer);
-    }
-    catch(std::runtime_error e){
-      break;
-    }
-    
-    m_block[buffer[0]] = buffer;    
-    buffer.clear();
-    
-  }
-}
-
-/**
  * Store standard parameters in the simulation.
  */
 template<typename t_topology, typename t_system>
@@ -517,6 +495,55 @@ inline void io::InInput::read_BOUNDARY(int &ntb, int &nrdbox)
   if (_lineStream.fail())
     io::messages.add("bad line in BOUNDARY block",
 		     "InInput", io::message::error);
+}
+
+/**
+ * read the PERTURB block.
+ */
+inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  buffer = m_block["PERTURB"];
+  if (!buffer.size()){
+    ntg = 0;
+    rlam = 0;
+    dlamt = 0;
+    return;
+  }
+  
+  it = buffer.begin()+1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  int nrdgl;
+  double dmu, dmut;
+  double alphlj, alphc, nlam, mmu;
+  
+  _lineStream >> ntg >> nrdgl >> rlam >> dlamt >> dmu >> dmut;
+  _lineStream.clear();
+  _lineStream.str(*(++it));
+  _lineStream >> alphlj >> alphc >> nlam >> mmu;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in PERTURB block",
+		     "InInput", io::message::error);
+
+  if (nrdgl)
+    io::messages.add("PERTURB: nrdgl != 0 not allowed",
+		     "InInput", io::message::error);
+  
+  if (ntg != 0 && ntg != 1)
+    io::messages.add("PERTURB: only ntg = 0 or ntg = 1 allowed",
+		     "InInput", io::message::error);
+  
+  if (alphlj || alphc){
+    std::cerr << "alphlj: " << alphlj << "alphc: " << alphc << std::endl;
+    io::messages.add("PERTURB: softness not implemented",
+		     "InInput", io::message::error);
+  }
+  
 }
 
 /**

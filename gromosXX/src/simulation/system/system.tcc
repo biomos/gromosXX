@@ -291,6 +291,16 @@ simulation::System<b>::energies()
 }
 
 /**
+ * lambda derivative of the energy accessor.
+ */
+template<math::boundary_enum b>
+inline simulation::Energy & 
+simulation::System<b>::lambda_energies()
+{
+  return m_lambda_energy;
+}
+
+/**
  * check state
  */
 template<math::boundary_enum b>
