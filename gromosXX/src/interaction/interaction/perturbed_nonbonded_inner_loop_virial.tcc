@@ -83,6 +83,24 @@ void interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
     DEBUG(7, "\tlj-parameter state B c6=" << B_lj->c6 << " c12=" << B_lj->c12);
     DEBUG(7, "\tcharges state A i*j = " << A_q);
     DEBUG(7, "\tcharges state B i*j = " << B_q);
+
+    m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+				   A_q, sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
+	  << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
+	  << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
+    
+    m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
+				   B_q, 1.0 - sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
+	  << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
+	  << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
     
     if (do_scaling){
       
@@ -98,75 +116,19 @@ void interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
 
 	std::pair<double, double> scaling_pair =
 	  sim.topology().energy_group_scaling()[energy_group_pair];
-
-	m_base.lj_crf_scaled_interaction(r, A_lj->c6, A_lj->c12, 
-					 A_q, sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.first,
-					 A_f, A_e_lj, A_e_crf, A_de_lj,
-					 A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-    
-	m_base.lj_crf_scaled_interaction(r, B_lj->c6, B_lj->c12,
-					 B_q, 1.0 - sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.second,
-					 B_f, B_e_lj, B_e_crf, B_de_lj,
-					 B_de_crf);
-	
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);	
+	A_f      *= scaling_pair.first;
+	A_e_lj   *= scaling_pair.first;
+	A_e_crf  *= scaling_pair.first;
+	A_de_lj  *= scaling_pair.first;
+	A_de_crf *= scaling_pair.first;
+	B_f      *= scaling_pair.second;
+	B_e_lj   *= scaling_pair.second;
+	B_e_crf  *= scaling_pair.second;
+	B_de_lj  *= scaling_pair.second;
+	B_de_crf *= scaling_pair.second;
       }
-      else{
-
-	// we do interaction scaling but not for this
-	// combination of energy groups
-
-	m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-				       A_q, sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-
-	m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				       B_q, 1.0 - sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
-      }
-
     }
-    else{
-      // no interaction scaling
 
-      m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-				     A_q, sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
- 
-      DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	    << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	    << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-
-      m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				     B_q, 1.0 - sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-
-      DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	    << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	    << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
-    }
-    
     // now combine everything
     const double B_l = sim.topology().lambda();
     const double B_ln = pow(B_l, sim.topology().nlam());
@@ -289,6 +251,24 @@ void interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
     DEBUG(7, "\tcharges state A i*j = " << A_q);
     DEBUG(7, "\tcharges state B i*j = " << B_q);
     
+    m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
+				   A_q, sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
+	  << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
+	  << " de_lj: " << A_de_lj  << " de_crf: " << A_de_crf);
+    
+    m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
+				   B_q, 1.0 - sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
+	  << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
+	  << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
+    
     if (do_scaling){
       
       // check whether we need to do scaling
@@ -303,73 +283,17 @@ void interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
 
 	std::pair<double, double> scaling_pair =
 	  sim.topology().energy_group_scaling()[energy_group_pair];
-
-	m_base.lj_crf_scaled_interaction(r, A_lj->cs6, A_lj->cs12, 
-					 A_q, sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.first,
-					 A_f, A_e_lj, A_e_crf, A_de_lj,
-					 A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-    
-	m_base.lj_crf_scaled_interaction(r, B_lj->cs6, B_lj->cs12,
-					 B_q, 1.0 - sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.second,
-					 B_f, B_e_lj, B_e_crf, B_de_lj,
-					 B_de_crf);
-	
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);	
+	A_f      *= scaling_pair.first;
+	A_e_lj   *= scaling_pair.first;
+	A_e_crf  *= scaling_pair.first;
+	A_de_lj  *= scaling_pair.first;
+	A_de_crf *= scaling_pair.first;
+	B_f      *= scaling_pair.second;
+	B_e_lj   *= scaling_pair.second;
+	B_e_crf  *= scaling_pair.second;
+	B_de_lj  *= scaling_pair.second;
+	B_de_crf *= scaling_pair.second;
       }
-      else{
-
-	// we do interaction scaling but not for this
-	// combination of energy groups
-
-	m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-				       A_q, sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-
-	m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				       B_q, 1.0 - sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
-      }
-
-    }
-    else{
-      // no interaction scaling
-
-      m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-				     A_q, sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
- 
-      DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	    << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	    << " de_lj: " << A_de_lj  << " de_crf: " << A_de_crf);
-
-      m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				     B_q, 1.0 - sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-      
-      DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	    << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	    << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
     }
     
     // now combine everything

@@ -92,6 +92,23 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
     DEBUG(7, "\tcharges state A i*j = " << A_q);
     DEBUG(7, "\tcharges state B i*j = " << B_q);
     
+    m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+				   A_q, sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " << A_f << " e_lj: " 
+	  << A_e_lj << " e_crf: " << A_e_crf << " de_lj: " << A_de_lj 
+	  << " de_crf: " << A_de_crf);
+    
+    m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
+				   B_q, 1.0 - sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " << B_f << " e_lj: " 
+	  << B_e_lj << " e_crf: " << B_e_crf << " de_lj: " << B_de_lj 
+	  << " de_crf: " << B_de_crf);
     if (do_scaling){
       
       // check whether we need to do scaling
@@ -104,77 +121,19 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
       if (sim.topology().energy_group_scaling().count(energy_group_pair)){
 	
 	// YES, we do scale the interactions!
-
 	std::pair<double, double> scaling_pair =
 	  sim.topology().energy_group_scaling()[energy_group_pair];
-
-	m_base.lj_crf_scaled_interaction(r, A_lj->c6, A_lj->c12, 
-					 A_q, sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.first,
-					 A_f, A_e_lj, A_e_crf, A_de_lj,
-					 A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-    
-	m_base.lj_crf_scaled_interaction(r, B_lj->c6, B_lj->c12,
-					 B_q, 1.0 - sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.second,
-					 B_f, B_e_lj, B_e_crf, B_de_lj,
-					 B_de_crf);
-	
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);	
+	A_f      *= scaling_pair.first;
+	A_e_lj   *= scaling_pair.first;
+	A_e_crf  *= scaling_pair.first;
+	A_de_lj  *= scaling_pair.first;
+	A_de_crf *= scaling_pair.first;
+	B_f      *= scaling_pair.second;
+	B_e_lj   *= scaling_pair.second;
+	B_e_crf  *= scaling_pair.second;
+	B_de_lj  *= scaling_pair.second;
+	B_de_crf *= scaling_pair.second;
       }
-      else{
-
-	// we do interaction scaling but not for this
-	// combination of energy groups
-
-	m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-				       A_q, sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-
-	m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				       B_q, 1.0 - sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
-      }
-
-    }
-    else{
-      // no interaction scaling
-      
-      m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-				     A_q, sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
-      
-      DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " << A_f << " e_lj: " 
-	    << A_e_lj << " e_crf: " << A_e_crf << " de_lj: " << A_de_lj 
-	    << " de_crf: " << A_de_crf);
-    
-      m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				     B_q, 1.0 - sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-
-      DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " << B_f << " e_lj: " 
-	    << B_e_lj << " e_crf: " << B_e_crf << " de_lj: " << B_de_lj 
-	    << " de_crf: " << B_de_crf);
-      
     }
     
     // now combine everything
@@ -334,6 +293,24 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
     DEBUG(7, "\tcharges state A i*j = " << A_q);
     DEBUG(7, "\tcharges state B i*j = " << B_q);
     
+    m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
+				   A_q, sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
+	  << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
+	  << " de_lj: " << A_de_lj  << " de_crf: " << A_de_crf);
+    
+    m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
+				   B_q, 1.0 - sim.topology().lambda(),
+				   alpha_lj, alpha_crf,
+				   B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+    
+    DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
+	  << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
+	  << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
+
     if (do_scaling){
       
       // check whether we need to do scaling
@@ -348,73 +325,17 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 
 	std::pair<double, double> scaling_pair =
 	  sim.topology().energy_group_scaling()[energy_group_pair];
-
-	m_base.lj_crf_scaled_interaction(r, A_lj->cs6, A_lj->cs12, 
-					 A_q, sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.first,
-					 A_f, A_e_lj, A_e_crf, A_de_lj,
-					 A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-    
-	m_base.lj_crf_scaled_interaction(r, B_lj->cs6, B_lj->cs12,
-					 B_q, 1.0 - sim.topology().lambda(),
-					 alpha_lj, alpha_crf,
-					 scaling_pair.second,
-					 B_f, B_e_lj, B_e_crf, B_de_lj,
-					 B_de_crf);
-	
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);	
+	A_f      *= scaling_pair.first;
+	A_e_lj   *= scaling_pair.first;
+	A_e_crf  *= scaling_pair.first;
+	A_de_lj  *= scaling_pair.first;
+	A_de_crf *= scaling_pair.first;
+	B_f      *= scaling_pair.second;
+	B_e_lj   *= scaling_pair.second;
+	B_e_crf  *= scaling_pair.second;
+	B_de_lj  *= scaling_pair.second;
+	B_de_crf *= scaling_pair.second;
       }
-      else{
-
-	// we do interaction scaling but not for this
-	// combination of energy groups
-
-	m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-				       A_q, sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
-      
-	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	      << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	      << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
-
-	m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				       B_q, 1.0 - sim.topology().lambda(),
-				       alpha_lj, alpha_crf,
-				       B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	      << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
-      }
-
-    }
-    else{
-      // no interaction scaling
-
-      m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-				     A_q, sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
-      
-      DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	    << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	    << " de_lj: " << A_de_lj  << " de_crf: " << A_de_crf);
-
-      m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				     B_q, 1.0 - sim.topology().lambda(),
-				     alpha_lj, alpha_crf,
-				     B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-
-      DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	    << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	    << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
     }
     
     // now combine everything
@@ -540,36 +461,39 @@ interaction::Perturbed_Nonbonded_Inner_Loop<
 
   m_base.rf_interaction(r, q_i_a*q_i_a, f_old_A, e_crf_old_A);
 
+  m_base.rf_soft_interaction(r, q_i_a*q_i_a, 
+			     B_l, mit->second.CRF_softcore(),
+			     A_f_rf, A_e_rf, A_de_rf);
+  
+  m_base.rf_soft_interaction(r, q_i_b*q_i_b, 
+			     A_l, mit->second.CRF_softcore(),
+			     B_f_rf, B_e_rf, B_de_rf);
+  
   if (do_scaling){
 
     // check whether we need to do scaling
     // based on energy groups
     DEBUG(7, "scaled interaction: (self term) " << i << " " << i);
 
-      std::pair<int, int> 
-	energy_group_pair(sim.topology().atom_energy_group(i),
-			  sim.topology().atom_energy_group(i));
-
-      if (sim.topology().energy_group_scaling().count(energy_group_pair)){
-	
-	// YES, we do scale the interactions!
-      }
-      else{
-	// NO scaling
-
-      }
-  }
-  else{
-    // no do_scaling
-    m_base.rf_soft_interaction(r, q_i_a*q_i_a, 
-			       B_l, mit->second.CRF_softcore(),
-			       A_f_rf, A_e_rf, A_de_rf);
+    std::pair<int, int> 
+      energy_group_pair(sim.topology().atom_energy_group(i),
+			sim.topology().atom_energy_group(i));
     
-    m_base.rf_soft_interaction(r, q_i_b*q_i_b, 
-			       A_l, mit->second.CRF_softcore(),
-			       B_f_rf, B_e_rf, B_de_rf);
+    if (sim.topology().energy_group_scaling().count(energy_group_pair)){
+      
+	// YES, we do scale the interactions!
+
+      std::pair<double, double> scaling_pair =
+	sim.topology().energy_group_scaling()[energy_group_pair];
+      A_f_rf  *= scaling_pair.first;
+      A_e_rf  *= scaling_pair.first;
+      A_de_rf *= scaling_pair.first;
+      B_f_rf  *= scaling_pair.second;
+      B_e_rf  *= scaling_pair.second;
+      B_de_rf *= scaling_pair.second;
+    }
   }
-  
+
   DEBUG(7, "Self term for atom " << i << " A: "
 	<< A_e_rf << " B: " << B_e_rf);
   
@@ -659,6 +583,9 @@ interaction::Perturbed_Nonbonded_Inner_Loop<
 ::perturbed_pair_interaction_inner_loop(t_simulation &sim,
 					std::vector<simulation::Perturbed_Atompair>::const_iterator const &it)
 {
+
+  // NO SCALING for PERTURBED PAIRS ??
+
   math::Vec r, f, A_f, B_f;
   double A_e_lj, A_e_crf, A_de_lj, A_de_crf, 
     B_e_lj, B_e_crf, B_de_lj, B_de_crf;

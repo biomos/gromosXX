@@ -228,54 +228,6 @@ inline void interaction::Nonbonded_Base
     (dist3isoft - crf_pert*dist2);
   
 }
-inline void interaction::Nonbonded_Base
-::lj_crf_scaled_interaction(math::Vec const &r,
-			    double const c6, double const c12,
-			    double const q, double const l, 
-			    double const alpha_lj, double const alpha_crf,
-			    double const scale,
-			    math::Vec &force, double &e_lj, double &e_crf, 
-			    double &de_lj, double & de_crf)
-{
-  assert(dot(r,r) != 0);
-
-  double c126;
-  if (c6 != 0) c126=c12/c6;
-  else c126 = 0.0;
-  
-  const double dist2 = dot(r, r);
-  const double dist2soft = dist2 + alpha_crf*l*l;
-  const double distisoft = 1.0 / sqrt(dist2soft);
-  const double dist3isoft = distisoft / dist2soft;
-  
-  const double dist6soft = dist2*dist2*dist2 + alpha_lj*l*l*c126;
-  const double dist6isoft = 1.0/dist6soft;
-  
-  const double cut2soft = m_cut2 + alpha_crf*l*l;
-  const double cut2soft3 = cut2soft*cut2soft*cut2soft;
-  const double crf_2cut3i = m_crf_2 / sqrt(cut2soft3);
-  const double crf_cut3i = 2*crf_2cut3i;
-  const double crf_pert = 3.0*crf_2cut3i/cut2soft;
-  
-  /**
-   *@todo Think of the RF correction for excluded atoms
-   *      these should not be scaled (ever?)
-   */
-  force = scale * ((2 * c12 * dist6isoft - c6) * 
-	   6.0 * dist6isoft * dist6isoft * dist2 * dist2 + 
-    q * coulomb_constant() * (distisoft / dist2soft + crf_cut3i)) * r;
-
-  e_lj = scale * (c12 * dist6isoft - c6) * dist6isoft;
-  e_crf = scale * q * coulomb_constant() * 
-    (distisoft - crf_2cut3i * dist2 - m_crf_cut);
-  
-  de_lj = -2.0 * scale * alpha_lj * l * c126 * dist6isoft * dist6isoft *
-    (2 * c12 * dist6isoft - c6);
-
-  de_crf = -scale * q * coulomb_constant() * l * alpha_crf * 
-    (dist3isoft - crf_pert*dist2);
-  
-}
 
 inline double const  interaction::Nonbonded_Base
 ::crf_2cut3i()const

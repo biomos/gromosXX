@@ -75,18 +75,7 @@ namespace interaction
 				 math::Vec & force, double &e_lj,
 				 double & e_crf, double &de_lj, 
 				 double & de_crf);
-    /**
-     * calculate the force, energy and dh/dl of an atom pair, with scaling
-     */
-    void lj_crf_scaled_interaction(math::Vec const &r,
-				   double const c6, double const c12,
-				   double const q, double const l,
-				   double const alpha_lj,
-				   double const alpha_crf,
-				   double const scale,
-				   math::Vec & force, double &e_lj,
-				   double & e_crf, double &de_lj, 
-				   double & de_crf);
+
     /**
      * calculate the reaction field force and energy
      * of a perturbed atom pair
