@@ -254,8 +254,9 @@ namespace io
   /**
    * Print the PCOUPLE block.
    */
-  void print_PCOUPLE(std::ostream &os,
-		     bool calc, int ntp, math::Matrix pres0, double comp, 
+  void print_PCOUPLE(std::ostream &os, bool calc, 
+		     math::pressure_scale_enum scale,
+		     math::Matrix pres0, double comp, 
 		     double tau, math::virial_enum vir)
   {
     os << "PCOUPLE\n";
@@ -269,24 +270,24 @@ namespace io
        << std::setw(12) << "VIRIAL"
        << "\n";
     
-    if (calc && ntp)
+    if (calc && scale != math::pcouple_off)
       os << std::setw(12) << "scale";
     else if (calc)
       os << std::setw(12) << "calc";
     else
       os << std::setw(12) << "none";
 
-    switch(ntp){
-      case 0:
-	os << std::setw(12) << "no";
+    switch(scale){
+      case math::pcouple_off:
+	os << std::setw(12) << "off";
 	break;
-      case 1:
+      case math::pcouple_isotropic:
 	os << std::setw(12) << "iso";
 	break;
-      case 2:
+      case math::pcouple_anisotropic:
 	os << std::setw(12) << "aniso";
 	break;
-      case 3:
+      case math::pcouple_full_anisotropic:
 	os << std::setw(12) << "full";
 	break;
       default:
@@ -336,28 +337,28 @@ namespace io
     os << "\tmolecular kinetic energy:\n\t";
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
-	os << std::setw(15) << conf.special().molecular_kinetic_energy(i,j);
+	os << std::setw(15) << conf.old().kinetic_energy_tensor(i,j);
       os << "\n\t";
     }
     
     os << "\n\tvirial\n\t";
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
-	os << std::setw(15) << conf.current().virial_tensor(i,j);
+	os << std::setw(15) << conf.old().virial_tensor(i,j);
       os << "\n\t";
     }
 
     os << "\n\tpressure tensor\n\t";
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
-	os << std::setw(15) << conf.current().pressure_tensor(i,j);
+	os << std::setw(15) << conf.old().pressure_tensor(i,j);
       os << "\n\t";
     }
     os << "\n\tpressure: "
        << std::setw(15)
-       << (conf.current().pressure_tensor(0,0) + 
-	   conf.current().pressure_tensor(1,1) +
-	   conf.current().pressure_tensor(2,2)) / 3 
+       << (conf.old().pressure_tensor(0,0) + 
+	   conf.old().pressure_tensor(1,1) +
+	   conf.old().pressure_tensor(2,2)) / 3 
        << "\n";
 
     os << "\tvolume:   "

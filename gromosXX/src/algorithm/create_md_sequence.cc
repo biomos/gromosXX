@@ -25,7 +25,9 @@
 #include <algorithm/algorithm_sequence.h>
 #include <algorithm/integration/leap_frog.h>
 #include <algorithm/temperature/temperature_calculation.h>
-#include <algorithm/temperature/berendsen.h>
+#include <algorithm/temperature/berendsen_thermostat.h>
+#include <algorithm/pressure/pressure_calculation.h>
+#include <algorithm/pressure/berendsen_barostat.h>
 
 #include <interaction/forcefield/forcefield.h>
 #include <interaction/forcefield/create_forcefield.h>
@@ -113,7 +115,27 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       new algorithm::Berendsen_Thermostat;
     md_seq.push_back(tcoup);
   }
+
+  // pressure calculation?
+  io::print_PCOUPLE(std::cout, sim.param().pcouple.calculate,
+		    sim.param().pcouple.scale,
+		    sim.param().pcouple.pres0,
+		    sim.param().pcouple.compressibility,
+		    sim.param().pcouple.tau,
+		    sim.param().pcouple.virial);
   
+  if (sim.param().pcouple.calculate){
+    algorithm::Pressure_Calculation * pcalc =
+      new algorithm::Pressure_Calculation;
+    md_seq.push_back(pcalc);
+  }
+
+  if (sim.param().pcouple.scale != math::pcouple_off){
+    algorithm::Berendsen_Barostat * pcoup =
+      new algorithm::Berendsen_Barostat;
+    md_seq.push_back(pcoup);
+  }
+
   return 0;
 
 }

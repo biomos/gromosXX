@@ -1,5 +1,5 @@
 /**
- * @file temperature/berendsen.tcc
+ * @file temperature/berendsen_thermostat.tcc
  * methods of the berendsen thermostat
  */
 
@@ -18,7 +18,7 @@
 #include <configuration/state_properties.h>
 
 #include <algorithm/algorithm.h>
-#include "berendsen.h"
+#include "berendsen_thermostat.h"
 
 #undef MODULE
 #undef SUBMODULE

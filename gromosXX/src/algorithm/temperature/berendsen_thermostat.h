@@ -1,5 +1,5 @@
 /**
- * @file temperature/berendsen.h
+ * @file temperature/berendsen_thermostat.h
  * berendsen thermostat.
  */
 

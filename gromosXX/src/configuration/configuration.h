@@ -98,7 +98,7 @@ namespace configuration
       /**
        * the molecular kinetic energy.
        */
-      math::Matrix molecular_kinetic_energy;
+      // math::Matrix molecular_kinetic_energy;
 
     };
     

@@ -4,7 +4,9 @@ include_HEADERS =	algorithm.h \
 			algorithm/algorithm_sequence.h \
 			integration/leap_frog.h \
 			temperature/temperature_calculation.h \
-			temperature/berendsen.h \
+			temperature/berendsen_thermostat.h \
+			pressure/pressure_calculation.h \
+			pressure/berendsen_barostat.h \
 			create_md_sequence.h \
 			constraints/shake.h \
 			constraints/shake.tcc
@@ -18,7 +20,9 @@ libalgorithm_la_SOURCES =	algorithm.cc \
 				algorithm/algorithm_sequence.cc \
 				integration/leap_frog.cc \
 				temperature/temperature_calculation.cc \
-				temperature/berendsen.cc
+				temperature/berendsen_thermostat.cc \
+				pressure/pressure_calculation.cc \
+				pressure/berendsen_barostat.cc
 
 bin_PROGRAMS =			
 

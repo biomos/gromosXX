@@ -851,17 +851,17 @@ void io::Out_Configuration
  
   std::vector<double> volprt(20,0.0);
   volprt[7] = math::dot(math::cross(conf.current().box(0), conf.current().box(1)), conf.current().box(2));
-  volprt[8] = conf.current().pressure_tensor(0,0);
-  volprt[9] = conf.current().pressure_tensor(1,1);
-  volprt[10] = conf.current().pressure_tensor(2,2);
+  volprt[8] = conf.old().pressure_tensor(0,0);
+  volprt[9] = conf.old().pressure_tensor(1,1);
+  volprt[10] = conf.old().pressure_tensor(2,2);
   volprt[11] = (volprt[8] + volprt[9] + volprt[10])/3.0;
-  volprt[12] = conf.special().molecular_kinetic_energy(0,0);
-  volprt[13] = conf.special().molecular_kinetic_energy(1,1);
-  volprt[14] = conf.special().molecular_kinetic_energy(2,2);
+  volprt[12] = conf.old().kinetic_energy_tensor(0,0);
+  volprt[13] = conf.old().kinetic_energy_tensor(1,1);
+  volprt[14] = conf.old().kinetic_energy_tensor(2,2);
   volprt[15] = volprt[12] + volprt[13] + volprt[14];
-  volprt[16] = conf.current().virial_tensor(0,0);
-  volprt[17] = conf.current().virial_tensor(1,1);
-  volprt[18] = conf.current().virial_tensor(2,2);
+  volprt[16] = conf.old().virial_tensor(0,0);
+  volprt[17] = conf.old().virial_tensor(1,1);
+  volprt[18] = conf.old().virial_tensor(2,2);
   volprt[19] = volprt[16] + volprt[17] + volprt[18];
 
   // now actually write it out
@@ -937,6 +937,9 @@ void io::Out_Configuration
     print_ENERGY(m_output, conf.old().energies, topo.energy_groups());
     
     print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
+
+    if (sim.param().pcouple.calculate)
+      print_PRESSURE(m_output, conf);
     
   }
   

@@ -27,8 +27,9 @@ namespace io
   /**
    * Print the PCOUPLE block.
    */
-  void print_PCOUPLE(std::ostream &os,
-		     bool calc, int ntp, math::Matrix pres0, double comp, 
+  void print_PCOUPLE(std::ostream &os, bool calc, 
+		     math::pressure_scale_enum scale,
+		     math::Matrix pres0, double comp, 
 		     double tau, math::virial_enum vir);
 
   /**
