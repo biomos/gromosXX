@@ -21,7 +21,7 @@ namespace interaction
      */
     Perturbed_Quartic_Bond_Interaction(Quartic_Bond_Interaction<t_interaction_spec> 
 				       &bond_interaction)
-      : Interaction("PerturbedQuraticBond"),
+      : Interaction("PerturbedQuarticBond"),
 	m_interaction(bond_interaction)
     {}
     

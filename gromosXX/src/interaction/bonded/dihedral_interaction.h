@@ -19,7 +19,7 @@ namespace interaction
     /**
      * Constructor.
      */
-    Dihedral_Interaction() : Interaction("DihedralInteraction") {}
+    Dihedral_Interaction() : Interaction("Dihedral") {}
     /**
      * Destructor.
      */

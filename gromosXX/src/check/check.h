@@ -33,6 +33,8 @@ if (x1 != x2){ \
 
 #define CHECK_APPROX_EQUAL(x1, x2, eps, res) \
 if (x1 < x2 - eps || x1 > x2 + eps){ \
+  std::cout.precision(6); \
+  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield); \
   std::cout << "\n\t" << STR(x1) << " =\t" << x1 \
             << "\n\t" << STR(x2) << " =\t" << x2 \
             << "\n\t" << std::setw(60) << " "; \

@@ -1,6 +1,6 @@
 /**
- * @file rasn.t.cc
- * tests using rasn
+ * @file aladip.t.cc
+ * tests using aladip
  */
 
 
@@ -55,6 +55,7 @@
 #include "check.h"
 
 #include "check_forcefield.h"
+#include "check_state.h"
 
 int main(int argc, char* argv[])
 {
@@ -89,22 +90,22 @@ int main(int argc, char* argv[])
       if(args.count("topo") == 1)
 	stopo = args["topo"];
       else
-	GETFILEPATH(stopo, "rasn.topo", "src/check/data/");
+	GETFILEPATH(stopo, "aladip.topo", "src/check/data/");
 
       if(args.count("pttopo") == 1)
 	spttopo = args["pttopo"];
       else
-	GETFILEPATH(spttopo, "rasn.pttopo", "src/check/data/");
+	GETFILEPATH(spttopo, "aladip.pttopo", "src/check/data/");
       
       if(args.count("conf") == 1)
 	sconf = args["conf"];
       else
-	GETFILEPATH(sconf, "rasn.conf", "src/check/data/");
+	GETFILEPATH(sconf, "aladip.conf", "src/check/data/");
 
       if(args.count("input") == 1)
 	sinput = args["input"];
       else
-	GETFILEPATH(sinput, "rasn.in", "src/check/data/");
+	GETFILEPATH(sinput, "aladip.in", "src/check/data/");
 
       if (!quiet)
 	std::cout << "\n\n"
@@ -114,7 +115,7 @@ int main(int argc, char* argv[])
 		  << "configuration : " << sconf << "\n"
 		  << std::endl;
 
-      util::simulation_struct rasn_sim;
+      util::simulation_struct aladip_sim;
       io::In_Topology in_topo;
 
       in_topo.quiet = quiet;
@@ -123,7 +124,7 @@ int main(int argc, char* argv[])
 				  spttopo,
 				  sconf,
 				  sinput,
-				  rasn_sim,
+				  aladip_sim,
 				  in_topo,
 				  quiet
 				  )
@@ -137,9 +138,9 @@ int main(int argc, char* argv[])
 	interaction::Forcefield *ff = new interaction::Forcefield;
 	
 	if (interaction::create_g96_forcefield(*ff, 
-					       rasn_sim.topo,
-					       rasn_sim.sim,
-					       rasn_sim.conf,
+					       aladip_sim.topo,
+					       aladip_sim.sim,
+					       aladip_sim.conf,
 					       in_topo,
 					       quiet)
 	  != 0){
@@ -148,29 +149,30 @@ int main(int argc, char* argv[])
 	}
 
 	// first check the forcefield
-	total += check::check_forcefield(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, *ff);
+	total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
 
+	total += check::check_state(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
       }
       // vtune: run the thing...
       else{
 	
-	algorithm::create_md_sequence(rasn_sim.md,
-				      rasn_sim.topo,
-				      rasn_sim.conf,
-				      rasn_sim.sim,
+	algorithm::create_md_sequence(aladip_sim.md,
+				      aladip_sim.topo,
+				      aladip_sim.conf,
+				      aladip_sim.sim,
 				      in_topo);
 
-	double end_time = rasn_sim.sim.param().step.t0 + 
-	  rasn_sim.sim.time_step_size() * 
-	  rasn_sim.sim.param().step.number_of_steps;
+	double end_time = aladip_sim.sim.param().step.t0 + 
+	  aladip_sim.sim.time_step_size() * 
+	  aladip_sim.sim.param().step.number_of_steps;
     
 	int error;
 
-	while(rasn_sim.sim.time() < end_time){
+	while(aladip_sim.sim.time() < end_time){
       
-	  if ((error = rasn_sim.md.run(rasn_sim.topo, 
-				       rasn_sim.conf,
-				       rasn_sim.sim))){
+	  if ((error = aladip_sim.md.run(aladip_sim.topo, 
+				       aladip_sim.conf,
+				       aladip_sim.sim))){
 
 	    std::cout << "\nError during MD run!\n" << std::endl;
 	    // try to save the final structures...
@@ -178,28 +180,28 @@ int main(int argc, char* argv[])
 	  }
 
 	  // update the energies
-	  rasn_sim.conf.old().energies.calculate_totals();
-	  rasn_sim.conf.current().energy_averages.
-	    update(rasn_sim.conf.old().energies,
-		   rasn_sim.conf.old().energy_averages,
-		   rasn_sim.sim.time_step_size());
+	  aladip_sim.conf.old().energies.calculate_totals();
+	  aladip_sim.conf.current().energy_averages.
+	    update(aladip_sim.conf.old().energies,
+		   aladip_sim.conf.old().energy_averages,
+		   aladip_sim.sim.time_step_size());
 
       // perturbed energy derivatives
-	  if (rasn_sim.sim.param().perturbation.perturbation){
-	    rasn_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
+	  if (aladip_sim.sim.param().perturbation.perturbation){
+	    aladip_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
 
-	    rasn_sim.conf.current().perturbed_energy_derivative_averages.
-	      update(rasn_sim.conf.old().perturbed_energy_derivatives,
-		     rasn_sim.conf.old().perturbed_energy_derivative_averages,
-		     rasn_sim.sim.time_step_size(),
-		     rasn_sim.sim.param().perturbation.dlamt);
+	    aladip_sim.conf.current().perturbed_energy_derivative_averages.
+	      update(aladip_sim.conf.old().perturbed_energy_derivatives,
+		     aladip_sim.conf.old().perturbed_energy_derivative_averages,
+		     aladip_sim.sim.time_step_size(),
+		     aladip_sim.sim.param().perturbation.dlamt);
 	  }
 	  
-	  rasn_sim.sim.time() +=  rasn_sim.sim.time_step_size();
-	  ++ rasn_sim.sim.steps();
+	  aladip_sim.sim.time() +=  aladip_sim.sim.time_step_size();
+	  ++ aladip_sim.sim.steps();
 
 	}
-	rasn_sim.md.print_timing(std::cout);
+	aladip_sim.md.print_timing(std::cout);
       }
     }
     catch (std::string s){

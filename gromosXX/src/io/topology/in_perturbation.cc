@@ -65,6 +65,14 @@ void
 io::In_Perturbation::read(topology::Topology &topo,
 			  simulation::Parameter &param)
 {
+
+  if (!param.perturbation.perturbation){
+    io::messages.add("Ignoring perturbation topology because perturbation is not enabled.",
+		     "In_Perturbation",
+		     io::message::warning);
+    return;
+  }
+
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
