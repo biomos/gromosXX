@@ -119,19 +119,26 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
   switch(sim.param().constraint.solute.algorithm){
     case simulation::constr_shake:
       {
-	// SHAKE
-	algorithm::Shake<do_virial> * s = 
-	  new algorithm::Shake<do_virial>
-	  (sim.param().constraint.solute.shake_tolerance);
-	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim, quiet);
-	md_seq.push_back(s);
-	
-	if (sim.param().perturbation.perturbation){
+	if (!sim.param().perturbation.perturbation){
+	  
+	  // SHAKE
+	  algorithm::Shake<do_virial> * s = 
+	    new algorithm::Shake<do_virial>
+	    (sim.param().constraint.solute.shake_tolerance);
+	  it.read_harmonic_bonds(s->parameter());
+	  s->init(topo, conf, sim, quiet);
+	  md_seq.push_back(s);
+	  
+	}
+	else{
+	  // perturbed shake also calls normal shake...
 	  algorithm::Perturbed_Shake<do_virial> * ps =
-	    new algorithm::Perturbed_Shake<do_virial>(*s);
+	    new algorithm::Perturbed_Shake<do_virial>
+	    (sim.param().constraint.solute.shake_tolerance);
+	  it.read_harmonic_bonds(ps->parameter());
 	  ps->init(topo, conf, sim, quiet);
 	  md_seq.push_back(ps);
+
 	}
 	break;
       }

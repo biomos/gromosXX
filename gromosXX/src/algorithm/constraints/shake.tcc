@@ -16,8 +16,9 @@
  */
 template<math::virial_enum do_virial>
 algorithm::Shake<do_virial>
-::Shake(double const tolerance, int const max_iterations)
-  : Algorithm("Shake"),
+::Shake(double const tolerance, int const max_iterations,
+	std::string const name)
+  : Algorithm(name),
     m_tolerance(tolerance),
     m_max_iterations(max_iterations),
     m_solvent_timing(0.0)
@@ -42,9 +43,11 @@ void algorithm::Shake<do_virial>
 
 /**
  * do one iteration
- */      
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int _shake(topology::Topology const &topo,
+ */
+template<math::virial_enum do_virial>
+template<math::boundary_enum b>
+int algorithm::Shake<do_virial>
+::shake_iteration(topology::Topology const &topo,
 		  configuration::Configuration & conf,
 		  bool & convergence,
 		  int const first,
@@ -55,7 +58,7 @@ static int _shake(topology::Topology const &topo,
 		  double const dt,
 		  math::Periodicity<b> const & periodicity,
 		  double const tolerance,
-		  bool do_constraint_force = false, size_t force_offset = 0)
+		  bool do_constraint_force, size_t force_offset)
 {
   convergence = true;
 
@@ -187,13 +190,15 @@ static int _shake(topology::Topology const &topo,
 /**
  * shake solute
  */
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int solute(topology::Topology const & topo,
-		  configuration::Configuration & conf,
-		  std::vector<interaction::bond_type_struct> const & param,
-		  double dt, int const max_iterations,
-		  double const tolerance,
-		  double & timing)
+template<math::virial_enum do_virial>
+template<math::boundary_enum b>
+int algorithm::Shake<do_virial>::
+solute(topology::Topology const & topo,
+       configuration::Configuration & conf,
+       std::vector<interaction::bond_type_struct> const & param,
+       double dt, int const max_iterations,
+       double const tolerance,
+       double & timing)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
@@ -219,7 +224,7 @@ static int solute(topology::Topology const & topo,
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    if(_shake<do_virial, b>
+    if(shake_iteration<b>
        (topo, conf, convergence, first, skip_now, skip_next,
 	topo.solute().distance_constraints(), param, dt,
 	periodicity, tolerance, true)
@@ -262,13 +267,15 @@ static int solute(topology::Topology const & topo,
 /**
  * shake solvent.
  */
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int solvent(topology::Topology const & topo,
-		   configuration::Configuration & conf,
-		   std::vector<interaction::bond_type_struct> &param,
-		   double dt, int const max_iterations, 
-		   double const tolerance,
-		   double & timing)
+template<math::virial_enum do_virial>
+template<math::boundary_enum b>
+int algorithm::Shake<do_virial>
+::solvent(topology::Topology const & topo,
+	  configuration::Configuration & conf,
+	  std::vector<interaction::bond_type_struct> &param,
+	  double dt, int const max_iterations, 
+	  double const tolerance,
+	  double & timing)
 {
 
   DEBUG(8, "\tshaking SOLVENT");
@@ -299,7 +306,7 @@ static int solvent(topology::Topology const & topo,
       while(!convergence){
 	DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-	if(_shake<do_virial, b>
+	if(shake_iteration<b>
 	   (topo, conf, convergence, first, skip_now, skip_next,
 	    topo.solvent(i).distance_constraints(), param, dt,
 	    periodicity, tolerance, false)){
@@ -359,17 +366,17 @@ int algorithm::Shake<do_virial>
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	error = solute<do_virial, math::vacuum>
+	error = solute<math::vacuum>
 	  (topo, conf, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::rectangular:
-	error = solute<do_virial, math::rectangular>
+	error = solute<math::rectangular>
 	  (topo, conf, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::triclinic:
-	error = solute<do_virial, math::triclinic>
+	error = solute<math::triclinic>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
@@ -394,19 +401,19 @@ int algorithm::Shake<do_virial>
     switch(conf.boundary_type){
       case math::vacuum:
 	error = 
-	  solvent<do_virial, math::vacuum>
+	  solvent<math::vacuum>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance, m_solvent_timing);
 	break;
       case math::rectangular:
 	error = 
-	  solvent<do_virial, math::rectangular>
+	  solvent<math::rectangular>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance, m_solvent_timing);
 	break;
       case math::triclinic:
 	error = 
-	  solvent<do_virial, math::triclinic>
+	  solvent<math::triclinic>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance, m_solvent_timing);
 	break;

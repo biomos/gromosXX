@@ -19,7 +19,9 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Shake(double const tolerance = 0.000001, int const max_iterations = 1000);
+    Shake(double const tolerance = 0.000001, 
+	  int const max_iterations = 1000,
+	  std::string const name = "Shake");
 
     /**
      * Destructor.
@@ -94,6 +96,37 @@ namespace algorithm
      * time spent for solvent
      */
     double m_solvent_timing;
+
+    template<math::boundary_enum b>
+    int shake_iteration(topology::Topology const &topo,
+			configuration::Configuration & conf,
+			bool & convergence,
+			int const first,
+			std::vector<bool> &skip_now,
+			std::vector<bool> &skip_next,
+			std::vector<topology::two_body_term_struct> const & constr,
+			std::vector<interaction::bond_type_struct> const & param,
+			double const dt,
+			math::Periodicity<b> const & periodicity,
+			double const tolerance,
+			bool do_constraint_force = false, size_t force_offset = 0);
+    
+    template<math::boundary_enum b>
+    int solute(topology::Topology const & topo,
+	       configuration::Configuration & conf,
+	       std::vector<interaction::bond_type_struct> const & param,
+	       double dt, int const max_iterations,
+	       double const tolerance,
+	       double & timing);
+    
+    template<math::boundary_enum b>
+    int solvent(topology::Topology const & topo,
+		configuration::Configuration & conf,
+		std::vector<interaction::bond_type_struct> &param,
+		double dt, int const max_iterations, 
+		double const tolerance,
+		double & timing);
+    
 
   };
   

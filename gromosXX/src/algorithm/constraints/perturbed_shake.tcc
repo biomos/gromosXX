@@ -14,9 +14,8 @@
  */
 template<math::virial_enum do_virial>
 algorithm::Perturbed_Shake<do_virial>
-::Perturbed_Shake(Shake<do_virial> const & shake)
-  : Algorithm("PerturbedShake"),
-    m_shake(shake)
+::Perturbed_Shake(double const tolerance, int const max_iterations)
+  : Shake<do_virial>(tolerance, max_iterations)
 {
 }
 
@@ -32,8 +31,10 @@ algorithm::Perturbed_Shake<do_virial>
 /**
  * do one iteration
  */      
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int _perturbed_shake(topology::Topology const &topo,
+template<math::virial_enum do_virial>
+template<math::boundary_enum b>
+int algorithm::Perturbed_Shake<do_virial>
+::perturbed_shake_iteration(topology::Topology const &topo,
 			    configuration::Configuration & conf,
 			    bool & convergence,
 			    int const first,
@@ -45,8 +46,8 @@ static int _perturbed_shake(topology::Topology const &topo,
 			    double const dt,
 			    math::Periodicity<b> const & periodicity,
 			    double const tolerance,
-			    bool do_constraint_force = false,
-			    size_t force_offset = 0)
+			    bool do_constraint_force,
+			    size_t force_offset)
 {
   convergence = true;
 
@@ -189,14 +190,16 @@ static int _perturbed_shake(topology::Topology const &topo,
 /**
  * shake perturbed solute
  */
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int _perturbed_solute(topology::Topology const & topo,
-			     configuration::Configuration & conf,
-			     std::vector<interaction::bond_type_struct> 
-			     const & param,
-			     double dt, int const max_iterations,
-			     double const tolerance,
-			     double & timing)
+template<math::virial_enum do_virial>
+template<math::boundary_enum b>
+int algorithm::Perturbed_Shake<do_virial>
+::perturbed_solute(topology::Topology const & topo,
+		   configuration::Configuration & conf,
+		   std::vector<interaction::bond_type_struct> 
+		   const & param,
+		   double dt, int const max_iterations,
+		   double const tolerance,
+		   double & timing)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
@@ -221,11 +224,14 @@ static int _perturbed_solute(topology::Topology const & topo,
   skip_next.assign(topo.solute().num_atoms(), true);
   
   bool convergence = false;
+  bool pert_convergence = false;
+  
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    if(_perturbed_shake<do_virial, b>
-       (topo, conf, convergence, first, skip_now, skip_next,
+    DEBUG(8, "perturbed shake iteration");
+    if(perturbed_shake_iteration<b>
+       (topo, conf, pert_convergence, first, skip_now, skip_next,
 	topo.perturbed_solute().distance_constraints(), 
 	param, dt,
 	periodicity, tolerance, true)){
@@ -235,7 +241,20 @@ static int _perturbed_solute(topology::Topology const & topo,
       std::cout << "Perturbed SHAKE failure in solute!" << std::endl;
       return E_SHAKE_FAILURE_SOLUTE;
     }
-     
+    
+    DEBUG(8, "unperturbed shake iteration");
+    if(Shake<do_virial>::shake_iteration(topo, conf, convergence, 
+			  first, skip_now, skip_next,
+			  topo.solute().distance_constraints(), param, dt,
+			  periodicity, tolerance, true) != 0){
+      io::messages.add("SHAKE error. vectors orthogonal",
+		       "Shake::solute",
+		       io::message::error);
+      std::cout << "SHAKE failure in solute!" << std::endl;
+      return E_SHAKE_FAILURE_SOLUTE;
+    }
+
+    convergence = pert_convergence && convergence;
 
     if(++num_iterations > max_iterations){
       io::messages.add("Perturbed SHAKE error. too many iterations",
@@ -265,6 +284,88 @@ static int _perturbed_solute(topology::Topology const & topo,
 } // solute
 
 /**
+ * shake solvent.
+ */
+template<math::virial_enum do_virial>
+template<math::boundary_enum b>
+int algorithm::Perturbed_Shake<do_virial>
+::solvent(topology::Topology const & topo,
+	  configuration::Configuration & conf,
+	  std::vector<interaction::bond_type_struct> &param,
+	  double dt, int const max_iterations, 
+	  double const tolerance,
+	  double & timing)
+{
+
+  DEBUG(8, "\tshaking SOLVENT");
+  
+  const double start = util::now();
+
+  // the first atom of a solvent
+  size_t first = topo.num_solute_atoms();
+
+  std::vector<bool> skip_now;
+  std::vector<bool> skip_next;
+  int tot_iterations = 0;
+
+  math::Periodicity<b> periodicity(conf.current().box);
+
+  // for all solvents
+  for(size_t i=0; i<topo.num_solvents(); ++i){
+
+    // loop over the molecules
+    for(size_t nm=0; nm<topo.num_solvent_molecules(i);
+	++nm, first+=topo.solvent(i).num_atoms()){
+
+      skip_now.assign(topo.solvent(i).num_atoms(), false);
+      skip_next.assign(topo.solvent(i).num_atoms(), true);
+
+      int num_iterations = 0;
+      bool convergence = false;
+      while(!convergence){
+	DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
+
+	if(shake_iteration
+	   (topo, conf, convergence, first, skip_now, skip_next,
+	    topo.solvent(i).distance_constraints(), param, dt,
+	    periodicity, tolerance, false)){
+	  
+	  io::messages.add("SHAKE error. vectors orthogonal",
+			   "Shake::solute", io::message::error);
+	  
+	  std::cout << "SHAKE failure in solute!" << std::endl;
+	  return E_SHAKE_FAILURE_SOLVENT;
+	}
+	
+	// std::cout << num_iterations+1 << std::endl;
+	if(++num_iterations > max_iterations){
+	  io::messages.add("SHAKE error. too many iterations",
+			   "Shake::solvent",
+			   io::message::critical);
+	  // throw std::runtime_error("SHAKE failure in solvent");
+	  return E_SHAKE_FAILURE_SOLVENT;
+	}
+
+	skip_now = skip_next;
+	skip_next.assign(skip_next.size(), true);
+
+      } // while(!convergence)
+      
+      tot_iterations += num_iterations;
+      
+    } // molecules
+    
+  } // solvents
+
+  timing += util::now() - start;
+  DEBUG(3, "total shake solvent iterations: " << tot_iterations);
+  return 0;
+  
+} // shake solvent
+
+
+
+/**
  * apply the SHAKE algorithm
  */
 template<math::virial_enum do_virial>
@@ -277,8 +378,9 @@ int algorithm::Perturbed_Shake<do_virial>
   bool do_vel = false;
   int error = 0;
   
-  // check whether we shake
-  if (topo.perturbed_solute().distance_constraints().size() && 
+  // check whether we shake solute
+  if ((topo.perturbed_solute().distance_constraints().size() ||
+       topo.solute().distance_constraints().size()) && 
       sim.param().constraint.solute.algorithm == simulation::constr_shake &&
       sim.param().constraint.ntc > 1){
 
@@ -286,25 +388,72 @@ int algorithm::Perturbed_Shake<do_virial>
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	error += _perturbed_solute<do_virial, math::vacuum>
-	  (topo, conf, m_shake.parameter(), sim.time_step_size(), 
-	   m_shake.max_iterations(), m_shake.tolerance(), m_timing);
+	error += perturbed_solute<math::vacuum>
+	  (topo, conf, parameter(), sim.time_step_size(), 
+	   max_iterations(), tolerance(), m_timing);
 	break;
       case math::rectangular:
-	error += _perturbed_solute<do_virial, math::rectangular>
-	  (topo, conf, m_shake.parameter(), sim.time_step_size(), 
-	   m_shake.max_iterations(), m_shake.tolerance(), m_timing);
+	error += perturbed_solute<math::rectangular>
+	  (topo, conf, parameter(), sim.time_step_size(), 
+	   max_iterations(), tolerance(), m_timing);
 	break;
       case math::triclinic:
-	error += _perturbed_solute<do_virial, math::triclinic>
-	  (topo, conf, m_shake.parameter(), sim.time_step_size(),
-	   m_shake.max_iterations(), m_shake.tolerance(), m_timing);
+	error += perturbed_solute<math::triclinic>
+	  (topo, conf, parameter(), sim.time_step_size(),
+	   max_iterations(), tolerance(), m_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");
     }
   }
+
+  if (error){
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE" << std::endl;
+    // save old positions to final configuration... (even before free-flight!)
+    conf.current().pos = conf.old().pos;
+    return E_SHAKE_FAILURE_SOLUTE;
+  }
+
+  // solvent
+  if (sim.param().system.nsm &&
+      sim.param().constraint.solvent.algorithm == simulation::constr_shake){
+
+    DEBUG(8, "\twe need to shake SOLVENT");
+    do_vel = true;
+    switch(conf.boundary_type){
+      case math::vacuum:
+	error = 
+	  solvent<math::rectangular>(topo, conf, parameter(), 
+				     sim.time_step_size(),
+				     m_max_iterations, m_tolerance,
+				     m_solvent_timing);
+	break;
+      case math::rectangular:
+	error = 
+	  solvent<math::rectangular>
+	  (topo, conf, parameter(), sim.time_step_size(),
+	   m_max_iterations, m_tolerance, m_solvent_timing);
+	break;
+      case math::triclinic:
+	error = 
+	  solvent<math::triclinic>
+	  (topo, conf, parameter(), sim.time_step_size(),
+	   m_max_iterations, m_tolerance, m_solvent_timing);
+	break;
+      default:
+	throw std::string("wrong boundary type");
+	
+    }
+  }
   
+  if (error){
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT" << std::endl;
+    // save old positions to final configuration... (even before free-flight!)
+    conf.current().pos = conf.old().pos;
+    return E_SHAKE_FAILURE_SOLVENT;
+  }
+
+
   // shaken velocity
   conf.current().vel = (conf.current().pos - conf.old().pos) / 
     sim.time_step_size();
