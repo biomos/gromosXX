@@ -34,7 +34,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
       param.multibath.tcouple.ntt[2] == 0){
     // nothing
   }
-  // 1 0 0
+  // 1 0 0 => couple ir
   else if (param.multibath.tcouple.ntt[0] == 1 && 
 	   param.multibath.tcouple.ntt[1] == 0 && 
 	   param.multibath.tcouple.ntt[2] == 0){
@@ -46,7 +46,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
 			     param.multibath.tcouple.tau[0]);
     param.multibath.multibath.add_bath(0, -1);
     // the atoms in the baths
-    param.multibath.multibath.add_bath_index(last_solute, 0, 0, 1);
+    param.multibath.multibath.add_bath_index(last_solute, 0, 1, 0);
     // and an uncoupled one for the solvent...
     if (last_solvent != last_solute)
       param.multibath.multibath.add_bath_index(last_solvent, 0, 1, 1);
@@ -62,7 +62,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
 			     param.multibath.tcouple.tau[1]);
     param.multibath.multibath.add_bath(0, -1);
     // the atoms in the baths
-    param.multibath.multibath.add_bath_index(last_solute, 0, 1, 0);
+    param.multibath.multibath.add_bath_index(last_solute, 0, 0, 1);
     // and an uncoupled one for the solvent...
     if (last_solvent != last_solute)
       param.multibath.multibath.add_bath_index(last_solvent, 0, 1, 1);
@@ -92,7 +92,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[1], 
 			     param.multibath.tcouple.tau[1]);
     // the atoms in the baths
-    param.multibath.multibath.add_bath_index(last_solute, 0, 0, 1);
+    param.multibath.multibath.add_bath_index(last_solute, 0, 1, 0);
 
     // and an uncoupled one for the solvent...
     if (last_solvent != last_solute){
@@ -114,7 +114,7 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[2], 
 			     param.multibath.tcouple.tau[2]);
     // the atoms in the baths
-    param.multibath.multibath.add_bath_index(last_solute, 0, 0, 1);
+    param.multibath.multibath.add_bath_index(last_solute, 0, 1, 0);
     param.multibath.multibath.add_bath_index(last_solvent, 0, 2, 2);
   }
   // 2 -2 0
