@@ -82,11 +82,23 @@ inline int simulation::Simulation<t_topo, t_system>
  * Nonbonded interaction class
  */
 template<typename t_topo, typename t_system>
-inline simulation::Nonbonded simulation::Simulation<t_topo, t_system>
+inline simulation::Nonbonded & simulation::Simulation<t_topo, t_system>
 ::nonbonded()
 {
   return m_nonbonded;
 }
+
+/**
+ * add solvent molecules to the simulation (system).
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>::solvate(size_t solv, size_t num_molecules)
+{
+  topology().solvate(solv, num_molecules);
+  system().resize(topology().num_solute_atoms() + 
+		  topology().num_solvent_atoms());
+}
+
 
 namespace simulation
 {

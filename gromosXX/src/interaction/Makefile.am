@@ -13,7 +13,11 @@ include_HEADERS = 		interaction.h \
                                 interaction/improper_dihedral_interaction.h \
                                 interaction/improper_dihedral_interaction.tcc \
 				pairlist/simple_pairlist.h \
-				pairlist/simple_pairlist.tcc
+				pairlist/simple_pairlist.tcc \
+				pairlist/twin_range_pairlist.h \
+				pairlist/twin_range_pairlist.tcc \
+				pairlist/twin_range_pairlist_cg.h \
+				pairlist/twin_range_pairlist_cg.tcc
 
 lib_LTLIBRARIES	= 		libinteraction.la
 

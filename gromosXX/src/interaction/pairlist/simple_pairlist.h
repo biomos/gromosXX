@@ -1,10 +1,10 @@
-#ifndef INCLUDED_SIMPLE_PAIRLIST_H
-#define INCLUDED_SIMPLE_PAIRLIST_H
-
 /**
  * @file simple_pairlist.h
  * a simple pairlist class.
  */
+
+#ifndef INCLUDED_SIMPLE_PAIRLIST_H
+#define INCLUDED_SIMPLE_PAIRLIST_H
 
 #ifndef INCLUDED_UTILITY
 // pair<A,B>
@@ -87,58 +87,7 @@ namespace interaction
   template<typename t_simulation>
   std::ostream& operator<<(
 			   std::ostream& os, 
-			   class simple_pairlist<t_simulation>& pl
-			   );
-
-
-  /**
-   * @class twin_range_pairlist
-   * a pair of simple_pairlists 
-   *
-   * @todo add cryptic code somewhere to minimize memory 
-   * allocation/deallocation in the update() method.
-   */
-  template<typename t_simulation>
-  class twin_range_pairlist :
-    public std::pair< simple_pairlist<t_simulation>, simple_pairlist<t_simulation> >
-  {
-  public:
-    /**
-     * access to the iterator type.
-     */
-    typedef typename simple_pairlist<t_simulation>::iterator iterator;
-    
-    /**
-     * the short range pairlist
-     */
-    simple_pairlist<t_simulation>& short_range() { return first; }
-    /**
-     * the long range pairlist
-     */
-    simple_pairlist<t_simulation>& long_range() { return second; }
-    /**
-     * update the pairlists (using rcutl, rcutp).
-     */
-    void update(t_simulation &sim);
-
-  };
-
-  /**
-   * @class twin_range_pairlist_cg
-   * a pair of simple_pairlists, the
-   * distance calculation between atoms is
-   * chargegroup based.
-   */
-  template<typename t_simulation>
-  class twin_range_pairlist_cg :
-    public twin_range_pairlist<t_simulation>
-  {
-  public:
-    /**
-     * update the pairlists (using rcutl, rcutp).
-     */
-    void update(t_simulation &sim);
-  };
+			   class simple_pairlist<t_simulation>& pl);
   
 } // interaction
 

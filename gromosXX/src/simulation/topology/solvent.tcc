@@ -7,7 +7,7 @@
  * add a solvent atom.
  */
 inline void simulation::Solvent
-::add_atom(std::string name, int iac, int res_nr,
+::add_atom(std::string name, int res_nr, int iac,
 	   double mass, double charge)
 {
   atom_struct s;

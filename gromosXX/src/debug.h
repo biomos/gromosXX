@@ -47,6 +47,11 @@
 // the global one
 extern int debug_level;
 
+namespace math
+{
+  extern int debug_level;
+}
+
 namespace interaction
 {
   extern int debug_level;
@@ -58,6 +63,7 @@ namespace io
   extern int debug_level;
   extern int trajectory_debug_level;
   extern int input_debug_level;
+  extern int topology_debug_level;
 }
 
 namespace simulation

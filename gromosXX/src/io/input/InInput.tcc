@@ -57,9 +57,10 @@ inline io::InInput & io::InInput
     _lineStream >> i >> update_step
 		>> rcutp >> rcutl;
 
-    if (_lineStream.fail() || ! _lineStream.eof())
+    if (_lineStream.fail())
       throw std::runtime_error("bad line in PLIST block");
 
+    DEBUG(7, "pairlist update=" << update_step);
     DEBUG(7, "setting short cutoff=" << rcutp << " long cutoff=" << rcutl);
     
     sim.nonbonded().update(update_step);

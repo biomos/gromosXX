@@ -187,13 +187,19 @@ inline void simulation::Topology::solvate(size_t solv, size_t num_molecules)
   m_num_solvent_molecules.push_back(num_molecules);
   m_num_solvent_atoms.push_back(num_molecules * m_solvent[solv].num_atoms());
   
+  DEBUG(5, "solvate: solvent atoms: " << num_solvent_atoms());
+  DEBUG(10, "solvate: total atoms: " << num_solute_atoms() + num_solvent_atoms());
+  
   resize(num_solute_atoms() + num_solvent_atoms());
 
   // add to iac, mass, charge
   for(size_t i=0; i<num_molecules; ++i){
     for(size_t j=0; j<m_solvent[solv].num_atoms(); ++j, ++n){
 
-      m_iac.push_back(m_solvent[solv].atom(j).iac);
+      DEBUG(10, "iac[" << n << "]=" << m_solvent[solv].atom(j).iac);
+      DEBUG(10, "charge[" << n << "]=" << m_solvent[solv].atom(j).charge);
+      
+      m_iac[n] = m_solvent[solv].atom(j).iac;
       m_mass(n) = m_solvent[solv].atom(j).mass;
       m_charge(n) = m_solvent[solv].atom(j).charge;
       // no exclusions or 1-4 interactions for solvent ?!
@@ -201,7 +207,8 @@ inline void simulation::Topology::solvate(size_t solv, size_t num_molecules)
     }
 
     // add to the chargegroups
-    m_chargegroup.push_back(n+1);
+    DEBUG(10, "solvent cg: " << n);
+    m_chargegroup.push_back(n);
 
   }
     

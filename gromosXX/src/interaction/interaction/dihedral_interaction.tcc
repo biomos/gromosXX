@@ -3,6 +3,13 @@
  * template methods of Dihedral_interaction.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE interaction
+
+#include "../../debug.h"
+
 /**
  * Destructor.
  */
@@ -17,21 +24,22 @@ inline interaction::Dihedral_interaction<t_simulation>
  */
 template<typename t_simulation>
 inline void interaction::Dihedral_interaction<t_simulation>
-::calculate_interactions(t_simulation &simu)
+::calculate_interactions(t_simulation &sim)
 {
   // loop over the improper dihedrals
   simulation::Dihedral::iterator d_it =
-    simu.topology().solute().dihedrals().begin();
+    sim.topology().solute().dihedrals().begin();
 
-  math::VArray &pos   = simu.system().pos();
-  math::VArray &force = simu.system().force();
+  math::VArray &pos   = sim.system().pos();
+  math::VArray &force = sim.system().force();
   math::Vec rij, rkj, rkl, rim, rln, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dim, dln, ip;
   
   for( ; !d_it.eol(); ++d_it){
-    rkj = pos(d_it.k()) - pos(d_it.l());
-    rij = pos(d_it.i()) - pos(d_it.j());
-    rkl = pos(d_it.k()) - pos(d_it.l());
+    sim.system().periodicity().nearest_image(pos(d_it.i()), pos(d_it.j()), rij);
+    sim.system().periodicity().nearest_image(pos(d_it.k()), pos(d_it.j()), rkj);
+    sim.system().periodicity().nearest_image(pos(d_it.k()), pos(d_it.l()), rkl);
+
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
     
@@ -39,6 +47,7 @@ inline void interaction::Dihedral_interaction<t_simulation>
 
     double frim = dot(rij, rkj)/dkj2;
     double frln = dot(rkl, rkj)/dkj2;
+
     rim = rij - frim * rkj;
     rln = frln * rkj - rkl;
     dim = sqrt(dot(rim, rim));
@@ -79,12 +88,13 @@ inline void interaction::Dihedral_interaction<t_simulation>
       default:
 	//io::messages.add("dihedral function not implemented for m>6", 
 	//		 "dihedral_interaction", io::message::error);
-	;
+	throw std::runtime_error("dihedral type for m=6 not implemented");
 	
     }
     double      K = m_dihedral_parameter[d_it.type()].K;
     double delta = m_dihedral_parameter[d_it.type()].pd;
 
+    DEBUG(10, "dihedral K=" << K << " delta=" << delta << " dcos=" << dcosmphi);
 
     double ki = -K * delta * dcosmphi / dim;
     double kl = -K * delta * dcosmphi / dln;

@@ -12,12 +12,7 @@
 #include "../math/gmath.h"
 #include "../simulation/simulation.h"
 
-#include "interaction/interaction.h"
-#include "pairlist/simple_pairlist.h"
-#include "interaction/nonbonded_interaction.h"
-
-
-#include "forcefield/forcefield.h"
+#include "interaction.h"
 
 #ifndef NDEBUG
 int debug_level = 0;

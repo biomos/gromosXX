@@ -41,14 +41,17 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
     double dist2 = dot(v, v);
     
     assert(unsigned(b_it.type()) < m_bond_parameter.size());
-    
-    DEBUG(7, "bond " << b_it.i() << "-" << b_it.j() << " type " << b_it.type());
-    DEBUG(10, "K " << m_bond_parameter[b_it.type()].K << " r0 " << m_bond_parameter[b_it.type()].r0);
+    const double r02 = m_bond_parameter[b_it.type()].r0 *
+      m_bond_parameter[b_it.type()].r0;
 
-    DEBUG(10, "DF " << (-m_bond_parameter[b_it.type()].K * (dist2 - m_bond_parameter[b_it.type()].r0)) << "\n" << v);
-    // r0 in this case actually contains r0 * r0 (i hope)
+    DEBUG(7, "bond " << b_it.i() << "-" << b_it.j() << " type " << b_it.type());
+    DEBUG(10, "K " << m_bond_parameter[b_it.type()].K << " r02 " << r02);
+
+    DEBUG(10, "DF " << (-m_bond_parameter[b_it.type()].K * (dist2 - r02)) << "\n" << v);
+
+
     f = v * (-m_bond_parameter[b_it.type()].K *
-	     (dist2 - m_bond_parameter[b_it.type()].r0));
+	     (dist2 - r02));
     
     force(b_it.i()) += f;
     force(b_it.j()) -= f;
@@ -75,7 +78,7 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
 {
   bond_type_struct s;
   s.K = K;
-  s.r0 = r0*r0;
+  s.r0 = r0;
   add(s);
 }
 

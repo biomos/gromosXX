@@ -17,21 +17,22 @@ inline interaction::Improper_dihedral_interaction<t_simulation>
  */
 template<typename t_simulation>
 inline void interaction::Improper_dihedral_interaction<t_simulation>
-::calculate_interactions(t_simulation &simu)
+::calculate_interactions(t_simulation &sim)
 {
   // loop over the improper dihedrals
   simulation::Improper_dihedral::iterator i_it =
-    simu.topology().solute().improper_dihedrals().begin();
+    sim.topology().solute().improper_dihedrals().begin();
 
-  math::VArray &pos   = simu.system().pos();
-  math::VArray &force = simu.system().force();
+  math::VArray &pos   = sim.system().pos();
+  math::VArray &force = sim.system().force();
   math::Vec rij, rkj, rkl, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, q;
   
   for( ; !i_it.eol(); ++i_it){
-    rkj = pos(i_it.k()) - pos(i_it.l());
-    rij = pos(i_it.i()) - pos(i_it.j());
-    rkl = pos(i_it.k()) - pos(i_it.l());
+    sim.system().periodicity().nearest_image(pos(i_it.k()), pos(i_it.j()), rkj);
+    sim.system().periodicity().nearest_image(pos(i_it.i()), pos(i_it.j()), rij);
+    sim.system().periodicity().nearest_image(pos(i_it.k()), pos(i_it.l()), rkl);
+
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
     

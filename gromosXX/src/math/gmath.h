@@ -45,6 +45,11 @@ namespace math
    */
   const double epsilon = 0.000000000001;
 
+  /**
+   * Pi
+   */
+  const double Pi = 3.1415926535897932384626433;
+
 #ifndef NDEBUG
   /**
    * module debug level.

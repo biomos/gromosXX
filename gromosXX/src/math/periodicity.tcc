@@ -3,6 +3,12 @@
  * implementation of the periodic boundary condition functions.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE math
+
+#include "../debug.h"
+
 template<math::boundary_enum b>
 math::Periodicity<b>::Periodicity(Matrix &box,
 				  boundary_enum boundary)

@@ -54,12 +54,17 @@ namespace simulation
     /**
      * nonbonded parameters
      */
-    simulation::Nonbonded nonbonded();
+    simulation::Nonbonded & nonbonded();
 
     /**
      * increase the time by dt.
      */
     void increase_time(double dt);
+
+    /**
+     * add solvent molecules to the simulation (system).
+     */
+    void solvate(size_t solv, size_t num_molecules);
 
   private:
     /**

@@ -11,11 +11,9 @@
 
 #include "simulation.h"
 
-// #include <boost/test/unit_test_suite.hpp>
-// #include <boost/test/test_tools.hpp>
-
-
-// using namespace boost::unit_test_framework;
+#ifndef NDEBUG
+int debug_level = 0;
+#endif
 
 /**
  * some simple tests on the

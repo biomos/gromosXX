@@ -3,6 +3,12 @@
  * definition of the OutTrajectory template methods.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE io
+#define SUBMODULE trajectory
+#include "../../debug.h"
+
 template<typename t_simulation>
 inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
 						      std::ostream &final, int every)
@@ -60,19 +66,19 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
   
   if (m_format == reduced){
 
-    if(sim.steps() % m_every_pos == 0){
+    if((sim.steps() % m_every_pos) == 0){
       _print_timestep(sim, *m_pos_traj);
       _print_positionred(sim.system(), *m_pos_traj);
       if (sim.system().boundary_condition() != math::vacuum)
 	_print_box(sim.system(), *m_pos_traj);
     }
     
-    if (m_vel && sim.steps() % m_every_vel == 0){
+    if (m_vel && (sim.steps() % m_every_vel) == 0){
       _print_timestep(sim, *m_vel_traj);
       _print_velocityred(sim.system(), *m_vel_traj);
     }
     
-    if(m_force && sim.steps() % m_every_force == 0){
+    if(m_force && (sim.steps() % m_every_force) == 0){
       if(sim.steps()){
 	_print_timestep(sim, *m_force_traj);
 	_print_forcered(sim.system(), *m_force_traj);
@@ -96,18 +102,18 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
   }
   else{
 
-    if(sim.steps() % m_every_pos == 0){
+    if((sim.steps() % m_every_pos) == 0){
       _print_timestep(sim, *m_pos_traj);
       _print_position(sim.system(), sim.topology(), *m_pos_traj);
       _print_box(sim.system(), *m_pos_traj);
     }
     
-    if (m_vel && sim.steps() % m_every_vel == 0){
+    if (m_vel && (sim.steps() % m_every_vel) == 0){
       _print_timestep(sim, *m_vel_traj);
       _print_velocity(sim.system(), sim.topology(), *m_vel_traj);
     }
     
-    if(m_force && sim.steps() % m_every_force == 0){
+    if(m_force && (sim.steps() % m_every_force) == 0){
       if (sim.steps()){
 	_print_timestep(sim, *m_force_traj);	
 	_print_force(sim.system(), sim.topology(), *m_force_traj);
@@ -197,7 +203,7 @@ inline void io::OutTrajectory<t_simulation>
        << std::setw(15) << v(2)
        << "\n";
   }
-  
+
   int index = topo.num_solute_atoms();
 
   for(size_t s=0; s < topo.num_solvents(); ++s){
@@ -205,7 +211,7 @@ inline void io::OutTrajectory<t_simulation>
     for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
       
       for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
-
+	
 	v = pos(index);
 	sys.periodicity().positive_box(v);
 	
@@ -239,6 +245,8 @@ inline void io::OutTrajectory<t_simulation>
   math::Vec v, o(0.0, 0.0, 0.0);
   math::Vec half_box(sys.box()(0)(0), sys.box()(1)(1), sys.box()(2)(2));
   half_box /= 2.0;
+
+  DEBUG(10, "writing POSITIONRED " << pos.size() );
   
   for(int i=0,to = pos.size(); i<to; ++i){
 
@@ -254,7 +262,7 @@ inline void io::OutTrajectory<t_simulation>
   }
   
   os << "END\n";
-  
+
 }
 
 template<typename t_simulation>
@@ -305,7 +313,7 @@ inline void io::OutTrajectory<t_simulation>
   }
 
   os << "END\n";
-  
+
 }
 
 template<typename t_simulation>
@@ -381,7 +389,7 @@ inline void io::OutTrajectory<t_simulation>
   }
 
   os << "END\n";
-  
+
 }
 
 template<typename t_simulation>
@@ -406,6 +414,8 @@ inline void io::OutTrajectory<t_simulation>
   }
   
   os << "END\n";
+  
+  os << "HALLO" << std::endl;
   
 }
 

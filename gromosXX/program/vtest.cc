@@ -58,7 +58,8 @@ int main(int argc, char *argv[])
     { // print
       io::Argument::const_iterator it = args.lower_bound("print"),
 	to = args.upper_bound("print");
-      std::cout << "printing\n";
+      if (it != to)
+	std::cout << "printing\n";
       for( ; it != to; ++it){
 	std::string s;
 	int num;
@@ -116,10 +117,6 @@ int main(int argc, char *argv[])
     sys >> the_system;
 
     DEBUG(7, "topology and system read");
-
-    int nsm;
-    input.read_SYSTEM(nsm);
-    if (nsm) the_topology.solvate(0, nsm);
   
     // simulation
     typedef simulation::Simulation<simulation::Topology,
@@ -127,6 +124,11 @@ int main(int argc, char *argv[])
   
     simulation_type the_simulation(the_topology, the_system);
   
+    // add solvent
+    int nsm;
+    input.read_SYSTEM(nsm);
+    if (nsm) the_simulation.solvate(0, nsm);
+
     // FORCEFIELD
     interaction::forcefield<simulation_type> the_forcefield;
 
@@ -163,6 +165,7 @@ int main(int argc, char *argv[])
     topo >> *the_bond_interaction;
     topo >> *the_angle_interaction;
     topo >> *the_improper_interaction;
+    topo >> *the_dihedral_interaction;
     topo >> *the_nonbonded_interaction;
   
     input >> the_simulation;

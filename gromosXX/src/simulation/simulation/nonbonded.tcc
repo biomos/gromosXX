@@ -75,14 +75,15 @@ inline void simulation::Nonbonded::RF_constant(double const epsilon,
   m_RF_epsilon = epsilon;
   m_RF_kappa   = kappa;
   m_RF_cutoff  = cutoff; 
-  m_RF_constant = (2 - 2 * epsilon) * (1 - kappa * cutoff)
+  m_RF_constant = (2 - 2 * epsilon) * (1 + kappa * cutoff)
                    - epsilon * kappa * kappa * cutoff * cutoff;
-  m_RF_constant /= (1 + 2 * epsilon) * (1 - kappa * cutoff)
+  m_RF_constant /= (1 + 2 * epsilon) * (1 + kappa * cutoff)
                    + epsilon * kappa * kappa * cutoff * cutoff;
 }
 
 /**
  * get reaction field epsilon
+ * Crf in the book, II-54
  */
 double simulation::Nonbonded::RF_epsilon()const
 {

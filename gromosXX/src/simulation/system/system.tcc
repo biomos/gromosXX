@@ -3,6 +3,13 @@
  * inline methods definition
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE simulation
+#define SUBMODULE system
+
+#include "../../debug.h"
+
 /**
  * Constructor
  */
@@ -33,6 +40,8 @@ inline simulation::system::system()
  */
 inline void simulation::system::resize(size_t s)
 {
+  DEBUG(7, "system resize: " << s);
+  
   m_position1.resizeAndPreserve(s);
   m_position2.resizeAndPreserve(s);
   m_velocity1.resizeAndPreserve(s);

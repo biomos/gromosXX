@@ -4,6 +4,13 @@
  * the class Shake.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE algorithm
+#define SUBMODULE constraint
+
+#include "../../debug.h"
+
 /**
  * Constructor.
  */
@@ -44,9 +51,9 @@ int algorithm::Shake<t_simulation>
     // std::cout << num_iterations+1 << std::endl;
     if(++num_iterations > max_iterations){
       io::messages.add("SHAKE error. too many iterations",
-		       "Shake::solvent",
+		       "Shake::solute",
 		       io::message::critical);
-      throw std::runtime_error("SHAKE failure in solvent");
+      throw std::runtime_error("SHAKE failure in solute");
     }
 
   } // convergence?
@@ -141,8 +148,7 @@ bool algorithm::Shake<t_simulation>
     // check whether we can skip this constraint
     if (skip_now[it->i] && skip_now[it->j]) continue;
 
-    // std::cout << "mol: " << nm << " i: " << it->i << " j: " << it->j
-    // << " first: " << first << std::endl;
+    DEBUG(10, "i: " << it->i << " j: " << it->j << " first: " << first);
 
     // the position
     math::Vec &pos_i = sys.pos()(first+it->i);
@@ -154,8 +160,7 @@ bool algorithm::Shake<t_simulation>
     double constr_length2 = it->b0 * it->b0;
     double diff = constr_length2 - dist2;
 
-    // std::cout << "constr: " << constr_length2 
-    // << " dist2: " << dist2 << std::endl;
+    DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
 	  
     if(fabs(diff) >= constr_length2 * tolerance * 2.0){
       // we have to shake
@@ -169,9 +174,12 @@ bool algorithm::Shake<t_simulation>
 	  
       if(sp < constr_length2 * math::epsilon){
 	io::messages.add("SHAKE error. vectors orthogonal",
-			 "Shake::solvent",
+			 "Shake::???",
 			 io::message::critical);
-	throw std::runtime_error("SHAKE failure in solvent");
+	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
+	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
+	
+	throw std::runtime_error("SHAKE failure in ??? (SHAKE)");
       }
 	  
       // lagrange multiplier

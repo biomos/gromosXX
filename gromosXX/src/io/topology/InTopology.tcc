@@ -3,6 +3,13 @@
  * implements methods of InTopology.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE io
+#define SUBMODULE topology
+
+#include "../../debug.h"
+
 inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
 
   std::vector<std::string> buffer;
@@ -267,6 +274,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       _lineStream >> s;
       
       topo.residue_name().push_back(s);
+      DEBUG(10, "RESNAME: " << s);
     }
 
     if (n != num){
@@ -334,6 +342,11 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
     buffer = m_block["SOLVENTATOM"];
     
     int res_nr = topo.residue_name().size();
+    DEBUG(10, "res name: " << topo.residue_name().size());
+    for(int i=0; i<res_nr; ++i){
+      DEBUG(10, topo.residue_name()[i]);
+    }
+    
     topo.residue_name().push_back("SOLV");
 
     it = buffer.begin() + 1;
@@ -441,9 +454,6 @@ io::InTopology &io::InTopology
 
   buffer = m_block["BONDTYPE"];
 
-  io::messages.add("storing squares of the minimum bond length distances", 
-		   "InTopology::bondtype", io::message::notice);
-
   // 1. BONDTYPE 2. number of types
   for (it = buffer.begin() + 2; 
    it != buffer.end() - 1; ++it) {
@@ -458,7 +468,7 @@ io::InTopology &io::InTopology
       throw std::runtime_error("bad line in BONDTYPE block");
 
     // and add...
-    qbi.add(k, r*r);
+    qbi.add(k, r);
 
   }
   
@@ -489,7 +499,7 @@ io::InTopology &io::InTopology
       throw std::runtime_error("bad line in BONDANGLETYPE block");
 
     // and add...
-    ai.add(k, cos( t ) );
+    ai.add(k, cos( t * 2 * math::Pi / 360.0 ) );
 
   }
   return *this;
@@ -549,8 +559,9 @@ io::InTopology &io::InTopology
 
     // and add...
     di.add(k, pd, m);
-
+    DEBUG(10, "DIHEDRALTYPE " << k << " " << pd << " " << m);
   }
+
   return *this;
 }
 
@@ -569,8 +580,8 @@ io::InTopology &io::InTopology
     _lineStream.clear();
     _lineStream.str(*it);
     double fpepsi, hbar;
-    _lineStream >> fpepsi >> hbar;
-    if (_lineStream.fail() || ! _lineStream.eof())
+    _lineStream >> fpepsi;
+    if (_lineStream.fail())
       io::messages.add("Bad line in TOPPHYSCON block",
 			"InTopology", io::message::error);
     nbi.coulomb_constant(fpepsi);
