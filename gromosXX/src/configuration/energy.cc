@@ -144,7 +144,7 @@ int configuration::Energy::calculate_totals()
   total = potential_total + kinetic_total + special_total;
 
 #ifdef HAVE_ISNAN
-  if (isnan()){
+  if (isnan(total)){
     io::messages.add("total energy is NaN", "energy", io::message::error);
     return E_NAN;
   }
