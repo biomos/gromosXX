@@ -28,11 +28,15 @@ namespace interaction
     /**
      * the short range pairlist
      */
-    simple_pairlist<t_simulation>& short_range() { return first; }
+    simple_pairlist<t_simulation>& short_range() { 
+      return std::pair< simple_pairlist<t_simulation>, 
+	simple_pairlist<t_simulation> >::first; }
     /**
      * the long range pairlist
      */
-    simple_pairlist<t_simulation>& long_range() { return second; }
+    simple_pairlist<t_simulation>& long_range() { 
+      return std::pair< simple_pairlist<t_simulation>, 
+	simple_pairlist<t_simulation> >::second; }
     /**
      * update the pairlists (using rcutl, rcutp).
      */

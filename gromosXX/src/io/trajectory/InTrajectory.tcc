@@ -299,23 +299,10 @@ inline bool io::InTrajectory::_read_box(simulation::System<b> &sys, std::vector<
   
   math::Box box;
 
-  int i;
+  int boundary;
   _lineStream.clear();
   _lineStream.str(*it);
-  _lineStream >> i;
-
-  switch(i){
-    case 0:
-      sys.periodicity().boundary_condition(math::vacuum);
-      io::messages.add("boundary conditions set to VACUUM", "InTrajectory", io::message::notice);
-      break;
-    case 1:
-      sys.periodicity().boundary_condition(math::triclinic);
-      io::messages.add("boundary conditions set to TRICLINIC", "InTrajectory", io::message::notice);
-      break;
-    default:
-      throw std::runtime_error("bad boundary conditions in TRICLINICBOX block");
-  }
+  _lineStream >> boundary;
 
   ++it;
   
@@ -337,7 +324,22 @@ inline bool io::InTrajectory::_read_box(simulation::System<b> &sys, std::vector<
   }
 
   // set the box...
+  std::cerr << "calling box" << std::endl;
   sys.periodicity().box(box);
+  
+  // and the boundary condition...
+  switch(boundary){
+    case 0:
+      sys.periodicity().boundary_condition(math::vacuum);
+      io::messages.add("boundary conditions set to VACUUM", "InTrajectory", io::message::notice);
+      break;
+    case 1:
+      sys.periodicity().boundary_condition(math::triclinic);
+      io::messages.add("boundary conditions set to TRICLINIC", "InTrajectory", io::message::notice);
+      break;
+    default:
+      throw std::runtime_error("bad boundary conditions in TRICLINICBOX block");
+  }
 
   return true;
   

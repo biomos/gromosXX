@@ -39,6 +39,15 @@ autoconf --version [autoconf (GNU Autoconf) 2.57]
 automake --version [automake (GNU automake) 1.7.2]
 libtoolize --version [libtoolize (GNU libtool) 1.4.3]
 
+compiling with Intel C++ Compiler (7.1)
+---------------------------------
+
+export CC=/opt/intel/compiler70/ia32/bin/icc
+export CXX=/opt/intel/compiler70/ia32/bin/icc
+export LD=/opt/intel/compiler70/ia32/bin/icc
+
+normal ./Config.sh; mkdir obj; cd obj; ../configure; make works.
+
 -------------------------------------------------------------------------------
 
 

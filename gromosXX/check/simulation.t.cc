@@ -146,7 +146,7 @@ int simulation_check()
     io::InTopology topo(topo_file);
     io::InTrajectory coord(coord_file);
     io::InInput input(input_file);
-    
+
     topo >> the_topology;
     coord >> the_system;
 

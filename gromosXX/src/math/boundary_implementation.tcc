@@ -189,7 +189,8 @@ inline void math::Boundary_Implementation<b>
 {
   m_box = m;
   m_volume = dot(cross(m_box(K), m_box(L)), m_box(M));
-
+  // std::cout << "m_volume = " << m_volume << std::endl;
+  
   if (m_boundary==triclinic){
     assert(m_volume != 0);
     m_cross_K_L_M(0) = cross(m_box(L), m_box(M)) / -m_volume;

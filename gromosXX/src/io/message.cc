@@ -36,7 +36,7 @@ io::message::severity_enum io::message::display(std::ostream &os)
 {
   severity_enum r = none;
 
-  std::map<severity_enum, std::string>::const_iterator
+  std::multimap<severity_enum, std::string>::const_iterator
     it = m_message.lower_bound(critical),
     it_to = m_message.upper_bound(critical);
   

@@ -51,10 +51,9 @@ namespace io{
 	s += std::string(argv[i])+' ';
     }
 
-    // std::cerr << "arg: " << s << std::endl;
-  
     std::istringstream is(s.c_str());
     is >> *this;
+    
   }
 
   Argument::~Argument() {
@@ -63,18 +62,19 @@ namespace io{
   /**
    * read in the arguments.
    */
-  std::istream &io::operator>>(std::istream &istr, Argument &args)
+  std::istream &operator>>(std::istream &istr, Argument &args)
   {
     // get away the comments
     std::string buff;
     std::string s("");
   
     while(istr.good()) {
-      // std::cerr << "buff: " << buff << std::endl;
-	  io::getline(istr, buff);
+      io::getline(istr, buff);
+
       s += buff;
       s += '\n';
     }
+
     std::istringstream is(s);
 
     std::string str, last;
@@ -85,6 +85,7 @@ namespace io{
       throw std::string(args.d_usage);
   
     last=last.substr(1);
+
     if(args.find(last)!=args.end())
       args.erase(args.lower_bound(last), args.upper_bound(last));
 
@@ -92,12 +93,13 @@ namespace io{
       std::string errmsg = "Unknown argument: " + last + "\n";
       throw std::string(errmsg + args.d_usage);
     }
-  
+
     while(is>>str){
       if(str[0] == '@'){
 	if(args.find(last) == args.end())
 	  args.insert(argType(last,""));
 	last=str.substr(1);
+	
 	if(args.find(last)!=args.end())
 	  for(Argument::iterator l=args.lower_bound(last);
 	      l!=args.upper_bound(last);++l)

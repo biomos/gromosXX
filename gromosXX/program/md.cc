@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     usage += "\t@print   <pairlist>\n";
     usage += "\t@trp     <print file>\n";
     usage += "\t@verb    <[module:][submodule:]level>\n";
-    
+
     io::Argument args(argc, argv, nknowns, knowns, usage);
 
     // parse the verbosity flag and set debug levels
@@ -73,7 +73,6 @@ int main(int argc, char *argv[])
       }
     }
 
-    
     // topology and system
     simulation::System<math::any> the_system;
     simulation::Topology the_topology;
@@ -109,8 +108,9 @@ int main(int argc, char *argv[])
 	algorithm::Shake<simulation_type>,
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
-      
+    
       the_MD.initialize(args);
+
       the_MD.run();
 
       std::cout << "\nwriting final structure" << std::endl;
