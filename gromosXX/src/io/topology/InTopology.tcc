@@ -188,6 +188,68 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
 	throw std::runtime_error("error in IMPDIHEDRALH block (n != num)");
     }
   } // IMPDIHEDRALH
+
+  { // DIHEDRAL
+    buffer = m_block["DIHEDRAL"];
+  
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    int num, n;
+    _lineStream >> num;
+    ++it;
+    
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, k, l, t;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> k >> l >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in DIHEDRAL block");
+      
+      topo.solute().dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail()|| ! _lineStream.eof())
+	throw std::runtime_error("error in DIHEDRAL block (n != num)");
+    }
+  } // DIHEDRAL
+
+  { // DIHEDRALH
+    buffer.clear();
+    buffer = m_block["DIHEDRALH"];
+  
+    it = buffer.begin() + 1;
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    int num, n;
+    _lineStream >> num;
+    ++it;
+
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, k, l, t;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> k >> l >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	io::messages.add("bad line in DIHEDRALH block",
+			 "InTopology", io::message::error);
+
+      topo.solute().dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail() || ! _lineStream.eof())
+	io::messages.add("error in DIHEDRALH block (n != num)",
+			 "InTopology", io::message::error);
+    }
+  } // DIHEDRALH
   
   { // RESNAME
     buffer = m_block["RESNAME"];
@@ -424,6 +486,36 @@ io::InTopology &io::InTopology
 
     // and add...
     ii.add(k, q);
+
+  }
+  return *this;
+}
+template<typename t_simulation>
+io::InTopology &io::InTopology
+::operator>>(interaction::Dihedral_interaction<t_simulation> &di){
+
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  buffer = m_block["DIHEDRALTYPE"];
+
+  // 1. DIHEDRALTYPE 2. number of types
+  for (it = buffer.begin() + 2; 
+   it != buffer.end() - 1; ++it) {
+
+    double k, pd;
+    int m;
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> k >> pd >> m;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+      io::messages.add("bad line in DIHEDRALTYPE block", 
+		       "InTopology", io::message::error);
+
+    // and add...
+    di.add(k, pd, m);
 
   }
   return *this;

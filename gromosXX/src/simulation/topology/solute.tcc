@@ -122,3 +122,12 @@ simulation::Solute::improper_dihedrals()
 {
   return m_improper_dihedral;
 }
+
+/**
+ * dihedrals accessor.
+ */
+inline simulation::Dihedral &
+simulation::Solute::dihedrals()
+{
+  return m_dihedral;
+}

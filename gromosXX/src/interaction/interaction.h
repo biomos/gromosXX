@@ -11,6 +11,7 @@
 #include "interaction/harmonic_bond_interaction.h"
 #include "interaction/angle_interaction.h"
 #include "interaction/improper_dihedral_interaction.h"
+#include "interaction/dihedral_interaction.h"
 
 #ifndef NDEBUG
 namespace interaction

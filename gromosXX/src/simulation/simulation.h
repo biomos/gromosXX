@@ -11,6 +11,7 @@
 #include "topology/bond.h"
 #include "topology/angle.h"
 #include "topology/improper_dihedral.h"
+#include "topology/dihedral.h"
 #include "topology/solute.h"
 #include "topology/solvent.h"
 #include "topology/topology.h"

@@ -74,6 +74,11 @@ namespace simulation
      * improper dihedral accessor.
      */
     Improper_dihedral & improper_dihedrals();
+    /**
+     * dihedral accessor.
+     */
+    Dihedral & dihedrals();
+    
     
   private:
     /**
@@ -95,6 +100,11 @@ namespace simulation
      * the improper dihedral.
      */
     Improper_dihedral m_improper_dihedral;
+    
+    /**
+     * the dihedral
+     */
+    Dihedral m_dihedral;
     
   };
   

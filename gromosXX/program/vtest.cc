@@ -145,6 +145,11 @@ int main(int argc, char *argv[])
       *the_improper_interaction = 
       new interaction::Improper_dihedral_interaction<simulation_type>;
     
+    // dihedrals
+    interaction::Dihedral_interaction<simulation_type>
+      *the_dihedral_interaction =
+      new interaction::Dihedral_interaction<simulation_type>;
+    
     // nonbonded
     typedef interaction::twin_range_pairlist_cg<simulation_type> pairlist_type;
 
@@ -173,6 +178,8 @@ int main(int argc, char *argv[])
       the_forcefield.add_interaction(the_angle_interaction);
     if (do_improper)
       the_forcefield.add_interaction(the_improper_interaction);
+    if (do_dihedral)
+      the_forcefield.add_interaction(the_dihedral_interaction);
     if (do_nonbonded)
       the_forcefield.add_interaction(the_nonbonded_interaction);
 
