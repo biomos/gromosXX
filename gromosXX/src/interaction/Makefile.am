@@ -19,6 +19,8 @@ include_HEADERS = 		interaction.h \
 				interaction/dihedral_interaction.tcc \
 				interaction/perturbed_quartic_bond_interaction.h \
 				interaction/perturbed_quartic_bond_interaction.tcc \
+				interaction/perturbed_harmonic_bond_interaction.h \
+				interaction/perturbed_harmonic_bond_interaction.tcc \
 				interaction/perturbed_angle_interaction.h \
 				interaction/perturbed_angle_interaction.tcc \
 				interaction/perturbed_nonbonded_interaction.h \
