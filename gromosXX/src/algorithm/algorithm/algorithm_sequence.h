@@ -39,8 +39,16 @@ namespace algorithm
 	    configuration::Configuration &conf,
 	    simulation::Simulation &sim);
 
+    /**
+     * print timing information
+     */
     int print_timing(std::ostream & os);
 
+    /**
+     * algorithm accessor
+     */
+    Algorithm * algorithm(std::string name);
+    
   protected:
 
   };

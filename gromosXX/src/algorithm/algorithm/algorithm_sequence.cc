@@ -102,3 +102,21 @@ int algorithm::Algorithm_Sequence
 
   return 0;
 }
+
+algorithm::Algorithm * algorithm::Algorithm_Sequence::algorithm
+(
+ std::string name
+ )
+{
+  for(Algorithm_Sequence::iterator 
+	it = begin(), to = end();
+      it != to;
+      ++it){
+    
+    if ((*it)->name == name)
+      return (*it);
+
+  }
+
+  return NULL;
+}
