@@ -57,6 +57,7 @@ void topology::Topology::resize(unsigned int const atoms)
   
   m_iac.resize(atoms);
   // chargegroups???
+  m_is_perturbed.resize(atoms, false);
 }
 
 void topology::Topology::initialise()
@@ -65,6 +66,12 @@ void topology::Topology::initialise()
     m_molecule.push_back(0);
     // do it gromos++ like and determine by bonds???
     m_molecule.push_back(num_solute_atoms());
+  }
+
+  if (!m_energy_group.size()){
+    m_energy_group.push_back(num_solute_atoms()-1);
+    for(unsigned int i=0; i<num_solute_atoms(); ++i)
+      m_atom_energy_group.push_back(0);
   }
 }
 
