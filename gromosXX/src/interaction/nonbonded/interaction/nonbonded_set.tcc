@@ -31,7 +31,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
  * calculate nonbonded forces and energies.
  */
 template<typename t_interaction_spec, typename t_perturbation_spec>
-inline int
+int
 interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
@@ -315,7 +315,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 }
 
 template<typename t_interaction_spec, typename t_perturbation_spec>
-inline void
+void
 interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::initialize(topology::Topology const & topo,
 	     configuration::Configuration const & conf,

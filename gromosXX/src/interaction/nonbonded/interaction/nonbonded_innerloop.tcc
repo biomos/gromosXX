@@ -39,7 +39,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     
     const lj_parameter_struct &lj = 
       m_param->lj_parameter(topo.iac(i),
-			  topo.iac(j));
+			    topo.iac(j));
 
     DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
     DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));

@@ -30,7 +30,7 @@ interaction::Nonbonded_Outerloop<t_interaction_spec>
  * to make it usable for longrange calculations.
  */
 template<typename t_interaction_spec>
-inline void interaction::Nonbonded_Outerloop<t_interaction_spec>
+void interaction::Nonbonded_Outerloop<t_interaction_spec>
 ::lj_crf_outerloop(topology::Topology & topo,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim, 
@@ -110,7 +110,7 @@ inline void interaction::Nonbonded_Outerloop<t_interaction_spec>
  * 1,4 interactions.
  */
 template<typename t_interaction_spec>
-inline void interaction::Nonbonded_Outerloop<t_interaction_spec>
+void interaction::Nonbonded_Outerloop<t_interaction_spec>
 ::one_four_outerloop(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
@@ -141,7 +141,7 @@ inline void interaction::Nonbonded_Outerloop<t_interaction_spec>
  * RF contribution of excluded atoms and self term
  */
 template<typename t_interaction_spec>
-inline void interaction::Nonbonded_Outerloop<t_interaction_spec>
+void interaction::Nonbonded_Outerloop<t_interaction_spec>
 ::RF_excluded_outerloop(topology::Topology & topo,
 			configuration::Configuration & conf,
 			simulation::Simulation & sim,
