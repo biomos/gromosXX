@@ -71,7 +71,7 @@ FORCE
 # H        H         H        H
   1  1     1  1      1  1     1  1     1  1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
-     3      4	12      72
+     3      4	12   72
 END
 PLIST
 #     NTNB      NSNB     RCUTP     RCUTL

@@ -4,23 +4,13 @@
  */
 
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
-#include <topology/core/core.h>
-
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
-
-#include <topology/topology.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
-#include <simulation/simulation.h>
-#include <configuration/energy.h>
-#include <configuration/energy_average.h>
-#include <configuration/configuration.h>
 #include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
@@ -29,12 +19,12 @@
 #include <util/parse_verbosity.h>
 #include <util/error.h>
 
-#include <simulation/parameter.h>
 #include <interaction/interaction_types.h>
 #include <io/instream.h>
 #include <util/parse_tcouple.h>
 #include <io/blockinput.h>
 #include <io/topology/in_topology.h>
+#include <io/print_block.h>
 
 #include <algorithm/integration/leap_frog.h>
 #include <algorithm/temperature/temperature_calculation.h>
@@ -42,13 +32,12 @@
 #include <algorithm/pressure/pressure_calculation.h>
 #include <algorithm/pressure/berendsen_barostat.h>
 
-#include <interaction/forcefield/forcefield.h>
 #include <interaction/forcefield/create_forcefield.h>
 
 #include <util/create_simulation.h>
 #include <algorithm/create_md_sequence.h>
 
-#include <time.h>
+#include <ctime>
 
 #include <config.h>
 
@@ -186,57 +175,97 @@ int main(int argc, char* argv[])
 		aladip_sim.conf,
 		aladip_sim.sim);
 
-      aladip_sim.conf.current().perturbed_energy_derivatives[0].
-	calculate_totals();
+      aladip_sim.conf.current().perturbed_energy_derivatives.calculate_totals();
+      if (!quiet)
+	io::print_ENERGY(std::cout,
+			 aladip_sim.conf.current().perturbed_energy_derivatives,
+			 aladip_sim.topo.energy_groups());
+      
+      // save the un - scaled energies
+      std::vector<std::vector<double> > lj_energy, crf_energy;
+      lj_energy.resize(aladip_sim.conf.current().perturbed_energy_derivatives.lj_energy.size());
+      crf_energy.resize(aladip_sim.conf.current().perturbed_energy_derivatives.crf_energy.size());
 
+      for(unsigned int i=0; i<lj_energy.size(); ++i){
+	lj_energy[i] = aladip_sim.conf.current().perturbed_energy_derivatives.lj_energy[i];
+	crf_energy[i] = aladip_sim.conf.current().perturbed_energy_derivatives.crf_energy[i];
+      }
+      
       // set lambda correctly
       const double lp = aladip_sim.topo.lambda();
-      double nonbonded_der = 0;
+      double dlp;
 
-      for(size_t s=0; 
-	  s < aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives.size();
-	  ++s){
-	
-	const double alpha = 
-	  aladip_lambdadep_sim.topo.perturbed_energy_derivative_alpha()[s];
+      // for all energy groups which are scaled
+      std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
+	it = aladip_lambdadep_sim.topo.energy_group_lambdadep().begin(),
+	to = aladip_lambdadep_sim.topo.energy_group_lambdadep().end();
+      
+      for( ; it != to; ++it){
+	// account for i,j and j,i pairs being present (only due it once...)
+	if (it->first.first > it->first.second) continue;
 
-	// std::cerr << "\nalpha = " << alpha << std::endl;
+	const double alpha = it->second.second;
+
+	// std::cout << "\nenergy group " << it->first.first << " - " 
+	// << it->first.second << std::endl;
+	// std::cout << "\talpha = " << alpha << std::endl;
 	
 	if (alpha != 0.0){
 	  const double l = (alpha - 1 + sqrt((1-alpha)*(1-alpha) + 4 * alpha * lp)) 
 	    / (2 * alpha);
 	  
-	  // std::cerr << "setting lambda to " << l << std::endl;
-	  
 	  aladip_lambdadep_sim.topo.lambda(l);
+	  dlp = (2 * l - 1.0) * alpha + 1;
+
+	  // std::cout << "\tdl'/dl = " << dlp << std::endl;
+	  // std::cout << "\t=> l = " << l << " for l' = " << lp << std::endl;
 	}
 	else{
-	  // std::cerr << "normal lambda dependency: l = " << lp << std::endl;
 	  aladip_lambdadep_sim.topo.lambda(lp);
+	  dlp = (2 * lp - 1.0) * alpha + 1;	  
+	  // std::cout << "\tdl'/dl = " << dlp << std::endl;
 	}
-	
+
 	lambdadep_ff->apply(aladip_lambdadep_sim.topo,
 			    aladip_lambdadep_sim.conf,
 			    aladip_lambdadep_sim.sim);
 
-	aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives[s].
-	  calculate_totals();
+	aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives.calculate_totals();
+	if (!quiet)
+	  io::print_ENERGY(std::cout,
+			   aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives,
+			   aladip_lambdadep_sim.topo.energy_groups());
 	
-	// std::cerr << "nonbonded_total[" << s << "] = "
-	// << aladip_lambdadep_sim.conf.current().
-	// perturbed_energy_derivatives[s].nonbonded_total << std::endl;
+	// the total (nonbonded) energy lambda derivative (including the dl'/dl term)
+	double e =
+	  aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives.
+	  lj_energy[it->first.first][it->first.second] +
+	  aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives.
+	  crf_energy[it->first.first][it->first.second];
 
-	nonbonded_der += aladip_lambdadep_sim.conf.current().
-	  perturbed_energy_derivatives[s].nonbonded_total;
+	// the non - scaled dE/dl
+	double normal_e =
+	  lj_energy[it->first.first][it->first.second] +
+	  crf_energy[it->first.first][it->first.second];
 
+	// add the j,i part (if atoms in the second energy group are perturbed)
+	if (it->first.first != it->first.second){
+	  e +=
+	    aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives.
+	    lj_energy[it->first.second][it->first.first] +
+	    aladip_lambdadep_sim.conf.current().perturbed_energy_derivatives.
+	    crf_energy[it->first.second][it->first.first];
+	  
+	  normal_e +=
+	    lj_energy[it->first.second][it->first.first] +
+	    crf_energy[it->first.second][it->first.first];
+	}
+
+	// get rid of the dl'/dl derivative
+	e /= dlp;
+	CHECK_APPROX_EQUAL(normal_e, e, 0.0000001, res);
       }
 
-      const double normal_nonbonded_der = 
-	aladip_sim.conf.current().perturbed_energy_derivatives[0].nonbonded_total;
-      
-      // std::cerr << "normal nonbonded der = " << normal_nonbonded_der << std::endl;
-
-      CHECK_APPROX_EQUAL(normal_nonbonded_der, nonbonded_der, 0.0000001, res);
       RESULT(res, total);
 
     }
