@@ -58,10 +58,10 @@ inline double simulation::Perturbed_Atom::LJ_softcore(){
 inline double const simulation::Perturbed_Atom::LJ_softcore()const{
   return m_LJ_softcore; 
 }
-inline double simulation::Perturbed_Atom::crf_softcore(){
+inline double simulation::Perturbed_Atom::CRF_softcore(){
   return m_crf_softcore; 
 }
-inline double const simulation::Perturbed_Atom::crf_softcore()const{
+inline double const simulation::Perturbed_Atom::CRF_softcore()const{
   return m_crf_softcore; 
 }
 
@@ -89,7 +89,7 @@ inline void simulation::Perturbed_Atom::B_charge(const double a){
 inline void simulation::Perturbed_Atom::LJ_softcore(const double a){
   m_LJ_softcore = a;
 }
-inline void simulation::Perturbed_Atom::crf_softcore(const double a){
+inline void simulation::Perturbed_Atom::CRF_softcore(const double a){
   m_crf_softcore = a;
 }
 inline std::set<int> & simulation::Perturbed_Atom::exclusion()

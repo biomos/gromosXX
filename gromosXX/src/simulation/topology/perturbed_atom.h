@@ -93,9 +93,9 @@ namespace simulation
     double const LJ_softcore()const;
     void LJ_softcore(const double);
     
-    double crf_softcore();
-    double const crf_softcore()const;
-    void crf_softcore(const double);
+    double CRF_softcore();
+    double const CRF_softcore()const;
+    void CRF_softcore(const double);
     
     std::set<int> & exclusion();
     std::set<int> const & exclusion()const;

@@ -630,56 +630,71 @@ inline void io::InInput::read_BOUNDARY(int &ntb, int &nrdbox)
 /**
  * read the PERTURB block.
  */
-inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt,
-				      double &alphlj, double &alphc,int &nlam)
+inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int &nlam)
 {
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
   
-  buffer = m_block["PERTURB"];
-  if (!buffer.size()){
-    ntg = 0;
-    rlam = 0;
-    dlamt = 0;
-    alphlj= 0;
-    alphc = 0;
-    nlam = 1;
-    return;
+  // try the new PERTURB03 block
+  buffer = m_block["PERTURB03"];
+  if (buffer.size()){
+    
+    it = buffer.begin()+1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+  
+    _lineStream >> ntg >> rlam >> dlamt >> nlam;
+    
+    if (_lineStream.fail())
+      io::messages.add("bad line in PERTURB block",
+		       "InInput", io::message::error);
   }
+  else{
+    // a common PERTURB block...
+    buffer = m_block["PERTURB"];
+    if (!buffer.size()){
+      // no block at all???
+      ntg = 0;
+      rlam = 0;
+      dlamt = 0;
+      nlam = 1;
+      return;
+    }
   
-  it = buffer.begin()+1;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  
-  int nrdgl;
-  double dmu, dmut;
-  double mmu;
-  
-  _lineStream >> ntg >> nrdgl >> rlam >> dlamt >> dmu >> dmut;
-  _lineStream.clear();
-  _lineStream.str(*(++it));
-  _lineStream >> alphlj >> alphc >> nlam >> mmu;
-  
-  if (_lineStream.fail())
-    io::messages.add("bad line in PERTURB block",
-		     "InInput", io::message::error);
+    it = buffer.begin()+1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    
+    int nrdgl;
+    double dmu, dmut;
+    double mmu;
+    double alpha_lj, alpha_crf;
+    
+    _lineStream >> ntg >> nrdgl >> rlam >> dlamt >> dmu >> dmut;
+    _lineStream.clear();
+    _lineStream.str(*(++it));
+    _lineStream >> alpha_lj >> alpha_crf >> nlam >> mmu;
+    
+    if (_lineStream.fail())
+      io::messages.add("bad line in PERTURB block",
+		       "InInput", io::message::error);
+    
+    if (nrdgl)
+      io::messages.add("PERTURB: nrdgl != 0 not allowed",
+		       "InInput", io::message::error);
 
-  if (nrdgl)
-    io::messages.add("PERTURB: nrdgl != 0 not allowed",
-		     "InInput", io::message::error);
+    if (alpha_lj || alpha_crf){
+      io::messages.add("PERTURB: softness constants taken from topology!",
+		       "InInput", io::message::notice);
+    }
+
+  }
   
   if (ntg != 0 && ntg != 1)
     io::messages.add("PERTURB: only ntg = 0 or ntg = 1 allowed",
 		     "InInput", io::message::error);
   
-  if (alphlj || alphc){
-    std::cerr << "alphlj: " << alphlj << "alphc: " << alphc << std::endl;
-    io::messages.add("PERTURB: softness not implemented",
-		     "InInput", io::message::error);
-  }
-
   if (nlam<=0){
-    std::cerr << "nlam: " << nlam << std::endl;
     io::messages.add("PERTURB: nlam > 0",
 		     "InInput", io::message::error);
   }

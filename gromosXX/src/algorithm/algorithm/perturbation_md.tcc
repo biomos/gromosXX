@@ -37,8 +37,9 @@ void algorithm::Perturbation_MD<t_spec>
   MD<t_spec>::read_input(args, topo, sys, input);
   
   int ntg, nlam;
-  double rlam, dlamt, alphlj, alphc;
-  input.read_PERTURB(ntg, rlam, dlamt, alphlj, alphc, nlam);
+  double rlam, dlamt;
+  
+  input.read_PERTURB(ntg, rlam, dlamt, nlam);
 
   if (ntg == 1){
     io::messages.add("Perturbation enabled", "Perturbation_MD",
@@ -47,8 +48,6 @@ void algorithm::Perturbation_MD<t_spec>
     m_do_perturbation = true;
 
     m_simulation.topology().lambda(rlam);
-    m_simulation.topology().alpha_lj(alphlj);
-    m_simulation.topology().alpha_crf(alphc);
     m_simulation.topology().nlam(nlam);
     
     // initialize
@@ -98,10 +97,6 @@ int algorithm::Perturbation_MD<t_spec>
   std::cout << "PERTURBATION\n\n"
 	    << std::setw(15) << "lambda" 
 	    << std::setw(20) << m_simulation.topology().lambda() << "\n"
-	    << std::setw(15) << "alpha lj"
-	    << std::setw(20) << m_simulation.topology().alpha_lj() << "\n"
-	    << std::setw(15) << "alpha crf"
-	    << std::setw(20) << m_simulation.topology().alpha_crf() << "\n"
 	    << std::setw(15) << "nlam"
 	    << std::setw(20) << m_simulation.topology().nlam()
 	    << "\n\n";

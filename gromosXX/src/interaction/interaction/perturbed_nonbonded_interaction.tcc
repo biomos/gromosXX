@@ -17,13 +17,11 @@
 template<typename t_simulation, typename t_pairlist, typename t_innerloop, typename t_nonbonded_interaction>
 inline interaction::Perturbed_Nonbonded_Interaction<
   t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
-::Perturbed_Nonbonded_Interaction(t_simulation &sim, t_nonbonded_interaction &nonbonded_interaction)
+::Perturbed_Nonbonded_Interaction(t_simulation &sim, 
+				  t_nonbonded_interaction &nonbonded_interaction)
   : Interaction<t_simulation>("Perturbed NonBonded"),
     m_nonbonded_interaction(nonbonded_interaction)
 {
-  // this should maybe be done somewhere else, but it seems to work
-  m_nonbonded_interaction.alpha_lj(sim.topology().alpha_lj());
-  m_nonbonded_interaction.alpha_crf(sim.topology().alpha_crf());
 }
 
 /**
@@ -83,9 +81,6 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 			    typename t_pairlist::iterator to)
 {  
   DEBUG(7, "\tcalculate perturbed interactions");  
-
-  DEBUG(8, "Alpha LJ: " << m_nonbonded_interaction.alpha_lj() 
-	<< " Alpha CRF: " << m_nonbonded_interaction.alpha_crf());
 
   for( ; it != to; ++it){    
     DEBUG(8, "ni: perturbed pair: " << it.i() << " - " << *it);
@@ -196,9 +191,11 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
     const double A_lnm = pow(A_l, sim.topology().nlam()-1);
 
     m_nonbonded_interaction.rf_soft_interaction(r, q_i_a*q_i_a, 
-						B_l, A_f_rf, A_e_rf, A_de_rf);
+						B_l, mit->second.CRF_softcore(),
+						A_f_rf, A_e_rf, A_de_rf);
     m_nonbonded_interaction.rf_soft_interaction(r, q_i_b*q_i_b, 
-						A_l, B_f_rf, B_e_rf, B_de_rf);
+						A_l, mit->second.CRF_softcore(),
+						B_f_rf, B_e_rf, B_de_rf);
 
     DEBUG(7, "Self term for atom " << i << " A: " << A_e_rf << " B: " << B_e_rf);
     
@@ -225,19 +222,30 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
       
       double q_ij_a;
       double q_ij_b;
+      double alpha_crf;
+      
       if(sim.topology().perturbed_atom()[*it]){
 	q_ij_a = q_i_a * 
 	  sim.topology().perturbed_solute().atoms()[*it].A_charge();
 	q_ij_b = q_i_b *
 	  sim.topology().perturbed_solute().atoms()[*it].B_charge();
+	
+	alpha_crf = (mit->second.CRF_softcore() +
+		     sim.topology().perturbed_solute().
+		     atoms()[*it].CRF_softcore()) * 0.5;
       }
       else{
 	q_ij_a = q_i_a * sim.topology().charge()(*it);
 	q_ij_b = q_i_b * sim.topology().charge()(*it);
+
+	alpha_crf = mit->second.CRF_softcore();
+	
       }
-      m_nonbonded_interaction.rf_soft_interaction(r, q_ij_a, A_l, 
+      m_nonbonded_interaction.rf_soft_interaction(r, q_ij_a, A_l,
+						  alpha_crf,
 						  A_f_rf, A_e_rf, A_de_rf);
       m_nonbonded_interaction.rf_soft_interaction(r, q_ij_b, B_l, 
+						  alpha_crf,
 						  B_f_rf, B_e_rf, B_de_rf);
       DEBUG(7, "excluded atoms " << i << " & " << *it << " A: " << A_e_rf << " B: " << B_e_rf);
       e_rf  = B_ln * B_e_rf  + A_ln * A_e_rf;
@@ -260,8 +268,9 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 }
 
 /**
- * helper function to calculate the forces and energies from the
- * RF contribution of excluded atoms and self term
+ * calculate the interactions for the
+ * PERTURBED PAIRS
+ * (different interaction types in A and in B)
  */
 template<typename t_simulation, typename t_pairlist,
 	 typename t_innerloop, typename t_nonbonded_interaction>
@@ -281,6 +290,8 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
   lj_parameter_struct const *A_lj;
   lj_parameter_struct const *B_lj;
   double A_q, B_q;
+  double alpha_lj, alpha_crf;
+  
   const double l = sim.topology().lambda();
   DEBUG(7, "lambda: " << l);
   bool is_perturbed;
@@ -294,13 +305,6 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 
     // is i perturbed?
     if (sim.topology().perturbed_atom()[it->i] == true){
-#ifndef NDEBUG
-      if (sim.topology().perturbed_solute().atoms().count(it->i) != 1){
-	std::cerr << it->i << std::endl;	
-	std::cerr << sim.topology().perturbed_solute().atoms().size() << std::endl;
-	std::cerr << sim.topology().perturbed_solute().atoms().count(it->i) << std::endl;
-      }
-#endif
       assert(sim.topology().perturbed_solute().atoms().count(it->i) == 1);
 
       is_perturbed = true;
@@ -320,6 +324,13 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 	  sim.topology().perturbed_solute().atoms()[it->j].A_charge();
 	B_q = sim.topology().perturbed_solute().atoms()[it->i].B_charge() *
 	  sim.topology().perturbed_solute().atoms()[it->j].B_charge();
+
+	alpha_lj = (sim.topology().perturbed_solute().atoms()[it->i].LJ_softcore() +
+		    sim.topology().perturbed_solute().atoms()[it->j].LJ_softcore()) /
+	  2.0;
+	alpha_crf = (sim.topology().perturbed_solute().atoms()[it->i].CRF_softcore() +
+		     sim.topology().perturbed_solute().atoms()[it->j].CRF_softcore()) /
+	  2.0;
       
       }
       else{ // only i perturbed
@@ -333,6 +344,10 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 	  sim.topology().charge()(it->j);
 	B_q = sim.topology().perturbed_solute().atoms()[it->i].B_charge() *
 	  sim.topology().charge()(it->j);
+
+	alpha_lj = sim.topology().perturbed_solute().atoms()[it->i].LJ_softcore();
+	alpha_crf = sim.topology().perturbed_solute().atoms()[it->i].CRF_softcore();
+
       }
     }
     else{ // i unperturbed
@@ -353,6 +368,9 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 	  sim.topology().perturbed_solute().atoms()[it->j].A_charge();
 	B_q = sim.topology().charge()(it->j) *
 	  sim.topology().perturbed_solute().atoms()[it->j].B_charge();
+
+	alpha_lj = sim.topology().perturbed_solute().atoms()[it->j].LJ_softcore();
+	alpha_crf = sim.topology().perturbed_solute().atoms()[it->j].CRF_softcore();
       
       }
       else{
@@ -393,6 +411,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 	  DEBUG(7, "perturbed interaction");
 	  m_nonbonded_interaction.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
 							  A_q, sim.topology().lambda(),
+							  alpha_lj, alpha_crf,
 							  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
 	}
 	else{
@@ -419,6 +438,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 	  DEBUG(7, "perturbed 1,4 interaction");
 	  m_nonbonded_interaction.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
 							  A_q, sim.topology().lambda(),
+							  alpha_lj, alpha_crf,
 							  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
 	}
 	else{
@@ -460,6 +480,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 	  m_nonbonded_interaction.
 	    lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
 				    B_q, 1.0 - sim.topology().lambda(),
+				    alpha_lj, alpha_crf,
 				    B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 	}
 	else{
@@ -488,6 +509,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 	  m_nonbonded_interaction.
 	    lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
 				    B_q, 1.0 - sim.topology().lambda(),
+				    alpha_lj, alpha_crf,
 				    B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 	}
 	else{

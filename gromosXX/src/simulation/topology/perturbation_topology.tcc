@@ -58,28 +58,7 @@ simulation::Perturbation_Topology::lambda(double const l)
 {
   m_lambda = l;
 }
-inline double
-simulation::Perturbation_Topology::alpha_lj()
-{
-  return m_alpha_lj;
-}
 
-inline void
-simulation::Perturbation_Topology::alpha_lj(double const a)
-{
-  m_alpha_lj = a;
-}
-inline double
-simulation::Perturbation_Topology::alpha_crf()
-{
-  return m_alpha_crf;
-}
-
-inline void
-simulation::Perturbation_Topology::alpha_crf(double const a)
-{
-  m_alpha_crf = a;
-}
 inline int
 simulation::Perturbation_Topology::nlam()
 {

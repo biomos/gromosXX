@@ -37,23 +37,19 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
     lj_parameter_struct const *A_lj;
     lj_parameter_struct const *B_lj;
     double A_q, B_q;
+    double alpha_lj, alpha_crf;
+    
     const double l = sim.topology().lambda();
     
     DEBUG(7, "lambda: " << l);
     
     //assert(sim.topology().perturbed_atom().size() > j);
     
-#ifndef NDEBUG
-      if (sim.topology().perturbed_solute().atoms().count(i) != 1){
-	std::cerr << i << std::endl;	
-	std::cerr << sim.topology().perturbed_solute().atoms().size() << std::endl;
-	std::cerr << sim.topology().perturbed_solute().atoms().count(i) << std::endl;
-      }
-#endif
     assert(sim.topology().perturbed_solute().atoms().count(i) == 1);
 
     
     if(sim.topology().perturbed_atom()[j] ==true){
+      // both perturbed
       assert(sim.topology().perturbed_solute().atoms().count(j) == 1);
       A_lj =  &m_base.lj_parameter(
 	        sim.topology().perturbed_solute().atoms()[i].A_IAC(),
@@ -65,6 +61,13 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
 	    sim.topology().perturbed_solute().atoms()[j].A_charge();
       B_q = sim.topology().perturbed_solute().atoms()[i].B_charge() *
 	    sim.topology().perturbed_solute().atoms()[j].B_charge();
+      
+      alpha_lj = (sim.topology().perturbed_solute().atoms()[i].LJ_softcore() +
+		  sim.topology().perturbed_solute().atoms()[j].LJ_softcore()) /
+	2.0;
+      alpha_crf = (sim.topology().perturbed_solute().atoms()[i].CRF_softcore() +
+		   sim.topology().perturbed_solute().atoms()[j].CRF_softcore()) /
+	2.0;
       
     }
     else{
@@ -78,6 +81,10 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
 	    sim.topology().charge()(j);
       B_q = sim.topology().perturbed_solute().atoms()[i].B_charge() *
 	    sim.topology().charge()(j);
+
+      alpha_lj = sim.topology().perturbed_solute().atoms()[i].LJ_softcore();
+      alpha_crf = sim.topology().perturbed_solute().atoms()[i].CRF_softcore();
+
     }
     
     DEBUG(7, "\tlj-parameter state A c6=" << A_lj->c6 << " c12=" << A_lj->c12);
@@ -103,6 +110,7 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
 
 	m_base.lj_crf_scaled_interaction(r, A_lj->c6, A_lj->c12, 
 					 A_q, sim.topology().lambda(),
+					 alpha_lj, alpha_crf,
 					 scaling_pair.first,
 					 A_f, A_e_lj, A_e_crf, A_de_lj,
 					 A_de_crf);
@@ -113,6 +121,7 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
     
 	m_base.lj_crf_scaled_interaction(r, B_lj->c6, B_lj->c12,
 					 B_q, 1.0 - sim.topology().lambda(),
+					 alpha_lj, alpha_crf,
 					 scaling_pair.second,
 					 B_f, B_e_lj, B_e_crf, B_de_lj,
 					 B_de_crf);
@@ -128,6 +137,7 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
 
 	m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
 				       A_q, sim.topology().lambda(),
+				       alpha_lj, alpha_crf,
 				       A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
       
 	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
@@ -136,6 +146,7 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
 
 	m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
 				       B_q, 1.0 - sim.topology().lambda(),
+				       alpha_lj, alpha_crf,
 				       B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
 	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
@@ -148,6 +159,7 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
       
       m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
 				     A_q, sim.topology().lambda(),
+				     alpha_lj, alpha_crf,
 				     A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
       
       DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " << A_f << " e_lj: " 
@@ -156,6 +168,7 @@ void interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage,
     
       m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
 				     B_q, 1.0 - sim.topology().lambda(),
+				     alpha_lj, alpha_crf,
 				     B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 
       DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " << B_f << " e_lj: " 
@@ -271,6 +284,8 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
     lj_parameter_struct const *B_lj;
     
     double A_q, B_q;
+    double alpha_lj, alpha_crf;
+    
     const double l = sim.topology().lambda();
 
     //assert(sim.topology().perturbed_solute().atoms().size() > i &&
@@ -288,7 +303,14 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 	    sim.topology().perturbed_solute().atoms()[j].A_charge();
       B_q = sim.topology().perturbed_solute().atoms()[i].B_charge() *
 	    sim.topology().perturbed_solute().atoms()[j].B_charge();
-      
+    
+      alpha_lj = (sim.topology().perturbed_solute().atoms()[i].LJ_softcore() +
+		  sim.topology().perturbed_solute().atoms()[j].LJ_softcore()) /
+	2.0;
+      alpha_crf = (sim.topology().perturbed_solute().atoms()[i].CRF_softcore() +
+		   sim.topology().perturbed_solute().atoms()[j].CRF_softcore()) /
+	2.0;
+
     }
     else{
       A_lj = &m_base.lj_parameter(
@@ -301,6 +323,10 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 	    sim.topology().charge()(j);
       B_q = sim.topology().perturbed_solute().atoms()[i].B_charge() *
 	    sim.topology().charge()(j);
+
+      alpha_lj = sim.topology().perturbed_solute().atoms()[i].LJ_softcore();
+      alpha_crf = sim.topology().perturbed_solute().atoms()[i].CRF_softcore();
+
    }
     
     DEBUG(7, "\tlj-parameter state A c6=" << A_lj->cs6 << " c12=" << A_lj->cs12);
@@ -325,6 +351,7 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 
 	m_base.lj_crf_scaled_interaction(r, A_lj->cs6, A_lj->cs12, 
 					 A_q, sim.topology().lambda(),
+					 alpha_lj, alpha_crf,
 					 scaling_pair.first,
 					 A_f, A_e_lj, A_e_crf, A_de_lj,
 					 A_de_crf);
@@ -335,6 +362,7 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
     
 	m_base.lj_crf_scaled_interaction(r, B_lj->cs6, B_lj->cs12,
 					 B_q, 1.0 - sim.topology().lambda(),
+					 alpha_lj, alpha_crf,
 					 scaling_pair.second,
 					 B_f, B_e_lj, B_e_crf, B_de_lj,
 					 B_de_crf);
@@ -350,6 +378,7 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 
 	m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
 				       A_q, sim.topology().lambda(),
+				       alpha_lj, alpha_crf,
 				       A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
       
 	DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
@@ -358,6 +387,7 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 
 	m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
 				       B_q, 1.0 - sim.topology().lambda(),
+				       alpha_lj, alpha_crf,
 				       B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 	DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
 	      << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
@@ -370,6 +400,7 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 
       m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
 				     A_q, sim.topology().lambda(),
+				     alpha_lj, alpha_crf,
 				     A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
       
       DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
@@ -378,6 +409,7 @@ Perturbed_Nonbonded_Inner_Loop<t_simulation, t_storage, do_scaling>
 
       m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
 				     B_q, 1.0 - sim.topology().lambda(),
+				     alpha_lj, alpha_crf,
 				     B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 
       DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 

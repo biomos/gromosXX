@@ -89,6 +89,8 @@ namespace interaction
     void lj_crf_soft_interaction(math::Vec const &r,
 				 double const c6, double const c12,
 				 double const q, double const l,
+				 double const alpha_lj,
+				 double const alpha_crf,
 				 math::Vec & force, double &e_lj,
 				 double & e_crf, double &de_lj, 
 				 double & de_crf);
@@ -97,7 +99,9 @@ namespace interaction
      */
     void lj_crf_scaled_interaction(math::Vec const &r,
 				   double const c6, double const c12,
-				   double const q, double const l, 
+				   double const q, double const l,
+				   double const alpha_lj,
+				   double const alpha_crf,
 				   double const scale,
 				   math::Vec & force, double &e_lj,
 				   double & e_crf, double &de_lj, 
@@ -106,7 +110,8 @@ namespace interaction
      * calculate the reaction field force and energy
      * of a perturbed atom pair
      */
-    void rf_soft_interaction(math::Vec const &r, double const q, double const l, 
+    void rf_soft_interaction(math::Vec const &r, double const q, double const l,
+			     double const alpha_crf,
 			     math::Vec & force, double & e_rf, double & de_rf);
     
   protected:
@@ -119,17 +124,7 @@ namespace interaction
      * the coulomb constant
      */
     double m_coulomb_constant;
-    
-
-    /**
-     * the alpha for lennard jones interactions
-     */
-    double m_alpha_lj;
-    /**
-     * the alpha for coulomb interactions
-     */
-    double m_alpha_crf;
-    
+        
     /**
      * Force:
      * inverse reaction field cutoff to the power of 3.

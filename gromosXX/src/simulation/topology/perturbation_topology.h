@@ -53,25 +53,6 @@ namespace simulation
      * lambda accessor.
      */
     void lambda(double const l);
-
-    /**
-     * alpha for lennard jones
-     */
-    double alpha_lj();
-    
-    /**
-     * alpha for lennard jones
-     */
-    void alpha_lj(double const a);
-    
-    /**
-     * alpha for coulomb
-     */
-    double alpha_crf();
-    /**
-     * alpha for coulomb
-     */
-    void alpha_crf(double const a);
     
     /**
      * lambda dependence for nonbonded interactions
@@ -136,14 +117,6 @@ namespace simulation
      * lambda.
      */
     double m_lambda;
-    /**
-     * alpha lennard jones
-     */
-    double m_alpha_lj;
-    /**
-     * alpha coulomb
-     */
-    double m_alpha_crf;
     /**
      * lambda dependence
      */
