@@ -38,9 +38,14 @@ Blitz++ (http://www.oonumerics.org/blitz/)
 	on isengard installed in
 			/orc/markus/machines/isengard/programs/
 	on troll installed in
-			/troll/markus/programs
+			/troll2/markus/programs
 	on shepherd installed in
 			/goat7/markus/programs
+
+if this directory is not in your standard search path for
+header files and libraries, you can use
+
+../configure --with-blitz=/troll2/markus/programs
 
 so for example do the following (before you run configure):
 

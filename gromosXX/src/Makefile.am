@@ -2,7 +2,8 @@ SUBDIRS = simulation util math topology configuration algorithm interaction io c
 
 lib_LTLIBRARIES = 	libgroxx.la
 
-libgroxx_la_LDFLAGS =	-no-undefined -version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
+libgroxx_la_CPPFLAGS = $(BLITZ_CPPFLAGS)
+libgroxx_la_LDFLAGS =	-no-undefined -version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0 $(BLITZ_LDFLAGS)
 
 libgroxx_la_SOURCES =	
 
@@ -14,6 +15,4 @@ libgroxx_la_LIBADD =	algorithm/libgroalgorithm.la \
 			topology/libgrotopology.la \
 			util/libgroutil.la \
 			io/libgroio.la \
-			-lblitz
-
-
+			$(BLITZ_LIB)
