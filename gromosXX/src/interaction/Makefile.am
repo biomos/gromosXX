@@ -36,6 +36,9 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/interaction/nonbonded_set.h \
 				nonbonded/interaction/perturbed_nonbonded_set.h \
 				nonbonded/interaction/nonbonded_interaction.h \
+				nonbonded/interaction/omp_nonbonded_interaction.h \
+				nonbonded/interaction/mpi_nonbonded_master.h \
+				nonbonded/interaction/mpi_nonbonded_slave.h \
 				nonbonded/interaction/storage.h \
 				nonbonded/pairlist/pairlist.h \
 				nonbonded/pairlist/pairlist_algorithm.h \
@@ -59,6 +62,9 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				nonbonded/pairlist/grid_pairlist_algorithm.cc \
 				nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc \
 				nonbonded/interaction/nonbonded_interaction.cc \
+				nonbonded/interaction/omp_nonbonded_interaction.cc \
+				nonbonded/interaction/mpi_nonbonded_master.cc \
+				nonbonded/interaction/mpi_nonbonded_slave.cc \
 				nonbonded/interaction/nonbonded_set.cc \
 				nonbonded/interaction/nonbonded_outerloop.cc \
 				nonbonded/interaction/perturbed_nonbonded_set.cc \
