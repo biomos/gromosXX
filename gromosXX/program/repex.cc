@@ -26,6 +26,7 @@
 
 #include <io/configuration/out_configuration.h>
 
+#include <gsl/gsl_rng.h>
 #include <util/replica_exchange.h>
 
 #ifdef REM
