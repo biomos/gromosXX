@@ -265,7 +265,7 @@ inline io::InInput & io::InInput
       
       for(size_t i=0; i<num; ++i){
 	_lineStream >> e;
-	sim.topology().energy_groups().push_back(e);
+	sim.topology().energy_groups().push_back(e-1);
 	for( ; atom < e; ++atom){
 	  sim.topology().atom_energy_group().push_back(i);
 	}

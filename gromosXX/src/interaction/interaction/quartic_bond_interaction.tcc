@@ -44,6 +44,8 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
   math::VArray &force = sim.system().force();
   math::Vec v, f;
 
+  double e;
+
   for( ; !b_it.eol(); ++b_it){
     sim.system().periodicity()
       .nearest_image(pos(b_it.i()), pos(b_it.j()), v);
@@ -65,6 +67,10 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
     
     force(b_it.i()) += f;
     force(b_it.j()) -= f;
+
+    e = 0.25 * m_bond_parameter[b_it.type()].K * (dist2 -r02) * (dist2 - r02);
+    sim.system().energies().bond_energy[sim.topology().atom_energy_group()[b_it.i()]] += e;
+    
   }
     
 }

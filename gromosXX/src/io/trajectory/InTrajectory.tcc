@@ -307,9 +307,11 @@ inline bool io::InTrajectory::_read_box(simulation::System<b> &sys, std::vector<
   switch(i){
     case 0:
       sys.periodicity().boundary_condition(math::vacuum);
+      io::messages.add("boundary conditions set to VACUUM", "InTrajectory", io::message::notice);
       break;
     case 1:
       sys.periodicity().boundary_condition(math::triclinic);
+      io::messages.add("boundary conditions set to TRICLINIC", "InTrajectory", io::message::notice);
       break;
     default:
       throw std::runtime_error("bad boundary conditions in TRICLINICBOX block");

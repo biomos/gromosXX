@@ -22,14 +22,15 @@ inline interaction::Forcefield<t_simulation>::~Forcefield()
 
 template<typename t_simulation>
 inline void interaction::Forcefield<t_simulation>
-::calculate_interactions(t_simulation &simu)
+::calculate_interactions(t_simulation &sim)
 {
 
-  simu.system().force() = 0.0;
+  sim.system().force() = 0.0;
+  sim.system().energies().zero();
 
   for(typename Forcefield<t_simulation>::iterator it = begin(), to = end();
       it != to;
       ++it){
-    (*it)->calculate_interactions(simu);
+    (*it)->calculate_interactions(sim);
   }
 }
