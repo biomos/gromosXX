@@ -12,8 +12,9 @@ namespace interaction
    * @class Improper_dihedral_interaction
    * calculates the improper dihedral interactions.
    */
-  template<typename t_simulation>
-  class Improper_dihedral_interaction : public Interaction<t_simulation>
+  template<typename t_simulation, typename t_interaction_spec>
+  class Improper_dihedral_interaction : 
+    public Interaction<t_simulation, t_interaction_spec>
   {
   public:
     /**

@@ -39,8 +39,9 @@ namespace io {
     /**
      * Read in the harmonic bond parameters.
      */
-    template<typename t_simulation>
-    InTopology & operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi);
+    template<typename t_simulation, typename t_interaction_spec>
+    InTopology & operator>>(interaction::harmonic_bond_interaction<t_simulation, 
+			    t_interaction_spec> &hbi);
     /**
      * Read in the bond parameter to Shake.
      */
@@ -49,35 +50,39 @@ namespace io {
     /**
      * Read in the quartic bond parameters.
      */    
-    template<typename t_simulation>
-      InTopology & operator>>(interaction::Quartic_bond_interaction<t_simulation> &qbi);
+    template<typename t_simulation, typename t_interaction_spec>
+      InTopology & operator>>(interaction::Quartic_bond_interaction<t_simulation,
+			      t_interaction_spec> &qbi);
     
     /**
      * Read in the angle parameters.
      */
-    template<typename t_simulation>
-    InTopology & operator>>(interaction::angle_interaction<t_simulation> &ai);
+    template<typename t_simulation, typename t_interaction_spec>
+    InTopology & operator>>(interaction::angle_interaction<t_simulation,
+			    t_interaction_spec> &ai);
     
     /**
      * Read in the improper dihedral parameters.
      */
-    template<typename t_simulation>
+    template<typename t_simulation, typename t_interaction_spec>
     InTopology & operator>>
-    (interaction::Improper_dihedral_interaction<t_simulation> & ii);
+    (interaction::Improper_dihedral_interaction<t_simulation,
+     t_interaction_spec> & ii);
     
     /** 
      * Read in the dihedral parameters.
      */
-    template<typename t_simulation>
+    template<typename t_simulation, typename t_interaction_spec>
       InTopology & operator>>
-      (interaction::Dihedral_interaction<t_simulation> & di);
+      (interaction::Dihedral_interaction<t_simulation,
+       t_interaction_spec> & di);
     
     /**
      * Read in the nonbonded interaction types (lennard-jones).
      */
-    template<typename t_simulation, typename t_nonbonded_spec>
+    template<typename t_simulation, typename t_interaction_spec>
     InTopology & operator >>(interaction::
-			     Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+			     Nonbonded_Interaction<t_simulation, t_interaction_spec>
 			     &nbi);
 
   };

@@ -13,7 +13,7 @@ namespace interaction
    * @interface Interaction
    * declares the interaction interface.
    */
-  template<typename t_simulation>
+  template<typename t_simulation, typename t_interaction_spec>
   class Interaction
   {
   public:

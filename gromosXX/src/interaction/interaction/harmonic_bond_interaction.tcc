@@ -13,18 +13,18 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-inline interaction::harmonic_bond_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::harmonic_bond_interaction<t_simulation, t_interaction_spec>
 ::harmonic_bond_interaction()
-  : Interaction<t_simulation>("HarmonicBond")
+  : Interaction<t_simulation, t_interaction_spec>("HarmonicBond")
 {
 }
 
 /**
  * Destructor.
  */
-template<typename t_simulation>
-inline interaction::harmonic_bond_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::harmonic_bond_interaction<t_simulation, t_interaction_spec>
 ::~harmonic_bond_interaction()
 {
 }
@@ -32,8 +32,8 @@ inline interaction::harmonic_bond_interaction<t_simulation>
 /**
  * calculate harmonic bond forces and energies.
  */
-template<typename t_simulation>
-inline void interaction::harmonic_bond_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::harmonic_bond_interaction<t_simulation, t_interaction_spec>
 ::calculate_interactions(t_simulation &sim)
 {
   // loop over the bonds
@@ -83,8 +83,8 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
 /**
  * add bond type.
  */
-template<typename t_simulation>
-inline void interaction::harmonic_bond_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::harmonic_bond_interaction<t_simulation, t_interaction_spec>
 ::add(bond_type_struct s)
 {
   m_bond_parameter.push_back(s);
@@ -93,8 +93,8 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
 /**
  * add bond type.
  */
-template<typename t_simulation>
-inline void interaction::harmonic_bond_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::harmonic_bond_interaction<t_simulation, t_interaction_spec>
 ::add(double K, double r0)
 {
   bond_type_struct s;
@@ -106,9 +106,9 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
 /**
  * access bond parameter.
  */
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 inline std::vector<interaction::bond_type_struct> const &
-interaction::harmonic_bond_interaction<t_simulation>
+interaction::harmonic_bond_interaction<t_simulation, t_interaction_spec>
 ::parameter()const
 {
   return m_bond_parameter;

@@ -12,8 +12,9 @@ namespace interaction
    * @class Quartic_bond_interaction
    * calculates the bond interactions (quartic).
    */
-  template<typename t_simulation>
-  class Quartic_bond_interaction : public Interaction<t_simulation>
+  template<typename t_simulation, typename t_interaction_spec>
+  class Quartic_bond_interaction : 
+    public Interaction<t_simulation, t_interaction_spec>
   {
   public:
     /**

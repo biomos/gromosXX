@@ -13,11 +13,11 @@ namespace interaction
    * @class Perturbed_Nonbonded_Interaction
    * calculates the perturbed nonbonded interactions.
    */
-  template<typename t_simulation, typename t_nonbonded_spec>
+  template<typename t_simulation, typename t_interaction_spec>
   class Perturbed_Nonbonded_Interaction : 
-    public Nonbonded_Interaction<t_simulation, t_nonbonded_spec>,
-    public t_nonbonded_spec::perturbation_filter_type,
-    public t_nonbonded_spec::perturbed_nonbonded_innerloop_type
+    public Nonbonded_Interaction<t_simulation, t_interaction_spec>,
+    public t_interaction_spec::perturbation_filter_type,
+    public t_interaction_spec::perturbed_nonbonded_innerloop_type
   {
   public:    
     /**

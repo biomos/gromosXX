@@ -8,9 +8,10 @@
  * Runge-Kutta integration step.
  */
 template<typename t_simulation>
+template<typename t_interaction_spec>
 void algorithm::runge_kutta<t_simulation>
 ::step(t_simulation &sim,
-       interaction::Forcefield<t_simulation> &ff,
+       interaction::Forcefield<t_simulation, t_interaction_spec> &ff,
        double const dt)
 {
   // we do not have something as the old forces

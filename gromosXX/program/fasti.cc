@@ -74,7 +74,18 @@ int main(int argc, char *argv[])
     if (perturbation){ // leap frog + perturbation
 
       algorithm::Perturbation_MD<
-	program::perturbed_Fasti_spec
+	algorithm::perturbed_MD_spec,
+	program::Fast_Interaction_spec<
+	algorithm::perturbed_MD_spec::simulation_type,
+	// perturbation
+	true,
+	// virial
+	interaction::molecular_virial,
+	// atomic cutoff
+	false,
+	// scaling
+	false
+	>
 	>
 	the_MD;
       
@@ -85,7 +96,18 @@ int main(int argc, char *argv[])
     else{ // leap frog, no perturbation
 
       algorithm::MD<
-	program::Fasti_spec
+	algorithm::MD_spec,
+	program::Fast_Interaction_spec<
+	algorithm::MD_spec::simulation_type,
+	// perturbation
+	false,
+	// virial
+	interaction::molecular_virial,
+	// atomic cutoff
+	false,
+	// scaling
+	false
+	>
 	>
 	the_MD;
       

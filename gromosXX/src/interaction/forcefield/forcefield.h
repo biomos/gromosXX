@@ -20,8 +20,9 @@ namespace interaction
    * @TODO are the destructors called? properly?
    * clear does not call them (i guess).
    */
-  template<typename t_simulation>
-  class Forcefield : public std::vector<Interaction<t_simulation> *>
+  template<typename t_simulation, typename t_interaction_spec>
+  class Forcefield : public std::vector<Interaction<t_simulation, 
+						    t_interaction_spec> *>
   {
   public:
     /**

@@ -6,18 +6,18 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-inline interaction::Improper_dihedral_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::Improper_dihedral_interaction<t_simulation, t_interaction_spec>
 ::Improper_dihedral_interaction()
-  : Interaction<t_simulation>("ImproperDihedral")
+  : Interaction<t_simulation, t_interaction_spec>("ImproperDihedral")
 {
 }
 
 /**
  * Destructor.
  */
-template<typename t_simulation>
-inline interaction::Improper_dihedral_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::Improper_dihedral_interaction<t_simulation, t_interaction_spec>
 ::~Improper_dihedral_interaction()
 {
 }
@@ -25,8 +25,8 @@ inline interaction::Improper_dihedral_interaction<t_simulation>
 /**
  * calculate improper dihedral forces and energies.
  */
-template<typename t_simulation>
-inline void interaction::Improper_dihedral_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Improper_dihedral_interaction<t_simulation, t_interaction_spec>
 ::calculate_interactions(t_simulation &sim)
 {
   // loop over the improper dihedrals
@@ -105,8 +105,8 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
 /**
  * add improper dihedral type.
  */
-template<typename t_simulation>
-inline void interaction::Improper_dihedral_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Improper_dihedral_interaction<t_simulation, t_interaction_spec>
 ::add(improper_dihedral_type_struct s)
 {
   m_improper_dihedral_parameter.push_back(s);
@@ -115,8 +115,8 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
 /**
  * add improper dihedral type.
  */
-template<typename t_simulation>
-inline void interaction::Improper_dihedral_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Improper_dihedral_interaction<t_simulation, t_interaction_spec>
 ::add(double K, double q0)
 {
   improper_dihedral_type_struct s;
@@ -128,9 +128,9 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
 /**
  * access improper dihedral parameter.
  */
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 inline std::vector<interaction::improper_dihedral_type_struct> const &
-interaction::Improper_dihedral_interaction<t_simulation>
+interaction::Improper_dihedral_interaction<t_simulation, t_interaction_spec>
 ::parameter()const
 {
   return m_improper_dihedral_parameter;

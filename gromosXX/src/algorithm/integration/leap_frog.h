@@ -32,8 +32,9 @@ namespace algorithm
     /**
      * Leap frog step.
      */
+    template<typename t_interaction_spec>
     void step(t_simulation &sim,
-	      interaction::Forcefield<t_simulation> &ff, 
+	      interaction::Forcefield<t_simulation, t_interaction_spec> &ff, 
 	      double const dt);
 
   protected:

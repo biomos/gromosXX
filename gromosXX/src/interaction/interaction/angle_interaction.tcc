@@ -6,18 +6,18 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-inline interaction::angle_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::angle_interaction<t_simulation, t_interaction_spec>
 ::angle_interaction()
-  : Interaction<t_simulation>("BondAngle")
+  : Interaction<t_simulation, t_interaction_spec>("BondAngle")
 {
 }
 
 /**
  * Destructor.
  */
-template<typename t_simulation>
-inline interaction::angle_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::angle_interaction<t_simulation, t_interaction_spec>
 ::~angle_interaction()
 {
 }
@@ -25,8 +25,8 @@ inline interaction::angle_interaction<t_simulation>
 /**
  * calculate angle forces and energies.
  */
-template<typename t_simulation>
-inline void interaction::angle_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::angle_interaction<t_simulation, t_interaction_spec>
 ::calculate_interactions(t_simulation &sim)
 {
   // loop over the bonds
@@ -86,8 +86,8 @@ inline void interaction::angle_interaction<t_simulation>
 /**
  * add angle type.
  */
-template<typename t_simulation>
-inline void interaction::angle_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::angle_interaction<t_simulation, t_interaction_spec>
 ::add(angle_type_struct s)
 {
   m_angle_parameter.push_back(s);
@@ -96,8 +96,8 @@ inline void interaction::angle_interaction<t_simulation>
 /**
  * add angle type.
  */
-template<typename t_simulation>
-inline void interaction::angle_interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::angle_interaction<t_simulation, t_interaction_spec>
 ::add(double K, double cos0)
 {
   angle_type_struct s;
@@ -109,9 +109,9 @@ inline void interaction::angle_interaction<t_simulation>
 /**
  * access bond parameter.
  */
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 inline std::vector<interaction::angle_type_struct> const &
-interaction::angle_interaction<t_simulation>
+interaction::angle_interaction<t_simulation, t_interaction_spec>
 ::parameter()const
 {
   return m_angle_parameter;

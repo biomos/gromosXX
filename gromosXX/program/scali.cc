@@ -72,7 +72,18 @@ int main(int argc, char *argv[])
     if (perturbation){ // leap frog + perturbation
       
       algorithm::Perturbation_MD<
-	algorithm::scaled_MD_spec
+	algorithm::perturbed_MD_spec,
+	algorithm::Interaction_spec<
+	algorithm::perturbed_MD_spec::simulation_type,
+	// perturbation
+	true,
+	// virial
+	interaction::molecular_virial,
+	// atomic cutoff
+	false,
+	// scaling
+	true
+	>
 	> 
 	the_MD;
 
@@ -81,8 +92,21 @@ int main(int argc, char *argv[])
       }
     }
     else{ // leap frog, no perturbation
+      std::cout << "\nNo scaling of interactions without perturbation!\n";
+
       algorithm::MD<
-	algorithm::MD_spec
+	algorithm::MD_spec,
+	algorithm::Interaction_spec<
+	algorithm::MD_spec::simulation_type,
+	// perturbation
+	false,
+	// virial
+	interaction::molecular_virial,
+	// atomic cutoff
+	false,
+	// scaling
+	false
+	>
 	> 
 	the_MD;
 

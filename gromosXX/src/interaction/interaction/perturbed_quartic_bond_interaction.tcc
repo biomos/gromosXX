@@ -13,12 +13,12 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-inline interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::Perturbed_Quartic_Bond_Interaction<t_simulation, t_interaction_spec>
 ::Perturbed_Quartic_Bond_Interaction(
-    interaction::Quartic_bond_interaction<t_simulation>
+    interaction::Quartic_bond_interaction<t_simulation, t_interaction_spec>
     & bond_interaction)
-  : Interaction<t_simulation>("Perturbed QuarticBond"),
+  : Interaction<t_simulation, t_interaction_spec>("Perturbed QuarticBond"),
     m_bond_interaction(bond_interaction)
 {
 }
@@ -26,8 +26,8 @@ inline interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
 /**
  * Destructor.
  */
-template<typename t_simulation>
-inline interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::Perturbed_Quartic_Bond_Interaction<t_simulation, t_interaction_spec>
 ::~Perturbed_Quartic_Bond_Interaction()
 {
 }
@@ -35,8 +35,8 @@ inline interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
 /**
  * calculate quartic bond forces and energies and lambda derivatives.
  */
-template<typename t_simulation>
-inline void interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Perturbed_Quartic_Bond_Interaction<t_simulation, t_interaction_spec>
 ::calculate_interactions(t_simulation &sim)
 {
   // this is repeated code from Quartic_Bond_Interaction !!!

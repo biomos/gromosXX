@@ -49,9 +49,6 @@ namespace interaction
 #include "interaction/dihedral_interaction.h"
 #include "interaction/perturbed_dihedral_interaction.h"
 
-// and provide a general spec
-#include "interaction/nonbonded/nonbonded_spec.h"
-
 #ifndef NDEBUG
 namespace interaction
 {

@@ -429,9 +429,10 @@ io::InTopology::read_TOPOLOGY(t_topology& topo){
 
 }
 
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 io::InTopology &io::InTopology
-::operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi){
+::operator>>(interaction::harmonic_bond_interaction<t_simulation,
+	     t_interaction_spec> &hbi){
 
   DEBUG(10, "(HARM)BONDTYPE block");
 
@@ -581,9 +582,10 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 io::InTopology &io::InTopology
-::operator>>(interaction::Quartic_bond_interaction<t_simulation> &qbi){
+::operator>>(interaction::Quartic_bond_interaction<t_simulation,
+	     t_interaction_spec> &qbi){
 
   DEBUG(10, "BONDTYPE block");
 
@@ -614,9 +616,10 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 io::InTopology &io::InTopology
-::operator>>(interaction::angle_interaction<t_simulation> &ai){
+::operator>>(interaction::angle_interaction<t_simulation,
+	     t_interaction_spec> &ai){
 
   DEBUG(10, "BONDANGLETYPE block");
 
@@ -645,9 +648,10 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 io::InTopology &io::InTopology
-::operator>>(interaction::Improper_dihedral_interaction<t_simulation> &ii){
+::operator>>(interaction::Improper_dihedral_interaction<t_simulation,
+	     t_interaction_spec> &ii){
 
   DEBUG(10, "IMPDIHEDRALTYPE block");
 
@@ -675,9 +679,10 @@ io::InTopology &io::InTopology
   }
   return *this;
 }
-template<typename t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
 io::InTopology &io::InTopology
-::operator>>(interaction::Dihedral_interaction<t_simulation> &di){
+::operator>>(interaction::Dihedral_interaction<t_simulation,
+	     t_interaction_spec> &di){
 
   DEBUG(10, "DIHEDRALTYPE block");
 
@@ -709,10 +714,10 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 io::InTopology &io::InTopology
 ::operator>>(interaction
-	     ::Nonbonded_Interaction<t_simulation, t_nonbonded_spec> &nbi){
+	     ::Nonbonded_Interaction<t_simulation, t_interaction_spec> &nbi){
 
   DEBUG(10, "TOPPHYSCON block");
   

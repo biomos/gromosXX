@@ -24,9 +24,10 @@ algorithm::Leap_Frog<t_simulation, t_thermostat>
  * Leap frog step.
  */
 template<typename t_simulation, typename t_thermostat>
+template<typename t_interaction_spec>
 void algorithm::Leap_Frog<t_simulation, t_thermostat>
 ::step(t_simulation &sim,
-       interaction::Forcefield<t_simulation> &ff,
+       interaction::Forcefield<t_simulation, t_interaction_spec> &ff,
        double const dt)
 {
   // one force calculation per step

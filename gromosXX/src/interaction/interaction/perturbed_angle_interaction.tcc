@@ -13,12 +13,12 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-inline interaction::Perturbed_Angle_Interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::Perturbed_Angle_Interaction<t_simulation, t_interaction_spec>
 ::Perturbed_Angle_Interaction(
-    interaction::angle_interaction<t_simulation>
+    interaction::angle_interaction<t_simulation, t_interaction_spec>
     & angle_interaction)
-  : Interaction<t_simulation>("Perturbed Angle"),
+  : Interaction<t_simulation, t_interaction_spec>("Perturbed Angle"),
     m_angle_interaction(angle_interaction)
 {
 }
@@ -26,8 +26,8 @@ inline interaction::Perturbed_Angle_Interaction<t_simulation>
 /**
  * Destructor.
  */
-template<typename t_simulation>
-inline interaction::Perturbed_Angle_Interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline interaction::Perturbed_Angle_Interaction<t_simulation, t_interaction_spec>
 ::~Perturbed_Angle_Interaction()
 {
 }
@@ -35,8 +35,9 @@ inline interaction::Perturbed_Angle_Interaction<t_simulation>
 /**
  * calculate angle forces and energies and lambda derivatives.
  */
-template<typename t_simulation>
-inline void interaction::Perturbed_Angle_Interaction<t_simulation>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::
+Perturbed_Angle_Interaction<t_simulation, t_interaction_spec>
 ::calculate_interactions(t_simulation &sim)
 {
   // this is repeated code from Angle_Interaction !!!

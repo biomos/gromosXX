@@ -14,14 +14,14 @@
 /**
  * Constructor.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::Nonbonded_Interaction(t_simulation &sim)
-  : Interaction<t_simulation>("NonBonded"),
+  : Interaction<t_simulation, t_interaction_spec>("NonBonded"),
     Nonbonded_Base(),
     Storage(),
-    t_nonbonded_spec::nonbonded_innerloop_type(*dynamic_cast<Nonbonded_Base *>(this)),
+    t_interaction_spec::nonbonded_innerloop_type(*dynamic_cast<Nonbonded_Base *>(this)),
     m_pairlist_algorithm()
 {
 }
@@ -29,9 +29,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * Destructor.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline 
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::~Nonbonded_Interaction()
 {
   DEBUG(4, "Nonbonded_Interaction::destructor");
@@ -40,9 +40,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * calculate nonbonded forces and energies.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline void 
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::calculate_interactions(t_simulation &sim)
 {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
@@ -91,7 +91,7 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
   }
   
   // add longrange virial
-  if (t_nonbonded_spec::do_virial){
+  if (t_interaction_spec::do_virial){
     DEBUG(7, "\tadd long range virial");
     for(size_t i=0; i<3; ++i)
       for(size_t j=0; j<3; ++j)
@@ -113,9 +113,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * add a shortrange interaction
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline void
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::add_shortrange_pair(t_simulation const & sim, size_t const i, size_t const j)
 {
   assert(pairlist().size() > i);
@@ -125,9 +125,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * add a longrange interaction
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline void
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::add_longrange_pair(t_simulation & sim, size_t const i, size_t const j)
 {
   interaction_innerloop(sim, i, j, *this);
@@ -141,9 +141,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * pairlist accessor.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline interaction::Pairlist & 
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::pairlist()
 {
   return m_pairlist;
@@ -151,9 +151,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * const pairlist accessor.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline interaction::Pairlist const &
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::pairlist()const
 {
   return m_pairlist;
@@ -161,9 +161,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * perturbed pairlist accessor.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline interaction::Pairlist & 
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::perturbed_pairlist()
 {
   return m_perturbed_pairlist;
@@ -171,9 +171,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * const perturbed pairlist accessor.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline interaction::Pairlist const &
-interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::perturbed_pairlist()const
 {
   return m_perturbed_pairlist;
@@ -188,8 +188,8 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
  * stores them in the arrays pointed to by parameters
  * to make it usable for longrange calculations.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
-inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::do_interactions(t_simulation &sim, Pairlist::iterator it, 
 		  Pairlist::iterator to)
 {  
@@ -208,8 +208,8 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
  * helper function to calculate the forces and energies from the
  * 1,4 interactions.
  */
-template<typename t_simulation, typename t_nonbonded_spec>
-inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::do_14_interactions(t_simulation &sim)
 {
   DEBUG(7, "\tcalculate 1,4-interactions");
@@ -232,8 +232,8 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
  * helper function to calculate the forces and energies from the
  * RF contribution of excluded atoms and self term
  */
-template<typename t_simulation, typename t_nonbonded_spec>
-inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::do_RF_excluded_interactions(t_simulation &sim)
 {
   
@@ -260,8 +260,8 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 /**
  * initialize the arrays
  */
-template<typename t_simulation, typename t_nonbonded_spec>
-inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
+inline void interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::initialize(t_simulation &sim)
 {
   DEBUG(15, "nonbonded_interaction::initialize");

@@ -12,8 +12,8 @@ namespace interaction
    * @class angle_interaction
    * calculates the angle interactions.
    */
-  template<typename t_simulation>
-  class angle_interaction : public Interaction<t_simulation>
+  template<typename t_simulation, typename t_interaction_spec>
+  class angle_interaction : public Interaction<t_simulation, t_interaction_spec>
   {
   public:
     /**

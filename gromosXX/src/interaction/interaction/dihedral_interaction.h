@@ -12,8 +12,8 @@ namespace interaction
    * @class Dihedral_interaction
    * calculates the dihedral interactions.
    */
-  template<typename t_simulation>
-  class Dihedral_interaction : public Interaction<t_simulation>
+  template<typename t_simulation, typename t_interaction_spec>
+  class Dihedral_interaction : public Interaction<t_simulation, t_interaction_spec>
   {
   public:
     /**

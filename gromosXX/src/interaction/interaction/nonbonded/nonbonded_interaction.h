@@ -13,12 +13,12 @@ namespace interaction
    * @class Nonbonded_Interaction
    * calculates the nonbonded interactions.
    */
-  template<typename t_simulation, typename t_nonbonded_spec>
+  template<typename t_simulation, typename t_interaction_spec>
   class Nonbonded_Interaction : 
-    public Interaction<t_simulation>,
+    public Interaction<t_simulation, t_interaction_spec>,
     public Nonbonded_Base,
     public Storage,
-    public t_nonbonded_spec::nonbonded_innerloop_type
+    public t_interaction_spec::nonbonded_innerloop_type
   {
   public:    
     /**
@@ -102,7 +102,7 @@ namespace interaction
     /**
      * the pairlist update algorithm.
      */
-    typename t_nonbonded_spec::pairlist_algorithm_type m_pairlist_algorithm;
+    typename t_interaction_spec::pairlist_algorithm_type m_pairlist_algorithm;
     
   };
   

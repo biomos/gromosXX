@@ -1,31 +1,30 @@
 /**
- * @file flexi.h
- * specification of the typenames for various classes.
+ * @file interaction_spec.h
+ * specification of how to calculate the interactions
  */
 
-#ifndef INCLUDED_FASTI_H
-#define INCLUDED_FASTI_H
+#ifndef INCLUDED_INTERACTION_SPEC_H
+#define INCLUDED_INTERACTION_SPEC_H
 
-namespace program
+namespace algorithm
 {
-
   /**
-   * @class Fast_Interaction_Spec
-   * defines parameters for the interactions.
+   * @class Interaction_spec
+   * interaction specifications.
    */
   template<typename t_simulation,
 	   bool t_perturbation = false,
-	   interaction::virial_enum t_virial = 
-	   interaction::molecular_virial,
+	   interaction::virial_enum t_virial 
+	   = interaction::molecular_virial,
 	   bool t_atomic_cutoff = false,
 	   bool t_scaling = false>
-  class Fast_Interaction_spec
+  class Interaction_spec
   {
   public:
     typedef t_simulation simulation_type;
-    typedef Fast_Interaction_spec<t_simulation, t_perturbation,
-				  t_virial, t_atomic_cutoff,
-				  t_scaling>
+    typedef Interaction_spec<t_simulation, t_perturbation,
+			     t_virial, t_atomic_cutoff,
+			     t_scaling>
     interaction_spec_type;
 
     static const bool do_exclusion = true;
@@ -37,7 +36,7 @@ namespace program
     // the interaction types
     // bonded interactions
     //==============================
-    typedef interaction::Quartic_bond_interaction<simulation_type,
+    typedef interaction::Quartic_bond_interaction<simulation_type, 
 						  interaction_spec_type>
     quartic_bond_interaction_type;
 
@@ -79,8 +78,8 @@ namespace program
 						       interaction_spec_type>
     perturbed_nonbonded_innerloop_type;
     
-    typedef interaction::Grid_Pairlist_Algorithm<simulation_type,
-						 interaction_spec_type>
+    typedef interaction::Standard_Pairlist_Algorithm<simulation_type,
+						     interaction_spec_type>
     pairlist_algorithm_type;
     
     typedef interaction::Nonbonded_Interaction<
@@ -118,8 +117,7 @@ namespace program
     perturbed_nonbonded_interaction_type;
 
   };
-
-} // program
-
+    
+} // algorithm
 
 #endif

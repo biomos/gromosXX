@@ -94,34 +94,27 @@ int main(int argc, char *argv[])
 			 "md", io::message::error);
       }
 
-      /**
-      // topology and system
-      simulation::System<math::any> the_system;
-      simulation::Perturbation_Topology the_topology;
-
-      // simulation
-      typedef simulation::Simulation<simulation::Perturbation_Topology,
-	simulation::System<math::any> > simulation_type;
-  
-      simulation_type the_simulation(the_topology, the_system);
-
-      algorithm::MD<simulation_type,
-	algorithm::Berendsen_Thermostat,
-	algorithm::Berendsen_Barostat,
-	algorithm::Shake<simulation_type>,
-	algorithm::runge_kutta<simulation_type> >
-	the_MD(the_simulation);
+      io::messages.add("runge-kutta only almost implemented!",
+		       "md",
+		       io::message::error);
       
-      if (do_md(the_MD, args)){
-	return 1;
-      }      
-      */
       return 1;
     }
     else if (perturbation){ // leap frog + perturbation
 
       algorithm::Perturbation_MD<
-	algorithm::perturbed_MD_spec
+	algorithm::perturbed_MD_spec,
+	algorithm::Interaction_spec<
+	algorithm::perturbed_MD_spec::simulation_type,
+	// perturbation
+	true,
+	// virial
+	interaction::molecular_virial,
+	// atomic cutoff
+	false,
+	// scaling
+	false
+	>
 	> 
 	the_MD;
 
@@ -131,7 +124,18 @@ int main(int argc, char *argv[])
     }
     else{ // leap frog, no perturbation
       algorithm::MD<
-	algorithm::MD_spec
+	algorithm::MD_spec,
+	algorithm::Interaction_spec<
+	algorithm::MD_spec::simulation_type,
+	// perturbation
+	false,
+	// virial
+	interaction::molecular_virial,
+	// atomic cutoff
+	false,
+	// scaling
+	false
+	>
 	> 
 	the_MD;
 

@@ -1,6 +1,10 @@
 INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		algorithm.h \
+				algorithm/md_spec.h \
+				algorithm/interaction_spec.h \
+				algorithm/md_base.h \
+				algorithm/md_base.tcc \
 				algorithm/md.h \
 				algorithm/md.tcc \
 				algorithm/perturbation_md.h \

@@ -12,7 +12,9 @@
 #include "constraint/perturbed_flexible_constraint.h"
 
 #include "algorithm/md_spec.h"
+#include "algorithm/interaction_spec.h"
 
+#include "algorithm/md_base.h"
 #include "algorithm/md.h"
 #include "algorithm/perturbation_md.h"
 
