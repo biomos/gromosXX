@@ -43,19 +43,20 @@ void algorithm::Shake<do_virial>
  * do one iteration
  */      
 template<math::virial_enum do_virial, math::boundary_enum b>
-static bool _shake(topology::Topology const &topo,
-		   configuration::Configuration & conf,
-		   int const first,
-		   std::vector<bool> &skip_now,
-		   std::vector<bool> &skip_next,
-		   std::vector<topology::two_body_term_struct> const & constr,
-		   std::vector<interaction::bond_type_struct> const & param,
-		   double const dt,
-		   math::Periodicity<b> const & periodicity,
-		   double const tolerance,
-		   bool do_constraint_force = false, size_t force_offset = 0)
+static int _shake(topology::Topology const &topo,
+		  configuration::Configuration & conf,
+		  bool & convergence,
+		  int const first,
+		  std::vector<bool> &skip_now,
+		  std::vector<bool> &skip_next,
+		  std::vector<topology::two_body_term_struct> const & constr,
+		  std::vector<interaction::bond_type_struct> const & param,
+		  double const dt,
+		  math::Periodicity<b> const & periodicity,
+		  double const tolerance,
+		  bool do_constraint_force = false, size_t force_offset = 0)
 {
-  bool convergence = true;
+  convergence = true;
 
   // index for constraint_force...
   size_t k = 0;
@@ -103,15 +104,37 @@ static bool _shake(topology::Topology const &topo,
       double sp = dot(ref_r, r);
 	  
       if(sp < constr_length2 * math::epsilon){
+	/*
 	io::messages.add("SHAKE error. vectors orthogonal",
 			 "Shake::???",
 			 io::message::critical);
+	*/
 	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
 	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
 	DEBUG(5, "ref r " << ref_r);
 	DEBUG(5, "r " << r);
+
+	std::cout << "SHAKE ERROR\n"
+		  << "\tatom i    : " << it->i << "\n"
+		  << "\tatom j    : " << it->j << "\n"
+		  << "\tfirst     : " << first << "\n"
+		  << "\tref i     : " << math::v2s(ref_i) << "\n"
+		  << "\tref j     : " << math::v2s(ref_j) << "\n"
+		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
+		  << "\tfree j    : " << math::v2s(pos_j) << "\n"
+		  << "\tref r     : " << math::v2s(ref_r) << "\n"
+		  << "\tr         : " << math::v2s(r) << "\n"
+		  << "\tsp        : " << sp << "\n"
+		  << "\tconstr    : " << constr_length2 << "\n"
+		  << "\tdiff      : " << diff << "\n"
+		  << "\tforce i   : " << math::v2s(conf.old().force(first+it->i)) << "\n"
+		  << "\tforce j   : " << math::v2s(conf.old().force(first+it->j)) << "\n"
+		  << "\tvel i     : " << math::v2s(conf.current().vel(first+it->i)) << "\n"
+		  << "\tvel j     : " << math::v2s(conf.current().vel(first+it->j)) << "\n"
+		  << "\told vel i : " << math::v2s(conf.old().vel(first+it->i)) << "\n"
+		  << "\told vel j : " << math::v2s(conf.old().vel(first+it->j)) << "\n\n";
 	
-	throw std::runtime_error("SHAKE failure in ??? (SHAKE)");
+	return E_SHAKE_FAILURE;
       }
 	  
       // lagrange multiplier
@@ -156,7 +179,7 @@ static bool _shake(topology::Topology const &topo,
   } // constraints
       
   
-  return convergence;
+  return 0;
 
 }    
 
@@ -192,17 +215,23 @@ static int solute(topology::Topology const & topo,
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    convergence = _shake<do_virial, b>
-      (topo, conf, first, skip_now, skip_next,
-       topo.solute().distance_constraints(), param, dt,
-       periodicity, tolerance, true);
-
+    if(_shake<do_virial, b>
+       (topo, conf, convergence, first, skip_now, skip_next,
+	topo.solute().distance_constraints(), param, dt,
+	periodicity, tolerance, true)
+       ){
+      io::messages.add("SHAKE error. vectors orthogonal",
+		       "Shake::solute",
+		       io::message::error);
+      std::cout << "SHAKE failure in solute!" << std::endl;
+      return E_SHAKE_FAILURE_SOLUTE;
+    }
+    
     if(++num_iterations > max_iterations){
       io::messages.add("SHAKE error. too many iterations",
 		       "Shake::solute",
-		       io::message::critical);
-      // throw std::runtime_error("SHAKE failure in solute");
-      return E_SHAKE_FAILURE;
+		       io::message::error);
+      return E_SHAKE_FAILURE_SOLUTE;
     }
 
     skip_now = skip_next;
@@ -261,10 +290,17 @@ static int solvent(topology::Topology const & topo,
       while(!convergence){
 	DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-	convergence = _shake<do_virial, b>
-	  (topo, conf, first, skip_now, skip_next,
-	   topo.solvent(i).distance_constraints(), param, dt,
-	   periodicity, tolerance, false);
+	if(_shake<do_virial, b>
+	   (topo, conf, convergence, first, skip_now, skip_next,
+	    topo.solvent(i).distance_constraints(), param, dt,
+	    periodicity, tolerance, false)){
+	  
+	  io::messages.add("SHAKE error. vectors orthogonal",
+			   "Shake::solute", io::message::error);
+	  
+	  std::cout << "SHAKE failure in solute!" << std::endl;
+	  return E_SHAKE_FAILURE_SOLVENT;
+	}
 	
 	// std::cout << num_iterations+1 << std::endl;
 	if(++num_iterations > max_iterations){
@@ -272,7 +308,7 @@ static int solvent(topology::Topology const & topo,
 			   "Shake::solvent",
 			   io::message::critical);
 	  // throw std::runtime_error("SHAKE failure in solvent");
-	  return E_SHAKE_FAILURE;
+	  return E_SHAKE_FAILURE_SOLVENT;
 	}
 
 	skip_now = skip_next;
@@ -333,8 +369,13 @@ int algorithm::Shake<do_virial>
     }
   }
   
-  if (error) return E_SHAKE_FAILURE_SOLUTE;
-
+  if (error){
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE" << std::endl;
+    // save old positions to final configuration... (even before free-flight!)
+    conf.current().pos = conf.old().pos;
+    return E_SHAKE_FAILURE_SOLUTE;
+  }
+  
   if (sim.param().system.nsm){
     DEBUG(8, "\twe need to shake SOLVENT");
     do_vel = true;
@@ -363,8 +404,13 @@ int algorithm::Shake<do_virial>
     }
   }
   
-  if (error) return E_SHAKE_FAILURE_SOLVENT;
-
+  if (error){
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT" << std::endl;
+    // save old positions to final configuration... (even before free-flight!)
+    conf.current().pos = conf.old().pos;
+    return E_SHAKE_FAILURE_SOLVENT;
+  }
+      
   // shaken velocity
   conf.current().vel = (conf.current().pos - conf.old().pos) / 
     sim.time_step_size();
