@@ -29,7 +29,7 @@ namespace topology
     {
       v = 0.0;
       for(Atom_Iterator it=begin(), to=end(); it!=to; ++it)
-	v += pos(*it);
+		v += pos(int(*it));
       v /= num_atoms();
     }
       

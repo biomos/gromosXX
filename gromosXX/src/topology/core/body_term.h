@@ -20,16 +20,16 @@ namespace topology
      * @param i atom i.
      * @param t interaction type.
      */
-    one_body_term_struct(size_t i, size_t t) : i(i), type(t) {};
+    one_body_term_struct(unsigned int i, unsigned int t) : i(i), type(t) {};
     
     /**
      * atom i.
      */
-    size_t i;
+    unsigned int i;
     /**
      * interaction type.
      */
-    size_t type;
+    unsigned int type;
     /**
      * equal operator
      */
@@ -51,22 +51,22 @@ namespace topology
      * @param t_A interaction type.
      * @param t_B interaction type.
      */
-    perturbed_one_body_term_struct(size_t i, size_t t_A, size_t t_B) 
+    perturbed_one_body_term_struct(unsigned int i, unsigned int t_A, unsigned int t_B) 
       : i(i), A_type(t_A), B_type(t_B) {};
     
     /**
      * atom i.
      */
-    size_t i;
+    unsigned int i;
     /**
      * interaction type for state A.
      */
-    size_t A_type;
+    unsigned int A_type;
 
     /**
      * interaction type for state B.
      */
-    size_t B_type;
+    unsigned int B_type;
     /**
      * equal operator
      */
@@ -88,13 +88,13 @@ namespace topology
      * @param j atom j.
      * @param t interaction type.
      */
-    two_body_term_struct(size_t i, size_t j, size_t t) 
+    two_body_term_struct(unsigned int i, unsigned int j, unsigned int t) 
       : one_body_term_struct(i, t), j(j) {};
     
     /**
      * atom j.
      */
-    size_t j;
+    unsigned int j;
     /**
      * equal operator
      */
@@ -117,13 +117,13 @@ namespace topology
      * @param t_A interaction type for state A.
      * @param t_B interaction type for state B.
      */
-    perturbed_two_body_term_struct(size_t i, size_t j, size_t t_A, size_t t_B) 
+    perturbed_two_body_term_struct(unsigned int i, unsigned int j, unsigned int t_A, unsigned int t_B) 
       : perturbed_one_body_term_struct(i, t_A, t_B), j(j) {};
     
     /**
      * atom j.
      */
-    size_t j;
+    unsigned int j;
     /**
      * equal operator
      */
@@ -145,13 +145,13 @@ namespace topology
      * @param k atom k.
      * @param t interaction type.
      */
-    three_body_term_struct(size_t i, size_t j, size_t k, size_t t) 
+    three_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int t) 
       : two_body_term_struct(i, j, t), k(k) {};
     
     /**
      * atom k.
      */
-    size_t k;
+    unsigned int k;
     /**
      * equal operator
      */
@@ -175,14 +175,14 @@ namespace topology
      * @param t_A interaction type for state A.
      * @param t_B interaction type for state B.
      */
-    perturbed_three_body_term_struct(size_t i, size_t j, size_t k, 
-				     size_t t_A, size_t t_B) 
+    perturbed_three_body_term_struct(unsigned int i, unsigned int j, unsigned int k, 
+				     unsigned int t_A, unsigned int t_B) 
       : perturbed_two_body_term_struct(i, j, t_A, t_B), k(k) {};
     
     /**
      * atom k.
      */
-    size_t k;
+    unsigned int k;
     /**
      * equal operator
      */
@@ -205,13 +205,13 @@ namespace topology
      * @param l atom l.
      * @param t interaction type.
      */
-    four_body_term_struct(size_t i, size_t j, size_t k, size_t l, size_t t) 
+    four_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int l, unsigned int t) 
       : three_body_term_struct(i, j, k, t), l(l) {};
     
     /**
      * atom l.
      */
-    size_t l;
+    unsigned int l;
     /**
      * equal operator
      */
@@ -236,14 +236,14 @@ namespace topology
      * @param t_A interaction type for state A.
      * @param t_B interaction type for state B.
      */
-    perturbed_four_body_term_struct(size_t i, size_t j, size_t k, size_t l, 
-				    size_t t_A, size_t t_B) 
+    perturbed_four_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int l, 
+				    unsigned int t_A, unsigned int t_B) 
       : perturbed_three_body_term_struct(i, j, k, t_A, t_B), l(l) {};
     
     /**
      * atom l.
      */
-    size_t l;
+    unsigned int l;
     /**
      * equal operator
      */
@@ -257,7 +257,7 @@ namespace topology
     /**
      * Constructor.
      */
-    position_restraint_struct(size_t seq, math::Vec pos, 
+    position_restraint_struct(unsigned int seq, math::Vec pos, 
 			       double bfactor = 1.0)
       : seq(seq), pos(pos), bfactor(bfactor)
     {}
@@ -265,7 +265,7 @@ namespace topology
     /**
      * sequence number.
      */
-    size_t seq;
+    unsigned int seq;
     /**
      * position.
      */

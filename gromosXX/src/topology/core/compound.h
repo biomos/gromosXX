@@ -31,7 +31,7 @@ namespace topology
      */
     struct lincs_struct
     {
-      std::vector<std::vector<size_t> > coupled_constr;
+      std::vector<std::vector<unsigned int> > coupled_constr;
       std::vector<std::vector<double> > coef;
       std::vector<double> sdiag;
     };
@@ -53,7 +53,7 @@ namespace topology
     /**
      * accessor to a single distance constraint.
      */
-    two_body_term_struct &distance_constraint(size_t i){return m_distance_constraint[i];}
+    two_body_term_struct &distance_constraint(unsigned int i){return m_distance_constraint[i];}
   
     /**
      * add a distance constraint.
@@ -77,7 +77,7 @@ namespace topology
     /**
      * number of atoms in the compound.
      */
-    size_t num_atoms()const {return m_num_atoms;}
+    unsigned int num_atoms()const {return m_num_atoms;}
 
   protected:
     /**
@@ -93,7 +93,7 @@ namespace topology
     /**
      * the number of atoms in the compound.
      */
-    size_t m_num_atoms;
+    unsigned int m_num_atoms;
   };
   
 } // simulation

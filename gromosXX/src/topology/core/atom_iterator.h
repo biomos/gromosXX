@@ -15,7 +15,7 @@ namespace topology
   class Atom_Iterator
   {
   public:
-    Atom_Iterator(size_t const atom)
+    Atom_Iterator(unsigned int atom)
       : m_atom(atom)
     {
     }
@@ -31,19 +31,19 @@ namespace topology
     {
       ++m_atom;
     }
-    Atom_Iterator operator+(size_t n)const
+    Atom_Iterator operator+(unsigned int n)const
     {
       Atom_Iterator dummy(*this);
       dummy.m_atom += n;
       return dummy;
     }
     
-    size_t operator*()const
+    unsigned int operator*()const
     {
       return m_atom;
     }
   private:
-    size_t m_atom;
+    unsigned int m_atom;
   };
     
 } // topology

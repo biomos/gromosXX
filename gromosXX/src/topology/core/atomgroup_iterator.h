@@ -40,7 +40,7 @@ namespace topology
     {
       ++m_it;
     }
-    void operator+=(size_t const n)
+    void operator+=(unsigned int n)
     {
       m_it += n;
     }
@@ -61,7 +61,7 @@ namespace topology
     {
       return Atom_Iterator(*(m_it+1));
     }
-    size_t num_atoms()const
+    unsigned int num_atoms()const
     {
       return *(m_it+1) - *m_it;
     }

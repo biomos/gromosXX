@@ -69,17 +69,17 @@ namespace topology
     /**
      * perturbed atoms accessor.
      */
-    std::map<size_t, Perturbed_Atom> & atoms() {return m_atom;}
+    std::map<unsigned int, Perturbed_Atom> & atoms() {return m_atom;}
 
     /**
      * const perturbed atoms accessor.
      */
-    std::map<size_t, Perturbed_Atom> const & atoms()const {return m_atom;}
+    std::map<unsigned int, Perturbed_Atom> const & atoms()const {return m_atom;}
 
     /**
      * perturbed atom accessor
      */
-    Perturbed_Atom & atom(const size_t i) {return m_atom[i];}
+    Perturbed_Atom & atom(unsigned int i) {return m_atom[i];}
 
     /**
      * perturbed atompairs.
@@ -129,7 +129,7 @@ namespace topology
     /**
      * the perturbed atoms.
      */
-    std::map<size_t, Perturbed_Atom> m_atom;
+    std::map<unsigned int, Perturbed_Atom> m_atom;
     
     /**
      * the perturbed atompairs.

@@ -44,11 +44,11 @@ namespace topology
      * @param SCLJ soft core van der Waals parameter.
      * @param SCC soft core electrostatic parameter.
      */
-    Perturbed_Atom(size_t const JLA, size_t const IACA,
-		   double const WMA, double const CGA,
-		   size_t const IACB, double const WMB,
-		   double const CGB,
-		   double const SCLJ, double const SCC)
+    Perturbed_Atom(unsigned int JLA, unsigned int IACA,
+		   double WMA, double CGA,
+		   unsigned int IACB, double WMB,
+		   double CGB,
+		   double SCLJ, double SCC)
       : m_sequence_number(JLA),
 	m_A_IAC(IACA),
 	m_A_mass(WMA),
@@ -66,40 +66,32 @@ namespace topology
      * @name accessors
      * @{
      */
-    size_t sequence_number();
-    size_t const sequence_number()const;
-    void sequence_number(const size_t);
-    size_t A_IAC();
-    size_t const A_IAC()const;
-    void A_IAC(const size_t);
+    unsigned int sequence_number();
+    unsigned int sequence_number()const;
+    void sequence_number(unsigned int);
+    unsigned int A_IAC()const;
+    void A_IAC( unsigned int);
     
-    double A_mass();
-    double const A_mass()const;
-    void A_mass(const double);
+    double A_mass()const;
+    void A_mass(double);
     
-    double A_charge();
-    double const A_charge()const;
-    void A_charge(const double);
+    double A_charge()const;
+    void A_charge(double);
     
-    size_t B_IAC();
-    size_t const B_IAC()const;
-    void B_IAC(const size_t);
+    unsigned int B_IAC()const;
+    void B_IAC(unsigned int);
     
-    double B_mass();
-    double const B_mass()const;
-    void B_mass(const double);
+    double B_mass()const;
+    void B_mass(double);
     
-    double B_charge();
-    double const B_charge()const;
-    void B_charge(const double);
+    double B_charge()const;
+    void B_charge(double);
     
-    double LJ_softcore();
-    double const LJ_softcore()const;
-    void LJ_softcore(const double);
+    double LJ_softcore()const;
+    void LJ_softcore(double);
     
-    double CRF_softcore();
-    double const CRF_softcore()const;
-    void CRF_softcore(const double);
+    double CRF_softcore()const;
+    void CRF_softcore(double);
     
     std::set<int> & exclusion();
     std::set<int> const & exclusion()const;
@@ -111,11 +103,11 @@ namespace topology
      */
 
   private:
-    size_t m_sequence_number;
-    size_t m_A_IAC;
+    unsigned int m_sequence_number;
+    unsigned int m_A_IAC;
     double m_A_mass;
     double m_A_charge;
-    size_t m_B_IAC;
+    unsigned int m_B_IAC;
     double m_B_mass;
     double m_B_charge;
     double m_LJ_softcore;
@@ -126,86 +118,67 @@ namespace topology
   
 } // topology
 
-inline size_t topology::Perturbed_Atom::sequence_number(){
+inline unsigned int topology::Perturbed_Atom::sequence_number()const{
   return m_sequence_number;
 }
-inline size_t const topology::Perturbed_Atom::sequence_number()const{
-  return m_sequence_number;
-}
-inline size_t topology::Perturbed_Atom::A_IAC(){
+
+inline unsigned int topology::Perturbed_Atom::A_IAC()const{
   return m_A_IAC;
 }
-inline size_t const topology::Perturbed_Atom::A_IAC()const{
-  return m_A_IAC;
-}
-inline double topology::Perturbed_Atom::A_mass(){
+
+inline double topology::Perturbed_Atom::A_mass()const{
   return m_A_mass; 
 }
-inline double const topology::Perturbed_Atom::A_mass()const{
-  return m_A_mass; 
-}
-inline double topology::Perturbed_Atom::A_charge(){
+
+inline double topology::Perturbed_Atom::A_charge()const{
   return m_A_charge; 
 }
-inline double const topology::Perturbed_Atom::A_charge()const{
-  return m_A_charge; 
-}
-inline size_t topology::Perturbed_Atom::B_IAC(){
+
+inline unsigned int topology::Perturbed_Atom::B_IAC()const{
   return m_B_IAC; 
 }
-inline size_t const topology::Perturbed_Atom::B_IAC()const{
-  return m_B_IAC;
-}
-inline double topology::Perturbed_Atom::B_mass(){
+
+inline double topology::Perturbed_Atom::B_mass()const{
   return m_B_mass; 
 }
-inline double const topology::Perturbed_Atom::B_mass()const{
-  return m_B_mass; 
-}
-inline double topology::Perturbed_Atom::B_charge(){
+
+inline double topology::Perturbed_Atom::B_charge()const{
   return m_B_charge; 
 }
-inline double const topology::Perturbed_Atom::B_charge()const{
-  return m_B_charge; 
-}
-inline double topology::Perturbed_Atom::LJ_softcore(){
+
+inline double topology::Perturbed_Atom::LJ_softcore()const{
   return m_LJ_softcore; 
 }
-inline double const topology::Perturbed_Atom::LJ_softcore()const{
-  return m_LJ_softcore; 
-}
-inline double topology::Perturbed_Atom::CRF_softcore(){
-  return m_crf_softcore; 
-}
-inline double const topology::Perturbed_Atom::CRF_softcore()const{
+
+inline double topology::Perturbed_Atom::CRF_softcore()const{
   return m_crf_softcore; 
 }
 
-inline void topology::Perturbed_Atom::sequence_number(const size_t a){
+inline void topology::Perturbed_Atom::sequence_number(unsigned int a){
   m_sequence_number = a;
 }
-inline void topology::Perturbed_Atom::A_IAC(const size_t a){
+inline void topology::Perturbed_Atom::A_IAC(unsigned int a){
   m_A_IAC = a;
 }
-inline void topology::Perturbed_Atom::A_mass(const double a){ 
+inline void topology::Perturbed_Atom::A_mass(double a){ 
   m_A_mass = a;
 }
-inline void topology::Perturbed_Atom::A_charge(const double a){
+inline void topology::Perturbed_Atom::A_charge(double a){
   m_A_charge = a;
 }
-inline void topology::Perturbed_Atom::B_IAC(const size_t a){
+inline void topology::Perturbed_Atom::B_IAC(unsigned int a){
   m_B_IAC = a;
 }
-inline void topology::Perturbed_Atom::B_mass(const double a){
+inline void topology::Perturbed_Atom::B_mass(double a){
   m_B_mass = a;
 }
-inline void topology::Perturbed_Atom::B_charge(const double a){
+inline void topology::Perturbed_Atom::B_charge(double a){
   m_B_charge = a;
 }
-inline void topology::Perturbed_Atom::LJ_softcore(const double a){
+inline void topology::Perturbed_Atom::LJ_softcore(double a){
   m_LJ_softcore = a;
 }
-inline void topology::Perturbed_Atom::CRF_softcore(const double a){
+inline void topology::Perturbed_Atom::CRF_softcore(double a){
   m_crf_softcore = a;
 }
 inline std::set<int> & topology::Perturbed_Atom::exclusion()
@@ -229,8 +202,4 @@ inline std::set<int> const & topology::Perturbed_Atom::one_four_pair()const
 
 
 #endif
-
   
-    
-      
-    

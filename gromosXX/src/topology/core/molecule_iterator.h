@@ -13,11 +13,11 @@ namespace topology
    * iterator over the molecules (SUBMOLECULES block)
    */
   class Molecule_Iterator 
-    : public Atomgroup_Iterator<std::vector<size_t>::const_iterator>
+    : public Atomgroup_Iterator<std::vector<unsigned int>::const_iterator>
   {
   public:
-    Molecule_Iterator(std::vector<size_t>::const_iterator mol_it)
-      : Atomgroup_Iterator<std::vector<size_t>::const_iterator>(mol_it) {};
+    Molecule_Iterator(std::vector<unsigned int>::const_iterator mol_it)
+      : Atomgroup_Iterator<std::vector<unsigned int>::const_iterator>(mol_it) {};
     
 
   private:

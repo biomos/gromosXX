@@ -3,6 +3,8 @@
  * methods definition
  */
 
+#include <stdheader.h>
+
 double topology_ver = 0.10;
 
 namespace simulation
@@ -10,7 +12,6 @@ namespace simulation
   class Multibath;
 }
 
-#include <util/stdheader.h>
 
 #include <util/debug.h>
 #include <topology/core/core.h>

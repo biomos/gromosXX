@@ -40,11 +40,11 @@ namespace topology
     /**
      * accessor to the atom information.
      */
-    atom_struct & atom(size_t i){assert (i < m_atom.size()); return m_atom[i];}
+    atom_struct & atom(unsigned int i){assert (i < m_atom.size()); return m_atom[i];}
     /**
      * const accessor to the atom information.
      */
-    atom_struct const & atom(size_t i)const{assert (i < m_atom.size()); return m_atom[i];}
+    atom_struct const & atom(unsigned int i)const{assert (i < m_atom.size()); return m_atom[i];}
     
     /**
      * add a soluteatom at the end of the list.

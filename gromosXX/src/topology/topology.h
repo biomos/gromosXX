@@ -80,7 +80,7 @@ namespace topology
     /**
      * number of solvents.
      */
-    unsigned int num_solvents()const {return m_num_solvent_molecules.size();}
+    unsigned int num_solvents()const {return unsigned(m_num_solvent_molecules.size());}
     
     /**
      * solvent accessor.
@@ -206,7 +206,7 @@ namespace topology
     /**
      * the number of chargegroups present.
      */
-    unsigned int num_chargegroups()const {return m_chargegroup.size()-1;}
+    unsigned int num_chargegroups()const {return unsigned(m_chargegroup.size())-1;}
 
     /**
      * the number of solute chargegroups.
