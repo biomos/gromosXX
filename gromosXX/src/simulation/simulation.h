@@ -23,7 +23,8 @@ namespace simulation
     /**
      * Constructor.
      */
-    Simulation() : m_time_step_size(0),
+    Simulation() : mpi(false),
+		   m_time_step_size(0),
 		   m_steps(0), 
 		   m_time(0) {}
     
@@ -81,9 +82,13 @@ namespace simulation
      * minimisation step size.
      */
     double & minimisation_step_size() { return m_minimisation_step_size; }
+
+    /**
+     * enable mpi?
+     */
+    bool mpi;
     
   private:
-
     /**
      * the simulation parameters
      */
@@ -108,7 +113,7 @@ namespace simulation
      * minimisation step size.
      */
     double m_minimisation_step_size;
-    
+
   };
   
 } // simulation
