@@ -12,7 +12,7 @@ xxinclude_HEADERS = 	stdheader.h \
 			prepare_virial.h \
 			create_simulation.h
 
-lib_LTLIBRARIES	= 	libgroutil.la
+noinst_LTLIBRARIES = 	libgroutil.la
 
 libgroutil_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
@@ -24,12 +24,7 @@ libgroutil_la_SOURCES =	debug.cc \
 			prepare_virial.cc \
 			create_simulation.cc
 
-libgroutil_la_LIBADD = ../io/libgroio.la \
-			../topology/libgrotopology.la \
-			../algorithm/libgroalgorithm.la \
-			../configuration/libgroconfiguration.la \
-			../simulation/libgrosimulation.la \
-			../interaction/libgrointeraction.la
+libgroutil_la_LIBADD =
 
 bin_PROGRAMS =			
 

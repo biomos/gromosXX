@@ -67,7 +67,7 @@ xxinclude_HEADERS =		interaction.h \
 				special/position_restraint_interaction.h \
 				special/position_restraint_interaction.tcc
 
-lib_LTLIBRARIES	=		libgrointeraction.la
+noinst_LTLIBRARIES =		libgrointeraction.la
 
 libgrointeraction_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 

@@ -9,7 +9,7 @@ xxinclude_HEADERS =		configuration_global.h \
 				state_properties.h
 
 
-lib_LTLIBRARIES	=		libgroconfiguration.la
+noinst_LTLIBRARIES =		libgroconfiguration.la
 
 libgroconfiguration_la_LDFLAGS = -version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 

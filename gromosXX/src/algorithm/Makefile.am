@@ -25,7 +25,7 @@ xxinclude_HEADERS =	algorithm.h \
 			integration/slow_growth.h \
 			integration/steepest_descent.h
 
-lib_LTLIBRARIES	=	libgroalgorithm.la
+noinst_LTLIBRARIES	=	libgroalgorithm.la
 
 libgroalgorithm_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 

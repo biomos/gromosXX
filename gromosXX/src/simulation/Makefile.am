@@ -6,7 +6,7 @@ xxinclude_HEADERS =	simulation.h \
 			multibath.h \
 			parameter.h
 
-lib_LTLIBRARIES	=	libgrosimulation.la
+noinst_LTLIBRARIES =	libgrosimulation.la
 
 libgrosimulation_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 

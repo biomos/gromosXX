@@ -17,7 +17,7 @@ xxinclude_HEADERS = 	argument.h \
 			configuration/out_configuration.h \
 			topology/in_posres.h
 
-lib_LTLIBRARIES	=	libgroio.la
+noinst_LTLIBRARIES =	libgroio.la
 
 libgroio_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
@@ -37,7 +37,7 @@ libgroio_la_SOURCES =	io.cc \
 			configuration/out_configuration.cc \
 			topology/in_posres.cc
 
-libgroio_la_LIBADD =	../util/libgroutil.la
+libgroio_la_LIBADD =
 
 bin_PROGRAMS =			
 
