@@ -1,6 +1,7 @@
 INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		simulation.h \
+				core.h \
 				simulation/simulation.h \
 				simulation/simulation.tcc \
 				simulation/nonbonded.h \
@@ -9,6 +10,8 @@ include_HEADERS = 		simulation.h \
 				simulation/multibath.tcc \
 				system/system.h \
 				system/system.tcc \
+				system/energy.h \
+				system/energy.tcc \
 				topology/bond.h \
 				topology/bond.tcc \
 				topology/angle.h \
