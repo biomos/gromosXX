@@ -24,8 +24,7 @@ algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_print_pairlist(0),
     m_print_force(0),
     m_calculate_pressure(0),
-    m_qbond_interaction(NULL),
-    m_angle_interaction(NULL)
+    m_qbond_interaction(NULL)
 {
 }
 
@@ -236,12 +235,13 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 
   if (do_angle){
     // angles
-    m_angle_interaction = 
+    interaction::angle_interaction<t_simulation>
+      *the_angle_interaction = 
       new interaction::angle_interaction<t_simulation>;
     
-    topo >> *m_angle_interaction;
+    topo >> *the_angle_interaction;
  
-    m_forcefield.push_back(m_angle_interaction);
+    m_forcefield.push_back(the_angle_interaction);
   }
   
   if (do_improper){
@@ -275,30 +275,30 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       // nonbonded (with virial)
       DEBUG(8, "md (create_forcefield): nonbonded with pressure");
 
-      interaction::Nonbonded_Interaction<t_simulation, pairlist_virial_type,
+      interaction::Nonbonded_Interaction<t_simulation,
+	pairlist_virial_type,
 	innerloop_virial_type>
-	*the_nonbonded_interaction =
+	*the_nonbonded_virial_interaction =
 	new interaction::Nonbonded_Interaction<t_simulation,
 	pairlist_virial_type,
 	innerloop_virial_type>(m_simulation);
 
       
-      topo >> *the_nonbonded_interaction;
+      topo >> *the_nonbonded_virial_interaction;
       
       DEBUG(10, "md (create forcefield): nonbonded with pressure read in");
 
-      m_forcefield.push_back(the_nonbonded_interaction);
+      m_forcefield.push_back(the_nonbonded_virial_interaction);
     }
     else{
       // nonbonded
       DEBUG(8, "md (create_forcefield): nonbonded without pressure");
-      interaction::Nonbonded_Interaction<t_simulation, pairlist_type,
-	innerloop_type>
-	*the_nonbonded_interaction =
+      interaction::Nonbonded_Interaction<t_simulation,
+	pairlist_type, innerloop_type>
+	* the_nonbonded_interaction =
 	new interaction::Nonbonded_Interaction<t_simulation,
-	pairlist_type,
-	innerloop_type>(m_simulation);
-
+	pairlist_type, innerloop_type>(m_simulation);
+      
       topo >> *the_nonbonded_interaction;
       
       m_forcefield.push_back(the_nonbonded_interaction);
@@ -669,24 +669,29 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   for( ; it != to; ++it){
 	  
     if ((*it)->name == "NonBonded"){
+      
+      if (m_calculate_pressure){
+	std::cerr << "printing virial pairlist" << std::endl;
 
-      (*m_print_file) << "shortrange\n" 
-		      << dynamic_cast<interaction::Nonbonded_Interaction
-	<simulation_type, pairlist_type, innerloop_type> *>
-	(*it)->pairlist()
-		      << std::endl;
-
-    /**
-       // there is no longrange pairlist anymore!
-       (*m_print_file) << "longrange\n" 
-       << dynamic_cast<interaction::Nonbonded_Interaction
-       <simulation_type, pairlist_type> *>
-       (*it)->pairlist().long_range()
-       << std::endl;
-    */
-
+	(*m_print_file) << "shortrange\n" 
+			<< dynamic_cast<interaction::Nonbonded_Interaction
+	  <simulation_type, pairlist_virial_type, innerloop_virial_type> *>
+	  (*it)->pairlist()
+			<< std::endl;
+      }
+      else {      
+	std::cerr << "printing pairlist" << std::endl;
+	
+	(*m_print_file) << "shortrange\n" 
+			<< dynamic_cast<interaction::Nonbonded_Interaction
+	  <simulation_type, pairlist_type, innerloop_type> *>
+	  (*it)->pairlist()
+			<< std::endl;
+	
+      }
+      
     }
-	  
+    
   }
   
 }

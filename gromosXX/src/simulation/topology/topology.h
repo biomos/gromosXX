@@ -142,6 +142,11 @@ namespace simulation
      */
     std::set<int> & one_four_pair(size_t const i);
     /**
+     * 1,4 pairs 
+     */
+    std::vector<std::set<int> > & one_four_pair();
+    
+    /**
      * the number of chargegroups present.
      */
     size_t num_chargegroups()const;

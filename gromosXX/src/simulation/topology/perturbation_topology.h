@@ -35,17 +35,53 @@ namespace simulation
      * perturbed solute accessor.
      */
     Perturbed_Solute &perturbed_solute();
-
+    /**
+     * perturbed solute accessor as const.
+     */
+    Perturbed_Solute const & perturbed_solute()const;
+    
     /**
      * lambda accessor.
      */
     double lambda();
-
+    /**
+     * lambda accessor const.
+     */
+    double const lambda()const;
+    
     /**
      * lambda accessor.
      */
     void lambda(double const l);
 
+    /**
+     * alpha for lennard jones
+     */
+    double alpha_lj();
+    
+    /**
+     * alpha for lennard jones
+     */
+    void alpha_lj(double const a);
+    
+    /**
+     * alpha for coulomb
+     */
+    double alpha_crf();
+    /**
+     * alpha for coulomb
+     */
+    void alpha_crf(double const a);
+    
+    /**
+     * lambda dependence for nonbonded interactions
+     */
+    int nlam();
+    /**
+     * lambda dependence for nonbonded interactions
+     */
+    void nlam(int const n);
+    
     /**
      * const perturbed atom accessor. (bool)
      */
@@ -55,6 +91,11 @@ namespace simulation
      * perturbed atom accessor. (bool)
      */
     std::vector<bool> & perturbed_atom();
+
+    /**
+     * recalculate lambda dependent properties.
+     */
+    void update_for_lambda();
     
   private:
     /**
@@ -71,6 +112,19 @@ namespace simulation
      * lambda.
      */
     double m_lambda;
+    /**
+     * alpha lennard jones
+     */
+    double m_alpha_lj;
+    /**
+     * alpha coulomb
+     */
+    double m_alpha_crf;
+    /**
+     * lambda dependence
+     */
+    int m_nlam;
+    
     
   };
 

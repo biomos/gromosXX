@@ -19,15 +19,16 @@ namespace simulation
      * Default Constructor.
      */
     Perturbed_Atom()
-      : sequence_number(0),
-	A_IAC(0),
-	A_mass(0),
-	A_charge(0),
-	B_IAC(0),
-	B_mass(0),
-	B_charge(0),
-	LJ_softcore(0),
-	crf_softcore(0)
+      : m_sequence_number(0),
+	m_A_IAC(0),
+	m_A_mass(0),
+	m_A_charge(0),
+	m_B_IAC(0),
+	m_B_mass(0),
+	m_B_charge(0),
+	m_LJ_softcore(0),
+        m_crf_softcore(0),
+        m_one_four_pair()
     {};
 
     /**
@@ -47,30 +48,72 @@ namespace simulation
 		   size_t const IACB, double const WMB,
 		   double const CGB,
 		   double const SCLJ, double const SCC)
-      : sequence_number(JLA),
-	A_IAC(IACA),
-	A_mass(WMA),
-	A_charge(CGA),
-	B_IAC(IACB),
-	B_mass(WMB),
-	B_charge(CGB),
-	LJ_softcore(SCLJ),
-	crf_softcore(SCC)
+      : m_sequence_number(JLA),
+	m_A_IAC(IACA),
+	m_A_mass(WMA),
+	m_A_charge(CGA),
+	m_B_IAC(IACB),
+	m_B_mass(WMB),
+	m_B_charge(CGB),
+	m_LJ_softcore(SCLJ),
+        m_crf_softcore(SCC),
+        m_one_four_pair()
     {};
+  public:
+    size_t sequence_number();
+    size_t const sequence_number()const;
+    void sequence_number(const size_t);
+    size_t A_IAC();
+    size_t const A_IAC()const;
+    void A_IAC(const size_t);
     
-    size_t sequence_number;
-    size_t A_IAC;
-    double A_mass;
-    double A_charge;
-    size_t B_IAC;
-    double B_mass;
-    double B_charge;
-    double LJ_softcore;
-    double crf_softcore;
+    double A_mass();
+    double const A_mass()const;
+    void A_mass(const double);
+    
+    double A_charge();
+    double const A_charge()const;
+    void A_charge(const double);
+    
+    size_t B_IAC();
+    size_t const B_IAC()const;
+    void B_IAC(const size_t);
+    
+    double B_mass();
+    double const B_mass()const;
+    void B_mass(const double);
+    
+    double B_charge();
+    double const B_charge()const;
+    void B_charge(const double);
+    
+    double LJ_softcore();
+    double const LJ_softcore()const;
+    void LJ_softcore(const double);
+    
+    double crf_softcore();
+    double const crf_softcore()const;
+    void crf_softcore(const double);
+    
+    std::set<int> & one_four_pair();
+    std::set<int> const & one_four_pair()const;
+    
+  private:
+    size_t m_sequence_number;
+    size_t m_A_IAC;
+    double m_A_mass;
+    double m_A_charge;
+    size_t m_B_IAC;
+    double m_B_mass;
+    double m_B_charge;
+    double m_LJ_softcore;
+    double m_crf_softcore;
+    std::set<int> m_one_four_pair;
   };
   
 } // simulation
 
+#include "perturbed_atom.tcc"
 #endif
 
   

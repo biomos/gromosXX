@@ -26,7 +26,10 @@ interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
   force().resize(sim.system().force().size());
   
   force() = 0.0;
+  // resize calls zero...
   energies().resize(sim.system().energies().bond_energy.size());
+  lambda_energies().resize(sim.system().energies().bond_energy.size());
+  
   virial() = 0.0;
   
 }
@@ -48,6 +51,18 @@ interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
   
   // ok, we are in the middle range
   // calculate the interaction...
+  if (perturbed_atom(sim, i))
+    {
+      // i perturbed (and maybe j)
+      perturbed_interaction_inner_loop(sim, i, j);
+      return true;
+    }
+  else if (perturbed_atom(sim, j))
+    {
+      perturbed_interaction_inner_loop(sim, j, i);
+      return true;
+    }
+
   interaction_inner_loop(sim, i, j);
   // ...and filter
   return true;

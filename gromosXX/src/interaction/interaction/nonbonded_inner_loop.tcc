@@ -1,5 +1,5 @@
 /**
- * @file nonbonded_inner_loop.tcc
+ * @File nonbonded_inner_loop.tcc
  * template methods of Nonbonded_Inner_Loop
  */
 
@@ -102,6 +102,21 @@ void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
     DEBUG(11, "\ti and j " << sim.topology().atom_energy_group(i)
 	  << " " << sim.topology().atom_energy_group(j));
 
+}
+
+
+template<typename t_simulation, typename t_storage>
+void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
+::perturbed_interaction_inner_loop(t_simulation &sim, 
+				   size_t const i, size_t const j)
+{
+} 
+
+template<typename t_simulation, typename t_storage>
+void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
+::perturbed_one_four_interaction_inner_loop(t_simulation &sim,
+				  size_t const i, size_t const j)
+{
 }
 
 

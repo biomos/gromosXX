@@ -42,6 +42,25 @@ namespace interaction
     double coulomb_constant()const;
     
     /**
+     * set the alpha for lennard jones interactions
+     */
+    void alpha_lj(double const alpha_lj);
+    
+    /**
+     * get the alpha for lennard jones interactions
+     */
+    double alpha_lj()const;
+    
+    /**
+     * set the alpha for coulomd interactions
+     */
+    void alpha_crf(double const alpha_crf);
+    /**
+     * get the alpha for coulomb interactions
+     */
+    double alpha_crf()const;
+    
+    /**
      * resize the lj_parameter matrix.
      */
     void resize(size_t i);
@@ -64,7 +83,16 @@ namespace interaction
      */
     void rf_interaction(math::Vec const &r, double const q,
 			math::Vec & force, double & e_rf);
-
+    /**
+     * calculate the force, energy and dh/dl of an atom pair.
+     */
+    void lj_crf_soft_interaction(math::Vec const &r,
+				 double const c6, double const c12,
+				 double const q, double const l,
+				 math::Vec & force, double &e_lj,
+				 double & e_crf, double &de_lj, 
+				 double & de_crf);
+    
   protected:
     /**
      * the lj parameter.
@@ -75,6 +103,16 @@ namespace interaction
      * the coulomb constant
      */
     double m_coulomb_constant;
+    
+
+    /**
+     * the alpha for lennard jones interactions
+     */
+    double m_alpha_lj;
+    /**
+     * the alpha for coulomb interactions
+     */
+    double m_alpha_crf;
     
     /**
      * Force:
@@ -101,6 +139,18 @@ namespace interaction
      * divided by reaction field cutoff.
      */
     double m_crf_cut;
+
+    /**
+     * Perturbation:
+     * reaction field constant / 2
+     */
+    double m_crf_2;
+    /**
+     * Perturbation:
+     * reaction field cutoff ^2
+     */
+    double m_cut2;
+    
 
   };
   

@@ -13,9 +13,11 @@ namespace interaction
    * provide filtering using a twinrange cutoff
    * with chargegroups.
    */
-  template<typename t_simulation, typename t_base, typename t_innerloop>
+  template<typename t_simulation, typename t_base, typename t_innerloop, 
+    typename t_basic_filter = Basic_Filter<t_simulation, t_base> >
   class Twinrange_Chargegroup_Filter
-    : public Twinrange_Filter<t_simulation, t_base, t_innerloop>
+    : public Twinrange_Filter<t_simulation, t_base,
+                              t_innerloop, t_basic_filter>
   {
   public:
     /**
@@ -25,7 +27,7 @@ namespace interaction
 
     void prepare(t_simulation &sim);
     
-    bool range_chargegroup_pair(t_simulation const &sim, 
+    bool range_chargegroup_pair(t_simulation &sim, 
 				size_t const i,
 				size_t const j,
 				simulation::chargegroup_iterator const &it_i,

@@ -173,12 +173,8 @@ namespace algorithm
      * quartic bond interaction.
      */
     interaction::Quartic_bond_interaction<t_simulation> * m_qbond_interaction;
-    /**
-     * angle interaction
-     */
-    interaction::angle_interaction<t_simulation> * m_angle_interaction;
-  
-    /**
+
+    /*
      * parse the print argument
      * for pairlist and force that
      * are not present in the input file...

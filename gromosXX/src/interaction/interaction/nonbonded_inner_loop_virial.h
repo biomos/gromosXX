@@ -15,7 +15,7 @@ namespace interaction
    */
   template<typename t_simulation, typename t_storage>
   class Nonbonded_Inner_Loop_Virial
-    : Nonbonded_Inner_Loop<t_simulation, t_storage>
+    : public Nonbonded_Inner_Loop<t_simulation, t_storage>
   {
   public:
     /**
@@ -30,11 +30,23 @@ namespace interaction
     void interaction_inner_loop(t_simulation const &sim,
 				size_t const i, size_t const j);
 
+
+    /**
+     * perturbed interaction
+     */
+    void perturbed_interaction_inner_loop(t_simulation &sim,
+					  size_t const i, size_t const j);
     /**
      * 1-4 interaction
      */
     void one_four_interaction_inner_loop(t_simulation &sim,
 					 size_t const i, size_t const j);
+    /**
+     * perturbed 1-4 interaction
+     */
+    void perturbed_one_four_interaction_inner_loop(t_simulation &sim,
+					   size_t const i, size_t const j);
+    
     
   };
   

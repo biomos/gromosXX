@@ -45,6 +45,21 @@ namespace simulation
      * const perturbed atoms accessor.
      */
     std::map<size_t, Perturbed_Atom> const & atoms()const;
+
+    /**
+     * const perturbed atom accessoe
+     */
+    Perturbed_Atom & atom(const size_t i);
+    
+    /**
+     * perturbed atompairs.
+     */
+    std::vector<Perturbed_Atompair> & atompairs();
+    
+    /**
+     * const perturbed atompairs.
+     */
+    std::vector<Perturbed_Atompair> const & atompairs()const;
     
   private:
     /**
@@ -61,6 +76,11 @@ namespace simulation
      * the perturbed atoms.
      */
     std::map<size_t, Perturbed_Atom> m_atom;
+    
+    /**
+     * the perturbed atompairs.
+     */
+    std::vector<Perturbed_Atompair> m_atompair;
     
   };
   

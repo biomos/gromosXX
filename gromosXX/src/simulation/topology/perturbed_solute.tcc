@@ -45,3 +45,21 @@ simulation::Perturbed_Solute::atoms()const
 {
   return m_atom;
 }
+inline simulation::Perturbed_Atom & 
+simulation::Perturbed_Solute::atom(const size_t i)
+{
+  return m_atom[i];
+}
+
+ 
+inline std::vector<simulation::Perturbed_Atompair> &
+simulation::Perturbed_Solute::atompairs()
+{
+  return m_atompair;
+}
+
+inline std::vector<simulation::Perturbed_Atompair> const &
+simulation::Perturbed_Solute::atompairs()const
+{
+  return m_atompair;
+}

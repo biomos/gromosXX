@@ -35,6 +35,7 @@ inline void interaction::Forcefield<t_simulation>
 
   sim.system().force() = 0.0;
   sim.system().energies().zero();
+  sim.system().lambda_energies().zero();
   sim.system().virial() = 0.0;
 
   for(typename Forcefield<t_simulation>::iterator it = begin(), to = end();

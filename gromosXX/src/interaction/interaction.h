@@ -11,7 +11,9 @@
 #include "interaction/storage.h"
 #include "interaction/nonbonded_base.h"
 #include "interaction/nonbonded_inner_loop.h"
+#include "interaction/perturbed_nonbonded_inner_loop.h"
 #include "interaction/nonbonded_inner_loop_virial.h"
+#include "interaction/perturbed_nonbonded_inner_loop_virial.h"
 
 // nonbonded filter
 #include "pairlist/basic_filter.h"
@@ -28,7 +30,7 @@
 
 // nonbonded interaction
 #include "interaction/nonbonded_interaction.h"
-//#include "interaction/nonbonded_virial_interaction.h"
+#include "interaction/perturbed_nonbonded_interaction.h"
 
 // bonded interactions
 #include "interaction/quartic_bond_interaction.h"

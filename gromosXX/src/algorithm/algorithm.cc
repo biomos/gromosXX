@@ -13,5 +13,8 @@ namespace algorithm
   int debug_level = 0;
   int constraint_debug_level = 0;
   int integration_debug_level = 0;
+  int algorithm_debug_level = 0;
+  int temperature_debug_level = 0;
+  
 #endif
 }

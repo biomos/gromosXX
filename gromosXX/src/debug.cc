@@ -29,6 +29,7 @@ void parse_verbosity(io::Argument &args, std::string flag = "verb", std::ostream
     if (sep == std::string::npos){
       // no module or submodule
       level = atoi(s.c_str());
+      assert(!errno);
     }
     else{
       module = s.substr(0, sep);
@@ -38,9 +39,11 @@ void parse_verbosity(io::Argument &args, std::string flag = "verb", std::ostream
       if (sep == std::string::npos){
 	// no submodule
 	level = atoi(second.c_str());
+	assert(!errno);
       }
       else{
 	level = atoi(second.substr(sep+1, std::string::npos).c_str());
+	assert(!errno);
 	submodule = second.substr(0, sep);
       }
     }
@@ -68,6 +71,9 @@ void parse_verbosity(io::Argument &args, std::string flag = "verb", std::ostream
       if (submodule == "") algorithm::debug_level = level;
       else if (submodule == "constraint") algorithm::constraint_debug_level = level;
       else if (submodule == "integration") algorithm::integration_debug_level = level;
+      else if (submodule == "algorithm") algorithm::algorithm_debug_level = level;
+      else if (submodule == "temperature") algorithm::temperature_debug_level = level;
+      
       else throw std::string("unknown submodule");	  
     }
     else if (module == "interaction"){

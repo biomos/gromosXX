@@ -10,7 +10,8 @@
 
 #include "../../debug.h"
 
-inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
+template<typename t_topology>
+inline io::InTopology &io::InTopology::operator>>(t_topology& topo){
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;

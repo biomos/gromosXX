@@ -3,6 +3,14 @@
  * methods of the berendsen thermostat
  */
 
+#undef MODULE
+#undef SUBMODULE
+
+#define MODULE algorithm
+#define SUBMODULE temperature
+
+#include "../../debug.h"
+
 algorithm::Berendsen_Thermostat::Berendsen_Thermostat()
 {
 }
@@ -92,3 +100,45 @@ inline void algorithm::Berendsen_Thermostat
     
 }
   
+template<typename t_simulation>
+inline void algorithm::Berendsen_Thermostat
+::calculate_kinetic_energy_lambda_derivative(t_simulation &sim)
+{
+  math::VArray &vel = sim.system().vel();
+  math::VArray const & old_vel = sim.system().old_vel();
+  math::SArray const & mass = sim.topology().mass();
+
+  // loop over the baths
+  std::vector<simulation::bath_struct>::iterator
+    it = sim.multibath().begin(),
+    to = sim.multibath().end();
+  
+  size_t last = 0;
+  std::vector<double> &e_kin = sim.system().lambda_energies().kinetic_energy;
+  
+  e_kin.resize(sim.system().energies().kinetic_energy.size());
+
+  for(int bath=0; it != to; ++it, ++bath){
+    // assert(e_kin.size() > bath);
+    e_kin[bath] = 0.0;
+    for(size_t i=last; i<=it->last_atom; ++i){
+      
+      if(sim.topology().perturbed_atom()[i]){
+	DEBUG(7, "\tpertrubed kinetic energy for " << i << " in bath " << bath);
+	DEBUG(7, "\tA_mass: " << sim.topology().perturbed_solute().atoms()[i].A_mass() << " B_mass: " << sim.topology().perturbed_solute().atoms()[i].B_mass());
+	// for some reason we take the new velocities here
+	e_kin[bath] -=
+	  (sim.topology().perturbed_solute().atoms()[i].B_mass() -
+	   sim.topology().perturbed_solute().atoms()[i].A_mass()) 
+	  * math::dot(vel(i), vel(i));
+	DEBUG(7, "\tdE_kin/dl: " << e_kin[bath]);
+	
+      }
+      
+    } // atoms in bath
+    
+    e_kin[bath] *= 0.5;
+    last = it->last_atom + 1;
+    
+  } // baths    
+}

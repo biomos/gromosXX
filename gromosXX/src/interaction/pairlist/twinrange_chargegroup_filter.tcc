@@ -11,21 +11,23 @@
 #include "../../debug.h"
 
 
-template<typename t_simulation, typename t_base, typename t_innerloop>
+template<typename t_simulation, typename t_base, typename t_innerloop, typename t_basic_filter>
 inline
-interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
-::Twinrange_Chargegroup_Filter(t_base &base)
-  : Twinrange_Filter<t_simulation, t_base, t_innerloop>(base)
+interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
+::Twinrange_Chargegroup_Filter(t_base & base)
+  : Twinrange_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>(base)
 {
 }
 
-template<typename t_simulation, typename t_base, typename t_innerloop>
+template<typename t_simulation, typename t_base, typename t_innerloop, typename t_basic_filter>
 inline void
-interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
+interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
 ::prepare(t_simulation &sim)
 {
   // call parent
-  Twinrange_Filter<t_simulation, t_base, t_innerloop>::prepare(sim);
+  Twinrange_Filter<t_simulation, t_base, t_innerloop, 
+    t_basic_filter>
+    ::prepare(sim);
   
   // calculate cg cog's
   m_cg_cog.resize(sim.topology().num_chargegroups());
@@ -45,10 +47,10 @@ interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
   }  
 }
 
-template<typename t_simulation, typename t_base, typename t_innerloop>
+template<typename t_simulation, typename t_base, typename t_innerloop, typename t_basic_filter>
 inline bool
-interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
-::range_chargegroup_pair(t_simulation const &sim,
+interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
+::range_chargegroup_pair(t_simulation &sim,
 			 size_t const i, size_t const j,
 			 simulation::chargegroup_iterator const & it_i,
 			 simulation::chargegroup_iterator const & it_j)
@@ -85,8 +87,20 @@ interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
 
       // the interactions
 
-      DEBUG(7, "inner loop: " << *a1 << " - " << *a2);
-      
+
+      if (perturbed_atom(sim, *a1))
+	{
+	  // i perturbed (and maybe j)
+	  perturbed_interaction_inner_loop(sim, *a1, *a2);
+	  continue;
+	}
+      else if (perturbed_atom(sim, *a2))
+	{
+	  perturbed_interaction_inner_loop(sim, *a2, *a1);
+	  continue;
+	}
+
+      DEBUG(7, "inner loop: " << *a1 << " - " << *a2);      
       interaction_inner_loop(sim, *a1, *a2);
 
     } // loop over atom 2 of cg1

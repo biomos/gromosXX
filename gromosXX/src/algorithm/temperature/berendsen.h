@@ -37,6 +37,13 @@ namespace algorithm
      */
     template<typename t_simulation>
     void calculate_kinetic_energy(t_simulation &sim);
+
+    /**
+     * calculate the kinetic energy lambda derivative
+     * @param sim the simulation.
+     */
+    template<typename t_simulation>
+    void calculate_kinetic_energy_lambda_derivative(t_simulation &sim);
     
   private:
 

@@ -145,7 +145,7 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::perturbed_begin()
 {
   DEBUG(7, "\tsize ot perturbed pairlist : " 
-	<< m_perturbed_pairlist->size());
+	<< m_perturbed_pairlist.size());
   
   return iterator(m_perturbed_pairlist);
 }
@@ -156,7 +156,7 @@ inline typename interaction::Basic_Pairlist<t_simulation,
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::perturbed_end()
 {
-  iterator it(m_perturbed);
+  iterator it(m_perturbed_pairlist);
   it.row(size());
   return it;
 }
@@ -184,24 +184,53 @@ namespace interaction
   operator<<(std::ostream &os, Basic_Pairlist<t_simulation, 
 	     t_pairlist_algorithm> &pl)
   {
-    os << "Printing pairlist" << std::endl;
+    {
+      
+      os << "Basic_Pairlist" << std::endl;
     
-    typename Basic_Pairlist<t_simulation, t_pairlist_algorithm>::iterator
-      it = pl.begin(),
-      to = pl.end();
+      typename Basic_Pairlist<t_simulation, t_pairlist_algorithm>::iterator
+	it = pl.begin(),
+	to = pl.end();
 
-    int ind = 1;
-    while (it != to) {
-      if (!it.j()){
-	ind = 1;
-	os << endl << std::setw(5) << it.i() << ": " << flush;
+      size_t ii = -1;
+
+      int ind = 1;
+      while (it != to) {
+	if (ii != it.i()){
+	  ii = it.i();
+	  ind = 1;
+	  os << endl << std::setw(5) << it.i() << ": " << flush;
+	}
+	os << std::setw(5) << *it << " "; 
+	if (!(ind%15)) os << "\n\t";
+	++it;
+	++ind;
       }
-      os << std::setw(5) << *it << " "; 
-      if (!(ind%15)) os << "\n\t";
-      ++it;
-      ++ind;
+      os << std::endl;
     }
-    os << std::endl;
+    
+    if (pl.perturbed().size()){
+      os << "Basic_Pairlist: Perturbed atoms" << std::endl;
+      
+      typename Basic_Pairlist<t_simulation, t_pairlist_algorithm>::iterator
+	it = pl.perturbed_begin(),
+	to = pl.perturbed_end();
+
+      size_t ii = -1;
+      int ind = 1;
+      while (it != to) {
+	if (ii != it.i()){
+	  ii = it.i();
+	  ind = 1;
+	  os << endl << std::setw(5) << it.i() << ": " << flush;
+	}
+	os << std::setw(5) << *it << " "; 
+	if (!(ind%15)) os << "\n\t";
+	++it;
+	++ind;
+      }
+      os << std::endl;
+    }
     
     return os;
   }

@@ -21,6 +21,8 @@ include_HEADERS = 		interaction.h \
 				interaction/perturbed_quartic_bond_interaction.tcc \
 				interaction/perturbed_angle_interaction.h \
 				interaction/perturbed_angle_interaction.tcc \
+				interaction/perturbed_nonbonded_interaction.h \
+				interaction/perturbed_nonbonded_interaction.tcc \
 				interaction/nonbonded_base.h \
 				interaction/nonbonded_base.tcc \
 				interaction/nonbonded_inner_loop.h \

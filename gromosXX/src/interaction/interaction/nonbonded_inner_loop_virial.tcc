@@ -108,4 +108,19 @@ void interaction::Nonbonded_Inner_Loop_Virial<t_simulation, t_storage>
 
 }
 
+template<typename t_simulation, typename t_storage>
+void interaction::Nonbonded_Inner_Loop_Virial<t_simulation, t_storage>
+::perturbed_interaction_inner_loop(t_simulation &sim, 
+				   size_t const i, size_t const j)
+{
+}
+
+
+template<typename t_simulation, typename t_storage>
+void interaction::Nonbonded_Inner_Loop_Virial<t_simulation, t_storage>
+::perturbed_one_four_interaction_inner_loop(t_simulation &sim,
+				  size_t const i, size_t const j)
+{
+}
+
 

@@ -500,7 +500,8 @@ inline void io::InInput::read_BOUNDARY(int &ntb, int &nrdbox)
 /**
  * read the PERTURB block.
  */
-inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt)
+inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt,
+				      double &alphlj, double &alphc,int &nlam)
 {
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -510,6 +511,9 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt)
     ntg = 0;
     rlam = 0;
     dlamt = 0;
+    alphlj= 0;
+    alphc = 0;
+    nlam = 1;
     return;
   }
   
@@ -519,7 +523,7 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt)
   
   int nrdgl;
   double dmu, dmut;
-  double alphlj, alphc, nlam, mmu;
+  double mmu;
   
   _lineStream >> ntg >> nrdgl >> rlam >> dlamt >> dmu >> dmut;
   _lineStream.clear();
@@ -543,7 +547,12 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt)
     io::messages.add("PERTURB: softness not implemented",
 		     "InInput", io::message::error);
   }
-  
+
+  if (nlam<=0){
+    std::cerr << "nlam: " << nlam << std::endl;
+    io::messages.add("PERTURB: nlam > 0",
+		     "InInput", io::message::error);
+  }
 }
 
 /**

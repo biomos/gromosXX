@@ -298,6 +298,13 @@ inline std::set<int> & simulation::Topology::one_four_pair(size_t const i)
   assert(i < m_one_four_pair.size());
   return m_one_four_pair[i];
 }
+/**
+ * all one four pairs.
+ */
+inline std::vector<std::set<int> > & simulation::Topology::one_four_pair()
+{
+  return m_one_four_pair;
+}
 
 /**
  * iterator over the chargegrops
