@@ -177,6 +177,12 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     bond_param = &the_hbond_interaction->parameter();
 
     m_forcefield.push_back(the_hbond_interaction);
+    interaction::Perturbed_Harmonic_Bond_Interaction<t_simulation>
+      *the_perturbed_hbond_interaction = 
+      new interaction::Perturbed_Harmonic_Bond_Interaction<t_simulation>
+      (*the_hbond_interaction);
+    
+    m_forcefield.push_back(the_perturbed_hbond_interaction);
   }
 
   if (do_angle){
