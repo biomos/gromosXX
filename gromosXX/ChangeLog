@@ -17,4 +17,12 @@
 	version 0_0_1
 	STABLE
 
-	
+08. 06. 2003: (markus)
+	reorganization of the test programs
+	helper class to perform an MD run
+	temperature calculation and berendsen temperature coupling to any number of temperature baths
+	pressure calculation and berendsen pressure coupling
+	OutG96Trajectory: gather chargegroups on first atom (not on center of geometry).
+	Energies for the physical interactions.
+	build option for release builds (--disable-debug) added to configure.in
+
