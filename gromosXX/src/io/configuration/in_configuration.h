@@ -6,6 +6,8 @@
 #ifndef INCLUDED_IN_CONFIGURATION_H
 #define INCLUDED_IN_CONFIGURATION_H
 
+#include <gromosXX/io/configuration/inframe.h>
+
 namespace io {
 
   /**

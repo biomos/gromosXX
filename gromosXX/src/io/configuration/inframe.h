@@ -6,6 +6,8 @@
 #ifndef INCLUDED_INFRAME_H
 #define INCLUDED_INFRAME_H
 
+#include <gromosXX/io/instream.h>
+
 namespace io {
 
   class In_Frame : public GInStream {

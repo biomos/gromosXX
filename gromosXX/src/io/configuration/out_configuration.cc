@@ -3,7 +3,7 @@
  * definition of the Out_Configuration methods.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -91,6 +91,14 @@ io::Out_Configuration::~Out_Configuration()
     m_free_energy_traj.close();
   }
 
+  if (m_write_blockaverage_energy){
+	  m_blockaveraged_energy.flush();
+	  m_blockaveraged_energy.close();
+  }
+  if (m_write_blockaverage_free_energy){
+	  m_blockaveraged_free_energy.flush();
+	  m_blockaveraged_free_energy.close();
+  }
 }
 
 void io::Out_Configuration::_print_title(std::string title,
@@ -346,7 +354,7 @@ static void _print_g96_position_bound(configuration::Configuration const &conf,
     cg_to = topo.chargegroup_end();
 
   // solute chargegroups...
-  size_t i = 0;
+  unsigned int i = 0;
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
     // gather on first atom...
     v = pos(*cg_it.begin());
@@ -375,8 +383,8 @@ static void _print_g96_position_bound(configuration::Configuration const &conf,
   }
 
   // solvent chargegroups
-  size_t s = 0;
-  size_t mol = 0;
+  unsigned int s = 0;
+  unsigned int mol = 0;
 
   for( ; cg_it != cg_to; ++cg_it, ++mol){
     v = pos(**cg_it);
@@ -390,7 +398,7 @@ static void _print_g96_position_bound(configuration::Configuration const &conf,
     topology::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
     // one chargegroup per solvent
-    for(size_t atom=0; at_it != at_to; ++at_it, ++atom){
+    for(unsigned int atom=0; at_it != at_to; ++at_it, ++atom){
       r = pos(*at_it) + trans;
 	
       os << std::setw(5)  << mol+1
@@ -445,11 +453,11 @@ static void _print_position_bound(configuration::Configuration const &conf,
   int index = topo.num_solute_atoms();
   int res_nr = 1;
 
-  for(size_t s=0; s < topo.num_solvents(); ++s){
+  for(unsigned int s=0; s < topo.num_solvents(); ++s){
 
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_nr){
+    for(unsigned int m=0; m < topo.num_solvent_molecules(s); ++m, ++res_nr){
       
-      for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
+      for(unsigned int a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
 	v = pos(index);
 	periodicity.put_into_positive_box(v);
@@ -516,7 +524,7 @@ static void _print_g96_positionred_bound(configuration::Configuration const &con
   DEBUG(10, "cg to : " <<  **cg_to << std::endl);
   
   // solute chargegroups...
-  size_t i = 0, count = 0;
+  unsigned int i = 0, count = 0;
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
     DEBUG(10, "solute cg: " << i);
     // gather on first atom...
@@ -546,7 +554,7 @@ static void _print_g96_positionred_bound(configuration::Configuration const &con
   DEBUG(10, "solvent");
   
   // solvent chargegroups
-  size_t mol = 0;
+  unsigned int mol = 0;
 
   for( ; cg_it != cg_to; ++cg_it, ++mol){
     DEBUG(10, "solvent " << mol);
@@ -665,11 +673,11 @@ void io::Out_Configuration
   int index = topo.num_solute_atoms();
   int res_num = 1;
   
-  for(size_t s=0; s < topo.num_solvents(); ++s){
+  for(unsigned int s=0; s < topo.num_solvents(); ++s){
 
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
+    for(unsigned int m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
       
-      for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
+      for(unsigned int a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
 	os << std::setw(5)  << res_num << " "
 	   << std::setw(5)  << std::left 
@@ -743,11 +751,11 @@ void io::Out_Configuration
   
   int index = topo.num_solute_atoms();
   
-  for(size_t s=0; s < topo.num_solvents(); ++s){
+  for(unsigned int s=0; s < topo.num_solvents(); ++s){
 
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
+    for(unsigned int m=0; m < topo.num_solvent_molecules(s); ++m){
       
-      for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
+      for(unsigned int a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
 	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
 	   << std::setw(5)  << residue_name[topo.solvent(s).atom(a).residue_nr]
@@ -929,7 +937,7 @@ void io::Out_Configuration
     if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
       m_output << "FLEXSHAKE\n";
       m_output << "\tflex_ekin";
-      for(size_t i=0; i < conf.special().flexible_ekin.size(); ++i)
+      for(unsigned int i=0; i < conf.special().flexible_ekin.size(); ++i)
 	m_output << std::setw(12) << std::setprecision(4) << std::scientific
 		 << conf.special().flexible_ekin[i];
       m_output << "\nEND\n";
@@ -1148,8 +1156,8 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e)
 {
 
-  const int numenergygroups = e.bond_energy.size();
-  const int numbaths = e.kinetic_energy.size();
+  const int numenergygroups = unsigned(e.bond_energy.size());
+  const int numbaths = unsigned(e.kinetic_energy.size());
   // const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
 
   os << "# totals\n";
@@ -1222,7 +1230,7 @@ static void _print_volumepressurered_helper(std::ostream &os,
 					    math::Matrix const & v,
 					    math::Matrix const & k)
 {
-  const int numbaths = m.size();
+  const int numbaths = int(m.size());
 
   os << "# mass\n";
   os << std::setw(18) << mass << "\n";

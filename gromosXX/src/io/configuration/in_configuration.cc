@@ -3,7 +3,7 @@
  * implements methods of In_Configuration.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -169,7 +169,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if (param.constraint.solute.algorithm == simulation::constr_flexshake){
     conf.special().flexible_vel.resize(topo.solute().distance_constraints().size()+
 				       topo.perturbed_solute().distance_constraints().size());
-    const size_t numb = param.multibath.multibath.size();
+    const unsigned int numb = unsigned(param.multibath.multibath.size());
 
     conf.special().flexible_ekin.resize(numb);
 

@@ -3,7 +3,7 @@
  * basic input stream class definition.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include "../blockinput.h"
 #include "../instream.h"
