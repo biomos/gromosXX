@@ -55,6 +55,19 @@ namespace simulation
   };
 
   /**
+   * @enum interaction_func_enum
+   * which interaction function to use.
+   * if a interaction function is added, it has to be added
+   * to the innerloop_template.h file as well,
+   * and (of course) to the switch in the Nonbonded_Innerloop
+   * and Perturbed_Nonbonded_Innerloop
+   */
+  enum interaction_func_enum{
+    /** lj_crf_function */ lj_crf_func
+  };
+
+
+  /**
    * @class Parameter
    * input parameters.
    */
@@ -584,7 +597,10 @@ namespace simulation
        * - energy_group empty
        * - spc_loop -1
        */
-      force_struct() : bond(1), angle(1), improper(1), dihedral(1), nonbonded(1), spc_loop(-1) {}
+      force_struct() : bond(1), angle(1), improper(1),
+		       dihedral(1), nonbonded(1), spc_loop(-1),
+		       interaction_function(lj_crf_func)
+      {}
       
       /**
        * bonds?
@@ -614,6 +630,12 @@ namespace simulation
        * fast spc loops
        */
       int spc_loop;
+
+      /**
+       * nonbonded interaction function
+       */
+      interaction_func_enum interaction_function;
+
     } /** Force(field) parameters */ force;
 
     /**

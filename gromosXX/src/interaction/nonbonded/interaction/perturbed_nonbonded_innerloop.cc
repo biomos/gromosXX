@@ -148,12 +148,20 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   //
   else{
 
-    lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-			    B_lj->c6, B_lj->c12,
-			    A_q, B_q,
-			    alpha_lj, alpha_crf,
-			    f1, f6, f12,
-			    e_lj, e_crf, de_lj, de_crf);
+    switch(t_interaction_spec::interaction_func){
+      case simulation::lj_crf_func :
+	lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+				B_lj->c6, B_lj->c12,
+				A_q, B_q,
+				alpha_lj, alpha_crf,
+				f1, f6, f12,
+				e_lj, e_crf, de_lj, de_crf);
+	break;
+      default:
+	io::messages.add("Nonbonded_Innerloop",
+			 "interaction function not implemented",
+			 io::message::critical);
+    }
   }
   //--------------------------------------------------
   // interactions have been calculated
@@ -377,7 +385,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 			      B_lj->cs6, B_lj->cs12,
 			      A_q, B_q,
 			      alpha_lj, alpha_crf,
-			      f1, f6, f12,
+			      f1, f6, f12, 
 			      e_lj, e_crf, de_lj, de_crf);
     }
     
@@ -388,13 +396,20 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   // END OF SCALING ON ---
   //
   else{
-
-    lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-			    B_lj->cs6, B_lj->cs12,
-			    A_q, B_q,
-			    alpha_lj, alpha_crf,
-			    f1, f6, f12, 
-			    e_lj, e_crf, de_lj, de_crf);
+    switch(t_interaction_spec::interaction_func){
+      case simulation::lj_crf_func :
+	lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
+				B_lj->cs6, B_lj->cs12,
+				A_q, B_q,
+				alpha_lj, alpha_crf,
+				f1, f6, f12,
+				e_lj, e_crf, de_lj, de_crf);
+	break;
+      default:
+	io::messages.add("Nonbonded_Innerloop",
+			 "interaction function not implemented",
+			 io::message::critical);
+    }
   }
   //--------------------------------------------------
   // interactions have been calculated

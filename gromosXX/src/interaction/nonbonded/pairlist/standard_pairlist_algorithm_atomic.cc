@@ -29,7 +29,7 @@
 #include <interaction/nonbonded/interaction_spec.h>
 
 #include <util/debug.h>
-#include <util/template_split.h>
+#include <interaction/nonbonded/innerloop_template.h>
 
 #undef MODULE
 #undef SUBMODULE

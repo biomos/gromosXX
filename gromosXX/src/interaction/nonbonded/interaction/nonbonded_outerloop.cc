@@ -25,7 +25,7 @@
 #include <interaction/nonbonded/interaction_spec.h>
 
 #include <util/debug.h>
-#include <util/template_split.h>
+#include <interaction/nonbonded/innerloop_template.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -188,6 +188,13 @@ void interaction::Nonbonded_Outerloop
 			simulation::Simulation & sim,
 			Storage & storage)
 {
+  if (sim.param().force.interaction_function !=
+      simulation::lj_crf_func){
+    io::messages.add("Nonbonded_Outerloop",
+		     "RF excluded term for non-lj_crf_func called",
+		     io::message::error);
+  }
+  
   SPLIT_INNERLOOP(_RF_excluded_outerloop, topo, conf, sim, storage);  
 }
 
@@ -302,7 +309,8 @@ int interaction::Nonbonded_Outerloop
 		     simulation::Simulation & sim,
 		     unsigned int atom_i, unsigned int atom_j,
 		     math::Matrix & hessian,
-		     Pairlist const & pairlist){
+		     Pairlist const & pairlist)
+{
   
   hessian = 0.0;
   

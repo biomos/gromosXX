@@ -37,10 +37,18 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop
   DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
   DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
   
-  lj_crf_interaction(r, lj.c6, lj.c12,
-		     topo.charge()(i) * 
-		     topo.charge()(j),
-		     f, e_lj, e_crf);
+  switch(t_nonbonded_spec::interaction_func){
+    case simulation::lj_crf_func :
+      lj_crf_interaction(r, lj.c6, lj.c12,
+			 topo.charge()(i) * 
+			 topo.charge()(j),
+			 f, e_lj, e_crf);
+      break;
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+		       "interaction function not implemented",
+		       io::message::critical);
+  }
   
   // most common case
   if (t_nonbonded_spec::do_virial == math::molecular_virial){
@@ -49,7 +57,8 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop
     storage.force(j) -= rf;
     
     for(int b=0; b<3; ++b){
-      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
+      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) 
+	+ conf.special().rel_mol_com_pos(j)(b);
       for(int a=0; a<3; ++a){
 	storage.virial_tensor(b, a) += rr * rf(a);
       }
@@ -269,12 +278,20 @@ void interaction::Nonbonded_Innerloop::one_four_interaction_innerloop
 			  topo.iac(j));
   
   DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
-  
-  lj_crf_interaction(r, lj.cs6, lj.cs12,
-		     topo.charge()(i) * 
-		     topo.charge()(j),
-		     f, e_lj, e_crf);
-  
+
+  switch(t_nonbonded_spec::interaction_func){
+    case simulation::lj_crf_func :
+      lj_crf_interaction(r, lj.cs6, lj.cs12,
+			 topo.charge()(i) * 
+			 topo.charge()(j),
+			 f, e_lj, e_crf);
+      break;
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+		       "interaction function not implemented",
+		       io::message::critical);
+  }
+
   for (int a=0; a<3; ++a){
 
     const double term = f * r(a);

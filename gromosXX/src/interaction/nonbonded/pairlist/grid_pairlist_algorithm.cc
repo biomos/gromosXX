@@ -27,7 +27,7 @@
 #include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
 
 // #include <interaction/nonbonded/interaction_spec.h>
-// #include <util/template_split.h>
+// #include <interaction/nonbonded/innerloop_template.h>
 
 #include <util/debug.h>
 
