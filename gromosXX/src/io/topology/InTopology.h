@@ -8,7 +8,7 @@
 
 namespace algorithm
 {
-  template<typename t_simulation>
+  template<typename t_simulation, interaction::virial_enum do_virial>
   class Shake;
 }
 
@@ -45,8 +45,8 @@ namespace io {
     /**
      * Read in the bond parameter to Shake.
      */
-    template<typename t_simulation>
-    InTopology & operator>>(algorithm::Shake<t_simulation> &shake);
+    template<typename t_simulation, interaction::virial_enum do_virial>
+    InTopology & operator>>(algorithm::Shake<t_simulation, do_virial> &shake);
     /**
      * Read in the quartic bond parameters.
      */    

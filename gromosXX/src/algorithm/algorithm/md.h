@@ -12,7 +12,7 @@ namespace algorithm
    * @class MD
    * the MD algorithm
    */
-  template<typename t_md_spec=MD_spec,
+  template<typename t_md_spec=MD_spec<>,
 	   typename t_interaction_spec=Interaction_spec<
     typename t_md_spec::simulation_type>
   >
@@ -33,7 +33,7 @@ namespace algorithm
      * perform an md simulation.
      * calls run.
      */
-    virtual int do_md(io::Argument &args);
+    virtual int do_md(io::Argument &args, io::InInput &input);
 
     /**
      * run the system.
@@ -73,7 +73,7 @@ namespace algorithm
     /**
      * initialization.
      */
-    virtual int initialize(io::Argument &args);
+    virtual int initialize(io::Argument &args, io::InInput &input);
     
     /**
      * pre md

@@ -13,18 +13,19 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-algorithm::Perturbed_Flexible_Constraint<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>
 ::Perturbed_Flexible_Constraint(double const tolerance, int const max_iterations)
-  : algorithm::Flexible_Constraint<t_simulation>(tolerance, max_iterations)
+  : algorithm::Flexible_Constraint<t_simulation, do_virial>(tolerance, 
+							    max_iterations)
 {
 }
 
 /**
  * shake solute
  */
-template<typename t_simulation>
-int algorithm::Perturbed_Flexible_Constraint<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+int algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>
 ::solute(typename simulation_type::topology_type &topo,
 	 typename simulation_type::system_type &sys,
 	 double dt)
@@ -76,13 +77,13 @@ int algorithm::Perturbed_Flexible_Constraint<t_simulation>
     // non-perturbed constraints
     DEBUG(7, "non-perturbed-flexible-constraints");
     convergence = _shake(topo, sys, first, skip_now, skip_next,
-			 topo.solute().distance_constraints(), true);
+			 topo.solute().distance_constraints(), dt, true);
 
     // and perturbed constraints
     DEBUG(7, "perturbed-flexible-constraints");
     pert_convergence = _shake(topo, sys, first, skip_now, skip_next,
 			      topo.perturbed_solute().distance_constraints(), 
-			      true, 
+			      dt, true, 
 			      topo.solute().distance_constraints().size());
 
     if(++num_iterations > max_iterations){
@@ -181,28 +182,30 @@ int algorithm::Perturbed_Flexible_Constraint<t_simulation>
 
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> const &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::A_K()const
-{
-  return m_A_K;
-}
-template<typename t_simulation>
-inline std::vector<double> &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::A_K()
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>::A_K()const
 {
   return m_A_K;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+inline std::vector<double> &
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>::A_K()
+{
+  return m_A_K;
+}
+
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> const &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::B_K()const
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>::B_K()const
 {
   return m_B_K;
 }
-template<typename t_simulation>
+
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> &
-algorithm::Perturbed_Flexible_Constraint<t_simulation>::B_K()
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>::B_K()
 {
   return m_B_K;
 }
@@ -211,13 +214,13 @@ algorithm::Perturbed_Flexible_Constraint<t_simulation>::B_K()
  * add all bonds to the solute constraint vector and
  * remove them from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void 
-algorithm::Perturbed_Flexible_Constraint<t_simulation>
-::add_bond_length_constraints(typename t_simulation::topology_type &topo)
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>
+::add_bond_length_constraints(typename simulation_type::topology_type &topo)
 {
 
-  Flexible_Constraint<t_simulation>::add_bond_length_constraints(topo);
+  Flexible_Constraint<t_simulation, do_virial>::add_bond_length_constraints(topo);
   
   DEBUG(7, "perturbed_flexible_constraints: add_bond_length_constraints");
 
@@ -245,15 +248,15 @@ algorithm::Perturbed_Flexible_Constraint<t_simulation>
  * add bonds connecting an atom of type iac to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Perturbed_Flexible_Constraint<t_simulation>
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>
 ::add_bond_length_constraints(int iac,
 			      std::vector<int> const &atom_iac,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
 
-  Flexible_Constraint<t_simulation>::
+  Flexible_Constraint<t_simulation, do_virial>::
     add_bond_length_constraints(iac, atom_iac, topo);
   
   simulation::Perturbed_Solute & solute = topo.perturbed_solute();
@@ -287,14 +290,14 @@ algorithm::Perturbed_Flexible_Constraint<t_simulation>
  * add bonds connecting an atom of mass mass to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Perturbed_Flexible_Constraint<t_simulation>
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>
 ::add_bond_length_constraints(double mass,
 			      math::SArray const &atom_mass,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
-  Flexible_Constraint<t_simulation>::
+  Flexible_Constraint<t_simulation, do_virial>::
     add_bond_length_constraints(mass, atom_mass, topo);
   
   simulation::Perturbed_Solute & solute = topo.perturbed_solute();
@@ -324,14 +327,14 @@ algorithm::Perturbed_Flexible_Constraint<t_simulation>
 }
 
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Perturbed_Flexible_Constraint<t_simulation>
+algorithm::Perturbed_Flexible_Constraint<t_simulation, do_virial>
 ::init(t_simulation &sim, io::Argument &args, io::InTopology &topo,
        io::InInput &input)
 { 
   // initialize SHAKE
-  Flexible_Constraint<t_simulation>::init(sim, args, topo, input);
+  Flexible_Constraint<t_simulation, do_virial>::init(sim, args, topo, input);
   
   sim.topology().perturbed_solute().
     set_distance_constraints(sim.topology().lambda());

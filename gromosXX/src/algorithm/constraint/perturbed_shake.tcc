@@ -13,18 +13,18 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-algorithm::Perturbed_Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+algorithm::Perturbed_Shake<t_simulation, do_virial>
 ::Perturbed_Shake(double const tolerance, int const max_iterations)
-  : Shake<t_simulation>::Shake(tolerance, max_iterations)
+  : Shake<t_simulation, do_virial>::Shake(tolerance, max_iterations)
 {
 }
 
 /**
  * Destructor.
  */
-template<typename t_simulation>
-algorithm::Perturbed_Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+algorithm::Perturbed_Shake<t_simulation, do_virial>
 ::~Perturbed_Shake()
 {
 }
@@ -32,8 +32,8 @@ algorithm::Perturbed_Shake<t_simulation>
 /**
  * shake solute
  */
-template<typename t_simulation>
-int algorithm::Perturbed_Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+int algorithm::Perturbed_Shake<t_simulation, do_virial>
 ::solute(typename simulation_type::topology_type &topo,
 	 typename simulation_type::system_type &sys,
 	 double dt)
@@ -67,7 +67,7 @@ int algorithm::Perturbed_Shake<t_simulation>
     // non-perturbed constraints
     DEBUG(7, "non-perturbed-constraints");
     convergence = _shake(topo, sys, first, skip_now, skip_next,
-			 topo.solute().distance_constraints(), true);
+			 topo.solute().distance_constraints(), dt, true);
 
     // and perturbed constraints
     DEBUG(7, "perturbed-constraints");
@@ -136,14 +136,14 @@ int algorithm::Perturbed_Shake<t_simulation>
  * add all bonds to the solute constraint vector and
  * remove them from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void 
-algorithm::Perturbed_Shake<t_simulation>
-::add_bond_length_constraints(typename t_simulation::topology_type &topo)
+algorithm::Perturbed_Shake<t_simulation, do_virial>
+::add_bond_length_constraints(typename simulation_type::topology_type &topo)
 {
   DEBUG(7, "perturbed_shake: add_bond_length_constraints");
   
-  Shake<t_simulation>::add_bond_length_constraints(topo);
+  Shake<t_simulation, do_virial>::add_bond_length_constraints(topo);
   
   simulation::Perturbed_Solute & solute = topo.perturbed_solute();
   
@@ -164,15 +164,15 @@ algorithm::Perturbed_Shake<t_simulation>
  * add bonds connecting an atom of type iac to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Perturbed_Shake<t_simulation>
+algorithm::Perturbed_Shake<t_simulation, do_virial>
 ::add_bond_length_constraints(int iac,
 			      std::vector<int> const &atom_iac,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
   DEBUG(7, "perturbed_shake: add_bond_length_constraints (iac)");
-  Shake<t_simulation>::add_bond_length_constraints(iac, atom_iac, topo);
+  Shake<t_simulation, do_virial>::add_bond_length_constraints(iac, atom_iac, topo);
   
   simulation::Perturbed_Solute & solute = topo.perturbed_solute();
   
@@ -198,15 +198,15 @@ algorithm::Perturbed_Shake<t_simulation>
  * add bonds connecting an atom of mass mass to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Perturbed_Shake<t_simulation>
+algorithm::Perturbed_Shake<t_simulation, do_virial>
 ::add_bond_length_constraints(double mass,
 			      math::SArray const &atom_mass,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
   DEBUG(7, "perturbed_shake: add_bond_length_constraints (mass)");
-  Shake<t_simulation>::add_bond_length_constraints(mass, atom_mass, topo);
+  Shake<t_simulation, do_virial>::add_bond_length_constraints(mass, atom_mass, topo);
   
   simulation::Perturbed_Solute &solute = topo.perturbed_solute();
 
@@ -228,13 +228,13 @@ algorithm::Perturbed_Shake<t_simulation>
   solute.bonds() = bonds;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Perturbed_Shake<t_simulation>
-::init(t_simulation &sim, io::Argument &args, io::InTopology &topo,
-       io::InInput &input)
+algorithm::Perturbed_Shake<t_simulation, do_virial>
+::init(simulation_type &sim, io::Argument &args, 
+       io::InTopology &topo, io::InInput &input)
 {
-  Shake<t_simulation>::init(sim, args, topo, input);
+  Shake<t_simulation, do_virial>::init(sim, args, topo, input);
 
   sim.topology().perturbed_solute().
     set_distance_constraints(sim.topology().lambda());

@@ -156,6 +156,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
       
       DEBUG(7, "\tvirial done");
     }
+
+    if (t_nonbonded_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  storage.virial()(a, b) += 
+	    r(a) * f(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
     
     // energy
     assert(storage.energies().lj_energy.size() > 
@@ -309,6 +318,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
     DEBUG(7, "\tforces stored");
     
+    if (t_nonbonded_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    r(a) * f(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
+
     // energy
     assert(sim.system().energies().lj_energy.size() > 
 	   sim.topology().atom_energy_group(i));
@@ -473,6 +491,16 @@ interaction::Perturbed_Nonbonded_Innerloop<
       [sim.topology().atom_energy_group(*it)] += de_rf;
     force(i) += f_rf;
     force(*it) -=f_rf;
+
+    if (t_nonbonded_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    r(a) * f_rf(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
+
   }
 }
 
@@ -833,6 +861,16 @@ interaction::Perturbed_Nonbonded_Innerloop<
   sim.system().force()(it->i) += f;
   sim.system().force()(it->j) -= f;
   
+  if (t_nonbonded_spec::do_virial == atomic_virial){
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+	sim.system().virial()(a, b) += 
+	  r(a) * f(b);
+    
+    DEBUG(7, "\tatomic virial done");
+  }
+
+
   DEBUG(7, "A_lnm: " << m_base.A_lambda_n_1() << " B_lnm: " << m_base.B_lambda_n_1());
   DEBUG(7, "\tcalculated interaction:\n\t\tf: " << f << " e_lj: " 
 	<< e_lj << " e_crf: " << e_crf << " de_lj: " << de_lj 

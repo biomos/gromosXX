@@ -17,6 +17,7 @@
 #include "algorithm/md_base.h"
 #include "algorithm/md.h"
 #include "algorithm/perturbation_md.h"
+#include "algorithm/md_global.h"
 
 #ifndef NDEBUG
 namespace algorithm

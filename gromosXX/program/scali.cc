@@ -30,6 +30,134 @@
 
 using namespace math;
 
+/**
+ * perform an MD simulation.
+ */
+int do_md(io::Argument &args)
+{
+  // decide which code options to use
+  // we need the input file!
+  io::InInput input;
+  DEBUG(7, "opening input");
+  std::ifstream *input_file = new std::ifstream(args["input"].c_str());
+  if (!input_file->good())
+    io::messages.add("unable to open input file: " + args["input"], 
+                     "md.tcc",
+		     io::message::error);
+  else
+    io::messages.add("parsing input file: " + args["input"], "md.tcc",
+		     io::message::notice);
+  input.stream(*input_file);
+  DEBUG(7, "reading input");
+  input.readStream();
+  input.auto_delete(true);
+
+  // VIRIAL?
+  int ntb, nrdbox;
+  input.read_BOUNDARY(ntb, nrdbox);
+  interaction::virial_enum do_vir = interaction::no_virial;
+  if (abs(ntb) == 2)
+    do_vir = interaction::molecular_virial;
+  
+  // PERTURBATION?
+  int ntg, nlam;
+  double rlam, dlamt;
+  
+  input.read_PERTURB(ntg, rlam, dlamt, nlam);
+  bool do_perturb = false;
+  if (ntg) do_perturb = true;
+  if (do_perturb && (args.count("pert") != 1)){
+    io::messages.add("PERTURB requested from input file but no "
+		     "perturbation topology specified (@pert)!",
+		     "md_global::do_md",
+		     io::message::error);
+  }
+
+  //==================================================
+  // create the algorithm
+  //==================================================
+
+  if (do_perturb){
+    switch(do_vir){
+      case interaction::no_virial:
+	{
+	  algorithm::Perturbation_MD<
+	    algorithm::perturbed_MD_spec<interaction::no_virial>,
+	    algorithm::Interaction_spec<
+	    algorithm::perturbed_MD_spec<interaction::no_virial>::simulation_type,
+	    // perturbation
+	    true,
+	    // virial
+	    interaction::no_virial,
+	    // atomic cutoff
+	    false,
+	    // scaling
+	    true
+	    >
+	    > 
+	    the_MD;
+
+	  return the_MD.do_md(args, input);
+	}
+	
+      case interaction::atomic_virial:
+	{
+	  algorithm::Perturbation_MD<
+	    algorithm::perturbed_MD_spec<interaction::atomic_virial>,
+	    algorithm::Interaction_spec<
+	    algorithm::perturbed_MD_spec<interaction::atomic_virial>::simulation_type,
+	    // perturbation
+	    true,
+	    // virial
+	    interaction::atomic_virial,
+	    // atomic cutoff
+	    false,
+	    // scaling
+	    true
+	    >
+	    > 
+	    the_MD;
+	
+	  return the_MD.do_md(args, input);
+	}
+	
+      case interaction::molecular_virial:
+	{
+	  algorithm::Perturbation_MD<
+	    algorithm::perturbed_MD_spec<interaction::molecular_virial>,
+	    algorithm::Interaction_spec<
+	    algorithm::perturbed_MD_spec<interaction::molecular_virial>::simulation_type,
+	    // perturbation
+	    true,
+	    // virial
+	    interaction::molecular_virial,
+	    // atomic cutoff
+	    false,
+	    // scaling
+	    true
+	    >
+	    > 
+	    the_MD;
+	  
+	  return the_MD.do_md(args, input);
+	}
+	
+      default:
+	io::messages.add("wrong virial method specified",
+			 "md_global::do_md",
+			 io::message::error);
+    }
+
+  }
+  else{
+    io::messages.add("scali called without perturbation","scali",io::message::error);
+  }
+  
+  return 10;
+
+}
+
+
 int main(int argc, char *argv[])
 {
   try{
@@ -64,59 +192,13 @@ int main(int argc, char *argv[])
     // parse the verbosity flag and set debug levels
     parse_verbosity(args);
     
-    // determine whether we do perturbation
-    bool perturbation = false;
-    if (args.count("pert") == 1)
-      perturbation = true;
-
-    if (perturbation){ // leap frog + perturbation
-      
-      algorithm::Perturbation_MD<
-	algorithm::perturbed_MD_spec,
-	algorithm::Interaction_spec<
-	algorithm::perturbed_MD_spec::simulation_type,
-	// perturbation
-	true,
-	// virial
-	interaction::molecular_virial,
-	// atomic cutoff
-	false,
-	// scaling
-	true
-	>
-	> 
-	the_MD;
-
-      if (the_MD.do_md(args)){
-	return 1;
-      }
+    if (do_md(args)){
+      std::cout << "\nMD encountered an error\n\n" << std::endl;
     }
-    else{ // leap frog, no perturbation
-      std::cout << "\nNo scaling of interactions without perturbation!\n";
-
-      algorithm::MD<
-	algorithm::MD_spec,
-	algorithm::Interaction_spec<
-	algorithm::MD_spec::simulation_type,
-	// perturbation
-	false,
-	// virial
-	interaction::molecular_virial,
-	// atomic cutoff
-	false,
-	// scaling
-	false
-	>
-	> 
-	the_MD;
-
-      if (the_MD.do_md(args)){
-	return 1;
-      }
+    else{
+      std::cout << "\nMD finished successfully\n\n" << std::endl;
     }
     
-    std::cout << "\nMD finished successfully\n\n" << std::endl;
-  
     std::cout << "messages (simulation)\n";
     io::messages.display(std::cout);
     std::cout << "\n\n";

@@ -56,7 +56,15 @@ interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
 	    (r(a) - sim.system().rel_mol_com_pos()(i)(a) + 
 	     sim.system().rel_mol_com_pos()(j)(a)) * f(b);
 
-      DEBUG(7, "\tvirial done");
+      DEBUG(7, "\tmolecular virial done");
+    }
+    if (t_nonbonded_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  storage.virial()(a, b) += 
+	    r(a) * f(b);
+
+      DEBUG(7, "\tatomic virial done");
     }
     
     // energy
@@ -102,6 +110,15 @@ void interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
 
     sim.system().force()(i) += f;
     sim.system().force()(j) -= f;
+
+    if (t_nonbonded_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    r(a) * f(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
 
     // energy
     sim.system().energies().lj_energy[sim.topology().atom_energy_group(i)]
@@ -155,6 +172,15 @@ interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
     force(i) += f;
     force(*it) -= f;
     
+    if (t_nonbonded_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    r(a) * f(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
+
     // energy
     sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(*it)] += e_crf;

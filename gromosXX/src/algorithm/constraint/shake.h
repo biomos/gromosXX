@@ -12,7 +12,7 @@ namespace algorithm
    * @class Shake
    * implements the shake algorithm.
    */
-  template<typename t_simulation>
+  template<typename t_simulation, interaction::virial_enum do_virial>
   class Shake
   {
   public:
@@ -29,7 +29,7 @@ namespace algorithm
     /**
      * initialization.
      */
-    void init(t_simulation &sim, io::Argument &args, io::InTopology &topo,
+    void init(simulation_type &sim, io::Argument &args, io::InTopology &topo,
 	      io::InInput &input);
     
     /**
@@ -65,7 +65,7 @@ namespace algorithm
      * remove them from the bond vector.
      */
     virtual void
-    add_bond_length_constraints(typename t_simulation::
+    add_bond_length_constraints(typename simulation_type::
 				topology_type &topo);
     /**
      * add bonds connecting an atom of type iac to the
@@ -74,7 +74,7 @@ namespace algorithm
     virtual void 
     add_bond_length_constraints(int iac, std::vector<int> 
 				const &atom_iac,
-				typename t_simulation::
+				typename simulation_type::
 				topology_type &topo);
     
     /**
@@ -84,7 +84,7 @@ namespace algorithm
     virtual void 
     add_bond_length_constraints(double mass,
 				math::SArray const &atom_mass,
-				typename t_simulation::
+				typename simulation_type::
 				topology_type &topo);
 
   protected:
@@ -96,7 +96,7 @@ namespace algorithm
 		std::vector<bool> &skip_now,
 		std::vector<bool> &skip_next,
 		std::vector<t_distance_struct>
-		& constr, 
+		& constr, double const dt,
 		bool do_constraint_force = false, size_t force_offset = 0);
 
     double m_tolerance;
@@ -114,4 +114,3 @@ namespace algorithm
 #include "shake.tcc"
 
 #endif
-  

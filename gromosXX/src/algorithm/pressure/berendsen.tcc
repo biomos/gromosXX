@@ -12,11 +12,14 @@ inline void algorithm::Berendsen_Barostat
 ::apply(t_simulation &sim, double const dt)
 {
   // calculate the pressure (tensor)
-  for(int i=0; i<3; ++i)
-    for(int j=0; j<3; ++j)
+  for(int i=0; i<3; ++i){
+    for(int j=0; j<3; ++j){
+      // virial -0.5 factor applied here!
       sim.system().pressure()(i,j) = 2 * (sim.system().molecular_kinetic_energy()(i,j)
-					  - sim.system().virial()(i,j)) /
+					  + 0.5 * sim.system().virial()(i,j)) /
 	sim.system().periodicity().volume();
+    }
+  }
 
   if (m_ntp){
 

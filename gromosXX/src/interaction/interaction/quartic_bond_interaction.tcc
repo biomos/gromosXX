@@ -70,6 +70,15 @@ inline void interaction::Quartic_bond_interaction<t_simulation, t_interaction_sp
     force(b_it->i) += f;
     force(b_it->j) -= f;
 
+    if (t_interaction_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    v(a) * f(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
+
     e = 0.25 * m_bond_parameter[b_it->type].K *
       (dist2 -r02) * (dist2 - r02);
 

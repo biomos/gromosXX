@@ -12,7 +12,7 @@ namespace algorithm
    * @class MD_Base
    * the base of an MD algorithm
    */
-  template<typename t_md_spec=MD_spec,
+  template<typename t_md_spec=MD_spec<>,
 	   typename t_interaction_spec=Interaction_spec<
     typename t_md_spec::simulation_type>
   >

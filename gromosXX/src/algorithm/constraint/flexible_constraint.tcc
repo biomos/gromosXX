@@ -13,10 +13,10 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-algorithm::Flexible_Constraint<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+algorithm::Flexible_Constraint<t_simulation, do_virial>
 ::Flexible_Constraint(double const tolerance, int const max_iterations)
-  : algorithm::Shake<t_simulation>(tolerance, max_iterations),
+  : algorithm::Shake<t_simulation, do_virial>(tolerance, max_iterations),
     m_lfcon(0),
     m_bath(NULL)
 {
@@ -25,8 +25,8 @@ algorithm::Flexible_Constraint<t_simulation>
 /**
  * shake solute
  */
-template<typename t_simulation>
-int algorithm::Flexible_Constraint<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+int algorithm::Flexible_Constraint<t_simulation, do_virial>
 ::solute(typename simulation_type::topology_type &topo,
 	 typename simulation_type::system_type &sys,
 	 double dt)
@@ -37,50 +37,50 @@ int algorithm::Flexible_Constraint<t_simulation>
     calc_distance(topo, sys, first, topo.solute().distance_constraints(), dt);
 
   // and shake
-  return Shake<t_simulation>::solute(topo, sys, dt);
+  return Shake<t_simulation, do_virial>::solute(topo, sys, dt);
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> const &
-algorithm::Flexible_Constraint<t_simulation>::r0()const
+algorithm::Flexible_Constraint<t_simulation, do_virial>::r0()const
 {
   return m_r0;
 }
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> &
-algorithm::Flexible_Constraint<t_simulation>::r0()
+algorithm::Flexible_Constraint<t_simulation, do_virial>::r0()
 {
   return m_r0;
 }
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> const &
-algorithm::Flexible_Constraint<t_simulation>::vel()const
+algorithm::Flexible_Constraint<t_simulation, do_virial>::vel()const
 {
   return m_vel;
 }
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> &
-algorithm::Flexible_Constraint<t_simulation>::vel()
+algorithm::Flexible_Constraint<t_simulation, do_virial>::vel()
 {
   return m_vel;
 }
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> const &
-algorithm::Flexible_Constraint<t_simulation>::K()const
+algorithm::Flexible_Constraint<t_simulation, do_virial>::K()const
 {
   return m_K;
 }
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline std::vector<double> &
-algorithm::Flexible_Constraint<t_simulation>::K()
+algorithm::Flexible_Constraint<t_simulation, do_virial>::K()
 {
   return m_K;
 }
 
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 template<typename t_distance_struct>
-void algorithm::Flexible_Constraint<t_simulation>
+void algorithm::Flexible_Constraint<t_simulation, do_virial>
 ::calc_distance(typename simulation_type::topology_type const &topo,
 		typename simulation_type::system_type &sys,
 		int const first,
@@ -186,10 +186,10 @@ void algorithm::Flexible_Constraint<t_simulation>
  * add all bonds to the solute constraint vector and
  * remove them from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void 
-algorithm::Flexible_Constraint<t_simulation>
-::add_bond_length_constraints(typename t_simulation::topology_type &topo)
+algorithm::Flexible_Constraint<t_simulation, do_virial>
+::add_bond_length_constraints(typename simulation_type::topology_type &topo)
 {
   simulation::Solute & solute = topo.solute();
 
@@ -210,12 +210,12 @@ algorithm::Flexible_Constraint<t_simulation>
  * add bonds connecting an atom of type iac to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Flexible_Constraint<t_simulation>
+algorithm::Flexible_Constraint<t_simulation, do_virial>
 ::add_bond_length_constraints(int iac,
 			      std::vector<int> const &atom_iac,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
   simulation::Solute & solute = topo.solute();
 
@@ -241,12 +241,12 @@ algorithm::Flexible_Constraint<t_simulation>
  * add bonds connecting an atom of mass mass to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Flexible_Constraint<t_simulation>
+algorithm::Flexible_Constraint<t_simulation, do_virial>
 ::add_bond_length_constraints(double mass,
 			      math::SArray const &atom_mass,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
   simulation::Solute & solute = topo.solute();
   
@@ -268,9 +268,9 @@ algorithm::Flexible_Constraint<t_simulation>
   solute.bonds() = bonds;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Flexible_Constraint<t_simulation>
+algorithm::Flexible_Constraint<t_simulation, do_virial>
 ::init(t_simulation &sim, io::Argument &args, io::InTopology &topo,
        io::InInput &input)
 {
@@ -343,9 +343,9 @@ algorithm::Flexible_Constraint<t_simulation>
 
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 template<typename t_distance_struct>
-void algorithm::Flexible_Constraint<t_simulation>
+void algorithm::Flexible_Constraint<t_simulation, do_virial>
 ::initial_ekin(typename simulation_type::topology_type const &topo,
 	       typename simulation_type::system_type &sys,
 	       int const first,

@@ -36,7 +36,7 @@ inline void interaction::Improper_dihedral_interaction<t_simulation, t_interacti
 
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
-  math::Vec rij, rkj, rkl, rmj, rnk, fi, fj, fk, fl;
+  math::Vec rij, rkj, rkl, rlj, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, q;
   double energy;
   
@@ -48,6 +48,7 @@ inline void interaction::Improper_dihedral_interaction<t_simulation, t_interacti
       nearest_image(pos(i_it->i), pos(i_it->j), rij);
     sim.system().periodicity().
       nearest_image(pos(i_it->k), pos(i_it->l), rkl);
+    
 
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
@@ -94,6 +95,21 @@ inline void interaction::Improper_dihedral_interaction<t_simulation, t_interacti
     force(i_it->k) += fk;
     force(i_it->l) += fl;
     
+    if (t_interaction_spec::do_virial == atomic_virial){
+      sim.system().periodicity().
+	nearest_image(pos(i_it->l), pos(i_it->j), rlj);
+
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    rij(a) * fi(b) +
+	    rkj(a) * fk(b) +
+	    rlj(a) * fl(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
+
+
     energy = 0.5 * K * (q-q0) * (q-q0);
     sim.system().energies().improper_energy[sim.topology().
 					    atom_energy_group()[i_it->i]]

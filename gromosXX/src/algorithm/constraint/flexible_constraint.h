@@ -12,9 +12,9 @@ namespace algorithm
    * @class Flexible_Constraint
    * calculates the flexible constraint distance
    */
-  template<typename t_simulation>
+  template<typename t_simulation, interaction::virial_enum do_virial>
   class Flexible_Constraint :
-    public Shake<t_simulation> 
+    public Shake<t_simulation, do_virial> 
   {
   public:
     /**
@@ -26,8 +26,8 @@ namespace algorithm
     /**
      * initialization.
      */
-    void init(t_simulation &sim, io::Argument &args, io::InTopology &topo,
-	      io::InInput &input);
+    void init(t_simulation &sim, io::Argument &args, 
+	      io::InTopology &topo, io::InInput &input);
 
     /**
      * shake solute.
@@ -50,7 +50,7 @@ namespace algorithm
      * remove them from the bond vector.
      */
     virtual void
-    add_bond_length_constraints(typename t_simulation::topology_type &topo);
+    add_bond_length_constraints(typename simulation_type::topology_type &topo);
     /**
      * add bonds connecting an atom of type iac to the
      * flexible constraint vector and remove from the bond vector.
@@ -58,7 +58,7 @@ namespace algorithm
     virtual void 
     add_bond_length_constraints(int iac,
 				std::vector<int> const &atom_iac,
-				typename t_simulation::
+				typename simulation_type::
 				topology_type &topo);
     
     /**
@@ -68,7 +68,7 @@ namespace algorithm
     virtual void 
     add_bond_length_constraints(double mass,
 				math::SArray const &atom_mass,
-				typename t_simulation::
+				typename simulation_type::
 				topology_type &topo);
 
   protected:

@@ -14,6 +14,7 @@ namespace algorithm
    * typedef's for the various classes
    * needed for an MD simulation.
    */
+  template<interaction::virial_enum do_virial=interaction::no_virial>
   class MD_spec
   {
     // the standard types
@@ -22,11 +23,11 @@ namespace algorithm
     typedef simulation::Simulation<simulation::Topology,
 				   simulation::System<math::any> >
     simulation_type;
-    
+
+    typedef algorithm::Shake<simulation_type, do_virial> 
+    distance_constraint_type;
     typedef algorithm::Berendsen_Thermostat   temperature_type;
     typedef algorithm::Berendsen_Barostat     pressure_type;
-    typedef algorithm::Shake<simulation_type> 
-    distance_constraint_type;
     typedef algorithm::Leap_Frog<simulation_type>
     integration_type;
   };
@@ -36,6 +37,7 @@ namespace algorithm
    * typedef's for the various classes
    * needed for an MD simulation with perturbation.
    */
+  template<interaction::virial_enum do_virial=interaction::no_virial>
   class perturbed_MD_spec
   {
     // the standard types
@@ -44,11 +46,11 @@ namespace algorithm
     typedef simulation::Simulation<simulation::Perturbation_Topology,
 				   simulation::System<math::any> >
     simulation_type;
-    
+
+    typedef algorithm::Perturbed_Shake<simulation_type, do_virial> 
+    distance_constraint_type;    
     typedef algorithm::Berendsen_Thermostat   temperature_type;
     typedef algorithm::Berendsen_Barostat     pressure_type;
-    typedef algorithm::Perturbed_Shake<simulation_type> 
-    distance_constraint_type;
     typedef algorithm::Leap_Frog<simulation_type>
     integration_type;
     

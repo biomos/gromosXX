@@ -50,9 +50,6 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
   if (!sim.steps())
     initialize(sim);
 
-  if(sim.pressure_calculation())
-    sim.calculate_mol_com();
-
   // need to update pairlist?
   if(!(sim.steps() % sim.nonbonded().update())){
     // create a pairlist
@@ -100,7 +97,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
     for(size_t i=0; i<3; ++i)
       for(size_t j=0; j<3; ++j)
 	sim.system().virial()(i,j) =
-	  -0.5 * (sim.system().virial()(i,j) + virial()(i,j));
+	  sim.system().virial()(i,j) + virial()(i,j);
   }
   
   // add 1,4 - interactions

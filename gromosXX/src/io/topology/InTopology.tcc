@@ -510,9 +510,9 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 io::InTopology &io::InTopology
-::operator>>(algorithm::Shake<t_simulation> &shake){
+::operator>>(algorithm::Shake<t_simulation, do_virial> &shake){
 
   DEBUG(10, "(HARM)BONDTYPE block");
 

@@ -17,7 +17,8 @@ namespace algorithm
 	   interaction::virial_enum t_virial 
 	   = interaction::molecular_virial,
 	   bool t_atomic_cutoff = false,
-	   bool t_scaling = false>
+	   bool t_scaling = false
+	   >
   class Interaction_spec
   {
   public:
@@ -88,7 +89,6 @@ namespace algorithm
       >
     nonbonded_interaction_type;
 
-    // perturbed interactions
     typedef interaction::Perturbed_Quartic_Bond_Interaction<simulation_type,
 							    interaction_spec_type>
     perturbed_quartic_bond_interaction_type;

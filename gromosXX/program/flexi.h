@@ -14,6 +14,7 @@ namespace program
    * typedef's for the various classes
    * needed for an MD simulation.
    */
+  template<interaction::virial_enum do_virial = interaction::no_virial>
   class FLEXI_spec
   {
     // the standard types
@@ -27,7 +28,7 @@ namespace program
 
     typedef algorithm::Berendsen_Barostat     pressure_type;
 
-    typedef algorithm::Flexible_Constraint<simulation_type> 
+    typedef algorithm::Flexible_Constraint<simulation_type, do_virial> 
     distance_constraint_type;
 
     typedef algorithm::Leap_Frog<simulation_type>
@@ -40,6 +41,7 @@ namespace program
    * typedef's for the various classes
    * needed for an MD simulation with perturbation.
    */
+  template<interaction::virial_enum do_virial = interaction::no_virial>
   class perturbed_FLEXI_spec
   {
     // the standard types
@@ -53,7 +55,7 @@ namespace program
 
     typedef algorithm::Berendsen_Barostat     pressure_type;
 
-    typedef algorithm::Perturbed_Flexible_Constraint<simulation_type> 
+    typedef algorithm::Perturbed_Flexible_Constraint<simulation_type, do_virial> 
     distance_constraint_type;
 
     typedef algorithm::Leap_Frog<simulation_type>

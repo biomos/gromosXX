@@ -14,8 +14,8 @@
 /**
  * Constructor.
  */
-template<typename t_simulation>
-algorithm::Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+algorithm::Shake<t_simulation, do_virial>
 ::Shake(double const tolerance, int const max_iterations)
   : m_tolerance(tolerance),
     max_iterations(max_iterations)
@@ -25,14 +25,14 @@ algorithm::Shake<t_simulation>
 /**
  * Destructor.
  */
-template<typename t_simulation>
-algorithm::Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+algorithm::Shake<t_simulation, do_virial>
 ::~Shake()
 {
 }
 
-template<typename t_simulation>
-void algorithm::Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+void algorithm::Shake<t_simulation, do_virial>
 ::tolerance(double const tol)
 {
   m_tolerance = tol;
@@ -41,8 +41,8 @@ void algorithm::Shake<t_simulation>
 /**
  * shake solute
  */
-template<typename t_simulation>
-int algorithm::Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+int algorithm::Shake<t_simulation, do_virial>
 ::solute(typename simulation_type::topology_type &topo,
 	 typename simulation_type::system_type &sys,
 	 double dt)
@@ -69,7 +69,7 @@ int algorithm::Shake<t_simulation>
   while(!convergence){
 
     convergence = _shake(topo, sys, first, skip_now, skip_next,
-			 topo.solute().distance_constraints(), true);
+			 topo.solute().distance_constraints(), dt, true);
 
     if(++num_iterations > max_iterations){
       io::messages.add("SHAKE error. too many iterations",
@@ -100,8 +100,8 @@ int algorithm::Shake<t_simulation>
 /**
  * shake solvent.
  */
-template<typename t_simulation>
-int algorithm::Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+int algorithm::Shake<t_simulation, do_virial>
 ::solvent(typename simulation_type::topology_type &topo,
 	  typename simulation_type::system_type &sys,
 	  double dt)
@@ -127,7 +127,7 @@ int algorithm::Shake<t_simulation>
       bool convergence = false;
       while(!convergence){
 	convergence = _shake(topo, sys, first, skip_now, skip_next,
-			     topo.solvent(i).distance_constraints(), false);
+			     topo.solvent(i).distance_constraints(), dt, false);
 	
 	// std::cout << num_iterations+1 << std::endl;
 	if(++num_iterations > max_iterations){
@@ -159,21 +159,23 @@ int algorithm::Shake<t_simulation>
 /**
  * do one iteration
  */      
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 template<typename t_distance_struct>
-bool algorithm::Shake<t_simulation>
+bool algorithm::Shake<t_simulation, do_virial>
 ::_shake(typename simulation_type::topology_type const &topo,
 	 typename simulation_type::system_type &sys,
 	 int const first,
 	 std::vector<bool> &skip_now,
 	 std::vector<bool> &skip_next,
 	 std::vector<t_distance_struct>
-	 & constr, bool do_constraint_force, size_t force_offset)
+	 & constr, double const dt,
+	 bool do_constraint_force, size_t force_offset)
 {
   bool convergence = true;
 
   // index for constraint_force...
   size_t k = 0;
+  double const dt2 = dt * dt;
   
   // and constraints
   for(typename std::vector<t_distance_struct>
@@ -243,6 +245,16 @@ bool algorithm::Shake<t_simulation>
 	m_lambda(k) += lambda;
       }
 
+      if (do_virial == interaction::atomic_virial){
+	for(int a=0; a<3; ++a){
+	  for(int b=0; b<3; ++b){
+	    sys.virial()(a,b) +=
+	      ref_r(a) * ref_r(b) * lambda / dt2;
+	  }
+	}
+	DEBUG(12, "\tatomic virial done");
+      }
+      
       // update positions
       ref_r *= lambda;
       pos_i += ref_r / topo.mass()(first+it->i);
@@ -265,8 +277,8 @@ bool algorithm::Shake<t_simulation>
 /**
  * add bond type.
  */
-template<typename t_simulation>
-inline void algorithm::Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+inline void algorithm::Shake<t_simulation, do_virial>
 ::add_bond_type(interaction::bond_type_struct s)
 {
   m_bond_parameter.push_back(s);
@@ -275,8 +287,8 @@ inline void algorithm::Shake<t_simulation>
 /**
  * add bond type.
  */
-template<typename t_simulation>
-inline void algorithm::Shake<t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
+inline void algorithm::Shake<t_simulation, do_virial>
 ::add_bond_type(double K, double r0)
 {
   interaction::bond_type_struct s;
@@ -289,10 +301,10 @@ inline void algorithm::Shake<t_simulation>
  * add all bonds to the solute constraint vector and
  * remove them from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void 
-algorithm::Shake<t_simulation>
-::add_bond_length_constraints(typename t_simulation::topology_type &topo)
+algorithm::Shake<t_simulation, do_virial>
+::add_bond_length_constraints(typename simulation_type::topology_type &topo)
 {
   simulation::Solute & solute = topo.solute();
 
@@ -310,12 +322,12 @@ algorithm::Shake<t_simulation>
  * add bonds connecting an atom of type iac to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Shake<t_simulation>
+algorithm::Shake<t_simulation, do_virial>
 ::add_bond_length_constraints(int iac,
 			      std::vector<int> const &atom_iac,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
   simulation::Solute & solute = topo.solute();
 
@@ -338,12 +350,12 @@ algorithm::Shake<t_simulation>
  * add bonds connecting an atom of mass mass to the
  * constraint vector and remove from the bond vector.
  */
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Shake<t_simulation>
+algorithm::Shake<t_simulation, do_virial>
 ::add_bond_length_constraints(double mass,
 			      math::SArray const &atom_mass,
-			      typename t_simulation::topology_type &topo)
+			      typename simulation_type::topology_type &topo)
 {
   simulation::Solute & solute = topo.solute();
   
@@ -362,10 +374,10 @@ algorithm::Shake<t_simulation>
   solute.bonds() = bonds;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, interaction::virial_enum do_virial>
 inline void
-algorithm::Shake<t_simulation>
-::init(t_simulation &sim, io::Argument &args, io::InTopology &topo,
+algorithm::Shake<t_simulation, do_virial>
+::init(simulation_type &sim, io::Argument &args, io::InTopology &topo,
        io::InInput &input)
 {
   // initialize SHAKE / ??
@@ -406,5 +418,4 @@ algorithm::Shake<t_simulation>
   std::cout << "END\n";
 
 }
-
 

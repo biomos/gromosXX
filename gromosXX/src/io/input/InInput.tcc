@@ -601,6 +601,72 @@ inline void io::InInput::read_PCOUPLE(int &ntp, double &pres0,
 }
 
 /**
+ * read the PCOUPLE03 block.
+ */
+inline bool io::InInput::read_PCOUPLE03(int &ntp, double &pres0,
+					double &comp, double &tau,
+					interaction::virial_enum &vir)
+{
+  std::vector<std::string> buffer;
+  buffer = m_block["PCOUPLE03"];
+
+  if (!buffer.size()){
+    ntp = 0;
+    pres0 = 0;
+    comp = 0;
+    tau = -1;
+    vir = interaction::no_virial;
+    return false;
+  }
+
+  _lineStream.clear();
+  _lineStream.str(buffer[1]);
+  
+  std::string s1, s2;
+  
+  _lineStream >> s1 >> pres0 >> comp >> tau >> s2;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in PCOUPLE block",
+		     "InInput", io::message::error);
+  
+  if (s1 == "off" || s1 == "OFF")
+    ntp = 0;
+  else if (s1 == "calc" || s1 == "CALC")
+    ntp = 1;
+  else if (s1 == "scale" || s1 == "SCALE")
+    ntp = 2;
+  else{
+    io::messages.add("bad value for ntp switch in PCOUPLE03 block\n"
+		     "(off,calc,scale)",
+		     "InInput", io::message::error);
+    ntp = 0;
+  }
+  
+  if (s2 == "none" || s2 == "NONE")
+    vir = interaction::no_virial;
+  else if (s2 == "atomic" || s2 == "ATOMIC")
+    vir = interaction::atomic_virial;
+  else if (s2 == "molecular" || s2 == "MOLECULAR")
+    vir = interaction::molecular_virial;
+  else{
+    io::messages.add("bad value for virial switch in PCOUPLE03 block\n"
+		     "(none,atomic,molecular)",
+		     "InInput", io::message::error);
+    vir = interaction::no_virial;
+  }
+
+  if (ntp != 0 && vir == interaction::no_virial){
+    io::messages.add("PCOUPLE03 block: pressure calculation requested but"
+		     " no virial specified!", "InInput",
+		     io::message::error);
+  }
+
+  return true;
+
+}
+
+/**
  * read the BOUNDARY block.
  */
 inline void io::InInput::read_BOUNDARY(int &ntb, int &nrdbox)
@@ -654,7 +720,7 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int
     buffer = m_block["PERTURB"];
     if (!buffer.size()){
       // no block at all???
-      std::cerr << "PERTURB block not found" << std::endl;
+      // std::cerr << "PERTURB block not found" << std::endl;
       ntg = 0;
       rlam = 0;
       dlamt = 0;

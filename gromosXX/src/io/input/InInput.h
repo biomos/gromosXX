@@ -77,6 +77,12 @@ namespace io {
     void read_PCOUPLE(int &ntp, double &pres0, double &comp, double &tau);
 
     /**
+     * read the PCOUPLE03 block.
+     */
+    bool read_PCOUPLE03(int &ntp, double &pres0, double &comp, double &tau,
+			interaction::virial_enum &vir);
+    
+    /**
      * read the BOUNDARY block.
      */
     void read_BOUNDARY(int &ntb, int &nrdbox);

@@ -3,7 +3,6 @@
  * MD implementation
  */
 
-
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
@@ -25,19 +24,46 @@ algorithm::MD<t_md_spec, t_interaction_spec>
 }
 
 template<typename t_md_spec, typename t_interaction_spec>
-int algorithm::MD<t_md_spec, t_interaction_spec>::initialize(io::Argument &args)
+int algorithm::MD<t_md_spec, t_interaction_spec>
+::initialize(io::Argument &args, io::InInput & input)
 {
 
   std::cout << "==============\n"
 	    << "INITIALIZATION\n"
 	    << "==============\n";
 
+  std::cout << "\n\ttemplate parameter:\n"
+	    << std::setw(40) << "exclusion:" << std::setw(20)
+	    << t_interaction_spec::do_exclusion << "\n"
+	    << std::setw(40) << "perturbation:" << std::setw(20)
+	    << t_interaction_spec::do_perturbation << "\n"
+	    << std::setw(40) << "atomic cutoff:" << std::setw(20)
+	    << t_interaction_spec::do_atomic_cutoff << "\n"
+	    << std::setw(40) << "scaling:" << std::setw(20)
+	    << t_interaction_spec::do_scaling << "\n"
+	    << std::setw(40) << "virial:";
+  
+  switch(t_interaction_spec::do_virial){
+    case interaction::no_virial:
+      std::cout << std::setw(20) << "no virial" << "\n";
+      break;
+    case interaction::atomic_virial:
+      std::cout << std::setw(20) << "atomic virial" << "\n";
+      break;
+    case interaction::molecular_virial:
+      std::cout << std::setw(20) << "molecular virial" << "\n";
+      break;
+    default:
+      std::cout << std::setw(20) << "wrong virial" << "\n";
+  }
+  
+  std::cout << "\n\n";
+
   //----------------------------------------------------------------------------
 
   DEBUG(7, "constructing topo, sys & input");
   io::InTopology topo;
   io::InTrajectory sys;
-  io::InInput input;
 
   DEBUG(7, "open_files");
   open_files(args, topo, sys, input);
@@ -168,118 +194,10 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
 {
 
   DEBUG(7, "md: create forcefield");
-  // check which interactions to add
-  int do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
-  input.read_FORCE(do_bond, do_angle, do_improper,
-		   do_dihedral, do_nonbonded);
 
-  int bond_term, angle_term;
-  bool have_DIRK =
-    input.read_FORCEFIELD(bond_term, angle_term);
-
-  // const std::vector<interaction::bond_type_struct> * bond_param = NULL;
-  
-  if (do_bond){
-    if ((have_DIRK && (bond_term == 0))
-      || ((!have_DIRK) && (do_bond == 1))){
-
-      if (do_bond == 2){
-	io::messages.add("FORCEFIELD and FORCE block contradictory "
-			 "for bond term", "md", io::message::error);
-      }
-      else
-	io::messages.add("using Gromos96 quartic bond term",
-			 "md", io::message::notice);
-      // bonds: quartic
-      typename t_interaction_spec::quartic_bond_interaction_type *
-	qbond_interaction =
-	new typename t_interaction_spec::quartic_bond_interaction_type;      
-    
-      topo >> *qbond_interaction;
-      // bond_param = &m_qbond_interaction->parameter();
-      
-      m_forcefield.push_back(qbond_interaction);
-    }
-
-    else if ((have_DIRK && (bond_term == 2))
-	|| (do_bond == 2)){
-
-      if (do_bond == 1){
-	io::messages.add("FORCEFIELD and FORCE block contradictory "
-			 "for bond term", "md", io::message::error);
-      }
-      else
-	io::messages.add("using Gromos87 harmonic bond term", 
-			 "md", io::message::notice);
-
-      // bonds: harmonic
-      typename t_interaction_spec::harmonic_bond_interaction_type
-	*the_hbond_interaction =
-	new typename t_interaction_spec::harmonic_bond_interaction_type;
-
-      topo >> *the_hbond_interaction;
-      m_forcefield.push_back(the_hbond_interaction);
-
-    }
-    else{
-      io::messages.add("FORCE or FORCEFIELD block wrong for bond term",
-		       "md", io::message::error);
-    }
-  }
-
-  if (do_angle){
-    // angles
-
-    if (have_DIRK && (angle_term != 0)){
-      io::messages.add("FORCEFIELD harmonic angle term not supported",
-		       "md", io::message::error);
-    }
-
-    typename t_interaction_spec::angle_interaction_type
-      *the_angle_interaction = 
-      new     typename t_interaction_spec::angle_interaction_type;
-    
-    topo >> *the_angle_interaction;
- 
-    m_forcefield.push_back(the_angle_interaction);
-  }
-  
-  if (do_improper){
-    // improper dihedrals
-    typename t_interaction_spec::improper_interaction_type
-      *the_improper_interaction = 
-      new typename t_interaction_spec::improper_interaction_type;
-
-    topo >> *the_improper_interaction;
-    
-    m_forcefield.push_back(the_improper_interaction);
-  }
-  
-  if (do_dihedral){
-    // dihedrals
-    typename t_interaction_spec::dihedral_interaction_type
-      *the_dihedral_interaction =
-      new typename t_interaction_spec::dihedral_interaction_type;
-    
-    topo >> *the_dihedral_interaction;
-    
-    m_forcefield.push_back(the_dihedral_interaction);
-  }
+  G96_Forcefield(m_forcefield, m_simulation, topo, input, args);
   
   m_simulation.pressure_calculation(m_calculate_pressure);
-
-  if (do_nonbonded){
-
-    typename t_interaction_spec::nonbonded_interaction_type
-      *the_nonbonded_interaction =
-      new typename t_interaction_spec::nonbonded_interaction_type(m_simulation);
-
-    topo >> *the_nonbonded_interaction;
-      
-    DEBUG(10, "md (create forcefield): nonbonded with pressure read in");
-
-    m_forcefield.push_back(the_nonbonded_interaction);
-  }
 
   // decide on SHAKE
   m_distance_constraint.init(m_simulation, args, topo, input);
@@ -292,9 +210,10 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
  * perform an MD simulation.
  */
 template<typename t_md_spec, typename t_interaction_spec>
-int algorithm::MD<t_md_spec, t_interaction_spec>::do_md(io::Argument &args)
+int algorithm::MD<t_md_spec, t_interaction_spec>
+::do_md(io::Argument &args, io::InInput &input)
 {
-  if(initialize(args)){
+  if(initialize(args, input)){
     return 1;
   }
   
@@ -442,23 +361,8 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
   sys.stream(*sys_file);
   sys.auto_delete(true);
 
-  DEBUG(7, "opening input");
-  std::ifstream *input_file = new std::ifstream(args["input"].c_str());
-  if (!input_file->good())
-    io::messages.add("unable to open input file: " + args["input"], 
-                     "md.tcc",
-		     io::message::error);
-  else
-    io::messages.add("parsing input file: " + args["input"], "md.tcc",
-		     io::message::notice);
-  input.stream(*input_file);
-  DEBUG(7, "reading input");
-  input.readStream();
-  input.auto_delete(true);
-
   DEBUG(7, "read topology");
   topo.read_TOPOLOGY(m_simulation.topology());
-
 
   // decide whether we need velocities or not
   int ntx, init;

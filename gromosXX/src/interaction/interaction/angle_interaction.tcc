@@ -74,6 +74,17 @@ inline void interaction::angle_interaction<t_simulation, t_interaction_spec>
     force(a_it->j) += fj;
     force(a_it->k) += fk;
 
+    if (t_interaction_spec::do_virial == atomic_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    rij(a) * fi(b) +
+	    rkj(a) * fk(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
+
+
     energy = 0.5 * K * (cost - cos0) * (cost - cos0);
     sim.system().energies().angle_energy[sim.topology().
 					 atom_energy_group()[a_it->i]]

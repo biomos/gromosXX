@@ -41,6 +41,12 @@ inline void interaction::Forcefield<t_simulation, t_interaction_spec>
   sim.system().lambda_energies().zero();
   sim.system().virial() = 0.0;
 
+  // prepare for the virial
+  if (t_interaction_spec::do_virial != interaction::no_virial){
+    if(sim.pressure_calculation())
+      sim.calculate_mol_com();
+  }
+  
   for(typename Forcefield<t_simulation, t_interaction_spec>::iterator 
 	it = begin(), to = end();
       it != to;
@@ -48,4 +54,16 @@ inline void interaction::Forcefield<t_simulation, t_interaction_spec>
     DEBUG(7, "interaction: " << (*it)->name);
     (*it)->calculate_interactions(sim);
   }
+
+  // prefactor to the virial
+  // done before the pressure calculation...
+  /*
+  if (t_interaction_spec::do_virial != interaction::no_virial){
+    for(size_t i=0; i<3; ++i)
+      for(size_t j=0; j<3; ++j)
+	sim.system().virial()(i,j) =
+	  -0.5 * sim.system().virial()(i,j);
+  }
+  */
+
 }

@@ -43,7 +43,7 @@ inline void interaction::Dihedral_interaction<t_simulation, t_interaction_spec>
 
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
-  math::Vec rij, rkj, rkl, rim, rln, rmj, rnk, fi, fj, fk, fl;
+  math::Vec rij, rkj, rkl, rlj, rim, rln, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dim, dln, ip;
   double energy;
   
@@ -134,6 +134,20 @@ inline void interaction::Dihedral_interaction<t_simulation, t_interaction_spec>
     force(d_it->j) += fj;
     force(d_it->k) += fk;
     force(d_it->l) += fl;
+
+    if (t_interaction_spec::do_virial == atomic_virial){
+      sim.system().periodicity().
+	nearest_image(pos(d_it->l), pos(d_it->j), rlj);
+
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  sim.system().virial()(a, b) += 
+	    rij(a) * fi(b) +
+	    rkj(a) * fk(b) +
+	    rlj(a) * fl(b);
+
+      DEBUG(7, "\tatomic virial done");
+    }
 
     energy = K * (1 + delta * cosmphi);
     sim.system().energies().dihedral_energy

@@ -68,8 +68,9 @@ int main(int argc, char *argv[])
     if (args.count("alg") != -1){
       if (args["alg"] == "RK"){
 	runge_kutta = true;
-	io::messages.add("using Runge Kutta integration scheme",
-			 "md",io::message::notice);
+	io::messages.add("using Runge Kutta integration scheme"
+			 " -- not implemented",
+			 "md",io::message::error);
       }
       else if(args["alg"] == "LF"){
 	io::messages.add("using Leap Frog integration scheme",
@@ -81,71 +82,14 @@ int main(int argc, char *argv[])
       }
     }
     
-    // determine whether we do perturbation and RK
-    bool perturbation = false;
-    if (args.count("pert") == 1)
-      perturbation = true;
-
-    if (runge_kutta){
-
-      if (perturbation){
-	io::messages.add("perturbation with runge kutta integration"
-			 " not allowed",
-			 "md", io::message::error);
-      }
-
-      io::messages.add("runge-kutta only almost implemented!",
-		       "md",
-		       io::message::error);
-      
-      return 1;
+    // try to do the md
+    if(algorithm::do_md(args)){
+      std::cout << "\nMD encountered an error\n\n" << std::endl;
     }
-    else if (perturbation){ // leap frog + perturbation
-
-      algorithm::Perturbation_MD<
-	algorithm::perturbed_MD_spec,
-	algorithm::Interaction_spec<
-	algorithm::perturbed_MD_spec::simulation_type,
-	// perturbation
-	true,
-	// virial
-	interaction::molecular_virial,
-	// atomic cutoff
-	false,
-	// scaling
-	false
-	>
-	> 
-	the_MD;
-
-      if (the_MD.do_md(args)){
-	return 1;
-      }
-    }
-    else{ // leap frog, no perturbation
-      algorithm::MD<
-	algorithm::MD_spec,
-	algorithm::Interaction_spec<
-	algorithm::MD_spec::simulation_type,
-	// perturbation
-	false,
-	// virial
-	interaction::molecular_virial,
-	// atomic cutoff
-	false,
-	// scaling
-	false
-	>
-	> 
-	the_MD;
-
-      if (the_MD.do_md(args)){
-	return 1;
-      }
+    else{
+      std::cout << "\nMD finished successfully\n\n" << std::endl;
     }
     
-    std::cout << "\nMD finished successfully\n\n" << std::endl;
-  
     std::cout << "messages (simulation)\n";
     io::messages.display(std::cout);
     std::cout << "\n\n";

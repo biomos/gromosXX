@@ -14,7 +14,7 @@ namespace algorithm
    * @class Perturbation_MD
    * MD algorithm with perturbation.
    */
-  template<typename t_md_spec = perturbed_MD_spec,
+  template<typename t_md_spec = perturbed_MD_spec<>,
 	   typename t_interaction_spec = Interaction_spec<
     typename t_md_spec::simulation_type,
     true>
