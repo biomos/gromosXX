@@ -225,7 +225,8 @@ void interaction::Grid_Pairlist_Algorithm::collapse_grid()
 
     m_grid.cell_index[z].clear();
     
-    if (m_grid.count[z][0])
+    // need the index for all particles...
+    for(int j=0; j<m_grid.count[z][0]; ++j)
       m_grid.cell_index[z].push_back(cell_index_ex);
     
     for(int i=1; i < N; ++i){
@@ -236,12 +237,10 @@ void interaction::Grid_Pairlist_Algorithm::collapse_grid()
       if (i % m_grid.Na == 0)
 	cell_index_ex += m_grid.Na_ex - m_grid.Na;
 
-      if (m_grid.count[z][i])
-	m_grid.cell_index[z].push_back(cell_index_ex);
-      
       for(int j=0; j < m_grid.count[z][i]; ++j, ++p_cell_index){
 
 	m_grid.p_cell[z][p_cell_index] = m_grid.p_cell[z][start + j];
+	m_grid.cell_index[z].push_back(cell_index_ex);
 
       } // loop over particles in cell
 
@@ -523,21 +522,18 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
 {
   std::cerr << "prepare plane " << z << std::endl;
   
-  // const int N = m_grid.Na * m_grid.Nb;
-
-  // reserve enough space for anything...
-  p_plane.resize(m_grid.p_cell[z].size() * 4);
-  cell_start.resize(m_grid.Na_ex * m_grid.Nb_ex);
-
-  const int a_ex = (m_grid.Na_ex - m_grid.Na) / 2;
-  const int b_ex = (m_grid.Nb_ex - m_grid.Nb) / 2;
-  // const int c_ex = (m_grid.Nc_ex - m_grid.Nc) / 2;
-  
   int z_shift = 0;
-  if (z > m_grid.Nc){
+  if (z >= m_grid.Nc){
     z_shift = 9;
     z -= m_grid.Nc;
   }
+
+  // reserve enough space for anything...
+  p_plane.resize(m_grid.p_cell[z].size() * 4);
+  cell_start.resize(m_grid.Na_ex * m_grid.Nb_ex + 1);
+
+  const int a_ex = (m_grid.Na_ex - m_grid.Na) / 2;
+  const int b_ex = (m_grid.Nb_ex - m_grid.Nb) / 2;
   
   // index into the (newly constructed) plane
   int j = 0;
@@ -559,8 +555,10 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
     --------------------
   */
 
+
   // the upper extended area
   std::cerr << "upper extension" << std::endl;
+  std::cerr << "(shifted) z " << z << std::endl;
   
   int i = (m_grid.Nb - b_ex) * m_grid.Na;
   int i_to = i + m_grid.Na;
@@ -613,7 +611,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
     i_ex += m_grid.Na;
     i_ex_to += m_grid.Na;
   }
-  
+
   // the center area
   std::cerr << "center" << std::endl;
   
@@ -772,11 +770,14 @@ void interaction::Grid_Pairlist_Algorithm::update
 
   const int c_ex = (m_grid.Nc_ex - m_grid.Nc) / 2;
 
-  for(int z=0; z < m_grid.Nc + c_ex; ++z){
+  for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
 
     prepare_plane(z, p_plane, cell_start);
     print_plane(z, p_plane, cell_start);
     
+    // loop over all mask levels (inside box)
+
+
   }
 
   std::cerr << "pairlist done" << std::endl;
