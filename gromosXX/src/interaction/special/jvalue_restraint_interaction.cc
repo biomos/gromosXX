@@ -29,6 +29,13 @@
 #define MODULE interaction
 #define SUBMODULE special
 
+static double _calculate_derivative(topology::Topology & topo,
+				    configuration::Configuration &conf,
+				    simulation::Parameter const & param,
+				    std::vector<topology::jvalue_restraint_struct>::const_iterator it,
+				    double Jcurr, double Jav,
+				    double cos_phi_delta, double sin_phi_delta);
+
 /**
  * calculate position restraint interactions
  */
