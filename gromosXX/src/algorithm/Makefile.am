@@ -15,6 +15,8 @@ include_HEADERS = 		algorithm.h \
 				constraint/perturbed_shake.tcc \
 				constraint/flexible_constraint.h \
 				constraint/flexible_constraint.tcc \
+				constraint/perturbed_flexible_constraint.h \
+				constraint/perturbed_flexible_constraint.tcc \
 				temperature/berendsen.h \
 				temperature/berendsen.tcc \
 				pressure/berendsen.h \

@@ -78,19 +78,24 @@ algorithm::Flexible_Constraint<t_simulation>::K()
 
 
 template<typename t_simulation>
+template<typename t_distance_struct>
 void algorithm::Flexible_Constraint<t_simulation>
 ::calc_distance(typename simulation_type::topology_type const &topo,
 		typename simulation_type::system_type &sys,
 		int const first,
-		std::vector<simulation::compound::distance_constraint_struct>
-		& constr, double const dt)
+		std::vector<t_distance_struct>
+		& constr, double const dt, size_t offset)
 {
      
-  unsigned int k=0;//index of flex_constraint_distance
+  unsigned int k=offset; //index of flex_constraint_distance
    
-  
+  DEBUG(10, "offset: " << k);
+  DEBUG(10, "sizes:\n\tvel: " << m_vel.size()
+	<< "\n\tK:   " << m_K.size()
+	<< "\n\tF:   " << sys.constraint_force().size());
+
   //loop over all constraints
-  for(std::vector<simulation::compound::distance_constraint_struct>
+  for(typename std::vector<t_distance_struct>
 	::iterator
 	it = constr.begin(),
 	to = constr.end();
@@ -98,6 +103,9 @@ void algorithm::Flexible_Constraint<t_simulation>
       ++it, ++k){
     
     // the position
+    assert(sys.pos().size() > first+it->i);
+    assert(sys.pos().size() > first+it->j);
+    
     math::Vec &pos_i = sys.pos()(first+it->i);
     math::Vec &pos_j = sys.pos()(first+it->j);
 	
@@ -105,6 +113,8 @@ void algorithm::Flexible_Constraint<t_simulation>
     sys.periodicity().nearest_image(pos_i, pos_j, r);
     double dist2 = dot(r, r);// actual bond length at (t+Dt) 
     
+    assert(sys.old_pos().size() > first+it->i);
+    assert(sys.old_pos().size() > first+it->j);
 
     const math::Vec &ref_i = sys.old_pos()(first+it->i);
     const math::Vec &ref_j = sys.old_pos()(first+it->j);
@@ -116,10 +126,13 @@ void algorithm::Flexible_Constraint<t_simulation>
 
     // standard formula with velocity along contsraints correction
     // (not the velocityless formula):
+    assert(topo.mass().size() > first+it->i);
+    assert(topo.mass().size() > first+it->j);
     double red_mass = 1 / (1/topo.mass()(first+it->i) + 1/topo.mass()(first+it->j));
     double dt2 = dt * dt;
       
     // calculate the force on constraint k
+    assert(m_vel.size() > k);
     const double force_on_constraint  = (red_mass / dt2) * 
       (sqrt(dist2) - sqrt(ref_dist2) - m_vel[k] * dt);
 
@@ -134,6 +147,7 @@ void algorithm::Flexible_Constraint<t_simulation>
     const double constr_length2 = m_r0[k] * m_r0[k];
  
      // calculate the flexible constraint distance
+    assert(m_K.size() > k);
     it->b0 = force_on_constraint / m_K[k] + sqrt(constr_length2);
 
     // update the velocity array
@@ -159,8 +173,10 @@ void algorithm::Flexible_Constraint<t_simulation>
 template<typename t_simulation>
 inline void 
 algorithm::Flexible_Constraint<t_simulation>
-::add_bond_length_constraints(simulation::Solute &solute)
+::add_bond_length_constraints(typename t_simulation::topology_type &topo)
 {
+  simulation::Solute & solute = topo.solute();
+
   std::vector<simulation::Bond> bonds;
   std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
     to = solute.bonds().end();
@@ -183,8 +199,10 @@ inline void
 algorithm::Flexible_Constraint<t_simulation>
 ::add_bond_length_constraints(int iac,
 			      std::vector<int> const &atom_iac,
-			      simulation::Solute &solute)
+			      typename t_simulation::topology_type &topo)
 {
+  simulation::Solute & solute = topo.solute();
+
   std::vector<simulation::Bond> bonds;
   std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
     to = solute.bonds().end();
@@ -212,8 +230,10 @@ inline void
 algorithm::Flexible_Constraint<t_simulation>
 ::add_bond_length_constraints(double mass,
 			      math::SArray const &atom_mass,
-			      simulation::Solute &solute)
+			      typename t_simulation::topology_type &topo)
 {
+  simulation::Solute & solute = topo.solute();
+  
   std::vector<simulation::Bond> bonds;
   std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
     to = solute.bonds().end();
@@ -259,14 +279,14 @@ algorithm::Flexible_Constraint<t_simulation>
       topo >> *this;
       add_bond_length_constraints(1.0,
 				  sim.topology().mass(),
-				  sim.topology().solute());
+				  sim.topology());
       break;
     case 3: 
       if (m_lfcon) std::cout << "flexible SHAKE all bonds" << std::endl;
       else std::cout << "SHAKE all bonds" << std::endl;
       // read in parameter
       topo >> *this;
-      add_bond_length_constraints(sim.topology().solute());
+      add_bond_length_constraints(sim.topology());
       break;
     default:
       std::cout << "wrong ntc parameter" << std::endl;
@@ -276,8 +296,7 @@ algorithm::Flexible_Constraint<t_simulation>
   if (m_lfcon && args.count("flexcon") == 1){
     std::ifstream flex_file(args["flexcon"].c_str());
     io::InFlexibleConstraints flexin(flex_file);
-    flexin.read_FLEXCON(m_vel,
-			sim.topology().solute().distance_constraints());
+    flexin.read_FLEXCON(m_vel, sim.topology());
   }
   else{
     // initialize with zero length and zero velocities
@@ -294,5 +313,9 @@ algorithm::Flexible_Constraint<t_simulation>
   // give the constraint force the correct size...
   sim.system().constraint_force().resize(sim.topology().solute().
 					 distance_constraints().size());
+
+  m_lambda.resize(sim.topology().solute().
+		  distance_constraints().size());
+
 
 }

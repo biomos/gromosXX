@@ -9,6 +9,7 @@
 #include "constraint/shake.h"
 #include "constraint/perturbed_shake.h"
 #include "constraint/flexible_constraint.h"
+#include "constraint/perturbed_flexible_constraint.h"
 #include "algorithm/md.h"
 #include "algorithm/perturbation_md.h"
 

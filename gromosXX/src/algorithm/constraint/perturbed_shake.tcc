@@ -45,6 +45,7 @@ int algorithm::Perturbed_Shake<t_simulation>
   if (!topo.solute().distance_constraints().size()) return 0;
   
   sys.constraint_force() = 0.0;
+  m_lambda = 0.0;
 
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -234,5 +235,9 @@ algorithm::Perturbed_Shake<t_simulation>
 					 distance_constraints().size() + 
 					 sim.topology().perturbed_solute().
 					 distance_constraints().size());
+  m_lambda.resize(sim.topology().solute().
+		  distance_constraints().size() + 
+		  sim.topology().perturbed_solute().
+		  distance_constraints().size());
 
 }

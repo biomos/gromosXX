@@ -22,11 +22,18 @@ namespace io {
      */
     InFlexibleConstraints(std::istream& is);
     /**
-     * Read in a G96 trajectory into the system.
+     * Read in a flexible constraints file into a topology.
      */
     void read_FLEXCON(std::vector<double> &vel,
-		      std::vector<simulation::compound::
-		      distance_constraint_struct> &constr);
+		      simulation::Topology &topo);
+
+    /**
+     * Read in a flexible constraints file into a perturbation topology.
+     */
+    void read_FLEXCON(std::vector<double> &vel,
+		      simulation::Perturbation_Topology &topo);
+    
+
   private:
     
   };

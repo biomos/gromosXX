@@ -38,10 +38,10 @@ int main(int argc, char *argv[])
       {
 	"topo", "struct", "input", "verb", "pert",
 	"trj", "fin", "trv", "trf", "tre", "print", "trp",
-	"flexcon"
+	"flexcon", "trc"
       };
     
-    int nknowns = 13;
+    int nknowns = 14;
     
     string usage = argv[0];
     usage += "\n\t@topo     <topology>\n";
@@ -56,6 +56,7 @@ int main(int argc, char *argv[])
     usage += "\t[@print   <pairlist/force>]\n";
     usage += "\t[@trp     <print file>]\n";
     usage += "\t[@flexcon <flexible constraints data file>]\n";
+    usage += "\t[@trc     <flexible constraints output file>]\n";
     usage += "\t[@verb    <[module:][submodule:]level>]\n";
 
     io::Argument args(argc, argv, nknowns, knowns, usage);
@@ -83,7 +84,7 @@ int main(int argc, char *argv[])
       algorithm::Perturbation_MD<simulation_type,
 	algorithm::Berendsen_Thermostat,
 	algorithm::Berendsen_Barostat,
-	algorithm::Flexible_Constraint<simulation_type>,
+	algorithm::Perturbed_Flexible_Constraint<simulation_type>,
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
     
@@ -96,6 +97,20 @@ int main(int argc, char *argv[])
       std::cout << "\nwriting final structure" << std::endl;
       the_MD.trajectory() << io::final << the_MD.simulation();
 
+      if (args.count("trc") == 1){
+	std::cout << "\nwriting flexible constraints data" << std::endl;
+	std::ofstream constr_file(args["trc"].c_str());
+	io::OutFlexibleConstraints flexout(constr_file);
+	flexout.write_FLEXCON(the_MD.distance_constraint_algorithm().vel(),
+			      the_MD.simulation().topology());
+
+      }
+      else{
+	std::cout << "writing of final flexible constraint data"
+		  << " not required\n";
+	
+      }
+      
       simulation::Energy energy, fluctuation;
       the_MD.simulation().system().energy_averages().average(energy, fluctuation);
       
@@ -143,6 +158,21 @@ int main(int argc, char *argv[])
       
       std::cout << "\nwriting final structure" << std::endl;
       the_MD.trajectory() << io::final << the_MD.simulation();
+
+      if (args.count("trc") == 1){
+	std::cout << "writing flexible constraints data\n\n";
+	std::ofstream constr_file(args["trc"].c_str());
+	io::OutFlexibleConstraints flexout(constr_file);
+	flexout.write_FLEXCON(the_MD.distance_constraint_algorithm().vel(),
+			      the_MD.simulation().topology());
+
+      }
+      else{
+	std::cout << "writing of final flexible constraint data"
+		  << " not required\n";
+	// std::cout << "trc: " << args.count("trc") << std::endl;
+	
+      }
 
       simulation::Energy energy, fluctuation;
       the_MD.simulation().system().energy_averages().average(energy, fluctuation);

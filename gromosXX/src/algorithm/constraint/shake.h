@@ -95,7 +95,6 @@ namespace algorithm
 		int const first, 
 		std::vector<bool> &skip_now,
 		std::vector<bool> &skip_next,
-		// std::vector<simulation::compound::distance_constraint_struct>
 		std::vector<t_distance_struct>
 		& constr, 
 		bool do_constraint_force = false, size_t force_offset = 0);
@@ -104,6 +103,8 @@ namespace algorithm
     const int max_iterations;
     
     std::vector<interaction::bond_type_struct> m_bond_parameter;
+
+    math::SArray m_lambda;
     
   };
   

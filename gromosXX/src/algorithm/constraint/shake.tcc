@@ -54,6 +54,7 @@ int algorithm::Shake<t_simulation>
   if (!topo.solute().distance_constraints().size()) return 0;
   
   sys.constraint_force() = 0.0;
+  m_lambda = 0.0;
 
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -166,7 +167,6 @@ bool algorithm::Shake<t_simulation>
 	 int const first,
 	 std::vector<bool> &skip_now,
 	 std::vector<bool> &skip_next,
-	 // std::vector<simulation::compound::distance_constraint_struct>
 	 std::vector<t_distance_struct>
 	 & constr, bool do_constraint_force, size_t force_offset)
 {
@@ -240,6 +240,7 @@ bool algorithm::Shake<t_simulation>
 	//if it is a solute sum up constraint forces
 	assert(unsigned(sys.constraint_force().size()) > k + force_offset);
 	sys.constraint_force()(k+force_offset) += (lambda * ref_r);
+	m_lambda(k) += lambda;
       }
 
       // update positions
@@ -400,7 +401,8 @@ algorithm::Shake<t_simulation>
   // give the constraint force the correct size...
   sim.system().constraint_force().resize(sim.topology().solute().
 				distance_constraints().size());
-  
+  m_lambda.resize(sim.topology().solute().distance_constraints().size());
+
   std::cout << "END\n";
 
 }

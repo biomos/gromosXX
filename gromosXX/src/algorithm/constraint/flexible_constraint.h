@@ -49,30 +49,35 @@ namespace algorithm
      * add all bonds to the flexible solute constraint vector and
      * remove them from the bond vector.
      */
-    void add_bond_length_constraints(simulation::Solute &solute);
+    virtual void
+    add_bond_length_constraints(typename t_simulation::topology_type &topo);
     /**
      * add bonds connecting an atom of type iac to the
      * flexible constraint vector and remove from the bond vector.
      */
-    void add_bond_length_constraints(int iac,
-				     std::vector<int> const &atom_iac,
-				     simulation::Solute &solute);
+    virtual void 
+    add_bond_length_constraints(int iac,
+				std::vector<int> const &atom_iac,
+				typename t_simulation::
+				topology_type &topo);
     
     /**
      * add bonds connecting an atom of mass mass to the
      * flexible constraint vector and remove from the bond vector.
      */
-    void add_bond_length_constraints(double mass,
-				     math::SArray const &atom_mass,
-				     simulation::Solute &solute);
+    virtual void 
+    add_bond_length_constraints(double mass,
+				math::SArray const &atom_mass,
+				typename t_simulation::
+				topology_type &topo);
 
-  private:
+  protected:
+    template<typename t_distance_struct>
     void calc_distance(typename simulation_type::topology_type const &topo, 
 		       typename simulation_type::system_type &sys, 
 		       int const first,
-		       std::vector<simulation::compound::
-		       distance_constraint_struct>
-		       & constr, double const dt);
+		       std::vector<t_distance_struct>
+		       & constr, double const dt, size_t offset = 0);
 
     std::vector<double> force_on_constraint;
     double Ekin;
