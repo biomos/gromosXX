@@ -3,13 +3,13 @@
  * headers for the split up creation of the nonbonded interaction
  */
 
-#include <util/stdheader.h>
-
 #pragma hdrstop
 
 #ifdef OMP
 #include <omp.h>
 #endif
+
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -63,4 +63,3 @@
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE nonbonded
-
