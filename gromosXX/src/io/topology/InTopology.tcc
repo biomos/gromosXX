@@ -130,6 +130,8 @@ io::InTopology &io::InTopology
 
   buffer = m_block["BONDTYPE"];
 
+  
+
   // 1. BONDTYPE 2. number of types
   for (it = buffer.begin() + 2; 
    it != buffer.end() - 1; ++it) {
@@ -142,6 +144,9 @@ io::InTopology &io::InTopology
 
     if (_lineStream.fail() || ! _lineStream.eof())
       throw std::runtime_error("bad line in bond type block");
+
+    // we are reading into harmonic bond term, so convert k
+    k *= 2 * r * r;
 
     // and add...
     hbi.add(k, r);

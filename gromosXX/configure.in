@@ -141,7 +141,7 @@ dnl i hope this will not be necessary in the future.
 dnl before finalising some code, maybe a build w/o this option might be
 dnl a good idea...
 if eval "test x$GXX = xyes"; then
-  CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-variable -frepo"
+  CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-variable"
 fi
 
 AC_PREFIX_DEFAULT(`pwd`)
