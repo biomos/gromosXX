@@ -1,5 +1,23 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
+/* GNU C++ compiler */
+#undef COMPILER_GCC
+
+/* Intel C++ compiler */
+#undef COMPILER_ICC
+
+/* KAI C++ compiler */
+#undef COMPILER_KAI
+
+/* Microsoft Visual C++ compiler */
+#undef COMPILER_MSVC
+
+/* Metrowerks Codewarrior C++ compiler */
+#undef COMPILER_MWERK
+
+/* SGI C++ compiler */
+#undef COMPILER_SGI
+
 /* Define to 1 if you have the `acosh' function. */
 #undef HAVE_ACOSH
 

@@ -83,6 +83,7 @@ case "$compiler" in
        CXX_OPTIMIZE_FLAGS="+K3 -O3 -fast --inline_keyword_space_time=10000"
        CXX_DEBUG_FLAGS="-g +K0 -DBZDEBUG"
        CXXLD="$CXX"
+	   AC_DEFINE_UNQUOTED(COMPILER_KAI, 1, [KAI C++ compiler])
      ;;
     intel*)             # Intel C++.  tested with version 5.00
        echo "Configuring for Intell C++"
@@ -91,6 +92,7 @@ case "$compiler" in
        CXX_OPTIMIZE_FLAGS="-O3 -ip -DNDEBUG"
        CXX_DEBUG_FLAGS="-g -DBZDEBUG"
        CXXLD="$CXX"
+	   AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
      ;;
      sgi*)               # SGI C++  http://www.sgi.com
        echo "Configuring for SGI C++"
@@ -100,6 +102,7 @@ case "$compiler" in
        CXX_DEBUG_FLAGS="-g -DBZDEBUG"
        CXXLD="$CXX"
        LDFLAGS=
+	   AC_DEFINE_UNQUOTED(COMPILER_SGI, 1, [SGI C++ compiler])
      ;;
      gnu*)              # EGCS  http://egcs.cygnus.com/
        echo "Configuring for GNU C++"
@@ -117,6 +120,7 @@ case "$compiler" in
        F77=g77
        F77_OPTIMIZE_FLAGS="-O2 -funroll-loops"
        FORTLIBS=-lg2c
+	   AC_DEFINE_UNQUOTED(COMPILER_GCC, 1, [GNU C++ compiler])
      ;;
      msvc*) # Microsoft Visual C++
        echo "Configuring for Microsoft Visual C++"
@@ -128,6 +132,7 @@ case "$compiler" in
        CXX_DEBUG_FLAGS="/Zi"
        LDOUT="/out:"
        CXXLD="link"
+	   AC_DEFINE_UNQUOTED(COMPILER_MSVC, 1, [Microsoft Visual C++ compiler])
      ;;
      mwerk*)
        echo "Configuring for Metrowerks Codewarrior (x86)"
@@ -138,6 +143,7 @@ case "$compiler" in
        CXX_OPTIMIZE_FLAGS="-opt all -DNDEBUG"
        CXX_DEBUG_FLAGS="-g"
        CXXLD="mwld"
+	   AC_DEFINE_UNQUOTED(COMPILER_MWERK, 1, [Metrowerks Codewarrior C++ compiler])
      ;;
      *)
         CXXLD="$CXX"
