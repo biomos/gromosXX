@@ -212,7 +212,7 @@ static int _calculate_perturbed_dihedral_interactions
     }
 
     energy = (1.0-l) * A_energy + l * B_energy;
-    e_lambda = l*(B_energy - A_energy);
+    e_lambda = (B_energy - A_energy);
 
     assert(conf.current().energies.dihedral_energy.size() >
 	   topo.atom_energy_group()[d_it->i]);
