@@ -54,9 +54,13 @@ namespace algorithm
 	     configuration::Configuration & conf,
 	     simulation::Simulation & sim);
 
+    virtual void print_timing(std::ostream & os);
+
   protected:
 
     std::vector<interaction::bond_type_struct> m_parameter;
+
+    double m_solvent_timing;
 
   };
   

@@ -53,9 +53,30 @@ int algorithm::Algorithm_Sequence
       ++it){
     DEBUG(7, "algorithm: " << (*it)->name);
     if((ret = (*it)->apply(topo, conf, sim))){
-      DEBUG(1, "ERROR in algorithm_sequence: bailing out!");
+      DEBUG(1, "ERROR in algorithm_sequence::run : bailing out!");
       return ret;
     }
   }
+  return 0;
+}
+
+int algorithm::Algorithm_Sequence
+::print_timing(std::ostream & os)
+{
+  int ret;
+  
+  os << "TIMING\n";
+  
+  for(Algorithm_Sequence::iterator 
+	it = begin(), to = end();
+      it != to;
+      ++it){
+    
+    (*it)->print_timing(os);
+
+  }
+  
+  os << "END\n";
+
   return 0;
 }

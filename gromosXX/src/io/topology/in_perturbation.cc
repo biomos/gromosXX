@@ -65,6 +65,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   DEBUG(7, "Reading PERTURBATION");
   std::cout << "PERTURBATION TOPOLOGY\n";
 
+  std::cout << title << "\n";
+
   // prepare arrays
   topo.is_perturbed().resize(topo.num_solute_atoms(), false);
 

@@ -43,7 +43,8 @@ namespace io
    */
   void print_ENERGY(std::ostream &os, configuration::Energy const &e,
 		    std::vector<size_t> const & energy_groups,
-		    std::string const title = "ENERGIES");
+		    std::string const title = "ENERGIES",
+		    std::string const type = "E_");
   
   /**
    * Print a matrix.

@@ -35,7 +35,8 @@ namespace configuration
      */
     void update(configuration::Energy const &e, 
 		configuration::Energy_Average const &av,
-		double const dt);
+		double const dt,
+		double const dlamt = 0);
 
     /**
      * average the pressure.
@@ -46,10 +47,17 @@ namespace configuration
 
     /**
      * get the average energy and fluctuations
+     * @param energy average energy
+     * @param fluctuation energy fluctuations
+     * @param pressure average pressure
+     * @param pressure_fluctuations pressure fluctuations
+     * @param dlamt slow growth change of lambda per step
+     * cumulative DG returned.
      */
     void average(Energy &energy, Energy &fluctuation,
 		 math::Matrix &pressure, 
-		 math::Matrix &pressure_fluctuations);
+		 math::Matrix &pressure_fluctuations,
+		 double const dlamt = 0);
 
   private:
     /**

@@ -19,7 +19,8 @@ algorithm::Shake<do_virial>
 ::Shake(double const tolerance, int const max_iterations)
   : Algorithm("Shake"),
     m_tolerance(tolerance),
-    m_max_iterations(max_iterations)
+    m_max_iterations(max_iterations),
+    m_solvent_timing(0.0)
 {
 }
 
@@ -191,7 +192,8 @@ static int solute(topology::Topology const & topo,
 		  configuration::Configuration & conf,
 		  std::vector<interaction::bond_type_struct> const & param,
 		  double dt, int const max_iterations,
-		  double const tolerance)
+		  double const tolerance,
+		  double & timing)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
@@ -201,6 +203,8 @@ static int solute(topology::Topology const & topo,
   
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
+
+  const double start = util::now();
 
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -248,6 +252,8 @@ static int solute(topology::Topology const & topo,
   }
   */
 
+  timing += util::now() - start;
+
   return 0;
 
 } // solute
@@ -261,11 +267,14 @@ static int solvent(topology::Topology const & topo,
 		   configuration::Configuration & conf,
 		   std::vector<interaction::bond_type_struct> &param,
 		   double dt, int const max_iterations, 
-		   double const tolerance)
+		   double const tolerance,
+		   double & timing)
 {
 
   DEBUG(8, "\tshaking SOLVENT");
   
+  const double start = util::now();
+
   // the first atom of a solvent
   size_t first = topo.num_solute_atoms();
 
@@ -322,6 +331,8 @@ static int solvent(topology::Topology const & topo,
     
   } // solvents
 
+  timing += util::now() - start;
+
   return 0;
   
 } // shake solvent
@@ -351,17 +362,17 @@ int algorithm::Shake<do_virial>
       case math::vacuum:
 	error = solute<do_virial, math::vacuum>
 	  (topo, conf, parameter(), sim.time_step_size(), 
-	   m_max_iterations, m_tolerance);
+	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::rectangular:
 	error = solute<do_virial, math::rectangular>
 	  (topo, conf, parameter(), sim.time_step_size(), 
-	   m_max_iterations, m_tolerance);
+	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::triclinic:
 	error = solute<do_virial, math::triclinic>
 	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance);
+	   m_max_iterations, m_tolerance, m_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");
@@ -384,19 +395,19 @@ int algorithm::Shake<do_virial>
 	error = 
 	  solvent<do_virial, math::vacuum>
 	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance);
+	   m_max_iterations, m_tolerance, m_solvent_timing);
 	break;
       case math::rectangular:
 	error = 
 	  solvent<do_virial, math::rectangular>
 	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance);
+	   m_max_iterations, m_tolerance, m_solvent_timing);
 	break;
       case math::triclinic:
 	error = 
 	  solvent<do_virial, math::triclinic>
 	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance);
+	   m_max_iterations, m_tolerance, m_solvent_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");
@@ -466,4 +477,14 @@ int algorithm::Shake<do_virial>
   }
   
   return 0;
+}
+
+template<math::virial_enum do_virial>
+void algorithm::Shake<do_virial>
+::print_timing(std::ostream & os)
+{
+  os << std::setw(40) << std::left << "Shake::solute"
+     << std::setw(20) << m_timing << "\n"
+     << std::setw(40) << std::left << "Shake::solvent"
+     << std::setw(20) << m_solvent_timing << "\n";
 }

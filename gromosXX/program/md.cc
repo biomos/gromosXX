@@ -136,10 +136,12 @@ int main(int argc, char *argv[]){
       // perturbed energy derivatives
       if (sim.param().perturbation.perturbation){
 	conf.old().perturbed_energy_derivatives.calculate_totals();
+
 	conf.current().perturbed_energy_derivative_averages.update
 	  (conf.old().perturbed_energy_derivatives,
 	   conf.old().perturbed_energy_derivative_averages,
-	   sim.time_step_size());
+	   sim.time_step_size(),
+	   sim.param().perturbation.dlamt);
       }
 
       traj.print(topo, conf, sim);
@@ -157,6 +159,10 @@ int main(int argc, char *argv[]){
     
     std::cout << "\nMESSAGES FROM SIMULATION\n";
     io::messages.display(std::cout);
+
+    std::cout << "\n\n";
+    
+    md.print_timing(std::cout);
 
     if (error)
       std::cout << "\nErrors encountered during run - check above!\n" << std::endl;

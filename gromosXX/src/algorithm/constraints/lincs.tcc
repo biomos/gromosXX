@@ -20,7 +20,8 @@ struct coupling_struct
 template<math::virial_enum do_virial>
 algorithm::Lincs<do_virial>
 ::Lincs()
-  : Algorithm("Lincs")
+  : Algorithm("Lincs"),
+    m_solvent_timing(0.0)
 {
 }
 
@@ -83,8 +84,11 @@ static int _lincs(topology::Topology & topo,
 		  std::vector<topology::two_body_term_struct> const & constr,
 		  topology::Compound::lincs_struct const & lincs,
 		  std::vector<interaction::bond_type_struct> const & param,
+		  double & timing,
 		  size_t const offset = 0)
 {
+  const double start = util::now();
+  
   const size_t num_constr = constr.size();
   math::VArray const & old_pos = conf.old().pos;
   math::VArray & pos = conf.current().pos;
@@ -163,6 +167,8 @@ static int _lincs(topology::Topology & topo,
   if (count)
     std::cout << "LINCS:\ttoo much rotation in " << count << " cases!\n";
 
+  timing += util::now() - start;
+
   return 0;
 }
 
@@ -170,7 +176,8 @@ template<math::virial_enum do_virial, math::boundary_enum b>
 static int _solvent(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
-		    std::vector<interaction::bond_type_struct> const & param)
+		    std::vector<interaction::bond_type_struct> const & param,
+		    double & timing)
 {
   // the first atom of a solvent
   size_t first = topo.num_solute_atoms();
@@ -183,7 +190,7 @@ static int _solvent(topology::Topology & topo,
 	++nm, first+=topo.solvent(i).num_atoms()){
 
       _lincs<b>(topo, conf, sim, topo.solvent(i).distance_constraints(),
-		topo.solvent(i).lincs(), param, first);
+		topo.solvent(i).lincs(), param, timing, first);
       
     }
   }
@@ -213,15 +220,15 @@ int algorithm::Lincs<do_virial>
     switch(conf.boundary_type){
       case math::vacuum:
 	_lincs<math::vacuum>(topo, conf, sim, topo.solute().distance_constraints(),  
-			     topo.solute().lincs(), parameter());
+			     topo.solute().lincs(), parameter(), m_timing);
 	break;
       case math::rectangular:
 	_lincs<math::rectangular>(topo, conf, sim, topo.solute().distance_constraints(),  
-				  topo.solute().lincs(), parameter());
+				  topo.solute().lincs(), parameter(), m_timing);
 	break;
       case math::triclinic:
 	_lincs<math::triclinic>(topo, conf, sim, topo.solute().distance_constraints(),  
-				topo.solute().lincs(), parameter());
+				topo.solute().lincs(), parameter(), m_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");
@@ -233,13 +240,13 @@ int algorithm::Lincs<do_virial>
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	_solvent<do_virial, math::vacuum>(topo, conf, sim, parameter());
+	_solvent<do_virial, math::vacuum>(topo, conf, sim, parameter(), m_solvent_timing);
 	break;
       case math::rectangular:
-	_solvent<do_virial, math::rectangular>(topo, conf, sim, parameter());
+	_solvent<do_virial, math::rectangular>(topo, conf, sim, parameter(), m_solvent_timing);
 	break;
       case math::triclinic:
-	_solvent<do_virial, math::triclinic>(topo, conf, sim, parameter());
+	_solvent<do_virial, math::triclinic>(topo, conf, sim, parameter(), m_solvent_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");
@@ -382,4 +389,14 @@ int algorithm::Lincs<do_virial>
   }
   
   return 0;
+}
+
+template<math::virial_enum do_virial>
+void algorithm::Lincs<do_virial>
+::print_timing(std::ostream & os)
+{
+  os << std::setw(40) << std::left << "Lincs::solute"
+     << std::setw(20) << m_timing << "\n"
+     << std::setw(40) << std::left << "Lincs::solvent"
+     << std::setw(20) << m_solvent_timing << "\n";
 }

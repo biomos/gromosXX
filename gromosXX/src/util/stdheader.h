@@ -25,6 +25,8 @@
 
 #include <io/message.h>
 
+#include <util/timing.h>
+
 #ifdef COMPILER_GCC
 #include <cxxabi.h>
 using namespace ranlib;

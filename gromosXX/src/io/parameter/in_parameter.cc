@@ -30,6 +30,9 @@ void io::In_Parameter::read(simulation::Parameter &param)
 {
   DEBUG(7, "reading input");
 
+  std::cout << "\nINPUT\n";
+  std::cout << title << "\n";
+
   read_MINIMISE(param);
   read_SYSTEM(param);
   read_START(param); // and CENTREOFMASS

@@ -942,7 +942,7 @@ void io::Out_Configuration
     
     if (sim.param().perturbation.perturbation)
       print_ENERGY(m_output, conf.old().perturbed_energy_derivatives, 
-		   topo.energy_groups(), "dE/dLAMBDA");
+		   topo.energy_groups(), "dE/dLAMBDA", "dE_");
     
 
     print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
@@ -970,8 +970,28 @@ void io::Out_Configuration
   
   conf.current().energy_averages.average(e, ef, p, pf);
 
-  print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES");
-  print_ENERGY(m_output, ef, topo.energy_groups(), "ENERGY FLUCTUATIONS");
+  print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES", "<E>_");
+  print_ENERGY(m_output, ef, topo.energy_groups(), "ENERGY FLUCTUATIONS", "<<E>>_");
+
+  if (sim.param().perturbation.perturbation){
+    if (sim.param().perturbation.dlamt){
+      conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf,
+								  sim.param().perturbation.dlamt);
+
+      print_ENERGY(m_output, e, topo.energy_groups(), "CUMULATIVE DG", "DG_");
+
+      // what's that anyway...
+      //print_ENERGY(m_output, ef, topo.energy_groups(), "DG FLUCTUATIONS", "<<DG>>_");
+
+    }
+    else{
+      conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf);
+
+      print_ENERGY(m_output, e, topo.energy_groups(), "dE/dLAMBDA AVERAGES", "<dE/dl>_");
+      print_ENERGY(m_output, ef, topo.energy_groups(), "dE/dLAMBDA FLUCTUATIONS", "<<dE/dl>>_");
+    }
+    
+  }
 
   print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
   print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
@@ -980,12 +1000,5 @@ void io::Out_Configuration
     print_MATRIX(m_output, p, "PRESSURE AVERAGE");
     print_MATRIX(m_output, pf, "PRESSURE FLUCTUATION");
   }
-  
-  if (sim.param().perturbation.perturbation){
-    conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf);
-
-    print_ENERGY(m_output, e, topo.energy_groups(), "dE/dLAMBDA AVERAGES");
-    print_ENERGY(m_output, ef, topo.energy_groups(), "dE/dLAMBDA FLUCTUATIONS");
-  }
-  
+    
 }

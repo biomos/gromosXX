@@ -56,72 +56,76 @@ configuration::Energy_Average::resize(size_t const energy_groups, size_t const m
 void
 configuration::Energy_Average::update(configuration::Energy const &e, 
 				      configuration::Energy_Average const &av,
-				      double const dt)
+				      double const dt,
+				      double const dlamt)
 {
+  double cum = dt;
+  if (dlamt) cum = dlamt;
+  
   // totals
   DEBUG(10, "energy average: update - kin size: " << e.kinetic_energy.size());
   
   DEBUG(10, "old total: " << av.m_average.total
 	<< "\ttotal: " << e.total << "\tdt: " << dt);
   
-  m_average.total = av.m_average.total + dt * e.total;
+  m_average.total = av.m_average.total + cum * e.total;
   
   m_square_average.total = av.m_square_average.total + dt * e.total * e.total;
   
-  m_average.kinetic_total = av.m_average.kinetic_total + dt * e.kinetic_total;
+  m_average.kinetic_total = av.m_average.kinetic_total + cum * e.kinetic_total;
   m_square_average.kinetic_total = av.m_square_average.kinetic_total + 
     dt * e.kinetic_total * e.kinetic_total;
   
   m_average.potential_total = av.m_average.potential_total +
-    dt * e.potential_total;
+    cum * e.potential_total;
   m_square_average.potential_total = av.m_square_average.potential_total + 
     dt * e.potential_total * e.potential_total;
 
   // physical interaction totals
-  m_average.bond_total = av.m_average.bond_total + dt * e.bond_total;
+  m_average.bond_total = av.m_average.bond_total + cum * e.bond_total;
   m_square_average.bond_total = av.m_square_average.bond_total + 
     dt * e.bond_total * e.bond_total;
   
-  m_average.angle_total = av.m_average.angle_total + dt * e.angle_total;
+  m_average.angle_total = av.m_average.angle_total + cum * e.angle_total;
   m_square_average.angle_total = av.m_square_average.angle_total +
     dt * e.angle_total * e.angle_total;
   
   m_average.improper_total = av.m_average.improper_total +
-    dt * e.improper_total;
+    cum * e.improper_total;
   m_square_average.improper_total = av.m_square_average.improper_total + 
     dt * e.improper_total * e.improper_total;
   
-  m_average.dihedral_total = av.m_average.dihedral_total + dt * e.dihedral_total;
+  m_average.dihedral_total = av.m_average.dihedral_total + cum * e.dihedral_total;
   m_square_average.dihedral_total = av.m_square_average.dihedral_total +
     dt * e.dihedral_total * e.dihedral_total;
   
-  m_average.bonded_total = av.m_average.bonded_total + dt * e.bonded_total;
+  m_average.bonded_total = av.m_average.bonded_total + cum * e.bonded_total;
   m_square_average.bonded_total = av.m_square_average.bonded_total +
     dt * e.bonded_total * e.bonded_total;
   
   m_average.nonbonded_total = av.m_average.nonbonded_total +
-    dt * e.nonbonded_total;
+    cum * e.nonbonded_total;
   m_square_average.nonbonded_total = av.m_square_average.nonbonded_total +
     dt * e.nonbonded_total * e.nonbonded_total;
   
-  m_average.lj_total = av.m_average.lj_total + dt * e.lj_total;
+  m_average.lj_total = av.m_average.lj_total + cum * e.lj_total;
   m_square_average.lj_total = av.m_square_average.lj_total +
     dt * e.lj_total * e.lj_total;
   
-  m_average.crf_total = av.m_average.crf_total + dt * e.crf_total;
+  m_average.crf_total = av.m_average.crf_total + cum * e.crf_total;
   m_square_average.crf_total = av.m_square_average.crf_total +
     dt * e.crf_total * e.crf_total;
   
-  m_average.special_total = av.m_average.special_total + dt * e.special_total;
+  m_average.special_total = av.m_average.special_total + cum * e.special_total;
   m_square_average.special_total = av.m_square_average.special_total +
     dt * e.special_total * e.special_total;
 
-  m_average.posrest_total = av.m_average.posrest_total + dt * e.posrest_total;
+  m_average.posrest_total = av.m_average.posrest_total + cum * e.posrest_total;
   m_square_average.posrest_total = av.m_square_average.posrest_total +
     dt * e.posrest_total * e.posrest_total;
 
   m_average.constraints_total = 
-    av.m_average.constraints_total + dt * e.constraints_total;
+    av.m_average.constraints_total + cum * e.constraints_total;
   m_square_average.constraints_total = av.m_square_average.constraints_total +
     dt * e.constraints_total * e.constraints_total;
   
@@ -133,7 +137,7 @@ configuration::Energy_Average::update(configuration::Energy const &e,
     assert(e.kinetic_energy.size() > i);
     
     m_average.kinetic_energy[i] = av.m_average.kinetic_energy[i] +
-      dt * e.kinetic_energy[i];
+      cum * e.kinetic_energy[i];
     m_square_average.kinetic_energy[i] = av.m_square_average.kinetic_energy[i] + 
       dt * e.kinetic_energy[i] * e.kinetic_energy[i];
 
@@ -142,7 +146,7 @@ configuration::Energy_Average::update(configuration::Energy const &e,
     assert(e.com_kinetic_energy.size() > i);
     
     m_average.com_kinetic_energy[i] = av.m_average.com_kinetic_energy[i] +
-      dt * e.com_kinetic_energy[i];
+      cum * e.com_kinetic_energy[i];
     m_square_average.com_kinetic_energy[i] = av.m_square_average.com_kinetic_energy[i] +
       dt * e.com_kinetic_energy[i] * e.com_kinetic_energy[i];
 
@@ -151,7 +155,7 @@ configuration::Energy_Average::update(configuration::Energy const &e,
     assert(e.ir_kinetic_energy.size() > i);
 
     m_average.ir_kinetic_energy[i] = av.m_average.ir_kinetic_energy[i] +
-      dt * e.ir_kinetic_energy[i];
+      cum * e.ir_kinetic_energy[i];
     m_square_average.ir_kinetic_energy[i] = av.m_square_average.ir_kinetic_energy[i] +
       dt * e.ir_kinetic_energy[i] * e.ir_kinetic_energy[i];
     
@@ -159,33 +163,33 @@ configuration::Energy_Average::update(configuration::Energy const &e,
   
   // the energy groups
   for(size_t i=0; i < e.bond_energy.size(); ++i){
-    m_average.bond_energy[i] = av.m_average.bond_energy[i] + dt * e.bond_energy[i];
+    m_average.bond_energy[i] = av.m_average.bond_energy[i] + cum * e.bond_energy[i];
     m_square_average.bond_energy[i] = av.m_square_average.bond_energy[i] +
       dt * e.bond_energy[i] * e.bond_energy[i];
   
-    m_average.angle_energy[i] = av.m_average.angle_energy[i] + dt * e.angle_energy[i];
+    m_average.angle_energy[i] = av.m_average.angle_energy[i] + cum * e.angle_energy[i];
     m_square_average.angle_energy[i] = av.m_square_average.angle_energy[i] +
       dt * e.angle_energy[i] * e.angle_energy[i];
   
     m_average.improper_energy[i] = av.m_average.improper_energy[i] +
-      dt * e.improper_energy[i];
+      cum * e.improper_energy[i];
     m_square_average.improper_energy[i] = av.m_square_average.improper_energy[i] +
       dt * e.improper_energy[i] * e.improper_energy[i];
   
     m_average.dihedral_energy[i] = av.m_average.dihedral_energy[i] +
-      dt * e.dihedral_energy[i];
+      cum * e.dihedral_energy[i];
     m_square_average.dihedral_energy[i] = av.m_square_average.dihedral_energy[i] +
       dt * e.dihedral_energy[i] * e.dihedral_energy[i];
 
     // and the nonbonded groups
     for(size_t j=0; j < e.lj_energy.size(); ++j){
       m_average.lj_energy[i][j] = av.m_average.lj_energy[i][j] + 
-	dt * e.lj_energy[i][j];
+	cum * e.lj_energy[i][j];
       m_square_average.lj_energy[i][j] = av.m_square_average.lj_energy[i][j] +
 	dt * e.lj_energy[i][j] * e.lj_energy[i][j];
   
       m_average.crf_energy[i][j] = av.m_average.crf_energy[i][j] +
-	dt * e.crf_energy[i][j];
+	cum * e.crf_energy[i][j];
       m_square_average.crf_energy[i][j] = av.m_square_average.crf_energy[i][j] +
 	dt * e.crf_energy[i][j] * e.crf_energy[i][j];
       
@@ -193,12 +197,12 @@ configuration::Energy_Average::update(configuration::Energy const &e,
   
     // special energies
     m_average.posrest_energy[i] = av.m_average.posrest_energy[i] +
-      dt * e.posrest_energy[i];
+      cum * e.posrest_energy[i];
     m_square_average.posrest_energy[i] = av.m_square_average.posrest_energy[i] +
       dt * e.posrest_energy[i] * e.posrest_energy[i];
 
     m_average.constraints_energy[i] = av.m_average.constraints_energy[i] +
-      dt * e.constraints_energy[i];
+      cum * e.constraints_energy[i];
     m_square_average.constraints_energy[i] = 
       av.m_square_average.constraints_energy[i] +
       dt * e.constraints_energy[i] * e.constraints_energy[i];
@@ -229,9 +233,12 @@ void
 configuration::Energy_Average::average(configuration::Energy &energy, 
 				       configuration::Energy &fluctuation,
 				       math::Matrix &pressure,
-				       math::Matrix &pressure_fluctuations)
+				       math::Matrix &pressure_fluctuations,
+				       double const dlamt)
 {
   double diff;
+  double cum = m_time;
+  if (dlamt) cum = 1;
   
   Energy &e = energy;
   Energy &f = fluctuation;
@@ -241,13 +248,13 @@ configuration::Energy_Average::average(configuration::Energy &energy,
 
   DEBUG(10, "average total: " << m_average.total << "\ttime: " << m_time);
 
-  e.total = m_average.total / m_time;
+  e.total = m_average.total / cum;
   diff = m_square_average.total - m_average.total * m_average.total / m_time;
   if (diff > 0.0)
     f.total = sqrt(diff / m_time);
   else f.total = 0.0;
   
-  e.kinetic_total = m_average.kinetic_total / m_time;
+  e.kinetic_total = m_average.kinetic_total / cum;
   diff = m_square_average.kinetic_total -
     m_average.kinetic_total * m_average.kinetic_total / m_time;
   if (diff > 0.0)
@@ -255,7 +262,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.kinetic_total = 0.0;
   
-  e.potential_total = m_average.potential_total / m_time;
+  e.potential_total = m_average.potential_total / cum;
   diff = m_square_average.potential_total - 
     m_average.potential_total * m_average.potential_total / m_time;
   if (diff > 0.0)
@@ -264,7 +271,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     f.potential_total = 0.0;
   
   // physical interaction totals
-  e.bond_total = m_average.bond_total / m_time;
+  e.bond_total = m_average.bond_total / cum;
   diff = m_square_average.bond_total -
     m_average.bond_total * m_average.bond_total / m_time;
   if (diff > 0.0)
@@ -272,7 +279,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.bond_total = 0.0;
   
-  e.angle_total = m_average.angle_total / m_time;
+  e.angle_total = m_average.angle_total / cum;
   diff = m_square_average.angle_total -
     m_average.angle_total * m_average.angle_total / m_time;
   if (diff > 0.0)
@@ -280,7 +287,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.angle_total = 0.0;
   
-  e.improper_total = m_average.improper_total / m_time;
+  e.improper_total = m_average.improper_total / cum;
   diff = m_square_average.improper_total -
     m_average.improper_total * m_average.improper_total / m_time;
   if (diff > 0.0)
@@ -288,7 +295,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.improper_total = 0.0;
   
-  e.dihedral_total = m_average.dihedral_total / m_time;
+  e.dihedral_total = m_average.dihedral_total / cum;
   diff = m_square_average.dihedral_total -
     m_average.dihedral_total * m_average.dihedral_total / m_time;
   if (diff > 0.0)
@@ -296,7 +303,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.dihedral_total = 0;
 
-  e.bonded_total = m_average.bonded_total / m_time;
+  e.bonded_total = m_average.bonded_total / cum;
   diff = m_square_average.bonded_total -
     m_average.bonded_total * m_average.bonded_total / m_time;
   if (diff > 0.0)
@@ -304,7 +311,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.bonded_total = 0.0;
 
-  e.nonbonded_total = m_average.nonbonded_total / m_time;
+  e.nonbonded_total = m_average.nonbonded_total / cum;
   diff = m_square_average.nonbonded_total -
     m_average.nonbonded_total * m_average.nonbonded_total / m_time;
   if (diff > 0.0)
@@ -312,7 +319,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.nonbonded_total = 0.0;
   
-  e.lj_total = m_average.lj_total / m_time;
+  e.lj_total = m_average.lj_total / cum;
   diff = m_square_average.lj_total -
     m_average.lj_total * m_average.lj_total / m_time;
   if (diff > 0.0)
@@ -320,7 +327,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.lj_total = 0.0;
 
-  e.crf_total = m_average.crf_total / m_time;
+  e.crf_total = m_average.crf_total / cum;
   diff = m_square_average.crf_total -
     m_average.crf_total * m_average.crf_total / m_time;
   if (diff > 0.0)
@@ -329,7 +336,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     f.crf_total = 0.0;
 
   // special energies
-  e.special_total = m_average.special_total / m_time;
+  e.special_total = m_average.special_total / cum;
   diff = m_square_average.special_total -
     m_average.special_total * m_average.special_total / m_time;
   if (diff > 0.0)
@@ -337,7 +344,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.special_total = 0.0;
 
-  e.posrest_total = m_average.posrest_total / m_time;
+  e.posrest_total = m_average.posrest_total / cum;
   diff = m_square_average.posrest_total -
     m_average.posrest_total * m_average.posrest_total / m_time;
   if (diff > 0.0)
@@ -345,7 +352,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   else
     f.posrest_total = 0.0;
 
-  e.constraints_total = m_average.constraints_total / m_time;
+  e.constraints_total = m_average.constraints_total / cum;
   diff = m_square_average.constraints_total -
     m_average.constraints_total * m_average.constraints_total / m_time;
   if (diff > 0.0)
@@ -355,7 +362,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   
   // kinetic energies of the baths
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
-    e.kinetic_energy[i] = m_average.kinetic_energy[i] / m_time;
+    e.kinetic_energy[i] = m_average.kinetic_energy[i] / cum;
     diff = m_square_average.kinetic_energy[i] -
       m_average.kinetic_energy[i] * m_average.kinetic_energy[i] / m_time;
     if (diff > 0.0)
@@ -363,7 +370,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     else
       f.com_kinetic_energy[i] = 0.0;
 
-    e.com_kinetic_energy[i] = m_average.com_kinetic_energy[i] / m_time;
+    e.com_kinetic_energy[i] = m_average.com_kinetic_energy[i] / cum;
     diff = m_square_average.com_kinetic_energy[i] -
       m_average.com_kinetic_energy[i] * m_average.com_kinetic_energy[i] 
       / m_time;
@@ -372,7 +379,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     else
       f.com_kinetic_energy[i] = 0.0;
 
-    e.ir_kinetic_energy[i] = m_average.ir_kinetic_energy[i] / m_time;
+    e.ir_kinetic_energy[i] = m_average.ir_kinetic_energy[i] / cum;
     diff = m_square_average.ir_kinetic_energy[i] -
       m_average.ir_kinetic_energy[i] * m_average.ir_kinetic_energy[i] 
       / m_time;
@@ -385,7 +392,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   
   // the energy groups
   for(size_t i=0; i < e.bond_energy.size(); ++i){
-    e.bond_energy[i] = m_average.bond_energy[i] / m_time;
+    e.bond_energy[i] = m_average.bond_energy[i] / cum;
     diff = m_square_average.bond_energy[i] -
       m_average.bond_energy[i] * m_average.bond_energy[i] / m_time;
     if (diff > 0.0)
@@ -393,7 +400,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     else
       f.bond_energy[i] = 0.0;
 
-    e.angle_energy[i] = m_average.angle_energy[i] / m_time;
+    e.angle_energy[i] = m_average.angle_energy[i] / cum;
     diff = m_square_average.angle_energy[i] -
       m_average.angle_energy[i] * m_average.angle_energy[i] / m_time;
     if (diff > 0.0)
@@ -401,7 +408,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     else
       f.angle_energy[i] = 0.0;
 
-    e.improper_energy[i] = m_average.improper_energy[i] / m_time;
+    e.improper_energy[i] = m_average.improper_energy[i] / cum;
     diff = m_square_average.improper_energy[i]
       - m_average.improper_energy[i] * m_average.improper_energy[i] / m_time;
     if (diff > 0.0)
@@ -409,7 +416,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     else
       f.improper_energy[i] = 0.0;
     
-    e.dihedral_energy[i] = m_average.dihedral_energy[i] / m_time;
+    e.dihedral_energy[i] = m_average.dihedral_energy[i] / cum;
     diff = m_square_average.dihedral_energy[i] -
       m_average.dihedral_energy[i] * m_average.dihedral_energy[i] / m_time;
     if (diff > 0.0)
@@ -419,7 +426,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     
     // and the nonbonded groups
     for(size_t j=0; j < e.lj_energy.size(); ++j){
-      e.lj_energy[i][j] = m_average.lj_energy[i][j] / m_time;
+      e.lj_energy[i][j] = m_average.lj_energy[i][j] / cum;
       diff = m_square_average.lj_energy[i][j] -
 	m_average.lj_energy[i][j] * m_average.lj_energy[i][j] / m_time;
       if (diff > 0.0)
@@ -427,7 +434,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
       else
 	f.lj_energy[i][j] = 0.0;
 
-      e.crf_energy[i][j] = m_average.crf_energy[i][j] / m_time;
+      e.crf_energy[i][j] = m_average.crf_energy[i][j] / cum;
       diff = m_square_average.crf_energy[i][j] -
 	m_average.crf_energy[i][j] * m_average.crf_energy[i][j] / m_time;
       if (diff > 0.0)
@@ -436,7 +443,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
 	f.crf_energy[i][j] = 0.0;
     }
 
-    e.posrest_energy[i] = m_average.posrest_energy[i] / m_time;
+    e.posrest_energy[i] = m_average.posrest_energy[i] / cum;
     diff = m_square_average.posrest_energy[i]
       - m_average.posrest_energy[i] * m_average.posrest_energy[i] / m_time;
     if (diff > 0.0)
@@ -444,7 +451,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
     else
       f.posrest_energy[i] = 0.0;
 
-    e.constraints_energy[i] = m_average.constraints_energy[i] / m_time;
+    e.constraints_energy[i] = m_average.constraints_energy[i] / cum;
     diff = m_square_average.constraints_energy[i]
       - m_average.constraints_energy[i] * m_average.constraints_energy[i] 
       / m_time;
@@ -459,7 +466,7 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   // the pressure
   for(int a=0; a<3; ++a){
     for(int b=0; b<3; ++b){
-      pressure(a,b) = m_pressure_average(a,b) / m_time;
+      pressure(a,b) = m_pressure_average(a,b) / cum;
       diff = m_square_pressure_average(a,b) -
 	m_pressure_average(a,b) * m_pressure_average(a,b) / m_time;
       if (diff > 0.0)

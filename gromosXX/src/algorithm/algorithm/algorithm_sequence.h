@@ -36,6 +36,8 @@ namespace algorithm
 	    configuration::Configuration &conf,
 	    simulation::Simulation &sim);
 
+    int print_timing(std::ostream & os);
+
   protected:
 
   };

@@ -55,6 +55,8 @@ io::In_Topology::read(topology::Topology& topo,
   DEBUG(7, "reading in topology");
 
   std::cout << "TOPOLOGY\n";
+
+  std::cout << title << "\n";
   
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -90,14 +92,15 @@ io::In_Topology::read(topology::Topology& topo,
     
     for(n=0; n<10; ++n)
       std::cout << std::setw(8) << n+1;
-    
+    std::cout << "\n\t";
+
     for(n=0; it != buffer.end() - 1; ++it, ++n){
       std::string s;
       _lineStream.clear();
       _lineStream.str(*it);
       _lineStream >> s;
       
-      if (((n) % 10) == 0) std::cout << "\n\t";
+      if (n && ((n) % 10) == 0) std::cout << std::setw(10) << n << "\n\t";
       std::cout << std::setw(8) << s;      
 
       topo.residue_names().push_back(s);
