@@ -92,12 +92,29 @@ namespace io {
      */
     void free_energy_trajectory(std::string const name, int every=1);
     /**
+     * write block averaged energy / pressure / volume properties.
+     */
+    void block_averaged_energy(std::string const name, int every=1);
+    /**
+     * write block averaged free energies.
+     */
+    void block_averaged_free_energy(std::string const name, int every=1);
+    /**
      * precision of output.
      */
     void precision(int prec, int add=6);
+    /**
+     * precision accessor.
+     */
     int precision();
 
+    /**
+     * force write precision.
+     */
     void force_precision(int prec, int add=9);
+    /**
+     * force write precision accessor.
+     */
     int force_precision();
     
     /**
@@ -131,6 +148,9 @@ namespace io {
     std::ofstream m_force_traj;
     std::ofstream m_energy_traj;
     std::ofstream m_free_energy_traj;
+    std::ofstream m_blockaveraged_energy;
+    std::ofstream m_blockaveraged_free_energy;
+    
     std::ostream & m_output;
     
     bool m_final;
@@ -140,6 +160,10 @@ namespace io {
     int m_every_force;
     int m_every_energy;
     int m_every_free_energy;
+    int m_every_blockaverage;
+
+    bool m_write_blockaverage_energy;
+    bool m_write_blockaverage_free_energy;
 
     int m_precision;
     int m_force_precision;
@@ -198,6 +222,15 @@ namespace io {
     void _print_flexv(configuration::Configuration const &conf,
 		      topology::Topology const &topo,
 		      std::ostream &os);
+
+    void _print_blockaveraged_energyred(configuration::Configuration const &conf, 
+					std::ostream &os);
+
+    void _print_blockaveraged_volumepressurered(configuration::Configuration const &conf, 
+						std::ostream &os);
+
+    void _print_blockaveraged_free_energyred(configuration::Configuration const &conf, 
+					     std::ostream &os);
 
   };
   

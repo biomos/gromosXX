@@ -329,6 +329,10 @@ namespace simulation
        * free energy.
        */
       int free_energy;
+      /**
+       * block averages.
+       */
+      int block_average;
     } write;
 
     /**

@@ -3,16 +3,23 @@
  * methods definition
  */
 
+#include <util/stdheader.h>
+
+#include <configuration/configuration_global.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <configuration/configuration.h>
+
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
+
+#include <math/periodicity.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE configuration
 #define SUBMODULE configuration
-
-#include <util/stdheader.h>
-#include <configuration/configuration_global.h>
-#include <configuration/energy.h>
-#include <configuration/energy_average.h>
-#include <configuration/configuration.h>
 
 double configuration_ver = 0.10;
 
@@ -37,6 +44,78 @@ configuration::Configuration::Configuration()
     }
   
 }
+
+void configuration::Configuration::initialise(topology::Topology & topo,
+					      simulation::Parameter const & param)
+{
+  // resize the energy arrays
+  const size_t num = topo.energy_groups().size();
+  const size_t numb = param.multibath.multibath.size();
+
+  DEBUG(5, "number of energy groups: " << num 
+	<< "\nnumber of baths: " << numb);
+
+  current().energies.resize(num, numb);
+  current().energy_averages.resize(num, numb);
+
+  old().energies.resize(num, numb);
+  old().energy_averages.resize(num, numb);
+  
+  current().perturbed_energy_derivatives.resize(num, numb);
+  current().perturbed_energy_derivative_averages.resize(num, numb);
+    
+  old().perturbed_energy_derivatives.resize(num, numb);
+  old().perturbed_energy_derivative_averages.resize(num, numb);
+
+  current().averages.resize(topo, *this, param);
+  old().averages.resize(topo, *this, param);
+
+  // resize some special data
+  special().rel_mol_com_pos.resize(topo.num_atoms());
+
+  // possibly resize the dihedral angle monitoring array
+  // initialize or set to such a value that it is recalculated in
+  // the first step, initialization would require an additional function
+  // which can be done only after reading of the coordinates. Would be a
+  // nicer solution, but also requires the parameters...
+  if(param.print.monitor_dihedrals){
+    special().dihedral_angle_minimum.resize
+      (topo.solute().dihedrals().size(), 4*math::Pi);
+  }
+  
+  if (param.constraint.solute.algorithm == simulation::constr_flexshake &&
+      special().flexible_vel.size() == 0){
+
+    special().flexible_vel.resize(topo.solute().distance_constraints().size() +
+				  topo.perturbed_solute().distance_constraints().size());
+
+    special().flexible_ekin.resize(numb);
+  }
+  
+  // gather the molecules!
+  switch(boundary_type){
+    case math::vacuum:
+      break;
+    case math::rectangular:
+      {
+	math::Periodicity<math::rectangular> periodicity(current().box);
+	periodicity.gather_molecules_into_box(*this, topo);
+	break;
+      }
+    case math::triclinic:
+      {
+	math::Periodicity<math::triclinic> periodicity(current().box);
+	periodicity.gather_molecules_into_box(*this, topo);
+	break;
+      }
+    default:
+      std::cout << "wrong periodic boundary conditions!";
+      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+  }
+
+
+}
+
 
 /**
  * set the number of atoms.

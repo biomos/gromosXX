@@ -6,6 +6,21 @@
 #ifndef INCLUDED_CONFIGURATION_H
 #define INCLUDED_CONFIGURATION_H
 
+// headers needed for configuration
+#include <configuration/energy.h>
+#include <configuration/energy_average.h>
+#include <configuration/average.h>
+
+namespace topology
+{
+  class Topology;
+}
+
+namespace simulation
+{
+  class Parameter;
+}
+
 namespace configuration
 {
   /**
@@ -66,7 +81,12 @@ namespace configuration
        * energy averages.
        */
       configuration::Energy_Average energy_averages;
-    
+
+      /**
+       * averages.
+       */
+      configuration::Average averages;
+      
       /**
        * perturbed energy derivatives.
        */
@@ -155,6 +175,14 @@ namespace configuration
      */
     math::boundary_enum boundary_type;
     
+    /**
+     * initialise.
+     * should be called after a (initial) configuration has been read in or
+     * constructed otherwise.
+     */
+    void initialise(topology::Topology & topo,
+		    simulation::Parameter const & param);
+
   protected:
 
     /**

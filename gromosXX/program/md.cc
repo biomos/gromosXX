@@ -5,21 +5,11 @@
 
 #include <util/stdheader.h>
 
-#include <topology/core/core.h>
-
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
-
-#include <topology/topology.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
-#include <simulation/simulation.h>
-#include <configuration/energy.h>
-#include <configuration/energy_average.h>
-#include <configuration/configuration.h>
 #include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
@@ -55,10 +45,10 @@ int main(int argc, char *argv[]){
       {
         "topo", "conf", "input", "verb", "pttopo",
         "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-	"posres", "version"
+	"bae", "bag", "posres", "version"
       };
     
-    int nknowns = 15;
+    int nknowns = 17;
     
     std::string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
@@ -71,6 +61,8 @@ int main(int argc, char *argv[]){
     usage += "\t[@trf    <force trajectory>]\n";
     usage += "\t[@tre    <energy trajectory>]\n";
     usage += "\t[@trg    <free energy trajectory>]\n";
+    usage += "\t[@bae    <block averaged energy trajectory>]\n";
+    usage += "\t[@bag    <block averaged free energy trajectory>]\n";    
     usage += "\t[@posres <position restraints data>]\n";
     usage += "\t[@print  <pairlist/force>]\n";
     usage += "\t[@trp    <print file>]\n";
@@ -124,37 +116,17 @@ int main(int argc, char *argv[]){
     // parse the verbosity flag and set debug levels
     util::parse_verbosity(args);
 
-    // std::cout << "timing (arguments and verbosity) : " 
-    // << util::now() - init_start << std::endl;
-    // init_start = util::now();
-    
     // create the simulation classes
     topology::Topology topo;
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
 
-    // std::cout << "timing (constructed classes) : "
-    // << util::now() - init_start << std::endl;
-    // init_start = util::now();
-
     io::Out_Configuration traj("GromosXX\n");
-
-    // std::cout << "timing (output) : "
-    // << util::now() - init_start << std::endl;
-    // init_start = util::now();
 
     io::read_input(args, topo, conf, sim,  md);
 
-    // std::cout << "timing (read input) : "
-    // << util::now() - init_start << std::endl;
-    // init_start = util::now();
-
     io::read_special(args, topo, conf, sim);
-
-    // std::cout << "timing (read special) : "
-    // << util::now() - init_start << std::endl;
-    // init_start = util::now();
 
     traj.title("GromosXX\n" + sim.param().title);
 
@@ -181,6 +153,14 @@ int main(int argc, char *argv[]){
       traj.free_energy_trajectory(args["trg"], sim.param().write.free_energy);
     else if (sim.param().write.free_energy)
       throw std::string("write free energy trajectory but no trg argument");
+    if (args.count("bae") > 0)
+      traj.block_averaged_energy(args["bae"], sim.param().write.block_average);
+    else if (sim.param().write.block_average && sim.param().write.energy)
+      throw std::string("write block averaged energy but no bae argument");
+    if (args.count("bag") > 0)
+      traj.block_averaged_free_energy(args["bag"], sim.param().write.block_average);
+    else if (sim.param().write.block_average && sim.param().write.free_energy)
+      throw std::string("write block averaged free energy but no bag argument");
 
     std::cout << "\nMESSAGES FROM INITIALIZATION\n";
     if (io::messages.display(std::cout) >= io::message::error){
@@ -262,21 +242,13 @@ int main(int argc, char *argv[]){
 	// try to save the final structures...
 	break;	
       }
-      
-      conf.current().energy_averages.update(conf.old().energies,
-					    conf.old().energy_averages,
-					    sim.time_step_size());
+
       // perturbed energy derivatives
       if (sim.param().perturbation.perturbation){
-
 	conf.old().perturbed_energy_derivatives.calculate_totals();
-	
-	conf.current().perturbed_energy_derivative_averages.update
-	  (conf.old().perturbed_energy_derivatives,
-	   conf.old().perturbed_energy_derivative_averages,
-	   sim.time_step_size(),
-	   sim.param().perturbation.dlamt);
       }
+      
+      conf.current().averages.apply(topo, conf, sim);
       
       traj.print(topo, conf, sim);
 
@@ -285,7 +257,6 @@ int main(int argc, char *argv[]){
 
     }
     
-
     std::cout << "writing final configuration" << std::endl;
     
     traj.write(conf, topo, sim, io::final);
