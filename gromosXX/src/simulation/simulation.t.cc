@@ -31,9 +31,9 @@ int construct_test()
   
   // this is rather a compile test
   simulation::system the_system;
-  simulation::topology the_topology;
+  simulation::Topology the_topology;
   
-  simulation::simulation<simulation::topology, simulation::system>
+  simulation::Simulation<simulation::Topology, simulation::system>
     the_simulation(the_topology, the_system);
   
   // two pseudo tests (-> but they failed the first time!!!)
@@ -71,17 +71,6 @@ int construct_test()
   
   return result;
 }
-
-/*
-test_suite*
-init_unit_test_suite( int argc, char* argv[] )
-{
-    test_suite* test= BOOST_TEST_SUITE( "simulation test" );
-    test->add( BOOST_TEST_CASE( &construct_test ) );
-
-    return test;
-}
-*/
 
 int main()
 {

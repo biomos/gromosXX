@@ -55,7 +55,7 @@ int forcefield_test()
     const int SIZE = 10;
   
     simulation::system the_system;
-    simulation::topology the_topology;
+    simulation::Topology the_topology;
   
     the_system.resize(SIZE);
     the_topology.resize(SIZE);
@@ -70,7 +70,7 @@ int forcefield_test()
     the_system.vel() = 0.0;
     the_system.force() = 0.0;
   
-    typedef simulation::simulation<simulation::topology, simulation::system>
+    typedef simulation::Simulation<simulation::Topology, simulation::system>
       simulation_type;  
 
     simulation_type the_simulation(the_topology, the_system);

@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <stdexcept>
 
+#include "../debug.h"
+
 #include "../math/gmath.h"
 
 #include "../simulation/simulation.h"
@@ -16,6 +18,8 @@
 
 #include "integration/leap_frog.h"
 #include "integration/runge_kutta.h"
+
+#include "../debug.cc"
 
 using namespace math;
 
@@ -50,7 +54,7 @@ int leap_frog_test()
   const int SIZE = 10;
   
   simulation::system the_system;
-  simulation::topology the_topology;
+  simulation::Topology the_topology;
   
   the_system.resize(SIZE);
   the_topology.resize(SIZE);
@@ -69,7 +73,7 @@ int leap_frog_test()
   
   // the_topology.mass() = 1.0;
 
-  typedef simulation::simulation<simulation::topology, simulation::system>
+  typedef simulation::Simulation<simulation::Topology, simulation::system>
     simulation_type;  
 
   simulation_type the_simulation(the_topology, the_system);
@@ -160,7 +164,7 @@ int runge_kutta_test()
   const int SIZE = 5;
   
   simulation::system the_system;
-  simulation::topology the_topology;
+  simulation::Topology the_topology;
   
   the_system.resize(SIZE);
   the_topology.resize(SIZE);
@@ -178,7 +182,7 @@ int runge_kutta_test()
   
   // the_topology.mass() = 1.0;
 
-  typedef simulation::simulation<simulation::topology, simulation::system>
+  typedef simulation::Simulation<simulation::Topology, simulation::system>
     simulation_type;  
 
   simulation_type the_simulation(the_topology, the_system);

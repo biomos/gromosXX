@@ -28,7 +28,7 @@ template<typename t_simulation, typename t_pairlist>
 inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 ::add_lj_parameter(size_t iac_i, size_t iac_j, lj_parameter_struct lj)
 {
-  DEBUG(4, "Nonbonded_Interaction::add_lj_parameter " 
+  DEBUG(15, "Nonbonded_Interaction::add_lj_parameter " 
 	<< iac_i << "-" << iac_j);
   
   assert(iac_i < m_lj_parameter.size());
@@ -48,7 +48,7 @@ inline interaction::lj_parameter_struct const &
 interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 ::lj_parameter(size_t iac_i, size_t iac_j)
 {
-  DEBUG(4, "Nonbonded_Interaction::get_lj_parameter " 
+  DEBUG(15, "Nonbonded_Interaction::get_lj_parameter " 
 	<< iac_i << "-" << iac_j);
 
   assert(iac_i < m_lj_parameter.size());
@@ -107,6 +107,9 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
   // add long-range force
   sim.system().force() += m_longrange_force;
 
+  // add 1,4 - interactions
+  do_14_interactions(sim.topology(), sim.system());
+
 }
 
 /**
@@ -141,12 +144,70 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 
     const double dist6i = 1.0 / (dist2 * dist2 * dist2);
     
-    math::Vec f = v * ((2 * lj.c12 * dist6i - lj.c6) * 6 * dist6i);
+    math::Vec f = v * ((2 * lj.c12 * dist6i - lj.c6) * 6 * dist6i / dist2);
 
     force(it.i()) += f;
-    force(it.j()) -= f;
+    force(*it) -= f;
   }
   
+}
+
+/**
+ * helper function to calculate the forces and energies from the
+ * 1,4 interactions.
+ */
+template<typename t_simulation, typename t_pairlist>
+inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
+::do_14_interactions(typename t_simulation::topology_type &topo,
+		     typename t_simulation::system_type &sys)
+{
+  math::Vec v;
+  math::VArray &pos = sys.pos();
+  math::VArray &force = sys.force();
+  
+  DEBUG(7, "\tcalculate 1,4-interactions");
+  
+  std::set<int>::const_iterator it, to;
+  
+  for(size_t i=0; i<topo.num_solute_atoms(); ++i){
+    it = topo.one_four_pair(i).begin();
+    to = topo.one_four_pair(i).end();
+    
+    for( ; it != to; ++it){
+      DEBUG(10, "\tpair " << i << " - " << *it);
+      
+      sys.periodicity().nearest_image(pos(i), pos(*it), v);
+      const double dist2 = dot(v, v);
+
+      DEBUG(10, "\tdist2 = " << dist2);
+      assert(dist2 != 0.0);
+
+      const lj_parameter_struct &lj = 
+	lj_parameter(topo.iac(i),
+		     topo.iac(*it));
+
+      DEBUG(10, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+
+      const double dist6i = 1.0 / (dist2 * dist2 * dist2);
+    
+      math::Vec f = v * ((2 * lj.cs12 * dist6i - lj.cs6)
+			 * 6 * dist6i / dist2);
+
+      force(i) += f;
+      force(*it) -= f;
+    } // loop over 1,4 pairs
+  } // loop over solute atoms
+}  
+
+/**
+ * pairlist accessor
+ */
+template<typename t_simulation, typename t_pairlist>
+t_pairlist & 
+interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
+::pairlist()
+{
+  return m_pairlist;
 }
 
   

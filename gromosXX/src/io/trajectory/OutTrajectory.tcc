@@ -58,7 +58,8 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
 
     _print_timestep(sim, *m_pos_traj);
     _print_positionred(sim.system(), *m_pos_traj);
-    _print_box(sim.system(), *m_pos_traj);
+    if (sim.system().boundary_condition() != math::vacuum)
+      _print_box(sim.system(), *m_pos_traj);
     
     if(m_vel){
       _print_timestep(sim, *m_vel_traj);
@@ -143,7 +144,7 @@ inline void io::OutTrajectory<t_simulation>
 
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
-::_print_position(simulation::system &sys, simulation::topology &topo, std::ostream &os)
+::_print_position(simulation::system &sys, simulation::Topology &topo, std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(9);
@@ -154,17 +155,24 @@ inline void io::OutTrajectory<t_simulation>
   simulation::Solute &solute = topo.solute();
   std::vector<std::string> &residue_name = topo.residue_name();
 
+  math::Vec v, o(0.0, 0.0, 0.0);
+  math::Vec half_box(sys.box()(0)(0), sys.box()(1)(1), sys.box()(2)(2));
+  half_box /= 2.0;
+  
   os << "# first 24 chars ignored\n";
   
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
+
+    v = pos(i);
+    sys.periodicity().positive_box(v);
 
     os << std::setw(6)  << solute.atom(i).residue_nr+1
        << std::setw(5)  << residue_name[solute.atom(i).residue_nr]
        << std::setw(6)  << solute.atom(i).name
        << std::setw(8)  << i+1
-       << std::setw(15) << pos(i)(0)
-       << std::setw(15) << pos(i)(1)
-       << std::setw(15) << pos(i)(2)
+       << std::setw(15) << v(0)
+       << std::setw(15) << v(1)
+       << std::setw(15) << v(2)
        << "\n";
   }
   
@@ -175,15 +183,18 @@ inline void io::OutTrajectory<t_simulation>
     for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
       
       for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
+
+	v = pos(index);
+	sys.periodicity().positive_box(v);
 	
 	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
 	   << std::setw(5)  
 	   << residue_name[topo.solvent(s).atom(a).residue_nr]
 	   << std::setw(6)  << topo.solvent(s).atom(a).name
 	   << std::setw(8)  << index + 1
-	   << std::setw(15) << pos(index)(0)
-	   << std::setw(15) << pos(index)(1)
-	   << std::setw(15) << pos(index)(2)
+	   << std::setw(15) << v(0)
+	   << std::setw(15) << v(1)
+	   << std::setw(15) << v(2)
 	   << "\n";
       }
     }
@@ -203,14 +214,21 @@ inline void io::OutTrajectory<t_simulation>
   os << "POSITIONRED\n";
   
   math::VArray &pos = sys.pos();
+  math::Vec v, o(0.0, 0.0, 0.0);
+  math::Vec half_box(sys.box()(0)(0), sys.box()(1)(1), sys.box()(2)(2));
+  half_box /= 2.0;
   
   for(int i=0,to = pos.size(); i<to; ++i){
-    if(i% 10 == 0 && i) os << '#' << std::setw(15) << i << "\n";
-    
-    os << std::setw(15) << pos(i)(0)
-       << std::setw(15) << pos(i)(1)
-       << std::setw(15) << pos(i)(2)
+
+    v = pos(i);
+    sys.periodicity().positive_box(v);
+
+    os << std::setw(15) << v(0)
+       << std::setw(15) << v(1)
+       << std::setw(15) << v(2)
        << "\n";
+
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
   }
   
   os << "END\n";
@@ -219,7 +237,7 @@ inline void io::OutTrajectory<t_simulation>
 
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
-::_print_velocity(simulation::system &sys, simulation::topology &topo, std::ostream &os)
+::_print_velocity(simulation::system &sys, simulation::Topology &topo, std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(9);
@@ -280,12 +298,13 @@ inline void io::OutTrajectory<t_simulation>
   math::VArray &vel = sys.vel();
   
   for(int i=0,to = vel.size(); i<to; ++i){
-    if(i% 10 == 0) os << '#' << std::setw(15) << i << "\n";
-    
+
     os << std::setw(15) << vel(i)(0)
        << std::setw(15) << vel(i)(1)
        << std::setw(15) << vel(i)(2)
        << "\n";
+
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
   }
   
   os << "END\n";
@@ -294,7 +313,7 @@ inline void io::OutTrajectory<t_simulation>
 
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
-::_print_force(simulation::system &sys, simulation::topology &topo, std::ostream &os)
+::_print_force(simulation::system &sys, simulation::Topology &topo, std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(9);
@@ -355,12 +374,13 @@ inline void io::OutTrajectory<t_simulation>
   math::VArray &force = sys.force();
   
   for(int i=0,to = force.size(); i<to; ++i){
-    if(i% 10 == 0) os << '#' << std::setw(15) << i << "\n";
     
     os << std::setw(15) << force(i)(0)
        << std::setw(15) << force(i)(1)
        << std::setw(15) << force(i)(2)
        << "\n";
+
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
   }
   
   os << "END\n";

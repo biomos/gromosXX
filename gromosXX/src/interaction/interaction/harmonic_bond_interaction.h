@@ -23,7 +23,7 @@ namespace interaction
     /**
      * calculate the interactions.
      */
-    virtual void calculate_interactions(t_simulation &simu);
+    virtual void calculate_interactions(t_simulation &sim);
     /**
      * add bond type.
      */

@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   // check command line
   if (argc < 4){
     std::cout << "usage: " << argv[0] << " topology structure input "
-      "[RungeKutta]\n\n";
+      "[RungeKutta] [debuglevel]\n\n";
     io::messages.add("wrong number of arguments.", 
 		     "vtest", 
 		     io::message::critical);
@@ -51,9 +51,15 @@ int main(int argc, char *argv[])
 		       "vtest", io::message::notice);
     }
   }
+  if (argc > 5){
+    debug_level = atoi(argv[5]);
+    std::cout << "setting debug_level = " << debug_level << std::endl;
+  }
   
   simulation::system the_system;
-  simulation::topology the_topology;
+  simulation::Topology the_topology;
+
+  DEBUG(7, "reading the files");
   
   // read in the files
   std::ifstream topo_file(argv[1]);
@@ -68,12 +74,14 @@ int main(int argc, char *argv[])
   topo >> the_topology;
   sys >> the_system;
 
+  DEBUG(7, "topology and system read");
+
   int nsm;
   input.read_SYSTEM(nsm);
   if (nsm) the_topology.solvate(0, nsm);
   
   // simulation
-  typedef simulation::simulation<simulation::topology,
+  typedef simulation::Simulation<simulation::Topology,
     simulation::system> simulation_type;
   
   simulation_type the_simulation(the_topology, the_system);
@@ -87,16 +95,20 @@ int main(int argc, char *argv[])
     new interaction::harmonic_bond_interaction<simulation_type>;
   
   // nonbonded
-  typedef interaction::twin_range_pairlist<simulation_type> pairlist_type;
+  typedef interaction::twin_range_pairlist_cg<simulation_type> pairlist_type;
 
   interaction::Nonbonded_Interaction<simulation_type, pairlist_type>
     *the_nonbonded_interaction =
     new interaction::Nonbonded_Interaction<simulation_type, pairlist_type>;
 
+  DEBUG(7, "parsing parameter");
+
   // read parameter
   topo >> *the_bond_interaction;
   topo >> *the_nonbonded_interaction;
   
+  input >> the_simulation;
+
   // add to the forcefield
   bool do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
   input.read_FORCE(do_bond, do_angle, do_improper,
@@ -116,12 +128,14 @@ int main(int argc, char *argv[])
     case 1:
       break;
     case 2: 
+      std::cout << "SHAKE bonds containing hydrogen atoms" << std::endl;
       the_topology.solute().
 	add_bond_length_constraints(1.0,
 				    the_topology.mass(),
 				    the_bond_interaction->parameter());
       break;
     case 3: 
+      std::cout << "SHAKE all bonds" << std::endl;
       the_topology.solute().
 	add_bond_length_constraints(the_bond_interaction->parameter());
       break;
@@ -131,7 +145,7 @@ int main(int argc, char *argv[])
   
   // create the algorithm
   algorithm::runge_kutta<simulation_type> RK;
-  algorithm::Shake<simulation_type> shake;
+  algorithm::Shake<simulation_type> shake(tolerance);
 
   // prepare for the output
   std::ofstream trap("vtest.trj");
@@ -146,7 +160,7 @@ int main(int argc, char *argv[])
   traj.print_title("\tvtest(gromosXX) MD simulation");
 
   std::cout << "Messages (startup)\n";
-  if (io::messages.display() > io::message::notice)
+  if (io::messages.display(std::cout) > io::message::notice)
     return 1;
   std::cout << "\n";
 
@@ -170,9 +184,18 @@ int main(int argc, char *argv[])
       algorithm::leap_frog<simulation_type>
 	::step(the_simulation, the_forcefield, dt);
   
+    std::cout << "shortrange\n" 
+	      << the_nonbonded_interaction->pairlist().short_range()
+	      << std::endl;
+    std::cout << "longrange\n" 
+	      << the_nonbonded_interaction->pairlist().long_range()
+	      << std::endl;
+
     try{
-      shake.solute(the_topology, the_system, dt);
-      shake.solvent(the_topology, the_system, dt);
+      std::cout << "shake solute:  " << shake.solute(the_topology, the_system, dt)
+		<< "\n";
+      std::cout << "shake solvent: " << shake.solvent(the_topology, the_system, dt)
+		<< "\n";
     }
     catch(std::runtime_error e){
       the_system.exchange_pos();
@@ -189,7 +212,7 @@ int main(int argc, char *argv[])
   std::cout << "\nVTEST finished successfully\n\n" << std::endl;
   
   std::cout << "messages (simulation)\n";
-  io::messages.display();
+  io::messages.display(std::cout);
   std::cout << "\n\n";
   
   }

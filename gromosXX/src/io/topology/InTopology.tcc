@@ -3,7 +3,7 @@
  * implements methods of InTopology.
  */
 
-inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
+inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -123,15 +123,19 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
 
       _lineStream >> a_nr >> r_nr >> s >> t >> m >> q >> cg >> n_ex;
 
+      // exclusions
+      ex.clear();
       for(int i=0; i<n_ex; ++i){
 	_lineStream >> a_ex;
-	ex.insert(a_ex);
+	ex.insert(a_ex-1);
       }
       
+      // 1,4 - pairs
       _lineStream >> n_ex;
+      ex14.clear();
       for(int i=0; i<n_ex; ++i){
 	_lineStream >> a_ex;
-	ex14.insert(a_ex);
+	ex14.insert(a_ex-1);
       }
       
       if (_lineStream.fail())

@@ -12,6 +12,11 @@
 #include "input/InInput.h"
 
 #ifndef NDEBUG
-extern int debug_level;
-extern int trajectory_debug_level;
+namespace io
+{
+  extern int debug_level;
+  extern int trajectory_debug_level;
+  extern int input_debug_level;
+}
+
 #endif

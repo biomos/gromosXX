@@ -23,7 +23,7 @@ namespace io {
     /**
      * Read in a G96 topology into the topology.
      */
-    InTopology & operator>>(simulation::topology &topo);
+    InTopology & operator>>(simulation::Topology &topo);
     /**
      * Read in the harmonic bond parameters.
      */

@@ -12,7 +12,8 @@ include_HEADERS = 		simulation.h \
 				topology/solvent.h \
 				topology/solvent.tcc \
 				topology/topology.h \
-				topology/topology.tcc
+				topology/topology.tcc \
+				topology/chargegroup_iterator.h
 
 lib_LTLIBRARIES	= 		libsimulation.la
 

@@ -3,6 +3,13 @@
  * template methods of harmonic_bond_interaction.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE interaction
+
+#include "../../debug.h"
+
 /**
  * Destructor.
  */
@@ -17,24 +24,31 @@ inline interaction::harmonic_bond_interaction<t_simulation>
  */
 template<typename t_simulation>
 inline void interaction::harmonic_bond_interaction<t_simulation>
-::calculate_interactions(t_simulation &simu)
+::calculate_interactions(t_simulation &sim)
 {
   // loop over the bonds
   simulation::Bond::iterator b_it =
-    simu.topology().solute().bonds().begin();
+    sim.topology().solute().bonds().begin();
 
-  math::VArray &pos   = simu.system().pos();
-  math::VArray &force = simu.system().force();
+  math::VArray &pos   = sim.system().pos();
+  math::VArray &force = sim.system().force();
   math::Vec v, f;
 
   for( ; !b_it.eol(); ++b_it){
-    v = pos(b_it.i()) - pos(b_it.j());
+    sim.system().periodicity()
+      .nearest_image(pos(b_it.i()), pos(b_it.j()), v);
+
     double dist = sqrt(dot(v, v));
     
     assert(dist != 0.0);
     assert(unsigned(b_it.type()) < m_bond_parameter.size());
     
-    f = v * (-m_bond_parameter[b_it.type()].K*
+    DEBUG(7, "bond " << b_it.i() << "-" << b_it.j() << " type " << b_it.type());
+    DEBUG(10, "K " << m_bond_parameter[b_it.type()].K << " r0 " << m_bond_parameter[b_it.type()].r0);
+
+    DEBUG(10, "DF " << (-m_bond_parameter[b_it.type()].K * (dist - m_bond_parameter[b_it.type()].r0) / dist) << "\n" << v);
+
+    f = v * (-m_bond_parameter[b_it.type()].K *
 	     (dist - m_bond_parameter[b_it.type()].r0) / dist);
     
     force(b_it.i()) += f;

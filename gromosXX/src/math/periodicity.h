@@ -40,6 +40,8 @@ namespace math
     Periodicity(Matrix &box, boundary_enum boundary = b);
     void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
     void boundary(boundary_enum const b);
+    void box(Vec &v)const;
+    void positive_box(Vec &v)const;
     boundary_enum const boundary()const;
   private:
     Matrix &m_box;
@@ -57,6 +59,8 @@ namespace math
     Periodicity(Matrix &box, boundary_enum boundary = vacuum);
     void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
     void boundary(boundary_enum const b);
+    void box(Vec &v)const;
+    void positive_box(Vec &v)const;
     boundary_enum const boundary()const;
   private:
     Matrix &m_box;
@@ -73,6 +77,8 @@ namespace math
     Periodicity(Matrix &box, boundary_enum boundary = triclinic);
     void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
     void boundary(boundary_enum const b);
+    void box(Vec &v)const;
+    void positive_box(Vec &v)const;
     boundary_enum const boundary()const;
   private:
     Matrix &m_box;

@@ -41,7 +41,8 @@ void math::Periodicity<b>::nearest_image(Vec const &v1, Vec const &v2,
       }
       break;
     default:
-      /*      io::messages.add("undefined boundary condition",
+      /*
+      io::messages.add("undefined boundary condition",
 		       "math::Periodicity",
 		       io::message::critical);
       */
@@ -63,6 +64,44 @@ void math::Periodicity<math::triclinic>::nearest_image(Vec const &v1, Vec const 
     if (fabs(nim(d)) >= m_box(d)(d) * 0.5)
       nim(d) -= m_box(d)(d) * rint(nim(d) / m_box(d)(d));
   }
+}
+
+template<math::boundary_enum b>
+void math::Periodicity<b>::box(math::Vec &v)const
+{
+  Vec o(0, 0, 0);
+  nearest_image(v, o, v);
+}
+
+void math::Periodicity<math::vacuum>::box(math::Vec &v)const
+{
+}
+
+void math::Periodicity<math::triclinic>::box(math::Vec &v)const
+{
+  Vec o(0, 0, 0);
+  nearest_image(v, o, v);
+}
+
+template<math::boundary_enum b>
+void math::Periodicity<b>::positive_box(math::Vec &v)const
+{
+  Vec o(m_box(0)(0), m_box(1)(1), m_box(2)(2));
+  o /= 2;
+  nearest_image(v, o, v);
+  v += o;  
+}
+
+void math::Periodicity<math::vacuum>::positive_box(math::Vec &v)const
+{
+}
+
+void math::Periodicity<math::triclinic>::positive_box(math::Vec &v)const
+{
+  Vec o(m_box(0)(0), m_box(1)(1), m_box(2)(2));
+  o /= 2;
+  nearest_image(v, o, v);
+  v += o;  
 }
 
 template<math::boundary_enum b>

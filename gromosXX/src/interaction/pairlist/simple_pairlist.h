@@ -97,8 +97,6 @@ namespace interaction
    *
    * @todo add cryptic code somewhere to minimize memory 
    * allocation/deallocation in the update() method.
-   * 
-   * @todo un-hardcode cutoff-distances and nearest-image.
    */
   template<typename t_simulation>
   class twin_range_pairlist :
@@ -118,6 +116,24 @@ namespace interaction
      * the long range pairlist
      */
     simple_pairlist<t_simulation>& long_range() { return second; }
+    /**
+     * update the pairlists (using rcutl, rcutp).
+     */
+    void update(t_simulation &sim);
+
+  };
+
+  /**
+   * @class twin_range_pairlist_cg
+   * a pair of simple_pairlists, the
+   * distance calculation between atoms is
+   * chargegroup based.
+   */
+  template<typename t_simulation>
+  class twin_range_pairlist_cg :
+    public twin_range_pairlist<t_simulation>
+  {
+  public:
     /**
      * update the pairlists (using rcutl, rcutp).
      */

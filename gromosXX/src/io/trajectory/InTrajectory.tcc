@@ -58,8 +58,10 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
       if (pos_read)
 	throw std::runtime_error("second POSITION/POSITIONRED block before "
 				 "all other required blocks have been read in");
+      DEBUG(10, "resize: " << buffer.size()-2);
       sys.resize(buffer.size()-2);
       pos_read = _read_position(sys.pos(), buffer);
+      DEBUG(10, "\tPOSITION read");
 
     }
     
@@ -69,7 +71,7 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       pos_read = _read_positionred(sys.pos(), buffer);
-
+      DEBUG(10, "\tPOSITIONRED read");
     }
 
     if (buffer[0] == "VELOCITY"){
@@ -78,7 +80,7 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       vel_read = _read_velocity(sys.vel(), buffer);
-
+      DEBUG(10, "\tVELOCITY read");
     }
     
     if (buffer[0] == "VELOCITYRED"){
@@ -87,7 +89,7 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       vel_read = _read_velocityred(sys.vel(), buffer);
-
+      DEBUG(10, "\tVELOCITYRED read");
     }
 
     if (buffer[0] == "TRICLINICBOX"){
@@ -96,7 +98,7 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
 
       box_read = _read_box(sys, buffer);
-
+      DEBUG(10, "\tTRICLINICBOX read");
     }
     
   }
@@ -138,8 +140,12 @@ inline bool io::InTrajectory::_read_position(math::VArray &pos, std::vector<std:
     _lineStream >> n >> s1 >> s2 >> nr;
     _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
     
-    if(_lineStream.fail() || !_lineStream.eof())
+    if(_lineStream.fail()){
+      io::messages.add("bad line in POSITION block",
+		       "InTrajectory",
+		       io::message::critical);
       throw std::runtime_error("bad line in POSITION block");
+    }
   }
 
   return true;
@@ -180,8 +186,13 @@ inline bool io::InTrajectory::_read_velocity(math::VArray &vel, std::vector<std:
     _lineStream >> n >> s1 >> s2 >> nr;
     _lineStream >> vel(i)(0) >> vel(i)(1) >> vel(i)(2);
     
-    if(_lineStream.fail() || !_lineStream.eof())
+    if(_lineStream.fail()){
+      io::messages.add("bad line in VELOCITY block",
+		       "InTrajectory",
+		       io::message::critical);
+      
       throw std::runtime_error("bad line in VELOCITY block");
+    }
   }
 
   return true;

@@ -42,6 +42,11 @@ namespace interaction
      * resize the lj_parameter matrix.
      */
     void resize(size_t i);
+
+    /**
+     * pairlist accessor
+     */
+    t_pairlist & pairlist();
     
   protected:
     /**
@@ -68,6 +73,12 @@ namespace interaction
 			 typename t_pairlist::iterator it, 
 			 typename t_pairlist::iterator to,
 			 math::VArray &force);
+
+    /**
+     * calculate the 1,4-interactions.
+     */
+    void do_14_interactions(typename t_simulation::topology_type &topo,
+			    typename t_simulation::system_type &sys);
 
   };
   

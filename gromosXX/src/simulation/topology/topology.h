@@ -15,13 +15,13 @@ namespace simulation
    * @sa simulation::simulation
    * @sa simulation::system
    */
-  class topology
+  class Topology
   {
   public:
     /**
      * Constructor
      */
-    explicit topology();
+    explicit Topology();
 
     /**
      * integer atom code accessor.
@@ -122,7 +122,19 @@ namespace simulation
     /**
      * all exclusions for atom i.
      */
-    std::set<int> & all_exclusion(size_t i);
+    std::set<int> & all_exclusion(size_t const i);
+    /**
+     * 1,4 pairs of atom i.
+     */
+    std::set<int> & one_four_pair(size_t const i);
+    /**
+     * iterator over the chargegrops
+     */
+    chargegroup_iterator chargegroup_begin();
+    /**
+     * end of the chargegroup iterator.
+     */
+    chargegroup_iterator chargegroup_end();
 
   private:
     /**

@@ -41,6 +41,9 @@
     std::cout << STR(MODULE) << ": " <<  s << std::endl; \
   }
 
+// the global one
+extern int debug_level;
+
 namespace interaction
 {
   extern int debug_level;
@@ -51,6 +54,15 @@ namespace io
 {
   extern int debug_level;
   extern int trajectory_debug_level;
+  extern int input_debug_level;
+}
+
+namespace simulation
+{
+  extern int debug_level;
+  extern int simulation_debug_level;
+  extern int topology_debug_level;
+  extern int system_debug_level;
 }
 
 #endif

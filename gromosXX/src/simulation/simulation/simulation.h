@@ -1,6 +1,6 @@
 /**
  * @file src/simulation/simulation/simulation.h
- * the simulation class
+ * the Simulation class
  */
 
 #ifndef INCLUDED_SIMULATION_H
@@ -14,13 +14,13 @@
 namespace simulation
 {
   /**
-   * @class simulation
+   * @class Simulation
    * holds together the system, the topology and
    * input parameters.
    * provides the simulation properties.
    */
   template<typename t_topo, typename t_system>
-  class simulation
+  class Simulation
   {
   public:
     typedef t_topo topology_type;
@@ -29,7 +29,7 @@ namespace simulation
     /**
      * Constructor
      */
-    explicit simulation(t_topo &topo, t_system &sys);
+    explicit Simulation(t_topo &topo, t_system &sys);
     
     /**
      * topology accessor
@@ -114,7 +114,7 @@ namespace simulation
      */
     double m_nonbonded_cutoff_long;
     
-  }; // class simulation
+  }; // class Simulation
   
   
 } // namespace simulation

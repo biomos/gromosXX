@@ -3,15 +3,14 @@
  * test routines for blockinput.
  */
 
-#include "../debug.h"
-
-#include "../math/gmath.h"
-
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <map>
 #include <stdexcept>
+
+#include "../debug.h"
+#include "../math/gmath.h"
 
 #include "../simulation/simulation.h"
 #include "../interaction/interaction.h"
@@ -28,9 +27,9 @@ int test_blockio()
   int result = 0;
 
   simulation::system the_system;
-  simulation::topology the_topology;
+  simulation::Topology the_topology;
   
-  typedef simulation::simulation<simulation::topology, simulation::system>
+  typedef simulation::Simulation<simulation::Topology, simulation::system>
     simulation_type;  
 
   simulation_type the_simulation(the_topology, the_system);
@@ -40,17 +39,17 @@ int test_blockio()
   interaction::harmonic_bond_interaction<simulation_type> *bond_interaction
     = new interaction::harmonic_bond_interaction<simulation_type>;
   
-  std::ifstream topo_file("/home/markus/test/hexa10.topo");
+  std::ifstream topo_file("/home/markus/test/hexa/hexa10.topo");
   if (!topo_file.good()){
-    std::cout << "could not open topology: /home/markus/test/hexa10.topo" << std::endl;
+    std::cout << "could not open topology: /home/markus/test/hexa/hexa10.topo" << std::endl;
     return 1;
   }
   
   io::InTopology topo(topo_file);
   
-  std::ifstream sys_file("/home/markus/test/hexa10.coord");
+  std::ifstream sys_file("/home/markus/test/hexa/hexa10.coord");
   if (!sys_file.good()){
-    std::cout << "could not open system: /home/markus/test/hexa10.coord" << std::endl;
+    std::cout << "could not open system: /home/markus/test/hexa/hexa10.coord" << std::endl;
     return 2;
   }
   io::InTrajectory sys(sys_file);

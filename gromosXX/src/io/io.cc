@@ -12,5 +12,6 @@ namespace io
 #ifndef NDEBUG
   int debug_level = 0;
   int trajectory_debug_level = 0;
+  int input_debug_level = 0;
 #endif
 }

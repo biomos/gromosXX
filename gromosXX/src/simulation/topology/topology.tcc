@@ -3,19 +3,27 @@
  * inline methods definition
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE simulation
+#define SUBMODULE topology
+
+#include "../../debug.h"
+
 /**
  * Constructor
  */
-inline simulation::topology::topology()
+inline simulation::Topology::Topology()
   : m_mass(0),
     m_charge(0)
 {
+  m_chargegroup.push_back(0);
 }
 
 /**
  * integer atom code accessor.
  */
-inline int simulation::topology::iac(int i)
+inline int simulation::Topology::iac(int i)
 {
   return m_iac[i];
 }
@@ -23,7 +31,7 @@ inline int simulation::topology::iac(int i)
 /**
  * mass accessor
  */
-inline math::SArray & simulation::topology::mass()
+inline math::SArray & simulation::Topology::mass()
 {
   return m_mass;
 }
@@ -31,7 +39,7 @@ inline math::SArray & simulation::topology::mass()
 /**
  * const mass accessor
  */
-inline math::SArray const & simulation::topology::mass()const
+inline math::SArray const & simulation::Topology::mass()const
 {
   return m_mass;
 }
@@ -39,7 +47,7 @@ inline math::SArray const & simulation::topology::mass()const
 /**
  * charge accessor
  */
-inline math::SArray & simulation::topology::charge()
+inline math::SArray & simulation::Topology::charge()
 {
   return m_charge;
 }
@@ -47,7 +55,7 @@ inline math::SArray & simulation::topology::charge()
 /**
  * const charge accessor
  */
-inline math::SArray const & simulation::topology::charge()const
+inline math::SArray const & simulation::Topology::charge()const
 {
   return m_charge;
 }
@@ -56,7 +64,7 @@ inline math::SArray const & simulation::topology::charge()const
  * solute accessor.
  */
 inline simulation::Solute &
-simulation::topology::solute()
+simulation::Topology::solute()
 {
   return m_solute;
 }
@@ -65,7 +73,7 @@ simulation::topology::solute()
  * const solute accessor.
  */
 inline simulation::Solute const &
-simulation::topology::solute()const
+simulation::Topology::solute()const
 {
   return m_solute;
 }
@@ -73,7 +81,7 @@ simulation::topology::solute()const
 /**
  * the number of solute atoms
  */
-inline size_t simulation::topology::num_solute_atoms()const
+inline size_t simulation::Topology::num_solute_atoms()const
 {
   return solute().num_atoms();
 }
@@ -82,7 +90,7 @@ inline size_t simulation::topology::num_solute_atoms()const
  * set the capacity of solute atoms by resizeing
  * the apropriate arrays.
  */
-inline void simulation::topology::resize(size_t atoms)
+inline void simulation::Topology::resize(size_t atoms)
 {
   // if you want to shrink, first change num_atoms...
   assert(atoms >= num_solute_atoms() + num_solvent_atoms());
@@ -92,6 +100,9 @@ inline void simulation::topology::resize(size_t atoms)
   m_exclusion.resize(atoms);
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);
+  
+  m_iac.resize(atoms);
+  // chargegroups???
 }
 
 /**
@@ -99,7 +110,7 @@ inline void simulation::topology::resize(size_t atoms)
  * if the arrays are too small they will be increased.
  * if adding multiple solute atoms, first call solute_atoms_capacity...
  */
-inline void simulation::topology
+inline void simulation::Topology
 ::add_solute_atom(std::string name, int residue_nr,
 		  int iac, double mass,
 		  double charge, bool chargegroup,
@@ -111,12 +122,14 @@ inline void simulation::topology
     resize(num_solute_atoms()+1);
   }
   
-  topology::mass()(num_solute_atoms()) = mass;
-  topology::charge()(num_solute_atoms()) = charge;
+  Topology::mass()(num_solute_atoms()) = mass;
+  Topology::charge()(num_solute_atoms()) = charge;
 
   if (chargegroup) m_chargegroup.push_back(num_solute_atoms()+1);
   
-  m_iac.push_back(iac);
+  DEBUG(10, "iac[" << num_solute_atoms() << "] = " << iac);
+
+  m_iac[num_solute_atoms()] = iac;
 
   m_exclusion[num_solute_atoms()] = exclusions;
   m_one_four_pair[num_solute_atoms()] = one_four_pairs;
@@ -129,13 +142,12 @@ inline void simulation::topology
 
   // this increases num_solute_atoms()
   solute().add_atom(name, residue_nr);
-
 }
 
 /**
  * solvent accessor.
  */
-inline simulation::Solvent & simulation::topology::solvent(size_t i)
+inline simulation::Solvent & simulation::Topology::solvent(size_t i)
 {
   assert(i < m_solvent.size());
   return m_solvent[i];
@@ -144,7 +156,7 @@ inline simulation::Solvent & simulation::topology::solvent(size_t i)
 /**
  * number of solvents.
  */
-inline size_t simulation::topology::num_solvents()const
+inline size_t simulation::Topology::num_solvents()const
 {
   return m_num_solvent_molecules.size();
 }
@@ -152,7 +164,7 @@ inline size_t simulation::topology::num_solvents()const
 /**
  * add a solvent.
  */
-inline void simulation::topology::add_solvent(Solvent solv)
+inline void simulation::Topology::add_solvent(Solvent solv)
 {
   m_solvent.push_back(solv);
 }
@@ -160,7 +172,7 @@ inline void simulation::topology::add_solvent(Solvent solv)
 /**
  * add solvent molecules to the simulation (system).
  */
-inline void simulation::topology::solvate(size_t solv, size_t num_molecules)
+inline void simulation::Topology::solvate(size_t solv, size_t num_molecules)
 {
   // only add in the correct order!
   assert(solv == m_num_solvent_atoms.size());
@@ -190,7 +202,7 @@ inline void simulation::topology::solvate(size_t solv, size_t num_molecules)
 /**
  * number of solvent molecules.
  */
-inline size_t simulation::topology::num_solvent_molecules(size_t i)const
+inline size_t simulation::Topology::num_solvent_molecules(size_t i)const
 {
   assert(i < m_num_solvent_molecules.size());
   return m_num_solvent_molecules[i];
@@ -199,7 +211,7 @@ inline size_t simulation::topology::num_solvent_molecules(size_t i)const
 /**
  * total number of solvent atoms.
  */
-inline size_t simulation::topology::num_solvent_atoms()const
+inline size_t simulation::Topology::num_solvent_atoms()const
 {
   size_t n = 0;
   for(std::vector<size_t>::const_iterator it = m_num_solvent_atoms.begin(),
@@ -212,7 +224,7 @@ inline size_t simulation::topology::num_solvent_atoms()const
 /**
  * solvent atoms of solvent i (*molecules).
  */
-inline size_t simulation::topology::num_solvent_atoms(size_t i)const
+inline size_t simulation::Topology::num_solvent_atoms(size_t i)const
 {
   assert(i<m_num_solvent_atoms.size());
   return m_num_solvent_atoms[i];
@@ -221,7 +233,7 @@ inline size_t simulation::topology::num_solvent_atoms(size_t i)const
 /**
  * residue name accessor.
  */
-inline std::vector<std::string> & simulation::topology::residue_name()
+inline std::vector<std::string> & simulation::Topology::residue_name()
 {
   return m_residue_name;
 }
@@ -229,9 +241,35 @@ inline std::vector<std::string> & simulation::topology::residue_name()
 /**
  * all exclusions for atom i.
  */
-inline std::set<int> & simulation::topology::all_exclusion(size_t i)
+inline std::set<int> & simulation::Topology::all_exclusion(size_t const i)
 {
   return m_all_exclusion[i];
+}
+
+/**
+ * all one four pairs for atom i.
+ */
+inline std::set<int> & simulation::Topology::one_four_pair(size_t const i)
+{
+  return m_one_four_pair[i];
+}
+
+/**
+ * iterator over the chargegrops
+ */
+inline simulation::chargegroup_iterator 
+simulation::Topology::chargegroup_begin()
+{
+  return chargegroup_iterator(m_chargegroup.begin());
+}
+
+/**
+ * end of the chargegroup iterator.
+ */
+inline simulation::chargegroup_iterator
+simulation::Topology::chargegroup_end()
+{
+  return chargegroup_iterator(m_chargegroup.end()-1);
 }
 
 namespace simulation
@@ -239,7 +277,7 @@ namespace simulation
   /**
    * output information about the topology.
    */
-  inline std::ostream & operator<<(std::ostream &os, topology &topo)
+  inline std::ostream & operator<<(std::ostream &os, Topology &topo)
   {
     os << "a topology";
     return os;

@@ -73,11 +73,11 @@ namespace io {
     bool m_force;
 
     void _print_timestep(t_simulation &sim, std::ostream &os);
-    void _print_position(simulation::system &sys, simulation::topology &topo,
+    void _print_position(simulation::system &sys, simulation::Topology &topo,
 			 std::ostream &os);
-    void _print_velocity(simulation::system &sys, simulation::topology &topo,
+    void _print_velocity(simulation::system &sys, simulation::Topology &topo,
 			 std::ostream &os);
-    void _print_force(simulation::system &sys, simulation::topology &topo,
+    void _print_force(simulation::system &sys, simulation::Topology &topo,
 			 std::ostream &os);
     void _print_positionred(simulation::system &sys, std::ostream &os);
     void _print_velocityred(simulation::system &sys, std::ostream &os);

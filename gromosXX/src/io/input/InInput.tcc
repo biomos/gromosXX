@@ -3,6 +3,13 @@
  * implements methods of InInput.
  */
 
+#undef MODULE
+#define MODULE io
+#undef SUBMODULE
+#define SUBMODULE input
+
+#include "../../debug.h"
+
 /**
  * read the stream into blocks.
  */
@@ -31,7 +38,7 @@ inline void io::InInput::read_stream()
  */
 template<typename t_topology, typename t_system>
 inline io::InInput & io::InInput
-::operator>>(simulation::simulation<t_topology, t_system> &sim)
+::operator>>(simulation::Simulation<t_topology, t_system> &sim)
 {
   // let's for now only do the 'numbers only' stuff
   std::vector<std::string> buffer;
@@ -45,12 +52,16 @@ inline io::InInput & io::InInput
     _lineStream.str(*it);
     
     int i, update_step;
+    double rcutp, rcutl;
+    
     _lineStream >> i >> update_step
 		>> rcutp >> rcutl;
 
     if (_lineStream.fail() || ! _lineStream.eof())
       throw std::runtime_error("bad line in PLIST block");
 
+    DEBUG(7, "setting short cutoff=" << rcutp << " long cutoff=" << rcutl);
+    
     sim.nonbonded_update(update_step);
     sim.nonbonded_cutoff_short(rcutp);
     sim.nonbonded_cutoff_long(rcutl);
