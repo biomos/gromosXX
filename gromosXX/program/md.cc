@@ -25,6 +25,10 @@
 
 #include <io/configuration/out_configuration.h>
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
 int main(int argc, char *argv[]){
 
   const double start = util::now();
@@ -114,11 +118,27 @@ int main(int argc, char *argv[]){
     std::cout << "\nenter the next level of molecular "
 	      << "dynamics simulations\n" << std::endl;
 
+
+    // some omp stuff
+#ifdef OMP
+    int nthreads, tid;
+#pragma omp parallel private(nthreads, tid)
+    {
+      tid = omp_get_thread_num();
+      if (tid == 0){
+	nthreads = omp_get_num_threads();
+	std::cout << "number of OMP threads: "
+		  << omp_get_num_threads() << std::endl;
+      }
+   
+    }
+#endif
+    
     double end_time = sim.param().step.t0 + 
       sim.time_step_size() * sim.param().step.number_of_steps;
     
-
-
+    
+    
     std::cout << "==================================================\n"
 	      << " MAIN MD LOOP\n"
 	      << "==================================================\n"
