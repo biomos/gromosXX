@@ -92,9 +92,9 @@ namespace interaction
     /**
      * size the arrays of storage.
      */
-    virtual int init(topology::Topology const & topo,
-		     configuration::Configuration const & conf,
-		     simulation::Simulation const & sim,
+    virtual int init(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim,
 		     bool quiet = false);
     
     /**
@@ -108,6 +108,13 @@ namespace interaction
     Nonbonded_Parameter & parameter() { return m_parameter; }
 
   protected:
+    void check_spc_loop
+    (
+     topology::Topology const & topo,
+     configuration::Configuration const & conf,
+     simulation::Simulation & sim,
+     bool quiet);
+
     /**
      * the pairlist update algorithm.
      */

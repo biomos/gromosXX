@@ -156,6 +156,11 @@ namespace io {
      * read REPLICA block.
      */
     void read_REPLICA(simulation::Parameter &param);
+
+    /**
+     * read INNERLOOP block.
+     */
+    void read_INNERLOOP(simulation::Parameter &param);
     
   };
   

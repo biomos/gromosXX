@@ -120,7 +120,7 @@ int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
 
   Nonbonded_Interaction * ni = new Nonbonded_Interaction(spa);
   it.read_lj_parameter(ni->parameter().lj_parameter());
-  ni->init(topo, conf, sim, quiet);
+  // ni->init(topo, conf, sim, quiet);
   
   spa->init(&ni->parameter());
   

@@ -139,6 +139,8 @@ int main(int argc, char* argv[])
       return 1;
     }
 
+    ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, quiet);
+
     // first check the forcefield
     total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
 

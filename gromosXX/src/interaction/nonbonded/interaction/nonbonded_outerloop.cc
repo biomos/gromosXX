@@ -120,7 +120,14 @@ void interaction::Nonbonded_Outerloop
   else{ // no grid based pairlist
 
     DEBUG(9, "nonbonded_interaction: no grid based pairlist");
-    for(i=0; i < size_i; ++i){
+
+    unsigned int end = size_i;
+    if (sim.param().force.spc_loop){
+      end = topo.num_solute_atoms();
+      size_i = topo.num_solute_atoms() + topo.num_chargegroups() - topo.num_solute_chargegroups();
+    }
+    
+    for(i=0; i < end; ++i){
     
       for(j_it = pairlist[i].begin(),
 	    j_to = pairlist[i].end();
@@ -138,7 +145,23 @@ void interaction::Nonbonded_Outerloop
       }
       
     }
-  }
+
+    // solvent - solvent...
+    for(int cg1=0; i < size_i; ++i, ++cg1){
+      
+      for(j_it = pairlist[i].begin(),
+	    j_to = pairlist[i].end();
+	  j_it != j_to;
+	++j_it){
+	
+	DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+	
+	// shortrange, therefore store in simulation.system()
+	innerloop.spc_innerloop(topo, conf, cg1, *j_it, storage, periodicity);
+      }
+      
+    }
+  } // no grid based pairlist
 }
 
 /**

@@ -139,7 +139,16 @@ int check_lambda_derivative(topology::Topology & topo,
 {
   int res, total = 0;
   
-  CHECKING(term.name + " energy lambda derivative", res);
+  std::string name = term.name;
+
+  if (term.name == "NonBonded"){
+    if (sim.param().force.spc_loop == 1)
+      name += " (spc loop)";
+    else
+      name += " (std loop)";
+  }
+
+  CHECKING(name + " energy lambda derivative", res);
 
   // assume no different lambda dependence here!
   // this will be checked in a different function
@@ -206,8 +215,17 @@ int check_interaction(topology::Topology & topo,
 		      double const delta)
 {
   int res, total = 0;
-  
-  CHECKING(term.name + " interaction energy", res);
+
+  std::string name = term.name;
+
+  if (term.name == "NonBonded"){
+    if (sim.param().force.spc_loop == 1)
+      name += " (spc loop)";
+    else
+      name += " (std loop)";
+  }
+
+  CHECKING(name + " interaction energy", res);
 
   conf.current().force = 0;
   conf.current().energies.zero();
@@ -220,7 +238,7 @@ int check_interaction(topology::Topology & topo,
   RESULT(res, total);
 
   // finite diff
-  CHECKING(term.name + " interaction force (finite diff)", res);
+  CHECKING(name + " interaction force (finite diff)", res);
 
   for(size_t atom=0; atom < atoms; ++atom){
 
@@ -252,7 +270,7 @@ int check_interaction(topology::Topology & topo,
     interaction::Nonbonded_Interaction & ni =
       dynamic_cast<interaction::Nonbonded_Interaction &>(term);
 
-    CHECKING(term.name + " hessian (finite diff)", res);
+    CHECKING(name + " hessian (finite diff)", res);
     res += nonbonded_hessian(topo, conf, sim, ni, 1, 8, epsilon, delta, res);
     res += nonbonded_hessian(topo, conf, sim, ni, 2, 11, epsilon, delta, res);
     res += nonbonded_hessian(topo, conf, sim, ni, 9, 69, epsilon, delta, res);
@@ -309,6 +327,10 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }
     else if ((*it)->name == "NonBonded"){
+      sim.param().force.spc_loop = 1;
+      total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
+      sim.param().force.spc_loop = 0;
       total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }

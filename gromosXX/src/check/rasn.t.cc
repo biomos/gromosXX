@@ -139,6 +139,8 @@ int main(int argc, char* argv[])
       return 1;
     }
 
+    ff->init(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, quiet);
+    
     // first check the forcefield
     total += check::check_forcefield(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, *ff);
 

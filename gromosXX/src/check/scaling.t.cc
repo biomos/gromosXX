@@ -150,6 +150,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, quiet);
+
   // std::cout << "aladip forcefield" << std::endl;
   // io::messages.display(std::cout);
   // io::messages.clear();
@@ -165,6 +167,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  lambdadep_ff->init(aladip_lambdadep_sim.topo, aladip_lambdadep_sim.conf, aladip_lambdadep_sim.sim, quiet);
+  
   // std::cout << "aladip lambdadep forcefield" << std::endl;
   // io::messages.display(std::cout);
   // io::messages.clear();

@@ -60,6 +60,15 @@ namespace interaction
     (topology::Topology & topo, configuration::Configuration & conf,
      topology::Chargegroup_Iterator const & cg_it,
      Periodicity_type const &periodicity);
+
+    void spc_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     int i, int j,
+     Storage & storage,
+     Periodicity_type const & periodicity
+     );
     
   protected:
     Nonbonded_Parameter * m_param;

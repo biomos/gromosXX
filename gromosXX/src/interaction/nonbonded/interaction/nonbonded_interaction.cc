@@ -243,9 +243,9 @@ int interaction::Nonbonded_Interaction::calculate_hessian(topology::Topology & t
 /**
  * initialize the arrays
  */
-int interaction::Nonbonded_Interaction::init(topology::Topology const & topo,
-					     configuration::Configuration const & conf,
-					     simulation::Simulation const & sim,
+int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
+					     configuration::Configuration & conf,
+					     simulation::Simulation & sim,
 					     bool quiet)
 {
 
@@ -259,7 +259,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology const & topo,
       }
     }
 #else
-    m_omp_num_threads = 2;
+    m_omp_num_threads = 1;
 #endif
 
   DEBUG(15, "nonbonded_interaction::initialize");
@@ -284,6 +284,8 @@ int interaction::Nonbonded_Interaction::init(topology::Topology const & topo,
   for( ; it != to; ++it){
     (*it)->init(topo, conf, sim, quiet);
   }
+
+  check_spc_loop(topo, conf, sim, quiet);
 
   return 0;
 }
@@ -315,3 +317,86 @@ void interaction::Nonbonded_Interaction::print_timing(std::ostream & os)
      << "\n";
 }
 
+void interaction::Nonbonded_Interaction::check_spc_loop
+(
+ topology::Topology const & topo,
+ configuration::Configuration const & conf,
+ simulation::Simulation & sim,
+ bool quiet)
+{
+  DEBUG(7, "checking for spc interaction loops");
+  
+  if (sim.param().force.spc_loop == -1){
+
+    sim.param().force.spc_loop = 0;
+    if (!quiet)
+      std::cout << "\tusing standard solvent loops (user request)\n";
+    return;
+  }
+  
+  if (topo.num_solvents() != 1 || topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) != 3 ||
+      topo.num_solvent_molecules(0) < 1){
+
+    sim.param().force.spc_loop = 0;
+    if (!quiet)
+      std::cout << "\tusing standard solvent loops (num solvents doesn't match)\n"
+		<< "\t\tnum solvents: " << topo.num_solvents() << "\n"
+		<< "\t\tsolvent atoms: " << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
+		<< "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
+    return;
+  }
+  
+  // check charges
+  if (topo.charge()(topo.num_solute_atoms()) != -0.82 ||
+      topo.charge()(topo.num_solute_atoms()+1) != 0.41 ||
+      topo.charge()(topo.num_solute_atoms()+2) != 0.41){
+    
+    sim.param().force.spc_loop = 0;
+    if (!quiet)
+	std::cout << "\tusing standard solvent loops (charges don't match)\n"
+		  << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
+		  << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms()+1) << "\n"
+		  << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms()+2) << "\n\n";
+	  
+    return;
+  }
+  
+  // check lj parameters
+  const lj_parameter_struct &lj_OO = 
+    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+			     topo.iac(topo.num_solute_atoms()));
+  
+  const lj_parameter_struct &lj_OH1 = 
+    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+			     topo.iac(topo.num_solute_atoms()+1));
+  
+  const lj_parameter_struct &lj_OH2 = 
+    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+			     topo.iac(topo.num_solute_atoms()+2));
+  
+  const lj_parameter_struct &lj_H1H2 = 
+    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()+1),
+			     topo.iac(topo.num_solute_atoms()+2));
+  
+  if (lj_OO.c6 != 2.617346E-3 ||
+      lj_OO.c12 != 2.634129E-6 ||
+      lj_OH1.c6 != 0.0 ||
+      lj_OH1.c12 != 0.0 ||
+      lj_OH2.c6 != 0.0 ||
+      lj_OH2.c12 != 0.0 ||
+      lj_H1H2.c6 != 0.0 ||
+      lj_H1H2.c12 != 0.0){
+    
+    sim.param().force.spc_loop = 0;
+    if (!quiet)
+      std::cout << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
+    return;
+    
+  }
+  
+  sim.param().force.spc_loop = 1;
+  if (!quiet)
+    std::cout << "\tusing spc solvent loops\n";
+    return;
+    
+}

@@ -19,7 +19,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
  int pc)
 {
   // storage.energies.bond_energy[0] += j;
-
+  
   DEBUG(8, "\tpair\t" << i << "\t" << j);
   
   math::Vec r;
@@ -40,7 +40,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
     
   }
-    
+  
   const lj_parameter_struct &lj = 
     m_param->lj_parameter(topo.iac(i),
 			  topo.iac(j));
@@ -55,33 +55,33 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   
   // most common case
   if (t_nonbonded_spec::do_virial == math::molecular_virial){
-	  math::Vec rf = f * r;
-	  storage.force(i) += rf;
-	  storage.force(j) -= rf;
-
-	  for(int b=0; b<3; ++b){
-		  const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
-		  for(int a=0; a<3; ++a){
-			  storage.virial_tensor(b, a) += rr * rf(a);
-		  }
-	  }
+    math::Vec rf = f * r;
+    storage.force(i) += rf;
+    storage.force(j) -= rf;
+    
+    for(int b=0; b<3; ++b){
+      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
+      for(int a=0; a<3; ++a){
+	storage.virial_tensor(b, a) += rr * rf(a);
+      }
+    }
   }
   else{
-	for (int a=0; a<3; ++a){
-    
-		const double term = f * r(a);
-		storage.force(i)(a) += term;
-		storage.force(j)(a) -= term;
-
-	    if (t_nonbonded_spec::do_virial == math::atomic_virial){
-			for(int b=0; b<3; ++b){
-				storage.virial_tensor(b, a) += 
-				r(b) * term;
-			}
-		}
+    for (int a=0; a<3; ++a){
+      
+      const double term = f * r(a);
+      storage.force(i)(a) += term;
+      storage.force(j)(a) -= term;
+      
+      if (t_nonbonded_spec::do_virial == math::atomic_virial){
+	for(int b=0; b<3; ++b){
+	  storage.virial_tensor(b, a) += 
+	    r(b) * term;
 	}
+      }
+    }
   }
-
+  
   // energy
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	<< " j " << topo.atom_energy_group(j));
@@ -260,4 +260,279 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     } // loop over at2_it
   } // loop over at_it
   
+}
+
+template<typename t_nonbonded_spec>
+inline void 
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>
+::spc_innerloop
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ int i, int j,
+ Storage & storage,
+ Periodicity_type const & periodicity
+ )
+{
+  math::Vec r, rf;
+  
+  // only one energy group
+  const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
+  DEBUG(8, "\tspc pair\t" << i << "\t" << j << " egroup " << egroup);
+  
+  const int ii = topo.num_solute_atoms() + i * 3;
+  const int jj = topo.num_solute_atoms() + j * 3;
+  DEBUG(9, "ii = " << ii << " jj = " << jj);
+  
+  math::Vec const * const pos_i = &conf.current().pos(ii);
+  math::Vec const * const pos_j = &conf.current().pos(jj);
+
+  math::Vec * const force_i = &storage.force(ii);
+  math::Vec * const force_j = &storage.force(jj);
+
+  double dist2, dist2i, dist6i, disti, e_lj, e_crf, f, rr;
+
+  // O - O
+  periodicity.nearest_image(*pos_i, *pos_j, r);
+    
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_lj = (2.634129E-6 * dist6i - 2.617346E-3) * dist6i;
+  e_crf = 0.82 * 0.82 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+
+  f = (12 * 2.634129E-6 * dist6i - 6 * 2.617346E-3) * dist6i * dist2i +
+    0.82 * 0.82 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *force_i += rf;
+  *force_j -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) - conf.special().rel_mol_com_pos(ii)(b) + conf.special().rel_mol_com_pos(jj)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+    
+  storage.energies.lj_energy[egroup][egroup] += e_lj;
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // O1-H21
+  periodicity.nearest_image(*pos_i, *(pos_j+1), r);
+    
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf -= 0.82 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+
+  f = -0.82 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *force_i += rf;
+  *(force_j+1) -= rf;
+  
+  for(int b=0; b<3; ++b){
+    rr = r(b) - conf.special().rel_mol_com_pos(ii)(b) + conf.special().rel_mol_com_pos(jj+1)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+    
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // O1-H22
+  periodicity.nearest_image(*pos_i, *(pos_j+2), r);
+    
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf -= 0.82 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+
+  f = -0.82 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *force_i += rf;
+  *(force_j+2) -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) - conf.special().rel_mol_com_pos(ii)(b) + conf.special().rel_mol_com_pos(jj+2)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+    
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // O2 - H11
+  periodicity.nearest_image(*(pos_i+1), *pos_j, r);
+
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf -= 0.82 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  f = -0.82 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *(force_i+1) += rf;
+  *force_j -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) - 
+      conf.special().rel_mol_com_pos(ii+1)(b) + 
+      conf.special().rel_mol_com_pos(jj)(b);
+      
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+    
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // O2 - H12
+  periodicity.nearest_image(*(pos_i+2), *pos_j, r);
+
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf -= 0.82 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  f = -0.82 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *(force_i+2) += rf;
+  *force_j -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) -
+      conf.special().rel_mol_com_pos(ii+2)(b) +
+      conf.special().rel_mol_com_pos(jj)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+    
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // H11 - H21
+  periodicity.nearest_image(*(pos_i+1), *(pos_j+1), r);
+
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf += 0.41 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  f = 0.41 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *(force_i+1) += rf;
+  *(force_j+1) -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) -
+      conf.special().rel_mol_com_pos(ii+1)(b) +
+      conf.special().rel_mol_com_pos(jj+1)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+  
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // H11 - H22
+  periodicity.nearest_image(*(pos_i+1), *(pos_j+2), r);
+
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf += 0.41 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  f = 0.41 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *(force_i+1) += rf;
+  *(force_j+2) -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) -
+      conf.special().rel_mol_com_pos(ii+1)(b) +
+      conf.special().rel_mol_com_pos(jj+2)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+  
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // H12 - H21
+  periodicity.nearest_image(*(pos_i+2), *(pos_j+1), r);
+
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf += 0.41 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  f = 0.41 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *(force_i+2) += rf;
+  *(force_j+1) -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) -
+      conf.special().rel_mol_com_pos(ii+2)(b) +
+      conf.special().rel_mol_com_pos(jj+1)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+
+  // storage.energies.crf_energy[egroup][egroup] += e_crf;
+  
+  // H12 - H22
+  periodicity.nearest_image(*(pos_i+2), *(pos_j+2), r);
+
+  assert(abs2(r) != 0);
+  dist2 = abs2(r);
+  dist2i = 1.0 / dist2;
+  // dist6i = dist2i * dist2i * dist2i;
+  disti = sqrt(dist2i);
+  
+  e_crf += 0.41 * 0.41 * 138.935 * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  f = 0.41 * 0.41 * 138.935 * (disti * dist2i + m_crf_cut3i);
+
+  rf = f * r;
+  *(force_i+2) += rf;
+  *(force_j+2) -= rf;
+    
+  for(int b=0; b<3; ++b){
+    rr = r(b) -
+      conf.special().rel_mol_com_pos(ii+2)(b) +
+      conf.special().rel_mol_com_pos(jj+2)(b);
+    for(int a=0; a<3; ++a){
+      storage.virial_tensor(b, a) += rr * rf(a);
+    }
+  }
+    
+  storage.energies.crf_energy[egroup][egroup] += e_crf;
 }

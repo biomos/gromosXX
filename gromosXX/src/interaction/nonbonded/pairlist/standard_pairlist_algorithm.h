@@ -12,7 +12,6 @@ namespace math
   class Periodicity;
 }
 
-
 namespace interaction
 {
   class Storage;
@@ -47,7 +46,7 @@ namespace interaction
     /**
      * init pairlist
      */
-    int init(Nonbonded_Parameter * param);
+    void set_parameter(Nonbonded_Parameter * param);
     
     /**
      * prepare the pairlists
@@ -70,14 +69,29 @@ namespace interaction
     /**
      * update the pairlist, separating perturbed and nonperturbed interactions
      */
-    virtual void update_perturbed(topology::Topology & topo,
-				  configuration::Configuration & conf,
-				  simulation::Simulation & sim,
-				  interaction::Storage & storage,
-				  interaction::Pairlist & pairlist,
-				  interaction::Pairlist & perturbed_pairlist,
-				  unsigned int begin, unsigned int end,
-				  unsigned int stride);
+    virtual void update_perturbed
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     interaction::Storage & storage,
+     interaction::Pairlist & pairlist,
+     interaction::Pairlist & perturbed_pairlist,
+     unsigned int begin, unsigned int end,
+     unsigned int stride
+     );
+
+    void update_perturbed_atomic
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     interaction::Storage & storage,
+     interaction::Pairlist & pairlist,
+     interaction::Pairlist & perturbed_pairlist,
+     unsigned int begin, unsigned int end,
+     unsigned int stride
+     );
         
   protected:
 
@@ -117,68 +131,46 @@ namespace interaction
 			 interaction::Pairlist & perturbed_pairlist,
 			 unsigned int begin, unsigned int end,
 			 unsigned int stride);
+    
+    
+    template<typename t_interaction_spec>
+    void _solvent_solvent
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     interaction::Storage & storage,
+     interaction::Pairlist & pairlist,
+     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+     int cg1, int stride,
+     math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
+     );
 
     template<typename t_interaction_spec>
-    void do_cg1_loop(topology::Topology & topo,
+    void _spc_loop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     interaction::Storage & storage,
+     interaction::Pairlist & pairlist,
+     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+     int cg1, int stride,
+     math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
+     );
+
+    template<typename t_interaction_spec>
+    void do_spc_loop(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     interaction::Storage & storage,
 		     interaction::Pairlist & pairlist,
 		     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
 		     topology::Chargegroup_Iterator const & cg1,
-		     int cg1_index, int num_solute_cg, int num_cg,
+		     int cg1_index,
+		     int const num_solute_cg,
+		     int const num_cg,
 		     math::Periodicity<t_interaction_spec::boundary_type> const & periodicity);
-
-    template<typename t_interaction_spec, typename t_perturbation_details>
-    void do_pert_cg1_loop(topology::Topology & topo,
-			  configuration::Configuration & conf,
-			  interaction::Storage & storage,
-			  interaction::Pairlist & pairlist,
-			  interaction::Pairlist & perturbed_pairlist,
-			  Nonbonded_Innerloop<t_interaction_spec> & innerloop,
-			  Perturbed_Nonbonded_Innerloop
-			  <t_interaction_spec, t_perturbation_details>
-			  & perturbed_innerloop,
-			  topology::Chargegroup_Iterator const & cg1,
-			  int cg1_index, int num_solute_cg, int num_cg,
-			  math::Periodicity<t_interaction_spec::boundary_type>
-			  const & periodicity,
-			  bool scaled_only);
     
-    void do_cg_interaction(topology::Chargegroup_Iterator const &cg1,
-			   topology::Chargegroup_Iterator const &cg2,
-			   interaction::Pairlist & pairlist);
-
-    template<typename t_perturbation_details>
-    void do_pert_cg_interaction(topology::Topology & topo,
-				topology::Chargegroup_Iterator const &cg1,
-				topology::Chargegroup_Iterator const &cg2,
-				interaction::Pairlist & pairlist,
-				interaction::Pairlist & perturbed_pairlist,
-				bool scaled_only);
-    
-    void do_cg_interaction_excl(topology::Topology & topo,
-				topology::Chargegroup_Iterator const &cg1,
-				topology::Chargegroup_Iterator const &cg2,
-				interaction::Pairlist & pairlist);
-
-    template<typename t_perturbation_details>
-    void do_pert_cg_interaction_excl(topology::Topology & topo,
-				     topology::Chargegroup_Iterator const &cg1,
-				     topology::Chargegroup_Iterator const &cg2,
-				     interaction::Pairlist & pairlist,
-				     interaction::Pairlist & perturbed_pairlist,
-				     bool scaled_only);
-    
-    void do_cg_interaction_intra(topology::Topology & topo,
-				 topology::Chargegroup_Iterator const &cg1,
-				 interaction::Pairlist & pairlist);
-
-    template<typename t_perturbation_details>
-    void do_pert_cg_interaction_intra(topology::Topology & topo,
-				      topology::Chargegroup_Iterator const &cg1,
-				      interaction::Pairlist & pairlist,
-				      interaction::Pairlist & perturbed_pairlist,
-				      bool scaled_only);
 
     void update_atomic(topology::Topology & topo,
 		       configuration::Configuration & conf,
@@ -228,6 +220,30 @@ namespace interaction
       m_cutoff_long_2  = cutoff_long * cutoff_long;
     }
 
+    template<typename t_interaction_spec, typename t_perturbation_details>
+    bool calculate_pair
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     interaction::Storage & storage,
+     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+     Perturbed_Nonbonded_Innerloop
+     <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
+     int a1, int a2,
+     math::Periodicity<t_interaction_spec::boundary_type> const & periodicity,
+     bool scaled_only
+     );
+    
+    template<typename t_perturbation_details>
+    bool insert_pair
+    (
+     topology::Topology & topo,
+     interaction::Pairlist & pairlist,
+     interaction::Pairlist & perturbed_pairlist,
+     int a1, int a2,
+     bool scaled_only
+     );
+      
   private:
     /**
      * the chargegroup center of geometries.

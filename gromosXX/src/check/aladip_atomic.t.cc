@@ -137,6 +137,8 @@ int main(int argc, char* argv[])
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
+
+  ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, quiet);
       
   total += check::check_atomic_virial(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
     

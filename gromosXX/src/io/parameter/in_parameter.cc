@@ -63,6 +63,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_JVALUE(param);
   read_PSCALE(param);
   read_ROTTRANS(param);
+  read_INNERLOOP(param);
   
   DEBUG(7, "input read...");
 
@@ -1867,6 +1868,44 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param)
 		       "In_Parameter", io::message::error);
 
     param.rottrans.rottrans = (i != 0);
+
+  }
+  
+}
+
+/**
+ * read the INNERLOOP block.
+ */
+void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param)
+{
+  DEBUG(8, "read INNERLOOP");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["INNERLOOP"];
+
+  if (buffer.size()){
+    int spc;
+
+    block_read.insert("INNERLOOP");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> spc;
+    
+    if (_lineStream.fail())
+      io::messages.add("bad line in INNERLOOP block",
+		       "In_Parameter", io::message::error);
+
+    if (spc != -1 && spc != 0){
+      io::messages.add("bad value for SPCL in INNERLOOP: allowed : -1, 0",
+		       "In_Parameter",
+		       io::message::error);
+      spc = -1;
+    }
+    param.force.spc_loop = spc;
 
   }
   
