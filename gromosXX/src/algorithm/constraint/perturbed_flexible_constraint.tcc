@@ -119,10 +119,18 @@ int algorithm::Perturbed_Flexible_Constraint<t_simulation>
     it = topo.perturbed_solute().distance_constraints().begin(),
     to = topo.perturbed_solute().distance_constraints().end();
 
+  DEBUG(6, "perturbed lagrange multiplier:\t\tb0(t)");
+
+#ifndef NDEBUG
+  // need more precision
+  std::cout.precision(20);
+  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+#endif
 
   double m1, m2, dm1, dm2, mu;
   
   for(; it != to; ++it, ++k){
+    DEBUG(6, "\t" << m_lambda(k) << "\t\t" << it->b0);
     
     assert(sys.constraint_force().size() > int(k));
     
@@ -153,7 +161,7 @@ int algorithm::Perturbed_Flexible_Constraint<t_simulation>
     }
     else dm2 = 0;
 
-    sys.lambda_energies().constraint_energy +=
+    sys.lambda_energies().constraint_energy -=
       2 * m_lambda(k) * it->b0  *
       (it->B_b0 - it->A_b0 +( it->b0 - m_r0[k] ) *
        ((dm1 + dm2) / (m1 * m2 * mu) - 
