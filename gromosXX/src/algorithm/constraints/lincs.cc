@@ -1,5 +1,5 @@
 /**
- * @file lincs.tcc
+ * @file lincs.cc
  * contains the template methods for
  * the class Lincs.
  */

@@ -1,5 +1,5 @@
 /**
- * @file position_restraint_interaction.tcc
+ * @file position_restraint_interaction.cc
  * template methods of Position_Restraint_Interaction
  */
 
@@ -17,10 +17,9 @@ template<math::boundary_enum b, typename t_interaction_spec>
 static int _calculate_position_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim
- )
+ simulation::Simulation & sim)
 {
-  // loop over the bonds
+  // loop over the position restraints
   std::vector<topology::position_restraint_struct>::const_iterator 
     it = topo.position_restraints().begin(),
     to = topo.position_restraints().end();
@@ -57,7 +56,7 @@ static int _calculate_position_restraint_interactions
     energy = 0.5 * sim.param().posrest.force_constant / it->bfactor * dist;
 
     conf.current().energies.posrest_energy[topo.atom_energy_group()
-					   [it->seq]] += energy;
+					  [it->seq]] += energy;
     
   }
 

@@ -49,7 +49,7 @@ namespace math
 } // math
 
 // inline functions
-#include "periodicity.tcc"
+#include "periodicity.cc"
 
 #endif
   

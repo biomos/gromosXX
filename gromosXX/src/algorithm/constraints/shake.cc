@@ -1,5 +1,5 @@
 /**
- * @file shake.tcc
+ * @file shake.cc
  * contains the template methods for
  * the class Shake.
  */

@@ -1,5 +1,5 @@
 /**
- * @file flexible_constraint.tcc
+ * @file flexible_constraint.cc
  * implements flexible constraint algorithm
  */
 

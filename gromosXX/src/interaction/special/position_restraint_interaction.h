@@ -41,6 +41,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "position_restraint_interaction.tcc"
+#include "position_restraint_interaction.cc"
 
 #endif

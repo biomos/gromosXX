@@ -1,5 +1,5 @@
 /**
- * @file perturbed_shake.tcc
+ * @file perturbed_shake.cc
  * contains the template methods for
  * the class Perturbed_Shake.
  */

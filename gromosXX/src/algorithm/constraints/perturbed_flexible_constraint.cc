@@ -1,5 +1,5 @@
 /**
- * @file perturbed_flexible_constraint.tcc
+ * @file perturbed_flexible_constraint.cc
  * contains the template methods for
  * the class Perturbed_Flexible_Constraint.
  */

@@ -1,5 +1,5 @@
 /**
- * @file periodicity.tcc
+ * @file periodicity.cc
  * implementation of the periodic boundary condition functions.
  */
 
