@@ -65,6 +65,7 @@ int io::read_special(io::Argument const & args,
     if (!jval_file){
       io::messages.add("opening jvalue restraints file failed!\n",
 		      "read_special", io::message::error);
+      return 1;
     }
     io::messages.add("jvalue restraints read from " + args["jval"],
 		     "read special",

@@ -32,8 +32,8 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE simulation
-#define SUBMODULE read_input
+#define MODULE io
+#define SUBMODULE parameter
 
 
 int io::read_input(io::Argument const & args,
@@ -48,14 +48,8 @@ int io::read_input(io::Argument const & args,
 
   std::ifstream input_file, topo_file, pttopo_file, conf_file;
   
-  try{
-    input_file.open(args["input"].c_str());
-  }
-  catch(std::string s){
-    io::messages.add("opening input failed", "read_input",
-		     io::message::critical);
-    return -1;
-  }
+  input_file.open(args["input"].c_str());
+
   if (!input_file.is_open()){
     std::cout << "\n\ncould not open " << args["input"] << "!\n" << std::endl;
     io::messages.add("opening input failed", "read_input",
@@ -72,19 +66,11 @@ int io::read_input(io::Argument const & args,
   sim.time_step_size() = sim.param().step.dt;
   sim.time() = sim.param().step.t0;
 
-  try{
-    topo_file.open(args["topo"].c_str());
-  }
-  catch(std::string s){
-    io::messages.add("opening topology failed", "read_input",
-		     io::message::critical);
-    return -1;
-  }
+  topo_file.open(args["topo"].c_str());
   if (!topo_file.is_open()){
     std::cout << "\n\ncould not open " << args["topo"] << "!\n" << std::endl;
     io::messages.add("opening topology failed", "read_input",
 		     io::message::critical);
-    return -1;
   }
 
   io::messages.add("topology read from " + args["topo"],
@@ -100,19 +86,13 @@ int io::read_input(io::Argument const & args,
 		       "read_input", io::message::critical);
       return -1;
     }
-    try{
-      pttopo_file.open(args["pttopo"].c_str());
-    }
-    catch(std::string s){
-      io::messages.add("opening perturbation topology failed", "read_input",
-		       io::message::critical);
-      return -1;
-    }
+
+    pttopo_file.open(args["pttopo"].c_str());
+
     if (!pttopo_file.is_open()){
       std::cout << "\n\ncould not open " << args["pttopo"] << "!\n" << std::endl;
       io::messages.add("opening perturbation topology failed", "read_input",
 		       io::message::critical);
-      return -1;
     }
     
     io::messages.add("perturbation topology read from " + args["pttopo"],
@@ -128,16 +108,12 @@ int io::read_input(io::Argument const & args,
   sim.multibath().calculate_degrees_of_freedom(topo, sim.param().rottrans.rottrans);
 
   // read in the special data
+  DEBUG(7, "reading special data");
   io::read_special(args, topo, conf, sim);
 
-  try{
-    conf_file.open(args["conf"].c_str());
-  }
-  catch(std::string s){
-    io::messages.add("opening configuration failed", "read_input",
-		     io::message::critical);
-    return -1;
-  }
+  DEBUG(7, "reading configuration");
+  conf_file.open(args["conf"].c_str());
+
   if (!conf_file.is_open()){
     std::cout << "\n\ncould not open " << args["conf"] << "!\n" << std::endl;
     io::messages.add("opening configuration failed", "read_input",
