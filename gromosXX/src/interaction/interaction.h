@@ -11,6 +11,10 @@
 #include "pairlist/twin_range_pairlist.h"
 #include "pairlist/twin_range_pairlist_cg.h"
 
+#include "pairlist/basic_filter.h"
+#include "pairlist/basic_pairlist_algorithm.h"
+#include "pairlist/basic_pairlist.h"
+
 #include "interaction/nonbonded_interaction.h"
 #include "interaction/nonbonded_virial_interaction.h"
 #include "interaction/quartic_bond_interaction.h"
@@ -19,6 +23,9 @@
 #include "interaction/angle_interaction.h"
 #include "interaction/improper_dihedral_interaction.h"
 #include "interaction/dihedral_interaction.h"
+
+#include "interaction/nonbonded_base.h"
+#include "interaction/nonbonded_inner_loop.h"
 
 #ifndef NDEBUG
 namespace interaction

@@ -46,7 +46,8 @@ void interaction::twin_range_pairlist<t_simulation, t_filter>
     for(size_t j=i+1; j<num_solute_atoms; ++j) {
 
       // check it is not excluded
-      if (sim.topology().all_exclusion(i).count(j))
+      // if (sim.topology().all_exclusion(i).count(j))
+      if (solute_pair(sim, i, j))
         continue;
 
       sim.system().periodicity().nearest_image(pos(i), pos(j), p);

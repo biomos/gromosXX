@@ -20,6 +20,10 @@ include_HEADERS = 		interaction.h \
 				interaction/dihedral_interaction.tcc \
 				interaction/perturbed_quartic_bond_interaction.h \
 				interaction/perturbed_quartic_bond_interaction.tcc \
+				interaction/nonbonded_base.h \
+				interaction/nonbonded_base.tcc \
+				interaction/nonbonded_inner_loop.h \
+				interaction/nonbonded_inner_loop.tcc \
 				pairlist/simple_pairlist.h \
 				pairlist/simple_pairlist.tcc \
 				pairlist/twin_range_pairlist.h \
@@ -27,7 +31,13 @@ include_HEADERS = 		interaction.h \
 				pairlist/twin_range_pairlist_cg.h \
 				pairlist/twin_range_pairlist_cg.tcc \
 				pairlist/simple_filter.h \
-				pairlist/simple_filter.tcc
+				pairlist/simple_filter.tcc \
+				pairlist/basic_pairlist.h \
+				pairlist/basic_pairlist.tcc \
+				pairlist/basic_pairlist_algorithm.h \
+				pairlist/basic_pairlist_algorithm.tcc \
+				pairlist/basic_filter.h \
+				pairlist/basic_filter.tcc
 
 lib_LTLIBRARIES	= 		libinteraction.la
 
