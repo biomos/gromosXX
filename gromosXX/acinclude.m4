@@ -201,7 +201,7 @@ if test "$withval" != no ; then
 
 	if test "$withval" != 'yes'; then
 		CPPFLAGS="-I$withval/include"
-		LDFLAGS="-L$withval/lib"
+		LDFLAGS="-L$withval/lib -Wl,-R$withval/lib"
 	fi
 	LIBS="-lblitz"
 
@@ -225,7 +225,7 @@ x = blitz::tensor::i;
 	if test "$ac_cxx_lib_blitz" = yes ; then
 		if test "$withval" != yes ; then
 			CPPFLAGS="-I$withval/include"
-			BLITZ_LDFLAGS="-L$withval/lib"
+			BLITZ_LDFLAGS="-L$withval/lib -Wl,-R$withval/lib"
 dnl			AC_SUBST(BLITZ_CPPFLAGS)
 			AC_SUBST(BLITZ_LDFLAGS)
 		fi
