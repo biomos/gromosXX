@@ -79,6 +79,13 @@ if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
 dnl set some defaults to CXXFLAGS and LDFLAGS
 extra_lib=""
 
+dnl take out -O and -g from CXXFLAGS, CFLAGS, as these are set
+dnl automagically
+
+CXXFLAGS=`echo $CXXFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
+CFLAGS=`echo $CFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
+LDFLAGS=`echo $LDFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
+
 case "$compiler" in
      kai*)               # KAI C++  http://www.kai.com/
        echo "Configuring for KAI C++"
@@ -89,7 +96,8 @@ case "$compiler" in
        CXX_PICKY_FLAGS="-w1"
 	   dnl consider adding -xP, -xN or -xW for Intel processors
 	   dnl maybe some inline control: -Qoption,c,-ip_ninl_max_stats=2000
-       CXX_OPTIMIZE_FLAGS="-O3 -ipo -static -restrict -align -DNDEBUG -fno-exceptions -vec_report"
+	   dnl or maybe -ipo if your lucky...
+       CXX_OPTIMIZE_FLAGS="-O3 -xN -ip -static -restrict -align -DNDEBUG -fno-exceptions -vec_report"
        CXX_DEBUG_FLAGS="-g -pch"
        CXXLD="$CXX"
 
@@ -105,9 +113,10 @@ case "$compiler" in
 	    echo "configuring for debug build"
 	else
 	    AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_OPTIMIZE_FLAGS")
-		extra_lib="$extra_lib -lstdc++"
 	    echo "configuring for release build"
 	fi
+
+	dnl extra_lib="$extra_lib -lstdc++"
 
 	   AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
      ;;

@@ -10,7 +10,7 @@ rasn_t_SOURCES = 		rasn.t.cc \
 				check_forcefield.h \
 				check_forcefield.cc
 
-rasn_t_LDADD = ../libgroxx.la
+rasn_t_LDADD = ../libgroxx.la $(extra_lib)
 
 
 aladip_t_SOURCES = 		aladip.t.cc \
@@ -20,7 +20,7 @@ aladip_t_SOURCES = 		aladip.t.cc \
 				check_state.h \
 				check_state.cc
 
-aladip_t_LDADD = ../libgroxx.la
+aladip_t_LDADD = ../libgroxx.la $(extra_lib)
 
 aladip_atomic_t_SOURCES = 	aladip_atomic.t.cc \
 				check.h \
@@ -29,12 +29,12 @@ aladip_atomic_t_SOURCES = 	aladip_atomic.t.cc \
 				check_state.h \
 				check_state.cc
 
-aladip_atomic_t_LDADD = ../libgroxx.la
+aladip_atomic_t_LDADD = ../libgroxx.la $(extra_lib)
 
 
 scaling_t_SOURCES = scaling.t.cc check.h
 
-scaling_t_LDADD = ../libgroxx.la
+scaling_t_LDADD = ../libgroxx.la $(extra_lib)
 
 
 TESTS = aladip.t aladip_atomic.t scaling.t
