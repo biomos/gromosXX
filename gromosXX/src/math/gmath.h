@@ -50,10 +50,15 @@ namespace math
   class VArray : public std::vector<Vec>
   {
   public:
+#ifndef __SUNPRO_CC
     VArray() : std::vector<Vec>::vector() {}
-    
     VArray(size_t s) : std::vector<Vec>::vector(s) {}
     VArray(size_t s, Vec const &v) : std::vector<Vec>::vector(s, v) {}
+#else
+    VArray() : vector() {}
+    VArray(size_t s) : vector(s) {}
+    VArray(size_t s, Vec const &v) : vector(s, v) {}
+#endif
     
     VArray & operator=(double d)
     {
@@ -92,10 +97,16 @@ namespace math
   class SArray : public std::vector<double>
   {
   public:
+
+#ifndef __SUNPRO_CC
     SArray() {}
     SArray(size_t s) : std::vector<double>::vector(s) {}
     SArray(size_t s, double d) : std::vector<double>::vector(s, d) {}
-
+#else
+    SArray() {}
+    SArray(size_t s) : vector(s) {}
+    SArray(size_t s, double d) : vector(s, d) {}
+#endif
     double operator()(int i)const 
     {
       assert(i < size());
