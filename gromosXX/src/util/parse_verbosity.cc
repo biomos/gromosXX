@@ -4,6 +4,9 @@
  */
 
 #include <util/stdheader.h>
+
+#pragma hdrstop
+
 #include <io/argument.h>
 #include <io/message.h>
 

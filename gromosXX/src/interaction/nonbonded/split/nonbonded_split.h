@@ -5,6 +5,8 @@
 
 #include <util/stdheader.h>
 
+#pragma hdrstop
+
 #ifdef OMP
 #include <omp.h>
 #endif

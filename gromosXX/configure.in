@@ -96,12 +96,12 @@ case "$compiler" in
        CXXLD="$CXX"
 	   AC_DEFINE_UNQUOTED(COMPILER_KAI, 1, [KAI C++ compiler])
      ;;
-    intel*)             # Intel C++.  tested with version 5.00
+    intel*)             # Intel C++.  tested with version 8.0beta (precompiled headers)
        echo "Configuring for Intel C++"
-       CXX_PICKY_FLAGS="-w1 -g -DBZDEBUG"
+       CXX_PICKY_FLAGS="-w1 -g -DBZDEBUG -pch"
 
-       CXX_OPTIMIZE_FLAGS="-O3 -ip -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -align"
-       CXX_DEBUG_FLAGS="-g -DBZDEBUG"
+       CXX_OPTIMIZE_FLAGS="-O3 -ip -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -align -pch"
+       CXX_DEBUG_FLAGS="-g -DBZDEBUG -pch"
        CXXLD="$CXX"
 
 #      openmp support...       

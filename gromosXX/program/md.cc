@@ -39,6 +39,8 @@
 #include <omp.h>
 #endif
 
+#pragma hdrstop
+
 #include "BUILD_NUMBER"
 
 int main(int argc, char *argv[]){

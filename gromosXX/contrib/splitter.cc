@@ -253,6 +253,7 @@ void write_solution(map<string, string> &current)
   // header
   splitf << "// " << name.str() << "\n\n"
 	 << "#include \"nonbonded_split.h\"\n\n"
+	 << "#pragma hdrstop\n\n"
 	 << "using namespace interaction;\n"
 	 << "using namespace math;\n"
 	 << "using namespace std;\n\n"
