@@ -35,7 +35,7 @@ namespace interaction
      */    
     virtual void prepare(topology::Topology & topo,
 			 configuration::Configuration & conf,
-			 simulation::Simulation &sim){ DEBUG(8, "Standard Pairlist Algorithm::prepare");}
+			 simulation::Simulation &sim);
 
     /**
      * update the pairlist(s).

@@ -20,6 +20,28 @@ Standard_Pairlist_Algorithm()
 template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
 interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
+prepare(topology::Topology & topo,
+	configuration::Configuration & conf,
+	simulation::Simulation & sim)
+{
+
+  // prepare the range filter (cutoff and chargegroup center of geometries)
+  set_cutoff(sim.param().pairlist.cutoff_short, 
+	     sim.param().pairlist.cutoff_long);
+  
+  if (!t_interaction_spec::do_atomic_cutoff){
+
+    prepare_cog(topo, conf, sim);
+    DEBUG(7, "range filter prepared (cog)");
+
+  }
+  
+}
+
+
+template<typename t_interaction_spec, typename t_perturbation_spec>
+inline void
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim, 
@@ -33,6 +55,8 @@ update(topology::Topology & topo,
   Periodicity_type periodicity(conf.current().box);
    
   // empty the pairlist
+  // to be general, we anyway empty the COMPLETE pairlist
+  // (changing begin, end, stride during simulation possible)
   for(size_t i=0; i<topo.num_atoms(); ++i)
     nbs.pairlist()[i].clear();
 
@@ -45,16 +69,6 @@ update(topology::Topology & topo,
   
   DEBUG(7, "pairlist(s) resized");
   
-  // prepare the range filter (cutoff)
-  set_cutoff(sim.param().pairlist.cutoff_short, 
-	     sim.param().pairlist.cutoff_long);
-  
-  if (!t_interaction_spec::do_atomic_cutoff){
-    // prepare the range filter (center of geometries)    
-    prepare_cog(topo, conf, sim);
-    DEBUG(7, "range filter prepared (cog)");
-
-  }
   
   // loop over the chargegroups
   
@@ -68,24 +82,26 @@ update(topology::Topology & topo,
 
   topology::Chargegroup_Iterator cg1;
 
-  cg1_index = 0;
+  cg1_index = begin;
   cg1_to = num_cg;
-  for( ; cg1_index < num_solute_cg; ++cg1_index) {
+  for( ; cg1_index < num_solute_cg; cg1_index+=stride) {
 
     cg1 = topo.chargegroup_it(cg1_index);
 
+    // intra chargegroup
     do_cg_interaction_intra(topo, conf, sim, nbs, 
 			    cg1, periodicity);
 
-    
+    // inter chargegroup
     do_cg1_loop(topo, conf, sim, nbs, cg1, 
 		cg1_index, num_solute_cg, num_cg,
 		periodicity);
     
   } // cg1
 
-  for( ; cg1_index < num_cg; ++cg1_index) {
+  for( ; cg1_index < num_cg; cg1_index+=stride) {
 
+    // solvent
     cg1 = topo.chargegroup_it(cg1_index);
 
     

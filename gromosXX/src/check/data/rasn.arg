@@ -4,6 +4,6 @@
 	@input   rasn.in
 	@trj     rasn.trj
 	@fin     rasn.fin
-	@trv     rasn.trb
+	@trv     rasn.trv
 	@tre     rasn.tre
 

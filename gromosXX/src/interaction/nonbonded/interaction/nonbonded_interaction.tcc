@@ -49,16 +49,34 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 
   const double nonbonded_start = util::now();
 
+  // shared memory do this only once
   m_pairlist_algorithm->prepare(topo, conf, sim);
 
   typename
     std::vector<Nonbonded_Set<t_interaction_spec, t_perturbation_spec> >::iterator
     it = m_nonbonded_set.begin(),
     to = m_nonbonded_set.end();
+
+#ifdef OMP
+  int tid;
+#pragma omp parallel private(tid)
+    {
+      tid = omp_get_thread_num();
+      // calculate the corresponding interactions
+      m_nonbonded_set[tid].calculate_interactions(topo, conf, sim,
+						  tid, m_omp_num_threads);
+    }
+
+#else
+
+  // have to do all from here (probably it's only one, coud unite this,
+  // but then maybe it's clearer like it is...
   
   for( ; it != to; ++it){
     it->calculate_interactions(topo, conf, sim);
   }
+
+#endif
 
   // add the forces, energies, virial...
   it = m_nonbonded_set.begin();
@@ -124,9 +142,24 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbatio
 	     configuration::Configuration const & conf,
 	     simulation::Simulation const & sim)
 {
+
+#ifdef OMP
+  int tid;
+#pragma omp parallel private(tid)
+    {
+      tid = omp_get_thread_num();
+      if (tid == 0){
+	m_omp_num_threads = omp_get_num_threads();
+      }
+      
+    }
+#else
+    m_omp_num_threads = 1;
+#endif
+
   DEBUG(15, "nonbonded_interaction::initialize");
   m_nonbonded_set.
-    resize(1,Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
+    resize(m_omp_num_threads, Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 	      (*this));
   
   typename

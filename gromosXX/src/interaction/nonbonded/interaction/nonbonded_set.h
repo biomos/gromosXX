@@ -48,7 +48,8 @@ namespace interaction
      */
     int calculate_interactions(topology::Topology & topo,
 			       configuration::Configuration & conf,
-			       simulation::Simulation & sim);
+			       simulation::Simulation & sim,
+			       int tid = 0, int num_threads = 1);
 
     /**
      * add a shortrange interaction.

@@ -37,7 +37,7 @@ START
 END
 STEP
 #   NSTLIM         T        DT
-        20       0.0     0.002
+        50       0.0     0.002
 END
 BOUNDARY
 #      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
@@ -66,7 +66,7 @@ PRINT
 #NTPL: print out C.O.M motion and total energy fitting every NTPL steps
 #NTPP: =1 perform dihedral angle transition monitoring
 #     NTPR      NTPL      NTPP
-         1        10         1
+        25        25         1
 END
 WRITE
 # NTPW = 0 : binary
@@ -75,7 +75,7 @@ WRITE
 # =0: write normal trajectory
 # >0: chose min energy for writing configurations
 #     NTWX     NTWSE      NTWV      NTWE      NTWG      NTPW
-         1         0         1        25         0         1
+       100         0         0         0         0         1
 END
 SHAKE
 #      NTC       TOL

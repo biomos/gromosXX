@@ -81,6 +81,11 @@ namespace interaction
      */
     double m_longrange_timing;
 
+    /**
+     * number of omp threads.
+     */
+    int m_omp_num_threads;
+
   };
   
 } // interaction

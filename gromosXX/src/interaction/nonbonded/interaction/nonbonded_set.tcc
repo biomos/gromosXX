@@ -3,6 +3,10 @@
  * template methods of Nonbonded_Set.
  */
 
+// just testing
+// the sleep function
+#include <unistd.h>
+
 #undef MODULE
 #undef SUBMODULE
 
@@ -34,7 +38,8 @@ int
 interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
-			 simulation::Simulation & sim)
+			 simulation::Simulation & sim,
+			 int tid, int num_threads)
 {
   DEBUG(4, "(Perturbed) Nonbonded_Interaction::calculate_interactions");
 
@@ -47,20 +52,31 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 
   // need to update pairlist?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
+    //====================
     // create a pairlist
-
-    // double pairlist_start = now();
+    //====================
     
     // zero the longrange forces, energies, virial
     m_longrange_storage.zero();
 
-    DEBUG(7, "\tupdate the parlist");
+    // int atoms_per_thread = topo.num_atoms() / num_threads;
+    // int start_atom = atoms_per_thread * tid;
+    // int end_atom = atoms_per_thread * (tid + 1);
+    
+    // m_nonbonded_interaction->pairlist_algorithm().
+    // update(topo, conf, sim, *this, start_atom, end_atom, 1);
+
+    // other option: (using the stride)
+    // chargegroup based pairlist can only use this one!!!!
+    // TODO:
+    // move decision to pairlist!!!
     m_nonbonded_interaction->pairlist_algorithm().
-      update(topo, conf, sim, *this, 0, topo.num_atoms(), 1);
-    DEBUG(7, "\tpairlist updated");
+      update(topo, conf, sim, *this, tid, topo.num_atoms(), num_threads);
 
     /*
-    std::cout << "PRINTING OUT THE STUPID PAIRLIST\n\n";
+    sleep(2*tid);
+    
+    std::cout << "PRINTING OUT THE PAIRLIST\n\n";
     for(size_t i=0; i<100; ++i){
       if (i >= pairlist().size()) break;
 
@@ -73,11 +89,6 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
       }
     }
     */
-
-    
-    // timing.pairlist += now() - pairlist_start;
-    // ++timing.count_pairlist;
-
   }
 
   // calculate forces / energies
@@ -96,28 +107,30 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   }
   
   // add 1,4 - interactions
-  DEBUG(7, "\t1,4 - interactions");
-  one_four_outerloop(topo, conf, sim, m_shortrange_storage);
-  if(t_perturbation_spec::do_perturbation){
-    DEBUG(7, "\tperturbed 1,4 - interactions");
-    perturbed_one_four_outerloop(topo, conf, sim, m_shortrange_storage);
-  }
-  
-  // possibly do the RF contributions due to excluded atoms
-  if(sim.param().longrange.rf_excluded){
-    DEBUG(7, "\tRF excluded interactions and self term");
-    RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+  if (tid == 0){
+    DEBUG(7, "\t1,4 - interactions");
+    one_four_outerloop(topo, conf, sim, m_shortrange_storage);
     if(t_perturbation_spec::do_perturbation){
-      DEBUG(7, "\tperturbed RF excluded interactions and self term");
-      perturbed_RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+      DEBUG(7, "\tperturbed 1,4 - interactions");
+      perturbed_one_four_outerloop(topo, conf, sim, m_shortrange_storage);
+    }
+  
+    // possibly do the RF contributions due to excluded atoms
+    if(sim.param().longrange.rf_excluded){
+      DEBUG(7, "\tRF excluded interactions and self term");
+      RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+      if(t_perturbation_spec::do_perturbation){
+	DEBUG(7, "\tperturbed RF excluded interactions and self term");
+	perturbed_RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+      }
+    }
+
+    if(t_perturbation_spec::do_perturbation){
+      DEBUG(7, "\tperturbed pairs");
+      perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
     }
   }
-
-  if(t_perturbation_spec::do_perturbation){
-    DEBUG(7, "\tperturbed pairs");
-    perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
-  }
-
+  
   // add long-range force
   DEBUG(7, "\tadd long range forces");
 
@@ -190,7 +203,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 		      int pc)
 {
   DEBUG(8, "add shortrange pair " << i << " - " << j);
-  
+
   assert(!t_interaction_spec::do_bekker || (pc >= 0 && pc < 27));
   assert(pairlist().size() > i);
 
@@ -252,6 +265,12 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 	perturbed_pairlist()[j].push_back(((26 - pc) << 26) + i);
       else
 	perturbed_pairlist()[j].push_back(i);
+    }
+    else{
+      if(t_interaction_spec::do_bekker)
+	pairlist()[i].push_back((pc << 26) + j);
+      else
+	pairlist()[i].push_back(j);
     }
   }
   
@@ -329,6 +348,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
       perturbed_lj_crf_innerloop(topo, conf, j, i, m_longrange_storage, periodicity, pc);
       
     }
+    else
+      lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
   }
   
   else
