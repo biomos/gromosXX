@@ -4,6 +4,15 @@
  */
 
 /**
+ * Destructor.
+ */
+template<typename t_simulation>
+inline interaction::nonbonded_interaction<t_simulation>
+::~nonbonded_interaction()
+{
+}
+
+/**
  * calculate nonbonded forces and energies.
  */
 template<typename t_simulation>

@@ -18,6 +18,10 @@ namespace interaction
   {
   public:
     /**
+     * Destructor.
+     */
+    virtual ~nonbonded_interaction();
+    /**
      * calculate the interactions.
      */
     virtual void calculate_interactions(t_simulation &simu);

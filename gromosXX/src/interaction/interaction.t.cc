@@ -30,19 +30,17 @@ using namespace math;
  * they should be implemented by blitz, but i cannot get
  * them to work?!
  */
-template<typename T, int N>
-bool operator==(blitz::TinyVector<T,N> &t1, blitz::TinyVector<T,N> &t2)
+bool operator==(math::Vec &t1, math::Vec &t2)
 {
   bool b = true;
-  for(int i=0; i<N; ++i)
+  for(int i=0; i<3; ++i)
     if (t1(i) != t2(i)) b = false;
   return b;
 }
 /**
  * != operator
  */
-template<typename T, int N>
-bool operator!=(blitz::TinyVector<T,N> &t1, blitz::TinyVector<T,N> &t2)
+bool operator!=(math::Vec &t1, math::Vec &t2)
 {
   return !(t1 == t2);
 }
@@ -61,7 +59,7 @@ void forcefield_test()
   the_topology.num_solute_atoms(SIZE);
 
   // initialize everything with zero
-  blitz::TinyVector<double, 3> t(0.0, 0.0, 0.0), t2(1, 1, 1);
+  Vec t(0.0, 0.0, 0.0), t2(1, 1, 1);
 
   the_system.pos() = tensor::i;
   the_system.vel() = 0.0;
@@ -78,25 +76,38 @@ void forcefield_test()
   interaction::simple_pairlist<simulation_type> the_pairlist;
   the_pairlist.make_pairlist(the_simulation);
   
-  the_pairlist.print_pairlist(cout);
+  // the_pairlist.print_pairlist(cout);
   
   interaction::simple_pairlist<simulation_type>::iterator it =
     the_pairlist.begin();
   
+  /*
   for( ; !it.eol(); ++it){
     std::cout << std::setw(6) << it.i() << setw(6) << it.j() << std::endl;
   }
+  */
   
   // let's create a forcefield...
+
   interaction::forcefield<simulation_type> the_forcefield;
+
   interaction::nonbonded_interaction<simulation_type> *the_nb_interaction =
     new interaction::nonbonded_interaction<simulation_type>;
   
   the_forcefield.add_interaction(the_nb_interaction);
-  
+
   // and calculate the forces...
   the_forcefield.calculate_interactions(the_simulation);
-  
+
+  // total force should be 0
+  Vec v = sum(the_simulation.system().force());
+
+  bool b = true;
+  if (v == t) b=true;
+  else b = false;
+
+  BOOST_CHECK_EQUAL(b, true);
+
 }
 
 test_suite*
