@@ -70,6 +70,11 @@ namespace simulation
      */
     Angle & angles();
     
+    /**
+     * improper dihedral accessor.
+     */
+    Improper_dihedral & improper_dihedrals();
+    
   private:
     /**
      * atom information.
@@ -85,6 +90,11 @@ namespace simulation
      * the angles.
      */
     Angle m_angle;
+    
+    /**
+     * the improper dihedral.
+     */
+    Improper_dihedral m_improper_dihedral;
     
   };
   

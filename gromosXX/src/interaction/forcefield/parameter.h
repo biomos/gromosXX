@@ -29,6 +29,16 @@ namespace interaction
   };
   
   /**
+   * @struct improper_dihedral_type_struct
+   * improper dihedral types.
+   */
+  struct improper_dihedral_type_struct
+  {
+    double K;
+    double q0;
+  };
+  
+  /**
    * @struct lj_parameter_struct
    * Lennard Jones interaction parameter.
    */

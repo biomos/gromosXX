@@ -36,6 +36,13 @@ namespace io {
     InTopology & operator>>(interaction::angle_interaction<t_simulation> &ai);
     
     /**
+     * Read in the improper dihedral parameters.
+     */
+    template<typename t_simulation>
+    InTopology & operator>>
+    (interaction::Improper_dihedral_interaction<t_simulation> & ii);
+    
+    /**
      * Read in the nonbonded interaction types (lennard-jones).
      */
     template<typename t_simulation, typename t_pairlist>

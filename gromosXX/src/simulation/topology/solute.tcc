@@ -113,3 +113,12 @@ simulation::Solute::angles()
 {
   return m_angle;
 }
+
+/**
+ * improper_dihedrals accessor.
+ */
+inline simulation::Improper_dihedral &
+simulation::Solute::improper_dihedrals()
+{
+  return m_improper_dihedral;
+}

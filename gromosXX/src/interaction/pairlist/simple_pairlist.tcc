@@ -100,10 +100,10 @@ void interaction::twin_range_pairlist<t_simulation>
   double d = 0;
 
   // square of the cutoff...
-  double rcutp2 = sim.nonbonded_cutoff_short();
+  double rcutp2 = sim.nonbonded().cutoff_short();
   rcutp2 *= rcutp2;
   
-  double rcutl2 = sim.nonbonded_cutoff_long();
+  double rcutl2 = sim.nonbonded().cutoff_long();
   rcutl2 *= rcutl2;
 
   math::Vec p;
@@ -147,10 +147,10 @@ void interaction::twin_range_pairlist_cg<t_simulation>
   double d = 0;
 
   // square of the cutoff...
-  double rcutp2 = sim.nonbonded_cutoff_short();
+  double rcutp2 = sim.nonbonded().cutoff_short();
   rcutp2 *= rcutp2;
   
-  double rcutl2 = sim.nonbonded_cutoff_long();
+  double rcutl2 = sim.nonbonded().cutoff_long();
   rcutl2 *= rcutl2;
 
   math::Vec cog1, cog2;

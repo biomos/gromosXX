@@ -9,6 +9,8 @@ include_HEADERS = 		simulation.h \
 				topology/bond.tcc \
 				topology/angle.h \
 				topology/angle.tcc \
+                                topology/improper_dihedral.h \
+                                topology/improper_dihedral.tcc \
 				topology/solute.h \
 				topology/solute.tcc \
 				topology/solvent.h \

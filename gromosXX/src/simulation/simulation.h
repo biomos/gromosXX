@@ -4,11 +4,13 @@
  */
 
 #include "../interaction/forcefield/parameter.h"
+#include "simulation/nonbonded.h"
 #include "simulation/simulation.h"
 #include "topology/chargegroup_iterator.h"
 #include "topology/compound.h"
 #include "topology/bond.h"
 #include "topology/angle.h"
+#include "topology/improper_dihedral.h"
 #include "topology/solute.h"
 #include "topology/solvent.h"
 #include "topology/topology.h"

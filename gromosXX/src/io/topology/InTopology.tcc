@@ -7,6 +7,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
+
   
   { // BOND
     buffer = m_block["BOND"];
@@ -127,6 +128,66 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
 	throw std::runtime_error("error in BONDANGLEH block (n != num)");
     }
   } // BONDANGLEH
+
+  { // IMPDIHEDRAL
+    buffer = m_block["IMPDIHEDRAL"];
+  
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    int num, n;
+    _lineStream >> num;
+    ++it;
+    
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, k, l, t;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> k >> l >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in IMPDIHEDRAL block");
+      
+      topo.solute().improper_dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail()|| ! _lineStream.eof())
+	throw std::runtime_error("error in IMPDIHEDRAL block (n != num)");
+    }
+  } // IMPDIHEDRAL
+
+  { // IMPDIHEDRALH
+    buffer.clear();
+    buffer = m_block["IMPDIHEDRALH"];
+  
+    it = buffer.begin() + 1;
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    int num, n;
+    _lineStream >> num;
+    ++it;
+
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, k, l, t;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> k >> l >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in IMPDIHEDRALH block");
+
+      topo.solute().improper_dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("error in IMPDIHEDRALH block (n != num)");
+    }
+  } // IMPDIHEDRALH
   
   { // RESNAME
     buffer = m_block["RESNAME"];
@@ -339,6 +400,35 @@ io::InTopology &io::InTopology
   return *this;
 }
 
+template<typename t_simulation>
+io::InTopology &io::InTopology
+::operator>>(interaction::Improper_dihedral_interaction<t_simulation> &ii){
+
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  buffer = m_block["IMPDIHEDRALTYPE"];
+
+  // 1. IMPDIHEDRALTYPE 2. number of types
+  for (it = buffer.begin() + 2; 
+   it != buffer.end() - 1; ++it) {
+
+    double k, q;
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> k >> q;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+      throw std::runtime_error("bad line in IMPDIHEDRALTYPE block");
+
+    // and add...
+    ii.add(k, q);
+
+  }
+  return *this;
+}
+
 template<typename t_simulation, typename t_pairlist>
 io::InTopology &io::InTopology
 ::operator>>(interaction
@@ -347,46 +437,64 @@ io::InTopology &io::InTopology
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
-  buffer = m_block["LJPARAMETERS"];
-
-  int num, n;
-  
-  it = buffer.begin() + 1;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  _lineStream >> num;
-
-  // calculate the matrix size from: x = n*(n+1)/2
-  size_t sz = size_t(sqrt(double((8*num+1)-1))/2);
-  nbi.resize(sz);
-
-  ++it;
-  
-  for (n=0; it != buffer.end() - 1; ++it, ++n) {
-
-    typename interaction::lj_parameter_struct s;
-    int i, j;
+  { // TOPPHYSCON
+    buffer = m_block["TOPPHYSCON"];
     
+    it = buffer.begin() + 1;
     _lineStream.clear();
     _lineStream.str(*it);
-
-    _lineStream >> i >> j >> s.c12 >> s.c6 >> s.cs12 >> s.cs6;
-
+    double fpepsi, hbar;
+    _lineStream >> fpepsi >> hbar;
     if (_lineStream.fail() || ! _lineStream.eof())
-      throw std::runtime_error("bad line in LJPARAMETERS block");
+      io::messages.add("Bad line in TOPPHYSCON block",
+			"InTopology", io::message::error);
+    nbi.coulomb_constant(fpepsi);
+  } // TOPPHYSCON
 
-    // and add...
-    nbi.add_lj_parameter(i-1, j-1, s);
+  { // LJPARAMETERS
+    
+    buffer = m_block["LJPARAMETERS"];
+    
+    int num, n;
+    
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> num;
+    
+    // calculate the matrix size from: x = n*(n+1)/2
+    size_t sz = size_t(sqrt(double((8*num+1)-1))/2);
+    nbi.resize(sz);
+    
+    ++it;
+    
+    for (n=0; it != buffer.end() - 1; ++it, ++n) {
+      
+      typename interaction::lj_parameter_struct s;
+      int i, j;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> i >> j >> s.c12 >> s.c6 >> s.cs12 >> s.cs6;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in LJPARAMETERS block");
+      
+      // and add...
+      nbi.add_lj_parameter(i-1, j-1, s);
+    } 
+    
+  
 
-  }
-
-  if (num != n){
-    io::messages.add("Reading the LJPARAMETERS failed (n != num)",
-		     "InTopology",
-		     io::message::critical);
-    throw std::runtime_error("bad LJPARAMETERS block (n != num)");
-  }
-
+    if (num != n){
+      io::messages.add("Reading the LJPARAMETERS failed (n != num)",
+		       "InTopology",
+		       io::message::critical);
+      throw std::runtime_error("bad LJPARAMETERS block (n != num)");
+    }
+  } // LJPARAMETER
+   
   return *this;  
 }
 

@@ -62,10 +62,34 @@ inline io::InInput & io::InInput
 
     DEBUG(7, "setting short cutoff=" << rcutp << " long cutoff=" << rcutl);
     
-    sim.nonbonded_update(update_step);
-    sim.nonbonded_cutoff_short(rcutp);
-    sim.nonbonded_cutoff_long(rcutl);
+    sim.nonbonded().update(update_step);
+    sim.nonbonded().cutoff_short(rcutp);
+    sim.nonbonded().cutoff_long(rcutl);
   }
+  
+  { // LONGRANGE
+    buffer = m_block["LONGRANGE"];
+
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    
+    double epsilon, kappa, cutoff;
+    
+    _lineStream >> epsilon >> kappa >> cutoff;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+
+      io::messages.add("bad linein LONGRANGE block",
+		       "InInput", io::message::error);
+
+    sim.nonbonded().RF_constant(epsilon, kappa, cutoff);
+
+    DEBUG(7, "calculating Crf: epsilon= " << epsilon << " kappa= "
+	  << kappa << " cutoff= " << cutoff << endl << "RF_constant= " 
+	  << sim.nonbonded().RF_constant());
+    
+  } // LONGRANGE
 
   return *this;
 }

@@ -37,6 +37,16 @@ namespace interaction
      * get the lj parameters for atom type i and j.
      */
     lj_parameter_struct const & lj_parameter(size_t iac_i, size_t iac_j);
+
+    /**
+     * set the coulomb constant 
+     */
+    void coulomb_constant(double const coulomb_constant);
+    
+    /**
+     * get the coulomb constant
+     */
+    double coulomb_constant()const;
     
     /**
      * resize the lj_parameter matrix.
@@ -61,6 +71,11 @@ namespace interaction
      */
     std::vector< std::vector<lj_parameter_struct> > m_lj_parameter;
 
+    /**
+     * the coulomb constant
+     */
+    double m_coulomb_constant;
+    
     /**
      * the long-range force.
      */

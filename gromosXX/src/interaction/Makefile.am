@@ -8,6 +8,10 @@ include_HEADERS = 		interaction.h \
 				interaction/nonbonded_interaction.tcc \
 				interaction/harmonic_bond_interaction.h \
 				interaction/harmonic_bond_interaction.tcc \
+                                interaction/angle_interaction.h \
+                                interaction/angle_interaction.tcc \
+                                interaction/improper_dihedral_interaction.h \
+                                interaction/improper_dihedral_interaction.tcc \
 				pairlist/simple_pairlist.h \
 				pairlist/simple_pairlist.tcc
 
