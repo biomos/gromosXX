@@ -1,0 +1,25 @@
+
+TODO list of gromosXX
+=====================
+
+	-	change OutGTrajectory: gather chargegroups on first atom, not on cog
+	-	write check_state methods for Simulation, Topology and System (and maybe others)
+	-	autoconf flag to create production code
+	-	energy calculation
+	-	energy trajectory
+	-	excluded atoms reaction field contribution
+
+Release 0.0.2
+
+	-	handle the GENBOX block
+	-	perturbation
+	-	check the triclinic computational box
+	-	atomic virial
+	-	center of mass motion removal (constraining)
+	
+
+
+	-	P3M, PME
+	-	path integral
+	-	SD, (MC?)
+	-	special forces
