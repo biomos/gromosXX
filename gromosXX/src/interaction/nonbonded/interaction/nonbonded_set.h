@@ -52,6 +52,15 @@ namespace interaction
 			       int tid = 0, int num_threads = 1);
 
     /**
+     * calculate the hessian for a given atom.
+     */
+    int calculate_hessian(topology::Topology & topo,
+			  configuration::Configuration & conf,
+			  simulation::Simulation & sim,
+			  size_t const atom_i, size_t const atom_j,
+			  math::Matrix & hessian);
+
+    /**
      * add a shortrange interaction.
      */
     void add_shortrange_pair(topology::Topology & topo,

@@ -43,6 +43,16 @@ namespace interaction
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
+
+    /**
+     * calculate the hessian for a given atom.
+     */
+    int calculate_hessian(topology::Topology & topo,
+			  configuration::Configuration & conf,
+			  simulation::Simulation & sim,
+			  size_t const atom_i, size_t const atom_j,
+			  math::Matrix & hessian);
+
     /**
      * Pairlist algorithm
      */

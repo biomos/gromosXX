@@ -198,6 +198,88 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 }
 
 /**
+ * calculate the hessian for a given atom.
+ */
+template<typename t_interaction_spec, typename t_perturbation_spec>
+inline int
+interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
+::calculate_hessian(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    size_t const atom_i, size_t const atom_j,
+		    math::Matrix & hessian){
+  
+  hessian = 0.0;
+  
+  // loop over the pairlist
+
+  //*************************
+  // standard implementation
+  //*************************
+
+  std::vector<size_t>::const_iterator j_it, j_to;
+  size_t i;
+  size_t size_i = pairlist().size();
+  math::Vec r;
+  math::Matrix h;
+  Periodicity_type periodicity(conf.current().box);
+  
+  for(j_it = pairlist()[atom_i].begin(),
+	j_to = pairlist()[i].end();
+      j_it != j_to;
+      ++j_it){
+
+    if (*j_it == atom_j){
+      periodicity.nearest_image(conf.current().pos(atom_i),
+				conf.current().pos(atom_j),
+				r);
+    }
+    else continue;
+      
+    const lj_parameter_struct &lj = 
+      m_nonbonded_interaction->lj_parameter(topo.iac(atom_i),
+					    topo.iac(atom_j));
+    
+    lj_crf_hessian(r,
+		   lj.c6, lj.c12, 
+		   topo.charge()(atom_i) * topo.charge()(atom_j),
+		   h);
+
+    for(size_t d1=0; d1 < 3; ++d1)
+      for(size_t d2=0; d2 < 3; ++d2)
+	hessian(d1,d2) += h(d1,d2);
+  }
+  // and the other way round
+  for(j_it = pairlist()[atom_j].begin(),
+	j_to = pairlist()[i].end();
+      j_it != j_to;
+      ++j_it){
+
+    if (*j_it == atom_i){
+      periodicity.nearest_image(conf.current().pos(atom_i),
+				conf.current().pos(atom_j),
+				r);
+    }
+    else continue;
+      
+    const lj_parameter_struct &lj = 
+      m_nonbonded_interaction->lj_parameter(topo.iac(atom_i),
+					    topo.iac(atom_j));
+    
+    lj_crf_hessian(r,
+		   lj.c6, lj.c12, 
+		   topo.charge()(atom_i) * topo.charge()(atom_j),
+		   h);
+
+    for(size_t d1=0; d1 < 3; ++d1)
+      for(size_t d2=0; d2 < 3; ++d2)
+	hessian(d1,d2) += h(d1,d2);
+  }
+
+  return 0;
+}
+
+/**
  * add a shortrange interaction
  */
 template<typename t_interaction_spec, typename t_perturbation_spec>

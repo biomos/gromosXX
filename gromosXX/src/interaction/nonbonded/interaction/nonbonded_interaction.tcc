@@ -143,6 +143,35 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 }
 
 /**
+ * calculate the hessian for a given atom.
+ */
+template<typename t_interaction_spec, typename t_perturbation_spec>
+int interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
+::calculate_hessian(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    size_t const atom_i, size_t const atom_j,
+		    math::Matrix & hessian)
+{
+  typename
+    std::vector<Nonbonded_Set<t_interaction_spec, t_perturbation_spec> >::iterator
+    it = m_nonbonded_set.begin(),
+    to = m_nonbonded_set.end();
+
+  hessian = 0.0;
+  math::Matrix h;
+
+  for( ; it != to; ++it){
+    it->calculate_hessian(topo, conf, sim, atom_i, atom_j, h);
+
+    for(size_t d1=0; d1 < 3; ++d1)
+      for(size_t d2=0; d2 < 3; ++d2)
+	hessian(d1,d2) += h(d1,d2);
+  }
+  return 0;
+}
+
+/**
  * initialize the arrays
  */
 template<typename t_interaction_spec, typename t_perturbation_spec>

@@ -37,6 +37,17 @@ namespace interaction
 				       simulation::Simulation & sim) = 0;
 
     /**
+     * calculate the second derivative of the potential
+     * energy term with respect to the position of the
+     * specified atom.
+     */
+    virtual int calculate_hessian(topology::Topology & topo,
+				  configuration::Configuration & conf,
+				  simulation::Simulation & sim,
+				  size_t const atom_i, size_t const atom_j,
+				  math::Matrix & hessian){ return 0; }
+    
+    /**
      * timing information.
      */
     virtual void print_timing(std::ostream & os)
