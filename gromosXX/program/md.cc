@@ -302,7 +302,7 @@ int main(int argc, char *argv[]){
   }
   catch (std::string s){
     io::messages.display();
-    std::cerr << "there was something wrong:\n" << s << std::endl;
+    std::cerr << "error encountered while running md:\n" << s << std::endl;
     return 1;
   }
   
