@@ -66,13 +66,6 @@ interaction::simple_pairlist<t_simulation>::iterator::operator!=(
   return !operator==(it);
 }
 
-/**
- * Build up a pairlist, here
- * every particle interacts with all other particles.
- * To not count double, the pairlist contains only
- * interactions with particles with higher sequence
- * number.
- */
 template<typename t_simulation>
 void interaction::simple_pairlist<t_simulation>
 ::update(t_simulation &simu)
