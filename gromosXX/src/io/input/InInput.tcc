@@ -91,6 +91,111 @@ inline io::InInput & io::InInput
 	  << sim.nonbonded().RF_constant());
     
   } // LONGRANGE
+  
+  { // TEMPERATURE COUPLING
+    
+    // is there a MULTIBATH block
+    buffer = m_block["MULTIBATH"];
+    
+    it = buffer.begin();
+    if (it != buffer.end()){
+
+      io::messages.add("using MULTIBATH block",
+		       "InInput", io::message::notice);
+      ++it;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      int num;
+      int last;
+      double temp, tau;
+
+      _lineStream >> num;
+      ++it;
+      
+      for(int i=0; i<num; ++i, ++it){
+	_lineStream.clear();
+	_lineStream.str(*it);
+	
+	_lineStream >> last >> temp >> tau;
+
+	sim.multibath().add_bath(last, temp, tau);
+	
+      }
+      
+      if (_lineStream.fail()){
+	io::messages.add("bad line in MULTIBATH block",
+			 "InInput", io::message::error);
+      }
+
+    }
+    else{
+      // try a TCOUPLE block
+      
+      buffer = m_block["TCOUPLE"];
+      if (buffer.size()){
+
+	int ntt[3];
+	double temp[3];
+	double tau[3];
+	
+	it = buffer.begin()+1;
+
+	for(int i=0; i<3; ++i, ++it){
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> ntt[i] >> temp[i] >> tau[i];
+	}
+
+	if (_lineStream.fail()){
+	  io::messages.add("bad line in TCOUPLE block",
+			   "InInput", io::message::error);
+	  return *this;
+	}	
+
+	// need the number of solvents...
+	// has to be adapted in case of multiple solvents...
+	int nsm;
+	read_SYSTEM(nsm);
+
+	// the last solute atom
+	int last_solute = sim.topology().num_solute_atoms();
+	// the last solvent atom
+	int last_solvent = sim.topology().solvent(0).num_atoms() * nsm + last_solute;
+
+	// cases to handle
+	// 0 0 0
+	if (ntt[0] == 0 && ntt[1] == 0 && ntt[2] == 0){
+	  // nothing
+	}
+	// 2 2 0
+	else if (ntt[0] == 2 && ntt[1] == 2 && ntt[2] == 0){
+	  sim.multibath().add_bath(last_solute, temp[0], tau[0]);
+	}
+	// 2 -2 1
+	else if (ntt[0] == 2 && ntt[1] == -2 && ntt[2] == 1){
+	  sim.multibath().add_bath(last_solute, temp[0], tau[0]);
+	  sim.multibath().add_bath(last_solvent, temp[2], tau[2]);
+	}
+	// 3 3 3
+	else if (ntt[0] == 3 && ntt[1] == 3 && ntt[2] == 3){
+	  sim.multibath().add_bath(last_solvent, temp[0], tau[0]);
+	}
+	// rest is not handled!
+	else{
+	  io::messages.add("TCOUPLE ntt combination not handled",
+			   "InInput", io::message::error);
+	  return *this;
+	}
+
+      }
+      else{
+	// no TCOUPLE block
+      }
+      
+    }
+    
+  }
 
   return *this;
 }

@@ -11,6 +11,16 @@
 #include "../../debug.h"
 
 /**
+ * Constructor.
+ */
+template<typename t_simulation>
+inline interaction::Dihedral_interaction<t_simulation>
+::Dihedral_interaction()
+  : Interaction<t_simulation>("Dihedral")
+{
+}
+
+/**
  * Destructor.
  */
 template<typename t_simulation>

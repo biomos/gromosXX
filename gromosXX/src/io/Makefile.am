@@ -15,7 +15,8 @@ include_HEADERS = 		io.h \
 				trajectory/OutG96Trajectory.tcc \
 				input/InInput.h \
 				input/InInput.tcc \
-				argument.h
+				argument.h \
+				print_block.h
 
 lib_LTLIBRARIES	= 		libio.la
 
@@ -24,7 +25,8 @@ libio_la_LDFLAGS =	 	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 libio_la_SOURCES =		io.cc \
 				message.cc \
 				GInStream.cc \
-				argument.cc
+				argument.cc \
+				print_block.cc
 
 bin_PROGRAMS =			
 

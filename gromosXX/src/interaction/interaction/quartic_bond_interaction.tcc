@@ -11,6 +11,16 @@
 #include "../../debug.h"
 
 /**
+ * Constructor.
+ */
+template<typename t_simulation>
+inline interaction::Quartic_bond_interaction<t_simulation>
+::Quartic_bond_interaction()
+  : Interaction<t_simulation>("QuarticBond")
+{
+}
+
+/**
  * Destructor.
  */
 template<typename t_simulation>

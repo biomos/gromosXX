@@ -89,6 +89,16 @@ inline simulation::Nonbonded & simulation::Simulation<t_topo, t_system>
 }
 
 /**
+ * multibath parameter
+ */
+template<typename t_topo, typename t_system>
+inline simulation::Multibath & simulation::Simulation<t_topo, t_system>
+::multibath()
+{
+  return m_multibath;
+}
+
+/**
  * add solvent molecules to the simulation (system).
  */
 template<typename t_topo, typename t_system>
@@ -99,6 +109,14 @@ inline void simulation::Simulation<t_topo, t_system>::solvate(size_t solv, size_
 		  topology().num_solvent_atoms());
 }
 
+/**
+ * calculate the degrees of freedom.
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>::calculate_degrees_of_freedom()
+{
+  multibath().calculate_degrees_of_freedom(topology());
+}
 
 namespace simulation
 {

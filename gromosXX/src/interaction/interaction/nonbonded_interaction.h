@@ -18,6 +18,11 @@ namespace interaction
   {
   public:    
     /**
+     * Constructor.
+     */
+    Nonbonded_Interaction();
+    
+    /**
      * Destructor.
      */
     virtual ~Nonbonded_Interaction();

@@ -85,7 +85,7 @@ FORCE
 #      NTF array
 # bonds    angles    imp.     dihe     charge nonbonded
 # H        H         H        H
-  0  0     0  0      0  0     0  0     1  1
+  1  1     0  0      0  0     0  0     0  0
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      2      6      3738
 END

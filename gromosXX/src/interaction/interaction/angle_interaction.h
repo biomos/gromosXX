@@ -17,6 +17,10 @@ namespace interaction
   {
   public:
     /**
+     * Constructor.
+     */
+    angle_interaction();
+    /**
      * Destructor.
      */
     virtual ~angle_interaction();

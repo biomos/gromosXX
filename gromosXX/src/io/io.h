@@ -12,6 +12,7 @@
 #include "trajectory/OutTrajectory.h"
 #include "trajectory/OutG96Trajectory.h"
 #include "input/InInput.h"
+#include "print_block.h"
 
 #ifndef NDEBUG
 

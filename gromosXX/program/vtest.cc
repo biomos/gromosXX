@@ -11,6 +11,7 @@
 #include "../src/debug.h"
 
 #include <math/gmath.h>
+#include <io/message.h>
 #include <simulation/simulation.h>
 #include <interaction/interaction.h>
 #include <io/io.h>
@@ -20,6 +21,9 @@
 #include <algorithm/integration/runge_kutta.h>
 
 #include "../src/debug.cc"
+
+// helper functions to prepare the md run
+#include "create_forcefield.h"
 
 using namespace math;
 
@@ -123,109 +127,31 @@ int main(int argc, char *argv[])
       simulation::System<math::any> > simulation_type;
   
     simulation_type the_simulation(the_topology, the_system);
-  
+
+    typedef interaction::twin_range_pairlist_cg<simulation_type> pairlist_type;
+
     // add solvent
     int nsm;
     input.read_SYSTEM(nsm);
     if (nsm) the_simulation.solvate(0, nsm);
 
     // FORCEFIELD
-    interaction::Forcefield<simulation_type> the_forcefield;
+    interaction::Forcefield<simulation_type> &the_forcefield
+      = create_forcefield<simulation_type, pairlist_type>(topo, input, the_topology);
 
-    // bonds: quartic
-    interaction::Quartic_bond_interaction<simulation_type> 
-      *the_qbond_interaction =
-      new interaction::Quartic_bond_interaction<simulation_type>;
-
-    // bonds: harmonic
-    interaction::harmonic_bond_interaction<simulation_type>
-      *the_hbond_interaction =
-      new interaction::harmonic_bond_interaction<simulation_type>;
-
-    // angles
-    interaction::angle_interaction<simulation_type>
-      *the_angle_interaction = 
-      new interaction::angle_interaction<simulation_type>;
-  
-    // improper dihedrals
-    interaction::Improper_dihedral_interaction<simulation_type>
-      *the_improper_interaction = 
-      new interaction::Improper_dihedral_interaction<simulation_type>;
-    
-    // dihedrals
-    interaction::Dihedral_interaction<simulation_type>
-      *the_dihedral_interaction =
-      new interaction::Dihedral_interaction<simulation_type>;
-    
-    // nonbonded
-    typedef interaction::twin_range_pairlist_cg<simulation_type> pairlist_type;
-
-    interaction::Nonbonded_Interaction<simulation_type, pairlist_type>
-      *the_nonbonded_interaction =
-      new interaction::Nonbonded_Interaction<simulation_type, pairlist_type>;
-
-    DEBUG(7, "parsing parameter");
-
-    // read parameter
-    topo >> *the_qbond_interaction;
-    topo >> *the_hbond_interaction;
-    topo >> *the_angle_interaction;
-    topo >> *the_improper_interaction;
-    topo >> *the_dihedral_interaction;
-    topo >> *the_nonbonded_interaction;
-  
     input >> the_simulation;
-
-    // add to the forcefield
-    int do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
-    input.read_FORCE(do_bond, do_angle, do_improper,
-		     do_dihedral, do_nonbonded);
   
-    if (do_bond == 1){
-      io::messages.add("using Gromos96 quartic bond term", "vtest", io::message::notice);
-      the_forcefield.push_back(the_qbond_interaction);
-    }
-    if (do_bond == 2){
-      io::messages.add("using Gromos87 harmonic bond term", "vtest", io::message::notice);
-      the_forcefield.push_back(the_hbond_interaction);
-    }
-    if (do_angle)
-      the_forcefield.push_back(the_angle_interaction);
-    if (do_improper)
-      the_forcefield.push_back(the_improper_interaction);
-    if (do_dihedral)
-      the_forcefield.push_back(the_dihedral_interaction);
-    if (do_nonbonded)
-      the_forcefield.push_back(the_nonbonded_interaction);
-
-    // decide on SHAKE
+    // create the algorithm
     int ntc;
     double tolerance;
     input.read_SHAKE(ntc, tolerance);
 
-    switch(ntc){
-      case 1:
-	break;
-      case 2: 
-	std::cout << "SHAKE bonds containing hydrogen atoms" << std::endl;
-	the_topology.solute().
-	  add_bond_length_constraints(1.0,
-				      the_topology.mass(),
-				      the_hbond_interaction->parameter());
-	break;
-      case 3: 
-	std::cout << "SHAKE all bonds" << std::endl;
-	the_topology.solute().
-	  add_bond_length_constraints(the_hbond_interaction->parameter());
-	break;
-      default:
-	std::cout << "wrong ntc" << std::endl;
-    }
-  
-    // create the algorithm
     algorithm::runge_kutta<simulation_type> RK;
     algorithm::Shake<simulation_type> shake(tolerance);
 
+    // prepare for the run
+    the_simulation.calculate_degrees_of_freedom();
+    
     // prepare for the output
     int print_trajectory, print_velocity, print_energy;
     input.read_PRINT(print_trajectory, print_velocity, print_energy);
@@ -256,10 +182,13 @@ int main(int argc, char *argv[])
     
     traj.print_title("\tvtest(gromosXX) MD simulation");
 
+    std::cout << the_simulation.multibath();
+
     std::cout << "Messages (startup)\n";
     if (io::messages.display(std::cout) > io::message::notice)
       return 1;
     std::cout << "\n";
+    io::messages.clear();
 
     int num_steps;
     double t0, dt;
@@ -281,13 +210,31 @@ int main(int argc, char *argv[])
 	algorithm::leap_frog<simulation_type>
 	  ::step(the_simulation, the_forcefield, dt);
   
+      if (print_energy && the_simulation.steps() % print_energy == 0){
+	std::cout << the_simulation.multibath();
+      }
+
       if (print_pairlist && the_simulation.steps() % print_pairlist == 0){
-	*trprint << "shortrange\n" 
-		 << the_nonbonded_interaction->pairlist().short_range()
-		 << std::endl;
-	*trprint << "longrange\n" 
-		 << the_nonbonded_interaction->pairlist().long_range()
-		 << std::endl;
+
+	std::vector<interaction::Interaction<simulation_type> *>::const_iterator it = the_forcefield.begin(),
+	  to = the_forcefield.end();
+	
+	for( ; it != to; ++it){
+	  
+	  if ((*it)->name == "NonBonded"){
+
+	    *trprint << "shortrange\n" 
+		     << dynamic_cast<interaction::Nonbonded_Interaction<simulation_type,
+	      pairlist_type> *>(*it)->pairlist().short_range()
+		     << std::endl;
+	    *trprint << "longrange\n" 
+		     << dynamic_cast<interaction::Nonbonded_Interaction<simulation_type,
+	      pairlist_type> *>(*it)->pairlist().long_range()
+		     << std::endl;
+	  }
+	  
+	}
+	
       }
       
       try{

@@ -4,8 +4,6 @@
  */
 
 #include "../interaction/forcefield/parameter.h"
-#include "simulation/nonbonded.h"
-#include "simulation/simulation.h"
 #include "topology/chargegroup_iterator.h"
 #include "topology/compound.h"
 #include "topology/bond.h"
@@ -16,6 +14,9 @@
 #include "topology/solvent.h"
 #include "topology/topology.h"
 #include "system/system.h"
+#include "simulation/multibath.h"
+#include "simulation/nonbonded.h"
+#include "simulation/simulation.h"
 
 #ifndef NDEBUG
 namespace simulation

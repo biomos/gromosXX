@@ -18,6 +18,19 @@ namespace interaction
   {
   public:
     /**
+     * Constructor.
+     */
+    Interaction(std::string name) : name(name) {};
+    /**
+     * Destructor.
+     */
+    virtual ~Interaction(){};
+    /**
+     * the name of the interaction.
+     * can be used to identify a special class.
+     */
+    std::string name;
+    /**
      * calculate the interactions.
      */
     virtual void calculate_interactions(t_simulation &simu) = 0;

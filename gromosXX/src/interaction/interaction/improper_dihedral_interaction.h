@@ -17,6 +17,10 @@ namespace interaction
   {
   public:
     /**
+     * Constructor.
+     */
+    Improper_dihedral_interaction();
+    /**
      * Destructor.
      */
     virtual ~Improper_dihedral_interaction();

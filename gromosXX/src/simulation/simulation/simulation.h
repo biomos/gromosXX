@@ -57,6 +57,11 @@ namespace simulation
     simulation::Nonbonded & nonbonded();
 
     /**
+     * the multibath / degree of freedom parameters
+     */
+    simulation::Multibath & multibath();
+    
+    /**
      * increase the time by dt.
      */
     void increase_time(double dt);
@@ -65,6 +70,11 @@ namespace simulation
      * add solvent molecules to the simulation (system).
      */
     void solvate(size_t solv, size_t num_molecules);
+
+    /**
+     * calculate degrees of freedom.
+     */
+    void calculate_degrees_of_freedom();
 
   private:
     /**
@@ -85,10 +95,15 @@ namespace simulation
     int m_steps;
 
     /**
-     * nonbonded parameters.
+     * nonbonded parameter.
      */
     simulation::Nonbonded m_nonbonded;
     
+    /**
+     * multibath parameter.
+     */
+    simulation::Multibath m_multibath;
+
   }; // class Simulation
   
   

@@ -4,6 +4,16 @@
  */
 
 /**
+ * Constructor.
+ */
+template<typename t_simulation>
+inline interaction::Improper_dihedral_interaction<t_simulation>
+::Improper_dihedral_interaction()
+  : Interaction<t_simulation>("ImproperDihedral")
+{
+}
+
+/**
  * Destructor.
  */
 template<typename t_simulation>

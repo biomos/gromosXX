@@ -6,6 +6,7 @@
 /**
  * constructor
  */
+inline
 simulation::Nonbonded::Nonbonded():
   m_update(5),
   m_cutoff_short(0.8),
@@ -85,6 +86,7 @@ inline void simulation::Nonbonded::RF_constant(double const epsilon,
  * get reaction field epsilon
  * Crf in the book, II-54
  */
+inline
 double simulation::Nonbonded::RF_epsilon()const
 {
   return m_RF_epsilon;
@@ -93,6 +95,7 @@ double simulation::Nonbonded::RF_epsilon()const
 /**
  * get reaction field kappa
  */
+inline
 double simulation::Nonbonded::RF_kappa()const
 {
   return m_RF_kappa;
@@ -101,6 +104,7 @@ double simulation::Nonbonded::RF_kappa()const
 /**
  * get reaction field constant Crf
  */
+inline
 double simulation::Nonbonded::RF_constant()const
 {
   return m_RF_constant;
@@ -109,6 +113,7 @@ double simulation::Nonbonded::RF_constant()const
 /**
  * get reaction field cutoff
  */
+inline
 double simulation::Nonbonded::RF_cutoff()const
 {
   return m_RF_cutoff;

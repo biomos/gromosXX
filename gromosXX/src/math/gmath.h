@@ -50,6 +50,11 @@ namespace math
    */
   const double Pi = 3.1415926535897932384626433;
 
+  /**
+   * Boltzmann constant.
+   */
+  const double k_Boltzmann = 0.00831441;
+  
 #ifndef NDEBUG
   /**
    * module debug level.

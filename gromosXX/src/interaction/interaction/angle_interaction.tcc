@@ -4,6 +4,16 @@
  */
 
 /**
+ * Constructor.
+ */
+template<typename t_simulation>
+inline interaction::angle_interaction<t_simulation>
+::angle_interaction()
+  : Interaction<t_simulation>("BondAngle")
+{
+}
+
+/**
  * Destructor.
  */
 template<typename t_simulation>

@@ -11,6 +11,16 @@
 #include "../../debug.h"
 
 /**
+ * Constructor.
+ */
+template<typename t_simulation>
+inline interaction::harmonic_bond_interaction<t_simulation>
+::harmonic_bond_interaction()
+  : Interaction<t_simulation>("HarmonicBond")
+{
+}
+
+/**
  * Destructor.
  */
 template<typename t_simulation>

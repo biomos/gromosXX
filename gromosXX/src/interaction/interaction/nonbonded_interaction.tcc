@@ -12,6 +12,16 @@
 #include "../../debug.h"
 
 /**
+ * Constructor.
+ */
+template<typename t_simulation, typename t_pairlist>
+inline interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
+::Nonbonded_Interaction()
+  : Interaction<t_simulation>("NonBonded")
+{
+}
+
+/**
  * Destructor.
  */
 template<typename t_simulation, typename t_pairlist>

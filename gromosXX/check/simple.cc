@@ -16,6 +16,8 @@
 #include "../src/debug.h"
 
 #include <math/gmath.h>
+#include <io/message.h>
+
 #include <simulation/simulation.h>
 #include <interaction/interaction.h>
 #include <io/io.h>

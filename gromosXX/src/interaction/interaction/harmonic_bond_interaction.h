@@ -17,6 +17,11 @@ namespace interaction
   {
   public:
     /**
+     * Constructor.
+     */
+    harmonic_bond_interaction();
+    
+    /**
      * Destructor.
      */
     virtual ~harmonic_bond_interaction();

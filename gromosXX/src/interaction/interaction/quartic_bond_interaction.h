@@ -17,6 +17,10 @@ namespace interaction
   {
   public:
     /**
+     * Constructor.
+     */
+    Quartic_bond_interaction();
+    /**
      * Destructor.
      */
     virtual ~Quartic_bond_interaction();
