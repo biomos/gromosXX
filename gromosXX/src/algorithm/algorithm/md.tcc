@@ -11,7 +11,8 @@ template<typename t_simulation,
 algorithm::MD<t_simulation, t_temperature, t_pressure,
 	      t_distance_constraint, t_integration>
 ::MD(t_simulation &sim)
-  : m_simulation(sim),
+  : title("\tgromosXX molecular dynamics program"),
+    m_simulation(sim),
     m_forcefield(),
     m_temperature(),
     m_pressure(),
@@ -25,8 +26,7 @@ algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_print_force(0),
     m_calculate_pressure(0),
     m_qbond_interaction(NULL),
-    m_angle_interaction(NULL),
-    title("\tgromosXX molecular dynamics program");
+    m_angle_interaction(NULL)
 {
 }
 

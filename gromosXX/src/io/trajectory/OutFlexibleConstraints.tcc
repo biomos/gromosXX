@@ -18,7 +18,7 @@ io::OutFlexibleConstraints::OutFlexibleConstraints(std::ostream &os)
 {
 };
 
-io::OutFlexibleConstraints::write_title(std::string title)
+void io::OutFlexibleConstraints::write_title(std::string title)
 {
   m_os << "TITLE\n"
        << title

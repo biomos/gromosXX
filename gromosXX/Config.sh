@@ -5,9 +5,9 @@ echo ""
 
 mkdir -p config
 aclocal &&
-libtoolize &&
+libtoolize --copy &&
 autoconf &&
-automake --add-missing ||
+automake --add-missing --copy ||
 echo "setup failed. try doing it manually"
 
 echo ""
