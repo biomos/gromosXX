@@ -10,6 +10,7 @@
 
 /**
  * Print the multibath block.
+ * @TODO write summary information.
  */
 std::ostream & operator<<(std::ostream &os, simulation::Multibath &bath)
 {
@@ -33,7 +34,7 @@ std::ostream & operator<<(std::ostream &os, simulation::Multibath &bath)
     to = bath.end();
   
   for( ; it != to; ++it){
-    os << std::setw(10) << it->last_atom
+    os << std::setw(10) << it->last_atom + 1
        << std::setw( 8) << it->temperature
        << std::setw( 6) << it->tau
        << std::setw(10) << it->dof

@@ -50,6 +50,9 @@ inline void simulation::System<b>::resize(size_t s)
   m_velocity2.resizeAndPreserve(s);
   m_force1.resizeAndPreserve(s);
   m_force2.resizeAndPreserve(s);
+
+  m_box_index.resize(s);
+  
 }
 
 /**
@@ -169,13 +172,15 @@ inline math::Periodicity<b> const & simulation::System<b>
  * box index accessor.
  */
 template<math::boundary_enum b>
-inline std::vector<int[3]> & simulation::System<b>::box_index()
+inline std::vector<typename simulation::System<b>::index_struct> & 
+simulation::System<b>::box_indices()
 {
   return m_box_index;
 }
 
 template<math::boundary_enum b>
-inline int[3] & simulation::System<b>::box_index(size_t i)
+inline typename simulation::System<b>::index_struct &
+simulation::System<b>::box_index(size_t i)
 {
   assert(i < m_box_index.size());
   return m_box_index[i];

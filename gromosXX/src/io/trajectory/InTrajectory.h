@@ -26,18 +26,22 @@ namespace io {
     template <math::boundary_enum b>
     InTrajectory & operator>>(simulation::System<b> &sys);
     /**
-     * switch: read in position (positionred) or not.
+     * switch: require position (positionred) or not.
      */
     bool read_position;
     /**
-     * switch: read in velocity (velocityred) or not.
+     * switch: require velocity (velocityred) or not.
      */
     bool read_velocity;
     /**
-     * switch: read in box or not.
+     * switch: require box or not.
      */
     bool read_box;
-
+    /**
+     * switch: require box indices or not.
+     */
+    bool read_boxindices;
+    
   private:
     /**
      * read POSITION block.
@@ -60,6 +64,13 @@ namespace io {
      */
     template<math::boundary_enum b>
     bool _read_box(simulation::System<b> &sys, std::vector<std::string> &buffer);
+
+    /**
+     * read BOXINDICES block.
+     */
+    template<math::boundary_enum b>
+    bool _read_boxindices(simulation::System<b> &sys,
+			  std::vector<std::string> &buffer);
     
   };
   

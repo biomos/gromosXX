@@ -148,6 +148,10 @@ namespace simulation
      * end of the chargegroup iterator.
      */
     chargegroup_iterator chargegroup_end();
+    /**
+     * the molecules.
+     */
+    std::vector<size_t> & molecules();
 
   private:
     /**
@@ -201,6 +205,11 @@ namespace simulation
      */
     std::vector< std::set<int> > m_all_exclusion;
     
+    /**
+     * the molecules.
+     */
+    std::vector<size_t> m_molecule;
+
     /**
      * the chargegroups.
      */

@@ -169,7 +169,7 @@ int simulation_check()
 		last_result);
     
     RESULT(last_result, result);
-
+    
     the_simulation.solvate(0, 1244);
 
     forcefield_type the_forcefield;
@@ -211,9 +211,9 @@ int simulation_check()
     topo >> *the_improper_interaction;
     topo >> *the_dihedral_interaction;
     topo >> *the_nonbonded_interaction;
-  
+
     input >> the_simulation;
-    
+
     // create a chargegroup based pairlist and compare
     pairlist_type the_pairlist;
     the_pairlist.update(the_simulation);

@@ -18,7 +18,8 @@ inline io::InTrajectory::InTrajectory(std::istream &is)
   : GInStream(is),
     read_position(true),
     read_velocity(true),
-    read_box(true)
+    read_box(true),
+    read_boxindices(false)
 {
 }
 
@@ -37,15 +38,27 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys
   bool pos_read = false;
   bool vel_read = false;
   bool box_read = false;
+  bool boxindices_read = false;
   
-  while ((!pos_read && read_position) ||
-	 (!vel_read && read_velocity) ||
-	 (!box_read && read_box)){
+  while (true){
 
+    bool required = ((!pos_read && read_position) ||
+		     (!vel_read && read_velocity) ||
+		     (!box_read && read_box) ||
+		     (!boxindices_read && read_boxindices));
+
+    // std::cerr << "required: " << required << std::endl;
+    
     try{
       io::getblock(stream(), buffer);
     }
     catch(std::runtime_error e){
+      // std::cerr << "no more blocks" << std::endl;
+      
+      // check whether we already have all required blocks...
+      if (!required)
+	return *this;
+      
       std::cout << "failed to read block from trajectory\n"
 		<< e.what() << std::endl;
       std::cout << "position: " << pos_read << " velocity: "
@@ -53,12 +66,19 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys
       throw;
     }
 
+    // std::cerr << "block " << buffer[0] << std::endl;
+
     DEBUG(10, "\tblock " << buffer[0]);
     
     if (buffer[0] == "POSITION"){
-      if (pos_read)
-	throw std::runtime_error("second POSITION/POSITIONRED block before "
-				 "all other required blocks have been read in");
+      if (pos_read){
+	// check whether we have all the required ones but the boxindices
+	if (required)
+	  throw std::runtime_error("second POSITION/POSITIONRED block before "
+				   "all other required blocks have been read in");
+	else return *this;
+      }
+      
       DEBUG(10, "resize: " << buffer.size()-2);
       sys.resize(buffer.size()-2);
       pos_read = _read_position(sys.pos(), buffer);
@@ -67,18 +87,26 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys
     }
     
     if (buffer[0] == "POSITIONRED"){
-      if (pos_read)
-	throw std::runtime_error("second POSITION/POSITIONRED block before "
-				 "all other required blocks have been read in");
+      if (pos_read){
+	if (required)
+	  throw std::runtime_error("second POSITION/POSITIONRED block before "
+				   "all other required blocks have been read in");
+	else return *this;
+      }
+	  
       sys.resize(buffer.size()-2);
       pos_read = _read_positionred(sys.pos(), buffer);
       DEBUG(10, "\tPOSITIONRED read");
     }
 
     if (buffer[0] == "VELOCITY"){
-      if (vel_read)
-	throw std::runtime_error("second VELOCITY/VELOCITYRED block before "
-				 "all other required blocks have been read in");
+      if (vel_read){
+	if (required)
+	  throw std::runtime_error("second VELOCITY/VELOCITYRED block before "
+				   "all other required blocks have been read in");
+	else return *this;
+      }
+      
       sys.resize(buffer.size()-2);
       vel_read = _read_velocity(sys.vel(), buffer);
       sys.old_vel() = sys.vel();
@@ -87,9 +115,13 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys
     }
     
     if (buffer[0] == "VELOCITYRED"){
-      if (vel_read)
-	throw std::runtime_error("second VELOCITY/VELOCITYRED block before "
-				 "all other required blocks have been read in");
+      if (vel_read){
+	if (required)
+	  throw std::runtime_error("second VELOCITY/VELOCITYRED block before "
+				   "all other required blocks have been read in");
+	else return *this;
+      }
+      
       sys.resize(buffer.size()-2);
       vel_read = _read_velocityred(sys.vel(), buffer);
       sys.old_vel() = sys.vel();
@@ -98,13 +130,30 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys
     }
 
     if (buffer[0] == "TRICLINICBOX"){
-      if (box_read)
-	throw std::runtime_error("second TRICLINICBOX block before "
-				 "all other required blocks have been read in");
-
+      if (box_read){
+	if (required)
+	  throw std::runtime_error("second TRICLINICBOX block before "
+				   "all other required blocks have been read in");
+	else return *this;
+      }
+      
       box_read = _read_box(sys, buffer);
       DEBUG(10, "\tTRICLINICBOX read");
     }
+
+    if (buffer[0] == "BOXINDICES"){
+      if (boxindices_read){
+	if (required)
+	  throw std::runtime_error("second BOXINDICES block before "
+				   "all other required blocks have been read in");
+	else return *this;
+      }
+      
+      sys.resize(buffer.size()-2);
+      boxindices_read = _read_boxindices(sys, buffer);
+      DEBUG(10, "\tBOXINDICES read");
+    }
+	
     
   }
 
@@ -210,6 +259,35 @@ inline bool io::InTrajectory::_read_velocity(math::VArray &vel, std::vector<std:
 
   return true;
   
+}
+
+template<math::boundary_enum b>
+inline bool io::InTrajectory
+::_read_boxindices(simulation::System<b> &sys,
+		   std::vector<std::string> &buffer)
+{
+  std::vector<typename simulation::System<b>::index_struct> &ind = sys.box_indices();
+
+  std::vector<std::string>::const_iterator it = buffer.begin()+1,
+    to = buffer.end()-1;
+  
+  for(int i=0; it != to; ++i, ++it){
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+  
+    _lineStream >> ind[i].k >> ind[i].l >> ind[i].m;
+    
+    if(_lineStream.fail()){
+      io::messages.add("bad line in BOXINDICES block",
+		       "InTrajectory",
+		       io::message::critical);
+      
+      throw std::runtime_error("bad line in BOXINDICES block");
+    }
+  }
+
+  return true;
 }
 
 template<math::boundary_enum b>

@@ -32,7 +32,6 @@ inline void io::InInput::read_stream()
   }
 }
 
-
 /**
  * Store standard parameters in the simulation.
  */
@@ -81,7 +80,7 @@ inline io::InInput & io::InInput
 
     if (_lineStream.fail() || ! _lineStream.eof())
 
-      io::messages.add("bad linein LONGRANGE block",
+      io::messages.add("bad line in LONGRANGE block",
 		       "InInput", io::message::error);
 
     sim.nonbonded().RF_constant(epsilon, kappa, cutoff);
@@ -92,6 +91,42 @@ inline io::InInput & io::InInput
     
   } // LONGRANGE
   
+  { // SUBMOLECULE
+    buffer = m_block["SUBMOLECULES"];
+    
+    // std::cerr << "reading SUBMOLECULES" << std::endl;
+
+    if (buffer.begin() == buffer.end()){
+      io::messages.add("empty SUBMOLECULES block",
+		       "InInput", io::message::error);
+    }
+    else{
+      
+      std::string submol;
+      concatenate(buffer.begin()+1, buffer.end()-1, submol);
+      
+      _lineStream.clear();
+      _lineStream.str(submol);
+    
+      size_t num;
+      _lineStream >> num;
+      // std::cerr << "num: " << num << std::endl;
+      
+      size_t m;
+
+      for(size_t i=0; i<num; ++i){
+	_lineStream >> m;
+	sim.topology().molecules().push_back(m);
+	// std::cerr << "\t" << m << std::endl;
+      }
+    
+      if (_lineStream.fail())
+	io::messages.add("bad line in SUBMOLECULES block",
+			 "InInput", io::message::error);
+    }
+    
+  } // SUBMOLECULE
+
   { // TEMPERATURE COUPLING
     
     // is there a MULTIBATH block

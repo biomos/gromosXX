@@ -8,6 +8,7 @@
 #include <fstream>
 #include <set>
 #include <map>
+#include <iostream>
 
 #include "argument.h"
 #include "blockinput.h"
@@ -49,6 +50,8 @@ namespace io{
       else
 	s += std::string(argv[i])+' ';
     }
+
+    // std::cerr << "arg: " << s << std::endl;
   
     std::istringstream is(s.c_str());
     is >> *this;
@@ -66,10 +69,12 @@ namespace io{
     std::string buff;
     std::string s("");
   
-    do {
+    while(istr.good()) {
+      // std::cerr << "buff: " << buff << std::endl;
+	  io::getline(istr, buff);
       s += buff;
       s += '\n';
-    } while(io::getline(istr, buff));
+    }
     std::istringstream is(s);
 
     std::string str, last;

@@ -19,6 +19,7 @@ inline simulation::Topology::Topology()
     m_num_solute_chargegroups(0)
 {
   m_chargegroup.push_back(0);
+  m_molecule.push_back(0);
 }
 
 /**
@@ -216,8 +217,11 @@ inline void simulation::Topology::solvate(size_t solv, size_t num_molecules)
     }
 
     // add to the chargegroups
-    DEBUG(10, "solvent cg: " << n);
+    DEBUG(11, "solvent cg: " << n);
     m_chargegroup.push_back(n);
+
+    // and to the molecules
+    m_molecule.push_back(n);
 
   }
     
@@ -312,6 +316,14 @@ inline size_t simulation::Topology::num_chargegroups()
 inline size_t simulation::Topology::num_solute_chargegroups()
 {
   return m_num_solute_chargegroups;
+}
+
+/**
+ * the molecule indices.
+ */
+inline std::vector<size_t> & simulation::Topology::molecules()
+{
+  return m_molecule;
 }
 
 namespace simulation

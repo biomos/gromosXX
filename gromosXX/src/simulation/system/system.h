@@ -20,6 +20,19 @@ namespace simulation
   {
   public:
     /**
+     * @struct index_struct
+     * struct to hold the box indices for
+     * the atoms.
+     */
+    struct index_struct
+    {
+      index_struct() : k(0), l(0), m(0) {};
+      int k;
+      int l;
+      int m;
+    };
+    
+    /**
      * Constructor
      */
     explicit System();
@@ -78,11 +91,11 @@ namespace simulation
     /**
      * box index accessor
      */
-    std::vector<int[3]> & box_index();
+    std::vector<index_struct> & box_indices();
     /**
      * box index i accessor
      */
-    int[3] & box_index(size_t i);
+    index_struct & box_index(size_t i);
     
   protected:
     /**
@@ -145,7 +158,7 @@ namespace simulation
     /**
      * the box indices for every atom.
      */
-    std::vector<int[3]> m_box_index;
+    std::vector<index_struct> m_box_index;
     
   }; // System
   
