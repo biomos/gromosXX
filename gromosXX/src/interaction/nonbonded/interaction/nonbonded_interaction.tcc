@@ -7,7 +7,7 @@
 #undef SUBMODULE
 
 #define MODULE interaction
-#define SUBMODULE interaction
+#define SUBMODULE nonbonded
 
 /**
  * Constructor.
@@ -101,10 +101,17 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
     if (t_interaction_spec::do_virial){
       DEBUG(7, "\tadd long range virial");
 
-      for(size_t i=0; i<3; ++i)
-	for(size_t j=0; j<3; ++j)
+      for(size_t i=0; i<3; ++i){
+	for(size_t j=0; j<3; ++j){
+
+	  DEBUG(8, "set virial = " << it->shortrange_storage().virial_tensor(i,j)
+		<< "\tvirial = " << conf.current().virial_tensor(i,j));
+	  
 	  conf.current().virial_tensor(i,j) +=
 	    it->shortrange_storage().virial_tensor(i,j);
+	}
+      }
+      
     }
   }
   
@@ -178,7 +185,8 @@ template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 ::initialize(topology::Topology const & topo,
 	     configuration::Configuration const & conf,
-	     simulation::Simulation const & sim)
+	     simulation::Simulation const & sim,
+	     bool quiet)
 {
 
 #ifdef OMP
@@ -206,7 +214,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbatio
     to = m_nonbonded_set.end();
   
   for( ; it != to; ++it){
-    it->initialize(topo, conf, sim);
+    it->initialize(topo, conf, sim, quiet);
   }
 }
 

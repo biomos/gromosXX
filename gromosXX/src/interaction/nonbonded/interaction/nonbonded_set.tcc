@@ -52,6 +52,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 
   // need to update pairlist?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
+    DEBUG(7, "\tdoing longrange...");
+    
     //====================
     // create a pairlist
     //====================
@@ -132,12 +134,12 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   }
   
   // add long-range force
-  DEBUG(7, "\tadd long range forces");
+  DEBUG(7, "\t(set) add long range forces");
 
   m_shortrange_storage.force += m_longrange_storage.force;
   
   // and long-range energies
-  DEBUG(7, "\tadd long range energies");
+  DEBUG(7, "\t(set) add long range energies");
   for(size_t i = 0; i < m_shortrange_storage.energies.lj_energy.size(); ++i){
     for(size_t j = 0; j < m_shortrange_storage.energies.lj_energy.size(); ++j){
       m_shortrange_storage.energies.lj_energy[i][j] += 
@@ -149,17 +151,23 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 
   // add longrange virial
   if (t_interaction_spec::do_virial){
-    DEBUG(7, "\tadd long range virial");
-    for(size_t i=0; i<3; ++i)
-      for(size_t j=0; j<3; ++j)
+    DEBUG(7, "\t(set) add long range virial");
+    for(size_t i=0; i<3; ++i){
+      for(size_t j=0; j<3; ++j){
+
+	DEBUG(8, "longrange virial = " << m_longrange_storage.virial_tensor(i,j)
+	      << "\tshortrange virial = " << m_shortrange_storage.virial_tensor(i,j));
+
 	m_shortrange_storage.virial_tensor(i,j) +=
 	  m_longrange_storage.virial_tensor(i,j);
+      }
+    }
   }
   
   
   if (t_perturbation_spec::do_perturbation){
     // and long-range energy lambda-derivatives
-    DEBUG(7, "add long-range lambda-derivatives");
+    DEBUG(7, "(set) add long-range lambda-derivatives");
 
     // one we definitely have...
     const size_t lj_size 
@@ -219,7 +227,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 
   std::vector<size_t>::const_iterator j_it, j_to;
   size_t i;
-  size_t size_i = pairlist().size();
+  // size_t size_i = pairlist().size();
   math::Vec r;
   math::Matrix h;
   Periodicity_type periodicity(conf.current().box);
@@ -291,7 +299,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 		      size_t const i, size_t const j,
 		      int pc)
 {
-  DEBUG(8, "add shortrange pair " << i << " - " << j);
+  DEBUG(9, "add shortrange pair " << i << " - " << j);
 
   assert(!t_interaction_spec::do_bekker || (pc >= 0 && pc < 27));
   assert(pairlist().size() > i);
@@ -383,7 +391,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 		     size_t const i, size_t const j,
 		     Periodicity_type const & periodicity, int pc)
 {
-  DEBUG(8, "add longrange pair " << i << " - " << j);
+  DEBUG(9, "add longrange pair " << i << " - " << j);
 
   // const double longrange_start = util::now();
 
@@ -454,7 +462,8 @@ void
 interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::initialize(topology::Topology const & topo,
 	     configuration::Configuration const & conf,
-	     simulation::Simulation const & sim)
+	     simulation::Simulation const & sim,
+	     bool quiet)
 {
   Nonbonded_Outerloop<t_interaction_spec>::initialize(sim);
   if(t_perturbation_spec::do_perturbation)
@@ -506,8 +515,9 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
     const size_t pairs = 
       int(1.3 * topo.num_atoms() / vol * 4.0 / 3.0 * math::Pi * c3);
 
-    std::cout << "\n\testimated pairlist size (per atom) : "
-	      << pairs << "\n\n";
+    if (!quiet)
+      std::cout << "\n\testimated pairlist size (per atom) : "
+		<< pairs << "\n\n";
     
     for(size_t i=0; i<topo.num_atoms(); ++i)
       pairlist()[i].reserve(pairs);

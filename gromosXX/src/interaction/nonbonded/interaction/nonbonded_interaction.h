@@ -70,7 +70,8 @@ namespace interaction
      */
     void initialize(topology::Topology const & topo,
 		    configuration::Configuration const & conf,
-		    simulation::Simulation const & sim);
+		    simulation::Simulation const & sim,
+		    bool quiet = false);
 
     /**
      * accessor to the longrange timing
