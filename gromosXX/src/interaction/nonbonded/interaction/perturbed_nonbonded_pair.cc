@@ -3,19 +3,40 @@
  * template methods of Perturbed_Nonbonded_Pair
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
+#include <interaction/interaction_types.h>
+#include <interaction/nonbonded/interaction_spec.h>
+
+#include <math/periodicity.h>
+
+#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include <interaction/nonbonded/interaction/storage.h>
+
+#include <interaction/nonbonded/interaction/nonbonded_term.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
+
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
+
+#include <interaction/nonbonded/interaction_spec.h>
+
+#include <util/debug.h>
+#include <util/template_split.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
-template<typename t_interaction_spec, typename perturbation_details>
-interaction::Perturbed_Nonbonded_Pair<t_interaction_spec, perturbation_details>
-::Perturbed_Nonbonded_Pair(Nonbonded_Parameter &nbp,
-			   Nonbonded_Term & nbt,
-			   Perturbed_Nonbonded_Term & pnbt)
-  : m_param(&nbp),
-    m_nonbonded_term(&nbt),
-    m_perturbed_nonbonded_term(&pnbt)
+interaction::Perturbed_Nonbonded_Pair
+::Perturbed_Nonbonded_Pair(Nonbonded_Parameter &nbp)
+  : m_param(&nbp)
 {
 }
 
@@ -24,47 +45,66 @@ interaction::Perturbed_Nonbonded_Pair<t_interaction_spec, perturbation_details>
  * PERTURBED PAIRS
  * (different interaction types in A and in B)
  */
-template<typename t_interaction_spec, typename perturbation_details>
-inline void interaction::Perturbed_Nonbonded_Pair<
-  t_interaction_spec, perturbation_details>
+void interaction::Perturbed_Nonbonded_Pair
 ::perturbed_pair_outerloop(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
 			   Storage & storage)
 {
+  SPLIT_PERTURBATION(_perturbed_pair_outerloop,
+		     topo, conf, sim, storage);
+}
+
+template<typename t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Pair
+::_perturbed_pair_outerloop(topology::Topology & topo,
+			    configuration::Configuration & conf,
+			    simulation::Simulation & sim,
+			    Storage & storage)
+{
+  SPLIT_PERT_INNERLOOP(_split_perturbed_pair_outerloop,
+		       topo, conf, sim, storage);
+}
+
+template<typename t_interaction_spec, typename t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Pair
+::_split_perturbed_pair_outerloop(topology::Topology & topo,
+				  configuration::Configuration & conf,
+				  simulation::Simulation & sim,
+				  Storage & storage)
+{
   DEBUG(8, "perturbed pairs");
   
-  Periodicity_type periodicity(conf.current().box);
-  
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  m_nonbonded_term.init(sim);
+  m_perturbed_nonbonded_term.init(sim);
+  m_perturbed_nonbonded_term.set_lambda(topo.lambda(), topo.lambda_exp());
+
   std::vector<topology::perturbed_two_body_term_struct>::const_iterator
     it = topo.perturbed_solute().atompairs().begin(),
     to = topo.perturbed_solute().atompairs().end();
     
   for(; it != to; ++it){
-    perturbed_pair_interaction_innerloop(topo, conf, sim, it, periodicity);
+    perturbed_pair_interaction_innerloop<t_interaction_spec, t_perturbation_details>
+      (topo, conf, sim, it, periodicity);
   }
-  
 }
 
-
-
 template<typename t_interaction_spec, typename perturbation_details>
-inline void 
-interaction::Perturbed_Nonbonded_Pair<
-  t_interaction_spec, perturbation_details>
+void interaction::Perturbed_Nonbonded_Pair
 ::perturbed_pair_interaction_innerloop
 ( topology::Topology & topo,
   configuration::Configuration & conf,
   simulation::Simulation & sim,
   std::vector<topology::perturbed_two_body_term_struct>
   ::const_iterator const &it,
-  Periodicity_type const & periodicity)
+  math::Periodicity<t_interaction_spec::boundary_type> const & periodicity)
 {
 
   // NO RANGE FILTER FOR PERTURBED PAIRS ??
   // NO SCALING for PERTURBED PAIRS ??
   // NO MOLECULAR VIRIAL CONTRIBUTION ??
-
+ 
   math::Vec r, f, A_f, B_f;
   double A_e_lj, A_e_crf, A_de_lj, A_de_crf, 
     B_e_lj, B_e_crf, B_de_lj, B_de_crf;
@@ -210,13 +250,13 @@ interaction::Perturbed_Nonbonded_Pair<
       DEBUG(7, "excluded in A");
       if(sim.param().longrange.rf_excluded){
 	if (is_perturbed){
-	  m_perturbed_nonbonded_term->
+	  m_perturbed_nonbonded_term.
 	    rf_soft_interaction(r, A_q, 0, topo.lambda(),
 			      alpha_crf,
 			      A_f, A_e_crf, A_de_crf);
 	}
 	else
-	  m_nonbonded_term->
+	  m_nonbonded_term.
 	    rf_interaction(r, A_q, A_f, A_e_crf);
       }
 
@@ -231,7 +271,7 @@ interaction::Perturbed_Nonbonded_Pair<
 	DEBUG(7, "perturbed interaction");
 	double A_f1, A_f6, A_f12;
 	
-	m_perturbed_nonbonded_term->
+	m_perturbed_nonbonded_term.
 	  lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
 				0, 0,
 				A_q, 0,
@@ -245,7 +285,7 @@ interaction::Perturbed_Nonbonded_Pair<
       else{
 	  double A_f1;
 	DEBUG(7, "non-perturbed interaction");
-	m_nonbonded_term->
+	m_nonbonded_term.
 	  lj_crf_interaction(r, A_lj->c6, A_lj->c12,
 			     A_q, A_f1, A_e_lj, 
 			     A_e_crf);
@@ -271,7 +311,7 @@ interaction::Perturbed_Nonbonded_Pair<
 	DEBUG(7, "perturbed 1,4 interaction");
 	double A_f1, A_f6, A_f12;
 	
-	m_perturbed_nonbonded_term->
+	m_perturbed_nonbonded_term.
 	  lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
 				  0, 0,
 				  A_q, 0,
@@ -282,7 +322,7 @@ interaction::Perturbed_Nonbonded_Pair<
       else{
 	  double A_f1;
 	DEBUG(7, "non-perturbed 1,4 interaction");
-	m_nonbonded_term->
+	m_nonbonded_term.
 	  lj_crf_interaction(r, A_lj->cs6, A_lj->cs12,
 			     A_q, A_f1, A_e_lj, 
 			     A_e_crf);
@@ -310,12 +350,12 @@ interaction::Perturbed_Nonbonded_Pair<
       B_f = 0.0;
       if(sim.param().longrange.rf_excluded){
 	if (is_perturbed)
-	  m_perturbed_nonbonded_term->
+	  m_perturbed_nonbonded_term.
 	    rf_soft_interaction(r, 0, B_q, topo.lambda(),
 				alpha_crf,
 				B_f, B_e_crf, B_de_crf);
 	else
-	  m_nonbonded_term->
+	  m_nonbonded_term.
 	    rf_interaction(r, B_q, B_f, B_e_crf);
       }
  
@@ -330,7 +370,7 @@ interaction::Perturbed_Nonbonded_Pair<
 	DEBUG(7, "perturbed interaction");
 	double B_f1, B_f6, B_f12;
 	
-	m_perturbed_nonbonded_term->
+	m_perturbed_nonbonded_term.
 	  lj_crf_soft_interaction(r, 0, 0, B_lj->c6, B_lj->c12,
 				  0, B_q,
 				  alpha_lj, alpha_crf,
@@ -341,7 +381,7 @@ interaction::Perturbed_Nonbonded_Pair<
       else{
 	  double B_f1;
 	DEBUG(7, "non-perturbed interaction");
-	m_nonbonded_term->
+	m_nonbonded_term.
 	  lj_crf_interaction(r, B_lj->c6, B_lj->c12,
 			     B_q, B_f1, B_e_lj, 
 			     B_e_crf);
@@ -365,7 +405,7 @@ interaction::Perturbed_Nonbonded_Pair<
 	DEBUG(7, "perturbed 1,4 interaction");
 	double B_f1, B_f6, B_f12;
 
-	m_perturbed_nonbonded_term->
+	m_perturbed_nonbonded_term.
 	  lj_crf_soft_interaction(r, 0, 0, B_lj->cs6, B_lj->cs12,
 				  0, B_q, alpha_lj, alpha_crf,
 				  B_f1, B_f6, B_f12,
@@ -375,7 +415,7 @@ interaction::Perturbed_Nonbonded_Pair<
       else{
 	DEBUG(7, "non-perturbed 1,4 interaction");
 	double B_f1;
-	m_nonbonded_term->
+	m_nonbonded_term.
 	  lj_crf_interaction(r, B_lj->cs6, B_lj->cs12,
 			     B_q, B_f1, B_e_lj, 
 			     B_e_crf);
@@ -423,21 +463,21 @@ interaction::Perturbed_Nonbonded_Pair<
   }
 
   // now combine everything
-  DEBUG(10, "B_l: " << m_perturbed_nonbonded_term->B_lambda() <<
-	" B_ln: " << m_perturbed_nonbonded_term->B_lambda_n() <<
-	" A_l: " << m_perturbed_nonbonded_term->A_lambda() <<
-	" A_ln: " << m_perturbed_nonbonded_term->A_lambda_n());
+  DEBUG(10, "B_l: " << m_perturbed_nonbonded_term.B_lambda() <<
+	" B_ln: " << m_perturbed_nonbonded_term.B_lambda_n() <<
+	" A_l: " << m_perturbed_nonbonded_term.A_lambda() <<
+	" A_ln: " << m_perturbed_nonbonded_term.A_lambda_n());
   
-  f      = m_perturbed_nonbonded_term->B_lambda_n() * B_f      + m_perturbed_nonbonded_term->A_lambda_n() * A_f;
-  e_lj   = m_perturbed_nonbonded_term->B_lambda_n() * B_e_lj   + m_perturbed_nonbonded_term->A_lambda_n() * A_e_lj;
-  e_crf  = m_perturbed_nonbonded_term->B_lambda_n() * B_e_crf  + m_perturbed_nonbonded_term->A_lambda_n() * A_e_crf;
-  de_lj  = m_perturbed_nonbonded_term->B_lambda_n() * B_de_lj  + m_perturbed_nonbonded_term->A_lambda_n() * A_de_lj  
-    + topo.lambda_exp() * m_perturbed_nonbonded_term->B_lambda_n_1() * B_e_lj  
-    - topo.lambda_exp() * m_perturbed_nonbonded_term->A_lambda_n_1() * A_e_lj;
+  f      = m_perturbed_nonbonded_term.B_lambda_n() * B_f      + m_perturbed_nonbonded_term.A_lambda_n() * A_f;
+  e_lj   = m_perturbed_nonbonded_term.B_lambda_n() * B_e_lj   + m_perturbed_nonbonded_term.A_lambda_n() * A_e_lj;
+  e_crf  = m_perturbed_nonbonded_term.B_lambda_n() * B_e_crf  + m_perturbed_nonbonded_term.A_lambda_n() * A_e_crf;
+  de_lj  = m_perturbed_nonbonded_term.B_lambda_n() * B_de_lj  + m_perturbed_nonbonded_term.A_lambda_n() * A_de_lj  
+    + topo.lambda_exp() * m_perturbed_nonbonded_term.B_lambda_n_1() * B_e_lj  
+    - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lambda_n_1() * A_e_lj;
   
-  de_crf = m_perturbed_nonbonded_term->B_lambda_n() * B_de_crf + m_perturbed_nonbonded_term->A_lambda_n() * A_de_crf 
-    + topo.lambda_exp() * m_perturbed_nonbonded_term->B_lambda_n_1() * B_e_crf 
-    - topo.lambda_exp() * m_perturbed_nonbonded_term->A_lambda_n_1() * A_e_crf;
+  de_crf = m_perturbed_nonbonded_term.B_lambda_n() * B_de_crf + m_perturbed_nonbonded_term.A_lambda_n() * A_de_crf 
+    + topo.lambda_exp() * m_perturbed_nonbonded_term.B_lambda_n_1() * B_e_crf 
+    - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lambda_n_1() * A_e_crf;
   
   conf.current().force(it->i) += f;
   conf.current().force(it->j) -= f;
@@ -452,7 +492,7 @@ interaction::Perturbed_Nonbonded_Pair<
   }
 
 
-  DEBUG(7, "A_lnm: " << m_perturbed_nonbonded_term->A_lambda_n_1() << " B_lnm: " << m_perturbed_nonbonded_term->B_lambda_n_1());
+  DEBUG(7, "A_lnm: " << m_perturbed_nonbonded_term.A_lambda_n_1() << " B_lnm: " << m_perturbed_nonbonded_term.B_lambda_n_1());
   DEBUG(7, "\tcalculated interaction:\n\t\tf: " << f << " e_lj: " 
 	<< e_lj << " e_crf: " << e_crf << " de_lj: " << de_lj 
 	<< " de_crf: " << de_crf);

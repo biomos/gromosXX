@@ -24,7 +24,6 @@ namespace interaction
   template<
     math::boundary_enum t_boundary = math::rectangular,
     math::virial_enum t_virial = math::molecular_virial,
-    bool t_atomic_cutoff = atomic_cutoff_off,
     bool t_bekker = bekker_off
     >
   class Interaction_Spec
@@ -32,15 +31,12 @@ namespace interaction
   public:
     typedef Interaction_Spec<t_boundary,
 			     t_virial, 
-			     t_atomic_cutoff,
 			     t_bekker
 			     >
     interaction_spec_type;
 
     static const math::boundary_enum boundary_type = t_boundary;
-    static const bool do_exclusion = true;
     static const math::virial_enum do_virial = t_virial;
-    static const bool do_atomic_cutoff = t_atomic_cutoff;
     static const bool do_bekker = t_bekker;
     
   };
@@ -49,22 +45,16 @@ namespace interaction
    * @class Perturbation_Spec
    * specifies if and what kind of perturbation to do (or rather apply)
    */
-  template<bool t_perturbation = perturbation_off,
-	   bool t_scaling = scaling_off
-	   >
+  template<
+    bool t_scaling = scaling_off
+  >
   class Perturbation_Spec
   {
   public:
-    typedef Perturbation_Spec<t_perturbation, t_scaling>
+    typedef Perturbation_Spec<t_scaling>
     perturbation_spec_type;
-
-    static const bool do_perturbation = t_perturbation;
-
-    struct perturbation_details
-    {
-      static const bool do_scaling = t_scaling;
-    };
     
+    static const bool do_scaling = t_scaling;
   };
 
 

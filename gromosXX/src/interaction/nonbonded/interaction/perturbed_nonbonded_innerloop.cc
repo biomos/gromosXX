@@ -216,13 +216,14 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	<< " pert der index = " << energy_derivative_index);
   
   assert(storage.perturbed_energy_derivatives.
-	 lj_energy.size() > max(topo.atom_energy_group(i),
-				topo.atom_energy_group(j)));
+	 lj_energy.size() > topo.atom_energy_group(i) &&
+	 storage.perturbed_energy_derivatives.
+	 lj_energy.size() > topo.atom_energy_group(j));
   
   assert(storage.perturbed_energy_derivatives.
-	 lj_energy[topo.atom_energy_group(i)].size() 
-	 > max(topo.atom_energy_group(i),
-	       topo.atom_energy_group(j)));
+	 lj_energy[topo.atom_energy_group(i)].size() > topo.atom_energy_group(i) &&
+	 storage.perturbed_energy_derivatives.
+	 lj_energy[topo.atom_energy_group(i)].size() > topo.atom_energy_group(j));
 
   if (t_perturbation_details::do_scaling &&
       energy_derivative_index != -1){

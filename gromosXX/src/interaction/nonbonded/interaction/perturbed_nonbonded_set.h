@@ -1,31 +1,32 @@
 /**
- * @file nonbonded_set.h
- * the non bonded interactions for a set of atoms:
+ * @file perturbed_nonbonded_set.h
+ * the (perturbed) non bonded interactions for a set of atoms:
  * Lennard-Jones and Coulomb interactions
  * perturbed and non-perturbed.
  */
 
-#ifndef INCLUDED_NONBONDED_SET_H
-#define INCLUDED_NONBONDED_SET_H
+#ifndef INCLUDED_PERTURBED_NONBONDED_SET_H
+#define INCLUDED_PERTURBED_NONBONDED_SET_H
 
 namespace interaction
 {
   /**
-   * @class Nonbonded_Set
-   * calculates the nonbonded interactions.
+   * @class Perturbed_Nonbonded_Set
+   * calculates the (perturbed) nonbonded interactions.
    */
-  class Nonbonded_Set
+  class Perturbed_Nonbonded_Set : public Nonbonded_Set
   {
   public:    
     /**
      * Constructor.
      */
-    Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param);
+    Perturbed_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg,
+			    Nonbonded_Parameter & param);
 
     /**
      * Destructor
      */
-    virtual ~Nonbonded_Set() {}
+    virtual ~Perturbed_Nonbonded_Set() {}
     
     /**
      * initialize some things
@@ -51,28 +52,17 @@ namespace interaction
 				  simulation::Simulation & sim,
 				  unsigned int atom_i, unsigned int atom_j,
 				  math::Matrix & hessian);
-
-    Storage & shortrange_storage()
-    {
-      return m_shortrange_storage;
-    }
-    Storage & longrange_storage()
-    {
-      return m_longrange_storage;
-    }
     
-    Pairlist & pairlist() { return m_pairlist; }
-    Pairlist const & pairlist()const { return m_pairlist; }
+    Pairlist & perturbed_pairlist() { return m_perturbed_pairlist; }
+    Pairlist const & perturbed_pairlist()const { return m_perturbed_pairlist; }
 
   protected:
-    Pairlist_Algorithm & m_pairlist_alg;
-    
-    Storage m_shortrange_storage;
-    Storage m_longrange_storage;
 
-    Pairlist m_pairlist;
+    Pairlist m_perturbed_pairlist;
 
-    Nonbonded_Outerloop m_outerloop;
+    Perturbed_Nonbonded_Outerloop m_perturbed_outerloop;
+
+    Perturbed_Nonbonded_Pair m_perturbed_pair;
 
   };
   

@@ -12,7 +12,7 @@
  * helper function to initialize the constants.
  */
 inline void interaction::Nonbonded_Term
-::initialize(simulation::Simulation const &sim)
+::init(simulation::Simulation const &sim)
 {
   // Force
   m_cut3i = 

@@ -1,6 +1,6 @@
 /**
  * @file pairlist.cc
- * inline methods of Pairlist
+ * methods of Pairlist
  */
 
 #undef MODULE
@@ -8,145 +8,35 @@
 #define MODULE interaction
 #define SUBMODULE pairlist
 
+#include <stdheader.h>
+#include <interaction/nonbonded/pairlist/pairlist.h>
+
 #include <util/debug.h>
-
-inline
-interaction::Pairlist
-::iterator::iterator(std::vector<std::vector<unsigned int> > &pl)
-  : m_pairlist(pl)
-{
-
-  DEBUG(7, "Pairlist size @iteractor construction " << unsigned(pl.size()));
-  
-  m_i = pl.begin();
-  // go to the first pair
-  while(m_i != pl.end()){
-    m_j = m_i->begin();
-    if (m_j == m_i->end()){
-      ++m_i;
-    }
-    else {
-      DEBUG(7, "we got a pair");
-      break;
-    }
-  }
-}
-
-inline void
-interaction::Pairlist::iterator
-::operator++()
-{
-  if(++m_j == m_i->end()){
-    while(m_i !=  m_pairlist.end()){
-      ++m_i;
-      m_j = m_i->begin();
-      if (m_j != m_i->end())
-	break;
-    }
-  }
-}
-
-inline bool
-interaction::Pairlist::iterator
-::operator==(Pairlist::iterator &it)
-{
-  if (m_i == it.m_i) return true;
-  return false;
-}
-
-inline bool
-interaction::Pairlist::iterator
-::operator!=(Pairlist::iterator &it)
-{
-  if (m_i != it.m_i){
-    return true;
-  }
-  return false;
-}
-
-inline void
-interaction::Pairlist::iterator
-::row(unsigned int i)
-{
-  DEBUG(7, "pairlist iterator row() " << i);
-
-  m_i = m_pairlist.begin() + i;
-  if (m_i != m_pairlist.end()){
-    m_j = m_i->begin();
-  }
-}
-
-inline unsigned int
-interaction::Pairlist::iterator
-::i()
-{
-  DEBUG(10, "Pairlist::i()");
-  return unsigned((m_i - m_pairlist.begin()));
-}
-
-inline unsigned int
-interaction::Pairlist::iterator
-::j()
-{
-  DEBUG(10, "Pairlist::j()");
-  return *m_j;
-}
-
-inline unsigned int
-interaction::Pairlist::iterator
-::operator*()
-{
-  DEBUG(10, "Pairlist::operator*()");
-  return *m_j;
-}
-
-inline
-interaction::Pairlist
-::Pairlist()
-{
-}
-
-inline interaction::Pairlist::iterator
-interaction::Pairlist::begin()
-{
-  return iterator(*this);
-}
-
-inline interaction::Pairlist::iterator
-interaction::Pairlist::end()
-{
-  iterator it(*this);
-  it.row(unsigned(size()));
-  return it;
-}
 
 namespace interaction
 {
   inline std::ostream & 
-  operator<<(std::ostream &os, Pairlist &pl)
-  {
-    {
-      os << "Pairlist" << std::endl;
+  operator<<(std::ostream &os, Pairlist &pl){
     
-      Pairlist::iterator
-	it = pl.begin(),
-	to = pl.end();
-
-      unsigned int ii = 999999999;
-
-      int ind = 1;
-      while (it != to) {
-	if (ii != it.i()){
-	  ii = it.i();
-	  ind = 1;
-	  os << std::endl << std::setw(5) << it.i() << ": " << std::flush;
-	}
-	os << std::setw(5) << *it << " "; 
-	if (!(ind%15)) os << "\n\t";
-	++it;
-	++ind;
+    os << "Pairlist" << std::endl;
+    
+    Pairlist::const_iterator
+      it = pl.begin(),
+      to = pl.end();
+    
+    std::vector<unsigned int>::const_iterator j_it, j_to;
+    
+    for (unsigned int i=0; it != to; ++i) {
+      
+      int ind = 0;
+      os << std::setw(5) << i << ": " << std::flush;
+      
+      for(j_it = it->begin(), j_to = it->end(); j_it != j_to; ++j_it, ++ind){
+	
+	os << std::setw(5) << *j_it << " "; 
+	if (!(++ind % 15)) os << "\n\t";
       }
-      os << std::endl;
+      if (ind) os << std::endl;
     }    
     return os;
   }

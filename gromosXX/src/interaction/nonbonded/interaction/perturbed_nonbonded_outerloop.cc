@@ -1,7 +1,31 @@
 /**
  * @file perturbed_nonbonded_outerloop.cc
- * template methods of Perturbed_Nonbonded_Outerloop.
+ * (template) methods of Perturbed_Nonbonded_Outerloop.
  */
+
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
+#include <interaction/interaction_types.h>
+#include <math/periodicity.h>
+
+#include <interaction/nonbonded/pairlist/pairlist.h>
+#include <interaction/nonbonded/interaction/storage.h>
+#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
+
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
+
+#include <interaction/nonbonded/interaction_spec.h>
+
+#include <util/debug.h>
+#include <util/template_split.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -11,12 +35,9 @@
 /**
  * Constructor.
  */
-template<typename t_interaction_spec, typename t_perturbation_details>
-inline
-interaction::Perturbed_Nonbonded_Outerloop<t_interaction_spec,  
-					   t_perturbation_details>
+interaction::Perturbed_Nonbonded_Outerloop
 ::Perturbed_Nonbonded_Outerloop(Nonbonded_Parameter & nbp)
-  : Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details>(nbp)
+  : m_param(nbp)
 {
 }
 
@@ -33,22 +54,50 @@ interaction::Perturbed_Nonbonded_Outerloop<t_interaction_spec,
  * stores them in the arrays pointed to by parameters
  * to make it usable for longrange calculations.
  */
-template<typename t_interaction_spec, typename  t_perturbation_details>
-inline void interaction::Perturbed_Nonbonded_Outerloop<
-  t_interaction_spec,  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
 ::perturbed_lj_crf_outerloop(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     std::vector<std::vector<unsigned int> > & pl,
+			     Pairlist const & pairlist,
 			     Storage & storage)
+{
+  SPLIT_PERTURBATION(_perturbed_lj_crf_outerloop,
+		     topo, conf, sim,
+		     pairlist, storage);
+}
+
+template<typename t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
+::_perturbed_lj_crf_outerloop(topology::Topology & topo,
+			      configuration::Configuration & conf,
+			      simulation::Simulation & sim,
+			      Pairlist const & pairlist,
+			      Storage & storage)
+{
+  SPLIT_PERT_INNERLOOP(_split_perturbed_lj_crf_outerloop,
+		       topo, conf, sim,
+		       pairlist, storage);
+}
+
+
+template<typename t_interaction_spec, typename  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
+::_split_perturbed_lj_crf_outerloop(topology::Topology & topo,
+				    configuration::Configuration & conf,
+				    simulation::Simulation & sim,
+				    Pairlist const & pairlist,
+				    Storage & storage)
 {  
   DEBUG(7, "\tcalculate perturbed interactions");  
 
-  Periodicity_type periodicity(conf.current().box);
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
+  innerloop.init(sim);
+  innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
 
   std::vector<unsigned int>::const_iterator j_it, j_to;
   unsigned int i;
-  unsigned int size_i = unsigned(pl.size());
+  unsigned int size_i = unsigned(pairlist.size());
 
   if (t_interaction_spec::do_bekker){
 
@@ -61,8 +110,8 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
 
     for(i=0; i < size_i; ++i){
       
-      for(j_it = pl[i].begin(),
-	    j_to = pl[i].end();
+      for(j_it = pairlist[i].begin(),
+	    j_to = pairlist[i].end();
 	  j_it != j_to;
 	  ++j_it){
       
@@ -72,7 +121,7 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
 	DEBUG(10, "\tperturbed nonbonded_interaction: i " << i << " j " << j
 	      << " pc " << pc);
       
-	perturbed_lj_crf_innerloop(topo, conf, i, j, storage, periodicity, pc);
+	innerloop.perturbed_lj_crf_innerloop(topo, conf, i, j, storage, periodicity, pc);
       }
     }
   }
@@ -81,8 +130,8 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
     DEBUG(9, "perturbed nonbonded_interaction: no grid based pairlist");
     for(i=0; i < size_i; ++i){
     
-      for(j_it = pl[i].begin(),
-	    j_to = pl[i].end();
+      for(j_it = pairlist[i].begin(),
+	    j_to = pairlist[i].end();
 	  j_it != j_to;
 	  ++j_it){
 
@@ -91,7 +140,7 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
 	// printf("nb pair %d - %d\n", i, *j_it);
 	
 	// shortrange, therefore store in simulation.system()
-	perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+	innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
       }
       
     }
@@ -104,17 +153,40 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
  * helper function to calculate the forces and energies from the
  * 1,4 interactions.
  */
-template<typename t_interaction_spec, typename  t_perturbation_details>
-inline void interaction::Perturbed_Nonbonded_Outerloop<
-  t_interaction_spec,  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
 ::perturbed_one_four_outerloop(topology::Topology & topo,
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
 			       Storage & storage)
 {
+  SPLIT_PERTURBATION(_perturbed_one_four_outerloop,
+		     topo, conf, sim, storage);
+}
+
+template<typename t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
+::_perturbed_one_four_outerloop(topology::Topology & topo,
+				configuration::Configuration & conf,
+				simulation::Simulation & sim,
+				Storage & storage)
+{
+  SPLIT_PERT_INNERLOOP(_split_perturbed_one_four_outerloop,
+		       topo, conf, sim, storage);
+}
+
+template<typename t_interaction_spec, typename  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
+::_split_perturbed_one_four_outerloop(topology::Topology & topo,
+				      configuration::Configuration & conf,
+				      simulation::Simulation & sim,
+				      Storage & storage)
+{
   DEBUG(7, "\tcalculate perturbed 1,4-interactions");
   
-  Periodicity_type periodicity(conf.current().box);
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
+  innerloop.init(sim);
+  innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
   
   std::set<int>::const_iterator it, to;
   std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
@@ -127,29 +199,53 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
     
     for( ; it != to; ++it){
 
-      perturbed_one_four_interaction_innerloop
+      innerloop.perturbed_one_four_interaction_innerloop
 	(topo, conf, mit->second.sequence_number(), *it, periodicity);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
 }  
 
+
 /**
  * helper function to calculate the forces and energies from the
  * RF contribution of excluded atoms and self term
  */
-template<typename t_interaction_spec, typename  t_perturbation_details>
-inline void interaction::Perturbed_Nonbonded_Outerloop<
-  t_interaction_spec,  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
 ::perturbed_RF_excluded_outerloop(topology::Topology & topo,
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
 				  Storage & storage)
 {
+  SPLIT_PERTURBATION(_perturbed_RF_excluded_outerloop,
+		     topo, conf, sim, storage);
+}
+
+template<typename  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
+::_perturbed_RF_excluded_outerloop(topology::Topology & topo,
+				   configuration::Configuration & conf,
+				   simulation::Simulation & sim,
+				   Storage & storage)
+{
+  SPLIT_PERT_INNERLOOP(_split_perturbed_RF_excluded_outerloop,
+		       topo, conf, sim, storage);
+}
+
+template<typename t_interaction_spec, typename  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
+::_split_perturbed_RF_excluded_outerloop(topology::Topology & topo,
+					 configuration::Configuration & conf,
+					 simulation::Simulation & sim,
+					 Storage & storage)
+{
 
   DEBUG(7, "\tcalculate perturbed excluded RF interactions");
 
-  Periodicity_type periodicity(conf.current().box);
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
+  innerloop.init(sim);
+  innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
 
   std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
     mit=topo.perturbed_solute().atoms().begin(),
@@ -159,7 +255,7 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
 	<< unsigned(topo.perturbed_solute().atoms().size()));
   
   for(; mit!=mto; ++mit){
-    perturbed_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity);
+    innerloop.perturbed_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity);
   }
 }
 

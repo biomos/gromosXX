@@ -1,5 +1,5 @@
 /**
- * @file nonbonded_set.cc
+ * @file perturbed_nonbonded_set.cc
  */
 
 #include <stdheader.h>
@@ -15,13 +15,21 @@
 #include <interaction/nonbonded/pairlist/pairlist.h>
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 
+#include <math/periodicity.h>
+
 #include <interaction/nonbonded/interaction/storage.h>
 #include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
 
-#include <math/periodicity.h>
+#include <interaction/nonbonded/interaction/nonbonded_term.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
+
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
+
 #include <math/volume.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_set.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_set.h>
 
 #include <util/debug.h>
 
@@ -33,24 +41,61 @@
 /**
  * Constructor.
  */
-interaction::Nonbonded_Set
-::Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param)
-  : m_pairlist_alg(pairlist_alg), 
-    m_outerloop(param)
+interaction::Perturbed_Nonbonded_Set
+::Perturbed_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param)
+  : Nonbonded_Set(pairlist_alg, param),
+    m_perturbed_outerloop(param),
+    m_perturbed_pair(param)
 {
 }
 
 /**
  * calculate nonbonded forces and energies.
  */
-int interaction::Nonbonded_Set
+int interaction::Perturbed_Nonbonded_Set
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
 			 int tid, int num_threads)
 {
   DEBUG(4, "Nonbonded_Set::calculate_interactions");
+
+  const double l = topo.lambda();
   
+  if (sim.param().perturbation.scaling){
+    // calculate lambda primes and d lambda prime / d lambda derivatives
+    std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
+      it = topo.energy_group_lambdadep().begin(),
+      to = topo.energy_group_lambdadep().end();
+    
+    for(unsigned int i=0; it != to; ++i, ++it){
+      
+      const double alpha = it->second.second;
+      double lp = alpha * l * l + (1-alpha) * l;
+      double dlp = (2 * l - 1.0) * alpha + 1;
+      
+      // some additional flexibility
+      if (lp > 1.0) {
+	lp = 1.0;
+	dlp = 0.0;
+      }
+      
+      else if (lp < 0.0){
+	lp = 0.0;
+	dlp = 0.0;
+      }
+      
+      // -1 or not???
+      assert(int(topo.lambda_prime().size()) > it->second.first);
+      assert(int(topo.lambda_prime_derivative().size()) > it->second.first);
+      assert(it->second.first >= 0);
+      
+      topo.lambda_prime()[it->second.first] = lp;
+      topo.lambda_prime_derivative()[it->second.first] = dlp;
+      
+    }
+  }
+    
   // zero forces, energies, virial...
   m_shortrange_storage.zero();
 
@@ -69,9 +114,10 @@ int interaction::Nonbonded_Set
     // chargegroup based pairlist can only use this one!!!!
     // TODO:
     // move decision to pairlist!!!
-    m_pairlist_alg.update(topo, conf, sim, 
-			  longrange_storage(), pairlist(),
-			  tid, topo.num_atoms(), num_threads);
+    m_pairlist_alg.update_perturbed(topo, conf, sim, 
+				    longrange_storage(),
+				    pairlist(), perturbed_pairlist(),
+				    tid, topo.num_atoms(), num_threads);
 
     /*
     sleep(2*tid);
@@ -94,21 +140,36 @@ int interaction::Nonbonded_Set
   // calculate forces / energies
   DEBUG(7, "\tshort range interactions");
 
-  //  double shortrange_start = now();
-
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist, m_shortrange_storage);
-  
+
+  DEBUG(7, "\tperturbed short range");
+  m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim, 
+						   m_perturbed_pairlist,
+						   m_shortrange_storage);
   // add 1,4 - interactions
   if (tid == 0){
     DEBUG(7, "\t1,4 - interactions");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
+
+    DEBUG(7, "\tperturbed 1,4 - interactions");
+    m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
+						       m_shortrange_storage);
   
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+
+      DEBUG(7, "\tperturbed RF excluded interactions and self term");
+      m_perturbed_outerloop.perturbed_RF_excluded_outerloop(topo, conf, sim,
+							    m_shortrange_storage);
+
     }
+
+    DEBUG(7, "\tperturbed pairs");
+    m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
+
   }
   
   // add long-range force
@@ -144,6 +205,33 @@ int interaction::Nonbonded_Set
     }
   }
   
+  // and long-range energy lambda-derivatives
+  DEBUG(7, "(set) add long-range lambda-derivatives");
+  
+  const unsigned int lj_size 
+    = unsigned(m_shortrange_storage.perturbed_energy_derivatives.lj_energy.size());
+  
+  for(unsigned int i = 0; i < lj_size; ++i){
+    for(unsigned int j = 0; j < lj_size; ++j){
+      
+      assert(m_shortrange_storage.perturbed_energy_derivatives.
+	     lj_energy.size() > i);
+      assert(m_shortrange_storage.perturbed_energy_derivatives.
+	     lj_energy[i].size() > j);
+      assert(m_shortrange_storage.perturbed_energy_derivatives.
+	     lj_energy.size() > j);
+      assert(m_shortrange_storage.perturbed_energy_derivatives.
+	     lj_energy[j].size() > i);
+      
+      m_shortrange_storage.perturbed_energy_derivatives.lj_energy[i][j] += 
+	m_longrange_storage.perturbed_energy_derivatives.lj_energy[i][j];
+      
+      m_shortrange_storage.perturbed_energy_derivatives.crf_energy[i][j] += 
+	m_longrange_storage.perturbed_energy_derivatives.crf_energy[i][j];
+      
+    }
+  }
+
   return 0;
 }
 
@@ -151,38 +239,31 @@ int interaction::Nonbonded_Set
  * calculate the hessian for a given atom.
  * this will be VERY SLOW !
  */
-int interaction::Nonbonded_Set
+int interaction::Perturbed_Nonbonded_Set
 ::calculate_hessian(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
 		    unsigned int atom_i, unsigned int atom_j,
 		    math::Matrix & hessian){
   
-  return m_outerloop.calculate_hessian(topo, conf, sim,
-				       atom_i, atom_j, hessian,
-				       m_pairlist);
+  if (topo.is_perturbed(atom_i) ||
+      topo.is_perturbed(atom_j)){
+    assert(false);
+    return -1;
+  }
+
+  return Nonbonded_Set::calculate_hessian(topo, conf, sim,
+					  atom_i, atom_j, hessian);
 }
 
-int interaction::Nonbonded_Set
+int interaction::Perturbed_Nonbonded_Set
 ::init(topology::Topology const & topo,
        configuration::Configuration const & conf,
        simulation::Simulation const & sim,
        bool quiet)
 {
-  // ?????
-  // m_outerloop.initialize(sim);
-
-  m_shortrange_storage.force.resize(conf.current().force.size());
-  m_longrange_storage.force.resize(conf.current().force.size());
-
-  m_shortrange_storage.energies.
-    resize(unsigned(conf.current().energies.bond_energy.size()),
-	   unsigned(conf.current().energies.kinetic_energy.size()));
-  m_longrange_storage.energies.
-    resize(unsigned(conf.current().energies.bond_energy.size()),
-	   unsigned(conf.current().energies.kinetic_energy.size()));
+  Nonbonded_Set::init(topo, conf, sim, quiet);
   
-  /*
   m_shortrange_storage.perturbed_energy_derivatives.resize
     (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
      unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
@@ -190,29 +271,8 @@ int interaction::Nonbonded_Set
   m_longrange_storage.perturbed_energy_derivatives.resize
     (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
      unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
-  */
 
-  // and the pairlists
-  pairlist().resize(topo.num_atoms());
-
-  // check if we can guess the number of pairs
-  const double vol = math::volume(conf.current().box, conf.boundary_type);
-  if (vol){
-    const double c3 = sim.param().pairlist.cutoff_short *
-      sim.param().pairlist.cutoff_short *
-      sim.param().pairlist.cutoff_short;
-    
-    const unsigned int pairs = 
-      int(1.3 * topo.num_atoms() / vol * 4.0 / 3.0 * math::Pi * c3);
-
-    if (!quiet)
-      std::cout << "\n\testimated pairlist size (per atom) : "
-		<< pairs << "\n\n";
-    
-    for(unsigned int i=0; i<topo.num_atoms(); ++i)
-      pairlist()[i].reserve(pairs);
-    
-  }
+  perturbed_pairlist().resize(topo.num_atoms());
 
   return 0;
 }

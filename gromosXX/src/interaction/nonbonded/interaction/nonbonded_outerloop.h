@@ -12,28 +12,23 @@ namespace interaction
    * @class Nonbonded_Outerloop
    * loops the nonbonded interactions...
    */
-  template<typename t_interaction_spec>
-  class Nonbonded_Outerloop : 
-    public Nonbonded_Innerloop<t_interaction_spec>
+  class Nonbonded_Outerloop
   {
   public:    
-    typedef math::Periodicity<t_interaction_spec::boundary_type> Periodicity_type;
-
     /**
      * Constructor.
      */
     Nonbonded_Outerloop(Nonbonded_Parameter & nbp);
     
-  protected:
-
     /**
      * calculate the lj crf interactions.
      */
     void lj_crf_outerloop(topology::Topology & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
-			  std::vector<std::vector<unsigned int> > const & pairlist,
+			  Pairlist const & pairlist,
 			  Storage & storage);
+
     /**
      * calculate the 1,4-interactions.
      */
@@ -49,12 +44,49 @@ namespace interaction
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
 			       Storage & storage);
+
+    int calculate_hessian(topology::Topology & topo,
+			  configuration::Configuration & conf,
+			  simulation::Simulation & sim,
+			  unsigned int atom_i, unsigned int atom_j,
+			  math::Matrix & hessian,
+			  Pairlist const & pairlist);
+
+  private:
+    /**
+     * the nonbonded parameter.
+     */
+    Nonbonded_Parameter & m_param;
+
+    template<typename t_interaction_spec>
+    void _lj_crf_outerloop(topology::Topology & topo,
+			   configuration::Configuration & conf,
+			   simulation::Simulation & sim,
+			   Pairlist const & pairlist,
+			   Storage & storage);
+
+    template<typename t_interaction_spec>
+    void _one_four_outerloop(topology::Topology & topo,
+			     configuration::Configuration & conf,
+			     simulation::Simulation & sim,
+			     Storage & storage);
+
+    template<typename t_interaction_spec>
+    void _RF_excluded_outerloop(topology::Topology & topo,
+				configuration::Configuration & conf,
+				simulation::Simulation & sim,
+				Storage & storage);
+
+    template<typename t_interaction_spec>
+    int _calculate_hessian(topology::Topology & topo,
+			   configuration::Configuration & conf,
+			   simulation::Simulation & sim,
+			   unsigned int atom_i, unsigned int atom_j,
+			   math::Matrix & hessian,
+			   Pairlist const & pairlist);
     
   };
   
 } // interaction
-
-// template methods
-#include "nonbonded_outerloop.cc"
 
 #endif

@@ -28,7 +28,7 @@ namespace interaction
     /**
      * initialize constants
      */
-    void initialize(simulation::Simulation const &sim);
+    void init(simulation::Simulation const &sim);
 
     /**
      * calculate the force and energy of an atom pair.

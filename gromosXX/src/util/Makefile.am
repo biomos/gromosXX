@@ -10,7 +10,8 @@ xxinclude_HEADERS = \
 			parse_tcouple.h \
 			parse_verbosity.h \
 			prepare_virial.h \
-			create_simulation.h
+			create_simulation.h \
+			template_split.h
 
 noinst_LTLIBRARIES = 	libgroutil.la
 
