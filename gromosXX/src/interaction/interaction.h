@@ -6,6 +6,7 @@
 #include "interaction/interaction.h"
 #include "forcefield/forcefield.h"
 
+#include "pairlist/simple_filter.h"
 #include "pairlist/simple_pairlist.h"
 #include "pairlist/twin_range_pairlist.h"
 #include "pairlist/twin_range_pairlist_cg.h"

@@ -46,6 +46,16 @@ namespace simulation
      */
     void lambda(double const l);
 
+    /**
+     * const perturbed atom accessor. (bool)
+     */
+    std::vector<bool> const & perturbed_atom()const;
+
+    /**
+     * perturbed atom accessor. (bool)
+     */
+    std::vector<bool> & perturbed_atom();
+    
   private:
     /**
      * is the atom perturbed?

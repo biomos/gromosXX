@@ -44,3 +44,16 @@ simulation::Perturbation_Topology::lambda(double const l)
   m_lambda = l;
 }
 
+inline std::vector<bool> &
+simulation::Perturbation_Topology::perturbed_atom()
+{
+  return m_perturbed_atom;
+}
+
+inline std::vector<bool> const &
+simulation::Perturbation_Topology::perturbed_atom()const
+{
+  return m_perturbed_atom;
+}
+
+

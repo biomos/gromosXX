@@ -29,6 +29,7 @@ include_HEADERS = 		simulation.h \
 				topology/topology.tcc \
 				topology/perturbation_topology.h \
 				topology/perturbation_topology.tcc \
+				topology/perturbed_atom.h \
 				topology/perturbed_bond.h \
 				topology/perturbed_solute.h \
 				topology/perturbed_solute.tcc \

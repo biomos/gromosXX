@@ -17,15 +17,36 @@ namespace simulation
   {
   public:
     /**
+     * const perturbed bonds.
+     */
+    std::vector<Perturbed_Bond> const & bonds()const;
+
+    /**
      * perturbed bonds.
      */
     std::vector<Perturbed_Bond> & bonds();
 
+    /**
+     * perturbed atoms accessor.
+     */
+    std::map<size_t, Perturbed_Atom> & atoms();
+
+    /**
+     * const perturbed atoms accessor.
+     */
+    std::map<size_t, Perturbed_Atom> const & atoms()const;
+    
   private:
     /**
      * the perturbed bonds.
      */
     std::vector<Perturbed_Bond> m_bond;
+
+    /**
+     * the perturbed atoms.
+     */
+    std::map<size_t, Perturbed_Atom> m_atom;
+    
   };
   
 } // simulation

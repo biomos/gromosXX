@@ -31,7 +31,7 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
   { // PERTBOND03
     buffer = m_block["PERTBOND03"];
     if (buffer.size()){
-      std::cout << "\tBONDS\n";
+      std::cout << "\tPERTBONDS\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -79,7 +79,55 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 
     } // if block present
     
-  } // PERTBOND
+  } // PERTBOND03
+  
+  { // PERTATOM03
+    
+    buffer = m_block["PERTATOM03"];
+    if (buffer.size()){
+      std::cout << "\tPERTATOMS\n";
+      
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+      
+      size_t seq, res, a_iac, b_iac;
+      double a_mass, b_mass, a_charge, b_charge;
+      double lj_soft, crf_soft;
+      std::string name;
+      
+      for(n = 0; it != buffer.end() - 1; ++it, ++n){
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> seq >> res >> name >> a_iac >> a_mass >> a_charge
+		    >> b_iac >> b_mass >> b_charge
+		    >> lj_soft >> crf_soft;
+	
+	if (_lineStream.fail() || ! _lineStream.eof())
+	  throw std::runtime_error("bad line in PERTATOM03 block");
+	
+	--seq;
+	--a_iac;
+	--b_iac;
+	simulation::Perturbed_Atom atom(seq, a_iac, a_mass, a_charge,
+					b_iac, b_mass, b_charge,
+					lj_soft, crf_soft);
+
+	topo.perturbed_solute().atoms()[seq] = atom;
+	topo.perturbed_atom()[seq] = true;
+      }
+      
+      if (n != num)
+	throw std::runtime_error("error in PERTATOM03 block (n != num)");
+      else if (_lineStream.fail())
+	throw std::runtime_error("error in PERTATOM03 block (fail)");
+      
+    } // if block present
+    
+  } // PERTATOM03
   
   std::cout << "END\n";
   

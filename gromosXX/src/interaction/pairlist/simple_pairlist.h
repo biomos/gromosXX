@@ -7,9 +7,9 @@
 #define INCLUDED_SIMPLE_PAIRLIST_H
 
 #ifndef INCLUDED_UTILITY
+#define INCLUDED_UTILITY
 // pair<A,B>
 #include <utility>
-#define INCLUDED_UTILITY
 #endif
 
 namespace interaction
@@ -25,7 +25,8 @@ namespace interaction
    * @todo add cryptic code somewhere to minimize memory 
    * allocation/deallocation in the update() method.
    */
-  template<typename t_simulation>
+  template<typename t_simulation,
+	   typename t_filter = interaction::Simple_Filter<t_simulation> >
   class simple_pairlist : 
     public t_pl_matrix
   {
@@ -62,14 +63,13 @@ namespace interaction
       t_pl_index& i() { return m_i; }
       /**
        * Return the column index.
-       * @TODO check if properly updated or remove.
-       * *it works...
        */
       t_pl_index& j() { return m_j; }
       /**
        * Pairlist accessor.
        */
       t_pl_matrix& pairlist() { return m_pairlist; }
+
     protected:
       /**
        * reference to the pairlist we operate over.
@@ -102,14 +102,14 @@ namespace interaction
      * If possible, return an iterator to the first non-empty 
      * pairlist entry. Otherwise return end().
      */
-    typename simple_pairlist<t_simulation>::iterator begin();
-    typename simple_pairlist<t_simulation>::iterator end();
+    typename simple_pairlist<t_simulation, t_filter>::iterator begin();
+    typename simple_pairlist<t_simulation, t_filter>::iterator end();
   };
 
-  template<typename t_simulation>
+  template<typename t_simulation, typename t_filter>
   std::ostream& operator<<(
 			   std::ostream& os, 
-			   class simple_pairlist<t_simulation>& pl);
+			   class simple_pairlist<t_simulation, t_filter>& pl);
   
 } // interaction
 

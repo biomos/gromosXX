@@ -25,7 +25,9 @@ include_HEADERS = 		interaction.h \
 				pairlist/twin_range_pairlist.h \
 				pairlist/twin_range_pairlist.tcc \
 				pairlist/twin_range_pairlist_cg.h \
-				pairlist/twin_range_pairlist_cg.tcc
+				pairlist/twin_range_pairlist_cg.tcc \
+				pairlist/simple_filter.h \
+				pairlist/simple_filter.tcc
 
 lib_LTLIBRARIES	= 		libinteraction.la
 

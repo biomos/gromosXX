@@ -15,32 +15,36 @@ namespace interaction
    * @todo add cryptic code somewhere to minimize memory 
    * allocation/deallocation in the update() method.
    */
-  template<typename t_simulation>
+  template<typename t_simulation, 
+	   typename t_filter = interaction::Simple_Filter<t_simulation> >
   class twin_range_pairlist :
-    public std::pair< simple_pairlist<t_simulation>, simple_pairlist<t_simulation> >
+    public std::pair< simple_pairlist<t_simulation, t_filter>, 
+		      simple_pairlist<t_simulation, t_filter> >
   {
   public:
     /**
      * access to the iterator type.
      */
-    typedef typename simple_pairlist<t_simulation>::iterator iterator;
+    typedef typename simple_pairlist<t_simulation, t_filter>::iterator iterator;
     
     /**
      * the short range pairlist
      */
-    simple_pairlist<t_simulation>& short_range() { 
-      return std::pair< simple_pairlist<t_simulation>, 
-	simple_pairlist<t_simulation> >::first; }
+    simple_pairlist<t_simulation, t_filter>& short_range() { 
+      return std::pair< simple_pairlist<t_simulation, t_filter>, 
+	simple_pairlist<t_simulation, t_filter> >::first; }
     /**
      * the long range pairlist
      */
-    simple_pairlist<t_simulation>& long_range() { 
-      return std::pair< simple_pairlist<t_simulation>, 
-	simple_pairlist<t_simulation> >::second; }
+    simple_pairlist<t_simulation, t_filter>& long_range() { 
+      return std::pair< simple_pairlist<t_simulation, t_filter>, 
+	simple_pairlist<t_simulation, t_filter> >::second; }
     /**
      * update the pairlists (using rcutl, rcutp).
      */
     void update(t_simulation &sim);
+
+  protected:
 
   };  
   
