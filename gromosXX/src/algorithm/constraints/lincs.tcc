@@ -437,8 +437,10 @@ template<math::virial_enum do_virial>
 void algorithm::Lincs<do_virial>
 ::print_timing(std::ostream & os)
 {
-  os << std::setw(40) << std::left << "Lincs::solute"
+  os << "    "
+     << std::setw(40) << std::left << "Lincs::solute"
      << std::setw(20) << m_timing << "\n"
+     << "    "
      << std::setw(40) << std::left << "Lincs::solvent"
      << std::setw(20) << m_solvent_timing << "\n";
 }

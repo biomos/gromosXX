@@ -85,6 +85,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  ps->init(topo, conf, sim);
 	  md_seq.push_back(ps);
 	}
+	break;
       }
     case simulation::constr_lincs:
       {
@@ -118,6 +119,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  md_seq.push_back(pfc);
 
 	}
+	break;
       }
     default:
       {

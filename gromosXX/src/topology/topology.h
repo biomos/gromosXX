@@ -218,6 +218,14 @@ namespace topology
       return Chargegroup_Iterator(m_chargegroup.begin());}
 
     /**
+     * iterator on a specified chargegroup
+     */
+    Chargegroup_Iterator chargegroup_it(const size_t i)const
+    {
+      return Chargegroup_Iterator(m_chargegroup.begin()+i);
+    }
+
+    /**
      * end of the chargegroup iterator.
      */
     Chargegroup_Iterator chargegroup_end()const{

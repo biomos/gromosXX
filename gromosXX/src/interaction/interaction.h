@@ -19,7 +19,7 @@ namespace interaction
     /**
      * Constructor.
      */
-    Interaction(std::string name) : name(name) {};
+    Interaction(std::string name) : name(name), m_timing(0.0) {};
     /**
      * Destructor.
      */
@@ -35,6 +35,23 @@ namespace interaction
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim) = 0;
+
+    /**
+     * timing information.
+     */
+    virtual void print_timing(std::ostream & os)
+    {
+      os << "        "
+	 << std::setw(36) << std::left << name
+	 << std::setw(20) << m_timing << "\n";
+    }
+
+  protected:
+    /**
+     * store time used in algorithm.
+     */
+    double m_timing;
+
   };  
   
 } // interaction

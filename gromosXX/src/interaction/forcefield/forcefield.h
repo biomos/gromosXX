@@ -51,6 +51,7 @@ namespace interaction
       return calculate_interactions(topo, conf, sim);
     }
     
+    virtual void print_timing(std::ostream & os);
 
   protected:
 

@@ -49,6 +49,8 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
 {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
+  const double nonbonded_start = util::now();
+
   // initialize the constants
   if (!sim.steps())
     initialize(topo, conf, sim);
@@ -57,6 +59,9 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
     // create a pairlist
     // zero the longrange forces, energies, virial
+
+    const double pairlist_start = util::now();
+    
     force = 0.0;
     energies.zero();
     DEBUG(15, "zero the longrange lambda energies");
@@ -66,18 +71,19 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
     DEBUG(7, "\tupdate the parlist");
     m_pairlist_algorithm.update(topo, conf, sim, *this);
     DEBUG(7, "\tpairlist updated");
+
+    m_pairlist_timing += util::now() - pairlist_start;
   }
 
   // calculate forces / energies
   DEBUG(7, "\tshort range");
 
-  /**
-  do_interactions(topo, conf, sim, 
-		  m_pairlist.begin(),
-		  m_pairlist.end() );
-  */
+  const double shortrange_start = util::now();
+  
   do_interactions(topo, conf, sim,
 		  m_pairlist);
+
+  m_shortrange_timing += util::now() - shortrange_start;
 
   // add long-range force
   DEBUG(7, "\tadd long range forces and energies");
@@ -85,18 +91,22 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
   conf.current().force += force;
   
   // and long-range energies
-  for(size_t i = 0; i < energies.lj_energy.size(); ++i){
-    for(size_t j = 0; j < energies.lj_energy.size(); ++j){
-      conf.current().energies.lj_energy[i][j] += 
-	energies.lj_energy[i][j];
-      conf.current().energies.crf_energy[i][j] += 
-	energies.crf_energy[i][j];
+  const double ljs = energies.lj_energy.size();
+  configuration::Energy & e = conf.current().energies;
+  
+  for(size_t i = 0; i < ljs; ++i){
+    for(size_t j = 0; j < ljs; ++j){
+      e.lj_energy[i][j] += 
+	e.lj_energy[i][j];
+      e.crf_energy[i][j] += 
+	e.crf_energy[i][j];
     }
   }
   
   // add longrange virial
   if (t_interaction_spec::do_virial){
     DEBUG(7, "\tadd long range virial");
+    // newer Blitz++ code should support this in one line...
     for(size_t i=0; i<3; ++i)
       for(size_t j=0; j<3; ++j)
 	conf.current().virial_tensor(i,j) =
@@ -112,6 +122,8 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
     DEBUG(7, "\tRF excluded interactions and self term");
     do_RF_excluded_interactions(topo, conf, sim);
   }
+
+  m_timing += util::now() - nonbonded_start;
 
   return 0;
   
@@ -201,10 +213,6 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim, 
 		  std::vector<std::vector<size_t> > const & pairlist)
-  /*
-		  Pairlist::iterator it, 
-		  Pairlist::iterator to)
-  */
 {  
   DEBUG(7, "\tcalculate interactions");  
 
@@ -218,6 +226,9 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
   int i;
   int size_i = pairlist.size();
 
+  //**************************
+  // the Bekker implementation
+  //**************************
   if (t_interaction_spec::do_bekker){
 
     periodicity.recalc_shift_vectors();
@@ -227,6 +238,11 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
     // translate the atom j
     DEBUG(9, "nonbonded_interaction: grid based pairlist");
 
+#ifdef OMP
+#pragma omp parallel for \
+    shared(topo, conf, periodicity, size_i, pairlist) \
+    private(i, j_it, j_to, pc, j)
+#endif
     for(i=0; i < size_i; ++i){
 
       for(j_it = pairlist[i].begin(),
@@ -246,6 +262,9 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
     }
 
   }
+  //*************************
+  // standard implementation
+  //*************************
   else{ // no grid based pairlist
     DEBUG(9, "nonbonded_interaction: no grid based pairlist");
     
@@ -289,8 +308,16 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
   Periodicity_type periodicity(conf.current().box);
 
   std::set<int>::const_iterator it, to;
+  size_t const num_solute_atoms = topo.num_solute_atoms();
+  int i;
   
-  for(size_t i=0; i<topo.num_solute_atoms(); ++i){
+#ifdef OMP
+#pragma omp parallel for \
+    shared(topo, conf, periodicity, num_solute_atoms) \
+    private(i, it, to)
+#endif
+
+  for(i=0; i < num_solute_atoms; ++i){
     it = topo.one_four_pair(i).begin();
     to = topo.one_four_pair(i).end();
     
@@ -317,7 +344,15 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
 
   Periodicity_type periodicity(conf.current().box);
   
-  for(size_t i=0; i<topo.num_solute_atoms(); ++i){
+  int i, num_solute_atoms = topo.num_solute_atoms();
+  
+#ifdef OMP
+#pragma omp parallel for \
+    shared(topo, conf, periodicity, num_solute_atoms) \
+    private(i)
+#endif
+
+  for(i=0; i<num_solute_atoms; ++i){
     
     RF_excluded_interaction_innerloop(topo, conf, i, periodicity);
     
@@ -327,12 +362,14 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
   topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
     cg_to = topo.chargegroup_end();
   cg_it += topo.num_solute_chargegroups();
-  
-  for( ; cg_it != cg_to; ++cg_it){
+
+  for(; cg_it != cg_to; ++cg_it){
 
     RF_solvent_interaction_innerloop(topo, conf, cg_it, periodicity);
+    ++cg_it;
 
   } // loop over solvent charge groups
+
 }  
 
 /**
@@ -358,3 +395,25 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
      conf.current().perturbed_energy_derivatives.kinetic_energy.size());
   
 }
+
+
+//***************************************************************************
+// helper functions 
+//***************************************************************************
+
+template<typename t_interaction_spec>
+inline void interaction::Nonbonded_Interaction<t_interaction_spec>
+::print_timing(std::ostream & os)
+{
+      os << "        "
+	 << std::setw(36) << std::left << name
+	 << std::setw(20) << m_timing << "\n"
+	 << "            "
+	 << std::setw(32) << std::left << "pairlist/longrange"
+	 << std::setw(20) << m_pairlist_timing << "\n"
+	 << "            "
+	 << std::setw(32) << std::left << "shortrange"
+	 << std::setw(20) << m_shortrange_timing << "\n";
+      
+}
+

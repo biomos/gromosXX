@@ -92,6 +92,7 @@ namespace interaction
      * const perturbed pairlist accessor.
      */
     Pairlist const & perturbed_pairlist()const { return m_perturbed_pairlist; }
+    virtual void print_timing(std::ostream & os);
 
   protected:
     /**
@@ -140,6 +141,18 @@ namespace interaction
      * the pairlist update algorithm.
      */
     typename t_interaction_spec::pairlist_algorithm_type m_pairlist_algorithm;
+
+    /**
+     * time used for pairlist construction and
+     * longrange forces / energies
+     */
+    double m_pairlist_timing;
+
+    /**
+     * time used for shortrange forces / energies
+     */
+    double m_shortrange_timing;
+    
     
   };
   

@@ -55,18 +55,25 @@ if it does not work
 check the version number of the autotools:
 (in brackets the versions known to work)
 
-autoconf --version [autoconf (GNU Autoconf) 2.57]
-automake --version [automake (GNU automake) 1.7.2]
-libtoolize --version [libtoolize (GNU libtool) 1.4.3]
+autoconf --version [autoconf (GNU Autoconf) 2.58]
+automake --version [automake (GNU automake) 1.7.9]
+libtoolize --version [libtoolize (GNU libtool) 1.5]
 
 compiling with Intel C++ Compiler (7.1)
----------------------------------
+----------------------------------------
 
 export CC=/opt/intel/compiler70/ia32/bin/icc
 export CXX=/opt/intel/compiler70/ia32/bin/icc
 export LD=/opt/intel/compiler70/ia32/bin/icc
 
-normal ./Config.sh; mkdir obj; cd obj; ../configure; make works.
+normal ./Config.sh; mkdir obj; cd obj; 
+       ../configure --disable-shared; make
+
+note: OpenMP parallelization available:
+      --enable-openmp configure option
+
+      use a Blitz++ library compiled with the intel compiler
+      (mordor: /troll2/markus/programs/Blitz-intel)
 
 -------------------------------------------------------------------------------
 

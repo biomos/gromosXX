@@ -218,21 +218,35 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 			  topo.charge()(*it),
 			  f, e_crf);
     
-    force(i) += f;
-    force(*it) -= f;
+#ifdef OMP
+#pragma omp critical (force)
+#endif
+    {
+      force(i) += f;
+      force(*it) -= f;
+    }
     
     if (t_nonbonded_spec::do_virial == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  conf.current().virial_tensor(a, b) += 
-	    r(a) * f(b);
-
+#ifdef OMP
+#pragma omp critical (virial)
+#endif
+      {
+	for(int a=0; a<3; ++a)
+	  for(int b=0; b<3; ++b)
+	    conf.current().virial_tensor(a, b) += 
+	      r(a) * f(b);
+      }
       DEBUG(11, "\tatomic virial done");
     }
 
     // energy
-    conf.current().energies.crf_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(*it)] += e_crf;
+#ifdef OMP
+#pragma omp critical (energy)
+#endif
+    {
+      conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+	[topo.atom_energy_group(*it)] += e_crf;
+    }
     DEBUG(11, "\tcontribution " << e_crf);
     
   } // loop over excluded pairs

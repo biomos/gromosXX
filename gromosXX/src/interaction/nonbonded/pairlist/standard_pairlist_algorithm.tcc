@@ -63,9 +63,16 @@ update(topology::Topology & topo,
   
   /**
    * @todo rewrite into two loops (one solute, one solvent)
+   * or maybe not (for easier parallelization)
    */
-  for(int cg1_index=0; cg1 != cg_to; ++cg1, ++cg1_index) {
+  const int num_cg = topo.num_chargegroups();
+  int cg1_index;
+  
+  for(cg1_index=0; cg1_index < num_cg; ++cg1_index) {
     // add intra cg (if not solvent...)
+    
+    cg1 = topo.chargegroup_it(cg1_index);
+
     if (unsigned(**cg1) < topo.solute().num_atoms()){
       do_cg_interaction_intra(topo, conf, sim, nonbonded_interaction, cg1,
 			      periodicity);

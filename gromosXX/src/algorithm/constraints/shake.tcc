@@ -505,8 +505,10 @@ template<math::virial_enum do_virial>
 void algorithm::Shake<do_virial>
 ::print_timing(std::ostream & os)
 {
-  os << std::setw(40) << std::left << "Shake::solute"
+  os << "    "
+     << std::setw(40) << std::left << "Shake::solute"
      << std::setw(20) << m_timing << "\n"
+     << "    "
      << std::setw(40) << std::left << "Shake::solvent"
      << std::setw(20) << m_solvent_timing << "\n";
 }
