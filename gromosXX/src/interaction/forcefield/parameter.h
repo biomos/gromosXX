@@ -19,6 +19,16 @@ namespace interaction
   };
 
   /**
+   * @struct angle_type_struct
+   * angle types.
+   */
+  struct angle_type_struct
+  {
+    double K;
+    double cos0;
+  };
+  
+  /**
    * @struct lj_parameter_struct
    * Lennard Jones interaction parameter.
    */

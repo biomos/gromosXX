@@ -64,9 +64,69 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
     
     if(n != num){
       if (_lineStream.fail() || ! _lineStream.eof())
-	throw std::runtime_error("error in HBOND block (n != num)");
+	throw std::runtime_error("error in BONDH block (n != num)");
     }
   } // BONDH
+
+  { // BONDANGLE
+    buffer = m_block["BONDANGLE"];
+  
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    int num, n;
+    _lineStream >> num;
+    ++it;
+    
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, k, t;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> k >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in BONDANGLE block");
+      
+      topo.solute().angles().add(i-1, j-1, k-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail()|| ! _lineStream.eof())
+	throw std::runtime_error("error in BONDANGLE block (n != num)");
+    }
+  } // BONDANGLE
+
+  { // BONDANGLEH
+    buffer.clear();
+    buffer = m_block["BONDANGLEH"];
+  
+    it = buffer.begin() + 1;
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    int num, n;
+    _lineStream >> num;
+    ++it;
+
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, k, t;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> k >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in BONDANGLEH block");
+
+      topo.solute().angles().add(i-1, j-1, k-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("error in BONDANGLEH block (n != num)");
+    }
+  } // BONDANGLEH
   
   { // RESNAME
     buffer = m_block["RESNAME"];
@@ -247,6 +307,35 @@ io::InTopology &io::InTopology
   }
   
 
+  return *this;
+}
+
+template<typename t_simulation>
+io::InTopology &io::InTopology
+::operator>>(interaction::angle_interaction<t_simulation> &ai){
+
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  buffer = m_block["BONDANGLETYPE"];
+
+  // 1. BONDTYPE 2. number of types
+  for (it = buffer.begin() + 2; 
+   it != buffer.end() - 1; ++it) {
+
+    double k, t;
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> k >> t;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+      throw std::runtime_error("bad line in BONDANGLETYPE block");
+
+    // and add...
+    ai.add(k, cos( t ) );
+
+  }
   return *this;
 }
 

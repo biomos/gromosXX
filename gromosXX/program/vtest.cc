@@ -93,6 +93,11 @@ int main(int argc, char *argv[])
   interaction::harmonic_bond_interaction<simulation_type> 
     *the_bond_interaction =
     new interaction::harmonic_bond_interaction<simulation_type>;
+
+  // angles
+  interaction::angle_interaction<simulation_type>
+    *the_angle_interaction = 
+    new interaction::angle_interaction<simulation_type>;
   
   // nonbonded
   typedef interaction::twin_range_pairlist_cg<simulation_type> pairlist_type;
@@ -105,6 +110,7 @@ int main(int argc, char *argv[])
 
   // read parameter
   topo >> *the_bond_interaction;
+  topo >> *the_angle_interaction;
   topo >> *the_nonbonded_interaction;
   
   input >> the_simulation;
@@ -116,6 +122,8 @@ int main(int argc, char *argv[])
   
   if (do_bond)
     the_forcefield.add_interaction(the_bond_interaction);
+  if (do_angle)
+    the_forcefield.add_interaction(the_angle_interaction);
   if (do_nonbonded)
     the_forcefield.add_interaction(the_nonbonded_interaction);
 

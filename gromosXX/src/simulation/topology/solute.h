@@ -65,6 +65,11 @@ namespace simulation
     void add_bond_length_constraints(double mass, math::SArray const &atom_mass,
 				    std::vector<interaction::bond_type_struct> const & param);
 
+    /**
+     * angle accessor.
+     */
+    Angle & angles();
+    
   private:
     /**
      * atom information.
@@ -75,6 +80,11 @@ namespace simulation
      * the bonds.
      */
     Bond m_bond;
+    
+    /**
+     * the angles.
+     */
+    Angle m_angle;
     
   };
   

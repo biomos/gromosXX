@@ -7,6 +7,8 @@ include_HEADERS = 		simulation.h \
 				system/system.tcc \
 				topology/bond.h \
 				topology/bond.tcc \
+				topology/angle.h \
+				topology/angle.tcc \
 				topology/solute.h \
 				topology/solute.tcc \
 				topology/solvent.h \

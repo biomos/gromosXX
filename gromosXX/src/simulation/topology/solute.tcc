@@ -105,3 +105,11 @@ simulation::Solute::add_bond_length_constraints(double mass,
 }
 
 
+/**
+ * angles accessor.
+ */
+inline simulation::Angle &
+simulation::Solute::angles()
+{
+  return m_angle;
+}

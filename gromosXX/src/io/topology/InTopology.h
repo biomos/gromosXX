@@ -30,6 +30,12 @@ namespace io {
     template<typename t_simulation>
     InTopology & operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi);
     /**
+     * Read in the angle parameters.
+     */
+    template<typename t_simulation>
+    InTopology & operator>>(interaction::angle_interaction<t_simulation> &ai);
+    
+    /**
      * Read in the nonbonded interaction types (lennard-jones).
      */
     template<typename t_simulation, typename t_pairlist>

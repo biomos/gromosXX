@@ -9,6 +9,7 @@
 #include "pairlist/simple_pairlist.h"
 #include "interaction/nonbonded_interaction.h"
 #include "interaction/harmonic_bond_interaction.h"
+#include "interaction/angle_interaction.h"
 
 #ifndef NDEBUG
 extern int debug_level;

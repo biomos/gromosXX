@@ -8,6 +8,7 @@
 #include "topology/chargegroup_iterator.h"
 #include "topology/compound.h"
 #include "topology/bond.h"
+#include "topology/angle.h"
 #include "topology/solute.h"
 #include "topology/solvent.h"
 #include "topology/topology.h"
