@@ -74,8 +74,8 @@ WRITE
 # NTWSE = configuration selection parameter
 # =0: write normal trajectory
 # >0: chose min energy for writing configurations
-#     NTWX     NTWSE      NTWV      NTWE      NTWG      NTPW
-       100         0         0         0         0         1
+#     NTWX     NTWSE      NTWV      NTWE      NTWG      NTBA	NTPW
+       100         0         0         0         0         0	   1
 END
 SHAKE
 #      NTC       TOL

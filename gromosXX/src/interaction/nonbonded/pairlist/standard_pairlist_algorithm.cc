@@ -448,6 +448,8 @@ _update_atomic(topology::Topology & topo,
   
   for(int a1 = 0; a1 < num_solute; a1 += stride) {
 
+    DEBUG(9, "solute (" << a1 << ") - solute");
+    
     for(int a2 = a1 + 1; a2 < num_solute; ++a2){
 
       // check exclusions and range
@@ -455,13 +457,16 @@ _update_atomic(topology::Topology & topo,
       
       // the distance
       const double d = dot(v, v);
+
+      DEBUG(10, "\t" << a1 << " - " << a2);
     
       if (d > m_cutoff_long_2){        // OUTSIDE
+	DEBUG(11, "\t\toutside");
 	continue;
       }
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
-
+	DEBUG(11, "\t\tlongrange");
 	// the interactions
 	innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
 
@@ -469,11 +474,16 @@ _update_atomic(topology::Topology & topo,
       } // longrange
       
       // shortrange - check exclusions
-      if (excluded_solute_pair(topo, a1, a2)) continue;
+      if (excluded_solute_pair(topo, a1, a2)){
+	continue;
+      }
 
+      DEBUG(11, "\t\tshortrange");
       pairlist[a1].push_back(a2);
       
     } // solute - solute
+
+    DEBUG(9, "solute (" << a1 << ") - solvent");
 
     for(int a2 = num_solute; a2 < num_atoms; ++a2){
       
@@ -483,18 +493,22 @@ _update_atomic(topology::Topology & topo,
       // the distance
       const double d = dot(v, v);
     
+      DEBUG(10, "\t" << a1 << " - " << a2);
+
       if (d > m_cutoff_long_2){        // OUTSIDE
+	DEBUG(11, "\t\toutside");
 	continue;
       }
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
-
+	DEBUG(11, "\t\tlongrange");
 	// the interactions
 	innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
 
 	continue;
       } // longrange
       
+      DEBUG(11, "\t\tshortrange");
       pairlist[a1].push_back(a2);
 
     } // solute - solvent
@@ -504,10 +518,17 @@ _update_atomic(topology::Topology & topo,
   int a1 = num_solute;
 
   // multiple solvents
+  DEBUG(9, "solvent - solvent");
+
   for(unsigned int s = 0; s < topo.num_solvents(); ++s){
+    DEBUG(11, "solvent " << s);
     int end = a1 + topo.num_solvent_molecules(s);
+    DEBUG(11, "\tends at atom " << end);
+
     const int num_solv_at = topo.num_solvent_atoms(s);
     int a2_start = a1 + num_solv_at;
+    
+    DEBUG(11, "\twith " << num_solv_at << " atoms");
     
     for( ; a1 < end; ++a1){
       
@@ -520,19 +541,23 @@ _update_atomic(topology::Topology & topo,
 	
 	// the distance
 	const double d = dot(v, v);
-	
+
+	DEBUG(10, "\t" << a1 << " - " << a2);
+
 	if (d > m_cutoff_long_2){        // OUTSIDE
+	  DEBUG(11, "\t\toutside");
 	  continue;
 	}
   
 	if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
-	  
+	  DEBUG(11, "\t\tlongrange");	  
 	  // the interactions
 	  innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
 	  
 	  continue;
 	} // longrange
-	
+
+	DEBUG(11, "\t\tshortrange");	
 	pairlist[a1].push_back(a2);
 	
       } // solvent - solvent

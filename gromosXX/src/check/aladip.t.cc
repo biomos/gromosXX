@@ -139,6 +139,12 @@ int main(int argc, char* argv[])
 	// first check the forcefield
 	total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
 
+	// run it with atomic cutoff
+	aladip_sim.sim.param().pairlist.atomic_cutoff = true;
+	total += check::check_atomic_cutoff(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
+	aladip_sim.sim.param().pairlist.atomic_cutoff = false;
+
+	// check virial, ...
 	total += check::check_state(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
       }
       // vtune: run the thing...

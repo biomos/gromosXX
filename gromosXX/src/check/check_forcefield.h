@@ -12,6 +12,11 @@ namespace check
 		       configuration::Configuration & conf,
 		       simulation::Simulation & sim,
 		       interaction::Forcefield & ff);
+
+  int check_atomic_cutoff(topology::Topology & topo,
+			  configuration::Configuration & conf,
+			  simulation::Simulation & sim,
+			  interaction::Forcefield & ff);
   
 } // check
 

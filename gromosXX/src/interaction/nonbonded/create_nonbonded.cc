@@ -99,11 +99,14 @@ int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
     }
     
     if (sim.param().perturbation.perturbation){
-      cout << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "off" << right << "\n";
+      cout << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "on" << right << "\n";
       if (sim.param().perturbation.scaling)
 	cout << "\t" << setw(20) << left << "scaling" << setw(30) << left << "on" << right << "\n";
       else
 	cout << "\t" << setw(20) << left << "scaling" << setw(30) << left << "off" << right << "\n";
+    }
+    else{
+      cout << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "off" << right << "\n";
     }
 
   }
@@ -118,6 +121,25 @@ int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
   spa->init(&ni->parameter());
   
   ff.push_back(ni);
+
+  if (!quiet){
+    std::cout
+      << "\t\t\tshortrange cutoff      : "
+      << sim.param().pairlist.cutoff_short << "\n"
+      << "\t\t\tlongrange cutoff       : "
+      << sim.param().pairlist.cutoff_long << "\n"
+      << "\t\t\tepsilon                : "
+      << sim.param().longrange.epsilon << "\n"
+      << "\t\t\treactionfield epsilon  : "
+      << sim.param().longrange.rf_epsilon << "\n"
+      << "\t\t\tkappa                  : "
+      << sim.param().longrange.rf_kappa << "\n"
+      << "\t\t\treactionfield cutoff   : "
+      << sim.param().longrange.rf_cutoff << "\n"
+      << "\t\t\tpairlist creation every "
+      << sim.param().pairlist.skip_step
+      << " steps\n\n";
+  }
   
   return 0;
 }

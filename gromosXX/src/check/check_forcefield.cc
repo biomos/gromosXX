@@ -250,3 +250,35 @@ int check::check_forcefield(topology::Topology & topo,
   
   return total;
 }
+
+int check::check_atomic_cutoff(topology::Topology & topo,
+			       configuration::Configuration & conf,
+			       simulation::Simulation & sim,
+			       interaction::Forcefield & ff)
+{
+  int res=0, total=0;
+  
+  for(vector<interaction::Interaction *>::iterator
+	it = ff.begin(),
+	to = ff.end();
+      it != to;
+      ++it){
+    
+    if ((*it)->name == "NonBonded"){
+  
+      CHECKING((*it)->name + ": atomic cutoff", res);
+
+      conf.current().force = 0;
+      conf.current().energies.zero();
+
+      (*it)->calculate_interactions(topo, conf, sim);
+      
+      conf.current().energies.calculate_totals();
+      CHECK_APPROX_EQUAL(conf.current().energies.potential_total,
+			 -50.068, 0.001, res);
+      RESULT(res, total);
+    }
+  }
+  
+  return total;
+}
