@@ -49,7 +49,7 @@ update(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction)
 
   DEBUG(7, "create a grid");
   Chargegroup_Grid<t_simulation> 
-    a_grid(sim.system().periodicity(), 
+    a_grid(sim, 
 	   sim.nonbonded().grid_cell_size(), m_cutoff_long);
 
   DEBUG(7, "grid the cog's");
@@ -209,7 +209,6 @@ inter_cell(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction,
 	  // filter out interactions based on chargegroup distances
 	  if (range_chargegroup_pair(sim, nonbonded_interaction,
 				     *cg_it, *it, cg1, cg2, 
-				     sim.system().periodicity().shift(pc), 
 				     pc))
 	    continue;
 	}

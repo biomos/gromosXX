@@ -11,21 +11,30 @@
 
 #include "../../../debug.h"
 
+/*
+template<typename t_simulation>
+inline 
+interaction::Chargegroup_Grid<t_simulation>
+::Chargegroup_Grid(interaction::Chargegroup_Grid<t_simulation> & periodicity){
+
+}
+*/
+
 template<typename t_simulation>
 inline
 interaction::Chargegroup_Grid<t_simulation>
-::Chargegroup_Grid(math::Periodicity<
-		   t_simulation::system_type::boundary_type> 
-		   & periodicity,
+::Chargegroup_Grid(
+		   t_simulation 
+		   & sim,
 		   double const size,
 		   double const cutoff)
-  : m_periodicity(periodicity)
+  : m_periodicity(sim.system().periodicity())
 {
 
   DEBUG(8, "initialize grid");
   DEBUG(8, "\tcells\t\tsize");
   for(size_t d=0; d<3; ++d){
-    double const length = sqrt(dot(periodicity.box()(d), periodicity.box()(d)));
+    double const length = sqrt(math::dot((m_periodicity.box()(d)), (m_periodicity.box()(d))));
     m_num_cells[d] = int(rint(length / size));
     m_size(d) = length / m_num_cells[d];
     DEBUG(8, "\t" << m_num_cells[d] << "\t\t" << m_size(d));

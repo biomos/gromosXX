@@ -77,9 +77,9 @@ namespace interaction
     /**
      * Constructor.
      */
-    Chargegroup_Grid(math::Periodicity<
-		     t_simulation::system_type::boundary_type> 
-		     & periodicity,
+    Chargegroup_Grid(
+		     t_simulation 
+		     & sim,
 		     double const size,
 		     double const cutoff);
 

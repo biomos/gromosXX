@@ -88,19 +88,19 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
 #else
   std::cout << "\n"
 	    << std::setw(25) << std::left << "\tsimulation"
-	    << typeid(m_simulation)
+	    << typeid(m_simulation).name()
 	    << "\n"
 	    << std::setw(25) << std::left  << "\tintegration"
-	    << typeid(m_integration)
+	    << typeid(m_integration).name()
 	    << "\n"
 	    << std::setw(25) << std::left << "\ttemperature coupling"
-	    << typeid(m_temperature)
+	    << typeid(m_temperature).name()
 	    << "\n"
 	    << std::setw(25) << std::left << "\tpressure coupling"
-	    << typeid(m_pressure)
+	    << typeid(m_pressure).name()
 	    << "\n"
 	    << std::setw(25) << std::left << "\tconstraints" 
-	    << typeid(m_distance_constraint)
+	    << typeid(m_distance_constraint).name()
 	    << "\n";
   
   std::cout << std::right << "\n\n";

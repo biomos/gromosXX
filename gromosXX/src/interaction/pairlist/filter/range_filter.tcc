@@ -148,13 +148,12 @@ interaction::Range_Filter<t_simulation, t_nonbonded_spec>
 			 size_t const i, size_t const j,
 			 simulation::chargegroup_iterator const & it_i,
 			 simulation::chargegroup_iterator const & it_j,
-			 typename math::Boundary_Implementation
-			 <t_simulation::system_type::boundary_type>
-			 ::shift_struct const & shift,
 			 int pc)
 {
   DEBUG(11, "Range_Filter::range_chargegroup_pair (shift) " << i << " - " << j);
-  
+ 
+  math::Boundary_Implementation<t_simulation::system_type::boundary_type>::shift_struct const & shift = sim.system().periodicity().shift(pc);
+ 
   math::Vec p;
   
   assert(unsigned(m_cg_cog.size()) > i &&

@@ -617,9 +617,9 @@ inline bool io::InInput::read_PCOUPLE(bool &calc, int &ntp,
       io::messages.add("bad line in PCOUPLE03 block",
 		       "InInput", io::message::error);
     
-    transform(s1.begin(), s1.end(), s1.begin(), tolower);
-    transform(s2.begin(), s2.end(), s2.begin(), tolower);
-    transform(s3.begin(), s3.end(), s3.begin(), tolower);
+    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    std::transform(s3.begin(), s3.end(), s3.begin(), tolower);
 
     bool scale = false;
     
@@ -799,8 +799,8 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int
       io::messages.add("bad line in PERTURB block",
 		       "InInput", io::message::error);
 
-    transform(s1.begin(), s1.end(), s1.begin(), tolower);
-    transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
     
     if (s1 == "on") ntg = 1;
     else if (s1 == "off") ntg = 0;
@@ -1062,8 +1062,8 @@ inline bool io::InInput::read_PLIST(bool &grid, int &nsnb, double &rcutp, double
     if (_lineStream.fail())
       throw std::runtime_error("bad line in PLIST03 block");
     
-    transform(s1.begin(), s1.end(), s1.begin(), tolower);
-    transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
     
     if (s1 == "grid") grid = true;
     else if (s1 == "standard") grid = false;
