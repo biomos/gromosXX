@@ -115,8 +115,6 @@ namespace configuration
        * get the average energy and fluctuations
        * @param energy average energy
        * @param fluctuation energy fluctuations
-       * @param dlamt slow growth change of lambda per step
-       * cumulative DG returned.
        */
       void energy_average(Energy &energy, Energy &fluctuation)const;
       
@@ -124,6 +122,8 @@ namespace configuration
        * get the average energy lambda derivative and its fluctuations
        * @param energy average energy lambda derivative
        * @param fluctuation energy lambda derivative fluctuations
+       * @param lambda the current lambda value
+       * @param lambda_fluct lambda value for the fluctuations
        * @param dlamt slow growth change of lambda per step
        * if dlamt != 0 the integrated energy lambda derivative is returned.
        */
@@ -134,11 +134,11 @@ namespace configuration
       /**
        * get the average energy and fluctuations
        * @param pressure average
-       * @param perssure_fluctuations
+       * @param perssure_fluctuations pressure fluctuations
        * @param virial average
-       * @param virial_fluctuations
+       * @param virial_fluctuations virial fluctuations
        * @param kinetic_energy tensor average
-       * @param kinetic_energy_fluctuations
+       * @param kinetic_energy_fluctuations average
        */
       void pressure_average(math::Matrix &pressure, 
 			    math::Matrix &pressure_fluctuations,
@@ -149,10 +149,14 @@ namespace configuration
       
       /**
        * get the averages and fluctuations of various other properties.
-       * @param mass
-       * @param volume
-       * @param box
-       * @param scaling factors of temperature scaling
+       * @param mass average
+       * @param mass_fluctuations mass fluctuations
+       * @param volume volume average
+       * @param volume_fluctuations volume fluctuations
+       * @param box average
+       * @param box_fluctuations box fluctuations
+       * @param scaling average of the scaling factors for temperature scaling
+       * @param scaling_fluctuations fluctuations of the scaling factors
        */
       void mbs_average(double & mass, double & mass_fluctuations,
 		       double & volume, double & volume_fluctuations,

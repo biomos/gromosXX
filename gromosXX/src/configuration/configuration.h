@@ -148,7 +148,7 @@ namespace configuration
 
       //////////////////////////////////////////////////
       /**
-       * @struct pscale struct
+       * @struct pscale_struct
        * stores periodic scaling information
        */
       struct pscale_struct

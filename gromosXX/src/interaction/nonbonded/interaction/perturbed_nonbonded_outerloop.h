@@ -19,8 +19,7 @@ namespace interaction
 
     /**
      * Constructor.
-     * @param sim where to store forces and energies
-     * (and virial contribution).
+     * @param nbp the nonbonded parameters
      */
     Perturbed_Nonbonded_Outerloop(Nonbonded_Parameter & nbp);
 

@@ -26,8 +26,8 @@ inline int rint(float param)
 }
 #endif
 
-/**
- * Constructor.
+/*
+ * Constructors.
  */
 inline math::Boundary_Implementation<math::vacuum>
 ::Boundary_Implementation(math::Box const & b)
@@ -35,9 +35,6 @@ inline math::Boundary_Implementation<math::vacuum>
 {
 }
 
-/**
- * Constructor.
- */
 inline math::Boundary_Implementation<math::rectangular>
 ::Boundary_Implementation(math::Box const & b)
  : m_box(b)
@@ -46,9 +43,6 @@ inline math::Boundary_Implementation<math::rectangular>
     m_half_box(i) = 0.5 * m_box(i)(i);
 }
 
-/**
- * Constructor.
- */
 inline math::Boundary_Implementation<math::triclinic>
 ::Boundary_Implementation(math::Box const & b)
   : m_box(b)
@@ -62,9 +56,6 @@ inline math::Boundary_Implementation<math::triclinic>
   
 }
 
-/**
- * Constructor.
- */
 inline math::Boundary_Implementation<math::truncoct>
 ::Boundary_Implementation(math::Box const & b)
  : m_box(b)

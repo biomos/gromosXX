@@ -55,7 +55,7 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
 
 /**
  * Destructor.
- * @TODO change destruction of nonbonded set to be standard - conform!
+ * @bug change destruction of nonbonded set to be standard - conform!
  */
 interaction::Nonbonded_Interaction::~Nonbonded_Interaction()
 {

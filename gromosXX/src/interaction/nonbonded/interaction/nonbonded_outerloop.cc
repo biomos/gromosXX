@@ -1,6 +1,6 @@
 /**
- * @file nonbonded_interaction.cc
- * template methods of Nonbonded_Interaction.
+ * @file nonbonded_outerloop.cc
+ * template methods of Nonbonded_Outerloop.
  */
 
 #include <stdheader.h>

@@ -1,6 +1,6 @@
 /**
- * @file standard_pairlist_algorithm.cc
- * standard pairlist algorithm
+ * @file standard_pairlist_algorithm_atomic.cc
+ * standard pairlist algorithm (atomic implementation)
  */
 
 #include <stdheader.h>

@@ -54,6 +54,9 @@ namespace algorithm
 
     /**
      * calculate the scaling factors.
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
      * @param immediate if true rescales the velocities to immediately satisfy
      * the given reference temperature (strong coupling).
      */
