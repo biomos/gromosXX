@@ -1,5 +1,5 @@
 /**
- * @file interaction.h
+ * @file src/interaction/interaction.h
  * gathers common include directives for the interaction library.
  */
 

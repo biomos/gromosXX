@@ -1,5 +1,5 @@
 /**
- * @file interaction.h
+ * @file src/interaction/interaction/interaction.h
  * the interaction interface.
  */
 
