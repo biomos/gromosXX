@@ -13,11 +13,13 @@
 /**
  * Constructor.
  */
+inline
 io::OutFlexibleConstraints::OutFlexibleConstraints(std::ostream &os) 
   : m_os(os)
 {
 };
 
+inline
 void io::OutFlexibleConstraints::write_title(std::string title)
 {
   m_os << "TITLE\n"

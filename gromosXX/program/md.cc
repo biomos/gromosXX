@@ -20,7 +20,7 @@
 #include <io/GInStream.h>
 #include <io/input/InInput.h>
 
-#include <algorithm/md_global.h>
+#include <algorithm/algorithm/md_global.h>
 
 // global variables for debug and timing
 #include "../src/debug.cc"

@@ -13,6 +13,7 @@
 /**
  * Constructor.
  */
+inline
 io::InFlexibleConstraints::InFlexibleConstraints(std::istream &is) 
   : GInStream(is) 
 {

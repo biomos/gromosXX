@@ -25,12 +25,12 @@ using namespace math;
 
 namespace algorithm
 {
-  int molvir_md(io::Argument &args, io::InInput &input)
+  int atvir_md(io::Argument &args, io::InInput &input)
   {
     algorithm::Perturbation_MD<
       algorithm::perturbed_MD_spec<interaction::atomic_virial>,
       algorithm::Interaction_spec<
-      typename algorithm::perturbed_MD_spec<interaction::atomic_virial>::simulation_type,
+      algorithm::perturbed_MD_spec<interaction::atomic_virial>::simulation_type,
       // perturbation
       false,
       // virial

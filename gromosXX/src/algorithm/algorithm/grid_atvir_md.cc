@@ -25,7 +25,7 @@ using namespace math;
 
 namespace algorithm
 {
-  int grid_molvir_md(io::Argument &args, io::InInput &input)
+  int grid_atvir_md(io::Argument &args, io::InInput &input)
   {
     algorithm::Perturbation_MD<
       algorithm::perturbed_MD_spec<interaction::atomic_virial>,

@@ -25,7 +25,7 @@ using namespace math;
 
 namespace algorithm
 {
-  int scaled_molvir_md(io::Argument &args, io::InInput &input)
+  int scaled_atvir_md(io::Argument &args, io::InInput &input)
   {
     algorithm::Perturbation_MD<
       algorithm::perturbed_MD_spec<interaction::atomic_virial>,

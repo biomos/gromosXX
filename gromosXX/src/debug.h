@@ -74,6 +74,7 @@ namespace simulation
   extern int simulation_debug_level;
   extern int topology_debug_level;
   extern int system_debug_level;
+  extern int core_debug_level;
 }
 
 namespace algorithm

@@ -32,33 +32,33 @@
 namespace algorithm
 {
   // forward declarations
-  int do_grid_scaled_molvir_perturbed_md(io::Argument & args, io::InInput &input);
-  int do_grid_scaled_atvir_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_grid_scaled_molvir_md(io::Argument & args, io::InInput & input);
-  int do_grid_scaled_atvir_md(io::Argument & args, io::InInput & input);
-  int do_grid_scaled_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_grid_scaled_md(io::Argument & args, io::InInput & input);
+  int grid_scaled_molvir_perturbed_md(io::Argument & args, io::InInput &input);
+  int grid_scaled_atvir_perturbed_md(io::Argument & args, io::InInput & input);
+  int grid_scaled_molvir_md(io::Argument & args, io::InInput & input);
+  int grid_scaled_atvir_md(io::Argument & args, io::InInput & input);
+  int grid_scaled_perturbed_md(io::Argument & args, io::InInput & input);
+  int grid_scaled_md(io::Argument & args, io::InInput & input);
 
-  int do_grid_molvir_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_grid_atvir_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_grid_molvir_md(io::Argument & args, io::InInput & input);
-  int do_grid_atvir_md(io::Argument & args, io::InInput & input);
-  int do_grid_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_grid_md(io::Argument & args, io::InInput & input);
+  int grid_molvir_perturbed_md(io::Argument & args, io::InInput & input);
+  int grid_atvir_perturbed_md(io::Argument & args, io::InInput & input);
+  int grid_molvir_md(io::Argument & args, io::InInput & input);
+  int grid_atvir_md(io::Argument & args, io::InInput & input);
+  int grid_perturbed_md(io::Argument & args, io::InInput & input);
+  int grid_md(io::Argument & args, io::InInput & input);
 
-  int do_scaled_molvir_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_scaled_atvir_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_scaled_molvir_md(io::Argument & args, io::InInput & input);
-  int do_scaled_atvir_md(io::Argument & args, io::InInput & input);
-  int do_scaled_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_scaled_md(io::Argument & args, io::InInput & input);
+  int scaled_molvir_perturbed_md(io::Argument & args, io::InInput & input);
+  int scaled_atvir_perturbed_md(io::Argument & args, io::InInput & input);
+  int scaled_molvir_md(io::Argument & args, io::InInput & input);
+  int scaled_atvir_md(io::Argument & args, io::InInput & input);
+  int scaled_perturbed_md(io::Argument & args, io::InInput & input);
+  int scaled_md(io::Argument & args, io::InInput & input);
 
-  int do_molvir_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_atvir_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_molvir_md(io::Argument & args, io::InInput & input);
-  int do_atvir_md(io::Argument & args, io::InInput & input);
-  int do_perturbed_md(io::Argument & args, io::InInput & input);
-  int do_md(io::Argument & args, io::InInput & input);
+  int molvir_perturbed_md(io::Argument & args, io::InInput & input);
+  int atvir_perturbed_md(io::Argument & args, io::InInput & input);
+  int molvir_md(io::Argument & args, io::InInput & input);
+  int atvir_md(io::Argument & args, io::InInput & input);
+  int perturbed_md(io::Argument & args, io::InInput & input);
+  int md(io::Argument & args, io::InInput & input);
 }
 
 /**
@@ -119,52 +119,52 @@ int algorithm::do_md(io::Argument &args)
     if (do_scaled){
       if (do_vir == interaction::molecular_virial){
 	if (do_perturb){
-	  return do_grid_scaled_molvir_perturbed_md(args, input);
+	  return grid_scaled_molvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_grid_scaled_molvir_md(args, input);
+	  return grid_scaled_molvir_md(args, input);
 	}	
       }
       else if (do_vir == interaction::atomic_virial){
 	if (do_perturb){
-	  return do_grid_scaled_atvir_perturbed_md(args, input);
+	  return grid_scaled_atvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_grid_scaled_atvir_md(args, input);
+	  return grid_scaled_atvir_md(args, input);
 	}	
       }
       else { // no virial
 	if (do_perturb){
-	  return do_grid_scaled_perturbed_md(args, input);
+	  return grid_scaled_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_grid_scaled_md(args, input);
+	  return grid_scaled_md(args, input);
 	}
       }
     }
     else{ // not scaled
       if (do_vir == interaction::molecular_virial){
 	if (do_perturb){
-	  return do_grid_molvir_perturbed_md(args, input);
+	  return grid_molvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_grid_molvir_md(args, input);
+	  return grid_molvir_md(args, input);
 	}	
       }
       else if (do_vir == interaction::atomic_virial){
 	if (do_perturb){
-	  return do_grid_atvir_perturbed_md(args, input);
+	  return grid_atvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_grid_atvir_md(args, input);
+	  return grid_atvir_md(args, input);
 	}	
       }
       else{ // no virial
 	if (do_perturb){
-	  return do_grid_perturbed_md(args, input);
+	  return grid_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_grid_md(args, input);
+	  return grid_md(args, input);
 	}
       }      
     }
@@ -173,52 +173,52 @@ int algorithm::do_md(io::Argument &args)
     if (do_scaled){
       if (do_vir == interaction::molecular_virial){
 	if (do_perturb){
-	  return do_scaled_molvir_perturbed_md(args, input);
+	  return scaled_molvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_scaled_molvir_md(args, input);
+	  return scaled_molvir_md(args, input);
 	}	
       }
       else if (do_vir == interaction::atomic_virial){
 	if (do_perturb){
-	  return do_scaled_atvir_perturbed_md(args, input);
+	  return scaled_atvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_scaled_atvir_md(args, input);
+	  return scaled_atvir_md(args, input);
 	}	
       }
       else{ // no virial
 	if (do_perturb){
-	  return do_scaled_perturbed_md(args, input);
+	  return scaled_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_scaled_md(args, input);
+	  return scaled_md(args, input);
 	}
       }
     }
     else{ // not scaled
       if (do_vir == interaction::molecular_virial){
 	if (do_perturb){
-	  return do_molvir_perturbed_md(args, input);
+	  return molvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_molvir_md(args, input);
+	  return molvir_md(args, input);
 	}	
       }
       if (do_vir == interaction::atomic_virial){
 	if (do_perturb){
-	  return do_atvir_perturbed_md(args, input);
+	  return atvir_perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_atvir_md(args, input);
+	  return atvir_md(args, input);
 	}	
       }
       else{ // no virial
 	if (do_perturb){
-	  return do_perturbed_md(args, input);
+	  return perturbed_md(args, input);
 	}
 	else{ // not perturbed
-	  return do_md(args, input);
+	  return md(args, input);
 	}
       }      
     }    

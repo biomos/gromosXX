@@ -11,6 +11,7 @@
 
 #include "../../debug.h"
 
+inline
 algorithm::Berendsen_Thermostat::Berendsen_Thermostat()
 {
 }

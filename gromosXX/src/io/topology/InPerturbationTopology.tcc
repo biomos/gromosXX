@@ -13,6 +13,7 @@
 /**
  * Constructor.
  */
+inline
 io::InPerturbationTopology::InPerturbationTopology(std::istream &is) 
   : GInStream(is) 
 {
