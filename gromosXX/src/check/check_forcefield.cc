@@ -12,6 +12,7 @@
 
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <interaction/interaction.h>
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 #include <interaction/forcefield/forcefield.h>
 
 #include <io/argument.h>
@@ -78,6 +79,56 @@ double finite_diff(topology::Topology & topo,
   return (e2 - e1) / 2.0 / epsilon;
 
 }
+
+int nonbonded_hessian(topology::Topology & topo, 
+		      configuration::Configuration &conf, 
+		      simulation::Simulation & sim, 
+		      interaction::Nonbonded_Interaction &term,
+		      size_t atom_i, size_t atom_j,
+		      double const epsilon,
+		      double const delta,
+		      int & res)
+{
+
+  math::Vec pos_i = conf.current().pos(atom_i);
+  math::Vec f1, f2;
+  double e_lj, e_crf;
+  math::Matrix fd_h, h;
+
+  for(int d=0; d<3; ++d){
+    
+    conf.current().pos(atom_i)(d) += epsilon;
+
+    term.calculate_interaction(topo, conf, sim, atom_i, atom_j, f1, e_lj, e_crf);
+
+    conf.current().pos(atom_i)(d) -= 2 * epsilon;
+    
+    term.calculate_interaction(topo, conf, sim, atom_i, atom_j, f2, e_lj, e_crf);
+
+    // restore...
+    conf.current().pos(atom_i) = pos_i;
+
+    for(int i=0; i<3; ++i)
+      fd_h(i, d) = (f2(i) - f1(i)) / 2.0 / epsilon;
+
+  }
+
+  conf.current().force = 0;
+  conf.current().energies.zero();
+
+  // need to create a pairlist
+  term.calculate_interactions(topo, conf, sim);
+  
+  term.calculate_hessian(topo, conf, sim, atom_i, atom_j, h);
+
+  for(int i=0; i<3; ++i)
+    for(int j=0; j<3; ++j)
+      CHECK_APPROX_EQUAL(h(i,j), fd_h(i,j), delta, res);
+
+  return res;
+
+}
+
 
 int check_lambda_derivative(topology::Topology & topo,
 			    configuration::Configuration & conf,
@@ -192,6 +243,23 @@ int check_interaction(topology::Topology & topo,
       
   RESULT(res, total);
   
+  if (term.name == "NonBonded"){
+    
+    // std::cout << "num atoms : " << topo.num_atoms() << std::endl;
+    // std::cout << "num solvents : " << topo.num_solvents() << std::endl;
+    // std::cout << "num solvent atoms : " << topo.num_solvent_atoms() << std::endl;
+
+    interaction::Nonbonded_Interaction & ni =
+      dynamic_cast<interaction::Nonbonded_Interaction &>(term);
+
+    CHECKING(term.name + " hessian (finite diff)", res);
+    res += nonbonded_hessian(topo, conf, sim, ni, 1, 8, epsilon, delta, res);
+    res += nonbonded_hessian(topo, conf, sim, ni, 2, 11, epsilon, delta, res);
+    res += nonbonded_hessian(topo, conf, sim, ni, 9, 69, epsilon, delta, res);
+    res += nonbonded_hessian(topo, conf, sim, ni, 9, 70, epsilon, delta, res);
+    RESULT(res, total);
+  }
+
   return total;
 
 }
