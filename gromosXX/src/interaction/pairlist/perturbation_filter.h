@@ -23,10 +23,14 @@ namespace interaction
      */
     Perturbation_Filter(t_base &base);
     
+    /**
+     * prepare the filter.
+     */
     void prepare(t_simulation &sim);
-    
-    bool perturbed_pair(t_simulation const &sim, size_t const i,
-			size_t const j);
+    /**
+     * filter for perturbed atoms.
+     */
+    bool perturbed_atom(t_simulation const &sim, size_t const i);
     
   protected:
     

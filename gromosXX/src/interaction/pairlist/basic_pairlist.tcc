@@ -112,7 +112,7 @@ template<typename t_simulation, typename t_pairlist_algorithm>
 inline
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::Basic_Pairlist(interaction::Nonbonded_Base &base)
-  : t_pairlist_algorithm(*this, base)
+  : t_pairlist_algorithm(*this, m_perturbed_pairlist, base)
 {
 }
 
@@ -162,7 +162,7 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 }
 
 template<typename t_simulation, typename t_pairlist_algorithm>
-inline basic_pairlist_type &
+inline interaction::basic_pairlist_type &
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::perturbed()
 {
@@ -170,7 +170,7 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 }
 
 template<typename t_simulation, typename t_pairlist_algorithm>
-inline basic_pairlist_type const &
+inline interaction::basic_pairlist_type const &
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::perturbed()const
 {

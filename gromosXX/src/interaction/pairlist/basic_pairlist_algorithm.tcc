@@ -5,9 +5,11 @@
 
 template<typename t_simulation, typename t_filter>
 interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
-::Basic_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > &pairlist,
+::Basic_Pairlist_Algorithm(basic_pairlist_type &pairlist,
+			   basic_pairlist_type &perturbed_pl,
 			   Nonbonded_Base &base)
   : m_pairlist(pairlist),
+    m_perturbed_pairlist(perturbed_pl),
     m_filter(base)
 {
 }
@@ -31,6 +33,10 @@ void interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
   m_pairlist.clear();
   m_pairlist.resize(num_atoms);
 
+  // and the perturbed pairlist
+  m_perturbed_pairlist.clear();
+  m_perturbed_pairlist.resize(num_atoms);
+  
   // prepare the filter
   m_filter.prepare();
  
@@ -39,12 +45,38 @@ void interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
     for(j=i+1; j<num_solute_atoms; ++j){
       
       // check solute exclusion
-      m_filter.exclusion_solute_pair(sim, i, j);
+      if (m_filter.exclusion_solute_pair(sim, i, j)) continue;
+      // check if one is perturbed
+      if (m_filter.perturbed_pair(sim, i))
+	{
+	  // i perturbed (and maybe j)
+	  m_perturbed_pairlist[i].push_back(j);
+	  continue;
+	}
+      else if (m_filter.perturbed_atom(sim, j))
+	{
+	  m_perturbed_parlist[j].push_back(i);
+	  continue;
+	}
       
       m_pairlist[i].push_back(j);
     }
     // solute - solvent
     for( ; j < num_atoms; ++j){
+
+      // check if one is perturbed
+      if (m_filter.perturbed_pair(sim, i))
+	{
+	  // i perturbed (and maybe j)
+	  m_perturbed_pairlist[i].push_back(j);
+	  continue;
+	}
+      else if (m_filter.perturbed_atom(sim, j))
+	{
+	  m_perturbed_pairlist[j].push_back(i);
+	  continue;
+	}
+
       m_pairlist[i].push_back(j);
     }
   }

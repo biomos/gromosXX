@@ -8,6 +8,8 @@
 
 namespace interaction
 {
+  typedef std::vector<std::vector<size_t> > basic_pairlist_type;
+
   /**
    * @class Basic_Pairlist_Algorithm
    * the basic pairlist building algorithm.
@@ -20,7 +22,8 @@ namespace interaction
       /**
        * Constructor.
        */
-      Basic_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > &pairlist,
+      Basic_Pairlist_Algorithm(basic_pairlist_type &pairlist,
+			       basic_pairlist_type &perturbed_pl,
 			       Nonbonded_Base &base);
       /**
        * update the pairlist.
@@ -32,8 +35,9 @@ namespace interaction
        */
       t_filter & filter();
       
-      protected:
-      std::vector<std::vector<unsigned int> > & m_pairlist;
+    protected:
+      basic_pairlist_type & m_pairlist;
+      basic_pairlist_type & m_perturbed_pairlist;
       t_filter m_filter;
       
     };

@@ -3,18 +3,20 @@
  * methods of Twinrange_Filter
  */
 
-template<typename t_simulation, typename t_base, typename t_innerloop>
+template<typename t_simulation, typename t_base,
+	 typename t_innerloop, typename t_basic_filter>
 inline
-interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
+interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
 ::Twinrange_Filter(t_base &base)
-  : Basic_Filter<t_simulation, t_base>(base),
+  : t_basic_filter(base),
     t_innerloop(base, *this)
 {
 }
 
-template<typename t_simulation, typename t_base, typename t_innerloop>
+template<typename t_simulation, typename t_base, 
+	 typename t_innerloop, typename t_basic_filter>
 inline void
-interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
+interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
 ::prepare(t_simulation &sim)
 {
   m_cutoff_short_2 = sim.nonbonded().cutoff_short() * 
@@ -29,9 +31,10 @@ interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
   
 }
 
-template<typename t_simulation, typename t_base, typename t_innerloop>
+template<typename t_simulation, typename t_base, 
+	 typename t_innerloop, typename t_basic_filter>
 inline bool
-interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
+interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop, t_basic_filter>
 ::range_pair(t_simulation const &sim, size_t const i, size_t const j)
 {
   math::Vec p;

@@ -8,8 +8,6 @@
 
 namespace interaction
 {
-  typedef std::vector<std::vector<size_t> > basic_pairlist_type;
-  
   /**
    * @class basic_pairlist
    * holds a pairlist and provides an iterator.

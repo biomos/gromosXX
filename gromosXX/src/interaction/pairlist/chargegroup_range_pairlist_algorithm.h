@@ -21,8 +21,9 @@ namespace interaction
       /**
        * Constructor.
        */
-      Chargegroup_Range_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > 
-					   &pairlist, Nonbonded_Base &base);
+      Chargegroup_Range_Pairlist_Algorithm(basic_pairlist_type &pairlist,
+					   basic_pairlist_type &perturbed_pl,
+					   Nonbonded_Base &base);
     
       /**
        * update the pairlist.
@@ -31,9 +32,10 @@ namespace interaction
     
     protected:
 
-      void do_cg_interaction(simulation::chargegroup_iterator cg1,
+      void do_cg_interaction(t_simulation const &sim,
+			     simulation::chargegroup_iterator cg1,
 			     simulation::chargegroup_iterator cg2);
-    
+      
       void do_cg_interaction_excl(t_simulation &sim,
 				  simulation::chargegroup_iterator cg1,
 				  simulation::chargegroup_iterator cg2);

@@ -41,9 +41,7 @@ namespace interaction
     /**
      * no perturbation here.
      */
-    bool perturbed_pair(t_simulation const &sim, size_t const i,
-			size_t const j) { return false; }
-    
+    bool perturbed_atom(t_simulation const &sim, size_t const i) {return false; }
 
   protected:
     t_base &m_base;

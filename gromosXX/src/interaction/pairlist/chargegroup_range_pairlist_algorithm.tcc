@@ -12,9 +12,11 @@
 
 template<typename t_simulation, typename t_filter>
 interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
-::Chargegroup_Range_Pairlist_Algorithm(std::vector<std::vector<unsigned int> >
-			       &pairlist, Nonbonded_Base &base)
-  : Basic_Pairlist_Algorithm<t_simulation, t_filter>(pairlist, base) 
+::Chargegroup_Range_Pairlist_Algorithm(basic_pairlist_type &pairlist,
+				       basic_pairlist_type &perturbed_pl,
+				       Nonbonded_Base &base)
+  : Basic_Pairlist_Algorithm<t_simulation, t_filter>(pairlist, 
+						     perturbed_pl, base) 
 {
 }
 
@@ -28,6 +30,10 @@ void interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
   // empty the pairlist
   m_pairlist.clear();
   m_pairlist.resize(sim.topology().num_atoms());
+
+  // and the perturbed pairlist
+  m_perturbed_pairlist.clear();
+  m_perturbed_pairlist.resize(sim.topology().num_atoms());
 
   DEBUG(7, "pairlist resized");
   
@@ -64,7 +70,7 @@ void interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
       }
       else{
 	// no exclusions... (at least cg2 is solvent)
-	do_cg_interaction(cg1, cg2);
+	do_cg_interaction(sim, cg1, cg2);
       }
 	
     } // inter cg (cg2)
@@ -81,7 +87,8 @@ void interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
 template<typename t_simulation, typename t_filter>
 inline void
 interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
-::do_cg_interaction(simulation::chargegroup_iterator cg1,
+::do_cg_interaction(t_simulation const & sim,
+		    simulation::chargegroup_iterator cg1,
 		    simulation::chargegroup_iterator cg2)
 {
   simulation::Atom_Iterator a1 = cg1.begin(),
@@ -93,6 +100,19 @@ interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
 	  a2_to = cg2.end();
 	a2 != a2_to; ++a2){
 
+      // check if one is perturbed
+      if (m_filter.perturbed_atom(sim, *a1))
+	{
+	  // i perturbed (and maybe j)
+	  m_perturbed_pairlist[*a1].push_back(*a2);
+	  continue;
+	}
+      else if (m_filter.perturbed_atom(sim, *a2))
+	{
+	  m_perturbed_pairlist[*a2].push_back(*a1);
+	  continue;
+	}
+
 #ifndef NDEBUG
       if (*a1 >= m_pairlist.size()){
 	std::cout << "a1=" << *a1 << " a2=" << *a2
@@ -100,8 +120,8 @@ interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
 		  << " pairlist.size=" << m_pairlist.size() << std::endl;
       }
 #endif
-
       assert(*a1 < m_pairlist.size());
+
       m_pairlist[*a1].push_back(*a2);
 
     } // loop over atom 2 of cg1
@@ -131,6 +151,19 @@ interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
 	DEBUG(7, "excluded" );
 	continue;
       }
+
+      // check if one is perturbed
+      if (m_filter.perturbed_atom(sim, *a1))
+	{
+	  // i perturbed (and maybe j)
+	  m_perturbed_pairlist[*a1].push_back(*a2);
+	  continue;
+	}
+      else if (m_filter.perturbed_atom(sim, *a2))
+	{
+	  m_perturbed_pairlist[*a2].push_back(*a1);
+	  continue;
+	}
       
 #ifndef NDEBUG
       if (*a1 >= m_pairlist.size()){
@@ -164,6 +197,18 @@ interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
       // check it is not excluded
       if (m_filter.exclusion_solute_pair(sim, *a1, *a2))
 	continue;
+      // check if one is perturbed
+      if (m_filter.perturbed_atom(sim, *a1))
+	{
+	  // i perturbed (and maybe j)
+	  m_perturbed_pairlist[*a1].push_back(*a2);
+	  continue;
+	}
+      else if (m_filter.perturbed_atom(sim, *a2))
+	{
+	  m_perturbed_pairlist[*a2].push_back(*a1);
+	  continue;
+	}
 
 #ifndef NDEBUG
       if (*a1 >= m_pairlist.size()){
