@@ -11,7 +11,7 @@ md_LDADD = 			../src/libgroxx.la
 
 md.cc : autobuildnr
 
-autobuildnr : md.cc ../src/libgroxx.la
+autobuildnr : ../src/libgroxx.la
 	echo "#define BUILD_DATE "\""`date`"\" > BUILD_NUMBER.new
 	awk '/BUILD_NUMBER/{ printf ("#define BUILD_NUMBER %d\n", $$3+1);}' ${srcdir}/BUILD_NUMBER >> BUILD_NUMBER.new
 	cp BUILD_NUMBER.new $(srcdir)/BUILD_NUMBER
