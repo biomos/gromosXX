@@ -152,7 +152,15 @@ namespace simulation
      * the molecules.
      */
     std::vector<size_t> & molecules();
-
+    /**
+     * iterator over the molecules.
+     */
+    Molecule_Iterator molecule_begin();
+    /**
+     * end of molecule iterator.
+     */
+    Molecule_Iterator molecule_end();
+    
   private:
     /**
      * the soluteatoms.

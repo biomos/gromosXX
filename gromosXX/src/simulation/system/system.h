@@ -41,6 +41,10 @@ namespace simulation
      */
     void resize(size_t s);
     /**
+     * const position accessor
+     */
+    math::VArray const &pos()const;
+    /**
      * position accessor
      */
     math::VArray &pos();
@@ -48,6 +52,10 @@ namespace simulation
      * old position
      */
     math::VArray const &old_pos()const;
+    /**
+     * const velocity accessor
+     */
+    math::VArray const &vel()const;
     /**
      * velocity accessor
      */

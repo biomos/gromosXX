@@ -12,6 +12,7 @@
 #include "pairlist/twin_range_pairlist_cg.h"
 
 #include "interaction/nonbonded_interaction.h"
+#include "interaction/nonbonded_virial_interaction.h"
 #include "interaction/quartic_bond_interaction.h"
 #include "interaction/harmonic_bond_interaction.h"
 #include "interaction/angle_interaction.h"

@@ -303,6 +303,24 @@ simulation::Topology::chargegroup_end()
 }
 
 /**
+ * iterator over the molecules
+ */
+inline simulation::Molecule_Iterator 
+simulation::Topology::molecule_begin()
+{
+  return Molecule_Iterator(m_molecule.begin());
+}
+
+/**
+ * end of the molecule iterator.
+ */
+inline simulation::Molecule_Iterator
+simulation::Topology::molecule_end()
+{
+  return Molecule_Iterator(m_molecule.end()-1);
+}
+
+/**
  * the number of chargegroups present.
  */
 inline size_t simulation::Topology::num_chargegroups()

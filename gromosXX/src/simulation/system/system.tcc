@@ -64,6 +64,14 @@ inline math::VArray & simulation::System<b>::pos()
   return *m_pos;
 }
 /**
+ * const position accessor
+ */
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::pos()const
+{
+  return *m_pos;
+}
+/**
  * old position accessor
  */
 template<math::boundary_enum b>
@@ -77,6 +85,14 @@ inline math::VArray const & simulation::System<b>::old_pos()const
  */
 template<math::boundary_enum b>
 inline math::VArray & simulation::System<b>::vel()
+{
+  return *m_vel;
+}
+/**
+ * const velocity accessor
+ */
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::vel()const
 {
   return *m_vel;
 }

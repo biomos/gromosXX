@@ -4,6 +4,7 @@
  */
 
 #include "../interaction/forcefield/parameter.h"
+#include "system/system.h"
 #include "topology/atom_iterator.h"
 #include "topology/atom_group_iterator.h"
 #include "topology/chargegroup_iterator.h"
@@ -16,7 +17,6 @@
 #include "topology/solute.h"
 #include "topology/solvent.h"
 #include "topology/topology.h"
-#include "system/system.h"
 #include "simulation/multibath.h"
 #include "simulation/nonbonded.h"
 #include "simulation/simulation.h"

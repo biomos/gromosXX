@@ -65,6 +65,12 @@ namespace interaction
     
   protected:
     /**
+     * @enum nonbonded_type_enum
+     * type of nonbonded interaction to calculate.
+     */
+    enum nonbonded_type_enum { shortrange, longrange };
+
+    /**
      * helper class to build the pairlist.
      * @TODO parametrize that one?
      * or assume an iterator and take a reference (polymorphism)
@@ -89,15 +95,15 @@ namespace interaction
     /**
      * calculate the interactions.
      */
-    void do_interactions(t_simulation &sim,
-			 typename t_pairlist::iterator it, 
-			 typename t_pairlist::iterator to,
-			 math::VArray &force);
+    virtual void do_interactions(t_simulation &sim,
+				 typename t_pairlist::iterator it, 
+				 typename t_pairlist::iterator to,
+				 nonbonded_type_enum range = shortrange);
 
     /**
      * calculate the 1,4-interactions.
      */
-    void do_14_interactions(t_simulation &sim);
+    virtual void do_14_interactions(t_simulation &sim);
 
   };
   

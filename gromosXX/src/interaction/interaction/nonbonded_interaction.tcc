@@ -127,14 +127,14 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
     
     do_interactions(sim, m_pairlist.long_range().begin(),
 		    m_pairlist.long_range().end(),
-		    m_longrange_force);
+		    longrange);
   }
 
   // calculate forces / energies
   DEBUG(7, "\tshort range");
   do_interactions(sim, m_pairlist.short_range().begin(),
 		  m_pairlist.short_range().end(),
-		  sim.system().force());
+		  shortrange);
 
   // add long-range force
   sim.system().force() += m_longrange_force;
@@ -152,10 +152,16 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 template<typename t_simulation, typename t_pairlist>
 inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 ::do_interactions(t_simulation &sim, typename t_pairlist::iterator it, 
-		  typename t_pairlist::iterator to, math::VArray &force)
+		  typename t_pairlist::iterator to, 
+		  nonbonded_type_enum range)
 {
   math::Vec v;
   math::VArray &pos = sim.system().pos();
+
+  math::VArray *force;
+  if (range == shortrange) force = &sim.system().force();
+  else force = &m_longrange_force;
+  
 
   DEBUG(7, "\tcalculate interactions");
   // Force
@@ -201,8 +207,8 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
     
     DEBUG(10, "\tf_vdw=" << f_vdw << " f_el=" << f_el);
 
-    force(it.i()) += v*(f_vdw + f_el);
-    force(*it) -= v*(f_vdw + f_el);
+    (*force)(it.i()) += v*(f_vdw + f_el);
+    (*force)(*it) -= v*(f_vdw + f_el);
 
   }
   

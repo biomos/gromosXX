@@ -82,10 +82,10 @@ create_forcefield(io::InTopology &topo,
   }
   
   if (do_nonbonded){
-    // nonbonded
-    interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
+    // nonbonded (with virial)
+    interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
       *the_nonbonded_interaction =
-      new interaction::Nonbonded_Interaction<t_simulation, t_pairlist>;
+      new interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>;
     
     topo >> *the_nonbonded_interaction;
     
