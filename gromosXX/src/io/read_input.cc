@@ -47,6 +47,9 @@ int io::read_input(io::Argument const & args,
 		   algorithm::Algorithm_Sequence & md_seq)
 {
   // create an in_parameter
+
+  // double start = util::now();
+
   std::ifstream input_file, topo_file, pttopo_file, conf_file;
   
   try{
@@ -72,6 +75,10 @@ int io::read_input(io::Argument const & args,
   ip.read(sim.param());
   sim.time_step_size() = sim.param().step.dt;
   sim.time() = sim.param().step.t0;
+
+  // std::cout << "timing (parameter) : "
+  // << util::now() - start << std::endl;
+  // start = util::now();
   
   try{
     topo_file.open(args["topo"].c_str());
@@ -94,6 +101,10 @@ int io::read_input(io::Argument const & args,
   
   io::In_Topology it(topo_file);
   it.read(topo, sim.param());
+
+  // std::cout << "timing (topology) : "
+  // << util::now() - start << std::endl;
+  // start = util::now();
 
   if(sim.param().perturbation.perturbation){
     if(args.count("pttopo")<1){
@@ -123,10 +134,18 @@ int io::read_input(io::Argument const & args,
     io::In_Perturbation ipt(pttopo_file);
     ipt.read(topo, sim.param());
 
+    // std::cout << "timing (perturbation topology) : "
+    // << util::now() - start << std::endl;
+    // start = util::now();
+
   }
 
   // do this after reading in a perturbation topology
   sim.multibath().calculate_degrees_of_freedom(topo);
+
+  // std::cout << "timing (calculate dof) : "
+  // << util::now() - start << std::endl;
+  // start = util::now();
 
   try{
     conf_file.open(args["conf"].c_str());
@@ -149,10 +168,17 @@ int io::read_input(io::Argument const & args,
   
   io::In_Configuration ic(conf_file);
   ic.read(conf, topo, sim.param());
+
+  // std::cout << "timing (read configuration) : "
+  // << util::now() - start << std::endl;
+  // start = util::now();
   
   // and create the algorithms
   // (among them the forcefield!)
   algorithm::create_md_sequence(md_seq, topo, conf, sim, it);
+
+  // std::cout << "timing (create algorithm) : "
+  // << util::now() - start << std::endl;
   
   return 0;
 }

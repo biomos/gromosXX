@@ -22,7 +22,9 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
     Nonbonded_Base(),
     Storage(),
     t_interaction_spec::nonbonded_innerloop_type(*dynamic_cast<Nonbonded_Base *>(this)),
-    m_pairlist_algorithm()
+    m_pairlist_algorithm(),
+    m_pairlist_timing(0),
+    m_shortrange_timing(0)
 {
 }
 
@@ -77,7 +79,8 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
 
   // calculate forces / energies
   DEBUG(7, "\tshort range");
-
+  DEBUG(7, "\tinitial_energy = " << conf.current().energies.lj_energy[0][0]);
+  
   const double shortrange_start = util::now();
   
   do_interactions(topo, conf, sim,
@@ -96,10 +99,12 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
   
   for(size_t i = 0; i < ljs; ++i){
     for(size_t j = 0; j < ljs; ++j){
+      DEBUG(10, "shortrange e_lj[" << i << "][" << j << "] = " << e.lj_energy[i][j]);
+      
       e.lj_energy[i][j] += 
-	e.lj_energy[i][j];
+	energies.lj_energy[i][j];
       e.crf_energy[i][j] += 
-	e.crf_energy[i][j];
+	energies.crf_energy[i][j];
     }
   }
   
@@ -141,7 +146,17 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
 		      size_t const i, size_t const j)
 {
   assert(pairlist().size() > i);
-  pairlist()[i].push_back(j);
+
+  // as there is no changing of i and j this is not! necessary...
+
+  // printf("pair %d - %d\n", i, j);
+
+  // #ifdef OMP
+  // #pragma omp critical (pairlist)
+  // #endif
+    {
+      pairlist()[i].push_back(j);
+    }
 }
 
 /**
@@ -161,7 +176,14 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
   assert(pairlist().size() > i);
   assert(pc >=0 && pc <= 26);
   
-  pairlist()[i].push_back((pc << 26) + j);
+  // as there is no changing of i and j this is not! necessary...
+
+  // #ifdef OMP
+  // #pragma omp critical (pairlist)
+  // #endif
+    {
+      pairlist()[i].push_back((pc << 26) + j);
+    }
 }
 
 /**
@@ -238,7 +260,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
     // translate the atom j
     DEBUG(9, "nonbonded_interaction: grid based pairlist");
 
-#ifdef OMP
+#ifdef OMPX
 #pragma omp parallel for \
     shared(topo, conf, periodicity, size_i, pairlist) \
     private(i, j_it, j_to, pc, j)
@@ -269,26 +291,46 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
     DEBUG(9, "nonbonded_interaction: no grid based pairlist");
     
 #ifdef OMP
-#pragma omp parallel for \
+#pragma omp parallel \
     shared(topo, conf, periodicity, size_i, pairlist) \
     private(i, j_it, j_to)
-#endif
+    {
 
-    for(i=0; i < size_i; ++i){
-      
-      for(j_it = pairlist[i].begin(),
-	    j_to = pairlist[i].end();
-	  j_it != j_to;
-	  ++j_it)
-	{
-	  DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+#pragma omp for    
+      for(i=0; i < size_i; ++i){
+	
+	for(j_it = pairlist[i].begin(),
+	      j_to = pairlist[i].end();
+	    j_it != j_to;
+	    ++j_it){
+
+	  // DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+	  // printf("nb pair %d - %d\n", i, *j_it);
 	  
 	  // shortrange, therefore store in simulation.system()
 	  interaction_innerloop(topo, conf, i, *j_it, conf.current(), periodicity);
 	}
+	
+      }
+     
+    }
+#else
+    for(i=0; i < size_i; ++i){
+    
+      for(j_it = pairlist[i].begin(),
+	    j_to = pairlist[i].end();
+	  j_it != j_to;
+	  ++j_it){
+
+	DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+	// printf("nb pair %d - %d\n", i, *j_it);
+	
+	// shortrange, therefore store in simulation.system()
+	interaction_innerloop(topo, conf, i, *j_it, conf.current(), periodicity);
+      }
       
     }
-     
+#endif
   }
 }
 
@@ -311,7 +353,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
   size_t const num_solute_atoms = topo.num_solute_atoms();
   int i;
   
-#ifdef OMP
+#ifdef OMPX
 #pragma omp parallel for \
     shared(topo, conf, periodicity, num_solute_atoms) \
     private(i, it, to)
@@ -346,7 +388,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
   
   int i, num_solute_atoms = topo.num_solute_atoms();
   
-#ifdef OMP
+#ifdef OMPX
 #pragma omp parallel for \
     shared(topo, conf, periodicity, num_solute_atoms) \
     private(i)

@@ -69,6 +69,12 @@ namespace interaction
  
   protected:
     Nonbonded_Base &m_base;
+
+    /**
+     * avoid vector constructor calls?
+     */
+    // math::Vec r;
+    // math::Vec f;
     
   };
   

@@ -60,6 +60,8 @@ io::In_Topology::read(topology::Topology& topo,
   
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
+
+  // double start = util::now();
   
   { // TOPPHYSCON
     buffer = m_block["TOPPHYSCON"];
@@ -119,6 +121,8 @@ io::In_Topology::read(topology::Topology& topo,
     
   } // RESNAME
 
+  // std::cout << "time after RESNAME: " << util::now() - start << std::endl;
+
   { // SOLUTEATOM
     DEBUG(10, "SOLUTEATOM block");
     buffer = m_block["SOLUTEATOM"];
@@ -135,11 +139,14 @@ io::In_Topology::read(topology::Topology& topo,
     
     // put the rest of the block into a single stream
     ++it;
-    std::string soluteAtoms;
-    concatenate(it, buffer.end()-1, soluteAtoms);
 
-    _lineStream.clear();
-    _lineStream.str(soluteAtoms);
+    // std::string soluteAtoms;
+    // concatenate(it, buffer.end()-1, soluteAtoms);
+
+    // _lineStream.clear();
+    // _lineStream.str(soluteAtoms);
+
+    // std::cout << "\ntime after concatenate: " << util::now() - start << std::endl;
 
     int a_nr, r_nr, t, cg, n_ex, a_ex;
     double m, q;
@@ -149,8 +156,12 @@ io::In_Topology::read(topology::Topology& topo,
       
     for(n=0; n < num; ++n){
 
-      _lineStream >> a_nr >> r_nr >> s >> t >> m >> q >> cg >> n_ex;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      ++it;
       
+      _lineStream >> a_nr >> r_nr >> s >> t >> m >> q >> cg;
+
       if (a_nr != n+1){
 	io::messages.add("Error in SOLUTEATOM block: atom number not sequential.",
 			 "InTopology", io::message::error);
@@ -176,6 +187,20 @@ io::In_Topology::read(topology::Topology& topo,
 			 "InTopology", io::message::error);
       }
 
+      if (!(_lineStream >> n_ex)){
+	if (_lineStream.eof()){
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  ++it;
+	  _lineStream >> n_ex;
+	}
+	else{
+	  io::messages.add("Error in SOLUTEATOM block: number of exclusions "
+			   "could not be read.",
+			   "InTopology", io::message::error);	
+	}
+      }
+
       if (n_ex < 0){
 	io::messages.add("Error in SOLUTEATOM block: number of exclusions < 0.",
 			 "InTopology", io::message::error);
@@ -184,7 +209,19 @@ io::In_Topology::read(topology::Topology& topo,
       // exclusions
       ex.clear();
       for(int i=0; i<n_ex; ++i){
-	_lineStream >> a_ex;
+	if (!(_lineStream >> a_ex)){
+	  if (_lineStream.eof()){
+	    _lineStream.clear();
+	    _lineStream.str(*it);
+	    ++it;
+	    _lineStream >> a_ex;
+	  }
+	  else{
+	    io::messages.add("Error in SOLUTEATOM block: exclusion "
+			     "could not be read.",
+			     "InTopology", io::message::error);	
+	  }
+	}
 
 	if (a_ex <= a_nr)
 	  io::messages.add("Error in SOLUTEATOM block: exclusions only to "
@@ -195,7 +232,19 @@ io::In_Topology::read(topology::Topology& topo,
       }
       
       // 1,4 - pairs
-      _lineStream >> n_ex;
+      if (!(_lineStream >> n_ex)){
+	if (_lineStream.eof()){
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  ++it;
+	  _lineStream >> n_ex;
+	}
+	else{
+	  io::messages.add("Error in SOLUTEATOM block: number of 1,4 - exclusion "
+			   "could not be read.",
+			   "InTopology", io::message::error);	
+	}
+      }
 
       if (n_ex < 0){
 	io::messages.add("Error in SOLUTEATOM block: number of 1,4 exclusions < 0.",
@@ -204,7 +253,20 @@ io::In_Topology::read(topology::Topology& topo,
 
       ex14.clear();
       for(int i=0; i<n_ex; ++i){
-	_lineStream >> a_ex;
+	if (!(_lineStream >> a_ex)){
+	  if (_lineStream.eof()){
+	    _lineStream.clear();
+	    _lineStream.str(*it);
+	    ++it;
+	    _lineStream >> a_ex;
+	  }
+	  else{
+	    io::messages.add("Error in SOLUTEATOM block: 1,4 - exclusion "
+			     "could not be read.",
+			     "InTopology", io::message::error);	
+	  }
+	}
+
 	if (a_ex <= a_nr)
 	  io::messages.add("Error in SOLUTEATOM block: 1,4 - exclusions only to "
 			   "larger atom numbers.",
@@ -221,7 +283,9 @@ io::In_Topology::read(topology::Topology& topo,
     std::cout << "\n\tEND\n";
     
   } // SOLUTEATOM
-    
+  
+  // std::cout << "time after SOLUTEATOM: " << util::now() - start << std::endl;
+  
   { // BONDH
     DEBUG(10, "BONDH block");
 
@@ -346,12 +410,15 @@ io::In_Topology::read(topology::Topology& topo,
 
   } // BOND
 
+  // std::cout << "time after BONDS: " << util::now() - start << std::endl;
 
   // check the bonds
   if (!check_type(m_block["BONDTYPE"], topo.solute().bonds())){
     io::messages.add("Illegal bond type in BOND(H) block",
 		     "In_Topology", io::message::error);
   }
+
+  // std::cout << "time after CHECKBONDS: " << util::now() - start << std::endl;
 
   { // CONSTRAINT
     DEBUG(10, "CONSTRAINT block");
@@ -405,11 +472,15 @@ io::In_Topology::read(topology::Topology& topo,
     
   } // CONSTRAINT
 
+  // std::cout << "time after CONSTRAINTS: " << util::now() - start << std::endl;
+
   // check the bonds in constraints
   if (!check_type(m_block["BONDTYPE"], topo.solute().distance_constraints())){
     io::messages.add("Illegal bond type in CONSTRAINT (or BOND(H)) block",
 		     "In_Topology", io::message::error);
   }
+
+  // std::cout << "time after check CONSTRAINTS: " << util::now() - start << std::endl;
 
   { // BONDANGLEH
 
@@ -516,12 +587,15 @@ io::In_Topology::read(topology::Topology& topo,
 
   } // BONDANGLE
 
+  // std::cout << "time after BONDANGLE: " << util::now() - start << std::endl;
 
   // check the angles
   if (!check_type(m_block["BONDANGLETYPE"], topo.solute().angles())){
     io::messages.add("Illegal bond angle type in BONDANGLE(H) block",
 		     "In_Topology", io::message::error);
   }
+
+  // std::cout << "time after check BONDANGLE: " << util::now() - start << std::endl;
 
   { // IMPDIHEDRAL
     DEBUG(10, "IMPDIHEDRAL block");
@@ -741,12 +815,16 @@ io::In_Topology::read(topology::Topology& topo,
     
   } // DIHEDRALH
 
+  // std::cout << "time after DIHEDRAL: " << util::now() - start << std::endl;
+
   // check the dihedrals
   if (!check_type(m_block["DIHEDRALTYPE"], topo.solute().dihedrals())){
     io::messages.add("Illegal dihedral type in DIHEDRAL(H) block",
 		     "In_Topology", io::message::error);
   }
-      
+  
+  // std::cout << "time after check DIHEDRAL: " << util::now() - start << std::endl;
+    
   { // SOLVENTATOM and SOLVENTCONSTR
     // give it a number (SOLVENTATOM1, SOLVENTATOM2) for multiple
     // solvents...
@@ -875,6 +953,8 @@ io::In_Topology::read(topology::Topology& topo,
 
   std::cout << "\n\tEND\n";
 
+  // std::cout << "time after SOLVENT: " << util::now() - start << std::endl;
+
   // set lambda
   topo.lambda(param.perturbation.lambda);
   topo.lambda_exp(param.perturbation.lambda_exponent);
@@ -892,6 +972,8 @@ io::In_Topology::read(topology::Topology& topo,
 		     "In_Topology", io::message::error);
   }
 
+  // std::cout << "time after SUBMOLECULES check: " << util::now() - start << std::endl;
+
   // chargegroup check (starts with 0)
   if (topo.chargegroups()[topo.num_solute_chargegroups()] != int(topo.num_solute_atoms())){
     io::messages.add("Error: last solute atom has to be end of chargegroup",
@@ -902,6 +984,8 @@ io::In_Topology::read(topology::Topology& topo,
 	      << "\tsolute atoms : " << topo.num_solute_atoms() << "\n"
 	      << "\tlast cg      : " << topo.chargegroups()[topo.num_solute_chargegroups()] << "\n";
   }
+
+  // std::cout << "time after CHARGEGROUPS check: " << util::now() - start << std::endl;
 
   // add the submolecules
   topo.molecules() = param.submolecules.submolecules;

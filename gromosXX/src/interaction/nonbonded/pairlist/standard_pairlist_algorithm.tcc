@@ -58,58 +58,133 @@ update(topology::Topology & topo,
   }
   
   // loop over the chargegroups
-  topology::Chargegroup_Iterator cg1 = topo.chargegroup_begin(),
-    cg_to = topo.chargegroup_end();
   
   /**
    * @todo rewrite into two loops (one solute, one solvent)
    * or maybe not (for easier parallelization)
    */
   const int num_cg = topo.num_chargegroups();
-  int cg1_index;
+  const int num_solute_cg = topo.num_solute_chargegroups();
+  const int num_solute_atoms = topo.solute().num_atoms();
+  int cg1_index, cg2_index, cg1_to, tid;
+
+#ifdef OMP
+#pragma omp parallel \
+  shared(num_cg, topo, conf, sim, nonbonded_interaction, \
+	 periodicity, num_solute_atoms, num_solute_cg, std::cout) \
+  private(cg1_index, cg1_to, cg2_index, tid)
+  {
+    tid = omp_get_thread_num();
+
+    std::cout << "thread " << tid << " of "
+	      << omp_get_num_threads() << "\n";
+
+    // cg1_to = num_cg / omp_get_num_threads();
+    // cg1_index = tid * cg1_to;
+    // cg1_to *= (tid + 1);
+    
+    /*
+    std::cout << "thread " << tid << " looping from " << cg1_index
+	      << " to " << cg1_to << "\n";
+    */
+#pragma omp for
+    for(cg1_index=0; cg1_index < num_cg; ++cg1_index) {
+
+      // add intra cg (if not solvent...)
+
+
+      // printf("thread %d : %d\n", tid, cg1_index);
+
+      do_cg1_loop(topo, conf, sim, nonbonded_interaction, 
+		  cg1_index, num_solute_cg, num_cg,
+		  periodicity);
+
+    } // cg1
+  } // end parallel
   
-  for(cg1_index=0; cg1_index < num_cg; ++cg1_index) {
+#else
+
+  cg1_index = 0;
+  cg1_to = num_cg;
+  for( ; cg1_index < cg1_to; ++cg1_index) {
     // add intra cg (if not solvent...)
     
-    cg1 = topo.chargegroup_it(cg1_index);
-
-    if (unsigned(**cg1) < topo.solute().num_atoms()){
-      do_cg_interaction_intra(topo, conf, sim, nonbonded_interaction, cg1,
-			      periodicity);
-    }
-  
-    // inter chargegroup
-    topology::Chargegroup_Iterator cg2(*cg1+1);
-    for(int cg2_index = cg1_index + 1; cg2 != cg_to; ++cg2, ++cg2_index) {
-
-      if (!t_nonbonded_spec::do_atomic_cutoff){
-	// filter out interactions based on chargegroup distances
-	if (range_chargegroup_pair(topo, conf, sim, nonbonded_interaction,
-				   cg1_index, cg2_index, cg1, cg2,
-				   periodicity))
-	  continue;
-      }
-      
-      DEBUG(11, "\tshortrange!");
-      
-      // SHORTRANGE
-      if (unsigned(**cg2) < topo.solute().num_atoms()){
-	// exclusions! (because cg2 is not solvent)
-	do_cg_interaction_excl(topo, conf, sim, 
-			       nonbonded_interaction, cg1, cg2,
-			       periodicity);
-      }
-      else{
-	// no exclusions... (at least cg2 is solvent)
-	do_cg_interaction(topo, conf, sim, 
-			  nonbonded_interaction, cg1, cg2, periodicity);
-      }
-	
-    } // inter cg (cg2)
+    do_cg1_loop(topo, conf, sim, nonbonded_interaction, 
+		cg1_index, num_solute_cg, num_cg,
+		periodicity);
+    
   } // cg1
+  
+#endif
   
   DEBUG(7, "pairlist done");
 
+}
+
+/**
+ * loop over chargegroup 1
+ */
+template<typename t_nonbonded_spec>
+template<typename t_nonbonded_interaction>
+inline void
+interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
+::do_cg1_loop(topology::Topology & topo,
+	      configuration::Configuration & conf,
+	      simulation::Simulation & sim,
+	      t_nonbonded_interaction &nonbonded_interaction,
+	      int cg1_index,
+	      int const num_solute_cg,
+	      int const num_cg,
+	      Periodicity_type const & periodicity)
+{
+  topology::Chargegroup_Iterator cg1 = topo.chargegroup_it(cg1_index);
+  
+  if (cg1_index < num_solute_cg){
+    do_cg_interaction_intra(topo, conf, sim, nonbonded_interaction, 
+			    cg1, periodicity);
+  }
+  
+  // inter chargegroup
+  topology::Chargegroup_Iterator cg2 = *cg1+1;
+
+  // solute...
+  int cg2_index;
+  for(cg2_index = cg1_index + 1; cg2_index < num_solute_cg; ++cg2, ++cg2_index) {
+    
+    if (!t_nonbonded_spec::do_atomic_cutoff){
+      // filter out interactions based on chargegroup distances
+      
+      if (range_chargegroup_pair(topo, conf, sim, nonbonded_interaction,
+				 cg1_index, cg2_index, cg1, cg2, periodicity))
+	
+	continue;
+      
+    }
+    
+    // SHORTRANGE
+    // exclusions! (because cg2 is not solvent)
+    do_cg_interaction_excl(topo, conf, sim, nonbonded_interaction,
+			   cg1, cg2, periodicity);
+    
+  } // inter cg (cg2 solute)
+  // solvent...
+  for(; cg2_index < num_cg; ++cg2, ++cg2_index) {
+    
+    if (!t_nonbonded_spec::do_atomic_cutoff){
+      // filter out interactions based on chargegroup distances
+      
+      if (range_chargegroup_pair(topo, conf, sim, nonbonded_interaction,
+				 cg1_index, cg2_index, cg1, cg2, periodicity))
+	continue;
+      
+    }
+    
+    // SHORTRANGE
+    do_cg_interaction(topo, conf, sim, nonbonded_interaction,
+		      cg1, cg2, periodicity);
+    
+  } // inter cg (cg2 solvent)
+  
 }
 
 /**

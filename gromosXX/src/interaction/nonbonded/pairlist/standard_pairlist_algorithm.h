@@ -39,6 +39,14 @@ namespace interaction
   protected:
 
     template<typename t_nonbonded_interaction>
+    void do_cg1_loop(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim,
+		     t_nonbonded_interaction &nonbonded_interaction,
+		     int cg1_index, int num_solute_cg, int num_cg,
+		     Periodicity_type const & periodicity);
+
+    template<typename t_nonbonded_interaction>
     void do_cg_interaction(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
@@ -72,6 +80,7 @@ namespace interaction
 				 t_nonbonded_interaction &nonbonded_interaction,
 				 topology::Chargegroup_Iterator const &cg1,
 				 Periodicity_type const & periodicity, int const pc = -1);
+
 
   };
 } // interaction

@@ -6,6 +6,10 @@
 
 #include <util/stdheader.h>
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
 #include <topology/core/core.h>
 #include <topology/topology.h>
 #include <simulation/multibath.h>

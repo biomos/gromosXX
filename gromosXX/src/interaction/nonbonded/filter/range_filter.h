@@ -128,7 +128,9 @@ namespace interaction
      * shortrange cutoff.
      */
     double m_cutoff_short;
-    
+
+  private:
+
   };
   
 } // interaction

@@ -32,7 +32,8 @@
 int main(int argc, char *argv[]){
 
   const double start = util::now();
-  
+  double init_start = util::now();
+
   try{
     
     char *knowns[] = 
@@ -66,16 +67,37 @@ int main(int argc, char *argv[]){
     // parse the verbosity flag and set debug levels
     util::parse_verbosity(args);
 
+    // std::cout << "timing (arguments and verbosity) : " 
+    // << util::now() - init_start << std::endl;
+    // init_start = util::now();
+    
     // create the simulation classes
     topology::Topology topo;
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
 
+    // std::cout << "timing (constructed classes) : "
+    // << util::now() - init_start << std::endl;
+    // init_start = util::now();
+
     io::Out_Configuration traj("GromosXX\n");
 
+    // std::cout << "timing (output) : "
+    // << util::now() - init_start << std::endl;
+    // init_start = util::now();
+
     io::read_input(args, topo, conf, sim,  md);
+
+    // std::cout << "timing (read input) : "
+    // << util::now() - init_start << std::endl;
+    // init_start = util::now();
+
     io::read_special(args, topo, conf, sim);
+
+    // std::cout << "timing (read special) : "
+    // << util::now() - init_start << std::endl;
+    // init_start = util::now();
 
     traj.title("GromosXX\n" + sim.param().title);
 
@@ -151,9 +173,11 @@ int main(int argc, char *argv[]){
 	      << std::endl;
 
     int error;
+
+    const double init_time = util::now() - start;
     
     while(sim.time() < end_time){
-      // std::cout << "\tmd step " << sim.time() << std::endl;
+      std::cout << "\tmd step " << sim.time() << std::endl;
       
       traj.write(conf, topo, sim, io::reduced);
 
@@ -205,7 +229,8 @@ int main(int argc, char *argv[]){
     
     md.print_timing(std::cout);
 
-    std::cout << "Overall time used:\t" << util::now() - start << "\n\n";
+    std::cout << "Overall time used:\t" << util::now() - start << "\n"
+	      << "(initialization took " << init_time << ")\n\n";
 
     const time_t time_now = time_t(util::now());
     std::cout << ctime(&time_now) << "\n\n";

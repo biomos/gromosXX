@@ -70,27 +70,54 @@ update(topology::Topology & topo,
   // loop over all cells
   DEBUG(8, "num_cell: " << num_cells[0] << " " 
 	<< num_cells[1] << " " << num_cells[2]);
-  
-  for(the_cell[0]=0; the_cell[0] < num_cells[0]; ++the_cell[0]){
-    for(the_cell[1]=0; the_cell[1] < num_cells[1]; ++the_cell[1]){
 
-      DEBUG(8, "num_cell: " << num_cells[0] << " " 
-	    << num_cells[1] << " " << num_cells[2]);
+  int x, y, z;
 
-      for(the_cell[2]=0; the_cell[2] < num_cells[2]; ++the_cell[2]){
-	
-	DEBUG(12, "cc " << std::setw(3) << the_cell[0] 
+#ifdef OMP
+#pragma omp parallel
+  {
+    std::cout << "thread " << omp_get_thread_num() << " of "
+	      << omp_get_num_threads() << " : " << x << "\n";
+  }
+#endif
+
+#ifdef OMP
+#pragma omp parallel for \
+    shared(topo, conf, sim, nonbonded_interaction, \
+           num_cells, a_grid, periodicity) \
+    private(the_cell, cg_st, cg_to, x, y, z)
+#endif
+
+  // cells in x
+  for(x=0; x < num_cells[0]; ++x){
+
+#ifdef OMP
+    std::cout << "thread " << omp_get_thread_num() << " of "
+	      << omp_get_num_threads() << " : " << x << "\n";
+#endif
+
+    the_cell[0] = x;
+    // cells in y
+    for(y=0; y < num_cells[1]; ++y){
+      the_cell[1] = y;
+      // cells in z
+      for(z=0; z < num_cells[2]; ++z){
+	the_cell[2] = z;
+
+	DEBUG(10, "cc " << std::setw(3) << the_cell[0] 
 	      << " | " << std::setw(3) << the_cell[1] 
 	      << " | " << std::setw(3) << the_cell[2]);
 
-	DEBUG(8, "number of cg (of this grid point): " 
+	DEBUG(10, "number of cg (of this grid point): " 
 	      << a_grid.grid()[the_cell[0]][the_cell[1]][the_cell[2]].size());
 	      
+	// iterator over the chargegroups in the cell
 	cg_st = a_grid.grid()[the_cell[0]][the_cell[1]][the_cell[2]].begin();
 	cg_to = a_grid.grid()[the_cell[0]][the_cell[1]][the_cell[2]].end();
 
-	intra_cell(topo, conf, sim, nonbonded_interaction, cg_st, cg_to,
-		   periodicity);
+	// intra-cell interaction
+	intra_cell(topo, conf, sim, nonbonded_interaction, 
+		   cg_st, cg_to, periodicity);
 
 	// only in central box
 	inter_cell<t_nonbonded_interaction, false>
