@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <typeinfo>
 
-#if(compiler==gnucc)
+#ifdef COMPILER_GCC
 #include <cxxabi.h>
 #endif
 /**

@@ -61,7 +61,7 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
 
   int status = 0;
 
-#if(compiler==gnucc)
+#ifdef COMPILER_GCC
   std::cout << "\n"
 	    << std::setw(25) << std::left << "\tsimulation"
 	    << abi::__cxa_demangle(typeid(m_simulation).name(), 
