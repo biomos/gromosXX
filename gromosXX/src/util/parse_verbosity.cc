@@ -121,6 +121,11 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
       else if (submodule == "math") math::math_debug_level = level;
       else throw std::string("unknown submodule");
     }
+    else if (module == "util"){
+      if (submodule == "") util::debug_level = level;
+      else if (submodule == "util") util::util_debug_level = level;
+      else throw std::string("unknown submodule");
+    }
     else{
       throw std::string("unknown module");
     }

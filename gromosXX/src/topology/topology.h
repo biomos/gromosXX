@@ -292,11 +292,16 @@ namespace topology
      * return lambda
      */
     const double lambda()const {return m_lambda;}
+
     /**
      * set lambda
      */
+    void lambda(double const l){ m_old_lambda = m_lambda; m_lambda = l;}
 
-    void lambda(double const l){m_lambda = l;}
+    /**
+     * old lambda
+     */
+    const double old_lambda()const { return m_old_lambda; }
     
     /**
      * return nlam (exponent to lambda)
@@ -449,6 +454,11 @@ namespace topology
      */
     double m_lambda;
     
+    /**
+     * old lambda
+     */
+    double m_old_lambda;
+
     /**
      * lambda exponent
      */

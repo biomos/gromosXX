@@ -152,7 +152,21 @@ namespace interaction
      * time used for shortrange forces / energies
      */
     double m_shortrange_timing;
+
+    /**
+     * time used for longrange forces / energies
+     */
+    double m_longrange_timing;
+
+    /**
+     * storage for OMP forces, energies
+     */
+    std::vector<Storage> m_storage;
     
+    /**
+     * OMP number of threads
+     */
+    int m_omp_threads;
     
   };
   

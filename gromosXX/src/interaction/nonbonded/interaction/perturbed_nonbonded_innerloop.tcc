@@ -50,7 +50,9 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   
   // const double l = topo.lambda();
   
-  if(topo.is_perturbed(j) ==true){
+  if(j < topo.num_solute_atoms() && 
+     topo.is_perturbed(j) ==true){
+
     A_lj =  &m_base.lj_parameter(
 				 topo.perturbed_solute().atoms()[i].A_IAC(),
 				 topo.perturbed_solute().atoms()[j].A_IAC());
@@ -180,13 +182,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   storage.energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
   
-  DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
+  DEBUG(7, "\tenergy gropu: i and j " << topo.atom_energy_group(i)
 	<< " " << topo.atom_energy_group(j));
   
   storage.perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += de_lj;
   storage.perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += de_crf;
+
+  DEBUG(8, "\tperturbed pair " << i << " - " << j << " done!");
   
 }
 
@@ -200,7 +204,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   size_t const i, size_t const j,
   Periodicity_type const & periodicity)
 {
-    DEBUG(7, "\tpair\t" << i << "\t" << j);
+    DEBUG(7, "\tone four pair\t" << i << "\t" << j);
 
     math::Vec r, f;
 
@@ -334,7 +338,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
     DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
 	  << " " << topo.atom_energy_group(j));
-    DEBUG(20,"de_lj tot (before) " << conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
+    DEBUG(20,"de_lj tot (before) " 
+	  << conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
 	  [topo.atom_energy_group(j)]);
     
     conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
@@ -430,7 +435,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     double q_ij_b;
     double alpha_crf=0;
     
-    if(topo.is_perturbed(*it)){
+    if(*it < topo.num_solute_atoms() && topo.is_perturbed(*it)){
       // j perturbed
       q_ij_a = q_i_a * 
 	topo.perturbed_solute().atoms()[*it].A_charge();

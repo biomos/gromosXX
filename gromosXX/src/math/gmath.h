@@ -179,6 +179,14 @@ inline T abs2(TinyVector<T,N> v)
 
 BZ_DECLARE_FUNCTION_RET(abs2, double);
 
+inline void dyade(math::Vec const &v1, math::Vec const &v2,
+		  math::Matrix &m)
+{
+  for(int d1=0; d1 < 3; ++d1)
+    for(int d2=0; d2 < 3; ++d2)
+      m(d1,d2) = v1[d1] * v2[d2];
+}
+
 
 inline std::string v2s(math::Vec const & v)
 {

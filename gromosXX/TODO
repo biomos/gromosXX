@@ -57,12 +57,12 @@ Release 0.1.0
 		position constraints
 	ok 	EM: steepest descent
 	ok	slow growth
-	?	perturbed shake
+	ok	perturbed shake
 	ok	dihedral angle monitoring
 	ok	atomic virial
 	ok	center of mass motion removal (constraining)
 	ok	restructure the printing out
-		energy trajectories
+	ok	energy trajectories
 	ok	timing functions
 
 -------------
@@ -81,6 +81,3 @@ Release 0.1.0
 		no perturbed atom in bins => 1. normal, 2. perturbed &
 		bins, 3. perturbed & perturbed
 
-	-	rotating the box w/o rotating coordinates is NOT OK.
-		translation ok, splitting by lattice vectors ok.
-		look into lattice reduction...

@@ -274,7 +274,7 @@ topology::Topology::update_for_lambda()
           << ") = " << mass()(it->second.sequence_number()));
   }
 
-  // don't forget to update the distance constraints
+  // this is nowadays done directly in the shake routines
   // perturbed_solute().set_distance_constraints(lambda());
   
 }

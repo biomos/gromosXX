@@ -110,14 +110,21 @@ int algorithm::Temperature_Calculation
     assert(e_kin.size() == conf.old().energies.kinetic_energy.size());
 
     for(; it != to; ++it){
+      DEBUG(10, "starting atom range...");
+      
       // or just put everything into the first bath...?
       size_t bath = it->com_bath;
     
       e_kin[bath] = 0.0;
-      for(size_t i=last; i<=it->last_atom; ++i){
+      DEBUG(10, "\tperturbed kinetic energy last atom: "
+	    << it->last_atom << " to bath " << bath << "\n");
       
+      for(size_t i=last; i<=it->last_atom; ++i){
+	
+	if (i >= topo.num_solute_atoms()) break;
+	
 	if(topo.is_perturbed(i)){
-	  DEBUG(11, "\tpertrubed kinetic energy for " << i 
+	  DEBUG(11, "\tperturbed kinetic energy for " << i 
 		<< " in bath " << bath);
 	  DEBUG(11, "\tA_mass: " << topo.perturbed_solute().atoms()[i].A_mass() 
 		<< " B_mass: " << topo.perturbed_solute().atoms()[i].B_mass());
@@ -136,12 +143,15 @@ int algorithm::Temperature_Calculation
       
       } // atoms in bath
     
-      e_kin[bath] *= 0.5;
       last = it->last_atom + 1;
     
-    } // baths    
-  
-  }
+    } // bath indices!!!!
+
+    for(size_t i=0; i < e_kin.size(); ++i){
+      e_kin[i] *= 0.5;
+    }
+    
+  } // if perturbation...
 
   m_timing += util::now() - start;
   

@@ -142,7 +142,9 @@ namespace topology
     std::vector<perturbed_two_body_term_struct> m_distance_constraint;
 
   };
-  
+      
+
 } // topology
+
 
 #endif

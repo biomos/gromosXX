@@ -79,7 +79,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
   }
 
   // calculate forces / energies
-  DEBUG(7, "\tshort range");
+  DEBUG(7, "\tshort range interactions");
 
   //  double shortrange_start = now();
 
@@ -98,11 +98,12 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
   }
   
   // add long-range force
-  DEBUG(7, "\tadd long range forces and energies");
+  DEBUG(7, "\tadd long range forces");
 
   conf.current().force += force;
   
   // and long-range energies
+  DEBUG(7, "\tadd long range energies");
   for(size_t i = 0; i < energies.lj_energy.size(); ++i){
     for(size_t j = 0; j < energies.lj_energy.size(); ++j){
       conf.current().energies.lj_energy[i][j] += 

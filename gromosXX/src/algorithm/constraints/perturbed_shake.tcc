@@ -79,7 +79,11 @@ static int _perturbed_shake(topology::Topology const &topo,
 	
     double r0 = (1.0 - topo.lambda()) * param[it->A_type].r0 + 
       topo.lambda() * param[it->B_type].r0;
-    
+
+    DEBUG(10, "constraint length: " << r0);
+    DEBUG(10, "r0(A) = " << param[it->A_type].r0);
+    DEBUG(10, "r0(B) = " << param[it->B_type].r0);    
+
     double constr_length2 = r0 * r0;
     double diff = constr_length2 - dist2;
 
@@ -150,7 +154,7 @@ static int _perturbed_shake(topology::Topology const &topo,
       if (do_virial == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
-	    conf.current().virial_tensor(a,aa) +=
+	    conf.old().virial_tensor(a,aa) +=
 	      ref_r(a) * ref_r(aa) * lambda / dt2;
 	  }
 	}
@@ -158,7 +162,7 @@ static int _perturbed_shake(topology::Topology const &topo,
       }
       
       // the perturbed energy derivatives
-      conf.current().perturbed_energy_derivatives.
+      conf.old().perturbed_energy_derivatives.
 	constraints_energy[topo.atom_energy_group()[it->i]] -=
 	sqrt(dot(ref_r * lambda / dt2, ref_r * lambda / dt2)) *
 	(param[it->B_type].r0 - param[it->A_type].r0);
@@ -191,12 +195,17 @@ static int _perturbed_solute(topology::Topology const & topo,
 			     std::vector<interaction::bond_type_struct> 
 			     const & param,
 			     double dt, int const max_iterations,
-			     double const tolerance)
+			     double const tolerance,
+			     double & timing)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
 
+  const double start = util::now();
+
   DEBUG(8, "\tshaking perturbed SOLUTE");
+  DEBUG(8, "\tlambda is " << topo.lambda());
+  
   math::Periodicity<b> periodicity(conf.current().box);
   
   // conf.constraint_force() = 0.0;
@@ -249,6 +258,8 @@ static int _perturbed_solute(topology::Topology const & topo,
   }
   */
 
+  timing += util::now() - start;
+
   return 0;
 
 } // solute
@@ -277,17 +288,17 @@ int algorithm::Perturbed_Shake<do_virial>
       case math::vacuum:
 	error += _perturbed_solute<do_virial, math::vacuum>
 	  (topo, conf, m_shake.parameter(), sim.time_step_size(), 
-	   m_shake.max_iterations(), m_shake.tolerance());
+	   m_shake.max_iterations(), m_shake.tolerance(), m_timing);
 	break;
       case math::rectangular:
 	error += _perturbed_solute<do_virial, math::rectangular>
 	  (topo, conf, m_shake.parameter(), sim.time_step_size(), 
-	   m_shake.max_iterations(), m_shake.tolerance());
+	   m_shake.max_iterations(), m_shake.tolerance(), m_timing);
 	break;
       case math::triclinic:
 	error += _perturbed_solute<do_virial, math::triclinic>
 	  (topo, conf, m_shake.parameter(), sim.time_step_size(),
-	   m_shake.max_iterations(), m_shake.tolerance());
+	   m_shake.max_iterations(), m_shake.tolerance(), m_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");
@@ -309,6 +320,18 @@ int algorithm::Perturbed_Shake<do_virial>
        configuration::Configuration & conf,
        simulation::Simulation & sim)
 {
+  std::cout << "Perturbed SHAKE\n"
+	    << "\tsolute\t";
+  if (sim.param().constraint.solute.algorithm == simulation::constr_shake
+      && topo.perturbed_solute().distance_constraints().size()){    
+    std::cout << "ON\n";  
+    std::cout << "\t\ttolerance = "
+	      << sim.param().constraint.solute.shake_tolerance << "\n";
+  }
+  else std::cout << "OFF\n";
+  
+  std::cout << "\tsolvent\t"
+	    << "OFF\n";
 
   if (sim.param().start.shake_pos){
     std::cout << "shaking perturbed initial positions\n";

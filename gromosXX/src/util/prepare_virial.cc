@@ -74,6 +74,8 @@ static void _prepare_virial(topology::Topology const & topo,
 			    simulation::Simulation const & sim)
 {
   if (sim.param().pcouple.virial == math::molecular_virial){
+
+    DEBUG(10, "lambda = " << topo.lambda());
     
     math::Periodicity<b> periodicity(conf.current().box);
 

@@ -154,7 +154,7 @@ static int _perturbed_flexible_shake
       if (do_virial == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
-	    conf.current().virial_tensor(a,aa) +=
+	    conf.old().virial_tensor(a,aa) +=
 	      ref_r(a) * ref_r(aa) * lambda / dt2;
 	  }
 	}
@@ -164,7 +164,7 @@ static int _perturbed_flexible_shake
       // the perturbed energy derivatives
       /*
 
-      conf.current().perturbed_energy_derivatives.
+      conf.old().perturbed_energy_derivatives.
 	constraints_energy[topo.atom_energy_group()[it->i]] -=
 	sqrt(dot(ref_r * lambda / dt2, ref_r * lambda / dt2)) *
 	(param[it->B_type].r0 - param[it->A_type].r0);

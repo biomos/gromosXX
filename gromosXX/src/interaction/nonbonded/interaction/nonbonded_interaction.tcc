@@ -24,7 +24,8 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
     t_interaction_spec::nonbonded_innerloop_type(*dynamic_cast<Nonbonded_Base *>(this)),
     m_pairlist_algorithm(),
     m_pairlist_timing(0),
-    m_shortrange_timing(0)
+    m_shortrange_timing(0),
+    m_longrange_timing(0)
 {
 }
 
@@ -198,7 +199,10 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
 		     size_t const i, size_t const j,
 		     Periodicity_type const & periodicity)
 {
+  const double start = util::now();
   interaction_innerloop(topo, conf, i, j, *this, periodicity);
+  m_longrange_timing += util::now() - start;
+  
 }
 
 /**
@@ -217,7 +221,10 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
 
   assert(pc >=0 && pc <= 26);
 
+  const double start = util::now();
   interaction_innerloop(topo, conf, i, j, *this, periodicity, pc);
+  m_longrange_timing += util::now() - start;
+  
 }
 
 //==================================================
@@ -291,29 +298,43 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
     DEBUG(9, "nonbonded_interaction: no grid based pairlist");
     
 #ifdef OMP
+    int tid;
+    
+    for(int i=0; i<m_omp_threads; ++i){
+      m_storage[i].force = 0.0;
+      m_storage[i].energies.zero();
+      m_storage[i].virial = 0.0;
+    }
+
 #pragma omp parallel \
     shared(topo, conf, periodicity, size_i, pairlist) \
-    private(i, j_it, j_to)
+    private(i, j_it, j_to, tid)
     {
-
-#pragma omp for    
+      tid = omp_get_thread_num();
+#pragma omp for
       for(i=0; i < size_i; ++i){
 	
 	for(j_it = pairlist[i].begin(),
 	      j_to = pairlist[i].end();
 	    j_it != j_to;
 	    ++j_it){
-
+	  
 	  // DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
 	  // printf("nb pair %d - %d\n", i, *j_it);
 	  
 	  // shortrange, therefore store in simulation.system()
-	  interaction_innerloop(topo, conf, i, *j_it, conf.current(), periodicity);
+	  interaction_innerloop(topo, conf, i, *j_it, m_storage[tid], periodicity);
 	}
 	
       }
      
     }
+
+    for(int i=0; i<m_omp_threads; ++i){
+      conf.current().force += m_storage[i].force;
+      // and energies and virial
+    }
+
 #else
     for(i=0; i < size_i; ++i){
     
@@ -436,6 +457,31 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
     (conf.current().perturbed_energy_derivatives.bond_energy.size(),
      conf.current().perturbed_energy_derivatives.kinetic_energy.size());
   
+
+#ifdef OMP
+  // initialize the OpenMP arrays and variables...
+  int omp_threads;
+#pragma omp parallel \
+  shared(omp_threads)
+  {
+    if (omp_get_thread_num() == 0){
+      omp_threads = omp_get_num_threads();
+    }
+  }
+ 
+  m_omp_threads = omp_threads;
+
+ std::cout << "\tinitializing nonbonded for " << m_omp_threads << " OMP threads...\n";
+ m_storage.resize(m_omp_threads);
+ 
+ for(int i = 0; i < m_omp_threads; ++i){
+   m_storage[i].force.resize(conf.current().force.size());
+   m_storage[i].energies.resize(conf.current().energies.bond_energy.size());
+   m_storage[i].perturbed_energy_derivatives.resize(conf.current().energies.bond_energy.size());
+ }
+
+#endif
+
 }
 
 
@@ -451,11 +497,14 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
 	 << std::setw(36) << std::left << name
 	 << std::setw(20) << m_timing << "\n"
 	 << "            "
+	 << std::setw(32) << std::left << "shortrange"
+	 << std::setw(20) << m_shortrange_timing << "\n"
+	 << "            "
 	 << std::setw(32) << std::left << "pairlist/longrange"
 	 << std::setw(20) << m_pairlist_timing << "\n"
-	 << "            "
-	 << std::setw(32) << std::left << "shortrange"
-	 << std::setw(20) << m_shortrange_timing << "\n";
+	 << "                "
+	 << std::setw(28) << std::left << "longrange forces"
+	 << std::setw(20) << m_longrange_timing << "\n";
       
 }
 

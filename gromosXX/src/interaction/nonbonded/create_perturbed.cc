@@ -103,7 +103,7 @@ namespace interaction
 			    simulation::Parameter const & param,
 			    io::In_Topology & it)
   {
-    DEBUG(9, "\tcreate g96 nonbonded terms");
+    DEBUG(9, "\tcreate g96 nonbonded terms (perturbed, no grid)");
     
     if (param.force.nonbonded == 1){
       
@@ -257,7 +257,7 @@ static void _add_nonbonded(interaction::Forcefield & ff,
     ff.push_back(the_nonbonded);
   }
   else{ // no scaling
-    typedef interaction::Nonbonded_Interaction
+    typedef interaction::Perturbed_Nonbonded_Interaction
       < 
       interaction::Interaction_Spec
       < 

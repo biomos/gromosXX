@@ -180,6 +180,16 @@ io::In_Perturbation::read(topology::Topology &topo,
 			 "InTopology", io::message::error);
     	throw std::runtime_error("error in PERTBOND03 block (fail)");
       }
+
+      std::cout << "\n\t\tbonds :                          " 
+		<< topo.solute().bonds().size()
+		<< "\n\t\tperturbed bonds :                "
+		<< topo.perturbed_solute().bonds().size()
+		<< "\n\t\tdistance constraints :           "
+		<< topo.solute().distance_constraints().size()
+		<< "\n\t\tperturbed distance constraints : "
+		<< topo.perturbed_solute().distance_constraints().size()
+		<< "\n\n";
       
       std::cout << "\tEND\n";
 

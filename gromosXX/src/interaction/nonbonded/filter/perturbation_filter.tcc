@@ -20,7 +20,8 @@ interaction::Perturbation_Filter<t_nonbonded_spec>
 		 size_t const i)
 {
   if (t_nonbonded_spec::do_perturbation){
-    if (topo.is_perturbed(i))
+    if (i < topo.num_solute_atoms() &&
+	topo.is_perturbed(i))
       return true;
   }
   return false;

@@ -824,7 +824,7 @@ void io::Out_Configuration
 
   os << "FREEENERDERIVS03\n"
      << "# lambda\n"
-     << std::setw(18) << topo.lambda() << "\n";
+     << std::setw(18) << topo.old_lambda() << "\n";
   
 
   os << "# totals\n";
@@ -1029,7 +1029,7 @@ void io::Out_Configuration
     
     if (sim.param().perturbation.perturbation){
       
-      m_output << "lambda: " << topo.lambda() << "\n";
+      m_output << "lambda: " << topo.old_lambda() << "\n";
       
       print_ENERGY(m_output, conf.old().perturbed_energy_derivatives, 
 		   topo.energy_groups(), "dE/dLAMBDA", "dE_");

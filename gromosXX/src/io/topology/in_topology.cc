@@ -945,6 +945,18 @@ io::In_Topology::read(topology::Topology& topo,
 
   }
 
+  // add the submolecules (should be done before solvate ;-)
+  topo.molecules() = param.submolecules.submolecules;
+
+  // submolecules check
+  if (topo.molecules().back()
+      != topo.num_solute_atoms()){
+    
+    io::messages.add("Error in SUBMOLECULE block: "
+		     "last submolecule has to end with last solute atom",
+		     "In_Topology", io::message::error);
+  }
+
   // add the solvent to the topology
   std::cout << "\n\t\tadding " << param.system.nsm 
 	    << " solvents.";
@@ -955,8 +967,10 @@ io::In_Topology::read(topology::Topology& topo,
 
   // std::cout << "time after SOLVENT: " << util::now() - start << std::endl;
 
-  // set lambda
+  // set lambda (new and old one, yes it looks strange...)
   topo.lambda(param.perturbation.lambda);
+  topo.lambda(param.perturbation.lambda);
+  
   topo.lambda_exp(param.perturbation.lambda_exponent);
 
   //==================================================
@@ -964,11 +978,11 @@ io::In_Topology::read(topology::Topology& topo,
   //==================================================
     
   // submolecules check
-  if (param.submolecules.submolecules[param.submolecules.submolecules.size()-1]
-      != topo.num_solute_atoms()){
+  if (topo.molecules().back()
+      != topo.num_atoms()){
     
-    io::messages.add("Error in SUBMOLECULE block: "
-		     "last submolecule has to end with last solute atom",
+    io::messages.add("Error in SUBMOLECULE / solvation block: "
+		     "last submolecule has to end with last atom",
 		     "In_Topology", io::message::error);
   }
 
@@ -987,9 +1001,11 @@ io::In_Topology::read(topology::Topology& topo,
 
   // std::cout << "time after CHARGEGROUPS check: " << util::now() - start << std::endl;
 
-  // add the submolecules
-  topo.molecules() = param.submolecules.submolecules;
-  std::cout << "\n\tSOLUTE [sub]molecules: " << topo.molecules().size() - param.system.nsm - 1 << "\n";
+  std::cout << "\n\tSOLUTE [sub]molecules: " 
+	    << topo.molecules().size() - param.system.nsm - 1 << "\n";
+
+  DEBUG(10, "molecules().size: " << topo.molecules().size()
+	<< " nsm : " << param.system.nsm);
 
   // energy group check
   if (param.force.energy_group[param.force.energy_group.size()-1]
