@@ -24,7 +24,8 @@ algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_print_pairlist(0),
     m_print_force(0),
     m_calculate_pressure(0),
-    m_qbond_interaction(NULL)
+    m_qbond_interaction(NULL),
+    m_angle_interaction(NULL)
 {
 }
 
@@ -55,25 +56,29 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
 
   //----------------------------------------------------------------------------
   // read input
+  DEBUG(7, "constructing topo, sys & input");
   io::InTopology topo;
   io::InTrajectory sys;
   io::InInput input;
   
+  DEBUG(7, "init_input");
   init_input(args, topo, sys, input);
   
   //----------------------------------------------------------------------------
   // prepare for the output
+  DEBUG(7, "init_output");
   init_output(args, input);
 
   //----------------------------------------------------------------------------
   // prepare for the run
 
   // read in the input
+  DEBUG(7, "read_input");
   read_input(args, topo, sys, input);
 
   // and create the forcefield
   DEBUG(7, "md: create forcefield");
-  G96Forcefield(topo, input);
+  G96Forcefield(topo, input, args);
 
   // prepare temperature calculation
   DEBUG(7, "md: degrees of freedom");
@@ -81,12 +86,14 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   temperature_algorithm().calculate_kinetic_energy(m_simulation);
   std::cout << "initial temperature:\n";
   io::print_MULTIBATH(std::cout, m_simulation.multibath());
+
   // initialize the energy fluctuations
   m_simulation.system().energy_averages().
     resize(m_simulation.system().energies().bond_energy.size(),
 	   m_simulation.system().energies().kinetic_energy.size());
   
   //----------------------------------------------------------------------------
+  
   // see whether everything is all right  
   m_simulation.check_state();
 
@@ -197,7 +204,7 @@ template<typename t_simulation,
 void algorithm::MD<t_simulation, t_temperature, t_pressure, 
 		   t_distance_constraint, t_integration>
 ::G96Forcefield(io::InTopology &topo,
-		io::InInput &input)
+		io::InInput &input, io::Argument &args)
 {
 
   DEBUG(7, "md: create forcefield");
@@ -306,45 +313,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     
   }
 
-  DEBUG(7, "md (create forcefield): decide about SHAKE");
-
   // decide on SHAKE
-  int ntc;
-  double tolerance;
-  input.read_SHAKE(ntc, tolerance);
-
-  // bonds: harmonic
-  interaction::harmonic_bond_interaction<t_simulation>
-    *shake_param_interaction = NULL;
-
-  if (ntc > 1 && bond_param == NULL){
-    shake_param_interaction =
-      new interaction::harmonic_bond_interaction<t_simulation>;
-
-    topo >> *shake_param_interaction;    
-    bond_param = &shake_param_interaction->parameter();
-  }
-  
-  switch(ntc){
-    case 1:
-      break;
-    case 2: 
-      std::cout << "SHAKE bonds containing hydrogen atoms" << std::endl;
-      m_simulation.topology().solute().
-	add_bond_length_constraints(1.0,
-				    m_simulation.topology().mass(),
-				    *bond_param);
-      break;
-    case 3: 
-      std::cout << "SHAKE all bonds" << std::endl;
-      m_simulation.topology().solute().
-	add_bond_length_constraints(*bond_param);
-      break;
-    default:
-      std::cout << "wrong ntc" << std::endl;
-  }
-
-  if (shake_param_interaction) delete shake_param_interaction;
+  m_distance_constraint.init(m_simulation, args, topo, input);
 
   DEBUG(7, "forcefield created");
 
@@ -470,20 +440,23 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 ::open_files(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
-  // std::cerr << "read in files" << std::endl;
-
   // read in the files - those are necessary
+  DEBUG(7, "opening topology " << args["topo"]);
   std::ifstream *topo_file = new std::ifstream(args["topo"].c_str());
+  DEBUG(7, "stream created");
   if (!topo_file->good())
     io::messages.add("unable to open topology file: " + args["topo"], "md.tcc",
 		     io::message::error);
   else 
     io::messages.add("parsing topology file: " + args["topo"], "md.tcc",
 		     io::message::notice);
+  DEBUG(7, "stream good");
   topo.stream(*topo_file);
+  DEBUG(7, "reading topology");
   topo.readStream();
   topo.auto_delete(true);
   
+  DEBUG(7, "opening system");
   std::ifstream *sys_file = new std::ifstream(args["struct"].c_str());
   if (!sys_file->good())
     io::messages.add("unable to open initial structure file: " + args["struct"], 
@@ -495,6 +468,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   sys.stream(*sys_file);
   sys.auto_delete(true);
 
+  DEBUG(7, "opening input");
   std::ifstream *input_file = new std::ifstream(args["input"].c_str());
   if (!input_file->good())
     io::messages.add("unable to open input file: " + args["input"], 
@@ -504,12 +478,12 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     io::messages.add("parsing input file: " + args["input"], "md.tcc",
 		     io::message::notice);
   input.stream(*input_file);
+  DEBUG(7, "reading input");
   input.readStream();
-  input.auto_delete(true);
-  
+  input.auto_delete(true);  
 }
 
-  
+
 template<typename t_simulation,
 	 typename t_temperature,
 	 typename t_pressure,
@@ -520,13 +494,16 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 ::init_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
-  // std::cerr << "init input" << std::endl;
-  
+  DEBUG(7, "parse print argument");
   parse_print_argument(args);
 
+  DEBUG(7, "open_files");
   open_files(args, topo, sys, input);
 
-  topo >> m_simulation.topology();
+  DEBUG(7, "read topology");
+  topo.read_TOPOLOGY(m_simulation.topology());
+  
+  DEBUG(7, "read system");
   sys >> m_simulation.system();
   
 }
@@ -549,13 +526,6 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   int nsm;
   input.read_SYSTEM(nsm);
   if (nsm) m_simulation.solvate(0, nsm);
-
-  // initialize SHAKE / ??
-  DEBUG(7, "md init shake");
-  int ntc;
-  double tolerance;
-  input.read_SHAKE(ntc, tolerance);
-  m_distance_constraint.tolerance(tolerance);
 
   // pressure calculation
   DEBUG(7, "md: init pressure");

@@ -11,7 +11,8 @@
 #include "../../debug.h"
 
 template<typename t_topology>
-inline io::InTopology &io::InTopology::operator>>(t_topology& topo){
+inline void 
+io::InTopology::read_TOPOLOGY(t_topology& topo){
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -412,7 +413,6 @@ inline io::InTopology &io::InTopology::operator>>(t_topology& topo){
     topo.add_solvent(s);
   }
 
-  return *this;
 }
 
 template<typename t_simulation>
@@ -444,12 +444,46 @@ io::InTopology &io::InTopology
 
     // and add...
     hbi.add(k, r);
-
   }
   
-
   return *this;
 }
+
+template<typename t_simulation>
+io::InTopology &io::InTopology
+::operator>>(algorithm::Shake<t_simulation> &shake){
+
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  buffer = m_block["BONDTYPE"];
+
+  io::messages.add("converting bond force constants from quartic"
+		   "to harmonic form for shake",
+		   "InTopology::bondtype", io::message::notice);
+  
+  // 1. BONDTYPE 2. number of types
+  for (it = buffer.begin() + 2; 
+       it != buffer.end() - 1; ++it) {
+
+    double k, r;
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> k >> r;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+      throw std::runtime_error("bad line in BONDTYPE block");
+
+    // we are reading into harmonic bond term, so convert k
+    k *= 2 * r * r;
+    
+    // and add...
+    shake.add_bond_type(k, r);
+  }
+  return *this;
+}
+
 template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::Quartic_bond_interaction<t_simulation> &qbi){

@@ -56,65 +56,6 @@ simulation::Solute::bonds()
   return m_bond;
 }
 
-/**
- * add all bonds to the solute constraint vector and
- * remove them from the bond vector.
- */
-inline void 
-simulation::Solute::add_bond_length_constraints(std::vector<interaction::bond_type_struct> const &param)
-{
-  std::vector<Bond> bonds;
-  std::vector<Bond>::iterator it = m_bond.begin(),
-    to = m_bond.end();
-  for( ; it != to; ++it){
-    add_distance_constraint(it->i, it->j, param[it->type].r0);
-  }
-  m_bond = bonds;
-}
-    
-/**
- * add bonds connecting an atom of type iac to the
- * constraint vector and remove from the bond vector.
- */
-inline void
-simulation::Solute
-::add_bond_length_constraints(int iac,
-			     std::vector<int> const &atom_iac,
-			     std::vector<interaction::bond_type_struct> const &param)
-{
-  std::vector<Bond> bonds;
-  std::vector<Bond>::iterator it = m_bond.begin(),
-    to = m_bond.end();
-  for( ; it != to; ++it){
-    if(atom_iac[it->i] == iac || atom_iac[it->j] == iac)
-      add_distance_constraint(it->i, it->j, param[it->type].r0);
-    else
-      bonds.push_back(Bond(it->i, it->j, it->type));
-  }
-  m_bond = bonds;
-}
-    
-/**
- * add bonds connecting an atom of mass mass to the
- * constraint vector and remove from the bond vector.
- */
-inline void
-simulation::Solute::add_bond_length_constraints(double mass,
-					       math::SArray const &atom_mass,
-					       std::vector<interaction::bond_type_struct> const &param)
-{
-  std::vector<Bond> bonds;
-  std::vector<Bond>::iterator it = m_bond.begin(),
-    to = m_bond.end();
-  for( ; it != to; ++it){
-    if(atom_mass(it->i) == mass || atom_mass(it->j) == mass)
-      add_distance_constraint(it->i, it->j, param[it->type].r0);
-    else
-      bonds.push_back(Bond(it->i, it->j, it->type));
-  }
-  m_bond = bonds;
-}
-
 
 /**
  * angles accessor.

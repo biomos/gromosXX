@@ -390,6 +390,38 @@ inline void io::InInput::read_SHAKE(int &ntc, double &tolerance)
 }
 
 /**
+ * the FLEXCON block.
+ */
+inline void io::InInput::read_FLEXCON(int &lfcon)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  buffer = m_block["FLEXCON"];
+
+  if (!buffer.size()){
+    io::messages.add("no FLEXCON block", "InInput",io::messages.notice);
+    lfcon = 0;
+    return;
+  }
+  
+  it = buffer.begin() + 1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  _lineStream >> lfcon;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in FLEXCON block",
+		       "InInput", io::message::error);
+
+  if (!_lineStream.eof())
+    io::messages.add("end of line not reached in FLEXCON block,"
+		     " but should have been: \n" + *it +  "\n",
+		     "InInput", io::message::warning);
+}
+
+/**
  * read the PRINT and WRITE block.
  */
 inline void io::InInput::read_PRINT(int &print_trajectory, 

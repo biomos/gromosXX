@@ -6,6 +6,12 @@
 #ifndef INCLUDED_INTOPOLOGY_H
 #define INCLUDED_INTOPOLOGY_H
 
+namespace algorithm
+{
+  template<typename t_simulation>
+  class Shake;
+}
+
 namespace io {
 
   /**
@@ -29,15 +35,20 @@ namespace io {
      * Read in a G96 topology into the topology.
      */
     template<typename t_topology>
-    InTopology & operator>>(t_topology &topo);
+    void read_TOPOLOGY(t_topology &topo);
     /**
      * Read in the harmonic bond parameters.
      */
     template<typename t_simulation>
     InTopology & operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi);
     /**
-     * Read in the quartic bond parameters.
+     * Read in the bond parameter to Shake.
      */
+    template<typename t_simulation>
+    InTopology & operator>>(algorithm::Shake<t_simulation> &shake);
+    /**
+     * Read in the quartic bond parameters.
+     */    
     template<typename t_simulation>
       InTopology & operator>>(interaction::Quartic_bond_interaction<t_simulation> &qbi);
     

@@ -12,6 +12,7 @@
 #include "trajectory/InTrajectory.h"
 #include "trajectory/OutTrajectory.h"
 #include "trajectory/OutG96Trajectory.h"
+#include "trajectory/InFlexibleConstraints.h"
 #include "input/InInput.h"
 #include "print_block.h"
 

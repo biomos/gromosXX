@@ -107,7 +107,8 @@ namespace algorithm
      * create a Gromos96 like forcefield.
      */
     virtual void G96Forcefield(io::InTopology &topo,
-			       io::InInput &input);
+			       io::InInput &input,
+			       io::Argument &args);
 
   protected:
 
@@ -131,6 +132,7 @@ namespace algorithm
      * distance constraint algorithm.
      */
     t_distance_constraint m_distance_constraint;
+      
     /**
      * integration algorithm.
      */
@@ -167,14 +169,18 @@ namespace algorithm
      * calculate the pressure?
      * which kind of virial?
      */
-    int m_calculate_pressure;
+    int m_calculate_pressure;      
     /**
      * the interactions:
      * quartic bond interaction.
      */
     interaction::Quartic_bond_interaction<t_simulation> * m_qbond_interaction;
+    /**
+     * angle interaction
+     */
+    interaction::angle_interaction<t_simulation> * m_angle_interaction;
 
-    /*
+    /**
      * parse the print argument
      * for pairlist and force that
      * are not present in the input file...

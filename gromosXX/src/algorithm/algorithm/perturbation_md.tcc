@@ -136,7 +136,8 @@ template<typename t_simulation,
 void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure, 
 				t_distance_constraint, t_integration>
 ::G96Forcefield(io::InTopology &topo,
-		io::InInput &input)
+		io::InInput &input,
+		io::Argument &args)
 {
   DEBUG(7, "md: create forcefield");
   // check which interactions to add
@@ -289,46 +290,9 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     
   }
 
-  DEBUG(7, "md (create forcefield): decide about SHAKE");
-
   // decide on SHAKE
-  int ntc;
-  double tolerance;
-  input.read_SHAKE(ntc, tolerance);
-
-  // bonds: harmonic
-  interaction::harmonic_bond_interaction<t_simulation>
-    *shake_param_interaction = NULL;
-
-  if (ntc > 1 && bond_param == NULL){
-    shake_param_interaction =
-      new interaction::harmonic_bond_interaction<t_simulation>;
-
-    topo >> *shake_param_interaction;    
-    bond_param = &shake_param_interaction->parameter();
-  }
+  m_distance_constraint.init(m_simulation, args, topo, input);
   
-  switch(ntc){
-    case 1:
-      break;
-    case 2: 
-      std::cout << "SHAKE bonds containing hydrogen atoms" << std::endl;
-      m_simulation.topology().solute().
-	add_bond_length_constraints(1.0,
-				    m_simulation.topology().mass(),
-				    *bond_param);
-      break;
-    case 3: 
-      std::cout << "SHAKE all bonds" << std::endl;
-      m_simulation.topology().solute().
-	add_bond_length_constraints(*bond_param);
-      break;
-    default:
-      std::cout << "wrong ntc" << std::endl;
-  }
-
-  if (shake_param_interaction) delete shake_param_interaction;
-
   DEBUG(7, "forcefield created");
 }
 

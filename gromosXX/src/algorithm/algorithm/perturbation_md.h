@@ -73,7 +73,8 @@ namespace algorithm
 			      io::InTrajectory &sys, io::InInput &input);
     
       virtual void G96Forcefield(io::InTopology &topo,
-				 io::InInput &input);
+				 io::InInput &input,
+				 io::Argument &args);
     
       /**
        * initialize the perturbation parameters.

@@ -44,8 +44,6 @@ int algorithm::Shake<t_simulation>
   // check whether we shake
   if (!topo.solute().distance_constraints().size()) return 0;
   
-  // give the constraint force the correct size...
-  sys.constraint_force().resize(topo.solute().distance_constraints().size());
   sys.constraint_force() = 0.0;
 
   std::vector<bool> skip_now;
@@ -72,6 +70,12 @@ int algorithm::Shake<t_simulation>
 
   } // convergence?
 
+  // print out the constraint_force
+  for (unsigned int i=0; i < topo.solute().distance_constraints().size();++i){
+    sys.constraint_force()(i) *= 1 /(dt * dt);
+    DEBUG(5, "constraint_force " << sqrt(dot(sys.constraint_force()(i),sys.constraint_force()(i)) ));
+  }
+  
   // shaken velocity
   sys.vel() = (sys.pos() - sys.old_pos()) / dt;
 
@@ -110,7 +114,7 @@ int algorithm::Shake<t_simulation>
       bool convergence = false;
       while(!convergence){
 	convergence = _shake(topo, sys, first, skip_now, skip_next,
-			     topo.solvent(i).distance_constraints());
+			     topo.solvent(i).distance_constraints(), false);
 	
 	// std::cout << num_iterations+1 << std::endl;
 	if(++num_iterations > max_iterations){
@@ -136,6 +140,7 @@ int algorithm::Shake<t_simulation>
   
 } // shake solvent
 
+
 /**
  * do one iteration
  */      
@@ -151,13 +156,16 @@ bool algorithm::Shake<t_simulation>
 {
   bool convergence = true;
 
+  // index for constraint_force...
+  int k = 0;
+  
   // and constraints
   for(std::vector<simulation::compound::distance_constraint_struct>
 	::const_iterator
 	it = constr.begin(),
 	to = constr.end();
       it != to;
-      ++it){
+      ++it, ++k ){
 	
     // check whether we can skip this constraint
     if (skip_now[it->i] && skip_now[it->j]) continue;
@@ -186,7 +194,6 @@ bool algorithm::Shake<t_simulation>
       // the reference position
       const math::Vec &ref_i = sys.old_pos()(first+it->i);
       const math::Vec &ref_j = sys.old_pos()(first+it->j);
-
       
       math::Vec ref_r;
       sys.periodicity().nearest_image(ref_i, ref_j, ref_r);
@@ -208,7 +215,15 @@ bool algorithm::Shake<t_simulation>
       // lagrange multiplier
       double lambda = diff / (sp * 2 *
 			      (1.0 / topo.mass()(first+it->i) +
-			       1.0 / topo.mass()(first+it->j) ));
+			       1.0 / topo.mass()(first+it->j) ));      
+  
+      if (do_constraint_force == true){
+	
+	//if it is a solute sum up constraint forces
+	assert(sys.constraint_force().size() > k);
+	sys.constraint_force()(k) += (lambda * ref_r);
+      }
+
       // update positions
       ref_r *= lambda;
       pos_i += ref_r / topo.mass()(first+it->i);
@@ -229,4 +244,134 @@ bool algorithm::Shake<t_simulation>
   return convergence;
 
 }
+
+/**
+ * add bond type.
+ */
+template<typename t_simulation>
+inline void algorithm::Shake<t_simulation>
+::add_bond_type(interaction::bond_type_struct s)
+{
+  m_bond_parameter.push_back(s);
+}
+
+/**
+ * add bond type.
+ */
+template<typename t_simulation>
+inline void algorithm::Shake<t_simulation>
+::add_bond_type(double K, double r0)
+{
+  interaction::bond_type_struct s;
+  s.K = K;
+  s.r0 = r0;
+  add_bond_type(s);
+}
+
+/**
+ * add all bonds to the solute constraint vector and
+ * remove them from the bond vector.
+ */
+template<typename t_simulation>
+inline void 
+algorithm::Shake<t_simulation>
+::add_bond_length_constraints(simulation::Solute &solute)
+{
+  std::vector<simulation::Bond> bonds;
+  std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
+    to = solute.bonds().end();
+  for( ; it != to; ++it){
+    solute.add_distance_constraint(it->i, it->j, m_bond_parameter[it->type].r0);
+  }
+  solute.bonds() = bonds;
+}
+
+/**
+ * add bonds connecting an atom of type iac to the
+ * constraint vector and remove from the bond vector.
+ */
+template<typename t_simulation>
+inline void
+algorithm::Shake<t_simulation>
+::add_bond_length_constraints(int iac,
+			      std::vector<int> const &atom_iac,
+			      simulation::Solute &solute)
+{
+  std::vector<simulation::Bond> bonds;
+  std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
+    to = solute.bonds().end();
+
+  for( ; it != to; ++it){
+    if(atom_iac[it->i] == iac || atom_iac[it->j] == iac)
+      solute.add_distance_constraint(it->i, it->j, m_bond_parameter[it->type].r0);
+    else
+      bonds.push_back(simulation::Bond(it->i, it->j, it->type));
+  }
+  solute.bonds() = bonds;
+}
+    
+/**
+ * add bonds connecting an atom of mass mass to the
+ * constraint vector and remove from the bond vector.
+ */
+template<typename t_simulation>
+inline void
+algorithm::Shake<t_simulation>
+::add_bond_length_constraints(double mass,
+			      math::SArray const &atom_mass,
+			      simulation::Solute &solute)
+{
+  std::vector<simulation::Bond> bonds;
+  std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
+    to = solute.bonds().end();
+
+  for( ; it != to; ++it){
+    if(atom_mass(it->i) == mass || atom_mass(it->j) == mass)
+      solute.add_distance_constraint(it->i, it->j, m_bond_parameter[it->type].r0);
+    else
+      bonds.push_back(simulation::Bond(it->i, it->j, it->type));
+  }
+  solute.bonds() = bonds;
+}
+
+template<typename t_simulation>
+inline void
+algorithm::Shake<t_simulation>
+::init(t_simulation &sim, io::Argument &args, io::InTopology &topo,
+       io::InInput &input)
+{
+  // initialize SHAKE / ??
+  DEBUG(7, "md init shake");
+  int ntc;
+  double tolerance;
+  input.read_SHAKE(ntc, tolerance);
+  this->tolerance(tolerance);
+
+  switch(ntc){
+    case 1:
+      break;
+    case 2: 
+      std::cout << "SHAKE bonds containing hydrogen atoms" << std::endl;
+      // read in the parameter
+      topo >> *this;
+      add_bond_length_constraints(1.0,
+				  sim.topology().mass(),
+				  sim.topology().solute());
+      break;
+    case 3: 
+      std::cout << "SHAKE all bonds" << std::endl;
+      // read in parameter
+      topo >> *this;
+      add_bond_length_constraints(sim.topology().solute());
+      break;
+    default:
+      std::cout << "wrong ntc parameter" << std::endl;
+  }
+
+  // give the constraint force the correct size...
+  sim.system().constraint_force().resize(sim.topology().solute().
+				distance_constraints().size());
+  
+}
+
 

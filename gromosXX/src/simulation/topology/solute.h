@@ -50,25 +50,17 @@ namespace simulation
      */
     std::vector<Bond> & bonds();
 
+
     /**
-     * add all bonds to the solute constraint vector and
+     * add all bonds to the flexible constraints vector and
      * remove them from the bond vector.
      */
-    void add_bond_length_constraints(std::vector<interaction::bond_type_struct> const &param);
-    
-    /**
-     * add bonds connecting an atom of type iac to the
-     * constraint vector and remove from the bond vector.
-     */
-    void add_bond_length_constraints(int iac, std::vector<int> const &atom_iac,
-				    std::vector<interaction::bond_type_struct> const &param);
-    
-    /**
-     * add bonds connecting an atom of mass mass to the
-     * constraint vector and remove from the bond vector.
-     */
-    void add_bond_length_constraints(double mass, math::SArray const &atom_mass,
-				    std::vector<interaction::bond_type_struct> const & param);
+    void add_flexible_bond_length_constraints(
+					      std::vector<interaction
+					      ::bond_type_struct>
+					      const &param,
+					      std::vector<double> &K,
+					      std::vector<double> &b0);
 
     /**
      * angle accessor.

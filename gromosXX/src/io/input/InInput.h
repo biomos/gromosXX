@@ -45,6 +45,12 @@ namespace io {
      * read the SHAKE block.
      */
     void read_SHAKE(int &ntc, double &tolerance);
+
+    /**
+     * read the FLEXCON block.
+     */
+    void read_FLEXCON(int &lfcon);
+
     /**
      * read FORCE block.
      */

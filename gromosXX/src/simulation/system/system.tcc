@@ -170,6 +170,26 @@ inline math::VArray & simulation::System<b>::constraint_force()
 }
 
 /**
+ * flex constraint distance(const) accessor
+ */
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::flex_constraint_distance()const
+{
+  return m_flex_constraint_distance;
+}
+
+/**
+ * flex constraint distance accessor
+ */
+template<math::boundary_enum b>
+inline math::VArray  & simulation::System<b>::flex_constraint_distance()
+{
+  return m_flex_constraint_distance;
+}
+
+
+
+/**
  * exchange positions
  */
 template<math::boundary_enum b>
