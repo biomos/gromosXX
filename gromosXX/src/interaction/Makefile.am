@@ -6,8 +6,6 @@ include_HEADERS = 		interaction.h \
 				interaction/interaction.h \
 				interaction/nonbonded_interaction.h \
 				interaction/nonbonded_interaction.tcc \
-				interaction/nonbonded_virial_interaction.h \
-				interaction/nonbonded_virial_interaction.tcc \
 				interaction/harmonic_bond_interaction.h \
 				interaction/harmonic_bond_interaction.tcc \
 				interaction/quartic_bond_interaction.h \
@@ -20,6 +18,8 @@ include_HEADERS = 		interaction.h \
 				interaction/dihedral_interaction.tcc \
 				interaction/perturbed_quartic_bond_interaction.h \
 				interaction/perturbed_quartic_bond_interaction.tcc \
+				interaction/perturbed_angle_interaction.h \
+				interaction/perturbed_angle_interaction.tcc \
 				interaction/nonbonded_base.h \
 				interaction/nonbonded_base.tcc \
 				interaction/nonbonded_inner_loop.h \
