@@ -82,6 +82,8 @@ namespace topology
     std::vector<four_body_term_struct> const & dihedrals()const{
       return m_dihedral;}
 
+  private:
+
     /**
      * atom information.
      */
