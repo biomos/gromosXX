@@ -11,22 +11,21 @@ namespace interaction
 {
   /**
    * @class Perturbed_Nonbonded_Interaction
-   * calculates the nonbonded interactions including perturbed interactions.
+   * calculates the perturbed nonbonded interactions.
    */
-  template<typename t_simulation, typename t_pairlist, 
-	   typename t_innerloop, typename t_nonbonded_interaction>
+  template<typename t_simulation, typename t_nonbonded_spec>
   class Perturbed_Nonbonded_Interaction : 
-    public Interaction<t_simulation>
+    public Nonbonded_Interaction<t_simulation, t_nonbonded_spec>,
+    public t_nonbonded_spec::perturbation_filter_type,
+    public t_nonbonded_spec::perturbed_nonbonded_innerloop_type
   {
   public:    
     /**
      * Constructor.
      * @param sim where to store forces and energies
      * (and virial contribution).
-     * @param nonbonded_interaction which interaction functions to use.
      */
-    Perturbed_Nonbonded_Interaction(t_simulation &sim, 
-				    t_nonbonded_interaction & nonbonded_interaction);
+    Perturbed_Nonbonded_Interaction(t_simulation &sim);
     
     /**
      * Destructor.
@@ -38,21 +37,31 @@ namespace interaction
      */
     virtual void calculate_interactions(t_simulation &sim);
 
+    /**
+     * add a shortrange interaction.
+     */
+    void add_shortrange_pair(t_simulation const &sim,
+				     size_t const i, size_t const j);
+    /**
+     * add a longrange interaction.
+     */
+    void add_longrange_pair(t_simulation & sim,
+				    size_t const i, size_t const j);
+
   protected:
     /**
-     * calculate the interactions.
+     * calculate the perturbed interactions.
      */
     virtual void do_perturbed_interactions(t_simulation &sim,
-					   typename t_pairlist::iterator it, 
-					   typename t_pairlist::iterator to);
-
+					   Pairlist::iterator it, 
+					   Pairlist::iterator to);
     /**
-     * calculate the 1,4-interactions.
+     * calculate the perturbed 1,4-interactions.
      */
     virtual void do_perturbed_14_interactions(t_simulation &sim);
 
     /**
-     * calculate the RF contributions for excluded atoms.
+     * calculate the perturbed RF contributions for excluded atoms.
      */
     virtual void do_perturbed_RF_excluded_interactions(t_simulation &sim);
 
@@ -60,12 +69,6 @@ namespace interaction
      * calculate the perturbed pair contributions.
      */
     void do_perturbed_pair_interactions(t_simulation &sim);
-    
-    /**
-     * the nonbonded interaction
-     */
-    t_nonbonded_interaction & m_nonbonded_interaction;
-    
   };
   
 } // interaction

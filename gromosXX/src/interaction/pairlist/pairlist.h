@@ -1,21 +1,19 @@
 /**
- * @file basic_pairlist.h
- * the basic pairlist class.
+ * @file pairlist.h
+ * the pairlist class.
  */
 
-#ifndef INCLUDED_BASIC_PAIRLIST_H
-#define INCLUDED_BASIC_PAIRLIST_H
+#ifndef INCLUDED_PAIRLIST_H
+#define INCLUDED_PAIRLIST_H
 
 namespace interaction
 {
   /**
-   * @class basic_pairlist
-   * holds a pairlist and provides an iterator.
+   * @class Pairlist
+   * holds a Pairlist and provides an iterator.
    */
-  template<typename t_simulation, typename t_pairlist_algorithm>
-  class Basic_Pairlist :
-    public basic_pairlist_type,
-    public t_pairlist_algorithm
+  class Pairlist :
+    public std::vector< std::vector<size_t> >
   {
   public:
     /**
@@ -28,7 +26,7 @@ namespace interaction
       /**
        * Constructor.
        */
-      iterator(basic_pairlist_type &pl);      
+      iterator(std::vector< std::vector<size_t> > &pl);      
       /**
        * next entry.
        */
@@ -72,48 +70,25 @@ namespace interaction
       /**
        * reference to the pairlist.
        */
-      basic_pairlist_type &m_pairlist;
+      std::vector<std::vector<size_t> > &m_pairlist;
 
     };
     
     /**
      * Constructor.
      */
-    Basic_Pairlist(interaction::Nonbonded_Base &base);
+    Pairlist();
 
     /**
      * @returns an iterator over the pairlist.
      */
-    Basic_Pairlist::iterator begin();
+    Pairlist::iterator begin();
     /**
      * @returns an iterator to the end of the pairlist.
      */
-    Basic_Pairlist::iterator end();
-    
-    /**
-     * @returns an iterator over the perturbed pairlist.
-     */
-    Basic_Pairlist::iterator perturbed_begin();
-    /**
-     * @returns an iterator to the end of the perturbed pairlist.
-     */
-    Basic_Pairlist::iterator perturbed_end();
-    
-    /**
-     * the perturbed pairlist.
-     */
-    basic_pairlist_type & perturbed();
-    /**
-     * const accessor to the perturbed pairlist.
-     */
-    basic_pairlist_type const & perturbed()const;
+    Pairlist::iterator end();
     
   protected:
-    /**
-     * the perturbed pairlist.
-     * the nonperturbed one is implemented through inheritance...
-     */
-    basic_pairlist_type m_perturbed_pairlist;
     
   };
 
@@ -122,11 +97,10 @@ namespace interaction
    */
   template<typename t_simulation, typename t_pairlist_algorithm>
   std::ostream & 
-  operator<<(std::ostream &os, Basic_Pairlist<t_simulation, 
-	     t_pairlist_algorithm> &pl);
+  operator<<(std::ostream &os, Pairlist &pl);
   
 } // interaction
 
-#include "basic_pairlist.tcc"
+#include "pairlist.tcc"
 
 #endif

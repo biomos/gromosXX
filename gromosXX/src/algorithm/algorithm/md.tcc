@@ -775,20 +775,23 @@ void algorithm::MD<t_spec>
       if (m_calculate_pressure){
 	std::cerr << "printing virial pairlist" << std::endl;
 
+	/*
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<
 	  typename t_spec::nonbonded_virial_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
+	*/
       }
       else {      
 	std::cerr << "printing pairlist" << std::endl;
 	
+	/*
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<typename t_spec::nonbonded_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
-	
+	*/
       }
       
     }

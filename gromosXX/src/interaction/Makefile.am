@@ -1,12 +1,14 @@
 INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		interaction.h \
-                                interaction/storage.h \
+                                interaction/nonbonded/storage.h \
 				forcefield/forcefield.h \
 				forcefield/forcefield.tcc \
 				interaction/interaction.h \
-				interaction/nonbonded_interaction.h \
-				interaction/nonbonded_interaction.tcc \
+				interaction/nonbonded/nonbonded_interaction.h \
+				interaction/nonbonded/nonbonded_interaction.tcc \
+				interaction/nonbonded/perturbed_nonbonded_interaction.h \
+				interaction/nonbonded/perturbed_nonbonded_interaction.tcc \
 				interaction/harmonic_bond_interaction.h \
 				interaction/harmonic_bond_interaction.tcc \
 				interaction/quartic_bond_interaction.h \
@@ -23,32 +25,21 @@ include_HEADERS = 		interaction.h \
 				interaction/perturbed_harmonic_bond_interaction.tcc \
 				interaction/perturbed_angle_interaction.h \
 				interaction/perturbed_angle_interaction.tcc \
-				interaction/perturbed_nonbonded_interaction.h \
-				interaction/perturbed_nonbonded_interaction.tcc \
-				interaction/nonbonded_base.h \
-				interaction/nonbonded_base.tcc \
-				interaction/nonbonded_inner_loop.h \
-				interaction/nonbonded_inner_loop.tcc \
-				interaction/nonbonded_inner_loop_virial.h \
-				interaction/nonbonded_inner_loop_virial.tcc \
-				interaction/perturbed_nonbonded_inner_loop.h \
-				interaction/perturbed_nonbonded_inner_loop.tcc \
-				interaction/perturbed_nonbonded_inner_loop_virial.h \
-				interaction/perturbed_nonbonded_inner_loop_virial.tcc \
-				pairlist/basic_pairlist.h \
-				pairlist/basic_pairlist.tcc \
-				pairlist/basic_pairlist_algorithm.h \
-				pairlist/basic_pairlist_algorithm.tcc \
-				pairlist/basic_filter.h \
-				pairlist/basic_filter.tcc \
-				pairlist/perturbation_filter.h \
-				pairlist/perturbation_filter.tcc \
-				pairlist/twinrange_filter.h \
-				pairlist/twinrange_filter.tcc \
-				pairlist/twinrange_chargegroup_filter.h \
-				pairlist/twinrange_chargegroup_filter.tcc \
-				pairlist/chargegroup_range_pairlist_algorithm.h \
-				pairlist/chargegroup_range_pairlist_algorithm.tcc
+				interaction/nonbonded/nonbonded_base.h \
+				interaction/nonbonded/nonbonded_base.tcc \
+				pairlist/pairlist.h \
+				pairlist/pairlist.tcc \
+				pairlist/pairlist_algorithm.h \
+				pairlist/standard_pairlist_algorithm.h \
+				pairlist/standard_pairlist_algorithm.tcc \
+				pairlist/filter/filter.h \
+				pairlist/filter/exclusion_filter.h \
+				pairlist/filter/exclusion_filter.tcc \
+				pairlist/filter/range_filter.h \
+				pairlist/filter/range_filter.tcc \
+				pairlist/filter/perturbation_filter.h \
+				pairlist/filter/perturbation_filter.tcc
+
 
 lib_LTLIBRARIES	= 		libinteraction.la
 

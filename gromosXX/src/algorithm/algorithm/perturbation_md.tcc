@@ -293,12 +293,6 @@ void algorithm::Perturbation_MD<t_spec>
 
       m_forcefield.push_back(the_nonbonded_virial_interaction);
  
-      typename t_spec::perturbed_nonbonded_virial_interaction_type *
-	the_perturbed_nonbonded_interaction = 
-	new typename t_spec::perturbed_nonbonded_virial_interaction_type 
-	(m_simulation, *the_nonbonded_virial_interaction);
-      
-      m_forcefield.push_back(the_perturbed_nonbonded_interaction);
     }
     else{
       // nonbonded
@@ -310,13 +304,6 @@ void algorithm::Perturbation_MD<t_spec>
       topo >> *the_nonbonded_interaction;
       
       m_forcefield.push_back(the_nonbonded_interaction);
-
-      typename t_spec::perturbed_nonbonded_interaction_type *
-	the_perturbed_nonbonded_interaction = 
-	new typename t_spec::perturbed_nonbonded_interaction_type
-	(m_simulation, *the_nonbonded_interaction);
-      
-      m_forcefield.push_back(the_perturbed_nonbonded_interaction);
 
     }
     
@@ -349,6 +336,10 @@ void algorithm::Perturbation_MD<t_spec>
 			<< dynamic_cast<
 	  typename t_spec::nonbonded_virial_interaction_type *>
 	  (*it)->pairlist()
+			<< "perturbed shortrange pairlist\n"
+			<< dynamic_cast<
+	  typename t_spec::nonbonded_virial_interaction_type *>
+	  (*it)->perturbed_pairlist()	  
 			<< std::endl;
       }
       else {      
@@ -357,8 +348,11 @@ void algorithm::Perturbation_MD<t_spec>
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<typename t_spec::nonbonded_interaction_type *>
 	  (*it)->pairlist()
+			<< "perturbed shortrange pairlist\n"
+			<< dynamic_cast<
+	  typename t_spec::nonbonded_interaction_type *>
+	  (*it)->perturbed_pairlist()	  
 			<< std::endl;
-	
       }
       
     }

@@ -9,7 +9,7 @@
 #define MODULE interaction
 #define SUBMODULE interaction
 
-#include "../../debug.h"
+#include "../../../debug.h"
 
 /**
  * Constructor.

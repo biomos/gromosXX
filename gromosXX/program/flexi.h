@@ -42,38 +42,25 @@ namespace program
     typedef interaction::Dihedral_interaction<simulation_type>
     dihedral_interaction_type;
     
-    // the nonbonded
-    typedef interaction::Basic_Pairlist<
-      simulation_type, interaction::Chargegroup_Range_Pairlist_Algorithm<
-      simulation_type, interaction::Twinrange_Chargegroup_Filter<
-      simulation_type, interaction::Nonbonded_Base, 
-      interaction::Nonbonded_Inner_Loop<
-      simulation_type, interaction::Storage> 
-    > > > 
-    pairlist_type;
-      
-    typedef interaction::Nonbonded_Inner_Loop<
-      simulation_type, simulation_type::system_type>
-    innerloop_type;
-
-    typedef interaction::Basic_Pairlist<
-      simulation_type, interaction::Chargegroup_Range_Pairlist_Algorithm<
-      simulation_type, interaction::Twinrange_Chargegroup_Filter<
-      simulation_type, interaction::Nonbonded_Base, 
-      interaction::Nonbonded_Inner_Loop_Virial<
-      simulation_type, interaction::Storage
-      > > > > 
-    pairlist_virial_type;
-      
-    typedef interaction::Nonbonded_Inner_Loop_Virial<
-      simulation_type, simulation_type::system_type> innerloop_virial_type;
-    
+    // the nonbonded    
+    //  - molecular virial
+    //  - perturbation no
+    //  - atomic cutoff no
     typedef interaction::Nonbonded_Interaction<
-      simulation_type, pairlist_virial_type, innerloop_virial_type>
+      simulation_type, 
+      interaction::Nonbonded_Spec<simulation_type, 
+				  interaction::molecular_virial,
+				  false, false> >
     nonbonded_virial_interaction_type;
 
+    //  - virial no
+    //  - perturbation no
+    //  - atomic cutoff no
     typedef interaction::Nonbonded_Interaction<
-      simulation_type, pairlist_type, innerloop_type>
+      simulation_type, 
+      interaction::Nonbonded_Spec<simulation_type, 
+				  interaction::no_virial,
+				  false, false> >
     nonbonded_interaction_type;
     
   };
@@ -112,50 +99,6 @@ namespace program
     typedef interaction::Dihedral_interaction<simulation_type>
     dihedral_interaction_type;
     
-    // the nonbonded    
-    // both nonbonded use the same (perturbed) pairlist !!!
-    // and inner loop!!!
-    typedef interaction::Perturbed_Nonbonded_Inner_Loop<
-      simulation_type, simulation_type::system_type>
-    innerloop_type;
-
-    typedef interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
-      simulation_type, simulation_type::system_type>
-    innerloop_virial_type;     
-
-    typedef interaction::Basic_Pairlist<
-      simulation_type, interaction::Chargegroup_Range_Pairlist_Algorithm<
-      simulation_type, interaction::Twinrange_Chargegroup_Filter<
-      simulation_type, interaction::Nonbonded_Base, 
-      interaction::Perturbed_Nonbonded_Inner_Loop<
-      simulation_type, interaction::Storage>, 
-      interaction::Perturbation_Filter<
-      simulation_type,interaction::Nonbonded_Base, true
-      > > > >
-    pairlist_type;
-
-    typedef interaction::Basic_Pairlist<
-      simulation_type, interaction::Chargegroup_Range_Pairlist_Algorithm<
-      simulation_type, interaction::Twinrange_Chargegroup_Filter<
-      simulation_type, interaction::Nonbonded_Base,
-      interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
-      simulation_type, interaction::Storage>,
-      interaction::Perturbation_Filter<
-      simulation_type, interaction::Nonbonded_Base, true
-      > > > > 
-    pairlist_virial_type;
-
-    typedef interaction::Nonbonded_Interaction<simulation_type,
-					       pairlist_virial_type,
-					       innerloop_virial_type>
-    nonbonded_virial_interaction_type;
-
-    typedef interaction::Nonbonded_Interaction<simulation_type,
-					       pairlist_type,
-					       innerloop_type>
-    nonbonded_interaction_type;
-       
-
     // and the perturbed interactions
     typedef interaction::Perturbed_Quartic_Bond_Interaction<simulation_type>
     perturbed_quartic_bond_interaction_type;
@@ -168,18 +111,20 @@ namespace program
     typedef interaction::Perturbed_Dihedral_Interaction<simulation_type>
     perturbed_dihedral_interaction_type;
     
-    // the perturbed nonbonded
+    // the nonbonded    
+    //  - molecular virial
+    //  - perturbation yes
+    //  - atomic cutoff no
     typedef interaction::Perturbed_Nonbonded_Interaction<
-      simulation_type, pairlist_virial_type, innerloop_virial_type,
-      nonbonded_virial_interaction_type
-      >
-    perturbed_nonbonded_virial_interaction_type;
+      simulation_type, interaction::Nonbonded_Spec<simulation_type, interaction::molecular_virial,
+						   true, false> >
+    nonbonded_virial_interaction_type;
 
     typedef interaction::Perturbed_Nonbonded_Interaction<
-      simulation_type, pairlist_type, innerloop_type,
-      nonbonded_interaction_type
-      >
-    perturbed_nonbonded_interaction_type; 
+      simulation_type, interaction::Nonbonded_Spec<simulation_type, interaction::no_virial,
+						   true, false> >
+    nonbonded_interaction_type;
+
   };
 
 } // program

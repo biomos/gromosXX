@@ -1,6 +1,6 @@
 /**
  * @file perturbation_filter.h
- * filter for perturbation (and construct a pairlist)
+ * filter for perturbed atoms.
  */
 
 #ifndef INCLUDED_PERTURBATION_FILTER_H
@@ -10,30 +10,21 @@ namespace interaction
 {
   /**
    * @class Perturbation_Filter
-   * provide filtering for perturbation
+   * provide filtering for perturbed atoms.
    */
-  template<typename t_simulation, typename t_base, 
-	   bool do_perturbation = false>
+  template<typename t_simulation, typename t_nonbonded_spec>
   class Perturbation_Filter
-    : public Basic_Filter<t_simulation, t_base>
+    : public Filter<t_simulation, t_nonbonded_spec>
   {
   public:
     /**
      * Constructor.
      */
-    Perturbation_Filter(t_base &base);
-    
+    Perturbation_Filter();
     /**
-     * prepare the filter.
-     */
-    void prepare(t_simulation &sim);
-    /**
-     * filter for perturbed atoms.
+     * solute exclusion.
      */
     bool perturbed_atom(t_simulation const &sim, size_t const i);
-    
-  protected:
-    
   };
   
 } // interaction
@@ -41,5 +32,6 @@ namespace interaction
 #include "perturbation_filter.tcc"
 
 #endif
+
 
   

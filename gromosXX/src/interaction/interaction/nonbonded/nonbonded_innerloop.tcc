@@ -1,6 +1,6 @@
 /**
- * @File nonbonded_inner_loop.tcc
- * template methods of Nonbonded_Inner_Loop
+ * @file nonbonded_innerloop.tcc
+ * template methods of Nonbonded_Innerloop
  */
 
 #undef MODULE
@@ -8,19 +8,21 @@
 #define MODULE interaction
 #define SUBMODULE interaction
 
-#include "../../debug.h"
+#include "../../../debug.h"
 
-template<typename t_simulation, typename t_storage>
-interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::Nonbonded_Inner_Loop(Nonbonded_Base &base, t_storage &storage)
-  : m_base(base),
-    m_storage(storage)
+template<typename t_simulation, typename t_nonbonded_spec>
+interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+::Nonbonded_Innerloop(Nonbonded_Base &base)
+  : m_base(base)
 {
 }
 
-template<typename t_simulation, typename t_storage>
-void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::interaction_inner_loop(t_simulation const &sim, size_t const i, size_t const j)
+template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_storage>
+inline void 
+interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+::interaction_innerloop(t_simulation const &sim, size_t const i, size_t const j,
+			t_storage &storage)
 {
     DEBUG(7, "\tpair\t" << i << "\t" << j);
 
@@ -43,21 +45,30 @@ void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
 
     DEBUG(7, "\tcalculated interaction f: " << f << " e_lj: " << e_lj << " e_crf: " << e_crf);
     
-    m_storage.force()(i) += f;
-    m_storage.force()(j) -= f;
-
+    storage.force()(i) += f;
+    storage.force()(j) -= f;
     DEBUG(7, "\tforces stored");
+
+    if (t_nonbonded_spec::do_virial == molecular_virial){
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  storage.virial()(a, b) += 
+	    (r(a) - sim.system().rel_mol_com_pos()(i)(a) + 
+	     sim.system().rel_mol_com_pos()(j)(a)) * f(b);
+
+      DEBUG(7, "\tvirial done");
+    }
     
     // energy
-    assert(m_storage.energies().lj_energy.size() > 
+    assert(storage.energies().lj_energy.size() > 
 	   sim.topology().atom_energy_group(i));
-    assert(m_storage.energies().lj_energy.size() >
+    assert(storage.energies().lj_energy.size() >
 	   sim.topology().atom_energy_group(j));
 
-    m_storage.energies().lj_energy[sim.topology().atom_energy_group(i)]
+    storage.energies().lj_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += e_lj;
 
-    m_storage.energies().crf_energy[sim.topology().atom_energy_group(i)]
+    storage.energies().crf_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += e_crf;
 
     DEBUG(7, "\ti and j " << sim.topology().atom_energy_group(i)
@@ -65,10 +76,10 @@ void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
 }
 
 
-template<typename t_simulation, typename t_storage>
-void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::one_four_interaction_inner_loop(t_simulation &sim,
-				  size_t const i, size_t const j)
+template<typename t_simulation, typename t_nonbonded_spec>
+void interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+::one_four_interaction_innerloop(t_simulation &sim,
+				 size_t const i, size_t const j)
 {
     DEBUG(10, "\t1,4-pair\t" << i << "\t" << j);
 
@@ -89,14 +100,14 @@ void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
 			    sim.topology().charge()(j),
 			    f, e_lj, e_crf);
 
-    m_storage.force()(i) += f;
-    m_storage.force()(j) -= f;
+    sim.system().force()(i) += f;
+    sim.system().force()(j) -= f;
 
     // energy
-    m_storage.energies().lj_energy[sim.topology().atom_energy_group(i)]
+    sim.system().energies().lj_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += e_lj;
 
-    m_storage.energies().crf_energy[sim.topology().atom_energy_group(i)]
+    sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += e_crf;
 
     DEBUG(11, "\ti and j " << sim.topology().atom_energy_group(i)
@@ -104,28 +115,11 @@ void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
 
 }
 
-
-template<typename t_simulation, typename t_storage>
-void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::perturbed_interaction_inner_loop(t_simulation &sim, 
-				   size_t const i, size_t const j)
-{
-  assert(false);
-} 
-
-template<typename t_simulation, typename t_storage>
-void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::perturbed_one_four_interaction_inner_loop(t_simulation &sim,
-				  size_t const i, size_t const j)
-{
-  assert(false);
-}
-
-template<typename t_simulation, typename t_storage>
+template<typename t_simulation, typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::RF_excluded_interaction_inner_loop(t_simulation &sim,
-				     size_t const i)
+interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+::RF_excluded_interaction_innerloop(t_simulation &sim,
+				    size_t const i)
 {
   math::Vec r, f;
   double e_crf;
@@ -170,18 +164,10 @@ interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
   
 }
 
-template<typename t_simulation, typename t_storage>
-void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::perturbed_RF_excluded_interaction_inner_loop
-(t_simulation &sim, std::map<size_t, simulation::Perturbed_Atom>::const_iterator const & mit)
-{
-  assert(false);
-}
-
-template<typename t_simulation, typename t_storage>
+template<typename t_simulation, typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
-::RF_solvent_interaction_inner_loop
+interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+::RF_solvent_interaction_innerloop
 (t_simulation &sim, simulation::chargegroup_iterator const & cg_it)
 {
   math::Vec r;
@@ -219,15 +205,4 @@ interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
     } // loop over at2_it
   } // loop over at_it
   
-}
-
-
-template<typename t_simulation, typename t_storage>
-inline void 
-interaction::Nonbonded_Inner_Loop<
-  t_simulation, t_storage>
-::perturbed_pair_interaction_inner_loop(t_simulation &sim,
-					std::vector<simulation::Perturbed_Atompair>::const_iterator const &it)
-{
-  assert(false);
 }

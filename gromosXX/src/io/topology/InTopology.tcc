@@ -709,10 +709,10 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
+template<typename t_simulation, typename t_nonbonded_spec>
 io::InTopology &io::InTopology
 ::operator>>(interaction
-	     ::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop> &nbi){
+	     ::Nonbonded_Interaction<t_simulation, t_nonbonded_spec> &nbi){
 
   DEBUG(10, "TOPPHYSCON block");
   
