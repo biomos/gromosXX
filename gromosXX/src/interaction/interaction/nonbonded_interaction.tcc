@@ -55,22 +55,24 @@ inline void interaction::nonbonded_interaction<t_simulation>
   double const C6 =  1.0;
   
   // create a pairlist
-  m_pairlist.make_pairlist(simu);
+  m_pairlist.update(simu);
   
   // calculate forces / energies
   math::VArray &pos = simu.system().pos();
   math::VArray &force = simu.system().force();
   
   typename simple_pairlist<t_simulation>::iterator it = m_pairlist.begin();
-  for( ; !it.eol(); ++it){
-    math::Vec v = pos(it.i()) - pos(it.j());
+  for( ; it != m_pairlist.end(); ++it){
+
+    math::Vec v = (pos(it.i()) - pos(*it));
     double dist2 = dot(v, v);
 
     assert(dist2 != 0.0);
 
     double dist6i = 1.0 / (dist2 * dist2 * dist2);
     
-    math::Vec f = v * ((2 * C12 * dist6i - C6) * 6 * dist6i);
+//    math::Vec f = v * ((2 * C12 * dist6i - C6) * 6 * dist6i);
+    math::Vec f = 2 * v;
 
     force(it.i()) += f;
     force(it.j()) -= f;

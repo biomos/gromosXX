@@ -61,9 +61,6 @@ int forcefield_test()
     the_topology.add_solute_atom("HI", 0, 0, 1.0, 0.0, false, ex, ex);
   
 
-  // initialize everything with zero
-  Vec t(0.0, 0.0, 0.0), t2(1, 1, 1);
-
   the_system.pos() = tensor::i;
   the_system.vel() = 0.0;
   the_system.force() = 0.0;
@@ -73,13 +70,11 @@ int forcefield_test()
 
   simulation_type the_simulation(the_topology, the_system);
 
-  interaction::simple_pairlist<simulation_type> the_pairlist;
-  the_pairlist.make_pairlist(the_simulation);
+  interaction::twin_range_pairlist<simulation_type> the_pairlist;
+  the_pairlist.update(the_simulation);
   
-  // the_pairlist.print_pairlist(cout);
-  
-  interaction::simple_pairlist<simulation_type>::iterator it =
-    the_pairlist.begin();
+  cout << the_pairlist.short_range();
+  cout << the_pairlist.long_range();
   
   // let's create a forcefield...
 
@@ -94,6 +89,7 @@ int forcefield_test()
   the_forcefield.calculate_interactions(the_simulation);
 
   // total force should be 0
+  Vec t(0.0, 0.0, 0.0);
   Vec v = sum(the_simulation.system().force());
 
   bool b = true;
