@@ -38,7 +38,9 @@
 
 interaction::Standard_Pairlist_Algorithm::
 Standard_Pairlist_Algorithm()
-  : interaction::Pairlist_Algorithm()
+  : interaction::Pairlist_Algorithm(),
+		 m_solvent_solvent_timing(0.0),
+		 m_spc_timing(0.0)
 {
 }
 
@@ -312,6 +314,8 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
  math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
  )
 {
+  const double start = util::now();
+  
   const int num_cg = topo.num_chargegroups();
   math::Vec r;
   
@@ -364,6 +368,9 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
     }
     
   } // cg1
+
+  m_solvent_solvent_timing += util::now() - start;
+  
 }
 
 template<typename t_interaction_spec>
@@ -379,6 +386,8 @@ void interaction::Standard_Pairlist_Algorithm::_spc_loop
  math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
  )
 {
+  const double start = util::now();
+  
   const int num_cg = topo.num_chargegroups();
   const int num_solute_cg = topo.num_solute_chargegroups();
   math::Vec r;
@@ -419,6 +428,9 @@ void interaction::Standard_Pairlist_Algorithm::_spc_loop
     }
     
   } // cg1
+
+  m_spc_timing += util::now() - start;
+
 }
 
 

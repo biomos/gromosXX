@@ -274,7 +274,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
  Periodicity_type const & periodicity
  )
 {
-  math::Vec r, rf;
+  math::Vec r, rf, trans;
   
   // only one energy group
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
@@ -293,7 +293,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   double dist2, dist2i, dist6i, disti, e_lj, e_crf, f, rr;
 
   // O - O
+  rf = *pos_i - *pos_j;
   periodicity.nearest_image(*pos_i, *pos_j, r);
+
+  trans = r - rf;
     
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -322,7 +325,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // O1-H21
-  periodicity.nearest_image(*pos_i, *(pos_j+1), r);
+  // periodicity.nearest_image(*pos_i, *(pos_j+1), r);
+  r = *pos_i - *(pos_j+1) + trans;
     
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -348,7 +352,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // O1-H22
-  periodicity.nearest_image(*pos_i, *(pos_j+2), r);
+  // periodicity.nearest_image(*pos_i, *(pos_j+2), r);
+  r = *pos_i - *(pos_j+2) + trans;
     
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -374,7 +379,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // O2 - H11
-  periodicity.nearest_image(*(pos_i+1), *pos_j, r);
+  // periodicity.nearest_image(*(pos_i+1), *pos_j, r);
+  r = *(pos_i+1) - *pos_j + trans;
 
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -402,7 +408,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // O2 - H12
-  periodicity.nearest_image(*(pos_i+2), *pos_j, r);
+  // periodicity.nearest_image(*(pos_i+2), *pos_j, r);
+  r = *(pos_i+2) - *pos_j + trans;
 
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -429,7 +436,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // H11 - H21
-  periodicity.nearest_image(*(pos_i+1), *(pos_j+1), r);
+  // periodicity.nearest_image(*(pos_i+1), *(pos_j+1), r);
+  r = *(pos_i+1) - *(pos_j+1) + trans;
 
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -456,7 +464,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // H11 - H22
-  periodicity.nearest_image(*(pos_i+1), *(pos_j+2), r);
+  // periodicity.nearest_image(*(pos_i+1), *(pos_j+2), r);
+  r = *(pos_i+1) - *(pos_j+2) + trans;
 
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -483,7 +492,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // H12 - H21
-  periodicity.nearest_image(*(pos_i+2), *(pos_j+1), r);
+  // periodicity.nearest_image(*(pos_i+2), *(pos_j+1), r);
+  r = *(pos_i+2) - *(pos_j+1) + trans;
 
   assert(abs2(r) != 0);
   dist2 = abs2(r);
@@ -510,7 +520,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   // storage.energies.crf_energy[egroup][egroup] += e_crf;
   
   // H12 - H22
-  periodicity.nearest_image(*(pos_i+2), *(pos_j+2), r);
+  // periodicity.nearest_image(*(pos_i+2), *(pos_j+2), r);
+  r = *(pos_i+2) - *(pos_j+2) + trans;
 
   assert(abs2(r) != 0);
   dist2 = abs2(r);

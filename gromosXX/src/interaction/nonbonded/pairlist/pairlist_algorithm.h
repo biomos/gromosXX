@@ -63,6 +63,11 @@ namespace interaction
 				  unsigned int stride) = 0;
     
     /**
+     * print timing
+     */
+    virtual void print_timing(std::ostream & os) {}
+    
+    /**
      * timing accessor.
      */
     double timing() { return m_timing; }

@@ -308,9 +308,11 @@ void interaction::Nonbonded_Interaction::print_timing(std::ostream & os)
      << "            "
      << std::setw(32) << std::left << "longrange"
     // << std::setw(20) << m_longrange_timing << "\n"
-     << std::setw(20) << "not measured: too expensive" << "\n"
-    
-     << "            "
+     << std::setw(20) << "not measured: too expensive" << "\n";
+
+  m_pairlist_algorithm->print_timing(os);
+
+  os << "            "
      << std::setw(32) << std::left << "pairlist"
      << std::setw(20) 
      << m_pairlist_algorithm->timing() - m_longrange_timing<< "\n"
