@@ -276,3 +276,10 @@ inline void interaction::Nonbonded_Base
     (dist3isoft - crf_pert*dist2);
   
 }
+
+inline double const  interaction::Nonbonded_Base
+::crf_2cut3i()const
+{
+  return m_crf_2cut3i;
+}
+

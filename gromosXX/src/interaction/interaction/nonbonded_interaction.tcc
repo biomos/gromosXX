@@ -153,53 +153,11 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_inner
 ::do_RF_excluded_interactions(t_simulation &sim)
 {
   
-  math::Vec r, f;
-  double e_crf;
-  std::cout.precision(10);
-  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-  
-  math::VArray &pos   = sim.system().pos();
-  math::VArray &force = sim.system().force();
-
   DEBUG(7, "\tcalculate RF excluded interactions");
   
   for(size_t i=0; i<sim.topology().num_solute_atoms(); ++i){
-
-    std::set<int>::const_iterator it, to;
-    it = sim.topology().exclusion(i).begin();
-    to = sim.topology().exclusion(i).end();
     
-    DEBUG(11, "\tself-term " << i );
-    r=0;
-    
-    // this will only contribute in the energy, the force should be zero.
-    rf_interaction(r,sim.topology().charge()(i) * sim.topology().charge()(i),
-		   f, e_crf);
-    sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
-      [sim.topology().atom_energy_group(i)] += 0.5 * e_crf;
-    DEBUG(11, "\tcontribution " << 0.5*e_crf);
-    
-    for( ; it != to; ++it){
-      
-      DEBUG(11, "\texcluded pair " << i << " - " << *it);
-      
-      sim.system().periodicity().nearest_image(pos(i), pos(*it), r);
-      
-      
-      rf_interaction(r, sim.topology().charge()(i) * 
-		     sim.topology().charge()(*it),
-		     f, e_crf);
-      
-      force(i) += f;
-      force(*it) -= f;
-      
-      // energy
-      sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
-	[sim.topology().atom_energy_group(*it)] += e_crf;
-      DEBUG(11, "\tcontribution " << e_crf);
-      
-    } // loop over excluded pairs
-    
+    RF_excluded_interaction_inner_loop(sim, i);
     
   } // loop over solute atoms
 
@@ -210,34 +168,8 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_inner
   
   for( ; cg_it != cg_to; ++cg_it){
 
-    // loop over the atoms
-    simulation::Atom_Iterator at_it = cg_it.begin(),
-      at_to = cg_it.end();
+    RF_solvent_interaction_inner_loop(sim, cg_it);
 
-    for ( ; at_it != at_to; ++at_it){
-      DEBUG(11, "\tsolvent self term " << *at_it);
-      // no solvent self term. The distance dependent part and the forces
-      // are zero. The distance independent part should add up to zero 
-      // for the energies and is left out.
-
-      for(simulation::Atom_Iterator at2_it=at_it+1; at2_it!=at_to; ++at2_it){
-	
-	DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
-	sim.system().periodicity().nearest_image(pos(*at_it), 
-						 pos(*at2_it), r);
-
-	// for solvent, we don't calculate internal forces (rigid molecules)
-	// and the distance independent parts should go to zero
-	e_crf = -sim.topology().charge()(*at_it) * 
-	  sim.topology().charge()(*at2_it) * coulomb_constant() * 
-	  m_crf_2cut3i * dot(r,r);
-	
-	// energy
-	sim.system().energies().crf_energy
-	  [sim.topology().atom_energy_group(*at_it) ]
-	  [sim.topology().atom_energy_group(*at2_it)] += e_crf;
-      } // loop over at2_it
-    } // loop over at_it
   } // loop over solvent charge groups
 }  
 

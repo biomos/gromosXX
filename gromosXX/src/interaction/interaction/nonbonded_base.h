@@ -40,26 +40,7 @@ namespace interaction
      * get the coulomb constant
      */
     double coulomb_constant()const;
-    
-    /**
-     * set the alpha for lennard jones interactions
-     */
-    void alpha_lj(double const alpha_lj);
-    
-    /**
-     * get the alpha for lennard jones interactions
-     */
-    double alpha_lj()const;
-    
-    /**
-     * set the alpha for coulomd interactions
-     */
-    void alpha_crf(double const alpha_crf);
-    /**
-     * get the alpha for coulomb interactions
-     */
-    double alpha_crf()const;
-    
+        
     /**
      * resize the lj_parameter matrix.
      */
@@ -114,6 +95,9 @@ namespace interaction
 			     double const alpha_crf,
 			     math::Vec & force, double & e_rf, double & de_rf);
     
+    double const crf_2cut3i()const;
+    
+
   protected:
     /**
      * the lj parameter.

@@ -34,6 +34,20 @@ namespace interaction
      */
     void perturbed_one_four_interaction_inner_loop(t_simulation &sim,
 					   size_t const i, size_t const j);
+
+    /**
+     * perturbed RF interaction (solute).
+     */
+    void perturbed_RF_excluded_interaction_inner_loop(t_simulation &sim,
+						      std::map<size_t, simulation::Perturbed_Atom>::const_iterator const & mit);
+
+    /**
+     * perturbed pairs!
+     * (the real fun!)
+     */
+    void perturbed_pair_interaction_inner_loop(t_simulation &sim,
+					       std::vector<simulation::
+					       Perturbed_Atompair>::const_iterator const &it);
     
  
   };
