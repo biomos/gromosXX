@@ -8,6 +8,7 @@
 #include "message.h"
 #include "GInStream.h"
 #include "topology/InTopology.h"
+#include "topology/InPerturbationTopology.h"
 #include "trajectory/InTrajectory.h"
 #include "trajectory/OutTrajectory.h"
 #include "trajectory/OutG96Trajectory.h"

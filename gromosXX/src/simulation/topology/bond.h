@@ -19,7 +19,12 @@ namespace simulation
     int i;
     int j;
     int type;
-      
+
+    bool operator==(Bond const &b)
+    {
+      return (i==b.i && j==b.j && type == b.type);
+    };
+    
   };
 	  
   

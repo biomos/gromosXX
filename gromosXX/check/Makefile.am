@@ -26,5 +26,6 @@ TESTS =				simple
 EXTRA_DIST =			data/rasn.topo  data/rasn.coord data/rasn.in \
 				data/rasn.hbond data/rasn.qbond data/rasn.angle \
 				data/rasn.improper data/rasn.dihedral \
-				data/rasn.nonbonded data/rasn.pl
+				data/rasn.nonbonded data/rasn.pl \
+				data/rasn.pert
 

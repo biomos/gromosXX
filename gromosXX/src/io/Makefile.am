@@ -7,6 +7,8 @@ include_HEADERS = 		io.h \
 				GInStream.h \
 				topology/InTopology.h \
 				topology/InTopology.tcc \
+				topology/InPerturbationTopology.h \
+				topology/InPerturbationTopology.tcc \
 				trajectory/InTrajectory.h \
 				trajectory/InTrajectory.tcc \
 				trajectory/OutTrajectory.h \

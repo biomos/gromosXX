@@ -23,7 +23,7 @@ namespace io
        << std::setw(10) << "DOF"
        << std::setw(10) << "SOLUC"
        << std::setw(10) << "SOLVC"
-       << std::setw(10) << "EKIN"
+       << std::setw(12) << "EKIN"
        << std::setw(10) << "TEMP"
        << "\n";
   
@@ -41,8 +41,8 @@ namespace io
 	 << std::setw(10) << it->dof
 	 << std::setw(10) << it->solute_constr_dof
 	 << std::setw(10) << it->solvent_constr_dof
-	 << std::setw(10) << std::setprecision(4) 
-	 << it->kinetic_energy << std::setprecision(2);
+	 << std::setw(12) << std::setprecision(4) << std::scientific 
+	 << it->kinetic_energy << std::setprecision(2) << std::fixed;
       if (it->kinetic_energy == 0){
 	os << std::setw(10) << 0;
       }
@@ -76,8 +76,9 @@ namespace io
     os << std::setw(10) << sum_dof
        << std::setw(10) << sum_soluc
        << std::setw(10) << sum_solvc
-       << std::setw(10) << std::setprecision(4) << sum_ekin
-       << std::setprecision(2)
+       << std::setw(12) << std::setprecision(4) << std::scientific
+       << sum_ekin
+       << std::setprecision(2) << std::fixed
        << std::setw(10) << 2 * sum_ekin / (math::k_Boltzmann * sum_dof)
        << "\n";
     

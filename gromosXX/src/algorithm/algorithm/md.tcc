@@ -194,6 +194,49 @@ template<typename t_simulation,
 	 typename t_pressure,
 	 typename t_distance_constraint,
 	 typename t_integration>
+int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint, t_integration>::init_perturbation(io::Argument &args)
+{
+  if (args.count("pert") != 1){
+    // migh also be an error...
+    io::messages.add("init_perturbation called but no perturbation topology",
+		     "algorithm::md",
+		     io::message::warning);
+    return 0;
+  }
+  std::ifstream pert_file(args["pert"].c_str());
+  if (!pert_file.good()){
+    io::messages.add("unable to open perturbation topology: "
+		     + args["pert"],
+		     "algorithm::md",
+		     io::message::error);
+    return 1;
+  }
+  else
+    io::messages.add("parsing perturbation topology file: "
+		     + args["pert"], "algorithm::md",
+		     io::message::notice);
+
+  io::InPerturbationTopology pert_topo(pert_file);
+
+  // it'd better be a perturbation topology!
+  pert_topo >> m_simulation.topology();
+
+  // messages?
+  std::cout << "Messages (perturbation)\n";
+  if (io::messages.display(std::cout) > io::message::warning)
+    return 1;
+  std::cout << "\n";
+  io::messages.clear();
+  
+  return 0;
+
+}
+
+template<typename t_simulation,
+	 typename t_temperature,
+	 typename t_pressure,
+	 typename t_distance_constraint,
+	 typename t_integration>
 t_simulation &  algorithm::MD<t_simulation, t_temperature, t_pressure,
 			      t_distance_constraint, t_integration>
 ::simulation()
@@ -520,7 +563,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
       io::print_MULTIBATH(std::cout, m_simulation.multibath());
       io::print_ENERGY(std::cout, m_simulation);
-      io::print_PRESSURE(std::cout, m_simulation.system());
+      if (m_calculate_pressure)
+	io::print_PRESSURE(std::cout, m_simulation.system());
     }
     
     DEBUG(8, "md: increase time");

@@ -31,11 +31,22 @@ namespace simulation
      */
     void resize(size_t const atoms);
 
+    /**
+     * perturbed solute accessor.
+     */
+    Perturbed_Solute &perturbed_solute();
+    
   private:
     /**
      * is the atom perturbed?
      */
     std::vector<bool> m_perturbed_atom;
+    
+    /**
+     * the perturbed solute information.
+     */
+    Perturbed_Solute m_perturbed_solute;
+    
   };
 
 } // simulation

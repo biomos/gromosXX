@@ -37,7 +37,7 @@ START
 END
 STEP
 #   NSTLIM         T        DT
-        10       0.0     0.002
+         2       0.0     0.002
 END
 BOUNDARY
 #      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX

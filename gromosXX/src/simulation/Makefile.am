@@ -2,6 +2,7 @@ INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		simulation.h \
 				core.h \
+				perturbation.h \
 				simulation/simulation.h \
 				simulation/simulation.tcc \
 				simulation/nonbonded.h \
@@ -13,13 +14,9 @@ include_HEADERS = 		simulation.h \
 				system/energy.h \
 				system/energy.tcc \
 				topology/bond.h \
-				topology/bond.tcc \
 				topology/angle.h \
-				topology/angle.tcc \
                                 topology/improper_dihedral.h \
-                                topology/improper_dihedral.tcc \
 				topology/dihedral.h \
-				topology/dihedral.tcc \
 				topology/compound.h \
 				topology/compound.tcc \
 				topology/solute.h \
@@ -30,6 +27,9 @@ include_HEADERS = 		simulation.h \
 				topology/topology.tcc \
 				topology/perturbation_topology.h \
 				topology/perturbation_topology.tcc \
+				topology/perturbed_bond.h \
+				topology/perturbed_solute.h \
+				topology/perturbed_solute.tcc \
 				core/atom_iterator.h \
 				core/atom_group_iterator.h \
 				core/molecule_iterator.h \

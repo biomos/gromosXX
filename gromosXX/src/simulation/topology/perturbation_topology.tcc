@@ -25,3 +25,9 @@ inline void simulation::Perturbation_Topology::resize(size_t const atoms)
   // standard is non-perturbed atoms
   m_perturbed_atom.resize(atoms, false);
 }
+
+inline simulation::Perturbed_Solute &
+simulation::Perturbation_Topology::perturbed_solute()
+{
+  return m_perturbed_solute;
+}

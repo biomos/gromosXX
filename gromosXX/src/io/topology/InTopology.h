@@ -11,7 +11,8 @@ namespace io {
   /**
    * @class InTopology
    * reads in a topology file and parses
-   * it into simulation::topology.
+   * it into simulation::Topology
+   * @sa simulation::Topology
    */
   class InTopology : public GInStream {
 

@@ -17,6 +17,7 @@
 #include <simulation/core.h>
 #include <math/periodicity.h>
 #include <simulation/simulation.h>
+#include <simulation/perturbation.h>
 #include <interaction/interaction.h>
 #include <io/io.h>
 #include <algorithm/algorithm.h>
@@ -35,25 +36,26 @@ int main(int argc, char *argv[])
     
     char *knowns[] = 
       {
-	"topo", "struct", "input", "verb", "alg",
+	"topo", "struct", "input", "verb", "alg", "pert",
 	"trj", "fin", "trv", "trf", "tre", "print", "trp"
       };
     
-    int nknowns = 12;
+    int nknowns = 13;
     
     string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
+    usage += "\t[@pert   <perturbation topology>]\n";
     usage += "\t@struct  <coordinates>\n";
     usage += "\t@input   <input>\n";
     usage += "\t@trj     <trajectory>\n";
     usage += "\t@fin     <final structure>\n";
-    usage += "\t@trv     <velocity trajectory>\n";
-    usage += "\t@trf     <force trajectory>\n";
-    usage += "\t@tre     <energy trajectory>\n";
-    usage += "\t@alg     <RK|LF>\n";
-    usage += "\t@print   <pairlist>\n";
-    usage += "\t@trp     <print file>\n";
-    usage += "\t@verb    <[module:][submodule:]level>\n";
+    usage += "\t[@trv    <velocity trajectory>]\n";
+    usage += "\t[@trf    <force trajectory>]\n";
+    usage += "\t[@tre    <energy trajectory>]\n";
+    usage += "\t[@alg    <RK|LF>]\n";
+    usage += "\t[@print  <pairlist/force>]\n";
+    usage += "\t[@trp    <print file>]\n";
+    usage += "\t[@verb   <[module:][submodule:]level>]\n";
 
     io::Argument args(argc, argv, nknowns, knowns, usage);
 
@@ -66,30 +68,40 @@ int main(int argc, char *argv[])
       if (args["alg"] == "RK"){
 	runge_kutta = true;
 	io::messages.add("using Runge Kutta integration scheme",
-			 "vtest",io::message::notice);
+			 "md",io::message::notice);
       }
       else if(args["alg"] == "LF"){
 	io::messages.add("using Leap Frog integration scheme",
-			 "vtest",io::message::notice);
+			 "md",io::message::notice);
       }
       else{
 	io::messages.add("unknown integration scheme (@alg) " + args["alg"],
-			 "vtest",io::message::error);
+			 "md",io::message::error);
       }
     }
 
-    // topology and system
-    simulation::System<math::any> the_system;
-    simulation::Topology the_topology;
-
-    // simulation
-    typedef simulation::Simulation<simulation::Topology,
-      simulation::System<math::any> > simulation_type;
-  
-    simulation_type the_simulation(the_topology, the_system);
-
+    // determine whether we do perturbation
+    bool perturbation = false;
+    if (args.count("pert") == 1){
+      perturbation = true;
+      if (runge_kutta)
+	io::messages.add("perturbation with runge kutta integration"
+			 " not allowed",
+			 "md", io::message::error);
+    }
+    
     // this is not the nicest solution...
     if (runge_kutta){
+
+      // topology and system
+      simulation::System<math::any> the_system;
+      simulation::Perturbation_Topology the_topology;
+
+      // simulation
+      typedef simulation::Simulation<simulation::Perturbation_Topology,
+	simulation::System<math::any> > simulation_type;
+  
+      simulation_type the_simulation(the_topology, the_system);
 
       algorithm::MD<simulation_type,
 	algorithm::Berendsen_Thermostat,
@@ -108,7 +120,47 @@ int main(int argc, char *argv[])
       the_MD.trajectory() << io::final << the_MD.simulation();
 
     }
-    else{
+    else if (perturbation){ // leap frog + perturbation
+      // topology and system
+      simulation::System<math::any> the_system;
+      simulation::Perturbation_Topology the_topology;
+
+      // simulation
+      typedef simulation::Simulation<simulation::Perturbation_Topology,
+	simulation::System<math::any> > simulation_type;
+  
+      simulation_type the_simulation(the_topology, the_system);
+      
+      algorithm::MD<simulation_type,
+	algorithm::Berendsen_Thermostat,
+	algorithm::Berendsen_Barostat,
+	algorithm::Shake<simulation_type>,
+	algorithm::Leap_Frog<simulation_type> >
+	the_MD(the_simulation);
+    
+      if(the_MD.initialize(args)){
+	return 1;
+      }
+      if(the_MD.init_perturbation(args)){
+	return 1;
+      }
+
+      the_MD.run();
+
+      std::cout << "\nwriting final structure" << std::endl;
+      the_MD.trajectory() << io::final << the_MD.simulation();
+
+    }
+    else{ // leap frog, no perturbation
+      // topology and system
+      simulation::System<math::any> the_system;
+      simulation::Topology the_topology;
+
+      // simulation
+      typedef simulation::Simulation<simulation::Topology,
+	simulation::System<math::any> > simulation_type;
+  
+      simulation_type the_simulation(the_topology, the_system);
       
       algorithm::MD<simulation_type,
 	algorithm::Berendsen_Thermostat,

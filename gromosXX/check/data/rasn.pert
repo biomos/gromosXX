@@ -1,0 +1,10 @@
+TITLE
+	perturbation topology
+END
+PERTBOND03
+# number
+     1
+#    i    j    type A    type B
+     1    2        26        26
+END
+

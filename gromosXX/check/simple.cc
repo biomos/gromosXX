@@ -21,6 +21,7 @@
 #include <simulation/core.h>
 #include <math/periodicity.h>
 #include <simulation/simulation.h>
+#include <simulation/perturbation.h>
 #include <interaction/interaction.h>
 #include <io/io.h>
 #include <algorithm/algorithm.h>

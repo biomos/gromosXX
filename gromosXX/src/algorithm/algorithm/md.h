@@ -78,6 +78,11 @@ namespace algorithm
     int initialize(io::Argument &args);
 
     /**
+     * initialize the perturbation parameters.
+     */
+    int init_perturbation(io::Argument &args);
+    
+    /**
      * run the system.
      * @param time the time to run the system.
      */
