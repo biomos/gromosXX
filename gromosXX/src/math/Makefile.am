@@ -11,8 +11,6 @@ xxinclude_HEADERS = 		gmath.h \
 
 noinst_LTLIBRARIES = 		libgromath.la
 
-libgromath_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
-
 libgromath_la_SOURCES =		math.cc \
 				volume.cc
 

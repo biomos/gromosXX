@@ -27,8 +27,6 @@ xxinclude_HEADERS =	algorithm.h \
 
 noinst_LTLIBRARIES	=	libgroalgorithm.la
 
-libgroalgorithm_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
-
 libgroalgorithm_la_SOURCES =	algorithm.cc \
 				create_md_sequence.cc \
 				algorithm/algorithm_sequence.cc \

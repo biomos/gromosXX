@@ -14,8 +14,6 @@ xxinclude_HEADERS = 	stdheader.h \
 
 noinst_LTLIBRARIES = 	libgroutil.la
 
-libgroutil_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
-
 libgroutil_la_SOURCES =	debug.cc \
 			timing.cc \
 			generate_velocities.cc \

@@ -76,8 +76,6 @@ xxinclude_HEADERS =		interaction.h \
 
 noinst_LTLIBRARIES =		libgrointeraction.la
 
-libgrointeraction_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
-
 libgrointeraction_la_SOURCES =	interaction.cc \
 				forcefield/forcefield.cc \
 				forcefield/create_forcefield.cc \

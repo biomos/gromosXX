@@ -11,8 +11,6 @@ xxinclude_HEADERS =		configuration_global.h \
 
 noinst_LTLIBRARIES =		libgroconfiguration.la
 
-libgroconfiguration_la_LDFLAGS = -version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
-
 libgroconfiguration_la_SOURCES = configuration_global.cc	\
 				configuration.cc \
 				energy.cc \

@@ -8,8 +8,6 @@ xxinclude_HEADERS =	simulation.h \
 
 noinst_LTLIBRARIES =	libgrosimulation.la
 
-libgrosimulation_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
-
 libgrosimulation_la_SOURCES =	simulation.cc
 
 bin_PROGRAMS =			
