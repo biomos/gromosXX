@@ -176,10 +176,11 @@ int main(int argc, char* argv[])
 		aladip_sim.sim);
 
       aladip_sim.conf.current().perturbed_energy_derivatives.calculate_totals();
-      if (!quiet)
+      if (!quiet){
 	io::print_ENERGY(std::cout,
 			 aladip_sim.conf.current().perturbed_energy_derivatives,
 			 aladip_sim.topo.energy_groups());
+      }
       
       // save the un - scaled energies
       std::vector<std::vector<double> > lj_energy, crf_energy;
@@ -195,6 +196,8 @@ int main(int argc, char* argv[])
       const double lp = aladip_sim.topo.lambda();
       double dlp;
 
+      // std::cout << "\nscaled only : " << aladip_lambdadep_sim.sim.param().perturbation.scaled_only << std::endl;
+
       // for all energy groups which are scaled
       std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
 	it = aladip_lambdadep_sim.topo.energy_group_lambdadep().begin(),
@@ -206,9 +209,11 @@ int main(int argc, char* argv[])
 
 	const double alpha = it->second.second;
 
-	// std::cout << "\nenergy group " << it->first.first << " - " 
-	// << it->first.second << std::endl;
-	// std::cout << "\talpha = " << alpha << std::endl;
+	if (!quiet){
+	  std::cout << "\nenergy group " << it->first.first << " - " 
+		    << it->first.second << std::endl;
+	  std::cout << "\talpha = " << alpha << std::endl;
+	}
 	
 	if (alpha != 0.0){
 	  const double l = (alpha - 1 + sqrt((1-alpha)*(1-alpha) + 4 * alpha * lp)) 
@@ -217,13 +222,16 @@ int main(int argc, char* argv[])
 	  aladip_lambdadep_sim.topo.lambda(l);
 	  dlp = (2 * l - 1.0) * alpha + 1;
 
-	  // std::cout << "\tdl'/dl = " << dlp << std::endl;
-	  // std::cout << "\t=> l = " << l << " for l' = " << lp << std::endl;
+	  if (!quiet){
+	    std::cout << "\tdl'/dl = " << dlp << std::endl;
+	    std::cout << "\t=> l = " << l << " for l' = " << lp << std::endl;
+	  }
 	}
 	else{
 	  aladip_lambdadep_sim.topo.lambda(lp);
 	  dlp = (2 * lp - 1.0) * alpha + 1;	  
-	  // std::cout << "\tdl'/dl = " << dlp << std::endl;
+	  if (!quiet)
+	    std::cout << "\tdl'/dl = " << dlp << std::endl;
 	}
 
 	lambdadep_ff->apply(aladip_lambdadep_sim.topo,

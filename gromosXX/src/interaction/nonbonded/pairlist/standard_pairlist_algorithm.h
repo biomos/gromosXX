@@ -141,37 +141,44 @@ namespace interaction
 			  topology::Chargegroup_Iterator const & cg1,
 			  int cg1_index, int num_solute_cg, int num_cg,
 			  math::Periodicity<t_interaction_spec::boundary_type>
-			  const & periodicity);
+			  const & periodicity,
+			  bool scaled_only);
     
     void do_cg_interaction(topology::Chargegroup_Iterator const &cg1,
 			   topology::Chargegroup_Iterator const &cg2,
 			   interaction::Pairlist & pairlist);
 
+    template<typename t_perturbation_details>
     void do_pert_cg_interaction(topology::Topology & topo,
 				topology::Chargegroup_Iterator const &cg1,
 				topology::Chargegroup_Iterator const &cg2,
 				interaction::Pairlist & pairlist,
-				interaction::Pairlist & perturbed_pairlist);
+				interaction::Pairlist & perturbed_pairlist,
+				bool scaled_only);
     
     void do_cg_interaction_excl(topology::Topology & topo,
 				topology::Chargegroup_Iterator const &cg1,
 				topology::Chargegroup_Iterator const &cg2,
 				interaction::Pairlist & pairlist);
 
+    template<typename t_perturbation_details>
     void do_pert_cg_interaction_excl(topology::Topology & topo,
 				     topology::Chargegroup_Iterator const &cg1,
 				     topology::Chargegroup_Iterator const &cg2,
 				     interaction::Pairlist & pairlist,
-				     interaction::Pairlist & perturbed_pairlist);
+				     interaction::Pairlist & perturbed_pairlist,
+				     bool scaled_only);
     
     void do_cg_interaction_intra(topology::Topology & topo,
 				 topology::Chargegroup_Iterator const &cg1,
 				 interaction::Pairlist & pairlist);
 
+    template<typename t_perturbation_details>
     void do_pert_cg_interaction_intra(topology::Topology & topo,
 				      topology::Chargegroup_Iterator const &cg1,
 				      interaction::Pairlist & pairlist,
-				      interaction::Pairlist & perturbed_pairlist);
+				      interaction::Pairlist & perturbed_pairlist,
+				      bool scaled_only);
 
     void update_atomic(topology::Topology & topo,
 		       configuration::Configuration & conf,
