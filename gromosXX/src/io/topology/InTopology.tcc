@@ -32,7 +32,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
     }
     
     if(n != num){
-      if (_lineStream.fail() || ! _lineStream.eof())
+      if (_lineStream.fail()|| ! _lineStream.eof())
 	throw std::runtime_error("error in BOND block (n != num)");
     }
   } // BOND
@@ -102,28 +102,31 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
     _lineStream.str(*it);
     int num, n;
     _lineStream >> num;
-    ++it;
-    
     topo.resize(num);
 
-    for(n=0; it != buffer.end() - 1; ++it, ++n){
-      int a_nr, r_nr, t, cg, n_ex, a_ex;
-      double m, q;
-      std::string s;
-      std::set<int> ex;
-      std::set<int> ex14;
+    // put the rest of the block into a single stream
+    ++it;
+    std::string soluteAtoms;
+    std::vector<std::string>::const_iterator bla = it;
+    std::vector<std::string>::const_iterator fasel = buffer.end() - 1;
+    concatenate(bla, fasel, soluteAtoms);
+    _lineStream.clear();
+    _lineStream.str(soluteAtoms);
+
+    int a_nr, r_nr, t, cg, n_ex, a_ex;
+    double m, q;
+    std::string s;
+    std::set<int> ex;
+    std::set<int> ex14;
       
-      _lineStream.clear();
-      _lineStream.str(*it);
+    for(n=0; n < num; ++n){
 
       _lineStream >> a_nr >> r_nr >> s >> t >> m >> q >> cg >> n_ex;
+
       for(int i=0; i<n_ex; ++i){
 	_lineStream >> a_ex;
 	ex.insert(a_ex);
       }
-      ++it;
-      _lineStream.clear();
-      _lineStream.str(*it);
       
       _lineStream >> n_ex;
       for(int i=0; i<n_ex; ++i){
@@ -131,16 +134,10 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
 	ex14.insert(a_ex);
       }
       
-      if (_lineStream.fail() || ! _lineStream.eof())
+      if (_lineStream.fail())
 	throw std::runtime_error("bad line in SOLUTEATOM block");
 
       topo.add_solute_atom(s, r_nr-1, t-1, m, q, cg, ex, ex14);
-
-    }
-    
-    if(n != num){
-      // if (_lineStream.fail() || ! _lineStream.eof())
-      throw std::runtime_error("error in SOLUTEATOM block (n != num)");
     }
   } // SOLUTEATOM
   
