@@ -75,18 +75,32 @@ void interaction::create_g96_nonbonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation){
       
-      if (param.pairlist.grid)
+      if (param.pairlist.grid){
 	create_g96_perturbed_grid(ff, topo, param, it);
+	std::cout << "\t\t\tgrid size          : " << param.pairlist.grid_size << "\n";
+      }
       else
 	create_g96_perturbed(ff, topo, param, it);
     }
     else{
 
-      if (param.pairlist.grid)
+      if (param.pairlist.grid){
 	create_g96_unperturbed_grid(ff, topo, param, it);
+	std::cout << "\t\tgrid size :     " << param.pairlist.grid_size << "\n";
+      }
       else
 	create_g96_unperturbed(ff, topo, param, it);
 
     }
+
+    std::cout << "\t\t\tinner cutoff           : " << param.pairlist.cutoff_short << "\n"
+	      << "\t\t\touter cutoff           : " << param.pairlist.cutoff_long << "\n"
+	      << "\t\t\tepsilon                : " << param.longrange.epsilon << "\n"
+	      << "\t\t\treactionfield epsilon  : " << param.longrange.rf_epsilon << "\n"
+	      << "\t\t\tkappa                  : " << param.longrange.rf_kappa << "\n"
+	      << "\t\t\treactionfield cutoff   : " << param.longrange.rf_cutoff << "\n"
+	      << "\t\t\tpairlist creation every  " << param.pairlist.skip_step << " steps\n"
+	      << "\n";
+    
   }
 }

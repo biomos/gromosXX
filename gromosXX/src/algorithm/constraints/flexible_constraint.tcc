@@ -59,9 +59,6 @@ static int _flexible_shake(topology::Topology const &topo,
   size_t k = 0;
   double const dt2 = dt * dt;
   
-  conf.special().flexible_ekin.assign(conf.special().flexible_ekin.size(), 0.0);
-  conf.special().flexible_epot.assign(conf.special().flexible_epot.size(), 0.0);
-
   // and constraints
   for(typename std::vector<topology::two_body_term_struct>
 	::const_iterator
@@ -275,7 +272,7 @@ static void _calc_distance(topology::Topology const &topo,
 
 
     // calculate Epot in the bond length constraints
-    conf.special().flexible_epot[topo.atom_energy_group()[it->i]] += 
+    conf.old().energies.constraints_energy[topo.atom_energy_group()[it->i]] += 
       0.5 * param[it->type].K * (param[it->type].r0 - new_len) * 
       (param[it->type].r0 - new_len);
       
@@ -380,6 +377,9 @@ int algorithm::Flexible_Constraint<do_virial>
       sim.param().constraint.ntc > 1){
     DEBUG(8, "\twe need to flexible shake SOLUTE");
     do_vel = true;
+
+    conf.special().flexible_ekin.assign(conf.special().flexible_ekin.size(), 0.0);
+
     switch(conf.boundary_type){
       case math::vacuum:
 	error = _flexible_solute<do_virial, math::vacuum>
@@ -424,7 +424,26 @@ int algorithm::Flexible_Constraint<do_virial>
        configuration::Configuration & conf,
        simulation::Simulation & sim)
 {
-
+  std::cout << "FLEXIBLESHAKE\n"
+	    << "\tsolute\t";
+  if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+    std::cout << "ON\n";
+    std::cout << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
+    if (sim.param().constraint.solute.flexshake_readin)
+      std::cout << "\t\treading velocities along constraints from file\n";
+  }
+  else std::cout << "OFF\n";
+  
+  std::cout << "\tsolvent\t";
+  if (sim.param().constraint.solvent.algorithm == simulation::constr_flexshake){
+    std::cout << "not supported!\n";
+    io::messages.add("flexible shake for solvent not implemented", "Flexible_Constraint",
+		     io::message::error);
+  }
+  else std::cout << "OFF\n";
+  
+  std::cout << "END\n";
+  
   if (sim.param().start.shake_pos){
     std::cout << "(flexible) shaking initial positions\n";
 

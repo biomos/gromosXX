@@ -54,9 +54,18 @@ int algorithm::Berendsen_Thermostat
 
       DEBUG(7, "pre-scale ekin: " << b_it->ekin);
 
-      double free_temp = 2 * 
-	b_it->ekin / (b_it->dof * math::k_Boltzmann);
+      double free_temp;
 
+      // small flexible constraints hack!
+      if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+	free_temp = 2 *
+	  (b_it->ekin - conf.special().flexible_ekin[num]) / (b_it->dof * math::k_Boltzmann);
+      }
+      else{
+	free_temp = 2 * 
+	  b_it->ekin / (b_it->dof * math::k_Boltzmann);
+      }
+      
       // divide by zero measure...
       if (free_temp < math::epsilon) free_temp = b_it->temperature;
 

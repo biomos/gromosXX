@@ -204,18 +204,22 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if (param.constraint.solute.algorithm == simulation::constr_flexshake){
     conf.special().flexible_vel.resize(topo.solute().distance_constraints().size());
     conf.special().flexible_ekin.resize(numb);
-    conf.special().flexible_epot.resize(num);
 
     buffer = m_block["FLEXV"];
-    if (buffer.size()){
+    if (buffer.size() && param.constraint.solute.flexshake_readin){
       std::cout << "\treading FLEXV...\n";
       _read_flexv(conf.special().flexible_vel, buffer, topo.solute().distance_constraints());
       block_read.insert("FLEXV");
     }
     else{
-      io::messages.add("no FLEXV block found, assuming SHAKE'n positions (and velocities)",
-		       "in_configuration",
-		       io::message::notice);
+      if (param.constraint.solute.flexshake_readin)
+	io::messages.add("no FLEXV block found but reading in of constraint velocities requested",
+			 "in_configuration",
+			 io::message::error);
+      else
+	io::messages.add("no FLEXV block found, assuming SHAKE'n positions (and velocities)",
+			 "in_configuration",
+			 io::message::notice);
     }
   }
 

@@ -892,8 +892,20 @@ io::In_Topology::read(topology::Topology& topo,
 		     "In_Topology", io::message::error);
   }
 
+  // chargegroup check (starts with 0)
+  if (topo.chargegroups()[topo.num_solute_chargegroups()] != int(topo.num_solute_atoms())){
+    io::messages.add("Error: last solute atom has to be end of chargegroup",
+		     "In_Topology",
+		     io::message::error);
+    std::cout << "ERROR:"
+	      << "\tsolute cg    : " << topo.num_solute_chargegroups() << "\n"
+	      << "\tsolute atoms : " << topo.num_solute_atoms() << "\n"
+	      << "\tlast cg      : " << topo.chargegroups()[topo.num_solute_chargegroups()] << "\n";
+  }
+
   // add the submolecules
   topo.molecules() = param.submolecules.submolecules;
+  std::cout << "\n\tSOLUTE [sub]molecules: " << topo.molecules().size() - param.system.nsm << "\n";
 
   // energy group check
   if (param.force.energy_group[param.force.energy_group.size()-1]

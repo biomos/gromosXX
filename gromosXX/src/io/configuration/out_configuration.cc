@@ -1032,6 +1032,16 @@ void io::Out_Configuration
     
     print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
 
+    // flexible shake kinetic energy
+    if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+      m_output << "FLEXSHAKE\n";
+      m_output << "\tflex_ekin";
+      for(size_t i=0; i < conf.special().flexible_ekin.size(); ++i)
+	m_output << std::setw(12) << std::setprecision(4) << std::scientific
+		 << conf.special().flexible_ekin[i];
+      m_output << "\nEND\n";
+    }
+    
     if (sim.param().pcouple.calculate)
       print_PRESSURE(m_output, conf);
     

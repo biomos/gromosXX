@@ -440,18 +440,20 @@ int algorithm::Shake<do_virial>
 {
   std::cout << "SHAKE\n"
 	    << "\tsolute\t";
-  if (sim.param().constraint.solute.algorithm == simulation::constr_shake)
-    std::cout << "ON\n";
+  if (sim.param().constraint.solute.algorithm == simulation::constr_shake){    
+    std::cout << "ON\n";  
+    std::cout << "\t\ttolerance = "
+	      << sim.param().constraint.solute.shake_tolerance << "\n";
+  }
   else std::cout << "OFF\n";
-  
-  std::cout << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
   
   std::cout << "\tsolvent\t";
-  if (sim.param().constraint.solvent.algorithm == simulation::constr_shake)
+  if (sim.param().constraint.solvent.algorithm == simulation::constr_shake){
     std::cout << "ON\n";
-  else std::cout << "OFF\n";
+    std::cout << "\t\ttolerance = " 
+	      << sim.param().constraint.solvent.shake_tolerance << "\n";
+  }  else std::cout << "OFF\n";
   
-  std::cout << "\t\ttolerance = " << sim.param().constraint.solvent.shake_tolerance << "\n";
 
   if (sim.param().start.shake_pos){
     std::cout << "\n\tshaking initial positions\n";

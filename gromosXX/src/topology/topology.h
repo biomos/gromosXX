@@ -198,6 +198,11 @@ namespace topology
     std::vector<std::set<int> > & one_four_pair(){return m_one_four_pair;}
     
     /**
+     * chargegroup accessor.
+     */
+    std::vector<int> const & chargegroups()const { return m_chargegroup; }
+    
+    /**
      * the number of chargegroups present.
      */
     size_t num_chargegroups()const {return m_chargegroup.size()-1;}

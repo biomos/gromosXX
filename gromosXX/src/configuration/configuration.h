@@ -111,11 +111,6 @@ namespace configuration
        */
       std::vector<double> flexible_ekin;
       
-      /**
-       * flexible constraints potential energy.
-       */
-      std::vector<double> flexible_epot;
-      
     };
     
     /**
