@@ -220,68 +220,6 @@ io::In_Topology::read(topology::Topology& topo,
     
   } // SOLUTEATOM
     
-  
-  { // BOND
-    DEBUG(10, "BOND block");
-    buffer = m_block["BOND"];
-
-    std::cout << "\tBOND";
-  
-    if (buffer.size()){
-      
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      if (param.shake.ntc == 3){
-	std::cout << "\n\t\t"
-		  << num
-		  << " bonds from BOND block added to CONSTRAINT";
-      }
-      else
-	std::cout << "\n\t\tbonds not containing hydrogens : "
-		  << num;
-      
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, t;
-	
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> t;
-	
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in BOND block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in BOND block");
-	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1){
-	  io::messages.add("Atom number out of range in BOND block",
-			   "In_Topology", io::message::error);
-	}
-      
-	if (param.shake.ntc == 3){
-	  topo.solute().distance_constraints().
-	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
-	}
-	else
-	  topo.solute().bonds().
-	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
-      }
-    
-      if(n != num){
-	io::messages.add("Wrong number of bonds in BOND block",
-			 "In_Topology", io::message::error);
-	throw std::runtime_error("error in BOND block (n != num)");
-      }
-    }
-  
-  } // BOND
-
   { // BONDH
     DEBUG(10, "BONDH block");
     
@@ -344,6 +282,68 @@ io::In_Topology::read(topology::Topology& topo,
     std::cout << "\n\tEND\n";
     
   } // BONDH
+  
+  { // BOND
+    DEBUG(10, "BOND block");
+    buffer = m_block["BOND"];
+
+    std::cout << "\tBOND";
+  
+    if (buffer.size()){
+      
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+
+      if (param.shake.ntc == 3){
+	std::cout << "\n\t\t"
+		  << num
+		  << " bonds from BOND block added to CONSTRAINT";
+      }
+      else
+	std::cout << "\n\t\tbonds not containing hydrogens : "
+		  << num;
+      
+      for(n=0; it != buffer.end() - 1; ++it, ++n){
+	int i, j, t;
+	
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> i >> j >> t;
+	
+	if (_lineStream.fail() || ! _lineStream.eof()){
+	  io::messages.add("Bad line in BOND block",
+			   "In_Topology", io::message::error);
+	  throw std::runtime_error("bad line in BOND block");
+	}
+      
+	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	    i < 1 || j < 1){
+	  io::messages.add("Atom number out of range in BOND block",
+			   "In_Topology", io::message::error);
+	}
+      
+	if (param.shake.ntc == 3){
+	  topo.solute().distance_constraints().
+	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
+	}
+	else
+	  topo.solute().bonds().
+	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
+      }
+    
+      if(n != num){
+	io::messages.add("Wrong number of bonds in BOND block",
+			 "In_Topology", io::message::error);
+	throw std::runtime_error("error in BOND block (n != num)");
+      }
+    }
+  
+  } // BOND
+
 
   // check the bonds
   if (!check_type(m_block["BONDTYPE"], topo.solute().bonds())){
