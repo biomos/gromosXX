@@ -30,6 +30,7 @@ PARAMETER
 	t_virial
 	sim.param().pcouple.virial == no_virial @ no_virial
 	sim.param().pcouple.virial == molecular_virial @ molecular_virial
+	sim.param().pcouple.virial == atomic_virial @ atomic_virial
 END
 	
 PARAMETER

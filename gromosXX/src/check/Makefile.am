@@ -1,18 +1,35 @@
 INCLUDES = -I$(top_srcdir)/src
 
-check_PROGRAMS = 	rasn.t \
-			aladip.t \
-			scaling.t
+check_PROGRAMS = 		rasn.t \
+				aladip.t \
+				aladip_atomic.t \
+				scaling.t
 
-rasn_t_SOURCES = rasn.t.cc check.h check_forcefield.h check_forcefield.cc
+rasn_t_SOURCES = 		rasn.t.cc \
+				check.h \
+				check_forcefield.h \
+				check_forcefield.cc
 
 rasn_t_LDADD = ../libgroxx.la
 
 
-aladip_t_SOURCES = aladip.t.cc check.h check_forcefield.h check_forcefield.cc \
-			check_state.h check_state.cc
+aladip_t_SOURCES = 		aladip.t.cc \
+				check.h \
+				check_forcefield.h \
+				check_forcefield.cc \
+				check_state.h \
+				check_state.cc
 
 aladip_t_LDADD = ../libgroxx.la
+
+aladip_atomic_t_SOURCES = 	aladip_atomic.t.cc \
+				check.h \
+				check_forcefield.h \
+				check_forcefield.cc \
+				check_state.h \
+				check_state.cc
+
+aladip_atomic_t_LDADD = ../libgroxx.la
 
 
 scaling_t_SOURCES = scaling.t.cc check.h
@@ -20,7 +37,7 @@ scaling_t_SOURCES = scaling.t.cc check.h
 scaling_t_LDADD = ../libgroxx.la
 
 
-TESTS = aladip.t scaling.t
+TESTS = aladip.t aladip_atomic.t scaling.t
 
 EXTRA_DIST =	data/rasn.topo \
 		data/rasn.conf \
@@ -30,6 +47,7 @@ EXTRA_DIST =	data/rasn.topo \
 		data/aladip.pttopo \
 		data/aladip.conf \
 		data/aladip.in \
+		data/aladip_atomic.in \
 		data/scaling.in \
 		data/scaling.lambdadep.in \
 		data/scaling.pttopo \
