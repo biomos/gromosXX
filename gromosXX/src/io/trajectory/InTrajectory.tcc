@@ -174,7 +174,7 @@ inline bool io::InTrajectory::_read_positionred(math::VArray &pos, std::vector<s
       throw std::runtime_error("bad line in POSITIONRED block");
     if (!_lineStream.eof()) {
       std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
-      DEBUG(2, msg);
+      DEBUG(10, msg);
     }
   }
   
@@ -224,7 +224,7 @@ inline bool io::InTrajectory::_read_velocityred(math::VArray &vel, std::vector<s
       throw std::runtime_error("bad line in VELOCITYRED block");
     if (!_lineStream.eof()) {
       std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
-      DEBUG(2, msg);
+      DEBUG(10, msg);
     }
   }
   
@@ -330,7 +330,7 @@ inline bool io::InTrajectory::_read_box(simulation::System<b> &sys, std::vector<
       throw std::runtime_error("bad line in TRICLINICBOX block");
     if (!_lineStream.eof()) {
       std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
-      DEBUG(2, msg);
+      DEBUG(10, msg);
     }
   }
 
