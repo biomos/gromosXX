@@ -15,6 +15,8 @@ inline void simulation::Energy::zero(bool potential, bool kinetic)
   DEBUG(10, "energy: zero");
   
   if (potential){
+    DEBUG(15, "zero potential energies");
+
     total = 0.0;
     potential_total = 0.0;
     bond_total = 0.0;
@@ -29,19 +31,29 @@ inline void simulation::Energy::zero(bool potential, bool kinetic)
 
     constraint_energy = 0.0;
     
+    DEBUG(15, "totals done");
+    
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
     improper_energy.assign(improper_energy.size(), 0.0);
     dihedral_energy.assign(dihedral_energy.size(), 0.0);
-    
+
+    DEBUG(15, "energy groups: " << lj_energy.size() << " - " << crf_energy.size());
+
     lj_energy.assign(lj_energy.size(), 
 		     std::vector<double>(lj_energy.size(), 0.0));
+    DEBUG(15, "lj assigned");
+    
     crf_energy.assign(crf_energy.size(), 
 		      std::vector<double>(crf_energy.size(), 0.0));
+    DEBUG(15, "crf assigned");
+    
   }
 
   if (kinetic){
 
+    DEBUG(15, "zero kinetic energies");
+    
     kinetic_total = 0.0;
 
     kinetic_energy.assign(kinetic_energy.size(), 0.0);
@@ -49,6 +61,8 @@ inline void simulation::Energy::zero(bool potential, bool kinetic)
     ir_kinetic_energy.assign(ir_kinetic_energy.size(), 0.0);
 
   }
+  DEBUG(15, "energies zero");
+
 }
 
 
