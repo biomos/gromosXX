@@ -8,7 +8,8 @@ md_SOURCES =			md.cc
 
 script_SOURCES =		script.cc
 
-LDADD = ../src/libgroxx.la
+LDADD = ../src/libgroxx.la $(extra_lib)
+
 
 EXTRA_DIST =			BUILD_NUMBER
 

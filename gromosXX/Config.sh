@@ -8,7 +8,7 @@ aclocal &&
 libtoolize --copy &&
 autoconf &&
 autoheader &&
-automake --add-missing --copy --foreign ||
+automake --add-missing --copy ||
 echo "setup failed. try doing it manually"
 
 echo ""
