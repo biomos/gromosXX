@@ -1,5 +1,5 @@
 /**
- * @file math.h
+ * @file gmath.h
  * mathematical definitions.
  */
 
