@@ -336,7 +336,7 @@ void write_solution(map<string, string> &current)
   splitf << indent << "pairlist_algorithm_type * pa = new pairlist_algorithm_type;\n\n"
 	 << indent << "nonbonded_interaction_type * ni = new nonbonded_interaction_type(pa);\n\n"
 	 << indent << "it.read_lj_parameter(ni->lj_parameter());\n"
-	 << indent << "ni->initialize(topo, conf, sim);\n\n"
+	 << indent << "ni->initialize(topo, conf, sim, quiet);\n\n"
 	 << indent << "ff.push_back(ni);\n\n";
 
   splitf << "}\n\n";
