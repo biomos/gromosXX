@@ -50,18 +50,34 @@ Release 0.0.3
 
 -------------
 
-	ok	reorganise iterators (and utility classes) -> avoid circular includes, use stl
+Release 0.1.0
+
+	ok	reorganisation
+	ok	position restraints
+		position constraints
+	ok 	EM: steepest descent
+		slow growth
+		perturbed shake
+		dihedral angle monitoring
 	ok	atomic virial
 	ok	center of mass motion removal (constraining)
-	-	options for different compilers (see blitz)
-	
+		restructure the printing out
+		energy trajectories
+		timing functions
 
-	- 	EM
-	-	P3M, PME
+-------------
+
+	-	options for different compilers (see blitz)
+	-	distance restraining
+	-	pseudo/virtual atoms	
+	-	stochastic dynamics
+
+	-	Ewald, P3M, PME
 	-	path integral
 	-	SD, (MC?)
 	-	special forces
-	partly	perturbation & Tim / Bekker algorithm:
+		
+		partly	perturbation & Tim / Bekker algorithm:
 		no perturbed atom in bins => 1. normal, 2. perturbed &
 		bins, 3. perturbed & perturbed
 
