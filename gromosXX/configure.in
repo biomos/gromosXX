@@ -67,15 +67,20 @@ dnl AC_CXX_NAMESPACES
 
 dnl detect the compiler
 compiler="none"
-if eval "test x$GXX = xyes"; then
-	compiler=gnucc
-	echo "using GNU c++ compiler"
+dnl need to test for intel first, as it looks nowadays
+dnl suspiciously like GNU g++
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_INTELCC ; fi
+
+if eval "test x$compiler = xnone"; then
+	if eval "test x$GXX = xyes"; then
+		compiler=gnucc
+		echo "using GNU c++ compiler"
+	fi
 fi
 
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_KAICC   ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_SGICC   ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_MWERKS  ; fi
-if eval "test x$compiler = xnone"; then AC_PROG_CXX_INTELCC ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_MSVCPP  ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
 
@@ -93,9 +98,9 @@ case "$compiler" in
      ;;
     intel*)             # Intel C++.  tested with version 5.00
        echo "Configuring for Intel C++"
-       CXX_PICKY_FLAGS="-w1 -DBZDEBUG"
+       CXX_PICKY_FLAGS="-w1 -g -DBZDEBUG"
 
-       CXX_OPTIMIZE_FLAGS="-O3 -ip -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -w2 -align"
+       CXX_OPTIMIZE_FLAGS="-O3 -ip -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -align"
        CXX_DEBUG_FLAGS="-g -DBZDEBUG"
        CXXLD="$CXX"
 
