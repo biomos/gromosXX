@@ -15,13 +15,29 @@ configure)
 necessary libraries
 -------------------
 
-Blitz++		
-			on igc installed in
-			/usr/local/blitz-0.6/
+Blitz++ (http://www.oonumerics.org/blitz/)
 
-Boost test framework
-			on igc installed in
-			/home/markus/programs/
+	on igc installed in
+			/usr/local/blitz-0.6/
+	on isengard installed in
+			/orc/markus/machines/isengard/programs/
+
+so for example do the following (before you run configure):
+
+set BLITZPATH=/orc/markus/machines/isengard/programs
+setenv CPPFLAGS "-I${BLITZPATH}/include"
+setenv CXXFLAGS "-I${BLITZPATH}/include"
+setenv LDFLAGS "-L${BLITZPATH}/lib"
+
+if it does not work
+-------------------
+
+check the version number of the autotools:
+(in brackets the versions known to work)
+
+autoconf --version [autoconf (GNU Autoconf) 2.57]
+automake --version [automake (GNU automake) 1.7.2]
+libtoolize --version [libtoolize (GNU libtool) 1.4.3]
 
 -------------------------------------------------------------------------------
 

@@ -3,6 +3,8 @@ INCLUDES = -I$(top_srcdir)/src
 include_HEADERS = 		simulation.h \
 				simulation/simulation.h \
 				simulation/simulation.tcc \
+				simulation/nonbonded.h \
+				simulation/nonbonded.tcc \
 				system/system.h \
 				system/system.tcc \
 				topology/bond.h \
@@ -11,6 +13,10 @@ include_HEADERS = 		simulation.h \
 				topology/angle.tcc \
                                 topology/improper_dihedral.h \
                                 topology/improper_dihedral.tcc \
+				topology/dihedral.h \
+				topology/dihedral.tcc \
+				topology/compound.h \
+				topology/compound.tcc \
 				topology/solute.h \
 				topology/solute.tcc \
 				topology/solvent.h \

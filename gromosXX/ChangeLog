@@ -1,5 +1,20 @@
-6. 5. 2003	markus
+06. 05. 2003: (markus)
 	setting up initial cvs.
 	van der Waals gas in vacuum simulation with hard coded paramteres.
 
 	added runge-kutta integration algorithm.
+
+28. 05. 2003: (markus)
+	Input/Output routines
+	interactions (forces) of all Gromos96 physical terms + Gromos87
+	bond potential
+	Shake of solute and solvent
+	generalized triclinic boundary conditions
+	chargegroup based and atom based pairlist generation
+	constant energy simulations
+	reorganized testing
+
+	version 0_0_1
+	STABLE
+
+	

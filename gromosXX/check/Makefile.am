@@ -1,6 +1,8 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS = 		check.h
+include_HEADERS = 		check.h \
+				math.t.cc \
+				simulation.t.cc
 
 lib_LTLIBRARIES = 
 
@@ -19,5 +21,10 @@ simple_LDADD =			../src/simulation/libsimulation.la \
 
 simple_CXXFLAGS =		-DBZ_DEBUG
 
-TESTS = simple
+TESTS =				simple
+
+EXTRA_DIST =			data/rasn.topo  data/rasn.coord data/rasn.in \
+				data/rasn.hbond data/rasn.qbond data/rasn.angle \
+				data/rasn.improper data/rasn.dihedral \
+				data/rasn.nonbonded data/rasn.pl
 
