@@ -3,6 +3,7 @@
  * gathers common include directives for io
  */
 
+#include "argument.h"
 #include "blockinput.h"
 #include "message.h"
 #include "GInStream.h"
