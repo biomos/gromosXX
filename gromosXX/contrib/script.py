@@ -80,7 +80,7 @@ def write(rep):
 
     f.write("\n\n")
 
-    f.write("export LD_LIBRARY_PATH=/troll2/markus/programs/lib\n")
+    f.write("OMP_NUM_THREADS=1\n")
 
     f.write("\n\n")
 
