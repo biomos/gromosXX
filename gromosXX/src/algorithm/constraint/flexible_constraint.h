@@ -17,6 +17,9 @@ namespace algorithm
     public Shake<t_simulation, do_virial> 
   {
   public:
+
+     typedef t_simulation simulation_type;
+	  
     /**
      * Constructor.
      */

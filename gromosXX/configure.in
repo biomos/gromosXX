@@ -156,9 +156,9 @@ AC_MSG_CHECKING(blitz++ scientific computing library)
 AC_CHECK_HEADER(blitz/array.h, , 
 [AC_MSG_ERROR([header files for blitz++
  not found. Add the path to blitz++ to your CPPFLAGS])])
-AC_SEARCH_LIBS(_blitz_id, blitz, , [AC_MSG_ERROR(
-[lib blitz not found. make sure to include it in your
-CXXFLAGS, CFLAGS and LDFLAGS])])
+dnl AC_SEARCH_LIBS(_blitz_id, blitz, , [AC_MSG_ERROR(
+dnl [lib blitz not found. make sure to include it in your
+dnl CXXFLAGS, CFLAGS and LDFLAGS])])
 
 dnl AC_MSG_CHECKING(boost test library)
 dnl AC_CHECK_HEADER(boost/test/unit_test_suite.hpp, ,
