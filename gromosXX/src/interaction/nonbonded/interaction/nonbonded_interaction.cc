@@ -33,6 +33,10 @@
 
 #include <util/debug.h>
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -55,20 +59,25 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
  */
 interaction::Nonbonded_Interaction::~Nonbonded_Interaction()
 {
-  DEBUG(4, "Nonbonded_Interaction::destructor");
+  DEBUG(7, "Nonbonded_Interaction::destructor");
   delete m_pairlist_algorithm;
-  for(std::vector<Nonbonded_Set *>::iterator it = m_nonbonded_set.begin(), to = m_nonbonded_set.end();
-      it != to;
-      ++it)
-    delete *it;
+  DEBUG(12, "pairlist algorithm destroyed");
+
+  for(unsigned int i=0; i < m_nonbonded_set.size(); ++i){
+    DEBUG(12, "deleting set " << i);
+    delete m_nonbonded_set[i];
+    m_nonbonded_set[i] = NULL;
+  }
+  
 }
 
 /**
  * calculate nonbonded forces and energies.
  */
-int interaction::Nonbonded_Interaction::calculate_interactions(topology::Topology & topo,
-							       configuration::Configuration & conf,
-							       simulation::Simulation & sim)
+int interaction::Nonbonded_Interaction::
+calculate_interactions(topology::Topology & topo,
+		       configuration::Configuration & conf,
+		       simulation::Simulation & sim)
 {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
@@ -88,6 +97,9 @@ int interaction::Nonbonded_Interaction::calculate_interactions(topology::Topolog
     tid = omp_get_thread_num();
     // calculate the corresponding interactions
     assert(m_nonbonded_set.size() > tid);
+    DEBUG(8, "calculating nonbonded interactions (thread " 
+	  << tid << " of " << m_omp_num_threads << ")");
+    
     m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim,
 						 tid, m_omp_num_threads);
   }
@@ -97,8 +109,9 @@ int interaction::Nonbonded_Interaction::calculate_interactions(topology::Topolog
   // have to do all from here (probably it's only one, could unite this,
   // but then maybe it's clearer like it is...
   
-  for( ; it != to; ++it){
-    (*it)->calculate_interactions(topo, conf, sim);
+  for(int i=0; i < m_omp_num_threads; ++i){
+    m_nonbonded_set[i]->calculate_interactions(topo, conf, sim, 
+					       i, m_omp_num_threads);
   }
 
 #endif
@@ -110,11 +123,18 @@ int interaction::Nonbonded_Interaction::calculate_interactions(topology::Topolog
   configuration::Energy & e = conf.current().energies;
   
   for( ; it != to; ++it){
+    DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
     for(unsigned int i=0; i<topo.num_atoms(); ++i)
       conf.current().force(i) += (*it)->shortrange_storage().force(i);
 
+    DEBUG(7, "adding energies from set " << it - m_nonbonded_set.begin());
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
+
+	DEBUG(8, "set " << it - m_nonbonded_set.begin() << " group["
+	      << i << "][" << j <<"] e_lj = " 
+	      << (*it)->shortrange_storage().energies.lj_energy[i][j]
+	      << " e_crf = " << (*it)->shortrange_storage().energies.crf_energy[i][j]);
       
 	e.lj_energy[i][j] += 
 	  (*it)->shortrange_storage().energies.lj_energy[i][j];
@@ -142,6 +162,8 @@ int interaction::Nonbonded_Interaction::calculate_interactions(topology::Topolog
   
   if (sim.param().perturbation.perturbation){
 
+    DEBUG(7, "\tadd perturbed energy derivatives");
+    
     it = m_nonbonded_set.begin();
       
     for( ; it != to; ++it){
@@ -151,6 +173,12 @@ int interaction::Nonbonded_Interaction::calculate_interactions(topology::Topolog
       for(unsigned int i = 0; i < ljs; ++i){
 	for(unsigned int j = 0; j < ljs; ++j){
       
+	  assert(pe.lj_energy.size() > i);
+	  assert(pe.lj_energy[i].size() > j);
+
+	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy.size() > i);
+	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i].size() > j);
+
 	  pe.lj_energy[i][j] += 
 	    (*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
 	  pe.crf_energy[i][j] += 
@@ -211,18 +239,22 @@ int interaction::Nonbonded_Interaction::init(topology::Topology const & topo,
       }
     }
 #else
-    m_omp_num_threads = 1;
+    m_omp_num_threads = 2;
 #endif
 
   DEBUG(15, "nonbonded_interaction::initialize");
 
   if (sim.param().perturbation.perturbation){
-    m_nonbonded_set.
-      resize(m_omp_num_threads, new Perturbed_Nonbonded_Set(*m_pairlist_algorithm, m_parameter));
+
+    for(int i=0; i<m_omp_num_threads; ++i)
+      m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
+							    m_parameter));
+    
   }
   else{
-    m_nonbonded_set.
-      resize(m_omp_num_threads, new Nonbonded_Set(*m_pairlist_algorithm, m_parameter));
+    for(int i=0; i<m_omp_num_threads; ++i)
+      m_nonbonded_set.push_back(new Nonbonded_Set(*m_pairlist_algorithm, 
+						  m_parameter));
   }
   
   std::vector<Nonbonded_Set *>::iterator

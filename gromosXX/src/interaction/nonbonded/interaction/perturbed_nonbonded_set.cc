@@ -222,6 +222,14 @@ int interaction::Perturbed_Nonbonded_Set
 	     lj_energy.size() > j);
       assert(m_shortrange_storage.perturbed_energy_derivatives.
 	     lj_energy[j].size() > i);
+      assert(m_longrange_storage.perturbed_energy_derivatives.
+	     lj_energy.size() > i);
+      assert(m_longrange_storage.perturbed_energy_derivatives.
+	     lj_energy[i].size() > j);
+      assert(m_longrange_storage.perturbed_energy_derivatives.
+	     lj_energy.size() > j);
+      assert(m_longrange_storage.perturbed_energy_derivatives.
+	     lj_energy[j].size() > i);
       
       m_shortrange_storage.perturbed_energy_derivatives.lj_energy[i][j] += 
 	m_longrange_storage.perturbed_energy_derivatives.lj_energy[i][j];
@@ -231,6 +239,8 @@ int interaction::Perturbed_Nonbonded_Set
       
     }
   }
+  
+  DEBUG(7, "(set) calculate interactions done!");
 
   return 0;
 }
@@ -262,6 +272,12 @@ int interaction::Perturbed_Nonbonded_Set
        simulation::Simulation const & sim,
        bool quiet)
 {
+  DEBUG(7, "Perturbed Nonbonded Set :: init");
+  DEBUG(7, "sizes: " 
+	<< unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size())
+	<< " - " 
+	<< unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
+
   Nonbonded_Set::init(topo, conf, sim, quiet);
   
   m_shortrange_storage.perturbed_energy_derivatives.resize

@@ -83,6 +83,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   }
 
   // energy
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
+
   assert(storage.energies.lj_energy.size() > 
 	 topo.atom_energy_group(i));
   assert(storage.energies.lj_energy.size() >
@@ -94,8 +97,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   storage.energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
   
-  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
-	<< " j " << topo.atom_energy_group(j));
 }
 
 
