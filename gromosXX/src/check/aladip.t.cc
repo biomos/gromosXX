@@ -4,23 +4,13 @@
  */
 
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
-#include <topology/core/core.h>
-
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
-
-#include <topology/topology.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
-#include <simulation/simulation.h>
-#include <configuration/energy.h>
-#include <configuration/energy_average.h>
-#include <configuration/configuration.h>
 #include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
@@ -29,7 +19,6 @@
 #include <util/parse_verbosity.h>
 #include <util/error.h>
 
-#include <simulation/parameter.h>
 #include <interaction/interaction_types.h>
 #include <io/instream.h>
 #include <util/parse_tcouple.h>
@@ -42,7 +31,6 @@
 #include <algorithm/pressure/pressure_calculation.h>
 #include <algorithm/pressure/berendsen_barostat.h>
 
-#include <interaction/forcefield/forcefield.h>
 #include <interaction/forcefield/create_forcefield.h>
 
 #include <util/create_simulation.h>
@@ -132,7 +120,7 @@ int main(int argc, char* argv[])
 	std::cerr << "creating simulation failed!" << std::endl;
 	return 1;
       }
-
+      
       if (true){
 	// create a forcefield
 	interaction::Forcefield *ff = new interaction::Forcefield;
@@ -181,29 +169,15 @@ int main(int argc, char* argv[])
 
 	  // update the energies
 	  aladip_sim.conf.old().energies.calculate_totals();
-	  aladip_sim.conf.current().energy_averages.
-	    update(aladip_sim.conf.old().energies,
-		   aladip_sim.conf.old().energy_averages,
-		   aladip_sim.sim.time_step_size());
-
-      // perturbed energy derivatives
+	  // perturbed energy derivatives
 	  if (aladip_sim.sim.param().perturbation.perturbation){
-
-	    for(size_t s=0, s_to = aladip_sim.conf.old().
-		  perturbed_energy_derivatives.size();
-		s != s_to;
-		++s){
-
-	      aladip_sim.conf.old().perturbed_energy_derivatives[s].calculate_totals();
-
-	      aladip_sim.conf.current().perturbed_energy_derivative_averages[s].
-		update(aladip_sim.conf.old().perturbed_energy_derivatives[s],
-		       aladip_sim.conf.old().perturbed_energy_derivative_averages[s],
-		       aladip_sim.sim.time_step_size(),
-		       aladip_sim.sim.param().perturbation.dlamt);
-	    }
-	    
+	    aladip_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
 	  }
+
+	  aladip_sim.conf.current().averages.
+	    apply(aladip_sim.topo,
+		  aladip_sim.conf,
+		  aladip_sim.sim);
 	  
 	  aladip_sim.sim.time() +=  aladip_sim.sim.time_step_size();
 	  ++ aladip_sim.sim.steps();

@@ -3,23 +3,13 @@
  */
 
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
-#include <topology/core/core.h>
-
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
-
-#include <topology/topology.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
-#include <simulation/simulation.h>
-#include <configuration/energy.h>
-#include <configuration/energy_average.h>
-#include <configuration/configuration.h>
 #include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
@@ -28,7 +18,6 @@
 #include <util/parse_verbosity.h>
 #include <util/error.h>
 
-#include <simulation/parameter.h>
 #include <interaction/interaction_types.h>
 #include <io/instream.h>
 #include <util/parse_tcouple.h>
@@ -41,7 +30,6 @@
 #include <algorithm/pressure/pressure_calculation.h>
 #include <algorithm/pressure/berendsen_barostat.h>
 
-#include <interaction/forcefield/forcefield.h>
 #include <interaction/forcefield/create_forcefield.h>
 
 #include <util/create_simulation.h>
@@ -180,16 +168,9 @@ static void zero(configuration::Configuration & conf)
 {
   conf.current().force = 0.0;
   conf.current().energies.zero();
+  conf.current().perturbed_energy_derivatives.zero();
 
   conf.current().virial_tensor = 0.0;
-
-  // can have multiple entries (for different lambda dependencies)
-  for(size_t s = 0,
-	s_to = conf.current().perturbed_energy_derivatives.size();
-      s != s_to;
-      ++s){
-    conf.current().perturbed_energy_derivatives[s].zero();
-  }
 }
 
 static void fdiff_atomic_virial(topology::Topology & topo, 
