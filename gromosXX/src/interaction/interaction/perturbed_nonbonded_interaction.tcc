@@ -181,9 +181,9 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_pairlis
     const double A_lnm = pow(A_l, sim.topology().nlam()-1);
 
     m_nonbonded_interaction.rf_soft_interaction(r, q_i_a*q_i_a, 
-						A_l, A_f_rf, A_e_rf, A_de_rf);
+						B_l, A_f_rf, A_e_rf, A_de_rf);
     m_nonbonded_interaction.rf_soft_interaction(r, q_i_b*q_i_b, 
-						B_l, B_f_rf, B_e_rf, B_de_rf);
+						A_l, B_f_rf, B_e_rf, B_de_rf);
 
     DEBUG(7, "Self term for atom " << i << " A: " << A_e_rf << " B: " << B_e_rf);
     
@@ -338,8 +338,8 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 	is_perturbed = false;
 	
 	A_lj = &m_nonbonded_interaction.lj_parameter(
-						     sim.topology().iac(it->i),
-						     sim.topology().iac(it->j));
+				     sim.topology().iac(it->i),
+				     sim.topology().iac(it->j));
 	B_lj = A_lj;
       
 	A_q = sim.topology().charge()(it->i) *
@@ -357,6 +357,7 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
       case 0: // excluded
 	A_e_lj = A_e_crf = A_de_lj = A_de_crf = 0.0;
 	A_f = 0.0;
+	DEBUG(7, "excluded in A");
 	
 	break;
 	// --------------------------
@@ -366,11 +367,13 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 	DEBUG(7, "\tcharges state A i*j = " << A_q);
     
 	if (is_perturbed){
+	  DEBUG(7, "perturbed interaction");
 	  m_nonbonded_interaction.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
 							  A_q, sim.topology().lambda(),
 							  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
 	}
 	else{
+	  DEBUG(7, "non-perturbed interaction");
 	  m_nonbonded_interaction.lj_crf_interaction(r, A_lj->c6, A_lj->c12,
 						     A_q, A_f, A_e_lj, 
 						     A_e_crf);
@@ -390,11 +393,13 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 	DEBUG(7, "\tcharges state A i*j = " << A_q);
     
 	if (is_perturbed){
+	  DEBUG(7, "perturbed 1,4 interaction");
 	  m_nonbonded_interaction.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
 							  A_q, sim.topology().lambda(),
 							  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
 	}
 	else{
+	  DEBUG(7, "non-perturbed 1,4 interaction");
 	  m_nonbonded_interaction.lj_crf_interaction(r, A_lj->cs6, A_lj->cs12,
 						     A_q, A_f, A_e_lj, 
 						     A_e_crf);
@@ -416,6 +421,7 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
     switch(it->B_interaction){
       // --------------------------
       case 0: // excluded
+	DEBUG(7, "B excluded");
 	B_e_lj = B_e_crf = B_de_lj = B_de_crf = 0.0;
 	B_f = 0.0;
 	
@@ -427,12 +433,14 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 	DEBUG(7, "\tcharges state B i*j = " << B_q);
     
 	if (is_perturbed){
+	  DEBUG(7, "perturbed interaction");
 	  m_nonbonded_interaction.
 	    lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				    B_q, sim.topology().lambda(),
+				    B_q, 1.0 - sim.topology().lambda(),
 				    B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 	}
 	else{
+	  DEBUG(7, "non-perturbed interaction");
 	  m_nonbonded_interaction.lj_crf_interaction(r, B_lj->c6, B_lj->c12,
 						     B_q, B_f, B_e_lj, 
 						     B_e_crf);
@@ -453,12 +461,14 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 	DEBUG(7, "\tcharges state B i*j = " << B_q);
     
 	if (is_perturbed){
+	  DEBUG(7, "perturbed 1,4 interaction");
 	  m_nonbonded_interaction.
 	    lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				    B_q, sim.topology().lambda(),
+				    B_q, 1.0 - sim.topology().lambda(),
 				    B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
 	}
 	else{
+	  DEBUG(7, "non-perturbed 1,4 interaction");
 	  m_nonbonded_interaction.lj_crf_interaction(r, B_lj->cs6, B_lj->cs12,
 						     B_q, B_f, B_e_lj, 
 						     B_e_crf);

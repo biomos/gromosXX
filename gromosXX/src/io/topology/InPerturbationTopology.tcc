@@ -176,16 +176,23 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 	// make sure it's excluded
 	if (topo.all_exclusion(ap.i).count(ap.j) != 1){
 	  topo.all_exclusion(ap.i).insert(ap.j);
+	  DEBUG(7, "excluding perturbed pair " << ap.i << " and " << ap.j);
+	  
 	}
 	else{
 	  // it was already excluded, let's remove it from the
 	  // exclusions or 1,4 pairs...
 	  
 	  // is it in the exclusions
-	  if (topo.exclusion(ap.i).count(ap.j))
+	  if (topo.exclusion(ap.i).count(ap.j)){
+	    DEBUG(7, "removing perturbed pair from exclusion " << ap.i << " and " << ap.j);
 	    topo.exclusion(ap.i).erase(ap.j);
-	  if (topo.one_four_pair(ap.i).count(ap.j))
+	  }
+	  if (topo.one_four_pair(ap.i).count(ap.j)){
+	    DEBUG(7, "removing perturbed pair from one four " << ap.i << " and " << ap.j);
 	    topo.one_four_pair(ap.i).erase(ap.j);
+	  }
+	  
 	}
       }
       
