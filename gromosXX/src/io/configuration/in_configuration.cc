@@ -164,14 +164,27 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   conf.current().energies.resize(num, numb);
   conf.current().energy_averages.resize(num, numb);
-  conf.current().perturbed_energy_derivatives.resize(num, numb);
-  conf.current().perturbed_energy_derivative_averages.resize(num, numb);
 
   conf.old().energies.resize(num, numb);
   conf.old().energy_averages.resize(num, numb);
-  conf.old().perturbed_energy_derivatives.resize(num, numb);
-  conf.old().perturbed_energy_derivative_averages.resize(num, numb);
 
+  // allow for split up storage of the perturbed energy derivatives
+  // (to accomodate different lambda dependences)
+  size_t s = topo.energy_group_lambdadep().size() / 2 + 1;
+
+  conf.current().perturbed_energy_derivatives.resize(s);
+  conf.current().perturbed_energy_derivative_averages.resize(s);
+  conf.old().perturbed_energy_derivatives.resize(s);
+  conf.old().perturbed_energy_derivative_averages.resize(s);
+  
+  for(size_t s=0; s < conf.current().perturbed_energy_derivatives.size(); ++s){
+    conf.current().perturbed_energy_derivatives[s].resize(num, numb);
+    conf.current().perturbed_energy_derivative_averages[s].resize(num, numb);
+    
+    conf.old().perturbed_energy_derivatives[s].resize(num, numb);
+    conf.old().perturbed_energy_derivative_averages[s].resize(num, numb);
+  }
+  
   // resize some special data
   conf.special().rel_mol_com_pos.resize(topo.num_atoms());
 

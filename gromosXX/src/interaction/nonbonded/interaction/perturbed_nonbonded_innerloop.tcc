@@ -25,6 +25,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   
   double e_lj, e_crf, de_lj, de_crf;
   
+  size_t energy_derivative_index = 0;
+
   if (t_interaction_spec::do_bekker){
     r = conf.current().pos(i) + periodicity.shift(pc).pos
       - conf.current().pos(j);
@@ -88,12 +90,33 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
 
   if (t_perturbation_details::do_scaling){
+    // SCALING ON
+
     // check whether we need to do scaling
     // based on energy groups
     
     std::pair<int, int> 
     energy_group_pair(topo.atom_energy_group(i),
     topo.atom_energy_group(j));
+    
+    bool reset_lambda = false;
+
+    // check whether we have changing lambda dependencies
+    if (topo.energy_group_lambdadep().count(energy_group_pair)){
+      
+      // set lambdas
+      const double l = topo.lambda();
+      const double alpha = topo.energy_group_lambdadep()[energy_group_pair].second;
+      const double lp = alpha * l * l + (1-alpha) * l;
+      energy_derivative_index = topo.energy_group_lambdadep()[energy_group_pair].first;
+      
+      DEBUG(8, "lambda dep l=" << l << " alpha=" << alpha << " lp=" << lp
+	    << " index=" << energy_derivative_index);
+
+      set_lambda(lp, topo.lambda_exp());
+      reset_lambda = true;
+    }
+
     if (topo.energy_group_scaling().count(energy_group_pair)){
     
     // YES, we do scale the interactions!
@@ -115,7 +138,12 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 			      f1, f6, f12,
 			      e_lj, e_crf, de_lj, de_crf);
     }
-  }
+    
+    if (reset_lambda)
+      set_lambda(topo.lambda(), topo.lambda_exp());
+
+
+  } // END OF SCALING ON ---
   else{
     lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
 			    B_lj->c6, B_lj->c12,
@@ -170,14 +198,18 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     [topo.atom_energy_group(j)] += e_crf;
   
   DEBUG(7, "\tenergy gropu: i and j " << topo.atom_energy_group(i)
-	<< " " << topo.atom_energy_group(j));
+	<< " " << topo.atom_energy_group(j)
+	<< " pert der index = " << energy_derivative_index);
   
-  storage.perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
+  storage.perturbed_energy_derivatives[energy_derivative_index].lj_energy
+    [topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += de_lj;
-  storage.perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)]
+
+  storage.perturbed_energy_derivatives[energy_derivative_index].crf_energy
+    [topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += de_crf;
 
-  DEBUG(8, "\tperturbed pair " << i << " - " << j << " done!");
+  DEBUG(8, "\tperturbed lj_crf_innerloop " << i << " - " << j << " done!");
   
 }
 
@@ -293,12 +325,12 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
 	  << " " << topo.atom_energy_group(j));
     DEBUG(20,"de_lj tot (before) " 
-	  << conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
+	  << conf.current().perturbed_energy_derivatives[0].lj_energy[topo.atom_energy_group(i)]
 	  [topo.atom_energy_group(j)]);
     
-    conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
+    conf.current().perturbed_energy_derivatives[0].lj_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_lj;
-    conf.current().perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)]
+    conf.current().perturbed_energy_derivatives[0].crf_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_crf;
 
 }
@@ -344,7 +376,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     
   conf.current().energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(i)] += 0.5 * e_rf;
-  conf.current().perturbed_energy_derivatives.crf_energy
+  conf.current().perturbed_energy_derivatives[0].crf_energy
     [topo.atom_energy_group(i)]
     [topo.atom_energy_group(i)] += 0.5 * de_rf;
   
@@ -397,7 +429,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     conf.current().energies.crf_energy 
       [topo.atom_energy_group(i)]
       [topo.atom_energy_group(*it)] += e_rf;
-    conf.current().perturbed_energy_derivatives.crf_energy 
+    conf.current().perturbed_energy_derivatives[0].crf_energy 
       [topo.atom_energy_group(i)]
       [topo.atom_energy_group(*it)] += de_rf;
     force(i) += f_rf;

@@ -110,22 +110,30 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
   if (t_perturbation_spec::do_perturbation){
 
     it = m_nonbonded_set.begin();
+    const double ps = conf.current().perturbed_energy_derivatives.size();
 
-    configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
-  
+    DEBUG(8, "storing "
+	  << ps << " set pert energies in conf");
+    
+      
     for( ; it != to; ++it){
 
-      for(size_t i = 0; i < ljs; ++i){
-	for(size_t j = 0; j < ljs; ++j){
+      for(size_t s=0; s<ps; ++s){
+	
+	configuration::Energy & pe = conf.current().perturbed_energy_derivatives[s];
+	
+	for(size_t i = 0; i < ljs; ++i){
+	  for(size_t j = 0; j < ljs; ++j){
       
-	  pe.lj_energy[i][j] += 
-	    it->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
-	  pe.crf_energy[i][j] += 
-	    it->shortrange_storage().perturbed_energy_derivatives.crf_energy[i][j];
+	    pe.lj_energy[i][j] += 
+	      it->shortrange_storage().perturbed_energy_derivatives[s].lj_energy[i][j];
+	    pe.crf_energy[i][j] += 
+	      it->shortrange_storage().perturbed_energy_derivatives[s].crf_energy[i][j];
+	  }
 	}
-      }
-    }
-  }
+      } // all different lambda dependencies
+    } // sets
+  } // perturbation
 
   m_timing += util::now() - nonbonded_start;
 

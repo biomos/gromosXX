@@ -339,6 +339,32 @@ namespace topology
     energy_group_scaling() { return m_energy_group_scaling;}
 
     /**
+     * matrix for changed lambda dependence for interactions
+     * between energy groups  energy groups
+     */
+    std::map<std::pair<int, int>, std::pair<int, double> > const &
+    energy_group_lambdadep()const { return m_energy_group_lambdadep;}
+
+    /**
+     * matrix for changed lambda dependence for interactions
+     * between energy groups  energy groups
+     */
+    std::map<std::pair<int, int>, std::pair<int, double> > &
+    energy_group_lambdadep() { return m_energy_group_lambdadep;}
+
+    /**
+     * alpha parameters for the perturbed energy derivatives.
+     */
+    std::vector<double> const & perturbed_energy_derivative_alpha()const
+    { return m_perturbed_energy_derivative_alpha; }
+
+    /**
+     * alpha parameters for the perturbed energy derivatives.
+     */
+    std::vector<double> & perturbed_energy_derivative_alpha()
+    { return m_perturbed_energy_derivative_alpha; }
+    
+    /**
      * position restraints accessor.
      */
     std::vector<position_restraint_struct> & position_restraints()
@@ -466,6 +492,18 @@ namespace topology
      */
     std::map<std::pair<int, int>, std::pair<double, double> > 
     m_energy_group_scaling;
+
+    /**
+     * interaction matrix for interactions with
+     * changed lambda dependence
+     */
+    std::map<std::pair<int, int>, std::pair<int, double> > 
+    m_energy_group_lambdadep;
+
+    /**
+     * alpha parameter values for the perturbed energy derivatives
+     */
+    std::vector<double> m_perturbed_energy_derivative_alpha;
 
     /**
      * position restraints / constraints

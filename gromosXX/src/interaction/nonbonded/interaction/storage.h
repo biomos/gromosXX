@@ -33,7 +33,7 @@ namespace interaction
     /**
      * (longrange) potential energy lambda derivative storage.
      */
-    configuration::Energy perturbed_energy_derivatives;
+    std::vector<configuration::Energy> perturbed_energy_derivatives;
     /**
      * (longrange) virial storage.
      */
@@ -46,7 +46,11 @@ namespace interaction
     {
       force = 0.0;
       energies.zero();
-      perturbed_energy_derivatives.zero();
+
+      for(size_t s=0, s_to = perturbed_energy_derivatives.size();
+	  s != s_to; ++s)
+	perturbed_energy_derivatives[s].zero();
+
       virial_tensor = 0.0;
     }
 

@@ -70,12 +70,12 @@ namespace configuration
       /**
        * perturbed energy derivatives.
        */
-      configuration::Energy perturbed_energy_derivatives;
+      std::vector<configuration::Energy> perturbed_energy_derivatives;
 
       /**
        * perturbed energy derivative averages.
        */
-      configuration::Energy_Average perturbed_energy_derivative_averages;
+      std::vector<configuration::Energy_Average> perturbed_energy_derivative_averages;
       
       /**
        * resize the arrays for s atoms.

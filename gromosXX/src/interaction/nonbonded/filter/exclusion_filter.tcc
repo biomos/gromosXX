@@ -27,8 +27,8 @@ interaction::Exclusion_Filter<t_interaction_spec>
       e_to = topo.all_exclusion(i).rend();
 
     for( ; e != e_to; ++e){
-      if (j > *e) break;
-      if (j == *e){
+      if (j > unsigned(*e)) break;
+      if (j == unsigned(*e)){
 	DEBUG(11, "\texcluded");
 	return true;
       }

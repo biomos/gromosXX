@@ -55,7 +55,15 @@ int interaction::Forcefield
   DEBUG(15, "zero energies");
   conf.current().energies.zero();
   DEBUG(15, "zero lambda energies");
-  conf.current().perturbed_energy_derivatives.zero();
+  
+  // can have multiple entries (for different lambda dependencies)
+  for(size_t s = 0,
+	s_to = conf.current().perturbed_energy_derivatives.size();
+      s != s_to;
+      ++s){
+    conf.current().perturbed_energy_derivatives[s].zero();
+  }
+
   conf.current().virial_tensor = 0.0;
 
   // prepare for the virial

@@ -219,9 +219,9 @@ static int _calculate_perturbed_dihedral_interactions
     conf.current().energies.dihedral_energy
       [topo.atom_energy_group()[d_it->i]] += energy;
 
-   assert(conf.current().perturbed_energy_derivatives.dihedral_energy.size() >
+   assert(conf.current().perturbed_energy_derivatives[0].dihedral_energy.size() >
 	   topo.atom_energy_group()[d_it->i]);
-   conf.current().perturbed_energy_derivatives.dihedral_energy
+   conf.current().perturbed_energy_derivatives[0].dihedral_energy
      [topo.atom_energy_group()[d_it->i]] += e_lambda;   
   }
 

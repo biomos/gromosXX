@@ -478,21 +478,21 @@ interaction::Perturbed_Nonbonded_Pair<
   DEBUG(7, "\tenergy i and j " << topo.atom_energy_group(it->i)
 	<< " " << topo.atom_energy_group(it->j));
   
-  //assert(m_storage.perturbed_energy_derivatives.lj_energy.size() > 
+  //assert(m_storage.perturbed_energy_derivatives[0].lj_energy.size() > 
   //   topo.atom_energy_group(i));
-  //assert(m_storage.perturbed_energy_derivatives.lj_energy.size() >
+  //assert(m_storage.perturbed_energy_derivatives[0].lj_energy.size() >
   //   topo.atom_energy_group(j));
-  //assert(m_storage.perturbed_energy_derivatives.crf_energy.size() > 
+  //assert(m_storage.perturbed_energy_derivatives[0].crf_energy.size() > 
   //   topo.atom_energy_group(i));
-  //assert(m_storage.perturbed_energy_derivatives.crf_energy.size() >
+  //assert(m_storage.perturbed_energy_derivatives[0].crf_energy.size() >
   //   topo.atom_energy_group(j));
   
-  conf.current().perturbed_energy_derivatives.
+  conf.current().perturbed_energy_derivatives[0].
     lj_energy[topo.atom_energy_group(it->i)]
     [topo.atom_energy_group(it->j)]
     += de_lj;
   
-  conf.current().perturbed_energy_derivatives.
+  conf.current().perturbed_energy_derivatives[0].
     crf_energy[topo.atom_energy_group(it->i)]
     [topo.atom_energy_group(it->j)]
     += de_crf;
