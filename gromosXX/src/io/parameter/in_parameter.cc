@@ -33,6 +33,9 @@ void io::In_Parameter::read(simulation::Parameter &param)
   std::cout << "\nINPUT\n";
   std::cout << title << "\n";
 
+  // store the title...
+  param.title = title;
+
   read_MINIMISE(param);
   read_SYSTEM(param);
   read_START(param); // and CENTREOFMASS
@@ -428,9 +431,6 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param)
   if(param.print.centreofmass<=0)
     io::messages.add("PRINT block: print centre of mass should be >0",
 		     "In_Parameter", io::message::error);
-  if( param.print.monitor_dihedrals)
-    io::messages.add("Dihedral angle monitoring currently not supported",
-		     "In_Parameter", io::message::warning);
 }
 
 /**

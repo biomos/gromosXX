@@ -52,7 +52,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
 {
   
   if (param.force.bond == 1){
-    std::cout <<"\tquartic bonds\n";
+    std::cout <<"\tquartic bond interaction\n";
 
     interaction::Quartic_Bond_Interaction<t_interaction_spec> *b =
       new interaction::Quartic_Bond_Interaction<t_interaction_spec>();
@@ -61,7 +61,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
     ff.push_back(b);
 
     if (param.perturbation.perturbation){
-      std::cout <<"\tperturbed quartic bonds\n";
+      std::cout <<"\tperturbed quartic bond interaction\n";
       
       interaction::Perturbed_Quartic_Bond_Interaction<t_interaction_spec> * pb =
 	new interaction::Perturbed_Quartic_Bond_Interaction<t_interaction_spec>(*b);
@@ -70,7 +70,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
   }
 
   if (param.force.bond == 2){
-      std::cout <<"\tharmonic bonds\n";
+      std::cout <<"\tharmonic bond interaction\n";
 
     interaction::Harmonic_Bond_Interaction<t_interaction_spec> *b =
       new interaction::Harmonic_Bond_Interaction<t_interaction_spec>();
@@ -82,7 +82,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
 		     "create bonded", io::message::notice);
 
     if (param.perturbation.perturbation){
-      std::cout <<"\tperturbed harmonic bonds\n";
+      std::cout <<"\tperturbed harmonic bond interaction\n";
 
       interaction::Perturbed_Harmonic_Bond_Interaction<t_interaction_spec> * pb =
 	new interaction::Perturbed_Harmonic_Bond_Interaction<t_interaction_spec>(*b);
@@ -91,7 +91,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
   }
   
   if (param.force.angle == 1){
-    std::cout <<"\tbond angles\n";
+    std::cout <<"\tbond angle interaction\n";
     interaction::Angle_Interaction<t_interaction_spec> *a =
       new interaction::Angle_Interaction<t_interaction_spec>();
     
@@ -99,7 +99,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
     ff.push_back(a);
 
     if (param.perturbation.perturbation){
-      std::cout <<"\tperturbed bond angles\n";
+      std::cout <<"\tperturbed bond angle interaction\n";
       interaction::Perturbed_Angle_Interaction<t_interaction_spec> * pa =
 	new interaction::Perturbed_Angle_Interaction<t_interaction_spec>(*a);
       ff.push_back(pa);
@@ -112,7 +112,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
   }
   
   if (param.force.improper == 1){
-    std::cout << "\timproper dihedrals\n";
+    std::cout << "\timproper dihedral interaction\n";
     
     interaction::Improper_Dihedral_Interaction<t_interaction_spec> * i =
       new interaction::Improper_Dihedral_Interaction<t_interaction_spec>();
@@ -120,7 +120,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
     ff.push_back(i);
 
     if (param.perturbation.perturbation){
-      std::cout << "\tperturbed improper dihedrals\n";
+      std::cout << "\tperturbed improper dihedral interaction\n";
       interaction::Perturbed_Improper_Dihedral_Interaction<t_interaction_spec> * pi =
 	new interaction::Perturbed_Improper_Dihedral_Interaction<t_interaction_spec>(*i);
       ff.push_back(pi);
@@ -129,7 +129,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
   }
 
   if (param.force.dihedral == 1){
-    std::cout <<"\tdihedrals\n";
+    std::cout <<"\tdihedral interaction\n";
     
     interaction::Dihedral_Interaction<t_interaction_spec> * d =
       new interaction::Dihedral_Interaction<t_interaction_spec>();
@@ -137,7 +137,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
     ff.push_back(d);
 
     if (param.perturbation.perturbation){
-      std::cout <<"\tperurbed dihedrals\n";
+      std::cout <<"\tperurbed dihedral interaction\n";
       interaction::Perturbed_Dihedral_Interaction<t_interaction_spec> * pd =
 	new interaction::Perturbed_Dihedral_Interaction<t_interaction_spec>(*d);
       ff.push_back(pd);

@@ -437,24 +437,25 @@ namespace io
     os << type << "Posrest      : " << std::setw(30) << e.posrest_total << "\n";
     os << "\n";
 
-    os << std::setw(15) << "COV";
+    os << std::setw(20) << "COV";
     
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
-    os << "\n" << std::setw(15) << type + "bonds";
+    os << "\n" << std::setw(20) << type + "bonds";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.bond_energy[i];
-    os << "\n" << std::setw(15) << type + "angles";
+    os << "\n" << std::setw(20) << type + "angles";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.angle_energy[i];
-    os << "\n" << std::setw(15) << type + "dihedrals";
+    os << "\n" << std::setw(20) << type + "dihedrals";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihedral_energy[i];
-    os << "\n" << std::setw(15) << type + "impropers";
+    os << "\n" << std::setw(20) << type + "impropers";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.improper_energy[i];
+
     os << "\n" << "\n";
-    os << std::setw(15) << type + "VDW";
+    os << std::setw(20) << type + "VDW";
     
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n";
     for(int j=0; j < numenergygroups; j++) {
-      os << std::setw(15) << energroup[j];
+      os << std::setw(20) << energroup[j];
       for(int i=0; i<j; i++) os << std::setw(12) << " ";
       for(int i=j; i < numenergygroups; i++){
 	if(i==j)
@@ -464,12 +465,12 @@ namespace io
       }
       os << "\n";
     }
-    os << "\n" << std::setw(15) << type + "CRF";
+    os << "\n" << std::setw(20) << type + "CRF";
     
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n";
     for(int j=0; j < numenergygroups; j++) {
-      os << std::setw(15) << energroup[j];
+      os << std::setw(20) << energroup[j];
       for(int i=0; i<j; i++) os << std::setw(12) << " ";
       for(int i=j; i < numenergygroups; i++){
 	if(i==j)
@@ -481,12 +482,13 @@ namespace io
     }
 
     os << "\n" << "\n";
-    os << std::setw(10) << type + "SPECIAL";
+    os << std::setw(20) << type + "SPECIAL";
 
-    os << "\n" << std::setw(12) << type + "Constraints";
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n" << std::setw(20) << type + "Constraints";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.constraints_energy[i];
 
-    os << "\n" << std::setw(12) << type + "Posrest";
+    os << "\n" << std::setw(20) << type + "Posrest";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];
 
     os << "\nEND\n";
@@ -521,10 +523,10 @@ namespace io
     os.setf(std::ios::fixed, std::ios::floatfield);
     os.precision(9);
     
-    os << "TIMESTEP\n"
+    os << "TIMESTEP"
        << std::setw(15) << steps
        << std::setw(15) << time
-       << "\nEND\n";
+       << "\n";
 
   }
 

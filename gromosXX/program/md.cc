@@ -68,10 +68,12 @@ int main(int argc, char *argv[]){
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
 
-    io::Out_Configuration traj("GromosXX");
-    
+    io::Out_Configuration traj("GromosXX\n");
+
     io::read_input(args, topo, conf, sim,  md);
     io::read_special(args, topo, conf, sim);
+
+    traj.title("GromosXX\n" + sim.param().title);
 
     if (args.count("fin") > 0)
       traj.final_configuration(args["fin"]);
@@ -111,8 +113,11 @@ int main(int argc, char *argv[]){
       sim.time_step_size() * sim.param().step.number_of_steps;
     
 
-    std::cout << "MD loop\n\tstart t=" << sim.time() 
-	      << "\tend t=" << end_time << "\n" << std::endl;
+
+    std::cout << "==================================================\n"
+	      << " MAIN MD LOOP\n"
+	      << "==================================================\n"
+	      << std::endl;
 
     int error;
     

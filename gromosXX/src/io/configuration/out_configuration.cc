@@ -950,6 +950,8 @@ void io::Out_Configuration
     if (sim.param().pcouple.calculate)
       print_PRESSURE(m_output, conf);
     
+    m_output.flush();
+
   }
   
 }
@@ -963,15 +965,18 @@ void io::Out_Configuration
   m_output << "FINAL DATA\n";
   m_output << "============================================================\n";
   
-  _print_timestep(sim, m_output);
-  
+  m_output << "\tsimulation time  :" << std::setw(10) << sim.time() << "\n"
+	   << "\tsimulation steps :" << std::setw(10) << sim.steps() << "\n\n";
+
   configuration::Energy e, ef;
   math::Matrix p, pf;
   
   conf.current().energy_averages.average(e, ef, p, pf);
 
   print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES", "<E>_");
+  m_output << "\n";
   print_ENERGY(m_output, ef, topo.energy_groups(), "ENERGY FLUCTUATIONS", "<<E>>_");
+  m_output << "\n";
 
   if (sim.param().perturbation.perturbation){
     if (sim.param().perturbation.dlamt){
@@ -979,6 +984,7 @@ void io::Out_Configuration
 								  sim.param().perturbation.dlamt);
 
       print_ENERGY(m_output, e, topo.energy_groups(), "CUMULATIVE DG", "DG_");
+      m_output << "\n";
 
       // what's that anyway...
       //print_ENERGY(m_output, ef, topo.energy_groups(), "DG FLUCTUATIONS", "<<DG>>_");
@@ -988,17 +994,22 @@ void io::Out_Configuration
       conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf);
 
       print_ENERGY(m_output, e, topo.energy_groups(), "dE/dLAMBDA AVERAGES", "<dE/dl>_");
+      m_output << "\n";
       print_ENERGY(m_output, ef, topo.energy_groups(), "dE/dLAMBDA FLUCTUATIONS", "<<dE/dl>>_");
+      m_output << "\n";
     }
     
   }
-
+  m_output << "\n";
   print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
+  m_output << "\n";
   print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
 
+  m_output << "\n\n";
   if (sim.param().pcouple.calculate){
     print_MATRIX(m_output, p, "PRESSURE AVERAGE");
+    m_output << "\n";
     print_MATRIX(m_output, pf, "PRESSURE FLUCTUATION");
   }
-    
+  m_output << "\n\n";    
 }

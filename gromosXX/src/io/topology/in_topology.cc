@@ -222,6 +222,8 @@ io::In_Topology::read(topology::Topology& topo,
     
   { // BONDH
     DEBUG(10, "BONDH block");
+
+    std::cout << "\tBOND";
     
     buffer.clear();
     buffer = m_block["BONDH"];
@@ -279,16 +281,12 @@ io::In_Topology::read(topology::Topology& topo,
       }
     }
 
-    std::cout << "\n\tEND\n";
-    
   } // BONDH
   
   { // BOND
     DEBUG(10, "BOND block");
     buffer = m_block["BOND"];
 
-    std::cout << "\tBOND";
-  
     if (buffer.size()){
       
       it = buffer.begin() + 1;
@@ -342,6 +340,8 @@ io::In_Topology::read(topology::Topology& topo,
       }
     }
   
+    std::cout << "\n\tEND\n";
+
   } // BOND
 
 

@@ -123,7 +123,7 @@ interaction::Pairlist::end()
 
 namespace interaction
 {
-  std::ostream & 
+  inline std::ostream & 
   operator<<(std::ostream &os, Pairlist &pl)
   {
     {

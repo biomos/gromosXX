@@ -67,6 +67,10 @@ libinteraction_la_SOURCES =	interaction.cc \
 				forcefield/create_forcefield.cc \
 				bonded/create_bonded.cc \
 				nonbonded/create_nonbonded.cc \
+				nonbonded/create_perturbed.cc \
+				nonbonded/create_perturbed_grid.cc \
+				nonbonded/create_unperturbed.cc \
+				nonbonded/create_unperturbed_grid.cc \
 				special/create_special.cc
 
 

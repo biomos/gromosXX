@@ -16,6 +16,11 @@ namespace simulation
   {
   public:
     /**
+     * title of the simulation (from the input file)
+     */
+    std::string title;
+    
+    /**
      * @struct system_struct
      * system block
      */

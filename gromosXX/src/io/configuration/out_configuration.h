@@ -100,6 +100,16 @@ namespace io {
     void force_precision(int prec, int add=9);
     int force_precision();
     
+    /**
+     * get the title.
+     */
+    std::string title() const { return m_title; }
+
+    /**
+     * set the title.
+     */
+    void title(std::string s) { m_title = s; }
+
   protected:
     std::ofstream m_pos_traj;
     std::ofstream m_final_conf;
