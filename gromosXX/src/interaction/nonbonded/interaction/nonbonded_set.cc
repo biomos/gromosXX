@@ -258,23 +258,24 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   //*************************
 
   std::vector<unsigned int>::const_iterator j_it, j_to;
-  // size_t i;
-  // size_t size_i = pairlist().size();
+
   math::Vec r;
   math::Matrix h;
   Periodicity_type periodicity(conf.current().box);
+  
+  assert(pairlist().size() > atom_i);
   
   for(j_it = pairlist()[atom_i].begin(),
 	j_to = pairlist()[atom_i].end();
       j_it != j_to;
       ++j_it){
 
-    if (*j_it == atom_j){
-      periodicity.nearest_image(conf.current().pos(atom_i),
-				conf.current().pos(atom_j),
-				r);
-    }
-    else continue;
+    if (*j_it != atom_j) continue;
+    DEBUG(12, "\thessian pair in pairlist: " << atom_i << " - " << atom_j);
+
+    periodicity.nearest_image(conf.current().pos(atom_i),
+			      conf.current().pos(atom_j),
+			      r);
       
     const lj_parameter_struct &lj = 
       m_nonbonded_interaction->lj_parameter(topo.iac(atom_i),
@@ -289,18 +290,20 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
       for(unsigned int d2=0; d2 < 3; ++d2)
 	hessian(d1,d2) += h(d1,d2);
   }
+
   // and the other way round
+  assert(pairlist().size() > atom_j);
   for(j_it = pairlist()[atom_j].begin(),
-	j_to = pairlist()[atom_i].end();
+	j_to = pairlist()[atom_j].end();
       j_it != j_to;
       ++j_it){
+    
+    if (*j_it != atom_i) continue;
+    DEBUG(12, "\thessian pair in pairlist: " << atom_j << " - " << atom_i);
 
-    if (*j_it == atom_i){
-      periodicity.nearest_image(conf.current().pos(atom_i),
-				conf.current().pos(atom_j),
-				r);
-    }
-    else continue;
+    periodicity.nearest_image(conf.current().pos(atom_i),
+			      conf.current().pos(atom_j),
+			      r);
       
     const lj_parameter_struct &lj = 
       m_nonbonded_interaction->lj_parameter(topo.iac(atom_i),
