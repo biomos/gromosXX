@@ -60,6 +60,8 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
 	    << t_interaction_spec::do_bekker << "\n";
 
   int status = 0;
+
+#if(compiler==gnucc)
   std::cout << "\n"
 	    << std::setw(25) << std::left << "\tsimulation"
 	    << abi::__cxa_demangle(typeid(m_simulation).name(), 
@@ -83,6 +85,26 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
 	    << "\n";
   
   std::cout << std::right << "\n\n";
+#else
+  std::cout << "\n"
+	    << std::setw(25) << std::left << "\tsimulation"
+	    << typeid(m_simulation)
+	    << "\n"
+	    << std::setw(25) << std::left  << "\tintegration"
+	    << typeid(m_integration)
+	    << "\n"
+	    << std::setw(25) << std::left << "\ttemperature coupling"
+	    << typeid(m_temperature)
+	    << "\n"
+	    << std::setw(25) << std::left << "\tpressure coupling"
+	    << typeid(m_pressure)
+	    << "\n"
+	    << std::setw(25) << std::left << "\tconstraints" 
+	    << typeid(m_distance_constraint)
+	    << "\n";
+  
+  std::cout << std::right << "\n\n";
+#endif
 
   //----------------------------------------------------------------------------
 
@@ -474,7 +496,6 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
   // pressure calculation and coupling
   DEBUG(7, "md: init pressure");
 
-  bool calc;
   int ntp;
   double comp, tau;
   math::Matrix pres0;

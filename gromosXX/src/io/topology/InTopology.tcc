@@ -732,6 +732,12 @@ io::InTopology &io::InTopology
     _lineStream.str(*it);
     double fpepsi, hbar;
     _lineStream >> fpepsi;
+    ++it;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> hbar;
+    math::h_bar = hbar;
+    
     if (_lineStream.fail())
       io::messages.add("Bad line in TOPPHYSCON block",
 			"InTopology", io::message::error);

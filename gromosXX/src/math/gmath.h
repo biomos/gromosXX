@@ -18,8 +18,10 @@
 #include <set>
 #include <algorithm>
 #include <typeinfo>
-#include <cxxabi.h>
 
+#if(compiler==gnucc)
+#include <cxxabi.h>
+#endif
 /**
  * @namespace math
  * namespace that contains mathematical functions
@@ -88,6 +90,11 @@ namespace math
    * Boltzmann constant.
    */
   const double k_Boltzmann = 0.00831441;
+
+  /**
+   * h bar.
+   */
+  extern double h_bar;
   
 #ifndef NDEBUG
   /**

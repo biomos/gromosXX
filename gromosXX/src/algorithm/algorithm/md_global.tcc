@@ -197,7 +197,7 @@ void algorithm::Perturbed_G96_Forcefield(interaction::Forcefield<
   bool have_DIRK =
     input.read_FORCEFIELD(bond_term, angle_term);
   
-  const std::vector<interaction::bond_type_struct> * bond_param = NULL;
+  // const std::vector<interaction::bond_type_struct> * bond_param = NULL;
   
   if (do_bond){
 

@@ -525,7 +525,6 @@ inline void io::InInput::read_PRINT(int &NTPR,
   _lineStream.clear();
   _lineStream.str(*it);
   
-  int com, dih_monitoring;
   _lineStream >> NTPR >> NTPL >> NTPP;
 
   if (_lineStream.fail())
@@ -955,7 +954,6 @@ inline bool io::InInput::read_FORCEFIELD(int &bond_term,
   _lineStream.clear();
   _lineStream.str(*it);
   
-  int bondH, angleH, impH, dihedralH, charge;
   _lineStream >> bond_term >> angle_term;
   
   if (_lineStream.fail())

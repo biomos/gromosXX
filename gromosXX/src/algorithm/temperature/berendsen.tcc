@@ -156,8 +156,8 @@ inline void algorithm::Berendsen_Thermostat
 ::calculate_kinetic_energy_lambda_derivative(t_simulation &sim)
 {
   math::VArray &vel = sim.system().vel();
-  math::VArray const & old_vel = sim.system().old_vel();
-  math::SArray const & mass = sim.topology().mass();
+  // math::VArray const & old_vel = sim.system().old_vel();
+  // math::SArray const & mass = sim.topology().mass();
 
   // loop over the baths
   std::vector<simulation::bath_index_struct>::iterator

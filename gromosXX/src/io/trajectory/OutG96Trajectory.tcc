@@ -231,8 +231,8 @@ inline void io::OutG96Trajectory<t_simulation>
   os << "POSITIONRED\n";
   
   math::VArray &pos = sys.pos();
-  simulation::Solute &solute = topo.solute();
-  std::vector<std::string> &residue_name = topo.residue_name();
+  // simulation::Solute &solute = topo.solute();
+  // std::vector<std::string> &residue_name = topo.residue_name();
 
   math::Vec v, v_box, trans, r;
   

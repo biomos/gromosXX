@@ -47,7 +47,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     double A_q, B_q;
     double alpha_lj=0, alpha_crf=0;
     
-    const double l = sim.topology().lambda();
+    // const double l = sim.topology().lambda();
     
     if(sim.topology().perturbed_atom()[j] ==true){
       A_lj =  &m_base.lj_parameter(
@@ -217,7 +217,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     double A_q, B_q;
     double alpha_lj=0, alpha_crf=0;
     
-    const double l = sim.topology().lambda();
+    // const double l = sim.topology().lambda();
     
     if(sim.topology().perturbed_atom()[j] ==true){
       A_lj =  & m_base.lj_parameter(
@@ -369,7 +369,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
 
   math::Vec r, f_rf, A_f_rf, B_f_rf, f_old_A;
   double e_rf, A_e_rf, B_e_rf, de_rf, A_de_rf, B_de_rf, e_crf_old_A;
-  const double l=sim.topology().lambda();
+  // const double l=sim.topology().lambda();
   
   std::set<int>::const_iterator it, to;
   

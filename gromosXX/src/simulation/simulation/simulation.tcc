@@ -374,7 +374,7 @@ inline void simulation::Simulation<t_topo, t_system>::remove_com_motion
     com_L += topology().mass()(i)* math::cross(system().pos()(i), system().vel()(i));
 
     // inertia tensor
-    double r2 = dot(r,r);
+    // double r2 = dot(r,r);
     com_I(0,0) += topology().mass()(i) * (r(1)*r(1)+r(2)*r(2));
     com_I(1,1) += topology().mass()(i) * (r(0)*r(0)+r(2)*r(2));
     com_I(2,2) += topology().mass()(i) * (r(0)*r(0)+r(1)*r(1));

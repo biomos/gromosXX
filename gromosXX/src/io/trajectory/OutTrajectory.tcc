@@ -566,7 +566,7 @@ inline void io::OutTrajectory<t_simulation>
   std::vector<double> eneres(6,0.0);
   
   // and some internal ones that are currently not written out
-  double tot_nb=0.0, tot_b=0.0, tot_pot=0.0, tot_special=0.0;
+  // double tot_nb=0.0, tot_b=0.0, tot_pot=0.0, tot_special=0.0;
   
   /*
   for(unsigned int i=0; i<sim.multibath().size(); i++)
@@ -627,7 +627,7 @@ inline void io::OutTrajectory<t_simulation>
   simulation::Energy const & e = sim.system().energies();
   simulation::Energy const & f = sim.system().lambda_energies();
   
-  const int numenergygroups=e.bond_energy.size();
+  // const int numenergygroups=e.bond_energy.size();
   
   // energy arrays according to page III-56 of the GROMOS96 manual
   std::vector<double> ener(9,0.0);
@@ -648,7 +648,7 @@ inline void io::OutTrajectory<t_simulation>
   fren[17] = f.lj_total;
   fren[18] = f.crf_total;
   
-  int index=0;
+  // int index=0;
   
   // now actually write it out
   for(unsigned int i=0; i<ener.size(); i++){
