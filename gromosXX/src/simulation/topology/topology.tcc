@@ -7,9 +7,7 @@
  * Constructor
  */
 inline simulation::topology::topology()
-  : m_num_solute_atoms(0),
-    m_num_solvent_atoms(0),
-    m_mass(0),
+  : m_mass(0),
     m_charge(0)
 {
 }
@@ -55,15 +53,33 @@ inline math::SArray const & simulation::topology::charge()const
 }
 
 /**
+ * solute accessor.
+ */
+inline simulation::Solute &
+simulation::topology::solute()
+{
+  return m_solute;
+}
+
+/**
+ * const solute accessor.
+ */
+inline simulation::Solute const &
+simulation::topology::solute()const
+{
+  return m_solute;
+}
+
+/**
  * the number of solute atoms
  */
 inline size_t simulation::topology::num_solute_atoms()const
 {
-  return m_num_solute_atoms;
+  return solute().num_atoms();
 }
 
 /**
- * set the capacity of solute atoms byresizeing
+ * set the capacity of solute atoms by resizeing
  * the apropriate arrays.
  */
 inline void simulation::topology::resize(size_t atoms)
@@ -79,89 +95,50 @@ inline void simulation::topology::resize(size_t atoms)
 }
 
 /**
- * set the number of solute atoms
- */
-inline void simulation::topology::num_solute_atoms(size_t atoms)
-{
-  assert(num_solvent_atoms() == 0);
-  assert(unsigned(m_mass.size()) == atoms);
-
-  m_num_solute_atoms = atoms;
-}
-
-/**
- * bond accessor
- */
-inline simulation::bond & simulation::topology::bonds()
-{
-  return m_bonds;
-}
-
-namespace simulation
-{
-  /**
-   * output information about the topology.
-   */
-  inline std::ostream & operator<<(std::ostream &os, topology &topo)
-  {
-    os << "a topology";
-    return os;
-  }
-}
-
-/**
  * add a solute atom to the topology.
  * if the arrays are too small they will be increased.
  * if adding multiple solute atoms, first call solute_atoms_capacity...
  */
-inline void simulation::topology::add_solute_atom(std::string name, int residue_nr,
-						  int iac, double mass,
-						  double charge, bool chargegroup,
-						  std::set<int> exclusions,
-						  std::set<int> one_four_pairs)
+inline void simulation::topology
+::add_solute_atom(std::string name, int residue_nr,
+		  int iac, double mass,
+		  double charge, bool chargegroup,
+		  std::set<int> exclusions,
+		  std::set<int> one_four_pairs)
 {
 
-  if (unsigned(m_mass.size()) < m_num_solute_atoms + 1){
-    resize(m_num_solute_atoms+1);
+  if (unsigned(m_mass.size()) < num_solute_atoms() + 1){
+    resize(num_solute_atoms()+1);
   }
   
-  soluteatoms().add(name, residue_nr);
+  topology::mass()(num_solute_atoms()) = mass;
+  topology::charge()(num_solute_atoms()) = charge;
 
-  topology::mass()(m_num_solute_atoms) = mass;
-  topology::charge()(m_num_solute_atoms) = charge;
-
-  if (chargegroup) m_chargegroup.push_back(m_num_solute_atoms+1);
+  if (chargegroup) m_chargegroup.push_back(num_solute_atoms()+1);
   
   m_iac.push_back(iac);
 
-  m_exclusion[m_num_solute_atoms] = exclusions;
-  m_one_four_pair[m_num_solute_atoms] = one_four_pairs;
+  m_exclusion[num_solute_atoms()] = exclusions;
+  m_one_four_pair[num_solute_atoms()] = one_four_pairs;
   
-  set_union(exclusions.begin(), exclusions.end(),
-	    one_four_pairs.begin(), one_four_pairs.end(),
-	    inserter(m_all_exclusion[m_num_solute_atoms], 
-		     m_all_exclusion[m_num_solute_atoms].end())
-	    );
+  std::set_union(exclusions.begin(), exclusions.end(),
+		 one_four_pairs.begin(), one_four_pairs.end(),
+		 std::inserter(m_all_exclusion[num_solute_atoms()], 
+			       m_all_exclusion[num_solute_atoms()].end())
+		 );
 
-  ++m_num_solute_atoms;  
+  // this increases num_solute_atoms()
+  solute().add_atom(name, residue_nr);
 
-}
-
-/**
- * soluteatom accessor.
- */
-inline simulation::soluteatom & simulation::topology::soluteatoms()
-{
-  return m_soluteatoms;
 }
 
 /**
  * solvent accessor.
  */
-inline simulation::solvent & simulation::topology::solvents(size_t i)
+inline simulation::Solvent & simulation::topology::solvent(size_t i)
 {
-  assert(i < m_solvents.size());
-  return m_solvents[i];
+  assert(i < m_solvent.size());
+  return m_solvent[i];
 }
 
 /**
@@ -175,34 +152,36 @@ inline size_t simulation::topology::num_solvents()const
 /**
  * add a solvent.
  */
-inline void simulation::topology::add_solvent(solvent solv)
+inline void simulation::topology::add_solvent(Solvent solv)
 {
-  m_solvents.push_back(solv);
+  m_solvent.push_back(solv);
 }
 
 /**
- * add solvent to the simulation.
+ * add solvent molecules to the simulation (system).
  */
 inline void simulation::topology::solvate(size_t solv, size_t num_molecules)
 {
   // only add in the correct order!
   assert(solv == m_num_solvent_atoms.size());
-  assert(solv < m_solvents.size());
+  assert(solv < m_solvent.size());
 
   int n = num_solute_atoms() + num_solvent_atoms();
 
   m_num_solvent_molecules.push_back(num_molecules);
-  m_num_solvent_atoms.push_back(num_molecules * m_solvents[solv].num_atoms());
+  m_num_solvent_atoms.push_back(num_molecules * m_solvent[solv].num_atoms());
   
   resize(num_solute_atoms() + num_solvent_atoms());
 
   // add to iac, mass, charge
   for(size_t i=0; i<num_molecules; ++i){
-    for(size_t j=0; j<m_solvents[solv].num_atoms(); ++j, ++n){
-      m_iac.push_back(m_solvents[solv].atom(j).iac);
-      m_mass(n) = m_solvents[solv].atom(j).mass;
-      m_charge(n) = m_solvents[solv].atom(j).charge;
+    for(size_t j=0; j<m_solvent[solv].num_atoms(); ++j, ++n){
+
+      m_iac.push_back(m_solvent[solv].atom(j).iac);
+      m_mass(n) = m_solvent[solv].atom(j).mass;
+      m_charge(n) = m_solvent[solv].atom(j).charge;
       // no exclusions or 1-4 interactions for solvent ?!
+
     }
   }
   
@@ -218,7 +197,7 @@ inline size_t simulation::topology::num_solvent_molecules(size_t i)const
 }
 
 /**
- * total solvent atoms accessor
+ * total number of solvent atoms.
  */
 inline size_t simulation::topology::num_solvent_atoms()const
 {
@@ -231,7 +210,7 @@ inline size_t simulation::topology::num_solvent_atoms()const
 }
 
 /**
- * solvent atoms of solvent i
+ * solvent atoms of solvent i (*molecules).
  */
 inline size_t simulation::topology::num_solvent_atoms(size_t i)const
 {
@@ -246,3 +225,16 @@ inline std::vector<std::string> & simulation::topology::residue_name()
 {
   return m_residue_name;
 }
+
+namespace simulation
+{
+  /**
+   * output information about the topology.
+   */
+  inline std::ostream & operator<<(std::ostream &os, topology &topo)
+  {
+    os << "a topology";
+    return os;
+  }
+}
+

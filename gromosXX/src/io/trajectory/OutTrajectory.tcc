@@ -151,16 +151,16 @@ inline void io::OutTrajectory<t_simulation>
   os << "POSITION\n";
   
   math::VArray &pos = sys.pos();
-  simulation::soluteatom &soluteatom = topo.soluteatoms();
+  simulation::Solute &solute = topo.solute();
   std::vector<std::string> &residue_name = topo.residue_name();
 
   os << "# first 24 chars ignored\n";
   
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
-    os << std::setw(6)  << soluteatom(i).residue_nr+1
-       << std::setw(5)  << residue_name[soluteatom(i).residue_nr]
-       << std::setw(6)  << soluteatom(i).name
+    os << std::setw(6)  << solute.atom(i).residue_nr+1
+       << std::setw(5)  << residue_name[solute.atom(i).residue_nr]
+       << std::setw(6)  << solute.atom(i).name
        << std::setw(8)  << i+1
        << std::setw(15) << pos(i)(0)
        << std::setw(15) << pos(i)(1)
@@ -169,17 +169,17 @@ inline void io::OutTrajectory<t_simulation>
   }
   
   int index = topo.num_solute_atoms();
-  int res_num = soluteatom(topo.num_solute_atoms()-1).residue_nr + 2;
-  
+
   for(size_t s=0; s < topo.num_solvents(); ++s){
 
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
+    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
       
-      for(size_t a=0; a < topo.solvents(s).num_atoms(); ++a, ++index){
+      for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
-	os << std::setw(6)  << res_num
-	   << std::setw(5)  << "SOLV"
-	   << std::setw(6)  << topo.solvents(s).atom(a).name
+	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
+	   << std::setw(5)  
+	   << residue_name[topo.solvent(s).atom(a).residue_nr]
+	   << std::setw(6)  << topo.solvent(s).atom(a).name
 	   << std::setw(8)  << index + 1
 	   << std::setw(15) << pos(index)(0)
 	   << std::setw(15) << pos(index)(1)
@@ -227,16 +227,16 @@ inline void io::OutTrajectory<t_simulation>
   os << "VELOCITY\n";
   
   math::VArray &vel = sys.vel();
-  simulation::soluteatom &soluteatom = topo.soluteatoms();
+  simulation::Solute &solute = topo.solute();
   std::vector<std::string> &residue_name = topo.residue_name();
 
   os << "# first 24 chars ignored\n";
   
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
-    os << std::setw(6)  << soluteatom(i).residue_nr+1
-       << std::setw(5)  << residue_name[soluteatom(i).residue_nr]
-       << std::setw(6)  << soluteatom(i).name
+    os << std::setw(6)  << solute.atom(i).residue_nr+1
+       << std::setw(5)  << residue_name[solute.atom(i).residue_nr]
+       << std::setw(6)  << solute.atom(i).name
        << std::setw(8)  << i+1
        << std::setw(15) << vel(i)(0)
        << std::setw(15) << vel(i)(1)
@@ -245,17 +245,16 @@ inline void io::OutTrajectory<t_simulation>
   }
   
   int index = topo.num_solute_atoms();
-  int res_num = soluteatom(topo.num_solute_atoms()-1).residue_nr + 2;
   
   for(size_t s=0; s < topo.num_solvents(); ++s){
 
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
+    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
       
-      for(size_t a=0; a < topo.solvents(s).num_atoms(); ++a, ++index){
+      for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
-	os << std::setw(6)  << res_num
-	   << std::setw(5)  << "SOLV"
-	   << std::setw(6)  << topo.solvents(s).atom(a).name
+	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
+	   << std::setw(5)  << residue_name[topo.solvent(s).atom(a).residue_nr]
+	   << std::setw(6)  << topo.solvent(s).atom(a).name
 	   << std::setw(8)  << index + 1
 	   << std::setw(15) << vel(index)(0)
 	   << std::setw(15) << vel(index)(1)
@@ -303,16 +302,16 @@ inline void io::OutTrajectory<t_simulation>
   os << "FORCE\n";
   
   math::VArray &force = sys.force();
-  simulation::soluteatom &soluteatom = topo.soluteatoms();
+  simulation::Solute &solute = topo.solute();
   std::vector<std::string> &residue_name = topo.residue_name();
 
   os << "# first 24 chars ignored\n";
   
-  for(int i=0,to = force.size(); i<to; ++i){
+  for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
-    os << std::setw(6)  << soluteatom(i).residue_nr+1
-       << std::setw(5)  << residue_name[soluteatom(i).residue_nr]
-       << std::setw(6)  << soluteatom(i).name
+    os << std::setw(6)  << solute.atom(i).residue_nr+1
+       << std::setw(5)  << residue_name[solute.atom(i).residue_nr]
+       << std::setw(6)  << solute.atom(i).name
        << std::setw(8)  << i+1
        << std::setw(15) << force(i)(0)
        << std::setw(15) << force(i)(1)
@@ -320,6 +319,26 @@ inline void io::OutTrajectory<t_simulation>
        << "\n";
   }
   
+  int index = topo.num_solute_atoms();
+  
+  for(size_t s=0; s < topo.num_solvents(); ++s){
+
+    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
+      
+      for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
+	
+	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
+	   << std::setw(5)  << residue_name[topo.solvent(s).atom(a).residue_nr]
+	   << std::setw(6)  << topo.solvent(s).atom(a).name
+	   << std::setw(8)  << index + 1
+	   << std::setw(15) << force(index)(0)
+	   << std::setw(15) << force(index)(1)
+	   << std::setw(15) << force(index)(2)
+	   << "\n";
+      }
+    }
+  }
+
   os << "END\n";
   
 }

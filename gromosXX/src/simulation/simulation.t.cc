@@ -62,9 +62,9 @@ int construct_test()
   // the_simulation.system().pos()(SIZE2)(0) = 5;
 
   // try to add a bond
-  the_simulation.topology().bonds().add(1, 2, 1);
+  the_simulation.topology().solute().bonds().add(1, 2, 1);
   simulation::bond::iterator b_it = 
-    the_simulation.topology().bonds().begin();
+    the_simulation.topology().solute().bonds().begin();
   
   for( ; !b_it.eol(); ++b_it)
     if (1 != b_it.i()) ++result;

@@ -36,10 +36,10 @@ int algorithm::shake<t_simulation>
 
     // loop over the molecules
     for(size_t nm=0; nm<topo.num_solvent_molecules(i);
-	++nm, first+=topo.solvents(i).num_atoms()){
+	++nm, first+=topo.solvent(i).num_atoms()){
 
-      skip_now.assign(topo.solvents(i).num_atoms(), false);
-      skip_next.assign(topo.solvents(i).num_atoms(), true);
+      skip_now.assign(topo.solvent(i).num_atoms(), false);
+      skip_next.assign(topo.solvent(i).num_atoms(), true);
 
       int num_iterations = 0;
       bool convergence = false;
@@ -47,10 +47,10 @@ int algorithm::shake<t_simulation>
 	convergence = true;
 	
 	// and constraints
-	for(std::vector<simulation::solvent::solventconstraint_struct>
+	for(std::vector<simulation::compound::distance_constraint_struct>
 	      ::const_iterator
-	      it = topo.solvents(i).constraints().begin(),
-	      to = topo.solvents(i).constraints().end();
+	      it = topo.solvent(i).distance_constraints().begin(),
+	      to = topo.solvent(i).distance_constraints().end();
 	    it != to;
 	    ++it){
 	
@@ -108,7 +108,7 @@ int algorithm::shake<t_simulation>
 	} // constraints
       
 	skip_now = skip_next;
-	skip_next.assign(topo.solvents(i).num_atoms(), true);
+	skip_next.assign(topo.solvent(i).num_atoms(), true);
       
 	// std::cout << num_iterations+1 << std::endl;
 	if(++num_iterations > max_iterations){

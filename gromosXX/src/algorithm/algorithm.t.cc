@@ -54,7 +54,11 @@ int leap_frog_test()
   
   the_system.resize(SIZE);
   the_topology.resize(SIZE);
-  the_topology.num_solute_atoms(SIZE);
+
+  // have to add real atoms...
+  std::set<int> ex;
+  for(int i=0; i<SIZE; ++i)
+    the_topology.add_solute_atom("HI", 0, 0, 1.0, 0.0, false, ex, ex);
   
   // initialize everything with zero
   math::Vec t(0.0, 0.0, 0.0), t2(1, 1, 1);
@@ -63,7 +67,7 @@ int leap_frog_test()
   the_system.vel() = 0.0;
   the_system.force() = 0.0;
   
-  the_topology.mass() = 1.0;
+  // the_topology.mass() = 1.0;
 
   typedef simulation::simulation<simulation::topology, simulation::system>
     simulation_type;  
@@ -160,14 +164,19 @@ int runge_kutta_test()
   
   the_system.resize(SIZE);
   the_topology.resize(SIZE);
-  the_topology.num_solute_atoms(SIZE);
+
+  // have to add real atoms...
+  std::set<int> ex;
+  for(int i=0; i<SIZE; ++i)
+    the_topology.add_solute_atom("HI", 0, 0, 1.0, 0.0, false, ex, ex);
+  
 
   // constant velocity
   the_system.pos() = tensor::i;
   the_system.vel() = tensor::i;
   the_system.force() = 0.0;
   
-  the_topology.mass() = 1.0;
+  // the_topology.mass() = 1.0;
 
   typedef simulation::simulation<simulation::topology, simulation::system>
     simulation_type;  

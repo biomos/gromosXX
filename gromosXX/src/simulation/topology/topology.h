@@ -49,15 +49,15 @@ namespace simulation
     math::SArray const & charge()const;
     
     /**
-     * bond accessor.
-     */
-    bond & bonds();
-
-    /**
      * soluteatom accessor.
      */
-    soluteatom & soluteatoms();
+    Solute & solute();
 
+    /**
+     * const solute accessor.
+     */
+    Solute const & solute()const;
+    
     /**
      * number of solvents.
      */
@@ -67,12 +67,12 @@ namespace simulation
      * solvent accessor.
      * support for multiple solvents.
      */
-    solvent & solvents(size_t i);
+    Solvent & solvent(size_t i);
 
     /**
      * add a solvent.
      */
-    void add_solvent(solvent solv);
+    void add_solvent(Solvent solv);
 
     /**
      * add solvent to the simulation.
@@ -86,11 +86,6 @@ namespace simulation
      */
     void resize(size_t atoms);
 
-    /**
-     * set the number of solute atoms
-     */
-    void num_solute_atoms(size_t atoms);
-    
     /**
      * get the number of solute atoms
      */
@@ -126,14 +121,9 @@ namespace simulation
 
   private:
     /**
-     * the number of solute atoms.
-     */
-    size_t m_num_solute_atoms;
-    
-    /**
      * the soluteatoms.
      */
-    soluteatom m_soluteatoms;
+    Solute m_solute;
 
     /**
      * the number of solvent molecules.
@@ -149,7 +139,7 @@ namespace simulation
     /**
      * the solvents (multiple solvent).
      */
-    std::vector<solvent> m_solvents;
+    std::vector<Solvent> m_solvent;
     
     /**
      * the integer atom code.
@@ -187,12 +177,7 @@ namespace simulation
     std::vector<int> m_chargegroup;
     
     /**
-     * the bonds.
-     */
-    bond m_bonds;
-    
-    /**
-     * residue names.
+     * residue names (solute and solvent).
      */
     std::vector<std::string> m_residue_name;
     

@@ -21,7 +21,7 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
 {
   // loop over the bonds
   simulation::bond::iterator b_it =
-    simu.topology().bonds().begin();
+    simu.topology().solute().bonds().begin();
 
   math::VArray &pos   = simu.system().pos();
   math::VArray &force = simu.system().force();

@@ -10,64 +10,44 @@
 namespace simulation
 {
   /**
-   * @class solvent
+   * @class Solvent
    * holds solvent information
    * (for one solute).
    */
-  class solvent
+  class Solvent : public compound
   {
   public:
     /**
-     * @struct solventatom_struct
+     * @struct atom_struct
      * the solvent atom information.
      */
-    struct solventatom_struct
+    struct atom_struct
     {
       std::string name;
+      int residue_nr;
       int iac;
       double mass;
       double charge;
     };
     
-    struct solventconstraint_struct
-    {
-      int i;
-      int j;
-      double b0;
-    };
-    
     /**
      * accessor to the solvent atom information.
      */
-    std::vector<solventatom_struct> & atoms();
+    std::vector<atom_struct> & atoms();
+
     /**
      * accessor to a single atom of solvent atom struct.
      */
-    solventatom_struct & atom(size_t i);
+    atom_struct & atom(size_t i);
+
     /**
      * add a solventatom.
      */
-    void add_atom(std::string name, int iac, double mass, double charge);
-    /**
-     * accessor to the solvent constraint information.
-     */
-    std::vector<solventconstraint_struct> & constraints();
-    /**
-     * accessor to a single constraint.
-     */
-    solventconstraint_struct &constraint(size_t i);
-    /**
-     * add a constraint.
-     */
-    void add_constraint(int i, int j, double b0);
-    /**
-     * number of atoms in the solvent.
-     */
-    size_t num_atoms()const;
+    void add_atom(std::string name, int res_nr, int iac, 
+		  double mass, double charge);
 
   private:
-    std::vector<solventatom_struct> m_atom;
-    std::vector<solventconstraint_struct> m_constraint;
+    std::vector<atom_struct> m_atom;
 
   };
   

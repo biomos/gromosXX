@@ -4,8 +4,9 @@
  */
 
 #include "simulation/simulation.h"
-#include "topology/soluteatom.h"
-#include "topology/solvent.h"
+#include "topology/compound.h"
 #include "topology/bond.h"
+#include "topology/solute.h"
+#include "topology/solvent.h"
 #include "topology/topology.h"
 #include "system/system.h"

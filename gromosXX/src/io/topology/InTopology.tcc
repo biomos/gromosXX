@@ -28,7 +28,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in BOND block");
       
-      topo.bonds().add(i-1, j-1, t-1);
+      topo.solute().bonds().add(i-1, j-1, t-1);
     }
     
     if(n != num){
@@ -59,7 +59,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in BONDH block");
 
-      topo.bonds().add(i-1, j-1, t-1);
+      topo.solute().bonds().add(i-1, j-1, t-1);
     }
     
     if(n != num){
@@ -149,6 +149,9 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
     // solvents...
     buffer = m_block["SOLVENTATOM"];
     
+    int res_nr = topo.residue_name().size();
+    topo.residue_name().push_back("SOLV");
+
     it = buffer.begin() + 1;
     _lineStream.clear();
     _lineStream.str(*it);
@@ -156,7 +159,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
     _lineStream >> num;
     ++it;
     
-    simulation::solvent s;
+    simulation::Solvent s;
     
     std::string name;
     int i, iac;
@@ -171,7 +174,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in SOLVENTATOM block");
 
-      s.add_atom(name, iac-1, mass, charge);
+      s.add_atom(name, res_nr, iac-1, mass, charge);
     }
     
     if (n!=num)
@@ -198,7 +201,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in SOLVENTCONSTR block");
  
-      s.add_constraint(i-1, j-1, b0);
+      s.add_distance_constraint(i-1, j-1, b0);
     }
 
     if (n!=num)
