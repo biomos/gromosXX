@@ -154,8 +154,26 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
 	if(old_min != 4*math::Pi){
 	  // could be written to a separate file or by a separate function
 	  // should at least be more descriptive.
-	  std::cout << "transition from: " << old_min << " to " 
-		    << conf.special().dihedral_angle_minimum[n] << "\n";
+	  std::cout << "D-A-T: " 
+		    << std::setw(4) << topo.solute().atom(d_it->i).residue_nr + 1
+		    << std::setw(4) << std::left 
+		    << topo.residue_names()[topo.solute().atom(d_it->i).residue_nr]
+		    << std::setw(4)  << std::right<< topo.solute().atom(d_it->i).name 
+		    << " -"
+		    << std::setw(4)  << std::right<< topo.solute().atom(d_it->j).name 
+		    << " -"
+		    << std::setw(4)  << std::right<< topo.solute().atom(d_it->k).name 
+		    << " -"
+		    << std::setw(4)  << std::right<< topo.solute().atom(d_it->l).name 
+		    << std::setw(6) << d_it->i + 1 << " -"
+		    << std::setw(4) << d_it->j + 1 << " -" 
+		    << std::setw(4) << d_it->k + 1 << " -"
+		    << std::setw(4) << d_it->l + 1
+		    << std::setw(10) << std::setprecision(1) 
+		    << std::fixed << 180.0*old_min/math::Pi << " -> " 
+		    << std::setw(8) << std::setprecision(1) 
+		    << std::fixed
+		    << 180.0 * conf.special().dihedral_angle_minimum[n]/math::Pi << "\n";
 	}
       }
     }
