@@ -9,51 +9,32 @@
 
 #include "../../debug.h"
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
-			   t_distance_constraint, t_integration>
-::Perturbation_MD(t_simulation &sim)
-  : MD<t_simulation, t_temperature, t_pressure,
-       t_distance_constraint, t_integration>(sim)
+template<typename t_spec>
+algorithm::Perturbation_MD<t_spec>
+::Perturbation_MD()
+  : MD<t_spec>()
 {
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure, 
-				t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::Perturbation_MD<t_spec>
 ::init_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
   // nothing to do...
-  MD<t_simulation, t_temperature, t_pressure,
-    t_distance_constraint, t_integration>::init_input(args, topo, sys, input);
+  MD<t_spec>::init_input(args, topo, sys, input);
 }
 
 /**
  * read the input and setup a standard simulation.
  */
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::Perturbation_MD<t_simulation, t_temperature,
-			       t_pressure, t_distance_constraint,
-			       t_integration>
+template<typename t_spec>
+void algorithm::Perturbation_MD<t_spec>
 ::read_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
   // std::cerr << "read input" << std::endl;
-  MD<t_simulation, t_temperature, t_pressure,
-    t_distance_constraint, t_integration>::read_input(args, topo, sys, input);
+  MD<t_spec>::read_input(args, topo, sys, input);
   
   int ntg, nlam;
   double rlam, dlamt, alphlj, alphc;
@@ -62,6 +43,8 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature,
   if (ntg == 1){
     io::messages.add("Perturbation enabled", "Perturbation_MD",
 		     io::message::notice);
+
+    m_do_perturbation = true;
 
     m_simulation.topology().lambda(rlam);
     m_simulation.topology().alpha_lj(alphlj);
@@ -87,14 +70,8 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature,
   
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-int algorithm::Perturbation_MD<t_simulation, t_temperature,
-			       t_pressure, t_distance_constraint,
-			       t_integration>
+template<typename t_spec>
+int algorithm::Perturbation_MD<t_spec>
 ::init_perturbation(io::Argument &args, io::InInput &input)
 {
   if (args.count("pert") != 1){
@@ -154,13 +131,8 @@ int algorithm::Perturbation_MD<t_simulation, t_temperature,
 
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure, 
-				t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::Perturbation_MD<t_spec>
 ::G96Forcefield(io::InTopology &topo,
 		io::InInput &input,
 		io::Argument &args)
@@ -190,18 +162,18 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
 	io::messages.add("using Gromos96 quartic bond term", 
 			 "md", io::message::notice);
       // bonds: quartic
-      m_qbond_interaction =
-	new interaction::Quartic_bond_interaction<t_simulation>;
+      typename t_spec::quartic_bond_interaction_type * the_qbond_interaction =
+	new typename t_spec::quartic_bond_interaction_type;
     
-      topo >> *m_qbond_interaction;
-      bond_param = &m_qbond_interaction->parameter();
+      topo >> *the_qbond_interaction;
+      //bond_param = &m_qbond_interaction->parameter();
 
-      m_forcefield.push_back(m_qbond_interaction); 
+      m_forcefield.push_back(the_qbond_interaction); 
       
-      interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
-	*the_perturbed_qbond_interaction = 
-	new interaction::Perturbed_Quartic_Bond_Interaction<t_simulation>
-	(*m_qbond_interaction);
+      typename t_spec::perturbed_quartic_bond_interaction_type *
+	the_perturbed_qbond_interaction = 
+	new typename t_spec::perturbed_quartic_bond_interaction_type
+	(*the_qbond_interaction);
 
       m_forcefield.push_back(the_perturbed_qbond_interaction);
     
@@ -218,17 +190,17 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
 	io::messages.add("using Gromos87 harmonic bond term", 
 			 "md", io::message::notice);
       // bonds: harmonic
-      interaction::harmonic_bond_interaction<t_simulation>
-	*the_hbond_interaction =
-	new interaction::harmonic_bond_interaction<t_simulation>;
+      typename t_spec::harmonic_bond_interaction_type *
+	the_hbond_interaction =
+	new typename t_spec::harmonic_bond_interaction_type;
 
       topo >> *the_hbond_interaction;
-      bond_param = &the_hbond_interaction->parameter();
+      // bond_param = &the_hbond_interaction->parameter();
 
       m_forcefield.push_back(the_hbond_interaction);
-      interaction::Perturbed_Harmonic_Bond_Interaction<t_simulation>
-	*the_perturbed_hbond_interaction = 
-	new interaction::Perturbed_Harmonic_Bond_Interaction<t_simulation>
+      typename t_spec::perturbed_harmonic_bond_interaction_type *
+	the_perturbed_hbond_interaction = 
+	new typename t_spec::perturbed_harmonic_bond_interaction_type
 	(*the_hbond_interaction);
       
       m_forcefield.push_back(the_perturbed_hbond_interaction);
@@ -247,16 +219,16 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
 		       "md", io::message::error);
     }
 
-    interaction::angle_interaction<t_simulation> *the_angle_interaction = 
-      new interaction::angle_interaction<t_simulation>;
-    
+    typename t_spec::angle_interaction_type *the_angle_interaction = 
+      new typename t_spec::angle_interaction_type;
+        
     topo >> *the_angle_interaction;
  
     m_forcefield.push_back(the_angle_interaction);
 
-    interaction::Perturbed_Angle_Interaction<t_simulation>
-    *the_perturbed_angle_interaction = 
-    new interaction::Perturbed_Angle_Interaction<t_simulation>
+    typename t_spec::perturbed_angle_interaction_type *
+    the_perturbed_angle_interaction = 
+    new typename t_spec::perturbed_angle_interaction_type
     (*the_angle_interaction);
   
     m_forcefield.push_back(the_perturbed_angle_interaction);
@@ -267,18 +239,18 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     // improper dihedrals
     DEBUG(7, "\timpropers");
     
-    interaction::Improper_dihedral_interaction<t_simulation>
-      *the_improper_interaction = 
-      new interaction::Improper_dihedral_interaction<t_simulation>;
+    typename t_spec::improper_interaction_type *
+      the_improper_interaction = 
+      new typename t_spec::improper_interaction_type;
 
     topo >> *the_improper_interaction;
     
     m_forcefield.push_back(the_improper_interaction);
     DEBUG(7, "\tperturbed impropers");
     
-    interaction::Perturbed_Improper_Dihedral_Interaction<t_simulation>
-      *the_perturbed_improper_interaction = 
-      new interaction::Perturbed_Improper_Dihedral_Interaction<t_simulation>
+    typename t_spec::perturbed_improper_interaction_type *
+      the_perturbed_improper_interaction = 
+      new typename t_spec::perturbed_improper_interaction_type
       (*the_improper_interaction);
     
     m_forcefield.push_back(the_perturbed_improper_interaction);
@@ -290,18 +262,18 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     // dihedrals
     DEBUG(7, "\tdihedrals");
     
-    interaction::Dihedral_interaction<t_simulation>
-      *the_dihedral_interaction =
-      new interaction::Dihedral_interaction<t_simulation>;
+    typename t_spec::dihedral_interaction_type *
+      the_dihedral_interaction =
+      new typename t_spec::dihedral_interaction_type;
     
     topo >> *the_dihedral_interaction;
     
     m_forcefield.push_back(the_dihedral_interaction);
     DEBUG(7, "\tperturbed dihedrals");
     
-    interaction::Perturbed_Dihedral_Interaction<t_simulation>
-      *the_perturbed_dihedral_interaction = 
-      new interaction::Perturbed_Dihedral_Interaction<t_simulation>
+    typename t_spec::perturbed_dihedral_interaction_type *
+      the_perturbed_dihedral_interaction = 
+      new typename t_spec::perturbed_dihedral_interaction_type
       (*the_dihedral_interaction);
     
     m_forcefield.push_back(the_perturbed_dihedral_interaction);
@@ -316,27 +288,19 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
       // nonbonded (with virial)
       DEBUG(8, "md (create_forcefield): nonbonded with pressure");
 
-      interaction::Nonbonded_Interaction<t_simulation,
-	perturbed_pairlist_virial_type,
-	perturbed_innerloop_virial_type> 
-	*the_nonbonded_virial_interaction =
-	new interaction::Nonbonded_Interaction<t_simulation,
-	perturbed_pairlist_virial_type,
-	perturbed_innerloop_virial_type>(m_simulation);
+      typename t_spec::nonbonded_virial_interaction_type * 
+	the_nonbonded_virial_interaction =
+	new typename t_spec::nonbonded_virial_interaction_type(m_simulation);
 
-      
       topo >> *the_nonbonded_virial_interaction;
       
       DEBUG(10, "md (create forcefield): nonbonded with pressure read in");
 
       m_forcefield.push_back(the_nonbonded_virial_interaction);
-      interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-	perturbed_pairlist_virial_type, 
-	perturbed_innerloop_virial_type> 
-	* the_perturbed_nonbonded_interaction = 
-	new interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-	perturbed_pairlist_virial_type, 
-	perturbed_innerloop_virial_type>
+ 
+      typename t_spec::perturbed_nonbonded_virial_interaction_type *
+	the_perturbed_nonbonded_interaction = 
+	new typename t_spec::perturbed_nonbonded_virial_interaction_type 
 	(m_simulation, *the_nonbonded_virial_interaction);
       
       m_forcefield.push_back(the_perturbed_nonbonded_interaction);
@@ -344,25 +308,17 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     else{
       // nonbonded
       DEBUG(8, "md (create_forcefield): nonbonded without pressure");
-      interaction::Nonbonded_Interaction<t_simulation,
-	perturbed_pairlist_type, 
-	perturbed_innerloop_type> 
-	*the_nonbonded_interaction =
-	new interaction::Nonbonded_Interaction<t_simulation,
-	perturbed_pairlist_type,
-	perturbed_innerloop_type>(m_simulation);
+      typename t_spec::nonbonded_interaction_type *
+	the_nonbonded_interaction =
+	new typename t_spec::nonbonded_interaction_type(m_simulation);
       
       topo >> *the_nonbonded_interaction;
       
       m_forcefield.push_back(the_nonbonded_interaction);
 
-      interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-	perturbed_pairlist_type, 
-	perturbed_innerloop_type> 
-	* the_perturbed_nonbonded_interaction = 
-	new interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-	perturbed_pairlist_type, 
-	perturbed_innerloop_type>
+      typename t_spec::perturbed_nonbonded_interaction_type *
+	the_perturbed_nonbonded_interaction = 
+	new typename t_spec::perturbed_nonbonded_interaction_type
 	(m_simulation, *the_nonbonded_interaction);
       
       m_forcefield.push_back(the_perturbed_nonbonded_interaction);
@@ -377,18 +333,13 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
   DEBUG(7, "forcefield created");
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure, 
-				t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::Perturbation_MD<t_spec>
 ::print_pairlists()
 {
   
   typename std::vector<typename interaction::Interaction<
-    typename parent_type::simulation_type> *>
+    typename t_spec::simulation_type> *>
     ::const_iterator it = m_forcefield.begin(),
     to = m_forcefield.end();
 	
@@ -400,10 +351,8 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
 	std::cerr << "printing virial pairlist" << std::endl;
 
 	(*m_print_file) << "shortrange\n" 
-			<< dynamic_cast<interaction::Nonbonded_Interaction
-	  <typename parent_type::simulation_type,
-	  perturbed_pairlist_virial_type,
-	  typename parent_type::innerloop_virial_type> *>
+			<< dynamic_cast<
+	  typename t_spec::nonbonded_virial_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
       }
@@ -411,10 +360,7 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
 	std::cerr << "printing pairlist" << std::endl;
 	
 	(*m_print_file) << "shortrange\n" 
-			<< dynamic_cast<interaction::Nonbonded_Interaction
-	  <typename parent_type::simulation_type,
-	  perturbed_pairlist_type,
-	  typename parent_type::innerloop_type> *>
+			<< dynamic_cast<typename t_spec::nonbonded_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
 	
@@ -426,18 +372,12 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
   
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::Perturbation_MD<t_spec>
 ::do_energies()
 {
   // do the normal energies
-  MD<t_simulation, t_temperature, t_pressure,
-    t_distance_constraint, t_integration>::do_energies();
+  MD<t_spec>::do_energies();
 
   // and calculate the kinetic energy lamba derivative
   m_temperature.

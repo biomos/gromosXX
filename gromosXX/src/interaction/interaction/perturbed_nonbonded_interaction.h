@@ -13,7 +13,8 @@ namespace interaction
    * @class Perturbed_Nonbonded_Interaction
    * calculates the nonbonded interactions including perturbed interactions.
    */
-  template<typename t_simulation, typename t_pairlist, typename t_innerloop>
+  template<typename t_simulation, typename t_pairlist, 
+	   typename t_innerloop, typename t_nonbonded_interaction>
   class Perturbed_Nonbonded_Interaction : 
     public Interaction<t_simulation>
   {
@@ -25,8 +26,7 @@ namespace interaction
      * @param nonbonded_interaction which interaction functions to use.
      */
     Perturbed_Nonbonded_Interaction(t_simulation &sim, 
-    interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
-      & nonbonded_interaction);
+				    t_nonbonded_interaction & nonbonded_interaction);
     
     /**
      * Destructor.
@@ -64,8 +64,7 @@ namespace interaction
     /**
      * the nonbonded interaction
      */
-    interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop> 
-      & m_nonbonded_interaction;
+    t_nonbonded_interaction & m_nonbonded_interaction;
     
   };
   

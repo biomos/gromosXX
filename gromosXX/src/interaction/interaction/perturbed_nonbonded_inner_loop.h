@@ -13,7 +13,7 @@ namespace interaction
    * perturbed non bonded inner loop.
    * no virial calculation.
    */
-  template<typename t_simulation, typename t_storage>
+  template<typename t_simulation, typename t_storage, bool do_scaling=false>
   class Perturbed_Nonbonded_Inner_Loop
     : public Nonbonded_Inner_Loop<t_simulation, t_storage>
   {

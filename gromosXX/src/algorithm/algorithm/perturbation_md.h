@@ -14,50 +14,14 @@ namespace algorithm
    * @class Perturbation_MD
    * MD algorithm with perturbation.
    */
-  template<typename t_simulation,
-    typename t_temperature = algorithm::Berendsen_Thermostat,
-    typename t_pressure = algorithm::Berendsen_Barostat,
-    typename t_distance_constraint = algorithm::Shake<t_simulation>,
-    typename t_integration = algorithm::Leap_Frog<t_simulation> >
-    class Perturbation_MD : public MD<t_simulation, t_temperature,
-    t_pressure, t_distance_constraint,
-    t_integration>
+  template<typename t_spec = perturbed_MD_spec>
+    class Perturbation_MD : public MD<t_spec>
     {
       public:
-      typedef MD<t_simulation, t_temperature, 
-      t_pressure, t_distance_constraint,
-      t_integration> parent_type;
-
-      typedef interaction::Perturbed_Nonbonded_Inner_Loop<t_simulation,
-      typename t_simulation::system_type> perturbed_innerloop_type;
-
-      typedef interaction::Perturbed_Nonbonded_Inner_Loop_Virial<t_simulation,
-      typename t_simulation::system_type> perturbed_innerloop_virial_type;
-      
-      typedef interaction::Basic_Pairlist<t_simulation,
-      interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, 
-      interaction::Twinrange_Chargegroup_Filter<t_simulation,
-      interaction::Nonbonded_Base,
-      interaction::Perturbed_Nonbonded_Inner_Loop<
-      t_simulation, interaction::Storage>,
-      interaction::Perturbation_Filter<t_simulation,
-      interaction::Nonbonded_Base, true> > > >
-      perturbed_pairlist_type;
-
-      typedef interaction::Basic_Pairlist<t_simulation,
-      interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, 
-      interaction::Twinrange_Chargegroup_Filter<t_simulation,
-      interaction::Nonbonded_Base,
-      interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
-      t_simulation, interaction::Storage>,
-      interaction::Perturbation_Filter<t_simulation,
-      interaction::Nonbonded_Base, true> > > > 
-      perturbed_pairlist_virial_type;
-
       /**
        * Constructor.
        */
-      Perturbation_MD(t_simulation &sim);
+      Perturbation_MD();
 
       protected:
       /**

@@ -113,6 +113,13 @@ namespace simulation
      */
     std::map<std::pair<int, int>, std::pair<double, double> > &
     energy_group_scaling();
+
+    /**
+     * add solvent to the simulation.
+     * @param solv the solvent (multiple solvents).
+     * @param num_molecules the number of solvent molecules to add.
+     */
+    void solvate(size_t solv, size_t num_molecules);
     
   private:
     /**

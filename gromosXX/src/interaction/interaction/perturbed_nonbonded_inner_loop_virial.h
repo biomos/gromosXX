@@ -14,7 +14,7 @@ namespace interaction
    * perturbed non bonded inner loop.
    * with virial calculation.
    */
-  template<typename t_simulation, typename t_storage>
+  template<typename t_simulation, typename t_storage, bool do_scaling=false>
   class Perturbed_Nonbonded_Inner_Loop_Virial
     : public Nonbonded_Inner_Loop_Virial<t_simulation, t_storage>
   {
@@ -25,7 +25,6 @@ namespace interaction
     Perturbed_Nonbonded_Inner_Loop_Virial(Nonbonded_Base &base, 
 					  t_storage &storage);
     
-
     /**
      * perturbed interaction
      */
@@ -36,7 +35,6 @@ namespace interaction
      */
     void perturbed_one_four_interaction_inner_loop(t_simulation &sim,
 					   size_t const i, size_t const j);
-    
     
   };
   

@@ -177,3 +177,13 @@ simulation::Perturbation_Topology::energy_group_scaling()
   return m_energy_group_scaling;
 }
 
+/**
+ * add solvent molecules to the simulation (system).
+ */
+inline void simulation::Perturbation_Topology
+::solvate(size_t solv, size_t num_molecules)
+{
+
+  Topology::solvate(solv, num_molecules);
+  m_perturbed_atom.resize(num_atoms(), false);
+}

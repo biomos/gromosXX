@@ -14,10 +14,10 @@
 /**
  * Constructor.
  */
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
-inline interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-						    t_pairlist, t_innerloop>
-::Perturbed_Nonbonded_Interaction(t_simulation &sim, interaction::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop> &nonbonded_interaction)
+template<typename t_simulation, typename t_pairlist, typename t_innerloop, typename t_nonbonded_interaction>
+inline interaction::Perturbed_Nonbonded_Interaction<
+  t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
+::Perturbed_Nonbonded_Interaction(t_simulation &sim, t_nonbonded_interaction &nonbonded_interaction)
   : Interaction<t_simulation>("Perturbed NonBonded"),
     m_nonbonded_interaction(nonbonded_interaction)
 {
@@ -29,9 +29,10 @@ inline interaction::Perturbed_Nonbonded_Interaction<t_simulation,
 /**
  * Destructor.
  */
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
-inline interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, 
-						    t_innerloop>
+template<typename t_simulation, typename t_pairlist, 
+	 typename t_innerloop, typename t_nonbonded_interaction>
+inline interaction::Perturbed_Nonbonded_Interaction<
+  t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
 ::~Perturbed_Nonbonded_Interaction()
 {
   DEBUG(4, "Perturbed_Nonbonded_Interaction::destructor");
@@ -40,9 +41,10 @@ inline interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist,
 /**
  * calculate nonbonded forces and energies.
  */
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
-inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-						   t_pairlist, t_innerloop>
+template<typename t_simulation, typename t_pairlist, 
+	 typename t_innerloop, typename t_nonbonded_interaction>
+inline void interaction::Perturbed_Nonbonded_Interaction<
+  t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
 ::calculate_interactions(t_simulation &sim)
 {
   DEBUG(4, "Perturbed_Nonbonded_Interaction::calculate_interactions");
@@ -72,9 +74,10 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation,
  * stores them in the arrays pointed to by parameters
  * to make it usable for longrange calculations.
  */
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
-inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-						 t_pairlist, t_innerloop>
+template<typename t_simulation, typename t_pairlist,
+	 typename t_innerloop, typename t_nonbonded_interaction>
+inline void interaction::Perturbed_Nonbonded_Interaction<
+  t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
 ::do_perturbed_interactions(t_simulation &sim,
 			    typename t_pairlist::iterator it,
 			    typename t_pairlist::iterator to)
@@ -85,7 +88,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation,
 	<< " Alpha CRF: " << m_nonbonded_interaction.alpha_crf());
 
   for( ; it != to; ++it){    
-    DEBUG(8, "perturbed pair: " << it.i() << " - " << *it);
+    DEBUG(8, "ni: perturbed pair: " << it.i() << " - " << *it);
     
     m_nonbonded_interaction.perturbed_interaction_inner_loop(sim, it.i(), *it);
 
@@ -122,9 +125,10 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation,
  * helper function to calculate the forces and energies from the
  * 1,4 interactions.
  */
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
-inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, 
-					   t_pairlist, t_innerloop>
+template<typename t_simulation, typename t_pairlist, 
+	 typename t_innerloop, typename t_nonbonded_interaction>
+inline void interaction::Perturbed_Nonbonded_Interaction<
+  t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
 ::do_perturbed_14_interactions(t_simulation &sim)
 {
   DEBUG(7, "\tcalculate perturbed 1,4-interactions");
@@ -151,10 +155,13 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation,
  * helper function to calculate the forces and energies from the
  * RF contribution of excluded atoms and self term
  */
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
-inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
+template<typename t_simulation, typename t_pairlist, 
+	 typename t_innerloop, typename t_nonbonded_interaction>
+inline void interaction::Perturbed_Nonbonded_Interaction<
+  t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
 ::do_perturbed_RF_excluded_interactions(t_simulation &sim)
 {
+
   DEBUG(7, "\tcalculate perturbed excluded RF interactions");
 
   math::VArray &pos   = sim.system().pos();
@@ -256,9 +263,10 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_pairlis
  * helper function to calculate the forces and energies from the
  * RF contribution of excluded atoms and self term
  */
-template<typename t_simulation, typename t_pairlist, typename t_innerloop>
-inline void interaction::
-Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
+template<typename t_simulation, typename t_pairlist,
+	 typename t_innerloop, typename t_nonbonded_interaction>
+inline void interaction::Perturbed_Nonbonded_Interaction<
+  t_simulation, t_pairlist, t_innerloop, t_nonbonded_interaction>
 ::do_perturbed_pair_interactions(t_simulation &sim)
 {
 
@@ -286,6 +294,13 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 
     // is i perturbed?
     if (sim.topology().perturbed_atom()[it->i] == true){
+#ifndef NDEBUG
+      if (sim.topology().perturbed_solute().atoms().count(it->i) != 1){
+	std::cerr << it->i << std::endl;	
+	std::cerr << sim.topology().perturbed_solute().atoms().size() << std::endl;
+	std::cerr << sim.topology().perturbed_solute().atoms().count(it->i) << std::endl;
+      }
+#endif
       assert(sim.topology().perturbed_solute().atoms().count(it->i) == 1);
 
       is_perturbed = true;

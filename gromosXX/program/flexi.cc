@@ -28,75 +28,9 @@
 // global variables for debug
 #include "../src/debug.cc"
 
+#include "flexi.h"
+
 using namespace math;
-
-template<typename t_md>
-int do_md(t_md & md, io::Argument &args, bool perturbation = false)
-{
-  if(md.initialize(args)){
-    return 1;
-  }
-  
-  md.run();
-  
-  std::cout << "\nwriting final structure" << std::endl;
-  md.trajectory() << io::final << md.simulation();
-  
-  if (args.count("trc") == 1){
-    std::cout << "\nwriting flexible constraints data\n" << std::endl;
-    std::ofstream constr_file(args["trc"].c_str());
-    io::OutFlexibleConstraints flexout(constr_file);
-    flexout.write_title(md.title);
-    flexout.write_FLEXCON(md.distance_constraint_algorithm().vel(),
-			  md.simulation().topology());
-  }
-  else{
-    std::cout << "writing of final flexible constraint data"
-	      << " not required\n";
-  }
-
-  simulation::Energy energy, fluctuation;
-  md.simulation().system().energy_averages().
-    average(energy, fluctuation);
-  
-  io::print_ENERGY(std::cout, energy,
-		   md.simulation().topology().energy_groups(),
-		   "AVERAGE ENERGIES");
-
-  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-		      energy);
-  
-  io::print_ENERGY(std::cout, fluctuation,
-		   md.simulation().topology().energy_groups(),
-		   "ENERGY FLUCTUATIONS");
-  
-  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-		      fluctuation);
-
-  // and the lambda derivatives
-  if (perturbation){
-
-    md.simulation().system().lambda_derivative_averages().
-      average(energy, fluctuation);
-  
-    io::print_ENERGY(std::cout, energy,
-		     md.simulation().topology().energy_groups(),
-		     "AVERAGE ENERGY LAMBDA DERIVATIVES");
-
-    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-			energy);
-
-    io::print_ENERGY(std::cout, fluctuation,
-		     md.simulation().topology().energy_groups(),
-		     "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
-    
-    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-			fluctuation);
-  }
-
-  return 0;
-
-}
 
 int main(int argc, char *argv[])
 {
@@ -126,7 +60,9 @@ int main(int argc, char *argv[])
     usage += "\t[@trp     <print file>]\n";
     usage += "\t[@flexcon <flexible constraints data file>]\n";
     usage += "\t[@trc     <flexible constraints output file>]\n";
+#ifndef NDEBUG
     usage += "\t[@verb    <[module:][submodule:]level>]\n";
+#endif
 
     io::Argument args(argc, argv, nknowns, knowns, usage);
 
@@ -135,53 +71,29 @@ int main(int argc, char *argv[])
 
     // determine whether we do perturbation
     bool perturbation = false;
-    if (args.count("pert") == 1){
+    if (args.count("pert") == 1)
       perturbation = true;
-    }
     
     if (perturbation){ // leap frog + perturbation
-      // topology and system
-      simulation::System<math::any> the_system;
-      simulation::Perturbation_Topology the_topology;
 
-      // simulation
-      typedef simulation::Simulation<simulation::Perturbation_Topology,
-	simulation::System<math::any> > simulation_type;
-  
-      simulation_type the_simulation(the_topology, the_system);
+      algorithm::Perturbation_MD<
+	program::perturbed_FLEXI_spec
+	>
+	the_MD;
       
-      algorithm::Perturbation_MD<simulation_type,
-	algorithm::Berendsen_Thermostat,
-	algorithm::Berendsen_Barostat,
-	algorithm::Perturbed_Flexible_Constraint<simulation_type>,
-	algorithm::Leap_Frog<simulation_type> >
-	the_MD(the_simulation);
-      
-      if (do_md(the_MD, args, perturbation)){
+      if (the_MD.do_md(args)){
 	return 1;
       }
 
     }
     else{ // leap frog, no perturbation
 
-      // topology and system
-      simulation::System<math::any> the_system;
-      simulation::Topology the_topology;
-
-      // simulation
-      typedef simulation::Simulation<simulation::Topology,
-	simulation::System<math::any> > simulation_type;
-  
-      simulation_type the_simulation(the_topology, the_system);
+      algorithm::MD<
+	program::FLEXI_spec
+	>
+	the_MD;
       
-      algorithm::MD<simulation_type,
-	algorithm::Berendsen_Thermostat,
-	algorithm::Berendsen_Barostat,
-	algorithm::Flexible_Constraint<simulation_type>,
-	algorithm::Leap_Frog<simulation_type> >
-	the_MD(the_simulation);
-    
-      if (do_md(the_MD, args, perturbation)){
+      if (the_MD.do_md(args)){
 	return 1;
       }
       

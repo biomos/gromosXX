@@ -9,9 +9,9 @@
  */
 template<typename t_topo, typename t_system>
 inline simulation::Simulation<t_topo, t_system>
-::Simulation(t_topo &topo, t_system &sys)
-  : m_topology(topo),
-    m_system(sys),
+::Simulation()
+  : m_topology(),
+    m_system(),
     m_time(0.0),
     m_old_time(0.0),
     m_steps(0)

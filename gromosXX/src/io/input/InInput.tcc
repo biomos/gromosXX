@@ -554,12 +554,13 @@ inline void io::InInput::read_WRITE(int &NTWX,
     NTWG = 1;
     return;
   }
-
+  int NTWP;
+  
   it = buffer.begin() + 1;
   _lineStream.clear();
   _lineStream.str(*it);
   
-  _lineStream >> NTWX >> NTWSE >> NTWV >> NTWE >> NTWG;
+  _lineStream >> NTWX >> NTWSE >> NTWV >> NTWE >> NTWG >> NTWP;
   
   if (_lineStream.fail())
     io::messages.add("bad line in WRITE block",

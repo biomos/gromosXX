@@ -11,16 +11,11 @@
 
 #include "../../debug.h"
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-algorithm::MD<t_simulation, t_temperature, t_pressure,
-	      t_distance_constraint, t_integration>
-::MD(t_simulation &sim)
+template<typename t_spec>
+algorithm::MD<t_spec>
+::MD()
   : title("\tgromosXX molecular dynamics program"),
-    m_simulation(sim),
+    m_simulation(),
     m_forcefield(),
     m_temperature(),
     m_pressure(),
@@ -33,18 +28,12 @@ algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_print_pairlist(0),
     m_print_force(0),
     m_calculate_pressure(0),
-    m_qbond_interaction(NULL),
-    m_angle_interaction(NULL)
+    m_do_perturbation(false)
 {
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint, 
-	      t_integration>
+template<typename t_spec>
+algorithm::MD<t_spec>
 ::~MD()
 {
   if (m_print_file != &std::cout){
@@ -55,12 +44,8 @@ algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint,
     delete m_trajectory;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint, t_integration>::initialize(io::Argument &args)
+template<typename t_spec>
+int algorithm::MD<t_spec>::initialize(io::Argument &args)
 {
 
   std::cout << "==============\n"
@@ -132,99 +117,59 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
 }
 
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-t_simulation &  algorithm::MD<t_simulation, t_temperature, t_pressure,
-			      t_distance_constraint, t_integration>
+template<typename t_spec>
+typename t_spec::simulation_type &  algorithm::MD<t_spec>
 ::simulation()
 {
   return m_simulation;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-interaction::Forcefield<t_simulation> & 
-algorithm::MD<t_simulation, t_temperature, t_pressure, 
-	      t_distance_constraint, t_integration>
+template<typename t_spec>
+interaction::Forcefield<typename t_spec::simulation_type> & 
+algorithm::MD<t_spec>
 ::forcefield()
 {
   return m_forcefield;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-t_temperature &  algorithm::MD<t_simulation, t_temperature, t_pressure,
-			       t_distance_constraint, t_integration>
+template<typename t_spec>
+typename t_spec::temperature_type &  algorithm::MD<t_spec>
 ::temperature_algorithm()
 {
   return m_temperature;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-t_pressure &  algorithm::MD<t_simulation, t_temperature, t_pressure,
-			    t_distance_constraint, t_integration>
+template<typename t_spec>
+typename t_spec::pressure_type &  algorithm::MD<t_spec>
 ::pressure_algorithm()
 {
   return m_pressure;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-t_distance_constraint &  algorithm::MD<t_simulation, t_temperature, t_pressure,
-				       t_distance_constraint, t_integration>
+template<typename t_spec>
+typename t_spec::distance_constraint_type &  algorithm::MD<t_spec>
 ::distance_constraint_algorithm()
 {
   return m_distance_constraint;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-t_integration &  algorithm::MD<t_simulation, t_temperature, t_pressure,
-			       t_distance_constraint, t_integration>
+template<typename t_spec>
+typename t_spec::integration_type &  algorithm::MD<t_spec>
 ::integration_algorithm()
 {
   return m_integration;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-io::OutG96Trajectory<t_simulation> &  
-algorithm::MD<t_simulation, t_temperature, t_pressure,
-	      t_distance_constraint, t_integration>
+template<typename t_spec>
+io::OutG96Trajectory<typename t_spec::simulation_type> &  
+algorithm::MD<t_spec>
 ::trajectory()
 {
   return *m_trajectory;
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::G96Forcefield(io::InTopology &topo,
 		io::InInput &input, io::Argument &args)
 {
@@ -239,7 +184,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   bool have_DIRK =
     input.read_FORCEFIELD(bond_term, angle_term);
 
-  const std::vector<interaction::bond_type_struct> * bond_param = NULL;
+  // const std::vector<interaction::bond_type_struct> * bond_param = NULL;
   
   if (do_bond){
     if ((have_DIRK && (bond_term == 0))
@@ -253,13 +198,14 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 	io::messages.add("using Gromos96 quartic bond term",
 			 "md", io::message::notice);
       // bonds: quartic
-      m_qbond_interaction =
-	new interaction::Quartic_bond_interaction<t_simulation>;
+      typename t_spec::quartic_bond_interaction_type *
+	qbond_interaction =
+	new typename t_spec::quartic_bond_interaction_type;      
     
-      topo >> *m_qbond_interaction;
-      bond_param = &m_qbond_interaction->parameter();
+      topo >> *qbond_interaction;
+      // bond_param = &m_qbond_interaction->parameter();
       
-      m_forcefield.push_back(m_qbond_interaction);
+      m_forcefield.push_back(qbond_interaction);
     }
 
     else if ((have_DIRK && (bond_term == 2))
@@ -274,21 +220,19 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 			 "md", io::message::notice);
 
       // bonds: harmonic
-      interaction::harmonic_bond_interaction<t_simulation>
+      typename t_spec::harmonic_bond_interaction_type
 	*the_hbond_interaction =
-	new interaction::harmonic_bond_interaction<t_simulation>;
+	new typename t_spec::harmonic_bond_interaction_type;
 
       topo >> *the_hbond_interaction;
-      bond_param = &the_hbond_interaction->parameter();
-
       m_forcefield.push_back(the_hbond_interaction);
+
     }
     else{
       io::messages.add("FORCE or FORCEFIELD block wrong for bond term",
 		       "md", io::message::error);
     }
   }
-
 
   if (do_angle){
     // angles
@@ -298,9 +242,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 		       "md", io::message::error);
     }
 
-    interaction::angle_interaction<t_simulation>
+    typename t_spec::angle_interaction_type
       *the_angle_interaction = 
-      new interaction::angle_interaction<t_simulation>;
+      new     typename t_spec::angle_interaction_type;
     
     topo >> *the_angle_interaction;
  
@@ -309,9 +253,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
   if (do_improper){
     // improper dihedrals
-    interaction::Improper_dihedral_interaction<t_simulation>
+    typename t_spec::improper_interaction_type
       *the_improper_interaction = 
-      new interaction::Improper_dihedral_interaction<t_simulation>;
+      new typename t_spec::improper_interaction_type;
 
     topo >> *the_improper_interaction;
     
@@ -320,9 +264,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
   if (do_dihedral){
     // dihedrals
-    interaction::Dihedral_interaction<t_simulation>
+    typename t_spec::dihedral_interaction_type
       *the_dihedral_interaction =
-      new interaction::Dihedral_interaction<t_simulation>;
+      new typename t_spec::dihedral_interaction_type;
     
     topo >> *the_dihedral_interaction;
     
@@ -338,15 +282,10 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       // nonbonded (with virial)
       DEBUG(8, "md (create_forcefield): nonbonded with pressure");
 
-      interaction::Nonbonded_Interaction<t_simulation,
-	pairlist_virial_type,
-	innerloop_virial_type>
+      typename t_spec::nonbonded_virial_interaction_type
 	*the_nonbonded_virial_interaction =
-	new interaction::Nonbonded_Interaction<t_simulation,
-	pairlist_virial_type,
-	innerloop_virial_type>(m_simulation);
+	new typename t_spec::nonbonded_virial_interaction_type(m_simulation);
 
-      
       topo >> *the_nonbonded_virial_interaction;
       
       DEBUG(10, "md (create forcefield): nonbonded with pressure read in");
@@ -356,11 +295,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     else{
       // nonbonded
       DEBUG(8, "md (create_forcefield): nonbonded without pressure");
-      interaction::Nonbonded_Interaction<t_simulation,
-	pairlist_type, innerloop_type>
+     typename t_spec::nonbonded_interaction_type
 	* the_nonbonded_interaction =
-	new interaction::Nonbonded_Interaction<t_simulation,
-	pairlist_type, innerloop_type>(m_simulation);
+	new typename t_spec::nonbonded_interaction_type(m_simulation);
       
       topo >> *the_nonbonded_interaction;
       
@@ -376,19 +313,71 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 
 }
 
+/**
+ * perform an MD simulation.
+ */
+template<typename t_spec>
+int algorithm::MD<t_spec>::do_md(io::Argument &args)
+{
+  if(initialize(args)){
+    return 1;
+  }
+  
+  run();
+  
+  std::cout << "\nwriting final structure" << std::endl;
+  trajectory() << io::final << simulation();
+  
+  simulation::Energy energy, fluctuation;
+  simulation().system().energy_averages().
+    average(energy, fluctuation);
+  
+  io::print_ENERGY(std::cout, energy,
+		   simulation().topology().energy_groups(),
+		   "AVERAGE ENERGIES");
+
+  io::print_MULTIBATH(std::cout, simulation().multibath(),
+		      energy);
+  
+  io::print_ENERGY(std::cout, fluctuation,
+		   simulation().topology().energy_groups(),
+		   "ENERGY FLUCTUATIONS");
+  
+  io::print_MULTIBATH(std::cout, simulation().multibath(),
+		      fluctuation);
+
+  // lambda derivatives
+  if (m_do_perturbation){
+
+    simulation().system().lambda_derivative_averages().
+      average(energy, fluctuation);
+  
+    io::print_ENERGY(std::cout, energy,
+		     simulation().topology().energy_groups(),
+		     "AVERAGE ENERGY LAMBDA DERIVATIVES");
+
+    io::print_MULTIBATH(std::cout, simulation().multibath(),
+			energy);
+
+    io::print_ENERGY(std::cout, fluctuation,
+		     simulation().topology().energy_groups(),
+		     "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
+    
+    io::print_MULTIBATH(std::cout, simulation().multibath(),
+			fluctuation);
+  }
+
+  return 0;
+
+}
 
 /**
  * run an MD simulation.
  *
  * this is the main md loop.
  */
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::run(double time)
 {
 
@@ -457,13 +446,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   }    
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::parse_print_argument(io::Argument &args)
 {
 
@@ -495,13 +479,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   }
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::open_files(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
@@ -549,13 +528,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 }
 
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::init_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
@@ -621,13 +595,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::read_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
@@ -675,13 +644,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::init_output(io::Argument &args, io::InInput &input)
 {
   // std::cerr << "init_output" << std::endl;
@@ -706,8 +670,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 
   // use a G96 trajectory
   m_trajectory = 
-    new io::OutG96Trajectory<simulation_type>(*traj_file, *fin_file, 
-					      print_trajectory, true);
+    new io::OutG96Trajectory<typename t_spec::simulation_type>
+    (*traj_file, *fin_file, 
+     print_trajectory, true);
 
   // optional files
   //================
@@ -747,17 +712,13 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::print_pairlists()
 {
   
-  typename std::vector<typename interaction::Interaction<simulation_type> *>
+  typename std::vector<typename interaction::Interaction<
+    typename t_spec::simulation_type> *>
     ::const_iterator it = m_forcefield.begin(),
     to = m_forcefield.end();
 	
@@ -769,8 +730,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 	std::cerr << "printing virial pairlist" << std::endl;
 
 	(*m_print_file) << "shortrange\n" 
-			<< dynamic_cast<interaction::Nonbonded_Interaction
-	  <simulation_type, pairlist_virial_type, innerloop_virial_type> *>
+			<< dynamic_cast<
+	  typename t_spec::nonbonded_virial_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
       }
@@ -778,8 +739,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 	std::cerr << "printing pairlist" << std::endl;
 	
 	(*m_print_file) << "shortrange\n" 
-			<< dynamic_cast<interaction::Nonbonded_Interaction
-	  <simulation_type, pairlist_type, innerloop_type> *>
+			<< dynamic_cast<typename t_spec::nonbonded_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
 	
@@ -791,13 +751,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
 }
 
-template<typename t_simulation,
-	 typename t_temperature,
-	 typename t_pressure,
-	 typename t_distance_constraint,
-	 typename t_integration>
-void algorithm::MD<t_simulation, t_temperature, t_pressure, 
-		   t_distance_constraint, t_integration>
+template<typename t_spec>
+void algorithm::MD<t_spec>
 ::do_energies()
 {
   // calculate the kinetic energy now (velocities adjusted for constraints)

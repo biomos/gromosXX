@@ -29,7 +29,7 @@ namespace simulation
     /**
      * Constructor
      */
-    explicit Simulation(t_topo &topo, t_system &sys);
+    explicit Simulation();
     
     /**
      * const topology accessor
@@ -139,11 +139,11 @@ namespace simulation
     /**
      * the topology.
      */
-    topology_type &m_topology;
+    topology_type m_topology;
     /** 
      * the system.
      */
-    system_type   &m_system;
+    system_type   m_system;
     /**
      * the time.
      */

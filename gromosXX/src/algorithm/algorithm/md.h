@@ -12,45 +12,14 @@ namespace algorithm
    * @class MD
    * the MD algorithm
    */
-  template<typename t_simulation,
-	   typename t_temperature = algorithm::Berendsen_Thermostat,
-	   typename t_pressure = algorithm::Berendsen_Barostat,
-	   typename t_distance_constraint = algorithm::Shake<t_simulation>,
-	   typename t_integration = algorithm::Leap_Frog<t_simulation> >
+  template<typename t_spec=MD_spec>
   class MD
   {
   public:
-    typedef t_simulation simulation_type;
-    typedef t_temperature temperature_algorithm_type;
-    typedef t_pressure pressure_algortihm_type;
-    typedef t_distance_constraint distance_constraint_type;
-    typedef t_integration integration_algorithm_type;
-
-    typedef interaction::Basic_Pairlist<t_simulation,
-					interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, 
-											  interaction::Twinrange_Chargegroup_Filter<t_simulation,
-																    interaction::Nonbonded_Base,
-																    interaction::Nonbonded_Inner_Loop<
-      t_simulation, interaction::Storage> > > > pairlist_type;
-      
-    typedef interaction::Nonbonded_Inner_Loop<t_simulation,
-					      typename t_simulation::system_type> innerloop_type;
-
-    typedef interaction::Basic_Pairlist<t_simulation,
-					interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, 
-											  interaction::Twinrange_Chargegroup_Filter<t_simulation,
-																    interaction::Nonbonded_Base,
-																    interaction::Nonbonded_Inner_Loop_Virial<
-      t_simulation, interaction::Storage> > > > pairlist_virial_type;
-      
-    typedef interaction::Nonbonded_Inner_Loop_Virial<t_simulation,
-						     typename t_simulation::system_type> innerloop_virial_type;
-    
-
     /**
      * Constructor.
      */
-    MD(t_simulation &sim);
+    MD();
 
     /**
      * Destructor.
@@ -60,43 +29,49 @@ namespace algorithm
     /**
      * simulation accessor.
      */
-    t_simulation & simulation();
+    typename t_spec::simulation_type & simulation();
     
     /**
      * forcefield accessor.
      */
-    interaction::Forcefield<t_simulation> & forcefield();
+    interaction::Forcefield<typename t_spec::simulation_type> & forcefield();
     
     /**
      * temperature coupling algorithm.
      */
-    t_temperature & temperature_algorithm();
+    typename t_spec::temperature_type & temperature_algorithm();
     
     /**
      * pressure coupling algorithm.
      */
-    t_pressure & pressure_algorithm();
+    typename t_spec::pressure_type & pressure_algorithm();
     
     /**
      * distance constraint algorithm.
      */
-    t_distance_constraint & distance_constraint_algorithm();
+    typename t_spec::distance_constraint_type & distance_constraint_algorithm();
 
     /**
      * integration algorithm.
      */
-    t_integration & integration_algorithm();
+    typename t_spec::integration_type & integration_algorithm();
 
     /**
      * the trajectory.
      */
-    io::OutG96Trajectory<t_simulation> & trajectory();
+    io::OutG96Trajectory<typename t_spec::simulation_type> & trajectory();
     
     /**
      * initialization.
      */
     int initialize(io::Argument &args);
     
+    /**
+     * perform an md simulation.
+     * calls run.
+     */
+    int do_md(io::Argument &args);
+
     /**
      * run the system.
      * @param time the time to run the system.
@@ -118,32 +93,32 @@ namespace algorithm
     /**
      * simulation.
      */
-    t_simulation & m_simulation;
+    typename t_spec::simulation_type m_simulation;
     /**
      * forcefield.
      */
-    interaction::Forcefield<t_simulation> m_forcefield;
+    interaction::Forcefield<typename t_spec::simulation_type> m_forcefield;
     /**
      * temperature coupling.
      */
-    t_temperature m_temperature;
+    typename t_spec::temperature_type m_temperature;
     /**
      * pressure coupling.
      */
-    t_pressure m_pressure;
+    typename t_spec::pressure_type m_pressure;
     /**
      * distance constraint algorithm.
      */
-    t_distance_constraint m_distance_constraint;
+    typename t_spec::distance_constraint_type m_distance_constraint;
       
     /**
      * integration algorithm.
      */
-    t_integration m_integration;
+    typename t_spec::integration_type m_integration;
     /**
      * trajecorty file
      */
-    io::OutG96Trajectory<t_simulation> *m_trajectory;
+    io::OutG96Trajectory<typename t_spec::simulation_type> *m_trajectory;
     /**
      * additional output file.
      */
@@ -177,16 +152,14 @@ namespace algorithm
      * which kind of virial?
      */
     int m_calculate_pressure;      
-    /**
-     * the interactions:
-     * quartic bond interaction.
-     */
-    interaction::Quartic_bond_interaction<t_simulation> * m_qbond_interaction;
-    /**
-     * angle interaction
-     */
-    interaction::angle_interaction<t_simulation> * m_angle_interaction;
 
+    /**
+     * are we performing a perturbation run.
+     * which of course we cannot from this class
+     * but (maybe???) from derived classes.
+     */
+    bool m_do_perturbation;
+    
     /**
      * parse the print argument
      * for pairlist and force that

@@ -48,7 +48,6 @@ void interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
   
   for(int cg1_index=0; cg1 != cg_to; ++cg1, ++cg1_index) {
     // add intra cg (if not solvent...)
-    DEBUG(7, "intra: " << cg1_index);
     if (unsigned(**cg1) < sim.topology().solute().num_atoms()){
       do_cg_interaction_intra(sim, cg1);
     }
@@ -57,11 +56,11 @@ void interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
     simulation::chargegroup_iterator cg2(*cg1+1);
     for(int cg2_index = cg1_index + 1; cg2 != cg_to; ++cg2, ++cg2_index) {
 
-      DEBUG(7, "cg1: " << cg1_index << " - cg2: " << cg2_index);
+      // DEBUG(7, "cg1: " << cg1_index << " - cg2: " << cg2_index);
 
       if (m_filter.range_chargegroup_pair(sim, cg1_index, cg2_index, cg1, cg2))
 	continue;
-      DEBUG(7, "it's in SHORT-range!");
+      // DEBUG(7, "it's in SHORT-range!");
       
       // SHORTRANGE
       if (unsigned(**cg2) < sim.topology().solute().num_atoms()){
@@ -77,7 +76,7 @@ void interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, t_filter>
   } // cg1
   
   DEBUG(7, "pairlist done");
-  DEBUG(7, "pairlist size: " << m_pairlist.size());
+  // DEBUG(7, "pairlist size: " << m_pairlist.size());
   
 }
 

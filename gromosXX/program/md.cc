@@ -21,70 +21,14 @@
 #include <interaction/interaction.h>
 #include <io/io.h>
 #include <algorithm/algorithm.h>
-// #include <io/trajectory/InFlexibleConstraints.h>
 
-// sppecial includes
+// special includes
 #include <algorithm/integration/runge_kutta.h>
 
 // global variables for debug
 #include "../src/debug.cc"
 
 using namespace math;
-
-template<typename t_md>
-int do_md(t_md & md, io::Argument &args, bool perturbation = false)
-{
-  if(md.initialize(args)){
-    return 1;
-  }
-  
-  md.run();
-  
-  std::cout << "\nwriting final structure" << std::endl;
-  md.trajectory() << io::final << md.simulation();
-  
-  simulation::Energy energy, fluctuation;
-  md.simulation().system().energy_averages().
-    average(energy, fluctuation);
-  
-  io::print_ENERGY(std::cout, energy,
-		   md.simulation().topology().energy_groups(),
-		   "AVERAGE ENERGIES");
-
-  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-		      energy);
-  
-  io::print_ENERGY(std::cout, fluctuation,
-		   md.simulation().topology().energy_groups(),
-		   "ENERGY FLUCTUATIONS");
-  
-  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-		      fluctuation);
-
-  // lambda derivatives
-  if (perturbation){
-
-    md.simulation().system().lambda_derivative_averages().
-      average(energy, fluctuation);
-  
-    io::print_ENERGY(std::cout, energy,
-		     md.simulation().topology().energy_groups(),
-		     "AVERAGE ENERGY LAMBDA DERIVATIVES");
-
-    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-			energy);
-
-    io::print_ENERGY(std::cout, fluctuation,
-		     md.simulation().topology().energy_groups(),
-		     "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
-    
-    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
-			fluctuation);
-  }
-
-  return 0;
-
-}
 
 int main(int argc, char *argv[])
 {
@@ -136,20 +80,21 @@ int main(int argc, char *argv[])
 			 "md",io::message::error);
       }
     }
-
-    // determine whether we do perturbation
+    
+    // determine whether we do perturbation and RK
     bool perturbation = false;
-    if (args.count("pert") == 1){
+    if (args.count("pert") == 1)
       perturbation = true;
-      if (runge_kutta)
+
+    if (runge_kutta){
+
+      if (perturbation){
 	io::messages.add("perturbation with runge kutta integration"
 			 " not allowed",
 			 "md", io::message::error);
-    }
-    
-    // this is not the nicest solution...
-    if (runge_kutta){
+      }
 
+      /**
       // topology and system
       simulation::System<math::any> the_system;
       simulation::Perturbation_Topology the_topology;
@@ -170,49 +115,27 @@ int main(int argc, char *argv[])
       if (do_md(the_MD, args)){
 	return 1;
       }      
+      */
+      return 1;
     }
     else if (perturbation){ // leap frog + perturbation
-      // topology and system
-      simulation::System<math::any> the_system;
-      simulation::Perturbation_Topology the_topology;
 
-      // simulation
-      typedef simulation::Simulation<simulation::Perturbation_Topology,
-	simulation::System<math::any> > simulation_type;
-  
-      simulation_type the_simulation(the_topology, the_system);
-      
-      algorithm::Perturbation_MD<simulation_type,
-	algorithm::Berendsen_Thermostat,
-	algorithm::Berendsen_Barostat,
-	algorithm::Perturbed_Shake<simulation_type>,
-	algorithm::Leap_Frog<simulation_type> >
-	the_MD(the_simulation);
-    
-      if (do_md(the_MD, args, perturbation)){
+      algorithm::Perturbation_MD<
+	algorithm::perturbed_MD_spec
+	> 
+	the_MD;
+
+      if (the_MD.do_md(args)){
 	return 1;
       }
-
     }
     else{ // leap frog, no perturbation
-      // topology and system
-      simulation::System<math::any> the_system;
-      simulation::Topology the_topology;
+      algorithm::MD<
+	algorithm::MD_spec
+	> 
+	the_MD;
 
-      // simulation
-      typedef simulation::Simulation<simulation::Topology,
-	simulation::System<math::any> > simulation_type;
-  
-      simulation_type the_simulation(the_topology, the_system);
-      
-      algorithm::MD<simulation_type,
-	algorithm::Berendsen_Thermostat,
-	algorithm::Berendsen_Barostat,
-	algorithm::Shake<simulation_type>,
-	algorithm::Leap_Frog<simulation_type> >
-	the_MD(the_simulation);
-
-      if (do_md(the_MD, args)){
+      if (the_MD.do_md(args)){
 	return 1;
       }
     }
