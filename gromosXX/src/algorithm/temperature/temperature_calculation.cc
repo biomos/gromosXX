@@ -94,7 +94,7 @@ int algorithm::Temperature_Calculation
 
   // and the perturbed energy derivatives (if there are any)
   if (sim.param().perturbation.perturbation){
-    math::VArray &vel = conf.old().vel;
+    math::VArray &vel = conf.current().vel;
 
     // loop over the baths
     std::vector<simulation::bath_index_struct>::iterator
@@ -119,6 +119,8 @@ int algorithm::Temperature_Calculation
 		<< " in bath " << bath);
 	  DEBUG(11, "\tA_mass: " << topo.perturbed_solute().atoms()[i].A_mass() 
 		<< " B_mass: " << topo.perturbed_solute().atoms()[i].B_mass());
+
+	  DEBUG(10, "\tbefore dE_kin/dl: " << e_kin[bath]);
 
 	  // for some reason we take the new velocities here
 	  e_kin[bath] -=
