@@ -42,7 +42,7 @@ io::message::severity_enum io::message::display(std::ostream &os)
   
   if (it != it_to && critical > r) r = critical;
   for( ; it != it_to; ++it){
-    os << std::setw(10) << "CRITICAL" << it->second << std::endl;
+    os << std::setw(10) << "CRITICAL " << it->second << std::endl;
   }
   
   it = m_message.lower_bound(error);
@@ -50,21 +50,21 @@ io::message::severity_enum io::message::display(std::ostream &os)
   
   if(it != it_to && error > r) r = error;
   for( ; it != it_to; ++it)
-    os << std::setw(10) << "ERROR" << it->second << std::endl;
+    os << std::setw(10) << "ERROR " << it->second << std::endl;
 
   it = m_message.lower_bound(warning);
   it_to = m_message.upper_bound(warning);
   
   if(it != it_to && warning > r) r = warning;
   for( ; it != it_to; ++it)
-    os << std::setw(10) << "WARNING" << it->second << std::endl;
+    os << std::setw(10) << "WARNING " << it->second << std::endl;
 
   it = m_message.lower_bound(notice);
   it_to = m_message.upper_bound(notice);
   
   if(it != it_to && notice > r) r = notice;
   for( ; it != it_to; ++it)
-    os << std::setw(10) << "NOTICE" << it->second << std::endl;
+    os << std::setw(10) << "NOTICE " << it->second << std::endl;
     
   return r;
   

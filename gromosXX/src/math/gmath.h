@@ -35,7 +35,10 @@ namespace math
    * Array of scalars.
    */
   typedef blitz::Array<double, 1>      SArray;
-  
+  /**
+   * Matrix.
+   */
+  typedef blitz::TinyVector< blitz::TinyVector<double, 3>, 3> Matrix;
   
 } // math
 

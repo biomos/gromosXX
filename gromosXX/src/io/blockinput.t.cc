@@ -13,9 +13,7 @@
 #include "../simulation/simulation.h"
 #include "../interaction/interaction.h"
 
-#include "blockinput.h"
-#include "GInStream.h"
-#include "topology/InTopology.h"
+#include "io.h"
 
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/test_tools.hpp>
@@ -35,7 +33,6 @@ void test_blockio()
 
   simulation_type the_simulation(the_topology, the_system);
 
-  // i need an empty forcefield
   interaction::forcefield<simulation_type> the_forcefield;
 
   interaction::harmonic_bond_interaction<simulation_type> *bond_interaction
@@ -44,12 +41,23 @@ void test_blockio()
   std::ifstream topo_file("/home/markus/test/hexa10.topo");
   io::InTopology topo(topo_file);
   
-  topo >> *bond_interaction;
+  std::ifstream sys_file("/home/markus/test/hexa10.coord");
+  io::InTrajectory sys(sys_file);
 
+  topo >> *bond_interaction;
   topo >> the_topology;
 
-  // no tests...
-  BOOST_CHECK_EQUAL(1, 1);
+  sys >> the_system;
+
+  BOOST_CHECK_EQUAL(io::message::notice, io::messages.display());
+
+  // output
+  std::ofstream final("blockinput.t.fin");
+  io::OutTrajectory<simulation_type> traj(std::cout, final);
+  traj << the_simulation;
+  // traj << io::decorated << the_simulation;
+  traj << io::final << the_simulation;
+
 }
 
 test_suite*

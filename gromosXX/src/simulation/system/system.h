@@ -9,6 +9,21 @@
 namespace simulation
 {
   /**
+   * @enum boundary_enum
+   * boundary condition
+   */
+  enum boundary_enum{
+    /**
+     * vacuum.
+     */
+    vacuum = 0,
+    /**
+     * triclinic box
+     */
+    triclinic = 1
+  };
+
+  /**
    * @class system
    * holds the state information of
    * the simulated system.
@@ -62,6 +77,19 @@ namespace simulation
      * exchage forces
      */
     void exchange_force();
+    /**
+     * the box.
+     */
+    math::Matrix &box();
+    /**
+     * the boundary condition.
+     */
+    boundary_enum boundary_condition();
+    /**
+     * set the boundary condition.
+     */
+    void boundary_condition(boundary_enum b);
+    
   protected:
     /**
      * position 1
@@ -111,6 +139,14 @@ namespace simulation
      * old force
      */
     math::VArray *m_old_force;
+    /**
+     * the box.
+     */
+    math::Matrix m_box;
+    /**
+     * the boundary condition.
+     */
+    boundary_enum m_boundary_condition;
     
   }; // system
   

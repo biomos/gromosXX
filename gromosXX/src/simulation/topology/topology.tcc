@@ -111,7 +111,7 @@ inline void simulation::topology::add_solute_atom(std::string name, int residue_
     solute_atoms_capacity(m_num_solute_atoms+1);
   }
   
-  soluteatom().add(name, residue_nr, iac);
+  soluteatoms().add(name, residue_nr, iac);
 
   topology::mass()(m_num_solute_atoms) = mass;
   topology::charge()(m_num_solute_atoms) = charge;
@@ -129,4 +129,20 @@ inline void simulation::topology::add_solute_atom(std::string name, int residue_
 
   ++m_num_solute_atoms;  
 
+}
+
+/**
+ * soluteatom accessor.
+ */
+inline simulation::soluteatom & simulation::topology::soluteatoms()
+{
+  return m_soluteatoms;
+}
+
+/**
+ * residue name accessor.
+ */
+inline std::vector<std::string> & simulation::topology::residue_name()
+{
+  return m_residue_name;
 }

@@ -73,6 +73,11 @@ namespace simulation
 			 std::set<int> exclusions,
 			 std::set<int> one_four_pairs);
     
+    /**
+     * residue names.
+     */
+    std::vector<std::string> & residue_name();
+
   private:
     /**
      * the number of solute atoms.
@@ -118,6 +123,11 @@ namespace simulation
      * the bonds.
      */
     bond m_bonds;
+    
+    /**
+     * residue names.
+     */
+    std::vector<std::string> m_residue_name;
     
   }; // topology
   

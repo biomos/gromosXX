@@ -11,7 +11,9 @@ template<typename t_topo, typename t_system>
 inline simulation::simulation<t_topo, t_system>
 ::simulation(t_topo &topo, t_system &sys)
   : m_topology(topo),
-    m_system(sys)
+    m_system(sys),
+    m_time(0.0),
+    m_steps(0)
 {
 }
 
@@ -43,4 +45,24 @@ namespace simulation
     os << "a simulation";
     return os;
   }
+}
+
+/**
+ * time accessor
+ */
+template<typename t_topo, typename t_system>
+inline double simulation::simulation<t_topo, t_system>
+::time()
+{
+  return m_time;
+}
+
+/**
+ * steps accessor
+ */
+template<typename t_topo, typename t_system>
+inline int simulation::simulation<t_topo, t_system>
+::steps()
+{
+  return m_steps;
 }

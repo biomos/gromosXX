@@ -1,5 +1,5 @@
 /**
- * @file simulation.h
+ * @file src/simulation/simulation/simulation.h
  * the simulation class
  */
 
@@ -39,7 +39,15 @@ namespace simulation
      * system accessor
      */
     t_system & system();
-
+    /**
+     * time accessor
+     */
+    double time();
+    /**
+     * steps accessor
+     */
+    int steps();
+    
   private:
     /**
      * the topology.
@@ -49,6 +57,15 @@ namespace simulation
      * the system.
      */
     system_type   &m_system;
+    /**
+     * the time.
+     */
+    double m_time;
+    /**
+     * the number of steps done.
+     */
+    int m_steps;
+
   }; // class simulation
   
   

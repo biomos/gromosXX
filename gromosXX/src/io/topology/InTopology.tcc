@@ -68,6 +68,16 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
     }
   } // BONDH
   
+  { // RESNAME
+    buffer = m_block["RESNAME"];
+    buffer.erase(buffer.begin());
+    buffer.erase(buffer.begin());
+    buffer.erase(buffer.end()-1);
+    
+    topo.residue_name() = buffer;
+    
+  } // RESNAME
+  
   { // SOLUTEATOM
     buffer = m_block["SOLUTEATOM"];
   
@@ -108,7 +118,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line SOLUTEATOM block");
 
-      topo.add_solute_atom(s, r_nr, t, m, q, cg, ex, ex14);
+      topo.add_solute_atom(s, r_nr-1, t-1, m, q, cg, ex, ex14);
 
     }
     

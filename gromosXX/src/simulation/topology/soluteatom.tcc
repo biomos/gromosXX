@@ -23,5 +23,6 @@ inline
 simulation::soluteatom::soluteatom_struct & 
 simulation::soluteatom::operator()(size_t i)
 {
+  assert(i < m_information.size());
   return m_information[i];
 }

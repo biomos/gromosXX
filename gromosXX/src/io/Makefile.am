@@ -6,7 +6,11 @@ include_HEADERS = 		io.h \
 				message.h \
 				GInStream.h \
 				topology/InTopology.h \
-				topology/InTopology.tcc
+				topology/InTopology.tcc \
+				trajectory/InTrajectory.h \
+				trajectory/InTrajectory.tcc \
+				trajectory/OutTrajectory.h \
+				trajectory/OutTrajectory.tcc
 
 lib_LTLIBRARIES	= 		libio.la
 

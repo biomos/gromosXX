@@ -114,6 +114,29 @@ inline void simulation::system::exchange_force()
   m_force = m_old_force;
   m_old_force = dummy;
 }
+/**
+ * box accessor.
+ */
+inline math::Matrix & simulation::system::box()
+{
+  return m_box;
+}
+
+/**
+ * boundary condition accessor.
+ */
+inline simulation::boundary_enum simulation::system::boundary_condition()
+{
+  return m_boundary_condition;
+}
+
+/**
+ * set boundary condition.
+ */
+inline void simulation::system::boundary_condition(boundary_enum b)
+{
+  m_boundary_condition = b;
+}
 
 namespace simulation
 {
