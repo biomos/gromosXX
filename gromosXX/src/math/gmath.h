@@ -26,7 +26,7 @@ namespace math
   /**
    * 3 dimensional vector.
    */
-  typedef blitz::TinyVector<double, 3> Vec;
+  typedef blitz::TinyVector<double, 3U> Vec;
   /**
    * Array of 3D vectors.
    */
@@ -40,6 +40,11 @@ namespace math
    */
   typedef blitz::TinyVector< blitz::TinyVector<double, 3>, 3> Matrix;
   
+  /**
+   * a small number.
+   */
+  const double epsilon = 0.000000000001;
+
 } // math
 
 #endif

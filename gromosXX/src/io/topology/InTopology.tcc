@@ -88,7 +88,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
     _lineStream >> num;
     ++it;
     
-    topo.solute_atoms_capacity(num);
+    topo.resize(num);
 
     for(n=0; it != buffer.end() - 1; ++it, ++n){
       int a_nr, r_nr, t, cg, n_ex, a_ex;

@@ -7,7 +7,8 @@
  * Constructor
  */
 inline simulation::topology::topology()
-  : m_num_solute_atoms(0), 
+  : m_num_solute_atoms(0),
+    m_num_solvent_atoms(0),
     m_mass(0),
     m_charge(0)
 {
@@ -65,8 +66,11 @@ inline size_t simulation::topology::num_solute_atoms()const
  * set the capacity of solute atoms byresizeing
  * the apropriate arrays.
  */
-inline void simulation::topology::solute_atoms_capacity(size_t atoms)
+inline void simulation::topology::resize(size_t atoms)
 {
+  // if you want to shrink, first change num_atoms...
+  assert(atoms >= num_solute_atoms() + num_solvent_atoms());
+
   m_mass.resizeAndPreserve(atoms);
   m_charge.resizeAndPreserve(atoms);
   m_exclusion.resize(atoms);
@@ -79,7 +83,9 @@ inline void simulation::topology::solute_atoms_capacity(size_t atoms)
  */
 inline void simulation::topology::num_solute_atoms(size_t atoms)
 {
-  assert(unsigned(m_mass.size()) <= atoms);
+  assert(num_solvent_atoms() == 0);
+  assert(unsigned(m_mass.size()) == atoms);
+
   m_num_solute_atoms = atoms;
 }
 
@@ -116,7 +122,7 @@ inline void simulation::topology::add_solute_atom(std::string name, int residue_
 {
 
   if (unsigned(m_mass.size()) < m_num_solute_atoms + 1){
-    solute_atoms_capacity(m_num_solute_atoms+1);
+    resize(m_num_solute_atoms+1);
   }
   
   soluteatoms().add(name, residue_nr);
@@ -159,6 +165,14 @@ inline simulation::solvent & simulation::topology::solvents(size_t i)
 }
 
 /**
+ * number of solvents.
+ */
+inline size_t simulation::topology::num_solvents()const
+{
+  return m_solvents.size();
+}
+
+/**
  * add a solvent.
  */
 inline void simulation::topology::add_solvent(solvent solv)
@@ -171,7 +185,48 @@ inline void simulation::topology::add_solvent(solvent solv)
  */
 inline void simulation::topology::solvate(int solv, int num_molecules)
 {
-  throw std::runtime_error("topology::solvate not yet implemented!");
+  // only add in the correct order!
+  assert(solv = m_num_solvent_atoms.size());
+
+  int n = num_solute_atoms() + num_solvent_atoms();
+
+  m_num_solvent_molecules.push_back(num_molecules);
+  m_num_solvent_atoms.push_back(num_molecules * m_solvents[solv].num_atoms());
+  
+  resize(num_solute_atoms() + num_solvent_atoms());
+
+  // add to iac, mass, charge
+  for(int i=0; i<num_molecules; ++i){
+    for(size_t j=0; j<m_solvents[solv].num_atoms(); ++j, ++n){
+      m_iac.push_back(m_solvents[solv].atom(j).iac);
+      m_mass(n) = m_solvents[solv].atom(j).mass;
+      m_charge(n) = m_solvents[solv].atom(j).charge;
+      // no exclusions or 1-4 interactions for solvent ?!
+    }
+  }
+  
+}
+
+/**
+ * total solvent atoms accessor
+ */
+inline size_t simulation::topology::num_solvent_atoms()const
+{
+  size_t n = 0;
+  for(std::vector<size_t>::const_iterator it = m_num_solvent_atoms.begin(),
+	to = m_num_solvent_atoms.end();
+      it != to; ++it)
+    n += *it;
+  return n;
+}
+
+/**
+ * solvent atoms of solvent i
+ */
+inline size_t simulation::topology::num_solvent_atoms(size_t i)const
+{
+  assert(i<m_num_solvent_atoms.size());
+  return m_num_solvent_atoms[i];
 }
 
 /**

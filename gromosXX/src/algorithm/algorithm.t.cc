@@ -55,7 +55,7 @@ void leap_frog_test()
   simulation::topology the_topology;
   
   the_system.resize(SIZE);
-  the_topology.solute_atoms_capacity(SIZE);
+  the_topology.resize(SIZE);
   the_topology.num_solute_atoms(SIZE);
   
   // initialize everything with zero
@@ -162,7 +162,7 @@ void runge_kutta_test()
   simulation::topology the_topology;
   
   the_system.resize(SIZE);
-  the_topology.solute_atoms_capacity(SIZE);
+  the_topology.resize(SIZE);
   the_topology.num_solute_atoms(SIZE);
 
   // constant velocity

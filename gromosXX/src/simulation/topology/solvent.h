@@ -60,6 +60,10 @@ namespace simulation
      * add a constraint.
      */
     void add_constraint(int i, int j, double b0);
+    /**
+     * number of atoms in the solvent.
+     */
+    size_t num_atoms()const;
 
   private:
     std::vector<solventatom_struct> m_atom;

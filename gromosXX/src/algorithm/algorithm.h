@@ -4,3 +4,4 @@
  */
 
 #include "integration/leap_frog.h"
+#include "constraint/shake.h"

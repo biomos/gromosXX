@@ -55,6 +55,7 @@ void forcefield_test()
   simulation::topology the_topology;
   
   the_system.resize(SIZE);
+  the_topology.resize(SIZE);
   the_topology.num_solute_atoms(SIZE);
 
   // initialize everything with zero

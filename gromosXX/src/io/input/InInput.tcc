@@ -26,6 +26,29 @@ inline void io::InInput::read_stream()
 }
 
 /**
+ * read the SYSTEM block.
+ */
+inline void io::InInput::read_SYSTEM(int &nsm)
+{
+  std::vector<std::string> buffer;
+  buffer = m_block["SYSTEM"];
+  _lineStream.clear();
+  _lineStream.str(buffer[1]);
+  
+  int npm;
+  _lineStream >> npm >> nsm;
+ 
+  if (_lineStream.fail() || ! _lineStream.eof())
+    throw std::runtime_error("bad line in SYSTEM block");
+  
+  if (npm != 1)
+    io::messages.add("SYSTEM: only NPM=1 allowed",
+		     "io::InInput::read_SYSTEM",
+		     io::message::error);
+  
+} 
+
+/**
  * read the STEP block.
  */
 inline void io::InInput::read_STEP(int &num_steps, double &t0, double &dt)
@@ -42,7 +65,7 @@ inline void io::InInput::read_STEP(int &num_steps, double &t0, double &dt)
   _lineStream >> num_steps >> t0 >> dt;
   
   if (_lineStream.fail() || ! _lineStream.eof())
-    throw std::runtime_error("bad line in BOND block");
+    throw std::runtime_error("bad line in STEP block");
   
 }
 

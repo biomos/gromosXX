@@ -59,6 +59,11 @@ namespace simulation
     soluteatom & soluteatoms();
 
     /**
+     * number of solvents.
+     */
+    size_t num_solvents()const;
+    
+    /**
      * solvent accessor.
      * support for multiple solvents.
      */
@@ -79,7 +84,7 @@ namespace simulation
     /**
      * set the capacity of solute atoms
      */
-    void solute_atoms_capacity(size_t atoms);
+    void resize(size_t atoms);
 
     /**
      * set the number of solute atoms
@@ -91,6 +96,19 @@ namespace simulation
      */
     size_t num_solute_atoms()const;
 
+    /**
+     * get the total number of solvent atoms.
+     */
+    size_t num_solvent_atoms()const;
+    
+    /**
+     * get the number of solvent atoms.
+     */
+    size_t num_solvent_atoms(size_t i)const;
+
+    /**
+     * add a solute atom.
+     */
     void add_solute_atom(std::string name, int residue_nr, int iac,
 			 double mass, double charge, bool chargegroup,
 			 std::set<int> exclusions,
@@ -112,6 +130,17 @@ namespace simulation
      */
     soluteatom m_soluteatoms;
 
+    /**
+     * the number of solvent molecules.
+     */
+    std::vector<size_t> m_num_solvent_molecules;
+    
+    /**
+     * the number of solvent atoms.
+     * vector for multiple solvents.
+     */
+    std::vector<size_t> m_num_solvent_atoms;
+    
     /**
      * the solvents (multiple solvent).
      */

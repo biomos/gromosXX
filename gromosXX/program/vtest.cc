@@ -11,8 +11,8 @@
 #include <math/gmath.h>
 #include <simulation/simulation.h>
 #include <interaction/interaction.h>
-#include <algorithm/algorithm.h>
 #include <io/io.h>
+#include <algorithm/algorithm.h>
 
 // sppecial includes
 #include <algorithm/integration/runge_kutta.h>
@@ -59,6 +59,10 @@ int main(int argc, char *argv[])
 
   topo >> the_topology;
   sys >> the_system;
+
+  int nsm;
+  input.read_SYSTEM(nsm);
+  if (nsm) the_topology.solvate(0, nsm);
   
   // simulation
   typedef simulation::simulation<simulation::topology,

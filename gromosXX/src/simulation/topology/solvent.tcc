@@ -72,3 +72,12 @@ simulation::solvent::constraints()
 {
   return m_constraint;
 }
+
+/**
+ * accessor: number of atoms.
+ */
+inline
+size_t simulation::solvent::num_atoms()const
+{
+  return m_atom.size();
+}

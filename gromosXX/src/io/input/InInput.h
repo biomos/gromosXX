@@ -25,6 +25,11 @@ namespace io {
      */
     void read_STEP(int &num_steps, double &t0, double &dt);
 
+    /**
+     * read the SYSTEM block.
+     */
+    void read_SYSTEM(int &nsm);
+    
   private:
     /**
      * read the entire stream and store the blocks in the map.
