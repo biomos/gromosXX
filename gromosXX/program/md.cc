@@ -139,6 +139,7 @@ int main(int argc, char *argv[]){
       
     traj.write(conf, topo, sim, io::reduced);
 
+    // run a step
     if ((error = md.run(topo, conf, sim))){
 
       if (error == E_MINIMUM_REACHED){
@@ -157,22 +158,6 @@ int main(int argc, char *argv[]){
       break;
     }
 
-    // update the energies
-    if (conf.old().energies.calculate_totals()){
-      std::cout << "\nError during MD run!\n" << std::endl;
-      error = E_NAN;
-      
-      // try to save the final structures...
-      break;	
-    }
-
-    // perturbed energy derivatives
-    if (sim.param().perturbation.perturbation){
-      conf.old().perturbed_energy_derivatives.calculate_totals();
-    }
-      
-    conf.current().averages.apply(topo, conf, sim);
-      
     traj.print(topo, conf, sim);
 
     sim.time() += sim.time_step_size();

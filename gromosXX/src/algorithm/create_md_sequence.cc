@@ -18,6 +18,8 @@
 #include <io/topology/in_topology.h>
 
 #include <algorithm/algorithm/algorithm_sequence.h>
+#include <algorithm/constraints/position_constraints.h>
+#include <algorithm/integration/energy_calculation.h>
 #include <algorithm/integration/leap_frog.h>
 #include <algorithm/temperature/temperature_calculation.h>
 #include <algorithm/temperature/nosehoover_thermostat.h>
@@ -75,6 +77,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   
   // add the forcefield
   md_seq.push_back(ff);
+
+  // position constraints?
+  if (sim.param().posrest.posrest == 3){
+    algorithm::Position_Constraints * pc = new algorithm::Position_Constraints;
+    md_seq.push_back(pc);
+  }
 
   // energy minimisation or MD?
   if (sim.param().minimise.ntem == 1){
@@ -185,6 +193,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   else
     std::cout << "PERTURATION OFF\n";
   
+  // total energy calculation and energy average update
+  {
+    algorithm::Energy_Calculation * ec = new algorithm::Energy_Calculation();
+    md_seq.push_back(ec);
+  }
+
   return 0;
 
 }

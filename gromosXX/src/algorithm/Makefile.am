@@ -5,6 +5,7 @@ xxincludedir = 			$(includedir)/gromosXX/algorithm
 xxinclude_HEADERS =		algorithm.h \
 				create_md_sequence.h \
 			  	algorithm/algorithm_sequence.h \
+				integration/energy_calculation.h \
 				integration/leap_frog.h \
 				integration/slow_growth.h \
 				integration/steepest_descent.h \
@@ -15,6 +16,7 @@ xxinclude_HEADERS =		algorithm.h \
 			  	pressure/pressure_calculation.h \
 			  	pressure/berendsen_barostat.h \
 			  	constraints/create_constraints.h \
+				constraints/position_constraints.h \
 				constraints/shake.h \
 				constraints/perturbed_shake.h \
 				constraints/lincs.h \
@@ -36,12 +38,14 @@ libgroalgorithm_la_SOURCES =	algorithm.cc \
 				pressure/pressure_calculation.cc \
 				pressure/berendsen_barostat.cc \
 				constraints/create_constraints.cc \
+				constraints/position_constraints.cc \
 				constraints/remove_com_motion.cc \
 				constraints/shake.cc \
 				constraints/perturbed_shake.cc \
 				constraints/flexible_constraint.cc \
 				constraints/perturbed_flexible_constraint.cc \
 				constraints/lincs.cc \
+				integration/energy_calculation.cc \
 				integration/slow_growth.cc \
 				integration/steepest_descent.cc \
 				constraints/rottrans.cc
