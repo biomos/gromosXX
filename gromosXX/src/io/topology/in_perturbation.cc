@@ -719,70 +719,82 @@ io::In_Perturbation::read(topology::Topology &topo,
 
     buffer = m_block["SCALEDINTERACTIONS"];
     if (buffer.size()){
-      std::cout << "\tSCALED INTERACTIONS\n";
-
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      int i, j;
-      double A, B;
-
-      std::cout << "\t"
-		<< std::setw(10) << "group i"
-		<< std::setw(10) << "group j"
-		<< std::setw(10) << "scale A"
-		<< std::setw(10) << "scale B"
-		<< "\n";
-
-      for(n = 0; it != buffer.end() - 1; ++it, ++n){
+      if(!param.perturbation.scaling){
+	io::messages.add("Scaled interactions not turned on, ignoring SCALEDINTERACTIONS block.",
+			 "InPerturbation", io::message::warning);
+      }
+      else{
+	std::cout << "\tSCALED INTERACTIONS\n";
+	
+	it = buffer.begin() + 1;
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> i >> j >> A >> B;
+	int num, n;
+	_lineStream >> num;
+	++it;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in PERTATOM03 block.",
-			   "InTopology", io::message::error);
-	  throw std::runtime_error("bad line in SCALEDINTERACTIONS block\n\t"
-				   + *it);
-	}
-	
-	--i;
-	--j;
-
-	std::pair<int, int> energy_pair(i,j);
-	std::pair<int, int> energy_pair2(j,i);
-	
-	std::pair<double, double> scale_pair(A,B);
-	
-	topo.energy_group_scaling()[energy_pair]=scale_pair;
-	topo.energy_group_scaling()[energy_pair2]=scale_pair;
+	int i, j;
+	double A, B;
 	
 	std::cout << "\t"
-		  << std::setw(10) << i+1
-		  << std::setw(10) << j+1
-		  << std::setw(10) << A
-		  << std::setw(10) << B
-		  << std::endl;
+		  << std::setw(10) << "group i"
+		  << std::setw(10) << "group j"
+		  << std::setw(10) << "scale A"
+		  << std::setw(10) << "scale B"
+		  << "\n";
 	
-      }
-      
-      if (n != num){
+	for(n = 0; it != buffer.end() - 1; ++it, ++n){
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> A >> B;
+	  
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in PERTATOM03 block.",
+			     "InTopology", io::message::error);
+	    throw std::runtime_error("bad line in SCALEDINTERACTIONS block\n\t"
+				     + *it);
+	  }
+	  
+	  --i;
+	  --j;
+	  
+	  std::pair<int, int> energy_pair(i,j);
+	  std::pair<int, int> energy_pair2(j,i);
+	  
+	  std::pair<double, double> scale_pair(A,B);
+	  
+	  topo.energy_group_scaling()[energy_pair]=scale_pair;
+	  topo.energy_group_scaling()[energy_pair2]=scale_pair;
+	  
+	  std::cout << "\t"
+		    << std::setw(10) << i+1
+		    << std::setw(10) << j+1
+		    << std::setw(10) << A
+		    << std::setw(10) << B
+		    << std::endl;
+	  
+	}
+	
+	if (n != num){
 	  io::messages.add("Wrong number of bonds in SCALEDINTERACTIONS block.",
 			   "InTopology", io::message::error);	
 	  throw std::runtime_error("error in SCALEDINTERACTIONS block (n != num)");
-      }
-      else if (_lineStream.fail()){
-	io::messages.add("Bad line in SCALEDINTERACTIONS block.",
-			 "InTopology", io::message::error);
-    	throw std::runtime_error("error in SCALEDINTERACTIONS block (fail)");
-      }
-      std::cout << "\tEND\n";
+	}
+	else if (_lineStream.fail()){
+	  io::messages.add("Bad line in SCALEDINTERACTIONS block.",
+			   "InTopology", io::message::error);
+	  throw std::runtime_error("error in SCALEDINTERACTIONS block (fail)");
+	}
+	std::cout << "\tEND\n";
+      } // if scaling turned on
       
     } // if block present
+    else{
+      if(param.perturbation.scaling){
+	io::messages.add("Scaling turned on but no SCALEDINTERACTIONS block.",
+			 "InPerturbation", io::message::error);
+      }
+    }
   } // PERTATOMPAIR03
 
   std::cout << "END\n";

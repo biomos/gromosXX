@@ -65,6 +65,8 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
     force = 0.0;
     energies.zero();
     perturbed_energy_derivatives.zero();
+    DEBUG(11,"\tenergy derivative" << perturbed_energy_derivatives.lj_energy[0][0] );
+    
     virial_tensor = 0.0;
 
     DEBUG(7, "\tupdate the parlist");
@@ -184,10 +186,47 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 		      size_t const i, size_t const j)
 {
   assert(pairlist().size() > i);
-  if (perturbed_atom(topo, conf, sim, i))
+
+  if (perturbed_atom(topo, conf, sim, i)){
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+      
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_pairlist()[i].push_back(j);
+	else
+	  pairlist()[i].push_back(j);
+	return;      
+      }
+    }
     perturbed_pairlist()[i].push_back(j);
-  else if (perturbed_atom(topo, conf, sim, j))
+  }
+  else if (perturbed_atom(topo, conf, sim, j)){
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+	
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_pairlist()[j].push_back(i);
+	else
+	  pairlist()[i].push_back(j);
+	return;      
+      }
+    }
+    
+    
     perturbed_pairlist()[j].push_back(i);
+  }
   else
     pairlist()[i].push_back(j);
 }
@@ -206,15 +245,49 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 {
   assert(t_interaction_spec::do_bekker);
   assert(pairlist().size() > i);
+
   if (perturbed_atom(topo, conf, sim, i)){
-    perturbed_pairlist()[i].push_back((pc << 26) +j);
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+	
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_pairlist()[i].push_back((pc << 26) + j);
+	else
+	  pairlist()[i].push_back((pc << 26) + j);
+	return;
+      }
+    }
+
+    perturbed_pairlist()[i].push_back((pc << 26) + j);
   }
   else if (perturbed_atom(topo, conf, sim, j)){
-    perturbed_pairlist()[j].push_back(((26 - pc) << 26) +i);
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+	
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_pairlist()[j].push_back(((26 - pc) << 26) + i);
+	else
+	  pairlist()[i].push_back((pc << 26) + j);
+	return;      
+      }
+    }
+    
+    perturbed_pairlist()[j].push_back(((26 - pc) << 26) + i);
   }
-  else{
+  else
     pairlist()[i].push_back((pc << 26) + j);
-  }
 }
 
 /**
@@ -230,14 +303,49 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 		     Periodicity_type const & periodicity)
 {
   if (perturbed_atom(topo, conf, sim, i)){
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+	
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_interaction_innerloop(topo, conf, i, j, *this, periodicity);
+	else
+	  interaction_innerloop(topo, conf, i, j, *this, periodicity);
+	return;      
+      }
+    }
+    
     perturbed_interaction_innerloop(topo, conf, i, j, *this, periodicity);
+
   }
   else if (perturbed_atom(topo, conf, sim, j)){
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+	
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_interaction_innerloop(topo, conf, j, i, *this, periodicity);
+	else
+	  interaction_innerloop(topo, conf, i, j, *this, periodicity);
+	return;      
+      }
+    }
+    
     perturbed_interaction_innerloop(topo, conf, j, i, *this, periodicity);
+
   }
-  else{
+  else
     interaction_innerloop(topo, conf, i, j, *this, periodicity);
-  }
 }
 
 /**
@@ -253,14 +361,50 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 		     Periodicity_type const & periodicity, int pc)
 {
   if (perturbed_atom(topo, conf, sim, i)){
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+	
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_interaction_innerloop(topo, conf, i, j, *this, periodicity, pc);
+	else
+	  interaction_innerloop(topo, conf, i, j, *this, periodicity, pc);
+	return;      
+      }
+    }
+    
     perturbed_interaction_innerloop(topo, conf, i, j, *this, periodicity, pc);
+
   }
   else if (perturbed_atom(topo, conf, sim, j)){
+
+    if (t_interaction_spec::do_scaling){
+      // check whether we need to do scaling
+      // based on energy groups
+      if (sim.param().perturbation.scaled_only){
+	std::pair<int, int> 
+	  energy_group_pair(topo.atom_energy_group(i),
+			    topo.atom_energy_group(j));
+	
+	if (topo.energy_group_scaling().count(energy_group_pair))
+	  perturbed_interaction_innerloop(topo, conf, j, i, *this, periodicity, pc);
+	else
+	  interaction_innerloop(topo, conf, i, j, *this, periodicity, pc);
+	return;      
+      }
+    }
+    
     perturbed_interaction_innerloop(topo, conf, j, i, *this, periodicity, pc);
+
   }
-  else{
+  else
     interaction_innerloop(topo, conf, i, j, *this, periodicity, pc);
-  }
+
 }
 
 //==================================================

@@ -738,13 +738,22 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
     
-    if (s1 == "on") param.perturbation.perturbation = true;
+    if (s1 == "on"){
+      param.perturbation.perturbation = true;
+      param.perturbation.scaled_only = false;
+    }
     else if (s1 == "off") param.perturbation.perturbation = false;
+    else if (s1 == "scaled") {
+      param.perturbation.perturbation = true;
+      param.perturbation.scaled_only = true;
+    }
     else {
       param.perturbation.perturbation = (atoi(s1.c_str())==1);
+      param.perturbation.scaled_only = false;
+
       if(errno){
 	io::messages.add("bad value for NTG in PERTURB block\n"
-			 "on,off,0,1",
+			 "on, scaled, off, 0, 1",
 			 "In_Parameter", io::message::error);
 	param.perturbation.perturbation=false;
 	return;
@@ -762,6 +771,10 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
 	param.perturbation.scaling=false;
 	return;
       }
+    }
+    if(param.perturbation.scaled_only && !param.perturbation.scaling){
+      io::messages.add("inconsistent input: perturbing only scaled interactions, but scaling not turned on",
+		       "In_Parameter", io::message::error);
     }
   }
   else{
@@ -795,6 +808,7 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
 		>> mmu;
     
     param.perturbation.scaling = false;
+    param.perturbation.scaled_only = false;
     
     if (_lineStream.fail())
       io::messages.add("bad line in PERTURB block",

@@ -73,21 +73,51 @@ namespace interaction
      * calculate the force, energy and dh/dl of an atom pair.
      */
     void lj_crf_soft_interaction(math::Vec const &r,
-				 double const c6, double const c12,
-				 double const q, double const l,
+				 double const A_c6, double const A_c12,
+				 double const B_c6, double const B_c12,
+				 double const A_q, double const B_q,
 				 double const alpha_lj,
 				 double const alpha_crf,
-				 math::Vec & force, double &e_lj,
-				 double & e_crf, double &de_lj, 
+				 double & force1, double & force6, double & force12,
+				 double &e_lj, double & e_crf, double &de_lj, 
 				 double & de_crf);
+
+    /**
+     * calculate the force, energy and dh/dl of an atom pair for
+     * which the interaction is scaled.
+     */
+    void lj_crf_scaled_interaction(math::Vec const &r,
+				   double const A_c6, double const A_c12,
+				   double const B_c6, double const B_c12,
+				   double const A_q, double const B_q,
+				   double const alpha_lj, double const alpha_crf,
+				   double const A_scale, double const B_scale,
+				   double & force1, double & force6, double & force12,
+				   double &e_lj, double & e_crf, double &de_lj, 
+				   double & de_crf);
+
 
     /**
      * calculate the reaction field force and energy
      * of a perturbed atom pair
      */
-    void rf_soft_interaction(math::Vec const &r, double const q, double const l,
+    void rf_soft_interaction(math::Vec const &r, 
+			     double const A_q, double const B_q, 
+			     double const l,
 			     double const alpha_crf,
 			     math::Vec & force, double & e_rf, double & de_rf);
+
+    /**
+     * calculate the reaction field force and energy
+     * of a perturbed atom pair for which the interaction
+     * is scaled.
+     */
+    void rf_scaled_interaction(math::Vec const &r, 
+			       double const A_q, double const B_q, 
+			       double const l,
+			       double const alpha_crf,
+			       double const A_scale, double const B_scale,
+			       math::Vec & force, double & e_rf, double & de_rf);
     
     double const crf_2cut3i()const;
      /**
@@ -181,10 +211,20 @@ namespace interaction
      */
     double m_A_lambda;
     /**
+     * Perturbation
+     * A lambda squared.
+     */
+    double m_A_lambda2;
+    /**
      * Perturbation:
      * lambda value for state B
      */
     double m_B_lambda;
+    /**
+     * Perturbation:
+     * square lambda value for state B
+     */
+    double m_B_lambda2;
     /**
      * Perturbation:
      * lambda value for state A to the power nlam
@@ -205,6 +245,12 @@ namespace interaction
      * lambda value for state B to the power nlam-1
      */
     double m_B_lambda_n_1;
+
+    /**
+     * Perturbation:
+     * exponent to lambda.
+     */
+    double m_lambda_exp;
 
   };
   

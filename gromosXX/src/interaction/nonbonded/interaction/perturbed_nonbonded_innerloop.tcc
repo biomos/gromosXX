@@ -27,172 +27,167 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   Periodicity_type const & periodicity,
   int pc)
 {
-    DEBUG(7, "\tperturbed pair\t" << i << "\t" << j);
+  DEBUG(7, "\tperturbed pair\t" << i << "\t" << j << " (inner loop)");
 
-    math::Vec r, f, A_f, B_f;
-    double A_e_lj, A_e_crf, A_de_lj, A_de_crf, 
-           B_e_lj, B_e_crf, B_de_lj, B_de_crf;
-    double e_lj, e_crf, de_lj, de_crf;
+  math::Vec r, f;
+  double f1, f6, f12;
+  
+  double e_lj, e_crf, de_lj, de_crf;
+  
+  if (t_interaction_spec::do_bekker){
+    r = conf.current().pos(i) + periodicity.shift(pc).pos
+      - conf.current().pos(j);
+  }
+  else{
+    periodicity.nearest_image(conf.current().pos(i), 
+			      conf.current().pos(j), r);
+  }
+  
+  lj_parameter_struct const *A_lj;
+  lj_parameter_struct const *B_lj;
+  double A_q, B_q;
+  double alpha_lj=0, alpha_crf=0;
+  
+  // const double l = topo.lambda();
+  
+  if(topo.is_perturbed(j) ==true){
+    A_lj =  &m_base.lj_parameter(
+				 topo.perturbed_solute().atoms()[i].A_IAC(),
+				 topo.perturbed_solute().atoms()[j].A_IAC());
+    B_lj = &m_base.lj_parameter(
+				topo.perturbed_solute().atoms()[i].B_IAC(),
+				topo.perturbed_solute().atoms()[j].B_IAC());
+    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
+      topo.perturbed_solute().atoms()[j].A_charge();
+    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
+      topo.perturbed_solute().atoms()[j].B_charge();
     
-    if (t_interaction_spec::do_bekker){
-      r = conf.current().pos(i) + periodicity.shift(pc).pos
-	- conf.current().pos(j);
+    alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
+		topo.perturbed_solute().atoms()[j].LJ_softcore()) /
+      2.0;
+    alpha_crf = (topo.perturbed_solute().atoms()[i].CRF_softcore() +
+		 topo.perturbed_solute().atoms()[j].CRF_softcore()) /
+      2.0;
+    
+  }
+  else{
+    A_lj = & m_base.lj_parameter(
+				 topo.perturbed_solute().atoms()[i].A_IAC(),
+				 topo.iac(j));
+    B_lj = & m_base.lj_parameter(
+				 topo.perturbed_solute().atoms()[i].B_IAC(),
+				 topo.iac(j));
+    DEBUG(10, "\tiac-i (A) : " << topo.perturbed_solute().atoms()[i].A_IAC() 
+	  << " iac-i (B) : " << topo.perturbed_solute().atoms()[i].B_IAC()
+	  << " iac-j : " << topo.iac(j));
+    
+    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
+      topo.charge()(j);
+    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
+      topo.charge()(j);
+    
+    alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
+    alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
+    
+  }
+  
+  DEBUG(7, "\tlj-parameter state A c6=" << A_lj->c6 << " c12=" << A_lj->c12);
+  DEBUG(7, "\tlj-parameter state B c6=" << B_lj->c6 << " c12=" << B_lj->c12);
+  DEBUG(7, "\tcharges state A i*j = " << A_q);
+  DEBUG(7, "\tcharges state B i*j = " << B_q);
+    
+
+  if (t_interaction_spec::do_scaling){
+    // check whether we need to do scaling
+    // based on energy groups
+    
+    std::pair<int, int> 
+    energy_group_pair(topo.atom_energy_group(i),
+    topo.atom_energy_group(j));
+    if (topo.energy_group_scaling().count(energy_group_pair)){
+    
+    // YES, we do scale the interactions!
+      m_base.lj_crf_scaled_interaction(r, A_lj->c6, A_lj->c12,
+				       B_lj->c6, B_lj->c12,
+				       A_q, B_q,
+				       alpha_lj, alpha_crf,
+				       topo.energy_group_scaling()[energy_group_pair].first,
+				       topo.energy_group_scaling()[energy_group_pair].second,
+				       f1, f6, f12,
+				       e_lj, e_crf, de_lj, de_crf);
     }
     else{
-      periodicity.nearest_image(conf.current().pos(i), 
-				conf.current().pos(j), r);
+      // no scaling
+      m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+				     B_lj->c6, B_lj->c12,
+				     A_q, B_q,
+				     alpha_lj, alpha_crf,
+				     f1, f6, f12,
+				     e_lj, e_crf, de_lj, de_crf);
+      
     }
-    
-    lj_parameter_struct const *A_lj;
-    lj_parameter_struct const *B_lj;
-    double A_q, B_q;
-    double alpha_lj=0, alpha_crf=0;
-    
-    // const double l = topo.lambda();
-    
-    if(topo.is_perturbed(j) ==true){
-      A_lj =  &m_base.lj_parameter(
-	        topo.perturbed_solute().atoms()[i].A_IAC(),
-	        topo.perturbed_solute().atoms()[j].A_IAC());
-      B_lj = &m_base.lj_parameter(
-	       topo.perturbed_solute().atoms()[i].B_IAC(),
-	       topo.perturbed_solute().atoms()[j].B_IAC());
-      A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-	    topo.perturbed_solute().atoms()[j].A_charge();
-      B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-	    topo.perturbed_solute().atoms()[j].B_charge();
-
-      alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
-		  topo.perturbed_solute().atoms()[j].LJ_softcore()) /
-	2.0;
-      alpha_crf = (topo.perturbed_solute().atoms()[i].CRF_softcore() +
-		   topo.perturbed_solute().atoms()[j].CRF_softcore()) /
-	2.0;
-            
-    }
-    else{
-      A_lj = & m_base.lj_parameter(
-	       topo.perturbed_solute().atoms()[i].A_IAC(),
-	       topo.iac(j));
-      B_lj = & m_base.lj_parameter(
-	       topo.perturbed_solute().atoms()[i].B_IAC(),
-	       topo.iac(j));
-      A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-	    topo.charge()(j);
-      B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-	    topo.charge()(j);
-
-      alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
-      alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
-
-   }
-    
-    DEBUG(7, "\tlj-parameter state A c6=" << A_lj->c6 << " c12=" << A_lj->c12);
-    DEBUG(7, "\tlj-parameter state B c6=" << B_lj->c6 << " c12=" << B_lj->c12);
-    DEBUG(7, "\tcharges state A i*j = " << A_q);
-    DEBUG(7, "\tcharges state B i*j = " << B_q);
-
+  }
+  else{
     m_base.lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-				   A_q, topo.lambda(),
+				   B_lj->c6, B_lj->c12,
+				   A_q, B_q,
 				   alpha_lj, alpha_crf,
-				   A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+				   f1, f6, f12,
+				   e_lj, e_crf, de_lj, de_crf);
+  }
+  
+  DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
+	<< f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
+	<< " e_crf: " << e_crf 
+	<< " de_lj: " << de_lj << " de_crf: " << de_crf);
+  
+  // now combine everything
+  f      = (f1 + f6 + f12) * r;
+  
+  storage.force(i) += f;
+  storage.force(j) -= f;
+  
+  DEBUG(7, "\tforces stored");
+  
+  if (t_interaction_spec::do_virial == math::molecular_virial){
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+	storage.virial_tensor(a, b) += 
+	  (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
+	   conf.special().rel_mol_com_pos(j)(a)) * f(b);
     
-    DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	  << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	  << " de_lj: " << A_de_lj << " de_crf: " << A_de_crf);
+    DEBUG(7, "\tvirial done");
+  }
+  
+  if (t_interaction_spec::do_virial == math::atomic_virial){
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+	storage.virial_tensor(a, b) += 
+	  r(a) * f(b);
     
-    m_base.lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				   B_q, 1.0 - topo.lambda(),
-				   alpha_lj, alpha_crf,
-				   B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-    
-    DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	  << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	  << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
-    
-    if (t_interaction_spec::do_scaling){
-      
-      // check whether we need to do scaling
-      // based on energy groups
-
-      std::pair<int, int> 
-	energy_group_pair(topo.atom_energy_group(i),
-			  topo.atom_energy_group(j));
-      if (topo.energy_group_scaling().count(energy_group_pair)){
-	
-	// YES, we do scale the interactions!
-
-	std::pair<double, double> scaling_pair =
-	  topo.energy_group_scaling()[energy_group_pair];
-	A_f      *= scaling_pair.first;
-	A_e_lj   *= scaling_pair.first;
-	A_e_crf  *= scaling_pair.first;
-	A_de_lj  *= scaling_pair.first;
-	A_de_crf *= scaling_pair.first;
-	B_f      *= scaling_pair.second;
-	B_e_lj   *= scaling_pair.second;
-	B_e_crf  *= scaling_pair.second;
-	B_de_lj  *= scaling_pair.second;
-	B_de_crf *= scaling_pair.second;
-      }
-    }
-
-    // now combine everything
-    f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
-    e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
-    e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
-    de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
-      + topo.lambda_exp() * m_base.B_lambda_n_1() * B_e_lj  
-      - topo.lambda_exp() * m_base.A_lambda_n_1() * A_e_lj;
-    de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
-      + topo.lambda_exp() * m_base.B_lambda_n_1() * B_e_crf 
-      - topo.lambda_exp() * m_base.A_lambda_n_1() * A_e_crf;
-    
-
-    storage.force(i) += f;
-    storage.force(j) -= f;
-
-    DEBUG(7, "\tforces stored");
-
-    if (t_interaction_spec::do_virial == math::molecular_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  storage.virial_tensor(a, b) += 
-	    (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
-	     conf.special().rel_mol_com_pos(j)(a)) * f(b);
-      
-      DEBUG(7, "\tvirial done");
-    }
-
-    if (t_interaction_spec::do_virial == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  storage.virial_tensor(a, b) += 
-	    r(a) * f(b);
-
-      DEBUG(7, "\tatomic virial done");
-    }
-    
-    // energy
-    assert(storage.energies.lj_energy.size() > 
-	   topo.atom_energy_group(i));
-    assert(storage.energies.lj_energy.size() >
-	   topo.atom_energy_group(j));
-
-    storage.energies.lj_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_lj;
-    
-    storage.energies.crf_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += e_crf;
-    
-    DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
-	  << " " << topo.atom_energy_group(j));
-    
-    storage.perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += de_lj;
-    storage.perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)]
-      [topo.atom_energy_group(j)] += de_crf;
-    
+    DEBUG(7, "\tatomic virial done");
+  }
+  
+  // energy
+  assert(storage.energies.lj_energy.size() > 
+	 topo.atom_energy_group(i));
+  assert(storage.energies.lj_energy.size() >
+	 topo.atom_energy_group(j));
+  
+  storage.energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
+  
+  storage.energies.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_crf;
+  
+  DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
+	<< " " << topo.atom_energy_group(j));
+  
+  storage.perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += de_lj;
+  storage.perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += de_crf;
+  
 }
 
 
@@ -207,11 +202,10 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 {
     DEBUG(7, "\tpair\t" << i << "\t" << j);
 
-    math::Vec r, f, A_f, B_f;
-    double A_e_lj, A_e_crf, A_de_lj, A_de_crf, 
-           B_e_lj, B_e_crf, B_de_lj, B_de_crf;
+    math::Vec r, f;
+
     double e_lj, e_crf, de_lj, de_crf;
-    
+    double f1, f6, f12;
     
     periodicity.nearest_image(conf.current().pos(i), 
 			      conf.current().pos(j), r);
@@ -268,23 +262,19 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     DEBUG(7, "\tcharges state B i*j = " << B_q);
     
     m_base.lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-				   A_q, topo.lambda(),
+				   B_lj->cs6, B_lj->cs12,
+				   A_q, B_q,
 				   alpha_lj, alpha_crf,
-				   A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+				   f1, f6, f12, 
+				   e_lj, e_crf, de_lj, de_crf);
     
     DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	  << A_f << " e_lj: " << A_e_lj << " e_crf: " << A_e_crf 
-	  << " de_lj: " << A_de_lj  << " de_crf: " << A_de_crf);
+	  << f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
+	  << " e_crf: " << e_crf 
+	  << " de_lj: " << de_lj  << " de_crf: " << de_crf);
     
-    m_base.lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				   B_q, 1.0 - topo.lambda(),
-				   alpha_lj, alpha_crf,
-				   B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
-    
-    DEBUG(7, "\tcalculated interaction state B:\n\t\tf: " 
-	  << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
-	  << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
-    
+
+    /*
     if (t_interaction_spec::do_scaling){
       
       // check whether we need to do scaling
@@ -311,17 +301,10 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	B_de_crf *= scaling_pair.second;
       }
     }
-    
+    */
+
     // now combine everything
-    f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
-    e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
-    e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
-    de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
-      + topo.lambda_exp() * m_base.B_lambda_n_1() * B_e_lj  
-      - topo.lambda_exp() * m_base.A_lambda_n_1() * A_e_lj;
-    de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
-      + topo.lambda_exp() * m_base.B_lambda_n_1() * B_e_crf 
-      - topo.lambda_exp() * m_base.A_lambda_n_1() * A_e_crf;
+    f      = (f1 + f6 + f12) * r;
 
     conf.current().force(i) += f;
     conf.current().force(j) -= f;
@@ -351,6 +334,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
     DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
 	  << " " << topo.atom_energy_group(j));
+    DEBUG(20,"de_lj tot (before) " << conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
+	  [topo.atom_energy_group(j)]);
     
     conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_lj;
@@ -372,8 +357,8 @@ interaction::Perturbed_Nonbonded_Innerloop<
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
 
-  math::Vec r, f_rf, A_f_rf, B_f_rf, f_old_A;
-  double e_rf, A_e_rf, B_e_rf, de_rf, A_de_rf, B_de_rf, e_crf_old_A;
+  math::Vec r, f_rf, f_old_A;
+  double e_rf, de_rf, e_crf_old_A;
   // const double l=topo.lambda();
   
   std::set<int>::const_iterator it, to;
@@ -390,14 +375,11 @@ interaction::Perturbed_Nonbonded_Innerloop<
   // now calculate everything
   m_base.rf_interaction(r, q_i_a*q_i_a, f_old_A, e_crf_old_A);
 
-  m_base.rf_soft_interaction(r, q_i_a*q_i_a, 
+  m_base.rf_soft_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
 			     m_base.B_lambda(), mit->second.CRF_softcore(),
-			     A_f_rf, A_e_rf, A_de_rf);
+			     f_rf, e_rf, de_rf);
   
-  m_base.rf_soft_interaction(r, q_i_b*q_i_b, 
-			     m_base.A_lambda(), mit->second.CRF_softcore(),
-			     B_f_rf, B_e_rf, B_de_rf);
-  
+  /*
   if (t_interaction_spec::do_scaling){
 
     // check whether we need to do scaling
@@ -422,18 +404,13 @@ interaction::Perturbed_Nonbonded_Innerloop<
       B_de_rf *= scaling_pair.second;
     }
   }
+  */
 
-  DEBUG(7, "Self term for atom " << i << " A: "
-	<< A_e_rf << " B: " << B_e_rf);
-  
-  // (1-l)^n * A + l^n *B - A 
-  e_rf  = m_base.B_lambda_n() * B_e_rf  + m_base.A_lambda_n() * A_e_rf - e_crf_old_A;
-  de_rf = m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
-    + topo.lambda_exp() * m_base.B_lambda_n_1() * B_e_rf 
-    - topo.lambda_exp() * m_base.A_lambda_n_1() * A_e_rf;
-  
+  DEBUG(7, "Self term for atom " << i << " = "
+	<< e_rf);
+    
   conf.current().energies.crf_energy[topo.atom_energy_group(i)]
-    [topo.atom_energy_group(i)] += 0.5 * e_rf;
+    [topo.atom_energy_group(i)] += 0.5 * (e_rf - e_crf_old_A);
   conf.current().perturbed_energy_derivatives.crf_energy
     [topo.atom_energy_group(i)]
     [topo.atom_energy_group(i)] += 0.5 * de_rf;
@@ -476,23 +453,12 @@ interaction::Perturbed_Nonbonded_Innerloop<
 	  << " q_ij_a " << q_ij_a << " q_ij_b " << q_ij_b
 	  << " A_l " << m_base.A_lambda() << " B_l " << m_base.B_lambda());
     
-    m_base.rf_soft_interaction(r, q_ij_a, m_base.B_lambda(),
-			       alpha_crf,
-			       A_f_rf, A_e_rf, A_de_rf);
-
-    m_base.rf_soft_interaction(r, q_ij_b, m_base.A_lambda(), 
-			       alpha_crf,
-			       B_f_rf, B_e_rf, B_de_rf);
+    m_base.rf_soft_interaction(r, q_ij_a, q_ij_b, m_base.B_lambda(),
+			       alpha_crf, f_rf, e_rf, de_rf);
 
     DEBUG(8, "alpha_crf : " << alpha_crf);
-    DEBUG(7, "excluded atoms " << i << " & " << *it << " A: " 
-	  << A_e_rf << " B: " << B_e_rf);
-    
-    e_rf  = m_base.B_lambda_n() * B_e_rf  + m_base.A_lambda_n() * A_e_rf;
-    de_rf = m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
-      + topo.lambda_exp() * m_base.B_lambda_n_1() * B_e_rf 
-      - topo.lambda_exp() * m_base.A_lambda_n_1() * A_e_rf;
-    f_rf = m_base.B_lambda_n() * B_f_rf + m_base.A_lambda_n() * A_f_rf;
+    DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
+    DEBUG(7, "\tde_rf: " << de_rf);
     
     // and add everything to the correct arrays 
     conf.current().energies.crf_energy 
@@ -677,10 +643,11 @@ interaction::Perturbed_Nonbonded_Innerloop<
       A_f = 0.0;
       DEBUG(7, "excluded in A");
       if(sim.param().longrange.rf_excluded){
-	if (is_perturbed)
-	  m_base.rf_soft_interaction(r, A_q, topo.lambda(),
+	if (is_perturbed){
+	  m_base.rf_soft_interaction(r, A_q, 0, topo.lambda(),
 			       alpha_crf,
-			       A_f, A_e_crf, A_de_crf);
+				     A_f, A_e_crf, A_de_crf);
+	}
 	else
 	  m_base.rf_interaction(r, A_q, A_f, A_e_crf);
       }
@@ -694,11 +661,18 @@ interaction::Perturbed_Nonbonded_Innerloop<
       
       if (is_perturbed){
 	DEBUG(7, "perturbed interaction");
+	double A_f1, A_f6, A_f12;
+	
 	m_base.
 	  lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-				  A_q, topo.lambda(),
+				  0, 0,
+				  A_q, 0,
 				  alpha_lj, alpha_crf,
-				  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+				  A_f1, A_f6, A_f12,
+				  A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+
+	A_f = (A_f1 + A_f6 + A_f12) * r;
+	
       }
       else{
 	DEBUG(7, "non-perturbed interaction");
@@ -724,11 +698,15 @@ interaction::Perturbed_Nonbonded_Innerloop<
       
       if (is_perturbed){
 	DEBUG(7, "perturbed 1,4 interaction");
+	double A_f1, A_f6, A_f12;
+	
 	m_base.
 	  lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-				  A_q, topo.lambda(),
+				  0, 0,
+				  A_q, 0,
 				  alpha_lj, alpha_crf,
-				  A_f, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+				  A_f1, A_f6, A_f12, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+	A_f = (A_f1 + A_f6 + A_f12) * r;
       }
       else{
 	DEBUG(7, "non-perturbed 1,4 interaction");
@@ -759,7 +737,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
       B_f = 0.0;
       if(sim.param().longrange.rf_excluded){
 	if (is_perturbed)
-	  m_base.rf_soft_interaction(r, B_q, topo.lambda(),
+	  m_base.rf_soft_interaction(r, 0, B_q, topo.lambda(),
 			       alpha_crf,
 			       B_f, B_e_crf, B_de_crf);
 	else
@@ -775,11 +753,15 @@ interaction::Perturbed_Nonbonded_Innerloop<
     
       if (is_perturbed){
 	DEBUG(7, "perturbed interaction");
+	double B_f1, B_f6, B_f12;
+	
 	m_base.
-	  lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				  B_q, 1.0 - topo.lambda(),
+	  lj_crf_soft_interaction(r, 0, 0, B_lj->c6, B_lj->c12,
+				  0, B_q,
 				  alpha_lj, alpha_crf,
-				  B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+				  B_f1, B_f6, B_f12,
+				  B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+	B_f = (B_f1 + B_f6 + B_f12) * r;
       }
       else{
 	DEBUG(7, "non-perturbed interaction");
@@ -804,11 +786,14 @@ interaction::Perturbed_Nonbonded_Innerloop<
       
       if (is_perturbed){
 	DEBUG(7, "perturbed 1,4 interaction");
+	double B_f1, B_f6, B_f12;
+	
 	m_base.
-	  lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				  B_q, 1.0 - topo.lambda(),
-				  alpha_lj, alpha_crf,
-				  B_f, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+	  lj_crf_soft_interaction(r, 0, 0, B_lj->cs6, B_lj->cs12,
+				  0, B_q, alpha_lj, alpha_crf,
+				  B_f1, B_f6, B_f12,
+				  B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+	B_f = (B_f1 + B_f6 + B_f12) * r;
       }
       else{
 	DEBUG(7, "non-perturbed 1,4 interaction");

@@ -459,6 +459,11 @@ namespace simulation
        * scaling?
        */
       bool scaling;
+      /**
+       * perturb only scaled interactions.
+       */
+      bool scaled_only;
+      
     } perturbation;
     
   };
