@@ -239,7 +239,8 @@ inline io::InInput & io::InInput
 	  // the atoms in the baths
 	  sim.multibath().add_bath_index(last_solute, 0, 1);
 	  // and an uncoupled one for the solvent...
-	  sim.multibath().add_bath_index(last_solvent, 1, 1);
+	  if (last_solvent != last_solute)
+	    sim.multibath().add_bath_index(last_solvent, 1, 1);
 
 	}
 	// 0 1 0
@@ -250,7 +251,8 @@ inline io::InInput & io::InInput
 	  // the atoms in the baths
 	  sim.multibath().add_bath_index(last_solute, 1, 0);
 	  // and an uncoupled one for the solvent...
-	  sim.multibath().add_bath_index(last_solvent, 1, 1);
+	  if (last_solvent != last_solute)
+	    sim.multibath().add_bath_index(last_solvent, 1, 1);
 
 	}
 	// 0 0 1
@@ -269,9 +271,13 @@ inline io::InInput & io::InInput
 	  sim.multibath().add_bath(temp[1], tau[1]);
 	  // the atoms in the baths
 	  sim.multibath().add_bath_index(last_solute, 0, 1);
+
 	  // and an uncoupled one for the solvent...
-	  sim.multibath().add_bath(0, -1);
-	  sim.multibath().add_bath_index(last_solvent, 2, 2);
+	  if (last_solvent != last_solute){
+	    sim.multibath().add_bath(0, -1);
+	    sim.multibath().add_bath_index(last_solvent, 2, 2);
+	  }
+	  
 	}
 	// 1 1 1
 	else if (ntt[0] == 1 && ntt[1] == 1 && ntt[2] == 1){
@@ -290,8 +296,11 @@ inline io::InInput & io::InInput
 	  // the atoms in the bath
 	  sim.multibath().add_bath_index(last_solute, 0, 0);
 	  // and an uncoupled one for the solvent...
-	  sim.multibath().add_bath(0, -1);
-	  sim.multibath().add_bath_index(last_solvent, 1, 1);
+	  if (last_solvent != last_solute){
+	    sim.multibath().add_bath(0, -1);
+	    sim.multibath().add_bath_index(last_solvent, 1, 1);
+	  }
+
 	}
 	// 2 -2 1
 	else if (ntt[0] == 2 && ntt[1] == -2 && ntt[2] == 1){

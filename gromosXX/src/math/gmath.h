@@ -17,6 +17,7 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include <typeinfo>
 #include <cxxabi.h>
 
 /**

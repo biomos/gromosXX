@@ -123,6 +123,11 @@ inline void algorithm::Berendsen_Thermostat
 	  vel(*start) =
 	    sim.multibath()[com_bath].scale * new_com_v +
 	    sim.multibath()[ir_bath].scale * ir_v;
+	  
+	  DEBUG(10, "com scale=" << sim.multibath()[com_bath].scale
+		<< " ir scale=" << sim.multibath()[ir_bath].scale);
+	  DEBUG(10, "com_v=" << new_com_v << " ir_v=" << ir_v);
+
 	} // loop over atoms
       } // loop over molecules of bath
     } // seperately coupled
@@ -178,14 +183,14 @@ inline void algorithm::Berendsen_Thermostat
     for(size_t i=last; i<=it->last_atom; ++i){
       
       if(sim.topology().perturbed_atom()[i]){
-	DEBUG(7, "\tpertrubed kinetic energy for " << i << " in bath " << bath);
-	DEBUG(7, "\tA_mass: " << sim.topology().perturbed_solute().atoms()[i].A_mass() << " B_mass: " << sim.topology().perturbed_solute().atoms()[i].B_mass());
+	DEBUG(11, "\tpertrubed kinetic energy for " << i << " in bath " << bath);
+	DEBUG(11, "\tA_mass: " << sim.topology().perturbed_solute().atoms()[i].A_mass() << " B_mass: " << sim.topology().perturbed_solute().atoms()[i].B_mass());
 	// for some reason we take the new velocities here
 	e_kin[bath] -=
 	  (sim.topology().perturbed_solute().atoms()[i].B_mass() -
 	   sim.topology().perturbed_solute().atoms()[i].A_mass()) 
 	  * math::dot(vel(i), vel(i));
-	DEBUG(7, "\tdE_kin/dl: " << e_kin[bath]);
+	DEBUG(10, "\tdE_kin/dl: " << e_kin[bath]);
 	
       }
       

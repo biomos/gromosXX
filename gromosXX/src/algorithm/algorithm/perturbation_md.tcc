@@ -208,7 +208,8 @@ void algorithm::Perturbation_MD<t_md_spec, t_interaction_spec>
 
   if (m_print_energy && 
       (m_simulation.steps() ) % m_print_energy == 0){
-    std::cout << "LAMBDA\t" << m_simulation.topology().lambda() << std::endl;
+    std::cout << "LAMBDA\t" << std::scientific << m_simulation.topology().lambda() 
+	      << std::fixed << std::endl;
     io::print_ENERGY(std::cout, 
 		     m_simulation.system().lambda_energies(),
 		     m_simulation.topology().energy_groups(),
@@ -251,10 +252,14 @@ void algorithm::Perturbation_MD<t_md_spec, t_interaction_spec>
   if (m_do_perturbation){
 
     simulation::Energy energy, fluctuation;
+    math::Matrix pressure, pressure_fluct;
+    
 
     MD<t_md_spec, t_interaction_spec>::simulation().system().
       lambda_derivative_averages().
-      average(energy, fluctuation);
+      average(energy, fluctuation, pressure, pressure_fluct);
+
+    std::cout << "\n==================================================\n";
   
     io::print_ENERGY(std::cout, energy,
 		     MD<t_md_spec, t_interaction_spec>
@@ -265,6 +270,8 @@ void algorithm::Perturbation_MD<t_md_spec, t_interaction_spec>
 			::simulation().multibath(),
 			energy);
 
+    std::cout << "\n--------------------------------------------------\n";
+    
     io::print_ENERGY(std::cout, fluctuation,
 		     MD<t_md_spec, t_interaction_spec>
 		     ::simulation().topology().energy_groups(),

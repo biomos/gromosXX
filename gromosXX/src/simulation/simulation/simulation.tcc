@@ -303,7 +303,7 @@ calculate_mol_ekin()
     
     multibath().in_bath(*m_it.begin(), com_bath, ir_bath);
 
-    DEBUG(7, "adding to bath: com: "
+    DEBUG(9, "adding to bath: com: "
 	  << com_bath << " ir: " << ir_bath);
     DEBUG(10, "number of baths: energy " 
 	  << system().energies().kinetic_energy.size()

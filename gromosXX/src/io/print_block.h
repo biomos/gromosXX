@@ -51,6 +51,13 @@ namespace io
 	       std::string const title = "ENERGIES");
   
   /**
+   * Print a matrix.
+   */
+  inline std::ostream &
+  print_MATRIX(std::ostream &os, math::Matrix const &m,
+	       std::string const title);
+
+  /**
    * Print the TIMESTEP block.
    */
   inline std::ostream &

@@ -98,9 +98,13 @@ simulation::Perturbation_Topology::update_for_lambda()
 	it = perturbed_solute().atoms().begin(),
 	to = perturbed_solute().atoms().end();
       it != to; ++it){
-    mass()(it->second.sequence_number())
-      = (1-lambda()) * it->second.A_mass() + lambda() * it->second.B_mass();
-    DEBUG(10, "mass(" << it->second.sequence_number()
+    mass()(it->second.sequence_number()) = 
+      (1-lambda()) * it->second.A_mass() + 
+      lambda() * it->second.B_mass();
+
+    DEBUG(5, "mass A : " << it->second.A_mass() << " B : "
+	  << it->second.B_mass());
+        DEBUG(5, "mass(" << it->second.sequence_number()
 	  << ") = " << mass()(it->second.sequence_number()));
   }
 

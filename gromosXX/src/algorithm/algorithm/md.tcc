@@ -59,23 +59,23 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
 
   int status = 0;
   std::cout << "\n"
-	    << std::setw(20) << std::left << "\tsimulation"
+	    << std::setw(25) << std::left << "\tsimulation"
 	    << abi::__cxa_demangle(typeid(m_simulation).name(), 
 				   0, 0, &status) 
 	    << "\n"
-	    << std::setw(20) << std::left  << "\tintegration"
+	    << std::setw(25) << std::left  << "\tintegration"
 	    << abi::__cxa_demangle(typeid(m_integration).name(),
 				   0, 0, &status)
 	    << "\n"
-	    << std::setw(20) << std::left << "\ttemperature coupling"
+	    << std::setw(25) << std::left << "\ttemperature coupling"
 	    << abi::__cxa_demangle(typeid(m_temperature).name(),
 				   0, 0, &status)
 	    << "\n"
-	    << std::setw(20) << std::left << "\tpressure coupling"
+	    << std::setw(25) << std::left << "\tpressure coupling"
 	    << abi::__cxa_demangle(typeid(m_pressure).name(),
 				   0, 0, &status)
 	    << "\n"
-	    << std::setw(20) << std::left << "\tconstraints" 
+	    << std::setw(25) << std::left << "\tconstraints" 
 	    << abi::__cxa_demangle(typeid(m_distance_constraint).name(),
 				   0, 0, &status)
 	    << "\n";
@@ -579,8 +579,13 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
   // and sum up the energy arrays
   m_simulation.system().energies().calculate_totals();
 
+  // energies
   m_simulation.system().energy_averages().
     update(m_simulation.system().energies(), m_dt);
+
+  // and pressure
+  m_simulation.system().energy_averages().
+    update(m_simulation.system().pressure(), m_dt);
   
   if (m_print_energy && (m_simulation.steps()) % m_print_energy == 0){
     io::print_MULTIBATH(std::cout, m_simulation.multibath(),
@@ -596,14 +601,20 @@ template<typename t_md_spec, typename t_interaction_spec>
 void algorithm::MD<t_md_spec, t_interaction_spec>
 ::post_md()
 {
+
+  std::cout << "\n==================================================\n";
+
   std::cout << "\nwriting final structure" << std::endl;
   trajectory() << io::final << m_simulation;
   
   simulation::Energy energy, fluctuation;
+  math::Matrix pressure, pressure_fluctuations;
 
   m_simulation.system().energy_averages().
-    average(energy, fluctuation);
+    average(energy, fluctuation, pressure, pressure_fluctuations);
   
+  std::cout << "\n--------------------------------------------------\n";
+
   io::print_ENERGY(std::cout, energy,
 		   m_simulation.topology().energy_groups(),
 		   "AVERAGE ENERGIES");
@@ -611,12 +622,18 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
   io::print_MULTIBATH(std::cout, m_simulation.multibath(),
 		      energy);
   
+  io::print_MATRIX(std::cout, pressure, "AVERAGE PRESSURE");
+
+  std::cout << "\n--------------------------------------------------\n";
+
   io::print_ENERGY(std::cout, fluctuation,
 		   m_simulation.topology().energy_groups(),
 		   "ENERGY FLUCTUATIONS");
   
   io::print_MULTIBATH(std::cout, m_simulation.multibath(),
 		      fluctuation);
+
+  io::print_MATRIX(std::cout, pressure_fluctuations, "PRESSURE FLUCTUATIONS");
 
 }
 

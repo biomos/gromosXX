@@ -310,26 +310,26 @@ namespace io
   {
     os << "PRESSURE\n";
     os.precision(5);
-    os.setf(std::ios_base::fixed, std::ios_base::floatfield);
+    os.setf(std::ios_base::scientific, std::ios_base::floatfield);
     
     os << "\tmolecular kinetic energy:\n\t";
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
-	os << std::setw(12) << sys.molecular_kinetic_energy()(i,j);
+	os << std::setw(15) << sys.molecular_kinetic_energy()(i,j);
       os << "\n\t";
     }
     
     os << "\n\tvirial\n\t";
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
-	os << std::setw(12) << sys.virial()(i,j);
+	os << std::setw(15) << sys.virial()(i,j);
       os << "\n\t";
     }
 
     os << "\n\tpressure tensor\n\t";
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
-	os << std::setw(12) << sys.pressure()(i,j);
+	os << std::setw(15) << sys.pressure()(i,j);
       os << "\n\t";
     }
     os << "\n\tpressure: "
@@ -343,6 +343,9 @@ namespace io
        << "\n";
     
     os << "\nEND\n";
+
+    os.precision(5);
+    os.setf(std::ios_base::fixed, std::ios_base::floatfield);
     
     return os;
   }
@@ -442,6 +445,30 @@ namespace io
     os << "\nEND\n";
     
   
+    return os;
+  }
+
+  /**
+   * Print a matrix.
+   */
+  inline std::ostream &
+  print_MATRIX(std::ostream &os, math::Matrix const &m,
+	       std::string const title)
+  {
+    os.precision(5);
+    os.setf(std::ios::scientific, std::ios::floatfield);
+
+    os << title << "\n";
+    for(int a=0; a<3; ++a){
+      os << "\t";
+      for(int b=0; b<3; ++b){
+	os << std::setw(15) << m(a,b);
+      }
+      os << "\n";
+    }
+    os << "END\n";
+
+    os.setf(std::ios::fixed, std::ios::floatfield);
     return os;
   }
 

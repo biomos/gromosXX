@@ -27,16 +27,25 @@ namespace simulation
      * resize the arrays.
      */
     void resize(size_t const energy_goups, size_t const multi_baths = 0);
+
     /**
      * update from the calculated energies per step.
      * To allow non constant timesteps, the energies are
      * weighted by the current step size.
      */
-    void update(Energy const &e, double const dt);
+    void update(simulation::Energy const &e, double const dt);
+
+    /**
+     * average the pressure.
+     */
+    void update(math::Matrix const &pressure, double const dt);
+
     /**
      * get the average energy and fluctuations
      */
-    void average(Energy &energy, Energy &fluctuation);
+    void average(Energy &energy, Energy &fluctuation,
+		 math::Matrix &pressure, 
+		 math::Matrix &pressure_fluctuations);
 
   private:
     /**
@@ -51,6 +60,15 @@ namespace simulation
      * the time.
      */
     double m_time;
+
+    /**
+     * the average pressure.
+     */
+    math::Matrix m_pressure_average;
+    /**
+     * the squared average pressure.
+     */
+    math::Matrix m_square_pressure_average;
 
   }; // Energy_Average
   

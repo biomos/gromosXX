@@ -492,6 +492,10 @@ molecular_translational_ekin(Atom_Iterator start, Atom_Iterator end,
     
     com_v += m * v;
     e_kin += m * dot(v,v);
+    DEBUG(11, "scaling ekin mass=" << m << " v=" << new_v);
+    DEBUG(11, "av v="<<v);
+    DEBUG(11, "old_v=" << old_vel()(*start));
+    
     new_com_v += m * new_v;
     new_e_kin += m * dot(new_v, new_v);
 

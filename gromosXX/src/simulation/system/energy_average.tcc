@@ -16,6 +16,13 @@ simulation::Energy_Average::Energy_Average()
     m_square_average(),
     m_time(0)
 {
+  for(int a=0; a<3; ++a){
+    for(int b=0; b<3; ++b){
+      m_pressure_average(a,b) = 0.0;
+      m_square_pressure_average(a,b) = 0.0;
+    }
+  }
+  
 }
 
 inline void
@@ -25,6 +32,14 @@ simulation::Energy_Average::zero()
   m_average.zero();
   m_square_average.zero();
   m_time = 0.0;
+
+  for(int a=0; a<3; ++a){
+    for(int b=0; b<3; ++b){
+      m_pressure_average(a,b) = 0.0;
+      m_square_pressure_average(a,b) = 0.0;
+    }
+  }
+
 }
 
 inline void
@@ -145,7 +160,24 @@ simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
 }
 
 inline void
-simulation::Energy_Average::average(simulation::Energy &energy, simulation::Energy &fluctuation)
+simulation::Energy_Average::update(math::Matrix const & pressure, 
+				   double const dt)
+{
+  // the pressure...
+  for(int a=0; a<3; ++a){
+    for(int b=0; b<3; ++b){
+      m_pressure_average(a,b) += dt * pressure(a,b);
+      m_square_pressure_average(a,b) += dt * pressure(a,b)
+	* pressure(a,b);
+    }
+  }
+}
+
+inline void
+simulation::Energy_Average::average(simulation::Energy &energy, 
+				    simulation::Energy &fluctuation,
+				    math::Matrix &pressure,
+				    math::Matrix &pressure_fluctuations)
 {
   double diff;
   
@@ -344,6 +376,19 @@ simulation::Energy_Average::average(simulation::Energy &energy, simulation::Ener
 	f.crf_energy[i][j] = 0.0;
     }
   
+  }
+
+  // the pressure
+  for(int a=0; a<3; ++a){
+    for(int b=0; b<3; ++b){
+      pressure(a,b) = m_pressure_average(a,b) / m_time;
+      diff = m_square_pressure_average(a,b) -
+	m_pressure_average(a,b) * m_pressure_average(a,b) / m_time;
+      if (diff > 0.0)
+	pressure_fluctuations(a,b) = sqrt(diff / m_time);
+      else
+	pressure_fluctuations(a,b) = 0.0;
+    }
   }
 
 }
