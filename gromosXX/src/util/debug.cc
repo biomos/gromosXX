@@ -2,9 +2,9 @@
  * @file debug.cc
  */
 
-#ifndef NDEBUG
+#include <stdheader.h>
 
-#include <util/stdheader.h>
+#ifndef NDEBUG
 
 #include "debug.h"
 

@@ -3,7 +3,7 @@
  * parse TCOUPLE into multibath
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <topology/core/core.h>
 

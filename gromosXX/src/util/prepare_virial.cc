@@ -2,7 +2,7 @@
  * prepare for virial calculation.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -113,7 +113,7 @@ static void _prepare_virial(topology::Topology const & topo,
 
     conf.current().kinetic_energy_tensor = 0.0;
 
-    for(size_t i=0; i < topo.num_atoms(); ++i){
+    for(unsigned int i=0; i < topo.num_atoms(); ++i){
       for(int a=0; a<3; ++a){
 	for(int bb=0; bb<3; ++bb){
 	  conf.current().kinetic_energy_tensor(a, bb) +=

@@ -6,6 +6,13 @@
 #ifndef INCLUDED_PARSE_TCOUPLE_H
 #define INCLUDED_PARSE_TCOUPLE_H
 
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Parameter;
+}
+
 namespace util
 {
   /**

@@ -3,7 +3,7 @@
  * generate velocities from Maxwell distribution.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 #include <random/normal.h>
 
 #include "generate_velocities.h"

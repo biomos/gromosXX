@@ -6,6 +6,16 @@
 #ifndef INCLUDED_PREPARE_VIRIAL_H
 #define INCLUDED_PREPARE_VIRIAL_H
 
+namespace configuration{
+	class Configuration;
+}
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Simulation;
+}
+
 namespace util
 {
   /**

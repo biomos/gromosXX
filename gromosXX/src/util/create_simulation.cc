@@ -4,7 +4,7 @@
  * to easily create a simulation from (non-complete) data.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 #include <fstream>
 
 #include <algorithm/algorithm.h>
@@ -99,6 +99,8 @@ int util::create_simulation(std::string topo,
 
   in_topo.stream(topo_file);
   in_topo.read(sim.topo, sim.sim.param());
+
+  sim.topo.initialise();
 
   if(pttopo != ""){
     

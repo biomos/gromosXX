@@ -6,6 +6,22 @@
 #ifndef INCLUDED_CREATE_SIMULATION_H
 #define INCLUDED_CREATE_SIMULATION_H
 
+namespace configuration{
+	class Configuration;
+}
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Simulation;
+}
+namespace algorithm{
+	class Algorithm_Sequence;
+}
+namespace io{
+	class In_Topology;
+}
+
 namespace util
 {
 
