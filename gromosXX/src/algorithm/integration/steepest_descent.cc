@@ -26,20 +26,24 @@
 int algorithm::Steepest_Descent
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
-       simulation::Simulation &sim)
+       simulation::Simulation &sim,
+       bool quiet)
 {
-  std::cout << "ENERGY MINIMISATION\n"
-	    << "\tsteepest descent\n"
-	    << "\tminimum energy criterion : " << sim.param().minimise.dele << "\n"
-	    << "\tstarting step size       : " << sim.param().minimise.dx0 << "\n"
-	    << "\tmaximum step size        : " << sim.param().minimise.dxm << "\n"
-	    << "\tminimum steps            : " << sim.param().minimise.nmin << "\n";
+  if (!quiet)
+    std::cout << "ENERGY MINIMISATION\n"
+	      << "\tsteepest descent\n"
+	      << "\tminimum energy criterion : " << sim.param().minimise.dele << "\n"
+	      << "\tstarting step size       : " << sim.param().minimise.dx0 << "\n"
+	      << "\tmaximum step size        : " << sim.param().minimise.dxm << "\n"
+	      << "\tminimum steps            : " << sim.param().minimise.nmin << "\n";
   
   if (sim.param().minimise.flim != 0)
-    std::cout << "\tlimiting the force to    : "
-	      << sim.param().minimise.flim << "\n";
+    if (!quiet)
+      std::cout << "\tlimiting the force to    : "
+		<< sim.param().minimise.flim << "\n";
   
-  std::cout << "END\n";
+  if (!quiet)
+    std::cout << "END\n";
   return 0;
 }
 
