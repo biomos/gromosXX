@@ -21,7 +21,24 @@ void algorithm::Perturbation_MD<t_spec>
 ::init_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
-  // nothing to do...
+  int ntg, nlam;
+  double rlam, dlamt;
+  
+  input.read_PERTURB(ntg, rlam, dlamt, nlam);
+
+  if (ntg == 1){
+    io::messages.add("Perturbation enabled", "Perturbation_MD",
+		     io::message::notice);
+
+    m_do_perturbation = true;
+
+    m_simulation.topology().lambda(rlam);
+    m_simulation.topology().nlam(nlam);
+    
+    // initialize
+    init_perturbation(args, input);
+  }
+
   MD<t_spec>::init_input(args, topo, sys, input);
 }
 
@@ -42,16 +59,27 @@ void algorithm::Perturbation_MD<t_spec>
   input.read_PERTURB(ntg, rlam, dlamt, nlam);
 
   if (ntg == 1){
-    io::messages.add("Perturbation enabled", "Perturbation_MD",
-		     io::message::notice);
+    // io::messages.add("Perturbation enabled", "Perturbation_MD",
+    // io::message::notice);
 
-    m_do_perturbation = true;
+    // m_do_perturbation = true;
 
-    m_simulation.topology().lambda(rlam);
-    m_simulation.topology().nlam(nlam);
+    // m_simulation.topology().lambda(rlam);
+    // m_simulation.topology().nlam(nlam);
     
     // initialize
-    init_perturbation(args, input);
+    // init_perturbation(args, input);
+
+    // resize the energy derivative array
+    m_simulation.system().lambda_energies().
+      resize(m_simulation.system().energies().bond_energy.size(),
+	     m_simulation.system().energies().kinetic_energy.size());
+
+    // initialize the lambda derivative fluctuations
+    m_simulation.system().lambda_derivative_averages().
+      resize(m_simulation.system().energies().bond_energy.size(),
+	     m_simulation.system().energies().kinetic_energy.size());
+
   }
   else{
     io::messages.add("using Perturbation_MD, but perturbation disabled",
@@ -105,17 +133,6 @@ int algorithm::Perturbation_MD<t_spec>
 
   // it'd better be a perturbation topology!
   pert_topo >> m_simulation.topology();
-
-  // resize the energy derivative array
-  m_simulation.system().lambda_energies().
-    resize(m_simulation.system().energies().bond_energy.size(),
-	   m_simulation.system().energies().kinetic_energy.size());
-
-    
-  // initialize the lambda derivative fluctuations
-  m_simulation.system().lambda_derivative_averages().
-    resize(m_simulation.system().energies().bond_energy.size(),
-	   m_simulation.system().energies().kinetic_energy.size());
   
   // initialize topology for lambda = ??
   m_simulation.topology().update_for_lambda();
