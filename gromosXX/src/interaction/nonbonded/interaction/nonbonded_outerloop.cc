@@ -83,85 +83,47 @@ void interaction::Nonbonded_Outerloop
   unsigned int i;
   unsigned int size_i = unsigned(pairlist.size());
 
-  //**************************
-  // the Bekker implementation
-  //**************************
-  if (t_interaction_spec::do_bekker){
+  unsigned int end = size_i;
 
-    periodicity.recalc_shift_vectors();
-
-    int pc;
-    unsigned int j;
-    // translate the atom j
-    DEBUG(9, "nonbonded_interaction: grid based pairlist");
-
-    for(i=0; i < size_i; ++i){
-
-      for(j_it = pairlist[i].begin(),
-	    j_to = pairlist[i].end();
-	  j_it != j_to;
-	  ++j_it){
-      
-	pc = (*j_it >> 26);
-	j = (*j_it & 67108863);
-      
-	DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << j
-	      << " pc " << pc);
-      
-	innerloop.lj_crf_innerloop(topo, conf, i, j, storage, periodicity, pc);
-      }
-      
-    }
-
+  if (sim.param().force.spc_loop){
+    end = topo.num_solute_atoms();
+    size_i = topo.num_solute_atoms() + topo.num_chargegroups() 
+      - topo.num_solute_chargegroups();
   }
-  //*************************
-  // standard implementation
-  //*************************
-  else{ // no grid based pairlist
-
-    DEBUG(9, "nonbonded_interaction: no grid based pairlist");
-
-    unsigned int end = size_i;
-    if (sim.param().force.spc_loop){
-      end = topo.num_solute_atoms();
-      size_i = topo.num_solute_atoms() + topo.num_chargegroups() - topo.num_solute_chargegroups();
-    }
+  
+  for(i=0; i < end; ++i){
     
-    for(i=0; i < end; ++i){
-    
-      for(j_it = pairlist[i].begin(),
-	    j_to = pairlist[i].end();
-	  j_it != j_to;
-	  ++j_it){
-
-	DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
-	// printf("nb pair %d - %d\n", i, *j_it);
-	
-	// shortrange, therefore store in simulation.system()
-	innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
-
-	// storage.energies.bond_energy[0] += *j_it;
-
-      }
-      
-    }
-
-    // solvent - solvent...
-    for(int cg1=0; i < size_i; ++i, ++cg1){
-      
-      for(j_it = pairlist[i].begin(),
-	    j_to = pairlist[i].end();
-	  j_it != j_to;
+    for(j_it = pairlist[i].begin(),
+	  j_to = pairlist[i].end();
+	j_it != j_to;
 	++j_it){
-	
-	DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
-	
-	// shortrange, therefore store in simulation.system()
-	innerloop.spc_innerloop(topo, conf, cg1, *j_it, storage, periodicity);
-      }
+      
+      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+      // printf("nb pair %d - %d\n", i, *j_it);
+      
+      // shortrange, therefore store in simulation.system()
+      innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+      
+      // storage.energies.bond_energy[0] += *j_it;
       
     }
-  } // no grid based pairlist
+  }
+
+  // solvent - solvent...
+  for(int cg1=0; i < size_i; ++i, ++cg1){
+    
+    for(j_it = pairlist[i].begin(),
+	  j_to = pairlist[i].end();
+	j_it != j_to;
+	++j_it){
+      
+      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+      
+      // shortrange, therefore store in simulation.system()
+      innerloop.spc_innerloop(topo, conf, cg1, *j_it, storage, periodicity);
+    }
+    
+  }
 }
 
 /**

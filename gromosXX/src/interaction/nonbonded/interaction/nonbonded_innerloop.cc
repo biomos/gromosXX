@@ -26,20 +26,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   double f;
   double e_lj, e_crf;
   
-  if (t_nonbonded_spec::do_bekker){
-    r = conf.current().pos(i) + periodicity.shift(pc).pos
-      - conf.current().pos(j);
-    DEBUG(10, "\tpc=" << pc << " shift = " << periodicity.shift(pc).pos(0)
-	  << " / " << periodicity.shift(pc).pos(1) 
-	  << " / " << periodicity.shift(pc).pos(2));
-    DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-  }
-  else{
-    periodicity.nearest_image(conf.current().pos(i), 
-			      conf.current().pos(j), r);
-    DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-    
-  }
+  periodicity.nearest_image(conf.current().pos(i), 
+			    conf.current().pos(j), r);
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
   
   const lj_parameter_struct &lj = 
     m_param->lj_parameter(topo.iac(i),

@@ -27,14 +27,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   
   int energy_derivative_index = -1;
 
-  if (t_interaction_spec::do_bekker){
-    r = conf.current().pos(i) + periodicity.shift(pc).pos
-      - conf.current().pos(j);
-  }
-  else{
-    periodicity.nearest_image(conf.current().pos(i), 
-			      conf.current().pos(j), r);
-  }
+  periodicity.nearest_image(conf.current().pos(i), 
+			    conf.current().pos(j), r);
   
   lj_parameter_struct const *A_lj;
   lj_parameter_struct const *B_lj;

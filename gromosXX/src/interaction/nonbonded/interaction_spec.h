@@ -12,8 +12,6 @@ namespace interaction
   const bool atomic_cutoff_off = false;
   const bool perturbation_on = true;
   const bool perturbation_off = false;
-  const bool bekker_on = true;
-  const bool bekker_off = false;
   const bool scaling_on = true;
   const bool scaling_off = false;
   
@@ -23,21 +21,18 @@ namespace interaction
    */
   template<
     math::boundary_enum t_boundary = math::rectangular,
-    math::virial_enum t_virial = math::molecular_virial,
-    bool t_bekker = bekker_off
+    math::virial_enum t_virial = math::molecular_virial
     >
   class Interaction_Spec
   {
   public:
     typedef Interaction_Spec<t_boundary,
-			     t_virial, 
-			     t_bekker
+			     t_virial
 			     >
     interaction_spec_type;
 
     static const math::boundary_enum boundary_type = t_boundary;
     static const math::virial_enum do_virial = t_virial;
-    static const bool do_bekker = t_bekker;
     
   };
 

@@ -99,51 +99,20 @@ void interaction::Perturbed_Nonbonded_Outerloop
   unsigned int i;
   unsigned int size_i = unsigned(pairlist.size());
 
-  if (t_interaction_spec::do_bekker){
-
-    periodicity.recalc_shift_vectors();
+  for(i=0; i < size_i; ++i){
     
-    int pc;
-    unsigned int j;
-
-    // translate the atom j
-
-    for(i=0; i < size_i; ++i){
+    for(j_it = pairlist[i].begin(),
+	  j_to = pairlist[i].end();
+	j_it != j_to;
+	++j_it){
       
-      for(j_it = pairlist[i].begin(),
-	    j_to = pairlist[i].end();
-	  j_it != j_to;
-	  ++j_it){
+      DEBUG(10, "\tperturbed nonbonded_interaction: i "
+	    << i << " j " << *j_it);
       
-	pc = (*j_it >> 26);
-	j = (*j_it & 67108863);
-      
-	DEBUG(10, "\tperturbed nonbonded_interaction: i " << i << " j " << j
-	      << " pc " << pc);
-      
-	innerloop.perturbed_lj_crf_innerloop(topo, conf, i, j, storage, periodicity, pc);
-      }
+      // shortrange, therefore store in simulation.system()
+      innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
-  }
-  else{
-
-    DEBUG(9, "perturbed nonbonded_interaction: no grid based pairlist");
-    for(i=0; i < size_i; ++i){
     
-      for(j_it = pairlist[i].begin(),
-	    j_to = pairlist[i].end();
-	  j_it != j_to;
-	  ++j_it){
-
-	DEBUG(10, "\tperturbed nonbonded_interaction: i "
-	      << i << " j " << *j_it);
-	// printf("nb pair %d - %d\n", i, *j_it);
-	
-	// shortrange, therefore store in simulation.system()
-	innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
-      }
-      
-    }
   }
 
   DEBUG(7, "end of function perturbed nonbonded interaction");  

@@ -46,129 +46,54 @@ if (sim.param().perturbation.scaling){ \
 
 
 #define SPLIT_INNERLOOP(f, ...) \
-if (sim.param().pairlist.grid) { \
   switch(conf.boundary_type){ \
-    case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial, true> >(__VA_ARGS__); break; \
+    case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial> >(__VA_ARGS__); break; \
     case math::rectangular : \
       switch(sim.param().pcouple.virial){ \
-        case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, true> >(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, true> >(__VA_ARGS__); break; \
-        case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, true> >(__VA_ARGS__); break; \
+        case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial> >(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial> >(__VA_ARGS__); break; \
+        case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial> >(__VA_ARGS__); break; \
         default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     case math::truncoct : \
       switch(sim.param().pcouple.virial){ \
-        case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, true> >(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, true> >(__VA_ARGS__); break; \
-        case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, true> >(__VA_ARGS__); break; \
+        case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial> >(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial> >(__VA_ARGS__); break; \
+        case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial> >(__VA_ARGS__); break; \
         default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
-} \
-else { \
-  switch(conf.boundary_type){ \
-    case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial, false> >(__VA_ARGS__); break; \
-    case math::rectangular : \
-      switch(sim.param().pcouple.virial){ \
-        case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, false> >(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false> >(__VA_ARGS__); break; \
-        case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, false> >(__VA_ARGS__); break; \
-        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
-      } \
-      break; \
-    case math::truncoct : \
-      switch(sim.param().pcouple.virial){ \
-        case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, false> >(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false> >(__VA_ARGS__); break; \
-        case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, false> >(__VA_ARGS__); break; \
-        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
-      } \
-      break; \
-    default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
-  } \
-} \
-
-#define SPLIT_INNERLOOP_NO_GRID(f, ...) \
-switch(conf.boundary_type){ \
-  case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial, false> >(__VA_ARGS__); break; \
-  case math::rectangular : \
-    switch(sim.param().pcouple.virial){ \
-      case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, false> >(__VA_ARGS__); break; \
-      case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false> >(__VA_ARGS__); break; \
-      case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, false> >(__VA_ARGS__); break; \
-      default: io::messages.add("wrong virial type", "template_split", io::message::error); \
-    } \
-    break; \
-  case math::truncoct : \
-    switch(sim.param().pcouple.virial){ \
-      case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, false> >(__VA_ARGS__); break; \
-      case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false> >(__VA_ARGS__); break; \
-      case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, false> >(__VA_ARGS__); break; \
-      default: io::messages.add("wrong virial type", "template_split", io::message::error); \
-    } \
-    break; \
-  default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
-} \
-
 
 #define SPLIT_PERT_INNERLOOP(f, ...) \
-if (sim.param().pairlist.grid) { \
   switch(conf.boundary_type){ \
-    case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial, true>, t_perturbation_details>(__VA_ARGS__); break; \
+    case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial>, t_perturbation_details>(__VA_ARGS__); break; \
     case math::rectangular : \
       switch(sim.param().pcouple.virial){ \
-        case math::no_virial :        f<Interaction_Spec<math::rectangular, math::no_virial, true>, \
+        case math::no_virial :        f<Interaction_Spec<math::rectangular, math::no_virial>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, true>, \
+        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        case math::atomic_virial :    f<Interaction_Spec<math::rectangular, math::atomic_virial, true>, \
+        case math::atomic_virial :    f<Interaction_Spec<math::rectangular, math::atomic_virial>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
         default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     case math::truncoct : \
       switch(sim.param().pcouple.virial){ \
-        case math::no_virial :        f<Interaction_Spec<math::truncoct, math::no_virial, true>, \
+        case math::no_virial :        f<Interaction_Spec<math::truncoct, math::no_virial>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, true>, \
+        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        case math::atomic_virial :    f<Interaction_Spec<math::truncoct, math::atomic_virial, true>, \
-                                        t_perturbation_details>(__VA_ARGS__); break; \
-        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
-      } \
-      break; \
-    default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
-  } \
-} \
-else { \
-  switch(conf.boundary_type){ \
-    case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial, false>, t_perturbation_details>(__VA_ARGS__); break; \
-    case math::rectangular : \
-      switch(sim.param().pcouple.virial){ \
-        case math::no_virial :        f<Interaction_Spec<math::rectangular, math::no_virial, false>, \
-                                        t_perturbation_details>(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false>, \
-                                        t_perturbation_details>(__VA_ARGS__); break; \
-        case math::atomic_virial :    f<Interaction_Spec<math::rectangular, math::atomic_virial, false>, \
-                                        t_perturbation_details>(__VA_ARGS__); break; \
-        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
-      } \
-      break; \
-    case math::truncoct : \
-      switch(sim.param().pcouple.virial){ \
-        case math::no_virial :        f<Interaction_Spec<math::truncoct, math::no_virial, false>, \
-                                        t_perturbation_details>(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false>, \
-                                        t_perturbation_details>(__VA_ARGS__); break; \
-        case math::atomic_virial :    f<Interaction_Spec<math::truncoct, math::atomic_virial, false>, \
+        case math::atomic_virial :    f<Interaction_Spec<math::truncoct, math::atomic_virial>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
         default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
-} \
+
+
 
