@@ -30,6 +30,7 @@
 
 #include <io/read_input.h>
 #include <io/read_special.h>
+#include <io/print_block.h>
 
 #include <time.h>
 
@@ -240,17 +241,28 @@ int main(int argc, char *argv[]){
       if ((error = md.run(topo, conf, sim))){
 
 	if (error == E_MINIMUM_REACHED){
+	  conf.old().energies.calculate_totals();
+	  traj.print_timestep(sim, traj.output());
+	  io::print_ENERGY(traj.output(), conf.old().energies, 
+			   topo.energy_groups(),
+			   "MINIMUM ENERGY", "EMIN_");
+	  
 	  error = 0; // clear error condition
 	  break;
 	}
-	
+
 	std::cout << "\nError during MD run!\n" << std::endl;
 	// try to save the final structures...
 	break;
       }
 
       // update the energies
-      conf.old().energies.calculate_totals();
+      if (conf.old().energies.calculate_totals()){
+	std::cout << "\nError during MD run!\n" << std::endl;
+	// try to save the final structures...
+	break;	
+      }
+      
       conf.current().energy_averages.update(conf.old().energies,
 					    conf.old().energy_averages,
 					    sim.time_step_size());
