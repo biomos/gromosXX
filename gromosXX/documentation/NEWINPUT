@@ -1,0 +1,49 @@
+
+==================================================
+ changes in the MD input file
+==================================================
+
+SYSTEM
+# NPM is limited to 1
+#      NPM      NSM 
+         1      100
+END
+
+BOUNDARY
+# the boundary conditions are read from the TRICLINICBOX block.
+#      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
+         2       0.0       0.0       0.0      90.0       1
+END
+
+MULTIBATH
+# replaces the TCOUPLE block (which is still recognized)
+#   number of baths
+    2
+#   temp0  tau
+    300    0.010
+    300    0.010
+#   different couplings
+    1
+#   last   com-bath  ir-bath
+    60     0         1
+END
+
+
+PCOUPLE03
+#   COUPLE  SCALE   COMP        TAUP    VIRIAL
+    calc    iso     4.575E-4    0.5     atomic
+#   reference pressure
+    0.06102     0.00000     0.00000
+    0.00000     0.06102     0.00000
+    0.00000     0.00000     0.06102
+END
+
+FORCE
+#      NTF array
+# if bonds are set to 2, harmonic force field terms are used
+# bonds    angles    imp.     dihe     charge nonbonded
+# H        H         H        H
+  0  0     1  1      1  1     1  1     1  1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     1         60
+END
