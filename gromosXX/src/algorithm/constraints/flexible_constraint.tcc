@@ -261,9 +261,19 @@ static void _calc_distance(topology::Topology const &topo,
     DEBUG(10, "flexible constraint velocity =  "
 	  << conf.special().flexible_vel[k]);
     
-    const double force_on_constraint  = (red_mass / dt2) * 
-      (sqrt(dist2) - sqrt(ref_dist2) - conf.special().flexible_vel[k] * dt);
-
+    double force_on_constraint;
+    
+    if (false){
+      // take out velocities along constraint from previous step...
+      force_on_constraint = (red_mass / dt2) * 
+	(sqrt(dist2) - sqrt(ref_dist2) - conf.special().flexible_vel[k] * dt);
+    }
+    else{
+      // ignore velocities along constraints
+      force_on_constraint = (red_mass / dt2) * 
+	(sqrt(dist2) - sqrt(ref_dist2));
+    }
+      
     // zero energy distance
 
     // =================================================
@@ -400,9 +410,11 @@ int algorithm::Flexible_Constraint<do_virial>
   bool do_vel = false;
   int error = 0;
   
-  // check whether we shake
-  conf.special().flexible_ekin.assign(conf.special().flexible_ekin.size(), 0.0);
 
+  conf.special().flexible_ekin.assign
+    (conf.special().flexible_ekin.size(), 0.0);
+
+  // check whether we shake
   if (topo.solute().distance_constraints().size() && 
       sim.param().constraint.solute.algorithm == simulation::constr_flexshake &&
       sim.param().constraint.ntc > 1){
