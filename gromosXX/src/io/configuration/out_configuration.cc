@@ -901,7 +901,7 @@ void io::Out_Configuration
 
   const int numbaths = m.size();
 
-  os << "VOLUMEPRESSURE\n";
+  os << "VOLUMEPRESSURE03\n";
 
   os << "# mass\n";
   os << std::setw(18) << math::sum(topo.mass()) << "\n";
