@@ -7,8 +7,8 @@
 #define INCLUDED_CONFIGURATION_H
 
 // headers needed for configuration
-#include <configuration/energy.h>
-#include <configuration/average.h>
+#include <gromosXX/configuration/energy.h>
+#include <gromosXX/configuration/average.h>
 
 namespace topology
 {
@@ -36,6 +36,10 @@ namespace configuration
      */
     explicit Configuration();
     
+    /**
+     * @struct state_struct
+     * holds state information.
+     */
     struct state_struct
     {
       /**
@@ -87,9 +91,9 @@ namespace configuration
       configuration::Energy perturbed_energy_derivatives;
 
       /**
-       * resize the arrays for s atoms.
+       * resize the position / velocities and force arrays
        */
-      void resize(size_t s);
+      void resize(size_t num_atoms);
 
     };
 
@@ -168,9 +172,16 @@ namespace configuration
      * initialise.
      * should be called after a (initial) configuration has been read in or
      * constructed otherwise.
+     * - resizes energy / perturbed energy arrays
+     * - resizes averages
+     * - resizes special data
+     * - resizes state_struct current() and old()
+     * - if coordinates have been read in it is usually necessary to gather them
+     * to keep chargegroups together.
      */
     void initialise(topology::Topology & topo,
-		    simulation::Parameter const & param);
+		    simulation::Parameter const & param,
+		    bool gather = true);
 
   protected:
 
