@@ -97,7 +97,7 @@ case "$compiler" in
 	   dnl consider adding -xP, -xN or -xW for Intel processors
 	   dnl maybe some inline control: -Qoption,c,-ip_ninl_max_stats=2000
 	   dnl or maybe -ipo if your lucky...
-       CXX_OPTIMIZE_FLAGS="-O3 -xN -ip -static -restrict -align -DNDEBUG -fno-exceptions -vec_report"
+       CXX_OPTIMIZE_FLAGS="-O3 -ip -static -restrict -align -DNDEBUG -fno-exceptions -vec_report"
        CXX_DEBUG_FLAGS="-g -pch"
        CXXLD="$CXX"
 
