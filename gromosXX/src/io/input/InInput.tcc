@@ -244,7 +244,7 @@ inline io::InInput & io::InInput
 	  sim.multibath().add_bath(last_solvent, temp[2], tau[2]);
 	}
 	// 3 3 3
-	else if (ntt[0] == 3 && ntt[1] == 3 && ntt[2] == 3){
+	else if (ntt[0] == 3 && ntt[1] == -3 && ntt[2] == -3){
 	  sim.multibath().add_bath(last_solvent, temp[0], tau[0]);
 	}
 	// rest is not handled!

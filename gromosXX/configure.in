@@ -154,7 +154,7 @@ if eval "test x$GXX = xyes"; then
 fi
 
 if eval "test x$enable_debug = xno"; then
-  CXXFLAGS="-O3 -ftemplate-depth-30 -Wno-unused-variable -DNDEBUG"
+  CXXFLAGS="-O2 -funroll-loops -fstrict-aliasing -fno-gcse -ftemplate-depth-40 -Wno-unused-variable -DNDEBUG"
   echo "setting flags for production compilation"
 else
   echo "setting flags for debug compilation"
