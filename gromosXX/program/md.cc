@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
       algorithm::Perturbation_MD<simulation_type,
 	algorithm::Berendsen_Thermostat,
 	algorithm::Berendsen_Barostat,
-	algorithm::Shake<simulation_type>,
+	algorithm::Perturbed_Shake<simulation_type>,
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
     

@@ -28,7 +28,9 @@ namespace simulation
     double lj_total;
     double crf_total;
     double special_total;
-    
+
+    double constraint_energy;
+
     // this should be size of bath
     std::vector<double> kinetic_energy;
     std::vector<double> com_kinetic_energy;

@@ -92,12 +92,19 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation,
   }
 
   // and long-range energy lambda-derivatives
+  DEBUG(7, "add long-range lambda-derivatives");
+
   for(size_t i = 0; 
       i < m_nonbonded_interaction.pairlist().filter()
 	.lambda_energies().lj_energy.size(); ++i){
     for(size_t j = 0; j < m_nonbonded_interaction.pairlist()
 	  .filter().lambda_energies().lj_energy.size(); ++j){
 
+      assert(sim.system().lambda_energies().lj_energy.size() > i);
+      assert(sim.system().lambda_energies().lj_energy[i].size() > j);
+      assert(sim.system().lambda_energies().lj_energy.size() > j);
+      assert(sim.system().lambda_energies().lj_energy[j].size() > i);
+      
       sim.system().lambda_energies().lj_energy[i][j] += 
 	m_nonbonded_interaction.pairlist().filter().lambda_energies()
 	.lj_energy[i][j];
@@ -107,6 +114,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation,
     }
   }
 
+  DEBUG(7, "end of function perturbed nonbonded interaction");
   
 }
 

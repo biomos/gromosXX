@@ -28,7 +28,7 @@ namespace io
     
     for(; it!=to; ++it){
       os << std::setw(12) << it->last_atom + 1
-	 << std::setw(12) << it->last_molecule
+	 << std::setw(12) << it->last_molecule + 1
 	 << std::setw(12) << it->com_bath
 	 << std::setw(12) << it->ir_bath
 	 << "\n";
@@ -83,7 +83,7 @@ namespace io
       if (it->tau != -1){
 	tau_dof += it->dof;
 	avg_tau += it->tau * it->dof;
-	avg_temp0 += it->temperature;
+	avg_temp0 += it->temperature * it->dof;
       }
       sum_dof += it->dof;
       sum_ir_dof += it->ir_dof;
@@ -95,7 +95,7 @@ namespace io
     }
 
     os << "    --------------------------------------------------------------------------\n";
-    os << std::setw(10) << "Avg";
+    os << std::setw(10) << "Total";
     if (tau_dof)
       os << std::setw( 8) << avg_temp0 / tau_dof
 	 << std::setw( 8) << avg_tau / tau_dof;
@@ -293,6 +293,7 @@ namespace io
     os << "Vdw        : " << std::setw(39) << e.lj_total << "\n";
     os << "El (RF)    : " << std::setw(39) << e.crf_total  << "\n";
     os << "Special    : " << std::setw(21) << e.special_total << "\n";
+    os << "Constraint : " << std::setw(30) << e.constraint_energy << "\n";
     os << "\n";
 
     os << std::setw(10) << "COV";

@@ -46,6 +46,10 @@ namespace simulation
      */
     std::vector<distance_constraint_struct> & distance_constraints();
     /**
+     * const accessor to the distance constraints.
+     */
+    std::vector<distance_constraint_struct> const & distance_constraints()const;
+    /**
      * accessor to a single distance constraint.
      */
     distance_constraint_struct &distance_constraint(size_t i);

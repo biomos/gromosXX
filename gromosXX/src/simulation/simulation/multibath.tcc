@@ -154,64 +154,7 @@ inline void simulation::Multibath
   }
 
   // substract constraints
-  std::vector<compound::distance_constraint_struct>::const_iterator 
-    c_it = topo.solute().distance_constraints().begin(),
-    c_to = topo.solute().distance_constraints().end();
-  
-  size_t com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
-
-  for( ; c_it != c_to; ++c_it){
-    
-    DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
-    in_bath(c_it->i, com_bath_i, ir_bath_i);
-    in_bath(c_it->j, com_bath_j, ir_bath_j);
-
-    (*this)[ir_bath_i].dof -= 0.5;
-    (*this)[ir_bath_j].dof -= 0.5;
-
-    (*this)[ir_bath_i].ir_dof -= 0.5;
-    (*this)[ir_bath_j].ir_dof -= 0.5;
-
-    (*this)[ir_bath_i].solute_constr_dof += 0.5;
-    (*this)[ir_bath_j].solute_constr_dof += 0.5;
-
-  }
-  
-  for(size_t i=0; i<size(); ++i){
-    DEBUG(7, "dof           " << (*this)[i].dof);
-    DEBUG(7, "solute constr " << (*this)[i].solute_constr_dof);
-  }
-
-  // solvent constraints
-  int index = topo.num_solute_atoms();
-  for(size_t s=0; s < topo.num_solvents(); ++s){
-    
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
-
-      c_it = topo.solvent(s).distance_constraints().begin();
-      c_to = topo.solvent(s).distance_constraints().end();
-      
-      for( ; c_it != c_to; ++c_it){
-
-	in_bath(c_it->i + index, com_bath_i, ir_bath_i);
-	in_bath(c_it->j + index, com_bath_j, ir_bath_j);
-	
-	(*this)[ir_bath_i].dof -= 0.5;
-	(*this)[ir_bath_j].dof -= 0.5;
-
-	(*this)[ir_bath_i].ir_dof -= 0.5;
-	(*this)[ir_bath_j].ir_dof -= 0.5;
-	
-	(*this)[ir_bath_i].solvent_constr_dof += 0.5;
-	(*this)[ir_bath_j].solvent_constr_dof += 0.5;
-	
-      }
-      
-      index += topo.solvent(s).num_atoms();
-      
-    }
-    
-  }
+  topo.calculate_constraint_dof(*this);
   
 }
 

@@ -166,6 +166,14 @@ inline simulation::Solvent & simulation::Topology::solvent(size_t i)
   assert(i < m_solvent.size());
   return m_solvent[i];
 }
+/**
+ * const solvent accessor.
+ */
+inline simulation::Solvent const & simulation::Topology::solvent(size_t i)const
+{
+  assert(i < m_solvent.size());
+  return m_solvent[i];
+}
 
 /**
  * number of solvents.
@@ -416,6 +424,75 @@ simulation::Topology::atom_energy_group(size_t i)const
 {
   assert(i < m_atom_energy_group.size());
   return m_atom_energy_group[i];
+}
+
+/**
+ * calculate constraint degrees of freedom.
+ */
+inline void
+simulation::Topology::
+calculate_constraint_dof(simulation::Multibath &multibath)const
+{
+  // substract constraints
+  std::vector<compound::distance_constraint_struct>::const_iterator 
+    c_it = solute().distance_constraints().begin(),
+    c_to = solute().distance_constraints().end();
+  
+  size_t com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+
+  for( ; c_it != c_to; ++c_it){
+    
+    DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
+    multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
+    multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
+
+    multibath[ir_bath_i].dof -= 0.5;
+    multibath[ir_bath_j].dof -= 0.5;
+
+    multibath[ir_bath_i].ir_dof -= 0.5;
+    multibath[ir_bath_j].ir_dof -= 0.5;
+
+    multibath[ir_bath_i].solute_constr_dof += 0.5;
+    multibath[ir_bath_j].solute_constr_dof += 0.5;
+
+  }
+  
+  for(size_t i=0; i<multibath.size(); ++i){
+    DEBUG(7, "dof           " << multibath[i].dof);
+    DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);
+  }
+
+  // solvent constraints
+  int index = num_solute_atoms();
+  for(size_t s=0; s < num_solvents(); ++s){
+    
+    for(size_t m=0; m < num_solvent_molecules(s); ++m){
+
+      c_it = solvent(s).distance_constraints().begin();
+      c_to = solvent(s).distance_constraints().end();
+      
+      for( ; c_it != c_to; ++c_it){
+
+	multibath.in_bath(c_it->i + index, com_bath_i, ir_bath_i);
+	multibath.in_bath(c_it->j + index, com_bath_j, ir_bath_j);
+	
+	multibath[ir_bath_i].dof -= 0.5;
+	multibath[ir_bath_j].dof -= 0.5;
+
+	multibath[ir_bath_i].ir_dof -= 0.5;
+	multibath[ir_bath_j].ir_dof -= 0.5;
+	
+	multibath[ir_bath_i].solvent_constr_dof += 0.5;
+	multibath[ir_bath_j].solvent_constr_dof += 0.5;
+	
+      }
+      
+      index += solvent(s).num_atoms();
+      
+    }
+    
+  }
+
 }
 
 /**

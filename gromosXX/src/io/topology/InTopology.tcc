@@ -433,34 +433,71 @@ template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi){
 
-  DEBUG(10, "BONDTYPE block");
+  DEBUG(10, "(HARM)BONDTYPE block");
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
-  buffer = m_block["BONDTYPE"];
-
-  io::messages.add("converting bond force constants from quartic to harmonic form", "InTopology::bondtype", io::message::notice);
-
-  // 1. BONDTYPE 2. number of types
-  for (it = buffer.begin() + 2; 
-   it != buffer.end() - 1; ++it) {
-
-    double k, r;
+  buffer = m_block["HARMBONDTYPE"];
+  if (buffer.size()){
+    DEBUG(7, "reading in a DIRK (HARMBONDTYPE) block)");
+    io::messages.add("harmonic bond force constants from HARMBONDTYPE block",
+		     "InTopology::bondtype", io::message::notice);
+    
+    int num, n=0;
+    it = buffer.begin()+1;
     _lineStream.clear();
     _lineStream.str(*it);
+    _lineStream >> num;
+    ++it;
+    for(; it!=buffer.end()-1; ++it, ++n){
+      double k, r;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> k >> r;
 
-    _lineStream >> k >> r;
-
-    if (_lineStream.fail() || ! _lineStream.eof())
-      throw std::runtime_error("bad line in BONDTYPE block");
-
-    // we are reading into harmonic bond term, so convert k
-    k *= 2 * r * r;
-
-    // and add...
-    hbi.add(k, r);
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in HARMBONDTYPE block");
+      
+      // and add...
+      hbi.add(k, r);
+    }
+  
+    if (num != n)
+      throw std::runtime_error("not enough bond types in HARMBONDTYPE block");
+  
   }
+  else{
+    buffer = m_block["BONDTYPE"];
+
+    io::messages.add("converting bond force constants from quartic "
+		     "to harmonic form", "InTopology::bondtype",
+		     io::message::notice);
+
+    if (buffer.size()==0)
+      throw std::runtime_error("BONDTYPE block not found!");
+
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2; 
+	 it != buffer.end() - 1; ++it) {
+
+      double k, r;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> r;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in BONDTYPE block");
+      
+      // we are reading into harmonic bond term, so convert k
+      k *= 2 * r * r;
+      
+      // and add...
+      hbi.add(k, r);
+    }
+  }
+  
   
   return *this;
 }
@@ -469,36 +506,71 @@ template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(algorithm::Shake<t_simulation> &shake){
 
-  DEBUG(10, "BONDTYPE block");
+  DEBUG(10, "(HARM)BONDTYPE block");
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
-  buffer = m_block["BONDTYPE"];
-
-  io::messages.add("converting bond force constants from quartic"
-		   "to harmonic form for shake",
-		   "InTopology::bondtype", io::message::notice);
-  
-  // 1. BONDTYPE 2. number of types
-  for (it = buffer.begin() + 2; 
-       it != buffer.end() - 1; ++it) {
-
-    double k, r;
+  buffer = m_block["HARMBONDTYPE"];
+  if (buffer.size()){
+    DEBUG(7, "reading in a DIRK (HARMBONDTYPE) block)");
+    io::messages.add("harmonic bond force constants from HARMBONDTYPE block",
+		     "InTopology::bondtype", io::message::notice);
+    
+    int num, n=0;
+    it = buffer.begin()+1;
     _lineStream.clear();
     _lineStream.str(*it);
+    _lineStream >> num;
+    ++it;
+    for(; it!=buffer.end()-1; ++it, ++n){
+      double k, r;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> k >> r;
 
-    _lineStream >> k >> r;
-
-    if (_lineStream.fail() || ! _lineStream.eof())
-      throw std::runtime_error("bad line in BONDTYPE block");
-
-    // we are reading into harmonic bond term, so convert k
-    k *= 2 * r * r;
-    
-    // and add...
-    shake.add_bond_type(k, r);
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in HARMBONDTYPE block");
+      
+      // and add...
+      shake.add_bond_type(k, r);
+    }
+  
+    if (num != n)
+      throw std::runtime_error("not enough bond types in HARMBONDTYPE block");
+  
   }
+  else{
+    buffer = m_block["BONDTYPE"];
+
+    io::messages.add("converting bond force constants from quartic "
+		     "to harmonic form", "InTopology::bondtype",
+		     io::message::notice);
+
+    if (buffer.size()==0)
+      throw std::runtime_error("BONDTYPE block not found!");
+
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2; 
+	 it != buffer.end() - 1; ++it) {
+
+      double k, r;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> r;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in BONDTYPE block");
+      
+      // we are reading into harmonic bond term, so convert k
+      k *= 2 * r * r;
+      
+      // and add...
+      shake.add_bond_type(k, r);
+    }
+  }
+  
   return *this;
 }
 

@@ -7,6 +7,7 @@
 #include "pressure/berendsen.h"
 #include "integration/leap_frog.h"
 #include "constraint/shake.h"
+#include "constraint/perturbed_shake.h"
 #include "constraint/flexible_constraint.h"
 #include "algorithm/md.h"
 #include "algorithm/perturbation_md.h"

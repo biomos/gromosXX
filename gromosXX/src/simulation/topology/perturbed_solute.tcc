@@ -63,3 +63,45 @@ simulation::Perturbed_Solute::atompairs()const
 {
   return m_atompair;
 }
+
+inline std::vector<simulation::Perturbed_Solute::perturbed_distance_constraint_struct> const &
+simulation::Perturbed_Solute::distance_constraints()const
+{
+  return m_distance_constraint;
+}
+
+inline std::vector<simulation::Perturbed_Solute::perturbed_distance_constraint_struct> &
+simulation::Perturbed_Solute::distance_constraints()
+{
+  return m_distance_constraint;
+}
+
+inline void
+simulation::Perturbed_Solute::
+add_distance_constraint(int const i, int const j, 
+			double const A_b0, double const B_b0)
+{
+  perturbed_distance_constraint_struct s;
+  s.i = i;
+  s.j = j;
+  s.A_b0 = A_b0;
+  s.B_b0 = B_b0;
+  s.b0 = A_b0;
+  m_distance_constraint.push_back(s);
+}
+
+inline void
+simulation::Perturbed_Solute::
+set_distance_constraints(double const lambda)
+{
+  std::vector<perturbed_distance_constraint_struct>::iterator
+    it = m_distance_constraint.begin(),
+    to = m_distance_constraint.end();
+  
+  DEBUG(7, "perturbed distance constraints:");
+  for( ; it!=to; ++it){
+    it->b0 = (1-lambda)*it->A_b0 + lambda*it->B_b0;
+    DEBUG(7, "\tdistance: " << it->b0);
+  }
+}
+

@@ -11,6 +11,8 @@ include_HEADERS = 		algorithm.h \
 				integration/runge_kutta.tcc \
 				constraint/shake.h \
 				constraint/shake.tcc \
+				constraint/perturbed_shake.h \
+				constraint/perturbed_shake.tcc \
 				constraint/flexible_constraint.h \
 				constraint/flexible_constraint.tcc \
 				temperature/berendsen.h \

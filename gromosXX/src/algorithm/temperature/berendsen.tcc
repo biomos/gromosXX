@@ -151,9 +151,10 @@ inline void algorithm::Berendsen_Thermostat
   
   size_t last = 0;
   std::vector<double> &e_kin = sim.system().lambda_energies().kinetic_energy;
-  
-  assert(e_kin.size() == sim.system().energies().kinetic_energy.size());
-  // e_kin.resize(sim.system().energies().kinetic_energy.size());
+
+  // !!!FIXME!!!
+  // assert(e_kin.size() == sim.system().energies().kinetic_energy.size());
+  e_kin.resize(sim.system().energies().kinetic_energy.size());
 
   for(; it != to; ++it){
     // or just put everything into the first bath...?

@@ -33,6 +33,8 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
       break;
     }
   }
+  DEBUG(7, "pairlist iterator constructor: end == " << int(m_i == pl.end()));
+  
 }
 
 template<typename t_simulation, typename t_pairlist_algorithm>
@@ -66,7 +68,11 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>::iterator
 ::operator!=(typename Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 	     ::iterator &it)
 {
-  if (m_i != it.m_i) return true;
+  if (m_i != it.m_i){
+    DEBUG(10, "pairlist iterators are !=");
+    return true;
+  }
+  DEBUG(10, "pairlist iterators are ==");  
   return false;
 }
 
@@ -75,12 +81,15 @@ inline void
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::iterator::row(unsigned int i)
 {
+  DEBUG(7, "pairlist iterator row() " << i);
+
   m_i = m_pairlist.begin() + i;
   DEBUG(7, "m_i set");
   if (m_i != m_pairlist.end()){
     DEBUG(7, "not the end");
     m_j = m_i->begin();
   }
+  DEBUG(7, "the end");
   
 }
 
@@ -89,6 +98,7 @@ inline unsigned int
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::iterator::i()
 {
+  DEBUG(10, "Basic_Pairlist::i()");
   return (m_i - m_pairlist.begin());
 }
 
@@ -97,6 +107,7 @@ inline unsigned int
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::iterator::j()
 {
+  DEBUG(10, "Basic_Pairlist::j()");
   return *m_j;
 }
 
@@ -105,6 +116,7 @@ inline unsigned int
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::iterator::operator*()
 {
+  DEBUG(10, "Basic_Pairlist::operator*()");
   return *m_j;
 }
 
@@ -157,7 +169,7 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::perturbed_end()
 {
   iterator it(m_perturbed_pairlist);
-  it.row(size());
+  it.row(m_perturbed_pairlist.size());
   return it;
 }
 

@@ -117,3 +117,46 @@ simulation::Perturbation_Topology::update_for_lambda()
 }
 
 
+/**
+ * calculate constraint degrees of freedom.
+ */
+inline void
+simulation::Perturbation_Topology::
+calculate_constraint_dof(simulation::Multibath &multibath)const
+{
+  // do nonperturbed constraints
+  simulation::Topology::calculate_constraint_dof(multibath);
+  
+  DEBUG(7, "and the perturbd distance constraints (DOF calc)");
+
+  // substract perturbed constraints
+  std::vector<Perturbed_Solute::perturbed_distance_constraint_struct>
+    ::const_iterator 
+    c_it = perturbed_solute().distance_constraints().begin(),
+    c_to = perturbed_solute().distance_constraints().end();
+  
+  size_t com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+
+  for( ; c_it != c_to; ++c_it){
+    
+    DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
+    multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
+    multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
+
+    multibath[ir_bath_i].dof -= 0.5;
+    multibath[ir_bath_j].dof -= 0.5;
+
+    multibath[ir_bath_i].ir_dof -= 0.5;
+    multibath[ir_bath_j].ir_dof -= 0.5;
+
+    multibath[ir_bath_i].solute_constr_dof += 0.5;
+    multibath[ir_bath_j].solute_constr_dof += 0.5;
+
+  }
+  
+  for(size_t i=0; i<multibath.size(); ++i){
+    DEBUG(7, "dof           " << multibath[i].dof);
+    DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);
+  }
+  
+}

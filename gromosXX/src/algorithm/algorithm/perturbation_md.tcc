@@ -58,7 +58,7 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature,
   int ntg, nlam;
   double rlam, dlamt, alphlj, alphc;
   input.read_PERTURB(ntg, rlam, dlamt, alphlj, alphc, nlam);
-
+  std::cout << "NTG " << ntg << std::endl;
   if (ntg == 1){
     io::messages.add("Perturbation enabled", "Perturbation_MD",
 		     io::message::notice);
@@ -74,6 +74,11 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature,
   else{
     io::messages.add("using Perturbation_MD, but perturbation disabled",
 		     "Perturbation_MD", io::message::notice);
+    // resize the energy derivative array
+    m_simulation.system().lambda_energies().
+      resize(m_simulation.system().energies().bond_energy.size(),
+	   m_simulation.system().energies().kinetic_energy.size());
+    
   }
   
 }
@@ -138,7 +143,7 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
 		io::InInput &input,
 		io::Argument &args)
 {
-  DEBUG(7, "md: create forcefield");
+  DEBUG(7, "md: create perturbed forcefield");
   // check which interactions to add
   int do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
   input.read_FORCE(do_bond, do_angle, do_improper,

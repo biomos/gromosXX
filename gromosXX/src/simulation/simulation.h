@@ -3,6 +3,7 @@
  * gathers include directives for the simulation library.
  */
 
+// header files
 #include "system/energy.h"
 #include "system/energy_average.h"
 #include "system/system.h"
@@ -17,6 +18,9 @@
 #include "simulation/multibath.h"
 #include "simulation/nonbonded.h"
 #include "simulation/simulation.h"
+
+// implementation files
+#include "topology/topology.tcc"
 
 #ifndef NDEBUG
 namespace simulation

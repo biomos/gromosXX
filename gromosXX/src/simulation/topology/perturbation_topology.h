@@ -96,6 +96,12 @@ namespace simulation
      * recalculate lambda dependent properties.
      */
     void update_for_lambda();
+
+    /**
+     * calculate constraint degrees of freedom
+     * also adding the perturbed constraints!
+     */
+    void calculate_constraint_dof(simulation::Multibath &multibath)const;
     
   private:
     /**

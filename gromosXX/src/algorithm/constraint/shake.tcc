@@ -22,6 +22,15 @@ algorithm::Shake<t_simulation>
 {
 }
 
+/**
+ * Destructor.
+ */
+template<typename t_simulation>
+algorithm::Shake<t_simulation>
+::~Shake()
+{
+}
+
 template<typename t_simulation>
 void algorithm::Shake<t_simulation>
 ::tolerance(double const tol)
@@ -57,16 +66,19 @@ int algorithm::Shake<t_simulation>
   
   bool convergence = false;
   while(!convergence){
+
     convergence = _shake(topo, sys, first, skip_now, skip_next,
 			 topo.solute().distance_constraints(), true);
 
-    // std::cout << num_iterations+1 << std::endl;
     if(++num_iterations > max_iterations){
       io::messages.add("SHAKE error. too many iterations",
 		       "Shake::solute",
 		       io::message::critical);
       throw std::runtime_error("SHAKE failure in solute");
     }
+
+    skip_now = skip_next;
+    skip_next.assign(skip_next.size(), true);
 
   } // convergence?
 
@@ -124,6 +136,8 @@ int algorithm::Shake<t_simulation>
 	  throw std::runtime_error("SHAKE failure in solvent");
 	}
 
+	skip_now = skip_next;
+	skip_next.assign(skip_next.size(), true);
 
       } // while(!convergence)
       
@@ -145,22 +159,24 @@ int algorithm::Shake<t_simulation>
  * do one iteration
  */      
 template<typename t_simulation>
+template<typename t_distance_struct>
 bool algorithm::Shake<t_simulation>
 ::_shake(typename simulation_type::topology_type const &topo,
 	 typename simulation_type::system_type &sys,
 	 int const first,
 	 std::vector<bool> &skip_now,
 	 std::vector<bool> &skip_next,
-	 std::vector<simulation::compound::distance_constraint_struct>
-	 & constr, bool do_constraint_force)
+	 // std::vector<simulation::compound::distance_constraint_struct>
+	 std::vector<t_distance_struct>
+	 & constr, bool do_constraint_force, size_t force_offset)
 {
   bool convergence = true;
 
   // index for constraint_force...
-  int k = 0;
+  size_t k = 0;
   
   // and constraints
-  for(std::vector<simulation::compound::distance_constraint_struct>
+  for(typename std::vector<t_distance_struct>
 	::const_iterator
 	it = constr.begin(),
 	to = constr.end();
@@ -216,12 +232,14 @@ bool algorithm::Shake<t_simulation>
       double lambda = diff / (sp * 2 *
 			      (1.0 / topo.mass()(first+it->i) +
 			       1.0 / topo.mass()(first+it->j) ));      
-  
+
+      DEBUG(10, "lagrange multiplier " << lambda);
+
       if (do_constraint_force == true){
 	
 	//if it is a solute sum up constraint forces
-	assert(sys.constraint_force().size() > k);
-	sys.constraint_force()(k) += (lambda * ref_r);
+	assert(unsigned(sys.constraint_force().size()) > k + force_offset);
+	sys.constraint_force()(k+force_offset) += (lambda * ref_r);
       }
 
       // update positions
@@ -238,8 +256,6 @@ bool algorithm::Shake<t_simulation>
     } // we have to shake
   } // constraints
       
-  skip_now = skip_next;
-  skip_next.assign(skip_next.size(), true);
   
   return convergence;
 
@@ -275,12 +291,15 @@ inline void algorithm::Shake<t_simulation>
 template<typename t_simulation>
 inline void 
 algorithm::Shake<t_simulation>
-::add_bond_length_constraints(simulation::Solute &solute)
+::add_bond_length_constraints(typename t_simulation::topology_type &topo)
 {
+  simulation::Solute & solute = topo.solute();
+
   std::vector<simulation::Bond> bonds;
   std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
     to = solute.bonds().end();
   for( ; it != to; ++it){
+    DEBUG(9, "constraint " << it->i << " - " << it->j);
     solute.add_distance_constraint(it->i, it->j, m_bond_parameter[it->type].r0);
   }
   solute.bonds() = bonds;
@@ -295,15 +314,19 @@ inline void
 algorithm::Shake<t_simulation>
 ::add_bond_length_constraints(int iac,
 			      std::vector<int> const &atom_iac,
-			      simulation::Solute &solute)
+			      typename t_simulation::topology_type &topo)
 {
+  simulation::Solute & solute = topo.solute();
+
   std::vector<simulation::Bond> bonds;
   std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
     to = solute.bonds().end();
 
   for( ; it != to; ++it){
-    if(atom_iac[it->i] == iac || atom_iac[it->j] == iac)
+    if(atom_iac[it->i] == iac || atom_iac[it->j] == iac){
+      DEBUG(9, "constraint " << it->i << " - " << it->j);      
       solute.add_distance_constraint(it->i, it->j, m_bond_parameter[it->type].r0);
+    }
     else
       bonds.push_back(simulation::Bond(it->i, it->j, it->type));
   }
@@ -319,15 +342,19 @@ inline void
 algorithm::Shake<t_simulation>
 ::add_bond_length_constraints(double mass,
 			      math::SArray const &atom_mass,
-			      simulation::Solute &solute)
+			      typename t_simulation::topology_type &topo)
 {
+  simulation::Solute & solute = topo.solute();
+  
   std::vector<simulation::Bond> bonds;
   std::vector<simulation::Bond>::iterator it = solute.bonds().begin(),
     to = solute.bonds().end();
 
   for( ; it != to; ++it){
-    if(atom_mass(it->i) == mass || atom_mass(it->j) == mass)
+    if(atom_mass(it->i) == mass || atom_mass(it->j) == mass){
+      DEBUG(9, "constraint " << it->i << " - " << it->j);      
       solute.add_distance_constraint(it->i, it->j, m_bond_parameter[it->type].r0);
+    }
     else
       bonds.push_back(simulation::Bond(it->i, it->j, it->type));
   }
@@ -358,13 +385,13 @@ algorithm::Shake<t_simulation>
       topo >> *this;
       add_bond_length_constraints(1.0,
 				  sim.topology().mass(),
-				  sim.topology().solute());
+				  sim.topology());
       break;
     case 3: 
       std::cout << "\tSHAKE all bonds" << std::endl;
       // read in parameter
       topo >> *this;
-      add_bond_length_constraints(sim.topology().solute());
+      add_bond_length_constraints(sim.topology());
       break;
     default:
       std::cout << "\twrong ntc parameter" << std::endl;

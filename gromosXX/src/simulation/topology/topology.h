@@ -8,6 +8,11 @@
 
 namespace simulation
 {
+  class Multibath;
+}
+
+namespace simulation
+{
   /**
    * @class Topology
    * holds the topological information of
@@ -68,6 +73,11 @@ namespace simulation
      * support for multiple solvents.
      */
     Solvent & solvent(size_t i);
+    /**
+     * const solvent accessor.
+     * support for multiple solvents.
+     */
+    Solvent const & solvent(size_t i)const;
 
     /**
      * add a solvent.
@@ -204,6 +214,11 @@ namespace simulation
      * energy group of atom accessor
      */
     const size_t atom_energy_group(size_t i)const;
+
+    /**
+     * calculate constraint degrees of freedom
+     */
+    void calculate_constraint_dof(simulation::Multibath &multibath)const;
     
     /**
      * check state
@@ -298,6 +313,6 @@ namespace simulation
 } // simulation
 
 // inline method definitions
-#include "topology.tcc"
+// #include "topology.tcc"
 
 #endif

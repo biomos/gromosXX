@@ -21,6 +21,15 @@ simulation::compound::distance_constraints()
 }
 
 /**
+ * const distance constraints accessor.
+ */
+inline std::vector<simulation::compound::distance_constraint_struct> const &
+simulation::compound::distance_constraints()const
+{
+  return m_distance_constraint;
+}
+
+/**
  * a single distance constraint.
  */
 inline simulation::compound::distance_constraint_struct &

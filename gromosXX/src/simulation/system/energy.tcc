@@ -17,6 +17,8 @@ inline void simulation::Energy::zero(bool potential, bool kinetic)
     lj_total = 0.0;
     crf_total = 0.0;
     special_total = 0.0;
+
+    constraint_energy = 0.0;
     
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
@@ -96,14 +98,14 @@ inline void simulation::Energy::calculate_totals()
     angle_total    += angle_energy[i];
     improper_total += improper_energy[i];
     dihedral_total += dihedral_energy[i];
-    // tot_posrest += posrest_energy[i];
-      
   }
+
   nonbonded_total = lj_total + crf_total;
   bonded_total    = bond_total + angle_total + 
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;
-  // special_total   = posrest_total;
+
+  special_total   += constraint_energy;
 
   total = potential_total + kinetic_total + special_total;
 
