@@ -6,11 +6,11 @@
 #ifndef INCLUDED_TOPOLOGY_H
 #define INCLUDED_TOPOLOGY_H
 
-#include <topology/core/core.h>
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
+#include <gromosXX/topology/core/core.h>
+#include <gromosXX/topology/solute.h>
+#include <gromosXX/topology/solvent.h>
+#include <gromosXX/topology/perturbed_atom.h>
+#include <gromosXX/topology/perturbed_solute.h>
 
 namespace simulation
 {
@@ -400,6 +400,12 @@ namespace topology
     {
       return m_position_restraint;
     }
+
+    /**
+     * initialise the topology.
+     * - adjust submolecules if empty
+     */
+    void initialise();
     
   private:
     /**
