@@ -40,12 +40,13 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 				   topology::Topology const &topo,
 				   simulation::Parameter const &param,
 				   io::IFP & it,
+				   std::ostream & os,
 				   bool quiet)
 {
   
   if (param.force.bond == 1){
     if (!quiet)
-      std::cout <<"\tquartic bond interaction\n";
+      os <<"\tquartic bond interaction\n";
 
     interaction::Quartic_Bond_Interaction *b =
       new interaction::Quartic_Bond_Interaction();
@@ -55,7 +56,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation){
       if (!quiet)
-	std::cout <<"\tperturbed quartic bond interaction\n";
+	os <<"\tperturbed quartic bond interaction\n";
       
       interaction::Perturbed_Quartic_Bond_Interaction * pb =
 	new interaction::Perturbed_Quartic_Bond_Interaction(*b);
@@ -64,7 +65,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   }
   else if (param.force.bond == 2){
     if (!quiet)
-      std::cout <<"\tharmonic bond interaction\n";
+      os <<"\tharmonic bond interaction\n";
 
     interaction::Harmonic_Bond_Interaction *b =
       new interaction::Harmonic_Bond_Interaction();
@@ -77,7 +78,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation){
       if(!quiet)
-	std::cout <<"\tperturbed harmonic bond interaction\n";
+	os <<"\tperturbed harmonic bond interaction\n";
 
       interaction::Perturbed_Harmonic_Bond_Interaction * pb =
 	new interaction::Perturbed_Harmonic_Bond_Interaction(*b);
@@ -87,7 +88,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   
   if (param.force.angle == 1){
     if (!quiet)
-      std::cout <<"\tbond angle interaction\n";
+      os <<"\tbond angle interaction\n";
     interaction::Angle_Interaction *a =
       new interaction::Angle_Interaction();
     
@@ -96,7 +97,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation){
       if (!quiet)
-	std::cout <<"\tperturbed bond angle interaction\n";
+	os <<"\tperturbed bond angle interaction\n";
       interaction::Perturbed_Angle_Interaction * pa =
 	new interaction::Perturbed_Angle_Interaction(*a);
       ff.push_back(pa);
@@ -110,7 +111,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   
   if (param.force.improper == 1){
     if (!quiet)
-      std::cout << "\timproper dihedral interaction\n";
+      os << "\timproper dihedral interaction\n";
     
     interaction::Improper_Dihedral_Interaction * i =
       new interaction::Improper_Dihedral_Interaction();
@@ -119,7 +120,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation){
       if(!quiet)
-	std::cout << "\tperturbed improper dihedral interaction\n";
+	os << "\tperturbed improper dihedral interaction\n";
       interaction::Perturbed_Improper_Dihedral_Interaction * pi =
 	new interaction::Perturbed_Improper_Dihedral_Interaction(*i);
       ff.push_back(pi);
@@ -129,7 +130,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
   if (param.force.dihedral == 1){
     if (!quiet)
-      std::cout <<"\tdihedral interaction\n";
+      os <<"\tdihedral interaction\n";
     
     interaction::Dihedral_Interaction * d =
       new interaction::Dihedral_Interaction();
@@ -138,7 +139,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation){
       if(!quiet)
-	std::cout <<"\tperurbed dihedral interaction\n";
+	os <<"\tperurbed dihedral interaction\n";
       interaction::Perturbed_Dihedral_Interaction * pd =
 	new interaction::Perturbed_Dihedral_Interaction(*d);
       ff.push_back(pd);

@@ -299,10 +299,11 @@ int interaction::Nonbonded_Interaction::calculate_hessian(topology::Topology & t
 int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 					     configuration::Configuration & conf,
 					     simulation::Simulation & sim,
+					     std::ostream & os,
 					     bool quiet)
 {
   // initialise the pairlist...
-  m_pairlist_algorithm->init(topo, conf, sim, quiet);
+  m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
 
   // OpenMP parallelization
 #ifdef OMP
@@ -341,12 +342,12 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   
   for( ; it != to; ++it){
     if (sim.param().multicell.multicell)
-      (*it)->init(topo.multicell_topo(), conf, sim, quiet);
+      (*it)->init(topo.multicell_topo(), conf, sim, os, quiet);
     else
-      (*it)->init(topo, conf, sim, quiet);
+      (*it)->init(topo, conf, sim, os, quiet);
   }
 
-  check_spc_loop(topo, conf, sim, quiet);
+  check_spc_loop(topo, conf, sim, os, quiet);
 
   return 0;
 }
@@ -385,6 +386,7 @@ void interaction::Nonbonded_Interaction::check_spc_loop
  topology::Topology const & topo,
  configuration::Configuration const & conf,
  simulation::Simulation & sim,
+ std::ostream & os,
  bool quiet)
 {
   DEBUG(7, "checking for spc interaction loops");
@@ -393,14 +395,14 @@ void interaction::Nonbonded_Interaction::check_spc_loop
 
     sim.param().force.spc_loop = 0;
     if (!quiet)
-      std::cout << "\tusing standard solvent loops (user request)\n";
+      os << "\tusing standard solvent loops (user request)\n";
     return;
   }
 
   if (sim.param().pairlist.grid){
     sim.param().force.spc_loop = 0;
     if (!quiet)
-      std::cout << "\tusing standard solvent loops (grid based pairlist)\n";
+      os << "\tusing standard solvent loops (grid based pairlist)\n";
     return;
   }
   
@@ -410,12 +412,12 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     sim.param().force.spc_loop = 0;
     if (!quiet)
 	if (topo.num_solvents() > 0)
-      std::cout << "\tusing standard solvent loops (num solvents doesn't match)\n"
+      os << "\tusing standard solvent loops (num solvents doesn't match)\n"
 		<< "\t\tnum solvents: " << topo.num_solvents() << "\n"
 		<< "\t\tsolvent atoms: " << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
 		<< "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
 	else
-      std::cout << "\tusing standard solvent loops (no solvent present!)\n\n";
+      os << "\tusing standard solvent loops (no solvent present!)\n\n";
     return;
   }
   
@@ -426,7 +428,7 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     
     sim.param().force.spc_loop = 0;
     if (!quiet)
-	std::cout << "\tusing standard solvent loops (charges don't match)\n"
+	os << "\tusing standard solvent loops (charges don't match)\n"
 		  << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
 		  << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms()+1) << "\n"
 		  << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms()+2) << "\n\n";
@@ -462,14 +464,14 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     
     sim.param().force.spc_loop = 0;
     if (!quiet)
-      std::cout << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
+      os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
     return;
     
   }
   
   sim.param().force.spc_loop = 1;
   if (!quiet)
-    std::cout << "\tusing spc solvent loops\n";
+    os << "\tusing spc solvent loops\n";
     return;
     
 }

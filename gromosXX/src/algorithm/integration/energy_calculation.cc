@@ -29,9 +29,12 @@ int algorithm::Energy_Calculation::init
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation &sim,
+ std::ostream & os,
  bool quiet
  )
 {
+  os << "Energy calculation\n";
+  
   // the resizing of the energy-arrays could be moved here...
   return 0;
 }

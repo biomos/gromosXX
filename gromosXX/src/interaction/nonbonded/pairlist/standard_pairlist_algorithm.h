@@ -44,6 +44,19 @@ namespace interaction
     virtual ~Standard_Pairlist_Algorithm() {}
 
     /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false) 
+    {
+      os << "Standard pairlist algorithm\n";
+      return 0;
+    };
+
+    /**
      * prepare the pairlists
      */    
     virtual void prepare(topology::Topology & topo,

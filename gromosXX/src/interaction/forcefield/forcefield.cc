@@ -34,6 +34,7 @@ int interaction::Forcefield
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation &sim,
+       std::ostream & os,
        bool quiet)
 {
   
@@ -43,7 +44,7 @@ int interaction::Forcefield
       it != to;
       ++it){
 
-    i += (*it)->init(topo, conf, sim, quiet);
+    i += (*it)->init(topo, conf, sim, os, quiet);
   }
 
   return i;

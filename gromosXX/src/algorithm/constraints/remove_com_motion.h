@@ -18,7 +18,7 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Remove_COM_Motion() : Algorithm("RemoveCOMMotion") {}
+    Remove_COM_Motion(std::ostream & os = std::cout) : Algorithm("RemoveCOMMotion"), os(os) {}
 
     /**
      * Destructor.
@@ -32,7 +32,21 @@ namespace algorithm
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
     
+    /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false) 
+    {
+      os << "Remove centre of mass motion\n";
+      return 0;
+    };
+
   protected:
+    std::ostream & os;
   };
   
 } //algorithm

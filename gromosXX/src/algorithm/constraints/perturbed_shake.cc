@@ -452,26 +452,27 @@ int algorithm::Perturbed_Shake
 int algorithm::Perturbed_Shake::init(topology::Topology & topo,
 				     configuration::Configuration & conf,
 				     simulation::Simulation & sim,
+				     std::ostream & os,
 				     bool quiet)
 {
   if (!quiet){
-    std::cout << "Perturbed SHAKE\n"
+    os << "Perturbed SHAKE\n"
 	    << "\tsolute\t";
     if (sim.param().constraint.solute.algorithm == simulation::constr_shake
 	&& topo.perturbed_solute().distance_constraints().size()){    
-      std::cout << "ON\n";  
-      std::cout << "\t\ttolerance = "
+      os << "ON\n";  
+      os << "\t\ttolerance = "
 		<< sim.param().constraint.solute.shake_tolerance << "\n";
     }
-    else std::cout << "OFF\n";
+    else os << "OFF\n";
     
-    std::cout << "\tsolvent\t"
+    os << "\tsolvent\t"
 	      << "OFF\n";
   }
   
   if (sim.param().start.shake_pos){
     if (!quiet)
-      std::cout << "shaking perturbed initial positions\n";
+      os << "shaking perturbed initial positions\n";
 
     // old and current pos and vel are the same...
     // shake the current ones
@@ -485,7 +486,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
     
     if (sim.param().start.shake_vel){
       if (!quiet)
-	std::cout << "shaking initial velocities\n";
+	os << "shaking initial velocities\n";
 
       for(unsigned int i=0; i<topo.num_atoms(); ++i)
 	conf.current().pos(i) = conf.old().pos(i) - 
@@ -510,7 +511,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
   }
 
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
   
   return 0;
 }

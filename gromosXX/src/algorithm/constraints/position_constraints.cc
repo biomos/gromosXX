@@ -69,14 +69,15 @@ int algorithm::Position_Constraints
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
+       std::ostream & os,
        bool quiet)
 {
   if (!quiet){
-    std::cout << "POSITION CONSTRAINTS\n"
-	      << "\tenabled\n"
-	      << "\tSHAKEing of bonds containing positionally constrained"
-	      << " atoms is NOT implemented (results will be wrong)!\n"
-	      << "END\n";
+    os << "POSITION CONSTRAINTS\n"
+       << "\tenabled\n"
+       << "\tSHAKEing of bonds containing positionally constrained"
+       << " atoms is NOT implemented (results will be wrong)!\n"
+       << "END\n";
   }
 
   return 0;

@@ -42,74 +42,78 @@
 
 using namespace std;
 
-int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
-		topology::Topology const & topo,
-		simulation::Simulation const & sim,
-		configuration::Configuration const & conf,
-		io::IFP & it,
-		bool quiet)
+int interaction::create_g96_nonbonded
+(
+ interaction::Forcefield & ff,
+ topology::Topology const & topo,
+ simulation::Simulation const & sim,
+ configuration::Configuration const & conf,
+ io::IFP & it,
+ std::ostream & os,
+ bool quiet
+ )
 {
   if (sim.param().force.nonbonded == 0) return 0;
   
   if(!quiet){
     if (!sim.param().pairlist.grid)
-      cout << "\t" << setw(20) << left << "PairlistAlgorithm" << setw(30) 
+      os << "\t" << setw(20) << left << "PairlistAlgorithm" << setw(30) 
 	   << left << "Standard_Pairlist_Algorithm" << right << "\n";
     else{
-      cout << "\t" << setw(20) << left << "PairlistAlgorithm" << setw(30) 
+      os << "\t" << setw(20) << left << "PairlistAlgorithm" << setw(30) 
 	   << left << "Grid_Pairlist_Algorithm" << right << "\n";
     }
     
     if (sim.param().pairlist.atomic_cutoff)
-      cout << "\t" << setw(20) << left << "atomic-cutoff" << setw(30) << left << "on" << right << "\n";
+      os << "\t" << setw(20) << left << "atomic-cutoff" << setw(30) << left << "on" << right << "\n";
     else
-      cout << "\t" << setw(20) << left << "atomic-cutoff" << setw(30) << left << "off" << right << "\n";
+      os << "\t" << setw(20) << left << "atomic-cutoff" << setw(30) << left << "off" << right << "\n";
 
     switch(sim.param().boundary.boundary){
       case math::vacuum:
-	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
+	os << "\t" << setw(20) << left << "boundary" << setw(30) 
 	     << left << "vacuum" << right << "\n";
 	break;
       case math::rectangular:
-	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
+	os << "\t" << setw(20) << left << "boundary" << setw(30) 
 	     << left << "rectangular" << right << "\n";
 	break;
       case math::truncoct:
-	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
+	os << "\t" << setw(20) << left << "boundary" << setw(30) 
 	     << left << "truncoct" << right << "\n";
 	break;
       case math::triclinic:
-	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
+	os << "\t" << setw(20) << left << "boundary" << setw(30) 
 	     << left << "triclinic" << right << "\n";
 	break;
       default:
-	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
+	os << "\t" << setw(20) << left << "boundary" << setw(30) 
 	     << left << "unknown" << right << "\n";
     }
 
     switch(sim.param().pcouple.virial){
       case math::no_virial:
-	cout << "\t" << setw(20) << left << "virial" << setw(30) << left << "none" << right << "\n";
+	os << "\t" << setw(20) << left << "virial" << setw(30) << left << "none" << right << "\n";
 	break;
       case math::molecular_virial:
-	cout << "\t" << setw(20) << left << "virial" << setw(30) << left << "molecular" << right << "\n";
+	os << "\t" << setw(20) << left << "virial" << setw(30) << left << "molecular" << right << "\n";
 	break;
       case math::atomic_virial:
-	cout << "\t" << setw(20) << left << "virial" << setw(30) << left << "atomic" << right << "\n";
+	os << "\t" << setw(20) << left << "virial" << setw(30) << left << "atomic" << right << "\n";
 	break;
       default:
-	cout << "\t" << setw(20) << left << "virial" << setw(30) << left << "unknown" << right << "\n";
+	os << "\t" << setw(20) << left << "virial" << setw(30) << left << "unknown" << right << "\n";
     }
     
     if (sim.param().perturbation.perturbation){
-      cout << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "on" << right << "\n";
+      os << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "on" << right << "\n";
       if (sim.param().perturbation.scaling)
-	cout << "\t" << setw(20) << left << "scaling" << setw(30) << left << "on" << right << "\n";
+	os << "\t" << setw(20) << left << "scaling" << setw(30) << left << "on" << right << "\n";
       else
-	cout << "\t" << setw(20) << left << "scaling" << setw(30) << left << "off" << right << "\n";
+	os << "\t" << setw(20) << left << "scaling" << setw(30) << left << "off" << right << "\n";
     }
     else{
-      cout << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "off" << right << "\n";
+      os << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "off" << right << "\n";
     }
 
   }
@@ -130,7 +134,7 @@ int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
   ff.push_back(ni);
 
   if (!quiet){
-    std::cout
+    os
       << "\t\t\tshortrange cutoff      : "
       << sim.param().pairlist.cutoff_short << "\n"
       << "\t\t\tlongrange cutoff       : "

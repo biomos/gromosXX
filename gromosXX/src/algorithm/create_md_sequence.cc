@@ -52,12 +52,13 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 				  topology::Topology &topo,
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
-				  io::In_Topology &it)
+				  io::In_Topology &it,
+				  std::ostream & os)
 {
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
-  interaction::create_g96_forcefield(*ff, topo, sim, conf, it);
+  interaction::create_g96_forcefield(*ff, topo, sim, conf, it, os);
   
   //==================================================
   // construct the md algorithm
@@ -65,7 +66,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // center of mass removal
   algorithm::Remove_COM_Motion * rcom =
-    new algorithm::Remove_COM_Motion;
+    new algorithm::Remove_COM_Motion(os);
   
   if (sim.param().centreofmass.remove_trans ||
       sim.param().centreofmass.remove_rot)
@@ -122,7 +123,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
     // do we scale the initial temperatures?
     if (sim.param().replica.scale){
-      std::cout << "\tscale initial velocities (replica exchange)\n";
+      os << "\tscale initial velocities (replica exchange)\n";
       
       algorithm::Berendsen_Thermostat tcoup;
       tcoup.calc_scaling(topo, conf, sim, true);
@@ -131,11 +132,11 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       tcalc->apply(topo, conf, sim);
     }
 
-    io::print_MULTIBATH_COUPLING(std::cout, sim.multibath());
+    io::print_MULTIBATH_COUPLING(os, sim.multibath());
 
-    io::print_DEGREESOFFREEDOM(std::cout, sim.multibath());
+    io::print_DEGREESOFFREEDOM(os, sim.multibath());
     
-    io::print_MULTIBATH(std::cout, sim.multibath(),
+    io::print_MULTIBATH(os, sim.multibath(),
 			conf.old().energies,
 			"INITIAL TEMPERATURES");
 
@@ -146,7 +147,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   // pressure calculation?
-  io::print_PCOUPLE(std::cout, sim.param().pcouple.calculate,
+  io::print_PCOUPLE(os, sim.param().pcouple.calculate,
 		    sim.param().pcouple.scale,
 		    sim.param().pcouple.pres0,
 		    sim.param().pcouple.compressibility,
@@ -174,24 +175,24 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       md_seq.push_back(sg);
     }
     
-    std::cout << "PERTURBATION\n"
-	      << "\tlambda         : " << sim.param().perturbation.lambda << "\n"
-	      << "\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
-	      << "\tdlambda        : " << sim.param().perturbation.dlamt << "\n"
-	      << "\tscaling        : ";
+    os << "PERTURBATION\n"
+       << "\tlambda         : " << sim.param().perturbation.lambda << "\n"
+       << "\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
+       << "\tdlambda        : " << sim.param().perturbation.dlamt << "\n"
+       << "\tscaling        : ";
 
     if (sim.param().perturbation.scaling){
       if (sim.param().perturbation.scaled_only)
-	std::cout << "perturbing only scaled interactions\n";
+	os << "perturbing only scaled interactions\n";
       else
-	std::cout << "on\n";
+	os << "on\n";
     }
     else
-      std::cout << "off\n";
-    std::cout << "END\n";
+      os << "off\n";
+    os << "END\n";
   }
   else
-    std::cout << "PERTURATION OFF\n";
+    os << "PERTURATION OFF\n";
   
   // total energy calculation and energy average update
   {

@@ -31,6 +31,7 @@ namespace interaction
 			topology::Topology const & topo,
 			simulation::Parameter const & param,
 			io::IFP & it,
+			std::ostream & os = std::cout,
 			bool quiet = false);
 
 }

@@ -47,6 +47,7 @@ int interaction::Grid_Pairlist_Algorithm::init
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
+ std::ostream & os,
  bool quiet)
 {
 

@@ -26,11 +26,12 @@ int algorithm::Berendsen_Thermostat::init
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
+ std::ostream & os,
  bool quiet
  )
 {
   if (!quiet){
-    std::cout << "\tWeak-Coupling temperature coupling\n";
+    os << "\tWeak-Coupling temperature coupling\n";
   }
   return 0;
 }

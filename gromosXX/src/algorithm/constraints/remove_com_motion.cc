@@ -141,14 +141,14 @@ int algorithm::Remove_COM_Motion
   DEBUG(7, " com_Ekin_rot " << ekin_rot);
    
   if (print_it){
-    io::print_CENTREOFMASS(std::cout, ekin_trans, ekin_rot);
+    io::print_CENTREOFMASS(os, ekin_trans, ekin_rot);
   }
 
   // remove if necessary
   // angular momentum
   if(remove_it && sim.param().centreofmass.remove_rot){
 
-    std::cout << "removing center of mass angular momentum\n";
+    os << "removing center of mass angular momentum\n";
     
     for(unsigned int i=0; i<topo.num_atoms(); ++i){
       math::Vec r = conf.current().pos(i) - 
@@ -160,7 +160,7 @@ int algorithm::Remove_COM_Motion
   // translational momentum
   if(remove_it && sim.param().centreofmass.remove_trans){
     
-    std::cout << "removing center of mass translational momentum\n";
+    os << "removing center of mass translational momentum\n";
     
     // get the corrected velocities
     for(unsigned int i=0; i<topo.num_atoms(); ++i){

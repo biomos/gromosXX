@@ -32,6 +32,19 @@ namespace algorithm
 		      configuration::Configuration &conf,
 		      simulation::Simulation &sim);
 
+    /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false) 
+    {
+      os << "Leap frog position\n";
+      return 0;
+    };
+
   };
 
   /**
@@ -56,6 +69,19 @@ namespace algorithm
     virtual int apply(topology::Topology &topo, 
 		      configuration::Configuration &conf,
 		      simulation::Simulation &sim);
+
+    /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false) 
+    {
+      os << "Leap frog velocity\n";
+      return 0;
+    };
 
   };
 

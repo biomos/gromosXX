@@ -103,6 +103,7 @@ namespace interaction
     virtual int init(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
+		     std::ostream & os = std::cout,
 		     bool quiet = false);
     
     /**
@@ -125,7 +126,8 @@ namespace interaction
      topology::Topology const & topo,
      configuration::Configuration const & conf,
      simulation::Simulation & sim,
-     bool quiet);
+     std::ostream & os = std::cout,
+     bool quiet = false);
 
     /**
      * expand a configuration for

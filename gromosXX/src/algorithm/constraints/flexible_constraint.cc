@@ -823,48 +823,49 @@ int algorithm::Flexible_Constraint
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
+       std::ostream & os,
        bool quiet)
 {
   if (!quiet){
-    std::cout << "FLEXIBLESHAKE\n"
+    os << "FLEXIBLESHAKE\n"
 	      << "\tsolute\t";
     if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
-      std::cout << "ON\n";
-      std::cout << "\t\ttolerance = " 
+      os << "ON\n";
+      os << "\t\ttolerance = " 
 		<< sim.param().constraint.solute.shake_tolerance << "\n";
       if (sim.param().constraint.solute.flexshake_readin)
-	std::cout << "\t\treading velocities along constraints from file\n";
+	os << "\t\treading velocities along constraints from file\n";
       if (sim.param().constraint.solute.flexshake_mode == 2 ||
 	  sim.param().constraint.solute.flexshake_mode == 3)
-	std::cout << "\t\tusing the exact algorithm\n";
+	os << "\t\tusing the exact algorithm\n";
       else
-	std::cout << "\t\tusing the approximate algorithm\n";
+	os << "\t\tusing the approximate algorithm\n";
       if (sim.param().constraint.solute.flexshake_mode == 0 ||
 	  sim.param().constraint.solute.flexshake_mode == 2)
-	std::cout << "\t\tusing potential and kinetic energy\n";
+	os << "\t\tusing potential and kinetic energy\n";
       else
-	std::cout << "\t\tusing potentialenergy only\n";
+	os << "\t\tusing potentialenergy only\n";
       
     }
-    else std::cout << "OFF\n";
+    else os << "OFF\n";
   
-    std::cout << "\tsolvent\t";
+    os << "\tsolvent\t";
   }
   
   if (sim.param().constraint.solvent.algorithm == simulation::constr_flexshake){
     if (!quiet)
-      std::cout << "not supported!\n";
+      os << "not supported!\n";
     io::messages.add("flexible shake for solvent not implemented", "Flexible_Constraint",
 		     io::message::error);
   }
-  else if (!quiet) std::cout << "OFF\n";
+  else if (!quiet) os << "OFF\n";
 
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
   
   if (sim.param().start.shake_pos){
     if (!quiet)
-      std::cout << "(flexible) shaking initial positions\n";
+      os << "(flexible) shaking initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -885,7 +886,7 @@ int algorithm::Flexible_Constraint
     
     if (sim.param().start.shake_vel){
       if (!quiet)
-	std::cout << "shaking initial velocities\n";
+	os << "shaking initial velocities\n";
 
       for(unsigned int i=0; i<topo.num_atoms(); ++i)
 	conf.current().pos(i) = conf.old().pos(i) - 
@@ -914,7 +915,7 @@ int algorithm::Flexible_Constraint
 		     "shake", io::message::error);
   }
 
-  std::cout << "END\n";
+  os << "END\n";
   
   return 0;
 }

@@ -272,6 +272,7 @@ int interaction::Perturbed_Nonbonded_Set
 ::init(topology::Topology const & topo,
        configuration::Configuration const & conf,
        simulation::Simulation const & sim,
+       std::ostream & os,
        bool quiet)
 {
   DEBUG(7, "Perturbed Nonbonded Set :: init");
@@ -280,7 +281,7 @@ int interaction::Perturbed_Nonbonded_Set
 	<< " - " 
 	<< unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
 
-  Nonbonded_Set::init(topo, conf, sim, quiet);
+  Nonbonded_Set::init(topo, conf, sim, os, quiet);
   
   m_shortrange_storage.perturbed_energy_derivatives.resize
     (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),

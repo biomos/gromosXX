@@ -154,12 +154,13 @@ int algorithm::Rottrans_Constraints
 
 template<math::boundary_enum b, math::virial_enum do_virial>
 static void _init(topology::Topology & topo,
-		 configuration::Configuration & conf,
-		 simulation::Simulation & sim,
-		 bool quiet)
+		  configuration::Configuration & conf,
+		  simulation::Simulation & sim,
+		  std::ostream & os,
+		  bool quiet)
 {
   if (!quiet)
-    std::cout << "Roto-translational constraints\tON\n";
+    os << "Roto-translational constraints\tON\n";
 
   math::Periodicity<b> periodicity(conf.current().box);
   configuration::State_Properties sp(conf);
@@ -269,11 +270,12 @@ int algorithm::Rottrans_Constraints
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
+       std::ostream & os,
        bool quiet)
 {
 
   if (sim.param().rottrans.rottrans){
-    SPLIT_VIRIAL_BOUNDARY(_init, topo, conf, sim, quiet);
+    SPLIT_VIRIAL_BOUNDARY(_init, topo, conf, sim, os, quiet);
   }
   
   return 0;

@@ -53,6 +53,7 @@ namespace interaction
     virtual int init(topology::Topology const & topo,
 		     configuration::Configuration const & conf,
 		     simulation::Simulation const & sim,
+		     std::ostream & os = std::cout,
 		     bool quiet = false);
     
     /**

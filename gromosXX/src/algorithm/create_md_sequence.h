@@ -33,7 +33,8 @@ namespace algorithm
 			 topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
-			 io::In_Topology &it);
+			 io::In_Topology &it,
+			 std::ostream & os = std::cout);
 }
 
 #endif

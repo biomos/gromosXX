@@ -46,7 +46,9 @@ namespace algorithm
     virtual int init(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     bool quiet) { return 0; }
+		     std::ostream & os = std::cout,
+		     bool quiet = false) = 0;
+    // { return 0; }
     
     /**
      * apply the algorithm

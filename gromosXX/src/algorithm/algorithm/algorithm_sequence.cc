@@ -37,6 +37,7 @@ int algorithm::Algorithm_Sequence
 ::init(topology::Topology & topo, 
        configuration::Configuration &conf,
        simulation::Simulation &sim,
+       std::ostream & os,
        bool quiet)
 {
   DEBUG(5, "Algorithm_Sequence: init");
@@ -49,7 +50,10 @@ int algorithm::Algorithm_Sequence
       ++it){
     DEBUG(7, "algorithm::init -> " << (*it)->name);
     
-    if((ret = (*it)->init(topo, conf, sim, quiet))){
+    if((ret = (*it)->init(topo, conf, sim, os, quiet))){
+      os << "Algorithm_Sequence: error during initialisation of " 
+	 << (*it)->name << "\n";
+      
       io::messages.add("Error in algorithm sequence init",
 		       "Algorithm_Sequence",
 		       io::message::error);

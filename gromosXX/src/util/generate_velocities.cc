@@ -11,13 +11,14 @@
 
 void util::generate_velocities(double const temp, math::SArray const &mass,
 			       math::VArray & vel, math::VArray & old_vel,
-			       unsigned int const seed)
+			       unsigned int const seed,
+			       std::ostream & os)
 {
 
-  std::cout << "\n\tgenerating initial velocities\n"
-	    << "\t\ttemperature         = " << temp << "\n"
-	    << "\t\trandom number seed  = " << seed
-	    << "\n";
+  os << "\n\tgenerating initial velocities\n"
+     << "\t\ttemperature         = " << temp << "\n"
+     << "\t\trandom number seed  = " << seed
+     << "\n";
   
   // get a random number generator type
   const gsl_rng_type *rng_type;
@@ -34,8 +35,8 @@ void util::generate_velocities(double const temp, math::SArray const &mass,
     gsl_rng_set (rng, seed);
 	
   // print a comment
-  std::cout << "\t\trandom number generator: " << gsl_rng_name(rng)
-	    << "\n\t\tdefault seed: " << gsl_rng_default_seed << "\n\n";
+  os << "\t\trandom number generator: " << gsl_rng_name(rng)
+     << "\n\t\tdefault seed: " << gsl_rng_default_seed << "\n\n";
 
   for(unsigned int i=0; i<vel.size(); ++i){
     const double sd = sqrt(math::k_Boltzmann * temp / mass(i));

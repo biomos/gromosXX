@@ -60,6 +60,19 @@ namespace configuration
 		simulation::Parameter const &param);
     
     /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false)
+    {
+      os << "Averages\n";
+      return 0;
+    };
+
+    /**
      * simulation averages accessor.
      */
     Block_Average const & simulation()const 

@@ -53,6 +53,9 @@ util::Replica_Exchange::Replica_Exchange()
 
 int util::Replica_Exchange::run(io::Argument & args, int tid, int num_threads)
 {
+  // use local copy
+  io::Argument my_args(args);
+
   std::ostringstream oss;
   oss << "repex_" << tid << ".out";
   
@@ -64,17 +67,28 @@ int util::Replica_Exchange::run(io::Argument & args, int tid, int num_threads)
   algorithm::Algorithm_Sequence md;
   simulation::Simulation sim;
 
-  io::Out_Configuration traj("GromosXX\n");
+  io::Out_Configuration traj("GromosXX\n", os);
 
-  io::read_input(args, topo, conf, sim,  md, os);
+  io::read_input(my_args, topo, conf, sim,  md, os);
 
   traj.title("GromosXX\n" + sim.param().title);
 
   // create output files...
-  traj.init(args, sim.param());
+  // rename them appropriately
+  std::ostringstream suff;
+  suff << "." << tid;
+  
+  my_args["trj"] = my_args["trj"] + suff.str();
+  my_args["tre"] = my_args["tre"] + suff.str();
+  my_args["trg"] = my_args["trg"] + suff.str();
+  my_args["bae"] = my_args["bae"] + suff.str();
+  my_args["bag"] = my_args["bag"] + suff.str();
+  my_args["trv"] = my_args["trv"] + suff.str();
+  
+  traj.init(my_args, sim.param());
 
   // initialises all algorithms (and therefore also the forcefield)
-  md.init(topo, conf, sim);
+  md.init(topo, conf, sim, os);
 
   // initialise thread state, and assigned replicas
   thread_state.resize(num_threads, waiting);
@@ -160,11 +174,17 @@ int util::Replica_Exchange::run(io::Argument & args, int tid, int num_threads)
 
     os.flush();
     
+    int trials = 0;
     int runs = 0;
     
     while(true){
       
-      if(runs >= sim.param().replica.trials * sim.param().replica.number) break;
+      if (runs == sim.param().replica.number){
+	++trials;
+	runs = 0;
+      }
+      
+      if(trials > sim.param().replica.trials) break;
     
       // is a thread waiting?
       std::cerr << "master: selecting thread..." << std::endl;
@@ -183,10 +203,11 @@ int util::Replica_Exchange::run(io::Argument & args, int tid, int num_threads)
 	      switch_replica(r, replica_data[r].switch_replica);
 	    }
 	    
-	    if(replica_data[r].state == ready){
+	    if(replica_data[r].state == ready && replica_data[r].run == trials){
 	      std::cerr << "replica " << r << " is ready..." << std::endl;
 	      
 	      // assign it!
+	      replica_data[r].state = running;
 	      thread_replica[i] = r;
 	      thread_state[i] = ready;
 	      ++runs;
@@ -229,13 +250,16 @@ int util::Replica_Exchange::run(io::Argument & args, int tid, int num_threads)
 	std::cerr << "thread " << tid << " running replica " << thread_replica[tid]
 		  << " at T=" << replica_data[thread_replica[tid]].temperature
 		  << " and l=" << replica_data[thread_replica[tid]].lambda
+		  << " (run = " << replica_data[thread_replica[tid]].run << ")"
 		  << std::endl;
 	os << "thread " << tid << " running replica " << thread_replica[tid]
 	   << " at T=" << replica_data[thread_replica[tid]].temperature
 	   << " and l=" << replica_data[thread_replica[tid]].lambda
+	   << " (run = " << replica_data[thread_replica[tid]].run << ")"
 	   << std::endl;
 	
-	sleep(10);
+	run_md(topo, conf, sim, md, traj);
+	sleep(3);
 	
 	++replica_data[thread_replica[tid]].run;
 	replica_data[thread_replica[tid]].state = waiting;
@@ -368,7 +392,9 @@ int util::Replica_Exchange::update_thread_state(int tid)
   // MPI would use messages to 0 for that
   
   assert(replica_master != NULL);
-  replica_master->thread_state[tid] = thread_state[tid];
+  // OMP synch problem! but only in case of termination...
+  if (replica_master->thread_state[tid] != terminate)
+    replica_master->thread_state[tid] = thread_state[tid];
   return 0;
 }
 
@@ -392,3 +418,59 @@ int util::Replica_Exchange::update_replica(int r)
   return 0;
 }
 
+int util::Replica_Exchange::run_md(topology::Topology & topo,
+				   configuration::Configuration & conf,
+				   simulation::Simulation & sim,
+				   algorithm::Algorithm_Sequence & md,
+				   io::Out_Configuration & traj)
+{
+  double end_time = sim.time() + 
+    sim.time_step_size() * (sim.param().step.number_of_steps - 1);
+    
+  int error;
+
+  while(sim.time() < end_time + math::epsilon){
+      
+    traj.write(conf, topo, sim, io::reduced);
+
+    // run a step
+    if ((error = md.run(topo, conf, sim))){
+
+      if (error == E_MINIMUM_REACHED){
+	conf.old().energies.calculate_totals();
+	traj.print_timestep(sim, traj.output());
+	io::print_ENERGY(traj.output(), conf.old().energies, 
+			 topo.energy_groups(),
+			 "MINIMUM ENERGY", "EMIN_");
+	  
+	error = 0; // clear error condition
+	break;
+      }
+
+      std::cout << "\nError during MD run!\n" << std::endl;
+      // try to save the final structures...
+      break;
+    }
+
+    traj.print(topo, conf, sim);
+
+    sim.time() += sim.time_step_size();
+    ++sim.steps();
+
+  }
+    
+  // std::cout << "writing final configuration" << std::endl;
+    
+  // traj.write(conf, topo, sim, io::final);
+  // traj.print_final(topo, conf, sim);
+    
+  // std::cout << "\nMESSAGES FROM SIMULATION\n";
+  // io::message::severity_enum err_msg = io::messages.display(std::cout);
+
+  // std::cout << "\n\n";
+    
+  if (error)
+    std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
+
+  return error;
+}

@@ -187,6 +187,7 @@ int interaction::Nonbonded_Set
 ::init(topology::Topology const & topo,
        configuration::Configuration const & conf,
        simulation::Simulation const & sim,
+       std::ostream & os,
        bool quiet)
 {
   // ?????
@@ -219,8 +220,8 @@ int interaction::Nonbonded_Set
       int(1.3 * num_atoms / vol * 4.0 / 3.0 * math::Pi * c3);
 
     if (!quiet)
-      std::cout << "\n\testimated pairlist size (per atom) : "
-		<< pairs << "\n\n";
+      os << "\n\testimated pairlist size (per atom) : "
+	 << pairs << "\n\n";
     
     for(unsigned int i=0; i<num_atoms; ++i)
       pairlist()[i].reserve(pairs);

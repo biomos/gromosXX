@@ -45,7 +45,9 @@ namespace interaction
     virtual int init(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     bool quiet = false) { return 0; }
+		     std::ostream & os = std::cout,
+		     bool quiet = false) = 0;
+    // { return 0; }
     /**
      * calculate the interactions.
      */

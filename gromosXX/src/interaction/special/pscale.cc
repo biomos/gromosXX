@@ -151,12 +151,13 @@ int interaction::Periodic_Scaling
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation &sim,
+       std::ostream & os,
        bool quiet)
 {
   DEBUG(8, "PSCALE::init");
   
   if (!quiet)
-    std::cout << "PERIODIC SCALING\n";
+    os << "PERIODIC SCALING\n";
   
   if (sim.param().pscale.jrest){
     const int num_J = conf.special().jvalue_curr.size();
@@ -182,15 +183,15 @@ int interaction::Periodic_Scaling
       it = topo.jvalue_restraints().begin(),
       to = topo.jvalue_restraints().end();
     
-    std::cout << std::setw(10) << "dihedral"
-	      << std::setw(10) << "i"
-	      << std::setw(10) << "j"
-	      << std::setw(10) << "k"
-	      << std::setw(10) << "l"
-	      << std::setw(20) << "type"
-	      << std::setw(5) << " "
-	      << std::setw(10) << "new type"
-	      << "\n";    
+    os << std::setw(10) << "dihedral"
+       << std::setw(10) << "i"
+       << std::setw(10) << "j"
+       << std::setw(10) << "k"
+       << std::setw(10) << "l"
+       << std::setw(20) << "type"
+       << std::setw(5) << " "
+       << std::setw(10) << "new type"
+       << "\n";    
 
     for(int n=0; it != to; ++it, ++n){
       
@@ -207,12 +208,12 @@ int interaction::Periodic_Scaling
 	if (d_it->i == it->i && d_it->j == it->j &&
 	    d_it->k == it->k && d_it->l == it->l){
 	  
-	  std::cout << std::setw(20) << it->i + 1
-		    << std::setw(10) << it->j + 1
-		    << std::setw(10) << it->k + 1
-		    << std::setw(10) << it->l + 1
-		    << std::setw(20) << d_it->type + 1
-		    << std::setw(5) << "->";
+	  os << std::setw(20) << it->i + 1
+	     << std::setw(10) << it->j + 1
+	     << std::setw(10) << it->k + 1
+	     << std::setw(10) << it->l + 1
+	     << std::setw(20) << d_it->type + 1
+	     << std::setw(5) << "->";
 	  
 	  // change the type to a new (private) type
 	  interaction::dihedral_type_struct dts(m_DI->parameter()[d_it->type]);
@@ -257,7 +258,7 @@ int interaction::Periodic_Scaling
   } // JREST periodic scaling
   
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
 
   return 0;
 }

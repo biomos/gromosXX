@@ -418,30 +418,31 @@ int algorithm::Shake::apply(topology::Topology & topo,
 int algorithm::Shake::init(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
+			   std::ostream & os,
 			   bool quiet)
 {
   if (!quiet){
-    std::cout << "SHAKE\n"
+    os << "SHAKE\n"
 	      << "\tsolute\t";
     if (sim.param().constraint.solute.algorithm == simulation::constr_shake){    
-      std::cout << "ON\n";  
-      std::cout << "\t\ttolerance = "
+      os << "ON\n";  
+      os << "\t\ttolerance = "
 		<< sim.param().constraint.solute.shake_tolerance << "\n";
     }
-    else std::cout << "OFF\n";
+    else os << "OFF\n";
   
-    std::cout << "\tsolvent\t";
+    os << "\tsolvent\t";
   
     if (sim.param().constraint.solvent.algorithm == simulation::constr_shake){
-      std::cout << "ON\n";
-      std::cout << "\t\ttolerance = " 
+      os << "ON\n";
+      os << "\t\ttolerance = " 
 		<< sim.param().constraint.solvent.shake_tolerance << "\n";
-    }  else std::cout << "OFF\n";
+    }  else os << "OFF\n";
   }
   
   if (sim.param().start.shake_pos){
     if (!quiet)
-      std::cout << "\n\tshaking initial positions\n";
+      os << "\n\tshaking initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -459,7 +460,7 @@ int algorithm::Shake::init(topology::Topology & topo,
     
     if (sim.param().start.shake_vel){
       if (!quiet)
-	std::cout << "\tshaking initial velocities\n";
+	os << "\tshaking initial velocities\n";
 
       for(unsigned int i=0; i<topo.num_atoms(); ++i)
       conf.current().pos(i) = conf.old().pos(i) - 
@@ -485,7 +486,7 @@ int algorithm::Shake::init(topology::Topology & topo,
   }
   
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
   
   return 0;
 }

@@ -25,6 +25,7 @@ int algorithm::NoseHoover_Thermostat::init
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
+ std::ostream & os,
  bool quiet
  )
 {

@@ -34,6 +34,7 @@ namespace interaction
 			    simulation::Simulation const & sim,
 			    configuration::Configuration const & conf,
 			    io::IFP & it,
+			    std::ostream & os = std::cout,
 			    bool quiet = false);
     
   

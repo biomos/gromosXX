@@ -22,6 +22,7 @@
 #include <io/print_block.h>
 
 #include <time.h>
+#include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
 
@@ -105,13 +106,26 @@ int main(int argc, char *argv[]){
   util::replica_master = &rep[0];
   std::cerr << "starting REM on " << nthreads << " threads" <<  std::endl;
 
+  if (nthreads < 2){
+    std::cerr << "replica exchange needs at least 2 threads!"
+	      << std::endl;
+    return 1;
+  }
+  
+
 #pragma omp parallel private(tid)
   {
 
     tid = omp_get_thread_num();
 
     assert(rep.size() > tid);
-    std::cerr << "running " << tid+1 << " of " << nthreads << std::endl;
+    if (tid > 0){
+      sleep(3);
+      std::cerr << "running " << tid << " of " << nthreads << std::endl;
+    }
+    else
+      std::cerr << "starting master thread" << std::endl;
+    
     rep[tid].run(args, tid, nthreads);
 
   }

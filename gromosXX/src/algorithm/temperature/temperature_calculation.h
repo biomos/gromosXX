@@ -32,6 +32,19 @@ namespace algorithm
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
+
+    /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false) 
+    {
+      os << "Temperature calculation\n";
+      return 0;
+    };
         
   private:
 

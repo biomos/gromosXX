@@ -43,7 +43,7 @@ namespace util
      */
     Replica_Exchange();
 
-    enum state_enum{ waiting, ready, running, terminate };
+    enum state_enum{ waiting=0, ready=1, running=2, terminate=4 };
 
     /**
      * @struct Replica_Data
@@ -82,6 +82,12 @@ namespace util
     int update_thread_state(int tid);
     int update_replica(int r);
     
+    int run_md(topology::Topology & topo,
+	       configuration::Configuration & conf,
+	       simulation::Simulation & sim,
+	       algorithm::Algorithm_Sequence & md,
+	       io::Out_Configuration & traj);
+
     gsl_rng * m_rng;
 
     std::vector<configuration::Configuration> m_conf;

@@ -517,35 +517,36 @@ int algorithm::Perturbed_Flexible_Constraint
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
+       std::ostream & os,
        bool quiet)
 {
   if (!quiet){
-    std::cout << "PERTURBED_FLEXIBLESHAKE\n"
+    os << "PERTURBED_FLEXIBLESHAKE\n"
 	      << "\tsolute\t";
     if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
-      std::cout << "ON\n";
-      std::cout << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
+      os << "ON\n";
+      os << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
       if (sim.param().constraint.solute.flexshake_readin)
-	std::cout << "\t\treading velocities along constraints from file\n";
+	os << "\t\treading velocities along constraints from file\n";
     }
-    else std::cout << "OFF\n";
+    else os << "OFF\n";
     
-    std::cout << "\tsolvent\t";
+    os << "\tsolvent\t";
   }
   
   if (sim.param().constraint.solvent.algorithm == simulation::constr_flexshake){
-    std::cout << "not supported!\n";
+    os << "not supported!\n";
     io::messages.add("flexible shake for solvent not implemented", "Flexible_Constraint",
 		     io::message::error);
   }
-  else if (!quiet) std::cout << "OFF\n";
+  else if (!quiet) os << "OFF\n";
   
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
 
   if (sim.param().start.shake_pos){
     if (!quiet)
-      std::cout << "shaking perturbed initial positions\n";
+      os << "shaking perturbed initial positions\n";
 
     // old and current pos and vel are the same...
     // shake the current ones
@@ -559,7 +560,7 @@ int algorithm::Perturbed_Flexible_Constraint
     
     if (sim.param().start.shake_vel){
       if (!quiet)
-	std::cout << "shaking initial velocities\n";
+	os << "shaking initial velocities\n";
 
       for(unsigned int i=0; i<topo.num_atoms(); ++i)
 	conf.current().pos(i) = conf.old().pos(i) - 
@@ -584,7 +585,7 @@ int algorithm::Perturbed_Flexible_Constraint
   }
   
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
   
   return 0;
 }

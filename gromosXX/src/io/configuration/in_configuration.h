@@ -31,8 +31,10 @@ namespace io {
     /**
      * Read in a G96 trajectory into the Configuration.
      */
-    void read(configuration::Configuration &conf, topology::Topology &topo, 
-	      simulation::Simulation & sim);
+    void read(configuration::Configuration &conf, 
+	      topology::Topology &topo, 
+	      simulation::Simulation & sim,
+	      std::ostream & os = std::cout);
   private:
     /**
      * read POSITION block.

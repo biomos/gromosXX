@@ -11,6 +11,7 @@ namespace interaction
   int create_special(interaction::Forcefield & ff,
 		     topology::Topology const & topo,
 		     simulation::Parameter const & param,
+		     std::ostream & os = std::cout,
 		     bool quiet = false);
 
 }

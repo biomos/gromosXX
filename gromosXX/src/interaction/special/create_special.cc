@@ -29,17 +29,18 @@
 int interaction::create_special(interaction::Forcefield & ff,
 				topology::Topology const & topo,
 				simulation::Parameter const & param,
+				std::ostream & os,
 				bool quiet)
 {
   if (!quiet)
-    std::cout << "SPECIAL\n";
+    os << "SPECIAL\n";
   
   // Position restraints / constraints
   if (param.posrest.posrest == 1 || 
       param.posrest.posrest == 2){
 
     if(!quiet)
-      std::cout <<"\tPosition restraints\n";
+      os <<"\tPosition restraints\n";
 
     interaction::Position_Restraint_Interaction *pr =
       new interaction::Position_Restraint_Interaction();
@@ -61,22 +62,22 @@ int interaction::create_special(interaction::Forcefield & ff,
   // J-Value restraints
   if (param.jvalue.mode != simulation::restr_off){
     if(!quiet){
-      std::cout << "\tJ-Value restraints (";
+      os << "\tJ-Value restraints (";
       switch(param.jvalue.mode){
 	case simulation::restr_inst :
-	  std::cout << "instantaneous";
+	  os << "instantaneous";
 	  break;
 	case simulation::restr_av :
-	  std::cout << "time averaged";
+	  os << "time averaged";
 	  break;
 	case simulation::restr_biq :
-	  std::cout << "biquadratic";
+	  os << "biquadratic";
 	  break;
 	default:
-	  std::cout << "unknown mode!";
+	  os << "unknown mode!";
 	  break;
       }
-      std::cout << ")\n";
+      os << ")\n";
     }
 
     interaction::Jvalue_Restraint_Interaction *jr =
@@ -90,7 +91,7 @@ int interaction::create_special(interaction::Forcefield & ff,
   if (param.pscale.jrest){
 
     if(!quiet){
-      std::cout << "\tscaling based on J-Value restraints\n";
+      os << "\tscaling based on J-Value restraints\n";
     }
     
     interaction::Periodic_Scaling * ps = 

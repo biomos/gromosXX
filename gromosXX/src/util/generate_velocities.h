@@ -13,7 +13,8 @@ namespace util
    */
   void generate_velocities(double const temp, math::SArray const &mass,
 			   math::VArray &vel, math::VArray &old_vel,
-			   unsigned int const seed);
+			   unsigned int const seed,
+			   std::ostream & os = std::cout);
   
 }
 

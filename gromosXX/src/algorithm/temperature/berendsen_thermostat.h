@@ -36,6 +36,7 @@ namespace algorithm
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
+     std::ostream & os = std::cout,
      bool quiet = false
      );
 

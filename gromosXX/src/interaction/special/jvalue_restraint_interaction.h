@@ -27,6 +27,18 @@ namespace interaction
     virtual ~Jvalue_Restraint_Interaction() {}
 
     /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false) 
+    {
+      os << "J-value restraint interaction\n";
+      return 0;
+    };
+    /**
      * calculate the interactions.
      */
     virtual int calculate_interactions(topology::Topology & topo,

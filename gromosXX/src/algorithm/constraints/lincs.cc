@@ -330,23 +330,24 @@ static void _setup_lincs(topology::Topology const & topo,
 int algorithm::Lincs::init(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
+			   std::ostream & os,
 			   bool quiet)
 {
   if (!quiet){
-    std::cout << "LINCS\n"
+    os << "LINCS\n"
 	      << "\tsolute\t";
     if (sim.param().constraint.solute.algorithm == simulation::constr_lincs)
-      std::cout << "ON\n";
-    else std::cout << "OFF\n";
+      os << "ON\n";
+    else os << "OFF\n";
   
-    std::cout << "\t\torder = " << sim.param().constraint.solute.lincs_order << "\n";
+    os << "\t\torder = " << sim.param().constraint.solute.lincs_order << "\n";
   
-    std::cout << "\tsolvent\t";
+    os << "\tsolvent\t";
     if (sim.param().constraint.solvent.algorithm == simulation::constr_lincs)
-      std::cout << "ON\n";
-    else std::cout << "OFF\n";
+      os << "ON\n";
+    else os << "OFF\n";
     
-    std::cout << "\t\torder = " << sim.param().constraint.solvent.lincs_order << "\n";
+    os << "\t\torder = " << sim.param().constraint.solvent.lincs_order << "\n";
   }
   
   // setup lincs
@@ -373,7 +374,7 @@ int algorithm::Lincs::init(topology::Topology & topo,
 
   if (sim.param().start.shake_pos){
     if (!quiet)
-      std::cout << "\n\tshaking (lincs) initial positions\n";
+      os << "\n\tshaking (lincs) initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -390,7 +391,7 @@ int algorithm::Lincs::init(topology::Topology & topo,
     
     if (sim.param().start.shake_vel){
       if (!quiet)
-	std::cout << "\tshaking(lincs) initial velocities\n";
+	os << "\tshaking(lincs) initial velocities\n";
 
       for(unsigned int i=0; i<topo.num_atoms(); ++i)
 	conf.current().pos(i) = conf.old().pos(i) - 
@@ -415,7 +416,7 @@ int algorithm::Lincs::init(topology::Topology & topo,
   }
   
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
 
   return 0;
 }
