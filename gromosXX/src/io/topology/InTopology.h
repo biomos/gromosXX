@@ -63,9 +63,9 @@ namespace io {
     /**
      * Read in the nonbonded interaction types (lennard-jones).
      */
-    template<typename t_simulation, typename t_pairlist>
+    template<typename t_simulation, typename t_pairlist, typename t_innerloop>
     InTopology & operator >>(interaction::
-			     Nonbonded_Interaction<t_simulation, t_pairlist>
+			     Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 			     &nbi);
 
   };

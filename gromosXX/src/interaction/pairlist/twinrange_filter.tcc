@@ -16,7 +16,7 @@ interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
 template<typename t_simulation, typename t_base, typename t_innerloop>
 inline void
 interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
-::prepare(t_simulation const &sim)
+::prepare(t_simulation &sim)
 {
   m_cutoff_short_2 = sim.nonbonded().cutoff_short() * 
     sim.nonbonded().cutoff_short();
@@ -26,7 +26,10 @@ interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
   
   force() = 0.0;
   energies().resize(sim.system().energies().bond_energy.size());
+  virial() = 0.0;
   
+  if(sim.pressure_calculation())
+    sim.calculate_mol_com();
 }
 
 template<typename t_simulation, typename t_base, typename t_innerloop>

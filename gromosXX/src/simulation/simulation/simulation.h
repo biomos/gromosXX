@@ -106,7 +106,23 @@ namespace simulation
      * update the box indices.
      */
     void put_chargegroups_into_box();
+    /**
+     * const calculate virial
+     */
+    const bool pressure_calculation()const;
 
+    /**
+     * calculate virial
+     */
+    bool pressure_calculation();
+    
+    void pressure_calculation(bool pc);
+    
+    /**
+     * calculate positions relative to molecular com
+     */
+    void calculate_mol_com();
+    
     /**
      * check the state of the class (class invariant)
      * @return 0 if ok.
@@ -145,6 +161,11 @@ namespace simulation
      */
     simulation::Multibath m_multibath;
 
+    /**
+     * do we calculate the pressure?
+     */
+    bool m_pressure_calculation;
+    
   }; // class Simulation
   
   

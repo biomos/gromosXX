@@ -58,7 +58,8 @@ inline void simulation::System<b>::resize(size_t s)
   m_velocity2.resizeAndPreserve(s);
   m_force1.resizeAndPreserve(s);
   m_force2.resizeAndPreserve(s);
-
+  m_rel_mol_com_pos.resizeAndPreserve(s);
+  
   m_box_index.resize(s);
   
 }
@@ -199,6 +200,25 @@ inline math::Periodicity<b> const & simulation::System<b>
 ::periodicity()const
 {
   return m_periodicity;
+}
+/**
+ * const rel_mol_com_pos accessor.
+ */
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>
+::rel_mol_com_pos()const
+{
+  return m_rel_mol_com_pos;
+}
+
+/**
+ * rel_mol_com_pos accessor.
+ */
+template<math::boundary_enum b>
+inline math::VArray & simulation::System<b>
+::rel_mol_com_pos()
+{
+  return m_rel_mol_com_pos;
 }
 
 /**

@@ -19,10 +19,12 @@ namespace interaction
   public:
     math::VArray & force() {return m_force;}
     simulation::Energy & energies() {return m_energy;}
-
+    math::Matrix & virial() {return m_virial;}
+    
   protected:
     math::VArray m_force;
     simulation::Energy m_energy;
+    math::Matrix m_virial;
     
   };
   

@@ -13,12 +13,11 @@ namespace interaction
    * @class Nonbonded_Interaction
    * calculates the nonbonded interactions.
    */
-  template<typename t_simulation, typename t_pairlist>
+  template<typename t_simulation, typename t_pairlist, typename t_innerloop>
   class Nonbonded_Interaction : 
     public Interaction<t_simulation>,
     public Nonbonded_Base,
-    public Nonbonded_Inner_Loop<t_simulation,
-				typename t_simulation::system_type>
+    public t_innerloop
   {
   public:    
     /**

@@ -11,6 +11,7 @@
 #include "interaction/storage.h"
 #include "interaction/nonbonded_base.h"
 #include "interaction/nonbonded_inner_loop.h"
+#include "interaction/nonbonded_inner_loop_virial.h"
 
 // nonbonded filter
 #include "pairlist/basic_filter.h"

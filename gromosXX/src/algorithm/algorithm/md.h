@@ -17,21 +17,34 @@ namespace algorithm
 	   typename t_pressure = algorithm::Berendsen_Barostat,
 	   typename t_distance_constraint = algorithm::Shake<t_simulation>,
 	   typename t_integration = algorithm::Leap_Frog<t_simulation> >
-  class MD
-  {
-  public:
-    typedef t_simulation simulation_type;
-    typedef t_temperature temperature_algorithm_type;
-    typedef t_pressure pressure_algortihm_type;
-    typedef t_distance_constraint distance_constraint_type;
-    typedef t_integration integration_algorithm_type;
-    // typedef interaction::twin_range_pairlist_cg<t_simulation> pairlist_type;
-    typedef interaction::Basic_Pairlist<t_simulation,
+    class MD
+    {
+      public:
+      typedef t_simulation simulation_type;
+      typedef t_temperature temperature_algorithm_type;
+      typedef t_pressure pressure_algortihm_type;
+      typedef t_distance_constraint distance_constraint_type;
+      typedef t_integration integration_algorithm_type;
+
+      typedef interaction::Basic_Pairlist<t_simulation,
       interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, 
       interaction::Twinrange_Chargegroup_Filter<t_simulation,
-						interaction::Nonbonded_Base,
-						interaction::Nonbonded_Inner_Loop<
+      interaction::Nonbonded_Base,
+      interaction::Nonbonded_Inner_Loop<
       t_simulation, interaction::Storage> > > > pairlist_type;
+      
+      typedef interaction::Nonbonded_Inner_Loop<t_simulation,
+      typename t_simulation::system_type> innerloop_type;
+
+      typedef interaction::Basic_Pairlist<t_simulation,
+      interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, 
+      interaction::Twinrange_Chargegroup_Filter<t_simulation,
+      interaction::Nonbonded_Base,
+      interaction::Nonbonded_Inner_Loop_Virial<
+      t_simulation, interaction::Storage> > > > pairlist_virial_type;
+      
+      typedef interaction::Nonbonded_Inner_Loop_Virial<t_simulation,
+      typename t_simulation::system_type> innerloop_virial_type;
     
 
     /**

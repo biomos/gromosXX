@@ -24,14 +24,8 @@ include_HEADERS = 		interaction.h \
 				interaction/nonbonded_base.tcc \
 				interaction/nonbonded_inner_loop.h \
 				interaction/nonbonded_inner_loop.tcc \
-				pairlist/simple_pairlist.h \
-				pairlist/simple_pairlist.tcc \
-				pairlist/twin_range_pairlist.h \
-				pairlist/twin_range_pairlist.tcc \
-				pairlist/twin_range_pairlist_cg.h \
-				pairlist/twin_range_pairlist_cg.tcc \
-				pairlist/simple_filter.h \
-				pairlist/simple_filter.tcc \
+				interaction/nonbonded_inner_loop_virial.h \
+				interaction/nonbonded_inner_loop_virial.tcc \
 				pairlist/basic_pairlist.h \
 				pairlist/basic_pairlist.tcc \
 				pairlist/basic_pairlist_algorithm.h \

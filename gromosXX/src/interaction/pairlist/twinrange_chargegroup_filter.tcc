@@ -22,7 +22,7 @@ interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
 template<typename t_simulation, typename t_base, typename t_innerloop>
 inline void
 interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
-::prepare(t_simulation const &sim)
+::prepare(t_simulation &sim)
 {
   // call parent
   Twinrange_Filter<t_simulation, t_base, t_innerloop>::prepare(sim);

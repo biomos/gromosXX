@@ -110,6 +110,17 @@ namespace simulation
     index_struct & box_index(size_t i);
     
     /**
+     * const rel_mol_com_pos
+     * relative molecular com position
+     */
+    math::VArray const & rel_mol_com_pos()const;
+    
+    /**
+     * rel_mol_com_pos
+     * relative molecular com position
+     */
+    math::VArray & rel_mol_com_pos();
+     /**
      * const virial accessor.
      */
     math::Matrix const & virial()const;
@@ -254,6 +265,12 @@ namespace simulation
      * the box indices for every atom.
      */
     std::vector<index_struct> m_box_index;
+
+    /*
+     * rel_mol_com_pos
+     * relative molecular com position
+     */
+    math::VArray m_rel_mol_com_pos;
     
     /**
      * the virial.

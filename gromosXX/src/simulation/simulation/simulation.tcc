@@ -181,6 +181,74 @@ inline void simulation::Simulation<t_topo, t_system>::put_chargegroups_into_box(
 		   io::message::error);
 }
 
+/**
+ * pressure calculation
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>
+::pressure_calculation(bool pc)
+{
+  m_pressure_calculation = pc;
+}
+
+/**
+ * pressure calculation
+ */
+template<typename t_topo, typename t_system>
+inline bool simulation::Simulation<t_topo, t_system>
+::pressure_calculation()
+{
+  return m_pressure_calculation;
+}
+/**
+ * pressure calculation
+ */
+template<typename t_topo, typename t_system>
+inline const bool simulation::Simulation<t_topo, t_system>
+::pressure_calculation()const
+{
+  return m_pressure_calculation;
+}
+
+
+/**
+ * calculate positions relative to molecular com
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>::
+calculate_mol_com()
+{  
+  Molecule_Iterator m_it = topology().molecule_begin(),
+    m_to = topology().molecule_end();
+  
+  math::Vec com_pos;
+  math::Matrix com_ekin;
+  
+  system().molecular_kinetic_energy() = 0.0;
+
+  for( ; m_it != m_to; ++m_it){
+    system().center_of_mass(m_it.begin(), m_it.end(),
+				topology().mass(),
+				com_pos, com_ekin);
+
+    for(int i=0; i<3; ++i)
+      for(int j=0; j<3; ++j)
+	system().molecular_kinetic_energy()(i,j) += com_ekin(i,j);
+    
+    Atom_Iterator a_it = m_it.begin(),
+      a_to = m_it.end();
+    
+    math::VArray &pos = system().pos();
+
+    for( ; a_it != a_to; ++a_it){
+      assert(unsigned(system().rel_mol_com_pos().size()) > *a_it);
+      system().periodicity().nearest_image(pos(*a_it), com_pos, 
+					   system().rel_mol_com_pos()(*a_it));
+    }
+
+  }
+}
+
 template<typename t_topo, typename t_system>
 inline int simulation::Simulation<t_topo, t_system>::check_state()const
 {

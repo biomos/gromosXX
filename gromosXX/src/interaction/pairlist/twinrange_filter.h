@@ -24,7 +24,7 @@ namespace interaction
      */
     Twinrange_Filter(t_base &base);
 
-    void prepare(t_simulation const &sim);
+    void prepare(t_simulation &sim);
     
     bool range_pair(t_simulation const &sim, size_t const i,
 		     size_t const j);

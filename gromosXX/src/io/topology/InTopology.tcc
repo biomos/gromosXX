@@ -569,10 +569,10 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation, typename t_pairlist>
+template<typename t_simulation, typename t_pairlist, typename t_innerloop>
 io::InTopology &io::InTopology
 ::operator>>(interaction
-	     ::Nonbonded_Interaction<t_simulation, t_pairlist> &nbi){
+	     ::Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop> &nbi){
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
