@@ -123,7 +123,7 @@ int main(int argc, char *argv[]){
 	  break;
 	}
 	
-	std::cout << "\nError during MD run!\n\n";
+	std::cout << "\nError during MD run!\n" << std::endl;
 	// try to save the final structures...
 	break;
       }
