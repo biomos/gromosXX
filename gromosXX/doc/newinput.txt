@@ -65,10 +65,10 @@ END
 
 CONSTRAINT
 #	NTC
-#		1	solvent only
-#		2	solvent and solute bonds containing hydrogens
-#		3	solvent and solute all bonds
-#		4	solvent and constraints in the CONSTRAINTS block
+#		1	"solvent"	solvent only
+#		2	"hydrogen"	solvent and solute bonds containing hydrogens
+#		3	"all"		solvent and solute all bonds
+#		4	"specified"	solvent and constraints in the CONSTRAINTS block
 	3
 #
 #	solute algorithm
