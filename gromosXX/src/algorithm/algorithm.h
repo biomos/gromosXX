@@ -49,7 +49,7 @@ namespace algorithm
     /**
      * timing information.
      */
-    void print_timing(std::ostream & os)
+    virtual void print_timing(std::ostream & os)
     {
       os << std::setw(40) << std::left << name
 	 << std::setw(20) << m_timing << "\n";

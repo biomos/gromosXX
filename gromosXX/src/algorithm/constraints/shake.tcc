@@ -442,6 +442,9 @@ int algorithm::Shake<do_virial>
     std::cout << "shaking initial positions\n";
 
     // old and current pos and vel are the same...
+    conf.old().pos = conf.current().pos;
+    conf.old().vel = conf.current().vel;
+
     // shake the current ones
     if (apply(topo, conf, sim))
       return E_SHAKE_FAILURE;

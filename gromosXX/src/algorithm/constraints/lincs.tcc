@@ -9,6 +9,8 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
+#include <util/debug.h>
+
 struct coupling_struct
 {
   std::vector<double> a;
@@ -58,7 +60,7 @@ static int _solve(topology::Topology & topo,
       rhs[w](i) = 0.0;
 
       for(size_t n=0; n < lincs.coupled_constr[i].size(); ++n){
-	rhs[w](i) = rhs[w](i) + A[i].a[n] * rhs[1-w](lincs.coupled_constr[i][n]);
+	rhs[w](i) += A[i].a[n] * rhs[1-w](lincs.coupled_constr[i][n]);
       }
 
       sol(i) = sol(i) + rhs[w](i);
@@ -90,7 +92,7 @@ static int _lincs(topology::Topology & topo,
   const double start = util::now();
   
   const size_t num_constr = constr.size();
-  math::VArray const & old_pos = conf.old().pos;
+  math::VArray & old_pos = conf.old().pos;
   math::VArray & pos = conf.current().pos;
 
   math::Vec r, ref_r;
@@ -106,14 +108,17 @@ static int _lincs(topology::Topology & topo,
   rhs[1].resize(num_constr);
 
   math::SArray sol(num_constr);
-  
 
   for(size_t i=0; i<num_constr; ++i){
     periodicity.nearest_image(old_pos(constr[i].i + offset), 
 			      old_pos(constr[i].j + offset), ref_r);
 
-    B(i) = ref_r / sqrt(math::dot(ref_r, ref_r));
+    DEBUG(12, "i=" << constr[i].i << " j=" << constr[i].j << " offset=" << offset);
+    DEBUG(12, "pos i = " << math::v2s(old_pos(constr[i].i + offset)));
+    DEBUG(12, "pos j = " << math::v2s(old_pos(constr[i].j + offset)));
+    DEBUG(12, "ref_r = " << math::v2s(ref_r));
     
+    B(i) = ref_r / sqrt(math::dot(ref_r, ref_r));
     DEBUG(12, "B(" << i << ") = " << B(i)(0) << " / " << B(i)(1) << " / " << B(i)(2));
   }
   
@@ -298,10 +303,10 @@ static void _setup_lincs(topology::Topology const & topo,
 	con = constr[i].j;
       
       if (con != -1){
-	DEBUG(8, "constraint " << i << ": " << constr[i].i << " - " << constr[i].j);
+	DEBUG(8, "constraint " << i << ": " << constr[i].i << " - " << constr[i].j << "\tconnected with");
 	DEBUG(8, "constraint " << j << ": " << constr[j].i << " - " << constr[j].j);
 	
-	DEBUG(8, "connected: " << i << " - " << j << " with " << con);
+	DEBUG(8, "\tthrough atom " << con);
 	
 	lincs.coupled_constr[i].push_back(j);
 	lincs.coupled_constr[j].push_back(i);
@@ -332,6 +337,7 @@ int algorithm::Lincs<do_virial>
 {
 
   // setup lincs
+  DEBUG(8, "setting up lincs");
   _setup_lincs(topo, topo.solute().lincs(),
 	       topo.solute().distance_constraints());
   
@@ -353,9 +359,12 @@ int algorithm::Lincs<do_virial>
   //================================================================================
 
   if (sim.param().start.shake_pos){
-    std::cout << "shaking(lincs) initial positions\n";
+    std::cout << "shaking (lincs) initial positions\n";
 
     // old and current pos and vel are the same...
+    conf.old().pos = conf.current().pos;
+    conf.old().vel = conf.current().vel;
+
     // shake the current ones
     apply(topo, conf, sim);
 

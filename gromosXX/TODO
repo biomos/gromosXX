@@ -61,9 +61,9 @@ Release 0.1.0
 		dihedral angle monitoring
 	ok	atomic virial
 	ok	center of mass motion removal (constraining)
-		restructure the printing out
+	ok	restructure the printing out
 		energy trajectories
-		timing functions
+	ok	timing functions
 
 -------------
 
