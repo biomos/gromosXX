@@ -26,6 +26,8 @@ namespace simulation
   class Parameter
   {
   public:
+    Parameter() : title("GromosXX") {}
+    
     /**
      * title of the simulation (from the input file)
      */
@@ -39,8 +41,11 @@ namespace simulation
     {
       /**
        * Constructor.
+       * Default values:
+       * - npm 1 (1 solute)
+       * - nsm 0 (no solvent)
        */
-      system_struct() : npm(0), nsm(0) {}
+      system_struct() : npm(1), nsm(0) {}
       
       /**
        * Number of protein molecules
@@ -50,7 +55,7 @@ namespace simulation
        * Number of solvent molecules
        */
       int nsm;
-    } system;
+    } /** the system paramters */ system;
     
     /**
      * @struct minimise_struct
@@ -60,6 +65,14 @@ namespace simulation
     {
       /**
        * Constructor.
+       * Default values:
+       * - ntem 0      (no energy minimisation)
+       * - ncyc 0      (unused, conjugate gradient not implemented)
+       * - dele 0.0001 (minimal energy difference)
+       * - dx0  0.1    (initial step size)
+       * - dxm  0.5    (maximum step size)
+       * - nmin 1      (at least 1 step)
+       * - flim 0.0    (no force limitation)
        */
       minimise_struct() : ntem(0), ncyc(0), dele(0.0001),
 			  dx0(0.1), dxm(0.5), nmin(1), flim(0.0)
@@ -93,16 +106,23 @@ namespace simulation
        */
       double flim;
 
-    } minimise;
+    } /** energy minimisation parameters */ minimise;
 
     /**
-     * @struct istart_struct
+     * @struct start_struct
      * start block
      */
     struct start_struct
     {
       /**
        * Constructor.
+       * Default values:
+       * - shake_pos           false  (no initial SHAKE of positions)
+       * - shake_vel           false  (no initial SHAKE of velocities)
+       * - remove_com          false  (no initial removal of COM motion)
+       * - generate_velocities false  (no generation of initial velocities)
+       * - ig                      0  (random number seed)
+       * - tempi                 0.0  (temperature to generate initial velocities)
        */
       start_struct() : shake_pos(false), shake_vel(false), remove_com(false),
 		       generate_velocities(false), ig(0), tempi(0.0) {}
@@ -131,7 +151,7 @@ namespace simulation
        * Initial temperature
        */
       double tempi;
-    } start;
+    } /** startup parameters */ start;
 
     /**
      * @struct step_struct
@@ -139,6 +159,15 @@ namespace simulation
      */
     struct step_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - number_of_steps  0
+       * - t0               0.0 (initial time)
+       * - dt               0.0 (time step)
+       */
+      step_struct() : number_of_steps(0), t0(0.0), dt(0.0) {}
+      
       /**
        * Number of steps
        */
@@ -151,7 +180,7 @@ namespace simulation
        * time step
        */
       double dt;
-    } step;
+    } /** (time) step paramters */ step;
 
     /**
      * @struct boundary_struct
@@ -160,10 +189,17 @@ namespace simulation
     struct boundary_struct
     {
       /**
+       * Constructor
+       * Default values:
+       * - boundary math::vacuum
+       */
+      boundary_struct() : boundary(math::vacuum) {}
+      
+      /**
        * NTB switch
        */
       math::boundary_enum boundary;
-    } boundary;
+    } /** boundary parameters */ boundary;
  
     /**
      * @struct submolecules_struct
@@ -172,16 +208,33 @@ namespace simulation
     struct submolecules_struct
     {
       /**
+       * Constructor
+       * Default values:
+       * - submolecules empty (if it stays empty, all atoms are considered to be in one submolecule)
+       */
+      submolecules_struct() {}
+      
+      /**
        * Vector containing the last atom of every molecule
        */
       std::vector<size_t> submolecules;
-    } submolecules;
+    } /** submolecule array */ submolecules;
 
     /**
+     * @struct multibath_struct
      * multibath block
      */
     struct multibath_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - couple false (no temperature coupling)
+       * - found multibath false
+       * - found tcouple false
+       */
+      multibath_struct() : couple(false), found_multibath(false), found_tcouple(false) {}
+      
       /**
        * do temperature coupling?
        */
@@ -192,9 +245,24 @@ namespace simulation
       Multibath multibath;
       /**
        * tcouple struct
+       * is translated to the multibath before the 
+       * configuration / topology is read in.
        */
       struct tcouple_struct
       {
+	/**
+	 * Constructor
+	 * Default values:
+	 * - ntt     0    (no temperature coupling)
+	 * - temp0 300    (300 K)
+	 * - tau     0.1  (coupling time)
+	 */
+	tcouple_struct(){
+	  ntt[0] = ntt[1] = ntt[2] = 0;
+	  temp0[0] = temp0[1] = temp0[2] = 300.0;
+	  tau[0] = tau[1] = tau[2] = 0.1;
+	}
+	
 	/**
 	 * ntt array
 	 */
@@ -207,7 +275,7 @@ namespace simulation
 	 * tau
 	 */
 	double tau[3];
-      } tcouple;
+      } /** TCOUPLE paramter */ tcouple;
       
       /**
        * have multibath
@@ -217,8 +285,7 @@ namespace simulation
        * have tcouple
        */
       bool found_tcouple;
-    } multibath;
-    
+    } /** temperature coupling parameters */ multibath;
     
     /**
      * @struct pcouple_struct
@@ -227,15 +294,25 @@ namespace simulation
     struct pcouple_struct
     {
       /**
-       * default constructor
+       * Constructor
+       * Default values:
+       * - scale pcouple_off   (no pressure coupling)
+       * - calculate false     (no pressure calculation)
+       * - virial no_virial    (no virial calculation)
+       * - pres0 diag(0.06102) (1atm in Gromos96 units)
+       * - tau 0.5
+       * - compressibility 0.000751
        */
       pcouple_struct()
       {
 	scale=math::pcouple_off;
 	calculate=false;
 	virial=math::no_virial;
+	pres0 = 0.0;
+	pres0(0,0) = pres0(1,1) = pres0(2,2) = 0.06102;
+	tau = 0.5;
+	compressibility = 0.000751;
       }
-      
       /**
        * calculate pressure?
        */
@@ -260,7 +337,7 @@ namespace simulation
        * isothermal compressibility
        */
       double compressibility;
-    } pcouple;
+    } /** pressure coupling parameters */ pcouple;
 
     /**
      * @struct centreofmass_struct
@@ -268,6 +345,16 @@ namespace simulation
      */
     struct centreofmass_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - ndfmin 0            (number of degrees of freedom to substract)
+       * - skip_step 0         (number of steps to skip between removal of com motion)
+       * - remove_rot false    (remove center of mass rotation)
+       * - remove_trans false  (remove center of mass translation)
+       */
+      centreofmass_struct() : ndfmin(0), skip_step(0), remove_rot(false), remove_trans(false) {}
+      
       /**
        * Number of degrees of freedom to substract
        */
@@ -285,7 +372,7 @@ namespace simulation
        */
       bool remove_trans;
       
-    } centreofmass;
+    } /** centre of mass motion removal parameters */ centreofmass;
 
     /**
      * @struct print_struct
@@ -293,6 +380,15 @@ namespace simulation
      */
     struct print_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - stepblock 0               (print out every step)
+       * - centreofmass 0            (print centre of mass information every step)
+       * - monitor_dihedrals false   (do not monitor dihedral angle transitions)
+       */
+      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(false) {}
+      
       /**
        * print stepblock
        */
@@ -305,7 +401,7 @@ namespace simulation
        * dihedral angle transitions
        */
       bool monitor_dihedrals;
-    } print;
+    } /** output parameters */ print;
 
     /**
      * @struct write_struct
@@ -313,6 +409,17 @@ namespace simulation
      */
     struct write_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - position 0       (write position trajectory)
+       * - velocity 0       (write velocity trajectory)
+       * - energy   0       (write energy trajectory)
+       * - free_energy 0    (write energy lambda derivative trajectory)
+       * - block_average 0  (write block averaged energy trajectories)
+       */
+      write_struct() : position(0), velocity(0), energy(0), free_energy(0), block_average(0) {}
+      
       /**
        * position.
        */
@@ -333,7 +440,7 @@ namespace simulation
        * block averages.
        */
       int block_average;
-    } write;
+    } /** write out paramters (trajectories) */ write;
 
     /**
      * @struct constraint_struct
@@ -341,6 +448,13 @@ namespace simulation
      */
     struct constraint_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - ntc = 1
+       */
+      constraint_struct() : ntc(1) {}
+      
       /**
        * NTC parameter (off=1, hydrogens=2, all=3, specified=4)
        * specified shakes everything in the constraint block in the topology.
@@ -356,7 +470,12 @@ namespace simulation
       struct constr_param_struct
       {
 	/**
-	 * constructor.
+	 * Constructor
+	 * Default values:
+	 * - algorithm constr_off
+	 * - shake_tolerance 0.0001
+	 * - lincs_order 4
+	 * - flexshake_readin false
 	 */
 	constr_param_struct()
 	  : algorithm(constr_off),
@@ -382,7 +501,6 @@ namespace simulation
 	 * from configuration file.
 	 */
 	bool flexshake_readin;
-	
       };
       /**
        * parameter for solute.
@@ -393,7 +511,7 @@ namespace simulation
        */
       constr_param_struct solvent;
       
-    } constraint;
+    } /** Constraint method parameters */ constraint;
 
     /**
      * @struct force_struct
@@ -401,6 +519,18 @@ namespace simulation
      */
     struct force_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - bond 1
+       * - angle 1
+       * - improper 1
+       * - dihedral 1
+       * - nonbonded 1
+       * - energy_group <empty>
+       */
+      force_struct() : bond(1), angle(1), improper(1), dihedral(1), nonbonded(1) {}
+      
       /**
        * bonds?
        */
@@ -425,7 +555,7 @@ namespace simulation
        * Energy groups
        */
       std::vector<size_t> energy_group;
-    } force;
+    } /** Force(field) parameters */ force;
 
     /**
      * @struct plist_struct
@@ -433,6 +563,19 @@ namespace simulation
      */
     struct plist_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - grid false
+       * - skip_step 5
+       * - cutoff_short 0.8
+       * - cutoff_long 1.4
+       * - grid_size 0.4
+       * - atomic_cutoff false
+       */
+      plist_struct() : grid(false), skip_step(5), cutoff_short(0.8),
+		       cutoff_long(1.4), grid_size(0.4), atomic_cutoff(false) {}
+      
       /**
        * algorithm.
        */
@@ -458,13 +601,26 @@ namespace simulation
        */
       bool atomic_cutoff;
       
-    } pairlist;
+    } /** Pairlist method parameters */ pairlist;
+
     /**
      * @struct longrange_struct
      * LONGRANGE block
      */
     struct longrange_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - rf_epsilon 66 (spc water)
+       * - rf_kappa    0
+       * - rf_cutoff 1.4
+       * - rf_excluded false (old standard)
+       * - epsilon     1
+       */
+      longrange_struct() : rf_epsilon(66), rf_kappa(0), rf_cutoff(1.4),
+			   rf_excluded(false), epsilon(1) {}
+      
       /**
        * Reaction field epsilon
        */
@@ -488,8 +644,7 @@ namespace simulation
        */
       double epsilon;
       
-      
-    } longrange;
+    } /** longrange treatment parameters */ longrange;
 
     /**
      * @struct posrest_struct
@@ -497,6 +652,15 @@ namespace simulation
      */
     struct posrest_struct
     {
+      /** 
+       * Constructor
+       * Default values:
+       * - posrest 0 (no position restraints)
+       * - nrdrx true
+       * - force_constant 10000
+       */
+      posrest_struct() : posrest(0), nrdrx(true), force_constant(1E4) {}
+      
       /**
        * posrest
        */
@@ -509,7 +673,7 @@ namespace simulation
        * CHO
        */
       double force_constant;
-    } posrest;
+    } /** Position restraint parameters */ posrest;
 
     /**
      * @struct perturb_struct
@@ -517,6 +681,19 @@ namespace simulation
      */
     struct perturb_struct
     {
+      /**
+       * Constructor
+       * Default values:
+       * - perturbation false
+       * - lambda 0
+       * - lambda_exponent 1
+       * - dlamt 0
+       * - scaling false
+       * - scaled_only false
+       */
+      perturb_struct() : perturbation(false), lambda(0), lambda_exponent(1),
+			 dlamt(0), scaling(false), scaled_only(false) {}
+      
       /**
        * perturbation?
        */
@@ -542,7 +719,7 @@ namespace simulation
        */
       bool scaled_only;
       
-    } perturbation;
+    } /** Perturbation parameters */ perturbation;
     
   };
   

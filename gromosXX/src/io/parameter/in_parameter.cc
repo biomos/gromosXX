@@ -141,7 +141,6 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
   
   if (!buffer.size()){
     // no minimisation
-    param.minimise.ntem = 0;
     return;
   }
 
@@ -223,9 +222,6 @@ void io::In_Parameter::read_STEP(simulation::Parameter &param)
   
   if (!buffer.size()){
     io::messages.add("no STEP block in input", "In_Parameter", io::message::error);
-    param.step.number_of_steps = 0;
-    param.step.t0 = 0;
-    param.step.dt = 0;
     return;
   }
 
@@ -541,9 +537,6 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param)
 
   if (!buffer.size()){
     io::messages.add("no PRINT block", "In_Parameter", io::message::notice);
-    param.print.stepblock = 1;
-    param.print.centreofmass = 1;
-    param.print.monitor_dihedrals = false;
     return;
   }
 
@@ -587,11 +580,6 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
 
   if (!buffer.size()){
     io::messages.add("no WRITE block", "In_Parameter", io::message::notice);
-    param.write.position = 1;
-    param.write.velocity = 1;
-    param.write.energy = 1;
-    param.write.free_energy = 1;
-    param.write.block_average = 1;
     return;
   }
 
@@ -955,11 +943,6 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
     // a common PERTURB block...
     buffer = m_block["PERTURB"];
     if (!buffer.size()){
-      param.perturbation.perturbation=false;
-      param.perturbation.lambda = 0;
-      param.perturbation.lambda_exponent = 1;
-      param.perturbation.dlamt = 0;
-      param.perturbation.scaling = false;
       return;
     }
 
@@ -1024,11 +1007,6 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param)
 
   if (!buffer.size()){
     io::messages.add("no FORCE block", "In_Parameter", io::message::error);
-    param.force.bond = 0;
-    param.force.angle = 0;
-    param.force.improper = 0;
-    param.force.dihedral = 0;
-    param.force.nonbonded = 0;
     return;
   }
 
@@ -1192,12 +1170,6 @@ void io::In_Parameter::read_START(simulation::Parameter &param)
   
   if (!buffer.size()){
     io::messages.add("no START block", "In_Parameter", io::message::error);
-    param.start.shake_pos = false;
-    param.start.shake_vel = false;
-    param.start.remove_com = false;
-    param.start.generate_velocities = false;
-    param.start.ig = 19536976;
-    param.start.tempi = 0.0;
     return;
   }
 
@@ -1274,11 +1246,6 @@ void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param)
   buffer = m_block["CENTREOFMASS"];
   
   if (!buffer.size()){
-    param.centreofmass.ndfmin = 0;
-    param.start.remove_com=false;
-    param.centreofmass.skip_step = 0;
-    param.centreofmass.remove_rot = false;
-    param.centreofmass.remove_trans = false;
     return;
   }
 
@@ -1331,10 +1298,6 @@ void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param)
   if (!buffer.size()){
     io::messages.add("no LONGRANGE block in input",
 		     "In_Parameter",io::message::error);
-    param.longrange.rf_epsilon=1;
-    param.longrange.rf_kappa=0;
-    param.longrange.rf_cutoff=1;
-    param.longrange.epsilon=1;
     return;
   }
   
@@ -1525,12 +1488,6 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param)
     
     if (!buffer.size()){
       io::messages.add("no PLIST block in input","In_Parameter",io::message::error);
-      param.pairlist.grid_size = 0;
-      param.pairlist.grid = false;
-      param.pairlist.cutoff_short = 0;
-      param.pairlist.cutoff_long = 0;
-      param.pairlist.skip_step = 1;
-      param.pairlist.atomic_cutoff = false;
       return;
     }
 
@@ -1699,9 +1656,6 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param)
   buffer = m_block["POSREST"];
   
   if (!buffer.size()){
-    param.posrest.posrest=0;
-    param.posrest.nrdrx = false;
-    param.posrest.force_constant=1;
     return;
   }
   
@@ -1736,3 +1690,4 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param)
 		     "In_Parameter", io::message::error);
 
 } // POSREST
+
