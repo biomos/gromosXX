@@ -5,6 +5,18 @@
 #ifndef INCLUDED_CREATE_FORCEFIELD_H
 #define INCLUDED_CREATE_FORCEFIELD_H
 
+namespace topology
+{
+  class Topology;
+}
+namespace simulation
+{
+  class Simulation;
+}
+namespace configuration
+{
+  class Configuration;
+}
 namespace io
 {
   class IFP;
@@ -12,6 +24,7 @@ namespace io
 
 namespace interaction
 {
+  class Forcefield;
   
   /**
    * create a Gromos96 (like) forcefield.

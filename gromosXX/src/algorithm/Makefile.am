@@ -14,15 +14,15 @@ xxinclude_HEADERS =		algorithm.h \
 			  	pressure/berendsen_barostat.h \
 			  	constraints/create_constraints.h \
 				constraints/shake.h \
-				constraints/shake.tcc \
+				constraints/shake.cc \
 				constraints/perturbed_shake.h \
-				constraints/perturbed_shake.tcc \
+				constraints/perturbed_shake.cc \
 				constraints/lincs.h \
-				constraints/lincs.tcc \
+				constraints/lincs.cc \
 				constraints/flexible_constraint.h \
-				constraints/flexible_constraint.tcc \
+				constraints/flexible_constraint.cc \
 				constraints/perturbed_flexible_constraint.h \
-				constraints/perturbed_flexible_constraint.tcc \
+				constraints/perturbed_flexible_constraint.cc \
 				constraints/remove_com_motion.h
 
 noinst_LTLIBRARIES	=	libgroalgorithm.la

@@ -4,9 +4,9 @@ xxincludedir = $(includedir)/gromosXX/math
 
 xxinclude_HEADERS = 		gmath.h \
 				boundary_implementation.h \
-				boundary_implementation.tcc \
+				boundary_implementation.cc \
 				periodicity.h \
-				periodicity.tcc \
+				periodicity.cc \
 				volume.h
 
 noinst_LTLIBRARIES = 		libgromath.la
