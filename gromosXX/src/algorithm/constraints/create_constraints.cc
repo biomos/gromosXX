@@ -157,6 +157,8 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Perturbed_Flexible_Constraint
 	    (sim.param().constraint.solute.shake_tolerance, 1000, ff);
 
+	  it.read_harmonic_bonds(pfc->parameter());
+
 	  md_seq.push_back(pfc);
 
 	}
