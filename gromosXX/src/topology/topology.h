@@ -29,7 +29,7 @@ namespace topology
     /**
      * integer atom code accessor.
      */
-    int iac(size_t const i)const {assert(i < m_iac.size()); return m_iac[i];}
+    int iac(unsigned int const i)const {assert(i < m_iac.size()); return m_iac[i];}
     
     /**
      * masses accessor
@@ -74,18 +74,18 @@ namespace topology
     /**
      * number of solvents.
      */
-    size_t num_solvents()const {return m_num_solvent_molecules.size();}
+    unsigned int num_solvents()const {return m_num_solvent_molecules.size();}
     
     /**
      * solvent accessor.
      * support for multiple solvents.
      */
-    Solvent & solvent(size_t i) {assert(i < m_solvent.size()); return m_solvent[i];}
+    Solvent & solvent(unsigned int i) {assert(i < m_solvent.size()); return m_solvent[i];}
     /**
      * const solvent accessor.
      * support for multiple solvents.
      */
-    Solvent const & solvent(size_t i)const {assert(i < m_solvent.size()); return m_solvent[i];}
+    Solvent const & solvent(unsigned int i)const {assert(i < m_solvent.size()); return m_solvent[i];}
 
     /**
      * add a solvent.
@@ -97,32 +97,32 @@ namespace topology
      * @param solv the solvent (multiple solvents).
      * @param num_molecules the number of solvent molecules to add.
      */
-    void solvate(size_t solv, size_t num_molecules);
+    void solvate(unsigned int solv, unsigned int num_molecules);
     
     /**
      * set the capacity of solute atoms
      */
-    void resize(size_t const atoms);
+    void resize(unsigned int const atoms);
 
     /**
      * get the total number of atoms.
      */
-    size_t num_atoms()const {return num_solute_atoms() + num_solvent_atoms();}
+    unsigned int num_atoms()const {return num_solute_atoms() + num_solvent_atoms();}
 
     /**
      * get the number of solute atoms
      */
-    size_t num_solute_atoms()const{return solute().num_atoms();}
+    unsigned int num_solute_atoms()const{return solute().num_atoms();}
 
     /**
      * get the total number of solvent atoms.
      */
-    size_t num_solvent_atoms()const;
+    unsigned int num_solvent_atoms()const;
 
     /**
      * get the number of solvent molecules.
      */
-    size_t num_solvent_molecules(size_t i)const {
+    unsigned int num_solvent_molecules(unsigned int i)const {
       assert(i < m_num_solvent_molecules.size());
       return m_num_solvent_molecules[i];
     }
@@ -130,7 +130,7 @@ namespace topology
     /**
      * get the number of solvent atoms.
      */
-    size_t num_solvent_atoms(size_t i)const{
+    unsigned int num_solvent_atoms(unsigned int i)const{
       assert(i<m_num_solvent_atoms.size());
       return m_num_solvent_atoms[i];
     }
@@ -155,7 +155,7 @@ namespace topology
     /**
      * all exclusions for atom i. Exclusions and 1,4 interactions.
      */
-    std::set<int> & all_exclusion(size_t const i){
+    std::set<int> & all_exclusion(unsigned int const i){
       assert(i < m_all_exclusion.size());
       return m_all_exclusion[i];
     }
@@ -163,7 +163,7 @@ namespace topology
     /**
      * const all exclusions for atom i. Exclusions and 1,4 interactions.
      */
-    std::set<int> const & all_exclusion(size_t const i)const{
+    std::set<int> const & all_exclusion(unsigned int const i)const{
       assert(i < m_all_exclusion.size());
       return m_all_exclusion[i];
     }
@@ -171,7 +171,7 @@ namespace topology
     /**
      * exclusions for atom i.
      */
-    std::set<int> & exclusion(size_t const i){
+    std::set<int> & exclusion(unsigned int const i){
       assert(i < m_exclusion.size());
       return m_exclusion[i];
     }
@@ -183,7 +183,7 @@ namespace topology
     /**
      * 1,4 pairs of atom i.
      */
-    std::set<int> & one_four_pair(size_t const i){
+    std::set<int> & one_four_pair(unsigned int const i){
       assert(i < m_one_four_pair.size());
       return m_one_four_pair[i];
     }
@@ -200,12 +200,12 @@ namespace topology
     /**
      * the number of chargegroups present.
      */
-    size_t num_chargegroups()const {return m_chargegroup.size()-1;}
+    unsigned int num_chargegroups()const {return m_chargegroup.size()-1;}
 
     /**
      * the number of solute chargegroups.
      */
-    size_t num_solute_chargegroups()const {return m_num_solute_chargegroups;}
+    unsigned int num_solute_chargegroups()const {return m_num_solute_chargegroups;}
     /**
      * iterator over the chargegrops
      */
@@ -215,7 +215,7 @@ namespace topology
     /**
      * iterator on a specified chargegroup
      */
-    Chargegroup_Iterator chargegroup_it(const size_t i)const
+    Chargegroup_Iterator chargegroup_it(const unsigned int i)const
     {
       return Chargegroup_Iterator(m_chargegroup.begin()+i);
     }
@@ -229,7 +229,7 @@ namespace topology
     /**
      * the molecules.
      */
-    std::vector<size_t> & molecules(){ return m_molecule;}
+    std::vector<unsigned int> & molecules(){ return m_molecule;}
     /**
      * iterator over the molecules.
      */
@@ -244,31 +244,31 @@ namespace topology
     /**
      * const energy group accessor.
      */
-    std::vector<size_t> const & energy_groups()const {return m_energy_group;}
+    std::vector<unsigned int> const & energy_groups()const {return m_energy_group;}
 
     /**
      * energy group accessor.
      */
-    std::vector<size_t> & energy_groups() {return m_energy_group;}
+    std::vector<unsigned int> & energy_groups() {return m_energy_group;}
 
     /**
      * const energy group of atoms accessor.
      */
-    std::vector<size_t> const & atom_energy_group()const{
+    std::vector<unsigned int> const & atom_energy_group()const{
       return m_atom_energy_group;
     }
 
     /**
      * energy group of atoms accessor.
      */
-    std::vector<size_t> & atom_energy_group(){
+    std::vector<unsigned int> & atom_energy_group(){
       return m_atom_energy_group;
     }
   
     /**
      * energy group of atom accessor
      */
-    const size_t atom_energy_group(size_t i)const{
+    const unsigned int atom_energy_group(unsigned int i)const{
       assert(i < m_atom_energy_group.size());
       return m_atom_energy_group[i];
     };
@@ -311,7 +311,7 @@ namespace topology
     /**
      * is the atom perturbed?
      */
-    bool is_perturbed(size_t const i)const {
+    bool is_perturbed(unsigned int const i)const {
       if (i >= num_solute_atoms()) return false;
       
       assert(i < m_is_perturbed.size()); 
@@ -399,13 +399,13 @@ namespace topology
     /**
      * the number of solvent molecules.
      */
-    std::vector<size_t> m_num_solvent_molecules;
+    std::vector<unsigned int> m_num_solvent_molecules;
     
     /**
      * the number of solvent atoms.
      * vector for multiple solvents.
      */
-    std::vector<size_t> m_num_solvent_atoms;
+    std::vector<unsigned int> m_num_solvent_atoms;
     
     /**
      * the solvents (multiple solvent).
@@ -445,7 +445,7 @@ namespace topology
     /**
      * the molecules.
      */
-    std::vector<size_t> m_molecule;
+    std::vector<unsigned int> m_molecule;
 
     /**
      * the chargegroups.
@@ -455,7 +455,7 @@ namespace topology
     /**
      * the number of solute chargegroups.
      */
-    size_t m_num_solute_chargegroups;
+    unsigned int m_num_solute_chargegroups;
     
     /**
      * residue names (solute and solvent).
@@ -465,12 +465,12 @@ namespace topology
     /**
      * energy groups.
      */
-    std::vector<size_t> m_energy_group;
+    std::vector<unsigned int> m_energy_group;
     
     /**
      * energy group of atom
      */
-    std::vector<size_t> m_atom_energy_group;
+    std::vector<unsigned int> m_atom_energy_group;
     
     /**
      * lambda.

@@ -44,7 +44,7 @@ topology::Topology::Topology()
  * set the capacity of solute atoms by resizeing
  * the apropriate arrays.
  */
-void topology::Topology::resize(size_t const atoms)
+void topology::Topology::resize(unsigned int const atoms)
 {
   // if you want to shrink, first change num_atoms...
   assert(atoms >= num_solute_atoms() + num_solvent_atoms());
@@ -104,7 +104,7 @@ void topology::Topology
 /**
  * add solvent molecules to the simulation (system).
  */
-void topology::Topology::solvate(size_t solv, size_t num_molecules)
+void topology::Topology::solvate(unsigned int solv, unsigned int num_molecules)
 {
   // only add in the correct order!
   assert(solv == m_num_solvent_atoms.size());
@@ -121,8 +121,8 @@ void topology::Topology::solvate(size_t solv, size_t num_molecules)
   resize(num_solute_atoms() + num_solvent_atoms());
 
   // add to iac, mass, charge
-  for(size_t i=0; i<num_molecules; ++i){
-    for(size_t j=0; j<m_solvent[solv].num_atoms(); ++j, ++n){
+  for(unsigned int i=0; i<num_molecules; ++i){
+    for(unsigned int j=0; j<m_solvent[solv].num_atoms(); ++j, ++n){
 
       DEBUG(15, "iac[" << n << "]=" << m_solvent[solv].atom(j).iac);
       DEBUG(15, "charge[" << n << "]=" << m_solvent[solv].atom(j).charge);
@@ -148,10 +148,10 @@ void topology::Topology::solvate(size_t solv, size_t num_molecules)
 /**
  * total number of solvent atoms.
  */
-size_t topology::Topology::num_solvent_atoms()const
+unsigned int topology::Topology::num_solvent_atoms()const
 {
-  size_t n = 0;
-  for(std::vector<size_t>::const_iterator it = m_num_solvent_atoms.begin(),
+  unsigned int n = 0;
+  for(std::vector<unsigned int>::const_iterator it = m_num_solvent_atoms.begin(),
 	to = m_num_solvent_atoms.end();
       it != to; ++it)
     n += *it;
@@ -171,7 +171,7 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
       c_it = solute().distance_constraints().begin(),
       c_to = solute().distance_constraints().end();
     
-    size_t com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+    unsigned int com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
     
     for( ; c_it != c_to; ++c_it){
       
@@ -190,16 +190,16 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
       
     }
     
-    for(size_t i=0; i<multibath.size(); ++i){
+    for(unsigned int i=0; i<multibath.size(); ++i){
       DEBUG(7, "dof           " << multibath[i].dof);
       DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);
     }
     
     // solvent constraints
     int index = num_solute_atoms();
-    for(size_t s=0; s < num_solvents(); ++s){
+    for(unsigned int s=0; s < num_solvents(); ++s){
       
-      for(size_t m=0; m < num_solvent_molecules(s); ++m){
+      for(unsigned int m=0; m < num_solvent_molecules(s); ++m){
 	
 	c_it = solvent(s).distance_constraints().begin();
 	c_to = solvent(s).distance_constraints().end();
@@ -235,7 +235,7 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
       c_it = perturbed_solute().distance_constraints().begin(),
       c_to = perturbed_solute().distance_constraints().end();
     
-    size_t com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+    unsigned int com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
     
     for( ; c_it != c_to; ++c_it){
       
@@ -254,7 +254,7 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
       
     }
   
-    for(size_t i=0; i<multibath.size(); ++i){
+    for(unsigned int i=0; i<multibath.size(); ++i){
       DEBUG(7, "dof           " << multibath[i].dof);
       DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);
     }
@@ -267,7 +267,7 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
 void
 topology::Topology::update_for_lambda()
 {
-  for(std::map<size_t, topology::Perturbed_Atom>::const_iterator
+  for(std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
         it = perturbed_solute().atoms().begin(),
         to = perturbed_solute().atoms().end();
       it != to; ++it){
@@ -300,7 +300,7 @@ topology::Topology::check_state()const
 		     "Topology::check_state", io::message::error);
     ++result;
   }
-  for(std::vector<size_t>::const_iterator it = m_atom_energy_group.begin(),
+  for(std::vector<unsigned int>::const_iterator it = m_atom_energy_group.begin(),
 	to = m_atom_energy_group.end(); it != to; ++it){
     if (*it >= m_energy_group.size()){
       io::messages.add("energy group index of atom too large",
