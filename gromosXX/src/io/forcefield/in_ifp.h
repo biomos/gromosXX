@@ -4,6 +4,7 @@
 #define INCLUDED_IN_IFP_H
 
 #include <gromosXX/io/ifp.h>
+#include <gromosXX/io/instream.h>
 
 namespace io{
 
@@ -21,8 +22,50 @@ namespace io{
    */
   class In_IFP : public GInStream, public IFP {
   public:
+    /**
+     * Constructor
+     */
     In_IFP(std::istream& is) : GInStream(is) { readStream(); }
+    /**
+     * Destructor
+     */
     virtual ~In_IFP() {}
+
+    //////////////////////////////////////////////////
+    // INTERFACE
+    //////////////////////////////////////////////////
+
+    /**
+     * Read in the harmonic bond parameter.
+     */
+    virtual void read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b);
+
+    /**
+     * Read in the quartic bond parameter.
+     */    
+    virtual void read_g96_bonds(std::vector<interaction::bond_type_struct> &b);
+
+    /**
+     * Read in the bond angle parameter.
+     */    
+    virtual void read_angles(std::vector<interaction::angle_type_struct> &a);
+
+    /**
+     * Read in the improper dihedral parameter.
+     */
+    virtual void read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i);
+
+    /**
+     * Read in the dihedral parameter.
+     */
+    virtual void read_dihedrals(std::vector<interaction::dihedral_type_struct> &d);
+    
+    /**
+     * Read in the nonbonded interaction types (lennard-jones).
+     */
+    virtual void read_lj_parameter(std::vector<std::vector
+				   <interaction::lj_parameter_struct> > 
+				   & lj_parameter);
     
   private:
     
