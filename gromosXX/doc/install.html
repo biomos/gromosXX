@@ -207,4 +207,13 @@ create a <tt>DEBIAN</tt> subdirectory.<br>
 copy the <tt>control.debian</tt> file to <tt>DEBIAN/control</tt>.<br>
 edit the dependencies<br>
 build the package <tt>dpkg --build gromosXX</tt> (from outside the <tt>DESTDIR</tt>).<br>
+</p>
 
+<b>compiling statically</b><br>
+<p>
+To create a completely statically linked binary use the following
+<tt>configure</tt> options:
+<tt>--disable-debug --disable-shared --enable-static
+--enable-allstatic</tt><br>
+This has only been tested with the Intel C++ compiler.
+</p>
