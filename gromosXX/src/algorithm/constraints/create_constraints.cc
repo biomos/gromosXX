@@ -29,6 +29,7 @@
 #include <algorithm/constraints/perturbed_shake.h>
 #include <algorithm/constraints/lincs.h>
 #include <algorithm/constraints/flexible_constraint.h>
+#include <algorithm/constraints/perturbed_flexible_constraint.h>
 
 #include <io/print_block.h>
 
@@ -107,6 +108,12 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	md_seq.push_back(fs);
 
 	if (sim.param().perturbation.perturbation){
+
+	  algorithm::Perturbed_Flexible_Constraint<do_virial> * pfc =
+	    new algorithm::Perturbed_Flexible_Constraint<do_virial>(*fs);
+	  pfc->init(topo, conf, sim);
+	  md_seq.push_back(pfc);
+
 	  io::messages.add("no free energy derivatives for flexible Constraints, "
 			   "so you better don't change constrained bond lengths", 
 			   "create_constraints",

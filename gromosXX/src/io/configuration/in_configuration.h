@@ -68,7 +68,9 @@ namespace io {
     bool _read_flexv(std::vector<double> &flexv,
 		     std::vector<std::string> &buffer,
 		     std::vector<topology::two_body_term_struct>
-		     const & constr);
+		     const & constr,
+		     std::vector<topology::perturbed_two_body_term_struct>
+		     const & pert_constr);
     
 
   };

@@ -905,7 +905,7 @@ io::In_Topology::read(topology::Topology& topo,
 
   // add the submolecules
   topo.molecules() = param.submolecules.submolecules;
-  std::cout << "\n\tSOLUTE [sub]molecules: " << topo.molecules().size() - param.system.nsm << "\n";
+  std::cout << "\n\tSOLUTE [sub]molecules: " << topo.molecules().size() - param.system.nsm - 1 << "\n";
 
   // energy group check
   if (param.force.energy_group[param.force.energy_group.size()-1]

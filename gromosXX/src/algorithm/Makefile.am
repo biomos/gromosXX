@@ -15,6 +15,10 @@ include_HEADERS =	algorithm.h \
 			constraints/perturbed_shake.tcc \
 			constraints/lincs.h \
 			constraints/lincs.tcc \
+			constraints/flexible_constraint.h \
+			constraints/flexible_constraint.tcc \
+			constraints/perturbed_flexible_constraint.h \
+			constraints/perturbed_flexible_constraint.tcc \
 			constraints/remove_com_motion.h \
 			integration/slow_growth.h \
 			integration/steepest_descent.h

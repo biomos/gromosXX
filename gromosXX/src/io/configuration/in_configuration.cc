@@ -202,13 +202,17 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   std::cout << "\n\n";
 
   if (param.constraint.solute.algorithm == simulation::constr_flexshake){
-    conf.special().flexible_vel.resize(topo.solute().distance_constraints().size());
+    conf.special().flexible_vel.resize(topo.solute().distance_constraints().size()+
+				       topo.perturbed_solute().distance_constraints().size());
     conf.special().flexible_ekin.resize(numb);
 
     buffer = m_block["FLEXV"];
     if (buffer.size() && param.constraint.solute.flexshake_readin){
       std::cout << "\treading FLEXV...\n";
-      _read_flexv(conf.special().flexible_vel, buffer, topo.solute().distance_constraints());
+      _read_flexv(conf.special().flexible_vel, buffer, 
+		  topo.solute().distance_constraints(),
+		  topo.perturbed_solute().distance_constraints());
+
       block_read.insert("FLEXV");
     }
     else{
@@ -494,9 +498,12 @@ bool io::In_Configuration::_read_g96_box(math::Box &box, std::vector<std::string
   
 }
 
-bool io::In_Configuration::_read_flexv(std::vector<double> &flexv,
-				       std::vector<std::string> &buffer,
-				       std::vector<topology::two_body_term_struct> const & constr)
+bool io::In_Configuration::_read_flexv
+(
+ std::vector<double> &flexv,
+ std::vector<std::string> &buffer,
+ std::vector<topology::two_body_term_struct> const & constr,
+ std::vector<topology::perturbed_two_body_term_struct> const & pert_constr)
 {
   DEBUG(8, "read flexv");
 
@@ -504,13 +511,19 @@ bool io::In_Configuration::_read_flexv(std::vector<double> &flexv,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
   
-  std::vector<topology::two_body_term_struct>::const_iterator constr_it = constr.begin();
+  std::vector<topology::two_body_term_struct>::const_iterator 
+    constr_it = constr.begin(),
+    constr_to = constr.end();
+  std::vector<topology::perturbed_two_body_term_struct>::const_iterator 
+    pert_constr_it = pert_constr.begin(),
+    pert_constr_to = pert_constr.end();
+
   std::vector<double>::iterator flexv_it = flexv.begin();
 
-  int i, j, c;
+  int i, j, c, pc;
   double v;
   
-  for(c=0; it != to; ++it, ++constr_it, ++flexv_it, ++c){
+  for(c=0; (it != to) && (constr_it != constr_to); ++it, ++constr_it, ++flexv_it, ++c){
 
     _lineStream.clear();
     _lineStream.str(*it);
@@ -531,12 +544,45 @@ bool io::In_Configuration::_read_flexv(std::vector<double> &flexv,
       io::messages.add("wrong order in FLEXV block, constraints do not match",
 		       "In_Configuration",
 		       io::message::error);
+
+    *flexv_it = v;
+
+  }
+
+  // and the perturbed constraints
+  for(pc=0; (it != to) && (pert_constr_it != pert_constr_to);
+       ++it, ++pert_constr_it, ++flexv_it, ++pc){
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> i >> j >> v;
+    
+    --i;
+    --j;
+    
+    if(_lineStream.fail())
+      throw std::runtime_error("bad line in FLEXV block");
+
+    if (!_lineStream.eof()) {
+      std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
+      DEBUG(10, msg);
+    }
+
+    if (i != int(pert_constr_it->i) || j != int(pert_constr_it->j))
+      io::messages.add("wrong order in FLEXV block, perturbed constraints do not match",
+		       "In_Configuration",
+		       io::message::error);
+
     *flexv_it = v;
 
   }
   
-  std::cout << "\tvelocities for " << c << " flexible constraints read in\n";
-  
+  if (c)
+    std::cout << "\tvelocities for " << c << " flexible constraints read in\n";
+  if (pc)
+    std::cout << "\tvelocities for " << pc << " perturbed flexible constraints read in\n";
+
   return true;
   
 }

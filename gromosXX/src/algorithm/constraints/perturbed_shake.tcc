@@ -33,21 +33,22 @@ algorithm::Perturbed_Shake<do_virial>
  * do one iteration
  */      
 template<math::virial_enum do_virial, math::boundary_enum b>
-static bool _perturbed_shake(topology::Topology const &topo,
-		   configuration::Configuration & conf,
-		   int const first,
-		   std::vector<bool> &skip_now,
-		   std::vector<bool> &skip_next,
-		   std::vector<topology::perturbed_two_body_term_struct>
-		   const & constr,
-		   std::vector<interaction::bond_type_struct> const & param,
-		   double const dt,
-		   math::Periodicity<b> const & periodicity,
-		   double const tolerance,
-		   bool do_constraint_force = false,
-		   size_t force_offset = 0)
+static int _perturbed_shake(topology::Topology const &topo,
+			    configuration::Configuration & conf,
+			    bool & convergence,
+			    int const first,
+			    std::vector<bool> &skip_now,
+			    std::vector<bool> &skip_next,
+			    std::vector<topology::perturbed_two_body_term_struct>
+			    const & constr,
+			    std::vector<interaction::bond_type_struct> const & param,
+			    double const dt,
+			    math::Periodicity<b> const & periodicity,
+			    double const tolerance,
+			    bool do_constraint_force = false,
+			    size_t force_offset = 0)
 {
-  bool convergence = true;
+  convergence = true;
 
   // index for constraint_force...
   size_t k = 0;
@@ -106,7 +107,27 @@ static bool _perturbed_shake(topology::Topology const &topo,
 	DEBUG(5, "ref r " << ref_r);
 	DEBUG(5, "r " << r);
 	
-	throw std::runtime_error("SHAKE failure in ??? (SHAKE)");
+	std::cout << "Perturbed SHAKE ERROR\n"
+		  << "\tatom i    : " << it->i << "\n"
+		  << "\tatom j    : " << it->j << "\n"
+		  << "\tfirst     : " << first << "\n"
+		  << "\tref i     : " << math::v2s(ref_i) << "\n"
+		  << "\tref j     : " << math::v2s(ref_j) << "\n"
+		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
+		  << "\tfree j    : " << math::v2s(pos_j) << "\n"
+		  << "\tref r     : " << math::v2s(ref_r) << "\n"
+		  << "\tr         : " << math::v2s(r) << "\n"
+		  << "\tsp        : " << sp << "\n"
+		  << "\tconstr    : " << constr_length2 << "\n"
+		  << "\tdiff      : " << diff << "\n"
+		  << "\tforce i   : " << math::v2s(conf.old().force(first+it->i)) << "\n"
+		  << "\tforce j   : " << math::v2s(conf.old().force(first+it->j)) << "\n"
+		  << "\tvel i     : " << math::v2s(conf.current().vel(first+it->i)) << "\n"
+		  << "\tvel j     : " << math::v2s(conf.current().vel(first+it->j)) << "\n"
+		  << "\told vel i : " << math::v2s(conf.old().vel(first+it->i)) << "\n"
+		  << "\told vel j : " << math::v2s(conf.old().vel(first+it->j)) << "\n\n";
+	
+	return E_SHAKE_FAILURE;
       }
 	  
       // lagrange multiplier
@@ -157,7 +178,7 @@ static bool _perturbed_shake(topology::Topology const &topo,
   } // constraints
       
   
-  return convergence;
+  return 0;
 
 }    
 
@@ -194,17 +215,24 @@ static int _perturbed_solute(topology::Topology const & topo,
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    convergence = _perturbed_shake<do_virial, b>
-      (topo, conf, first, skip_now, skip_next,
-       topo.perturbed_solute().distance_constraints(), 
-       param, dt,
-       periodicity, tolerance, true);
+    if(_perturbed_shake<do_virial, b>
+       (topo, conf, convergence, first, skip_now, skip_next,
+	topo.perturbed_solute().distance_constraints(), 
+	param, dt,
+	periodicity, tolerance, true)){
+      io::messages.add("Perturbed SHAKE error. vectors orthogonal",
+		       "Perturbed_Shake::solute",
+		       io::message::error);
+      std::cout << "Perturbed SHAKE failure in solute!" << std::endl;
+      return E_SHAKE_FAILURE_SOLUTE;
+    }
+     
 
     if(++num_iterations > max_iterations){
       io::messages.add("Perturbed SHAKE error. too many iterations",
 		       "Perturbed_Shake::solute",
-		       io::message::critical);
-      throw std::runtime_error("SHAKE failure in perturbed solute");
+		       io::message::error);
+      return E_SHAKE_FAILURE_SOLUTE;
     }
 
     skip_now = skip_next;
@@ -221,7 +249,7 @@ static int _perturbed_solute(topology::Topology const & topo,
   }
   */
 
-  return num_iterations;
+  return 0;
 
 } // solute
 
@@ -236,7 +264,7 @@ int algorithm::Perturbed_Shake<do_virial>
 {
   DEBUG(7, "applying SHAKE");
   bool do_vel = false;
-  int iterations = 0;
+  int error = 0;
   
   // check whether we shake
   if (topo.perturbed_solute().distance_constraints().size() && 
@@ -247,17 +275,17 @@ int algorithm::Perturbed_Shake<do_virial>
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	iterations = _perturbed_solute<do_virial, math::vacuum>
+	error += _perturbed_solute<do_virial, math::vacuum>
 	  (topo, conf, m_shake.parameter(), sim.time_step_size(), 
 	   m_shake.max_iterations(), m_shake.tolerance());
 	break;
       case math::rectangular:
-	iterations = _perturbed_solute<do_virial, math::rectangular>
+	error += _perturbed_solute<do_virial, math::rectangular>
 	  (topo, conf, m_shake.parameter(), sim.time_step_size(), 
 	   m_shake.max_iterations(), m_shake.tolerance());
 	break;
       case math::triclinic:
-	iterations = _perturbed_solute<do_virial, math::triclinic>
+	error += _perturbed_solute<do_virial, math::triclinic>
 	  (topo, conf, m_shake.parameter(), sim.time_step_size(),
 	   m_shake.max_iterations(), m_shake.tolerance());
 	break;
@@ -271,7 +299,7 @@ int algorithm::Perturbed_Shake<do_virial>
     sim.time_step_size();
 
   // return success!
-  return 0;
+  return error;
 		   
 }
 
