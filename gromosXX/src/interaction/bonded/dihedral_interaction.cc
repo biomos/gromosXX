@@ -3,6 +3,23 @@
  * template methods of Dihedral_interaction.
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+
+#include <math/periodicity.h>
+
+// interactions
+#include <interaction/interaction_types.h>
+#include "dihedral_interaction.h"
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -10,12 +27,12 @@
 
 #include <util/debug.h>
 
-double _calculate_nearest_minimum(double phi, int m, double pd);
+static double _calculate_nearest_minimum(double phi, int m, double pd);
 
 /**
  * calculate dihedral forces and energies.
  */
-template<math::boundary_enum b, typename t_interaction_spec>
+template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_dihedral_interactions(topology::Topology & topo,
 					    configuration::Configuration & conf,
 					    simulation::Simulation & sim,
@@ -33,7 +50,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
   double dkj2, dim, dln, ip;
   double energy;
   
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   for(int n =0; d_it != d_to; ++d_it, ++n){
     periodicity.nearest_image(pos(d_it->i), pos(d_it->j), rij);
@@ -121,7 +138,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     force(d_it->k) += fk;
     force(d_it->l) += fl;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (V == math::atomic_virial){
       periodicity.nearest_image(pos(d_it->l), pos(d_it->j), rlj);
 
       for(int a=0; a<3; ++a)
@@ -186,39 +203,25 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
   
 }
 
-template<typename t_interaction_spec>
-int interaction::Dihedral_Interaction<t_interaction_spec>
+int interaction::Dihedral_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
   const double start = util::now();
-  
-  switch(conf.boundary_type){
-    case math::vacuum :
-      return _calculate_dihedral_interactions<math::vacuum, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    case math::triclinic :
-      return _calculate_dihedral_interactions<math::triclinic, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    case math::rectangular :
-      return _calculate_dihedral_interactions<math::rectangular, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+
+  SPLIT_VIRIAL_BOUNDARY(_calculate_dihedral_interactions,
+			topo, conf, sim, m_parameter);
 
   m_timing += util::now() - start;
-  
+
+  return 0;
 }
 
 /**
  * calculate nearest minimum
  */
-inline double _calculate_nearest_minimum(double phi, int m, double pd)
+static inline double _calculate_nearest_minimum(double phi, int m, double pd)
 {
   // copy from gromos++ nearest_minimum function
   double a_minimum = 0.5*math::Pi*(3.0 - pd)/ m;

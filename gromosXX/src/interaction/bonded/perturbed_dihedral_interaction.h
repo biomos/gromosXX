@@ -22,19 +22,15 @@ namespace interaction
    * @class Perturbed_Dihedral_Interaction
    * calculates the perturbed dihedral interactions.
    */
-  template<typename t_interaction_spec>
-  class Perturbed_Dihedral_Interaction 
-    : public Interaction
+  class Perturbed_Dihedral_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    Perturbed_Dihedral_Interaction
-      (Dihedral_Interaction<t_interaction_spec> 
-       & dihedral_interaction)
-	: Interaction("PerturbedDihedral"),
-	  m_interaction(dihedral_interaction)
+    Perturbed_Dihedral_Interaction(Dihedral_Interaction & dihedral_interaction)
+      : Interaction("PerturbedDihedral"),
+	m_interaction(dihedral_interaction)
     {}
     
     /**
@@ -50,12 +46,9 @@ namespace interaction
 				       simulation::Simulation & sim);
     
   protected:
-    Dihedral_Interaction<t_interaction_spec> & m_interaction;
+    Dihedral_Interaction & m_interaction;
   };
   
 } // interaction
-
-// template methods
-#include "perturbed_dihedral_interaction.cc"
 
 #endif

@@ -22,16 +22,13 @@ namespace interaction
    * @class Perturbed_Angle_Interaction
    * calculates the perturbed angle interactions.
    */
-  template<typename t_interaction_spec>
-  class Perturbed_Angle_Interaction : 
-    public Interaction
+  class Perturbed_Angle_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    Perturbed_Angle_Interaction(Angle_Interaction<t_interaction_spec> 
-				&angle_interaction)
+    Perturbed_Angle_Interaction(Angle_Interaction & angle_interaction)
       : Interaction("PerturbedAngle"),
 	m_interaction(angle_interaction)
     {}
@@ -49,12 +46,9 @@ namespace interaction
 				       simulation::Simulation & sim);
     
   protected:
-    Angle_Interaction<t_interaction_spec> &m_interaction;
+    Angle_Interaction & m_interaction;
   };
   
 } // interaction
-
-// template methods
-#include "perturbed_angle_interaction.cc"
 
 #endif

@@ -3,6 +3,23 @@
  * template methods of Quartic_bond_interaction.
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+
+#include <math/periodicity.h>
+
+// interactions
+#include <interaction/interaction_types.h>
+#include "quartic_bond_interaction.h"
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -11,14 +28,14 @@
 /**
  * calculate quartic bond forces and energies.
  */
-template<math::boundary_enum b, typename t_interaction_spec>
+template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_quartic_bond_interactions(topology::Topology &topo,
-			    configuration::Configuration &conf,
-			    simulation::Simulation &sim,
-			    std::vector<interaction::bond_type_struct> const & param)
+						configuration::Configuration &conf,
+						simulation::Simulation &sim,
+						std::vector<interaction::bond_type_struct> const & param)
 {
   
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   // loop over the bonds
   std::vector<topology::two_body_term_struct>::iterator b_it =
@@ -53,12 +70,12 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
     force(b_it->i) += f;
     force(b_it->j) -= f;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int c=0; c<3; ++c)
 	  conf.current().virial_tensor(a, c) += 
 	    v(a) * f(c);
-
+      
       DEBUG(7, "\tatomic virial done");
     }
 
@@ -80,32 +97,17 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
   return 0;
 }
 
-template<typename t_interaction_spec>
-int interaction::Quartic_Bond_Interaction<t_interaction_spec>
+int interaction::Quartic_Bond_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
   const double start = util::now();
-  
-  switch(conf.boundary_type){
-    case math::vacuum :
-      return _calculate_quartic_bond_interactions<math::vacuum, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    case math::triclinic :
-      return _calculate_quartic_bond_interactions<math::triclinic, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    case math::rectangular :
-      return _calculate_quartic_bond_interactions<math::rectangular, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+
+  SPLIT_VIRIAL_BOUNDARY(_calculate_quartic_bond_interactions, topo, conf, sim, m_parameter);
   
   m_timing += util::now() - start;
   
+  return 0;
 }
 

@@ -4,6 +4,23 @@
  * the class Rottrans_Constraints.
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
+#include <configuration/state_properties.h>
+#include <math/periodicity.h>
+
+#include <math/volume.h>
+
+#include <algorithm/constraints/rottrans.h>
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
@@ -12,8 +29,7 @@
 /**
  * Constructor.
  */
-template<math::virial_enum do_virial>
-algorithm::Rottrans_Constraints<do_virial>
+algorithm::Rottrans_Constraints
 ::Rottrans_Constraints(std::string const name)
   : Algorithm(name)
 {
@@ -22,14 +38,13 @@ algorithm::Rottrans_Constraints<do_virial>
 /**
  * Destructor.
  */
-template<math::virial_enum do_virial>
-algorithm::Rottrans_Constraints<do_virial>
+algorithm::Rottrans_Constraints
 ::~Rottrans_Constraints()
 {
 }
 
 template<math::boundary_enum b, math::virial_enum do_virial>
-static int _apply(topology::Topology & topo,
+static void _apply(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim)
 {
@@ -89,25 +104,25 @@ static int _apply(topology::Topology & topo,
   conf.current().vel = (conf.current().pos - conf.old().pos) / 
     sim.time_step_size();
 
+#ifndef NDEBUG
   //==================================================
   // CHECK
   //==================================================
-  
+
   math::Vec v = 0.0;
   for(unsigned int i=0; i<topo.num_solute_atoms(); ++i){
     v += topo.mass()(i) * (math::cross(conf.special().rottrans_constr.pos(i), conf.current().pos(i)));
   }
-  
   DEBUG(10, "testestest: " << math::v2s(v));
 
-  return 0;
+#endif
+
 }
 
 /**
  * apply roto-translational constraints
  */
-template<math::virial_enum do_virial>
-int algorithm::Rottrans_Constraints<do_virial>
+int algorithm::Rottrans_Constraints
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
@@ -118,20 +133,9 @@ int algorithm::Rottrans_Constraints<do_virial>
   if (sim.param().rottrans.rottrans){
     
     DEBUG(8, "\tapplying roto-constrational translaints");
+
+    SPLIT_VIRIAL_BOUNDARY(_apply, topo, conf, sim);
     
-    switch(conf.boundary_type){
-      case math::vacuum:
-	_apply<math::vacuum, do_virial>(topo, conf, sim);
-	break;
-      case math::rectangular:
-	_apply<math::rectangular, do_virial>(topo, conf, sim);
-	break;
-      case math::triclinic:
-	_apply<math::triclinic, do_virial>(topo, conf, sim);
-	break;
-      default:
-	throw std::string("wrong boundary type");
-    }
   }
   
   return 0;		   
@@ -139,7 +143,7 @@ int algorithm::Rottrans_Constraints<do_virial>
 
 
 template<math::boundary_enum b, math::virial_enum do_virial>
-static int _init(topology::Topology & topo,
+static void _init(topology::Topology & topo,
 		 configuration::Configuration & conf,
 		 simulation::Simulation & sim,
 		 bool quiet)
@@ -244,28 +248,17 @@ static int _init(topology::Topology & topo,
   theta_inv(4, 5) = h(1);
   theta_inv(5, 5) = h(2);
 
-  return 0;
 }
 
-template<math::virial_enum do_virial>
-int algorithm::Rottrans_Constraints<do_virial>
+int algorithm::Rottrans_Constraints
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
        bool quiet)
 {
-  switch(conf.boundary_type){
-    case math::vacuum:
-      _init<math::vacuum, do_virial>(topo, conf, sim, quiet);
-      break;
-    case math::rectangular:
-      _init<math::rectangular, do_virial>(topo, conf, sim, quiet);
-      break;
-    case math::triclinic:
-      _init<math::triclinic, do_virial>(topo, conf, sim, quiet);
-      break;
-    default:
-      throw std::string("wrong boundary type");
+
+  if (sim.param().rottrans.rottrans){
+    SPLIT_VIRIAL_BOUNDARY(_init, topo, conf, sim, quiet);
   }
   
   return 0;

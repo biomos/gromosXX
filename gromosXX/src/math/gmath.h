@@ -58,9 +58,13 @@ namespace math
      */
     triclinic = 2,
     /**
+     * truncated octahedral box
+     */
+    truncoct = 3,
+    /**
      * non-specialized version
      */
-    any = 3
+    any = 4
   };
   /**
    * @enum virial_enum

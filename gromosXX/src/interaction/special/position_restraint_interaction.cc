@@ -3,17 +3,33 @@
  * template methods of Position_Restraint_Interaction
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+
+#include <math/periodicity.h>
+
+// special interactions
+#include <interaction/interaction_types.h>
+
+#include <interaction/special/position_restraint_interaction.h>
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE special
 
-#include <util/debug.h>
-
 /**
  * calculate position restraint interactions
  */
-template<math::boundary_enum b, typename t_interaction_spec>
+template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_position_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
@@ -30,7 +46,7 @@ static int _calculate_position_restraint_interactions
 
   double energy;
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   for( ; it != to; ++it){
 
@@ -44,7 +60,7 @@ static int _calculate_position_restraint_interactions
 
     force(it->seq) += f;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
@@ -61,31 +77,16 @@ static int _calculate_position_restraint_interactions
   }
 
   return 0;
-  
 }
 
-
-template<typename t_interaction_spec>
-int interaction::Position_Restraint_Interaction<t_interaction_spec>
+int interaction::Position_Restraint_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  switch(conf.boundary_type){
-    case math::vacuum :
-      return _calculate_position_restraint_interactions<math::vacuum, t_interaction_spec>
-	(topo, conf, sim);
-      break;
-    case math::triclinic :
-      return _calculate_position_restraint_interactions<math::triclinic, t_interaction_spec>
-	(topo, conf, sim);
-      break;
-    case math::rectangular :
-      return _calculate_position_restraint_interactions<math::rectangular, t_interaction_spec>
-	(topo, conf, sim);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+
+  SPLIT_VIRIAL_BOUNDARY(_calculate_position_restraint_interactions,
+			topo, conf, sim);
   
+  return 0;
 }

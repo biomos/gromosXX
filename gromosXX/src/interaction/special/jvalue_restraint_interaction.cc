@@ -3,17 +3,36 @@
  * template methods of Jvalue_Restraint_Interaction
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+#include <interaction/forcefield/forcefield.h>
+
+#include <math/periodicity.h>
+
+// special interactions
+#include <interaction/interaction_types.h>
+
+#include <interaction/special/jvalue_restraint_interaction.h>
+
+#include "create_special.h"
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE special
 
-#include <util/debug.h>
-
 /**
  * calculate position restraint interactions
  */
-template<math::boundary_enum b, typename t_interaction_spec>
+template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_jvalue_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
@@ -31,7 +50,7 @@ static int _calculate_jvalue_restraint_interactions
 
   double dkj2, dmj2, dnk2, dim, dln;
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   int n = 0;
   for( ; it != to; ++it, ++n){
@@ -145,7 +164,7 @@ static int _calculate_jvalue_restraint_interactions
     conf.current().force(it->k) += fk;
     conf.current().force(it->l) += fl;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (V == math::atomic_virial){
       math::Vec rlj;
       periodicity.nearest_image(pos(it->l), pos(it->j), rlj);
 
@@ -164,29 +183,14 @@ static int _calculate_jvalue_restraint_interactions
   return 0;
 }
 
-template<typename t_interaction_spec>
-int interaction::Jvalue_Restraint_Interaction<t_interaction_spec>
-::calculate_interactions(topology::Topology &topo,
-			 configuration::Configuration &conf,
-			 simulation::Simulation &sim)
+int interaction::Jvalue_Restraint_Interaction
+::calculate_interactions(topology::Topology & topo,
+			 configuration::Configuration & conf,
+			 simulation::Simulation & sim)
 {
-  switch(conf.boundary_type){
-    case math::vacuum :
-      return _calculate_jvalue_restraint_interactions<math::vacuum, t_interaction_spec>
-	(topo, conf, sim);
-      break;
-    case math::triclinic :
-      return _calculate_jvalue_restraint_interactions<math::triclinic, t_interaction_spec>
-	(topo, conf, sim);
-      break;
-    case math::rectangular :
-      return _calculate_jvalue_restraint_interactions<math::rectangular, t_interaction_spec>
-	(topo, conf, sim);
-      break;
-    default:
-      throw std::string("wrong boundary type");
-  }
-  
+  SPLIT_VIRIAL_BOUNDARY(_calculate_jvalue_restraint_interactions,
+			topo, conf, sim);
+  return 0;
 }
 
 static double _calculate_derivative(topology::Topology & topo,

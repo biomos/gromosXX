@@ -22,7 +22,6 @@ namespace interaction
    * @class Perturbed_Harmonic_Bond_Interaction
    * calculates the perturbed bond interactions (harmonic).
    */
-  template<typename t_interaction_spec>
   class Perturbed_Harmonic_Bond_Interaction : public Interaction
   {
   public:
@@ -30,7 +29,7 @@ namespace interaction
      * Constructor.
      */
     Perturbed_Harmonic_Bond_Interaction(
-       Harmonic_Bond_Interaction<t_interaction_spec> &bond_interaction)
+       Harmonic_Bond_Interaction &bond_interaction)
       : Interaction("PerturbedHarmonicBond"),
 	m_interaction(bond_interaction)
     {}
@@ -48,13 +47,10 @@ namespace interaction
 				       simulation::Simulation & sim);
     
   protected:
-    Harmonic_Bond_Interaction<t_interaction_spec> & m_interaction;
+    Harmonic_Bond_Interaction & m_interaction;
 
   };
   
 } // interaction
-
-// template methods
-#include "perturbed_harmonic_bond_interaction.cc"
 
 #endif

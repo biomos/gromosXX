@@ -12,7 +12,6 @@ namespace interaction
    * @class Jvalue_Restraint_Interaction
    * calculates the J-Value restraining interaction
    */
-  template<typename t_interaction_spec>
   class Jvalue_Restraint_Interaction : 
     public Interaction
   {
@@ -37,8 +36,5 @@ namespace interaction
   };
   
 } // interaction
-
-// template methods
-#include "jvalue_restraint_interaction.cc"
 
 #endif

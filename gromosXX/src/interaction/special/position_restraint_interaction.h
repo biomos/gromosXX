@@ -12,9 +12,7 @@ namespace interaction
    * @class position_restraint_interaction
    * calculates the position restraining interaction
    */
-  template<typename t_interaction_spec>
-  class Position_Restraint_Interaction : 
-    public Interaction
+  class Position_Restraint_Interaction : public Interaction
   {
   public:
     /**
@@ -39,8 +37,5 @@ namespace interaction
   };
   
 } // interaction
-
-// template methods
-#include "position_restraint_interaction.cc"
 
 #endif

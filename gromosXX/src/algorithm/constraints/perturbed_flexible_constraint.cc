@@ -4,6 +4,26 @@
  * the class Perturbed_Flexible_Constraint.
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
+#include <interaction/interaction.h>
+#include <interaction/interaction_types.h>
+#include <interaction/forcefield/forcefield.h>
+
+#include <math/periodicity.h>
+
+#include <algorithm/constraints/flexible_constraint.h>
+#include <algorithm/constraints/perturbed_flexible_constraint.h>
+
+#include <util/template_split.h>
+#include <util/error.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
@@ -12,9 +32,8 @@
 /**
  * Constructor.
  */
-template<math::virial_enum do_virial>
-algorithm::Perturbed_Flexible_Constraint<do_virial>
-::Perturbed_Flexible_Constraint(Flexible_Constraint<do_virial> 
+algorithm::Perturbed_Flexible_Constraint
+::Perturbed_Flexible_Constraint(Flexible_Constraint 
 				const & flexible_constraint)
   : Algorithm("PerturbedFlexibleConstraint"),
     m_flexible_constraint(flexible_constraint)
@@ -24,8 +43,7 @@ algorithm::Perturbed_Flexible_Constraint<do_virial>
 /**
  * Destructor.
  */
-template<math::virial_enum do_virial>
-algorithm::Perturbed_Flexible_Constraint<do_virial>
+algorithm::Perturbed_Flexible_Constraint
 ::~Perturbed_Flexible_Constraint()
 {
 }
@@ -33,7 +51,7 @@ algorithm::Perturbed_Flexible_Constraint<do_virial>
 /**
  * do one iteration
  */      
-template<math::virial_enum do_virial, math::boundary_enum b>
+template<math::boundary_enum B, math::virial_enum V>
 static int _perturbed_flexible_shake
 (
  topology::Topology &topo,
@@ -44,7 +62,7 @@ static int _perturbed_flexible_shake
  std::vector<bool> &skip_next,
  std::vector<interaction::bond_type_struct> const & param,
  double const dt,
- math::Periodicity<b> const & periodicity,
+ math::Periodicity<B> const & periodicity,
  double const tolerance,
  bool do_constraint_force = false
  )
@@ -151,7 +169,7 @@ static int _perturbed_flexible_shake
       }
       */
 
-      if (do_virial == math::atomic_virial){
+      if (V == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
 	    conf.old().virial_tensor(a,aa) +=
@@ -161,16 +179,6 @@ static int _perturbed_flexible_shake
 	DEBUG(12, "\tatomic virial done");
       }
       
-      // the perturbed energy derivatives
-      /*
-
-      conf.old().perturbed_energy_derivatives.
-	constraints_energy[topo.atom_energy_group()[it->i]] -=
-	sqrt(dot(ref_r * lambda / dt2, ref_r * lambda / dt2)) *
-	(param[it->B_type].r0 - param[it->A_type].r0);
-
-      */      
-
       // and the lambda derivative
       assert(topo.mass().size() > int(it->i));
       assert(topo.mass().size() > int(it->j));
@@ -229,12 +237,10 @@ static int _perturbed_flexible_shake
     } // we have to shake
   } // constraints
       
-  
   return 0;
-
 }    
 
-template<math::virial_enum do_virial, math::boundary_enum b>
+template<math::boundary_enum B, math::virial_enum V>
 static void _calc_perturbed_distance
 (
  topology::Topology const &topo,
@@ -248,7 +254,7 @@ static void _calc_perturbed_distance
   
   flex_len.clear();
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   //loop over all constraints
   unsigned int k = unsigned(topo.solute().distance_constraints().size());
@@ -351,8 +357,8 @@ static void _calc_perturbed_distance
 /**
  * flexible shake perturbed solute
  */
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int _perturbed_flexible_solute
+template<math::boundary_enum B, math::virial_enum V>
+static void _perturbed_flexible_solute
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -361,7 +367,8 @@ static int _perturbed_flexible_solute
  double dt, 
  int const max_iterations,
  double const tolerance,
- double & timing)
+ double & timing,
+ int & error)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
@@ -369,10 +376,10 @@ static int _perturbed_flexible_solute
   DEBUG(8, "\tflexible shaking perturbed SOLUTE");
   const double start = util::now();
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
   
   std::vector<double> flex_len;
-  _calc_perturbed_distance<do_virial, b>(topo, conf, sim, param, flex_len, dt);
+  _calc_perturbed_distance<B, V>(topo, conf, sim, param, flex_len, dt);
 
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
@@ -388,7 +395,7 @@ static int _perturbed_flexible_solute
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    if(_perturbed_flexible_shake<do_virial, b>
+    if(_perturbed_flexible_shake<B, V>
       (topo, conf, convergence, flex_len, skip_now, skip_next,
        param, dt,
        periodicity, tolerance, true))
@@ -397,14 +404,16 @@ static int _perturbed_flexible_solute
 		       "Perturbed_Flexible_Constraint::solute",
 		       io::message::error);
       std::cout << "Perturbed Flexible SHAKE failure in solute!" << std::endl;
-      return E_SHAKE_FAILURE_SOLUTE;
+      error = E_SHAKE_FAILURE_SOLUTE;
+      return;
     }
       
     if(++num_iterations > max_iterations){
       io::messages.add("Perturbed Flexible SHAKE error. too many iterations",
 		       "Perturbed_Flexible_Constraint::solute",
 		       io::message::critical);
-      return E_SHAKE_FAILURE_SOLUTE;
+      error = E_SHAKE_FAILURE_SOLUTE;
+      return;
     }
 
     skip_now = skip_next;
@@ -422,17 +431,13 @@ static int _perturbed_flexible_solute
   */
 
   timing += util::now() - start;
- 
-  return 0;
-  
-
+  error = 0;
 } // solute
 
 /**
  * apply the flexible SHAKE algorithm
  */
-template<math::virial_enum do_virial>
-int algorithm::Perturbed_Flexible_Constraint<do_virial>
+int algorithm::Perturbed_Flexible_Constraint
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
@@ -449,28 +454,11 @@ int algorithm::Perturbed_Flexible_Constraint<do_virial>
 
     DEBUG(8, "\twe need to flexible shake perturbed SOLUTE");
     do_vel = true;
-    switch(conf.boundary_type){
-      case math::vacuum:
-	error = _perturbed_flexible_solute<do_virial, math::vacuum>
-	  (topo, conf, sim, m_flexible_constraint.parameter(), 
-	   sim.time_step_size(), m_flexible_constraint.max_iterations(), 
-	   m_flexible_constraint.tolerance(), m_timing);
-	break;
-      case math::rectangular:
-	error = _perturbed_flexible_solute<do_virial, math::rectangular>
-	  (topo, conf, sim, m_flexible_constraint.parameter(), 
-	   sim.time_step_size(), m_flexible_constraint.max_iterations(), 
-	   m_flexible_constraint.tolerance(), m_timing);
-	break;
-      case math::triclinic:
-	error = _perturbed_flexible_solute<do_virial, math::triclinic>
-	  (topo, conf, sim, m_flexible_constraint.parameter(), 
-	   sim.time_step_size(), m_flexible_constraint.max_iterations(), 
-	   m_flexible_constraint.tolerance(), m_timing);
-	break;
-      default:
-	throw std::string("wrong boundary type");
-    }
+
+    SPLIT_VIRIAL_BOUNDARY(_perturbed_flexible_solute,
+			  topo, conf, sim, m_flexible_constraint.parameter(),
+			  sim.time_step_size(), m_flexible_constraint.max_iterations(),
+			  m_flexible_constraint.tolerance(), m_timing, error);
   }
   
   if (error){
@@ -488,11 +476,9 @@ int algorithm::Perturbed_Flexible_Constraint<do_virial>
 
   // return success!
   return 0;
-		   
 }
 
-template<math::virial_enum do_virial>
-int algorithm::Perturbed_Flexible_Constraint<do_virial>
+int algorithm::Perturbed_Flexible_Constraint
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
@@ -565,3 +551,4 @@ int algorithm::Perturbed_Flexible_Constraint<do_virial>
   
   return 0;
 }
+

@@ -22,15 +22,13 @@ namespace interaction
    * @class Perturbed_Quartic_Bond_Interaction
    * calculates the perturbed bond interactions (quartic).
    */
-  template<typename t_interaction_spec>
   class Perturbed_Quartic_Bond_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    Perturbed_Quartic_Bond_Interaction(Quartic_Bond_Interaction<t_interaction_spec> 
-				       &bond_interaction)
+    Perturbed_Quartic_Bond_Interaction(Quartic_Bond_Interaction &bond_interaction)
       : Interaction("PerturbedQuarticBond"),
 	m_interaction(bond_interaction)
     {}
@@ -48,13 +46,10 @@ namespace interaction
 				       simulation::Simulation & sim);
     
   protected:
-    Quartic_Bond_Interaction<t_interaction_spec> & m_interaction;
+    Quartic_Bond_Interaction & m_interaction;
 
   };
   
 } // interaction
-
-// template methods
-#include "perturbed_quartic_bond_interaction.cc"
 
 #endif

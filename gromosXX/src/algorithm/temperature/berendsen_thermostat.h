@@ -38,6 +38,23 @@ namespace algorithm
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
+
+    /**
+     * calculate the scaling factors.
+     * @param immediate if true rescales the velocities to immediately satisfy
+     * the given reference temperature (strong coupling).
+     */
+    void calc_scaling(topology::Topology & topo,
+		      configuration::Configuration & conf,
+		      simulation::Simulation & sim,
+		      bool immediate = false);
+    
+    /**
+     * rescale the velocities.
+     */
+    void scale(topology::Topology & topo,
+	       configuration::Configuration & conf,
+	       simulation::Simulation & sim);
     
   private:
 

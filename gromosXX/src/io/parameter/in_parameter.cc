@@ -49,6 +49,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_STEP(param);
   read_BOUNDARY(param);
   read_SUBMOLECULES(param);
+  read_REPLICA(param); // has to be read in before MULTIBATH (to overwrite temps)
   read_MULTIBATH(param);
   read_PCOUPLE(param);
   read_PRINT(param);
@@ -247,7 +248,7 @@ void io::In_Parameter::read_STEP(simulation::Parameter &param)
 		       "In_Parameter", io::message::warning);
   */
 
-  if(param.step.t0 < 0)
+  if(param.step.t0 < 0 && param.step.t0 != -1.0)
     io::messages.add("Negative time in STEP block is not supported",
 		     "In_Parameter", io::message::error);
   if(param.step.number_of_steps <= 0)
@@ -570,7 +571,7 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param)
   if(param.print.stepblock<=0)
     io::messages.add("PRINT block: print stepblock should be >0",
 		     "In_Parameter", io::message::error);
-  if(param.print.centreofmass<=0)
+  if(param.print.centreofmass < 0)
     io::messages.add("PRINT block: print centre of mass should be >0",
 		     "In_Parameter", io::message::error);
 }
@@ -840,6 +841,7 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param)
   if(ntb=="vacuum") param.boundary.boundary=math::vacuum;
   else if(ntb=="rectangular") param.boundary.boundary=math::rectangular;
   else if(ntb=="triclinic") param.boundary.boundary=math::triclinic;
+  else if(ntb=="truncoct") param.boundary.boundary=math::truncoct;
   else {
     cs.str(ntb);
     // n=atoi(ntb.c_str());
@@ -854,7 +856,7 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param)
     }
     if(n==0) param.boundary.boundary=math::vacuum;
     else if(n>0) param.boundary.boundary=math::rectangular;
-    else param.boundary.boundary=math::triclinic;
+    else param.boundary.boundary=math::truncoct;
     
     if(abs(n)==2){
       param.pcouple.calculate=true;
@@ -1587,6 +1589,12 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
 	io::messages.add("illegal value for temp or tau in MULTIBATH block",
 			 "In_Parameter", io::message::error);
       }
+
+      if (param.replica.T){
+	std::cout << "\tsetting temperature to " << param.replica.T << "K "
+		  << "for replica exchange\n";
+	temp = param.replica.T;
+      }
       
       param.multibath.multibath.add_bath(temp, tau);
       if (tau != -1) param.multibath.couple = true;
@@ -1637,7 +1645,14 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
 			 "In_Parameter", io::message::error);
 	return;
       }	
-      
+
+      if (param.replica.T){
+	std::cout << "\tsetting temperature to " << param.replica.T << "K "
+		  << "for replica exchange\n";
+	param.multibath.tcouple.temp0[0] = param.replica.T;
+	param.multibath.tcouple.temp0[1] = param.replica.T;
+	param.multibath.tcouple.temp0[2] = param.replica.T;
+      }
     }
     else{
       param.multibath.found_multibath=false;
@@ -1849,6 +1864,40 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param)
 		       "In_Parameter", io::message::error);
 
     param.rottrans.rottrans = (i != 0);
+
+  }
+  
+}
+
+/**
+ * read the REPLICA block.
+ */
+void io::In_Parameter::read_REPLICA(simulation::Parameter &param)
+{
+  DEBUG(8, "read REPLICA");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["REPLICA"];
+
+  if (buffer.size()){
+
+    block_read.insert("REPLICA");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.replica.ID >> param.replica.T >> param.replica.scale;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in REPLICA block",
+		       "In_Parameter", io::message::error);
+
+      param.replica.ID = 0;
+      param.replica.T = 0.0;
+      param.replica.scale = 0;
+    }
 
   }
   

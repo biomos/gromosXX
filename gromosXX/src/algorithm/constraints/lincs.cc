@@ -4,12 +4,28 @@
  * the class Lincs.
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
+#include <interaction/interaction.h>
+#include <interaction/interaction_types.h>
+
+#include <math/periodicity.h>
+
+#include <algorithm/constraints/lincs.h>
+
+#include <util/template_split.h>
+#include <util/error.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
 #define SUBMODULE constraints
-
-#include <util/debug.h>
 
 struct coupling_struct
 {
@@ -19,9 +35,7 @@ struct coupling_struct
 /**
  * Constructor.
  */
-template<math::virial_enum do_virial>
-algorithm::Lincs<do_virial>
-::Lincs()
+algorithm::Lincs::Lincs()
   : Algorithm("Lincs"),
     m_solvent_timing(0.0)
 {
@@ -30,9 +44,7 @@ algorithm::Lincs<do_virial>
 /**
  * Destructor.
  */
-template<math::virial_enum do_virial>
-algorithm::Lincs<do_virial>
-::~Lincs()
+algorithm::Lincs::~Lincs()
 {
 }
 
@@ -77,10 +89,9 @@ static int _solve(topology::Topology & topo,
   }
     
   return 0;
-  
 }
 
-template<math::boundary_enum b>
+template<math::boundary_enum bound>
 static int _lincs(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
@@ -99,7 +110,7 @@ static int _lincs(topology::Topology & topo,
 
   math::Vec r, ref_r;
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<bound> periodicity(conf.current().box);
   
   math::VArray B(num_constr);
 
@@ -179,12 +190,12 @@ static int _lincs(topology::Topology & topo,
   return 0;
 }
 
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int _solvent(topology::Topology & topo,
-		    configuration::Configuration & conf,
-		    simulation::Simulation & sim,
-		    std::vector<interaction::bond_type_struct> const & param,
-		    double & timing)
+template<math::boundary_enum B, math::virial_enum V>
+static void _solvent(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim,
+		     std::vector<interaction::bond_type_struct> const & param,
+		     double & timing, int & error)
 {
   // the first atom of a solvent
   unsigned int first = unsigned(topo.num_solute_atoms());
@@ -196,25 +207,22 @@ static int _solvent(topology::Topology & topo,
     for(unsigned int nm=0; nm<topo.num_solvent_molecules(i);
 	++nm, first+=topo.solvent(i).num_atoms()){
 
-      _lincs<b>(topo, conf, sim, topo.solvent(i).distance_constraints(),
+      _lincs<B>(topo, conf, sim, topo.solvent(i).distance_constraints(),
 		topo.solvent(i).lincs(), 
 		param, sim.param().constraint.solvent.lincs_order,
 		timing, first);
     }
   }
  
-  return 0;
-  
+  error = 0;
 }
 
 /**
  * apply the Lincs algorithm
  */
-template<math::virial_enum do_virial>
-int algorithm::Lincs<do_virial>
-::apply(topology::Topology & topo,
-	configuration::Configuration & conf,
-	simulation::Simulation & sim)
+int algorithm::Lincs::apply(topology::Topology & topo,
+			    configuration::Configuration & conf,
+			    simulation::Simulation & sim)
 {
   DEBUG(7, "applying LINCS");
 
@@ -227,28 +235,11 @@ int algorithm::Lincs<do_virial>
 
     DEBUG(8, "\twe need to shake SOLUTE");
     do_vel = true;
-    switch(conf.boundary_type){
-      case math::vacuum:
-	_lincs<math::vacuum>(topo, conf, sim, topo.solute().distance_constraints(),  
-			     topo.solute().lincs(),
-			     parameter(), sim.param().constraint.solute.lincs_order,
-			     m_timing);
-	break;
-      case math::rectangular:
-	_lincs<math::rectangular>(topo, conf, sim, topo.solute().distance_constraints(),
-				  topo.solute().lincs(), 
-				  parameter(), sim.param().constraint.solute.lincs_order,
-				  m_timing);
-	break;
-      case math::triclinic:
-	_lincs<math::triclinic>(topo, conf, sim, topo.solute().distance_constraints(),  
-				topo.solute().lincs(), 
-				parameter(), sim.param().constraint.solute.lincs_order,
-				m_timing);
-	break;
-      default:
-	throw std::string("wrong boundary type");
-    }
+
+    SPLIT_BOUNDARY(_lincs, topo, conf, sim, topo.solute().distance_constraints(),
+		   topo.solute().lincs(), parameter(),
+		   sim.param().constraint.solute.lincs_order, m_timing);
+ 
   }
 
   // SOLVENT
@@ -257,22 +248,11 @@ int algorithm::Lincs<do_virial>
 
     DEBUG(8, "\twe need to shake SOLVENT");
     do_vel = true;
-    switch(conf.boundary_type){
-      case math::vacuum:
-	_solvent<do_virial, math::vacuum>(topo, conf, sim, parameter(), 
-					  m_solvent_timing);
-	break;
-      case math::rectangular:
-	_solvent<do_virial, math::rectangular>(topo, conf, sim, parameter(),
-					       m_solvent_timing);
-	break;
-      case math::triclinic:
-	_solvent<do_virial, math::triclinic>(topo, conf, sim, parameter(),
-					     m_solvent_timing);
-	break;
-      default:
-	throw std::string("wrong boundary type");
-    }
+    int error = 0;
+
+    SPLIT_VIRIAL_BOUNDARY(_solvent,
+			  topo, conf, sim, parameter(), m_solvent_timing, error);
+    
   }
   
   // "shake" velocities
@@ -346,12 +326,10 @@ static void _setup_lincs(topology::Topology const & topo,
 }
 
 
-template<math::virial_enum do_virial>
-int algorithm::Lincs<do_virial>
-::init(topology::Topology & topo,
-       configuration::Configuration & conf,
-       simulation::Simulation & sim,
-       bool quiet)
+int algorithm::Lincs::init(topology::Topology & topo,
+			   configuration::Configuration & conf,
+			   simulation::Simulation & sim,
+			   bool quiet)
 {
   if (!quiet){
     std::cout << "LINCS\n"
@@ -439,9 +417,7 @@ int algorithm::Lincs<do_virial>
   return 0;
 }
 
-template<math::virial_enum do_virial>
-void algorithm::Lincs<do_virial>
-::print_timing(std::ostream & os)
+void algorithm::Lincs::print_timing(std::ostream & os)
 {
   os << "    "
      << std::setw(40) << std::left << "Lincs::solute"
@@ -450,3 +426,5 @@ void algorithm::Lincs<do_virial>
      << std::setw(40) << std::left << "Lincs::solvent"
      << std::setw(20) << m_solvent_timing << "\n";
 }
+
+

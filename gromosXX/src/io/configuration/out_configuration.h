@@ -68,7 +68,7 @@ namespace io {
 	       simulation::Simulation const & sim);
 
     /**
-     * print out data (per time step).
+     * print out final data
      */
     void print_final(topology::Topology const & topo,
 		     configuration::Configuration & conf,
@@ -114,7 +114,6 @@ namespace io {
      * precision accessor.
      */
     int precision();
-
     /**
      * force write precision.
      */
@@ -123,22 +122,18 @@ namespace io {
      * force write precision accessor.
      */
     int force_precision();
-    
     /**
      * get the title.
      */
     std::string title() const { return m_title; }
-
     /**
      * set the title.
      */
     void title(std::string s) { m_title = s; }
-
     /**
      * get standard output stream.
      */
     std::ostream & output() { return m_output; }
-    
     /**
      * print timestep.
      */
@@ -157,10 +152,12 @@ namespace io {
     std::ofstream m_free_energy_traj;
     std::ofstream m_blockaveraged_energy;
     std::ofstream m_blockaveraged_free_energy;
+    std::ofstream m_replica_data;
     
     std::ostream & m_output;
     
     bool m_final;
+    bool m_replica;
     
     int m_every_pos;
     int m_every_vel;
@@ -248,6 +245,10 @@ namespace io {
     void _print_blockaveraged_free_energyred(configuration::Configuration const & conf,
 					     double dlamt,
 					     std::ostream & os);
+
+    void _print_replica_data(configuration::Configuration const & conf,
+			     simulation::Simulation const & sim,
+			     std::ostream & os);
 
   };
   

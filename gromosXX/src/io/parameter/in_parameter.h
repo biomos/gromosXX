@@ -151,6 +151,11 @@ namespace io {
      * read ROTTRANS block.
      */
     void read_ROTTRANS(simulation::Parameter &param);
+
+    /**
+     * read REPLICA block.
+     */
+    void read_REPLICA(simulation::Parameter &param);
     
   };
   

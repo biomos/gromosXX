@@ -32,7 +32,7 @@ namespace io {
      * Read in a G96 trajectory into the Configuration.
      */
     void read(configuration::Configuration &conf, topology::Topology &topo, 
-	      simulation::Parameter const &param);
+	      simulation::Simulation & sim);
   private:
     /**
      * read POSITION block.
@@ -88,8 +88,13 @@ namespace io {
 			    configuration::Configuration::special_struct::pscale_struct &pscale,
 			    std::vector<topology::jvalue_restraint_struct> const & jval_res);
 
+    /**
+     * read time information.
+     */
+    bool _read_time(std::vector<std::string> &buffer,
+		    double & t);
+
   };
-  
 
 } // io
 

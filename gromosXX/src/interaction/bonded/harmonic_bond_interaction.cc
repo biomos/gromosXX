@@ -3,17 +3,32 @@
  * template methods of harmonic_bond_interaction.
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+
+#include <math/periodicity.h>
+
+// interactions
+#include <interaction/interaction_types.h>
+#include "harmonic_bond_interaction.h"
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE bonded
 
-#include <util/debug.h>
-
 /**
  * calculate harmonic bond forces and energies.
  */
-template<math::boundary_enum b, typename t_interaction_spec>
+template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_harmonic_bond_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
@@ -31,7 +46,7 @@ static int _calculate_harmonic_bond_interactions
 
   double energy, diff;
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   for( ; b_it != b_to; ++b_it){
     periodicity.nearest_image(pos(b_it->i), pos(b_it->j), v);
@@ -57,7 +72,7 @@ static int _calculate_harmonic_bond_interactions
     force(b_it->i) += f;
     force(b_it->j) -= f;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
@@ -77,8 +92,7 @@ static int _calculate_harmonic_bond_interactions
 }
 
 
-template<typename t_interaction_spec>
-int interaction::Harmonic_Bond_Interaction<t_interaction_spec>
+int interaction::Harmonic_Bond_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
@@ -86,23 +100,11 @@ int interaction::Harmonic_Bond_Interaction<t_interaction_spec>
 
   const double start = util::now();
 
-  switch(conf.boundary_type){
-    case math::vacuum :
-      return _calculate_harmonic_bond_interactions<math::vacuum, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    case math::triclinic :
-      return _calculate_harmonic_bond_interactions<math::triclinic, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    case math::rectangular :
-      return _calculate_harmonic_bond_interactions<math::rectangular, t_interaction_spec>
-	(topo, conf, sim, m_parameter);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+  SPLIT_VIRIAL_BOUNDARY(_calculate_harmonic_bond_interactions,
+			topo, conf, sim, m_parameter);
 
   m_timing += util::now() - start;
+
+  return 0;
   
 }

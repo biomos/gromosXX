@@ -14,18 +14,12 @@ xxinclude_HEADERS =		algorithm.h \
 			  	pressure/berendsen_barostat.h \
 			  	constraints/create_constraints.h \
 				constraints/shake.h \
-				constraints/shake.cc \
 				constraints/perturbed_shake.h \
-				constraints/perturbed_shake.cc \
 				constraints/lincs.h \
-				constraints/lincs.cc \
 				constraints/flexible_constraint.h \
-				constraints/flexible_constraint.cc \
 				constraints/perturbed_flexible_constraint.h \
-				constraints/perturbed_flexible_constraint.cc \
 				constraints/remove_com_motion.h \
-				constraints/rottrans.h \
-				constraints/rottrans.cc
+				constraints/rottrans.h
 
 noinst_LTLIBRARIES	=	libgroalgorithm.la
 
@@ -39,8 +33,14 @@ libgroalgorithm_la_SOURCES =	algorithm.cc \
 				pressure/berendsen_barostat.cc \
 				constraints/create_constraints.cc \
 				constraints/remove_com_motion.cc \
+				constraints/shake.cc \
+				constraints/perturbed_shake.cc \
+				constraints/flexible_constraint.cc \
+				constraints/perturbed_flexible_constraint.cc \
+				constraints/lincs.cc \
 				integration/slow_growth.cc \
-				integration/steepest_descent.cc
+				integration/steepest_descent.cc \
+				constraints/rottrans.cc
 
 bin_PROGRAMS =			
 

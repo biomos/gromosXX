@@ -8,6 +8,7 @@ switch(conf.boundary_type){ \
   case math::vacuum : f<math::vacuum>(__VA_ARGS__); break; \
   case math::rectangular : f<math::rectangular>(__VA_ARGS__); break; \
   case math::triclinic : f<math::triclinic>(__VA_ARGS__); break; \
+  case math::truncoct : f<math::truncoct>(__VA_ARGS__); break; \
   default: throw std::string("wrong boundary type"); \
 } \
 
@@ -20,6 +21,14 @@ switch(conf.boundary_type){ \
       case math::no_virial : f<math::rectangular, math::no_virial>(__VA_ARGS__); break; \
       case math::molecular_virial : f<math::rectangular, math::molecular_virial>(__VA_ARGS__); break; \
       case math::atomic_virial : f<math::rectangular, math::atomic_virial>(__VA_ARGS__); break; \
+      default: throw std::string("wrong virial type"); \
+    } \
+    break; \
+  case math::truncoct : \
+    switch(sim.param().pcouple.virial){ \
+      case math::no_virial : f<math::truncoct, math::no_virial>(__VA_ARGS__); break; \
+      case math::molecular_virial : f<math::truncoct, math::molecular_virial>(__VA_ARGS__); break; \
+      case math::atomic_virial : f<math::truncoct, math::atomic_virial>(__VA_ARGS__); break; \
       default: throw std::string("wrong virial type"); \
     } \
     break; \
@@ -48,6 +57,14 @@ if (sim.param().pairlist.grid) { \
         default: throw std::string("wrong virial type"); \
       } \
       break; \
+    case math::truncoct : \
+      switch(sim.param().pcouple.virial){ \
+        case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, true> >(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, true> >(__VA_ARGS__); break; \
+        case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, true> >(__VA_ARGS__); break; \
+        default: throw std::string("wrong virial type"); \
+      } \
+      break; \
     default: throw std::string("wrong boundary type"); \
   } \
 } \
@@ -59,6 +76,14 @@ else { \
         case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, false> >(__VA_ARGS__); break; \
         case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false> >(__VA_ARGS__); break; \
         case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, false> >(__VA_ARGS__); break; \
+        default: throw std::string("wrong virial type"); \
+      } \
+      break; \
+    case math::truncoct : \
+      switch(sim.param().pcouple.virial){ \
+        case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, false> >(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false> >(__VA_ARGS__); break; \
+        case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, false> >(__VA_ARGS__); break; \
         default: throw std::string("wrong virial type"); \
       } \
       break; \
@@ -77,6 +102,14 @@ switch(conf.boundary_type){ \
       default: throw std::string("wrong virial type"); \
     } \
     break; \
+  case math::truncoct : \
+    switch(sim.param().pcouple.virial){ \
+      case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, false> >(__VA_ARGS__); break; \
+      case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false> >(__VA_ARGS__); break; \
+      case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, false> >(__VA_ARGS__); break; \
+      default: throw std::string("wrong virial type"); \
+    } \
+    break; \
   default: throw std::string("wrong boundary type"); \
 } \
 
@@ -87,9 +120,23 @@ if (sim.param().pairlist.grid) { \
     case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial, true>, t_perturbation_details>(__VA_ARGS__); break; \
     case math::rectangular : \
       switch(sim.param().pcouple.virial){ \
-        case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, true>, t_perturbation_details>(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, true>, t_perturbation_details>(__VA_ARGS__); break; \
-        case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, true>, t_perturbation_details>(__VA_ARGS__); break; \
+        case math::no_virial :        f<Interaction_Spec<math::rectangular, math::no_virial, true>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, true>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::atomic_virial :    f<Interaction_Spec<math::rectangular, math::atomic_virial, true>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        default: throw std::string("wrong virial type"); \
+      } \
+      break; \
+    case math::truncoct : \
+      switch(sim.param().pcouple.virial){ \
+        case math::no_virial :        f<Interaction_Spec<math::truncoct, math::no_virial, true>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, true>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::atomic_virial :    f<Interaction_Spec<math::truncoct, math::atomic_virial, true>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
         default: throw std::string("wrong virial type"); \
       } \
       break; \
@@ -101,9 +148,23 @@ else { \
     case math::vacuum : f<Interaction_Spec<math::vacuum, math::no_virial, false>, t_perturbation_details>(__VA_ARGS__); break; \
     case math::rectangular : \
       switch(sim.param().pcouple.virial){ \
-        case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, false>, t_perturbation_details>(__VA_ARGS__); break; \
-        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false>, t_perturbation_details>(__VA_ARGS__); break; \
-        case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, false>, t_perturbation_details>(__VA_ARGS__); break; \
+        case math::no_virial :        f<Interaction_Spec<math::rectangular, math::no_virial, false>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::atomic_virial :    f<Interaction_Spec<math::rectangular, math::atomic_virial, false>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        default: throw std::string("wrong virial type"); \
+      } \
+      break; \
+    case math::truncoct : \
+      switch(sim.param().pcouple.virial){ \
+        case math::no_virial :        f<Interaction_Spec<math::truncoct, math::no_virial, false>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
+        case math::atomic_virial :    f<Interaction_Spec<math::truncoct, math::atomic_virial, false>, \
+                                        t_perturbation_details>(__VA_ARGS__); break; \
         default: throw std::string("wrong virial type"); \
       } \
       break; \

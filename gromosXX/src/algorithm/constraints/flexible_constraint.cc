@@ -3,18 +3,34 @@
  * implements flexible constraint algorithm
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
+#include <interaction/interaction.h>
+#include <interaction/interaction_types.h>
+#include <interaction/forcefield/forcefield.h>
+
+#include <math/periodicity.h>
+
+#include <algorithm/constraints/flexible_constraint.h>
+
+#include <util/template_split.h>
+#include <util/error.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
 #define SUBMODULE constraints
 
-#include <util/debug.h>
-
 /**
  * Constructor.
  */
-template<math::virial_enum do_virial>
-algorithm::Flexible_Constraint<do_virial>
+algorithm::Flexible_Constraint
 ::Flexible_Constraint(double const tolerance, int const max_iterations,
 		      interaction::Forcefield * ff)
   : Algorithm("FlexibleShake"),
@@ -41,14 +57,12 @@ algorithm::Flexible_Constraint<do_virial>
 /**
  * Destructor
  */
-template<math::virial_enum do_virial>
-algorithm::Flexible_Constraint<do_virial>
+algorithm::Flexible_Constraint
 ::~Flexible_Constraint()
 {
 }
 
-template<math::virial_enum do_virial>
-void algorithm::Flexible_Constraint<do_virial>
+void algorithm::Flexible_Constraint
 ::tolerance(double const tol)
 {
   m_tolerance = tol;
@@ -57,7 +71,7 @@ void algorithm::Flexible_Constraint<do_virial>
 /**
  * do one iteration
  */      
-template<math::virial_enum do_virial, math::boundary_enum b>
+template<math::boundary_enum B, math::virial_enum V>
 static int _flexible_shake(topology::Topology const &topo,
 			   configuration::Configuration & conf,
 			   bool & convergence,
@@ -65,7 +79,7 @@ static int _flexible_shake(topology::Topology const &topo,
 			   std::vector<bool> & skip_now,
 			   std::vector<bool> & skip_next,
 			   double const dt,
-			   math::Periodicity<b> const & periodicity,
+			   math::Periodicity<B> const & periodicity,
 			   double const tolerance,
 			   bool do_constraint_force = false)
 {
@@ -166,7 +180,7 @@ static int _flexible_shake(topology::Topology const &topo,
       }
       */
 
-      if (do_virial == math::atomic_virial){
+      if (V == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
 	    conf.old().virial_tensor(a,aa) +=
@@ -203,15 +217,15 @@ static int _flexible_shake(topology::Topology const &topo,
 //================================================================================
 //================================================================================
 
-template<math::virial_enum do_virial, math::boundary_enum b>
+template<math::boundary_enum B, math::virial_enum V>
 static int _exact_flexible_shake(topology::Topology const &topo,
-				 configuration::Configuration & conf,
-				 bool & convergence,
-				 std::vector<double> & flex_len,
-				 std::vector<std::vector<math::Vec> > & force,
-				 double const dt,
-				 math::Periodicity<b> const & periodicity,
-				 double const tolerance)
+				  configuration::Configuration & conf,
+				  bool & convergence,
+				  std::vector<double> & flex_len,
+				  std::vector<std::vector<math::Vec> > & force,
+				  double const dt,
+				  math::Periodicity<B> const & periodicity,
+				  double const tolerance)
 {
   convergence = true;
 
@@ -295,7 +309,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
       const double lambda = diff / (- 4 * dt2 * sp);
       DEBUG(10, "lagrange multiplier " << lambda);
 
-      if (do_virial == math::atomic_virial){
+      if (V == math::atomic_virial){
 	/*
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
@@ -327,7 +341,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
 //================================================================================
 //================================================================================
 
-template<math::virial_enum do_virial, math::boundary_enum b>
+template<math::boundary_enum B, math::virial_enum V>
 static void _calc_distance(topology::Topology const &topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation const & sim,
@@ -338,7 +352,7 @@ static void _calc_distance(topology::Topology const &topo,
   
   flex_len.clear();
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   //loop over all constraints
   unsigned int k = 0;
@@ -471,7 +485,7 @@ static void _calc_distance(topology::Topology const &topo,
   
 }
 
-template<math::virial_enum do_virial, math::boundary_enum b>
+template<math::boundary_enum B, math::virial_enum V>
 static void _calc_undetermined_forces(topology::Topology &topo,
 				      configuration::Configuration & conf,
 				      simulation::Simulation & sim,
@@ -486,7 +500,7 @@ static void _calc_undetermined_forces(topology::Topology &topo,
   // resize to number of constraints
   force.resize(topo.solute().distance_constraints().size());
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   const double dt2 = dt * dt;
 
@@ -642,16 +656,17 @@ static void _calc_undetermined_forces(topology::Topology &topo,
 /**
  * shake solute
  */
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int _flexible_solute(topology::Topology & topo,
-			    configuration::Configuration & conf,
-			    simulation::Simulation & sim,
-			    std::vector<interaction::bond_type_struct> const & param,
-			    std::vector<std::vector<math::Vec> > & force,
-			    interaction::Interaction * ni,
-			    double dt, int const max_iterations,
-			    double const tolerance,
-			    double & timing)
+template<math::boundary_enum B, math::virial_enum V>
+static void _flexible_solute(topology::Topology & topo,
+			     configuration::Configuration & conf,
+			     simulation::Simulation & sim,
+			     std::vector<interaction::bond_type_struct> const & param,
+			     std::vector<std::vector<math::Vec> > & force,
+			     interaction::Interaction * ni,
+			     double dt, int const max_iterations,
+			     double const tolerance,
+			     double & timing,
+			     int & error)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
@@ -660,18 +675,18 @@ static int _flexible_solute(topology::Topology & topo,
 
   const double start = util::now();
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
   
   std::vector<double> flex_len;
-  _calc_distance<do_virial, b>(topo, conf, sim, param, flex_len, dt);
+  _calc_distance<B, V>(topo, conf, sim, param, flex_len, dt);
   // exact solution
 
   if (sim.param().constraint.solute.flexshake_mode == 2 ||
       sim.param().constraint.solute.flexshake_mode == 3){
     
-    _calc_undetermined_forces<do_virial, b>(topo, conf, sim, 
-					    param, flex_len, 
-					    force, ni, dt);
+    _calc_undetermined_forces<B, V>(topo, conf, sim, 
+				    param, flex_len, 
+				    force, ni, dt);
   }
   
   // conf.constraint_force() = 0.0;
@@ -694,7 +709,7 @@ static int _flexible_solute(topology::Topology & topo,
     if (sim.param().constraint.solute.flexshake_mode == 0 ||
 	sim.param().constraint.solute.flexshake_mode == 1){
       // standard algorithm
-      if(_flexible_shake<do_virial, b>
+      if(_flexible_shake<B, V>
 	 (topo, conf, convergence, flex_len, skip_now, skip_next,
 	  dt,
 	  periodicity, tolerance, true)
@@ -703,12 +718,13 @@ static int _flexible_solute(topology::Topology & topo,
 			 "Flexible_Constraint::solute",
 			 io::message::error);
 	std::cout << "Flexible SHAKE failure in solute!" << std::endl;
-	return E_SHAKE_FAILURE_SOLUTE;
+	error = E_SHAKE_FAILURE_SOLUTE;
+	return;
       }
     }
     else{
       // exact algorithm
-      if(_exact_flexible_shake<do_virial, b>
+      if(_exact_flexible_shake<B, V>
 	 (topo, conf, convergence, flex_len, force,
 	  dt, periodicity, tolerance)
 	 ){
@@ -716,7 +732,8 @@ static int _flexible_solute(topology::Topology & topo,
 			 "Flexible_Constraint::solute",
 			 io::message::error);
 	std::cout << "Exact Flexible SHAKE failure in solute!" << std::endl;
-	return E_SHAKE_FAILURE_SOLUTE;
+	error =  E_SHAKE_FAILURE_SOLUTE;
+	return;
       }
     }
     
@@ -724,7 +741,8 @@ static int _flexible_solute(topology::Topology & topo,
       io::messages.add("Flexible SHAKE error. too many iterations",
 		       "Flexible_Constraint::solute",
 		       io::message::error);
-      return E_SHAKE_FAILURE_SOLUTE;
+      error =  E_SHAKE_FAILURE_SOLUTE;
+      return;
     }
 
     skip_now = skip_next;
@@ -736,15 +754,14 @@ static int _flexible_solute(topology::Topology & topo,
 
   timing += util::now() - start;
 
-  return 0;
+  error = 0;
 }
 
 
 /**
  * apply the Flexible SHAKE algorithm
  */
-template<math::virial_enum do_virial>
-int algorithm::Flexible_Constraint<do_virial>
+int algorithm::Flexible_Constraint
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
@@ -764,29 +781,11 @@ int algorithm::Flexible_Constraint<do_virial>
     DEBUG(8, "\twe need to flexible shake SOLUTE");
     do_vel = true;
 
-    switch(conf.boundary_type){
-      case math::vacuum:
-	error = _flexible_solute<do_virial, math::vacuum>
-	  (topo, conf, sim, parameter(), m_force, m_nonbonded,
-	   sim.time_step_size(), 
-	   m_max_iterations, m_tolerance, m_timing);
-	break;
-      case math::rectangular:
-	error = _flexible_solute<do_virial, math::rectangular>
-	  (topo, conf, sim, parameter(), m_force, m_nonbonded,
-	   sim.time_step_size(), 
-	   m_max_iterations, m_tolerance, m_timing);
-	break;
-      case math::triclinic:
-	error = _flexible_solute<do_virial, math::triclinic>
-	  (topo, conf, sim, parameter(), m_force, m_nonbonded,
-	   sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_timing);
-	break;
-      default:
-	throw std::string("wrong boundary type");
-	
-    }
+    SPLIT_VIRIAL_BOUNDARY(_flexible_solute,
+			  topo, conf, sim, parameter(), m_force,
+			  m_nonbonded, sim.time_step_size(),
+			  m_max_iterations, m_tolerance, m_timing,
+			  error);
   }
   
   if (error){
@@ -805,8 +804,7 @@ int algorithm::Flexible_Constraint<do_virial>
 		   
 }
 
-template<math::virial_enum do_virial>
-int algorithm::Flexible_Constraint<do_virial>
+int algorithm::Flexible_Constraint
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
@@ -907,7 +905,7 @@ int algorithm::Flexible_Constraint<do_virial>
 /**
  * do one iteration
  */      
-template<math::virial_enum do_virial, math::boundary_enum b>
+template<math::boundary_enum B, math::virial_enum V>
 static int _exact_flexible_shake(topology::Topology const &topo,
 				 configuration::Configuration & conf,
 				 bool & convergence,
@@ -915,7 +913,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
 				 std::vector<bool> & skip_now,
 				 std::vector<bool> & skip_next,
 				 double const dt,
-				 math::Periodicity<b> const & periodicity,
+				 math::Periodicity<B> const & periodicity,
 				 double const tolerance,
 				 interaction::Interaction * nonbonded,
 				 bool do_constraint_force = false)
@@ -1017,7 +1015,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
       }
       */
 
-      if (do_virial == math::atomic_virial){
+      if (V == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
 	    conf.old().virial_tensor(a,aa) +=

@@ -178,10 +178,10 @@ namespace math
      * reference to the system::box.
      */
     Box const & m_box;
-	/**
-	 * half box (rectangular)
-	 */
-	math::Vec m_half_box;
+    /**
+     * half box (rectangular)
+     */
+    math::Vec m_half_box;
     /**
      * the shift vectors.
      */
@@ -266,6 +266,90 @@ namespace math
      */
     Box m_cross_K_L_M;
 
+    /**
+     * the shift vectors.
+     */
+    shift_struct m_shift[27];
+
+  };
+
+  /*
+   * @class Boundary_Implementation
+   * implements the specific functions of
+   * the Periodicity class.
+   */
+  template<>
+  class Boundary_Implementation<math::truncoct>
+  {
+  public:
+    static int const K = 0;
+    static int const L = 1;
+    static int const M = 2;
+
+    /**
+     * @struct shift_struct
+     * the shift vectors.
+     */
+    struct shift_struct
+    {
+      int cell[3];
+      math::Vec pos;
+    };
+
+    /**
+     * Constructor.
+     */
+    Boundary_Implementation(Box const & b);
+    /**
+     * Get the nearest image of v1 in respect to v2 (v1 - v2).
+     */
+    void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    /**
+     * Get the box components of v.
+     */
+    void box_components(Vec const &v, Vec & n)const;
+    /**
+     * get the box.
+     */
+    Box const & box()const;
+    /**
+     * get a box vector.
+     */
+    // Vec const & box(unsigned int const d)const;
+    /**
+     * get a box element.
+     */
+    double box(unsigned int d1, unsigned int d2)const;
+
+    /**
+     * the shifts over the periodic images.
+     */
+    shift_struct & shift(unsigned int i) { assert(false); return m_shift[i]; }
+
+    /**
+     * the shifts over the periodic images.
+     */
+    shift_struct const & shift(unsigned int i)const { assert(false); return m_shift[i]; }
+
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors(unsigned int num_cells[3]) { assert(false); }
+    
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors() { assert(false); }
+
+  protected:
+    /**
+     * reference to the system::box.
+     */
+    Box const & m_box;
+    /**
+     * half box (rectangular)
+     */
+    math::Vec m_half_box;
     /**
      * the shift vectors.
      */

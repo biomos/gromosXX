@@ -8,7 +8,8 @@ xxinclude_HEADERS =	simulation.h \
 
 noinst_LTLIBRARIES =	libgrosimulation.la
 
-libgrosimulation_la_SOURCES =	simulation.cc
+libgrosimulation_la_SOURCES =	simulation.cc \
+				multibath.cc
 
 bin_PROGRAMS =			
 

@@ -13,13 +13,14 @@
 
 #include "prepare_virial.h"
 
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE util
 #define SUBMODULE util
 
-#include <util/debug.h>
 
 template<math::boundary_enum b>
 static void _center_of_mass(topology::Atom_Iterator start, 
@@ -134,18 +135,9 @@ void util::prepare_virial(topology::Topology const & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation const & sim)
 {
-  switch(conf.boundary_type){
-    case math::vacuum :
-      // no virial necessary!!!
-      break;
-    case math::triclinic :
-      _prepare_virial<math::triclinic> (topo, conf, sim);
-      break;
-    case math::rectangular :
-      _prepare_virial<math::rectangular> (topo, conf, sim);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
-  
+
+  if (conf.boundary_type == math::vacuum) return;
+
+  SPLIT_BOUNDARY(_prepare_virial, topo, conf, sim);
+    
 }

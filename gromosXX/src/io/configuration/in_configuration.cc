@@ -9,6 +9,7 @@
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
+#include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
 #include <io/blockinput.h>
@@ -32,10 +33,12 @@ static std::set<std::string> block_read;
  */
 void io::In_Configuration::read(configuration::Configuration &conf, 
 				topology::Topology &topo, 
-				simulation::Parameter const &param)
+				simulation::Simulation & sim)
 {
   if (!quiet)
     std::cout << "\nCONFIGURATION\n";
+
+  simulation::Parameter const & param = sim.param();
   
   // resize the configuration
   conf.resize(topo.num_atoms());
@@ -45,6 +48,24 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   block_read.clear();
   std::vector<std::string> buffer;
+
+  // current time
+  if (param.step.t0 == -1){
+    buffer = m_block["TIMESTEP"];
+    if (!buffer.size()){
+      io::messages.add("Requested time information from TIMESTEP block, "
+		       "but block not found", "in_configuration", io::message::error);
+    }
+    else{
+      _read_time(buffer, sim.time());
+      block_read.insert("TIMESTEP");
+    }
+  }
+  else{
+    buffer = m_block["TIMESTEP"];
+    if (buffer.size())
+      block_read.insert("TIMESTEP");
+  }
 
   // read positions
   buffer = m_block["POSITION"];
@@ -117,7 +138,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     }
     else{
       buffer = m_block["BOX"];
-      if (buffer.size() && param.boundary.boundary == math::rectangular){
+      if (buffer.size() && (param.boundary.boundary == math::rectangular ||
+			    param.boundary.boundary == math::truncoct)){
 	if (!quiet)
 	  std::cout << "\treading BOX...\n";
 	_read_g96_box(conf.current().box, buffer);
@@ -125,7 +147,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 	block_read.insert("BOX");
       }
       else{
-	io::messages.add("no TRICLINICBOX / BOX (for rectangular boundary conditions)\n"
+	io::messages.add("no TRICLINICBOX / BOX (for rectangular/truncoct "
+			 "boundary conditions)\n"
 			 "\tblock found in input configuration",
 			 "in_configuration",
 			 io::message::error);
@@ -147,6 +170,9 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 	break;
       case math::triclinic:
 	std::cout << "PBC            = triclinic\n";
+	break;
+      case math::truncoct:
+	std::cout << "PBC            = truncoct\n";
 	break;
       default:
 	std::cout << "wrong periodic boundary conditions!";
@@ -764,5 +790,30 @@ _read_pscale_jrest(std::vector<std::string> &buffer,
     return false;
   }
   
+  return true;
+}
+
+bool io::In_Configuration::
+_read_time(std::vector<std::string> &buffer,
+	   double & t)
+{
+  DEBUG(8, "read time");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  _lineStream.clear();
+  _lineStream.str(*it);
+
+  int i;
+  _lineStream >> i >> t;
+  
+  if (_lineStream.fail() || t < 0){
+    io::messages.add("Could not read time from configuration file",
+		     "In_Configuration", io::message::error);
+    return false;
+  }
+
   return true;
 }

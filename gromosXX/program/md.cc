@@ -45,10 +45,10 @@ int main(int argc, char *argv[]){
       {
         "topo", "conf", "input", "verb", "pttopo",
         "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-	"bae", "bag", "posres", "jval", "version"
+	"bae", "bag", "posres", "jval", "rep", "version"
       };
     
-    int nknowns = 18;
+    int nknowns = 19;
     
     std::string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
@@ -65,6 +65,7 @@ int main(int argc, char *argv[]){
     usage += "\t[@bag    <block averaged free energy trajectory>]\n";    
     usage += "\t[@posres <position restraints data>]\n";
     usage += "\t[@jval   <jvalue restraints data>]\n";
+    usage += "\t[@rep    <replica exchange final data>]\n";
     usage += "\t[@print  <pairlist/force>]\n";
     usage += "\t[@trp    <print file>]\n";
     usage += "\t[@verb   <[module:][submodule:]level>]\n";
@@ -118,7 +119,7 @@ int main(int argc, char *argv[]){
 
 
     
-    double end_time = sim.param().step.t0 + 
+    double end_time = sim.time() + 
       sim.time_step_size() * sim.param().step.number_of_steps;
     
     std::cout << "==================================================\n"
@@ -223,11 +224,11 @@ void print_title(bool color)
 #else
     std::cout << "\033[1;31m";
 #endif
-    std::cout << "\n\nGromosXX 0.1.3 development\033[22;0m\n\n"
+    std::cout << "\n\nGromosXX 0.2.0 development\033[22;0m\n\n"
 	      << "1st June 2004\n";
   }
   else
-    std::cout << "\n\nGromosXX 0.1.2 development\n\n"
+    std::cout << "\n\nGromosXX 0.2.0 development\n\n"
 	      << "20. January 2004\n";
   
   std::cout << "build date    " << BUILD_DATE << "\n"

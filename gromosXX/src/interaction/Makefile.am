@@ -14,25 +14,15 @@ xxffinclude_HEADERS =		forcefield/forcefield.h \
 
 xxbinclude_HEADERS =		bonded/create_bonded.h \
 				bonded/quartic_bond_interaction.h \
-				bonded/quartic_bond_interaction.cc \
 				bonded/harmonic_bond_interaction.h \
-				bonded/harmonic_bond_interaction.cc \
 				bonded/angle_interaction.h \
-				bonded/angle_interaction.cc \
 				bonded/improper_dihedral_interaction.h \
-				bonded/improper_dihedral_interaction.cc \
 				bonded/dihedral_interaction.h \
-				bonded/dihedral_interaction.cc \
 				bonded/perturbed_quartic_bond_interaction.h \
-				bonded/perturbed_quartic_bond_interaction.cc \
 				bonded/perturbed_harmonic_bond_interaction.h \
-				bonded/perturbed_harmonic_bond_interaction.cc \
 				bonded/perturbed_angle_interaction.h \
-				bonded/perturbed_angle_interaction.cc \
 				bonded/perturbed_improper_dihedral_interaction.h \
-				bonded/perturbed_improper_dihedral_interaction.cc \
-				bonded/perturbed_dihedral_interaction.h \
-				bonded/perturbed_dihedral_interaction.cc
+				bonded/perturbed_dihedral_interaction.h
 
 xxnbinclude_HEADERS =		nonbonded/create_nonbonded.h \
 				nonbonded/interaction_spec.h \
@@ -58,11 +48,9 @@ xxnbinclude_HEADERS =		nonbonded/create_nonbonded.h \
 
 xxspinclude_HEADERS =		special/create_special.h \
 				special/position_restraint_interaction.h \
-				special/position_restraint_interaction.cc \
 				special/jvalue_restraint_interaction.h \
-				special/jvalue_restraint_interaction.cc \
-				special/pscale.h \
-				special/pscale.cc
+				special/pscale.h
+
 
 noinst_LTLIBRARIES =		libgrointeraction.la
 
@@ -80,7 +68,20 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				nonbonded/interaction/perturbed_nonbonded_outerloop.cc \
 				nonbonded/interaction/perturbed_nonbonded_pair.cc \
 				bonded/create_bonded.cc \
-				special/create_special.cc
+				bonded/quartic_bond_interaction.cc \
+				bonded/perturbed_quartic_bond_interaction.cc \
+				bonded/harmonic_bond_interaction.cc \
+				bonded/perturbed_harmonic_bond_interaction.cc \
+				bonded/angle_interaction.cc \
+				bonded/perturbed_angle_interaction.cc \
+				bonded/improper_dihedral_interaction.cc \
+				bonded/perturbed_improper_dihedral_interaction.cc \
+				bonded/dihedral_interaction.cc \
+				bonded/perturbed_dihedral_interaction.cc \
+				special/create_special.cc \
+				special/position_restraint_interaction.cc \
+				special/jvalue_restraint_interaction.cc \
+				special/pscale.cc
 
 bin_PROGRAMS =			
 

@@ -12,8 +12,6 @@
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
 
-#include <math/periodicity.h>
-
 // special interactions
 #include <interaction/interaction_types.h>
 
@@ -28,17 +26,10 @@
 
 #include "create_special.h"
 
-template<math::virial_enum v>
-struct bonded_interaction_spec
-{
-  static const math::virial_enum do_virial = v;
-};
-
-template<typename t_interaction_spec>
-static void _create_special(interaction::Forcefield & ff,
-			    topology::Topology const & topo,
-			    simulation::Parameter const & param,
-			    bool quiet = false)
+int interaction::create_special(interaction::Forcefield & ff,
+				topology::Topology const & topo,
+				simulation::Parameter const & param,
+				bool quiet)
 {
   if (!quiet)
     std::cout << "SPECIAL\n";
@@ -50,8 +41,8 @@ static void _create_special(interaction::Forcefield & ff,
     if(!quiet)
       std::cout <<"\tPosition restraints\n";
 
-    interaction::Position_Restraint_Interaction<t_interaction_spec> *pr =
-      new interaction::Position_Restraint_Interaction<t_interaction_spec>();
+    interaction::Position_Restraint_Interaction *pr =
+      new interaction::Position_Restraint_Interaction();
 
     ff.push_back(pr);
     
@@ -88,8 +79,8 @@ static void _create_special(interaction::Forcefield & ff,
       std::cout << ")\n";
     }
 
-    interaction::Jvalue_Restraint_Interaction<t_interaction_spec> *jr =
-      new interaction::Jvalue_Restraint_Interaction<t_interaction_spec>();
+    interaction::Jvalue_Restraint_Interaction *jr =
+      new interaction::Jvalue_Restraint_Interaction();
     
     ff.push_back(jr);
   }
@@ -102,46 +93,11 @@ static void _create_special(interaction::Forcefield & ff,
       std::cout << "\tscaling based on J-Value restraints\n";
     }
     
-    interaction::Periodic_Scaling<t_interaction_spec> * ps = 
-      new interaction::Periodic_Scaling<t_interaction_spec>(ff, param);
+    interaction::Periodic_Scaling * ps = 
+      new interaction::Periodic_Scaling(ff, param);
 
     ff.push_back(ps);
   }
-  
-}
 
-int interaction::create_special(interaction::Forcefield & ff,
-				topology::Topology const & topo,
-				simulation::Parameter const & param,
-				bool quiet)
-{
-  switch(param.pcouple.virial){
-    case math::no_virial:
-      {
-	// create an interaction spec suitable for the bonded terms
-	_create_special<bonded_interaction_spec<math::no_virial> >
-	  (ff, topo, param, quiet);
-	break;
-      }
-    case math::atomic_virial:
-      {
-	// create an interaction spec suitable for the bonded terms
-	_create_special<bonded_interaction_spec<math::atomic_virial> >
-	  (ff, topo, param, quiet);
-	break;
-      }
-    case math::molecular_virial:
-      {
-	// create an interaction spec suitable for the bonded terms
-	_create_special<bonded_interaction_spec<math::molecular_virial> >
-	  (ff, topo, param, quiet);
-	break;
-      }
-    default:
-      {
-	throw std::string("Wrong virial type requested");
-      }
-  }
   return 0;
 }
-

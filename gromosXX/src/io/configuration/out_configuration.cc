@@ -20,6 +20,9 @@
 
 #include "out_configuration.h"
 
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE io
@@ -44,6 +47,7 @@ io::Out_Configuration::Out_Configuration(std::string title,
 					 std::ostream & os)
   : m_output(os),
     m_final(false),
+    m_replica(false),
     m_every_pos(0),
     m_every_vel(0),
     m_every_force(0),
@@ -70,6 +74,11 @@ io::Out_Configuration::~Out_Configuration()
   if (m_final){
     m_final_conf.flush();
     m_final_conf.close();
+  }
+
+  if (m_replica){
+    m_replica_data.flush();
+    m_replica_data.close();
   }
   
   if (m_every_vel){
@@ -158,6 +167,13 @@ void io::Out_Configuration::init(io::Argument & args,
 			"but no bag argument");
   }
 
+  if (args.count("rep") > 0){
+    m_replica = true;
+    m_replica_data.open(args["rep"].c_str());
+    if (!m_replica_data)
+      throw std::string("could not open replica exchange final data file!");
+  }
+  
 }
 
 void io::Out_Configuration::write(configuration::Configuration &conf,
@@ -545,19 +561,8 @@ void io::Out_Configuration
   
   os << "POSITION\n";
 
-  switch(conf.boundary_type){
-    case math::vacuum :
-      _print_g96_position_bound<math::vacuum>(conf, topo, os, m_width);
-      break;
-    case math::triclinic :
-      _print_g96_position_bound<math::triclinic>(conf, topo, os, m_width);
-      break;
-    case math::rectangular :
-      _print_g96_position_bound<math::rectangular>(conf, topo, os, m_width);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+  SPLIT_BOUNDARY(_print_g96_position_bound,
+		 conf, topo, os, m_width);
   
   os << "END\n";
   
@@ -680,20 +685,8 @@ inline void io::Out_Configuration
   
   os << "POSITIONRED\n";
   DEBUG(7, "configuration boundary type :" << conf.boundary_type);
-  
-  switch(conf.boundary_type){
-    case math::vacuum :
-      _print_g96_positionred_bound<math::vacuum>(conf, topo, os, m_width);
-      break;
-    case math::triclinic :
-      _print_g96_positionred_bound<math::triclinic>(conf, topo, os, m_width);
-      break;
-    case math::rectangular :
-      _print_g96_positionred_bound<math::rectangular>(conf, topo, os, m_width);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+
+  SPLIT_BOUNDARY(_print_g96_positionred_bound, conf, topo, os, m_width);
   
   os << "END\n";
 
@@ -1079,6 +1072,10 @@ void io::Out_Configuration
       m_output << "\n";
     }
   }
+
+  if (m_replica)
+    _print_replica_data(conf, sim, m_replica_data);
+
 }
 
 void io::Out_Configuration
@@ -1205,6 +1202,40 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
        << std::setw(20) << *flexv_it
        << "\n";
   }
+  os << "END\n";
+
+}
+
+void io::Out_Configuration::_print_replica_data(configuration::Configuration const & conf,
+						simulation::Simulation const & sim,
+						std::ostream & os)
+{
+  DEBUG(10, "REPLICA");
+  
+  _print_title(title(), "REPLICA EXCHANGE DATA", os);
+
+  double ekin, ekin_mol, ekin_ir,
+    temp, temp_mol, temp_ir,
+    scale;
+  sim.multibath().calc_totals(conf.old().energies,
+			      ekin, ekin_mol, ekin_ir,
+			      temp, temp_mol, temp_ir,
+			      scale);
+  
+  os << "REPEXDATA\n";
+  
+  os << std::setw(20) << "ID"
+     << std::setw(20) << "T0"
+     << std::setw(20) << "Epot"
+     << std::setw(20) << "T"
+     << "\n";
+
+  os << std::setw(20) << sim.param().replica.ID
+     << std::setw(20) << sim.param().replica.T
+     << std::setw(20) << conf.old().energies.potential_total
+     << std::setw(20) << temp
+     << "\n";
+
   os << "END\n";
 
 }

@@ -15,6 +15,9 @@
 
 #include <configuration/state_properties.h>
 
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE configuration
@@ -22,7 +25,7 @@
 
 template <math::boundary_enum b>
 static void
-_center_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
+_centre_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
 		math::SArray const &mass, math::Vec &com_pos, 
 		math::Matrix &com_e_kin, configuration::Configuration const & conf)
 {
@@ -85,23 +88,10 @@ center_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
 	       math::Vec &com_pos, math::Matrix &com_e_kin)
 {
 
+  configuration::Configuration const & conf = m_configuration;
 
-  switch(m_configuration.boundary_type){
-    case math::vacuum :
-      _center_of_mass<math::vacuum>(start, end, mass, com_pos, com_e_kin,
-				    m_configuration);
-      break;
-    case math::triclinic :
-      _center_of_mass<math::triclinic>(start, end, mass, com_pos, com_e_kin,
-				       m_configuration);
-      break;
-    case math::rectangular :
-      _center_of_mass<math::rectangular>(start, end, mass, com_pos, com_e_kin,
-					 m_configuration);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+  SPLIT_BOUNDARY(_centre_of_mass, start, end, mass, com_pos, com_e_kin,
+		 m_configuration);
   
 }
 

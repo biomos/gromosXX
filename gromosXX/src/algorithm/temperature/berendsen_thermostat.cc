@@ -26,15 +26,32 @@ int algorithm::Berendsen_Thermostat
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  DEBUG(7, "Temperature Scaling!!!!");
-  
   const double start = util::now();
 
-  std::cout.precision(9);
-  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  calc_scaling(topo, conf, sim);
+
+  //--------------------------------
+  // now we have the scaling factors
+  //--------------------------------
+
+  scale(topo, conf, sim);
+
+  m_timing += util::now() - start;
+
+  return 0;
   
-  math::VArray &vel = conf.current().vel;
-  // configuration::Energy &e = conf.current().energies;
+}
+
+void algorithm::Berendsen_Thermostat
+::calc_scaling(topology::Topology & topo,
+	       configuration::Configuration & conf,
+	       simulation::Simulation & sim,
+	       bool immediate)
+{
+  DEBUG(7, "Temperature Scaling!!!!");
+
+  // std::cout.precision(9);
+  // std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
   
   // loop over the baths
   std::vector<simulation::bath_struct>::iterator
@@ -62,8 +79,11 @@ int algorithm::Berendsen_Thermostat
       // divide by zero measure...
       if (free_temp < math::epsilon) free_temp = b_it->temperature;
 
-      b_it->scale = sqrt(1.0 + sim.time_step_size() / b_it->tau *
-			 (b_it->temperature / free_temp - 1));
+      if (immediate)
+	b_it->scale = sqrt(b_it->temperature / free_temp);
+      else
+	b_it->scale = sqrt(1.0 + sim.time_step_size() / b_it->tau *
+			   (b_it->temperature / free_temp - 1));
 
       DEBUG(8, "free T " << free_temp << " dof " << b_it->dof);
       DEBUG(8, "ref. T " << b_it->temperature);
@@ -73,11 +93,16 @@ int algorithm::Berendsen_Thermostat
     else
       b_it->scale = 1;
   } // loop over the baths
+  
+}
 
-  //--------------------------------
-  // now we have the scaling factors
-  //--------------------------------
-
+void algorithm::Berendsen_Thermostat
+::scale(topology::Topology & topo,
+	configuration::Configuration & conf,
+	simulation::Simulation & sim)
+{
+  math::VArray &vel = conf.current().vel;
+  
   // loop over the ranges
   std::vector<simulation::bath_index_struct>::const_iterator
     r_it = sim.multibath().bath_index().begin(),
@@ -155,9 +180,5 @@ int algorithm::Berendsen_Thermostat
     last_atom = r_it->last_atom;
     last_mol = r_it->last_molecule;
   } // loop over baths
-
-  m_timing += util::now() - start;
-
-  return 0;
   
 }

@@ -12,7 +12,6 @@ namespace algorithm
    * @class Lincs
    * implements the lincs algorithm.
    */
-  template<math::virial_enum do_virial>
   class Lincs : public Algorithm
   {
   public:
@@ -66,8 +65,5 @@ namespace algorithm
   };
   
 } //algorithm
-
-// template methods
-#include "lincs.cc"
 
 #endif

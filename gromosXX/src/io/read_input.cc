@@ -151,7 +151,7 @@ int io::read_input(io::Argument const & args,
 		   io::message::notice);
   
   io::In_Configuration ic(conf_file);
-  ic.read(conf, topo, sim.param());
+  ic.read(conf, topo, sim);
   // and initialise
   conf.initialise(topo, sim.param());
     

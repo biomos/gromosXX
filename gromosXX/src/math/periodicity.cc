@@ -6,7 +6,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE math
-
+#define SUBMODULE math
 
 template<math::boundary_enum b>
 math::Periodicity<b>::Periodicity(math::Box const & bb) 
@@ -85,25 +85,28 @@ void math::Periodicity<b>
   Vec cog, o, trans;
   o = 0.0;
   
-  // std::cout.precision(12);
-  // std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-
   for(size_t i=0; i<topo.molecules().size()-1; ++i){
 
     // first atom
     cog = conf.current().pos(topo.molecules()[i]);
       
     // put into box
-    this->nearest_image(cog, o, trans);
-    // cog = o + trans;
-    cog = trans;
+    DEBUG(12, "mol " << i << " cog      = " << math::v2s(cog));
+    this->nearest_image(conf.current().pos(topo.molecules()[i]), o, trans);
+    conf.current().pos(topo.molecules()[i]) = trans;
+    
+    DEBUG(12, "mol " << i << " cog(box) = " << math::v2s(cog));
     
     // put the molecule into the box
-    for(unsigned int a=topo.molecules()[i];
-	a<topo.molecules()[i+1]; ++a){
+    // using nearest image with respect to the previous atom!
+    for(unsigned int a=topo.molecules()[i] + 1;
+	a < topo.molecules()[i+1]; ++a){
 
-      nearest_image(conf.current().pos(a), cog, trans);
-      conf.current().pos(a) = cog + trans;
+      nearest_image(conf.current().pos(a), conf.current().pos(a-1), trans);
+      DEBUG(12, "atom " << a << " pos " << math::v2s(conf.current().pos(a)));
+      DEBUG(12, "\tni = " << math::v2s(trans));
+      
+      conf.current().pos(a) = conf.current().pos(a-1) + trans;
 
     } // loop over atoms in molecule
   

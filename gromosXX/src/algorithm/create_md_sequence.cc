@@ -90,7 +90,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	new algorithm::Berendsen_Thermostat;
       md_seq.push_back(tcoup);
     }
-
+    
     md_seq.push_back(new algorithm::Leap_Frog_Position);
   }
   
@@ -104,6 +104,17 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     // calculate initial temperature
     tcalc->apply(topo, conf, sim);
 
+    // do we scale the initial temperatures?
+    if (sim.param().replica.scale){
+      std::cout << "\tscale initial velocities (replica exchange)\n";
+      
+      algorithm::Berendsen_Thermostat tcoup;
+      tcoup.calc_scaling(topo, conf, sim, true);
+      tcoup.scale(topo, conf, sim);
+
+      tcalc->apply(topo, conf, sim);
+    }
+
     io::print_MULTIBATH_COUPLING(std::cout, sim.multibath());
 
     io::print_DEGREESOFFREEDOM(std::cout, sim.multibath());
@@ -115,7 +126,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
     DEBUG(7, tcalc->name);
     md_seq.push_back(tcalc);
-    
+
   }
   
   // pressure calculation?

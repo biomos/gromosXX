@@ -3,22 +3,38 @@
  * template methods of Perturbed_Improper_Dihedral_Interaction
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+
+#include <math/periodicity.h>
+
+// interactions
+#include <interaction/interaction_types.h>
+#include "improper_dihedral_interaction.h"
+#include "perturbed_improper_dihedral_interaction.h"
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE interaction
-
-#include <util/debug.h>
+#define SUBMODULE bonded
 
 /**
  * calculate angle forces and energies and lambda derivatives.
  */
-template<math::boundary_enum b, typename t_interaction_spec>
+template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_improper_interactions
 ( topology::Topology & topo,
   configuration::Configuration & conf,
   simulation::Simulation & sim,
-  interaction::Improper_Dihedral_Interaction<t_interaction_spec> const & m_interaction)
+  interaction::Improper_Dihedral_Interaction const & m_interaction)
 {
   // this is repeated code from Improper_Dihedral_Interaction !!!
 
@@ -38,7 +54,7 @@ static int _calculate_perturbed_improper_interactions
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, q;
   double energy, e_lambda;
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   for( ; i_it != i_to; ++i_it){
 
@@ -115,7 +131,7 @@ static int _calculate_perturbed_improper_interactions
     force(i_it->k) += fk;
     force(i_it->l) += fl;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (V == math::atomic_virial){
       periodicity.nearest_image(pos(i_it->l), pos(i_it->j), rlj);
 
       for(int a=0; a<3; ++a)
@@ -152,31 +168,17 @@ static int _calculate_perturbed_improper_interactions
   
 }
 
-template<typename t_interaction_spec>
-int interaction::Perturbed_Improper_Dihedral_Interaction<t_interaction_spec>
+int interaction::Perturbed_Improper_Dihedral_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
   const double start = util::now();
   
-  switch(conf.boundary_type){
-    case math::vacuum :
-      return _calculate_perturbed_improper_interactions<math::vacuum, t_interaction_spec>
-	(topo, conf, sim, m_interaction);
-      break;
-    case math::triclinic :
-      return _calculate_perturbed_improper_interactions<math::triclinic, t_interaction_spec>
-	(topo, conf, sim, m_interaction);
-      break;
-    case math::rectangular :
-      return _calculate_perturbed_improper_interactions<math::rectangular, t_interaction_spec>
-	(topo, conf, sim, m_interaction);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+  SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_improper_interactions,
+			topo, conf, sim, m_interaction);
 
   m_timing += util::now() - start;
-  
+
+  return 0;
 }

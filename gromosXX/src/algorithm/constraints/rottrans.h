@@ -12,7 +12,6 @@ namespace algorithm
    * @class Rottrans_Constraints
    * implements roto-translational constraints
    */
-  template<math::virial_enum do_virial>
   class Rottrans_Constraints : public Algorithm
   {
   public:
@@ -46,9 +45,6 @@ namespace algorithm
   };
   
 } //algorithm
-
-// template methods
-#include "rottrans.cc"
 
 #endif
 

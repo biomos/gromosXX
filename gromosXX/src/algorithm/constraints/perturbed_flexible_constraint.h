@@ -13,15 +13,13 @@ namespace algorithm
    * implements the flexible constraint algorithm 
    * for perturbed distance constraints.
    */
-  template<math::virial_enum do_virial>
   class Perturbed_Flexible_Constraint : public Algorithm
   {
   public:
     /**
      * Constructor.
      */
-    Perturbed_Flexible_Constraint(Flexible_Constraint<do_virial> 
-				  const & flexible_constraint);
+    Perturbed_Flexible_Constraint(Flexible_Constraint const & flexible_constraint);
     
     /**
      * Destructor.
@@ -43,13 +41,10 @@ namespace algorithm
 
   protected:
 
-    Flexible_Constraint<do_virial> const & m_flexible_constraint;
+    Flexible_Constraint const & m_flexible_constraint;
     
   };
   
 } //algorithm
-
-// template methods
-#include "perturbed_flexible_constraint.cc"
 
 #endif

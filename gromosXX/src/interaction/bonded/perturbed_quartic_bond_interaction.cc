@@ -3,22 +3,38 @@
  * template methods of Perturbed_Quartic_Bond_Interaction
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+
+#include <math/periodicity.h>
+
+// interactions
+#include <interaction/interaction_types.h>
+#include "quartic_bond_interaction.h"
+#include "perturbed_quartic_bond_interaction.h"
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE interaction
-
-#include <util/debug.h>
+#define SUBMODULE bonded
 
 /**
  * calculate quartic bond forces and energies and lambda derivatives.
  */
-template<math::boundary_enum b, typename t_interaction_spec>
+template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_qbond_interactions
 ( topology::Topology & topo,
   configuration::Configuration & conf,
   simulation::Simulation & sim,
-  interaction::Quartic_Bond_Interaction<t_interaction_spec> const & m_interaction)
+  interaction::Quartic_Bond_Interaction const & m_interaction)
 {
 
   DEBUG(7, "perturbed quartic bond interaction");
@@ -36,7 +52,7 @@ static int _calculate_perturbed_qbond_interactions
 
   double e, e_lambda;
 
-  math::Periodicity<b> periodicity(conf.current().box);
+  math::Periodicity<B> periodicity(conf.current().box);
 
   for( ; b_it != b_to; ++b_it){
 
@@ -80,7 +96,7 @@ static int _calculate_perturbed_qbond_interactions
     force(b_it->i) += f;
     force(b_it->j) -= f;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int c=0; c<3; ++c)
 	  conf.current().virial_tensor(a, c) += 
@@ -134,31 +150,17 @@ static int _calculate_perturbed_qbond_interactions
     
 }
 
-template<typename t_interaction_spec>
-int interaction::Perturbed_Quartic_Bond_Interaction<t_interaction_spec>
+int interaction::Perturbed_Quartic_Bond_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
   const double start = util::now();
   
-  switch(conf.boundary_type){
-    case math::vacuum :
-      return _calculate_perturbed_qbond_interactions<math::vacuum, t_interaction_spec>
-	(topo, conf, sim, m_interaction);
-      break;
-    case math::triclinic :
-      return _calculate_perturbed_qbond_interactions<math::triclinic, t_interaction_spec>
-	(topo, conf, sim, m_interaction);
-      break;
-    case math::rectangular :
-      return _calculate_perturbed_qbond_interactions<math::rectangular, t_interaction_spec>
-	(topo, conf, sim, m_interaction);
-      break;
-    default:
-      throw std::string("Wrong boundary type");
-  }
+  SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_qbond_interactions,
+			topo, conf, sim, m_interaction);
 
   m_timing += util::now() - start;
+  return 0;
   
 }

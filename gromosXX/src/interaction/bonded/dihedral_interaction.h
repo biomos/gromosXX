@@ -22,7 +22,6 @@ namespace interaction
    * @class Dihedral_Interaction
    * calculates the dihedral interactions.
    */
-  template<typename t_interaction_spec>
   class Dihedral_Interaction : public Interaction
   {
   public:
@@ -62,8 +61,5 @@ namespace interaction
   };
   
 } // interaction
-
-// template methods
-#include "dihedral_interaction.cc"
 
 #endif

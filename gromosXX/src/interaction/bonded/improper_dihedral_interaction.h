@@ -22,9 +22,7 @@ namespace interaction
    * @class Improper_Dihedral_Interaction
    * calculates the improper dihedral interactions.
    */
-  template<typename t_interaction_spec>
-  class Improper_Dihedral_Interaction : 
-    public Interaction
+  class Improper_Dihedral_Interaction : public Interaction
   {
   public:
     /**
@@ -58,8 +56,5 @@ namespace interaction
   };
   
 } // interaction
-
-// template methods
-#include "improper_dihedral_interaction.cc"
 
 #endif

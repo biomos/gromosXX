@@ -80,10 +80,10 @@ int algorithm::Remove_COM_Motion
     math::Vec r = conf.current().pos(i) - 
       0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
 
-    DEBUG(10, "pos  " << i << " " 
+    DEBUG(15, "pos  " << i << " " 
 	  << conf.current().pos(i) - 
 	  0.5 * sim.time_step_size() * conf.current().vel(i));
-    DEBUG(10, "posp " << i << " " << r);
+    DEBUG(15, "posp " << i << " " << r);
     
     // should this be pos or r???
     com_L += topo.mass()(i) * 

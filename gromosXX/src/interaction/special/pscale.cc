@@ -4,6 +4,24 @@
  * for periodic scaling
  */
 
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+#include <interaction/forcefield/forcefield.h>
+
+// special interactions
+#include <interaction/interaction_types.h>
+
+#include <interaction/bonded/dihedral_interaction.h>
+#include <interaction/special/pscale.h>
+
+#include <util/template_split.h>
+#include <util/debug.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -12,10 +30,9 @@
 /**
  * Constructor
  */
-template<typename t_interaction_spec>
-interaction::Periodic_Scaling<t_interaction_spec>
+interaction::Periodic_Scaling
 ::Periodic_Scaling(interaction::Forcefield & ff, simulation::Parameter const & param)
-  : interaction::Interaction("Periodic_Scaling"),
+  : Interaction("Periodic_Scaling"),
     m_DI(NULL)
 {
 
@@ -27,7 +44,7 @@ interaction::Periodic_Scaling<t_interaction_spec>
     
     for( ; i_it != i_to; ++i_it){
       
-      if ((m_DI = dynamic_cast<interaction::Dihedral_Interaction<t_interaction_spec> *>(*i_it)))
+      if ((m_DI = dynamic_cast<interaction::Dihedral_Interaction *>(*i_it)))
 	break;
     }
     if (i_it == i_to){
@@ -42,8 +59,7 @@ interaction::Periodic_Scaling<t_interaction_spec>
 /**
  * periodic scaling.
  */
-template<typename t_interaction_spec>
-int interaction::Periodic_Scaling<t_interaction_spec>
+int interaction::Periodic_Scaling
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation &sim)
@@ -131,8 +147,7 @@ int interaction::Periodic_Scaling<t_interaction_spec>
 /**
  * initialisation
  */
-template<typename t_interaction_spec>
-int interaction::Periodic_Scaling<t_interaction_spec>
+int interaction::Periodic_Scaling
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation &sim,
@@ -251,13 +266,11 @@ int interaction::Periodic_Scaling<t_interaction_spec>
 /**
  * scale a force constant
  */
-template<typename t_interaction_spec>
-double interaction::Periodic_Scaling<t_interaction_spec>
+double interaction::Periodic_Scaling
 ::scale(double t, double T, double s)
 {
   double sc = sin(t * math::Pi / T);
   sc *= sc;
   return 1.0 - (1.0 - s) * sc;
 }
-
-    
+  

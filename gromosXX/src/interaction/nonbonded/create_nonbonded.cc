@@ -75,6 +75,10 @@ int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
 	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
 	     << left << "rectangular" << right << "\n";
 	break;
+      case math::truncoct:
+	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
+	     << left << "truncoct" << right << "\n";
+	break;
       case math::triclinic:
 	cout << "\t" << setw(20) << left << "boundary" << setw(30) 
 	     << left << "triclinic" << right << "\n";

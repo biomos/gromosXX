@@ -30,6 +30,8 @@
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
 
+#include <util/error.h>
+
 #include <algorithm/constraints/shake.h>
 #include <algorithm/constraints/perturbed_shake.h>
 #include <algorithm/constraints/lincs.h>
@@ -48,15 +50,20 @@
 #define SUBMODULE constraints
 
 
-template<math::virial_enum do_virial>
-static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
-			       topology::Topology &topo,
-			       configuration::Configuration & conf,
-			       simulation::Simulation & sim,
-			       io::In_Topology &it,
-			       bool quiet)
+int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
+				  topology::Topology &topo,
+				  configuration::Configuration & conf,
+				  simulation::Simulation & sim,
+				  io::In_Topology &it,
+				  bool quiet)
 			       
 {
+  DEBUG(7, "solute:  " << sim.param().constraint.solute.algorithm);
+  DEBUG(7, "solvent: " << sim.param().constraint.solvent.algorithm);
+  DEBUG(7, "\tNTC: " << sim.param().constraint.ntc);
+  DEBUG(7, "rottrans: " << sim.param().rottrans.rottrans);
+  
+
   // CONSTRAINTS
   DEBUG(7, "Constrain solute?");
 
@@ -80,8 +87,8 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	if (!sim.param().perturbation.perturbation){
 	  
 	  // SHAKE
-	  algorithm::Shake<do_virial> * s = 
-	    new algorithm::Shake<do_virial>
+	  algorithm::Shake * s = 
+	    new algorithm::Shake
 	    (sim.param().constraint.solute.shake_tolerance);
 	  it.read_harmonic_bonds(s->parameter());
 	  // s->init(topo, conf, sim, quiet);
@@ -90,8 +97,8 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	}
 	else{
 	  // perturbed shake also calls normal shake...
-	  algorithm::Perturbed_Shake<do_virial> * ps =
-	    new algorithm::Perturbed_Shake<do_virial>
+	  algorithm::Perturbed_Shake * ps =
+	    new algorithm::Perturbed_Shake
 	    (sim.param().constraint.solute.shake_tolerance);
 	  it.read_harmonic_bonds(ps->parameter());
 	  // ps->init(topo, conf, sim, quiet);
@@ -102,8 +109,8 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
       }
     case simulation::constr_lincs:
       {
-	algorithm::Lincs<do_virial> * s =
-	  new algorithm::Lincs<do_virial>;
+	algorithm::Lincs * s =
+	  new algorithm::Lincs;
 	it.read_harmonic_bonds(s->parameter());
 	// s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
@@ -133,8 +140,8 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 			   io::message::error);
 	}
 
-	algorithm::Flexible_Constraint<do_virial> * fs = 
-	  new algorithm::Flexible_Constraint<do_virial>
+	algorithm::Flexible_Constraint * fs = 
+	  new algorithm::Flexible_Constraint
 	  (sim.param().constraint.solute.shake_tolerance, 1000, ff);
 
 	it.read_harmonic_bonds(fs->parameter());
@@ -142,9 +149,13 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	md_seq.push_back(fs);
 
 	if (sim.param().perturbation.perturbation){
+	  
+	  io::messages.add("perturbed flexible constraints uncoupled!",
+			   "create_constraints",
+			   io::message::error);
 
-	  algorithm::Perturbed_Flexible_Constraint<do_virial> * pfc =
-	    new algorithm::Perturbed_Flexible_Constraint<do_virial>(*fs);
+	  algorithm::Perturbed_Flexible_Constraint * pfc =
+	    new algorithm::Perturbed_Flexible_Constraint(*fs);
 	  // pfc->init(topo, conf, sim, quiet);
 	  md_seq.push_back(pfc);
 
@@ -173,8 +184,8 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
       case simulation::constr_shake:
 	{
 	  // SHAKE
-	  algorithm::Shake<do_virial> * s = 
-	    new algorithm::Shake<do_virial>
+	  algorithm::Shake * s = 
+	    new algorithm::Shake
 	    (sim.param().constraint.solvent.shake_tolerance);
 	  it.read_harmonic_bonds(s->parameter());
 	  // s->init(topo, conf, sim, quiet);
@@ -184,8 +195,8 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	}
       case simulation::constr_lincs:
 	{
-	  algorithm::Lincs<do_virial> * s =
-	    new algorithm::Lincs<do_virial>;
+	  algorithm::Lincs * s =
+	    new algorithm::Lincs;
 	  it.read_harmonic_bonds(s->parameter());
 	  // s->init(topo, conf, sim, quiet);
 	  md_seq.push_back(s);
@@ -210,52 +221,11 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
   if (sim.param().rottrans.rottrans){
     DEBUG(8, "creating roto-translational constraints");
     
-    algorithm::Rottrans_Constraints<do_virial> * rtc =
-      new algorithm::Rottrans_Constraints<do_virial>();
+    algorithm::Rottrans_Constraints * rtc =
+      new algorithm::Rottrans_Constraints();
     md_seq.push_back(rtc);
   }
 
   return 0;
 }
 
-
-int algorithm::create_constraints(algorithm::Algorithm_Sequence & md_seq,
-				  topology::Topology & topo,
-				  configuration::Configuration & conf,
-				  simulation::Simulation & sim,
-				  io::In_Topology &it,
-				  bool quiet)
-{
-
-  DEBUG(7, "solute:  " << sim.param().constraint.solute.algorithm);
-  DEBUG(7, "solvent: " << sim.param().constraint.solvent.algorithm);
-  DEBUG(7, "\tNTC: " << sim.param().constraint.ntc);
-  DEBUG(7, "rottrans: " << sim.param().rottrans.rottrans);
-  
-  switch(sim.param().pcouple.virial){
-    case math::no_virial:
-    case math::molecular_virial:
-      {
-	DEBUG(8, "\twith no virial");
-	
-	return _create_constraints<math::no_virial>(md_seq, topo, conf, sim, it, quiet);
-      }
-    case math::atomic_virial:
-      {
-	DEBUG(8, "\twith atomic virial");
-
-	if (sim.param().constraint.solute.algorithm == simulation::constr_lincs){
-	  io::messages.add("atomic virial not implemented for lincs",
-			   "create_constraints",
-			   io::message::error);
-	}
-	
-	return _create_constraints<math::atomic_virial>(md_seq, topo, conf, sim, it, quiet);
-      }
-    default:
-      io::messages.add("wrong virial type", "create_constraints",
-		       io::message::error);
-      return -1;
-  }
-  
-}

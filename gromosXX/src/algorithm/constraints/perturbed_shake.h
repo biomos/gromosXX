@@ -12,8 +12,7 @@ namespace algorithm
    * @class Perturbed_Shake
    * implements the shake algorithm for perturbed distance constraints.
    */
-  template<math::virial_enum do_virial>
-  class Perturbed_Shake : public Shake<do_virial>
+  class Perturbed_Shake : public Shake
   {
   public:
     /**
@@ -49,7 +48,7 @@ namespace algorithm
     /**
      * do one iteration
      */
-    template<math::boundary_enum b>
+    template<math::boundary_enum B, math::virial_enum V>
     int perturbed_shake_iteration(topology::Topology const &topo,
 				  configuration::Configuration & conf,
 				  bool & convergence,
@@ -59,7 +58,7 @@ namespace algorithm
 				  std::vector<topology::perturbed_two_body_term_struct>
 				  const & constr,
 				  double dt,
-				  math::Periodicity<b> const & periodicity,
+				  math::Periodicity<B> const & periodicity,
 				  bool do_constraint_force = false,
 				  unsigned int force_offset = 0);
     
@@ -67,25 +66,24 @@ namespace algorithm
     /**
      * shake (perturbed) solute
      */
-    template<math::boundary_enum b>
-    int perturbed_solute(topology::Topology const & topo,
-			 configuration::Configuration & conf,
-			 double dt, int max_iterations);
+    template<math::boundary_enum B, math::virial_enum V>
+    void perturbed_solute(topology::Topology const & topo,
+			  configuration::Configuration & conf,
+			  double dt, int max_iterations,
+			  int & error);
 
     // overwrites the other one, as g++ seems unable to compile this...!!!
     /**
      * shake solvent (not perturbed)
      */
-    template<math::boundary_enum b>
-    int solvent(topology::Topology const & topo,
-		configuration::Configuration & conf,
-		double dt, int const max_iterations);
+    template<math::boundary_enum B, math::virial_enum V>
+    void solvent(topology::Topology const & topo,
+		 configuration::Configuration & conf,
+		 double dt, int const max_iterations,
+		 int & error);
 
   };
   
 } //algorithm
-
-// template methods
-#include "perturbed_shake.cc"
 
 #endif

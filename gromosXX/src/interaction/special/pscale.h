@@ -14,7 +14,6 @@ namespace interaction
    * @class Periodic_Scaling
    * implements periodic scaling (of topology parameters)
    */
-  template<typename t_interaction_spec>
   class Periodic_Scaling : public interaction::Interaction
   {
   public:
@@ -23,7 +22,7 @@ namespace interaction
      */
     Periodic_Scaling(interaction::Forcefield & ff,
 		     simulation::Parameter const & param);
-
+    
     /**
      * Destructor.
      */
@@ -55,14 +54,11 @@ namespace interaction
     /**
      * Dihedral interaction
      */
-    interaction::Dihedral_Interaction<t_interaction_spec> * m_DI;
+    interaction::Dihedral_Interaction * m_DI;
 
   };
   
 } // interaction
-
-// template methods
-#include "pscale.cc"
 
 #endif
 

@@ -22,7 +22,6 @@ namespace interaction
    * @class Angle_Interaction
    * calculates the angle interactions.
    */
-  template<typename t_interaction_spec>
   class Angle_Interaction : public Interaction
   {
   public:
@@ -56,8 +55,5 @@ namespace interaction
   };
   
 } // interaction
-
-// template methods
-#include "angle_interaction.cc"
 
 #endif

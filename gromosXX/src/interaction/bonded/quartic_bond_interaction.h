@@ -22,7 +22,6 @@ namespace interaction
    * @class Quartic_bond_interaction
    * calculates the bond interactions (quartic).
    */
-  template<typename t_interaction_spec>
   class Quartic_Bond_Interaction : public Interaction
   {
   public:
@@ -50,16 +49,11 @@ namespace interaction
      */
     std::vector<bond_type_struct> & parameter() { return m_parameter; }
     
-    
-      
   protected:
     std::vector<bond_type_struct> m_parameter;
     
   };
   
 } // interaction
-
-// template methods
-#include "quartic_bond_interaction.cc"
 
 #endif

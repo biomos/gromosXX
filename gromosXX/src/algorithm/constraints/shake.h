@@ -12,7 +12,6 @@ namespace algorithm
    * @class Shake
    * implements the shake algorithm.
    */
-  template<math::virial_enum do_virial>
   class Shake : public Algorithm
   {
   public:
@@ -96,7 +95,7 @@ namespace algorithm
      */
     double m_solvent_timing;
 
-    template<math::boundary_enum b>
+    template<math::boundary_enum B, math::virial_enum V>
     int shake_iteration(topology::Topology const &topo,
 			configuration::Configuration & conf,
 			bool & convergence,
@@ -105,25 +104,24 @@ namespace algorithm
 			std::vector<bool> &skip_next,
 			std::vector<topology::two_body_term_struct> const & constr,
 			double dt,
-			math::Periodicity<b> const & periodicity,
+			math::Periodicity<B> const & periodicity,
 			bool do_constraint_force = false, unsigned int force_offset = 0);
     
-    template<math::boundary_enum b>
-    int solute(topology::Topology const & topo,
-	       configuration::Configuration & conf,
-	       double dt, int const max_iterations);
-    
-    template<math::boundary_enum b>
-    int solvent(topology::Topology const & topo,
+    template<math::boundary_enum B, math::virial_enum V>
+    void solute(topology::Topology const & topo,
 		configuration::Configuration & conf,
-		double dt, int const max_iterations);
+		double dt, int const max_iterations,
+		int & error);
+    
+    template<math::boundary_enum B, math::virial_enum V>
+    void solvent(topology::Topology const & topo,
+		 configuration::Configuration & conf,
+		 double dt, int const max_iterations,
+		 int & error);
     
 
   };
   
 } //algorithm
-
-// template methods
-#include "shake.cc"
 
 #endif

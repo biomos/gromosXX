@@ -870,6 +870,36 @@ namespace simulation
        */
       bool rottrans;
     } /** rottrans parameters */ rottrans;
+
+    /**
+     * @struct replica_struct
+     * information to do replica-exchange simulations
+     */
+    struct replica_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - ID 0
+       * - T 0
+       * - scale 0
+       */
+      replica_struct() : ID(0), T(0.0), scale(0)
+      {
+      }
+      /**
+       * job ID
+       */
+      int ID;
+      /**
+       * temperature
+       */
+      double T;
+      /**
+       * scale initial velocities to T?
+       */
+      int scale;
+    } /** replica exchange parameters */ replica;
     
   };
   

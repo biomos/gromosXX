@@ -147,7 +147,7 @@ int util::create_simulation(std::string topo,
 
     io::In_Configuration ic(conf_file);
     ic.quiet = quiet;
-    ic.read(sim.conf, sim.topo, sim.sim.param());
+    ic.read(sim.conf, sim.topo, sim.sim);
     sim.conf.initialise(sim.topo, sim.sim.param());
     
   }
