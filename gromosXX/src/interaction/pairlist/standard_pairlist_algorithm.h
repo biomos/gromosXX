@@ -46,6 +46,12 @@ namespace interaction
 				simulation::chargegroup_iterator const &cg2);
 
     template<typename t_nonbonded_interaction>
+    void do_cg_interaction_inv_excl(t_simulation & sim,
+				    t_nonbonded_interaction &nonbonded_interaction,
+				    simulation::chargegroup_iterator const &cg1,
+				    simulation::chargegroup_iterator const &cg2);
+
+    template<typename t_nonbonded_interaction>
     void do_cg_interaction_intra(t_simulation & sim,
 				 t_nonbonded_interaction &nonbonded_interaction,
 				 simulation::chargegroup_iterator const &cg1);

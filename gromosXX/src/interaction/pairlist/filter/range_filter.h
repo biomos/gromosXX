@@ -61,8 +61,10 @@ namespace interaction
 				size_t const j,
 				simulation::chargegroup_iterator const &it_i,
 				simulation::chargegroup_iterator const &it_j,
-				typename Chargegroup_Grid<t_simulation>::
-				shift_struct const & shift);
+				typename math::Boundary_Implementation
+				<t_simulation::system_type::boundary_type>
+				::shift_struct const & shift);
+
     /**
      * check the distance between two atoms.
      * add to nonbonded_interaction longrange, or filter.

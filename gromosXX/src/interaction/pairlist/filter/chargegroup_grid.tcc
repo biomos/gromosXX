@@ -21,6 +21,7 @@ interaction::Chargegroup_Grid<t_simulation>
 		   double const cutoff)
   : m_periodicity(periodicity)
 {
+
   DEBUG(8, "initialize grid");
   DEBUG(8, "\tcells\t\tsize");
   for(size_t d=0; d<3; ++d){
@@ -38,58 +39,43 @@ interaction::Chargegroup_Grid<t_simulation>
   }
 
   // initialize the shift vectors
-  {
-    int index=0;
-    for(int k=-1; k<2; ++k){
-      for(int l=-1; l<2; ++l){
-	for(int m=-1; m<2; ++m, ++index){
+  // should probably go to boundary implementation
+  m_periodicity.recalc_shift_vectors(m_num_cells);
 
-	  m_shift[index].cell[0] = k*m_num_cells[0];
-	  m_shift[index].cell[1] = l*m_num_cells[1];
-	  m_shift[index].cell[2] = m*m_num_cells[2];
+  // get the loop bounds (to create the mask)
 
-	  m_shift[index].pos = 
-	    k*m_periodicity.box()(0) +
-	    l*m_periodicity.box()(1) +
-	    m*m_periodicity.box()(2);
-
-	}
-      }
-    }
-  }
-
-  // loop corrections
   // K direction
-  double m_k = sqrt(dot(m_periodicity.box()(0), m_periodicity.box()(0)));
   // L x M
   math::Vec cr = math::cross(m_periodicity.box()(1), m_periodicity.box()(2));
   // unit (L x M)
   cr = cr / sqrt(math::dot(cr, cr));
   // projection of K on unit vector (L x M)
-  int cells_k = int(cutoff / fabs(dot(m_periodicity.box()(0), cr)) * m_num_cells[0]) + 1;
+  int cells_k = int(cutoff / fabs(dot(m_periodicity.box()(0), cr)) 
+		    * m_num_cells[0]) + 1;
   DEBUG(8, "cells inside cutoff (k) " << cells_k);
 
   // L direction
-  double m_l = sqrt(dot(m_periodicity.box()(1), m_periodicity.box()(1)));
   // K x M
   cr = math::cross(m_periodicity.box()(2), m_periodicity.box()(0));
   // unit (K x M)
   cr = cr / sqrt(math::dot(cr, cr));
   // projection of L on unit vector (K x M)
-  int cells_l = int(cutoff / fabs(dot(m_periodicity.box()(1), cr)) * m_num_cells[1]) + 1;
+  int cells_l = int(cutoff / fabs(dot(m_periodicity.box()(1), cr))
+		    * m_num_cells[1]) + 1;
   DEBUG(8, "cells inside cutoff (l) " << cells_l);
 
   // M direction
-  double m_m = sqrt(dot(m_periodicity.box()(2), m_periodicity.box()(2)));
   // K x L
   cr = math::cross(m_periodicity.box()(0), m_periodicity.box()(1));
   // unit (K x L)
   cr = cr / sqrt(math::dot(cr, cr));
   // projection of M on unit vector (K x L)
-  int cells_m = int(cutoff / fabs(dot(m_periodicity.box()(2), cr)) * m_num_cells[2]) + 1;
+  int cells_m = int(cutoff / fabs(dot(m_periodicity.box()(2), cr))
+		    * m_num_cells[2]) + 1;
   DEBUG(8, "cells inside cutoff (m) " << cells_m);
 
   // get the longest diagonal:
+  // should also go out! (boundary implementation or box...
   math::Vec diag1 = m_periodicity.box()(0) / int(m_num_cells[0]) +
     m_periodicity.box()(1) / int(m_num_cells[1]) +
     m_periodicity.box()(2) / int(m_num_cells[2]);
@@ -223,7 +209,7 @@ interaction::Chargegroup_Grid<t_simulation>
   }
 
   DEBUG(8, "ratio: " << in << " / " << out);
-  print_mask();
+  // print_mask();
   
 }
 
@@ -255,14 +241,6 @@ interaction::Chargegroup_Grid<t_simulation>
 ::grid()
 {
   return m_grid;
-}
-
-template<typename t_simulation>
-inline typename interaction::Chargegroup_Grid<t_simulation>::shift_struct &
-interaction::Chargegroup_Grid<t_simulation>
-::shift(size_t const i)
-{
-  return m_shift[i];
 }
 
 template<typename t_simulation>
@@ -376,8 +354,6 @@ interaction::Cell_Cell_Iterator<t_simulation, periodic>
     m_eol = ! (++(*this));
     return;
   }
-  
-
 }
 
 template<typename t_simulation, bool periodic>

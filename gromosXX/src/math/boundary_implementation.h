@@ -21,7 +21,17 @@ namespace math
     static int const K = 0;
     static int const L = 1;
     static int const M = 2;
-    
+
+    /**
+     * @struct shift_struct
+     * the shift vectors.
+     */
+    struct shift_struct
+    {
+      int cell[3];
+      math::Vec pos;
+    };
+
     /**
      * Constructor.
      * @param boundary is the boundary condition.
@@ -71,6 +81,16 @@ namespace math
      */
     double volume()const;
 
+    /**
+     * the shifts over the periodic images.
+     */
+    shift_struct & shift(size_t const i);
+
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors(size_t const num_cells[3]);
+
   protected:
     /**
      * reference to the system::box.
@@ -92,6 +112,11 @@ namespace math
      */
     Box m_cross_K_L_M;
 
+    /**
+     * the shift vectors.
+     */
+    shift_struct m_shift[27];
+
   };
   
   /**
@@ -105,6 +130,17 @@ namespace math
     static int const K = 0;
     static int const L = 1;
     static int const M = 2;
+
+    /**
+     * @struct shift_struct
+     * the shift vectors.
+     */
+    struct shift_struct
+    {
+      int cell[3];
+      math::Vec pos;
+    };
+
     /**
      * Constructor.
      * @param boundary is the boundary condition.
@@ -154,6 +190,16 @@ namespace math
      */
     double volume()const;
 
+    /**
+     * the shifts over the periodic images.
+     */
+    shift_struct & shift(size_t const i);
+
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors(size_t const num_cells[3]);
+
   protected:
     /**
      * reference to the system::box.
@@ -163,6 +209,12 @@ namespace math
      * the box volume.
      */
     double m_volume;
+
+    /**
+     * the shift vectors.
+     */
+    shift_struct m_shift[27];
+
   };
   
   /**
@@ -176,6 +228,17 @@ namespace math
     static int const K = 0;
     static int const L = 1;
     static int const M = 2;
+
+    /**
+     * @struct shift_struct
+     * the shift vectors.
+     */
+    struct shift_struct
+    {
+      int cell[3];
+      math::Vec pos;
+    };
+
     /**
      * Constructor.
      * @param boundary is the boundary condition.
@@ -226,6 +289,16 @@ namespace math
      */
     double volume()const;
 
+    /**
+     * the shifts over the periodic images.
+     */
+    shift_struct & shift(size_t const i);
+
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors(size_t const num_cells[3]);
+
   protected:
     /**
      * reference to the system::box.
@@ -242,6 +315,11 @@ namespace math
      * -(K*L) / vol
      */
     Box m_cross_K_L_M;
+
+    /**
+     * the shift vectors.
+     */
+    shift_struct m_shift[27];
 
   };
   

@@ -21,10 +21,20 @@ namespace interaction
   public:
     struct mask_struct
     {
+      /**
+       * mask: k
+       */
       std::pair<int, int> k;
+      /**
+       * mask: l
+       */
       std::vector<std::pair<int, int> > l;
+      /**
+       * mask: m
+       */
       std::vector<std::vector<std::pair<int, int> > > m;
-      
+
+      // accessors...
       int lower_k()const 
       {
 	return k.first;
@@ -64,26 +74,33 @@ namespace interaction
       
     };
 
-    struct shift_struct
-    {
-      int cell[3];
-      math::Vec pos;
-    };
-
+    /**
+     * Constructor.
+     */
     Chargegroup_Grid(math::Periodicity<
 		     t_simulation::system_type::boundary_type> 
 		     & periodicity,
 		     double const size,
 		     double const cutoff);
 
+    /**
+     * the (chargegroup) grid.
+     */
     std::vector<std::vector<std::vector<std::vector<size_t> > > > & grid();
 
-    shift_struct & shift(size_t const i);
-
+    /**
+     * add a point to the grid
+     */
     void add(math::Vec & v, size_t i);
  
+    /**
+     * print the mask
+     */
     void print_mask();
    
+    /**
+     * the number of cells in each direction
+     */
     void num_cells(int cells[3]);
     
   protected:
@@ -108,11 +125,6 @@ namespace interaction
      * the MASK!
      */
     mask_struct m_mask;
-
-    /**
-     * the shift vectors.
-     */
-    shift_struct m_shift[27];
     
     friend class Cell_Cell_Iterator<t_simulation, true>;
     friend class Cell_Cell_Iterator<t_simulation, false>;

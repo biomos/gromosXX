@@ -26,6 +26,10 @@ namespace interaction
      */
     bool excluded_solute_pair(t_simulation const &sim,
 			      size_t const i, size_t const j);
+
+    bool inverse_excluded_solute_pair(t_simulation const &sim,
+				      size_t const i, size_t const j);
+    
   };
   
 } // interaction

@@ -148,8 +148,9 @@ interaction::Range_Filter<t_simulation, t_nonbonded_spec>
 			 size_t const i, size_t const j,
 			 simulation::chargegroup_iterator const & it_i,
 			 simulation::chargegroup_iterator const & it_j,
-			 typename interaction::Chargegroup_Grid<t_simulation>::
-			 shift_struct const & shift)
+			 typename math::Boundary_Implementation
+			 <t_simulation::system_type::boundary_type>
+			 ::shift_struct const & shift)
 {
   DEBUG(11, "Range_Filter::range_chargegroup_pair (shift) " << i << " - " << j);
   
@@ -160,12 +161,8 @@ interaction::Range_Filter<t_simulation, t_nonbonded_spec>
   
   p = m_cg_cog(i) + shift.pos - m_cg_cog(j);
   
-  // sim.system().periodicity().
-  // nearest_image(m_cg_cog(i), m_cg_cog(j), p);
- 
   // the distance
   const double d = dot(p, p);
-
   DEBUG(11, "\tdistance: " << d);
 
   if (d > m_cutoff_long_2){        // OUTSIDE: filter
@@ -179,7 +176,6 @@ interaction::Range_Filter<t_simulation, t_nonbonded_spec>
   }
 
   DEBUG(11, "cg pair " << i << " - " << j << " long range");  
-    
   // LONGRANGE: interactions and filter
 
   simulation::Atom_Iterator a1 = it_i.begin(),

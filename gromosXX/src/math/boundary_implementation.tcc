@@ -117,6 +117,73 @@ inline void math::Boundary_Implementation<math::triclinic>
 
 template<math::boundary_enum b>
 inline void math::Boundary_Implementation<b>
+::recalc_shift_vectors(size_t const num_cells[3])
+{
+  int index=0;
+  for(int k=-1; k<2; ++k){
+    for(int l=-1; l<2; ++l){
+      for(int m=-1; m<2; ++m, ++index){
+
+	m_shift[index].cell[0] = k * num_cells[0];
+	m_shift[index].cell[1] = l * num_cells[1];
+	m_shift[index].cell[2] = m * num_cells[2];
+
+	m_shift[index].pos = 
+	  k * box()(0) +
+	  l * box()(1) +
+	  m * box()(2);
+	
+      }
+    }
+  }  
+}
+
+inline void math::Boundary_Implementation<math::triclinic>
+::recalc_shift_vectors(size_t const num_cells[3])
+{
+  int index=0;
+  for(int k=-1; k<2; ++k){
+    for(int l=-1; l<2; ++l){
+      for(int m=-1; m<2; ++m, ++index){
+
+	m_shift[index].cell[0] = k * num_cells[0];
+	m_shift[index].cell[1] = l * num_cells[1];
+	m_shift[index].cell[2] = m * num_cells[2];
+
+	m_shift[index].pos = 
+	  k * box()(0) +
+	  l * box()(1) +
+	  m * box()(2);
+	
+      }
+    }
+  }  
+}
+
+inline void math::Boundary_Implementation<math::vacuum>
+::recalc_shift_vectors(size_t const num_cells[3])
+{
+  int index=0;
+  for(int k=-1; k<2; ++k){
+    for(int l=-1; l<2; ++l){
+      for(int m=-1; m<2; ++m, ++index){
+
+	m_shift[index].cell[0] = 0;
+	m_shift[index].cell[1] = 0;
+	m_shift[index].cell[2] = 0;
+
+	m_shift[index].pos = 
+	  0 * box()(0) +
+	  0 * box()(1) +
+	  0 * box()(2);
+	
+      }
+    }
+  }  
+}
+
+template<math::boundary_enum b>
+inline void math::Boundary_Implementation<b>
 ::boundary_condition(boundary_enum const boundary)
 {
   m_boundary = boundary;
@@ -252,5 +319,25 @@ inline void math::Boundary_Implementation<math::triclinic>
 
 }
 
-  
-  
+template<math::boundary_enum b>
+inline typename math::Boundary_Implementation<b>::shift_struct &
+math::Boundary_Implementation<b>
+::shift(size_t const i)
+{
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::vacuum>::shift_struct &
+math::Boundary_Implementation<math::vacuum>
+::shift(size_t const i)
+{
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::triclinic>::shift_struct &
+math::Boundary_Implementation<math::triclinic>
+::shift(size_t const i)
+{
+  return m_shift[i];
+}
+

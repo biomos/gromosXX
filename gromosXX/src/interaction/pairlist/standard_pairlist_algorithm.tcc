@@ -172,6 +172,43 @@ template<typename t_simulation, typename t_nonbonded_spec>
 template<typename t_nonbonded_interaction>
 inline void
 interaction::Standard_Pairlist_Algorithm<t_simulation, t_nonbonded_spec>
+::do_cg_interaction_inv_excl(t_simulation & sim,
+			     t_nonbonded_interaction &nonbonded_interaction,
+			     simulation::chargegroup_iterator const & cg1,
+			     simulation::chargegroup_iterator const & cg2)
+{
+  simulation::Atom_Iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+
+  DEBUG(11, "do_cg_interaction_excl " << *a1);
+  
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::Atom_Iterator
+	  a2 = cg2.begin(),
+	  a2_to = cg2.end();
+	a2 != a2_to; ++a2){
+
+      if (t_nonbonded_spec::do_atomic_cutoff){
+	// filter out interactions based on chargegroup distances
+	if (range_atom_pair(sim, nonbonded_interaction, *a1, *a2))
+	  continue;
+      }
+
+      // check it is not excluded
+      if (inverse_excluded_solute_pair(sim, *a1, *a2)){
+	continue;
+      }
+
+      nonbonded_interaction.add_shortrange_pair(sim, *a1, *a2);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
+}
+
+template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_nonbonded_interaction>
+inline void
+interaction::Standard_Pairlist_Algorithm<t_simulation, t_nonbonded_spec>
 ::do_cg_interaction_intra(t_simulation & sim,
 			  t_nonbonded_interaction & nonbonded_interaction,
 			  simulation::chargegroup_iterator const & cg1)
