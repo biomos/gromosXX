@@ -3,7 +3,7 @@
  * the main md program
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -82,8 +82,8 @@ int main(int argc, char *argv[]){
 #else
       std::cout << "\033[1;31m";
 #endif
-      std::cout << "\n\nGromosXX 0.1.2 development\033[22;0m\n\n"
-		<< "20. January 2004\n";
+      std::cout << "\n\nGromosXX 0.1.3 development\033[22;0m\n\n"
+		<< "1st June 2004\n";
     }
     else
       std::cout << "\n\nGromosXX 0.1.2 development\n\n"
@@ -157,11 +157,12 @@ int main(int argc, char *argv[]){
       traj.block_averaged_energy(args["bae"], sim.param().write.block_average);
     else if (sim.param().write.block_average && sim.param().write.energy)
       throw std::string("write block averaged energy but no bae argument");
-    if (args.count("bag") > 0)
-      traj.block_averaged_free_energy(args["bag"], sim.param().write.block_average);
-    else if (sim.param().write.block_average && sim.param().write.free_energy)
-      throw std::string("write block averaged free energy but no bag argument");
-
+	if (sim.param().perturbation.perturbation){
+			if (args.count("bag") > 0)
+				traj.block_averaged_free_energy(args["bag"], sim.param().write.block_average);
+			else if (sim.param().write.block_average && sim.param().write.free_energy)
+				throw std::string("write block averaged free energy but no bag argument");
+	}
     std::cout << "\nMESSAGES FROM INITIALIZATION\n";
     if (io::messages.display(std::cout) >= io::message::error){
       // exit
