@@ -83,8 +83,10 @@ namespace io{
     if(args.find(last)!=args.end())
       args.erase(args.lower_bound(last), args.upper_bound(last));
 
-    if(!isKnown(last, args.d_known))
-      throw std::string(args.d_usage);
+    if(!isKnown(last, args.d_known)) {
+      std::string errmsg = "Unknown argument: " + last + "\n";
+      throw std::string(errmsg + args.d_usage);
+    }
   
     while(is>>str){
       if(str[0] == '@'){
