@@ -1,5 +1,5 @@
 /**
- *  grid_pairlist_algorithm.tcc
+ *  grid_pairlist_algorithm.cc
  * create an atomic pairlist with a
  * chargegroup or an atom based cut-off criterion.
  * using a grid.

@@ -1,5 +1,5 @@
 /**
- * @file pairlist.tcc
+ * @file pairlist.cc
  * inline methods of Pairlist
  */
 

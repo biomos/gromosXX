@@ -131,6 +131,6 @@ namespace interaction
   
 } // interaction
 
-#include "range_filter.tcc"
+#include "range_filter.cc"
 
 #endif

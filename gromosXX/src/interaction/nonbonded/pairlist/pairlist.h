@@ -100,6 +100,6 @@ namespace interaction
   
 } // interaction
 
-#include "pairlist.tcc"
+#include "pairlist.cc"
 
 #endif

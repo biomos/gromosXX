@@ -159,6 +159,6 @@ namespace interaction
   
 }
 
-#include "chargegroup_grid.tcc"
+#include "chargegroup_grid.cc"
 
 #endif

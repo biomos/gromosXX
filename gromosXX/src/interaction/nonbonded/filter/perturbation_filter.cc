@@ -1,5 +1,5 @@
 /**
- * perturbation_filter.tcc
+ * perturbation_filter.cc
  * filter for perturbed atoms.
  */
 

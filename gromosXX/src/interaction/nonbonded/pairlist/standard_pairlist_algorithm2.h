@@ -75,7 +75,7 @@ namespace interaction
 } // interaction
 
 
-#include "standard_pairlist_algorithm2.tcc"
+#include "standard_pairlist_algorithm2.cc"
 
 #endif
 

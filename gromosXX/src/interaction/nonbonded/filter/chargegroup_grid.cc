@@ -1,5 +1,5 @@
 /**
- * @file chargegroup_grid.tcc
+ * @file chargegroup_grid.cc
  * create a grid for the
  * chargegroups (or anything...)
  */

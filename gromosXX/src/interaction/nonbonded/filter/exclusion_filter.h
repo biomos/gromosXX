@@ -37,6 +37,6 @@ namespace interaction
   
 } // interaction
 
-#include "exclusion_filter.tcc"
+#include "exclusion_filter.cc"
 
 #endif

@@ -91,6 +91,6 @@ namespace interaction
   };
 } // interaction
 
-#include "standard_pairlist_algorithm.tcc"
+#include "standard_pairlist_algorithm.cc"
 
 #endif

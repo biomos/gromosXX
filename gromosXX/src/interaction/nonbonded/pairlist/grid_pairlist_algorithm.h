@@ -70,6 +70,6 @@ namespace interaction
   };
 } // interaction
 
-#include "grid_pairlist_algorithm.tcc"
+#include "grid_pairlist_algorithm.cc"
 
 #endif
