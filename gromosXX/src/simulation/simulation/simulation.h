@@ -130,6 +130,12 @@ namespace simulation
     void calculate_mol_ekin(int mean = 0);
 
     /**
+     * remove COM motion.
+     */
+    void remove_com_motion(double const dt, bool remove_trans, bool remove_rot,
+			   double &ekin_trans, double &ekin_rot);
+    
+    /**
      * check the state of the class (class invariant)
      * @return 0 if ok.
      */

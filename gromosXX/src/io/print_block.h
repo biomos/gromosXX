@@ -48,6 +48,12 @@ namespace io
   inline std::ostream &
   print_TIMESTEP(std::ostream &os, double const steps, double const time);
 
+  /**
+   * Print the CENTREOFMASS block.
+   */
+  inline std::ostream &
+  print_CENTREOFMASS(std::ostream &os, double const ekin_trans, double const ekin_rot);
+  
 } // io
 
 #include "print_block.tcc"

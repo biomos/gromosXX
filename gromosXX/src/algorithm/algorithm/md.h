@@ -136,10 +136,6 @@ namespace algorithm
      */
     int m_print_energy;
     /**
-     * print com every .. steps.
-     */
-    int m_print_com;
-    /**
      * print pairlist every .. steps.
      */
     int m_print_pairlist;
@@ -147,6 +143,14 @@ namespace algorithm
      * print the force every .. steps.
      */
     int m_print_force;
+    /**
+     * remove com every .. steps.
+     */
+    int m_remove_com;
+    /**
+     * print com every .. steps.
+     */
+    int m_print_com;
     /**
      * calculate the pressure?
      * which kind of virial?

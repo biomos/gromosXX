@@ -94,7 +94,7 @@ namespace algorithm
     
     typedef algorithm::Berendsen_Thermostat   temperature_type;
     typedef algorithm::Berendsen_Barostat     pressure_type;
-    typedef algorithm::Shake<simulation_type> 
+    typedef algorithm::Perturbed_Shake<simulation_type> 
     distance_constraint_type;
     typedef algorithm::Leap_Frog<simulation_type>
     integration_type;

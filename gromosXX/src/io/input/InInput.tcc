@@ -835,3 +835,35 @@ inline void io::InInput::read_START(int &ntx, int &init, double &tempi, unsigned
 		     "InInput", io::message::error);
   
 }
+/**
+ * read CENTREOFMASS block.
+ */
+inline bool io::InInput::read_CENTREOFMASS(int &ndfmin, int &ntcm, int &nscm)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  DEBUG(10, "reading CENTREOFMASS block");
+  buffer = m_block["CENTREOFMASS"];
+
+  if (!buffer.size()){
+    ndfmin = 0;
+    ntcm = 0;
+    nscm = 0;
+    return false;
+  }
+  
+  it = buffer.begin()+1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  _lineStream >> ndfmin >> ntcm >> nscm;
+  
+  _lineStream.clear();
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in CENTREOFMASS block",
+		     "InInput", io::message::error);
+  return true;
+  
+}

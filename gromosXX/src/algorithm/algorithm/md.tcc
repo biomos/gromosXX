@@ -27,6 +27,8 @@ algorithm::MD<t_spec>
     m_print_energy(1),
     m_print_pairlist(0),
     m_print_force(0),
+    m_remove_com(0),
+    m_print_com(0),
     m_calculate_pressure(0),
     m_do_perturbation(false)
 {
@@ -99,6 +101,7 @@ int algorithm::MD<t_spec>::initialize(io::Argument &args)
     resize(m_simulation.system().energies().bond_energy.size(),
 	   m_simulation.system().energies().kinetic_energy.size());
 
+  
   //----------------------------------------------------------------------------
   
   // see whether everything is all right  
@@ -436,6 +439,24 @@ void algorithm::MD<t_spec>
     if (m_calculate_pressure){
       m_pressure.apply(m_simulation, m_dt);
     }
+    if(m_remove_com && (m_simulation.steps()+1) % m_remove_com == 0){
+      double ekin_trans, ekin_rot;
+      
+      DEBUG(8, "md: remove centre of mass");
+      m_simulation.remove_com_motion(m_dt,true, true, ekin_trans, ekin_rot);
+      if(m_print_com && (m_simulation.steps()+1 ) % m_print_com ==0){
+	io::print_CENTREOFMASS(std::cout, ekin_trans, ekin_rot);
+      }
+    }
+    else if(m_print_com &&( m_simulation.steps()+1 ) % m_print_com ==0){ 
+      double ekin_trans, ekin_rot;
+      DEBUG(8, "md: print centre of mass");
+      
+      m_simulation.remove_com_motion(m_dt,false, false, ekin_trans, ekin_rot);
+      io::print_CENTREOFMASS(std::cout, ekin_trans, ekin_rot);
+    }
+
+   
     
     DEBUG(8, "md: calculate and print the energies");
     do_energies();
@@ -487,14 +508,13 @@ void algorithm::MD<t_spec>
   // read in the files - those are necessary
   DEBUG(7, "opening topology " << args["topo"]);
   std::ifstream *topo_file = new std::ifstream(args["topo"].c_str());
-  DEBUG(7, "stream created");
   if (!topo_file->good())
     io::messages.add("unable to open topology file: " + args["topo"], "md.tcc",
 		     io::message::error);
   else 
     io::messages.add("parsing topology file: " + args["topo"], "md.tcc",
 		     io::message::notice);
-  DEBUG(7, "stream good");
+
   topo.stream(*topo_file);
   DEBUG(7, "reading topology");
   topo.readStream();
@@ -553,7 +573,7 @@ void algorithm::MD<t_spec>
     sys.read_velocity = false;
     DEBUG(7, "not reading initial velocities from file");
   }
-
+ 
   int ntb, nrdbox;
   input.read_BOUNDARY(ntb, nrdbox);
 
@@ -592,7 +612,8 @@ void algorithm::MD<t_spec>
     m_simulation.system().exchange_vel();
     m_simulation.system().vel() = 0.0;
   }
-  
+
+
 }
 
 template<typename t_spec>
@@ -642,6 +663,25 @@ void algorithm::MD<t_spec>
   m_time = num_steps * m_dt;
   m_simulation.time(t0);
 
+
+  // centre of mass removal
+  int ndfmin, ntcm;
+  input.read_CENTREOFMASS(ndfmin, ntcm, m_remove_com);
+
+  // start
+  int ntx, init;
+  unsigned int ig;
+  double tempi;
+  input.read_START(ntx, init, tempi, ig);  
+
+  double e_kin_trans, e_kin_rot;
+  if(init<4 && ntcm) {
+    
+    m_simulation.remove_com_motion(m_dt, true, true, e_kin_trans, e_kin_rot);
+    io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
+  }
+  
+  
 }
 
 template<typename t_spec>
@@ -653,7 +693,7 @@ void algorithm::MD<t_spec>
   int print_trajectory, print_velocity_traj, print_energy_traj, 
     print_free_energy_traj;
   int conf_sel;
-  int print_com, dihedral_monitoring;
+  int dihedral_monitoring;
   
   input.read_PRINT(m_print_energy, m_print_com, dihedral_monitoring);
 
@@ -763,7 +803,7 @@ void algorithm::MD<t_spec>
   m_simulation.system().energy_averages().
     update(m_simulation.system().energies(), m_dt);
   
-  if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
+  if (m_print_energy && (m_simulation.steps()) % m_print_energy == 0){
     io::print_MULTIBATH(std::cout, m_simulation.multibath(),
 			m_simulation.system().energies());
     io::print_ENERGY(std::cout, m_simulation.system().energies(),

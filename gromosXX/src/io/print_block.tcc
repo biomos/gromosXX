@@ -382,5 +382,20 @@ namespace io
     return os;
   }
 
+  inline std::ostream & print_CENTREOFMASS(std::ostream &os, 
+					   double const ekin_trans, 
+					   double const ekin_rot)
+  {
+    os.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    os.precision(5);
+    
+    os << "CENTREOFMASS\n"
+       << std::setw(15) << "E-KIN trans " << std::setw(15) << ekin_trans <<"\n"
+       << std::setw(15) << "E-KIN rot "   << std::setw(15) << ekin_rot <<"\n"
+       << std::setw(15) << "E-KIN COM " << std::setw(15) << ekin_trans + ekin_rot
+       << "\nEND\n";
+
+    return os;
+  }
   
 } // io

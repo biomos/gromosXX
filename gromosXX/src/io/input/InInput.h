@@ -90,7 +90,11 @@ namespace io {
      * read START block.
      */
     void read_START(int &ntx, int &init, double &tempi, unsigned int &ig);
-        
+    /**
+     * read CENTREOFMASS block.
+     */
+    bool read_CENTREOFMASS(int &ndfmin, int &ntcm, int &nscm);
+    
   };
   
 } // io

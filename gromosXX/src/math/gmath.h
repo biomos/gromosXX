@@ -128,6 +128,16 @@ inline T dot(TinyVector<T,N> const &v1, TinyVector<T,N> const &v2)
 BZ_DECLARE_FUNCTION2_RET(dot, double);
 
 /**
+ * blitz cross product
+ */
+inline math::Vec cross(math::Vec const &v1, math::Vec const & v2)
+{
+  return blitz::cross(v1, v2);
+}
+
+BZ_DECLARE_FUNCTION2_RET(cross, math::Vec);
+
+/**
  * blitz abs2
  */
 template<typename T, int N>

@@ -386,7 +386,7 @@ void algorithm::Perturbation_MD<t_spec>
     update(m_simulation.system().lambda_energies(), m_dt);
 
   if (m_print_energy && 
-      m_simulation.steps() % m_print_energy == 0){
+      (m_simulation.steps() ) % m_print_energy == 0){
     io::print_ENERGY(std::cout, 
 		     m_simulation.system().lambda_energies(),
 		     m_simulation.topology().energy_groups(),

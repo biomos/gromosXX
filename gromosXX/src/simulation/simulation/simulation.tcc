@@ -4,6 +4,8 @@
  * for the class Simulation
  */
 
+// BZ_USING_NAMESPACE(blitz)
+
 /**
  * Constructor
  */
@@ -296,6 +298,131 @@ calculate_mol_ekin(int mean)
     system().energies().kinetic_energy[i] =
       system().energies().com_kinetic_energy[i] +
       system().energies().ir_kinetic_energy[i];
+
+}
+
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>::remove_com_motion
+  (double const dt, bool remove_trans, bool remove_rot,
+   double &ekin_trans, double &ekin_rot)
+{
+#ifndef NDEBUG
+  std::cout.precision(20);
+  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+#endif
+
+  math::Vec com_v = 0.0, com_r = 0.0;
+  double com_mass = 0.0;
+  
+  for(size_t i = 0; i < topology().num_atoms(); ++i){
+    com_mass += topology().mass()(i);
+    com_v += topology().mass()(i) * system().vel()(i);
+    com_r += topology().mass()(i) * system().pos()(i) - 
+      0.5 * topology().mass()(i) * system().vel()(i)*dt;
+  }
+  com_v /= com_mass;
+  com_r /= com_mass;
+
+  DEBUG(7, "totmass " << com_mass);
+  DEBUG(7, "com_v " << com_v);
+  DEBUG(7, "com_r " << com_r);
+  DEBUG(7, "com_Ekin " << 0.5*com_mass*dot(com_v,com_v));
+
+  ekin_trans = 0.5*com_mass*dot(com_v,com_v);
+  
+  math::Vec com_L = 0.0;
+  math::Matrix com_I;
+  com_I.initialize(0.0);
+  
+  for(size_t i = 0; i < topology().num_atoms(); ++i){
+    math::Vec r = system().pos()(i) - 0.5*dt*system().vel()(i) - com_r;
+    DEBUG(7, "pos  " << i << " " << system().pos()(i) - 0.5*dt*system().vel()(i));
+    DEBUG(7, "posp " << i << " " << r);
+    
+    //com_L += topology().mass()(i) * 
+    //  math::cross(r, system().vel()(i) - com_v);    
+    com_L += topology().mass()(i)* math::cross(system().pos()(i), system().vel()(i));
+
+    // inertia tensor
+    double r2 = dot(r,r);
+    com_I(0,0) += topology().mass()(i) * (r(1)*r(1)+r(2)*r(2));
+    com_I(1,1) += topology().mass()(i) * (r(0)*r(0)+r(2)*r(2));
+    com_I(2,2) += topology().mass()(i) * (r(0)*r(0)+r(1)*r(1));
+    com_I(1,0) += topology().mass()(i) * (-r(0)*r(1));
+    com_I(0,1) += topology().mass()(i) * (-r(0)*r(1));
+    com_I(2,0) += topology().mass()(i) * (-r(0)*r(2));
+    com_I(0,2) += topology().mass()(i) * (-r(0)*r(2));
+    com_I(2,1) += topology().mass()(i) * (-r(1)*r(2));
+    com_I(1,2) += topology().mass()(i) * (-r(1)*r(2));
+    
+  }
+  com_L -= com_mass*math::cross(com_r, com_v);
+  
+  DEBUG(7, "Angular momentum " << com_L);
+  
+  // invert the inertia tensor
+  math::Matrix com_II;
+  const double denom = -com_I(2,0)*com_I(2,0)*com_I(1,1)
+    + 2 * com_I(0,1) * com_I(0,2) * com_I(1,2)
+    - com_I(0, 0) * com_I(1,2) * com_I(1,2)
+    - com_I(0,1) * com_I(0,1) * com_I(2,2)
+    + com_I(0,0) * com_I(1,1) * com_I(2,2);
+  
+  com_II(0,0) = (-com_I(1,2)*com_I(1,2) + com_I(1,1) * com_I(2,2));
+  com_II(1,0) = com_II(0,1) = (com_I(0,2) * com_I(1,2)
+    - com_I(0,1) * com_I(2,2));
+  com_II(0,2) = com_II(2,0) = (-com_I(0,2)*com_I(1,1)
+    + com_I(0,1)*com_I(1,2));
+
+  com_II(1,1) = (-com_I(0,2)*com_I(0,2) + com_I(0,0) * com_I(2,2));
+  com_II(1,2) = com_II(2,1) = (com_I(0,1)*com_I(0,2)
+    - com_I(0,0) * com_I(1,2));
+
+  com_II(2,2) = (-com_I(0,1)*com_I(0,1) + com_I(0,0)*com_I(1,1));
+  
+  math::Matrix inv;
+  DEBUG(7, "inertia tensor:\n"<< com_I);
+  DEBUG(7, "determinant : " << denom);
+  DEBUG(7, "inverted tens :\n" << com_II);
+
+#ifndef NDEBUG
+  for(int i=0; i<3; i++){
+    for(int j=0; j<3; j++){
+      inv(i,j)=0.0;
+      for(int k=0; k<3; k++){
+	inv(i,j)+= com_I(i,k)*com_II(k,j);
+      }
+    }
+  }
+#endif 
+
+  DEBUG(7, "one matrix\n" << inv);
+  
+  // get the angular velocity around the COM
+  math::Vec com_O;
+  com_O = blitz::product(com_II, com_L) / denom;
+  
+  DEBUG(7, " angular velocity " << com_O);
+  
+  DEBUG(7, " com_Ekin_rot " << 0.5*dot(com_O,com_L));
+ 
+  ekin_rot =  0.5*dot(com_O,com_L);
+  
+  if(remove_rot){
+    DEBUG(7, "removing rot");
+    for(size_t i=0; i<topology().num_atoms(); ++i){
+      math::Vec r = system().pos()(i) -0.5*dt*system().vel()(i) - com_r;
+      system().vel()(i) -=math::cross(com_O, r); 
+    }
+  }
+  if(remove_trans){
+    DEBUG(7, "removing trans");
+    
+    // get the corrected velocities
+    for(size_t i=0; i<topology().num_atoms(); ++i){
+      system().vel()(i) -= com_v;
+    }
+  }
 
 }
 
