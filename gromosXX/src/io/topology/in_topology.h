@@ -6,6 +6,8 @@
 #ifndef INCLUDED_IN_TOPOLOGY_H
 #define INCLUDED_IN_TOPOLOGY_H
 
+#include <gromosXX/io/instream.h>
+
 namespace io {
 
   /**
@@ -24,7 +26,7 @@ namespace io {
     /**
      * Constructor.
      */
-    In_Topology(std::istream& is) : GInStream(is) { readStream(); };
+    In_Topology(std::istream& is) : GInStream(is) { readStream(); }
 
     /**
      * set the stream
