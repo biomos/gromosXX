@@ -9,9 +9,9 @@
 namespace io
 {
   int read_input(io::Argument const &args,
-		 simulation::Parameter &param,
 		 topology::Topology &topo,
 		 configuration::Configuration &conf,
+		 simulation::Simulation & sim,
 		 algorithm::Algorithm_Sequence &md_seq);
   
 }

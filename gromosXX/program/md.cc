@@ -53,13 +53,12 @@ int main(int argc, char *argv[]){
     util::parse_verbosity(args);
 
     // create the simulation classes
-    simulation::Parameter param;
     topology::Topology topo;
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
+    simulation::Simulation sim;
     
-    io::read_input(args, param, topo, conf, md);
-    simulation::Simulation sim(param);
+    io::read_input(args, topo, conf, sim,  md);
 
     io::Out_Configuration traj("GromosXX");
 
@@ -67,24 +66,24 @@ int main(int argc, char *argv[]){
       traj.final_configuration(args["fin"]);
     else throw std::string("argument fin for final configuration required!");
     if (args.count("trj") > 0)
-      traj.trajectory(args["trj"], param.write.position);
-    else if (param.write.position)
+      traj.trajectory(args["trj"], sim.param().write.position);
+    else if (sim.param().write.position)
       throw std::string("write trajectory but no trj argument");
     if (args.count("trv") > 0)
-      traj.velocity_trajectory(args["trv"], param.write.velocity);
-    else if (param.write.velocity)
+      traj.velocity_trajectory(args["trv"], sim.param().write.velocity);
+    else if (sim.param().write.velocity)
       throw std::string("write velocity trajectory but no trv argument");
     if (args.count("trf") > 0)
       traj.force_trajectory(args["trf"], 1);
-    //else if (param.write.force)
+    //else if (sim.param().write.force)
     //  throw std::string("write force trajectory but no trf argument");
     if (args.count("tre") > 0)
-      traj.energy_trajectory(args["tre"], param.write.energy);
-    else if (param.write.energy)
+      traj.energy_trajectory(args["tre"], sim.param().write.energy);
+    else if (sim.param().write.energy)
       throw std::string("write energy trajectory but no tre argument");
     if (args.count("trg") > 0)
-      traj.free_energy_trajectory(args["trg"], param.write.free_energy);
-    else if (param.write.free_energy)
+      traj.free_energy_trajectory(args["trg"], sim.param().write.free_energy);
+    else if (sim.param().write.free_energy)
       throw std::string("write free energy trajectory but no trg argument");
 
     std::cout << "\nMESSAGES FROM INITIALIZATION\n";

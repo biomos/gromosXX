@@ -40,11 +40,11 @@
 #define SUBMODULE read_input
 
 
-int io::read_input(io::Argument const &args,
-		   simulation::Parameter &param,
-		   topology::Topology &topo,
-		   configuration::Configuration &conf,
-		   algorithm::Algorithm_Sequence &md_seq)
+int io::read_input(io::Argument const & args,
+		   topology::Topology & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation & sim,
+		   algorithm::Algorithm_Sequence & md_seq)
 {
   // create an in_parameter
   std::ifstream input_file, topo_file, pttopo_file, conf_file;
@@ -61,7 +61,9 @@ int io::read_input(io::Argument const &args,
 		   io::message::notice);
   
   io::In_Parameter ip(input_file);
-  ip.read(param);
+  ip.read(sim.param());
+  sim.time_step_size() = sim.param().step.dt;
+  sim.time() = sim.param().step.t0;
   
   try{
     topo_file.open(args["topo"].c_str());
@@ -76,9 +78,9 @@ int io::read_input(io::Argument const &args,
 		   io::message::notice);
   
   io::In_Topology it(topo_file);
-  it.read(topo, param);
+  it.read(topo, sim.param());
 
-  if(param.perturbation.perturbation){
+  if(sim.param().perturbation.perturbation){
     if(args.count("pttopo")<1){
       io::messages.add("No perturbation topology specified",
 		       "read_input", io::message::critical);
@@ -96,7 +98,7 @@ int io::read_input(io::Argument const &args,
 		     io::message::notice);
     
     io::In_Perturbation ipt(pttopo_file);
-    ipt.read(topo, param);
+    ipt.read(topo, sim.param());
 
   }
 
@@ -113,14 +115,14 @@ int io::read_input(io::Argument const &args,
 		   io::message::notice);
   
   io::In_Configuration ic(conf_file);
-  ic.read(conf, topo, param);
+  ic.read(conf, topo, sim.param());
   
   // do this after reading in a perturbation topology
-  param.multibath.multibath.calculate_degrees_of_freedom(topo);
+  sim.multibath().calculate_degrees_of_freedom(topo);
 
   // and create the algorithms
   // (among them the forcefield!)
-  algorithm::create_md_sequence(md_seq, topo, param, it);
+  algorithm::create_md_sequence(md_seq, topo, conf, sim, it);
   
   return 0;
 }

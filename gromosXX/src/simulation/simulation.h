@@ -19,10 +19,9 @@ namespace simulation
     /**
      * Constructor.
      */
-    Simulation(Parameter & param) : m_param(param), 
-				    m_time_step_size(param.step.dt),
-				    m_steps(0), 
-				    m_time(param.step.t0) {}
+    Simulation() : m_time_step_size(0),
+		   m_steps(0), 
+		   m_time(0) {}
     
     /**
      * the simulation parameter
@@ -79,7 +78,7 @@ namespace simulation
     /**
      * the simulation parameters
      */
-    Parameter & m_param;
+    Parameter m_param;
     
     /**
      * the time step size

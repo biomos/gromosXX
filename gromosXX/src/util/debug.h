@@ -86,6 +86,9 @@ namespace algorithm
   extern int debug_level;
   extern int algorithm_debug_level;
   extern int constraints_debug_level;
+  extern int temperature_debug_level;
+  extern int pressure_debug_level;
+  extern int integration_debug_level;
 }
 
 namespace simulation
