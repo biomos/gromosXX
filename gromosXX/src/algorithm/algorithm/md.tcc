@@ -75,6 +75,17 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   // and create the forcefield
   DEBUG(7, "md: create forcefield");
   G96Forcefield(topo, input);
+
+  // prepare temperature calculation
+  DEBUG(7, "md: degrees of freedom");
+  m_simulation.calculate_degrees_of_freedom();
+  temperature_algorithm().calculate_kinetic_energy(m_simulation);
+  std::cout << "initial temperature:\n";
+  io::print_MULTIBATH(std::cout, m_simulation.multibath());
+  // initialize the energy fluctuations
+  m_simulation.system().energy_averages().
+    resize(m_simulation.system().energies().bond_energy.size(),
+	   m_simulation.system().energies().kinetic_energy.size());
   
   //----------------------------------------------------------------------------
   // see whether everything is all right  
@@ -561,13 +572,6 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   else
     m_calculate_pressure = 0;
 
-  // prepare temperature calculation
-  DEBUG(7, "md: degrees of freedom");
-  m_simulation.calculate_degrees_of_freedom();
-  temperature_algorithm().calculate_kinetic_energy(m_simulation);
-  std::cout << "initial temperature:\n";
-  io::print_MULTIBATH(std::cout, m_simulation.multibath());
-
   // pressure coupling (has to be done before 
   // constructing the forcefield!)
   int ntp;
@@ -577,11 +581,6 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   DEBUG(8, "md: PCOUPLE read");
   
   m_pressure.initialize(ntp, pres0, comp, tau);
-
-  // initialize the energy fluctuations
-  m_simulation.system().energy_averages().
-    resize(m_simulation.system().energies().bond_energy.size(),
-	   m_simulation.system().energies().kinetic_energy.size());
 
   // time to simulate
   int num_steps;

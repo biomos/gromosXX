@@ -33,7 +33,9 @@ include_HEADERS = 		interaction.h \
 				pairlist/basic_pairlist_algorithm.tcc \
 				pairlist/basic_filter.h \
 				pairlist/basic_filter.tcc \
- 				pairlist/twinrange_filter.h \
+				pairlist/perturbation_filter.h \
+				pairlist/perturbation_filter.tcc \
+				pairlist/twinrange_filter.h \
 				pairlist/twinrange_filter.tcc \
 				pairlist/twinrange_chargegroup_filter.h \
 				pairlist/twinrange_chargegroup_filter.tcc \

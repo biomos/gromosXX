@@ -14,7 +14,7 @@ namespace interaction
    */
   template<typename t_simulation, typename t_base, typename t_innerloop>
   class Twinrange_Filter
-    : public Basic_Filter<t_simulation>,
+    : public Basic_Filter<t_simulation, t_base>,
       public t_innerloop,
       public Storage
   {
@@ -30,8 +30,6 @@ namespace interaction
 		     size_t const j);
     
   protected:
-    t_base &m_base;
-
     double m_cutoff_short_2;
     double m_cutoff_long_2;
     

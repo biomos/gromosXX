@@ -7,9 +7,8 @@ template<typename t_simulation, typename t_base, typename t_innerloop>
 inline
 interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
 ::Twinrange_Filter(t_base &base)
-  : Basic_Filter<t_simulation>(),
-    t_innerloop(base, *this),
-    m_base(base)
+  : Basic_Filter<t_simulation, t_base>(base),
+    t_innerloop(base, *this)
 {
 }
 

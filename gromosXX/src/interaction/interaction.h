@@ -15,6 +15,7 @@
 
 // nonbonded filter
 #include "pairlist/basic_filter.h"
+#include "pairlist/perturbation_filter.h"
 #include "pairlist/twinrange_filter.h"
 #include "pairlist/twinrange_chargegroup_filter.h"
 

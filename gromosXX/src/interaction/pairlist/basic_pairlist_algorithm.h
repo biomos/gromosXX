@@ -13,7 +13,7 @@ namespace interaction
    * the basic pairlist building algorithm.
    */
   template<typename t_simulation,
-    typename t_filter = Basic_Filter<t_simulation> >
+    typename t_filter = Basic_Filter<t_simulation, interaction::Storage> >
     class Basic_Pairlist_Algorithm
     {
       public:

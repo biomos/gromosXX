@@ -3,6 +3,13 @@
  * methods for the multibath parameter class.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE simulation
+#define SUBMODULE simulation
+
+#include "../../debug.h"
+
 inline
 simulation::Multibath::Multibath()
 {
@@ -86,6 +93,8 @@ inline void simulation::Multibath
   
   for( ; c_it != c_to; ++c_it){
     
+    DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
+
     (*this)[in_bath(c_it->i)].dof -= 0.5;
     (*this)[in_bath(c_it->j)].dof -= 0.5;
 
@@ -94,6 +103,11 @@ inline void simulation::Multibath
 
   }
   
+  for(size_t i=0; i<size(); ++i){
+    DEBUG(7, "dof           " << (*this)[i].dof);
+    DEBUG(7, "solute constr " << (*this)[i].solute_constr_dof);
+  }
+
   // solvent constraints
   int index = topo.num_solute_atoms();
   for(size_t s=0; s < topo.num_solvents(); ++s){
