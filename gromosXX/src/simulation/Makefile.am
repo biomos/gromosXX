@@ -30,8 +30,12 @@ include_HEADERS = 		simulation.h \
 				topology/perturbation_topology.h \
 				topology/perturbation_topology.tcc \
 				topology/perturbed_atom.h \
+				topology/perturbed_atom.tcc \
+				topology/perturbed_atompair.h \
 				topology/perturbed_bond.h \
 				topology/perturbed_angle.h \
+				topology/perturbed_improper_dihedral.h \
+				topology/perturbed_dihedral.h \
 				topology/perturbed_solute.h \
 				topology/perturbed_solute.tcc \
 				core/atom_iterator.h \
