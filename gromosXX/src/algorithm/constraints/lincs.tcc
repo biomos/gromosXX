@@ -137,19 +137,31 @@ static int _lincs(topology::Topology & topo,
   _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, offset);
   
   // correction for rotational lengthening
+  double p;
+  size_t count = 0;
+  
   for(size_t i=0; i<num_constr; ++i){
 
     periodicity.nearest_image(pos(constr[i].i + offset), pos(constr[i].j + offset), r);
 
-    const double p = sqrt(2 * param[constr[i].type].r0 * param[constr[i].type].r0 -
-			  math::dot(r, r));
-
+    const double diff = 2 * param[constr[i].type].r0 * param[constr[i].type].r0 -
+      math::dot(r, r);
+    if (diff > 0.0)
+      p = sqrt(diff);
+    else{
+      p = 0;
+      ++count;
+    }
+    
     rhs[0](i) = lincs.sdiag[i] * (param[constr[i].type].r0 - p);
     sol(i) = rhs[0](i);
 
   }
 
   _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, offset);
+
+  if (count)
+    std::cout << "LINCS:\ttoo much rotation in " << count << " cases!\n";
 
   return 0;
 }
