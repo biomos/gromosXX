@@ -164,9 +164,10 @@ bool algorithm::Shake<t_simulation>
     math::Vec &pos_i = sys.pos()(first+it->i);
     math::Vec &pos_j = sys.pos()(first+it->j);
 
-    DEBUG(10, "i: " << pos_i << "\nj: " << pos_j);
+    DEBUG(10, "\ni: " << pos_i << "\nj: " << pos_j);
 	
-    math::Vec r = pos_i - pos_j;
+    math::Vec r;
+    sys.periodicity().nearest_image(pos_i, pos_j, r);
     double dist2 = dot(r, r);
 	
     double constr_length2 = it->b0 * it->b0;
@@ -176,6 +177,7 @@ bool algorithm::Shake<t_simulation>
 	  
     if(fabs(diff) >= constr_length2 * m_tolerance * 2.0){
       // we have to shake
+      DEBUG(10, "shaking");
       
       // the reference position
       const math::Vec &ref_i = sys.old_pos()(first+it->i);
