@@ -150,9 +150,10 @@ namespace io
    */
   void print_MULTIBATH(std::ostream &os,
 		       simulation::Multibath const &bath,
-		       configuration::Energy const &energy)
+		       configuration::Energy const &energy,
+		       std::string title)
   {
-    os << "MULTIBATH\n";
+    os << title << "\n";
   
     os.precision(2);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);

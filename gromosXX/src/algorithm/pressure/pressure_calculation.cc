@@ -47,6 +47,11 @@ int algorithm::Pressure_Calculation
     }
   }
   
+  // update the averages
+  conf.current().energy_averages.update(conf.old().pressure_tensor,
+					conf.old().energy_averages,
+					sim.time_step_size());
+
   return 0;
   
 }

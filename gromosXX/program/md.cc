@@ -114,6 +114,20 @@ int main(int argc, char *argv[]){
 	break;
       }
 
+      // update the energies
+      conf.old().energies.calculate_totals();
+      conf.current().energy_averages.update(conf.old().energies,
+					    conf.old().energy_averages,
+					    sim.time_step_size());
+      // perturbed energy derivatives
+      if (sim.param().perturbation.perturbation){
+	conf.old().perturbed_energy_derivatives.calculate_totals();
+	conf.current().perturbed_energy_derivative_averages.update
+	  (conf.old().perturbed_energy_derivatives,
+	   conf.old().perturbed_energy_derivative_averages,
+	   sim.time_step_size());
+      }
+
       sim.time() += sim.time_step_size();
       ++sim.steps();
 
@@ -125,6 +139,7 @@ int main(int argc, char *argv[]){
     std::cout << "writing final configuration" << std::endl;
     
     traj.write(conf, topo, sim, io::final);
+    traj.print_final(topo, conf, sim);
     
     std::cout << "\nMESSAGES FROM SIMULATION\n";
     io::messages.display(std::cout);

@@ -33,12 +33,16 @@ namespace configuration
      * To allow non constant timesteps, the energies are
      * weighted by the current step size.
      */
-    void update(configuration::Energy const &e, double const dt);
+    void update(configuration::Energy const &e, 
+		configuration::Energy_Average const &av,
+		double const dt);
 
     /**
      * average the pressure.
      */
-    void update(math::Matrix const &pressure, double const dt);
+    void update(math::Matrix const &pressure, 
+		configuration::Energy_Average const &av,
+		double const dt);
 
     /**
      * get the average energy and fluctuations

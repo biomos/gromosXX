@@ -17,7 +17,8 @@ namespace io
    * Print the MULTIBATH block.
    */
   void print_MULTIBATH(std::ostream &os, simulation::Multibath const &bath,
-		       configuration::Energy const &energy);
+		       configuration::Energy const &energy,
+		       std::string title="MULTIBATH");
 
   /** 
    * Print the DEGREES OF FREEDOM block.

@@ -933,14 +933,52 @@ void io::Out_Configuration
     
     _print_timestep(sim, m_output);
     
-    conf.old().energies.calculate_totals();
     print_ENERGY(m_output, conf.old().energies, topo.energy_groups());
     
+    if (sim.param().perturbation.perturbation)
+      print_ENERGY(m_output, conf.old().perturbed_energy_derivatives, 
+		   topo.energy_groups(), "dE/dLAMBDA");
+    
+
     print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
 
     if (sim.param().pcouple.calculate)
       print_PRESSURE(m_output, conf);
     
+  }
+  
+}
+
+void io::Out_Configuration
+::print_final(topology::Topology const & topo,
+	      configuration::Configuration & conf,
+	      simulation::Simulation const & sim)
+{
+  m_output << "FINAL DATA\n";
+  
+  _print_timestep(sim, m_output);
+  
+  configuration::Energy e, ef;
+  math::Matrix p, pf;
+  
+  conf.current().energy_averages.average(e, ef, p, pf);
+
+  print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES");
+  print_ENERGY(m_output, ef, topo.energy_groups(), "ENERGY FLUCTUATIONS");
+
+  print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
+  print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
+
+  if (sim.param().pcouple.calculate){
+    print_MATRIX(m_output, p, "PRESSURE AVERAGE");
+    print_MATRIX(m_output, pf, "PRESSURE FLUCTUATION");
+  }
+  
+  if (sim.param().perturbation.perturbation){
+    conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf);
+
+    print_ENERGY(m_output, e, topo.energy_groups(), "dE/dLAMBDA AVERAGES");
+    print_ENERGY(m_output, ef, topo.energy_groups(), "dE/dLAMBDA FLUCTUATIONS");
   }
   
 }

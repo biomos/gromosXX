@@ -61,6 +61,13 @@ namespace io {
 	       simulation::Simulation const & sim);
 
     /**
+     * print out data (per time step).
+     */
+    void print_final(topology::Topology const & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation const & sim);
+
+    /**
      * final structure.
      */
     void final_configuration(std::string const name);
