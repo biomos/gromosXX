@@ -101,33 +101,39 @@ int main(int argc, char *argv[]){
       nthreads = omp_get_num_threads();
   }
   
-  std::vector<util::Replica_Exchange> rep(nthreads);
+  // the master
+  util::Replica_Exchange_Master rep_master;
+  // and the slaves
+  std::vector<util::Replica_Exchange_Slave> rep_slave(nthreads-1);
   
-  util::replica_master = &rep[0];
-  std::cerr << "starting REM on " << nthreads << " threads" <<  std::endl;
+  util::replica_master = &rep_master;
+  std::cout << "starting REM on " << nthreads << " threads" <<  std::endl;
 
+  /*
+  // comment for debug reasons
   if (nthreads < 2){
     std::cerr << "replica exchange needs at least 2 threads!"
 	      << std::endl;
     return 1;
   }
-  
+  */
 
 #pragma omp parallel private(tid)
   {
 
     tid = omp_get_thread_num();
 
-    assert(rep.size() > tid);
-    if (tid > 0){
-      sleep(3);
-      std::cerr << "running " << tid << " of " << nthreads << std::endl;
+    if (tid == 0){
+      std::cout << "starting master thread" << std::endl;
+      rep_master.run(args, tid, nthreads);
     }
-    else
-      std::cerr << "starting master thread" << std::endl;
-    
-    rep[tid].run(args, tid, nthreads);
+    else{
+      sleep(5);
+      std::cout << "running " << tid << " of " << nthreads << std::endl;
 
+      assert(tid > 0 && tid <= rep_slave.size());
+      rep_slave[tid - 1].run(args, tid, nthreads);
+    }
   }
 
 #else

@@ -32,8 +32,7 @@ namespace util
 {
   /**
    * @class Replica_Exchange
-   * replica exchange master
-   * and state data
+   * replica exchange
    */
   class Replica_Exchange
   {
@@ -62,43 +61,167 @@ namespace util
       int        run;
       state_enum state;
     };
+
+    /**
+     * @struct Slave_Data
+     * slave information
+     */
+    struct Slave_Data
+    {
+      /**
+       * Default Constructor
+       */
+      Slave_Data() : state(waiting), replica(-1) 
+      {
+      }
+      /**
+       * Constructor
+       */
+      Slave_Data(state_enum state, int replica) : state(state), replica(replica) 
+      {
+      }
+      
+      /**
+       * state of the slave
+       */
+      state_enum state;
+      /**
+       * assigned replica
+       */
+      int        replica;
+    };
+
+    /**
+     * run
+     */
+    virtual int run(io::Argument & args, int tid, int num_threads) = 0;
     
+  protected:
+
+    /**
+     * thread ID
+     */
+    int m_ID;
+
+  };
+  
+  /**
+   * @class Replica_Exchange_Master
+   * replica exchange master
+   */
+  class Replica_Exchange_Master : public Replica_Exchange
+  {
+  public:
+    /**
+     * Constructor
+     */
+    Replica_Exchange_Master();
+
+    /**
+     * information of all replicas
+     * gets updated from the slaves
+     */
     std::vector<Replica_Data> replica_data;
     
-    std::vector<state_enum> thread_state;
-    std::vector<int>        thread_replica;
-
+    /**
+     * information of all slaves
+     */
+    std::vector<Slave_Data>   slave_data;
+    
+    /**
+     * neighbour list for each replica
+     * this should get multi-dimensional later...
+     */
     std::vector<int>        neighbour;
+    /**
+     * position in the neighbour list for each replica
+     */
     std::vector<int>        neighbour_pos;
 
-    int run(io::Argument & args, int tid, int num_threads);
+    virtual int run(io::Argument & args, int tid, int num_threads);
     
   private:
+    /**
+     * try a switch between i and j
+     */
     int switch_replica(int i, int j);
-    int synchronise_thread_state(int tid);
-    int synchronise_thread_replica(int tid);
-    int synchronise_replica(int r);
+
+    /**
+     * random number generator
+     */
+    gsl_rng * m_rng;
+
+    /**
+     * (current) configuration of all replicas
+     * this is necessary if there are more replicas than slaves
+     * (very likely true)
+     */
+    std::vector<configuration::Configuration> m_conf;
+
+  };
+
+  /**
+   * @class Replica_Exchange_Slave
+   * replica exchange master
+   */
+  class Replica_Exchange_Slave : public Replica_Exchange
+  {
+  public:
+    /**
+     * Constructor
+     */
+    Replica_Exchange_Slave();
+
+    /**
+     * replica information
+     */
+    Replica_Data replica_data;
     
-    int update_thread_state(int tid);
-    int update_replica(int r);
+    /**
+     * slave information
+     */
+    Slave_Data slave_data;
     
+    /**
+     * run the slave
+     */
+    virtual int run(io::Argument & args, int tid, int num_threads);
+    
+  private:
+
+    /**
+     * get thread state from master
+     */
+    int get_slave_data();
+    /**
+     * update thread state on master
+     */
+    int update_slave_data();
+    /**
+     * get replica data from master
+     */
+    int get_replica_data();
+    /**
+     * update replica data on master
+     */
+    int update_replica_data();
+    
+    /**
+     * run the replica
+     */
     int run_md(topology::Topology & topo,
 	       configuration::Configuration & conf,
 	       simulation::Simulation & sim,
 	       algorithm::Algorithm_Sequence & md,
 	       io::Out_Configuration & traj);
 
-    gsl_rng * m_rng;
-
-    std::vector<configuration::Configuration> m_conf;
-
   };
-  
+
   /**
    * replica exchange accessor
    * for OMP
    */
-  extern Replica_Exchange * replica_master;
+  extern Replica_Exchange_Master * replica_master;
   
 } // util
 
