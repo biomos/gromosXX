@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special
+INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/algorithm
 
 
 xxincludedir = 			$(includedir)/gromosXX/interaction
@@ -39,6 +39,7 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/pairlist/pairlist.h \
 				nonbonded/pairlist/pairlist_algorithm.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.h \
+				nonbonded/pairlist/grid_pairlist_algorithm.h \
 				special/create_special.h \
 				special/position_restraint_interaction.h \
 				special/jvalue_restraint_interaction.h \
@@ -53,6 +54,7 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				nonbonded/create_nonbonded.cc \
 				nonbonded/pairlist/pairlist.cc \
 				nonbonded/pairlist/standard_pairlist_algorithm.cc \
+				nonbonded/pairlist/grid_pairlist_algorithm.cc \
 				nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc \
 				nonbonded/interaction/nonbonded_interaction.cc \
 				nonbonded/interaction/nonbonded_set.cc \

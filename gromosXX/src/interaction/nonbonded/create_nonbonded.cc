@@ -21,6 +21,7 @@
 #include <interaction/nonbonded/pairlist/pairlist.h>
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
 #include <interaction/nonbonded/interaction/nonbonded_set.h>
@@ -115,14 +116,18 @@ int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
 
   }
   
-  Standard_Pairlist_Algorithm * spa;
-  spa = new Standard_Pairlist_Algorithm();
-
-  Nonbonded_Interaction * ni = new Nonbonded_Interaction(spa);
-  it.read_lj_parameter(ni->parameter().lj_parameter());
-  // ni->init(topo, conf, sim, quiet);
+  Pairlist_Algorithm * pa;
+  if (!sim.param().pairlist.grid){
+    pa = new Standard_Pairlist_Algorithm();
+  }
+  else{
+    pa = new Grid_Pairlist_Algorithm();
+  }
   
-  spa->init(&ni->parameter());
+  Nonbonded_Interaction * ni = new Nonbonded_Interaction(pa);
+  it.read_lj_parameter(ni->parameter().lj_parameter());
+
+  pa->set_parameter(&ni->parameter());
   
   ff.push_back(ni);
 
