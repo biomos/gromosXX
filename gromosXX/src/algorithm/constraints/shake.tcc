@@ -54,10 +54,8 @@ int algorithm::Shake<do_virial>
 		  std::vector<bool> &skip_now,
 		  std::vector<bool> &skip_next,
 		  std::vector<topology::two_body_term_struct> const & constr,
-		  std::vector<interaction::bond_type_struct> const & param,
 		  double const dt,
 		  math::Periodicity<b> const & periodicity,
-		  double const tolerance,
 		  bool do_constraint_force, size_t force_offset)
 {
   convergence = true;
@@ -89,12 +87,12 @@ int algorithm::Shake<do_virial>
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = dot(r, r);
 	
-    double constr_length2 = param[it->type].r0 * param[it->type].r0;
+    double constr_length2 = parameter()[it->type].r0 * parameter()[it->type].r0;
     double diff = constr_length2 - dist2;
 
     DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
 	  
-    if(fabs(diff) >= constr_length2 * tolerance * 2.0){
+    if(fabs(diff) >= constr_length2 * tolerance() * 2.0){
       // we have to shake
       DEBUG(10, "shaking");
       
@@ -195,10 +193,7 @@ template<math::boundary_enum b>
 int algorithm::Shake<do_virial>::
 solute(topology::Topology const & topo,
        configuration::Configuration & conf,
-       std::vector<interaction::bond_type_struct> const & param,
-       double dt, int const max_iterations,
-       double const tolerance,
-       double & timing)
+       double dt, int const max_iterations)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
@@ -226,8 +221,8 @@ solute(topology::Topology const & topo,
 
     if(shake_iteration<b>
        (topo, conf, convergence, first, skip_now, skip_next,
-	topo.solute().distance_constraints(), param, dt,
-	periodicity, tolerance, true)
+	topo.solute().distance_constraints(), dt,
+	periodicity, true)
        ){
       io::messages.add("SHAKE error. vectors orthogonal",
 		       "Shake::solute",
@@ -257,7 +252,7 @@ solute(topology::Topology const & topo,
   }
   */
 
-  timing += util::now() - start;
+  m_timing += util::now() - start;
 
   return 0;
 
@@ -272,10 +267,7 @@ template<math::boundary_enum b>
 int algorithm::Shake<do_virial>
 ::solvent(topology::Topology const & topo,
 	  configuration::Configuration & conf,
-	  std::vector<interaction::bond_type_struct> &param,
-	  double dt, int const max_iterations, 
-	  double const tolerance,
-	  double & timing)
+	  double dt, int const max_iterations)
 {
 
   DEBUG(8, "\tshaking SOLVENT");
@@ -308,8 +300,8 @@ int algorithm::Shake<do_virial>
 
 	if(shake_iteration<b>
 	   (topo, conf, convergence, first, skip_now, skip_next,
-	    topo.solvent(i).distance_constraints(), param, dt,
-	    periodicity, tolerance, false)){
+	    topo.solvent(i).distance_constraints(), dt,
+	    periodicity, false)){
 	  
 	  io::messages.add("SHAKE error. vectors orthogonal",
 			   "Shake::solute", io::message::error);
@@ -338,7 +330,7 @@ int algorithm::Shake<do_virial>
     
   } // solvents
 
-  timing += util::now() - start;
+  m_solvent_timing += util::now() - start;
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
   return 0;
   
@@ -367,18 +359,18 @@ int algorithm::Shake<do_virial>
     switch(conf.boundary_type){
       case math::vacuum:
 	error = solute<math::vacuum>
-	  (topo, conf, parameter(), sim.time_step_size(), 
-	   m_max_iterations, m_tolerance, m_timing);
+	  (topo, conf, sim.time_step_size(), 
+	   m_max_iterations);
 	break;
       case math::rectangular:
 	error = solute<math::rectangular>
-	  (topo, conf, parameter(), sim.time_step_size(), 
-	   m_max_iterations, m_tolerance, m_timing);
+	  (topo, conf, sim.time_step_size(), 
+	   m_max_iterations);
 	break;
       case math::triclinic:
 	error = solute<math::triclinic>
-	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_timing);
+	  (topo, conf, sim.time_step_size(),
+	   m_max_iterations);
 	break;
       default:
 	throw std::string("wrong boundary type");
@@ -402,20 +394,20 @@ int algorithm::Shake<do_virial>
       case math::vacuum:
 	error = 
 	  solvent<math::vacuum>
-	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_solvent_timing);
+	  (topo, conf, sim.time_step_size(),
+	   m_max_iterations);
 	break;
       case math::rectangular:
 	error = 
 	  solvent<math::rectangular>
-	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_solvent_timing);
+	  (topo, conf, sim.time_step_size(),
+	   m_max_iterations);
 	break;
       case math::triclinic:
 	error = 
 	  solvent<math::triclinic>
-	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_solvent_timing);
+	  (topo, conf, sim.time_step_size(),
+	   m_max_iterations);
 	break;
       default:
 	throw std::string("wrong boundary type");

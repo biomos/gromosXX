@@ -51,10 +51,8 @@ namespace algorithm
 				  std::vector<bool> &skip_next,
 				  std::vector<topology::perturbed_two_body_term_struct>
 				  const & constr,
-				  std::vector<interaction::bond_type_struct> const & param,
-			    double const dt,
+				  double const dt,
 				  math::Periodicity<b> const & periodicity,
-				  double const tolerance,
 				  bool do_constraint_force = false,
 				  size_t force_offset = 0);
     
@@ -62,20 +60,13 @@ namespace algorithm
     template<math::boundary_enum b>
     int perturbed_solute(topology::Topology const & topo,
 			 configuration::Configuration & conf,
-			 std::vector<interaction::bond_type_struct> 
-			 const & param,
-			 double dt, int const max_iterations,
-			 double const tolerance,
-			 double & timing);
+			 double dt, int const max_iterations);
 
     // overwrites the other one, as g++ seems unable to compile this...!!!
     template<math::boundary_enum b>
     int solvent(topology::Topology const & topo,
 		configuration::Configuration & conf,
-		std::vector<interaction::bond_type_struct> &param,
-		double dt, int const max_iterations, 
-		double const tolerance,
-		double & timing);
+		double dt, int const max_iterations);
     
 
   };
