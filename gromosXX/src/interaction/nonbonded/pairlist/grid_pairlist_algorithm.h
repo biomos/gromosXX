@@ -253,6 +253,13 @@ namespace interaction
      std::vector<int> & cell_start
      );
 
+    bool excluded_solute_pair
+    (
+     topology::Topology & topo,
+     unsigned int i,
+     unsigned int j
+     );
+
     /** 
      * the grid
      */

@@ -270,7 +270,7 @@ void interaction::Grid_Pairlist_Algorithm::print_grid()
 
   for(int z=0; z<m_grid.Nc; ++z){
     
-    std::cout << "plane " << z << ":\n";
+    // std::cout << "plane " << z << ":\n";
     int ci = 0;
     
     for(int i=0; i<N; ++i){
@@ -280,19 +280,19 @@ void interaction::Grid_Pairlist_Algorithm::print_grid()
       }
       
       if (m_grid.count[z][i] != 0){
-	// look up extended index
-	const int ind = m_grid.cell_index[z][ci];
-	const int indy = ind / m_grid.Na_ex - (m_grid.Nb_ex - m_grid.Nb) / 2;
-	const int indx = ind % m_grid.Na_ex - (m_grid.Na_ex - m_grid.Na) / 2;
-	if (indy * m_grid.Na + indx != i){
-	  std::cout << "grid error: extended index and index don't match" << std::endl;
-	  ++errors;
-	}
 	
-	std::cout << "cell " << i << " (" << ind << " = [" << indx << ", " << indy << "]) ["
-		  << m_grid.count[z][i] << "] = ";
 	
-	for(int n=0; n<m_grid.count[z][i]; ++n){
+	for(int n=0; n<m_grid.count[z][i]; ++n, ++ci){
+
+	  // look up extended index
+	  const int ind = m_grid.cell_index[z][ci];
+	  const int indy = ind / m_grid.Na_ex - (m_grid.Nb_ex - m_grid.Nb) / 2;
+	  const int indx = ind % m_grid.Na_ex - (m_grid.Na_ex - m_grid.Na) / 2;
+	  if (indy * m_grid.Na + indx != i){
+	    std::cout << "grid error: extended index and index don't match" << std::endl;
+	    ++errors;
+	  }
+
 	  Grid::Particle const & p = m_grid.p_cell[z][m_grid.cell_start[z][i] + n];
 	  
 	  if (p.shift_index != 0){
@@ -304,27 +304,30 @@ void interaction::Grid_Pairlist_Algorithm::print_grid()
 	      p.x + ha < indx * m_grid.a || p.x + ha > (indx+1) * m_grid.a ||
 	      p.y + hb < indy * m_grid.b || p.y + hb > (indy+1) * m_grid.b){
 	    std::cout << "grid error: particle cog not inside cell" << std::endl;
-	    std::cout << "x=" << p.x << " y=" << p.y << " z=" << p.z << "\n"
-		      << "indx*a=" << indx*m_grid.a << " indy*b=" << indy*m_grid.b
-		      << " z*c=" << z*m_grid.c << "\n";
+	    // std::cout << "x=" << p.x << " y=" << p.y << " z=" << p.z << "\n"
+	    // << "indx*a=" << indx*m_grid.a << " indy*b=" << indy*m_grid.b
+	    // << " z*c=" << z*m_grid.c << "\n";
 	    ++errors;
 	  }
 	  
-	  std::cout << p.i << " ";
+	  // std::cout << "cell " << i << " (" << ind << " = [" << indx << ", " << indy << "]) ["
+	  // << m_grid.count[z][i] << "] ";
+
+	  // std::cout << p.i << "\n";
 	  
 	  ++num_P;
 	}
 	
-	std::cout << "\n";
-	++ci;
+	// std::cout << "\n";
       }
     }
   }
   
   std::cout << "particles on grid: " << num_P << "\n";
   
-  if (errors == 0)
-    std::cout << "no errors detected\n";
+  if (errors == 0){
+    // std::cout << "no errors detected\n";
+  }
   else
     std::cout << errors << " errors detected!\n";
   
@@ -356,7 +359,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare
 
   collapse_grid();
 
-  print_grid();
+  // print_grid();
   
 }
 
@@ -450,7 +453,8 @@ void interaction::Grid_Pairlist_Algorithm::calculate_mask()
       m_grid.mask[0].push_back(row - mask_x);
       m_grid.mask[0].push_back(row + mask_x + 1);
     }
-    m_grid.mask[0][0] = 0;
+    // don't do self interaction over mask...
+    m_grid.mask[0][0] = 1;
   }
 
   for(int z=1; z<=m_grid.mask_z; ++z){
@@ -572,29 +576,31 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
     const int pi_ex = m_grid.cell_start[z][i_ex];
     const int pi_ex_to = m_grid.cell_start[z][i_ex_to];
 
-    std::cout << "i=" << i << " i_to=" << i_to << " i_ex=" << i_ex << " i_ex_to=" << i_ex_to << "\n";
-    std::cout << "pi=" << pi << " pi_to=" << pi_to << " pi_ex=" << pi_ex << " pi_ex_to=" << pi_ex_to << "\n";
+    // std::cout << "i=" << i << " i_to=" << i_to << " i_ex=" << i_ex 
+    // << " i_ex_to=" << i_ex_to << "\n";
+    // std::cout << "pi=" << pi << " pi_to=" << pi_to << " pi_ex=" << pi_ex 
+    // << " pi_ex_to=" << pi_ex_to << "\n";
     
     // shift the particles
-    std::cerr << "particles" << std::endl;
-    std::cout << "from " << i_ex << " to " << i_to << ":\n";
+    // std::cerr << "particles" << std::endl;
+    // std::cout << "from " << i_ex << " to " << i_to << ":\n";
     for(int p=pi_ex; p < pi_to; ++p, ++j){
       p_plane[j].shift(m_grid.p_cell[z][p], z_shift, m_shift_vector);
-      std::cout << "shift " << m_grid.p_cell[z][p].i << " to cell " << j << "\n";
+      // std::cout << "shift " << m_grid.p_cell[z][p].i << " to cell " << j << "\n";
     }
-    std::cout << "from " << i << " to " << i_to << ":\n";
+    // std::cout << "from " << i << " to " << i_to << ":\n";
     for(int p=pi; p < pi_to; ++p, ++j){
       p_plane[j].shift(m_grid.p_cell[z][p], z_shift + 1, m_shift_vector);
-      std::cout << "shift " << m_grid.p_cell[z][p].i << " to cell " << j << "\n";
+      // std::cout << "shift " << m_grid.p_cell[z][p].i << " to cell " << j << "\n";
     }
-    std::cout << "from " << i << " to " << i_ex_to << ":\n";
+    // std::cout << "from " << i << " to " << i_ex_to << ":\n";
     for(int p=pi; p < pi_ex_to; ++p, ++j){
       p_plane[j].shift(m_grid.p_cell[z][p], z_shift + 2, m_shift_vector);
-      std::cout << "shift " << m_grid.p_cell[z][p].i << " to cell " << j << "\n";
+      // std::cout << "shift " << m_grid.p_cell[z][p].i << " to cell " << j << "\n";
     }
 
     // adapt the cell_start
-    std::cerr << "cell start" << std::endl;
+    // std::cerr << "cell start" << std::endl;
     for(int c=i_ex; c < i_to; ++c, ++cj)
       cell_start[cj] = m_grid.cell_start[z][c] - m_grid.cell_start[z][i_ex] + cs;
     cs += m_grid.cell_start[z][i_to] - m_grid.cell_start[z][i_ex];
@@ -604,7 +610,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
     for(int c=i; c < i_ex_to; ++c, ++cj)
       cell_start[cj] = m_grid.cell_start[z][c] - m_grid.cell_start[z][i] + cs;
     cs += m_grid.cell_start[z][i_ex_to] - m_grid.cell_start[z][i];
-    std::cerr << "cj after upper (" << e << ") = " << cj << std::endl;
+    // std::cerr << "cj after upper (" << e << ") = " << cj << std::endl;
 
     i += m_grid.Na;
     i_to += m_grid.Na;
@@ -613,7 +619,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
   }
 
   // the center area
-  std::cerr << "center" << std::endl;
+  // std::cerr << "center" << std::endl;
   
   i = 0;
   i_to = i + m_grid.Na;
@@ -645,7 +651,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
     for(int c=i; c < i_ex_to; ++c, ++cj)
       cell_start[cj] = m_grid.cell_start[z][c] - m_grid.cell_start[z][i] + cs;
     cs += m_grid.cell_start[z][i_ex_to] - m_grid.cell_start[z][i];
-    std::cerr << "cj after upper (" << e << ") = " << cj << std::endl;
+    // std::cerr << "cj after upper (" << e << ") = " << cj << std::endl;
 
     i += m_grid.Na;
     i_to += m_grid.Na;
@@ -684,7 +690,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
     for(int c=i; c < i_ex_to; ++c, ++cj)
       cell_start[cj] = m_grid.cell_start[z][c] - m_grid.cell_start[z][i] + cs;
     cs += m_grid.cell_start[z][i_ex_to] - m_grid.cell_start[z][i];
-    std::cerr << "cj after upper (" << e << ") = " << cj << std::endl;
+    // std::cerr << "cj after upper (" << e << ") = " << cj << std::endl;
 
     i += m_grid.Na;
     i_to += m_grid.Na;
@@ -693,7 +699,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
   }
 
   // sentinel
-  std::cerr << "cj " << cj << std::endl;
+  // std::cerr << "cj " << cj << std::endl;
   cell_start[cj] = cs;
 
 }
@@ -765,22 +771,270 @@ void interaction::Grid_Pairlist_Algorithm::update
  unsigned int stride
  )
 {
+  const double update_start = util::now();
+
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
 
   const int c_ex = (m_grid.Nc_ex - m_grid.Nc) / 2;
+  const int N = m_grid.Na * m_grid.Nb;
+  const int num_solute_cg = topo.num_solute_chargegroups();
 
   for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
 
     prepare_plane(z, p_plane, cell_start);
-    print_plane(z, p_plane, cell_start);
+    // print_plane(z, p_plane, cell_start);
+
+    // std::cerr << "plane " << z << " printed..." << std::endl;
     
+    if (z < m_grid.Nc){
+      // do self interaction
+      const int i_first = m_grid.cell_start[z][0];
+      const int i_last  = m_grid.cell_start[z][N];
+
+      int base = -1;
+      int start = -1;
+
+      for(int i=i_first; i < i_last; ++i){
+
+	if (m_grid.p_cell[z][i].i < num_solute_cg){ // self interaction
+	  DEBUG(8, "self " << m_grid.p_cell[z][i].i);
+	  for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
+		a_to = topo.chargegroups()[m_grid.p_cell[z][i].i + 1];
+	      a1 < a_to; ++a1){
+	    for(int a2 = a1+1; a2 < a_to; ++a2){
+	      if (excluded_solute_pair(topo, a1, a2))
+		continue;
+	      pairlist[a1].push_back(a2);
+	    }
+	  }
+	}
+	
+	if (base != m_grid.cell_index[z][i]){
+	  base = m_grid.cell_index[z][i];
+	  start = i;
+	}
+	else{ // more than 1 cg in the cell
+	  if (m_grid.p_cell[z][i].i < num_solute_cg){ // solute - ?
+	    for(int j=start; j<i; ++j){
+	      DEBUG(8, "intra cell " << m_grid.p_cell[z][i].i << " - " 
+		    << m_grid.p_cell[z][j].i);
+	      
+	      if (m_grid.p_cell[z][j].i < num_solute_cg){ // solute - solute
+
+		const int ii = (m_grid.p_cell[z][i].i < m_grid.p_cell[z][j].i) ? 
+		  m_grid.p_cell[z][i].i : m_grid.p_cell[z][j].i;
+		const int jj = (m_grid.p_cell[z][i].i < m_grid.p_cell[z][j].i) ? 
+		  m_grid.p_cell[z][j].i : m_grid.p_cell[z][i].i;
+
+		for(int a1 = topo.chargegroups()[ii],
+		      a_to = topo.chargegroups()[ii + 1];
+		    a1 < a_to; ++a1){
+		  for(int a2 = topo.chargegroups()[jj],
+			a2_to = topo.chargegroups()[jj + 1];
+		      a2 < a2_to; ++a2){
+		    
+		    if (excluded_solute_pair(topo, a1, a2))
+		      continue;
+		    pairlist[a1].push_back(a2);
+		  }
+		}
+	      }
+	      else{ // solute - solvent
+		for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
+		      a_to = topo.chargegroups()[m_grid.p_cell[z][i].i+1];
+		    a1 < a_to; ++a1){
+		  for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
+			a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
+		      a2 < a2_to; ++a2){
+		    pairlist[a1].push_back(a2);
+		  }
+		}
+
+	      }
+	    }
+	  }
+	  else{ // solvent - ?
+	    for(int j=start; j<i; ++j){
+	      DEBUG(8, "intra cell " << m_grid.p_cell[z][i].i << " - " 
+		    << m_grid.p_cell[z][j].i);
+	      
+	      for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
+		    a_to = topo.chargegroups()[m_grid.p_cell[z][i].i+1];
+		  a1 < a_to; ++a1){
+		for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
+		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
+		    a2 < a2_to; ++a2){
+		  pairlist[a2].push_back(a1);
+		}
+	      }
+	    }
+	  }
+	}
+      } // loop over plane
+    } // self interaction
+
     // loop over all mask levels (inside box)
+    for(int mask_z=0; mask_z < int(m_grid.mask.size()); ++mask_z){
+      if (z - mask_z < 0) break;
+      if (z - mask_z >= m_grid.Nc) continue;
+      
+      // std::cerr << "z=" << z << " mask_z=" << mask_z
+      // << " i_level=" << z - mask_z << std::endl;
+      
+      const int i_level = z - mask_z;
+      
+      // std::cout << "mask level " << mask_z << std::endl;
+      // std::cerr << "mask level " << mask_z << std::endl;
 
+      const int i_first = m_grid.cell_start[i_level][0];
+      const int i_last  = m_grid.cell_start[i_level][N];
 
-  }
+      // std::cout << "particles " << i_last - i_first << std::endl;
+      // std::cerr << "particles " << i_last - i_first << std::endl;
+
+      // loop over all particles in this level
+      for(int i=i_first; i < i_last; ++i){
+	
+	assert(m_grid.cell_index[i_level].size() > unsigned(i));
+	const int base = m_grid.cell_index[i_level][i];
+	
+	if (m_grid.p_cell[i_level][i].i < num_solute_cg){ // solute - ?
+	  
+	  assert(m_grid.mask.size() > unsigned(mask_z));
+	  for(unsigned int m=0; m<m_grid.mask[mask_z].size(); m+=2){
+	    
+	    assert(cell_start.size() > unsigned(base + m_grid.mask[mask_z][m]));
+	  
+	    const int first = cell_start[base + m_grid.mask[mask_z][m]];
+	    const int last  = cell_start[base + m_grid.mask[mask_z][m+1]];
+	    
+	    for(int j=first; j<last; ++j){
+	      
+	      const double d2 = 
+		(m_grid.p_cell[i_level][i].x - p_plane[j].x) *
+		(m_grid.p_cell[i_level][i].x - p_plane[j].x) +
+		(m_grid.p_cell[i_level][i].y - p_plane[j].y) *
+		(m_grid.p_cell[i_level][i].y - p_plane[j].y) +
+		(m_grid.p_cell[i_level][i].z - p_plane[j].z) *
+		(m_grid.p_cell[i_level][i].z - p_plane[j].z);
+
+	      if (d2 > m_cutoff_long_2) continue;
+
+	      // no self interaction here...
+	      DEBUG(8, m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
+	      assert(m_grid.p_cell[i_level][i].i != p_plane[j].i);
+
+	      if (p_plane[j].i < num_solute_cg){ // solute - solute
+		const int ii = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
+		  m_grid.p_cell[i_level][i].i : p_plane[j].i;
+		const int jj = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
+		  p_plane[j].i : m_grid.p_cell[i_level][i].i;
+
+		DEBUG(8, "rewritten: " << ii
+		      << " - " << jj);
+
+		for(int a1 = topo.chargegroups()[ii],
+		      a_to = topo.chargegroups()[ii + 1];
+		    a1 < a_to; ++a1){
+		  for(int a2 = topo.chargegroups()[jj],
+			a2_to = topo.chargegroups()[jj + 1];
+		      a2 < a2_to; ++a2){
+		    
+		    std::cout << "ii=" << ii << " jj=" << jj
+			      << " a1=" << a1 << " a2=" << a2 << std::endl;
+		    
+		    if (excluded_solute_pair(topo, a1, a2))
+		      continue;
+		    pairlist[a1].push_back(a2);
+		  }
+		}
+	      }
+	      else{ // solute - solvent
+		for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
+		      a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
+		    a1 < a_to; ++a1){
+		  for(int a2 = topo.chargegroups()[p_plane[j].i],
+			a2_to = topo.chargegroups()[p_plane[j].i + 1];
+		      a2 < a2_to; ++a2){
+		    pairlist[a1].push_back(a2);
+		  }
+		}
+
+	      }
+	      
+	    } // j in mask row
+	  }  // mask
+	} // solute - ?
+	else{ // solvent - ?
+	  assert(m_grid.mask.size() > unsigned(mask_z));
+	  for(unsigned int m=0; m<m_grid.mask[mask_z].size(); m+=2){
+	    
+	    assert(cell_start.size() > unsigned(base + m_grid.mask[mask_z][m]));
+	  
+	    const int first = cell_start[base + m_grid.mask[mask_z][m]];
+	    const int last  = cell_start[base + m_grid.mask[mask_z][m+1]];
+	    
+	    for(int j=first; j<last; ++j){
+
+	      const double d2 = 
+		(m_grid.p_cell[i_level][i].x - p_plane[j].x) *
+		(m_grid.p_cell[i_level][i].x - p_plane[j].x) +
+		(m_grid.p_cell[i_level][i].y - p_plane[j].y) *
+		(m_grid.p_cell[i_level][i].y - p_plane[j].y) +
+		(m_grid.p_cell[i_level][i].z - p_plane[j].z) *
+		(m_grid.p_cell[i_level][i].z - p_plane[j].z);
+
+	      if (d2 > m_cutoff_long_2) continue;
+
+	      DEBUG(8, m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);	      
+
+	      for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
+		    a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
+		  a1 < a_to; ++a1){
+		for(int a2 = topo.chargegroups()[p_plane[j].i],
+		      a2_to = topo.chargegroups()[p_plane[j].i + 1];
+		    a2 < a2_to; ++a2){
+		  pairlist[a2].push_back(a1);
+		}
+	      }
+	    }
+	    
+	  }
+
+	} // solvent - ?
+
+	// std::cout << "\n";
+	
+      } // particle in the current mask plane
+
+    } // mask levels
+
+  } // the extended planes
 
   std::cerr << "pairlist done" << std::endl;
 
+  m_timing += util::now() - update_start;
 }
 
+bool interaction::Grid_Pairlist_Algorithm
+::excluded_solute_pair(topology::Topology & topo,
+		       unsigned int i, unsigned int j)
+{
+  assert(i<j);
+  
+  std::set<int>::const_reverse_iterator
+    e = topo.all_exclusion(i).rbegin(),
+    e_to = topo.all_exclusion(i).rend();
+
+  for( ; e != e_to; ++e){
+    if (j > unsigned(*e)) break;
+    if (j == unsigned(*e)){
+      DEBUG(11, "\texcluded");
+      return true;
+    }
+      
+  }
+  DEBUG(12, "\tnot excluded");
+  return false;
+}
