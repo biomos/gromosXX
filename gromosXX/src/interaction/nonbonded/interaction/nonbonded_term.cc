@@ -5,7 +5,6 @@
 
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE interaction
 #define SUBMODULE nonbonded
 

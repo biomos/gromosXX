@@ -5,7 +5,6 @@
 
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
@@ -34,7 +33,7 @@ void interaction::Nonbonded_Outerloop<t_interaction_spec>
 ::lj_crf_outerloop(topology::Topology & topo,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim, 
-		   std::vector<std::vector<size_t> > const & pairlist,
+		   std::vector<std::vector<unsigned int> > const & pairlist,
 		   Storage & storage)
 {  
   DEBUG(7, "\tcalculate interactions");  
@@ -45,9 +44,9 @@ void interaction::Nonbonded_Outerloop<t_interaction_spec>
     variables for a OMP parallelizable loop.
     outer index has to be integer...
   */
-  std::vector<size_t>::const_iterator j_it, j_to;
-  int i;
-  int size_i = pairlist.size();
+  std::vector<unsigned int>::const_iterator j_it, j_to;
+  unsigned int i;
+  unsigned int size_i = unsigned(pairlist.size());
 
   //**************************
   // the Bekker implementation
@@ -57,7 +56,7 @@ void interaction::Nonbonded_Outerloop<t_interaction_spec>
     periodicity.recalc_shift_vectors();
 
     int pc;
-    size_t j;
+    unsigned int j;
     // translate the atom j
     DEBUG(9, "nonbonded_interaction: grid based pairlist");
 
@@ -124,8 +123,8 @@ void interaction::Nonbonded_Outerloop<t_interaction_spec>
   Periodicity_type periodicity(conf.current().box);
 
   std::set<int>::const_iterator it, to;
-  size_t const num_solute_atoms = topo.num_solute_atoms();
-  size_t i;
+  unsigned int const num_solute_atoms = topo.num_solute_atoms();
+  unsigned int i;
   
   for(i=0; i < num_solute_atoms; ++i){
     it = topo.one_four_pair(i).begin();

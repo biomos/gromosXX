@@ -31,7 +31,7 @@ namespace interaction
     /**
      * resize the lj_parameter matrix.
      */
-    void resize(size_t i)
+    void resize(unsigned int i)
     {
       m_lj_parameter.resize(i);
       std::vector< std::vector<lj_parameter_struct> >::iterator
@@ -53,7 +53,7 @@ namespace interaction
     /**
      * get the lj parameters for atom type i and j.
      */
-    lj_parameter_struct const & lj_parameter(size_t iac_i, size_t iac_j){
+    lj_parameter_struct const & lj_parameter(unsigned int iac_i, unsigned int iac_j){
       assert(iac_i < m_lj_parameter.size());
       assert(iac_j < m_lj_parameter[iac_i].size());      
       return m_lj_parameter[iac_i][iac_j];
@@ -62,7 +62,7 @@ namespace interaction
     /**
      * add the lj parameters for atom type i and j.
      */
-    void add_lj_parameter(size_t iac_i, size_t iac_j,
+    void add_lj_parameter(unsigned int iac_i, unsigned int iac_j,
 			  lj_parameter_struct lj)
     {
       assert(iac_i < m_lj_parameter.size());

@@ -32,7 +32,7 @@ namespace interaction
     void lj_crf_outerloop(topology::Topology & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
-			  std::vector<std::vector<size_t> > const & pairlist,
+			  std::vector<std::vector<unsigned int> > const & pairlist,
 			  Storage & storage);
     /**
      * calculate the 1,4-interactions.

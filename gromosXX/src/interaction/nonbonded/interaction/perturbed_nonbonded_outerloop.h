@@ -36,7 +36,7 @@ namespace interaction
     void perturbed_lj_crf_outerloop(topology::Topology & topo,
 				    configuration::Configuration & conf,
 				    simulation::Simulation & sim,
-				    std::vector<std::vector<size_t> > & pl,
+				    std::vector<std::vector<unsigned int> > & pl,
 				    Storage & storage);
 
     /**

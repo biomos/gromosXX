@@ -50,7 +50,7 @@ namespace interaction
     int calculate_hessian(topology::Topology & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
-			  size_t const atom_i, size_t const atom_j,
+			  unsigned int atom_i, unsigned int atom_j,
 			  math::Matrix & hessian);
 
     /**

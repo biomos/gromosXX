@@ -3,13 +3,8 @@
  * template methods of Nonbonded_Set.
  */
 
-// just testing
-// the sleep function
-#include <unistd.h>
-
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
@@ -119,12 +114,12 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
     sleep(2*tid);
     
     std::cout << "PRINTING OUT THE PAIRLIST\n\n";
-    for(size_t i=0; i<100; ++i){
+    for(unsigned int i=0; i<100; ++i){
       if (i >= pairlist().size()) break;
 
       std::cout << "\n\n--------------------------------------------------";
       std::cout << "\n" << i;
-      for(size_t j=0; j<pairlist()[i].size(); ++j){
+      for(unsigned int j=0; j<pairlist()[i].size(); ++j){
 
 	if (j % 10 == 0) std::cout << "\n\t";
 	std::cout << std::setw(7) << pairlist()[i][j];
@@ -182,8 +177,10 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   
   // and long-range energies
   DEBUG(7, "\t(set) add long range energies");
-  for(size_t i = 0; i < m_shortrange_storage.energies.lj_energy.size(); ++i){
-    for(size_t j = 0; j < m_shortrange_storage.energies.lj_energy.size(); ++j){
+  const unsigned int lj_e_size = unsigned(m_shortrange_storage.energies.lj_energy.size());
+  
+  for(unsigned int i = 0; i < lj_e_size; ++i){
+    for(unsigned int j = 0; j < lj_e_size; ++j){
       m_shortrange_storage.energies.lj_energy[i][j] += 
 	m_longrange_storage.energies.lj_energy[i][j];
       m_shortrange_storage.energies.crf_energy[i][j] += 
@@ -194,8 +191,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   // add longrange virial
   if (t_interaction_spec::do_virial){
     DEBUG(7, "\t(set) add long range virial");
-    for(size_t i=0; i<3; ++i){
-      for(size_t j=0; j<3; ++j){
+    for(unsigned int i=0; i<3; ++i){
+      for(unsigned int j=0; j<3; ++j){
 
 	DEBUG(8, "longrange virial = " << m_longrange_storage.virial_tensor(i,j)
 	      << "\tshortrange virial = " << m_shortrange_storage.virial_tensor(i,j));
@@ -212,11 +209,11 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
     DEBUG(7, "(set) add long-range lambda-derivatives");
 
     // one we definitely have...
-    const size_t lj_size 
-      = m_shortrange_storage.perturbed_energy_derivatives.lj_energy.size();
+    const unsigned int lj_size 
+      = unsigned(m_shortrange_storage.perturbed_energy_derivatives.lj_energy.size());
     
-    for(size_t i = 0; i < lj_size; ++i){
-      for(size_t j = 0; j < lj_size; ++j){
+    for(unsigned int i = 0; i < lj_size; ++i){
+      for(unsigned int j = 0; j < lj_size; ++j){
 
 	assert(m_shortrange_storage.perturbed_energy_derivatives.
 	       lj_energy.size() > i);
@@ -249,7 +246,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::calculate_hessian(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
-		    size_t const atom_i, size_t const atom_j,
+		    unsigned int atom_i, unsigned int atom_j,
 		    math::Matrix & hessian){
   
   hessian = 0.0;
@@ -260,15 +257,15 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   // standard implementation
   //*************************
 
-  std::vector<size_t>::const_iterator j_it, j_to;
-  size_t i;
+  std::vector<unsigned int>::const_iterator j_it, j_to;
+  // size_t i;
   // size_t size_i = pairlist().size();
   math::Vec r;
   math::Matrix h;
   Periodicity_type periodicity(conf.current().box);
   
   for(j_it = pairlist()[atom_i].begin(),
-	j_to = pairlist()[i].end();
+	j_to = pairlist()[atom_i].end();
       j_it != j_to;
       ++j_it){
 
@@ -288,13 +285,13 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 		   topo.charge()(atom_i) * topo.charge()(atom_j),
 		   h);
 
-    for(size_t d1=0; d1 < 3; ++d1)
-      for(size_t d2=0; d2 < 3; ++d2)
+    for(unsigned int d1=0; d1 < 3; ++d1)
+      for(unsigned int d2=0; d2 < 3; ++d2)
 	hessian(d1,d2) += h(d1,d2);
   }
   // and the other way round
   for(j_it = pairlist()[atom_j].begin(),
-	j_to = pairlist()[i].end();
+	j_to = pairlist()[atom_i].end();
       j_it != j_to;
       ++j_it){
 
@@ -314,8 +311,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 		   topo.charge()(atom_i) * topo.charge()(atom_j),
 		   h);
 
-    for(size_t d1=0; d1 < 3; ++d1)
-      for(size_t d2=0; d2 < 3; ++d2)
+    for(unsigned int d1=0; d1 < 3; ++d1)
+      for(unsigned int d2=0; d2 < 3; ++d2)
 	hessian(d1,d2) += h(d1,d2);
   }
 
@@ -331,7 +328,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::add_shortrange_pair(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim,
-		      size_t const i, size_t const j,
+		      unsigned int i, unsigned int j,
 		      int pc)
 {
   DEBUG(9, "add shortrange pair " << i << " - " << j);
@@ -423,7 +420,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::add_longrange_pair(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     size_t const i, size_t const j,
+		     unsigned int i, unsigned int const j,
 		     Periodicity_type const & periodicity, int pc)
 {
   DEBUG(9, "add longrange pair " << i << " - " << j);
@@ -508,20 +505,20 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   m_longrange_storage.force.resize(conf.current().force.size());
 
   m_shortrange_storage.energies.
-    resize(conf.current().energies.bond_energy.size(),
-	   conf.current().energies.kinetic_energy.size());
+    resize(unsigned(conf.current().energies.bond_energy.size()),
+	   unsigned(conf.current().energies.kinetic_energy.size()));
   m_longrange_storage.energies.
-    resize(conf.current().energies.bond_energy.size(),
-	   conf.current().energies.kinetic_energy.size());
+    resize(unsigned(conf.current().energies.bond_energy.size()),
+	   unsigned(conf.current().energies.kinetic_energy.size()));
 
   
   m_shortrange_storage.perturbed_energy_derivatives.resize
-    (conf.current().perturbed_energy_derivatives.bond_energy.size(),
-     conf.current().perturbed_energy_derivatives.kinetic_energy.size());
+    (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
+     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
 
   m_longrange_storage.perturbed_energy_derivatives.resize
-    (conf.current().perturbed_energy_derivatives.bond_energy.size(),
-     conf.current().perturbed_energy_derivatives.kinetic_energy.size());
+    (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
+     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
   
   // and the pairlists
   pairlist().resize(topo.num_atoms());
@@ -536,14 +533,14 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
       sim.param().pairlist.cutoff_short *
       sim.param().pairlist.cutoff_short;
     
-    const size_t pairs = 
+    const unsigned int pairs = 
       int(1.3 * topo.num_atoms() / vol * 4.0 / 3.0 * math::Pi * c3);
 
     if (!quiet)
       std::cout << "\n\testimated pairlist size (per atom) : "
 		<< pairs << "\n\n";
     
-    for(size_t i=0; i<topo.num_atoms(); ++i)
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
       pairlist()[i].reserve(pairs);
     
   }

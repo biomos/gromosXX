@@ -29,7 +29,7 @@ namespace interaction
      */
     void lj_crf_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
-     size_t const i, size_t const j,
+     unsigned int i, unsigned int j,
      Storage & storage,
      Periodicity_type const & periodicity,
      int pc = -1);
@@ -49,7 +49,7 @@ namespace interaction
      */
     void RF_excluded_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
-     size_t const i,
+     unsigned int i,
      Periodicity_type const & periodicity);
 
     /**

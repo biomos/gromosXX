@@ -13,7 +13,7 @@ inline void
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 ::lj_crf_innerloop
 (topology::Topology & topo, configuration::Configuration & conf,
- size_t const i, size_t const j,
+ unsigned int i, unsigned int j,
  Storage & storage,
  Periodicity_type const & periodicity,
  int pc)
@@ -53,25 +53,33 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 		     topo.charge()(j),
 		     f, e_lj, e_crf);
   
-  for (int a=0; a<3; ++a){
-    
-    const double term = f * r(a);
-    storage.force(i)(a) += term;
-    storage.force(j)(a) -= term;
+  // most common case
+  if (t_nonbonded_spec::do_virial == math::molecular_virial){
+	  math::Vec rf = f * r;
+	  storage.force(i) += rf;
+	  storage.force(j) -= rf;
 
-    if (t_nonbonded_spec::do_virial == math::molecular_virial){
-      for(int b=0; b<3; ++b){
-	storage.virial_tensor(b, a) += 
-	  (r(b) - conf.special().rel_mol_com_pos(i)(b) + 
-	   conf.special().rel_mol_com_pos(j)(b)) * term;
-      }
-    }
-    if (t_nonbonded_spec::do_virial == math::atomic_virial){
-      for(int b=0; b<3; ++b){
-	storage.virial_tensor(b, a) += 
-	  r(b) * term;
-      }
-    }
+	  for(int b=0; b<3; ++b){
+		  const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
+		  for(int a=0; a<3; ++a){
+			  storage.virial_tensor(b, a) += rr * rf(a);
+		  }
+	  }
+  }
+  else{
+	for (int a=0; a<3; ++a){
+    
+		const double term = f * r(a);
+		storage.force(i)(a) += term;
+		storage.force(j)(a) -= term;
+
+	    if (t_nonbonded_spec::do_virial == math::atomic_virial){
+			for(int b=0; b<3; ++b){
+				storage.virial_tensor(b, a) += 
+				r(b) * term;
+			}
+		}
+	}
   }
 
   // energy
@@ -96,7 +104,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 ::one_four_interaction_innerloop
 (topology::Topology & topo,
  configuration::Configuration & conf,
- size_t const i, size_t const j,
+ unsigned int i, unsigned int j,
  Periodicity_type const & periodicity)
 {
   DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
@@ -152,7 +160,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 ::RF_excluded_interaction_innerloop
 (topology::Topology & topo,
  configuration::Configuration & conf,
- size_t const i,
+ unsigned int i,
  Periodicity_type const & periodicity)
 {
   math::Vec r, f;

@@ -5,7 +5,6 @@
 
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
@@ -104,8 +103,10 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
   
   // and long-range energies
   DEBUG(7, "\tadd long range energies");
-  for(size_t i = 0; i < energies.lj_energy.size(); ++i){
-    for(size_t j = 0; j < energies.lj_energy.size(); ++j){
+  const unsigned int lj_e_size = energies.lj_energy.size();
+  
+  for(unsigned int i = 0; i < lj_e_size; ++i){
+    for(unsigned int j = 0; j < lj_e_size; ++j){
       conf.current().energies.lj_energy[i][j] += 
 	energies.lj_energy[i][j];
       conf.current().energies.crf_energy[i][j] += 
@@ -116,8 +117,8 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
   // add longrange virial
   if (t_interaction_spec::do_virial){
     DEBUG(7, "\tadd long range virial");
-    for(size_t i=0; i<3; ++i)
-      for(size_t j=0; j<3; ++j)
+    for(unsigned int i=0; i<3; ++i)
+      for(unsigned int j=0; j<3; ++j)
 	conf.current().virial_tensor(i,j) =
 	  conf.current().virial_tensor(i,j) + virial_tensor(i,j);
   }
@@ -149,9 +150,9 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
     // and long-range energy lambda-derivatives
     DEBUG(7, "add long-range lambda-derivatives");
 
-    for(size_t i = 0; 
-	i < perturbed_energy_derivatives.lj_energy.size(); ++i){
-      for(size_t j = 0; j < perturbed_energy_derivatives.lj_energy.size(); ++j){
+	const unsigned int lj_e_size = perturbed_energy_derivatives.lj_energy.size();
+    for(unsigned int i = 0; i < lj_e_size; ++i){
+      for(unsigned int j = 0; j < lj_e_size; ++j){
 
 	assert(conf.current().perturbed_energy_derivatives.
 	       lj_energy.size() > i);
@@ -187,7 +188,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 ::add_shortrange_pair(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim,
-		      size_t const i, size_t const j)
+		      unsigned int i, unsigned int j)
 {
   assert(pairlist().size() > i);
 
@@ -244,7 +245,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 ::add_shortrange_pair(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim,
-		      size_t const i, size_t const j,
+		      unsigned int i, unsigned int j,
 		      int pc)
 {
   assert(t_interaction_spec::do_bekker);
@@ -303,7 +304,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 ::add_longrange_pair(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     size_t const i, size_t const j,
+		     unsigned int i, unsigned int j,
 		     Periodicity_type const & periodicity)
 {
   if (perturbed_atom(topo, conf, sim, i)){
@@ -361,7 +362,7 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
 ::add_longrange_pair(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     size_t const i, size_t const j,
+		     unsinged int i, unsigned int j,
 		     Periodicity_type const & periodicity, int pc)
 {
   if (perturbed_atom(topo, conf, sim, i)){
@@ -442,7 +443,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
     periodicity.recalc_shift_vectors();
     
     int pc;
-    size_t j;
+    unsigned int j;
 
     // translate the atom j
     for( ; it != to; ++it){
@@ -485,7 +486,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
   Periodicity_type periodicity(conf.current().box);
 
   std::set<int>::const_iterator it, to;
-  std::map<size_t, topology::Perturbed_Atom>::const_iterator 
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
     mit=topo.perturbed_solute().atoms().begin(), 
     mto=topo.perturbed_solute().atoms().end();
   
@@ -518,7 +519,7 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 
   Periodicity_type periodicity(conf.current().box);
 
-  std::map<size_t, topology::Perturbed_Atom>::const_iterator
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
     mit=topo.perturbed_solute().atoms().begin(),
     mto=topo.perturbed_solute().atoms().end();
 

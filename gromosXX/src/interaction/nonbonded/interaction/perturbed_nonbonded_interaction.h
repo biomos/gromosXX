@@ -48,7 +48,7 @@ namespace interaction
     void add_shortrange_pair(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     size_t const i, size_t const j);
+			     unsigned int i, unsigned int j);
 
     /**
      * add a shortrange interaction.
@@ -56,7 +56,7 @@ namespace interaction
     void add_shortrange_pair(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     size_t const i, size_t const j,
+			     unsigned int i, unsigned int j,
 			     int pc);
 
     /**
@@ -65,7 +65,7 @@ namespace interaction
     void add_longrange_pair(topology::Topology & topo,
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
-			    size_t const i, size_t const j,
+			    unsigned int i, unsigned int j,
 			    Periodicity_type const & periodicity);
 
     /**
@@ -74,7 +74,7 @@ namespace interaction
     void add_longrange_pair(topology::Topology & topo,
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
-			    size_t const i, size_t const j,
+			    unsigned int i, unsigned int j,
 			    Periodicity_type const & periodicity, int pc);
 
   protected:

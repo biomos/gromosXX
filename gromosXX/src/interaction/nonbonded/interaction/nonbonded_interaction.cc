@@ -5,7 +5,6 @@
 
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
@@ -88,8 +87,8 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
   for( ; it != to; ++it){
     conf.current().force += it->shortrange_storage().force;
 
-    for(size_t i = 0; i < ljs; ++i){
-      for(size_t j = 0; j < ljs; ++j){
+    for(unsigned int i = 0; i < ljs; ++i){
+      for(unsigned int j = 0; j < ljs; ++j){
       
 	e.lj_energy[i][j] += 
 	  it->shortrange_storage().energies.lj_energy[i][j];
@@ -101,8 +100,8 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
     if (t_interaction_spec::do_virial){
       DEBUG(7, "\tadd long range virial");
 
-      for(size_t i=0; i<3; ++i){
-	for(size_t j=0; j<3; ++j){
+      for(unsigned int i=0; i<3; ++i){
+	for(unsigned int j=0; j<3; ++j){
 
 	  DEBUG(8, "set virial = " << it->shortrange_storage().virial_tensor(i,j)
 		<< "\tvirial = " << conf.current().virial_tensor(i,j));
@@ -123,8 +122,8 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 	
       configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
 	
-      for(size_t i = 0; i < ljs; ++i){
-	for(size_t j = 0; j < ljs; ++j){
+      for(unsigned int i = 0; i < ljs; ++i){
+	for(unsigned int j = 0; j < ljs; ++j){
       
 	  pe.lj_energy[i][j] += 
 	    it->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
@@ -149,7 +148,7 @@ int interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 ::calculate_hessian(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
-		    size_t const atom_i, size_t const atom_j,
+		    unsigned int atom_i, unsigned int atom_j,
 		    math::Matrix & hessian)
 {
   typename
@@ -163,8 +162,8 @@ int interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
   for( ; it != to; ++it){
     it->calculate_hessian(topo, conf, sim, atom_i, atom_j, h);
 
-    for(size_t d1=0; d1 < 3; ++d1)
-      for(size_t d2=0; d2 < 3; ++d2)
+    for(unsigned int d1=0; d1 < 3; ++d1)
+      for(unsigned int d2=0; d2 < 3; ++d2)
 	hessian(d1,d2) += h(d1,d2);
   }
   return 0;

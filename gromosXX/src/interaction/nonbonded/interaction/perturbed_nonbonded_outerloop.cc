@@ -5,7 +5,6 @@
 
 #undef MODULE
 #undef SUBMODULE
-
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
@@ -40,23 +39,23 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
 ::perturbed_lj_crf_outerloop(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     std::vector<std::vector<size_t> > & pl,
+			     std::vector<std::vector<unsigned int> > & pl,
 			     Storage & storage)
 {  
   DEBUG(7, "\tcalculate perturbed interactions");  
 
   Periodicity_type periodicity(conf.current().box);
 
-  std::vector<size_t>::const_iterator j_it, j_to;
-  int i;
-  int size_i = pl.size();
+  std::vector<unsigned int>::const_iterator j_it, j_to;
+  unsigned int i;
+  unsigned int size_i = unsigned(pl.size());
 
   if (t_interaction_spec::do_bekker){
 
     periodicity.recalc_shift_vectors();
     
     int pc;
-    size_t j;
+    unsigned int j;
 
     // translate the atom j
 
@@ -118,7 +117,7 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
   Periodicity_type periodicity(conf.current().box);
   
   std::set<int>::const_iterator it, to;
-  std::map<size_t, topology::Perturbed_Atom>::const_iterator 
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
     mit=topo.perturbed_solute().atoms().begin(), 
     mto=topo.perturbed_solute().atoms().end();
   
@@ -152,12 +151,12 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
 
   Periodicity_type periodicity(conf.current().box);
 
-  std::map<size_t, topology::Perturbed_Atom>::const_iterator
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
     mit=topo.perturbed_solute().atoms().begin(),
     mto=topo.perturbed_solute().atoms().end();
 
   DEBUG(9, "\tSize of perturbed atoms " 
-	<< topo.perturbed_solute().atoms().size());
+	<< unsigned(topo.perturbed_solute().atoms().size()));
   
   for(; mit!=mto; ++mit){
     perturbed_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity);

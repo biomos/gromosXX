@@ -31,7 +31,7 @@ namespace interaction
      */
     void perturbed_lj_crf_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
-     size_t const i, size_t const j, Storage &storage,
+     unsigned int i, unsigned int j, Storage &storage,
      Periodicity_type const & periodicity,
      int pc = -1);
 
@@ -41,7 +41,7 @@ namespace interaction
      */
     void perturbed_one_four_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
-     size_t const i, size_t const j,
+     unsigned int i, unsigned int j,
      Periodicity_type const & periodicity);
     
     /**
@@ -51,7 +51,7 @@ namespace interaction
     void perturbed_RF_excluded_interaction_innerloop
     ( topology::Topology & topo,
       configuration::Configuration & conf,
-      std::map<size_t, topology::Perturbed_Atom>::const_iterator const & mit,
+      std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
       Periodicity_type const & periodicity);
 
   protected:

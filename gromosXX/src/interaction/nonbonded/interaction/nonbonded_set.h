@@ -58,7 +58,7 @@ namespace interaction
     int calculate_hessian(topology::Topology & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
-			  size_t const atom_i, size_t const atom_j,
+			  unsigned int atom_i, unsigned int atom_j,
 			  math::Matrix & hessian);
 
     /**
@@ -67,7 +67,7 @@ namespace interaction
     void add_shortrange_pair(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     size_t const i, size_t const j,
+			     unsigned int i, unsigned int j,
 			     int pc = -1);
 
     /**
@@ -76,7 +76,7 @@ namespace interaction
     void add_longrange_pair(topology::Topology & topo,
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
-			    size_t const i, size_t const j,
+			    unsigned int i, unsigned int j,
 			    Periodicity_type const & periodicity, 
 			    int pc = -1);
     Storage & shortrange_storage()
