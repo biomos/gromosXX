@@ -445,16 +445,33 @@ void write_code()
     cd << code[i];
   }
 
+  // or case not supported
   cd << indent << " {\n";
   ++indent;
   
   cd << indent << "io::messages.add(\"case not supported!\",\n"
      << indent << "                 \"create_nonbonded\",\n"
-     << indent << "                 io::message::error);\n"
-     << indent << "return 1;\n";
+     << indent << "                 io::message::error);\n\n";
+  cd << indent << "std::cout\n";
+  ++indent;
+  cd << indent << "<< \"\\t\\t\\tgrid based pairlist    : \"\n" 
+     << indent << "<< sim.param().pairlist.grid << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tatomic cutoff          : \"\n" 
+     << indent << "<< sim.param().pairlist.atomic_cutoff << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tboundary condition     : \"\n" 
+     << indent << "<< sim.param().boundary.boundary << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tperturbation           : \"\n" 
+     << indent << "<< sim.param().perturbation.perturbation << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tscaling                : \"\n" 
+     << indent << "<< sim.param().perturbation.scaling << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tvirial                 : \"\n" 
+     << indent << "<< sim.param().pcouple.virial << \"\\n\";\n\n";
+  --indent;
+  cd << indent << "return 1;\n";
   --indent;
   cd << indent << "}\n\n";
-  
+
+  // creation succeeded...
   cd << indent << "if (!quiet){\n";
   ++indent;
   cd << indent << "std::cout\n";
