@@ -114,10 +114,6 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  pfc->init(topo, conf, sim);
 	  md_seq.push_back(pfc);
 
-	  io::messages.add("no free energy derivatives for flexible Constraints, "
-			   "so you better don't change constrained bond lengths", 
-			   "create_constraints",
-			   io::message::warning);
 	}
       }
     default:

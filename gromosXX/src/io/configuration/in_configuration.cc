@@ -141,20 +141,6 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
 
-  // warn for unread input data
-  for(std::map<std::string, std::vector<std::string> >::const_iterator
-	it = m_block.begin(),
-	to = m_block.end();
-      it != to;
-      ++it){
-
-    if (block_read.count(it->first) == 0 && it->second.size()){
-      io::messages.add("block " + it->first + " not read in!",
-		       "In_Configuration",
-		       io::message::warning);
-    }
-  }
-
   // resize the energy arrays
   const size_t num = topo.energy_groups().size();
   const size_t numb = param.multibath.multibath.size();
@@ -208,12 +194,12 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
     buffer = m_block["FLEXV"];
     if (buffer.size() && param.constraint.solute.flexshake_readin){
+      block_read.insert("FLEXV");
       std::cout << "\treading FLEXV...\n";
       _read_flexv(conf.special().flexible_vel, buffer, 
 		  topo.solute().distance_constraints(),
 		  topo.perturbed_solute().distance_constraints());
 
-      block_read.insert("FLEXV");
     }
     else{
       if (param.constraint.solute.flexshake_readin)
@@ -224,6 +210,20 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 	io::messages.add("no FLEXV block found, assuming SHAKE'n positions (and velocities)",
 			 "in_configuration",
 			 io::message::notice);
+    }
+  }
+
+  // warn for unread input data
+  for(std::map<std::string, std::vector<std::string> >::const_iterator
+	it = m_block.begin(),
+	to = m_block.end();
+      it != to;
+      ++it){
+
+    if (block_read.count(it->first) == 0 && it->second.size()){
+      io::messages.add("block " + it->first + " not read in!",
+		       "In_Configuration",
+		       io::message::warning);
     }
   }
 

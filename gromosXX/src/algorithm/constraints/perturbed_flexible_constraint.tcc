@@ -66,18 +66,24 @@ static int _perturbed_flexible_shake
     // check whether we can skip this constraint
     if (skip_now[it->i] && skip_now[it->j]) continue;
 
-    DEBUG(10, "i: " << it->i << " j: " << it->j);
+    DEBUG(10, "\ti: " << it->i << " j: " << it->j);
 
     // the position
     math::Vec &pos_i = conf.current().pos(it->i);
     math::Vec &pos_j = conf.current().pos(it->j);
 
-    DEBUG(10, "\ni: " << pos_i << "\nj: " << pos_j);
+    DEBUG(10, "\n\tpositions:");
+    DEBUG(10, "\t\ti: " << math::v2s(pos_i) 
+	  << "\n\t\tj: " << math::v2s(pos_j));
 	
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = dot(r, r);
 	
+    DEBUG(10, "\tdist2 = " << dist2);
+    DEBUG(10, "\tconstraint " << k << ":");
+    DEBUG(10, "\tflex len = " << flex_len[k]);
+    
     double constr_length2 = flex_len[k] * flex_len[k];
     double diff = constr_length2 - dist2;
 
@@ -174,8 +180,6 @@ static int _perturbed_flexible_shake
       const double mu = (m1*m2)/(m1+m2);
       double dm1, dm2;
 
-      assert(topo.perturbed_solute().atoms().size() > it->i);
-
       if(topo.is_perturbed(it->i)){
 	dm1 = topo.perturbed_solute().atom(it->i).B_mass() -
 	  topo.perturbed_solute().atom(it->i).A_mass();
@@ -188,18 +192,25 @@ static int _perturbed_flexible_shake
       }
       else dm2 = 0;
 
+      DEBUG(10, "old dE/dL: " << conf.old().perturbed_energy_derivatives.constraints_energy
+	    [topo.atom_energy_group()[it->i]]);
+      DEBUG(10, "m1=" << m1 << " m2=" << m2 << " mu=" << mu << " dm1=" << dm1 << " dm2=" << dm2);
+
+      const double mr0 = topo.lambda() * param[it->B_type].r0 + 
+	(1.0 - topo.lambda()) * param[it->A_type].r0;
+      const double mK = (1.0 - topo.lambda()) * param[it->A_type].K +
+	topo.lambda() * param[it->B_type].K;
+
+      DEBUG(10, "mixed r0=" << mr0 << " mixed K=" << mK);
+
       conf.old().perturbed_energy_derivatives.constraints_energy
-	[topo.atom_energy_group()[it->i]] -=
-	2 * lambda * flex_len[k] *
+	[topo.atom_energy_group()[it->i]] +=
+	lambda / dt2  * flex_len[k] *
 	(param[it->B_type].r0 - param[it->A_type].r0 +
-	 (flex_len[k] - (topo.lambda() * param[it->B_type].r0 + 
-			 (1.0 - topo.lambda()) * param[it->A_type].r0) *
-	  ((dm1 + dm2) / (m1 * m2 * mu) - 
-	   dm2 / m2 - dm1 / m1 - 
-	   (param[it->B_type].K - param[it->A_type].K) / 
-	   ((1.0 - topo.lambda()) * param[it->A_type].K +
-	    topo.lambda() * param[it->B_type].K)
-	   )
+	 (flex_len[k] -  mr0) * 
+	 ((dm1 + dm2) / (m1 * m2 * mu) -
+	  dm2 / m2 - dm1 / m1 - 
+	  (param[it->B_type].K - param[it->A_type].K) / mK
 	  )
 	 );
 	 
@@ -232,6 +243,8 @@ static void _calc_perturbed_distance
  std::vector<double> & flex_len,
  double const dt)
 {
+  DEBUG(8, "\tcalculate perturbed flexible distance");
+  
   flex_len.clear();
 
   math::Periodicity<b> periodicity(conf.current().box);
@@ -245,6 +258,8 @@ static void _calc_perturbed_distance
 	to = topo.perturbed_solute().distance_constraints().end();
       it != to;
       ++it, ++k){
+    
+    DEBUG(10, "constraint k=" << k);
     
     // the position
     assert(conf.current().pos.size() > int(it->i));
@@ -350,13 +365,13 @@ static int _perturbed_flexible_solute
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
 
-  DEBUG(8, "\tshaking perturbed SOLUTE");
+  DEBUG(8, "\tflexible shaking perturbed SOLUTE");
   const double start = util::now();
 
   math::Periodicity<b> periodicity(conf.current().box);
   
   std::vector<double> flex_len;
-  _calc_distance<do_virial, b>(topo, conf, sim, param, flex_len, dt);
+  _calc_perturbed_distance<do_virial, b>(topo, conf, sim, param, flex_len, dt);
 
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
@@ -421,13 +436,14 @@ int algorithm::Perturbed_Flexible_Constraint<do_virial>
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  DEBUG(7, "applying SHAKE");
+  DEBUG(7, "applying perturbed flexible SHAKE");
   bool do_vel = false;
   int error = 0;
   
   // check whether we shake
   if (topo.perturbed_solute().distance_constraints().size() && 
-      sim.param().constraint.solute.algorithm == simulation::constr_flexshake &&
+      sim.param().constraint.solute.algorithm == 
+      simulation::constr_flexshake &&
       sim.param().constraint.ntc > 1){
 
     DEBUG(8, "\twe need to flexible shake perturbed SOLUTE");

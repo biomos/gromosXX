@@ -95,7 +95,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 		  << "perturbed distance constraints.";
       }
 
-      std::cout << "\t"
+      std::cout << "\n\t"
 		<< std::setw(10) << "atom i"
 		<< std::setw(10) << "atom j"
 		<< std::setw(10) << "type A"
