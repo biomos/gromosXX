@@ -3,6 +3,7 @@
  * globals of the interaction library
  */
 
+#include <stdheader.h>
 #include "config.h"
 
 double interaction_ver = 0.10;

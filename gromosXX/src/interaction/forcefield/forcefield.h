@@ -6,6 +6,16 @@
 #ifndef INCLUDED_FORCEFIELD_H
 #define INCLUDED_FORCEFIELD_H
 
+namespace configuration{
+	class Configuration;
+}
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Simulation;
+}
+
 /**
  * @namespace interaction
  * namespace that contains the classes to

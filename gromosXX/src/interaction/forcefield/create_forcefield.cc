@@ -2,7 +2,7 @@
  * @file create_forcefield.cc
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>

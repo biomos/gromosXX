@@ -6,6 +6,16 @@
 #ifndef INCLUDED_INTERACTION_H
 #define INCLUDED_INTERACTION_H
 
+namespace configuration{
+	class Configuration;
+}
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Simulation;
+}
+
 namespace interaction
 {
   /**
@@ -44,7 +54,7 @@ namespace interaction
     virtual int calculate_hessian(topology::Topology & topo,
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
-				  size_t const atom_i, size_t const atom_j,
+				  unsigned int atom_i, unsigned int atom_j,
 				  math::Matrix & hessian){ return 0; }
     
     /**
