@@ -30,6 +30,74 @@
 
 using namespace math;
 
+template<typename t_md>
+int do_md(t_md & md, io::Argument &args, bool perturbation = false)
+{
+  if(md.initialize(args)){
+    return 1;
+  }
+  
+  md.run();
+  
+  std::cout << "\nwriting final structure" << std::endl;
+  md.trajectory() << io::final << md.simulation();
+  
+  if (args.count("trc") == 1){
+    std::cout << "\nwriting flexible constraints data" << std::endl;
+    std::ofstream constr_file(args["trc"].c_str());
+    io::OutFlexibleConstraints flexout(constr_file);
+    flexout.write_title(md.title);
+    flexout.write_FLEXCON(md.distance_constraint_algorithm().vel(),
+			  md.simulation().topology());
+  }
+  else{
+    std::cout << "writing of final flexible constraint data"
+	      << " not required\n";
+  }
+
+  simulation::Energy energy, fluctuation;
+  md.simulation().system().energy_averages().
+    average(energy, fluctuation);
+  
+  io::print_ENERGY(std::cout, energy,
+		   md.simulation().topology().energy_groups(),
+		   "AVERAGE ENERGIES");
+
+  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+		      energy);
+  
+  io::print_ENERGY(std::cout, fluctuation,
+		   md.simulation().topology().energy_groups(),
+		   "ENERGY FLUCTUATIONS");
+  
+  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+		      fluctuation);
+
+  // and the lambda derivatives
+  if (perturbation){
+
+    md.simulation().system().lambda_derivative_averages().
+      average(energy, fluctuation);
+  
+    io::print_ENERGY(std::cout, energy,
+		     md.simulation().topology().energy_groups(),
+		     "AVERAGE ENERGY LAMBDA DERIVATIVES");
+
+    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+			energy);
+
+    io::print_ENERGY(std::cout, fluctuation,
+		     md.simulation().topology().energy_groups(),
+		     "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
+    
+    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+			fluctuation);
+  }
+
+  return 0;
+
+}
+
 int main(int argc, char *argv[])
 {
   try{
@@ -87,69 +155,23 @@ int main(int argc, char *argv[])
 	algorithm::Perturbed_Flexible_Constraint<simulation_type>,
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
-    
-      if(the_MD.initialize(args)){
+      
+      if (do_md(the_MD, args, perturbation)){
 	return 1;
       }
 
-      the_MD.run();
-
-      std::cout << "\nwriting final structure" << std::endl;
-      the_MD.trajectory() << io::final << the_MD.simulation();
-
-      if (args.count("trc") == 1){
-	std::cout << "\nwriting flexible constraints data" << std::endl;
-	std::ofstream constr_file(args["trc"].c_str());
-	io::OutFlexibleConstraints flexout(constr_file);
-	flexout.write_title(the_MD.title);
-	flexout.write_FLEXCON(the_MD.distance_constraint_algorithm().vel(),
-			      the_MD.simulation().topology());
-
-      }
-      else{
-	std::cout << "writing of final flexible constraint data"
-		  << " not required\n";
-	
-      }
-      
-      simulation::Energy energy, fluctuation;
-      the_MD.simulation().system().energy_averages().average(energy, fluctuation);
-      
-      io::print_ENERGY(std::cout, energy,
-		       the_MD.simulation().topology().energy_groups(),
-		       "AVERAGE ENERGIES");
-
-      io::print_ENERGY(std::cout, fluctuation,
-		       the_MD.simulation().topology().energy_groups(),
-		       "ENERGY FLUCTUATIONS");
-
-      the_MD.simulation().system().lambda_derivative_averages().
-	average(energy, fluctuation);
-
-      io::print_ENERGY(std::cout, energy,
-		       the_MD.simulation().topology().energy_groups(),
-		       "AVERAGE ENERGY LAMBDA DERIVATIVES");
-
-      io::print_ENERGY(std::cout, fluctuation,
-		       the_MD.simulation().topology().energy_groups(),
-		       "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
-
     }
     else{ // leap frog, no perturbation
+
       // topology and system
-      std::cout << "no perturbation" << std::endl;
       simulation::System<math::any> the_system;
       simulation::Topology the_topology;
 
-      std::cout << "system & topology" << std::endl;
-      
       // simulation
       typedef simulation::Simulation<simulation::Topology,
 	simulation::System<math::any> > simulation_type;
   
       simulation_type the_simulation(the_topology, the_system);
-      
-      std::cout << "simulation" << std::endl;
       
       algorithm::MD<simulation_type,
 	algorithm::Berendsen_Thermostat,
@@ -158,45 +180,10 @@ int main(int argc, char *argv[])
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
     
-      std::cout << "the md algorithm" << std::endl;
-      
-      if(the_MD.initialize(args)){
+      if (do_md(the_MD, args, perturbation)){
 	return 1;
       }
-      std::cout << "initialized" << std::endl;
       
-      the_MD.run();
-      
-      std::cout << "\nwriting final structure" << std::endl;
-      the_MD.trajectory() << io::final << the_MD.simulation();
-
-      if (args.count("trc") == 1){
-	std::cout << "writing flexible constraints data\n\n";
-	std::ofstream constr_file(args["trc"].c_str());
-	io::OutFlexibleConstraints flexout(constr_file);
-	flexout.write_title(the_MD.title);
-	flexout.write_FLEXCON(the_MD.distance_constraint_algorithm().vel(),
-			      the_MD.simulation().topology());
-
-      }
-      else{
-	std::cout << "writing of final flexible constraint data"
-		  << " not required\n";
-	// std::cout << "trc: " << args.count("trc") << std::endl;
-	
-      }
-
-      simulation::Energy energy, fluctuation;
-      the_MD.simulation().system().energy_averages().average(energy, fluctuation);
-      
-      io::print_ENERGY(std::cout, energy,
-		       the_MD.simulation().topology().energy_groups(),
-		       "AVERAGE ENERGIES");
-
-      io::print_ENERGY(std::cout, fluctuation,
-		       the_MD.simulation().topology().energy_groups(),
-		       "ENERGY FLUCTUATIONS");
-
     }
     
     std::cout << "\nMD finished successfully\n\n" << std::endl;

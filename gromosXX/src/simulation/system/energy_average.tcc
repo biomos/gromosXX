@@ -108,7 +108,8 @@ simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
 inline void
 simulation::Energy_Average::average(simulation::Energy &energy, simulation::Energy &fluctuation)
 {
-  // only at the end of a run, so create a temporary
+  double diff;
+  
   Energy &e = energy;
   Energy &f = fluctuation;
 
@@ -117,91 +118,162 @@ simulation::Energy_Average::average(simulation::Energy &energy, simulation::Ener
 
   // totals
   e.total = m_average.total / m_time;
-  f.total = sqrt((m_square_average.total - m_average.total * m_average.total / m_time) / m_time);
-
+  diff = m_square_average.total - m_average.total * m_average.total / m_time;
+  if (diff > 0.0)
+    f.total = sqrt(diff / m_time);
+  else f.total = 0.0;
+  
   e.kinetic_total = m_average.kinetic_total / m_time;
-  f.kinetic_total = sqrt((m_square_average.kinetic_total -
-			  m_average.kinetic_total * m_average.kinetic_total / m_time) / m_time);
-
+  diff = m_square_average.kinetic_total -
+    m_average.kinetic_total * m_average.kinetic_total / m_time;
+  if (diff > 0.0)
+    f.kinetic_total = sqrt(diff / m_time);
+  else
+    f.kinetic_total = 0.0;
+  
   e.potential_total = m_average.potential_total / m_time;
-  f.potential_total = sqrt((m_square_average.potential_total - 
-			    m_average.potential_total * m_average.potential_total / m_time) / m_time);
+  diff = m_square_average.potential_total - 
+    m_average.potential_total * m_average.potential_total / m_time;
+  if (diff > 0.0)
+    f.potential_total = sqrt(diff / m_time);
+  else
+    f.potential_total = 0.0;
   
   // physical interaction totals
   e.bond_total = m_average.bond_total / m_time;
-  f.bond_total = sqrt((m_square_average.bond_total - 
-		       m_average.bond_total * m_average.bond_total / m_time) / m_time);
-
+  diff = m_square_average.bond_total -
+    m_average.bond_total * m_average.bond_total / m_time;
+  if (diff > 0.0)
+    f.bond_total = sqrt(diff / m_time);
+  else
+    f.bond_total = 0.0;
+  
   e.angle_total = m_average.angle_total / m_time;
-  f.angle_total = sqrt((m_square_average.angle_total -
-			m_average.angle_total * m_average.angle_total / m_time) / m_time);
-
+  diff = m_square_average.angle_total -
+    m_average.angle_total * m_average.angle_total / m_time;
+  if (diff > 0.0)
+    f.angle_total = sqrt(diff / m_time);
+  else
+    f.angle_total = 0.0;
+  
   e.improper_total = m_average.improper_total / m_time;
-  f.improper_total = sqrt((m_square_average.improper_total - 
-			   m_average.improper_total * m_average.improper_total / m_time) / m_time);
-
+  diff = m_square_average.improper_total -
+    m_average.improper_total * m_average.improper_total / m_time;
+  if (diff > 0.0)
+    f.improper_total = sqrt(diff / m_time);
+  else
+    f.improper_total = 0.0;
+  
   e.dihedral_total = m_average.dihedral_total / m_time;
-  f.dihedral_total = sqrt((m_square_average.dihedral_total -
-			   m_average.dihedral_total * m_average.dihedral_total / m_time) / m_time);
+  diff = m_square_average.dihedral_total -
+    m_average.dihedral_total * m_average.dihedral_total / m_time;
+  if (diff > 0.0)
+    f.dihedral_total = sqrt(diff / m_time);
+  else
+    f.dihedral_total = 0;
 
   e.bonded_total = m_average.bonded_total / m_time;
-  f.bonded_total = sqrt((m_square_average.bonded_total -
-			 m_average.bonded_total * m_average.bonded_total / m_time) / m_time);
+  diff = m_square_average.bonded_total -
+    m_average.bonded_total * m_average.bonded_total / m_time;
+  if (diff > 0.0)
+    f.bonded_total = sqrt(diff / m_time);
+  else
+    f.bonded_total = 0.0;
 
   e.nonbonded_total = m_average.nonbonded_total / m_time;
-  f.nonbonded_total = sqrt((m_square_average.nonbonded_total -
-			    m_average.nonbonded_total * m_average.nonbonded_total / m_time) / m_time);
+  diff = m_square_average.nonbonded_total -
+    m_average.nonbonded_total * m_average.nonbonded_total / m_time;
+  if (diff > 0.0)
+    f.nonbonded_total = sqrt(diff / m_time);
+  else
+    f.nonbonded_total = 0.0;
   
   e.lj_total = m_average.lj_total / m_time;
-  f.lj_total = sqrt((m_square_average.lj_total -
-		     m_average.lj_total * m_average.lj_total / m_time) / m_time);
+  diff = m_square_average.lj_total -
+    m_average.lj_total * m_average.lj_total / m_time;
+  if (diff > 0.0)
+    f.lj_total = sqrt(diff / m_time);
+  else
+    f.lj_total = 0.0;
 
   e.crf_total = m_average.crf_total / m_time;
-  f.crf_total = sqrt((m_square_average.crf_total -
-		      m_average.crf_total * m_average.crf_total / m_time) / m_time);
+  diff = m_square_average.crf_total -
+    m_average.crf_total * m_average.crf_total / m_time;
+  if (diff > 0.0)
+    f.crf_total = sqrt(diff / m_time);
+  else
+    f.crf_total = 0.0;
 
   e.special_total = m_average.special_total / m_time;
-  f.special_total = sqrt((m_square_average.special_total -
-			  m_average.special_total * m_average.special_total / m_time) / m_time);
+  diff = m_square_average.special_total -
+    m_average.special_total * m_average.special_total / m_time;
+  if (diff > 0.0)
+    f.special_total = sqrt(diff / m_time);
+  else
+    f.special_total = 0.0;
   
   // kinetic energies of the baths
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
     e.kinetic_energy[i] = m_average.kinetic_energy[i] / m_time;
-    f.kinetic_energy[i] = sqrt((m_square_average.kinetic_energy[i] -
-				m_average.kinetic_energy[i] * m_average.kinetic_energy[i] / m_time)
-			       / m_time);
+    diff = m_square_average.kinetic_energy[i] -
+      m_average.kinetic_energy[i] * m_average.kinetic_energy[i] / m_time;
+    if (diff > 0.0)
+      f.kinetic_energy[i] = sqrt(diff / m_time);
+    else
+      f.kinetic_energy[i] = 0.0;
   }
   
   // the energy groups
   for(size_t i=0; i < e.bond_energy.size(); ++i){
     e.bond_energy[i] = m_average.bond_energy[i] / m_time;
-    f.bond_energy[i] = sqrt((m_square_average.bond_energy[i] -
-			     m_average.bond_energy[i] * m_average.bond_energy[i] / m_time) / m_time);
+    diff = m_square_average.bond_energy[i] -
+      m_average.bond_energy[i] * m_average.bond_energy[i] / m_time;
+    if (diff > 0.0)
+      f.bond_energy[i] = sqrt(diff / m_time);
+    else
+      f.bond_energy[i] = 0.0;
 
     e.angle_energy[i] = m_average.angle_energy[i] / m_time;
-    f.angle_energy[i] = sqrt((m_square_average.angle_energy[i] -
-			 m_average.angle_energy[i] * m_average.angle_energy[i] / m_time) / m_time);
+    diff = m_square_average.angle_energy[i] -
+      m_average.angle_energy[i] * m_average.angle_energy[i] / m_time;
+    if (diff > 0.0)
+      f.angle_energy[i] = sqrt(diff / m_time);
+    else
+      f.angle_energy[i] = 0.0;
 
     e.improper_energy[i] = m_average.improper_energy[i] / m_time;
-    f.improper_energy[i] = sqrt((m_square_average.improper_energy[i]
-				 - m_average.improper_energy[i] * m_average.improper_energy[i] / m_time)
-				/ m_time);
-
+    diff = m_square_average.improper_energy[i]
+      - m_average.improper_energy[i] * m_average.improper_energy[i] / m_time;
+    if (diff > 0.0)
+      f.improper_energy[i] = sqrt(diff / m_time);
+    else
+      f.improper_energy[i] = 0.0;
+    
     e.dihedral_energy[i] = m_average.dihedral_energy[i] / m_time;
-    f.dihedral_energy[i] = sqrt((m_square_average.dihedral_energy[i] -
-				 m_average.dihedral_energy[i] * m_average.dihedral_energy[i] / m_time)
-				/ m_time);
-
+    diff = m_square_average.dihedral_energy[i] -
+      m_average.dihedral_energy[i] * m_average.dihedral_energy[i] / m_time;
+    if (diff > 0.0)
+      f.dihedral_energy[i] = sqrt(diff / m_time);
+    else
+      f.dihedral_energy[i] = 0.0;
+    
     // and the nonbonded groups
     for(size_t j=0; j < e.lj_energy.size(); ++j){
       e.lj_energy[i][j] = m_average.lj_energy[i][j] / m_time;
-      f.lj_energy[i][j] = sqrt((m_square_average.lj_energy[i][j] -
-				m_average.lj_energy[i][j] * m_average.lj_energy[i][j] / m_time) / m_time);
+      diff = m_square_average.lj_energy[i][j] -
+	m_average.lj_energy[i][j] * m_average.lj_energy[i][j] / m_time;
+      if (diff > 0.0)
+	f.lj_energy[i][j] = sqrt(diff / m_time);
+      else
+	f.lj_energy[i][j] = 0.0;
 
       e.crf_energy[i][j] = m_average.crf_energy[i][j] / m_time;
-      f.crf_energy[i][j] = sqrt((m_square_average.crf_energy[i][j] -
-				 m_average.crf_energy[i][j] * m_average.crf_energy[i][j] / m_time)
-				/ m_time);
+      diff = m_square_average.crf_energy[i][j] -
+	m_average.crf_energy[i][j] * m_average.crf_energy[i][j] / m_time;
+      if (diff > 0.0)
+	f.crf_energy[i][j] = sqrt(diff / m_time);
+      else
+	f.crf_energy[i][j] = 0.0;
     }
   
   }

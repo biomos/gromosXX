@@ -58,7 +58,7 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature,
   int ntg, nlam;
   double rlam, dlamt, alphlj, alphc;
   input.read_PERTURB(ntg, rlam, dlamt, alphlj, alphc, nlam);
-  std::cout << "NTG " << ntg << std::endl;
+
   if (ntg == 1){
     io::messages.add("Perturbation enabled", "Perturbation_MD",
 		     io::message::notice);
@@ -118,6 +118,17 @@ int algorithm::Perturbation_MD<t_simulation, t_temperature,
 		     + args["pert"], "algorithm::md",
 		     io::message::notice);
 
+  std::cout << "PERTURBATION\n"
+	    << std::setw(15) << "lambda" 
+	    << std::setw(20) << m_simulation.topology().lambda() << "\n"
+	    << std::setw(15) << "alpha_lj"
+	    << std::setw(20) << m_simulation.topology().alpha_lj() << "\n"
+	    << std::setw(15) << "alpha_crf"
+	    << std::setw(20) << m_simulation.topology().alpha_crf() << "\n"
+	    << std::setw(15) << "nlam"
+	    << std::setw(20) << m_simulation.topology().nlam()
+	    << "\n\n";
+
   io::InPerturbationTopology pert_topo(pert_file);
 
   // it'd better be a perturbation topology!
@@ -136,6 +147,8 @@ int algorithm::Perturbation_MD<t_simulation, t_temperature,
   
   // initialize topology for lambda = ??
   m_simulation.topology().update_for_lambda();
+
+  std::cout << "\nEND\n";
   
   return 0;
 

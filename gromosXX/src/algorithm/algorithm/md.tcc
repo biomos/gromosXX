@@ -758,6 +758,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   temperature_algorithm().calculate_kinetic_energy(m_simulation);
   // and sum up the energy arrays
   m_simulation.system().energies().calculate_totals();
+
   m_simulation.system().energy_averages().
     update(m_simulation.system().energies(), m_dt);
   

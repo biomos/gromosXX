@@ -26,7 +26,7 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
-  std::cout << "PERTURBATION\n";
+  // std::cout << "PERTURBATION\n";
   DEBUG(7, "Reading PERTURBATION");
   
   { // PERTBOND03
@@ -77,6 +77,8 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 	throw std::runtime_error("error in PERTBOND03 block (n != num)");
       else if (_lineStream.fail())
     	throw std::runtime_error("error in PERTBOND03 block (fail)");
+
+      std::cout << "\tEND\n";
 
     } // if block present
     
@@ -132,6 +134,8 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
       else if (_lineStream.fail())
     	throw std::runtime_error("error in PERTBANGLE03 block (fail)");
 
+      std::cout << "\tEND\n";
+
     } // if block present
   } // PERTANGLE03
   
@@ -185,6 +189,8 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 	throw std::runtime_error("error in PERTIMPDIHEDRAL03 block (n != num)");
       else if (_lineStream.fail())
     	throw std::runtime_error("error in PERTIMPDIHEDRAL03 block (fail)");
+
+      std::cout << "\tEND\n";
 
     } // if block present
    
@@ -240,6 +246,8 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 	throw std::runtime_error("error in PERTDIHEDRAL03 block (n != num)");
       else if (_lineStream.fail())
     	throw std::runtime_error("error in PERTDIHEDRAL03 block (fail)");
+
+      std::cout << "\tEND\n";
 
     } // if block present
    
@@ -309,6 +317,8 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 	throw std::runtime_error("error in PERTATOM03 block (n != num)");
       else if (_lineStream.fail())
 	throw std::runtime_error("error in PERTATOM03 block (fail)");
+    
+      std::cout << "\tEND\n";
       
     } // if block present
   } // PERTATOMPAIR03
@@ -422,11 +432,13 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
       else if (_lineStream.fail())
 	throw std::runtime_error("error in PERTATOM03 block (fail)");
       
+      std::cout << "\tEND\n";
+      
     } // if block present
     
   } // PERTATOM03
     
-  std::cout << "END\n";
+  // std::cout << "END\n";
   
   return *this;
 }

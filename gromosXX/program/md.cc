@@ -31,6 +31,61 @@
 
 using namespace math;
 
+template<typename t_md>
+int do_md(t_md & md, io::Argument &args, bool perturbation = false)
+{
+  if(md.initialize(args)){
+    return 1;
+  }
+  
+  md.run();
+  
+  std::cout << "\nwriting final structure" << std::endl;
+  md.trajectory() << io::final << md.simulation();
+  
+  simulation::Energy energy, fluctuation;
+  md.simulation().system().energy_averages().
+    average(energy, fluctuation);
+  
+  io::print_ENERGY(std::cout, energy,
+		   md.simulation().topology().energy_groups(),
+		   "AVERAGE ENERGIES");
+
+  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+		      energy);
+  
+  io::print_ENERGY(std::cout, fluctuation,
+		   md.simulation().topology().energy_groups(),
+		   "ENERGY FLUCTUATIONS");
+  
+  io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+		      fluctuation);
+
+  // lambda derivatives
+  if (perturbation){
+
+    md.simulation().system().lambda_derivative_averages().
+      average(energy, fluctuation);
+  
+    io::print_ENERGY(std::cout, energy,
+		     md.simulation().topology().energy_groups(),
+		     "AVERAGE ENERGY LAMBDA DERIVATIVES");
+
+    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+			energy);
+
+    io::print_ENERGY(std::cout, fluctuation,
+		     md.simulation().topology().energy_groups(),
+		     "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
+    
+    io::print_MULTIBATH(std::cout, md.simulation().multibath(),
+			fluctuation);
+  }
+
+  return 0;
+
+}
+
 int main(int argc, char *argv[])
 {
   try{
@@ -111,15 +166,9 @@ int main(int argc, char *argv[])
 	algorithm::runge_kutta<simulation_type> >
 	the_MD(the_simulation);
       
-      if (the_MD.initialize(args)){
+      if (do_md(the_MD, args)){
 	return 1;
-      }
-      
-      the_MD.run();
-
-      std::cout << "\nwriting final structure" << std::endl;
-      the_MD.trajectory() << io::final << the_MD.simulation();
-
+      }      
     }
     else if (perturbation){ // leap frog + perturbation
       // topology and system
@@ -139,36 +188,9 @@ int main(int argc, char *argv[])
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
     
-      if(the_MD.initialize(args)){
+      if (do_md(the_MD, args, perturbation)){
 	return 1;
       }
-
-      the_MD.run();
-
-      std::cout << "\nwriting final structure" << std::endl;
-      the_MD.trajectory() << io::final << the_MD.simulation();
-
-      simulation::Energy energy, fluctuation;
-      the_MD.simulation().system().energy_averages().average(energy, fluctuation);
-      
-      io::print_ENERGY(std::cout, energy,
-		       the_MD.simulation().topology().energy_groups(),
-		       "AVERAGE ENERGIES");
-
-      io::print_ENERGY(std::cout, fluctuation,
-		       the_MD.simulation().topology().energy_groups(),
-		       "ENERGY FLUCTUATIONS");
-
-      the_MD.simulation().system().lambda_derivative_averages().
-	average(energy, fluctuation);
-
-      io::print_ENERGY(std::cout, energy,
-		       the_MD.simulation().topology().energy_groups(),
-		       "AVERAGE ENERGY LAMBDA DERIVATIVES");
-
-      io::print_ENERGY(std::cout, fluctuation,
-		       the_MD.simulation().topology().energy_groups(),
-		       "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
 
     }
     else{ // leap frog, no perturbation
@@ -188,25 +210,10 @@ int main(int argc, char *argv[])
 	algorithm::Shake<simulation_type>,
 	algorithm::Leap_Frog<simulation_type> >
 	the_MD(the_simulation);
-    
-      if(the_MD.initialize(args)){
+
+      if (do_md(the_MD, args)){
 	return 1;
       }
-
-      the_MD.run();
-
-      std::cout << "\nwriting final structure" << std::endl;
-      the_MD.trajectory() << io::final << the_MD.simulation();
-
-      simulation::Energy energy, fluctuation;
-      the_MD.simulation().system().energy_averages().average(energy, fluctuation);
-      
-      io::print_ENERGY(std::cout, energy,
-		       the_MD.simulation().topology().energy_groups(), "AVERAGE ENERGIES");
-
-      io::print_ENERGY(std::cout, fluctuation,
-		       the_MD.simulation().topology().energy_groups(), "ENERGY FLUCTUATIONS");
-
     }
     
     std::cout << "\nMD finished successfully\n\n" << std::endl;
