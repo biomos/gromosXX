@@ -37,8 +37,9 @@ inline void interaction::Dihedral_interaction<t_simulation>
 ::calculate_interactions(t_simulation &sim)
 {
   // loop over the improper dihedrals
-  simulation::Dihedral::iterator d_it =
-    sim.topology().solute().dihedrals().begin();
+  std::vector<simulation::Dihedral>::iterator d_it =
+    sim.topology().solute().dihedrals().begin(),
+    d_to = sim.topology().solute().dihedrals().end();
 
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
@@ -46,10 +47,13 @@ inline void interaction::Dihedral_interaction<t_simulation>
   double dkj2, dim, dln, ip;
   double energy;
   
-  for( ; !d_it.eol(); ++d_it){
-    sim.system().periodicity().nearest_image(pos(d_it.i()), pos(d_it.j()), rij);
-    sim.system().periodicity().nearest_image(pos(d_it.k()), pos(d_it.j()), rkj);
-    sim.system().periodicity().nearest_image(pos(d_it.k()), pos(d_it.l()), rkl);
+  for( ; d_it != d_to; ++d_it){
+    sim.system().periodicity().
+      nearest_image(pos(d_it->i), pos(d_it->j), rij);
+    sim.system().periodicity().
+      nearest_image(pos(d_it->k), pos(d_it->j), rkj);
+    sim.system().periodicity().
+      nearest_image(pos(d_it->k), pos(d_it->l), rkl);
 
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
@@ -71,12 +75,12 @@ inline void interaction::Dihedral_interaction<t_simulation>
     double cosphi3 = cosphi2 * cosphi;
     double cosphi4 = cosphi3 * cosphi;
 
-    assert(unsigned(d_it.type()) < m_dihedral_parameter.size());
+    assert(unsigned(d_it->type) < m_dihedral_parameter.size());
     
     double dcosmphi = 0;
     double cosmphi = 0;
     
-    switch(m_dihedral_parameter[d_it.type()].m){
+    switch(m_dihedral_parameter[d_it->type].m){
       case 0:
 	cosmphi = 0.0;
 	dcosmphi = 0.0;
@@ -111,8 +115,8 @@ inline void interaction::Dihedral_interaction<t_simulation>
 	throw std::runtime_error("dihedral type for m=6 not implemented");
 	
     }
-    double      K = m_dihedral_parameter[d_it.type()].K;
-    double delta = m_dihedral_parameter[d_it.type()].pd;
+    double      K = m_dihedral_parameter[d_it->type].K;
+    double delta = m_dihedral_parameter[d_it->type].pd;
 
     DEBUG(10, "dihedral K=" << K << " delta=" << delta << " dcos=" << dcosmphi);
 
@@ -126,13 +130,14 @@ inline void interaction::Dihedral_interaction<t_simulation>
     fj = kj1 * fi - kj2 * fl;
     fk = -1.0 * (fi + fj + fl);
     
-    force(d_it.i()) += fi;
-    force(d_it.j()) += fj;
-    force(d_it.k()) += fk;
-    force(d_it.l()) += fl;
+    force(d_it->i) += fi;
+    force(d_it->j) += fj;
+    force(d_it->k) += fk;
+    force(d_it->l) += fl;
 
     energy = K * (1 + delta * cosmphi);
-    sim.system().energies().dihedral_energy[sim.topology().atom_energy_group()[d_it.i()]] += energy;
+    sim.system().energies().dihedral_energy
+      [sim.topology().atom_energy_group()[d_it->i]] += energy;
     
   }
 }

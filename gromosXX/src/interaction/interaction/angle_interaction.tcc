@@ -30,8 +30,9 @@ inline void interaction::angle_interaction<t_simulation>
 ::calculate_interactions(t_simulation &sim)
 {
   // loop over the bonds
-  simulation::Angle::iterator a_it =
-    sim.topology().solute().angles().begin();
+  std::vector<simulation::Angle>::iterator a_it =
+    sim.topology().solute().angles().begin(),
+    a_to = sim.topology().solute().angles().end();
 
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
@@ -39,10 +40,10 @@ inline void interaction::angle_interaction<t_simulation>
 
   double energy;
 
-  for( ; !a_it.eol(); ++a_it){
+  for( ; a_it != a_to; ++a_it){
     
-    sim.system().periodicity().nearest_image(pos(a_it.i()), pos(a_it.j()), rij);
-    sim.system().periodicity().nearest_image(pos(a_it.k()), pos(a_it.j()), rkj);
+    sim.system().periodicity().nearest_image(pos(a_it->i), pos(a_it->j), rij);
+    sim.system().periodicity().nearest_image(pos(a_it->k), pos(a_it->j), rkj);
 
     double dij = sqrt(dot(rij, rij));
     double dkj = sqrt(dot(rkj, rkj));
@@ -53,10 +54,10 @@ inline void interaction::angle_interaction<t_simulation>
     double ip = dot(rij, rkj);
     double cost = ip / (dij * dkj);
         
-    assert(unsigned(a_it.type()) < m_angle_parameter.size());
+    assert(unsigned(a_it->type) < m_angle_parameter.size());
  
-    double K    = m_angle_parameter[a_it.type()].K;
-    double cos0 = m_angle_parameter[a_it.type()].cos0;
+    double K    = m_angle_parameter[a_it->type].K;
+    double cos0 = m_angle_parameter[a_it->type].cos0;
 
     DEBUG(10, "K=" << K << " cos0=" << cos0 << " dij=" << dij << " dkj=" << dkj);
 
@@ -69,12 +70,14 @@ inline void interaction::angle_interaction<t_simulation>
     fk = kk*(rij/dij - rkj/dkj * cost);
     fj = -1.0 * fi - fk;
     
-    force(a_it.i()) += fi;
-    force(a_it.j()) += fj;
-    force(a_it.k()) += fk;
+    force(a_it->i) += fi;
+    force(a_it->j) += fj;
+    force(a_it->k) += fk;
 
     energy = 0.5 * K * (cost - cos0) * (cost - cos0);
-    sim.system().energies().angle_energy[sim.topology().atom_energy_group()[a_it.i()]] += energy;
+    sim.system().energies().angle_energy[sim.topology().
+					 atom_energy_group()[a_it->i]]
+      += energy;
 
   }
     

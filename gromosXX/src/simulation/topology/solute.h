@@ -26,6 +26,11 @@ namespace simulation
     };
 
     /**
+     * Constructor
+     */
+    Solute();
+
+    /**
      * accessor to all atom information.
      */
     std::vector<atom_struct> & atoms();
@@ -68,16 +73,16 @@ namespace simulation
     /**
      * angle accessor.
      */
-    Angle & angles();
+    std::vector<Angle> & angles();
     
     /**
      * improper dihedral accessor.
      */
-    Improper_dihedral & improper_dihedrals();
+    std::vector<Improper_Dihedral> & improper_dihedrals();
     /**
      * dihedral accessor.
      */
-    Dihedral & dihedrals();
+    std::vector<Dihedral> & dihedrals();
     
     
   private:
@@ -94,17 +99,17 @@ namespace simulation
     /**
      * the angles.
      */
-    Angle m_angle;
+    std::vector<Angle> m_angle;
     
     /**
      * the improper dihedral.
      */
-    Improper_dihedral m_improper_dihedral;
+    std::vector<Improper_Dihedral> m_improper_dihedral;
     
     /**
      * the dihedral
      */
-    Dihedral m_dihedral;
+    std::vector<Dihedral> m_dihedral;
     
   };
   

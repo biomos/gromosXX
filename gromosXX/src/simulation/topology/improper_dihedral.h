@@ -9,59 +9,23 @@
 namespace simulation
 {
   /**
-   * @class Improper_dihedral
+   * @class Improper_Dihedral
    * holds improper dihedral information.
    */
-  class Improper_dihedral
+  class Improper_Dihedral
   {
   public:
-    /**
-     * @struct angle_struct
-     * angle information.
-     */
-    struct improper_dihedral_struct
-    {
-      int i;
-      int j;
-      int k;
-      int l;
-      int type;
-    };
+    Improper_Dihedral(int i, int j, int k, int l, int type)
+      : i(i), j(j), k(k), l(l), type(type) {};
 
-    /**
-     * @class iterator
-     * iterator over the improper dihedrals.
-     */
-    class iterator
-    {
-    public:
-      iterator(std::vector<improper_dihedral_struct> &bi);
-      bool eol();
-      bool neol();
-      void operator++();
-      int i();
-      int j();
-      int k();
-      int l();
-      int type();
-    protected:
-      std::vector<improper_dihedral_struct>::const_iterator 
-	m_improper_dihedral_it;
-      std::vector<improper_dihedral_struct>::const_iterator 
-	m_improper_dihedral_end;
-    };
-      
-    iterator begin();
-    void add(int i, int j, int k, int l, int type);
-
-  private:      
-    std::vector<improper_dihedral_struct> m_improper_dihedral_information;
-      
+    int i;
+    int j;
+    int k;
+    int l;
+    int type;
   };
 	  
   
 } // simulation
-
-#include "improper_dihedral.tcc"
 
 #endif

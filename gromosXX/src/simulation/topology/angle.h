@@ -15,49 +15,15 @@ namespace simulation
   class Angle
   {
   public:
-    /**
-     * @struct angle_struct
-     * angle information.
-     */
-    struct angle_struct
-    {
-      int i;
-      int j;
-      int k;
-      int type;
-    };
-
-    /**
-     * @class iterator
-     * iterator over the angles.
-     */
-    class iterator
-    {
-    public:
-      iterator(std::vector<angle_struct> &bi);
-      bool eol();
-      bool neol();
-      void operator++();
-      int i();
-      int j();
-      int k();
-      int type();
-    protected:
-      std::vector<angle_struct>::const_iterator m_angle_it;
-      std::vector<angle_struct>::const_iterator m_angle_end;
-    };
-      
-    iterator begin();
-    void add(int i, int j, int k, int type);
-
-  private:      
-    std::vector<angle_struct> m_angle_information;
-      
+    Angle(int i, int j, int k, int type) : i(i), j(j), k(k), type(type) {};
+    
+    int i;
+    int j;
+    int k;
+    int type;
   };
 	  
   
 } // simulation
-
-#include "angle.tcc"
 
 #endif

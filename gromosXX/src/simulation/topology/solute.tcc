@@ -3,6 +3,14 @@
  * inline methods for solute-topology.
  */
 
+/**
+ * Constructor
+ */
+inline
+simulation::Solute::Solute()
+  : compound()
+{
+}
 
 /**
  * atom information accessor.
@@ -111,7 +119,7 @@ simulation::Solute::add_bond_length_constraints(double mass,
 /**
  * angles accessor.
  */
-inline simulation::Angle &
+inline std::vector<simulation::Angle> &
 simulation::Solute::angles()
 {
   return m_angle;
@@ -120,7 +128,7 @@ simulation::Solute::angles()
 /**
  * improper_dihedrals accessor.
  */
-inline simulation::Improper_dihedral &
+inline std::vector<simulation::Improper_Dihedral> &
 simulation::Solute::improper_dihedrals()
 {
   return m_improper_dihedral;
@@ -129,7 +137,7 @@ simulation::Solute::improper_dihedrals()
 /**
  * dihedrals accessor.
  */
-inline simulation::Dihedral &
+inline std::vector<simulation::Dihedral> &
 simulation::Solute::dihedrals()
 {
   return m_dihedral;

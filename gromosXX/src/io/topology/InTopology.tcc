@@ -96,7 +96,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in BONDANGLE block");
       
-      topo.solute().angles().add(i-1, j-1, k-1, t-1);
+      topo.solute().angles().push_back(simulation::Angle(i-1, j-1, k-1, t-1));
     }
     
     if(n != num){
@@ -127,7 +127,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in BONDANGLEH block");
 
-      topo.solute().angles().add(i-1, j-1, k-1, t-1);
+      topo.solute().angles().push_back(simulation::Angle(i-1, j-1, k-1, t-1));
     }
     
     if(n != num){
@@ -156,7 +156,8 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in IMPDIHEDRAL block");
       
-      topo.solute().improper_dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+      topo.solute().improper_dihedrals().
+	push_back(simulation::Improper_Dihedral(i-1, j-1, k-1, l-1, t-1));
     }
     
     if(n != num){
@@ -187,7 +188,8 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in IMPDIHEDRALH block");
 
-      topo.solute().improper_dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+      topo.solute().improper_dihedrals().
+	push_back(simulation::Improper_Dihedral(i-1, j-1, k-1, l-1, t-1));
     }
     
     if(n != num){
@@ -216,7 +218,8 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in DIHEDRAL block");
       
-      topo.solute().dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+      topo.solute().dihedrals().
+	push_back(simulation::Dihedral(i-1, j-1, k-1, l-1, t-1));
     }
     
     if(n != num){
@@ -248,7 +251,8 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
 	io::messages.add("bad line in DIHEDRALH block",
 			 "InTopology", io::message::error);
 
-      topo.solute().dihedrals().add(i-1, j-1, k-1, l-1, t-1);
+      topo.solute().dihedrals().
+	push_back(simulation::Dihedral(i-1, j-1, k-1, l-1, t-1));
     }
     
     if(n != num){

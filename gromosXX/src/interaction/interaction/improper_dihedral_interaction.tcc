@@ -30,8 +30,9 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
 ::calculate_interactions(t_simulation &sim)
 {
   // loop over the improper dihedrals
-  simulation::Improper_dihedral::iterator i_it =
-    sim.topology().solute().improper_dihedrals().begin();
+  std::vector<simulation::Improper_Dihedral>::iterator i_it =
+    sim.topology().solute().improper_dihedrals().begin(),
+    i_to = sim.topology().solute().improper_dihedrals().end();
 
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
@@ -39,10 +40,14 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, q;
   double energy;
   
-  for( ; !i_it.eol(); ++i_it){
-    sim.system().periodicity().nearest_image(pos(i_it.k()), pos(i_it.j()), rkj);
-    sim.system().periodicity().nearest_image(pos(i_it.i()), pos(i_it.j()), rij);
-    sim.system().periodicity().nearest_image(pos(i_it.k()), pos(i_it.l()), rkl);
+  for( ; i_it != i_to; ++i_it){
+
+    sim.system().periodicity().
+      nearest_image(pos(i_it->k), pos(i_it->j), rkj);
+    sim.system().periodicity().
+      nearest_image(pos(i_it->i), pos(i_it->j), rij);
+    sim.system().periodicity().
+      nearest_image(pos(i_it->k), pos(i_it->l), rkl);
 
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
@@ -69,10 +74,10 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
     ip = dot(rij, rnk);
     if(ip < 0) q *= -1.0;
     
-    assert(unsigned(i_it.type()) < m_improper_dihedral_parameter.size());
+    assert(unsigned(i_it->type) < m_improper_dihedral_parameter.size());
  
-    const double K  = m_improper_dihedral_parameter[i_it.type()].K;
-    const double q0 = m_improper_dihedral_parameter[i_it.type()].q0;
+    const double K  = m_improper_dihedral_parameter[i_it->type].K;
+    const double q0 = m_improper_dihedral_parameter[i_it->type].q0;
 
     const double ki = -K * (q - q0) * dkj / dmj2;
     const double kl = K * (q - q0) * dkj / dnk2;
@@ -84,13 +89,15 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
     fj = kj1 * fi - kj2 * fl;
     fk = -1.0*(fi + fj + fl);
     
-    force(i_it.i()) += fi;
-    force(i_it.j()) += fj;
-    force(i_it.k()) += fk;
-    force(i_it.l()) += fl;
+    force(i_it->i) += fi;
+    force(i_it->j) += fj;
+    force(i_it->k) += fk;
+    force(i_it->l) += fl;
     
     energy = 0.5 * K * (q-q0) * (q-q0);
-    sim.system().energies().improper_energy[sim.topology().atom_energy_group()[i_it.i()]] += energy;
+    sim.system().energies().improper_energy[sim.topology().
+					    atom_energy_group()[i_it->i]]
+      += energy;
 
   }
 }

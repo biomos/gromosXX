@@ -15,53 +15,17 @@ namespace simulation
   class Dihedral
   {
   public:
-    /**
-     * @struct dihedral_struct
-     * dihedral information.
-     */
-    struct dihedral_struct
-    {
-      int i;
-      int j;
-      int k;
-      int l;
-      int type;
-    };
-
-    /**
-     * @class iterator
-     * iterator over the dihedrals.
-     */
-    class iterator
-    {
-    public:
-      iterator(std::vector<dihedral_struct> &bi);
-      bool eol();
-      bool neol();
-      void operator++();
-      int i();
-      int j();
-      int k();
-      int l();
-      int type();
-    protected:
-      std::vector<dihedral_struct>::const_iterator 
-	m_dihedral_it;
-      std::vector<dihedral_struct>::const_iterator 
-	m_dihedral_end;
-    };
-      
-    iterator begin();
-    void add(int i, int j, int k, int l, int type);
-
-  private:      
-    std::vector<dihedral_struct> m_dihedral_information;
-      
+    Dihedral(int i, int j, int k, int l, int type)
+      : i(i), j(j), k(k), l(l), type(type) {};
+    
+    int i;
+    int j;
+    int k;
+    int l;
+    int type;
   };
 	  
   
 } // simulation
-
-#include "dihedral.tcc"
 
 #endif
