@@ -1,3 +1,84 @@
+2004-11-24 16:19  markus
+
+	* doc/doxygen.conf: start of namespace descriptions
+
+2004-11-24 16:19  markus
+
+	* INSTALL: installation update (all static)
+
+2004-11-24 16:18  markus
+
+	* packaging/: PACKAGING, control.debian: debian package builders
+	  instructions
+
+2004-11-24 16:18  markus
+
+	* configure.in: all static build
+
+2004-11-11 13:05  markus
+
+	* src/interaction/special/create_special.cc: position constraints
+	  check
+
+2004-11-09 17:33  markus
+
+	* src/util/parse_tcouple.cc: TCOUPLE ir / com index interchanged
+
+2004-11-09 11:13  markus
+
+	* src/io/: blockinput.cc, configuration/inframe.cc: allow empty
+	  lines and spaces after blocknames
+
+2004-11-09 11:12  markus
+
+	* src/io/topology/in_perturbation.cc: check sequence number
+	  --markus
+
+2004-11-02 13:59  markus
+
+	* src/algorithm/integration/steepest_descent.cc: nan check
+
+2004-11-02 13:59  markus
+
+	* doc/doxygen.conf,
+	  src/algorithm/temperature/berendsen_thermostat.h,
+	  src/configuration/average.h, src/configuration/configuration.h,
+	  src/configuration/energy.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_outerloop.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc,
+	  src/math/boundary_implementation.cc: doxygen warnings
+
+2004-11-02 13:57  markus
+
+	* src/: algorithm/constraints/position_constraints.cc,
+	  algorithm/constraints/position_constraints.h,
+	  io/parameter/in_parameter.cc, simulation/parameter.h: position
+	  constraints
+
+2004-11-02 13:56  markus
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/integration/energy_calculation.cc,
+	  src/algorithm/integration/energy_calculation.h: moved total
+	  energy calculation into seperate algorithm
+
+2004-11-02 12:23  markus
+
+	* program/md.cc, src/algorithm/constraints/remove_com_motion.cc:
+	  fixed bug #50: centre of mass removal gives nan if det=0
+
+2004-10-26 17:27  markus
+
+	* doc/newinput.txt: J-VAL, PSCALE
+
+2004-10-26 17:19  markus
+
+	* ChangeLog, VERSION, doc/doxygen.conf, program/BUILD_NUMBER,
+	  program/md.cc, src/configuration/energy.cc: release 0.2.0
+
 2004-10-04 16:44  markus
 
 	* src/algorithm/pressure/berendsen_barostat.cc: wrong loop index in

@@ -5,15 +5,23 @@
 
 /**
  * @namespace math
- * standard mathematical functions, mainly concerned with vector
- * and matrix manipulations. 
+ * mathematical library
  *
- * To achieve a fast execution speed the
- * blitz template library is used. Blitz itself uses advanced
- * template expression syntax to optimize performence.
- * Standard enumeration declarations are also in this namespace
- * (like the boundary type or what virial to calculate), as well as
- * some physical constants.
+ * Content
+ * - standard mathematical functions, mainly concerned with vector
+ *   and matrix manipulations.
+ *    @sa math::Vec
+ *    @sa math::Matrix
+ *
+ * - Physical constants and standard enumeration declarations
+ *   (like the boundary type or what virial to calculate), as well as
+ *   some physical constants.
+ *
+ * - Boundary treatment
+ *   the basic routines are in math::Boundary_Implementation
+ *   the higher level functions in math::Periodicity
+ *   when using Periodicity a template parameter for the boundary shape
+ *   has to be passed.
  */
 namespace math
 {
@@ -21,22 +29,10 @@ namespace math
 }
 
 /**
- * @namespace blitz
- * the blitz library namespace.
- * library that uses expression templates to optimize the manipulation
- * of vectors and matrices.
- */
-namespace blitz
-{
-  // empty here...
-}
-
-/**
  * @namespace util
- * utilitary functions that did not fit nicely somewhere else.
- *
- * The debug message routines are in here but also
- * generation of initial velocities and preparation of the virial.
+ * utility library
+ * 
+ * 
  */
 namespace util
 {
