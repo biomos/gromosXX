@@ -1,4 +1,7 @@
-// included by BlockInput.h
+/**
+ * @file blockinput.tcc
+ * defines blockinput functions.
+ */
 
 inline 
 std::istream& 
@@ -50,10 +53,11 @@ io::getblock(
     if (!is.good()) 
       throw std::runtime_error("error reading block.");
 
-    dest++;
+    ++dest;
   }
 
-  // b.erase(dest, b.end());
+  ++dest;
+  b.erase(dest, b.end());
 
   return is;
 }
