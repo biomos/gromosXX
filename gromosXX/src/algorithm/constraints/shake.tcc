@@ -117,8 +117,8 @@ int algorithm::Shake<do_virial>
 	DEBUG(5, "r " << r);
 
 	std::cout << "SHAKE ERROR\n"
-		  << "\tatom i    : " << it->i << "\n"
-		  << "\tatom j    : " << it->j << "\n"
+		  << "\tatom i    : " << it->i + 1 << "\n"
+		  << "\tatom j    : " << it->j + 1 << "\n"
 		  << "\tfirst     : " << first << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
@@ -159,7 +159,7 @@ int algorithm::Shake<do_virial>
       if (do_virial == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
-	    conf.current().virial_tensor(a,aa) +=
+	    conf.old().virial_tensor(a,aa) +=
 	      ref_r(a) * ref_r(aa) * lambda / dt2;
 	  }
 	}
