@@ -1031,7 +1031,11 @@ void io::Out_Configuration
   configuration::Energy e, ef;
   math::Matrix p, pf, v, vf, et, etf;
   
-  // conf.current().energy_averages.average(e, ef, p, pf);
+  if (sim.param().minimise.ntem){
+    print_ENERGY(m_output, conf.current().energies, topo.energy_groups(), "MINIMIZED ENERGY",
+		 "<EMIN>_");
+  }
+
   // new averages
   conf.current().averages.simulation().energy_average(e, ef);
   conf.current().averages.simulation().pressure_average(p, pf, v, vf, et, etf);
