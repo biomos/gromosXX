@@ -263,7 +263,7 @@ static void _calc_distance(topology::Topology const &topo,
     
     double force_on_constraint;
     
-    if (false){
+    if (true){
       // take out velocities along constraint from previous step...
       force_on_constraint = (red_mass / dt2) * 
 	(sqrt(dist2) - sqrt(ref_dist2) - conf.special().flexible_vel[k] * dt);
