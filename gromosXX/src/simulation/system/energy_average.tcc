@@ -22,7 +22,6 @@ simulation::Energy_Average::zero()
 inline void
 simulation::Energy_Average::resize(size_t const energy_groups, size_t const multi_baths)
 {
-  std::cout << "Energy_Average::resize" << std::endl;
   m_average.resize(energy_groups, multi_baths);
   m_square_average.resize(energy_groups, multi_baths);
   m_time = 0.0;
@@ -31,10 +30,8 @@ simulation::Energy_Average::resize(size_t const energy_groups, size_t const mult
 inline void
 simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
 {
-  std::cout << "Energy_Average::update total: " << m_average.total << std::endl;
   // totals
   m_average.total += dt * e.total;
-  std::cout << "+= " << e.total << " * " << dt << " = " << m_average.total << std::endl;
   
   m_square_average.total += dt * e.total * e.total;
   

@@ -247,7 +247,7 @@ namespace simulation
 				      math::SArray const &mass, 
 				      math::Vec &mol_v, double &com_e_kin,
 				      double &e_kin,
-				      bool mean = true);
+				      int mean = 0);
     
   protected:
     /**

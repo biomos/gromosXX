@@ -54,6 +54,10 @@ template<typename t_simulation,
 int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint, t_integration>::initialize(io::Argument &args)
 {
 
+  std::cout << "==============\n"
+	    << "INITIALIZATION\n"
+	    << "==============\n";
+
   //----------------------------------------------------------------------------
   // read input
   DEBUG(7, "constructing topo, sys & input");
@@ -84,7 +88,9 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   DEBUG(7, "md: degrees of freedom");
   m_simulation.calculate_degrees_of_freedom();
   temperature_algorithm().calculate_kinetic_energy(m_simulation);
-  std::cout << "initial temperature:\n";
+  std::cout << "INITIAL TEMPERATURES AND TEMPERATURE COUPLING\n";
+  io::print_DEGREESOFFREEDOM(std::cout, m_simulation.multibath());
+  io::print_MULTIBATH_COUPLING(std::cout, m_simulation.multibath());
   io::print_MULTIBATH(std::cout, m_simulation.multibath(),
 		      m_simulation.system().energies());
 
@@ -99,10 +105,10 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   m_simulation.check_state();
 
   // messages?
-  std::cout << "Messages (startup)\n";
+  std::cout << "MESSAGES (startup)\n";
   if (io::messages.display(std::cout) > io::message::warning)
     return 1;
-  std::cout << "\n";
+  std::cout << "END\n";
   io::messages.clear();
 
   DEBUG(7, "md initialized");
@@ -336,6 +342,11 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 		   t_distance_constraint, t_integration>
 ::run(double time)
 {
+
+  std::cout << "========================\n";
+  std::cout << "PERFORMING MD SIMULATION\n";
+  std::cout << "========================\n";
+
   if (time == -1) time = m_time;
   
   double end_time = m_simulation.time() + time;
@@ -362,15 +373,14 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       
     DEBUG(8, "md: shake");
     try{
-      std::cout << "shake solute:  " 
-		<< m_distance_constraint.solute(m_simulation.topology(), 
-						m_simulation.system(), m_dt)
-		<< "\n";
+      // std::cout << "shake solute:  " << 
+      m_distance_constraint.solute(m_simulation.topology(), 
+				   m_simulation.system(), m_dt);
       
-      std::cout << "shake solvent: " 
-		<< m_distance_constraint.solvent(m_simulation.topology(),
-						 m_simulation.system(), m_dt)
-		<< "\n";
+            
+      // std::cout << "shake solvent: " <<
+      m_distance_constraint.solvent(m_simulation.topology(),
+				    m_simulation.system(), m_dt);  
     }
     catch(std::runtime_error e){
       // go back to positions before SHAKE

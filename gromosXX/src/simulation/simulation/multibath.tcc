@@ -22,19 +22,38 @@ inline void simulation::Multibath
 }
 
 inline void simulation::Multibath
-::add_bath(int last_atom, double temperature, double tau,
-	   double dof, double solute_constr_dof, double solvent_constr_dof)
+::add_bath(double temperature, double tau,
+	   double dof, double com_dof,
+	   double ir_dof, 
+	   double solute_constr_dof, double solvent_constr_dof)
 {
   bath_struct s;
-  s.last_atom = last_atom;
   s.temperature = temperature;
   s.tau = tau;
   s.dof = dof;
+  s.ir_dof = ir_dof;
+  s.com_dof = com_dof;
   s.solute_constr_dof = solute_constr_dof;
   s.solvent_constr_dof = solvent_constr_dof;
-  s.kinetic_energy = 0;
   
   add_bath(s);
+}
+
+inline void simulation::Multibath
+::add_bath_index(bath_index_struct s)
+{
+  m_bath_index.push_back(s);
+}
+
+inline void simulation::Multibath
+::add_bath_index(size_t const last, size_t const com_bath, size_t const ir_bath)
+{
+  bath_index_struct s;
+  s.last_atom = last;
+  s.com_bath = com_bath;
+  s.ir_bath = ir_bath;
+
+  add_bath_index(s);
 }
 
 inline simulation::bath_struct & 
@@ -51,39 +70,87 @@ simulation::Multibath::bath(size_t i)const
   return (*this)[i];  
 }
 
-inline int simulation::Multibath::in_bath(size_t const i)const
+inline std::vector<simulation::bath_index_struct> & 
+simulation::Multibath::bath_index()
 {
-  std::vector<bath_struct>::const_iterator it = begin(),
-    to = end();
+  return m_bath_index;
+}
+
+inline std::vector<simulation::bath_index_struct> const & 
+simulation::Multibath::bath_index()const
+{
+  return m_bath_index;
+}
+
+inline void simulation::Multibath::in_bath(size_t const atom,
+					   size_t &com, size_t &ir)const
+{
+  std::vector<bath_index_struct>::const_iterator it = m_bath_index.begin(),
+    to = m_bath_index.end();
   
-  for(size_t b=0; it != to; ++it, ++b)
-    if (it->last_atom >= i) return b;
-  
-  return -1;
+  for(; it != to; ++it){
+    if (it->last_atom >= atom){
+      com = it->com_bath;
+      ir = it->ir_bath;
+      return;
+    }
+  }
+  assert(false);
 }
 
 template<typename t_topology>
 inline void simulation::Multibath
 ::calculate_degrees_of_freedom(t_topology &topo)
 {
-  // check whether the last last is really the last_atom
-  if (size() == 0 || 
-      (end()-1)->last_atom != topo.num_atoms()-1){
-
+  // check whether we have at least one bath
+  if (size() == 0){
     io::messages.add("Adding a bath, no temperature coupling",
 		     "Multibath::calculate_degrees_of_freedom",
 		     io::message::notice);
-    add_bath(topo.num_atoms()-1, 0.0, -1);
+    add_bath(0.0);
+  }
+  
+  // check whether the last last is really the last_atom
+  if (m_bath_index.size() == 0 || 
+      (m_bath_index.end()-1)->last_atom != topo.num_atoms()-1){
+
+    io::messages.add("Adding atoms to the last bath!",
+		     "Multibath::calculate_degrees_of_freedom",
+		     io::message::notice);
+    add_bath_index(topo.num_atoms()-1, size()-1, size()-1);
     
   }
 
-  std::vector<bath_struct>::iterator it = begin(),
-    to = end();
+  // loop over the ranges
+  std::vector<bath_index_struct>::iterator it = m_bath_index.begin(),
+    to = m_bath_index.end();
 
-  // loop over the baths
-  for(size_t last=0; it != to; ++it){
-    it->dof = (it->last_atom - last + 1) * 3;
-    last = it->last_atom + 1;
+  for(int last=-1; it != to; ++it){
+    // get the number of molecules in the range
+    int num_mol = 0;
+    int mol = 0;
+    for(Molecule_Iterator m_it = topo.molecule_begin(),
+	  m_to = topo.molecule_end();
+	m_it != m_to;
+	++m_it, ++mol){
+      if (*(m_it.begin()) > it->last_atom){
+	break;
+      }
+      
+      if (int(*(m_it.begin())) > last)
+	++num_mol;
+    }
+    // add the last molecule
+    it->last_molecule = mol - 1;
+    // add the molecular translational dof
+    (*this)[it->com_bath].dof += num_mol * 3;
+    (*this)[it->com_bath].com_dof += num_mol * 3;
+
+    // and the internal and molecular rotational dof
+    (*this)[it->ir_bath].dof += (it->last_atom - last) * 3 - num_mol * 3;
+    (*this)[it->ir_bath].ir_dof += (it->last_atom - last) * 3 - num_mol * 3;
+
+    last = it->last_atom;
   }
 
   // substract constraints
@@ -91,15 +158,22 @@ inline void simulation::Multibath
     c_it = topo.solute().distance_constraints().begin(),
     c_to = topo.solute().distance_constraints().end();
   
+  size_t com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+
   for( ; c_it != c_to; ++c_it){
     
     DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
+    in_bath(c_it->i, com_bath_i, ir_bath_i);
+    in_bath(c_it->j, com_bath_j, ir_bath_j);
 
-    (*this)[in_bath(c_it->i)].dof -= 0.5;
-    (*this)[in_bath(c_it->j)].dof -= 0.5;
+    (*this)[ir_bath_i].dof -= 0.5;
+    (*this)[ir_bath_j].dof -= 0.5;
 
-    (*this)[in_bath(c_it->i)].solute_constr_dof += 0.5;
-    (*this)[in_bath(c_it->j)].solute_constr_dof += 0.5;
+    (*this)[ir_bath_i].ir_dof -= 0.5;
+    (*this)[ir_bath_j].ir_dof -= 0.5;
+
+    (*this)[ir_bath_i].solute_constr_dof += 0.5;
+    (*this)[ir_bath_j].solute_constr_dof += 0.5;
 
   }
   
@@ -118,12 +192,18 @@ inline void simulation::Multibath
       c_to = topo.solvent(s).distance_constraints().end();
       
       for( ; c_it != c_to; ++c_it){
+
+	in_bath(c_it->i + index, com_bath_i, ir_bath_i);
+	in_bath(c_it->j + index, com_bath_j, ir_bath_j);
 	
-	(*this)[in_bath(c_it->i + index)].dof -= 0.5;
-	(*this)[in_bath(c_it->j + index)].dof -= 0.5;
+	(*this)[ir_bath_i].dof -= 0.5;
+	(*this)[ir_bath_j].dof -= 0.5;
+
+	(*this)[ir_bath_i].ir_dof -= 0.5;
+	(*this)[ir_bath_j].ir_dof -= 0.5;
 	
-	(*this)[in_bath(c_it->i + index)].solvent_constr_dof += 0.5;
-	(*this)[in_bath(c_it->j + index)].solvent_constr_dof += 0.5;
+	(*this)[ir_bath_i].solvent_constr_dof += 0.5;
+	(*this)[ir_bath_j].solvent_constr_dof += 0.5;
 	
       }
       
@@ -139,8 +219,8 @@ inline int simulation::Multibath::check_state(size_t const num_atoms)const
 {
   int result = 0;
   size_t last_atom = 0;
-  std::vector<bath_struct>::const_iterator it = begin(),
-    to = end();
+  std::vector<bath_index_struct>::const_iterator it = m_bath_index.begin(),
+    to = m_bath_index.end();
   for( ; it!=to; ++it){
     if (it->last_atom < last_atom){
       io::messages.add("Multibath not sorted", "Multibath::check_state",
@@ -153,23 +233,54 @@ inline int simulation::Multibath::check_state(size_t const num_atoms)const
 		       io::message::error);
       ++result;
     }
-    if (it->dof == 0)
+    if (it->com_bath >= size()){
+      io::messages.add("Multibath: com bath index out of range",
+		       "Multibath::check_state",
+		       io::message::error);
+      throw std::string("com bath index out of range");
+    }
+    if (it->ir_bath >= size()){
+      io::messages.add("Multibath: ir bath index out of range",
+		       "Multibath::check_state",
+		       io::message::error);
+      throw std::string("ir bath index out of range");
+    }    
+    if ((*this)[it->com_bath].dof == 0)
       io::messages.add("Multibath: bath with 0 degrees of freedom?",
 		       "Multibath::check_state",
 		       io::message::warning);
-    if (it->solute_constr_dof < 0 || it->solvent_constr_dof < 0){
+    if ((*this)[it->ir_bath].dof == 0)
+      io::messages.add("Multibath: bath with 0 degrees of freedom?",
+		       "Multibath::check_state",
+		       io::message::warning);
+    if ((*this)[it->ir_bath].solute_constr_dof < 0 
+	|| (*this)[it->ir_bath].solvent_constr_dof < 0){
       io::messages.add("Multibath: constrained degrees of freedom negative",
 		       "Multibath::check_state",
 		       io::message::error);
       ++result;
     }
-    if (it->tau < 0 && it->tau != -1){
+    if ((*this)[it->com_bath].solute_constr_dof < 0 
+	|| (*this)[it->com_bath].solvent_constr_dof < 0){
+      io::messages.add("Multibath: constrained degrees of freedom negative",
+		       "Multibath::check_state",
+		       io::message::error);
+      ++result;
+    }
+    if ((*this)[it->ir_bath].tau < 0 && (*this)[it->ir_bath].tau != -1){
       io::messages.add("Multibath: tau < 0 && tau != -1",
 		       "Multibath::check_state",
 		       io::message::error);
       ++result;
     }
-    if (it->temperature < 0){
+    if ((*this)[it->com_bath].tau < 0 && (*this)[it->com_bath].tau != -1){
+      io::messages.add("Multibath: tau < 0 && tau != -1",
+		       "Multibath::check_state",
+		       io::message::error);
+      ++result;
+    }
+    if ((*this)[it->ir_bath].temperature < 0 ||
+	(*this)[it->com_bath].temperature < 0){
       io::messages.add("Multibath: temperature < 0",
 		       "Multibath::check_state",
 		       io::message::error);

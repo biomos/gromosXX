@@ -459,7 +459,7 @@ void simulation::System<b>::
 molecular_translational_ekin(Atom_Iterator start, Atom_Iterator end,
 			     math::SArray const &mass, 
 			     math::Vec &com_v, double &com_e_kin,
-			     double &e_kin, bool mean)
+			     double &e_kin, int mean)
 {
 
   com_v = 0.0;
@@ -481,10 +481,12 @@ molecular_translational_ekin(Atom_Iterator start, Atom_Iterator end,
     m = mass(*start);
     tot_mass += m;
 
-    if (mean)
+    if (mean == 0)
       v = 0.5 * (vel()(*start) + old_vel()(*start));
-    else
+    else if (mean == -1)
       v = old_vel()(*start);
+    else
+      v = vel()(*start);
     
     com_v += m * v;
     e_kin += m * dot(v,v);

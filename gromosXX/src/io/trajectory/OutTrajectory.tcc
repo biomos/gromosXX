@@ -534,9 +534,13 @@ inline void io::OutTrajectory<t_simulation>
   // and some internal ones that are currently not written out
   double tot_nb=0.0, tot_b=0.0, tot_pot=0.0, tot_special=0.0;
   
+  /*
   for(unsigned int i=0; i<sim.multibath().size(); i++)
     // ener[1] is the kinetic energy
     ener[1] += sim.multibath()[i].kinetic_energy;
+  */
+  ener[1] = e.kinetic_total;
+
   int index=0;
   
   for(int i=0; i<numenergygroups; i++){

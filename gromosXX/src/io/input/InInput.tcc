@@ -151,9 +151,11 @@ inline io::InInput & io::InInput
       _lineStream.str(*it);
       
       int num;
-      int last;
+      size_t last;
+      size_t com_bath, ir_bath;
       double temp, tau;
 
+      // the baths
       _lineStream >> num;
       ++it;
       
@@ -161,9 +163,9 @@ inline io::InInput & io::InInput
 	_lineStream.clear();
 	_lineStream.str(*it);
 	
-	_lineStream >> last >> temp >> tau;
+	_lineStream >> temp >> tau;
 
-	sim.multibath().add_bath(last-1, temp, tau);
+	sim.multibath().add_bath(temp, tau);
 	
       }
       
@@ -172,6 +174,24 @@ inline io::InInput & io::InInput
 			 "InInput", io::message::error);
       }
 
+      // now the ranges
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> num;
+      ++it;
+      
+      for(int i=0; i<num; ++i, ++it){
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> last >> com_bath >> ir_bath;
+	sim.multibath().add_bath_index(last - 1, com_bath, ir_bath);
+      }
+      
+      if (_lineStream.fail()){
+	io::messages.add("bad line in MULTIBATH block",
+			 "InInput", io::message::error);
+      }
+      
     }
     else{
       // try a TCOUPLE block
@@ -212,18 +232,71 @@ inline io::InInput & io::InInput
 	if (ntt[0] == 0 && ntt[1] == 0 && ntt[2] == 0){
 	  // nothing
 	}
+	// 1 0 0
+	else if (ntt[0] == 1 && ntt[1] == 0 && ntt[2] == 0){
+	  // the baths
+	  sim.multibath().add_bath(temp[0], tau[0]);
+	  sim.multibath().add_bath(0, -1);
+	  // the atoms in the baths
+	  sim.multibath().add_bath_index(last_solute, 0, 1);
+	}
+	// 0 1 0
+	else if (ntt[0] == 0 && ntt[1] == 1 && ntt[2] == 0){
+	  // the baths
+	  sim.multibath().add_bath(temp[1], tau[1]);
+	  sim.multibath().add_bath(0, -1);
+	  // the atoms in the baths
+	  sim.multibath().add_bath_index(last_solute, 1, 0);
+	}
+	// 0 0 1
+	else if (ntt[0] == 0 && ntt[1] == 0 && ntt[2] == 1){
+	  // the baths
+	  sim.multibath().add_bath(temp[2], tau[2]);
+	  sim.multibath().add_bath(0, -1);
+	  // the atoms in the baths
+	  sim.multibath().add_bath_index(last_solute, 1, 1);
+	  sim.multibath().add_bath_index(last_solvent, 0, 0);
+	}
+	// 1 1 0
+	else if (ntt[0] == 1 && ntt[1] == 1 && ntt[2] == 0){
+	  // the baths
+	  sim.multibath().add_bath(temp[0], tau[0]);
+	  sim.multibath().add_bath(temp[1], tau[1]);
+	  // the atoms in the baths
+	  sim.multibath().add_bath_index(last_solute, 0, 1);
+	}
+	// 1 1 1
+	else if (ntt[0] == 1 && ntt[1] == 1 && ntt[2] == 1){
+	  // the baths
+	  sim.multibath().add_bath(temp[0], tau[0]);
+	  sim.multibath().add_bath(temp[1], tau[1]);
+	  sim.multibath().add_bath(temp[2], tau[2]);
+	  // the atoms in the baths
+	  sim.multibath().add_bath_index(last_solute, 0, 1);
+	  sim.multibath().add_bath_index(last_solvent, 2, 2);
+	}
 	// 2 -2 0
 	else if (ntt[0] == 2 && ntt[1] == -2 && ntt[2] == 0){
-	  sim.multibath().add_bath(last_solute, temp[0], tau[0]);
+	  // the bath
+	  sim.multibath().add_bath(temp[0], tau[0]);
+	  // the atoms in the bath
+	  sim.multibath().add_bath_index(last_solute, 0, 0);
 	}
 	// 2 -2 1
 	else if (ntt[0] == 2 && ntt[1] == -2 && ntt[2] == 1){
-	  sim.multibath().add_bath(last_solute, temp[0], tau[0]);
-	  sim.multibath().add_bath(last_solvent, temp[2], tau[2]);
+	  // the baths
+	  sim.multibath().add_bath(temp[0], tau[0]);
+	  sim.multibath().add_bath(temp[2], tau[2]);
+	  // the atoms in the baths
+	  sim.multibath().add_bath_index(last_solute, 0, 0);
+	  sim.multibath().add_bath_index(last_solvent, 1, 1);
 	}
 	// 3 3 3
 	else if (ntt[0] == 3 && ntt[1] == -3 && ntt[2] == -3){
-	  sim.multibath().add_bath(last_solvent, temp[0], tau[0]);
+	  // the bath
+	  sim.multibath().add_bath(temp[0], tau[0]);
+	  // the atoms in the bath
+	  sim.multibath().add_bath_index(last_solvent, 0, 0);
 	}
 	// rest is not handled!
 	else{

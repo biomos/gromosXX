@@ -8,12 +8,24 @@
 
 namespace io
 {
+  /**
+   * Print the dof coupling table from the MULTIBATH block.
+   */
+  inline std::ostream &
+  print_MULTIBATH_COUPLING(std::ostream &os, simulation::Multibath const &bath);
+
   /** 
    * Print the MULTIBATH block.
    */
   inline std::ostream & 
-  print_MULTIBATH(std::ostream &os,simulation::Multibath const &bath,
+  print_MULTIBATH(std::ostream &os, simulation::Multibath const &bath,
 		  simulation::Energy const &energy);
+
+  /** 
+   * Print the DEGREES OF FREEDOM block.
+   */
+  inline std::ostream & 
+  print_DEGREESOFFREEDOM(std::ostream &os, simulation::Multibath const &bath);
   
   /**
    * Print the PRESSURE block.

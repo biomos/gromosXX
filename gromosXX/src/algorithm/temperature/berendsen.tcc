@@ -19,60 +19,110 @@ template<typename t_simulation>
 inline void algorithm::Berendsen_Thermostat
 ::apply(t_simulation &sim, double const dt)
 {
-  math::VArray &vel = sim.system().vel();
-  math::VArray const & old_vel = sim.system().old_vel();
-  math::SArray const & mass = sim.topology().mass();
-
+  
   // calculate the old kinetic energies
-  sim.calculate_mol_ekin(false);
-
+  sim.calculate_mol_ekin(-1);
+  
+  math::VArray &vel = sim.system().vel();
+  simulation::Energy &e = sim.system().energies();
+  
   // loop over the baths
   std::vector<simulation::bath_struct>::iterator
-    it = sim.multibath().begin(),
-    to = sim.multibath().end();
+    b_it = sim.multibath().begin(),
+    b_to = sim.multibath().end();
   
-  size_t last = 0;
+  for(size_t num=0; b_it != b_to; ++b_it, ++num){
+    // do temperature coupling for that bath?
+    if (b_it->tau != -1){
+
+      assert(e.kinetic_energy.size() > num);
+      DEBUG(7, "pre-scale ekin: " << e.kinetic_energy[num]);
+
+      const double free_temp = 2 * e.kinetic_energy[num] / 
+	(b_it->dof * math::k_Boltzmann);
+
+      b_it->scale = sqrt(1.0 + dt / b_it->tau *
+		       (b_it->temperature / free_temp - 1));
+      DEBUG(8, "free T " << free_temp << " dof " << b_it->dof);
+      DEBUG(8, "ref. T " << b_it->temperature);
+      DEBUG(8, "bath " << num << " scaling: " << b_it->scale);
+
+    } // scaling ?
+  } // loop over the baths
+
+  //--------------------------------
+  // now we have the scaling factors
+  //--------------------------------
+
+  // loop over the ranges
+  std::vector<simulation::bath_index_struct>::const_iterator
+    r_it = sim.multibath().bath_index().begin(),
+    r_to = sim.multibath().bath_index().end();
+
+  int last_atom = -1, last_mol = -1;
   
-  for(size_t num=0; it != to; ++it, ++num){
-    // get a range
-    // math::Range bath_range(last, it->last_atom);
+  for(; r_it != r_to; ++r_it){
 
-    // temperature coupling?
-    if (it->tau != -1){
+    DEBUG(8, "atoms " << last_atom + 1 << " - " << r_it->last_atom
+	  << " mols " << last_mol + 1 << " - " << r_it->last_molecule);
+    
+    // decide whether molecular translational kinetic energy and
+    // internal, rotational kinetic energies are jointly coupled
+    if (r_it->com_bath == r_it->ir_bath){
+      DEBUG(8, "jointly coupled, scaling with "
+	    << sim.multibath()[r_it->com_bath].scale);
 
-      // calculate the kinetic energy from the old velocities
-      double ekin = 0.0;
-      for(size_t i=last; i<=it->last_atom; ++i){
-	ekin += mass(i) * math::dot(old_vel(i), old_vel(i));
+      for(size_t i=last_atom + 1; i <= r_it->last_atom; ++i){
+	vel(i) *= sim.multibath()[r_it->com_bath].scale;
       }
-
-      assert(sim.system().energies().kinetic_energy.size() > num);
-      
-      DEBUG(7, "pre-scale ekin: " << 0.5*ekin 
-	    << "\tnew: " << sim.system().energies().kinetic_energy[num]);
-      
-      double free_temp = ekin / (it->dof * math::k_Boltzmann);
-      double scale = sqrt(1.0 + dt / it->tau *
-		      (it->temperature / free_temp -1));
-
-      // do not calculate the kinetic energy here
-      // because SHAKE will be called later on...
-      // it->kinetic_energy = 0.0;
-      for(size_t i=last; i<=it->last_atom; ++i){
-	vel(i) *= scale;
-	// math::Vec v = 0.5 * (vel(i) + old_vel(i));
-	// it->kinetic_energy += mass(i) * math::dot(v, v);
-      }
-      
-      // it->kinetic_energy *= 0.5;
 
     }
-    // otherwise just do nothing, kinetic energy is calculated later
-    // (after SHAKE)
+    else{
+  
+      simulation::Molecule_Iterator 
+	m_it = sim.topology().molecule_begin(),
+	m_to = sim.topology().molecule_begin();
+      
+      m_it += last_mol + 1;
+      m_to += r_it->last_molecule + 1;
 
-    last = it->last_atom + 1;
+      DEBUG(8, "separately coupled");
+      DEBUG(8, "scaling from mol " << last_mol << " to "
+	    << r_it->last_molecule);
 
-  }
+      math::Vec com_v, ir_v;
+      double com_ekin, ekin;
+      size_t ir_bath, com_bath;
+
+      // which bathes?
+      sim.multibath().in_bath(*(m_it.begin()), com_bath, ir_bath);  
+
+      for( ; m_it != m_to; ++m_it){
+	// new molecular translational velocities
+	sim.system().
+	  molecular_translational_ekin(m_it.begin(), m_it.end(),
+				       sim.topology().mass(),
+				       com_v, com_ekin, ekin,
+				       1);
+
+	simulation::Atom_Iterator start = m_it.begin(),
+	  end = m_it.end();
+    
+	// loop over the atoms in the molecule
+	for( ; start != end; ++start){
+    
+	  assert(unsigned(vel.size()) > *start);
+	  ir_v = vel(*start) - com_v;
+	  vel(*start) =
+	    sim.multibath()[com_bath].scale * com_v +
+	    sim.multibath()[ir_bath].scale * ir_v;
+	} // loop over atoms
+      } // loop over molecules of bath
+    } // seperately coupled
+
+    last_atom = r_it->last_atom;
+    last_mol = r_it->last_molecule;
+  } // loop over baths
   
 }
 
@@ -84,33 +134,6 @@ inline void algorithm::Berendsen_Thermostat
   sim.system().energies().zero(false, true);
   sim.calculate_mol_ekin();
   
-  /*
-  math::VArray &vel = sim.system().vel();
-  math::VArray const & old_vel = sim.system().old_vel();
-  math::SArray const & mass = sim.topology().mass();
-
-  // loop over the baths
-  std::vector<simulation::bath_struct>::iterator
-    it = sim.multibath().begin(),
-    to = sim.multibath().end();
-  
-  size_t last = 0;
-  
-  for(int bath=0; it != to; ++it, ++bath){
-    it->kinetic_energy = 0.0;
-    for(size_t i=last; i<=it->last_atom; ++i){
-      math::Vec v = 0.5 * (vel(i) + old_vel(i));
-      
-      it->kinetic_energy += mass(i) * math::dot(v, v);
-    } // atoms in bath
-    
-    it->kinetic_energy *= 0.5;
-    sim.system().energies().kinetic_energy[bath] = it->kinetic_energy;
-    
-    last = it->last_atom + 1;
-    
-  } // baths
-  */
 }
   
 template<typename t_simulation>
@@ -122,16 +145,20 @@ inline void algorithm::Berendsen_Thermostat
   math::SArray const & mass = sim.topology().mass();
 
   // loop over the baths
-  std::vector<simulation::bath_struct>::iterator
-    it = sim.multibath().begin(),
-    to = sim.multibath().end();
+  std::vector<simulation::bath_index_struct>::iterator
+    it = sim.multibath().bath_index().begin(),
+    to = sim.multibath().bath_index().end();
   
   size_t last = 0;
   std::vector<double> &e_kin = sim.system().lambda_energies().kinetic_energy;
   
-  e_kin.resize(sim.system().energies().kinetic_energy.size());
+  assert(e_kin.size() == sim.system().energies().kinetic_energy.size());
+  // e_kin.resize(sim.system().energies().kinetic_energy.size());
 
-  for(int bath=0; it != to; ++it, ++bath){
+  for(; it != to; ++it){
+    // or just put everything into the first bath...?
+    size_t bath = it->com_bath;
+    
     // assert(e_kin.size() > bath);
     e_kin[bath] = 0.0;
     for(size_t i=last; i<=it->last_atom; ++i){

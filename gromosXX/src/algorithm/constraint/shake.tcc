@@ -347,11 +347,13 @@ algorithm::Shake<t_simulation>
   input.read_SHAKE(ntc, tolerance);
   this->tolerance(tolerance);
 
+  std::cout << "DISTANCE CONSTRAINTS\n";
+
   switch(ntc){
     case 1:
       break;
     case 2: 
-      std::cout << "SHAKE bonds containing hydrogen atoms" << std::endl;
+      std::cout << "\tSHAKE bonds containing hydrogen atoms" << std::endl;
       // read in the parameter
       topo >> *this;
       add_bond_length_constraints(1.0,
@@ -359,19 +361,21 @@ algorithm::Shake<t_simulation>
 				  sim.topology().solute());
       break;
     case 3: 
-      std::cout << "SHAKE all bonds" << std::endl;
+      std::cout << "\tSHAKE all bonds" << std::endl;
       // read in parameter
       topo >> *this;
       add_bond_length_constraints(sim.topology().solute());
       break;
     default:
-      std::cout << "wrong ntc parameter" << std::endl;
+      std::cout << "\twrong ntc parameter" << std::endl;
   }
 
   // give the constraint force the correct size...
   sim.system().constraint_force().resize(sim.topology().solute().
 				distance_constraints().size());
   
+  std::cout << "END\n";
+
 }
 
 
