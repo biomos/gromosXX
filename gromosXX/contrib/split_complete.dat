@@ -1,0 +1,75 @@
+PAIRLIST
+	t_PairlistAlgorithm < Interaction_Spec < t_boundary ,
+						 t_virial ,
+						 t_atomic_cutoff ,
+						 t_bekker > ,
+			      Perturbation_Spec < t_perturbation ,
+						  t_scaling > >
+END
+
+NONBONDED
+	Nonbonded_Interaction < Interaction_Spec < t_boundary ,
+						  t_virial ,
+						  t_atomic_cutoff ,
+						  t_bekker > ,
+				Perturbation_Spec < t_perturbation ,
+						    t_scaling > >
+END
+
+PARAMETER
+	t_PairlistAlgorithm
+	sim.param().pairlist.grid == true @ Grid_Pairlist_Algorithm
+	sim.param().pairlist.grid == false @ Standard_Pairlist_Algorithm
+END
+
+PARAMETER
+	t_boundary
+	sim.param().boundary.boundary == vacuum @ vacuum
+	sim.param().boundary.boundary == rectangular @ rectangular
+	sim.param().boundary.boundary == triclinic @ triclinic
+END
+
+PARAMETER
+	t_virial
+	sim.param().pcouple.virial == no_virial @ no_virial
+	sim.param().pcouple.virial == atomic_virial @ atomic_virial
+	sim.param().pcouple.virial == molecular_virial @ molecular_virial
+END
+	
+PARAMETER
+	t_atomic_cutoff
+	sim.param().pairlist.atomic_cutoff == true @ atomic_cutoff_on
+	sim.param().pairlist.atomic_cutoff == false @ atomic_cutoff_off
+END
+
+PARAMETER
+	t_bekker
+	sim.param().pairlist.grid == true @ bekker_on
+	sim.param().pairlist.grid == false @ bekker_off
+END
+
+PARAMETER
+	t_perturbation
+	sim.param().perturbation.perturbation == true @ perturbation_on
+	sim.param().perturbation.perturbation == false @ perturbation_off
+END
+
+PARAMETER
+	t_scaling
+	sim.param().perturbation.scaling == true @ scaling_on
+	sim.param().perturbation.scaling == false @ scaling_off
+END
+
+RULE
+	t_boundary@vacuum			t_virial@atomic_virial
+	t_boundary@vacuum			t_virial@molecular_virial
+END
+
+RULE
+	t_perturbation@perturbation_off		t_scaling@scaling_on
+END
+
+RULE
+	t_PairlistAlgorithm@Grid_Pairlist_Algorithm	t_bekker@bekker_off
+	t_PairlistAlgorithm@Standard_Pairlist_Algorithm	t_bekker@bekker_on
+END
