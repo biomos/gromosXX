@@ -193,6 +193,7 @@ int main(int argc, char* argv[])
 	}
 	
       }
+      rasn_sim.md.print_timing(std::cout);
     }
     catch (std::string s){
       std::cout << s << std::endl;
