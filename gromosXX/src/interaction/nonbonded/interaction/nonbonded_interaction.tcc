@@ -158,7 +158,9 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbatio
 	 << "\n"
 	 << "            "
 	 << std::setw(32) << std::left << "longrange"
-	 << std::setw(20) << m_longrange_timing << "\n"
+	  // << std::setw(20) << m_longrange_timing << "\n"
+	 << std::setw(20) << "not measured: too expensive" << "\n"
+
 	 << "            "
 	 << std::setw(32) << std::left << "pairlist"
 	 << std::setw(20) 

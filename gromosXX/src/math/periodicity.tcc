@@ -85,33 +85,25 @@ void math::Periodicity<b>
   Vec cog, o, trans;
   o = 0.0;
   
-  std::cout.precision(12);
-  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  // std::cout.precision(12);
+  // std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
   for(size_t i=0; i<topo.molecules().size()-1; ++i){
 
     // first atom
     cog = conf.current().pos(topo.molecules()[i]);
       
-    std::cout << "first atom = " << cog << "\n";
-    
     // put into box
     nearest_image(cog, o, trans);
     // cog = o + trans;
     cog = trans;
     
-    std::cout << "cog in box = " << cog << "\n";
-
     // put the molecule into the box
     for(size_t a=topo.molecules()[i];
 	a<topo.molecules()[i+1]; ++a){
 
-      std::cout << "atom " << conf.current().pos(a) << "\n";
-      
       nearest_image(conf.current().pos(a), cog, trans);
       conf.current().pos(a) = cog + trans;
-
-      std::cout << "atom (gathered) " << conf.current().pos(a) << "\n";
 
     } // loop over atoms in molecule
   

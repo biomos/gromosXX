@@ -21,7 +21,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     DEBUG(8, "\tpair\t" << i << "\t" << j);
 
     math::Vec r, f;
-    double e_lj, e_crf;
+    // double e_lj, e_crf;
     
     if (t_nonbonded_spec::do_bekker){
       r = conf.current().pos(i) + periodicity.shift(pc).pos
@@ -44,38 +44,43 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
     DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
     
+    /**
     lj_crf_interaction(r, lj.c6, lj.c12,
 		       topo.charge()(i) * 
 		       topo.charge()(j),
 		       f, e_lj, e_crf);
-    
-    DEBUG(10, "\tcalculated interaction f: " << f << " e_lj: " 
-	  << e_lj << " e_crf: " << e_crf);
-    
-    storage.force(i) += f;
-    storage.force(j) -= f;
-    
-    DEBUG(11, "\tforces stored");
+    */
 
-    if (t_nonbonded_spec::do_virial == math::molecular_virial){
+    const double dist2 = r(0)*r(0) + r(1)*r(1) + r(2)*r(2);
+    const double dist2i = 1.0 / dist2;
+    const double dist6i = dist2i * dist2i * dist2i;
+    const double disti = sqrt(dist2i);
+    const double q_eps = topo.charge()(i) * topo.charge()(j)
+	* math::four_pi_eps_i;
+  
+    const double e_lj = (lj.c12 * dist6i - lj.c6) * dist6i;
+    const double e_crf = q_eps * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
 
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  storage.virial_tensor(a, b) += 
-	    (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
-	     conf.special().rel_mol_com_pos(j)(a)) * f(b);
-      
-      DEBUG(11, "\tmolecular virial done");
+    const double af = (e_lj + e_lj + lj.c6 * dist6i) * 6 * dist2i +
+	q_eps * (disti * dist2i +  m_crf_cut3i);
+  
+  // force = f * r;
+
+    for (int a=0; a<3; ++a){
+	const double term = af * r(a);
+	storage.force(i)(a) += term;
+	storage.force(j)(a) -= term;
+
+	if (t_nonbonded_spec::do_virial == math::molecular_virial){
+
+	    for(int b=0; b<3; ++b){
+		storage.virial_tensor(b, a) += 
+		    (r(b) - conf.special().rel_mol_com_pos(i)(b) + 
+		     conf.special().rel_mol_com_pos(j)(b)) * term;
+	    }
+	}
     }
-    if (t_nonbonded_spec::do_virial == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  storage.virial_tensor(a, b) += 
-	    r(a) * f(b);
-      
-      DEBUG(11, "\tatomic virial done");
-    }
-    
+
     // energy
     assert(storage.energies.lj_energy.size() > 
 	   topo.atom_energy_group(i));

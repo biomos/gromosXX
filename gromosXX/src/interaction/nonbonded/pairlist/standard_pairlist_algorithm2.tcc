@@ -114,14 +114,6 @@ update(topology::Topology & topo,
 	
       const double dist2 = r(0)*r(0) + r(1)*r(1) + r(2)*r(2);
       
-      if (cg1 == 38 && cg2 == 3642){
-	std::cout << "THE CULPRIT dist2 = " << dist2 << "\n\n";
-	std::cout << m_cog(cg1) << "\n"
-		  << m_cog(cg2) << "\n"
-		  << r << "\n"
-		  << "\n\n";
-      }
-
       DEBUG(9, "cg1=" << cg1 << " cg2=" << cg2 << " dist2 = " << dist2);
 
       if (dist2 > m_cutoff_long2) continue;
@@ -266,7 +258,7 @@ calc_cg_cog(topology::Topology & topo,
     
   }
 
-
+  /*
   // print them out... (seems to be reasonable, no solvent check yet)
   std::cout.precision(12);
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
@@ -281,7 +273,7 @@ calc_cg_cog(topology::Topology & topo,
 	      << "\t" << m_cog(i)(2)
 	      << "\n";
   }
-
+  */
 
 }
 

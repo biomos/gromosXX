@@ -60,6 +60,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
       update(topo, conf, sim, *this, 0, topo.num_atoms(), 1);
     DEBUG(7, "\tpairlist updated");
 
+    /*
     std::cout << "PRINTING OUT THE STUPID PAIRLIST\n\n";
     for(size_t i=0; i<100; ++i){
       if (i >= pairlist().size()) break;
@@ -72,7 +73,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 	std::cout << std::setw(7) << pairlist()[i][j];
       }
     }
-    
+    */
 
     
     // timing.pairlist += now() - pairlist_start;
@@ -277,7 +278,7 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 {
   DEBUG(8, "add longrange pair " << i << " - " << j);
 
-  const double longrange_start = util::now();
+  // const double longrange_start = util::now();
 
   if (t_perturbation_spec::do_perturbation){
     if (topo.is_perturbed(i)){
@@ -294,8 +295,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 	    perturbed_lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
 	  else
 	    lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
-	  m_nonbonded_interaction->longrange_timing() += 
-	    util::now() - longrange_start;
+	  // m_nonbonded_interaction->longrange_timing() += 
+	  // util::now() - longrange_start;
 	  
 	  return;      
 	}
@@ -319,8 +320,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 	  else
 	    lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
 	  
-	  m_nonbonded_interaction->longrange_timing() += 
-	    util::now() - longrange_start;
+	  // m_nonbonded_interaction->longrange_timing() += 
+	  // util::now() - longrange_start;
 	  
 	  return;      
 	}
@@ -334,9 +335,9 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
   else
     lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
 
-  m_nonbonded_interaction->longrange_timing() += 
-    util::now() - longrange_start;
-
+  // m_nonbonded_interaction->longrange_timing() += 
+  // util::now() - longrange_start;
+  
 }
 
 template<typename t_interaction_spec, typename t_perturbation_spec>
