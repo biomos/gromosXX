@@ -48,13 +48,18 @@ namespace simulation
       math::Vec v = 0.0;
 
       prev = sys.pos()(*begin());
+      // std::cout << "center of mass: " << *begin() << " - " << *end() << std::endl;
       for(Atom_Iterator it=begin(), to=end(); it!=to; ++it){
+	// std::cout << *it << std::endl;
+	
+	assert(unsigned(mass.size()) > *it && unsigned(sys.pos().size()) > *it);
+
 	m = mass(*it);
 	tot_mass += m;
 	sys.periodicity().nearest_image(sys.pos()(*it), prev, p);
 	com_pos += m * (p + prev);
 	v += m * sys.vel()(*it);
-	prev = sys.pos()(*it);
+	prev += p;
       }
       com_pos /= tot_mass;
       

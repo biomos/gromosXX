@@ -41,6 +41,9 @@ int algorithm::Shake<t_simulation>
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
   
+  // check whether we shake
+  if (!topo.solute().distance_constraints().size()) return 0;
+
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
   int num_iterations = 0;

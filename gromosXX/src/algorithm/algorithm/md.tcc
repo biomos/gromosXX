@@ -108,23 +108,30 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   //----------------------------------------------------------------------------
   // prepare for the run
 
+  // read in the input (has to be before solvate,
+  // 'cause the submolecules need to be added in order...
+  DEBUG(7, "md: read input");
+  input >> m_simulation;
+
   // add solvent
+  DEBUG(7, "md: add solvent");
   int nsm;
   input.read_SYSTEM(nsm);
   if (nsm) m_simulation.solvate(0, nsm);
 
-  // read in the input
-  input >> m_simulation;
-
   // initialize SHAKE / ??
+  DEBUG(7, "md init shake");
   int ntc;
   double tolerance;
   input.read_SHAKE(ntc, tolerance);
   m_distance_constraint.tolerance(tolerance);
 
   // pressure calculation
+  DEBUG(7, "md: init pressure");
   int ntb, nrdbox;
   input.read_BOUNDARY(ntb, nrdbox);
+  DEBUG(8, "md: boundary read");
+  
   if (nrdbox != 1){
     io::messages.add("nrdbox!=1 not supported","md.tcc",
 		     io::message::error);
@@ -138,16 +145,21 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   // constructing the forcefield!)
   int ntp;
   double pres0, comp, tau;
+  DEBUG(8, "md: read PCOUPLE");
   input.read_PCOUPLE(ntp, pres0, comp, tau);
+  DEBUG(8, "md: PCOUPLE read");
+  
   std::cout << "pressure ntp: " << ntp << " pres0: " << pres0
 	    << " comp: " << comp << " tau: " << tau << std::endl;
   
   m_pressure.initialize(ntp, pres0, comp, tau);
 
   // create the forcefield
+  DEBUG(7, "md: create forcefield");
   G96Forcefield(topo, input, m_simulation.topology());
 
   // prepare temperature calculation
+  DEBUG(7, "md: degrees of freedom");
   m_simulation.calculate_degrees_of_freedom();
   std::cout << m_simulation.multibath();
   
@@ -166,6 +178,7 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   std::cout << "\n";
   io::messages.clear();
 
+  DEBUG(7, "md initialized");
   return 0;
 
 }
@@ -267,6 +280,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 		io::InInput &input,
 		typename t_simulation::topology_type &the_topology)
 {
+
+  DEBUG(7, "md: create forcefield");
   // check which interactions to add
   int do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
   input.read_FORCE(do_bond, do_angle, do_improper,
@@ -337,6 +352,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 
     if (m_calculate_pressure){
       // nonbonded (with virial)
+      DEBUG(8, "md (create_forcefield): nonbonded with pressure");
       interaction::Nonbonded_Virial_Interaction<t_simulation, 
 	interaction::twin_range_pairlist_cg<t_simulation> >
 	*the_nonbonded_interaction =
@@ -345,10 +361,13 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     
       topo >> *the_nonbonded_interaction;
       
+      DEBUG(10, "md (create forcefield): nonbonded with pressure read in");
+
       m_forcefield.push_back(the_nonbonded_interaction);
     }
     else{
       // nonbonded
+      DEBUG(8, "md (create_forcefield): nonbonded without pressure");
       interaction::Nonbonded_Interaction<t_simulation, 
 	interaction::twin_range_pairlist_cg<t_simulation> >
 	*the_nonbonded_interaction =
@@ -361,6 +380,8 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     }
     
   }
+
+  DEBUG(7, "md (create forcefield): decide about SHAKE");
 
   // decide on SHAKE
   int ntc;
@@ -399,7 +420,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   }
 
   if (shake_param_interaction) delete shake_param_interaction;
-  
+
+  DEBUG(7, "forcefield created");
+
 }
 
 
@@ -423,23 +446,17 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
   while(m_simulation.time() < end_time){
 
-    // std::cerr << "printing" << std::endl;
-
+    DEBUG(8, "md: print trajectory");
     (*m_trajectory) << m_simulation;
 
-    // std::cerr << "integrate" << std::endl;
-    
     // integrate
+    DEBUG(8, "md: integrate");
     m_integration.step(m_simulation, m_forcefield, m_dt);
-    
-    // std::cerr << "multibath" << std::endl;
     
     if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
       std::cout << m_simulation.multibath();
     }
 
-    // std::cerr << "pairlist" << std::endl;
-    
     if (m_print_pairlist && m_simulation.steps() % m_print_pairlist == 0){
 
       typename std::vector<typename interaction::Interaction<simulation_type> *>
@@ -468,8 +485,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 	
     }
       
-    // std::cerr << "shake" << std::endl;
-
+    DEBUG(8, "md: shake");
     try{
       std::cout << "shake solute:  " 
 		<< m_distance_constraint.solute(m_simulation.topology(), 
@@ -487,21 +503,16 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       throw;
     }
 
-    // std::cerr << "pressure" << std::endl;
-    
+    DEBUG(8, "md: calculate pressure");
     if (m_calculate_pressure){
       m_pressure.apply(m_simulation, m_dt);
       io::print_PRESSURE(std::cout, m_simulation.system());
     }
     
-    // std::cerr << "increase time" << std::endl;
-    
+    DEBUG(8, "md: increase time");
     m_simulation.increase_time(m_dt);
    
-    // std::cerr << "loop" << std::endl;
-
-  }
-    
+  }    
 }
 
 template<typename t_simulation,

@@ -37,7 +37,7 @@ namespace algorithm
   private:
 
     int m_ntp;
-    double m_pres0;
+    math::Matrix m_pres0;
     double m_comp;
     double m_tau;
 

@@ -45,62 +45,70 @@ inline io::InInput & io::InInput
   
   { // PLIST
     buffer = m_block["PLIST"];
-    
-    it = buffer.begin() + 1;
-    _lineStream.clear();
-    _lineStream.str(*it);
-    
-    int i, update_step;
-    double rcutp, rcutl;
-    
-    _lineStream >> i >> update_step
-		>> rcutp >> rcutl;
 
-    if (_lineStream.fail())
-      throw std::runtime_error("bad line in PLIST block");
-
-    DEBUG(7, "pairlist update=" << update_step);
-    DEBUG(7, "setting short cutoff=" << rcutp << " long cutoff=" << rcutl);
+    if (!buffer.size())
+      io::messages.add("no PLIST block in input","InInput",io::message::error);
+    else{
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
     
-    sim.nonbonded().update(update_step);
-    sim.nonbonded().cutoff_short(rcutp);
-    sim.nonbonded().cutoff_long(rcutl);
+      int i, update_step;
+      double rcutp, rcutl;
+    
+      _lineStream >> i >> update_step
+		  >> rcutp >> rcutl;
+
+      if (_lineStream.fail())
+	throw std::runtime_error("bad line in PLIST block");
+
+      DEBUG(7, "pairlist update=" << update_step);
+      DEBUG(7, "setting short cutoff=" << rcutp << " long cutoff=" << rcutl);
+    
+      sim.nonbonded().update(update_step);
+      sim.nonbonded().cutoff_short(rcutp);
+      sim.nonbonded().cutoff_long(rcutl);
+    }
   }
   
   { // LONGRANGE
     buffer = m_block["LONGRANGE"];
 
-    it = buffer.begin() + 1;
-    _lineStream.clear();
-    _lineStream.str(*it);
+    if (!buffer.size()){
+      io::messages.add("no LONGRANGE block in input","InInput",io::message::error);
+    }
+    else{
+
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
     
-    double epsilon, kappa, cutoff;
-    
-    _lineStream >> epsilon >> kappa >> cutoff;
+      double epsilon, kappa, cutoff;
+      
+      _lineStream >> epsilon >> kappa >> cutoff;
+      
+      if (_lineStream.fail())
+	io::messages.add("bad line in LONGRANGE block",
+			 "InInput", io::message::error);
 
-    if (_lineStream.fail())
-      io::messages.add("bad line in LONGRANGE block",
-		       "InInput", io::message::error);
+      if (!_lineStream.eof())
+	io::messages.add("End of line not reached, but should have been: \n" + *it +  "\n",
+			 "InInput", io::message::warning);
+      
 
-    if (!_lineStream.eof())
-      io::messages.add("End of line not reached, but should have been: \n" + *it +  "\n",
-		       "InInput", io::message::warning);
-
-
-    sim.nonbonded().RF_constant(epsilon, kappa, cutoff);
-
-    DEBUG(7, "calculating Crf: epsilon= " << epsilon << " kappa= "
-	  << kappa << " cutoff= " << cutoff << endl << "RF_constant= " 
-	  << sim.nonbonded().RF_constant());
+      sim.nonbonded().RF_constant(epsilon, kappa, cutoff);
+      
+      DEBUG(7, "calculating Crf: epsilon= " << epsilon << " kappa= "
+	    << kappa << " cutoff= " << cutoff << endl << "RF_constant= " 
+	    << sim.nonbonded().RF_constant());
+    }
     
   } // LONGRANGE
   
-  { // SUBMOLECULE
+  { // SUBMOLECULES
     buffer = m_block["SUBMOLECULES"];
     
-    // std::cerr << "reading SUBMOLECULES" << std::endl;
-
-    if (buffer.begin() == buffer.end()){
+    if (!buffer.size()){
       io::messages.add("empty SUBMOLECULES block",
 		       "InInput", io::message::error);
     }
@@ -121,7 +129,7 @@ inline io::InInput & io::InInput
       for(size_t i=0; i<num; ++i){
 	_lineStream >> m;
 	sim.topology().molecules().push_back(m);
-	// std::cerr << "\t" << m << std::endl;
+	DEBUG(10, "add submol " << m);
       }
     
       if (_lineStream.fail())
@@ -129,7 +137,7 @@ inline io::InInput & io::InInput
 			 "InInput", io::message::error);
     }
     
-  } // SUBMOLECULE
+  } // SUBMOLECULES
 
   { // TEMPERATURE COUPLING
     
@@ -230,6 +238,7 @@ inline io::InInput & io::InInput
       }
       else{
 	// no TCOUPLE block
+	// that's fine, same as 0,0,0
       }
       
     }
@@ -246,6 +255,12 @@ inline void io::InInput::read_SYSTEM(int &nsm)
 {
   std::vector<std::string> buffer;
   buffer = m_block["SYSTEM"];
+  if (!buffer.size()){
+    io::messages.add("no SYSTEM block in input", "InInput", io::message::error);
+    nsm = 0;
+    return;
+  }
+  
   _lineStream.clear();
   _lineStream.str(buffer[1]);
   
@@ -261,11 +276,11 @@ inline void io::InInput::read_SYSTEM(int &nsm)
 		       "InInput", io::message::warning);
 
   
+  // we might need to also allow for 0...
   if (npm != 1)
     io::messages.add("SYSTEM: only NPM=1 allowed",
 		     "io::InInput::read_SYSTEM",
 		     io::message::error);
-  
 } 
 
 /**
@@ -278,6 +293,14 @@ inline void io::InInput::read_STEP(int &num_steps, double &t0, double &dt)
   
   buffer = m_block["STEP"];
   
+  if (!buffer.size()){
+    io::messages.add("no STEP block in input", "InInput", io::message::error);
+    num_steps = 0;
+    t0 = 0;
+    dt = 0;
+    return;
+  }
+
   it = buffer.begin() + 1;
   _lineStream.clear();
   _lineStream.str(*it);
@@ -302,6 +325,13 @@ inline void io::InInput::read_SHAKE(int &ntc, double &tolerance)
   std::vector<std::string>::const_iterator it;
   
   buffer = m_block["SHAKE"];
+
+  if (!buffer.size()){
+    io::messages.add("no SHAKE block", "InInput",io::messages.notice);
+    ntc = 1;
+    tolerance = 0;
+    return;
+  }
   
   it = buffer.begin() + 1;
   _lineStream.clear();
@@ -329,6 +359,15 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
   std::vector<std::string>::const_iterator it;
   
   buffer = m_block["PRINT"];
+
+  if (!buffer.size()){
+    io::messages.add("no PRINT block", "InInput", io::message::notice);
+    print_trajectory = 1;
+    print_velocity = 1;
+    print_energy = 1;
+    return;
+  }
+
   it = buffer.begin() + 1;
   _lineStream.clear();
   _lineStream.str(*it);
@@ -370,8 +409,16 @@ inline void io::InInput::read_PCOUPLE(int &ntp, double &pres0,
 				      double &comp, double &tau)
 {
   std::vector<std::string> buffer;
-  
   buffer = m_block["PCOUPLE"];
+
+  if (!buffer.size()){
+    ntp = 0;
+    pres0 = 0;
+    comp = 0;
+    tau = -1;
+    return;
+  }
+
   _lineStream.clear();
   _lineStream.str(buffer[1]);
   
@@ -389,6 +436,14 @@ inline void io::InInput::read_BOUNDARY(int &ntb, int &nrdbox)
 {
   std::vector<std::string> buffer;
   buffer = m_block["BOUNDARY"];
+
+  if (!buffer.size()){
+    io::messages.add("no BOUNDARY block", "InInput", io::message::error);
+    ntb = 0;
+    nrdbox = 1;
+    return;
+  }
+
   _lineStream.clear();
   _lineStream.str(buffer[1]);
 
@@ -412,6 +467,16 @@ inline void io::InInput::read_FORCE(int &do_bond, int &do_angle,
   std::vector<std::string>::const_iterator it;
   
   buffer = m_block["FORCE"];
+
+  if (!buffer.size()){
+    io::messages.add("no FORCE block", "InInput", io::message::error);
+    do_bond = 0;
+    do_angle = 0;
+    do_improper = 0;
+    do_dihedral = 0;
+    do_nonbonded = 0;
+    return;
+  }
   
   it = buffer.begin()+1;
   _lineStream.clear();

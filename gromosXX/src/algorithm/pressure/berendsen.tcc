@@ -20,58 +20,73 @@ inline void algorithm::Berendsen_Barostat
 
   if (m_ntp){
 
-    math::Matrix mu;
+    math::VArray &pos = sim.system().pos();
+    math::Matrix &pressure = sim.system().pressure();
+    math::Box box = sim.system().periodicity().box();
 
-    if (m_ntp == 1){
+    if (m_ntp == 1){ // isotropic
       std::cout << "\tisotropic pressure coupling...\n";
       
-      double total_pressure =  (sim.system().pressure()(0,0)
-				+ sim.system().pressure()(1,1)
-				+ sim.system().pressure()(2,2)) / 3.0;
+      double total_pressure =  (pressure(0,0)
+				+ pressure(1,1)
+				+ pressure(2,2)) / 3.0;
 
-      double mu_iso = pow(1.0 - m_comp*dt/m_tau
-			  * (m_pres0 - total_pressure), 1.0/3.0);
+      double mu = pow(1.0 - m_comp*dt/m_tau
+		      * (m_pres0(0,0) - total_pressure), 1.0/3.0);
 
+
+      // scale the box
+      box = mu * box;
+      sim.system().periodicity().box(box);
+
+      // scale the positions
+      for(int i=0; i<pos.size(); ++i)
+	pos(i) = mu * pos(i);
+
+    }
+    else if(m_ntp == 2){ // anisotropic
+      std::cout << "\tanisotropic pressure coupling...\n";
+    
+      math::Vec mu;
 
       for(int i=0; i<3; ++i){
-	for(int j=0; j<3; ++j){
-	  if (i != j) mu(i,j) = 0.0;
-	  else
-	    mu(i,j) = mu_iso;
-	}
+	mu(i) = pow(1.0 - m_comp*dt/m_tau
+		    * (m_pres0(i,i) - pressure(i,i)), 1.0/3.0);
       }
-    }
-    else if(m_ntp == 2){
-    std::cout << "\tanisotropic pressure coupling...\n";
 
-      for(int i=0; i<3; ++i){
-	for(int j=0; j<3; ++j){
-	  if (i != j) mu(i,j) = 0.0;
-	  else
-	    mu(i,j) = pow(1.0 - m_comp*dt/m_tau
-			  * (m_pres0 - sim.system().pressure()(i,j)), 1.0/3.0);
-	}
-      }
+      // scale the box
+      for(int i=0; i<3; ++i)
+	box(i) = box(i) * mu;
+      sim.system().periodicity().box(box);
+
+      // scale the positions
+      for(int i=0; i<pos.size(); ++i)
+	pos(i) = mu * pos(i);
+
     }
+    else if(m_ntp == 3){ // fully anisotropic
+      std::cout << "\tfull anisotropic pressure coupling...\n";
       
+      math::Matrix mu;
 
-    // std::cout.precision(20);
-    // std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+      for(int i=0; i<3; ++i){
+	for(int j=0; j<3; ++i){
+	  
+	  mu(i, j) = pow(1.0 - m_comp*dt/m_tau
+		      * (m_pres0(i,j) - pressure(i,j)), 1.0/3.0);
+	}
+      }
 
-    // std::cout << "comp*dt/tau = " << m_comp*dt/m_tau << std::endl;
-    // std::cout << "pres0=" << m_pres0 << " presto=" << total_pressure << std::endl;
-    // std::cout << "mu: " << mu << std::endl;
+      // scale the box
+      box = math::product(mu, box);
+      sim.system().periodicity().box(box);
 
-    // scale the box
-    math::Box box = sim.system().periodicity().box();
-    box = math::product(mu, sim.system().periodicity().box());
-    sim.system().periodicity().box(box);
+      // scale the positions
+      for(int i=0; i<pos.size(); ++i)
+	pos(i) = math::product(mu, pos(i));
 
-    // scale the positions
-    math::VArray &pos = sim.system().pos();
-    for(int i=0; i<pos.size(); ++i)
-      pos(i) = math::product(mu, pos(i));
-
+    }
+    
   }
   
 }
@@ -79,10 +94,17 @@ inline void algorithm::Berendsen_Barostat
 inline void algorithm::Berendsen_Barostat
 ::initialize(int ntp, double pres0, double comp, double tau)
 {
+  if (ntp < 0 || ntp > 3){
+    io::messages.add("Invalid pressure coupling scheme requested",
+		     "Berendsen_Barostat",
+		     io::message::error);
+  }
+    
   m_ntp = ntp;
-  m_pres0 = pres0;
+  m_pres0(0,0) = pres0;
+  m_pres0(1,1) = pres0;
+  m_pres0(2,2) = pres0;
   m_comp = comp;
   m_tau = tau;
 }
-
 

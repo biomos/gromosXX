@@ -31,6 +31,14 @@ if (x1 != x2){ \
   ++res; \
 }
 
+#define CHECK_APPROX_EQUAL(x1, x2, eps, res) \
+if (x1 < x2 - eps || x1 > x2 + eps){ \
+  std::cout << "\n\t" << STR(x1) << " =\t" << x1 \
+            << "\n\t" << STR(x2) << " =\t" << x2 \
+            << "\n\t" << std::setw(60) << " "; \
+  ++res; \
+}
+
 #define CHECKING(name, res) \
 { \
 std::cout << "\033[34mchecking\033[0m " << std::setw(60) \

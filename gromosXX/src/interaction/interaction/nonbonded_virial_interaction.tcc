@@ -39,6 +39,8 @@ template<typename t_simulation, typename t_pairlist>
 inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
 ::calculate_interactions(t_simulation &sim)
 {
+  DEBUG(7, "nonbonded virial interactions");
+  
   // prepare for the virial calculation
   m_com_pos.resize(sim.system().pos().size());
   
@@ -60,8 +62,12 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
     simulation::Atom_Iterator a_it = m_it.begin(),
       a_to = m_it.end();
     
+    math::VArray &pos = sim.system().pos();
+
     for( ; a_it != a_to; ++a_it){
-      m_com_pos(*a_it) = com_pos;
+      assert(unsigned(m_com_pos.size()) > *a_it);
+      // m_com_pos(*a_it) = pos(*a_it) - com_pos;
+      sim.system().periodicity().nearest_image(pos(*a_it), com_pos, m_com_pos(*a_it));
     }
 
   }
@@ -98,6 +104,7 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
   double energy;
   
   math::VArray &pos = sim.system().pos();
+  math::SArray &charge = sim.topology().charge();
 
   math::VArray *force;
   if (range == shortrange) force = &sim.system().force();
@@ -113,8 +120,11 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
     
     DEBUG(10, "\tpair\t" << it.i() << "\t" << *it);
 
+    assert(pos.size() > it.i() && pos.size() > *it);
+    assert(m_com_pos.size() > it.i() && m_com_pos.size() > *it);
+    
     sim.system().periodicity().nearest_image(pos(it.i()), pos(*it), r);
-    sim.system().periodicity().nearest_image(m_com_pos(it.i()), m_com_pos(*it), r_com);
+    // sim.system().periodicity().nearest_image(m_com_pos(it.i()), m_com_pos(*it), r_com);
 
     const lj_parameter_struct &lj = 
       lj_parameter(sim.topology().iac(it.i()),
@@ -122,9 +132,11 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
 
     DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
 
+    assert(charge.size() > it.i() && charge.size() > *it);
+    
     lj_crf_interaction(r, lj.c6, lj.c12,
-		       sim.topology().charge()(it.i()) * 
-		       sim.topology().charge()(*it),
+		       charge(it.i()) * 
+		       charge(*it),
 		       f, energy);
 
     (*force)(it.i()) += f;
@@ -132,7 +144,8 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
 
     for(int i=0; i<3; ++i)
       for(int j=0; j<3; ++j)
-	(*virial)(i, j) += f(i) * r_com(j);
+	(*virial)(i, j) += (r(i) - m_com_pos(it.i())(i) + m_com_pos(*it)(i)) 
+	  * f(j);
 
   }
     

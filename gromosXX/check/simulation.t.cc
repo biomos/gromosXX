@@ -170,8 +170,6 @@ int simulation_check()
     
     RESULT(last_result, result);
     
-    the_simulation.solvate(0, 1244);
-
     forcefield_type the_forcefield;
     
     // bonds: quartic
@@ -204,6 +202,10 @@ int simulation_check()
       *the_nonbonded_interaction =
       new interaction::Nonbonded_Interaction<simulation_type, pairlist_type>;
     
+    interaction::Nonbonded_Virial_Interaction<simulation_type, pairlist_type>
+      *the_nonbonded_virial_interaction =
+      new interaction::Nonbonded_Virial_Interaction<simulation_type, pairlist_type>;
+    
     // read parameter
     topo >> *the_qbond_interaction;
     topo >> *the_hbond_interaction;
@@ -211,8 +213,12 @@ int simulation_check()
     topo >> *the_improper_interaction;
     topo >> *the_dihedral_interaction;
     topo >> *the_nonbonded_interaction;
+    topo >> *the_nonbonded_virial_interaction;
 
     input >> the_simulation;
+    // solvate has to be called after reading the input (at least for now...)
+    // because the SUBMOLECULES block has to be ordered...
+    the_simulation.solvate(0, 1244);
 
     // create a chargegroup based pairlist and compare
     pairlist_type the_pairlist;
@@ -294,6 +300,7 @@ int simulation_check()
     the_forcefield.clear();
     check_file.close();
 
+
     CHECKING("dihedral forces", last_result);
 
     the_forcefield.push_back(the_dihedral_interaction);
@@ -309,6 +316,7 @@ int simulation_check()
     the_forcefield.clear();
     check_file.close();
 
+
     CHECKING("nonbonded forces", last_result);
 
     the_forcefield.push_back(the_nonbonded_interaction);
@@ -323,6 +331,61 @@ int simulation_check()
     
     the_forcefield.clear();
     check_file.close();
+
+
+    CHECKING("molecular translational ekin", last_result);
+    
+    the_forcefield.push_back(the_nonbonded_virial_interaction);
+    the_forcefield.calculate_interactions(the_simulation);
+    
+    // check whether we get the same forces
+    GETFILE(check_file, "rasn.nonbonded");
+    res = check_coordinates(check_file, "FORCERED", the_system.force(), epsilon);
+    CHECK_EQUAL(res, correct, last_result);
+
+    // check the virial
+    /*
+    std::cout << "pressure: " << the_simulation.system().pressure() << std::endl
+	      << "virial: " << the_simulation.system().virial() << std::endl
+	      << "molecular ekin: " << the_simulation.system().molecular_kinetic_energy() << std::endl;
+    */
+
+    math::Matrix &mol_ekin = the_simulation.system().molecular_kinetic_energy();
+
+    CHECK_APPROX_EQUAL(mol_ekin(0,0), 1606.60325, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(0,1),  -64.84878, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(0,2),  -16.06713, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(1,0),  -64.84878, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(1,1), 1552.48036, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(1,2),  -22.77930, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(2,0),  -16.06713, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(2,1),  -22.77930, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(mol_ekin(2,2), 1589.80563, 0.00001,  last_result);
+
+    RESULT(last_result, result);
+
+    CHECKING("virial calculation", last_result);
+
+    math::Matrix &virial = the_simulation.system().virial();
+    
+    CHECK_APPROX_EQUAL(virial(0,0), -4416.96163, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(0,1),  -612.72666, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(0,2),  -461.87316, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(1,0),   -84.73985, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(1,1), -5210.89030, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(1,2), -1006.66333, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(2,0),  -462.23679, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(2,1),  -369.95442, 0.00001,  last_result);
+    CHECK_APPROX_EQUAL(virial(2,2), -8084.57680, 0.00001,  last_result);
+
+    // and the total pressure... -> after Berendsen_Barostat is called...
+    // math::Matrix &pressure = the_simulation.system().pressure();
+    // double press = pressure(0,0) + pressure(1,1) + pressure(2,2);
+    // CHECK_APPROX_EQUAL(press, 402.73872, 0.00001, last_result);
+
+    RESULT(last_result, result);
+    
+    the_forcefield.clear();
 
   }
   catch(std::runtime_error e){
