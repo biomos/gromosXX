@@ -53,13 +53,16 @@ void scale_positions(topology::Topology & topo,
 		     math::Vec const scale)
 {
   for(size_t i = 0; i< topo.num_atoms(); ++i){
-    conf.current().pos(i) = 
-      (conf.current().pos(i) - conf.special().rel_mol_com_pos(i)) *
-      scale + conf.special().rel_mol_com_pos(i);
+    for(unsigned int j=0; j<3; ++j)
+      conf.current().pos(i)(j) = 
+      (conf.current().pos(i)(j) - conf.special().rel_mol_com_pos(i)(j)) *
+      scale(j) + conf.special().rel_mol_com_pos(i)(j);
   }
-  conf.current().box(0) *=scale;
-  conf.current().box(1) *=scale;
-  conf.current().box(2) *=scale;
+  for(unsigned int i=0; i<3; ++i){
+    conf.current().box(0)(i) *=scale(i);
+    conf.current().box(1)(i) *=scale(i);
+    conf.current().box(2)(i) *=scale(i);
+  }
   
 }
 
@@ -67,11 +70,16 @@ void scale_positions_atomic(topology::Topology & topo,
 			    configuration::Configuration & conf,
 			    math::Vec const scale)
 {
-  conf.current().pos *= scale;
-
-  conf.current().box(0) *=scale;
-  conf.current().box(1) *=scale;
-  conf.current().box(2) *=scale;
+  for(size_t i = 0; i< topo.num_atoms(); ++i){
+    for(unsigned int j=0; j<3; ++j)
+      conf.current().pos(i)(j) *= scale(j);
+  }
+  
+  for(unsigned int i=0; i<3; ++i){
+    conf.current().box(0)(i) *=scale(i);
+    conf.current().box(1)(i) *=scale(i);
+    conf.current().box(2)(i) *=scale(i);
+  }
 }
 
 
@@ -113,7 +121,7 @@ int check::check_state(topology::Topology & topo,
   finP=0;
   
   for(int i=0; i < 3; i++){
-    math::Vec s1=1;
+    math::Vec s1(1);
     s1(i) += epsilon;
       
     scale_positions(topo, conf, s1);
@@ -124,7 +132,7 @@ int check::check_state(topology::Topology & topo,
     conf.current().pos = conf.old().pos;
     conf.current().box = conf.old().box;
 
-    math::Vec s2=1;
+    math::Vec s2(1);
     s2(i) -= epsilon;
 
     scale_positions(topo, conf, s2);
@@ -182,7 +190,7 @@ static void fdiff_atomic_virial(topology::Topology & topo,
 {
   for(int i=0; i<3; ++i){
 
-    math::Vec scale=1;
+    math::Vec scale(1);
     scale(i) += epsilon;
     scale_positions_atomic(topo, conf, scale);
 

@@ -166,9 +166,12 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
 {
   DEBUG(7, "state struct resize: " << s);
 
-  pos.resizeAndPreserve(s);
-  vel.resizeAndPreserve(s);
-  force.resizeAndPreserve(s);
+  pos.resize(s);
+  vel.resize(s);
+  force.resize(s);
+  // pos.resizeAndPreserve(s);
+  // vel.resizeAndPreserve(s);
+  // force.resizeAndPreserve(s);
 }
 
 namespace configuration

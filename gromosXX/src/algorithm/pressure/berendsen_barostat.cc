@@ -51,10 +51,10 @@ int algorithm::Berendsen_Barostat
 	DEBUG(8, "mu: " << mu);
 
 	// scale the box
-	box = mu * box;
+	box *= mu;
 
 	// scale the positions
-	for(int i=0; i<pos.size(); ++i)
+	for(unsigned int i=0; i<pos.size(); ++i)
 	  pos(i) = mu * pos(i);
 
 	break;
@@ -73,11 +73,13 @@ int algorithm::Berendsen_Barostat
 
 	// scale the box
 	for(int i=0; i<3; ++i)
-	  box(i) = box(i) * mu;
+	  for(int j=0; i<3; ++j)
+	    box(i)(j) *= mu(j);
 
 	// scale the positions
-	for(int i=0; i<pos.size(); ++i)
-	  pos(i) = mu * pos(i);
+	for(unsigned int i=0; i<pos.size(); ++i)
+	  for(int j=0; j<3; ++j)
+	    pos(i)(j) *= mu(j);
 	
 	break;
       }
@@ -101,7 +103,7 @@ int algorithm::Berendsen_Barostat
 	box = math::product(mu, box);
 	
 	// scale the positions
-	for(int i=0; i<pos.size(); ++i)
+	for(unsigned int i=0; i<pos.size(); ++i)
 	  pos(i) = math::product(mu, pos(i));
 
       }

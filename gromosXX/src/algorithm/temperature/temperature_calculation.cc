@@ -55,10 +55,10 @@ int algorithm::Temperature_Calculation
 				   com_v, com_ekin, ekin,
 				   new_com_v, new_com_ekin, new_ekin);
 
-    DEBUG(10, "average com_v:" << com_v << " com_ekin:" 
+    DEBUG(10, "average com_v:" << math::v2s(com_v) << " com_ekin:" 
 	  << com_ekin << " ekin:" << ekin);
     
-    DEBUG(10, "new com_v:" << new_com_v << " com_ekin:" 
+    DEBUG(10, "new com_v:" << math::v2s(new_com_v) << " com_ekin:" 
 	  << new_com_ekin << " ekin:" << new_ekin);
     
     sim.multibath().in_bath(*m_it.begin(), com_bath, ir_bath);
@@ -130,7 +130,7 @@ int algorithm::Temperature_Calculation
 	  e_kin[bath] -=
 	    (topo.perturbed_solute().atoms()[i].B_mass() -
 	     topo.perturbed_solute().atoms()[i].A_mass()) 
-	    * math::dot(vel(i), vel(i));
+	    * math::abs2(vel(i));
 
 	  DEBUG(10, "\tdE_kin/dl: " << e_kin[bath]);
 	

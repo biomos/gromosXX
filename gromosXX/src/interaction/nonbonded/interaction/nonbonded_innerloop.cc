@@ -250,7 +250,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
       e_crf = -topo.charge()(*at_it) * 
 	topo.charge()(*at2_it) * 
 	math::four_pi_eps_i * 
-	crf_2cut3i() * dot(r,r);
+	crf_2cut3i() * abs2(r);
       
       // energy
       conf.current().energies.crf_energy

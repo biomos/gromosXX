@@ -61,11 +61,11 @@ static int _calculate_perturbed_hbond_interactions
 	  << " B-type " << b_it->B_type
 	  << " lambda " << topo.lambda());
 
-    assert(pos.size() > int(b_it->i) && pos.size() > int(b_it->j));
+    assert(pos.size() > (b_it->i) && pos.size() > (b_it->j));
 
     periodicity.nearest_image(pos(b_it->i), pos(b_it->j), v);
 
-    double dist = sqrt(dot(v, v));
+    double dist = sqrt(abs2(v));
 
     DEBUG(7, "dist: " << dist);
 
@@ -88,11 +88,11 @@ static int _calculate_perturbed_hbond_interactions
     
     DEBUG(9, "r0: " << r0);
     
-    DEBUG(9, "DF " << K * (diff) << "\n" << v);
+    DEBUG(9, "DF " << K * (diff) << "\n" << math::v2s(v));
     
     f = v * (-K) * diff/dist;
 
-    DEBUG(9, "FORCE: " << f);
+    DEBUG(9, "FORCE: " << math::v2s(f));
     
     force(b_it->i) += f;
     force(b_it->j) -= f;

@@ -37,7 +37,7 @@ _centre_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
 
   math::Vec p;
   math::Vec prev;
-  math::Vec v = 0.0;
+  math::Vec v(0.0);
 
   math::VArray const & pos = conf.current().pos;
   math::VArray const & vel = conf.current().vel;
@@ -133,23 +133,23 @@ molecular_translational_ekin(topology::Atom_Iterator start,
     new_v = vel(*start);
     
     com_v += m * v;
-    e_kin += m * dot(v,v);
-    DEBUG(11, "scaling ekin mass=" << m << " v=" << new_v);
-    DEBUG(11, "av v="<<v);
-    DEBUG(11, "old_v=" << old_vel(*start));
+    e_kin += m * abs2(v);
+    DEBUG(11, "scaling ekin mass=" << m << " v=" << math::v2s(new_v));
+    DEBUG(11, "av v=" << math::v2s(v));
+    DEBUG(11, "old_v=" << math::v2s(old_vel(*start)));
     
     new_com_v += m * new_v;
-    new_e_kin += m * dot(new_v, new_v);
+    new_e_kin += m * abs2(new_v);
 
   }
 
   com_v /= tot_mass;
   new_com_v /= tot_mass;
   
-  com_e_kin = 0.5 * tot_mass * dot(com_v, com_v);
+  com_e_kin = 0.5 * tot_mass * abs2(com_v);
   e_kin *= 0.5;
   
-  new_com_e_kin = 0.5 * tot_mass * math::dot(new_com_v, new_com_v);
+  new_com_e_kin = 0.5 * tot_mass * math::abs2(new_com_v);
   new_e_kin *= 0.5;
 
   DEBUG(9, "com_e_kin: " << com_e_kin << " e_kin: " << e_kin);

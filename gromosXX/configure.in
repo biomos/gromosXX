@@ -131,10 +131,9 @@ case "$compiler" in
      ;;
      gnu*)              # EGCS  http://egcs.cygnus.com/
        echo "Configuring for GNU C++"
-       CXX_PICKY_FLAGS="-Wall -DBZDEBUG -ftemplate-depth-40"
-#       CXX_OPTIMIZE_FLAGS="-O6 -finline-limit=2500 -funroll-loops -fstrict-aliasing -fno-gcse -ftemplate-depth-40 -DNDEBUG -g -fomit-frame-pointer"
-       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -ftemplate-depth-40 -DNDEBUG -g"
-       CXX_DEBUG_FLAGS="-g -DBZ_DEBUG -DBZDEBUG -ftemplate-depth-40"
+       CXX_PICKY_FLAGS="-Wall -DBZDEBUG -g"
+       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -DNDEBUG -g"
+       # CXX_DEBUG_FLAGS="-g -DBZ_DEBUG -DBZDEBUG"
        CXXLD="$CXX"
 
 #      profile support...       
@@ -146,14 +145,14 @@ case "$compiler" in
        if eval "test x$enable_debug = xyes"; then
 	    AC_BZ_SET_COMPILER($withval,"g++","$CXX_PICKY_FLAGS")
 	    echo "configuring for debug build"
-	else
-		AC_BZ_SET_COMPILER($withval,"g++","$CXX_OPTIMIZE_FLAGS")
-		echo "configuring for release build"
-	fi
+       else
+	    AC_BZ_SET_COMPILER($withval,"g++","$CXX_OPTIMIZE_FLAGS")
+	    echo "configuring for release build"
+       fi
        F77=g77
        F77_OPTIMIZE_FLAGS="-O2 -funroll-loops"
        FORTLIBS=-lg2c
-	   AC_DEFINE_UNQUOTED(COMPILER_GCC, 1, [GNU C++ compiler])
+       AC_DEFINE_UNQUOTED(COMPILER_GCC, 1, [GNU C++ compiler])
      ;;
      msvc*) # Microsoft Visual C++
        echo "Configuring for Microsoft Visual C++"
@@ -165,7 +164,7 @@ case "$compiler" in
        CXX_DEBUG_FLAGS="/Zi"
        LDOUT="/out:"
        CXXLD="link"
-	   AC_DEFINE_UNQUOTED(COMPILER_MSVC, 1, [Microsoft Visual C++ compiler])
+       AC_DEFINE_UNQUOTED(COMPILER_MSVC, 1, [Microsoft Visual C++ compiler])
      ;;
      mwerk*)
        echo "Configuring for Metrowerks Codewarrior (x86)"
@@ -176,7 +175,7 @@ case "$compiler" in
        CXX_OPTIMIZE_FLAGS="-opt all -DNDEBUG"
        CXX_DEBUG_FLAGS="-g"
        CXXLD="mwld"
-	   AC_DEFINE_UNQUOTED(COMPILER_MWERK, 1, [Metrowerks Codewarrior C++ compiler])
+       AC_DEFINE_UNQUOTED(COMPILER_MWERK, 1, [Metrowerks Codewarrior C++ compiler])
      ;;
      *)
         CXXLD="$CXX"
@@ -194,7 +193,8 @@ dnl AC_SEARCH_LIBS(_blitz_id, blitz, , [AC_MSG_ERROR(
 dnl [lib blitz not found. make sure to include it in your
 dnl CXXFLAGS, CFLAGS and LDFLAGS])])
 
-AC_CXX_LIB_BLITZ(["required"])
+dnl blitz++ is out right now...
+dnl AC_CXX_LIB_BLITZ(["required"])
 
 dnl AC_MSG_CHECKING(boost test library)
 dnl AC_CHECK_HEADER(boost/test/unit_test_suite.hpp, ,
@@ -215,6 +215,8 @@ dnl possibly create sym links
 # AC_SEARCH_LIBS(cblas_daxpy, gslcblas, ,[AC_MSG_ERROR([libgsl not found. make sure libgsl is installed if necessary add it to CXXFLAGS, CFLAGS and LDFLAGS])])
 # AC_SEARCH_LIBS(gsl_rng_alloc, gsl, , [AC_MSG_ERROR([libgsl not found. make sure libgsl is installed if necessary add it to CXXFLAGS, CFLAGS and LDFLAGS])])
 # AC_MSG_RESULT(yes)
+
+AC_CXX_LIB_GSL([required])
 
 dnl check header files
 AC_HEADER_STDC

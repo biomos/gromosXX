@@ -50,8 +50,10 @@ void topology::Topology::resize(unsigned int const atoms)
   // if you want to shrink, first change num_atoms...
   assert(atoms >= num_solute_atoms() + num_solvent_atoms());
 
-  m_mass.resizeAndPreserve(atoms);
-  m_charge.resizeAndPreserve(atoms);
+  // m_mass.resizeAndPreserve(atoms);
+  m_mass.resize(atoms);
+  // m_charge.resizeAndPreserve(atoms);
+  m_charge.resize(atoms);
   m_exclusion.resize(atoms);
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);

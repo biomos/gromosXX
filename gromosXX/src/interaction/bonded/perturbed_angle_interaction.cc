@@ -62,14 +62,14 @@ static int _calculate_perturbed_angle_interactions
 	  << " B-type " << a_it->B_type
 	  << " lambda " << topo.lambda());
 
-    assert(pos.size() > int(a_it->i) && pos.size() > int(a_it->j) && 
-	   pos.size() > int(a_it->k));
+    assert(pos.size() > (a_it->i) && pos.size() > (a_it->j) && 
+	   pos.size() > (a_it->k));
 
     periodicity.nearest_image(pos(a_it->i), pos(a_it->j), rij);
     periodicity.nearest_image(pos(a_it->k), pos(a_it->j), rkj);
 
-    double dij = sqrt(dot(rij, rij));
-    double dkj = sqrt(dot(rkj, rkj));
+    double dij = sqrt(abs2(rij));
+    double dkj = sqrt(abs2(rkj));
     
     assert(dij != 0.0);
     assert(dkj != 0.0);

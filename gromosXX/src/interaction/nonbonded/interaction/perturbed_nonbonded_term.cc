@@ -57,7 +57,7 @@ inline void interaction::Perturbed_Nonbonded_Term
 		      math::Vec & force, double &e_rf, double & de_rf,
 		      bool selfterm_correction)
 {
-  const double dist2 = dot(r, r);
+  const double dist2 = abs2(r);
 
   const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
   const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
@@ -102,7 +102,7 @@ inline void interaction::Perturbed_Nonbonded_Term
 			math::Vec & force, double &e_rf, double & de_rf,
 			bool selfterm_correction)
 {
-  const double dist2 = dot(r, r);
+  const double dist2 = abs2(r);
 
   const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
   const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
@@ -156,7 +156,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   if (B_c6 != 0) B_c126=B_c12/B_c6;
   else B_c126 = 0.0;
   
-  const double dist2 = dot(r, r);
+  const double dist2 = abs2(r);
   assert(dist2 != 0);
   
   const double A_dist2soft = dist2 + alpha_crf*m_B_lambda2;
@@ -254,7 +254,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   if (B_c6 != 0) B_c126=B_c12/B_c6;
   else B_c126 = 0.0;
   
-  const double dist2 = dot(r, r);
+  const double dist2 = abs2(r);
   assert(dist2 != 0);
   
   const double A_dist2soft = dist2 + alpha_crf*m_B_lambda2;

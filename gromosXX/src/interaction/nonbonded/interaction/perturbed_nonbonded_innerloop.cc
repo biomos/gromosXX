@@ -170,7 +170,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	<< "\n\t\te_lj: " << e_lj 
 	<< " e_crf: " << e_crf 
 	<< " de_lj: " << de_lj << " de_crf: " << de_crf
-	<< "\n\t\tr: " << sqrt(math::dot(r,r)));
+	<< "\n\t\tr: " << sqrt(math::abs2(r)));
   
   // now combine everything
   f      = (f1 + f6 + f12) * r;
@@ -528,7 +528,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     periodicity.nearest_image(pos(i), 
 			      pos(*it), r);
 
-    DEBUG(8, "r2 i(" << i << "-" << *it << ") " << dot(r,r));
+    DEBUG(8, "r2 i(" << i << "-" << *it << ") " << abs2(r));
     
     double q_ij_a;
     double q_ij_b;

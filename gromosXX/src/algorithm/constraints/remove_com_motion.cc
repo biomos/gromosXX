@@ -48,7 +48,7 @@ int algorithm::Remove_COM_Motion
 
   if (!print_it && !remove_it) return 0;
 
-  math::Vec com_v = 0.0, com_r = 0.0;
+  math::Vec com_v (0.0), com_r(0.0);
   double com_mass = 0.0;
   
   for(unsigned int i = 0; i < topo.num_atoms(); ++i){
@@ -63,34 +63,34 @@ int algorithm::Remove_COM_Motion
   com_v /= com_mass;
   com_r /= com_mass;
 
-  double ekin_trans = 0.5*com_mass*dot(com_v,com_v);
+  double ekin_trans = 0.5*com_mass*abs2(com_v);
 
   DEBUG(7, "totmass " << com_mass);
-  DEBUG(7, "com_v " << com_v);
-  DEBUG(7, "com_r " << com_r);
+  DEBUG(7, "com_v " << math::v2s(com_v));
+  DEBUG(7, "com_r " << math::v2s(com_r));
   DEBUG(7, "com_Ekin " << ekin_trans);
 
 
   
-  math::Vec com_L = 0.0;
+  math::Vec com_L(0.0);
   math::Matrix com_I;
-  com_I.initialize(0.0);
+  com_I = 0.0;
   
   for(unsigned int i = 0; i < topo.num_atoms(); ++i){
     math::Vec r = conf.current().pos(i) - 
       0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
 
     DEBUG(15, "pos  " << i << " " 
-	  << conf.current().pos(i) - 
-	  0.5 * sim.time_step_size() * conf.current().vel(i));
-    DEBUG(15, "posp " << i << " " << r);
+	  << math::v2s(conf.current().pos(i) - 
+	  0.5 * sim.time_step_size() * conf.current().vel(i)));
+    DEBUG(15, "posp " << i << " " << math::v2s(r));
     
     // should this be pos or r???
     com_L += topo.mass()(i) * 
       math::cross(conf.current().pos(i), conf.current().vel(i));
 
     // inertia tensor
-    // double r2 = dot(r,r);
+    // double r2 = abs2(r);
     com_I(0,0) += topo.mass()(i) * (r(1)*r(1)+r(2)*r(2));
     com_I(1,1) += topo.mass()(i) * (r(0)*r(0)+r(2)*r(2));
     com_I(2,2) += topo.mass()(i) * (r(0)*r(0)+r(1)*r(1));
@@ -104,7 +104,7 @@ int algorithm::Remove_COM_Motion
 
   com_L -= com_mass * math::cross(com_r, com_v);
   
-  DEBUG(7, "Angular momentum " << com_L);
+  DEBUG(7, "Angular momentum " << math::v2s(com_L));
   
   // invert the inertia tensor
   math::Matrix com_II;
@@ -126,15 +126,15 @@ int algorithm::Remove_COM_Motion
 
   com_II(2,2) = (-com_I(0,1)*com_I(0,1) + com_I(0,0)*com_I(1,1));
   
-  DEBUG(7, "inertia tensor:\n"<< com_I);
+  DEBUG(7, "inertia tensor:\n"<< math::m2s(com_I));
   DEBUG(7, "determinant : " << denom);
-  DEBUG(7, "inverted tens :\n" << com_II);
+  DEBUG(7, "inverted tens :\n" << math::m2s(com_II));
   
   // get the angular velocity around the COM
   math::Vec com_O;
-  com_O = blitz::product(com_II, com_L) / denom;
+  com_O = math::product(com_II, com_L) / denom;
   
-  DEBUG(7, " angular velocity " << com_O);
+  DEBUG(7, " angular velocity " << math::v2s(com_O));
 
   double ekin_rot =  0.5 * dot(com_O, com_L);
   DEBUG(7, " com_Ekin_rot " << ekin_rot);

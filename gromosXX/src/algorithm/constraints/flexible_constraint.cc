@@ -106,11 +106,11 @@ static int _flexible_shake(topology::Topology const &topo,
     math::Vec &pos_i = conf.current().pos(it->i);
     math::Vec &pos_j = conf.current().pos(it->j);
 
-    DEBUG(10, "\ni: " << pos_i << "\nj: " << pos_j);
+    DEBUG(10, "\ni: " << math::v2s(pos_i) << "\nj: " << math::v2s(pos_j));
 	
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
-    double dist2 = dot(r, r);
+    double dist2 = math::abs2(r);
 	
     double constr_length2 = flex_len[k] * flex_len[k];
     double diff = constr_length2 - dist2;
@@ -128,7 +128,7 @@ static int _flexible_shake(topology::Topology const &topo,
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
 
-      double sp = dot(ref_r, r);
+      double sp = math::dot(ref_r, r);
 	  
       if(sp < constr_length2 * math::epsilon){
 	/*
@@ -136,10 +136,10 @@ static int _flexible_shake(topology::Topology const &topo,
 			 "Shake::???",
 			 io::message::critical);
 	*/
-	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
-	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
-	DEBUG(5, "ref r " << ref_r);
-	DEBUG(5, "r " << r);
+	DEBUG(5, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
+	DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
+	DEBUG(5, "ref r " << math::v2s(ref_r));
+	DEBUG(5, "r " << math::v2s(r));
 
 	std::cout << "FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
 		  << "\tatom i    : " << it->i << "\n"
@@ -254,7 +254,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
     
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
-    double dist2 = dot(r, r);
+    double dist2 = math::abs2(r);
     
     double constr_length2 = flex_len[k] * flex_len[k];
     double diff = constr_length2 - dist2;
@@ -278,10 +278,10 @@ static int _exact_flexible_shake(topology::Topology const &topo,
 	  
       if(sp < constr_length2 * math::epsilon){
 
-	DEBUG(5, "f(ud) i " << f_i << " f(ud) j " << f_j);
-	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
-	DEBUG(5, "ud_f " << ud_f);
-	DEBUG(5, "r " << r);
+	DEBUG(5, "f(ud) i " << math::v2s(f_i) << " f(ud) j " << math::v2s(f_j));
+	DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
+	DEBUG(5, "ud_f " << math::v2s(ud_f));
+	DEBUG(5, "r " << math::v2s(r));
 
 	std::cout << "EXACT FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
 		  << "\tatom i    : " << it->i << "\n"
@@ -366,8 +366,8 @@ static void _calc_distance(topology::Topology const &topo,
     
     DEBUG(8, "flexible constraint " << k);
 
-    assert(conf.old().pos.size() > int(it->i));
-    assert(conf.old().pos.size() > int(it->j));
+    assert(conf.old().pos.size() > (it->i));
+    assert(conf.old().pos.size() > (it->j));
 
     const math::Vec &ref_i = conf.old().pos(it->i);
     const math::Vec &ref_j = conf.old().pos(it->j);
@@ -376,10 +376,10 @@ static void _calc_distance(topology::Topology const &topo,
     periodicity.nearest_image(ref_i, ref_j, ref_r);
 
     // reference distance
-    const double ref_dist2 = dot(ref_r, ref_r);
+    const double ref_dist2 = math::abs2(ref_r);
 
-    assert(topo.mass().size() > int(it->i));
-    assert(topo.mass().size() > int(it->j));
+    assert(topo.mass().size() > (it->i));
+    assert(topo.mass().size() > (it->j));
 
     const double red_mass = 1 / (1/topo.mass()(it->i) + 1/topo.mass()(it->j));
     const double dt2 = dt * dt;
@@ -397,8 +397,8 @@ static void _calc_distance(topology::Topology const &topo,
     if (sim.param().constraint.solute.flexshake_mode == 0 ||
 	sim.param().constraint.solute.flexshake_mode == 2){
       // the position
-      assert(conf.current().pos.size() > int(it->i));
-      assert(conf.current().pos.size() > int(it->j));
+      assert(conf.current().pos.size() > (it->i));
+      assert(conf.current().pos.size() > (it->j));
       
       math::Vec const & pos_i = conf.current().pos(it->i);
       math::Vec const & pos_j = conf.current().pos(it->j);
@@ -407,7 +407,7 @@ static void _calc_distance(topology::Topology const &topo,
       periodicity.nearest_image(pos_i, pos_j, r);
       
       // unconstrained distance
-      const double dist2 = dot(r, r);
+      const double dist2 = math::abs2(r);
       DEBUG(10, "unconstrained distance = " << dist2);
       
       // take out velocities along constraint from previous step...
@@ -431,7 +431,7 @@ static void _calc_distance(topology::Topology const &topo,
       periodicity.nearest_image(pos_i, pos_j, r);
 
       // unconstrained distance
-      const double dist2 = dot(r, r);
+      const double dist2 = math::abs2(r);
       DEBUG(10, "unconstrained distance = " << dist2);
 
       // ignore velocities along constraints
@@ -514,11 +514,11 @@ static void _calc_undetermined_forces(topology::Topology &topo,
 
     DEBUG(8, "\tconstraint " << k);
     
-    force[k].assign(topo.num_atoms(), 0);
+    force[k].assign(topo.num_atoms(), math::Vec(0.0));
     for(unsigned int a=0; a<topo.num_atoms(); ++a){
 
-      assert(conf.current().pos.size() > int(it->i));
-      assert(conf.current().pos.size() > int(it->j));
+      assert(conf.current().pos.size() > (it->i));
+      assert(conf.current().pos.size() > (it->j));
     
       // r_k^nc(t+dt) vector
       math::Vec r_nc;
@@ -542,7 +542,7 @@ static void _calc_undetermined_forces(topology::Topology &topo,
       DEBUG(10, "r_nc = " << math::v2s(r_nc));
 
       // unconstrained distance
-      const double dist = sqrt(math::dot(r_nc, r_nc));
+      const double dist = sqrt(math::abs2(r_nc));
       // normalise
       r_nc /= dist;
       
@@ -564,7 +564,7 @@ static void _calc_undetermined_forces(topology::Topology &topo,
 	periodicity.nearest_image(ref_i, ref_j, r);
 
 	// last step (constrained) distance
-	const double r_dist = sqrt(math::dot(r, r));
+	const double r_dist = sqrt(math::abs2(r));
 
 	math::Matrix h1, h2, u1, u2;
 	for(unsigned int d1=0; d1<3; ++d1){
@@ -601,7 +601,7 @@ static void _calc_undetermined_forces(topology::Topology &topo,
 	}
 
 	math::Vec f1 =  r - math::product(u1, r_nc) * dk * mu / param[it->type].K;
-	math::Vec f2 = -r + math::product(u2, r_nc) * dk * mu / param[it->type].K;
+	math::Vec f2 =  math::product(u2, r_nc) * dk * mu / param[it->type].K - r;
 	
 	f1 += (r_nc - r / r_dist) * dk * mu / param[it->type].K / dt2;
 	f2 -= (r_nc - r / r_dist) * dk * mu / param[it->type].K / dt2;
@@ -643,7 +643,7 @@ static void _calc_undetermined_forces(topology::Topology &topo,
 	}
 
 	assert(force.size() > k && force[k].size() > a);
-	force[k][a] = - math::product(h1, r_nc) * dk * mu / param[it->type].K;
+	force[k][a] = math::product(h1, r_nc) * (-dk) * mu / param[it->type].K;
 
 	DEBUG(12, "f(" << a << ") = " << math::v2s(force[k][a]));
 
@@ -796,8 +796,9 @@ int algorithm::Flexible_Constraint
   }
 
   // shaken velocity
-  conf.current().vel = (conf.current().pos - conf.old().pos) / 
-    sim.time_step_size();
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+      sim.time_step_size();
   
   // return success!
   return 0;
@@ -871,8 +872,9 @@ int algorithm::Flexible_Constraint
       if (!quiet)
 	std::cout << "shaking initial velocities\n";
 
-      conf.current().pos = conf.old().pos - 
-	sim.time_step_size() * conf.old().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().pos(i) = conf.old().pos(i) - 
+	  sim.time_step_size() * conf.old().vel(i);
     
       // shake again
       if (apply(topo, conf, sim))
@@ -882,7 +884,8 @@ int algorithm::Flexible_Constraint
       conf.current().pos = conf.old().pos;
     
       // velocities are in opposite direction (in time)
-      conf.current().vel = -1.0 * conf.current().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().vel(i) = -1.0 * conf.current().vel(i);
       conf.old().vel = conf.current().vel;
 
       // also change the velocities along the constraints...
@@ -941,11 +944,11 @@ static int _exact_flexible_shake(topology::Topology const &topo,
     math::Vec &pos_i = conf.current().pos(it->i);
     math::Vec &pos_j = conf.current().pos(it->j);
 
-    DEBUG(10, "\ni: " << pos_i << "\nj: " << pos_j);
+    DEBUG(10, "\ni: " << math::v2s(pos_i) << "\nj: " << math::v2s(pos_j));
 	
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
-    double dist2 = dot(r, r);
+    double dist2 = math::abs2(r);
 	
     double constr_length2 = flex_len[k] * flex_len[k];
     double diff = constr_length2 - dist2;
@@ -971,10 +974,10 @@ static int _exact_flexible_shake(topology::Topology const &topo,
 			 "Shake::???",
 			 io::message::critical);
 	*/
-	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
-	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
-	DEBUG(5, "ref r " << ref_r);
-	DEBUG(5, "r " << r);
+	DEBUG(5, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
+	DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
+	DEBUG(5, "ref r " << math::v2s(ref_r));
+	DEBUG(5, "r " << math::v2s(r));
 
 	std::cout << "FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
 		  << "\tatom i    : " << it->i << "\n"

@@ -63,17 +63,17 @@ static int _calculate_jvalue_restraint_interactions
     //calculate phi, cross- and dot-products
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
-    dkj2 = dot(rkj, rkj);
-    dmj2 = dot(rmj, rmj);
-    dnk2 = dot(rnk, rnk);
+    dkj2 = abs2(rkj);
+    dmj2 = abs2(rmj);
+    dnk2 = abs2(rnk);
     
     const double frim = dot(rij, rkj) / dkj2;
     const double frln = dot(rkl, rkj) / dkj2;
 
     rim = rij - frim * rkj;
     rln = frln * rkj - rkl;
-    dim = sqrt(dot(rim, rim));
-    dln = sqrt(dot(rln, rln));
+    dim = sqrt(abs2(rim));
+    dln = sqrt(abs2(rln));
     
     const double ip = dot(rim, rln);
     const double cosphi = ip / (dim*dln);

@@ -83,15 +83,18 @@ int algorithm::Steepest_Descent
   // limit the maximum force!
   if (sim.param().minimise.flim != 0.0){
     for(unsigned int i=0; i<topo.num_atoms(); ++i){
-      const double fs = math::dot(conf.current().force(i), 
-				  conf.current().force(i));
+      const double fs = math::abs2(conf.current().force(i));
       if (fs > sim.param().minimise.flim)
 	conf.current().force(i) *= sim.param().minimise.flim / fs;
     }
   }
 
   // <f|f>^-0.5
-  double f = math::sum(math::dot(conf.current().force, conf.current().force));
+  // double f = math::sum(math::abs2(conf.current().force));
+  double f = 0.0;
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    f += math::abs2(conf.current().force(i));
+  
   f = 1.0 / sqrt(f);
 
 #ifdef HAVE_ISNAN
@@ -103,8 +106,9 @@ int algorithm::Steepest_Descent
 
   conf.exchange_state();
 
-  conf.current().pos = conf.old().pos + sim.minimisation_step_size() * f *
-    conf.old().force;
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    conf.current().pos(i) = conf.old().pos(i) + sim.minimisation_step_size() * f *
+      conf.old().force(i);
 
   conf.old().vel = 0.0;
   conf.current().vel = 0.0;

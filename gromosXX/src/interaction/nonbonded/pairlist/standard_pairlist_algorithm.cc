@@ -217,13 +217,13 @@ void interaction::Standard_Pairlist_Algorithm
 
   for(cg2_index = cg1_index + 1; cg2_index < num_solute_cg; ++cg2, ++cg2_index){
     
-    assert(m_cg_cog.size() > cg1_index &&
-	   m_cg_cog.size() > cg2_index);
+    assert(m_cg_cog.size() > unsigned(cg1_index) &&
+	   m_cg_cog.size() > unsigned(cg2_index));
     
     periodicity.nearest_image(m_cg_cog(cg1_index), m_cg_cog(cg2_index), p);
     
     // the distance
-    const double d = dot(p, p);
+    const double d = math::abs2(p);
 
     // DEBUG(11, "cg1=" << cg1_index << " cg2=" << cg2_index);
     DEBUG(11, "Range_Filter::range_chargegroup_pair " << cg1_index << " - " << cg2_index);
@@ -263,13 +263,13 @@ void interaction::Standard_Pairlist_Algorithm
   // solvent...
   for(; cg2_index < num_cg; ++cg2, ++cg2_index) {
     
-    assert(m_cg_cog.size() > cg1_index &&
-	   m_cg_cog.size() > cg2_index);
+    assert(m_cg_cog.size() > unsigned(cg1_index) &&
+	   m_cg_cog.size() > unsigned(cg2_index));
     
     periodicity.nearest_image(m_cg_cog(cg1_index), m_cg_cog(cg2_index), p);
     
     // the distance
-    const double d = dot(p, p);
+    const double d = math::abs2(p);
     
     if (d > m_cutoff_long_2){        // OUTSIDE
       continue;
@@ -458,7 +458,7 @@ _update_atomic(topology::Topology & topo,
       periodicity.nearest_image(pos(a1), pos(a2), v);
       
       // the distance
-      const double d = dot(v, v);
+      const double d = math::abs2(v);
 
       DEBUG(10, "\t" << a1 << " - " << a2);
     
@@ -493,7 +493,7 @@ _update_atomic(topology::Topology & topo,
       periodicity.nearest_image(pos(a1), pos(a2), v);
       
       // the distance
-      const double d = dot(v, v);
+      const double d = math::abs2(v);
     
       DEBUG(10, "\t" << a1 << " - " << a2);
 
@@ -542,7 +542,7 @@ _update_atomic(topology::Topology & topo,
 	periodicity.nearest_image(pos(a1), pos(a2), v);
 	
 	// the distance
-	const double d = dot(v, v);
+	const double d = math::abs2(v);
 
 	DEBUG(10, "\t" << a1 << " - " << a2);
 
@@ -731,13 +731,13 @@ void interaction::Standard_Pairlist_Algorithm
 
   for(cg2_index = cg1_index + 1; cg2_index < num_solute_cg; ++cg2, ++cg2_index){
     
-    assert(m_cg_cog.size() > cg1_index &&
-	   m_cg_cog.size() > cg2_index);
+    assert(m_cg_cog.size() > unsigned(cg1_index) &&
+	   m_cg_cog.size() > unsigned(cg2_index));
     
     periodicity.nearest_image(m_cg_cog(cg1_index), m_cg_cog(cg2_index), p);
     
     // the distance
-    const double d = dot(p, p);
+    const double d = math::abs2(p);
     
     if (d > m_cutoff_long_2){        // OUTSIDE: filter
       continue;
@@ -820,13 +820,13 @@ void interaction::Standard_Pairlist_Algorithm
   // ? - solvent...
   for(; cg2_index < num_cg; ++cg2, ++cg2_index) {
     
-    assert(m_cg_cog.size() > cg1_index &&
-	   m_cg_cog.size() > cg2_index);
+    assert(m_cg_cog.size() > unsigned(cg1_index) &&
+	   m_cg_cog.size() > unsigned(cg2_index));
     
     periodicity.nearest_image(m_cg_cog(cg1_index), m_cg_cog(cg2_index), p);
     
     // the distance
-    const double d = dot(p, p);
+    const double d = math::abs2(p);
     
     if (d > m_cutoff_long_2){        // OUTSIDE
       continue;
@@ -1145,7 +1145,7 @@ _update_pert_atomic(topology::Topology & topo,
       periodicity.nearest_image(pos(a1), pos(a2), v);
       
       // the distance
-      const double d = dot(v, v);
+      const double d = math::abs2(v);
 
       DEBUG(10, "\t" << a1 << " - " << a2);
     
@@ -1279,7 +1279,7 @@ _update_pert_atomic(topology::Topology & topo,
       periodicity.nearest_image(pos(a1), pos(a2), v);
       
       // the distance
-      const double d = dot(v, v);
+      const double d = math::abs2(v);
     
       DEBUG(10, "\t" << a1 << " - " << a2);
 
@@ -1382,7 +1382,7 @@ _update_pert_atomic(topology::Topology & topo,
 	periodicity.nearest_image(pos(a1), pos(a2), v);
 	
 	// the distance
-	const double d = dot(v, v);
+	const double d = math::abs2(v);
 
 	DEBUG(10, "\t" << a1 << " - " << a2);
 	

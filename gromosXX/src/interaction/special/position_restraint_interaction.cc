@@ -52,7 +52,7 @@ static int _calculate_position_restraint_interactions
 
     periodicity.nearest_image(pos(it->seq), it->pos, v);
 
-    double dist = sqrt(dot(v, v));
+    double dist = sqrt(abs2(v));
     
     assert(dist != 0.0);
     

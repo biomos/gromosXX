@@ -131,7 +131,7 @@ static int _lincs(topology::Topology & topo,
     DEBUG(12, "pos j = " << math::v2s(old_pos(constr[i].j + offset)));
     DEBUG(12, "ref_r = " << math::v2s(ref_r));
     
-    B(i) = ref_r / sqrt(math::dot(ref_r, ref_r));
+    B(i) = ref_r / sqrt(math::abs2(ref_r));
     DEBUG(12, "B(" << i << ") = " << B(i)(0) << " / " << B(i)(1) << " / " << B(i)(2));
   }
   
@@ -167,7 +167,7 @@ static int _lincs(topology::Topology & topo,
     periodicity.nearest_image(pos(constr[i].i + offset), pos(constr[i].j + offset), r);
 
     const double diff = 2 * param[constr[i].type].r0 * param[constr[i].type].r0 -
-      math::dot(r, r);
+      math::abs2(r);
     if (diff > 0.0)
       p = sqrt(diff);
     else{
@@ -257,8 +257,9 @@ int algorithm::Lincs::apply(topology::Topology & topo,
   
   // "shake" velocities
   if (do_vel)
-    conf.current().vel = (conf.current().pos - conf.old().pos) / 
-      sim.time_step_size();
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
+      conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+	sim.time_step_size();
 
   // return success!
   return 0;
@@ -391,8 +392,9 @@ int algorithm::Lincs::init(topology::Topology & topo,
       if (!quiet)
 	std::cout << "\tshaking(lincs) initial velocities\n";
 
-      conf.current().pos = conf.old().pos - 
-	sim.time_step_size() * conf.old().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().pos(i) = conf.old().pos(i) - 
+	  sim.time_step_size() * conf.old().vel(i);
     
       // shake again
       apply(topo, conf, sim);
@@ -401,7 +403,8 @@ int algorithm::Lincs::init(topology::Topology & topo,
       conf.current().pos = conf.old().pos;
     
       // velocities are in opposite direction (in time)
-      conf.current().vel = -1.0 * conf.current().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().vel(i) = -1.0 * conf.current().vel(i);
       conf.old().vel = conf.current().vel;
     }
     

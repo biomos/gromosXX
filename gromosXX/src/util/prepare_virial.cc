@@ -38,7 +38,7 @@ static void _center_of_mass(topology::Atom_Iterator start,
 
   math::Vec p;
   math::Vec prev;
-  math::Vec v = 0.0;
+  math::Vec v(0.0);
 
   prev = conf.current().pos(*start);
 

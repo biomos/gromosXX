@@ -296,7 +296,7 @@ void interaction::Perturbed_Nonbonded_Pair
       }
  
       DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
-	    << A_f << " e_lj: " 
+	    << math::v2s(A_f) << " e_lj: " 
 	    << A_e_lj << " e_crf: " << A_e_crf 
 	    << " de_lj: " << A_de_lj 
 	    << " de_crf: " << A_de_crf);
@@ -331,7 +331,7 @@ void interaction::Perturbed_Nonbonded_Pair
       }
  
       DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
-	    << A_f << " e_lj: " 
+	    << math::v2s(A_f) << " e_lj: " 
 	    << A_e_lj << " e_crf: " << A_e_crf 
 	    << " de_lj: " << A_de_lj 
 	    << " de_crf: " << A_de_crf);
@@ -390,7 +390,7 @@ void interaction::Perturbed_Nonbonded_Pair
       }
  
       DEBUG(7, "\tcalculated interaction state B:\n\t\tf: "
-	    << B_f << " e_lj: " 
+	    << math::v2s(B_f) << " e_lj: " 
 	    << B_e_lj << " e_crf: " << B_e_crf 
 	    << " de_lj: " << B_de_lj 
 	    << " de_crf: " << B_de_crf);
@@ -424,7 +424,7 @@ void interaction::Perturbed_Nonbonded_Pair
       }
       
       DEBUG(7, "\tcalculated interaction state B:\n\t\tf: "
-	    << B_f << " e_lj: " 
+	    << math::v2s(B_f) << " e_lj: " 
 	    << B_e_lj << " e_crf: " << B_e_crf 
 	    << " de_lj: " << B_de_lj 
 	    << " de_crf: " << B_de_crf);
@@ -493,7 +493,7 @@ void interaction::Perturbed_Nonbonded_Pair
 
 
   DEBUG(7, "A_lnm: " << m_perturbed_nonbonded_term.A_lambda_n_1() << " B_lnm: " << m_perturbed_nonbonded_term.B_lambda_n_1());
-  DEBUG(7, "\tcalculated interaction:\n\t\tf: " << f << " e_lj: " 
+  DEBUG(7, "\tcalculated interaction:\n\t\tf: " << math::v2s(f) << " e_lj: " 
 	<< e_lj << " e_crf: " << e_crf << " de_lj: " << de_lj 
 	<< " de_crf: " << de_crf);
   

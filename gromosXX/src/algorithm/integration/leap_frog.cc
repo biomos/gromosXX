@@ -28,10 +28,13 @@ int algorithm::Leap_Frog_Position
 {
   const double start = util::now();
   
+  const int num_atoms = topo.num_atoms();
+  
   // r = r + v*dt
-  conf.current().pos = conf.old().pos + conf.current().vel
-    * sim.time_step_size();
-
+  for(int i=0; i < num_atoms; ++i)
+    conf.current().pos(i) =
+      conf.old().pos(i) + conf.current().vel(i) * sim.time_step_size();
+  
   m_timing += util::now() - start;
   
   return 0;
@@ -50,10 +53,15 @@ int algorithm::Leap_Frog_Velocity
   conf.exchange_state();
   // copy the box
   conf.current().box = conf.old().box;
+
+  const int num_atoms = topo.num_atoms();
+  
+
   
   // v = v + f * dt / m
-  conf.current().vel = conf.old().vel + conf.old().force 
-    * sim.time_step_size() / topo.mass();
+  for(int i=0; i < num_atoms; ++i)
+    conf.current().vel(i) =
+      conf.old().vel(i) + conf.old().force(i) * sim.time_step_size() / topo.mass()(i);
 
   m_timing += util::now() - start;
   

@@ -98,7 +98,7 @@ int algorithm::Shake::shake_iteration(topology::Topology const &topo,
     periodicity.nearest_image(pos_i, pos_j, r);
     DEBUG(12, "ni:  " << math::v2s(r));
     
-    double dist2 = dot(r, r);
+    double dist2 = abs2(r);
 	
     double constr_length2 = parameter()[it->type].r0 * parameter()[it->type].r0;
     double diff = constr_length2 - dist2;
@@ -124,10 +124,10 @@ int algorithm::Shake::shake_iteration(topology::Topology const &topo,
 			 "Shake::???",
 			 io::message::critical);
 	*/
-	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
-	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
-	DEBUG(5, "ref r " << ref_r);
-	DEBUG(5, "r " << r);
+	DEBUG(5, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
+	DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
+	DEBUG(5, "ref r " << math::v2s(ref_r));
+	DEBUG(5, "r " << math::v2s(r));
 
 	std::cout << "SHAKE ERROR\n"
 		  << "\tatom i    : " << it->i + 1 << "\n"
@@ -262,8 +262,7 @@ solute(topology::Topology const & topo,
   /*
   for (unsigned int i=0; i < topo.solute().distance_constraints().size();++i){
     conf.constraint_force()(i) *= 1 /(dt * dt);
-    DEBUG(5, "constraint_force " << sqrt(dot(conf.constraint_force()(i),
-					     conf.constraint_force()(i)) ));
+    DEBUG(5, "constraint_force " << sqrt(abs2(conf.constraint_force()(i)) ));
   }
   */
 
@@ -401,8 +400,9 @@ int algorithm::Shake::apply(topology::Topology & topo,
   }
       
   // shaken velocity
-  conf.current().vel = (conf.current().pos - conf.old().pos) / 
-    sim.time_step_size();
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+      sim.time_step_size();
 
   // return success!
   return 0;
@@ -455,8 +455,9 @@ int algorithm::Shake::init(topology::Topology & topo,
       if (!quiet)
 	std::cout << "\tshaking initial velocities\n";
 
-      conf.current().pos = conf.old().pos - 
-	sim.time_step_size() * conf.old().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+      conf.current().pos(i) = conf.old().pos(i) - 
+	sim.time_step_size() * conf.old().vel(i);
     
       // shake again
       if (apply(topo, conf, sim))
@@ -466,7 +467,8 @@ int algorithm::Shake::init(topology::Topology & topo,
       conf.current().pos = conf.old().pos;
     
       // velocities are in opposite direction (in time)
-      conf.current().vel = -1.0 * conf.current().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().vel(i) = -1.0 * conf.current().vel(i);
       conf.old().vel = conf.current().vel;
     }
     

@@ -57,9 +57,9 @@ static int _calculate_improper_interactions(topology::Topology & topo,
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
     
-    dkj2 = dot(rkj, rkj);
-    dmj2 = dot(rmj, rmj);
-    dnk2 = dot(rnk, rnk);
+    dkj2 = abs2(rkj);
+    dmj2 = abs2(rmj);
+    dnk2 = abs2(rnk);
     dkj  = sqrt(dkj2);
     dmj  = sqrt(dmj2);
     dnk  = sqrt(dnk2);

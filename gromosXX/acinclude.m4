@@ -241,3 +241,87 @@ fi
 
 ])
 
+dnl @synopsis AC_CXX_LIB_GSL([optional-string "required"])
+dnl
+dnl Check whether Gnu Scientific Library (GSL) is installed.
+dnl GSL is available from
+dnl www.gnu.org
+dnl
+dnl   Set the path for GSL  with the option
+dnl      --with-gsl[=DIR]
+dnl   GSL headers should be under DIR/include
+dnl   GSL library should be under DIR/lib
+dnl   Then try to compile and run a simple program with a gsl random number
+dnl   Optional argument `required' triggers an error if GSL not installed
+dnl 
+dnl @version $Id$
+dnl @author Patrick Guio <patrick.guio@matnat.uio.no>
+dnl
+AC_DEFUN([AC_MSG_ERROR_GSL],[
+AC_MSG_ERROR([
+$PACKAGE_STRING requires the Gnu Scientific Library (GSL)
+When installed give the directory of installation with the option
+  --with-gsl@<:@=DIR@:>@
+])])
+
+
+AC_DEFUN([AC_CXX_LIB_GSL],[
+
+AC_ARG_WITH(gsl,
+AS_HELP_STRING([--with-gsl@<:@=DIR@:>@],[Set the path for GSL]),
+[],[withval='yes'])
+
+if test "$1" = required -a "$withval" = no ; then
+	AC_MSG_ERROR_GSL
+fi
+
+if test "$withval" != no ; then
+
+	saveCPPFLAGS=$CPPFLAGS
+	saveLDFLAGS=$LDFLAGS
+	saveLIBS=$LIBS
+
+	if test "$withval" != 'yes'; then
+		CPPFLAGS="-I$withval/include"
+		LDFLAGS="-L$withval/lib -Wl,-R$withval/lib"
+	fi
+	LIBS="-lgsl -lgslcblas"
+
+	AC_CACHE_CHECK([whether Gnu Scientific Library is installed],ac_cxx_lib_gsl,
+	[AC_LANG_SAVE
+	AC_LANG_CPLUSPLUS
+	AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([[
+#include <gsl/gsl_matrix.h>
+]],[[
+gsl_matrix * mat = gsl_matrix_alloc(3,3);
+gsl_matrix_set_zero(mat);
+gsl_matrix_free(mat);
+	]])],[ac_cxx_lib_gsl=yes],[ac_cxx_lib_gsl=no])
+	AC_LANG_RESTORE
+	])
+
+	CPPFLAGS=$saveCPPFLAGS
+	LDFLAGS=$saveLDFLAGS
+	LIBS=$saveLIBS
+
+	if test "$ac_cxx_lib_gsl" = yes ; then
+		if test "$withval" != yes ; then
+			CPPFLAGS="$CPPFLAGS -I$withval/include"
+			GSL_LDFLAGS="-L$withval/lib -Wl,-R$withval/lib"
+			AC_SUBST(GSL_LDFLAGS)
+		fi
+		GSL_LIB="-lgsl -lgslcblas"
+		AC_SUBST(GSL_LIB)
+
+   		AC_DEFINE_UNQUOTED([HAVE_GSL],[],[Gnu Scientific Library])
+
+	else
+		if test "$1" = required ; then
+			AC_MSG_ERROR_GSL
+		fi
+	fi
+
+fi
+
+])

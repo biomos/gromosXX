@@ -87,11 +87,11 @@ int algorithm::Perturbed_Shake
     math::Vec &pos_i = conf.current().pos(first+it->i);
     math::Vec &pos_j = conf.current().pos(first+it->j);
 
-    DEBUG(10, "\ni: " << pos_i << "\nj: " << pos_j);
+    DEBUG(10, "\ni: " << math::v2s(pos_i) << "\nj: " << math::v2s(pos_j));
 	
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
-    double dist2 = dot(r, r);
+    double dist2 = math::abs2(r);
 	
     double r0 = (1.0 - topo.lambda()) * this->parameter()[it->A_type].r0 + 
       topo.lambda() * this->parameter()[it->B_type].r0;
@@ -122,10 +122,10 @@ int algorithm::Perturbed_Shake
 	io::messages.add("SHAKE error. vectors orthogonal",
 			 "Shake::???",
 			 io::message::critical);
-	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
-	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
-	DEBUG(5, "ref r " << ref_r);
-	DEBUG(5, "r " << r);
+	DEBUG(5, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
+	DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
+	DEBUG(5, "ref r " << math::v2s(ref_r));
+	DEBUG(5, "r " << math::v2s(r));
 	
 	std::cout << "Perturbed SHAKE ERROR\n"
 		  << "\tatom i    : " << it->i << "\n"
@@ -288,8 +288,7 @@ void algorithm::Perturbed_Shake
   /*
   for (unsigned int i=0; i < topo.solute().distance_constraints().size();++i){
     conf.constraint_force()(i) *= 1 /(dt * dt);
-    DEBUG(5, "constraint_force " << sqrt(dot(conf.constraint_force()(i),
-					     conf.constraint_force()(i)) ));
+    DEBUG(5, "constraint_force " << sqrt(abs2(conf.constraint_force()(i)) ));
   }
   */
 
@@ -435,8 +434,9 @@ int algorithm::Perturbed_Shake
   }
 
   // shaken velocity
-  conf.current().vel = (conf.current().pos - conf.old().pos) / 
-    sim.time_step_size();
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+      sim.time_step_size();
 
   // return success!
   return error;
@@ -485,8 +485,9 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
       if (!quiet)
 	std::cout << "shaking initial velocities\n";
 
-      conf.current().pos = conf.old().pos - 
-	sim.time_step_size() * conf.old().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().pos(i) = conf.old().pos(i) - 
+	  sim.time_step_size() * conf.old().vel(i);
     
       // shake again
       apply(topo, conf, sim);
@@ -495,7 +496,8 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
       conf.current().pos = conf.old().pos;
     
       // velocities are in opposite direction (in time)
-      conf.current().vel = -1.0 * conf.current().vel;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().vel(i) = -1.0 * conf.current().vel(i);
       conf.old().vel = conf.current().vel;
     }
     

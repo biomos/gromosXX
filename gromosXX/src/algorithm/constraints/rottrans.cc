@@ -51,67 +51,77 @@ static void _apply(topology::Topology & topo,
   // calculate c
   DEBUG(8, "Roto-constrational translaints");
   
-  blitz::TinyVector<double, 6U> c(0.0), lambda(0.0);
+  // blitz::TinyVector<double, 6U> c(0.0), lambda(0.0);
+  math::Vec c_trans(0.0), c_rot(0.0), lambda_trans(0.0), lambda_rot(0.0);
   
   for(unsigned int i=0; i<topo.num_solute_atoms(); ++i){
     const math::Vec diff = conf.current().pos(i) - conf.old().pos(i);
     
-    c(0) += topo.mass()(i) * diff(0);
-    c(1) += topo.mass()(i) * diff(1);
-    c(2) += topo.mass()(i) * diff(2);
+    c_trans(0) += topo.mass()(i) * diff(0);
+    c_trans(1) += topo.mass()(i) * diff(1);
+    c_trans(2) += topo.mass()(i) * diff(2);
 
-    c(3) += topo.mass()(i) * (conf.special().rottrans_constr.pos(i)(1) * diff(2) -
+    c_rot(0) += topo.mass()(i) * (conf.special().rottrans_constr.pos(i)(1) * diff(2) -
 			      conf.special().rottrans_constr.pos(i)(2) * diff(1));
 
-    c(4) += topo.mass()(i) * (conf.special().rottrans_constr.pos(i)(2) * diff(0) -
+    c_rot(1) += topo.mass()(i) * (conf.special().rottrans_constr.pos(i)(2) * diff(0) -
 			      conf.special().rottrans_constr.pos(i)(0) * diff(2));
 
-    c(5) += topo.mass()(i) * (conf.special().rottrans_constr.pos(i)(0) * diff(1) -
+    c_rot(2) += topo.mass()(i) * (conf.special().rottrans_constr.pos(i)(0) * diff(1) -
 			      conf.special().rottrans_constr.pos(i)(1) * diff(0));
   }
 
   // lambda = - theta_inv * c
-  for(int d1=0; d1 < 6; ++ d1){
-    for(int d2=0; d2 < 6; ++d2){
-      lambda(d1) -= conf.special().rottrans_constr.theta_inv(d1, d2) * c(d2);
+  for(int d1=0; d1<3; ++d1){
+    lambda_trans(d1) -= 
+      conf.special().rottrans_constr.theta_inv_trans(d1, d1) * c_trans(d1);
+    DEBUG(10, "\tlambda[" << d1 << "] = " << lambda_trans(d1) << "\n");
+  }
+  
+  for(int d1=0; d1 < 3; ++ d1){
+    for(int d2=0; d2 < 3; ++d2){
+      lambda_rot(d1) -=
+	conf.special().rottrans_constr.theta_inv_rot(d1, d2) * c_rot(d2);
     }
-    DEBUG(10, "\tlambda[" << d1 << "] = " << lambda(d1) << "\n");
+    DEBUG(10, "\tlambda[" << d1+3 << "] = " << lambda_rot(d1) << "\n");
   }
   
   // update the positions
   for(unsigned int i=0; i<topo.num_solute_atoms(); ++i){
 
-    conf.current().pos(i)(0) += // sim.time_step_size() * sim.time_step_size() *
-      ( lambda(0) +
-	lambda(4) * conf.special().rottrans_constr.pos(i)(2) -
-	lambda(5) * conf.special().rottrans_constr.pos(i)(1)
+    conf.current().pos(i)(0) +=
+      ( lambda_trans(0) +
+	lambda_rot(1) * conf.special().rottrans_constr.pos(i)(2) -
+	lambda_rot(2) * conf.special().rottrans_constr.pos(i)(1)
 	);
 
-    conf.current().pos(i)(1) += // sim.time_step_size() * sim.time_step_size() *
-      ( lambda(1) -
-	lambda(3) * conf.special().rottrans_constr.pos(i)(2) +
-	lambda(5) * conf.special().rottrans_constr.pos(i)(0)
+    conf.current().pos(i)(1) +=
+      ( lambda_trans(1) -
+	lambda_rot(0) * conf.special().rottrans_constr.pos(i)(2) +
+	lambda_rot(2) * conf.special().rottrans_constr.pos(i)(0)
 	);
     
-    conf.current().pos(i)(2) += // sim.time_step_size() * sim.time_step_size() *
-      ( lambda(2) +
-	lambda(3) * conf.special().rottrans_constr.pos(i)(1) -
-	lambda(4) * conf.special().rottrans_constr.pos(i)(0)
+    conf.current().pos(i)(2) +=
+      ( lambda_trans(2) +
+	lambda_rot(0) * conf.special().rottrans_constr.pos(i)(1) -
+	lambda_rot(1) * conf.special().rottrans_constr.pos(i)(0)
 	);
   }
 
   // update velocities
-  conf.current().vel = (conf.current().pos - conf.old().pos) / 
-    sim.time_step_size();
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+      sim.time_step_size();
 
 #ifndef NDEBUG
   //==================================================
   // CHECK
   //==================================================
 
-  math::Vec v = 0.0;
+  math::Vec v(0.0);
   for(unsigned int i=0; i<topo.num_solute_atoms(); ++i){
-    v += topo.mass()(i) * (math::cross(conf.special().rottrans_constr.pos(i), conf.current().pos(i)));
+    v += topo.mass()(i) * (math::cross(conf.special().rottrans_constr.pos(i),
+				       conf.current().pos(i)));
   }
   DEBUG(10, "testestest: " << math::v2s(v));
 
@@ -162,10 +172,12 @@ static void _init(topology::Topology & topo,
 
   DEBUG(12, "com: " << math::v2s(com_pos));
 
-  conf.current().pos -= com_pos;
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    conf.current().pos(i) -= com_pos;
   periodicity.put_chargegroups_into_box(conf, topo);
   conf.exchange_state();
-  conf.current().pos -= com_pos;
+  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+    conf.current().pos(i) -= com_pos;
   periodicity.put_chargegroups_into_box(conf, topo);
   conf.exchange_state();
 
@@ -223,30 +235,33 @@ static void _init(topology::Topology & topo,
   const double d = math::dot(math::cross(theta[3], theta[4]), theta[5]);
 
   // inverse that
-  blitz::TinyMatrix<double, 6U, 6U> & theta_inv = conf.special().rottrans_constr.theta_inv;
+  // blitz::TinyMatrix<double, 6U, 6U> & theta_inv = conf.special().rottrans_constr.theta_inv;
 
-  for(int d1=0; d1<6; ++d1)
-    for(int d2=0; d2<6; ++d2)
-      theta_inv(d1, d2) = 0.0;
+  math::Matrix & theta_inv_trans = conf.special().rottrans_constr.theta_inv_trans;
+  math::Matrix & theta_inv_rot = conf.special().rottrans_constr.theta_inv_rot;
+
+  theta_inv_trans = 0.0;
+  theta_inv_rot = 0.0;
   
-  theta_inv(0, 0) = theta_inv(1, 1) = theta_inv(2, 2) = 1.0 / theta[0](0);
+  theta_inv_trans(0,0) = theta_inv_trans(1,1) = theta_inv_trans(2,2) = 
+    1.0 / theta[0](0);
   
   math::Vec h = math::cross(theta[4], theta[5]) / d;
-  theta_inv(3, 3) = h(0);
-  theta_inv(4, 3) = h(1);
-  theta_inv(5, 3) = h(2);
+  theta_inv_rot(0,0) = h(0);
+  theta_inv_rot(1,0) = h(1);
+  theta_inv_rot(2,0) = h(2);
   
   h = math::cross(theta[3], theta[5]) / (-d);
   
-  theta_inv(3, 4) = h(0);
-  theta_inv(4, 4) = h(1);
-  theta_inv(5, 4) = h(2);
+  theta_inv_rot(0,1) = h(0);
+  theta_inv_rot(1,1) = h(1);
+  theta_inv_rot(2,1) = h(2);
   
   h = math::cross(theta[3], theta[4]) / d;
   
-  theta_inv(3, 5) = h(0);
-  theta_inv(4, 5) = h(1);
-  theta_inv(5, 5) = h(2);
+  theta_inv_rot(0,2) = h(0);
+  theta_inv_rot(1,2) = h(1);
+  theta_inv_rot(2,2) = h(2);
 
 }
 

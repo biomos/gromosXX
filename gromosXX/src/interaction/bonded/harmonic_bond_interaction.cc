@@ -51,7 +51,7 @@ static int _calculate_harmonic_bond_interactions
   for( ; b_it != b_to; ++b_it){
     periodicity.nearest_image(pos(b_it->i), pos(b_it->j), v);
 
-    double dist = sqrt(dot(v, v));
+    double dist = sqrt(abs2(v));
     
     assert(dist != 0.0);
     assert(unsigned(b_it->type) < param.size());
@@ -62,7 +62,7 @@ static int _calculate_harmonic_bond_interactions
 
     DEBUG(10, "DF " << (-param[b_it->type].K * 
 			(dist - param[b_it->type].r0) / dist) 
-	  << "\n" << v);
+	  << "\n" << math::v2s(v));
 
     diff = dist - param[b_it->type].r0;
 

@@ -61,8 +61,8 @@ static int _calculate_angle_interactions(topology::Topology & topo,
     DEBUG(10, "\trij = " << math::v2s(rij));
     DEBUG(10, "\trkj = " << math::v2s(rkj));
 
-    double dij = sqrt(dot(rij, rij));
-    double dkj = sqrt(dot(rkj, rkj));
+    double dij = sqrt(abs2(rij));
+    double dkj = sqrt(abs2(rkj));
 
     DEBUG(10, "\tdij = " << dij);
     DEBUG(10, "\tdkj = " << dkj);

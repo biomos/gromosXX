@@ -64,8 +64,8 @@ static int _calculate_perturbed_improper_interactions
 	  << " B-type " << i_it->B_type
 	  << " lambda " << topo.lambda());
 
-    assert(pos.size() > int(i_it->i) && pos.size() > int(i_it->j) && 
-	   pos.size() > int(i_it->k) && pos.size() > int(i_it->l));
+    assert(pos.size() > (i_it->i) && pos.size() > (i_it->j) && 
+	   pos.size() > (i_it->k) && pos.size() > (i_it->l));
 
     periodicity.nearest_image(pos(i_it->k), pos(i_it->j), rkj);
     periodicity.nearest_image(pos(i_it->i), pos(i_it->j), rij);
@@ -74,9 +74,9 @@ static int _calculate_perturbed_improper_interactions
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
     
-    dkj2 = dot(rkj, rkj);
-    dmj2 = dot(rmj, rmj);
-    dnk2 = dot(rnk, rnk);
+    dkj2 = abs2(rkj);
+    dmj2 = abs2(rmj);
+    dnk2 = abs2(rnk);
     dkj  = sqrt(dkj2);
     dmj  = sqrt(dmj2);
     dnk  = sqrt(dnk2);

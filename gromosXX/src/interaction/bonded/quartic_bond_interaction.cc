@@ -51,7 +51,7 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
   for( ; b_it != b_to; ++b_it){
     periodicity.nearest_image(pos(b_it->i), pos(b_it->j), v);
 
-    double dist2 = dot(v, v);
+    double dist2 = abs2(v);
     
     assert(unsigned(b_it->type) < param.size());
     const double r02 = param[b_it->type].r0 *
@@ -62,7 +62,7 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
     DEBUG(10, "K " << param[b_it->type].K
 	  << " r02 " << r02);
     DEBUG(10, "DF " << (-param[b_it->type].K *
-			(dist2 - r02)) << "\n" << v);
+			(dist2 - r02)) << "\n" << math::v2s(v));
 
     f = v * (-param[b_it->type].K *
 	     (dist2 - r02));

@@ -34,7 +34,7 @@ namespace configuration
     /**
      * Constructor
      */
-    explicit Configuration();
+    Configuration();
     
     /**
      * @struct state_struct
@@ -169,9 +169,13 @@ namespace configuration
       struct rottrans_constr_struct
       {
 	/**
-	 * inverse theta
+	 * inverse theta: translational part (diagonal)
 	 */
-	blitz::TinyMatrix<double, 6U, 6U> theta_inv;
+	math::Matrix theta_inv_trans;
+	/**
+	 * inverse theta: rotational part
+	 */
+	math::Matrix theta_inv_rot;
 	/**
 	 * reference positions
 	 */

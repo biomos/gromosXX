@@ -110,7 +110,8 @@ int interaction::Nonbonded_Interaction::calculate_interactions(topology::Topolog
   configuration::Energy & e = conf.current().energies;
   
   for( ; it != to; ++it){
-    conf.current().force += (*it)->shortrange_storage().force;
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
+      conf.current().force(i) += (*it)->shortrange_storage().force(i);
 
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){

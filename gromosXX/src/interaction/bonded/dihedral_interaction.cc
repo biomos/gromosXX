@@ -61,15 +61,15 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
     
-    dkj2 = dot(rkj, rkj);
+    dkj2 = abs2(rkj);
 
     double frim = dot(rij, rkj)/dkj2;
     double frln = dot(rkl, rkj)/dkj2;
 
     rim = rij - frim * rkj;
     rln = frln * rkj - rkl;
-    dim = sqrt(dot(rim, rim));
-    dln = sqrt(dot(rln, rln));
+    dim = sqrt(abs2(rim));
+    dln = sqrt(abs2(rln));
     
     ip = dot(rim, rln);
     double cosphi = ip / (dim*dln);

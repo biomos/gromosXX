@@ -61,10 +61,10 @@ static int _calculate_perturbed_qbond_interactions
 	  << " B-type " << b_it->B_type 
 	  << " lambda " << topo.lambda());
 
-    assert(pos.size() > int(b_it->i) && pos.size() > int(b_it->j));
+    assert(pos.size() > (b_it->i) && pos.size() > (b_it->j));
     periodicity.nearest_image(pos(b_it->i), pos(b_it->j), v);
 
-    double dist2 = dot(v, v);
+    double dist2 = abs2(v);
 
     DEBUG(7, "dist2: " << dist2);
 
@@ -87,11 +87,11 @@ static int _calculate_perturbed_qbond_interactions
 
     DEBUG(7, "r02: " << r02);
     
-    DEBUG(7, "DF " << K * (dist2 - r02) << "\n" << v);
+    DEBUG(7, "DF " << K * (dist2 - r02) << "\n" << math::v2s(v));
     
     f = v * (-K) * (dist2 - r02);
 
-    DEBUG(7, "FORCE: " << f);
+    DEBUG(7, "FORCE: " << math::v2s(f));
     
     force(b_it->i) += f;
     force(b_it->j) -= f;

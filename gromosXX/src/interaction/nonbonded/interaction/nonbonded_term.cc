@@ -53,8 +53,8 @@ inline void interaction::Nonbonded_Term
 		     double const q,
 		     double &force, double &e_lj, double &e_crf)
 {
-  assert(dot(r,r) != 0);
-  const double dist2 = dot(r, r);
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
   const double dist2i = 1.0 / dist2;
   const double q_eps = q * math::four_pi_eps_i;
   const double dist6i = dist2i * dist2i * dist2i;
@@ -82,7 +82,7 @@ inline void interaction::Nonbonded_Term
 ::rf_interaction(math::Vec const &r,double const q,
 		 math::Vec &force, double &e_crf)
 {
-  const double dist2 = dot(r, r);
+  const double dist2 = abs2(r);
   
   force = q * math::four_pi_eps_i *  m_crf_cut3i * r;
 
@@ -106,7 +106,7 @@ interaction::Nonbonded_Term::lj_crf_hessian(math::Vec const &r,
 				    double const q,
 				    math::Matrix &hess)
 {
-  const double r2 = math::dot(r,r);
+  const double r2 = math::abs2(r);
   
   const double r4 = r2*r2;
   const double r8 = r4*r4;

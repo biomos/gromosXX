@@ -171,7 +171,7 @@ void algorithm::Berendsen_Thermostat
 	  
 	  DEBUG(10, "com scale=" << sim.multibath()[com_bath].scale
 		<< " ir scale=" << sim.multibath()[ir_bath].scale);
-	  DEBUG(10, "com_v=" << new_com_v << " ir_v=" << ir_v);
+	  DEBUG(10, "com_v=" << math::v2s(new_com_v) << " ir_v=" << math::v2s(ir_v));
 
 	} // loop over atoms
       } // loop over molecules of bath

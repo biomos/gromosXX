@@ -71,8 +71,8 @@ static int _calculate_perturbed_dihedral_interactions
 	  << " B-type " << d_it->B_type
 	  << " lambda " << topo.lambda());
     
-    assert(pos.size() > int(d_it->i) && pos.size() > int(d_it->j) && 
-	   pos.size() > int(d_it->k) && pos.size() > int(d_it->l));
+    assert(pos.size() > (d_it->i) && pos.size() > (d_it->j) && 
+	   pos.size() > (d_it->k) && pos.size() > (d_it->l));
 
     periodicity.nearest_image(pos(d_it->k), pos(d_it->j), rkj);
     periodicity.nearest_image(pos(d_it->i), pos(d_it->j), rij);
@@ -81,15 +81,15 @@ static int _calculate_perturbed_dihedral_interactions
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
     
-    dkj2 = dot(rkj, rkj);
+    dkj2 = abs2(rkj);
 
     double frim = dot(rij, rkj)/dkj2;
     double frln = dot(rkl, rkj)/dkj2;
 
     rim = rij - frim * rkj;
     rln = frln * rkj - rkl;
-    dim = sqrt(dot(rim, rim));
-    dln = sqrt(dot(rln, rln));
+    dim = sqrt(abs2(rim));
+    dln = sqrt(abs2(rln));
     
     ip = dot(rim, rln);
 
