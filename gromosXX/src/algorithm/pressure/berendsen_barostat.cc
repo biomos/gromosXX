@@ -24,7 +24,7 @@
 #undef SUBMODULE
 
 #define MODULE algorithm
-#define SUBMODULE temperature
+#define SUBMODULE pressure
 
 #include <util/debug.h>
 
@@ -34,9 +34,10 @@ int algorithm::Berendsen_Barostat
 	simulation::Simulation & sim)
 {
 
-  math::VArray &pos = conf.old().pos;
-  math::Matrix &pressure = conf.old().pressure_tensor;
-  math::Box box = conf.old().box;
+  // position are current!
+  math::VArray & pos = conf.current().pos;
+  math::Matrix & pressure = conf.old().pressure_tensor;
+  math::Box & box = conf.current().box;
 
   switch(sim.param().pcouple.scale){
     case math::pcouple_isotropic:
@@ -44,11 +45,15 @@ int algorithm::Berendsen_Barostat
 	double total_pressure =  (pressure(0,0)
 				  + pressure(1,1)
 				  + pressure(2,2)) / 3.0;
+
+	DEBUG(8, "pressure: " << total_pressure);
 	
 	double mu = pow(1.0 - sim.param().pcouple.compressibility
 			* sim.time_step_size() / sim.param().pcouple.tau
 			* (sim.param().pcouple.pres0(0,0) - total_pressure),
 			1.0/3.0);
+
+	DEBUG(8, "mu: " << mu);
 
 	// scale the box
 	box = mu * box;

@@ -11,7 +11,7 @@ namespace math
   /**
    * calculate the volume.
    */
-  double volume(math::Box & box, math::boundary_enum b);
+  double volume(math::Box const & box, math::boundary_enum const b);
 }
 
 #endif

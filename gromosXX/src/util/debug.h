@@ -50,6 +50,7 @@ extern int debug_level;
 namespace math
 {
   extern int debug_level;
+  extern int math_debug_level;
 }
 
 namespace interaction

@@ -17,5 +17,6 @@ namespace math
 
 #ifndef NDEBUG
   int debug_level = 0;
+  int math_debug_level = 0;
 #endif
 }

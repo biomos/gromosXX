@@ -46,6 +46,8 @@ int algorithm::Leap_Frog_Velocity
 	simulation::Simulation &sim)
 {
   conf.exchange_state();
+  // copy the box
+  conf.current().box = conf.old().box;
   
   // v = v + f * dt / m
   conf.current().vel = conf.old().vel + conf.old().force 

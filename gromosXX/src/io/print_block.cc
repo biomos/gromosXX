@@ -32,6 +32,8 @@
 
 #include <interaction/forcefield/forcefield.h>
 
+#include <math/volume.h>
+
 #include "print_block.h"
 
 namespace io
@@ -364,7 +366,7 @@ namespace io
 
     os << "\tvolume:   "
        << std::setw(15)
-       << 0.0 // sys.periodicity().volume()
+       << math::volume(conf.old().box, conf.boundary_type)
        << "\n";
     
     os << "\nEND\n";
