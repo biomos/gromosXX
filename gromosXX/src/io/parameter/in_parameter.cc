@@ -1738,16 +1738,16 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param)
     io::messages.add("bad line in POSREST block",
 		     "In_Parameter", io::message::error);
   
-  /*
-  if (!_lineStream.eof())
-    io::messages.add("End of line not reached, but should have been: \n" + s +  "\n",
-		     "In_Parameter", io::message::warning);
-  */
-
   if(param.posrest.posrest == 3) {
-    io::messages.add("Position constraining currently not supported",
+    io::messages.add("Position constraining is experimental",
 		     "In_Parameter", 
 		     io::message::warning);
+
+    if (param.pcouple.scale != math::pcouple_off){
+      io::messages.add("Position constraining together with pressure coupling not allowed",
+		       "In_Parameter",
+		       io::message::error);
+    }
   }
 
   if(param.posrest.force_constant <0)

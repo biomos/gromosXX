@@ -581,7 +581,7 @@ namespace simulation
        * - improper 1
        * - dihedral 1
        * - nonbonded 1
-       * - energy_group <empty>
+       * - energy_group empty
        * - spc_loop -1
        */
       force_struct() : bond(1), angle(1), improper(1), dihedral(1), nonbonded(1), spc_loop(-1) {}
