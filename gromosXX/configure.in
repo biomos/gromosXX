@@ -7,13 +7,17 @@ AC_PREREQ(2.53)
 AC_INIT()
 AC_CONFIG_SRCDIR(src/debug.cc)
 AC_CONFIG_AUX_DIR(config)
-AC_CANONICAL_HOST
+AC_CANONICAL_SYSTEM
+AC_MSG_RESULT([Configure gromosXX for $target])
 
 AC_LANG(C++)
 
-MD_MAJOR_VERSION=0
-MD_MINOR_VERSION=0
-MD_MICRO_VERSION=3
+dnl MD_MAJOR_VERSION=0
+dnl MD_MINOR_VERSION=0
+dnl MD_MICRO_VERSION=3
+
+dnl include version information
+sinclude([VERSION])
 
 MD_VERSION=$MD_MAJOR_VERSION.$MD_MINOR_VERSION.$MD_MICRO_VERSION
 AC_DEFINE_UNQUOTED(MD_VERSION, "$MD_VERSION", [MD version info])
@@ -49,11 +53,91 @@ dnl check for required programs
 # AC_PROG_C
 AC_PROG_CXX
 AC_PROG_MAKE_SET
+AC_PROG_INSTALL
 
 # C++ requirements
 dnl AC_CXX_REQUIRE_STL
 dnl AC_CXX_NAMESPACES
 
+dnl detect the compiler
+compiler="none"
+if eval "test x$GXX = xyes"; then
+	compiler=gnucc
+	echo "using GNU c++ compiler"
+fi
+
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_KAICC   ; fi
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_SGICC   ; fi
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_MWERKS  ; fi
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_INTELCC ; fi
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_MSVCPP  ; fi
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
+
+
+dnl set some defaults to CXXFLAGS and LDFLAGS
+case "$compiler" in
+     kai*)               # KAI C++  http://www.kai.com/
+       echo "Configuring for KAI C++"
+       CXX_PICKY_FLAGS="--strict_warnings -DBZDEBUG"
+       AC_BZ_SET_COMPILER($withval,"KCC","--restrict $CXX_PICKY_FLAGS")
+       CXX_OPTIMIZE_FLAGS="+K3 -O3 -fast --inline_keyword_space_time=10000"
+       CXX_DEBUG_FLAGS="-g +K0 -DBZDEBUG"
+       CXXLD="$CXX"
+     ;;
+     sgi*)               # SGI C++  http://www.sgi.com
+       echo "Configuring for SGI C++"
+       CXX_PICKY_FLAGS=""
+       AC_BZ_SET_COMPILER($withval,"$CXX","-LANG:restrict -LANG:std $CXX_PICKY_FLAGS")
+       CXX_OPTIMIZE_FLAGS="-Ofast -LANG:restrict"
+       CXX_DEBUG_FLAGS="-g -DBZDEBUG"
+       CXXLD="$CXX"
+       LDFLAGS=
+     ;;
+     gnu*)              # EGCS  http://egcs.cygnus.com/
+       echo "Configuring for GNU C++"
+       CXX_PICKY_FLAGS="-Wall -DBZDEBUG -ftemplate-depth-40"
+       CXX_OPTIMIZE_FLAGS="-O2 -funroll-loops -fstrict-aliasing -fno-gcse -ftemplate-depth-40"
+       CXX_DEBUG_FLAGS="-g -DBZ_DEBUG -DBZDEBUG -ftemplate-depth-40"
+       CXXLD="$CXX"
+	   if eval "test x$enable_debug = xyes"; then
+         AC_BZ_SET_COMPILER($withval,"g++","$CXX_PICKY_FLAGS")
+		 echo "configuring for debug build"
+	   else
+		 AC_BZ_SET_COMPILER($withval,"g++","$CXX_OPTIMIZE_FLAGS")
+		 echo "configuring for release build"
+	   fi
+       F77=g77
+       F77_OPTIMIZE_FLAGS="-O2 -funroll-loops"
+       FORTLIBS=-lg2c
+     ;;
+     msvc*) # Microsoft Visual C++
+       echo "Configuring for Microsoft Visual C++"
+       CXX_PICKY_FLAGS="/W0" # VC++ gives warnings for its own headers!
+       AC_BZ_SET_COMPILER($withval,"cl","")
+# had to move this below AC_PROG_CC
+#       CPPFLAGS="/TP /ML /GX /YX /FD $CXX_PICKY_FLAGS /Fo\$*.o"
+       CXX_OPTIMIZE_FLAGS="/Ox"
+       CXX_DEBUG_FLAGS="/Zi"
+       LDOUT="/out:"
+       CXXLD="link"
+     ;;
+     mwerk*)
+       echo "Configuring for Metrowerks Codewarrior (x86)"
+       CXX_PICKY_FLAGS="-w on"
+       AC_BZ_SET_COMPILER($withval,"mwcc -i-","")
+# had to move this below AC_PROG_CC
+#       CPPFLAGS="$CXX_PICKY_FLAGS -o \$*.o"
+       CXX_OPTIMIZE_FLAGS="-opt all"
+       CXX_DEBUG_FLAGS="-g"
+       CXXLD="mwld"
+     ;;
+     *)
+        CXXLD="$CXX"
+        AC_MSG_WARN([Compiler not recognized])
+     ;;
+esac
+
+AC_PREFIX_DEFAULT(`pwd`)
 AC_MSG_CHECKING(blitz++ scientific computing library)
 AC_CHECK_HEADER(blitz/array.h, , 
 [AC_MSG_ERROR([header files for blitz++
@@ -144,23 +228,6 @@ dnl extern double hypot(double, double);
 dnl
 
 
-dnl set some defaults to CXXFLAGS and LDFLAGS
-dnl to compile with blitz -Wno-unused-variable is added to the CXXFLAGS
-dnl i hope this will not be necessary in the future.
-dnl before finalising some code, maybe a build w/o this option might be
-dnl a good idea...
-if eval "test x$GXX = xyes"; then
-  CXXFLAGS="$CXXFLAGS -DBZDEBUG -Wall -Wno-unused-variable -ftemplate-depth-30"
-fi
-
-if eval "test x$enable_debug = xno"; then
-  CXXFLAGS="-O2 -funroll-loops -fstrict-aliasing -fno-gcse -ftemplate-depth-40 -Wno-unused-variable -DNDEBUG"
-  echo "setting flags for production compilation"
-else
-  echo "setting flags for debug compilation"
-fi
-
-AC_PREFIX_DEFAULT(`pwd`)
 
 dnl Checks for libraries.
 dnl Replace `main' with a function in -lm:
