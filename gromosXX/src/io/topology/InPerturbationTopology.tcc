@@ -375,11 +375,11 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 
 	DEBUG(10, "\tcreated an atom");
 	
-	std::cout << std::setw(5) << seq
-		  << std::setw(8) << a_iac
+	std::cout << std::setw(5) << seq + 1
+		  << std::setw(8) << a_iac + 1
 		  << std::setw(10) << a_mass
 		  << std::setw(10) << a_charge
-		  << std::setw(8) << b_iac
+		  << std::setw(8) << b_iac + 1
 		  << std::setw(10) << b_mass
 		  << std::setw(10) << b_charge
 		  << std::setw(10) << lj_soft

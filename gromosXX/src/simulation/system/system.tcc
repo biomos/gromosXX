@@ -446,6 +446,7 @@ center_of_mass(Atom_Iterator start, Atom_Iterator end,
     v += m * vel()(*start);
     prev += p;
   }
+
   com_pos /= tot_mass;
       
   for(int i=0; i<3; ++i)

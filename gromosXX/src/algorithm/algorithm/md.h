@@ -62,11 +62,6 @@ namespace algorithm
     io::OutG96Trajectory<typename t_spec::simulation_type> & trajectory();
     
     /**
-     * initialization.
-     */
-    virtual int initialize(io::Argument &args);
-    
-    /**
      * perform an md simulation.
      * calls run.
      */
@@ -189,6 +184,37 @@ namespace algorithm
      * initialize the output.
      */
     virtual void init_output(io::Argument &args, io::InInput &input);
+
+    /**
+     * initialization.
+     */
+    virtual int initialize(io::Argument &args);
+    
+    /**
+     * pre md
+     */
+    virtual int pre_md(io::InInput &input);
+
+    /**
+     * before we do a step in run md
+     */
+    virtual void pre_step();
+    
+    /**
+     * do the step in run md.
+     */
+    virtual void do_step();
+    
+    /**
+     * after the step in run md.
+     */
+    virtual void post_step();
+
+    /**
+     * after the md run.
+     */
+    virtual void post_md();
+
     /**
      * print pairlists.
      */
@@ -197,6 +223,12 @@ namespace algorithm
      * calculate and print the energies.
      */
     virtual void do_energies();
+
+    /**
+     * shake the initial positions and
+     * velocities if required
+     */
+    void init_pos_vel(int init);
     
   };
   

@@ -55,30 +55,57 @@ int algorithm::MD<t_spec>::initialize(io::Argument &args)
 	    << "==============\n";
 
   //----------------------------------------------------------------------------
-  // read input
+
   DEBUG(7, "constructing topo, sys & input");
   io::InTopology topo;
   io::InTrajectory sys;
   io::InInput input;
+
+  DEBUG(7, "open_files");
+  open_files(args, topo, sys, input);
+
+  // read input
+  DEBUG(7, "read_input");
+  read_input(args, topo, sys, input);
   
   DEBUG(7, "init_input");
   init_input(args, topo, sys, input);
-  
-  //----------------------------------------------------------------------------
-  // prepare for the output
   DEBUG(7, "init_output");
   init_output(args, input);
-
+  
   //----------------------------------------------------------------------------
   // prepare for the run
-
-  // read in the input
-  DEBUG(7, "read_input");
-  read_input(args, topo, sys, input);
 
   // and create the forcefield
   DEBUG(7, "md: create forcefield");
   G96Forcefield(topo, input, args);
+
+  pre_md(input);
+  
+  //----------------------------------------------------------------------------
+  
+  // see whether everything is all right  
+  m_simulation.check_state();
+
+  // messages?
+  std::cout << "MESSAGES (startup)\n";
+  if (io::messages.display(std::cout) > io::message::warning)
+    return 1;
+  std::cout << "END\n";
+  io::messages.clear();
+
+  DEBUG(7, "pre md done");
+  
+  return 0;
+
+}
+
+
+template<typename t_spec>
+inline int algorithm::MD<t_spec>
+::pre_md(io::InInput &input)
+{
+  // last minute initializations...
 
   // prepare temperature calculation
   DEBUG(7, "md: degrees of freedom");
@@ -116,59 +143,9 @@ int algorithm::MD<t_spec>::initialize(io::Argument &args)
     m_simulation.system().vel() = 0.0;
   }
 
-  if (init == 1){
-    // shake positions and velocities!
-    simulation().system().exchange_pos();
-    simulation().system().exchange_vel();
-    simulation().system().pos() = simulation().system().old_pos();
-    simulation().system().vel() = simulation().system().old_vel();
-    
-    DEBUG(7, "shake initial coordinates -- solute");
-    // shake the current coordinates with respect to themselves
-    distance_constraint_algorithm().solute(simulation().topology(),
-					   simulation().system(),
-					   m_dt);
-    DEBUG(7, "shake initial coordinates -- solvent");
-    distance_constraint_algorithm().solvent(simulation().topology(),
-					    simulation().system(),
-					    m_dt);
+  // shake intial positions / velocities if required.
+  init_pos_vel(init);
   
-    // restore the velocities
-    simulation().system().vel() = simulation().system().old_vel();
-
-    // take a step back (positions)
-    DEBUG(10, "take a step back");
-    simulation().system().exchange_pos();
-    simulation().system().pos() = simulation().system().old_pos()
-      - m_dt * simulation().system().vel();
-    
-    // shake again
-    DEBUG(7, "shake initial velocities -- solute");
-    distance_constraint_algorithm().solute(simulation().topology(),
-					   simulation().system(),
-					   m_dt);
-
-    DEBUG(7, "shake initial velocities -- solvent");
-    distance_constraint_algorithm().solvent(simulation().topology(),
-					    simulation().system(),
-					    m_dt);
-
-    // restore the positions
-    simulation().system().exchange_pos();
-
-    // the velocities are negative (wrong time direction)
-    simulation().system().vel() = -1.0 * simulation().system().vel();
-    
-    // and copy to old array
-    simulation().system().exchange_vel();
-    simulation().system().vel() = simulation().system().old_vel();
-    
-  }
-  else if (init == 2){
-    io::messages.add("init = 2 in START block no longer supported",
-		     "md", io::message::error);
-  }
-
   // centre of mass removal
   int ndfmin, ntcm;
   input.read_CENTREOFMASS(ndfmin, ntcm, m_remove_com);
@@ -176,6 +153,8 @@ int algorithm::MD<t_spec>::initialize(io::Argument &args)
   double e_kin_trans, e_kin_rot;
   if(init<4 && ntcm) {
     
+    std::cout << "stopping initial center of mass motion\n";
+  
     m_simulation.remove_com_motion(m_dt, true, true, 
 				   e_kin_trans, e_kin_rot);
     io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
@@ -193,23 +172,15 @@ int algorithm::MD<t_spec>::initialize(io::Argument &args)
   io::print_MULTIBATH_COUPLING(std::cout, m_simulation.multibath());
   io::print_MULTIBATH(std::cout, m_simulation.multibath(),
 		      m_simulation.system().energies());
+
+
+  m_trajectory->print_title(title);
+
+  DEBUG(8, "md: put chargegroups into box");
+  simulation().system().periodicity().
+    put_chargegroups_into_box(simulation());
     
-
-  //----------------------------------------------------------------------------
-  
-  // see whether everything is all right  
-  m_simulation.check_state();
-
-  // messages?
-  std::cout << "MESSAGES (startup)\n";
-  if (io::messages.display(std::cout) > io::message::warning)
-    return 1;
-  std::cout << "END\n";
-  io::messages.clear();
-
-  DEBUG(7, "md initialized");
   return 0;
-
 }
 
 
@@ -421,50 +392,9 @@ int algorithm::MD<t_spec>::do_md(io::Argument &args)
   
   run();
   
-  std::cout << "\nwriting final structure" << std::endl;
-  trajectory() << io::final << simulation();
-  
-  simulation::Energy energy, fluctuation;
-  simulation().system().energy_averages().
-    average(energy, fluctuation);
-  
-  io::print_ENERGY(std::cout, energy,
-		   simulation().topology().energy_groups(),
-		   "AVERAGE ENERGIES");
-
-  io::print_MULTIBATH(std::cout, simulation().multibath(),
-		      energy);
-  
-  io::print_ENERGY(std::cout, fluctuation,
-		   simulation().topology().energy_groups(),
-		   "ENERGY FLUCTUATIONS");
-  
-  io::print_MULTIBATH(std::cout, simulation().multibath(),
-		      fluctuation);
-
-  // lambda derivatives
-  if (m_do_perturbation){
-
-    simulation().system().lambda_derivative_averages().
-      average(energy, fluctuation);
-  
-    io::print_ENERGY(std::cout, energy,
-		     simulation().topology().energy_groups(),
-		     "AVERAGE ENERGY LAMBDA DERIVATIVES");
-
-    io::print_MULTIBATH(std::cout, simulation().multibath(),
-			energy);
-
-    io::print_ENERGY(std::cout, fluctuation,
-		     simulation().topology().energy_groups(),
-		     "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
-    
-    io::print_MULTIBATH(std::cout, simulation().multibath(),
-			fluctuation);
-  }
+  post_md();
 
   return 0;
-
 }
 
 /**
@@ -481,27 +411,40 @@ void algorithm::MD<t_spec>
   std::cout << "PERFORMING MD SIMULATION\n";
   std::cout << "========================\n";
 
-  m_trajectory->print_title(title);
-
   if (time == -1) time = m_time;
-  
   double end_time = m_simulation.time() + time;
   
   while(m_simulation.time() < end_time){
 
-    if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
-      io::print_TIMESTEP(std::cout, 
-			 m_simulation.steps(), m_simulation.time());
-    }
+    pre_step();
     
-    DEBUG(8, "md: put chargegroups into box");
-    simulation().system().periodicity().
-      put_chargegroups_into_box(simulation());
-    
+    do_step();
 
-    DEBUG(8, "md: print trajectory");
-    (*m_trajectory) << m_simulation;
+    post_step();
+  
+    DEBUG(8, "md: increase time");
+    m_simulation.increase_time(m_dt);
+     
+  }    
+}
 
+template<typename t_spec>
+void algorithm::MD<t_spec>
+::pre_step()
+{
+  if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
+    io::print_TIMESTEP(std::cout, 
+		       m_simulation.steps(), m_simulation.time());
+  }
+  
+  DEBUG(8, "md: print trajectory");
+  (*m_trajectory) << m_simulation;
+}
+
+template<typename t_spec>
+void algorithm::MD<t_spec>
+::do_step()
+{
     // integrate
     DEBUG(8, "md: integrate");
     m_integration.step(m_simulation, m_forcefield, m_dt);
@@ -527,37 +470,36 @@ void algorithm::MD<t_spec>
       (*m_trajectory) << m_simulation;
       throw;
     }
+}
 
-    DEBUG(8, "md: calculate pressure");
-    if (m_calculate_pressure){
-      m_pressure.apply(m_simulation, m_dt);
-    }
-    if(m_remove_com && (m_simulation.steps()+1) % m_remove_com == 0){
-      double ekin_trans, ekin_rot;
-      
-      DEBUG(8, "md: remove centre of mass");
-      m_simulation.remove_com_motion(m_dt,true, true, ekin_trans, ekin_rot);
-      if(m_print_com && (m_simulation.steps()+1 ) % m_print_com ==0){
-	io::print_CENTREOFMASS(std::cout, ekin_trans, ekin_rot);
-      }
-    }
-    else if(m_print_com &&( m_simulation.steps()+1 ) % m_print_com ==0){ 
-      double ekin_trans, ekin_rot;
-      DEBUG(8, "md: print centre of mass");
-      
-      m_simulation.remove_com_motion(m_dt,false, false, ekin_trans, ekin_rot);
+template<typename t_spec>
+void algorithm::MD<t_spec>
+::post_step()
+{
+  DEBUG(8, "md: calculate pressure");
+  if (m_calculate_pressure){
+    m_pressure.apply(m_simulation, m_dt);
+  }
+  if(m_remove_com && (m_simulation.steps()+1) % m_remove_com == 0){
+    double ekin_trans, ekin_rot;
+    
+    DEBUG(8, "md: remove centre of mass");
+    m_simulation.remove_com_motion(m_dt,true, true, ekin_trans, ekin_rot);
+    if(m_print_com && (m_simulation.steps()+1 ) % m_print_com ==0){
       io::print_CENTREOFMASS(std::cout, ekin_trans, ekin_rot);
     }
-
-   
+  }
+  else if(m_print_com &&( m_simulation.steps()+1 ) % m_print_com ==0){ 
+    double ekin_trans, ekin_rot;
+    DEBUG(8, "md: print centre of mass");
     
-    DEBUG(8, "md: calculate and print the energies");
-    do_energies();
+    m_simulation.remove_com_motion(m_dt,false, false, ekin_trans, ekin_rot);
+    io::print_CENTREOFMASS(std::cout, ekin_trans, ekin_rot);
+  }
+  
+  DEBUG(8, "md: calculate and print the energies");
+  do_energies();
     
-    DEBUG(8, "md: increase time");
-    m_simulation.increase_time(m_dt);
-   
-  }    
 }
 
 template<typename t_spec>
@@ -637,25 +579,12 @@ void algorithm::MD<t_spec>
   input.stream(*input_file);
   DEBUG(7, "reading input");
   input.readStream();
-  input.auto_delete(true);  
-}
-
-
-template<typename t_spec>
-void algorithm::MD<t_spec>
-::init_input(io::Argument &args, io::InTopology &topo,
-	     io::InTrajectory &sys, io::InInput &input)
-{
-  DEBUG(7, "parse print argument");
-  parse_print_argument(args);
-
-  DEBUG(7, "open_files");
-  open_files(args, topo, sys, input);
+  input.auto_delete(true);
 
   DEBUG(7, "read topology");
   topo.read_TOPOLOGY(m_simulation.topology());
-  
-  DEBUG(7, "read system");
+
+
   // decide whether we need velocities or not
   int ntx, init;
   unsigned int ig;
@@ -690,7 +619,32 @@ void algorithm::MD<t_spec>
     sys.read_box = false;
   }
   
+  DEBUG(7, "read system");  
   sys >> m_simulation.system();
+
+  // input, system and topology open and read.
+
+}
+
+
+template<typename t_spec>
+void algorithm::MD<t_spec>
+::init_input(io::Argument &args, io::InTopology &topo,
+	     io::InTrajectory &sys, io::InInput &input)
+{
+  // add solvent
+  DEBUG(7, "md: add solvent");
+  int nsm;
+  input.read_SYSTEM(nsm);
+  if (nsm) m_simulation.solvate(0, nsm);
+
+  // pressure coupling
+  int ntp;
+  double pres0, comp, tau;
+  DEBUG(8, "md: read PCOUPLE");
+  input.read_PCOUPLE(ntp, pres0, comp, tau);
+  DEBUG(8, "md: PCOUPLE read");
+  m_pressure.initialize(ntp, pres0, comp, tau);
 
 }
 
@@ -699,14 +653,12 @@ void algorithm::MD<t_spec>
 ::read_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
+  DEBUG(7, "parse print argument");
+  parse_print_argument(args);
+
+
   DEBUG(7, "md: read input");
   input >> m_simulation;
-
-  // add solvent
-  DEBUG(7, "md: add solvent");
-  int nsm;
-  input.read_SYSTEM(nsm);
-  if (nsm) m_simulation.solvate(0, nsm);
 
   // pressure calculation
   DEBUG(7, "md: init pressure");
@@ -718,20 +670,12 @@ void algorithm::MD<t_spec>
     io::messages.add("nrdbox!=1 only for vacuum runs supported","md.tcc",
 		     io::message::error);
   }
+
+  // do we need a virial calculation?
   if (abs(ntb) == 2)
     m_calculate_pressure = 1;
   else
     m_calculate_pressure = 0;
-
-  // pressure coupling (has to be done before 
-  // constructing the forcefield!)
-  int ntp;
-  double pres0, comp, tau;
-  DEBUG(8, "md: read PCOUPLE");
-  input.read_PCOUPLE(ntp, pres0, comp, tau);
-  DEBUG(8, "md: PCOUPLE read");
-  
-  m_pressure.initialize(ntp, pres0, comp, tau);
 
   // time to simulate
   int num_steps;
@@ -740,8 +684,6 @@ void algorithm::MD<t_spec>
 
   m_time = num_steps * m_dt;
   m_simulation.time(t0);
-
-
   
 }
 
@@ -749,8 +691,6 @@ template<typename t_spec>
 void algorithm::MD<t_spec>
 ::init_output(io::Argument &args, io::InInput &input)
 {
-  // std::cerr << "init_output" << std::endl;
-  
   int print_trajectory, print_velocity_traj, print_energy_traj, 
     print_free_energy_traj;
   int conf_sel;
@@ -809,8 +749,6 @@ void algorithm::MD<t_spec>
     m_print_file = new std::ofstream(args["trp"].c_str());
   }
 
-  // std::cerr << "init output done" << std::endl;
-  
 }
 
 template<typename t_spec>
@@ -828,8 +766,6 @@ void algorithm::MD<t_spec>
     if ((*it)->name == "NonBonded"){
       
       if (m_calculate_pressure){
-	std::cerr << "printing virial pairlist" << std::endl;
-
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<
 	  typename t_spec::nonbonded_virial_interaction_type *>
@@ -837,8 +773,6 @@ void algorithm::MD<t_spec>
 			<< std::endl;
       }
       else {      
-	std::cerr << "printing pairlist" << std::endl;
-	
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<typename t_spec::nonbonded_interaction_type *>
 	  (*it)->pairlist()
@@ -873,3 +807,96 @@ void algorithm::MD<t_spec>
       io::print_PRESSURE(std::cout, m_simulation.system());
   }
 }
+
+template<typename t_spec>
+void algorithm::MD<t_spec>
+::post_md()
+{
+  std::cout << "\nwriting final structure" << std::endl;
+  trajectory() << io::final << simulation();
+  
+  simulation::Energy energy, fluctuation;
+
+  simulation().system().energy_averages().
+    average(energy, fluctuation);
+  
+  io::print_ENERGY(std::cout, energy,
+		   simulation().topology().energy_groups(),
+		   "AVERAGE ENERGIES");
+
+  io::print_MULTIBATH(std::cout, simulation().multibath(),
+		      energy);
+  
+  io::print_ENERGY(std::cout, fluctuation,
+		   simulation().topology().energy_groups(),
+		   "ENERGY FLUCTUATIONS");
+  
+  io::print_MULTIBATH(std::cout, simulation().multibath(),
+		      fluctuation);
+
+}
+
+template<typename t_spec>
+void algorithm::MD<t_spec>
+::init_pos_vel(int init)
+{
+
+  if (init == 1){
+
+    std::cout << "enforce position constraints for intial positions\n"
+	      << "and remove initial velocity along the constraints\n";
+
+    // shake positions and velocities!
+    simulation().system().exchange_pos();
+    simulation().system().exchange_vel();
+    simulation().system().pos() = simulation().system().old_pos();
+    simulation().system().vel() = simulation().system().old_vel();
+    
+    DEBUG(7, "shake initial coordinates -- solute");
+    // shake the current coordinates with respect to themselves
+    distance_constraint_algorithm().solute(simulation().topology(),
+					   simulation().system(),
+					   m_dt);
+    DEBUG(7, "shake initial coordinates -- solvent");
+    distance_constraint_algorithm().solvent(simulation().topology(),
+					    simulation().system(),
+					    m_dt);
+  
+    // restore the velocities
+    simulation().system().vel() = simulation().system().old_vel();
+
+    // take a step back (positions)
+    DEBUG(10, "take a step back");
+    simulation().system().exchange_pos();
+    simulation().system().pos() = simulation().system().old_pos()
+      - m_dt * simulation().system().vel();
+    
+    // shake again
+    DEBUG(7, "shake initial velocities -- solute");
+    distance_constraint_algorithm().solute(simulation().topology(),
+					   simulation().system(),
+					   m_dt);
+
+    DEBUG(7, "shake initial velocities -- solvent");
+    distance_constraint_algorithm().solvent(simulation().topology(),
+					    simulation().system(),
+					    m_dt);
+
+    // restore the positions
+    simulation().system().exchange_pos();
+
+    // the velocities are negative (wrong time direction)
+    simulation().system().vel() = -1.0 * simulation().system().vel();
+    
+    // and copy to old array
+    simulation().system().exchange_vel();
+    simulation().system().vel() = simulation().system().old_vel();
+    
+  }
+  else if (init == 2){
+    io::messages.add("init = 2 in START block no longer supported",
+		     "md", io::message::error);
+  }  
+  
+}
+

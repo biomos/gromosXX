@@ -150,7 +150,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     if (t_nonbonded_spec::do_virial == molecular_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
-	  storage.virial()(a, b) -= 0.5 *
+	  storage.virial()(a, b) += 
 	    (r(a) - sim.system().rel_mol_com_pos()(i)(a) + 
 	     sim.system().rel_mol_com_pos()(j)(a)) * f(b);
       

@@ -53,8 +53,28 @@ namespace algorithm
      /**
        * energy calculation.
        */
-      virtual void do_energies();
+      void do_perturbed_energies();
     
+      /**
+       * post step
+       */
+      virtual void post_step();
+      
+      /**
+       * pre md.
+       */
+      virtual int pre_md(io::InInput &input);
+      
+      /**
+       * post md
+       */
+      virtual void post_md();
+      
+      /**
+       * store the lambda change per step.
+       */
+      double m_d_lambda;
+
     };
   
 } // algorithm

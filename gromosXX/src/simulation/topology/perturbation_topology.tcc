@@ -100,7 +100,13 @@ simulation::Perturbation_Topology::update_for_lambda()
       it != to; ++it){
     mass()(it->second.sequence_number())
       = (1-lambda()) * it->second.A_mass() + lambda() * it->second.B_mass();
+    DEBUG(10, "mass(" << it->second.sequence_number()
+	  << ") = " << mass()(it->second.sequence_number()));
   }
+
+  // don't forget to update the distance constraints
+  perturbed_solute().set_distance_constraints(lambda());
+  
 }
 
 

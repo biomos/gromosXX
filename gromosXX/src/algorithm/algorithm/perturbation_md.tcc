@@ -12,17 +12,40 @@
 template<typename t_spec>
 algorithm::Perturbation_MD<t_spec>
 ::Perturbation_MD()
-  : MD<t_spec>()
+  : MD<t_spec>(),
+    m_d_lambda(0)
 {
 }
 
 template<typename t_spec>
+inline int
+algorithm::Perturbation_MD<t_spec>
+::pre_md(io::InInput &input)
+{
+  int r = MD<t_spec>::pre_md(input);
+
+  // resize the energy derivative array
+  m_simulation.system().lambda_energies().
+    resize(m_simulation.system().energies().bond_energy.size(),
+	   m_simulation.system().energies().kinetic_energy.size());
+  
+  // initialize the lambda derivative fluctuations
+  m_simulation.system().lambda_derivative_averages().
+    resize(m_simulation.system().energies().bond_energy.size(),
+	   m_simulation.system().energies().kinetic_energy.size());
+
+  return r;
+}
+
+
+
+template<typename t_spec>
 void algorithm::Perturbation_MD<t_spec>
-::init_input(io::Argument &args, io::InTopology &topo,
+::read_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
-
-  MD<t_spec>::init_input(args, topo, sys, input);
+ 
+  MD<t_spec>::read_input(args, topo, sys, input);
 
   int ntg, nlam;
   double rlam, dlamt;
@@ -30,69 +53,40 @@ void algorithm::Perturbation_MD<t_spec>
   input.read_PERTURB(ntg, rlam, dlamt, nlam);
 
   if (ntg == 1){
-    io::messages.add("Perturbation enabled", "Perturbation_MD",
+    io::messages.add("Perturbation enabled", "Perturbation MD",
 		     io::message::notice);
 
     m_do_perturbation = true;
 
     m_simulation.topology().lambda(rlam);
     m_simulation.topology().nlam(nlam);
+    m_d_lambda = dlamt;
     
-    // initialize
-    init_perturbation(args, input);
+    if (m_d_lambda){
+      io::messages.add("Perturbation: changing lambda during simulation",
+		       "Perturbation MD", io::message::notice);
+    }
+    
   }
+  
 }
 
-/**
- * read the input and setup a standard simulation.
- */
+
 template<typename t_spec>
 void algorithm::Perturbation_MD<t_spec>
-::read_input(io::Argument &args, io::InTopology &topo,
+::init_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
-  MD<t_spec>::read_input(args, topo, sys, input);
-  
-  int ntg, nlam;
-  double rlam, dlamt;
-  
-  input.read_PERTURB(ntg, rlam, dlamt, nlam);
+  // call parent
+  MD<t_spec>::init_input(args, topo, sys, input);
 
-  if (ntg == 1){
-    // io::messages.add("Perturbation enabled", "Perturbation_MD",
-    // io::message::notice);
-
-    // m_do_perturbation = true;
-
-    // m_simulation.topology().lambda(rlam);
-    // m_simulation.topology().nlam(nlam);
-    
+  if (m_do_perturbation){
     // initialize
-    // init_perturbation(args, input);
-
-    // resize the energy derivative array
-    m_simulation.system().lambda_energies().
-      resize(m_simulation.system().energies().bond_energy.size(),
-	     m_simulation.system().energies().kinetic_energy.size());
-
-    // initialize the lambda derivative fluctuations
-    m_simulation.system().lambda_derivative_averages().
-      resize(m_simulation.system().energies().bond_energy.size(),
-	     m_simulation.system().energies().kinetic_energy.size());
-
+    init_perturbation(args, input);
   }
   else{
     io::messages.add("using Perturbation_MD, but perturbation disabled",
 		     "Perturbation_MD", io::message::notice);
-    // resize the energy derivative array
-    m_simulation.system().lambda_energies().
-      resize(m_simulation.system().energies().bond_energy.size(),
-	   m_simulation.system().energies().kinetic_energy.size());
-    
-    // initialize the lambda derivative fluctuations
-    m_simulation.system().lambda_derivative_averages().
-      resize(m_simulation.system().energies().bond_energy.size(),
-	     m_simulation.system().energies().kinetic_energy.size());
   }
   
 }
@@ -106,7 +100,11 @@ int algorithm::Perturbation_MD<t_spec>
     io::messages.add("init_perturbation called but no perturbation topology",
 		     "algorithm::md",
 		     io::message::warning);
-    return 0;
+ 
+    if (m_do_perturbation) 
+      throw std::string("No perturbation topology given");
+
+   return 0;
   }
 
   std::ifstream pert_file(args["pert"].c_str());
@@ -126,7 +124,9 @@ int algorithm::Perturbation_MD<t_spec>
 	    << std::setw(15) << "lambda" 
 	    << std::setw(20) << m_simulation.topology().lambda() << "\n"
 	    << std::setw(15) << "nlam"
-	    << std::setw(20) << m_simulation.topology().nlam()
+	    << std::setw(20) << m_simulation.topology().nlam() << "\n"
+	    << std::setw(15) << "dlamt"
+	    << std::setw(20) << m_d_lambda
 	    << "\n\n";
 
   io::InPerturbationTopology pert_topo(pert_file);
@@ -378,11 +378,8 @@ void algorithm::Perturbation_MD<t_spec>
 
 template<typename t_spec>
 void algorithm::Perturbation_MD<t_spec>
-::do_energies()
+::do_perturbed_energies()
 {
-  // do the normal energies
-  MD<t_spec>::do_energies();
-
   // and calculate the kinetic energy lamba derivative
   m_temperature.
     calculate_kinetic_energy_lambda_derivative(m_simulation);
@@ -396,9 +393,66 @@ void algorithm::Perturbation_MD<t_spec>
 
   if (m_print_energy && 
       (m_simulation.steps() ) % m_print_energy == 0){
+    std::cout << "LAMBDA\t" << m_simulation.topology().lambda() << std::endl;
     io::print_ENERGY(std::cout, 
 		     m_simulation.system().lambda_energies(),
 		     m_simulation.topology().energy_groups(),
 		     "dE/dLAMBDA");
+  }
+}
+
+
+
+template<typename t_spec>
+void algorithm::Perturbation_MD<t_spec>
+::post_step()
+{
+
+  MD<t_spec>::post_step();
+
+  DEBUG(8, "md: calculate and print the perturbed energies");
+  do_perturbed_energies();
+
+  // allow for a change of lambda
+  if (m_d_lambda){
+    
+    m_simulation.topology().lambda(m_simulation.topology().lambda() + 
+				   m_d_lambda);
+    
+    m_simulation.topology().update_for_lambda();
+    
+  }
+
+
+}
+
+template<typename t_spec>
+void algorithm::Perturbation_MD<t_spec>
+::post_md()
+{
+  MD<t_spec>::post_md();
+
+  // lambda derivatives
+  if (m_do_perturbation){
+
+    simulation::Energy energy, fluctuation;
+
+    MD<t_spec>::simulation().system().lambda_derivative_averages().
+      average(energy, fluctuation);
+  
+    io::print_ENERGY(std::cout, energy,
+		     MD<t_spec>::simulation().topology().energy_groups(),
+		     "AVERAGE ENERGY LAMBDA DERIVATIVES");
+
+    io::print_MULTIBATH(std::cout, MD<t_spec>::simulation().multibath(),
+			energy);
+
+    io::print_ENERGY(std::cout, fluctuation,
+		     MD<t_spec>::simulation().topology().energy_groups(),
+		     "ENERGY LAMBDA DERIVATIVE FLUCTUATIONS");
+    
+    io::print_MULTIBATH(std::cout, MD<t_spec>::simulation().multibath(),
+			fluctuation);
+
   }
 }
