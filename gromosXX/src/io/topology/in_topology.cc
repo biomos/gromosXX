@@ -4,7 +4,7 @@
  */
 
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <topology/topology.h>
 #include <simulation/multibath.h>
@@ -452,7 +452,7 @@ io::In_Topology::read(topology::Topology& topo,
 		    << num
 		    << " bonds in CONSTRAINT block."
 		    << "\n\t\ttotal of constraint bonds : " 
-		    << num + topo.solute().distance_constraints().size()
+		    << num + unsigned(topo.solute().distance_constraints().size())
 		    << "\n\tEND\n";
       
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
@@ -881,7 +881,7 @@ io::In_Topology::read(topology::Topology& topo,
     
     if (buffer.size()){
       
-      int res_nr = topo.residue_names().size();
+      unsigned int res_nr = unsigned(topo.residue_names().size());
     
       topo.residue_names().push_back("SOLV");
 
@@ -1035,9 +1035,9 @@ io::In_Topology::read(topology::Topology& topo,
 
   if (!quiet)
     std::cout << "\n\tSOLUTE [sub]molecules: " 
-	      << topo.molecules().size() - param.system.nsm - 1 << "\n";
+	      << unsigned(topo.molecules().size()) - param.system.nsm - 1 << "\n";
 
-  DEBUG(10, "molecules().size: " << topo.molecules().size()
+  DEBUG(10, "molecules().size: " << unsigned(topo.molecules().size())
 	<< " nsm : " << param.system.nsm);
 
   // energy group check
@@ -1051,8 +1051,8 @@ io::In_Topology::read(topology::Topology& topo,
 		     "In_Topology", io::message::error);
   }
   // and add them
-  size_t atom = 0;
-  for(size_t i=0; i<param.force.energy_group.size(); ++i){
+  unsigned int atom = 0;
+  for(unsigned int i=0; i<param.force.energy_group.size(); ++i){
     topo.energy_groups().push_back(param.force.energy_group[i]);
     for( ; atom <= param.force.energy_group[i]; ++atom){
       topo.atom_energy_group().push_back(i);
@@ -1429,7 +1429,7 @@ void io::In_Topology
     _lineStream >> num;
     
     // calculate the matrix size from: x = n*(n+1)/2
-    size_t sz = size_t(sqrt(double((8*num+1)-1))/2);
+    unsigned int sz = unsigned(sqrt(double((8*num+1)-1))/2);
 
     lj_parameter.resize(sz);
     std::vector< std::vector<interaction::lj_parameter_struct> >::iterator

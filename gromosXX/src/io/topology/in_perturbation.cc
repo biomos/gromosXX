@@ -3,7 +3,7 @@
  * implements methods of In_Perturbation.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <topology/topology.h>
 #include <simulation/multibath.h>
@@ -196,13 +196,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 
       if (!quiet)
 	std::cout << "\n\t\tbonds :                          " 
-		  << topo.solute().bonds().size()
+		  << unsigned(topo.solute().bonds().size())
 		  << "\n\t\tperturbed bonds :                "
-		  << topo.perturbed_solute().bonds().size()
+		  << unsigned(topo.perturbed_solute().bonds().size())
 		  << "\n\t\tdistance constraints :           "
-		  << topo.solute().distance_constraints().size()
+		  << unsigned(topo.solute().distance_constraints().size())
 		  << "\n\t\tperturbed distance constraints : "
-		  << topo.perturbed_solute().distance_constraints().size()
+		  << unsigned(topo.perturbed_solute().distance_constraints().size())
 		  << "\n\n"
 		  << "\tEND\n";
 
@@ -228,7 +228,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 		  << num
 		  << " bonds in PERTCONSTRAINT03 block."
 		  << "\n\t\ttotal of perturbed constraint bonds : " 
-		  << num + topo.perturbed_solute().distance_constraints().size()
+		  << unsigned(num + topo.perturbed_solute().distance_constraints().size())
 		  << "\n"  
 		  << "\t"
 		  << std::setw(10) << "atom i"
@@ -653,7 +653,7 @@ io::In_Perturbation::read(topology::Topology &topo,
       _lineStream >> num;
       ++it;
       
-      size_t seq, res, a_iac, b_iac;
+      int seq, res, a_iac, b_iac;
       double a_mass, b_mass, a_charge, b_charge;
       double lj_soft, crf_soft;
       std::string name;
@@ -743,7 +743,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	topo.perturbed_solute().atoms()[seq] = atom;
 
-	assert(seq<topo.is_perturbed().size());
+	assert(seq<int(topo.is_perturbed().size()));
 	topo.is_perturbed()[seq] = true;
 	
       }

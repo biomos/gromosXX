@@ -60,12 +60,12 @@ namespace simulation
     /**
      * number of steps done.
      */
-    size_t & steps() { return m_steps; }
+    unsigned int & steps() { return m_steps; }
 
     /**
      * number of steps done.
      */
-    size_t steps()const { return m_steps; }
+    unsigned int steps()const { return m_steps; }
     
     /**
      * simulation time.
@@ -97,7 +97,7 @@ namespace simulation
     /**
      * the number of steps done.
      */
-    size_t m_steps;
+    unsigned int m_steps;
     
     /**
      * the simulation time.

@@ -217,7 +217,7 @@ namespace simulation
       /**
        * Vector containing the last atom of every molecule
        */
-      std::vector<size_t> submolecules;
+      std::vector<unsigned int> submolecules;
     } /** submolecule array */ submolecules;
 
     /**
@@ -554,7 +554,7 @@ namespace simulation
       /**
        * Energy groups
        */
-      std::vector<size_t> energy_group;
+      std::vector<unsigned int> energy_group;
     } /** Force(field) parameters */ force;
 
     /**

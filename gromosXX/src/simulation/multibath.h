@@ -12,6 +12,13 @@
 #define SUBMODULE simulation
 
 // #include <util/debug.h>
+namespace topology{
+	/*
+		unfortunately it needs the Topology explicitly for calculating the
+		degrees of freedom. one could move that out to an implementation file.
+	*/
+	class Topology;
+}
 
 namespace simulation
 {
@@ -46,15 +53,15 @@ namespace simulation
    */
   struct bath_index_struct
   {
-    bath_index_struct(size_t last_atom, size_t last_molecule, 
-		      size_t com_bath, size_t ir_bath)
+    bath_index_struct(unsigned int last_atom, unsigned int last_molecule, 
+		      unsigned int com_bath, unsigned int ir_bath)
       : last_atom(last_atom), last_molecule(last_molecule), 
 	com_bath(com_bath), ir_bath(ir_bath){}
     
-    size_t last_atom;
-    size_t last_molecule;
-    size_t com_bath;
-    size_t ir_bath;
+    unsigned int last_atom;
+    unsigned int last_molecule;
+    unsigned int com_bath;
+    unsigned int ir_bath;
   };
   
   /**
@@ -95,9 +102,10 @@ namespace simulation
     /**
      * add the bath indices for a range of atoms.
      */
-    void add_bath_index(size_t const last, size_t const last_m, 
-			size_t const com_bath, size_t const ir_bath){
-      m_bath_index.push_back(bath_index_struct(last, last_m, 
+    void add_bath_index(unsigned int last, unsigned int last_m, 
+			unsigned int com_bath, unsigned int ir_bath){
+      
+				m_bath_index.push_back(bath_index_struct(last, last_m, 
 					       com_bath, ir_bath));
     }
     
@@ -105,14 +113,14 @@ namespace simulation
     /**
      * get bath i.
      */
-    bath_struct & bath(size_t i) {
+    bath_struct & bath(unsigned int i) {
       assert(i < size());
       return (*this)[i];  
     }
     /**
      * get const bath i.
      */
-    bath_struct const & bath(size_t i)const{
+    bath_struct const & bath(unsigned int i)const{
       assert(i < size());
       return (*this)[i];  
     }
@@ -129,8 +137,8 @@ namespace simulation
     /**
      * get the bath number of particle number i.
      */
-    void in_bath(size_t const atom,
-		 size_t &com, size_t &ir)const{
+    void in_bath(unsigned int const atom,
+		 unsigned int &com, unsigned int &ir)const{
       std::vector<bath_index_struct>::const_iterator 
 	it = m_bath_index.begin(),
 	to = m_bath_index.end();
@@ -159,7 +167,7 @@ namespace simulation
     /**
      * check the state.
      */
-    int check_state(size_t const num_atoms)const;
+    int check_state(unsigned int num_atoms)const;
 
   private:
     /**
@@ -190,8 +198,8 @@ inline void simulation::Multibath
     io::messages.add("Adding atoms to the last bath!",
 		     "Multibath::calculate_degrees_of_freedom",
 		     io::message::notice);
-    add_bath_index(topo.num_atoms()-1, topo.molecules().size()-1, 
-		   size()-1, size()-1);
+    add_bath_index(topo.num_atoms()-1, unsigned(topo.molecules().size())-1, 
+		   unsigned(size())-1, unsigned(size())-1);
     
   }
 
@@ -199,8 +207,8 @@ inline void simulation::Multibath
   std::vector<bath_index_struct>::iterator it = m_bath_index.begin(),
     to = m_bath_index.end();
 
-  DEBUG(8, "number of baths: " << size());
-  DEBUG(8, "molecules " << topo.molecules().size());
+  DEBUG(8, "number of baths: " << unsigned(size()));
+  DEBUG(8, "molecules " << unsigned(topo.molecules().size()));
   
   for(int last=-1; it != to; ++it){
     // get the number of molecules in the range
@@ -246,10 +254,10 @@ inline void simulation::Multibath
   
 }
 
-inline int simulation::Multibath::check_state(size_t const num_atoms)const
+inline int simulation::Multibath::check_state(unsigned int num_atoms)const
 {
   int result = 0;
-  size_t last_atom = 0;
+  unsigned int last_atom = 0;
   std::vector<bath_index_struct>::const_iterator it = m_bath_index.begin(),
     to = m_bath_index.end();
   for( ; it!=to; ++it){

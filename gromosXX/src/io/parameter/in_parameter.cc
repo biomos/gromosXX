@@ -3,7 +3,7 @@
  * implements methods of In_Parameter
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <topology/core/core.h>
 
@@ -1017,7 +1017,7 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param)
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
   int bondH, angleH, impH, dihedralH, charge;
-  size_t num, e, old_e=0;
+  unsigned int num, e, old_e=0;
   
   _lineStream >> bondH >> param.force.bond >> angleH >> param.force.angle
 	      >> impH >> param.force.improper >> dihedralH >> param.force.dihedral
@@ -1029,7 +1029,7 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param)
     return;
   }
   
-  for(size_t i=0; i<num; ++i){
+  for(unsigned int i=0; i<num; ++i){
     _lineStream >> e;
     param.force.energy_group.push_back(e-1);
     if(e<=old_e){
@@ -1382,8 +1382,8 @@ void io::In_Parameter::read_SUBMOLECULES(simulation::Parameter &param)
     return;
   }
   
-  size_t m;
-  size_t old_m=0;
+  unsigned int m;
+  unsigned int old_m=0;
   
   param.submolecules.submolecules.push_back(0);
 
@@ -1564,8 +1564,8 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
     int num;
-    size_t last;
-    size_t com_bath, ir_bath;
+    unsigned int last;
+    unsigned int com_bath, ir_bath;
     double temp, tau;
     
     // the baths

@@ -4,7 +4,7 @@
  */
 
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -49,7 +49,7 @@ io::In_Posres::read(topology::Topology& topo,
       to = buffer.end()-1;
   
     std::string s1, s2;
-    size_t i, n, nr;
+    unsigned int i, n, nr;
     math::Vec pos;
 
     DEBUG(10, "reading in POSRES data");
@@ -101,7 +101,7 @@ io::In_Posres::read(topology::Topology& topo,
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
-      size_t n, num;
+      unsigned int n, num;
       
       _lineStream >> num;
       ++it;
@@ -116,7 +116,7 @@ io::In_Posres::read(topology::Topology& topo,
 	posres_it = topo.position_restraints().begin();
       
       for(n=0; it != buffer.end() - 1; ++it, ++n, ++posres_it){
-	size_t seq;
+	unsigned int seq;
 	double bfactor;
 	
 	_lineStream.clear();

@@ -6,6 +6,8 @@
 #ifndef INCLUDED_IN_PERTURBATION_H
 #define INCLUDED_IN_PERTURBATION_H
 
+#include <gromosXX/io/instream.h>
+
 namespace io
 {
   /**
