@@ -154,7 +154,9 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
 	      >> param.minimise.ncyc
 	      >> param.minimise.dele
 	      >> param.minimise.dx0
-	      >> param.minimise.dxm;
+	      >> param.minimise.dxm
+	      >> param.minimise.nmin
+	      >> param.minimise.flim;
  
   if (_lineStream.fail())
     io::messages.add("bad line in MINIMISE block",
@@ -180,6 +182,17 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
     io::messages.add("MINIMISE: DXM should be > DX0",
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
+
+  if(param.minimise.nmin <= 0)
+    io::messages.add("MINIMISE: NMIN should be > 0",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::error);
+  
+  if(param.minimise.flim < 0)
+    io::messages.add("MINIMISE: FLIM should be >= 0",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::error);
+
 } 
 
 /**

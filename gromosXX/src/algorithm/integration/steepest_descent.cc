@@ -45,7 +45,13 @@ int algorithm::Steepest_Descent
 	    << "\tminimum energy criterion : " << sim.param().minimise.dele << "\n"
 	    << "\tstarting step size       : " << sim.param().minimise.dx0 << "\n"
 	    << "\tmaximum step size        : " << sim.param().minimise.dxm << "\n"
-	    << "END\n";
+	    << "\tminimum steps            : " << sim.param().minimise.nmin << "\n";
+  
+  if (sim.param().minimise.flim != 0)
+    std::cout << "\tlimiting the force to    : "
+	      << sim.param().minimise.flim << "\n";
+  
+  std::cout << "END\n";
   return 0;
 }
 
@@ -58,7 +64,7 @@ int algorithm::Steepest_Descent
 	simulation::Simulation &sim)
 {
   // only if it's not the first step
-  if (sim.steps()){
+  if (sim.steps() > unsigned(sim.param().minimise.nmin)){
     // check whether minimum reached...
     conf.current().energies.calculate_totals();
 
@@ -85,6 +91,16 @@ int algorithm::Steepest_Descent
   }
   else
     sim.minimisation_step_size() = sim.param().minimise.dx0;
+
+  // limit the maximum force!
+  if (sim.param().minimise.flim != 0.0){
+    for(size_t i=0; i<topo.num_atoms(); ++i){
+      const double fs = math::dot(conf.current().force(i), 
+				  conf.current().force(i));
+      if (fs > sim.param().minimise.flim)
+	conf.current().force(i) *= sim.param().minimise.flim / fs;
+    }
+  }
 
   // <f|f>^-0.5
   double f = math::sum(math::dot(conf.current().force, conf.current().force));

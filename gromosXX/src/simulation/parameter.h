@@ -59,6 +59,12 @@ namespace simulation
     struct minimise_struct
     {
       /**
+       * Constructor.
+       */
+      minimise_struct() : ntem(0), ncyc(0), dele(0.0001),
+			  dx0(0.1), dxm(0.5), nmin(1), flim(0.0)
+      {}
+      /**
        * minimisation method.
        */
       int ntem;
@@ -78,6 +84,15 @@ namespace simulation
        * maximum step size.
        */
       double dxm;
+      /**
+       * minimum number of steps.
+       */
+      int nmin;
+      /**
+       * force limit.
+       */
+      double flim;
+
     } minimise;
 
     /**
