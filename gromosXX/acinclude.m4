@@ -107,11 +107,11 @@ AC_DEFUN([AC_BZ_SET_COMPILER],
      ;;
      *:*)                   # Simple initialization syntax
        CXX=`echo "$cxxwith" | sed  -n -e 's/.*:\(.*\)/\1/p'`
-       CXXFLAGS=$3
+       CXXFLAGS="$CXXFLAGS $3"
      ;;
      *)                     # Default values
        CXX=$2
-       CXXFLAGS=$3
+       CXXFLAGS="$CXXFLAGS $3"
      ;;
    esac])
 
