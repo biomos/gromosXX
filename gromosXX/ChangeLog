@@ -1,3 +1,273 @@
+2004-06-01 19:58  markus
+
+	* VERSION, contrib/split_develop.dat: version update: 0.1.3.pre1
+
+2004-06-01 19:58  markus
+
+	* INSTALL: windows compile instructions
+
+2004-06-01 19:57  markus
+
+	* program/: BUILD_NUMBER, md.cc: block averaged free energies only
+	  if perturbation on, version update
+
+2004-06-01 19:56  markus
+
+	* src/: Makefile.am, stdheader.h: stdheader move
+
+2004-06-01 19:56  markus
+
+	* src/check/: scaling.t.cc, data/scaling.in,
+	  data/scaling.lambdadep.in: check scaling by use of energy groups
+	  instead of energy derivative vector
+
+2004-06-01 19:55  markus
+
+	* src/check/: aladip.t.cc, aladip_atomic.t.cc, check_forcefield.cc,
+	  check_state.cc, rasn.t.cc: perturbed energy derivatives not
+	  vector any more, easier construction of a simulation
+
+2004-06-01 19:54  markus
+
+	* src/util/: create_simulation.cc, create_simulation.h, debug.cc,
+	  generate_velocities.cc, parse_tcouple.cc, parse_tcouple.h,
+	  parse_verbosity.cc, prepare_virial.cc, prepare_virial.h,
+	  stdheader.h, timing.cc: windows update, move of stdheader, now()
+	  windows port
+
+2004-06-01 19:52  markus
+
+	* src/topology/: perturbed_atom.h, perturbed_solute.h, solute.h,
+	  solvent.h, topology.cc, topology.h, topology_global.cc,
+	  core/atom_iterator.h, core/atomgroup_iterator.h,
+	  core/body_term.h, core/chargegroup_iterator.h, core/compound.h,
+	  core/molecule_iterator.h: remove of size_t, remove of non-const
+	  built-in type accessors
+
+2004-06-01 19:51  markus
+
+	* src/math/: boundary_implementation.cc, boundary_implementation.h,
+	  gmath.h, math.cc, periodicity.cc, volume.cc: windows updates:
+	  rint function, size_t
+
+2004-06-01 19:50  markus
+
+	* src/io/: Makefile.am, argument.cc, blockinput.cc, instream.cc,
+	  io.cc, message.cc, print_block.cc, print_block.h, read_input.cc,
+	  read_special.cc, forcefield/in_ifp.cc: size_t and other windows
+	  updates
+
+2004-06-01 19:49  markus
+
+	* src/io/configuration/: in_configuration.cc, in_configuration.h,
+	  inframe.cc, inframe.h, out_configuration.cc: size_t and
+	  blockaverage output
+
+2004-06-01 19:48  markus
+
+	* src/: io/topology/in_perturbation.cc,
+	  io/topology/in_perturbation.h, io/topology/in_posres.cc,
+	  io/topology/in_posres.h, io/topology/in_topology.cc,
+	  io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  simulation/multibath.h, simulation/parameter.h,
+	  simulation/simulation.cc, simulation/simulation.h: size_t update
+
+2004-06-01 19:48  markus
+
+	* src/interaction/: interaction.cc, interaction.h,
+	  forcefield/create_forcefield.cc, forcefield/forcefield.cc,
+	  forcefield/forcefield.h: stdheader, forward declarations
+
+2004-06-01 19:47  markus
+
+	* src/interaction/special/create_special.cc: stdheader
+
+2004-06-01 19:47  markus
+
+	* src/interaction/nonbonded/: create_nonbonded.h,
+	  split/nonbonded_split.h: comment & stdheader
+
+2004-06-01 19:46  markus
+
+	* src/interaction/nonbonded/: filter/chargegroup_grid.cc,
+	  filter/chargegroup_grid.h, filter/exclusion_filter.cc,
+	  filter/exclusion_filter.h, filter/perturbation_filter.cc,
+	  filter/perturbation_filter.h, filter/range_filter.cc,
+	  filter/range_filter.h, pairlist/grid_pairlist_algorithm.cc,
+	  pairlist/grid_pairlist_algorithm.h, pairlist/pairlist.cc,
+	  pairlist/pairlist_algorithm.h,
+	  pairlist/standard_pairlist_algorithm.cc,
+	  pairlist/standard_pairlist_algorithm2.cc,
+	  pairlist/standard_pairlist_algorithm2.h: size_t
+
+2004-06-01 19:46  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_innerloop.cc,
+	  nonbonded_innerloop.h, nonbonded_interaction.cc,
+	  nonbonded_interaction.h, nonbonded_outerloop.cc,
+	  nonbonded_outerloop.h, nonbonded_parameter.h, nonbonded_set.cc,
+	  nonbonded_set.h, nonbonded_term.cc,
+	  perturbed_nonbonded_innerloop.h,
+	  perturbed_nonbonded_interaction.cc,
+	  perturbed_nonbonded_interaction.h,
+	  perturbed_nonbonded_outerloop.cc,
+	  perturbed_nonbonded_outerloop.h, perturbed_nonbonded_term.cc:
+	  size_t, perturbed_energy_derivatives not a vector anymore
+
+2004-06-01 19:44  markus
+
+	*
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc:
+	  size_t, 1,4 interactions: scaling, lambda dependence
+
+2004-06-01 19:41  markus
+
+	* src/: algorithm/create_md_sequence.cc,
+	  algorithm/create_md_sequence.h,
+	  algorithm/algorithm/algorithm_sequence.cc,
+	  algorithm/constraints/create_constraints.cc,
+	  algorithm/constraints/flexible_constraint.cc,
+	  algorithm/constraints/lincs.cc,
+	  algorithm/constraints/perturbed_flexible_constraint.cc,
+	  algorithm/constraints/perturbed_shake.cc,
+	  algorithm/constraints/perturbed_shake.h,
+	  algorithm/constraints/remove_com_motion.cc,
+	  algorithm/constraints/shake.cc, algorithm/constraints/shake.h,
+	  algorithm/integration/leap_frog.cc,
+	  algorithm/integration/slow_growth.cc,
+	  algorithm/integration/steepest_descent.cc,
+	  algorithm/pressure/berendsen_barostat.cc,
+	  algorithm/pressure/pressure_calculation.cc,
+	  algorithm/temperature/berendsen_thermostat.cc,
+	  algorithm/temperature/temperature_calculation.cc,
+	  configuration/average.cc, configuration/average.h,
+	  configuration/configuration.cc, configuration/configuration.h,
+	  configuration/configuration_global.cc, configuration/energy.cc,
+	  configuration/energy.h, configuration/state_properties.cc,
+	  interaction/bonded/angle_interaction.cc,
+	  interaction/bonded/angle_interaction.h,
+	  interaction/bonded/create_bonded.cc,
+	  interaction/bonded/create_bonded.h,
+	  interaction/bonded/dihedral_interaction.h,
+	  interaction/bonded/harmonic_bond_interaction.h,
+	  interaction/bonded/improper_dihedral_interaction.cc,
+	  interaction/bonded/improper_dihedral_interaction.h,
+	  interaction/bonded/perturbed_angle_interaction.h,
+	  interaction/bonded/perturbed_dihedral_interaction.h,
+	  interaction/bonded/perturbed_harmonic_bond_interaction.h,
+	  interaction/bonded/perturbed_improper_dihedral_interaction.h,
+	  interaction/bonded/perturbed_quartic_bond_interaction.h,
+	  interaction/bonded/quartic_bond_interaction.cc,
+	  interaction/bonded/quartic_bond_interaction.h: remove of size_t
+
+2004-06-01 18:21  markus
+
+	* src/algorithm/algorithm.cc: windows compatibility
+
+2004-05-22 16:29  markus
+
+	* src/: algorithm/Makefile.am, interaction/Makefile.am,
+	  interaction/forcefield/create_forcefield.h,
+	  interaction/nonbonded/create_nonbonded.h, math/Makefile.am: name
+	  changes: tcc -> cc
+
+2004-05-22 14:36  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_innerloop.cc,
+	  nonbonded_innerloop.h, nonbonded_innerloop.tcc,
+	  nonbonded_interaction.cc, nonbonded_interaction.h,
+	  nonbonded_interaction.tcc, nonbonded_outerloop.cc,
+	  nonbonded_outerloop.h, nonbonded_outerloop.tcc, nonbonded_set.cc,
+	  nonbonded_set.h, nonbonded_set.tcc, nonbonded_term.cc,
+	  nonbonded_term.h, nonbonded_term.tcc,
+	  perturbed_nonbonded_innerloop.cc,
+	  perturbed_nonbonded_innerloop.h,
+	  perturbed_nonbonded_innerloop.tcc,
+	  perturbed_nonbonded_interaction.cc,
+	  perturbed_nonbonded_interaction.h,
+	  perturbed_nonbonded_interaction.tcc,
+	  perturbed_nonbonded_outerloop.cc,
+	  perturbed_nonbonded_outerloop.h,
+	  perturbed_nonbonded_outerloop.tcc, perturbed_nonbonded_pair.cc,
+	  perturbed_nonbonded_pair.h, perturbed_nonbonded_pair.tcc,
+	  perturbed_nonbonded_term.cc, perturbed_nonbonded_term.h,
+	  perturbed_nonbonded_term.tcc: name change: tcc -> cc
+
+2004-05-22 14:31  markus
+
+	* src/interaction/nonbonded/pairlist/: grid_pairlist_algorithm.cc,
+	  grid_pairlist_algorithm.h, grid_pairlist_algorithm.tcc,
+	  pairlist.cc, pairlist.h, pairlist.tcc,
+	  standard_pairlist_algorithm.cc, standard_pairlist_algorithm.h,
+	  standard_pairlist_algorithm.tcc, standard_pairlist_algorithm2.cc,
+	  standard_pairlist_algorithm2.h, standard_pairlist_algorithm2.tcc:
+	  name change: tcc -> cc
+
+2004-05-22 14:26  markus
+
+	* src/interaction/nonbonded/filter/: chargegroup_grid.cc,
+	  chargegroup_grid.h, chargegroup_grid.tcc, exclusion_filter.cc,
+	  exclusion_filter.h, exclusion_filter.tcc, perturbation_filter.cc,
+	  perturbation_filter.h, perturbation_filter.tcc, range_filter.cc,
+	  range_filter.h, range_filter.tcc: name change: tcc -> cc
+
+2004-05-22 14:04  markus
+
+	* src/interaction/bonded/: angle_interaction.cc,
+	  angle_interaction.h, angle_interaction.tcc, create_bonded.h,
+	  dihedral_interaction.cc, dihedral_interaction.h,
+	  dihedral_interaction.tcc, harmonic_bond_interaction.cc,
+	  harmonic_bond_interaction.h, harmonic_bond_interaction.tcc,
+	  improper_dihedral_interaction.cc,
+	  improper_dihedral_interaction.h,
+	  improper_dihedral_interaction.tcc,
+	  perturbed_angle_interaction.cc, perturbed_angle_interaction.h,
+	  perturbed_angle_interaction.tcc,
+	  perturbed_dihedral_interaction.cc,
+	  perturbed_dihedral_interaction.h,
+	  perturbed_dihedral_interaction.tcc,
+	  perturbed_harmonic_bond_interaction.cc,
+	  perturbed_harmonic_bond_interaction.h,
+	  perturbed_harmonic_bond_interaction.tcc,
+	  perturbed_improper_dihedral_interaction.cc,
+	  perturbed_improper_dihedral_interaction.h,
+	  perturbed_improper_dihedral_interaction.tcc,
+	  perturbed_quartic_bond_interaction.cc,
+	  perturbed_quartic_bond_interaction.h,
+	  perturbed_quartic_bond_interaction.tcc,
+	  quartic_bond_interaction.cc, quartic_bond_interaction.h,
+	  quartic_bond_interaction.tcc: name change: tcc -> cc
+
+2004-05-22 13:53  markus
+
+	* src/interaction/special/: position_restraint_interaction.tcc,
+	  position_restraint_interaction.cc,
+	  position_restraint_interaction.h: name change: tcc -> cc
+
+2004-05-22 13:50  markus
+
+	* src/: math/boundary_implementation.tcc, math/periodicity.tcc,
+	  math/boundary_implementation.cc, math/boundary_implementation.h,
+	  math/periodicity.cc, math/periodicity.h,
+	  algorithm/constraints/flexible_constraint.cc,
+	  algorithm/constraints/lincs.cc,
+	  algorithm/constraints/perturbed_flexible_constraint.cc,
+	  algorithm/constraints/perturbed_shake.cc,
+	  algorithm/constraints/shake.cc: name change: tcc -> cc
+
+2004-05-22 13:34  markus
+
+	* src/algorithm/constraints/: flexible_constraint.tcc, lincs.tcc,
+	  perturbed_flexible_constraint.tcc, perturbed_shake.tcc,
+	  shake.tcc, flexible_constraint.cc, flexible_constraint.h,
+	  lincs.cc, lincs.h, perturbed_flexible_constraint.cc,
+	  perturbed_flexible_constraint.h, perturbed_shake.cc,
+	  perturbed_shake.h, shake.cc, shake.h: name change: tcc -> cc
+
+2004-05-22 13:25  markus
+
+	* ChangeLog: [no log message]
+
 2004-05-21 18:17  markus
 
 	* program/Makefile.am: added script
