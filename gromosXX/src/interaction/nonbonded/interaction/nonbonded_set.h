@@ -31,7 +31,7 @@ namespace interaction
 
     /**
      * Constructor.
-     * @param sim where to store forces and energies
+     * @param nbi where to store forces and energies
      * (and virial contribution).
      */
     Nonbonded_Set(Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec> & nbi);
