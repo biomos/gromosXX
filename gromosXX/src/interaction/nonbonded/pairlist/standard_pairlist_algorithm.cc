@@ -448,12 +448,16 @@ _update_atomic(topology::Topology & topo,
   const int num_solute = topo.num_solute_atoms();
   const int num_atoms = topo.num_atoms();
   
-  for(int a1 = 0; a1 < num_solute; a1 += stride) {
+  int a1 = begin;
+
+  for( ; a1 < num_solute; a1 += stride) {
 
     DEBUG(9, "solute (" << a1 << ") - solute");
     
     for(int a2 = a1 + 1; a2 < num_solute; ++a2){
 
+      assert(a1 != a2);
+      
       // check exclusions and range
       periodicity.nearest_image(pos(a1), pos(a2), v);
       
@@ -488,6 +492,8 @@ _update_atomic(topology::Topology & topo,
     DEBUG(9, "solute (" << a1 << ") - solvent");
 
     for(int a2 = num_solute; a2 < num_atoms; ++a2){
+    
+      assert(a1 != a2);
       
       // check range, no exclusions
       periodicity.nearest_image(pos(a1), pos(a2), v);
@@ -517,7 +523,7 @@ _update_atomic(topology::Topology & topo,
     
   }
 
-  int a1 = num_solute;
+  // int a1 = num_solute;
 
   // multiple solvents
   DEBUG(9, "solvent - solvent");
@@ -532,11 +538,13 @@ _update_atomic(topology::Topology & topo,
     
     DEBUG(11, "\twith " << num_solv_at << " atoms");
     
-    for( ; a1 < end; ++a1){
+    for( ; a1 < end; a1 += stride){
       
       if (a1 == a2_start) a2_start += num_solv_at;
       
       for(int a2 = a2_start; a2_start < num_atoms; ++a2){
+
+	assert(a1 != a2);
 	
 	// check range, no exclusions
 	periodicity.nearest_image(pos(a1), pos(a2), v);
@@ -1135,12 +1143,16 @@ _update_pert_atomic(topology::Topology & topo,
 
   math::VArray const & pos = conf.current().pos;
   math::Vec v;
-  
-  for(int a1 = 0; a1 < num_solute; a1 += stride) {
+
+  int a1 = begin;
+
+  for( ; a1 < num_solute; a1 += stride) {
     DEBUG(9, "solute (" << a1 << ") - solute");
 
     for(int a2 = a1 + 1; a2 < num_solute; ++a2){
 
+      assert(a1 != a2);
+      
       // check exclusions and range
       periodicity.nearest_image(pos(a1), pos(a2), v);
       
@@ -1274,6 +1286,8 @@ _update_pert_atomic(topology::Topology & topo,
     DEBUG(9, "solute (" << a1 << ") - solvent");
 
     for(int a2 = num_solute; a2 < num_atoms; ++a2){
+    
+      assert(a1 != a2);
       
       // check range, no exclusions
       periodicity.nearest_image(pos(a1), pos(a2), v);
@@ -1356,7 +1370,7 @@ _update_pert_atomic(topology::Topology & topo,
     
   }
 
-  int a1 = num_solute;
+  int solv_start = num_solute;
 
   // multiple solvents
   DEBUG(9, "solvent - solvent");
@@ -1365,18 +1379,21 @@ _update_pert_atomic(topology::Topology & topo,
   for(unsigned int s = 0; s < topo.num_solvents(); ++s){
     DEBUG(11, "solvent " << s);
 
-    int end = a1 + topo.num_solvent_atoms(s);
+    int end = solv_start + topo.num_solvent_atoms(s);
     DEBUG(11, "\tends at atom " << end);
 
     const int num_solv_at = topo.num_solvent_atoms(s) / topo.num_solvent_molecules(s);
-    int a2_start = a1 + num_solv_at;
+    int a2_start = solv_start + num_solv_at;
     DEBUG(11, "\twith " << num_solv_at << " atoms");
-    
-    for( ; a1 < end; ++a1){
+    DEBUG(11, "\ta1 starts with " << a1 << "\ta2 starts with " << a2_start);
+
+    for( ; a1 < end; a1+=stride){
       
-      if (a1 == a2_start) a2_start += num_solv_at;
+      while (a1 >= a2_start) a2_start += num_solv_at;
       
       for(int a2 = a2_start; a2 < num_atoms; ++a2){
+	
+	assert(a1 != a2);
 	
 	// check range, no exclusions
 	periodicity.nearest_image(pos(a1), pos(a2), v);
@@ -1406,6 +1423,9 @@ _update_pert_atomic(topology::Topology & topo,
       } // solvent - solvent
 
     } // a1 of solvent s
+
+    // start of next solvent
+    solv_start += topo.num_solvent_atoms(s);    
 
   } // multiple solvents
   
