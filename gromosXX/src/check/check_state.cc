@@ -133,7 +133,6 @@ int check::check_state(topology::Topology & topo,
 
     finP(i,i) = -0.5 * conf.current().box(i)(i) * (e2-e1)/(2*epsilon) /
       conf.current().box(i)(i);
-
   }
   
     
@@ -148,6 +147,7 @@ int check::check_state(topology::Topology & topo,
   pcalc->apply(topo, conf, sim);
   
   for(int i=0; i < 3; i++){
+
     CHECK_APPROX_EQUAL(conf.old().virial_tensor(i,i), finP(i,i), 0.00001, res);
   }
 

@@ -99,28 +99,31 @@ int check_lambda_derivative(topology::Topology & topo,
   
   CHECKING(term.name + " energy lambda derivative", res);
 
+  // assume no different lambda dependence here!
+  // this will be checked in a different function
+
   conf.current().force = 0;
   conf.current().energies.zero();
-  conf.current().perturbed_energy_derivatives.zero();
+  conf.current().perturbed_energy_derivatives[0].zero();
 
   term.calculate_interactions(topo, conf, sim);
       
   conf.current().energies.calculate_totals();
-  conf.current().perturbed_energy_derivatives.calculate_totals();
+  conf.current().perturbed_energy_derivatives[0].calculate_totals();
 
-  const double dE = conf.current().perturbed_energy_derivatives.potential_total;
+  const double dE = conf.current().perturbed_energy_derivatives[0].potential_total;
   
   // change lambda, calculate energies
   topo.lambda(topo.lambda()+epsilon);
     
   conf.current().force = 0;
   conf.current().energies.zero();
-  conf.current().perturbed_energy_derivatives.zero();
+  conf.current().perturbed_energy_derivatives[0].zero();
 
   term.calculate_interactions(topo, conf, sim);
       
   conf.current().energies.calculate_totals();
-  conf.current().perturbed_energy_derivatives.calculate_totals();
+  conf.current().perturbed_energy_derivatives[0].calculate_totals();
 
   double e1 = conf.current().energies.potential_total;
 
@@ -129,12 +132,12 @@ int check_lambda_derivative(topology::Topology & topo,
  
   conf.current().force = 0;
   conf.current().energies.zero();
-  conf.current().perturbed_energy_derivatives.zero();
+  conf.current().perturbed_energy_derivatives[0].zero();
 
   term.calculate_interactions(topo, conf, sim);
       
   conf.current().energies.calculate_totals();
-  conf.current().perturbed_energy_derivatives.calculate_totals();
+  conf.current().perturbed_energy_derivatives[0].calculate_totals();
 
   double e2 = conf.current().energies.potential_total;
   

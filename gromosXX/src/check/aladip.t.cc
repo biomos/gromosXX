@@ -188,13 +188,21 @@ int main(int argc, char* argv[])
 
       // perturbed energy derivatives
 	  if (aladip_sim.sim.param().perturbation.perturbation){
-	    aladip_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
 
-	    aladip_sim.conf.current().perturbed_energy_derivative_averages.
-	      update(aladip_sim.conf.old().perturbed_energy_derivatives,
-		     aladip_sim.conf.old().perturbed_energy_derivative_averages,
-		     aladip_sim.sim.time_step_size(),
-		     aladip_sim.sim.param().perturbation.dlamt);
+	    for(size_t s=0, s_to = aladip_sim.conf.old().
+		  perturbed_energy_derivatives.size();
+		s != s_to;
+		++s){
+
+	      aladip_sim.conf.old().perturbed_energy_derivatives[s].calculate_totals();
+
+	      aladip_sim.conf.current().perturbed_energy_derivative_averages[s].
+		update(aladip_sim.conf.old().perturbed_energy_derivatives[s],
+		       aladip_sim.conf.old().perturbed_energy_derivative_averages[s],
+		       aladip_sim.sim.time_step_size(),
+		       aladip_sim.sim.param().perturbation.dlamt);
+	    }
+	    
 	  }
 	  
 	  aladip_sim.sim.time() +=  aladip_sim.sim.time_step_size();

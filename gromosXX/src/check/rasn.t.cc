@@ -186,14 +186,23 @@ int main(int argc, char* argv[])
 
       // perturbed energy derivatives
 	  if (rasn_sim.sim.param().perturbation.perturbation){
-	    rasn_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
 
-	    rasn_sim.conf.current().perturbed_energy_derivative_averages.
-	      update(rasn_sim.conf.old().perturbed_energy_derivatives,
-		     rasn_sim.conf.old().perturbed_energy_derivative_averages,
-		     rasn_sim.sim.time_step_size(),
-		     rasn_sim.sim.param().perturbation.dlamt);
+	    for(size_t s=0, s_to = rasn_sim.conf.old().
+		  perturbed_energy_derivatives.size();
+		s != s_to;
+		++s){
+
+	      rasn_sim.conf.old().perturbed_energy_derivatives[s].
+		calculate_totals();
+
+	      rasn_sim.conf.current().perturbed_energy_derivative_averages[s].
+		update(rasn_sim.conf.old().perturbed_energy_derivatives[s],
+		       rasn_sim.conf.old().perturbed_energy_derivative_averages[s],
+		       rasn_sim.sim.time_step_size(),
+		       rasn_sim.sim.param().perturbation.dlamt);
+	    }
 	  }
+	  
 	  
 	  rasn_sim.sim.time() +=  rasn_sim.sim.time_step_size();
 	  ++ rasn_sim.sim.steps();
