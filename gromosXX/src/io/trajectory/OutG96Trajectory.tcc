@@ -63,6 +63,13 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
       }
     }
 
+    if(m_free_energy && (sim.steps() % m_every_free_energy) == 0){
+      if(sim.steps()){
+	_print_old_timestep(sim, *m_free_energy_traj);
+	_print_free_energyred(sim, *m_free_energy_traj);
+      }
+    }
+
   }
   else if(m_format == final){
     DEBUG(7, "print timestep final");
@@ -80,11 +87,18 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
       DEBUG(7, "print forcered final");
       _print_forcered(sim.system(), *m_force_traj);
     }
-    if(m_energy){
+
+    if(m_energy && (sim.steps() % m_every_energy) == 0){
       _print_old_timestep(sim, *m_energy_traj);
       _print_energyred(sim, *m_energy_traj);
       _print_volumepressurered(sim.system(), *m_energy_traj);
     }
+
+    if(m_free_energy && (sim.steps() % m_every_free_energy) == 0){
+      _print_old_timestep(sim, *m_free_energy_traj);
+      _print_free_energyred(sim, *m_free_energy_traj);
+    }
+
     
     // reset the format after one output (compare std::setw)
     m_format = m_old_format;    

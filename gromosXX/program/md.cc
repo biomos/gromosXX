@@ -93,10 +93,10 @@ int main(int argc, char *argv[])
     char *knowns[] = 
       {
 	"topo", "struct", "input", "verb", "alg", "pert",
-	"trj", "fin", "trv", "trf", "tre", "print", "trp"
+	"trj", "fin", "trv", "trf", "tre", "trg", "print", "trp"
       };
     
-    int nknowns = 13;
+    int nknowns = 14;
     
     string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
@@ -108,6 +108,7 @@ int main(int argc, char *argv[])
     usage += "\t[@trv    <velocity trajectory>]\n";
     usage += "\t[@trf    <force trajectory>]\n";
     usage += "\t[@tre    <energy trajectory>]\n";
+    usage += "\t[@trg    <free energy trajectory>]\n";
     usage += "\t[@alg    <RK|LF>]\n";
     usage += "\t[@print  <pairlist/force>]\n";
     usage += "\t[@trp    <print file>]\n";

@@ -20,14 +20,17 @@ inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
     m_vel_traj(NULL),
     m_force_traj(NULL),
     m_energy_traj(NULL),
+    m_free_energy_traj(NULL),
     m_pos(true),
     m_vel(false),
     m_force(false),
     m_energy(false),
+    m_free_energy(false),
     m_every_pos(every),
     m_every_vel(0),
     m_every_force(0),
     m_every_energy(0),
+    m_every_free_energy(0),
     m_precision(9),
     m_force_precision(9),
     m_width(15),
@@ -69,7 +72,11 @@ io::OutTrajectory<t_simulation>::~OutTrajectory()
       // m_energy_traj->close();
       delete m_energy_traj;
     }
-    
+
+    if (m_free_energy){
+      m_free_energy_traj->flush();
+      delete m_free_energy_traj;
+    }
   }
 }
 
@@ -108,6 +115,12 @@ inline void io::OutTrajectory<t_simulation>::print_title(std::string title)
 		   << "\tenergy trajectory\n"
 		   << "END\n";
   }
+  if (m_free_energy){
+    *m_free_energy_traj << "TITLE\n"
+		   << title << "\n"
+		   << "\tfree energy trajectory\n"
+		   << "END\n";
+  }
   
 }
 
@@ -141,9 +154,17 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
       if(sim.steps()){
 	_print_old_timestep(sim, *m_energy_traj);
 	_print_energyred(sim.system(), *m_energy_traj);
-	_print_volumepressurered(sim.syste(), *m_energy_traj);
+	_print_volumepressurered(sim.system(), *m_energy_traj);
       }
     }
+    
+    if(m_free_energy && (sim.steps() % m_every_free_energy) == 0){
+      if(sim.steps()){
+	_print_old_timestep(sim, *m_free_energy_traj);
+	_print_free_energyred(sim, *m_free_energy_traj);
+      }
+    }
+
   }
   else if(m_format == final){
     _print_timestep(sim, *m_final_traj);
@@ -155,12 +176,16 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
       _print_old_timestep(sim, *m_force_traj);
       _print_forcered(sim.system(), *m_force_traj);
     }
-    if (m_energy){
+    if(m_energy && (sim.steps() % m_every_energy) == 0){
       _print_old_timestep(sim, *m_energy_traj);
       _print_energyred(sim.system(), *m_energy_traj);
       _print_volumepressurered(sim.syste(), *m_energy_traj);
     }
-	
+    if(m_free_energy && (sim.steps() % m_every_free_energy) == 0){
+      _print_old_timestep(sim, *m_free_energy_traj);
+      _print_free_energyred(sim, *m_free_energy_traj);
+    }
+
     // reset the format after one output (compare std::setw)
     m_format = m_old_format;    
   }
@@ -229,6 +254,17 @@ inline void io::OutTrajectory<t_simulation>
   m_every_energy = every;
   assert(m_every_energy > 0);
 }
+
+template<typename t_simulation>
+inline void io::OutTrajectory<t_simulation>
+::free_energy_trajectory(std::ostream &os, int every)
+{
+  m_free_energy_traj = &os;
+  m_free_energy = true;
+  m_every_free_energy = every;
+  assert(m_every_free_energy > 0);
+}
+
 
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
@@ -514,8 +550,6 @@ inline void io::OutTrajectory<t_simulation>
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_precision);
   
-  os << "ENERGY\n"
-     << "# ENER\n";
   
   simulation::Energy const & e = sim.system().energies();
 
@@ -539,31 +573,28 @@ inline void io::OutTrajectory<t_simulation>
     // ener[1] is the kinetic energy
     ener[1] += sim.multibath()[i].kinetic_energy;
   */
-  ener[1] = e.kinetic_total;
-
+  ener[0]  = e.total;
+  ener[1]  = ener[2] = e.kinetic_total;
+  ener[8]  = e.potential_total;
+  ener[10] = e.bond_total;
+  ener[12] = e.angle_total;
+  ener[14] = e.improper_total;
+  ener[16] = e.dihedral_total;
+  ener[17] = e.lj_total;
+  ener[18] = e.crf_total;
+  
   int index=0;
   
   for(int i=0; i<numenergygroups; i++){
     for(int j=0; j<numenergygroups; j++, index++){
-      ener[17] +=e.lj_energy[i][j];
-      ener[19] +=e.crf_energy[i][j];
       enerlj[index] = e.lj_energy[i][j];
       enercl[index] = e.crf_energy[i][j];
     }
-    ener[10] +=e.bond_energy[i];
-    ener[12] +=e.angle_energy[i];
-    ener[14] +=e.improper_energy[i];
-    ener[16] +=e.dihedral_energy[i];
   }
-  tot_nb = ener[17] + ener[19];
-  tot_b  = ener[10] + ener[12] + ener[14] + ener[16];
-  tot_pot= tot_nb + tot_b;
-  for(unsigned int i=0; i< eneres.size(); i++)
-    tot_special += eneres[i];
-  
-  ener[0]    = tot_pot + ener[1] + tot_special;
   
   // now actually write it out
+  os << "ENERGY\n"
+     << "# ENER\n";
   for(unsigned int i=0; i<ener.size(); i++){
     os << std::setw(m_width) << ener[i] << "\n";
     if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
@@ -580,6 +611,58 @@ inline void io::OutTrajectory<t_simulation>
        << std::setw(m_width) << enercl[i] << ' '
        << std::setw(m_width) << enerrf[i] << ' '
        << std::setw(m_width) << enerrc[i] << "\n";
+  os << "END\n";
+}
+
+template<typename t_simulation>
+inline void io::OutTrajectory<t_simulation>
+::_print_free_energyred(t_simulation &sim, std::ostream &os)
+{
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "FREEENERGYLAMBDA\n"
+     << "# ENER\n";
+  
+  simulation::Energy const & e = sim.system().energies();
+  simulation::Energy const & f = sim.system().lambda_energies();
+  
+  const int numenergygroups=e.bond_energy.size();
+  
+  // energy arrays according to page III-56 of the GROMOS96 manual
+  std::vector<double> ener(9,0.0);
+  std::vector<double> fren(22,0.0);
+  
+
+  ener[0] = e.total;
+  fren[0] = f.total;
+  ener[1] = ener[2] = e.kinetic_total;
+  fren[1] = fren[2] = f.kinetic_total;
+  ener[8] = e.potential_total;
+  fren[8] = f.potential_total;
+  
+  fren[10] = f.bond_total;
+  fren[12] = f.angle_total;
+  fren[14] = f.improper_total;
+  fren[16] = f.dihedral_total;
+  fren[17] = f.lj_total;
+  fren[18] = f.crf_total;
+  
+  int index=0;
+  
+  // now actually write it out
+  for(unsigned int i=0; i<ener.size(); i++){
+    os << std::setw(m_width) << ener[i] << "\n";
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
+  }
+  os << "# RLAM\n";
+  os << std::setw(m_width) << sim.topology().lambda() << "\n";
+
+  os << "# FREN\n";
+  for(unsigned int i=0; i< fren.size(); i++){
+    os << std::setw(m_width) << fren[i] << "\n";
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
+  }
   os << "END\n";
 }
 

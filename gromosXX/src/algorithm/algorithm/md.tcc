@@ -686,51 +686,63 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
 {
   // std::cerr << "init_output" << std::endl;
   
-  int print_trajectory, print_velocity, print_energy_traj;
-  input.read_PRINT(print_trajectory, print_velocity, m_print_energy);
-
-  // std::cerr << "PRINT read" << std::endl;
+  int print_trajectory, print_velocity_traj, print_energy_traj, 
+    print_free_energy_traj;
+  int conf_sel;
+  int print_com, dihedral_monitoring;
   
+  input.read_PRINT(m_print_energy, m_print_com, dihedral_monitoring);
+
+  input.read_WRITE(print_trajectory, conf_sel, print_velocity_traj,
+		   print_energy_traj, print_free_energy_traj);
+  
+  // some unhandled cases
+  if (conf_sel != 0)
+    io::messages.add("WRITE block: NTWSE != 0 not implemented",
+		     "MD", io::message::error);
+
   std::ofstream *traj_file = new std::ofstream(args["trj"].c_str());
   std::ofstream *fin_file = new std::ofstream(args["fin"].c_str());
-
-  // std::cerr << "traj + fin file open" << std::endl;
 
   // use a G96 trajectory
   m_trajectory = 
     new io::OutG96Trajectory<simulation_type>(*traj_file, *fin_file, 
 					      print_trajectory, true);
 
-  // std::cerr << "OutG96Trajectory generated" << std::endl;  
-
   // optional files
+  //================
+
   // velocity trajectory
   if (args.count("trv") == 1){
-    // m_velocity_file.open(args["trv"].c_str());
     std::ofstream *vel_file = new std::ofstream(args["trv"].c_str());
-    m_trajectory->velocity_trajectory(*vel_file, print_velocity);
-    // std::cerr << "trv added" << std::endl;
+    m_trajectory->velocity_trajectory(*vel_file, print_velocity_traj);
   }
 
   // force trajectory
   if (args.count("trf") == 1){
-    // m_force_file.open(args["trf"].c_str());
     std::ofstream *force_file = new std::ofstream(args["trf"].c_str());
     m_trajectory->force_trajectory(*force_file, m_print_force);
-    // std::cerr << "trf added" << std::endl;
   }
 
+  // energy trajectory
   if (args.count("tre") == 1){
-    // m_energy_file.open(args["tre"].c_str());
     std::ofstream *energy_file = new std::ofstream(args["tre"].c_str());
-    m_trajectory->energy_trajectory(*energy_file, m_print_energy);
-    // std::cerr << "tre added" << std::endl;
+    m_trajectory->energy_trajectory(*energy_file, print_energy_traj);
+  }
+
+  // free energy trajectory
+  if (args.count("trg") == 1){
+    std::ofstream *free_energy_file = 
+      new std::ofstream(args["trg"].c_str());
+    m_trajectory->free_energy_trajectory(*free_energy_file, 
+				    print_free_energy_traj);
   }
   
+  // print file
   if (args.count("trp") == 1){
     m_print_file = new std::ofstream(args["trp"].c_str());
-    // std::cerr << "trp added" << std::endl;
   }
+
   // std::cerr << "init output done" << std::endl;
   
 }

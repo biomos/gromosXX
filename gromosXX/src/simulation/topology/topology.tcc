@@ -521,6 +521,14 @@ simulation::Topology::check_state()const
   return result;
 }
 
+/**
+ * return a lambda for a nonperturbed system
+ */
+inline const double simulation::Topology::lambda()const
+{
+  return 0.0;
+}
+
 namespace simulation
 {
   /**

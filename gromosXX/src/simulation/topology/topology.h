@@ -224,7 +224,11 @@ namespace simulation
      * check state
      */
     int check_state()const;
-
+    /**
+     * return lambda
+     */
+    const double lambda()const;
+    
   private:
     /**
      * the soluteatoms.

@@ -71,6 +71,11 @@ namespace io {
      */
     void energy_trajectory(std::ostream &os, int every=1);
     /**
+     * write a free energy trajectory
+     */
+    void free_energy_trajectory(std::ostream &os, int every=1);
+    
+    /**
      * precision of output.
      */
     void precision(int prec, int add=6);
@@ -86,16 +91,19 @@ namespace io {
     std::ostream *m_vel_traj;
     std::ostream *m_force_traj;
     std::ostream *m_energy_traj;
+    std::ostream *m_free_energy_traj;
     
     bool m_pos;
     bool m_vel;
     bool m_force;
     bool m_energy;
+    bool m_free_energy;
 
     int m_every_pos;
     int m_every_vel;
     int m_every_force;
     int m_every_energy;
+    int m_every_free_energy;
 
     int m_precision;
     int m_force_precision;
@@ -128,6 +136,8 @@ namespace io {
     void _print_forcered(typename t_simulation::system_type &sys, std::ostream &os);
     void _print_energyred(t_simulation &sim, std::ostream &os);
     void _print_volumepressurered(typename t_simulation::system_type &sys, std::ostream &os);
+    void _print_free_energyred(t_simulation &sim, std::ostream &os);
+    
     
     void _print_box(typename t_simulation::system_type &sys, std::ostream &os);
   };

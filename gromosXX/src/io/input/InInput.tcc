@@ -495,11 +495,11 @@ inline void io::InInput::read_FLEXCON(int &lfcon)
 }
 
 /**
- * read the PRINT and WRITE block.
+ * read the PRINT
  */
-inline void io::InInput::read_PRINT(int &print_trajectory, 
-				    int &print_velocity,
-				    int &print_energy)
+inline void io::InInput::read_PRINT(int &NTPR, 
+				    int &NTPL,
+				    int &NTPP)
 {
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -508,9 +508,9 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
 
   if (!buffer.size()){
     io::messages.add("no PRINT block", "InInput", io::message::notice);
-    print_trajectory = 1;
-    print_velocity = 1;
-    print_energy = 1;
+    NTPR = 1;
+    NTPL = 1;
+    NTPP = 1;
     return;
   }
 
@@ -519,7 +519,7 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
   _lineStream.str(*it);
   
   int com, dih_monitoring;
-  _lineStream >> print_energy >> com >> dih_monitoring;
+  _lineStream >> NTPR >> NTPL >> NTPP;
 
   if (_lineStream.fail())
     io::messages.add("bad line in PRINT block",
@@ -528,23 +528,47 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
   if (!_lineStream.eof())
     io::messages.add("End of line not reached in PRINT, but should have been: \n" + *it +  "\n",
 		       "InInput", io::message::warning);
+    
+}
 
+/**
+ * read the WRITE
+ */
+inline void io::InInput::read_WRITE(int &NTWX,
+				    int &NTWSE,
+				    int &NTWV,
+				    int &NTWE,
+				    int &NTWG)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
   buffer = m_block["WRITE"];
+
+  if (!buffer.size()){
+    io::messages.add("no WRITE block", "InInput", io::message::notice);
+    NTWX = 1;
+    NTWSE = 0;
+    NTWV = 1;
+    NTWE = 1;
+    NTWG = 1;
+    return;
+  }
+
   it = buffer.begin() + 1;
   _lineStream.clear();
   _lineStream.str(*it);
   
-  int format, selection, energy, free_energy;
-  _lineStream >> print_trajectory >> selection >> print_velocity
-	      >> energy >> free_energy >> format;
+  _lineStream >> NTWX >> NTWSE >> NTWV >> NTWE >> NTWG;
   
   if (_lineStream.fail())
     io::messages.add("bad line in WRITE block",
 		       "InInput", io::message::error);
 
   if (!_lineStream.eof())
-    io::messages.add("End of line not reached in WRITE block, but should have been: \n" + *it +  "\n",
-		       "InInput", io::message::warning);
+    io::messages.add("End of line not reached in WRITE block, "
+		     "but should have been: \n" + *it +  "\n",
+		     "InInput", io::message::warning);
     
 }
 

@@ -62,10 +62,14 @@ namespace io {
     bool read_FORCEFIELD(int &bond_term, int &angle_term);
 
     /**
-     * read PRINT and WRITE block.
+     * read PRINT block.
      */
-    void read_PRINT(int &print_trajectory, int &print_velocity,
-		    int &print_energy);
+    void read_PRINT(int &NTPR, int &NTPL, int &NTPP);
+
+    /**
+     * read WRITE block.
+     */
+    void read_WRITE(int &NTWX, int &NTWSE, int &NTWV, int &NTWE, int &NTWG);
 
     /**
      * read the PCOUPLE block.
