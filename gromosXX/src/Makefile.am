@@ -1,5 +1,7 @@
 SUBDIRS = util simulation math topology configuration algorithm interaction io check .
 
+noinst_HEADERS = 	stdheader.h
+
 lib_LTLIBRARIES = 	libgroxx.la
 
 libgroxx_la_LDFLAGS =	-no-undefined -version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0 $(BLITZ_LDFLAGS)
