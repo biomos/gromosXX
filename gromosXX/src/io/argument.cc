@@ -22,7 +22,8 @@ namespace io{
     : std::multimap<std::string,std::string>(),
       d_usage(""),
       d_prog(""),
-      d_known()
+      d_known(),
+      empty("")
   {
   }
   
@@ -135,7 +136,7 @@ namespace io{
   {
     const_iterator f = find(str);
     if(f == end()){
-      return "";
+      return empty;
     }
   
     else return find(str)->second;

@@ -75,6 +75,8 @@ namespace io{
     std::string d_prog;
     std::set<std::string> d_known;
 
+    std::string const empty;
+
   };
 
 }
