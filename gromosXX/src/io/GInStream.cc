@@ -33,11 +33,14 @@ void io::GInStream::readStream()
       io::getblock(stream(), buffer);
     }
     catch(std::runtime_error e){
+      if (buffer.size() && buffer[0] != ""){
+	std::cout << "invalid block " + buffer[0] <<  " in input file?" << std::endl;
+      }
+      
       break;
     }
-    
+
     trimblock(buffer);
-    // std::cerr << buffer[0] << std::endl;
     
     m_block[buffer[0]] = buffer;
     

@@ -39,9 +39,12 @@ inline void algorithm::Berendsen_Thermostat
       DEBUG(7, "pre-scale ekin: " << 
 	    b_it->ekin - e.flexible_constraints_ir_kinetic_energy[num]);
 
-      const double free_temp = 2 * 
+      double free_temp = 2 * 
 	(b_it->ekin - e.flexible_constraints_ir_kinetic_energy[num]) / 
 	(b_it->dof * math::k_Boltzmann);
+
+      // divide by zero measure...
+      if (free_temp < math::epsilon) free_temp = b_it->temperature;
 
       b_it->scale = sqrt(1.0 + dt / b_it->tau *
 		       (b_it->temperature / free_temp - 1));
