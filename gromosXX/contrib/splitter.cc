@@ -256,7 +256,7 @@ void write_solution(map<string, string> &current)
 	   << sol_it->first.substr(2, string::npos)
 	   << "\" << setw(30) << left << \""
 	   << sol_it->second
-	   << "\" << \"\\n\";\n";
+	   << "\" << right << \"\\n\";\n";
   }
   splitf << "\n";
   
