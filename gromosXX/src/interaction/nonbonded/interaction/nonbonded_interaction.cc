@@ -341,10 +341,13 @@ void interaction::Nonbonded_Interaction::check_spc_loop
 
     sim.param().force.spc_loop = 0;
     if (!quiet)
+	if (topo.num_solvents() > 0)
       std::cout << "\tusing standard solvent loops (num solvents doesn't match)\n"
 		<< "\t\tnum solvents: " << topo.num_solvents() << "\n"
 		<< "\t\tsolvent atoms: " << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
 		<< "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
+	else
+      std::cout << "\tusing standard solvent loops (no solvent present!)\n\n";
     return;
   }
   
