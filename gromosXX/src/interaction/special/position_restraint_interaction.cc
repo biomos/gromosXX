@@ -54,8 +54,6 @@ static int _calculate_position_restraint_interactions
 
     double dist = sqrt(abs2(v));
     
-    assert(dist != 0.0);
-    
     f = (- sim.param().posrest.force_constant / it->bfactor) * v;
 
     force(it->seq) += f;
