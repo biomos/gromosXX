@@ -55,7 +55,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
   interaction::create_g96_forcefield(*ff, topo, sim, conf, it);
-
+  
   //==================================================
   // construct the md algorithm
   //==================================================
@@ -78,7 +78,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   // energy minimisation or MD?
   if (sim.param().minimise.ntem == 1){
     algorithm::Steepest_Descent * sd = new algorithm::Steepest_Descent;
-    sd->init(topo, conf, sim);
+    // sd->init(topo, conf, sim);
     md_seq.push_back(sd);
   }
   else{

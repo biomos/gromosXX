@@ -80,7 +80,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Shake<do_virial>
 	    (sim.param().constraint.solute.shake_tolerance);
 	  it.read_harmonic_bonds(s->parameter());
-	  s->init(topo, conf, sim, quiet);
+	  // s->init(topo, conf, sim, quiet);
 	  md_seq.push_back(s);
 	  
 	}
@@ -90,7 +90,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Perturbed_Shake<do_virial>
 	    (sim.param().constraint.solute.shake_tolerance);
 	  it.read_harmonic_bonds(ps->parameter());
-	  ps->init(topo, conf, sim, quiet);
+	  // ps->init(topo, conf, sim, quiet);
 	  md_seq.push_back(ps);
 
 	}
@@ -101,7 +101,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	algorithm::Lincs<do_virial> * s =
 	  new algorithm::Lincs<do_virial>;
 	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim, quiet);
+	// s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 
 	if (sim.param().perturbation.perturbation){
@@ -134,14 +134,14 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  (sim.param().constraint.solute.shake_tolerance, 1000, ff);
 
 	it.read_harmonic_bonds(fs->parameter());
-	fs->init(topo, conf, sim, quiet);
+	// fs->init(topo, conf, sim, quiet);
 	md_seq.push_back(fs);
 
 	if (sim.param().perturbation.perturbation){
 
 	  algorithm::Perturbed_Flexible_Constraint<do_virial> * pfc =
 	    new algorithm::Perturbed_Flexible_Constraint<do_virial>(*fs);
-	  pfc->init(topo, conf, sim, quiet);
+	  // pfc->init(topo, conf, sim, quiet);
 	  md_seq.push_back(pfc);
 
 	}
@@ -173,7 +173,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  new algorithm::Shake<do_virial>
 	  (sim.param().constraint.solvent.shake_tolerance);
 	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim, quiet);
+	// s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 	
 	break;
@@ -183,7 +183,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	algorithm::Lincs<do_virial> * s =
 	  new algorithm::Lincs<do_virial>;
 	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim, quiet);
+	// s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 	
 	break;

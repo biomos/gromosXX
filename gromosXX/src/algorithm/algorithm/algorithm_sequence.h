@@ -24,6 +24,14 @@ namespace algorithm
      */
     ~Algorithm_Sequence();
     /**
+     * init
+     */
+    int init(topology::Topology &topo, 
+	     configuration::Configuration &conf,
+	     simulation::Simulation &sim,
+	     bool quiet = false);
+
+    /**
      * calculate all interactions.
      */
     int run(topology::Topology &topo, 

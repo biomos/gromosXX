@@ -34,10 +34,11 @@
 
 #include "BUILD_NUMBER"
 
+void print_title(bool color = false);
+
 int main(int argc, char *argv[]){
 
   const double start = util::now();
-  // double init_start = util::now();
 
   try{
     
@@ -45,10 +46,10 @@ int main(int argc, char *argv[]){
       {
         "topo", "conf", "input", "verb", "pttopo",
         "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-	"bae", "bag", "posres", "version"
+	"bae", "bag", "posres", "jval", "version"
       };
     
-    int nknowns = 17;
+    int nknowns = 18;
     
     std::string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
@@ -64,6 +65,7 @@ int main(int argc, char *argv[]){
     usage += "\t[@bae    <block averaged energy trajectory>]\n";
     usage += "\t[@bag    <block averaged free energy trajectory>]\n";    
     usage += "\t[@posres <position restraints data>]\n";
+    usage += "\t[@jval   <jvalue restraints data>]\n";
     usage += "\t[@print  <pairlist/force>]\n";
     usage += "\t[@trp    <print file>]\n";
     usage += "\t[@verb   <[module:][submodule:]level>]\n";
@@ -71,47 +73,13 @@ int main(int argc, char *argv[]){
 
     io::Argument args(argc, argv, nknowns, knowns, usage);
     
-    if (args.count("version") >= 0){
-      
-#ifdef NDEBUG
-#ifndef BZDEBUG
-      std::cout << "\033[1;32m";
-#else
-      std::cout << "\033[1;31m";
-#endif
-#else
-      std::cout << "\033[1;31m";
-#endif
-      std::cout << "\n\nGromosXX 0.1.3 development\033[22;0m\n\n"
-		<< "1st June 2004\n";
-    }
-    else
-      std::cout << "\n\nGromosXX 0.1.2 development\n\n"
-		<< "20. January 2004\n";
-    
-    std::cout << "build date    " << BUILD_DATE << "\n"
-	      << "build number  " << BUILD_NUMBER << "\n\n";
-    
-#ifdef NDEBUG
-    std::cout << "standard library debugging disabled.\n";
-#else
-    std::cout << "standard library debugging enabled.\n";
-#endif
-#ifdef BZDEBUG
-    std::cout << "Blitz debugging enabled.\n";
-#else
-    std::cout << "Blitz debugging disabled.\n";
-#endif
-    
-    std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"
-	      << "Professor W. F. van Gunsteren\n"
-	      << "Swiss Federal Institute of Technology\n"
-	      << "Zuerich\n\n"
-	      << "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+
     
     if (args.count("version") >= 0){
+      print_title(true);
       return 0;
     }
+    else print_title();
     
     // parse the verbosity flag and set debug levels
     util::parse_verbosity(args);
@@ -130,39 +98,12 @@ int main(int argc, char *argv[]){
 
     traj.title("GromosXX\n" + sim.param().title);
 
-    if (args.count("fin") > 0)
-      traj.final_configuration(args["fin"]);
-    else throw std::string("argument fin for final configuration required!");
-    if (args.count("trj") > 0)
-      traj.trajectory(args["trj"], sim.param().write.position);
-    else if (sim.param().write.position)
-      throw std::string("write trajectory but no trj argument");
-    if (args.count("trv") > 0)
-      traj.velocity_trajectory(args["trv"], sim.param().write.velocity);
-    else if (sim.param().write.velocity)
-      throw std::string("write velocity trajectory but no trv argument");
-    if (args.count("trf") > 0)
-      traj.force_trajectory(args["trf"], 1);
-    //else if (sim.param().write.force)
-    //  throw std::string("write force trajectory but no trf argument");
-    if (args.count("tre") > 0)
-      traj.energy_trajectory(args["tre"], sim.param().write.energy);
-    else if (sim.param().write.energy)
-      throw std::string("write energy trajectory but no tre argument");
-    if (args.count("trg") > 0)
-      traj.free_energy_trajectory(args["trg"], sim.param().write.free_energy);
-    else if (sim.param().write.free_energy)
-      throw std::string("write free energy trajectory but no trg argument");
-    if (args.count("bae") > 0)
-      traj.block_averaged_energy(args["bae"], sim.param().write.block_average);
-    else if (sim.param().write.block_average && sim.param().write.energy)
-      throw std::string("write block averaged energy but no bae argument");
-	if (sim.param().perturbation.perturbation){
-			if (args.count("bag") > 0)
-				traj.block_averaged_free_energy(args["bag"], sim.param().write.block_average);
-			else if (sim.param().write.block_average && sim.param().write.free_energy)
-				throw std::string("write block averaged free energy but no bag argument");
-	}
+    // create output files...
+    traj.init(args, sim.param());
+
+    // initialises all algorithms (and therefore also the forcefield)
+    md.init(topo, conf, sim);
+
     std::cout << "\nMESSAGES FROM INITIALIZATION\n";
     if (io::messages.display(std::cout) >= io::message::error){
       // exit
@@ -179,31 +120,9 @@ int main(int argc, char *argv[]){
 	      << "dynamics simulations\n" << std::endl;
 
 
-    // some omp stuff
-#ifdef OMP
-    int nthreads, tid;
-#pragma omp parallel private(nthreads, tid)
-    {
-      tid = omp_get_thread_num();
-      if (tid == 0){
-	nthreads = omp_get_num_threads();
-	std::cout << "OpenMP code enabled\n"
-		  << "\tshared memory parallelization\n"
-		  << "\twww.openmp.org\n\n"
-		  << "\tusing "
-		  << omp_get_num_threads() << " threads\n"
-		  << "\tthis can be adjusted by setting the\n"
-		  << "\tOMP_NUM_THREADS environment variable\n"
-		  << std::endl;
-      }
-   
-    }
-#endif
     
     double end_time = sim.param().step.t0 + 
       sim.time_step_size() * sim.param().step.number_of_steps;
-    
-    
     
     std::cout << "==================================================\n"
 	      << " MAIN MD LOOP\n"
@@ -215,7 +134,6 @@ int main(int argc, char *argv[]){
     const double init_time = util::now() - start;
     
     while(sim.time() < end_time){
-      // std::cout << "\tmd step " << sim.time() << std::endl;
       
       traj.write(conf, topo, sim, io::reduced);
 
@@ -291,3 +209,69 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// helper functions
+////////////////////////////////////////////////////////////////////////////////
+
+void print_title(bool color)
+{
+  if (color){
+
+#ifdef NDEBUG
+#ifndef BZDEBUG
+    std::cout << "\033[1;32m";
+#else
+    std::cout << "\033[1;31m";
+#endif
+#else
+    std::cout << "\033[1;31m";
+#endif
+    std::cout << "\n\nGromosXX 0.1.3 development\033[22;0m\n\n"
+	      << "1st June 2004\n";
+  }
+  else
+    std::cout << "\n\nGromosXX 0.1.2 development\n\n"
+	      << "20. January 2004\n";
+  
+  std::cout << "build date    " << BUILD_DATE << "\n"
+	    << "build number  " << BUILD_NUMBER << "\n\n";
+  
+#ifdef NDEBUG
+  std::cout << "standard library debugging disabled.\n";
+#else
+  std::cout << "standard library debugging enabled.\n";
+#endif
+#ifdef BZDEBUG
+  std::cout << "Blitz debugging enabled.\n";
+#else
+  std::cout << "Blitz debugging disabled.\n";
+#endif
+
+  // some omp stuff
+#ifdef OMP
+  int nthreads, tid;
+#pragma omp parallel private(nthreads, tid)
+  {
+    tid = omp_get_thread_num();
+    if (tid == 0){
+      nthreads = omp_get_num_threads();
+      std::cout << "OpenMP code enabled\n"
+		<< "\tshared memory parallelization\n"
+		<< "\twww.openmp.org\n\n"
+		<< "\tusing "
+		<< omp_get_num_threads() << " threads\n"
+		  << "\tthis can be adjusted by setting the\n"
+		<< "\tOMP_NUM_THREADS environment variable\n"
+		<< std::endl;
+    }
+    
+  }
+#endif
+  
+  std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"
+	    << "Professor W. F. van Gunsteren\n"
+	    << "Swiss Federal Institute of Technology\n"
+	    << "Zuerich\n\n"
+	    << "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+
+}

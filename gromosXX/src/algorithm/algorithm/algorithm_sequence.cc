@@ -34,6 +34,31 @@ algorithm::Algorithm_Sequence::~Algorithm_Sequence()
 }
 
 int algorithm::Algorithm_Sequence
+::init(topology::Topology & topo, 
+       configuration::Configuration &conf,
+       simulation::Simulation &sim,
+       bool quiet)
+{
+  DEBUG(5, "Algorithm_Sequence: init");
+
+  int ret;
+  
+  for(Algorithm_Sequence::iterator 
+	it = begin(), to = end();
+      it != to;
+      ++it){
+    DEBUG(7, "algorithm::init -> " << (*it)->name);
+    
+    if((ret = (*it)->init(topo, conf, sim, quiet))){
+      io::messages.add("Error in algorithm sequence init",
+		       "Algorithm_Sequence",
+		       io::message::error);
+    }
+  }
+  return 0;
+}
+
+int algorithm::Algorithm_Sequence
 ::run(topology::Topology & topo, 
       configuration::Configuration &conf,
       simulation::Simulation &sim)
