@@ -15,13 +15,12 @@ template<typename t_interaction_spec, typename t_perturbation_spec>
 interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::Nonbonded_Set(Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec> & nbi)
   : Nonbonded_Outerloop<t_interaction_spec>(nbi),
-    Perturbed_Nonbonded_Outerloop<t_interaction_spec, 
-				  typename t_perturbation_spec::perturbation_details>(nbi),
-    Perturbed_Nonbonded_Pair<
-  t_interaction_spec, typename t_perturbation_spec::perturbation_details>(nbi, 
-		      dynamic_cast<Nonbonded_Term&>(*this),
-		      dynamic_cast<Perturbed_Nonbonded_Term&>(*this)),
-    m_nonbonded_interaction(&nbi)
+  Perturbed_Nonbonded_Outerloop<t_interaction_spec, 
+  typename t_perturbation_spec::perturbation_details>(nbi),
+  Perturbed_Nonbonded_Pair<t_interaction_spec, 
+  typename t_perturbation_spec::perturbation_details>(nbi, dynamic_cast<Nonbonded_Term&>(*this),
+						      dynamic_cast<Perturbed_Nonbonded_Term&>(*this)),
+							m_nonbonded_interaction(&nbi)
 {
 }
 
