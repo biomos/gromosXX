@@ -1,0 +1,74 @@
+INCLUDES = -I$(top_srcdir)/src
+
+include_HEADERS =		interaction.h \
+				interaction_types.h \
+				forcefield/forcefield.h \
+				forcefield/create_forcefield.h \
+				bonded/create_bonded.h \
+				bonded/quartic_bond_interaction.h \
+				bonded/quartic_bond_interaction.tcc \
+				bonded/harmonic_bond_interaction.h \
+				bonded/harmonic_bond_interaction.tcc \
+				bonded/angle_interaction.h \
+				bonded/angle_interaction.tcc \
+				bonded/improper_dihedral_interaction.h \
+				bonded/improper_dihedral_interaction.tcc \
+				bonded/dihedral_interaction.h \
+				bonded/dihedral_interaction.tcc \
+				bonded/perturbed_quartic_bond_interaction.h \
+				bonded/perturbed_quartic_bond_interaction.tcc \
+				bonded/perturbed_harmonic_bond_interaction.h \
+				bonded/perturbed_harmonic_bond_interaction.tcc \
+				bonded/perturbed_angle_interaction.h \
+				bonded/perturbed_angle_interaction.tcc \
+				bonded/perturbed_improper_dihedral_interaction.h \
+				bonded/perturbed_improper_dihedral_interaction.tcc \
+				bonded/perturbed_dihedral_interaction.h \
+				bonded/perturbed_dihedral_interaction.tcc \
+				nonbonded/create_nonbonded.h \
+				nonbonded/interaction_spec.h \
+				nonbonded/interaction/nonbonded_base.h \
+				nonbonded/interaction/nonbonded_base.tcc \
+				nonbonded/interaction/nonbonded_innerloop.h \
+				nonbonded/interaction/nonbonded_innerloop.tcc \
+				nonbonded/interaction/nonbonded_interaction.h \
+				nonbonded/interaction/nonbonded_interaction.tcc \
+				nonbonded/interaction/perturbed_nonbonded_innerloop.h \
+				nonbonded/interaction/perturbed_nonbonded_innerloop.tcc \
+				nonbonded/interaction/perturbed_nonbonded_interaction.h \
+				nonbonded/interaction/perturbed_nonbonded_interaction.tcc \
+				nonbonded/interaction/storage.h \
+				nonbonded/filter/chargegroup_grid.h \
+				nonbonded/filter/chargegroup_grid.tcc \
+				nonbonded/filter/exclusion_filter.h \
+				nonbonded/filter/exclusion_filter.tcc \
+				nonbonded/filter/filter.h \
+				nonbonded/filter/perturbation_filter.h \
+				nonbonded/filter/perturbation_filter.tcc \
+				nonbonded/filter/range_filter.h \
+				nonbonded/filter/range_filter.tcc \
+				nonbonded/pairlist/grid_pairlist_algorithm.h \
+				nonbonded/pairlist/grid_pairlist_algorithm.tcc \
+				nonbonded/pairlist/pairlist.h \
+				nonbonded/pairlist/pairlist.tcc \
+				nonbonded/pairlist/pairlist_algorithm.h \
+				nonbonded/pairlist/standard_pairlist_algorithm.h \
+				nonbonded/pairlist/standard_pairlist_algorithm.tcc
+
+lib_LTLIBRARIES	=			libinteraction.la
+
+libinteraction_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
+
+libinteraction_la_SOURCES =	interaction.cc \
+				forcefield/forcefield.cc \
+				forcefield/create_forcefield.cc \
+				bonded/create_bonded.cc \
+				nonbonded/create_nonbonded.cc
+
+
+bin_PROGRAMS =			
+
+check_PROGRAMS =
+
+TESTS =
+
