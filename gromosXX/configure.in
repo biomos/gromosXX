@@ -2,7 +2,7 @@ dnl configure.in for GromosXX
 dnl written by Markus Christen
 dnl april, 2003
 
-AC_PREREQ(2.53)
+AC_PREREQ(2.58)
 
 AC_INIT()
 AC_CONFIG_SRCDIR(src/math/math.cc)
