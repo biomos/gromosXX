@@ -45,6 +45,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "perturbed_angle_interaction.tcc"
+#include "perturbed_angle_interaction.cc"
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * @file improper_dihedral_interaction.tcc
+ * @file improper_dihedral_interaction.cc
  * template methods of Improper_dihedral_interaction.
  */
 

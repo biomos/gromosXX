@@ -1,5 +1,5 @@
 /**
- * @file angle_interaction.tcc
+ * @file angle_interaction.cc
  * template methods of Angle_Interaction.
  */
 

@@ -48,6 +48,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "angle_interaction.tcc"
+#include "angle_interaction.cc"
 
 #endif

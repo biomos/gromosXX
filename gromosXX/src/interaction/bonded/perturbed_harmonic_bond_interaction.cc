@@ -1,5 +1,5 @@
 /**
- * @file perturbed_harmonic_bond_interaction.tcc
+ * @file perturbed_harmonic_bond_interaction.cc
  * template methods of Perturbed_Harmonic_Bond_Interaction
  */
 

@@ -50,6 +50,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "quartic_bond_interaction.tcc"
+#include "quartic_bond_interaction.cc"
 
 #endif

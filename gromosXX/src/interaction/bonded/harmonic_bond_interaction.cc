@@ -1,5 +1,5 @@
 /**
- * @file harmonic_bond_interaction.tcc
+ * @file harmonic_bond_interaction.cc
  * template methods of harmonic_bond_interaction.
  */
 

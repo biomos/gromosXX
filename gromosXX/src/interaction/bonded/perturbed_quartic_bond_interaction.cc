@@ -1,5 +1,5 @@
 /**
- * @file perturbed_quartic_bond_interaction.tcc
+ * @file perturbed_quartic_bond_interaction.cc
  * template methods of Perturbed_Quartic_Bond_Interaction
  */
 

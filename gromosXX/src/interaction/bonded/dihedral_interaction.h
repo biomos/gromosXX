@@ -54,6 +54,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "dihedral_interaction.tcc"
+#include "dihedral_interaction.cc"
 
 #endif

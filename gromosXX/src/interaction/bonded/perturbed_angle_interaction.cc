@@ -1,5 +1,5 @@
 /**
- * @file perturbed_angle_interaction.tcc
+ * @file perturbed_angle_interaction.cc
  * template methods of Perturbed_Angle_Interaction
  */
 

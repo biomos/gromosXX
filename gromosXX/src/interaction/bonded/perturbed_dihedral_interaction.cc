@@ -1,5 +1,5 @@
 /**
- * @file perturbed_dihedral_interaction.tcc
+ * @file perturbed_dihedral_interaction.cc
  * template methods of Perturbed_Dihedral_Interaction
  */
 

@@ -50,6 +50,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "improper_dihedral_interaction.tcc"
+#include "improper_dihedral_interaction.cc"
 
 #endif

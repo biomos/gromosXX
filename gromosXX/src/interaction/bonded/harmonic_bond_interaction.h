@@ -50,6 +50,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "harmonic_bond_interaction.tcc"
+#include "harmonic_bond_interaction.cc"
 
 #endif

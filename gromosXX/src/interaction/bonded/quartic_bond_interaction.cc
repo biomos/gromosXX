@@ -1,5 +1,5 @@
 /**
- * @file quartic_bond_interaction.tcc
+ * @file quartic_bond_interaction.cc
  * template methods of Quartic_bond_interaction.
  */
 

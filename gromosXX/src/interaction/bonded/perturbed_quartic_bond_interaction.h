@@ -45,6 +45,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "perturbed_quartic_bond_interaction.tcc"
+#include "perturbed_quartic_bond_interaction.cc"
 
 #endif

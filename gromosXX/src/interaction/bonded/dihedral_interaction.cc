@@ -1,5 +1,5 @@
 /**
- * @file dihedral_interaction.tcc
+ * @file dihedral_interaction.cc
  * template methods of Dihedral_interaction.
  */
 
