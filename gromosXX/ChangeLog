@@ -1,0 +1,2386 @@
+2004-04-23 10:40  markus
+
+	* src/io/parameter/in_parameter.cc: easier input in MINIMISE
+
+2004-04-23 10:25  markus
+
+	* src/io/parameter/in_parameter.cc: allow standard input and only
+	  number of steps
+
+2004-04-23 10:24  markus
+
+	* src/algorithm/constraints/flexible_constraint.tcc: standard
+	  formula
+
+2004-04-16 09:57  markus
+
+	* src/algorithm/constraints/flexible_constraint.tcc: hardcode two
+	  methods to do flexible constraints
+
+2004-04-14 13:43  markus
+
+	* src/configuration/energy.cc: isnan typo
+
+2004-04-13 10:40  markus
+
+	* program/BUILD_NUMBER: 0.1.2 - 87 PRE1
+
+2004-04-13 10:13  markus
+
+	* src/io/parameter/in_parameter.cc: energy minimisation parameter
+	  check
+
+2004-04-12 10:58  markus
+
+	* src/io/parameter/in_parameter.cc: allow for old and new format of
+	  MINIMISE block
+
+2004-04-12 10:57  markus
+
+	* src/io/configuration/out_configuration.h: print final state of
+	  energy minimisation
+
+2004-04-12 10:55  markus
+
+	* program/md.cc: aborting if NaN
+
+2004-04-12 10:55  markus
+
+	* src/: configuration/energy.cc, configuration/energy.h,
+	  util/error.h, algorithm/integration/steepest_descent.cc: checking
+	  for NaN
+
+2004-04-09 16:24  markus
+
+	* program/BUILD_NUMBER,
+	  src/algorithm/constraints/flexible_constraint.tcc: fixed bugs 39,
+	  40, 41 and 42; added atomic virial checks
+
+2004-04-09 16:17  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_interaction.h,
+	  nonbonded_interaction.tcc, nonbonded_set.h, nonbonded_set.tcc:
+	  quiet initialization
+
+2004-04-09 16:15  markus
+
+	* src/algorithm/constraints/shake.tcc: atomic virial stored in
+	  wrong state struct, shake error output format update
+
+2004-04-09 16:14  markus
+
+	* src/io/parameter/in_parameter.cc: TCOUPLE, PCOUPLE and FORCE /
+	  FORCEFIELD inconsistencies in input parameter interpretation
+
+2004-04-09 16:13  markus
+
+	* src/interaction/bonded/create_bonded.cc: resolving FORCE /
+	  FORCEFIELD inconsistencies
+
+2004-04-09 16:12  markus
+
+	* src/algorithm/constraints/remove_com_motion.cc: code review
+
+2004-04-09 16:11  markus
+
+	* src/: algorithm/Makefile.am, configuration/Makefile.am,
+	  interaction/Makefile.am, io/Makefile.am, math/Makefile.am,
+	  simulation/Makefile.am, topology/Makefile.am, util/Makefile.am:
+	  removed version info from convenience libraries
+
+2004-04-09 16:09  markus
+
+	* Makefile.am, program/Makefile.am: make build support
+
+2004-04-09 16:09  markus
+
+	* contrib/splitter.cc: atomic virial testing support
+
+2004-04-09 16:08  markus
+
+	* contrib/Makefile: simple make support
+
+2004-04-09 16:08  markus
+
+	* doc/newinput.txt: minor corrections
+
+2004-04-09 16:07  markus
+
+	* contrib/split_develop.dat, src/check/Makefile.am,
+	  src/check/aladip_atomic.t.cc, src/check/check_state.cc,
+	  src/check/check_state.h, src/check/data/aladip_atomic.in: atomic
+	  virial checks
+
+2004-02-26 17:09  markus
+
+	* src/algorithm/constraints/: create_constraints.cc,
+	  flexible_constraint.h, flexible_constraint.tcc: preparation for
+	  exact solution, reintegrating flexible constraints. energy
+	  derivative still needs checking
+
+2004-02-26 17:08  markus
+
+	* src/interaction/: interaction.h,
+	  nonbonded/interaction/nonbonded_interaction.h,
+	  nonbonded/interaction/nonbonded_interaction.tcc,
+	  nonbonded/interaction/nonbonded_set.h,
+	  nonbonded/interaction/nonbonded_set.tcc: hessian in interaction
+	  interface
+
+2004-02-24 16:19  markus
+
+	* program/BUILD_NUMBER: enhanced energy minimisation and free
+	  energy different lambda dependence
+
+2004-02-24 16:18  markus
+
+	* src/:
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
+	  io/configuration/in_configuration.cc,
+	  io/topology/in_perturbation.cc: lambdadependence: alpha <-1.0 or
+	  >1.0 possible
+
+2004-02-24 16:17  markus
+
+	* src/: algorithm/integration/steepest_descent.cc,
+	  io/parameter/in_parameter.cc, simulation/parameter.h: energy
+	  minimisation: force limit
+
+2004-02-22 10:44  markus
+
+	* program/BUILD_NUMBER: 0.1.2 beta1
+
+2004-02-22 10:43  markus
+
+	* src/io/configuration/out_configuration.cc: perturbed energy
+	  derivative averages / fluctuations: lambdadependence written in
+	  output
+
+2004-02-21 20:11  markus
+
+	* src/: io/topology/in_topology.cc, simulation/parameter.h: fixed
+	  NPM=0 error
+
+2004-02-21 20:09  markus
+
+	* configure.in, contrib/splitter.cc, program/md.cc,
+	  src/interaction/nonbonded/split/nonbonded_split.h,
+	  src/util/parse_verbosity.cc: adding precompiled header support
+	  (icc 8.0)
+
+2004-02-21 14:38  markus
+
+	* program/Makefile.am, src/interaction/Makefile.am: re-enabling
+	  make distcheck
+
+2004-02-21 09:55  markus
+
+	* program/BUILD_NUMBER: updating...
+
+2004-02-21 09:48  developer
+
+	* program/md.cc: fixing error message --markus
+
+2004-02-21 09:48  developer
+
+	* src/io/: configuration/in_configuration.cc,
+	  topology/in_perturbation.cc: fixing segfault when adding intra
+	  energy group lambda dependency --markus
+
+2004-02-21 09:47  developer
+
+	* src/interaction/nonbonded/interaction/:
+	  nonbonded_interaction.tcc, perturbed_nonbonded_innerloop.tcc,
+	  perturbed_nonbonded_term.tcc: adjusting DEBUG levels, assert
+	  statements --markus
+
+2004-02-21 09:45  developer
+
+	* src/: io/parameter/in_parameter.cc, util/parse_verbosity.cc:
+	  replacing atoi/atof with istringstream --markus
+
+2004-02-21 09:43  developer
+
+	* configure.in: changes for intel icc 8.0 --markus
+
+2004-02-20 15:31  developer
+
+	* program/BUILD_NUMBER,
+	  src/algorithm/constraints/perturbed_shake.h,
+	  src/algorithm/constraints/perturbed_shake.tcc,
+	  src/algorithm/constraints/shake.h,
+	  src/algorithm/constraints/shake.tcc: shake/perturbed_shake
+	  refactorings --markus
+
+2004-02-20 15:11  developer
+
+	* Config.sh, INSTALL: checking for nonbonded split up, added
+	  install instructions --markus
+
+2004-02-20 14:14  developer
+
+	* src/interaction/nonbonded/interaction/: nonbonded_base.h,
+	  nonbonded_base.tcc: forgot to remove these files after nonbnoded
+	  restructuring --markus
+
+2004-02-19 14:15  developer
+
+	* program/Makefile.am: md.cc dependency removed --markus
+
+2004-02-19 14:15  developer
+
+	* doc/newinput.txt, program/BUILD_NUMBER, program/md.cc: lambda
+	  dependency added --markus
+
+2004-02-19 14:14  developer
+
+	* contrib/: split_develop.dat, splitter.cc: quiet option added,
+	  additional output from create_nonbonded --markus
+
+2004-02-19 14:12  developer
+
+	* src/: algorithm/constraints/perturbed_flexible_constraint.tcc,
+	  algorithm/constraints/perturbed_shake.tcc,
+	  algorithm/temperature/temperature_calculation.cc,
+	  configuration/configuration.h,
+	  interaction/bonded/perturbed_angle_interaction.tcc,
+	  interaction/bonded/perturbed_dihedral_interaction.tcc,
+	  interaction/bonded/perturbed_harmonic_bond_interaction.tcc,
+	  interaction/bonded/perturbed_improper_dihedral_interaction.tcc,
+	  interaction/bonded/perturbed_quartic_bond_interaction.tcc,
+	  interaction/forcefield/forcefield.cc,
+	  interaction/nonbonded/filter/exclusion_filter.tcc,
+	  interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_pair.tcc,
+	  interaction/nonbonded/interaction/storage.h,
+	  io/configuration/in_configuration.cc,
+	  io/configuration/out_configuration.cc,
+	  io/topology/in_perturbation.cc, topology/topology.h: different
+	  lambda dependency added --markus
+
+2004-02-19 14:10  developer
+
+	* src/check/: Makefile.am, aladip.t.cc, check_forcefield.cc,
+	  check_state.cc, rasn.t.cc, scaling.t.cc, data/rasn.arg,
+	  data/scaling.in, data/scaling.lambdadep.in,
+	  data/scaling.lambdadep.pttopo, data/scaling.pttopo: test for
+	  different lambda dependence added --markus
+
+2004-02-18 14:37  developer
+
+	* program/: BUILD_NUMBER, Makefile.am, md.cc: build date / number
+	  support --markus
+
+2004-02-17 14:36  developer
+
+	* src/: algorithm/constraints/perturbed_shake.tcc,
+	  check/check_state.cc: perturbed shake energy lambda derivatives,
+	  checking pressure by finite diff --chris&markus
+
+2004-02-17 10:16  developer
+
+	* doc/newinput.txt: pairlist input correction --markus
+
+2004-02-16 21:47  developer
+
+	* src/io/configuration/out_configuration.cc: printing out
+	  temperature / pressure averages in perturbed runs --markus
+
+2004-02-16 21:46  developer
+
+	* src/algorithm/constraints/: create_constraints.cc,
+	  perturbed_shake.h, perturbed_shake.tcc, shake.h, shake.tcc:
+	  fixing perturbed shake to also include shake iterations --markus
+
+2004-02-13 17:55  developer
+
+	* src/: check/Makefile.am, check/aladip.t.cc, check/check.h,
+	  check/check_forcefield.cc, check/check_forcefield.h,
+	  check/check_state.cc, check/check_state.h, check/rasn.t.cc,
+	  check/data/aladip.conf, check/data/aladip.in,
+	  check/data/aladip.pttopo, check/data/aladip.topo,
+	  interaction/bonded/dihedral_interaction.h,
+	  interaction/bonded/perturbed_quartic_bond_interaction.h,
+	  io/topology/in_perturbation.cc: we're checking again! --m&c
+
+2004-02-12 10:53  developer
+
+	* configure.in, doc/doxygen.conf, doc/tail.html,
+	  src/check/data/rasn.arg, src/check/data/rasn.in,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_set.h,
+	  src/interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc:
+	  perturbation bugfix: calculate nonperturbed interactions
+	  --chris&markus
+
+2004-02-10 19:44  developer
+
+	* configure.in, src/configuration/energy.h,
+	  src/interaction/nonbonded/interaction/nonbonded_innerloop.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_outerloop.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_term.h,
+	  src/interaction/nonbonded/interaction/nonbonded_term.tcc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_pair.tcc,
+	  src/interaction/nonbonded/interaction/storage.h,
+	  src/math/boundary_implementation.tcc: not manually inlining term,
+	  force is a double in the term --m&c
+
+2004-02-09 15:39  developer
+
+	* src/: interaction/nonbonded/interaction/nonbonded_innerloop.tcc,
+	  interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm2.tcc,
+	  math/periodicity.tcc: timing too slow! pairlist algorithm 2
+	  slower than standard --markus
+
+2004-02-08 19:19  developer
+
+	* contrib/splitter.cc,
+	  src/algorithm/constraints/create_constraints.cc,
+	  src/interaction/nonbonded/filter/range_filter.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  src/interaction/nonbonded/pairlist/pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm2.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm2.tcc,
+	  src/interaction/nonbonded/split/nonbonded_split.h,
+	  src/io/configuration/in_configuration.cc,
+	  src/io/configuration/in_configuration.h, src/math/periodicity.h,
+	  src/math/periodicity.tcc: gathering in the beginning! numerical
+	  stability in nonbonded term. new standard pairlist algorithm
+	  --markus&chris
+
+2004-02-08 09:40  developer
+
+	* configure.in, contrib/split_develop.dat,
+	  src/algorithm/constraints/create_constraints.cc,
+	  src/interaction/nonbonded/filter/exclusion_filter.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_term.h,
+	  src/interaction/nonbonded/interaction/nonbonded_term.tcc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.tcc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  src/interaction/nonbonded/split/nonbonded_split.h,
+	  src/topology/core/atomgroup_iterator.h,
+	  src/topology/core/chargegroup_iterator.h: nonbonded term,
+	  standard pairlist optimizations --markus
+
+2004-02-07 19:21  developer
+
+	* contrib/splitter.cc: do not create nonbonded if not required
+	  --markus
+
+2004-02-07 18:12  developer
+
+	* contrib/splitter.cc, src/interaction/Makefile.am: adding makefile
+	  include to splitter
+
+2004-02-06 18:11  developer
+
+	* contrib/splitter.cc: output fix --markus
+
+2004-02-06 15:34  developer
+
+	* VERSION, configure.in, contrib/splitter.cc, doc/doxygen.conf,
+	  program/md.cc, src/check/Makefile.am,
+	  src/interaction/Makefile.am,
+	  src/interaction/nonbonded/create_header.h,
+	  src/interaction/nonbonded/split/nonbonded_split.h,
+	  src/io/parameter/in_parameter.cc,
+	  src/math/boundary_implementation.tcc: splitted up the nonbonded
+	  --markus
+
+2004-02-06 15:29  developer
+
+	* contrib/: split_complete.dat, split_develop.dat, splitter.cc:
+	  contrib splitting --markus
+
+2004-02-06 14:14  developer
+
+	* src/interaction/nonbonded/: create_header.h,
+	  split/nonbonded_split.h: adding needed files for auto-split up
+	  --markus
+
+2004-02-06 14:12  developer
+
+	* src/interaction/nonbonded/: create_nonbonded.cc,
+	  create_perturbed.cc, create_perturbed_grid.cc,
+	  create_unperturbed.cc, create_unperturbed_grid.cc,
+	  interaction/nonbonded_innerloop.tcc,
+	  interaction/nonbonded_outerloop.tcc,
+	  interaction/nonbonded_set.tcc, interaction/nonbonded_term.h,
+	  interaction/nonbonded_term.tcc: removed files to prepare
+	  automatic split up --markus
+
+2004-02-05 18:24  developer
+
+	* src/check/rasn.t.cc: print the timing --chris
+
+2004-02-04 19:45  developer
+
+	* src/algorithm/: create_md_sequence.cc,
+	  algorithm/algorithm_sequence.cc,
+	  constraints/create_constraints.cc: wrong include path --markus
+
+2004-02-04 19:44  developer
+
+	* configure.in, src/namespaces.doxy, src/check/rasn.t.cc,
+	  src/check/data/rasn.arg, src/check/data/rasn.in: performance
+	  monitoring --markus
+
+2004-02-02 14:43  developer
+
+	* TODO, src/algorithm/constraints/flexible_constraint.h,
+	  src/algorithm/constraints/flexible_constraint.tcc,
+	  src/interaction/bonded/angle_interaction.tcc,
+	  src/interaction/bonded/dihedral_interaction.tcc,
+	  src/interaction/bonded/harmonic_bond_interaction.tcc,
+	  src/interaction/bonded/improper_dihedral_interaction.tcc,
+	  src/interaction/bonded/perturbed_angle_interaction.tcc,
+	  src/interaction/bonded/perturbed_dihedral_interaction.tcc,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.tcc,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.tcc,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.tcc,
+	  src/interaction/bonded/quartic_bond_interaction.tcc,
+	  src/interaction/nonbonded/create_perturbed.cc,
+	  src/interaction/nonbonded/create_perturbed_grid.cc,
+	  src/interaction/nonbonded/create_unperturbed.cc,
+	  src/interaction/nonbonded/create_unperturbed_grid.cc,
+	  src/interaction/nonbonded/interaction_spec.h,
+	  src/interaction/nonbonded/filter/range_filter.h,
+	  src/interaction/nonbonded/filter/range_filter.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_set.h,
+	  src/interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.tcc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_pair.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_pair.tcc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.tcc,
+	  src/interaction/nonbonded/pairlist/pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc:
+	  nonbonded and libraries restructuring --c&m
+
+2004-02-01 16:40  developer
+
+	* configure.in, program/md.cc, src/Makefile.am,
+	  src/check/Makefile.am, src/check/check.h, src/check/rasn.t.cc,
+	  src/check/data/rasn.conf, src/check/data/rasn.pttopo,
+	  src/check/data/rasn.topo,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/bonded/create_bonded.h,
+	  src/interaction/forcefield/create_forcefield.cc,
+	  src/interaction/forcefield/create_forcefield.h,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/create_nonbonded.h,
+	  src/interaction/nonbonded/create_perturbed.cc,
+	  src/interaction/nonbonded/create_perturbed_grid.cc,
+	  src/interaction/nonbonded/create_unperturbed.cc,
+	  src/interaction/nonbonded/create_unperturbed_grid.cc,
+	  src/interaction/special/create_special.cc,
+	  src/interaction/special/create_special.h, src/io/argument.cc,
+	  src/io/argument.h, src/io/parameter/in_parameter.cc,
+	  src/io/topology/in_perturbation.cc,
+	  src/util/create_simulation.cc, src/util/create_simulation.h:
+	  preparing for check routines --markus
+
+2004-02-01 00:11  developer
+
+	* configure.in, program/Makefile.am, src/Makefile.am,
+	  src/algorithm/Makefile.am, src/configuration/Makefile.am,
+	  src/interaction/Makefile.am, src/io/Makefile.am,
+	  src/math/Makefile.am, src/simulation/Makefile.am,
+	  src/topology/Makefile.am, src/util/Makefile.am: introduced
+	  libgroxx and convenience libraries in subdirs --markus
+
+2004-01-30 17:38  developer
+
+	* src/: algorithm/create_md_sequence.cc,
+	  algorithm/constraints/create_constraints.cc,
+	  algorithm/constraints/flexible_constraint.h,
+	  algorithm/constraints/flexible_constraint.tcc,
+	  interaction/Makefile.am,
+	  interaction/forcefield/create_forcefield.cc,
+	  interaction/forcefield/create_forcefield.h,
+	  interaction/nonbonded/create_nonbonded.cc,
+	  interaction/nonbonded/create_nonbonded.h,
+	  interaction/nonbonded/create_perturbed.cc,
+	  interaction/nonbonded/create_perturbed_grid.cc,
+	  interaction/nonbonded/create_unperturbed.cc,
+	  interaction/nonbonded/create_unperturbed_grid.cc,
+	  interaction/nonbonded/interaction_spec.h,
+	  interaction/nonbonded/filter/exclusion_filter.h,
+	  interaction/nonbonded/filter/exclusion_filter.tcc,
+	  interaction/nonbonded/filter/filter.h,
+	  interaction/nonbonded/filter/range_filter.h,
+	  interaction/nonbonded/filter/range_filter.tcc,
+	  interaction/nonbonded/interaction/nonbonded_innerloop.h,
+	  interaction/nonbonded/interaction/nonbonded_innerloop.tcc,
+	  interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  interaction/nonbonded/interaction/nonbonded_outerloop.h,
+	  interaction/nonbonded/interaction/nonbonded_outerloop.tcc,
+	  interaction/nonbonded/interaction/nonbonded_parameter.h,
+	  interaction/nonbonded/interaction/nonbonded_set.h,
+	  interaction/nonbonded/interaction/nonbonded_set.tcc,
+	  interaction/nonbonded/interaction/nonbonded_term.h,
+	  interaction/nonbonded/interaction/nonbonded_term.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_pair.h,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_pair.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_term.h,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_term.tcc,
+	  interaction/nonbonded/interaction/storage.h,
+	  interaction/nonbonded/pairlist/grid_pairlist_algorithm.h,
+	  interaction/nonbonded/pairlist/grid_pairlist_algorithm.tcc,
+	  interaction/nonbonded/pairlist/pairlist_algorithm.h,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  topology/topology.h: rewrite of the nonbonded interactions --m&c
+
+2004-01-29 15:59  developer
+
+	* src/util/: create_simulation.cc, create_simulation.h: starting
+	  towards a testing framework --markus
+
+2004-01-29 15:58  developer
+
+	* TODO, VERSION, program/Makefile.am, program/md.cc,
+	  src/algorithm/Makefile.am, src/algorithm/algorithm.cc,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/algorithm/algorithm_sequence.cc,
+	  src/algorithm/constraints/create_constraints.cc,
+	  src/algorithm/constraints/create_constraints.h,
+	  src/algorithm/constraints/flexible_constraint.h,
+	  src/algorithm/constraints/flexible_constraint.tcc,
+	  src/algorithm/constraints/lincs.h,
+	  src/algorithm/constraints/lincs.tcc,
+	  src/algorithm/constraints/perturbed_flexible_constraint.h,
+	  src/algorithm/constraints/perturbed_flexible_constraint.tcc,
+	  src/algorithm/constraints/perturbed_shake.h,
+	  src/algorithm/constraints/perturbed_shake.tcc,
+	  src/algorithm/constraints/remove_com_motion.cc,
+	  src/algorithm/constraints/shake.h,
+	  src/algorithm/constraints/shake.tcc,
+	  src/algorithm/integration/leap_frog.cc,
+	  src/algorithm/integration/slow_growth.cc,
+	  src/algorithm/integration/steepest_descent.cc,
+	  src/algorithm/pressure/berendsen_barostat.cc,
+	  src/algorithm/pressure/pressure_calculation.cc,
+	  src/algorithm/temperature/berendsen_thermostat.cc,
+	  src/algorithm/temperature/temperature_calculation.cc,
+	  src/configuration/Makefile.am,
+	  src/configuration/configuration.cc,
+	  src/configuration/state_properties.cc,
+	  src/interaction/Makefile.am, src/interaction/interaction.cc,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/forcefield/create_forcefield.cc,
+	  src/interaction/forcefield/forcefield.cc,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/create_perturbed.cc,
+	  src/interaction/nonbonded/create_perturbed_grid.cc,
+	  src/interaction/nonbonded/create_unperturbed.cc,
+	  src/interaction/nonbonded/create_unperturbed_grid.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_base.h,
+	  src/interaction/nonbonded/interaction/nonbonded_base.tcc,
+	  src/interaction/special/create_special.cc, src/io/Makefile.am,
+	  src/io/argument.cc, src/io/instream.h, src/io/io.cc,
+	  src/io/print_block.cc, src/io/read_input.cc, src/io/read_input.h,
+	  src/io/read_special.cc, src/io/configuration/in_configuration.cc,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/topology/in_perturbation.cc, src/io/topology/in_posres.cc,
+	  src/io/topology/in_topology.cc, src/io/topology/in_topology.h,
+	  src/math/Makefile.am, src/math/math.cc,
+	  src/simulation/Makefile.am, src/simulation/multibath.h,
+	  src/simulation/parameter.h, src/simulation/simulation.cc,
+	  src/topology/Makefile.am, src/topology/topology.cc,
+	  src/topology/topology.h, src/util/Makefile.am, src/util/debug.cc,
+	  src/util/parse_tcouple.cc, src/util/prepare_virial.cc: get it to
+	  work with ++ --markus
+
+2004-01-21 16:09  developer
+
+	* src/:
+	  interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  util/Makefile.am: fixing compile warnings --markus
+
+2004-01-21 14:16  developer
+
+	* TODO,
+	  src/algorithm/constraints/perturbed_flexible_constraint.tcc,
+	  src/algorithm/constraints/perturbed_shake.tcc,
+	  src/algorithm/temperature/temperature_calculation.cc,
+	  src/interaction/nonbonded/create_perturbed.cc,
+	  src/interaction/nonbonded/filter/perturbation_filter.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_interaction.tcc,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/topology/in_perturbation.cc,
+	  src/io/topology/in_topology.cc, src/math/gmath.h,
+	  src/topology/perturbed_solute.h, src/topology/topology.cc,
+	  src/topology/topology.h, src/util/debug.cc,
+	  src/util/parse_verbosity.cc, src/util/prepare_virial.cc: bugfixes
+	  for release 0.1.0: perturbation #25, submolecule, perturbed temp
+	  calc --c&m
+
+2004-01-21 13:28  developer
+
+	* src/interaction/bonded/dihedral_interaction.tcc: Added dihedral
+	  angle monitoring --chris
+
+2003-12-15 16:17  developer
+
+	* configure.in, program/md.cc,
+	  src/interaction/nonbonded/create_perturbed.cc,
+	  src/interaction/nonbonded/create_perturbed_grid.cc,
+	  src/interaction/nonbonded/create_unperturbed.cc,
+	  src/interaction/nonbonded/create_unperturbed_grid.cc,
+	  src/interaction/nonbonded/filter/range_filter.h,
+	  src/interaction/nonbonded/interaction/nonbonded_innerloop.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.tcc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  src/io/read_input.cc, src/io/topology/in_topology.cc: intel
+	  accomodations --markus
+
+2003-12-07 09:05  developer
+
+	* INSTALL, configure.in, src/algorithm/algorithm.h,
+	  src/algorithm/constraints/create_constraints.cc,
+	  src/algorithm/constraints/lincs.tcc,
+	  src/algorithm/constraints/shake.tcc,
+	  src/interaction/interaction.h,
+	  src/interaction/forcefield/forcefield.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/nonbonded/interaction/nonbonded_innerloop.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  src/topology/topology.h: continuing the OMP effort --markus
+
+2003-12-04 16:27  developer
+
+	* Config.sh, configure.in, program/md.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_innerloop.tcc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.tcc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_interaction.tcc,
+	  src/io/configuration/out_configuration.cc: start to do omp
+	  parallelization --markus
+
+2003-12-02 19:35  developer
+
+	* configure.in, program/md.cc: trying for openmp --markus
+
+2003-12-02 11:38  developer
+
+	* src/io/configuration/out_configuration.cc: block name change
+	  --markus
+
+2003-11-30 12:37  developer
+
+	* doc/doxygen.conf, src/algorithm/algorithm/algorithm_sequence.h,
+	  src/algorithm/constraints/create_constraints.cc,
+	  src/algorithm/constraints/lincs.h,
+	  src/algorithm/integration/leap_frog.h,
+	  src/algorithm/pressure/berendsen_barostat.cc,
+	  src/algorithm/pressure/berendsen_barostat.h,
+	  src/algorithm/temperature/berendsen_thermostat.cc,
+	  src/algorithm/temperature/berendsen_thermostat.h,
+	  src/algorithm/temperature/temperature_calculation.cc,
+	  src/algorithm/temperature/temperature_calculation.h,
+	  src/configuration/configuration_global.cc,
+	  src/configuration/energy.cc, src/configuration/energy_average.cc,
+	  src/configuration/state_properties.h,
+	  src/interaction/forcefield/forcefield.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/create_perturbed.cc,
+	  src/interaction/nonbonded/create_perturbed_grid.cc,
+	  src/interaction/nonbonded/create_unperturbed.cc,
+	  src/interaction/nonbonded/create_unperturbed_grid.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/pairlist/pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.tcc,
+	  src/interaction/special/position_restraint_interaction.tcc,
+	  src/io/blockinput.cc, src/io/instream.cc, src/io/instream.h,
+	  src/io/print_block.cc, src/io/read_special.cc,
+	  src/io/configuration/in_configuration.h,
+	  src/io/topology/in_posres.h, src/io/topology/in_topology.cc,
+	  src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc, src/math/gmath.h,
+	  src/topology/topology.cc, src/topology/core/body_term.h,
+	  src/topology/core/core.h: updated to doxygen 1.3.5 and added a
+	  few desctiptions --markus
+
+2003-11-25 14:15  developer
+
+	* doc/newinput.txt: update --markus
+
+2003-11-25 12:55  developer
+
+	* doc/newinput.txt, src/io/read_input.cc, src/topology/topology.cc:
+	  error messages when not able to open file instead of exceptions
+	  --markus
+
+2003-11-24 14:20  developer
+
+	* src/: algorithm/constraints/create_constraints.cc,
+	  algorithm/constraints/perturbed_flexible_constraint.tcc,
+	  io/configuration/in_configuration.cc,
+	  io/topology/in_perturbation.cc: lambda derivatives --markus
+
+2003-11-23 15:04  developer
+
+	* src/: algorithm/constraints/perturbed_flexible_constraint.tcc,
+	  topology/perturbed_solute.h: perturbed flexible constraints
+	  lambda derivative --markus
+
+2003-11-22 19:47  developer
+
+	* src/: algorithm/Makefile.am,
+	  algorithm/constraints/create_constraints.cc,
+	  algorithm/constraints/flexible_constraint.tcc,
+	  algorithm/constraints/perturbed_flexible_constraint.h,
+	  algorithm/constraints/perturbed_flexible_constraint.tcc,
+	  algorithm/constraints/perturbed_shake.tcc,
+	  io/configuration/in_configuration.cc,
+	  io/configuration/in_configuration.h, io/topology/in_topology.cc:
+	  tentative implementation of perturbed flexible constraints
+	  --markus
+
+2003-11-22 13:14  developer
+
+	* src/: algorithm/constraints/flexible_constraint.tcc,
+	  algorithm/constraints/shake.tcc,
+	  algorithm/temperature/berendsen_thermostat.cc,
+	  configuration/configuration.h,
+	  interaction/nonbonded/create_nonbonded.cc,
+	  io/configuration/in_configuration.cc,
+	  io/configuration/out_configuration.cc,
+	  io/topology/in_topology.cc, topology/topology.h: cg error checks,
+	  output, flexible ekin --markus
+
+2003-11-21 18:31  developer
+
+	* TODO, src/io/print_block.cc,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h: energy trajectory
+	  --chris & markus
+
+2003-11-19 14:46  developer
+
+	* src/: algorithm/constraints/flexible_constraint.tcc,
+	  configuration/configuration.h,
+	  io/configuration/in_configuration.cc,
+	  io/configuration/in_configuration.h,
+	  io/configuration/out_configuration.cc,
+	  io/configuration/out_configuration.h,
+	  io/parameter/in_parameter.cc, util/generate_velocities.cc:
+	  flexible constraints setup --markus
+
+2003-11-17 17:05  developer
+
+	* src/: algorithm/create_md_sequence.cc,
+	  algorithm/constraints/create_constraints.cc,
+	  algorithm/constraints/flexible_constraint.h,
+	  algorithm/constraints/flexible_constraint.tcc,
+	  algorithm/constraints/lincs.tcc, algorithm/constraints/shake.tcc,
+	  algorithm/integration/steepest_descent.cc,
+	  algorithm/integration/steepest_descent.h,
+	  configuration/configuration.h,
+	  interaction/nonbonded/create_nonbonded.cc,
+	  interaction/nonbonded/create_perturbed.cc,
+	  interaction/nonbonded/create_perturbed_grid.cc,
+	  interaction/nonbonded/create_unperturbed.cc,
+	  interaction/nonbonded/create_unperturbed_grid.cc,
+	  io/print_block.h, io/configuration/out_configuration.cc,
+	  io/topology/in_topology.cc: output and flexible constraints
+	  --markus
+
+2003-11-16 18:37  developer
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/constraints/create_constraints.cc,
+	  src/algorithm/constraints/create_constraints.h,
+	  src/algorithm/constraints/flexible_constraint.h,
+	  src/algorithm/constraints/flexible_constraint.tcc,
+	  src/algorithm/constraints/lincs.tcc,
+	  src/algorithm/constraints/perturbed_shake.tcc,
+	  src/algorithm/constraints/shake.h,
+	  src/algorithm/constraints/shake.tcc,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/topology/in_perturbation.cc,
+	  src/io/topology/in_topology.cc, src/simulation/parameter.h:
+	  restructuring constraints --markus
+
+2003-11-16 11:02  developer
+
+	* TODO, src/algorithm/algorithm.h,
+	  src/algorithm/constraints/lincs.tcc,
+	  src/algorithm/constraints/shake.tcc: lincs / shake corrections
+	  --markus
+
+2003-11-12 16:43  developer
+
+	* program/md.cc, src/interaction/Makefile.am,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/create_perturbed.cc,
+	  src/interaction/nonbonded/create_perturbed_grid.cc,
+	  src/interaction/nonbonded/create_unperturbed.cc,
+	  src/interaction/nonbonded/create_unperturbed_grid.cc,
+	  src/interaction/nonbonded/pairlist/pairlist.tcc,
+	  src/io/print_block.cc, src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h,
+	  src/io/parameter/in_parameter.cc, src/io/topology/in_topology.cc,
+	  src/simulation/parameter.h, src/simulation/simulation.h: split up
+	  create nonbonded, nicer output --markus
+
+2003-11-11 22:11  developer
+
+	* src/io/topology/in_topology.cc: shake gives different results if
+	  BOND / BONDH block read in different order --markus
+
+2003-11-11 21:37  developer
+
+	* program/md.cc, src/algorithm/constraints/remove_com_motion.cc,
+	  src/algorithm/pressure/berendsen_barostat.cc,
+	  src/algorithm/pressure/pressure_calculation.cc,
+	  src/algorithm/temperature/berendsen_thermostat.cc,
+	  src/algorithm/temperature/temperature_calculation.cc,
+	  src/interaction/forcefield/forcefield.cc: some more timings
+	  --markus
+
+2003-11-11 21:06  developer
+
+	* program/md.cc, src/algorithm/algorithm.h,
+	  src/algorithm/algorithm/algorithm_sequence.cc,
+	  src/algorithm/algorithm/algorithm_sequence.h,
+	  src/algorithm/constraints/lincs.h,
+	  src/algorithm/constraints/lincs.tcc,
+	  src/algorithm/constraints/shake.h,
+	  src/algorithm/constraints/shake.tcc,
+	  src/algorithm/integration/leap_frog.cc,
+	  src/configuration/energy_average.cc,
+	  src/configuration/energy_average.h, src/io/print_block.cc,
+	  src/io/print_block.h, src/io/configuration/out_configuration.cc,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/topology/in_perturbation.cc,
+	  src/io/topology/in_topology.cc, src/util/stdheader.h,
+	  src/util/timing.cc, src/util/timing.h: output formatting and
+	  averages and some timing --markus
+
+2003-11-09 16:35  developer
+
+	* src/math/gmath.h: vector output --markus
+
+2003-11-09 16:35  developer
+
+	* src/interaction/nonbonded/interaction/nonbonded_base.tcc: module
+	  update --markus
+
+2003-11-09 16:34  developer
+
+	* src/algorithm/constraints/shake.tcc: shake reverting to old
+	  configuration after error --markus
+
+2003-11-09 16:33  developer
+
+	* src/algorithm/constraints/lincs.tcc: rotation correction negative
+	  fix --markus
+
+2003-11-09 16:32  developer
+
+	* program/md.cc: flush output after error
+
+2003-11-09 16:31  developer
+
+	* TODO: updated TODO --markus
+
+2003-11-09 16:30  developer
+
+	* src/interaction/bonded/perturbed_dihedral_interaction.tcc: de/dl
+	  fix --chris & markus
+
+2003-11-09 15:47  developer
+
+	* src/: interaction/nonbonded/interaction/nonbonded_base.h,
+	  interaction/nonbonded/interaction/nonbonded_base.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.tcc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_interaction.tcc,
+	  io/parameter/in_parameter.cc, io/topology/in_perturbation.cc,
+	  simulation/parameter.h: fixed a bug in de/dl --markus&chris
+
+2003-11-08 16:04  developer
+
+	* src/interaction/nonbonded/create_nonbonded.cc: remove of
+	  commented out code --markus
+
+2003-11-08 16:03  developer
+
+	* src/algorithm/temperature/temperature_calculation.cc: new
+	  velocity for free energy derivatives
+
+2003-11-07 10:34  developer
+
+	* program/md.cc, src/algorithm/constraints/shake.tcc,
+	  src/io/print_block.cc, src/util/error.h: tcouple scaling print
+	  out, shake failure error code -- markus
+
+2003-11-04 21:47  developer
+
+	* src/: algorithm/Makefile.am, algorithm/create_md_sequence.cc,
+	  algorithm/constraints/lincs.h, algorithm/constraints/lincs.tcc,
+	  io/print_block.cc, io/configuration/out_configuration.cc,
+	  io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  simulation/parameter.h, topology/core/compound.h: lincs algorithm
+	  -- chris & markus
+
+2003-11-04 09:45  developer
+
+	* src/: configuration/configuration.cc,
+	  configuration/configuration.h,
+	  interaction/bonded/dihedral_interaction.h,
+	  interaction/bonded/dihedral_interaction.tcc,
+	  io/configuration/in_configuration.cc, topology/solute.h: added
+	  dihedral angle monitoring --chris
+
+2003-11-03 17:59  developer
+
+	* TODO: updated the todo --chris & markus
+
+2003-11-03 17:21  developer
+
+	* src/: algorithm/integration/leap_frog.cc,
+	  algorithm/pressure/berendsen_barostat.cc, io/print_block.cc,
+	  math/math.cc, math/volume.cc, math/volume.h, util/debug.h,
+	  util/parse_verbosity.cc: pressure scaling fix --markus
+
+2003-11-03 14:30  developer
+
+	* doc/doxygen.conf, doc/newinput.txt, doc/tail.html, program/md.cc,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/temperature/berendsen_thermostat.cc,
+	  src/algorithm/temperature/temperature_calculation.cc: temperature
+	  coupling bugfix --markus
+
+2003-11-02 16:09  developer
+
+	* src/: algorithm/Makefile.am, algorithm/create_md_sequence.cc,
+	  algorithm/constraints/perturbed_shake.h,
+	  algorithm/constraints/perturbed_shake.tcc,
+	  algorithm/constraints/shake.h, algorithm/constraints/shake.tcc,
+	  configuration/energy.cc, configuration/energy.h,
+	  configuration/energy_average.cc, io/print_block.cc,
+	  io/topology/in_perturbation.cc: perturbed shake --markus
+
+2003-11-02 12:20  developer
+
+	* Makefile.am, cvs2cl.pl: added automatic change log generation
+	  --markus
+
+2003-11-01 15:52  developer
+
+	* src/interaction/nonbonded/: create_nonbonded.cc,
+	  filter/range_filter.h, filter/range_filter.tcc,
+	  interaction/nonbonded_innerloop.h,
+	  interaction/nonbonded_innerloop.tcc,
+	  interaction/nonbonded_interaction.h,
+	  interaction/nonbonded_interaction.tcc,
+	  interaction/perturbed_nonbonded_innerloop.h,
+	  interaction/perturbed_nonbonded_innerloop.tcc,
+	  interaction/perturbed_nonbonded_interaction.h,
+	  interaction/perturbed_nonbonded_interaction.tcc,
+	  pairlist/grid_pairlist_algorithm.h,
+	  pairlist/grid_pairlist_algorithm.tcc,
+	  pairlist/standard_pairlist_algorithm.h,
+	  pairlist/standard_pairlist_algorithm.tcc: intel icc quirk fix
+
+2003-11-01 11:57  developer
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/integration/steepest_descent.cc,
+	  src/algorithm/integration/steepest_descent.h,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/parameter/in_parameter.h, src/simulation/parameter.h,
+	  src/simulation/simulation.h, src/util/error.h: steepest descent
+	  minimisation
+
+2003-10-31 16:23  developer
+
+	* Makefile.am, program/md.cc, src/configuration/energy.cc,
+	  src/configuration/energy.h, src/configuration/energy_average.cc,
+	  src/interaction/Makefile.am, src/interaction/interaction.cc,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/forcefield/create_forcefield.cc,
+	  src/interaction/special/create_special.cc,
+	  src/interaction/special/create_special.h,
+	  src/interaction/special/position_restraint_interaction.h,
+	  src/interaction/special/position_restraint_interaction.tcc,
+	  src/io/Makefile.am, src/io/print_block.cc,
+	  src/io/read_special.cc, src/io/read_special.h,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/parameter/in_parameter.cc, src/io/topology/in_posres.cc,
+	  src/io/topology/in_posres.h, src/topology/topology.h,
+	  src/topology/core/body_term.h, src/util/debug.h,
+	  src/util/parse_verbosity.cc: position restraints
+
+2003-10-30 22:01  developer
+
+	* src/: configuration/energy_average.cc,
+	  io/configuration/out_configuration.cc, util/debug.h,
+	  util/parse_verbosity.cc: energy averages and fluctuations
+
+2003-10-30 19:14  developer
+
+	* program/md.cc, src/algorithm/pressure/pressure_calculation.cc,
+	  src/configuration/energy_average.cc,
+	  src/configuration/energy_average.h, src/io/print_block.cc,
+	  src/io/print_block.h, src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h: energy averages
+
+2003-10-30 17:18  developer
+
+	* src/algorithm/: Makefile.am, create_md_sequence.cc,
+	  integration/slow_growth.cc, integration/slow_growth.h: slow
+	  growth
+
+2003-10-29 00:19  developer
+
+	* src/: algorithm/Makefile.am, algorithm/create_md_sequence.cc,
+	  algorithm/constraints/remove_com_motion.cc,
+	  algorithm/constraints/remove_com_motion.h,
+	  algorithm/constraints/shake.h, algorithm/constraints/shake.tcc,
+	  io/parameter/in_parameter.cc, simulation/parameter.h: init
+	  options
+
+2003-10-28 15:15  developer
+
+	* src/: algorithm/Makefile.am, algorithm/create_md_sequence.cc,
+	  algorithm/temperature/berendsen.cc,
+	  algorithm/temperature/berendsen.h,
+	  algorithm/temperature/berendsen_thermostat.cc,
+	  algorithm/temperature/berendsen_thermostat.h,
+	  configuration/configuration.h, io/print_block.cc,
+	  io/print_block.h, io/configuration/out_configuration.cc,
+	  math/Makefile.am, math/volume.cc, math/volume.h,
+	  algorithm/pressure/berendsen_barostat.cc,
+	  algorithm/pressure/berendsen_barostat.h,
+	  algorithm/pressure/pressure_calculation.cc,
+	  algorithm/pressure/pressure_calculation.h: pressure
+
+2003-10-27 10:43  developer
+
+	* program/Makefile.am,
+	  src/interaction/nonbonded/pairlist/pairlist.tcc: compiling on igc
+
+2003-10-26 16:04  developer
+
+	* program/md.cc, src/algorithm/create_md_sequence.cc,
+	  src/algorithm/algorithm/algorithm_sequence.cc,
+	  src/algorithm/constraints/shake.tcc,
+	  src/algorithm/temperature/temperature_calculation.cc,
+	  src/configuration/energy.cc, src/configuration/energy.h,
+	  src/configuration/energy_average.cc,
+	  src/interaction/forcefield/forcefield.cc,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/io/Makefile.am, src/io/print_block.cc, src/io/print_block.h,
+	  src/io/read_input.cc, src/io/configuration/in_configuration.cc,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h,
+	  src/io/parameter/in_parameter.cc, src/io/topology/in_topology.cc,
+	  src/simulation/multibath.h, src/simulation/parameter.h,
+	  src/simulation/simulation.cc, src/topology/topology.h,
+	  src/util/Makefile.am, src/util/debug.h,
+	  src/util/parse_tcouple.cc, src/util/parse_verbosity.cc,
+	  src/util/prepare_virial.cc, src/util/prepare_virial.h:
+	  reintegrating temperature calculation
+
+2003-10-25 10:16  developer
+
+	* program/md.cc, src/algorithm/algorithm.cc, src/io/read_input.cc,
+	  src/io/read_input.h, src/simulation/simulation.h,
+	  src/util/debug.h: initial state
+
+2003-10-24 17:15  developer
+
+	* src/algorithm/: Makefile.am, create_md_sequence.cc,
+	  create_md_sequence.h, integration/leap_frog.h,
+	  temperature/berendsen.cc, temperature/berendsen.h,
+	  temperature/temperature_calculation.cc,
+	  temperature/temperature_calculation.h: adding temperature
+	  calculation
+
+2003-10-24 16:58  developer
+
+	* src/interaction/nonbonded/: interaction/nonbonded_base.h,
+	  interaction/nonbonded_innerloop.h,
+	  interaction/nonbonded_interaction.h,
+	  interaction/perturbed_nonbonded_innerloop.h,
+	  interaction/perturbed_nonbonded_interaction.h,
+	  interaction/storage.h, filter/chargegroup_grid.h,
+	  filter/chargegroup_grid.tcc, filter/exclusion_filter.h,
+	  filter/exclusion_filter.tcc, filter/filter.h,
+	  filter/perturbation_filter.h, filter/perturbation_filter.tcc,
+	  filter/range_filter.h, filter/range_filter.tcc,
+	  pairlist/grid_pairlist_algorithm.h,
+	  pairlist/grid_pairlist_algorithm.tcc, pairlist/pairlist.h,
+	  pairlist/pairlist.tcc, pairlist/pairlist_algorithm.h,
+	  pairlist/standard_pairlist_algorithm.h,
+	  pairlist/standard_pairlist_algorithm.tcc,
+	  interaction/nonbonded_base.tcc,
+	  interaction/nonbonded_innerloop.tcc,
+	  interaction/nonbonded_interaction.tcc,
+	  interaction/perturbed_nonbonded_innerloop.tcc,
+	  interaction/perturbed_nonbonded_interaction.tcc: [no log message]
+
+2003-10-24 15:57  developer
+
+	* AUTHORS, COPYING, ChangeLog, Config.sh, INSTALL, Makefile.am,
+	  NEWS, README, TODO, VERSION, acinclude.m4, configure.in,
+	  program/Makefile.am, program/md.cc, src/Makefile.am,
+	  src/algorithm/Makefile.am, src/algorithm/algorithm.cc,
+	  src/algorithm/algorithm.h, src/algorithm/create_md_sequence.cc,
+	  src/algorithm/create_md_sequence.h,
+	  src/algorithm/algorithm/algorithm_sequence.cc,
+	  src/algorithm/algorithm/algorithm_sequence.h,
+	  src/algorithm/constraints/shake.h,
+	  src/algorithm/constraints/shake.tcc,
+	  src/algorithm/integration/leap_frog.cc,
+	  src/algorithm/integration/leap_frog.h,
+	  src/configuration/Makefile.am,
+	  src/configuration/configuration.cc,
+	  src/configuration/configuration.h,
+	  src/configuration/configuration_global.cc,
+	  src/configuration/configuration_global.h,
+	  src/configuration/energy.cc, src/configuration/energy.h,
+	  src/configuration/energy_average.cc,
+	  src/configuration/energy_average.h,
+	  src/configuration/state_properties.cc,
+	  src/configuration/state_properties.h,
+	  src/interaction/Makefile.am, src/interaction/interaction.cc,
+	  src/interaction/interaction.h,
+	  src/interaction/interaction_types.h,
+	  src/interaction/bonded/angle_interaction.h,
+	  src/interaction/bonded/angle_interaction.tcc,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/bonded/create_bonded.h,
+	  src/interaction/bonded/dihedral_interaction.h,
+	  src/interaction/bonded/dihedral_interaction.tcc,
+	  src/interaction/bonded/harmonic_bond_interaction.h,
+	  src/interaction/bonded/harmonic_bond_interaction.tcc,
+	  src/interaction/bonded/improper_dihedral_interaction.h,
+	  src/interaction/bonded/improper_dihedral_interaction.tcc,
+	  src/interaction/bonded/perturbed_angle_interaction.h,
+	  src/interaction/bonded/perturbed_angle_interaction.tcc,
+	  src/interaction/bonded/perturbed_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_dihedral_interaction.tcc,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.h,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.tcc,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.tcc,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.h,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.tcc,
+	  src/interaction/bonded/quartic_bond_interaction.h,
+	  src/interaction/bonded/quartic_bond_interaction.tcc,
+	  src/interaction/forcefield/create_forcefield.cc,
+	  src/interaction/forcefield/create_forcefield.h,
+	  src/interaction/forcefield/forcefield.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/create_nonbonded.h,
+	  src/interaction/nonbonded/interaction_spec.h, src/io/Makefile.am,
+	  src/io/argument.cc, src/io/argument.h, src/io/blockinput.cc,
+	  src/io/blockinput.h, src/io/instream.cc, src/io/instream.h,
+	  src/io/io.cc, src/io/message.cc, src/io/message.h,
+	  src/io/read_input.cc, src/io/read_input.h,
+	  src/io/configuration/in_configuration.cc,
+	  src/io/configuration/in_configuration.h,
+	  src/io/configuration/inframe.cc, src/io/configuration/inframe.h,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/parameter/in_parameter.h,
+	  src/io/topology/in_perturbation.cc,
+	  src/io/topology/in_perturbation.h,
+	  src/io/topology/in_topology.cc, src/io/topology/in_topology.h,
+	  src/math/Makefile.am, src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc, src/math/gmath.h,
+	  src/math/math.cc, src/math/periodicity.h,
+	  src/math/periodicity.tcc, src/simulation/Makefile.am,
+	  src/simulation/multibath.h, src/simulation/parameter.h,
+	  src/simulation/simulation.cc, src/simulation/simulation.h,
+	  src/topology/Makefile.am, src/topology/perturbed_atom.h,
+	  src/topology/perturbed_solute.h, src/topology/solute.h,
+	  src/topology/solvent.h, src/topology/topology.cc,
+	  src/topology/topology.h, src/topology/topology_global.cc,
+	  src/topology/core/atom_iterator.h,
+	  src/topology/core/atomgroup_iterator.h,
+	  src/topology/core/body_term.h,
+	  src/topology/core/chargegroup_iterator.h,
+	  src/topology/core/compound.h, src/topology/core/core.h,
+	  src/topology/core/molecule_iterator.h, src/util/Makefile.am,
+	  src/util/debug.cc, src/util/debug.h,
+	  src/util/generate_velocities.cc, src/util/generate_velocities.h,
+	  src/util/parse_tcouple.cc, src/util/parse_tcouple.h,
+	  src/util/parse_verbosity.cc, src/util/parse_verbosity.h,
+	  src/util/stdheader.h, src/util/timing.cc, src/util/timing.h:
+	  enter the next stage of molecular dynamics simulations (gromosXX
+	  0.1.0)
+
+2003-10-24 15:13  developer
+
+	* AUTHORS, COPYING, ChangeLog, Config.sh, INSTALL, Makefile.am,
+	  NEWS, README, TODO, VERSION, acinclude.m4, config.h.in,
+	  configure.in, doxygen.conf, tail.html, program/Makefile.am,
+	  program/flexi.cc, program/flexi.h, program/md.cc,
+	  program/vtest.cc, src/Makefile.am, src/debug.cc, src/debug.h,
+	  src/timing.cc, src/timing.h, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.cc, src/algorithm/algorithm.h,
+	  src/algorithm/algorithm.t.cc,
+	  src/algorithm/algorithm/atvir_md.cc,
+	  src/algorithm/algorithm/atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/forcefield.h,
+	  src/algorithm/algorithm/forcefield.tcc,
+	  src/algorithm/algorithm/grid_atvir_md.cc,
+	  src/algorithm/algorithm/grid_atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_md.cc,
+	  src/algorithm/algorithm/grid_molvir_md.cc,
+	  src/algorithm/algorithm/grid_molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_scaled_atvir_md.cc,
+	  src/algorithm/algorithm/grid_scaled_atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_scaled_md.cc,
+	  src/algorithm/algorithm/grid_scaled_molvir_md.cc,
+	  src/algorithm/algorithm/grid_scaled_molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_scaled_perturbed_md.cc,
+	  src/algorithm/algorithm/interaction_spec.h,
+	  src/algorithm/algorithm/md.cc, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_base.h,
+	  src/algorithm/algorithm/md_base.tcc,
+	  src/algorithm/algorithm/md_global.cc,
+	  src/algorithm/algorithm/md_global.h,
+	  src/algorithm/algorithm/md_spec.h,
+	  src/algorithm/algorithm/molvir_md.cc,
+	  src/algorithm/algorithm/molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/perturbation_md.h,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/algorithm/perturbed_md.cc,
+	  src/algorithm/algorithm/scaled_atvir_md.cc,
+	  src/algorithm/algorithm/scaled_atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/scaled_md.cc,
+	  src/algorithm/algorithm/scaled_molvir_md.cc,
+	  src/algorithm/algorithm/scaled_molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/scaled_perturbed_md.cc,
+	  src/algorithm/integration/leap_frog.h,
+	  src/algorithm/integration/leap_frog.tcc,
+	  src/algorithm/integration/runge_kutta.h,
+	  src/algorithm/integration/runge_kutta.tcc,
+	  src/algorithm/pressure/berendsen.h,
+	  src/algorithm/pressure/berendsen.tcc,
+	  src/algorithm/temperature/berendsen.h,
+	  src/algorithm/temperature/berendsen.tcc,
+	  src/interaction/Makefile.am, src/interaction/interaction.cc,
+	  src/interaction/interaction.h, src/interaction/interaction.t.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/forcefield/forcefield.tcc, src/io/GInStream.cc,
+	  src/io/GInStream.h, src/io/Makefile.am, src/io/argument.cc,
+	  src/io/argument.h, src/io/blockinput.h, src/io/blockinput.t.cc,
+	  src/io/blockinput.tcc, src/io/io.cc, src/io/io.h,
+	  src/io/message.cc, src/io/message.h, src/io/message.t.cc,
+	  src/io/print_block.h, src/io/print_block.tcc,
+	  src/io/topology/InPerturbationTopology.h,
+	  src/io/topology/InPerturbationTopology.tcc,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc,
+	  src/math/Makefile.am, src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc, src/math/gmath.h,
+	  src/math/math.cc, src/math/math.t.cc, src/math/periodicity.h,
+	  src/math/periodicity.tcc, src/simulation/Makefile.am,
+	  src/simulation/core.cc, src/simulation/core.h,
+	  src/simulation/perturbation.h, src/simulation/simulation.cc,
+	  src/simulation/simulation.h, src/simulation/simulation.t.cc:
+	  removing everything!
+
+2003-10-07 22:46  developer
+
+	* program/md.cc, src/debug.h, src/algorithm/algorithm/atvir_md.cc,
+	  src/algorithm/algorithm/grid_atvir_md.cc,
+	  src/algorithm/algorithm/grid_md.cc,
+	  src/algorithm/algorithm/grid_scaled_atvir_md.cc,
+	  src/algorithm/algorithm/md_global.cc,
+	  src/algorithm/algorithm/scaled_atvir_md.cc,
+	  src/algorithm/temperature/berendsen.tcc,
+	  src/io/topology/InPerturbationTopology.tcc: breaking up the
+	  sources (templates) --markus
+
+2003-10-07 20:44  developer
+
+	* src/algorithm/algorithm/atvir_perturbed_md.cc: reduce memory
+	  usage during compilation --markus
+
+2003-10-07 20:32  developer
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.h, src/algorithm/algorithm/atvir_md.cc,
+	  src/algorithm/algorithm/atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/forcefield.h,
+	  src/algorithm/algorithm/forcefield.tcc,
+	  src/algorithm/algorithm/grid_atvir_md.cc,
+	  src/algorithm/algorithm/grid_atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_md.cc,
+	  src/algorithm/algorithm/grid_molvir_md.cc,
+	  src/algorithm/algorithm/grid_molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_scaled_atvir_md.cc,
+	  src/algorithm/algorithm/grid_scaled_atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_scaled_md.cc,
+	  src/algorithm/algorithm/grid_scaled_molvir_md.cc,
+	  src/algorithm/algorithm/grid_scaled_molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/grid_scaled_perturbed_md.cc,
+	  src/algorithm/algorithm/md.cc, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_global.cc,
+	  src/algorithm/algorithm/md_global.h,
+	  src/algorithm/algorithm/md_global.tcc,
+	  src/algorithm/algorithm/molvir_md.cc,
+	  src/algorithm/algorithm/molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/perturbed_md.cc,
+	  src/algorithm/algorithm/scaled_atvir_md.cc,
+	  src/algorithm/algorithm/scaled_atvir_perturbed_md.cc,
+	  src/algorithm/algorithm/scaled_md.cc,
+	  src/algorithm/algorithm/scaled_molvir_md.cc,
+	  src/algorithm/algorithm/scaled_molvir_perturbed_md.cc,
+	  src/algorithm/algorithm/scaled_perturbed_md.cc,
+	  src/interaction/interaction.h, src/math/gmath.h: reduce memory
+	  usage during compilation --markus
+
+2003-10-07 17:16  developer
+
+	* configure.in: intel crusoe
+
+2003-10-07 17:15  developer
+
+	* configure.in: intel comp
+
+2003-10-07 16:04  developer
+
+	* configure.in: intel again
+
+2003-10-07 16:03  developer
+
+	* src/algorithm/algorithm/md.tcc: intel c++ compliancy??
+
+2003-10-07 09:17  developer
+
+	* src/: algorithm/algorithm/md.tcc, math/gmath.h: intel
+	  compatibility
+
+2003-10-07 08:50  developer
+
+	* config.h.in, configure.in: compiler version
+
+2003-10-07 08:22  developer
+
+	* configure.in, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_global.tcc,
+	  src/algorithm/temperature/berendsen.tcc,
+	  src/io/topology/InTopology.tcc, src/math/gmath.h,
+	  src/math/math.cc: remove unused variables --markus
+
+2003-10-06 17:09  developer
+
+	* configure.in: intel compilation flags
+
+2003-10-06 16:49  developer
+
+	* Config.sh, VERSION, acinclude.m4, configure.in: configure.in
+	  change
+
+2003-10-06 14:59  developer
+
+	* src/: algorithm/temperature/berendsen.tcc, io/GInStream.cc:
+	  bugfix --markus
+
+2003-09-12 17:20  developer
+
+	* src/: Makefile.am, interaction/Makefile.am,
+	  simulation/Makefile.am: preparing the release --markus
+
+2003-09-12 16:10  developer
+
+	* program/Makefile.am, program/fasti.cc, program/fasti.h,
+	  program/flexi.cc, program/scali.cc, src/timing.cc, src/timing.h,
+	  src/algorithm/algorithm/interaction_spec.h,
+	  src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_global.h,
+	  src/algorithm/algorithm/md_global.tcc,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/pressure/berendsen.tcc,
+	  src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc: bekker pairlist --markus &
+	  chris
+
+2003-09-11 13:40  developer
+
+	* TODO, program/fasti.cc, program/flexi.cc, program/md.cc,
+	  program/scali.cc, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_global.tcc,
+	  src/algorithm/integration/leap_frog.tcc: timing functions
+
+2003-09-11 11:33  developer
+
+	* src/: algorithm/algorithm/md.tcc,
+	  algorithm/algorithm/perturbation_md.tcc,
+	  algorithm/temperature/berendsen.tcc, io/print_block.h,
+	  io/print_block.tcc, math/gmath.h: slow growth fix --chris &
+	  markus
+
+2003-09-09 21:44  developer
+
+	* src/algorithm/temperature/berendsen.tcc: tried to fix pert temp
+	  coupling --markus
+
+2003-09-08 16:03  developer
+
+	* program/fasti.cc, program/flexi.cc, program/scali.cc,
+	  src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_base.h,
+	  src/algorithm/algorithm/md_base.tcc,
+	  src/algorithm/algorithm/md_global.tcc,
+	  src/algorithm/pressure/berendsen.h,
+	  src/algorithm/pressure/berendsen.tcc,
+	  src/interaction/forcefield/forcefield.tcc, src/io/print_block.h,
+	  src/io/print_block.tcc, src/math/gmath.h: atomic virial
+	  calculation --markus
+
+2003-09-07 23:26  developer
+
+	* program/fasti.cc, program/flexi.cc, program/flexi.h,
+	  program/md.cc, program/scali.cc, src/debug.h,
+	  src/algorithm/Makefile.am, src/algorithm/algorithm.h,
+	  src/algorithm/algorithm/interaction_spec.h,
+	  src/algorithm/algorithm/md.h, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_base.h,
+	  src/algorithm/algorithm/md_global.h,
+	  src/algorithm/algorithm/md_global.tcc,
+	  src/algorithm/algorithm/md_spec.h,
+	  src/algorithm/algorithm/perturbation_md.h,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/pressure/berendsen.tcc,
+	  src/interaction/forcefield/forcefield.tcc,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc:
+	  atomic virial trial 1 --markus
+
+2003-09-06 21:49  developer
+
+	* program/fasti.cc, program/fasti.h, program/flexi.cc,
+	  program/flexi.h, program/md.cc, program/scali.cc,
+	  src/algorithm/Makefile.am, src/algorithm/algorithm.h,
+	  src/algorithm/algorithm/interaction_spec.h,
+	  src/algorithm/algorithm/md.h, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_base.h,
+	  src/algorithm/algorithm/md_base.tcc,
+	  src/algorithm/algorithm/md_spec.h,
+	  src/algorithm/algorithm/perturbation_md.h,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/integration/leap_frog.h,
+	  src/algorithm/integration/leap_frog.tcc,
+	  src/algorithm/integration/runge_kutta.h,
+	  src/algorithm/integration/runge_kutta.tcc,
+	  src/interaction/interaction.h,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/forcefield/forcefield.tcc,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc:
+	  restructered spec files --markus
+
+2003-09-06 12:19  developer
+
+	* src/math/: boundary_implementation.h,
+	  boundary_implementation.tcc: grid pairlist exclusion fix
+
+2003-09-02 14:59  developer
+
+	* src/interaction/forcefield/forcefield.tcc: energy seg fault...
+
+2003-08-29 19:31  developer
+
+	* src/math/periodicity.tcc: fix in put_chargegroups_into_box
+	  --markus, chris
+
+2003-08-29 19:11  developer
+
+	* program/Makefile.am, program/fasti.cc, program/fasti.h,
+	  src/interaction/Makefile.am, src/interaction/interaction.h:
+	  bekker part 1: grid based pairlist --markus, chris
+
+2003-08-29 17:20  developer
+
+	* src/algorithm/algorithm/perturbation_md.tcc: slow growth
+	  --markus, chris, clara
+
+2003-08-29 16:18  developer
+
+	* src/: algorithm/algorithm/md.h, algorithm/algorithm/md.tcc,
+	  algorithm/algorithm/perturbation_md.h,
+	  algorithm/algorithm/perturbation_md.tcc,
+	  io/topology/InPerturbationTopology.tcc: virial calculation bugcvs
+	  update! --clara, chris, markus
+
+2003-08-29 09:42  developer
+
+	* src/: algorithm/algorithm/md.h, algorithm/algorithm/md.tcc,
+	  algorithm/algorithm/perturbation_md.tcc, io/GInStream.cc: shake
+	  initial positions and velocities (and some bugs)  --markus&chris
+
+2003-08-27 14:31  developer
+
+	* src/math/: boundary_implementation.h,
+	  boundary_implementation.tcc: box components from vector --markus
+
+2003-08-27 14:30  developer
+
+	* src/algorithm/algorithm/perturbation_md.tcc: perturbation: update
+	  for lambda before generating of velocities --markus
+
+2003-08-25 14:10  developer
+
+	* TODO: updated TODO
+
+2003-08-24 22:04  developer
+
+	* program/flexi.h, src/debug.h, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/md_spec.h,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/interaction/Makefile.am, src/interaction/interaction.h,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc:
+	  reworked the nonbonded --markus
+
+2003-08-22 13:02  developer
+
+	* src/algorithm/algorithm/md.tcc: bug in perturbed virial
+	  calculation --markus
+
+2003-08-21 23:07  developer
+
+	* src/: algorithm/algorithm/md.h, algorithm/algorithm/md.tcc,
+	  algorithm/algorithm/md_spec.h,
+	  algorithm/algorithm/perturbation_md.tcc, io/print_block.h,
+	  io/print_block.tcc, math/gmath.h: included centre of mass removal
+	  --markus & chris
+
+2003-08-21 13:45  developer
+
+	* TODO: updated a bit the TODO --markus
+
+2003-08-21 12:05  developer
+
+	* program/flexi.cc, src/io/print_block.tcc: correct temperature
+	  scaling ? for flexible constraints --markus
+
+2003-08-21 11:10  developer
+
+	* program/flexi.h, program/scali.cc,
+	  src/algorithm/algorithm/md_spec.h,
+	  src/algorithm/temperature/berendsen.tcc, src/io/GInStream.cc,
+	  src/io/blockinput.h, src/io/blockinput.tcc,
+	  src/io/print_block.tcc: added forgotten files, corrected
+	  blockinput --chris & markus
+
+2003-08-19 16:38  developer
+
+	* src/algorithm/algorithm/perturbation_md.tcc: alpha lj and crf per
+	  atom, PERTURB03 block -- chris & markus
+
+2003-08-19 14:21  developer
+
+	* program/Makefile.am, program/create_forcefield.h,
+	  program/flexi.cc, program/md.cc, src/algorithm/algorithm.h,
+	  src/algorithm/algorithm/md.h, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.h,
+	  src/algorithm/algorithm/perturbation_md.tcc: scaled interactions
+	  in perturbation --chris & markus
+
+2003-08-18 14:34  developer
+
+	* src/io/topology/InPerturbationTopology.tcc: added free energy
+	  trajectories --markus & chris
+
+2003-08-18 14:04  developer
+
+	* program/flexi.cc, program/md.cc, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc: added free energy trajectories
+	  --markus & chris
+
+2003-08-15 18:43  developer
+
+	* program/flexi.cc, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/temperature/berendsen.tcc,
+	  src/io/topology/InTopology.tcc: FORCEFIELD block, averages
+	  --markus
+
+2003-08-15 14:28  developer
+
+	* program/flexi.cc, program/md.cc, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/io/topology/InPerturbationTopology.tcc: small adaptions
+	  --markus
+
+2003-08-15 11:21  developer
+
+	* program/: flexi.cc, md.cc: debug output and averages in flexi
+	  --markus
+
+2003-08-15 09:53  developer
+
+	* src/: algorithm/algorithm/perturbation_md.tcc,
+	  interaction/interaction.h,
+	  io/topology/InPerturbationTopology.tcc,
+	  simulation/perturbation.h: added the perturbed dihedral --chris
+
+2003-08-15 09:22  developer
+
+	* program/md.cc, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.tcc: lambda energy
+	  averages
+
+2003-08-14 13:25  developer
+
+	* src/algorithm/algorithm/: md.tcc, perturbation_md.tcc: bug in
+	  perturbed shake... --markus
+
+2003-08-14 10:29  developer
+
+	* program/flexi.cc, src/algorithm/algorithm/md.tcc: now really the
+	  titles --markus
+
+2003-08-14 10:14  developer
+
+	* Config.sh, src/algorithm/algorithm/md.tcc: compile error --markus
+
+2003-08-14 10:09  developer
+
+	* program/flexi.cc, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc: write title to trajecotries
+	  --markus
+
+2003-08-14 08:27  developer
+
+	* INSTALL, src/algorithm/temperature/berendsen.tcc: bug: velocities
+	  set to 0 w/o tcouple --markus
+
+2003-08-13 16:51  developer
+
+	* program/flexi.cc, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.h, src/io/Makefile.am, src/io/io.h:
+	  flexible constraints and lambda derivatives of constraints
+
+2003-08-12 13:36  developer
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.h,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/temperature/berendsen.tcc, src/io/print_block.tcc,
+	  src/io/topology/InTopology.tcc, src/simulation/simulation.h:
+	  perturbed shake
+
+2003-08-08 17:26  developer
+
+	* src/: algorithm/algorithm/md.tcc,
+	  algorithm/temperature/berendsen.tcc, io/print_block.h,
+	  io/print_block.tcc: temperature coupling: internal and molecular
+	  temperatures --markus
+
+2003-08-07 17:40  developer
+
+	* src/io/topology/InPerturbationTopology.tcc: fixed bugs in
+	  perturbed pairs --markus & chris
+
+2003-08-07 14:40  developer
+
+	* src/io/topology/InPerturbationTopology.tcc: put in the perturbed
+	  excluded RF correction --chris
+
+2003-08-07 09:52  developer
+
+	* doxygen.conf, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/temperature/berendsen.tcc,
+	  src/interaction/Makefile.am, src/io/print_block.h,
+	  src/io/print_block.tcc,
+	  src/io/topology/InPerturbationTopology.tcc,
+	  src/io/topology/InTopology.tcc, src/math/gmath.h: perturbed pairs
+	  and kinetic energy part I --markus
+
+2003-08-04 13:23  developer
+
+	* src/io/print_block.tcc: doxygen changes --markus
+
+2003-07-31 16:36  developer
+
+	* program/flexi.cc: flexible constraint simulation --markus
+
+2003-07-31 16:14  developer
+
+	* program/Makefile.am, program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.h, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.h,
+	  src/algorithm/algorithm/perturbation_md.tcc, src/io/Makefile.am,
+	  src/io/io.h, src/io/topology/InTopology.h,
+	  src/io/topology/InTopology.tcc: shake and flexible shake
+	  rearrangement --markus
+
+2003-07-31 10:36  developer
+
+	* src/interaction/Makefile.am: [no log message]
+
+2003-07-31 10:27  developer
+
+	* src/: algorithm/algorithm/perturbation_md.tcc,
+	  interaction/interaction.h: added harmonic perturbation --chris
+
+2003-07-31 08:47  developer
+
+	* src/: debug.cc, algorithm/algorithm.cc, algorithm/algorithm.h,
+	  algorithm/algorithm/md.h, algorithm/algorithm/md.tcc,
+	  algorithm/algorithm/perturbation_md.h,
+	  algorithm/algorithm/perturbation_md.tcc,
+	  algorithm/temperature/berendsen.h,
+	  algorithm/temperature/berendsen.tcc, interaction/Makefile.am,
+	  interaction/interaction.h, interaction/forcefield/forcefield.tcc,
+	  io/topology/InPerturbationTopology.tcc, io/topology/InTopology.h,
+	  io/topology/InTopology.tcc, simulation/perturbation.h: nonbonded
+	  perturbation --markus&chris
+
+2003-07-23 09:28  developer
+
+	* src/: algorithm/algorithm/md.tcc, interaction/Makefile.am,
+	  interaction/interaction.h: adding perturbation filter --markus
+
+2003-07-18 18:48  developer
+
+	* src/interaction/Makefile.am: more missing files --chris
+
+2003-07-18 18:24  developer
+
+	* src/: interaction/Makefile.am, simulation/Makefile.am: angle
+	  perturbation and pressure --markus
+
+2003-07-18 18:19  developer
+
+	* src/: algorithm/algorithm/md.h, algorithm/algorithm/md.tcc,
+	  interaction/Makefile.am, interaction/interaction.h,
+	  interaction/forcefield/forcefield.tcc, io/topology/InTopology.h,
+	  io/topology/InTopology.tcc: pressure calculation
+
+2003-07-17 16:59  developer
+
+	* src/: algorithm/algorithm/md.h, algorithm/algorithm/md.tcc,
+	  algorithm/algorithm/perturbation_md.tcc,
+	  interaction/interaction.h,
+	  io/topology/InPerturbationTopology.tcc,
+	  simulation/perturbation.h:  perturbed angles --chris
+
+2003-07-17 16:56  developer
+
+	* src/: algorithm/algorithm/md.h, algorithm/algorithm/md.tcc,
+	  interaction/interaction.h: lots of bugs --markus
+
+2003-07-15 14:18  developer
+
+	* src/interaction/: Makefile.am, interaction.h: major changes to
+	  nonbonded structure part I --markus
+
+2003-07-13 10:41  developer
+
+	* src/: interaction/Makefile.am, interaction/interaction.h,
+	  io/topology/InPerturbationTopology.tcc, simulation/Makefile.am,
+	  simulation/perturbation.h: adding filter code to pairlist
+
+2003-06-24 14:15  developer
+
+	* ChangeLog, INSTALL, TODO, program/md.cc,
+	  src/algorithm/algorithm/md.tcc, src/simulation/Makefile.am,
+	  src/simulation/simulation.h: energy averages and fluctuations
+	  --markus
+
+2003-06-19 17:03  developer
+
+	* ChangeLog, TODO, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.h,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/io/print_block.h, src/io/print_block.tcc: quartic bond
+	  interaction perturbation --markus
+
+2003-06-18 16:18  developer
+
+	* src/interaction/Makefile.am: distcheck --markus
+
+2003-06-18 16:10  developer
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.h, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc,
+	  src/algorithm/algorithm/perturbation_md.h,
+	  src/algorithm/algorithm/perturbation_md.tcc,
+	  src/algorithm/integration/leap_frog.tcc,
+	  src/algorithm/temperature/berendsen.tcc,
+	  src/interaction/interaction.h,
+	  src/interaction/forcefield/forcefield.tcc, src/io/GInStream.cc,
+	  src/io/GInStream.h, src/io/print_block.tcc,
+	  src/io/topology/InPerturbationTopology.h,
+	  src/io/topology/InPerturbationTopology.tcc,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc:
+	  still bond perturbation, rearangement in algorithm --markus
+
+2003-06-15 17:12  developer
+
+	* program/md.cc, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc, src/io/Makefile.am, src/io/io.h,
+	  src/io/print_block.tcc, src/io/topology/InPerturbationTopology.h,
+	  src/io/topology/InPerturbationTopology.tcc,
+	  src/io/topology/InTopology.h, src/simulation/Makefile.am,
+	  src/simulation/perturbation.h, src/simulation/simulation.h: added
+	  reading of bond perturbation info --markus
+
+2003-06-12 18:08  developer
+
+	* src/io/topology/InTopology.tcc: change topology classes --markus
+
+2003-06-12 17:35  developer
+
+	* src/: io/topology/InTopology.tcc, simulation/Makefile.am,
+	  simulation/simulation.h: change topology classes: bond --markus
+
+2003-06-12 11:03  developer
+
+	* config.h.in, src/simulation/Makefile.am: distcheck
+
+2003-06-12 10:44  developer
+
+	* TODO, configure.in, program/md.cc, src/debug.cc,
+	  src/interaction/Makefile.am, src/interaction/interaction.h,
+	  src/interaction/forcefield/parameter.h, src/io/Makefile.am,
+	  src/io/print_block.cc, src/io/print_block.h,
+	  src/io/print_block.tcc, src/math/boundary_implementation.h,
+	  src/math/gmath.h, src/math/periodicity.h,
+	  src/math/periodicity.tcc, src/simulation/Makefile.am,
+	  src/simulation/core.cc, src/simulation/core.h,
+	  src/simulation/simulation.h: reorganizing iterators
+
+2003-06-12 09:31  developer
+
+	* configure.in: release flags
+
+2003-06-11 16:37  developer
+
+	* ChangeLog, TODO, src/algorithm/algorithm/md.tcc,
+	  src/math/periodicity.h, src/math/periodicity.tcc: put
+	  chargegroups into the box
+
+2003-06-11 15:07  developer
+
+	* ChangeLog, TODO, src/io/print_block.cc, src/io/print_block.h:
+	  release 0.0.2
+
+2003-06-11 15:01  developer
+
+	* program/md.cc, src/algorithm/algorithm/md.h,
+	  src/algorithm/algorithm/md.tcc: energy trajectory
+
+2003-06-11 13:26  developer
+
+	* TODO, program/md.cc, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/temperature/berendsen.h,
+	  src/algorithm/temperature/berendsen.tcc, src/io/print_block.h:
+	  kinetic energy/temperature
+
+2003-06-11 09:49  developer
+
+	* TODO, src/algorithm/algorithm/md.tcc: added checks
+
+2003-06-10 20:59  developer
+
+	* TODO, src/io/print_block.h: reaction field excluded atoms
+	  contribution
+
+2003-06-09 21:52  developer
+
+	* INSTALL, program/md.cc, src/io/argument.cc,
+	  src/io/blockinput.tcc, src/io/message.cc,
+	  src/math/boundary_implementation.tcc: intel c++ compilation
+
+2003-06-09 12:18  developer
+
+	* TODO: check state beginning
+
+2003-06-09 09:55  developer
+
+	* TODO: updated TODO
+
+2003-06-08 15:12  developer
+
+	* ChangeLog: [no log message]
+
+2003-06-08 15:08  developer
+
+	* src/algorithm/: algorithm/md.tcc, pressure/berendsen.tcc:
+	  energies.
+
+2003-06-08 13:34  developer
+
+	* src/interaction/forcefield/forcefield.tcc: bond energies
+
+2003-06-06 19:03  developer
+
+	* src/: algorithm/algorithm/md.tcc, io/print_block.h,
+	  simulation/simulation.h: energy (groups)
+
+2003-06-06 15:46  developer
+
+	* configure.in, src/debug.cc, src/debug.h: enable production build
+
+2003-06-06 15:11  developer
+
+	* doxygen.conf: [no log message]
+
+2003-06-06 14:49  developer
+
+	* src/algorithm/: algorithm/md.tcc, pressure/berendsen.h,
+	  pressure/berendsen.tcc: virial bugfixes
+
+2003-06-06 14:44  developer
+
+	* TODO: [no log message]
+
+2003-06-05 12:44  developer
+
+	* src/: algorithm/algorithm/md.tcc, io/blockinput.tcc: more error
+	  messages
+
+2003-06-05 12:32  developer
+
+	* program/md.cc: added file parsing notices.
+
+2003-06-04 18:49  developer
+
+	* program/Makefile.am, program/md.cc, program/vtest.cc,
+	  src/algorithm/Makefile.am, src/algorithm/algorithm.h,
+	  src/algorithm/algorithm/md.h, src/algorithm/algorithm/md.tcc,
+	  src/algorithm/pressure/berendsen.h,
+	  src/algorithm/pressure/berendsen.tcc,
+	  src/algorithm/temperature/berendsen.h,
+	  src/algorithm/temperature/berendsen.tcc, src/io/print_block.h,
+	  src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc, src/math/gmath.h: pressure
+	  scaling
+
+2003-06-01 12:23  developer
+
+	* program/create_forcefield.h, src/interaction/Makefile.am,
+	  src/interaction/interaction.h, src/simulation/simulation.h:
+	  preparing virial calculation
+
+2003-05-31 21:28  developer
+
+	* src/simulation/: Makefile.am, simulation.h: molecule iterator
+
+2003-05-31 18:33  developer
+
+	* program/vtest.cc: [no log message]
+
+2003-05-31 12:00  developer
+
+	* src/io/: argument.cc, print_block.cc: SUBMOLECULES block
+
+2003-05-30 15:15  developer
+
+	* src/: algorithm/integration/leap_frog.h, math/periodicity.h:
+	  berendsen thermostat
+
+2003-05-30 14:58  developer
+
+	* doxygen.conf, program/Makefile.am, program/vtest.cc,
+	  src/algorithm/Makefile.am, src/algorithm/algorithm.h,
+	  src/algorithm/integration/leap_frog.h,
+	  src/algorithm/integration/leap_frog.tcc,
+	  src/algorithm/temperature/berendsen.h,
+	  src/algorithm/temperature/berendsen.tcc, src/math/gmath.h,
+	  src/simulation/Makefile.am: berendsen thermostat
+
+2003-05-29 15:33  developer
+
+	* program/create_forcefield.h, program/vtest.cc,
+	  src/io/Makefile.am, src/io/io.h, src/io/print_block.cc,
+	  src/io/print_block.h, src/math/gmath.h,
+	  src/simulation/simulation.h: adding degree of freedom calculation
+
+2003-05-29 13:38  developer
+
+	* src/io/argument.cc: added message for unknown arguments
+
+2003-05-29 12:41  developer
+
+	* src/io/argument.cc: arguments can now be arbitrarily long lines
+
+2003-05-28 15:55  developer
+
+	* doxygen.conf, src/io/argument.cc, src/io/blockinput.h: doxygen
+	  changes
+
+2003-05-28 15:32  developer
+
+	* configure.in, doxygen.conf, src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc: doxygen changes
+
+2003-05-28 15:22  developer
+
+	* configure.in: name change
+
+2003-05-28 15:16  developer
+
+	* ChangeLog, INSTALL, README, config.h.in, configure.in,
+	  src/interaction/Makefile.am, src/simulation/Makefile.am:
+	  distcheck changes
+
+2003-05-28 13:45  developer
+
+	* Makefile.am, config.h.in, configure.in, program/vtest.cc,
+	  src/algorithm/Makefile.am, src/algorithm/integration/leap_frog.h,
+	  src/algorithm/integration/leap_frog.tcc,
+	  src/algorithm/integration/runge_kutta.h,
+	  src/algorithm/integration/runge_kutta.tcc,
+	  src/interaction/Makefile.am,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/forcefield/forcefield.tcc, src/io/Makefile.am,
+	  src/math/Makefile.am, src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc, src/math/gmath.h,
+	  src/math/periodicity.h, src/math/periodicity.tcc,
+	  src/simulation/Makefile.am: reorganize testing
+
+2003-05-26 15:31  developer
+
+	* program/vtest.cc, src/io/Makefile.am, src/io/io.h,
+	  src/math/Makefile.am, src/math/boundary_implementation.h,
+	  src/math/boundary_implementation.tcc, src/math/gmath.h,
+	  src/math/periodicity.h, src/math/periodicity.tcc: G96 output
+
+2003-05-23 18:35  developer
+
+	* src/io/topology/InTopology.tcc: still a shake error for alices
+	  hepta
+
+2003-05-22 22:03  developer
+
+	* program/vtest.cc, src/debug.h, src/interaction/Makefile.am,
+	  src/interaction/interaction.h, src/interaction/interaction.t.cc,
+	  src/io/topology/InTopology.tcc, src/math/gmath.h,
+	  src/math/periodicity.tcc, src/simulation/simulation.t.cc: testing
+	  interactions
+
+2003-05-22 17:17  developer
+
+	* program/vtest.cc, src/interaction/interaction.h,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc:
+	  added quartic bond interaction
+
+2003-05-22 15:36  developer
+
+	* program/vtest.cc, src/interaction/interaction.h,
+	  src/interaction/forcefield/parameter.h,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc,
+	  src/simulation/simulation.h: added dihedral
+
+2003-05-22 13:55  developer
+
+	* src/: debug.h, algorithm/algorithm.t.cc,
+	  interaction/interaction.t.cc, io/blockinput.t.cc: solvent
+	  pairlist
+
+2003-05-22 13:33  developer
+
+	* program/vtest.cc, src/interaction/Makefile.am,
+	  src/interaction/interaction.h,
+	  src/interaction/forcefield/parameter.h,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc,
+	  src/simulation/Makefile.am, src/simulation/simulation.h: added
+	  angle and nonbonded parameters
+
+2003-05-22 10:40  developer
+
+	* src/debug.h: doxygen changes
+
+2003-05-22 10:34  developer
+
+	* program/vtest.cc, src/debug.cc, src/debug.h,
+	  src/algorithm/algorithm.cc, src/algorithm/algorithm.h,
+	  src/interaction/interaction.cc, src/interaction/interaction.h,
+	  src/io/io.cc, src/io/io.h, src/math/gmath.h, src/math/math.cc:
+	  arguments parsing in vtest
+
+2003-05-21 22:46  developer
+
+	* program/vtest.cc, src/io/Makefile.am, src/io/argument.cc,
+	  src/io/argument.h, src/io/io.h: argument parsing part I
+
+2003-05-21 18:42  developer
+
+	* src/: interaction/interaction.h, io/io.h: doxygen changes
+
+2003-05-21 18:25  developer
+
+	* program/vtest.cc, src/interaction/interaction.h,
+	  src/interaction/forcefield/parameter.h,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc,
+	  src/simulation/Makefile.am, src/simulation/simulation.h: added
+	  angles
+
+2003-05-21 18:14  developer
+
+	* program/vtest.cc, src/debug.h, src/algorithm/algorithm.t.cc,
+	  src/interaction/interaction.t.cc, src/io/blockinput.t.cc,
+	  src/io/io.cc, src/io/io.h, src/io/topology/InTopology.h,
+	  src/io/topology/InTopology.tcc, src/math/periodicity.h,
+	  src/math/periodicity.tcc, src/simulation/Makefile.am,
+	  src/simulation/simulation.cc, src/simulation/simulation.h,
+	  src/simulation/simulation.t.cc: testing against gromos
+
+2003-05-20 15:42  developer
+
+	* program/vtest.cc, src/Makefile.am, src/debug.cc, src/debug.h,
+	  src/interaction/interaction.cc, src/interaction/interaction.h,
+	  src/interaction/interaction.t.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/forcefield/forcefield.tcc,
+	  src/interaction/forcefield/parameter.h, src/io/blockinput.t.cc,
+	  src/io/io.cc, src/io/io.h, src/io/topology/InTopology.h,
+	  src/io/topology/InTopology.tcc, src/math/math.t.cc,
+	  src/math/periodicity.h, src/math/periodicity.tcc: twinrange
+	  pairlist, periodicity and debug code
+
+2003-05-19 14:28  developer
+
+	* program/vtest.cc: shake solute
+
+2003-05-19 13:28  developer
+
+	* src/io/topology/InTopology.tcc: multiline exclusions in
+	  InTopology (SOLUTEATOM)
+
+2003-05-19 13:27  developer
+
+	* src/io/: blockinput.h, blockinput.tcc: added constness to
+	  blockio::concatenate
+
+	  fixed multiline-exclusion issue in InTopology
+
+2003-05-19 11:53  developer
+
+	* src/interaction/interaction.t.cc: updated simple_pairlist stuff.
+
+	  warning simple_pairlist::iterator interface changed slightly
+
+	  it.j() does not return atom j, but the index in the pairlist
+	  matrix.
+
+	  use it.i() and *it to get the atom indices.
+
+2003-05-18 12:39  developer
+
+	* program/vtest.cc, src/interaction/interaction.h,
+	  src/interaction/forcefield/parameter.h, src/io/blockinput.t.cc,
+	  src/simulation/simulation.h, src/simulation/simulation.t.cc:
+	  shake for solute part I
+
+2003-05-16 18:01  developer
+
+	* src/: algorithm/algorithm.t.cc, interaction/interaction.t.cc,
+	  io/topology/InTopology.tcc, simulation/Makefile.am,
+	  simulation/simulation.h, simulation/simulation.t.cc:
+	  restructuring topology
+
+2003-05-14 18:27  developer
+
+	* src/: io/topology/InTopology.h, io/topology/InTopology.tcc,
+	  math/Makefile.am, math/gmath.h, math/math.t.cc,
+	  math/periodicity.h, math/periodicity.tcc: reading in lennard
+	  jones parameter and pbc
+
+2003-05-14 16:15  developer
+
+	* src/algorithm/algorithm.t.cc: boost again
+
+2003-05-14 16:12  developer
+
+	* configure.in, program/vtest.cc, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.t.cc, src/interaction/Makefile.am,
+	  src/interaction/interaction.t.cc, src/io/Makefile.am,
+	  src/io/blockinput.t.cc, src/io/message.t.cc,
+	  src/io/topology/InTopology.tcc, src/math/Makefile.am,
+	  src/math/math.t.cc, src/simulation/Makefile.am,
+	  src/simulation/simulation.t.cc: boost out, solvent in
+
+2003-05-13 20:48  developer
+
+	* program/vtest.cc, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.h, src/algorithm/algorithm.t.cc,
+	  src/interaction/interaction.t.cc, src/io/topology/InTopology.tcc,
+	  src/math/gmath.h: solvent part I
+
+2003-05-12 16:15  developer
+
+	* program/vtest.cc, src/algorithm/algorithm.t.cc,
+	  src/interaction/interaction.t.cc, src/io/Makefile.am,
+	  src/io/blockinput.t.cc, src/io/io.h,
+	  src/io/topology/InTopology.tcc, src/simulation/Makefile.am,
+	  src/simulation/simulation.h, src/simulation/simulation.t.cc:
+	  reading in solvent parameter
+
+2003-05-11 17:29  developer
+
+	* program/Makefile.am, program/vtest.cc, src/io/Makefile.am,
+	  src/io/blockinput.t.cc, src/io/io.h, src/io/message.cc,
+	  src/io/topology/InTopology.tcc, src/math/gmath.h: io routines for
+	  topology and trajectory files
+
+2003-05-09 20:02  developer
+
+	* src/io/: io.h, topology/InTopology.tcc: messages
+
+2003-05-09 17:37  developer
+
+	* configure.in, src/io/Makefile.am, src/io/message.cc,
+	  src/io/message.h, src/io/message.t.cc,
+	  src/io/topology/InTopology.tcc: adding message processing.
+
+2003-05-09 10:25  developer
+
+	* src/io/blockinput.tcc: fix reading of END
+
+2003-05-08 19:02  developer
+
+	* configure.in, src/algorithm/algorithm.t.cc,
+	  src/interaction/interaction.t.cc, src/io/Makefile.am,
+	  src/io/blockinput.t.cc, src/io/blockinput.tcc,
+	  src/io/topology/InTopology.h, src/io/topology/InTopology.tcc,
+	  src/math/gmath.h, src/simulation/Makefile.am,
+	  src/simulation/simulation.h, src/simulation/simulation.t.cc:
+	  reading in topology
+
+2003-05-07 21:34  developer
+
+	* src/: algorithm/Makefile.am, algorithm/algorithm.t.cc,
+	  interaction/Makefile.am, interaction/interaction.t.cc,
+	  io/Makefile.am, simulation/Makefile.am, simulation/simulation.h,
+	  simulation/simulation.t.cc: relocating class bond (out of
+	  topology).  minor changes to makefiles.
+
+2003-05-07 18:58  developer
+
+	* doxygen.conf, tail.html: adding doxygen support.
+
+2003-05-07 18:57  developer
+
+	* src/io/: GInStream.cc, GInStream.h, Makefile.am, blockinput.h,
+	  blockinput.t.cc, blockinput.tcc, topology/InTopology.h,
+	  topology/InTopology.tcc: some more io...
+
+2003-05-07 17:24  developer
+
+	* src/io/: Makefile.am, io.cc, io.h: some more io
+
+2003-05-07 17:12  developer
+
+	* src/io/: Makefile.am, blockinput.h, blockinput.t.cc,
+	  blockinput.tcc: very basic io stuff
+
+2003-05-07 17:10  developer
+
+	* src/Makefile.am: still adding io stuff
+
+2003-05-07 17:09  developer
+
+	* configure.in: adding io stuff
+
+2003-05-07 16:30  developer
+
+	* program/Makefile.am, program/vtest.cc, src/algorithm/algorithm.h,
+	  src/algorithm/integration/runge_kutta.tcc,
+	  src/interaction/Makefile.am, src/interaction/interaction.h,
+	  src/interaction/forcefield/forcefield.tcc,
+	  src/simulation/simulation.h, src/simulation/simulation.t.cc:
+	  added harmonic bond terms
+
+2003-05-07 09:27  developer
+
+	* ChangeLog, src/math/gmath.h: doxygen comment in src/math/gmath.h
+
+2003-05-06 17:17  developer
+
+	* src/: algorithm/Makefile.am, algorithm/algorithm.t.cc,
+	  algorithm/integration/runge_kutta.h,
+	  algorithm/integration/runge_kutta.tcc,
+	  interaction/interaction.t.cc: added runge-kutta
+
+2003-05-06 08:59  developer
+
+	* AUTHORS, COPYING, ChangeLog, Config.sh, INSTALL, Makefile.am,
+	  NEWS, README, acinclude.m4, config.h.in, configure.in,
+	  program/Makefile.am, src/Makefile.am, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.cc, src/algorithm/algorithm.t.cc,
+	  src/algorithm/integration/leap_frog.h,
+	  src/algorithm/integration/leap_frog.tcc,
+	  src/interaction/Makefile.am, src/interaction/interaction.cc,
+	  src/interaction/interaction.t.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/forcefield/forcefield.tcc, src/math/Makefile.am,
+	  src/math/gmath.h, src/math/math.cc, src/math/math.t.cc,
+	  src/simulation/Makefile.am, src/simulation/simulation.cc,
+	  src/simulation/simulation.t.cc: GromosXX initial sources
+
+2003-05-06 08:59  developer
+
+	* AUTHORS, COPYING, ChangeLog, Config.sh, INSTALL, Makefile.am,
+	  NEWS, README, acinclude.m4, config.h.in, configure.in,
+	  program/Makefile.am, src/Makefile.am, src/algorithm/Makefile.am,
+	  src/algorithm/algorithm.cc, src/algorithm/algorithm.t.cc,
+	  src/algorithm/integration/leap_frog.h,
+	  src/algorithm/integration/leap_frog.tcc,
+	  src/interaction/Makefile.am, src/interaction/interaction.cc,
+	  src/interaction/interaction.t.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/forcefield/forcefield.tcc, src/math/Makefile.am,
+	  src/math/gmath.h, src/math/math.cc, src/math/math.t.cc,
+	  src/simulation/Makefile.am, src/simulation/simulation.cc,
+	  src/simulation/simulation.t.cc: Initial revision
+
