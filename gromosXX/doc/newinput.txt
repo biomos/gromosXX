@@ -97,6 +97,13 @@ PLIST03
 END
 
 PERTURB03
+#	NTG:
+#			on	perturbation on 
+#				(nonbonded: all atom pairs involving a perturbed atom)
+#			off	perturbation off
+#			scaled	nonbonded: perturbation on for all atom pairs with a scaled interaction,
+#					otherwise off
+#					bonded: on
 #	SCALING:
 #			on (activate interaction scaling)
 #  			off (deactivate interaction scaling)
@@ -104,5 +111,5 @@ PERTURB03
 #			perturbation topology.
 #	NTG:		on / off
 #	NTG	RLAM	DLAMT	NLAM	SCALING
-	on	0.5	1.0	1.0	off
+	on	0.5		1.0		1.0		off
 END
