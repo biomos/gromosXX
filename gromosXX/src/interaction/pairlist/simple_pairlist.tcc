@@ -104,15 +104,20 @@ interaction::operator<<(
   class simple_pairlist<t_simulation>& pl
 )
 {
-  os << "printing pairlist\n";
-  os << "-----------------" << endl;
+  // os << "printing pairlist\n";
+  // os << "-----------------" << endl;
 
   typename simple_pairlist<t_simulation>::iterator it = pl.begin();
+  int ind = 1;
   while (it != pl.end()) {
-    if (!it.j())
-      os << endl << std::setw(6) << it.i() << " | " << flush;
-    os << std::setw(6) << *it; 
+    if (!it.j()){
+      ind = 1;
+      os << endl << std::setw(5) << it.i() << ": " << flush;
+    }
+    os << std::setw(5) << *it << " "; 
+    if (!(ind%15)) os << "\n\t";
     ++it;
+    ++ind;
   }
   os << std::endl;
 
