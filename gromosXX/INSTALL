@@ -49,6 +49,48 @@ setenv CPPFLAGS "-I${BLITZPATH}/include"
 setenv CXXFLAGS "-I${BLITZPATH}/include"
 setenv LDFLAGS "-L${BLITZPATH}/lib"
 
+nonbonded split-up
+------------------
+
+these steps should only be necessary when using CVS source.
+(that's at least the intention)
+
+In order to save on compiling resources (although not compile time),
+the nonbonded compilation is split up over multiple object files.
+The corresponding cc files are automatically generated. Because
+of that, they are not in the CVS.
+The files have to be generated before running Config.sh the first time.
+Otherwise it fails and you have to re-run it after you have created the
+files. The files can be recreated at any time later on.
+
+to split up the nonbonded:
+
+1.	cd contrib
+2.	build the splitter (usually: g++ -Wall -o splitter splitter.cc)
+3.	edit the template file (if necessary)
+	Two templates are supplied:
+		1. split_complete.dat
+			creates the full gromosXX code
+			compilation is rather slow
+		2. split_develop.dat
+			creates a subspace of the gromosXX code
+			(ie just rectangular boundary conditions,
+			 standard pairlist, ...)
+	edit the split_develop.dat for your cases or use
+	split_complete.dat
+	if you did not compile a case you want to use later,
+	the program will stop.
+	THERE IS NO RISK THAT YOU WILL GET WRONG RESULTS FROM THIS.
+4.	cd ../src/interaction/nonbonded
+5.	../../../contrib/splitter ../../../contrib/split_complete.dat
+	or any other template you like to use.
+
+6.	cd ../../../
+7.	./Config.sh and continue with the normal build process.
+
+=========================================================================
+
+
 if it does not work
 -------------------
 
@@ -59,8 +101,8 @@ autoconf --version [autoconf (GNU Autoconf) 2.58]
 automake --version [automake (GNU automake) 1.7.9]
 libtoolize --version [libtoolize (GNU libtool) 1.5]
 
-compiling with Intel C++ Compiler (7.1)
-----------------------------------------
+compiling with Intel C++ Compiler (7.1 or 8.0 beta)
+---------------------------------------------------
 
 export CC=/opt/intel/compiler70/ia32/bin/icc
 export CXX=/opt/intel/compiler70/ia32/bin/icc
