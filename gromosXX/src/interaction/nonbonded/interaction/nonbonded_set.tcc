@@ -59,6 +59,21 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
     m_nonbonded_interaction->pairlist_algorithm().
       update(topo, conf, sim, *this, 0, topo.num_atoms(), 1);
     DEBUG(7, "\tpairlist updated");
+
+    std::cout << "PRINTING OUT THE STUPID PAIRLIST\n\n";
+    for(size_t i=0; i<100; ++i){
+      if (i >= pairlist().size()) break;
+
+      std::cout << "\n\n--------------------------------------------------";
+      std::cout << "\n" << i;
+      for(size_t j=0; j<pairlist()[i].size(); ++j){
+
+	if (j % 10 == 0) std::cout << "\n\t";
+	std::cout << std::setw(7) << pairlist()[i][j];
+      }
+    }
+    
+
     
     // timing.pairlist += now() - pairlist_start;
     // ++timing.count_pairlist;
@@ -174,6 +189,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 		      size_t const i, size_t const j,
 		      int pc)
 {
+  DEBUG(8, "add shortrange pair " << i << " - " << j);
+  
   assert(!t_interaction_spec::do_bekker || (pc >= 0 && pc < 27));
   assert(pairlist().size() > i);
 
@@ -258,6 +275,8 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 		     size_t const i, size_t const j,
 		     Periodicity_type const & periodicity, int pc)
 {
+  DEBUG(8, "add longrange pair " << i << " - " << j);
+
   const double longrange_start = util::now();
 
   if (t_perturbation_spec::do_perturbation){

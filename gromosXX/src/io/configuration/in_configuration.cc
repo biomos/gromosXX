@@ -25,6 +25,7 @@
 
 #include <util/generate_velocities.h>
 #include <math/volume.h>
+#include <math/periodicity.h>
 
 #include "in_configuration.h"
 
@@ -39,7 +40,7 @@ static std::set<std::string> block_read;
  * read in a trajectory.
  */
 void io::In_Configuration::read(configuration::Configuration &conf, 
-				topology::Topology const &topo, 
+				topology::Topology &topo, 
 				simulation::Parameter const &param)
 {
   if (!quiet)
@@ -246,8 +247,30 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     }
   }
 
+  // gather the molecules!
+  switch(conf.boundary_type){
+    case math::vacuum:
+      break;
+    case math::rectangular:
+      {
+	math::Periodicity<math::rectangular> periodicity(conf.current().box);
+	periodicity.gather_molecules_into_box(conf, topo);
+	break;
+      }
+    case math::triclinic:
+      {
+	math::Periodicity<math::triclinic> periodicity(conf.current().box);
+	periodicity.gather_molecules_into_box(conf, topo);
+	break;
+      }
+    default:
+      std::cout << "wrong periodic boundary conditions!";
+      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+  }
+  
   if (!quiet)
-    std::cout << "END\n\n";
+    std::cout << "\n\tgathering molecules...\n\n"
+	      << "END\n\n";
 
 }
 

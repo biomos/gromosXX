@@ -49,7 +49,7 @@ interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 
   const double nonbonded_start = util::now();
 
-  m_pairlist_algorithm->prepare();
+  m_pairlist_algorithm->prepare(topo, conf, sim);
 
   typename
     std::vector<Nonbonded_Set<t_interaction_spec, t_perturbation_spec> >::iterator

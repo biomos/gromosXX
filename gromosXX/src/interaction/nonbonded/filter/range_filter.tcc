@@ -181,7 +181,7 @@ interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
     return true;
   }
   
-  if (d < m_cutoff_short_2){       // SHORTRANGE: no filter
+  if (d <= m_cutoff_short_2){       // SHORTRANGE: no filter
     DEBUG(11, "cg pair " << i << " - " << j << " short range");
     return false;
   }

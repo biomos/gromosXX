@@ -31,7 +31,9 @@ namespace interaction
     /**
      * prepare the pairlist(s).
      */
-    virtual void prepare(){ assert(false); }
+    virtual void prepare(topology::Topology & topo,
+			 configuration::Configuration & conf,
+			 simulation::Simulation &sim){ assert(false); }
     
     /**
      * update the pairlist(s).

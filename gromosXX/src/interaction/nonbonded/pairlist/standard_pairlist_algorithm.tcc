@@ -1,5 +1,5 @@
 /**
- *  standard_pairlist_algorithm.tcc
+ * @file standard_pairlist_algorithm.tcc
  * create an atomic pairlist with a
  * chargegroup or an atom based cut-off criterion.
  */

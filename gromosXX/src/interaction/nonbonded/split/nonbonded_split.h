@@ -61,6 +61,7 @@
 // nonbonded pairlist algorithm
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm2.h>
 #include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
 
 

@@ -26,14 +26,16 @@ namespace interaction
     Standard_Pairlist_Algorithm();
 
     /**
-     * Constructor.
+     * Destructor.
      */
     virtual ~Standard_Pairlist_Algorithm(){}
     
     /**
      * prepare the pairlists
      */    
-    virtual void prepare(){ DEBUG(8, "Standard Pairlist Algorithm::prepare");}
+    virtual void prepare(topology::Topology & topo,
+			 configuration::Configuration & conf,
+			 simulation::Simulation &sim){ DEBUG(8, "Standard Pairlist Algorithm::prepare");}
 
     /**
      * update the pairlist(s).

@@ -31,10 +31,25 @@ void write_makefile();
 
 int main(int argc, char *argv[])
 {
+
+  cout << "\n\n"
+       << "Splitting the templated nonbonded interactions\n\n"
+       << "Chris Oostenbrink and Markus Christen\n\n";
+
+
   if (argc != 2){
     cout << "usage:\n\t"
 	 << argv[0]
 	 << " template_file\n\n";
+    return 1;
+  }
+
+  ifstream checkfile("create_nonbonded.h");
+  if (!checkfile.is_open()){
+    cerr << argv[0] << " should run in src/interaction/nonbonded !\n"
+	 << "if you know what you're doing, create a file\n"
+	 << "create_nonbonded.h and start " << argv[0] << " again.\n"
+	 << "(touch create_nonbonded.h)\n" << endl;
     return 1;
   }
 
@@ -119,10 +134,12 @@ int main(int argc, char *argv[])
 	string r1b = r1.substr(sep1+1, string::npos);
 	string r2a = r2.substr(0, sep2);
 	string r2b = r2.substr(sep2+1, string::npos);
-
+	
+	/*
 	cout << "Rule: " << r1a << " @ " << r1b << "  &&  "
 	     << r2a << " @ " << r2b << endl;
-	
+	*/
+
 	rule.push_back(pair<pair<string, string>, pair<string, string> >
 		       (pair<string, string>(r1a, r1b),
 			pair<string, string>(r2a, r2b)));

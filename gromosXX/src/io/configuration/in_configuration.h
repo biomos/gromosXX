@@ -29,7 +29,7 @@ namespace io {
     /**
      * Read in a G96 trajectory into the Configuration.
      */
-    void read(configuration::Configuration &conf, topology::Topology const &topo, 
+    void read(configuration::Configuration &conf, topology::Topology &topo, 
 	      simulation::Parameter const &param);
   private:
     /**

@@ -38,6 +38,7 @@
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
 
+/*
 // nonbonded base
 #include <interaction/nonbonded/interaction/storage.h>
 #include <interaction/nonbonded/interaction/nonbonded_parameter.h>
@@ -70,12 +71,14 @@
 
 // and the specs...
 #include <interaction/nonbonded/interaction_spec.h>
+*/
+
 
 #include <algorithm/constraints/shake.h>
 #include <algorithm/constraints/perturbed_shake.h>
 #include <algorithm/constraints/lincs.h>
-#include <algorithm/constraints/flexible_constraint.h>
-#include <algorithm/constraints/perturbed_flexible_constraint.h>
+// #include <algorithm/constraints/flexible_constraint.h>
+// #include <algorithm/constraints/perturbed_flexible_constraint.h>
 
 #include <io/print_block.h>
 
@@ -149,6 +152,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
       }
     case simulation::constr_flexshake:
       {
+	/*
 	// let's try to get the forcefield
 	interaction::Forcefield * ff = NULL;
 
@@ -180,6 +184,12 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  md_seq.push_back(pfc);
 
 	}
+	*/
+
+	io::messages.add("flexible constraints disabled",
+			 "create_constraints",
+			 io::message::error);
+
 	break;
       }
     default:
