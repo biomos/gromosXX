@@ -391,7 +391,8 @@ inline double const interaction::Perturbed_Nonbonded_Term::B_lambda_n_1()const
 inline void interaction::Perturbed_Nonbonded_Term::set_lambda(double const l, 
 						    int const n)
 {
-  DEBUG(9, "initializing lambdas");
+  DEBUG(9, "initializing lambdas: l=" << l
+	<< " n=" << n);
   m_A_lambda = 1-l;
   m_A_lambda2 = m_A_lambda * m_A_lambda;
 

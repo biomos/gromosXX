@@ -44,7 +44,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   // const double l = topo.lambda();
   
   if(j < topo.num_solute_atoms() && 
-     topo.is_perturbed(j) ==true){
+     topo.is_perturbed(j) == true){
 
     A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
 				 topo.perturbed_solute().atoms()[j].A_IAC());
@@ -87,7 +87,9 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   DEBUG(8, "\tlj-parameter state B c6=" << B_lj->c6 << " c12=" << B_lj->c12);
   DEBUG(8, "\tcharges state A i*j = " << A_q);
   DEBUG(8, "\tcharges state B i*j = " << B_q);
-    
+  DEBUG(8, "\talpha lj = " << alpha_lj);
+  DEBUG(8, "\talpha crf = " << alpha_crf);
+
 
   if (t_perturbation_details::do_scaling){
     // SCALING ON
@@ -164,9 +166,11 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   //--------------------------------------------------
   
   DEBUG(8, "\tcalculated interaction state A:\n\t\tf: " 
-	<< f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
+	<< f1 << " f6: " << f6 << " f12: " << f12 
+	<< "\n\t\te_lj: " << e_lj 
 	<< " e_crf: " << e_crf 
-	<< " de_lj: " << de_lj << " de_crf: " << de_crf);
+	<< " de_lj: " << de_lj << " de_crf: " << de_crf
+	<< "\n\t\tr: " << sqrt(math::dot(r,r)));
   
   // now combine everything
   f      = (f1 + f6 + f12) * r;
