@@ -19,6 +19,8 @@ namespace simulation
   class System
   {
   public:
+    const static math::boundary_enum boundary_type = b;
+    
     /**
      * @struct index_struct
      * struct to hold the box indices for
