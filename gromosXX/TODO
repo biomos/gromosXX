@@ -57,8 +57,8 @@ Release 0.1.0
 		position constraints
 	ok 	EM: steepest descent
 	ok	slow growth
-		perturbed shake
-		dihedral angle monitoring
+	?	perturbed shake
+	ok	dihedral angle monitoring
 	ok	atomic virial
 	ok	center of mass motion removal (constraining)
 	ok	restructure the printing out

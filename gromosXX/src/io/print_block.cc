@@ -444,10 +444,10 @@ namespace io
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.bond_energy[i];
     os << "\n" << std::setw(20) << type + "angles";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.angle_energy[i];
-    os << "\n" << std::setw(20) << type + "dihedrals";
-    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihedral_energy[i];
     os << "\n" << std::setw(20) << type + "impropers";
     for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.improper_energy[i];
+    os << "\n" << std::setw(20) << type + "dihedrals";
+    for(int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihedral_energy[i];
 
     os << "\n" << "\n";
     os << std::setw(20) << type + "VDW";

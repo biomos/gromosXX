@@ -169,7 +169,9 @@ namespace io {
     void _print_energyred(configuration::Configuration const &conf,
 			  std::ostream &os);
 
-    void _print_volumepressurered(configuration::Configuration const &conf, 
+    void _print_volumepressurered(topology::Topology const &topo,
+				  configuration::Configuration const &conf, 
+				  simulation::Simulation const &sim,
 				  std::ostream &os);
 
     void _print_free_energyred(configuration::Configuration const &conf,
