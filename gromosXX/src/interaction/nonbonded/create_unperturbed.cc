@@ -38,12 +38,26 @@
 
 // nonbonded base
 #include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_base.h>
+#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+
+// nonbonded pairlist
+#include <interaction/nonbonded/pairlist/pairlist.h>
+
+
+// nonbonded interaction
+#include <interaction/nonbonded/interaction/nonbonded_term.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
+#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
+#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
+#include <interaction/nonbonded/interaction/nonbonded_set.h>
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 
 // nonbonded filter
 #include <interaction/nonbonded/filter/filter.h>
 #include <interaction/nonbonded/filter/exclusion_filter.h>
-#include <interaction/nonbonded/filter/perturbation_filter.h>
 #include <interaction/nonbonded/filter/chargegroup_grid.h>
 #include <interaction/nonbonded/filter/range_filter.h>
 
@@ -52,15 +66,6 @@
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
 
-// nonbonded pairlist
-#include <interaction/nonbonded/pairlist/pairlist.h>
-
-
-// nonbonded interaction
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
-#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_interaction.h>
 
 #include <interaction/nonbonded/interaction_spec.h>
 
@@ -76,22 +81,24 @@
 template<math::boundary_enum t_boundary>
 static void _select_virial(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
-			   simulation::Parameter const & param,
+			   simulation::Simulation const & sim,
+			   configuration::Configuration const & conf,
 			   io::In_Topology & it);
 
 template<math::boundary_enum t_boundary, math::virial_enum t_virial>
 static void _select_cutoff(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
-			   simulation::Parameter const & param,
+			   simulation::Simulation const & sim,
+			   configuration::Configuration const & conf,
 			   io::In_Topology & it);
 
 template<math::boundary_enum t_boundary, 
 	 math::virial_enum t_virial,
-	 bool t_cutoff,
-	 bool t_scaling>
+	 bool t_cutoff>
 static void _add_nonbonded(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
-			   simulation::Parameter const & param,
+			   simulation::Simulation const & sim,
+			   configuration::Configuration const & conf,
 			   io::In_Topology & it);
 
 //==================================================
@@ -102,28 +109,29 @@ namespace interaction
 {
   void create_g96_unperturbed(interaction::Forcefield & ff,
 			      topology::Topology const & topo,
-			      simulation::Parameter const & param,
+			      simulation::Simulation const & sim,
+			      configuration::Configuration const & conf,
 			      io::In_Topology & it)
   {
     DEBUG(9, "\tcreate g96 nonbonded terms");
     
-    if (param.force.nonbonded == 1){
+    if (sim.param().force.nonbonded == 1){
       
-      switch(param.boundary.boundary){
+      switch(sim.param().boundary.boundary){
 	case math::vacuum:
 	  {
 	    // no pressure calculation in vaccuo
-	    _select_cutoff<math::vacuum, math::no_virial>(ff, topo, param, it);
+	    _select_cutoff<math::vacuum, math::no_virial>(ff, topo, sim, conf, it);
 	    break;
 	  }
 	case math::rectangular:
 	  {
-	  _select_virial<math::rectangular>(ff, topo, param, it);
+	  _select_virial<math::rectangular>(ff, topo, sim, conf, it);
 	  break;
 	  }
 	case math::triclinic:
 	  {
-	    _select_virial<math::triclinic>(ff, topo, param, it);
+	    _select_virial<math::triclinic>(ff, topo, sim, conf, it);
 	    break;
 	  }
 	default:
@@ -137,26 +145,27 @@ namespace interaction
 
 template<math::boundary_enum t_boundary>
 static void _select_virial(interaction::Forcefield & ff,
-		    topology::Topology const & topo,
-		    simulation::Parameter const & param,
-		    io::In_Topology & it)
+			   topology::Topology const & topo,
+			   simulation::Simulation const & sim,
+			   configuration::Configuration const & conf,
+			   io::In_Topology & it)
 {
   DEBUG(9, "\t\tboundary : " << t_boundary);
   
-  switch(param.pcouple.virial){
+  switch(sim.param().pcouple.virial){
     case math::no_virial:
       {
-	_select_cutoff<t_boundary, math::no_virial>(ff, topo, param, it);
+	_select_cutoff<t_boundary, math::no_virial>(ff, topo, sim, conf, it);
 	break;
       }
     case math::atomic_virial:
       {
-	_select_cutoff<t_boundary, math::atomic_virial>(ff, topo, param, it);
+	_select_cutoff<t_boundary, math::atomic_virial>(ff, topo, sim, conf, it);
 	break;
       }
     case math::molecular_virial:
       {
-	_select_cutoff<t_boundary, math::molecular_virial>(ff, topo, param, it);
+	_select_cutoff<t_boundary, math::molecular_virial>(ff, topo, sim, conf, it);
 	break;
       }
     default:
@@ -169,17 +178,20 @@ static void _select_virial(interaction::Forcefield & ff,
 template<math::boundary_enum t_boundary, math::virial_enum t_virial>
 static void _select_cutoff(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
-			   simulation::Parameter const & param,
+			   simulation::Simulation const & sim,
+			   configuration::Configuration const & conf,
 			   io::In_Topology & it)
 {
   DEBUG(9, "\t\tvirial : " << t_virial);
 
-  if (param.pairlist.atomic_cutoff){
+  if (sim.param().pairlist.atomic_cutoff){
     
-    _add_nonbonded<t_boundary, t_virial, true>(ff, topo, param, it);
+    _add_nonbonded<t_boundary, t_virial, interaction::atomic_cutoff_on>
+      (ff, topo, sim, conf, it);
   }
   else
-    _add_nonbonded<t_boundary, t_virial, false>(ff, topo, param, it);
+    _add_nonbonded<t_boundary, t_virial, interaction::atomic_cutoff_off>
+      (ff, topo, sim, conf, it);
 }
 
 template<math::boundary_enum t_boundary, 
@@ -187,7 +199,8 @@ template<math::boundary_enum t_boundary,
 	 bool t_cutoff>
 static void _add_nonbonded(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
-			   simulation::Parameter const & param,
+			   simulation::Simulation const & sim,
+			   configuration::Configuration const & conf,
 			   io::In_Topology & it)
 {
   DEBUG(9, "\t\tperturbation : off");
@@ -217,7 +230,7 @@ static void _add_nonbonded(interaction::Forcefield & ff,
   else
     std::cout << "chargegroup\n";
 
-  if (param.longrange.rf_excluded)
+  if (sim.param().longrange.rf_excluded)
     std::cout << "\t\treaction field contributions from excluded atoms added\n";
   else
     std::cout << "\t\tno reaction field contributions from excluded atoms\n";
@@ -226,28 +239,26 @@ static void _add_nonbonded(interaction::Forcefield & ff,
 
   std::cout << "\n";
   
-  typedef interaction::Nonbonded_Interaction
-    < 
-    interaction::Interaction_Spec
+  typedef interaction::Interaction_Spec
     < 
     t_boundary,
-    false,
     t_virial,
     t_cutoff,
-    false
+    interaction::bekker_off,
+    interaction::scaling_off
     >
-    >
-    nonbonded_type;
+    interaction_spec_type;
   
-  nonbonded_type * the_nonbonded = new nonbonded_type;
+  interaction::Standard_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_off> * pa 
+    = new  interaction::Standard_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_off>;
+  
+
+  interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_off> * the_nonbonded 
+    = new interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_off>(pa);
   
   it.read_lj_parameter(the_nonbonded->lj_parameter());
   
-  the_nonbonded->energies.resize(param.force.energy_group.size(),
-				 param.multibath.multibath.size());
-  the_nonbonded->perturbed_energy_derivatives.
-    resize(param.force.energy_group.size(),
-	   param.multibath.multibath.size());
+  the_nonbonded->initialize(topo, conf, sim);
     
   ff.push_back(the_nonbonded);
 }

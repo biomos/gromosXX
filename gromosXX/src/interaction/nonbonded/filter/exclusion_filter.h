@@ -12,9 +12,9 @@ namespace interaction
    * @class Exclusion_Filter
    * provide filtering for exclusions.
    */
-  template<typename t_nonbonded_spec>
+  template<typename t_interaction_spec>
   class Exclusion_Filter
-    : public Filter<t_nonbonded_spec>
+    : public Filter
   {
   public:
     /**

@@ -8,16 +8,13 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
-#include <util/debug.h>
-
 template<typename t_nonbonded_spec>
-template<typename t_storage>
 inline void 
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>
-::interaction_innerloop
+::lj_crf_innerloop
 (topology::Topology & topo, configuration::Configuration & conf,
  size_t const i, size_t const j,
- t_storage &storage,
+ Storage & storage,
  Periodicity_type const & periodicity,
  int pc)
 {
@@ -41,54 +38,41 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     }
     
     const lj_parameter_struct &lj = 
-      m_base.lj_parameter(topo.iac(i),
+      m_param->lj_parameter(topo.iac(i),
 			  topo.iac(j));
 
     DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
     DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
     
-    m_base.lj_crf_interaction(r, lj.c6, lj.c12,
-			      topo.charge()(i) * 
-			      topo.charge()(j),
-			      f, e_lj, e_crf);
-
+    lj_crf_interaction(r, lj.c6, lj.c12,
+		       topo.charge()(i) * 
+		       topo.charge()(j),
+		       f, e_lj, e_crf);
+    
     DEBUG(10, "\tcalculated interaction f: " << f << " e_lj: " 
 	  << e_lj << " e_crf: " << e_crf);
     
-#ifdef OMP
-#pragma omp critical (force)
-#endif
-    {
-      storage.force(i) += f;
-      storage.force(j) -= f;
-    }
+    storage.force(i) += f;
+    storage.force(j) -= f;
     
     DEBUG(11, "\tforces stored");
 
     if (t_nonbonded_spec::do_virial == math::molecular_virial){
 
-#ifdef OMP
-#pragma omp critical (virial)
-#endif
-      {
-	for(int a=0; a<3; ++a)
-	  for(int b=0; b<3; ++b)
-	    storage.virial_tensor(a, b) += 
-	      (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
-	       conf.special().rel_mol_com_pos(j)(a)) * f(b);
-      }
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  storage.virial_tensor(a, b) += 
+	    (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
+	     conf.special().rel_mol_com_pos(j)(a)) * f(b);
+      
       DEBUG(11, "\tmolecular virial done");
     }
     if (t_nonbonded_spec::do_virial == math::atomic_virial){
-#ifdef OMP
-#pragma omp critical (virial)
-#endif
-      {
-	for(int a=0; a<3; ++a)
-	  for(int b=0; b<3; ++b)
-	    storage.virial_tensor(a, b) += 
-	      r(a) * f(b);
-      }
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  storage.virial_tensor(a, b) += 
+	    r(a) * f(b);
+      
       DEBUG(11, "\tatomic virial done");
     }
     
@@ -98,16 +82,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     assert(storage.energies.lj_energy.size() >
 	   topo.atom_energy_group(j));
 
-#ifdef OMP
-#pragma omp critical (energy)
-#endif
-    {
-      storage.energies.lj_energy[topo.atom_energy_group(i)]
-	[topo.atom_energy_group(j)] += e_lj;
-
-      storage.energies.crf_energy[topo.atom_energy_group(i)]
-	[topo.atom_energy_group(j)] += e_crf;
-    }
+    storage.energies.lj_energy[topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += e_lj;
+    
+    storage.energies.crf_energy[topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += e_crf;
+    
     
     DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	  << " j " << topo.atom_energy_group(j));
@@ -131,47 +111,34 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 			      conf.current().pos(j), r);
 
     const lj_parameter_struct &lj = 
-      m_base.lj_parameter(topo.iac(i),
+      m_param->lj_parameter(topo.iac(i),
 			  topo.iac(j));
 
     DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
 
-    m_base.lj_crf_interaction(r, lj.cs6, lj.cs12,
+    lj_crf_interaction(r, lj.cs6, lj.cs12,
 			      topo.charge()(i) * 
 			      topo.charge()(j),
 			      f, e_lj, e_crf);
-#ifdef OMP
-#pragma omp critical (force)
-#endif
-    {
-      conf.current().force(i) += f;
-      conf.current().force(j) -= f;
-    }
+    conf.current().force(i) += f;
+    conf.current().force(j) -= f;
+
 
     if (t_nonbonded_spec::do_virial == math::atomic_virial){
-#ifdef OMP
-#pragma omp critical (virial)
-#endif
-      {
-	for(int a=0; a<3; ++a)
-	  for(int b=0; b<3; ++b)
-	    conf.current().virial_tensor(a, b) += 
-	      r(a) * f(b);
-      }
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  conf.current().virial_tensor(a, b) += 
+	    r(a) * f(b);
+    
       DEBUG(11, "\tatomic virial done");
     }
 
     // energy
-#ifdef OMP
-#pragma omp critical (energy)
-#endif
-    {
-      conf.current().energies.lj_energy[topo.atom_energy_group(i)]
-	[topo.atom_energy_group(j)] += e_lj;
-      
-      conf.current().energies.crf_energy[topo.atom_energy_group(i)]
-	[topo.atom_energy_group(j)] += e_crf;
-    }
+    conf.current().energies.lj_energy[topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += e_lj;
+    
+    conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += e_crf;
     
     DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	  << " j " << topo.atom_energy_group(j));
@@ -201,7 +168,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
   r=0;
   
   // this will only contribute in the energy, the force should be zero.
-  m_base.rf_interaction(r,topo.charge()(i) * topo.charge()(i),
+  rf_interaction(r,topo.charge()(i) * topo.charge()(i),
 			f, e_crf);
   conf.current().energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(i)] += 0.5 * e_crf;
@@ -214,39 +181,25 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     periodicity.nearest_image(pos(i), pos(*it), r);
     
     
-    m_base.rf_interaction(r, topo.charge()(i) * 
+    rf_interaction(r, topo.charge()(i) * 
 			  topo.charge()(*it),
 			  f, e_crf);
     
-#ifdef OMP
-#pragma omp critical (force)
-#endif
-    {
-      force(i) += f;
-      force(*it) -= f;
-    }
+    force(i) += f;
+    force(*it) -= f;
     
     if (t_nonbonded_spec::do_virial == math::atomic_virial){
-#ifdef OMP
-#pragma omp critical (virial)
-#endif
-      {
-	for(int a=0; a<3; ++a)
-	  for(int b=0; b<3; ++b)
-	    conf.current().virial_tensor(a, b) += 
-	      r(a) * f(b);
-      }
+      for(int a=0; a<3; ++a)
+	for(int b=0; b<3; ++b)
+	  conf.current().virial_tensor(a, b) += 
+	    r(a) * f(b);
       DEBUG(11, "\tatomic virial done");
     }
 
     // energy
-#ifdef OMP
-#pragma omp critical (energy)
-#endif
-    {
-      conf.current().energies.crf_energy[topo.atom_energy_group(i)]
-	[topo.atom_energy_group(*it)] += e_crf;
-    }
+    conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+      [topo.atom_energy_group(*it)] += e_crf;
+    
     DEBUG(11, "\tcontribution " << e_crf);
     
   } // loop over excluded pairs
@@ -288,7 +241,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
       e_crf = -topo.charge()(*at_it) * 
 	topo.charge()(*at2_it) * 
 	math::four_pi_eps_i * 
-	m_base.crf_2cut3i() * dot(r,r);
+	crf_2cut3i() * dot(r,r);
       
       // energy
       conf.current().energies.crf_energy

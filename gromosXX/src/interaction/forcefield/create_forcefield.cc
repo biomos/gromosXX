@@ -42,22 +42,23 @@
  */
 void interaction::create_g96_forcefield(interaction::Forcefield & ff,
 					topology::Topology const & topo,
-					simulation::Parameter const & param,
+					simulation::Simulation const & sim,
+					configuration::Configuration const & conf,
 					io::In_Topology & it)
 {
   std::cout << "FORCEFIELD\n";
   
   // the bonded
   DEBUG(8, "creating the bonded terms");
-  create_g96_bonded(ff, topo, param, it);
+  create_g96_bonded(ff, topo, sim.param(), it);
 
   // the nonbonded
   DEBUG(8, "creating the nonbonded terms");
-  create_g96_nonbonded(ff, topo, param, it);
+  create_g96_nonbonded(ff, topo, sim, conf, it);
   
   // the special
   DEBUG(8, "creating the special terms");
-  create_special(ff, topo, param);
+  create_special(ff, topo, sim.param());
 
   std::cout << "END\n";
 

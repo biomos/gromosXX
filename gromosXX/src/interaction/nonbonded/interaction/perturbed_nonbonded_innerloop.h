@@ -13,7 +13,8 @@ namespace interaction
    * perturbed non bonded inner loop.
    */
   template<typename t_interaction_spec>
-  class Perturbed_Nonbonded_Innerloop
+  class Perturbed_Nonbonded_Innerloop:
+    public Perturbed_Nonbonded_Term
   {
   public:
 
@@ -22,15 +23,14 @@ namespace interaction
     /**
      * Constructor
      */
-    Perturbed_Nonbonded_Innerloop(Nonbonded_Base &base);
+    explicit Perturbed_Nonbonded_Innerloop(Nonbonded_Parameter &nbp): m_param(&nbp){}
     
     /**
      * perturbed interaction
      */
-    template<typename t_storage>
-    void perturbed_interaction_innerloop
+    void perturbed_lj_crf_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
-     size_t const i, size_t const j, t_storage &storage,
+     size_t const i, size_t const j, Storage &storage,
      Periodicity_type const & periodicity,
      int pc = -1);
 
@@ -52,22 +52,10 @@ namespace interaction
       configuration::Configuration & conf,
       std::map<size_t, topology::Perturbed_Atom>::const_iterator const & mit,
       Periodicity_type const & periodicity);
-    /**
-     * perturbed pairs.
-     * (always shortrange)
-     * NO RANGE FILTER FOR PERTURBED PAIRS ??
-     * NO SCALING for PERTURBED PAIRS ??
-     * NO MOLECULAR VIRIAL CONTRIBUTION ??
-     */
-    void perturbed_pair_interaction_innerloop
-    ( topology::Topology & topo, configuration::Configuration & conf,
-      simulation::Simulation & sim,
-      std::vector<topology::perturbed_two_body_term_struct>
-      ::const_iterator const &it,
-      Periodicity_type const & periodicity);
- 
+
   protected:
-    Nonbonded_Base &m_base;
+
+    Nonbonded_Parameter * m_param;
     
   };
   

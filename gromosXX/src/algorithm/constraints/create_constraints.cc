@@ -39,12 +39,25 @@
 
 // nonbonded base
 #include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_base.h>
+#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+
+// nonbonded pairlist
+#include <interaction/nonbonded/pairlist/pairlist.h>
+
+// nonbonded interaction
+#include <interaction/nonbonded/interaction/nonbonded_term.h>
+#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
+#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
+#include <interaction/nonbonded/interaction/nonbonded_set.h>
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 
 // nonbonded filter
 #include <interaction/nonbonded/filter/filter.h>
 #include <interaction/nonbonded/filter/exclusion_filter.h>
-#include <interaction/nonbonded/filter/perturbation_filter.h>
 #include <interaction/nonbonded/filter/chargegroup_grid.h>
 #include <interaction/nonbonded/filter/range_filter.h>
 
@@ -53,15 +66,7 @@
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
 
-// nonbonded pairlist
-#include <interaction/nonbonded/pairlist/pairlist.h>
 
-
-// nonbonded interaction
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
-#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_interaction.h>
 // and the specs...
 #include <interaction/nonbonded/interaction_spec.h>
 

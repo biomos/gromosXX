@@ -13,71 +13,74 @@ namespace interaction
    * @class Standard_Pairlist_Algorithm
    * creates a pairlist.
    */
-  template<typename t_nonbonded_spec>
+  template<typename t_interaction_spec, bool perturbed>
   class Standard_Pairlist_Algorithm : 
-    public Pairlist_Algorithm<t_nonbonded_spec>,
-    public t_nonbonded_spec::exclusion_filter_type,
-    public t_nonbonded_spec::range_filter_type
+    public Pairlist_Algorithm<t_interaction_spec, perturbed>
   {
   public:
-    typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
+    typedef math::Periodicity<t_interaction_spec::boundary_type> Periodicity_type;
 
     /**
      * Constructor.
      */
     Standard_Pairlist_Algorithm();
+
+    /**
+     * Constructor.
+     */
+    virtual ~Standard_Pairlist_Algorithm(){}
     
+    /**
+     * prepare the pairlists
+     */    
+    virtual void prepare(){ DEBUG(8, "Standard Pairlist Algorithm::prepare");}
+
     /**
      * update the pairlist(s).
      */
-    template<typename t_nonbonded_interaction>
-    void update(topology::Topology & topo,
-		configuration::Configuration & conf,
-		simulation::Simulation & sim, 
-		t_nonbonded_interaction &nonbonded_interaction);
-    
+    virtual void update(topology::Topology & topo,
+			configuration::Configuration & conf,
+			simulation::Simulation & sim,	
+			Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+			size_t begin, size_t end, size_t stride);
+        
   protected:
 
-    template<typename t_nonbonded_interaction>
     void do_cg1_loop(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     t_nonbonded_interaction &nonbonded_interaction,
+		     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 		     int cg1_index, int num_solute_cg, int num_cg,
 		     Periodicity_type const & periodicity);
 
-    template<typename t_nonbonded_interaction>
     void do_cg_interaction(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
-			   t_nonbonded_interaction &nonbonded_interaction,
+			   Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 			   topology::Chargegroup_Iterator const &cg1,
 			   topology::Chargegroup_Iterator const &cg2,
 			   Periodicity_type const & periodicity, int const pc = -1);
     
-    template<typename t_nonbonded_interaction>
     void do_cg_interaction_excl(topology::Topology & topo,
 				configuration::Configuration & conf,
 				simulation::Simulation & sim,
-				t_nonbonded_interaction &nonbonded_interaction,
+				Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 				topology::Chargegroup_Iterator const &cg1,
 				topology::Chargegroup_Iterator const &cg2,
 				Periodicity_type const & periodicity, int const pc = -1);
 
-    template<typename t_nonbonded_interaction>
     void do_cg_interaction_inv_excl(topology::Topology & topo,
 				    configuration::Configuration & conf,
 				    simulation::Simulation & sim,
-				    t_nonbonded_interaction &nonbonded_interaction,
+				    Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 				    topology::Chargegroup_Iterator const &cg1,
 				    topology::Chargegroup_Iterator const &cg2,
 				    Periodicity_type const & periodicity, int const pc = -1);
 
-    template<typename t_nonbonded_interaction>
     void do_cg_interaction_intra(topology::Topology & topo,
 				 configuration::Configuration & conf,
 				 simulation::Simulation & sim,
-				 t_nonbonded_interaction &nonbonded_interaction,
+				 Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 				 topology::Chargegroup_Iterator const &cg1,
 				 Periodicity_type const & periodicity, int const pc = -1);
 

@@ -9,39 +9,35 @@
 #define MODULE interaction
 #define SUBMODULE pairlist
 
-#include <util/debug.h>
-
-template<typename t_nonbonded_spec>
+template<typename t_interaction_spec, bool perturbed>
 inline
-interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>::
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>::
 Standard_Pairlist_Algorithm()
-  : interaction::Pairlist_Algorithm<t_nonbonded_spec>(),
-    t_nonbonded_spec::exclusion_filter_type(),
-    t_nonbonded_spec::range_filter_type()
+  : interaction::Pairlist_Algorithm<t_interaction_spec, perturbed>()
 {
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>::
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>::
 update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim, 
-       t_nonbonded_interaction & nonbonded_interaction)
+       Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+       size_t begin, size_t end, size_t stride)
 {
-  DEBUG(7, "pairlist update");
+  DEBUG(7, "standard pairlist update");
 
   Periodicity_type periodicity(conf.current().box);
    
   // empty the pairlist
-  nonbonded_interaction.pairlist().clear();
-  nonbonded_interaction.pairlist().resize(topo.num_atoms());
+  nbs.pairlist().clear();
+  nbs.pairlist().resize(topo.num_atoms());
 
-  if(t_nonbonded_spec::do_perturbation){
+  if(perturbed){
     // and the perturbed pairlist
-    nonbonded_interaction.perturbed_pairlist().clear();
-    nonbonded_interaction.perturbed_pairlist().resize(topo.num_atoms());
+    nbs.perturbed_pairlist().clear();
+    nbs.perturbed_pairlist().resize(topo.num_atoms());
   }
   
   DEBUG(7, "pairlist(s) resized");
@@ -50,7 +46,7 @@ update(topology::Topology & topo,
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
   
-  if (!t_nonbonded_spec::do_atomic_cutoff){
+  if (!t_interaction_spec::do_atomic_cutoff){
     // prepare the range filter (center of geometries)    
     prepare_cog(topo, conf, sim);
     DEBUG(7, "range filter prepared (cog)");
@@ -67,56 +63,16 @@ update(topology::Topology & topo,
   const int num_solute_cg = topo.num_solute_chargegroups();
   int cg1_index, cg1_to;
 
-#ifdef OMP
-  const int num_solute_atoms = topo.solute().num_atoms();
-  int cg2_index, tid;
-#pragma omp parallel \
-  shared(num_cg, topo, conf, sim, nonbonded_interaction, \
-	 periodicity, num_solute_atoms, num_solute_cg, std::cout) \
-  private(cg1_index, cg1_to, cg2_index, tid)
-  {
-    tid = omp_get_thread_num();
-
-    std::cout << "thread " << tid << " of "
-	      << omp_get_num_threads() << "\n";
-
-    // cg1_to = num_cg / omp_get_num_threads();
-    // cg1_index = tid * cg1_to;
-    // cg1_to *= (tid + 1);
-    
-    /*
-    std::cout << "thread " << tid << " looping from " << cg1_index
-	      << " to " << cg1_to << "\n";
-    */
-#pragma omp for
-    for(cg1_index=0; cg1_index < num_cg; ++cg1_index) {
-
-      // add intra cg (if not solvent...)
-
-
-      // printf("thread %d : %d\n", tid, cg1_index);
-
-      do_cg1_loop(topo, conf, sim, nonbonded_interaction, 
-		  cg1_index, num_solute_cg, num_cg,
-		  periodicity);
-
-    } // cg1
-  } // end parallel
-  
-#else
-
   cg1_index = 0;
   cg1_to = num_cg;
   for( ; cg1_index < cg1_to; ++cg1_index) {
     // add intra cg (if not solvent...)
     
-    do_cg1_loop(topo, conf, sim, nonbonded_interaction, 
+    do_cg1_loop(topo, conf, sim, nbs, 
 		cg1_index, num_solute_cg, num_cg,
 		periodicity);
     
   } // cg1
-  
-#endif
   
   DEBUG(7, "pairlist done");
 
@@ -125,14 +81,13 @@ update(topology::Topology & topo,
 /**
  * loop over chargegroup 1
  */
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
 ::do_cg1_loop(topology::Topology & topo,
 	      configuration::Configuration & conf,
 	      simulation::Simulation & sim,
-	      t_nonbonded_interaction &nonbonded_interaction,
+	      Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 	      int cg1_index,
 	      int const num_solute_cg,
 	      int const num_cg,
@@ -141,7 +96,7 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
   topology::Chargegroup_Iterator cg1 = topo.chargegroup_it(cg1_index);
   
   if (cg1_index < num_solute_cg){
-    do_cg_interaction_intra(topo, conf, sim, nonbonded_interaction, 
+    do_cg_interaction_intra(topo, conf, sim, nbs, 
 			    cg1, periodicity);
   }
   
@@ -152,10 +107,10 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
   int cg2_index;
   for(cg2_index = cg1_index + 1; cg2_index < num_solute_cg; ++cg2, ++cg2_index) {
     
-    if (!t_nonbonded_spec::do_atomic_cutoff){
+    if (!t_interaction_spec::do_atomic_cutoff){
       // filter out interactions based on chargegroup distances
       
-      if (range_chargegroup_pair(topo, conf, sim, nonbonded_interaction,
+      if (range_chargegroup_pair(topo, conf, sim, nbs,
 				 cg1_index, cg2_index, cg1, cg2, periodicity))
 	
 	continue;
@@ -164,24 +119,24 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
     
     // SHORTRANGE
     // exclusions! (because cg2 is not solvent)
-    do_cg_interaction_excl(topo, conf, sim, nonbonded_interaction,
+    do_cg_interaction_excl(topo, conf, sim, nbs,
 			   cg1, cg2, periodicity);
     
   } // inter cg (cg2 solute)
   // solvent...
   for(; cg2_index < num_cg; ++cg2, ++cg2_index) {
     
-    if (!t_nonbonded_spec::do_atomic_cutoff){
+    if (!t_interaction_spec::do_atomic_cutoff){
       // filter out interactions based on chargegroup distances
       
-      if (range_chargegroup_pair(topo, conf, sim, nonbonded_interaction,
+      if (range_chargegroup_pair(topo, conf, sim, nbs,
 				 cg1_index, cg2_index, cg1, cg2, periodicity))
 	continue;
       
     }
     
     // SHORTRANGE
-    do_cg_interaction(topo, conf, sim, nonbonded_interaction,
+    do_cg_interaction(topo, conf, sim, nbs,
 		      cg1, cg2, periodicity);
     
   } // inter cg (cg2 solvent)
@@ -191,14 +146,13 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 /**
  * inter cg, no exclusion
  */
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
 ::do_cg_interaction(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
-		    t_nonbonded_interaction &nonbonded_interaction,
+		    Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 		    topology::Chargegroup_Iterator const &cg1,
 		    topology::Chargegroup_Iterator const &cg2,
 		    Periodicity_type const & periodicity,
@@ -216,41 +170,39 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 	  a2_to = cg2.end();
 	a2 != a2_to; ++a2){
 
-      if (t_nonbonded_spec::do_atomic_cutoff){
+      if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on chargegroup distances
-	if (t_nonbonded_spec::do_bekker){
+	if (t_interaction_spec::do_bekker){
 	  if (range_atom_pair(topo, conf, sim, 
-			      nonbonded_interaction, *a1, *a2,
+			      nbs, *a1, *a2,
 			      pc, periodicity))
 	    continue;
 	}
 	else {
 	  if (range_atom_pair(topo, conf, sim, 
-			      nonbonded_interaction, *a1, *a2,
+			      nbs, *a1, *a2,
 			      periodicity))
 	    continue;
 
 	}
       }
       
-      if (t_nonbonded_spec::do_bekker)
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, 
-						  *a1, *a2, pc);
+      if (t_interaction_spec::do_bekker)
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2, pc);
       else
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, *a1, *a2);
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2);
     } // loop over atom 2 of cg1
   } // loop over atom 1 of cg1
 }
 
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
 ::do_cg_interaction_excl(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
-			 t_nonbonded_interaction &nonbonded_interaction,
+			 Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 			 topology::Chargegroup_Iterator const & cg1,
 			 topology::Chargegroup_Iterator const & cg2,
 			 Periodicity_type const & periodicity,
@@ -267,17 +219,15 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 	  a2_to = cg2.end();
 	a2 != a2_to; ++a2){
 
-      if (t_nonbonded_spec::do_atomic_cutoff){
+      if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on chargegroup distances
-	if (t_nonbonded_spec::do_bekker){
-	  if (range_atom_pair(topo, conf, sim, 
-			      nonbonded_interaction, *a1, *a2,
+	if (t_interaction_spec::do_bekker){
+	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2,
 			      pc, periodicity))
 	    continue;
 	}
 	else{
-	  if (range_atom_pair(topo, conf, sim, 
-			      nonbonded_interaction, *a1, *a2,
+	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2,
 			      periodicity))
 	    continue;
 	}
@@ -288,24 +238,21 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 	continue;
       }
 
-      if (t_nonbonded_spec::do_bekker)
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, 
-						  *a1, *a2, pc);
+      if (t_interaction_spec::do_bekker)
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2, pc);
       else
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, 
-						  *a1, *a2);
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2);
     } // loop over atom 2 of cg1
   } // loop over atom 1 of cg1
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
 ::do_cg_interaction_inv_excl(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     t_nonbonded_interaction &nonbonded_interaction,
+			     Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 			     topology::Chargegroup_Iterator const & cg1,
 			     topology::Chargegroup_Iterator const & cg2,
 			     Periodicity_type const & periodicity, int const pc)
@@ -321,15 +268,15 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 	  a2_to = cg2.end();
 	a2 != a2_to; ++a2){
 
-      if (t_nonbonded_spec::do_atomic_cutoff){
+      if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on chargegroup distances
-	if (t_nonbonded_spec::do_bekker){
-	  if (range_atom_pair(topo, conf, sim, nonbonded_interaction, 
+	if (t_interaction_spec::do_bekker){
+	  if (range_atom_pair(topo, conf, sim, nbs, 
 			      *a1, *a2, pc, periodicity))
 	    continue;
 	}
 	else{
-	  if (range_atom_pair(topo, conf, sim, nonbonded_interaction, 
+	  if (range_atom_pair(topo, conf, sim, nbs, 
 			      *a1, *a2, periodicity))
 	    continue;
 	}
@@ -340,25 +287,22 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
 	continue;
       }
 
-      if (t_nonbonded_spec::do_bekker)
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, 
-						  *a1, *a2, pc);
+      if (t_interaction_spec::do_bekker)
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2, pc);
       else
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, 
-						  *a1, *a2);
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2);
 
     } // loop over atom 2 of cg1
   } // loop over atom 1 of cg1
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
 ::do_cg_interaction_intra(topology::Topology & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
-			  t_nonbonded_interaction & nonbonded_interaction,
+			  Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 			  topology::Chargegroup_Iterator const & cg1,
 			  Periodicity_type const & periodicity, int const pc)
 {
@@ -376,26 +320,22 @@ interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>
       if (excluded_solute_pair(topo, conf, sim, *a1, *a2))
 	continue;
 
-      if (t_nonbonded_spec::do_atomic_cutoff){
+      if (t_interaction_spec::do_atomic_cutoff){
 	// filter out interactions based on chargegroup distances
-	if (t_nonbonded_spec::do_bekker){
-	  if (range_atom_pair(topo, conf, sim, nonbonded_interaction, 
-			      *a1, *a2, pc, periodicity))
+	if (t_interaction_spec::do_bekker){
+	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2, pc, periodicity))
 	    continue;
 	}
 	else{
-	  if (range_atom_pair(topo, conf, sim, nonbonded_interaction, 
-			      *a1, *a2, periodicity))
+	  if (range_atom_pair(topo, conf, sim, nbs, *a1, *a2, periodicity))
 	    continue;
 	}
       }
 
-      if (t_nonbonded_spec::do_bekker)
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, 
-						  *a1, *a2, pc);
+      if (t_interaction_spec::do_bekker)
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2, pc);
       else
-	nonbonded_interaction.add_shortrange_pair(topo, conf, sim, 
-						  *a1, *a2);
+	nbs.add_shortrange_pair(topo, conf, sim, *a1, *a2);
 
     } // loop over atom 2 of cg1
   } // loop over atom 1 of cg1

@@ -12,7 +12,6 @@ namespace interaction
    * @class Filter
    * provide base class for filtering
    */
-  template<typename t_nonbonded_spec>
   class Filter
   {
   public:

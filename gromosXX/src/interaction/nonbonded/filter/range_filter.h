@@ -14,13 +14,13 @@ namespace interaction
    * provides methods both for atom and chargegroup
    * based cutoffs.
    */
-  template<typename t_nonbonded_spec>
+  template<typename t_interaction_spec, bool perturbed>
   class Range_Filter
-    : public Filter<t_nonbonded_spec>
+    : public Filter
   {
   public:
-    typedef Chargegroup_Grid<t_nonbonded_spec::boundary_type> Chargegroup_Grid_type;
-    typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
+    typedef Chargegroup_Grid<t_interaction_spec::boundary_type> Chargegroup_Grid_type;
+    typedef math::Periodicity<t_interaction_spec::boundary_type> Periodicity_type;
     
     /**
      * Constructor.
@@ -44,11 +44,10 @@ namespace interaction
      * if between short- and longrange cutoff,
      * return false if shorter, true if longer.
      */
-    template<typename t_nonbonded_interaction>
     bool range_chargegroup_pair
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim, 
-     t_nonbonded_interaction &nonbonded_interaction,
+     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
      size_t const i, size_t const j,
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
@@ -62,11 +61,10 @@ namespace interaction
      * shift the first chargegroup by a shift vector
      * instead of calculating the nearest image.
      */
-    template<typename t_nonbonded_interaction>
     bool range_chargegroup_pair
     (topology::Topology & topo,	configuration::Configuration & conf,
      simulation::Simulation & sim, 
-     t_nonbonded_interaction &nonbonded_interaction,
+     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
      size_t const i, size_t const j,
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
@@ -77,11 +75,10 @@ namespace interaction
      * check the distance between two atoms.
      * add to nonbonded_interaction longrange, or filter.
      */
-    template<typename t_nonbonded_interaction>
     bool range_atom_pair
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim,
-     t_nonbonded_interaction &nonbonded_interaction,
+     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
      size_t const i, size_t const j,
      Periodicity_type const & periodicity);
 
@@ -89,11 +86,10 @@ namespace interaction
      * check the distance between two atoms.
      * add to nonbonded_interaction longrange, or filter.
      */
-    template<typename t_nonbonded_interaction>
     bool range_atom_pair
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim,
-     t_nonbonded_interaction &nonbonded_interaction,
+     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
      size_t const i, size_t const j, int pc,
      Periodicity_type const & periodicity);
     

@@ -312,6 +312,8 @@ namespace topology
      * is the atom perturbed?
      */
     bool is_perturbed(size_t const i)const {
+      if (i >= num_solute_atoms()) return false;
+      
       assert(i < m_is_perturbed.size()); 
       return m_is_perturbed[i];
     }

@@ -12,46 +12,57 @@
 
 #include <util/debug.h>
 
-template<typename t_nonbonded_spec>
+template<typename t_interaction_spec, bool perturbed>
 inline
-interaction::Grid_Pairlist_Algorithm<t_nonbonded_spec>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
 Grid_Pairlist_Algorithm()
-  : interaction::Standard_Pairlist_Algorithm<t_nonbonded_spec>()
+  : interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>()
 {
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Grid_Pairlist_Algorithm<t_nonbonded_spec>::
-update(topology::Topology & topo,
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+prepare(topology::Topology & topo,
        configuration::Configuration & conf,
-       simulation::Simulation & sim,
-       t_nonbonded_interaction & nonbonded_interaction)
+       simulation::Simulation & sim)
 {
-  DEBUG(7, "pairlist update");
-   
-  // empty the pairlist
-  nonbonded_interaction.pairlist().clear();
-  nonbonded_interaction.pairlist().resize(topo.num_atoms());
-
-  if(t_nonbonded_spec::do_perturbation){
-    // and the perturbed pairlist
-    nonbonded_interaction.perturbed_pairlist().clear();
-    nonbonded_interaction.perturbed_pairlist().resize(topo.num_atoms());
-  }
-  
-  DEBUG(7, "pairlist(s) resized");
   
   // prepare the range filter (cutoff)
   set_cutoff(sim.param().pairlist.cutoff_short,
 	     sim.param().pairlist.cutoff_long);
-  
-  Periodicity_type periodicity(conf.current().box);
 
   // prepare the range filter (center of geometries)    
   prepare_cog(topo, conf, sim);
   DEBUG(7, "range filter prepared (cog)");
+}
+
+template<typename t_interaction_spec, bool perturbed>
+inline void
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+update(topology::Topology & topo,
+       configuration::Configuration & conf,
+       simulation::Simulation & sim,
+       Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+       size_t begin, size_t end, size_t stride)
+{
+  DEBUG(7, "pairlist update");
+   
+  // empty the pairlist
+  nbs.pairlist().clear();
+  nbs.pairlist().resize(topo.num_atoms());
+
+  if(perturbed){
+    // and the perturbed pairlist
+    nbs.perturbed_pairlist().clear();
+    nbs.perturbed_pairlist().resize(topo.num_atoms());
+  }
+  
+  DEBUG(7, "pairlist(s) resized");
+  
+  
+  Periodicity_type periodicity(conf.current().box);
+
 
   DEBUG(7, "create a grid");
   Chargegroup_Grid_type 
@@ -73,28 +84,8 @@ update(topology::Topology & topo,
 
   int x, y, z;
 
-#ifdef OMP
-#pragma omp parallel
-  {
-    std::cout << "thread " << omp_get_thread_num() << " of "
-	      << omp_get_num_threads() << " : " << x << "\n";
-  }
-#endif
-
-#ifdef OMP
-#pragma omp parallel for \
-    shared(topo, conf, sim, nonbonded_interaction, \
-           num_cells, a_grid, periodicity) \
-    private(the_cell, cg_st, cg_to, x, y, z)
-#endif
-
   // cells in x
   for(x=0; x < num_cells[0]; ++x){
-
-#ifdef OMP
-    std::cout << "thread " << omp_get_thread_num() << " of "
-	      << omp_get_num_threads() << " : " << x << "\n";
-#endif
 
     the_cell[0] = x;
     // cells in y
@@ -116,19 +107,14 @@ update(topology::Topology & topo,
 	cg_to = a_grid.grid()[the_cell[0]][the_cell[1]][the_cell[2]].end();
 
 	// intra-cell interaction
-	intra_cell(topo, conf, sim, nonbonded_interaction, 
-		   cg_st, cg_to, periodicity);
+	intra_cell(topo, conf, sim, nbs, cg_st, cg_to, periodicity);
 
 	// only in central box
-	inter_cell<t_nonbonded_interaction, false>
-	  (topo, conf, sim, nonbonded_interaction, 
-	   cg_st, cg_to, a_grid, the_cell,
+	inter_cell<false>(topo, conf, sim, nbs, cg_st, cg_to, a_grid, the_cell,
 	   periodicity);
 
 	// and also the periodic images
-	inter_cell<t_nonbonded_interaction, true>
-	  (topo, conf, sim, nonbonded_interaction,
-	   cg_st, cg_to, a_grid, the_cell,
+	inter_cell<true>(topo, conf, sim, nbs, cg_st, cg_to, a_grid, the_cell,
 	   periodicity);
       }
     }
@@ -138,14 +124,13 @@ update(topology::Topology & topo,
   DEBUG(7, "pairlist done");
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Grid_Pairlist_Algorithm<t_nonbonded_spec>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
 intra_cell(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
-	   t_nonbonded_interaction & nonbonded_interaction,
+	   Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 	   std::vector<size_t>::const_iterator &cg_st, 
 	   std::vector<size_t>::const_iterator &cg_to,
 	   Periodicity_type const & periodicity)
@@ -166,7 +151,7 @@ intra_cell(topology::Topology & topo,
       // not solvent, intra cg
       DEBUG(12, "intra cg: " << *cg_it);
       
-      do_cg_interaction_intra(topo, conf, sim, nonbonded_interaction, cg1,
+      do_cg_interaction_intra(topo, conf, sim, nbs, cg1,
 			      periodicity, 13);
     }
     
@@ -182,28 +167,25 @@ intra_cell(topology::Topology & topo,
       // ASSUME SHORTRANGE
       if (unsigned(**cg2) < topo.solute().num_atoms()){
 	// exclusions! (because cg2 is not solvent)
-	do_cg_interaction_excl(topo, conf, sim, 
-			       nonbonded_interaction, cg1, cg2,
-			       periodicity, 13);
+	do_cg_interaction_excl(topo, conf, sim, nbs, cg1, cg2, periodicity, 13);
       }
       else{
 	// no exclusions... (at least cg2 is solvent)
-	do_cg_interaction(topo, conf, sim, nonbonded_interaction, cg1, cg2,
-			  periodicity, 13);
+	do_cg_interaction(topo, conf, sim, nbs, cg1, cg2, periodicity, 13);
       }
     }
   }
 }
 
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction, bool periodic>
+template<typename t_interaction_spec, bool perturbed>
+template<bool periodic>
 inline void
-interaction::Grid_Pairlist_Algorithm<t_nonbonded_spec>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
 inter_cell(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
-	   t_nonbonded_interaction & nonbonded_interaction,
+	   Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 	   std::vector<size_t>::const_iterator &cg_st, 
 	   std::vector<size_t>::const_iterator &cg_to,
 	   Chargegroup_Grid_type & grid,
@@ -237,7 +219,7 @@ inter_cell(topology::Topology & topo,
       our_cell[d] = cell[d] + periodicity.shift(pc).cell[d];
 
     // get an iterator over the mask
-    Cell_Cell_Iterator<t_nonbonded_spec::boundary_type, periodic>
+    Cell_Cell_Iterator<t_interaction_spec::boundary_type, periodic>
       it(grid, our_cell);
     if (it.eol()) {
       DEBUG(12, "no interactions in range..."); 
@@ -259,12 +241,10 @@ inter_cell(topology::Topology & topo,
 	cg1 += *cg_it;
 	cg2 += *it;
 	
-	if (!t_nonbonded_spec::do_atomic_cutoff){
+	if (!t_interaction_spec::do_atomic_cutoff){
 	  // filter out interactions based on chargegroup distances
-	  if (range_chargegroup_pair(topo, conf, sim, nonbonded_interaction,
-				     *cg_it, *it, cg1, cg2, 
-				     pc,
-				     periodicity))
+	  if (range_chargegroup_pair(topo, conf, sim, nbs, *cg_it, *it, cg1, cg2, 
+				     pc, periodicity))
 	    continue;
 	}
 	else{
@@ -278,18 +258,15 @@ inter_cell(topology::Topology & topo,
 	if (unsigned(**cg2) >= topo.solute().num_atoms() || 
 	    unsigned(**cg1) >= topo.solute().num_atoms()){
 	  // no exclusions... (at least cg2 is solvent)
-	  do_cg_interaction(topo, conf, sim, nonbonded_interaction, cg1, cg2,
-			    periodicity, pc);
+	  do_cg_interaction(topo, conf, sim, nbs, cg1, cg2, periodicity, pc);
 	}
 	else{
 	  // exclusions! (because no cg is solvent)
 	  if (*cg_it <= *it)
-	    do_cg_interaction_excl(topo, conf, sim, 
-				   nonbonded_interaction, cg1, cg2,
+	    do_cg_interaction_excl(topo, conf, sim, nbs, cg1, cg2,
 				   periodicity, pc);
 	  else
-	    do_cg_interaction_inv_excl(topo, conf, sim, 
-				       nonbonded_interaction, cg1, cg2,
+	    do_cg_interaction_inv_excl(topo, conf, sim, nbs, cg1, cg2,
 				       periodicity, pc);
 	}
 

@@ -26,11 +26,11 @@ algorithm::Flexible_Constraint<do_virial>
     interaction::Interaction_Spec
     < 
     math::rectangular,
-    false,
     math::molecular_virial,
-    false,
-    false
-    >
+    interaction::bekker_off,
+    interaction::scaling_off
+    >,
+    interaction::perturbation_off
     >
     nonbonded_type;
   
@@ -564,8 +564,8 @@ static int _exact_flexible_shake(topology::Topology const &topo,
 				 double const tolerance,
 				 interaction::Nonbonded_Interaction
 				 <interaction::Interaction_Spec<
-				 math::rectangular, false, math::molecular_virial,
-				 false, false> 
+				 math::rectangular, math::molecular_virial,
+				 interaction::bekker_off, interaction::scaling_off>, interaction::perturbation_off 
 				 > * nonbonded,
 				 bool do_constraint_force = false)
 {

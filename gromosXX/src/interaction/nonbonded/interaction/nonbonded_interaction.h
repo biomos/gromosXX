@@ -9,16 +9,18 @@
 
 namespace interaction
 {
+
+  template<typename t_interaction_spec, bool perturbed>
+  class Pairlist_Algorithm;
+
   /**
    * @class Nonbonded_Interaction
    * calculates the nonbonded interactions.
    */
-  template<typename t_interaction_spec>
+  template<typename t_interaction_spec, bool perturbed>
   class Nonbonded_Interaction : 
     public Interaction,
-    public Nonbonded_Base,
-    public Storage,
-    public t_interaction_spec::nonbonded_innerloop_type
+    public Nonbonded_Parameter
   {
   public:    
 
@@ -27,7 +29,7 @@ namespace interaction
     /**
      * Constructor.
      */
-    Nonbonded_Interaction();
+    Nonbonded_Interaction(Pairlist_Algorithm<t_interaction_spec, perturbed> *pa);
     
     /**
      * Destructor.
@@ -40,134 +42,34 @@ namespace interaction
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
-
     /**
-     * add a shortrange interaction.
+     * Pairlist algorithm
      */
-    void add_shortrange_pair(topology::Topology & topo,
-			     configuration::Configuration & conf,
-			     simulation::Simulation & sim,
-			     size_t const i, size_t const j);
+    Pairlist_Algorithm<t_interaction_spec, perturbed> & pairlist_algorithm()
+    {
+      return *m_pairlist_algorithm;
+    }
     /**
-     * add a shortrange interaction.
-     */
-    void add_shortrange_pair(topology::Topology & topo,
-			     configuration::Configuration & conf,
-			     simulation::Simulation & sim,
-			     size_t const i, size_t const j,
-			     int pc);
-
-    /**
-     * add a longrange interaction.
-     */
-    void add_longrange_pair(topology::Topology & topo,
-			    configuration::Configuration & conf,
-			    simulation::Simulation & sim,
-			    size_t const i, size_t const j,
-			    Periodicity_type const & periodicity);
-
-    /**
-     * add a longrange interaction.
-     */
-    void add_longrange_pair(topology::Topology & topo,
-			    configuration::Configuration & conf,
-			    simulation::Simulation & sim,
-			    size_t const i, size_t const j,
-			    Periodicity_type const & periodicity, int pc);
-    
-    // ACCESSORS
-    /**
-     * pairlist accessor.
-     */
-    Pairlist & pairlist() { return m_pairlist; }
-    /**
-     * const pairlist accessor.
-     */
-    Pairlist const & pairlist()const { return m_pairlist; }
-    /**
-     * perturbed pairlist accessor.
-     */
-    Pairlist & perturbed_pairlist() { return m_perturbed_pairlist; }
-    /**
-     * const perturbed pairlist accessor.
-     */
-    Pairlist const & perturbed_pairlist()const { return m_perturbed_pairlist; }
+     * printing function for timings
+     */  
     virtual void print_timing(std::ostream & os);
-
-  protected:
+      
     /**
      * size the arrays of storage.
      */
-    void initialize(topology::Topology & topo,
-		    configuration::Configuration & conf,
-		    simulation::Simulation & sim);
-    
-    /**
-     * calculate the interactions.
-     */
-    void do_interactions(topology::Topology & topo,
-			 configuration::Configuration & conf,
-			 simulation::Simulation & sim,
-			 std::vector<std::vector<size_t> > const & pairlist);
-    /*    
-			 Pairlist::iterator it, 
-			 Pairlist::iterator to);
-    */
+    void initialize(topology::Topology const & topo,
+		    configuration::Configuration const & conf,
+		    simulation::Simulation const & sim);
 
-    /**
-     * calculate the 1,4-interactions.
-     */
-    void do_14_interactions(topology::Topology & topo,
-			    configuration::Configuration & conf,
-			    simulation::Simulation & sim);
-
-    /**
-     * calculate the RF contributions for excluded atoms.
-     */
-    void do_RF_excluded_interactions(topology::Topology & topo,
-				     configuration::Configuration & conf,
-				     simulation::Simulation & sim);
- 
-    /**
-     * the (shortrange) pairlist.
-     */
-    Pairlist m_pairlist;
-    /**
-     * the perturbed (shortrange) pairlist.
-     */
-    Pairlist m_perturbed_pairlist;
-    
+  protected:
     /**
      * the pairlist update algorithm.
      */
-    typename t_interaction_spec::pairlist_algorithm_type m_pairlist_algorithm;
-
+    Pairlist_Algorithm<t_interaction_spec, perturbed> *m_pairlist_algorithm;
     /**
-     * time used for pairlist construction and
-     * longrange forces / energies
+     * a vector of nonbonded sets
      */
-    double m_pairlist_timing;
-
-    /**
-     * time used for shortrange forces / energies
-     */
-    double m_shortrange_timing;
-
-    /**
-     * time used for longrange forces / energies
-     */
-    double m_longrange_timing;
-
-    /**
-     * storage for OMP forces, energies
-     */
-    std::vector<Storage> m_storage;
-    
-    /**
-     * OMP number of threads
-     */
-    int m_omp_threads;
-    
+    std::vector<Nonbonded_Set<t_interaction_spec, perturbed> > m_nonbonded_set;
   };
   
 } // interaction

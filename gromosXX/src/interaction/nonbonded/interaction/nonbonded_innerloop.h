@@ -13,29 +13,24 @@ namespace interaction
    * standard non bonded inner loop.
    */
   template<typename t_nonbonded_spec>
-  class Nonbonded_Innerloop
+  class Nonbonded_Innerloop:
+    public Nonbonded_Term
   {
   public:
     typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
     
     /**
-     * copy constructor.
-     */
-    explicit Nonbonded_Innerloop(Nonbonded_Innerloop<t_nonbonded_spec> 
-				 const &nil);
-    /**
      * Constructor
      */
-    explicit Nonbonded_Innerloop(Nonbonded_Base &base) : m_base(base) {}
+    explicit Nonbonded_Innerloop(Nonbonded_Parameter &nbp) : m_param(&nbp) {}
     
     /**
      * (normal) interaction
      */
-    template<typename t_storage>
-    void interaction_innerloop
+    void lj_crf_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      size_t const i, size_t const j,
-     t_storage & storage,
+     Storage & storage,
      Periodicity_type const & periodicity,
      int pc = -1);
 
@@ -68,14 +63,8 @@ namespace interaction
     
  
   protected:
-    Nonbonded_Base &m_base;
+    Nonbonded_Parameter * m_param;
 
-    /**
-     * avoid vector constructor calls?
-     */
-    // math::Vec r;
-    // math::Vec f;
-    
   };
   
 } // interaction

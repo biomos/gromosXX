@@ -33,7 +33,18 @@ namespace interaction
      * (longrange) virial storage.
      */
     math::Matrix virial_tensor;
-    
+
+    /**
+     * zero all entities
+     */
+    void zero()
+    {
+      force = 0.0;
+      energies.zero();
+      perturbed_energy_derivatives.zero();
+      virial_tensor = 0.0;
+    }
+
   };
   
 } // interaction

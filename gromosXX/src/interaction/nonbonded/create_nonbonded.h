@@ -10,7 +10,8 @@ namespace interaction
 
   void create_g96_nonbonded(interaction::Forcefield & ff,
 			    topology::Topology const & topo,
-			    simulation::Parameter const & param,
+			    simulation::Simulation const & sim,
+			    configuration::Configuration const & conf,
 			    io::In_Topology & it);
 
 } // interaction

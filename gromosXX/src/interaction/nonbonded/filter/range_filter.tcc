@@ -10,17 +10,17 @@
 
 #include <util/debug.h>
 
-template<typename t_nonbonded_spec>
+template<typename t_interaction_spec, bool perturbed>
 inline
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::Range_Filter()
-  : interaction::Filter<t_nonbonded_spec>()
+  : interaction::Filter()
 {
 }
 
-template<typename t_nonbonded_spec>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::set_cutoff(double const cutoff_short, double const cutoff_long)
 {
   m_cutoff_long = cutoff_long;
@@ -29,9 +29,9 @@ interaction::Range_Filter<t_nonbonded_spec>
   m_cutoff_long_2  = cutoff_long * cutoff_long;
 }
 
-template<typename t_nonbonded_spec>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::prepare_cog(topology::Topology & topo,
 	      configuration::Configuration & conf,
 	      simulation::Simulation & sim)
@@ -39,7 +39,7 @@ interaction::Range_Filter<t_nonbonded_spec>
   DEBUG(11, "Range_Filter::prepare_cog");
   
   // first put the chargegroups into the box
-  math::Periodicity<t_nonbonded_spec::boundary_type> 
+  math::Periodicity<t_interaction_spec::boundary_type> 
     periodicity(conf.current().box);
   
   periodicity.put_chargegroups_into_box(conf, topo);
@@ -65,15 +65,15 @@ interaction::Range_Filter<t_nonbonded_spec>
   }  
 }
 
-template<typename t_nonbonded_spec>
+template<typename t_interaction_spec, bool perturbed>
 inline void
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::grid_cog(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
 	   Chargegroup_Grid_type & grid)
 {
-  math::Periodicity<t_nonbonded_spec::boundary_type>
+  math::Periodicity<t_interaction_spec::boundary_type>
     periodicity(conf.current().box);
 
   DEBUG(8, "box:\n\t" << periodicity.box()(0)(0)
@@ -91,14 +91,13 @@ interaction::Range_Filter<t_nonbonded_spec>
   
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline bool
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::range_chargegroup_pair(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
-			 t_nonbonded_interaction & nonbonded_interaction,
+			 Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 			 size_t const i, size_t const j,
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
@@ -142,7 +141,7 @@ interaction::Range_Filter<t_nonbonded_spec>
 	a2 != a2_to; ++a2){
 
       // the interactions
-      nonbonded_interaction.add_longrange_pair
+      nbs.add_longrange_pair
 	(topo, conf, sim, *a1, *a2, periodicity);
 
     } // loop over atom 2 of cg1
@@ -151,14 +150,13 @@ interaction::Range_Filter<t_nonbonded_spec>
   return true;
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline bool
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::range_chargegroup_pair(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
-			 t_nonbonded_interaction & nonbonded_interaction,
+			 Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 			 size_t const i, size_t const j,
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
@@ -201,7 +199,7 @@ interaction::Range_Filter<t_nonbonded_spec>
 	a2 != a2_to; ++a2){
 
       // the interactions
-      nonbonded_interaction.add_longrange_pair
+      nbs.add_longrange_pair
 	(topo, conf, sim, *a1, *a2, periodicity, pc);
 
     } // loop over atom 2 of cg1
@@ -210,14 +208,13 @@ interaction::Range_Filter<t_nonbonded_spec>
   return true;
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline bool
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::range_atom_pair(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
-		  t_nonbonded_interaction &nonbonded_interaction,
+		  Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 		  size_t const i, size_t const j,
 		  Periodicity_type const & periodicity)
 {
@@ -247,19 +244,18 @@ interaction::Range_Filter<t_nonbonded_spec>
   // LONGRANGE: interactions and filter
 
   // the interactions
-  nonbonded_interaction.add_longrange_pair(topo, conf, sim, i, j, periodicity);
+  nbs.add_longrange_pair(topo, conf, sim, i, j, periodicity);
 
   return true;
 }
 
-template<typename t_nonbonded_spec>
-template<typename t_nonbonded_interaction>
+template<typename t_interaction_spec, bool perturbed>
 inline bool
-interaction::Range_Filter<t_nonbonded_spec>
+interaction::Range_Filter<t_interaction_spec, perturbed>
 ::range_atom_pair(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
-		  t_nonbonded_interaction &nonbonded_interaction,
+		  Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
 		  size_t const i, size_t const j,
 		  int pc,
 		  Periodicity_type const & periodicity)
@@ -290,8 +286,8 @@ interaction::Range_Filter<t_nonbonded_spec>
   // LONGRANGE: interactions and filter
 
   // the interactions
-  nonbonded_interaction.add_longrange_pair(topo, conf, sim, i, j,
-					   periodicity, pc);
+  nbs.add_longrange_pair(topo, conf, sim, i, j,
+			 periodicity, pc);
 
   return true;
 }

@@ -48,22 +48,26 @@ namespace interaction
 {
   void create_g96_unperturbed(interaction::Forcefield & ff,
 			      topology::Topology const & topo,
-			      simulation::Parameter const & param,
+			      simulation::Simulation const & sim,
+			      configuration::Configuration const & conf,
 			      io::In_Topology & it);
   
   void create_g96_unperturbed_grid(interaction::Forcefield & ff,
 				   topology::Topology const & topo,
-				   simulation::Parameter const & param,
+				   simulation::Simulation const & sim,
+				   configuration::Configuration const & conf,
 				   io::In_Topology & it);
   
   void create_g96_perturbed(interaction::Forcefield & ff,
 			    topology::Topology const & topo,
-			    simulation::Parameter const & param,
+			    simulation::Simulation const & sim,
+			    configuration::Configuration const & conf,
 			    io::In_Topology & it);
   
   void create_g96_perturbed_grid(interaction::Forcefield & ff,
 				 topology::Topology const & topo,
-				 simulation::Parameter const & param,
+				 simulation::Simulation const & sim,
+				 configuration::Configuration const & conf,
 				 io::In_Topology & it);
 }
 
@@ -73,40 +77,41 @@ namespace interaction
 
 void interaction::create_g96_nonbonded(interaction::Forcefield & ff,
 				       topology::Topology const & topo,
-				       simulation::Parameter const & param,
+				       simulation::Simulation const & sim,
+				       configuration::Configuration const & conf,
 				       io::In_Topology & it)
 {
   DEBUG(9, "\tcreate g96 nonbonded terms");
 
-  if (param.force.nonbonded == 1){
+  if (sim.param().force.nonbonded == 1){
 
-    if (param.perturbation.perturbation){
+    if (sim.param().perturbation.perturbation){
       
-      if (param.pairlist.grid){
-	create_g96_perturbed_grid(ff, topo, param, it);
-	std::cout << "\t\t\tgrid size          : " << param.pairlist.grid_size << "\n";
+      if (sim.param().pairlist.grid){
+	create_g96_perturbed_grid(ff, topo, sim,conf, it);
+	std::cout << "\t\t\tgrid size          : " << sim.param().pairlist.grid_size << "\n";
       }
       else
-	create_g96_perturbed(ff, topo, param, it);
+	create_g96_perturbed(ff, topo, sim, conf, it);
     }
     else{
 
-      if (param.pairlist.grid){
-	create_g96_unperturbed_grid(ff, topo, param, it);
-	std::cout << "\t\tgrid size :     " << param.pairlist.grid_size << "\n";
+      if (sim.param().pairlist.grid){
+	create_g96_unperturbed_grid(ff, topo, sim, conf, it);
+	std::cout << "\t\tgrid size :     " << sim.param().pairlist.grid_size << "\n";
       }
       else
-	create_g96_unperturbed(ff, topo, param, it);
+	create_g96_unperturbed(ff, topo, sim, conf, it);
 
     }
 
-    std::cout << "\t\t\tinner cutoff           : " << param.pairlist.cutoff_short << "\n"
-	      << "\t\t\touter cutoff           : " << param.pairlist.cutoff_long << "\n"
-	      << "\t\t\tepsilon                : " << param.longrange.epsilon << "\n"
-	      << "\t\t\treactionfield epsilon  : " << param.longrange.rf_epsilon << "\n"
-	      << "\t\t\tkappa                  : " << param.longrange.rf_kappa << "\n"
-	      << "\t\t\treactionfield cutoff   : " << param.longrange.rf_cutoff << "\n"
-	      << "\t\t\tpairlist creation every  " << param.pairlist.skip_step << " steps\n"
+    std::cout << "\t\t\tinner cutoff           : " << sim.param().pairlist.cutoff_short << "\n"
+	      << "\t\t\touter cutoff           : " << sim.param().pairlist.cutoff_long << "\n"
+	      << "\t\t\tepsilon                : " << sim.param().longrange.epsilon << "\n"
+	      << "\t\t\treactionfield epsilon  : " << sim.param().longrange.rf_epsilon << "\n"
+	      << "\t\t\tkappa                  : " << sim.param().longrange.rf_kappa << "\n"
+	      << "\t\t\treactionfield cutoff   : " << sim.param().longrange.rf_cutoff << "\n"
+	      << "\t\t\tpairlist creation every  " << sim.param().pairlist.skip_step << " steps\n"
 	      << "\n";
     
   }

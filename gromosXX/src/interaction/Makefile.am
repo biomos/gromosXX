@@ -29,24 +29,31 @@ xxinclude_HEADERS =		interaction.h \
 				bonded/perturbed_dihedral_interaction.tcc \
 				nonbonded/create_nonbonded.h \
 				nonbonded/interaction_spec.h \
-				nonbonded/interaction/nonbonded_base.h \
-				nonbonded/interaction/nonbonded_base.tcc \
+				nonbonded/interaction/nonbonded_parameter.h \
+				nonbonded/interaction/nonbonded_term.h \
+				nonbonded/interaction/nonbonded_term.tcc \
 				nonbonded/interaction/nonbonded_innerloop.h \
 				nonbonded/interaction/nonbonded_innerloop.tcc \
-				nonbonded/interaction/nonbonded_interaction.h \
-				nonbonded/interaction/nonbonded_interaction.tcc \
+				nonbonded/interaction/nonbonded_outerloop.h \
+				nonbonded/interaction/nonbonded_outerloop.tcc \
+				nonbonded/interaction/perturbed_nonbonded_term.h \
+				nonbonded/interaction/perturbed_nonbonded_term.tcc \
 				nonbonded/interaction/perturbed_nonbonded_innerloop.h \
 				nonbonded/interaction/perturbed_nonbonded_innerloop.tcc \
-				nonbonded/interaction/perturbed_nonbonded_interaction.h \
-				nonbonded/interaction/perturbed_nonbonded_interaction.tcc \
+				nonbonded/interaction/perturbed_nonbonded_outerloop.h \
+				nonbonded/interaction/perturbed_nonbonded_outerloop.tcc \
+				nonbonded/interaction/perturbed_nonbonded_pair.h \
+				nonbonded/interaction/perturbed_nonbonded_pair.tcc \
+				nonbonded/interaction/nonbonded_set.h \
+				nonbonded/interaction/nonbonded_set.tcc \
+				nonbonded/interaction/nonbonded_interaction.h \
+				nonbonded/interaction/nonbonded_interaction.tcc \
 				nonbonded/interaction/storage.h \
 				nonbonded/filter/chargegroup_grid.h \
 				nonbonded/filter/chargegroup_grid.tcc \
 				nonbonded/filter/exclusion_filter.h \
 				nonbonded/filter/exclusion_filter.tcc \
 				nonbonded/filter/filter.h \
-				nonbonded/filter/perturbation_filter.h \
-				nonbonded/filter/perturbation_filter.tcc \
 				nonbonded/filter/range_filter.h \
 				nonbonded/filter/range_filter.tcc \
 				nonbonded/pairlist/grid_pairlist_algorithm.h \

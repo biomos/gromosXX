@@ -14,44 +14,53 @@ namespace interaction
    * @class Grid_Pairlist_Algorithm
    * creates a pairlist.
    */
-  template<typename t_nonbonded_spec>
+  template<typename t_interaction_spec, bool perturbed>
   class Grid_Pairlist_Algorithm : 
-    public Standard_Pairlist_Algorithm<t_nonbonded_spec>
+    public Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
   {
   public:
-    typedef Chargegroup_Grid<t_nonbonded_spec::boundary_type> Chargegroup_Grid_type;
-    typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
+    typedef Chargegroup_Grid<t_interaction_spec::boundary_type> Chargegroup_Grid_type;
+    typedef math::Periodicity<t_interaction_spec::boundary_type> Periodicity_type;
     
     /**
      * Constructor.
      */
     Grid_Pairlist_Algorithm();
+    /**
+     * Destructor.
+     */
+    virtual ~Grid_Pairlist_Algorithm(){}
+    /**
+     * prepare the pairlists
+     */
+    virtual void prepare(topology::Topology & topo,
+			 configuration::Configuration & conf,
+			 simulation::Simulation & sim);
     
     /**
      * update the pairlist(s).
      */
-    template<typename t_nonbonded_interaction>
     void update(topology::Topology & topo,
 		configuration::Configuration & conf,
 		simulation::Simulation & sim,
-		t_nonbonded_interaction &nonbonded_interaction);
+		Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+		size_t begin, size_t end, size_t stride);
     
   private:
 
-    template<typename t_nonbonded_interaction>
     void intra_cell(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
-		    t_nonbonded_interaction & nonbonded_interaction,
+		    Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 		    std::vector<size_t>::const_iterator &cg_st, 
 		    std::vector<size_t>::const_iterator &cg_to,
 		    Periodicity_type const & periodicity);
 
-    template<typename t_nonbonded_interaction, bool periodic>
+    template<bool periodic>
     void inter_cell(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim, 
-		    t_nonbonded_interaction & nonbonded_interaction,
+		    Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
 		    std::vector<size_t>::const_iterator &cg_st, 
 		    std::vector<size_t>::const_iterator &cg_to,
 		    Chargegroup_Grid_type &grid,
