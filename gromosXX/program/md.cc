@@ -129,6 +129,7 @@ int main(int argc, char *argv[])
     // runtime problem
     std::cout << "severe error encountered:\n"
 	      << e.what() << std::endl;
+    std::cout << "messages (simulation)\n";
     
     io::messages.display();
     std::cout << std::endl;
