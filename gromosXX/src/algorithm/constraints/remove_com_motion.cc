@@ -66,6 +66,7 @@ int algorithm::Remove_COM_Motion
 
     com_mass += topo.mass()(i);
     com_v += topo.mass()(i) * conf.current().vel(i);
+    // positions should be at same time than velocities
     com_r += topo.mass()(i) * conf.current().pos(i) - 
       0.5 * topo.mass()(i) * conf.current().vel(i) * sim.time_step_size();
   }
@@ -95,6 +96,7 @@ int algorithm::Remove_COM_Motion
 	  0.5 * sim.time_step_size() * conf.current().vel(i));
     DEBUG(10, "posp " << i << " " << r);
     
+    // should this be pos or r???
     com_L += topo.mass()(i) * 
       math::cross(conf.current().pos(i), conf.current().vel(i));
 
