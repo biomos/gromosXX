@@ -3,6 +3,14 @@
  * methods of Twinrange_Chargegroup_Filter
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE pairlist
+
+#include "../../debug.h"
+
+
 template<typename t_simulation, typename t_base, typename t_innerloop>
 inline
 interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
@@ -51,13 +59,19 @@ interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
   sim.system().periodicity().
     nearest_image(m_cg_cog(i), m_cg_cog(j), p);
   const double d = dot(p, p);
-  
-  if (d > m_cutoff_long_2)        // OUTSIDE: filter
+
+  if (d > m_cutoff_long_2){        // OUTSIDE: filter
+    DEBUG(7, "it's outside range");
     return true;
+  }
   
-  if (d < m_cutoff_short_2)       // SHORTRANGE: no filter
+  if (d < m_cutoff_short_2){       // SHORTRANGE: no filter
+    DEBUG(7, "it's short range");
     return false;
-    
+  }
+  
+  DEBUG(7, "it's LONG-range");
+  
   // LONGRANGE: interactions and filter
 
   simulation::Atom_Iterator a1 = it_i.begin(),
@@ -70,6 +84,9 @@ interaction::Twinrange_Chargegroup_Filter<t_simulation, t_base, t_innerloop>
 	a2 != a2_to; ++a2){
 
       // the interactions
+
+      DEBUG(7, "inner loop: " << *a1 << " - " << *a2);
+      
       interaction_inner_loop(sim, *a1, *a2);
 
     } // loop over atom 2 of cg1

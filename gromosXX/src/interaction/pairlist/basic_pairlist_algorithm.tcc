@@ -1,5 +1,5 @@
 /**
- * @file basic_pairlist_algorithm.tcc
+ * @File basic_pairlist_algorithm.tcc
  * template methods
  */
 
@@ -10,6 +10,13 @@ interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
   : m_pairlist(pairlist),
     m_filter(base)
 {
+}
+
+template<typename t_simulation, typename t_filter>
+t_filter & interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
+::filter()
+{
+  return m_filter;
 }
 
 template<typename t_simulation, typename t_filter>

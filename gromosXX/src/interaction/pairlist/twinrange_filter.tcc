@@ -22,9 +22,10 @@ interaction::Twinrange_Filter<t_simulation, t_base, t_innerloop>
     sim.nonbonded().cutoff_short();
   m_cutoff_long_2 = sim.nonbonded().cutoff_long() *
     sim.nonbonded().cutoff_long();
-
+  force().resize(sim.system().force().size());
+  
   force() = 0.0;
-  energies().zero();
+  energies().resize(sim.system().energies().bond_energy.size());
   
 }
 

@@ -3,6 +3,13 @@
  * template methods of Nonbonded_Inner_Loop
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE interaction
+
+#include "../../debug.h"
+
 template<typename t_simulation, typename t_storage>
 interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
 ::Nonbonded_Inner_Loop(Nonbonded_Base &base, t_storage &storage)
@@ -15,7 +22,7 @@ template<typename t_simulation, typename t_storage>
 void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
 ::interaction_inner_loop(t_simulation const &sim, size_t const i, size_t const j)
 {
-    DEBUG(10, "\tpair\t" << i << "\t" << j);
+    DEBUG(7, "\tpair\t" << i << "\t" << j);
 
     math::Vec r, f;
     double e_lj, e_crf;
@@ -27,24 +34,33 @@ void interaction::Nonbonded_Inner_Loop<t_simulation, t_storage>
       m_base.lj_parameter(sim.topology().iac(i),
 			  sim.topology().iac(j));
 
-    DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+    DEBUG(7, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
 
     m_base.lj_crf_interaction(r, lj.c6, lj.c12,
 			      sim.topology().charge()(i) * 
 			      sim.topology().charge()(j),
 			      f, e_lj, e_crf);
 
+    DEBUG(7, "\tcalculated interaction f: " << f << " e_lj: " << e_lj << " e_crf: " << e_crf);
+    
     m_storage.force()(i) += f;
     m_storage.force()(j) -= f;
 
+    DEBUG(7, "\tforces stored");
+    
     // energy
+    assert(m_storage.energies().lj_energy.size() > 
+	   sim.topology().atom_energy_group(i));
+    assert(m_storage.energies().lj_energy.size() >
+	   sim.topology().atom_energy_group(j));
+
     m_storage.energies().lj_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += e_lj;
 
     m_storage.energies().crf_energy[sim.topology().atom_energy_group(i)]
       [sim.topology().atom_energy_group(j)] += e_crf;
 
-    DEBUG(11, "\ti and j " << sim.topology().atom_energy_group(i)
+    DEBUG(7, "\ti and j " << sim.topology().atom_energy_group(i)
 	  << " " << sim.topology().atom_energy_group(j));
 }
 

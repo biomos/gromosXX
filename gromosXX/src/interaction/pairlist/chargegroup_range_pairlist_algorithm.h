@@ -13,36 +13,35 @@ namespace interaction
    * the chargegroup based range pairlist algorithm
    */
   template<typename t_simulation,
-	   typename t_filter>
-  class Chargegroup_Range_Pairlist_Algorithm
-  {
-  public:
-    /**
-     * Constructor.
-     */
-    Chargegroup_Range_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > 
-					 &pairlist, Nonbonded_Base &base);
+    typename t_filter>
+    class Chargegroup_Range_Pairlist_Algorithm
+    : public Basic_Pairlist_Algorithm<t_simulation, t_filter>
+    {
+    public:
+      /**
+       * Constructor.
+       */
+      Chargegroup_Range_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > 
+					   &pairlist, Nonbonded_Base &base);
     
-    /**
-     * update the pairlist.
-     */
-    void update(t_simulation &sim);
+      /**
+       * update the pairlist.
+       */
+      void update(t_simulation &sim);
     
-  protected:
-    std::vector<std::vector<unsigned int> > & m_pairlist;
-    t_filter m_filter;
+    protected:
 
-    void do_cg_interaction(simulation::chargegroup_iterator cg1,
-			   simulation::chargegroup_iterator cg2);
+      void do_cg_interaction(simulation::chargegroup_iterator cg1,
+			     simulation::chargegroup_iterator cg2);
     
-    void do_cg_interaction_excl(t_simulation &sim,
-				simulation::chargegroup_iterator cg1,
-				simulation::chargegroup_iterator cg2);
+      void do_cg_interaction_excl(t_simulation &sim,
+				  simulation::chargegroup_iterator cg1,
+				  simulation::chargegroup_iterator cg2);
 
-    void do_cg_interaction_intra(t_simulation &sim,
-				 simulation::chargegroup_iterator cg1);
+      void do_cg_interaction_intra(t_simulation &sim,
+				   simulation::chargegroup_iterator cg1);
 
-  };
+    };
   
 } // interaction
 

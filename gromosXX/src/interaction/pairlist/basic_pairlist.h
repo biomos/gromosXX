@@ -72,7 +72,7 @@ namespace interaction
     Basic_Pairlist::iterator begin();
     Basic_Pairlist::iterator end();
 
-    basic_pairlist_type m_pairlist;
+    //basic_pairlist_type m_pairlist;
     
   };
 

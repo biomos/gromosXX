@@ -3,22 +3,35 @@
  * template methods of Basic_Pairlist
  */
 
+#undef MODULE
+#undef SUBMODULE
+
+#define MODULE interaction
+#define SUBMODULE pairlist
+
+#include "../../debug.h"
+
 template<typename t_simulation, typename t_pairlist_algorithm>
 inline
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::iterator::iterator(basic_pairlist_type &pl)
-  :   m_i(pl.begin()),
-      m_j(m_i->begin()),
+  :  
       m_pairlist(pl)
 {
+
+  DEBUG(7, "Pairlist size here " << pl.size());
   
+  m_i = pl.begin();
   // go to the first pair
   while(m_i != pl.end()){
+    m_j = m_i->begin();
     if (m_j == m_i->end()){
       ++m_i;
-      m_j = m_i->begin();
     }
-    else break;
+    else {
+      DEBUG(7, "we got a pair");
+      break;
+    }
   }
 }
 
@@ -63,8 +76,12 @@ interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::iterator::row(unsigned int i)
 {
   m_i = m_pairlist.begin() + i;
-  if (m_i != m_pairlist.end())
+  DEBUG(7, "m_i set");
+  if (m_i != m_pairlist.end()){
+    DEBUG(7, "not the end");
     m_j = m_i->begin();
+  }
+  
 }
 
 template<typename t_simulation, typename t_pairlist_algorithm>
@@ -95,7 +112,7 @@ template<typename t_simulation, typename t_pairlist_algorithm>
 inline
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>
 ::Basic_Pairlist(interaction::Nonbonded_Base &base)
-  : t_pairlist_algorithm(m_pairlist, base)
+  : t_pairlist_algorithm(*this, base)
 {
 }
 
@@ -104,6 +121,8 @@ inline typename interaction::Basic_Pairlist<t_simulation,
 					    t_pairlist_algorithm>::iterator
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>::begin()
 {
+  DEBUG(7, "\tsize ot this : " << this->size());
+  
   return iterator(*this);
 }
 
@@ -112,6 +131,7 @@ inline typename interaction::Basic_Pairlist<t_simulation,
 					    t_pairlist_algorithm>::iterator
 interaction::Basic_Pairlist<t_simulation, t_pairlist_algorithm>::end()
 {
+  DEBUG(7, "pairlist::end");
   iterator it(*this);
   it.row(size());
   return it;
@@ -124,6 +144,8 @@ namespace interaction
   operator<<(std::ostream &os, Basic_Pairlist<t_simulation, 
 	     t_pairlist_algorithm> &pl)
   {
+    os << "Printing pairlist" << std::endl;
+    
     typename Basic_Pairlist<t_simulation, t_pairlist_algorithm>::iterator
       it = pl.begin(),
       to = pl.end();

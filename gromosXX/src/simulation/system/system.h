@@ -71,6 +71,10 @@ namespace simulation
     /**
      * force accessor
      */
+    math::VArray const &force()const; 
+    /**
+     * force accessor
+     */
     math::VArray &force();
     /**
      * old force

@@ -127,6 +127,15 @@ inline math::VArray & simulation::System<b>::old_vel()
  * force accessor
  */
 template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::force()const
+{
+  return *m_force;
+}
+
+/**
+ * force accessor
+ */
+template<math::boundary_enum b>
 inline math::VArray & simulation::System<b>::force()
 {
   return *m_force;

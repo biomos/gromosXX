@@ -53,9 +53,10 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 
   if(!(sim.steps() % sim.nonbonded().update())){
     // create a pairlist
-    DEBUG(7, "\tupdate the pairlist");
+    DEBUG(7, "\tupdate the parlist");
     m_pairlist.update(sim);
-  
+    DEBUG(7, "\tafter update : " << m_pairlist.size());
+    
     /*
     // recalc long-range forces
     DEBUG(7, "\tlong range");
@@ -80,19 +81,17 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
   //		  shortrange);
 
   // add long-range force
-  // sim.system().force() += m_longrange_force;
+  sim.system().force() += m_pairlist.filter().force();
   
   // and long-range energies
-  /*
-  for(size_t i = 0; i < m_longrange_energy.lj_energy.size(); ++i){
-    for(size_t j = 0; j < m_longrange_energy.lj_energy.size(); ++j){
+  for(size_t i = 0; i < m_pairlist.filter().energies().lj_energy.size(); ++i){
+    for(size_t j = 0; j < m_pairlist.filter().energies().lj_energy.size(); ++j){
       sim.system().energies().lj_energy[i][j] += 
-	m_longrange_energy.lj_energy[i][j];
+	m_pairlist.filter().energies().lj_energy[i][j];
       sim.system().energies().crf_energy[i][j] += 
-	m_longrange_energy.crf_energy[i][j];
+	m_pairlist.filter().energies().crf_energy[i][j];
     }
   }
-  */
 
   // add 1,4 - interactions
   do_14_interactions(sim);
