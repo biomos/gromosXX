@@ -86,7 +86,7 @@ case "$compiler" in
        echo "Configuring for Intel C++"
        CXX_PICKY_FLAGS="-w1"
 
-       CXX_OPTIMIZE_FLAGS="-O3 -ip -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -align -pch -fno-exceptions"
+       CXX_OPTIMIZE_FLAGS="-fast -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -align -pch -fno-exceptions -vec_report"
        CXX_DEBUG_FLAGS="-g -pch"
        CXXLD="$CXX"
 
@@ -114,7 +114,7 @@ case "$compiler" in
      gnu*)              # EGCS  http://egcs.cygnus.com/
        echo "Configuring for GNU C++"
        CXX_PICKY_FLAGS="-Wall"
-       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -fno-exceptions -DNDEBUG -g"
+       CXX_OPTIMIZE_FLAGS="-O6-funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -fno-exceptions -DNDEBUG -g"
        CXX_DEBUG_FLAGS="-g"
        CXXLD="$CXX"
 

@@ -60,10 +60,14 @@ set CXXFLAGS or LDFLAGS accordingly.
 Intel C++ Compiler
 --------------------------------------------------
 
-export CC=/opt/intel/compiler70/ia32/bin/icc
-export CXX=/opt/intel/compiler70/ia32/bin/icc
-export LD=/opt/intel/compiler70/ia32/bin/icc
+make sure the bin directory of the Intel C++
+compiler is added to your path and the
+lib directory to the library search path.
 
+export CC=icc
+export CXX=icc
+export LD=xild
+export AR=xiar
 
 * OpenMP parallelization available:
       --enable-openmp configure option
