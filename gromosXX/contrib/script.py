@@ -2,21 +2,44 @@
 
 import os
 
-_name = "default"
-_nr = 1
-
-program = "/troll2/markus/programs/gromosXX/LINUX_GCC_RELEASE/program/md"
+# simulation directory
 simdir = os.getcwd()
+# temporary directory
 workdir = "/scrloc/${USER}"
-python = "python"
+
+# link perturbation input (topology) and output (energy derivatives)
 pert = 0
 
+# paths
+#
+# python interpreter:
+python = "python"
+# MD program
+program = "/troll2/markus/programs/gromosXX/LINUX_GCC_RELEASE/program/md"
+
+################################################################################
+# private
+_name = "default"
+_nr = 1
+################################################################################
+
+################################################################################
+# set name and run number
+################################################################################
+#
 def set_name(name, nr=1):
-    global _name, _nr, _script_name
+    global _name, _nr
     _name = name
     _nr = nr
     return None
+#
+################################################################################
 
+
+################################################################################
+# write MD script
+################################################################################
+#
 def write(rep):
     global _name, _nr, program, simdir, workdir
 
@@ -113,8 +136,17 @@ def write(rep):
     os.chmod(script_name, 0755)
     
     return None
+#
+# end of write
+################################################################################
 
 
+################################################################################
+# write a queue run script that starts 2 MD jobs,
+# waits for them to finish,
+# then starts repex to perform a replica exchange if needed
+################################################################################
+#
 def write_qmaster(rep1, rep2, T):
     global _name, _nr, program, simdir, workdir
 
@@ -148,43 +180,6 @@ def write_qmaster(rep1, rep2, T):
 
     os.chmod(script_name, 0755)
     return None
-
-
-def write_smaster(rep1, rep2):
-    global _name, _nr, program, simdir, workdir
-
-    repdir1 = simdir + "/rep" + str(rep1)
-    repdir2 = simdir + "/rep" + str(rep2)
-
-    full_name = _name + "_" + str(_nr)
-    script_name = simdir + "/mj" + full_name + "_" + str(rep1) + "_" + str(rep2) +".sh"
-
-    job1 = "j" + full_name + ".sh"
-    job2 = "j" + full_name + ".sh"
-    
-    f = open(script_name, "w")
-    f.write("#!/bin/sh\n")
-    f.write("# master job script for " + _name + " (" + str(_nr) + ") \n\n")
-    f.write("echo " + _name + " run " + str(_nr) + " rep1 = " + str(rep1) + " rep2 = " + str(rep2) + "\n\n")
-
-    f.write("# first replica\n")
-    f.write("cd " + repdir1 + "\n")
-    f.write(job1 + "\n\n")
-
-    f.write("# second replica\n")
-    f.write("cd " + repdir2 + "\n")    
-    f.write(job2 + "\n\n")
-
-    f.write("cd " + simdir + "\n\n")
-
-    f.write("# check switch\n")
-    f.write(python + " repex.py " + str(rep1 - 1) + " " + str(rep1) + " " + str(_nr + 1) + "\n")
-    f.write(python + " repex.py " + str(rep2) + " " + str(rep2 + 1) + " " + str(_nr + 1) + "\n")    
-
-    f.write("\n\n")
-
-    os.chmod(script_name, 0755)
-    return None
-
-
-
+#
+# end write_qmaster
+################################################################################

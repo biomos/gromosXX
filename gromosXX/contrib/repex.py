@@ -64,16 +64,25 @@ def get_name(t, run, post):
 # write_ts
 # write out time series of exchanges, exchange probablities
 ################################################################################
-def write_ts(ID1, T01, ID2, T02):
+def write_ts(ID1, T01, ID2, T02, E1, E2, p, s):
     # write time series of temperatures per replica ...
+    # ID1 ID of first replica
+    # ID2 ID of second replica
+    # T01 current temperature of first replica
+    # T02 current temperature of second replica
+    # E1  current potential energy of first replica
+    # E2  current potential energy of second replica
+    # p   exchange probability
+    # s   0 / 1 : replicas exchanged?
+    #
     nr1 = "replica_" + str(ID1) + ".dat"
     nr2 = "replica_" + str(ID2) + ".dat"
 
     f1 = open(nr1, "a")
     f2 = open(nr2, "a")
 
-    f1.write("\t" + str(run) + "\t\t" + str(T01) + "\n")
-    f2.write("\t" + str(run) + "\t\t" + str(T02) + "\n")
+    f1.write("\t" + str(run) + "\t\t" + str(T01) + "\t\t" + str(E1) + "\t\t" + str(p) + "\t\t" + str(s) + "\n")
+    f2.write("\t" + str(run) + "\t\t" + str(T02) + "\t\t" + str(E2) + "\t\t" + str(p) + "\t\t" + str(s) + "\n")
 
     f1.close()
     f2.close()
@@ -85,8 +94,8 @@ def write_ts(ID1, T01, ID2, T02):
     f1 = open(nt1, "a")
     f2 = open(nt2, "a")
 
-    f1.write("\t" + str(run) + "\t\t" + str(ID1) + "\n")
-    f2.write("\t" + str(run) + "\t\t" + str(ID2) + "\n")
+    f1.write("\t" + str(run) + "\t\t" + str(ID1) + "\t\t" + str(p) + "\t\t" + str(s) + "\n")
+    f2.write("\t" + str(run) + "\t\t" + str(ID2) + "\t\t" + str(p) + "\t\t" + str(s) + "\n")
 
     f1.close()
     f2.close()
