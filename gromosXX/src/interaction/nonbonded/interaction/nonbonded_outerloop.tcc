@@ -98,6 +98,9 @@ void interaction::Nonbonded_Outerloop<t_interaction_spec>
 	
 	// shortrange, therefore store in simulation.system()
 	lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+
+	// storage.energies.bond_energy[0] += *j_it;
+
       }
       
     }

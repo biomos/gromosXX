@@ -243,13 +243,16 @@ interaction::Perturbed_Nonbonded_Pair<
 	
       }
       else{
+	  double A_f1;
 	DEBUG(7, "non-perturbed interaction");
 	m_nonbonded_term->
 	  lj_crf_interaction(r, A_lj->c6, A_lj->c12,
-			     A_q, A_f, A_e_lj, 
+			     A_q, A_f1, A_e_lj, 
 			     A_e_crf);
 
 	A_de_lj = A_de_crf = 0.0;
+	A_f = A_f1 * r;
+
       }
  
       DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
@@ -277,12 +280,14 @@ interaction::Perturbed_Nonbonded_Pair<
 	A_f = (A_f1 + A_f6 + A_f12) * r;
       }
       else{
+	  double A_f1;
 	DEBUG(7, "non-perturbed 1,4 interaction");
 	m_nonbonded_term->
 	  lj_crf_interaction(r, A_lj->cs6, A_lj->cs12,
-			     A_q, A_f, A_e_lj, 
+			     A_q, A_f1, A_e_lj, 
 			     A_e_crf);
 	A_de_lj = A_de_crf = 0.0;
+	A_f = A_f1 * r;
       }
  
       DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
@@ -334,13 +339,14 @@ interaction::Perturbed_Nonbonded_Pair<
 	B_f = (B_f1 + B_f6 + B_f12) * r;
       }
       else{
+	  double B_f1;
 	DEBUG(7, "non-perturbed interaction");
 	m_nonbonded_term->
 	  lj_crf_interaction(r, B_lj->c6, B_lj->c12,
-			     B_q, B_f, B_e_lj, 
+			     B_q, B_f1, B_e_lj, 
 			     B_e_crf);
 	B_de_lj = B_de_crf = 0.0;
-	
+	B_f = B_f1 * r;
       }
  
       DEBUG(7, "\tcalculated interaction state B:\n\t\tf: "
@@ -368,11 +374,13 @@ interaction::Perturbed_Nonbonded_Pair<
       }
       else{
 	DEBUG(7, "non-perturbed 1,4 interaction");
+	double B_f1;
 	m_nonbonded_term->
 	  lj_crf_interaction(r, B_lj->cs6, B_lj->cs12,
-			     B_q, B_f, B_e_lj, 
+			     B_q, B_f1, B_e_lj, 
 			     B_e_crf);
 	B_de_lj = B_de_crf = 0.0;
+	B_f = B_f1 * r;
       }
       
       DEBUG(7, "\tcalculated interaction state B:\n\t\tf: "

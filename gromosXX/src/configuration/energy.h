@@ -15,6 +15,8 @@ namespace configuration
   class Energy
   {
   public:
+    Energy(){}
+
     double total;
     double kinetic_total;
     double potential_total;

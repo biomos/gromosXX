@@ -18,11 +18,15 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
  Periodicity_type const & periodicity,
  int pc)
 {
+    storage.energies.bond_energy[0] += j;
+
     DEBUG(8, "\tpair\t" << i << "\t" << j);
 
-    math::Vec r, f;
-    // double e_lj, e_crf;
     
+    math::Vec r;
+    double f;
+    double e_lj, e_crf;
+
     if (t_nonbonded_spec::do_bekker){
       r = conf.current().pos(i) + periodicity.shift(pc).pos
 	- conf.current().pos(j);
@@ -35,48 +39,51 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
       periodicity.nearest_image(conf.current().pos(i), 
 				conf.current().pos(j), r);
       DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+
+      /*
+	for(int d=0; d<3; ++d){
+	r(d) = conf.current().pos(i)(d) 
+	- conf.current().pos(i)(d);
+	
+	if (fabs(r(d) + r(d)) >= conf.current().box(d)(d)){
+	r(d) -= conf.current().box(d)(d) * 
+	rint(r(d)/conf.current().box(d)(d));
+	
+	}
+	}
+      */
     }
     
     const lj_parameter_struct &lj = 
       m_param->lj_parameter(topo.iac(i),
 			    topo.iac(j));
 
+
     DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
     DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
     
-    /**
     lj_crf_interaction(r, lj.c6, lj.c12,
 		       topo.charge()(i) * 
 		       topo.charge()(j),
 		       f, e_lj, e_crf);
-    */
-
-    const double dist2 = r(0)*r(0) + r(1)*r(1) + r(2)*r(2);
-    const double dist2i = 1.0 / dist2;
-    const double dist6i = dist2i * dist2i * dist2i;
-    const double disti = sqrt(dist2i);
-    const double q_eps = topo.charge()(i) * topo.charge()(j)
-	* math::four_pi_eps_i;
-  
-    const double e_lj = (lj.c12 * dist6i - lj.c6) * dist6i;
-    const double e_crf = q_eps * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
-
-    const double af = (e_lj + e_lj + lj.c6 * dist6i) * 6 * dist2i +
-	q_eps * (disti * dist2i +  m_crf_cut3i);
-  
-  // force = f * r;
 
     for (int a=0; a<3; ++a){
-	const double term = af * r(a);
+
+	const double term = f * r(a);
 	storage.force(i)(a) += term;
 	storage.force(j)(a) -= term;
 
 	if (t_nonbonded_spec::do_virial == math::molecular_virial){
-
 	    for(int b=0; b<3; ++b){
 		storage.virial_tensor(b, a) += 
 		    (r(b) - conf.special().rel_mol_com_pos(i)(b) + 
 		     conf.special().rel_mol_com_pos(j)(b)) * term;
+	    }
+	}
+	if (t_nonbonded_spec::do_virial == math::atomic_virial){
+	    for(int b=0; b<3; ++b){
+		storage.virial_tensor(b, a) += 
+		    r(b) * term;
 	    }
 	}
     }
@@ -93,7 +100,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     storage.energies.crf_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += e_crf;
     
-    
     DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	  << " j " << topo.atom_energy_group(j));
 }
@@ -109,8 +115,8 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 {
     DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
 
-    math::Vec r, f;
-    double e_lj, e_crf;
+    math::Vec r;
+    double f, e_lj, e_crf;
     
     periodicity.nearest_image(conf.current().pos(i), 
 			      conf.current().pos(j), r);
@@ -125,17 +131,21 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>
 			      topo.charge()(i) * 
 			      topo.charge()(j),
 			      f, e_lj, e_crf);
-    conf.current().force(i) += f;
-    conf.current().force(j) -= f;
 
+    for (int a=0; a<3; ++a){
 
-    if (t_nonbonded_spec::do_virial == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  conf.current().virial_tensor(a, b) += 
-	    r(a) * f(b);
-    
-      DEBUG(11, "\tatomic virial done");
+	const double term = f * r(a);
+	// storage.force(i)(a) += term;
+	// storage.force(j)(a) -= term;
+	conf.current().force(i)(a) += term;
+	conf.current().force(j)(a) -= term;
+
+	if (t_nonbonded_spec::do_virial == math::atomic_virial){
+	    for(int b=0; b<3; ++b){
+		conf.current().virial_tensor(b, a) += 
+		    r(b) * term;
+	    }
+	}
     }
 
     // energy
@@ -187,8 +197,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>
     
     
     rf_interaction(r, topo.charge()(i) * 
-			  topo.charge()(*it),
-			  f, e_crf);
+		   topo.charge()(*it),
+		   f, e_crf);
     
     force(i) += f;
     force(*it) -= f;

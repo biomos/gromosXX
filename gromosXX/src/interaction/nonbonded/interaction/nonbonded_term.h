@@ -36,8 +36,9 @@ namespace interaction
     void lj_crf_interaction(math::Vec const &r,
 			    double const c6, double const c12,
 			    double const q,
-			    math::Vec & force, double & e_lj,
+			    double & force, double & e_lj,
 			    double & e_crf);
+
     /**
      * calculate the reaction field force and energy of an atom pair.
      */

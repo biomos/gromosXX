@@ -17,6 +17,11 @@ namespace interaction
   class Storage
   {
   public:
+      /**
+       * Constractor
+       */
+      Storage(){}
+
     /**
      * (longrange) force storage.
      */

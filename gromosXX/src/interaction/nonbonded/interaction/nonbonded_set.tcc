@@ -13,7 +13,6 @@
  * Constructor.
  */
 template<typename t_interaction_spec, typename t_perturbation_spec>
-inline
 interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::Nonbonded_Set(Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec> & nbi)
   : Nonbonded_Outerloop<t_interaction_spec>(nbi),

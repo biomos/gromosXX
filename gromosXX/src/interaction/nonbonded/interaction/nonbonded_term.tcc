@@ -52,7 +52,7 @@ inline void interaction::Nonbonded_Term
 ::lj_crf_interaction(math::Vec const &r,
 		     double const c6, double const c12,
 		     double const q,
-		     math::Vec &force, double &e_lj, double &e_crf)
+		     double &force, double &e_lj, double &e_crf)
 {
   assert(dot(r,r) != 0);
   const double dist2 = dot(r, r);
@@ -63,17 +63,15 @@ inline void interaction::Nonbonded_Term
   const double c12_dist6i = c12 * dist6i;
   
   e_lj = (c12_dist6i - c6) * dist6i;
+
   e_crf = q_eps * 
-    (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+      (disti - m_crf_2cut3i * dist2 - m_crf_cut);
 
-  const double f = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i + 
-    q_eps * (disti * dist2i + m_crf_cut3i);
+  force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i + 
+      q_eps * (disti * dist2i + m_crf_cut3i);
 
-  force[0] = f * r[0];
-  force[1] = f * r[1];
-  force[2] = f * r[2];
-
-  DEBUG(15, "q=" << q << " 4pie=" << math::four_pi_eps_i << " crf_cut2i=" << m_crf_cut3i);
+  DEBUG(15, "q=" << q << " 4pie=" << math::four_pi_eps_i 
+	<< " crf_cut2i=" << m_crf_cut3i);
   
 }
 

@@ -43,6 +43,94 @@ inline math::Boundary_Implementation<math::triclinic>
   
 }
 
+// the box stuff
+// -------------
+
+// accessors
+inline math::Box const math::Boundary_Implementation<math::vacuum>::box()const
+{
+  return m_box;
+}
+
+inline math::Box const & math::Boundary_Implementation<math::rectangular>::box()const
+{
+  return m_box;
+}
+
+inline math::Box const & math::Boundary_Implementation<math::triclinic>::box()const
+{
+  return m_box;
+}
+
+inline const double math::Boundary_Implementation<math::vacuum>
+::box(size_t const d1, size_t const d2)const
+{
+  return m_box(d1)(d2);
+}
+
+inline const double math::Boundary_Implementation<math::rectangular>
+::box(size_t const d1, size_t const d2)const
+{
+  return m_box(d1)(d2);
+}
+
+inline const double math::Boundary_Implementation<math::triclinic>
+::box(size_t const d1, size_t const d2)const
+{
+  return m_box(d1)(d2);
+}
+
+inline math::Boundary_Implementation<math::vacuum>::shift_struct &
+math::Boundary_Implementation<math::vacuum>
+::shift(size_t const i)
+{
+  assert(27 > i);
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::vacuum>::shift_struct const &
+math::Boundary_Implementation<math::vacuum>
+::shift(size_t const i)const
+{
+  assert(27 > i);
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::rectangular>::shift_struct &
+math::Boundary_Implementation<math::rectangular>
+::shift(size_t const i)
+{
+  assert(27 > i);
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::rectangular>::shift_struct const &
+math::Boundary_Implementation<math::rectangular>
+::shift(size_t const i)const
+{
+  assert(27 > i);
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::triclinic>::shift_struct &
+math::Boundary_Implementation<math::triclinic>
+::shift(size_t const i)
+{
+  assert(27 > i);
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::triclinic>::shift_struct const &
+math::Boundary_Implementation<math::triclinic>
+::shift(size_t const i)const
+{
+  assert(27 > i);
+  return m_shift[i];
+}
+
+//==================================================
+// nearest image functions
+//==================================================
 
 inline void math::Boundary_Implementation<math::vacuum>
 ::nearest_image(Vec const &v1,
@@ -82,6 +170,10 @@ inline void math::Boundary_Implementation<math::triclinic>
       nim += m_box(d) * rint(dot(m_cross_K_L_M(d), nim));
   }
 }
+
+//==================================================
+// grid stuff
+//==================================================
 
 inline void math::Boundary_Implementation<math::vacuum>
 ::box_components(Vec const &v, Vec & n)const
@@ -217,90 +309,5 @@ inline void math::Boundary_Implementation<math::vacuum>
       }
     }
   }  
-}
-
-// the box stuff
-// -------------
-
-// accessors
-inline math::Box const math::Boundary_Implementation<math::vacuum>::box()const
-{
-  return m_box;
-}
-
-inline math::Box const & math::Boundary_Implementation<math::rectangular>::box()const
-{
-  return m_box;
-}
-
-inline math::Box const & math::Boundary_Implementation<math::triclinic>::box()const
-{
-  return m_box;
-}
-
-inline const double math::Boundary_Implementation<math::vacuum>
-::box(size_t const d1, size_t const d2)const
-{
-  return m_box(d1)(d2);
-}
-
-inline const double math::Boundary_Implementation<math::rectangular>
-::box(size_t const d1, size_t const d2)const
-{
-  return m_box(d1)(d2);
-}
-
-inline const double math::Boundary_Implementation<math::triclinic>
-::box(size_t const d1, size_t const d2)const
-{
-  return m_box(d1)(d2);
-}
-
-inline math::Boundary_Implementation<math::vacuum>::shift_struct &
-math::Boundary_Implementation<math::vacuum>
-::shift(size_t const i)
-{
-  assert(27 > i);
-  return m_shift[i];
-}
-
-inline math::Boundary_Implementation<math::vacuum>::shift_struct const &
-math::Boundary_Implementation<math::vacuum>
-::shift(size_t const i)const
-{
-  assert(27 > i);
-  return m_shift[i];
-}
-
-inline math::Boundary_Implementation<math::rectangular>::shift_struct &
-math::Boundary_Implementation<math::rectangular>
-::shift(size_t const i)
-{
-  assert(27 > i);
-  return m_shift[i];
-}
-
-inline math::Boundary_Implementation<math::rectangular>::shift_struct const &
-math::Boundary_Implementation<math::rectangular>
-::shift(size_t const i)const
-{
-  assert(27 > i);
-  return m_shift[i];
-}
-
-inline math::Boundary_Implementation<math::triclinic>::shift_struct &
-math::Boundary_Implementation<math::triclinic>
-::shift(size_t const i)
-{
-  assert(27 > i);
-  return m_shift[i];
-}
-
-inline math::Boundary_Implementation<math::triclinic>::shift_struct const &
-math::Boundary_Implementation<math::triclinic>
-::shift(size_t const i)const
-{
-  assert(27 > i);
-  return m_shift[i];
 }
 
