@@ -23,6 +23,12 @@ namespace simulation
     int k;
     int l;
     int type;
+
+    bool operator==(Improper_Dihedral const &id)
+    {
+      return (i==id.i && j==id.j && k==id.k && l==id.l && type==id.type);
+    };
+
   };
 	  
   

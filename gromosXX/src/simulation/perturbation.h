@@ -5,6 +5,8 @@
 
 #include "topology/perturbed_bond.h"
 #include "topology/perturbed_angle.h"
+#include "topology/perturbed_improper_dihedral.h"
+#include "topology/perturbed_dihedral.h"
 #include "topology/perturbed_atom.h"
 #include "topology/perturbed_atompair.h"
 #include "topology/perturbed_solute.h"

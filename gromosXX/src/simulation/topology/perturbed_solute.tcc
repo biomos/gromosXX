@@ -34,6 +34,29 @@ simulation::Perturbed_Solute::angles()const
   return m_angle;
 }
 
+inline std::vector<simulation::Perturbed_Improper_Dihedral> const &
+simulation::Perturbed_Solute::improper_dihedrals()const
+{
+  return m_improper_dihedral;
+}
+
+inline std::vector<simulation::Perturbed_Improper_Dihedral> &
+simulation::Perturbed_Solute::improper_dihedrals()
+{
+  return m_improper_dihedral;
+}
+
+inline std::vector<simulation::Perturbed_Dihedral> const &
+simulation::Perturbed_Solute::dihedrals()const
+{
+  return m_dihedral;
+}
+inline std::vector<simulation::Perturbed_Dihedral> &
+simulation::Perturbed_Solute::dihedrals()
+{
+  return m_dihedral;
+}
+
 inline std::map<size_t, simulation::Perturbed_Atom> &
 simulation::Perturbed_Solute::atoms()
 {

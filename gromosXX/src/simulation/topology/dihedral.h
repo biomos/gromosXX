@@ -23,6 +23,12 @@ namespace simulation
     int k;
     int l;
     int type;
+    
+    bool operator==(Dihedral const &d)
+    {
+      return (i==d.i && j==d.j && k==d.k && l==d.l && type==d.type);
+    };
+
   };
 	  
   

@@ -82,7 +82,7 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
     
   } // PERTBOND03
 
-  { // PERtBANGLE03
+  { // PERTBANGLE03
     buffer = m_block["PERTBANGLE03"];
     if (buffer.size()){
       std::cout << "\tPERTANGLES\n";
@@ -133,8 +133,117 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
     	throw std::runtime_error("error in PERTBANGLE03 block (fail)");
 
     } // if block present
-    
   } // PERTANGLE03
+  
+  { // PERTIMPDIHEDRAL03
+    buffer = m_block["PERTIMPDIHEDRAL03"];
+    if (buffer.size()){
+      std::cout << "\tPERTIMPDIHEDRALS\n";
+
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+      
+      for(n=0; it != buffer.end() -1; ++it, ++n){
+	int i, j, k, l, t_A, t_B;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
+	
+	if (_lineStream.fail() || ! _lineStream.eof())
+	  throw std::runtime_error("bad line in PERTIMPDIHEDRAL03 block");
+	
+	simulation::Improper_Dihedral id(i-1, j-1, k-1,l-1, t_A-1);
+	std::vector<simulation::Improper_Dihedral>::iterator id_it
+	  = std::find(topo.solute().improper_dihedrals().begin(), 
+		      topo.solute().improper_dihedrals().end(), 
+		      id);
+	
+	if (id_it == topo.solute().improper_dihedrals().end()){
+	  throw std::runtime_error(
+		     "trying to perturb non-existing improper dihedral");
+	}
+	
+	topo.solute().improper_dihedrals().erase(id_it);
+	simulation::Perturbed_Improper_Dihedral pid(id, t_B-1);
+
+	std::cout << std::setw(10) << pid.i+1 
+		  << std::setw(10) << pid.j+1
+		  << std::setw(10) << pid.k+1
+		  << std::setw(10) << pid.l+1
+		  << std::setw(10) << pid.type+1 
+		  << std::setw(10) << pid.B_type+1 
+		  << "\n";
+	
+	topo.perturbed_solute().improper_dihedrals().push_back(pid);
+      }
+      
+      if (n != num)
+	throw std::runtime_error("error in PERTIMPDIHEDRAL03 block (n != num)");
+      else if (_lineStream.fail())
+    	throw std::runtime_error("error in PERTIMPDIHEDRAL03 block (fail)");
+
+    } // if block present
+   
+  } // PERTIMPDIHEDRAL03
+
+  { // PERTDIHEDRAL03
+    buffer = m_block["PERTDIHEDRAL03"];
+    if (buffer.size()){
+      std::cout << "\tPERTDIHEDRALS\n";
+
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+      
+      for(n=0; it != buffer.end() -1; ++it, ++n){
+	int i, j, k, l, t_A, t_B;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
+	
+	if (_lineStream.fail() || ! _lineStream.eof())
+	  throw std::runtime_error("bad line in PERTDIHEDRAL03 block");
+	
+	simulation::Dihedral id(i-1, j-1, k-1,l-1, t_A-1);
+	std::vector<simulation::Dihedral>::iterator id_it
+	  = std::find(topo.solute().dihedrals().begin(), 
+		      topo.solute().dihedrals().end(), 
+		      id);
+	
+	if (id_it == topo.solute().dihedrals().end()){
+	  throw std::runtime_error(
+		     "trying to perturb non-existing dihedral dihedral");
+	}
+	
+	topo.solute().dihedrals().erase(id_it);
+	simulation::Perturbed_Dihedral pid(id, t_B-1);
+
+	std::cout << std::setw(10) << pid.i+1 
+		  << std::setw(10) << pid.j+1
+		  << std::setw(10) << pid.k+1
+		  << std::setw(10) << pid.l+1
+		  << std::setw(10) << pid.type+1 
+		  << std::setw(10) << pid.B_type+1 
+		  << "\n";
+	
+	topo.perturbed_solute().dihedrals().push_back(pid);
+      }
+      
+      if (n != num)
+	throw std::runtime_error("error in PERTDIHEDRAL03 block (n != num)");
+      else if (_lineStream.fail())
+    	throw std::runtime_error("error in PERTDIHEDRAL03 block (fail)");
+
+    } // if block present
+   
+  } // PERTDIHEDRAL03
 
   { // PERTATOMPAIR03
     // has to be read in before(!!) PERTATOM03

@@ -219,6 +219,8 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
   
   if (do_improper){
     // improper dihedrals
+    DEBUG(7, "\timpropers");
+    
     interaction::Improper_dihedral_interaction<t_simulation>
       *the_improper_interaction = 
       new interaction::Improper_dihedral_interaction<t_simulation>;
@@ -226,10 +228,22 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     topo >> *the_improper_interaction;
     
     m_forcefield.push_back(the_improper_interaction);
+    DEBUG(7, "\tperturbed impropers");
+    
+    interaction::Perturbed_Improper_Dihedral_Interaction<t_simulation>
+      *the_perturbed_improper_interaction = 
+      new interaction::Perturbed_Improper_Dihedral_Interaction<t_simulation>
+      (*the_improper_interaction);
+    
+    m_forcefield.push_back(the_perturbed_improper_interaction);
+    DEBUG(7, "\tdone impropers");
+    
   }
   
   if (do_dihedral){
     // dihedrals
+    DEBUG(7, "\tdihedrals");
+    
     interaction::Dihedral_interaction<t_simulation>
       *the_dihedral_interaction =
       new interaction::Dihedral_interaction<t_simulation>;
@@ -237,6 +251,14 @@ void algorithm::Perturbation_MD<t_simulation, t_temperature, t_pressure,
     topo >> *the_dihedral_interaction;
     
     m_forcefield.push_back(the_dihedral_interaction);
+    DEBUG(7, "\tperturbed dihedrals");
+    
+    interaction::Perturbed_Dihedral_Interaction<t_simulation>
+      *the_perturbed_dihedral_interaction = 
+      new interaction::Perturbed_Dihedral_Interaction<t_simulation>
+      (*the_dihedral_interaction);
+    
+    m_forcefield.push_back(the_perturbed_dihedral_interaction);
   }
   
   m_simulation.pressure_calculation(m_calculate_pressure);

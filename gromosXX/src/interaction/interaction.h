@@ -40,7 +40,9 @@
 #include "interaction/angle_interaction.h"
 #include "interaction/perturbed_angle_interaction.h"
 #include "interaction/improper_dihedral_interaction.h"
+#include "interaction/perturbed_improper_dihedral_interaction.h"
 #include "interaction/dihedral_interaction.h"
+#include "interaction/perturbed_dihedral_interaction.h"
 
 #ifndef NDEBUG
 namespace interaction

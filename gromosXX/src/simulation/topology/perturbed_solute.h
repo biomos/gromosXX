@@ -54,6 +54,26 @@ namespace simulation
     std::vector<Perturbed_Angle> & angles();
     
     /**
+     * const perturbed improper dihedrals.
+     */
+    std::vector<Perturbed_Improper_Dihedral> const & improper_dihedrals()const;
+    
+    /**
+     * perturbed improper dihedrals.
+     */
+    std::vector<Perturbed_Improper_Dihedral> & improper_dihedrals();
+    
+    /**
+     * const perturbed dihedrals.
+     */
+    std::vector<Perturbed_Dihedral> const & dihedrals()const;
+    
+    /**
+     * perturbed dihedrals.
+     */
+    std::vector<Perturbed_Dihedral> & dihedrals();
+    
+    /**
      * perturbed atoms accessor.
      */
     std::map<size_t, Perturbed_Atom> & atoms();
@@ -110,6 +130,16 @@ namespace simulation
      * the perturbed angles.
      */
     std::vector<Perturbed_Angle> m_angle;
+
+    /**
+     * the perturbed improper dihedrals.
+     */
+    std::vector<Perturbed_Improper_Dihedral> m_improper_dihedral;
+    
+    /**
+     * the perturbed dihedrals.
+     */
+    std::vector<Perturbed_Dihedral> m_dihedral;
     
     /**
      * the perturbed atoms.
