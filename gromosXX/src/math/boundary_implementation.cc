@@ -9,6 +9,23 @@
 
 #include <util/debug.h>
 
+#ifdef WIN32
+// Converts a floating point value to an integer, very fast.
+inline int rint(float param)
+{
+	// Uses the FloatToInt functionality
+	int a;
+	int *int_pointer = &a;
+
+	__asm  fld  param
+	__asm  mov  edx,int_pointer
+	__asm  FRNDINT
+	__asm  fistp dword ptr [edx];
+
+	return a;
+}
+#endif
+
 /**
  * Constructor.
  */
@@ -25,6 +42,8 @@ inline math::Boundary_Implementation<math::rectangular>
 ::Boundary_Implementation(math::Box const & b)
  : m_box(b)
 {
+	for(int i=0; i<3; ++i)
+		m_half_box(i) = 0.5 * m_box(i)(i);
 }
 
 /**
@@ -62,27 +81,27 @@ inline math::Box const & math::Boundary_Implementation<math::triclinic>::box()co
   return m_box;
 }
 
-inline const double math::Boundary_Implementation<math::vacuum>
-::box(size_t const d1, size_t const d2)const
+inline double math::Boundary_Implementation<math::vacuum>
+::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
 }
 
-inline const double math::Boundary_Implementation<math::rectangular>
-::box(size_t const d1, size_t const d2)const
+inline double math::Boundary_Implementation<math::rectangular>
+::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
 }
 
-inline const double math::Boundary_Implementation<math::triclinic>
-::box(size_t const d1, size_t const d2)const
+inline double math::Boundary_Implementation<math::triclinic>
+::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
 }
 
 inline math::Boundary_Implementation<math::vacuum>::shift_struct &
 math::Boundary_Implementation<math::vacuum>
-::shift(size_t const i)
+::shift(unsigned int i)
 {
   assert(27 > i);
   return m_shift[i];
@@ -90,7 +109,7 @@ math::Boundary_Implementation<math::vacuum>
 
 inline math::Boundary_Implementation<math::vacuum>::shift_struct const &
 math::Boundary_Implementation<math::vacuum>
-::shift(size_t const i)const
+::shift(unsigned int i)const
 {
   assert(27 > i);
   return m_shift[i];
@@ -98,7 +117,7 @@ math::Boundary_Implementation<math::vacuum>
 
 inline math::Boundary_Implementation<math::rectangular>::shift_struct &
 math::Boundary_Implementation<math::rectangular>
-::shift(size_t const i)
+::shift(unsigned int i)
 {
   assert(27 > i);
   return m_shift[i];
@@ -106,7 +125,7 @@ math::Boundary_Implementation<math::rectangular>
 
 inline math::Boundary_Implementation<math::rectangular>::shift_struct const &
 math::Boundary_Implementation<math::rectangular>
-::shift(size_t const i)const
+::shift(unsigned int i)const
 {
   assert(27 > i);
   return m_shift[i];
@@ -114,7 +133,7 @@ math::Boundary_Implementation<math::rectangular>
 
 inline math::Boundary_Implementation<math::triclinic>::shift_struct &
 math::Boundary_Implementation<math::triclinic>
-::shift(size_t const i)
+::shift(unsigned int i)
 {
   assert(27 > i);
   return m_shift[i];
@@ -122,7 +141,7 @@ math::Boundary_Implementation<math::triclinic>
 
 inline math::Boundary_Implementation<math::triclinic>::shift_struct const &
 math::Boundary_Implementation<math::triclinic>
-::shift(size_t const i)const
+::shift(unsigned int i)const
 {
   assert(27 > i);
   return m_shift[i];
@@ -149,7 +168,7 @@ inline void math::Boundary_Implementation<math::rectangular>
   for(int d=0; d<3; ++d){
     nim(d) = v1(d) - v2(d);
 
-    if (fabs(nim(d) + nim(d)) >= m_box(d)(d)){
+    if (fabs(nim(d)) >= m_half_box(d)){
       nim(d) -= m_box(d)(d) * rint(nim(d)/m_box(d)(d));
 
     }
@@ -198,7 +217,7 @@ inline void math::Boundary_Implementation<math::triclinic>
 }
 
 inline void math::Boundary_Implementation<math::rectangular>
-::recalc_shift_vectors(size_t const num_cells[3])
+::recalc_shift_vectors(unsigned int num_cells[3])
 {
   int index=0;
   for(int k=-1; k<2; ++k){
@@ -235,7 +254,7 @@ inline void math::Boundary_Implementation<math::rectangular>
 }
 
 inline void math::Boundary_Implementation<math::triclinic>
-::recalc_shift_vectors(size_t const num_cells[3])
+::recalc_shift_vectors(unsigned int num_cells[3])
 {
   int index=0;
   for(int k=-1; k<2; ++k){
@@ -275,7 +294,7 @@ inline void math::Boundary_Implementation<math::triclinic>
 }
 
 inline void math::Boundary_Implementation<math::vacuum>
-::recalc_shift_vectors(size_t const num_cells[3])
+::recalc_shift_vectors(unsigned int num_cells[3])
 {
   int index=0;
   for(int k=-1; k<2; ++k){

@@ -12,10 +12,6 @@
 #include <blitz/tinymat.h>
 
 
-namespace interaction
-{
-}
-
 namespace math
 {
 

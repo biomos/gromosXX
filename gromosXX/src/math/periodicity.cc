@@ -42,7 +42,7 @@ void math::Periodicity<b>
     cg_to = topo.chargegroup_end();
 
   // solute chargegroups...
-  size_t i = 0;
+  unsigned int i = 0;
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
     cg_it.cog(pos, v);
     // gather on first atom...
@@ -99,7 +99,7 @@ void math::Periodicity<b>
     cog = trans;
     
     // put the molecule into the box
-    for(size_t a=topo.molecules()[i];
+    for(unsigned int a=topo.molecules()[i];
 	a<topo.molecules()[i+1]; ++a){
 
       nearest_image(conf.current().pos(a), cog, trans);

@@ -3,6 +3,8 @@
  * globals of the math library
  */
 
+#include <stdheader.h>
+
 #include "config.h"
 
 double math_ver = 0.10;

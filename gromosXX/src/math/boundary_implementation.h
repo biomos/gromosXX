@@ -70,22 +70,22 @@ namespace math
     /**
      * get a box element.
      */
-    double const box(size_t const d1, size_t const d2)const;
+    double box(unsigned int d1, unsigned int d2)const;
 
     /**
      * the shifts over the periodic images.
      */
-    shift_struct & shift(size_t const i);
+    shift_struct & shift(unsigned int i);
 
     /**
      * the shifts over the periodic images.
      */
-    shift_struct const & shift(size_t const i)const;
+    shift_struct const & shift(unsigned int i)const;
 
     /**
      * recalculate the shift vectors.
      */
-    void recalc_shift_vectors(size_t const num_cells[3]);
+    void recalc_shift_vectors(unsigned int num_cells[3]);
 
     /**
      * recalculate the shift vectors.
@@ -147,26 +147,26 @@ namespace math
     /**
      * get a box vector.
      */
-    // Vec const & box(size_t const d)const;
+    // Vec const & box(unsigned int const d)const;
     /**
      * get a box element.
      */
-    double const box(size_t const d1, size_t const d2)const;
+    double box(unsigned int d1, unsigned int d2)const;
 
     /**
      * the shifts over the periodic images.
      */
-    shift_struct & shift(size_t const i);
+    shift_struct & shift(unsigned int i);
 
     /**
      * the shifts over the periodic images.
      */
-    shift_struct const & shift(size_t const i)const;
+    shift_struct const & shift(unsigned int i)const;
 
     /**
      * recalculate the shift vectors.
      */
-    void recalc_shift_vectors(size_t const num_cells[3]);
+    void recalc_shift_vectors(unsigned int num_cells[3]);
 
     /**
      * recalculate the shift vectors.
@@ -178,6 +178,10 @@ namespace math
      * reference to the system::box.
      */
     Box const & m_box;
+	/**
+	 * half box (rectangular)
+	 */
+	math::Vec m_half_box;
     /**
      * the shift vectors.
      */
@@ -227,22 +231,22 @@ namespace math
     /**
      * get a box element.
      */
-    double const box(size_t const d1, size_t const d2)const;
+    double box(unsigned int d1, unsigned int d2)const;
 
     /**
      * the shifts over the periodic images.
      */
-    shift_struct & shift(size_t const i);
+    shift_struct & shift(unsigned int i);
 
     /**
      * the shifts over the periodic images.
      */
-    shift_struct const & shift(size_t const i)const;
+    shift_struct const & shift(unsigned int i)const;
 
     /**
      * recalculate the shift vectors.
      */
-    void recalc_shift_vectors(size_t const num_cells[3]);
+    void recalc_shift_vectors(unsigned int num_cells[3]);
 
     /**
      * recalculate the shift vectors.
