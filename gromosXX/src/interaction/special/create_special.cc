@@ -53,8 +53,8 @@ int interaction::create_special(interaction::Forcefield & ff,
       io::messages.add("Position restraint forces not added to molecular virial",
 		       "create_special", io::message::warning);
   }
-  else if (param.posrest.posrest == 3){
-    io::messages.add("Position constraints not implemented",
+  else if (param.posrest.posrest != 0 && param.posrest.posrest != 3){
+    io::messages.add("Wrong value for position restraints",
 		     "create_special", io::message::error);
   }
 
