@@ -3,6 +3,7 @@
  * globals of the algorithm library
  */
 
+#include <stdheader.h>
 #include "config.h"
 
 double algorithm_ver = 0.10;
