@@ -6,6 +6,19 @@
 #ifndef INCLUDED_ALGORITHM_H
 #define INCLUDED_ALGORITHM_H
 
+namespace configuration
+{
+  class Configuration;
+}
+namespace topology
+{
+  class Topology;
+}
+namespace simulation
+{
+  class Simulation;
+}
+
 namespace algorithm
 {
   /**
