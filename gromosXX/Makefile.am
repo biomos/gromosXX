@@ -1,2 +1,2 @@
-SUBDIRS = src program
+SUBDIRS = src program check
 

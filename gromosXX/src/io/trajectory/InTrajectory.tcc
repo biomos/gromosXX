@@ -28,7 +28,8 @@ inline io::InTrajectory::InTrajectory(std::istream &is)
  * if a block that should be read is not present, it will go ahead through the trajectory,
  * if it encounters one of the other blocks a second time, this is considered an error.
  */
-inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
+template<math::boundary_enum b>
+inline io::InTrajectory &io::InTrajectory::operator>>(simulation::System<b>& sys){
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -199,13 +200,14 @@ inline bool io::InTrajectory::_read_velocity(math::VArray &vel, std::vector<std:
   
 }
 
-inline bool io::InTrajectory::_read_box(simulation::system &sys, std::vector<std::string> &buffer)
+template<math::boundary_enum b>
+inline bool io::InTrajectory::_read_box(simulation::System<b> &sys, std::vector<std::string> &buffer)
 {
 
   std::vector<std::string>::const_iterator it = buffer.begin()+1,
     to = buffer.end()-1;
   
-  math::Matrix &box = sys.box();
+  math::Matrix box;
 
   int i;
   _lineStream.clear();
@@ -214,15 +216,14 @@ inline bool io::InTrajectory::_read_box(simulation::system &sys, std::vector<std
 
   switch(i){
     case 0:
-      sys.boundary_condition(math::vacuum);
+      sys.periodicity().boundary_condition(math::vacuum);
       break;
     case 1:
-      sys.boundary_condition(math::triclinic);
+      sys.periodicity().boundary_condition(math::triclinic);
       break;
     default:
       throw std::runtime_error("bad boundary conditions in TRICLINICBOX block");
   }
-
 
   ++it;
   
@@ -238,6 +239,9 @@ inline bool io::InTrajectory::_read_box(simulation::system &sys, std::vector<std
     if(_lineStream.fail() || !_lineStream.eof())
       throw std::runtime_error("bad line in TRICLINICBOX block");
   }
+
+  // set the box...
+  sys.periodicity().box(box);
 
   return true;
   

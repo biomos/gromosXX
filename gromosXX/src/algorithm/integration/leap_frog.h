@@ -27,7 +27,7 @@ namespace algorithm
      * Leap frog step.
      */
     static void step(t_simulation &sim,
-		     interaction::forcefield<t_simulation> &ff, 
+		     interaction::Forcefield<t_simulation> &ff, 
 		     double const dt);
 
   protected:

@@ -13,14 +13,15 @@
 /**
  * Constructor
  */
-inline simulation::system::system()
+template<math::boundary_enum b>
+inline simulation::System<b>::System()
   : m_position1(0),
     m_position2(0),
     m_velocity1(0),
     m_velocity2(0),
     m_force1(0),
     m_force2(0),
-    m_periodicity(m_box)
+    m_periodicity()
 {
   m_pos = &m_position1;
   m_old_pos = &m_position2;
@@ -38,7 +39,8 @@ inline simulation::system::system()
  * a faster version would be just resize, but then
  * the arrays contain garbage...
  */
-inline void simulation::system::resize(size_t s)
+template<math::boundary_enum b>
+inline void simulation::System<b>::resize(size_t s)
 {
   DEBUG(7, "system resize: " << s);
   
@@ -53,14 +55,16 @@ inline void simulation::system::resize(size_t s)
 /**
  * position accessor
  */
-inline math::VArray & simulation::system::pos()
+template<math::boundary_enum b>
+inline math::VArray & simulation::System<b>::pos()
 {
   return *m_pos;
 }
 /**
  * old position accessor
  */
-inline math::VArray const & simulation::system::old_pos()const
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::old_pos()const
 {
   return *m_old_pos;
 }
@@ -68,7 +72,8 @@ inline math::VArray const & simulation::system::old_pos()const
 /**
  * velocity accessor
  */
-inline math::VArray & simulation::system::vel()
+template<math::boundary_enum b>
+inline math::VArray & simulation::System<b>::vel()
 {
   return *m_vel;
 }
@@ -76,7 +81,8 @@ inline math::VArray & simulation::system::vel()
 /**
  * old velocity accessor
  */
-inline math::VArray const & simulation::system::old_vel()const
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::old_vel()const
 {
   return *m_old_vel;
 }
@@ -84,7 +90,8 @@ inline math::VArray const & simulation::system::old_vel()const
 /**
  * force accessor
  */
-inline math::VArray & simulation::system::force()
+template<math::boundary_enum b>
+inline math::VArray & simulation::System<b>::force()
 {
   return *m_force;
 }
@@ -92,7 +99,8 @@ inline math::VArray & simulation::system::force()
 /**
  * old force accessor
  */
-inline math::VArray const & simulation::system::old_force()const
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::old_force()const
 {
   return *m_old_force;
 }
@@ -100,7 +108,8 @@ inline math::VArray const & simulation::system::old_force()const
 /**
  * exchange positions
  */
-inline void simulation::system::exchange_pos()
+template<math::boundary_enum b>
+inline void simulation::System<b>::exchange_pos()
 {
   math::VArray *dummy = m_pos;
   m_pos = m_old_pos;
@@ -109,7 +118,8 @@ inline void simulation::system::exchange_pos()
 /**
  * exchange velocities
  */
-inline void simulation::system::exchange_vel()
+template<math::boundary_enum b>
+inline void simulation::System<b>::exchange_vel()
 {
   math::VArray *dummy = m_vel;
   m_vel = m_old_vel;
@@ -118,48 +128,38 @@ inline void simulation::system::exchange_vel()
 /**
  * exchange forces
  */
-inline void simulation::system::exchange_force()
+template<math::boundary_enum b>
+inline void simulation::System<b>::exchange_force()
 {
   math::VArray *dummy = m_force;
   m_force = m_old_force;
   m_old_force = dummy;
 }
-/**
- * box accessor.
- */
-inline math::Matrix & simulation::system::box()
-{
-  return m_box;
-}
-
-/**
- * boundary condition accessor.
- */
-inline math::boundary_enum simulation::system::boundary_condition()
-{
-  return m_periodicity.boundary();
-}
 
 /**
  * periodicity accessor.
  */
-inline math::Periodicity<math::any> const & simulation::system
-::periodicity()const
+template<math::boundary_enum b>
+inline math::Periodicity<b> & simulation::System<b>
+::periodicity()
 {
   return m_periodicity;
 }
 
 /**
- * set boundary condition.
+ * const periodicity accessor.
  */
-inline void simulation::system::boundary_condition(math::boundary_enum b)
+template<math::boundary_enum b>
+inline math::Periodicity<b> const & simulation::System<b>
+::periodicity()const
 {
-  m_periodicity.boundary(b);
+  return m_periodicity;
 }
 
 namespace simulation
 {
-  inline std::ostream &operator<<(std::ostream &os, system &sys)
+  template<math::boundary_enum b>
+  inline std::ostream &operator<<(std::ostream &os, System<b> &sys)
   {
     os << "a system";
     return os;

@@ -11,7 +11,7 @@ namespace io {
   /**
    * @class InTrajectory
    * reads in a trajectory file and parses
-   * it into simulation::system.
+   * it into simulation::System.
    */
   class InTrajectory : public GInStream {
 
@@ -23,7 +23,8 @@ namespace io {
     /**
      * Read in a G96 trajectory into the system.
      */
-    InTrajectory & operator>>(simulation::system &sys);
+    template <math::boundary_enum b>
+    InTrajectory & operator>>(simulation::System<b> &sys);
     /**
      * switch: read in position (positionred) or not.
      */
@@ -57,7 +58,8 @@ namespace io {
     /**
      * read BOX block.
      */
-    bool _read_box(simulation::system &sys, std::vector<std::string> &buffer);
+    template<math::boundary_enum b>
+    bool _read_box(simulation::System<b> &sys, std::vector<std::string> &buffer);
     
   };
   

@@ -41,9 +41,12 @@ namespace io
     
   protected:
 
-    void _print_position(simulation::system &sys, simulation::Topology &topo,
+    void _print_position(typename t_simulation::system_type &sys,
+			 typename t_simulation::topology_type &topo,
 			 std::ostream &os);
-    void _print_positionred(simulation::system &sys, simulation::Topology &topo,
+
+    void _print_positionred(typename t_simulation::system_type &sys,
+			    typename t_simulation::topology_type &topo,
 			    std::ostream &os);
   };
   

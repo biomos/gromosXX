@@ -30,7 +30,7 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
     if((sim.steps() % m_every_pos) == 0){
       _print_timestep(sim, *m_pos_traj);
       _print_positionred(sim.system(), sim.topology(), *m_pos_traj);
-      if (sim.system().boundary_condition() != math::vacuum)
+      if (sim.system().periodicity().boundary_condition() != math::vacuum)
 	_print_box(sim.system(), *m_pos_traj);
     }
     
@@ -90,7 +90,8 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
 
 template<typename t_simulation>
 inline void io::OutG96Trajectory<t_simulation>
-::_print_position(simulation::system &sys, simulation::Topology &topo, std::ostream &os)
+::_print_position(typename t_simulation::system_type &sys,
+		  typename t_simulation::topology_type &topo, std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(9);
@@ -114,7 +115,7 @@ inline void io::OutG96Trajectory<t_simulation>
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
     cg_it.cog(pos, v);
     v_box = v;
-    sys.periodicity().positive_box(v_box);
+    sys.periodicity().put_into_positive_box(v_box);
     trans = v_box - v;
     
     // atoms in a chargegroup
@@ -143,7 +144,7 @@ inline void io::OutG96Trajectory<t_simulation>
   for( ; cg_it != cg_to; ++cg_it, ++mol){
     v = pos(**cg_it);
     v_box = v;
-    sys.periodicity().positive_box(v_box);
+    sys.periodicity().put_into_positive_box(v_box);
     trans = v_box - v;
     
     if (mol >= topo.num_solvent_molecules(s)) ++s;
@@ -151,13 +152,16 @@ inline void io::OutG96Trajectory<t_simulation>
     // loop over the atoms
     simulation::chargegroup_iterator::atom_iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
-    for( ; at_it != at_to; ++at_it){
+    // one chargegroup per solvent
+    for(size_t atom=0; at_it != at_to; ++at_it, ++atom){
       r = pos(*at_it) + trans;
 	
+      // std::cout << "atom it: " << *at_it << " atom: " << atom << std::endl;
+      
       os << std::setw(5)  << mol+1
 	 << ' ' << std::setw(5)  << std::left
-	 << residue_name[topo.solvent(s).atom(*at_it).residue_nr] << " "
-	 << std::setw(6)  << std::left << topo.solvent(s).atom(*at_it).name
+	 << residue_name[topo.solvent(s).atom(atom).residue_nr] << " "
+	 << std::setw(6)  << std::left << topo.solvent(s).atom(atom).name
 	 << std::right
 	 << std::setw(6)  << *at_it + 1
 	 << std::setw(15) << r(0)
@@ -173,8 +177,8 @@ inline void io::OutG96Trajectory<t_simulation>
 
 template<typename t_simulation>
 inline void io::OutG96Trajectory<t_simulation>
-::_print_positionred(simulation::system &sys, 
-		     simulation::Topology &topo, 
+::_print_positionred(typename t_simulation::system_type &sys, 
+		     typename t_simulation::topology_type &topo, 
 		     std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -197,7 +201,7 @@ inline void io::OutG96Trajectory<t_simulation>
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
     cg_it.cog(pos, v);
     v_box = v;
-    sys.periodicity().positive_box(v_box);
+    sys.periodicity().put_into_positive_box(v_box);
     trans = v_box - v;
     
     // atoms in a chargegroup
@@ -220,10 +224,10 @@ inline void io::OutG96Trajectory<t_simulation>
   size_t s = 0;
   size_t mol = 0;
 
-  for( ; cg_it != cg_to; ++cg_it, ++mol){
+  for(; cg_it != cg_to; ++cg_it, ++mol){
     v = pos(**cg_it);
     v_box = v;
-    sys.periodicity().positive_box(v_box);
+    sys.periodicity().put_into_positive_box(v_box);
     trans = v_box - v;
     
     if (mol >= topo.num_solvent_molecules(s)) ++s;

@@ -198,9 +198,9 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
 /**
  * read FORCE block.
  */
-inline void io::InInput::read_FORCE(bool &do_bond, bool &do_angle,
-				    bool &do_improper, bool &do_dihedral,
-				    bool &do_nonbonded)
+inline void io::InInput::read_FORCE(int &do_bond, int &do_angle,
+				    int &do_improper, int &do_dihedral,
+				    int &do_nonbonded)
 {
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -211,7 +211,7 @@ inline void io::InInput::read_FORCE(bool &do_bond, bool &do_angle,
   _lineStream.clear();
   _lineStream.str(*it);
   
-  bool bondH, angleH, impH, dihedralH, charge;
+  int bondH, angleH, impH, dihedralH, charge;
   _lineStream >> bondH >> do_bond >> angleH >> do_angle
 	      >> impH >> do_improper >> dihedralH >> do_dihedral
 	      >> charge >> do_nonbonded;

@@ -2,7 +2,8 @@ dnl configure.in for GromosXX
 dnl written by Markus Christen
 dnl april, 2003
 
-AC_INIT(src/Makefile.am)
+AC_INIT()
+AC_CONFIG_SRCDIR(src/debug.cc)
 AC_CONFIG_AUX_DIR(config)
 AC_CANONICAL_HOST
 
@@ -17,6 +18,9 @@ AC_DEFINE_UNQUOTED(MD_VERSION, "$MD_VERSION", [MD version info])
 
 CONF_DATE=`date`
 AC_DEFINE_UNQUOTED(MD_DATE, "$CONF_DATE", [MD date (configure)])
+
+dnl TOP_DIR=`pwd`
+dnl AC_DEFINE_UNQUOTED(TOP_DIR, "$TOP_DIR", [top level directory])
 
 echo ""
 echo "GromosXX molecular dynamics program"
@@ -164,13 +168,18 @@ AC_SUBST(MD_MINOR_VERSION)
 AC_SUBST(MD_MICRO_VERSION)
 AC_SUBST(MD_VERSION)
 
-AC_OUTPUT(
-src/Makefile
-src/math/Makefile
-src/simulation/Makefile
-src/algorithm/Makefile
-src/interaction/Makefile
-src/io/Makefile
-program/Makefile
-Makefile)
+AC_DEFINE_UNQUOTED(TOP_SOURCE_DIR, "$srcdir", [top src directory])
 
+AC_CONFIG_FILES([
+	src/Makefile
+	src/math/Makefile
+	src/simulation/Makefile
+	src/algorithm/Makefile
+	src/interaction/Makefile
+	src/io/Makefile
+	program/Makefile
+	check/Makefile
+	Makefile
+])
+	
+AC_OUTPUT

@@ -27,12 +27,6 @@ libsimulation_la_SOURCES =	simulation.cc
 
 bin_PROGRAMS =
 
-check_PROGRAMS = 		simulation.t
+check_PROGRAMS =
 
-simulation_t_SOURCES =		simulation.t.cc
-
-simulation_t_LDADD = 		libsimulation.la
-
-simulation_t_CXXFLAGS =		-DBZ_DEBUG
-
-TESTS = simulation.t
+TESTS =

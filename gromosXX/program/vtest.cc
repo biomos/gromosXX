@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
       }
     }
   
-    simulation::system the_system;
+    simulation::System<math::any> the_system;
     simulation::Topology the_topology;
 
     DEBUG(7, "reading the files");
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
   
     // simulation
     typedef simulation::Simulation<simulation::Topology,
-      simulation::system> simulation_type;
+      simulation::System<math::any> > simulation_type;
   
     simulation_type the_simulation(the_topology, the_system);
   
@@ -130,12 +130,17 @@ int main(int argc, char *argv[])
     if (nsm) the_simulation.solvate(0, nsm);
 
     // FORCEFIELD
-    interaction::forcefield<simulation_type> the_forcefield;
+    interaction::Forcefield<simulation_type> the_forcefield;
 
-    // bonds
+    // bonds: quartic
     interaction::Quartic_bond_interaction<simulation_type> 
-      *the_bond_interaction =
+      *the_qbond_interaction =
       new interaction::Quartic_bond_interaction<simulation_type>;
+
+    // bonds: harmonic
+    interaction::harmonic_bond_interaction<simulation_type>
+      *the_hbond_interaction =
+      new interaction::harmonic_bond_interaction<simulation_type>;
 
     // angles
     interaction::angle_interaction<simulation_type>
@@ -162,7 +167,8 @@ int main(int argc, char *argv[])
     DEBUG(7, "parsing parameter");
 
     // read parameter
-    topo >> *the_bond_interaction;
+    topo >> *the_qbond_interaction;
+    topo >> *the_hbond_interaction;
     topo >> *the_angle_interaction;
     topo >> *the_improper_interaction;
     topo >> *the_dihedral_interaction;
@@ -171,20 +177,26 @@ int main(int argc, char *argv[])
     input >> the_simulation;
 
     // add to the forcefield
-    bool do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
+    int do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
     input.read_FORCE(do_bond, do_angle, do_improper,
 		     do_dihedral, do_nonbonded);
   
-    if (do_bond)
-      the_forcefield.add_interaction(the_bond_interaction);
+    if (do_bond == 1){
+      io::messages.add("using Gromos96 quartic bond term", "vtest", io::message::notice);
+      the_forcefield.push_back(the_qbond_interaction);
+    }
+    if (do_bond == 2){
+      io::messages.add("using Gromos87 harmonic bond term", "vtest", io::message::notice);
+      the_forcefield.push_back(the_hbond_interaction);
+    }
     if (do_angle)
-      the_forcefield.add_interaction(the_angle_interaction);
+      the_forcefield.push_back(the_angle_interaction);
     if (do_improper)
-      the_forcefield.add_interaction(the_improper_interaction);
+      the_forcefield.push_back(the_improper_interaction);
     if (do_dihedral)
-      the_forcefield.add_interaction(the_dihedral_interaction);
+      the_forcefield.push_back(the_dihedral_interaction);
     if (do_nonbonded)
-      the_forcefield.add_interaction(the_nonbonded_interaction);
+      the_forcefield.push_back(the_nonbonded_interaction);
 
     // decide on SHAKE
     int ntc;
@@ -199,12 +211,12 @@ int main(int argc, char *argv[])
 	the_topology.solute().
 	  add_bond_length_constraints(1.0,
 				      the_topology.mass(),
-				      the_bond_interaction->parameter());
+				      the_hbond_interaction->parameter());
 	break;
       case 3: 
 	std::cout << "SHAKE all bonds" << std::endl;
 	the_topology.solute().
-	  add_bond_length_constraints(the_bond_interaction->parameter());
+	  add_bond_length_constraints(the_hbond_interaction->parameter());
 	break;
       default:
 	std::cout << "wrong ntc" << std::endl;
@@ -293,6 +305,8 @@ int main(int argc, char *argv[])
       the_simulation.increase_time(dt);
     
     }
+
+    std::cout << "\nwriting final structure" << std::endl;
 
     traj << io::final << the_simulation;
   

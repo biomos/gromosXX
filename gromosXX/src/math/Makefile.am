@@ -14,11 +14,7 @@ libmath_la_SOURCES =		math.cc
 
 bin_PROGRAMS =			
 
-check_PROGRAMS = 		math.t
+check_PROGRAMS =
 
-math_t_SOURCES =		math.t.cc
-
-math_t_CXXFLAGS =		-DBZ_DEBUG
-
-TESTS = math.t
+TESTS =
 

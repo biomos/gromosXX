@@ -87,6 +87,9 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* top src directory */
+#undef TOP_SOURCE_DIR
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 

@@ -59,6 +59,13 @@ namespace io {
      * write a force trajectory.
      */
     void force_trajectory(std::ostream &os, int every=1);
+    /**
+     * precision of output.
+     */
+    void precision(int prec, int add=6);
+    int precision();
+    void force_precision(int prec, int add=9);
+    int force_precision();
     
   protected:
     output_format m_format;
@@ -76,17 +83,33 @@ namespace io {
     int m_every_vel;
     int m_every_force;
 
+    int m_precision;
+    int m_force_precision;
+    
+    int m_width;
+    int m_force_width;
+
     void _print_timestep(t_simulation &sim, std::ostream &os);
-    void _print_position(simulation::system &sys, simulation::Topology &topo,
+
+    void _print_position(typename t_simulation::system_type &sys,
+			 typename t_simulation::topology_type &topo,
 			 std::ostream &os);
-    void _print_velocity(simulation::system &sys, simulation::Topology &topo,
+
+    void _print_velocity(typename t_simulation::system_type &sys,
+			 typename t_simulation::topology_type &topo,
 			 std::ostream &os);
-    void _print_force(simulation::system &sys, simulation::Topology &topo,
-			 std::ostream &os);
-    void _print_positionred(simulation::system &sys, std::ostream &os);
-    void _print_velocityred(simulation::system &sys, std::ostream &os);
-    void _print_forcered(simulation::system &sys, std::ostream &os);
-    void _print_box(simulation::system &sys, std::ostream &os);
+
+    void _print_force(typename t_simulation::system_type &sys,
+		      typename t_simulation::topology_type &topo,
+		      std::ostream &os);
+
+    void _print_positionred(typename t_simulation::system_type &sys, std::ostream &os);
+
+    void _print_velocityred(typename t_simulation::system_type &sys, std::ostream &os);
+
+    void _print_forcered(typename t_simulation::system_type &sys, std::ostream &os);
+
+    void _print_box(typename t_simulation::system_type &sys, std::ostream &os);
   };
   
 } // io

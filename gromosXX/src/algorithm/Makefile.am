@@ -16,13 +16,6 @@ libalgorithm_la_SOURCES =	algorithm.cc
 
 bin_PROGRAMS =
 
-check_PROGRAMS = 		algorithm.t
+check_PROGRAMS =
 
-algorithm_t_SOURCES =		algorithm.t.cc
-
-algorithm_t_LDADD = 		libalgorithm.la \
-				../simulation/libsimulation.la
-
-algorithm_t_CXXFLAGS =		-DBZ_DEBUG
-
-TESTS = algorithm.t
+TESTS =

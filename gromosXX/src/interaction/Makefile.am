@@ -27,13 +27,6 @@ libinteraction_la_SOURCES =	interaction.cc
 
 bin_PROGRAMS =
 
-check_PROGRAMS = 		interaction.t
+check_PROGRAMS =
 
-interaction_t_SOURCES =		interaction.t.cc
-
-interaction_t_LDADD = 		libinteraction.la \
-				../simulation/libsimulation.la
-
-interaction_t_CXXFLAGS =	-DBZ_DEBUG
-
-TESTS = interaction.t
+TESTS =

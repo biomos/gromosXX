@@ -10,7 +10,7 @@
 template<typename t_simulation>
 void algorithm::leap_frog<t_simulation>
 ::step(t_simulation &sim,
-       interaction::forcefield<t_simulation> &ff,
+       interaction::Forcefield<t_simulation> &ff,
        double const dt)
 {
   // one force calculation per step

@@ -1,6 +1,6 @@
 /**
  * @file forcefield.h
- * the forcefield class.
+ * the Forcefield class.
  */
 
 #ifndef INCLUDED_FORCEFIELD_H
@@ -15,35 +15,30 @@
 namespace interaction
 {
   /**
-   * @class forcefield
+   * @class Forcefield
    * contains the specific interactions.
+   * @TODO are the destructors called? properly?
+   * clear does not call them (i guess).
    */
   template<typename t_simulation>
-  class forcefield
+  class Forcefield : public std::vector<Interaction<t_simulation> *>
   {
   public:
     /**
      * Constructor
      */
-    forcefield();
+    Forcefield();
     /**
      * Destructor
      */
-    ~forcefield();
-    /**
-     * add an interaction
-     */
-    void add_interaction(Interaction<t_simulation> *inter);
+    ~Forcefield();
     /**
      * calculate all interactions.
      */
     void calculate_interactions(t_simulation &simu);
 
   protected:
-    /**
-     * the interactions
-     */
-    std::vector<Interaction<t_simulation> *> m_interaction;
+
   };
   
 } // interaction

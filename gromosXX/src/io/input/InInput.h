@@ -44,8 +44,8 @@ namespace io {
     /**
      * read FORCE block.
      */
-    void read_FORCE(bool &do_bond, bool &do_angle, bool &do_improper,
-		    bool &do_dihedral, bool &do_nonbonded);
+    void read_FORCE(int &do_bond, int &do_angle, int &do_improper,
+		    int &do_dihedral, int &do_nonbonded);
     /**
      * read PRINT and WRITE block.
      */

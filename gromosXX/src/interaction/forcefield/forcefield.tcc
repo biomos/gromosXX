@@ -5,16 +5,15 @@
  */
 
 template<typename t_simulation>
-inline interaction::forcefield<t_simulation>::forcefield()
+inline interaction::Forcefield<t_simulation>::Forcefield()
+  : std::vector<Interaction<t_simulation> *>()
 {
 }
 
 template<typename t_simulation>
-inline interaction::forcefield<t_simulation>::~forcefield()
+inline interaction::Forcefield<t_simulation>::~Forcefield()
 {
-  for(typename std::vector<Interaction<t_simulation> *>::iterator
-	it = m_interaction.begin(),
-	to = m_interaction.end();
+  for(typename Forcefield<t_simulation>::iterator it = begin(), to = end();
       it != to;
       ++it){
     delete *it;
@@ -22,23 +21,13 @@ inline interaction::forcefield<t_simulation>::~forcefield()
 }
 
 template<typename t_simulation>
-inline void interaction::forcefield<t_simulation>
-::add_interaction(Interaction<t_simulation> *inter)
-{
-  m_interaction.push_back(inter);
-}
-
-
-template<typename t_simulation>
-inline void interaction::forcefield<t_simulation>
+inline void interaction::Forcefield<t_simulation>
 ::calculate_interactions(t_simulation &simu)
 {
 
   simu.system().force() = 0.0;
 
-  for(typename std::vector<Interaction<t_simulation> *>::iterator 
-	it = m_interaction.begin(),
-	to = m_interaction.end();
+  for(typename Forcefield<t_simulation>::iterator it = begin(), to = end();
       it != to;
       ++it){
     (*it)->calculate_interactions(simu);

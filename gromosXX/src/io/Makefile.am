@@ -28,22 +28,7 @@ libio_la_SOURCES =		io.cc \
 
 bin_PROGRAMS =			
 
-check_PROGRAMS = 		blockinput.t \
-				message.t
+check_PROGRAMS =
 
-blockinput_t_SOURCES =		blockinput.t.cc
+TESTS =
 
-blockinput_t_CXXFLAGS =     	-DBZ_DEBUG
-
-blockinput_t_LDADD =		libio.la \
-				../simulation/libsimulation.la \
-				../interaction/libinteraction.la
-
-message_t_SOURCES = 		message.t.cc
-
-message_t_CXXFLAGS =		-DBZ_DEBUG
-
-message_t_LDADD =		libio.la
-
-TESTS = 			blockinput.t \
-				message.t

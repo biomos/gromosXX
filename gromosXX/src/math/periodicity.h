@@ -19,9 +19,9 @@ namespace math
   class Periodicity : public Boundary_Implementation<b>
   {
   public:
-    Periodicity(Matrix &box, boundary_enum boundary = b);
-    void box(Vec &v)const;
-    void positive_box(Vec &v)const;
+    Periodicity(boundary_enum boundary = b);
+    void put_into_box(Vec &v)const;
+    void put_into_positive_box(Vec &v)const;
   private:
   };
   

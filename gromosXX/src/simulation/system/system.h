@@ -9,19 +9,20 @@
 namespace simulation
 {
   /**
-   * @class system
+   * @class System
    * holds the state information of
    * the simulated system.
    * @sa simulation::simulation
    * @sa simulation::topology
    */
-  class system
+  template<math::boundary_enum b>
+  class System
   {
   public:
     /**
      * Constructor
      */
-    explicit system();
+    explicit System();
     /**
      * set the number of atoms in the system.
      */
@@ -63,21 +64,13 @@ namespace simulation
      */
     void exchange_force();
     /**
-     * the box.
+     * const periodicity accessor
      */
-    math::Matrix &box();
-    /**
-     * the boundary condition.
-     */
-    math::boundary_enum boundary_condition();
-    /**
-     * set the boundary condition.
-     */
-    void boundary_condition(math::boundary_enum b);
+    math::Periodicity<b> const & periodicity()const;
     /**
      * periodicity accessor
      */
-    math::Periodicity<math::any> const& periodicity()const;
+    math::Periodicity<b> & periodicity();
     
   protected:
     /**
@@ -138,7 +131,7 @@ namespace simulation
      */
     math::Periodicity<math::any> m_periodicity;
     
-  }; // system
+  }; // System
   
 } // simulation
 
