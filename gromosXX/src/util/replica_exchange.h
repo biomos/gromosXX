@@ -6,7 +6,7 @@
 #ifndef INCLUDED_REPLICA_EXCHANGE_H
 #define INCLUDED_REPLICA_EXCHANGE_H
 
-class gsl_rng;
+// class gsl_rng;
 
 namespace topology
 {
@@ -53,13 +53,14 @@ namespace util
       double     temperature;
       double     lambda;
       double     energy;
-      int        switch_replica;
       double     switch_temperature;
       double     switch_lambda;
       double     switch_energy;
       int        TID;
       int        run;
       state_enum state;
+      double     probability;
+      bool       switched;
     };
 
     /**
@@ -157,7 +158,7 @@ namespace util
     /**
      * try a switch between i and j
      */
-    int switch_replica(int i, int j);
+    int switch_replica(int i);
 
     /**
      * random number generator
