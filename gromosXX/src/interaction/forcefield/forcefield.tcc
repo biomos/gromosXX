@@ -42,9 +42,13 @@ inline void interaction::Forcefield<t_simulation, t_interaction_spec>
   sim.system().virial() = 0.0;
 
   // prepare for the virial
-  if (t_interaction_spec::do_virial != interaction::no_virial){
+  if (t_interaction_spec::do_virial == interaction::molecular_virial){
     if(sim.pressure_calculation())
       sim.calculate_mol_com();
+  }
+  if (t_interaction_spec::do_virial == interaction::atomic_virial){
+    if (sim.pressure_calculation())
+      sim.calculate_atom_ekin();
   }
   
   for(typename Forcefield<t_simulation, t_interaction_spec>::iterator 

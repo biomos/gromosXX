@@ -15,8 +15,10 @@ inline void algorithm::Berendsen_Barostat
   for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
       // virial -0.5 factor applied here!
-      sim.system().pressure()(i,j) = 2 * (sim.system().molecular_kinetic_energy()(i,j)
-					  + 0.5 * sim.system().virial()(i,j)) /
+      sim.system().virial()(i,j) *= -0.5;
+      sim.system().pressure()(i,j) = 2 * 
+	(sim.system().molecular_kinetic_energy()(i,j)
+	 - sim.system().virial()(i,j)) /
 	sim.system().periodicity().volume();
     }
   }
@@ -95,7 +97,7 @@ inline void algorithm::Berendsen_Barostat
 }
 
 inline void algorithm::Berendsen_Barostat
-::initialize(int ntp, double pres0, double comp, double tau)
+::initialize(int ntp, math::Matrix pres0, double comp, double tau)
 {
   if (ntp < 0 || ntp > 3){
     io::messages.add("Invalid pressure coupling scheme requested",
@@ -104,10 +106,13 @@ inline void algorithm::Berendsen_Barostat
   }
     
   m_ntp = ntp;
-  m_pres0(0,0) = pres0;
-  m_pres0(1,1) = pres0;
-  m_pres0(2,2) = pres0;
+
+  for(int i=0; i<3; ++i)
+    for(int j=0; j<3; ++j)
+      m_pres0(i,j) = pres0(i,j);
+
   m_comp = comp;
   m_tau = tau;
+
 }
 

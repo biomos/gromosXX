@@ -576,94 +576,167 @@ inline void io::InInput::read_WRITE(int &NTWX,
 /**
  * read the PCOUPLE block.
  */
-inline void io::InInput::read_PCOUPLE(int &ntp, double &pres0,
-				      double &comp, double &tau)
+inline bool io::InInput::read_PCOUPLE(bool &calc, int &ntp, 
+				      math::Matrix &pres0,
+				      double &comp, double &tau,
+				      interaction::virial_enum &vir)
 {
   std::vector<std::string> buffer;
-  buffer = m_block["PCOUPLE"];
 
-  if (!buffer.size()){
-    ntp = 0;
-    pres0 = 0;
-    comp = 0;
-    tau = -1;
-    return;
-  }
+  // read the boundary block
+  int ntb, nrdbox;
+  read_BOUNDARY(ntb, nrdbox);
 
-  _lineStream.clear();
-  _lineStream.str(buffer[1]);
-  
-  _lineStream >> ntp >> pres0 >> comp >> tau;
-  
-  if (_lineStream.fail())
-    io::messages.add("bad line in PCOUPLE block",
-		     "InInput", io::message::error);
-}
-
-/**
- * read the PCOUPLE03 block.
- */
-inline bool io::InInput::read_PCOUPLE03(int &ntp, double &pres0,
-					double &comp, double &tau,
-					interaction::virial_enum &vir)
-{
-  std::vector<std::string> buffer;
+  // first try for a PCOUPLE03 block
   buffer = m_block["PCOUPLE03"];
 
-  if (!buffer.size()){
-    ntp = 0;
-    pres0 = 0;
-    comp = 0;
-    tau = -1;
-    vir = interaction::no_virial;
-    return false;
+  if (buffer.size()){
+  
+    std::string s1, s2, s3, sblock;
+    
+    concatenate(buffer.begin()+1, buffer.end()-1, sblock);
+
+    _lineStream.clear();
+    _lineStream.str(sblock);
+    
+    _lineStream >> s1 >> s2 >> comp >> tau >> s3;
+
+    for(int i=0; i<3; ++i){
+      for(int j=0; j<3; ++j){
+	_lineStream >> pres0(i, j);
+      }
+    }
+
+    if (_lineStream.fail())
+      io::messages.add("bad line in PCOUPLE03 block",
+		       "InInput", io::message::error);
+    
+    transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    transform(s3.begin(), s3.end(), s3.begin(), tolower);
+
+    bool scale = false;
+    
+    if (s1 == "off")
+      calc = false;
+    else if (s1 == "calc")
+      calc = true;
+    else if (s1 == "scale"){
+      calc = true;
+      scale = true;
+    }
+    else{
+      io::messages.add("bad value for calc switch in PCOUPLE03 block\n"
+		       "(off,calc,scale)",
+		       "InInput", io::message::error);
+      calc = false;
+    }
+  
+    if (scale){
+      if (s2 == "iso")
+	ntp = 1;
+      else if (s2 == "aniso")
+	ntp = 2;
+      else if (s2 == "full")
+	ntp = 3;
+      else{
+	io::messages.add("bad value for ntp switch in PCOUPLE03 block\n"
+			 "(iso,aniso,full)",
+			 "InInput", io::message::error);
+	ntp = 0;
+      }
+    }
+    else ntp = 0;
+    
+    if (calc){
+      if (s3 == "none")
+	vir = interaction::no_virial;
+      else if (s3 == "atomic")
+	vir = interaction::atomic_virial;
+      else if (s3 == "molecular")
+	vir = interaction::molecular_virial;
+      else{
+	io::messages.add("bad value for virial switch in PCOUPLE03 block\n"
+			 "(none,atomic,molecular)",
+			 "InInput", io::message::error);
+	vir = interaction::no_virial;
+      }
+    }
+    else vir = interaction::no_virial;
+    
+  } // PCOUPLE03 block
+  else{
+
+    buffer = m_block["PCOUPLE"];
+    if (!buffer.size()){
+
+      if (abs(ntb) == 2){
+	calc = true;
+	vir = interaction::molecular_virial;
+      }
+      else{
+	ntp = 0;
+	vir = interaction::no_virial;
+      }
+      
+      for(int i=0; i<3; ++i)
+	for(int j=0; j<3; ++j)
+	  pres0(i,j) = 0;
+      comp = 0;
+      tau = -1;
+
+      return false;
+    }
+  
+    _lineStream.clear();
+    _lineStream.str(buffer[1]);
+
+    double p0;
+    _lineStream >> ntp >> p0 >> comp >> tau;
+  
+    if (_lineStream.fail())
+      io::messages.add("bad line in PCOUPLE block",
+		       "InInput", io::message::error);
+
+    for(int i=0; i<3; ++i){
+      for(int j=0; j<3; ++j){
+	if (i == j)
+	  pres0(i,j) = p0;
+	else pres0(i,j) = 0.0;
+      }
+    }
+
+    if (abs(ntb) == 2){
+      // pressure calculation
+      calc = true;
+      vir = interaction::molecular_virial;
+    }
+    else{
+      vir = interaction::no_virial;
+    }
+    
   }
 
-  _lineStream.clear();
-  _lineStream.str(buffer[1]);
-  
-  std::string s1, s2;
-  
-  _lineStream >> s1 >> pres0 >> comp >> tau >> s2;
-  
-  if (_lineStream.fail())
-    io::messages.add("bad line in PCOUPLE block",
-		     "InInput", io::message::error);
-  
-  if (s1 == "off" || s1 == "OFF")
-    ntp = 0;
-  else if (s1 == "calc" || s1 == "CALC")
-    ntp = 1;
-  else if (s1 == "scale" || s1 == "SCALE")
-    ntp = 2;
-  else{
-    io::messages.add("bad value for ntp switch in PCOUPLE03 block\n"
-		     "(off,calc,scale)",
-		     "InInput", io::message::error);
-    ntp = 0;
-  }
-  
-  if (s2 == "none" || s2 == "NONE")
-    vir = interaction::no_virial;
-  else if (s2 == "atomic" || s2 == "ATOMIC")
-    vir = interaction::atomic_virial;
-  else if (s2 == "molecular" || s2 == "MOLECULAR")
-    vir = interaction::molecular_virial;
-  else{
-    io::messages.add("bad value for virial switch in PCOUPLE03 block\n"
-		     "(none,atomic,molecular)",
-		     "InInput", io::message::error);
-    vir = interaction::no_virial;
-  }
+  if (ntp && (!calc))
+    io::messages.add("pressure coupling activated but "
+		     "not calculating pressure",
+		     "InInput",
+		     io::message::error);
 
-  if (ntp != 0 && vir == interaction::no_virial){
+
+  if (calc && (vir == interaction::no_virial)){
     io::messages.add("PCOUPLE03 block: pressure calculation requested but"
 		     " no virial specified!", "InInput",
 		     io::message::error);
   }
 
+  if (ntp < 0 || ntp > 3)
+    io::messages.add("wrong value for NTP in PCOUPLE block",
+		     "InInput",
+		     io::message::error);
+  
   return true;
-
+  
 }
 
 /**

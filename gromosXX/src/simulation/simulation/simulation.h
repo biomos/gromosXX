@@ -124,6 +124,11 @@ namespace simulation
     void calculate_mol_com();
     
     /**
+     * calculate e-kin for atomic virial.
+     */
+    void calculate_atom_ekin();
+    
+    /**
      * calculate molecular kinetic energies.
      * internal and rotational and translational.
      */

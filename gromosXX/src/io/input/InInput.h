@@ -72,15 +72,11 @@ namespace io {
     void read_WRITE(int &NTWX, int &NTWSE, int &NTWV, int &NTWE, int &NTWG);
 
     /**
-     * read the PCOUPLE block.
-     */
-    void read_PCOUPLE(int &ntp, double &pres0, double &comp, double &tau);
-
-    /**
      * read the PCOUPLE03 block.
      */
-    bool read_PCOUPLE03(int &ntp, double &pres0, double &comp, double &tau,
-			interaction::virial_enum &vir);
+    bool read_PCOUPLE(bool &calc, int &ntp, math::Matrix &pres0, 
+		      double &comp, double &tau,
+		      interaction::virial_enum &vir);
     
     /**
      * read the BOUNDARY block.

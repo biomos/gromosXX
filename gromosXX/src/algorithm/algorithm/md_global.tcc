@@ -33,27 +33,13 @@ int algorithm::do_md(io::Argument &args)
   input.auto_delete(true);
 
   // VIRIAL?
-  int ntb, nrdbox;
-  input.read_BOUNDARY(ntb, nrdbox);
-
+  bool calc;
   int ntp;
-  double pres0, comp, tau;
-  interaction::virial_enum vir, do_vir = interaction::no_virial;
+  double comp, tau;
+  math::Matrix pres0;
+  interaction::virial_enum do_vir;
 
-  if (input.read_PCOUPLE03(ntp, pres0, comp, tau, vir)){
-    do_vir = vir;
-
-    if ((abs(ntb) == 2) && (ntp == 0)){
-      io::messages.add("BOUNDARY and PCOUPLE03 block inconsistent!",
-		      "md_global::do_md",
-		      io::message::error);
-    }
-    
-  }
-  else{
-    if (abs(ntb) == 2)
-      do_vir = interaction::molecular_virial;
-  }
+  input.read_PCOUPLE(calc, ntp, pres0, comp, tau, do_vir);
   
   // PERTURBATION?
   int ntg, nlam;

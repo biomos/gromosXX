@@ -32,7 +32,7 @@ namespace algorithm
     /**
      * initialize.
      */
-    void initialize(int ntp, double pres0, double comp, double tau);
+    void initialize(int ntp, math::Matrix pres0, double comp, double tau);
     
   private:
 

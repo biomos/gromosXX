@@ -228,6 +228,80 @@ namespace io
   }
 
   /**
+   * Print the PCOUPLE block.
+   */
+  inline std::ostream &
+  print_PCOUPLE(std::ostream &os,
+		bool calc, int ntp, math::Matrix pres0, double comp, 
+		double tau, interaction::virial_enum vir)
+  {
+    os << "PCOUPLE\n";
+    os.precision(5);
+    os.setf(std::ios_base::fixed, std::ios_base::floatfield);
+
+    os << std::setw(12) << "COUPLE"
+       << std::setw(12) << "SCALE"
+       << std::setw(12) << "COMP"
+       << std::setw(12) << "TAU"
+       << std::setw(12) << "VIRIAL"
+       << "\n";
+    
+    if (calc && ntp)
+      os << std::setw(12) << "scale";
+    else if (calc)
+      os << std::setw(12) << "calc";
+    else
+      os << std::setw(12) << "none";
+
+    switch(ntp){
+      case 0:
+	os << std::setw(12) << "no";
+	break;
+      case 1:
+	os << std::setw(12) << "iso";
+	break;
+      case 2:
+	os << std::setw(12) << "aniso";
+	break;
+      case 3:
+	os << std::setw(12) << "full";
+	break;
+      default:
+	os << std::setw(12) << "unknown";
+    }
+    
+    os << std::setw(12) << comp
+       << std::setw(12) << tau;
+    
+    switch(vir){
+      case interaction::no_virial:
+	os << std::setw(12) << "none";
+	break;
+      case interaction::atomic_virial:
+	os << std::setw(12) << "atomic";
+	break;
+      case interaction::molecular_virial:
+	os << std::setw(12) << "molecular";
+	break;
+      default:
+	os << std::setw(12) << "unknown";
+    }
+    
+    os << "\n" << std::setw(23) << "REFERENCE PRESSURE" << "\n";
+    
+    for(int i=0; i<3; ++i){
+      for(int j=0; j<3; ++j){
+	os << std::setw(12) << pres0(i,j);
+      }
+      os << "\n";
+    }
+    
+    os << "END\n";
+
+    return os;
+  }
+
+  /**
    * Print the PRESSURE block.
    */
   template<math::boundary_enum b>
@@ -258,11 +332,13 @@ namespace io
 	os << std::setw(12) << sys.pressure()(i,j);
       os << "\n\t";
     }
-    os << "\n\tpressure: " 
+    os << "\n\tpressure: "
+       << std::setw(15)
        << (sys.pressure()(0,0)+sys.pressure()(1,1)+sys.pressure()(2,2))/3 
        << "\n";
 
-    os << "\n\tvolume: "
+    os << "\tvolume:   "
+       << std::setw(15)
        << sys.periodicity().volume()
        << "\n";
     

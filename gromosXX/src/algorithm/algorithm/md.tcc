@@ -42,7 +42,7 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
 	    << std::setw(40) << "scaling:" << std::setw(20)
 	    << t_interaction_spec::do_scaling << "\n"
 	    << std::setw(40) << "virial:";
-  
+
   switch(t_interaction_spec::do_virial){
     case interaction::no_virial:
       std::cout << std::setw(20) << "no virial" << "\n";
@@ -56,8 +56,31 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
     default:
       std::cout << std::setw(20) << "wrong virial" << "\n";
   }
+
+  int status = 0;
+  std::cout << "\n"
+	    << std::setw(20) << std::left << "\tsimulation"
+	    << abi::__cxa_demangle(typeid(m_simulation).name(), 
+				   0, 0, &status) 
+	    << "\n"
+	    << std::setw(20) << std::left  << "\tintegration"
+	    << abi::__cxa_demangle(typeid(m_integration).name(),
+				   0, 0, &status)
+	    << "\n"
+	    << std::setw(20) << std::left << "\ttemperature coupling"
+	    << abi::__cxa_demangle(typeid(m_temperature).name(),
+				   0, 0, &status)
+	    << "\n"
+	    << std::setw(20) << std::left << "\tpressure coupling"
+	    << abi::__cxa_demangle(typeid(m_pressure).name(),
+				   0, 0, &status)
+	    << "\n"
+	    << std::setw(20) << std::left << "\tconstraints" 
+	    << abi::__cxa_demangle(typeid(m_distance_constraint).name(),
+				   0, 0, &status)
+	    << "\n";
   
-  std::cout << "\n\n";
+  std::cout << std::right << "\n\n";
 
   //----------------------------------------------------------------------------
 
@@ -415,15 +438,6 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
   int nsm;
   input.read_SYSTEM(nsm);
   if (nsm) m_simulation.solvate(0, nsm);
-
-  // pressure coupling
-  int ntp;
-  double pres0, comp, tau;
-  DEBUG(8, "md: read PCOUPLE");
-  input.read_PCOUPLE(ntp, pres0, comp, tau);
-  DEBUG(8, "md: PCOUPLE read");
-  m_pressure.initialize(ntp, pres0, comp, tau);
-
 }
 
 template<typename t_md_spec, typename t_interaction_spec>
@@ -438,22 +452,23 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
   DEBUG(7, "md: read input");
   input >> m_simulation;
 
-  // pressure calculation
+  // pressure calculation and coupling
   DEBUG(7, "md: init pressure");
-  int ntb, nrdbox;
-  input.read_BOUNDARY(ntb, nrdbox);
-  DEBUG(8, "md: boundary read");
-  
-  if (nrdbox != 1 && ntb != 0){
-    io::messages.add("nrdbox!=1 only for vacuum runs supported","md.tcc",
-		     io::message::error);
-  }
 
-  // do we need a virial calculation?
-  if (abs(ntb) == 2)
-    m_calculate_pressure = 1;
-  else
-    m_calculate_pressure = 0;
+  bool calc;
+  int ntp;
+  double comp, tau;
+  math::Matrix pres0;
+  interaction::virial_enum vir;
+
+  DEBUG(8, "md: read PCOUPLE");
+  input.read_PCOUPLE(m_calculate_pressure, ntp, pres0, comp, tau, vir);
+
+  io::print_PCOUPLE(std::cout, m_calculate_pressure, 
+		    ntp, pres0, comp, tau, vir);
+
+  // and initialize the pressure algorithm...
+  m_pressure.initialize(ntp, pres0, comp, tau);
 
   // time to simulate
   int num_steps;

@@ -47,3 +47,11 @@ FORCE
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      1         60
 END
+
+FORCEFIELD
+#   IDIBND                       IDIANG
+#   bond stretching potential    angle bending potential
+#   0: standard GROMOS96         0: standard GROMOS96
+#   2: harmonic                  1: harmonic
+  0 0
+END

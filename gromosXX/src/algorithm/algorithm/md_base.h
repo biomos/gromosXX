@@ -111,7 +111,7 @@ namespace algorithm
      * calculate the pressure?
      * which kind of virial?
      */
-    int m_calculate_pressure;      
+    bool m_calculate_pressure;      
 
     /**
      * are we performing a perturbation run.

@@ -26,7 +26,15 @@ namespace io
    */
   inline std::ostream & 
   print_DEGREESOFFREEDOM(std::ostream &os, simulation::Multibath const &bath);
-  
+
+  /**
+   * Print the PCOUPLE block.
+   */
+  inline std::ostream &
+  print_PCOUPLE(std::ostream &os,
+		bool calc, int ntp, math::Matrix pres0, double comp, 
+		double tau, interaction::virial_enum vir);
+
   /**
    * Print the PRESSURE block.
    */

@@ -24,7 +24,7 @@ algorithm::MD_Base<t_md_spec, t_interaction_spec>
     m_print_force(0),
     m_remove_com(0),
     m_print_com(0),
-    m_calculate_pressure(0),
+    m_calculate_pressure(false),
     m_do_perturbation(false),
     m_simulation(),
     m_forcefield(),

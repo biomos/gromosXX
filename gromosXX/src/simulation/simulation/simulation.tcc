@@ -252,6 +252,28 @@ calculate_mol_com()
 }
 
 /**
+ * ekin term for atomic virial
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>::
+calculate_atom_ekin()
+{  
+  system().molecular_kinetic_energy() = 0.0;
+
+  for(size_t i=0; i < topology().num_atoms(); ++i){
+    for(int a=0; a<3; ++a){
+      for(int b=0; b<3; ++b){
+	system().molecular_kinetic_energy()(a, b) +=
+	  0.5 * topology().mass()(i) * 
+	  system().vel()(i)(a) * system().vel()(i)(b);
+      }
+    }
+  }
+
+  // system().molecular_kinetic_energy() *= 0.5;
+}
+
+/**
  * calculate molecular kinetic energies
  * (translational and rotational+internal)
  */

@@ -53,11 +53,13 @@ int do_md(io::Argument &args)
   input.auto_delete(true);
 
   // VIRIAL?
-  int ntb, nrdbox;
-  input.read_BOUNDARY(ntb, nrdbox);
-  interaction::virial_enum do_vir = interaction::no_virial;
-  if (abs(ntb) == 2)
-    do_vir = interaction::molecular_virial;
+  bool calc;
+  int ntp;
+  double comp, tau;
+  math::Matrix pres0;
+  interaction::virial_enum do_vir;
+
+  input.read_PCOUPLE(calc, ntp, pres0, comp, tau, do_vir);
   
   // PERTURBATION?
   int ntg, nlam;
