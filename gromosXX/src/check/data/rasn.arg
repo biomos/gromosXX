@@ -1,0 +1,9 @@
+# ../../../LINUX_ICC_RELEASE/program/md
+	@topo    rasn.topo
+	@conf    rasn.conf
+	@input   rasn.in
+	@trj     rasn.trj
+	@fin     rasn.fin
+	@trv     rasn.trb
+	@tre     rasn.tre
+

@@ -46,6 +46,7 @@
 #include <interaction/forcefield/create_forcefield.h>
 
 #include <util/create_simulation.h>
+#include <algorithm/create_md_sequence.h>
 
 #include <time.h>
 
@@ -127,20 +128,71 @@ int main(int argc, char* argv[])
 	return 1;
       }
 
-      // create a forcefield
-      interaction::Forcefield *ff = new interaction::Forcefield;
-
-      if (interaction::create_g96_forcefield(*ff, 
-					     rasn_sim.topo,
-					     rasn_sim.sim,
-					     rasn_sim.conf,
-					     in_topo,
-					     quiet)
+      if (false){
+	// create a forcefield
+	interaction::Forcefield *ff = new interaction::Forcefield;
+	
+	if (interaction::create_g96_forcefield(*ff, 
+					       rasn_sim.topo,
+					       rasn_sim.sim,
+					       rasn_sim.conf,
+					       in_topo,
+					       quiet)
 	  != 0){
-	std::cerr << "creating forcefield failed!" << std::endl;
-	return 1;
+	  std::cerr << "creating forcefield failed!" << std::endl;
+	  return 1;
+	}
       }
+      // vtune: run the thing...
+      else{
+	
+	algorithm::create_md_sequence(rasn_sim.md,
+				      rasn_sim.topo,
+				      rasn_sim.conf,
+				      rasn_sim.sim,
+				      in_topo);
 
+	double end_time = rasn_sim.sim.param().step.t0 + 
+	  rasn_sim.sim.time_step_size() * 
+	  rasn_sim.sim.param().step.number_of_steps;
+    
+	int error;
+
+	while(rasn_sim.sim.time() < end_time){
+      
+	  if ((error = rasn_sim.md.run(rasn_sim.topo, 
+				       rasn_sim.conf,
+				       rasn_sim.sim))){
+
+	    std::cout << "\nError during MD run!\n" << std::endl;
+	    // try to save the final structures...
+	    break;
+	  }
+
+	  // update the energies
+	  rasn_sim.conf.old().energies.calculate_totals();
+	  rasn_sim.conf.current().energy_averages.
+	    update(rasn_sim.conf.old().energies,
+		   rasn_sim.conf.old().energy_averages,
+		   rasn_sim.sim.time_step_size());
+
+      // perturbed energy derivatives
+	  if (rasn_sim.sim.param().perturbation.perturbation){
+	    rasn_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
+
+	    rasn_sim.conf.current().perturbed_energy_derivative_averages.
+	      update(rasn_sim.conf.old().perturbed_energy_derivatives,
+		     rasn_sim.conf.old().perturbed_energy_derivative_averages,
+		     rasn_sim.sim.time_step_size(),
+		     rasn_sim.sim.param().perturbation.dlamt);
+	  }
+	  
+	  rasn_sim.sim.time() +=  rasn_sim.sim.time_step_size();
+	  ++ rasn_sim.sim.steps();
+
+	}
+	
+      }
     }
     catch (std::string s){
       std::cout << s << std::endl;
