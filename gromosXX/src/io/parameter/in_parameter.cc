@@ -172,6 +172,10 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
     _lineStream.clear();
   }
  
+  // allow 0 to disable feature...
+  if (param.minimise.nmin == 0)
+    param.minimise.nmin = 1;
+
   if (param.minimise.ntem != 0 && param.minimise.ntem != 1)
     io::messages.add("MINIMISE: currently only steepest descent implemented",
 		     "io::In_Parameter::read_MINIMISE",
