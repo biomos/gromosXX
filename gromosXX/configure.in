@@ -1,6 +1,6 @@
 dnl configure.in for GromosXX
 dnl written by Markus Christen
-dnl april, 2003
+dnl september, 2004
 
 AC_PREREQ(2.58)
 
@@ -21,9 +21,6 @@ AC_DEFINE_UNQUOTED(MD_VERSION, "$MD_VERSION", [MD version info])
 CONF_DATE=`date`
 AC_DEFINE_UNQUOTED(MD_DATE, "$CONF_DATE", [MD date (configure)])
 
-dnl TOP_DIR=`pwd`
-dnl AC_DEFINE_UNQUOTED(TOP_DIR, "$TOP_DIR", [top level directory])
-
 echo ""
 echo "GromosXX molecular dynamics program"
 echo "simple molecular dynamics simulations"
@@ -36,7 +33,6 @@ AM_INIT_AUTOMAKE(gromosXX, $MD_VERSION, no-define)
 AM_CONFIG_HEADER(config.h)
 dnl AC_CONFIG_HEADERS(config.h)
 
-dnl initialise libtool
 AM_PROG_LIBTOOL
 
 # AM_MAINTAINER_MODE
@@ -59,10 +55,6 @@ AC_PROG_INSTALL
 
 dnl create a symlink from src to gromosXX
 AC_LINK_FILES(src, gromosXX)
-
-# C++ requirements
-dnl AC_CXX_REQUIRE_STL
-dnl AC_CXX_NAMESPACES
 
 dnl detect the compiler
 compiler="none"
@@ -88,32 +80,28 @@ dnl set some defaults to CXXFLAGS and LDFLAGS
 case "$compiler" in
      kai*)               # KAI C++  http://www.kai.com/
        echo "Configuring for KAI C++"
-       CXX_PICKY_FLAGS="--strict_warnings -DBZDEBUG"
-       AC_BZ_SET_COMPILER($withval,"KCC","--restrict $CXX_PICKY_FLAGS")
-       CXX_OPTIMIZE_FLAGS="+K3 -O3 -fast --inline_keyword_space_time=10000"
-       CXX_DEBUG_FLAGS="-g +K0 -DBZDEBUG"
-       CXXLD="$CXX"
-	   AC_DEFINE_UNQUOTED(COMPILER_KAI, 1, [KAI C++ compiler])
+	   AC_MSG_ERROR([No compiler flags for KAI C++ provided])
      ;;
     intel*)             # Intel C++.  tested with version 8.0beta (precompiled headers)
        echo "Configuring for Intel C++"
-       CXX_PICKY_FLAGS="-w1 -g -DBZDEBUG -pch"
+       CXX_PICKY_FLAGS="-w1"
 
-       CXX_OPTIMIZE_FLAGS="-O3 -ip -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -align -pch"
-       CXX_DEBUG_FLAGS="-g -DBZDEBUG -pch"
+       CXX_OPTIMIZE_FLAGS="-O3 -ip -Qoption,c,-ip_ninl_max_stats=2000 -restrict -DNDEBUG -g -align -pch -fno-exceptions"
+       CXX_DEBUG_FLAGS="-g -pch"
        CXXLD="$CXX"
 
 #      openmp support...       
        if eval "test x$enable_openmp = xyes"; then
-	  CXX_PICKY_FLAGS="$CXX_PICKY_FLAGS -openmp -openmp_report -DOMP"
-	  CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -openmp -openmp_report -DOMP"
+	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -openmp -openmp_report -DOMP"
+	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -openmp -openmp_report -DOMP"
        fi
 
        if eval "test x$enable_debug = xyes"; then
-	    AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_PICKY_FLAGS")
+		CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS $CXX_PICKY_FLAGS"
+	    AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_DEBUG_FLAGS")
 	    echo "configuring for debug build"
 	else
-	    AC_BZ_SET_COMPILER($withval,"$CXX","$CXX_OPTIMIZE_FLAGS")
+	    AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_OPTIMIZE_FLAGS")
 	    echo "configuring for release build"
 	fi
 
@@ -121,29 +109,24 @@ case "$compiler" in
      ;;
      sgi*)               # SGI C++  http://www.sgi.com
        echo "Configuring for SGI C++"
-       CXX_PICKY_FLAGS=""
-       AC_BZ_SET_COMPILER($withval,"$CXX","-LANG:restrict -LANG:std $CXX_PICKY_FLAGS")
-       CXX_OPTIMIZE_FLAGS="-Ofast -LANG:restrict -DNDEBUG"
-       CXX_DEBUG_FLAGS="-g -DBZDEBUG"
-       CXXLD="$CXX"
-       LDFLAGS=
-	   AC_DEFINE_UNQUOTED(COMPILER_SGI, 1, [SGI C++ compiler])
+		AC_MSG_ERROR([No compiler flags provided for SGI C++ ])
      ;;
      gnu*)              # EGCS  http://egcs.cygnus.com/
        echo "Configuring for GNU C++"
-       CXX_PICKY_FLAGS="-Wall -DBZDEBUG -g"
-       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -DNDEBUG -g"
-       # CXX_DEBUG_FLAGS="-g -DBZ_DEBUG -DBZDEBUG"
+       CXX_PICKY_FLAGS="-Wall"
+       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -fno-exceptions -DNDEBUG -g"
+       CXX_DEBUG_FLAGS="-g"
        CXXLD="$CXX"
 
 #      profile support...       
        if eval "test x$enable_profile = xyes"; then
-	  CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -pg"
+	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -pg"
        fi
 
 #      debug
        if eval "test x$enable_debug = xyes"; then
-	    AC_BZ_SET_COMPILER($withval,"g++","$CXX_PICKY_FLAGS")
+		CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS $CXX_PICKY_FLAGS"
+	    AC_BZ_SET_COMPILER($withval,"g++","$CXX_DEBUG_FLAGS")
 	    echo "configuring for debug build"
        else
 	    AC_BZ_SET_COMPILER($withval,"g++","$CXX_OPTIMIZE_FLAGS")
@@ -155,27 +138,27 @@ case "$compiler" in
        AC_DEFINE_UNQUOTED(COMPILER_GCC, 1, [GNU C++ compiler])
      ;;
      msvc*) # Microsoft Visual C++
-       echo "Configuring for Microsoft Visual C++"
-       CXX_PICKY_FLAGS="/W0" # VC++ gives warnings for its own headers!
-       AC_BZ_SET_COMPILER($withval,"cl","")
-# had to move this below AC_PROG_CC
+        echo "Configuring for Microsoft Visual C++"
+        CXX_PICKY_FLAGS="/W0" # VC++ gives warnings for its own headers!
+        AC_BZ_SET_COMPILER($withval,"cl","")
+		# had to move this below AC_PROG_CC
 #       CPPFLAGS="/TP /ML /GX /YX /FD $CXX_PICKY_FLAGS /Fo\$*.o"
-       CXX_OPTIMIZE_FLAGS="/Ox"
-       CXX_DEBUG_FLAGS="/Zi"
-       LDOUT="/out:"
-       CXXLD="link"
-       AC_DEFINE_UNQUOTED(COMPILER_MSVC, 1, [Microsoft Visual C++ compiler])
+        CXX_OPTIMIZE_FLAGS="/Ox"
+        CXX_DEBUG_FLAGS="/Zi"
+        LDOUT="/out:"
+        CXXLD="link"
+        AC_DEFINE_UNQUOTED(COMPILER_MSVC, 1, [Microsoft Visual C++ compiler])
      ;;
      mwerk*)
-       echo "Configuring for Metrowerks Codewarrior (x86)"
-       CXX_PICKY_FLAGS="-w on"
-       AC_BZ_SET_COMPILER($withval,"mwcc -i-","")
-# had to move this below AC_PROG_CC
+        echo "Configuring for Metrowerks Codewarrior (x86)"
+        CXX_PICKY_FLAGS="-w on"
+        AC_BZ_SET_COMPILER($withval,"mwcc -i-","")
+		# had to move this below AC_PROG_CC
 #       CPPFLAGS="$CXX_PICKY_FLAGS -o \$*.o"
-       CXX_OPTIMIZE_FLAGS="-opt all -DNDEBUG"
-       CXX_DEBUG_FLAGS="-g"
-       CXXLD="mwld"
-       AC_DEFINE_UNQUOTED(COMPILER_MWERK, 1, [Metrowerks Codewarrior C++ compiler])
+        CXX_OPTIMIZE_FLAGS="-opt all -DNDEBUG"
+        CXX_DEBUG_FLAGS="-g"
+        CXXLD="mwld"
+        AC_DEFINE_UNQUOTED(COMPILER_MWERK, 1, [Metrowerks Codewarrior C++ compiler])
      ;;
      *)
         CXXLD="$CXX"
@@ -185,38 +168,11 @@ esac
 
 AC_PREFIX_DEFAULT(`pwd`)
 
-dnl AC_MSG_CHECKING(blitz++ scientific computing library)
-dnl AC_CHECK_HEADER(blitz/array.h, , 
-dnl [AC_MSG_ERROR([header files for blitz++
-dnl  not found. Add the path to blitz++ to your CPPFLAGS])])
-dnl AC_SEARCH_LIBS(_blitz_id, blitz, , [AC_MSG_ERROR(
-dnl [lib blitz not found. make sure to include it in your
-dnl CXXFLAGS, CFLAGS and LDFLAGS])])
-
 dnl blitz++ is out right now...
 dnl AC_CXX_LIB_BLITZ(["required"])
 
-dnl AC_MSG_CHECKING(boost test library)
-dnl AC_CHECK_HEADER(boost/test/unit_test_suite.hpp, ,
-dnl [AC_MSG_ERROR([header files for boost test library not found. Add the include
-dnl directory to your CPPFLAGS and CXXFLAGS.])])
-dnl AC_SEARCH_LIBS(main, boost_unit_test_framework, , [AC_MSG_ERROR(
-dnl [libboost_unit_test_framework not found. Add the library path to your LDFLAGS])])
-
-dnl possibly create sym links
-# AC_LINK_FILES(source-list, dest-list)
-
-# AC_MSG_CHECKING(gnu scientific library (libgsl))
-# AC_CHECK_HEADER(gsl/gsl_rng.h, , AC_MSG_ERROR([header files for libgsl not found
-#     install the gnu scientific library and
-#     add the path to your CPPFLAGS]))
-
-# AC_CHECK_LIB(gsl, gsl_rng_alloc)
-# AC_SEARCH_LIBS(cblas_daxpy, gslcblas, ,[AC_MSG_ERROR([libgsl not found. make sure libgsl is installed if necessary add it to CXXFLAGS, CFLAGS and LDFLAGS])])
-# AC_SEARCH_LIBS(gsl_rng_alloc, gsl, , [AC_MSG_ERROR([libgsl not found. make sure libgsl is installed if necessary add it to CXXFLAGS, CFLAGS and LDFLAGS])])
-# AC_MSG_RESULT(yes)
-
-AC_CXX_LIB_GSL([required])
+dnl AC_CXX_LIB_GSL([required])
+AM_PATH_GSL
 
 dnl check header files
 AC_HEADER_STDC
@@ -272,17 +228,7 @@ case "$host" in
        ;;
 esac
 
-dnl
-dnl FIXME: on Solaris we will need a prototype for hypot, since it is
-dnl missing from their math.h according to Jerry.
-dnl
-dnl extern double hypot(double, double);
-dnl
-
-
-
 dnl Checks for libraries.
-dnl Replace `main' with a function in -lm:
 AC_CHECK_LIB(m, sqrt)
 
 dnl check if full STL support
