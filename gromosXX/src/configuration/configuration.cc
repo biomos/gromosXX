@@ -45,7 +45,7 @@ configuration::Configuration::Configuration()
   
 }
 
-void configuration::Configuration::initialise(topology::Topology & topo,
+void configuration::Configuration::initialise(topology::Topology const & topo,
 					      simulation::Parameter const & param,
 					      bool gather)
 {
