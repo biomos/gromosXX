@@ -63,6 +63,9 @@ namespace io{
   Argument::~Argument() {
   }
 
+  /**
+   * read in the arguments.
+   */
   std::istream &io::operator>>(std::istream &istr, Argument &args)
   {
     // get away the comments

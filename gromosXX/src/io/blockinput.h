@@ -1,5 +1,5 @@
 /**
- * @blockinput.h
+ * @file blockinput.h
  * read in blocks.
  */
 
@@ -31,10 +31,6 @@
 #define INCLUDED_STDEXCEPT
 #endif
 
-/**
- * @namespace io
- * i/o routines.
- */
 namespace io {
 
   /*

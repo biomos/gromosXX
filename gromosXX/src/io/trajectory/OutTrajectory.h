@@ -9,7 +9,7 @@
 namespace io {
   
   /**
-   * @enum format
+   * @enum output_format
    * output format.
    */
   enum output_format {
