@@ -42,8 +42,11 @@ inline io::InInput & io::InInput
   // let's for now only do the 'numbers only' stuff
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
+
+  DEBUG(7, "reading input (to simulation)");
   
   { // PLIST
+    DEBUG(10, "pairlist block");
     buffer = m_block["PLIST"];
 
     if (!buffer.size())
@@ -72,6 +75,7 @@ inline io::InInput & io::InInput
   }
   
   { // LONGRANGE
+    DEBUG(10, "longrange block");
     buffer = m_block["LONGRANGE"];
 
     if (!buffer.size()){
@@ -119,6 +123,7 @@ inline io::InInput & io::InInput
   } // LONGRANGE
   
   { // SUBMOLECULES
+    DEBUG(10, "submolecules block");
     buffer = m_block["SUBMOLECULES"];
     
     if (!buffer.size()){
@@ -153,13 +158,14 @@ inline io::InInput & io::InInput
   } // SUBMOLECULES
 
   { // TEMPERATURE COUPLING
-    
+    DEBUG(10, "TEMPERATURE COUPLING block");
+
     // is there a MULTIBATH block
     buffer = m_block["MULTIBATH"];
     
     it = buffer.begin();
     if (it != buffer.end()){
-
+      DEBUG(11, "MULTIBATH present");
       io::messages.add("using MULTIBATH block",
 		       "InInput", io::message::notice);
       ++it;
@@ -194,7 +200,7 @@ inline io::InInput & io::InInput
       
       buffer = m_block["TCOUPLE"];
       if (buffer.size()){
-
+	DEBUG(11, "TCOUPLE present");
 	int ntt[3];
 	double temp[3];
 	double tau[3];
@@ -250,6 +256,7 @@ inline io::InInput & io::InInput
 
       }
       else{
+	DEBUG(11, "no TEMPERATURE COUPLING block");
 	// no TCOUPLE block
 	// that's fine, same as 0,0,0
       }
@@ -261,13 +268,14 @@ inline io::InInput & io::InInput
   { // ENERGY groups
 
     buffer = m_block["FORCE"];
-    
+    DEBUG(10, "FORCE block (energy groups)");
     if (buffer.size() < 4){
+      DEBUG(7, "FORCE block wrong");
       io::messages.add("wrong FORCE block (energy groups)",
 		       "InInput", io::message::error);
     }
     else{
-      
+      DEBUG(10, "ENERGY groups:");
       std::string egroup;
       concatenate(buffer.begin()+2, buffer.end()-1, egroup);
       _lineStream.clear();
@@ -275,17 +283,20 @@ inline io::InInput & io::InInput
       
       size_t num, e, atom = 0;
       _lineStream >> num;
+
+      DEBUG(10, "num: " << num);
       
       for(size_t i=0; i<num; ++i){
 	_lineStream >> e;
 	sim.topology().energy_groups().push_back(e-1);
 	for( ; atom < e; ++atom){
 	  sim.topology().atom_energy_group().push_back(i);
+	  DEBUG(11, "atom " << atom << ": " << i);
 	}
       }
 
       if (_lineStream.fail())
-	io::messages.add("bad line in SUBMOLECULES block",
+	io::messages.add("bad line in ENERGYGROUP (FORCE) block",
 			 "InInput", io::message::error);
 
       // and resize
@@ -294,6 +305,8 @@ inline io::InInput & io::InInput
     }
 
   } // ENERGY groups
+
+  DEBUG(7, "input read...");
 
   return *this;
 }

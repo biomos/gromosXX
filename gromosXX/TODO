@@ -5,7 +5,7 @@ TODO list of gromosXX
 Release 0.0.2
 
 	ok	change OutGTrajectory: gather chargegroups on first atom, not on cog
-	-	write check_state methods for Simulation, Topology and System (and maybe others)
+	ok	write check_state methods for Simulation, Topology and System (and maybe others)
 	ok	autoconf flag to create production code
 	ok	energy calculation
 	-	energy trajectory
@@ -16,11 +16,13 @@ Release 0.0.2
 
 Release 0.0.3
 
+	-	check SHAKE for non-gathered bonds
 	-	gather chargegroups during simulation
 	-	handle the GENBOX block
 	-	perturbation
 	-	check the triclinic computational box
 	-	shake for non-gathered systems?
+	-	add checks to the check_state() methods
 
 -------------
 

@@ -168,6 +168,8 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   m_time = num_steps * m_dt;
   m_simulation.time(t0);
 
+  m_simulation.check_state();
+
   // messages?
   std::cout << "Messages (startup)\n";
   if (io::messages.display(std::cout) > io::message::warning)

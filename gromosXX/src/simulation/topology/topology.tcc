@@ -407,6 +407,22 @@ inline int
 simulation::Topology::check_state()const
 {
   int result = 0;
+
+  // check that we have an energy group for every atom
+  if (m_atom_energy_group.size() != num_atoms()){
+    io::messages.add("not every atom has an energy group index",
+		     "Topology::check_state", io::message::error);
+    ++result;
+  }
+  for(std::vector<size_t>::const_iterator it = m_atom_energy_group.begin(),
+	to = m_atom_energy_group.end(); it != to; ++it){
+    if (*it >= m_energy_group.size()){
+      io::messages.add("energy group index of atom too large",
+		       "Topology::check_state", io::message::error);
+      ++result;
+    }
+  }
+
   return result;
 }
 

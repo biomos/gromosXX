@@ -190,6 +190,8 @@ inline int simulation::Simulation<t_topo, t_system>::check_state()const
 		     io::message::error);
     ++result;
   }
+
+  return result;
   
 }
 

@@ -220,6 +220,15 @@ int simulation_check()
     // because the SUBMOLECULES block has to be ordered...
     the_simulation.solvate(0, 1244);
 
+    the_simulation.check_state();
+
+    // messages?
+    std::cout << "Messages (startup)\n";
+    if (io::messages.display(std::cout) > io::message::warning)
+      return 1;
+    std::cout << "\n";
+    io::messages.clear();
+
     // create a chargegroup based pairlist and compare
     pairlist_type the_pairlist;
     the_pairlist.update(the_simulation);

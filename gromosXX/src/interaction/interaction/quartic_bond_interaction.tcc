@@ -69,6 +69,10 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
     force(b_it.j()) -= f;
 
     e = 0.25 * m_bond_parameter[b_it.type()].K * (dist2 -r02) * (dist2 - r02);
+
+    assert(sim.system().energies().bond_energy.size() >
+	   sim.topology().atom_energy_group()[b_it.i()]);
+    
     sim.system().energies().bond_energy[sim.topology().atom_energy_group()[b_it.i()]] += e;
     
   }

@@ -80,7 +80,7 @@ namespace simulation
     /**
      * check state.
      */
-    int check_state(math::Box const &box)const;
+    int check_state()const;
     
   private:      
     /**

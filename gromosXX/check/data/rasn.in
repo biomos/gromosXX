@@ -95,7 +95,7 @@ PLIST
 END
 LONGRANGE
 # EPSRF     APPAK      RCRF
-    62.0       0.0      -1.4
+    62.0       0.0       1.4
 END
 #
 POSREST

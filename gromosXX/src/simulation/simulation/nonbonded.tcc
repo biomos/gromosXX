@@ -141,7 +141,7 @@ bool simulation::Nonbonded::RF_exclusion()const
  * check state
  */
 inline
-int simulation::Nonbonded::check_state(math::Box const &box)const
+int simulation::Nonbonded::check_state()const
 {
   int result = 0;
 
