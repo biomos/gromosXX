@@ -43,7 +43,7 @@ int do_md(t_md & md, io::Argument &args, bool perturbation = false)
   md.trajectory() << io::final << md.simulation();
   
   if (args.count("trc") == 1){
-    std::cout << "\nwriting flexible constraints data" << std::endl;
+    std::cout << "\nwriting flexible constraints data\n" << std::endl;
     std::ofstream constr_file(args["trc"].c_str());
     io::OutFlexibleConstraints flexout(constr_file);
     flexout.write_title(md.title);

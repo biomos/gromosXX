@@ -3,8 +3,17 @@
  * implements the energy methods.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE simulation
+#define SUBMODULE system
+
+#include "../../debug.h"
+
 inline void simulation::Energy::zero(bool potential, bool kinetic)
 {
+  DEBUG(10, "energy: zero");
+  
   if (potential){
     total = 0.0;
     potential_total = 0.0;
@@ -45,6 +54,8 @@ inline void simulation::Energy::zero(bool potential, bool kinetic)
 
 inline void simulation::Energy::resize(size_t const energy_groups, size_t const multi_baths)
 {
+  DEBUG(10, "energy resize");
+  
   if (energy_groups){
     bond_energy.resize(energy_groups);
     angle_energy.resize(energy_groups);
@@ -71,6 +82,8 @@ inline void simulation::Energy::resize(size_t const energy_groups, size_t const 
 
 inline void simulation::Energy::calculate_totals()
 {
+  DEBUG(10, "energy: calculate totals");
+  
   int num_groups = bond_energy.size();
   total = 0.0;
   kinetic_total = 0.0;

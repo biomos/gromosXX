@@ -487,9 +487,16 @@ io::InTopology &io::InTopology
       
       _lineStream >> k >> r;
       
-      if (_lineStream.fail() || ! _lineStream.eof())
+      if (_lineStream.fail()){
+	std::cout << *it << std::endl;
 	throw std::runtime_error("bad line in BONDTYPE block");
-      
+      }
+      if (! _lineStream.eof()){
+	std::cout << *it << std::endl;
+	io::messages.add("eof not reached in BONDTYPE block",
+			 "InTopology", io::message::warning);
+      }
+
       // we are reading into harmonic bond term, so convert k
       k *= 2 * r * r;
       

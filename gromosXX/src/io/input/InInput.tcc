@@ -721,6 +721,46 @@ inline void io::InInput::read_FORCE(int &do_bond, int &do_angle,
 }
 
 /**
+ * read FORCEFIELD block.
+ */
+inline bool io::InInput::read_FORCEFIELD(int &bond_term,
+					 int &angle_term)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  buffer = m_block["FORCEFIELD"];
+
+  if (!buffer.size()){
+    bond_term = 0;
+    angle_term = 0;
+    return false;
+  }
+  
+  io::messages.add("using FORCEFIELD block to determine bond term",
+		   "InInput", io::message::notice);
+
+  it = buffer.begin()+1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  int bondH, angleH, impH, dihedralH, charge;
+  _lineStream >> bond_term >> angle_term;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in FORCEFIELD block",
+		     "InInput", io::message::error);
+
+  if (!_lineStream.eof())
+    io::messages.add("end of line not reached in FORCEFIELD block,"
+		     " but should have been: \n" + *it +  "\n",
+		     "InInput", io::message::warning);
+
+  return true;
+
+}
+
+/**
  * read START block.
  */
 inline void io::InInput::read_START(int &ntx, int &init, double &tempi, unsigned int &ig)

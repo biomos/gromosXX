@@ -57,6 +57,11 @@ namespace io {
     void read_FORCE(int &do_bond, int &do_angle, int &do_improper,
 		    int &do_dihedral, int &do_nonbonded);
     /**
+     * read FORCEFIELD block.
+     */
+    bool read_FORCEFIELD(int &bond_term, int &angle_term);
+
+    /**
      * read PRINT and WRITE block.
      */
     void read_PRINT(int &print_trajectory, int &print_velocity,

@@ -3,6 +3,13 @@
  * implements member methods.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE simulation
+#define SUBMODULE system
+
+#include "../../debug.h"
+
 inline
 simulation::Energy_Average::Energy_Average()
   : m_average(),
@@ -14,6 +21,7 @@ simulation::Energy_Average::Energy_Average()
 inline void
 simulation::Energy_Average::zero()
 {
+  DEBUG(10, "energy average: zero");
   m_average.zero();
   m_square_average.zero();
   m_time = 0.0;
@@ -22,6 +30,7 @@ simulation::Energy_Average::zero()
 inline void
 simulation::Energy_Average::resize(size_t const energy_groups, size_t const multi_baths)
 {
+  DEBUG(10, "energy average: resize");
   m_average.resize(energy_groups, multi_baths);
   m_square_average.resize(energy_groups, multi_baths);
   m_time = 0.0;
@@ -31,6 +40,8 @@ inline void
 simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
 {
   // totals
+  DEBUG(10, "energy average: update - kin size: " << e.kinetic_energy.size());
+  
   m_average.total += dt * e.total;
   
   m_square_average.total += dt * e.total * e.total;
@@ -40,7 +51,6 @@ simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
   
   m_average.potential_total += dt * e.potential_total;
   m_square_average.potential_total += dt * e.potential_total * e.potential_total;
-  
   // physical interaction totals
   m_average.bond_total += dt * e.bond_total;
   m_square_average.bond_total = dt * e.bond_total * e.bond_total;
@@ -71,8 +81,31 @@ simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
   
   // kinetic energies of the baths
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
+
+    assert(m_average.kinetic_energy.size() > i);
+    assert(m_square_average.kinetic_energy.size() > i);
+    assert(e.kinetic_energy.size() > i);
+    
     m_average.kinetic_energy[i] += dt * e.kinetic_energy[i];
-    m_square_average.kinetic_energy[i] += dt * e.kinetic_energy[i] * e.kinetic_energy[i];
+    m_square_average.kinetic_energy[i] += 
+      dt * e.kinetic_energy[i] * e.kinetic_energy[i];
+
+    assert(m_average.com_kinetic_energy.size() > i);
+    assert(m_square_average.com_kinetic_energy.size() > i);
+    assert(e.com_kinetic_energy.size() > i);
+    
+    m_average.com_kinetic_energy[i] += dt * e.com_kinetic_energy[i];
+    m_square_average.com_kinetic_energy[i] +=
+      dt * e.com_kinetic_energy[i] * e.com_kinetic_energy[i];
+
+    assert(m_average.ir_kinetic_energy.size() > i);
+    assert(m_square_average.ir_kinetic_energy.size() > i);
+    assert(e.ir_kinetic_energy.size() > i);
+
+    m_average.ir_kinetic_energy[i] += dt * e.ir_kinetic_energy[i];
+    m_square_average.ir_kinetic_energy[i] +=
+      dt * e.ir_kinetic_energy[i] * e.ir_kinetic_energy[i];
+    
   }
   
   // the energy groups
@@ -220,7 +253,26 @@ simulation::Energy_Average::average(simulation::Energy &energy, simulation::Ener
     if (diff > 0.0)
       f.kinetic_energy[i] = sqrt(diff / m_time);
     else
-      f.kinetic_energy[i] = 0.0;
+      f.com_kinetic_energy[i] = 0.0;
+
+    e.com_kinetic_energy[i] = m_average.com_kinetic_energy[i] / m_time;
+    diff = m_square_average.com_kinetic_energy[i] -
+      m_average.com_kinetic_energy[i] * m_average.com_kinetic_energy[i] 
+      / m_time;
+    if (diff > 0.0)
+      f.com_kinetic_energy[i] = sqrt(diff / m_time);
+    else
+      f.com_kinetic_energy[i] = 0.0;
+
+    e.ir_kinetic_energy[i] = m_average.ir_kinetic_energy[i] / m_time;
+    diff = m_square_average.ir_kinetic_energy[i] -
+      m_average.ir_kinetic_energy[i] * m_average.ir_kinetic_energy[i] 
+      / m_time;
+    if (diff > 0.0)
+      f.ir_kinetic_energy[i] = sqrt(diff / m_time);
+    else
+      f.ir_kinetic_energy[i] = 0.0;
+
   }
   
   // the energy groups

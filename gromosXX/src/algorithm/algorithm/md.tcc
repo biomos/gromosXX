@@ -235,35 +235,69 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   input.read_FORCE(do_bond, do_angle, do_improper,
 		   do_dihedral, do_nonbonded);
 
+  int bond_term, angle_term;
+  bool have_DIRK =
+    input.read_FORCEFIELD(bond_term, angle_term);
+
   const std::vector<interaction::bond_type_struct> * bond_param = NULL;
   
-  if (do_bond == 1){
-    io::messages.add("using Gromos96 quartic bond term", "vtest", io::message::notice);
-    // bonds: quartic
-    m_qbond_interaction =
-      new interaction::Quartic_bond_interaction<t_simulation>;
+  if (do_bond){
+    if ((have_DIRK && (bond_term == 0))
+      || ((!have_DIRK) && (do_bond == 1))){
+
+      if (do_bond == 2){
+	io::messages.add("FORCEFIELD and FORCE block contradictory "
+			 "for bond term", "md", io::message::error);
+      }
+      else
+	io::messages.add("using Gromos96 quartic bond term",
+			 "md", io::message::notice);
+      // bonds: quartic
+      m_qbond_interaction =
+	new interaction::Quartic_bond_interaction<t_simulation>;
     
-    topo >> *m_qbond_interaction;
-    bond_param = &m_qbond_interaction->parameter();
+      topo >> *m_qbond_interaction;
+      bond_param = &m_qbond_interaction->parameter();
+      
+      m_forcefield.push_back(m_qbond_interaction);
+    }
 
-    m_forcefield.push_back(m_qbond_interaction);
+    else if ((have_DIRK && (bond_term == 2))
+	|| (do_bond == 2)){
+
+      if (do_bond == 1){
+	io::messages.add("FORCEFIELD and FORCE block contradictory "
+			 "for bond term", "md", io::message::error);
+      }
+      else
+	io::messages.add("using Gromos87 harmonic bond term", 
+			 "md", io::message::notice);
+
+      // bonds: harmonic
+      interaction::harmonic_bond_interaction<t_simulation>
+	*the_hbond_interaction =
+	new interaction::harmonic_bond_interaction<t_simulation>;
+
+      topo >> *the_hbond_interaction;
+      bond_param = &the_hbond_interaction->parameter();
+
+      m_forcefield.push_back(the_hbond_interaction);
+    }
+    else{
+      io::messages.add("FORCE or FORCEFIELD block wrong for bond term",
+		       "md", io::message::error);
+    }
   }
 
-  if (do_bond == 2){
-    io::messages.add("using Gromos87 harmonic bond term", "vtest", io::message::notice);
-    // bonds: harmonic
-    interaction::harmonic_bond_interaction<t_simulation>
-      *the_hbond_interaction =
-      new interaction::harmonic_bond_interaction<t_simulation>;
-
-    topo >> *the_hbond_interaction;
-    bond_param = &the_hbond_interaction->parameter();
-
-    m_forcefield.push_back(the_hbond_interaction);
-  }
 
   if (do_angle){
     // angles
+
+    if (have_DIRK && (angle_term != 0)){
+      io::messages.add("FORCEFIELD harmonic angle term not supported",
+		       "md", io::message::error);
+    }
+
     interaction::angle_interaction<t_simulation>
       *the_angle_interaction = 
       new interaction::angle_interaction<t_simulation>;
