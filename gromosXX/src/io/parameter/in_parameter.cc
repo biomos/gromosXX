@@ -154,14 +154,19 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
 	      >> param.minimise.ncyc
 	      >> param.minimise.dele
 	      >> param.minimise.dx0
-	      >> param.minimise.dxm
-	      >> param.minimise.nmin
-	      >> param.minimise.flim;
- 
+	      >> param.minimise.dxm;
+  
   if (_lineStream.fail())
     io::messages.add("bad line in MINIMISE block",
 		       "In_Parameter", io::message::error);
 
+  if (!(_lineStream >> param.minimise.nmin >> param.minimise.flim)){
+    // support standard input format...
+    param.minimise.nmin = 0;
+    param.minimise.flim = 0.0;
+    _lineStream.clear();
+  }
+ 
   if (param.minimise.ntem != 0 && param.minimise.ntem != 1)
     io::messages.add("MINIMISE: currently only steepest descent implemented",
 		     "io::In_Parameter::read_MINIMISE",
@@ -183,8 +188,8 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
 
-  if(param.minimise.nmin <= 0)
-    io::messages.add("MINIMISE: NMIN should be > 0",
+  if(param.minimise.nmin < 0)
+    io::messages.add("MINIMISE: NMIN should be >= 0",
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
   
