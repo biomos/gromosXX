@@ -74,6 +74,10 @@ namespace simulation
      * set the boundary condition.
      */
     void boundary_condition(math::boundary_enum b);
+    /**
+     * periodicity accessor
+     */
+    math::Periodicity<math::any> const& periodicity()const;
     
   protected:
     /**
@@ -129,9 +133,10 @@ namespace simulation
      */
     math::Matrix m_box;
     /**
-     * the boundary condition.
+     * the periodicity.
+     * hard coded to any periodicity...
      */
-    math::boundary_enum m_boundary_condition;
+    math::Periodicity<math::any> m_periodicity;
     
   }; // system
   

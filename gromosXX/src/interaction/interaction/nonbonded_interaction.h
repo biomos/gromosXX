@@ -10,39 +10,33 @@
 namespace interaction
 {
   /**
-   * @class nonbonded_interaction
+   * @class Nonbonded_Interaction
    * calculates the nonbonded interactions.
    */
-  template<typename t_simulation>
-  class nonbonded_interaction : public interaction<t_simulation>
+  template<typename t_simulation, typename t_pairlist>
+  class Nonbonded_Interaction : public Interaction<t_simulation>
   {
-  public:
-    /**
-     * @struct lj_parameter_struct
-     * Lennard Jones interaction parameter.
-     */
-    struct lj_parameter_struct
-    {
-      double c6;
-      double c12;
-      double cs6;
-      double cs12;
-    };
-    
+  public:    
     /**
      * Destructor.
      */
-    virtual ~nonbonded_interaction();
+    virtual ~Nonbonded_Interaction();
 
     /**
      * calculate the interactions.
      */
-    virtual void calculate_interactions(t_simulation &simu);
+    virtual void calculate_interactions(t_simulation &sim);
 
     /**
      * add the lj parameters for atom type i and j.
      */
-    void add_lj_parameter(int i, int j, lj_parameter_struct lj);
+    void add_lj_parameter(size_t iac_i, size_t iac_j,
+			  lj_parameter_struct lj);
+    
+    /**
+     * get the lj parameters for atom type i and j.
+     */
+    lj_parameter_struct const & lj_parameter(size_t iac_i, size_t iac_j);
     
     /**
      * resize the lj_parameter matrix.
@@ -55,9 +49,25 @@ namespace interaction
      * @TODO parametrize that one?
      * or assume an iterator and take a reference (polymorphism)
      */
-    simple_pairlist<t_simulation> m_pairlist;
+    t_pairlist m_pairlist;
 
+    /**
+     * the lj parameter.
+     */
     std::vector< std::vector<lj_parameter_struct> > m_lj_parameter;
+
+    /**
+     * the long-range force.
+     */
+    math::VArray m_longrange_force;
+    
+    /**
+     * calculate the interactions.
+     */
+    void do_interactions(t_simulation &sim,
+			 typename t_pairlist::iterator it, 
+			 typename t_pairlist::iterator to,
+			 math::VArray &force);
 
   };
   

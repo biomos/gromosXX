@@ -10,3 +10,8 @@
 #include "trajectory/InTrajectory.h"
 #include "trajectory/OutTrajectory.h"
 #include "input/InInput.h"
+
+#ifndef NDEBUG
+extern int debug_level;
+extern int trajectory_debug_level;
+#endif

@@ -226,6 +226,14 @@ inline std::vector<std::string> & simulation::topology::residue_name()
   return m_residue_name;
 }
 
+/**
+ * all exclusions for atom i.
+ */
+inline std::set<int> & simulation::topology::all_exclusion(size_t i)
+{
+  return m_all_exclusion[i];
+}
+
 namespace simulation
 {
   /**

@@ -9,12 +9,12 @@
 namespace interaction
 {
   /**
-   * @class interaction
-   * @interface interaction
+   * @class Interaction
+   * @interface Interaction
    * declares the interaction interface.
    */
   template<typename t_simulation>
-  class interaction
+  class Interaction
   {
   public:
     /**

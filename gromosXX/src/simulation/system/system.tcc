@@ -12,7 +12,8 @@ inline simulation::system::system()
     m_velocity1(0),
     m_velocity2(0),
     m_force1(0),
-    m_force2(0)
+    m_force2(0),
+    m_periodicity(m_box)
 {
   m_pos = &m_position1;
   m_old_pos = &m_position2;
@@ -127,7 +128,16 @@ inline math::Matrix & simulation::system::box()
  */
 inline math::boundary_enum simulation::system::boundary_condition()
 {
-  return m_boundary_condition;
+  return m_periodicity.boundary();
+}
+
+/**
+ * periodicity accessor.
+ */
+inline math::Periodicity<math::any> const & simulation::system
+::periodicity()const
+{
+  return m_periodicity;
 }
 
 /**
@@ -135,7 +145,7 @@ inline math::boundary_enum simulation::system::boundary_condition()
  */
 inline void simulation::system::boundary_condition(math::boundary_enum b)
 {
-  m_boundary_condition = b;
+  m_periodicity.boundary(b);
 }
 
 namespace simulation

@@ -20,6 +20,13 @@ namespace io {
      * read in the complete file at once.
      */
     InInput(std::istream& is) : GInStream(is) { read_stream(); };
+
+    /**
+     * Store standard parameters in the simulation.
+     */
+    template<typename t_topology, typename t_system>
+    InInput & operator>>(simulation::simulation<t_topology, t_system> &sim);
+    
     /**
      * read step block.
      */
@@ -34,6 +41,11 @@ namespace io {
      * read the SHAKE block.
      */
     void read_SHAKE(int &ntc, double &tolerance);
+    /**
+     * read FORCE block.
+     */
+    void read_FORCE(bool &do_bond, bool &do_angle, bool &do_improper,
+		    bool &do_dihedral, bool &do_nonbonded);
     
   private:
     /**

@@ -119,6 +119,11 @@ namespace simulation
      */
     std::vector<std::string> & residue_name();
 
+    /**
+     * all exclusions for atom i.
+     */
+    std::set<int> & all_exclusion(size_t i);
+
   private:
     /**
      * the soluteatoms.

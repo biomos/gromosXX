@@ -13,7 +13,7 @@ namespace interaction
    * calculates the bond interactions (harmonic).
    */
   template<typename t_simulation>
-  class harmonic_bond_interaction : public interaction<t_simulation>
+  class harmonic_bond_interaction : public Interaction<t_simulation>
   {
   public:
     /**

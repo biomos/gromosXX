@@ -27,7 +27,7 @@ namespace interaction
    */
   template<typename t_simulation>
   class simple_pairlist : 
-  public t_pl_matrix
+    public t_pl_matrix
   {
   public:
 
@@ -75,7 +75,7 @@ namespace interaction
      * interactions with particles with higher sequence
      * number.
      */
-    void update(t_simulation &simu);
+    void update(t_simulation &sim);
     /**
      * If possible, return an iterator to the first non-empty 
      * pairlist entry. Otherwise return end().
@@ -86,9 +86,9 @@ namespace interaction
 
   template<typename t_simulation>
   std::ostream& operator<<(
-    std::ostream& os, 
-    class simple_pairlist<t_simulation>& pl
-  );
+			   std::ostream& os, 
+			   class simple_pairlist<t_simulation>& pl
+			   );
 
 
   /**
@@ -102,22 +102,26 @@ namespace interaction
    */
   template<typename t_simulation>
   class twin_range_pairlist :
-  public std::pair< simple_pairlist<t_simulation>, simple_pairlist<t_simulation> >
+    public std::pair< simple_pairlist<t_simulation>, simple_pairlist<t_simulation> >
   {
-
-    public:
-      /**
-       * the short range pairlist
-       */
-      simple_pairlist<t_simulation>& short_range() { return first; }
-      /**
-       * the long range pairlist
-       */
-      simple_pairlist<t_simulation>& long_range() { return second; }
-      /**
-       * update the pairlists (using rcutl, rcutp).
-       */
-      void update(t_simulation &simu);
+  public:
+    /**
+     * access to the iterator type.
+     */
+    typedef typename simple_pairlist<t_simulation>::iterator iterator;
+    
+    /**
+     * the short range pairlist
+     */
+    simple_pairlist<t_simulation>& short_range() { return first; }
+    /**
+     * the long range pairlist
+     */
+    simple_pairlist<t_simulation>& long_range() { return second; }
+    /**
+     * update the pairlists (using rcutl, rcutp).
+     */
+    void update(t_simulation &sim);
   };
   
 } // interaction

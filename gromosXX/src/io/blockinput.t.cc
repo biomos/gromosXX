@@ -3,6 +3,8 @@
  * test routines for blockinput.
  */
 
+#include "../debug.h"
+
 #include "../math/gmath.h"
 
 #include <fstream>
@@ -15,6 +17,8 @@
 #include "../interaction/interaction.h"
 
 #include "io.h"
+
+#include "../debug.cc"
 
 /**
  * test the io.
@@ -51,9 +55,13 @@ int test_blockio()
   }
   io::InTrajectory sys(sys_file);
 
+  // std::cout << "reading bond interaction" << std::endl;
   topo >> *bond_interaction;
   
+  // std::cout << "reading topology" << std::endl;
   topo >> the_topology;
+  
+  // std::cout << "reading system" << std::endl;
   sys >> the_system;
 
   if (io::message::notice != io::messages.display()) ++result;
@@ -74,8 +82,14 @@ int test_blockio()
 int main()
 {
   int r1;
-  if ((r1 = test_blockio()))
-    std::cout << "test_blockio failed" << std::endl;
+  try{
+    if ((r1 = test_blockio()))
+      std::cout << "test_blockio failed" << std::endl;
+  }
+  catch(std::runtime_error e){
+    std::cout << "Exception in test_blockio\n" << e.what() << std::endl;
+    throw;
+  }
   
   return r1;
 }

@@ -75,7 +75,7 @@ int periodicity_test()
 	     Vec(0.0, 5.0, 0.0),
 	     Vec(0.0, 0.0, 5.0));
   
-  periodicity<vacuum> pv(box);
+  Periodicity<vacuum> pv(box);
   
   Vec v1(1.0, 2.5, 2.5);
   Vec v2(9.0, 2.5, 2.5);
@@ -88,7 +88,7 @@ int periodicity_test()
   Vec rv(-8.0, 0.0, 0.0);
   if (v3 != rv) ++result;
   
-  periodicity<triclinic> pi(box);
+  Periodicity<triclinic> pi(box);
   pi.nearest_image(v1, v2, v3);
 
   // std::cout << "nearest image(triclinic): " << v3 << std::endl;

@@ -22,40 +22,58 @@ namespace math
     /**
      * triclinic box
      */
-    triclinic = 1
+    triclinic = 1,
+    /**
+     * non-specialized version
+     */
+    any = 2
   };
 
   /**
-   * @class periodicity
+   * @class Periodicity
    * the periodic boundary condition functions.
    */
   template<boundary_enum b>
-  class periodicity;
+  class Periodicity
+  {
+  public:
+    Periodicity(Matrix &box, boundary_enum boundary = b);
+    void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    void boundary(boundary_enum const b);
+    boundary_enum const boundary()const;
+  private:
+    Matrix &m_box;
+    boundary_enum m_boundary;
+  };
   
   /**
-   * @class periodicityvacuum>
+   * @class Periodicity<vacuum>
    * Specialized version for vacuum.
    */
   template<>
-  class periodicity<vacuum>
+  class Periodicity<vacuum>
   {
   public:
-    periodicity(Matrix &box);
-    void nearest_image(Vec const &v1, Vec const &v2, Vec &nim);
+    Periodicity(Matrix &box, boundary_enum boundary = vacuum);
+    void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    void boundary(boundary_enum const b);
+    boundary_enum const boundary()const;
   private:
     Matrix &m_box;
   };
   
   /**
-   * @class peridicity<triclinic>
+   * @class Periodicity<triclinic>
    * specialized version for triclinic boundary conditions.
    */
   template<>
-  class periodicity<triclinic>
+  class Periodicity<triclinic>
   {
   public:
-    periodicity(Matrix &box);
-    void nearest_image(Vec const &v1, Vec const &v2, Vec &nim);
+    Periodicity(Matrix &box, boundary_enum boundary = triclinic);
+    void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    void boundary(boundary_enum const b);
+    boundary_enum const boundary()const;
   private:
     Matrix &m_box;
   };

@@ -32,8 +32,10 @@ namespace io {
     /**
      * Read in the nonbonded interaction types (lennard-jones).
      */
-    template<typename t_simulation>
-    InTopology & operator >>(interaction::nonbonded_interaction<t_simulation> &nbi);
+    template<typename t_simulation, typename t_pairlist>
+    InTopology & operator >>(interaction::
+			     Nonbonded_Interaction<t_simulation, t_pairlist>
+			     &nbi);
 
   private:
     /**

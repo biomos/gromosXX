@@ -9,9 +9,9 @@
  */
 template<typename t_simulation>
 algorithm::Shake<t_simulation>
-::Shake()
-  : tolerance(0.0001),
-    max_iterations(5)
+::Shake(double const tolerance, int const max_iterations)
+  : tolerance(tolerance),
+    max_iterations(max_iterations)
 {
 }
 

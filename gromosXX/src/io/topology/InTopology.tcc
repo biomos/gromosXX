@@ -246,9 +246,10 @@ io::InTopology &io::InTopology
   return *this;
 }
 
-template<typename t_simulation>
+template<typename t_simulation, typename t_pairlist>
 io::InTopology &io::InTopology
-::operator>>(interaction::nonbonded_interaction<t_simulation> &nbi){
+::operator>>(interaction
+	     ::Nonbonded_Interaction<t_simulation, t_pairlist> &nbi){
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -263,14 +264,14 @@ io::InTopology &io::InTopology
   _lineStream >> num;
 
   // calculate the matrix size from: x = n*(n+1)/2
-  size_t sz = (sqrt(8*num+1)-1)/2;
+  size_t sz = size_t(sqrt(double((8*num+1)-1))/2);
   nbi.resize(sz);
 
   ++it;
   
   for (n=0; it != buffer.end() - 1; ++it, ++n) {
 
-    typename interaction::nonbonded_interaction<t_simulation>::lj_parameter_struct s;
+    typename interaction::lj_parameter_struct s;
     int i, j;
     
     _lineStream.clear();

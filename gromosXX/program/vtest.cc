@@ -8,6 +8,8 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "../src/debug.h"
+
 #include <math/gmath.h>
 #include <simulation/simulation.h>
 #include <interaction/interaction.h>
@@ -16,6 +18,8 @@
 
 // sppecial includes
 #include <algorithm/integration/runge_kutta.h>
+
+#include "../src/debug.cc"
 
 using namespace math;
 
@@ -74,18 +78,34 @@ int main(int argc, char *argv[])
   
   simulation_type the_simulation(the_topology, the_system);
   
-  // forcefield
+  // FORCEFIELD
   interaction::forcefield<simulation_type> the_forcefield;
-  
+
+  // bonds
   interaction::harmonic_bond_interaction<simulation_type> 
     *the_bond_interaction =
     new interaction::harmonic_bond_interaction<simulation_type>;
   
+  // nonbonded
+  typedef interaction::twin_range_pairlist<simulation_type> pairlist_type;
+
+  interaction::Nonbonded_Interaction<simulation_type, pairlist_type>
+    *the_nonbonded_interaction =
+    new interaction::Nonbonded_Interaction<simulation_type, pairlist_type>;
+
   // read parameter
   topo >> *the_bond_interaction;
+  topo >> *the_nonbonded_interaction;
   
   // add to the forcefield
-  the_forcefield.add_interaction(the_bond_interaction);
+  bool do_bond, do_angle, do_dihedral, do_improper, do_nonbonded;
+  input.read_FORCE(do_bond, do_angle, do_improper,
+		   do_dihedral, do_nonbonded);
+  
+  if (do_bond)
+    the_forcefield.add_interaction(the_bond_interaction);
+  if (do_nonbonded)
+    the_forcefield.add_interaction(the_nonbonded_interaction);
 
   // decide on SHAKE
   int ntc;

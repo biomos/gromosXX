@@ -25,6 +25,40 @@ inline void io::InInput::read_stream()
   }
 }
 
+
+/**
+ * Store standard parameters in the simulation.
+ */
+template<typename t_topology, typename t_system>
+inline io::InInput & io::InInput
+::operator>>(simulation::simulation<t_topology, t_system> &sim)
+{
+  // let's for now only do the 'numbers only' stuff
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  { // PLIST
+    buffer = m_block["PLIST"];
+    
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    
+    int i, update_step;
+    _lineStream >> i >> update_step
+		>> rcutp >> rcutl;
+
+    if (_lineStream.fail() || ! _lineStream.eof())
+      throw std::runtime_error("bad line in PLIST block");
+
+    sim.nonbonded_update(update_step);
+    sim.nonbonded_cutoff_short(rcutp);
+    sim.nonbonded_cutoff_long(rcutl);
+  }
+
+  return *this;
+}
+
 /**
  * read the SYSTEM block.
  */
@@ -89,3 +123,50 @@ inline void io::InInput::read_SHAKE(int &ntc, double &tolerance)
     throw std::runtime_error("bad line in SHAKE block");
 
 }
+
+/**
+ * read FORCE block.
+ */
+inline void io::InInput::read_FORCE(bool &do_bond, bool &do_angle,
+				    bool &do_improper, bool &do_dihedral,
+				    bool &do_nonbonded)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  buffer = m_block["FORCE"];
+  
+  it = buffer.begin()+1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  bool bondH, angleH, impH, dihedralH, charge;
+  _lineStream >> bondH >> do_bond >> angleH >> do_angle
+	      >> impH >> do_improper >> dihedralH >> do_dihedral
+	      >> charge >> do_nonbonded;
+  
+  if (bondH ^ do_bond)
+    io::messages.add("Force switch for bond and bond H has to be equal",
+		     "InInput", io::message::error);
+
+  if (angleH ^ do_angle)
+    io::messages.add("Force switch for angle and angle H has to be equal",
+		     "InInput", io::message::error);
+
+  if (impH ^ do_improper)
+    io::messages.add("Force switch for improper and improper H has to be equal",
+		     "InInput", io::message::error);
+
+  if (dihedralH ^ do_dihedral)
+    io::messages.add("Force switch for dihedral and dihedral H has to be equal",
+		     "InInput", io::message::error);
+
+  if (charge ^ do_nonbonded)
+    io::messages.add("Force switch for lj and charge has to be equal",
+		     "InInput", io::message::error);
+
+  if (_lineStream.fail() || ! _lineStream.eof())
+    throw std::runtime_error("bad line in FORCE block");
+
+}
+

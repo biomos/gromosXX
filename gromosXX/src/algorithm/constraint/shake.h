@@ -20,7 +20,7 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Shake();
+    Shake(double const tolerance = 0.000001, int const max_iterations = 1000);
 
     /**
      * shake solute.

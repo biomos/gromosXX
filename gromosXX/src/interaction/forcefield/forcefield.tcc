@@ -12,7 +12,7 @@ inline interaction::forcefield<t_simulation>::forcefield()
 template<typename t_simulation>
 inline interaction::forcefield<t_simulation>::~forcefield()
 {
-  for(typename std::vector<interaction<t_simulation> *>::iterator
+  for(typename std::vector<Interaction<t_simulation> *>::iterator
 	it = m_interaction.begin(),
 	to = m_interaction.end();
       it != to;
@@ -23,7 +23,7 @@ inline interaction::forcefield<t_simulation>::~forcefield()
 
 template<typename t_simulation>
 inline void interaction::forcefield<t_simulation>
-::add_interaction(interaction<t_simulation> *inter)
+::add_interaction(Interaction<t_simulation> *inter)
 {
   m_interaction.push_back(inter);
 }
@@ -36,7 +36,7 @@ inline void interaction::forcefield<t_simulation>
 
   simu.system().force() = 0.0;
 
-  for(typename std::vector<interaction<t_simulation> *>::iterator 
+  for(typename std::vector<Interaction<t_simulation> *>::iterator 
 	it = m_interaction.begin(),
 	to = m_interaction.end();
       it != to;

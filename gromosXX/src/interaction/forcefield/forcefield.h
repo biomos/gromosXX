@@ -33,7 +33,7 @@ namespace interaction
     /**
      * add an interaction
      */
-    void add_interaction(interaction<t_simulation> *inter);
+    void add_interaction(Interaction<t_simulation> *inter);
     /**
      * calculate all interactions.
      */
@@ -43,7 +43,7 @@ namespace interaction
     /**
      * the interactions
      */
-    std::vector<interaction<t_simulation> *> m_interaction;
+    std::vector<Interaction<t_simulation> *> m_interaction;
   };
   
 } // interaction

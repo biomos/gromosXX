@@ -3,6 +3,14 @@
  * implements methods of InTrajectory.
  */
 
+#undef MODULE
+#undef SUBMODULE
+
+#define MODULE io
+#define SUBMODULE trajectory
+
+#include "../../debug.h"
+
 /**
  * Constructor.
  */
@@ -32,8 +40,19 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
   while ((!pos_read && read_position) ||
 	 (!vel_read && read_velocity) ||
 	 (!box_read && read_box)){
-    
-    io::getblock(stream(), buffer);
+
+    try{
+      io::getblock(stream(), buffer);
+    }
+    catch(std::runtime_error e){
+      std::cout << "failed to read block from trajectory\n"
+		<< e.what() << std::endl;
+      std::cout << "position: " << pos_read << " velocity: "
+		<< vel_read << " box: " << box_read << std::endl;
+      throw;
+    }
+
+    DEBUG(10, "\tblock " << buffer[0]);
     
     if (buffer[0] == "POSITION"){
       if (pos_read)
@@ -41,6 +60,7 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       pos_read = _read_position(sys.pos(), buffer);
+
     }
     
     if (buffer[0] == "POSITIONRED"){
@@ -49,6 +69,7 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       pos_read = _read_positionred(sys.pos(), buffer);
+
     }
 
     if (buffer[0] == "VELOCITY"){
@@ -57,6 +78,7 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       vel_read = _read_velocity(sys.vel(), buffer);
+
     }
     
     if (buffer[0] == "VELOCITYRED"){
@@ -65,13 +87,16 @@ inline io::InTrajectory &io::InTrajectory::operator>>(simulation::system& sys){
 				 "all other required blocks have been read in");
       sys.resize(buffer.size()-2);
       vel_read = _read_velocityred(sys.vel(), buffer);
+
     }
 
     if (buffer[0] == "TRICLINICBOX"){
       if (box_read)
 	throw std::runtime_error("second TRICLINICBOX block before "
 				 "all other required blocks have been read in");
+
       box_read = _read_box(sys, buffer);
+
     }
     
   }
@@ -165,6 +190,7 @@ inline bool io::InTrajectory::_read_velocity(math::VArray &vel, std::vector<std:
 
 inline bool io::InTrajectory::_read_box(simulation::system &sys, std::vector<std::string> &buffer)
 {
+
   std::vector<std::string>::const_iterator it = buffer.begin()+1,
     to = buffer.end()-1;
   
@@ -174,6 +200,7 @@ inline bool io::InTrajectory::_read_box(simulation::system &sys, std::vector<std
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> i;
+
   switch(i){
     case 0:
       sys.boundary_condition(math::vacuum);
@@ -184,6 +211,7 @@ inline bool io::InTrajectory::_read_box(simulation::system &sys, std::vector<std
     default:
       throw std::runtime_error("bad boundary conditions in TRICLINICBOX block");
   }
+
 
   ++it;
   
