@@ -954,7 +954,9 @@ void io::Out_Configuration
 	      configuration::Configuration & conf,
 	      simulation::Simulation const & sim)
 {
+  m_output << "\n==================================================\n";
   m_output << "FINAL DATA\n";
+  m_output << "==================================================\n";
   
   _print_timestep(sim, m_output);
   

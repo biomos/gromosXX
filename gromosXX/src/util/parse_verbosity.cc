@@ -64,6 +64,8 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
     }
     else if (module == "configuration"){
       if (submodule == "") configuration::debug_level = level;
+      else if (submodule == "configuration") configuration::configuration_debug_level = level;
+      else if (submodule == "energy") configuration::energy_debug_level = level;
       else throw std::string("unknown submodule");
     }
     else if (module == "topology"){

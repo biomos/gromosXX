@@ -61,11 +61,14 @@ configuration::Energy_Average::update(configuration::Energy const &e,
   // totals
   DEBUG(10, "energy average: update - kin size: " << e.kinetic_energy.size());
   
+  DEBUG(10, "old total: " << av.m_average.total
+	<< "\ttotal: " << e.total << "\tdt: " << dt);
+  
   m_average.total = av.m_average.total + dt * e.total;
   
   m_square_average.total = av.m_square_average.total + dt * e.total * e.total;
   
-  m_average.kinetic_total += dt * e.kinetic_total;
+  m_average.kinetic_total = av.m_average.kinetic_total + dt * e.kinetic_total;
   m_square_average.kinetic_total = av.m_square_average.kinetic_total + 
     dt * e.kinetic_total * e.kinetic_total;
   
@@ -181,7 +184,7 @@ configuration::Energy_Average::update(configuration::Energy const &e,
   
   }
 
-  m_time += dt;
+  m_time = av.m_time + dt;
   
 }
 
@@ -214,7 +217,8 @@ configuration::Energy_Average::average(configuration::Energy &energy,
   e.resize(m_average.bond_energy.size(), m_average.kinetic_energy.size());
   f.resize(m_average.bond_energy.size(), m_average.kinetic_energy.size());
 
-  // totals
+  DEBUG(10, "average total: " << m_average.total << "\ttime: " << m_time);
+
   e.total = m_average.total / m_time;
   diff = m_square_average.total - m_average.total * m_average.total / m_time;
   if (diff > 0.0)

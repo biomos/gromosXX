@@ -74,6 +74,7 @@ namespace configuration
 {
   extern int debug_level;
   extern int configuration_debug_level;
+  extern int energy_debug_level;
 }
 
 namespace topology
