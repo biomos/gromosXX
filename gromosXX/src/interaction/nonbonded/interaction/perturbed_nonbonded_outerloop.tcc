@@ -12,11 +12,12 @@
 /**
  * Constructor.
  */
-template<typename t_interaction_spec>
+template<typename t_interaction_spec, typename t_perturbation_details>
 inline
-interaction::Perturbed_Nonbonded_Outerloop<t_interaction_spec>
+interaction::Perturbed_Nonbonded_Outerloop<t_interaction_spec,  
+					   t_perturbation_details>
 ::Perturbed_Nonbonded_Outerloop(Nonbonded_Parameter & nbp)
-  : Perturbed_Nonbonded_Innerloop<t_interaction_spec>(nbp)
+  : Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details>(nbp)
 {
 }
 
@@ -33,9 +34,9 @@ interaction::Perturbed_Nonbonded_Outerloop<t_interaction_spec>
  * stores them in the arrays pointed to by parameters
  * to make it usable for longrange calculations.
  */
-template<typename t_interaction_spec>
+template<typename t_interaction_spec, typename  t_perturbation_details>
 inline void interaction::Perturbed_Nonbonded_Outerloop<
-  t_interaction_spec>
+  t_interaction_spec,  t_perturbation_details>
 ::perturbed_lj_crf_outerloop(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
@@ -104,9 +105,9 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
  * helper function to calculate the forces and energies from the
  * 1,4 interactions.
  */
-template<typename t_interaction_spec>
+template<typename t_interaction_spec, typename  t_perturbation_details>
 inline void interaction::Perturbed_Nonbonded_Outerloop<
-  t_interaction_spec>
+  t_interaction_spec,  t_perturbation_details>
 ::perturbed_one_four_outerloop(topology::Topology & topo,
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
@@ -138,9 +139,9 @@ inline void interaction::Perturbed_Nonbonded_Outerloop<
  * helper function to calculate the forces and energies from the
  * RF contribution of excluded atoms and self term
  */
-template<typename t_interaction_spec>
+template<typename t_interaction_spec, typename  t_perturbation_details>
 inline void interaction::Perturbed_Nonbonded_Outerloop<
-  t_interaction_spec>
+  t_interaction_spec,  t_perturbation_details>
 ::perturbed_RF_excluded_outerloop(topology::Topology & topo,
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,

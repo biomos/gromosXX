@@ -10,14 +10,14 @@
 namespace interaction
 {
 
-  template<typename t_interaction_spec, bool perturbed>
+  template<typename t_interaction_spec, typename t_perturbation_spec>
   class Pairlist_Algorithm;
 
   /**
    * @class Nonbonded_Interaction
    * calculates the nonbonded interactions.
    */
-  template<typename t_interaction_spec, bool perturbed>
+  template<typename t_interaction_spec, typename t_perturbation_spec>
   class Nonbonded_Interaction : 
     public Interaction,
     public Nonbonded_Parameter
@@ -29,7 +29,8 @@ namespace interaction
     /**
      * Constructor.
      */
-    Nonbonded_Interaction(Pairlist_Algorithm<t_interaction_spec, perturbed> *pa);
+    Nonbonded_Interaction(Pairlist_Algorithm<t_interaction_spec, 
+			  t_perturbation_spec> *pa);
     
     /**
      * Destructor.
@@ -45,7 +46,7 @@ namespace interaction
     /**
      * Pairlist algorithm
      */
-    Pairlist_Algorithm<t_interaction_spec, perturbed> & pairlist_algorithm()
+    Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec> & pairlist_algorithm()
     {
       return *m_pairlist_algorithm;
     }
@@ -61,15 +62,25 @@ namespace interaction
 		    configuration::Configuration const & conf,
 		    simulation::Simulation const & sim);
 
+    /**
+     * accessor to the longrange timing
+     */
+    double & longrange_timing() { return m_longrange_timing; }
+    
   protected:
     /**
      * the pairlist update algorithm.
      */
-    Pairlist_Algorithm<t_interaction_spec, perturbed> *m_pairlist_algorithm;
+    Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec> *m_pairlist_algorithm;
     /**
      * a vector of nonbonded sets
      */
-    std::vector<Nonbonded_Set<t_interaction_spec, perturbed> > m_nonbonded_set;
+    std::vector<Nonbonded_Set<t_interaction_spec, t_perturbation_spec> > m_nonbonded_set;
+    /**
+     * longrange timing.
+     */
+    double m_longrange_timing;
+
   };
   
 } // interaction

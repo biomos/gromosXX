@@ -12,22 +12,23 @@
 /**
  * Constructor.
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline
-interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
-::Nonbonded_Interaction(Pairlist_Algorithm<t_interaction_spec, perturbed> *pa)
+interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
+::Nonbonded_Interaction(Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec> *pa)
   : Interaction("NonBonded"),
     Nonbonded_Parameter(),
-    m_pairlist_algorithm(pa)
+    m_pairlist_algorithm(pa),
+    m_longrange_timing(0.0)
 {
 }
 
 /**
  * Destructor.
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline 
-interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
+interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 ::~Nonbonded_Interaction()
 {
   DEBUG(4, "Nonbonded_Interaction::destructor");
@@ -37,9 +38,9 @@ interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
 /**
  * calculate nonbonded forces and energies.
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline int 
-interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
+interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim)
@@ -51,7 +52,7 @@ interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
   m_pairlist_algorithm->prepare();
 
   typename
-    std::vector<Nonbonded_Set<t_interaction_spec, perturbed> >::iterator
+    std::vector<Nonbonded_Set<t_interaction_spec, t_perturbation_spec> >::iterator
     it = m_nonbonded_set.begin(),
     to = m_nonbonded_set.end();
   
@@ -88,7 +89,7 @@ interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
     }
   }
   
-  if (perturbed){
+  if (t_perturbation_spec::do_perturbation){
 
     it = m_nonbonded_set.begin();
 
@@ -117,19 +118,19 @@ interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
 /**
  * initialize the arrays
  */
-template<typename t_interaction_spec, bool perturbed>
-inline void interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
+inline void interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 ::initialize(topology::Topology const & topo,
 	     configuration::Configuration const & conf,
 	     simulation::Simulation const & sim)
 {
   DEBUG(15, "nonbonded_interaction::initialize");
   m_nonbonded_set.
-    resize(1,Nonbonded_Set<t_interaction_spec, perturbed>
+    resize(1,Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 	      (*this));
   
   typename
-    std::vector<Nonbonded_Set<t_interaction_spec, perturbed> >::iterator
+    std::vector<Nonbonded_Set<t_interaction_spec, t_perturbation_spec> >::iterator
     it = m_nonbonded_set.begin(),
     to = m_nonbonded_set.end();
   
@@ -143,8 +144,8 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
 // helper functions 
 //***************************************************************************
 
-template<typename t_interaction_spec, bool perturbed>
-inline void interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
+inline void interaction::Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec>
 ::print_timing(std::ostream & os)
 {
       os << "        "
@@ -152,13 +153,16 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec, perturbed>
 	 << std::setw(20) << m_timing << "\n"
 	 << "            "
 	 << std::setw(32) << std::left << "shortrange"
-	//	 << std::setw(20) << m_shortrange_timing << "\n"
+	 << std::setw(20) 
+	 << m_timing - m_pairlist_algorithm->timing()
+	 << "\n"
 	 << "            "
-	 << std::setw(32) << std::left << "pairlist/longrange"
-	// << std::setw(20) << m_pairlist_timing << "\n"
-	 << "                "
-	 << std::setw(28) << std::left << "longrange forces"
-	//	 << std::setw(20) << m_longrange_timing 
+	 << std::setw(32) << std::left << "longrange"
+	 << std::setw(20) << m_longrange_timing << "\n"
+	 << "            "
+	 << std::setw(32) << std::left << "pairlist"
+	 << std::setw(20) 
+	 << m_pairlist_algorithm->timing() - m_longrange_timing<< "\n"
 	 << "\n";
       
 }

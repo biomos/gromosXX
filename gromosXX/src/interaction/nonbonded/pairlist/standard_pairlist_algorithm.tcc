@@ -9,24 +9,26 @@
 #define MODULE interaction
 #define SUBMODULE pairlist
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline
-interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 Standard_Pairlist_Algorithm()
-  : interaction::Pairlist_Algorithm<t_interaction_spec, perturbed>()
+  : interaction::Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>()
 {
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim, 
-       Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+       Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
        size_t begin, size_t end, size_t stride)
 {
   DEBUG(7, "standard pairlist update");
+
+  const double update_start = util::now();
 
   Periodicity_type periodicity(conf.current().box);
    
@@ -34,7 +36,7 @@ update(topology::Topology & topo,
   nbs.pairlist().clear();
   nbs.pairlist().resize(topo.num_atoms());
 
-  if(perturbed){
+  if(t_perturbation_spec::do_perturbation){
     // and the perturbed pairlist
     nbs.perturbed_pairlist().clear();
     nbs.perturbed_pairlist().resize(topo.num_atoms());
@@ -73,6 +75,8 @@ update(topology::Topology & topo,
 		periodicity);
     
   } // cg1
+
+  m_timing += util::now() - update_start;
   
   DEBUG(7, "pairlist done");
 
@@ -81,13 +85,13 @@ update(topology::Topology & topo,
 /**
  * loop over chargegroup 1
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>
 ::do_cg1_loop(topology::Topology & topo,
 	      configuration::Configuration & conf,
 	      simulation::Simulation & sim,
-	      Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+	      Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
 	      int cg1_index,
 	      int const num_solute_cg,
 	      int const num_cg,
@@ -146,13 +150,13 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
 /**
  * inter cg, no exclusion
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>
 ::do_cg_interaction(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
-		    Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+		    Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
 		    topology::Chargegroup_Iterator const &cg1,
 		    topology::Chargegroup_Iterator const &cg2,
 		    Periodicity_type const & periodicity,
@@ -196,13 +200,13 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
 }
 
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>
 ::do_cg_interaction_excl(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
-			 Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+			 Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 			 topology::Chargegroup_Iterator const & cg1,
 			 topology::Chargegroup_Iterator const & cg2,
 			 Periodicity_type const & periodicity,
@@ -246,13 +250,13 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
   } // loop over atom 1 of cg1
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>
 ::do_cg_interaction_inv_excl(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+			     Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 			     topology::Chargegroup_Iterator const & cg1,
 			     topology::Chargegroup_Iterator const & cg2,
 			     Periodicity_type const & periodicity, int const pc)
@@ -296,13 +300,13 @@ interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
   } // loop over atom 1 of cg1
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
+interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>
 ::do_cg_interaction_intra(topology::Topology & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
-			  Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+			  Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 			  topology::Chargegroup_Iterator const & cg1,
 			  Periodicity_type const & periodicity, int const pc)
 {

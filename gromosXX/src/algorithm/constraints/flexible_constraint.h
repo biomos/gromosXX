@@ -92,8 +92,8 @@ namespace algorithm
      *  no bonded terms!)
      */
     interaction::Nonbonded_Interaction<interaction::Interaction_Spec<
-      math::rectangular, math::molecular_virial, interaction::bekker_off, interaction::scaling_off>, 
-				       interaction::perturbation_off 
+      math::rectangular, math::molecular_virial, interaction::bekker_off>, 
+				       interaction::Perturbation_Spec<interaction::perturbation_off, interaction::scaling_off> 
 				       > * m_nonbonded;
 
   };

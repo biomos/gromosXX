@@ -8,8 +8,8 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
-template<typename t_interaction_spec>
-interaction::Perturbed_Nonbonded_Pair<t_interaction_spec>
+template<typename t_interaction_spec, typename perturbation_details>
+interaction::Perturbed_Nonbonded_Pair<t_interaction_spec, perturbation_details>
 ::Perturbed_Nonbonded_Pair(Nonbonded_Parameter &nbp,
 			   Nonbonded_Term & nbt,
 			   Perturbed_Nonbonded_Term & pnbt)
@@ -24,9 +24,9 @@ interaction::Perturbed_Nonbonded_Pair<t_interaction_spec>
  * PERTURBED PAIRS
  * (different interaction types in A and in B)
  */
-template<typename t_interaction_spec>
+template<typename t_interaction_spec, typename perturbation_details>
 inline void interaction::Perturbed_Nonbonded_Pair<
-  t_interaction_spec>
+  t_interaction_spec, perturbation_details>
 ::perturbed_pair_outerloop(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
@@ -48,10 +48,10 @@ inline void interaction::Perturbed_Nonbonded_Pair<
 
 
 
-template<typename t_interaction_spec>
+template<typename t_interaction_spec, typename perturbation_details>
 inline void 
 interaction::Perturbed_Nonbonded_Pair<
-  t_interaction_spec>
+  t_interaction_spec, perturbation_details>
 ::perturbed_pair_interaction_innerloop
 ( topology::Topology & topo,
   configuration::Configuration & conf,
@@ -385,7 +385,7 @@ interaction::Perturbed_Nonbonded_Pair<
       // --------------------------
   }
   
-  if (t_interaction_spec::do_scaling){
+  if (perturbation_details::do_scaling){
 
     // check whether we need to do scaling
     // based on energy groups

@@ -12,14 +12,15 @@
 /**
  * Constructor.
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline
-interaction::Nonbonded_Set<t_interaction_spec, perturbed>
-::Nonbonded_Set(Nonbonded_Interaction<t_interaction_spec, perturbed> & nbi)
+interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
+::Nonbonded_Set(Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec> & nbi)
   : Nonbonded_Outerloop<t_interaction_spec>(nbi),
-    Perturbed_Nonbonded_Outerloop<t_interaction_spec>(nbi),
+    Perturbed_Nonbonded_Outerloop<t_interaction_spec, 
+				  typename t_perturbation_spec::perturbation_details>(nbi),
     Perturbed_Nonbonded_Pair<
-  t_interaction_spec>(nbi, 
+  t_interaction_spec, typename t_perturbation_spec::perturbation_details>(nbi, 
 		      dynamic_cast<Nonbonded_Term&>(*this),
 		      dynamic_cast<Perturbed_Nonbonded_Term&>(*this)),
     m_nonbonded_interaction(&nbi)
@@ -29,9 +30,9 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
 /**
  * calculate nonbonded forces and energies.
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline int
-interaction::Nonbonded_Set<t_interaction_spec, perturbed>
+interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim)
@@ -39,7 +40,7 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
   DEBUG(4, "(Perturbed) Nonbonded_Interaction::calculate_interactions");
 
   // allow for slow growth (do it every step...)
-  if(perturbed)
+  if(t_perturbation_spec::do_perturbation)
     set_lambda(topo.lambda(), topo.lambda_exp());
 
   // zero forces, energies, virial...
@@ -53,16 +54,6 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
     
     // zero the longrange forces, energies, virial
     m_longrange_storage.zero();
-
-    /*
-    m_longrange_storage.force = 0.0;
-    m_longrange_storage.energies.zero();
-    m_longrange_storage.perturbed_energy_derivatives.zero();
-    DEBUG(11,"\tenergy derivative" 
-	  << m_longrange_storage.perturbed_energy_derivatives.lj_energy[0][0] );
-    
-    m_longrange_storage.virial_tensor = 0.0;
-    */
 
     DEBUG(7, "\tupdate the parlist");
     m_nonbonded_interaction->pairlist_algorithm().
@@ -82,7 +73,7 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
   lj_crf_outerloop(topo, conf, sim,
 		   m_pairlist, m_shortrange_storage);
 
-  if (perturbed){
+  if (t_perturbation_spec::do_perturbation){
     DEBUG(7, "\tperturbed short range");
     perturbed_lj_crf_outerloop(topo, conf, sim, 
 			       m_perturbed_pairlist,
@@ -92,7 +83,7 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
   // add 1,4 - interactions
   DEBUG(7, "\t1,4 - interactions");
   one_four_outerloop(topo, conf, sim, m_shortrange_storage);
-  if(perturbed){
+  if(t_perturbation_spec::do_perturbation){
     DEBUG(7, "\tperturbed 1,4 - interactions");
     perturbed_one_four_outerloop(topo, conf, sim, m_shortrange_storage);
   }
@@ -101,13 +92,13 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
   if(sim.param().longrange.rf_excluded){
     DEBUG(7, "\tRF excluded interactions and self term");
     RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
-    if(perturbed){
+    if(t_perturbation_spec::do_perturbation){
       DEBUG(7, "\tperturbed RF excluded interactions and self term");
       perturbed_RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
     }
   }
 
-  if(perturbed){
+  if(t_perturbation_spec::do_perturbation){
     DEBUG(7, "\tperturbed pairs");
     perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
   }
@@ -138,7 +129,7 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
   }
   
   
-  if (perturbed){
+  if (t_perturbation_spec::do_perturbation){
     // and long-range energy lambda-derivatives
     DEBUG(7, "add long-range lambda-derivatives");
 
@@ -168,18 +159,15 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
     }
   } // do perturbed
 
-  // timing.shortrange += now() - shortrange_start;
-  // ++timing.count_shortrange;
-
   return 0;
 }
 
 /**
  * add a shortrange interaction
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Nonbonded_Set<t_interaction_spec, perturbed>
+interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::add_shortrange_pair(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim,
@@ -189,9 +177,9 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
   assert(!t_interaction_spec::do_bekker || (pc >= 0 && pc < 27));
   assert(pairlist().size() > i);
 
-  if (perturbed && topo.is_perturbed(i)){
+  if (t_perturbation_spec::do_perturbation && topo.is_perturbed(i)){
 
-    if (t_interaction_spec::do_scaling){
+    if (t_perturbation_spec::perturbation_details::do_scaling){
       // check whether we need to do scaling
       // based on energy groups
       if (sim.param().perturbation.scaled_only){
@@ -218,9 +206,9 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
     else 
       perturbed_pairlist()[i].push_back(j);
   }
-  else if (perturbed && topo.is_perturbed(j)){
+  else if (t_perturbation_spec::do_perturbation && topo.is_perturbed(j)){
 
-    if (t_interaction_spec::do_scaling){
+    if (t_perturbation_spec::perturbation_details::do_scaling){
       // check whether we need to do scaling
       // based on energy groups
       if (sim.param().perturbation.scaled_only){
@@ -258,18 +246,20 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
 /**
  * add a longrange interaction
  */
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Nonbonded_Set<t_interaction_spec, perturbed>
+interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::add_longrange_pair(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
 		     size_t const i, size_t const j,
 		     Periodicity_type const & periodicity, int pc)
 {
-  if (perturbed && topo.is_perturbed(i)){
+  const double longrange_start = util::now();
 
-    if (t_interaction_spec::do_scaling){
+  if (t_perturbation_spec::do_perturbation && topo.is_perturbed(i)){
+
+    if (t_perturbation_spec::perturbation_details::do_scaling){
       // check whether we need to do scaling
       // based on energy groups
       if (sim.param().perturbation.scaled_only){
@@ -281,6 +271,9 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
 	  perturbed_lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
 	else
 	  lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
+	m_nonbonded_interaction->longrange_timing() += 
+	  util::now() - longrange_start;
+
 	return;      
       }
     }
@@ -288,9 +281,9 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
     perturbed_lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
 
   }
-  else if (perturbed && topo.is_perturbed(j)){
+  else if (t_perturbation_spec::do_perturbation && topo.is_perturbed(j)){
 
-    if (t_interaction_spec::do_scaling){
+    if (t_perturbation_spec::perturbation_details::do_scaling){
       // check whether we need to do scaling
       // based on energy groups
       if (sim.param().perturbation.scaled_only){
@@ -302,6 +295,10 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
 	  perturbed_lj_crf_innerloop(topo, conf, j, i, m_longrange_storage, periodicity, pc);
 	else
 	  lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
+
+	m_nonbonded_interaction->longrange_timing() += 
+	  util::now() - longrange_start;
+
 	return;      
       }
     }
@@ -312,18 +309,21 @@ interaction::Nonbonded_Set<t_interaction_spec, perturbed>
   else
     lj_crf_innerloop(topo, conf, i, j, m_longrange_storage, periodicity, pc);
 
+  m_nonbonded_interaction->longrange_timing() += 
+    util::now() - longrange_start;
+
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Nonbonded_Set<t_interaction_spec, perturbed>
+interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 ::initialize(topology::Topology const & topo,
 	     configuration::Configuration const & conf,
 	     simulation::Simulation const & sim)
 {
   Nonbonded_Outerloop<t_interaction_spec>::initialize(sim);
-  if(perturbed)
-    Perturbed_Nonbonded_Outerloop<t_interaction_spec>::initialize(sim);
+  if(t_perturbation_spec::do_perturbation)
+    Perturbed_Nonbonded_Outerloop<t_interaction_spec, typename t_perturbation_spec::perturbation_details>::initialize(sim);
 
   m_shortrange_storage.force.resize(conf.current().force.size());
   m_longrange_storage.force.resize(conf.current().force.size());

@@ -11,18 +11,19 @@
 namespace interaction
 {
   
-  template<typename t_interaction_spec, bool perturbed>
+  template<typename t_interaction_spec, typename t_perturbation_spec>
   class Nonbonded_Interaction;
   
   /**
    * @class Nonbonded_Set
    * calculates the nonbonded interactions.
    */
-  template<typename t_interaction_spec, bool perturbed>
+  template<typename t_interaction_spec, typename t_perturbation_spec>
   class Nonbonded_Set : 
     public Nonbonded_Outerloop<t_interaction_spec>,  
-    public Perturbed_Nonbonded_Outerloop<t_interaction_spec>,
-    public Perturbed_Nonbonded_Pair<t_interaction_spec>
+    public Perturbed_Nonbonded_Outerloop<t_interaction_spec, 
+					 typename t_perturbation_spec::perturbation_details>,
+    public Perturbed_Nonbonded_Pair<t_interaction_spec, typename t_perturbation_spec::perturbation_details>
   {
   public:    
 
@@ -33,7 +34,7 @@ namespace interaction
      * @param sim where to store forces and energies
      * (and virial contribution).
      */
-    Nonbonded_Set(Nonbonded_Interaction<t_interaction_spec, perturbed> & nbi);
+    Nonbonded_Set(Nonbonded_Interaction<t_interaction_spec, t_perturbation_spec> & nbi);
     
     /**
      * initialize some things
@@ -84,7 +85,7 @@ namespace interaction
 
   protected:
     Nonbonded_Interaction<
-      t_interaction_spec, perturbed> * m_nonbonded_interaction;
+      t_interaction_spec, t_perturbation_spec> * m_nonbonded_interaction;
     
     Storage m_shortrange_storage;
     Storage m_longrange_storage;

@@ -10,17 +10,17 @@
 
 #include <util/debug.h>
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::Range_Filter()
   : interaction::Filter()
 {
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::set_cutoff(double const cutoff_short, double const cutoff_long)
 {
   m_cutoff_long = cutoff_long;
@@ -29,9 +29,9 @@ interaction::Range_Filter<t_interaction_spec, perturbed>
   m_cutoff_long_2  = cutoff_long * cutoff_long;
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::prepare_cog(topology::Topology & topo,
 	      configuration::Configuration & conf,
 	      simulation::Simulation & sim)
@@ -65,9 +65,9 @@ interaction::Range_Filter<t_interaction_spec, perturbed>
   }  
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::grid_cog(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
@@ -91,13 +91,13 @@ interaction::Range_Filter<t_interaction_spec, perturbed>
   
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline bool
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::range_chargegroup_pair(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
-			 Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+			 Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 			 size_t const i, size_t const j,
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
@@ -150,13 +150,13 @@ interaction::Range_Filter<t_interaction_spec, perturbed>
   return true;
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline bool
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::range_chargegroup_pair(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
-			 Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+			 Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 			 size_t const i, size_t const j,
 			 topology::Chargegroup_Iterator const & it_i,
 			 topology::Chargegroup_Iterator const & it_j,
@@ -208,13 +208,13 @@ interaction::Range_Filter<t_interaction_spec, perturbed>
   return true;
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline bool
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::range_atom_pair(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
-		  Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+		  Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 		  size_t const i, size_t const j,
 		  Periodicity_type const & periodicity)
 {
@@ -249,13 +249,13 @@ interaction::Range_Filter<t_interaction_spec, perturbed>
   return true;
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline bool
-interaction::Range_Filter<t_interaction_spec, perturbed>
+interaction::Range_Filter<t_interaction_spec, t_perturbation_spec>
 ::range_atom_pair(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
-		  Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+		  Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 		  size_t const i, size_t const j,
 		  int pc,
 		  Periodicity_type const & periodicity)

@@ -14,9 +14,9 @@ namespace interaction
    * @class Grid_Pairlist_Algorithm
    * creates a pairlist.
    */
-  template<typename t_interaction_spec, bool perturbed>
+  template<typename t_interaction_spec, typename t_perturbation_spec>
   class Grid_Pairlist_Algorithm : 
-    public Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>
+    public Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>
   {
   public:
     typedef Chargegroup_Grid<t_interaction_spec::boundary_type> Chargegroup_Grid_type;
@@ -43,7 +43,7 @@ namespace interaction
     void update(topology::Topology & topo,
 		configuration::Configuration & conf,
 		simulation::Simulation & sim,
-		Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+		Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
 		size_t begin, size_t end, size_t stride);
     
   private:
@@ -51,7 +51,7 @@ namespace interaction
     void intra_cell(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
-		    Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+		    Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
 		    std::vector<size_t>::const_iterator &cg_st, 
 		    std::vector<size_t>::const_iterator &cg_to,
 		    Periodicity_type const & periodicity);
@@ -60,7 +60,7 @@ namespace interaction
     void inter_cell(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim, 
-		    Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+		    Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
 		    std::vector<size_t>::const_iterator &cg_st, 
 		    std::vector<size_t>::const_iterator &cg_to,
 		    Chargegroup_Grid_type &grid,

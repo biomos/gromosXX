@@ -13,9 +13,10 @@ namespace interaction
    * @class Perturbed_Nonbonded_Outerloop
    * outerloop for the perturbed nonbonded interactions.
    */
-  template<typename t_interaction_spec>
+  template<typename t_interaction_spec,
+	   typename t_perturbation_details>
   class Perturbed_Nonbonded_Outerloop : 
-    public Perturbed_Nonbonded_Innerloop<t_interaction_spec>
+    public Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details>
   {
   public:    
 

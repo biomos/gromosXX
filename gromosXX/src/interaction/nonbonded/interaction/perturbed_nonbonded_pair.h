@@ -12,7 +12,7 @@ namespace interaction
    * @class Perturbed_Nonbonded_Pair
    * perturbed non bonded pairs.
    */
-  template<typename t_interaction_spec>
+  template<typename t_interaction_spec, typename perturbation_details>
   class Perturbed_Nonbonded_Pair
   {
   public:

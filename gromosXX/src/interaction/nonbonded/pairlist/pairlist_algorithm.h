@@ -13,16 +13,16 @@ namespace interaction
    * @class Pairlist_Algorithm
    * creates a pairlist.
    */
-  template<typename t_interaction_spec, bool perturbed>
+  template<typename t_interaction_spec, typename t_perturbation_spec>
   class Pairlist_Algorithm:
     public Exclusion_Filter<t_interaction_spec>,
-    public Range_Filter<t_interaction_spec, perturbed> 
+    public Range_Filter<t_interaction_spec, t_perturbation_spec> 
   {
   public:
     /**
      * Constructor.
      */
-    Pairlist_Algorithm() {}
+    Pairlist_Algorithm() : m_timing(0.0) {}
     /**
      * destructor.
      */
@@ -39,10 +39,18 @@ namespace interaction
     virtual void update(topology::Topology & topo,
 			configuration::Configuration & conf,
 			simulation::Simulation &sim, 
-			Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+			Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
 			size_t begin, size_t end, size_t stride){ assert(false);}
     
+    /**
+     * timing accessor.
+     */
+    double timing() { return m_timing; }
+
   protected:
+
+    double m_timing;
+
   };
 } // interaction
 

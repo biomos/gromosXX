@@ -67,8 +67,15 @@ Release 0.1.0
 
 -------------
 
+Release 0.1.1
+	ok	nonbonded restructuring
 	-	nonbonded compartments
-	-	check environment
+	ok	check environment
+	ok	library restructuring (Gromos++ compatibility)
+
+-------------
+
+
 	-	check routines
 	-	exact flexible constraints
 	-	different lambda dependence

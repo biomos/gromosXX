@@ -12,17 +12,17 @@
 
 #include <util/debug.h>
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline
-interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 Grid_Pairlist_Algorithm()
-  : interaction::Standard_Pairlist_Algorithm<t_interaction_spec, perturbed>()
+  : interaction::Standard_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>()
 {
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 prepare(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim)
@@ -37,22 +37,24 @@ prepare(topology::Topology & topo,
   DEBUG(7, "range filter prepared (cog)");
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
-       Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+       Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
        size_t begin, size_t end, size_t stride)
 {
   DEBUG(7, "pairlist update");
    
+  const double update_start = util::now();
+
   // empty the pairlist
   nbs.pairlist().clear();
   nbs.pairlist().resize(topo.num_atoms());
 
-  if(perturbed){
+  if(t_perturbation_spec::do_perturbation){
     // and the perturbed pairlist
     nbs.perturbed_pairlist().clear();
     nbs.perturbed_pairlist().resize(topo.num_atoms());
@@ -121,16 +123,18 @@ update(topology::Topology & topo,
   }
   
   // and that's it...
+  m_timing += util::now() - update_start;
+
   DEBUG(7, "pairlist done");
 }
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 inline void
-interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 intra_cell(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
-	   Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+	   Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 	   std::vector<size_t>::const_iterator &cg_st, 
 	   std::vector<size_t>::const_iterator &cg_to,
 	   Periodicity_type const & periodicity)
@@ -178,14 +182,14 @@ intra_cell(topology::Topology & topo,
 }
 
 
-template<typename t_interaction_spec, bool perturbed>
+template<typename t_interaction_spec, typename t_perturbation_spec>
 template<bool periodic>
 inline void
-interaction::Grid_Pairlist_Algorithm<t_interaction_spec, perturbed>::
+interaction::Grid_Pairlist_Algorithm<t_interaction_spec, t_perturbation_spec>::
 inter_cell(topology::Topology & topo,
 	   configuration::Configuration & conf,
 	   simulation::Simulation & sim,
-	   Nonbonded_Set<t_interaction_spec, perturbed> & nbs,
+	   Nonbonded_Set<t_interaction_spec, t_perturbation_spec> & nbs,
 	   std::vector<size_t>::const_iterator &cg_st, 
 	   std::vector<size_t>::const_iterator &cg_to,
 	   Chargegroup_Grid_type & grid,

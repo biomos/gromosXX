@@ -252,17 +252,23 @@ static void _add_grid_nonbonded(interaction::Forcefield & ff,
     t_boundary,
     t_virial,
     t_cutoff,
-    interaction::bekker_on,
-    interaction::scaling_off
+    interaction::bekker_on
     >
     interaction_spec_type;
+
+  typedef interaction::Perturbation_Spec
+    <
+    interaction::perturbation_off,
+    interaction::scaling_off
+    >
+    perturbation_spec_type;
   
-  interaction::Grid_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_off> * pa 
-    = new interaction::Grid_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_off>;
+  interaction::Grid_Pairlist_Algorithm<interaction_spec_type, perturbation_spec_type> * pa 
+    = new interaction::Grid_Pairlist_Algorithm<interaction_spec_type, perturbation_spec_type>;
   
 
-  interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_off> * the_nonbonded 
-    = new interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_off>(pa);
+  interaction::Nonbonded_Interaction<interaction_spec_type, perturbation_spec_type> * the_nonbonded 
+    = new interaction::Nonbonded_Interaction<interaction_spec_type, perturbation_spec_type>(pa);
   
   it.read_lj_parameter(the_nonbonded->lj_parameter());
   

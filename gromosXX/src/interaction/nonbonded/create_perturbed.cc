@@ -268,17 +268,24 @@ static void _add_nonbonded(interaction::Forcefield & ff,
       t_boundary,
       t_virial,
       t_cutoff,
-      interaction::bekker_off,
-      interaction::scaling_on
+      interaction::bekker_off
       >
       interaction_spec_type;
     
-    interaction::Standard_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_on> * pa
-      = new  interaction::Standard_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_on>;
+    typedef interaction::Perturbation_Spec
+      <
+      interaction::perturbation_on,
+      interaction::scaling_on
+      >
+      perturbation_spec_type;
+    
+
+    interaction::Standard_Pairlist_Algorithm<interaction_spec_type, perturbation_spec_type> * pa
+      = new  interaction::Standard_Pairlist_Algorithm<interaction_spec_type, perturbation_spec_type>;
   
 
-    interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_on> * the_nonbonded 
-      = new interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_on>(pa);
+    interaction::Nonbonded_Interaction<interaction_spec_type, perturbation_spec_type> * the_nonbonded 
+      = new interaction::Nonbonded_Interaction<interaction_spec_type, perturbation_spec_type>(pa);
     
     it.read_lj_parameter(the_nonbonded->lj_parameter());
     
@@ -292,17 +299,23 @@ static void _add_nonbonded(interaction::Forcefield & ff,
       t_boundary,
       t_virial,
       t_cutoff,
-      interaction::bekker_off,
-      interaction::scaling_off
+      interaction::bekker_off
       >
       interaction_spec_type;
+
+    typedef interaction::Perturbation_Spec
+      <
+      interaction::perturbation_on,
+      interaction::scaling_off
+      >
+      perturbation_spec_type;
     
-    interaction::Standard_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_on> * pa 
-    = new  interaction::Standard_Pairlist_Algorithm<interaction_spec_type, interaction::perturbation_on>;
+    interaction::Standard_Pairlist_Algorithm<interaction_spec_type, perturbation_spec_type> * pa 
+    = new  interaction::Standard_Pairlist_Algorithm<interaction_spec_type, perturbation_spec_type>;
   
 
-    interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_on> * the_nonbonded 
-      = new interaction::Nonbonded_Interaction<interaction_spec_type, interaction::perturbation_on>(pa);
+    interaction::Nonbonded_Interaction<interaction_spec_type, perturbation_spec_type> * the_nonbonded 
+      = new interaction::Nonbonded_Interaction<interaction_spec_type, perturbation_spec_type>(pa);
     
     it.read_lj_parameter(the_nonbonded->lj_parameter());
     

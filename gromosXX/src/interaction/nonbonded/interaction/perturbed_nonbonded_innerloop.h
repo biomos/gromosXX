@@ -12,7 +12,8 @@ namespace interaction
    * @class Perturbed_Nonbonded_Innerloop
    * perturbed non bonded inner loop.
    */
-  template<typename t_interaction_spec>
+  template<typename t_interaction_spec,
+	   typename t_perturbation_details>
   class Perturbed_Nonbonded_Innerloop:
     public Perturbed_Nonbonded_Term
   {

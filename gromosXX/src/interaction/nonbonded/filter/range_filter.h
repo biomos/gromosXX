@@ -14,7 +14,7 @@ namespace interaction
    * provides methods both for atom and chargegroup
    * based cutoffs.
    */
-  template<typename t_interaction_spec, bool perturbed>
+  template<typename t_interaction_spec, typename t_perturbation_spec>
   class Range_Filter
     : public Filter
   {
@@ -47,7 +47,7 @@ namespace interaction
     bool range_chargegroup_pair
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim, 
-     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+     Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
      size_t const i, size_t const j,
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
@@ -64,7 +64,7 @@ namespace interaction
     bool range_chargegroup_pair
     (topology::Topology & topo,	configuration::Configuration & conf,
      simulation::Simulation & sim, 
-     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+     Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
      size_t const i, size_t const j,
      topology::Chargegroup_Iterator const &it_i,
      topology::Chargegroup_Iterator const &it_j,
@@ -78,7 +78,7 @@ namespace interaction
     bool range_atom_pair
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim,
-     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+     Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
      size_t const i, size_t const j,
      Periodicity_type const & periodicity);
 
@@ -89,7 +89,7 @@ namespace interaction
     bool range_atom_pair
     (topology::Topology & topo, configuration::Configuration & conf,
      simulation::Simulation & sim,
-     Nonbonded_Set<t_interaction_spec, perturbed> &nbs,
+     Nonbonded_Set<t_interaction_spec, t_perturbation_spec> &nbs,
      size_t const i, size_t const j, int pc,
      Periodicity_type const & periodicity);
     

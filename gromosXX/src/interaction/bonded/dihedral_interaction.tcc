@@ -189,6 +189,8 @@ int interaction::Dihedral_Interaction<t_interaction_spec>
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
+  const double start = util::now();
+  
   switch(conf.boundary_type){
     case math::vacuum :
       return _calculate_dihedral_interactions<math::vacuum, t_interaction_spec>
@@ -205,6 +207,8 @@ int interaction::Dihedral_Interaction<t_interaction_spec>
     default:
       throw std::string("Wrong boundary type");
   }
+
+  m_timing += util::now() - start;
   
 }
 
