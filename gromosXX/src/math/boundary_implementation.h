@@ -32,6 +32,10 @@ namespace math
      */
     void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
     /**
+     * Get the box components of v.
+     */
+    void box_components(Vec const &v, Vec & n)const;
+    /**
      * set the boundary condition.
      */
     void boundary_condition(boundary_enum const b);
@@ -111,6 +115,10 @@ namespace math
      */
     void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
     /**
+     * Get the box components of v.
+     */
+    void box_components(Vec const &v, Vec & n)const;
+    /**
      * set the boundary condition.
      */
     void boundary_condition(boundary_enum const b);
@@ -177,6 +185,10 @@ namespace math
      * Get the nearest image of v1 in respect to v2 (v1 - v2).
      */
     void nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    /**
+     * Get the box components of v.
+     */
+    void box_components(Vec const &v, Vec & n)const;
     /**
      * set the boundary condition.
      */

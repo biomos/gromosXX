@@ -39,23 +39,21 @@ inline void math::Boundary_Implementation<b>
       break;
     case triclinic:
       nim = v1 - v2;
-      // std::cout << "nim: " << nim << std::endl;
-      // std::cout << "m_box: " << m_box << std::endl;
 
       for(int d=0; d<3; ++d){
+	// i think the if statement might be wrong for really 
+	// triclinic cases!
 	if (fabs(nim(d)) >= m_box(d)(d) * 0.5){
 	  // have to change all three components!
 	  nim += m_box(d) * rint(dot(m_cross_K_L_M(d), nim));
 	}
-	// std::cout << "nim (" << d << "): " << nim << std::endl;	
       }
       break;
     default:
-      /*
       io::messages.add("undefined boundary condition",
 		       "math::Boundary_Implementation",
 		       io::message::critical);
-      */
+
       throw std::runtime_error("undefined boundary condition");
   }
 }      
@@ -77,6 +75,43 @@ inline void math::Boundary_Implementation<math::triclinic>
   for(int d=0; d<3; ++d){
     if (fabs(nim(d)) >= m_box(d)(d) * 0.5)
       nim += m_box(d) * rint(dot(m_cross_K_L_M(d), nim));
+  }
+}
+
+template<math::boundary_enum b>
+inline void math::Boundary_Implementation<b>
+::box_components(Vec const &v, Vec & n)const
+{
+  switch(m_boundary){
+    case vacuum:
+      n = 0;
+      break;
+    case triclinic:
+      for(int d=0; d<3; ++d){
+	// have to change all three components!
+	n(d) = -dot(m_cross_K_L_M(d), v);
+      }
+      break;
+    default:
+      io::messages.add("undefined boundary condition",
+		       "math::Boundary_Implementation",
+		       io::message::critical);
+
+      throw std::runtime_error("undefined boundary condition");
+  }
+}      
+
+inline void math::Boundary_Implementation<math::vacuum>
+::box_components(Vec const &v, Vec & n)const
+{
+  n = 0;
+}
+
+inline void math::Boundary_Implementation<math::triclinic>
+::box_components(Vec const &v, Vec & n)const
+{
+  for(int d=0; d<3; ++d){
+    n = -dot(m_cross_K_L_M(d), v);
   }
 }
 
