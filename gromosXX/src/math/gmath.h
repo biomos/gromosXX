@@ -145,6 +145,14 @@ namespace math
       return *this;
     }
     
+    Matrix & operator=(Matrix mat)
+    {
+      for(int i=0; i<3; ++i)
+	for(int j=0; j<3; ++j)
+	  m[i][j] = mat(i,j);
+      return *this;
+    }
+    
     double operator()(int i, int j)const 
     {
       assert( i>=0 && i<3 && j>=0 && j<3 );
@@ -160,7 +168,6 @@ namespace math
   /**
    * Box.
    */
-  // typedef blitz::TinyVector< blitz::TinyVector<double, 3>, 3> Box;
   class Box
   {
   private:
@@ -271,20 +278,6 @@ namespace math
 #endif
 
 
-  /**
-   * provide comparision operators for the blitz TinyVector.
-   * they should be implemented by blitz, but i cannot get
-   * them to work?!
-   */
-  /*
-    inline bool operator==(math::Vec &t1, math::Vec &t2)
-    {
-    bool b = true;
-    for(int i=0; i<3; ++i)
-    if (t1(i != t2(i)) b = false;
-    return b;
-    }
-  */
   inline bool operator==(Vec const &v1, Vec const &v2)
   {
     if (v1(0) != v2(0)) return false;
@@ -301,34 +294,10 @@ namespace math
     return !(t1 == t2);
   }
 
-  /**
-   * blitz dot product
-   */
-  /*
-  template<typename T, int N>
-  inline T dot(TinyVector<T,N> const &v1, TinyVector<T,N> const &v2)
-  {
-    return blitz::dot(v1, v2);
-  }
-
-  BZ_DECLARE_FUNCTION2_RET(dot, double);
-  */
   inline double dot(Vec const &v1, Vec const &v2)
   {
     return v1(0) * v2(0) + v1(1) * v2(1) + v1(2) * v2(2);
   }
-
-  /**
-   * blitz cross product
-   */
-  /*
-  inline math::Vec cross(math::Vec const &v1, math::Vec const & v2)
-  {
-    return blitz::cross(v1, v2);
-  }
-
-  BZ_DECLARE_FUNCTION2_RET(cross, math::Vec);
-  */
 
   inline Vec cross(Vec const &v1, Vec const &v2)
   {
@@ -337,33 +306,11 @@ namespace math
 	       v1(0) * v2(1) - v1(1) * v2(0));
   }
 
-  /**
-   * blitz abs2
-   */
-  /*
-  template<typename T, int N>
-  inline T abs2(TinyVector<T,N> v)
-  {
-    return sum(sqr(v));
-  }
-
-  BZ_DECLARE_FUNCTION_RET(abs2, double);
-  */
-  
   inline double abs2(Vec const &v)
   {
     return v(0) * v(0) + v(1) * v(1) + v(2) * v(2);
   }
   
-  /*
-  inline void dyade(math::Vec const &v1, math::Vec const &v2,
-		    math::Matrix &m)
-  {
-    for(int d1=0; d1 < 3; ++d1)
-      for(int d2=0; d2 < 3; ++d2)
-	m(d1,d2) = v1[d1] * v2[d2];
-  }
-  */
   inline void dyade(Vec const &v1, Vec const &v2, Matrix &m)
   {
     for(int d1=0; d1 < 3; ++d1)
