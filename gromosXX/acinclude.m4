@@ -1,4 +1,4 @@
-dnl Local function, as GROMOS++ depends
+dnl Local function, as GROMOSXX depends
 dnl on the STL. -> Does the C++ compiler
 dnl support the STL to the degree necessary?
 dnl 
@@ -166,7 +166,7 @@ dnl Blitz++ is available at http://oonumerics.org/blitz.
 dnl
 dnl   Set the path for Blitz++  with the option
 dnl      --with-blitz[=DIR]
-dnl   Blitz headers should be under DIR/includes
+dnl   Blitz headers should be under DIR/include
 dnl   Blitz library should be under DIR/lib
 dnl   Then try to compile and run a simple program with a Blitz Array
 dnl   Optional argument `required' triggers an error if Blitz++ not installed
