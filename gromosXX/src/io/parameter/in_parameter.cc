@@ -257,10 +257,10 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
   if (!buffer.size()){
     param.constraint.ntc = 1;
     param.constraint.solute.algorithm = simulation::constr_off;
-    param.constraint.solvent.algorithm = simulation::constr_off;
+    param.constraint.solvent.algorithm = simulation::constr_shake;
 
     io::messages.add("no SHAKE / CONSTRAINT block", "In_Parameter",
-		     io::message::error);
+		     io::message::warning);
 
     return;
   }
@@ -316,6 +316,8 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
     param.constraint.solute.algorithm = simulation::constr_shake;
     param.constraint.solute.shake_tolerance = param.constraint.solvent.shake_tolerance;
   }
+  else
+    param.constraint.solute.algorithm = simulation::constr_off;
   
   param.constraint.solvent.algorithm = simulation::constr_shake;
 
@@ -384,7 +386,10 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 
     DEBUG(9, "constraints solute shake");
     
-    param.constraint.solute.algorithm = simulation::constr_shake;
+    if (param.constraint.ntc > 1)
+      param.constraint.solute.algorithm = simulation::constr_shake;
+    else param.constraint.solute.algorithm = simulation::constr_off;
+    
     _lineStream >> param.constraint.solute.shake_tolerance;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
@@ -395,7 +400,10 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 
     DEBUG(9, "constraints solute flexshake");
     
-    param.constraint.solute.algorithm = simulation::constr_flexshake;
+    if (param.constraint.ntc > 1)
+      param.constraint.solute.algorithm = simulation::constr_flexshake;
+    else param.constraint.solute.algorithm = simulation::constr_off;
+    
     _lineStream >> param.constraint.solute.shake_tolerance
 		>> param.constraint.solute.flexshake_readin;
     
@@ -412,7 +420,11 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 
     DEBUG(9, "constraints solute lincs");
 
-    param.constraint.solute.algorithm = simulation::constr_lincs;
+    if (param.constraint.ntc > 1)
+      param.constraint.solute.algorithm = simulation::constr_lincs;
+    else 
+      param.constraint.solute.algorithm = simulation::constr_off;
+    
     _lineStream >> param.constraint.solute.lincs_order;
     
     if(param.constraint.solute.lincs_order < 1)
@@ -424,7 +436,6 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 
     DEBUG(9, "constraints solute off");
     param.constraint.solute.algorithm = simulation::constr_off;
-
   }
   else{
 
@@ -657,12 +668,33 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param)
 
     if (s1 == "off"){
       param.pcouple.calculate = false;
+      param.pcouple.scale = math::pcouple_off;
     } 
     else if (s1 == "calc"){
       param.pcouple.calculate = true;
+      param.pcouple.scale = math::pcouple_off;
     }
     else if (s1 == "scale"){
       param.pcouple.calculate = true;
+
+      if (s2 == "off"){
+	io::messages.add("requesting scaling but SCALE set to OFF\n",
+			 "In_Parameter", io::message::error);
+	param.pcouple.scale = math::pcouple_off;
+      }
+      else if (s2 == "iso")
+	param.pcouple.scale = math::pcouple_isotropic;
+      else if (s2 == "aniso")
+	param.pcouple.scale = math::pcouple_anisotropic;
+      else if (s2 == "full")
+	param.pcouple.scale = math::pcouple_full_anisotropic;
+      else{
+	io::messages.add("bad value for SCALE switch in PCOUPLE03 block\n"
+			 "(off,iso,aniso,full)",
+			 "In_Parameter", io::message::error);
+	param.pcouple.scale = math::pcouple_off;
+      }
+
     }
     else{
       io::messages.add("bad value for calc switch in PCOUPLE03 block\n"
@@ -671,32 +703,27 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param)
       param.pcouple.calculate = false;
     }
   
-    if (s2 == "off")
-      param.pcouple.scale = math::pcouple_off;
-    else if (s2 == "iso")
-      param.pcouple.scale = math::pcouple_isotropic;
-    else if (s2 == "aniso")
-      param.pcouple.scale = math::pcouple_anisotropic;
-    else if (s2 == "full")
-      param.pcouple.scale = math::pcouple_full_anisotropic;
-    else{
-      io::messages.add("bad value for SCALE switch in PCOUPLE03 block\n"
-		       "(off,iso,aniso,full)",
-		       "In_Parameter", io::message::error);
-	param.pcouple.scale = math::pcouple_off;
+    if (param.pcouple.calculate){
+      if (s3 == "none"){
+	io::messages.add("requesting pressure calculation but "
+			 "no virial specified\n",
+			 "In_Parameter", io::message::error);
+	param.pcouple.virial = math::no_virial;
+      }
+      else if (s3 == "atomic")
+	param.pcouple.virial = math::atomic_virial;
+      else if (s3 == "molecular")
+	param.pcouple.virial = math::molecular_virial;
+      else{
+	io::messages.add("bad value for virial switch in PCOUPLE03 block\n"
+			 "(none,atomic,molecular)",
+			 "In_Parameter", io::message::error);
+	param.pcouple.virial = math::no_virial;
+      }
     }
-    if (s3 == "none")
+    else
       param.pcouple.virial = math::no_virial;
-    else if (s3 == "atomic")
-      param.pcouple.virial = math::atomic_virial;
-    else if (s3 == "molecular")
-      param.pcouple.virial = math::molecular_virial;
-    else{
-      io::messages.add("bad value for virial switch in PCOUPLE03 block\n"
-		       "(none,atomic,molecular)",
-		       "In_Parameter", io::message::error);
-      param.pcouple.virial = math::no_virial;
-    }
+    
   } // PCOUPLE03 block
   else{
     
@@ -1091,12 +1118,34 @@ void io::In_Parameter::read_FORCEFIELD(simulation::Parameter &param)
   
   block_read.insert("FORCEFIELD");
 
-  io::messages.add("using FORCEFIELD block to determine bond term",
-		   "In_Parameter", io::message::notice);
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-  _lineStream >> param.force.bond 
-	      >> param.force.angle;
+
+  int bond, angle;
+  
+  _lineStream >> bond 
+	      >> angle;
+
+  if (bond == 2 && param.force.bond != 0){
+    if (param.force.bond != 2){
+      io::messages.add("using FORCEFIELD block to determine bond term",
+		       "In_Parameter", io::message::notice);
+      param.force.bond = 2;
+    }
+  }
+  if (bond == 0 && param.force.bond != 0){
+    if (param.force.bond != 1){
+      io::messages.add("using FORCEFIELD block to determine bond term",
+		       "In_Parameter", io::message::notice);
+      param.force.bond = 1;
+    }
+  }
+  
+  if (angle != 0){
+    io::messages.add("FORCEFIELD: only Gromos96 functional form for angle "
+		     "bending allowed.",
+		     "In_Parameter", io::message::error);
+  }
   
   if (_lineStream.fail())
     io::messages.add("bad line in FORCEFIELD block",
