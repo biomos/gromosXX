@@ -163,11 +163,12 @@ int algorithm::Perturbed_Shake<do_virial>
       }
       
       // the perturbed energy derivatives
+
       conf.old().perturbed_energy_derivatives.
-	constraints_energy[topo.atom_energy_group()[it->i]] -=
-	sqrt(dot(ref_r * lambda / dt2, ref_r * lambda / dt2)) *
+	constraints_energy[topo.atom_energy_group()[it->i]] +=
+	lambda / dt2 * sqrt(constr_length2) *
 	(param[it->B_type].r0 - param[it->A_type].r0);
-      
+
       // update positions
       ref_r *= lambda;
       pos_i += ref_r / topo.mass()(first+it->i);

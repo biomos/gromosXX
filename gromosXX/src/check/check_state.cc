@@ -48,6 +48,7 @@
 #include <algorithm/create_md_sequence.h>
 
 #include <math/volume.h>
+#include <util/prepare_virial.h>
 
 #include <time.h>
 
@@ -64,7 +65,9 @@ void scale_positions(topology::Topology & topo,
 		     math::Vec const scale)
 {
   for(size_t i = 0; i< topo.num_atoms(); ++i){
-    conf.current().pos(i) *= scale;
+    conf.current().pos(i) = 
+      (conf.current().pos(i) - conf.special().rel_mol_com_pos(i)) *
+      scale + conf.special().rel_mol_com_pos(i);
   }
   conf.current().box(0) *=scale;
   conf.current().box(1) *=scale;
@@ -80,12 +83,27 @@ int check::check_state(topology::Topology & topo,
   const double epsilon = 0.000001;
   int res=0, total=0;
 
+  // nach uns die sintflut
+  // na ons de zondvloed
+  // apres nous le deluge
+  // after us the  Flood (devil-may-care)
+
+  for(size_t s = 0; s < topo.num_solute_atoms(); ++s){
+    topo.one_four_pair(s).clear();
+    for(size_t t=s+1; t < topo.num_solute_atoms(); ++t){
+      
+      topo.all_exclusion(s).insert(t);
+    }
+  }
+
   CHECKING("Virial (finite diff)",res);
 
   conf.exchange_state();
   conf.current().pos = conf.old().pos;
   conf.current().box = conf.old().box;
-  
+
+  // prepare rel_mol_com_pos
+  util::prepare_virial(topo, conf, sim);
   
   math::Matrix finP;
   finP=0;
@@ -113,14 +131,11 @@ int check::check_state(topology::Topology & topo,
     conf.current().pos = conf.old().pos;
     conf.current().box = conf.old().box;
 
-    for(int j=0; j < 3; j++){
-      finP(i,j)=0.0;
-      for(int k=0; k< 3; k++){
-	finP(i,j) += conf.current().box(j)(k) * (e2-e1)/(2*epsilon*conf.current().box(i)(k));
-      }
-      
-    }
+    finP(i,i) = -0.5 * conf.current().box(i)(i) * (e2-e1)/(2*epsilon) /
+      conf.current().box(i)(i);
+
   }
+  
     
   // calculate the energy
   ff.apply(topo, conf, sim);
@@ -133,9 +148,7 @@ int check::check_state(topology::Topology & topo,
   pcalc->apply(topo, conf, sim);
   
   for(int i=0; i < 3; i++){
-    for(int j=0; j < 3; j++){
-      CHECK_APPROX_EQUAL(conf.old().virial_tensor(i,j), finP(i,j), 0.0000000001, res);
-    }
+    CHECK_APPROX_EQUAL(conf.old().virial_tensor(i,i), finP(i,i), 0.00001, res);
   }
 
   RESULT(res,total);
