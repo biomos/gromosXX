@@ -20,6 +20,7 @@
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <algorithm/integration/leap_frog.h>
 #include <algorithm/temperature/temperature_calculation.h>
+#include <algorithm/temperature/nosehoover_thermostat.h>
 #include <algorithm/temperature/berendsen_thermostat.h>
 #include <algorithm/pressure/pressure_calculation.h>
 #include <algorithm/pressure/berendsen_barostat.h>
@@ -85,9 +86,17 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
     // temperature scaling? -> has to be done before temperature calculation!!!
     if (sim.param().multibath.couple){
-      algorithm::Berendsen_Thermostat * tcoup =
-	new algorithm::Berendsen_Thermostat;
-      md_seq.push_back(tcoup);
+
+      if (sim.param().multibath.nosehoover == 0){
+	algorithm::Berendsen_Thermostat * tcoup =
+	  new algorithm::Berendsen_Thermostat;
+	md_seq.push_back(tcoup);
+      }
+      else if (sim.param().multibath.nosehoover >= 1){
+	algorithm::NoseHoover_Thermostat *tcoup =
+	  new algorithm::NoseHoover_Thermostat;
+	md_seq.push_back(tcoup);
+      }
     }
     
     md_seq.push_back(new algorithm::Leap_Frog_Position);

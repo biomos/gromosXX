@@ -9,7 +9,9 @@ xxinclude_HEADERS =		algorithm.h \
 				integration/slow_growth.h \
 				integration/steepest_descent.h \
 			 	temperature/temperature_calculation.h \
+				temperature/thermostat.h \
 				temperature/berendsen_thermostat.h \
+				temperature/nosehoover_thermostat.h \
 			  	pressure/pressure_calculation.h \
 			  	pressure/berendsen_barostat.h \
 			  	constraints/create_constraints.h \
@@ -28,7 +30,9 @@ libgroalgorithm_la_SOURCES =	algorithm.cc \
 				algorithm/algorithm_sequence.cc \
 				integration/leap_frog.cc \
 				temperature/temperature_calculation.cc \
+				temperature/thermostat.cc \
 				temperature/berendsen_thermostat.cc \
+				temperature/nosehoover_thermostat.cc \
 				pressure/pressure_calculation.cc \
 				pressure/berendsen_barostat.cc \
 				constraints/create_constraints.cc \

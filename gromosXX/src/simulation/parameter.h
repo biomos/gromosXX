@@ -267,8 +267,9 @@ namespace simulation
        * - couple false (no temperature coupling)
        * - found multibath false
        * - found tcouple false
+       * - nosehoover 0 (weak coupling)
        */
-      multibath_struct() : couple(false), found_multibath(false), found_tcouple(false) {}
+      multibath_struct() : couple(false), found_multibath(false), found_tcouple(false), nosehoover(0) {}
       
       /**
        * do temperature coupling?
@@ -320,6 +321,14 @@ namespace simulation
        * have tcouple
        */
       bool found_tcouple;
+      /**
+       * Nose-Hoover?
+       *  0 : berendsen
+       *  1 : Nose-Hoover
+       * >1 : Nose-Hoover-Chains
+       */
+      int nosehoover;
+
     } /** temperature coupling parameters */ multibath;
     
     /**

@@ -1578,11 +1578,49 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
+    std::string alg;
+
+    // the algorithm
+    _lineStream >> alg;
+    std::transform(alg.begin(), alg.end(), alg.begin(), tolower);
+
+    if (alg == "weak-coupling")
+      param.multibath.nosehoover = 0;
+    else if (alg == "nose-hoover")
+      param.multibath.nosehoover = 1;
+    else if (alg == "nose-hoover-chains")
+      param.multibath.nosehoover = 2;
+    else{
+      std::stringstream ss(alg);
+      if (!(ss >> param.multibath.nosehoover) ||
+	  param.multibath.nosehoover < 0 || param.multibath.nosehoover > 2){
+	io::messages.add("algorithm not understood in multibath block",
+			 "In_Parameter", io::message::error);
+
+	param.multibath.nosehoover = 0;
+	return;
+      }
+    }
+
+    if (param.multibath.nosehoover == 2){
+      // read in the number of chains
+      int num;
+      _lineStream >> num;
+
+      if (num < 2){
+	io::messages.add("wrong number of Nose-Hoover chains in multibath block",
+			 "In_Parameter", io::message::error);
+	param.multibath.nosehoover = 0;
+	return;
+      }
+      param.multibath.nosehoover = num;
+    }
+    
     int num;
     unsigned int last;
     unsigned int com_bath, ir_bath;
     double temp, tau;
-    
+
     // the baths
     _lineStream >> num;
     

@@ -25,10 +25,11 @@ namespace simulation
   {
     bath_struct(double t, double tau, double dof, double ir_dof, 
 		double com_dof, double solu_constr_dof, 
-		double solv_constr_dof, double scale=0, double ekin=0)
+		double solv_constr_dof, double scale=0, 
+		std::vector<double> zeta=std::vector<double>(1, 0.0), double ekin=0)
       : temperature(t),tau(tau), dof(dof), ir_dof(ir_dof),com_dof(com_dof),
 	solute_constr_dof(solu_constr_dof), 
-	solvent_constr_dof(solv_constr_dof), scale(scale), ekin(ekin)
+	solvent_constr_dof(solv_constr_dof), scale(scale), zeta(zeta), ekin(ekin)
     {}
     
     double temperature;
@@ -39,6 +40,7 @@ namespace simulation
     double solute_constr_dof;
     double solvent_constr_dof;
     double scale;
+    std::vector<double> zeta;
     double ekin;
   };
 
