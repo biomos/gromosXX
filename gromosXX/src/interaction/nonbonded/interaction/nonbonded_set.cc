@@ -1,5 +1,5 @@
 /**
- * @file nonbonded_set.tcc
+ * @file nonbonded_set.cc
  * template methods of Nonbonded_Set.
  */
 

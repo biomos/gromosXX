@@ -58,6 +58,6 @@ namespace interaction
   
 } // interaction
 
-#include "perturbed_nonbonded_pair.tcc"
+#include "perturbed_nonbonded_pair.cc"
 
 #endif

@@ -209,6 +209,6 @@ namespace interaction
 } // interaction
 
 // template / inline methods
-#include "perturbed_nonbonded_term.tcc"
+#include "perturbed_nonbonded_term.cc"
 
 #endif

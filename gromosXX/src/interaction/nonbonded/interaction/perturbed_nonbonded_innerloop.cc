@@ -1,5 +1,5 @@
 /**
- * @file perturbed_nonbonded_innerloop.tcc
+ * @file perturbed_nonbonded_innerloop.cc
  * template methods of Perturbed_Nonbonded_Innerloop
  */
 

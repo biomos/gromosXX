@@ -1,5 +1,5 @@
 /**
- * @file nonbonded_interaction.tcc
+ * @file nonbonded_interaction.cc
  * template methods of Nonbonded_Interaction.
  */
 

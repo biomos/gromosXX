@@ -1,5 +1,5 @@
 /**
- * @file perturbed_nonbonded_term.tcc
+ * @file perturbed_nonbonded_term.cc
  * inline methods of Perturbed_Nonbonded_Term
  */
 

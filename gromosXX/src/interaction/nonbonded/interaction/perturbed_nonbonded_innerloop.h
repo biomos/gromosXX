@@ -62,6 +62,6 @@ namespace interaction
   
 } // interaction
 
-#include "perturbed_nonbonded_innerloop.tcc"
+#include "perturbed_nonbonded_innerloop.cc"
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * @file perturbed_nonbonded_outerloop.tcc
+ * @file perturbed_nonbonded_outerloop.cc
  * template methods of Perturbed_Nonbonded_Outerloop.
  */
 

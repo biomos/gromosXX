@@ -1,5 +1,5 @@
 /**
- * @file nonbonded_term.tcc
+ * @file nonbonded_term.cc
  * inline methods of Nonbonded_Term
  */
 

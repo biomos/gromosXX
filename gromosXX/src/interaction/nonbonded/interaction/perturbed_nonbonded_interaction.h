@@ -115,6 +115,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "perturbed_nonbonded_interaction.tcc"
+#include "perturbed_nonbonded_interaction.cc"
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * @file perturbed_nonbonded_pair.tcc
+ * @file perturbed_nonbonded_pair.cc
  * template methods of Perturbed_Nonbonded_Pair
  */
 

@@ -96,6 +96,6 @@ namespace interaction
 } // interaction
 
 // inline methods
-#include "nonbonded_term.tcc"
+#include "nonbonded_term.cc"
 
 #endif

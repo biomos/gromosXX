@@ -108,6 +108,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "nonbonded_set.tcc"
+#include "nonbonded_set.cc"
 
 #endif

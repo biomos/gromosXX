@@ -55,6 +55,6 @@ namespace interaction
 } // interaction
 
 // template methods
-#include "nonbonded_outerloop.tcc"
+#include "nonbonded_outerloop.cc"
 
 #endif
