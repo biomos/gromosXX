@@ -216,7 +216,8 @@ int main(int argc, char *argv[])
 
       if (print_pairlist && the_simulation.steps() % print_pairlist == 0){
 
-	std::vector<interaction::Interaction<simulation_type> *>::const_iterator it = the_forcefield.begin(),
+	std::vector<interaction::Interaction<simulation_type> *>::const_iterator
+	  it = the_forcefield.begin(),
 	  to = the_forcefield.end();
 	
 	for( ; it != to; ++it){
@@ -249,6 +250,8 @@ int main(int argc, char *argv[])
 	throw;
       }
     
+      io::print_PRESSURE(std::cout, the_system);
+
       the_simulation.increase_time(dt);
     
     }

@@ -75,6 +75,11 @@ namespace interaction
      */
     math::Vec m_tot_ekin;
 
+    /**
+     * the longrange virial.
+     */
+    math::Matrix m_longrange_virial;
+
   };
   
 } // interaction

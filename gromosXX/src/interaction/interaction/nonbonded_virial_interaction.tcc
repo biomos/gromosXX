@@ -45,12 +45,17 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
   simulation::Molecule_Iterator m_it = sim.topology().molecule_begin(),
     m_to = sim.topology().molecule_end();
   
-  math::Vec com_pos, com_ekin;
-  m_tot_ekin = 0.0;
+  math::Vec com_pos;
+  math::Matrix com_ekin;
   
+  sim.system().molecular_kinetic_energy() = 0.0;
+
   for( ; m_it != m_to; ++m_it){
     m_it.com(sim.system(), sim.topology().mass(), com_pos, com_ekin);
-    m_tot_ekin += com_ekin;
+
+    for(int i=0; i<3; ++i)
+      for(int j=0; j<3; ++j)
+	sim.system().molecular_kinetic_energy()(i,j) += com_ekin(i,j);
     
     simulation::Atom_Iterator a_it = m_it.begin(),
       a_to = m_it.end();
@@ -60,9 +65,20 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
     }
 
   }
-  
+
+  // reset the virial
+  if(!(sim.steps() % sim.nonbonded().update())){
+    m_longrange_virial = 0.0;
+  }
+  sim.system().virial() = 0.0;
+
   // do the work...
   Nonbonded_Interaction<t_simulation, t_pairlist>::calculate_interactions(sim);
+
+  for(int i=0; i<3; ++i)
+    for(int j=0; j<3; ++j)
+      sim.system().virial()(i,j) = -0.5*(sim.system().virial()(i,j)+
+			       m_longrange_virial(i,j));
 
 }
 
@@ -75,11 +91,51 @@ template<typename t_simulation, typename t_pairlist>
 inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
 ::do_interactions(t_simulation &sim, typename t_pairlist::iterator it, 
 		  typename t_pairlist::iterator to,
-		  typename Nonbonded_Interaction<t_simulation, t_pairlist>::nonbonded_type_enum range)
+		  typename Nonbonded_Interaction<t_simulation, t_pairlist>
+		  ::nonbonded_type_enum range)
 {
+  math::Vec r, f, r_com;
+  double energy;
   
-  Nonbonded_Interaction<t_simulation, t_pairlist>::do_interactions(sim, it, to, range);
+  math::VArray &pos = sim.system().pos();
+
+  math::VArray *force;
+  if (range == shortrange) force = &sim.system().force();
+  else force = &m_longrange_force;
   
+  math::Matrix *virial;
+  if (range == shortrange) virial = &sim.system().virial();
+  else virial = &m_longrange_virial;
+
+  DEBUG(7, "\tcalculate interactions");  
+
+  for( ; it != to; ++it){
+    
+    DEBUG(10, "\tpair\t" << it.i() << "\t" << *it);
+
+    sim.system().periodicity().nearest_image(pos(it.i()), pos(*it), r);
+    sim.system().periodicity().nearest_image(m_com_pos(it.i()), m_com_pos(*it), r_com);
+
+    const lj_parameter_struct &lj = 
+      lj_parameter(sim.topology().iac(it.i()),
+		   sim.topology().iac(*it));
+
+    DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+
+    lj_crf_interaction(r, lj.c6, lj.c12,
+		       sim.topology().charge()(it.i()) * 
+		       sim.topology().charge()(*it),
+		       f, energy);
+
+    (*force)(it.i()) += f;
+    (*force)(*it) -= f;
+
+    for(int i=0; i<3; ++i)
+      for(int j=0; j<3; ++j)
+	(*virial)(i, j) += f(i) * r_com(j);
+
+  }
+    
 }
 
 /**

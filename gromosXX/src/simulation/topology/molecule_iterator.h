@@ -36,14 +36,16 @@ namespace simulation
      */
     template<math::boundary_enum b>
     void com(simulation::System<b> const & sys, math::SArray const &mass,
-	     math::Vec &com_pos, math::Vec &com_e_kin)
+	     math::Vec &com_pos, math::Matrix &com_e_kin)
     {
       com_pos = 0.0;
-      com_e_kin = 0.0;
+
       double m;
       double tot_mass = 0.0;
+
       math::Vec p;
       math::Vec prev;
+      math::Vec v = 0.0;
 
       prev = sys.pos()(*begin());
       for(Atom_Iterator it=begin(), to=end(); it!=to; ++it){
@@ -51,11 +53,14 @@ namespace simulation
 	tot_mass += m;
 	sys.periodicity().nearest_image(sys.pos()(*it), prev, p);
 	com_pos += m * (p + prev);
-	com_e_kin += m * sys.vel()(*it);
+	v += m * sys.vel()(*it);
 	prev = sys.pos()(*it);
       }
       com_pos /= tot_mass;
-      com_e_kin = 0.5 * com_e_kin * com_e_kin / tot_mass;
+      
+      for(int i=0; i<3; ++i)
+	for(int j=0; j<3; ++j)
+	  com_e_kin(i,j) = 0.5 * v(i) * v(j) / tot_mass;
     }
 
   private:

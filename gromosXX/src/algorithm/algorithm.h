@@ -4,8 +4,10 @@
  */
 
 #include "temperature/berendsen.h"
+#include "pressure/berendsen.h"
 #include "integration/leap_frog.h"
 #include "constraint/shake.h"
+#include "algorithm/md.h"
 
 #ifndef NDEBUG
 namespace algorithm

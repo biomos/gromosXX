@@ -88,6 +88,32 @@ namespace interaction
     double m_coulomb_constant;
     
     /**
+     * Force:
+     * inverse reaction field cutoff to the power of 3.
+     */
+    double m_cut3i;
+    
+    /**
+     * Force:
+     * coulomb reaction field constant divided
+     * by the reaction field cutoff to the power of 3.
+     */
+    double m_crf_cut3i;
+    
+    /**
+     * Energy:
+     * reaction field constant / twice reaction field cutoff ^ 3
+     */
+    double m_crf_2cut3i;
+    
+    /**
+     * Energy:
+     * (1-coulomb reaction field constant / 2 and
+     * divided by reaction field cutoff.
+     */
+    double m_crf_cut;
+    
+    /**
      * the long-range force.
      */
     math::VArray m_longrange_force;
@@ -104,6 +130,19 @@ namespace interaction
      * calculate the 1,4-interactions.
      */
     virtual void do_14_interactions(t_simulation &sim);
+
+    /**
+     * initialize constants
+     */
+    void initialize(t_simulation const &sim);
+
+    /**
+     * calculate the force and energy of an atom pair.
+     */
+    void lj_crf_interaction(math::Vec const &r,
+			    double const c6, double const c12,
+			    double const q,
+			    math::Vec & force, double & energy);
 
   };
   

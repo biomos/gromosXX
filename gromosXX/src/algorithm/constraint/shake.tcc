@@ -17,9 +17,16 @@
 template<typename t_simulation>
 algorithm::Shake<t_simulation>
 ::Shake(double const tolerance, int const max_iterations)
-  : tolerance(tolerance),
+  : m_tolerance(tolerance),
     max_iterations(max_iterations)
 {
+}
+
+template<typename t_simulation>
+void algorithm::Shake<t_simulation>
+::tolerance(double const tol)
+{
+  m_tolerance = tol;
 }
 
 /**
@@ -164,7 +171,7 @@ bool algorithm::Shake<t_simulation>
 
     DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
 	  
-    if(fabs(diff) >= constr_length2 * tolerance * 2.0){
+    if(fabs(diff) >= constr_length2 * m_tolerance * 2.0){
       // we have to shake
       
       // the reference position

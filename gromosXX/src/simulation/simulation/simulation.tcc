@@ -89,6 +89,16 @@ inline simulation::Nonbonded & simulation::Simulation<t_topo, t_system>
 }
 
 /**
+ * const nonbonded interaction class
+ */
+template<typename t_topo, typename t_system>
+inline simulation::Nonbonded const & simulation::Simulation<t_topo, t_system>
+::nonbonded()const
+{
+  return m_nonbonded;
+}
+
+/**
  * multibath parameter
  */
 template<typename t_topo, typename t_system>

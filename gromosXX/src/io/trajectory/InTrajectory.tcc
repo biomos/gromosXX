@@ -297,7 +297,7 @@ inline bool io::InTrajectory::_read_box(simulation::System<b> &sys, std::vector<
   std::vector<std::string>::const_iterator it = buffer.begin()+1,
     to = buffer.end()-1;
   
-  math::Matrix box;
+  math::Box box;
 
   int i;
   _lineStream.clear();

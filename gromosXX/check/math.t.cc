@@ -10,7 +10,7 @@ int math_periodicity()
   
   CHECKING("math::periodicity<vacuum>", last_result);
   
-  Matrix box(Vec(3.0, 0.0, 0.0),
+  Box box(Vec(3.0, 0.0, 0.0),
 	     Vec(1.0, 1.0, 0.0),
 	     Vec(1.0, 1.0, 2.0));
   

@@ -1,5 +1,5 @@
 /**
- * @file berendsen.tcc
+ * @file temperature/berendsen.tcc
  * methods of the berendsen thermostat
  */
 

@@ -364,6 +364,44 @@ inline void io::InInput::read_PRINT(int &print_trajectory,
 }
 
 /**
+ * read the PCOUPLE block.
+ */
+inline void io::InInput::read_PCOUPLE(int &ntp, double &pres0,
+				      double &comp, double &tau)
+{
+  std::vector<std::string> buffer;
+  
+  buffer = m_block["PCOUPLE"];
+  _lineStream.clear();
+  _lineStream.str(buffer[1]);
+  
+  _lineStream >> ntp >> pres0 >> comp >> tau;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in PCOUPLE block",
+		     "InInput", io::message::error);
+}
+
+/**
+ * read the BOUNDARY block.
+ */
+inline void io::InInput::read_BOUNDARY(int &ntb, int &nrdbox)
+{
+  std::vector<std::string> buffer;
+  buffer = m_block["BOUNDARY"];
+  _lineStream.clear();
+  _lineStream.str(buffer[1]);
+
+  double b1, b2, b3, beta;
+
+  _lineStream >> ntb >> b1 >> b2 >> b3 >> beta >> nrdbox;
+
+  if (_lineStream.fail())
+    io::messages.add("bad line in BOUNDARY block",
+		     "InInput", io::message::error);
+}
+
+/**
  * read FORCE block.
  */
 inline void io::InInput::read_FORCE(int &do_bond, int &do_angle,

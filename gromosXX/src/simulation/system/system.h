@@ -105,6 +105,36 @@ namespace simulation
      */
     index_struct & box_index(size_t i);
     
+    /**
+     * const virial accessor.
+     */
+    math::Matrix const & virial()const;
+
+    /**
+     * virial accessor.
+     */
+    math::Matrix & virial();
+
+    /**
+     * const molecular kinetic energy accessor.
+     */
+    math::Matrix const & molecular_kinetic_energy()const;
+    
+    /**
+     * molecular kinetic energy accessor.
+     */
+    math::Matrix & molecular_kinetic_energy();
+
+    /**
+     * pressure accessor.
+     */
+    math::Matrix & pressure();
+    
+    /**
+     * const pressure accessor.
+     */
+    math::Matrix const & pressure()const;
+    
   protected:
     /**
      * position 1
@@ -157,7 +187,7 @@ namespace simulation
     /**
      * the box.
      */
-    math::Matrix m_box;
+    math::Box m_box;
     /**
      * the periodicity.
      * hard coded to any periodicity...
@@ -167,6 +197,21 @@ namespace simulation
      * the box indices for every atom.
      */
     std::vector<index_struct> m_box_index;
+    
+    /**
+     * the virial.
+     */
+    math::Matrix m_virial;
+    
+    /**
+     * the molecular kinetic energy.
+     */
+    math::Matrix m_molecular_kinetic_energy;
+
+    /**
+     * the pressure.
+     */
+    math::Matrix m_pressure;
     
   }; // System
   

@@ -36,6 +36,11 @@ namespace algorithm
 		typename simulation_type::system_type &sys,
 		double dt);
 
+    /**
+     * set the tolerance.
+     */
+    void tolerance(double const tol);
+
   private:
 
     bool _shake(typename simulation_type::topology_type const &topo,
@@ -46,7 +51,7 @@ namespace algorithm
 		std::vector<simulation::compound::distance_constraint_struct>
 		& constr);
 
-    double tolerance;
+    double m_tolerance;
     const int max_iterations;
   };
   

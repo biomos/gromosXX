@@ -52,6 +52,16 @@ namespace io {
     void read_PRINT(int &print_trajectory, int &print_velocity,
 		    int &print_energy);
 
+    /**
+     * read the PCOUPLE block.
+     */
+    void read_PCOUPLE(int &ntp, double &pres0, double &comp, double &tau);
+
+    /**
+     * read the BOUNDARY block.
+     */
+    void read_BOUNDARY(int &ntb, int &nrdbox);
+
   private:
     /**
      * read the entire stream and store the blocks in the map.

@@ -61,7 +61,7 @@ namespace math
     /**
      * get the box.
      */
-    Matrix const & box()const;
+    Box const & box()const;
     /**
      * get a box vector.
      */
@@ -74,18 +74,23 @@ namespace math
     /**
      * set the box.
      */
-    void box(Matrix const &m);
+    void box(Box const &m);
     // not implemented
     /**
      * set the box.
      */
     // void box(Vec v1, Vec v2, Vec v3);
     
+    /**
+     * the volume
+     */
+    double volume()const;
+
   protected:
     /**
      * reference to the system::box.
      */
-    Matrix m_box;
+    Box m_box;
     /**
      * the boundary condition.
      */
@@ -100,7 +105,7 @@ namespace math
      * -(K*M) / vol
      * -(K*L) / vol
      */
-    Matrix m_cross_K_L_M;
+    Box m_cross_K_L_M;
 
   };
   
@@ -135,7 +140,7 @@ namespace math
     /**
      * get the box.
      */
-    Matrix const box()const;
+    Box const box()const;
     /**
      * get a box vector.
      */
@@ -148,18 +153,23 @@ namespace math
     /**
      * set the box.
      */
-    void box(Matrix const &m);
+    void box(Box const &m);
     // not implemented
     /**
      * set the box.
      */
     // void box(Vec v1, Vec v2, Vec v3);
 
+    /**
+     * the volume
+     */
+    double volume()const;
+
   protected:
     /**
      * reference to the system::box.
      */
-    Matrix m_box;
+    Box m_box;
     /**
      * the box volume.
      */
@@ -198,7 +208,7 @@ namespace math
     /**
      * get the box.
      */
-    Matrix const & box()const;
+    Box const & box()const;
     /**
      * get a box vector.
      */
@@ -211,18 +221,23 @@ namespace math
     /**
      * set the box.
      */
-    void box(Matrix const &m);
+    void box(Box const &m);
     // not implemented
     /**
      * set the box.
      */
     // void box(Vec v1, Vec v2, Vec v3);
 
+    /**
+     * the volume.
+     */
+    double volume()const;
+
   protected:
     /**
      * reference to the system::box.
      */
-    Matrix m_box;
+    Box m_box;
     /**
      * the box volume.
      */
@@ -233,7 +248,7 @@ namespace math
      * -(K*M) / vol
      * -(K*L) / vol
      */
-    Matrix m_cross_K_L_M;
+    Box m_cross_K_L_M;
 
   };
   

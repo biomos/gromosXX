@@ -1,6 +1,8 @@
 INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		algorithm.h \
+				algorithm/md.h \
+				algorithm/md.tcc \
 				integration/leap_frog.h \
 				integration/leap_frog.tcc \
 				integration/runge_kutta.h \
@@ -8,7 +10,9 @@ include_HEADERS = 		algorithm.h \
 				constraint/shake.h \
 				constraint/shake.tcc \
 				temperature/berendsen.h \
-				temperature/berendsen.tcc
+				temperature/berendsen.tcc \
+				pressure/berendsen.h \
+				pressure/berendsen.tcc
 
 lib_LTLIBRARIES	= 		libalgorithm.la
 

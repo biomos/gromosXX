@@ -2,10 +2,10 @@ INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS =		create_forcefield.h
 
-bin_PROGRAMS =			vtest
+bin_PROGRAMS =			md
 
-vtest_SOURCES =			vtest.cc
-vtest_LDADD =			../src/simulation/libsimulation.la \
+md_SOURCES =			md.cc
+md_LDADD =			../src/simulation/libsimulation.la \
 				../src/algorithm/libalgorithm.la \
 				../src/interaction/libinteraction.la \
 				../src/math/libmath.la \

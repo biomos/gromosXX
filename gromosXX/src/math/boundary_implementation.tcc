@@ -131,19 +131,35 @@ math::boundary_enum const math::Boundary_Implementation<math::triclinic>
 
 // accessors
 template<math::boundary_enum b>
-inline math::Matrix const & math::Boundary_Implementation<b>::box()const
+inline math::Box const & math::Boundary_Implementation<b>::box()const
 {
   return m_box;
 }
 
-inline math::Matrix const math::Boundary_Implementation<math::vacuum>::box()const
+inline math::Box const math::Boundary_Implementation<math::vacuum>::box()const
 {
   return m_box;
 }
 
-inline math::Matrix const & math::Boundary_Implementation<math::triclinic>::box()const
+inline math::Box const & math::Boundary_Implementation<math::triclinic>::box()const
 {
   return m_box;
+}
+
+template<math::boundary_enum b>
+inline double math::Boundary_Implementation<b>::volume()const
+{
+  return m_volume;
+}
+
+inline double math::Boundary_Implementation<math::vacuum>::volume()const
+{
+  return 0;
+}
+
+inline double math::Boundary_Implementation<math::triclinic>::volume()const
+{
+  return m_volume;
 }
 
 template<math::boundary_enum b>
@@ -169,7 +185,7 @@ inline const double math::Boundary_Implementation<math::triclinic>
 
 template<math::boundary_enum b>
 inline void math::Boundary_Implementation<b>
-::box(math::Matrix const &m)
+::box(math::Box const &m)
 {
   m_box = m;
   m_volume = dot(cross(m_box(K), m_box(L)), m_box(M));
@@ -183,13 +199,13 @@ inline void math::Boundary_Implementation<b>
 }
 
 inline void math::Boundary_Implementation<math::vacuum>
-::box(math::Matrix const &m)
+::box(math::Box const &m)
 {
   m_box = m;
 }
 
 inline void math::Boundary_Implementation<math::triclinic>
-::box(math::Matrix const &m)
+::box(math::Box const &m)
 {
   m_box = m;
   m_volume = dot(cross(m_box(K), m_box(L)), m_box(M));

@@ -52,6 +52,11 @@ namespace simulation
      */
     int steps();
     /**
+     * const nonbonded parameters
+     */
+    simulation::Nonbonded const & nonbonded()const;
+
+    /**
      * nonbonded parameters
      */
     simulation::Nonbonded & nonbonded();

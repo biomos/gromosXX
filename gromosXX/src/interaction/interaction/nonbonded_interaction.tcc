@@ -112,6 +112,10 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
+  // initialize the constants
+  if (!sim.steps())
+    initialize(sim);
+
   // need to update pairlist?
   DEBUG(7, "steps " << sim.steps() << " upd " << sim.nonbonded().update());
 
@@ -145,6 +149,30 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 }
 
 /**
+ * helper function to initialize the constants.
+ */
+template<typename t_simulation, typename t_pairlist>
+inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
+::initialize(t_simulation const &sim)
+{
+  // Force
+  m_cut3i = 
+    1.0 / ( sim.nonbonded().RF_cutoff() 
+	    * sim.nonbonded().RF_cutoff() 
+	    * sim.nonbonded().RF_cutoff());
+
+  m_crf_cut3i = sim.nonbonded().RF_constant() * m_cut3i;
+
+  // Energy
+  m_crf_2cut3i = sim.nonbonded().RF_constant() / 2.0 * m_cut3i;
+
+  m_crf_cut = (1 - sim.nonbonded().RF_constant() / 2.0)
+    / sim.nonbonded().RF_cutoff();
+
+}
+
+
+/**
  * helper function to calculate forces and energies, 
  * stores them in the arrays pointed to by parameters
  * to make it usable for longrange calculations.
@@ -155,62 +183,58 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 		  typename t_pairlist::iterator to, 
 		  nonbonded_type_enum range)
 {
-  math::Vec v;
+  math::Vec r, f;
+  double energy;
+  
   math::VArray &pos = sim.system().pos();
 
   math::VArray *force;
   if (range == shortrange) force = &sim.system().force();
   else force = &m_longrange_force;
   
-
-  DEBUG(7, "\tcalculate interactions");
-  // Force
-  const double cut3i = 
-	1.0 / ( sim.nonbonded().RF_cutoff() 
-		* sim.nonbonded().RF_cutoff() 
-		* sim.nonbonded().RF_cutoff());
-
-  const double crf_di3 = sim.nonbonded().RF_constant() * cut3i;
-
-  // Energy
-  const double crf_2 = sim.nonbonded().RF_constant() / 2.0 * cut3i;
-
-  const double crf_di = (1 - sim.nonbonded().RF_constant() / 2.0)
-    / sim.nonbonded().RF_cutoff();
-  
+  DEBUG(7, "\tcalculate interactions");  
 
   for( ; it != to; ++it){
     
     DEBUG(10, "\tpair\t" << it.i() << "\t" << *it);
 
-    sim.system().periodicity().nearest_image(pos(it.i()), pos(*it), v);
-    const double dist2 = dot(v, v);
-    DEBUG(10, "dist2 = " << dist2);
-    assert(dist2 != 0.0);
+    sim.system().periodicity().nearest_image(pos(it.i()), pos(*it), r);
 
     const lj_parameter_struct &lj = 
-      lj_parameter(sim.topology().iac(it.i()), sim.topology().iac(*it));
+      lj_parameter(sim.topology().iac(it.i()),
+		   sim.topology().iac(*it));
 
-    DEBUG(10, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+    DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
 
-    const double dist6i = 1.0 / (dist2 * dist2 * dist2);
-    
-    const double f_vdw = ((2 * lj.c12 * dist6i - lj.c6) * 6 * dist6i / dist2);
+    lj_crf_interaction(r, lj.c6, lj.c12,
+		       sim.topology().charge()(it.i()) * 
+		       sim.topology().charge()(*it),
+		       f, energy);
 
-    const double q = sim.topology().charge()(it.i()) 
-                   * sim.topology().charge()(*it);
-    DEBUG(10, "\tcharge product: " << q);
-    DEBUG(10, "coulo=" << coulomb_constant() << " crf_di3=" << crf_di3);
-    
-    const double f_el = q * coulomb_constant() 
-			  * (sqrt(dist6i) + crf_di3 );
-    
-    DEBUG(10, "\tf_vdw=" << f_vdw << " f_el=" << f_el);
-
-    (*force)(it.i()) += v*(f_vdw + f_el);
-    (*force)(*it) -= v*(f_vdw + f_el);
+    (*force)(it.i()) += f;
+    (*force)(*it) -= f;
 
   }
+  
+}
+
+/**
+ * helper function to calculate the force and energy for
+ * a given atom pair.
+ */
+template<typename t_simulation, typename t_pairlist>
+inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
+::lj_crf_interaction(math::Vec const &r,
+		     double const c6, double const c12,
+		     double const q,
+		     math::Vec &force, double &energy)
+{
+  assert(dot(r,r) != 0);
+  const double dist2i = 1.0 / dot(r, r);
+  const double dist6i = dist2i * dist2i * dist2i;
+  
+  force = ((2 * c12 * dist6i - c6) * 6.0 * dist6i * dist2i + 
+    q * coulomb_constant() * (sqrt(dist6i) + m_crf_cut3i)) * r;
   
 }
 
@@ -222,25 +246,13 @@ template<typename t_simulation, typename t_pairlist>
 inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 ::do_14_interactions(t_simulation &sim)
 {
-  math::Vec v;
+  math::Vec r, f;
+  double energy;
+
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
   
   DEBUG(7, "\tcalculate 1,4-interactions");
-  // Force
-  const double cut3i = 
-	1.0 / ( sim.nonbonded().RF_cutoff() 
-		* sim.nonbonded().RF_cutoff() 
-		* sim.nonbonded().RF_cutoff());
-
-  const double crf_di3 = sim.nonbonded().RF_constant() * cut3i;
-
-  // Energy
-  const double crf_2 = sim.nonbonded().RF_constant() / 2.0 * cut3i;
-
-  const double crf_di = (1 - sim.nonbonded().RF_constant() / 2.0)
-    / sim.nonbonded().RF_cutoff();
-
 
   std::set<int>::const_iterator it, to;
   
@@ -249,34 +261,23 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
     to = sim.topology().one_four_pair(i).end();
     
     for( ; it != to; ++it){
-      DEBUG(10, "\tpair " << i << " - " << *it);
+      DEBUG(11, "\tpair " << i << " - " << *it);
       
-      sim.system().periodicity().nearest_image(pos(i), pos(*it), v);
-      const double dist2 = dot(v, v);
-      
-      DEBUG(10, "\tdist2 = " << dist2);
-      assert(dist2 != 0.0);
+      sim.system().periodicity().nearest_image(pos(i), pos(*it), r);
 
       const lj_parameter_struct &lj = 
 	lj_parameter(sim.topology().iac(i),
 		     sim.topology().iac(*it));
 
-      DEBUG(10, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+      DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
 
-      const double q = sim.topology().charge()(i) 
-	* sim.topology().charge()(*it);
+      lj_crf_interaction(r, lj.cs6, lj.cs12,
+			 sim.topology().charge()(i) * 
+			 sim.topology().charge()(*it),
+			 f, energy);
 
-      DEBUG(10, "\tcharge product: " << q);
-
-      const double dist6i = 1.0 / (dist2 * dist2 * dist2);
-    
-      const double f_vdw = (2 * lj.cs12 * dist6i - lj.cs6)
-		  	   * 6 * dist6i / dist2;
-      const double f_el = q * coulomb_constant() 
-			  * (sqrt(dist6i) + crf_di3 );
-
-      force(i) += v * (f_vdw + f_el);
-      force(*it) -= v * (f_vdw + f_el);
+      force(i) += f;
+      force(*it) -= f;
 
     } // loop over 1,4 pairs
   } // loop over solute atoms

@@ -28,33 +28,46 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
   if (m_format == reduced){
 
     if((sim.steps() % m_every_pos) == 0){
+      DEBUG(7, "print timestep positionred");
       _print_timestep(sim, *m_pos_traj);
+      DEBUG(7, "print positionred");
       _print_positionred(sim.system(), sim.topology(), *m_pos_traj);
       if (sim.system().periodicity().boundary_condition() != math::vacuum)
+	DEBUG(7, "print box");
 	_print_box(sim.system(), *m_pos_traj);
     }
     
     if (m_vel && (sim.steps() % m_every_vel) == 0){
+      DEBUG(7, "print timestep velocityred");
       _print_timestep(sim, *m_vel_traj);
+      DEBUG(7, "print velocityred");
       _print_velocityred(sim.system(), *m_vel_traj);
     }
     
     if(m_force && (sim.steps() % m_every_force) == 0){
       if(sim.steps()){
+	DEBUG(7, "print timestep forcered");
 	_print_timestep(sim, *m_force_traj);
+	DEBUG(7, "print forcered");
 	_print_forcered(sim.system(), *m_force_traj);
       }
     }
 
   }
   else if(m_format == final){
+    DEBUG(7, "print timestep final");
     _print_timestep(sim, *m_final_traj);
+    DEBUG(7, "print position");
     _print_position(sim.system(), sim.topology(), *m_final_traj);
+    DEBUG(7, "print velocity");
     _print_velocity(sim.system(), sim.topology(), *m_final_traj);
+    DEBUG(7, "print box");
     _print_box(sim.system(), *m_final_traj);
     // forces still go to the force trajectory
     if (m_force){
+      DEBUG(7, "print timestep final force");
       _print_timestep(sim, *m_force_traj);
+      DEBUG(7, "print forcered final");
       _print_forcered(sim.system(), *m_force_traj);
     }
     

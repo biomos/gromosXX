@@ -29,6 +29,14 @@ inline simulation::System<b>::System()
   m_old_vel = &m_velocity2;
   m_force = &m_force1;
   m_old_force = &m_force2;
+
+  for(int i=0; i<3; ++i)
+    for(int j=0; j<3; ++j){
+      m_virial(i,j) = 0.0;
+      m_molecular_kinetic_energy(i,j) = 0.0;
+      m_pressure(i,j) = 0.0;
+    }
+  
 }
 
 /**
@@ -182,6 +190,66 @@ inline math::Periodicity<b> const & simulation::System<b>
 ::periodicity()const
 {
   return m_periodicity;
+}
+
+/**
+ * const virial accessor.
+ */
+template<math::boundary_enum b>
+inline math::Matrix const & simulation::System<b>
+::virial()const
+{
+  return m_virial;
+}
+
+/**
+ * virial accessor.
+ */
+template<math::boundary_enum b>
+inline math::Matrix & simulation::System<b>
+::virial()
+{
+  return m_virial;
+}
+
+/**
+ * const molecular kinetic energy accessor.
+ */
+template<math::boundary_enum b>
+inline math::Matrix const & simulation::System<b>
+::molecular_kinetic_energy()const
+{
+  return m_molecular_kinetic_energy;
+}
+
+/**
+ * molecular kinetic energy accessor.
+ */
+template<math::boundary_enum b>
+inline math::Matrix & simulation::System<b>
+::molecular_kinetic_energy()
+{
+  return m_molecular_kinetic_energy;
+}
+
+/**
+ * const pressure accessor.
+ */
+template<math::boundary_enum b>
+inline math::Matrix const & simulation::System<b>
+::pressure()const
+{
+  return m_pressure;
+}
+
+/**
+ * pressure accessor.
+ */
+template<math::boundary_enum b>
+inline math::Matrix & simulation::System<b>
+::pressure()
+{
+  return m_pressure;
 }
 
 /**

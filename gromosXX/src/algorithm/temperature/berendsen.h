@@ -1,10 +1,10 @@
 /**
- * @file berendsen.h
+ * @file temperature/berendsen.h
  * berendsen thermostat.
  */
 
-#ifndef INCLUDED_BERENDSEN_H
-#define INCLUDED_BERENDSEN_H
+#ifndef INCLUDED_TEMPERATURE_BERENDSEN_H
+#define INCLUDED_TEMPERATURE_BERENDSEN_H
 
 namespace algorithm
 {

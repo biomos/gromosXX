@@ -432,7 +432,7 @@ inline void io::OutTrajectory<t_simulation>
   
   os << "TRICLINICBOX\n";
   
-  math::Matrix const &box = sys.periodicity().box();
+  math::Box const &box = sys.periodicity().box();
   
   os << std::setw(5) << sys.periodicity().boundary_condition() << "\n";
   

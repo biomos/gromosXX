@@ -6,8 +6,10 @@
 #ifndef INCLUDED_MATH_H
 #define INCLUDED_MATH_H
 
+#include <blitz/blitz.h>
 #include <blitz/array.h>
 #include <blitz/tinyvec-et.h>
+#include <blitz/tinymat.h>
 
 #include <vector>
 #include <map>
@@ -21,6 +23,7 @@
 namespace math
 {
 
+  using namespace blitz;
   BZ_USING_NAMESPACE(blitz)
 
   /**
@@ -38,7 +41,12 @@ namespace math
   /**
    * Matrix.
    */
-  typedef blitz::TinyVector< blitz::TinyVector<double, 3>, 3> Matrix;
+  typedef blitz::TinyMatrix<double, 3U, 3U> Matrix;
+
+  /**
+   * Box.
+   */
+  typedef blitz::TinyVector< blitz::TinyVector<double, 3>, 3> Box;
   
   /**
    * a small number.
@@ -85,19 +93,26 @@ inline bool operator!=(math::Vec &t1, math::Vec &t2)
 }
 
 /**
- * dot product of two arrays
+ * blitz dot product
  */
-/*
-inline SArray dot(VArray const &v1, VArray const &v2)
+template<typename T, int N>
+inline T dot(TinyVector<T,N> const &v1, TinyVector<T,N> const &v2)
 {
- assert(v1.size() == v2.size());
- SArray s(v1.size());
- for(int i=0; i<v1.size(); ++i)
-   s(i) = dot(v1(i), v2(i));
- 
- return s;
+  return blitz::dot(v1, v2);
 }
-*/
+
+BZ_DECLARE_FUNCTION2_RET(dot, double);
+
+/**
+ * blitz abs2
+ */
+template<typename T, int N>
+inline T abs2(TinyVector<T,N> v)
+{
+  return sum(sqr(v));
+}
+
+BZ_DECLARE_FUNCTION_RET(abs2, double);
 
 } // math
 
