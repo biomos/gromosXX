@@ -452,6 +452,11 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
   while(m_simulation.time() < end_time){
 
+    DEBUG(8, "md: put chargegroups into box");
+    simulation().system().periodicity().
+      put_chargegroups_into_box(simulation());
+    
+
     DEBUG(8, "md: print trajectory");
     (*m_trajectory) << m_simulation;
 

@@ -17,15 +17,16 @@ Release 0.0.2
 Release 0.0.3
 
 	ok	check SHAKE for non-gathered bonds
-	-	gather chargegroups during simulation
+	ok	gather chargegroups during simulation
 	-	handle the GENBOX block
-	-	perturbation
+	-	read in perturbation topology
+	-	perturbed interactions
 	-	check the triclinic computational box
-	-	shake for non-gathered systems?
 	-	add checks to the check_state() methods
 
 -------------
 
+	-	reorganise iterators (and utility classes) -> avoid circular includes, use stl
 	-	atomic virial
 	-	center of mass motion removal (constraining)
 	

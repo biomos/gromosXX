@@ -33,6 +33,12 @@ namespace math
      * puts a vector into the box centered at (Kx/2, Ly/2, Mz/2).
      */
     void put_into_positive_box(Vec &v)const;
+    /**
+     * put chargegroups into the box.
+     */
+    template<typename t_simulation>
+    void put_chargegroups_into_box(t_simulation & sim)const;
+    
   private:
   };
   
