@@ -92,6 +92,7 @@ void configuration::Configuration::initialise(topology::Topology const & topo,
   resize(topo.num_atoms());
 
   // gather the molecules!
+  // check box size
   if (gather){
     switch(boundary_type){
       case math::vacuum:
@@ -104,38 +105,57 @@ void configuration::Configuration::initialise(topology::Topology const & topo,
 	}
       case math::triclinic:
 	{
+	  // NO CUTOFF CHECK -- IMPLEMENT!!!
 	  math::Periodicity<math::triclinic> periodicity(current().box);
 	  periodicity.gather_molecules_into_box(*this, topo);
 	  break;
 	}
       case math::truncoct:
 	{
-	  /*
-	  std::cout << "box:"
-		    << "\n\t" << math::v2s(current().box(0))
-		    << "\n\t" << math::v2s(current().box(1))
-		    << "\n\t" << math::v2s(current().box(2))
-		    << "\n\n";
-	  
-	  std::cout << "before gather:\n";
-	  for(int i=126; i<143; ++i)
-	    std::cout << i << "\t" << math::v2s(current().pos(i)) << "\n";
-	  */
 	  math::Periodicity<math::truncoct> periodicity(current().box);
 	  periodicity.gather_molecules_into_box(*this, topo);
-	  /*
-	  std::cout << "after gather:\n";	  
-	  for(int i=126; i<143; ++i)
-	    std::cout << i << "\t" << math::v2s(current().pos(i)) << "\n";
-
-	  exit(11);
-	  */
 	  break;
 	}
       default:
 	std::cout << "wrong periodic boundary conditions!";
 	io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
     }
+  }
+
+  // check periodicity
+  switch(boundary_type){
+    case math::vacuum:
+      break;
+    case math::rectangular:
+      {
+	if (current().box(0)(0) <= 2*param.pairlist.cutoff_long ||
+	    current().box(1)(1) <= 2*param.pairlist.cutoff_long ||
+	    current().box(2)(2) <= 2*param.pairlist.cutoff_long){
+	  io::messages.add("box is too small: not twice the cutoff!",
+			   "configuration",
+			   io::message::error);
+	}
+	
+	break;
+      }
+    case math::triclinic:
+      {
+	// NO CUTOFF CHECK -- IMPLEMENT!!!
+	break;
+      }
+    case math::truncoct:
+      {
+	if (0.5 * sqrt(3.0) * current().box(0)(0) <= 2 * param.pairlist.cutoff_long){
+	  
+	  io::messages.add("box is too small: not 4 / sqrt(3) * cutoff!",
+			   "configuration",
+			   io::message::error);
+	}
+	break;
+      }
+    default:
+      std::cout << "wrong periodic boundary conditions!";
+      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
   }
 }
 

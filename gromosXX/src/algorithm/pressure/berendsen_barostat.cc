@@ -12,6 +12,8 @@
 
 #include <configuration/state_properties.h>
 
+#include <util/error.h>
+
 #include "berendsen_barostat.h"
 
 #undef MODULE
@@ -120,6 +122,44 @@ int algorithm::Berendsen_Barostat
       }
     default:
       return 0;
+  }
+
+  // check periodicity
+  switch(conf.boundary_type){
+    case math::vacuum:
+      break;
+    case math::rectangular:
+      {
+	if (conf.current().box(0)(0) <= 2*sim.param().pairlist.cutoff_long ||
+	    conf.current().box(1)(1) <= 2*sim.param().pairlist.cutoff_long ||
+	    conf.current().box(2)(2) <= 2*sim.param().pairlist.cutoff_long){
+	  io::messages.add("box is too small: not twice the cutoff!",
+			   "configuration",
+			   io::message::critical);
+	  return E_BOUNDARY_ERROR;
+	}
+	
+	break;
+      }
+    case math::triclinic:
+      {
+	// NO CUTOFF CHECK -- IMPLEMENT!!!
+	break;
+      }
+    case math::truncoct:
+      {
+	if (0.5 * sqrt(3.0) * conf.current().box(0)(0) <= 2 * sim.param().pairlist.cutoff_long){
+	  
+	  io::messages.add("box is too small: not 4 / sqrt(3) * cutoff!",
+			   "configuration",
+			   io::message::critical);
+	  return E_BOUNDARY_ERROR;
+	}
+	break;
+      }
+    default:
+      std::cout << "wrong periodic boundary conditions!";
+      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
   }
 
   m_timing += util::now() - start;

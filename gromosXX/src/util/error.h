@@ -16,6 +16,7 @@
 #define E_TYPE_NOT_IMPLEMENTED 13
 #define E_INPUT_ERROR 14
 #define E_USAGE 15
+#define E_BOUNDARY_ERROR 16
 
 // termination
 #define E_MINIMUM_REACHED 1000
