@@ -9,18 +9,25 @@
 namespace algorithm
 {
   /**
-   * @class shake
+   * @class Shake
    * implements the shake algorithm.
    */
   template<typename t_simulation>
-  class shake
+  class Shake
   {
   public:
     typedef t_simulation simulation_type;
     /**
      * Constructor.
      */
-    shake();
+    Shake();
+
+    /**
+     * shake solute.
+     */
+    int solute(typename simulation_type::topology_type &topo,
+	       typename simulation_type::system_type &sys,
+	       double dt);
 
     /**
      * shake solvent.
@@ -30,6 +37,15 @@ namespace algorithm
 		double dt);
 
   private:
+
+    bool _shake(typename simulation_type::topology_type const &topo,
+		typename simulation_type::system_type &sys,
+		int const first, 
+		std::vector<bool> &skip_now,
+		std::vector<bool> &skip_next,
+		std::vector<simulation::compound::distance_constraint_struct>
+		& constr);
+
     double tolerance;
     const int max_iterations;
   };

@@ -93,19 +93,25 @@ int main(int argc, char *argv[])
   input.read_SHAKE(ntc, tolerance);
 
   switch(ntc){
-    case 1: break;
-    case 2: the_topology.solute().add_bond_length_constraints(1.0,
-							     the_topology.mass(),
-							     the_bond_interaction->parameter());
+    case 1:
       break;
-    case 3: the_topology.solute().add_bond_length_constraints(the_bond_interaction->parameter());
+    case 2: 
+      the_topology.solute().
+	add_bond_length_constraints(1.0,
+				    the_topology.mass(),
+				    the_bond_interaction->parameter());
       break;
-    default: std::cout << "wrong ntc" << std::endl;
+    case 3: 
+      the_topology.solute().
+	add_bond_length_constraints(the_bond_interaction->parameter());
+      break;
+    default:
+      std::cout << "wrong ntc" << std::endl;
   }
   
   // create the algorithm
   algorithm::runge_kutta<simulation_type> RK;
-  algorithm::shake<simulation_type> shake;
+  algorithm::Shake<simulation_type> shake;
 
   // prepare for the output
   std::ofstream trap("vtest.trj");
@@ -145,6 +151,7 @@ int main(int argc, char *argv[])
 	::step(the_simulation, the_forcefield, dt);
   
     try{
+      shake.solute(the_topology, the_system, dt);
       shake.solvent(the_topology, the_system, dt);
     }
     catch(std::runtime_error e){
