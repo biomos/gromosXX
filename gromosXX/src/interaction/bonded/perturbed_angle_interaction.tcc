@@ -124,10 +124,10 @@ static int _calculate_perturbed_angle_interactions
       angle_energy[topo.atom_energy_group()
 		  [a_it->i]] += energy;
     
-    assert(conf.current().perturbed_energy_derivatives[0].angle_energy.size() >
+    assert(conf.current().perturbed_energy_derivatives.angle_energy.size() >
 	   topo.atom_energy_group()[a_it->i]);
     
-    conf.current().perturbed_energy_derivatives[0].
+    conf.current().perturbed_energy_derivatives.
       angle_energy[topo.atom_energy_group()
 		  [a_it->i]] += e_lambda;
 

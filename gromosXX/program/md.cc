@@ -268,20 +268,16 @@ int main(int argc, char *argv[]){
 					    sim.time_step_size());
       // perturbed energy derivatives
       if (sim.param().perturbation.perturbation){
-	// multiple lambda dependencies
-	for(size_t s = 0, s_to = conf.old().perturbed_energy_derivatives.size();
-	    s != s_to; ++s){
 
-	  conf.old().perturbed_energy_derivatives[s].calculate_totals();
-
-	  conf.current().perturbed_energy_derivative_averages[s].update
-	    (conf.old().perturbed_energy_derivatives[s],
-	     conf.old().perturbed_energy_derivative_averages[s],
-	     sim.time_step_size(),
-	     sim.param().perturbation.dlamt);
-	}
+	conf.old().perturbed_energy_derivatives.calculate_totals();
+	
+	conf.current().perturbed_energy_derivative_averages.update
+	  (conf.old().perturbed_energy_derivatives,
+	   conf.old().perturbed_energy_derivative_averages,
+	   sim.time_step_size(),
+	   sim.param().perturbation.dlamt);
       }
-
+      
       traj.print(topo, conf, sim);
 
       sim.time() += sim.time_step_size();

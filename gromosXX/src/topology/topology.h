@@ -353,6 +353,21 @@ namespace topology
     energy_group_lambdadep() { return m_energy_group_lambdadep;}
 
     /**
+     * lambda prime's for different lambda dependencies.
+     * (so that they do not have to be recalculated for every interaction.
+     */
+    std::vector<double> & lambda_prime() { return m_lambda_prime; }
+    
+    /**
+     * d lambda prime / d lambda derivative.
+     * (to store the d Energy / d lambda derivative in one energy class as
+     * sum d E / d lambda prime * d lambda prime / d lambda 
+     * for all lambda prime).
+     */
+    std::vector<double> & lambda_prime_derivative() 
+    { return m_lambda_prime_derivative; }
+    
+    /**
      * alpha parameters for the perturbed energy derivatives.
      */
     std::vector<double> const & perturbed_energy_derivative_alpha()const
@@ -500,6 +515,16 @@ namespace topology
     std::map<std::pair<int, int>, std::pair<int, double> > 
     m_energy_group_lambdadep;
 
+    /**
+     * lambda primes for current lambda
+     */
+    std::vector<double> m_lambda_prime;
+    
+    /**
+     * lambda prime / lambda derivatives
+     */
+    std::vector<double> m_lambda_prime_derivative;
+    
     /**
      * alpha parameter values for the perturbed energy derivatives
      */

@@ -925,8 +925,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 			    io::message::notice);
 	  }
 	  
-	  // perturbed_energy_derivatives[0] is reserved for normal lambda
-	  std::pair<int, double> lambdadep_pair(n+1, a);
+	  std::pair<int, double> lambdadep_pair(n, a);
 	  
 	  topo.energy_group_lambdadep()[energy_pair]  = lambdadep_pair;
 	  topo.energy_group_lambdadep()[energy_pair2] = lambdadep_pair;
@@ -942,6 +941,11 @@ io::In_Perturbation::read(topology::Topology &topo,
 		      << std::endl;
 	  
 	}
+
+	// resize the arrays to cache the lambda primes
+	// and the lambda prime / lambda derivative
+	topo.lambda_prime().resize(n);
+	topo.lambda_prime_derivative().resize(n);
 
 	if (n != num){
 	  io::messages.add("Wrong number of pairs in LAMBDADEP block.",

@@ -162,38 +162,20 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   DEBUG(5, "number of energy groups: " << num 
 	<< "\nnumber of baths: " << numb);
 
+  // this should be moved to a easier accessible place
+  // for scripting...
+
   conf.current().energies.resize(num, numb);
   conf.current().energy_averages.resize(num, numb);
 
   conf.old().energies.resize(num, numb);
   conf.old().energy_averages.resize(num, numb);
-
-  // allow for split up storage of the perturbed energy derivatives
-  // (to accomodate different lambda dependences)
-  size_t s = 0;
   
-  std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
-    it = topo.energy_group_lambdadep().begin(),
-    to = topo.energy_group_lambdadep().end();
-  for( ; it!=to; ++it){
-    if (unsigned(it->second.first) > s) s = unsigned(it->second.first);
-  }
-  ++s;
-
-  // std::cerr << "resizing for " << s << " lambda dependencies" << std::endl;
-  
-  conf.current().perturbed_energy_derivatives.resize(s);
-  conf.current().perturbed_energy_derivative_averages.resize(s);
-  conf.old().perturbed_energy_derivatives.resize(s);
-  conf.old().perturbed_energy_derivative_averages.resize(s);
-  
-  for(size_t s=0; s < conf.current().perturbed_energy_derivatives.size(); ++s){
-    conf.current().perturbed_energy_derivatives[s].resize(num, numb);
-    conf.current().perturbed_energy_derivative_averages[s].resize(num, numb);
+  conf.current().perturbed_energy_derivatives.resize(num, numb);
+  conf.current().perturbed_energy_derivative_averages.resize(num, numb);
     
-    conf.old().perturbed_energy_derivatives[s].resize(num, numb);
-    conf.old().perturbed_energy_derivative_averages[s].resize(num, numb);
-  }
+  conf.old().perturbed_energy_derivatives.resize(num, numb);
+  conf.old().perturbed_energy_derivative_averages.resize(num, numb);
   
   // resize some special data
   conf.special().rel_mol_com_pos.resize(topo.num_atoms());

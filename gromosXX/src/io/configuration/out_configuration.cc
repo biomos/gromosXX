@@ -821,87 +821,78 @@ void io::Out_Configuration
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_precision);
 
-  assert(conf.old().perturbed_energy_derivatives.size() > 0);
-  
-  const int numenergygroups = conf.old().perturbed_energy_derivatives[0].bond_energy.size();
-  const int numbaths = conf.old().perturbed_energy_derivatives[0].kinetic_energy.size();
+  const int numenergygroups = conf.old().perturbed_energy_derivatives.bond_energy.size();
+  const int numbaths = conf.old().perturbed_energy_derivatives.kinetic_energy.size();
   const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
 
   DEBUG(11, "numenergygroups " << numenergygroups 
 	<< " energy_group_size " << energy_group_size );
 
-  const size_t lambdadep = conf.old().perturbed_energy_derivatives.size();
+  configuration::Energy const & e = conf.old().perturbed_energy_derivatives;
+
+  os << "FREEENERDERIVS03\n"
+     << "# lambda\n"
+     << std::setw(18) << topo.old_lambda() << "\n";
+
+  os << "# totals\n";
+  os << std::setw(18) << e.total << "\n"
+     << std::setw(18) << e.kinetic_total << "\n"
+     << std::setw(18) << e.potential_total << "\n"
+     << std::setw(18) << e.bond_total << "\n"
+     << std::setw(18) << e.angle_total << "\n"
+     << std::setw(18) << e.improper_total << "\n"
+     << std::setw(18) << e.dihedral_total << "\n"
+     << std::setw(18) << e.lj_total << "\n"
+     << std::setw(18) << e.crf_total << "\n"
+     << std::setw(18) << e.constraints_total << "\n"
+     << std::setw(18) << e.posrest_total << "\n"
+     << std::setw(18) << 0.0 << "\n" // disres
+     << std::setw(18) << 0.0 << "\n" // dihedral res
+     << std::setw(18) << 0.0 << "\n" // jval
+     << std::setw(18) << 0.0 << "\n" // local elevation
+     << std::setw(18) << 0.0 << "\n"; // path integral
   
-  for(size_t s=0; s < lambdadep; ++s){
-    
-    configuration::Energy const & e = conf.old().perturbed_energy_derivatives[s];
-
-
-    os << "FREEENERDERIVS03\n"
-       << "# lambda\n"
-       << std::setw(18) << topo.old_lambda() << "\n";
+  os << "# baths\n";
+  os << numbaths << "\n";
   
-
-    os << "# totals\n";
-    os << std::setw(18) << e.total << "\n"
-       << std::setw(18) << e.kinetic_total << "\n"
-       << std::setw(18) << e.potential_total << "\n"
-       << std::setw(18) << e.bond_total << "\n"
-       << std::setw(18) << e.angle_total << "\n"
-       << std::setw(18) << e.improper_total << "\n"
-       << std::setw(18) << e.dihedral_total << "\n"
-       << std::setw(18) << e.lj_total << "\n"
-       << std::setw(18) << e.crf_total << "\n"
-       << std::setw(18) << e.constraints_total << "\n"
-       << std::setw(18) << e.posrest_total << "\n"
-       << std::setw(18) << 0.0 << "\n" // disres
-       << std::setw(18) << 0.0 << "\n" // dihedral res
-       << std::setw(18) << 0.0 << "\n" // jval
-       << std::setw(18) << 0.0 << "\n" // local elevation
-       << std::setw(18) << 0.0 << "\n"; // path integral
-    
-    os << "# baths\n";
-    os << numbaths << "\n";
-    
-    for(int i=0; i < numbaths; ++i){
-      os << std::setw(18) << e.kinetic_energy[i] 
-	 << std::setw(18) << e.com_kinetic_energy[i]
-	 << std::setw(18) << e.ir_kinetic_energy[i] << "\n";
-    }
-    
-    os << "# bonded\n";
-    os << numenergygroups << "\n";
-    for(int i=0; i<numenergygroups; i++){
-      os << std::setw(18) << e.bond_energy[i] 
-	 << std::setw(18) << e.angle_energy[i] 
-	 << std::setw(18) << e.improper_energy[i] 
-	 << std::setw(18) << e.dihedral_energy[i] << "\n";
-    }
-    
-    os << "# nonbonded\n";
-    for(int i=0; i<numenergygroups; i++){
-      for(int j=i; j<numenergygroups; j++){
-	
-	os << std::setw(18) << e.lj_energy[i][j] 
-	   << std::setw(18) << e.crf_energy[i][j] << "\n";
-	
-      }
-    }
-    
-    os << "# special\n";
-    for(int i=0; i<numenergygroups; i++){
-      os << std::setw(18) << e.constraints_energy[i] 
-	 << std::setw(18) << e.posrest_energy[i] 
-	 << std::setw(18) << 0.0 // disres
-	 << std::setw(18) << 0.0 // dihedral res
-	 << std::setw(18) << 0.0 // jval
-	 << std::setw(18) << 0.0 // local elevation
-	 << std::setw(18) << 0.0 << "\n"; // path integral
-    }
-    
-    os << "END\n";
+  for(int i=0; i < numbaths; ++i){
+    os << std::setw(18) << e.kinetic_energy[i] 
+       << std::setw(18) << e.com_kinetic_energy[i]
+       << std::setw(18) << e.ir_kinetic_energy[i] << "\n";
   }
   
+  os << "# bonded\n";
+  os << numenergygroups << "\n";
+  for(int i=0; i<numenergygroups; i++){
+    os << std::setw(18) << e.bond_energy[i] 
+       << std::setw(18) << e.angle_energy[i] 
+       << std::setw(18) << e.improper_energy[i] 
+       << std::setw(18) << e.dihedral_energy[i] << "\n";
+  }
+  
+  os << "# nonbonded\n";
+  for(int i=0; i<numenergygroups; i++){
+    for(int j=i; j<numenergygroups; j++){
+      
+      os << std::setw(18) << e.lj_energy[i][j] 
+	 << std::setw(18) << e.crf_energy[i][j] << "\n";
+      
+    }
+  }
+  
+  os << "# special\n";
+  for(int i=0; i<numenergygroups; i++){
+    os << std::setw(18) << e.constraints_energy[i] 
+       << std::setw(18) << e.posrest_energy[i] 
+       << std::setw(18) << 0.0 // disres
+       << std::setw(18) << 0.0 // dihedral res
+       << std::setw(18) << 0.0 // jval
+       << std::setw(18) << 0.0 // local elevation
+       << std::setw(18) << 0.0 << "\n"; // path integral
+  }
+  
+  os << "END\n";
+
 }
 
 void io::Out_Configuration
@@ -1048,23 +1039,8 @@ void io::Out_Configuration
       
       m_output << "lambda: " << topo.old_lambda() << "\n";
       
-      DEBUG(8, "perturbed energy deriv size = " 
-	    << conf.old().perturbed_energy_derivatives.size());
-      
-      for(size_t s = 0, s_to = conf.old().perturbed_energy_derivatives.size();
-	  s < s_to; ++s){
-	
-	if (s != 0){
-	  const double alpha = topo.perturbed_energy_derivative_alpha()[s];
-	  const double l = topo.old_lambda();
-	  
-	  m_output << "lambda'[" << s << "]: "
-		   << alpha * l * l + (1-alpha) * l << "\n";
-	}
-
-	print_ENERGY(m_output, conf.old().perturbed_energy_derivatives[s], 
-		     topo.energy_groups(), "dE/dLAMBDA", "dE_");
-      }
+      print_ENERGY(m_output, conf.old().perturbed_energy_derivatives, 
+		   topo.energy_groups(), "dE/dLAMBDA", "dE_");
     }
     
     print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
@@ -1125,50 +1101,36 @@ void io::Out_Configuration
 
   if (sim.param().perturbation.perturbation){
     if (sim.param().perturbation.dlamt){
-      for(size_t s = 0, s_to = conf.current().perturbed_energy_derivative_averages.size();
-	  s != s_to; ++s){
 	
-	conf.current().perturbed_energy_derivative_averages[s].
-	  average(e, ef, p, pf,
-		  sim.param().perturbation.dlamt);
+      conf.current().perturbed_energy_derivative_averages.
+	average(e, ef, p, pf,
+		sim.param().perturbation.dlamt);
 
-	print_ENERGY(m_output, e, topo.energy_groups(), "CUMULATIVE DG", "DG_");
-	m_output << "\n";
+      print_ENERGY(m_output, e, topo.energy_groups(), "CUMULATIVE DG", "DG_");
+      m_output << "\n";
 
-	// what's that anyway...
-	//print_ENERGY(m_output, ef, topo.energy_groups(), "DG FLUCTUATIONS", "<<DG>>_");
-      }
-      
+      // what's that anyway...
+      //print_ENERGY(m_output, ef, topo.energy_groups(), "DG FLUCTUATIONS", "<<DG>>_");
     }
+
     else{
-      for(size_t s = 0, s_to = conf.current().perturbed_energy_derivative_averages.size();
-	  s != s_to; ++s){
 
-	std::ostringstream ss, pre;
-	if (s){
-	  ss << "dE/dLAMBDA[" << s << "] ";
-	  pre << "dE/dl[" << s << "]";
-	}
-	else{
-	  ss << "dE/dLAMBDA ";
-	  pre << "dE/dl";
-	}
-	
-	conf.current().perturbed_energy_derivative_averages[s].average(e, ef, p, pf);
-	
-	print_ENERGY(m_output, e, topo.energy_groups(),
-		     ss.str() + "AVERAGES", "<" + pre.str() + ">_");
-
-	m_output << "\n";
-
-	print_ENERGY(m_output, ef, topo.energy_groups(),
-		     ss.str() + "FLUCTUATIONS", "<<" + pre.str() + ">>_");
-
-	m_output << "\n";
-      }
+      std::ostringstream ss, pre;
+      ss << "dE/dLAMBDA ";
+      pre << "dE/dl";
       
+      conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf);
+      
+      print_ENERGY(m_output, e, topo.energy_groups(),
+		   ss.str() + "AVERAGES", "<" + pre.str() + ">_");
+      
+      m_output << "\n";
+      
+      print_ENERGY(m_output, ef, topo.energy_groups(),
+		   ss.str() + "FLUCTUATIONS", "<<" + pre.str() + ">>_");
+      
+      m_output << "\n";
     }
-    
   }
 }
 

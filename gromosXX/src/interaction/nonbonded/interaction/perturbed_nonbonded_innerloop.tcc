@@ -25,7 +25,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   
   double e_lj, e_crf, de_lj, de_crf;
   
-  size_t energy_derivative_index = 0;
+  int energy_derivative_index = -1;
 
   if (t_interaction_spec::do_bekker){
     r = conf.current().pos(i) + periodicity.shift(pc).pos
@@ -96,29 +96,30 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     // based on energy groups
     
     std::pair<int, int> 
-    energy_group_pair(topo.atom_energy_group(i),
-    topo.atom_energy_group(j));
-    
+      energy_group_pair(topo.atom_energy_group(i),
+			topo.atom_energy_group(j));
     bool reset_lambda = false;
 
     // check whether we have changing lambda dependencies
     if (topo.energy_group_lambdadep().count(energy_group_pair)){
       
-      // set lambdas
-      const double l = topo.lambda();
-      const double alpha = topo.energy_group_lambdadep()[energy_group_pair].second;
-      double lp = alpha * l * l + (1-alpha) * l;
       energy_derivative_index = topo.energy_group_lambdadep()[energy_group_pair].first;
+
+      DEBUG(8, "energy_derivative_index=" << energy_derivative_index);
+      assert(energy_derivative_index >= 0);
+
+      assert(energy_derivative_index < int(topo.lambda_prime().size()));
+      assert(energy_derivative_index < int(topo.lambda_prime_derivative().size()));
+
+      // set lambdas
+      DEBUG(8, "lambda dep l=" << topo.lambda() 
+	    << " alpha=" << topo.energy_group_lambdadep()[energy_group_pair].second
+	    << " lp=" << topo.lambda_prime()[energy_derivative_index]);
       
-      // some additional flexibility
-      if (lp > 1.0) lp = 1.0;
-      else if (lp < 0.0) lp = 0.0;
 
-      DEBUG(8, "lambda dep l=" << l << " alpha=" << alpha << " lp=" << lp
-	    << " index=" << energy_derivative_index);
-
-      set_lambda(lp, topo.lambda_exp());
+      set_lambda(topo.lambda_prime()[energy_derivative_index], topo.lambda_exp());
       reset_lambda = true;
+
     }
 
     if (topo.energy_group_scaling().count(energy_group_pair)){
@@ -146,9 +147,11 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     if (reset_lambda)
       set_lambda(topo.lambda(), topo.lambda_exp());
 
-
-  } // END OF SCALING ON ---
+  } 
+  // END OF SCALING ON ---
+  //
   else{
+
     lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
 			    B_lj->c6, B_lj->c12,
 			    A_q, B_q,
@@ -156,6 +159,9 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 			    f1, f6, f12,
 			    e_lj, e_crf, de_lj, de_crf);
   }
+  //--------------------------------------------------
+  // interactions have been calculated
+  //--------------------------------------------------
   
   DEBUG(8, "\tcalculated interaction state A:\n\t\tf: " 
 	<< f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
@@ -201,38 +207,48 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   storage.energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
   
-  DEBUG(8, "\tenergy gropu: i and j " << topo.atom_energy_group(i)
+  DEBUG(8, "\tenergy group: i and j " << topo.atom_energy_group(i)
 	<< " " << topo.atom_energy_group(j)
 	<< " pert der index = " << energy_derivative_index);
   
-  if (storage.perturbed_energy_derivatives.size() <=
-      energy_derivative_index){
-    std::cerr << "energy_derivative_index = "
-	      << energy_derivative_index
-	      << std::endl
-	      << "perturbed_energy_derivatives.size() = "
-	      << storage.perturbed_energy_derivatives.size()
-	      << std::endl;
-  }
-
-  assert(storage.perturbed_energy_derivatives.size() > 
-	 energy_derivative_index);
-  assert(storage.perturbed_energy_derivatives[energy_derivative_index].
+  assert(storage.perturbed_energy_derivatives.
 	 lj_energy.size() > max(topo.atom_energy_group(i),
 				topo.atom_energy_group(j)));
-  assert(storage.perturbed_energy_derivatives[energy_derivative_index].
+  
+  assert(storage.perturbed_energy_derivatives.
 	 lj_energy[topo.atom_energy_group(i)].size() 
 	 > max(topo.atom_energy_group(i),
 	       topo.atom_energy_group(j)));
+
+  if (t_perturbation_details::do_scaling &&
+      energy_derivative_index != -1){
+
+    // lambda dependent energy derivatives, add
+    // additional d lambda prime / d lambda factor
+
+    storage.perturbed_energy_derivatives.lj_energy
+      [topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += 
+      de_lj * topo.lambda_prime_derivative()[energy_derivative_index];
+    
+    storage.perturbed_energy_derivatives.crf_energy
+      [topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += 
+      de_crf * topo.lambda_prime_derivative()[energy_derivative_index];
+  }
+  else{
+    // standard...
+
+    storage.perturbed_energy_derivatives.lj_energy
+      [topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += de_lj;
+    
+    storage.perturbed_energy_derivatives.crf_energy
+      [topo.atom_energy_group(i)]
+      [topo.atom_energy_group(j)] += de_crf;
+    
+  }
   
-  storage.perturbed_energy_derivatives[energy_derivative_index].lj_energy
-    [topo.atom_energy_group(i)]
-    [topo.atom_energy_group(j)] += de_lj;
-
-  storage.perturbed_energy_derivatives[energy_derivative_index].crf_energy
-    [topo.atom_energy_group(i)]
-    [topo.atom_energy_group(j)] += de_crf;
-
   DEBUG(7, "\tperturbed lj_crf_innerloop " << i << " - " << j << " done!");
   
 }
@@ -349,12 +365,12 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     DEBUG(7, "\ti and j " << topo.atom_energy_group(i)
 	  << " " << topo.atom_energy_group(j));
     DEBUG(20,"de_lj tot (before) " 
-	  << conf.current().perturbed_energy_derivatives[0].lj_energy[topo.atom_energy_group(i)]
+	  << conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
 	  [topo.atom_energy_group(j)]);
     
-    conf.current().perturbed_energy_derivatives[0].lj_energy[topo.atom_energy_group(i)]
+    conf.current().perturbed_energy_derivatives.lj_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_lj;
-    conf.current().perturbed_energy_derivatives[0].crf_energy[topo.atom_energy_group(i)]
+    conf.current().perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_crf;
 
 }
@@ -400,7 +416,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     
   conf.current().energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(i)] += 0.5 * e_rf;
-  conf.current().perturbed_energy_derivatives[0].crf_energy
+  conf.current().perturbed_energy_derivatives.crf_energy
     [topo.atom_energy_group(i)]
     [topo.atom_energy_group(i)] += 0.5 * de_rf;
   
@@ -453,7 +469,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     conf.current().energies.crf_energy 
       [topo.atom_energy_group(i)]
       [topo.atom_energy_group(*it)] += e_rf;
-    conf.current().perturbed_energy_derivatives[0].crf_energy 
+    conf.current().perturbed_energy_derivatives.crf_energy 
       [topo.atom_energy_group(i)]
       [topo.atom_energy_group(*it)] += de_rf;
     force(i) += f_rf;

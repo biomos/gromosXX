@@ -166,7 +166,7 @@ int algorithm::Perturbed_Shake<do_virial>
       
       // the perturbed energy derivatives
 
-      conf.old().perturbed_energy_derivatives[0].
+      conf.old().perturbed_energy_derivatives.
 	constraints_energy[topo.atom_energy_group()[it->i]] +=
 	lambda / dt2 * sqrt(constr_length2) *
 	(this->parameter()[it->B_type].r0 - this->parameter()[it->A_type].r0);

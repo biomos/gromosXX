@@ -111,7 +111,7 @@ int algorithm::Temperature_Calculation
   
     size_t last = 0;
     std::vector<double> &e_kin = 
-      conf.old().perturbed_energy_derivatives[0].kinetic_energy;
+      conf.old().perturbed_energy_derivatives.kinetic_energy;
 
     assert(e_kin.size() == conf.old().energies.kinetic_energy.size());
 

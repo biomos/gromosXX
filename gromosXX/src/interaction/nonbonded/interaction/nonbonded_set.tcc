@@ -41,12 +41,52 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 			 simulation::Simulation & sim,
 			 int tid, int num_threads)
 {
-  DEBUG(4, "(Perturbed) Nonbonded_Interaction::calculate_interactions");
+  DEBUG(4, "(Perturbed) Nonbonded_Set::calculate_interactions");
 
   // allow for slow growth (do it every step...)
-  if(t_perturbation_spec::do_perturbation)
-    set_lambda(topo.lambda(), topo.lambda_exp());
+  if(t_perturbation_spec::do_perturbation){
 
+    const double l = topo.lambda();
+    set_lambda(l, topo.lambda_exp());
+
+    if (t_perturbation_spec::perturbation_details::do_scaling){
+
+      // calculate lambda primes and d lambda prime / d lambda derivatives
+      std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
+	it = topo.energy_group_lambdadep().begin(),
+	to = topo.energy_group_lambdadep().end();
+      
+      for(unsigned int i=0; it != to; ++i, ++it){
+
+	const double alpha = it->second.second;
+	double lp = alpha * l * l + (1-alpha) * l;
+	
+	double dlp = (2 * l - 1.0) * alpha + 1;
+	
+	// some additional flexibility
+	if (lp > 1.0) {
+	  lp = 1.0;
+	  dlp = 0.0;
+	}
+	
+	else if (lp < 0.0){
+	  lp = 0.0;
+	  dlp = 0.0;
+	}
+	
+	// -1 or not???
+	assert(int(topo.lambda_prime().size()) > it->second.first);
+	assert(int(topo.lambda_prime_derivative().size()) > it->second.first);
+	assert(it->second.first >= 0);
+
+	topo.lambda_prime()[it->second.first] = lp;
+	topo.lambda_prime_derivative()[it->second.first] = dlp;
+	
+      }
+
+    }
+  }
+  
   // zero forces, energies, virial...
   m_shortrange_storage.zero();
 
@@ -173,37 +213,30 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 
     // one we definitely have...
     const size_t lj_size 
-      = m_shortrange_storage.perturbed_energy_derivatives[0].lj_energy.size();
+      = m_shortrange_storage.perturbed_energy_derivatives.lj_energy.size();
     
-    DEBUG(8, "from a set of "
-	  << m_shortrange_storage.perturbed_energy_derivatives.size()
-	  << " lambda deps");
-    
-    for(size_t s=0, s_to = m_shortrange_storage.perturbed_energy_derivatives.size();
-	s != s_to; ++s){
-      for(size_t i = 0; i < lj_size; ++i){
-	for(size_t j = 0; j < lj_size; ++j){
+    for(size_t i = 0; i < lj_size; ++i){
+      for(size_t j = 0; j < lj_size; ++j){
 
-	  assert(m_shortrange_storage.perturbed_energy_derivatives[s].
-		 lj_energy.size() > i);
-	  assert(m_shortrange_storage.perturbed_energy_derivatives[s].
-		 lj_energy[i].size() > j);
-	  assert(m_shortrange_storage.perturbed_energy_derivatives[s].
-		 lj_energy.size() > j);
-	  assert(m_shortrange_storage.perturbed_energy_derivatives[s].
-		 lj_energy[j].size() > i);
+	assert(m_shortrange_storage.perturbed_energy_derivatives.
+	       lj_energy.size() > i);
+	assert(m_shortrange_storage.perturbed_energy_derivatives.
+	       lj_energy[i].size() > j);
+	assert(m_shortrange_storage.perturbed_energy_derivatives.
+	       lj_energy.size() > j);
+	assert(m_shortrange_storage.perturbed_energy_derivatives.
+	       lj_energy[j].size() > i);
 	
-	  m_shortrange_storage.perturbed_energy_derivatives[s].lj_energy[i][j] += 
-	    m_longrange_storage.perturbed_energy_derivatives[s]
-	    .lj_energy[i][j];
-	  m_shortrange_storage.perturbed_energy_derivatives[s].crf_energy[i][j] += 
-	    m_longrange_storage.perturbed_energy_derivatives[s]
-	    .crf_energy[i][j];
-	}
+	m_shortrange_storage.perturbed_energy_derivatives.lj_energy[i][j] += 
+	  m_longrange_storage.perturbed_energy_derivatives.lj_energy[i][j];
+
+	m_shortrange_storage.perturbed_energy_derivatives.crf_energy[i][j] += 
+	  m_longrange_storage.perturbed_energy_derivatives.crf_energy[i][j];
+
       }
     }
   } // do perturbed
-
+  
   return 0;
 }
 
@@ -482,24 +515,13 @@ interaction::Nonbonded_Set<t_interaction_spec, t_perturbation_spec>
 	   conf.current().energies.kinetic_energy.size());
 
   
-  size_t es = conf.current().perturbed_energy_derivatives.size();
-  
-  DEBUG(7, "initialize lambda dep to " << es);
+  m_shortrange_storage.perturbed_energy_derivatives.resize
+    (conf.current().perturbed_energy_derivatives.bond_energy.size(),
+     conf.current().perturbed_energy_derivatives.kinetic_energy.size());
 
-  m_shortrange_storage.perturbed_energy_derivatives.
-    resize(es);
-  m_longrange_storage.perturbed_energy_derivatives.
-    resize(es);
-
-  for(size_t s = 0; s < es; ++s){
-
-    m_shortrange_storage.perturbed_energy_derivatives[s].resize
-      (conf.current().perturbed_energy_derivatives[s].bond_energy.size(),
-       conf.current().perturbed_energy_derivatives[s].kinetic_energy.size());
-    m_longrange_storage.perturbed_energy_derivatives[s].resize
-      (conf.current().perturbed_energy_derivatives[s].bond_energy.size(),
-       conf.current().perturbed_energy_derivatives[s].kinetic_energy.size());
-  }
+  m_longrange_storage.perturbed_energy_derivatives.resize
+    (conf.current().perturbed_energy_derivatives.bond_energy.size(),
+     conf.current().perturbed_energy_derivatives.kinetic_energy.size());
   
   // and the pairlists
   pairlist().resize(topo.num_atoms());

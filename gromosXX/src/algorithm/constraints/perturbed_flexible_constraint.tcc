@@ -192,7 +192,7 @@ static int _perturbed_flexible_shake
       }
       else dm2 = 0;
 
-      DEBUG(10, "old dE/dL: " << conf.old().perturbed_energy_derivatives[0].
+      DEBUG(10, "old dE/dL: " << conf.old().perturbed_energy_derivatives.
 	    constraints_energy[topo.atom_energy_group()[it->i]]);
       DEBUG(10, "m1=" << m1 << " m2=" << m2 << " mu=" << mu << " dm1=" 
 	    << dm1 << " dm2=" << dm2);
@@ -204,7 +204,7 @@ static int _perturbed_flexible_shake
 
       DEBUG(10, "mixed r0=" << mr0 << " mixed K=" << mK);
 
-      conf.old().perturbed_energy_derivatives[0].constraints_energy
+      conf.old().perturbed_energy_derivatives.constraints_energy
 	[topo.atom_energy_group()[it->i]] +=
 	lambda / dt2  * flex_len[k] *
 	(param[it->B_type].r0 - param[it->A_type].r0 +
