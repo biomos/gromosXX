@@ -1,6 +1,6 @@
 INCLUDES = -I$(top_srcdir)/src
 
-xxincludedir = $(includedir)/gromosXX
+xxincludedir = $(includedir)/gromosXX/io
 
 xxinclude_HEADERS = 	argument.h \
 			blockinput.h \
@@ -15,7 +15,8 @@ xxinclude_HEADERS = 	argument.h \
 			configuration/inframe.h \
 			configuration/in_configuration.h \
 			configuration/out_configuration.h \
-			topology/in_posres.h
+			topology/in_posres.h \
+			forcefield/in_ifp.h
 
 noinst_LTLIBRARIES =	libgroio.la
 
@@ -33,7 +34,8 @@ libgroio_la_SOURCES =	io.cc \
 			configuration/inframe.cc \
 			configuration/in_configuration.cc \
 			configuration/out_configuration.cc \
-			topology/in_posres.cc
+			topology/in_posres.cc \
+			forcefield/in_ifp.cc
 
 libgroio_la_LIBADD =
 

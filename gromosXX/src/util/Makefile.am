@@ -1,6 +1,6 @@
 INCLUDES = -I$(top_srcdir)/src
 
-xxincludedir = $(includedir)/gromosXX
+xxincludedir = $(includedir)/gromosXX/util
 
 xxinclude_HEADERS = 	stdheader.h \
 			error.h \

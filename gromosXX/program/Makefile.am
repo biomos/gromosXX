@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 include_HEADERS =
 

@@ -1,14 +1,16 @@
-INCLUDES = -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir)/src	
 
-xxincludedir = $(includedir)/gromosXX
+xxincludedir = $(includedir)/gromosXX/topology
+xxcoreincludedir = $(includedir)/gromosXX/topology/core
 
-xxinclude_HEADERS =	core/atomgroup_iterator.h	core/chargegroup_iterator.h \
+xxcoreinclude_HEADERS =	core/atomgroup_iterator.h	core/chargegroup_iterator.h \
 			core/atom_iterator.h		core/compound.h \
 			core/body_term.h 		core/molecule_iterator.h \
-			core/core.h\
-			solute.h			solvent.h \
-			perturbed_solute.h \
-			topology.h			perturbed_atom.h
+			core/core.h
+
+xxinclude_HEADERS =	solute.h			solvent.h \
+			perturbed_atom.h 		perturbed_solute.h \
+			topology.h			
 
 noinst_LTLIBRARIES =	libgrotopology.la
 

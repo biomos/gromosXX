@@ -1,6 +1,6 @@
 INCLUDES = -I$(top_srcdir)/src
 
-xxincludedir = $(includedir)/gromosXX
+xxincludedir = $(includedir)/gromosXX/configuration
 
 xxinclude_HEADERS =		configuration_global.h \
 				configuration.h \

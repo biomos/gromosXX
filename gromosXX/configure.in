@@ -61,6 +61,9 @@ AC_PROG_CXX
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 
+dnl create a symlink from src to gromosXX
+AC_LINK_FILES(src, gromosXX)
+
 # C++ requirements
 dnl AC_CXX_REQUIRE_STL
 dnl AC_CXX_NAMESPACES

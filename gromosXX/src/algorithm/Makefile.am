@@ -1,29 +1,29 @@
 INCLUDES = -I$(top_srcdir)/src
 
-xxincludedir = $(includedir)/gromosXX
+xxincludedir = 			$(includedir)/gromosXX/algorithm
 
-xxinclude_HEADERS =	algorithm.h \
-			algorithm/algorithm_sequence.h \
-			integration/leap_frog.h \
-			temperature/temperature_calculation.h \
-			temperature/berendsen_thermostat.h \
-			pressure/pressure_calculation.h \
-			pressure/berendsen_barostat.h \
-			create_md_sequence.h \
-			constraints/create_constraints.h \
-			constraints/shake.h \
-			constraints/shake.tcc \
-			constraints/perturbed_shake.h \
-			constraints/perturbed_shake.tcc \
-			constraints/lincs.h \
-			constraints/lincs.tcc \
-			constraints/flexible_constraint.h \
-			constraints/flexible_constraint.tcc \
-			constraints/perturbed_flexible_constraint.h \
-			constraints/perturbed_flexible_constraint.tcc \
-			constraints/remove_com_motion.h \
-			integration/slow_growth.h \
-			integration/steepest_descent.h
+xxinclude_HEADERS =		algorithm.h \
+				create_md_sequence.h \
+			  	algorithm/algorithm_sequence.h \
+				integration/leap_frog.h \
+				integration/slow_growth.h \
+				integration/steepest_descent.h \
+			 	temperature/temperature_calculation.h \
+				temperature/berendsen_thermostat.h \
+			  	pressure/pressure_calculation.h \
+			  	pressure/berendsen_barostat.h \
+			  	constraints/create_constraints.h \
+				constraints/shake.h \
+				constraints/shake.tcc \
+				constraints/perturbed_shake.h \
+				constraints/perturbed_shake.tcc \
+				constraints/lincs.h \
+				constraints/lincs.tcc \
+				constraints/flexible_constraint.h \
+				constraints/flexible_constraint.tcc \
+				constraints/perturbed_flexible_constraint.h \
+				constraints/perturbed_flexible_constraint.tcc \
+				constraints/remove_com_motion.h
 
 noinst_LTLIBRARIES	=	libgroalgorithm.la
 

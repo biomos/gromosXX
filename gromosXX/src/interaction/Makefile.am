@@ -2,13 +2,19 @@ INCLUDES = -I$(top_srcdir)/src
 
 include $(top_srcdir)/src/interaction/nonbonded/split/Makefile.inc
 
-xxincludedir = $(includedir)/gromosXX
+xxincludedir = 			$(includedir)/gromosXX/interaction
+xxffincludedir = 		$(includedir)/gromosXX/interaction/forcefield
+xxbincludedir =			$(includedir)/gromosXX/interaction/bonded
+xxnbincludedir =		$(includedir)/gromosXX/interaction/nonbonded
+xxspincludedir =		$(includedir)/gromosXX/interaction/special
 
 xxinclude_HEADERS =		interaction.h \
-				interaction_types.h \
-				forcefield/forcefield.h \
-				forcefield/create_forcefield.h \
-				bonded/create_bonded.h \
+				interaction_types.h
+
+xxffinclude_HEADERS =		forcefield/forcefield.h \
+				forcefield/create_forcefield.h
+
+xxbinclude_HEADERS =		bonded/create_bonded.h \
 				bonded/quartic_bond_interaction.h \
 				bonded/quartic_bond_interaction.tcc \
 				bonded/harmonic_bond_interaction.h \
@@ -28,8 +34,9 @@ xxinclude_HEADERS =		interaction.h \
 				bonded/perturbed_improper_dihedral_interaction.h \
 				bonded/perturbed_improper_dihedral_interaction.tcc \
 				bonded/perturbed_dihedral_interaction.h \
-				bonded/perturbed_dihedral_interaction.tcc \
-				nonbonded/create_nonbonded.h \
+				bonded/perturbed_dihedral_interaction.tcc
+
+xxnbinclude_HEADERS =		nonbonded/create_nonbonded.h \
 				nonbonded/create_header.h \
 				nonbonded/split_header.h \
 				nonbonded/split/nonbonded_split.h \
@@ -69,8 +76,9 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.tcc \
 				nonbonded/pairlist/standard_pairlist_algorithm2.h \
-				nonbonded/pairlist/standard_pairlist_algorithm2.tcc \
-				special/create_special.h \
+				nonbonded/pairlist/standard_pairlist_algorithm2.tcc
+
+xxspinclude_HEADERS =		special/create_special.h \
 				special/position_restraint_interaction.h \
 				special/position_restraint_interaction.tcc
 
