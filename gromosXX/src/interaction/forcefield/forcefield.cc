@@ -42,6 +42,8 @@ int interaction::Forcefield
 {
   DEBUG(5, "forcefield: calculate interaction");
 
+  const double start = util::now();
+
   conf.current().force = 0.0;
 
   DEBUG(15, "zero energies");
@@ -59,6 +61,8 @@ int interaction::Forcefield
     DEBUG(7, "interaction: " << (*it)->name);
     (*it)->calculate_interactions(topo, conf, sim);
   }
+
+  m_timing += util::now() - start;
 
   return 0;
 }

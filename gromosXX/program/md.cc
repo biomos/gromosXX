@@ -21,9 +21,14 @@
 #include <io/read_input.h>
 #include <io/read_special.h>
 
+#include <time.h>
+
 #include <io/configuration/out_configuration.h>
 
 int main(int argc, char *argv[]){
+
+  const double start = util::now();
+  
   try{
     
     char *knowns[] = 
@@ -164,6 +169,11 @@ int main(int argc, char *argv[]){
     
     md.print_timing(std::cout);
 
+    std::cout << "Overall time used:\t" << util::now() - start << "\n\n";
+
+    const time_t time_now = time_t(util::now());
+    std::cout << ctime(&time_now) << "\n\n";
+    
     if (error)
       std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
     else

@@ -35,6 +35,8 @@ int algorithm::Pressure_Calculation
 {
   DEBUG(7, "Pressure calculation");
 
+  const double start = util::now();
+
   // calculate the pressure tensor
   for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
@@ -52,6 +54,8 @@ int algorithm::Pressure_Calculation
 					conf.old().energy_averages,
 					sim.time_step_size());
 
+  m_timing += util::now() - start;
+  
   return 0;
   
 }

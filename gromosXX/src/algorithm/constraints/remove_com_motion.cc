@@ -35,6 +35,8 @@ int algorithm::Remove_COM_Motion
   bool remove_it = false;
   bool print_it = false;
   
+  const double start = util::now();
+
   // check if nothing to do
   if (sim.steps() == 0){
     if (sim.param().start.remove_com) remove_it = true;
@@ -167,6 +169,8 @@ int algorithm::Remove_COM_Motion
       conf.current().vel(i) -= com_v;
     }
   }
+
+  m_timing += util::now() - start;
 
   // return success!
   return 0;

@@ -33,6 +33,8 @@ int algorithm::Temperature_Calculation
 {
   DEBUG(7, "Temperature calculation");
   
+  const double start = util::now();
+  
   // zero previous (temperature scaling) energies
   conf.old().energies.zero(false, true);
   // zero the energies in the multibath
@@ -140,6 +142,9 @@ int algorithm::Temperature_Calculation
     } // baths    
   
   }
+
+  m_timing += util::now() - start;
+  
   return 0;
   
 }

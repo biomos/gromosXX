@@ -35,6 +35,8 @@ int algorithm::Berendsen_Thermostat
 {
   DEBUG(7, "Temperature Scaling!!!!");
   
+  const double start = util::now();
+
   std::cout.precision(9);
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
   
@@ -151,6 +153,8 @@ int algorithm::Berendsen_Thermostat
     last_atom = r_it->last_atom;
     last_mol = r_it->last_molecule;
   } // loop over baths
+
+  m_timing += util::now() - start;
 
   return 0;
   

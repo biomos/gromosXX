@@ -33,7 +33,8 @@ int algorithm::Berendsen_Barostat
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-
+  const double start = util::now();
+  
   // position are current!
   math::VArray & pos = conf.current().pos;
   math::Matrix & pressure = conf.old().pressure_tensor;
@@ -113,6 +114,9 @@ int algorithm::Berendsen_Barostat
     default:
       return 0;
   }
+
+  m_timing += util::now() - start;
+
   return 0;
   
 }
