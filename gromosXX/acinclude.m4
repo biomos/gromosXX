@@ -2,7 +2,7 @@ dnl Local function, as GROMOSXX depends
 dnl on the STL. -> Does the C++ compiler
 dnl support the STL to the degree necessary?
 dnl 
-AC_DEFUN(AC_CV_CXX_VERSION_OK,
+AC_DEFUN([AC_CV_CXX_VERSION_OK],
   [AC_CACHE_CHECK(whether the compiler supports the STL,
    ac_cv_cxx_version_ok,
      [AC_LANG_SAVE
@@ -14,7 +14,7 @@ AC_DEFUN(AC_CV_CXX_VERSION_OK,
   ])
 ])
 
-AC_DEFUN(AC_PROG_CXX_MWERKS,
+AC_DEFUN([AC_PROG_CXX_MWERKS],
 [AC_CACHE_CHECK(whether we are using Metrowerks Codewarrior C++, MWERKS_CXX,
 [cat > conftest.c <<EOF
 #ifdef __MWERKS__
@@ -28,7 +28,7 @@ else
   MWERKS_CXX=no
 fi])])
 
-AC_DEFUN(AC_PROG_CXX_MSVCPP,
+AC_DEFUN([AC_PROG_CXX_MSVCPP],
 [AC_CACHE_CHECK(whether we are using Visual C++, MSVCPP_CXX,
 [cat > conftest.c <<EOF
 #if defined(_MSC_VER) && !defined(__MWERKS__) && !defined(__ICL)
@@ -42,7 +42,7 @@ else
   MSVCPP_CXX=no
 fi])])
 
-AC_DEFUN(AC_PROG_CXX_SGICC,
+AC_DEFUN([AC_PROG_CXX_SGICC],
 [AC_CACHE_CHECK(whether we are using SGI MIPSpro C++, SGI_CXX,
 [cat > conftest.c <<EOF
 # if defined(__sgi) && !defined(__GNUC__)
@@ -56,7 +56,7 @@ else
   SGI_CXX=no
 fi])])
 
-AC_DEFUN(AC_PROG_CXX_SUNCC,
+AC_DEFUN([AC_PROG_CXX_SUNCC],
 [AC_CACHE_CHECK(whether we are using Sun C++, SUN_CXX,
 [cat > conftest.c <<EOF
 # if defined(__SUNPRO_CC) 
@@ -70,7 +70,7 @@ else
   SUN_CXX=no
 fi])])
 
-AC_DEFUN(AC_PROG_CXX_INTELCC,
+AC_DEFUN([AC_PROG_CXX_INTELCC],
 [AC_CACHE_CHECK(whether we are using Intel C++, INTEL_CXX,
 [cat > conftest.c <<EOF
 # if defined(__ICC)
@@ -84,7 +84,7 @@ else
   INTEL_CXX=no
 fi])])
 
-AC_DEFUN(AC_PROG_CXX_KAICC,
+AC_DEFUN([AC_PROG_CXX_KAICC],
 [AC_CACHE_CHECK(whether we are using KAI C++, KAI_CXX,
 [cat > conftest.c <<EOF
 # if defined(__KCC)
@@ -98,7 +98,7 @@ else
   KAI_CXX=no
 fi])])
 
-AC_DEFUN(AC_BZ_SET_COMPILER,
+AC_DEFUN([AC_BZ_SET_COMPILER],
   [cxxwith=`echo $1 | sed -e 's/ /@/'`
    case "$cxxwith" in
      *:*@*)                 # Full initialization syntax
@@ -127,7 +127,7 @@ dnl accept `-g').  Otherwise, set `FFLAGS' to `-g' for all other Fortran
 dnl 77 compilers.
 dnl 
 dnl AC_PROG_F77()
-AC_DEFUN(AC_MTL_PROG_F77,
+AC_DEFUN([AC_MTL_PROG_F77],
 [AC_BEFORE([$0], [AC_PROG_CPP])dnl
 if test -z "$F77"; then
   AC_CHECK_PROGS(F77, g77 f77 f2c)
