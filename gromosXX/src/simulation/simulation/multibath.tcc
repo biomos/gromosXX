@@ -124,11 +124,11 @@ inline void simulation::Multibath
 inline int simulation::Multibath::check_state(size_t const num_atoms)const
 {
   int result = 0;
-  int last_atom = 0;
+  size_t last_atom = 0;
   std::vector<bath_struct>::const_iterator it = begin(),
     to = end();
   for( ; it!=to; ++it){
-    if (unsigned(it->last_atom) < last_atom){
+    if (it->last_atom < last_atom){
       io::messages.add("Multibath not sorted", "Multibath::check_state",
 		       io::message::error);
       ++result;

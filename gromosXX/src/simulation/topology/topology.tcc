@@ -9,7 +9,7 @@
 #define SUBMODULE topology
 
 // put this into a better place, needed for set_union
-#include <algo.h>
+#include <algorithm>
 
 #include "../../debug.h"
 
@@ -270,12 +270,21 @@ inline std::vector<std::string> & simulation::Topology::residue_name()
 }
 
 /**
- * all exclusions for atom i.
+ * all exclusions for atom i. Exclusions and 1,4 interactions.
  */
 inline std::set<int> & simulation::Topology::all_exclusion(size_t const i)
 {
   assert(i < m_all_exclusion.size());
   return m_all_exclusion[i];
+}
+
+/**
+ * exclusions for atom i.
+ */
+inline std::set<int> & simulation::Topology::exclusion(size_t const i)
+{
+  assert(i < m_exclusion.size());
+  return m_exclusion[i];
 }
 
 /**

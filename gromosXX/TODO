@@ -9,7 +9,8 @@ Release 0.0.2
 	ok	autoconf flag to create production code
 	ok	energy calculation
 	-	energy trajectory
-	-	excluded atoms reaction field contribution
+	ok	excluded atoms reaction field contribution
+	-	check kinetic energy at printout
 
 -------------
 
@@ -19,6 +20,7 @@ Release 0.0.3
 	-	handle the GENBOX block
 	-	perturbation
 	-	check the triclinic computational box
+	-	shake for non-gathered systems?
 
 -------------
 

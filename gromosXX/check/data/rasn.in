@@ -33,11 +33,11 @@ START
 #     3    no     no   yes
 #     4    no     no    no
 #      NTX     INIT      IG     TEMPI      HEAT  NTXO   BOLTZ
-         1        4  210185     300.0   0.00000     1   8.31441E-3
+         2        4  210185       0.0   0.00000     1   8.31441E-3
 END
 STEP
 #   NSTLIM         T        DT
-         1       0.0     0.002
+        10       0.0     0.002
 END
 BOUNDARY
 #      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
@@ -85,7 +85,7 @@ FORCE
 #      NTF array
 # bonds    angles    imp.     dihe     charge nonbonded
 # H        H         H        H
-  1  1     0  0      0  0     0  0     0  0
+  1  1     1  1      1  1     1  1     1  1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      2      6      3738
 END
@@ -95,7 +95,7 @@ PLIST
 END
 LONGRANGE
 # EPSRF     APPAK      RCRF
-    62.0       0.0       1.4
+    62.0       0.0      -1.4
 END
 #
 POSREST

@@ -114,7 +114,7 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
   if (range == shortrange) virial = &sim.system().virial();
   else virial = &m_longrange_virial;
 
-  DEBUG(7, "\tcalculate interactions");  
+  DEBUG(7, "\tcalculate interactions with virial");  
 
   for( ; it != to; ++it){
     

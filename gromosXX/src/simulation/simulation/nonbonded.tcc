@@ -13,7 +13,8 @@ simulation::Nonbonded::Nonbonded():
   m_cutoff_long(1.4),
   m_RF_epsilon(1.0),
   m_RF_kappa(0.0),
-  m_RF_cutoff(1.4),
+  m_RF_cutoff(1.4), 
+  m_RF_exclusion(true),
   m_RF_constant(0.0)
 {
 }
@@ -83,6 +84,14 @@ inline void simulation::Nonbonded::RF_constant(double const epsilon,
 }
 
 /**
+ * set reaction field exclusion flag
+ */
+inline void simulation::Nonbonded::RF_exclusion(bool const flag)
+{
+  m_RF_exclusion = flag;
+}
+
+/**
  * get reaction field epsilon
  * Crf in the book, II-54
  */
@@ -117,6 +126,15 @@ inline
 double simulation::Nonbonded::RF_cutoff()const
 {
   return m_RF_cutoff;
+}
+
+/**
+ * get reaction field exclusion flag
+ */
+inline
+bool simulation::Nonbonded::RF_exclusion()const
+{
+  return m_RF_exclusion;
 }
 
 /**

@@ -95,7 +95,20 @@ inline io::InInput & io::InInput
 	io::messages.add("End of line not reached, but should have been: \n" + *it +  "\n",
 			 "InInput", io::message::warning);
       
-
+      if(cutoff < 0) {
+	sim.nonbonded().RF_exclusion(true);
+	io::messages.add("Reaction field contribution of excluded atoms is " 
+			 "taken into account", "InInput", 
+			 io::message::notice);
+	cutoff *= -1;
+      }
+      else{
+	sim.nonbonded().RF_exclusion(false);
+	io::messages.add("Reaction field contribution of excluded atoms is " 
+			 "NOT taken into account", "InInput", 
+			 io::message::notice);
+      }
+      
       sim.nonbonded().RF_constant(epsilon, kappa, cutoff);
       
       DEBUG(7, "calculating Crf: epsilon= " << epsilon << " kappa= "

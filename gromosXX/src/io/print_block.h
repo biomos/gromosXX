@@ -103,7 +103,7 @@ namespace io
     os.precision(4);
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
     os << "Total      : " << setw(12) << tot << endl;
-    // os << "Kinetic    : " << setw(21) << tot_kin << endl;
+    os << "Kinetic    : " << setw(21) << tot_kin << endl;
     // os << "Temperature: " << setw(21) << v_kin/(0.5*k_Boltzmann*Ndf) << endl;
     os << "Potential  : " << setw(21) << tot_pot << endl;
     os << "Covalent   : " << setw(30) << tot_b << endl;
@@ -136,7 +136,12 @@ namespace io
     for(int j=0; j < numenergygroups; j++) {
       os << setw(12) << energroup[j];
       for(int i=0; i<j; i++) os << setw(12) << " ";
-      for(int i=j; i < numenergygroups; i++) os << setw(12) << e.lj_energy[j][i] + e.lj_energy[i][j] ;
+      for(int i=j; i < numenergygroups; i++){
+	if(i==j)
+	  os << setw(12) << e.lj_energy[i][j];
+	else 
+	  os << setw(12) << e.lj_energy[i][j] + e.lj_energy[j][i] ;
+      }
       os << endl;
     }
     os << endl << setw(10) << "CRF";
@@ -146,7 +151,12 @@ namespace io
     for(int j=0; j < numenergygroups; j++) {
       os << setw(12) << energroup[j];
       for(int i=0; i<j; i++) os << setw(12) << " ";
-      for(int i=j; i < numenergygroups; i++) os << setw(12) << e.crf_energy[j][i] + e.crf_energy[i][j];
+      for(int i=j; i < numenergygroups; i++){
+	if(i==j)
+	  os << setw(12) << e.crf_energy[i][j];
+	else
+	  os << setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
+      }
       os << endl;
     }
 

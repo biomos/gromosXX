@@ -125,9 +125,13 @@ namespace simulation
     std::vector<std::string> & residue_name();
 
     /**
-     * all exclusions for atom i.
+     * all exclusions for atom i. Exclusions and 1,4 interactions.
      */
     std::set<int> & all_exclusion(size_t const i);
+    /**
+     * exclusions for atom i.
+     */
+    std::set<int> & exclusion(size_t const i);
     /**
      * 1,4 pairs of atom i.
      */

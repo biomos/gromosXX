@@ -31,6 +31,13 @@ namespace simulation
     {
       ++m_atom;
     }
+    Atom_Iterator operator+(size_t n)
+    {
+      Atom_Iterator dummy(*this);
+      dummy.m_atom += n;
+      return dummy;
+    }
+    
     size_t operator*()
     {
       return m_atom;

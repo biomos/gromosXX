@@ -36,6 +36,11 @@ namespace simulation
     {
       ++m_it;
     }
+    void operator+=(size_t n)
+    {
+      m_it += n;
+    }
+    
     t_group_it const & operator*()
     {
       return m_it;

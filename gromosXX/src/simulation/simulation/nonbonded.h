@@ -67,7 +67,16 @@ namespace simulation
      * get reaction field cutoff
      */
     double RF_cutoff()const;
-
+    /**
+     * set the reaction field exclusion flag
+     */
+    void RF_exclusion(bool const flag);
+    
+    /**
+     * get reaction field exclusion flag
+     */
+    bool RF_exclusion()const;
+    
     /**
      * check state.
      */
@@ -103,6 +112,12 @@ namespace simulation
      * nonbonded reaction field cutoff
      */
     double m_RF_cutoff;
+    
+    /**
+     * flag to determine whether we want to calculate the RF
+     * contribution for excluded atoms
+     */
+    bool m_RF_exclusion;
     
     /**
      * nonbonded reaction field constant

@@ -132,6 +132,11 @@ namespace interaction
     virtual void do_14_interactions(t_simulation &sim);
 
     /**
+     * calculate the RF contributions for excluded atoms.
+     */
+    virtual void do_RF_excluded_interactions(t_simulation &sim);
+    
+    /**
      * initialize constants
      */
     void initialize(t_simulation const &sim);
@@ -143,6 +148,11 @@ namespace interaction
 			    double const c6, double const c12,
 			    double const q,
 			    math::Vec & force, double & e_lj, double & e_crf);
+    /**
+     * calculate the reaction field force and energy of an atom pair.
+     */
+    void rf_interaction(math::Vec const &r, double const q,
+			math::Vec & force, double & e_rf);
 
   };
   

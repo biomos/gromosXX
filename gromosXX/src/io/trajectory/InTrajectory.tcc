@@ -324,7 +324,6 @@ inline bool io::InTrajectory::_read_box(simulation::System<b> &sys, std::vector<
   }
 
   // set the box...
-  std::cerr << "calling box" << std::endl;
   sys.periodicity().box(box);
   
   // and the boundary condition...
