@@ -48,7 +48,7 @@ algorithm::Lincs::~Lincs()
 {
 }
 
-static int _solve(topology::Topology & topo,
+int _solve_lincs(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
 		  std::vector<topology::two_body_term_struct> const & constr,
@@ -92,7 +92,7 @@ static int _solve(topology::Topology & topo,
 }
 
 template<math::boundary_enum bound>
-static int _lincs(topology::Topology & topo,
+int _lincs(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim,
 		  std::vector<topology::two_body_term_struct> const & constr,
@@ -156,7 +156,7 @@ static int _lincs(topology::Topology & topo,
 
   }
 
-  _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
+  _solve_lincs(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
   
   // correction for rotational lengthening
   double p;
@@ -180,7 +180,7 @@ static int _lincs(topology::Topology & topo,
 
   }
 
-  _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
+  _solve_lincs(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
 
   if (count)
     std::cout << "LINCS:\ttoo much rotation in " << count << " cases!\n";
@@ -191,7 +191,7 @@ static int _lincs(topology::Topology & topo,
 }
 
 template<math::boundary_enum B, math::virial_enum V>
-static void _solvent(topology::Topology & topo,
+void _solvent(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
 		     std::vector<interaction::bond_type_struct> const & param,
