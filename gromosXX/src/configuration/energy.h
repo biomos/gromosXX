@@ -145,7 +145,7 @@ namespace configuration
     /**
      * resize the arrays for energy groups and temperature baths
      */
-    void resize(unsigned int const energy_groups, unsigned int const multi_baths = 0);
+    void resize(unsigned int energy_groups, unsigned int multi_baths = 0);
     /**
      * calculate the totals of the individual energy terms.
      */
