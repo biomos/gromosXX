@@ -19,7 +19,9 @@
 #include "integration/leap_frog.h"
 #include "integration/runge_kutta.h"
 
-#include "../debug.cc"
+#ifndef NDEBUG
+int debug_level = 0;
+#endif
 
 using namespace math;
 

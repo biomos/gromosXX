@@ -19,7 +19,9 @@
 
 #include "forcefield/forcefield.h"
 
-#include "../debug.cc"
+#ifndef NDEBUG
+int debug_level = 0;
+#endif
 
 using namespace math;
 
@@ -79,8 +81,8 @@ int forcefield_test()
     the_system.boundary_condition(math::vacuum);
 
     // increase the cutoffs
-    the_simulation.nonbonded_cutoff_short(2.0);
-    the_simulation.nonbonded_cutoff_long(8.0);
+    the_simulation.nonbonded().cutoff_short(2.0);
+    the_simulation.nonbonded().cutoff_long(8.0);
 
     interaction::twin_range_pairlist<simulation_type> the_pairlist;
     the_pairlist.update(the_simulation);
@@ -147,7 +149,7 @@ int forcefield_test()
 int main(int argc, char*argv[])
 {
   if (argc >= 2){
-    debug_level = atoi(argv[1]);
+    ::debug_level = atoi(argv[1]);
   }
   if (argc >= 3){
     interaction::debug_level = atoi(argv[2]);

@@ -3,11 +3,6 @@
  * simple pairlist implementation.
  */
 
-#ifndef INCLUDED_STDEXCEPT
-#include <stdexcept>
-#define INCLUDED_STDEXCEPT
-#endif
-
 template<typename t_simulation>
 inline 
 interaction::simple_pairlist<t_simulation>::iterator::iterator(
@@ -134,6 +129,9 @@ template<typename t_simulation>
 void interaction::twin_range_pairlist_cg<t_simulation>
 ::update(t_simulation &sim)
 {
+  static math::VArray cg_cog;
+  cg_cog.resize(sim.topology().num_chargegroups());
+
   short_range().clear();
   long_range().clear();
 
@@ -143,6 +141,21 @@ void interaction::twin_range_pairlist_cg<t_simulation>
   long_range().resize(num_atoms);
 
   math::VArray &pos = sim.system().pos();
+
+  // calculate all center of geometries
+  simulation::chargegroup_iterator cg1 = sim.topology().chargegroup_begin(),
+    cg_to = sim.topology().chargegroup_end();
+
+  size_t i;
+  // math::Vec v;
+  
+  for(i=0; i < sim.topology().num_solute_chargegroups(); ++cg1, ++i){
+    cg1.cog(pos, cg_cog(i));
+    // cg_cog(i) = v;
+  }
+  for( ; cg1 != cg_to; ++cg1, ++i){
+    cg_cog(i) = pos(**cg1);
+  }
 
   double d = 0;
 
@@ -157,73 +170,112 @@ void interaction::twin_range_pairlist_cg<t_simulation>
   math::Vec p;
   
   // loop over the chargegroups
-  simulation::chargegroup_iterator cg1 = sim.topology().chargegroup_begin(),
-    cg_to = sim.topology().chargegroup_end();
+  cg1 = sim.topology().chargegroup_begin();
   
-  for( ; cg1 != cg_to; ++cg1) {
+  for(int cg1_index=0; cg1 != cg_to; ++cg1, ++cg1_index) {
     // add intra cg (if not solvent...)
-    simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin();
-    if (*a1 < sim.topology().solute().num_atoms()){
-      for(simulation::chargegroup_iterator::atom_iterator 
-	    a1_to = cg1.end(); a1 != a1_to; ++a1){
-	for(simulation::chargegroup_iterator::atom_iterator a2(*a1+1);
-	    a2 != a1_to; ++a2){
-	  // check for exclusion
-	  if (sim.topology().all_exclusion(*a1).count(*a2))
-	    continue;
-
-	  short_range()[*a1].push_back(*a2);
-	} // loop over atom 2 of cg1
-      } // loop over atom 1 of cg1
-    } // not solvent
-
+    if (unsigned(**cg1) < sim.topology().solute().num_atoms()){
+      do_cg_interaction_intra(sim, cg1, short_range());
+    }
+    
     // inter chargegroup
-    cg1.cog(pos, cog1);
-
     simulation::chargegroup_iterator cg2(*cg1+1);
-    for( ; cg2 != cg_to; ++cg2) {
-      
-      cg2.cog(pos, cog2);
-      
-      sim.system().periodicity().nearest_image(cog1, cog2, p);
+    for(int cg2_index = cg1_index + 1; cg2 != cg_to; ++cg2, ++cg2_index) {
+
+      sim.system().periodicity().nearest_image(cg_cog(cg1_index), cg_cog(cg2_index), p);
       d = dot(p, p);
 
-      if (d > rcutl2) 
+      if (d > rcutl2)        // OUTSIDE
         continue;
-      else if (d > rcutp2){
-	simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin();
-	for(simulation::chargegroup_iterator::atom_iterator 
-	      a1_to = cg1.end(); a1 != a1_to; ++a1){
-	  for(simulation::chargegroup_iterator::atom_iterator
-		a2 = cg2.begin(),
-		a2_to = cg2.end();
-	      a2 != a2_to; ++a2){
-	    long_range()[*a1].push_back(*a2);
-	  } // loop over atom 2 of cg1
-	} // loop over atom 1 of cg1
+
+      else if (d > rcutp2){  // LONGRANGE
+	do_cg_interaction(cg1, cg2, long_range());
       }
-      else { // shortrange
-	simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin();
-	for(simulation::chargegroup_iterator::atom_iterator 
-	      a1_to = cg1.end(); a1 != a1_to; ++a1){
-	  for(simulation::chargegroup_iterator::atom_iterator
-		a2 = cg2.begin(),
-		a2_to = cg2.end();
-	      a2 != a2_to; ++a2){
 
-	    // check it is not excluded
-	    if(*a2 < sim.topology().solute().num_atoms())
-	      if (sim.topology().all_exclusion(*a1).count(*a2))
-		continue;
-	    short_range()[*a1].push_back(*a2);
-
-	  } // loop over atom 2 of cg1
-	} // loop over atom 1 of cg1
-
-      }
-    }
-  }
+      else {                 // SHORTRANGE
+	if (unsigned(**cg2) < sim.topology().solute().num_atoms()){
+	  // no exclusions... (at least cg2 is solvent)
+	  do_cg_interaction(cg1, cg2, short_range());
+	}
+	else{
+	  // exclusions!
+	  do_cg_interaction_excl(sim, cg1, cg2, short_range());
+	}
+	
+      } // ranges
+    } // inter cg (cg2)
+  } // cg1
 }
+
+template<typename t_simulation>
+static void do_cg_interaction(simulation::chargegroup_iterator cg1,
+			      simulation::chargegroup_iterator cg2,
+			      interaction::simple_pairlist<t_simulation> &pl)
+{
+  simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+  
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::chargegroup_iterator::atom_iterator
+	  a2 = cg2.begin(),
+	  a2_to = cg2.end();
+	a2 != a2_to; ++a2){
+
+      pl[*a1].push_back(*a2);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
+}
+
+template<typename t_simulation>
+static void do_cg_interaction_excl(t_simulation &sim,
+				   simulation::chargegroup_iterator cg1,
+				   simulation::chargegroup_iterator cg2,
+				   interaction::simple_pairlist<t_simulation> &pl)
+{
+  simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+  
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::chargegroup_iterator::atom_iterator
+	  a2 = cg2.begin(),
+	  a2_to = cg2.end();
+	a2 != a2_to; ++a2){
+
+      // check it is not excluded
+      if(*a2 < sim.topology().solute().num_atoms())
+	if (sim.topology().all_exclusion(*a1).count(*a2))
+	  continue;
+
+      pl[*a1].push_back(*a2);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
+}
+
+template<typename t_simulation>
+static void do_cg_interaction_intra(t_simulation &sim,
+				   simulation::chargegroup_iterator cg1,
+				   interaction::simple_pairlist<t_simulation> &pl)
+{
+  simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+  
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::chargegroup_iterator::atom_iterator
+	  a2(*a1+1);
+	a2 != a1_to; ++a2){
+
+      // check it is not excluded
+      if (sim.topology().all_exclusion(*a1).count(*a2))
+	continue;
+      
+      pl[*a1].push_back(*a2);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
+}
+
 
 template<typename t_simulation>
 inline 

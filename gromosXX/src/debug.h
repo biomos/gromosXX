@@ -15,6 +15,7 @@
  *  -  8:
  *  -  9:
  *  - 10 : everything
+ *  - 15 : even the ridiculous
  *
  * every file that uses it has to first
  * #define MODULE to the namespace name

@@ -73,9 +73,10 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
     }
     
     if(m_force && sim.steps() % m_every_force == 0){
-      if(sim.steps())
+      if(sim.steps()){
+	_print_timestep(sim, *m_force_traj);
 	_print_forcered(sim.system(), *m_force_traj);
-      _print_timestep(sim, *m_force_traj);
+      }
     }
 
   }
@@ -85,7 +86,11 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
     _print_velocity(sim.system(), sim.topology(), *m_final_traj);
     _print_box(sim.system(), *m_final_traj);
     // forces still go to the force trajectory
-    _print_forcered(sim.system(), *m_force_traj);
+    if (m_force){
+      _print_timestep(sim, *m_force_traj);
+      _print_forcered(sim.system(), *m_force_traj);
+    }
+    
     // reset the format after one output (compare std::setw)
     m_format = m_old_format;    
   }
@@ -103,10 +108,10 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
     }
     
     if(m_force && sim.steps() % m_every_force == 0){
-      if (sim.steps())
+      if (sim.steps()){
+	_print_timestep(sim, *m_force_traj);	
 	_print_force(sim.system(), sim.topology(), *m_force_traj);
-
-      _print_timestep(sim, *m_force_traj);
+      }
     }
 
     // reset the format after one output (compare std::setw)

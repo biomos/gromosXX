@@ -17,7 +17,9 @@
 
 #include "io.h"
 
-#include "../debug.cc"
+#ifndef NDEBUG
+int debug_level = 0;
+#endif
 
 /**
  * test the io.
@@ -71,7 +73,7 @@ int test_blockio()
   
   io::OutTrajectory<simulation_type> traj(trj, final);
   traj << the_simulation;
-  // traj << io::decorated << the_simulation;
+  traj << io::decorated << the_simulation;
   traj << io::final << the_simulation;
 
   return result;

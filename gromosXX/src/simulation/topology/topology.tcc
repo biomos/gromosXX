@@ -15,7 +15,8 @@
  */
 inline simulation::Topology::Topology()
   : m_mass(0),
-    m_charge(0)
+    m_charge(0),
+    m_num_solute_chargegroups(0)
 {
   m_chargegroup.push_back(0);
 }
@@ -125,7 +126,10 @@ inline void simulation::Topology
   Topology::mass()(num_solute_atoms()) = mass;
   Topology::charge()(num_solute_atoms()) = charge;
 
-  if (chargegroup) m_chargegroup.push_back(num_solute_atoms()+1);
+  if (chargegroup){
+    m_chargegroup.push_back(num_solute_atoms()+1);
+    ++m_num_solute_chargegroups;
+  }
   
   DEBUG(10, "iac[" << num_solute_atoms() << "] = " << iac);
 
@@ -195,8 +199,12 @@ inline void simulation::Topology::solvate(size_t solv, size_t num_molecules)
       // no exclusions or 1-4 interactions for solvent ?!
 
     }
+
+    // add to the chargegroups
+    m_chargegroup.push_back(n+1);
+
   }
-  
+    
 }
 
 /**
@@ -270,6 +278,22 @@ inline simulation::chargegroup_iterator
 simulation::Topology::chargegroup_end()
 {
   return chargegroup_iterator(m_chargegroup.end()-1);
+}
+
+/**
+ * the number of chargegroups present.
+ */
+inline size_t simulation::Topology::num_chargegroups()
+{
+  return m_chargegroup.size()-1;
+}
+
+/**
+ * the number of solute chargegroups.
+ */
+inline size_t simulation::Topology::num_solute_chargegroups()
+{
+  return m_num_solute_chargegroups;
 }
 
 namespace simulation

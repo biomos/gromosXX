@@ -9,7 +9,7 @@
 namespace simulation
 {
   /**
-   * @class topology
+   * @class Topology
    * holds the topological information of
    * the simulated system
    * @sa simulation::simulation
@@ -128,6 +128,14 @@ namespace simulation
      */
     std::set<int> & one_four_pair(size_t const i);
     /**
+     * the number of chargegroups present.
+     */
+    size_t num_chargegroups();
+    /**
+     * the number of solute chargegroups.
+     */
+    size_t num_solute_chargegroups();
+    /**
      * iterator over the chargegrops
      */
     chargegroup_iterator chargegroup_begin();
@@ -192,6 +200,11 @@ namespace simulation
      * the chargegroups.
      */
     std::vector<int> m_chargegroup;
+        
+    /**
+     * the number of solute chargegroups.
+     */
+    size_t m_num_solute_chargegroups;
     
     /**
      * residue names (solute and solvent).
