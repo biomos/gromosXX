@@ -25,7 +25,8 @@ algorithm::MD<t_simulation, t_temperature, t_pressure,
     m_print_force(0),
     m_calculate_pressure(0),
     m_qbond_interaction(NULL),
-    m_angle_interaction(NULL)
+    m_angle_interaction(NULL),
+    title("\tgromosXX molecular dynamics program");
 {
 }
 
@@ -361,6 +362,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     
 
     DEBUG(8, "md: print trajectory");
+    m_trajectory->print_title(title);
     (*m_trajectory) << m_simulation;
 
     // integrate

@@ -110,6 +110,9 @@ namespace algorithm
 			       io::InInput &input,
 			       io::Argument &args);
 
+
+      std::string title;
+      
   protected:
 
     /**

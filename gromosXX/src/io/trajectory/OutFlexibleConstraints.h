@@ -33,6 +33,11 @@ namespace io
     void write_FLEXCON(std::vector<double> &vel,
 		       simulation::Perturbation_Topology &topo);
 
+    /**
+     * write a title block.
+     */
+    void write_title(std::string title);
+
   protected:
     std::ostream & m_os;
   };

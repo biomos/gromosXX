@@ -18,6 +18,13 @@ io::OutFlexibleConstraints::OutFlexibleConstraints(std::ostream &os)
 {
 };
 
+io::OutFlexibleConstraints::write_title(std::string title)
+{
+  m_os << "TITLE\n"
+       << title
+       << "\nEND\n";
+}
+
 /**
  * write out flexible constraints information from a topology.
  */
