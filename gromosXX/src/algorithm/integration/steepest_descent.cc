@@ -105,7 +105,14 @@ int algorithm::Steepest_Descent
   // <f|f>^-0.5
   double f = math::sum(math::dot(conf.current().force, conf.current().force));
   f = 1.0 / sqrt(f);
-  
+
+#ifdef HAVE_ISNAN
+  if (isnan(f)){
+    io::messages.add("force is NaN", "Steepest_Descent", io::message::error);
+    return E_NAN;
+  }
+#endif
+
   conf.exchange_state();
 
   conf.current().pos = conf.old().pos + sim.minimisation_step_size() * f *

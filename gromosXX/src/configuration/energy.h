@@ -53,7 +53,7 @@ namespace configuration
     
     void zero(bool potential = true, bool kinetic = true);
     void resize(size_t const energy_groups, size_t const multi_baths = 0);
-    void calculate_totals();
+    int  calculate_totals();
     
   };
 

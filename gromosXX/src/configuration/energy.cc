@@ -12,6 +12,8 @@
 #include <configuration/configuration_global.h>
 #include <configuration/energy.h>
 
+#include <util/error.h>
+
 void configuration::Energy::zero(bool potential, bool kinetic)
 {
   DEBUG(10, "energy: zero");
@@ -98,7 +100,7 @@ void configuration::Energy::resize(size_t const energy_groups, size_t const mult
   zero();  
 }
 
-void configuration::Energy::calculate_totals()
+int configuration::Energy::calculate_totals()
 {
   DEBUG(10, "energy: calculate totals");
   
@@ -141,4 +143,12 @@ void configuration::Energy::calculate_totals()
 
   total = potential_total + kinetic_total + special_total;
 
+#ifdef HAVE_ISNAN
+  if (isnan()){
+    io::messages.add("total energy is NaN", "energy", io::message::error);
+    return E_NAN;
+  }
+#endif
+
+  return 0;
 }

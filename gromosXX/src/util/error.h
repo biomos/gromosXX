@@ -8,6 +8,7 @@
 
 // errors
 #define E_UNSPECIFIED 1
+#define E_NAN 2
 #define E_SHAKE_FAILURE 10
 #define E_SHAKE_FAILURE_SOLUTE 11
 #define E_SHAKE_FAILURE_SOLVENT 12
