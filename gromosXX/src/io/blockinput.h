@@ -1,3 +1,8 @@
+/**
+ * @blockinput.h
+ * read in blocks.
+ */
+
 #ifndef INCLUDED_IO_BLOCKINPUT
 #define INCLUDED_IO_BLOCKINPUT
 
@@ -26,8 +31,10 @@
 #define INCLUDED_STDEXCEPT
 #endif
 
-using namespace std;
-
+/**
+ * @namespace io
+ * i/o routines.
+ */
 namespace io {
 
   /*
@@ -37,12 +44,12 @@ namespace io {
    * having been stripped of comments (indicated by 
    * const char& comm), is not empty.
    */
-  inline istream& getline(
-    istream& is, 
-    string& s, 
-    const char& sep = '\n',
-    const char& comm = '#'
-  );
+  inline std::istream& getline(
+			       std::istream& is, 
+			       std::string& s, 
+			       const char& sep = '\n',
+			       const char& comm = '#'
+			       );
 
   /*
    * The function io::getblock retrieves the next block  
@@ -54,11 +61,11 @@ namespace io {
    * Finally, the vector<string> it writes to is resized to the 
    * number of strings read.
    */
-  inline istream& getblock(
-    istream& is, 
-    vector<string>& b, 
-    const string& sep = "END"
-  );
+  inline std::istream& getblock(
+				std::istream& is, 
+				std::vector<std::string>& b, 
+				const std::string& sep = "END"
+				);
 
   /*
    * The io::concatenate utility allows the concatenation
@@ -67,11 +74,12 @@ namespace io {
    * (defaulting to a newline character).
    */
   inline
-  string& concatenate(
-    vector<string>::iterator begin,
-    vector<string>::iterator end,
-    string& s 
-  );
+  std::string& concatenate(
+			   std::vector<std::string>::iterator begin,
+			   std::vector<std::string>::iterator end,
+			   std::string& s,
+			   const char& sep = '\n'
+			   );
 
 }
 
