@@ -20,6 +20,7 @@ xxinclude_HEADERS =		interaction.h \
 				bonded/perturbed_dihedral_interaction.h \
 				nonbonded/create_nonbonded.h \
 				nonbonded/interaction_spec.h \
+				nonbonded/innerloop_template.h \
 				nonbonded/interaction/nonbonded_parameter.h \
 				nonbonded/interaction/nonbonded_term.h \
 				nonbonded/interaction/nonbonded_term.cc \
