@@ -40,6 +40,10 @@ void interaction::twin_range_pairlist<t_simulation>
   for(size_t i=0; i<num_atoms; ++i) {
     for(size_t j=i+1; j<num_atoms; ++j) {
 
+      // check it is not excluded
+      if (sim.topology().all_exclusion(i).count(j))
+        continue;
+
       sim.system().periodicity().nearest_image(pos(i), pos(j), p);
       d = dot(p, p);
 
@@ -48,11 +52,6 @@ void interaction::twin_range_pairlist<t_simulation>
       else if (d > rcutp2)
         long_range()[i].push_back(j);
       else {
-	// check it is not excluded
-	if(i < sim.topology().solute().num_atoms())
-	  if (sim.topology().all_exclusion(i).count(j))
-	    continue;
-
         short_range()[i].push_back(j);
       }
     }

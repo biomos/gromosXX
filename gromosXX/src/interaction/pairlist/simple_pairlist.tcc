@@ -62,16 +62,15 @@ void interaction::simple_pairlist<t_simulation>
 {
 
   clear();
-  size_t num_atoms = sim.topology().num_solute_atoms();
+  size_t num_atoms = sim.topology().num_atoms();
   resize(num_atoms);
   
   // now the a bit silly algorithm
   for(size_t i=0; i<num_atoms; ++i)
     for(size_t j=i+1; j<num_atoms; ++j){
       // check if not excluded
-      if(i < sim.topology().solute().num_atoms())
-	if (sim.topology().all_exclusion(i).count(j))
-	  continue;
+      if (sim.topology().all_exclusion(i).count(j))
+        continue;
 
       (*this)[i].push_back(j);
     }
