@@ -29,7 +29,7 @@
 #define MODULE interaction
 #define SUBMODULE special
 
-static double _calculate_derivative(topology::Topology & topo,
+double _calculate_derivative(topology::Topology & topo,
 				    configuration::Configuration &conf,
 				    simulation::Parameter const & param,
 				    std::vector<topology::jvalue_restraint_struct>::const_iterator it,
@@ -40,7 +40,7 @@ static double _calculate_derivative(topology::Topology & topo,
  * calculate position restraint interactions
  */
 template<math::boundary_enum B, math::virial_enum V>
-static int _calculate_jvalue_restraint_interactions
+int _calculate_jvalue_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim)
@@ -200,7 +200,7 @@ int interaction::Jvalue_Restraint_Interaction
   return 0;
 }
 
-static double _calculate_derivative(topology::Topology & topo,
+double _calculate_derivative(topology::Topology & topo,
 				    configuration::Configuration &conf,
 				    simulation::Parameter const & param,
 				    std::vector<topology::jvalue_restraint_struct>::const_iterator it,

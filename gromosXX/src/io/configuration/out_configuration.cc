@@ -423,7 +423,7 @@ void io::Out_Configuration
 }
 
 template<math::boundary_enum b>
-static void _print_g96_position_bound(configuration::Configuration const &conf,
+void _print_g96_position_bound(configuration::Configuration const &conf,
 				      topology::Topology const &topo,
 				      std::ostream &os, int width)
 {
@@ -508,7 +508,7 @@ static void _print_g96_position_bound(configuration::Configuration const &conf,
  * i need a specialized function to put the particles into the box.
  */
 template<math::boundary_enum b>
-static void _print_position_bound(configuration::Configuration const &conf,
+void _print_position_bound(configuration::Configuration const &conf,
 				  topology::Topology const &topo,
 				  std::ostream &os, int width)
 {
@@ -583,7 +583,7 @@ void io::Out_Configuration
 }
 
 template<math::boundary_enum b>
-static void _print_g96_positionred_bound(configuration::Configuration const &conf,
+void _print_g96_positionred_bound(configuration::Configuration const &conf,
 					 topology::Topology const &topo,
 					 std::ostream &os, int width)
 {
@@ -663,7 +663,7 @@ static void _print_g96_positionred_bound(configuration::Configuration const &con
 
 
 template<math::boundary_enum b>
-static void
+void
 _print_positionred_bound(configuration::Configuration const &conf,
 			 std::ostream &os, int width)
 {

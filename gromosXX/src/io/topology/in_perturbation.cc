@@ -32,7 +32,7 @@ io::In_Perturbation::In_Perturbation(std::istream &is)
 };
 
 template<typename T>
-static bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
+bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
 {
   if (buffer.size()){
     std::istringstream is(buffer[1]);
