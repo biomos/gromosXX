@@ -665,6 +665,19 @@ io::In_Perturbation::read(topology::Topology &topo,
 	--seq;
 	--a_iac;
 	--b_iac;
+
+	if (seq < 0 || seq >= topo.num_solute_atoms()){
+	  io::messages.add("atom sequence number wrong in PERTATOM03 block",
+			   "In_Perturbation", io::message::critical);
+	  return;
+	}
+
+	if (a_iac < 0 || b_iac < 0){
+	  io::messages.add("integer atom code wrong in PERTATOM03 block",
+			   "In_Perturbation", io::message::critical);
+	  return;
+	}
+
 	topology::Perturbed_Atom atom(seq, a_iac, a_mass, a_charge,
 					b_iac, b_mass, b_charge,
 					lj_soft, crf_soft);
