@@ -28,7 +28,6 @@ END
 
 PARAMETER
 	t_virial
-	sim.param().pcouple.virial == no_virial @ no_virial
 	sim.param().pcouple.virial == molecular_virial @ molecular_virial
 	sim.param().pcouple.virial == atomic_virial @ atomic_virial
 END
@@ -51,8 +50,8 @@ END
 
 PARAMETER
 	t_scaling
-	sim.param().perturbation.scaling == false @ scaling_off
 	sim.param().perturbation.scaling == true @ scaling_on
+	sim.param().perturbation.scaling == false @ scaling_off
 END
 
 RULE
