@@ -56,16 +56,10 @@ void configuration::Configuration::initialise(topology::Topology & topo,
 	<< "\nnumber of baths: " << numb);
 
   current().energies.resize(num, numb);
-  current().energy_averages.resize(num, numb);
-
   old().energies.resize(num, numb);
-  old().energy_averages.resize(num, numb);
   
   current().perturbed_energy_derivatives.resize(num, numb);
-  current().perturbed_energy_derivative_averages.resize(num, numb);
-    
   old().perturbed_energy_derivatives.resize(num, numb);
-  old().perturbed_energy_derivative_averages.resize(num, numb);
 
   current().averages.resize(topo, *this, param);
   old().averages.resize(topo, *this, param);

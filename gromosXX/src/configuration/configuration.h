@@ -8,7 +8,6 @@
 
 // headers needed for configuration
 #include <configuration/energy.h>
-#include <configuration/energy_average.h>
 #include <configuration/average.h>
 
 namespace topology
@@ -78,11 +77,6 @@ namespace configuration
       configuration::Energy energies;
 
       /**
-       * energy averages.
-       */
-      configuration::Energy_Average energy_averages;
-
-      /**
        * averages.
        */
       configuration::Average averages;
@@ -92,11 +86,6 @@ namespace configuration
        */
       configuration::Energy perturbed_energy_derivatives;
 
-      /**
-       * perturbed energy derivative averages.
-       */
-      configuration::Energy_Average perturbed_energy_derivative_averages;
-      
       /**
        * resize the arrays for s atoms.
        */
