@@ -952,6 +952,7 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
       css >> param.perturbation.scaling;
       
       if(css.fail()){
+	std::cerr << "got " << s2 << std::endl;
 	io::messages.add("bad value for SCALING in PERTURB block\n"
 			 "on,off,0,1",
 			 "In_Parameter", io::message::error);
