@@ -23,7 +23,6 @@ namespace simulation
     {
       std::string name;
       int residue_nr;
-      int iac;
     };
     /**
      * accessor.
@@ -33,7 +32,7 @@ namespace simulation
     /**
      * add a soluteatom at the end of the list.
      */
-    void add(std::string name, int residue_nr, int iac);
+    void add(std::string name, int residue_nr);
 
   private:
     std::vector<soluteatom_struct> m_information;

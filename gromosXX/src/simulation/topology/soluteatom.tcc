@@ -6,12 +6,11 @@
 /**
  * add a solute atom.
  */
-inline void simulation::soluteatom::add(std::string name, int residue_nr, int iac)
+inline void simulation::soluteatom::add(std::string name, int residue_nr)
 {
   soluteatom_struct s;
   s.name = name;
   s.residue_nr = residue_nr;
-  s.iac = iac;
   
   m_information.push_back(s);
 }

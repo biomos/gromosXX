@@ -40,6 +40,10 @@ namespace io {
      */
     OutTrajectory(std::ostream &os, std::ostream &final);
     /**
+     * write out the title block.
+     */
+    void print_title(std::string title);
+    /**
      * write out a timestep.
      */
     OutTrajectory & operator<<(t_simulation &sim);

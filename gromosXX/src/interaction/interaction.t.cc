@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
 
 #include "../simulation/simulation.h"
 

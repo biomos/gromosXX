@@ -58,6 +58,27 @@ inline double simulation::simulation<t_topo, t_system>
 }
 
 /**
+ * set time
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::simulation<t_topo, t_system>
+::time(double t)
+{
+  m_time = t;
+}
+
+/**
+ * increase time by dt
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::simulation<t_topo, t_system>
+::increase_time(double dt)
+{
+  m_time += dt;
+  ++m_steps;
+}
+
+/**
  * steps accessor
  */
 template<typename t_topo, typename t_system>

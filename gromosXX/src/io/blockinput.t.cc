@@ -9,6 +9,7 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <stdexcept>
 
 #include "../simulation/simulation.h"
 #include "../interaction/interaction.h"

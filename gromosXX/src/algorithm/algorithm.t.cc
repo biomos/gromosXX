@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
 
 #include "../math/gmath.h"
 

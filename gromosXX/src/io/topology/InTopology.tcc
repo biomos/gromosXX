@@ -116,17 +116,80 @@ inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
       }
       
       if (_lineStream.fail() || ! _lineStream.eof())
-	throw std::runtime_error("bad line SOLUTEATOM block");
+	throw std::runtime_error("bad line in SOLUTEATOM block");
 
       topo.add_solute_atom(s, r_nr-1, t-1, m, q, cg, ex, ex14);
 
     }
     
     if(n != num){
-      if (_lineStream.fail() || ! _lineStream.eof())
-	throw std::runtime_error("error in SOLUTEATOM block (n != num)");
+      // if (_lineStream.fail() || ! _lineStream.eof())
+      throw std::runtime_error("error in SOLUTEATOM block (n != num)");
     }
   } // SOLUTEATOM
+  
+  { // SOLVENTATOM and SOLVENTCONSTR
+    // give it a number (SOLVENTATOM1, SOLVENTATOM2) for multiple
+    // solvents...
+    buffer = m_block["SOLVENTATOM"];
+    
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    int num, n;
+    _lineStream >> num;
+    ++it;
+    
+    simulation::solvent s;
+    
+    std::string name;
+    int i, iac;
+    double mass, charge;
+    
+    for(n=0; it != buffer.end()-1; ++it, ++n){
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> i >> name >> iac >> mass >> charge;
+
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in SOLVENTATOM block");
+
+      s.add_atom(name, iac, mass, charge);
+    }
+    
+    if (n!=num)
+      throw std::runtime_error("error in SOLVENTATOM block (n != num)");
+
+    buffer = m_block["SOLVENTCONSTR"];
+    
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> num;
+    ++it;
+    
+    int j;
+    double b0;
+    
+    for(n=0; it != buffer.end()-1; ++it, ++n){
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> i >> j >> b0;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in SOLVENTCONSTR block");
+ 
+      s.add_constraint(i, j, b0);
+    }
+
+    if (n!=num)
+      throw std::runtime_error("error in SOLVENTATOM block (n != num)");
+
+    topo.add_solvent(s);
+  }
 
   return *this;
 }

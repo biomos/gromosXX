@@ -5,6 +5,7 @@
 
 #include "simulation/simulation.h"
 #include "topology/soluteatom.h"
+#include "topology/solvent.h"
 #include "topology/bond.h"
 #include "topology/topology.h"
 #include "system/system.h"

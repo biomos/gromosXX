@@ -19,6 +19,37 @@ inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
 }
 
 template<typename t_simulation>
+inline void io::OutTrajectory<t_simulation>::print_title(std::string title)
+{
+  if (m_pos){
+    *m_pos_traj << "TITLE\n"
+		<< title << "\n"
+		<< "\tposition trajectory\n"
+		<< "END\n";
+  }
+  
+  *m_final_traj << "TITLE\n"
+		<< title << "\n"
+		<< "\tfinal structure\n"
+		<< "END\n";
+
+  if (m_vel){
+    *m_vel_traj << "TITLE\n"
+		<< title << "\n"
+		<< "\tvelocity trajectory\n"
+		<< "END\n";
+  }
+
+  if (m_force){
+    *m_force_traj << "TITLE\n"
+		  << title << "\n"
+		  << "\tforce trajectory\n"
+		  << "END\n";
+  }
+
+}
+
+template<typename t_simulation>
 inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
 ::operator<<(t_simulation &sim)
 {

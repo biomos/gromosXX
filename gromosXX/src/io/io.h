@@ -9,3 +9,4 @@
 #include "topology/InTopology.h"
 #include "trajectory/InTrajectory.h"
 #include "trajectory/OutTrajectory.h"
+#include "input/InInput.h"

@@ -14,9 +14,17 @@ inline simulation::topology::topology()
 }
 
 /**
+ * integer atom code accessor.
+ */
+inline int simulation::topology::iac(int i)
+{
+  return m_iac[i];
+}
+
+/**
  * mass accessor
  */
-math::SArray & simulation::topology::mass()
+inline math::SArray & simulation::topology::mass()
 {
   return m_mass;
 }
@@ -24,7 +32,7 @@ math::SArray & simulation::topology::mass()
 /**
  * const mass accessor
  */
-math::SArray const & simulation::topology::mass()const
+inline math::SArray const & simulation::topology::mass()const
 {
   return m_mass;
 }
@@ -32,7 +40,7 @@ math::SArray const & simulation::topology::mass()const
 /**
  * charge accessor
  */
-math::SArray & simulation::topology::charge()
+inline math::SArray & simulation::topology::charge()
 {
   return m_charge;
 }
@@ -40,7 +48,7 @@ math::SArray & simulation::topology::charge()
 /**
  * const charge accessor
  */
-math::SArray const & simulation::topology::charge()const
+inline math::SArray const & simulation::topology::charge()const
 {
   return m_charge;
 }
@@ -111,13 +119,15 @@ inline void simulation::topology::add_solute_atom(std::string name, int residue_
     solute_atoms_capacity(m_num_solute_atoms+1);
   }
   
-  soluteatoms().add(name, residue_nr, iac);
+  soluteatoms().add(name, residue_nr);
 
   topology::mass()(m_num_solute_atoms) = mass;
   topology::charge()(m_num_solute_atoms) = charge;
 
   if (chargegroup) m_chargegroup.push_back(m_num_solute_atoms+1);
   
+  m_iac.push_back(iac);
+
   m_exclusion[m_num_solute_atoms] = exclusions;
   m_one_four_pair[m_num_solute_atoms] = one_four_pairs;
   
@@ -137,6 +147,31 @@ inline void simulation::topology::add_solute_atom(std::string name, int residue_
 inline simulation::soluteatom & simulation::topology::soluteatoms()
 {
   return m_soluteatoms;
+}
+
+/**
+ * solvent accessor.
+ */
+inline simulation::solvent & simulation::topology::solvents(size_t i)
+{
+  assert(i < m_solvents.size());
+  return m_solvents[i];
+}
+
+/**
+ * add a solvent.
+ */
+inline void simulation::topology::add_solvent(solvent solv)
+{
+  m_solvents.push_back(solv);
+}
+
+/**
+ * add solvent to the simulation.
+ */
+inline void simulation::topology::solvate(int solv, int num_molecules)
+{
+  throw std::runtime_error("topology::solvate not yet implemented!");
 }
 
 /**

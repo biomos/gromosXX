@@ -44,10 +44,18 @@ namespace simulation
      */
     double time();
     /**
+     * set (initial) time.
+     */
+    void time(double t);
+    /**
      * steps accessor
      */
     int steps();
-    
+    /**
+     * increase the time by dt.
+     */
+    void increase_time(double dt);
+
   private:
     /**
      * the topology.

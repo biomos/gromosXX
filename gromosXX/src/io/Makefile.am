@@ -10,7 +10,9 @@ include_HEADERS = 		io.h \
 				trajectory/InTrajectory.h \
 				trajectory/InTrajectory.tcc \
 				trajectory/OutTrajectory.h \
-				trajectory/OutTrajectory.tcc
+				trajectory/OutTrajectory.tcc \
+				input/InInput.h \
+				input/InInput.tcc
 
 lib_LTLIBRARIES	= 		libio.la
 

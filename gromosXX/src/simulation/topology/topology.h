@@ -24,6 +24,11 @@ namespace simulation
     explicit topology();
 
     /**
+     * integer atom code accessor.
+     */
+    int iac(int i);
+    
+    /**
      * masses accessor
      */
     math::SArray &mass();
@@ -53,6 +58,24 @@ namespace simulation
      */
     soluteatom & soluteatoms();
 
+    /**
+     * solvent accessor.
+     * support for multiple solvents.
+     */
+    solvent & solvents(size_t i);
+
+    /**
+     * add a solvent.
+     */
+    void add_solvent(solvent solv);
+
+    /**
+     * add solvent to the simulation.
+     * @param solv the solvent (multiple solvents).
+     * @param num_molecules the number of solvent molecules to add.
+     */
+    void solvate(int solv, int num_molecules);
+    
     /**
      * set the capacity of solute atoms
      */
@@ -88,6 +111,16 @@ namespace simulation
      * the soluteatoms.
      */
     soluteatom m_soluteatoms;
+
+    /**
+     * the solvents (multiple solvent).
+     */
+    std::vector<solvent> m_solvents;
+    
+    /**
+     * the integer atom code.
+     */
+    std::vector<int> m_iac;
 
     /**
      * the atom masses.
