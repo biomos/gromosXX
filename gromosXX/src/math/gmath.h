@@ -184,6 +184,18 @@ inline T abs2(TinyVector<T,N> v)
 
 BZ_DECLARE_FUNCTION_RET(abs2, double);
 
+
+inline std::string v2s(math::Vec const & v)
+{
+  stringstream s;
+  s << "[" 
+    << std::setprecision(9) << std::setw(20) << v(0)
+    << std::setprecision(9) << std::setw(20) << v(1)
+    << std::setprecision(9) << std::setw(20) << v(2)
+    << "]";
+  return s.str();
+}
+
 } // math
 
 #endif
