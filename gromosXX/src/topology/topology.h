@@ -232,7 +232,7 @@ namespace topology
     
     int chargegroup(int i)const 
     {
-      assert(m_chargegroup.size() > i);
+      assert(int(m_chargegroup.size()) > i);
       return m_chargegroup[i];
     }
 
