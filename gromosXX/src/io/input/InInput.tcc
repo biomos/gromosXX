@@ -13,9 +13,9 @@
 /**
  * Store standard parameters in the simulation.
  */
-template<typename t_topology, typename t_system>
+template<typename t_simulation>
 inline io::InInput & io::InInput
-::operator>>(simulation::Simulation<t_topology, t_system> &sim)
+::operator>>(t_simulation &sim)
 {
   // let's for now only do the 'numbers only' stuff
   std::vector<std::string> buffer;

@@ -28,8 +28,8 @@ namespace io {
     /**
      * Store standard parameters in the simulation.
      */
-    template<typename t_topology, typename t_system>
-    InInput & operator>>(simulation::Simulation<t_topology, t_system> &sim);
+    template<typename t_simulation>
+    InInput & operator>>(t_simulation &sim);
     
     /**
      * read step block.

@@ -10,21 +10,17 @@
 #include <fstream>
 #include <stdexcept>
 
-#include "../src/debug.h"
-#include "../src/timing.h"
+#include <debug.h>
+#include <timing.h>
 
 #include <math/gmath.h>
 #include <io/message.h>
-#include <simulation/core.h>
-#include <math/periodicity.h>
-#include <simulation/simulation.h>
-#include <simulation/perturbation.h>
-#include <interaction/interaction.h>
-#include <io/io.h>
-#include <algorithm/algorithm.h>
+#include <io/argument.h>
+#include <io/blockinput.h>
+#include <io/GInStream.h>
+#include <io/input/InInput.h>
 
-// special includes
-#include <algorithm/integration/runge_kutta.h>
+#include <algorithm/md_global.h>
 
 // global variables for debug and timing
 #include "../src/debug.cc"

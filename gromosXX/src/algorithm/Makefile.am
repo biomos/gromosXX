@@ -2,7 +2,6 @@ INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		algorithm.h \
 				algorithm/md_global.h \
-				algorithm/md_global.tcc \
 				algorithm/md_spec.h \
 				algorithm/interaction_spec.h \
 				algorithm/md_base.h \
@@ -32,7 +31,20 @@ lib_LTLIBRARIES	= 		libalgorithm.la
 
 libalgorithm_la_LDFLAGS = 	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
-libalgorithm_la_SOURCES =	algorithm.cc
+libalgorithm_la_SOURCES =	algorithm.cc algorithm/md_global.cc \
+	algorithm/grid_scaled_molvir_perturbed_md.cc 	algorithm/grid_scaled_atvir_perturbed_md.cc \
+	algorithm/grid_scaled_molvir_md.cc 	   	algorithm/grid_scaled_atvir_md.cc \
+	algorithm/grid_scaled_perturbed_md.cc 	   	algorithm/grid_scaled_md.cc \
+	algorithm/grid_molvir_perturbed_md.cc 	   	algorithm/grid_atvir_perturbed_md.cc \
+	algorithm/grid_molvir_md.cc 		   	algorithm/grid_atvir_md.cc \
+	algorithm/grid_perturbed_md.cc 		   	algorithm/grid_md.cc \
+	algorithm/scaled_molvir_perturbed_md.cc 	algorithm/scaled_atvir_perturbed_md.cc \
+	algorithm/scaled_molvir_md.cc 		  	algorithm/scaled_atvir_md.cc \
+	algorithm/scaled_perturbed_md.cc 		algorithm/scaled_md.cc \
+	algorithm/molvir_perturbed_md.cc 		algorithm/atvir_perturbed_md.cc \
+	algorithm/molvir_md.cc 			   	algorithm/atvir_md.cc \
+	algorithm/perturbed_md.cc 		   	algorithm/md.cc 
+
 
 bin_PROGRAMS =
 

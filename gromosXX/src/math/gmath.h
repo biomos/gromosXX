@@ -22,6 +22,12 @@
 #ifdef COMPILER_GCC
 #include <cxxabi.h>
 #endif
+
+namespace interaction
+{
+  enum virial_enum { no_virial = 0, molecular_virial = 1, atomic_virial = 2 };
+}
+
 /**
  * @namespace math
  * namespace that contains mathematical functions

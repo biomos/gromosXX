@@ -152,7 +152,7 @@ interaction::Range_Filter<t_simulation, t_nonbonded_spec>
 {
   DEBUG(11, "Range_Filter::range_chargegroup_pair (shift) " << i << " - " << j);
  
-  math::Boundary_Implementation<t_simulation::system_type::boundary_type>::shift_struct const & shift = sim.system().periodicity().shift(pc);
+  typename math::Boundary_Implementation<t_simulation::system_type::boundary_type>::shift_struct const & shift = sim.system().periodicity().shift(pc);
  
   math::Vec p;
   

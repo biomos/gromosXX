@@ -242,7 +242,7 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
 
   DEBUG(7, "md: create forcefield");
 
-  G96_Forcefield(m_forcefield, m_simulation, topo, input, args);
+  algorithm::G96_Forcefield(m_forcefield, m_simulation, topo, input, args);
   
   m_simulation.pressure_calculation(m_calculate_pressure);
 

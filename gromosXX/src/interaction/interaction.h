@@ -3,11 +3,6 @@
  * gathers common include directives for the interaction library.
  */
 
-namespace interaction
-{
-  enum virial_enum { no_virial = 0, molecular_virial = 1, atomic_virial = 2 };
-}
-
 // general
 #include "interaction/interaction.h"
 #include "forcefield/forcefield.h"
