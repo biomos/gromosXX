@@ -100,6 +100,11 @@ namespace configuration
        */
       // math::Matrix molecular_kinetic_energy;
 
+      /**
+       * the dihedral angle minima for monitoring
+       */
+      std::vector<double> dihedral_angle_minimum;
+      
     };
     
     /**

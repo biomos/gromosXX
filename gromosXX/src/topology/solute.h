@@ -77,6 +77,12 @@ namespace topology
       return m_dihedral;}
 
     /**
+     * dihedral accessor as const
+     */
+    std::vector<four_body_term_struct> const & dihedrals()const{
+      return m_dihedral;}
+
+    /**
      * atom information.
      */
     std::vector<atom_struct> m_atom;

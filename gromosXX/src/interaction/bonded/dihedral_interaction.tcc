@@ -33,7 +33,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
   
   math::Periodicity<b> periodicity(conf.current().box);
 
-  for( ; d_it != d_to; ++d_it){
+  for(int n =0; d_it != d_to; ++d_it, ++n){
     periodicity.nearest_image(pos(d_it->i), pos(d_it->j), rij);
     periodicity.nearest_image(pos(d_it->k), pos(d_it->j), rkj);
     periodicity.nearest_image(pos(d_it->k), pos(d_it->l), rkl);
@@ -98,7 +98,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
 	throw std::runtime_error("dihedral type for m=6 not implemented");
 	
     }
-    double      K = param[d_it->type].K;
+    double     K = param[d_it->type].K;
     double delta = param[d_it->type].pd;
 
     DEBUG(10, "dihedral K=" << K << " delta=" << delta << " dcos=" << dcosmphi);
@@ -135,6 +135,30 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     conf.current().energies.dihedral_energy
       [topo.atom_energy_group()[d_it->i]] += energy;
     
+    // dihedral angle monitoring.
+    if(sim.param().print.monitor_dihedrals){
+      DEBUG(8, "monitoring dihedrals");
+      
+      double phi = acos(cosphi);
+      ip = dot(rij, rnk);
+      if(ip < 0) phi*=-1.0;
+      DEBUG(11, "dihedral angle: " << phi
+	    << " previous minimum: " <<conf.special().dihedral_angle_minimum[n]);
+      
+      if(fabs(conf.special().dihedral_angle_minimum[n] - phi) > 
+	 2*math::Pi / param[d_it->type].m){
+	double old_min=conf.special().dihedral_angle_minimum[n];
+	conf.special().dihedral_angle_minimum[n] = 
+	  _calculate_nearest_minimum(phi, param[d_it->type].m, delta);
+	// ugly check to see that it is not the first...
+	if(old_min != 4*math::Pi){
+	  // could be written to a separate file or by a separate function
+	  // should at least be more descriptive.
+	  std::cout << "transition from: " << old_min << " to " 
+		    << conf.special().dihedral_angle_minimum[n] << "\n";
+	}
+      }
+    }
   }
   
   return 0;
@@ -165,3 +189,18 @@ int interaction::Dihedral_Interaction<t_interaction_spec>
   }
   
 }
+
+/**
+ * calculate nearest minimum
+ */
+double _calculate_nearest_minimum(double phi, int m, double pd)
+{
+  // copy from gromos++ nearest_minimum function
+  double a_minimum = 0.5*math::Pi*(3.0 - pd)/ m;
+  double delta_phi = 2*math::Pi / m;
+  double nearest_min = a_minimum - int(rint((a_minimum - phi)/delta_phi))*delta_phi;
+  if(nearest_min >= 2*math::Pi - math::epsilon) nearest_min -= 2*math::Pi;
+  
+  return nearest_min;
+}
+

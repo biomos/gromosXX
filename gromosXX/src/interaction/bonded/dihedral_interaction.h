@@ -43,6 +43,11 @@ namespace interaction
     
   protected:
     std::vector<dihedral_type_struct> m_parameter;
+
+    /**
+     * calculate nearest minimum
+     */
+    double _calculate_nearest_minimum(double phi, int m, double pd);
     
   };
   

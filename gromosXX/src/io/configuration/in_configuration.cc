@@ -38,6 +38,15 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   // resize the configuration
   conf.resize(topo.num_atoms());
 
+  // possibly resize the dihedral angle monitoring array
+  // initialize or set to such a value that it is recalculated in
+  // the first step, initialization would require an additional function
+  // which can be done only after reading of the coordinates. Would be a
+  // nicer solution, but also requires the parameters...
+  if(param.print.monitor_dihedrals)
+    conf.special().dihedral_angle_minimum.resize
+      (topo.solute().dihedrals().size(), 4*math::Pi);
+    
   DEBUG(8, "reading in a frame");
   read_frame();
   DEBUG(8, "frame read");

@@ -64,8 +64,6 @@ void configuration::Configuration::state_struct::resize(size_t s)
   pos.resizeAndPreserve(s);
   vel.resizeAndPreserve(s);
   force.resizeAndPreserve(s);
-  
-    
 }
 
 namespace configuration
