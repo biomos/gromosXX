@@ -60,14 +60,31 @@ namespace topology
     std::vector<two_body_term_struct> & bonds(){return m_bond;}
 
     /**
+     * const bond accessor.
+     */
+    std::vector<two_body_term_struct> const & bonds()const
+    {
+      return m_bond;
+    }
+    
+    /**
      * angle accessor.
      */
     std::vector<three_body_term_struct> & angles(){return m_angle;}
+    /**
+     * const angle accessor.
+     */
+    std::vector<three_body_term_struct> const & angles()const{return m_angle;}
     
     /**
      * improper dihedral accessor.
      */
     std::vector<four_body_term_struct> & improper_dihedrals(){
+      return m_improper_dihedral;}
+    /**
+     * const improper dihedral accessor.
+     */
+    std::vector<four_body_term_struct> const & improper_dihedrals()const{
       return m_improper_dihedral;}
 
     /**
@@ -75,9 +92,8 @@ namespace topology
      */
     std::vector<four_body_term_struct> & dihedrals(){
       return m_dihedral;}
-
     /**
-     * dihedral accessor as const
+     * const dihedral accessor.
      */
     std::vector<four_body_term_struct> const & dihedrals()const{
       return m_dihedral;}

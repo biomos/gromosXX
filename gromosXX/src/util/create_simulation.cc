@@ -89,7 +89,7 @@ int util::create_simulation(std::string topo,
   in_topo.stream(topo_file);
   in_topo.read(sim.topo, sim.sim.param());
 
-  sim.topo.initialise();
+  sim.topo.init(sim.sim);
 
   if(pttopo != ""){
     

@@ -15,6 +15,8 @@
 namespace simulation
 {
   class Multibath;
+  class Simulation;
+  class Parameter;
 }
 
 namespace topology
@@ -31,6 +33,17 @@ namespace topology
      * Constructor
      */
     explicit Topology();
+
+    /**
+     * copy constructor
+     * can multiply topologies
+     */
+    explicit Topology(Topology const & topo, int mul_solute = 1, int mul_solvent = -1);
+    
+    /**
+     * Destructor
+     */
+    ~Topology();
 
     /**
      * integer atom code accessor.
@@ -91,7 +104,8 @@ namespace topology
      * const solvent accessor.
      * support for multiple solvents.
      */
-    Solvent const & solvent(unsigned int i)const {assert(i < m_solvent.size()); return m_solvent[i];}
+    Solvent const & solvent(unsigned int i)const
+    {assert(i < m_solvent.size()); return m_solvent[i];}
 
     /**
      * add a solvent.
@@ -236,6 +250,10 @@ namespace topology
      * the molecules.
      */
     std::vector<unsigned int> & molecules(){ return m_molecule;}
+    /**
+     * the molecules (const)
+     */
+    std::vector<unsigned int> const & molecules()const{ return m_molecule;}
     /**
      * iterator over the molecules.
      */
@@ -419,10 +437,26 @@ namespace topology
     }
 
     /**
+     * multi cell topology accessor
+     */
+    Topology & multicell_topo()
+    {
+      return *m_multicell_topo;
+    }
+
+    /**
+     * multi cell topology const accessor
+     */
+    Topology const & multicell_topo()const
+    {
+      return *m_multicell_topo;
+    }
+
+    /**
      * initialise the topology.
      * - adjust submolecules if empty
      */
-    void initialise();
+    void init(simulation::Simulation const & sim, bool quiet = false);
     
   private:
     /**
@@ -568,6 +602,11 @@ namespace topology
      * jvalue restraints / constraints
      */
     std::vector<jvalue_restraint_struct> m_jvalue_restraint;
+
+    /**
+     * expanded topology for multiple unit cell simulations
+     */
+    Topology * m_multicell_topo;
     
     
   }; // topology

@@ -64,6 +64,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_PSCALE(param);
   read_ROTTRANS(param);
   read_INNERLOOP(param);
+  read_MULTICELL(param);
   
   DEBUG(7, "input read...");
 
@@ -1982,3 +1983,33 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param)
   }
   
 }
+
+void io::In_Parameter::read_MULTICELL(simulation::Parameter & param)
+{
+  DEBUG(8, "read MULTICELL");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["MULTICELL"];
+
+  if (buffer.size()){
+
+    block_read.insert("MULTICELL");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.multicell.multicell 
+		>> param.multicell.x >> param.multicell.y >> param.multicell.z;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in MULTICELL block",
+		       "In_Parameter", io::message::error);
+
+      param.multicell.multicell = false;
+    }
+  }
+  
+}
+  

@@ -59,8 +59,6 @@ int main(int argc, char *argv[]){
   topo.add_solute_atom("AR", 0, 27, 39, 0, 1, std::set<int>(), std::set<int>());
   topo.add_solute_atom("AR", 1, 27, 39, 0, 1, std::set<int>(), std::set<int>());
     
-  topo.initialise();
-
   // perturb one of the atoms
   std::cout <<"perturb an atom" << std::endl;
 
@@ -80,6 +78,8 @@ int main(int argc, char *argv[]){
   conf.current().box(2) = math::Vec(0, 0, 5);
   conf.boundary_type = math::rectangular;
   sim.param().boundary.boundary = math::rectangular;
+
+  topo.init(sim);
 
   // no gather
   conf.initialise(topo, sim.param(), false);

@@ -161,6 +161,11 @@ namespace io {
      * read INNERLOOP block.
      */
     void read_INNERLOOP(simulation::Parameter &param);
+
+    /**
+     * read MULTICELL block.
+     */
+    void read_MULTICELL(simulation::Parameter & param);
     
   };
   

@@ -104,6 +104,8 @@ int io::read_input(io::Argument const & args,
 
   }
 
+  topo.init(sim);
+
   // do this after reading in a perturbation topology
   sim.multibath().calculate_degrees_of_freedom(topo, sim.param().rottrans.rottrans);
 

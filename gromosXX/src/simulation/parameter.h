@@ -937,8 +937,43 @@ namespace simulation
       int scale;
     } /** replica exchange parameters */ replica;
     
+    /**
+     * @struct multicell_struct
+     * multiple unit cell simulations
+     */
+    struct multicell_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - multicell false
+       * - x 1
+       * - y 1
+       * - z 1
+       */
+      multicell_struct() : multicell(false), x(1), y(1), z(1)
+      {
+      }
+      /**
+       * do multicell
+       */
+      bool multicell;
+      /**
+       * multiples in x direction
+       */
+      int x;
+      /**
+       * multiples in y direction
+       */
+      int y;
+      /**
+       * multiples in z direction
+       */
+      int z;
+    } /** multicell parameter */ multicell;
+
   };
-  
+
 }
 
 #endif

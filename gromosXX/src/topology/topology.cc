@@ -5,7 +5,7 @@
 
 #include <stdheader.h>
 
-double topology_ver = 0.10;
+double topology_ver = 0.30;
 
 namespace simulation
 {
@@ -23,6 +23,7 @@ namespace simulation
 
 #include <topology/topology.h>
 #include <simulation/multibath.h>
+#include <simulation/simulation.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -35,10 +36,126 @@ namespace simulation
 topology::Topology::Topology()
   : m_mass(0),
     m_charge(0),
-    m_num_solute_chargegroups(0)
+    m_num_solute_chargegroups(0),
+    m_multicell_topo(NULL)
 {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
+}
+
+topology::Topology::~Topology()
+{
+  delete m_multicell_topo;
+}
+
+/**
+ * copy (multiply) constructor
+ */
+topology::Topology::Topology(topology::Topology const & topo, int mul_solute, int mul_solvent)
+  : m_multicell_topo(NULL)
+{
+  if (mul_solvent == -1) mul_solvent = mul_solute;
+  
+  const int num_solute = topo.num_solute_atoms();
+  assert(topo.m_is_perturbed.size() == num_solute);
+  
+  m_is_perturbed.clear();
+  m_iac.clear();
+  m_mass.clear();
+  m_charge.clear();
+  m_exclusion.clear();
+  m_one_four_pair.clear();
+  m_all_exclusion.clear();
+  m_atom_energy_group.clear();
+  m_chargegroup.clear();
+  m_chargegroup.push_back(0);
+  
+  m_molecule.clear();
+  m_molecule.push_back(0);
+  
+  solute().bonds().clear();
+  solute().angles().clear();
+  solute().improper_dihedrals().clear();
+  solute().dihedrals().clear();
+
+  for(int m=0; m<mul_solute; ++m){
+    m_is_perturbed.insert(m_is_perturbed.end(), topo.m_is_perturbed.begin(), topo.m_is_perturbed.end());
+
+    for(int i=0; i<num_solute; ++i){
+      m_iac.push_back(topo.m_iac[i]);
+      m_mass.push_back(topo.m_mass[i]);
+      m_charge.push_back(topo.m_charge[i]);
+      m_exclusion.push_back(topo.m_exclusion[i]);
+      m_one_four_pair.push_back(topo.m_one_four_pair[i]);
+      m_all_exclusion.push_back(topo.m_all_exclusion[i]);
+      m_atom_energy_group.push_back(topo.m_atom_energy_group[i]);
+      
+      solute().add_atom(topo.solute().atom(i).name, topo.solute().atom(i).residue_nr);
+
+    }
+
+    for(int i=1; i<topo.num_solute_chargegroups(); ++i){
+      m_chargegroup.push_back(topo.m_chargegroup[i] + m * num_solute);
+    }
+
+    for(int i=1; i<topo.molecules().size() - topo.num_solvent_molecules(0); ++i){
+      m_molecule.push_back(topo.molecules()[i] + m * num_solute);
+    }
+
+    for(int i=0; i<topo.solute().bonds().size(); ++i){
+      solute().bonds().push_back
+	(two_body_term_struct(topo.solute().bonds()[i].i + m * num_solute,
+			      topo.solute().bonds()[i].j + m * num_solute,
+			      topo.solute().bonds()[i].type));
+    }
+    for(int i=0; i<topo.solute().angles().size(); ++i){
+      solute().angles().push_back
+	(three_body_term_struct(topo.solute().angles()[i].i + m * num_solute,
+				topo.solute().angles()[i].j + m * num_solute,
+				topo.solute().angles()[i].k + m * num_solute,
+				topo.solute().angles()[i].type));
+    }
+    for(int i=0; i<topo.solute().improper_dihedrals().size(); ++i){
+      solute().improper_dihedrals().push_back
+	(four_body_term_struct(topo.solute().improper_dihedrals()[i].i + m * num_solute,
+			       topo.solute().improper_dihedrals()[i].j + m * num_solute,
+			       topo.solute().improper_dihedrals()[i].k + m * num_solute,
+			       topo.solute().improper_dihedrals()[i].l + m * num_solute,
+			       topo.solute().improper_dihedrals()[i].type));
+    }
+    for(int i=0; i<topo.solute().dihedrals().size(); ++i){
+      solute().dihedrals().push_back
+	(four_body_term_struct(topo.solute().dihedrals()[i].i + m * num_solute,
+			       topo.solute().dihedrals()[i].j + m * num_solute,
+			       topo.solute().dihedrals()[i].k + m * num_solute,
+			       topo.solute().dihedrals()[i].l + m * num_solute,
+			       topo.solute().dihedrals()[i].type));
+    }
+
+    // perturbed solute
+
+  }
+  
+  m_energy_group = topo.m_energy_group;
+  m_lambda = topo.m_lambda;
+  m_old_lambda = topo.m_old_lambda;
+  m_lambda_exp = topo.m_lambda_exp;
+  m_energy_group_scaling = topo.m_energy_group_scaling;
+  m_energy_group_lambdadep = topo.m_energy_group_lambdadep;
+  
+  m_lambda_prime = topo.m_lambda_prime;
+  m_lambda_prime_derivative = topo.m_lambda_prime_derivative;
+  m_perturbed_energy_derivative_alpha =   topo.m_perturbed_energy_derivative_alpha;
+  
+  m_position_restraint = topo.m_position_restraint;
+  m_jvalue_restraint = topo.m_jvalue_restraint;
+
+  // solvent
+  assert(topo.num_solvents() == 1);
+  add_solvent(topo.solvent(0));
+  solvate(0, topo.num_solvent_atoms() * mul_solvent);
+  
+
 }
 
 /**
@@ -63,7 +180,7 @@ void topology::Topology::resize(unsigned int const atoms)
   m_is_perturbed.resize(atoms, false);
 }
 
-void topology::Topology::initialise()
+void topology::Topology::init(simulation::Simulation const & sim, bool quiet)
 {
   if (!m_molecule.size()){
     m_molecule.push_back(0);
@@ -75,6 +192,24 @@ void topology::Topology::initialise()
     m_energy_group.push_back(num_solute_atoms()-1);
     for(unsigned int i=0; i<num_solute_atoms(); ++i)
       m_atom_energy_group.push_back(0);
+  }
+
+  if (sim.param().multicell.multicell){
+    
+    const int num = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
+    m_multicell_topo = new Topology(*this, num);
+
+    if (!quiet){
+      std::cout << "\tMULTICELL\n" << "\t\t"
+		<< std::setw(10) << sim.param().multicell.x
+		<< std::setw(10) << sim.param().multicell.y
+		<< std::setw(10) << sim.param().multicell.z
+		<< "\n\t\t"
+		<< "molecules : " << m_multicell_topo->molecules().size() - 1
+		<< "\n\t\t"
+		<< "atoms     : " << m_multicell_topo->num_atoms()
+		<< "\n\tEND\n";
+    }
   }
 }
 
