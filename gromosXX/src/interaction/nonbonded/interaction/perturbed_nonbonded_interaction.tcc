@@ -84,8 +84,11 @@ interaction::Perturbed_Nonbonded_Interaction<t_interaction_spec>
   //  double shortrange_start = now();
 
   do_interactions(topo, conf, sim,
+		  m_pairlist);
+  /*
 		  m_pairlist.begin(),
 		  m_pairlist.end() );
+  */
 
   if (t_interaction_spec::do_perturbation){
     DEBUG(7, "\tperturbed short range");

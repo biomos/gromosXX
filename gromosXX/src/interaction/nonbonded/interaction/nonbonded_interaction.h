@@ -107,8 +107,11 @@ namespace interaction
     void do_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
+			 std::vector<std::vector<size_t> > const & pairlist);
+    /*    
 			 Pairlist::iterator it, 
 			 Pairlist::iterator to);
+    */
 
     /**
      * calculate the 1,4-interactions.

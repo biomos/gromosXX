@@ -910,8 +910,14 @@ void io::Out_Configuration
   os << numbaths << "\n";
   
   for(int i=0; i < numbaths; ++i){
-    os << std::setw(18) << 2 * e.kinetic_energy[i] / math::k_Boltzmann / m[i].dof 
-       << std::setw(18) << 2 * e.com_kinetic_energy[i] / math::k_Boltzmann / m[i].com_dof;
+    if (m[i].dof)
+      os << std::setw(18) << 2 * e.kinetic_energy[i] / math::k_Boltzmann / m[i].dof;
+    else
+      os << std::setw(18) << 0.0;
+    if (m[i].com_dof)
+      os << std::setw(18) << 2 * e.com_kinetic_energy[i] / math::k_Boltzmann / m[i].com_dof;
+    else
+      os << std::setw(18) << 0.0;
     if (m[i].ir_dof)
       os << std::setw(18) << 2 * e.ir_kinetic_energy[i] / math::k_Boltzmann / m[i].ir_dof;
     else

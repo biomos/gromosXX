@@ -127,8 +127,14 @@ int main(int argc, char *argv[]){
       tid = omp_get_thread_num();
       if (tid == 0){
 	nthreads = omp_get_num_threads();
-	std::cout << "number of OMP threads: "
-		  << omp_get_num_threads() << std::endl;
+	std::cout << "OpenMP code enabled\n"
+		  << "\tshared memory parallelization\n"
+		  << "\twww.openmp.org\n\n"
+		  << "\tusing "
+		  << omp_get_num_threads() << " threads\n"
+		  << "\tthis can be adjusted by setting the\n"
+		  << "\tOMP_NUM_THREADS environment variable\n"
+		  << std::endl;
       }
    
     }

@@ -71,10 +71,14 @@ interaction::Nonbonded_Interaction<t_interaction_spec>
   // calculate forces / energies
   DEBUG(7, "\tshort range");
 
+  /**
   do_interactions(topo, conf, sim, 
 		  m_pairlist.begin(),
 		  m_pairlist.end() );
-  
+  */
+  do_interactions(topo, conf, sim,
+		  m_pairlist);
+
   // add long-range force
   DEBUG(7, "\tadd long range forces and energies");
 
@@ -196,12 +200,23 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
 ::do_interactions(topology::Topology & topo,
 		  configuration::Configuration & conf,
 		  simulation::Simulation & sim, 
+		  std::vector<std::vector<size_t> > const & pairlist)
+  /*
 		  Pairlist::iterator it, 
 		  Pairlist::iterator to)
+  */
 {  
   DEBUG(7, "\tcalculate interactions");  
 
   Periodicity_type periodicity(conf.current().box);
+
+  /*
+    variables for a OMP parallelizable loop.
+    outer index has to be integer...
+  */
+  std::vector<size_t>::const_iterator j_it, j_to;
+  int i;
+  int size_i = pairlist.size();
 
   if (t_interaction_spec::do_bekker){
 
@@ -212,34 +227,52 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
     // translate the atom j
     DEBUG(9, "nonbonded_interaction: grid based pairlist");
 
-    for( ; it != to; ++it){
+    for(i=0; i < size_i; ++i){
+
+      for(j_it = pairlist[i].begin(),
+	    j_to = pairlist[i].end();
+	  j_it != j_to;
+	  ++j_it){
       
-      pc = (*it >> 26);
-      j = (*it & 67108863);
+	pc = (*j_it >> 26);
+	j = (*j_it & 67108863);
       
-      DEBUG(10, "\tnonbonded_interaction: i " << it.i() << " j " << j
-	    << " pc " << pc);
+	DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << j
+	      << " pc " << pc);
       
-      interaction_innerloop(topo, conf, it.i(), j, 
-			    conf.current(), periodicity, pc);
+	interaction_innerloop(topo, conf, i, j, conf.current(), periodicity, pc);
+      }
+      
     }
+
   }
   else{ // no grid based pairlist
     DEBUG(9, "nonbonded_interaction: no grid based pairlist");
     
-    for( ; it != to; ++it){    
+#ifdef OMP
+#pragma omp parallel for \
+    shared(topo, conf, periodicity, size_i, pairlist) \
+    private(i, j_it, j_to)
+#endif
 
-      DEBUG(10, "\tnonbonded_interaction: i " << it.i() << " j " << *it);
-
-      // shortrange, therefore store in simulation.system()
-      interaction_innerloop(topo, conf, it.i(), *it, 
-			    conf.current(), periodicity);
+    for(i=0; i < size_i; ++i){
+      
+      for(j_it = pairlist[i].begin(),
+	    j_to = pairlist[i].end();
+	  j_it != j_to;
+	  ++j_it)
+	{
+	  DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+	  
+	  // shortrange, therefore store in simulation.system()
+	  interaction_innerloop(topo, conf, i, *j_it, conf.current(), periodicity);
+	}
       
     }
-    
+     
   }
-  
 }
+
 
 /**
  * helper function to calculate the forces and energies from the

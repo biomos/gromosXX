@@ -98,8 +98,8 @@ case "$compiler" in
 
 #      openmp support...       
        if eval "test x$enable_openmp = xyes"; then
-	  CXX_PICKY_FLAGS="$CXX_PICKY_FLAGS -openmp -DOMP"
-	  CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -openmp -DOMP"
+	  CXX_PICKY_FLAGS="$CXX_PICKY_FLAGS -openmp -openmp_report2 -parallel -par_report3 -DOMP"
+	  CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -openmp -openmp_report2 -parallel -par_report2 -DOMP"
        fi
 
        if eval "test x$enable_debug = xyes"; then
