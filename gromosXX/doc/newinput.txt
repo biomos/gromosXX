@@ -63,6 +63,30 @@ FORCEFIELD
   0 0
 END
 
+CONSTRAINT
+#	NTC
+#		1	solvent only
+#		2	solvent and solute bonds containing hydrogens
+#		3	solvent and solute all bonds
+#		4	solvent and constraints in the CONSTRAINTS block
+	3
+#
+#	solute algorithm
+#		shake
+#		lincs
+#		flexshake
+		lincs
+#			lincs options
+#			order
+			4
+#
+#	solvent algorithm
+		shake
+#			shake options
+#			tolerance
+			0.0001
+END
+
 PLIST03
 #	algorithm: standard (gromos96 like pairlist)
 #		       grid (bekker like pairlist)

@@ -253,6 +253,8 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
     }
   }
   
+  DEBUG(10, "end dof calc");
+
 }
 
 void

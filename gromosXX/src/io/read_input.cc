@@ -53,9 +53,17 @@ int io::read_input(io::Argument const & args,
     input_file.open(args["input"].c_str());
   }
   catch(std::string s){
-    s = "opening input failed!\n" + s;
-    throw s;
+    io::messages.add("opening input failed", "read_input",
+		     io::message::critical);
+    return -1;
   }
+  if (!input_file.is_open()){
+    std::cout << "\n\ncould not open " << args["input"] << "!\n" << std::endl;
+    io::messages.add("opening input failed", "read_input",
+		     io::message::critical);
+    return -1;
+  }
+
   io::messages.add("parameter read from " + args["input"],
 		   "read input",
 		   io::message::notice);
@@ -69,8 +77,15 @@ int io::read_input(io::Argument const & args,
     topo_file.open(args["topo"].c_str());
   }
   catch(std::string s){
-    s = "opening topology failed!\n" + s;
-    throw s;
+    io::messages.add("opening topology failed", "read_input",
+		     io::message::critical);
+    return -1;
+  }
+  if (!topo_file.is_open()){
+    std::cout << "\n\ncould not open " << args["topo"] << "!\n" << std::endl;
+    io::messages.add("opening topology failed", "read_input",
+		     io::message::critical);
+    return -1;
   }
 
   io::messages.add("topology read from " + args["topo"],
@@ -90,9 +105,17 @@ int io::read_input(io::Argument const & args,
       pttopo_file.open(args["pttopo"].c_str());
     }
     catch(std::string s){
-      s = "opening perturbation topology failed!\n" + s;
+      io::messages.add("opening perturbation topology failed", "read_input",
+		       io::message::critical);
+      return -1;
     }
-
+    if (!pttopo_file.is_open()){
+      std::cout << "\n\ncould not open " << args["pttopo"] << "!\n" << std::endl;
+      io::messages.add("opening perturbation topology failed", "read_input",
+		       io::message::critical);
+      return -1;
+    }
+    
     io::messages.add("perturbation topology read from " + args["pttopo"],
 		     "read input",
 		     io::message::notice);
@@ -109,8 +132,15 @@ int io::read_input(io::Argument const & args,
     conf_file.open(args["conf"].c_str());
   }
   catch(std::string s){
-    s = "opening configuration failed!\n" + s;
-    throw s;
+    io::messages.add("opening configuration failed", "read_input",
+		     io::message::critical);
+    return -1;
+  }
+  if (!conf_file.is_open()){
+    std::cout << "\n\ncould not open " << args["conf"] << "!\n" << std::endl;
+    io::messages.add("opening configuration failed", "read_input",
+		     io::message::critical);
+    return -1;
   }
 
   io::messages.add("configuration read from " + args["conf"],
