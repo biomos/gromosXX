@@ -21,8 +21,8 @@ namespace algorithm
      */
     Perturbed_Flexible_Constraint
     (
-     double const tolerance = 0.000001,
-     int const max_iterations = 1000,
+     double tolerance = 0.000001,
+     int max_iterations = 1000,
      interaction::Forcefield *ff = NULL
      );
     
