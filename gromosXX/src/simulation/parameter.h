@@ -337,6 +337,16 @@ namespace simulation
       struct constr_param_struct
       {
 	/**
+	 * constructor.
+	 */
+	constr_param_struct()
+	  : algorithm(constr_off),
+	    shake_tolerance(0.0001),
+	    lincs_order(4),
+	    flexshake_readin(false)
+	{}
+	
+	/**
 	 * constraint algorithm to use.
 	 */
 	constr_enum algorithm;

@@ -87,775 +87,795 @@ io::In_Topology::read(topology::Topology& topo,
 		       "InTopology", io::message::error);
   }
 
-  { // RESNAME
-    if (!quiet)
-      std::cout << "\tRESNAME\n\t";
+  if (param.system.npm){
     
-    DEBUG(10, "RESNAME block");
-    buffer = m_block["RESNAME"];
-    it = buffer.begin()+1;
-    int n, num;
-    _lineStream.clear();
-    _lineStream.str(*it);
-    _lineStream >> num;
-    ++it;
+    { // RESNAME
+      if (!quiet)
+	std::cout << "\tRESNAME\n\t";
     
-    if (!quiet && num > 10){
-      for(n=0; n<10; ++n)
-	std::cout << std::setw(8) << n+1;
-      std::cout << "\n\t";
-    }
+      DEBUG(10, "RESNAME block");
+      buffer = m_block["RESNAME"];
+      it = buffer.begin()+1;
+      int n, num;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> num;
+      ++it;
     
-    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      if (!quiet && num > 10){
+	for(n=0; n<10; ++n)
+	  std::cout << std::setw(8) << n+1;
+	std::cout << "\n\t";
+      }
+    
+      for(n=0; it != buffer.end() - 1; ++it, ++n){
+	std::string s;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> s;
+      
+	if (!quiet){
+	  if (n && ((n) % 10) == 0) std::cout << std::setw(10) << n << "\n\t";
+	  std::cout << std::setw(8) << s;      
+	}
+      
+	topo.residue_names().push_back(s);
+      }
+
+      if (n != num){
+	io::messages.add("Error in RESNAME block: n!=num.",
+			 "InTopology", io::message::error);
+	throw std::runtime_error("error in RESNAME block (n != num)");
+      }
+
+      if (!quiet)
+	std::cout << "\n\tEND\n";
+    
+    
+    } // RESNAME
+
+    // std::cout << "time after RESNAME: " << util::now() - start << std::endl;
+
+    { // SOLUTEATOM
+      DEBUG(10, "SOLUTEATOM block");
+      buffer = m_block["SOLUTEATOM"];
+  
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      topo.resize(num);
+
+      if (!quiet)
+	std::cout << "\tSOLUTEATOM\n\t"
+		  << "\tnumber of atoms : " << num;
+    
+      // put the rest of the block into a single stream
+      ++it;
+
+      // std::string soluteAtoms;
+      // concatenate(it, buffer.end()-1, soluteAtoms);
+
+      // _lineStream.clear();
+      // _lineStream.str(soluteAtoms);
+
+      // std::cout << "\ntime after concatenate: " << util::now() - start << std::endl;
+
+      int a_nr, r_nr, t, cg, n_ex, a_ex;
+      double m, q;
       std::string s;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      _lineStream >> s;
+      std::set<int> ex;
+      std::set<int> ex14;
       
-      if (!quiet){
-	if (n && ((n) % 10) == 0) std::cout << std::setw(10) << n << "\n\t";
-	std::cout << std::setw(8) << s;      
-      }
+      for(n=0; n < num; ++n){
+
+	_lineStream.clear();
+	_lineStream.str(*it);
+	++it;
       
-      topo.residue_names().push_back(s);
-    }
+	_lineStream >> a_nr >> r_nr >> s >> t >> m >> q >> cg;
 
-    if (n != num){
-      io::messages.add("Error in RESNAME block: n!=num.",
-		       "InTopology", io::message::error);
-      throw std::runtime_error("error in RESNAME block (n != num)");
-    }
-
-    if (!quiet)
-      std::cout << "\n\tEND\n";
-    
-    
-  } // RESNAME
-
-  // std::cout << "time after RESNAME: " << util::now() - start << std::endl;
-
-  { // SOLUTEATOM
-    DEBUG(10, "SOLUTEATOM block");
-    buffer = m_block["SOLUTEATOM"];
-  
-    it = buffer.begin() + 1;
-    _lineStream.clear();
-    _lineStream.str(*it);
-    int num, n;
-    _lineStream >> num;
-    topo.resize(num);
-
-    if (!quiet)
-      std::cout << "\tSOLUTEATOM\n\t"
-		<< "\tnumber of atoms : " << num;
-    
-    // put the rest of the block into a single stream
-    ++it;
-
-    // std::string soluteAtoms;
-    // concatenate(it, buffer.end()-1, soluteAtoms);
-
-    // _lineStream.clear();
-    // _lineStream.str(soluteAtoms);
-
-    // std::cout << "\ntime after concatenate: " << util::now() - start << std::endl;
-
-    int a_nr, r_nr, t, cg, n_ex, a_ex;
-    double m, q;
-    std::string s;
-    std::set<int> ex;
-    std::set<int> ex14;
-      
-    for(n=0; n < num; ++n){
-
-      _lineStream.clear();
-      _lineStream.str(*it);
-      ++it;
-      
-      _lineStream >> a_nr >> r_nr >> s >> t >> m >> q >> cg;
-
-      if (a_nr != n+1){
-	io::messages.add("Error in SOLUTEATOM block: atom number not sequential.",
-			 "InTopology", io::message::error);
-      }
-
-      if (r_nr > int(topo.residue_names().size()) || r_nr < 1){
-	io::messages.add("Error in SOLUTEATOM block: residue number out of range.",
-			 "InTopology", io::message::error);
-      }
-      
-      if (t < 1){
-	io::messages.add("Error in SOLUTEATOM block: iac < 1.",
-			 "InTopology", io::message::error);
-      }
-
-      if (m <= 0){
-	io::messages.add("Error in SOLUTEATOM block: mass < 0.",
-			 "InTopology", io::message::error);
-      }
-
-      if (cg != 0 && cg != 1){
-	io::messages.add("Error in SOLUTEATOM block: cg = 0 / 1.",
-			 "InTopology", io::message::error);
-      }
-
-      if (!(_lineStream >> n_ex)){
-	if (_lineStream.eof()){
-	  _lineStream.clear();
-	  _lineStream.str(*it);
-	  ++it;
-	  _lineStream >> n_ex;
+	if (a_nr != n+1){
+	  io::messages.add("Error in SOLUTEATOM block: atom number not sequential.",
+			   "InTopology", io::message::error);
 	}
-	else{
-	  io::messages.add("Error in SOLUTEATOM block: number of exclusions "
-			   "could not be read.",
-			   "InTopology", io::message::error);	
-	}
-      }
 
-      if (n_ex < 0){
-	io::messages.add("Error in SOLUTEATOM block: number of exclusions < 0.",
-			 "InTopology", io::message::error);
-      }
+	if (r_nr > int(topo.residue_names().size()) || r_nr < 1){
+	  io::messages.add("Error in SOLUTEATOM block: residue number out of range.",
+			   "InTopology", io::message::error);
+	}
       
-      // exclusions
-      ex.clear();
-      for(int i=0; i<n_ex; ++i){
-	if (!(_lineStream >> a_ex)){
+	if (t < 1){
+	  io::messages.add("Error in SOLUTEATOM block: iac < 1.",
+			   "InTopology", io::message::error);
+	}
+
+	if (m <= 0){
+	  io::messages.add("Error in SOLUTEATOM block: mass < 0.",
+			   "InTopology", io::message::error);
+	}
+
+	if (cg != 0 && cg != 1){
+	  io::messages.add("Error in SOLUTEATOM block: cg = 0 / 1.",
+			   "InTopology", io::message::error);
+	}
+
+	if (!(_lineStream >> n_ex)){
 	  if (_lineStream.eof()){
 	    _lineStream.clear();
 	    _lineStream.str(*it);
 	    ++it;
-	    _lineStream >> a_ex;
+	    _lineStream >> n_ex;
 	  }
 	  else{
-	    io::messages.add("Error in SOLUTEATOM block: exclusion "
+	    io::messages.add("Error in SOLUTEATOM block: number of exclusions "
 			     "could not be read.",
 			     "InTopology", io::message::error);	
 	  }
 	}
 
-	if (a_ex <= a_nr)
-	  io::messages.add("Error in SOLUTEATOM block: exclusions only to "
-			   "larger atom numbers.",
-			   "InTopology", io::message::error);	
-
-	ex.insert(a_ex-1);
-      }
+	if (n_ex < 0){
+	  io::messages.add("Error in SOLUTEATOM block: number of exclusions < 0.",
+			   "InTopology", io::message::error);
+	}
       
-      // 1,4 - pairs
-      if (!(_lineStream >> n_ex)){
-	if (_lineStream.eof()){
-	  _lineStream.clear();
-	  _lineStream.str(*it);
-	  ++it;
-	  _lineStream >> n_ex;
-	}
-	else{
-	  io::messages.add("Error in SOLUTEATOM block: number of 1,4 - exclusion "
-			   "could not be read.",
-			   "InTopology", io::message::error);	
-	}
-      }
+	// exclusions
+	ex.clear();
+	for(int i=0; i<n_ex; ++i){
+	  if (!(_lineStream >> a_ex)){
+	    if (_lineStream.eof()){
+	      _lineStream.clear();
+	      _lineStream.str(*it);
+	      ++it;
+	      _lineStream >> a_ex;
+	    }
+	    else{
+	      io::messages.add("Error in SOLUTEATOM block: exclusion "
+			       "could not be read.",
+			       "InTopology", io::message::error);	
+	    }
+	  }
 
-      if (n_ex < 0){
-	io::messages.add("Error in SOLUTEATOM block: number of 1,4 exclusions < 0.",
-			 "InTopology", io::message::error);
-      }
+	  if (a_ex <= a_nr)
+	    io::messages.add("Error in SOLUTEATOM block: exclusions only to "
+			     "larger atom numbers.",
+			     "InTopology", io::message::error);	
 
-      ex14.clear();
-      for(int i=0; i<n_ex; ++i){
-	if (!(_lineStream >> a_ex)){
+	  ex.insert(a_ex-1);
+	}
+      
+	// 1,4 - pairs
+	if (!(_lineStream >> n_ex)){
 	  if (_lineStream.eof()){
 	    _lineStream.clear();
 	    _lineStream.str(*it);
 	    ++it;
-	    _lineStream >> a_ex;
+	    _lineStream >> n_ex;
 	  }
 	  else{
-	    io::messages.add("Error in SOLUTEATOM block: 1,4 - exclusion "
+	    io::messages.add("Error in SOLUTEATOM block: number of 1,4 - exclusion "
 			     "could not be read.",
 			     "InTopology", io::message::error);	
 	  }
 	}
 
-	if (a_ex <= a_nr)
-	  io::messages.add("Error in SOLUTEATOM block: 1,4 - exclusions only to "
-			   "larger atom numbers.",
-			   "InTopology", io::message::error);	
-	
-	ex14.insert(a_ex-1);
-      }
-      
-      if (_lineStream.fail())
-	throw std::runtime_error("bad line in SOLUTEATOM block");
-
-      topo.add_solute_atom(s, r_nr-1, t-1, m, q, cg, ex, ex14);
-    }
-    if (!quiet)
-      std::cout << "\n\tEND\n";
-    
-  } // SOLUTEATOM
-  
-  // std::cout << "time after SOLUTEATOM: " << util::now() - start << std::endl;
-  
-  { // BONDH
-    DEBUG(10, "BONDH block");
-
-    if (!quiet)
-      std::cout << "\tBOND";
-    
-    buffer.clear();
-    buffer = m_block["BONDH"];
-    if (buffer.size()){
-      it = buffer.begin() + 1;
-      
-      _lineStream.clear();
-      _lineStream.str(*it);
-      
-      int num, n;
-      _lineStream >> num;
-      ++it;
-      
-      if (!quiet){
-	if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
-	  std::cout << "\n\t\t"
-		    << num
-		    << " bonds from BONDH block added to CONSTRAINT";
+	if (n_ex < 0){
+	  io::messages.add("Error in SOLUTEATOM block: number of 1,4 exclusions < 0.",
+			   "InTopology", io::message::error);
 	}
-	else
-	  std::cout << "\n\t\tbonds containing hydrogens : "
-		    << num;
-      }
+
+	ex14.clear();
+	for(int i=0; i<n_ex; ++i){
+	  if (!(_lineStream >> a_ex)){
+	    if (_lineStream.eof()){
+	      _lineStream.clear();
+	      _lineStream.str(*it);
+	      ++it;
+	      _lineStream >> a_ex;
+	    }
+	    else{
+	      io::messages.add("Error in SOLUTEATOM block: 1,4 - exclusion "
+			       "could not be read.",
+			       "InTopology", io::message::error);	
+	    }
+	  }
+
+	  if (a_ex <= a_nr)
+	    io::messages.add("Error in SOLUTEATOM block: 1,4 - exclusions only to "
+			     "larger atom numbers.",
+			     "InTopology", io::message::error);	
+	
+	  ex14.insert(a_ex-1);
+	}
       
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, t;
+	if (_lineStream.fail())
+	  throw std::runtime_error("bad line in SOLUTEATOM block");
+
+	topo.add_solute_atom(s, r_nr-1, t-1, m, q, cg, ex, ex14);
+      }
+      if (!quiet)
+	std::cout << "\n\tEND\n";
+    
+    } // SOLUTEATOM
+  
+    // std::cout << "time after SOLUTEATOM: " << util::now() - start << std::endl;
+  
+    { // BONDH
+      DEBUG(10, "BONDH block");
+
+      if (!quiet)
+	std::cout << "\tBOND";
+    
+      buffer.clear();
+      buffer = m_block["BONDH"];
+      if (buffer.size()){
+	it = buffer.begin() + 1;
+      
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> i >> j >> t;
-	
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in BONDH block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in BONDH block");
+      
+	int num, n;
+	_lineStream >> num;
+	++it;
+      
+	if (!quiet){
+	  if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
+	    std::cout << "\n\t\t"
+		      << num
+		      << " bonds from BONDH block added to CONSTRAINT";
+	  }
+	  else
+	    std::cout << "\n\t\tbonds containing hydrogens : "
+		      << num;
 	}
+      
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, t;
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> t;
 	
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1){
-	  io::messages.add("Atom number out of range in BONDH block",
-			   "In_Topology", io::message::error);
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in BONDH block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in BONDH block");
+	  }
+	
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1){
+	    io::messages.add("Atom number out of range in BONDH block",
+			     "In_Topology", io::message::error);
+	  }
+	
+	  if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
+	    topo.solute().distance_constraints().
+	      push_back(topology::two_body_term_struct(i-1, j-1, t-1));
+	  }
+	  else
+	    topo.solute().bonds().
+	      push_back(topology::two_body_term_struct(i-1, j-1, t-1));
+	
 	}
+      
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in BONDH block",
+			   "In_Topology", io::message::error);
+	  throw std::runtime_error("error in BONDH block (n != num)");
+	}
+      }
+
+    } // BONDH
+  
+    { // BOND
+      DEBUG(10, "BOND block");
+      buffer = m_block["BOND"];
+
+      if (buffer.size()){
+      
+	it = buffer.begin() + 1;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet){
+	  if (param.constraint.ntc == 3){
+	    std::cout << "\n\t\t"
+		      << num
+		      << " bonds from BOND block added to CONSTRAINT";
+	  }
+	  else
+	    std::cout << "\n\t\tbonds not containing hydrogens : "
+		      << num;
+	}
+      
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, t;
 	
-	if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> t;
+	
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in BOND block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in BOND block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1){
+	    io::messages.add("Atom number out of range in BOND block",
+			     "In_Topology", io::message::error);
+	  }
+      
+	  if (param.constraint.ntc == 3){
+	    topo.solute().distance_constraints().
+	      push_back(topology::two_body_term_struct(i-1, j-1, t-1));
+	  }
+	  else
+	    topo.solute().bonds().
+	      push_back(topology::two_body_term_struct(i-1, j-1, t-1));
+	}
+    
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in BOND block",
+			   "In_Topology", io::message::error);
+	  throw std::runtime_error("error in BOND block (n != num)");
+	}
+      }
+  
+      if (!quiet)
+	std::cout << "\n\tEND\n";
+
+    } // BOND
+
+    // std::cout << "time after BONDS: " << util::now() - start << std::endl;
+
+    // check the bonds
+    if (!check_type(m_block["BONDTYPE"], topo.solute().bonds())){
+      io::messages.add("Illegal bond type in BOND(H) block",
+		       "In_Topology", io::message::error);
+    }
+
+    // std::cout << "time after CHECKBONDS: " << util::now() - start << std::endl;
+
+    { // CONSTRAINT
+      DEBUG(10, "CONSTRAINT block");
+      buffer = m_block["CONSTRAINT"];
+  
+      if (buffer.size() && param.constraint.ntc != 1){
+      
+	it = buffer.begin() + 1;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  std::cout << "\tCONSTRAINT\n\t\t"
+		    << num
+		    << " bonds in CONSTRAINT block."
+		    << "\n\t\ttotal of constraint bonds : " 
+		    << num + topo.solute().distance_constraints().size()
+		    << "\n\tEND\n";
+      
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, t;
+	
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> t;
+	
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in CONSTRAINT block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in CONSTRAINT block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1){
+	    io::messages.add("Atom number out of range in CONSTRAINT block",
+			     "In_Topology", io::message::error);
+	  }
+      
 	  topo.solute().distance_constraints().
 	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
 	}
-	else
-	  topo.solute().bonds().
-	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
-	
-      }
-      
-      if(n != num){
-	io::messages.add("Wrong number of bonds in BONDH block",
-			 "In_Topology", io::message::error);
-	throw std::runtime_error("error in BONDH block (n != num)");
-      }
-    }
-
-  } // BONDH
-  
-  { // BOND
-    DEBUG(10, "BOND block");
-    buffer = m_block["BOND"];
-
-    if (buffer.size()){
-      
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      if (!quiet){
-	if (param.constraint.ntc == 3){
-	  std::cout << "\n\t\t"
-		    << num
-		    << " bonds from BOND block added to CONSTRAINT";
-	}
-	else
-	  std::cout << "\n\t\tbonds not containing hydrogens : "
-		    << num;
-      }
-      
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, t;
-	
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> t;
-	
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in BOND block",
+    
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in CONSTRAINT block",
 			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in BOND block");
+	  throw std::runtime_error("error in CONSTRAINT block (n != num)");
 	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1){
-	  io::messages.add("Atom number out of range in BOND block",
-			   "In_Topology", io::message::error);
-	}
-      
-	if (param.constraint.ntc == 3){
-	  topo.solute().distance_constraints().
-	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
-	}
-	else
-	  topo.solute().bonds().
-	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
       }
     
-      if(n != num){
-	io::messages.add("Wrong number of bonds in BOND block",
-			 "In_Topology", io::message::error);
-	throw std::runtime_error("error in BOND block (n != num)");
-      }
+    } // CONSTRAINT
+
+    // std::cout << "time after CONSTRAINTS: " << util::now() - start << std::endl;
+
+    // check the bonds in constraints
+    if (!check_type(m_block["BONDTYPE"], topo.solute().distance_constraints())){
+      io::messages.add("Illegal bond type in CONSTRAINT (or BOND(H)) block",
+		       "In_Topology", io::message::error);
     }
-  
-    if (!quiet)
-      std::cout << "\n\tEND\n";
 
-  } // BOND
+    // std::cout << "time after check CONSTRAINTS: " << util::now() - start << std::endl;
 
-  // std::cout << "time after BONDS: " << util::now() - start << std::endl;
-
-  // check the bonds
-  if (!check_type(m_block["BONDTYPE"], topo.solute().bonds())){
-    io::messages.add("Illegal bond type in BOND(H) block",
-		     "In_Topology", io::message::error);
-  }
-
-  // std::cout << "time after CHECKBONDS: " << util::now() - start << std::endl;
-
-  { // CONSTRAINT
-    DEBUG(10, "CONSTRAINT block");
-    buffer = m_block["CONSTRAINT"];
-  
-    if (buffer.size() && param.constraint.ntc != 1){
-      
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
+    { // BONDANGLEH
 
       if (!quiet)
-	std::cout << "\tCONSTRAINT\n\t\t"
-		  << num
-		  << " bonds in CONSTRAINT block."
-		  << "\n\t\ttotal of constraint bonds : " 
-		  << num + topo.solute().distance_constraints().size()
-		  << "\n\tEND\n";
-      
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, t;
-	
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> t;
-	
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in CONSTRAINT block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in CONSTRAINT block");
-	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1){
-	  io::messages.add("Atom number out of range in CONSTRAINT block",
-			   "In_Topology", io::message::error);
-	}
-      
-	topo.solute().distance_constraints().
-	  push_back(topology::two_body_term_struct(i-1, j-1, t-1));
-      }
-    
-      if(n != num){
-	io::messages.add("Wrong number of bonds in CONSTRAINT block",
-			 "In_Topology", io::message::error);
-	throw std::runtime_error("error in CONSTRAINT block (n != num)");
-      }
-    }
-    
-  } // CONSTRAINT
+	std::cout << "\tBONDANGLE";
 
-  // std::cout << "time after CONSTRAINTS: " << util::now() - start << std::endl;
-
-  // check the bonds in constraints
-  if (!check_type(m_block["BONDTYPE"], topo.solute().distance_constraints())){
-    io::messages.add("Illegal bond type in CONSTRAINT (or BOND(H)) block",
-		     "In_Topology", io::message::error);
-  }
-
-  // std::cout << "time after check CONSTRAINTS: " << util::now() - start << std::endl;
-
-  { // BONDANGLEH
-
-    if (!quiet)
-      std::cout << "\tBONDANGLE";
-
-    DEBUG(10, "BONDANGLEH block");
-    buffer.clear();
-    buffer = m_block["BONDANGLEH"];
+      DEBUG(10, "BONDANGLEH block");
+      buffer.clear();
+      buffer = m_block["BONDANGLEH"];
   
-    if(buffer.size()){
+      if(buffer.size()){
       
-      it = buffer.begin() + 1;
+	it = buffer.begin() + 1;
 
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      if (!quiet)
-	std::cout << "\n\t\tbondangles not containing hydrogens : " << num;
-
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, k, t;
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> t;
-      
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in BONDANGLEH block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in BONDANGLEH block");
-	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    k > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1 || k < 1){
-	  io::messages.add("Atom number out of range in BONDANGLEH block",
-			   "In_Topology", io::message::error);
-	}
 
-	topo.solute().angles().
-	  push_back(topology::three_body_term_struct(i-1, j-1, k-1, t-1));
-      }
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  std::cout << "\n\t\tbondangles not containing hydrogens : " << num;
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, k, t;
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> k >> t;
+      
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in BONDANGLEH block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in BONDANGLEH block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      k > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1 || k < 1){
+	    io::messages.add("Atom number out of range in BONDANGLEH block",
+			     "In_Topology", io::message::error);
+	  }
+
+	  topo.solute().angles().
+	    push_back(topology::three_body_term_struct(i-1, j-1, k-1, t-1));
+	}
     
-      if(n != num){
-	io::messages.add("Wrong number of bonds in BONDANGLEH block",
-			 "In_Topology", io::message::error);
-	// if (_lineStream.fail()|| ! _lineStream.eof())
-	throw std::runtime_error("error in BONDANGLEH block (n != num)");
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in BONDANGLEH block",
+			   "In_Topology", io::message::error);
+	  // if (_lineStream.fail()|| ! _lineStream.eof())
+	  throw std::runtime_error("error in BONDANGLEH block (n != num)");
+	}
       }
-    }
         
-  } // BONDANGLEH
+    } // BONDANGLEH
   
-  { // BONDANGLE
-    DEBUG(10, "BONDANGLE block");
-    buffer = m_block["BONDANGLE"];
+    { // BONDANGLE
+      DEBUG(10, "BONDANGLE block");
+      buffer = m_block["BONDANGLE"];
   
-    if (buffer.size()){
+      if (buffer.size()){
       
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      if (!quiet)
-	std::cout << "\n\t\tbondangles containing hydrogens : " << num;
-    
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, k, t;
-      
+	it = buffer.begin() + 1;
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> t;
-      
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in BONDANGLE block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in BONDANGLE block");
-	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    k > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1 || k < 1){
-	  io::messages.add("Atom number out of range in BONDANGLE block",
-			   "In_Topology", io::message::error);
-	}
-      
-	topo.solute().angles().
-	  push_back(topology::three_body_term_struct(i-1, j-1, k-1, t-1));
-      }
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  std::cout << "\n\t\tbondangles containing hydrogens : " << num;
     
-      if(n != num){
-	io::messages.add("Wrong number of bonds in BONDANGLE block",
-			 "In_Topology", io::message::error);
-	// if (_lineStream.fail()|| ! _lineStream.eof())
-	throw std::runtime_error("error in BONDANGLE block (n != num)");
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, k, t;
+      
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> k >> t;
+      
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in BONDANGLE block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in BONDANGLE block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      k > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1 || k < 1){
+	    io::messages.add("Atom number out of range in BONDANGLE block",
+			     "In_Topology", io::message::error);
+	  }
+      
+	  topo.solute().angles().
+	    push_back(topology::three_body_term_struct(i-1, j-1, k-1, t-1));
+	}
+    
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in BONDANGLE block",
+			   "In_Topology", io::message::error);
+	  // if (_lineStream.fail()|| ! _lineStream.eof())
+	  throw std::runtime_error("error in BONDANGLE block (n != num)");
+	}
       }
+
+      if (!quiet)
+	std::cout << "\n\tEND\n";
+
+    } // BONDANGLE
+
+    // std::cout << "time after BONDANGLE: " << util::now() - start << std::endl;
+
+    // check the angles
+    if (!check_type(m_block["BONDANGLETYPE"], topo.solute().angles())){
+      io::messages.add("Illegal bond angle type in BONDANGLE(H) block",
+		       "In_Topology", io::message::error);
     }
 
-    if (!quiet)
-      std::cout << "\n\tEND\n";
+    // std::cout << "time after check BONDANGLE: " << util::now() - start << std::endl;
 
-  } // BONDANGLE
-
-  // std::cout << "time after BONDANGLE: " << util::now() - start << std::endl;
-
-  // check the angles
-  if (!check_type(m_block["BONDANGLETYPE"], topo.solute().angles())){
-    io::messages.add("Illegal bond angle type in BONDANGLE(H) block",
-		     "In_Topology", io::message::error);
-  }
-
-  // std::cout << "time after check BONDANGLE: " << util::now() - start << std::endl;
-
-  { // IMPDIHEDRAL
-    DEBUG(10, "IMPDIHEDRAL block");
-    buffer = m_block["IMPDIHEDRAL"];
+    { // IMPDIHEDRAL
+      DEBUG(10, "IMPDIHEDRAL block");
+      buffer = m_block["IMPDIHEDRAL"];
   
-    if (!quiet)
-      std::cout << "\tIMPDIHEDRAL";
-
-    if(buffer.size()){
-      
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
       if (!quiet)
-	std::cout << "\n\t\timproper dihedrals not containing hydrogens : "
-		  << num;
-    
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, k, l, t;
+	std::cout << "\tIMPDIHEDRAL";
+
+      if(buffer.size()){
       
+	it = buffer.begin() + 1;
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> l >> t;
-      
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in IMPDIHEDRAL block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in IMPDIHEDRAL block");
-	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1 || k < 1 || l < 1){
-	  io::messages.add("Atom number out of range in IMPDIHEDRAL block",
-			   "In_Topology", io::message::error);
-	}
-      
-	topo.solute().improper_dihedrals().
-	  push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
-      }
-    
-      if(n != num){
-	io::messages.add("Wrong number of bonds in IMPDIHEDRAL block",
-			 "In_Topology", io::message::error);
-	// if (_lineStream.fail()|| ! _lineStream.eof())
-	throw std::runtime_error("error in IMPDIHEDRAL block (n != num)");
-      }
-    }
-    
-  } // IMPDIHEDRAL
+	int num, n;
+	_lineStream >> num;
+	++it;
 
-  { // IMPDIHEDRALH
-    DEBUG(10, "IMPDIHEDRALH block");
-    buffer.clear();
-    buffer = m_block["IMPDIHEDRALH"];
+	if (!quiet)
+	  std::cout << "\n\t\timproper dihedrals not containing hydrogens : "
+		    << num;
+    
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, k, l, t;
+      
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> k >> l >> t;
+      
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in IMPDIHEDRAL block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in IMPDIHEDRAL block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1 || k < 1 || l < 1){
+	    io::messages.add("Atom number out of range in IMPDIHEDRAL block",
+			     "In_Topology", io::message::error);
+	  }
+      
+	  topo.solute().improper_dihedrals().
+	    push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
+	}
+    
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in IMPDIHEDRAL block",
+			   "In_Topology", io::message::error);
+	  // if (_lineStream.fail()|| ! _lineStream.eof())
+	  throw std::runtime_error("error in IMPDIHEDRAL block (n != num)");
+	}
+      }
+    
+    } // IMPDIHEDRAL
+
+    { // IMPDIHEDRALH
+      DEBUG(10, "IMPDIHEDRALH block");
+      buffer.clear();
+      buffer = m_block["IMPDIHEDRALH"];
   
-    if(buffer.size()){
+      if(buffer.size()){
       
-      it = buffer.begin() + 1;
+	it = buffer.begin() + 1;
 
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      if (!quiet)
-	std::cout << "\n\t\timproper dihedrals containing hydrogens : "
-		  << num;
-
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, k, l, t;
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> l >> t;
+
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  std::cout << "\n\t\timproper dihedrals containing hydrogens : "
+		    << num;
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, k, l, t;
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> k >> l >> t;
       
       
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in IMPDIHEDRALH block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in IMPDIHEDRALH block");
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in IMPDIHEDRALH block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in IMPDIHEDRALH block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1 || k < 1 || l < 1){
+	    io::messages.add("Atom number out of range in IMPDIHEDRALH block",
+			     "In_Topology", io::message::error);
+	  }
+      
+	  topo.solute().improper_dihedrals().
+	    push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
 	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1 || k < 1 || l < 1){
-	  io::messages.add("Atom number out of range in IMPDIHEDRALH block",
+    
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in IMPDIHEDRALH block",
 			   "In_Topology", io::message::error);
+	  // if (_lineStream.fail()|| ! _lineStream.eof())
+	  throw std::runtime_error("error in IMPDIHEDRALH block (n != num)");
 	}
-      
-	topo.solute().improper_dihedrals().
-	  push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
       }
-    
-      if(n != num){
-	io::messages.add("Wrong number of bonds in IMPDIHEDRALH block",
-			 "In_Topology", io::message::error);
-	// if (_lineStream.fail()|| ! _lineStream.eof())
-	throw std::runtime_error("error in IMPDIHEDRALH block (n != num)");
-      }
-    }
-
-    if (!quiet)
-      std::cout << "\n\tEND\n";
-    
-  } // IMPDIHEDRALH
-
-  // check the imporopers
-  if (!check_type(m_block["IMPDIHEDRALTYPE"], topo.solute().improper_dihedrals())){
-    io::messages.add("Illegal improper dihedral type in IMPDIHEDRAL(H) block",
-		     "In_Topology", io::message::error);
-  }  
-
-  { // DIHEDRAL
-    DEBUG(10, "DIHEDRAL block");    
-    buffer = m_block["DIHEDRAL"];
-
-    if (!quiet)
-      std::cout << "\tDIHEDRAL";
-    
-    if(buffer.size()){
-      
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-    
-      if (!quiet)
-	std::cout << "\n\t\tdihedrals not containing hydrogens : "
-		  << num;
-
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, k, l, t;
-      
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> l >> t;
-      
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in DIHEDRAL block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in DIHEDRAL block");
-	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1 || k < 1 || l < 1){
-	  io::messages.add("Atom number out of range in DIHEDRAL block",
-			   "In_Topology", io::message::error);
-	}
-      
-	topo.solute().dihedrals().
-	  push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
-      }
-    
-      if(n != num){
-	io::messages.add("Wrong number of bonds in DIHEDRAL block",
-			 "In_Topology", io::message::error);
-	// if (_lineStream.fail()|| ! _lineStream.eof())
-	throw std::runtime_error("error in DIHEDRAL block (n != num)");
-      }
-    }
-    
-  } // DIHEDRAL
-
-  { // DIHEDRALH
-    DEBUG(10, "DIHEDRALH block");
-    buffer.clear();
-    buffer = m_block["DIHEDRALH"];
-    if(buffer.size()){
-      
-      it = buffer.begin() + 1;
-
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      int num, n;
-      _lineStream >> num;
-      ++it;
 
       if (!quiet)
-	std::cout << "\n\t\tdihedrals containing hydrogens : "
-		  << num;
+	std::cout << "\n\tEND\n";
+    
+    } // IMPDIHEDRALH
 
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, k, l, t;
+    // check the imporopers
+    if (!check_type(m_block["IMPDIHEDRALTYPE"], topo.solute().improper_dihedrals())){
+      io::messages.add("Illegal improper dihedral type in IMPDIHEDRAL(H) block",
+		       "In_Topology", io::message::error);
+    }  
+
+    { // DIHEDRAL
+      DEBUG(10, "DIHEDRAL block");    
+      buffer = m_block["DIHEDRAL"];
+
+      if (!quiet)
+	std::cout << "\tDIHEDRAL";
+    
+      if(buffer.size()){
+      
+	it = buffer.begin() + 1;
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> l >> t;
+	int num, n;
+	_lineStream >> num;
+	++it;
+    
+	if (!quiet)
+	  std::cout << "\n\t\tdihedrals not containing hydrogens : "
+		    << num;
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, k, l, t;
       
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in DIHEDRALH block",
-			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in DIHEDRALH block");
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> k >> l >> t;
+      
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in DIHEDRAL block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in DIHEDRAL block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1 || k < 1 || l < 1){
+	    io::messages.add("Atom number out of range in DIHEDRAL block",
+			     "In_Topology", io::message::error);
+	  }
+      
+	  topo.solute().dihedrals().
+	    push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
 	}
-      
-	if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
-	    k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1 || k < 1 || l < 1){
-	  io::messages.add("Atom number out of range in DIHEDRALH block",
+    
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in DIHEDRAL block",
 			   "In_Topology", io::message::error);
+	  // if (_lineStream.fail()|| ! _lineStream.eof())
+	  throw std::runtime_error("error in DIHEDRAL block (n != num)");
 	}
-      
-	topo.solute().dihedrals().
-	  push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
       }
     
-      if(n != num){
-	io::messages.add("Wrong number of bonds in DIHEDRALH block",
-			 "In_Topology", io::message::error);
-	// if (_lineStream.fail()|| ! _lineStream.eof())
-	throw std::runtime_error("error in DIHEDRALH block (n != num)");
+    } // DIHEDRAL
+
+    { // DIHEDRALH
+      DEBUG(10, "DIHEDRALH block");
+      buffer.clear();
+      buffer = m_block["DIHEDRALH"];
+      if(buffer.size()){
+      
+	it = buffer.begin() + 1;
+
+	_lineStream.clear();
+	_lineStream.str(*it);
+
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  std::cout << "\n\t\tdihedrals containing hydrogens : "
+		    << num;
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j, k, l, t;
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> k >> l >> t;
+      
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in DIHEDRALH block",
+			     "In_Topology", io::message::error);
+	    throw std::runtime_error("bad line in DIHEDRALH block");
+	  }
+      
+	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
+	      k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
+	      i < 1 || j < 1 || k < 1 || l < 1){
+	    io::messages.add("Atom number out of range in DIHEDRALH block",
+			     "In_Topology", io::message::error);
+	  }
+      
+	  topo.solute().dihedrals().
+	    push_back(topology::four_body_term_struct(i-1, j-1, k-1, l-1, t-1));
+	}
+    
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in DIHEDRALH block",
+			   "In_Topology", io::message::error);
+	  // if (_lineStream.fail()|| ! _lineStream.eof())
+	  throw std::runtime_error("error in DIHEDRALH block (n != num)");
+	}
       }
+    
+      if (!quiet)
+	std::cout << "\n\tEND\n";
+    
+    } // DIHEDRALH
+
+    // std::cout << "time after DIHEDRAL: " << util::now() - start << std::endl;
+
+    // check the dihedrals
+    if (!check_type(m_block["DIHEDRALTYPE"], topo.solute().dihedrals())){
+      io::messages.add("Illegal dihedral type in DIHEDRAL(H) block",
+		       "In_Topology", io::message::error);
     }
-    
-    if (!quiet)
-      std::cout << "\n\tEND\n";
-    
-  } // DIHEDRALH
 
-  // std::cout << "time after DIHEDRAL: " << util::now() - start << std::endl;
+    // add the submolecules (should be done before solvate ;-)
+    topo.molecules() = param.submolecules.submolecules;
 
-  // check the dihedrals
-  if (!check_type(m_block["DIHEDRALTYPE"], topo.solute().dihedrals())){
-    io::messages.add("Illegal dihedral type in DIHEDRAL(H) block",
-		     "In_Topology", io::message::error);
-  }
+    if (topo.molecules().size() == 0){
+      topo.molecules().push_back(0);
+      topo.molecules().push_back(topo.num_solute_atoms());
+    }
+
+    // submolecules check
+    if (topo.molecules().back()
+	!= topo.num_solute_atoms()){
+    
+      io::messages.add("Error in SUBMOLECULE block: "
+		       "last submolecule has to end with last solute atom",
+		       "In_Topology", io::message::error);
+    }
+
   
-  // std::cout << "time after check DIHEDRAL: " << util::now() - start << std::endl;
+  } // npm != 0
     
   { // SOLVENTATOM and SOLVENTCONSTR
     // give it a number (SOLVENTATOM1, SOLVENTATOM2) for multiple
@@ -980,23 +1000,6 @@ io::In_Topology::read(topology::Topology& topo,
 
   }
 
-  // add the submolecules (should be done before solvate ;-)
-  topo.molecules() = param.submolecules.submolecules;
-
-  if (topo.molecules().size() == 0){
-    topo.molecules().push_back(0);
-    topo.molecules().push_back(topo.num_solute_atoms());
-  }
-
-  // submolecules check
-  if (topo.molecules().back()
-      != topo.num_solute_atoms()){
-    
-    io::messages.add("Error in SUBMOLECULE block: "
-		     "last submolecule has to end with last solute atom",
-		     "In_Topology", io::message::error);
-  }
-
   // add the solvent to the topology
   if (!quiet)
     std::cout << "\n\t\tadding " << param.system.nsm 
@@ -1006,8 +1009,6 @@ io::In_Topology::read(topology::Topology& topo,
   
   if (!quiet)
     std::cout << "\n\tEND\n";
-
-  // std::cout << "time after SOLVENT: " << util::now() - start << std::endl;
 
   // set lambda (new and old one, yes it looks strange...)
   topo.lambda(param.perturbation.lambda);
@@ -1028,8 +1029,6 @@ io::In_Topology::read(topology::Topology& topo,
 		     "In_Topology", io::message::error);
   }
 
-  // std::cout << "time after SUBMOLECULES check: " << util::now() - start << std::endl;
-
   // chargegroup check (starts with 0)
   if (topo.chargegroups()[topo.num_solute_chargegroups()] != int(topo.num_solute_atoms())){
     io::messages.add("Error: last solute atom has to be end of chargegroup",
@@ -1040,8 +1039,6 @@ io::In_Topology::read(topology::Topology& topo,
 	      << "\tsolute atoms : " << topo.num_solute_atoms() << "\n"
 	      << "\tlast cg      : " << topo.chargegroups()[topo.num_solute_chargegroups()] << "\n";
   }
-
-  // std::cout << "time after CHARGEGROUPS check: " << util::now() - start << std::endl;
 
   if (!quiet)
     std::cout << "\n\tSOLUTE [sub]molecules: " 
@@ -1125,9 +1122,9 @@ void io::In_Topology
     buffer = m_block["BONDTYPE"];
 
     /*
-    io::messages.add("converting bond force constants from quartic "
-		     "to harmonic form", "InTopology::bondtype",
-		     io::message::notice);
+      io::messages.add("converting bond force constants from quartic "
+      "to harmonic form", "InTopology::bondtype",
+      io::message::notice);
     */
 
     if (buffer.size()==0)
