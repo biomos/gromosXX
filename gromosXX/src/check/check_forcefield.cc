@@ -72,6 +72,9 @@ double finite_diff(topology::Topology & topo,
 
   conf.current().pos(atom)(coord) += epsilon;
 
+  // std::cout << "atom=" << atom << " e1=" << e1 
+  // << " e2=" << e2 << " epsilon=" << epsilon << std::endl;
+
   return (e2 - e1) / 2.0 / epsilon;
 
 }
