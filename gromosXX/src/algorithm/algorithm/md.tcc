@@ -149,9 +149,6 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   input.read_PCOUPLE(ntp, pres0, comp, tau);
   DEBUG(8, "md: PCOUPLE read");
   
-  std::cout << "pressure ntp: " << ntp << " pres0: " << pres0
-	    << " comp: " << comp << " tau: " << tau << std::endl;
-  
   m_pressure.initialize(ntp, pres0, comp, tau);
 
   // create the forcefield

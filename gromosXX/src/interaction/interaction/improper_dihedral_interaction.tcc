@@ -37,6 +37,7 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
   math::VArray &force = sim.system().force();
   math::Vec rij, rkj, rkl, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, q;
+  double energy;
   
   for( ; !i_it.eol(); ++i_it){
     sim.system().periodicity().nearest_image(pos(i_it.k()), pos(i_it.j()), rkj);
@@ -70,13 +71,13 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
     
     assert(unsigned(i_it.type()) < m_improper_dihedral_parameter.size());
  
-    double K  = m_improper_dihedral_parameter[i_it.type()].K;
-    double q0 = m_improper_dihedral_parameter[i_it.type()].q0;
+    const double K  = m_improper_dihedral_parameter[i_it.type()].K;
+    const double q0 = m_improper_dihedral_parameter[i_it.type()].q0;
 
-    double ki = -K * (q - q0) * dkj / dmj2;
-    double kl = K * (q - q0) * dkj / dnk2;
-    double kj1 = dot(rij, rkj) / dkj2 - 1.0;
-    double kj2 = dot(rkl, rkj) / dkj2;
+    const double ki = -K * (q - q0) * dkj / dmj2;
+    const double kl = K * (q - q0) * dkj / dnk2;
+    const double kj1 = dot(rij, rkj) / dkj2 - 1.0;
+    const double kj2 = dot(rkl, rkj) / dkj2;
     
     fi = ki * rmj;
     fl = kl * rnk;
@@ -87,6 +88,10 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
     force(i_it.j()) += fj;
     force(i_it.k()) += fk;
     force(i_it.l()) += fl;
+    
+    energy = 0.5 * K * (q-q0) * (q-q0);
+    sim.system().energies().improper_energy[sim.topology().atom_energy_group()[i_it.i()]] += energy;
+
   }
 }
 

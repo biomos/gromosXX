@@ -126,7 +126,9 @@ inline void io::OutG96Trajectory<t_simulation>
   // solute chargegroups...
   size_t i = 0;
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
-    cg_it.cog(pos, v);
+    // cg_it.cog(pos, v);
+    // gather on first atom...
+    v = pos(*cg_it.begin());
     v_box = v;
     sys.periodicity().put_into_positive_box(v_box);
     trans = v_box - v;
@@ -212,7 +214,9 @@ inline void io::OutG96Trajectory<t_simulation>
   // solute chargegroups...
   size_t i = 0;
   for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
-    cg_it.cog(pos, v);
+    // cg_it.cog(pos, v);
+    // gather on first atom...
+    v = pos(*cg_it.begin());
     v_box = v;
     sys.periodicity().put_into_positive_box(v_box);
     trans = v_box - v;

@@ -25,7 +25,7 @@ inline void algorithm::Berendsen_Barostat
     math::Box box = sim.system().periodicity().box();
 
     if (m_ntp == 1){ // isotropic
-      std::cout << "\tisotropic pressure coupling...\n";
+      // std::cout << "\tisotropic pressure coupling...\n";
       
       double total_pressure =  (pressure(0,0)
 				+ pressure(1,1)
@@ -45,7 +45,7 @@ inline void algorithm::Berendsen_Barostat
 
     }
     else if(m_ntp == 2){ // anisotropic
-      std::cout << "\tanisotropic pressure coupling...\n";
+      // std::cout << "\tanisotropic pressure coupling...\n";
     
       math::Vec mu;
 
@@ -65,7 +65,7 @@ inline void algorithm::Berendsen_Barostat
 
     }
     else if(m_ntp == 3){ // fully anisotropic
-      std::cout << "\tfull anisotropic pressure coupling...\n";
+      // std::cout << "\tfull anisotropic pressure coupling...\n";
       
       math::Matrix mu;
 

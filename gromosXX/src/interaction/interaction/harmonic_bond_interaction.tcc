@@ -44,6 +44,8 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
   math::VArray &force = sim.system().force();
   math::Vec v, f;
 
+  double energy, diff;
+
   for( ; !b_it.eol(); ++b_it){
     sim.system().periodicity()
       .nearest_image(pos(b_it.i()), pos(b_it.j()), v);
@@ -58,11 +60,17 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
 
     DEBUG(10, "DF " << (-m_bond_parameter[b_it.type()].K * (dist - m_bond_parameter[b_it.type()].r0) / dist) << "\n" << v);
 
+    diff = dist - m_bond_parameter[b_it.type()].r0;
+
     f = v * (-m_bond_parameter[b_it.type()].K *
-	     (dist - m_bond_parameter[b_it.type()].r0) / dist);
+	     (diff) / dist);
     
     force(b_it.i()) += f;
     force(b_it.j()) -= f;
+
+    energy = 0.5 * m_bond_parameter[b_it.type()].K * diff * diff;
+    sim.system().energies().bond_energy[sim.topology().atom_energy_group()[b_it.i()]] += energy;
+    
   }
     
 }

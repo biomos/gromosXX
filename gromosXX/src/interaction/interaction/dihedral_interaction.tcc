@@ -44,6 +44,7 @@ inline void interaction::Dihedral_interaction<t_simulation>
   math::VArray &force = sim.system().force();
   math::Vec rij, rkj, rkl, rim, rln, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dim, dln, ip;
+  double energy;
   
   for( ; !d_it.eol(); ++d_it){
     sim.system().periodicity().nearest_image(pos(d_it.i()), pos(d_it.j()), rij);
@@ -73,26 +74,35 @@ inline void interaction::Dihedral_interaction<t_simulation>
     assert(unsigned(d_it.type()) < m_dihedral_parameter.size());
     
     double dcosmphi = 0;
+    double cosmphi = 0;
+    
     switch(m_dihedral_parameter[d_it.type()].m){
       case 0:
+	cosmphi = 0.0;
 	dcosmphi = 0.0;
 	break;
       case 1:
+	cosmphi = cosphi;
 	dcosmphi = 1;
 	break;
       case 2:
+	cosmphi =  2*cosphi2 -1;
 	dcosmphi = 4*cosphi;
 	break;
       case 3:
+	cosmphi  = 4*cosphi3 - 3*cosphi;
 	dcosmphi = 12*cosphi2 - 3;
 	break;
       case 4:
+	cosmphi  = 8*cosphi4 - 8*cosphi2 + 1;
 	dcosmphi = 32*cosphi3-16*cosphi;
 	break;
       case 5:
+	cosmphi  = 16*cosphi4*cosphi - 20*cosphi3 + 5*cosphi;
 	dcosmphi = 80*cosphi4-60*cosphi2+5;
 	break;
       case 6:
+	cosmphi  = 32*cosphi4*cosphi2 - 48*cosphi4 + 18*cosphi2 -1;
 	dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
 	break;
       default:
@@ -120,6 +130,10 @@ inline void interaction::Dihedral_interaction<t_simulation>
     force(d_it.j()) += fj;
     force(d_it.k()) += fk;
     force(d_it.l()) += fl;
+
+    energy = K * (1 + delta * cosmphi);
+    sim.system().energies().dihedral_energy[sim.topology().atom_energy_group()[d_it.i()]] += energy;
+    
   }
 }
 

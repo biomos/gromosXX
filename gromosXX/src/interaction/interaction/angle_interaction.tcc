@@ -37,6 +37,8 @@ inline void interaction::angle_interaction<t_simulation>
   math::VArray &force = sim.system().force();
   math::Vec rij, rkj, fi, fj, fk;
 
+  double energy;
+
   for( ; !a_it.eol(); ++a_it){
     
     sim.system().periodicity().nearest_image(pos(a_it.i()), pos(a_it.j()), rij);
@@ -70,6 +72,10 @@ inline void interaction::angle_interaction<t_simulation>
     force(a_it.i()) += fi;
     force(a_it.j()) += fj;
     force(a_it.k()) += fk;
+
+    energy = 0.5 * K * (cost - cos0) * (cost - cos0);
+    sim.system().energies().angle_energy[sim.topology().atom_energy_group()[a_it.i()]] += energy;
+
   }
     
 }
