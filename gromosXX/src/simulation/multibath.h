@@ -162,7 +162,8 @@ namespace simulation
     /**
      * calculate degrees of freedom.
      */
-    void calculate_degrees_of_freedom(topology::Topology &topo);
+    void calculate_degrees_of_freedom(topology::Topology &topo,
+				      bool rottrans_constraints);
     
     /**
      * check the state.
@@ -181,7 +182,8 @@ namespace simulation
 
 
 inline void simulation::Multibath
-::calculate_degrees_of_freedom(topology::Topology &topo)
+::calculate_degrees_of_freedom(topology::Topology &topo,
+			       bool rottrans_constraints)
 {
   // check whether we have at least one bath
   if (size() == 0){
@@ -250,7 +252,7 @@ inline void simulation::Multibath
   }
 
   // substract constraints
-  topo.calculate_constraint_dof(*this);
+  topo.calculate_constraint_dof(*this, rottrans_constraints);
   
 }
 

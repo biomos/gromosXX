@@ -146,6 +146,11 @@ namespace io {
      * read PSCALE block.
      */
     void read_PSCALE(simulation::Parameter &param);
+
+    /**
+     * read ROTTRANS block.
+     */
+    void read_ROTTRANS(simulation::Parameter &param);
     
   };
   

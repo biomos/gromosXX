@@ -197,11 +197,12 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   if (param.jvalue.mode != simulation::restr_off){
 
-    if (param.jvalue.read_av && param.jvalue.mode == simulation::restr_inst)
-      io::messages.add("instantaneous J-value restraints, ignoring reading of averages",
-		       "in_configuration",
-		       io::message::warning);
-      
+    if (param.jvalue.mode == simulation::restr_inst){
+      if (param.jvalue.read_av)
+	io::messages.add("instantaneous J-value restraints, ignoring reading of averages",
+			 "in_configuration",
+			 io::message::warning);
+    }
     else if (!param.jvalue.read_av && param.jvalue.mode != simulation::restr_inst){
 
       buffer = m_block["JVALRESEXPAVE03"];

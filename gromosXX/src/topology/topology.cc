@@ -180,7 +180,8 @@ unsigned int topology::Topology::num_solvent_atoms()const
  */
 void
 topology::Topology::
-calculate_constraint_dof(simulation::Multibath &multibath)const
+calculate_constraint_dof(simulation::Multibath &multibath,
+			 bool rottrans_constraints)const
 {
   // substract constraints
   {
@@ -277,6 +278,45 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
     }
   }
   
+  if (rottrans_constraints){
+    // check whether all solute is in one bath
+    if (num_solute_atoms()){
+     
+      unsigned int ir_bath, ir_bath_0, com_bath, com_bath_0;
+      bool ok = true;
+
+      multibath.in_bath(0, com_bath_0, ir_bath_0);
+      for(unsigned int i=1; i<num_solute_atoms(); ++i){
+	multibath.in_bath(i, com_bath, ir_bath);
+	if (com_bath != com_bath_0 || ir_bath != ir_bath_0){
+	  io::messages.add("roto-translational constraints: all solute has to be coupled "
+			   "to one ir and one com bath", "calc_dof", 
+			   io::message::error);
+	  ok = false;
+	  break;
+	}
+      }
+      if (ok){
+	std::cout << "roto-translational constraints: removing 3 dof from com bath "
+		  << com_bath_0+1 << " and from ir bath " << ir_bath_0+1 << "\n";
+	multibath[com_bath_0].dof -= 3.0;
+	multibath[com_bath_0].com_dof -= 3.0;
+	multibath[ir_bath_0].dof -= 3.0;
+	multibath[ir_bath_0].ir_dof -= 3.0;
+      }
+    }
+  }
+
+  // check whether we have dof in every (coupled) bath
+  for(unsigned int i = 0; i < multibath.size(); ++i){
+    if (multibath[i].dof <= 0 && multibath[i].tau != -1){
+      io::messages.add("removing coupling of bath with 0 dof",
+		       "calc_dof",
+		       io::message::notice);
+      multibath[i].tau = -1;
+    }
+  }
+
   DEBUG(10, "end dof calc");
 
 }

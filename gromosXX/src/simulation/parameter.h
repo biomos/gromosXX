@@ -851,6 +851,26 @@ namespace simulation
       
     } /** pscale parameters */ pscale;
 
+    /**
+     * @struct rottrans_struct
+     * rotational translational constraints
+     */
+    struct rottrans_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - rottrans false
+       */
+      rottrans_struct() : rottrans(false)
+      {
+      }
+      /**
+       * apply rotational translational constraints?
+       */
+      bool rottrans;
+    } /** rottrans parameters */ rottrans;
+    
   };
   
 }

@@ -162,6 +162,22 @@ namespace configuration
 	
       } /** periodic scaling information */ pscale;
 
+      /**
+       * roto-translational constraints
+       * @struct rottrans_constr_struct
+       */
+      struct rottrans_constr_struct
+      {
+	/**
+	 * inverse theta
+	 */
+	blitz::TinyMatrix<double, 6U, 6U> theta_inv;
+	/**
+	 * reference positions
+	 */
+	math::VArray pos;
+      } /** roto-translational constraints information */ rottrans_constr;
+
     }; // special
     
     /**

@@ -125,7 +125,7 @@ int io::read_input(io::Argument const & args,
   }
 
   // do this after reading in a perturbation topology
-  sim.multibath().calculate_degrees_of_freedom(topo);
+  sim.multibath().calculate_degrees_of_freedom(topo, sim.param().rottrans.rottrans);
 
   // read in the special data
   io::read_special(args, topo, conf, sim);

@@ -61,6 +61,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_PERTURB(param);
   read_JVALUE(param);
   read_PSCALE(param);
+  read_ROTTRANS(param);
   
   DEBUG(7, "input read...");
 
@@ -1819,3 +1820,36 @@ void io::In_Parameter::read_PSCALE(simulation::Parameter &param)
     }
   }
 } // PSCALE
+
+
+/**
+ * read the ROTTRANS block.
+ */
+void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param)
+{
+  DEBUG(8, "read ROTTRANS");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["ROTTRANS"];
+
+  if (buffer.size()){
+    int i;
+
+    block_read.insert("ROTTRANS");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> i;
+    
+    if (_lineStream.fail())
+      io::messages.add("bad line in ROTTRANS block",
+		       "In_Parameter", io::message::error);
+
+    param.rottrans.rottrans = (i != 0);
+
+  }
+  
+}

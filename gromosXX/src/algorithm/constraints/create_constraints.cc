@@ -13,6 +13,8 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
+#include <configuration/state_properties.h>
+
 #include <algorithm/algorithm/algorithm_sequence.h>
 
 #include <interaction/interaction.h>
@@ -33,6 +35,8 @@
 #include <algorithm/constraints/lincs.h>
 #include <algorithm/constraints/flexible_constraint.h>
 #include <algorithm/constraints/perturbed_flexible_constraint.h>
+
+#include <algorithm/constraints/rottrans.h>
 
 #include <io/print_block.h>
 
@@ -162,43 +166,53 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
   }
 
   // sovlent (if not the same as solute)
-  if (sim.param().constraint.solute.algorithm == 
-      sim.param().constraint.solvent.algorithm) return 0;
+  if (sim.param().constraint.solute.algorithm != 
+      sim.param().constraint.solvent.algorithm){
 
-  switch(sim.param().constraint.solvent.algorithm){
-    case simulation::constr_shake:
-      {
-	// SHAKE
-	algorithm::Shake<do_virial> * s = 
-	  new algorithm::Shake<do_virial>
-	  (sim.param().constraint.solvent.shake_tolerance);
-	it.read_harmonic_bonds(s->parameter());
-	// s->init(topo, conf, sim, quiet);
-	md_seq.push_back(s);
-	
-	break;
-      }
-    case simulation::constr_lincs:
-      {
-	algorithm::Lincs<do_virial> * s =
-	  new algorithm::Lincs<do_virial>;
-	it.read_harmonic_bonds(s->parameter());
-	// s->init(topo, conf, sim, quiet);
-	md_seq.push_back(s);
-	
-	break;
-      }
-    case simulation::constr_flexshake:
-      {
-	io::messages.add("Flexible Shake not implemented for solvent",
-			 "create_constraints", io::message::error);
-	break;
-      }
-    default:
-      {
-	// no constraints
-	// should already be warned from In_Parameter
-      }
+    switch(sim.param().constraint.solvent.algorithm){
+      case simulation::constr_shake:
+	{
+	  // SHAKE
+	  algorithm::Shake<do_virial> * s = 
+	    new algorithm::Shake<do_virial>
+	    (sim.param().constraint.solvent.shake_tolerance);
+	  it.read_harmonic_bonds(s->parameter());
+	  // s->init(topo, conf, sim, quiet);
+	  md_seq.push_back(s);
+	  
+	  break;
+	}
+      case simulation::constr_lincs:
+	{
+	  algorithm::Lincs<do_virial> * s =
+	    new algorithm::Lincs<do_virial>;
+	  it.read_harmonic_bonds(s->parameter());
+	  // s->init(topo, conf, sim, quiet);
+	  md_seq.push_back(s);
+	  
+	  break;
+	}
+      case simulation::constr_flexshake:
+	{
+	  io::messages.add("Flexible Shake not implemented for solvent",
+			   "create_constraints", io::message::error);
+	  break;
+	}
+      default:
+	{
+	  // no constraints
+	  // should already be warned from In_Parameter
+	}
+    }
+  }
+  
+  // roto-translational constraints
+  if (sim.param().rottrans.rottrans){
+    DEBUG(8, "creating roto-translational constraints");
+    
+    algorithm::Rottrans_Constraints<do_virial> * rtc =
+      new algorithm::Rottrans_Constraints<do_virial>();
+    md_seq.push_back(rtc);
   }
 
   return 0;
@@ -216,6 +230,7 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence & md_seq,
   DEBUG(7, "solute:  " << sim.param().constraint.solute.algorithm);
   DEBUG(7, "solvent: " << sim.param().constraint.solvent.algorithm);
   DEBUG(7, "\tNTC: " << sim.param().constraint.ntc);
+  DEBUG(7, "rottrans: " << sim.param().rottrans.rottrans);
   
   switch(sim.param().pcouple.virial){
     case math::no_virial:

@@ -23,7 +23,9 @@ xxinclude_HEADERS =		algorithm.h \
 				constraints/flexible_constraint.cc \
 				constraints/perturbed_flexible_constraint.h \
 				constraints/perturbed_flexible_constraint.cc \
-				constraints/remove_com_motion.h
+				constraints/remove_com_motion.h \
+				constraints/rottrans.h \
+				constraints/rottrans.cc
 
 noinst_LTLIBRARIES	=	libgroalgorithm.la
 

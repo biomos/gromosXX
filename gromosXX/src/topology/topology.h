@@ -282,7 +282,8 @@ namespace topology
     /**
      * calculate constraint degrees of freedom
      */
-    void calculate_constraint_dof(simulation::Multibath & mb)const;
+    void calculate_constraint_dof(simulation::Multibath & mb,
+				  bool rottrans_constraints)const;
     
     /**
      * check state
