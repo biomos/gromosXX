@@ -1,0 +1,32 @@
+/**
+ * @file main.doxy
+ */
+
+/**
+ * @mainpage GromosXX
+ * <h1>Groningen Molecular Simulation : GromosXX</h1>
+ * <h2>Documentation</h2>
+ * <hr>
+ * <h3>MD program</h3>
+ * - @ref arguments "md arguments"
+ * - @ref input "input file"
+ * - @ref output "output file"
+ *
+ * <h3>Modules</h3>
+ * - @ref algorithm 
+ * - @ref simulation
+ * - @ref topology
+ * - @ref configuration
+ * - @ref interaction
+ * - @ref io
+ * - @ref util
+ * - @ref check
+ *
+ * <h3>Installation</h3>
+ * - binary packages (debian, statically linked; .tar.gz statically linked)
+ * - documentation (.tar.gz)
+ * - compiling
+ *   - configure arguments
+ *   - compiler support
+ *
+ */
