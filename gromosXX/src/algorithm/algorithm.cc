@@ -5,6 +5,8 @@
 
 #include "config.h"
 
+double algorithm_ver = 0.10;
+
 namespace algorithm
 {
   char const id[] = MD_VERSION;

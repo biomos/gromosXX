@@ -119,6 +119,11 @@ namespace interaction
 			       double const A_scale, double const B_scale,
 			       math::Vec & force, double & e_rf, double & de_rf);
     
+    void lj_crf_hessian(math::Vec const &r,
+			double const c6, double const c12,
+			double const q,
+			math::Matrix &hess);
+
     double const crf_2cut3i()const;
      /**
      * Perturbation:

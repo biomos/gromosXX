@@ -332,7 +332,7 @@ static int solvent(topology::Topology const & topo,
   } // solvents
 
   timing += util::now() - start;
-
+  DEBUG(3, "total shake solvent iterations: " << tot_iterations);
   return 0;
   
 } // shake solvent
@@ -436,27 +436,31 @@ template<math::virial_enum do_virial>
 int algorithm::Shake<do_virial>
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
-       simulation::Simulation & sim)
+       simulation::Simulation & sim,
+       bool quiet)
 {
-  std::cout << "SHAKE\n"
-	    << "\tsolute\t";
-  if (sim.param().constraint.solute.algorithm == simulation::constr_shake){    
-    std::cout << "ON\n";  
-    std::cout << "\t\ttolerance = "
-	      << sim.param().constraint.solute.shake_tolerance << "\n";
+  if (!quiet){
+    std::cout << "SHAKE\n"
+	      << "\tsolute\t";
+    if (sim.param().constraint.solute.algorithm == simulation::constr_shake){    
+      std::cout << "ON\n";  
+      std::cout << "\t\ttolerance = "
+		<< sim.param().constraint.solute.shake_tolerance << "\n";
+    }
+    else std::cout << "OFF\n";
+  
+    std::cout << "\tsolvent\t";
+  
+    if (sim.param().constraint.solvent.algorithm == simulation::constr_shake){
+      std::cout << "ON\n";
+      std::cout << "\t\ttolerance = " 
+		<< sim.param().constraint.solvent.shake_tolerance << "\n";
+    }  else std::cout << "OFF\n";
   }
-  else std::cout << "OFF\n";
   
-  std::cout << "\tsolvent\t";
-  if (sim.param().constraint.solvent.algorithm == simulation::constr_shake){
-    std::cout << "ON\n";
-    std::cout << "\t\ttolerance = " 
-	      << sim.param().constraint.solvent.shake_tolerance << "\n";
-  }  else std::cout << "OFF\n";
-  
-
   if (sim.param().start.shake_pos){
-    std::cout << "\n\tshaking initial positions\n";
+    if (!quiet)
+      std::cout << "\n\tshaking initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -473,7 +477,8 @@ int algorithm::Shake<do_virial>
     conf.old().pos = conf.current().pos;
     
     if (sim.param().start.shake_vel){
-      std::cout << "\tshaking initial velocities\n";
+      if (!quiet)
+	std::cout << "\tshaking initial velocities\n";
 
       conf.current().pos = conf.old().pos - 
 	sim.time_step_size() * conf.old().vel;
@@ -496,7 +501,8 @@ int algorithm::Shake<do_virial>
 		     "shake", io::message::error);
   }
   
-  std::cout << "END\n";
+  if (!quiet)
+    std::cout << "END\n";
   
   return 0;
 }

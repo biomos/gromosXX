@@ -1,6 +1,8 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS = 	argument.h \
+xxincludedir = $(includedir)/gromosXX
+
+xxinclude_HEADERS = 	argument.h \
 			blockinput.h \
 			instream.h \
 			message.h \
@@ -15,11 +17,11 @@ include_HEADERS = 	argument.h \
 			configuration/out_configuration.h \
 			topology/in_posres.h
 
-lib_LTLIBRARIES	=	libio.la
+lib_LTLIBRARIES	=	libgroio.la
 
-libio_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
+libgroio_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
-libio_la_SOURCES =	io.cc \
+libgroio_la_SOURCES =	io.cc \
 			argument.cc \
 			blockinput.cc \
 			instream.cc \
@@ -35,7 +37,7 @@ libio_la_SOURCES =	io.cc \
 			configuration/out_configuration.cc \
 			topology/in_posres.cc
 
-libio_la_LIBADD =	../util/libutil.la
+libgroio_la_LIBADD =	../util/libgroutil.la
 
 bin_PROGRAMS =			
 

@@ -1,6 +1,8 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS =	algorithm.h \
+xxincludedir = $(includedir)/gromosXX
+
+xxinclude_HEADERS =	algorithm.h \
 			algorithm/algorithm_sequence.h \
 			integration/leap_frog.h \
 			temperature/temperature_calculation.h \
@@ -23,11 +25,11 @@ include_HEADERS =	algorithm.h \
 			integration/slow_growth.h \
 			integration/steepest_descent.h
 
-lib_LTLIBRARIES	=	libalgorithm.la
+lib_LTLIBRARIES	=	libgroalgorithm.la
 
-libalgorithm_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
+libgroalgorithm_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
-libalgorithm_la_SOURCES =	algorithm.cc \
+libgroalgorithm_la_SOURCES =	algorithm.cc \
 				create_md_sequence.cc \
 				algorithm/algorithm_sequence.cc \
 				integration/leap_frog.cc \

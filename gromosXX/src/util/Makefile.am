@@ -1,24 +1,35 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS = 	stdheader.h \
+xxincludedir = $(includedir)/gromosXX
+
+xxinclude_HEADERS = 	stdheader.h \
 			error.h \
 			debug.h	\
 			timing.h \
 			generate_velocities.h \
 			parse_tcouple.h \
 			parse_verbosity.h \
-			prepare_virial.h
+			prepare_virial.h \
+			create_simulation.h
 
-lib_LTLIBRARIES	= 	libutil.la
+lib_LTLIBRARIES	= 	libgroutil.la
 
-libutil_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
+libgroutil_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
-libutil_la_SOURCES =	debug.cc \
+libgroutil_la_SOURCES =	debug.cc \
 			timing.cc \
 			generate_velocities.cc \
 			parse_tcouple.cc \
 			parse_verbosity.cc \
-			prepare_virial.cc
+			prepare_virial.cc \
+			create_simulation.cc
+
+libgroutil_la_LIBADD = ../io/libgroio.la \
+			../topology/libgrotopology.la \
+			../algorithm/libgroalgorithm.la \
+			../configuration/libgroconfiguration.la \
+			../simulation/libgrosimulation.la \
+			../interaction/libgrointeraction.la
 
 bin_PROGRAMS =			
 

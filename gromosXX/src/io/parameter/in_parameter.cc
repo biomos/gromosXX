@@ -6,6 +6,12 @@
 #include <util/stdheader.h>
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 
 #include <simulation/multibath.h>
@@ -378,6 +384,11 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
     if(param.constraint.solute.shake_tolerance <= 0.0)
       io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
 		       "In_Parameter", io::message::error);
+
+    if(param.centreofmass.remove_rot || param.centreofmass.remove_trans)
+      io::messages.add("flexible shake and removal of centre of mass motion "
+		       "needs extra care!", "In_Parameter", io::message::warning);
+
   }
   else if (salg == "lincs"){
 

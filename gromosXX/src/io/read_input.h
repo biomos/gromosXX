@@ -8,6 +8,9 @@
 
 namespace io
 {
+  /**
+   * read in data and setup an md simulation.
+   */
   int read_input(io::Argument const &args,
 		 topology::Topology &topo,
 		 configuration::Configuration &conf,

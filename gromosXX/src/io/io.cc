@@ -5,6 +5,8 @@
 
 #include "config.h"
 
+double io_ver = 0.10;
+
 namespace io
 {
   char const id[] = MD_VERSION;

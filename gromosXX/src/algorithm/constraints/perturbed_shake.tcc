@@ -318,23 +318,27 @@ template<math::virial_enum do_virial>
 int algorithm::Perturbed_Shake<do_virial>
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
-       simulation::Simulation & sim)
+       simulation::Simulation & sim,
+       bool quiet)
 {
-  std::cout << "Perturbed SHAKE\n"
+  if (!quiet){
+    std::cout << "Perturbed SHAKE\n"
 	    << "\tsolute\t";
-  if (sim.param().constraint.solute.algorithm == simulation::constr_shake
-      && topo.perturbed_solute().distance_constraints().size()){    
-    std::cout << "ON\n";  
-    std::cout << "\t\ttolerance = "
-	      << sim.param().constraint.solute.shake_tolerance << "\n";
+    if (sim.param().constraint.solute.algorithm == simulation::constr_shake
+	&& topo.perturbed_solute().distance_constraints().size()){    
+      std::cout << "ON\n";  
+      std::cout << "\t\ttolerance = "
+		<< sim.param().constraint.solute.shake_tolerance << "\n";
+    }
+    else std::cout << "OFF\n";
+    
+    std::cout << "\tsolvent\t"
+	      << "OFF\n";
   }
-  else std::cout << "OFF\n";
   
-  std::cout << "\tsolvent\t"
-	    << "OFF\n";
-
   if (sim.param().start.shake_pos){
-    std::cout << "shaking perturbed initial positions\n";
+    if (!quiet)
+      std::cout << "shaking perturbed initial positions\n";
 
     // old and current pos and vel are the same...
     // shake the current ones
@@ -347,7 +351,8 @@ int algorithm::Perturbed_Shake<do_virial>
     conf.old().pos = conf.current().pos;
     
     if (sim.param().start.shake_vel){
-      std::cout << "shaking initial velocities\n";
+      if (!quiet)
+	std::cout << "shaking initial velocities\n";
 
       conf.current().pos = conf.old().pos - 
 	sim.time_step_size() * conf.old().vel;
@@ -368,6 +373,9 @@ int algorithm::Perturbed_Shake<do_virial>
     io::messages.add("shaking velocities without shaking positions illegal.",
 		     "shake", io::message::error);
   }
+
+  if (!quiet)
+    std::cout << "END\n";
   
   return 0;
 }

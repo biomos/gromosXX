@@ -487,4 +487,60 @@ inline void interaction::Nonbonded_Base::set_lambda(double const l,
   DEBUG(7, "\tB^n-1: " << m_B_lambda_n_1);
 }
 
- 
+inline void
+interaction::Nonbonded_Base::lj_crf_hessian(math::Vec const &r,
+				    double const c6, double const c12,
+				    double const q,
+				    math::Matrix &hess)
+{
+  const double r2 = math::dot(r,r);
+  
+  const double r4 = r2*r2;
+  const double r8 = r4*r4;
+  const double r10 = r8*r2;
+  const double r14 = r10*r4;
+  const double r16 = r8*r8;
+    
+  // the LENNARD-JONES part
+  
+  // get the matrix for the first term
+  math::dyade(r, r, hess);
+
+  for(int d1=0; d1 < 3; ++d1){
+    // first term
+    for(int d2=0; d2 < 3; ++d2){
+      hess(d1, d2) *= 168.0 * c12 / r16 - 48.0 * c6 / r10;
+    }
+    // second term
+    hess(d1, d1) += 6.0 * c6 / r8 - 12.0 * c12 / r14;
+  }
+
+  const double r3 = sqrt(r4 * r2);
+  math::Matrix c;
+  math::dyade(r, r, c);
+
+  for(int d1=0; d1<3; ++d1){
+    for(int d2=0; d2<3; ++d2){
+      c(d1, d2) *= 3.0 / r2;
+    }
+    c(d1, d1) -= 1.0;
+  }
+
+  for(int d1=0; d1<3; ++d1){
+    for(int d2=0; d2<3; ++d2){
+      // first factor
+      c(d1, d2) *= q * math::four_pi_eps_i / r3;
+    }
+    // reaction field term
+    c(d1, d1) -= q * math::four_pi_eps_i * m_crf_cut3i;
+  }
+
+  for(int d1=0; d1<3; ++d1){
+    for(int d2=0; d2<3; ++d2){
+      // first factor
+      hess(d1, d2) += c(d1, d2);
+    }
+  }
+  
+}
+

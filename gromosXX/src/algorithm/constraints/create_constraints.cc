@@ -9,6 +9,12 @@
 #include <fstream>
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
@@ -16,18 +22,49 @@
 #include <configuration/energy.h>
 #include <configuration/energy_average.h>
 #include <configuration/configuration.h>
+#include <algorithm/algorithm.h>
+#include <algorithm/algorithm_sequence.h>
+
 #include <interaction/interaction.h>
 #include <interaction/interaction_types.h>
+
+#include <interaction/forcefield/forcefield.h>
+
+#include <math/periodicity.h>
 
 #include <io/argument.h>
 #include <io/blockinput.h>
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
 
-#include <algorithm/algorithm.h>
-#include <algorithm/algorithm_sequence.h>
+// nonbonded base
+#include <interaction/nonbonded/interaction/storage.h>
+#include <interaction/nonbonded/interaction/nonbonded_base.h>
 
-#include <math/periodicity.h>
+// nonbonded filter
+#include <interaction/nonbonded/filter/filter.h>
+#include <interaction/nonbonded/filter/exclusion_filter.h>
+#include <interaction/nonbonded/filter/perturbation_filter.h>
+#include <interaction/nonbonded/filter/chargegroup_grid.h>
+#include <interaction/nonbonded/filter/range_filter.h>
+
+// nonbonded pairlist algorithm
+#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
+
+// nonbonded pairlist
+#include <interaction/nonbonded/pairlist/pairlist.h>
+
+
+// nonbonded interaction
+#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_interaction.h>
+// and the specs...
+#include <interaction/nonbonded/interaction_spec.h>
+
 #include <algorithm/constraints/shake.h>
 #include <algorithm/constraints/perturbed_shake.h>
 #include <algorithm/constraints/lincs.h>
@@ -49,7 +86,9 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 			       topology::Topology &topo,
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
-			       io::In_Topology &it)
+			       io::In_Topology &it,
+			       bool quiet)
+			       
 {
   // CONSTRAINTS
   DEBUG(7, "Constrain solute?");
@@ -76,13 +115,13 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  new algorithm::Shake<do_virial>
 	  (sim.param().constraint.solute.shake_tolerance);
 	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim);
+	s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 	
 	if (sim.param().perturbation.perturbation){
 	  algorithm::Perturbed_Shake<do_virial> * ps =
 	    new algorithm::Perturbed_Shake<do_virial>(*s);
-	  ps->init(topo, conf, sim);
+	  ps->init(topo, conf, sim, quiet);
 	  md_seq.push_back(ps);
 	}
 	break;
@@ -92,7 +131,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	algorithm::Lincs<do_virial> * s =
 	  new algorithm::Lincs<do_virial>;
 	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim);
+	s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 
 	if (sim.param().perturbation.perturbation){
@@ -104,18 +143,34 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
       }
     case simulation::constr_flexshake:
       {
+	// let's try to get the forcefield
+	interaction::Forcefield * ff = NULL;
+
+	for(size_t i=0; i < md_seq.size(); ++i){
+	  if (md_seq[i]->name == "Forcefield"){
+	    DEBUG(8, "flexible shake: forcefield found");
+	    ff = dynamic_cast<interaction::Forcefield *>(md_seq[i]);
+	    break;
+	  }
+	}
+
+	if (!ff){
+	  io::messages.add("no forcefield found", "create_constraints", io::message::error);
+	}
+
 	algorithm::Flexible_Constraint<do_virial> * fs = 
 	  new algorithm::Flexible_Constraint<do_virial>
-	  (sim.param().constraint.solute.shake_tolerance);
+	  (sim.param().constraint.solute.shake_tolerance, 1000, ff);
+
 	it.read_harmonic_bonds(fs->parameter());
-	fs->init(topo, conf, sim);
+	fs->init(topo, conf, sim, quiet);
 	md_seq.push_back(fs);
 
 	if (sim.param().perturbation.perturbation){
 
 	  algorithm::Perturbed_Flexible_Constraint<do_virial> * pfc =
 	    new algorithm::Perturbed_Flexible_Constraint<do_virial>(*fs);
-	  pfc->init(topo, conf, sim);
+	  pfc->init(topo, conf, sim, quiet);
 	  md_seq.push_back(pfc);
 
 	}
@@ -140,7 +195,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  new algorithm::Shake<do_virial>
 	  (sim.param().constraint.solvent.shake_tolerance);
 	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim);
+	s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 	
 	break;
@@ -150,7 +205,7 @@ static int _create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	algorithm::Lincs<do_virial> * s =
 	  new algorithm::Lincs<do_virial>;
 	it.read_harmonic_bonds(s->parameter());
-	s->init(topo, conf, sim);
+	s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 	
 	break;
@@ -176,7 +231,8 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence & md_seq,
 				  topology::Topology & topo,
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
-				  io::In_Topology &it)
+				  io::In_Topology &it,
+				  bool quiet)
 {
 
   DEBUG(7, "solute:  " << sim.param().constraint.solute.algorithm);
@@ -189,7 +245,7 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence & md_seq,
       {
 	DEBUG(8, "\twith no virial");
 	
-	return _create_constraints<math::no_virial>(md_seq, topo, conf, sim, it);
+	return _create_constraints<math::no_virial>(md_seq, topo, conf, sim, it, quiet);
       }
     case math::atomic_virial:
       {
@@ -201,7 +257,7 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence & md_seq,
 			   io::message::error);
 	}
 	
-	return _create_constraints<math::atomic_virial>(md_seq, topo, conf, sim, it);
+	return _create_constraints<math::atomic_virial>(md_seq, topo, conf, sim, it, quiet);
       }
     default:
       io::messages.add("wrong virial type", "create_constraints",

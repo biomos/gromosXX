@@ -5,6 +5,8 @@
 
 #include "config.h"
 
+double interaction_ver = 0.10;
+
 namespace interaction
 {
   char const id[] = MD_VERSION;

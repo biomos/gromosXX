@@ -7,6 +7,12 @@
 #include <fstream>
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
@@ -521,7 +527,7 @@ namespace io
   void print_TIMESTEP(std::ostream &os, double const steps, double const time)
   {
     os.setf(std::ios::fixed, std::ios::floatfield);
-    os.precision(9);
+    os.precision(5);
     
     os << "TIMESTEP"
        << std::setw(15) << steps

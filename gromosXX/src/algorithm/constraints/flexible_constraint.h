@@ -20,7 +20,8 @@ namespace algorithm
      * Constructor.
      */
     Flexible_Constraint(double const tolerance = 0.000001,
-			int const max_iterations = 1000);
+			int const max_iterations = 1000,
+			interaction::Forcefield *ff = NULL);
 
     /**
      * Destructor.
@@ -32,7 +33,8 @@ namespace algorithm
      */
     virtual int init(topology::Topology & topo,
 		     configuration::Configuration & conf,
-		     simulation::Simulation & sim);
+		     simulation::Simulation & sim,
+		     bool quiet = false);
 
     /**
      * apply shake.
@@ -83,6 +85,15 @@ namespace algorithm
      * bond parameter
      */
     std::vector<interaction::bond_type_struct> m_parameter;
+
+    /**
+     * the nonbonded's for exact algorithm...
+     * (only implemented for diatomic molecules...
+     *  no bonded terms!)
+     */
+    interaction::Nonbonded_Interaction<interaction::Interaction_Spec<
+      math::rectangular, false, math::molecular_virial, false, false> 
+    > * m_nonbonded;
 
   };
   

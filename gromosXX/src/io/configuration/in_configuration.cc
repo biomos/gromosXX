@@ -6,6 +6,12 @@
 #include <util/stdheader.h>
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
@@ -36,7 +42,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 				topology::Topology const &topo, 
 				simulation::Parameter const &param)
 {
-  std::cout << "\nCONFIGURATION\n";
+  if (!quiet)
+    std::cout << "\nCONFIGURATION\n";
   
   // resize the configuration
   conf.resize(topo.num_atoms());
@@ -61,14 +68,16 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   // read positions
   buffer = m_block["POSITION"];
   if (buffer.size()){
-    std::cout << "\treading POSITION...\n";
+    if (!quiet)
+      std::cout << "\treading POSITION...\n";
     _read_position(conf.current().pos, buffer, topo.num_atoms());
     block_read.insert("POSITION");
   }
   else{
     buffer = m_block["POSITIONRED"];
     if (buffer.size()){
-      std::cout << "\treading POSITIONRED...\n";
+      if (!quiet)
+	std::cout << "\treading POSITIONRED...\n";
       _read_positionred(conf.current().pos, buffer, topo.num_atoms());
       block_read.insert("POSITIONRED");
     }
@@ -83,14 +92,16 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if(!param.start.generate_velocities){
     buffer = m_block["VELOCITY"];
     if (buffer.size()){
-      std::cout << "\treading VELOCITY...\n";
+      if (!quiet)
+	std::cout << "\treading VELOCITY...\n";
       _read_velocity(conf.current().vel, buffer, topo.num_atoms());
       block_read.insert("VELOCITY");
     }
     else{
       buffer = m_block["VELOCITYRED"];
       if (buffer.size()){
-	std::cout << "\treading VELOCITYRED...\n";
+	if (!quiet)
+	  std::cout << "\treading VELOCITYRED...\n";
 	_read_velocityred(conf.current().vel, buffer, topo.num_atoms());
 	block_read.insert("VELOCITYRED");
       }
@@ -117,7 +128,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if(param.boundary.boundary != math::vacuum){
     buffer = m_block["TRICLINICBOX"];
     if (buffer.size()){
-      std::cout << "\treading TRICLINICBOX...\n";
+      if (!quiet)
+	std::cout << "\treading TRICLINICBOX...\n";
       _read_box(conf.current().box, buffer, param.boundary.boundary);
       conf.old().box = conf.current().box;
       block_read.insert("TRICLINICBOX");
@@ -125,7 +137,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     else{
       buffer = m_block["BOX"];
       if (buffer.size() && param.boundary.boundary == math::rectangular){
-	std::cout << "\treading BOX...\n";
+	if (!quiet)
+	  std::cout << "\treading BOX...\n";
 	_read_g96_box(conf.current().box, buffer);
 	conf.old().box = conf.current().box;
 	block_read.insert("BOX");
@@ -162,31 +175,36 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   conf.special().rel_mol_com_pos.resize(topo.num_atoms());
 
   // print some information
-  std::cout << "\n\t";
-  switch(conf.boundary_type){
-    case math::vacuum:
-      std::cout << "PBC            = vacuum\n";
-      break;
-    case math::rectangular:
-      std::cout << "PBC            = rectangular\n";
-      break;
-    case math::triclinic:
-      std::cout << "PBC            = triclinic\n";
-      break;
-    default:
-      std::cout << "wrong periodic boundary conditions!";
-      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+  if (!quiet){
+    std::cout << "\n\t";
+    switch(conf.boundary_type){
+      case math::vacuum:
+	std::cout << "PBC            = vacuum\n";
+	break;
+      case math::rectangular:
+	std::cout << "PBC            = rectangular\n";
+	break;
+      case math::triclinic:
+	std::cout << "PBC            = triclinic\n";
+	break;
+      default:
+	std::cout << "wrong periodic boundary conditions!";
+	io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+    }
   }
 
-  std::cout << "\ttotal mass     = " << math::sum(topo.mass()) << "\n"
-	    << "\tvolume         = " << math::volume(conf.current().box, conf.boundary_type);
-  if (conf.boundary_type != math::vacuum)
-    std::cout << "\n\tdensity        = " 
-	      << math::sum(topo.mass()) / math::volume(conf.current().box,
-						       conf.boundary_type);
+  if (!quiet){
+    std::cout << "\ttotal mass     = " << math::sum(topo.mass()) << "\n"
+	      << "\tvolume         = " << math::volume(conf.current().box, conf.boundary_type);
+    
+    if (conf.boundary_type != math::vacuum)
+      std::cout << "\n\tdensity        = " 
+		<< math::sum(topo.mass()) / math::volume(conf.current().box,
+							 conf.boundary_type);
+    
+    std::cout << "\n\n";
+  }
   
-  std::cout << "\n\n";
-
   if (param.constraint.solute.algorithm == simulation::constr_flexshake){
     conf.special().flexible_vel.resize(topo.solute().distance_constraints().size()+
 				       topo.perturbed_solute().distance_constraints().size());
@@ -195,7 +213,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     buffer = m_block["FLEXV"];
     if (buffer.size() && param.constraint.solute.flexshake_readin){
       block_read.insert("FLEXV");
-      std::cout << "\treading FLEXV...\n";
+      if (!quiet)
+	std::cout << "\treading FLEXV...\n";
       _read_flexv(conf.special().flexible_vel, buffer, 
 		  topo.solute().distance_constraints(),
 		  topo.perturbed_solute().distance_constraints());
@@ -227,7 +246,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     }
   }
 
-  std::cout << "END\n\n";
+  if (!quiet)
+    std::cout << "END\n\n";
 
 }
 
@@ -578,11 +598,11 @@ bool io::In_Configuration::_read_flexv
 
   }
   
-  if (c)
+  if (c && !quiet)
     std::cout << "\tvelocities for " << c << " flexible constraints read in\n";
-  if (pc)
+  if (pc && !quiet)
     std::cout << "\tvelocities for " << pc << " perturbed flexible constraints read in\n";
-
+  
   return true;
   
 }

@@ -1,6 +1,8 @@
 INCLUDES = -I$(top_srcdir)/src
 
-include_HEADERS =		interaction.h \
+xxincludedir = $(includedir)/gromosXX
+
+xxinclude_HEADERS =		interaction.h \
 				interaction_types.h \
 				forcefield/forcefield.h \
 				forcefield/create_forcefield.h \
@@ -58,11 +60,11 @@ include_HEADERS =		interaction.h \
 				special/position_restraint_interaction.h \
 				special/position_restraint_interaction.tcc
 
-lib_LTLIBRARIES	=		libinteraction.la
+lib_LTLIBRARIES	=		libgrointeraction.la
 
-libinteraction_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
+libgrointeraction_la_LDFLAGS =	-version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
 
-libinteraction_la_SOURCES =	interaction.cc \
+libgrointeraction_la_SOURCES =	interaction.cc \
 				forcefield/forcefield.cc \
 				forcefield/create_forcefield.cc \
 				bonded/create_bonded.cc \

@@ -11,6 +11,12 @@
 #include <configuration/configuration.h>
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 
 #include <math/periodicity.h>

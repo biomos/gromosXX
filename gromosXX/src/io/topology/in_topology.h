@@ -25,6 +25,12 @@ namespace io {
      * Constructor.
      */
     In_Topology(std::istream& is) : GInStream(is) { readStream(); };
+
+    /**
+     * set the stream
+     */
+    void stream(std::istream& is) { GInStream::stream(is); readStream(); }
+
     /**
      * Read in a G96 topology into the topology.
      */

@@ -16,3 +16,5 @@ namespace util
 }
 
 #endif
+
+double util_ver = 0.10;

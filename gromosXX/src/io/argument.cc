@@ -28,6 +28,8 @@ namespace io{
     if(argc) d_prog = argv[0];
     d_usage="\n\n"+usage;
 
+    if (argc == 1) throw std::string(d_usage);
+
     for(int i=0;i<nknown;++i)
       d_known.insert(std::string(known[i]));
 

@@ -7,6 +7,12 @@
 #include <util/stdheader.h>
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
@@ -63,8 +69,6 @@ int algorithm::Algorithm_Sequence
 int algorithm::Algorithm_Sequence
 ::print_timing(std::ostream & os)
 {
-  int ret;
-  
   os << "TIMING\n";
   
   for(Algorithm_Sequence::iterator 

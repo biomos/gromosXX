@@ -38,6 +38,11 @@ namespace simulation
     struct system_struct
     {
       /**
+       * Constructor.
+       */
+      system_struct() : npm(0), nsm(0) {}
+      
+      /**
        * Number of protein molecules
        */
       int npm;
@@ -81,6 +86,12 @@ namespace simulation
      */
     struct start_struct
     {
+      /**
+       * Constructor.
+       */
+      start_struct() : shake_pos(false), shake_vel(false), remove_com(false),
+		       generate_velocities(false), ig(0), tempi(0.0) {}
+      
       /**
        * shake initial positions
        */

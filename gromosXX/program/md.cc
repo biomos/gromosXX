@@ -2,6 +2,12 @@
 #include <util/stdheader.h>
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
@@ -32,7 +38,7 @@
 int main(int argc, char *argv[]){
 
   const double start = util::now();
-  double init_start = util::now();
+  // double init_start = util::now();
 
   try{
     
@@ -40,10 +46,10 @@ int main(int argc, char *argv[]){
       {
         "topo", "conf", "input", "verb", "alg", "pttopo",
         "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-	"posres"
+	"posres", "version"
       };
     
-    int nknowns = 15;
+    int nknowns = 16;
     
     std::string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
@@ -61,8 +67,42 @@ int main(int argc, char *argv[]){
     usage += "\t[@print  <pairlist/force>]\n";
     usage += "\t[@trp    <print file>]\n";
     usage += "\t[@verb   <[module:][submodule:]level>]\n";
+    usage += "\t[@version]\n";
 
     io::Argument args(argc, argv, nknowns, knowns, usage);
+
+    if (args.count("version") >= 0){
+
+#ifdef NDEBUG
+#ifndef BZDEBUG
+      std::cout << "\033[1;32m";
+#else
+      std::cout << "\033[1;31m";
+#endif
+#else
+      std::cout << "\033[1;31m";
+#endif
+      
+      std::cout << "\n\nGromosXX 0.1.0\033[22;0m\n\n"
+		<< "20. January 2004\n";
+#ifdef NDEBUG
+      std::cout << "standard library debugging disabled.\n";
+#else
+      std::cout << "standard library debugging enabled.\n";
+#endif
+#ifdef BZDEBUG
+      std::cout << "Blitz debugging enabled.\n";
+#else
+      std::cout << "Blitz debugging disabled.\n";
+#endif
+
+      std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"
+		<< "Professor W. F. van Gunsteren\n"
+		<< "Swiss Federal Institute of Technology\n"
+		<< "Zuerich\n\n"
+		<< "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+      return 0;
+    }
 
     // parse the verbosity flag and set debug levels
     util::parse_verbosity(args);
@@ -177,7 +217,7 @@ int main(int argc, char *argv[]){
     const double init_time = util::now() - start;
     
     while(sim.time() < end_time){
-      std::cout << "\tmd step " << sim.time() << std::endl;
+      // std::cout << "\tmd step " << sim.time() << std::endl;
       
       traj.write(conf, topo, sim, io::reduced);
 

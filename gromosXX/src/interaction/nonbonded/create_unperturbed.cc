@@ -11,6 +11,12 @@
 #endif
 
 #include <topology/core/core.h>
+
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
@@ -29,10 +35,6 @@
 #include <io/topology/in_topology.h>
 
 #include "create_nonbonded.h"
-
-// general
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
 
 // nonbonded base
 #include <interaction/nonbonded/interaction/storage.h>

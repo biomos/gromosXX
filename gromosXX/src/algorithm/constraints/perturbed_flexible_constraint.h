@@ -38,7 +38,8 @@ namespace algorithm
      */
     int init(topology::Topology & topo,
 	     configuration::Configuration & conf,
-	     simulation::Simulation & sim);
+	     simulation::Simulation & sim,
+	     bool quiet = false);
 
   protected:
 

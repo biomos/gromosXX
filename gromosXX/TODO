@@ -67,6 +67,12 @@ Release 0.1.0
 
 -------------
 
+	-	nonbonded compartments
+	-	check environment
+	-	check routines
+	-	exact flexible constraints
+	-	different lambda dependence
+
 	-	options for different compilers (see blitz)
 	-	distance restraining
 	-	pseudo/virtual atoms	

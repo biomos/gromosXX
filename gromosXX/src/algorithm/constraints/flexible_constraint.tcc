@@ -15,11 +15,41 @@
  */
 template<math::virial_enum do_virial>
 algorithm::Flexible_Constraint<do_virial>
-::Flexible_Constraint(double const tolerance, int const max_iterations)
+::Flexible_Constraint(double const tolerance, int const max_iterations,
+		      interaction::Forcefield * ff)
   : Algorithm("FlexibleShake"),
     m_tolerance(tolerance),
     m_max_iterations(max_iterations)
 {
+  typedef interaction::Nonbonded_Interaction
+    < 
+    interaction::Interaction_Spec
+    < 
+    math::rectangular,
+    false,
+    math::molecular_virial,
+    false,
+    false
+    >
+    >
+    nonbonded_type;
+  
+  if (ff){
+    for(size_t i=0; i<ff->size(); ++i){
+      if ((*ff)[i]->name == "NonBonded"){
+	// we have a nonbonded, try to cast it
+	m_nonbonded = dynamic_cast<nonbonded_type *>((*ff)[i]);
+      }
+    }
+    
+    if(!ff){
+      io::messages.add("Accessing the Nonbonded_Interaction failed!",
+		       "Flexible_Constraint::Constructor",
+		       io::message::error);
+    }
+    
+  }
+
 }
 
 /**
@@ -200,6 +230,8 @@ static void _calc_distance(topology::Topology const &topo,
       it != to;
       ++it, ++k){
     
+    DEBUG(8, "flexible constraint " << k);
+
     // the position
     assert(conf.current().pos.size() > int(it->i));
     assert(conf.current().pos.size() > int(it->j));
@@ -212,6 +244,8 @@ static void _calc_distance(topology::Topology const &topo,
 
     // unconstrained distance
     const double dist2 = dot(r, r);
+
+    DEBUG(10, "unconstrained distance = " << dist2);
     
     assert(conf.old().pos.size() > int(it->i));
     assert(conf.old().pos.size() > int(it->j));
@@ -232,10 +266,15 @@ static void _calc_distance(topology::Topology const &topo,
 
     const double red_mass = 1 / (1/topo.mass()(it->i) + 1/topo.mass()(it->j));
     const double dt2 = dt * dt;
+
+    DEBUG(10, "red mass = " << red_mass << "   dt2 = " << dt2);
       
     // calculate the force on constraint k
     assert(conf.special().flexible_vel.size() > k);
 
+    DEBUG(10, "flexible constraint velocity =  "
+	  << conf.special().flexible_vel[k]);
+    
     const double force_on_constraint  = (red_mass / dt2) * 
       (sqrt(dist2) - sqrt(ref_dist2) - conf.special().flexible_vel[k] * dt);
 
@@ -249,6 +288,9 @@ static void _calc_distance(topology::Topology const &topo,
     // const double constr_length2 = param(it->type).r0 * param(it->type).r0;
     
     // calculate the flexible constraint distance
+    DEBUG(10, "F(c) = " << force_on_constraint);
+    DEBUG(10, "K = " << param[it->type].K << "     r0 = " << param[it->type].r0);
+
     const double new_len = force_on_constraint / param[it->type].K + 
       param[it->type].r0;
     
@@ -423,30 +465,38 @@ template<math::virial_enum do_virial>
 int algorithm::Flexible_Constraint<do_virial>
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
-       simulation::Simulation & sim)
+       simulation::Simulation & sim,
+       bool quiet)
 {
-  std::cout << "FLEXIBLESHAKE\n"
-	    << "\tsolute\t";
-  if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
-    std::cout << "ON\n";
-    std::cout << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
-    if (sim.param().constraint.solute.flexshake_readin)
-      std::cout << "\t\treading velocities along constraints from file\n";
-  }
-  else std::cout << "OFF\n";
+  if (!quiet){
+    std::cout << "FLEXIBLESHAKE\n"
+	      << "\tsolute\t";
+    if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+      std::cout << "ON\n";
+      std::cout << "\t\ttolerance = " 
+		<< sim.param().constraint.solute.shake_tolerance << "\n";
+      if (sim.param().constraint.solute.flexshake_readin)
+	std::cout << "\t\treading velocities along constraints from file\n";
+    }
+    else std::cout << "OFF\n";
   
-  std::cout << "\tsolvent\t";
+    std::cout << "\tsolvent\t";
+  }
+  
   if (sim.param().constraint.solvent.algorithm == simulation::constr_flexshake){
-    std::cout << "not supported!\n";
+    if (!quiet)
+      std::cout << "not supported!\n";
     io::messages.add("flexible shake for solvent not implemented", "Flexible_Constraint",
 		     io::message::error);
   }
-  else std::cout << "OFF\n";
-  
-  std::cout << "END\n";
+  else if (!quiet) std::cout << "OFF\n";
+
+  if (!quiet)
+    std::cout << "END\n";
   
   if (sim.param().start.shake_pos){
-    std::cout << "(flexible) shaking initial positions\n";
+    if (!quiet)
+      std::cout << "(flexible) shaking initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -459,11 +509,14 @@ int algorithm::Flexible_Constraint<do_virial>
     // restore the velocities
     conf.current().vel = conf.old().vel;
     
+    conf.special().flexible_vel.assign(conf.special().flexible_vel.size(), 0.0);
+
     // take a step back
     conf.old().pos = conf.current().pos;
     
     if (sim.param().start.shake_vel){
-      std::cout << "shaking initial velocities\n";
+      if (!quiet)
+	std::cout << "shaking initial velocities\n";
 
       conf.current().pos = conf.old().pos - 
 	sim.time_step_size() * conf.old().vel;
@@ -478,6 +531,10 @@ int algorithm::Flexible_Constraint<do_virial>
       // velocities are in opposite direction (in time)
       conf.current().vel = -1.0 * conf.current().vel;
       conf.old().vel = conf.current().vel;
+
+      // also change the velocities along the constraints...
+      for(size_t i=0; i<conf.special().flexible_vel.size(); ++i)
+	conf.special().flexible_vel[i] *= -1.0;
     }
     
   }
@@ -485,6 +542,155 @@ int algorithm::Flexible_Constraint<do_virial>
     io::messages.add("shaking velocities without shaking positions illegal.",
 		     "shake", io::message::error);
   }
+
+  std::cout << "END\n";
   
   return 0;
 }
+
+
+/**
+ * do one iteration
+ */      
+template<math::virial_enum do_virial, math::boundary_enum b>
+static int _exact_flexible_shake(topology::Topology const &topo,
+				 configuration::Configuration & conf,
+				 bool & convergence,
+				 std::vector<double> & flex_len,
+				 std::vector<bool> & skip_now,
+				 std::vector<bool> & skip_next,
+				 double const dt,
+				 math::Periodicity<b> const & periodicity,
+				 double const tolerance,
+				 interaction::Nonbonded_Interaction
+				 <interaction::Interaction_Spec<
+				 math::rectangular, false, math::molecular_virial,
+				 false, false> 
+				 > * nonbonded,
+				 bool do_constraint_force = false)
+{
+  convergence = true;
+
+  // index for constraint_force...
+  size_t k = 0;
+  double const dt2 = dt * dt;
+  
+  // and constraints
+  for(typename std::vector<topology::two_body_term_struct>
+	::const_iterator
+	it = topo.solute().distance_constraints().begin(),
+	to = topo.solute().distance_constraints().end();
+      it != to;
+      ++it, ++k ){
+	
+    // check whether we can skip this constraint
+    if (skip_now[it->i] && skip_now[it->j]) continue;
+
+    DEBUG(10, "i: " << it->i << " j: " << it->j);
+
+    // the position
+    math::Vec &pos_i = conf.current().pos(it->i);
+    math::Vec &pos_j = conf.current().pos(it->j);
+
+    DEBUG(10, "\ni: " << pos_i << "\nj: " << pos_j);
+	
+    math::Vec r;
+    periodicity.nearest_image(pos_i, pos_j, r);
+    double dist2 = dot(r, r);
+	
+    double constr_length2 = flex_len[k] * flex_len[k];
+    double diff = constr_length2 - dist2;
+
+    DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
+	  
+    if(fabs(diff) >= constr_length2 * tolerance * 2.0){
+      // we have to shake
+      DEBUG(10, "flexible shaking");
+      
+      // the reference position
+      const math::Vec &ref_i = conf.old().pos(it->i);
+      const math::Vec &ref_j = conf.old().pos(it->j);
+      
+      math::Vec ref_r;
+      periodicity.nearest_image(ref_i, ref_j, ref_r);
+
+      double sp = dot(ref_r, r);
+	  
+      if(sp < constr_length2 * math::epsilon){
+	/*
+	io::messages.add("SHAKE error. vectors orthogonal",
+			 "Shake::???",
+			 io::message::critical);
+	*/
+	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
+	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
+	DEBUG(5, "ref r " << ref_r);
+	DEBUG(5, "r " << r);
+
+	std::cout << "FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
+		  << "\tatom i    : " << it->i << "\n"
+		  << "\tatom j    : " << it->j << "\n"
+		  << "\tref i     : " << math::v2s(ref_i) << "\n"
+		  << "\tref j     : " << math::v2s(ref_j) << "\n"
+		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
+		  << "\tfree j    : " << math::v2s(pos_j) << "\n"
+		  << "\tref r     : " << math::v2s(ref_r) << "\n"
+		  << "\tr         : " << math::v2s(r) << "\n"
+		  << "\tsp        : " << sp << "\n"
+		  << "\tconstr    : " << constr_length2 << "\n"
+		  << "\tdiff      : " << diff << "\n"
+		  << "\tforce i   : " << math::v2s(conf.old().force(it->i)) << "\n"
+		  << "\tforce j   : " << math::v2s(conf.old().force(it->j)) << "\n"
+		  << "\tvel i     : " << math::v2s(conf.current().vel(it->i)) << "\n"
+		  << "\tvel j     : " << math::v2s(conf.current().vel(it->j)) << "\n"
+		  << "\told vel i : " << math::v2s(conf.old().vel(it->i)) << "\n"
+		  << "\told vel j : " << math::v2s(conf.old().vel(it->j)) << "\n\n";
+	
+	return E_SHAKE_FAILURE;
+      }
+	  
+      // lagrange multiplier
+      double lambda = diff / (sp * 2 *
+			      (1.0 / topo.mass()(it->i) +
+			       1.0 / topo.mass()(it->j) ));      
+
+      DEBUG(10, "lagrange multiplier " << lambda);
+
+      /*
+      if (do_constraint_force == true){
+	
+	//if it is a solute sum up constraint forces
+	assert(unsigned(sys.constraint_force().size()) > k + force_offset);
+	sys.constraint_force()(k+force_offset) += (lambda * ref_r);
+	// m_lambda(k) += lambda;
+      }
+      */
+
+      if (do_virial == math::atomic_virial){
+	for(int a=0; a<3; ++a){
+	  for(int aa=0; aa<3; ++aa){
+	    conf.current().virial_tensor(a,aa) +=
+	      ref_r(a) * ref_r(aa) * lambda / dt2;
+	  }
+	}
+	DEBUG(12, "\tatomic virial done");
+      }
+      
+      // update positions
+      ref_r *= lambda;
+      pos_i += ref_r / topo.mass()(it->i);
+      pos_j -= ref_r / topo.mass()(it->j);
+	  
+      convergence = false;
+
+      // consider atoms in the next step
+      skip_next[it->i] = false;
+      skip_next[it->j] = false;
+      
+    } // we have to shake
+  } // constraints
+      
+  
+  return 0;
+
+}    

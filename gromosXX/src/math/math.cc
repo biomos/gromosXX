@@ -5,6 +5,8 @@
 
 #include "config.h"
 
+double math_ver = 0.10;
+
 namespace math
 {
   char const id[] = MD_VERSION;

@@ -494,30 +494,36 @@ template<math::virial_enum do_virial>
 int algorithm::Perturbed_Flexible_Constraint<do_virial>
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
-       simulation::Simulation & sim)
+       simulation::Simulation & sim,
+       bool quiet)
 {
-  std::cout << "PERTURBED_FLEXIBLESHAKE\n"
-	    << "\tsolute\t";
-  if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
-    std::cout << "ON\n";
-    std::cout << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
-    if (sim.param().constraint.solute.flexshake_readin)
-      std::cout << "\t\treading velocities along constraints from file\n";
+  if (!quiet){
+    std::cout << "PERTURBED_FLEXIBLESHAKE\n"
+	      << "\tsolute\t";
+    if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+      std::cout << "ON\n";
+      std::cout << "\t\ttolerance = " << sim.param().constraint.solute.shake_tolerance << "\n";
+      if (sim.param().constraint.solute.flexshake_readin)
+	std::cout << "\t\treading velocities along constraints from file\n";
+    }
+    else std::cout << "OFF\n";
+    
+    std::cout << "\tsolvent\t";
   }
-  else std::cout << "OFF\n";
   
-  std::cout << "\tsolvent\t";
   if (sim.param().constraint.solvent.algorithm == simulation::constr_flexshake){
     std::cout << "not supported!\n";
     io::messages.add("flexible shake for solvent not implemented", "Flexible_Constraint",
 		     io::message::error);
   }
-  else std::cout << "OFF\n";
+  else if (!quiet) std::cout << "OFF\n";
   
-  std::cout << "END\n";
+  if (!quiet)
+    std::cout << "END\n";
 
   if (sim.param().start.shake_pos){
-    std::cout << "shaking perturbed initial positions\n";
+    if (!quiet)
+      std::cout << "shaking perturbed initial positions\n";
 
     // old and current pos and vel are the same...
     // shake the current ones
@@ -530,7 +536,8 @@ int algorithm::Perturbed_Flexible_Constraint<do_virial>
     conf.old().pos = conf.current().pos;
     
     if (sim.param().start.shake_vel){
-      std::cout << "shaking initial velocities\n";
+      if (!quiet)
+	std::cout << "shaking initial velocities\n";
 
       conf.current().pos = conf.old().pos - 
 	sim.time_step_size() * conf.old().vel;
@@ -551,6 +558,9 @@ int algorithm::Perturbed_Flexible_Constraint<do_virial>
     io::messages.add("shaking velocities without shaking positions illegal.",
 		     "shake", io::message::error);
   }
+  
+  if (!quiet)
+    std::cout << "END\n";
   
   return 0;
 }

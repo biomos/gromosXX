@@ -15,12 +15,12 @@ namespace io {
     /*
      * default constructor
      */
-    GInStream() : _auto_delete(false) {} 
+    GInStream() : quiet(false), _auto_delete(false) {} 
 
     /*
      * Constructor
      */
-    GInStream(std::istream& is) : _auto_delete(false) { stream(is); } 
+    GInStream(std::istream& is) : quiet(false), _auto_delete(false) { stream(is); } 
 
     /**
      * Destructor.
@@ -47,6 +47,11 @@ namespace io {
      * auto delete accessor.
      */
     void auto_delete(bool b) { _auto_delete = b; }
+
+    /**
+     * output during reading?
+     */
+    bool quiet;
 
   protected:
     std::istringstream _lineStream;

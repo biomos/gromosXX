@@ -14,6 +14,8 @@
 #include <configuration/energy_average.h>
 #include <configuration/configuration.h>
 
+double configuration_ver = 0.10;
+
 /**
  * Constructor
  */
