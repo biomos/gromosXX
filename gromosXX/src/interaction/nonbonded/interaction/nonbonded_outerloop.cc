@@ -72,7 +72,7 @@ void interaction::Nonbonded_Outerloop
   DEBUG(7, "\tcalculate interactions");  
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
-  Nonbonded_Innerloop innerloop(m_param);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
 
   /*
@@ -102,7 +102,7 @@ void interaction::Nonbonded_Outerloop
       DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
       
       // shortrange, therefore store in simulation.system()
-      innerloop.lj_crf_innerloop<t_interaction_spec>
+      innerloop.lj_crf_innerloop
 	(
 	 topo, conf, 
 	 i, *j_it,
@@ -123,7 +123,7 @@ void interaction::Nonbonded_Outerloop
       DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
       
       // shortrange, therefore store in simulation.system()
-      innerloop.spc_innerloop<t_interaction_spec>
+      innerloop.spc_innerloop
 	(
 	 topo, conf,
 	 cg1, *j_it,
@@ -160,7 +160,7 @@ void interaction::Nonbonded_Outerloop
   DEBUG(7, "\tcalculate 1,4-interactions");
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
-  Nonbonded_Innerloop innerloop(m_param);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
   
   std::set<int>::const_iterator it, to;
@@ -173,7 +173,7 @@ void interaction::Nonbonded_Outerloop
     
     for( ; it != to; ++it){
 
-      innerloop.one_four_interaction_innerloop<t_interaction_spec>(topo, conf, i, *it, periodicity);
+      innerloop.one_four_interaction_innerloop(topo, conf, i, *it, periodicity);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
@@ -214,14 +214,14 @@ void interaction::Nonbonded_Outerloop
   DEBUG(7, "\tcalculate RF excluded interactions");
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
-  Nonbonded_Innerloop innerloop(m_param);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
   
   int i, num_solute_atoms = topo.num_solute_atoms();
   
   for(i=0; i<num_solute_atoms; ++i){
     
-    innerloop.RF_excluded_interaction_innerloop<t_interaction_spec>(topo, conf, i, periodicity);
+    innerloop.RF_excluded_interaction_innerloop(topo, conf, i, periodicity);
     
   } // loop over solute atoms
 
@@ -232,7 +232,7 @@ void interaction::Nonbonded_Outerloop
 
   for(; cg_it != cg_to; ++cg_it){
 
-    innerloop.RF_solvent_interaction_innerloop<t_interaction_spec>(topo, conf, cg_it, periodicity);
+    innerloop.RF_solvent_interaction_innerloop(topo, conf, cg_it, periodicity);
     ++cg_it;
 
   } // loop over solvent charge groups
