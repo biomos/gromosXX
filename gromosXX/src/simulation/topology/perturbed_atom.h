@@ -28,6 +28,7 @@ namespace simulation
 	m_B_charge(0),
 	m_LJ_softcore(0),
         m_crf_softcore(0),
+        m_exclusion(),
         m_one_four_pair()
     {};
 
@@ -57,6 +58,7 @@ namespace simulation
 	m_B_charge(CGB),
 	m_LJ_softcore(SCLJ),
         m_crf_softcore(SCC),
+        m_exclusion(),
         m_one_four_pair()
     {};
   public:
@@ -95,6 +97,9 @@ namespace simulation
     double const crf_softcore()const;
     void crf_softcore(const double);
     
+    std::set<int> & exclusion();
+    std::set<int> const & exclusion()const;
+    
     std::set<int> & one_four_pair();
     std::set<int> const & one_four_pair()const;
     
@@ -108,6 +113,7 @@ namespace simulation
     double m_B_charge;
     double m_LJ_softcore;
     double m_crf_softcore;
+    std::set<int> m_exclusion;
     std::set<int> m_one_four_pair;
   };
   

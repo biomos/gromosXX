@@ -189,6 +189,29 @@ inline void interaction::Nonbonded_Base
   DEBUG(11, "q*q   " << q );
   
 }
+/**
+ * helper function to calculate the force and energy for 
+ * the reaction field contribution for a given pair
+ * using the soft interaction
+ */
+inline void interaction::Nonbonded_Base
+::rf_soft_interaction(math::Vec const &r, double const q, double const l,
+		      math::Vec & force, double &e_rf, double & de_rf)
+{
+  const double dist2 = dot(r, r);
+  const double cut2soft = m_cut2 + alpha_crf()*l*l;
+  const double cut2soft3 = cut2soft*cut2soft*cut2soft;
+  const double crf_2cut3i = m_crf_2 / sqrt(cut2soft3);
+  const double crf_cut3i = 2*crf_2cut3i;
+  const double crf_pert = 3.0*crf_2cut3i/cut2soft;
+ 
+  force = q * coulomb_constant() * crf_cut3i * r;
+  
+  e_rf = q * coulomb_constant() * (- crf_2cut3i * dist2 - m_crf_cut);
+  de_rf = q*coulomb_constant() * l * alpha_crf() * crf_pert*dist2;
+  
+}
+
 
 inline void interaction::Nonbonded_Base
 ::lj_crf_soft_interaction(math::Vec const &r,

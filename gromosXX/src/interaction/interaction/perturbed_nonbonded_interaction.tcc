@@ -147,95 +147,102 @@ template<typename t_simulation, typename t_pairlist, typename t_innerloop>
 inline void interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
 ::do_perturbed_RF_excluded_interactions(t_simulation &sim)
 {
-  /*  
-  math::Vec r, f;
-  double e_crf;
-  std::cout.precision(10);
-  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-  
+  DEBUG(7, "\tcalculate perturbed excluded RF interactions");
+
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
 
-  DEBUG(7, "\tcalculate RF excluded interactions");
+  math::Vec r, f_rf, A_f_rf, B_f_rf;
+  double e_rf, A_e_rf, B_e_rf, de_rf, A_de_rf, B_de_rf;
+  const double l=sim.topology().lambda();
   
-  for(size_t i=0; i<sim.topology().num_solute_atoms(); ++i){
+  std::set<int>::const_iterator it, to;
+  std::map<size_t, simulation::Perturbed_Atom>::const_iterator
+    mit=sim.topology().perturbed_solute().atoms().begin(),
+    mto=sim.topology().perturbed_solute().atoms().end();
+  DEBUG(7, "\tSize of perturbed atoms " << sim.topology().perturbed_solute().atoms().size());
+  
+  for(; mit!=mto; ++mit){
+    // self term has already been calculated for state A, correct for that and 
+    // calculate it for this lambda
+    // only a distance independent part
+    r=0.0;
+    const int i=mit->second.sequence_number();
+    const double q_i_a = mit->second.A_charge();
+    const double q_i_b = mit->second.B_charge();
 
-    std::set<int>::const_iterator it, to;
-    it = sim.topology().exclusion(i).begin();
-    to = sim.topology().exclusion(i).end();
+    // now calculate everything
+    const double B_l = sim.topology().lambda();
+    const double B_ln = pow(B_l, sim.topology().nlam());
+    const double B_lnm = pow(B_l, sim.topology().nlam()-1);
     
-    DEBUG(11, "\tself-term " << i );
-    r=0;
+    const double A_l = 1.0 - sim.topology().lambda();
+    const double A_ln = pow(A_l, sim.topology().nlam());
+    const double A_lnm = pow(A_l, sim.topology().nlam()-1);
+
+    m_nonbonded_interaction.rf_soft_interaction(r, q_i_a*q_i_a, 
+						A_l, A_f_rf, A_e_rf, A_de_rf);
+    m_nonbonded_interaction.rf_soft_interaction(r, q_i_b*q_i_b, 
+						B_l, B_f_rf, B_e_rf, B_de_rf);
+
+    DEBUG(7, "Self term for atom " << i << " A: " << A_e_rf << " B: " << B_e_rf);
     
-    // this will only contribute in the energy, the force should be zero.
-    m_nonbonded_interaction.rf_interaction(r,sim.topology().charge()(i) * sim.topology().charge()(i),
-		   f, e_crf);
+    // (1-l)^n * A + l^n *B - A 
+    e_rf  = B_ln * B_e_rf  + A_ln * A_e_rf - A_e_rf;
+    de_rf = B_ln * B_de_rf + A_ln * A_de_rf 
+      + sim.topology().nlam() * B_lnm * B_e_rf 
+      - sim.topology().nlam() * A_lnm * A_e_rf;
+  
     sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
-      [sim.topology().atom_energy_group(i)] += 0.5 * e_crf;
-    DEBUG(11, "\tcontribution " << 0.5*e_crf);
+      [sim.topology().atom_energy_group(i)] += 0.5 * e_rf;
+    sim.system().lambda_energies().crf_energy
+      [sim.topology().atom_energy_group(i)]
+      [sim.topology().atom_energy_group(i)] += 0.5 * de_rf;
     
-    for( ; it != to; ++it){
-      
-      DEBUG(11, "\texcluded pair " << i << " - " << *it);
-      
-      sim.system().periodicity().nearest_image(pos(i), pos(*it), r);
-      
-      
-      rf_interaction(r, sim.topology().charge()(i) * 
-		     sim.topology().charge()(*it),
-		     f, e_crf);
-      
-      force(i) += f;
-      force(*it) -= f;
-      
-      // energy
-      sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
-	[sim.topology().atom_energy_group(*it)] += e_crf;
-      DEBUG(11, "\tcontribution " << e_crf);
-      
-    } // loop over excluded pairs
+    // now loop over the exclusions
+    it = mit->second.exclusion().begin();
+    to = mit->second.exclusion().end();
     
-    
-  } // loop over solute atoms
-
-  // Solvent
-  simulation::chargegroup_iterator cg_it = sim.topology().chargegroup_begin(),
-    cg_to = sim.topology().chargegroup_end();
-  cg_it += sim.topology().num_solute_chargegroups();
-  
-  for( ; cg_it != cg_to; ++cg_it){
-
-    // loop over the atoms
-    simulation::Atom_Iterator at_it = cg_it.begin(),
-      at_to = cg_it.end();
-
-    for ( ; at_it != at_to; ++at_it){
-      DEBUG(11, "\tsolvent self term " << *at_it);
-      // no solvent self term. The distance dependent part and the forces
-      // are zero. The distance independent part should add up to zero 
-      // for the energies and is left out.
-
-      for(simulation::Atom_Iterator at2_it=at_it+1; at2_it!=at_to; ++at2_it){
-	
-	DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
-	sim.system().periodicity().nearest_image(pos(*at_it), 
-						 pos(*at2_it), r);
-
-	// for solvent, we don't calculate internal forces (rigid molecules)
-	// and the distance independent parts should go to zero
-	e_crf = -sim.topology().charge()(*at_it) * 
-	  sim.topology().charge()(*at2_it) * coulomb_constant() * 
-	  m_crf_2cut3i * dot(r,r);
-	
-	// energy
-	sim.system().energies().crf_energy
-	  [sim.topology().atom_energy_group(*at_it) ]
-	  [sim.topology().atom_energy_group(*at2_it)] += e_crf;
-      } // loop over at2_it
-    } // loop over at_it
-  } // loop over solvent charge groups
-  */
-}  
+    for( ;it != to; ++it){
+      sim.system().periodicity().nearest_image(pos(i), 
+					       pos(*it), r);
+      DEBUG(7, "r2 i(" << i << "-" << *it << ") " << dot(r,r));
+      
+      double q_ij_a;
+      double q_ij_b;
+      if(sim.topology().perturbed_atom()[*it]){
+	q_ij_a = q_i_a * 
+	  sim.topology().perturbed_solute().atoms()[*it].A_charge();
+	q_ij_b = q_i_b *
+	  sim.topology().perturbed_solute().atoms()[*it].B_charge();
+      }
+      else{
+	q_ij_a = q_i_a * sim.topology().charge()(*it);
+	q_ij_b = q_i_b * sim.topology().charge()(*it);
+      }
+      m_nonbonded_interaction.rf_soft_interaction(r, q_ij_a, A_l, 
+						  A_f_rf, A_e_rf, A_de_rf);
+      m_nonbonded_interaction.rf_soft_interaction(r, q_ij_b, B_l, 
+						  B_f_rf, B_e_rf, B_de_rf);
+      DEBUG(7, "excluded atoms " << i << " & " << *it << " A: " << A_e_rf << " B: " << B_e_rf);
+      e_rf  = B_ln * B_e_rf  + A_ln * A_e_rf;
+      de_rf = B_ln * B_de_rf + A_ln * A_de_rf 
+	+ sim.topology().nlam() * B_lnm * B_e_rf 
+	- sim.topology().nlam() * A_lnm * A_e_rf;
+      f_rf = B_ln * B_f_rf + A_ln * A_f_rf;
+     
+      // and add everything to the correct arrays 
+      sim.system().energies().crf_energy 
+	[sim.topology().atom_energy_group(i)]
+	[sim.topology().atom_energy_group(*it)] += e_rf;
+      sim.system().lambda_energies().crf_energy 
+	[sim.topology().atom_energy_group(i)]
+	[sim.topology().atom_energy_group(*it)] += de_rf;
+      force(i) += f_rf;
+      force(*it) -=f_rf;
+    }
+  }
+}
 
 /**
  * helper function to calculate the forces and energies from the
@@ -542,3 +549,4 @@ Perturbed_Nonbonded_Interaction<t_simulation, t_pairlist, t_innerloop>
   }
   
 }
+

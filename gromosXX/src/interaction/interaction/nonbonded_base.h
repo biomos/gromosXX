@@ -92,6 +92,12 @@ namespace interaction
 				 math::Vec & force, double &e_lj,
 				 double & e_crf, double &de_lj, 
 				 double & de_crf);
+    /**
+     * calculate the reaction field force and energy
+     * of a perturbed atom pair
+     */
+    void rf_soft_interaction(math::Vec const &r, double const q, double const l, 
+			     math::Vec & force, double & e_rf, double & de_rf);
     
   protected:
     /**

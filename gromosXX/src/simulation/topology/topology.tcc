@@ -289,6 +289,14 @@ inline std::set<int> & simulation::Topology::exclusion(size_t const i)
   assert(i < m_exclusion.size());
   return m_exclusion[i];
 }
+/**
+ * all exclusions
+ */
+inline std::vector<std::set<int> > & simulation::Topology::exclusion()
+{
+  return m_exclusion;
+}
+
 
 /**
  * all one four pairs for atom i.

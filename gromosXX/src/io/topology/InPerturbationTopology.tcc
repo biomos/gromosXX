@@ -260,12 +260,28 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
 		  << std::setw(10) << crf_soft
 		  << "\n";
 	
+	atom.exclusion() = topo.exclusion(seq);
+	topo.exclusion(seq).clear();
+	DEBUG(10, "\treplace the exclusions to perturbation");
+
+	std::vector<std::set<int> > & ex = topo.exclusion();
+	int seq2=0;
+	
+	for(std::vector<std::set<int> >::iterator eit=ex.begin(),
+	      eto=ex.end(); eit!=eto; ++eit, ++seq2){
+	  if(eit->count(seq)){
+	    atom.exclusion().insert(seq2);
+	    eit->erase(seq);
+	  }
+	}
+	DEBUG(10, "\tadapted perturbed exclusions");
+	
 	atom.one_four_pair() = topo.one_four_pair(seq);
 	topo.one_four_pair(seq).clear();
 	DEBUG(10, "\treplaced the 14 interactions");
 	
 	std::vector<std::set<int> > & ofp = topo.one_four_pair();
-	int seq2=0;
+	seq2=0;
 	
 	for(std::vector<std::set<int> >::iterator pit=ofp.begin(), 
 	      pito= ofp.end(); pit!=pito; ++pit, ++seq2){

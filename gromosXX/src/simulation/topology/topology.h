@@ -138,6 +138,11 @@ namespace simulation
      */
     std::set<int> & exclusion(size_t const i);
     /**
+     * exclusions
+     */
+    std::vector<std::set<int> > & exclusion();
+    
+    /**
      * 1,4 pairs of atom i.
      */
     std::set<int> & one_four_pair(size_t const i);
