@@ -141,6 +141,11 @@ namespace io {
      * read J-VAL block.
      */
     void read_JVALUE(simulation::Parameter &param);
+
+    /**
+     * read PSCALE block.
+     */
+    void read_PSCALE(simulation::Parameter &param);
     
   };
   

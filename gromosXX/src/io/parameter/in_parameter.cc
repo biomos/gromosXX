@@ -60,6 +60,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_POSREST(param);
   read_PERTURB(param);
   read_JVALUE(param);
+  read_PSCALE(param);
   
   DEBUG(7, "input read...");
 
@@ -1731,14 +1732,13 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param)
     else if (s1 == "instantaneous") param.jvalue.mode = simulation::restr_inst;
     else if (s1 == "averaged") param.jvalue.mode = simulation::restr_av;
     else if (s1 == "biquadratic") param.jvalue.mode = simulation::restr_biq;
-    else if (s1 == "scaled") param.jvalue.mode = simulation::restr_sc;
     else{
       std::istringstream css;
       css.str(s1);
       
       int i;
       css >> i;
-      if(css.fail()){
+      if(css.fail() || i < 0 || i > 3){
 	io::messages.add("bad value for MODE in J-VAL block:"+s1+"\n"
 			 "off, instantaneous, averaged, biquadratic, scaled (0-4)",
 			 "In_Parameter", io::message::error);
@@ -1746,6 +1746,9 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param)
 	return;
       }
       param.jvalue.mode = simulation::restr_enum(i);
+
+      DEBUG(10, "setting jvalue mode to " << param.jvalue.mode);
+
     }
     if (param.jvalue.tau < 0 ||
 	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
@@ -1756,3 +1759,58 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param)
     }
   }
 } // JVALUE
+
+/**
+ * read the PSCALE block.
+ */
+void io::In_Parameter::read_PSCALE(simulation::Parameter &param)
+{
+  DEBUG(8, "read PSCALE");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["PSCALE"];
+  if (buffer.size()){
+
+    block_read.insert("PSCALE");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+
+    std::string s1;
+    _lineStream >> s1;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in PSCALE block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
+    
+    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    
+    if (s1 == "jrest"){
+
+      param.pscale.jrest = true;
+
+      _lineStream >> param.pscale.KDIH >> param.pscale.KJ >> param.pscale.T;
+
+      if (_lineStream.fail())
+	io::messages.add("bad line in PSCALE block",
+			 "In_Parameter", io::message::error);
+      if (param.pscale.KDIH < 0.0)
+	io::messages.add("bad value for KDIH in PSCALE block (negative)",
+			 "In_Parameter", io::message::error);
+      if (param.pscale.KJ < 0.0)
+	io::messages.add("bad value for KJ in PSCALE block (negative)",
+			 "In_Parameter", io::message::error);
+      if (param.pscale.T < 0.0)
+	io::messages.add("bad value for T in PSCALE block (negative)",
+			 "In_Parameter", io::message::error);
+    }
+    else{
+      io::messages.add("bad value for periodic scaling mode", "In_Parameter", io::message::error);
+      return;
+    }
+  }
+} // PSCALE

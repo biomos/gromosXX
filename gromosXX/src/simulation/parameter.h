@@ -52,10 +52,6 @@ namespace simulation
      * biquadratic (time averaged & instantaneous) restraints
      */
     restr_biq = 3,
-    /**
-     * scaled biquadratic restraints
-     */
-    restr_sc = 4
   };
 
   /**
@@ -803,6 +799,43 @@ namespace simulation
       bool read_av;
     } /** jvalue-parameters */ jvalue;
     
+    /**
+     * @struct pscale_struct
+     * periodic scaling parameters.
+     */
+    struct pscale_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - jrest false
+       * - KDIH 1.0
+       * - KJ 1.0
+       * - T 1.0
+       */
+      pscale_struct() : jrest(false), KDIH(1.0), KJ(1.0), T(1.0)
+      {
+      }
+      
+      /**
+       * do J-Value restraints dependent periodic scaling?
+       */
+      bool jrest;
+      /**
+       * maximum scaling factor for the dihedral interaction force constant
+       */
+      double KDIH;
+      /**
+       * maximum scaling factor for the J-Value interaction force constant
+       */
+      double KJ;
+      /**
+       * periodicity of the consine scaling function.
+       */
+      double T;
+      
+    } /** pscale parameters */ pscale;
+
   };
   
 }
