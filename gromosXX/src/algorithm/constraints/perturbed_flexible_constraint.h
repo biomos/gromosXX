@@ -48,15 +48,37 @@ namespace algorithm
 	     simulation::Simulation & sim,
 	     bool quiet = false);
 
+    void calc_distance
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim
+     );
+
+    void solute
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     int & error
+     );
+
+    void _store_lengths
+    (
+     configuration::Configuration & conf
+     );
+
   protected:
   private:
+    
+    std::vector<double> m_perturbed_flex_len;
+
     template<math::boundary_enum B, math::virial_enum V>
-    int iteration
+    int _iteration
     (
      topology::Topology &topo,
      configuration::Configuration & conf,
      bool & convergence,
-     std::vector<double> & flex_len,
      std::vector<bool> &skip_now,
      std::vector<bool> &skip_next,
      double dt,
@@ -65,16 +87,15 @@ namespace algorithm
      );
 
     template<math::boundary_enum B, math::virial_enum V>
-    void calc_distance
+    void _calc_distance
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
-     simulation::Simulation const & sim,
-     std::vector<double> & flex_len
+     simulation::Simulation const & sim
      );
 
     template<math::boundary_enum B, math::virial_enum V>
-    void solute
+    void _solute
     (
      topology::Topology & topo,
      configuration::Configuration & conf,

@@ -602,14 +602,14 @@ bool io::In_Configuration::_read_flexv
   std::vector<double>::iterator flexv_it = flexv.begin();
 
   int i, j, c, pc;
-  double v;
+  double v, l;
   
   for(c=0; (it != to) && (constr_it != constr_to); ++it, ++constr_it, ++flexv_it, ++c){
 
     _lineStream.clear();
     _lineStream.str(*it);
 
-    _lineStream >> i >> j >> v;
+    _lineStream >> i >> j >> l >> v;
     
     --i;
     --j;
@@ -648,7 +648,7 @@ bool io::In_Configuration::_read_flexv
     --j;
     
     if(_lineStream.fail()){
-      io::messages.add("Failed to read FLEXV block",
+      io::messages.add("Failed to read (perturbed) FLEXV block",
 		       "In_Configuration",
 		       io::message::error);
       return false;

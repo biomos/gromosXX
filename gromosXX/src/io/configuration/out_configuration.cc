@@ -1207,19 +1207,51 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
 {
   DEBUG(10, "FLEXV");
   
-  std::vector<double>::const_iterator flexv_it = conf.special().flexible_constraint.flexible_vel.begin();
+  int k = 0;
+  
   std::vector<topology::two_body_term_struct>::const_iterator
     constr_it = topo.solute().distance_constraints().begin(),
     constr_to = topo.solute().distance_constraints().end();
   
   os << "FLEXV\n";
-  for( ; constr_it != constr_to; ++constr_it, ++flexv_it){
+  os << "#\tflexible constraints (" 
+     << topo.solute().distance_constraints().size()
+     << ")\n";
+
+  for( ; constr_it != constr_to; ++constr_it, ++k){
+    
+    assert(conf.special().flexible_constraint.flex_len.size() > k);
+    assert(conf.special().flexible_constraint.flexible_vel.size() > k);
     
     os << std::setw(15) << constr_it->i+1
        << std::setw(10) << constr_it->j+1
-       << std::setw(20) << *flexv_it
+       << std::setw(20) << conf.special().flexible_constraint.flex_len[k]
+       << std::setw(20) << conf.special().flexible_constraint.flexible_vel[k]
        << "\n";
   }
+
+  std::vector<topology::perturbed_two_body_term_struct>::const_iterator
+    pconstr_it = topo.perturbed_solute().distance_constraints().begin(),
+    pconstr_to = topo.perturbed_solute().distance_constraints().end();
+
+  os << "#\tperturbed flexible constraints (" 
+     << topo.perturbed_solute().distance_constraints().size()
+     << " of "
+     << conf.special().flexible_constraint.flex_len.size()
+     << ")\n";
+
+  for( ; pconstr_it != pconstr_to; ++pconstr_it, ++k){
+
+    assert(conf.special().flexible_constraint.flex_len.size() > k);
+    assert(conf.special().flexible_constraint.flexible_vel.size() > k);
+    
+    os << std::setw(15) << pconstr_it->i+1
+       << std::setw(10) << pconstr_it->j+1
+       << std::setw(20) << conf.special().flexible_constraint.flex_len[k]
+       << std::setw(20) << conf.special().flexible_constraint.flexible_vel[k]
+       << "\n";
+  }
+  
   os << "END\n";
 
 }

@@ -128,8 +128,8 @@ int algorithm::Perturbed_Shake
 	DEBUG(5, "r " << math::v2s(r));
 	
 	std::cout << "Perturbed SHAKE ERROR\n"
-		  << "\tatom i    : " << it->i << "\n"
-		  << "\tatom j    : " << it->j << "\n"
+		  << "\tatom i    : " << it->i + 1 << "\n"
+		  << "\tatom j    : " << it->j + 1 << "\n"
 		  << "\tfirst     : " << first << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
@@ -408,7 +408,8 @@ int algorithm::Perturbed_Shake
   }
 
   if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE" << std::endl;
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
+	      << "at step " << sim.steps() << std::endl;
     // save old positions to final configuration... (even before free-flight!)
     conf.current().pos = conf.old().pos;
     return E_SHAKE_FAILURE_SOLUTE;
@@ -427,7 +428,8 @@ int algorithm::Perturbed_Shake
   }
   
   if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT" << std::endl;
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
+	      << "at step " << sim.steps() << std::endl;
     // save old positions to final configuration... (even before free-flight!)
     conf.current().pos = conf.old().pos;
     return E_SHAKE_FAILURE_SOLVENT;

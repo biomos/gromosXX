@@ -72,13 +72,21 @@ int algorithm::Perturbed_Flexible_Constraint
     DEBUG(8, "\twe need to flexible shake perturbed SOLUTE");
     do_vel = true;
 
-    SPLIT_VIRIAL_BOUNDARY(solute,
-			  topo, conf, sim, error);
+    calc_distance(topo, conf, sim);
+
+    solute(topo, conf, sim, error);
+    
+    _store_lengths(conf);
+    
+    // SPLIT_VIRIAL_BOUNDARY(solute,
+    // topo, conf, sim, error);
+
   }
   
   if (error){
     std::cout << "Perturbed Flexible Constraints: "
-	      << "exiting with error condition: E_SHAKE_FAILURE_SOLUTE"
+	      << "exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
+	      << "at step " << sim.steps()
 	      << std::endl;
     // save old positions to final configuration... (even before free-flight!)
     conf.current().pos = conf.old().pos;
@@ -99,12 +107,11 @@ int algorithm::Perturbed_Flexible_Constraint
  * do one iteration
  */      
 template<math::boundary_enum B, math::virial_enum V>
-int algorithm::Perturbed_Flexible_Constraint::iteration
+int algorithm::Perturbed_Flexible_Constraint::_iteration
 (
  topology::Topology &topo,
  configuration::Configuration & conf,
  bool & convergence,
- std::vector<double> & flex_len,
  std::vector<bool> &skip_now,
  std::vector<bool> &skip_next,
  double dt,
@@ -144,9 +151,9 @@ int algorithm::Perturbed_Flexible_Constraint::iteration
 	
     DEBUG(10, "\tdist2 = " << dist2);
     DEBUG(10, "\tconstraint " << k << ":");
-    DEBUG(10, "\tflex len = " << flex_len[k]);
+    DEBUG(10, "\tflex len = " << m_perturbed_flex_len[k]);
     
-    double constr_length2 = flex_len[k] * flex_len[k];
+    double constr_length2 = m_perturbed_flex_len[k] * m_perturbed_flex_len[k];
     double diff = constr_length2 - dist2;
 
     DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
@@ -171,8 +178,8 @@ int algorithm::Perturbed_Flexible_Constraint::iteration
 	DEBUG(5, "r " << math::v2s(r));
 	
 	std::cout << "FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
-		  << "\tatom i    : " << it->i << "\n"
-		  << "\tatom j    : " << it->j << "\n"
+		  << "\tatom i    : " << it->i + 1 << "\n"
+		  << "\tatom j    : " << it->j + 1 << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
 		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
@@ -255,9 +262,9 @@ int algorithm::Perturbed_Flexible_Constraint::iteration
 
       conf.old().perturbed_energy_derivatives.constraints_energy
 	[topo.atom_energy_group()[it->i]] +=
-	lambda / dt2  * flex_len[k] *
+	lambda / dt2  * m_perturbed_flex_len[k] *
 	(m_parameter[it->B_type].r0 - m_parameter[it->A_type].r0 +
-	 (flex_len[k] -  mr0) * 
+	 (m_perturbed_flex_len[k] -  mr0) * 
 	 ((dm1 + dm2) / (m1 * m2 * mu) -
 	  dm2 / m2 - dm1 / m1 - 
 	  (m_parameter[it->B_type].K - m_parameter[it->A_type].K) / mK
@@ -281,18 +288,31 @@ int algorithm::Perturbed_Flexible_Constraint::iteration
   return 0;
 }    
 
-template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Perturbed_Flexible_Constraint::calc_distance
 (
  topology::Topology const &topo,
  configuration::Configuration & conf,
- simulation::Simulation const & sim,
- std::vector<double> & flex_len
+ simulation::Simulation const & sim
+ )
+{
+
+  Flexible_Constraint::calc_distance(topo, conf, sim);
+
+  SPLIT_VIRIAL_BOUNDARY(_calc_distance,
+			topo, conf, sim);
+}
+
+template<math::boundary_enum B, math::virial_enum V>
+void algorithm::Perturbed_Flexible_Constraint::_calc_distance
+(
+ topology::Topology const &topo,
+ configuration::Configuration & conf,
+ simulation::Simulation const & sim
  )
 {
   DEBUG(8, "\tcalculate perturbed flexible distance");
   
-  flex_len.clear();
+  m_perturbed_flex_len.clear();
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -366,10 +386,11 @@ void algorithm::Perturbed_Flexible_Constraint::calc_distance
     const double new_len = force_on_constraint / K + r0;
     
     // store for shake
-    flex_len.push_back(new_len);
+    m_perturbed_flex_len.push_back(new_len);
 
     // update the velocity array
-    conf.special().flexible_constraint.flexible_vel[k] = (new_len - sqrt(ref_dist2)) / sim.time_step_size();
+    conf.special().flexible_constraint.flexible_vel[k] = 
+      (new_len - sqrt(ref_dist2)) / sim.time_step_size();
 
     // now we have to store the kinetic energy of the constraint
     // length change in the correct temperature bath...
@@ -398,8 +419,20 @@ void algorithm::Perturbed_Flexible_Constraint::calc_distance
 /**
  * flexible shake perturbed solute
  */
-template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Perturbed_Flexible_Constraint::solute
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ int & error
+ )
+{
+  SPLIT_VIRIAL_BOUNDARY(_solute,
+			topo, conf, sim, error);
+}
+
+template<math::boundary_enum B, math::virial_enum V>
+void algorithm::Perturbed_Flexible_Constraint::_solute
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -415,10 +448,6 @@ void algorithm::Perturbed_Flexible_Constraint::solute
 
   math::Periodicity<B> periodicity(conf.current().box);
   
-  std::vector<double> flex_len, pert_flex_len;
-  Flexible_Constraint::calc_distance<B, V>(topo, conf, sim, flex_len);
-  calc_distance<B, V>(topo, conf, sim, pert_flex_len);
-
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
 
@@ -434,8 +463,8 @@ void algorithm::Perturbed_Flexible_Constraint::solute
 
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    if(iteration<B, V>
-       (topo, conf, pert_convergence, pert_flex_len, skip_now, skip_next,
+    if(_iteration<B, V>
+       (topo, conf, pert_convergence, skip_now, skip_next,
 	sim.time_step_size(), periodicity, true))
       {
 	io::messages.add("Perturbed Flexible SHAKE error. vectors orthogonal",
@@ -446,8 +475,8 @@ void algorithm::Perturbed_Flexible_Constraint::solute
 	return;
       }
 
-    if(Flexible_Constraint::iteration<B, V>
-       (topo, conf, convergence, flex_len, skip_now, skip_next,
+    if(Flexible_Constraint::_iteration<B, V>
+       (topo, conf, convergence, skip_now, skip_next,
 	sim.time_step_size(), periodicity, true))
       {
 	io::messages.add("Flexible SHAKE error. vectors orthogonal",
@@ -560,3 +589,22 @@ int algorithm::Perturbed_Flexible_Constraint
   return 0;
 }
 
+void algorithm::Perturbed_Flexible_Constraint::_store_lengths
+(
+ configuration::Configuration & conf
+ )
+{
+
+  if (conf.special().flexible_constraint.flex_len.size() < 
+      m_perturbed_flex_len.size() + m_flex_len.size())
+    conf.special().flexible_constraint.flex_len.resize(m_flex_len.size() + 
+						       m_perturbed_flex_len.size());
+
+  int k=0;
+  for( ; k<m_flex_len.size(); ++k)
+    conf.special().flexible_constraint.flex_len[k] = m_flex_len[k];
+
+  for(int kk=0; kk<m_perturbed_flex_len.size(); ++k, ++kk)
+    conf.special().flexible_constraint.flex_len[k] = m_perturbed_flex_len[kk];
+  
+}

@@ -143,40 +143,7 @@ namespace io {
       _print_timestep(sim, os);
     }
 
-  protected:
-    std::ofstream m_pos_traj;
-    std::ofstream m_final_conf;
-    std::ofstream m_vel_traj;
-    std::ofstream m_force_traj;
-    std::ofstream m_energy_traj;
-    std::ofstream m_free_energy_traj;
-    std::ofstream m_blockaveraged_energy;
-    std::ofstream m_blockaveraged_free_energy;
-    std::ofstream m_replica_data;
-    
-    std::ostream & m_output;
-    
-    bool m_final;
-    bool m_replica;
-    
-    int m_every_pos;
-    int m_every_vel;
-    int m_every_force;
-    int m_every_energy;
-    int m_every_free_energy;
-    int m_every_blockaverage;
-
-    bool m_write_blockaverage_energy;
-    bool m_write_blockaverage_free_energy;
-
-    int m_precision;
-    int m_force_precision;
-    
-    int m_width;
-    int m_force_width;
-
-    std::string m_title;
-
+    // make them available for scripting!
     void _print_title(std::string title, std::string name, 
 		      std::ostream &os);
 
@@ -249,6 +216,41 @@ namespace io {
     void _print_replica_data(configuration::Configuration const & conf,
 			     simulation::Simulation const & sim,
 			     std::ostream & os);
+
+  protected:
+    std::ofstream m_pos_traj;
+    std::ofstream m_final_conf;
+    std::ofstream m_vel_traj;
+    std::ofstream m_force_traj;
+    std::ofstream m_energy_traj;
+    std::ofstream m_free_energy_traj;
+    std::ofstream m_blockaveraged_energy;
+    std::ofstream m_blockaveraged_free_energy;
+    std::ofstream m_replica_data;
+    
+    std::ostream & m_output;
+    
+    bool m_final;
+    bool m_replica;
+    
+    int m_every_pos;
+    int m_every_vel;
+    int m_every_force;
+    int m_every_energy;
+    int m_every_free_energy;
+    int m_every_blockaverage;
+
+    bool m_write_blockaverage_energy;
+    bool m_write_blockaverage_free_energy;
+
+    int m_precision;
+    int m_force_precision;
+    
+    int m_width;
+    int m_force_width;
+
+    std::string m_title;
+
 
   };
   

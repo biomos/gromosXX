@@ -43,6 +43,9 @@ static int _calculate_angle_interactions(topology::Topology & topo,
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, fi, fj, fk;
 
+  DEBUG(10, "pos   size: " << pos.size());
+  DEBUG(10, "force size: " << force.size());
+  
   double energy;
 
   math::Periodicity<B> periodicity(conf.current().box);

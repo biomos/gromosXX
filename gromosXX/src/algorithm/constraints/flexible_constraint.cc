@@ -36,7 +36,8 @@ algorithm::Flexible_Constraint
 		      interaction::Forcefield * ff)
   : Algorithm("FlexibleShake"),
     m_tolerance(tolerance),
-    m_max_iterations(max_iterations)
+    m_max_iterations(max_iterations),
+    m_flex_len()
 {
 
   if (ff){
@@ -91,12 +92,13 @@ int algorithm::Flexible_Constraint
     DEBUG(8, "\twe need to flexible shake SOLUTE");
     do_vel = true;
 
-    SPLIT_VIRIAL_BOUNDARY(solute,
-			  topo, conf, sim, m_force, error);
+    calc_distance(topo, conf, sim);
+    solute(topo, conf, sim, error);
   }
   
   if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE" << std::endl;
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
+	      << "at step " << sim.steps() << std::endl;
     // save old positions to final configuration... (even before free-flight!)
     conf.current().pos = conf.old().pos;
     return E_SHAKE_FAILURE_SOLUTE;
@@ -111,12 +113,11 @@ int algorithm::Flexible_Constraint
  * do one iteration
  */      
 template<math::boundary_enum B, math::virial_enum V>
-int algorithm::Flexible_Constraint::iteration
+int algorithm::Flexible_Constraint::_iteration
 (
  topology::Topology const &topo,
  configuration::Configuration & conf,
  bool & convergence,
- std::vector<double> & flex_len,
  std::vector<bool> & skip_now,
  std::vector<bool> & skip_next,
  double dt,
@@ -152,7 +153,7 @@ int algorithm::Flexible_Constraint::iteration
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = math::abs2(r);
 	
-    double constr_length2 = flex_len[k] * flex_len[k];
+    double constr_length2 = m_flex_len[k] * m_flex_len[k];
     double diff = constr_length2 - dist2;
 
     DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
@@ -177,8 +178,8 @@ int algorithm::Flexible_Constraint::iteration
 	DEBUG(5, "r " << math::v2s(r));
 
 	std::cout << "FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
-		  << "\tatom i    : " << it->i << "\n"
-		  << "\tatom j    : " << it->j << "\n"
+		  << "\tatom i    : " << it->i + 1 << "\n"
+		  << "\tatom j    : " << it->j + 1 << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
 		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
@@ -252,13 +253,11 @@ int algorithm::Flexible_Constraint::iteration
 //================================================================================
 
 template<math::boundary_enum B, math::virial_enum V>
-int algorithm::Flexible_Constraint::exact_iteration
+int algorithm::Flexible_Constraint::_exact_iteration
 (
  topology::Topology const &topo,
  configuration::Configuration & conf,
  bool & convergence,
- std::vector<double> & flex_len,
- std::vector<std::vector<math::Vec> > & force,
  double dt,
  math::Periodicity<B> const & periodicity
  )
@@ -291,7 +290,7 @@ int algorithm::Flexible_Constraint::exact_iteration
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = math::abs2(r);
     
-    double constr_length2 = flex_len[k] * flex_len[k];
+    double constr_length2 = m_flex_len[k] * m_flex_len[k];
     double diff = constr_length2 - dist2;
 
     DEBUG(12, "constr: " << constr_length2 << " dist2: " << dist2);
@@ -302,8 +301,8 @@ int algorithm::Flexible_Constraint::exact_iteration
       
       // the undetermined constraint forces
       // (as function of the reference position...)
-      const math::Vec &f_i = force[k][it->i];
-      const math::Vec &f_j = force[k][it->j];
+      const math::Vec &f_i = m_force[k][it->i];
+      const math::Vec &f_j = m_force[k][it->j];
       
       math::Vec ud_f = 
 	1.0 / topo.mass()(it->i) * f_i -
@@ -360,7 +359,7 @@ int algorithm::Flexible_Constraint::exact_iteration
       
       // update positions
       for(unsigned int a=0; a<topo.num_atoms(); ++a){
-	conf.current().pos(a) -= 2 * dt2 / topo.mass()(a) * lambda * force[k][a];
+	conf.current().pos(a) -= 2 * dt2 / topo.mass()(a) * lambda * m_force[k][a];
       }
 	  
       convergence = false;
@@ -378,20 +377,30 @@ int algorithm::Flexible_Constraint::exact_iteration
 // flexible constraint distance
 //================================================================================
 
-template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Flexible_Constraint::calc_distance
 (
  topology::Topology const &topo,
  configuration::Configuration & conf,
- simulation::Simulation const & sim,
- std::vector<double> & flex_len
+ simulation::Simulation const & sim
+ )
+{
+  SPLIT_VIRIAL_BOUNDARY(_calc_distance,
+			topo, conf, sim);
+}
+
+template<math::boundary_enum B, math::virial_enum V>
+void algorithm::Flexible_Constraint::_calc_distance
+(
+ topology::Topology const &topo,
+ configuration::Configuration & conf,
+ simulation::Simulation const & sim
  )
 {
 
   DEBUG(7, "FLEXIBLE CONSTRAINTS::calc_distance");
   
-  flex_len.clear();
-
+  m_flex_len.clear();
+  
   math::Periodicity<B> periodicity(conf.current().box);
 
   //loop over all constraints
@@ -499,7 +508,7 @@ void algorithm::Flexible_Constraint::calc_distance
       m_parameter[it->type].r0;
     
     // store for shake
-    flex_len.push_back(new_len);
+    m_flex_len.push_back(new_len);
 
     // update the velocity array
     conf.special().flexible_constraint.flexible_vel[k] = (new_len - sqrt(ref_dist2)) / 
@@ -532,19 +541,17 @@ void algorithm::Flexible_Constraint::calc_distance
 //================================================================================
 
 template<math::boundary_enum B, math::virial_enum V>
-void algorithm::Flexible_Constraint::calc_undetermined_forces
+void algorithm::Flexible_Constraint::_calc_undetermined_forces
 (
  topology::Topology &topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim,
- std::vector<double> & flex_len, 
- std::vector<std::vector<math::Vec> > & force
+ simulation::Simulation & sim
  )
 {
   DEBUG(7, "FLEXIBLE CONSTRAINTS: _calc_undetermined_forces");
   
   // resize to number of constraints
-  force.resize(topo.solute().distance_constraints().size());
+  m_force.resize(topo.solute().distance_constraints().size());
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -560,7 +567,7 @@ void algorithm::Flexible_Constraint::calc_undetermined_forces
 
     DEBUG(8, "\tconstraint " << k);
     
-    force[k].assign(topo.num_atoms(), math::Vec(0.0));
+    m_force[k].assign(topo.num_atoms(), math::Vec(0.0));
 
     for(unsigned int a=0; a<topo.num_atoms(); ++a){
 
@@ -595,8 +602,8 @@ void algorithm::Flexible_Constraint::calc_undetermined_forces
       r_nc /= dist;
       
       // flexible constraint length
-      assert(flex_len.size() > k);
-      const double dk = flex_len[k];
+      assert(m_flex_len.size() > k);
+      const double dk = m_flex_len[k];
       // reduced mass
       const double mu = 1.0 / (1.0 / topo.mass()(it->i) + 1.0 / topo.mass()(it->j));
 
@@ -650,10 +657,10 @@ void algorithm::Flexible_Constraint::calc_undetermined_forces
 	f1 += (r_nc - r / r_dist) * dk * mu / (m_parameter[it->type].K * dt2);
 	f2 -= (r_nc - r / r_dist) * dk * mu / (m_parameter[it->type].K * dt2);
 
-	assert(force.size() > k && force[k].size() > it->i && force[k].size() > it->j);
+	assert(m_force.size() > k && m_force[k].size() > it->i && m_force[k].size() > it->j);
 
-	force[k][it->i] = f1;
-	force[k][it->j] = f2;
+	m_force[k][it->i] = f1;
+	m_force[k][it->j] = f2;
 
 	DEBUG(8, "\t\tr =  " << math::v2s(r));
 	DEBUG(8, "\t\tf1 = " << math::v2s(f1));
@@ -685,13 +692,11 @@ void algorithm::Flexible_Constraint::calc_undetermined_forces
 	  }
 	}
 
-	assert(force.size() > k && force[k].size() > a);
+	assert(m_force.size() > k && m_force[k].size() > a);
 
 	// r_nc is normalized
-	force[k][a] = math::product(h1, r_nc)  * (-dk) * mu / m_parameter[it->type].K;
-	// force[k][a] = 0.0;
-
-	DEBUG(12, "f(" << a << ") = " << math::v2s(force[k][a]));
+	m_force[k][a] = math::product(h1, r_nc)  * (-dk) * mu / m_parameter[it->type].K;
+	DEBUG(12, "f(" << a << ") = " << math::v2s(m_force[k][a]));
 
       }
     }
@@ -701,13 +706,24 @@ void algorithm::Flexible_Constraint::calc_undetermined_forces
 /**
  * shake solute
  */
-template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Flexible_Constraint::solute
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- std::vector<std::vector<math::Vec> > & force,
+ int & error
+ )
+{
+  SPLIT_VIRIAL_BOUNDARY(_solute,
+			topo, conf, sim, error);
+}
+
+template<math::boundary_enum B, math::virial_enum V>
+void algorithm::Flexible_Constraint::_solute
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
  int & error
  )
 {
@@ -720,20 +736,13 @@ void algorithm::Flexible_Constraint::solute
 
   math::Periodicity<B> periodicity(conf.current().box);
   
-  std::vector<double> flex_len;
-  calc_distance<B, V>(topo, conf, sim, flex_len);
   // exact solution
-
   if (sim.param().constraint.solute.flexshake_mode == 2 ||
       sim.param().constraint.solute.flexshake_mode == 3){
     
-    calc_undetermined_forces<B, V>(topo, conf, sim, 
-				   flex_len, force);
+    _calc_undetermined_forces<B, V>(topo, conf, sim);
   }
   
-  // conf.constraint_force() = 0.0;
-  // m_lambda = 0.0;
-
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
   int num_iterations = 0;
@@ -751,8 +760,8 @@ void algorithm::Flexible_Constraint::solute
     if (sim.param().constraint.solute.flexshake_mode == 0 ||
 	sim.param().constraint.solute.flexshake_mode == 1){
       // standard algorithm
-      if(iteration<B, V>
-	 (topo, conf, convergence, flex_len, skip_now, skip_next,
+      if(_iteration<B, V>
+	 (topo, conf, convergence, skip_now, skip_next,
 	  sim.time_step_size(),
 	  periodicity, true)
 	 ){
@@ -766,9 +775,8 @@ void algorithm::Flexible_Constraint::solute
     }
     else{
       // exact algorithm
-      if(exact_iteration<B, V>
-	 (topo, conf, convergence, flex_len, force,
-	  sim.time_step_size(), periodicity)
+      if(_exact_iteration<B, V>
+	 (topo, conf, convergence, sim.time_step_size(), periodicity)
 	 ){
 	io::messages.add("Exact Flexible SHAKE error. vectors orthogonal",
 			 "Flexible_Constraint::solute",
@@ -800,7 +808,10 @@ void algorithm::Flexible_Constraint::solute
       sim.time_step_size();
   
   // calculate the approximate work done
-  approx_work<B,V>(topo, conf, flex_len, sim.time_step_size());
+  _approx_work<B,V>(topo, conf, sim.time_step_size());
+
+  // store the constraint lengths
+  _store_lengths(conf);
 
   m_timing += util::now() - start;
 
@@ -913,17 +924,16 @@ int algorithm::Flexible_Constraint
  * approximate work wasted
  */      
 template<math::boundary_enum B, math::virial_enum V>
-int algorithm::Flexible_Constraint::approx_work
+int algorithm::Flexible_Constraint::_approx_work
 (
  topology::Topology const &topo,
  configuration::Configuration & conf,
- std::vector<double> const & flex_len,
  double dt
  )
 {
 
   if (!conf.special().flexible_constraint.flex_len.size())
-    conf.special().flexible_constraint.flex_len = flex_len;
+    conf.special().flexible_constraint.flex_len = m_flex_len;
 
   double w = 0;
   double aw = 0;
@@ -970,12 +980,12 @@ int algorithm::Flexible_Constraint::approx_work
 
     anw += 
       math::dot(dv, ref_r) * mu / dt *
-      (flex_len[k] - conf.special().flexible_constraint.flex_len[k]) /
+      (m_flex_len[k] - conf.special().flexible_constraint.flex_len[k]) /
       sqrt(math::abs2(ref_r));
 
     anaw += 
       fabs(math::dot(dv, ref_r) * mu / dt *
-      (flex_len[k] - conf.special().flexible_constraint.flex_len[k]) /
+      (m_flex_len[k] - conf.special().flexible_constraint.flex_len[k]) /
       sqrt(math::abs2(ref_r)));
 
   } // constraints
@@ -989,8 +999,23 @@ int algorithm::Flexible_Constraint::approx_work
   std::cout << "FLEXIBLECONSTRAINT_ANALYTABSWORK" << std::setw(30) << anaw << "\n";
 
   // store new lengths...
-  conf.special().flexible_constraint.flex_len = flex_len;
+  // conf.special().flexible_constraint.flex_len = m_flex_len;
 
   return 0;
 
 }    
+
+void algorithm::Flexible_Constraint::_store_lengths
+(
+ configuration::Configuration & conf
+ )
+{
+
+  if (conf.special().flexible_constraint.flex_len.size() < m_flex_len.size())
+    conf.special().flexible_constraint.flex_len.resize(m_flex_len.size());
+  
+  for(int k=0; k<m_flex_len.size(); ++k)
+    conf.special().flexible_constraint.flex_len[k] = m_flex_len[k];
+  
+}
+

@@ -41,7 +41,7 @@ namespace algorithm
 		     bool quiet = false);
 
     /**
-     * apply shake.
+     * apply flexible shake.
      */
     virtual int apply(topology::Topology & topo,
 		      configuration::Configuration & conf,
@@ -76,6 +76,26 @@ namespace algorithm
       return m_parameter;
     }
 
+    void calc_distance
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim
+     );
+
+    void solute
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     int & error
+     );
+
+    void _store_lengths
+    (
+     configuration::Configuration & conf
+     );
+
   protected:
     /**
      * shake tolerance
@@ -91,6 +111,11 @@ namespace algorithm
     std::vector<interaction::bond_type_struct> m_parameter;
 
     /**
+     * flexible constraint lengths
+     */
+    std::vector<double> m_flex_len;
+    
+    /**
      * the nonbonded's for exact algorithm...
      * (only implemented for diatomic molecules...
      *  no bonded terms!)
@@ -103,12 +128,11 @@ namespace algorithm
     std::vector<std::vector<math::Vec> > m_force;
 
     template<math::boundary_enum B, math::virial_enum V>
-    int iteration
+    int _iteration
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
      bool & convergence,
-     std::vector<double> & flex_len,
      std::vector<bool> &skip_now,
      std::vector<bool> &skip_next,
      double dt,
@@ -117,52 +141,45 @@ namespace algorithm
      );
 
     template<math::boundary_enum B, math::virial_enum V>
-    int exact_iteration
+    int _exact_iteration
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
      bool & convergence,
-     std::vector<double> & flex_len,
-     std::vector<std::vector<math::Vec> > & force,
      double dt,
      math::Periodicity<B> const & periodicity
      );
 
     template<math::boundary_enum B, math::virial_enum V>
-    void calc_distance
+    void _calc_distance
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
-     simulation::Simulation const & sim,
-     std::vector<double> & flex_len
+     simulation::Simulation const & sim
      );
 
     template<math::boundary_enum B, math::virial_enum V>
-    void calc_undetermined_forces
+    void _calc_undetermined_forces
     (
      topology::Topology &topo,
      configuration::Configuration & conf,
-     simulation::Simulation & sim,
-     std::vector<double> & flex_len, 
-     std::vector<std::vector<math::Vec> > & force
+     simulation::Simulation & sim
      );
 
     template<math::boundary_enum B, math::virial_enum V>
-    void solute
+    void _solute
     (
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     std::vector<std::vector<math::Vec> > & force,
      int & error
      );
 
     template<math::boundary_enum B, math::virial_enum V>
-    int approx_work
+    int _approx_work
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
-     std::vector<double> const & flex_len,
      double dt
      );
 

@@ -379,7 +379,8 @@ int algorithm::Shake::apply(topology::Topology & topo,
   }
   
   if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE" << std::endl;
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
+	      << "at step " << sim.steps() << std::endl;
     // save old positions to final configuration... (even before free-flight!)
     conf.current().pos = conf.old().pos;
     return E_SHAKE_FAILURE_SOLUTE;
@@ -397,7 +398,8 @@ int algorithm::Shake::apply(topology::Topology & topo,
   }
   
   if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT" << std::endl;
+    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
+	      << "at step " << sim.steps() << std::endl;
     // save old positions to final configuration... (even before free-flight!)
     conf.current().pos = conf.old().pos;
     return E_SHAKE_FAILURE_SOLVENT;
