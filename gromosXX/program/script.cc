@@ -3,7 +3,7 @@
  * example for a simple md script
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -63,14 +63,14 @@ int main(int argc, char *argv[]){
     std::cout <<"perturb an atom" << std::endl;
 
     topology::Perturbed_Atom atom(0, 
-				  27, 39, 0,
-				  27, 39, 0,
-				  0.1, 0.005);
+				  10, 12, 0,
+				  10, 12, 0,
+				  1.51, 0.005);
     
     topo.perturbed_solute().atoms()[0] = atom;
     topo.is_perturbed()[0] = true;
 
-    topo.lambda(0);
+    topo.lambda(0.5);
     topo.lambda_exp(1);
     
     conf.current().box(0) = math::Vec(5, 0, 0);
@@ -104,17 +104,19 @@ int main(int argc, char *argv[]){
     
     io::messages.display();
     
-    for(double i=0; i<1.01; i+=0.01){
+    for(double i=0.001; i<2.001; i+=0.001){
+
+      conf.current().pos(1)(0) = i;
 
       conf.current().energies.zero();
       conf.current().force = 0.0;
       
-      topo.lambda(i);
+      // topo.lambda(i);
 
       ff.apply(topo, conf, sim);
       
       conf.current().energies.calculate_totals();
-      std::cout << "lambda: " 
+      std::cout << "r: " 
 		<< i
 		<< "\tetot: "
 		<< conf.current().energies.total << "\n";
