@@ -18,6 +18,8 @@ include_HEADERS = 		interaction.h \
                                 interaction/improper_dihedral_interaction.tcc \
 				interaction/dihedral_interaction.h \
 				interaction/dihedral_interaction.tcc \
+				interaction/perturbed_quartic_bond_interaction.h \
+				interaction/perturbed_quartic_bond_interaction.tcc \
 				pairlist/simple_pairlist.h \
 				pairlist/simple_pairlist.tcc \
 				pairlist/twin_range_pairlist.h \
