@@ -586,7 +586,7 @@ inline void io::OutTrajectory<t_simulation>
   int index=0;
   
   for(int i=0; i<numenergygroups; i++){
-    for(int j=0; j<numenergygroups; j++, index++){
+    for(int j=i; j<numenergygroups; j++, index++){
       enerlj[index] = e.lj_energy[i][j];
       enercl[index] = e.crf_energy[i][j];
     }

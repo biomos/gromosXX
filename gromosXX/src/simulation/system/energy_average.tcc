@@ -68,7 +68,7 @@ simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
   m_square_average.potential_total += dt * e.potential_total * e.potential_total;
   // physical interaction totals
   m_average.bond_total += dt * e.bond_total;
-  m_square_average.bond_total = dt * e.bond_total * e.bond_total;
+  m_square_average.bond_total += dt * e.bond_total * e.bond_total;
   
   m_average.angle_total += dt * e.angle_total;
   m_square_average.angle_total += dt * e.angle_total * e.angle_total;
@@ -132,7 +132,7 @@ simulation::Energy_Average::update(simulation::Energy const &e, double const dt)
   // the energy groups
   for(size_t i=0; i < e.bond_energy.size(); ++i){
     m_average.bond_energy[i] += dt * e.bond_energy[i];
-    m_square_average.bond_energy[i] = dt * e.bond_energy[i] * e.bond_energy[i];
+    m_square_average.bond_energy[i] += dt * e.bond_energy[i] * e.bond_energy[i];
   
     m_average.angle_energy[i] += dt * e.angle_energy[i];
     m_square_average.angle_energy[i] += dt * e.angle_energy[i] * e.angle_energy[i];
