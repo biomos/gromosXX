@@ -119,7 +119,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream.str(*it);
 	_lineStream >> i >> j >> t_A >> t_B;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
+	if (_lineStream.fail()){
 	  io::messages.add("Bad line in PERTBOND03 block.",
 			   "In_Perturbation", io::message::error);
 	}
@@ -241,7 +241,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream.str(*it);
 	_lineStream >> i >> j >> t_A >> t_B;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
+	if (_lineStream.fail()){
 	  io::messages.add("Bad line in PERTCONSTRAINT03 block",
 			   "In_Topology", io::message::error);
 	}
@@ -320,7 +320,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream.str(*it);
 	_lineStream >> i >> j >> k >> t_A >> t_B;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
+	if (_lineStream.fail()){
 	  io::messages.add("Bad line in PERTBANGLE03 block.",
 			   "In_Perturbation", io::message::error);
 	}
@@ -396,7 +396,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream.str(*it);
 	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
+	if (_lineStream.fail()){
 	  io::messages.add("Bad line in PERTIMPDIHEDRAL03 block.",
 			   "In_Perturbation", io::message::error);
 	}
@@ -474,7 +474,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream.str(*it);
 	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
+	if (_lineStream.fail()){
 	  io::messages.add("Bad line in PERTDIHEDRAL03 block.",
 			   "In_Perturbation", io::message::error);	  
 	}
@@ -556,7 +556,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream.str(*it);
 	_lineStream >> i >> j >> A >> B;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
+	if (_lineStream.fail()){
 	  io::messages.add("Bad line in PERTATOMPAIR03 block.",
 			   "In_Perturbation", io::message::error);
 	}
@@ -657,7 +657,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 		    >> b_iac >> b_mass >> b_charge
 		    >> lj_soft >> crf_soft;
 	
-	if (_lineStream.fail() || ! _lineStream.eof()){
+	if (_lineStream.fail()){
 	  io::messages.add("Bad line in PERTATOM03 block.",
 			   "In_Perturbation", io::message::error);
 	}
@@ -788,7 +788,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  _lineStream.str(*it);
 	  _lineStream >> i >> j >> A >> B;
 	  
-	  if (_lineStream.fail() || ! _lineStream.eof()){
+	  if (_lineStream.fail()){
 	    io::messages.add("Bad line in SCALEDINTERACTIONS block.",
 			     "In_Perturbation", io::message::error);
 	  }
@@ -874,7 +874,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  _lineStream.str(*it);
 	  _lineStream >> i >> j >> a;
 	  
-	  if (_lineStream.fail() || ! _lineStream.eof()){
+	  if (_lineStream.fail()){
 	    io::messages.add("Bad line in LAMBDADEP block.",
 			     "In_Perturbation", io::message::error);
 	  }
