@@ -1,3 +1,113 @@
+2004-07-27 16:42  markus
+
+	* src/: interaction/special/pscale.cc,
+	  interaction/special/pscale.h, io/parameter/in_parameter.cc,
+	  io/parameter/in_parameter.h, simulation/parameter.h: periodic
+	  scaling (preparation)
+
+2004-07-27 16:42  markus
+
+	* src/interaction/nonbonded/interaction/nonbonded_set.cc: format
+
+2004-07-27 16:41  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_innerloop.h,
+	  nonbonded_outerloop.h, nonbonded_set.h: private inheritance
+
+2004-07-27 16:40  markus
+
+	* src/: configuration/configuration.h, interaction/Makefile.am,
+	  interaction/interaction.h, interaction/interaction_types.h,
+	  interaction/bonded/dihedral_interaction.cc,
+	  interaction/forcefield/forcefield.cc,
+	  interaction/forcefield/forcefield.h,
+	  interaction/special/create_special.cc,
+	  interaction/special/jvalue_restraint_interaction.cc,
+	  interaction/special/jvalue_restraint_interaction.h,
+	  io/print_block.cc, io/read_special.cc,
+	  io/configuration/in_configuration.cc,
+	  io/configuration/out_configuration.cc,
+	  io/configuration/out_configuration.h, io/topology/in_jvalue.cc,
+	  topology/core/body_term.h: jvalue restraints
+
+2004-07-27 16:39  markus
+
+	* program/md.cc, src/algorithm/algorithm.h,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/algorithm/algorithm_sequence.cc,
+	  src/algorithm/algorithm/algorithm_sequence.h,
+	  src/algorithm/constraints/create_constraints.cc: initialisation
+
+2004-07-26 07:25  markus
+
+	* src/: configuration/configuration.h, configuration/energy.cc,
+	  configuration/energy.h, interaction/Makefile.am,
+	  interaction/special/create_special.cc,
+	  interaction/special/jvalue_restraint_interaction.cc,
+	  interaction/special/jvalue_restraint_interaction.h,
+	  io/Makefile.am, io/configuration/in_configuration.cc,
+	  io/configuration/in_configuration.h,
+	  io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  io/topology/in_jvalue.cc, io/topology/in_jvalue.h,
+	  simulation/parameter.h, topology/topology.h,
+	  topology/core/body_term.h: jvalue restraints preparation
+
+2004-07-26 07:23  markus
+
+	* configure.in: gcc 3.4 changes
+
+2004-06-27 10:26  markus
+
+	* src/algorithm/constraints/: flexible_constraint.cc,
+	  flexible_constraint.h: exact flexible shake
+
+2004-06-27 10:23  markus
+
+	* src/interaction/nonbonded/interaction/nonbonded_set.cc: hessian
+	  bugfix
+
+2004-06-27 10:21  markus
+
+	* src/: io/parameter/in_parameter.cc, simulation/parameter.h:
+	  flexible shake parameters
+
+2004-06-27 10:20  markus
+
+	* contrib/splitter.cc: better error handling
+
+2004-06-27 10:18  markus
+
+	* src/interaction/nonbonded/filter/exclusion_filter.cc: signed /
+	  unsigned mismatch
+
+2004-06-27 10:17  markus
+
+	* src/: util/debug.h, util/parse_verbosity.cc,
+	  interaction/interaction.cc,
+	  interaction/bonded/angle_interaction.cc,
+	  interaction/bonded/dihedral_interaction.cc,
+	  interaction/bonded/harmonic_bond_interaction.cc,
+	  interaction/bonded/improper_dihedral_interaction.cc,
+	  interaction/bonded/quartic_bond_interaction.cc: bonded debug
+	  level
+
+2004-06-27 10:16  markus
+
+	* acinclude.m4: quotes
+
+2004-06-02 13:05  markus
+
+	* configure.in: autoconf version
+
+2004-06-01 20:37  markus
+
+	* program/script.cc, src/interaction/nonbonded/create_header.h,
+	  src/util/Makefile.am: stdheader
+
+2004-06-01 20:00  markus
+
+	* ChangeLog: [no log message]
+
 2004-06-01 19:58  markus
 
 	* VERSION, contrib/split_develop.dat: version update: 0.1.3.pre1

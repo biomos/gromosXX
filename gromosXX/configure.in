@@ -12,10 +12,6 @@ AC_MSG_RESULT([Configure gromosXX for $target])
 
 AC_LANG(C++)
 
-dnl MD_MAJOR_VERSION=0
-dnl MD_MINOR_VERSION=0
-dnl MD_MICRO_VERSION=3
-
 dnl include version information
 sinclude([VERSION])
 
