@@ -16,35 +16,6 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
   std::vector<std::string>::const_iterator it;
 
   
-  { // BOND
-    buffer = m_block["BOND"];
-  
-    it = buffer.begin() + 1;
-    _lineStream.clear();
-    _lineStream.str(*it);
-    int num, n;
-    _lineStream >> num;
-    ++it;
-    
-    for(n=0; it != buffer.end() - 1; ++it, ++n){
-      int i, j, t;
-      
-      _lineStream.clear();
-      _lineStream.str(*it);
-      _lineStream >> i >> j >> t;
-      
-      if (_lineStream.fail() || ! _lineStream.eof())
-	throw std::runtime_error("bad line in BOND block");
-      
-      topo.solute().bonds().add(i-1, j-1, t-1);
-    }
-    
-    if(n != num){
-      if (_lineStream.fail()|| ! _lineStream.eof())
-	throw std::runtime_error("error in BOND block (n != num)");
-    }
-  } // BOND
-
   { // BONDH
     buffer.clear();
     buffer = m_block["BONDH"];
@@ -75,6 +46,35 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
 	throw std::runtime_error("error in BONDH block (n != num)");
     }
   } // BONDH
+
+  { // BOND
+    buffer = m_block["BOND"];
+  
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    int num, n;
+    _lineStream >> num;
+    ++it;
+    
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, t;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in BOND block");
+      
+      topo.solute().bonds().add(i-1, j-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail()|| ! _lineStream.eof())
+	throw std::runtime_error("error in BOND block (n != num)");
+    }
+  } // BOND
 
   { // BONDANGLE
     buffer = m_block["BONDANGLE"];
@@ -528,7 +528,7 @@ io::InTopology &io::InTopology
       throw std::runtime_error("bad line in IMPDIHEDRALTYPE block");
 
     // and add...
-    ii.add(k, q);
+    ii.add(k*180*180/math::Pi/math::Pi , q * math::Pi / 180);
 
   }
   return *this;

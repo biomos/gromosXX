@@ -194,9 +194,9 @@ inline void io::OutTrajectory<t_simulation>
     v = pos(i);
     sys.periodicity().positive_box(v);
 
-    os << std::setw(6)  << solute.atom(i).residue_nr+1
-       << std::setw(5)  << residue_name[solute.atom(i).residue_nr]
-       << std::setw(6)  << solute.atom(i).name
+    os << std::setw(5)  << solute.atom(i).residue_nr+1
+       << std::setw(5)  << std::left << residue_name[solute.atom(i).residue_nr]
+       << std::setw(6)  << std::left << solute.atom(i).name
        << std::setw(8)  << i+1
        << std::setw(15) << v(0)
        << std::setw(15) << v(1)
@@ -215,10 +215,10 @@ inline void io::OutTrajectory<t_simulation>
 	v = pos(index);
 	sys.periodicity().positive_box(v);
 	
-	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
-	   << std::setw(5)  
-	   << residue_name[topo.solvent(s).atom(a).residue_nr]
-	   << std::setw(6)  << topo.solvent(s).atom(a).name
+	os << std::setw(5)  << topo.solvent(s).atom(a).residue_nr+1
+	   << ' ' << std::setw(4)  << std::left
+	   << residue_name[topo.solvent(s).atom(a).residue_nr] << std::right
+	   << std::setw(6)  << std::left << topo.solvent(s).atom(a).name << std::right
 	   << std::setw(8)  << index + 1
 	   << std::setw(15) << v(0)
 	   << std::setw(15) << v(1)
@@ -282,9 +282,9 @@ inline void io::OutTrajectory<t_simulation>
   
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
-    os << std::setw(6)  << solute.atom(i).residue_nr+1
-       << std::setw(5)  << residue_name[solute.atom(i).residue_nr]
-       << std::setw(6)  << solute.atom(i).name
+    os << std::setw(5)  << solute.atom(i).residue_nr+1
+       << std::setw(5)  << std::left << residue_name[solute.atom(i).residue_nr] << std::right
+       << std::setw(6)  << std::left << solute.atom(i).name << std::right
        << std::setw(8)  << i+1
        << std::setw(15) << vel(i)(0)
        << std::setw(15) << vel(i)(1)
@@ -300,9 +300,10 @@ inline void io::OutTrajectory<t_simulation>
       
       for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
-	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
-	   << std::setw(5)  << residue_name[topo.solvent(s).atom(a).residue_nr]
-	   << std::setw(6)  << topo.solvent(s).atom(a).name
+	os << std::setw(5)  << topo.solvent(s).atom(a).residue_nr+1
+	   << std::setw(5)  << std::left << residue_name[topo.solvent(s).atom(a).residue_nr]
+	   << std::right
+	   << std::setw(6)  << std::left << topo.solvent(s).atom(a).name << std::right
 	   << std::setw(8)  << index + 1
 	   << std::setw(15) << vel(index)(0)
 	   << std::setw(15) << vel(index)(1)

@@ -24,8 +24,9 @@ inline simulation::Topology::Topology()
 /**
  * integer atom code accessor.
  */
-inline int simulation::Topology::iac(int i)
+inline int simulation::Topology::iac(size_t i)
 {
+  assert(i < m_iac.size());
   return m_iac[i];
 }
 
@@ -80,6 +81,14 @@ simulation::Topology::solute()const
 }
 
 /**
+ * the number of atoms
+ */
+inline size_t simulation::Topology::num_atoms()const
+{
+  return num_solute_atoms() + num_solvent_atoms();
+}
+
+/**
  * the number of solute atoms
  */
 inline size_t simulation::Topology::num_solute_atoms()const
@@ -131,7 +140,7 @@ inline void simulation::Topology
     ++m_num_solute_chargegroups;
   }
   
-  DEBUG(10, "iac[" << num_solute_atoms() << "] = " << iac);
+  DEBUG(15, "iac[" << num_solute_atoms() << "] = " << iac);
 
   m_iac[num_solute_atoms()] = iac;
 
@@ -196,8 +205,8 @@ inline void simulation::Topology::solvate(size_t solv, size_t num_molecules)
   for(size_t i=0; i<num_molecules; ++i){
     for(size_t j=0; j<m_solvent[solv].num_atoms(); ++j, ++n){
 
-      DEBUG(10, "iac[" << n << "]=" << m_solvent[solv].atom(j).iac);
-      DEBUG(10, "charge[" << n << "]=" << m_solvent[solv].atom(j).charge);
+      DEBUG(15, "iac[" << n << "]=" << m_solvent[solv].atom(j).iac);
+      DEBUG(15, "charge[" << n << "]=" << m_solvent[solv].atom(j).charge);
       
       m_iac[n] = m_solvent[solv].atom(j).iac;
       m_mass(n) = m_solvent[solv].atom(j).mass;
@@ -258,6 +267,7 @@ inline std::vector<std::string> & simulation::Topology::residue_name()
  */
 inline std::set<int> & simulation::Topology::all_exclusion(size_t const i)
 {
+  assert(i < m_all_exclusion.size());
   return m_all_exclusion[i];
 }
 
@@ -266,6 +276,7 @@ inline std::set<int> & simulation::Topology::all_exclusion(size_t const i)
  */
 inline std::set<int> & simulation::Topology::one_four_pair(size_t const i)
 {
+  assert(i < m_one_four_pair.size());
   return m_one_four_pair[i];
 }
 

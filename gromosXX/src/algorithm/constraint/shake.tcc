@@ -153,6 +153,8 @@ bool algorithm::Shake<t_simulation>
     // the position
     math::Vec &pos_i = sys.pos()(first+it->i);
     math::Vec &pos_j = sys.pos()(first+it->j);
+
+    DEBUG(10, "i: " << pos_i << "\nj: " << pos_j);
 	
     math::Vec r = pos_i - pos_j;
     double dist2 = dot(r, r);

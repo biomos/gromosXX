@@ -43,12 +43,18 @@ inline void interaction::Improper_dihedral_interaction<t_simulation>
     dmj  = sqrt(dmj2);
     dnk  = sqrt(dnk2);
     
+    DEBUG(15,"dkj="<<dkj<<" dmj="<<dmj<<" dnk="<<dnk);
+    
+
     assert(dmj != 0.0);
     assert(dnk != 0.0);
 
     ip = dot(rmj, rnk);
    
     q  = acos(ip / (dmj*dnk));
+
+    DEBUG(10, "zeta="<<q);
+    
     ip = dot(rij, rnk);
     if(ip < 0) q *= -1.0;
     

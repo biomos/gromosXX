@@ -3,6 +3,13 @@
  * twin range
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE pairlist
+
+#include "../../debug.h"
+
 template<typename t_simulation>
 void interaction::twin_range_pairlist<t_simulation>
 ::update(t_simulation &sim)
@@ -10,7 +17,9 @@ void interaction::twin_range_pairlist<t_simulation>
   short_range().clear();
   long_range().clear();
 
-  size_t num_atoms = sim.topology().num_solute_atoms();
+  size_t num_atoms = sim.topology().num_atoms();
+  DEBUG(10, "pairlist size:" << num_atoms << " solute: " << sim.topology().num_solute_atoms() << " solvent: " << sim.topology().num_solvent_atoms());
+  
 
   short_range().resize(num_atoms);
   long_range().resize(num_atoms);

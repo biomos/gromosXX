@@ -26,7 +26,7 @@ namespace simulation
     /**
      * integer atom code accessor.
      */
-    int iac(int i);
+    int iac(size_t i);
     
     /**
      * masses accessor
@@ -85,6 +85,11 @@ namespace simulation
      * set the capacity of solute atoms
      */
     void resize(size_t atoms);
+
+    /**
+     * get the total number of atoms.
+     */
+    size_t num_atoms()const;
 
     /**
      * get the number of solute atoms

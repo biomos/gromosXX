@@ -8,14 +8,16 @@ template<typename t_simulation>
 void interaction::twin_range_pairlist_cg<t_simulation>
 ::update(t_simulation &sim)
 {
-  static math::VArray cg_cog;
-  cg_cog.resize(sim.topology().num_chargegroups());
-
   short_range().clear();
   long_range().clear();
 
-  size_t num_atoms = sim.topology().num_solute_atoms();
+  static math::VArray cg_cog;
+  cg_cog.resize(sim.topology().num_chargegroups());
 
+  size_t num_atoms = sim.topology().num_atoms();
+
+  DEBUG(10, "pairlist size:" << num_atoms << " solute: " << sim.topology().num_solute_atoms() << " solvent: " << sim.topology().num_solvent_atoms());
+  
   short_range().resize(num_atoms);
   long_range().resize(num_atoms);
 
@@ -85,6 +87,9 @@ void interaction::twin_range_pairlist_cg<t_simulation>
       } // ranges
     } // inter cg (cg2)
   } // cg1
+
+  DEBUG(7, "pairlist done");
+  
 }
 
 template<typename t_simulation>
@@ -101,6 +106,13 @@ static void do_cg_interaction(simulation::chargegroup_iterator cg1,
 	  a2_to = cg2.end();
 	a2 != a2_to; ++a2){
 
+      if (*a1 >= pl.size()){
+	std::cout << "a1=" << *a1 << " a2=" << *a2
+		  << " cg1=" << **cg1 << " cg2=" << **cg2
+		  << " pl.size=" << pl.size() << std::endl;
+      }
+
+      assert(*a1 < pl.size());
       pl[*a1].push_back(*a2);
 
     } // loop over atom 2 of cg1
@@ -127,6 +139,7 @@ static void do_cg_interaction_excl(t_simulation &sim,
 	if (sim.topology().all_exclusion(*a1).count(*a2))
 	  continue;
 
+      assert(*a1 < pl.size());
       pl[*a1].push_back(*a2);
 
     } // loop over atom 2 of cg1
@@ -150,6 +163,7 @@ static void do_cg_interaction_intra(t_simulation &sim,
       if (sim.topology().all_exclusion(*a1).count(*a2))
 	continue;
       
+      assert(*a1 < pl.size());
       pl[*a1].push_back(*a2);
 
     } // loop over atom 2 of cg1
