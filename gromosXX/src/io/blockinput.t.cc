@@ -37,14 +37,23 @@ int test_blockio()
     = new interaction::harmonic_bond_interaction<simulation_type>;
   
   std::ifstream topo_file("/home/markus/test/hexa10.topo");
+  if (!topo_file.good()){
+    std::cout << "could not open topology: /home/markus/test/hexa10.topo" << std::endl;
+    return 1;
+  }
+  
   io::InTopology topo(topo_file);
   
   std::ifstream sys_file("/home/markus/test/hexa10.coord");
+  if (!sys_file.good()){
+    std::cout << "could not open system: /home/markus/test/hexa10.coord" << std::endl;
+    return 2;
+  }
   io::InTrajectory sys(sys_file);
 
   topo >> *bond_interaction;
+  
   topo >> the_topology;
-
   sys >> the_system;
 
   if (io::message::notice != io::messages.display()) ++result;

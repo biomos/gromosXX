@@ -20,7 +20,7 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
 ::calculate_interactions(t_simulation &simu)
 {
   // loop over the bonds
-  simulation::bond::iterator b_it =
+  simulation::Bond::iterator b_it =
     simu.topology().solute().bonds().begin();
 
   math::VArray &pos   = simu.system().pos();
@@ -64,4 +64,15 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
   s.K = K;
   s.r0 = r0;
   add(s);
+}
+
+/**
+ * access bond parameter.
+ */
+template<typename t_simulation>
+inline std::vector<interaction::bond_type_struct> const &
+interaction::harmonic_bond_interaction<t_simulation>
+::parameter()const
+{
+  return m_bond_parameter;
 }

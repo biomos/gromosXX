@@ -16,11 +16,6 @@ namespace interaction
   class harmonic_bond_interaction : public interaction<t_simulation>
   {
   public:
-    struct bond_type_struct
-    {
-      double K;
-      double r0;
-    };
     /**
      * Destructor.
      */
@@ -37,6 +32,11 @@ namespace interaction
      * add bond type.
      */
     void add(double K, double r0);
+    /**
+     * the bond type parameters.
+     */
+    std::vector<bond_type_struct> const & parameter()const;
+    
   protected:
     std::vector<bond_type_struct> m_bond_parameter;
     

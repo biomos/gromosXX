@@ -43,25 +43,27 @@ namespace simulation
     /**
      * bond accessor.
      */
-    bond & bonds();
+    Bond & bonds();
 
     /**
      * add all bonds to the solute constraint vector and
      * remove them from the bond vector.
      */
-    void add_bond_length_constraints();
+    void add_bond_length_constraints(std::vector<interaction::bond_type_struct> const &param);
     
     /**
      * add bonds connecting an atom of type iac to the
      * constraint vector and remove from the bond vector.
      */
-    void add_bond_length_constraint(int iac);
+    void add_bond_length_constraints(int iac, std::vector<int> const &atom_iac,
+				    std::vector<interaction::bond_type_struct> const &param);
     
     /**
      * add bonds connecting an atom of mass mass to the
      * constraint vector and remove from the bond vector.
      */
-    void add_bond_length_constraint(double mass);
+    void add_bond_length_constraints(double mass, math::SArray const &atom_mass,
+				    std::vector<interaction::bond_type_struct> const & param);
 
   private:
     /**
@@ -72,7 +74,7 @@ namespace simulation
     /**
      * the bonds.
      */
-    bond m_bond;
+    Bond m_bond;
     
   };
   

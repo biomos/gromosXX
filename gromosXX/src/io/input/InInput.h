@@ -30,6 +30,11 @@ namespace io {
      */
     void read_SYSTEM(int &nsm);
     
+    /**
+     * read the SHAKE block.
+     */
+    void read_SHAKE(int &ntc, double &tolerance);
+    
   private:
     /**
      * read the entire stream and store the blocks in the map.

@@ -69,4 +69,23 @@ inline void io::InInput::read_STEP(int &num_steps, double &t0, double &dt)
   
 }
 
-    
+/**
+ * the SHAKE block.
+ */
+inline void io::InInput::read_SHAKE(int &ntc, double &tolerance)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  buffer = m_block["SHAKE"];
+  
+  it = buffer.begin() + 1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  _lineStream >> ntc >> tolerance;
+  
+  if (_lineStream.fail() || ! _lineStream.eof())
+    throw std::runtime_error("bad line in SHAKE block");
+
+}

@@ -3,6 +3,7 @@
  * gathers include directives for the simulation library.
  */
 
+#include "../interaction/forcefield/parameter.h"
 #include "simulation/simulation.h"
 #include "topology/compound.h"
 #include "topology/bond.h"

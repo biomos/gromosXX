@@ -37,16 +37,6 @@ inline t_system & simulation::simulation<t_topo, t_system>
   return m_system;
 }
 
-namespace simulation
-{
-  template<typename t_topo, typename t_system>
-  std::ostream &operator<<(std::ostream &os, simulation<t_topo, t_system> &sys)
-  {
-    os << "a simulation";
-    return os;
-  }
-}
-
 /**
  * time accessor
  */
@@ -86,4 +76,14 @@ inline int simulation::simulation<t_topo, t_system>
 ::steps()
 {
   return m_steps;
+}
+
+namespace simulation
+{
+  template<typename t_topo, typename t_system>
+  std::ostream &operator<<(std::ostream &os, simulation<t_topo, t_system> &sys)
+  {
+    os << "a simulation";
+    return os;
+  }
 }

@@ -6,7 +6,7 @@
 /**
  * get an iterator over the bonds.
  */
-inline simulation::bond::iterator simulation::bond::begin()
+inline simulation::Bond::iterator simulation::Bond::begin()
 {
   return iterator(m_bond_information);
 }
@@ -14,7 +14,7 @@ inline simulation::bond::iterator simulation::bond::begin()
 /**
  * add a bond.
  */
-inline void simulation::bond::add(int i, int j, int type)
+inline void simulation::Bond::add(int i, int j, int type)
 {
   bond_struct s;
   s.i = i;
@@ -26,7 +26,7 @@ inline void simulation::bond::add(int i, int j, int type)
 /**
  * iterator constructor.
  */
-inline simulation::bond::iterator
+inline simulation::Bond::iterator
 ::iterator(std::vector<bond_struct> &bi)
 {
   m_bond_it = bi.begin();
@@ -36,7 +36,7 @@ inline simulation::bond::iterator
 /**
  * end of list?
  */
-bool inline simulation::bond::iterator::eol()
+bool inline simulation::Bond::iterator::eol()
 {
   return m_bond_it == m_bond_end;
 }
@@ -44,7 +44,7 @@ bool inline simulation::bond::iterator::eol()
 /**
  * not end of list?
  */
-bool inline simulation::bond::iterator::neol()
+bool inline simulation::Bond::iterator::neol()
 {
   return m_bond_it != m_bond_end;
 }
@@ -52,7 +52,7 @@ bool inline simulation::bond::iterator::neol()
 /**
  * increment.
  */
-void inline simulation::bond::iterator::operator++()
+void inline simulation::Bond::iterator::operator++()
 {
   ++m_bond_it;
 }
@@ -60,7 +60,7 @@ void inline simulation::bond::iterator::operator++()
 /**
  * bond atom i.
  */
-int inline simulation::bond::iterator::i()
+int inline simulation::Bond::iterator::i()
 {
   return m_bond_it->i;
 }
@@ -68,7 +68,7 @@ int inline simulation::bond::iterator::i()
 /**
  * bond atom j.
  */
-int inline simulation::bond::iterator::j()
+int inline simulation::Bond::iterator::j()
 {
   return m_bond_it->j;
 }
@@ -76,7 +76,7 @@ int inline simulation::bond::iterator::j()
 /**
  * bond type.
  */
-int inline simulation::bond::iterator::type()
+int inline simulation::Bond::iterator::type()
 {
   return m_bond_it->type;
 }

@@ -86,6 +86,22 @@ int main(int argc, char *argv[])
   
   // add to the forcefield
   the_forcefield.add_interaction(the_bond_interaction);
+
+  // decide on SHAKE
+  int ntc;
+  double tolerance;
+  input.read_SHAKE(ntc, tolerance);
+
+  switch(ntc){
+    case 1: break;
+    case 2: the_topology.solute().add_bond_length_constraints(1.0,
+							     the_topology.mass(),
+							     the_bond_interaction->parameter());
+      break;
+    case 3: the_topology.solute().add_bond_length_constraints(the_bond_interaction->parameter());
+      break;
+    default: std::cout << "wrong ntc" << std::endl;
+  }
   
   // create the algorithm
   algorithm::runge_kutta<simulation_type> RK;

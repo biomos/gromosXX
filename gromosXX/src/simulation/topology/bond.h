@@ -9,10 +9,10 @@
 namespace simulation
 {
   /**
-   * @class bond
+   * @class Bond
    * holds bond information.
    */
-  class bond
+  class Bond
   {
   public:
     /**
