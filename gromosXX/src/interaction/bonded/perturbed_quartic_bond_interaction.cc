@@ -30,7 +30,7 @@
  * calculate quartic bond forces and energies and lambda derivatives.
  */
 template<math::boundary_enum B, math::virial_enum V>
-static int _calculate_perturbed_qbond_interactions
+int _calculate_perturbed_qbond_interactions
 ( topology::Topology & topo,
   configuration::Configuration & conf,
   simulation::Simulation & sim,
