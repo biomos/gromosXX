@@ -34,7 +34,9 @@ inline void interaction::Forcefield<t_simulation>
   DEBUG(5, "forcefield: calculate interaction");
 
   sim.system().force() = 0.0;
+  DEBUG(15, "zero energies");
   sim.system().energies().zero();
+  DEBUG(15, "zero lambda energies");
   sim.system().lambda_energies().zero();
   sim.system().virial() = 0.0;
 
