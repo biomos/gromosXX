@@ -30,6 +30,27 @@ interaction::Forcefield::~Forcefield()
   }
 }
 
+int interaction::Forcefield
+::init(topology::Topology & topo,
+       configuration::Configuration & conf,
+       simulation::Simulation &sim,
+       bool quiet)
+{
+  
+  int i = 0;
+
+  for(iterator it = begin(), to = end();
+      it != to;
+      ++it){
+
+    i += (*it)->init(topo, conf, sim, quiet);
+  }
+
+  return i;
+}
+
+
+
 interaction::Interaction * interaction::Forcefield
 ::interaction(std::string name)
 {

@@ -128,8 +128,36 @@ namespace configuration
        * j value average
        */
       std::vector<double> jvalue_av;
+      /**
+       * current j value
+       */
+      std::vector<double> jvalue_curr;
 
-    };
+      /**
+       * @struct pscale struct
+       * stores periodic scaling information
+       */
+      struct pscale_struct
+      {
+	/**
+	 * maps J-value restraints to dihedral angles.
+	 */
+	std::vector<int> JtoDihedral;
+	/**
+	 * stores original dihedral angle potential force constants
+	 */
+	std::vector<double> KDIH;
+	/**
+	 * stores original J-value restraint force constants.
+	 */
+	std::vector<double> KJ;
+	/**
+	 * scale time (no scaling if 0.0)
+	 */
+	std::vector<double> t;
+      } /** periodic scaling information */ pscale;
+
+    }; // special
     
     /**
      * get the current state

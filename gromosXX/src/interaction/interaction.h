@@ -40,6 +40,13 @@ namespace interaction
      */
     std::string name;
     /**
+     * initialise
+     */
+    virtual int init(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim,
+		     bool quiet = false) { return 0; }
+    /**
      * calculate the interactions.
      */
     virtual int calculate_interactions(topology::Topology & topo,

@@ -8,6 +8,8 @@
 
 namespace io {
   
+  class Argument;
+
   /**
    * @enum output_format
    * output format.
@@ -44,6 +46,11 @@ namespace io {
      * Destructor.
      */
     ~Out_Configuration();
+    
+    /**
+     * initialise the files.
+     */
+    void init(io::Argument & args, simulation::Parameter const & param);
     
     /**
      * write out a timestep.
@@ -222,6 +229,10 @@ namespace io {
     void _print_flexv(configuration::Configuration const &conf,
 		      topology::Topology const &topo,
 		      std::ostream &os);
+
+    void _print_jvalue(configuration::Configuration const &conf,
+		       topology::Topology const &topo,
+		       std::ostream &os);
 
     void _print_blockaveraged_energyred(configuration::Configuration const & conf,
 					std::ostream & os);

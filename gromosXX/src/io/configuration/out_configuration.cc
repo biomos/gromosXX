@@ -14,6 +14,7 @@
 #include <math/volume.h>
 
 #include <io/print_block.h>
+#include <io/argument.h>
 
 #include <sstream>
 
@@ -111,6 +112,54 @@ void io::Out_Configuration::_print_title(std::string title,
      << "\nEND\n";
 }
 
+void io::Out_Configuration::init(io::Argument & args,
+				 simulation::Parameter const & param)
+{
+  if (args.count("fin") > 0)
+    final_configuration(args["fin"]);
+  else throw std::string("argument fin for final configuration required!");
+
+  if (args.count("trj") > 0)
+    trajectory(args["trj"], param.write.position);
+  else if (param.write.position)
+    throw std::string("write trajectory but no trj argument");
+
+  if (args.count("trv") > 0)
+    velocity_trajectory(args["trv"], param.write.velocity);
+  else if (param.write.velocity)
+    throw std::string("write velocity trajectory but no trv argument");
+
+  if (args.count("trf") > 0)
+    force_trajectory(args["trf"], 1);
+  //else if (param.write.force)
+  //  throw std::string("write force trajectory but no trf argument");
+
+  if (args.count("tre") > 0)
+    energy_trajectory(args["tre"], param.write.energy);
+  else if (param.write.energy)
+    throw std::string("write energy trajectory but no tre argument");
+
+  if (args.count("trg") > 0)
+    free_energy_trajectory(args["trg"], param.write.free_energy);
+  else if (param.write.free_energy)
+    throw std::string("write free energy trajectory but no trg argument");
+
+  if (args.count("bae") > 0)
+    block_averaged_energy(args["bae"], param.write.block_average);
+  else if (param.write.block_average && param.write.energy)
+    throw std::string("write block averaged energy but no bae argument");
+
+  if (param.perturbation.perturbation){
+    if (args.count("bag") > 0)
+      block_averaged_free_energy(args["bag"], 
+				 param.write.block_average);
+    else if (param.write.block_average && param.write.free_energy)
+      throw std::string("write block averaged free energy "
+			"but no bag argument");
+  }
+
+}
+
 void io::Out_Configuration::write(configuration::Configuration &conf,
 				  topology::Topology const &topo,
 				  simulation::Simulation const &sim,
@@ -183,6 +232,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if(sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
       _print_flexv(conf, topo, m_final_conf);
+    }
+
+    if(sim.param().jvalue.mode != simulation::restr_off){
+      _print_jvalue(conf, topo, m_final_conf);
     }
 
     // forces and energies still go to their trajectories
@@ -1152,6 +1205,31 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
 
 }
 
+void io::Out_Configuration::_print_jvalue(configuration::Configuration const &conf,
+					  topology::Topology const &topo,
+					  std::ostream &os)
+{
+  DEBUG(10, "JVALUE Aversages");
+  
+  std::vector<double>::const_iterator av_it = conf.special().jvalue_av.begin();
+  std::vector<topology::jvalue_restraint_struct>::const_iterator
+    jval_it = topo.jvalue_restraints().begin(),
+    jval_to = topo.jvalue_restraints().end();
+  
+  os << "JVALRESEXPAVE03\n";
+
+  for( ; jval_it != jval_to; ++jval_it, ++av_it){
+    
+    os << std::setw(15) << jval_it->i+1
+       << std::setw(10) << jval_it->j+1
+       << std::setw(10) << jval_it->k+1
+       << std::setw(10) << jval_it->l+1
+       << std::setw(20) << *av_it
+       << "\n";
+  }
+  os << "END\n";
+
+}
 
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e)
 {

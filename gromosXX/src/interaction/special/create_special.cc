@@ -16,8 +16,12 @@
 
 // special interactions
 #include <interaction/interaction_types.h>
+
 #include <interaction/special/position_restraint_interaction.h>
 #include <interaction/special/jvalue_restraint_interaction.h>
+
+#include <interaction/bonded/dihedral_interaction.h>
+#include <interaction/special/pscale.h>
 
 #include <io/instream.h>
 #include <io/topology/in_topology.h>
@@ -25,7 +29,7 @@
 #include "create_special.h"
 
 template<math::virial_enum v>
-struct special_interaction_spec
+struct bonded_interaction_spec
 {
   static const math::virial_enum do_virial = v;
 };
@@ -65,12 +69,43 @@ static void _create_special(interaction::Forcefield & ff,
 
   // J-Value restraints
   if (param.jvalue.mode != simulation::restr_off){
-    if(!quiet)
-      std::cout << "\tJ-Value restraints\n";
+    if(!quiet){
+      std::cout << "\tJ-Value restraints (";
+      switch(param.jvalue.mode){
+	case simulation::restr_inst :
+	  std::cout << "instantaneous";
+	  break;
+	case simulation::restr_av :
+	  std::cout << "time averaged";
+	  break;
+	case simulation::restr_biq :
+	  std::cout << "biquadratic";
+	  break;
+	default:
+	  std::cout << "unknown mode!";
+	  break;
+      }
+      std::cout << ")\n";
+    }
+
     interaction::Jvalue_Restraint_Interaction<t_interaction_spec> *jr =
       new interaction::Jvalue_Restraint_Interaction<t_interaction_spec>();
     
     ff.push_back(jr);
+  }
+
+  // Periodic Scaling
+  // right now this only works if no dihedral angles with j-value restraints on are perturbed...
+  if (param.pscale.jrest){
+
+    if(!quiet){
+      std::cout << "\tscaling based on J-Value restraints\n";
+    }
+    
+    interaction::Periodic_Scaling<t_interaction_spec> * ps = 
+      new interaction::Periodic_Scaling<t_interaction_spec>(ff);
+
+    ff.push_back(ps);
   }
   
 }
@@ -84,21 +119,21 @@ int interaction::create_special(interaction::Forcefield & ff,
     case math::no_virial:
       {
 	// create an interaction spec suitable for the bonded terms
-	_create_special<special_interaction_spec<math::no_virial> >
+	_create_special<bonded_interaction_spec<math::no_virial> >
 	  (ff, topo, param, quiet);
 	break;
       }
     case math::atomic_virial:
       {
 	// create an interaction spec suitable for the bonded terms
-	_create_special<special_interaction_spec<math::atomic_virial> >
+	_create_special<bonded_interaction_spec<math::atomic_virial> >
 	  (ff, topo, param, quiet);
 	break;
       }
     case math::molecular_virial:
       {
 	// create an interaction spec suitable for the bonded terms
-	_create_special<special_interaction_spec<math::molecular_virial> >
+	_create_special<bonded_interaction_spec<math::molecular_virial> >
 	  (ff, topo, param, quiet);
 	break;
       }

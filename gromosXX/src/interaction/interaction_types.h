@@ -9,10 +9,18 @@
 namespace interaction
 {
   /**
+   * @struct interaction_type_struct
+   * common base class
+   */
+  struct interaction_type_struct
+  {
+  };
+  
+  /**
    * @struct bond_type_struct
    * bond types.
    */
-  struct bond_type_struct
+  struct bond_type_struct : public interaction_type_struct
   {
     bond_type_struct(double K, double r0) : K(K), r0(r0) {}
     double K;
@@ -23,7 +31,7 @@ namespace interaction
    * @struct angle_type_struct
    * angle types.
    */
-  struct angle_type_struct
+  struct angle_type_struct : public interaction_type_struct
   {
     angle_type_struct(double K, double cos0) : K(K), cos0(cos0) {}
     double K;
@@ -34,7 +42,7 @@ namespace interaction
    * @struct improper_dihedral_type_struct
    * improper dihedral types.
    */
-  struct improper_dihedral_type_struct
+  struct improper_dihedral_type_struct : public interaction_type_struct
   {
     improper_dihedral_type_struct(double K, double q0) : K(K), q0(q0) {}
     double K;
@@ -45,7 +53,7 @@ namespace interaction
    * @struct dihedral_type_struct
    * dihedral types.
    */
-  struct dihedral_type_struct
+  struct dihedral_type_struct : public interaction_type_struct
   {
     dihedral_type_struct(double K, double pd, int m) : K(K), pd(pd), m(m) {}
     double K;
@@ -57,7 +65,7 @@ namespace interaction
    * @struct lj_parameter_struct
    * Lennard Jones interaction parameter.
    */
-  struct lj_parameter_struct
+  struct lj_parameter_struct : public interaction_type_struct
   {
     lj_parameter_struct(double c6, double c12, double cs6, double cs12)
       : c6(c6), c12(c12), cs6(cs6), cs12(cs12) {}

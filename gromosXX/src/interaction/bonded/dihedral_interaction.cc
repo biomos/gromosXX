@@ -22,7 +22,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
 					    std::vector<interaction::dihedral_type_struct> 
 					    const & param)
 {
-  // loop over the improper dihedrals
+  // loop over the dihedrals
   std::vector<topology::four_body_term_struct>::iterator d_it =
     topo.solute().dihedrals().begin(),
     d_to = topo.solute().dihedrals().end();
@@ -100,6 +100,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
 	throw std::runtime_error("dihedral type for m=6 not implemented");
 	
     }
+
     double     K = param[d_it->type].K;
     double delta = param[d_it->type].pd;
 
@@ -217,7 +218,7 @@ int interaction::Dihedral_Interaction<t_interaction_spec>
 /**
  * calculate nearest minimum
  */
-double _calculate_nearest_minimum(double phi, int m, double pd)
+inline double _calculate_nearest_minimum(double phi, int m, double pd)
 {
   // copy from gromos++ nearest_minimum function
   double a_minimum = 0.5*math::Pi*(3.0 - pd)/ m;

@@ -48,10 +48,12 @@ io::In_Jvalue::read(topology::Topology& topo,
       to = buffer.end()-1;
   
     DEBUG(10, "reading in JVALRESSPEC data");
+    DEBUG(10, "jvalue_av size = " << conf.special().jvalue_av.size());
+    
     int i, j, k, l;
     double K, J;
     double a, b, c, delta;
-    int H_inst, H_av;
+    int H;
     
     std::cout.precision(2);
     std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
@@ -66,11 +68,11 @@ io::In_Jvalue::read(topology::Topology& topo,
 	      << std::setw(8) << "b"
 	      << std::setw(8) << "c"
 	      << std::setw(8) << "delta"
-	      << std::setw(7) << "H_inst"
-	      << std::setw(7) << "H_av"
+	      << std::setw(7) << "H"
+	      << std::setw(8) << "Jav"
 	      << "\n";
       
-    for(i=0; it != to; ++i, ++it){
+    for(int n=0; it != to; ++i, ++it, ++n){
       
       _lineStream.clear();
       _lineStream.str(*it);
@@ -79,7 +81,7 @@ io::In_Jvalue::read(topology::Topology& topo,
 		  >> K >> J
 		  >> delta
 		  >> a >> b >> c
-		  >> H_inst >> H_av;
+		  >> H;
 
       if(_lineStream.fail()){
 	io::messages.add("bad line in JVALRESSPEC block",
@@ -92,26 +94,21 @@ io::In_Jvalue::read(topology::Topology& topo,
       // 1 : harmonic
       // 2 : attractive
       // 3 : repulsive
-      if (H_inst < 1 || H_inst > 3){
-	io::messages.add("bad value for H_inst in JVALRESSPEC block "
+      if (H < 1 || H > 3){
+	io::messages.add("bad value for H in JVALRESSPEC block "
 			 "(harmonic: 1, attractive: 2, repulsive: 3)",
 			 "In_Jvalue",
 			 io::message::error);
       }
-      if (H_av < 1 || H_av > 3){
-	io::messages.add("bad value for H_av in JVALRESSPEC block "
-			 "(harmonic: 1, attractive: 2, repulsive: 3)",
-			 "In_Jvalue",
-			 io::message::error);
-      }
-      
 
       topo.jvalue_restraints().push_back
 	(topology::jvalue_restraint_struct(i-1, j-1, k-1, l-1,
 					   K, J,
-					   a, b, c, delta,
-					   topology::restr_func_enum(H_inst),
-					   topology::restr_func_enum(H_av)));
+					   a, b, c, math::Pi * delta / 180.0,
+					   topology::functional_form(H)));
+
+      if (conf.special().jvalue_av.size() < unsigned(n+1))
+	conf.special().jvalue_av.push_back(J);
 
       std::cout << std::setw(6) << i
 		<< std::setw(6) << j
@@ -123,11 +120,14 @@ io::In_Jvalue::read(topology::Topology& topo,
 		<< std::setw(8) << b
 		<< std::setw(8) << c
 		<< std::setw(8) << delta
-		<< std::setw(7) << H_inst
-		<< std::setw(7) << H_av
+		<< std::setw(7) << H
+		<< std::setw(8) << conf.special().jvalue_av[n]
 		<< "\n";
 
     }
+
+    assert(conf.special().jvalue_av.size() == topo.jvalue_restraints().size());
+    conf.special().jvalue_curr.resize(conf.special().jvalue_av.size());
 
     std::cout << "END\n";
 

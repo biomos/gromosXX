@@ -196,15 +196,19 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   }
 
   if (param.jvalue.mode != simulation::restr_off){
-    if (param.jvalue.mode == simulation::restr_inst){
-      io::messages.add("instantaneous jvalue restraints, ignoring reading of averages",
-		       "in_configuration",
-		       io::message::warning);
-    }
-    else if (!param.jvalue.read_av){
-      io::messages.add("re-initialising J-Value averages, non-continuous simulation",
-		       "in_configuration",
-		       io::message::warning);
+
+    if (!param.jvalue.read_av || param.jvalue.mode == simulation::restr_inst){
+      
+      if (param.jvalue.read_av)
+	io::messages.add("instantaneous jvalue restraints, ignoring reading of averages",
+			 "in_configuration",
+			 io::message::warning);
+      
+      else if (param.jvalue.mode != simulation::restr_inst)
+	io::messages.add("re-initialising J-Value averages, non-continuous simulation",
+			 "in_configuration",
+			 io::message::warning);
+      
     }
     else {
       buffer = m_block["JVALRESEXPAVE"];
@@ -623,10 +627,10 @@ _read_jvalue_av(std::vector<std::string> &buffer,
 
     _lineStream >> i >> j >> k >> l >> av;
     
-    if (jval_it->i != i-1 ||
-	jval_it->j != j-1 ||
-	jval_it->k != k-1 ||
-	jval_it->l != l-1){
+    if (int(jval_it->i) != i-1 ||
+	int(jval_it->j) != j-1 ||
+	int(jval_it->k) != k-1 ||
+	int(jval_it->l) != l-1){
 
       io::messages.add("Wrong J-Value in JVALAVERAGE block",
 		       "In_Configuration",

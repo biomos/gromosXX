@@ -22,6 +22,7 @@
 #include <io/topology/in_perturbation.h>
 #include <io/parameter/in_parameter.h>
 #include <io/topology/in_posres.h>
+#include <io/topology/in_jvalue.h>
 
 #include "read_special.h"
 
@@ -56,6 +57,26 @@ int io::read_special(io::Argument const & args,
     ip.read(topo, conf, sim);
     
   } // POSRES
+
+  // J-Value restraints
+  if (sim.param().jvalue.mode != simulation::restr_off){
+    std::ifstream jval_file;
+    
+    try{
+      jval_file.open(args["jval"].c_str());
+    }
+    catch(std::string s){
+      s = "opening jvalue restraints file failed!\n" + s;
+      throw s;
+    }
+    io::messages.add("jvalue restraints read from " + args["jval"],
+		     "read special",
+		     io::message::notice);
+  
+    io::In_Jvalue ij(jval_file);
+    ij.read(topo, conf, sim);
+    
+  } // JVALUE
   
   return 0;
 }

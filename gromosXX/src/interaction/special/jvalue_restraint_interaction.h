@@ -34,8 +34,6 @@ namespace interaction
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
     
-  protected:
-    
   };
   
 } // interaction

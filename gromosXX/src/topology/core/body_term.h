@@ -10,6 +10,25 @@
 namespace topology
 {
   /**
+   * @enum functional_form
+   * functional form
+   */
+  enum functional_form{
+    /**
+     * full harmonic (attractive and repulsive)
+     */
+    harmonic = 1,
+    /**
+     * half harmonic, attractive
+     */
+    attractive = 2,
+    /**
+     * half harmonic, repulsive
+     */
+    repulsive = 3
+  };
+  
+  /**
    * @struct one_body_term_struct
    * one body terms (topological information).
    */
@@ -278,17 +297,7 @@ namespace topology
      */
     double bfactor;
   };
-  
-  /**
-   * @enum restr_func_enum
-   * restraint function enum
-   */
-  enum restr_func_enum{
-    harmonic,
-    attractive,
-    repulsive
-  };
-  
+    
   /**
    * J-Value restraints.
    */
@@ -301,18 +310,18 @@ namespace topology
 			    double K, double J0,
 			    double a, double b, double c,
 			    double delta,
-			    restr_func_enum H_inst, restr_func_enum H_av)
+			    functional_form H)
       : i(i), j(j), k(k), l(l),
 	K(K), J0(J0),
 	a(a), b(b), c(c), delta(delta),
-	H_inst(H_inst), H_av(H_av)
+	H(H)
     {
     }
     
     /**
      * atom sequence numbers.
      */
-    int i, j, k, l;
+    unsigned int i, j, k, l;
     /**
      * force constant
      */
@@ -335,7 +344,7 @@ namespace topology
      * half harmonic repulsive,
      * harmonic
      */
-    int H_inst, H_av;
+    functional_form H;
   };
 
 }
