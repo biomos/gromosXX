@@ -176,7 +176,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     it = topo.energy_group_lambdadep().begin(),
     to = topo.energy_group_lambdadep().end();
   for( ; it!=to; ++it){
-    if (it->second.first > s) s = it->second.first;
+    if (unsigned(it->second.first) > s) s = unsigned(it->second.first);
   }
   ++s;
 

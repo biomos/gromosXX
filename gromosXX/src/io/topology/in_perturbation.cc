@@ -912,11 +912,17 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  std::pair<int, int> energy_pair2(j,i);
 
 	  // check a
+	  // this is limited now
 	  if (a < -1 || a > 1){
+	    /*
 	    io::messages.add("LAMBDADEP: parameter a results in l' >1 or <0 "
 			     "in the range [0,1] for l (recommended: -1<=a<=1).",
 			     "In_Perturbation",
 			     io::message::warning);
+	    */
+	    io::messages.add("LAMBDADEP: limiting l' because -1.0 <= a <= 1.0 not fulfilled",
+			    "In_Perturbation",
+			    io::message::notice);
 	  }
 	  
 	  // perturbed_energy_derivatives[0] is reserved for normal lambda

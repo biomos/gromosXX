@@ -107,9 +107,13 @@ void interaction::Perturbed_Nonbonded_Innerloop<
       // set lambdas
       const double l = topo.lambda();
       const double alpha = topo.energy_group_lambdadep()[energy_group_pair].second;
-      const double lp = alpha * l * l + (1-alpha) * l;
+      double lp = alpha * l * l + (1-alpha) * l;
       energy_derivative_index = topo.energy_group_lambdadep()[energy_group_pair].first;
       
+      // some additional flexibility
+      if (lp > 1.0) lp = 1.0;
+      else if (lp < 0.0) lp = 0.0;
+
       DEBUG(8, "lambda dep l=" << l << " alpha=" << alpha << " lp=" << lp
 	    << " index=" << energy_derivative_index);
 
