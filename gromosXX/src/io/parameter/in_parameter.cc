@@ -591,6 +591,7 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
     param.write.velocity = 1;
     param.write.energy = 1;
     param.write.free_energy = 1;
+    param.write.block_average = 1;
     return;
   }
 
@@ -606,8 +607,8 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
 	      >> param.write.velocity
 	      >> param.write.energy
 	      >> param.write.free_energy
+	      >> param.write.block_average
 	      >> ntwp;
-
   
   if (_lineStream.fail())
     io::messages.add("bad line in WRITE block",
@@ -636,6 +637,10 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
    if(param.write.free_energy < 0)
     io::messages.add("WRITE block: NTWG should be >= 0",
 		     "In_Parameter", io::message::error);
+   if(param.write.block_average < 0)
+    io::messages.add("WRITE block: NTWB should be >= 0",
+		     "In_Parameter", io::message::error);
+
 }
 
 /**

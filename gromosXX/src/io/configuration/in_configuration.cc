@@ -5,18 +5,10 @@
 
 #include <util/stdheader.h>
 
-#include <topology/core/core.h>
-
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
-
+#include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
-#include <configuration/energy.h>
-#include <configuration/energy_average.h>
 #include <configuration/configuration.h>
 
 #include <io/blockinput.h>
@@ -25,7 +17,6 @@
 
 #include <util/generate_velocities.h>
 #include <math/volume.h>
-#include <math/periodicity.h>
 
 #include "in_configuration.h"
 
@@ -49,21 +40,10 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   // resize the configuration
   conf.resize(topo.num_atoms());
 
-  // possibly resize the dihedral angle monitoring array
-  // initialize or set to such a value that it is recalculated in
-  // the first step, initialization would require an additional function
-  // which can be done only after reading of the coordinates. Would be a
-  // nicer solution, but also requires the parameters...
-  if(param.print.monitor_dihedrals)
-    conf.special().dihedral_angle_minimum.resize
-      (topo.solute().dihedrals().size(), 4*math::Pi);
-    
   DEBUG(8, "reading in a frame");
   read_frame();
-  DEBUG(8, "frame read");
 
   block_read.clear();
-  
   std::vector<std::string> buffer;
 
   // read positions
@@ -155,31 +135,6 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
 
-  // resize the energy arrays
-  const size_t num = topo.energy_groups().size();
-  const size_t numb = param.multibath.multibath.size();
-
-  DEBUG(5, "number of energy groups: " << num 
-	<< "\nnumber of baths: " << numb);
-
-  // this should be moved to a easier accessible place
-  // for scripting...
-
-  conf.current().energies.resize(num, numb);
-  conf.current().energy_averages.resize(num, numb);
-
-  conf.old().energies.resize(num, numb);
-  conf.old().energy_averages.resize(num, numb);
-  
-  conf.current().perturbed_energy_derivatives.resize(num, numb);
-  conf.current().perturbed_energy_derivative_averages.resize(num, numb);
-    
-  conf.old().perturbed_energy_derivatives.resize(num, numb);
-  conf.old().perturbed_energy_derivative_averages.resize(num, numb);
-  
-  // resize some special data
-  conf.special().rel_mol_com_pos.resize(topo.num_atoms());
-
   // print some information
   if (!quiet){
     std::cout << "\n\t";
@@ -214,6 +169,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if (param.constraint.solute.algorithm == simulation::constr_flexshake){
     conf.special().flexible_vel.resize(topo.solute().distance_constraints().size()+
 				       topo.perturbed_solute().distance_constraints().size());
+    const size_t numb = param.multibath.multibath.size();
+
     conf.special().flexible_ekin.resize(numb);
 
     buffer = m_block["FLEXV"];
@@ -251,31 +208,9 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 		       io::message::warning);
     }
   }
-
-  // gather the molecules!
-  switch(conf.boundary_type){
-    case math::vacuum:
-      break;
-    case math::rectangular:
-      {
-	math::Periodicity<math::rectangular> periodicity(conf.current().box);
-	periodicity.gather_molecules_into_box(conf, topo);
-	break;
-      }
-    case math::triclinic:
-      {
-	math::Periodicity<math::triclinic> periodicity(conf.current().box);
-	periodicity.gather_molecules_into_box(conf, topo);
-	break;
-      }
-    default:
-      std::cout << "wrong periodic boundary conditions!";
-      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
-  }
   
   if (!quiet)
-    std::cout << "\n\tgathering molecules...\n\n"
-	      << "END\n\n";
+    std::cout << "\n\nEND\n\n";
 
 }
 

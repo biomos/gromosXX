@@ -3,15 +3,16 @@
  * implements member methods.
  */
 
+#include <util/stdheader.h>
+#include <configuration/configuration_global.h>
+#include <configuration/energy.h>
+
+#include <configuration/energy_average.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE configuration
 #define SUBMODULE energy
-
-#include <util/stdheader.h>
-#include <configuration/configuration_global.h>
-#include <configuration/energy.h>
-#include <configuration/energy_average.h>
 
 configuration::Energy_Average::Energy_Average()
   : m_average(),

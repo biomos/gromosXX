@@ -6,6 +6,10 @@
 #ifndef INCLUDED_SIMULATION_H
 #define INCLUDED_SIMULATION_H
 
+// necessary headers
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
+
 namespace simulation
 {
   /**

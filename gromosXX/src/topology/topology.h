@@ -6,6 +6,12 @@
 #ifndef INCLUDED_TOPOLOGY_H
 #define INCLUDED_TOPOLOGY_H
 
+#include <topology/core/core.h>
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+
 namespace simulation
 {
   class Multibath;
