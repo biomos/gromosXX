@@ -1,18 +1,18 @@
 /**
  * @file debug.h
  * define debug macros.
- * @paragraph Debug Levels
- *  0: no output
- *  1: important program decisions
- *  2: important program path
- *  3: 
- *  4: program path (not unimportant functions)
- *  5: function outline
- *  6:
- *  7: function detail
- *  8:
- *  9:
- * 10: everything
+ * @page debug Debug Levels
+ *  -# : no output
+ *  -# : important program decisions
+ *  -# : important program path
+ *  -# : 
+ *  -# : program path (not unimportant functions)
+ *  -# : function outline
+ *  -# :
+ *  -# : function detail
+ *  -# :
+ *  -# :
+ *  -# : everything
  *
  * every file that uses it has to first
  * #define MODULE to the namespace name

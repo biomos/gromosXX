@@ -32,6 +32,10 @@ namespace io
    * debug level for the submodule input.
    */
   extern int input_debug_level;
+  /**
+   * debug level for the submodule topology.
+   */
+  extern int topology_debug_level;
 }
 
 #endif

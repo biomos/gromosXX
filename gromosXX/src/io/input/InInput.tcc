@@ -136,6 +136,41 @@ inline void io::InInput::read_SHAKE(int &ntc, double &tolerance)
 }
 
 /**
+ * read the PRINT and WRITE block.
+ */
+inline void io::InInput::read_PRINT(int &print_trajectory, 
+				    int &print_velocity,
+				    int &print_energy)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  
+  buffer = m_block["PRINT"];
+  it = buffer.begin() + 1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  int com, dih_monitoring;
+  _lineStream >> print_energy >> com >> dih_monitoring;
+  
+  if (_lineStream.fail() || ! _lineStream.eof())
+    throw std::runtime_error("bad line in PRINT block");
+
+  buffer = m_block["WRITE"];
+  it = buffer.begin() + 1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  
+  int format, selection, energy, free_energy;
+  _lineStream >> print_trajectory >> selection >> print_velocity
+	      >> energy >> free_energy >> format;
+  
+  if (_lineStream.fail() || ! _lineStream.eof())
+    throw std::runtime_error("bad line in WRITE block");
+    
+}
+
+/**
  * read FORCE block.
  */
 inline void io::InInput::read_FORCE(bool &do_bond, bool &do_angle,

@@ -50,6 +50,35 @@ int main(int argc, char *argv[])
     
     io::Argument args(argc, argv, nknowns, knowns, usage);
 
+    // parse the verbosity flag and set debug levels
+    parse_verbosity(args);
+
+    // parse print flag
+    int print_pairlist = 0, print_force = 1;
+    { // print
+      io::Argument::const_iterator it = args.lower_bound("print"),
+	to = args.upper_bound("print");
+      std::cout << "printing\n";
+      for( ; it != to; ++it){
+	std::string s;
+	int num;
+	std::string::size_type sep = it->second.find(':');
+	if (sep == std::string::npos){
+	  s = it->second;
+	  num = 1;
+	}
+	else{
+	  s = it->second.substr(0, sep);
+	  num = atoi(it->second.substr(sep+1, std::string::npos).c_str());
+	}
+	std::cout << "\t" << std::setw(15) << s << std::setw(6) << num << "\n";
+
+	if (s == "pairlist") print_pairlist = num;
+	else if (s == "force") print_force = num;
+	else throw std::string("unknown @print argument");
+      }
+    }
+
     // determine which algorithm to use
     bool runge_kutta = false;
     if (args.count("alg") != -1){
@@ -67,58 +96,13 @@ int main(int argc, char *argv[])
 			 "vtest",io::message::error);
       }
     }
-
-    // parse the verbosity
-    if (args.count("verb") != -1){
-
-#ifdef NDEBUG
-      throw std::string("@verb not supported with non-debug compilation");
-#endif
-      io::Argument::const_iterator it = args.lower_bound("verb"),
-	to = args.upper_bound("verb");
-
-      std::cout << "setting debug level\n";
-      
-      for( ; it != to; ++it){
-
-	int level;
-	std::string module = "";
-	std::string submodule = "";
-
-	std::string s(it->second);
-	std::string::size_type sep = s.find(':');
-	if (sep == std::string::npos){
-	  // no module or submodule
-	  level = atoi(s.c_str());
-	}
-	else{
-	  module = s.substr(0, sep);
-	  std::string second = s.substr(sep+1, std::string::npos);
-	  
-	  sep = second.find(':');
-	  if (sep == std::string::npos){
-	    // no submodule
-	    level = atoi(second.c_str());
-	  }
-	  else{
-	    level = atoi(second.substr(sep+1, std::string::npos).c_str());
-	    submodule = second.substr(0, sep);
-	  }
-	}
-	
-	std::cout << "\t" << module << "\t" << submodule << "\t" << level << "\n";
-
-      }
-      
-    }
-    
   
     simulation::system the_system;
     simulation::Topology the_topology;
 
     DEBUG(7, "reading the files");
   
-    // read in the files
+    // read in the files - those are necessary
     std::ifstream topo_file(args["topo"].c_str());
     io::InTopology topo(topo_file);
   
@@ -213,15 +197,32 @@ int main(int argc, char *argv[])
     algorithm::Shake<simulation_type> shake(tolerance);
 
     // prepare for the output
-    std::ofstream trap(args["trj"].c_str());
-    std::ofstream trav(args["trv"].c_str());
-    std::ofstream traf(args["trf"].c_str());
-    std::ofstream final(args["fin"].c_str());
-  
-    io::OutTrajectory<simulation_type> traj(trap, final);
-    traj.velocity_trajectory(trav);
-    traj.force_trajectory(traf);
+    int print_trajectory, print_velocity, print_energy;
+    input.read_PRINT(print_trajectory, print_velocity, print_energy);
 
+    std::ofstream trap(args["trj"].c_str());  // trajectory is required
+    std::ofstream final(args["fin"].c_str()); // final structure is required
+
+    io::OutTrajectory<simulation_type> traj(trap, final, print_trajectory);
+
+    // optional files
+    std::ofstream trav; // velocity trajectory
+    if (args.count("trv") == 1){
+      trav.open(args["trv"].c_str());
+      traj.velocity_trajectory(trav, print_velocity);
+    }
+    
+    std::ofstream traf; // force trajectory
+    if (args.count("trf") == 1){
+      traf.open(args["trf"].c_str());
+      traj.force_trajectory(traf, print_force);
+    }
+
+    std::ostream *trprint = &std::cout;
+    if (args.count("trp") == 1){
+      trprint = new std::ofstream(args["trp"].c_str());
+    }
+    
     traj.print_title("\tvtest(gromosXX) MD simulation");
 
     std::cout << "Messages (startup)\n";
@@ -249,13 +250,15 @@ int main(int argc, char *argv[])
 	algorithm::leap_frog<simulation_type>
 	  ::step(the_simulation, the_forcefield, dt);
   
-      std::cout << "shortrange\n" 
-		<< the_nonbonded_interaction->pairlist().short_range()
-		<< std::endl;
-      std::cout << "longrange\n" 
-		<< the_nonbonded_interaction->pairlist().long_range()
-		<< std::endl;
-
+      if (print_pairlist && the_simulation.steps() % print_pairlist == 0){
+	*trprint << "shortrange\n" 
+		 << the_nonbonded_interaction->pairlist().short_range()
+		 << std::endl;
+	*trprint << "longrange\n" 
+		 << the_nonbonded_interaction->pairlist().long_range()
+		 << std::endl;
+      }
+      
       try{
 	std::cout << "shake solute:  " << shake.solute(the_topology, the_system, dt)
 		  << "\n";
@@ -282,15 +285,19 @@ int main(int argc, char *argv[])
   
   }
   catch(std::runtime_error e){
-    std::cout << "severe error encountered:\n";
+    // runtime problem
+    std::cout << "severe error encountered:\n"
+	      << e.what() << std::endl;
+    
     io::messages.display();
     std::cout << std::endl;
     
     return 1;
   }
   catch(std::string s){
+    // argument exception
     std::cout << s << std::endl;
-    return 1;
+    return 2;
   }
   
   return 0;

@@ -45,6 +45,13 @@ namespace math
    */
   const double epsilon = 0.000000000001;
 
+#ifndef NDEBUG
+  /**
+   * module debug level.
+   */
+  extern int debug_level;
+#endif
+
 } // math
 
 #include "periodicity.h"

@@ -12,6 +12,11 @@
 #include "interaction/angle_interaction.h"
 
 #ifndef NDEBUG
-extern int debug_level;
-extern int interaction_debug_level;
+namespace interaction
+{
+  extern int debug_level;
+  extern int interaction_debug_level;
+  extern int pairlist_debug_level;
+  extern int forcefield_debug_level;
+}
 #endif

@@ -13,5 +13,6 @@ namespace io
   int debug_level = 0;
   int trajectory_debug_level = 0;
   int input_debug_level = 0;
+  int topology_debug_level = 0;
 #endif
 }

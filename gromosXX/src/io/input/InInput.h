@@ -46,7 +46,12 @@ namespace io {
      */
     void read_FORCE(bool &do_bond, bool &do_angle, bool &do_improper,
 		    bool &do_dihedral, bool &do_nonbonded);
-    
+    /**
+     * read PRINT and WRITE block.
+     */
+    void read_PRINT(int &print_trajectory, int &print_velocity,
+		    int &print_energy);
+
   private:
     /**
      * read the entire stream and store the blocks in the map.

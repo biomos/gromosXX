@@ -38,7 +38,7 @@ namespace io {
     /**
      * Constructor.
      */
-    OutTrajectory(std::ostream &os, std::ostream &final);
+    OutTrajectory(std::ostream &os, std::ostream &final, int every=1);
     /**
      * write out the title block.
      */
@@ -54,11 +54,11 @@ namespace io {
     /**
      * write a velocity trajectory.
      */
-    void velocity_trajectory(std::ostream &os);
+    void velocity_trajectory(std::ostream &os, int every=1);
     /**
      * write a force trajectory.
      */
-    void force_trajectory(std::ostream &os);
+    void force_trajectory(std::ostream &os, int every=1);
     
   private:
     output_format m_format;
@@ -71,6 +71,10 @@ namespace io {
     bool m_pos;
     bool m_vel;
     bool m_force;
+
+    int m_every_pos;
+    int m_every_vel;
+    int m_every_force;
 
     void _print_timestep(t_simulation &sim, std::ostream &os);
     void _print_position(simulation::system &sys, simulation::Topology &topo,

@@ -12,5 +12,7 @@ namespace interaction
 #ifndef NDEBUG
   int debug_level = 0;
   int interaction_debug_level = 0;
+  int pairlist_debug_level = 0;
+  int forcefield_debug_level = 0;
 #endif
 }

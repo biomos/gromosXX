@@ -5,7 +5,7 @@
 
 template<typename t_simulation>
 inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
-						      std::ostream &final)
+						      std::ostream &final, int every)
   : m_format(reduced),
     m_old_format(reduced),
     m_pos_traj(&os),
@@ -14,8 +14,12 @@ inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
     m_force_traj(NULL),
     m_pos(true),
     m_vel(false),
-    m_force(false)
+    m_force(false),
+    m_every_pos(every),
+    m_every_vel(0),
+    m_every_force(0)
 {
+  assert(m_every_pos > 0);
 }
 
 template<typename t_simulation>
@@ -56,19 +60,22 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
   
   if (m_format == reduced){
 
-    _print_timestep(sim, *m_pos_traj);
-    _print_positionred(sim.system(), *m_pos_traj);
-    if (sim.system().boundary_condition() != math::vacuum)
-      _print_box(sim.system(), *m_pos_traj);
+    if(sim.steps() % m_every_pos == 0){
+      _print_timestep(sim, *m_pos_traj);
+      _print_positionred(sim.system(), *m_pos_traj);
+      if (sim.system().boundary_condition() != math::vacuum)
+	_print_box(sim.system(), *m_pos_traj);
+    }
     
-    if(m_vel){
+    if (m_vel && sim.steps() % m_every_vel == 0){
       _print_timestep(sim, *m_vel_traj);
       _print_velocityred(sim.system(), *m_vel_traj);
     }
     
-    if(m_force){
+    if(m_force && sim.steps() % m_every_force == 0){
+      if(sim.steps())
+	_print_forcered(sim.system(), *m_force_traj);
       _print_timestep(sim, *m_force_traj);
-      _print_forcered(sim.system(), *m_force_traj);
     }
 
   }
@@ -77,23 +84,29 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
     _print_position(sim.system(), sim.topology(), *m_final_traj);
     _print_velocity(sim.system(), sim.topology(), *m_final_traj);
     _print_box(sim.system(), *m_final_traj);
-    
+    // forces still go to the force trajectory
+    _print_forcered(sim.system(), *m_force_traj);
     // reset the format after one output (compare std::setw)
     m_format = m_old_format;    
   }
   else{
-    _print_timestep(sim, *m_pos_traj);
-    _print_position(sim.system(), sim.topology(), *m_pos_traj);
-    _print_box(sim.system(), *m_pos_traj);
+
+    if(sim.steps() % m_every_pos == 0){
+      _print_timestep(sim, *m_pos_traj);
+      _print_position(sim.system(), sim.topology(), *m_pos_traj);
+      _print_box(sim.system(), *m_pos_traj);
+    }
     
-    if(m_vel){
+    if (m_vel && sim.steps() % m_every_vel == 0){
       _print_timestep(sim, *m_vel_traj);
       _print_velocity(sim.system(), sim.topology(), *m_vel_traj);
     }
     
-    if(m_force){
+    if(m_force && sim.steps() % m_every_force == 0){
+      if (sim.steps())
+	_print_force(sim.system(), sim.topology(), *m_force_traj);
+
       _print_timestep(sim, *m_force_traj);
-      _print_force(sim.system(), sim.topology(), *m_force_traj);
     }
 
     // reset the format after one output (compare std::setw)
@@ -114,18 +127,22 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
 
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
-::velocity_trajectory(std::ostream &os)
+::velocity_trajectory(std::ostream &os, int every)
 {
   m_vel_traj = &os;
   m_vel = true;
+  m_every_vel = every;
+  assert(m_every_vel > 0);
 }
 
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
-::force_trajectory(std::ostream &os)
+::force_trajectory(std::ostream &os, int every)
 {
   m_force_traj = &os;
   m_force = true;
+  m_every_force = every;
+  assert(m_every_force > 0);
 }
 
 template<typename t_simulation>
