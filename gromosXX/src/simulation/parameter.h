@@ -476,12 +476,14 @@ namespace simulation
 	 * - shake_tolerance 0.0001
 	 * - lincs_order 4
 	 * - flexshake_readin false
+	 * - flexshake_mode 0
 	 */
 	constr_param_struct()
 	  : algorithm(constr_off),
 	    shake_tolerance(0.0001),
 	    lincs_order(4),
-	    flexshake_readin(false)
+	    flexshake_readin(false),
+	    flexshake_mode(0)
 	{}
 	
 	/**
@@ -501,6 +503,14 @@ namespace simulation
 	 * from configuration file.
 	 */
 	bool flexshake_readin;
+	/**
+	 * mode of flexible constraints.
+	 * - 0: kinetic and potential energy, approximate (standard)
+	 * - 1: only potential energy, approximate
+	 * - 2: kinetic and potential energy, exact (but not conservative)
+	 * - 3: only potential energy, exact (conservative ???)
+	 */
+	int flexshake_mode;
       };
       /**
        * parameter for solute.

@@ -415,7 +415,8 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
     else param.constraint.solute.algorithm = simulation::constr_off;
     
     _lineStream >> param.constraint.solute.shake_tolerance
-		>> param.constraint.solute.flexshake_readin;
+		>> param.constraint.solute.flexshake_readin
+		>> param.constraint.solute.flexshake_mode;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
       io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
@@ -425,6 +426,11 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
       io::messages.add("flexible shake and removal of centre of mass motion "
 		       "needs extra care!", "In_Parameter", io::message::warning);
 
+    if(param.constraint.solute.flexshake_mode < 0 ||
+       param.constraint.solute.flexshake_mode > 3)
+      io::messages.add("flexshake mode in CONSTRAINT block should be >= 0 and <= 3",
+		       "In_Parameter", io::message::error);
+    
   }
   else if (salg == "lincs"){
 
