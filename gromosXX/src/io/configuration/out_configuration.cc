@@ -25,6 +25,8 @@
 
 #include <io/print_block.h>
 
+#include <sstream>
+
 #include "out_configuration.h"
 
 #undef MODULE
@@ -1142,11 +1144,26 @@ void io::Out_Configuration
       for(size_t s = 0, s_to = conf.current().perturbed_energy_derivative_averages.size();
 	  s != s_to; ++s){
 
+	std::ostringstream ss, pre;
+	if (s){
+	  ss << "dE/dLAMBDA[" << s << "] ";
+	  pre << "dE/dl[" << s << "]";
+	}
+	else{
+	  ss << "dE/dLAMBDA ";
+	  pre << "dE/dl";
+	}
+	
 	conf.current().perturbed_energy_derivative_averages[s].average(e, ef, p, pf);
 	
-	print_ENERGY(m_output, e, topo.energy_groups(), "dE/dLAMBDA AVERAGES", "<dE/dl>_");
+	print_ENERGY(m_output, e, topo.energy_groups(),
+		     ss.str() + "AVERAGES", "<" + pre.str() + ">_");
+
 	m_output << "\n";
-	print_ENERGY(m_output, ef, topo.energy_groups(), "dE/dLAMBDA FLUCTUATIONS", "<<dE/dl>>_");
+
+	print_ENERGY(m_output, ef, topo.energy_groups(),
+		     ss.str() + "FLUCTUATIONS", "<<" + pre.str() + ">>_");
+
 	m_output << "\n";
       }
       
