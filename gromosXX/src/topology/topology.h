@@ -274,7 +274,7 @@ namespace topology
     /**
      * energy group of atom accessor
      */
-    const unsigned int atom_energy_group(unsigned int i)const{
+    unsigned int atom_energy_group(unsigned int i)const{
       assert(i < m_atom_energy_group.size());
       return m_atom_energy_group[i];
     };
@@ -293,7 +293,7 @@ namespace topology
     /**
      * return lambda
      */
-    const double lambda()const {return m_lambda;}
+    double lambda()const {return m_lambda;}
 
     /**
      * set lambda
@@ -303,12 +303,12 @@ namespace topology
     /**
      * old lambda
      */
-    const double old_lambda()const { return m_old_lambda; }
+    double old_lambda()const { return m_old_lambda; }
     
     /**
      * return nlam (exponent to lambda)
      */
-    const int lambda_exp()const {return m_lambda_exp;}
+    int lambda_exp()const {return m_lambda_exp;}
 
     /**
      * set lambda exponent.
