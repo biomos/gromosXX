@@ -363,6 +363,13 @@ namespace math
 	       v1(2) + v2(2));
   }
 
+  inline Vec operator-(Vec const &v1)
+  {
+    return Vec(-v1(0),
+	       -v1(1),
+	       -v1(2));
+  }
+  
   inline Vec operator-(Vec const &v1, Vec const &v2)
   {
     return Vec(v1(0) - v2(0),
