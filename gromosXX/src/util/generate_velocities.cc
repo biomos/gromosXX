@@ -28,6 +28,10 @@ void util::generate_velocities(double const temp, math::SArray const &mass,
 
   // get the rundom number generator
   gsl_rng *rng = gsl_rng_alloc(rng_type);
+
+  // set seed if not set by environment variable
+  if (gsl_rng_default_seed == 0)
+    gsl_rng_set (rng, seed);
 	
   // print a comment
   std::cout << "\t\trandom number generator: " << gsl_rng_name(rng)
