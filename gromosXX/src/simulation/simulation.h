@@ -4,7 +4,10 @@
  */
 
 #include "../interaction/forcefield/parameter.h"
+#include "topology/atom_iterator.h"
+#include "topology/atom_group_iterator.h"
 #include "topology/chargegroup_iterator.h"
+#include "topology/molecule_iterator.h"
 #include "topology/compound.h"
 #include "topology/bond.h"
 #include "topology/angle.h"

@@ -95,11 +95,11 @@ static void do_cg_interaction(simulation::chargegroup_iterator cg1,
 			      simulation::chargegroup_iterator cg2,
 			      interaction::simple_pairlist<t_simulation> &pl)
 {
-  simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin(),
+  simulation::Atom_Iterator a1 = cg1.begin(),
     a1_to = cg1.end();
   
   for( ; a1 != a1_to; ++a1){
-    for(simulation::chargegroup_iterator::atom_iterator
+    for(simulation::Atom_Iterator
 	  a2 = cg2.begin(),
 	  a2_to = cg2.end();
 	a2 != a2_to; ++a2){
@@ -123,11 +123,11 @@ static void do_cg_interaction_excl(t_simulation &sim,
 				   simulation::chargegroup_iterator cg2,
 				   interaction::simple_pairlist<t_simulation> &pl)
 {
-  simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin(),
+  simulation::Atom_Iterator a1 = cg1.begin(),
     a1_to = cg1.end();
   
   for( ; a1 != a1_to; ++a1){
-    for(simulation::chargegroup_iterator::atom_iterator
+    for(simulation::Atom_Iterator
 	  a2 = cg2.begin(),
 	  a2_to = cg2.end();
 	a2 != a2_to; ++a2){
@@ -149,11 +149,11 @@ static void do_cg_interaction_intra(t_simulation &sim,
 				   simulation::chargegroup_iterator cg1,
 				   interaction::simple_pairlist<t_simulation> &pl)
 {
-  simulation::chargegroup_iterator::atom_iterator a1 = cg1.begin(),
+  simulation::Atom_Iterator a1 = cg1.begin(),
     a1_to = cg1.end();
   
   for( ; a1 != a1_to; ++a1){
-    for(simulation::chargegroup_iterator::atom_iterator
+    for(simulation::Atom_Iterator
 	  a2(*a1+1);
 	a2 != a1_to; ++a2){
 

@@ -119,7 +119,7 @@ inline void io::OutG96Trajectory<t_simulation>
     trans = v_box - v;
     
     // atoms in a chargegroup
-    simulation::chargegroup_iterator::atom_iterator at_it = cg_it.begin(),
+    simulation::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
     for( ; at_it != at_to; ++at_it){
       r = pos(*at_it) + trans;
@@ -150,7 +150,7 @@ inline void io::OutG96Trajectory<t_simulation>
     if (mol >= topo.num_solvent_molecules(s)) ++s;
     
     // loop over the atoms
-    simulation::chargegroup_iterator::atom_iterator at_it = cg_it.begin(),
+    simulation::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
     // one chargegroup per solvent
     for(size_t atom=0; at_it != at_to; ++at_it, ++atom){
@@ -205,7 +205,7 @@ inline void io::OutG96Trajectory<t_simulation>
     trans = v_box - v;
     
     // atoms in a chargegroup
-    simulation::chargegroup_iterator::atom_iterator at_it = cg_it.begin(),
+    simulation::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
     for( ; at_it != at_to; ++at_it){
       r = pos(*at_it) + trans;
@@ -233,7 +233,7 @@ inline void io::OutG96Trajectory<t_simulation>
     if (mol >= topo.num_solvent_molecules(s)) ++s;
     
     // loop over the atoms
-    simulation::chargegroup_iterator::atom_iterator at_it = cg_it.begin(),
+    simulation::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
     for( ; at_it != at_to; ++at_it){
       r = pos(*at_it) + trans;
