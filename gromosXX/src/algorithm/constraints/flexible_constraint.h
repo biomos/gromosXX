@@ -6,6 +6,11 @@
 #ifndef INCLUDED_FLEXIBLE_CONSTRAINT_H
 #define INCLUDED_FLEXIBLE_CONSTRAINT_H
 
+namespace interaction
+{
+  class Nonbonded_Interaction;
+}
+
 namespace algorithm
 {
   /**
@@ -89,14 +94,77 @@ namespace algorithm
      * the nonbonded's for exact algorithm...
      * (only implemented for diatomic molecules...
      *  no bonded terms!)
-     * luckily only interface needed... (i sincerely hope so!)
      */
-    interaction::Interaction * m_nonbonded;
+    interaction::Nonbonded_Interaction * m_nonbonded;
 
     /**
      * the (undetermined) constrained forces (without the lambda factor)
      */
     std::vector<std::vector<math::Vec> > m_force;
+
+    template<math::boundary_enum B, math::virial_enum V>
+    int iteration
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     bool & convergence,
+     std::vector<double> & flex_len,
+     std::vector<bool> &skip_now,
+     std::vector<bool> &skip_next,
+     double dt,
+     math::Periodicity<B> const & periodicity,
+     bool do_constraint_force = false
+     );
+
+    template<math::boundary_enum B, math::virial_enum V>
+    int exact_iteration
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     bool & convergence,
+     std::vector<double> & flex_len,
+     std::vector<std::vector<math::Vec> > & force,
+     double dt,
+     math::Periodicity<B> const & periodicity
+     );
+
+    template<math::boundary_enum B, math::virial_enum V>
+    void calc_distance
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     std::vector<double> & flex_len
+     );
+
+    template<math::boundary_enum B, math::virial_enum V>
+    void calc_undetermined_forces
+    (
+     topology::Topology &topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     std::vector<double> & flex_len, 
+     std::vector<std::vector<math::Vec> > & force
+     );
+
+    template<math::boundary_enum B, math::virial_enum V>
+    void solute
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     std::vector<std::vector<math::Vec> > & force,
+     int & error
+     );
+
+    template<math::boundary_enum B, math::virial_enum V>
+    int approx_work
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     std::vector<double> const & flex_len,
+     double dt
+     );
 
   };
   
