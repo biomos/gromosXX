@@ -124,6 +124,27 @@ note: OpenMP parallelization available:
 
 -------------------------------------------------------------------------------
 
+===============================================================================
+
+WINDOWS (Visual Studio 2003 (NET)
+---------------------------------
+
+1. split up the nonbonded if necessary
+   (normally you would rather start from a distribution with all
+	the files already prepared)
+
+2. copy config.h.windows to config.h
+
+3. open the solution in MS Visual Studio.net
+
+4. adjust include paths in Projects/Options/
+   (you need Blitz headers, not compiled or installed ;-)
+
+4. build the solution...
+
+
+===============================================================================
+
 
 Copyright 1994, 1995, 1996, 1999, 2000, 2001, 2002 Free Software
 Foundation, Inc.
