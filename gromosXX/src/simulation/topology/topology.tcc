@@ -25,7 +25,7 @@ inline simulation::Topology::Topology()
 /**
  * integer atom code accessor.
  */
-inline int simulation::Topology::iac(size_t i)
+inline int simulation::Topology::iac(size_t const i)const
 {
   assert(i < m_iac.size());
   return m_iac[i];
@@ -275,6 +275,12 @@ inline std::set<int> & simulation::Topology::all_exclusion(size_t const i)
   return m_all_exclusion[i];
 }
 
+inline std::set<int> const & simulation::Topology::all_exclusion(size_t const i)const
+{
+  assert(i < m_all_exclusion.size());
+  return m_all_exclusion[i];
+}
+
 /**
  * exclusions for atom i.
  */
@@ -297,7 +303,7 @@ inline std::set<int> & simulation::Topology::one_four_pair(size_t const i)
  * iterator over the chargegrops
  */
 inline simulation::chargegroup_iterator 
-simulation::Topology::chargegroup_begin()
+simulation::Topology::chargegroup_begin()const
 {
   return chargegroup_iterator(m_chargegroup.begin());
 }
@@ -306,7 +312,7 @@ simulation::Topology::chargegroup_begin()
  * end of the chargegroup iterator.
  */
 inline simulation::chargegroup_iterator
-simulation::Topology::chargegroup_end()
+simulation::Topology::chargegroup_end()const
 {
   return chargegroup_iterator(m_chargegroup.end()-1);
 }
@@ -332,7 +338,7 @@ simulation::Topology::molecule_end()
 /**
  * the number of chargegroups present.
  */
-inline size_t simulation::Topology::num_chargegroups()
+inline size_t simulation::Topology::num_chargegroups()const
 {
   return m_chargegroup.size()-1;
 }
@@ -340,7 +346,7 @@ inline size_t simulation::Topology::num_chargegroups()
 /**
  * the number of solute chargegroups.
  */
-inline size_t simulation::Topology::num_solute_chargegroups()
+inline size_t simulation::Topology::num_solute_chargegroups()const
 {
   return m_num_solute_chargegroups;
 }

@@ -25,8 +25,15 @@ namespace algorithm
     typedef t_pressure pressure_algortihm_type;
     typedef t_distance_constraint distance_constraint_type;
     typedef t_integration integration_algorithm_type;
-    typedef interaction::twin_range_pairlist_cg<t_simulation> pairlist_type;
+    // typedef interaction::twin_range_pairlist_cg<t_simulation> pairlist_type;
+    typedef interaction::Basic_Pairlist<t_simulation,
+      interaction::Chargegroup_Range_Pairlist_Algorithm<t_simulation, 
+      interaction::Twinrange_Chargegroup_Filter<t_simulation,
+						interaction::Nonbonded_Base,
+						interaction::Nonbonded_Inner_Loop<
+      t_simulation, interaction::Storage> > > > pairlist_type;
     
+
     /**
      * Constructor.
      */

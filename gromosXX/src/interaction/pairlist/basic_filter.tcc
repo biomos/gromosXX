@@ -5,28 +5,9 @@
 
 template<typename t_simulation>
 inline bool
-interaction::Basic_Filter<t_simulation>::solute_pair(t_simulation const &sim,
+interaction::Basic_Filter<t_simulation>::exclusion_solute_pair(t_simulation const &sim,
 						     size_t const i,
 						     size_t const j)
-{
-  return filter_excluded_solute(sim, i, j);
-}
-
-template<typename t_simulation>
-inline bool
-interaction::Basic_Filter<t_simulation>::solvent_pair(t_simulation const &sim,
-						      size_t const i,
-						      size_t const j)
-{
-  return filter_excluded_solvent(sim, i, j);
-}
-
-template<typename t_simulation>
-inline bool
-interaction::Basic_Filter<t_simulation>
-::filter_excluded_solute(t_simulation const & sim,
-			 size_t const i,
-			 size_t const j)
 {
   // check it is not excluded
   if (sim.topology().all_exclusion(i).count(j))
@@ -36,10 +17,9 @@ interaction::Basic_Filter<t_simulation>
 
 template<typename t_simulation>
 inline bool
-interaction::Basic_Filter<t_simulation>
-::filter_excluded_solvent(t_simulation const & sim,
-			  size_t i,
-			  size_t j)
+interaction::Basic_Filter<t_simulation>::exclusion_solvent_pair(t_simulation const &sim,
+						      size_t const i,
+						      size_t const j)
 {
   size_t s = 0;
   for( ; i - sim.topology().num_solvent_atoms[s] > 0;
@@ -56,5 +36,4 @@ interaction::Basic_Filter<t_simulation>
   if (i == j) return true;
 
   return false;
-    
 }

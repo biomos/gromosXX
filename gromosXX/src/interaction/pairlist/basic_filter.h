@@ -17,17 +17,11 @@ namespace interaction
   class Basic_Filter
   {
   public:
-    bool solute_pair(t_simulation const &sim, size_t const i,
-		     size_t const j);
-    bool solvent_pair(t_simulation const &sim, size_t const i,
-		      size_t const j);
-    
-  protected:
-    bool filter_excluded_solute(t_simulation const &sim,
-				size_t const i, size_t const j);
-    bool filter_excluded_solvent(t_simulation const &sim,
-				 size_t const i, size_t const j);
-    
+    bool exclusion_solute_pair(t_simulation const &sim, size_t const i,
+			       size_t const j);
+    bool exclusion_solvent_pair(t_simulation const &sim, size_t const i,
+				size_t const j);
+
   };
   
   

@@ -8,15 +8,16 @@
 
 namespace interaction
 {
-  typedef std::vector<std::vector<unsigned int> > basic_pairlist_type;
+  typedef std::vector<std::vector<size_t> > basic_pairlist_type;
   
   /**
    * @class basic_pairlist
    * holds a pairlist and provides an iterator.
    */
-  template<typename t_simulation>
+  template<typename t_simulation, typename t_pairlist_algorithm>
   class Basic_Pairlist :
-    public basic_pairlist_type
+    public basic_pairlist_type,
+    public t_pairlist_algorithm
   {
   public:
     class iterator
@@ -44,27 +45,41 @@ namespace interaction
       /**
        * the pair: i
        */
-      unsigned int i();
+      size_t i();
       /**
        * the pair: j
        */
-      unsigned int j();
+      size_t j();
+      /**
+       * also the pair: j
+       */
+      size_t operator*();
       
-      void row(unsigned int i);
+      void row(size_t i);
       
     protected:
-      std::vector<std::vector<unsigned int> >::iterator m_i;
-      std::vector<unsigned int>::iterator m_j;
+      std::vector<std::vector<size_t> >::iterator m_i;
+      std::vector<size_t>::iterator m_j;
       basic_pairlist_type &m_pairlist;
+
     };
     
+    /**
+     * Constructor.
+     */
+    Basic_Pairlist(interaction::Nonbonded_Base &base);
+
     Basic_Pairlist::iterator begin();
     Basic_Pairlist::iterator end();
+
+    basic_pairlist_type m_pairlist;
+    
   };
 
-  template<typename t_simulation>
+  template<typename t_simulation, typename t_pairlist_algorithm>
   std::ostream & 
-  operator<<(std::ostream &os, Basic_Pairlist<t_simulation> &pl);
+  operator<<(std::ostream &os, Basic_Pairlist<t_simulation, 
+	     t_pairlist_algorithm> &pl);
   
 } // interaction
 

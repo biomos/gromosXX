@@ -21,7 +21,7 @@ namespace simulation
     {
     }
 
-    void cog(math::VArray &pos, math::Vec &v)
+    void cog(const math::VArray &pos, math::Vec &v)const
     {
       v = 0.0;
       for(Atom_Iterator it=begin(), to=end(); it!=to; ++it)

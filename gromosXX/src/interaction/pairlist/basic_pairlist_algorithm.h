@@ -14,14 +14,14 @@ namespace interaction
    */
   template<typename t_simulation,
 	   typename t_filter = Basic_Filter<t_simulation> >
-  class Basic_Pairlist_Algorithm :
-    public t_filter
+  class Basic_Pairlist_Algorithm
   {
   public:
     /**
      * Constructor.
      */
-    Basic_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > &pairlist);
+    Basic_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > &pairlist,
+			     Nonbonded_Base &base);
     /**
      * update the pairlist.
      */
@@ -29,6 +29,7 @@ namespace interaction
 
   protected:
     std::vector<std::vector<unsigned int> > & m_pairlist;
+    t_filter m_filter;
     
   };
   

@@ -19,16 +19,16 @@ namespace simulation
     /**
      * Constructor.
      */
-    Atom_Group_Iterator(t_group_it it)
+    Atom_Group_Iterator(t_group_it const it)
       : m_it(it)
     {
     }
   
-    bool operator==(Atom_Group_Iterator &it)
+    bool operator==(Atom_Group_Iterator const &it)const
     {
       return m_it == it.m_it;
     }
-    bool operator!=(Atom_Group_Iterator &it)
+    bool operator!=(Atom_Group_Iterator const &it)const
     {
       return !(*this == it);
     }
@@ -36,12 +36,12 @@ namespace simulation
     {
       ++m_it;
     }
-    void operator+=(size_t n)
+    void operator+=(size_t const n)
     {
       m_it += n;
     }
     
-    t_group_it const & operator*()
+    t_group_it const & operator*()const
     {
       return m_it;
     }
@@ -49,15 +49,15 @@ namespace simulation
      * maybe move this one out?
      * is it already too specified?
      */
-    Atom_Iterator begin()
+    Atom_Iterator begin()const
     {
       return Atom_Iterator(*m_it);
     }
-    Atom_Iterator end()
+    Atom_Iterator end()const
     {
       return Atom_Iterator(*(m_it+1));
     }
-    size_t num_atoms()
+    size_t num_atoms()const
     {
       return *(m_it+1) - *m_it;
     }

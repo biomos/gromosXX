@@ -5,8 +5,10 @@
 
 template<typename t_simulation, typename t_filter>
 interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
-::Basic_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > &pairlist)
-  : m_pairlist(pairlist)
+::Basic_Pairlist_Algorithm(std::vector<std::vector<unsigned int> > &pairlist,
+			   Nonbonded_Base &base)
+  : m_pairlist(pairlist),
+    m_filter(base)
 {
 }
 
@@ -21,12 +23,16 @@ void interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
   // empty the pairlist
   m_pairlist.clear();
   m_pairlist.resize(num_atoms);
+
+  // prepare the filter
+  m_filter.prepare();
  
   // solute
   for(i=0; i<num_solute_atoms; ++i){
     for(j=i+1; j<num_solute_atoms; ++j){
       
       // check solute exclusion
+      m_filter.exclusion_solute_pair(sim, i, j);
       
       m_pairlist[i].push_back(j);
     }
@@ -41,6 +47,7 @@ void interaction::Basic_Pairlist_Algorithm<t_simulation, t_filter>
     for(j=i+1; j<num_atoms; ++j){
       
       // check solvent exclusions
+      m_filter.exclusion_solvent_pair(sim, i, j);
       
       m_pairlist[i].push_back(j);
     }

@@ -15,15 +15,15 @@ namespace simulation
   class Atom_Iterator
   {
   public:
-    Atom_Iterator(size_t atom)
+    Atom_Iterator(size_t const atom)
       : m_atom(atom)
     {
     }
-    bool operator==(Atom_Iterator &it)
+    bool operator==(Atom_Iterator const &it)const
     {
       return m_atom == it.m_atom;
     }
-    bool operator!=(Atom_Iterator &it)
+    bool operator!=(Atom_Iterator const &it)const
     {
       return m_atom != it.m_atom;
     }
@@ -31,14 +31,14 @@ namespace simulation
     {
       ++m_atom;
     }
-    Atom_Iterator operator+(size_t n)
+    Atom_Iterator operator+(size_t n)const
     {
       Atom_Iterator dummy(*this);
       dummy.m_atom += n;
       return dummy;
     }
     
-    size_t operator*()
+    size_t operator*()const
     {
       return m_atom;
     }

@@ -260,6 +260,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
     if (m_calculate_pressure){
       // nonbonded (with virial)
       DEBUG(8, "md (create_forcefield): nonbonded with pressure");
+      /*
       interaction::Nonbonded_Virial_Interaction<t_simulation, 
 	interaction::twin_range_pairlist_cg<t_simulation> >
 	*the_nonbonded_interaction =
@@ -271,16 +272,16 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       DEBUG(10, "md (create forcefield): nonbonded with pressure read in");
 
       m_forcefield.push_back(the_nonbonded_interaction);
+      */
     }
     else{
       // nonbonded
       DEBUG(8, "md (create_forcefield): nonbonded without pressure");
-      interaction::Nonbonded_Interaction<t_simulation, 
-	interaction::twin_range_pairlist_cg<t_simulation> >
+      interaction::Nonbonded_Interaction<t_simulation, pairlist_type>
 	*the_nonbonded_interaction =
 	new interaction::Nonbonded_Interaction<t_simulation,
-	interaction::twin_range_pairlist_cg<t_simulation> >;
-      
+	pairlist_type>(m_simulation);
+
       topo >> *the_nonbonded_interaction;
       
       m_forcefield.push_back(the_nonbonded_interaction);
@@ -667,15 +668,18 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       (*m_print_file) << "shortrange\n" 
 		      << dynamic_cast<interaction::Nonbonded_Interaction
 	<simulation_type, pairlist_type> *>
-	(*it)->pairlist().short_range()
+	(*it)->pairlist()
 		      << std::endl;
 
-      (*m_print_file) << "longrange\n" 
-		      << dynamic_cast<interaction::Nonbonded_Interaction
-	<simulation_type, pairlist_type> *>
-	(*it)->pairlist().long_range()
-		      << std::endl;
-	
+    /**
+       // there is no longrange pairlist anymore!
+       (*m_print_file) << "longrange\n" 
+       << dynamic_cast<interaction::Nonbonded_Interaction
+       <simulation_type, pairlist_type> *>
+       (*it)->pairlist().long_range()
+       << std::endl;
+    */
+
     }
 	  
   }

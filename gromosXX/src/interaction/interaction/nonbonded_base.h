@@ -46,6 +46,25 @@ namespace interaction
      */
     void resize(size_t i);
 
+    /**
+     * initialize constants
+     */
+    template<typename t_simulation>
+    void initialize(t_simulation const &sim);
+    /**
+     * calculate the force and energy of an atom pair.
+     */
+    void lj_crf_interaction(math::Vec const &r,
+			    double const c6, double const c12,
+			    double const q,
+			    math::Vec & force, double & e_lj,
+			    double & e_crf);
+    /**
+     * calculate the reaction field force and energy of an atom pair.
+     */
+    void rf_interaction(math::Vec const &r, double const q,
+			math::Vec & force, double & e_rf);
+
   protected:
     /**
      * the lj parameter.
@@ -82,25 +101,6 @@ namespace interaction
      * divided by reaction field cutoff.
      */
     double m_crf_cut;
-
-    /**
-     * initialize constants
-     */
-    template<typename t_simulation>
-    void initialize(t_simulation const &sim);
-    /**
-     * calculate the force and energy of an atom pair.
-     */
-    void lj_crf_interaction(math::Vec const &r,
-			    double const c6, double const c12,
-			    double const q,
-			    math::Vec & force, double & e_lj,
-			    double & e_crf);
-    /**
-     * calculate the reaction field force and energy of an atom pair.
-     */
-    void rf_interaction(math::Vec const &r, double const q,
-			math::Vec & force, double & e_rf);
 
   };
   

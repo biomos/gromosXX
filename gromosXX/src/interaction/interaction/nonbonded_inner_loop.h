@@ -13,24 +13,26 @@ namespace interaction
    * standard non bonded inner loop.
    * no virial calculation.
    */
-  template<typename t_simulation, typename t_pairlist, typename t_storage>
+  template<typename t_simulation, typename t_storage>
   class Nonbonded_Inner_Loop
   {
   public:
     /**
      * Constructor.
      */
-    Nonbonded_Inner_Loop(t_storage &store, Nonbonded_Base &base);
+    Nonbonded_Inner_Loop(Nonbonded_Base &base, t_storage &storage);
     
     /**
      * interaction
      */
-    void do_interaction(t_simulation &sim, typename t_pairlist::iterator &it);
+    void interaction_inner_loop(t_simulation const &sim,
+				size_t const i, size_t const j);
 
     /**
      * 1-4 interaction
      */
-    void do_one_four_interaction(t_simulation &sim, typename t_pairlist::iterator &it);
+    void one_four_interaction_inner_loop(t_simulation &sim,
+					 size_t const i, size_t const j);
     
   protected:
     Nonbonded_Base &m_base;

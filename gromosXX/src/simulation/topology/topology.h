@@ -26,7 +26,7 @@ namespace simulation
     /**
      * integer atom code accessor.
      */
-    int iac(size_t i);
+    int iac(size_t const i)const;
     
     /**
      * masses accessor
@@ -128,6 +128,11 @@ namespace simulation
      * all exclusions for atom i. Exclusions and 1,4 interactions.
      */
     std::set<int> & all_exclusion(size_t const i);
+
+    /**
+     * const all exclusions for atom i. Exclusions and 1,4 interactions.
+     */
+    std::set<int> const & all_exclusion(size_t const i)const;
     /**
      * exclusions for atom i.
      */
@@ -139,19 +144,19 @@ namespace simulation
     /**
      * the number of chargegroups present.
      */
-    size_t num_chargegroups();
+    size_t num_chargegroups()const;
     /**
      * the number of solute chargegroups.
      */
-    size_t num_solute_chargegroups();
+    size_t num_solute_chargegroups()const;
     /**
      * iterator over the chargegrops
      */
-    chargegroup_iterator chargegroup_begin();
+    chargegroup_iterator chargegroup_begin()const;
     /**
      * end of the chargegroup iterator.
      */
-    chargegroup_iterator chargegroup_end();
+    chargegroup_iterator chargegroup_end()const;
     /**
      * the molecules.
      */

@@ -3,29 +3,38 @@
  * gathers common include directives for the interaction library.
  */
 
+// general
 #include "interaction/interaction.h"
 #include "forcefield/forcefield.h"
 
-#include "pairlist/simple_filter.h"
-#include "pairlist/simple_pairlist.h"
-#include "pairlist/twin_range_pairlist.h"
-#include "pairlist/twin_range_pairlist_cg.h"
+// nonbonded base
+#include "interaction/storage.h"
+#include "interaction/nonbonded_base.h"
+#include "interaction/nonbonded_inner_loop.h"
 
+// nonbonded filter
 #include "pairlist/basic_filter.h"
+#include "pairlist/twinrange_filter.h"
+#include "pairlist/twinrange_chargegroup_filter.h"
+
+// nonbonded pairlist algorithm
 #include "pairlist/basic_pairlist_algorithm.h"
+#include "pairlist/chargegroup_range_pairlist_algorithm.h"
+
+// nonbonded pairlist
 #include "pairlist/basic_pairlist.h"
 
+// nonbonded interaction
 #include "interaction/nonbonded_interaction.h"
-#include "interaction/nonbonded_virial_interaction.h"
+//#include "interaction/nonbonded_virial_interaction.h"
+
+// bonded interactions
 #include "interaction/quartic_bond_interaction.h"
 #include "interaction/perturbed_quartic_bond_interaction.h"
 #include "interaction/harmonic_bond_interaction.h"
 #include "interaction/angle_interaction.h"
 #include "interaction/improper_dihedral_interaction.h"
 #include "interaction/dihedral_interaction.h"
-
-#include "interaction/nonbonded_base.h"
-#include "interaction/nonbonded_inner_loop.h"
 
 #ifndef NDEBUG
 namespace interaction
