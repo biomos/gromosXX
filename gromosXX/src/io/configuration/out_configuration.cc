@@ -1085,6 +1085,19 @@ void io::Out_Configuration
   print_ENERGY(m_output, ef, topo.energy_groups(), "ENERGY FLUCTUATIONS", "<<E>>_");
   m_output << "\n";
 
+  m_output << "\n";
+  print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
+  m_output << "\n";
+  print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
+
+  m_output << "\n\n";
+  if (sim.param().pcouple.calculate){
+    print_MATRIX(m_output, p, "PRESSURE AVERAGE");
+    m_output << "\n";
+    print_MATRIX(m_output, pf, "PRESSURE FLUCTUATION");
+  }
+  m_output << "\n\n";    
+
   if (sim.param().perturbation.perturbation){
     if (sim.param().perturbation.dlamt){
       conf.current().perturbed_energy_derivative_averages.average(e, ef, p, pf,
@@ -1107,18 +1120,6 @@ void io::Out_Configuration
     }
     
   }
-  m_output << "\n";
-  print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
-  m_output << "\n";
-  print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
-
-  m_output << "\n\n";
-  if (sim.param().pcouple.calculate){
-    print_MATRIX(m_output, p, "PRESSURE AVERAGE");
-    m_output << "\n";
-    print_MATRIX(m_output, pf, "PRESSURE FLUCTUATION");
-  }
-  m_output << "\n\n";    
 }
 
 void io::Out_Configuration::_print_flexv(configuration::Configuration const &conf,
