@@ -1,0 +1,442 @@
+<HTML>
+<head>
+<title>GromosXX Input File</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1>GromosXX Input File</h1>
+
+<ul>
+<li><a href="#title">TITLE</a></li>
+<li><a href="#system">SYSTEM</a></li>
+<li><a href="#start">START</a></li>
+<li><a href="#step">STEP</a></li>
+<li><a href="#boundary">BOUNDARY</a></li>
+<li><a href="#submolecules">SUBMOLECULES</a></li>
+<li><a href="#tcouple">TCOUPLE</a></li>
+<li><a href="#pcouple">PCOUPLE</a></li>
+<li><a href="#centreofmass">CENTREOFMASS</a></li>
+<li><a href="#print">PRINT</a></li>
+<li><a href="#write">WRITE</a></li>
+<li><a href="#constraint">CONSTRAINT</a></li>
+<li><a href="#force">FORCE</a></li>
+<li><a href="#plist">PAIRLIST</a></li>
+<li><a href="#longrange">LONGRANGE</a></li>
+<li><a href="#posrest">POSREST</a></li>
+<li><a href="#perturb">PERTURBATION</a></li>
+<li><a href="#jval">J-Value</a></li>
+<li><a href="#pscale">Periodic Scaling</a></li>
+</ul>
+
+<br>
+
+<h2><a name="title">TITLE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+TITLE
+  your title.
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="system">SYSTEM</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+SYSTEM
+# NPM : protein molecules (0, 1)
+# NSM : solvent molecules (>= 0)
+#      NPM      NSM 
+         1        0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="start">START</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+START
+#  NTX
+#       read X
+#              set V to zero if TEMPI=0.0
+#                      read V
+#    1  yes    yes     no
+#    2  yes    no      yes
+#
+#  INIT
+#     shake X
+#            shake V
+#	               centre of mass motion removal if NTCM=1
+#     1   yes    yes   yes
+#     2    no    yes   yes
+#     3    no     no   yes
+#     4    no     no    no
+#      NTX     INIT      IG     TEMPI      HEAT  NTXO   BOLTZ
+         1        1  210185       0.0   0.00000     1   8.31441E-3
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="step">STEP</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+STEP
+#   NSTLIM  number of steps
+#   T       initial time
+#   DT      time step
+#
+#   NSTLIM         T        DT
+       100       0.0     0.005
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="boundary">BOUNDARY</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+BOUNDARY
+#  NTB
+#    vacuum, rectangular, triclinic, truncoct
+#    old form:
+#      <0 : truncoct
+#      0  : vacuum
+#      >0 : rectangular
+#      |NTB| = 2 : pressure calculation
+#
+#  BOX, BETA ignored
+#  NRDBOX : read box from coordinates file (1)
+#
+#         NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
+  rectangular       0.0       0.0       0.0      90.0       1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="submolecules">SUBMOLECULES</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+SUBMOLECULES
+#  solute submolecules. used to calculate a molecular virial and
+#  molecular internal, rotational and translational temperatures.
+#     NSPM  NSP(1.. NSPM)
+        10    6 12 18 24 30 36 42 48 54 60
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="tcouple">TCOUPLE</a></h2>
+new format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+MULTIBATH
+#	algorithm
+#		weak-coupling
+#		nose-hoover
+#		nose-hoover-chains	num
+#		(where num is the number of chains to use)
+	nose-hoover-chains	3
+#   number of baths
+    2
+#   temp0  tau
+    300    0.010
+    300    0.010
+#   different couplings
+    1
+#   last   com-bath  ir-bath
+    60     0         1
+#   (this couples the first 60 atoms com motion to bath 0 and
+#    the internal / rotational motion to bath 1)
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+old format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+TCOUPLE
+#      NTT     TEMP0      TAUT
+         0     300.0     0.010
+         0     300.0     0.010
+         0     300.0     0.010
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pcouple">PCOUPLE</a></h2>
+
+new format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PCOUPLE03
+#	COUPLE:	off, calc, scale
+#	SCALE:  off, iso, aniso, full
+#	VIRIAL: none, atomic, molecular
+#
+#   COUPLE  SCALE   COMP        TAUP    VIRIAL
+    calc    iso     4.575E-4    0.5     atomic
+#   reference pressure
+    0.06102     0.00000     0.00000
+    0.00000     0.06102     0.00000
+    0.00000     0.00000     0.06102
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+old format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PCOUPLE
+#      NTP     PRES0      COMP      TAUP  
+         0  0.061020  4.575E-4   0.10000
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="centreofmass">CENTREOFMASS</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+CENTREOFMASS
+#  NDFMIN : number of degrees of freedom to remove
+#    NTCM : remove initial center of mass motion
+#    NSCM : remove centre of mass motion every NSCM steps
+#
+#  the code handles removal of only translational or rotational
+#  centre of mass motion. for periodic systems only tranlsational
+#  centre of mass motion should be removed (I believe).
+#
+#   NDFMIN      NTCM      NSCM
+         0         0   1000000
+END
+ROTTRANS
+# roto-translational constraints
+# use either centre of mass removal or roto-translational constraints
+# not both!
+#
+#  RTC : on (1), off (0)
+#  RTC
+     1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="print">PRINT</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PRINT
+#  NTPR: print out energies, etc. every NTPR steps
+#  NTPL: print out C.O.M motion and total energy fitting every NTPL steps
+#  NTPP: =1 perform dihedral angle transition monitoring
+#     NTPR      NTPL      NTPP
+       100      1000         0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="write">WRITE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+WRITE
+# NTWX  : write position trajectory every NTWX steps
+# NTWSE : write normal trajectory (0)
+# NTWV  : write velocity trajectory every NTWV steps
+# NTWE  : write energy trajectory every NTWE steps
+# NTWG  : write free energy trajectory every NTWG steps
+# NTWB  : write block averaged energies (and free energies if NTWG > 0) trajectory
+# NTPW  : write formatted (1)
+#
+#     NTWX     NTWSE      NTWV      NTWE      NTWG      NTWB    NTPW
+      100          0         0       100         0       100       1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="constraint">CONSTRAINT</a></h2>
+
+new format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+CONSTRAINT
+#	NTC
+#		1	"solvent"	solvent only
+#		2	"hydrogen"	solvent and solute bonds containing hydrogens
+#		3	"all"		solvent and solute all bonds
+#		4	"specified"	solvent and constraints in the CONSTRAINTS block
+	3
+#
+#	solute algorithm
+#		shake
+#		lincs
+#		flexshake
+		lincs
+#			lincs options
+#			order
+			4
+#
+#	solvent algorithm
+		shake
+#			shake options
+#			tolerance
+			0.0001
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+old format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+SHAKE
+#      NTC       TOL
+         3   0.00001
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="force">FORCE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+FORCE
+#      NTF array
+# bonds    angles    imp.     dihe     charge nonbonded
+# H        H         H        H
+  0  0     1  1      1  1     1  1     1  1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     1        60           
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="plist">PAIRLIST</a></h2>
+new format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PLIST03
+#	algorithm: standard (gromos96 like pairlist)
+#		       grid (XX grid pairlist)
+#	SIZE:	   grid cell size (or auto = 0.5 * RCUTP)
+#	TYPE:	   chargegoup (chargegroup based cutoff)
+#			   atomic (atom based cutoff)
+#
+#	algorithm	NSNB	RCUTP	RCUTL	SIZE	TYPE
+	grid		5	0.8	1.4	auto	chargegroup
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+old format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PLIST
+#     NTNB      NSNB     RCUTP     RCUTL
+         1         5       0.8       1.4
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="longrange">LONGRANGE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+LONGRANGE
+# EPSRF     APPAK      RCRF
+   54.0       0.0       1.4
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="posrest">POSREST</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+POSREST
+#     values for NTR
+#     0: no position re(con)straining
+#     1: use CHO
+#     2: use CHO/ ATOMIC B-FACTORS
+#     3: position constraining
+#      NTR       CHO   NRDRX
+         0     2.5E4       0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<br>
+Example <a href="posres.html">Position Restraints</a> file
+
+<h2><a name="perturb">PERTURB</a></h2>
+new format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTURB03
+#	NTG:
+#			on	perturbation on 
+#				(nonbonded: all atom pairs involving a perturbed atom)
+#			off	perturbation off
+#			scaled	nonbonded: perturbation on for all atom pairs 
+					   with a scaled interaction,
+#					   otherwise off
+#				bonded: normal perturbation on
+#	SCALING:
+#			on (activate interaction scaling)
+#  			off (deactivate interaction scaling)
+#			the scaling information is in the
+#			perturbation topology.
+#	NTG:		on / off
+#	NTG	RLAM	DLAMT	NLAM	SCALING
+	on	0.5	1.0	1.0	off
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+old format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTURB
+# NTG: 0 no perturbation is applied
+#    : 1 calculate dV/dRLAM perturbation
+#      NTG     NRDGL     RLAM     DLAMT        RMU   DMUT
+         0         0        0   0.00000    0.00000   0.00
+#   ALPHLJ    ALPHC     NLAM       MMU
+         0        0        1         1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<br>
+Example <a href="pttopo.html">perturbation topology</a>
+
+<h2><a name="jval">J-VAL</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+J-VAL
+# NTJR
+#       off (0)                          no J-Value restraints
+#       instantaneous (1)        instantaneous J-Value restraints
+#       averaged (2)             time averaged J-Value restraints
+#       biquadratic (3)      biquadratic J-Value restraints
+# TAUJR
+#       coupling time
+# NRDJR
+#    0: start from initial values (J0)
+#    1: read in time averages (for continuation run)
+#        NTJR    TAUJR     NRDJR
+  biquadratic      5.0         0 
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+
+<h2><a name="pscale">PSCALE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PSCALE
+#       what kind of periodic scaling?
+#               JREST (based on J-Value restraints)
+#       JREST
+#       parameters for J-Value restraints periodic scaling
+#       KDIH            maximum scaling factor for dihedral angle potential
+#       KJ                      maximum scaling factor for J-Value restraint potential
+#       T                       periode of cosine scaling function (ps)
+#       difference      minimum difference in J-Value to start a scaling period
+#       KDIH    KJ      T       difference      ratio   read
+        0.1     0.1     0.2     0.7             1.0     0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+
+
+</body>
+</html>

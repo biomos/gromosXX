@@ -1,0 +1,132 @@
+<HTML>
+<head>
+<title>GromosXX Perturbation Topology</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1>GromosXX Perturbation Topology</h1>
+
+<ul>
+<li><a href="#title">title</a></li>
+<li><a href="#scaled">scaled interactions</a></li>
+<li><a href="#pertatom">atoms</a></li>
+<li><a href="#pertatompair">atom pairs</a></li>
+<li><a href="#pertond">bonds</a></li>
+<li><a href="#pertangle">angles</a></li>
+<li><a href="#pertimp">improper dihedral angles</a></li>
+<li><a href="#pertdih">dihedral angles</a></li>
+</ul>
+
+<h2><a name="title">TITLE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+TITLE
+  Example Perturbation of Diethylstilbestrol (DES) into Estradiol (E2)
+  22-2-2000, Chris Oostenbrink
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="scaled">Scaled Interactions</a></h2>
+Specific (nonbonded) interactions can be scaled dependent on lambda.
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+SCALEDINTERACTIONS
+# number of scaled interactions
+  1
+# scale nonbonded interaction between atoms of energy group 1 and
+# atoms of energy group 2:
+# from 0.5 (at lambda = 0) to 0.1 (at lambda = 1)
+  1     2      0.5     0.1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pertatom">Atoms</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTATOM03
+# number of perturbed atoms
+   2
+#  
+#   NR RES NAME IAC(A) MASS(A)  CHARGE(A) IAC(B) MASS(B) CHARGE(B)   ALJ  ACRF
+     3   1  CZ1     11  12.011       0.15     12  16.011      0.25   1.0  1.0
+    17   1  CB2     14  15.035       0.00     13  10.035      0.10   0.0  0.0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pertatompair">Atom Pairs</a></h2>
+Interactions might change from excluded to 1,4 or to not excluded
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTATOMPAIR03
+# number of perturbed atom pairs
+   1
+#  interaction:
+#    0 : excluded
+#    1 : normal interaction
+#    2 : 1,4 interaction
+#
+#  NR(I) NR(J) INTERACTION(A) INTERACTION(B)
+    2     5    2              1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pertbond">Bonds</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTBOND03
+# number of perturbed bonds
+	3
+#   atom(i) atom(j) bond_type(A) bond_type(B)
+       4       6           15	        26
+       6      12           15   	25
+       3       8           15   	25
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pertangle">Bond Angles</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTBANGLE03
+# number of perturbed bond angles
+    3
+#    atom(i) atom(j) atom(k) type(A) type(B)
+        2       3       8      26       8
+        4       6      12      26       7
+        3       8      10      26       7
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pertimp">Imporoper Dihedral Angles</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTIMPDIHEDRAL03
+# number of perturbed improper dihedrals
+    2
+#    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)
+       12      13      10       6        1       2
+       18      19      13      16        1       2
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pertdih">Dihedral Angles</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTDIHEDRAL03
+# number of perturbed dihedrals
+    2
+#    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)
+	6      12      13      14        1      17
+       12      13      18      19        4      17
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+</body>
