@@ -6,6 +6,7 @@
 #ifndef INCLUDED_IN_TOPOLOGY_H
 #define INCLUDED_IN_TOPOLOGY_H
 
+#include <gromosXX/io/ifp.h>
 #include <gromosXX/io/instream.h>
 
 namespace io {
@@ -16,13 +17,18 @@ namespace io {
    * it into topology::Topology
    * @sa topology::Topology
    */
-  class In_Topology : public GInStream {
+  class In_Topology : public GInStream, public IFP {
 
   public:
     /**
      * Default constructor.
      */
     In_Topology() {}
+    /**
+     * destructor
+     */
+    virtual ~In_Topology() {}
+    
     /**
      * Constructor.
      */
@@ -41,34 +47,34 @@ namespace io {
     /**
      * Read in the harmonic bond parameter.
      */
-    void read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b);
+    virtual void read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b);
 
     /**
      * Read in the quartic bond parameter.
      */    
-    void read_g96_bonds(std::vector<interaction::bond_type_struct> &b);
+    virtual void read_g96_bonds(std::vector<interaction::bond_type_struct> &b);
 
     /**
      * Read in the bond angle parameter.
      */    
-    void read_angles(std::vector<interaction::angle_type_struct> &a);
+    virtual void read_angles(std::vector<interaction::angle_type_struct> &a);
 
     /**
      * Read in the improper dihedral parameter.
      */
-    void read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i);
+    virtual void read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i);
 
     /**
      * Read in the dihedral parameter.
      */
-    void read_dihedrals(std::vector<interaction::dihedral_type_struct> &d);
+    virtual void read_dihedrals(std::vector<interaction::dihedral_type_struct> &d);
     
     /**
      * Read in the nonbonded interaction types (lennard-jones).
      */
-    void read_lj_parameter(std::vector<std::vector
-			   <interaction::lj_parameter_struct> > 
-			   & lj_parameter);
+    virtual void read_lj_parameter(std::vector<std::vector
+				   <interaction::lj_parameter_struct> > 
+				   & lj_parameter);
   };
 
 } // io

@@ -11,7 +11,7 @@ namespace interaction
   int create_g96_bonded(interaction::Forcefield & ff,
 			topology::Topology const & topo,
 			simulation::Parameter const & param,
-			io::In_Topology & it,
+			io::IFP & it,
 			bool quiet = false);
 
 }

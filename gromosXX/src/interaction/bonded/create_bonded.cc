@@ -28,8 +28,8 @@
 #include <interaction/bonded/perturbed_improper_dihedral_interaction.h>
 #include <interaction/bonded/perturbed_dihedral_interaction.h>
 
-#include <io/instream.h>
-#include <io/topology/in_topology.h>
+// #include <io/instream.h>
+#include <io/ifp.h>
 
 #include "create_bonded.h"
 
@@ -43,7 +43,7 @@ template<typename t_interaction_spec>
 static void _create_g96_bonded(interaction::Forcefield & ff,
 			       topology::Topology const &topo,
 			       simulation::Parameter const &param,
-			       io::In_Topology &it,
+			       io::IFP & it,
 			       bool quiet = false)
 {
   
@@ -153,9 +153,9 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
 }
 
 int interaction::create_g96_bonded(interaction::Forcefield & ff,
-				    topology::Topology const & topo,
-				    simulation::Parameter const & param,
-				    io::In_Topology & it, bool quiet)
+				   topology::Topology const & topo,
+				   simulation::Parameter const & param,
+				   io::IFP & it, bool quiet)
 {
   switch(param.pcouple.virial){
     case math::no_virial:

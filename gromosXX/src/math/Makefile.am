@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_builddir)/src
+INCLUDES = -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/math
 

@@ -70,6 +70,7 @@ namespace io
   extern int configuration_debug_level;
   extern int parameter_debug_level;
   extern int topology_debug_level;
+  extern int forcefield_debug_level;
 }
 
 namespace configuration

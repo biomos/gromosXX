@@ -17,5 +17,6 @@ namespace io
   int configuration_debug_level = 0;
   int parameter_debug_level = 0;
   int topology_debug_level = 0;
+  int forcefield_debug_level = 0;
 #endif
 }
