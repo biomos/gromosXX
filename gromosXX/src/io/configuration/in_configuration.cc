@@ -197,32 +197,75 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   if (param.jvalue.mode != simulation::restr_off){
 
-    if (!param.jvalue.read_av || param.jvalue.mode == simulation::restr_inst){
+    if (param.jvalue.read_av && param.jvalue.mode == simulation::restr_inst)
+      io::messages.add("instantaneous J-value restraints, ignoring reading of averages",
+		       "in_configuration",
+		       io::message::warning);
       
-      if (param.jvalue.read_av)
-	io::messages.add("instantaneous jvalue restraints, ignoring reading of averages",
+    else if (!param.jvalue.read_av && param.jvalue.mode != simulation::restr_inst){
+
+      buffer = m_block["JVALRESEXPAVE03"];
+      if (buffer.size()){
+	block_read.insert("JVALRESEXPAVE03");
+
+	io::messages.add("re-initialising J-restraint averages, non-continuous simulation",
 			 "in_configuration",
 			 io::message::warning);
-      
-      else if (param.jvalue.mode != simulation::restr_inst)
-	io::messages.add("re-initialising J-Value averages, non-continuous simulation",
+      }
+      else{
+	io::messages.add("initialising J-restraint averages",
 			 "in_configuration",
-			 io::message::warning);
-      
+			 io::message::notice);
+      }
     }
     else {
-      buffer = m_block["JVALRESEXPAVE"];
+
+      buffer = m_block["JVALRESEXPAVE03"];
       if (buffer.size())
       {
+	block_read.insert("JVALRESEXPAVE03");
 	_read_jvalue_av(buffer, conf.special().jvalue_av, topo.jvalue_restraints());
       }
       else{
-	io::messages.add("reading in of J-Value averages requested but JVALRESEXPAVE block not found",
-			  "in_configuration",
-			  io::message::error);
+	io::messages.add("reading in of J-restraints averages requested "
+			 "but JVALRESEXPAVE03 block not found",
+			 "in_configuration",
+			 io::message::error);
       }
     }
   } // jvalue averages
+
+  if (param.pscale.jrest){
+
+    if (!param.pscale.read_data){
+      buffer = m_block["PSCALEJREST"];
+      if (buffer.size()){
+	block_read.insert("PSCALEJREST");
+	io::messages.add("re-initialising J-restraints periodic scaling data, non-continuous simulation",
+			 "in_configuration",
+			 io::message::warning);
+      }
+      else{
+	io::messages.add("initialising J-restraints periodic scaling data",
+			 "in_configuration",
+			 io::message::notice);
+      }
+    }
+    else {
+      buffer = m_block["PSCALEJREST"];
+      if (buffer.size())
+      {
+	block_read.insert("PSCALEJREST");
+	_read_pscale_jrest(buffer, conf.special().pscale, topo.jvalue_restraints());
+      }
+      else{
+	io::messages.add("reading in of J-restraints periodic scaling data requested "
+			 "but PSCALEJREST block not found",
+			 "in_configuration",
+			 io::message::error);
+      }
+    }
+  } // PSCALE JREST
 
   // warn for unread input data
   for(std::map<std::string, std::vector<std::string> >::const_iterator
@@ -620,6 +663,13 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   int i, j, k, l;
   double av;
   
+  if (buffer.size() - 1 != jval_res.size()){
+    io::messages.add("number of J-restraints does not match with number of "
+		     "continuation data", "in_configuration",
+		     io::message::error);
+    return false;
+  }
+  
   for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
 
     _lineStream.clear();
@@ -652,3 +702,66 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   return true;
 }
 
+
+bool io::In_Configuration::
+_read_pscale_jrest(std::vector<std::string> &buffer,
+		   configuration::Configuration::special_struct::pscale_struct &pscale,
+		   std::vector<topology::jvalue_restraint_struct> const & jval_res)
+{
+  DEBUG(8, "read pscale jrest data");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  std::vector<topology::jvalue_restraint_struct>::const_iterator 
+    jval_it = jval_res.begin(),
+    jval_to = jval_res.end();
+
+  if (buffer.size() - 1 != jval_res.size()){
+    io::messages.add("number of J-restraints does not match with number of "
+		     "J-restraints for periodic scaling", "in_configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  pscale.t.clear();
+  pscale.scaling.clear();
+  
+  int i, j, k, l, s;
+  double t;
+  
+  for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> i >> j >> k >> l >> s >> t;
+    
+    if (int(jval_it->i) != i-1 ||
+	int(jval_it->j) != j-1 ||
+	int(jval_it->k) != k-1 ||
+	int(jval_it->l) != l-1){
+
+      io::messages.add("Wrong J-Restraint in PSCALEJREST block",
+		       "In_Configuration",
+		       io::message::error);
+      DEBUG(8, "wrong J-Restraint in PSCALEJREST block!");
+      return false;
+    }
+    
+    pscale.t.push_back(t);
+    pscale.scaling.push_back(s);
+
+    DEBUG(10, "\tt = " << t << "\tscaling = " << s);
+  }
+  
+  if (jval_it != jval_to || it != to){
+    io::messages.add("Wrong number of J-Restraints in PSCALEJREST block",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  return true;
+}

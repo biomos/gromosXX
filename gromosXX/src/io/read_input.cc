@@ -28,6 +28,7 @@
 #include <interaction/forcefield/forcefield.h>
 
 #include "read_input.h"
+#include "read_special.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -126,6 +127,9 @@ int io::read_input(io::Argument const & args,
   // do this after reading in a perturbation topology
   sim.multibath().calculate_degrees_of_freedom(topo);
 
+  // read in the special data
+  io::read_special(args, topo, conf, sim);
+
   try{
     conf_file.open(args["conf"].c_str());
   }
@@ -140,6 +144,7 @@ int io::read_input(io::Argument const & args,
 		     io::message::critical);
     return -1;
   }
+
 
   io::messages.add("configuration read from " + args["conf"],
 		   "read input",

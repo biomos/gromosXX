@@ -65,14 +65,6 @@ int interaction::Periodic_Scaling<t_interaction_spec>
 	  conf.special().pscale.t[n] > sim.param().pscale.ratio * sim.param().pscale.T // long enough w/o scaling
 	  ){
 	
-	/*
-	std::cout << "step = " << sim.steps()
-		  << " t[n] = " << conf.special().pscale.t[n]
-		  << " ratio = " << sim.param().pscale.ratio
-		  << " T = " << sim.param().pscale.T
-		  << "\n";
-	*/
-
 	std::cout << "PSCALE JRest[" << n+1 << "] started with Jcurr "
 		  << conf.special().jvalue_curr[n]
 		  << " Jav " << conf.special().jvalue_av[n]
@@ -109,16 +101,19 @@ int interaction::Periodic_Scaling<t_interaction_spec>
 	}
 	else{
 	  // do the scaling
-	  double s = sin(conf.special().pscale.t[n] * math::Pi / sim.param().pscale.T);
-	  s *= s;
-	  const double Jfactor = 1.0 - (1.0 - sim.param().pscale.KJ) * s;
-	  it->K = Jfactor * conf.special().pscale.KJ[n];
+	  it->K = scale(conf.special().pscale.t[n],
+			sim.param().pscale.T,
+			sim.param().pscale.KJ)
+	    * conf.special().pscale.KJ[n];
 	  
 	  // do we have a dihedral potential as well?
 	  if (conf.special().pscale.JtoDihedral[n] != -1){
-	    const double Dfactor = 1.0 - (1.0 - sim.param().pscale.KDIH) * s;
+
 	    m_DI->parameter()[conf.special().pscale.JtoDihedral[n]].K =
-	      Dfactor * conf.special().pscale.KDIH[n];
+	      scale(conf.special().pscale.t[n],
+		    sim.param().pscale.T,
+		    sim.param().pscale.KDIH)
+	      * conf.special().pscale.KDIH[n];
 	  }
 	}
       }
@@ -143,6 +138,7 @@ int interaction::Periodic_Scaling<t_interaction_spec>
        simulation::Simulation &sim,
        bool quiet)
 {
+  DEBUG(8, "PSCALE::init");
   
   if (!quiet)
     std::cout << "PERIODIC SCALING\n";
@@ -153,11 +149,21 @@ int interaction::Periodic_Scaling<t_interaction_spec>
     conf.special().pscale.JtoDihedral.resize(num_J, -1);
     conf.special().pscale.KDIH.resize(num_J, 0.0);
     conf.special().pscale.KJ.resize(num_J, 0.0);
-    conf.special().pscale.t.resize(num_J, 0.0);
-    conf.special().pscale.scaling.resize(num_J, 0);
 
+    if (!sim.param().pscale.read_data){
+      conf.special().pscale.t.resize(num_J, 0.0);
+      conf.special().pscale.scaling.resize(num_J, 0);
+    }
+    else{
+      DEBUG(12, "t.size() = " << conf.special().pscale.t.size()
+	    << " num_J = " << num_J);
+      
+      assert(conf.special().pscale.t.size() == unsigned(num_J));
+      assert(conf.special().pscale.scaling.size() == unsigned(num_J));
+    }
+    
     // loop over the J-Values
-    std::vector<topology::jvalue_restraint_struct>::const_iterator 
+    std::vector<topology::jvalue_restraint_struct>::iterator 
       it = topo.jvalue_restraints().begin(),
       to = topo.jvalue_restraints().end();
     
@@ -208,8 +214,31 @@ int interaction::Periodic_Scaling<t_interaction_spec>
 	}
       }
     
-      
-    }
+      if (sim.param().pscale.read_data){
+	// initialise the force constants!
+	if (conf.special().pscale.scaling[n]){
+
+	  it->K = scale(conf.special().pscale.t[n],
+			sim.param().pscale.T,
+			sim.param().pscale.KJ)
+	    * conf.special().pscale.KJ[n];
+	  
+	  // do we have a dihedral potential as well?
+	  if (conf.special().pscale.JtoDihedral[n] != -1){
+
+	    m_DI->parameter()[conf.special().pscale.JtoDihedral[n]].K =
+	      scale(conf.special().pscale.t[n],
+		    sim.param().pscale.T,
+		    sim.param().pscale.KDIH)
+	      * conf.special().pscale.KDIH[n];
+	  }
+	
+	} // already in scaling?
+
+      } // data read in?
+
+    } // loop over J-value restraints
+
   } // JREST periodic scaling
   
   if (!quiet)
@@ -217,3 +246,18 @@ int interaction::Periodic_Scaling<t_interaction_spec>
 
   return 0;
 }
+
+
+/**
+ * scale a force constant
+ */
+template<typename t_interaction_spec>
+double interaction::Periodic_Scaling<t_interaction_spec>
+::scale(double t, double T, double s)
+{
+  double sc = sin(t * math::Pi / T);
+  sc *= sc;
+  return 1.0 - (1.0 - s) * sc;
+}
+
+    

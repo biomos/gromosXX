@@ -814,8 +814,9 @@ namespace simulation
        * - T 1.0
        * - difference 1.0
        * - ratio 1.0
+       * - read_data false
        */
-      pscale_struct() : jrest(false), KDIH(1.0), KJ(1.0), T(1.0), difference(1.0), ratio(1.0)
+      pscale_struct() : jrest(false), KDIH(1.0), KJ(1.0), T(1.0), difference(1.0), ratio(1.0), read_data(false)
       {
       }
       
@@ -843,7 +844,11 @@ namespace simulation
        * ration between non-scaled and scaled time
        */
       double ratio;
-
+      /**
+       * read data for continuous runs
+       */
+      bool read_data;
+      
     } /** pscale parameters */ pscale;
 
   };

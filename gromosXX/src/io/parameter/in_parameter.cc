@@ -1795,7 +1795,7 @@ void io::In_Parameter::read_PSCALE(simulation::Parameter &param)
 
       _lineStream >> param.pscale.KDIH >> param.pscale.KJ 
 		  >> param.pscale.T >> param.pscale.difference
-		  >> param.pscale.ratio;
+		  >> param.pscale.ratio >> param.pscale.read_data;
 
       if (_lineStream.fail())
 	io::messages.add("bad line in PSCALE block",

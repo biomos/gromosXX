@@ -234,6 +234,10 @@ namespace io {
 		       topology::Topology const &topo,
 		       std::ostream &os);
 
+    void _print_pscale_jrest(configuration::Configuration const &conf,
+			     topology::Topology const &topo,
+			     std::ostream &os);
+
     void _print_blockaveraged_energyred(configuration::Configuration const & conf,
 					std::ostream & os);
 

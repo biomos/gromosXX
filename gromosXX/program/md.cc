@@ -19,7 +19,6 @@
 #include <util/error.h>
 
 #include <io/read_input.h>
-#include <io/read_special.h>
 #include <io/print_block.h>
 
 #include <time.h>
@@ -93,8 +92,6 @@ int main(int argc, char *argv[]){
     io::Out_Configuration traj("GromosXX\n");
 
     io::read_input(args, topo, conf, sim,  md);
-
-    io::read_special(args, topo, conf, sim);
 
     traj.title("GromosXX\n" + sim.param().title);
 

@@ -81,6 +81,13 @@ namespace io {
 			 std::vector<double> & jvalue_av,
 			 std::vector<topology::jvalue_restraint_struct> const & jval_res);
 
+    /**
+     * read Periodic Scaling (PSCALE) data.
+     */
+    bool _read_pscale_jrest(std::vector<std::string> &buffer,
+			    configuration::Configuration::special_struct::pscale_struct &pscale,
+			    std::vector<topology::jvalue_restraint_struct> const & jval_res);
+
   };
   
 

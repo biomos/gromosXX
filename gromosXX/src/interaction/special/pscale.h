@@ -48,6 +48,11 @@ namespace interaction
 
   private:
     /**
+     * scale a force constant
+     */
+    double scale(double t, double T, double s);
+
+    /**
      * Dihedral interaction
      */
     interaction::Dihedral_Interaction<t_interaction_spec> * m_DI;

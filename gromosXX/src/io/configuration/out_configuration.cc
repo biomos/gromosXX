@@ -238,6 +238,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_jvalue(conf, topo, m_final_conf);
     }
 
+    if(sim.param().pscale.jrest){
+      _print_pscale_jrest(conf, topo, m_final_conf);
+    }
+
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0){
       _print_old_timestep(sim, m_force_traj);
@@ -1229,6 +1233,31 @@ void io::Out_Configuration::_print_jvalue(configuration::Configuration const &co
   }
   os << "END\n";
 
+}
+
+void io::Out_Configuration::_print_pscale_jrest(configuration::Configuration const &conf,
+						topology::Topology const &topo,
+						std::ostream &os)
+{
+  DEBUG(10, "PSCALE JREST data");
+  
+  std::vector<topology::jvalue_restraint_struct>::const_iterator
+    jval_it = topo.jvalue_restraints().begin(),
+    jval_to = topo.jvalue_restraints().end();
+  
+  os << "PSCALEJREST\n";
+
+  for(int i=0; jval_it != jval_to; ++jval_it, ++i){
+    
+    os << std::setw(15) << jval_it->i+1
+       << std::setw(10) << jval_it->j+1
+       << std::setw(10) << jval_it->k+1
+       << std::setw(10) << jval_it->l+1
+       << std::setw(10) << conf.special().pscale.scaling[i]
+       << std::setw(15) << conf.special().pscale.t[i]
+       << "\n";
+  }
+  os << "END\n";
 }
 
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e)
