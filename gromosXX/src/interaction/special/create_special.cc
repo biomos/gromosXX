@@ -103,7 +103,7 @@ static void _create_special(interaction::Forcefield & ff,
     }
     
     interaction::Periodic_Scaling<t_interaction_spec> * ps = 
-      new interaction::Periodic_Scaling<t_interaction_spec>(ff);
+      new interaction::Periodic_Scaling<t_interaction_spec>(ff, param);
 
     ff.push_back(ps);
   }

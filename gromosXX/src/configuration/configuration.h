@@ -155,6 +155,11 @@ namespace configuration
 	 * scale time (no scaling if 0.0)
 	 */
 	std::vector<double> t;
+	/**
+	 * scaling right now?
+	 */
+	std::vector<int> scaling;
+	
       } /** periodic scaling information */ pscale;
 
     }; // special

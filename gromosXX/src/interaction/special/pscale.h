@@ -21,7 +21,8 @@ namespace interaction
     /**
      * Constructor.
      */
-    Periodic_Scaling(interaction::Forcefield & ff);
+    Periodic_Scaling(interaction::Forcefield & ff,
+		     simulation::Parameter const & param);
 
     /**
      * Destructor.

@@ -812,8 +812,10 @@ namespace simulation
        * - KDIH 1.0
        * - KJ 1.0
        * - T 1.0
+       * - difference 1.0
+       * - ratio 1.0
        */
-      pscale_struct() : jrest(false), KDIH(1.0), KJ(1.0), T(1.0)
+      pscale_struct() : jrest(false), KDIH(1.0), KJ(1.0), T(1.0), difference(1.0), ratio(1.0)
       {
       }
       
@@ -833,7 +835,15 @@ namespace simulation
        * periodicity of the consine scaling function.
        */
       double T;
-      
+      /**
+       * difference in J that starts a scaling.
+       */
+      double difference;
+      /**
+       * ration between non-scaled and scaled time
+       */
+      double ratio;
+
     } /** pscale parameters */ pscale;
 
   };

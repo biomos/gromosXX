@@ -1793,7 +1793,9 @@ void io::In_Parameter::read_PSCALE(simulation::Parameter &param)
 
       param.pscale.jrest = true;
 
-      _lineStream >> param.pscale.KDIH >> param.pscale.KJ >> param.pscale.T;
+      _lineStream >> param.pscale.KDIH >> param.pscale.KJ 
+		  >> param.pscale.T >> param.pscale.difference
+		  >> param.pscale.ratio;
 
       if (_lineStream.fail())
 	io::messages.add("bad line in PSCALE block",
@@ -1806,6 +1808,9 @@ void io::In_Parameter::read_PSCALE(simulation::Parameter &param)
 			 "In_Parameter", io::message::error);
       if (param.pscale.T < 0.0)
 	io::messages.add("bad value for T in PSCALE block (negative)",
+			 "In_Parameter", io::message::error);
+      if (param.pscale.difference < 0.0)
+	io::messages.add("bad value for difference in PSCALE block (negative)",
 			 "In_Parameter", io::message::error);
     }
     else{
