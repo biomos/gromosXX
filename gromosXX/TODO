@@ -25,6 +25,7 @@ Release 0.0.3
 		PERTBOND03 : ok
 	-	check the triclinic computational box
 	-	add checks to the check_state() methods
+	ok	energy fluctuations
 
 -------------
 
@@ -34,7 +35,7 @@ Release 0.0.3
 	-	options for different compilers (see blitz)
 	
 
-
+	- 	EM
 	-	P3M, PME
 	-	path integral
 	-	SD, (MC?)

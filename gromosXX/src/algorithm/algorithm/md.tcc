@@ -571,6 +571,11 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   
   m_pressure.initialize(ntp, pres0, comp, tau);
 
+  // initialize the energy fluctuations
+  m_simulation.system().energy_averages().
+    resize(m_simulation.system().energies().bond_energy.size(),
+	   m_simulation.system().energies().kinetic_energy.size());
+
   // time to simulate
   int num_steps;
   double t0;
@@ -690,6 +695,7 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
   temperature_algorithm().calculate_kinetic_energy(m_simulation);
   // and sum up the energy arrays
   m_simulation.system().energies().calculate_totals();
+  m_simulation.system().energy_averages().update(m_simulation.system().energies(), m_dt);
   
   if (m_print_energy && m_simulation.steps() % m_print_energy == 0){
     io::print_MULTIBATH(std::cout, m_simulation.multibath());

@@ -2,15 +2,26 @@
 GromosXX install instructions
 -----------------------------
 
-./Config.sh
-mkdir obj
-cd obj
-../configure
-make
-make install
-(this will install GromosXX in obj/bin obj/lib obj/include.
+To install the package type
+
+1. ./Config.sh
+2. mkdir OBJ
+3. cd OBJ
+4. ../configure
+5. make
+6. make install
+
+(this will install GromosXX in OBJ/bin OBJ/lib OBJ/include.
 you can change this by specifying the --prefix=PATH option to
-configure)
+configure.)
+
+./Config.sh is a wrapper of the following commands:
+1. mkdir -p config
+2. aclocal
+3. libtoolize
+4. autoconf
+5. automake --add-missing
+
 
 necessary libraries
 -------------------

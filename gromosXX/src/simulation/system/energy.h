@@ -43,7 +43,7 @@ namespace simulation
     std::vector<std::string> group_name;
     
     void zero();
-    void resize(size_t s);
+    void resize(size_t const energy_groups, size_t const multi_baths = 0);
     void calculate_totals();
     
   };

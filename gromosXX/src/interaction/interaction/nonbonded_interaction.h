@@ -117,6 +117,11 @@ namespace interaction
      * the long-range force.
      */
     math::VArray m_longrange_force;
+
+    /**
+     * long range energies.
+     */
+    simulation::Energy m_longrange_energy;
     
     /**
      * calculate the interactions.

@@ -175,6 +175,15 @@ int main(int argc, char *argv[])
       std::cout << "\nwriting final structure" << std::endl;
       the_MD.trajectory() << io::final << the_MD.simulation();
 
+      simulation::Energy energy, fluctuation;
+      the_MD.simulation().system().energy_averages().average(energy, fluctuation);
+      
+      io::print_ENERGY(std::cout, energy,
+		       the_MD.simulation().topology().energy_groups(), "AVERAGE ENERGIES");
+
+      io::print_ENERGY(std::cout, fluctuation,
+		       the_MD.simulation().topology().energy_groups(), "ENERGY FLUCTUATIONS");
+
     }
     
     std::cout << "\nMD finished successfully\n\n" << std::endl;

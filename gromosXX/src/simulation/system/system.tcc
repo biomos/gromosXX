@@ -291,6 +291,26 @@ simulation::System<b>::energies()
 }
 
 /**
+ * const energy averages accessor.
+ */
+template<math::boundary_enum b>
+inline simulation::Energy_Average const & 
+simulation::System<b>::energy_averages()const
+{
+  return m_energy_average;
+}
+
+/**
+ * energy averages accessor.
+ */
+template<math::boundary_enum b>
+inline simulation::Energy_Average & 
+simulation::System<b>::energy_averages()
+{
+  return m_energy_average;
+}
+
+/**
  * lambda derivative of the energy accessor.
  */
 template<math::boundary_enum b>

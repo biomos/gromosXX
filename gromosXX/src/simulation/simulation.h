@@ -4,6 +4,7 @@
  */
 
 #include "system/energy.h"
+#include "system/energy_average.h"
 #include "system/system.h"
 #include "topology/compound.h"
 #include "topology/bond.h"

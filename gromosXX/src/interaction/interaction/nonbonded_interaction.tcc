@@ -128,6 +128,8 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
     DEBUG(7, "\tlong range");
     m_longrange_force.resize(sim.system().force().size());
     m_longrange_force = 0.0;
+
+    m_longrange_energy.resize(sim.system().energies().bond_energy.size());
     
     do_interactions(sim, m_pairlist.long_range().begin(),
 		    m_pairlist.long_range().end(),
@@ -142,6 +144,16 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 
   // add long-range force
   sim.system().force() += m_longrange_force;
+  
+  // and long-range energies
+  for(size_t i = 0; i < m_longrange_energy.lj_energy.size(); ++i){
+    for(size_t j = 0; j < m_longrange_energy.lj_energy.size(); ++j){
+      sim.system().energies().lj_energy[i][j] += 
+	m_longrange_energy.lj_energy[i][j];
+      sim.system().energies().crf_energy[i][j] += 
+	m_longrange_energy.crf_energy[i][j];
+    }
+  }
 
   // add 1,4 - interactions
   do_14_interactions(sim);
@@ -193,8 +205,16 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
   math::VArray &pos = sim.system().pos();
 
   math::VArray *force;
-  if (range == shortrange) force = &sim.system().force();
-  else force = &m_longrange_force;
+  simulation::Energy *energy;
+  
+  if (range == shortrange){
+    force = &sim.system().force();
+    energy = &sim.system().energies();
+  }
+  else{
+    force = &m_longrange_force;
+    energy = &m_longrange_energy;
+  }
   
   DEBUG(7, "\tcalculate interactions");  
 
@@ -219,12 +239,14 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
     (*force)(*it) -= f;
 
     // energy
-    sim.system().energies().lj_energy[sim.topology().atom_energy_group(it.i())]
+    (*energy).lj_energy[sim.topology().atom_energy_group(it.i())]
       [sim.topology().atom_energy_group(*it)] += e_lj;
 
-    sim.system().energies().crf_energy[sim.topology().atom_energy_group(it.i())]
+    (*energy).crf_energy[sim.topology().atom_energy_group(it.i())]
       [sim.topology().atom_energy_group(*it)] += e_crf;
-    DEBUG(11, "\ti and j " << sim.topology().atom_energy_group(it.i()) << " " << sim.topology().atom_energy_group(*it));
+
+    DEBUG(11, "\ti and j " << sim.topology().atom_energy_group(it.i())
+	  << " " << sim.topology().atom_energy_group(*it));
     
   }
   

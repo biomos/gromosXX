@@ -13,6 +13,8 @@ include_HEADERS = 		simulation.h \
 				system/system.tcc \
 				system/energy.h \
 				system/energy.tcc \
+				system/energy_average.h \
+				system/energy_average.tcc \
 				topology/bond.h \
 				topology/angle.h \
                                 topology/improper_dihedral.h \

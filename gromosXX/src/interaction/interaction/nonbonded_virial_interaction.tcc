@@ -110,13 +110,20 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
   math::SArray &charge = sim.topology().charge();
 
   math::VArray *force;
-  if (range == shortrange) force = &sim.system().force();
-  else force = &m_longrange_force;
-  
+  simulation::Energy *energy;
   math::Matrix *virial;
-  if (range == shortrange) virial = &sim.system().virial();
-  else virial = &m_longrange_virial;
-
+  
+  if (range == shortrange){
+    force = &sim.system().force();
+    virial = &sim.system().virial();
+    energy = &sim.system().energies();
+  }
+  else{
+    force = &m_longrange_force;
+    virial = &m_longrange_virial;
+    energy = &m_longrange_energy;
+  }
+  
   DEBUG(7, "\tcalculate interactions with virial");  
 
   for( ; it != to; ++it){
@@ -151,10 +158,10 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
 	  * f(j);
 
     // energy
-    sim.system().energies().lj_energy[sim.topology().atom_energy_group(it.i())]
+    (*energy).lj_energy[sim.topology().atom_energy_group(it.i())]
       [sim.topology().atom_energy_group(*it)] += e_lj;
 
-    sim.system().energies().crf_energy[sim.topology().atom_energy_group(it.i())]
+    (*energy).crf_energy[sim.topology().atom_energy_group(it.i())]
       [sim.topology().atom_energy_group(*it)] += e_crf;
 
   }

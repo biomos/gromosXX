@@ -146,6 +146,16 @@ namespace simulation
     simulation::Energy & energies();
     
     /**
+     * const energy averages.
+     */
+    simulation::Energy_Average const & energy_averages()const;
+    
+    /**
+     * energy averages.
+     */
+    simulation::Energy_Average & energy_averages();
+
+    /**
      * lambda derivative of the energies.
      */
     simulation::Energy & lambda_energies();
@@ -261,6 +271,11 @@ namespace simulation
      */
     Energy m_energy;
 
+    /**
+     * the average energies and fluctuations.
+     */
+    Energy_Average m_energy_average;
+    
     /**
      * the lambda derivative of the energy.
      */

@@ -183,7 +183,10 @@ bool algorithm::Shake<t_simulation>
       const math::Vec &ref_i = sys.old_pos()(first+it->i);
       const math::Vec &ref_j = sys.old_pos()(first+it->j);
 
-      math::Vec ref_r = ref_i - ref_j;
+      
+      math::Vec ref_r;
+      sys.periodicity().nearest_image(ref_i, ref_j, ref_r);
+
       double sp = dot(ref_r, r);
 	  
       if(sp < constr_length2 * math::epsilon){
@@ -192,6 +195,8 @@ bool algorithm::Shake<t_simulation>
 			 io::message::critical);
 	DEBUG(5, "ref i " << ref_i << " ref j " << ref_j);
 	DEBUG(5, "free i " << pos_i << " free j " << pos_j);
+	DEBUG(5, "ref r " << ref_r);
+	DEBUG(5, "r " << r);
 	
 	throw std::runtime_error("SHAKE failure in ??? (SHAKE)");
       }
