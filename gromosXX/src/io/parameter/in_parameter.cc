@@ -599,7 +599,7 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
-  int ntwse, ntwp;
+  int ntwse, ntpw;
   
   _lineStream >> param.write.position
 	      >> ntwse
@@ -607,7 +607,7 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
 	      >> param.write.energy
 	      >> param.write.free_energy
 	      >> param.write.block_average
-	      >> ntwp;
+	      >> ntpw;
   
   if (_lineStream.fail())
     io::messages.add("bad line in WRITE block",
@@ -621,8 +621,8 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
   if(ntwse!=0)
     io::messages.add("NTWSE != 0 not supported",
 		     "In_Parameter", io::message::error);
-  if(ntwp!=1)
-    io::messages.add("NTWP != 0 not supported",
+  if(ntpw!=1)
+    io::messages.add("NTPW != 1 not supported",
 		     "In_Parameter", io::message::error);
   if(param.write.position < 0)
     io::messages.add("WRITE block: NTWX should be >= 0",
