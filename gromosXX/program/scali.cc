@@ -11,6 +11,7 @@
 #include <stdexcept>
 
 #include "../src/debug.h"
+#include "../src/timing.h"
 
 #include <math/gmath.h>
 #include <io/message.h>
@@ -27,6 +28,7 @@
 
 // global variables for debug
 #include "../src/debug.cc"
+#include "../src/timing.cc"
 
 using namespace math;
 

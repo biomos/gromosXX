@@ -57,6 +57,8 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
   if(!(sim.steps() % sim.nonbonded().update())){
     // create a pairlist
 
+    double pairlist_start = now();
+    
     // zero the longrange forces, energies, virial
     force() = 0.0;
     energies().zero();
@@ -66,10 +68,17 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
     DEBUG(7, "\tupdate the parlist");
     m_pairlist_algorithm.update(sim, *this);
     DEBUG(7, "\tpairlist updated");
+    
+    timing.pairlist += now() - pairlist_start;
+    ++timing.count_pairlist;
+
   }
 
   // calculate forces / energies
   DEBUG(7, "\tshort range");
+
+  double shortrange_start = now();
+
   do_interactions(sim, m_pairlist.begin(),
 		  m_pairlist.end() );
 
@@ -148,6 +157,10 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
       }
     }
   } // do perturbed
+
+  timing.shortrange += now() - shortrange_start;
+  ++timing.count_shortrange;
+
 }
 
 /**

@@ -240,9 +240,14 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
     return 1;
   }
   
+  double md_start = now();
+
   run();
   
   post_md();
+
+  timing.total += now() - md_start;
+  print_timing(std::cout);
 
   return 0;
 }
@@ -297,12 +302,20 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
 {
     // integrate
     DEBUG(8, "md: integrate");
+    double integrate_start = now();
+
     m_integration.step(m_simulation, m_forcefield, m_dt);
-    
+
+    timing.integration += now() - integrate_start;
+    ++timing.count_integration;
+
+
     if (m_print_pairlist && m_simulation.steps() % m_print_pairlist == 0){
       print_pairlists();
     }
       
+    double shake_time = now();
+
     DEBUG(8, "md: shake");
     try{
       // std::cout << "shake solute:  " << 
@@ -320,6 +333,10 @@ void algorithm::MD<t_md_spec, t_interaction_spec>
       (*m_trajectory) << m_simulation;
       throw;
     }
+    
+    timing.constraints += now() - shake_time;
+    ++timing.count_constraints;
+
 }
 
 template<typename t_md_spec, typename t_interaction_spec>

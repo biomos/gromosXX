@@ -11,6 +11,7 @@
 #include <stdexcept>
 
 #include "../src/debug.h"
+#include "../src/timing.h"
 
 #include <math/gmath.h>
 #include <io/message.h>
@@ -25,8 +26,9 @@
 // special includes
 #include <algorithm/integration/runge_kutta.h>
 
-// global variables for debug
+// global variables for debug and timing
 #include "../src/debug.cc"
+#include "../src/timing.cc"
 
 using namespace math;
 

@@ -43,11 +43,15 @@ Release 0.0.3
 	ok	free energy trajectory
 	ok	flexible shake
 	ok	perturbed shake
+	ok	COM removal
+	ok	slow growth
+	ok	pressure average
+	ok	timing functions
 
 -------------
 
 	ok	reorganise iterators (and utility classes) -> avoid circular includes, use stl
-	-	atomic virial
+	ok	atomic virial
 	ok	center of mass motion removal (constraining)
 	-	options for different compilers (see blitz)
 	
@@ -57,7 +61,7 @@ Release 0.0.3
 	-	path integral
 	-	SD, (MC?)
 	-	special forces
-	-	perturbation & Tim / Bekker algorithm:
+	partly	perturbation & Tim / Bekker algorithm:
 		no perturbed atom in bins => 1. normal, 2. perturbed &
 		bins, 3. perturbed & perturbed
 

@@ -17,6 +17,7 @@ int algorithm::do_md(io::Argument &args)
 {
   // decide which code options to use
   // we need the input file!
+
   io::InInput input;
   DEBUG(7, "opening input");
   std::ifstream *input_file = new std::ifstream(args["input"].c_str());

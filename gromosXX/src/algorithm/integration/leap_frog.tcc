@@ -32,10 +32,15 @@ void algorithm::Leap_Frog<t_simulation, t_thermostat>
 {
   // one force calculation per step
   DEBUG(5, "Leap frog step");
+
+  double force_start = now();
   
   sim.system().exchange_force();
   DEBUG(7, "Leap frog: calculate interactions");
   ff.calculate_interactions(sim);
+
+  timing.force += now() - force_start;
+  ++timing.count_force;
   
   DEBUG(7, "Leap frog: velocities");
   velocities(sim.system(), sim.topology(), dt);
@@ -45,7 +50,7 @@ void algorithm::Leap_Frog<t_simulation, t_thermostat>
 
   DEBUG(7, "Leap frog: positions");
   positions(sim.system(), dt);
-  
+
 }
 
 /**

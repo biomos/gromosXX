@@ -55,6 +55,9 @@ interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
   if(!(sim.steps() % sim.nonbonded().update())){
     // create a pairlist
     // zero the longrange forces, energies, virial
+
+    double pairlist_start = now();
+    
     force() = 0.0;
     energies().zero();
     DEBUG(15, "zero the longrange lambda energies");
@@ -64,8 +67,14 @@ interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
     DEBUG(7, "\tupdate the parlist");
     m_pairlist_algorithm.update(sim, *this);
     DEBUG(7, "\tpairlist updated");
+
+    timing.pairlist += now() - pairlist_start;
+    ++timing.count_pairlist;
+    
   }
 
+  double shortrange_start = now();
+  
   // calculate forces / energies
   DEBUG(7, "\tshort range");
 
@@ -104,7 +113,12 @@ interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
   if(sim.nonbonded().RF_exclusion()){
     DEBUG(7, "\tRF excluded interactions and self term");
     do_RF_excluded_interactions(sim);
+  
   }
+
+  timing.shortrange += now() - shortrange_start;
+  ++timing.count_shortrange;
+  
 }
 
 /**
