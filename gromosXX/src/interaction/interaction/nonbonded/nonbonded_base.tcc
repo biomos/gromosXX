@@ -102,7 +102,7 @@ inline void interaction::Nonbonded_Base
   // Perturbation
   m_crf_2 = sim.nonbonded().RF_constant() / 2.0;
   m_cut2 = sim.nonbonded().RF_cutoff() * sim.nonbonded().RF_cutoff();
-  
+  set_lambda(sim.topology().lambda(), sim.topology().nlam());
 }
 
 /**
@@ -228,4 +228,75 @@ inline double const  interaction::Nonbonded_Base
 {
   return m_crf_2cut3i;
 }
+/**
+ * Perturbation:
+ * lambda value for state A
+ */
+inline double const interaction::Nonbonded_Base::A_lambda()const
+{
+  return m_A_lambda;
+}
+/**
+ * Perturbation:
+ * lambda value for state B
+ */
+inline double const interaction::Nonbonded_Base::B_lambda()const
+{
+  return m_B_lambda;
+}
 
+/**
+ * Perturbation:
+ * lambda value for state A to the power nlam
+ */
+inline double const interaction::Nonbonded_Base::A_lambda_n()const
+{
+  return m_A_lambda_n;
+}
+/**
+ * Perturbation:
+ * lambda value for state B to the power nlam
+ */
+inline double const interaction::Nonbonded_Base::B_lambda_n()const
+{
+  return m_B_lambda_n;
+}
+/**
+ * Perturbation:
+ * lambda value for state A to the power nlam-1
+ */
+inline double const interaction::Nonbonded_Base::A_lambda_n_1()const
+{
+  return m_A_lambda_n_1;
+}
+/**
+ * Perturbation:
+ * lambda value for state B to the power nlam-1
+ */
+inline double const interaction::Nonbonded_Base::B_lambda_n_1()const
+{
+  return m_B_lambda_n_1;
+}
+/**
+ * Perturbation:
+ * set the lambdas
+ */
+inline void interaction::Nonbonded_Base::set_lambda(double const l, 
+						    int const n)
+{
+  DEBUG(5, "initializing lambdas");
+  m_A_lambda = 1-l;
+  m_B_lambda = l;
+  m_A_lambda_n = pow(m_A_lambda, n);
+  m_B_lambda_n = pow(m_B_lambda, n);
+  m_A_lambda_n_1 = pow(m_A_lambda, n-1);
+  m_B_lambda_n_1 = pow(m_B_lambda, n-1);
+  DEBUG(5, "\tA:     " << m_A_lambda);
+  DEBUG(5, "\tB:     " << m_B_lambda);
+  DEBUG(5, "\tA^n:   " << m_A_lambda_n);
+  DEBUG(5, "\tB^n:   " << m_B_lambda_n);
+  DEBUG(5, "\tA^n-1: " << m_A_lambda_n_1);
+  DEBUG(5, "\tB^n-1: " << m_B_lambda_n_1);
+}
+
+ 

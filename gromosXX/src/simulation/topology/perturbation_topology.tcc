@@ -61,6 +61,12 @@ simulation::Perturbation_Topology::lambda(double const l)
   m_lambda = l;
 }
 
+inline int const
+simulation::Perturbation_Topology::nlam()const
+{
+  return m_nlam;
+}
+
 inline int
 simulation::Perturbation_Topology::nlam()
 {

@@ -529,6 +529,11 @@ inline const double simulation::Topology::lambda()const
   return 0.0;
 }
 
+inline const int simulation::Topology::nlam()const
+{
+  return 1;
+}
+
 namespace simulation
 {
   /**

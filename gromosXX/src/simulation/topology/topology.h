@@ -228,6 +228,10 @@ namespace simulation
      * return lambda
      */
     const double lambda()const;
+    /**
+     * return nlam
+     */
+    const int nlam()const;
     
   private:
     /**

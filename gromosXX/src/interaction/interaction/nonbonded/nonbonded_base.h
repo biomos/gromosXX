@@ -85,6 +85,41 @@ namespace interaction
 			     math::Vec & force, double & e_rf, double & de_rf);
     
     double const crf_2cut3i()const;
+     /**
+     * Perturbation:
+     * lambda value for state A
+     */
+    double const A_lambda()const;
+    /**
+     * Perturbation:
+     * lambda value for state B
+     */
+    double const B_lambda()const;
+    /**
+     * Perturbation:
+     * lambda value for state A to the power nlam
+     */
+    double const A_lambda_n()const;
+    /**
+     * Perturbation:
+     * lambda value for state B to the power nlam
+     */
+    double const B_lambda_n()const;
+    /**
+     * Perturbation:
+     * lambda value for state A to the power nlam-1
+     */
+    double const A_lambda_n_1()const;
+    /**
+     * Perturbation:
+     * lambda value for state B to the power nlam-1
+     */
+    double const B_lambda_n_1()const;
+    /**
+     * Perturbation:
+     * set the lambdas
+     */
+    void set_lambda(double const l, int const n);
     
 
   protected:
@@ -134,7 +169,36 @@ namespace interaction
      * reaction field cutoff ^2
      */
     double m_cut2;
-    
+    /**
+     * Perturbation:
+     * lambda value for state A
+     */
+    double m_A_lambda;
+    /**
+     * Perturbation:
+     * lambda value for state B
+     */
+    double m_B_lambda;
+    /**
+     * Perturbation:
+     * lambda value for state A to the power nlam
+     */
+    double m_A_lambda_n;
+    /**
+     * Perturbation:
+     * lambda value for state B to the power nlam
+     */
+    double m_B_lambda_n;
+    /**
+     * Perturbation:
+     * lambda value for state A to the power nlam-1
+     */
+    double m_A_lambda_n_1;
+    /**
+     * Perturbation:
+     * lambda value for state B to the power nlam-1
+     */
+    double m_B_lambda_n_1;
 
   };
   

@@ -55,6 +55,11 @@ namespace simulation
     void lambda(double const l);
     
     /**
+     * lambda dependence for nonbonded interactions const
+     */
+    int const nlam()const;
+    
+    /**
      * lambda dependence for nonbonded interactions
      */
     int nlam();

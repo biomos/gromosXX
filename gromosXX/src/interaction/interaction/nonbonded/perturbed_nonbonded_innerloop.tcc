@@ -39,7 +39,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     lj_parameter_struct const *A_lj;
     lj_parameter_struct const *B_lj;
     double A_q, B_q;
-    double alpha_lj, alpha_crf;
+    double alpha_lj=0, alpha_crf=0;
     
     const double l = sim.topology().lambda();
     
@@ -131,23 +131,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     }
 
     // now combine everything
-    const double B_l = sim.topology().lambda();
-    const double B_ln = pow(B_l, sim.topology().nlam());
-    const double B_lnm = pow(B_l, sim.topology().nlam()-1);
-
-    const double A_l = 1.0 - sim.topology().lambda();
-    const double A_ln = pow(A_l, sim.topology().nlam());
-    const double A_lnm = pow(A_l, sim.topology().nlam()-1);
-    
-    f      = B_ln * B_f      + A_ln * A_f;
-    e_lj   = B_ln * B_e_lj   + A_ln * A_e_lj;
-    e_crf  = B_ln * B_e_crf  + A_ln * A_e_crf;
-    de_lj  = B_ln * B_de_lj  + A_ln * A_de_lj  
-      + sim.topology().nlam() * B_lnm * B_e_lj  
-      - sim.topology().nlam() * A_lnm * A_e_lj;
-    de_crf = B_ln * B_de_crf + A_ln * A_de_crf 
-      + sim.topology().nlam() * B_lnm * B_e_crf 
-      - sim.topology().nlam() * A_lnm * A_e_crf;
+    f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
+    e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
+    e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
+    de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
+      + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_lj  
+      - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_lj;
+    de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
+      + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_crf 
+      - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_crf;
     
 
     storage.force()(i) += f;
@@ -208,7 +200,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     lj_parameter_struct const * A_lj;
     lj_parameter_struct const * B_lj;
     double A_q, B_q;
-    double alpha_lj, alpha_crf;
+    double alpha_lj=0, alpha_crf=0;
     
     const double l = sim.topology().lambda();
     
@@ -302,23 +294,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     }
     
     // now combine everything
-    const double B_l = sim.topology().lambda();
-    const double B_ln = pow(B_l, sim.topology().nlam());
-    const double B_lnm = pow(B_l, sim.topology().nlam()-1);
-
-    const double A_l = 1.0 - sim.topology().lambda();
-    const double A_ln = pow(A_l, sim.topology().nlam());
-    const double A_lnm = pow(A_l, sim.topology().nlam()-1);
-    
-    f      = B_ln * B_f      + A_ln * A_f;
-    e_lj   = B_ln * B_e_lj   + A_ln * A_e_lj;
-    e_crf  = B_ln * B_e_crf  + A_ln * A_e_crf;
-    de_lj  = B_ln * B_de_lj  + A_ln * A_de_lj  
-      + sim.topology().nlam() * B_lnm * B_e_lj  
-      - sim.topology().nlam() * A_lnm * A_e_lj;
-    de_crf = B_ln * B_de_crf + A_ln * A_de_crf 
-      + sim.topology().nlam() * B_lnm * B_e_crf 
-      - sim.topology().nlam() * A_lnm * A_e_crf;
+    f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
+    e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
+    e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
+    de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
+      + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_lj  
+      - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_lj;
+    de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
+      + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_crf 
+      - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_crf;
 
     sim.system().force()(i) += f;
     sim.system().force()(j) -= f;
@@ -375,22 +359,14 @@ interaction::Perturbed_Nonbonded_Innerloop<
   const double q_i_b = mit->second.B_charge();
   
   // now calculate everything
-  const double B_l = sim.topology().lambda();
-  const double B_ln = pow(B_l, sim.topology().nlam());
-  const double B_lnm = pow(B_l, sim.topology().nlam()-1);
-  
-  const double A_l = 1.0 - sim.topology().lambda();
-  const double A_ln = pow(A_l, sim.topology().nlam());
-  const double A_lnm = pow(A_l, sim.topology().nlam()-1);
-
   m_base.rf_interaction(r, q_i_a*q_i_a, f_old_A, e_crf_old_A);
 
   m_base.rf_soft_interaction(r, q_i_a*q_i_a, 
-			     B_l, mit->second.CRF_softcore(),
+			     m_base.B_lambda(), mit->second.CRF_softcore(),
 			     A_f_rf, A_e_rf, A_de_rf);
   
   m_base.rf_soft_interaction(r, q_i_b*q_i_b, 
-			     A_l, mit->second.CRF_softcore(),
+			     m_base.A_lambda(), mit->second.CRF_softcore(),
 			     B_f_rf, B_e_rf, B_de_rf);
   
   if (t_nonbonded_spec::do_scaling){
@@ -422,10 +398,10 @@ interaction::Perturbed_Nonbonded_Innerloop<
 	<< A_e_rf << " B: " << B_e_rf);
   
   // (1-l)^n * A + l^n *B - A 
-  e_rf  = B_ln * B_e_rf  + A_ln * A_e_rf - e_crf_old_A;
-  de_rf = B_ln * B_de_rf + A_ln * A_de_rf 
-    + sim.topology().nlam() * B_lnm * B_e_rf 
-    - sim.topology().nlam() * A_lnm * A_e_rf;
+  e_rf  = m_base.B_lambda_n() * B_e_rf  + m_base.A_lambda_n() * A_e_rf - e_crf_old_A;
+  de_rf = m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
+    + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_rf 
+    - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_rf;
   
   sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
     [sim.topology().atom_energy_group(i)] += 0.5 * e_rf;
@@ -445,7 +421,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     
     double q_ij_a;
     double q_ij_b;
-    double alpha_crf;
+    double alpha_crf=0;
     
     if(sim.topology().perturbed_atom()[*it]){
       // j perturbed
@@ -468,13 +444,13 @@ interaction::Perturbed_Nonbonded_Innerloop<
     }
     DEBUG(8, "q_i_a " << q_i_a << " q_i_b " << q_i_b
 	  << " q_ij_a " << q_ij_a << " q_ij_b " << q_ij_b
-	  << " A_l " << A_l << " B_l " << B_l);
+	  << " A_l " << m_base.A_lambda() << " B_l " << m_base.B_lambda());
     
-    m_base.rf_soft_interaction(r, q_ij_a, B_l,
+    m_base.rf_soft_interaction(r, q_ij_a, m_base.B_lambda(),
 			       alpha_crf,
 			       A_f_rf, A_e_rf, A_de_rf);
 
-    m_base.rf_soft_interaction(r, q_ij_b, A_l, 
+    m_base.rf_soft_interaction(r, q_ij_b, m_base.A_lambda(), 
 			       alpha_crf,
 			       B_f_rf, B_e_rf, B_de_rf);
 
@@ -482,11 +458,11 @@ interaction::Perturbed_Nonbonded_Innerloop<
     DEBUG(7, "excluded atoms " << i << " & " << *it << " A: " 
 	  << A_e_rf << " B: " << B_e_rf);
     
-    e_rf  = B_ln * B_e_rf  + A_ln * A_e_rf;
-    de_rf = B_ln * B_de_rf + A_ln * A_de_rf 
-      + sim.topology().nlam() * B_lnm * B_e_rf 
-      - sim.topology().nlam() * A_lnm * A_e_rf;
-    f_rf = B_ln * B_f_rf + A_ln * A_f_rf;
+    e_rf  = m_base.B_lambda_n() * B_e_rf  + m_base.A_lambda_n() * A_e_rf;
+    de_rf = m_base.B_lambda_n() * B_de_rf + m_base.A_lambda_n() * A_de_rf 
+      + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_rf 
+      - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_rf;
+    f_rf = m_base.B_lambda_n() * B_f_rf + m_base.A_lambda_n() * A_f_rf;
     
     // and add everything to the correct arrays 
     sim.system().energies().crf_energy 
@@ -520,7 +496,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
   lj_parameter_struct const *A_lj;
   lj_parameter_struct const *B_lj;
   double A_q, B_q;
-  double alpha_lj, alpha_crf;
+  double alpha_lj=0, alpha_crf=0;
   
   const double l = sim.topology().lambda();
   DEBUG(7, "lambda: " << l);
@@ -838,34 +814,26 @@ interaction::Perturbed_Nonbonded_Innerloop<
   }
 
   // now combine everything
-  const double B_l = sim.topology().lambda();
-  const double B_ln = pow(B_l, sim.topology().nlam());
-  const double B_lnm = pow(B_l, sim.topology().nlam()-1);
+  DEBUG(10, "B_l: " << m_base.B_lambda() <<
+	" B_ln: " << m_base.B_lambda_n() <<
+	" A_l: " << m_base.A_lambda() <<
+	" A_ln: " << m_base.A_lambda_n());
   
-  const double A_l = 1.0 - sim.topology().lambda();
-  const double A_ln = pow(A_l, sim.topology().nlam());
-  const double A_lnm = pow(A_l, sim.topology().nlam()-1);
+  f      = m_base.B_lambda_n() * B_f      + m_base.A_lambda_n() * A_f;
+  e_lj   = m_base.B_lambda_n() * B_e_lj   + m_base.A_lambda_n() * A_e_lj;
+  e_crf  = m_base.B_lambda_n() * B_e_crf  + m_base.A_lambda_n() * A_e_crf;
+  de_lj  = m_base.B_lambda_n() * B_de_lj  + m_base.A_lambda_n() * A_de_lj  
+    + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_lj  
+    - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_lj;
   
-  DEBUG(10, "B_l: " << B_l <<
-	" B_ln: " << B_ln <<
-	" A_l: " << A_l <<
-	" A_ln: " << A_ln);
-  
-  f      = B_ln * B_f      + A_ln * A_f;
-  e_lj   = B_ln * B_e_lj   + A_ln * A_e_lj;
-  e_crf  = B_ln * B_e_crf  + A_ln * A_e_crf;
-  de_lj  = B_ln * B_de_lj  + A_ln * A_de_lj  
-    + sim.topology().nlam() * B_lnm * B_e_lj  
-    - sim.topology().nlam() * A_lnm * A_e_lj;
-  
-  de_crf = B_ln * B_de_crf + A_ln * A_de_crf 
-    + sim.topology().nlam() * B_lnm * B_e_crf 
-    - sim.topology().nlam() * A_lnm * A_e_crf;
+  de_crf = m_base.B_lambda_n() * B_de_crf + m_base.A_lambda_n() * A_de_crf 
+    + sim.topology().nlam() * m_base.B_lambda_n_1() * B_e_crf 
+    - sim.topology().nlam() * m_base.A_lambda_n_1() * A_e_crf;
   
   sim.system().force()(it->i) += f;
   sim.system().force()(it->j) -= f;
   
-  DEBUG(7, "A_lnm: " << A_lnm << " B_lnm: " << B_lnm);
+  DEBUG(7, "A_lnm: " << m_base.A_lambda_n_1() << " B_lnm: " << m_base.B_lambda_n_1());
   DEBUG(7, "\tcalculated interaction:\n\t\tf: " << f << " e_lj: " 
 	<< e_lj << " e_crf: " << e_crf << " de_lj: " << de_lj 
 	<< " de_crf: " << de_crf);
