@@ -102,6 +102,17 @@ namespace simulation
      * also adding the perturbed constraints!
      */
     void calculate_constraint_dof(simulation::Multibath &multibath)const;
+
+    /**
+     * interaction matrix for scaled interactions with energy groups
+     */
+    std::map<std::pair<int, int>, std::pair<double, double> > const &
+    energy_group_scaling()const;
+    /**
+     * interaction matrix for scaled interactions with energy groups
+     */
+    std::map<std::pair<int, int>, std::pair<double, double> > &
+    energy_group_scaling();
     
   private:
     /**
@@ -131,6 +142,11 @@ namespace simulation
      */
     int m_nlam;
     
+    /**
+     * interaction matrix for scaled interactions
+     */
+    std::map<std::pair<int, int>, std::pair<double, double> > 
+    m_energy_group_scaling;
     
   };
 

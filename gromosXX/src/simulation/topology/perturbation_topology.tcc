@@ -160,3 +160,20 @@ calculate_constraint_dof(simulation::Multibath &multibath)const
   }
   
 }
+/**
+ * interaction matrix for scaled interactions with energy groups
+ */
+inline std::map<std::pair<int, int>, std::pair<double, double> > const &
+simulation::Perturbation_Topology::energy_group_scaling()const
+{
+  return m_energy_group_scaling;
+}
+/**
+ * interaction matrix for scaled interactions with energy groups
+ */
+inline std::map<std::pair<int, int>, std::pair<double, double> >  &
+simulation::Perturbation_Topology::energy_group_scaling()
+{
+  return m_energy_group_scaling;
+}
+

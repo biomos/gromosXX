@@ -438,7 +438,58 @@ io::InPerturbationTopology::operator>>(simulation::Perturbation_Topology &topo)
     
   } // PERTATOM03
     
-  // std::cout << "END\n";
+  { // SCALEDINTERACTIONS
+
+    buffer = m_block["SCALEDINTERACTIONS"];
+    if (buffer.size()){
+      std::cout << "\tSCALED INTERACTIONS\n";
+
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+
+      int i, j;
+      double A, B;
+      for(n = 0; it != buffer.end() - 1; ++it, ++n){
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> i >> j >> A >> B;
+	
+	if (_lineStream.fail() || ! _lineStream.eof())
+	  throw std::runtime_error("bad line in SCALEDINTERACTIONS block\n\t"
+				   + *it);
+	
+	--i;
+	--j;
+
+	std::pair<int, int> energy_pair(i,j);
+	std::pair<int, int> energy_pair2(j,i);
+	
+	std::pair<double, double> scale_pair(A,B);
+	
+	topo.energy_group_scaling()[energy_pair]=scale_pair;
+	topo.energy_group_scaling()[energy_pair2]=scale_pair;
+	
+	std::cout << std::setw(10) << i+1
+		  << std::setw(10) << j+1
+		  << std::setw(10) << A
+		  << std::setw(10) << B
+		  << std::endl;
+	
+      }
+      
+      if (n != num)
+	throw std::runtime_error("error in SCALEDINTERACTIONS block (n != num)");
+      else if (_lineStream.fail())
+	throw std::runtime_error("error in SCALEDINTERACTIONS block (fail)");
+    
+      std::cout << "\tEND\n";
+      
+    } // if block present
+  } // PERTATOMPAIR03
   
   return *this;
 }
