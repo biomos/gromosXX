@@ -654,6 +654,7 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int
     buffer = m_block["PERTURB"];
     if (!buffer.size()){
       // no block at all???
+      std::cerr << "PERTURB block not found" << std::endl;
       ntg = 0;
       rlam = 0;
       dlamt = 0;

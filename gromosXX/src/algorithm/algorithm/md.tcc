@@ -83,12 +83,6 @@ int algorithm::MD<t_spec>::initialize(io::Argument &args)
   // prepare temperature calculation
   DEBUG(7, "md: degrees of freedom");
   m_simulation.calculate_degrees_of_freedom();
-  temperature_algorithm().calculate_kinetic_energy(m_simulation);
-  std::cout << "INITIAL TEMPERATURES AND TEMPERATURE COUPLING\n";
-  io::print_DEGREESOFFREEDOM(std::cout, m_simulation.multibath());
-  io::print_MULTIBATH_COUPLING(std::cout, m_simulation.multibath());
-  io::print_MULTIBATH(std::cout, m_simulation.multibath(),
-		      m_simulation.system().energies());
 
   // initialize the energy fluctuations
   m_simulation.system().energy_averages().
@@ -101,7 +95,106 @@ int algorithm::MD<t_spec>::initialize(io::Argument &args)
     resize(m_simulation.system().energies().bond_energy.size(),
 	   m_simulation.system().energies().kinetic_energy.size());
 
+  int ntx, init;
+  unsigned int ig;
+  double tempi;
+  input.read_START(ntx, init, tempi, ig);  
+
+  if (tempi != 0){
+    DEBUG(7, "generating initial velocities with T=" << tempi);
+    std::cout << "generating initial velocities with T=" << tempi << "\n";
+
+    m_simulation.system().generate_velocities(tempi, 
+					      m_simulation.topology().mass(),
+					      ig);
+  }
   
+  else if (ntx == 1){
+    DEBUG(7, "setting initial velocities to 0");
+    m_simulation.system().vel() = 0.0;
+    m_simulation.system().exchange_vel();
+    m_simulation.system().vel() = 0.0;
+  }
+
+  if (init == 1){
+    // shake positions and velocities!
+    simulation().system().exchange_pos();
+    simulation().system().exchange_vel();
+    simulation().system().pos() = simulation().system().old_pos();
+    simulation().system().vel() = simulation().system().old_vel();
+    
+    DEBUG(7, "shake initial coordinates -- solute");
+    // shake the current coordinates with respect to themselves
+    distance_constraint_algorithm().solute(simulation().topology(),
+					   simulation().system(),
+					   m_dt);
+    DEBUG(7, "shake initial coordinates -- solvent");
+    distance_constraint_algorithm().solvent(simulation().topology(),
+					    simulation().system(),
+					    m_dt);
+  
+    // restore the velocities
+    simulation().system().vel() = simulation().system().old_vel();
+
+    // take a step back (positions)
+    DEBUG(10, "take a step back");
+    simulation().system().exchange_pos();
+    simulation().system().pos() = simulation().system().old_pos()
+      - m_dt * simulation().system().vel();
+    
+    // shake again
+    DEBUG(7, "shake initial velocities -- solute");
+    distance_constraint_algorithm().solute(simulation().topology(),
+					   simulation().system(),
+					   m_dt);
+
+    DEBUG(7, "shake initial velocities -- solvent");
+    distance_constraint_algorithm().solvent(simulation().topology(),
+					    simulation().system(),
+					    m_dt);
+
+    // restore the positions
+    simulation().system().exchange_pos();
+
+    // the velocities are negative (wrong time direction)
+    simulation().system().vel() = -1.0 * simulation().system().vel();
+    
+    // and copy to old array
+    simulation().system().exchange_vel();
+    simulation().system().vel() = simulation().system().old_vel();
+    
+  }
+  else if (init == 2){
+    io::messages.add("init = 2 in START block no longer supported",
+		     "md", io::message::error);
+  }
+
+  // centre of mass removal
+  int ndfmin, ntcm;
+  input.read_CENTREOFMASS(ndfmin, ntcm, m_remove_com);
+
+  double e_kin_trans, e_kin_rot;
+  if(init<4 && ntcm) {
+    
+    m_simulation.remove_com_motion(m_dt, true, true, 
+				   e_kin_trans, e_kin_rot);
+    io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
+  }
+  else{
+    m_simulation.remove_com_motion(m_dt, false, false, 
+				   e_kin_trans, e_kin_rot);
+    io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
+    
+  }
+
+  temperature_algorithm().calculate_kinetic_energy(m_simulation);
+  std::cout << "INITIAL TEMPERATURES AND TEMPERATURE COUPLING\n";
+  io::print_DEGREESOFFREEDOM(std::cout, m_simulation.multibath());
+  io::print_MULTIBATH_COUPLING(std::cout, m_simulation.multibath());
+  io::print_MULTIBATH(std::cout, m_simulation.multibath(),
+		      m_simulation.system().energies());
+    
+
   //----------------------------------------------------------------------------
   
   // see whether everything is all right  
@@ -599,21 +692,6 @@ void algorithm::MD<t_spec>
   
   sys >> m_simulation.system();
 
-  if (tempi != 0){
-    DEBUG(7, "generating initial velocities with T=" << tempi);
-    m_simulation.system().generate_velocities(tempi, 
-					      m_simulation.topology().mass(),
-					      ig);
-  }
-
-  else if (ntx == 1){
-    DEBUG(7, "setting initial velocities to 0");
-    m_simulation.system().vel() = 0.0;
-    m_simulation.system().exchange_vel();
-    m_simulation.system().vel() = 0.0;
-  }
-
-
 }
 
 template<typename t_spec>
@@ -664,29 +742,6 @@ void algorithm::MD<t_spec>
   m_simulation.time(t0);
 
 
-  // centre of mass removal
-  int ndfmin, ntcm;
-  input.read_CENTREOFMASS(ndfmin, ntcm, m_remove_com);
-
-  // start
-  int ntx, init;
-  unsigned int ig;
-  double tempi;
-  input.read_START(ntx, init, tempi, ig);  
-
-  double e_kin_trans, e_kin_rot;
-  if(init<4 && ntcm) {
-    
-    m_simulation.remove_com_motion(m_dt, true, true, 
-				   e_kin_trans, e_kin_rot);
-    io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
-  }
-  else{
-    m_simulation.remove_com_motion(m_dt, false, false, 
-				   e_kin_trans, e_kin_rot);
-    io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
-    
-  }
   
 }
 
@@ -775,23 +830,20 @@ void algorithm::MD<t_spec>
       if (m_calculate_pressure){
 	std::cerr << "printing virial pairlist" << std::endl;
 
-	/*
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<
 	  typename t_spec::nonbonded_virial_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
-	*/
       }
       else {      
 	std::cerr << "printing pairlist" << std::endl;
 	
-	/*
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<typename t_spec::nonbonded_interaction_type *>
 	  (*it)->pairlist()
 			<< std::endl;
-	*/
+
       }
       
     }

@@ -37,6 +37,8 @@ void io::GInStream::readStream()
     }
     
     trimblock(buffer);
+    // std::cerr << buffer[0] << std::endl;
+    
     m_block[buffer[0]] = buffer;
     
     buffer.clear();

@@ -64,19 +64,19 @@ namespace algorithm
     /**
      * initialization.
      */
-    int initialize(io::Argument &args);
+    virtual int initialize(io::Argument &args);
     
     /**
      * perform an md simulation.
      * calls run.
      */
-    int do_md(io::Argument &args);
+    virtual int do_md(io::Argument &args);
 
     /**
      * run the system.
      * @param time the time to run the system.
      */
-    void run(double time = -1);
+    virtual void run(double time = -1);
     
     /**
      * create a Gromos96 like forcefield.
@@ -169,11 +169,11 @@ namespace algorithm
      * for pairlist and force that
      * are not present in the input file...
      */
-    void parse_print_argument(io::Argument &args);
+    virtual void parse_print_argument(io::Argument &args);
     /**
      * open the input files.
      */
-    void open_files(io::Argument &args, io::InTopology &topo,
+    virtual void open_files(io::Argument &args, io::InTopology &topo,
 		    io::InTrajectory &sys, io::InInput &input);
     /**
      * initialize the input.

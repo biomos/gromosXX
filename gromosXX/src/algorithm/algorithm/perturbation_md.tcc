@@ -21,6 +21,9 @@ void algorithm::Perturbation_MD<t_spec>
 ::init_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
+
+  MD<t_spec>::init_input(args, topo, sys, input);
+
   int ntg, nlam;
   double rlam, dlamt;
   
@@ -38,8 +41,6 @@ void algorithm::Perturbation_MD<t_spec>
     // initialize
     init_perturbation(args, input);
   }
-
-  MD<t_spec>::init_input(args, topo, sys, input);
 }
 
 /**
@@ -50,7 +51,6 @@ void algorithm::Perturbation_MD<t_spec>
 ::read_input(io::Argument &args, io::InTopology &topo,
 	     io::InTrajectory &sys, io::InInput &input)
 {
-  // std::cerr << "read input" << std::endl;
   MD<t_spec>::read_input(args, topo, sys, input);
   
   int ntg, nlam;
@@ -347,7 +347,6 @@ void algorithm::Perturbation_MD<t_spec>
     if ((*it)->name == "NonBonded"){
       
       if (m_calculate_pressure){
-	std::cerr << "printing virial pairlist" << std::endl;
 
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<
@@ -360,7 +359,6 @@ void algorithm::Perturbation_MD<t_spec>
 			<< std::endl;
       }
       else {      
-	std::cerr << "printing pairlist" << std::endl;
 	
 	(*m_print_file) << "shortrange\n" 
 			<< dynamic_cast<typename t_spec::nonbonded_interaction_type *>
