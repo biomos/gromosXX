@@ -49,7 +49,7 @@ namespace algorithm
 		std::vector<bool> &skip_now,
 		std::vector<bool> &skip_next,
 		std::vector<simulation::compound::distance_constraint_struct>
-		& constr);
+		& constr, bool do_constraint_force = false);
 
     double m_tolerance;
     const int max_iterations;

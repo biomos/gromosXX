@@ -152,6 +152,24 @@ inline math::VArray const & simulation::System<b>::old_force()const
 }
 
 /**
+ * constraint force accessor
+ */
+template<math::boundary_enum b>
+inline math::VArray const & simulation::System<b>::constraint_force()const
+{
+  return m_constraint_force;
+}
+
+/**
+ * constraint force accessor
+ */
+template<math::boundary_enum b>
+inline math::VArray & simulation::System<b>::constraint_force()
+{
+  return m_constraint_force;
+}
+
+/**
  * exchange positions
  */
 template<math::boundary_enum b>

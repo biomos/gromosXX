@@ -43,6 +43,10 @@ int algorithm::Shake<t_simulation>
   
   // check whether we shake
   if (!topo.solute().distance_constraints().size()) return 0;
+  
+  // give the constraint force the correct size...
+  sys.constraint_force().resize(topo.solute().distance_constraints().size());
+  sys.constraint_force() = 0.0;
 
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -56,7 +60,7 @@ int algorithm::Shake<t_simulation>
   bool convergence = false;
   while(!convergence){
     convergence = _shake(topo, sys, first, skip_now, skip_next,
-			 topo.solute().distance_constraints());
+			 topo.solute().distance_constraints(), true);
 
     // std::cout << num_iterations+1 << std::endl;
     if(++num_iterations > max_iterations){
@@ -143,7 +147,7 @@ bool algorithm::Shake<t_simulation>
 	 std::vector<bool> &skip_now,
 	 std::vector<bool> &skip_next,
 	 std::vector<simulation::compound::distance_constraint_struct>
-	 & constr)
+	 & constr, bool do_constraint_force)
 {
   bool convergence = true;
 

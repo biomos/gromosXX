@@ -80,6 +80,17 @@ namespace simulation
      * old force
      */
     math::VArray const &old_force()const;
+
+    /**
+     * const constraint force
+     */
+    math::VArray const &constraint_force()const;
+
+    /**
+     * constraint force
+     */
+    math::VArray &constraint_force();
+    
     /**
      * exchange positions
      */
@@ -252,6 +263,11 @@ namespace simulation
      * old force
      */
     math::VArray *m_old_force;
+    /**
+     * constraint force
+     */
+    math::VArray m_constraint_force;
+    
     /**
      * the box.
      */
