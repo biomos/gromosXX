@@ -77,8 +77,7 @@ static void _create_g96_bonded(interaction::Forcefield & ff,
       ff.push_back(pb);
     }
   }
-
-  if (param.force.bond == 2){
+  else if (param.force.bond == 2){
     if (!quiet)
       std::cout <<"\tharmonic bond interaction\n";
 
