@@ -34,9 +34,12 @@
  * Constructor.
  */
 interaction::Nonbonded_Set
-::Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param)
+::Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
+		int rank, int num_threads)
   : m_pairlist_alg(pairlist_alg), 
-    m_outerloop(param)
+    m_outerloop(param),
+    m_rank(rank),
+    m_num_threads(num_threads)
 {
 }
 
@@ -46,8 +49,7 @@ interaction::Nonbonded_Set
 int interaction::Nonbonded_Set
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
-			 simulation::Simulation & sim,
-			 int tid, int num_threads)
+			 simulation::Simulation & sim)
 {
   DEBUG(4, "Nonbonded_Set::calculate_interactions");
   
@@ -71,7 +73,7 @@ int interaction::Nonbonded_Set
     // move decision to pairlist!!!
     m_pairlist_alg.update(topo, conf, sim, 
 			  longrange_storage(), pairlist(),
-			  tid, topo.num_atoms(), num_threads);
+			  m_rank, topo.num_atoms(), m_num_threads);
 
     /*
     sleep(2*tid);
@@ -100,7 +102,7 @@ int interaction::Nonbonded_Set
 			       m_pairlist, m_shortrange_storage);
   
   // add 1,4 - interactions
-  if (tid == 0){
+  if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
   
@@ -225,10 +227,7 @@ int interaction::Nonbonded_Set
     
     for(unsigned int i=0; i<num_atoms; ++i)
       pairlist()[i].reserve(pairs);
-    
   }
-
   return 0;
-
 }
 

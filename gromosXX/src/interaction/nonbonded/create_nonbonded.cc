@@ -27,6 +27,9 @@
 #include <interaction/nonbonded/interaction/nonbonded_set.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_interaction.h>
+#include <interaction/nonbonded/interaction/omp_nonbonded_interaction.h>
+#include <interaction/nonbonded/interaction/mpi_nonbonded_master.h>
+#include <interaction/nonbonded/interaction/mpi_nonbonded_slave.h>
 
 #include <io/ifp.h>
 
@@ -34,6 +37,9 @@
 
 #include <util/debug.h>
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -126,7 +132,30 @@ int interaction::create_g96_nonbonded
     pa = new Grid_Pairlist_Algorithm();
   }
   
+#if defined(OMP)
+
+  Nonbonded_Interaction * ni = new OMP_Nonbonded_Interaction(pa);
+
+#elif defined(XXMPI)
+
+  Nonbonded_Interaction * ni;
+
+  if (sim.mpi){
+    int rank = MPI::COMM_WORLD.Get_rank();
+    if (rank == 0)
+      ni = new MPI_Nonbonded_Master(pa);
+    else
+      ni = new MPI_Nonbonded_Slave(pa);
+  }
+  else
+    ni = new Nonbonded_Interaction(pa);
+
+#else
+
   Nonbonded_Interaction * ni = new Nonbonded_Interaction(pa);
+
+#endif
+
   it.read_lj_parameter(ni->parameter().lj_parameter());
 
   pa->set_parameter(&ni->parameter());

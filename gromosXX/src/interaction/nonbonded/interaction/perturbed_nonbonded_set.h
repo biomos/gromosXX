@@ -21,7 +21,8 @@ namespace interaction
      * Constructor.
      */
     Perturbed_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg,
-			    Nonbonded_Parameter & param);
+			    Nonbonded_Parameter & param,
+			    int rank, int num_threads);
 
     /**
      * Destructor
@@ -42,8 +43,7 @@ namespace interaction
      */
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
-				       simulation::Simulation & sim,
-				       int tid = 0, int num_threads = 1);
+				       simulation::Simulation & sim);
 
     /**
      * calculate the hessian for a given atom.

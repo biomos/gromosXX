@@ -40,7 +40,8 @@ namespace interaction
     /**
      * Constructor.
      */
-    Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param);
+    Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
+		  int rank, int num_threads);
 
     /**
      * Destructor
@@ -61,8 +62,7 @@ namespace interaction
      */
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
-				       simulation::Simulation & sim,
-				       int tid = 0, int num_threads = 1);
+				       simulation::Simulation & sim);
 
     /**
      * calculate the interaction for a given atom pair.
@@ -105,6 +105,15 @@ namespace interaction
     Pairlist m_pairlist;
 
     Nonbonded_Outerloop m_outerloop;
+
+    /**
+     * OpenMP / MPI rank of thread running this set
+     */
+    int m_rank;
+    /**
+     * total number of OpenMP / MPI threads
+     */
+    int m_num_threads;
 
   };
   

@@ -49,7 +49,8 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
   : Interaction("NonBonded"),
     m_pairlist_algorithm(pa),
     m_parameter(),
-    m_longrange_timing(0.0)
+    m_longrange_timing(0.0),
+    m_set_size(1)
 {
 }
 
@@ -68,7 +69,6 @@ interaction::Nonbonded_Interaction::~Nonbonded_Interaction()
     delete m_nonbonded_set[i];
     m_nonbonded_set[i] = NULL;
   }
-  
 }
 
 /**
@@ -86,165 +86,44 @@ calculate_interactions(topology::Topology & topo,
 
   const double nonbonded_start = util::now();
 
-  std::vector<Nonbonded_Set *>::iterator
-    it = m_nonbonded_set.begin(),
-    to = m_nonbonded_set.end();
-
   // multiple unit cell
   if (sim.param().multicell.multicell){
     
     DEBUG(6, "nonbonded: MULTICELL");
-    
     configuration::Configuration exp_conf;
-
     expand_configuration(topo, conf, sim, exp_conf);
-
     DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
     
     // shared memory do this only once
     m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim);
 
-#ifdef OMP
-    int tid;
-#pragma omp parallel private(tid)
-    {
-      tid = omp_get_thread_num();
-      // calculate the corresponding interactions
-      assert(m_nonbonded_set.size() > tid);
-      DEBUG(8, "calculating nonbonded interactions (thread " 
-	    << tid << " of " << m_omp_num_threads << ")");
-
-      m_nonbonded_set[tid]->calculate_interactions(topo.multicell_topo(), 
-						   exp_conf, sim,
-						   tid, m_omp_num_threads);
-    }
-    
-#else
-    
-    // have to do all from here (probably it's only one, could unite this,
-    // but then maybe it's clearer like it is...
-    
-    for(int i=0; i < m_omp_num_threads; ++i){
+    // have to do all from here (probably it's only one,
+    // but then maybe it's clearer like it is...)
+    for(int i=0; i < m_set_size; ++i){
       m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
-						 exp_conf, sim, 
-						 i, m_omp_num_threads);
+						 exp_conf, 
+						 sim);
     }
-
-    
-#endif
   }
   else{ // no MULTICELL
     
     // shared memory do this only once
     m_pairlist_algorithm->prepare(topo, conf, sim);
     
-#ifdef OMP
-    int tid;
-#pragma omp parallel private(tid)
-    {
-      tid = omp_get_thread_num();
-      // calculate the corresponding interactions
-      assert(m_nonbonded_set.size() > tid);
-      DEBUG(8, "calculating nonbonded interactions (thread " 
-	    << tid << " of " << m_omp_num_threads << ")");
-      
-      m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim,
-						   tid, m_omp_num_threads);
+    // have to do all from here (probably it's only one,
+    // but then maybe it's clearer like it is...)
+    for(int i=0; i < m_set_size; ++i){
+      m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
     }
-    
-#else
-    
-    // have to do all from here (probably it's only one, could unite this,
-    // but then maybe it's clearer like it is...
-    
-    for(int i=0; i < m_omp_num_threads; ++i){
-      m_nonbonded_set[i]->calculate_interactions(topo, conf, sim, 
-						 i, m_omp_num_threads);
-    }
-    
-#endif
   }
   
   DEBUG(6, "sets are done, adding things up...");
-
-  // add the forces, energies, virial...
-  it = m_nonbonded_set.begin();
-
-  const double ljs = conf.current().energies.lj_energy.size();
-  configuration::Energy & e = conf.current().energies;
-  
-  for( ; it != to; ++it){
-    DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
-    for(unsigned int i=0; i<topo.num_atoms(); ++i)
-      conf.current().force(i) += (*it)->shortrange_storage().force(i);
-
-    DEBUG(7, "adding energies from set " << it - m_nonbonded_set.begin());
-    for(unsigned int i = 0; i < ljs; ++i){
-      for(unsigned int j = 0; j < ljs; ++j){
-
-	DEBUG(8, "set " << it - m_nonbonded_set.begin() << " group["
-	      << i << "][" << j <<"] e_lj = " 
-	      << (*it)->shortrange_storage().energies.lj_energy[i][j]
-	      << " e_crf = " << (*it)->shortrange_storage().energies.crf_energy[i][j]);
-      
-	e.lj_energy[i][j] += 
-	  (*it)->shortrange_storage().energies.lj_energy[i][j];
-	e.crf_energy[i][j] += 
-	  (*it)->shortrange_storage().energies.crf_energy[i][j];
-      }
-    }
-    
-    if (sim.param().pcouple.virial){
-      DEBUG(7, "\tadd long range virial");
-
-      for(unsigned int i=0; i<3; ++i){
-	for(unsigned int j=0; j<3; ++j){
-
-	  DEBUG(8, "set virial = " << (*it)->shortrange_storage().virial_tensor(i,j)
-		<< "\tvirial = " << conf.current().virial_tensor(i,j));
-	  
-	  conf.current().virial_tensor(i,j) +=
-	    (*it)->shortrange_storage().virial_tensor(i,j);
-	}
-      }
-      
-    }
-  }
-  
-  if (sim.param().perturbation.perturbation){
-
-    DEBUG(7, "\tadd perturbed energy derivatives");
-    
-    it = m_nonbonded_set.begin();
-      
-    for( ; it != to; ++it){
-	
-      configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
-	
-      for(unsigned int i = 0; i < ljs; ++i){
-	for(unsigned int j = 0; j < ljs; ++j){
-      
-	  assert(pe.lj_energy.size() > i);
-	  assert(pe.lj_energy[i].size() > j);
-
-	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy.size() > i);
-	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i].size() > j);
-
-	  pe.lj_energy[i][j] += 
-	    (*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
-	  pe.crf_energy[i][j] += 
-	    (*it)->shortrange_storage().perturbed_energy_derivatives.crf_energy[i][j];
-	}
-      }
-    } // sets
-  } // perturbation
+  store_set_data(topo, conf, sim);
 
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
-
   m_timing += util::now() - nonbonded_start;
 
   return 0;
-  
 }
 
 /**
@@ -270,11 +149,14 @@ int interaction::Nonbonded_Interaction::calculate_interaction
 /**
  * calculate the hessian for a given atom.
  */
-int interaction::Nonbonded_Interaction::calculate_hessian(topology::Topology & topo,
-							  configuration::Configuration & conf,
-							  simulation::Simulation & sim,
-							  unsigned int atom_i, unsigned int atom_j,
-							  math::Matrix & hessian)
+int interaction::Nonbonded_Interaction::calculate_hessian
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ unsigned int atom_i, unsigned int atom_j,
+ math::Matrix & hessian
+ )
 {
   std::vector<Nonbonded_Set *>::iterator
     it = m_nonbonded_set.begin(),
@@ -305,35 +187,19 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   // initialise the pairlist...
   m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
 
-  // OpenMP parallelization
-#ifdef OMP
-  int tid;
-#pragma omp parallel private(tid)
-    {
-      tid = omp_get_thread_num();
-      if (tid == 0){
-	m_omp_num_threads = omp_get_num_threads();
-      }
-    }
-#else
-    m_omp_num_threads = 1;
-#endif
-
   DEBUG(15, "nonbonded_interaction::initialize");
-
   m_nonbonded_set.clear();
   
   if (sim.param().perturbation.perturbation){
 
-    for(int i=0; i<m_omp_num_threads; ++i)
+    for(int i=0; i<m_set_size; ++i)
       m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
-							    m_parameter));
-    
+							    m_parameter, i, m_set_size));
   }
   else{
-    for(int i=0; i<m_omp_num_threads; ++i)
+    for(int i=0; i<m_set_size; ++i)
       m_nonbonded_set.push_back(new Nonbonded_Set(*m_pairlist_algorithm, 
-						  m_parameter));
+						  m_parameter, i, m_set_size));
   }
   
   std::vector<Nonbonded_Set *>::iterator
@@ -348,7 +214,6 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   }
 
   check_spc_loop(topo, conf, sim, os, quiet);
-
   return 0;
 }
 
@@ -474,6 +339,110 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     os << "\tusing spc solvent loops\n";
     return;
     
+}
+
+/**
+ * store data from sets into the configuration
+ */
+void interaction::Nonbonded_Interaction::store_set_data
+(
+ topology::Topology const & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation const & sim
+ )
+{
+  std::vector<Nonbonded_Set *>::iterator
+    it = m_nonbonded_set.begin(),
+    to = m_nonbonded_set.end();
+  
+  // add the forces, energies, virial...
+  it = m_nonbonded_set.begin();
+
+  const int ljs = conf.current().energies.lj_energy.size();
+  configuration::Energy & e = conf.current().energies;
+
+  // DEBUG
+  /*
+  if (m_set_size > 1){
+    
+    // DEBUG: print forces
+    for(int i=20; i<25; ++i)
+      std::cout << "thread[0] force[" << i << "] = " 
+		<< math::v2s(m_nonbonded_set[0]->shortrange_storage().force(i))
+		<< std::endl;
+    for(int i=20; i<25; ++i)
+      std::cout << "thread[1] force[" << i << "] = " 
+		<< math::v2s(m_nonbonded_set[1]->shortrange_storage().force(i))
+		<< std::endl;
+  }
+  */
+
+  for( ; it != to; ++it){
+    DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
+      conf.current().force(i) += (*it)->shortrange_storage().force(i);
+
+    DEBUG(7, "adding energies from set " << it - m_nonbonded_set.begin());
+    for(unsigned int i = 0; i < ljs; ++i){
+      for(unsigned int j = 0; j < ljs; ++j){
+
+	DEBUG(8, "set " << it - m_nonbonded_set.begin() << " group["
+	      << i << "][" << j <<"] e_lj = " 
+	      << (*it)->shortrange_storage().energies.lj_energy[i][j]
+	      << " e_crf = " << (*it)->shortrange_storage().energies.crf_energy[i][j]);
+      
+	e.lj_energy[i][j] += 
+	  (*it)->shortrange_storage().energies.lj_energy[i][j];
+	e.crf_energy[i][j] += 
+	  (*it)->shortrange_storage().energies.crf_energy[i][j];
+      }
+    }
+    
+    if (sim.param().pcouple.virial){
+      DEBUG(7, "\tadd long range virial");
+
+      for(unsigned int i=0; i<3; ++i){
+	for(unsigned int j=0; j<3; ++j){
+
+	  DEBUG(8, "set virial = " << (*it)->shortrange_storage().virial_tensor(i,j)
+		<< "\tvirial = " << conf.current().virial_tensor(i,j));
+	  
+	  conf.current().virial_tensor(i,j) +=
+	    (*it)->shortrange_storage().virial_tensor(i,j);
+	}
+      }
+      
+    }
+  }
+  
+  if (sim.param().perturbation.perturbation){
+
+    DEBUG(7, "\tadd perturbed energy derivatives");
+    
+    it = m_nonbonded_set.begin();
+      
+    for( ; it != to; ++it){
+	
+      configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
+	
+      for(unsigned int i = 0; i < ljs; ++i){
+	for(unsigned int j = 0; j < ljs; ++j){
+      
+	  assert(pe.lj_energy.size() > i);
+	  assert(pe.lj_energy[i].size() > j);
+
+	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy.size() > i);
+	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i].size() > j);
+
+	  pe.lj_energy[i][j] += 
+	    (*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
+	  pe.crf_energy[i][j] += 
+	    (*it)->shortrange_storage().perturbed_energy_derivatives.crf_energy[i][j];
+	}
+      }
+    } // sets
+  } // perturbation
+
 }
 
 /**

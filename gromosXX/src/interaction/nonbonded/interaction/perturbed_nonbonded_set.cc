@@ -42,8 +42,9 @@
  * Constructor.
  */
 interaction::Perturbed_Nonbonded_Set
-::Perturbed_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param)
-  : Nonbonded_Set(pairlist_alg, param),
+::Perturbed_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param, 
+			  int rank, int num_threads)
+  : Nonbonded_Set(pairlist_alg, param, rank, num_threads),
     m_perturbed_outerloop(param),
     m_perturbed_pair(param)
 {
@@ -55,8 +56,7 @@ interaction::Perturbed_Nonbonded_Set
 int interaction::Perturbed_Nonbonded_Set
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
-			 simulation::Simulation & sim,
-			 int tid, int num_threads)
+			 simulation::Simulation & sim)
 {
   DEBUG(4, "Nonbonded_Set::calculate_interactions");
 
@@ -119,7 +119,7 @@ int interaction::Perturbed_Nonbonded_Set
     m_pairlist_alg.update_perturbed(topo, conf, sim, 
 				    longrange_storage(),
 				    pairlist(), perturbed_pairlist(),
-				    tid, topo.num_atoms(), num_threads);
+				    m_rank, topo.num_atoms(), m_num_threads);
 
     /*
     sleep(2*tid);
@@ -150,7 +150,7 @@ int interaction::Perturbed_Nonbonded_Set
 						   m_perturbed_pairlist,
 						   m_shortrange_storage);
   // add 1,4 - interactions
-  if (tid == 0){
+  if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
 

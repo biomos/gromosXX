@@ -143,6 +143,16 @@ namespace interaction
      );
 
     /**
+     * store data from sets into the configuration
+     */
+    void store_set_data
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim
+     );
+    
+    /**
      * the pairlist update algorithm.
      */
     Pairlist_Algorithm * m_pairlist_algorithm;
@@ -163,9 +173,9 @@ namespace interaction
     double m_longrange_timing;
 
     /**
-     * number of omp threads.
+     * number of sets to create
      */
-    int m_omp_num_threads;
+    int m_set_size;
 
   };
   
