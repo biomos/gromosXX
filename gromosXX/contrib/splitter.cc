@@ -439,7 +439,19 @@ void write_code()
 
 void write_makefile()
 {
+
+  ofstream mkf("split/Makefile.inc");
+  if (!mkf.is_open()){
+    cerr << "failed to open split/Makefile.in for writing" << endl;
+    exit(1);
+  }
+
+  mkf << "\n";
+
   for(size_t i=0; i<makefile.size(); ++i)
-    cout << makefile[i];
-  cout << "\n\n";
+    mkf << makefile[i];
+  mkf << "\n\n";
+  
+  mkf.close();
+
 }

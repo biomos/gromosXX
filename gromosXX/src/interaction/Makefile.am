@@ -1,9 +1,6 @@
 INCLUDES = -I$(top_srcdir)/src
 
-split_files = \
-        nonbonded/split/split_1.cc \
-        nonbonded/split/split_2.cc
-
+include $(top_srcdir)/src/interaction/nonbonded/split/Makefile.inc
 
 xxincludedir = $(includedir)/gromosXX
 
