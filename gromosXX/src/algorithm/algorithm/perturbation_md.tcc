@@ -417,7 +417,7 @@ void algorithm::Perturbation_MD<t_spec>
   if (m_d_lambda){
     
     m_simulation.topology().lambda(m_simulation.topology().lambda() + 
-				   m_d_lambda);
+				   m_d_lambda * m_dt);
     
     m_simulation.topology().update_for_lambda();
     
