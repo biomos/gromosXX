@@ -372,7 +372,7 @@ inline void interaction::Nonbonded_Interaction<t_interaction_spec>
 
   std::set<int>::const_iterator it, to;
   size_t const num_solute_atoms = topo.num_solute_atoms();
-  int i;
+  size_t i;
   
 #ifdef OMPX
 #pragma omp parallel for \

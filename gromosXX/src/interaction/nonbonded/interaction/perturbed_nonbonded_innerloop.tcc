@@ -435,7 +435,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     double q_ij_b;
     double alpha_crf=0;
     
-    if(*it < topo.num_solute_atoms() && topo.is_perturbed(*it)){
+    if(unsigned(*it) < topo.num_solute_atoms() && topo.is_perturbed(*it)){
       // j perturbed
       q_ij_a = q_i_a * 
 	topo.perturbed_solute().atoms()[*it].A_charge();

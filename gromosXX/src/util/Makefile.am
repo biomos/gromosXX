@@ -1,6 +1,7 @@
 INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 	stdheader.h \
+			error.h \
 			debug.h	\
 			timing.h \
 			generate_velocities.h \

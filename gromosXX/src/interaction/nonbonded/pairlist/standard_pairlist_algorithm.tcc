@@ -65,10 +65,11 @@ update(topology::Topology & topo,
    */
   const int num_cg = topo.num_chargegroups();
   const int num_solute_cg = topo.num_solute_chargegroups();
-  const int num_solute_atoms = topo.solute().num_atoms();
-  int cg1_index, cg2_index, cg1_to, tid;
+  int cg1_index, cg1_to;
 
 #ifdef OMP
+  const int num_solute_atoms = topo.solute().num_atoms();
+  int cg2_index, tid;
 #pragma omp parallel \
   shared(num_cg, topo, conf, sim, nonbonded_interaction, \
 	 periodicity, num_solute_atoms, num_solute_cg, std::cout) \
