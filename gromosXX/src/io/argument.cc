@@ -7,6 +7,7 @@
 
 #include "argument.h"
 #include "blockinput.h"
+#include <util/error.h>
 
 namespace io{
 
@@ -17,18 +18,21 @@ namespace io{
     return unsigned(known_args.count(str));
   }
 
-  Argument::Argument(int argc, char **argv, int nknown, 
-		       char **known, const std::string &usage, bool empty_ok)
+  Argument::Argument()
     : std::multimap<std::string,std::string>(),
       d_usage(""),
       d_prog(""),
       d_known()
   {
+  }
+  
+  int Argument::parse(int argc, char**argv, int nknown,
+		      char **known, bool empty_ok)
+  {
 
     if(argc) d_prog = argv[0];
-    d_usage="\n\n"+usage;
 
-    if (argc == 1 && !empty_ok) throw std::string(d_usage);
+    if (argc == 1 && !empty_ok) return E_USAGE;
 
     for(int i=0;i<nknown;++i)
       d_known.insert(std::string(known[i]));
@@ -41,7 +45,11 @@ namespace io{
 	// input file
 	++i;
 	std::ifstream inp(argv[i]);
-	inp >> *this;
+	if (parse_line(inp)){
+	  inp.close();
+	  return E_USAGE;
+	}
+	
 	inp.close();
       }
       else
@@ -49,8 +57,7 @@ namespace io{
     }
 
     std::istringstream is(s.c_str());
-    is >> *this;
-    
+    return parse_line(is);
   }
 
   Argument::~Argument() {
@@ -59,7 +66,7 @@ namespace io{
   /**
    * read in the arguments.
    */
-  std::istream &operator>>(std::istream &istr, Argument &args)
+  int Argument::parse_line(std::istream &istr)
   {
     // get away the comments
     std::string buff;
@@ -77,45 +84,49 @@ namespace io{
     std::string str, last;
   
     if(!(is>>last))
-      return istr;
-    if(last[0]!='@')
-      throw std::string(args.d_usage);
-  
+      return 0;
+    if(last[0]!='@'){
+      std::cerr << "argument does not begin with @ : " << last << std::endl;
+      return E_USAGE;
+    }
+    
     last=last.substr(1);
 
-    if(args.find(last)!=args.end())
-      args.erase(args.lower_bound(last), args.upper_bound(last));
+    if(find(last)!=end())
+      erase(lower_bound(last), upper_bound(last));
 
-    if(!isKnown(last, args.d_known)) {
-      std::string errmsg = "Unknown argument: " + last + "\n";
-      throw std::string(errmsg + args.d_usage);
+    if(!isKnown(last, d_known)) {
+      std::cerr << "unknown argument : " << last << std::endl;
+      return E_USAGE;
     }
 
     while(is>>str){
       if(str[0] == '@'){
-	if(args.find(last) == args.end())
-	  args.insert(argType(last,""));
+	if(find(last) == end())
+	  insert(argType(last,""));
 	last=str.substr(1);
 	
-	if(args.find(last)!=args.end())
-	  for(Argument::iterator l=args.lower_bound(last);
-	      l!=args.upper_bound(last);++l)
-	    args.erase(l);
+	if(find(last)!=end())
+	  for(Argument::iterator l=lower_bound(last);
+	      l!=upper_bound(last);++l)
+	    erase(l);
 
-	if(!isKnown(last, args.d_known))	
-	  throw std::string(args.d_usage);
-      
+	if(!isKnown(last, d_known)){
+	  std::cerr << "unknown argument: " << last << std::endl;
+	  return E_USAGE;
+	}
+
 	continue;
       }
       else
-	args.insert(argType(last,str));
+	insert(argType(last,str));
     }
 
     // insert the last one without value
-    if(args.find(last)==args.end())
-      args.insert(argType(last,""));
+    if(find(last)==end())
+      insert(argType(last,""));
   
-    return istr;
+    return 0;
   }
   
 
@@ -124,7 +135,7 @@ namespace io{
   {
     const_iterator f = find(str);
     if(f == end()){
-      throw std::string(d_usage);
+      return "";
     }
   
     else return find(str)->second;
@@ -133,13 +144,13 @@ namespace io{
   int Argument::check(const std::string &str, int num_args)const
   {
     if(find(str) == end())
-      throw std::string(d_usage);
+      return -1;
     int num=0;
     for(const_iterator l=lower_bound(str), u=upper_bound(str);
 	l!=u;++l)
       if (l->second!="")++num;
     if(num<num_args)
-      throw std::string(d_usage);
+      return -1;
     return 0;
   }
 

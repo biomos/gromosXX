@@ -1446,8 +1446,11 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param)
 		>> s2
 		>> s3;
     
-    if (_lineStream.fail())
-      throw std::runtime_error("bad line in PLIST03 block");
+    if (_lineStream.fail()){
+      io::messages.add("bad line in PLIST03 block",
+		       "In_Parameter",
+		       io::message::error);
+    }
     
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), tolower);

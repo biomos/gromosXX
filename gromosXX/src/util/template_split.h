@@ -9,7 +9,7 @@ switch(conf.boundary_type){ \
   case math::rectangular : f<math::rectangular>(__VA_ARGS__); break; \
   case math::triclinic : f<math::triclinic>(__VA_ARGS__); break; \
   case math::truncoct : f<math::truncoct>(__VA_ARGS__); break; \
-  default: throw std::string("wrong boundary type"); \
+  default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
 } \
 
 
@@ -21,7 +21,7 @@ switch(conf.boundary_type){ \
       case math::no_virial : f<math::rectangular, math::no_virial>(__VA_ARGS__); break; \
       case math::molecular_virial : f<math::rectangular, math::molecular_virial>(__VA_ARGS__); break; \
       case math::atomic_virial : f<math::rectangular, math::atomic_virial>(__VA_ARGS__); break; \
-      default: throw std::string("wrong virial type"); \
+      default: io::messages.add("wrong virial type", "template_split", io::message::error); \
     } \
     break; \
   case math::truncoct : \
@@ -29,10 +29,10 @@ switch(conf.boundary_type){ \
       case math::no_virial : f<math::truncoct, math::no_virial>(__VA_ARGS__); break; \
       case math::molecular_virial : f<math::truncoct, math::molecular_virial>(__VA_ARGS__); break; \
       case math::atomic_virial : f<math::truncoct, math::atomic_virial>(__VA_ARGS__); break; \
-      default: throw std::string("wrong virial type"); \
+      default: io::messages.add("wrong virial type", "template_split", io::message::error); \
     } \
     break; \
-  default: throw std::string("wrong boundary type"); \
+  default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
 } \
 
 
@@ -54,7 +54,7 @@ if (sim.param().pairlist.grid) { \
         case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, true> >(__VA_ARGS__); break; \
         case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, true> >(__VA_ARGS__); break; \
         case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, true> >(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     case math::truncoct : \
@@ -62,10 +62,10 @@ if (sim.param().pairlist.grid) { \
         case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, true> >(__VA_ARGS__); break; \
         case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, true> >(__VA_ARGS__); break; \
         case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, true> >(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
-    default: throw std::string("wrong boundary type"); \
+    default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
 } \
 else { \
@@ -76,7 +76,7 @@ else { \
         case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, false> >(__VA_ARGS__); break; \
         case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false> >(__VA_ARGS__); break; \
         case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, false> >(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     case math::truncoct : \
@@ -84,10 +84,10 @@ else { \
         case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, false> >(__VA_ARGS__); break; \
         case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false> >(__VA_ARGS__); break; \
         case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, false> >(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
-    default: throw std::string("wrong boundary type"); \
+    default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
 } \
 
@@ -99,7 +99,7 @@ switch(conf.boundary_type){ \
       case math::no_virial : f<Interaction_Spec<math::rectangular, math::no_virial, false> >(__VA_ARGS__); break; \
       case math::molecular_virial : f<Interaction_Spec<math::rectangular, math::molecular_virial, false> >(__VA_ARGS__); break; \
       case math::atomic_virial : f<Interaction_Spec<math::rectangular, math::atomic_virial, false> >(__VA_ARGS__); break; \
-      default: throw std::string("wrong virial type"); \
+      default: io::messages.add("wrong virial type", "template_split", io::message::error); \
     } \
     break; \
   case math::truncoct : \
@@ -107,10 +107,10 @@ switch(conf.boundary_type){ \
       case math::no_virial : f<Interaction_Spec<math::truncoct, math::no_virial, false> >(__VA_ARGS__); break; \
       case math::molecular_virial : f<Interaction_Spec<math::truncoct, math::molecular_virial, false> >(__VA_ARGS__); break; \
       case math::atomic_virial : f<Interaction_Spec<math::truncoct, math::atomic_virial, false> >(__VA_ARGS__); break; \
-      default: throw std::string("wrong virial type"); \
+      default: io::messages.add("wrong virial type", "template_split", io::message::error); \
     } \
     break; \
-  default: throw std::string("wrong boundary type"); \
+  default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
 } \
 
 
@@ -126,7 +126,7 @@ if (sim.param().pairlist.grid) { \
                                         t_perturbation_details>(__VA_ARGS__); break; \
         case math::atomic_virial :    f<Interaction_Spec<math::rectangular, math::atomic_virial, true>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     case math::truncoct : \
@@ -137,10 +137,10 @@ if (sim.param().pairlist.grid) { \
                                         t_perturbation_details>(__VA_ARGS__); break; \
         case math::atomic_virial :    f<Interaction_Spec<math::truncoct, math::atomic_virial, true>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
-    default: throw std::string("wrong boundary type"); \
+    default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
 } \
 else { \
@@ -154,7 +154,7 @@ else { \
                                         t_perturbation_details>(__VA_ARGS__); break; \
         case math::atomic_virial :    f<Interaction_Spec<math::rectangular, math::atomic_virial, false>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
     case math::truncoct : \
@@ -165,10 +165,10 @@ else { \
                                         t_perturbation_details>(__VA_ARGS__); break; \
         case math::atomic_virial :    f<Interaction_Spec<math::truncoct, math::atomic_virial, false>, \
                                         t_perturbation_details>(__VA_ARGS__); break; \
-        default: throw std::string("wrong virial type"); \
+        default: io::messages.add("wrong virial type", "template_split", io::message::error); \
       } \
       break; \
-    default: throw std::string("wrong boundary type"); \
+    default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
 } \
 

@@ -70,14 +70,12 @@ io::In_Posres::read(topology::Topology& topo,
 	io::messages.add("bad line in POSRES block",
 			 "In_Posres",
 			 io::message::error);
-	throw std::runtime_error("bad line in POSRES block");
       }
 
       if (nr < 1 || nr > topo.num_atoms()){
 	io::messages.add("illegal atom in POSRES block",
 			 "In_Posres",
 			 io::message::error);
-	throw std::runtime_error("illegal atom in POSRES block");
       }
 
       topo.position_restraints().push_back
@@ -126,7 +124,6 @@ io::In_Posres::read(topology::Topology& topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in BFACTOR block",
 			   "In_Posres", io::message::error);
-	  throw std::runtime_error("bad line in POSRES block");
 	}
       
 	if (seq > topo.num_atoms() || seq < 1 || seq != posres_it->seq){
@@ -141,7 +138,6 @@ io::In_Posres::read(topology::Topology& topo,
       if(n != num){
 	io::messages.add("Wrong number of bfactors in BFACTOR block",
 			 "In_Posres", io::message::error);
-	throw std::runtime_error("error in BFACTOR block (n != num)");
       }
     }
   

@@ -4,6 +4,7 @@
  */
 
 #include <stdheader.h>
+#include <io/message.h>
 #include "blockinput.h"
 
 std::istream& 
@@ -30,7 +31,7 @@ io::getline(
   return is;
 }
 
-std::istream& 
+bool 
 io::getblock(
 	     std::istream& is, 
 	     std::vector<std::string>& b, 
@@ -55,8 +56,9 @@ io::getblock(
     if (dest->find(sep) == 0)
       break;
 
-    if (!is.good()) 
-      throw std::runtime_error("error reading block: " + *(b.begin()));
+    if (!is.good()){
+      return false;
+    }
 
     ++dest;
   }
@@ -64,7 +66,7 @@ io::getblock(
   ++dest;
   b.erase(dest, b.end());
 
-  return is;
+  return true;
 }
 
 std::string& 

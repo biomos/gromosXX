@@ -126,52 +126,66 @@ void io::Out_Configuration::init(io::Argument & args,
 {
   if (args.count("fin") > 0)
     final_configuration(args["fin"]);
-  else throw std::string("argument fin for final configuration required!");
+  else io::messages.add("argument fin for final configuration required!",
+			"Out_Configuration",
+			io::message::error);
 
   if (args.count("trj") > 0)
     trajectory(args["trj"], param.write.position);
   else if (param.write.position)
-    throw std::string("write trajectory but no trj argument");
+    io::messages.add("write trajectory but no trj argument",
+		     "Out_Configuration",
+		     io::message::error);
 
   if (args.count("trv") > 0)
     velocity_trajectory(args["trv"], param.write.velocity);
   else if (param.write.velocity)
-    throw std::string("write velocity trajectory but no trv argument");
+    io::messages.add("write velocity trajectory but no trv argument",
+		     "Out_Configuration",
+		     io::message::error);
 
   if (args.count("trf") > 0)
     force_trajectory(args["trf"], 1);
-  //else if (param.write.force)
-  //  throw std::string("write force trajectory but no trf argument");
 
   if (args.count("tre") > 0)
     energy_trajectory(args["tre"], param.write.energy);
   else if (param.write.energy)
-    throw std::string("write energy trajectory but no tre argument");
+    io::messages.add("write energy trajectory but no tre argument",
+		     "Out_Configuration",
+		     io::message::error);
 
   if (args.count("trg") > 0)
     free_energy_trajectory(args["trg"], param.write.free_energy);
   else if (param.write.free_energy)
-    throw std::string("write free energy trajectory but no trg argument");
+    io::messages.add("write free energy trajectory but no trg argument",
+		     "Out_Configuration",
+		     io::message::error);
 
   if (args.count("bae") > 0)
     block_averaged_energy(args["bae"], param.write.block_average);
   else if (param.write.block_average && param.write.energy)
-    throw std::string("write block averaged energy but no bae argument");
+    io::messages.add("write block averaged energy but no bae argument",
+		     "Out_Configuration",
+		     io::message::error);
 
   if (param.perturbation.perturbation){
     if (args.count("bag") > 0)
       block_averaged_free_energy(args["bag"], 
 				 param.write.block_average);
     else if (param.write.block_average && param.write.free_energy)
-      throw std::string("write block averaged free energy "
-			"but no bag argument");
+      io::messages.add("write block averaged free energy "
+			"but no bag argument",
+		       "Out_Configuration",
+		       io::message::error);
   }
 
   if (args.count("rep") > 0){
     m_replica = true;
     m_replica_data.open(args["rep"].c_str());
     if (!m_replica_data)
-      throw std::string("could not open replica exchange final data file!");
+      io::messages.add("could not open replica exchange final data file!",
+		       "Out_Configuration",
+		       io::message::error);
   }
   
 }

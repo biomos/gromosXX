@@ -341,7 +341,7 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
       io::messages.add("bad line in POSITIONRED block",
 		       "In_Configuration",
 		       io::message::error);      
-      throw std::runtime_error("bad line in POSITIONRED block");
+      return false;
     }
     
   }
@@ -389,7 +389,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
       io::messages.add("bad line in POSITION block",
 		       "In_Configuration",
 		       io::message::critical);
-      throw std::runtime_error("bad line in POSITION block");
+      return false;
     }
   }
 
@@ -434,7 +434,7 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
       io::messages.add("bad line in VELOCITYRED block",
 		       "In_Configuration",
 		       io::message::error);      
-      throw std::runtime_error("bad line in VELOCITYRED block");
+      return false;
     }
 
   }
@@ -484,7 +484,7 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
 		       "In_Configuration",
 		       io::message::critical);
       
-      throw std::runtime_error("bad line in VELOCITY block");
+      return false;
     }
   }
 
@@ -522,7 +522,7 @@ bool io::In_Configuration::_read_box(math::Box &box, std::vector<std::string> &b
 
     if (i>=3){
       io::messages.add("bad line in TRICLINICBOX block","In_Configuration", io::message::error);
-      throw std::runtime_error("bad line in TRICLINICBOX block");
+      return false;
     }
     
     _lineStream.clear();
@@ -531,7 +531,7 @@ bool io::In_Configuration::_read_box(math::Box &box, std::vector<std::string> &b
     _lineStream >> box(0)(i) >> box(1)(i) >> box(2)(i);
     
     if(_lineStream.fail())
-      throw std::runtime_error("bad line in TRICLINICBOX block");
+      return false;
     if (!_lineStream.eof()) {
       std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
       DEBUG(10, msg);
@@ -562,8 +562,13 @@ bool io::In_Configuration::_read_g96_box(math::Box &box, std::vector<std::string
   _lineStream >> box(0)(0) >> box(1)(1) >> box(2)(2);
   box(0)(1) = box(0)(2) = box(1)(0) = box(1)(2) = box(2)(0) = box(2)(1) = 0.0;
     
-  if(_lineStream.fail())
-    throw std::runtime_error("bad line in TRICLINICBOX block");
+  if(_lineStream.fail()){
+    io::messages.add("failed to read BOX block",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+  
   if (!_lineStream.eof()) {
     std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
     DEBUG(10, msg);
@@ -608,8 +613,13 @@ bool io::In_Configuration::_read_flexv
     --i;
     --j;
     
-    if(_lineStream.fail())
-      throw std::runtime_error("bad line in FLEXV block");
+    if(_lineStream.fail()){
+      io::messages.add("failed to read FLEXV block",
+		       "In_Configuration",
+		       io::message::error);
+      return false;
+    }
+    
     if (!_lineStream.eof()) {
       std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
       DEBUG(10, msg);
@@ -636,8 +646,12 @@ bool io::In_Configuration::_read_flexv
     --i;
     --j;
     
-    if(_lineStream.fail())
-      throw std::runtime_error("bad line in FLEXV block");
+    if(_lineStream.fail()){
+      io::messages.add("Failed to read FLEXV block",
+		       "In_Configuration",
+		       io::message::error);
+      return false;
+    }
 
     if (!_lineStream.eof()) {
       std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";

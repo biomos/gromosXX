@@ -19,6 +19,7 @@
 #include "perturbed_dihedral_interaction.h"
 
 #include <util/template_split.h>
+#include <util/error.h>
 #include <util/debug.h>
 
 #undef MODULE
@@ -134,10 +135,9 @@ static int _calculate_perturbed_dihedral_interactions
         dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
         break;
       default:
-        //io::messages.add("dihedral function not implemented for m>6", 
-        //               "dihedral_interaction", io::message::error);
-        throw std::runtime_error("dihedral type for m=6 not implemented");
-
+        io::messages.add("dihedral function not implemented for m>6", 
+			 "dihedral_interaction", io::message::critical);
+	return E_TYPE_NOT_IMPLEMENTED;
     }
     double     K = m_interaction.parameter()[d_it->A_type].K;
     double delta = m_interaction.parameter()[d_it->A_type].pd;
@@ -188,10 +188,9 @@ static int _calculate_perturbed_dihedral_interactions
         dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
         break;
       default:
-        //io::messages.add("dihedral function not implemented for m>6", 
-        //               "dihedral_interaction", io::message::error);
-        throw std::runtime_error("dihedral type for m=6 not implemented");
-
+        io::messages.add("dihedral function not implemented for m>6", 
+			 "dihedral_interaction", io::message::critical);
+	return E_TYPE_NOT_IMPLEMENTED;
     }
         K = m_interaction.parameter()[d_it->B_type].K;
     delta = m_interaction.parameter()[d_it->B_type].pd;

@@ -57,91 +57,88 @@ int main(int argc, char* argv[])
   
   int nknowns = 5;
     
-    std::string usage = argv[0];
-    usage += "\n\t[@topo    <topology>]\n";
-    usage += "\t[@pttopo  <perturbation topology>]\n";
-    usage += "\t[@conf    <starting configuration>]\n";
-    usage += "\t[@input   <input>]\n";
-    usage += "\t[@verb    <[module:][submodule:]level>]\n";
+  std::string usage = argv[0];
+  usage += "\n\t[@topo    <topology>]\n";
+  usage += "\t[@pttopo  <perturbation topology>]\n";
+  usage += "\t[@conf    <starting configuration>]\n";
+  usage += "\t[@input   <input>]\n";
+  usage += "\t[@verb    <[module:][submodule:]level>]\n";
 
-    try{
-      io::Argument args(argc, argv, nknowns, knowns, usage, true);
+  io::Argument args;
+  if (args.parse(argc, argv, nknowns, knowns, true)){
+    std::cerr << usage << std::endl;
+    return 1;
+  }
 
-      // parse the verbosity flag and set debug levels
-      util::parse_verbosity(args);
+  // parse the verbosity flag and set debug levels
+  util::parse_verbosity(args);
       
-      std::string stopo, spttopo, sconf, sinput;
-      bool quiet = true;
+  std::string stopo, spttopo, sconf, sinput;
+  bool quiet = true;
 
-      if (args.count("verb") != -1) quiet = false;
+  if (args.count("verb") != -1) quiet = false;
       
-      if(args.count("topo") == 1)
-	stopo = args["topo"];
-      else
-	GETFILEPATH(stopo, "aladip.topo", "src/check/data/");
+  if(args.count("topo") == 1)
+    stopo = args["topo"];
+  else
+    GETFILEPATH(stopo, "aladip.topo", "src/check/data/");
 
-      if(args.count("pttopo") == 1)
-	spttopo = args["pttopo"];
-      else
-	GETFILEPATH(spttopo, "aladip.pttopo", "src/check/data/");
+  if(args.count("pttopo") == 1)
+    spttopo = args["pttopo"];
+  else
+    GETFILEPATH(spttopo, "aladip.pttopo", "src/check/data/");
       
-      if(args.count("conf") == 1)
-	sconf = args["conf"];
-      else
-	GETFILEPATH(sconf, "aladip.conf", "src/check/data/");
+  if(args.count("conf") == 1)
+    sconf = args["conf"];
+  else
+    GETFILEPATH(sconf, "aladip.conf", "src/check/data/");
 
-      if(args.count("input") == 1)
-	sinput = args["input"];
-      else
-	GETFILEPATH(sinput, "aladip_atomic.in", "src/check/data/");
+  if(args.count("input") == 1)
+    sinput = args["input"];
+  else
+    GETFILEPATH(sinput, "aladip_atomic.in", "src/check/data/");
 
-      if (!quiet)
-	std::cout << "\n\n"
-		  << "topology :      " << stopo << "\n"
-		  << "perturbation :  " << spttopo << "\n"
-		  << "input :         " << sinput << "\n"
-		  << "configuration : " << sconf << "\n"
-		  << std::endl;
+  if (!quiet)
+    std::cout << "\n\n"
+	      << "topology :      " << stopo << "\n"
+	      << "perturbation :  " << spttopo << "\n"
+	      << "input :         " << sinput << "\n"
+	      << "configuration : " << sconf << "\n"
+	      << std::endl;
 
-      util::simulation_struct aladip_sim;
-      io::In_Topology in_topo;
+  util::simulation_struct aladip_sim;
+  io::In_Topology in_topo;
 
-      in_topo.quiet = quiet;
+  in_topo.quiet = quiet;
       
-      if (util::create_simulation(stopo,
-				  spttopo,
-				  sconf,
-				  sinput,
-				  aladip_sim,
-				  in_topo,
-				  quiet
-				  )
-	  != 0){
-	std::cerr << "creating simulation failed!" << std::endl;
-	return 1;
-      }
+  if (util::create_simulation(stopo,
+			      spttopo,
+			      sconf,
+			      sinput,
+			      aladip_sim,
+			      in_topo,
+			      quiet
+			      )
+      != 0){
+    std::cerr << "creating simulation failed!" << std::endl;
+    return 1;
+  }
 
-      // create a forcefield
-      interaction::Forcefield *ff = new interaction::Forcefield;
+  // create a forcefield
+  interaction::Forcefield *ff = new interaction::Forcefield;
       
-      if (interaction::create_g96_forcefield(*ff, 
-					     aladip_sim.topo,
-					     aladip_sim.sim,
-					     aladip_sim.conf,
-					     in_topo,
-					     quiet)
-	  != 0){
-	std::cerr << "creating forcefield failed!" << std::endl;
-	return 1;
-      }
+  if (interaction::create_g96_forcefield(*ff, 
+					 aladip_sim.topo,
+					 aladip_sim.sim,
+					 aladip_sim.conf,
+					 in_topo,
+					 quiet)
+      != 0){
+    std::cerr << "creating forcefield failed!" << std::endl;
+    return 1;
+  }
       
-      total += check::check_atomic_virial(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
-      
-    }
-    catch (std::string s){
-      std::cout << s << std::endl;
-      return 1;
-    }
+  total += check::check_atomic_virial(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
     
-    return total;
+  return total;
 }

@@ -42,12 +42,11 @@ int io::read_special(io::Argument const & args,
   if (sim.param().posrest.posrest){
     std::ifstream posres_file;
   
-    try{
-      posres_file.open(args["posres"].c_str());
-    }
-    catch(std::string s){
-      s = "opening posres file failed!\n" + s;
-      throw s;
+    posres_file.open(args["posres"].c_str());
+    if (!posres_file){
+      io::messages.add("opening posres file failed!\n",
+		       "read_special", 
+		       io::message::error);
     }
     io::messages.add("position restraints read from " + args["posres"],
 		     "read special",
@@ -62,12 +61,10 @@ int io::read_special(io::Argument const & args,
   if (sim.param().jvalue.mode != simulation::restr_off){
     std::ifstream jval_file;
     
-    try{
-      jval_file.open(args["jval"].c_str());
-    }
-    catch(std::string s){
-      s = "opening jvalue restraints file failed!\n" + s;
-      throw s;
+    jval_file.open(args["jval"].c_str());
+    if (!jval_file){
+      io::messages.add("opening jvalue restraints file failed!\n",
+		      "read_special", io::message::error);
     }
     io::messages.add("jvalue restraints read from " + args["jval"],
 		     "read special",

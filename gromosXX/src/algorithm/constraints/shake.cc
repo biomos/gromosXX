@@ -331,7 +331,6 @@ void algorithm::Shake
 	  io::messages.add("SHAKE error. too many iterations",
 			   "Shake::solvent",
 			   io::message::critical);
-	  // throw std::runtime_error("SHAKE failure in solvent");
 	  error = E_SHAKE_FAILURE_SOLVENT;
 	  return;
 	}

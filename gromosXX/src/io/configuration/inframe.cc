@@ -8,13 +8,14 @@
 #include "../blockinput.h"
 #include "../instream.h"
 #include "inframe.h"
+#include <util/error.h>
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE io
 #define SUBMODULE configuration
 
-void io::In_Frame::read_frame()
+int io::In_Frame::read_frame()
 {
   std::vector<std::string> buffer;
 
@@ -33,9 +34,9 @@ void io::In_Frame::read_frame()
     }
     catch(std::runtime_error e){
       if (buffer.size() && buffer[0] != ""){
-	std::string s = "invalid block " + _next_block +  " in configuration file?";
+	std::string s = "error while reading frame : " + buffer[0];
 	io::messages.add(s, "inframe", io::message::error);
-	throw s;
+	return E_INPUT_ERROR;
       }
       
       break;
@@ -53,6 +54,6 @@ void io::In_Frame::read_frame()
       break;
     
   }
-  
+  return 0;
 }
 

@@ -4,6 +4,6 @@
 
 namespace util
 {
-  void parse_verbosity(io::Argument &args, std::string flag = "verb", 
-		       std::ostream &os = std::cout);
+  int parse_verbosity(io::Argument &args, std::string flag = "verb", 
+		      std::ostream &os = std::cout);
 }

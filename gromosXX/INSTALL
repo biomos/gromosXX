@@ -48,6 +48,11 @@ header files and libraries, you can use
 ../configure --with-blitz=/troll2/markus/programs
 
 
+optimization flags
+------------------
+
+CXXFLAGS -fno-exceptions -fomit-frame-pointer
+
 =========================================================================
 
 

@@ -118,7 +118,6 @@ io::In_Topology::read(topology::Topology& topo,
       if (n != num){
 	io::messages.add("Error in RESNAME block: n!=num.",
 			 "InTopology", io::message::error);
-	throw std::runtime_error("error in RESNAME block (n != num)");
       }
 
       if (!quiet)
@@ -283,7 +282,9 @@ io::In_Topology::read(topology::Topology& topo,
 	}
       
 	if (_lineStream.fail())
-	  throw std::runtime_error("bad line in SOLUTEATOM block");
+	  io::messages.add("bad line in SOLUTEATOM block",
+			   "In_Topology",
+			   io::message::critical);
 
 	topo.add_solute_atom(s, r_nr-1, t-1, m, q, cg, ex, ex14);
       }
@@ -332,7 +333,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in BONDH block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in BONDH block");
 	  }
 	
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -354,7 +354,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in BONDH block",
 			   "In_Topology", io::message::error);
-	  throw std::runtime_error("error in BONDH block (n != num)");
 	}
       }
 
@@ -394,7 +393,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in BOND block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in BOND block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -415,7 +413,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in BOND block",
 			   "In_Topology", io::message::error);
-	  throw std::runtime_error("error in BOND block (n != num)");
 	}
       }
   
@@ -465,7 +462,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in CONSTRAINT block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in CONSTRAINT block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -481,7 +477,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in CONSTRAINT block",
 			   "In_Topology", io::message::error);
-	  throw std::runtime_error("error in CONSTRAINT block (n != num)");
 	}
       }
     
@@ -529,7 +524,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in BONDANGLEH block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in BONDANGLEH block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -546,8 +540,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in BONDANGLEH block",
 			   "In_Topology", io::message::error);
-	  // if (_lineStream.fail()|| ! _lineStream.eof())
-	  throw std::runtime_error("error in BONDANGLEH block (n != num)");
 	}
       }
         
@@ -579,7 +571,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in BONDANGLE block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in BONDANGLE block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -596,8 +587,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in BONDANGLE block",
 			   "In_Topology", io::message::error);
-	  // if (_lineStream.fail()|| ! _lineStream.eof())
-	  throw std::runtime_error("error in BONDANGLE block (n != num)");
 	}
       }
 
@@ -646,7 +635,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in IMPDIHEDRAL block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in IMPDIHEDRAL block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -663,8 +651,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in IMPDIHEDRAL block",
 			   "In_Topology", io::message::error);
-	  // if (_lineStream.fail()|| ! _lineStream.eof())
-	  throw std::runtime_error("error in IMPDIHEDRAL block (n != num)");
 	}
       }
     
@@ -700,7 +686,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in IMPDIHEDRALH block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in IMPDIHEDRALH block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -717,8 +702,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in IMPDIHEDRALH block",
 			   "In_Topology", io::message::error);
-	  // if (_lineStream.fail()|| ! _lineStream.eof())
-	  throw std::runtime_error("error in IMPDIHEDRALH block (n != num)");
 	}
       }
 
@@ -763,7 +746,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in DIHEDRAL block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in DIHEDRAL block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -780,8 +762,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in DIHEDRAL block",
 			   "In_Topology", io::message::error);
-	  // if (_lineStream.fail()|| ! _lineStream.eof())
-	  throw std::runtime_error("error in DIHEDRAL block (n != num)");
 	}
       }
     
@@ -815,7 +795,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in DIHEDRALH block",
 			     "In_Topology", io::message::error);
-	    throw std::runtime_error("bad line in DIHEDRALH block");
 	  }
       
 	  if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
@@ -832,8 +811,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if(n != num){
 	  io::messages.add("Wrong number of bonds in DIHEDRALH block",
 			   "In_Topology", io::message::error);
-	  // if (_lineStream.fail()|| ! _lineStream.eof())
-	  throw std::runtime_error("error in DIHEDRALH block (n != num)");
 	}
       }
     
@@ -910,7 +887,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in SOLVENTATOM block",
 			   "In_Topology", io::message::error);	
-	  throw std::runtime_error("bad line in SOLVENTATOM block");
 	}
       
 
@@ -920,7 +896,6 @@ io::In_Topology::read(topology::Topology& topo,
       if (n!=num){
 	io::messages.add("Error in SOLVENTATOM block (num != n)",
 			 "In_Topology", io::message::error);
-	throw std::runtime_error("error in SOLVENTATOM block (n != num)");
       }
     
       // lookup the number of bond types
@@ -948,7 +923,6 @@ io::In_Topology::read(topology::Topology& topo,
 	io::messages.add("SOLVENTCONSTR block missing.",
 			 "In_Topology", io::message::error);	
 
-	throw std::runtime_error("SOLVENTCONSTR block missing.");
       }
     
       it = buffer.begin() + 1;
@@ -973,7 +947,6 @@ io::In_Topology::read(topology::Topology& topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in SOLVENTCONSTR block",
 			   "In_Topology", io::message::error);	
-	  throw std::runtime_error("bad line in SOLVENTCONSTR block");
 	}
       
 	// the solvent (distance constraints) bond types
@@ -984,9 +957,6 @@ io::In_Topology::read(topology::Topology& topo,
       if (n!=num){
 	io::messages.add("Error in SOLVENTCONSTR block (num != n)",
 			 "In_Topology", io::message::error);
-      
-	throw std::runtime_error("error in SOLVENTCONSTR block (n != num)");
-
       }
       topo.add_solvent(s);
     }
@@ -1100,16 +1070,22 @@ void io::In_Topology
       _lineStream.str(*it);
       _lineStream >> k >> r;
 
-      if (_lineStream.fail() || ! _lineStream.eof())
-	throw std::runtime_error("bad line in HARMBONDTYPE block");
-      
+      if (_lineStream.fail() || ! _lineStream.eof()){
+	io::messages.add("bad line in HARMBONDTYPE block",
+			 "In_Topology",
+			 io::message::error);
+	k = 0;
+	r = 0;
+      }
+
       // and add...
       b.push_back(interaction::bond_type_struct(k, r));
     }
   
     if (num != n)
-      throw std::runtime_error("not enough bond types in HARMBONDTYPE block");
-  
+      io::messages.add("not enough bond types in HARMBONDTYPE block",
+		       "In_Topology",
+		       io::message::error);
   }
   else{
     buffer = m_block["BONDTYPE"];
@@ -1121,7 +1097,9 @@ void io::In_Topology
     */
 
     if (buffer.size()==0)
-      throw std::runtime_error("BONDTYPE block not found!");
+      io::messages.add("BONDTYPE block not found!",
+		       "In_Topology",
+		       io::message::error);
 
     // 1. BONDTYPE 2. number of types
     for (it = buffer.begin() + 2; 
@@ -1135,7 +1113,9 @@ void io::In_Topology
       
       if (_lineStream.fail()){
 	std::cout << *it << std::endl;
-	throw std::runtime_error("bad line in BONDTYPE block");
+	io::messages.add("bad line in BONDTYPE block!",
+			 "In_Topology",
+			 io::message::error);
       }
       if (! _lineStream.eof()){
 	std::cout << *it << std::endl;
@@ -1176,7 +1156,6 @@ void io::In_Topology
       if (_lineStream.fail() || ! _lineStream.eof()){
 	io::messages.add("Bad line in SOLVENTCONSTR block",
 			 "In_Topology", io::message::error);	
-	throw std::runtime_error("bad line in SOLVENTCONSTR block");
       }
       
       // the solvent (distance constraints) bond types
@@ -1187,8 +1166,6 @@ void io::In_Topology
     if (n!=num){
       io::messages.add("Error in SOLVENTCONSTR block (num != n)",
 		       "In_Topology", io::message::error);
-      
-      throw std::runtime_error("error in SOLVENTCONSTR block (n != num)");
       
     }
   }
@@ -1207,7 +1184,9 @@ void io::In_Topology
   buffer = m_block["BONDTYPE"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("BONDTYPE block not found!");
+    io::messages.add("BONDTYPE block not found!",
+		     "In_Topology",
+		     io::message::error);
 
   // 1. BONDTYPE 2. number of types
   for (it = buffer.begin() + 2; 
@@ -1221,7 +1200,9 @@ void io::In_Topology
       
     if (_lineStream.fail()){
       std::cout << *it << std::endl;
-      throw std::runtime_error("bad line in BONDTYPE block");
+      io::messages.add("bad line in BONDTYPE block",
+		       "In_Topology",
+		       io::message::error);
     }
     if (! _lineStream.eof()){
       std::cout << *it << std::endl;
@@ -1258,7 +1239,6 @@ void io::In_Topology
       if (_lineStream.fail() || ! _lineStream.eof()){
 	io::messages.add("Bad line in SOLVENTCONSTR block",
 			 "In_Topology", io::message::error);	
-	throw std::runtime_error("bad line in SOLVENTCONSTR block");
       }
       
       // the solvent (distance constraints) bond types
@@ -1269,9 +1249,6 @@ void io::In_Topology
     if (n!=num){
       io::messages.add("Error in SOLVENTCONSTR block (num != n)",
 		       "In_Topology", io::message::error);
-      
-      throw std::runtime_error("error in SOLVENTCONSTR block (n != num)");
-      
     }
   }
   
@@ -1289,7 +1266,8 @@ void io::In_Topology
   buffer = m_block["BONDANGLETYPE"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("BONDANGLETYPE block not found!");
+    io::messages.add("BONDANGLETYPE block not found!", "In_Topology",
+		     io::message::error);
 
   // 1. BONDTYPE 2. number of types
   for (it = buffer.begin() + 2; 
@@ -1303,7 +1281,8 @@ void io::In_Topology
       
     if (_lineStream.fail()){
       std::cout << *it << std::endl;
-      throw std::runtime_error("bad line in BONDANGLETYPE block");
+      io::messages.add("bad line in BONDANGLETYPE block", "In_Topology",
+		       io::message::error);
     }
     if (! _lineStream.eof()){
       std::cout << *it << std::endl;
@@ -1329,7 +1308,8 @@ void io::In_Topology
   buffer = m_block["IMPDIHEDRALTYPE"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("IMPDIHEDRALTYPE block not found!");
+    io::messages.add("IMPDIHEDRALTYPE block not found!", "In_Topology",
+		     io::message::error);
 
   // 1. IMPDIHEDRALTYPE 2. number of types
   for (it = buffer.begin() + 2; 
@@ -1343,7 +1323,8 @@ void io::In_Topology
       
     if (_lineStream.fail()){
       std::cout << *it << std::endl;
-      throw std::runtime_error("bad line in IMPDIHEDRALTYPE block");
+      io::messages.add("bad line in IMPDIHEDRALTYPE block", "In_Topology",
+		       io::message::error);
     }
     if (! _lineStream.eof()){
       std::cout << *it << std::endl;
@@ -1370,7 +1351,8 @@ void io::In_Topology
   buffer = m_block["DIHEDRALTYPE"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("DIHEDRALTYPE block not found!");
+    io::messages.add("DIHEDRALTYPE block not found!", "In_Topology",
+		     io::message::error);
 
   // 1. DIHEDRALTYPE 2. number of types
   for (it = buffer.begin() + 2; 
@@ -1386,7 +1368,8 @@ void io::In_Topology
       
     if (_lineStream.fail()){
       std::cout << *it << std::endl;
-      throw std::runtime_error("bad line in DIHEDRALTYPE block");
+      io::messages.add("bad line in DIHEDRALTYPE block", "In_Topology",
+		       io::message::error);
     }
     if (! _lineStream.eof()){
       std::cout << *it << std::endl;
@@ -1455,12 +1438,15 @@ void io::In_Topology
       --j;
       
       if (_lineStream.fail() || ! _lineStream.eof())
-	throw std::runtime_error("bad line in LJPARAMETERS block");
+	io::messages.add("bad line in LJPARAMETERS block", "In_Topology",
+			 io::message::error);
       
       if (i >= int(sz) || j >= int(sz)){
 	DEBUG(7, "wrong iac in LJPARAMETERS: i=" << i << " j=" << j
 	      << " sz=" << sz);
-	throw std::string("wrong integer atom code in LJPARAMETERS block");
+	io::messages.add("wrong integer atom code in LJPARAMETERS block",
+			 "In_Topology", 
+			 io::message::error);
       }
 
       lj_parameter[i][j] = s;

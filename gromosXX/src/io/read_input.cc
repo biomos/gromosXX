@@ -98,7 +98,7 @@ int io::read_input(io::Argument const & args,
     if(args.count("pttopo")<1){
       io::messages.add("No perturbation topology specified",
 		       "read_input", io::message::critical);
-      throw std::string("No perturbation topology specified");
+      return -1;
     }
     try{
       pttopo_file.open(args["pttopo"].c_str());

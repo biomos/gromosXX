@@ -26,13 +26,10 @@ namespace io {
    * The function io::getblock retrieves the next block  
    * (separated by const string& sep) using io::getline.
    *
-   * It throws a runtime_error if the stream's good bit is unset 
-   * before it's finished reading a block.
-   *
    * Finally, the vector<string> it writes to is resized to the 
    * number of strings read.
    */
-  std::istream& getblock(
+  bool getblock(
 				std::istream& is, 
 				std::vector<std::string>& b, 
 				const std::string& sep = "END"

@@ -57,139 +57,137 @@ int main(int argc, char* argv[])
   
   int nknowns = 5;
     
-    std::string usage = argv[0];
-    usage += "\n\t[@topo    <topology>]\n";
-    usage += "\t[@pttopo <perturbation topology>]\n";
-    usage += "\t[@conf    <starting configuration>]\n";
-    usage += "\t[@input   <input>]\n";
-    usage += "\t[@verb   <[module:][submodule:]level>]\n";
+  std::string usage = argv[0];
+  usage += "\n\t[@topo    <topology>]\n";
+  usage += "\t[@pttopo <perturbation topology>]\n";
+  usage += "\t[@conf    <starting configuration>]\n";
+  usage += "\t[@input   <input>]\n";
+  usage += "\t[@verb   <[module:][submodule:]level>]\n";
 
-    try{
-      io::Argument args(argc, argv, nknowns, knowns, usage, true);
+  io::Argument args;
+  if (args.parse(argc, argv, nknowns, knowns, true)){
+    std::cerr << usage << std::endl;
+    return 1;
+  }
 
-      // parse the verbosity flag and set debug levels
-      util::parse_verbosity(args);
+  // parse the verbosity flag and set debug levels
+  util::parse_verbosity(args);
       
-      std::string stopo, spttopo, sconf, sinput;
-      bool quiet = true;
+  std::string stopo, spttopo, sconf, sinput;
+  bool quiet = true;
 
-      if (args.count("verb") != -1) quiet = false;
+  if (args.count("verb") != -1) quiet = false;
       
-      if(args.count("topo") == 1)
-	stopo = args["topo"];
-      else
-	GETFILEPATH(stopo, "rasn.topo", "src/check/data/");
+  if(args.count("topo") == 1)
+    stopo = args["topo"];
+  else
+    GETFILEPATH(stopo, "rasn.topo", "src/check/data/");
 
-      if(args.count("pttopo") == 1)
-	spttopo = args["pttopo"];
-      else
-	GETFILEPATH(spttopo, "rasn.pttopo", "src/check/data/");
+  if(args.count("pttopo") == 1)
+    spttopo = args["pttopo"];
+  else
+    GETFILEPATH(spttopo, "rasn.pttopo", "src/check/data/");
       
-      if(args.count("conf") == 1)
-	sconf = args["conf"];
-      else
-	GETFILEPATH(sconf, "rasn.conf", "src/check/data/");
+  if(args.count("conf") == 1)
+    sconf = args["conf"];
+  else
+    GETFILEPATH(sconf, "rasn.conf", "src/check/data/");
 
-      if(args.count("input") == 1)
-	sinput = args["input"];
-      else
-	GETFILEPATH(sinput, "rasn.in", "src/check/data/");
+  if(args.count("input") == 1)
+    sinput = args["input"];
+  else
+    GETFILEPATH(sinput, "rasn.in", "src/check/data/");
 
-      if (!quiet)
-	std::cout << "\n\n"
-		  << "topology :      " << stopo << "\n"
-		  << "perturbation :  " << spttopo << "\n"
-		  << "input :         " << sinput << "\n"
-		  << "configuration : " << sconf << "\n"
-		  << std::endl;
+  if (!quiet)
+    std::cout << "\n\n"
+	      << "topology :      " << stopo << "\n"
+	      << "perturbation :  " << spttopo << "\n"
+	      << "input :         " << sinput << "\n"
+	      << "configuration : " << sconf << "\n"
+	      << std::endl;
 
-      util::simulation_struct rasn_sim;
-      io::In_Topology in_topo;
+  util::simulation_struct rasn_sim;
+  io::In_Topology in_topo;
 
-      in_topo.quiet = quiet;
+  in_topo.quiet = quiet;
       
-      if (util::create_simulation(stopo,
-				  spttopo,
-				  sconf,
-				  sinput,
-				  rasn_sim,
-				  in_topo,
-				  quiet
-				  )
-	  != 0){
-	std::cerr << "creating simulation failed!" << std::endl;
-	return 1;
-      }
+  if (util::create_simulation(stopo,
+			      spttopo,
+			      sconf,
+			      sinput,
+			      rasn_sim,
+			      in_topo,
+			      quiet
+			      )
+      != 0){
+    std::cerr << "creating simulation failed!" << std::endl;
+    return 1;
+  }
 
-      if (true){
-	// create a forcefield
-	interaction::Forcefield *ff = new interaction::Forcefield;
+  if (true){
+    // create a forcefield
+    interaction::Forcefield *ff = new interaction::Forcefield;
 	
-	if (interaction::create_g96_forcefield(*ff, 
-					       rasn_sim.topo,
-					       rasn_sim.sim,
-					       rasn_sim.conf,
-					       in_topo,
-					       quiet)
-	  != 0){
-	  std::cerr << "creating forcefield failed!" << std::endl;
-	  return 1;
-	}
-
-	// first check the forcefield
-	total += check::check_forcefield(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, *ff);
-
-      }
-      // vtune: run the thing...
-      else{
-	
-	algorithm::create_md_sequence(rasn_sim.md,
-				      rasn_sim.topo,
-				      rasn_sim.conf,
-				      rasn_sim.sim,
-				      in_topo);
-
-	double end_time = rasn_sim.sim.param().step.t0 + 
-	  rasn_sim.sim.time_step_size() * 
-	  rasn_sim.sim.param().step.number_of_steps;
-    
-	int error;
-
-	while(rasn_sim.sim.time() < end_time){
-      
-	  if ((error = rasn_sim.md.run(rasn_sim.topo, 
-				       rasn_sim.conf,
-				       rasn_sim.sim))){
-
-	    std::cout << "\nError during MD run!\n" << std::endl;
-	    // try to save the final structures...
-	    break;
-	  }
-
-	  // update the energies
-	  rasn_sim.conf.old().energies.calculate_totals();
-	  // perturbed energy derivatives
-	  if (rasn_sim.sim.param().perturbation.perturbation){
-	    rasn_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
-	  }
-
-	  rasn_sim.conf.current().averages.
-	    apply(rasn_sim.topo,
-		  rasn_sim.conf,
-		  rasn_sim.sim);
-
-	  
-	  rasn_sim.sim.time() +=  rasn_sim.sim.time_step_size();
-	  ++ rasn_sim.sim.steps();
-
-	}
-	rasn_sim.md.print_timing(std::cout);
-      }
-    }
-    catch (std::string s){
-      std::cout << s << std::endl;
+    if (interaction::create_g96_forcefield(*ff, 
+					   rasn_sim.topo,
+					   rasn_sim.sim,
+					   rasn_sim.conf,
+					   in_topo,
+					   quiet)
+	!= 0){
+      std::cerr << "creating forcefield failed!" << std::endl;
       return 1;
     }
 
-    return total;
+    // first check the forcefield
+    total += check::check_forcefield(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, *ff);
+
+  }
+  // vtune: run the thing...
+  else{
+	
+    algorithm::create_md_sequence(rasn_sim.md,
+				  rasn_sim.topo,
+				  rasn_sim.conf,
+				  rasn_sim.sim,
+				  in_topo);
+
+    double end_time = rasn_sim.sim.param().step.t0 + 
+      rasn_sim.sim.time_step_size() * 
+      rasn_sim.sim.param().step.number_of_steps;
+    
+    int error;
+
+    while(rasn_sim.sim.time() < end_time){
+      
+      if ((error = rasn_sim.md.run(rasn_sim.topo, 
+				   rasn_sim.conf,
+				   rasn_sim.sim))){
+
+	std::cout << "\nError during MD run!\n" << std::endl;
+	// try to save the final structures...
+	break;
+      }
+
+      // update the energies
+      rasn_sim.conf.old().energies.calculate_totals();
+      // perturbed energy derivatives
+      if (rasn_sim.sim.param().perturbation.perturbation){
+	rasn_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
+      }
+
+      rasn_sim.conf.current().averages.
+	apply(rasn_sim.topo,
+	      rasn_sim.conf,
+	      rasn_sim.sim);
+
+	  
+      rasn_sim.sim.time() +=  rasn_sim.sim.time_step_size();
+      ++ rasn_sim.sim.steps();
+
+    }
+    rasn_sim.md.print_timing(std::cout);
+  }
+
+  return total;
 }

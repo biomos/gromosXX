@@ -14,7 +14,9 @@ void io::GInStream::readTitle() {
 
   io::getblock(*_is, _b);
   if (_b[0] != "TITLE")
-    throw std::runtime_error("TITLE block expected. Found: " + _b[0]);
+    io::messages.add("title block expected: found " + _b[0],
+		     "instream",
+		     io::message::error);
   title = io::concatenate(_b.begin() + 1, _b.end() - 1, title);
 }
 
@@ -24,14 +26,11 @@ void io::GInStream::readStream()
   
   while(!stream().eof()){
 
-    try{
-      io::getblock(stream(), buffer);
-    }
-    catch(std::runtime_error e){
+    if (!io::getblock(stream(), buffer)){
       if (buffer.size() && buffer[0] != ""){
-	std::cout << "invalid block " + buffer[0] <<  " in input file?" << std::endl;
+	std::cerr << "invalid block " + buffer[0] << " in input file?"
+		  << std::endl;
       }
-      
       break;
     }
 

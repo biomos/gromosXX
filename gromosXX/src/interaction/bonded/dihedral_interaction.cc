@@ -19,6 +19,7 @@
 
 #include <util/template_split.h>
 #include <util/debug.h>
+#include <util/error.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -112,10 +113,9 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
 	dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
 	break;
       default:
-	//io::messages.add("dihedral function not implemented for m>6", 
-	//		 "dihedral_interaction", io::message::error);
-	throw std::runtime_error("dihedral type for m=6 not implemented");
-	
+	io::messages.add("dihedral function not implemented for m>6", 
+			 "dihedral_interaction", io::message::critical);
+	return E_TYPE_NOT_IMPLEMENTED;
     }
 
     double     K = param[d_it->type].K;

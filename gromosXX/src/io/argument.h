@@ -20,8 +20,6 @@ namespace io{
    */
 
   class Argument: public std::multimap<std::string,std::string>{
-    // not implemented
-    Argument();
     Argument(const Argument &);
     Argument &operator=(const Argument &);
   public:
@@ -29,7 +27,11 @@ namespace io{
      * Argument constructor.
      * Details.
      */
-    Argument(int argc, char **args, int nknown, char **known, const std::string &usage, bool empty_ok = false); 
+    Argument();
+    /**
+     * parse the command line arguments.
+     */
+    int parse(int argc, char **args, int nknown, char **known, bool empty_ok = false); 
     /**
      * Argument destructor.
      * Details.
@@ -60,7 +62,7 @@ namespace io{
      * Member operator >>.
      * Details.
      */
-    friend std::istream &operator>>(std::istream &is, Argument &args);
+    int parse_line(std::istream &is);
   
     /** 
      * Member operator [] used to access the members.

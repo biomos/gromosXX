@@ -38,7 +38,7 @@ namespace io {
     /**
      * read frame.
      */
-    void read_frame();
+    int read_frame();
     
 
   protected:

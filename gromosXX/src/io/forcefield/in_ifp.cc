@@ -30,7 +30,9 @@ void io::In_IFP
   buffer = m_block["BONDTYPECODE"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("BONDTYPE block not found!");
+    io::messages.add("BONDTYPE block not found",
+		     "In_IFP",
+		     io::message::error);
 
   for (it = buffer.begin() + 1; 
        it != buffer.end() - 1; ++it) {
@@ -71,7 +73,9 @@ void io::In_IFP
   buffer = m_block["BONDTYPECODE"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("BONDTYPE block not found!");
+    io::messages.add("BONDTYPE block not found",
+		     "In_IFP",
+		     io::message::error);
 
   for (it = buffer.begin() + 1; 
        it != buffer.end() - 1; ++it) {
@@ -111,7 +115,9 @@ void io::In_IFP
   buffer = m_block["BONDANGLETYPECOD"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("BONDANGLETYPECOD block not found!");
+    io::messages.add("BONDANGLETYPECOD block not found",
+		     "In_IFP",
+		     io::message::error);
 
   for (it = buffer.begin() + 1; 
        it != buffer.end() - 1; ++it) {
@@ -150,7 +156,9 @@ void io::In_IFP
   buffer = m_block["IMPDIHEDRALTYPEC"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("IMPDIHEDRALTYPEC block not found!");
+    io::messages.add("IMPDIHEDRALTYPEC block not found",
+		     "In_IFP",
+		     io::message::error);
 
   for (it = buffer.begin() + 1; 
        it != buffer.end() - 1; ++it) {
@@ -191,7 +199,9 @@ void io::In_IFP
   buffer = m_block["DIHEDRALTYPECODE"];
 
   if (buffer.size()==0)
-    throw std::runtime_error("DIHEDRALTYPECODE block not found!");
+    io::messages.add("DIHEDRALTYPECODE block not found",
+		     "In_IFP",
+		     io::message::error);
 
   for (it = buffer.begin() + 1; 
        it != buffer.end() - 1; ++it) {
@@ -236,7 +246,9 @@ void io::In_IFP
     buffer = m_block["SINGLEATOMLJPAIR"];
 
     if (buffer.size() < 3)
-      throw std::runtime_error("SINGLEATOMLJPAIR block not found / corrupt!");
+      io::messages.add("SINGLEATOMLJPAIR block not found",
+		       "In_IFP",
+		       io::message::error);
     
     it = buffer.begin() + 1;
     _lineStream.clear();

@@ -122,7 +122,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in PERTBOND03 block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error("bad line in PERTBOND03 block");
 	}
 	
 	topology::two_body_term_struct b(i-1, j-1, t_A-1);
@@ -186,12 +185,10 @@ io::In_Perturbation::read(topology::Topology &topo,
       if (n != num){
 	  io::messages.add("Wrong number of bonds in PERTBOND03 block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in PERTBOND03 block (n != num)");
       }
       else if (_lineStream.fail()){
 	io::messages.add("Bad line in PERTBOND03 block.",
 			 "In_Perturbation", io::message::error);
-    	throw std::runtime_error("error in PERTBOND03 block (fail)");
       }
 
       if (!quiet)
@@ -247,7 +244,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in PERTCONSTRAINT03 block",
 			   "In_Topology", io::message::error);
-	  throw std::runtime_error("bad line in PERTCONSTRAINT03 block");
 	}
       
 	if (i > int(topo.num_solute_atoms()) || 
@@ -290,8 +286,6 @@ io::In_Perturbation::read(topology::Topology &topo,
       if(n != num){
 	io::messages.add("Wrong number of bonds in PERTCONSTRAINT03 block",
 			 "In_Perturbation", io::message::error);
-	throw std::runtime_error("error in PERTCONSTRAINT03 block "
-				 "(n != num)");
       }
     }
     
@@ -329,7 +323,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in PERTBANGLE03 block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error("bad line in PERTBANGLE03 block");
 	}
 	
 	topology::three_body_term_struct a(i-1, j-1, k-1, t_A-1);
@@ -342,7 +335,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  io::messages.add("Perturbation of a non-existing angle in "
 			   "PERTBANGLE03 block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("trying to perturb non-existing angle");
 	}
 	
 	topo.solute().angles().erase(a_it);
@@ -363,12 +355,10 @@ io::In_Perturbation::read(topology::Topology &topo,
       if (n != num){
 	  io::messages.add("Wrong number of bonds in PERTBANGLE03 block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in PERTBANGLE03 block (n != num)");
       }
       else if (_lineStream.fail()){
 	io::messages.add("Bad line in PERTBANGLE03 block.",
 			 "In_Perturbation", io::message::error);
-    	throw std::runtime_error("error in PERTBANGLE03 block (fail)");
       }
       
       if (!quiet)
@@ -409,7 +399,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in PERTIMPDIHEDRAL03 block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error("bad line in PERTIMPDIHEDRAL03 block");
 	}
 	
 	topology::four_body_term_struct id(i-1, j-1, k-1,l-1, t_A-1);
@@ -422,8 +411,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  io::messages.add("Perturbation of a non-existing improper dihedral in "
 			   "PERTIMPDIHEDAL03 block.",
 			   "In_Perturbation", io::message::error);
-	  throw 
-	    std::runtime_error("trying to perturb non-existing improper dihedral");
 	}
 	
 	topo.solute().improper_dihedrals().erase(id_it);
@@ -446,12 +433,10 @@ io::In_Perturbation::read(topology::Topology &topo,
       if (n != num){
 	  io::messages.add("Wrong number of bonds in PERTIMPDIHEDRAL03 block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in PERTIMPDIHEDRAL03 block (n != num)");
       }
       else if (_lineStream.fail()){
 	io::messages.add("Bad line in PERTIMPDIHEDRAL03 block.",
 			 "In_Perturbation", io::message::error);
-    	throw std::runtime_error("error in PERTIMPDIHEDRAL03 block (fail)");
       }
       if (!quiet)
 	std::cout << "\tEND\n";
@@ -492,7 +477,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in PERTDIHEDRAL03 block.",
 			   "In_Perturbation", io::message::error);	  
-	  throw std::runtime_error("bad line in PERTDIHEDRAL03 block");
 	}
 	
 	topology::four_body_term_struct id(i-1, j-1, k-1,l-1, t_A-1);
@@ -505,8 +489,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  io::messages.add("Perturbation of a non-existing dihedral in "
 			   "PERTDIHEDAL03 block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error(
-		     "trying to perturb non-existing dihedral dihedral");
 	}
 	
 	topo.solute().dihedrals().erase(id_it);
@@ -529,12 +511,10 @@ io::In_Perturbation::read(topology::Topology &topo,
       if (n != num){
 	  io::messages.add("Wrong number of bonds in PERTDIHEDRAL03 block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in PERTDIHEDRAL03 block (n != num)");
       }
       else if (_lineStream.fail()){
 	io::messages.add("Bad line in PERTDIHEDRAL03 block.",
 			 "In_Perturbation", io::message::error);
-    	throw std::runtime_error("error in PERTDIHEDRAL03 block (fail)");
       }
 
       if (!quiet)
@@ -579,7 +559,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in PERTATOMPAIR03 block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error("bad line in PERTATOMPAIR03 block\n\t"+ *it);
 	}
 	
 	if(j<i) { int t=j; j=i; i=t; }
@@ -624,12 +603,10 @@ io::In_Perturbation::read(topology::Topology &topo,
       if (n != num){
 	  io::messages.add("Wrong number of bonds in PERTATOMPAIR03 block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in PERTATOMPAIR03 block (n != num)");
       }
       else if (_lineStream.fail()){
 	io::messages.add("Bad line in PERTATOMPAIR03 block.",
 			 "In_Perturbation", io::message::error);
-    	throw std::runtime_error("error in PERTATOMPAIR03 block (fail)");
       }
 
       if (!quiet)
@@ -683,7 +660,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in PERTATOM03 block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error("bad line in PERTATOM03 block\n"+*it);
 	}
 	
 	--seq;
@@ -750,12 +726,10 @@ io::In_Perturbation::read(topology::Topology &topo,
       if (n != num){
 	  io::messages.add("Wrong number of bonds in PERTATOM03 block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in PERTATOM03 block (n != num)");
       }
       else if (_lineStream.fail()){
 	io::messages.add("Bad line in PERTATOM03 block.",
 			 "In_Perturbation", io::message::error);
-    	throw std::runtime_error("error in PERTATOM03 block (fail)");
       }
 
 
@@ -804,8 +778,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in SCALEDINTERACTIONS block.",
 			     "In_Perturbation", io::message::error);
-	    throw std::runtime_error("bad line in SCALEDINTERACTIONS block\n\t"
-				     + *it);
 	  }
 	  
 	  --i;
@@ -832,12 +804,10 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (n != num){
 	  io::messages.add("Wrong number of pairs in SCALEDINTERACTIONS block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in SCALEDINTERACTIONS block (n != num)");
 	}
 	else if (_lineStream.fail()){
 	  io::messages.add("Bad line in SCALEDINTERACTIONS block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error("error in SCALEDINTERACTIONS block (fail)");
 	}
 	if (!quiet)
 	  std::cout << "\tEND\n";
@@ -894,8 +864,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  if (_lineStream.fail() || ! _lineStream.eof()){
 	    io::messages.add("Bad line in LAMBDADEP block.",
 			     "In_Perturbation", io::message::error);
-	    throw std::runtime_error("bad line in LAMBDADEP block\n\t"
-				     + *it);
 	  }
 	  
 	  --i;
@@ -943,12 +911,10 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (n != num){
 	  io::messages.add("Wrong number of pairs in LAMBDADEP block.",
 			   "In_Perturbation", io::message::error);	
-	  throw std::runtime_error("error in LAMBDADEP block (n != num)");
 	}
 	else if (_lineStream.fail()){
 	  io::messages.add("Bad line in LAMBDADEP block.",
 			   "In_Perturbation", io::message::error);
-	  throw std::runtime_error("error in LAMBDADEP block (fail)");
 	}
 	if (!quiet)
 	  std::cout << "\tEND\n";

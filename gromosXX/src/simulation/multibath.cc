@@ -11,6 +11,7 @@
 #include <configuration/energy.h>
 #include <topology/topology.h>
 
+#include <util/error.h>
 #include <util/debug.h>
 
 #undef MODULE
@@ -115,13 +116,13 @@ int simulation::Multibath::check_state(unsigned int num_atoms)const
       io::messages.add("Multibath: com bath index out of range",
 		       "Multibath::check_state",
 		       io::message::error);
-      throw std::string("com bath index out of range");
+      return E_INPUT_ERROR;
     }
     if (it->ir_bath >= size()){
       io::messages.add("Multibath: ir bath index out of range",
 		       "Multibath::check_state",
 		       io::message::error);
-      throw std::string("ir bath index out of range");
+      return E_INPUT_ERROR;
     }    
     if ((*this)[it->com_bath].dof == 0)
       io::messages.add("Multibath: bath with 0 degrees of freedom?",

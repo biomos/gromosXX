@@ -87,7 +87,6 @@ io::In_Jvalue::read(topology::Topology& topo,
 	io::messages.add("bad line in JVALRESSPEC block",
 			 "In_Jvalue",
 			 io::message::error);
-	throw std::runtime_error("bad line in JVALRESSPEC block");
       }
 
       // restr_func_enum:
