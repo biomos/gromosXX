@@ -243,7 +243,8 @@ void write_solution(map<string, string> &current)
     "\tconfiguration::Configuration const & conf,\n"
     "\tsimulation::Simulation const & sim,\n"
     "\tinteraction::Forcefield & ff,\n"
-    "\tio::In_Topology & it)";
+    "\tio::In_Topology & it,\n"
+    "\tbool quiet)";
   
   header.push_back(decl + ";\n\n");
 
@@ -264,6 +265,9 @@ void write_solution(map<string, string> &current)
   // some output of what we are doing
   splitf << indent << "// some output of what we are doing\n";
   
+  splitf << indent << "if(!quiet){\n";
+  ++indent;
+
   map<string, string>::const_iterator sol_it = current.begin(),
     sol_to = current.end();
     
@@ -275,7 +279,9 @@ void write_solution(map<string, string> &current)
 	   << sol_it->second
 	   << "\" << right << \"\\n\";\n";
   }
-  splitf << "\n";
+
+  --indent;
+  splitf << indent << "}\n\n";
   
   // nonbonded interaction type
   splitf << indent << "typedef ";
@@ -391,7 +397,7 @@ void add_to_code(string name, map<string, string> &current)
   --indent;
   --indent;
   
-  ss << indent << name << "(topo, conf, sim, ff, it);\n\n";
+  ss << indent << name << "(topo, conf, sim, ff, it, quiet);\n\n";
   --indent;
   ss << indent << "}\n\n"
      << indent << "else";
@@ -446,7 +452,30 @@ void write_code()
      << indent << "                 io::message::error);\n"
      << indent << "return 1;\n";
   --indent;
-  cd << indent << "}\n";
+  cd << indent << "}\n\n";
+  
+  cd << indent << "if (!quiet){\n";
+  ++indent;
+  cd << indent << "std::cout\n";
+  ++indent;
+  cd << indent << "<< \"\\t\\t\\tinner cutoff           : \"\n" 
+     << indent << "<< sim.param().pairlist.cutoff_short << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\touter cutoff           : \"\n" 
+     << indent << "<< sim.param().pairlist.cutoff_long << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tepsilon                : \"\n" 
+     << indent << "<< sim.param().longrange.epsilon << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\treactionfield epsilon  : \"\n" 
+     << indent << "<< sim.param().longrange.rf_epsilon << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tkappa                  : \"\n" 
+     << indent << "<< sim.param().longrange.rf_kappa << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\treactionfield cutoff   : \"\n" 
+     << indent << "<< sim.param().longrange.rf_cutoff << \"\\n\"\n"
+     << indent << "<< \"\\t\\t\\tpairlist creation every \"\n" 
+     << indent << "<< sim.param().pairlist.skip_step\n"
+     << indent << "<< \" steps\\n\\n\";\n";
+  --indent;
+  --indent;
+  cd << indent << "}\n\n";
   
   cd << indent << "return 0;\n";
   --indent;

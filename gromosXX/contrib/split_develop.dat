@@ -44,13 +44,14 @@ END
 
 PARAMETER
 	t_perturbation
-	sim.param().perturbation.perturbation == true @ perturbation_on
 	sim.param().perturbation.perturbation == false @ perturbation_off
+	sim.param().perturbation.perturbation == true  @ perturbation_on
 END
 
 PARAMETER
 	t_scaling
 	sim.param().perturbation.scaling == false @ scaling_off
+	sim.param().perturbation.scaling == true @ scaling_on
 END
 
 RULE
