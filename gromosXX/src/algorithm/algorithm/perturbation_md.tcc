@@ -5,7 +5,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
-#define SUBMODULE constraint
+#define SUBMODULE algorithm
 
 #include "../../debug.h"
 

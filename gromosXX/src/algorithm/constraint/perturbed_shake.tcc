@@ -38,11 +38,14 @@ int algorithm::Perturbed_Shake<t_simulation>
 	 typename simulation_type::system_type &sys,
 	 double dt)
 {
+  DEBUG(7, "Perturbed_Shake::solute");
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
   
   // check whether we shake
-  if (!topo.solute().distance_constraints().size()) return 0;
+  if ((topo.solute().distance_constraints().size() == 0) &&
+      (topo.perturbed_solute().distance_constraints().size() == 0))
+    return 0;
   
   sys.constraint_force() = 0.0;
   m_lambda = 0.0;
@@ -85,6 +88,8 @@ int algorithm::Perturbed_Shake<t_simulation>
 
   } // convergence?
 
+  m_lambda /= -2*dt*dt;
+
   //constraint_force and free energy derivatives
   size_t k = 0;
   for( ; k < topo.solute().distance_constraints().size(); ++k){
@@ -100,11 +105,15 @@ int algorithm::Perturbed_Shake<t_simulation>
     perturbed_distance_constraint_struct>::const_iterator
     it = topo.perturbed_solute().distance_constraints().begin(),
     to = topo.perturbed_solute().distance_constraints().end();
+
+  DEBUG(6, "perturbed lagrange multiplier:");
   
   for(; it != to; ++it, ++k){
-    
+    DEBUG(6, "\t" << m_lambda(k));
+
     sys.constraint_force()(k) /= (dt * dt);
-    DEBUG(5, "perturbed constraint_force " << 
+
+    DEBUG(10, "perturbed constraint_force " << 
 	  sqrt(dot(sys.constraint_force()(k),
 		   sys.constraint_force()(k)) ));
 

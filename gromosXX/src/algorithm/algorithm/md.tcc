@@ -3,6 +3,14 @@
  * MD implementation
  */
 
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE algorithm
+#define SUBMODULE algorithm
+
+#include "../../debug.h"
+
 template<typename t_simulation,
 	 typename t_temperature,
 	 typename t_pressure,
