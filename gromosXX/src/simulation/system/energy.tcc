@@ -75,6 +75,7 @@ inline void simulation::Energy::resize(size_t const energy_groups, size_t const 
     kinetic_energy.resize(multi_baths);
     com_kinetic_energy.resize(multi_baths);
     ir_kinetic_energy.resize(multi_baths);
+    flexible_constraints_ir_kinetic_energy.resize(multi_baths);
   }
 
   zero();  
@@ -97,10 +98,15 @@ inline void simulation::Energy::calculate_totals()
   crf_total = 0.0;
   special_total = 0.0;
     
-  for(std::vector<double>::const_iterator it = kinetic_energy.begin(),
-	to = kinetic_energy.end(); it != to; ++it)
-    kinetic_total += *it;
-   
+  flexible_constraints_kinetic_total = 0;
+
+  for(size_t i=0; i<kinetic_energy.size(); ++i){
+    kinetic_total += kinetic_energy[i];
+    flexible_constraints_kinetic_total +=
+      flexible_constraints_ir_kinetic_energy[i];
+  }
+
+
   for(int i=0; i<num_groups; i++){
     for(int j=0; j<num_groups; j++){
       lj_total   += lj_energy[i][j];

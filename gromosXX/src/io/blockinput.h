@@ -77,6 +77,13 @@ namespace io {
 			   const char& sep = '\n'
 			   );
 
+  /**
+   * trim away leading empty lines (only whitespace)
+   */
+  inline
+  void
+  trimblock(std::vector<std::string> &block);
+
 }
 
 #include "blockinput.tcc"

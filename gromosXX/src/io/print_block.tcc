@@ -128,9 +128,10 @@ namespace io
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
   
     os << std::setw(10) << "BATH"
-       << std::setw(12) << "EKIN"
+       << std::setw(12) << "EKIN - FC"
        << std::setw(12) << "EKIN-MOL"
        << std::setw(12) << "EKIN-IR"
+       << std::setw(12) << "EKIN-FC"
        << std::setw(10) << "TEMP"
        << std::setw(10) << "TEMP-MOL"
        << std::setw(10) << "TEMP-IR"
@@ -139,7 +140,8 @@ namespace io
     double avg_temp0 = 0, avg_tau = 0, sum_dof = 0, sum_soluc = 0,
       sum_solvc = 0, sum_ekin = 0, tau_dof = 0,
       sum_com_ekin = 0, sum_ir_ekin = 0,
-      sum_ir_dof = 0, sum_com_dof = 0;
+      sum_ir_dof = 0, sum_com_dof = 0,
+      sum_fc_ekin = 0;
 
     std::vector<simulation::bath_struct>::const_iterator
       it = bath.begin(),
@@ -147,33 +149,43 @@ namespace io
   
     for(size_t i=0; it != to; ++it, ++i){
       
+      const double e_kin = energy.kinetic_energy[i] 
+	- energy.flexible_constraints_ir_kinetic_energy[i];
+      const double e_kin_com = energy.com_kinetic_energy[i];
+      const double e_kin_ir = energy.ir_kinetic_energy[i]
+	- energy.flexible_constraints_ir_kinetic_energy[i];
+
       os << std::setw(10) << i
 	 << std::setw(12) << std::setprecision(4) << std::scientific 
-	 << energy.kinetic_energy[i]
-	 << std::setw(12) << energy.com_kinetic_energy[i]
-	 << std::setw(12) << energy.ir_kinetic_energy[i]
+	 << e_kin
+	 << std::setw(12) 
+	 << e_kin_com
+	 << std::setw(12) 
+	 << e_kin_ir
+	 << std::setw(12) 
+	 << energy.flexible_constraints_ir_kinetic_energy[i]
 	 << std::setprecision(2) << std::fixed;
-      if (energy.kinetic_energy[i] == 0){
+      if (e_kin == 0){
 	os << std::setw(10) << 0;
       }
       else{
 	os << std::setw(10) 
-	   << 2 * energy.kinetic_energy[i] / (math::k_Boltzmann * it->dof);
+	   << 2 * e_kin / (math::k_Boltzmann * it->dof);
       }
-      if (energy.com_kinetic_energy[i] == 0){
+      if (e_kin_com == 0){
 	os << std::setw(10) << 0;
       }
       else{
 	os << std::setw(10) 
-	   << 2 * energy.com_kinetic_energy[i] / 
+	   << 2 * e_kin_com / 
 	  (math::k_Boltzmann * it->com_dof);
       }
-      if (energy.ir_kinetic_energy[i] == 0){
+      if (e_kin_ir == 0){
 	os << std::setw(10) << 0;
       }
       else{
 	os << std::setw(10) 
-	   << 2 * energy.ir_kinetic_energy[i] / 
+	   << 2 * e_kin_ir / 
 	  (math::k_Boltzmann * it->ir_dof);
       }
 
@@ -189,10 +201,11 @@ namespace io
 
       sum_soluc += it->solute_constr_dof;
       sum_solvc += it->solvent_constr_dof;
-      sum_ekin += energy.kinetic_energy[i];
-      sum_com_ekin += energy.com_kinetic_energy[i];
-      sum_ir_ekin += energy.ir_kinetic_energy[i];
-      
+      sum_ekin += e_kin;
+      sum_com_ekin += e_kin_com;
+      sum_ir_ekin += e_kin_ir;
+      sum_fc_ekin += energy.flexible_constraints_ir_kinetic_energy[i];
+
       os << "\n";
 
     }
@@ -203,6 +216,7 @@ namespace io
        << sum_ekin
        << std::setw(12) << sum_com_ekin
        << std::setw(12) << sum_ir_ekin
+       << std::setw(12) << sum_fc_ekin
        << std::setprecision(2) << std::fixed
        << std::setw(10) << 2 * sum_ekin / (math::k_Boltzmann * sum_dof)
        << std::setw(10) << 2 * sum_com_ekin / (math::k_Boltzmann * sum_com_dof)
@@ -282,7 +296,6 @@ namespace io
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
     os << "Total      : " << std::setw(12) << e.total << "\n";
     os << "Kinetic    : " << std::setw(21) << e.kinetic_total << "\n";
-    // os << "Temperature: " << std::setw(21) << v_kin/(0.5*k_Boltzmann*Ndf) << "\n";
     os << "Potential  : " << std::setw(21) << e.potential_total << "\n";
     os << "Covalent   : " << std::setw(30) << e.bonded_total << "\n";
     os << "Bonds      : " << std::setw(39) << e.bond_total << "\n";

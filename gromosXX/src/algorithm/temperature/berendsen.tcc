@@ -36,13 +36,16 @@ inline void algorithm::Berendsen_Thermostat
     if (b_it->tau != -1){
 
       assert(e.kinetic_energy.size() > num);
-      DEBUG(7, "pre-scale ekin: " << e.kinetic_energy[num]);
+      DEBUG(7, "pre-scale ekin: " << 
+	    e.kinetic_energy[num] - e.flexible_constraints_ir_kinetic_energy[num]);
 
-      const double free_temp = 2 * e.kinetic_energy[num] / 
+      const double free_temp = 2 * 
+	(e.kinetic_energy[num] - e.flexible_constraints_ir_kinetic_energy[num]) / 
 	(b_it->dof * math::k_Boltzmann);
 
       b_it->scale = sqrt(1.0 + dt / b_it->tau *
 		       (b_it->temperature / free_temp - 1));
+
       DEBUG(8, "free T " << free_temp << " dof " << b_it->dof);
       DEBUG(8, "ref. T " << b_it->temperature);
       DEBUG(8, "bath " << num << " scaling: " << b_it->scale);
@@ -162,6 +165,8 @@ inline void algorithm::Berendsen_Thermostat
   sim.system().lambda_energies().com_kinetic_energy.
     resize(e_kin.size());
   sim.system().lambda_energies().ir_kinetic_energy.
+    resize(e_kin.size());
+  sim.system().lambda_energies().flexible_constraints_ir_kinetic_energy.
     resize(e_kin.size());
   
   for(; it != to; ++it){

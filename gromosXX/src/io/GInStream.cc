@@ -36,7 +36,9 @@ void io::GInStream::readStream()
       break;
     }
     
-    m_block[buffer[0]] = buffer;    
+    trimblock(buffer);
+    m_block[buffer[0]] = buffer;
+    
     buffer.clear();
     
   }

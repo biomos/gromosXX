@@ -89,6 +89,8 @@ namespace algorithm
     
     int m_lfcon;
 
+    simulation::Multibath * m_bath;
+
   };
   
   

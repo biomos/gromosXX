@@ -17,7 +17,8 @@ template<typename t_simulation>
 algorithm::Flexible_Constraint<t_simulation>
 ::Flexible_Constraint(double const tolerance, int const max_iterations)
   : algorithm::Shake<t_simulation>(tolerance, max_iterations),
-    m_lfcon(0)
+    m_lfcon(0),
+    m_bath(NULL)
 {
 }
 
@@ -94,6 +95,10 @@ void algorithm::Flexible_Constraint<t_simulation>
 	<< "\n\tK:   " << m_K.size()
 	<< "\n\tF:   " << sys.constraint_force().size());
 
+  size_t com, ir;
+  sys.energies().flexible_constraints_ir_kinetic_energy.
+    assign(sys.energies().kinetic_energy.size(), 0.0);
+
   //loop over all constraints
   for(typename std::vector<t_distance_struct>
 	::iterator
@@ -152,7 +157,18 @@ void algorithm::Flexible_Constraint<t_simulation>
 
     // update the velocity array
     m_vel[k] = (it->b0 - sqrt(ref_dist2)) / dt;
-    
+
+    // now we have to store the kinetic energy of the constraint
+    // length change in the correct temperature bath...
+    assert(m_bath);
+    m_bath->in_bath(it->i, com, ir);
+    sys.energies().flexible_constraints_ir_kinetic_energy[ir] +=
+      0.5 * red_mass * m_vel[k] * m_vel[k];
+
+    DEBUG(8, "constr " << it->i << " bath " << ir << " ekin " 
+	  << 0.5 * red_mass * m_vel[k] * m_vel[k]
+	  << " tot ekin " << sys.energies().flexible_constraints_ir_kinetic_energy[ir]);
+
     // calculate Ekin along the constraints
     Ekin += 0.5 * red_mass * m_vel[k] * m_vel[k];
 
@@ -317,5 +333,7 @@ algorithm::Flexible_Constraint<t_simulation>
   m_lambda.resize(sim.topology().solute().
 		  distance_constraints().size());
 
+
+  m_bath = &sim.multibath();
 
 }

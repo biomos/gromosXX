@@ -30,11 +30,13 @@ namespace simulation
     double special_total;
 
     double constraint_energy;
-
+    double flexible_constraints_kinetic_total;
+    
     // this should be size of bath
     std::vector<double> kinetic_energy;
     std::vector<double> com_kinetic_energy;
     std::vector<double> ir_kinetic_energy;
+    std::vector<double> flexible_constraints_ir_kinetic_energy;
 
     std::vector<double> bond_energy;
     std::vector<double> angle_energy;

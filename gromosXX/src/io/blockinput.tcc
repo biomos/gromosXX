@@ -50,7 +50,8 @@ io::getblock(
     
     getline(is, *dest);
 
-    if (*dest == sep)
+    // if (*dest == sep)
+    if (dest->find(sep) == 0)
       break;
 
     if (!is.good()) 
@@ -82,4 +83,21 @@ io::concatenate(
   }
   
   return s;
+}
+
+inline
+void
+io::trimblock(std::vector<std::string> &block)
+{
+  std::string s;
+  std::vector<std::string>::iterator it = block.begin();
+  while(true){
+    std::istringstream is(*it);
+    if (!(is >> s)){
+      block.erase(it);
+      it = block.begin();
+      continue;
+    }
+    else break;
+  }  
 }
