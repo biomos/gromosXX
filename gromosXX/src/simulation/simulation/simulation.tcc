@@ -118,6 +118,15 @@ inline void simulation::Simulation<t_topo, t_system>::calculate_degrees_of_freed
   multibath().calculate_degrees_of_freedom(topology());
 }
 
+/**
+ * put chargegroups into box while updating the box indices for the atoms.
+ */
+template<typename t_topo, typename t_system>
+inline void simulation::Simulation<t_topo, t_system>::put_chargegroups_into_box()
+{
+
+}
+
 namespace simulation
 {
   template<typename t_topo, typename t_system>

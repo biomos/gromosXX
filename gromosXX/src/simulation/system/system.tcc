@@ -165,6 +165,22 @@ inline math::Periodicity<b> const & simulation::System<b>
   return m_periodicity;
 }
 
+/**
+ * box index accessor.
+ */
+template<math::boundary_enum b>
+inline std::vector<int[3]> & simulation::System<b>::box_index()
+{
+  return m_box_index;
+}
+
+template<math::boundary_enum b>
+inline int[3] & simulation::System<b>::box_index(size_t i)
+{
+  assert(i < m_box_index.size());
+  return m_box_index[i];
+}
+
 namespace simulation
 {
   template<math::boundary_enum b>

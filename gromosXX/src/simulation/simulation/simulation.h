@@ -76,6 +76,12 @@ namespace simulation
      */
     void calculate_degrees_of_freedom();
 
+    /**
+     * put chargegroups into the central (computational) box.
+     * update the box indices.
+     */
+    void put_chargegroups_into_box();
+
   private:
     /**
      * the topology.

@@ -75,6 +75,14 @@ namespace simulation
      * periodicity accessor
      */
     math::Periodicity<b> & periodicity();
+    /**
+     * box index accessor
+     */
+    std::vector<int[3]> & box_index();
+    /**
+     * box index i accessor
+     */
+    int[3] & box_index(size_t i);
     
   protected:
     /**
@@ -134,6 +142,10 @@ namespace simulation
      * hard coded to any periodicity...
      */
     math::Periodicity<math::any> m_periodicity;
+    /**
+     * the box indices for every atom.
+     */
+    std::vector<int[3]> m_box_index;
     
   }; // System
   

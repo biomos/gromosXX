@@ -14,7 +14,7 @@
 namespace algorithm
 {
   /**
-   * @class leap_frog
+   * @class Leap_Frog
    * implements the leap frog algorithm.
    */
   template<typename t_simulation,
