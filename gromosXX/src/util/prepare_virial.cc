@@ -105,9 +105,7 @@ static void _prepare_virial(topology::Topology const & topo,
 	periodicity.nearest_image(pos(*a_it), com_pos,
 				  conf.special().rel_mol_com_pos(*a_it));
       }
-      
     }
-    
   }
   
   else if (sim.param().pcouple.virial == math::atomic_virial){
