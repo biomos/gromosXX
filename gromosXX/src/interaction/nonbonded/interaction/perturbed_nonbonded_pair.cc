@@ -90,7 +90,7 @@ void interaction::Perturbed_Nonbonded_Pair
   }
 }
 
-template<typename t_interaction_spec, typename perturbation_details>
+template<typename t_interaction_spec, typename perturbation_details, math::boundary_enum t_boundary_type>
 void interaction::Perturbed_Nonbonded_Pair
 ::perturbed_pair_interaction_innerloop
 ( topology::Topology & topo,
@@ -98,7 +98,7 @@ void interaction::Perturbed_Nonbonded_Pair
   simulation::Simulation & sim,
   std::vector<topology::perturbed_two_body_term_struct>
   ::const_iterator const &it,
-  math::Periodicity<t_interaction_spec::boundary_type> const & periodicity)
+  math::Periodicity<t_boundary_type> const & periodicity)
 {
 
   // NO RANGE FILTER FOR PERTURBED PAIRS ??

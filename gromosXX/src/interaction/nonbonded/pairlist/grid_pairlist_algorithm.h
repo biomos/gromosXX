@@ -17,6 +17,8 @@ namespace interaction
   class Storage;
   class Pairlist;
   class Nonbonded_Parameter;
+  
+  template<typename t_interaction_spec>
   class Nonbonded_Innerloop;
   template<typename t_interaction_spec, typename t_perturbation_details>
   class Perturbed_Nonbonded_Innerloop;
@@ -143,9 +145,9 @@ namespace interaction
 	  : i(p.i), x(p.x), y(p.y), z(p.z), shift_index(p.shift_index)
 	{
 	}
-	void shift(Particle const & p, int shift_index, std::vector<math::Vec> const & shift_vec)
+	void shift(Particle const & p, int shift_ind, std::vector<math::Vec> const & shift_vec)
 	{
-	  this->shift_index = shift_index;
+	  this->shift_index = shift_ind;
 	  x = p.x + shift_vec[shift_index](0);
 	  y = p.y + shift_vec[shift_index](1);
 	  z = p.z + shift_vec[shift_index](2);
@@ -257,6 +259,22 @@ namespace interaction
      std::vector<int> & cell_start
      );
 
+    /**
+     * update the pairlist
+     */
+    template<typename t_interaction_spec>
+    void _update
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     interaction::Storage & storage,
+     interaction::Pairlist & pairlist,
+     unsigned int begin,
+     unsigned int end,
+     unsigned int stride
+     );
+     
     template<typename t_interaction_spec, typename t_perturbation_details>
     void _update_perturbed
     (
@@ -278,7 +296,7 @@ namespace interaction
      topology::Topology & topo,
      configuration::Configuration & conf,
      interaction::Storage & storage,
-     Nonbonded_Innerloop & innerloop,
+     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
      Perturbed_Nonbonded_Innerloop
      <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
      int a1, int a2,

@@ -55,13 +55,13 @@ namespace interaction
      * NO SCALING for PERTURBED PAIRS ??
      * NO MOLECULAR VIRIAL CONTRIBUTION ??
      */
-    template<typename t_interaction_spec, typename t_perturbation_details>
+    template<typename t_interaction_spec, typename t_perturbation_details, math::boundary_enum t_boundary_type>
     void perturbed_pair_interaction_innerloop
     ( topology::Topology & topo, configuration::Configuration & conf,
       simulation::Simulation & sim,
       std::vector<topology::perturbed_two_body_term_struct>
       ::const_iterator const &it,
-      math::Periodicity<t_interaction_spec::boundary_type> const & periodicity);
+      math::Periodicity<t_boundary_type> const & periodicity);
  
     Nonbonded_Parameter *m_param;
     Nonbonded_Term m_nonbonded_term;

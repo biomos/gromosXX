@@ -184,7 +184,6 @@ void interaction::Grid_Pairlist_Algorithm::prepare
 ////////////////////////////////////////////////////////////////////////////////
 // pairlist update
 ////////////////////////////////////////////////////////////////////////////////
-
 void interaction::Grid_Pairlist_Algorithm::update
 (
  topology::Topology & topo,
@@ -197,7 +196,33 @@ void interaction::Grid_Pairlist_Algorithm::update
  unsigned int stride
  )
 {
-  Nonbonded_Innerloop innerloop(*m_param);
+  if (sim.param().pairlist.atomic_cutoff){
+    // see standard_pairlist_algorithm_atomic.cc
+    io::messages.add("Grid based pairlist with atomic cutoff not implemented",
+        "GridPairlistAlgorithm",
+        io::message::critical);
+    assert(false);
+  }
+  else{
+    SPLIT_INNERLOOP(_update, topo, conf, sim, storage,
+		    pairlist, begin, end, stride);
+  }    
+}
+
+template<typename t_interaction_spec>
+void interaction::Grid_Pairlist_Algorithm::_update
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ interaction::Storage & storage,
+ interaction::Pairlist & pairlist,
+ unsigned int begin,
+ unsigned int end,
+ unsigned int stride
+ )
+{
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
   innerloop.init(sim);
 
   // empty the pairlist
@@ -536,7 +561,7 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 {
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
 
-  Nonbonded_Innerloop innerloop(*m_param);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
   innerloop.init(sim);
 
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details>
@@ -958,7 +983,7 @@ inline bool interaction::Grid_Pairlist_Algorithm::calculate_pair
  topology::Topology & topo,
  configuration::Configuration & conf,
  interaction::Storage & storage,
- Nonbonded_Innerloop & innerloop,
+ Nonbonded_Innerloop<t_interaction_spec> & innerloop,
  Perturbed_Nonbonded_Innerloop
  <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
  int a1, int a2,
@@ -998,7 +1023,7 @@ bool interaction::Grid_Pairlist_Algorithm
 {
   assert(i<j);
   
-  std::set<int>::const_reverse_iterator
+  std::set<int>::reverse_iterator
     e = topo.all_exclusion(i).rbegin(),
     e_to = topo.all_exclusion(i).rend();
 
