@@ -142,11 +142,11 @@ int main(int argc, char *argv[]){
 	   sim.time_step_size());
       }
 
+      traj.print(topo, conf, sim);
+
       sim.time() += sim.time_step_size();
       ++sim.steps();
 
-      traj.print(topo, conf, sim);
-      
     }
     
 

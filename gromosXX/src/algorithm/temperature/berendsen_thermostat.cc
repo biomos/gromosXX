@@ -33,6 +33,10 @@ int algorithm::Berendsen_Thermostat
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
+  DEBUG(7, "Temperature Scaling!!!!");
+  
+  std::cout.precision(9);
+  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
   
   math::VArray &vel = conf.current().vel;
   // configuration::Energy &e = conf.current().energies;

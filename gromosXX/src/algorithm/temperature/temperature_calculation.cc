@@ -58,12 +58,17 @@ int algorithm::Temperature_Calculation
 				   com_v, com_ekin, ekin,
 				   new_com_v, new_com_ekin, new_ekin);
 
+    DEBUG(10, "average com_v:" << com_v << " com_ekin:" 
+	  << com_ekin << " ekin:" << ekin);
+    
+    DEBUG(10, "new com_v:" << new_com_v << " com_ekin:" 
+	  << new_com_ekin << " ekin:" << new_ekin);
     
     sim.multibath().in_bath(*m_it.begin(), com_bath, ir_bath);
 
-    DEBUG(9, "adding to bath: com: "
+    DEBUG(15, "adding to bath: com: "
 	  << com_bath << " ir: " << ir_bath);
-    DEBUG(10, "number of baths: energy " 
+    DEBUG(20, "number of baths: energy " 
 	  << conf.old().energies.kinetic_energy.size()
 	  << " com ekin "
 	  << conf.old().energies.com_kinetic_energy.size()
@@ -100,17 +105,7 @@ int algorithm::Temperature_Calculation
     std::vector<double> &e_kin = 
       conf.old().perturbed_energy_derivatives.kinetic_energy;
 
-    // !!!FIXME!!!
     assert(e_kin.size() == conf.old().energies.kinetic_energy.size());
-    /*
-      e_kin.resize(conf.old().energies().kinetic_energy.size());
-      conf.old().lambda_energies().com_kinetic_energy.
-      resize(e_kin.size());
-      conf.old().lambda_energies().ir_kinetic_energy.
-      resize(e_kin.size());
-      conf.old().lambda_energies().flexible_constraints_ir_kinetic_energy.
-      resize(e_kin.size());
-    */
 
     for(; it != to; ++it){
       // or just put everything into the first bath...?

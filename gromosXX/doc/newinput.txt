@@ -1,0 +1,84 @@
+
+==================================================
+ changes in the MD input file
+==================================================
+
+SYSTEM
+# NPM is limited to 1
+#      NPM      NSM 
+         1      100
+END
+
+BOUNDARY
+# the boundary conditions are read from the TRICLINICBOX block.
+# BOX and BETA are not read in, 
+# NRDBOX has to be 1 if NTB not equal 0
+#      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
+         2       0.0       0.0       0.0      90.0       1
+END
+
+MULTIBATH
+# replaces the TCOUPLE block (which is still recognized)
+#   number of baths
+    2
+#   temp0  tau
+    300    0.010
+    300    0.010
+#   different couplings
+    1
+#   last   com-bath  ir-bath
+    60     0         1
+END
+
+
+PCOUPLE03
+#	COUPLE:	off, calc, scale
+#	SCALE:  off, iso, aniso, full
+#	VIRIAL: none, atomic, molecular
+#
+#   COUPLE  SCALE   COMP        TAUP    VIRIAL
+    calc    iso     4.575E-4    0.5     atomic
+#   reference pressure
+    0.06102     0.00000     0.00000
+    0.00000     0.06102     0.00000
+    0.00000     0.00000     0.06102
+END
+
+FORCE
+#      NTF array
+# if bonds are set to 2, harmonic force field terms are used
+# bonds    angles    imp.     dihe     charge nonbonded
+# H        H         H        H
+  0  0     1  1      1  1     1  1     1  1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     1         60
+END
+
+FORCEFIELD
+#   IDIBND                       IDIANG
+#   bond stretching potential    angle bending potential
+#   0: standard GROMOS96         0: standard GROMOS96
+#   2: harmonic                  1: harmonic
+#	IDIANG not equal 0 is not yet supported
+  0 0
+END
+
+PLIST03
+#	algorithm: standard (gromos96 like pairlist)
+#		       grid (bekker like pairlist)
+#	SIZE:	   grid cell size (or auto = 0.5 * RCUTP)
+#
+#	algorithm	NSNB	RCUTP	RCUTL	SIZE
+	grid		5	0.8	1.4	auto
+END
+
+PERTURB03
+#	SCALING:
+#			on (activate interaction scaling)
+#  			off (deactivate interaction scaling)
+#			the scaling information is in the
+#			perturbation topology.
+#	NTG:		on / off
+#	NTG	RLAM	DLAMT	NLAM	SCALING
+	on	0.5	1.0	1.0	off
+END

@@ -80,6 +80,15 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   else{
     md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+
+    // temperature scaling? -> has to be done before temperature calculation!!!
+    if (sim.param().multibath.couple){
+      
+      algorithm::Berendsen_Thermostat * tcoup =
+	new algorithm::Berendsen_Thermostat;
+      md_seq.push_back(tcoup);
+    }
+
     md_seq.push_back(new algorithm::Leap_Frog_Position);
   }
   
@@ -154,14 +163,6 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     
   }
   
-  // temperature scaling?
-  if (sim.param().multibath.couple){
-    
-    algorithm::Berendsen_Thermostat * tcoup =
-      new algorithm::Berendsen_Thermostat;
-    md_seq.push_back(tcoup);
-  }
-
   // pressure calculation?
   io::print_PCOUPLE(std::cout, sim.param().pcouple.calculate,
 		    sim.param().pcouple.scale,
