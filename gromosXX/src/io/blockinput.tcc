@@ -53,7 +53,7 @@ io::getblock(
     dest++;
   }
 
-  b.erase(dest, b.end());
+  // b.erase(dest, b.end());
 
   return is;
 }

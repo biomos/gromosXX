@@ -8,10 +8,7 @@
 
 #include "../math/gmath.h"
 
-#include "../simulation/simulation/simulation.h"
-#include "../simulation/topology/bond.h"
-#include "../simulation/topology/topology.h"
-#include "../simulation/system/system.h"
+#include "../simulation/simulation.h"
 
 #include "../interaction/interaction/interaction.h"
 #include "../interaction/forcefield/forcefield.h"
@@ -57,8 +54,9 @@ void leap_frog_test()
   simulation::topology the_topology;
   
   the_system.resize(SIZE);
+  the_topology.solute_atoms_capacity(SIZE);
   the_topology.num_solute_atoms(SIZE);
-
+  
   // initialize everything with zero
   blitz::TinyVector<double, 3> t(0.0, 0.0, 0.0), t2(1, 1, 1);
 
@@ -163,6 +161,7 @@ void runge_kutta_test()
   simulation::topology the_topology;
   
   the_system.resize(SIZE);
+  the_topology.solute_atoms_capacity(SIZE);
   the_topology.num_solute_atoms(SIZE);
 
   // constant velocity

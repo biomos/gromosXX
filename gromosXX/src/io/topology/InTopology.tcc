@@ -5,27 +5,118 @@
 
 inline io::InTopology &io::InTopology::operator>>(simulation::topology& topo){
 
-  std::vector<std::string> soluteatomblock;
-  std::vector<std::string> bondHblock;
-  std::vector<std::string> bondblock;
-
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
+  
+  { // BOND
+    buffer = m_block["BOND"];
+  
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    int num, n;
+    _lineStream >> num;
+    ++it;
+    
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, t;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in BOND block");
+      
+      topo.bonds().add(i-1, j-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("error in BOND block (n != num)");
+    }
+  } // BOND
 
-  while (!soluteatomblock.size()
-    && ! bondHblock.size()
-    && ! bondblock.size()
-  ) {
+  { // BONDH
+    buffer.clear();
+    buffer = m_block["BONDH"];
+  
+    it = buffer.begin() + 1;
 
-    io::getblock(stream(), buffer);
+    _lineStream.clear();
+    _lineStream.str(*it);
 
-    if (buffer[0] == "SOLUTEATOM")
-      soluteatomblock = buffer;
-    else if (buffer[0] == "BONDH")
-      bondHblock = buffer;
-    else if (buffer[0] == "BOND")
-      bondblock = buffer;
-  }  
+    int num, n;
+    _lineStream >> num;
+    ++it;
+
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int i, j, t;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> i >> j >> t;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line in BONDH block");
+
+      topo.bonds().add(i-1, j-1, t-1);
+    }
+    
+    if(n != num){
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("error in HBOND block (n != num)");
+    }
+  } // BONDH
+  
+  { // SOLUTEATOM
+    buffer = m_block["SOLUTEATOM"];
+  
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    int num, n;
+    _lineStream >> num;
+    ++it;
+    
+    topo.solute_atoms_capacity(num);
+
+    for(n=0; it != buffer.end() - 1; ++it, ++n){
+      int a_nr, r_nr, t, cg, n_ex, a_ex;
+      double m, q;
+      std::string s;
+      std::set<int> ex;
+      std::set<int> ex14;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+
+      _lineStream >> a_nr >> r_nr >> s >> t >> m >> q >> cg >> n_ex;
+      for(int i=0; i<n_ex; ++i){
+	_lineStream >> a_ex;
+	ex.insert(a_ex);
+      }
+      ++it;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> n_ex;
+      for(int i=0; i<n_ex; ++i){
+	_lineStream >> a_ex;
+	ex14.insert(a_ex);
+      }
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("bad line SOLUTEATOM block");
+
+      topo.add_solute_atom(s, r_nr, t, m, q, cg, ex, ex14);
+
+    }
+    
+    if(n != num){
+      if (_lineStream.fail() || ! _lineStream.eof())
+	throw std::runtime_error("error in SOLUTEATOM block (n != num)");
+    }
+  } // SOLUTEATOM
 
   return *this;
 }
@@ -34,21 +125,14 @@ template<typename t_simulation>
 io::InTopology &io::InTopology
 ::operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi){
 
-  std::vector<std::string> bondTypeblock;
-
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
-  while (! bondTypeblock.size()) {
+  buffer = m_block["BONDTYPE"];
 
-    io::getblock(stream(), buffer);
-
-    if (buffer[0] == "BONDTYPE")
-      bondTypeblock = buffer;
-  }
-
-  for (it = bondTypeblock.begin() + 1; 
-   it != bondTypeblock.end() - 1; it++) {
+  // 1. BONDTYPE 2. number of types
+  for (it = buffer.begin() + 2; 
+   it != buffer.end() - 1; ++it) {
 
     double k, r;
     _lineStream.clear();
@@ -66,4 +150,23 @@ io::InTopology &io::InTopology
   
 
   return *this;
+}
+
+inline void io::InTopology::read_stream()
+{
+  std::vector<std::string> buffer;
+  
+  while(!stream().eof()){
+
+    try{
+      io::getblock(stream(), buffer);
+    }
+    catch(std::runtime_error e){
+      break;
+    }
+    
+    m_block[buffer[0]] = buffer;    
+    buffer.clear();
+    
+  }
 }

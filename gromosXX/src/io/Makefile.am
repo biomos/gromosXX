@@ -24,4 +24,8 @@ blockinput_t_CXXFLAGS =     	-DBZ_DEBUG
 
 blockinput_t_LDFLAGS =		-lboost_unit_test_framework
 
+blockinput_t_LDADD =		libio.la \
+				../simulation/libsimulation.la \
+				../interaction/libinteraction.la
+
 TESTS = 			blockinput.t

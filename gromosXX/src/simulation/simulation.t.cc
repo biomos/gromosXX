@@ -8,10 +8,7 @@
 
 #include "../math/gmath.h"
 
-#include "simulation/simulation.h"
-#include "topology/bond.h"
-#include "topology/topology.h"
-#include "system/system.h"
+#include "simulation.h"
 
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/test_tools.hpp>

@@ -10,6 +10,8 @@
 #include <blitz/tinyvec-et.h>
 
 #include <vector>
+#include <map>
+#include <set>
 
 /**
  * @namespace math

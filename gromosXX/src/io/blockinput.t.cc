@@ -3,10 +3,13 @@
  * test routines for blockinput.
  */
 
+#include "../math/gmath.h"
+
+#include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <map>
 
-#include "../math/gmath.h"
 #include "../simulation/simulation.h"
 #include "../interaction/interaction.h"
 
@@ -24,6 +27,27 @@ using namespace boost::unit_test_framework;
  */
 void test_blockio()
 {
+  simulation::system the_system;
+  simulation::topology the_topology;
+  
+  typedef simulation::simulation<simulation::topology, simulation::system>
+    simulation_type;  
+
+  simulation_type the_simulation(the_topology, the_system);
+
+  // i need an empty forcefield
+  interaction::forcefield<simulation_type> the_forcefield;
+
+  interaction::harmonic_bond_interaction<simulation_type> *bond_interaction
+    = new interaction::harmonic_bond_interaction<simulation_type>;
+  
+  std::ifstream topo_file("/home/markus/test/hexa10.topo");
+  io::InTopology topo(topo_file);
+  
+  topo >> *bond_interaction;
+
+  topo >> the_topology;
+
   // no tests...
   BOOST_CHECK_EQUAL(1, 1);
 }

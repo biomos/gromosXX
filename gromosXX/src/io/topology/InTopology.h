@@ -19,7 +19,7 @@ namespace io {
     /**
      * Constructor.
      */
-    InTopology(std::istream& is = std::cin) : GInStream(is) {};
+    InTopology(std::istream& is) : GInStream(is) { read_stream(); };
     /**
      * Read in a G96 topology into the topology.
      */
@@ -30,6 +30,14 @@ namespace io {
     template<typename t_simulation>
     InTopology & operator>>(interaction::harmonic_bond_interaction<t_simulation> &hbi);
 
+  private:
+    /**
+     * read the entire stream and store the blocks in the map.
+     */
+    void read_stream();
+
+    std::map<std::string, std::vector<std::string> > m_block;
+    
   };
   
 

@@ -140,16 +140,8 @@ dnl to compile with blitz -Wno-unused-variable is added to the CXXFLAGS
 dnl i hope this will not be necessary in the future.
 dnl before finalising some code, maybe a build w/o this option might be
 dnl a good idea...
-if test ! -n "${CXXFLAGS}"  ; then
-  CXXFLAGS=${CFLAGS}
-fi
-
-if eval "test x$GCC = xyes"; then
-  if echo "$CXXFLAGS" | grep "\-Wall" > /dev/null 2> /dev/null; then
-    CXXFLAGS="$XXCFLAGS"
-  else
-    CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-variable"
-  fi
+if eval "test x$GXX = xyes"; then
+  CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-variable -frepo"
 fi
 
 AC_PREFIX_DEFAULT(`pwd`)

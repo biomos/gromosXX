@@ -32,7 +32,7 @@ inline void interaction::harmonic_bond_interaction<t_simulation>
     double dist = sqrt(dot(v, v));
     
     assert(dist != 0.0);
-    assert(b_it.type() < m_bond_parameter.size());
+    assert(unsigned(b_it.type()) < m_bond_parameter.size());
     
     f = v * (-m_bond_parameter[b_it.type()].K*
 	     (dist - m_bond_parameter[b_it.type()].r0) / dist);

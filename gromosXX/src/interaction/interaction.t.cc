@@ -3,15 +3,12 @@
  * test routines for the interaction library
  */
 
+#include "../math/gmath.h"
+
 #include <iostream>
 #include <iomanip>
 
-#include "../math/gmath.h"
-
-#include "../simulation/simulation/simulation.h"
-#include "../simulation/topology/bond.h"
-#include "../simulation/topology/topology.h"
-#include "../simulation/system/system.h"
+#include "../simulation/simulation.h"
 
 #include "interaction/interaction.h"
 #include "pairlist/simple_pairlist.h"

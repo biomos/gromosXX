@@ -14,9 +14,9 @@ namespace simulation
    */
   class bond
   {
-  private:
+  public:
     /**
-     * @struct bond
+     * @struct bond_struct
      * bond information.
      */
     struct bond_struct
@@ -25,7 +25,7 @@ namespace simulation
       int j;
       int type;
     };
-  public:
+
     /**
      * @class iterator
      * iterator over the bonds.
