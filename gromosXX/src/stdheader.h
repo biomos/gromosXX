@@ -23,8 +23,6 @@
 #include <math/gmath.h>
 #include <util/debug.h>
 
-// #include <random/normal.h>
-
 #include <io/message.h>
 
 #include <util/timing.h>
