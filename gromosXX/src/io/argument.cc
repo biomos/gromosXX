@@ -18,7 +18,7 @@ namespace io{
   }
 
   Argument::Argument(int argc, char **argv, int nknown, 
-		       char **known, const std::string &usage)
+		       char **known, const std::string &usage, bool empty_ok)
     : std::multimap<std::string,std::string>(),
       d_usage(""),
       d_prog(""),
@@ -28,7 +28,7 @@ namespace io{
     if(argc) d_prog = argv[0];
     d_usage="\n\n"+usage;
 
-    if (argc == 1) throw std::string(d_usage);
+    if (argc == 1 && !empty_ok) throw std::string(d_usage);
 
     for(int i=0;i<nknown;++i)
       d_known.insert(std::string(known[i]));

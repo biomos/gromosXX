@@ -40,27 +40,34 @@
 /**
  * create a Gromos96 (like) forcefield.
  */
-void interaction::create_g96_forcefield(interaction::Forcefield & ff,
-					topology::Topology const & topo,
-					simulation::Simulation const & sim,
-					configuration::Configuration const & conf,
-					io::In_Topology & it)
+int interaction::create_g96_forcefield(interaction::Forcefield & ff,
+				       topology::Topology const & topo,
+				       simulation::Simulation const & sim,
+				       configuration::Configuration const & conf,
+				       io::In_Topology & it, bool quiet)
 {
-  std::cout << "FORCEFIELD\n";
+  if (!quiet)
+    std::cout << "FORCEFIELD\n";
   
   // the bonded
   DEBUG(8, "creating the bonded terms");
-  create_g96_bonded(ff, topo, sim.param(), it);
+  if (create_g96_bonded(ff, topo, sim.param(), it, quiet))
+    return 1;
 
   // the nonbonded
   DEBUG(8, "creating the nonbonded terms");
-  create_g96_nonbonded(ff, topo, sim, conf, it);
-  
+  if (create_g96_nonbonded(ff, topo, sim, conf, it, quiet))
+    return 1;
+
   // the special
   DEBUG(8, "creating the special terms");
-  create_special(ff, topo, sim.param());
+  if(create_special(ff, topo, sim.param(), quiet))
+    return 1;
 
-  std::cout << "END\n";
+  if (!quiet)
+    std::cout << "END\n";
+
+  return 0;
 
 }
 

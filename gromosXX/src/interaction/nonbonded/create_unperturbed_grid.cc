@@ -81,14 +81,16 @@ static void _select_virial(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
 			   simulation::Simulation const & sim,
 			   configuration::Configuration const & conf,
-			   io::In_Topology & it);
+			   io::In_Topology & it,
+			   bool quiet);
 
 template<math::boundary_enum t_boundary, math::virial_enum t_virial>
 static void _select_cutoff(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
 			   simulation::Simulation const & sim,
 			   configuration::Configuration const & conf,
-			   io::In_Topology & it);
+			   io::In_Topology & it,
+			   bool quiet);
 
 template<math::boundary_enum t_boundary, 
 	 math::virial_enum t_virial,
@@ -97,7 +99,8 @@ static void _add_grid_nonbonded(interaction::Forcefield & ff,
 				topology::Topology const & topo,
 				simulation::Simulation const & sim,
 				configuration::Configuration const & conf,
-				io::In_Topology & it);
+				io::In_Topology & it,
+				bool quiet);
 
 //==================================================
 // DEFINITION
@@ -110,7 +113,8 @@ namespace interaction
 				   topology::Topology const & topo,
 				   simulation::Simulation const & sim,
 				   configuration::Configuration const & conf,
-				   io::In_Topology & it)
+				   io::In_Topology & it,
+				   bool quiet)
   {
     DEBUG(9, "\tcreate g96 nonbonded terms");
     
@@ -120,17 +124,17 @@ namespace interaction
 	case math::vacuum:
 	  {
 	  // no pressure calculation in vaccuo
-	    _select_cutoff<math::vacuum, math::no_virial>(ff, topo, sim, conf, it);
+	    _select_cutoff<math::vacuum, math::no_virial>(ff, topo, sim, conf, it, quiet);
 	    break;
 	  }
 	case math::rectangular:
 	  {
-	    _select_virial<math::rectangular>(ff, topo, sim, conf, it);
+	    _select_virial<math::rectangular>(ff, topo, sim, conf, it, quiet);
 	    break;
 	  }
 	case math::triclinic:
 	  {
-	    _select_virial<math::triclinic>(ff, topo, sim, conf, it);
+	    _select_virial<math::triclinic>(ff, topo, sim, conf, it, quiet);
 	    break;
 	  }
 	default:
@@ -147,24 +151,25 @@ static void _select_virial(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
 			   simulation::Simulation const & sim,
 			   configuration::Configuration const & conf,
-			   io::In_Topology & it)
+			   io::In_Topology & it,
+			   bool quiet)
 {
   DEBUG(9, "\t\tboundary : " << t_boundary);
   
   switch(sim.param().pcouple.virial){
     case math::no_virial:
       {
-	_select_cutoff<t_boundary, math::no_virial>(ff, topo, sim, conf, it);
+	_select_cutoff<t_boundary, math::no_virial>(ff, topo, sim, conf, it, quiet);
 	break;
       }
     case math::atomic_virial:
       {
-	_select_cutoff<t_boundary, math::atomic_virial>(ff, topo, sim, conf, it);
+	_select_cutoff<t_boundary, math::atomic_virial>(ff, topo, sim, conf, it, quiet);
 	break;
       }
     case math::molecular_virial:
       {
-	_select_cutoff<t_boundary, math::molecular_virial>(ff, topo, sim, conf, it);
+	_select_cutoff<t_boundary, math::molecular_virial>(ff, topo, sim, conf, it, quiet);
 	break;
       }
     default:
@@ -179,16 +184,19 @@ static void _select_cutoff(interaction::Forcefield & ff,
 			   topology::Topology const & topo,
 			   simulation::Simulation const & sim,
 			   configuration::Configuration const & conf,
-			   io::In_Topology & it)
+			   io::In_Topology & it,
+			   bool quiet)
 {
   DEBUG(9, "\t\tvirial : " << t_virial);
 
   if (sim.param().pairlist.atomic_cutoff){
     
-    _add_grid_nonbonded<t_boundary, t_virial, interaction::atomic_cutoff_on>(ff, topo, sim, conf, it);
+    _add_grid_nonbonded<t_boundary, t_virial, interaction::atomic_cutoff_on>
+      (ff, topo, sim, conf, it, quiet);
   }
   else
-    _add_grid_nonbonded<t_boundary, t_virial, interaction::atomic_cutoff_off>(ff, topo, sim, conf, it);
+    _add_grid_nonbonded<t_boundary, t_virial, interaction::atomic_cutoff_off>
+      (ff, topo, sim, conf, it, quiet);
 }
 
 template<math::boundary_enum t_boundary, 
@@ -198,44 +206,47 @@ static void _add_grid_nonbonded(interaction::Forcefield & ff,
 				topology::Topology const & topo,
 				simulation::Simulation const & sim,
 				configuration::Configuration const & conf,
-				io::In_Topology & it)
+				io::In_Topology & it,
+				bool quiet)
 {
   DEBUG(9, "\t\tperturbation : off");
   DEBUG(9, "\t\tscaling      : off");
   DEBUG(9, "\t\tgrid based pairlist");
 
-  std::cout << "\tnonbonded interaction\n"
-	    << "\t\tperturbation      : off\n"
-	    << "\t\tscaling           : off\n"
-	    << "\t\tvirial            : ";
-  
-  switch(t_virial){
-    case math::no_virial:
-      std::cout << "off\n";
-      break;
-    case math::molecular_virial:
-      std::cout << "molecular\n";
-      break;
-    case math::atomic_virial:
+  if (!quiet){
+    std::cout << "\tnonbonded interaction\n"
+	      << "\t\tperturbation      : off\n"
+	      << "\t\tscaling           : off\n"
+	      << "\t\tvirial            : ";
+    
+    switch(t_virial){
+      case math::no_virial:
+	std::cout << "off\n";
+	break;
+      case math::molecular_virial:
+	std::cout << "molecular\n";
+	break;
+      case math::atomic_virial:
+	std::cout << "atomic\n";
+	break;
+    }
+
+    std::cout << "\t\tcutoff            : ";
+    if(t_cutoff)
       std::cout << "atomic\n";
-      break;
+    else
+      std::cout << "chargegroup\n";
+    
+    if (sim.param().longrange.rf_excluded)
+      std::cout << "\t\treaction field contributions from excluded atoms added\n";
+    else
+      std::cout << "\t\tno reaction field contributions from excluded atoms\n";
+    
+    std::cout << "\t\tgrid based pairlist\n";
+    
+    std::cout << "\n";
   }
-
-  std::cout << "\t\tcutoff            : ";
-  if(t_cutoff)
-    std::cout << "atomic\n";
-  else
-    std::cout << "chargegroup\n";
-
-  if (sim.param().longrange.rf_excluded)
-    std::cout << "\t\treaction field contributions from excluded atoms added\n";
-  else
-    std::cout << "\t\tno reaction field contributions from excluded atoms\n";
-
-  std::cout << "\t\tgrid based pairlist\n";
-
-  std::cout << "\n";
-
+  
   typedef interaction::Interaction_Spec
     < 
     t_boundary,

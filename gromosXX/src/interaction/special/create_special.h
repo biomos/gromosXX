@@ -8,9 +8,10 @@
 
 namespace interaction
 {
-  void create_special(interaction::Forcefield & ff,
-		      topology::Topology const & topo,
-		      simulation::Parameter const & param);
+  int create_special(interaction::Forcefield & ff,
+		     topology::Topology const & topo,
+		     simulation::Parameter const & param,
+		     bool quiet = false);
 
 }
 

@@ -1,0 +1,48 @@
+TITLE
+	Perturbation of ASN: atom 1 to 6 into IACB = 19; all neutral
+	From topology: /flock1/chris/HYDR/SYSTEMS/RASN/TOPO/rasnmta1.dat
+END
+PERTATOM03
+6
+# JLA RESNR ATNAM     IACB      WMB      CGB ISCLJ  ISCC
+    1     1 CB   	14  15.0350    0.000 11  12.0350    1.000    0.3   0.6
+    2     1 CG   	11  12.0110    0.380 19  16.0110   -0.500    0.3   0.6
+    3     1 OD1   	 1  15.9994   -0.380 33  15.9994    0.000    0.3   0.6
+    4     1 ND2   	 6  14.0067   -0.830 19  14.0067    0.200    0.3   0.6
+    5     1 HD21   	18   1.0080    0.415 11   2.0080    0.000    0.3   0.6
+    6     1 HD22   	18   1.0080    0.415 19   4.0080   -0.400    0.3   0.6
+END
+#SCALEDINTERACTIONS
+#	number of scaled interactions
+#	2
+#	energy_group_1	energy_group_2	scale_A	scale_B
+#	1               1               0.568   0.568
+#	1				2				0.568   0.568
+#END
+PERTATOMPAIR
+   0
+END
+PERTBONDH
+   0
+END
+PERTBOND
+   0
+END
+PERTBANGLEH
+   0
+END
+PERTBANGLE
+   0
+END
+PERTIMPDIHEDRALH
+   0
+END
+PERTIMPDIHEDRAL
+   0
+END
+PERTDIHEDRALH
+   0
+END
+PERTDIHEDRAL
+   0
+END

@@ -11,11 +11,12 @@ namespace interaction
   /**
    * create a Gromos96 (like) forcefield.
    */
-  void create_g96_forcefield(interaction::Forcefield & ff,
-			     topology::Topology const & topo,
-			     simulation::Simulation const & sim,
-			     configuration::Configuration const & conf,
-			     io::In_Topology & it);
+  int create_g96_forcefield(interaction::Forcefield & ff,
+			    topology::Topology const & topo,
+			    simulation::Simulation const & sim,
+			    configuration::Configuration const & conf,
+			    io::In_Topology & it,
+			    bool quiet = false);
     
   
 }

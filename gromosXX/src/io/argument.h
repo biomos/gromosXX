@@ -29,7 +29,7 @@ namespace io{
      * Argument constructor.
      * Details.
      */
-    Argument(int argc, char **args, int nknown, char **known, const std::string &usage); 
+    Argument(int argc, char **args, int nknown, char **known, const std::string &usage, bool empty_ok = false); 
     /**
      * Argument destructor.
      * Details.

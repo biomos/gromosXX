@@ -43,14 +43,17 @@ struct special_interaction_spec
 template<typename t_interaction_spec>
 static void _create_special(interaction::Forcefield & ff,
 			    topology::Topology const & topo,
-			    simulation::Parameter const & param)
+			    simulation::Parameter const & param,
+			    bool quiet = false)
 {
-  std::cout << "SPECIAL\n";
+  if (!quiet)
+    std::cout << "SPECIAL\n";
   
   if (param.posrest.posrest == 1 || 
       param.posrest.posrest == 2){
 
-    std::cout <<"\tPosition restraints\n";
+    if(!quiet)
+      std::cout <<"\tPosition restraints\n";
 
     interaction::Position_Restraint_Interaction<t_interaction_spec> *pr =
       new interaction::Position_Restraint_Interaction<t_interaction_spec>();
@@ -71,28 +74,31 @@ static void _create_special(interaction::Forcefield & ff,
   
 }
 
-void interaction::create_special(interaction::Forcefield & ff,
-				 topology::Topology const & topo,
-				 simulation::Parameter const & param)
+int interaction::create_special(interaction::Forcefield & ff,
+				topology::Topology const & topo,
+				simulation::Parameter const & param,
+				bool quiet)
 {
   switch(param.pcouple.virial){
     case math::no_virial:
       {
 	// create an interaction spec suitable for the bonded terms
-	_create_special<special_interaction_spec<math::no_virial> >(ff, topo, param);
+	_create_special<special_interaction_spec<math::no_virial> >
+	  (ff, topo, param, quiet);
 	break;
       }
     case math::atomic_virial:
       {
 	// create an interaction spec suitable for the bonded terms
-	_create_special<special_interaction_spec<math::atomic_virial> >(ff, topo, param);
+	_create_special<special_interaction_spec<math::atomic_virial> >
+	  (ff, topo, param, quiet);
 	break;
       }
     case math::molecular_virial:
       {
 	// create an interaction spec suitable for the bonded terms
 	_create_special<special_interaction_spec<math::molecular_virial> >
-	  (ff, topo, param);
+	  (ff, topo, param, quiet);
 	break;
       }
     default:
@@ -100,5 +106,6 @@ void interaction::create_special(interaction::Forcefield & ff,
 	throw std::string("Wrong virial type requested");
       }
   }
+  return 0;
 }
 

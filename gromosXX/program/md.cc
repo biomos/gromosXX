@@ -1,3 +1,7 @@
+/**
+ * @file md.cc
+ * the main md program
+ */
 
 #include <util/stdheader.h>
 
@@ -44,12 +48,12 @@ int main(int argc, char *argv[]){
     
     char *knowns[] = 
       {
-        "topo", "conf", "input", "verb", "alg", "pttopo",
+        "topo", "conf", "input", "verb", "pttopo",
         "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
 	"posres", "version"
       };
     
-    int nknowns = 16;
+    int nknowns = 15;
     
     std::string usage = argv[0];
     usage += "\n\t@topo    <topology>\n";
@@ -63,7 +67,6 @@ int main(int argc, char *argv[]){
     usage += "\t[@tre    <energy trajectory>]\n";
     usage += "\t[@trg    <free energy trajectory>]\n";
     usage += "\t[@posres <position restraints data>]\n";
-    usage += "\t[@alg    <RK|LF>]\n";
     usage += "\t[@print  <pairlist/force>]\n";
     usage += "\t[@trp    <print file>]\n";
     usage += "\t[@verb   <[module:][submodule:]level>]\n";

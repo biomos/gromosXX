@@ -36,8 +36,9 @@ void io::In_Parameter::read(simulation::Parameter &param)
 {
   DEBUG(7, "reading input");
 
-  std::cout << "\nINPUT\n";
-  std::cout << title << "\n";
+  if (!quiet)
+    std::cout << "\nINPUT\n"
+	      << title << "\n";
 
   // store the title...
   param.title = title;
@@ -73,6 +74,10 @@ void io::In_Parameter::read(simulation::Parameter &param)
 		       io::message::warning);
     }
   }
+
+  if (!quiet)
+    std::cout << "END\n";
+
 }
 
 /**

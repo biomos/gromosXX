@@ -51,7 +51,8 @@ int util::create_simulation(std::string topo,
 			    std::string conf,
 			    std::string param,
 			    util::simulation_struct & sim,
-			    io::In_Topology & in_topo)
+			    io::In_Topology & in_topo,
+			    bool quiet)
 {
 
   // a topology is needed
@@ -82,6 +83,7 @@ int util::create_simulation(std::string topo,
     }
     
     io::In_Parameter ip(input_file);
+    ip.quiet = quiet;
     ip.read(sim.sim.param());
 
     sim.sim.time_step_size() = sim.sim.param().step.dt;
@@ -126,6 +128,7 @@ int util::create_simulation(std::string topo,
     }
     
     io::In_Perturbation ipt(pttopo_file);
+    ipt.quiet = quiet;
     ipt.read(sim.topo, sim.sim.param());
 
   }
@@ -150,6 +153,7 @@ int util::create_simulation(std::string topo,
     }
 
     io::In_Configuration ic(conf_file);
+    ic.quiet = quiet;
     ic.read(sim.conf, sim.topo, sim.sim.param());
     
   }

@@ -50,36 +50,41 @@ namespace interaction
 			      topology::Topology const & topo,
 			      simulation::Simulation const & sim,
 			      configuration::Configuration const & conf,
-			      io::In_Topology & it);
+			      io::In_Topology & it,
+			      bool quiet);
   
   void create_g96_unperturbed_grid(interaction::Forcefield & ff,
 				   topology::Topology const & topo,
 				   simulation::Simulation const & sim,
 				   configuration::Configuration const & conf,
-				   io::In_Topology & it);
+				   io::In_Topology & it,
+				   bool quiet);
   
   void create_g96_perturbed(interaction::Forcefield & ff,
 			    topology::Topology const & topo,
 			    simulation::Simulation const & sim,
 			    configuration::Configuration const & conf,
-			    io::In_Topology & it);
+			    io::In_Topology & it,
+			    bool quiet);
   
   void create_g96_perturbed_grid(interaction::Forcefield & ff,
 				 topology::Topology const & topo,
 				 simulation::Simulation const & sim,
 				 configuration::Configuration const & conf,
-				 io::In_Topology & it);
+				 io::In_Topology & it,
+				 bool quiet);
 }
 
 //==================================================
 // DEFINITION
 //==================================================
 
-void interaction::create_g96_nonbonded(interaction::Forcefield & ff,
-				       topology::Topology const & topo,
-				       simulation::Simulation const & sim,
-				       configuration::Configuration const & conf,
-				       io::In_Topology & it)
+int interaction::create_g96_nonbonded(interaction::Forcefield & ff,
+				      topology::Topology const & topo,
+				      simulation::Simulation const & sim,
+				      configuration::Configuration const & conf,
+				      io::In_Topology & it,
+				      bool quiet)
 {
   DEBUG(9, "\tcreate g96 nonbonded terms");
 
@@ -88,31 +93,44 @@ void interaction::create_g96_nonbonded(interaction::Forcefield & ff,
     if (sim.param().perturbation.perturbation){
       
       if (sim.param().pairlist.grid){
-	create_g96_perturbed_grid(ff, topo, sim,conf, it);
-	std::cout << "\t\t\tgrid size          : " << sim.param().pairlist.grid_size << "\n";
+	create_g96_perturbed_grid(ff, topo, sim,conf, it, quiet);
+	if (!quiet)
+	  std::cout << "\t\t\tgrid size          : " 
+		    << sim.param().pairlist.grid_size << "\n";
       }
       else
-	create_g96_perturbed(ff, topo, sim, conf, it);
+	create_g96_perturbed(ff, topo, sim, conf, it, quiet);
     }
     else{
 
       if (sim.param().pairlist.grid){
-	create_g96_unperturbed_grid(ff, topo, sim, conf, it);
-	std::cout << "\t\tgrid size :     " << sim.param().pairlist.grid_size << "\n";
+	create_g96_unperturbed_grid(ff, topo, sim, conf, it, quiet);
+	if (!quiet)
+	  std::cout << "\t\tgrid size :     " 
+		    << sim.param().pairlist.grid_size << "\n";
       }
       else
-	create_g96_unperturbed(ff, topo, sim, conf, it);
+	create_g96_unperturbed(ff, topo, sim, conf, it, quiet);
 
     }
 
-    std::cout << "\t\t\tinner cutoff           : " << sim.param().pairlist.cutoff_short << "\n"
-	      << "\t\t\touter cutoff           : " << sim.param().pairlist.cutoff_long << "\n"
-	      << "\t\t\tepsilon                : " << sim.param().longrange.epsilon << "\n"
-	      << "\t\t\treactionfield epsilon  : " << sim.param().longrange.rf_epsilon << "\n"
-	      << "\t\t\tkappa                  : " << sim.param().longrange.rf_kappa << "\n"
-	      << "\t\t\treactionfield cutoff   : " << sim.param().longrange.rf_cutoff << "\n"
-	      << "\t\t\tpairlist creation every  " << sim.param().pairlist.skip_step << " steps\n"
-	      << "\n";
+    if (!quiet)
+      std::cout << "\t\t\tinner cutoff           : " 
+		<< sim.param().pairlist.cutoff_short << "\n"
+		<< "\t\t\touter cutoff           : " 
+		<< sim.param().pairlist.cutoff_long << "\n"
+		<< "\t\t\tepsilon                : " 
+		<< sim.param().longrange.epsilon << "\n"
+		<< "\t\t\treactionfield epsilon  : " 
+		<< sim.param().longrange.rf_epsilon << "\n"
+		<< "\t\t\tkappa                  : " 
+		<< sim.param().longrange.rf_kappa << "\n"
+		<< "\t\t\treactionfield cutoff   : " 
+		<< sim.param().longrange.rf_cutoff << "\n"
+		<< "\t\t\tpairlist creation every  " 
+		<< sim.param().pairlist.skip_step << " steps\n"
+		<< "\n";
     
   }
+  return 0;
 }

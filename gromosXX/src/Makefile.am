@@ -1,6 +1,4 @@
-AUTOMAKE_OPTIONS = foreign
-
-SUBDIRS = simulation util math topology configuration algorithm interaction io .
+SUBDIRS = simulation util math topology configuration algorithm interaction io check .
 
 lib_LTLIBRARIES = 	libgroxx.la
 

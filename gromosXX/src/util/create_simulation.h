@@ -30,7 +30,8 @@ namespace util
 			std::string conf,
 			std::string param,
 			util::simulation_struct & sim,
-			io::In_Topology & in_topo);
+			io::In_Topology & in_topo,
+			bool quiet = false);
 }
 
 #endif

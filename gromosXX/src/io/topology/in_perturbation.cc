@@ -69,9 +69,10 @@ io::In_Perturbation::read(topology::Topology &topo,
   std::vector<std::string>::const_iterator it;
 
   DEBUG(7, "Reading PERTURBATION");
-  std::cout << "PERTURBATION TOPOLOGY\n";
-
-  std::cout << title << "\n";
+  if (!quiet){
+    std::cout << "PERTURBATION TOPOLOGY\n";
+    std::cout << title << "\n";
+  }
 
   // prepare arrays
   topo.is_perturbed().resize(topo.num_solute_atoms(), false);
@@ -79,7 +80,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   { // PERTBOND03
     buffer = m_block["PERTBOND03"];
     if (buffer.size()){
-      std::cout << "\tPERTBOND03\n";
+      if (!quiet)
+	std::cout << "\tPERTBOND03\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -95,18 +97,20 @@ io::In_Perturbation::read(topology::Topology &topo,
 			 io::message::warning);
       }
       else if (param.constraint.ntc == 3){
-	std::cout << "\n\t\t"
-		  << num
-		  << " perturbed bonds from PERTBOND03 block added to "
-		  << "perturbed distance constraints.";
+	if (!quiet)
+	  std::cout << "\n\t\t"
+		    << num
+		    << " perturbed bonds from PERTBOND03 block added to "
+		    << "perturbed distance constraints.";
       }
 
-      std::cout << "\n\t"
-		<< std::setw(10) << "atom i"
-		<< std::setw(10) << "atom j"
-		<< std::setw(10) << "type A"
-		<< std::setw(10) << "type B"
-		<< "\n";
+      if (!quiet)
+	std::cout << "\n\t"
+		  << std::setw(10) << "atom i"
+		  << std::setw(10) << "atom j"
+		  << std::setw(10) << "type A"
+		  << std::setw(10) << "type B"
+		  << "\n";
       
       for(n=0; it != buffer.end() -1; ++it, ++n){
 	int i, j, t_A, t_B;
@@ -138,12 +142,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  topology::perturbed_two_body_term_struct 
 	    pb(i-1, j-1, t_A-1, t_B-1);
 
-	  std::cout << "\t" 
-		    << std::setw(10) << pb.i+1 
-		    << std::setw(10) << pb.j+1
-		    << std::setw(10) << pb.A_type+1 
-		    << std::setw(10) << pb.B_type+1 
-		    << "\n";
+	  if (!quiet)
+	    std::cout << "\t" 
+		      << std::setw(10) << pb.i+1 
+		      << std::setw(10) << pb.j+1
+		      << std::setw(10) << pb.A_type+1 
+		      << std::setw(10) << pb.B_type+1 
+		      << "\n";
 	  
 	  topo.perturbed_solute().bonds().push_back(pb);
 	}
@@ -163,12 +168,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  topology::perturbed_two_body_term_struct 
 	    pb(i-1, j-1, t_A-1, t_B-1);
 
-	  std::cout << "\t" 
-		    << std::setw(10) << pb.i+1 
-		    << std::setw(10) << pb.j+1
-		    << std::setw(10) << pb.A_type+1 
-		    << std::setw(10) << pb.B_type+1 
-		    << "\n";
+	  if (!quiet)
+	    std::cout << "\t" 
+		      << std::setw(10) << pb.i+1 
+		      << std::setw(10) << pb.j+1
+		      << std::setw(10) << pb.A_type+1 
+		      << std::setw(10) << pb.B_type+1 
+		      << "\n";
 	  
 	  topo.perturbed_solute().distance_constraints().push_back(pb);
 
@@ -187,17 +193,17 @@ io::In_Perturbation::read(topology::Topology &topo,
     	throw std::runtime_error("error in PERTBOND03 block (fail)");
       }
 
-      std::cout << "\n\t\tbonds :                          " 
-		<< topo.solute().bonds().size()
-		<< "\n\t\tperturbed bonds :                "
-		<< topo.perturbed_solute().bonds().size()
-		<< "\n\t\tdistance constraints :           "
-		<< topo.solute().distance_constraints().size()
-		<< "\n\t\tperturbed distance constraints : "
-		<< topo.perturbed_solute().distance_constraints().size()
-		<< "\n\n";
-      
-      std::cout << "\tEND\n";
+      if (!quiet)
+	std::cout << "\n\t\tbonds :                          " 
+		  << topo.solute().bonds().size()
+		  << "\n\t\tperturbed bonds :                "
+		  << topo.perturbed_solute().bonds().size()
+		  << "\n\t\tdistance constraints :           "
+		  << topo.solute().distance_constraints().size()
+		  << "\n\t\tperturbed distance constraints : "
+		  << topo.perturbed_solute().distance_constraints().size()
+		  << "\n\n"
+		  << "\tEND\n";
 
     } // if block present
     
@@ -216,19 +222,19 @@ io::In_Perturbation::read(topology::Topology &topo,
       _lineStream >> num;
       ++it;
 
-      std::cout << "\tPERTCONSTRAINT03\n\t\t"
-		<< num
-		<< " bonds in PERTCONSTRAINT03 block."
-		<< "\n\t\ttotal of perturbed constraint bonds : " 
-		<< num + topo.perturbed_solute().distance_constraints().size()
-		<< "\n";
-  
-      std::cout << "\t"
-		<< std::setw(10) << "atom i"
-		<< std::setw(10) << "atom j"
-		<< std::setw(10) << "type A"
-		<< std::setw(10) << "type B"
-		<< "\n";
+      if (!quiet)
+	std::cout << "\tPERTCONSTRAINT03\n\t\t"
+		  << num
+		  << " bonds in PERTCONSTRAINT03 block."
+		  << "\n\t\ttotal of perturbed constraint bonds : " 
+		  << num + topo.perturbed_solute().distance_constraints().size()
+		  << "\n"  
+		  << "\t"
+		  << std::setw(10) << "atom i"
+		  << std::setw(10) << "atom j"
+		  << std::setw(10) << "type A"
+		  << std::setw(10) << "type B"
+		  << "\n";
     
       for(n=0; it != buffer.end() - 1; ++it, ++n){
 	int i, j, t_A, t_B;
@@ -270,12 +276,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 
 	topo.perturbed_solute().distance_constraints().push_back(pb);
 
-	std::cout << "\t" 
-		  << std::setw(10) << pb.i+1 
-		  << std::setw(10) << pb.j+1
-		  << std::setw(10) << pb.A_type+1 
-		  << std::setw(10) << pb.B_type+1 
-		  << "\n";
+	if (!quiet)
+	  std::cout << "\t" 
+		    << std::setw(10) << pb.i+1 
+		    << std::setw(10) << pb.j+1
+		    << std::setw(10) << pb.A_type+1 
+		    << std::setw(10) << pb.B_type+1 
+		    << "\n";
 	
       }
     
@@ -292,7 +299,9 @@ io::In_Perturbation::read(topology::Topology &topo,
   { // PERTBANGLE03
     buffer = m_block["PERTBANGLE03"];
     if (buffer.size()){
-      std::cout << "\tPERTANGLES\n";
+
+      if (!quiet)
+	std::cout << "\tPERTANGLES\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -301,13 +310,14 @@ io::In_Perturbation::read(topology::Topology &topo,
       _lineStream >> num;
       ++it;
       
-      std::cout << "\t"
-		<< std::setw(10) << "atom i"
-		<< std::setw(10) << "atom j"
-		<< std::setw(10) << "atom k"
-		<< std::setw(10) << "type A"
-		<< std::setw(10) << "type B"
-		<< "\n";
+      if (!quiet)
+	std::cout << "\t"
+		  << std::setw(10) << "atom i"
+		  << std::setw(10) << "atom j"
+		  << std::setw(10) << "atom k"
+		  << std::setw(10) << "type A"
+		  << std::setw(10) << "type B"
+		  << "\n";
 
       for(n=0; it != buffer.end() -1; ++it, ++n){
 	int i, j, k, t_A, t_B;
@@ -337,13 +347,15 @@ io::In_Perturbation::read(topology::Topology &topo,
 	topo.solute().angles().erase(a_it);
 	topology::perturbed_three_body_term_struct pa(i-1, j-1, k-1, t_A-1, t_B-1);
 	
-	std::cout << "\t"
-		  << std::setw(10) << pa.i+1 
-		  << std::setw(10) << pa.j+1
-		  << std::setw(10) << pa.k+1
-		  << std::setw(10) << pa.A_type+1 
-		  << std::setw(10) << pa.B_type+1 
-		  << "\n";
+
+	if (!quiet)
+	  std::cout << "\t"
+		    << std::setw(10) << pa.i+1 
+		    << std::setw(10) << pa.j+1
+		    << std::setw(10) << pa.k+1
+		    << std::setw(10) << pa.A_type+1 
+		    << std::setw(10) << pa.B_type+1 
+		    << "\n";
 	
 	topo.perturbed_solute().angles().push_back(pa);
       }
@@ -358,7 +370,8 @@ io::In_Perturbation::read(topology::Topology &topo,
     	throw std::runtime_error("error in PERTBANGLE03 block (fail)");
       }
       
-      std::cout << "\tEND\n";
+      if (!quiet)
+	std::cout << "\tEND\n";
       
     } // if block present
   } // PERTANGLE03
@@ -366,7 +379,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   { // PERTIMPDIHEDRAL03
     buffer = m_block["PERTIMPDIHEDRAL03"];
     if (buffer.size()){
-      std::cout << "\tPERTIMPDIHEDRALS\n";
+      if (!quiet)
+	std::cout << "\tPERTIMPDIHEDRALS\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -375,14 +389,15 @@ io::In_Perturbation::read(topology::Topology &topo,
       _lineStream >> num;
       ++it;
       
-      std::cout << "\t"
-		<< std::setw(10) << "atom i"
-		<< std::setw(10) << "atom j"
-		<< std::setw(10) << "atom k"
-		<< std::setw(10) << "atom l"
-		<< std::setw(10) << "type A"
-		<< std::setw(10) << "type B"
-		<< "\n";
+      if (!quiet)
+	std::cout << "\t"
+		  << std::setw(10) << "atom i"
+		  << std::setw(10) << "atom j"
+		  << std::setw(10) << "atom k"
+		  << std::setw(10) << "atom l"
+		  << std::setw(10) << "type A"
+		  << std::setw(10) << "type B"
+		  << "\n";
 
       for(n=0; it != buffer.end() -1; ++it, ++n){
 	int i, j, k, l, t_A, t_B;
@@ -414,14 +429,15 @@ io::In_Perturbation::read(topology::Topology &topo,
 	topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1, 
 						      t_A-1, t_B-1);
 	
-	std::cout << "\t"
-		  << std::setw(10) << pid.i+1 
-		  << std::setw(10) << pid.j+1
-		  << std::setw(10) << pid.k+1
-		  << std::setw(10) << pid.l+1
-		  << std::setw(10) << pid.A_type+1 
-		  << std::setw(10) << pid.B_type+1 
-		  << "\n";
+	  if (!quiet)
+	    std::cout << "\t"
+		      << std::setw(10) << pid.i+1 
+		      << std::setw(10) << pid.j+1
+		      << std::setw(10) << pid.k+1
+		      << std::setw(10) << pid.l+1
+		      << std::setw(10) << pid.A_type+1 
+		      << std::setw(10) << pid.B_type+1 
+		      << "\n";
 	
 	topo.perturbed_solute().improper_dihedrals().push_back(pid);
       }
@@ -436,7 +452,8 @@ io::In_Perturbation::read(topology::Topology &topo,
 			 "InTopology", io::message::error);
     	throw std::runtime_error("error in PERTIMPDIHEDRAL03 block (fail)");
       }
-      std::cout << "\tEND\n";
+      if (!quiet)
+	std::cout << "\tEND\n";
 
     } // if block present
    
@@ -445,7 +462,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   { // PERTDIHEDRAL03
     buffer = m_block["PERTDIHEDRAL03"];
     if (buffer.size()){
-      std::cout << "\tPERTDIHEDRALS\n";
+      if (!quiet)
+	std::cout << "\tPERTDIHEDRALS\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -454,14 +472,15 @@ io::In_Perturbation::read(topology::Topology &topo,
       _lineStream >> num;
       ++it;
 
-      std::cout << "\t"
-		<< std::setw(10) << "atom i"
-		<< std::setw(10) << "atom j"
-		<< std::setw(10) << "atom k"
-		<< std::setw(10) << "atom l"
-		<< std::setw(10) << "type A"
-		<< std::setw(10) << "type B"
-		<< "\n";
+      if (!quiet)
+	std::cout << "\t"
+		  << std::setw(10) << "atom i"
+		  << std::setw(10) << "atom j"
+		  << std::setw(10) << "atom k"
+		  << std::setw(10) << "atom l"
+		  << std::setw(10) << "type A"
+		  << std::setw(10) << "type B"
+		  << "\n";
       
       for(n=0; it != buffer.end() -1; ++it, ++n){
 	int i, j, k, l, t_A, t_B;
@@ -493,14 +512,15 @@ io::In_Perturbation::read(topology::Topology &topo,
 	topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1, 
 						      t_A-1, t_B-1);
 
-	std::cout << "\t"
-		  << std::setw(10) << pid.i+1 
-		  << std::setw(10) << pid.j+1
-		  << std::setw(10) << pid.k+1
-		  << std::setw(10) << pid.l+1
-		  << std::setw(10) << pid.A_type+1 
-		  << std::setw(10) << pid.B_type+1 
-		  << "\n";
+	if (!quiet)
+	  std::cout << "\t"
+		    << std::setw(10) << pid.i+1 
+		    << std::setw(10) << pid.j+1
+		    << std::setw(10) << pid.k+1
+		    << std::setw(10) << pid.l+1
+		    << std::setw(10) << pid.A_type+1 
+		    << std::setw(10) << pid.B_type+1 
+		    << "\n";
 	
 	topo.perturbed_solute().dihedrals().push_back(pid);
       }
@@ -515,7 +535,9 @@ io::In_Perturbation::read(topology::Topology &topo,
 			 "InTopology", io::message::error);
     	throw std::runtime_error("error in PERTDIHEDRAL03 block (fail)");
       }
-      std::cout << "\tEND\n";
+
+      if (!quiet)
+	std::cout << "\tEND\n";
 
     } // if block present
    
@@ -527,7 +549,9 @@ io::In_Perturbation::read(topology::Topology &topo,
 
     buffer = m_block["PERTATOMPAIR03"];
     if (buffer.size()){
-      std::cout << "\tPERTATOMPAIRS\n";
+
+      if (!quiet)
+	std::cout << "\tPERTATOMPAIRS\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -538,12 +562,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 
       int i, j, A, B;
 
-      std::cout << "\t"
-		<< std::setw(10) << "atom i"
-		<< std::setw(10) << "atom j"
-		<< std::setw(10) << "type A"
-		<< std::setw(10) << "type B"
-		<< "\n";
+      if (!quiet)
+	std::cout << "\t"
+		  << std::setw(10) << "atom i"
+		  << std::setw(10) << "atom j"
+		  << std::setw(10) << "type A"
+		  << std::setw(10) << "type B"
+		  << "\n";
 
       for(n = 0; it != buffer.end() - 1; ++it, ++n){
 	_lineStream.clear();
@@ -560,12 +585,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 
 	topology::perturbed_two_body_term_struct ap(i-1,j-1,A,B);
 	
-	std::cout << "\t"
-		  << std::setw(10) << ap.i+1
-		  << std::setw(10) << ap.j+1
-		  << std::setw(10) << ap.A_type
-		  << std::setw(10) << ap.B_type
-		  << std::endl;
+	if (!quiet)
+	  std::cout << "\t"
+		    << std::setw(10) << ap.i+1
+		    << std::setw(10) << ap.j+1
+		    << std::setw(10) << ap.A_type
+		    << std::setw(10) << ap.B_type
+		    << std::endl;
 	
 	topo.perturbed_solute().atompairs().push_back(ap);
 
@@ -604,7 +630,9 @@ io::In_Perturbation::read(topology::Topology &topo,
 			 "InTopology", io::message::error);
     	throw std::runtime_error("error in PERTATOMPAIR03 block (fail)");
       }
-      std::cout << "\tEND\n";
+
+      if (!quiet)
+	std::cout << "\tEND\n";
       
     } // if block present
   } // PERTATOMPAIR03
@@ -613,9 +641,9 @@ io::In_Perturbation::read(topology::Topology &topo,
     
     buffer = m_block["PERTATOM03"];
     if (buffer.size()){
-      std::cout << "\tPERTATOMS\n";
+      if (!quiet)
+	std::cout << "\tPERTATOMS\n";
       DEBUG(7, "PERTATOM03 block");
-      
       
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -629,17 +657,18 @@ io::In_Perturbation::read(topology::Topology &topo,
       double lj_soft, crf_soft;
       std::string name;
 
-      std::cout << "\t"
-		<< std::setw(5) << "seq"
-		<< std::setw(8) << "IAC(A)"
-		<< std::setw(10) << "mass(A)"
-		<< std::setw(10) << "charge(A)"
-		<< std::setw(8) << "IAC(B)"
-		<< std::setw(10) << "mass(B)"
-		<< std::setw(10) << "charge(B)"
-		<< std::setw(10) << "LJ(soft)"
+      if (!quiet)
+	std::cout << "\t"
+		  << std::setw(5) << "seq"
+		  << std::setw(8) << "IAC(A)"
+		  << std::setw(10) << "mass(A)"
+		  << std::setw(10) << "charge(A)"
+		  << std::setw(8) << "IAC(B)"
+		  << std::setw(10) << "mass(B)"
+		  << std::setw(10) << "charge(B)"
+		  << std::setw(10) << "LJ(soft)"
 		<< std::setw(10) << "CRF(soft)"
-		<< "\n";
+		  << "\n";
       
       for(n = 0; it != buffer.end() - 1; ++it, ++n){
 	DEBUG(10, "\treading a line: " << n);
@@ -665,17 +694,18 @@ io::In_Perturbation::read(topology::Topology &topo,
 
 	DEBUG(10, "\tcreated an atom");
 	
-	std::cout << "\t"
-		  << std::setw(5) << seq + 1
-		  << std::setw(8) << a_iac + 1
-		  << std::setw(10) << a_mass
-		  << std::setw(10) << a_charge
-		  << std::setw(8) << b_iac + 1
-		  << std::setw(10) << b_mass
-		  << std::setw(10) << b_charge
-		  << std::setw(10) << lj_soft
-		  << std::setw(10) << crf_soft
-		  << "\n";
+	if (!quiet)
+	  std::cout << "\t"
+		    << std::setw(5) << seq + 1
+		    << std::setw(8) << a_iac + 1
+		    << std::setw(10) << a_mass
+		    << std::setw(10) << a_charge
+		    << std::setw(8) << b_iac + 1
+		    << std::setw(10) << b_mass
+		    << std::setw(10) << b_charge
+		    << std::setw(10) << lj_soft
+		    << std::setw(10) << crf_soft
+		    << "\n";
 	
 	atom.exclusion() = topo.exclusion(seq);
 	topo.exclusion(seq).clear();
@@ -727,7 +757,9 @@ io::In_Perturbation::read(topology::Topology &topo,
     	throw std::runtime_error("error in PERTATOM03 block (fail)");
       }
 
-      std::cout << "\tEND\n";
+
+      if (!quiet)
+	std::cout << "\tEND\n";
       
     } // if block present
     
@@ -742,7 +774,8 @@ io::In_Perturbation::read(topology::Topology &topo,
 			 "InPerturbation", io::message::warning);
       }
       else{
-	std::cout << "\tSCALED INTERACTIONS\n";
+	if (!quiet)
+	  std::cout << "\tSCALED INTERACTIONS\n";
 	
 	it = buffer.begin() + 1;
 	_lineStream.clear();
@@ -754,12 +787,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 	int i, j;
 	double A, B;
 	
-	std::cout << "\t"
-		  << std::setw(10) << "group i"
-		  << std::setw(10) << "group j"
-		  << std::setw(10) << "scale A"
-		  << std::setw(10) << "scale B"
-		  << "\n";
+	if (!quiet)
+	  std::cout << "\t"
+		    << std::setw(10) << "group i"
+		    << std::setw(10) << "group j"
+		    << std::setw(10) << "scale A"
+		    << std::setw(10) << "scale B"
+		    << "\n";
 	
 	for(n = 0; it != buffer.end() - 1; ++it, ++n){
 	  _lineStream.clear();
@@ -784,12 +818,13 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  topo.energy_group_scaling()[energy_pair]=scale_pair;
 	  topo.energy_group_scaling()[energy_pair2]=scale_pair;
 	  
-	  std::cout << "\t"
-		    << std::setw(10) << i+1
-		    << std::setw(10) << j+1
-		    << std::setw(10) << A
-		    << std::setw(10) << B
-		    << std::endl;
+	  if (!quiet)
+	    std::cout << "\t"
+		      << std::setw(10) << i+1
+		      << std::setw(10) << j+1
+		      << std::setw(10) << A
+		      << std::setw(10) << B
+		      << std::endl;
 	  
 	}
 	
@@ -803,7 +838,8 @@ io::In_Perturbation::read(topology::Topology &topo,
 			   "InTopology", io::message::error);
 	  throw std::runtime_error("error in SCALEDINTERACTIONS block (fail)");
 	}
-	std::cout << "\tEND\n";
+	if (!quiet)
+	  std::cout << "\tEND\n";
       } // if scaling turned on
       
     } // if block present
@@ -815,7 +851,8 @@ io::In_Perturbation::read(topology::Topology &topo,
     }
   } // PERTATOMPAIR03
 
-  std::cout << "END\n";
+  if (!quiet)
+    std::cout << "END\n";
 
   // and update the properties for lambda
   topo.update_for_lambda();
