@@ -136,6 +136,9 @@ void algorithm::Flexible_Constraint<t_simulation>
      // calculate the flexible constraint distance
     it->b0 = force_on_constraint / m_K[k] + sqrt(constr_length2);
 
+    // update the velocity array
+    m_vel[k] = (it->b0 - sqrt(ref_dist2)) / dt;
+    
     // calculate Ekin along the constraints
     Ekin += 0.5 * red_mass * m_vel[k] * m_vel[k];
 
@@ -143,7 +146,7 @@ void algorithm::Flexible_Constraint<t_simulation>
     Epot += 0.5 * m_K[k] * pow(it->b0 - sqrt(constr_length2),2);
       
     // sys.flex_constraint_distance()(k) *= sys.flex_constraint_distance()(k);
-    DEBUG(5, "flex_constraint_distance^2: " << it->b0) ;
+    DEBUG(5, "flex_constraint_distance: " << it->b0) ;
         
     } // loop over all constraints
     
