@@ -95,7 +95,12 @@ inline void simulation::Multibath::in_bath(size_t const atom,
       return;
     }
   }
+
+  // if no bath read in, the 0 bath is not yet added (change that!)
   assert(false);
+
+  com = 0;
+  ir = 0;  
 }
 
 template<typename t_topology>
