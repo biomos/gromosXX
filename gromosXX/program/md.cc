@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
 
     
   double end_time = sim.time() + 
-    sim.time_step_size() * sim.param().step.number_of_steps;
+    sim.time_step_size() * (sim.param().step.number_of_steps - 1);
     
   std::cout << "==================================================\n"
 	    << " MAIN MD LOOP\n"
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]){
 
   const double init_time = util::now() - start;
     
-  while(sim.time() < end_time){
+  while(sim.time() < end_time + math::epsilon){
       
     traj.write(conf, topo, sim, io::reduced);
 
