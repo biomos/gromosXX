@@ -63,7 +63,7 @@ void math::Periodicity<b>::put_chargegroups_into_box(t_simulation &sim)const
     // on first atom
     v = pos(**cg_it);
     v_box = v;
-    sim.system().periodicity().put_into_positive_box(v_box);
+    sim.system().periodicity().put_into_box(v_box);
     trans = v_box - v;
     
     // loop over the atoms
