@@ -29,14 +29,19 @@ int algorithm::Berendsen_Barostat
 {
   const double start = util::now();
   
+  DEBUG(8, "Berendsen Barostat == apply");
+
   // position are current!
   math::VArray & pos = conf.current().pos;
   math::Matrix & pressure = conf.old().pressure_tensor;
   math::Box & box = conf.current().box;
 
+  DEBUG(9, "scaling = " << sim.param().pcouple.scale);
+  
   switch(sim.param().pcouple.scale){
     case math::pcouple_isotropic:
       {
+	DEBUG(9, "total pressure (isotropic) ...");
 	double total_pressure =  (pressure(0,0)
 				  + pressure(1,1)
 				  + pressure(2,2)) / 3.0;
@@ -63,6 +68,8 @@ int algorithm::Berendsen_Barostat
       {
 	math::Vec mu;
 
+	DEBUG(8, "anisotropic pressure scaling");
+
 	for(int i=0; i<3; ++i){
 	  mu(i) = pow(1.0 - sim.param().pcouple.compressibility
 		      * sim.time_step_size() / sim.param().pcouple.tau
@@ -71,10 +78,14 @@ int algorithm::Berendsen_Barostat
 		      1.0/3.0);
 	}
 
+	DEBUG(10, "mu = " << math::v2s(mu));
+	
 	// scale the box
 	for(int i=0; i<3; ++i)
-	  for(int j=0; i<3; ++j)
+	  for(int j=0; j<3; ++j)
 	    box(i)(j) *= mu(j);
+
+	DEBUG(10, "and the positions...");
 
 	// scale the positions
 	for(unsigned int i=0; i<pos.size(); ++i)
