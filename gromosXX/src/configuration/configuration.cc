@@ -3,7 +3,7 @@
  * methods definition
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <configuration/configuration_global.h>
 
@@ -50,8 +50,8 @@ void configuration::Configuration::initialise(topology::Topology & topo,
 					      bool gather)
 {
   // resize the energy arrays
-  const size_t num = topo.energy_groups().size();
-  const size_t numb = param.multibath.multibath.size();
+  const unsigned int num = unsigned(topo.energy_groups().size());
+  const unsigned int numb = unsigned(param.multibath.multibath.size());
 
   DEBUG(5, "number of energy groups: " << num 
 	<< "\nnumber of baths: " << numb);
@@ -120,7 +120,7 @@ void configuration::Configuration::initialise(topology::Topology & topo,
 /**
  * set the number of atoms.
  */
-void configuration::Configuration::resize(size_t s)
+void configuration::Configuration::resize(unsigned int s)
 {
   DEBUG(7, "Configuration resize: " << s);
   
@@ -138,7 +138,7 @@ void configuration::Configuration::resize(size_t s)
  * the arrays contain garbage...
  * the energies have to be sized seperately!
  */
-void configuration::Configuration::state_struct::resize(size_t s)
+void configuration::Configuration::state_struct::resize(unsigned int s)
 {
   DEBUG(7, "state struct resize: " << s);
 

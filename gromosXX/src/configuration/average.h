@@ -6,9 +6,16 @@
 #ifndef INCLUDED_AVERAGE_H
 #define INCLUDED_AVERAGE_H
 
+namespace topology{
+	class Topology;
+}
+namespace configuration{
+	class Configuration;
+}
 namespace simulation
 {
   class Parameter;
+  class Simulation;
 }
 
 namespace configuration

@@ -6,6 +6,16 @@
 #ifndef INCLUDED_HARMONIC_BOND_INTERACTION_H
 #define INCLUDED_HARMONIC_BOND_INTERACTION_H
 
+namespace configuration{
+	class Configuration;
+}
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Simulation;
+}
+
 namespace interaction
 {
   /**

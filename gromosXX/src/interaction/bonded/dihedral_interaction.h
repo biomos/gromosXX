@@ -6,6 +6,16 @@
 #ifndef INCLUDED_DIHEDRAL_INTERACTION_H
 #define INCLUDED_DIHEDRAL_INTERACTION_H
 
+namespace configuration{
+	class Configuration;
+}
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Simulation;
+}
+
 namespace interaction
 {
   /**

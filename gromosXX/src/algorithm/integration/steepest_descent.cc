@@ -4,7 +4,7 @@
  * for steepest descent energy minimisation
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -82,7 +82,7 @@ int algorithm::Steepest_Descent
 
   // limit the maximum force!
   if (sim.param().minimise.flim != 0.0){
-    for(size_t i=0; i<topo.num_atoms(); ++i){
+    for(unsigned int i=0; i<topo.num_atoms(); ++i){
       const double fs = math::dot(conf.current().force(i), 
 				  conf.current().force(i));
       if (fs > sim.param().minimise.flim)

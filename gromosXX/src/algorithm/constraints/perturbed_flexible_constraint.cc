@@ -52,7 +52,7 @@ static int _perturbed_flexible_shake
   convergence = true;
 
   // index for constraint_force...
-  size_t k = 0;
+  unsigned int k = 0;
   double const dt2 = dt * dt;
   
   // and constraints
@@ -251,8 +251,8 @@ static void _calc_perturbed_distance
   math::Periodicity<b> periodicity(conf.current().box);
 
   //loop over all constraints
-  size_t k = topo.solute().distance_constraints().size();
-  size_t com, ir;
+  unsigned int k = unsigned(topo.solute().distance_constraints().size());
+  unsigned int com, ir;
   
   for(std::vector<topology::perturbed_two_body_term_struct>::const_iterator
 	it = topo.perturbed_solute().distance_constraints().begin(),

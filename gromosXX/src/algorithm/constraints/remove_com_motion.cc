@@ -3,7 +3,7 @@
  * remove com motion.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -51,7 +51,7 @@ int algorithm::Remove_COM_Motion
   math::Vec com_v = 0.0, com_r = 0.0;
   double com_mass = 0.0;
   
-  for(size_t i = 0; i < topo.num_atoms(); ++i){
+  for(unsigned int i = 0; i < topo.num_atoms(); ++i){
 
     com_mass += topo.mass()(i);
     com_v += topo.mass()(i) * conf.current().vel(i);
@@ -76,7 +76,7 @@ int algorithm::Remove_COM_Motion
   math::Matrix com_I;
   com_I.initialize(0.0);
   
-  for(size_t i = 0; i < topo.num_atoms(); ++i){
+  for(unsigned int i = 0; i < topo.num_atoms(); ++i){
     math::Vec r = conf.current().pos(i) - 
       0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
 
@@ -149,7 +149,7 @@ int algorithm::Remove_COM_Motion
 
     std::cout << "removing center of mass angular momentum\n";
     
-    for(size_t i=0; i<topo.num_atoms(); ++i){
+    for(unsigned int i=0; i<topo.num_atoms(); ++i){
       math::Vec r = conf.current().pos(i) - 
 	0.5 * sim.time_step_size() * conf.current().vel(i) - com_r;
       conf.current().vel(i) -= math::cross(com_O, r); 
@@ -162,7 +162,7 @@ int algorithm::Remove_COM_Motion
     std::cout << "removing center of mass translational momentum\n";
     
     // get the corrected velocities
-    for(size_t i=0; i<topo.num_atoms(); ++i){
+    for(unsigned int i=0; i<topo.num_atoms(); ++i){
       conf.current().vel(i) -= com_v;
     }
   }

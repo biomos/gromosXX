@@ -52,7 +52,7 @@ namespace configuration
     std::vector<std::string> group_name;
     
     void zero(bool potential = true, bool kinetic = true);
-    void resize(size_t const energy_groups, size_t const multi_baths = 0);
+    void resize(unsigned int const energy_groups, unsigned int const multi_baths = 0);
     int  calculate_totals();
     
   };

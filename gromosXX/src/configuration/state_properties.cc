@@ -3,7 +3,7 @@
  * functions to calculate state properties.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <configuration/configuration_global.h>
 

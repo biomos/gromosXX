@@ -100,13 +100,13 @@ namespace algorithm
     int shake_iteration(topology::Topology const &topo,
 			configuration::Configuration & conf,
 			bool & convergence,
-			int const first,
+			int first,
 			std::vector<bool> &skip_now,
 			std::vector<bool> &skip_next,
 			std::vector<topology::two_body_term_struct> const & constr,
-			double const dt,
+			double dt,
 			math::Periodicity<b> const & periodicity,
-			bool do_constraint_force = false, size_t force_offset = 0);
+			bool do_constraint_force = false, unsigned int force_offset = 0);
     
     template<math::boundary_enum b>
     int solute(topology::Topology const & topo,

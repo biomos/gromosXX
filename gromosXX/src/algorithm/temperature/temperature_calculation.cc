@@ -3,7 +3,7 @@
  * calculates the temperature.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -33,9 +33,9 @@ int algorithm::Temperature_Calculation
   // zero previous (temperature scaling) energies
   conf.old().energies.zero(false, true);
   // zero the energies in the multibath
-  DEBUG(8, "\tbaths: " << sim.multibath().size());
+  DEBUG(8, "\tbaths: " << unsigned(sim.multibath().size()));
   
-  for(size_t i=0; i < sim.multibath().size(); ++i)
+  for(unsigned int i=0; i < unsigned(sim.multibath().size()); ++i)
     sim.multibath().bath(i).ekin = 0.0;
 
   topology::Molecule_Iterator m_it = topo.molecule_begin(),
@@ -44,7 +44,7 @@ int algorithm::Temperature_Calculation
   math::Vec com_v, new_com_v;
   double com_ekin, ekin, new_com_ekin, new_ekin;
   
-  size_t ir_bath, com_bath;
+  unsigned int ir_bath, com_bath;
   
   configuration::State_Properties state_props(conf);
 
@@ -66,11 +66,11 @@ int algorithm::Temperature_Calculation
     DEBUG(15, "adding to bath: com: "
 	  << com_bath << " ir: " << ir_bath);
     DEBUG(20, "number of baths: energy " 
-	  << conf.old().energies.kinetic_energy.size()
+	  << unsigned(conf.old().energies.kinetic_energy.size())
 	  << " com ekin "
-	  << conf.old().energies.com_kinetic_energy.size()
+	  << unsigned(conf.old().energies.com_kinetic_energy.size())
 	  << " ir ekin "
-	  << conf.old().energies.ir_kinetic_energy.size()
+	  << unsigned(conf.old().energies.ir_kinetic_energy.size())
 	  );
     
     // store the new ones in multibath (velocity scaling for next step)
@@ -98,7 +98,7 @@ int algorithm::Temperature_Calculation
       it = sim.multibath().bath_index().begin(),
       to = sim.multibath().bath_index().end();
   
-    size_t last = 0;
+    unsigned int last = 0;
     std::vector<double> &e_kin = 
       conf.old().perturbed_energy_derivatives.kinetic_energy;
 
@@ -108,13 +108,13 @@ int algorithm::Temperature_Calculation
       DEBUG(10, "starting atom range...");
       
       // or just put everything into the first bath...?
-      size_t bath = it->com_bath;
+      unsigned int bath = it->com_bath;
     
       e_kin[bath] = 0.0;
       DEBUG(10, "\tperturbed kinetic energy last atom: "
 	    << it->last_atom << " to bath " << bath << "\n");
       
-      for(size_t i=last; i<=it->last_atom; ++i){
+      for(unsigned int i=last; i<=it->last_atom; ++i){
 	
 	if (i >= topo.num_solute_atoms()) break;
 	

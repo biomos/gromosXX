@@ -3,7 +3,7 @@
  * methods of the berendsen thermostat
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -41,7 +41,7 @@ int algorithm::Berendsen_Thermostat
     b_it = sim.multibath().begin(),
     b_to = sim.multibath().end();
   
-  for(size_t num=0; b_it != b_to; ++b_it, ++num){
+  for(unsigned int num=0; b_it != b_to; ++b_it, ++num){
     // do temperature coupling for that bath?
     if (b_it->tau != -1){
 
@@ -99,7 +99,7 @@ int algorithm::Berendsen_Thermostat
       DEBUG(8, "jointly coupled, scaling with "
 	    << sim.multibath()[r_it->com_bath].scale);
 
-      for(size_t i=last_atom + 1; i <= r_it->last_atom; ++i){
+      for(unsigned int i=last_atom + 1; i <= r_it->last_atom; ++i){
 	vel(i) *= sim.multibath()[r_it->com_bath].scale;
       }
 
@@ -119,7 +119,7 @@ int algorithm::Berendsen_Thermostat
 
       math::Vec com_v, new_com_v, ir_v;
       double com_ekin, ekin, new_com_ekin, new_ekin;
-      size_t ir_bath, com_bath;
+      unsigned int ir_bath, com_bath;
 
       // which bathes?
       sim.multibath().in_bath(*(m_it.begin()), com_bath, ir_bath);  

@@ -2,7 +2,7 @@
  * @file create_md_sequence.cc
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 #include <fstream>
 
 #include <algorithm/algorithm.h>

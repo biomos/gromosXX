@@ -93,7 +93,7 @@ namespace configuration
       /**
        * resize the position / velocities and force arrays
        */
-      void resize(size_t num_atoms);
+      void resize(unsigned int num_atoms);
 
     };
 
@@ -161,7 +161,7 @@ namespace configuration
     /**
      * set the number of atoms in the system.
      */
-    void resize(size_t s);
+    void resize(unsigned int s);
     
     /**
      * boundary type.

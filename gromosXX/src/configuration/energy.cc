@@ -3,12 +3,13 @@
  * implements the energy methods.
  */
 
+#include <stdheader.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE configuration
 #define SUBMODULE energy
 
-#include <util/stdheader.h>
 #include <configuration/configuration_global.h>
 #include <configuration/energy.h>
 
@@ -43,7 +44,8 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     posrest_energy.assign(posrest_energy.size(), 0.0);
     constraints_energy.assign(constraints_energy.size(), 0.0);
 
-    DEBUG(15, "energy groups: " << lj_energy.size() << " - " << crf_energy.size());
+    DEBUG(15, "energy groups: " << unsigned(lj_energy.size()) 
+			<< " - " << unsigned(crf_energy.size()));
 
     lj_energy.assign(lj_energy.size(), 
 		     std::vector<double>(lj_energy.size(), 0.0));
@@ -69,7 +71,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
 }
 
 
-void configuration::Energy::resize(size_t const energy_groups, size_t const multi_baths)
+void configuration::Energy::resize(unsigned int energy_groups, unsigned int multi_baths)
 {
   DEBUG(10, "energy resize");
   
@@ -85,7 +87,7 @@ void configuration::Energy::resize(size_t const energy_groups, size_t const mult
     posrest_energy.resize(energy_groups);
     constraints_energy.resize(energy_groups);
     
-    for(size_t i=0; i<energy_groups; ++i){
+    for(unsigned int i=0; i<energy_groups; ++i){
       lj_energy[i].resize(energy_groups);
       crf_energy[i].resize(energy_groups);  
     }
@@ -104,7 +106,7 @@ int configuration::Energy::calculate_totals()
 {
   DEBUG(10, "energy: calculate totals");
   
-  int num_groups = bond_energy.size();
+  int num_groups = unsigned(bond_energy.size());
 
   kinetic_total = 0.0;
 

@@ -53,15 +53,15 @@ namespace algorithm
     int perturbed_shake_iteration(topology::Topology const &topo,
 				  configuration::Configuration & conf,
 				  bool & convergence,
-				  int const first,
+				  int first,
 				  std::vector<bool> &skip_now,
 				  std::vector<bool> &skip_next,
 				  std::vector<topology::perturbed_two_body_term_struct>
 				  const & constr,
-				  double const dt,
+				  double dt,
 				  math::Periodicity<b> const & periodicity,
 				  bool do_constraint_force = false,
-				  size_t force_offset = 0);
+				  unsigned int force_offset = 0);
     
 
     /**
@@ -70,7 +70,7 @@ namespace algorithm
     template<math::boundary_enum b>
     int perturbed_solute(topology::Topology const & topo,
 			 configuration::Configuration & conf,
-			 double dt, int const max_iterations);
+			 double dt, int max_iterations);
 
     // overwrites the other one, as g++ seems unable to compile this...!!!
     /**

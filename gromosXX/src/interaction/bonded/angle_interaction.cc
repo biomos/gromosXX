@@ -3,6 +3,11 @@
  * template methods of Angle_Interaction.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE interaction
+
 /**
  * calculate angle forces and energies.
  */

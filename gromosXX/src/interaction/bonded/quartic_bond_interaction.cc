@@ -66,8 +66,8 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
       (dist2 -r02) * (dist2 - r02);
 
     DEBUG(10, "energy: " << e);
-    DEBUG(10, "bond energy size: " << conf.current().energies.bond_energy.size());
-    DEBUG(10, "energy group size: " << topo.atom_energy_group().size());
+    DEBUG(10, "bond energy size: " << unsigned(conf.current().energies.bond_energy.size()));
+    DEBUG(10, "energy group size: " << unsigned(topo.atom_energy_group().size()));
 
     assert(conf.current().energies.bond_energy.size() >
 	   topo.atom_energy_group()[b_it->i]);

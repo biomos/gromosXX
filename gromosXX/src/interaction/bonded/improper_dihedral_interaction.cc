@@ -3,6 +3,11 @@
  * template methods of Improper_dihedral_interaction.
  */
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE interaction
+
 /**
  * calculate improper dihedral forces and energies.
  */

@@ -6,6 +6,16 @@
 #ifndef INCLUDED_PERTURBED_ANGLE_INTERACTION
 #define INCLUDED_PERTURBED_ANGLE_INTERACTION
 
+namespace configuration{
+	class Configuration;
+}
+namespace topology{
+	class Topology;
+}
+namespace simulation{
+	class Simulation;
+}
+
 namespace interaction
 {
   /**

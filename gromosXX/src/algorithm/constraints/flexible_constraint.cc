@@ -72,7 +72,7 @@ static int _flexible_shake(topology::Topology const &topo,
   convergence = true;
 
   // index for constraint_force...
-  size_t k = 0;
+  unsigned int k = 0;
   double const dt2 = dt * dt;
   
   // and constraints
@@ -207,8 +207,8 @@ static void _calc_distance(topology::Topology const &topo,
   math::Periodicity<b> periodicity(conf.current().box);
 
   //loop over all constraints
-  size_t k = 0;
-  size_t com, ir;
+  unsigned int k = 0;
+  unsigned int com, ir;
   
   for(std::vector<topology::two_body_term_struct>::const_iterator
 	it = topo.solute().distance_constraints().begin(),
@@ -566,7 +566,7 @@ static int _exact_flexible_shake(topology::Topology const &topo,
   convergence = true;
 
   // index for constraint_force...
-  size_t k = 0;
+  unsigned int k = 0;
   double const dt2 = dt * dt;
   
   // and constraints

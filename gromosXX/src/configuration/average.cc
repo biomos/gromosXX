@@ -3,7 +3,7 @@
  * implements Average member methods.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -107,8 +107,8 @@ resize(topology::Topology const & topo,
 {
   DEBUG(10, "Block_Average: resize");
 
-  const size_t e_groups = param.force.energy_group.size();
-  const size_t baths = param.multibath.multibath.size();
+  const unsigned int e_groups = unsigned(param.force.energy_group.size());
+  const unsigned int baths = unsigned(param.multibath.multibath.size());
 
   energy_avg.resize(e_groups, baths);
   energy_fluct.resize(e_groups, baths);
@@ -467,8 +467,10 @@ void configuration::Average::Block_Average
   Energy &e = energy;
   Energy &f = fluctuation;
 
-  e.resize(energy_avg.bond_energy.size(), energy_avg.kinetic_energy.size());
-  f.resize(energy_avg.bond_energy.size(), energy_avg.kinetic_energy.size());
+  e.resize(unsigned(energy_avg.bond_energy.size()),
+		unsigned(energy_avg.kinetic_energy.size()));
+  f.resize(unsigned(energy_avg.bond_energy.size()),
+	  unsigned(energy_avg.kinetic_energy.size()));
 
 #define ENERGY_RES(prop) \
   e.prop = avg.prop / cumu; \
@@ -493,6 +495,8 @@ void configuration::Average::Block_Average
   ENERGY_RES(special_total);
   ENERGY_RES(posrest_total);
   ENERGY_RES(constraints_total);
+
+  // std::cout << e.kinetic_energy.size() << std::endl;
 
   // kinetic energies...
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){

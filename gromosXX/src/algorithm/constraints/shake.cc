@@ -4,6 +4,8 @@
  * the class Shake.
  */
 
+#include <stdheader.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
@@ -50,18 +52,18 @@ int algorithm::Shake<do_virial>
 ::shake_iteration(topology::Topology const &topo,
 		  configuration::Configuration & conf,
 		  bool & convergence,
-		  int const first,
+		  int first,
 		  std::vector<bool> &skip_now,
 		  std::vector<bool> &skip_next,
 		  std::vector<topology::two_body_term_struct> const & constr,
-		  double const dt,
+		  double dt,
 		  math::Periodicity<b> const & periodicity,
-		  bool do_constraint_force, size_t force_offset)
+		  bool do_constraint_force, unsigned int force_offset)
 {
   convergence = true;
 
   // index for constraint_force...
-  size_t k = 0;
+  unsigned int k = 0;
   double const dt2 = dt * dt;
   
   // and constraints
@@ -275,7 +277,7 @@ int algorithm::Shake<do_virial>
   const double start = util::now();
 
   // the first atom of a solvent
-  size_t first = topo.num_solute_atoms();
+  unsigned int first = topo.num_solute_atoms();
 
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -284,10 +286,10 @@ int algorithm::Shake<do_virial>
   math::Periodicity<b> periodicity(conf.current().box);
 
   // for all solvents
-  for(size_t i=0; i<topo.num_solvents(); ++i){
+  for(unsigned int i=0; i<topo.num_solvents(); ++i){
 
     // loop over the molecules
-    for(size_t nm=0; nm<topo.num_solvent_molecules(i);
+    for(unsigned int nm=0; nm<topo.num_solvent_molecules(i);
 	++nm, first+=topo.solvent(i).num_atoms()){
 
       skip_now.assign(topo.solvent(i).num_atoms(), false);

@@ -23,6 +23,10 @@ namespace interaction
 {
   class Forcefield;
 
+	/**
+	 * create the bonded interaction terms for a Gromos96
+	 * like simulation.
+	 */
   int create_g96_bonded(interaction::Forcefield & ff,
 			topology::Topology const & topo,
 			simulation::Parameter const & param,

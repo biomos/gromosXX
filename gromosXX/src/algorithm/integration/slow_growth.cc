@@ -3,7 +3,7 @@
  * slow growth implementation
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
@@ -11,6 +11,8 @@
 #include <configuration/configuration.h>
 
 #include "slow_growth.h"
+
+#include <stdheader.h>
 
 #undef MODULE
 #undef SUBMODULE

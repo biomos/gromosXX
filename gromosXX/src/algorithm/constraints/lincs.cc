@@ -45,22 +45,22 @@ static int _solve(topology::Topology & topo,
 		  math::SArray rhs[],
 		  math::SArray & sol,
 		  topology::Compound::lincs_struct const & lincs,
-		  int const lincs_order,
-		  size_t const offset = 0)
+		  int lincs_order,
+		  unsigned int offset = 0)
 {
   DEBUG(8, "LINCS SOLVE");
   
-  size_t w = 1;
+  unsigned int w = 1;
 
-  const size_t num_constr = constr.size();
+  const unsigned int num_constr = unsigned(constr.size());
   math::VArray & pos = conf.current().pos;
   
-  for(size_t rec=0; int(rec) < lincs_order; ++rec){
-    for(size_t i=0; i < num_constr; ++i){
+  for(unsigned int rec=0; int(rec) < lincs_order; ++rec){
+    for(unsigned int i=0; i < num_constr; ++i){
       DEBUG(9, "rhs[" << i << "] = " << rhs[1-w](i));
       rhs[w](i) = 0.0;
 
-      for(size_t n=0; n < lincs.coupled_constr[i].size(); ++n){
+      for(unsigned int n=0; n < lincs.coupled_constr[i].size(); ++n){
 	rhs[w](i) += A[i].a[n] * rhs[1-w](lincs.coupled_constr[i][n]);
       }
 
@@ -69,7 +69,7 @@ static int _solve(topology::Topology & topo,
     w = 1 - w;
   }
 
-  for(size_t i=0; i < num_constr; ++i){
+  for(unsigned int i=0; i < num_constr; ++i){
     pos(constr[i].i + offset) -= B(i) * lincs.sdiag[i] / 
       topo.mass()(constr[i].i + offset) * sol(i);
     pos(constr[i].j + offset) += B(i) * lincs.sdiag[i] / 
@@ -87,13 +87,13 @@ static int _lincs(topology::Topology & topo,
 		  std::vector<topology::two_body_term_struct> const & constr,
 		  topology::Compound::lincs_struct const & lincs,
 		  std::vector<interaction::bond_type_struct> const & param,
-		  int const lincs_order,
+		  int lincs_order,
 		  double & timing,
-		  size_t const offset = 0)
+		  unsigned int offset = 0)
 {
   const double start = util::now();
   
-  const size_t num_constr = constr.size();
+  const unsigned int num_constr = unsigned(constr.size());
   math::VArray & old_pos = conf.old().pos;
   math::VArray & pos = conf.current().pos;
 
@@ -111,7 +111,7 @@ static int _lincs(topology::Topology & topo,
 
   math::SArray sol(num_constr);
 
-  for(size_t i=0; i<num_constr; ++i){
+  for(unsigned int i=0; i<num_constr; ++i){
     periodicity.nearest_image(old_pos(constr[i].i + offset), 
 			      old_pos(constr[i].j + offset), ref_r);
 
@@ -124,11 +124,11 @@ static int _lincs(topology::Topology & topo,
     DEBUG(12, "B(" << i << ") = " << B(i)(0) << " / " << B(i)(1) << " / " << B(i)(2));
   }
   
-  for(size_t i=0; i<num_constr; ++i){
+  for(unsigned int i=0; i<num_constr; ++i){
     // coupled distance constraints
-    const size_t ccon = lincs.coupled_constr[i].size();
+    const unsigned int ccon = unsigned(lincs.coupled_constr[i].size());
 
-    for(size_t n=0; n < ccon; ++n){
+    for(unsigned int n=0; n < ccon; ++n){
       DEBUG(8, "A[" << i << "]: coupled: " << lincs.coupled_constr[i][n]);
       DEBUG(8, "constraint length: " << param[constr[i].type].r0);
       
@@ -149,9 +149,9 @@ static int _lincs(topology::Topology & topo,
   
   // correction for rotational lengthening
   double p;
-  size_t count = 0;
+  unsigned int count = 0;
   
-  for(size_t i=0; i<num_constr; ++i){
+  for(unsigned int i=0; i<num_constr; ++i){
 
     periodicity.nearest_image(pos(constr[i].i + offset), pos(constr[i].j + offset), r);
 
@@ -187,13 +187,13 @@ static int _solvent(topology::Topology & topo,
 		    double & timing)
 {
   // the first atom of a solvent
-  size_t first = topo.num_solute_atoms();
+  unsigned int first = unsigned(topo.num_solute_atoms());
 
   // for all solvents
-  for(size_t i=0; i<topo.num_solvents(); ++i){
+  for(unsigned int i=0; i<topo.num_solvents(); ++i){
     
     // loop over the molecules
-    for(size_t nm=0; nm<topo.num_solvent_molecules(i);
+    for(unsigned int nm=0; nm<topo.num_solvent_molecules(i);
 	++nm, first+=topo.solvent(i).num_atoms()){
 
       _lincs<b>(topo, conf, sim, topo.solvent(i).distance_constraints(),
@@ -288,13 +288,13 @@ int algorithm::Lincs<do_virial>
 static void _setup_lincs(topology::Topology const & topo,
 			 topology::Compound::lincs_struct & lincs,
 			 std::vector<topology::two_body_term_struct> const & constr,
-			 size_t const offset = 0)
+			 unsigned int offset = 0)
 {
-  const size_t num_constr = constr.size();  
+  const unsigned int num_constr = unsigned(constr.size());  
   lincs.coupled_constr.resize(num_constr);
   lincs.coef.resize(num_constr);
 
-  for(size_t i=0; i < num_constr; ++i){
+  for(unsigned int i=0; i < num_constr; ++i){
     // diagonal matrix
     lincs.sdiag.push_back(1.0 / sqrt(1.0 / topo.mass()(constr[i].i + offset) +
 				     1.0 / topo.mass()(constr[i].j + offset)));
@@ -303,10 +303,10 @@ static void _setup_lincs(topology::Topology const & topo,
 
   }
   
-  for(size_t i=0; i < num_constr; ++i){
+  for(unsigned int i=0; i < num_constr; ++i){
 
     // connected constraints
-    for(size_t j=i+1; j < num_constr; ++j){
+    for(unsigned int j=i+1; j < num_constr; ++j){
 
       int con = -1;
       
@@ -376,10 +376,10 @@ int algorithm::Lincs<do_virial>
 	       topo.solute().distance_constraints());
   
   // the first atom of a solvent
-  size_t first = topo.num_solute_atoms();
+  unsigned int first = topo.num_solute_atoms();
 
   // for all solvents
-  for(size_t i=0; i<topo.num_solvents(); ++i){
+  for(unsigned int i=0; i<topo.num_solvents(); ++i){
     
     _setup_lincs(topo, topo.solvent(i).lincs(),
 		 topo.solvent(i).distance_constraints(),

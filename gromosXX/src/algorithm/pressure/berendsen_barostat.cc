@@ -3,7 +3,7 @@
  * methods of the berendsen barostat.
  */
 
-#include <util/stdheader.h>
+#include <stdheader.h>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
