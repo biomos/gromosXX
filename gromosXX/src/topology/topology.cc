@@ -213,7 +213,7 @@ void topology::Topology::resize(unsigned int const atoms)
   m_is_perturbed.resize(atoms, false);
 }
 
-void topology::Topology::init(simulation::Simulation const & sim, bool quiet)
+void topology::Topology::init(simulation::Simulation const & sim, std::ostream & os, bool quiet)
 {
   if (!m_molecule.size()){
     m_molecule.push_back(0);
@@ -233,7 +233,7 @@ void topology::Topology::init(simulation::Simulation const & sim, bool quiet)
     m_multicell_topo = new Topology(*this, num);
 
     if (!quiet){
-      std::cout << "\tMULTICELL\n" << "\t\t"
+      os << "\tMULTICELL\n" << "\t\t"
 		<< std::setw(10) << sim.param().multicell.x
 		<< std::setw(10) << sim.param().multicell.y
 		<< std::setw(10) << sim.param().multicell.z

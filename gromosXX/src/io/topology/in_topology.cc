@@ -49,13 +49,14 @@ bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
 
 void 
 io::In_Topology::read(topology::Topology& topo,
-		      simulation::Parameter &param){
+		      simulation::Parameter &param,
+		      std::ostream & os){
 
   DEBUG(7, "reading in topology");
 
   if (!quiet){
-    std::cout << "TOPOLOGY\n";
-    std::cout << title << "\n";
+    os << "TOPOLOGY\n";
+    os << title << "\n";
   }
   
   std::vector<std::string> buffer;
@@ -84,7 +85,7 @@ io::In_Topology::read(topology::Topology& topo,
     
     { // RESNAME
       if (!quiet)
-	std::cout << "\tRESNAME\n\t";
+	os << "\tRESNAME\n\t";
     
       DEBUG(10, "RESNAME block");
       buffer = m_block["RESNAME"];
@@ -97,8 +98,8 @@ io::In_Topology::read(topology::Topology& topo,
     
       if (!quiet && num > 10){
 	for(n=0; n<10; ++n)
-	  std::cout << std::setw(8) << n+1;
-	std::cout << "\n\t";
+	  os << std::setw(8) << n+1;
+	os << "\n\t";
       }
     
       for(n=0; it != buffer.end() - 1; ++it, ++n){
@@ -108,8 +109,8 @@ io::In_Topology::read(topology::Topology& topo,
 	_lineStream >> s;
       
 	if (!quiet){
-	  if (n && ((n) % 10) == 0) std::cout << std::setw(10) << n << "\n\t";
-	  std::cout << std::setw(8) << s;      
+	  if (n && ((n) % 10) == 0) os << std::setw(10) << n << "\n\t";
+	  os << std::setw(8) << s;      
 	}
       
 	topo.residue_names().push_back(s);
@@ -121,12 +122,12 @@ io::In_Topology::read(topology::Topology& topo,
       }
 
       if (!quiet)
-	std::cout << "\n\tEND\n";
+	os << "\n\tEND\n";
     
     
     } // RESNAME
 
-    // std::cout << "time after RESNAME: " << util::now() - start << std::endl;
+    // os << "time after RESNAME: " << util::now() - start << std::endl;
 
     { // SOLUTEATOM
       DEBUG(10, "SOLUTEATOM block");
@@ -140,7 +141,7 @@ io::In_Topology::read(topology::Topology& topo,
       topo.resize(num);
 
       if (!quiet)
-	std::cout << "\tSOLUTEATOM\n\t"
+	os << "\tSOLUTEATOM\n\t"
 		  << "\tnumber of atoms : " << num;
     
       // put the rest of the block into a single stream
@@ -152,7 +153,7 @@ io::In_Topology::read(topology::Topology& topo,
       // _lineStream.clear();
       // _lineStream.str(soluteAtoms);
 
-      // std::cout << "\ntime after concatenate: " << util::now() - start << std::endl;
+      // os << "\ntime after concatenate: " << util::now() - start << std::endl;
 
       int a_nr, r_nr, t, cg, n_ex, a_ex;
       double m, q;
@@ -289,17 +290,17 @@ io::In_Topology::read(topology::Topology& topo,
 	topo.add_solute_atom(s, r_nr-1, t-1, m, q, cg, ex, ex14);
       }
       if (!quiet)
-	std::cout << "\n\tEND\n";
+	os << "\n\tEND\n";
     
     } // SOLUTEATOM
   
-    // std::cout << "time after SOLUTEATOM: " << util::now() - start << std::endl;
+    // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
   
     { // BONDH
       DEBUG(10, "BONDH block");
 
       if (!quiet)
-	std::cout << "\tBOND";
+	os << "\tBOND";
     
       buffer.clear();
       buffer = m_block["BONDH"];
@@ -315,12 +316,12 @@ io::In_Topology::read(topology::Topology& topo,
       
 	if (!quiet){
 	  if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
-	    std::cout << "\n\t\t"
+	    os << "\n\t\t"
 		      << num
 		      << " bonds from BONDH block added to CONSTRAINT";
 	  }
 	  else
-	    std::cout << "\n\t\tbonds containing hydrogens : "
+	    os << "\n\t\tbonds containing hydrogens : "
 		      << num;
 	}
       
@@ -374,12 +375,12 @@ io::In_Topology::read(topology::Topology& topo,
 
 	if (!quiet){
 	  if (param.constraint.ntc == 3){
-	    std::cout << "\n\t\t"
+	    os << "\n\t\t"
 		      << num
 		      << " bonds from BOND block added to CONSTRAINT";
 	  }
 	  else
-	    std::cout << "\n\t\tbonds not containing hydrogens : "
+	    os << "\n\t\tbonds not containing hydrogens : "
 		      << num;
 	}
       
@@ -417,11 +418,11 @@ io::In_Topology::read(topology::Topology& topo,
       }
   
       if (!quiet)
-	std::cout << "\n\tEND\n";
+	os << "\n\tEND\n";
 
     } // BOND
 
-    // std::cout << "time after BONDS: " << util::now() - start << std::endl;
+    // os << "time after BONDS: " << util::now() - start << std::endl;
 
     // check the bonds
     if (!check_type(m_block["BONDTYPE"], topo.solute().bonds())){
@@ -429,7 +430,7 @@ io::In_Topology::read(topology::Topology& topo,
 		       "In_Topology", io::message::error);
     }
 
-    // std::cout << "time after CHECKBONDS: " << util::now() - start << std::endl;
+    // os << "time after CHECKBONDS: " << util::now() - start << std::endl;
 
     { // CONSTRAINT
       DEBUG(10, "CONSTRAINT block");
@@ -445,7 +446,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  std::cout << "\tCONSTRAINT\n\t\t"
+	  os << "\tCONSTRAINT\n\t\t"
 		    << num
 		    << " bonds in CONSTRAINT block."
 		    << "\n\t\ttotal of constraint bonds : " 
@@ -482,7 +483,7 @@ io::In_Topology::read(topology::Topology& topo,
     
     } // CONSTRAINT
 
-    // std::cout << "time after CONSTRAINTS: " << util::now() - start << std::endl;
+    // os << "time after CONSTRAINTS: " << util::now() - start << std::endl;
 
     // check the bonds in constraints
     if (!check_type(m_block["BONDTYPE"], topo.solute().distance_constraints())){
@@ -490,12 +491,12 @@ io::In_Topology::read(topology::Topology& topo,
 		       "In_Topology", io::message::error);
     }
 
-    // std::cout << "time after check CONSTRAINTS: " << util::now() - start << std::endl;
+    // os << "time after check CONSTRAINTS: " << util::now() - start << std::endl;
 
     { // BONDANGLEH
 
       if (!quiet)
-	std::cout << "\tBONDANGLE";
+	os << "\tBONDANGLE";
 
       DEBUG(10, "BONDANGLEH block");
       buffer.clear();
@@ -513,7 +514,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  std::cout << "\n\t\tbondangles not containing hydrogens : " << num;
+	  os << "\n\t\tbondangles not containing hydrogens : " << num;
 
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
 	  int i, j, k, t;
@@ -559,7 +560,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  std::cout << "\n\t\tbondangles containing hydrogens : " << num;
+	  os << "\n\t\tbondangles containing hydrogens : " << num;
     
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
 	  int i, j, k, t;
@@ -591,11 +592,11 @@ io::In_Topology::read(topology::Topology& topo,
       }
 
       if (!quiet)
-	std::cout << "\n\tEND\n";
+	os << "\n\tEND\n";
 
     } // BONDANGLE
 
-    // std::cout << "time after BONDANGLE: " << util::now() - start << std::endl;
+    // os << "time after BONDANGLE: " << util::now() - start << std::endl;
 
     // check the angles
     if (!check_type(m_block["BONDANGLETYPE"], topo.solute().angles())){
@@ -603,14 +604,14 @@ io::In_Topology::read(topology::Topology& topo,
 		       "In_Topology", io::message::error);
     }
 
-    // std::cout << "time after check BONDANGLE: " << util::now() - start << std::endl;
+    // os << "time after check BONDANGLE: " << util::now() - start << std::endl;
 
     { // IMPDIHEDRAL
       DEBUG(10, "IMPDIHEDRAL block");
       buffer = m_block["IMPDIHEDRAL"];
   
       if (!quiet)
-	std::cout << "\tIMPDIHEDRAL";
+	os << "\tIMPDIHEDRAL";
 
       if(buffer.size()){
       
@@ -622,7 +623,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  std::cout << "\n\t\timproper dihedrals not containing hydrogens : "
+	  os << "\n\t\timproper dihedrals not containing hydrogens : "
 		    << num;
     
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
@@ -673,7 +674,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  std::cout << "\n\t\timproper dihedrals containing hydrogens : "
+	  os << "\n\t\timproper dihedrals containing hydrogens : "
 		    << num;
 
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
@@ -706,7 +707,7 @@ io::In_Topology::read(topology::Topology& topo,
       }
 
       if (!quiet)
-	std::cout << "\n\tEND\n";
+	os << "\n\tEND\n";
     
     } // IMPDIHEDRALH
 
@@ -721,7 +722,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["DIHEDRAL"];
 
       if (!quiet)
-	std::cout << "\tDIHEDRAL";
+	os << "\tDIHEDRAL";
     
       if(buffer.size()){
       
@@ -733,7 +734,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
     
 	if (!quiet)
-	  std::cout << "\n\t\tdihedrals not containing hydrogens : "
+	  os << "\n\t\tdihedrals not containing hydrogens : "
 		    << num;
 
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
@@ -783,7 +784,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  std::cout << "\n\t\tdihedrals containing hydrogens : "
+	  os << "\n\t\tdihedrals containing hydrogens : "
 		    << num;
 
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
@@ -815,11 +816,11 @@ io::In_Topology::read(topology::Topology& topo,
       }
     
       if (!quiet)
-	std::cout << "\n\tEND\n";
+	os << "\n\tEND\n";
     
     } // DIHEDRALH
 
-    // std::cout << "time after DIHEDRAL: " << util::now() - start << std::endl;
+    // os << "time after DIHEDRAL: " << util::now() - start << std::endl;
 
     // check the dihedrals
     if (!check_type(m_block["DIHEDRALTYPE"], topo.solute().dihedrals())){
@@ -854,7 +855,7 @@ io::In_Topology::read(topology::Topology& topo,
     buffer = m_block["SOLVENTATOM"];
 
     if (!quiet)
-      std::cout << "\tSOLVENT";
+      os << "\tSOLVENT";
     
     if (buffer.size()){
       
@@ -870,7 +871,7 @@ io::In_Topology::read(topology::Topology& topo,
       ++it;
     
       if (!quiet)
-	std::cout << "\n\t\tatoms : " << num;
+	os << "\n\t\tatoms : " << num;
 
       topology::Solvent s;
     
@@ -933,7 +934,7 @@ io::In_Topology::read(topology::Topology& topo,
       ++it;
     
       if (!quiet)
-	std::cout << "\n\t\tconstraints : " << num;
+	os << "\n\t\tconstraints : " << num;
       
       int j;
       double b0;
@@ -965,14 +966,14 @@ io::In_Topology::read(topology::Topology& topo,
 
   // add the solvent to the topology
   if (!quiet)
-    std::cout << "\n\t\tadding " << param.system.nsm 
+    os << "\n\t\tadding " << param.system.nsm 
 	      << " solvents.";
   
   // if (param.system.nsm) 
   topo.solvate(0, param.system.nsm);  
   
   if (!quiet)
-    std::cout << "\n\tEND\n";
+    os << "\n\tEND\n";
 
   // set lambda (new and old one, yes it looks strange...)
   topo.lambda(param.perturbation.lambda);
@@ -998,14 +999,14 @@ io::In_Topology::read(topology::Topology& topo,
     io::messages.add("Error: last solute atom has to be end of chargegroup",
 		     "In_Topology",
 		     io::message::error);
-    std::cout << "ERROR:"
+    os << "ERROR:"
 	      << "\tsolute cg    : " << topo.num_solute_chargegroups() << "\n"
 	      << "\tsolute atoms : " << topo.num_solute_atoms() << "\n"
 	      << "\tlast cg      : " << topo.chargegroups()[topo.num_solute_chargegroups()] << "\n";
   }
 
   if (!quiet)
-    std::cout << "\n\tSOLUTE [sub]molecules: " 
+    os << "\n\tSOLUTE [sub]molecules: " 
 	      << unsigned(topo.molecules().size()) - param.system.nsm - 1 << "\n";
 
   DEBUG(10, "molecules().size: " << unsigned(topo.molecules().size())
@@ -1033,19 +1034,20 @@ io::In_Topology::read(topology::Topology& topo,
 
   if(!param.multibath.found_multibath && param.multibath.found_tcouple){
     if (!quiet)
-      std::cout << "\tparsing a (deprecated) TCOUPLE block into the new "
+      os << "\tparsing a (deprecated) TCOUPLE block into the new "
 		<< "MULTIBATH format.\n";
     
     util::parse_TCOUPLE(param, topo);
   }
 
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
   
 }
 
 void io::In_Topology
-::read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b)
+::read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b,
+		      std::ostream & os)
 {
   
   DEBUG(10, "(HARM)BONDTYPE block");
@@ -1113,13 +1115,13 @@ void io::In_Topology
       _lineStream >> k >> r;
       
       if (_lineStream.fail()){
-	std::cout << *it << std::endl;
+	os << *it << std::endl;
 	io::messages.add("bad line in BONDTYPE block!",
 			 "In_Topology",
 			 io::message::error);
       }
       if (! _lineStream.eof()){
-	std::cout << *it << std::endl;
+	os << *it << std::endl;
 	io::messages.add("eof not reached in BONDTYPE block",
 			 "InTopology", io::message::warning);
       }
@@ -1174,7 +1176,8 @@ void io::In_Topology
 }
 
 void io::In_Topology
-::read_g96_bonds(std::vector<interaction::bond_type_struct> &b)
+::read_g96_bonds(std::vector<interaction::bond_type_struct> &b,
+		 std::ostream & os)
 {
   
   DEBUG(10, "BONDTYPE block");
@@ -1200,13 +1203,13 @@ void io::In_Topology
     _lineStream >> k >> r;
       
     if (_lineStream.fail()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("bad line in BONDTYPE block",
 		       "In_Topology",
 		       io::message::error);
     }
     if (! _lineStream.eof()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("eof not reached in BONDTYPE block",
 		       "InTopology", io::message::warning);
     }
@@ -1256,7 +1259,8 @@ void io::In_Topology
 }
 
 void io::In_Topology
-::read_angles(std::vector<interaction::angle_type_struct> &b)
+::read_angles(std::vector<interaction::angle_type_struct> &b,
+	      std::ostream & os)
 {
   
   DEBUG(10, "BONDANGLETYPE block");
@@ -1281,12 +1285,12 @@ void io::In_Topology
     _lineStream >> k >> cos0;
       
     if (_lineStream.fail()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("bad line in BONDANGLETYPE block", "In_Topology",
 		       io::message::error);
     }
     if (! _lineStream.eof()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("eof not reached in BONDANGLETYPE block",
 		       "InTopology", io::message::warning);
     }
@@ -1298,7 +1302,8 @@ void io::In_Topology
 }
 
 void io::In_Topology
-::read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i)
+::read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i,
+			  std::ostream & os)
 {
   
   DEBUG(10, "IMPDIHEDRALTYPE block");
@@ -1323,12 +1328,12 @@ void io::In_Topology
     _lineStream >> k >> q0;
       
     if (_lineStream.fail()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("bad line in IMPDIHEDRALTYPE block", "In_Topology",
 		       io::message::error);
     }
     if (! _lineStream.eof()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("eof not reached in IMPDIHEDRALTYPE block",
 		       "InTopology", io::message::warning);
     }
@@ -1341,7 +1346,8 @@ void io::In_Topology
 }
 
 void io::In_Topology
-::read_dihedrals(std::vector<interaction::dihedral_type_struct> &d)
+::read_dihedrals(std::vector<interaction::dihedral_type_struct> &d,
+		 std::ostream & os)
 {
   
   DEBUG(10, "DIHEDRALTYPE block");
@@ -1368,12 +1374,12 @@ void io::In_Topology
     _lineStream >> k >> pd >> m;
       
     if (_lineStream.fail()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("bad line in DIHEDRALTYPE block", "In_Topology",
 		       io::message::error);
     }
     if (! _lineStream.eof()){
-      std::cout << *it << std::endl;
+      os << *it << std::endl;
       io::messages.add("eof not reached in DIHEDRALTYPE block",
 		       "InTopology", io::message::warning);
     }
@@ -1388,7 +1394,8 @@ void io::In_Topology
 void io::In_Topology
 ::read_lj_parameter(std::vector<std::vector
 		    <interaction::lj_parameter_struct> > 
-		    & lj_parameter)
+		    & lj_parameter,
+		    std::ostream & os)
 {
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;

@@ -37,6 +37,11 @@ namespace configuration
     Configuration();
     
     /**
+     * copy constructor
+     */
+    Configuration(Configuration const & conf);
+    
+    /**
      * @struct state_struct
      * holds state information.
      */

@@ -32,12 +32,13 @@ static std::set<std::string> block_read;
 /**
  * Store standard parameters in the Parameter
  */
-void io::In_Parameter::read(simulation::Parameter &param)
+void io::In_Parameter::read(simulation::Parameter &param,
+			    std::ostream & os)
 {
   DEBUG(7, "reading input");
 
   if (!quiet)
-    std::cout << "\nINPUT\n"
+    os << "\nINPUT\n"
 	      << title << "\n";
 
   // store the title...
@@ -50,6 +51,7 @@ void io::In_Parameter::read(simulation::Parameter &param)
   read_BOUNDARY(param);
   read_SUBMOLECULES(param);
   read_REPLICA(param); // has to be read in before MULTIBATH (to overwrite temps)
+  read_REPLICA03(param);
   read_MULTIBATH(param);
   read_PCOUPLE(param);
   read_PRINT(param);
@@ -82,14 +84,15 @@ void io::In_Parameter::read(simulation::Parameter &param)
   }
 
   if (!quiet)
-    std::cout << "END\n";
+    os << "END\n";
 
 }
 
 /**
  * read the SYSTEM block.
  */
-void io::In_Parameter::read_SYSTEM(simulation::Parameter &param)
+void io::In_Parameter::read_SYSTEM(simulation::Parameter &param,
+				   std::ostream & os)
 {
   DEBUG(8, "reading SYSTEM");
 
@@ -137,7 +140,8 @@ void io::In_Parameter::read_SYSTEM(simulation::Parameter &param)
 /**
  * read the MINIMISE block.
  */
-void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
+void io::In_Parameter::read_MINIMISE(simulation::Parameter &param,
+				     std::ostream & os)
 {
   DEBUG(8, "reading MINIMISE");
 
@@ -217,7 +221,8 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param)
 /**
  * read the STEP block.
  */
-void io::In_Parameter::read_STEP(simulation::Parameter &param)
+void io::In_Parameter::read_STEP(simulation::Parameter &param,
+				 std::ostream & os)
 {
   DEBUG(8, "read STEP");
   
@@ -261,7 +266,8 @@ void io::In_Parameter::read_STEP(simulation::Parameter &param)
 /**
  * the SHAKE block.
  */
-void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
+void io::In_Parameter::read_SHAKE(simulation::Parameter &param,
+				  std::ostream & os)
 {
   DEBUG(8, "read SHAKE");
 
@@ -275,7 +281,7 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
     param.constraint.solute.algorithm = simulation::constr_off;
     param.constraint.solvent.algorithm = simulation::constr_shake;
 
-    io::messages.add("no SHAKE / CONSTRAINT block", "In_Parameter",
+    io::messages.add("no SHAKE / CONSTRAINTS block", "In_Parameter",
 		     io::message::warning);
 
     return;
@@ -302,7 +308,7 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
   else {
     std::stringstream ss(sntc);
     if (!(ss >> param.constraint.ntc)){
-      io::messages.add("NTC not understood in CONSTRAINT block",
+      io::messages.add("NTC not understood in CONSTRAINTS block",
 		       "In_Parameter", io::message::error);
 
       param.constraint.solute.algorithm = simulation::constr_off;
@@ -313,7 +319,7 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
   }
 
   if(param.constraint.ntc<1 || param.constraint.ntc > 4){
-    io::messages.add("NTC out of range in CONSTRAINT block",
+    io::messages.add("NTC out of range in CONSTRAINTS block",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solute.algorithm = simulation::constr_off;
@@ -342,7 +348,8 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param)
 /**
  * the CONSTRAINTS block.
  */
-void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
+void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
+					std::ostream & os)
 {
   DEBUG(8, "read CONSTRAINTS");
 
@@ -373,12 +380,12 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
   else {
     std::stringstream ss(sntc);
     if (!(ss >> param.constraint.ntc))
-      io::messages.add("NTC not understood in CONSTRAINT block",
+      io::messages.add("NTC not understood in CONSTRAINTS block",
 		       "In_Parameter", io::message::error);
   }
   
   if(param.constraint.ntc<1 || param.constraint.ntc > 4){
-    io::messages.add("NTC out of range in CONSTRAINT block",
+    io::messages.add("NTC out of range in CONSTRAINTS block",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solute.algorithm = simulation::constr_off;
@@ -409,7 +416,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
     _lineStream >> param.constraint.solute.shake_tolerance;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
 		       "In_Parameter", io::message::error);
   }
   else if (salg == "flexshake"){
@@ -425,7 +432,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 		>> param.constraint.solute.flexshake_mode;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
 		       "In_Parameter", io::message::error);
 
     if(param.centreofmass.remove_rot || param.centreofmass.remove_trans)
@@ -434,7 +441,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 
     if(param.constraint.solute.flexshake_mode < 0 ||
        param.constraint.solute.flexshake_mode > 3)
-      io::messages.add("flexshake mode in CONSTRAINT block should be >= 0 and <= 3",
+      io::messages.add("flexshake mode in CONSTRAINTS block should be >= 0 and <= 3",
 		       "In_Parameter", io::message::error);
     
   }
@@ -450,7 +457,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
     _lineStream >> param.constraint.solute.lincs_order;
     
     if(param.constraint.solute.lincs_order < 1)
-      io::messages.add("lincs order should be >1 in CONSTRAINT block",
+      io::messages.add("lincs order should be >1 in CONSTRAINTS block",
 		       "In_Parameter", io::message::error);
 
   }
@@ -463,7 +470,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 
     DEBUG(9, "constraints solute error");
     
-    io::messages.add("unknown algorithm in CONSTRAINT block (solute)",
+    io::messages.add("unknown algorithm in CONSTRAINTS block (solute)",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solute.algorithm = simulation::constr_off;
@@ -489,7 +496,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
     _lineStream >> param.constraint.solvent.shake_tolerance;
     
     if(param.constraint.solvent.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
 		       "In_Parameter", io::message::error);
   }
   else if (salg == "flexshake"){
@@ -500,7 +507,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
     _lineStream >> param.constraint.solvent.shake_tolerance;
     
     if(param.constraint.solvent.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
 		       "In_Parameter", io::message::error);
   }
   else if (salg == "lincs"){
@@ -511,7 +518,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
     _lineStream >> param.constraint.solvent.lincs_order;
     
     if(param.constraint.solvent.lincs_order < 1)
-      io::messages.add("lincs order should be >1 in CONSTRAINT block",
+      io::messages.add("lincs order should be >1 in CONSTRAINTS block",
 		       "In_Parameter", io::message::error);
 
   }
@@ -526,7 +533,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
   else{
 
     DEBUG(9, "constraints solvent error");
-    io::messages.add("unknown algorithm in CONSTRAINT block (solvent)",
+    io::messages.add("unknown algorithm in CONSTRAINTS block (solvent)",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solvent.algorithm = simulation::constr_off;
@@ -538,7 +545,8 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param)
 /**
  * read the PRINT
  */
-void io::In_Parameter::read_PRINT(simulation::Parameter &param)
+void io::In_Parameter::read_PRINT(simulation::Parameter &param,
+				  std::ostream & os)
 {
   DEBUG(8, "read PRINT");
 
@@ -581,7 +589,8 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param)
 /**
  * read the WRITE
  */
-void io::In_Parameter::read_WRITE(simulation::Parameter &param)
+void io::In_Parameter::read_WRITE(simulation::Parameter &param,
+				  std::ostream & os)
 {
   DEBUG(8, "read WRITE");
 
@@ -646,7 +655,8 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param)
 /**
  * read the PCOUPLE block.
  */
-void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param)
+void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
+				    std::ostream & os)
 {
   DEBUG(8, "read PCOUPLE");
 
@@ -808,7 +818,8 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param)
 /**
  * read the BOUNDARY block.
  */
-void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param)
+void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param,
+				     std::ostream & os)
 {
   DEBUG(8, "read BOUNDARY");
 
@@ -876,7 +887,8 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param)
 /**
  * read the PERTURB block.
  */
-void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
+void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
+				    std::ostream & os)
 {
   DEBUG(8, "read PERTURB");
 
@@ -1009,7 +1021,8 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
 /**
  * read FORCE block.
  */
-void io::In_Parameter::read_FORCE(simulation::Parameter &param)
+void io::In_Parameter::read_FORCE(simulation::Parameter &param,
+				  std::ostream & os)
 {
   DEBUG(8, "read FORCE");
 
@@ -1113,7 +1126,8 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param)
 /**
  * read FORCEFIELD block.
  */
-void io::In_Parameter::read_FORCEFIELD(simulation::Parameter &param)
+void io::In_Parameter::read_FORCEFIELD(simulation::Parameter &param,
+				       std::ostream & os)
 {
   DEBUG(8, "read FORCEFIELD");
 
@@ -1172,7 +1186,8 @@ void io::In_Parameter::read_FORCEFIELD(simulation::Parameter &param)
 /**
  * read START block.
  */
-void io::In_Parameter::read_START(simulation::Parameter &param)
+void io::In_Parameter::read_START(simulation::Parameter &param,
+				  std::ostream & os)
 {
   DEBUG(8, "read START");
 
@@ -1248,7 +1263,8 @@ void io::In_Parameter::read_START(simulation::Parameter &param)
 /**
  * read CENTREOFMASS block.
  */
-void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param)
+void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param,
+					 std::ostream & os)
 {
   DEBUG(8, "read CENTREOFMASS");
 
@@ -1298,7 +1314,8 @@ void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param)
 /**
  * read LONGRANGE block.
  */
-void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param)
+void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param,
+				      std::ostream & os)
 {
   DEBUG(8, "read LONGRANGE");
 
@@ -1364,7 +1381,8 @@ void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param)
 /**
  * read SUBMOLECULES block.
  */
-void io::In_Parameter::read_SUBMOLECULES(simulation::Parameter &param)
+void io::In_Parameter::read_SUBMOLECULES(simulation::Parameter &param,
+					 std::ostream & os)
 {
   DEBUG(8, "read SUBMOLECULES");
 
@@ -1423,7 +1441,8 @@ void io::In_Parameter::read_SUBMOLECULES(simulation::Parameter &param)
 /**
  * read PLIST block.
  */
-void io::In_Parameter::read_PLIST(simulation::Parameter &param)
+void io::In_Parameter::read_PLIST(simulation::Parameter &param,
+				  std::ostream & os)
 {
   DEBUG(8, "read PLIST");
 
@@ -1551,7 +1570,8 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param)
 /**
  * read MULTIBATH block.
  */
-void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
+void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
+				      std::ostream & os)
 {
   DEBUG(8, "read MULTIBATH");
 
@@ -1634,7 +1654,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
       }
 
       if (param.replica.T){
-	std::cout << "\tsetting temperature to " << param.replica.T << "K "
+	os << "\tsetting temperature to " << param.replica.T << "K "
 		  << "for replica exchange\n";
 	temp = param.replica.T;
       }
@@ -1690,7 +1710,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
       }	
 
       if (param.replica.T){
-	std::cout << "\tsetting temperature to " << param.replica.T << "K "
+	os << "\tsetting temperature to " << param.replica.T << "K "
 		  << "for replica exchange\n";
 	param.multibath.tcouple.temp0[0] = param.replica.T;
 	param.multibath.tcouple.temp0[1] = param.replica.T;
@@ -1712,7 +1732,8 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param)
 /**
  * read POSREST block.
  */
-void io::In_Parameter::read_POSREST(simulation::Parameter &param)
+void io::In_Parameter::read_POSREST(simulation::Parameter &param,
+				    std::ostream & os)
 {
   DEBUG(8, "read POSREST");
 
@@ -1761,7 +1782,8 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param)
 /**
  * read the JVALUE block.
  */
-void io::In_Parameter::read_JVALUE(simulation::Parameter &param)
+void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
+				   std::ostream & os)
 {
   DEBUG(8, "read J-VAL");
 
@@ -1822,7 +1844,8 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param)
 /**
  * read the PSCALE block.
  */
-void io::In_Parameter::read_PSCALE(simulation::Parameter &param)
+void io::In_Parameter::read_PSCALE(simulation::Parameter &param,
+				   std::ostream & os)
 {
   DEBUG(8, "read PSCALE");
 
@@ -1883,7 +1906,8 @@ void io::In_Parameter::read_PSCALE(simulation::Parameter &param)
 /**
  * read the ROTTRANS block.
  */
-void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param)
+void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param,
+				     std::ostream & os)
 {
   DEBUG(8, "read ROTTRANS");
 
@@ -1915,7 +1939,8 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param)
 /**
  * read the INNERLOOP block.
  */
-void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param)
+void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
+				      std::ostream & os)
 {
   DEBUG(8, "read INNERLOOP");
 
@@ -1953,7 +1978,8 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param)
 /**
  * read the REPLICA block.
  */
-void io::In_Parameter::read_REPLICA(simulation::Parameter &param)
+void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
+				    std::ostream & os)
 {
   DEBUG(8, "read REPLICA");
 
@@ -1984,7 +2010,53 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param)
   
 }
 
-void io::In_Parameter::read_MULTICELL(simulation::Parameter & param)
+/**
+ * read the REPLICA03 block.
+ */
+void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
+				      std::ostream & os)
+{
+  DEBUG(8, "read REPLICA03");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["REPLICA03"];
+
+  if (buffer.size()){
+
+    block_read.insert("REPLICA03");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.replica.number;
+    param.replica.temperature.resize(param.replica.number, 0.0);
+    param.replica.lambda.resize(param.replica.number, 0.0);
+
+    for(int i=0; i<param.replica.number; ++i){
+      _lineStream >> param.replica.temperature[i];
+    }
+    for(int i=0; i<param.replica.number; ++i){
+      _lineStream >> param.replica.lambda[i];
+    }
+
+    _lineStream >> param.replica.trials;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in REPLICA03 block",
+		       "In_Parameter", io::message::error);
+
+      param.replica.number = 0;
+      param.replica.temperature.clear();
+      param.replica.lambda.clear();
+    }
+  }
+  
+}
+
+void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
+				      std::ostream & os)
 {
   DEBUG(8, "read MULTICELL");
 

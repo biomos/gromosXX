@@ -19,7 +19,8 @@
 
 
 void io::In_IFP
-::read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b)
+::read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b,
+		      std::ostream & os)
 {
   
   DEBUG(10, "BONDTYPECODE block");
@@ -63,7 +64,8 @@ void io::In_IFP
 }
 
 void io::In_IFP
-::read_g96_bonds(std::vector<interaction::bond_type_struct> &b)
+::read_g96_bonds(std::vector<interaction::bond_type_struct> &b,
+		 std::ostream & os)
 {
   DEBUG(10, "BONDTYPECODE block");
 
@@ -105,7 +107,8 @@ void io::In_IFP
 }
 
 void io::In_IFP
-::read_angles(std::vector<interaction::angle_type_struct> &b)
+::read_angles(std::vector<interaction::angle_type_struct> &b,
+	      std::ostream & os)
 {
   DEBUG(10, "BONDANGLETYPECOD block");
 
@@ -146,7 +149,8 @@ void io::In_IFP
 }
 
 void io::In_IFP
-::read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &imp)
+::read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &imp,
+			  std::ostream & os)
 {
   DEBUG(10, "IMPDIHEDRALTYPEC block");
 
@@ -189,7 +193,8 @@ void io::In_IFP
 }
 
 void io::In_IFP
-::read_dihedrals(std::vector<interaction::dihedral_type_struct> &d)
+::read_dihedrals(std::vector<interaction::dihedral_type_struct> &d,
+		 std::ostream & os)
 {
   DEBUG(10, "DIHEDRALTYPECODE block");
 
@@ -234,7 +239,8 @@ void io::In_IFP
 void io::In_IFP
 ::read_lj_parameter(std::vector<std::vector
 		    <interaction::lj_parameter_struct> > 
-		    & lj_parameter)
+		    & lj_parameter,
+		    std::ostream & os)
 {
   DEBUG(10, "SINGLEATOMLJPAIR block");
 

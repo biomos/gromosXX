@@ -15,7 +15,8 @@ namespace io
 		 topology::Topology &topo,
 		 configuration::Configuration &conf,
 		 simulation::Simulation & sim,
-		 algorithm::Algorithm_Sequence &md_seq);
+		 algorithm::Algorithm_Sequence &md_seq,
+		 std::ostream & os = std::cout);
   
 }
 

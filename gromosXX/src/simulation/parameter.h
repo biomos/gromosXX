@@ -920,21 +920,41 @@ namespace simulation
        * - T 0
        * - scale 0
        */
-      replica_struct() : ID(0), T(0.0), scale(0)
+      replica_struct() : number(0), ID(0), T(0.0), scale(0), trials(0)
       {
       }
+      /**
+       * num
+       */
+      int number;
       /**
        * job ID
        */
       int ID;
       /**
+       * @deprecated
        * temperature
        */
       double T;
       /**
+       * @deprecated
        * scale initial velocities to T?
        */
       int scale;
+      /**
+       * tempeartures
+       */
+      std::vector<double> temperature;
+      /**
+       * lambdas
+       */
+      std::vector<double> lambda;
+
+      /**
+       * trial moves
+       */
+      int trials;
+      
     } /** replica exchange parameters */ replica;
     
     /**

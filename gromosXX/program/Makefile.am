@@ -2,11 +2,13 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 include_HEADERS =
 
-bin_PROGRAMS =			md script
+bin_PROGRAMS =			md script repex
 
 md_SOURCES =			md.cc
 
 script_SOURCES =		script.cc
+
+repex_SOURCES = 		repex.cc
 
 LDADD = ../src/libgroxx.la $(extra_lib)
 
