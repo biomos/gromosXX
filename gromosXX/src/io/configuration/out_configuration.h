@@ -110,6 +110,20 @@ namespace io {
      */
     void title(std::string s) { m_title = s; }
 
+    /**
+     * get standard output stream.
+     */
+    std::ostream & output() { return m_output; }
+    
+    /**
+     * print timestep.
+     */
+    void print_timestep(simulation::Simulation const &sim,
+			std::ostream &os)
+    {
+      _print_timestep(sim, os);
+    }
+
   protected:
     std::ofstream m_pos_traj;
     std::ofstream m_final_conf;
