@@ -30,6 +30,9 @@ xxinclude_HEADERS =		interaction.h \
 				bonded/perturbed_dihedral_interaction.h \
 				bonded/perturbed_dihedral_interaction.tcc \
 				nonbonded/create_nonbonded.h \
+				nonbonded/create_header.h \
+				nonbonded/split_header.h \
+				nonbonded/split/nonbonded_split.h \
 				nonbonded/interaction_spec.h \
 				nonbonded/interaction/nonbonded_parameter.h \
 				nonbonded/interaction/nonbonded_term.h \
@@ -65,6 +68,8 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/pairlist/pairlist_algorithm.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.tcc \
+				nonbonded/pairlist/standard_pairlist_algorithm2.h \
+				nonbonded/pairlist/standard_pairlist_algorithm2.tcc \
 				special/create_special.h \
 				special/position_restraint_interaction.h \
 				special/position_restraint_interaction.tcc
