@@ -10,20 +10,21 @@
 
 #include "../../../debug.h"
 
-template<typename t_simulation, typename t_nonbonded_spec>
-interaction::Perturbed_Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
+interaction::Perturbed_Nonbonded_Innerloop<t_simulation, t_interaction_spec>
 ::Perturbed_Nonbonded_Innerloop(Nonbonded_Base &base)
   : m_base(base)
 {
 }
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 template<typename t_storage>
 void interaction::Perturbed_Nonbonded_Innerloop<
-  t_simulation, t_nonbonded_spec>
+  t_simulation, t_interaction_spec>
 ::perturbed_interaction_innerloop(t_simulation &sim, 
 				  size_t const i, size_t const j,
-				  t_storage &storage)
+				  t_storage &storage,
+				  int pc)
 {
     DEBUG(7, "\tperturbed pair\t" << i << "\t" << j);
 
@@ -32,10 +33,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
            B_e_lj, B_e_crf, B_de_lj, B_de_crf;
     double e_lj, e_crf, de_lj, de_crf;
     
+    if (t_interaction_spec::do_bekker){
+      r = sim.system().pos()(i) + sim.system().periodicity().shift(pc).pos
+	- sim.system().pos()(j);
+    }
+    else{
+      sim.system().periodicity().nearest_image(sim.system().pos()(i), 
+					       sim.system().pos()(j), r);
+    }
     
-    sim.system().periodicity().nearest_image(sim.system().pos()(i), 
-					     sim.system().pos()(j), r);
-
     lj_parameter_struct const *A_lj;
     lj_parameter_struct const *B_lj;
     double A_q, B_q;
@@ -103,7 +109,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	  << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
 	  << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
     
-    if (t_nonbonded_spec::do_scaling){
+    if (t_interaction_spec::do_scaling){
       
       // check whether we need to do scaling
       // based on energy groups
@@ -147,7 +153,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
     DEBUG(7, "\tforces stored");
 
-    if (t_nonbonded_spec::do_virial == molecular_virial){
+    if (t_interaction_spec::do_virial == molecular_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  storage.virial()(a, b) += 
@@ -157,7 +163,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
       DEBUG(7, "\tvirial done");
     }
 
-    if (t_nonbonded_spec::do_virial == atomic_virial){
+    if (t_interaction_spec::do_virial == atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  storage.virial()(a, b) += 
@@ -189,9 +195,9 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 }
 
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 void interaction::Perturbed_Nonbonded_Innerloop<
-  t_simulation, t_nonbonded_spec>
+  t_simulation, t_interaction_spec>
 ::perturbed_one_four_interaction_innerloop(t_simulation &sim,
 					   size_t const i, size_t const j)
 {
@@ -275,7 +281,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	  << B_f << " e_lj: " << B_e_lj << " e_crf: " << B_e_crf 
 	  << " de_lj: " << B_de_lj << " de_crf: " << B_de_crf);
     
-    if (t_nonbonded_spec::do_scaling){
+    if (t_interaction_spec::do_scaling){
       
       // check whether we need to do scaling
       // based on energy groups
@@ -318,7 +324,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
     DEBUG(7, "\tforces stored");
     
-    if (t_nonbonded_spec::do_virial == atomic_virial){
+    if (t_interaction_spec::do_virial == atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  sim.system().virial()(a, b) += 
@@ -349,10 +355,10 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
 }
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline void 
 interaction::Perturbed_Nonbonded_Innerloop<
-  t_simulation, t_nonbonded_spec>
+  t_simulation, t_interaction_spec>
 ::perturbed_RF_excluded_interaction_innerloop
 (t_simulation &sim, std::map<size_t, simulation::Perturbed_Atom>
  ::const_iterator const & mit)
@@ -387,7 +393,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
 			     m_base.A_lambda(), mit->second.CRF_softcore(),
 			     B_f_rf, B_e_rf, B_de_rf);
   
-  if (t_nonbonded_spec::do_scaling){
+  if (t_interaction_spec::do_scaling){
 
     // check whether we need to do scaling
     // based on energy groups
@@ -492,7 +498,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     force(i) += f_rf;
     force(*it) -=f_rf;
 
-    if (t_nonbonded_spec::do_virial == atomic_virial){
+    if (t_interaction_spec::do_virial == atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  sim.system().virial()(a, b) += 
@@ -504,10 +510,10 @@ interaction::Perturbed_Nonbonded_Innerloop<
   }
 }
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline void 
 interaction::Perturbed_Nonbonded_Innerloop<
-  t_simulation, t_nonbonded_spec>
+  t_simulation, t_interaction_spec>
 ::perturbed_pair_interaction_innerloop
 (t_simulation &sim, std::vector<simulation::Perturbed_Atompair>
  ::const_iterator const &it)
@@ -812,7 +818,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
       // --------------------------
   }
   
-  if (t_nonbonded_spec::do_scaling){
+  if (t_interaction_spec::do_scaling){
 
     // check whether we need to do scaling
     // based on energy groups
@@ -861,7 +867,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
   sim.system().force()(it->i) += f;
   sim.system().force()(it->j) -= f;
   
-  if (t_nonbonded_spec::do_virial == atomic_virial){
+  if (t_interaction_spec::do_virial == atomic_virial){
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
 	sim.system().virial()(a, b) += 

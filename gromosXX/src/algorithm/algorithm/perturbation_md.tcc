@@ -50,8 +50,9 @@ void algorithm::Perturbation_MD<t_md_spec, t_interaction_spec>
 
   int ntg, nlam;
   double rlam, dlamt;
+  bool scaling;
   
-  input.read_PERTURB(ntg, rlam, dlamt, nlam);
+  input.read_PERTURB(ntg, rlam, dlamt, nlam, scaling);
 
   if (ntg == 1){
     io::messages.add("Perturbation enabled", "Perturbation MD",

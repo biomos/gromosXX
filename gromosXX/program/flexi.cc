@@ -68,8 +68,9 @@ int do_md(io::Argument &args)
   // PERTURBATION?
   int ntg, nlam;
   double rlam, dlamt;
+  bool scaling;
   
-  input.read_PERTURB(ntg, rlam, dlamt, nlam);
+  input.read_PERTURB(ntg, rlam, dlamt, nlam, scaling);
   bool do_perturb = false;
   if (ntg) do_perturb = true;
   if (do_perturb && (args.count("pert") != 1)){

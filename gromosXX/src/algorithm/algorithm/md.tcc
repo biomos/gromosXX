@@ -56,6 +56,8 @@ int algorithm::MD<t_md_spec, t_interaction_spec>
     default:
       std::cout << std::setw(20) << "wrong virial" << "\n";
   }
+  std::cout << std::setw(40) << "bekker:" << std::setw(20)
+	    << t_interaction_spec::do_bekker << "\n";
 
   int status = 0;
   std::cout << "\n"

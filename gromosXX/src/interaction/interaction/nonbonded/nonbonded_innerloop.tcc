@@ -10,28 +10,53 @@
 
 #include "../../../debug.h"
 
-template<typename t_simulation, typename t_nonbonded_spec>
-interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
+interaction::Nonbonded_Innerloop<t_simulation, t_interaction_spec>
 ::Nonbonded_Innerloop(Nonbonded_Base &base)
   : m_base(base)
 {
 }
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 template<typename t_storage>
 inline void 
-interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
-::interaction_innerloop(t_simulation const &sim, size_t const i, size_t const j,
-			t_storage &storage)
+interaction::Nonbonded_Innerloop<t_simulation, t_interaction_spec>
+::interaction_innerloop(t_simulation const &sim, size_t const i, 
+			size_t const j,
+			t_storage &storage,
+			int pc)
 {
     DEBUG(7, "\tpair\t" << i << "\t" << j);
 
-    math::Vec r, f;
+    math::Vec r, f, r2;
     double e_lj, e_crf;
-    
-    sim.system().periodicity().nearest_image(sim.system().pos()(i), 
-					     sim.system().pos()(j), r);
 
+    if (t_interaction_spec::do_bekker){
+      DEBUG(5, "shift nearest image: pc=" << pc);
+      r = sim.system().pos()(i) + sim.system().periodicity().shift(pc).pos
+	- sim.system().pos()(j);
+
+      /*
+      sim.system().periodicity().nearest_image(sim.system().pos()(i), 
+					       sim.system().pos()(j), r2);
+      
+      
+      if (fabs(sum(r - r2)) > 0.0000001){
+	std::cout << "i= " << i << " j= " << j << "\n"
+		  << "r=  " << r << "\n"
+		  << "r2= " << r2 << "\n"
+		  << "r - r2 = " << r - r2 << "\n"
+		  << "shift= " << sim.system().periodicity().shift(pc).pos
+		  << "pc= " << pc << "\n\n";
+      }
+      */
+
+    }
+    else{
+      sim.system().periodicity().nearest_image(sim.system().pos()(i), 
+					       sim.system().pos()(j), r);
+    }
+    
     const lj_parameter_struct &lj = 
       m_base.lj_parameter(sim.topology().iac(i),
 			  sim.topology().iac(j));
@@ -49,7 +74,7 @@ interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
     storage.force()(j) -= f;
     DEBUG(7, "\tforces stored");
 
-    if (t_nonbonded_spec::do_virial == molecular_virial){
+    if (t_interaction_spec::do_virial == molecular_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  storage.virial()(a, b) += 
@@ -58,7 +83,7 @@ interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
 
       DEBUG(7, "\tmolecular virial done");
     }
-    if (t_nonbonded_spec::do_virial == atomic_virial){
+    if (t_interaction_spec::do_virial == atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  storage.virial()(a, b) += 
@@ -84,8 +109,8 @@ interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
 }
 
 
-template<typename t_simulation, typename t_nonbonded_spec>
-void interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
+void interaction::Nonbonded_Innerloop<t_simulation, t_interaction_spec>
 ::one_four_interaction_innerloop(t_simulation &sim,
 				 size_t const i, size_t const j)
 {
@@ -111,7 +136,7 @@ void interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
     sim.system().force()(i) += f;
     sim.system().force()(j) -= f;
 
-    if (t_nonbonded_spec::do_virial == atomic_virial){
+    if (t_interaction_spec::do_virial == atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  sim.system().virial()(a, b) += 
@@ -132,9 +157,9 @@ void interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
 
 }
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline void 
-interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Innerloop<t_simulation, t_interaction_spec>
 ::RF_excluded_interaction_innerloop(t_simulation &sim,
 				    size_t const i)
 {
@@ -172,7 +197,7 @@ interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
     force(i) += f;
     force(*it) -= f;
     
-    if (t_nonbonded_spec::do_virial == atomic_virial){
+    if (t_interaction_spec::do_virial == atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  sim.system().virial()(a, b) += 
@@ -190,9 +215,9 @@ interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
   
 }
 
-template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_simulation, typename t_interaction_spec>
 inline void 
-interaction::Nonbonded_Innerloop<t_simulation, t_nonbonded_spec>
+interaction::Nonbonded_Innerloop<t_simulation, t_interaction_spec>
 ::RF_solvent_interaction_innerloop
 (t_simulation &sim, simulation::chargegroup_iterator const & cg_it)
 {

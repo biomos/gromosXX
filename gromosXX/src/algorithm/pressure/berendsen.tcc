@@ -91,9 +91,11 @@ inline void algorithm::Berendsen_Barostat
 	pos(i) = math::product(mu, pos(i));
 
     }
+
+    sim.system().periodicity().recalc_shift_vectors();
     
   }
-  
+
 }
 
 inline void algorithm::Berendsen_Barostat

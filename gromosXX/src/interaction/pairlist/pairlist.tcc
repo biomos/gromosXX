@@ -133,7 +133,7 @@ namespace interaction
 	it = pl.begin(),
 	to = pl.end();
 
-      size_t ii = 999999999;
+      size_t ii = 999999999, num = 0;
 
       int ind = 1;
       while (it != to) {
@@ -142,12 +142,20 @@ namespace interaction
 	  ind = 1;
 	  os << std::endl << std::setw(5) << it.i() << ": " << std::flush;
 	}
-	os << std::setw(5) << *it << " "; 
+	if (*it < 67108864)
+	  os << std::setw(5) << *it << " "; 
+	else
+	  // os << std::setw(5) << (*it & 67108863) << " (" << *it << ", " << (*it >> 26) << ") " << "  "; 
+	os << std::setw(5) << (*it & 67108863) << " (" << (*it >> 26) << ") " << "  "; 
+	++ num;
+	
 	if (!(ind%15)) os << "\n\t";
 	++it;
 	++ind;
       }
       os << std::endl;
+      os << num << " pairs in the pairlist.\n";
+
     }    
     return os;
   }

@@ -46,6 +46,34 @@ namespace interaction
 		    Chargegroup_Grid<t_simulation> &grid,
 		    int cell[3]);
 
+    template<typename t_nonbonded_interaction>
+    void do_cg_interaction(t_simulation & sim,
+			   t_nonbonded_interaction &nonbonded_interaction,
+			   simulation::chargegroup_iterator const &cg1,
+			   simulation::chargegroup_iterator const &cg2,
+			   int pc);
+    
+    template<typename t_nonbonded_interaction>
+    void do_cg_interaction_excl(t_simulation & sim,
+				t_nonbonded_interaction &nonbonded_interaction,
+				simulation::chargegroup_iterator const &cg1,
+				simulation::chargegroup_iterator const &cg2,
+				int pc);
+
+    template<typename t_nonbonded_interaction>
+    void do_cg_interaction_inv_excl(t_simulation & sim,
+				    t_nonbonded_interaction &nonbonded_interaction,
+				    simulation::chargegroup_iterator const &cg1,
+				    simulation::chargegroup_iterator const &cg2,
+				    int pc);
+
+    template<typename t_nonbonded_interaction>
+    void do_cg_interaction_intra(t_simulation & sim,
+				 t_nonbonded_interaction &nonbonded_interaction,
+				 simulation::chargegroup_iterator const &cg1,
+				 int pc);
+
+
   };
 } // interaction
 

@@ -138,6 +138,25 @@ inline void math::Boundary_Implementation<b>
   }  
 }
 
+template<math::boundary_enum b>
+inline void math::Boundary_Implementation<b>
+::recalc_shift_vectors()
+{
+  int index=0;
+  for(int k=-1; k<2; ++k){
+    for(int l=-1; l<2; ++l){
+      for(int m=-1; m<2; ++m, ++index){
+
+	m_shift[index].pos = 
+	  k * box()(0) +
+	  l * box()(1) +
+	  m * box()(2);
+	
+      }
+    }
+  }  
+}
+
 inline void math::Boundary_Implementation<math::triclinic>
 ::recalc_shift_vectors(size_t const num_cells[3])
 {
@@ -160,6 +179,24 @@ inline void math::Boundary_Implementation<math::triclinic>
   }  
 }
 
+inline void math::Boundary_Implementation<math::triclinic>
+::recalc_shift_vectors()
+{
+  int index=0;
+  for(int k=-1; k<2; ++k){
+    for(int l=-1; l<2; ++l){
+      for(int m=-1; m<2; ++m, ++index){
+
+	m_shift[index].pos = 
+	  k * box()(0) +
+	  l * box()(1) +
+	  m * box()(2);
+	
+      }
+    }
+  }  
+}
+
 inline void math::Boundary_Implementation<math::vacuum>
 ::recalc_shift_vectors(size_t const num_cells[3])
 {
@@ -171,6 +208,24 @@ inline void math::Boundary_Implementation<math::vacuum>
 	m_shift[index].cell[0] = 0;
 	m_shift[index].cell[1] = 0;
 	m_shift[index].cell[2] = 0;
+
+	m_shift[index].pos = 
+	  0 * box()(0) +
+	  0 * box()(1) +
+	  0 * box()(2);
+	
+      }
+    }
+  }  
+}
+
+inline void math::Boundary_Implementation<math::vacuum>
+::recalc_shift_vectors()
+{
+  int index=0;
+  for(int k=-1; k<2; ++k){
+    for(int l=-1; l<2; ++l){
+      for(int m=-1; m<2; ++m, ++index){
 
 	m_shift[index].pos = 
 	  0 * box()(0) +
@@ -324,6 +379,16 @@ inline typename math::Boundary_Implementation<b>::shift_struct &
 math::Boundary_Implementation<b>
 ::shift(size_t const i)
 {
+  assert(27 > i);
+  return m_shift[i];
+}
+
+template<math::boundary_enum b>
+inline typename math::Boundary_Implementation<b>::shift_struct const &
+math::Boundary_Implementation<b>
+::shift(size_t const i)const
+{
+  assert(27 > i);
   return m_shift[i];
 }
 
@@ -331,6 +396,15 @@ inline math::Boundary_Implementation<math::vacuum>::shift_struct &
 math::Boundary_Implementation<math::vacuum>
 ::shift(size_t const i)
 {
+  assert(27 > i);
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::vacuum>::shift_struct const &
+math::Boundary_Implementation<math::vacuum>
+::shift(size_t const i)const
+{
+  assert(27 > i);
   return m_shift[i];
 }
 
@@ -338,6 +412,15 @@ inline math::Boundary_Implementation<math::triclinic>::shift_struct &
 math::Boundary_Implementation<math::triclinic>
 ::shift(size_t const i)
 {
+  assert(27 > i);
+  return m_shift[i];
+}
+
+inline math::Boundary_Implementation<math::triclinic>::shift_struct const &
+math::Boundary_Implementation<math::triclinic>
+::shift(size_t const i)const
+{
+  assert(27 > i);
   return m_shift[i];
 }
 

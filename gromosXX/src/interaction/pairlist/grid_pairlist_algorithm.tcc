@@ -49,7 +49,8 @@ update(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction)
 
   DEBUG(7, "create a grid");
   Chargegroup_Grid<t_simulation> 
-    a_grid(sim.system().periodicity(), 0.5*m_cutoff_short, m_cutoff_long);
+    a_grid(sim.system().periodicity(), 
+	   sim.nonbonded().grid_cell_size(), m_cutoff_long);
 
   DEBUG(7, "grid the cog's");
   grid_cog(sim, a_grid);
@@ -120,7 +121,7 @@ intra_cell(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction,
       // not solvent, intra cg
       DEBUG(8, "intra cg: " << *cg_it);
       
-      do_cg_interaction_intra(sim, nonbonded_interaction, cg1);	  
+      do_cg_interaction_intra(sim, nonbonded_interaction, cg1, 13);
     }
     
     // second chargegroups in the cell
@@ -135,11 +136,11 @@ intra_cell(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction,
       // ASSUME SHORTRANGE
       if (unsigned(**cg2) < sim.topology().solute().num_atoms()){
 	// exclusions! (because cg2 is not solvent)
-	do_cg_interaction_excl(sim, nonbonded_interaction, cg1, cg2);
+	do_cg_interaction_excl(sim, nonbonded_interaction, cg1, cg2, 13);
       }
       else{
 	// no exclusions... (at least cg2 is solvent)
-	do_cg_interaction(sim, nonbonded_interaction, cg1, cg2);
+	do_cg_interaction(sim, nonbonded_interaction, cg1, cg2, 13);
       }
     }
   }
@@ -208,7 +209,8 @@ inter_cell(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction,
 	  // filter out interactions based on chargegroup distances
 	  if (range_chargegroup_pair(sim, nonbonded_interaction,
 				     *cg_it, *it, cg1, cg2, 
-				     sim.system().periodicity().shift(pc)))
+				     sim.system().periodicity().shift(pc), 
+				     pc))
 	    continue;
 	}
 	
@@ -218,14 +220,14 @@ inter_cell(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction,
 	if (unsigned(**cg2) >= sim.topology().solute().num_atoms() || 
 	    unsigned(**cg1) >= sim.topology().solute().num_atoms()){
 	  // no exclusions... (at least cg2 is solvent)
-	  do_cg_interaction(sim, nonbonded_interaction, cg1, cg2);
+	  do_cg_interaction(sim, nonbonded_interaction, cg1, cg2, pc);
 	}
 	else{
 	  // exclusions! (because no cg is solvent)
 	  if (*cg_it <= *it)
-	    do_cg_interaction_excl(sim, nonbonded_interaction, cg1, cg2);
+	    do_cg_interaction_excl(sim, nonbonded_interaction, cg1, cg2, pc);
 	  else
-	    do_cg_interaction_inv_excl(sim, nonbonded_interaction, cg1, cg2);
+	    do_cg_interaction_inv_excl(sim, nonbonded_interaction, cg1, cg2, pc);
 	}
 
       }
@@ -234,4 +236,154 @@ inter_cell(t_simulation &sim, t_nonbonded_interaction & nonbonded_interaction,
     
   } // end of loop over periodic copies
   
+}
+
+
+/**
+ * inter cg, no exclusion
+ */
+template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_nonbonded_interaction>
+inline void
+interaction::Grid_Pairlist_Algorithm<t_simulation, t_nonbonded_spec>
+::do_cg_interaction(t_simulation & sim,
+		    t_nonbonded_interaction &nonbonded_interaction,
+		    simulation::chargegroup_iterator const &cg1,
+		    simulation::chargegroup_iterator const &cg2,
+		    int pc)
+{
+
+  simulation::Atom_Iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+
+  DEBUG(11, "do_cg_interaction " << *a1);
+    
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::Atom_Iterator
+	  a2 = cg2.begin(),
+	  a2_to = cg2.end();
+	a2 != a2_to; ++a2){
+
+      if (t_nonbonded_spec::do_atomic_cutoff){
+	// filter out interactions based on chargegroup distances
+	if (range_atom_pair(sim, nonbonded_interaction, *a1, *a2))
+	  continue;
+      }
+
+      nonbonded_interaction.add_shortrange_pair(sim, *a1, *a2, pc);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
+}
+
+
+template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_nonbonded_interaction>
+inline void
+interaction::Grid_Pairlist_Algorithm<t_simulation, t_nonbonded_spec>
+::do_cg_interaction_excl(t_simulation & sim,
+			 t_nonbonded_interaction &nonbonded_interaction,
+			 simulation::chargegroup_iterator const & cg1,
+			 simulation::chargegroup_iterator const & cg2,
+			 int pc)
+{
+  simulation::Atom_Iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+
+  DEBUG(11, "do_cg_interaction_excl " << *a1);
+  
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::Atom_Iterator
+	  a2 = cg2.begin(),
+	  a2_to = cg2.end();
+	a2 != a2_to; ++a2){
+
+      if (t_nonbonded_spec::do_atomic_cutoff){
+	// filter out interactions based on chargegroup distances
+	if (range_atom_pair(sim, nonbonded_interaction, *a1, *a2))
+	  continue;
+      }
+
+      // check it is not excluded
+      if (excluded_solute_pair(sim, *a1, *a2)){
+	continue;
+      }
+
+      nonbonded_interaction.add_shortrange_pair(sim, *a1, *a2, pc);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
+}
+
+template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_nonbonded_interaction>
+inline void
+interaction::Grid_Pairlist_Algorithm<t_simulation, t_nonbonded_spec>
+::do_cg_interaction_inv_excl(t_simulation & sim,
+			     t_nonbonded_interaction &nonbonded_interaction,
+			     simulation::chargegroup_iterator const & cg1,
+			     simulation::chargegroup_iterator const & cg2,
+			     int pc)
+{
+  simulation::Atom_Iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+
+  DEBUG(11, "do_cg_interaction_excl " << *a1);
+  
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::Atom_Iterator
+	  a2 = cg2.begin(),
+	  a2_to = cg2.end();
+	a2 != a2_to; ++a2){
+
+      if (t_nonbonded_spec::do_atomic_cutoff){
+	// filter out interactions based on chargegroup distances
+	if (range_atom_pair(sim, nonbonded_interaction, *a1, *a2))
+	  continue;
+      }
+
+      // check it is not excluded
+      if (inverse_excluded_solute_pair(sim, *a1, *a2)){
+	continue;
+      }
+
+      nonbonded_interaction.add_shortrange_pair(sim, *a1, *a2, pc);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
+}
+
+template<typename t_simulation, typename t_nonbonded_spec>
+template<typename t_nonbonded_interaction>
+inline void
+interaction::Grid_Pairlist_Algorithm<t_simulation, t_nonbonded_spec>
+::do_cg_interaction_intra(t_simulation & sim,
+			  t_nonbonded_interaction & nonbonded_interaction,
+			  simulation::chargegroup_iterator const & cg1,
+			  int pc)
+{
+  simulation::Atom_Iterator a1 = cg1.begin(),
+    a1_to = cg1.end();
+
+  DEBUG(11, "do_cg_interaction_intra " << *a1);
+  
+  for( ; a1 != a1_to; ++a1){
+    for(simulation::Atom_Iterator
+	  a2(*a1+1);
+	a2 != a1_to; ++a2){
+
+      // check it is not excluded
+      if (excluded_solute_pair(sim, *a1, *a2))
+	continue;
+
+      if (t_nonbonded_spec::do_atomic_cutoff){
+	// filter out interactions based on chargegroup distances
+	if (range_atom_pair(sim, nonbonded_interaction, *a1, *a2))
+	  continue;
+      }
+
+      nonbonded_interaction.add_shortrange_pair(sim, *a1, *a2, pc);
+
+    } // loop over atom 2 of cg1
+  } // loop over atom 1 of cg1
 }

@@ -134,6 +134,21 @@ interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 }
 
 /**
+ * add a shortrange interaction
+ */
+template<typename t_simulation, typename t_interaction_spec>
+inline void
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
+::add_shortrange_pair(t_simulation const & sim, size_t const i, size_t const j, 
+		      int pc)
+{
+  assert(t_interaction_spec::do_bekker);
+  assert(pairlist().size() > i);
+  // add box index...
+  pairlist()[i].push_back((pc << 26) + j);
+}
+
+/**
  * add a longrange interaction
  */
 template<typename t_simulation, typename t_interaction_spec>
@@ -142,6 +157,18 @@ interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 ::add_longrange_pair(t_simulation & sim, size_t const i, size_t const j)
 {
   interaction_innerloop(sim, i, j, *this);
+}
+
+/**
+ * add a longrange interaction
+ */
+template<typename t_simulation, typename t_interaction_spec>
+inline void
+interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
+::add_longrange_pair(t_simulation & sim, 
+		     size_t const i, size_t const j, int pc)
+{
+  interaction_innerloop(sim, i, j, *this, pc);
 }
 
 
@@ -206,11 +233,27 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_interaction_spec>
 {  
   DEBUG(7, "\tcalculate interactions");  
 
-  for( ; it != to; ++it){    
+  if (t_interaction_spec::do_bekker){
+    int pc;
+    size_t j;
 
-    // shortrange, therefore store in simulation.system()
-    interaction_innerloop(sim, it.i(), *it, sim.system());
+    // translate the atom j
+    for( ; it != to; ++it){
+      
+      pc = (*it >> 26);
+      j = (*it & 67108863);
+      
+      interaction_innerloop(sim, it.i(), j, sim.system(), pc);
+    }
 
+  }
+  else{
+    for( ; it != to; ++it){    
+      
+      // shortrange, therefore store in simulation.system()
+      interaction_innerloop(sim, it.i(), *it, sim.system());
+      
+    }
   }
   
 }

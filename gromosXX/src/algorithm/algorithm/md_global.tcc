@@ -33,176 +33,23 @@ int algorithm::do_md(io::Argument &args)
   input.readStream();
   input.auto_delete(true);
 
-  // VIRIAL?
-  bool calc;
-  int ntp;
-  double comp, tau;
-  math::Matrix pres0;
-  interaction::virial_enum do_vir;
+  
 
-  input.read_PCOUPLE(calc, ntp, pres0, comp, tau, do_vir);
-  
-  // PERTURBATION?
-  int ntg, nlam;
-  double rlam, dlamt;
-  
-  input.read_PERTURB(ntg, rlam, dlamt, nlam);
-  bool do_perturb = false;
-  if (ntg) do_perturb = true;
-  if (do_perturb && (args.count("pert") != 1)){
-    io::messages.add("PERTURB requested from input file but no "
-		     "perturbation topology specified (@pert)!",
-		     "md_global::do_md",
-		     io::message::error);
-  }
+  // GRID PAIRLIST?
+  bool do_grid;
+  int nsnb;
+  double rcutp, rcutl, size;
+  input.read_PLIST(do_grid, nsnb, rcutp, rcutl, size);
 
   //==================================================
   // create the algorithm
   //==================================================
 
-  if (do_perturb){
-    switch(do_vir){
-      case interaction::no_virial:
-	{
-	  algorithm::Perturbation_MD<
-	    algorithm::perturbed_MD_spec<interaction::no_virial>,
-	    algorithm::Interaction_spec<
-	    algorithm::perturbed_MD_spec<interaction::no_virial>::simulation_type,
-	    // perturbation
-	    true,
-	    // virial
-	    interaction::no_virial,
-	    // atomic cutoff
-	    false,
-	    // scaling
-	    false
-	    >
-	    > 
-	    the_MD;
-
-	  return the_MD.do_md(args, input);
-	}
-	
-      case interaction::atomic_virial:
-	{
-	  algorithm::Perturbation_MD<
-	    algorithm::perturbed_MD_spec<interaction::atomic_virial>,
-	    algorithm::Interaction_spec<
-	    algorithm::perturbed_MD_spec<interaction::atomic_virial>::simulation_type,
-	    // perturbation
-	    true,
-	    // virial
-	    interaction::atomic_virial,
-	    // atomic cutoff
-	    false,
-	    // scaling
-	    false
-	    >
-	    > 
-	    the_MD;
-	
-	  return the_MD.do_md(args, input);
-	}
-	
-      case interaction::molecular_virial:
-	{
-	  algorithm::Perturbation_MD<
-	    algorithm::perturbed_MD_spec<interaction::molecular_virial>,
-	    algorithm::Interaction_spec<
-	    algorithm::perturbed_MD_spec<interaction::molecular_virial>::simulation_type,
-	    // perturbation
-	    true,
-	    // virial
-	    interaction::molecular_virial,
-	    // atomic cutoff
-	    false,
-	    // scaling
-	    false
-	    >
-	    > 
-	    the_MD;
-	  
-	  return the_MD.do_md(args, input);
-	}
-	
-      default:
-	io::messages.add("wrong virial method specified",
-			 "md_global::do_md",
-			 io::message::error);
-    }
-
+  if (do_grid){
+    return do_md_grid<true>(args, input);
   }
   else{
-    switch(do_vir){
-      case interaction::no_virial:
-	{
-	  algorithm::MD<
-	    algorithm::MD_spec<interaction::no_virial>,
-	    algorithm::Interaction_spec<
-	    algorithm::MD_spec<interaction::no_virial>::simulation_type,
-	    // perturbation
-	    false,
-	    // virial
-	    interaction::no_virial,
-	    // atomic cutoff
-	    false,
-	    // scaling
-	    false
-	    >
-	    > 
-	    the_MD;
-	  
-	  return the_MD.do_md(args, input);
-	}
-	
-      case interaction::atomic_virial:
-	{
-	  algorithm::MD<
-	    algorithm::MD_spec<interaction::atomic_virial>,
-	    algorithm::Interaction_spec<
-	    algorithm::MD_spec<interaction::atomic_virial>::simulation_type,
-	    // perturbation
-	    false,
-	    // virial
-	    interaction::atomic_virial,
-	    // atomic cutoff
-	    false,
-	    // scaling
-	    false
-	    >
-	    > 
-	    the_MD;
-	  
-	  return the_MD.do_md(args, input);
-	}
-	
-      case interaction::molecular_virial:
-	{
-	  algorithm::MD<
-	    algorithm::MD_spec<interaction::molecular_virial>,
-	    algorithm::Interaction_spec<
-	    algorithm::MD_spec<interaction::molecular_virial>::simulation_type,
-	    // perturbation
-	    false,
-	    // virial
-	    interaction::molecular_virial,
-	    // atomic cutoff
-	    false,
-	    // scaling
-	    false
-	    >
-	    > 
-	    the_MD;
-	  
-	  return the_MD.do_md(args, input);
-	}
-	
-      default:
-	io::messages.add("wrong virial method specified",
-			 "md_global::do_md",
-			 io::message::error);
-    }
-
+    return do_md_grid<false>(args, input);
   }
   
   return 10;
@@ -495,3 +342,126 @@ void algorithm::Perturbed_G96_Forcefield(interaction::Forcefield<
 
 }
 
+
+template<bool do_grid>
+int algorithm::do_md_grid(io::Argument &args, io::InInput &input)
+{
+  // INTERACTION SCALING
+  int ntg, nlam;
+  double rlam, dlamt;
+  bool do_scaled;
+  
+  input.read_PERTURB(ntg, rlam, dlamt, nlam, do_scaled);
+
+  if (do_scaled){
+    return do_md_scaled<do_grid, true>(args, input);
+  }
+  else{
+    return do_md_scaled<do_grid, false>(args, input);
+  }
+  
+}
+
+template<bool do_grid, bool do_scaled>
+int algorithm::do_md_scaled(io::Argument &args, io::InInput &input)
+{
+
+  // VIRIAL?
+  bool calc;
+  int ntp;
+  double comp, tau;
+  math::Matrix pres0;
+  interaction::virial_enum do_vir;
+  
+  input.read_PCOUPLE(calc, ntp, pres0, comp, tau, do_vir);
+
+  switch (do_vir){
+    case interaction::no_virial:
+      {
+	return do_md_virial<do_grid, do_scaled, interaction::no_virial>
+	  (args, input);
+      }
+    case interaction::atomic_virial:
+      {
+	return do_md_virial<do_grid, do_scaled, interaction::atomic_virial>
+	  (args, input);
+      }
+    case interaction::molecular_virial:
+      {
+	return do_md_virial<do_grid, do_scaled, interaction::molecular_virial>
+	  (args, input);
+      }
+    default:
+      {
+	io::messages.add("Wrong virial specified", "md_global",
+			 io::message::error);
+	return 2;
+      }
+  }
+  return 2;
+}
+
+template<bool do_grid, bool do_scaled, interaction::virial_enum do_virial>
+int algorithm::do_md_virial(io::Argument &args, io::InInput &input)
+{
+  // PERTURBATION?
+  int ntg, nlam;
+  double rlam, dlamt;
+  bool scaling;
+  
+  input.read_PERTURB(ntg, rlam, dlamt, nlam, scaling);
+  bool do_perturb = false;
+  if (ntg) do_perturb = true;
+  if (do_perturb && (args.count("pert") != 1)){
+    io::messages.add("PERTURB requested from input file but no "
+		     "perturbation topology specified (@pert)!",
+		     "md_global::do_md",
+		     io::message::error);
+  }
+
+  if (do_perturb){
+    algorithm::Perturbation_MD<
+      algorithm::perturbed_MD_spec<do_virial>,
+      algorithm::Interaction_spec<
+      typename algorithm::perturbed_MD_spec<do_virial>::simulation_type,
+      // perturbation
+      true,
+      // virial
+      do_virial,
+      // atomic cutoff
+      false,
+      // scaling
+      do_scaled,
+      // bekker
+      do_grid
+      >
+      > 
+      the_MD;
+    
+    return the_MD.do_md(args, input);
+  }
+  else{
+    algorithm::MD<
+      algorithm::MD_spec<do_virial>,
+      algorithm::Interaction_spec<
+      typename algorithm::MD_spec<do_virial>::simulation_type,
+      // perturbation
+      false,
+      // virial
+      do_virial,
+      // atomic cutoff
+      false,
+      // scaling
+      do_scaled,
+      // bekker
+      do_grid
+      >
+      > 
+      the_MD;
+    
+    return the_MD.do_md(args, input);
+  }
+
+  return 2;
+
+}

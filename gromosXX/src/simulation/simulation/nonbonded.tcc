@@ -11,6 +11,7 @@ simulation::Nonbonded::Nonbonded():
   m_update(5),
   m_cutoff_short(0.8),
   m_cutoff_long(1.4),
+  m_grid_cell_size(0.4),
   m_RF_epsilon(1.0),
   m_RF_kappa(0.0),
   m_RF_cutoff(1.4), 
@@ -65,6 +66,22 @@ inline void simulation::Nonbonded::cutoff_long(double const cutoff_long)
 inline double simulation::Nonbonded::cutoff_long()const
 {
   return m_cutoff_long;
+}
+
+/**
+ * set grid cell size
+ */
+inline void simulation::Nonbonded::grid_cell_size(double const size)
+{
+  m_grid_cell_size = size;
+}
+
+/**
+ * get grid cell size.
+ */
+inline double simulation::Nonbonded::grid_cell_size()const
+{
+  return m_grid_cell_size;
 }
 
 /**

@@ -12,7 +12,7 @@ namespace interaction
    * @class Perturbed_Nonbonded_Innerloop
    * perturbed non bonded inner loop.
    */
-  template<typename t_simulation, typename t_nonbonded_spec>
+  template<typename t_simulation, typename t_interaction_spec>
   class Perturbed_Nonbonded_Innerloop
   {
   public:
@@ -27,7 +27,8 @@ namespace interaction
     template<typename t_storage>
     void perturbed_interaction_innerloop(t_simulation &sim,
 					 size_t const i, size_t const j,
-					 t_storage &storage);
+					 t_storage &storage,
+					 int pc = -1);
     /**
      * perturbed 1-4 interaction
      * (always shortrange)

@@ -181,6 +181,28 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
 }
 
 /**
+ * add a shortrange interaction
+ */
+template<typename t_simulation, typename t_interaction_spec>
+inline void
+interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
+::add_shortrange_pair(t_simulation const & sim, size_t const i, size_t const j,
+		      int pc)
+{
+  assert(t_interaction_spec::do_bekker);
+  assert(pairlist().size() > i);
+  if (perturbed_atom(sim, i)){
+    perturbed_pairlist()[i].push_back((pc << 26) +j);
+  }
+  else if (perturbed_atom(sim, j)){
+    perturbed_pairlist()[j].push_back(((26 - pc) << 26) +i);
+  }
+  else{
+    pairlist()[i].push_back((pc << 26) + j);
+  }
+}
+
+/**
  * add a longrange interaction
  */
 template<typename t_simulation, typename t_interaction_spec>
@@ -196,6 +218,25 @@ interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
   }
   else{
     interaction_innerloop(sim, i, j, *this);
+  }
+}
+
+/**
+ * add a longrange interaction
+ */
+template<typename t_simulation, typename t_interaction_spec>
+inline void
+interaction::Perturbed_Nonbonded_Interaction<t_simulation, t_interaction_spec>
+::add_longrange_pair(t_simulation & sim, size_t const i, size_t const j, int pc)
+{
+  if (perturbed_atom(sim, i)){
+    perturbed_interaction_innerloop(sim, i, j, *this, pc);
+  }
+  else if (perturbed_atom(sim, j)){
+    perturbed_interaction_innerloop(sim, j, i, *this, pc);
+  }
+  else{
+    interaction_innerloop(sim, i, j, *this, pc);
   }
 }
 
@@ -221,9 +262,26 @@ inline void interaction::Perturbed_Nonbonded_Interaction<
 {  
   DEBUG(7, "\tcalculate perturbed interactions");  
 
-  for( ; it != to; ++it){    
-    DEBUG(8, "perturbed pair: " << it.i() << " - " << *it);
-    perturbed_interaction_innerloop(sim, it.i(), *it, sim.system());
+  if (t_interaction_spec::do_bekker){
+    int pc;
+    size_t j;
+
+    // translate the atom j
+    for( ; it != to; ++it){
+      
+      pc = (*it >> 26);
+      j = (*it & 67108863);
+      
+      perturbed_interaction_innerloop(sim, it.i(), j, sim.system(), pc);
+    }
+
+  }
+  else{
+    
+    for( ; it != to; ++it){    
+      DEBUG(8, "perturbed pair: " << it.i() << " - " << *it);
+      perturbed_interaction_innerloop(sim, it.i(), *it, sim.system());
+    }
   }
 
   DEBUG(7, "end of function perturbed nonbonded interaction");  

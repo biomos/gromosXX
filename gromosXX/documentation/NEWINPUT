@@ -55,3 +55,21 @@ FORCEFIELD
 #   2: harmonic                  1: harmonic
   0 0
 END
+
+PLIST03
+#	algorithm: standard (gromos96 like pairlist)
+#		   grid (bekker like pairlist)
+#	SIZE:	   grid cell size (or auto = 0.5 * RCUTP)
+#	algorithm	NSNB	RCUTP	RCUTL	SIZE
+	grid		5	0.8	1.4	auto
+END
+
+PERTURB03
+#	SCALING:	on (activate interaction scaling)
+#			off (deactivate interaction scaling)
+#			the scaling information is in the
+#			perturbation topology.
+#	NTG:		on / off
+#	NTG	RLAM	DLAMT	NLAM	SCALING
+	on	0.5	1.0	1.0	off
+END

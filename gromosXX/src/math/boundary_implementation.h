@@ -87,9 +87,19 @@ namespace math
     shift_struct & shift(size_t const i);
 
     /**
+     * the shifts over the periodic images.
+     */
+    shift_struct const & shift(size_t const i)const;
+
+    /**
      * recalculate the shift vectors.
      */
     void recalc_shift_vectors(size_t const num_cells[3]);
+
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors();
 
   protected:
     /**
@@ -196,9 +206,19 @@ namespace math
     shift_struct & shift(size_t const i);
 
     /**
+     * the shifts over the periodic images.
+     */
+    shift_struct const & shift(size_t const i)const;
+
+    /**
      * recalculate the shift vectors.
      */
     void recalc_shift_vectors(size_t const num_cells[3]);
+
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors();
 
   protected:
     /**
@@ -295,9 +315,19 @@ namespace math
     shift_struct & shift(size_t const i);
 
     /**
+     * the shifts over the periodic images.
+     */
+    shift_struct const & shift(size_t const i)const;
+
+    /**
      * recalculate the shift vectors.
      */
     void recalc_shift_vectors(size_t const num_cells[3]);
+
+    /**
+     * recalculate the shift vectors.
+     */
+    void recalc_shift_vectors();
 
   protected:
     /**

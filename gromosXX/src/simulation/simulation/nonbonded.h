@@ -46,6 +46,14 @@ namespace simulation
      */
     double cutoff_long()const;
     /**
+     * set the grid cell size.
+     */
+    void grid_cell_size(double const size);
+    /**
+     * get the grid cell size.
+     */
+    double grid_cell_size()const;
+    /**
      * set reaction field epsilon and kappa, calculate the constant
      */
     void RF_constant(double const epsilon, 
@@ -98,6 +106,11 @@ namespace simulation
      */
     double m_cutoff_long;
  
+    /**
+     * grid cell size.
+     */
+    double m_grid_cell_size;
+    
     /**
      * nonbonded reaction field epsilon
      */

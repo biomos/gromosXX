@@ -86,7 +86,7 @@ namespace io {
     /**
      * read the PERTURB block.
      */
-    void read_PERTURB(int &ntg, double &rlam, double &dlamt, int &nlam);
+    void read_PERTURB(int &ntg, double &rlam, double &dlamt, int &nlam, bool &scaling);
 
     /**
      * read START block.
@@ -96,6 +96,12 @@ namespace io {
      * read CENTREOFMASS block.
      */
     bool read_CENTREOFMASS(int &ndfmin, int &ntcm, int &nscm);
+
+    /**
+     * read PLIST block.
+     */
+    bool read_PLIST(bool &grid, int &nsnb, double &rcutp, 
+		    double &rcutl, double &size);
     
   };
   

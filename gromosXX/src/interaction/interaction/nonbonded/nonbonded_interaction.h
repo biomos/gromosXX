@@ -43,11 +43,26 @@ namespace interaction
      */
     void add_shortrange_pair(t_simulation const &sim,
 			     size_t const i, size_t const j);
+
+    /**
+     * add a shortrange interaction.
+     */
+    void add_shortrange_pair(t_simulation const &sim,
+			     size_t const i, size_t const j,
+			     int pc);
+
     /**
      * add a longrange interaction.
      */
     void add_longrange_pair(t_simulation & sim,
 			    size_t const i, size_t const j);
+
+    /**
+     * add a longrange interaction.
+     */
+    void add_longrange_pair(t_simulation & sim,
+			    size_t const i, size_t const j,
+			    int pc);
 
     // ACCESSORS
     /**

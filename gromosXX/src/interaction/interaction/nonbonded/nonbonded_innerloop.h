@@ -12,14 +12,15 @@ namespace interaction
    * @class Nonbonded_Innerloop
    * standard non bonded inner loop.
    */
-  template<typename t_simulation, typename t_nonbonded_spec>
+  template<typename t_simulation, typename t_interaction_spec>
   class Nonbonded_Innerloop
   {
   public:
     /**
      * copy constructor.
      */
-    explicit Nonbonded_Innerloop(Nonbonded_Innerloop<t_simulation, t_nonbonded_spec> 
+    explicit Nonbonded_Innerloop(Nonbonded_Innerloop
+				 <t_simulation, t_interaction_spec> 
 				 const &nil);
     /**
      * Constructor
@@ -32,7 +33,8 @@ namespace interaction
     template<typename t_storage>
     void interaction_innerloop(t_simulation const &sim,
 			       size_t const i, size_t const j,
-			       t_storage &storage);
+			       t_storage &storage,
+			       int pc = -1);
 
     /**
      * 1-4 interaction

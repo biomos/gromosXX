@@ -150,7 +150,8 @@ interaction::Range_Filter<t_simulation, t_nonbonded_spec>
 			 simulation::chargegroup_iterator const & it_j,
 			 typename math::Boundary_Implementation
 			 <t_simulation::system_type::boundary_type>
-			 ::shift_struct const & shift)
+			 ::shift_struct const & shift,
+			 int pc)
 {
   DEBUG(11, "Range_Filter::range_chargegroup_pair (shift) " << i << " - " << j);
   
@@ -188,7 +189,7 @@ interaction::Range_Filter<t_simulation, t_nonbonded_spec>
 	a2 != a2_to; ++a2){
 
       // the interactions
-      nonbonded_interaction.add_longrange_pair(sim, *a1, *a2);
+      nonbonded_interaction.add_longrange_pair(sim, *a1, *a2, pc);
 
     } // loop over atom 2 of cg1
   } // loop over atom 1 of cg1

@@ -63,7 +63,8 @@ namespace interaction
 				simulation::chargegroup_iterator const &it_j,
 				typename math::Boundary_Implementation
 				<t_simulation::system_type::boundary_type>
-				::shift_struct const & shift);
+				::shift_struct const & shift,
+				int pc);
 
     /**
      * check the distance between two atoms.

@@ -25,31 +25,18 @@ inline io::InInput & io::InInput
   
   { // PLIST
     DEBUG(10, "pairlist block");
-    buffer = m_block["PLIST"];
 
-    if (!buffer.size())
-      io::messages.add("no PLIST block in input","InInput",io::message::error);
-    else{
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-    
-      int i, update_step;
-      double rcutp, rcutl;
-    
-      _lineStream >> i >> update_step
-		  >> rcutp >> rcutl;
+    bool grid;
+    int nsnb;
+    double rcutp, rcutl, size;
 
-      if (_lineStream.fail())
-	throw std::runtime_error("bad line in PLIST block");
+    read_PLIST(grid, nsnb, rcutp, rcutl, size);
+	
+    sim.nonbonded().update(nsnb);
+    sim.nonbonded().cutoff_short(rcutp);
+    sim.nonbonded().cutoff_long(rcutl);
+    sim.nonbonded().grid_cell_size(size);
 
-      DEBUG(7, "pairlist update=" << update_step);
-      DEBUG(7, "setting short cutoff=" << rcutp << " long cutoff=" << rcutl);
-    
-      sim.nonbonded().update(update_step);
-      sim.nonbonded().cutoff_short(rcutp);
-      sim.nonbonded().cutoff_long(rcutl);
-    }
   }
   
   { // LONGRANGE
@@ -792,7 +779,7 @@ inline void io::InInput::read_BOUNDARY(int &ntb, int &nrdbox)
 /**
  * read the PERTURB block.
  */
-inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int &nlam)
+inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int &nlam, bool &scaling)
 {
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -801,15 +788,33 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int
   buffer = m_block["PERTURB03"];
   if (buffer.size()){
     
-    it = buffer.begin()+1;
+    std::string b, s1, s2;
+    concatenate(buffer.begin()+1, buffer.end()-1, b);
+
     _lineStream.clear();
-    _lineStream.str(*it);
+    _lineStream.str(b);
   
-    _lineStream >> ntg >> rlam >> dlamt >> nlam;
+    _lineStream >> s1 >> rlam >> dlamt >> nlam >> s2;
     
     if (_lineStream.fail())
       io::messages.add("bad line in PERTURB block",
 		       "InInput", io::message::error);
+
+    transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    
+    if (s1 == "on") ntg = 1;
+    else if (s1 == "off") ntg = 0;
+    else ntg = atoi(s1.c_str());
+    
+    if (s2 == "on") scaling = true;
+    else if (s2 == "off") scaling = false;
+    else{
+      io::messages.add("wrong value for scaling in PERTURB03 block (on / off): " + s2,
+		       "InInput", io::message::error);
+      scaling = false;
+    }
+
   }
   else{
     // a common PERTURB block...
@@ -821,6 +826,7 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int
       rlam = 0;
       dlamt = 0;
       nlam = 1;
+      scaling = false;
       return;
     }
   
@@ -837,6 +843,8 @@ inline void io::InInput::read_PERTURB(int &ntg, double &rlam, double &dlamt, int
     _lineStream.clear();
     _lineStream.str(*(++it));
     _lineStream >> alpha_lj >> alpha_crf >> nlam >> mmu;
+
+    scaling = false;
     
     if (_lineStream.fail())
       io::messages.add("bad line in PERTURB block",
@@ -1029,4 +1037,90 @@ inline bool io::InInput::read_CENTREOFMASS(int &ndfmin, int &ntcm, int &nscm)
 		     "InInput", io::message::error);
   return true;
   
+}
+
+/**
+ * read PLIST block.
+ */
+inline bool io::InInput::read_PLIST(bool &grid, int &nsnb, double &rcutp, double &rcutl, double &size)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  DEBUG(10, "pairlist block");
+  
+  // try a PLIST03
+  buffer = m_block["PLIST03"];
+  if (buffer.size()){
+    // we got a NEW block!!!
+    std::string s1, s2;
+    
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    
+    _lineStream >> s1 >> nsnb >> rcutp >> rcutl >> s2;
+    
+    if (_lineStream.fail())
+      throw std::runtime_error("bad line in PLIST03 block");
+    
+    transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    
+    if (s1 == "grid") grid = true;
+    else if (s1 == "standard") grid = false;
+    else{
+      io::messages.add("wrong pairlist algorithm chosen (allowed: standard, grid) in PLIST03 block",
+		       "InInput", io::message::error);
+      grid = false;
+      }
+    
+    if (grid){
+      if (s2 == "auto") size = 0.5 * rcutp;
+      else{
+	size = atof(s2.c_str());
+	if (errno){
+	  io::messages.add("wrong pairlist grid size chosen (allowed: auto, [size]) in PLIST03 block",
+			   "InInput", io::message::error);
+	  size = 0.5 * rcutp;
+	}
+      }
+    }
+    else size = 0;
+  }
+  else{
+    buffer = m_block["PLIST"];
+    
+    if (!buffer.size()){
+      io::messages.add("no PLIST block in input","InInput",io::message::error);
+      size = 0;
+      grid = false;
+      rcutp = 0;
+      rcutl = 0;
+      nsnb = 1;
+      return false;
+    }
+    else{
+      
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+	
+      int i;
+      
+      _lineStream >> i >> nsnb >> rcutp >> rcutl;
+      size = 0;
+      grid = false;
+      
+      if (_lineStream.fail()){
+	io::messages.add("bad line in PLIST block",
+			 "InInput", io::message::error);
+      }
+      
+      DEBUG(7, "pairlist update=" << nsnb);
+      DEBUG(7, "setting short cutoff=" << rcutp << " long cutoff=" << rcutl);
+      
+    }
+  }
+  return true;
 }
