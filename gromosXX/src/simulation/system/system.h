@@ -134,6 +134,17 @@ namespace simulation
      * const pressure accessor.
      */
     math::Matrix const & pressure()const;
+
+    /**
+     * const energy arrays
+     */
+    simulation::Energy const & energies()const;
+
+    /**
+     * energy arrays
+     */
+    simulation::Energy & energies();
+    
     
   protected:
     /**
@@ -213,6 +224,11 @@ namespace simulation
      */
     math::Matrix m_pressure;
     
+    /**
+     * the energies.
+     */
+    Energy m_energy;
+
   }; // System
   
 } // simulation

@@ -270,6 +270,27 @@ simulation::System<b>::box_index(size_t i)
   return m_box_index[i];
 }
 
+/**
+ * const energy accessor.
+ */
+template<math::boundary_enum b>
+inline simulation::Energy const & 
+simulation::System<b>::energies()const
+{
+  return m_energy;
+}
+
+/**
+ * energy accessor.
+ */
+template<math::boundary_enum b>
+inline simulation::Energy & 
+simulation::System<b>::energies()
+{
+  return m_energy;
+}
+
+
 namespace simulation
 {
   template<math::boundary_enum b>

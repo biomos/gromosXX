@@ -142,7 +142,7 @@ namespace interaction
     void lj_crf_interaction(math::Vec const &r,
 			    double const c6, double const c12,
 			    double const q,
-			    math::Vec & force, double & energy);
+			    math::Vec & force, double & e_lj, double & e_crf);
 
   };
   

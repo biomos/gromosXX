@@ -32,6 +32,11 @@ namespace simulation
     explicit Simulation(t_topo &topo, t_system &sys);
     
     /**
+     * const topology accessor
+     */
+    t_topo const & topology()const;
+
+    /**
      * topology accessor
      */
     t_topo & topology();
@@ -39,6 +44,11 @@ namespace simulation
      * system accessor
      */
     t_system & system();
+    /**
+     * const system accessor
+     */
+    t_system const & system()const;
+    
     /**
      * time accessor
      */
@@ -60,6 +70,11 @@ namespace simulation
      * nonbonded parameters
      */
     simulation::Nonbonded & nonbonded();
+
+    /**
+     * the multibath / degree of freedom parameters
+     */
+    simulation::Multibath const & multibath()const;
 
     /**
      * the multibath / degree of freedom parameters

@@ -184,7 +184,7 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 		  nonbonded_type_enum range)
 {
   math::Vec r, f;
-  double energy;
+  double e_lj, e_crf;
   
   math::VArray &pos = sim.system().pos();
 
@@ -209,11 +209,18 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
     lj_crf_interaction(r, lj.c6, lj.c12,
 		       sim.topology().charge()(it.i()) * 
 		       sim.topology().charge()(*it),
-		       f, energy);
+		       f, e_lj, e_crf);
 
     (*force)(it.i()) += f;
     (*force)(*it) -= f;
 
+    // energy
+    sim.system().energies().lj_energy[sim.topology().atom_energy_group(it.i())]
+      [sim.topology().atom_energy_group(*it)] += e_lj;
+
+    sim.system().energies().crf_energy[sim.topology().atom_energy_group(it.i())]
+      [sim.topology().atom_energy_group(*it)] += e_crf;
+    
   }
   
 }
@@ -227,14 +234,19 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 ::lj_crf_interaction(math::Vec const &r,
 		     double const c6, double const c12,
 		     double const q,
-		     math::Vec &force, double &energy)
+		     math::Vec &force, double &e_lj, double &e_crf)
 {
   assert(dot(r,r) != 0);
-  const double dist2i = 1.0 / dot(r, r);
+  const double dist2 = dot(r, r);
+  const double dist2i = 1.0 / dist2;
   const double dist6i = dist2i * dist2i * dist2i;
+  const double disti = sqrt(dist2i);
   
   force = ((2 * c12 * dist6i - c6) * 6.0 * dist6i * dist2i + 
-    q * coulomb_constant() * (sqrt(dist6i) + m_crf_cut3i)) * r;
+    q * coulomb_constant() * (disti * dist2i + m_crf_cut3i)) * r;
+
+  e_lj = (c12 * dist6i - c6) * dist6i;
+  e_crf = q * coulomb_constant() * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
   
 }
 
@@ -247,7 +259,7 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
 ::do_14_interactions(t_simulation &sim)
 {
   math::Vec r, f;
-  double energy;
+  double e_lj, e_crf;
 
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
@@ -274,10 +286,18 @@ inline void interaction::Nonbonded_Interaction<t_simulation, t_pairlist>
       lj_crf_interaction(r, lj.cs6, lj.cs12,
 			 sim.topology().charge()(i) * 
 			 sim.topology().charge()(*it),
-			 f, energy);
+			 f, e_lj, e_crf);
 
       force(i) += f;
       force(*it) -= f;
+
+    // energy
+    sim.system().energies().lj_energy[sim.topology().atom_energy_group(i)]
+      [sim.topology().atom_energy_group(*it)] += e_lj;
+
+    sim.system().energies().crf_energy[sim.topology().atom_energy_group(i)]
+      [sim.topology().atom_energy_group(*it)] += e_crf;
+
 
     } // loop over 1,4 pairs
   } // loop over solute atoms

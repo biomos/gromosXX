@@ -4,6 +4,7 @@
  */
 
 #include "../interaction/forcefield/parameter.h"
+#include "system/energy.h"
 #include "system/system.h"
 #include "topology/atom_iterator.h"
 #include "topology/atom_group_iterator.h"

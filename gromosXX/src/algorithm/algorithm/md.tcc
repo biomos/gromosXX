@@ -503,6 +503,9 @@ void algorithm::MD<t_simulation, t_temperature, t_pressure,
       throw;
     }
 
+    if (m_print_energy && m_simulation.steps() % m_print_energy == 0)
+      io::print_ENERGY(std::cout, m_simulation);
+
     DEBUG(8, "md: calculate pressure");
     if (m_calculate_pressure){
       m_pressure.apply(m_simulation, m_dt);

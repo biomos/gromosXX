@@ -243,7 +243,44 @@ inline io::InInput & io::InInput
       
     }
     
-  }
+  } // TEMPERATURE coupling
+  
+  { // ENERGY groups
+
+    buffer = m_block["FORCE"];
+    
+    if (buffer.size() < 4){
+      io::messages.add("wrong FORCE block (energy groups)",
+		       "InInput", io::message::error);
+    }
+    else{
+      
+      std::string egroup;
+      concatenate(buffer.begin()+2, buffer.end()-1, egroup);
+      _lineStream.clear();
+      _lineStream.str(egroup);
+      
+      size_t num, e, atom = 0;
+      _lineStream >> num;
+      
+      for(size_t i=0; i<num; ++i){
+	_lineStream >> e;
+	sim.topology().energy_groups().push_back(e);
+	for( ; atom < e; ++atom){
+	  sim.topology().atom_energy_group().push_back(i);
+	}
+      }
+
+      if (_lineStream.fail())
+	io::messages.add("bad line in SUBMOLECULES block",
+			 "InInput", io::message::error);
+
+      // and resize
+      sim.system().energies().resize(num);
+      
+    }
+
+  } // ENERGY groups
 
   return *this;
 }

@@ -344,6 +344,50 @@ inline std::vector<size_t> & simulation::Topology::molecules()
   return m_molecule;
 }
 
+/**
+ * const energy group accessor.
+ */
+inline std::vector<size_t> const & simulation::Topology::energy_groups()const
+{
+  return m_energy_group;
+}
+
+/**
+ * energy group accessor.
+ */
+inline std::vector<size_t> & simulation::Topology::energy_groups()
+{
+  return m_energy_group;
+}
+
+/**
+ * const atom energy group accessor.
+ */
+inline std::vector<size_t> const & 
+simulation::Topology::atom_energy_group()const
+{
+  return m_atom_energy_group;
+}
+
+/**
+ * atom energy group accessor.
+ */
+inline std::vector<size_t> & 
+simulation::Topology::atom_energy_group()
+{
+  return m_atom_energy_group;
+}
+
+/**
+ * atom energy group accessor.
+ */
+inline const size_t 
+simulation::Topology::atom_energy_group(size_t i)const
+{
+  assert(i < m_atom_energy_group.size());
+  return m_atom_energy_group[i];
+}
+
 namespace simulation
 {
   /**

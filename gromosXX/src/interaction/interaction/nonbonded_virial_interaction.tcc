@@ -101,7 +101,7 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
 		  ::nonbonded_type_enum range)
 {
   math::Vec r, f, r_com;
-  double energy;
+  double e_lj, e_crf;
   
   math::VArray &pos = sim.system().pos();
   math::SArray &charge = sim.topology().charge();
@@ -137,7 +137,7 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
     lj_crf_interaction(r, lj.c6, lj.c12,
 		       charge(it.i()) * 
 		       charge(*it),
-		       f, energy);
+		       f, e_lj, e_crf);
 
     (*force)(it.i()) += f;
     (*force)(*it) -= f;
@@ -146,6 +146,13 @@ inline void interaction::Nonbonded_Virial_Interaction<t_simulation, t_pairlist>
       for(int j=0; j<3; ++j)
 	(*virial)(i, j) += (r(i) - m_com_pos(it.i())(i) + m_com_pos(*it)(i)) 
 	  * f(j);
+
+    // energy
+    sim.system().energies().lj_energy[sim.topology().atom_energy_group(it.i())]
+      [sim.topology().atom_energy_group(*it)] += e_lj;
+
+    sim.system().energies().crf_energy[sim.topology().atom_energy_group(it.i())]
+      [sim.topology().atom_energy_group(*it)] += e_crf;
 
   }
     

@@ -160,6 +160,31 @@ namespace simulation
      * end of molecule iterator.
      */
     Molecule_Iterator molecule_end();
+
+    /**
+     * const energy group accessor.
+     */
+    std::vector<size_t> const & energy_groups()const;
+
+    /**
+     * energy group accessor.
+     */
+    std::vector<size_t> & energy_groups();
+
+    /**
+     * const energy group of atoms accessor.
+     */
+    std::vector<size_t> const & atom_energy_group()const;
+
+    /**
+     * energy group of atoms accessor.
+     */
+    std::vector<size_t> & atom_energy_group();
+  
+    /**
+     * energy group of atom accessor
+     */
+    const size_t atom_energy_group(size_t i)const;
     
   private:
     /**
@@ -232,6 +257,17 @@ namespace simulation
      * residue names (solute and solvent).
      */
     std::vector<std::string> m_residue_name;
+
+    /**
+     * energy groups.
+     */
+    std::vector<size_t> m_energy_group;
+    
+    /**
+     * energy group of atom
+     */
+    std::vector<size_t> m_atom_energy_group;
+
     
   }; // topology
   
