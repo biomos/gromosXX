@@ -51,7 +51,7 @@ io::getblock(
       break;
 
     if (!is.good()) 
-      throw std::runtime_error("error reading block.");
+      throw std::runtime_error("error reading block: " + *(b.begin()));
 
     ++dest;
   }

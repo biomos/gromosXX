@@ -44,12 +44,32 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
 
   // read in the files - those are necessary
   std::ifstream topo_file(args["topo"].c_str());
+  if (!topo_file.good())
+    io::messages.add("unable to open topology file: " + args["topo"], "md.tcc",
+		     io::message::error);
+  else 
+    io::messages.add("parsing topology file: " + args["topo"], "md.tcc",
+		     io::message::notice);
   io::InTopology topo(topo_file);
   
   std::ifstream sys_file(args["struct"].c_str());
+  if (!sys_file.good())
+    io::messages.add("unable to open initial structure file: " + args["struct"], 
+                     "md.tcc",
+		     io::message::error);
+  else
+    io::messages.add("parsing initial structure file: " + args["struct"], "md.tcc",
+		     io::message::notice);
   io::InTrajectory sys(sys_file);
 
   std::ifstream input_file(args["input"].c_str());
+  if (!input_file.good())
+    io::messages.add("unable to open input file: " + args["input"], 
+                     "md.tcc",
+		     io::message::error);
+  else
+    io::messages.add("parsing input file: " + args["input"], "md.tcc",
+		     io::message::notice);
   io::InInput input(input_file);
 
   topo >> m_simulation.topology();
