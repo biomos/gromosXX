@@ -76,18 +76,23 @@ int main(int argc, char *argv[]){
 
     io::Argument args(argc, argv, nknowns, knowns, usage);
     
+    if (args.count("version") >= 0){
+      
 #ifdef NDEBUG
 #ifndef BZDEBUG
-    std::cout << "\033[1;32m";
+      std::cout << "\033[1;32m";
 #else
-    std::cout << "\033[1;31m";
+      std::cout << "\033[1;31m";
 #endif
 #else
-    std::cout << "\033[1;31m";
+      std::cout << "\033[1;31m";
 #endif
-    
-    std::cout << "\n\nGromosXX 0.1.2 development\033[22;0m\n\n"
-	      << "20. January 2004\n";
+      std::cout << "\n\nGromosXX 0.1.2 development\033[22;0m\n\n"
+		<< "20. January 2004\n";
+    }
+    else
+      std::cout << "\n\nGromosXX 0.1.2 development\n\n"
+		<< "20. January 2004\n";
     
     std::cout << "build date    " << BUILD_DATE << "\n"
 	      << "build number  " << BUILD_NUMBER << "\n\n";
@@ -249,13 +254,18 @@ int main(int argc, char *argv[]){
 					    sim.time_step_size());
       // perturbed energy derivatives
       if (sim.param().perturbation.perturbation){
-	conf.old().perturbed_energy_derivatives.calculate_totals();
+	// multiple lambda dependencies
+	for(size_t s = 0, s_to = conf.old().perturbed_energy_derivatives.size();
+	    s != s_to; ++s){
 
-	conf.current().perturbed_energy_derivative_averages.update
-	  (conf.old().perturbed_energy_derivatives,
-	   conf.old().perturbed_energy_derivative_averages,
-	   sim.time_step_size(),
-	   sim.param().perturbation.dlamt);
+	  conf.old().perturbed_energy_derivatives[s].calculate_totals();
+
+	  conf.current().perturbed_energy_derivative_averages[s].update
+	    (conf.old().perturbed_energy_derivatives[s],
+	     conf.old().perturbed_energy_derivative_averages[s],
+	     sim.time_step_size(),
+	     sim.param().perturbation.dlamt);
+	}
       }
 
       traj.print(topo, conf, sim);

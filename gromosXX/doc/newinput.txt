@@ -103,9 +103,10 @@ PERTURB03
 #			on	perturbation on 
 #				(nonbonded: all atom pairs involving a perturbed atom)
 #			off	perturbation off
-#			scaled	nonbonded: perturbation on for all atom pairs with a scaled interaction,
-#					otherwise off
-#					bonded: on
+#			scaled	nonbonded: perturbation on for all atom pairs 
+					   with a scaled interaction,
+#					   otherwise off
+#				bonded: normal perturbation on
 #	SCALING:
 #			on (activate interaction scaling)
 #  			off (deactivate interaction scaling)
@@ -114,4 +115,59 @@ PERTURB03
 #	NTG:		on / off
 #	NTG	RLAM	DLAMT	NLAM	SCALING
 	on	0.5		1.0		1.0		off
+END
+
+============================================================================
+if scaling is requested, the PERTURBATION TOPOLOGY needs an additional
+block
+
+SCALEDINTERACTIONS
+# example:
+# for all nonbonded interactions between atoms belonging to
+# energy group 1 and atoms belonging into energy group 2, the forces and
+# energies will be scaled by a lambda dependent scaling factor (varying
+# linearly from 0.5 at lambda=0 to 1 at lambda=1. Interactions between
+# energy group 1 and energy group 3 are always scaled by 0.25.
+#
+#	number of scaled interactions
+2
+#	energy group 1	energy group 2	scaling A	scaling B
+	1		2		0.5		1
+	1		3		0.25		0.25
+END
+
+
+LAMBDADEP
+#	provides the possibility to change the linear dependence
+#	on lambda for specified interactions (to a parabolic one)
+#
+#	number of changed lambda dependencies
+	2
+#	energy group 1	energy group 2	paramater
+	1		3		 0.25
+	2		5		-0.6
+#
+#	l' = a * l^2 + (1-a) * l
+#	this ensures l' = 0 if l = 0 
+#	and          l' = 1 if l = 1
+#
+#	now the extremum should be outside (0, 1) so that
+#	l' always lies in the range [0, 1].
+#
+#	extremum is at:
+#	0 = 2 * a * l + (1 - a)
+#	l = (a - 1) / (2 * a)
+#	max @ >= 1, a must be negative
+#	     1 <= -1/(2a) + 1/2
+#	     1 <= -1/a
+#	     a >= -1
+#
+#	min @ <= 0, a must be positive:
+#	     0  >= -1/(2a) + 1/2
+#	     -1 >= -1/a
+#	     a  <= 1
+#
+#	acceptable values for a:
+#	a = 0 (linear dependence)
+#	-1 <= a <= 1
 END
