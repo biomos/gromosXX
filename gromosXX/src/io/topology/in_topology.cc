@@ -237,7 +237,7 @@ io::In_Topology::read(topology::Topology& topo,
       _lineStream >> num;
       ++it;
       
-      if (param.shake.ntc == 2 || param.shake.ntc == 3){
+      if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
 	std::cout << "\n\t\t"
 		  << num
 		  << " bonds from BONDH block added to CONSTRAINT";
@@ -264,7 +264,7 @@ io::In_Topology::read(topology::Topology& topo,
 			   "In_Topology", io::message::error);
 	}
 	
-	if (param.shake.ntc == 2 || param.shake.ntc == 3){
+	if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
 	  topo.solute().distance_constraints().
 	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
 	}
@@ -296,7 +296,7 @@ io::In_Topology::read(topology::Topology& topo,
       _lineStream >> num;
       ++it;
 
-      if (param.shake.ntc == 3){
+      if (param.constraint.ntc == 3){
 	std::cout << "\n\t\t"
 		  << num
 		  << " bonds from BOND block added to CONSTRAINT";
@@ -324,7 +324,7 @@ io::In_Topology::read(topology::Topology& topo,
 			   "In_Topology", io::message::error);
 	}
       
-	if (param.shake.ntc == 3){
+	if (param.constraint.ntc == 3){
 	  topo.solute().distance_constraints().
 	    push_back(topology::two_body_term_struct(i-1, j-1, t-1));
 	}
@@ -355,7 +355,7 @@ io::In_Topology::read(topology::Topology& topo,
     DEBUG(10, "CONSTRAINT block");
     buffer = m_block["CONSTRAINT"];
   
-    if (buffer.size() && param.shake.ntc != 1){
+    if (buffer.size() && param.constraint.ntc != 1){
       
       it = buffer.begin() + 1;
       _lineStream.clear();

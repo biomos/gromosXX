@@ -8,6 +8,7 @@ include_HEADERS =	algorithm.h \
 			pressure/pressure_calculation.h \
 			pressure/berendsen_barostat.h \
 			create_md_sequence.h \
+			constraints/create_constraints.h \
 			constraints/shake.h \
 			constraints/shake.tcc \
 			constraints/perturbed_shake.h \
@@ -30,6 +31,7 @@ libalgorithm_la_SOURCES =	algorithm.cc \
 				temperature/berendsen_thermostat.cc \
 				pressure/pressure_calculation.cc \
 				pressure/berendsen_barostat.cc \
+				constraints/create_constraints.cc \
 				constraints/remove_com_motion.cc \
 				integration/slow_growth.cc \
 				integration/steepest_descent.cc

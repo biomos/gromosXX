@@ -1,31 +1,39 @@
 /**
- * @file shake.h
- * the shake algorithm.
+ * @file flexible_constraint.h
+ * the flexible shake algorithm
  */
 
-#ifndef INCLUDED_SHAKE_H
-#define INCLUDED_SHAKE_H
+#ifndef INCLUDED_FLEXIBLE_CONSTRAINT_H
+#define INCLUDED_FLEXIBLE_CONSTRAINT_H
 
 namespace algorithm
 {
   /**
-   * @class Shake
-   * implements the shake algorithm.
+   * @class Flexible_Constraint
+   * calculates the flexible constraint distance
    */
-  template<math::virial_enum do_virial>
-  class Shake : public Algorithm
+  template<typename math::virial_enum do_virial>
+  class Flexible_Constraint
   {
   public:
     /**
      * Constructor.
      */
-    Shake(double const tolerance = 0.000001, int const max_iterations = 1000);
+    Flexible_Constraint(double const tolerance = 0.000001,
+			int const max_iterations = 1000);
 
     /**
      * Destructor.
      */
-    virtual ~Shake();
-        
+    virtual ~Flexible_Constraint();
+
+    /**
+     * initialization.
+     */
+    virtual int init(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim);
+
     /**
      * apply shake.
      */
@@ -62,43 +70,25 @@ namespace algorithm
       return m_parameter;
     }
 
-    /**
-     * initialize startup positions and velocities
-     * if required.
-     */
-    virtual int init(topology::Topology & topo,
-		     configuration::Configuration & conf,
-		     simulation::Simulation & sim);
-
-    /**
-     * print out timing results.
-     */
-    virtual void print_timing(std::ostream & os);
-
   protected:
-
     /**
      * shake tolerance
      */
     double m_tolerance;
     /**
-     * max iterations
+     * max iterations.
      */
     const int m_max_iterations;
     /**
      * bond parameter
      */
     std::vector<interaction::bond_type_struct> m_parameter;
-    /**
-     * time spent for solvent
-     */
-    double m_solvent_timing;
 
   };
   
-} //algorithm
+  
+} // algorithm
 
-// template methods
-#include "shake.tcc"
+#include "flexible_constraint.tcc"
 
 #endif

@@ -45,6 +45,7 @@ static int _solve(topology::Topology & topo,
 		  math::SArray rhs[],
 		  math::SArray & sol,
 		  topology::Compound::lincs_struct const & lincs,
+		  int const lincs_order,
 		  size_t const offset = 0)
 {
   DEBUG(8, "LINCS SOLVE");
@@ -54,7 +55,7 @@ static int _solve(topology::Topology & topo,
   const size_t num_constr = constr.size();
   math::VArray & pos = conf.current().pos;
   
-  for(size_t rec=0; int(rec) < sim.param().shake.lincs_order; ++rec){
+  for(size_t rec=0; int(rec) < lincs_order; ++rec){
     for(size_t i=0; i < num_constr; ++i){
       DEBUG(9, "rhs[" << i << "] = " << rhs[1-w](i));
       rhs[w](i) = 0.0;
@@ -86,6 +87,7 @@ static int _lincs(topology::Topology & topo,
 		  std::vector<topology::two_body_term_struct> const & constr,
 		  topology::Compound::lincs_struct const & lincs,
 		  std::vector<interaction::bond_type_struct> const & param,
+		  int const lincs_order,
 		  double & timing,
 		  size_t const offset = 0)
 {
@@ -143,7 +145,7 @@ static int _lincs(topology::Topology & topo,
 
   }
 
-  _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, offset);
+  _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
   
   // correction for rotational lengthening
   double p;
@@ -167,7 +169,7 @@ static int _lincs(topology::Topology & topo,
 
   }
 
-  _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, offset);
+  _solve(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
 
   if (count)
     std::cout << "LINCS:\ttoo much rotation in " << count << " cases!\n";
@@ -195,8 +197,9 @@ static int _solvent(topology::Topology & topo,
 	++nm, first+=topo.solvent(i).num_atoms()){
 
       _lincs<b>(topo, conf, sim, topo.solvent(i).distance_constraints(),
-		topo.solvent(i).lincs(), param, timing, first);
-      
+		topo.solvent(i).lincs(), 
+		param, sim.param().constraint.solvent.lincs_order,
+		timing, first);
     }
   }
  
@@ -219,39 +222,52 @@ int algorithm::Lincs<do_virial>
   
   // check whether we "shake" solute
   if (topo.solute().distance_constraints().size() && 
-      sim.param().shake.ntc > 1){
+      sim.param().constraint.solute.algorithm == simulation::constr_lincs &&
+      sim.param().constraint.ntc > 1){
+
     DEBUG(8, "\twe need to shake SOLUTE");
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
 	_lincs<math::vacuum>(topo, conf, sim, topo.solute().distance_constraints(),  
-			     topo.solute().lincs(), parameter(), m_timing);
+			     topo.solute().lincs(),
+			     parameter(), sim.param().constraint.solute.lincs_order,
+			     m_timing);
 	break;
       case math::rectangular:
-	_lincs<math::rectangular>(topo, conf, sim, topo.solute().distance_constraints(),  
-				  topo.solute().lincs(), parameter(), m_timing);
+	_lincs<math::rectangular>(topo, conf, sim, topo.solute().distance_constraints(),
+				  topo.solute().lincs(), 
+				  parameter(), sim.param().constraint.solute.lincs_order,
+				  m_timing);
 	break;
       case math::triclinic:
 	_lincs<math::triclinic>(topo, conf, sim, topo.solute().distance_constraints(),  
-				topo.solute().lincs(), parameter(), m_timing);
+				topo.solute().lincs(), 
+				parameter(), sim.param().constraint.solute.lincs_order,
+				m_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");
     }
   }
 
-  if (sim.param().system.nsm){
+  if (sim.param().system.nsm &&
+      sim.param().constraint.solvent.algorithm == simulation::constr_lincs){
+
     DEBUG(8, "\twe need to shake SOLVENT");
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	_solvent<do_virial, math::vacuum>(topo, conf, sim, parameter(), m_solvent_timing);
+	_solvent<do_virial, math::vacuum>(topo, conf, sim, parameter(), 
+					  m_solvent_timing);
 	break;
       case math::rectangular:
-	_solvent<do_virial, math::rectangular>(topo, conf, sim, parameter(), m_solvent_timing);
+	_solvent<do_virial, math::rectangular>(topo, conf, sim, parameter(),
+					       m_solvent_timing);
 	break;
       case math::triclinic:
-	_solvent<do_virial, math::triclinic>(topo, conf, sim, parameter(), m_solvent_timing);
+	_solvent<do_virial, math::triclinic>(topo, conf, sim, parameter(),
+					     m_solvent_timing);
 	break;
       default:
 	throw std::string("wrong boundary type");

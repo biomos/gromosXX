@@ -240,7 +240,9 @@ int algorithm::Perturbed_Shake<do_virial>
   
   // check whether we shake
   if (topo.perturbed_solute().distance_constraints().size() && 
-      sim.param().shake.ntc > 1){
+      sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+      sim.param().constraint.ntc > 1){
+
     DEBUG(8, "\twe need to shake perturbed SOLUTE");
     do_vel = true;
     switch(conf.boundary_type){

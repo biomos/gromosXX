@@ -82,13 +82,13 @@ io::In_Perturbation::read(topology::Topology &topo,
       _lineStream >> num;
       ++it;
       
-      if (param.shake.ntc == 2){
+      if (param.constraint.ntc == 2){
 	io::messages.add("No perturbed distance constraints for "
 			 "NTC = 2 from perturbed bonds",
 			 "in_perturbation",
 			 io::message::warning);
       }
-      else if (param.shake.ntc == 3){
+      else if (param.constraint.ntc == 3){
 	std::cout << "\n\t\t"
 		  << num
 		  << " perturbed bonds from PERTBOND03 block added to "
@@ -116,7 +116,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	topology::two_body_term_struct b(i-1, j-1, t_A-1);
 
-	if (param.shake.ntc != 3){
+	if (param.constraint.ntc != 3){
 	  std::vector<topology::two_body_term_struct>::iterator b_it
 	    = std::find(topo.solute().bonds().begin(), 
 			topo.solute().bonds().end(), 
@@ -191,7 +191,7 @@ io::In_Perturbation::read(topology::Topology &topo,
     DEBUG(10, "PERTCONSTRAINT03 block");
     buffer = m_block["PERTCONSTRAINT03"];
   
-    if (buffer.size() && param.shake.ntc != 1){
+    if (buffer.size() && param.constraint.ntc != 1){
       
       it = buffer.begin() + 1;
       _lineStream.clear();

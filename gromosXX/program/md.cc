@@ -100,7 +100,12 @@ int main(int argc, char *argv[]){
       throw std::string("write free energy trajectory but no trg argument");
 
     std::cout << "\nMESSAGES FROM INITIALIZATION\n";
-    io::messages.display(std::cout);
+    if (io::messages.display(std::cout) >= io::message::error){
+      // exit
+      std::cout << "\nErrors during initialization!\n" << std::endl;
+      return 1;
+    }
+    
     io::messages.clear();
 
     std::cout.precision(5);

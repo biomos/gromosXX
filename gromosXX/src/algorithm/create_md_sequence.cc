@@ -33,9 +33,8 @@
 #include <interaction/forcefield/create_forcefield.h>
 
 #include <math/periodicity.h>
-#include <algorithm/constraints/shake.h>
-#include <algorithm/constraints/perturbed_shake.h>
-#include <algorithm/constraints/lincs.h>
+
+#include <algorithm/constraints/create_constraints.h>
 #include <algorithm/constraints/remove_com_motion.h>
 
 #include <algorithm/integration/slow_growth.h>
@@ -93,68 +92,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(new algorithm::Leap_Frog_Position);
   }
   
-  // SHAKE
-  DEBUG(7, "SHAKE?");
-  if (sim.param().system.nsm || sim.param().shake.ntc > 1){
-    DEBUG(8, "\tyes, we need it");
-    switch(sim.param().pcouple.virial){
-      case math::no_virial:
-      case math::molecular_virial:
-	{
-	  DEBUG(8, "\twith no virial");
-	  if (sim.param().shake.lincs){
-	    // LINCS
-	    DEBUG(8, "trying LINCS");
-	    algorithm::Lincs<math::no_virial> * s =
-	      new algorithm::Lincs<math::no_virial>;
-	    it.read_harmonic_bonds(s->parameter());
-	    s->init(topo, conf, sim);
-	    md_seq.push_back(s);
-	  }
-	  else{
-	    // SHAKE
-	    algorithm::Shake<math::no_virial> * s = 
-	      new algorithm::Shake<math::no_virial>
-	      (sim.param().shake.tolerance);
-	    it.read_harmonic_bonds(s->parameter());
-	    s->init(topo, conf, sim);
-	    md_seq.push_back(s);
-	  
-	    if (sim.param().perturbation.perturbation){
-	      algorithm::Perturbed_Shake<math::no_virial> * ps =
-		new algorithm::Perturbed_Shake<math::no_virial>(*s);
-	      ps->init(topo, conf, sim);
-	      md_seq.push_back(ps);
-	    }
-	  }
-	  
-	  break;
-	}
-      case math::atomic_virial:
-	DEBUG(8, "\twith atomic virial");
-	  algorithm::Shake<math::atomic_virial> * s = 
-	    new algorithm::Shake<math::atomic_virial>
-	    (sim.param().shake.tolerance);
-	  it.read_harmonic_bonds(s->parameter());
-	  s->init(topo, conf, sim);
-	  md_seq.push_back(s);
-
-	  if (sim.param().perturbation.perturbation){
-	    algorithm::Perturbed_Shake<math::atomic_virial> * ps =
-	      new algorithm::Perturbed_Shake<math::atomic_virial>(*s);
-	    ps->init(topo, conf, sim);
-	    md_seq.push_back(ps);
-	  }
-
-	break;
-    }
-  }
-  else if (sim.param().start.shake_pos || sim.param().start.shake_vel){
-    io::messages.add("Shaking initial positions / velocities without "
-		     "using shake during the simulation illegal.",
-		     "create md sequence",
-		     io::message::error);
-  }
+  // CONSTRAINTS
+  create_constraints(md_seq, topo, conf, sim, it);
 
   // temperature calculation (always!)
   {

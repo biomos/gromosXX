@@ -1,40 +1,38 @@
 /**
- * @file shake.tcc
- * contains the template methods for
- * the class Shake.
+ * @file flexible_constraint.tcc
+ * implements flexible constraint algorithm
  */
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
-#define SUBMODULE constraints
+#define SUBMODULE constraint
 
-#include <util/error.h>
+#include <util/debug.h>
 
 /**
  * Constructor.
  */
 template<math::virial_enum do_virial>
-algorithm::Shake<do_virial>
-::Shake(double const tolerance, int const max_iterations)
-  : Algorithm("Shake"),
+algorithm::Flexible_Constraint<do_virial>
+::Flexible_Constraint(double const tolerance, int const max_iterations)
+  : Algorithm("FlexibleShake"),
     m_tolerance(tolerance),
-    m_max_iterations(max_iterations),
-    m_solvent_timing(0.0)
+    m_max_iterations(max_iterations)
 {
 }
 
 /**
- * Destructor.
+ * Destructor
  */
 template<math::virial_enum do_virial>
-algorithm::Shake<do_virial>
-::~Shake()
+algorithm::Flexible_Constraint<do_virial>
+::~Flexible_Constraint()
 {
 }
 
 template<math::virial_enum do_virial>
-void algorithm::Shake<do_virial>
+void algorithm::Flexible_Constraint<do_virial>
 ::tolerance(double const tol)
 {
   m_tolerance = tol;
@@ -44,18 +42,16 @@ void algorithm::Shake<do_virial>
  * do one iteration
  */      
 template<math::virial_enum do_virial, math::boundary_enum b>
-static int _shake(topology::Topology const &topo,
-		  configuration::Configuration & conf,
-		  bool & convergence,
-		  int const first,
-		  std::vector<bool> &skip_now,
-		  std::vector<bool> &skip_next,
-		  std::vector<topology::two_body_term_struct> const & constr,
-		  std::vector<interaction::bond_type_struct> const & param,
-		  double const dt,
-		  math::Periodicity<b> const & periodicity,
-		  double const tolerance,
-		  bool do_constraint_force = false, size_t force_offset = 0)
+static int _flexible_shake(topology::Topology const &topo,
+			   configuration::Configuration & conf,
+			   bool & convergence,
+			   std::vector<double> flex_len,
+			   std::vector<bool> &skip_now,
+			   std::vector<bool> &skip_next,
+			   double const dt,
+			   math::Periodicity<b> const & periodicity,
+			   double const tolerance,
+			   bool do_constraint_force = false)
 {
   convergence = true;
 
@@ -66,8 +62,8 @@ static int _shake(topology::Topology const &topo,
   // and constraints
   for(typename std::vector<topology::two_body_term_struct>
 	::const_iterator
-	it = constr.begin(),
-	to = constr.end();
+	it = topo.solute().distance_constraints().begin(),
+	to = topo.solute().distance_constraints().end();
       it != to;
       ++it, ++k ){
 	
@@ -86,14 +82,14 @@ static int _shake(topology::Topology const &topo,
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = dot(r, r);
 	
-    double constr_length2 = param[it->type].r0 * param[it->type].r0;
+    double constr_length2 = flex_len[k] * flex_len[k];
     double diff = constr_length2 - dist2;
 
     DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
 	  
     if(fabs(diff) >= constr_length2 * tolerance * 2.0){
       // we have to shake
-      DEBUG(10, "shaking");
+      DEBUG(10, "flexible shaking");
       
       // the reference position
       const math::Vec &ref_i = conf.old().pos(first+it->i);
@@ -115,7 +111,7 @@ static int _shake(topology::Topology const &topo,
 	DEBUG(5, "ref r " << ref_r);
 	DEBUG(5, "r " << r);
 
-	std::cout << "SHAKE ERROR\n"
+	std::cout << "FLEXIBLE SHAKE ERROR (orthogonal vectors)\n"
 		  << "\tatom i    : " << it->i << "\n"
 		  << "\tatom j    : " << it->j << "\n"
 		  << "\tfirst     : " << first << "\n"
@@ -184,23 +180,125 @@ static int _shake(topology::Topology const &topo,
 
 }    
 
+template<math::virial_enum do_virial, math::boundary_enum b>
+static void _calc_distance(topology::Topology const &topo,
+			   configuration::Configuration const & conf,
+			   simulation::Simulation const & sim,
+			   std::vector<double> & flex_len)
+{
+  flex_len.clear();
+
+  math::Periodicity<b> periodicity(conf.current().box);
+
+  //loop over all constraints
+  size_t k = 0;
+  for(std::vector<topology::two_body_term_struct>::const_iterator
+	it = topo.solute().distance_constraints().begin(),
+	to = topo.solute().distance_constraints().end();
+      it != to;
+      ++it, ++k){
+    
+    // the position
+    assert(conf.current().pos.size() > it->i);
+    assert(conf.current().pos.size() > it->j);
+    
+    math::Vec &pos_i = conf.current().pos(it->i);
+    math::Vec &pos_j = conf.current().pos(it->j);
+	
+    math::Vec r;
+    periodicity.nearest_image(pos_i, pos_j, r);
+
+    // unconstrained distance
+    const double dist2 = dot(r, r);
+    
+    assert(conf.old().pos.size() > it->i);
+    assert(conf.old().pos.size() > it->j);
+
+    const math::Vec &ref_i = conf.old().pos(it->i);
+    const math::Vec &ref_j = conf.old().pos(it->j);
+      
+    math::Vec ref_r;
+    periodicity.nearest_image(ref_i, ref_j, ref_r);
+
+    // reference distance
+    const double ref_dist2 = dot(ref_r, ref_r);
+
+    // standard formula with velocity along contsraints correction
+    // (not the velocityless formula):
+    assert(topo.mass().size() > it->i);
+    assert(topo.mass().size() > it->j);
+
+    const double red_mass = 1 / (1/topo.mass()(it->i) + 1/topo.mass()(it->j));
+    const double dt2 = dt * dt;
+      
+    // calculate the force on constraint k
+    assert(conf.special().flexible_vel.size() > k);
+
+    const double force_on_constraint  = (red_mass / dt2) * 
+      (sqrt(dist2) - sqrt(ref_dist2) - conf.special().flexible_vel[k] * dt);
+
+    // zero energy distance
+
+    // =================================================
+    // it->type:  -> ideal bond length
+    // flex_len:  flexible constraint distance
+    // =================================================
+
+    // const double constr_length2 = param(it->type).r0 * param(it->type).r0;
+    
+    // calculate the flexible constraint distance
+    const double new_len = force_on_constraint / param(it->type).K + param(it->type).r0;
+    
+    // store for shake
+    flex_len.push_back(new_len);
+
+    // update the velocity array
+    conf.special().flexible_vel[k] = (new_len - sqrt(ref_dist2)) / dt;
+
+    // now we have to store the kinetic energy of the constraint
+    // length change in the correct temperature bath...
+    sim.multibath().in_bath(it->i, com, ir);
+
+    conf.special().flex_ekin[ir] +=
+      0.5 * red_mass * conf.special().flexible_vel[k] *
+      conf.special().flexible_vel[k];
+
+    DEBUG(8, "constr " << it->i << " bath " << ir << " ekin " 
+	  << 0.5 * red_mass * conf.special().flexible_vel[k] * 
+	  conf.special().flexible_vel[k]);
+
+
+    // calculate Epot in the bond length constraints
+    conf.special().flexible_epot += 
+      0.5 * param(it->type).K * (param(it->type).r0 - new_len) * 
+      (param(it->type).r0 - new_len);
+      
+    DEBUG(5, "flex_constraint_distance: " << new_len);
+    
+  } // loop over all constraints
+  
+}
+
 /**
  * shake solute
  */
 template<math::virial_enum do_virial, math::boundary_enum b>
-static int solute(topology::Topology const & topo,
-		  configuration::Configuration & conf,
-		  std::vector<interaction::bond_type_struct> const & param,
-		  double dt, int const max_iterations,
-		  double const tolerance,
-		  double & timing)
+static int _flexible_solute(topology::Topology const & topo,
+			    configuration::Configuration & conf,
+			    std::vector<interaction::bond_type_struct> const & param,
+			    double dt, int const max_iterations,
+			    double const tolerance,
+			    double & timing)
 {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
 
-  DEBUG(8, "\tshaking SOLUTE");
+  DEBUG(8, "\tFlexible shaking SOLUTE");
   math::Periodicity<b> periodicity(conf.current().box);
   
+  std::vector<double> flex_len;
+  _calc_distance(topo, conf, sim, flex_len);
+
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
 
@@ -219,21 +317,21 @@ static int solute(topology::Topology const & topo,
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    if(_shake<do_virial, b>
+    if(_flexible_shake<do_virial, b>
        (topo, conf, convergence, first, skip_now, skip_next,
 	topo.solute().distance_constraints(), param, dt,
 	periodicity, tolerance, true)
        ){
-      io::messages.add("SHAKE error. vectors orthogonal",
-		       "Shake::solute",
+      io::messages.add("Flexible SHAKE error. vectors orthogonal",
+		       "Flexible_Constraint::solute",
 		       io::message::error);
-      std::cout << "SHAKE failure in solute!" << std::endl;
+      std::cout << "Flexible SHAKE failure in solute!" << std::endl;
       return E_SHAKE_FAILURE_SOLUTE;
     }
     
     if(++num_iterations > max_iterations){
-      io::messages.add("SHAKE error. too many iterations",
-		       "Shake::solute",
+      io::messages.add("Flexible SHAKE error. too many iterations",
+		       "Flexible_Constraint::solute",
 		       io::message::error);
       return E_SHAKE_FAILURE_SOLUTE;
     }
@@ -255,124 +353,40 @@ static int solute(topology::Topology const & topo,
   timing += util::now() - start;
 
   return 0;
-
-} // solute
-
-
-/**
- * shake solvent.
- */
-template<math::virial_enum do_virial, math::boundary_enum b>
-static int solvent(topology::Topology const & topo,
-		   configuration::Configuration & conf,
-		   std::vector<interaction::bond_type_struct> &param,
-		   double dt, int const max_iterations, 
-		   double const tolerance,
-		   double & timing)
-{
-
-  DEBUG(8, "\tshaking SOLVENT");
-  
-  const double start = util::now();
-
-  // the first atom of a solvent
-  size_t first = topo.num_solute_atoms();
-
-  std::vector<bool> skip_now;
-  std::vector<bool> skip_next;
-  int tot_iterations = 0;
-
-  math::Periodicity<b> periodicity(conf.current().box);
-
-  // for all solvents
-  for(size_t i=0; i<topo.num_solvents(); ++i){
-
-    // loop over the molecules
-    for(size_t nm=0; nm<topo.num_solvent_molecules(i);
-	++nm, first+=topo.solvent(i).num_atoms()){
-
-      skip_now.assign(topo.solvent(i).num_atoms(), false);
-      skip_next.assign(topo.solvent(i).num_atoms(), true);
-
-      int num_iterations = 0;
-      bool convergence = false;
-      while(!convergence){
-	DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
-
-	if(_shake<do_virial, b>
-	   (topo, conf, convergence, first, skip_now, skip_next,
-	    topo.solvent(i).distance_constraints(), param, dt,
-	    periodicity, tolerance, false)){
-	  
-	  io::messages.add("SHAKE error. vectors orthogonal",
-			   "Shake::solute", io::message::error);
-	  
-	  std::cout << "SHAKE failure in solute!" << std::endl;
-	  return E_SHAKE_FAILURE_SOLVENT;
-	}
-	
-	// std::cout << num_iterations+1 << std::endl;
-	if(++num_iterations > max_iterations){
-	  io::messages.add("SHAKE error. too many iterations",
-			   "Shake::solvent",
-			   io::message::critical);
-	  // throw std::runtime_error("SHAKE failure in solvent");
-	  return E_SHAKE_FAILURE_SOLVENT;
-	}
-
-	skip_now = skip_next;
-	skip_next.assign(skip_next.size(), true);
-
-      } // while(!convergence)
-      
-      tot_iterations += num_iterations;
-      
-    } // molecules
-    
-  } // solvents
-
-  timing += util::now() - start;
-
-  return 0;
-  
-} // shake solvent
-
-
+}
 
 
 /**
- * apply the SHAKE algorithm
+ * apply the Flexible SHAKE algorithm
  */
 template<math::virial_enum do_virial>
-int algorithm::Shake<do_virial>
+int algorithm::Flexible_Constraint<do_virial>
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  DEBUG(7, "applying SHAKE");
+  DEBUG(7, "applying Flexible SHAKE");
   bool do_vel = false;
   int error = 0;
   
   // check whether we shake
   if (topo.solute().distance_constraints().size() && 
-      sim.param().constraint.solute.algorithm == simulation::constr_shake &&
-      sim.param().constraint.ntc > 1){
-
-    DEBUG(8, "\twe need to shake SOLUTE");
+      sim.param().shake.ntc > 1){
+    DEBUG(8, "\twe need to flexible shake SOLUTE");
     do_vel = true;
     switch(conf.boundary_type){
       case math::vacuum:
-	error = solute<do_virial, math::vacuum>
+	error = _flexible_solute<do_virial, math::vacuum>
 	  (topo, conf, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::rectangular:
-	error = solute<do_virial, math::rectangular>
+	error = _flexible_solute<do_virial, math::rectangular>
 	  (topo, conf, parameter(), sim.time_step_size(), 
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
       case math::triclinic:
-	error = solute<do_virial, math::triclinic>
+	error = _flexible_solute<do_virial, math::triclinic>
 	  (topo, conf, parameter(), sim.time_step_size(),
 	   m_max_iterations, m_tolerance, m_timing);
 	break;
@@ -388,62 +402,25 @@ int algorithm::Shake<do_virial>
     conf.current().pos = conf.old().pos;
     return E_SHAKE_FAILURE_SOLUTE;
   }
-  
-  if (sim.param().system.nsm &&
-      sim.param().constraint.solvent.algorithm == simulation::constr_shake){
 
-    DEBUG(8, "\twe need to shake SOLVENT");
-    do_vel = true;
-    switch(conf.boundary_type){
-      case math::vacuum:
-	error = 
-	  solvent<do_virial, math::vacuum>
-	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_solvent_timing);
-	break;
-      case math::rectangular:
-	error = 
-	  solvent<do_virial, math::rectangular>
-	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_solvent_timing);
-	break;
-      case math::triclinic:
-	error = 
-	  solvent<do_virial, math::triclinic>
-	  (topo, conf, parameter(), sim.time_step_size(),
-	   m_max_iterations, m_tolerance, m_solvent_timing);
-	break;
-      default:
-	throw std::string("wrong boundary type");
-	
-    }
-  }
-  
-  if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT" << std::endl;
-    // save old positions to final configuration... (even before free-flight!)
-    conf.current().pos = conf.old().pos;
-    return E_SHAKE_FAILURE_SOLVENT;
-  }
-      
   // shaken velocity
   conf.current().vel = (conf.current().pos - conf.old().pos) / 
     sim.time_step_size();
-
+  
   // return success!
   return 0;
 		   
 }
 
 template<math::virial_enum do_virial>
-int algorithm::Shake<do_virial>
+int algorithm::Flexible_Constraint<do_virial>
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim)
 {
 
   if (sim.param().start.shake_pos){
-    std::cout << "shaking initial positions\n";
+    std::cout << "(flexible) shaking initial positions\n";
 
     // old and current pos and vel are the same...
     conf.old().pos = conf.current().pos;
@@ -484,14 +461,4 @@ int algorithm::Shake<do_virial>
   }
   
   return 0;
-}
-
-template<math::virial_enum do_virial>
-void algorithm::Shake<do_virial>
-::print_timing(std::ostream & os)
-{
-  os << std::setw(40) << std::left << "Shake::solute"
-     << std::setw(20) << m_timing << "\n"
-     << std::setw(40) << std::left << "Shake::solvent"
-     << std::setw(20) << m_solvent_timing << "\n";
 }

@@ -9,6 +9,17 @@
 namespace simulation
 {
   /**
+   * @enum constr_enum
+   * constraints enumeration.
+   */
+  enum constr_enum{
+    constr_off,
+    constr_shake,
+    constr_lincs,
+    constr_flexshake
+  };
+  
+  /**
    * @class Parameter
    * input parameters.
    */
@@ -295,15 +306,11 @@ namespace simulation
     } write;
 
     /**
-     * @struct shake_struct
+     * @struct constraint_struct
      * SHAKE block
      */
-    struct shake_struct
+    struct constraint_struct
     {
-      /**
-       * shake or lincs?
-       */
-      bool lincs;
       /**
        * NTC parameter (off=1, hydrogens=2, all=3, specified=4)
        * specified shakes everything in the constraint block in the topology.
@@ -312,15 +319,41 @@ namespace simulation
        */
       int ntc;
       /**
-       * SHAKE tolerance
+       * @struct constr_param_struct
+       * constraint parameter for
+       * solute and solvent.
        */
-      double tolerance;
+      struct constr_param_struct
+      {
+	/**
+	 * constraint algorithm to use.
+	 */
+	constr_enum algorithm;
+	/**
+	 * SHAKE tolerance
+	 */
+	double shake_tolerance;
+	/**
+	 * LINCS order.
+	 */
+	int lincs_order;
+	/**
+	 * read flexible constraint information
+	 * from configuration file.
+	 */
+	bool flexshake_readin;
+	
+      };
       /**
-       * LINCS order.
+       * parameter for solute.
        */
-      int lincs_order;
-
-    } shake;
+      constr_param_struct solute;
+      /**
+       * parameter for solvent.
+       */
+      constr_param_struct solvent;
+      
+    } constraint;
 
     /**
      * @struct force_struct
