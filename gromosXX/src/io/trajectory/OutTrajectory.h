@@ -60,7 +60,7 @@ namespace io {
      */
     void force_trajectory(std::ostream &os, int every=1);
     
-  private:
+  protected:
     output_format m_format;
     output_format m_old_format;
     std::ostream *m_pos_traj;

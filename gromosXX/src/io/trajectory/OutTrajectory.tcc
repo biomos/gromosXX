@@ -183,21 +183,19 @@ inline void io::OutTrajectory<t_simulation>
   simulation::Solute &solute = topo.solute();
   std::vector<std::string> &residue_name = topo.residue_name();
 
-  math::Vec v, o(0.0, 0.0, 0.0);
-  math::Vec half_box(sys.box()(0)(0), sys.box()(1)(1), sys.box()(2)(2));
-  half_box /= 2.0;
+  math::Vec v;
   
   os << "# first 24 chars ignored\n";
   
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
     v = pos(i);
-    sys.periodicity().positive_box(v);
+    sys.periodicity().box(v);
 
-    os << std::setw(5)  << solute.atom(i).residue_nr+1
-       << std::setw(5)  << std::left << residue_name[solute.atom(i).residue_nr]
-       << std::setw(6)  << std::left << solute.atom(i).name
-       << std::setw(8)  << i+1
+    os << std::setw(5)  << solute.atom(i).residue_nr+1 << " "
+       << std::setw(5)  << std::left << residue_name[solute.atom(i).residue_nr] << " "
+       << std::setw(6)  << std::left << solute.atom(i).name << std::right
+       << std::setw(6)  << i+1
        << std::setw(15) << v(0)
        << std::setw(15) << v(1)
        << std::setw(15) << v(2)
@@ -205,21 +203,22 @@ inline void io::OutTrajectory<t_simulation>
   }
 
   int index = topo.num_solute_atoms();
+  int res_nr = 1;
 
   for(size_t s=0; s < topo.num_solvents(); ++s){
 
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
+    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_nr){
       
       for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
 	v = pos(index);
-	sys.periodicity().positive_box(v);
+	sys.periodicity().box(v);
 	
-	os << std::setw(5)  << topo.solvent(s).atom(a).residue_nr+1
-	   << ' ' << std::setw(4)  << std::left
-	   << residue_name[topo.solvent(s).atom(a).residue_nr] << std::right
+	os << std::setw(5)  << res_nr
+	   << ' ' << std::setw(5)  << std::left
+	   << residue_name[topo.solvent(s).atom(a).residue_nr] << " "
 	   << std::setw(6)  << std::left << topo.solvent(s).atom(a).name << std::right
-	   << std::setw(8)  << index + 1
+	   << std::setw(6)  << index + 1
 	   << std::setw(15) << v(0)
 	   << std::setw(15) << v(1)
 	   << std::setw(15) << v(2)
@@ -242,16 +241,14 @@ inline void io::OutTrajectory<t_simulation>
   os << "POSITIONRED\n";
   
   math::VArray &pos = sys.pos();
-  math::Vec v, o(0.0, 0.0, 0.0);
-  math::Vec half_box(sys.box()(0)(0), sys.box()(1)(1), sys.box()(2)(2));
-  half_box /= 2.0;
+  math::Vec v;
 
   DEBUG(10, "writing POSITIONRED " << pos.size() );
   
   for(int i=0,to = pos.size(); i<to; ++i){
 
     v = pos(i);
-    sys.periodicity().positive_box(v);
+    sys.periodicity().box(v);
 
     os << std::setw(15) << v(0)
        << std::setw(15) << v(1)
@@ -282,10 +279,10 @@ inline void io::OutTrajectory<t_simulation>
   
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
 
-    os << std::setw(5)  << solute.atom(i).residue_nr+1
-       << std::setw(5)  << std::left << residue_name[solute.atom(i).residue_nr] << std::right
+    os << std::setw(5)  << solute.atom(i).residue_nr+1 << " "
+       << std::setw(5)  << std::left << residue_name[solute.atom(i).residue_nr] << " "
        << std::setw(6)  << std::left << solute.atom(i).name << std::right
-       << std::setw(8)  << i+1
+       << std::setw(6)  << i+1
        << std::setw(15) << vel(i)(0)
        << std::setw(15) << vel(i)(1)
        << std::setw(15) << vel(i)(2)
@@ -293,18 +290,19 @@ inline void io::OutTrajectory<t_simulation>
   }
   
   int index = topo.num_solute_atoms();
+  int res_num = 1;
   
   for(size_t s=0; s < topo.num_solvents(); ++s){
 
-    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m){
+    for(size_t m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
       
       for(size_t a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
 	
-	os << std::setw(5)  << topo.solvent(s).atom(a).residue_nr+1
-	   << std::setw(5)  << std::left << residue_name[topo.solvent(s).atom(a).residue_nr]
-	   << std::right
+	os << std::setw(5)  << res_num << " "
+	   << std::setw(5)  << std::left 
+	   << residue_name[topo.solvent(s).atom(a).residue_nr] << " "
 	   << std::setw(6)  << std::left << topo.solvent(s).atom(a).name << std::right
-	   << std::setw(8)  << index + 1
+	   << std::setw(6)  << index + 1
 	   << std::setw(15) << vel(index)(0)
 	   << std::setw(15) << vel(index)(1)
 	   << std::setw(15) << vel(index)(2)
@@ -415,8 +413,6 @@ inline void io::OutTrajectory<t_simulation>
   }
   
   os << "END\n";
-  
-  os << "HALLO" << std::endl;
   
 }
 

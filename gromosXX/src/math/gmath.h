@@ -59,6 +59,7 @@ namespace math
 
 } // math
 
+#include "boundary_implementation.h"
 #include "periodicity.h"
 
 #endif

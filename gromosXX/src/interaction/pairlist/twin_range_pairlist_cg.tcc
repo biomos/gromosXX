@@ -28,11 +28,9 @@ void interaction::twin_range_pairlist_cg<t_simulation>
     cg_to = sim.topology().chargegroup_end();
 
   size_t i;
-  // math::Vec v;
   
   for(i=0; i < sim.topology().num_solute_chargegroups(); ++cg1, ++i){
     cg1.cog(pos, cg_cog(i));
-    // cg_cog(i) = v;
   }
   for( ; cg1 != cg_to; ++cg1, ++i){
     cg_cog(i) = pos(**cg1);

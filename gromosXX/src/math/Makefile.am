@@ -1,6 +1,8 @@
 INCLUDES = -I$(top_srcdir)/src
 
 include_HEADERS = 		gmath.h \
+				boundary_implementation.h \
+				boundary_implementation.tcc \
 				periodicity.h \
 				periodicity.tcc
 

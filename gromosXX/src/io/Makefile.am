@@ -11,6 +11,8 @@ include_HEADERS = 		io.h \
 				trajectory/InTrajectory.tcc \
 				trajectory/OutTrajectory.h \
 				trajectory/OutTrajectory.tcc \
+				trajectory/OutG96Trajectory.h \
+				trajectory/OutG96Trajectory.tcc \
 				input/InInput.h \
 				input/InInput.tcc \
 				argument.h

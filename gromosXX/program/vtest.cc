@@ -221,7 +221,8 @@ int main(int argc, char *argv[])
     std::ofstream trap(args["trj"].c_str());  // trajectory is required
     std::ofstream final(args["fin"].c_str()); // final structure is required
 
-    io::OutTrajectory<simulation_type> traj(trap, final, print_trajectory);
+    // use a G96 trajectory
+    io::OutG96Trajectory<simulation_type> traj(trap, final, print_trajectory);
 
     // optional files
     std::ofstream trav; // velocity trajectory
