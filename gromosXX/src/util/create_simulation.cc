@@ -89,8 +89,6 @@ int util::create_simulation(std::string topo,
   in_topo.stream(topo_file);
   in_topo.read(sim.topo, sim.sim.param());
 
-  sim.topo.init(sim.sim);
-
   if(pttopo != ""){
     
     pttopo_file.open(pttopo.c_str());
@@ -107,6 +105,8 @@ int util::create_simulation(std::string topo,
     ipt.read(sim.topo, sim.sim.param());
 
   }
+
+  sim.topo.init(sim.sim);
 
   // do this after reading in a perturbation topology
   sim.sim.multibath().calculate_degrees_of_freedom(sim.topo, 
