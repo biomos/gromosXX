@@ -887,6 +887,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	if (!quiet)
 	  std::cout << "\t"
+		    << std::setw(10) << "index"
 		    << std::setw(10) << "group i"
 		    << std::setw(10) << "group j"
 		    << std::setw(10) << "parameter"
@@ -928,13 +929,14 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  
 	  if (!quiet)
 	    std::cout << "\t"
+		      << std::setw(10) << n+1
 		      << std::setw(10) << i+1
 		      << std::setw(10) << j+1
 		      << std::setw(10) << a
 		      << std::endl;
 	  
 	}
-	
+
 	if (n != num){
 	  io::messages.add("Wrong number of pairs in LAMBDADEP block.",
 			   "In_Perturbation", io::message::error);	

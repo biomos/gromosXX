@@ -170,8 +170,18 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   // allow for split up storage of the perturbed energy derivatives
   // (to accomodate different lambda dependences)
-  size_t s = topo.energy_group_lambdadep().size() / 2 + 1;
+  size_t s = 0;
+  
+  std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
+    it = topo.energy_group_lambdadep().begin(),
+    to = topo.energy_group_lambdadep().end();
+  for( ; it!=to; ++it){
+    if (it->second.first > s) s = it->second.first;
+  }
+  ++s;
 
+  // std::cerr << "resizing for " << s << " lambda dependencies" << std::endl;
+  
   conf.current().perturbed_energy_derivatives.resize(s);
   conf.current().perturbed_energy_derivative_averages.resize(s);
   conf.old().perturbed_energy_derivatives.resize(s);
