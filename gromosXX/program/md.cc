@@ -39,6 +39,8 @@
 #include <omp.h>
 #endif
 
+#include "BUILD_NUMBER"
+
 int main(int argc, char *argv[]){
 
   const double start = util::now();
@@ -73,40 +75,44 @@ int main(int argc, char *argv[]){
     usage += "\t[@version]\n";
 
     io::Argument args(argc, argv, nknowns, knowns, usage);
-
-    if (args.count("version") >= 0){
-
+    
 #ifdef NDEBUG
 #ifndef BZDEBUG
-      std::cout << "\033[1;32m";
+    std::cout << "\033[1;32m";
 #else
-      std::cout << "\033[1;31m";
+    std::cout << "\033[1;31m";
 #endif
 #else
-      std::cout << "\033[1;31m";
+    std::cout << "\033[1;31m";
 #endif
-      
-      std::cout << "\n\nGromosXX 0.1.2 development\033[22;0m\n\n"
-		<< "20. January 2004\n";
+    
+    std::cout << "\n\nGromosXX 0.1.2 development\033[22;0m\n\n"
+	      << "20. January 2004\n";
+    
+    std::cout << "build date    " << BUILD_DATE << "\n"
+	      << "build number  " << BUILD_NUMBER << "\n\n";
+    
 #ifdef NDEBUG
-      std::cout << "standard library debugging disabled.\n";
+    std::cout << "standard library debugging disabled.\n";
 #else
-      std::cout << "standard library debugging enabled.\n";
+    std::cout << "standard library debugging enabled.\n";
 #endif
 #ifdef BZDEBUG
-      std::cout << "Blitz debugging enabled.\n";
+    std::cout << "Blitz debugging enabled.\n";
 #else
-      std::cout << "Blitz debugging disabled.\n";
+    std::cout << "Blitz debugging disabled.\n";
 #endif
-
-      std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"
-		<< "Professor W. F. van Gunsteren\n"
-		<< "Swiss Federal Institute of Technology\n"
-		<< "Zuerich\n\n"
-		<< "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+    
+    std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"
+	      << "Professor W. F. van Gunsteren\n"
+	      << "Swiss Federal Institute of Technology\n"
+	      << "Zuerich\n\n"
+	      << "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+    
+    if (args.count("version") >= 0){
       return 0;
     }
-
+    
     // parse the verbosity flag and set debug levels
     util::parse_verbosity(args);
 
