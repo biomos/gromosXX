@@ -37,8 +37,9 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
 ::calculate_interactions(t_simulation &sim)
 {
   // loop over the bonds
-  simulation::Bond::iterator b_it =
-    sim.topology().solute().bonds().begin();
+  std::vector<simulation::Bond>::iterator b_it =
+    sim.topology().solute().bonds().begin(),
+    b_to = sim.topology().solute().bonds().end();
 
   math::VArray &pos   = sim.system().pos();
   math::VArray &force = sim.system().force();
@@ -46,35 +47,34 @@ inline void interaction::Quartic_bond_interaction<t_simulation>
 
   double e;
 
-  for( ; !b_it.eol(); ++b_it){
+  for( ; b_it != b_to; ++b_it){
     sim.system().periodicity()
-      .nearest_image(pos(b_it.i()), pos(b_it.j()), v);
+      .nearest_image(pos(b_it->i), pos(b_it->j), v);
 
     double dist2 = dot(v, v);
     
-    assert(unsigned(b_it.type()) < m_bond_parameter.size());
-    const double r02 = m_bond_parameter[b_it.type()].r0 *
-      m_bond_parameter[b_it.type()].r0;
+    assert(unsigned(b_it->type) < m_bond_parameter.size());
+    const double r02 = m_bond_parameter[b_it->type].r0 *
+      m_bond_parameter[b_it->type].r0;
 
-    DEBUG(7, "bond " << b_it.i() << "-" << b_it.j() << " type " << b_it.type());
-    DEBUG(10, "K " << m_bond_parameter[b_it.type()].K << " r02 " << r02);
+    DEBUG(7, "bond " << b_it->i << "-" << b_it->j << " type " << b_it->type);
+    DEBUG(10, "K " << m_bond_parameter[b_it->type].K << " r02 " << r02);
+    DEBUG(10, "DF " << (-m_bond_parameter[b_it->type].K * (dist2 - r02))
+	  << "\n" << v);
 
-    DEBUG(10, "DF " << (-m_bond_parameter[b_it.type()].K * (dist2 - r02)) << "\n" << v);
-
-
-    f = v * (-m_bond_parameter[b_it.type()].K *
+    f = v * (-m_bond_parameter[b_it->type].K *
 	     (dist2 - r02));
     
-    force(b_it.i()) += f;
-    force(b_it.j()) -= f;
+    force(b_it->i) += f;
+    force(b_it->j) -= f;
 
-    e = 0.25 * m_bond_parameter[b_it.type()].K * (dist2 -r02) * (dist2 - r02);
+    e = 0.25 * m_bond_parameter[b_it->type].K * (dist2 -r02) * (dist2 - r02);
 
     assert(sim.system().energies().bond_energy.size() >
-	   sim.topology().atom_energy_group()[b_it.i()]);
+	   sim.topology().atom_energy_group()[b_it->i]);
     
-    sim.system().energies().bond_energy[sim.topology().atom_energy_group()[b_it.i()]] += e;
-    
+    sim.system().energies().bond_energy[sim.topology().atom_energy_group()
+					[b_it->i]] += e;
   }
     
 }

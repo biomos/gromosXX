@@ -15,47 +15,14 @@ namespace simulation
   class Bond
   {
   public:
-    /**
-     * @struct bond_struct
-     * bond information.
-     */
-    struct bond_struct
-    {
-      int i;
-      int j;
-      int type;
-    };
-
-    /**
-     * @class iterator
-     * iterator over the bonds.
-     */
-    class iterator
-    {
-    public:
-      iterator(std::vector<bond_struct> &bi);
-      bool eol();
-      bool neol();
-      void operator++();
-      int i();
-      int j();
-      int type();
-    protected:
-      std::vector<bond_struct>::const_iterator m_bond_it;
-      std::vector<bond_struct>::const_iterator m_bond_end;
-    };
-      
-    iterator begin();
-    void add(int i, int j, int type);
-
-  private:      
-    std::vector<bond_struct> m_bond_information;
+    Bond(int i, int j, int type) : i(i), j(j), type(type) {};
+    int i;
+    int j;
+    int type;
       
   };
 	  
   
 } // simulation
-
-#include "bond.tcc"
 
 #endif

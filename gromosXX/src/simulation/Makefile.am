@@ -28,6 +28,8 @@ include_HEADERS = 		simulation.h \
 				topology/solvent.tcc \
 				topology/topology.h \
 				topology/topology.tcc \
+				topology/perturbation_topology.h \
+				topology/perturbation_topology.tcc \
 				core/atom_iterator.h \
 				core/atom_group_iterator.h \
 				core/molecule_iterator.h \

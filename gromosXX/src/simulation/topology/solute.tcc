@@ -42,7 +42,7 @@ simulation::Solute::add_atom(std::string name, int residue_nr)
 /**
  * bonds accessor.
  */
-inline simulation::Bond &
+inline std::vector<simulation::Bond> &
 simulation::Solute::bonds()
 {
   return m_bond;
@@ -55,10 +55,11 @@ simulation::Solute::bonds()
 inline void 
 simulation::Solute::add_bond_length_constraints(std::vector<interaction::bond_type_struct> const &param)
 {
-  Bond bonds;
-  Bond::iterator it = m_bond.begin();
-  for( ; it.neol(); ++it){
-    add_distance_constraint(it.i(), it.j(), param[it.type()].r0);
+  std::vector<Bond> bonds;
+  std::vector<Bond>::iterator it = m_bond.begin(),
+    to = m_bond.end();
+  for( ; it != to; ++it){
+    add_distance_constraint(it->i, it->j, param[it->type].r0);
   }
   m_bond = bonds;
 }
@@ -73,13 +74,14 @@ simulation::Solute
 			     std::vector<int> const &atom_iac,
 			     std::vector<interaction::bond_type_struct> const &param)
 {
-  Bond bonds;
-  Bond::iterator it = m_bond.begin();
-  for( ; it.neol(); ++it){
-    if(atom_iac[it.i()] == iac || atom_iac[it.j()] == iac)
-      add_distance_constraint(it.i(), it.j(), param[it.type()].r0);
+  std::vector<Bond> bonds;
+  std::vector<Bond>::iterator it = m_bond.begin(),
+    to = m_bond.end();
+  for( ; it != to; ++it){
+    if(atom_iac[it->i] == iac || atom_iac[it->j] == iac)
+      add_distance_constraint(it->i, it->j, param[it->type].r0);
     else
-      bonds.add(it.i(), it.j(), it.type());
+      bonds.push_back(Bond(it->i, it->j, it->type));
   }
   m_bond = bonds;
 }
@@ -93,13 +95,14 @@ simulation::Solute::add_bond_length_constraints(double mass,
 					       math::SArray const &atom_mass,
 					       std::vector<interaction::bond_type_struct> const &param)
 {
-  Bond bonds;
-  Bond::iterator it = m_bond.begin();
-  for( ; it.neol(); ++it){
-    if(atom_mass(it.i()) == mass || atom_mass(it.j()) == mass)
-      add_distance_constraint(it.i(), it.j(), param[it.type()].r0);
+  std::vector<Bond> bonds;
+  std::vector<Bond>::iterator it = m_bond.begin(),
+    to = m_bond.end();
+  for( ; it != to; ++it){
+    if(atom_mass(it->i) == mass || atom_mass(it->j) == mass)
+      add_distance_constraint(it->i, it->j, param[it->type].r0);
     else
-      bonds.add(it.i(), it.j(), it.type());
+      bonds.push_back(Bond(it->i, it->j, it->type));
   }
   m_bond = bonds;
 }

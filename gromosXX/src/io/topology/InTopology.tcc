@@ -38,7 +38,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in BONDH block");
 
-      topo.solute().bonds().add(i-1, j-1, t-1);
+      topo.solute().bonds().push_back(simulation::Bond(i-1, j-1, t-1));
     }
     
     if(n != num){
@@ -67,7 +67,7 @@ inline io::InTopology &io::InTopology::operator>>(simulation::Topology& topo){
       if (_lineStream.fail() || ! _lineStream.eof())
 	throw std::runtime_error("bad line in BOND block");
       
-      topo.solute().bonds().add(i-1, j-1, t-1);
+      topo.solute().bonds().push_back(simulation::Bond(i-1, j-1, t-1));
     }
     
     if(n != num){

@@ -13,6 +13,7 @@
 #include "topology/solute.h"
 #include "topology/solvent.h"
 #include "topology/topology.h"
+#include "topology/perturbation_topology.h"
 #include "simulation/multibath.h"
 #include "simulation/nonbonded.h"
 #include "simulation/simulation.h"

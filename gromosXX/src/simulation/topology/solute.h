@@ -43,7 +43,7 @@ namespace simulation
     /**
      * bond accessor.
      */
-    Bond & bonds();
+    std::vector<Bond> & bonds();
 
     /**
      * add all bonds to the solute constraint vector and
@@ -89,7 +89,7 @@ namespace simulation
     /**
      * the bonds.
      */
-    Bond m_bond;
+    std::vector<Bond> m_bond;
     
     /**
      * the angles.

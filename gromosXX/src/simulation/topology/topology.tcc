@@ -101,7 +101,7 @@ inline size_t simulation::Topology::num_solute_atoms()const
  * set the capacity of solute atoms by resizeing
  * the apropriate arrays.
  */
-inline void simulation::Topology::resize(size_t atoms)
+inline void simulation::Topology::resize(size_t const atoms)
 {
   // if you want to shrink, first change num_atoms...
   assert(atoms >= num_solute_atoms() + num_solvent_atoms());

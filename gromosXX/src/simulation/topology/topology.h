@@ -84,7 +84,7 @@ namespace simulation
     /**
      * set the capacity of solute atoms
      */
-    void resize(size_t atoms);
+    void resize(size_t const atoms);
 
     /**
      * get the total number of atoms.
