@@ -147,6 +147,26 @@ io::In_Posres::read(topology::Topology& topo,
     posres_it = topo.position_restraints().begin(),
     posres_to = topo.position_restraints().end();
   
+  switch(sim.param().posrest.posrest){
+    case 0:
+      std::cout << "\tPosition restraints OFF\n";
+      // how did you get here?
+      break;
+    case 1:
+      std::cout << "\tPosition restraints ON\n"
+		<< "\t\trestraining to following positions:\n";
+      break;
+    case 2:
+      std::cout << "\tPosition restraints ON\n"
+		<< "\t\trestraining to following positions\n"
+		<< "\t\t(using atomic B-factors):\n";
+      break;
+    case 3:
+      std::cout << "\tPosition constraints ON\n"
+		<< "\t\tconstraining following atoms"
+		<< " to their initial positions:\n";
+      break;
+  }
 
   std::cout << std::setw(10) << "SEQ"
 	    << std::setw(20) << "POS(X)"
