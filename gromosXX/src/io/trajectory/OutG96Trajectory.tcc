@@ -47,9 +47,16 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
     if(m_force && (sim.steps() % m_every_force) == 0){
       if(sim.steps()){
 	DEBUG(7, "print timestep forcered");
-	_print_timestep(sim, *m_force_traj);
+	_print_old_timestep(sim, *m_force_traj);
 	DEBUG(7, "print forcered");
 	_print_forcered(sim.system(), *m_force_traj);
+      }
+    }
+    if(m_energy && (sim.steps() % m_every_energy) == 0){
+      if(sim.steps()){
+	_print_old_timestep(sim, *m_energy_traj);
+	_print_energyred(sim, *m_energy_traj);
+	_print_volumepressurered(sim.system(), *m_energy_traj);
       }
     }
 
@@ -63,12 +70,17 @@ inline io::OutG96Trajectory<t_simulation> & io::OutG96Trajectory<t_simulation>
     _print_velocity(sim.system(), sim.topology(), *m_final_traj);
     DEBUG(7, "print box");
     _print_box(sim.system(), *m_final_traj);
-    // forces still go to the force trajectory
+    // forces and energies still go to the their trajectories
     if (m_force){
       DEBUG(7, "print timestep final force");
-      _print_timestep(sim, *m_force_traj);
+      _print_old_timestep(sim, *m_force_traj);
       DEBUG(7, "print forcered final");
       _print_forcered(sim.system(), *m_force_traj);
+    }
+    if(m_energy){
+      _print_old_timestep(sim, *m_energy_traj);
+      _print_energyred(sim, *m_energy_traj);
+      _print_volumepressurered(sim.system(), *m_energy_traj);
     }
     
     // reset the format after one output (compare std::setw)

@@ -77,7 +77,7 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
   
   //----------------------------------------------------------------------------
   // prepare for the output
-  int print_trajectory, print_velocity;
+  int print_trajectory, print_velocity, print_energy_traj;
   input.read_PRINT(print_trajectory, print_velocity, m_print_energy);
 
   m_trajectory_file.open(args["trj"].c_str());  // trajectory is required
@@ -101,6 +101,11 @@ int algorithm::MD<t_simulation, t_temperature, t_pressure, t_distance_constraint
     m_trajectory->force_trajectory(m_force_file, m_print_force);
   }
 
+  if (args.count("tre") == 1){
+    m_energy_file.open(args["tre"].c_str());
+    m_trajectory->energy_trajectory(m_energy_file, m_print_energy);
+  }
+  
   if (args.count("trp") == 1){
     m_print_file = new std::ofstream(args["trp"].c_str());
   }

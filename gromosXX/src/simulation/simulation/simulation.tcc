@@ -13,6 +13,7 @@ inline simulation::Simulation<t_topo, t_system>
   : m_topology(topo),
     m_system(sys),
     m_time(0.0),
+    m_old_time(0.0),
     m_steps(0)
 {
 }
@@ -68,6 +69,16 @@ inline double simulation::Simulation<t_topo, t_system>
 }
 
 /**
+ * old time accessor
+ */
+template<typename t_topo, typename t_system>
+inline double simulation::Simulation<t_topo, t_system>
+::old_time()
+{
+  return m_old_time;
+}
+
+/**
  * set time
  */
 template<typename t_topo, typename t_system>
@@ -84,6 +95,7 @@ template<typename t_topo, typename t_system>
 inline void simulation::Simulation<t_topo, t_system>
 ::increase_time(double dt)
 {
+  m_old_time=m_time;
   m_time += dt;
   ++m_steps;
 }

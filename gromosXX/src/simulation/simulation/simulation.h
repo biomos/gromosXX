@@ -54,6 +54,11 @@ namespace simulation
      */
     double time();
     /**
+     * old time accessor
+     */
+    double old_time();
+    
+    /**
      * set (initial) time.
      */
     void time(double t);
@@ -122,10 +127,14 @@ namespace simulation
      */
     double m_time;
     /**
+     * the time of the previous step
+     */
+    double m_old_time;
+    
+    /**
      * the number of steps done.
      */
     int m_steps;
-
     /**
      * nonbonded parameter.
      */

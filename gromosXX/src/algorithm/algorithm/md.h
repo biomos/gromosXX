@@ -134,6 +134,11 @@ namespace algorithm
     std::ofstream m_force_file;
     
     /**
+     * energy trajectory
+     */
+    std::ofstream m_energy_file;
+  
+    /**
      * trajectory file
      */
     std::ofstream m_trajectory_file;

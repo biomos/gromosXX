@@ -18,12 +18,15 @@ inline io::OutTrajectory<t_simulation>::OutTrajectory(std::ostream &os,
     m_final_traj(&final),
     m_vel_traj(NULL),
     m_force_traj(NULL),
+    m_energy_traj(NULL),
     m_pos(true),
     m_vel(false),
     m_force(false),
+    m_energy(false),
     m_every_pos(every),
     m_every_vel(0),
     m_every_force(0),
+    m_every_energy(0),
     m_precision(9),
     m_force_precision(9),
     m_width(15),
@@ -61,12 +64,20 @@ inline void io::OutTrajectory<t_simulation>::print_title(std::string title)
 		  << "END\n";
   }
 
+  if (m_energy){
+    *m_energy_traj << "TITLE\n"
+		   << title << "\n"
+		   << "\tenergy trajectory\n"
+		   << "END\n";
+  }
+  
 }
 
 template<typename t_simulation>
 inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
 ::operator<<(t_simulation &sim)
 {
+  DEBUG(11, "print energy " << m_energy << " " << m_every_energy );
   
   if (m_format == reduced){
 
@@ -84,23 +95,35 @@ inline io::OutTrajectory<t_simulation> & io::OutTrajectory<t_simulation>
     
     if(m_force && (sim.steps() % m_every_force) == 0){
       if(sim.steps()){
-	_print_timestep(sim, *m_force_traj);
+	_print_old_timestep(sim, *m_force_traj);
 	_print_forcered(sim.system(), *m_force_traj);
       }
     }
-
+    
+    if(m_energy && (sim.steps() % m_every_energy) == 0){
+      if(sim.steps()){
+	_print_old_timestep(sim, *m_energy_traj);
+	_print_energyred(sim.system(), *m_energy_traj);
+	_print_volumepressurered(sim.syste(), *m_energy_traj);
+      }
+    }
   }
   else if(m_format == final){
     _print_timestep(sim, *m_final_traj);
     _print_position(sim.system(), sim.topology(), *m_final_traj);
     _print_velocity(sim.system(), sim.topology(), *m_final_traj);
     _print_box(sim.system(), *m_final_traj);
-    // forces still go to the force trajectory
+    // forces and energies still go to their trajectories
     if (m_force){
-      _print_timestep(sim, *m_force_traj);
+      _print_old_timestep(sim, *m_force_traj);
       _print_forcered(sim.system(), *m_force_traj);
     }
-    
+    if (m_energy){
+      _print_old_timestep(sim, *m_energy_traj);
+      _print_energyred(sim.system(), *m_energy_traj);
+      _print_volumepressurered(sim.syste(), *m_energy_traj);
+    }
+	
     // reset the format after one output (compare std::setw)
     m_format = m_old_format;    
   }
@@ -162,6 +185,17 @@ inline void io::OutTrajectory<t_simulation>
 
 template<typename t_simulation>
 inline void io::OutTrajectory<t_simulation>
+::energy_trajectory(std::ostream &os, int every)
+{
+  m_energy_traj = &os;
+  m_energy = true;
+  m_every_energy = every;
+  assert(m_every_energy > 0);
+}
+
+
+template<typename t_simulation>
+inline void io::OutTrajectory<t_simulation>
 ::_print_timestep(t_simulation &sim, std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -170,6 +204,19 @@ inline void io::OutTrajectory<t_simulation>
   os << "TIMESTEP\n"
      << std::setw(m_width) << sim.steps()
      << std::setw(m_width) << sim.time()
+     << "\nEND\n";
+  
+}
+template<typename t_simulation>
+inline void io::OutTrajectory<t_simulation>
+::_print_old_timestep(t_simulation &sim, std::ostream &os)
+{
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "TIMESTEP\n"
+     << std::setw(m_width) << sim.steps()-1
+     << std::setw(m_width) << sim.old_time()
      << "\nEND\n";
   
 }
@@ -421,6 +468,111 @@ inline void io::OutTrajectory<t_simulation>
   
   os << "END\n";
   
+}
+
+template<typename t_simulation>
+inline void io::OutTrajectory<t_simulation>
+::_print_energyred(t_simulation &sim, std::ostream &os)
+{
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "ENERGY\n"
+     << "# ENER\n";
+  
+  simulation::Energy const & e = sim.system().energies();
+
+  const int numenergygroups=e.bond_energy.size();
+  const int energy_group_size=numenergygroups * (numenergygroups + 1) /2;
+  DEBUG(11, "numenergygroups " << numenergygroups << " energy_group_size " << energy_group_size );
+  
+  // energy arrays according to page III-56 of the GROMOS96 manual
+  std::vector<double> ener(22,0.0);
+  std::vector<double> enerlj(energy_group_size, 0.0);
+  std::vector<double> enercl(energy_group_size, 0.0);
+  std::vector<double> enerrf(energy_group_size, 0.0);
+  std::vector<double> enerrc(energy_group_size, 0.0);
+  std::vector<double> eneres(6,0.0);
+  
+  // and some internal ones that are currently not written out
+  double tot_nb=0.0, tot_b=0.0, tot_pot=0.0, tot_special=0.0;
+  
+  for(unsigned int i=0; i<sim.multibath().size(); i++)
+    // ener[1] is the kinetic energy
+    ener[1] += sim.multibath()[i].kinetic_energy;
+  int index=0;
+  
+  for(int i=0; i<numenergygroups; i++){
+    for(int j=0; j<numenergygroups; j++, index++){
+      ener[17] +=e.lj_energy[i][j];
+      ener[19] +=e.crf_energy[i][j];
+      enerlj[index] = e.lj_energy[i][j];
+      enercl[index] = e.crf_energy[i][j];
+    }
+    ener[10] +=e.bond_energy[i];
+    ener[12] +=e.angle_energy[i];
+    ener[14] +=e.improper_energy[i];
+    ener[16] +=e.dihedral_energy[i];
+  }
+  tot_nb = ener[17] + ener[19];
+  tot_b  = ener[10] + ener[12] + ener[14] + ener[16];
+  tot_pot= tot_nb + tot_b;
+  for(unsigned int i=0; i< eneres.size(); i++)
+    tot_special += eneres[i];
+  
+  ener[0]    = tot_pot + ener[1] + tot_special;
+  
+  // now actually write it out
+  for(unsigned int i=0; i<ener.size(); i++){
+    os << std::setw(m_width) << ener[i] << "\n";
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
+  }
+  os << "# ENERES\n";
+  for(unsigned int i=0; i<eneres.size(); i++){
+    os << std::setw(m_width) << eneres[i] << "\n";
+  }
+  os << "# NUMUSD\n"
+     << std::setw(5) << numenergygroups << "\n";
+  os << "# ENERLJ,ENERCL,ENERRF,ENERRC\n";
+  for(unsigned int i=0; i< enerlj.size(); i++)
+    os << std::setw(m_width) << enerlj[i] << ' '
+       << std::setw(m_width) << enercl[i] << ' '
+       << std::setw(m_width) << enerrf[i] << ' '
+       << std::setw(m_width) << enerrc[i] << "\n";
+  os << "END\n";
+}
+
+template<typename t_simulation>
+inline void io::OutTrajectory<t_simulation>
+::_print_volumepressurered(typename t_simulation::system_type &sys, 
+			  std::ostream &os)
+{
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "VOLUMEPRESSURE\n";
+ 
+  std::vector<double> volprt(20,0.0);
+  volprt[7] = sys.periodicity().volume();
+  volprt[8] = sys.pressure()(0,0);
+  volprt[9] = sys.pressure()(1,1);
+  volprt[10] = sys.pressure()(2,2);
+  volprt[11] = (volprt[8] + volprt[9] + volprt[10])/3.0;
+  volprt[12] = sys.molecular_kinetic_energy()(0,0);
+  volprt[13] = sys.molecular_kinetic_energy()(1,1);
+  volprt[14] = sys.molecular_kinetic_energy()(2,2);
+  volprt[15] = volprt[12] + volprt[13] + volprt[14];
+  volprt[16] = sys.virial()(0,0);
+  volprt[17] = sys.virial()(1,1);
+  volprt[18] = sys.virial()(2,2);
+  volprt[19] = volprt[16] + volprt[17] + volprt[18];
+
+  // now actually write it out
+  for(unsigned int i=0; i<volprt.size(); i++){
+    os << std::setw(m_width) << volprt[i] << "\n";
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
+  }
+  os << "END\n";
 }
 
 template<typename t_simulation>
