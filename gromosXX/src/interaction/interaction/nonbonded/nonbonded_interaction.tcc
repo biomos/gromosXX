@@ -60,6 +60,7 @@ interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
     // zero the longrange forces, energies, virial
     force() = 0.0;
     energies().zero();
+    DEBUG(15, "zero the longrange lambda energies");
     lambda_energies().zero();
     virial() = 0.0;
     
@@ -263,13 +264,16 @@ template<typename t_simulation, typename t_nonbonded_spec>
 inline void interaction::Nonbonded_Interaction<t_simulation, t_nonbonded_spec>
 ::initialize(t_simulation &sim)
 {
+  DEBUG(15, "nonbonded_interaction::initialize");
+  
   Nonbonded_Base::initialize(sim);
 
   force().resize(sim.system().force().size());
 
   energies().resize(sim.system().energies().bond_energy.size(),
 		    sim.system().energies().kinetic_energy.size());
-  lambda_energies().resize(sim.system().energies().bond_energy.size(),
-			   sim.system().energies().kinetic_energy.size());
+
+  lambda_energies().resize(sim.system().lambda_energies().bond_energy.size(),
+			   sim.system().lambda_energies().kinetic_energy.size());
   
 }
