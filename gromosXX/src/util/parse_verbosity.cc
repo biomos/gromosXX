@@ -31,8 +31,10 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
     std::string::size_type sep = s.find(':');
     if (sep == std::string::npos){
       // no module or submodule
-      level = atoi(s.c_str());
-      assert(!errno);
+      std::istringstream css(s);
+      css >> level;
+      // level = atoi(s.c_str());
+      assert(!css.fail());
     }
     else{
       module = s.substr(0, sep);
@@ -41,12 +43,16 @@ void util::parse_verbosity(io::Argument &args, std::string flag,
       sep = second.find(':');
       if (sep == std::string::npos){
 	// no submodule
-	level = atoi(second.c_str());
-	assert(!errno);
+	std::istringstream css(second);
+	css >> level;
+	// level = atoi(second.c_str());
+	assert(!css.fail());
       }
       else{
-	level = atoi(second.substr(sep+1, std::string::npos).c_str());
-	assert(!errno);
+	std::istringstream css(second.substr(sep+1, std::string::npos));
+	css >> level;
+	// level = atoi(second.substr(sep+1, std::string::npos).c_str());
+	assert(!css.fail());
 	submodule = second.substr(0, sep);
       }
     }

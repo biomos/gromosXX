@@ -772,7 +772,8 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param)
   std::string ntb;
   int n, nrdbox;
   double b1, b2, b3, beta;
-
+  std::istringstream cs;
+  
   _lineStream >> ntb >> b1 >> b2 >> b3 >> beta >> nrdbox;
   
   if (_lineStream.fail())
@@ -784,9 +785,12 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param)
   else if(ntb=="rectangular") param.boundary.boundary=math::rectangular;
   else if(ntb=="triclinic") param.boundary.boundary=math::triclinic;
   else {
-    n=atoi(ntb.c_str());
-    if(errno){
-      io::messages.add("wrong value for NTB in BOUNDARY block\n"
+    cs.str(ntb);
+    // n=atoi(ntb.c_str());
+    cs >> n;
+    if(cs.fail()){
+      std::cerr << "boundary error number = " << n << std::endl;
+      io::messages.add("wrong value for NTB in BOUNDARY block: "+ntb+"\n"
 		       "vacuum, rectangular, triclinic, 0, +/-1, +/-2",
 		       "In_Parameter", io::message::error);
       param.boundary.boundary=math::vacuum;
@@ -853,11 +857,14 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
       param.perturbation.scaled_only = true;
     }
     else {
-      param.perturbation.perturbation = (atoi(s1.c_str())==1);
+      std::istringstream css;
+      css.str(s1);
+      
+      // param.perturbation.perturbation = (atoi(s1.c_str())==1);
       param.perturbation.scaled_only = false;
-
-      if(errno){
-	io::messages.add("bad value for NTG in PERTURB block\n"
+      css >> param.perturbation.perturbation;
+      if(css.fail()){
+	io::messages.add("bad value for NTG in PERTURB block:"+s1+"\n"
 			 "on, scaled, off, 0, 1",
 			 "In_Parameter", io::message::error);
 	param.perturbation.perturbation=false;
@@ -868,8 +875,11 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param)
     if (s2 == "on") param.perturbation.scaling = true;
     else if (s2 == "off") param.perturbation.scaling = false;
     else {
-      param.perturbation.scaling = (atoi(s1.c_str())==1);
-      if(errno){
+      // param.perturbation.scaling = (atoi(s2.c_str())==1);
+      std::istringstream css(s2);
+      css >> param.perturbation.scaling;
+      
+      if(css.fail()){
 	io::messages.add("bad value for SCALING in PERTURB block\n"
 			 "on,off,0,1",
 			 "In_Parameter", io::message::error);
@@ -1400,8 +1410,11 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param)
       if (s2 == "auto") 
 	param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
       else{
-	param.pairlist.grid_size = atof(s2.c_str());
-	if (errno){
+	std::istringstream css;
+	css.str(s2);
+	css >> param.pairlist.grid_size;
+	// param.pairlist.grid_size = atof(s2.c_str());
+	if (css.fail()){
 	  io::messages.add("wrong pairlist grid size chosen (allowed: auto, [size]) in PLIST03 block",
 			   "In_Parameter", io::message::error);
 	  param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
@@ -1413,13 +1426,17 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param)
     if (s3 == "atomic") param.pairlist.atomic_cutoff = true;
     else if (s3 == "chargegroup") param.pairlist.atomic_cutoff = false;
     else {
-      param.pairlist.atomic_cutoff = (atoi(s3.c_str()) != 0);
-	if (errno){
-	  io::messages.add("wrong cutoff type chosen (allowed: atomic, chargegroup)"
-			   " in PLIST03 block",
-			   "In_Parameter", io::message::error);
-	  param.pairlist.atomic_cutoff = false;
-	}
+      std::istringstream css;
+      css.str(s3);
+      css >> param.pairlist.atomic_cutoff;
+      
+      // param.pairlist.atomic_cutoff = (atoi(s3.c_str()) != 0);
+      if (css.fail()){
+	io::messages.add("wrong cutoff type chosen (allowed: atomic, chargegroup)"
+			 " in PLIST03 block",
+			 "In_Parameter", io::message::error);
+	param.pairlist.atomic_cutoff = false;
+      }
     }
   }
   else{
