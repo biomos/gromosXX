@@ -44,13 +44,16 @@ void interaction::Nonbonded_Inner_Loop_Virial<t_simulation, t_storage>
     
     m_storage.force()(i) += f;
     m_storage.force()(j) -= f;
+    DEBUG(7, "\tforces stored");
+
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
 	m_storage.virial()(a, b) += 
 	  (r(a) - sim.system().rel_mol_com_pos()(i)(a) + 
 	          sim.system().rel_mol_com_pos()(j)(a)) * f(b);
 
-    DEBUG(7, "\tforces stored");
+    DEBUG(7, "\tvirial done");
+
     
     // energy
     assert(m_storage.energies().lj_energy.size() > 

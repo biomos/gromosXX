@@ -677,10 +677,16 @@ void algorithm::MD<t_spec>
   double e_kin_trans, e_kin_rot;
   if(init<4 && ntcm) {
     
-    m_simulation.remove_com_motion(m_dt, true, true, e_kin_trans, e_kin_rot);
+    m_simulation.remove_com_motion(m_dt, true, true, 
+				   e_kin_trans, e_kin_rot);
     io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
   }
-  
+  else{
+    m_simulation.remove_com_motion(m_dt, false, false, 
+				   e_kin_trans, e_kin_rot);
+    io::print_CENTREOFMASS(std::cout , e_kin_trans, e_kin_rot);
+    
+  }
   
 }
 

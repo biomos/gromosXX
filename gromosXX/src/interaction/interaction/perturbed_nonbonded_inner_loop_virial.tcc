@@ -156,9 +156,12 @@ void interaction::Perturbed_Nonbonded_Inner_Loop_Virial<
 
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
-	m_storage.virial()(a, b) += 
+	m_storage.virial()(a, b) -= 0.5 *
 	  (r(a) - sim.system().rel_mol_com_pos()(i)(a) + 
 	          sim.system().rel_mol_com_pos()(j)(a)) * f(b);
+    
+    DEBUG(7, "\tvirial done");
+
     
     // energy
     assert(m_storage.energies().lj_energy.size() > 

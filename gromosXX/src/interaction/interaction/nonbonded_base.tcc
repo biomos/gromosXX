@@ -24,9 +24,6 @@ inline interaction::Nonbonded_Base::Nonbonded_Base()
 inline void interaction::Nonbonded_Base
 ::add_lj_parameter(size_t iac_i, size_t iac_j, lj_parameter_struct lj)
 {
-  DEBUG(15, "Nonbonded_Interaction::add_lj_parameter " 
-	<< iac_i << "-" << iac_j);
-  
   assert(iac_i < m_lj_parameter.size());
   assert(iac_j < m_lj_parameter.size());
   assert(iac_i < m_lj_parameter[iac_j].size());
@@ -61,9 +58,6 @@ inline interaction::lj_parameter_struct const &
 interaction::Nonbonded_Base
 ::lj_parameter(size_t iac_i, size_t iac_j)
 {
-  DEBUG(15, "Nonbonded_Interaction::get_lj_parameter " 
-	<< iac_i << "-" << iac_j);
-
   assert(iac_i < m_lj_parameter.size());
   assert(iac_j < m_lj_parameter[iac_i].size());
   

@@ -15,7 +15,9 @@
  */
 inline simulation::Perturbation_Topology::Perturbation_Topology()
   : Topology(),
-    m_perturbed_atom(0)
+    m_perturbed_atom(0),
+    m_lambda(0),
+    m_nlam(1)
 {
 }
 
