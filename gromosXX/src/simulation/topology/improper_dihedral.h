@@ -9,8 +9,8 @@
 namespace simulation
 {
   /**
-   * @class Angle
-   * holds angle information.
+   * @class Improper_dihedral
+   * holds improper dihedral information.
    */
   class Improper_dihedral
   {

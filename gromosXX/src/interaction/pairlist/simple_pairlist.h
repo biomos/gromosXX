@@ -44,7 +44,13 @@ namespace interaction
        * Go to the next non-empty pairlist entry.
        */
       void operator++();
+      /**
+       * equality operator.
+       */
       bool operator==(iterator it);
+      /**
+       * unequality operator.
+       */
       bool operator!=(iterator it);
       /**
        * Return the value of the pairlist entry.
@@ -56,6 +62,8 @@ namespace interaction
       t_pl_index& i() { return m_i; }
       /**
        * Return the column index.
+       * @TODO check if properly updated or remove.
+       * *it works...
        */
       t_pl_index& j() { return m_j; }
       /**
@@ -63,8 +71,18 @@ namespace interaction
        */
       t_pl_matrix& pairlist() { return m_pairlist; }
     protected:
+      /**
+       * reference to the pairlist we operate over.
+       */
       t_pl_matrix &m_pairlist;
+      /**
+       * index of atom i at current position.
+       */
       t_pl_index m_i;
+      /**
+       * index of atom j at current position.
+       * @TODO check if properly updated.
+       */
       t_pl_index m_j;
     };
 

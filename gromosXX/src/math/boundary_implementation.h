@@ -43,7 +43,6 @@ namespace math
     
     /**
      * Constructor.
-     * @param box refernce to the box member of system.
      * @param boundary is the boundary condition.
      */
     Boundary_Implementation(boundary_enum boundary = b);
@@ -118,7 +117,6 @@ namespace math
     static int const M = 2;
     /**
      * Constructor.
-     * @param box refernce to the box member of system.
      * @param boundary is the boundary condition.
      */
     Boundary_Implementation(boundary_enum boundary = vacuum);
@@ -181,7 +179,6 @@ namespace math
     static int const M = 2;
     /**
      * Constructor.
-     * @param box refernce to the box member of system.
      * @param boundary is the boundary condition.
      */
     Boundary_Implementation(boundary_enum boundary = triclinic);
