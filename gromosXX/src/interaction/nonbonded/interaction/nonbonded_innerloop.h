@@ -12,6 +12,7 @@ namespace interaction
    * @class Nonbonded_Innerloop
    * standard non bonded inner loop.
    */
+  template<typename t_nonbonded_spec>
   class Nonbonded_Innerloop:
     public Nonbonded_Term
   {
@@ -26,7 +27,7 @@ namespace interaction
     /**
      * (normal) interaction
      */
-    template<typename t_nonbonded_spec>
+    // template<typename t_nonbonded_spec>
     void lj_crf_innerloop
     (
      topology::Topology & topo, 
@@ -72,7 +73,7 @@ namespace interaction
      * 1-4 interaction
      * (always shortrange)
      */
-    template<typename t_nonbonded_spec>
+    // template<typename t_nonbonded_spec>
     void one_four_interaction_innerloop
     (
      topology::Topology & topo,
@@ -86,7 +87,7 @@ namespace interaction
      * RF interaction (solute).
      * (always shortrange)
      */
-    template<typename t_nonbonded_spec>
+    // template<typename t_nonbonded_spec>
     void RF_excluded_interaction_innerloop
     (
      topology::Topology & topo,
@@ -99,7 +100,7 @@ namespace interaction
      * RF solvent interaction.
      * (always shortrange)
      */
-    template<typename t_nonbonded_spec>
+    // template<typename t_nonbonded_spec>
     void RF_solvent_interaction_innerloop
     (
      topology::Topology & topo,
@@ -108,7 +109,7 @@ namespace interaction
      math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity
      );
 
-    template<typename t_nonbonded_spec>
+    // template<typename t_nonbonded_spec>
     void spc_innerloop
     (
      topology::Topology & topo,

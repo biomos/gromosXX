@@ -10,7 +10,7 @@
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop::lj_crf_innerloop
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -102,8 +102,9 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop
   
 }
 
-inline void 
-interaction::Nonbonded_Innerloop::lj_crf_innerloop_central
+template<typename t_nonbonded_spec>
+inline void
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_central
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -132,19 +133,17 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop_central
 		     f, e_lj, e_crf);
   
   // most common case
-  // if (t_nonbonded_spec::do_virial == math::molecular_virial){
-  math::Vec rf = f * r;
-  storage.force(i) += rf;
-  storage.force(j) -= rf;
+  if (t_nonbonded_spec::do_virial == math::molecular_virial){
+    math::Vec rf = f * r;
+    storage.force(i) += rf;
+    storage.force(j) -= rf;
   
-  for(int b=0; b<3; ++b){
-    const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
-    for(int a=0; a<3; ++a){
-      storage.virial_tensor(b, a) += rr * rf(a);
+    for(int b=0; b<3; ++b){
+      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
+      for(int a=0; a<3; ++a){
+        storage.virial_tensor(b, a) += rr * rf(a);
+      }
     }
-  }
-
-  /*
   }
   else{
     for (int a=0; a<3; ++a){
@@ -161,8 +160,7 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop_central
       }
     }
   }
-  */
-  
+
   // energy
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	<< " j " << topo.atom_energy_group(j));
@@ -180,8 +178,9 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop_central
   
 }
 
+template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop::lj_crf_innerloop_shift
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_shift
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -212,19 +211,17 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop_shift
 		     f, e_lj, e_crf);
   
   // most common case
-  // if (t_nonbonded_spec::do_virial == math::molecular_virial){
-  math::Vec rf = f * r;
-  storage.force(i) += rf;
-  storage.force(j) -= rf;
+  if (t_nonbonded_spec::do_virial == math::molecular_virial){
+    math::Vec rf = f * r;
+    storage.force(i) += rf;
+    storage.force(j) -= rf;
   
-  for(int b=0; b<3; ++b){
-    const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
-    for(int a=0; a<3; ++a){
-      storage.virial_tensor(b, a) += rr * rf(a);
+    for(int b=0; b<3; ++b){
+      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
+      for(int a=0; a<3; ++a){
+        storage.virial_tensor(b, a) += rr * rf(a);
+      }
     }
-  }
-
-  /*
   }
   else{
     for (int a=0; a<3; ++a){
@@ -241,7 +238,6 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop_shift
       }
     }
   }
-  */
   
   // energy
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
@@ -262,7 +258,7 @@ interaction::Nonbonded_Innerloop::lj_crf_innerloop_shift
 
 
 template<typename t_nonbonded_spec>
-void interaction::Nonbonded_Innerloop::one_four_interaction_innerloop
+void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_innerloop
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -327,7 +323,7 @@ void interaction::Nonbonded_Innerloop::one_four_interaction_innerloop
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop::RF_excluded_interaction_innerloop
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_innerloop
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -388,7 +384,7 @@ interaction::Nonbonded_Innerloop::RF_excluded_interaction_innerloop
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop::RF_solvent_interaction_innerloop
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_innerloop
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -435,7 +431,7 @@ interaction::Nonbonded_Innerloop::RF_solvent_interaction_innerloop
 
 template<typename t_nonbonded_spec>
 inline void 
-interaction::Nonbonded_Innerloop::spc_innerloop
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
