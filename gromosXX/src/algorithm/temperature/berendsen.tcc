@@ -48,6 +48,8 @@ inline void algorithm::Berendsen_Thermostat
       DEBUG(8, "bath " << num << " scaling: " << b_it->scale);
 
     } // scaling ?
+    else
+      b_it->scale = 1;
   } // loop over the baths
 
   //--------------------------------
@@ -69,6 +71,8 @@ inline void algorithm::Berendsen_Thermostat
     // decide whether molecular translational kinetic energy and
     // internal, rotational kinetic energies are jointly coupled
     if (r_it->com_bath == r_it->ir_bath){
+      if (sim.multibath()[r_it->com_bath].tau == -1) continue;
+      
       DEBUG(8, "jointly coupled, scaling with "
 	    << sim.multibath()[r_it->com_bath].scale);
 

@@ -5,22 +5,27 @@ GromosXX install instructions
 To install the package type
 
 1. ./Config.sh
-2. mkdir OBJ
-3. cd OBJ
+2. mkdir ARCHITECTURE
+3. cd ARCHITECTURE
 4. ../configure
 5. make
 6. make install
 
-(this will install GromosXX in OBJ/bin OBJ/lib OBJ/include.
+(this will install GromosXX in ARCHITECTURE/bin ARCHITECTURE/lib OBJ/include.
 you can change this by specifying the --prefix=PATH option to
 configure.)
+If you follow this setup, you can compile the same source tree on different
+architectures by repeating from step 2 with another directory name.
+
+If you do not type make install, the programs will be in
+ARCHITECTURE/program/.
 
 ./Config.sh is a wrapper of the following commands:
 1. mkdir -p config
 2. aclocal
-3. libtoolize
+3. libtoolize --copy
 4. autoconf
-5. automake --add-missing
+5. automake --add-missing --copy
 
 
 necessary libraries
@@ -32,6 +37,10 @@ Blitz++ (http://www.oonumerics.org/blitz/)
 			/usr/local/blitz-0.6/
 	on isengard installed in
 			/orc/markus/machines/isengard/programs/
+	on troll installed in
+			/troll/markus/programs
+	on shepherd installed in
+			/goat7/markus/programs
 
 so for example do the following (before you run configure):
 
