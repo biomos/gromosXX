@@ -85,7 +85,8 @@ void algorithm::Berendsen_Thermostat
       // small flexible constraints hack!
       if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
 	free_temp = 2 *
-	  (b_it->ekin - conf.special().flexible_constraint.flexible_ekin[num]) / (b_it->dof * math::k_Boltzmann);
+	  (b_it->ekin - conf.special().flexible_constraint.flexible_ekin[num])
+	  / (b_it->dof * math::k_Boltzmann);
       }
       else{
 	free_temp = 2 * 
@@ -95,7 +96,11 @@ void algorithm::Berendsen_Thermostat
       // divide by zero measure...
       if (free_temp < math::epsilon) free_temp = b_it->temperature;
 
-      if (immediate)
+      // 2nd divide by zero measure... (if reference temperature is zero)
+      double quot;
+      if (free_temp < math::epsilon)
+	b_it->scale = 1;
+      else if (immediate)
 	b_it->scale = sqrt(b_it->temperature / free_temp);
       else
 	b_it->scale = sqrt(1.0 + sim.time_step_size() / b_it->tau *
