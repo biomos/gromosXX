@@ -43,30 +43,31 @@ int main(int argc, char *argv[]){
     {
       "topo", "conf", "input", "verb", "pttopo",
       "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-      "bae", "bag", "posres", "jval", "rep", "version"
+      "bae", "bag", "posres","distrest", "jval", "rep", "version"
     };
     
-  int nknowns = 19;
+  int nknowns = 20;
     
   std::string usage = argv[0];
-  usage += "\n\t@topo    <topology>\n";
-  usage += "\t[@pttopo <perturbation topology>]\n";
-  usage += "\t@conf    <starting configuration>\n";
-  usage += "\t@input   <input>\n";
-  usage += "\t@trj     <trajectory>\n";
-  usage += "\t@fin     <final structure>\n";
-  usage += "\t[@trv    <velocity trajectory>]\n";
-  usage += "\t[@trf    <force trajectory>]\n";
-  usage += "\t[@tre    <energy trajectory>]\n";
-  usage += "\t[@trg    <free energy trajectory>]\n";
-  usage += "\t[@bae    <block averaged energy trajectory>]\n";
-  usage += "\t[@bag    <block averaged free energy trajectory>]\n";    
-  usage += "\t[@posres <position restraints data>]\n";
-  usage += "\t[@jval   <jvalue restraints data>]\n";
-  usage += "\t[@rep    <replica exchange final data>]\n";
-  usage += "\t[@print  <pairlist/force>]\n";
-  usage += "\t[@trp    <print file>]\n";
-  usage += "\t[@verb   <[module:][submodule:]level>]\n";
+  usage += "\n\t@topo      <topology>\n";
+  usage += "\t[@pttopo   <perturbation topology>]\n";
+  usage += "\t@conf      <starting configuration>\n";
+  usage += "\t@input     <input>\n";
+  usage += "\t@trj       <trajectory>\n";
+  usage += "\t@fin       <final structure>\n";
+  usage += "\t[@trv      <velocity trajectory>]\n";
+  usage += "\t[@trf      <force trajectory>]\n";
+  usage += "\t[@tre      <energy trajectory>]\n";
+  usage += "\t[@trg      <free energy trajectory>]\n";
+  usage += "\t[@bae      <block averaged energy trajectory>]\n";
+  usage += "\t[@bag      <block averaged free energy trajectory>]\n";    
+  usage += "\t[@posres   <position restraints data>]\n";
+  usage += "\t[@distrest <distrest restraints data>]\n";
+  usage += "\t[@jval     <jvalue restraints data>]\n";
+  usage += "\t[@rep      <replica exchange final data>]\n";
+  usage += "\t[@print    <pairlist/force>]\n";
+  usage += "\t[@trp      <print file>]\n";
+  usage += "\t[@verb     <[module:][submodule:]level>]\n";
   usage += "\t[@version]\n";
 
   io::Argument args;
@@ -151,6 +152,11 @@ int main(int argc, char *argv[]){
 	  
 	error = 0; // clear error condition
 	break;
+      }
+      else if (error == E_NAN){
+	io::print_ENERGY(traj.output(), conf.old().energies, 
+			 topo.energy_groups(),
+			 "NAN_ERROR", "ENAN_");
       }
 
       std::cout << "\nError during MD run!\n" << std::endl;
