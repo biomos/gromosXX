@@ -12,7 +12,8 @@ xxinclude_HEADERS = \
 			prepare_virial.h \
 			create_simulation.h \
 			replica_exchange.h \
-			template_split.h
+			template_split.h \
+			virtual_atom.h
 
 noinst_LTLIBRARIES = 	libgroutil.la
 
@@ -23,9 +24,10 @@ libgroutil_la_SOURCES =	debug.cc \
 			parse_verbosity.cc \
 			prepare_virial.cc \
 			replica_exchange.cc \
-			create_simulation.cc
-
+			create_simulation.cc \
+			virtual_atom.cc
 libgroutil_la_LIBADD =
+
 
 bin_PROGRAMS =			
 
