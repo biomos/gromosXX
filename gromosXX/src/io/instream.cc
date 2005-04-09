@@ -8,6 +8,11 @@
 #include "blockinput.h"
 #include "instream.h"
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE io
+#define SUBMODULE topology
+
 void io::GInStream::readTitle() {
 
   std::vector<std::string> _b;
@@ -36,10 +41,12 @@ void io::GInStream::readStream()
 
     trimblock(buffer);
     
+    std::string n = buffer[0];
+    DEBUG(10, "reading block -" << buffer[0] << "- size " << buffer.size());
     m_block[buffer[0]] = buffer;
     
     buffer.clear();
-    
+
   }
   
 }
