@@ -46,6 +46,7 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/pairlist/grid_pairlist_algorithm.h \
 				special/create_special.h \
 				special/position_restraint_interaction.h \
+				special/distance_restraint_interaction.h \
 				special/jvalue_restraint_interaction.h \
 				special/pscale.h
 
@@ -83,6 +84,8 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				bonded/perturbed_dihedral_interaction.cc \
 				special/create_special.cc \
 				special/position_restraint_interaction.cc \
+				special/distance_restraint_interaction.cc \
+ 				special/perturbed_distance_restraint_interaction.cc \
 				special/jvalue_restraint_interaction.cc \
 				special/pscale.cc
 
@@ -91,8 +94,3 @@ bin_PROGRAMS =
 check_PROGRAMS =
 
 TESTS =
-
-
-
-
-

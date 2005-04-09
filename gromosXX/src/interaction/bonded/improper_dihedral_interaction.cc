@@ -71,7 +71,24 @@ static int _calculate_improper_interactions(topology::Topology & topo,
 
     ip = dot(rmj, rnk);
    
-    q  = acos(ip / (dmj*dnk));
+    double acs = ip / (dmj*dnk);
+    if (acs > 1.0){
+      std::cout << "numerical error?? in : "
+		<< i_it->i << " - " << i_it->j
+		<< " - " << i_it->k << " - " << i_it->l
+		<< " : " << acs << std::endl;
+      
+      if (acs < 1.0 + math::epsilon){
+	acs = 1.0;
+      }
+      else{
+	io::messages.add("improper dihedral",
+			 "acs > 1.0",
+			 io::message::critical);
+      }
+    }
+    
+    q  = acos(acs);
 
     DEBUG(10, "zeta="<<q);
     
