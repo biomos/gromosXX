@@ -310,6 +310,11 @@ namespace math
   {
     return v(0) * v(0) + v(1) * v(1) + v(2) * v(2);
   }
+
+  inline double abs(Vec const &v)
+  {
+    return sqrt(v(0) * v(0) + v(1) * v(1) + v(2) * v(2));
+  }
   
   inline void dyade(Vec const &v1, Vec const &v2, Matrix &m)
   {
