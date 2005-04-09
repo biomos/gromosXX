@@ -55,9 +55,10 @@ double finite_diff(topology::Topology & topo,
 		   simulation::Simulation & sim, 
 		   interaction::Interaction &term,
 		   size_t atom, size_t coord,
-		   double const epsilon,
-		   bool physical=true)
+		   double const epsilon)
 {
+  const double orig =  conf.current().pos(atom)(coord);
+  
   conf.current().pos(atom)(coord) += epsilon;
   conf.current().force = 0;
   conf.current().energies.zero();
@@ -65,11 +66,7 @@ double finite_diff(topology::Topology & topo,
   term.calculate_interactions(topo, conf, sim);
   conf.current().energies.calculate_totals();
 
-  double e1;
-  if(physical)
-    e1= conf.current().energies.potential_total;
-  else
-    e1= conf.current().energies.special_total;
+  double e1 = conf.current().energies.potential_total;
 
   conf.current().pos(atom)(coord) -= 2 * epsilon;
   conf.current().force = 0;
@@ -78,67 +75,14 @@ double finite_diff(topology::Topology & topo,
   term.calculate_interactions(topo, conf, sim);
   conf.current().energies.calculate_totals();
 
-  double e2;
-  if(physical)
-    e2= conf.current().energies.potential_total;
-  else
-    e2= conf.current().energies.special_total;
+  double e2 = conf.current().energies.potential_total;
 
-  conf.current().pos(atom)(coord) += epsilon;
+  conf.current().pos(atom)(coord) = orig;
 
   // std::cout << "atom=" << atom << " e1=" << e1 
   // << " e2=" << e2 << " epsilon=" << epsilon << std::endl;
 
   return (e2 - e1) / 2.0 / epsilon;
-
-}
-
-int nonbonded_hessian(topology::Topology & topo, 
-		      configuration::Configuration &conf, 
-		      simulation::Simulation & sim, 
-		      interaction::Nonbonded_Interaction &term,
-		      size_t atom_i, size_t atom_j,
-		      double const epsilon,
-		      double const delta,
-		      int & res)
-{
-
-  math::Vec pos_i = conf.current().pos(atom_i);
-  math::Vec f1, f2;
-  double e_lj, e_crf;
-  math::Matrix fd_h, h;
-
-  for(int d=0; d<3; ++d){
-    
-    conf.current().pos(atom_i)(d) += epsilon;
-
-    term.calculate_interaction(topo, conf, sim, atom_i, atom_j, f1, e_lj, e_crf);
-
-    conf.current().pos(atom_i)(d) -= 2 * epsilon;
-    
-    term.calculate_interaction(topo, conf, sim, atom_i, atom_j, f2, e_lj, e_crf);
-
-    // restore...
-    conf.current().pos(atom_i) = pos_i;
-
-    for(int i=0; i<3; ++i)
-      fd_h(i, d) = (f2(i) - f1(i)) / 2.0 / epsilon;
-
-  }
-
-  conf.current().force = 0;
-  conf.current().energies.zero();
-
-  // need to create a pairlist
-  term.calculate_interactions(topo, conf, sim);
-  
-  term.calculate_hessian(topo, conf, sim, atom_i, atom_j, h);
-
-  for(int i=0; i<3; ++i)
-    for(int j=0; j<3; ++j)
-      CHECK_APPROX_EQUAL(h(i,j), fd_h(i,j), delta, res);
-
-  return res;
 
 }
 
@@ -148,32 +92,19 @@ int check_lambda_derivative(topology::Topology & topo,
 			    simulation::Simulation & sim,
 			    interaction::Interaction &term,
 			    double const epsilon,
-			    double const delta,
-			    bool physical=true
-)
+			    double const delta)
 {
   int res, total = 0;
   
   std::string name = term.name;
-
-  if (term.name == "NonBonded"){
-    if (sim.param().force.spc_loop == 1)
-      if (sim.param().pairlist.grid)
-	name += " (grid, spc loop)";
-      else
-	name += " (std, spc loop)";
-    else
-      if (sim.param().pairlist.grid)
-	name += " (grid, std loop)";
-      else
-	name += " (std, std loop)";
-  }
 
   CHECKING(name + " energy lambda derivative", res);
 
   // assume no different lambda dependence here!
   // this will be checked in a different function
 
+  const double orig = topo.lambda();
+  
   conf.current().force = 0;
   conf.current().energies.zero();
   conf.current().perturbed_energy_derivatives.zero();
@@ -183,9 +114,7 @@ int check_lambda_derivative(topology::Topology & topo,
   conf.current().energies.calculate_totals();
   conf.current().perturbed_energy_derivatives.calculate_totals();
 
-  double dE;
-  if (physical) dE = conf.current().perturbed_energy_derivatives.potential_total;
-  else dE = conf.current().perturbed_energy_derivatives.special_total;
+  const double dE = conf.current().perturbed_energy_derivatives.potential_total;
   
   // change lambda, calculate energies
   topo.lambda(topo.lambda()+epsilon);
@@ -199,11 +128,7 @@ int check_lambda_derivative(topology::Topology & topo,
   conf.current().energies.calculate_totals();
   conf.current().perturbed_energy_derivatives.calculate_totals();
 
-  double e1;
-  if(physical)
-    e1 = conf.current().energies.potential_total;
-  else 
-    e1 = conf.current().energies.special_total;
+  double e1 = conf.current().energies.potential_total;
 
   // change lambda, calculate energies
   topo.lambda(topo.lambda()-2*epsilon);
@@ -217,20 +142,13 @@ int check_lambda_derivative(topology::Topology & topo,
   conf.current().energies.calculate_totals();
   conf.current().perturbed_energy_derivatives.calculate_totals();
 
-  double e2;
-  if(physical)
-    e2 = conf.current().energies.potential_total;
-  else
-    e2 = conf.current().energies.special_total;
-
-
+  double e2 = conf.current().energies.potential_total;
+  
   const double dfE = (e1 - e2) / (2 * epsilon);
   
   CHECK_APPROX_EQUAL(dE, dfE, delta, res);
 
-  // std::cout << " dE " << dE << " dfE " << dfE << std::endl;
-  
-  topo.lambda(topo.lambda() + epsilon);
+  topo.lambda(origin);
 
   RESULT(res, total);
 
@@ -317,61 +235,6 @@ int check_interaction(topology::Topology & topo,
     res += nonbonded_hessian(topo, conf, sim, ni, 9, 70, epsilon, delta, res);
     RESULT(res, total);
   }
-
-  return total;
-
-}
-
-int check_distrest_interaction(topology::Topology & topo,
-			       configuration::Configuration & conf,
-			       simulation::Simulation & sim,
-			       interaction::Interaction &term,
-			       size_t atoms,
-			       double const energy,
-			       double const epsilon,
-			       double const delta)
-{
-  int res, total = 0;
-  
-  std::string name = term.name;
-  
-  CHECKING(name + " interaction energy", res);
-
-  conf.current().force = 0;
-  conf.current().energies.zero();
-  
-  term.calculate_interactions(topo, conf, sim);
-      
-  conf.current().energies.calculate_totals();
-  CHECK_APPROX_EQUAL(conf.current().energies.special_total,
-		     energy, delta, res);
-  RESULT(res, total);
-  
-  // finite diff
-  CHECKING(name + " interaction force (finite diff)", res);
-  
-  for(size_t i=0; i < topo.distance_restraints().size(); ++i){
-
-    int atom = topo.distance_restraints()[i].v1.atom(0);
-    
-    conf.current().force = 0;
-    conf.current().energies.zero();
-
-    term.calculate_interactions(topo, conf, sim);
-      
-    math::Vec f = conf.current().force(atom);
-
-    math::Vec finf;
-    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon, false);
-    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon, false);
-    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon, false);
-	
-    CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
-    CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
-    CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
-  }
-      
-  RESULT(res, total);
 
   return total;
 
@@ -470,14 +333,6 @@ int check::check_forcefield(topology::Topology & topo,
 	ni->init(topo, conf, sim, std::cout, true);
 	delete pa;
       }
-    }
-
-    else if ((*it)->name == "DistanceRestraint"){
-      total += check_distrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 257.189539, 0.0000000001, 0.001);
-    }
-    else if ((*it)->name == "PerturbedDistanceRestraint"){
-      total += check_distrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 195.899012, 0.0000000001, 0.001);
-      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     }
     else {
       CHECKING((*it)->name << " no check implemented!", res);

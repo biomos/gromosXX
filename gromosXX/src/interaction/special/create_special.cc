@@ -16,6 +16,8 @@
 #include <interaction/interaction_types.h>
 
 #include <interaction/special/position_restraint_interaction.h>
+#include <interaction/special/distance_restraint_interaction.h>
+#include <interaction/special/perturbed_distance_restraint_interaction.h>
 #include <interaction/special/jvalue_restraint_interaction.h>
 
 #include <interaction/bonded/dihedral_interaction.h>
@@ -57,6 +59,30 @@ int interaction::create_special(interaction::Forcefield & ff,
   else if (param.posrest.posrest != 0 && param.posrest.posrest != 3){
     io::messages.add("Wrong value for position restraints",
 		     "create_special", io::message::error);
+  }
+  // Distance restraints 
+  if (param.distrest.distrest == 1 || 
+      param.distrest.distrest == 2){
+
+    if(!quiet)
+      os <<"\tDistance restraints\n";
+
+    interaction::Distance_Restraint_Interaction *dr =
+      new interaction::Distance_Restraint_Interaction();
+
+    ff.push_back(dr);
+    
+    if(param.perturbation.perturbation)
+      {
+	if(!quiet)
+	  os <<"\tPerturbed distance restraints\n";
+	
+	interaction::Perturbed_Distance_Restraint_Interaction *pdr =
+	  new interaction::Perturbed_Distance_Restraint_Interaction();
+
+	ff.push_back(pdr); 
+      }
+    
   }
 
   // J-Value restraints

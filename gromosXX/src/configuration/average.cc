@@ -336,6 +336,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
 
   ENERGY_AVG(special_total);
   ENERGY_AVG(posrest_total);
+  ENERGY_AVG(distrest_total);
   ENERGY_AVG(constraints_total);
 
 
@@ -388,6 +389,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   
     // special energies
     ENERGY_AVG(posrest_energy[i]);
+    ENERGY_AVG(distrest_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
   }
 
@@ -494,6 +496,7 @@ void configuration::Average::Block_Average
 
   ENERGY_RES(special_total);
   ENERGY_RES(posrest_total);
+  ENERGY_RES(distrest_total);
   ENERGY_RES(constraints_total);
 
   // std::cout << e.kinetic_energy.size() << std::endl;
@@ -533,6 +536,7 @@ void configuration::Average::Block_Average
   
     // special energies
     ENERGY_RES(posrest_energy[i]);
+    ENERGY_RES(distrest_energy[i]);
     ENERGY_RES(constraints_energy[i]);
   }
 

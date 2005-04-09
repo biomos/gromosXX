@@ -297,7 +297,94 @@ namespace topology
      */
     double bfactor;
   };
+
+struct distance_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    distance_restraint_struct(util::Virtual_Atom v1, util::Virtual_Atom v2, double r0, double w0, int rah)
+      :v1(v1), v2(v2),
+       r0(r0),
+       w0(w0),
+       rah(rah)
+    {}
     
+    /**
+     * Virtual Atom 1.
+     */
+    util::Virtual_Atom v1;
+
+    /**
+     * Virtual Atom 2.
+     */
+    util::Virtual_Atom v2;
+    
+    /**
+     * restraint distance.
+     */
+    double r0;
+    /**
+     * weighting factor.
+     */
+    double w0;
+    /**
+     *repulsiv, attractiv, harmonic
+     */
+    int rah;
+    
+  };
+
+/**
+   *Perturbed distance restraints information.
+   */
+  struct perturbed_distance_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    perturbed_distance_restraint_struct(util::Virtual_Atom v1, util::Virtual_Atom v2, double A_r0, double B_r0, double A_w0, double B_w0, int rah)
+      :v1(v1), v2(v2),
+       A_r0(A_r0), B_r0(B_r0),
+       A_w0(A_w0), B_w0(B_w0),
+       rah(rah)
+    {}
+    
+    /**
+     * Virtual Atom 1.
+     */
+    util::Virtual_Atom v1;
+
+    /**
+     * Virtual Atom 2.
+     */
+    util::Virtual_Atom v2;
+    
+    /**
+     * restraint distance A.
+     */
+    double A_r0;
+    /**
+     * restraint distance B.
+     */
+    double B_r0;
+    /**
+     * weighting factor A.
+     */
+    double A_w0;
+    /**
+     * weighting factor B.
+     */
+    double B_w0; 
+    /**
+     *repulsiv, attractiv, harmonic
+     */
+    int rah;
+    
+  };
+
+  
+  
   /**
    * J-Value restraints.
    */

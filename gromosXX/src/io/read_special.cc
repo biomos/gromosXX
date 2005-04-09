@@ -22,6 +22,7 @@
 #include <io/topology/in_perturbation.h>
 #include <io/parameter/in_parameter.h>
 #include <io/topology/in_posres.h>
+#include <io/topology/in_distrest.h>
 #include <io/topology/in_jvalue.h>
 
 #include "read_special.h"
@@ -62,6 +63,32 @@ int io::read_special(io::Argument const & args,
       ip.read(topo, conf, sim);
     }
   } // POSRES
+
+  // DISTREST
+  if (sim.param().distrest.distrest){
+    std::ifstream distrest_file;
+
+    if (args.count("distrest") != 1){
+      io::messages.add("distance restraints: no data file specified (use @posres)",
+		       "read special",
+		       io::message::error);
+    }
+    else{
+  
+      distrest_file.open(args["distrest"].c_str());
+      if (!distrest_file){
+	io::messages.add("opening distrest file failed!\n",
+			 "read_special", 
+			 io::message::error);
+      }
+      io::messages.add("distance restraints read from " + args["distrest"],
+		       "read special",
+		       io::message::notice);
+      
+      io::In_Distrest ip(distrest_file);
+      ip.read(topo, conf, sim);
+    }    
+  } // DISTREST
 
   // J-Value restraints
   if (sim.param().jvalue.mode != simulation::restr_off){

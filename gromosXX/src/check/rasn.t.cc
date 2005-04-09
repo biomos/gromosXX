@@ -117,6 +117,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      rasn_sim,
 			      in_topo,
+			      "",
 			      quiet
 			      )
       != 0){
@@ -133,13 +134,14 @@ int main(int argc, char* argv[])
 					   rasn_sim.sim,
 					   rasn_sim.conf,
 					   in_topo,
+					   std::cout,
 					   quiet)
 	!= 0){
       std::cerr << "creating forcefield failed!" << std::endl;
       return 1;
     }
 
-    ff->init(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, quiet);
+    ff->init(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, std::cout, quiet);
     
     // first check the forcefield
     total += check::check_forcefield(rasn_sim.topo, rasn_sim.conf, rasn_sim.sim, *ff);
@@ -152,7 +154,8 @@ int main(int argc, char* argv[])
 				  rasn_sim.topo,
 				  rasn_sim.conf,
 				  rasn_sim.sim,
-				  in_topo);
+				  in_topo,
+				  std::cout);
 
     double end_time = rasn_sim.sim.param().step.t0 + 
       rasn_sim.sim.time_step_size() * 

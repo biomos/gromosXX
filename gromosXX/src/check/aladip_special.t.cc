@@ -36,7 +36,7 @@
 #include <util/create_simulation.h>
 #include <algorithm/create_md_sequence.h>
 
-#include <ctime>
+#include <time.h>
 
 #include <config.h>
 
@@ -52,17 +52,18 @@ int main(int argc, char* argv[])
   
   char *knowns[] = 
     {
-      "topo", "conf", "input", "pttopo", "verb"
+      "topo", "conf", "input", "pttopo", "distrest", "verb"
     };
   
-  int nknowns = 5;
+  int nknowns = 6;
     
   std::string usage = argv[0];
-  usage += "\n\t[@topo    <topology>]\n";
-  usage += "\t[@pttopo  <perturbation topology>]\n";
-  usage += "\t[@conf    <starting configuration>]\n";
-  usage += "\t[@input   <input>]\n";
-  usage += "\t[@verb    <[module:][submodule:]level>]\n";
+  usage += "\n\t[@topo      <topology>]\n";
+  usage += "\t[@pttopo   <perturbation topology>]\n";
+  usage += "\t[@conf      <starting configuration>]\n";
+  usage += "\t[@input     <input>]\n";
+  usage += "\t[@distrest  <distrest>]\n";
+  usage += "\t[@verb     <[module:][submodule:]level>]\n";
 
   io::Argument args;
   if (args.parse(argc, argv, nknowns, knowns, true)){
@@ -73,7 +74,7 @@ int main(int argc, char* argv[])
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput;
+  std::string stopo, spttopo, sconf, sinput, sdistrest;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -96,13 +97,19 @@ int main(int argc, char* argv[])
   if(args.count("input") == 1)
     sinput = args["input"];
   else
-    GETFILEPATH(sinput, "aladip_atomic.in", "src/check/data/");
+    GETFILEPATH(sinput, "aladip_special.in", "src/check/data/");
+
+  if(args.count("distrest") == 1)
+    sdistrest = args["distrest"];
+  else
+    GETFILEPATH(sdistrest, "aladip.distrest", "src/check/data/");
 
   if (!quiet)
     std::cout << "\n\n"
 	      << "topology :      " << stopo << "\n"
 	      << "perturbation :  " << spttopo << "\n"
 	      << "input :         " << sinput << "\n"
+	      << "distrest :      " << sdistrest << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
@@ -117,17 +124,18 @@ int main(int argc, char* argv[])
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      "",
+			      sdistrest,
 			      quiet
 			      )
       != 0){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+      
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
-      
+	
   if (interaction::create_g96_forcefield(*ff, 
 					 aladip_sim.topo,
 					 aladip_sim.sim,
@@ -140,9 +148,14 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout, quiet);
-      
-  total += check::check_atomic_virial(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
-    
+  ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
+
+  // first check the forcefield
+  total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
+
+  // check virial, ...
+  // total += check::check_state(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
+  
+
   return total;
 }

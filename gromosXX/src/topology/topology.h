@@ -440,6 +440,36 @@ namespace topology
     }
 
     /**
+     * const distance restraints accessor.
+     */
+    std::vector<distance_restraint_struct> const & distance_restraints()const
+    {
+      return m_distance_restraint;
+    }
+
+    /**
+     *  distance restraints accessor.
+     */
+    std::vector<distance_restraint_struct>  & distance_restraints()
+    {
+      return m_distance_restraint;
+    } 
+    /**
+     * const perturbed distance restraints accessor.
+     */
+    std::vector<perturbed_distance_restraint_struct> const & perturbed_distance_restraints()const
+    {
+      return m_perturbed_distance_restraint;
+    }
+    /**
+     * perturbed distance restraints accessor.
+     */
+    std::vector<perturbed_distance_restraint_struct>  & perturbed_distance_restraints()
+    {
+      return m_perturbed_distance_restraint;
+    }
+
+    /**
      * j value restraints accessor.
      */
     std::vector<jvalue_restraint_struct> & jvalue_restraints()
@@ -618,6 +648,14 @@ namespace topology
      */
     std::vector<position_restraint_struct> m_position_restraint;
 
+    /**
+     * distance restraints 
+     */
+    std::vector<distance_restraint_struct> m_distance_restraint;
+    /**
+     * perturbed distance restraints 
+     */
+    std::vector<perturbed_distance_restraint_struct> m_perturbed_distance_restraint;
     /**
      * jvalue restraints / constraints
      */

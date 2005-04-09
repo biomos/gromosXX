@@ -1023,15 +1023,19 @@ io::In_Topology::read(topology::Topology& topo,
 		     "In_Topology", io::message::error);
   }
   // and add them
+  DEBUG(10, "adding energy groups : " << param.force.energy_group.size());
   unsigned int atom = 0;
   for(unsigned int i=0; i<param.force.energy_group.size(); ++i){
+    assert(param.force.energy_group.size() > i);
     topo.energy_groups().push_back(param.force.energy_group[i]);
+    DEBUG(10, "energy group " << i << " start = " << atom << " end = " << param.force.energy_group[i]);
     for( ; atom <= param.force.energy_group[i]; ++atom){
       topo.atom_energy_group().push_back(i);
       // DEBUG(11, "atom " << atom << ": " << i);
     }
   }
 
+  DEBUG(10, "multibath?");
   if(!param.multibath.found_multibath && param.multibath.found_tcouple){
     if (!quiet)
       os << "\tparsing a (deprecated) TCOUPLE block into the new "
@@ -1042,7 +1046,8 @@ io::In_Topology::read(topology::Topology& topo,
 
   if (!quiet)
     os << "END\n";
-  
+
+  DEBUG(10, "topology read");
 }
 
 void io::In_Topology

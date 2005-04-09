@@ -757,6 +757,60 @@ namespace simulation
     } /** Position restraint parameters */ posrest;
 
     /**
+     * @struct distrest_struct
+     * DISTREST block
+     */
+
+    struct distrest_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - distrest 0 (no distance restraints)
+       * - K 0
+       * - r_linear 0
+       * - tau 10
+       * - read 0
+       */
+
+      distrest_struct()
+	: distrest(0),
+	  K(0),
+	  r_linear(0),
+	  tau(10),
+	  read(0)
+      {
+      }
+      
+      /** 
+       * distance restraints on/off
+       */
+      int distrest;
+      
+      /**
+       * force constant K
+       */
+      double K;
+      
+      /**
+       * distance where potential gets linear
+       */
+      double r_linear;
+      
+      /**
+       * memory time for time averaging 
+       */
+      double tau;
+      
+      /**
+       * read on/off (not supported)
+       */
+      bool read;
+      
+    }/** Distance restraints parameters */ distrest;
+    
+
+    /**
      * @struct perturb_struct
      * PERTURB block
      */

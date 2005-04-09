@@ -1,3 +1,4 @@
+
 /**
  * @file in_parameter.cc
  * implements methods of In_Parameter
@@ -61,6 +62,9 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_PLIST(param);
   read_LONGRANGE(param);
   read_POSREST(param);
+
+  read_DISTREST(param);
+  
   read_PERTURB(param);
   read_JVALUE(param);
   read_PSCALE(param);
@@ -1033,12 +1037,12 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   buffer = m_block["FORCE"];
 
   if (!buffer.size()){
+    DEBUG(8, "no force block found???");
     io::messages.add("no FORCE block", "In_Parameter", io::message::error);
     return;
   }
 
   block_read.insert("FORCE");
-  
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -1051,6 +1055,7 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
 	      >> charge >> param.force.nonbonded;
   _lineStream >> num;
   if(num<=0){
+    DEBUG(10, "number of energy group < 0?");
     io::messages.add("number of energy groups in FORCE block should be > 0",
 		     "In_Parameter", io::message::error);
     return;
@@ -1058,8 +1063,10 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   
   for(unsigned int i=0; i<num; ++i){
     _lineStream >> e;
+    DEBUG(10, "\tadding energy group " << e-1);
     param.force.energy_group.push_back(e-1);
     if(e<=old_e){
+      DEBUG(10, "energy groups not in order...");
       io::messages.add("energy groups are not in order in FORCE block",
 		       "In_Parameter", io::message::error);
       return;
@@ -1067,6 +1074,8 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
     old_e = e;
   }
   
+  DEBUG(10, "number of energy groups: " << param.force.energy_group.size());
+
   if (_lineStream.fail())
     io::messages.add("bad line in ENERGYGROUP (FORCE) block",
 		     "In_Parameter", io::message::error);
@@ -1779,6 +1788,61 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
 
 } // POSREST
+
+/**
+ * read DISTREST block.
+ */
+void io::In_Parameter::read_DISTREST(simulation::Parameter &param,
+				    std::ostream & os)
+{
+  DEBUG(8, "read DISTREST");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  DEBUG(10, "distrest block");
+  buffer = m_block["DISTREST"];
+  
+  if (!buffer.size()){
+    return;
+  }
+  
+  block_read.insert("DISTREST");
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+  
+  _lineStream >> param.distrest.distrest
+	      >> param.distrest.K
+	      >> param.distrest.r_linear
+	      >> param.distrest.tau
+	      >> param.distrest.read;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in DISTREST block",
+		     "In_Parameter", io::message::error);
+  
+  if(param.distrest.distrest <0) {
+    io::messages.add("Distance restrain averaging not implemented",
+		     "In_Parameter", 
+		     io::message::warning);
+  }
+  
+  if(param.distrest.distrest >2) {
+    io::messages.add("bad input in DISTREST block, NTDR must be <=2",
+		     "In_Parameter", 
+		     io::message::warning);
+    
+  }
+  
+
+
+  if(param.distrest.K <0)
+    io::messages.add("Illegal value for force constant"
+		     " in DISTREST block (>=0)",
+		     "In_Parameter", io::message::error);
+
+} // DISTREST
 
 /**
  * read the JVALUE block.

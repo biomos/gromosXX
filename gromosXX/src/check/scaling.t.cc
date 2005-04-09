@@ -107,6 +107,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      aladip_sim,
 			      in_topo,
+			      "",
 			      quiet
 			      )
       != 0){
@@ -124,6 +125,7 @@ int main(int argc, char* argv[])
 			      slambdadepinput,
 			      aladip_lambdadep_sim,
 			      in_lambdadep_topo,
+			      "",
 			      quiet
 			      )
       != 0){
@@ -144,13 +146,14 @@ int main(int argc, char* argv[])
 					 aladip_sim.sim,
 					 aladip_sim.conf,
 					 in_topo,
+					 std::cout,
 					 quiet)
       != 0){
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
 
-  ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, quiet);
+  ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout, quiet);
 
   // std::cout << "aladip forcefield" << std::endl;
   // io::messages.display(std::cout);
@@ -161,13 +164,14 @@ int main(int argc, char* argv[])
 					 aladip_lambdadep_sim.sim,
 					 aladip_lambdadep_sim.conf,
 					 in_lambdadep_topo,
+					 std::cout,
 					 quiet)
       != 0){
     std::cerr << "creating lambda dependent forcefield failed!" << std::endl;
     return 1;
   }
 
-  lambdadep_ff->init(aladip_lambdadep_sim.topo, aladip_lambdadep_sim.conf, aladip_lambdadep_sim.sim, quiet);
+  lambdadep_ff->init(aladip_lambdadep_sim.topo, aladip_lambdadep_sim.conf, aladip_lambdadep_sim.sim, std::cout, quiet);
   
   // std::cout << "aladip lambdadep forcefield" << std::endl;
   // io::messages.display(std::cout);

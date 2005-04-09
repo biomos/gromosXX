@@ -36,8 +36,9 @@ io::In_Posres::read(topology::Topology& topo,
   std::vector<std::string>::const_iterator it;
   
   { // POSRES
-    DEBUG(10, "POSRES block");
+
     buffer = m_block["POSRES"];
+    DEBUG(10, "POSRES block : " << buffer.size());
     
     if (!buffer.size()){
       io::messages.add("no POSRES block in position restraints file",

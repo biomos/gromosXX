@@ -15,5 +15,6 @@
 #include "atomgroup_iterator.h"
 #include "chargegroup_iterator.h"
 #include "molecule_iterator.h"
+#include <util/virtual_atom.h>
 #include "body_term.h"
 #include "compound.h"

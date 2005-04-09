@@ -117,6 +117,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      aladip_sim,
 			      in_topo,
+			      "",
 			      quiet
 			      )
       != 0){
@@ -133,13 +134,14 @@ int main(int argc, char* argv[])
 					   aladip_sim.sim,
 					   aladip_sim.conf,
 					   in_topo,
+					   std::cout,
 					   quiet)
 	!= 0){
       std::cerr << "creating forcefield failed!" << std::endl;
       return 1;
     }
 
-    ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, quiet);
+    ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
 
     // first check the forcefield
     total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
@@ -160,7 +162,7 @@ int main(int argc, char* argv[])
 				  aladip_sim.conf,
 				  aladip_sim.sim,
 				  in_topo);
-
+    
     double end_time = aladip_sim.sim.param().step.t0 + 
       aladip_sim.sim.time_step_size() * 
       aladip_sim.sim.param().step.number_of_steps;
