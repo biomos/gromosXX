@@ -71,6 +71,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_ROTTRANS(param);
   read_INNERLOOP(param);
   read_MULTICELL(param);
+  read_ANALYZE(param);
   
   DEBUG(7, "input read...");
 
@@ -2149,4 +2150,33 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
   }
   
 }
+
+void io::In_Parameter::read_ANALYZE(simulation::Parameter & param,
+				    std::ostream & os)
+{
+  DEBUG(8, "read ANALYZE");
+
+  std::vector<std::string> buffer;
+  std::string s;
   
+  buffer = m_block["ANALYZE"];
+
+  if (buffer.size()){
+
+    block_read.insert("ANALYZE");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.analyze.analyze;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in ANALYZE block",
+		       "In_Parameter", io::message::error);
+      
+      param.analyze.analyze = false;
+    }
+  }
+  
+}
+

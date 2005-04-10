@@ -35,7 +35,78 @@ namespace io {
 	      topology::Topology &topo, 
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
+
+    /**
+     * read the next frame, topology has to be already prepared.
+     */
+    bool read_next(topology::Topology & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation & sim,
+		   std::ostream & os = std::cout);
+
   private:
+    /**
+     * try to get positions
+     */
+    bool read_position(topology::Topology & topo,
+		       configuration::Configuration & conf,
+		       simulation::Simulation & sim,
+		       std::ostream & os = std::cout);
+    /**
+     * try to get velocities
+     */
+    bool read_velocity(topology::Topology & topo,
+		       configuration::Configuration & conf,
+		       simulation::Simulation & sim,
+		       std::ostream & os = std::cout);
+    /**
+     * try to get time, step
+     */
+    bool read_time(topology::Topology & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation & sim,
+		   std::ostream & os = std::cout);
+
+    /**
+     * try to get time, step
+     */
+    bool read_time_step(topology::Topology & topo,
+			configuration::Configuration & conf,
+			simulation::Simulation & sim,
+			std::ostream & os = std::cout);
+
+    /**
+     * try to get box
+     */
+    bool read_box(topology::Topology & topo,
+		  configuration::Configuration & conf,
+		  simulation::Simulation & sim,
+		  std::ostream & os = std::cout);
+
+    /**
+     * try to get jvalue average data
+     */
+    bool read_jvalue(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    std::ostream & os = std::cout);
+
+    /**
+     * try to get pscale continuation data
+     */
+    bool read_pscale(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    std::ostream & os = std::cout);
+
+    /**
+     * try to get flexible constraints data
+     */
+    bool read_flexv(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    std::ostream & os = std::cout);
+    
     /**
      * read POSITION block.
      */
@@ -95,7 +166,12 @@ namespace io {
      */
     bool _read_time(std::vector<std::string> &buffer,
 		    double & t);
-
+    /**
+     * read time and step information.
+     */
+    bool _read_time_step(std::vector<std::string> &buffer,
+			 simulation::Simulation & sim);
+    
   };
 
 } // io

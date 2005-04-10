@@ -48,117 +48,18 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_frame();
 
   block_read.clear();
-  std::vector<std::string> buffer;
 
-  // current time
-  if (param.step.t0 == -1){
-    buffer = m_block["TIMESTEP"];
-    if (!buffer.size()){
-      io::messages.add("Requested time information from TIMESTEP block, "
-		       "but block not found", "in_configuration", io::message::error);
-    }
-    else{
-      _read_time(buffer, sim.time());
-      block_read.insert("TIMESTEP");
-    }
-  }
-  else{
-    buffer = m_block["TIMESTEP"];
-    if (buffer.size())
-      block_read.insert("TIMESTEP");
-  }
-
-  // read positions
-  buffer = m_block["POSITION"];
-  if (buffer.size()){
-    if (!quiet)
-      os << "\treading POSITION...\n";
-    _read_position(conf.current().pos, buffer, topo.num_atoms());
-    block_read.insert("POSITION");
-  }
-  else{
-    buffer = m_block["POSITIONRED"];
-    if (buffer.size()){
-      if (!quiet)
-	os << "\treading POSITIONRED...\n";
-      _read_positionred(conf.current().pos, buffer, topo.num_atoms());
-      block_read.insert("POSITIONRED");
-    }
-    else{
-      io::messages.add("no POSITION / POSITIONRED block found in input configuration",
-		       "in_configuration",
-		       io::message::error);
-    }
-  }
+  read_time(topo, conf, sim, os);
+  read_position(topo, conf, sim, os);
+  read_velocity(topo, conf, sim, os);
+  read_box(topo, conf, sim, os);
+  read_jvalue(topo, conf, sim, os);
+  read_pscale(topo, conf, sim, os);
+  read_flexv(topo, conf, sim, os);
   
-  // read velocities
-  if(!param.start.generate_velocities && !param.minimise.ntem){
-    buffer = m_block["VELOCITY"];
-    if (buffer.size()){
-      if (!quiet)
-	os << "\treading VELOCITY...\n";
-      _read_velocity(conf.current().vel, buffer, topo.num_atoms());
-      block_read.insert("VELOCITY");
-    }
-    else{
-      buffer = m_block["VELOCITYRED"];
-      if (buffer.size()){
-	if (!quiet)
-	  os << "\treading VELOCITYRED...\n";
-	_read_velocityred(conf.current().vel, buffer, topo.num_atoms());
-	block_read.insert("VELOCITYRED");
-      }
-      else{
-	io::messages.add("no VELOCITY / VELOCITYRED block found in input configuration",
-			 "in_configuration",
-			 io::message::error);
-	conf.current().vel = 0.0;
-      }
-    }
-    // store also in old velocities (for initial temperature calculation)
-    conf.old().vel = conf.current().vel;
-  }
-  else{
-    // generate initial velocities
-    util::generate_velocities(param.start.tempi, 
-			      topo.mass(),
-			      conf.current().vel,
-			      conf.old().vel,
-			      param.start.ig,
-			      os);
-  }
-  
-  // read box
-  if(param.boundary.boundary != math::vacuum){
-    buffer = m_block["TRICLINICBOX"];
-    if (buffer.size()){
-      if (!quiet)
-	os << "\treading TRICLINICBOX...\n";
-      _read_box(conf.current().box, buffer, param.boundary.boundary);
-      conf.old().box = conf.current().box;
-      block_read.insert("TRICLINICBOX");
-    }
-    else{
-      buffer = m_block["BOX"];
-      if (buffer.size() && (param.boundary.boundary == math::rectangular ||
-			    param.boundary.boundary == math::truncoct)){
-	if (!quiet)
-	  os << "\treading BOX...\n";
-	_read_g96_box(conf.current().box, buffer);
-	conf.old().box = conf.current().box;
-	block_read.insert("BOX");
-      }
-      else{
-	io::messages.add("no TRICLINICBOX / BOX (for rectangular/truncoct "
-			 "boundary conditions)\n"
-			 "\tblock found in input configuration",
-			 "in_configuration",
-			 io::message::error);
-      }
-    }    
-  }
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
+
 
   // print some information
   if (!quiet){
@@ -194,45 +95,223 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     os << "\n\n";
   }
   
-  if (param.constraint.solute.algorithm == simulation::constr_flexshake){
-    conf.special().flexible_constraint.flexible_vel.
-      resize(topo.solute().distance_constraints().size()+
-	     topo.perturbed_solute().distance_constraints().size());
-    const unsigned int numb = unsigned(param.multibath.multibath.size());
 
-    conf.special().flexible_constraint.flexible_ekin.resize(numb);
+  // warn for unread input data
+  for(std::map<std::string, std::vector<std::string> >::const_iterator
+	it = m_block.begin(),
+	to = m_block.end();
+      it != to;
+      ++it){
 
-    buffer = m_block["FLEXV"];
-    if (buffer.size() && param.constraint.solute.flexshake_readin){
-      block_read.insert("FLEXV");
-      if (!quiet)
-	os << "\treading FLEXV...\n";
-      _read_flexv(conf.special().flexible_constraint.flexible_vel, buffer, 
-		  topo.solute().distance_constraints(),
-		  topo.perturbed_solute().distance_constraints());
-
+    if (block_read.count(it->first) == 0 && it->second.size()){
+      io::messages.add("block " + it->first + " not read in!",
+		       "In_Configuration",
+		       io::message::warning);
     }
-    else{
-      if (param.constraint.solute.flexshake_readin)
-	io::messages.add("no FLEXV block found but reading in of constraint velocities requested",
-			 "in_configuration",
-			 io::message::error);
-      else
-	io::messages.add("no FLEXV block found, assuming SHAKEd positions (and velocities)",
-			 "in_configuration",
-			 io::message::notice);
+  }
+  
+  if (!quiet)
+    os << "\n\nEND\n\n";
+}
+
+/**
+ * read in a trajectory.
+ */
+bool io::In_Configuration::read_next
+(
+ topology::Topology &topo,
+ configuration::Configuration &conf,
+ simulation::Simulation & sim,
+ std::ostream & os
+ )
+{
+  if (!quiet)
+    os << "\nread next frame\n";
+
+  read_frame();
+
+  block_read.clear();
+
+  if (!(
+	read_time_step(topo, conf, sim, os) &&
+	read_position(topo, conf, sim, os) &&
+	read_box(topo, conf, sim, os)
+
+	// read_velocity(topo, conf, sim, os);
+	// read_jvalue(topo, conf, sim, os);
+	// read_pscale(topo, conf, sim, os);
+	// read_flexv(topo, conf, sim, os);
+
+	)){
+    return false;
+  }
+
+  // print some information
+  if (!quiet){
+    os << "\n\t";
+    os << "time : " << sim.time()
+       << "\n\t"
+       << "step : " << sim.steps();
+
+    os << "\n\n";
+  }
+
+  // warn for unread input data
+  for(std::map<std::string, std::vector<std::string> >::const_iterator
+	it = m_block.begin(),
+	to = m_block.end();
+      it != to;
+      ++it){
+
+    if (block_read.count(it->first) == 0 && it->second.size()){
+      os << "\tblock " + it->first + " not read in!\n";
     }
   }
 
-  if (param.jvalue.mode != simulation::restr_off){
+  return true;
+}
 
-    if (param.jvalue.mode == simulation::restr_inst){
-      if (param.jvalue.read_av)
+bool io::In_Configuration::read_position
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  // read positions
+  std::vector<std::string> buffer;
+  buffer = m_block["POSITION"];
+  if (buffer.size()){
+    if (!quiet)
+      os << "\treading POSITION...\n";
+    _read_position(conf.current().pos, buffer, topo.num_atoms());
+    block_read.insert("POSITION");
+  }
+  else{
+    buffer = m_block["POSITIONRED"];
+    if (buffer.size()){
+      if (!quiet)
+	os << "\treading POSITIONRED...\n";
+      _read_positionred(conf.current().pos, buffer, topo.num_atoms());
+      block_read.insert("POSITIONRED");
+    }
+    else{
+      io::messages.add("no POSITION / POSITIONRED block found in input configuration",
+		       "in_configuration",
+		       io::message::error);
+      return false;
+    }
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_velocity
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  // read velocities
+  std::vector<std::string> buffer;
+  if(!sim.param().start.generate_velocities && !sim.param().minimise.ntem){
+    buffer = m_block["VELOCITY"];
+    if (buffer.size()){
+      if (!quiet)
+	os << "\treading VELOCITY...\n";
+      _read_velocity(conf.current().vel, buffer, topo.num_atoms());
+      block_read.insert("VELOCITY");
+    }
+    else{
+      buffer = m_block["VELOCITYRED"];
+      if (buffer.size()){
+	if (!quiet)
+	  os << "\treading VELOCITYRED...\n";
+	_read_velocityred(conf.current().vel, buffer, topo.num_atoms());
+	block_read.insert("VELOCITYRED");
+      }
+      else{
+	io::messages.add("no VELOCITY / VELOCITYRED block found in input configuration",
+			 "in_configuration",
+			 io::message::error);
+	conf.current().vel = 0.0;
+	return false;
+      }
+    }
+    // store also in old velocities (for initial temperature calculation)
+    conf.old().vel = conf.current().vel;
+  }
+  else{
+    // generate initial velocities
+    util::generate_velocities(sim.param().start.tempi, 
+			      topo.mass(),
+			      conf.current().vel,
+			      conf.old().vel,
+			      sim.param().start.ig,
+			      os);
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_box
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  // read box
+  std::vector<std::string> buffer;
+  if(sim.param().boundary.boundary != math::vacuum){
+    buffer = m_block["TRICLINICBOX"];
+    if (buffer.size()){
+      if (!quiet)
+	os << "\treading TRICLINICBOX...\n";
+      _read_box(conf.current().box, buffer, sim.param().boundary.boundary);
+      conf.old().box = conf.current().box;
+      block_read.insert("TRICLINICBOX");
+    }
+    else{
+      buffer = m_block["BOX"];
+      if (buffer.size() && (sim.param().boundary.boundary == math::rectangular ||
+			    sim.param().boundary.boundary == math::truncoct)){
+	if (!quiet)
+	  os << "\treading BOX...\n";
+	_read_g96_box(conf.current().box, buffer);
+	conf.old().box = conf.current().box;
+	block_read.insert("BOX");
+      }
+      else{
+	io::messages.add("no TRICLINICBOX / BOX (for rectangular/truncoct "
+			 "boundary conditions)\n"
+			 "\tblock found in input configuration",
+			 "in_configuration",
+			 io::message::error);
+	return false;
+      }
+    }    
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_jvalue
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+
+  if (sim.param().jvalue.mode != simulation::restr_off){
+
+    if (sim.param().jvalue.mode == simulation::restr_inst){
+      if (sim.param().jvalue.read_av)
 	io::messages.add("instantaneous J-value restraints, ignoring reading of averages",
 			 "in_configuration",
 			 io::message::warning);
     }
-    else if (!param.jvalue.read_av && param.jvalue.mode != simulation::restr_inst){
+    else if (!sim.param().jvalue.read_av && sim.param().jvalue.mode != simulation::restr_inst){
 
       buffer = m_block["JVALRESEXPAVE03"];
       if (buffer.size()){
@@ -261,13 +340,24 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 			 "but JVALRESEXPAVE03 block not found",
 			 "in_configuration",
 			 io::message::error);
+	return false;
       }
     }
   } // jvalue averages
+  return true;
+}
 
-  if (param.pscale.jrest){
+bool io::In_Configuration::read_pscale
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().pscale.jrest){
 
-    if (!param.pscale.read_data){
+    if (!sim.param().pscale.read_data){
       buffer = m_block["PSCALEJREST"];
       if (buffer.size()){
 	block_read.insert("PSCALEJREST");
@@ -293,27 +383,106 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 			 "but PSCALEJREST block not found",
 			 "in_configuration",
 			 io::message::error);
+	return false;
       }
     }
   } // PSCALE JREST
+  return true;
+}
 
-  // warn for unread input data
-  for(std::map<std::string, std::vector<std::string> >::const_iterator
-	it = m_block.begin(),
-	to = m_block.end();
-      it != to;
-      ++it){
+bool io::In_Configuration::read_flexv
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
+    conf.special().flexible_constraint.flexible_vel.
+      resize(topo.solute().distance_constraints().size()+
+	     topo.perturbed_solute().distance_constraints().size());
+    const unsigned int numb = unsigned(sim.param().multibath.multibath.size());
 
-    if (block_read.count(it->first) == 0 && it->second.size()){
-      io::messages.add("block " + it->first + " not read in!",
-		       "In_Configuration",
-		       io::message::warning);
+    conf.special().flexible_constraint.flexible_ekin.resize(numb);
+
+    buffer = m_block["FLEXV"];
+    if (buffer.size() && sim.param().constraint.solute.flexshake_readin){
+      block_read.insert("FLEXV");
+      if (!quiet)
+	os << "\treading FLEXV...\n";
+      _read_flexv(conf.special().flexible_constraint.flexible_vel, buffer, 
+		  topo.solute().distance_constraints(),
+		  topo.perturbed_solute().distance_constraints());
+
+    }
+    else{
+      if (sim.param().constraint.solute.flexshake_readin){
+	io::messages.add("no FLEXV block found but reading in of constraint velocities requested",
+			 "in_configuration",
+			 io::message::error);
+	return false;
+      }
+      else
+	io::messages.add("no FLEXV block found, assuming SHAKEd positions (and velocities)",
+			 "in_configuration",
+			 io::message::notice);
     }
   }
-  
-  if (!quiet)
-    os << "\n\nEND\n\n";
+  return true;
+}
 
+bool io::In_Configuration::read_time
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  // current time
+  std::vector<std::string> buffer;
+  if (sim.param().step.t0 == -1){
+    buffer = m_block["TIMESTEP"];
+    if (!buffer.size()){
+      io::messages.add("Requested time information from TIMESTEP block, "
+		       "but block not found", "in_configuration", io::message::error);
+      return false;
+    }
+    else{
+      _read_time(buffer, sim.time());
+      block_read.insert("TIMESTEP");
+    }
+  }
+  else{
+    buffer = m_block["TIMESTEP"];
+    if (buffer.size())
+      block_read.insert("TIMESTEP");
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_time_step
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  // current time
+  std::vector<std::string> buffer;
+
+  buffer = m_block["TIMESTEP"];
+  if (!buffer.size()){
+    io::messages.add("TIMESTEP block not found",
+		     "in_configuration",
+		     io::message::error);
+    return false;
+  }
+  else{
+    _read_time_step(buffer, sim);
+    block_read.insert("TIMESTEP");
+  }
+  return true;
 }
 
 bool io::In_Configuration::_read_positionred(math::VArray &pos, 
@@ -825,5 +994,35 @@ _read_time(std::vector<std::string> &buffer,
     return false;
   }
 
+  return true;
+}
+
+bool io::In_Configuration::
+_read_time_step(std::vector<std::string> &buffer,
+		simulation::Simulation & sim)
+{
+  DEBUG(8, "read time step");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  _lineStream.clear();
+  _lineStream.str(*it);
+
+  int i;
+  double t;
+  
+  _lineStream >> i >> t;
+  
+  if (_lineStream.fail() || t < 0 || i < 0){
+    io::messages.add("Could not read time from configuration file",
+		     "In_Configuration", io::message::error);
+    return false;
+  }
+
+  sim.steps() = i;
+  sim.time() = t;
+  
   return true;
 }

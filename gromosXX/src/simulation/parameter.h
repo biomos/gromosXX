@@ -1046,6 +1046,32 @@ namespace simulation
       int z;
     } /** multicell parameter */ multicell;
 
+    /**
+     * @struct analyze_struct
+     * re-analyze trajectory
+     */
+    struct analyze_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - analyze(false)
+       * - trajectory("")
+       */
+      analyze_struct() : analyze(false), trajectory("")
+      {
+      }
+      /** 
+       * re-analyze trajectory
+       */
+      bool analyze;
+      /**
+       * trajectory filename
+       */
+      std::string trajectory;
+      
+    } /** analyze parameter */ analyze;
+
   };
 
 }

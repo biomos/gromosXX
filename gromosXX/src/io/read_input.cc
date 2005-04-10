@@ -67,6 +67,18 @@ int io::read_input(io::Argument const & args,
   sim.time_step_size() = sim.param().step.dt;
   sim.time() = sim.param().step.t0;
 
+  if (sim.param().analyze.analyze){
+    if (args.count("anatrj") < 1){
+      os << "\n\nno analyzation trajectory specified (@anatrj)\n";
+      io::messages.add("\n\nno analyzation trajectory specified (@anatrj)\n",
+		       "read_input",
+		       io::message::critical);
+      sim.param().analyze.analyze = false;
+    }
+    else
+      sim.param().analyze.trajectory = args["anatrj"];
+  }
+
   topo_file.open(args["topo"].c_str());
   if (!topo_file.is_open()){
     os << "\n\ncould not open " << args["topo"] << "!\n" << std::endl;

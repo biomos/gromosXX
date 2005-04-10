@@ -176,6 +176,11 @@ namespace io {
      * read MULTICELL block.
      */
     void read_MULTICELL(simulation::Parameter & param, std::ostream & os = std::cout);
+
+    /**
+     * read ANALYZE block.
+     */
+    void read_ANALYZE(simulation::Parameter & param, std::ostream & os = std::cout);
     
   };
   

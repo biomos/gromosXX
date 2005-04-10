@@ -9,6 +9,7 @@ xxinclude_HEADERS =		algorithm.h \
 				integration/leap_frog.h \
 				integration/slow_growth.h \
 				integration/steepest_descent.h \
+				integration/analyze.h \
 			 	temperature/temperature_calculation.h \
 				temperature/thermostat.h \
 				temperature/berendsen_thermostat.h \
@@ -48,6 +49,7 @@ libgroalgorithm_la_SOURCES =	algorithm.cc \
 				integration/energy_calculation.cc \
 				integration/slow_growth.cc \
 				integration/steepest_descent.cc \
+				integration/analyze.cc \
 				constraints/rottrans.cc
 
 bin_PROGRAMS =			

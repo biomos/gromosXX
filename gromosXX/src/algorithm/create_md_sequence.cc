@@ -21,6 +21,13 @@
 #include <algorithm/constraints/position_constraints.h>
 #include <algorithm/integration/energy_calculation.h>
 #include <algorithm/integration/leap_frog.h>
+
+#include <io/blockinput.h>
+#include <io/instream.h>
+#include <io/configuration/inframe.h>
+#include <io/configuration/in_configuration.h>
+
+#include <algorithm/integration/analyze.h>
 #include <algorithm/temperature/temperature_calculation.h>
 #include <algorithm/temperature/nosehoover_thermostat.h>
 #include <algorithm/temperature/berendsen_thermostat.h>
@@ -196,8 +203,17 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   
   // total energy calculation and energy average update
   {
-    algorithm::Energy_Calculation * ec = new algorithm::Energy_Calculation();
+    algorithm::Energy_Calculation * ec = 
+      new algorithm::Energy_Calculation();
     md_seq.push_back(ec);
+  }
+
+  // analyze trajectory:
+  // overwrite current configuration with trajectory data
+  if (sim.param().analyze.analyze){
+    algorithm::Analyze_Step * as = 
+      new algorithm::Analyze_Step(sim.param().analyze.trajectory);
+    md_seq.push_back(as);
   }
 
   return 0;
