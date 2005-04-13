@@ -47,6 +47,7 @@ xxinclude_HEADERS =		interaction.h \
 				special/create_special.h \
 				special/position_restraint_interaction.h \
 				special/distance_restraint_interaction.h \
+				special/perturbed_distance_restraint_interaction.h \
 				special/jvalue_restraint_interaction.h \
 				special/pscale.h
 
