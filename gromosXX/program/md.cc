@@ -135,10 +135,16 @@ int main(int argc, char *argv[]){
 	error = 0; // clear error condition
 	break;
       }
-      else if (error == E_NAN){
+      else { 
+	// try to print energies anyway
+	// if (error == E_NAN){
+	io::print_ENERGY(traj.output(), conf.current().energies,
+			 topo.energy_groups(),
+			 "OLDERROR", "OLDERR_");
+	
 	io::print_ENERGY(traj.output(), conf.old().energies, 
 			 topo.energy_groups(),
-			 "NAN_ERROR", "ENAN_");
+			 "ERROR", "ERR_");
       }
 
       std::cout << "\nError during MD run!\n" << std::endl;
