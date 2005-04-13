@@ -1017,11 +1017,19 @@ io::In_Topology::read(topology::Topology& topo,
     param.force.energy_group.push_back(topo.num_atoms() -1);
   }
 
-  if (param.force.energy_group.back() != topo.num_atoms()-1){
+  if (param.force.energy_group.back() > topo.num_atoms()-1){
     io::messages.add("Error in FORCE block: "
 		     "last energy group has to end with last atom",
 		     "In_Topology", io::message::error);
   }
+  else if (param.force.energy_group.back() < topo.num_atoms()-1){
+    param.force.energy_group.push_back(topo.num_atoms() -1);
+    io::messages.add("FORCE block: "
+		     "added an additional energy group",
+		     "In_Topology", io::message::warning);
+    
+  }
+  
   // and add them
   DEBUG(10, "adding energy groups : " << param.force.energy_group.size());
   unsigned int atom = 0;
