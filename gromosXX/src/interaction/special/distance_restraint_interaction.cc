@@ -62,68 +62,69 @@ static int _calculate_distance_restraint_interactions
 
     DEBUG(9, "DISTREST v : " << math::v2s(v));
     
-    double dist = abs(v);
+    double dist = math::abs(v);
 
     DEBUG(9, "DISTREST dist : " << dist << " r0 : " << it->r0);
 
-
-    if(it->rah*dist < it->rah*it->r0)
-      {
-	DEBUG(9, "DISTREST  : restraint fulfilled");
-	f=0*v;
-      }    
-    else if(fabs(it->r0 - dist) < sim.param().distrest.r_linear)
-      {
-	DEBUG(9, "DISTREST  : harmonic");
-	f = - sim.param().distrest.K * (dist - it->r0) * v / dist;
-      }
-    else 
-      {
-	DEBUG(9, "DISTREST  : linear");
-	if(dist<it->r0)
-	  f =sim.param().distrest.r_linear * sim.param().distrest.K  * v / dist;
-	else
-	  f = - sim.param().distrest.r_linear * sim.param().distrest.K  * v / dist;
-      }
+    if(it->rah*dist < it->rah * it->r0){
+      DEBUG(9, "DISTREST  : restraint fulfilled");
+      f=0;
+    }
+    else if(fabs(it->r0 - dist) < sim.param().distrest.r_linear){
+      DEBUG(9, "DISTREST  : harmonic");
+      f = - sim.param().distrest.K * (dist - it->r0) * v / dist;
+    }
+    else{
+      DEBUG(9, "DISTREST  : linear");
+      if(dist < it->r0)
+	f =  sim.param().distrest.r_linear * sim.param().distrest.K  * v / dist;
+      else
+	f = -sim.param().distrest.r_linear * sim.param().distrest.K  * v / dist;
+    }
     
     if(sim.param().distrest.distrest == 1)
       ;
     else if(sim.param().distrest.distrest == 2)
-      f=f*it->w0;
+      f *= it->w0;
     else 
-      f=0*f;
+      f = 0;
     
     DEBUG(9, "Distrest force : " << math::v2s(f));
 
-    it->v1.force(pos,f, force);
-    it->v2.force(pos,-f, force);  
+    it->v1.force(pos,  f, force);
+    it->v2.force(pos, -f, force);  
 
-    if(it->rah*dist < it->rah*it->r0)
+    if(it->rah * dist < it->rah * it->r0)
       energy = 0;
     else if(fabs(it->r0 - dist) < sim.param().distrest.r_linear)
-      energy = 0.5 * sim.param().distrest.K* (dist - it->r0)*(dist - it->r0);
+      energy = 0.5 * sim.param().distrest.K * (dist - it->r0) * (dist - it->r0);
     else{
-      if(dist<it->r0)
-	energy= -sim.param().distrest.K * sim.param().distrest.r_linear *
+      if(dist < it->r0)
+	energy = -sim.param().distrest.K * sim.param().distrest.r_linear *
 	  (dist - it->r0 + 0.5 * sim.param().distrest.r_linear);
       else
-	energy= sim.param().distrest.K * sim.param().distrest.r_linear *
+	energy =  sim.param().distrest.K * sim.param().distrest.r_linear *
 	  (dist - it->r0 - 0.5 * sim.param().distrest.r_linear);
     }
     
     if(sim.param().distrest.distrest == 1)
       ;
     else if(sim.param().distrest.distrest == 2)
-     energy=energy*it->w0;
+     energy *= it->w0;
     else
-     energy=0;
+      energy=0;
 
     DEBUG(9, "Distrest energy : " << energy);
 
     conf.current().energies.distrest_energy[topo.atom_energy_group()
-					  [it->v1.atom(0)]] += energy;
+					    [it->v1.atom(0)]] += energy;
+    
+    std::cout.precision(9);
+    std::cout.setf(std::ios::fixed, std::ios::floatfield);
+    std::cout << "DISTREST " << dist << "\t\t" << abs(f) << "\t\t" << energy << "\n";
+    
   }
-
+  
   return 0;
 }
 
