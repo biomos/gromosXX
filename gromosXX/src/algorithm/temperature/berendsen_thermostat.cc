@@ -97,7 +97,6 @@ void algorithm::Berendsen_Thermostat
       if (free_temp < math::epsilon) free_temp = b_it->temperature;
 
       // 2nd divide by zero measure... (if reference temperature is zero)
-      double quot;
       if (free_temp < math::epsilon)
 	b_it->scale = 1;
       else if (immediate)
