@@ -50,15 +50,15 @@ static int _calculate_distance_restraint_interactions
 
   for( ; it != to; ++it){
 
-    periodicity.nearest_image(it->v1.pos(pos), it->v2.pos(pos), v);
+    periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
 
     DEBUG(10, "v1 : " << it->v1.atom(0) << " - " << it->v1.atom(1)
 	  <<  " - " <<it->v1.atom(2) << " - " << it->v1.atom(3));
     DEBUG(10, "v2 : " << it->v2.atom(0) << " - " << it->v2.atom(1)
 	  <<  " - " << it->v2.atom(2) << " - " << it->v2.atom(3));
 
-    DEBUG(10, "pos(v1) = " << math::v2s(it->v1.pos(pos)));
-    DEBUG(10, "pos(v2) = " << math::v2s(it->v2.pos(pos)));
+    DEBUG(10, "pos(v1) = " << math::v2s(it->v1.pos(conf)));
+    DEBUG(10, "pos(v2) = " << math::v2s(it->v2.pos(conf)));
 
     DEBUG(9, "DISTREST v : " << math::v2s(v));
     
@@ -91,8 +91,8 @@ static int _calculate_distance_restraint_interactions
     
     DEBUG(9, "Distrest force : " << math::v2s(f));
 
-    it->v1.force(pos,  f, force);
-    it->v2.force(pos, -f, force);  
+    it->v1.force(conf,  f);
+    it->v2.force(conf, -f);  
 
     if(it->rah * dist < it->rah * it->r0)
       energy = 0;
