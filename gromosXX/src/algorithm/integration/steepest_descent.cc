@@ -62,20 +62,23 @@ int algorithm::Steepest_Descent
     // check whether minimum reached...
     conf.current().energies.calculate_totals();
 
-    DEBUG(10, "epot: " << conf.current().energies.potential_total
-	  << "\told epot: " << conf.old().energies.potential_total
-	  << "\tdiff: " << fabs(conf.current().energies.potential_total -
-				conf.old().energies.potential_total)
+    const double eold = conf.old().energies.potential_total + conf.old().energies.special_total;
+    const double ecur = conf.current().energies.potential_total +  conf.current().energies.special_total;
+
+    DEBUG(10, "epot + espec: " 
+	  << ecur
+	  << "\told epot + espec: " 
+	  << eold
+	  << "\tdiff: " << fabs(ecur - eold)
 	  << "\tdele: " << sim.param().minimise.dele);
     
-    if (fabs(conf.current().energies.potential_total -
-	     conf.old().energies.potential_total) < sim.param().minimise.dele)
+    if (fabs(ecur - eold) < sim.param().minimise.dele)
     {
       std::cout << "STEEPEST DESCENT:\tMINIMUM REACHED\n";
       return E_MINIMUM_REACHED;
     }
     
-    if (conf.current().energies.potential_total < conf.old().energies.potential_total){
+    if (ecur < eold){
       sim.minimisation_step_size() *= 1.2;
       if (sim.minimisation_step_size() > sim.param().minimise.dxm)
 	sim.minimisation_step_size() = sim.param().minimise.dxm;
