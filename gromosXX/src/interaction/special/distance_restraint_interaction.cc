@@ -64,6 +64,14 @@ static int _calculate_distance_restraint_interactions
     
     double dist = math::abs(v);
 
+    if (2 * dist > conf.current().box(0)(0) ||
+	2 * dist > conf.current().box(1)(1) ||
+	2 * dist > conf.current().box(2)(2)){
+      io::messages.add("dist > 0.5 * box",
+		       "distance restraints",
+		       io::message::critical);
+    }
+
     DEBUG(9, "DISTREST dist : " << dist << " r0 : " << it->r0);
 
     if(it->rah*dist < it->rah * it->r0){
