@@ -48,7 +48,8 @@ static int _calculate_distance_restraint_interactions
 
   math::Periodicity<B> periodicity(conf.current().box);
 
-  for( ; it != to; ++it){
+  // for(int i=0; it != to; ++it, ++i){
+  for(; it != to; ++it){
 
     periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
 
@@ -63,14 +64,6 @@ static int _calculate_distance_restraint_interactions
     DEBUG(9, "DISTREST v : " << math::v2s(v));
     
     double dist = math::abs(v);
-
-    if (2 * dist > conf.current().box(0)(0) ||
-	2 * dist > conf.current().box(1)(1) ||
-	2 * dist > conf.current().box(2)(2)){
-      io::messages.add("dist > 0.5 * box",
-		       "distance restraints",
-		       io::message::critical);
-    }
 
     DEBUG(9, "DISTREST dist : " << dist << " r0 : " << it->r0);
 
@@ -127,9 +120,11 @@ static int _calculate_distance_restraint_interactions
     conf.current().energies.distrest_energy[topo.atom_energy_group()
 					    [it->v1.atom(0)]] += energy;
     
-    std::cout.precision(9);
-    std::cout.setf(std::ios::fixed, std::ios::floatfield);
-    std::cout << "DISTREST " << dist << "\t\t" << abs(f) << "\t\t" << energy << "\n";
+    // std::cout.precision(9);
+    // std::cout.setf(std::ios::fixed, std::ios::floatfield);
+    // std::cout << "DISTREST_" << i << ": " 
+    // << dist << "\t\t" << math::dot(f, v) / dist 
+    // << "\t\t" << energy << "\n";
     
   }
   
