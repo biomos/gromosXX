@@ -639,22 +639,26 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param,
   if(ntpw!=1)
     io::messages.add("NTPW != 1 not supported",
 		     "In_Parameter", io::message::error);
-  if(param.write.position < 0)
-    io::messages.add("WRITE block: NTWX should be >= 0",
-		     "In_Parameter", io::message::error);
-   if(param.write.velocity < 0)
+
+  if(param.write.position < 0){
+    param.write.solute_only = true;
+    param.write.position = -param.write.position;
+    io::messages.add("writing solute only trajectory",
+		     "In_Parameter", io::message::notice);
+  }
+  
+  if(param.write.velocity < 0)
     io::messages.add("WRITE block: NTWV should be >= 0",
 		     "In_Parameter", io::message::error);
-   if(param.write.energy < 0)
+  if(param.write.energy < 0)
     io::messages.add("WRITE block: NTWE should be >= 0",
 		     "In_Parameter", io::message::error);
-   if(param.write.free_energy < 0)
+  if(param.write.free_energy < 0)
     io::messages.add("WRITE block: NTWG should be >= 0",
 		     "In_Parameter", io::message::error);
-   if(param.write.block_average < 0)
+  if(param.write.block_average < 0)
     io::messages.add("WRITE block: NTWB should be >= 0",
 		     "In_Parameter", io::message::error);
-
 }
 
 /**

@@ -469,13 +469,15 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - position 0       (write position trajectory)
-       * - velocity 0       (write velocity trajectory)
-       * - energy   0       (write energy trajectory)
-       * - free_energy 0    (write energy lambda derivative trajectory)
-       * - block_average 0  (write block averaged energy trajectories)
+       * - position 0        (write position trajectory)
+       * - velocity 0        (write velocity trajectory)
+       * - energy   0        (write energy trajectory)
+       * - free_energy 0     (write energy lambda derivative trajectory)
+       * - block_average 0   (write block averaged energy trajectories)
+       * - solute_only false (write solute and solvent)
        */
-      write_struct() : position(0), velocity(0), energy(0), free_energy(0), block_average(0) {}
+      write_struct() : position(0), velocity(0), energy(0), free_energy(0), 
+		       block_average(0), solute_only(false) {}
       
       /**
        * position.
@@ -497,6 +499,11 @@ namespace simulation
        * block averages.
        */
       int block_average;
+      /**
+       * write solute only trajectory
+       */
+      bool solute_only;
+      
     } /** write out paramters (trajectories) */ write;
 
     /**

@@ -279,7 +279,12 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0){
       _print_timestep(sim, m_pos_traj);
-      _print_positionred(conf, topo,  m_pos_traj);
+
+      if (sim.param().write.solute_only)
+	_print_positionred(conf, topo,  topo.num_solute_atoms(), m_pos_traj);
+      else
+	_print_positionred(conf, topo,  topo.num_atoms(), m_pos_traj);
+
       if (conf.boundary_type != math::vacuum)
 	_print_box(conf, m_pos_traj);
     }
@@ -666,8 +671,9 @@ void io::Out_Configuration
 
 template<math::boundary_enum b>
 void _print_g96_positionred_bound(configuration::Configuration const &conf,
-					 topology::Topology const &topo,
-					 std::ostream &os, int width)
+				  topology::Topology const &topo,
+				  int num,
+				  std::ostream &os, int width)
 {
   DEBUG(10, "g96 positionred");
   
@@ -696,6 +702,9 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
       at_to = cg_it.end();
 
     for( ; at_it != at_to; ++at_it, ++count){
+
+      if (*at_it >= num) return;
+
       DEBUG(10, "atom: " << count);
       r = pos(*at_it) + trans;
 
@@ -729,6 +738,8 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
     for( ; at_it != at_to; ++at_it, ++count){
       DEBUG(10, "\tatom " << count);
       
+      if (*at_it >= num) return;
+
       r = pos(*at_it) + trans;
 	
       os << std::setw(width) << r(0)
@@ -740,13 +751,13 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
 
     }
   }
-
 }
 
 
 template<math::boundary_enum b>
 void
 _print_positionred_bound(configuration::Configuration const &conf,
+			 int num,
 			 std::ostream &os, int width)
 {
   math::Periodicity<b> periodicity(conf.current().box);
@@ -756,7 +767,7 @@ _print_positionred_bound(configuration::Configuration const &conf,
 
   DEBUG(10, "writing POSITIONRED " << pos.size() );
   
-  for(int i=0,to = pos.size(); i<to; ++i){
+  for(int i=0; i<num; ++i){
 
     v = pos(i);
     periodicity.put_into_box(v);
@@ -774,6 +785,7 @@ _print_positionred_bound(configuration::Configuration const &conf,
 inline void io::Out_Configuration
 ::_print_positionred(configuration::Configuration const &conf,
 		     topology::Topology const &topo,
+		     int num,
 		     std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -782,7 +794,7 @@ inline void io::Out_Configuration
   os << "POSITIONRED\n";
   DEBUG(7, "configuration boundary type :" << conf.boundary_type);
 
-  SPLIT_BOUNDARY(_print_g96_positionred_bound, conf, topo, os, m_width);
+  SPLIT_BOUNDARY(_print_g96_positionred_bound, conf, topo, num, os, m_width);
   
   os << "END\n";
 
