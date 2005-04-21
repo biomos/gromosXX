@@ -33,8 +33,6 @@ AM_INIT_AUTOMAKE(gromosXX, $MD_VERSION, no-define)
 AM_CONFIG_HEADER(config.h)
 dnl AC_CONFIG_HEADERS(config.h)
 
-AM_PROG_LIBTOOL
-
 # AM_MAINTAINER_MODE
 
 dnl option for production builds
@@ -70,6 +68,8 @@ fi
 dnl check for required programs
 # AC_PROG_C
 AC_PROG_CXX
+AC_PROG_LIBTOOL
+
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 
