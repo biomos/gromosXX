@@ -475,8 +475,12 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
       os << "shaking perturbed initial positions\n";
 
     // old and current pos and vel are the same...
+    conf.old().pos = conf.current().pos;
+    conf.old().vel = conf.current().vel;
+    
     // shake the current ones
-    apply(topo, conf, sim);
+    if(apply(topo, conf, sim))
+      return E_SHAKE_FAILURE;
 
     // restore the velocities
     conf.current().vel = conf.old().vel;
@@ -493,7 +497,8 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
 	  sim.time_step_size() * conf.old().vel(i);
     
       // shake again
-      apply(topo, conf, sim);
+      if (apply(topo, conf, sim))
+	return E_SHAKE_FAILURE;
     
       // restore the positions
       conf.current().pos = conf.old().pos;
