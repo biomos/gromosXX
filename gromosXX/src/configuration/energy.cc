@@ -130,9 +130,18 @@ int configuration::Energy::calculate_totals()
 
 
   for(int i=0; i<num_groups; i++){
-    for(int j=0; j<num_groups; j++){
-      lj_total   += lj_energy[i][j];
-      crf_total  += crf_energy[i][j];
+    for(int j=i; j<num_groups; j++){
+
+      if(i!=j){
+	lj_energy[j][i] += lj_energy[i][j];
+	crf_energy[j][i] += crf_energy[i][j];
+	
+	lj_energy[i][j] = 0.0;
+	crf_energy[i][j] = 0.0;
+      }
+
+      lj_total   += lj_energy[j][i];
+      crf_total  += crf_energy[j][i];
     }
 
     bond_total         += bond_energy[i];
