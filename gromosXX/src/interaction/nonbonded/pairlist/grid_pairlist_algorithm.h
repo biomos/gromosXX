@@ -58,7 +58,7 @@ namespace interaction
     /**
      * prepare the pairlists
      */    
-    virtual void prepare
+    virtual int prepare
     (
      topology::Topology & topo,
      configuration::Configuration & conf,
@@ -225,7 +225,7 @@ namespace interaction
     /**
      * prepare the grid
      */
-    void prepare_grid
+    int prepare_grid
     (
      topology::Topology & topo,
      configuration::Configuration & conf,

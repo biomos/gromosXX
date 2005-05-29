@@ -100,7 +100,8 @@ int interaction::Forcefield
       it != to;
       ++it){
     DEBUG(7, "interaction: " << (*it)->name);
-    (*it)->calculate_interactions(topo, conf, sim);
+    if ((*it)->calculate_interactions(topo, conf, sim))
+      return 1;
   }
 
   m_timing += util::now() - start;

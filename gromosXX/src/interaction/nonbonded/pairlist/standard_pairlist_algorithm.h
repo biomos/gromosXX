@@ -59,7 +59,7 @@ namespace interaction
     /**
      * prepare the pairlists
      */    
-    virtual void prepare(topology::Topology & topo,
+    virtual int prepare(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation &sim);
 

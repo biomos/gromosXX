@@ -60,7 +60,7 @@ void _prepare_cog(configuration::Configuration & conf,
 /**
  * calculate center of geometries
  */
-void interaction::Standard_Pairlist_Algorithm::
+int interaction::Standard_Pairlist_Algorithm::
 prepare(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
@@ -93,7 +93,8 @@ prepare(topology::Topology & topo,
     }
 
   } // chargegroup based cutoff
-  
+
+  return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

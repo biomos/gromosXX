@@ -95,7 +95,8 @@ calculate_interactions(topology::Topology & topo,
     DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
     
     // shared memory do this only once
-    m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim);
+    if(m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim))
+      return 1;
 
     // have to do all from here (probably it's only one,
     // but then maybe it's clearer like it is...)
@@ -108,7 +109,8 @@ calculate_interactions(topology::Topology & topo,
   else{ // no MULTICELL
     
     // shared memory do this only once
-    m_pairlist_algorithm->prepare(topo, conf, sim);
+    if (m_pairlist_algorithm->prepare(topo, conf, sim))
+      return 1;
     
     // have to do all from here (probably it's only one,
     // but then maybe it's clearer like it is...)

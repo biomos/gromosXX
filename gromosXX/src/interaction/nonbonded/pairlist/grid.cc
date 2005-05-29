@@ -32,7 +32,7 @@
 /**
  * put the chargegroups into the box and on the grid
  */
-void interaction::Grid_Pairlist_Algorithm::prepare_grid
+int interaction::Grid_Pairlist_Algorithm::prepare_grid
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -131,11 +131,18 @@ void interaction::Grid_Pairlist_Algorithm::prepare_grid
   for(int z=0; z < m_grid.Nc; ++z){
     for(int i=0; i<Nab; ++i)
       if (m_grid.count[z][i] > space){
+	std::cerr << "not enough space to put chargegroups into cells:\n\t"
+		  << "available space " << space << "\n\t"
+		  << "space required " << m_grid.count[z][i] << "\n\n";
+	
 	io::messages.add("Not enough space to put chargegroups into cells!",
 			 "Grid Pairlist Algorithm",
 			 io::message::critical);
+	return 1;
       }
   }
+
+  return 0;
 }
 
 void interaction::Grid_Pairlist_Algorithm::collapse_grid()

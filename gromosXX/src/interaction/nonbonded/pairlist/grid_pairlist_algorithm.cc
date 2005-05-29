@@ -128,7 +128,13 @@ int interaction::Grid_Pairlist_Algorithm::init
 	      << "\tpairs (cutoff)      " << std::setw(10) << 0.5 * P * Pcut << "\n";
 
     // just for fun, already try this
-    prepare_grid(topo, conf, sim);
+    if (prepare_grid(topo, conf, sim)){
+      std::cout << "\terror during grid preparation!\n";
+      io::messages.add("Grid_Pairlist_Algorithm",
+		       "error during grid preparation",
+		       io::message::error);
+      return 1;
+    }
     // collapse_grid();
 
     int occupied = 0;
@@ -156,7 +162,7 @@ int interaction::Grid_Pairlist_Algorithm::init
  * put chargegroups on grid,
  * including the center of geometries
  */
-void interaction::Grid_Pairlist_Algorithm::prepare
+int interaction::Grid_Pairlist_Algorithm::prepare
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -173,12 +179,15 @@ void interaction::Grid_Pairlist_Algorithm::prepare
 
   grid_properties(topo, conf, sim);
 
-  prepare_grid(topo, conf, sim);
+  if (prepare_grid(topo, conf, sim)){
+    return 1;
+  }
 
   collapse_grid();
 
   // print_grid();
-  
+
+  return 0;
 }
 
 
