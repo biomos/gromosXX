@@ -76,13 +76,11 @@ calculate_interactions(topology::Topology & topo,
 
   const double nonbonded_start = util::now();
 
-  // do this on the master and on the slaves...
-  m_pairlist_algorithm->prepare(topo, conf, sim);
-  
 #ifdef XXMPI
   int rank = MPI::COMM_WORLD.Get_rank();
   int num_threads = MPI::COMM_WORLD.Get_size();
 
+  // --------------------------------------------------
   // distribute the positions
 
   // if this is true, the positions (and forces) can be copied
@@ -95,10 +93,15 @@ calculate_interactions(topology::Topology & topo,
 			MPI::DOUBLE,
 			0);
 
-  // calculate interactions for our rank
+  // --------------------------------------------------
+  // calculate interactions
+
   DEBUG(8, "calculating nonbonded interactions (thread " 
 	<< rank << " of " << num_threads << ")");
     
+  // do this on the master and on the slaves...
+  m_pairlist_algorithm->prepare(topo, conf, sim);
+  
   m_nonbonded_set[0]->calculate_interactions(topo, conf, sim);
 
   // collect the forces, energies, energy-derivatives, virial

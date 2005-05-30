@@ -80,9 +80,6 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 
   const double nonbonded_start = util::now();
 
-  // do this on the master and on the slaves...
-  m_pairlist_algorithm->prepare(topo, conf, sim);
-  
 #ifdef XXMPI
   int rank = MPI::COMM_WORLD.Get_rank();
   int num_threads = MPI::COMM_WORLD.Get_size();
@@ -95,6 +92,9 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 			conf.current().pos.size() * 3, 
 			MPI::DOUBLE,
 			0);
+
+  // do this on the master and on the slaves...
+  m_pairlist_algorithm->prepare(topo, conf, sim);
 
   // prepare for the virial
   util::prepare_virial(topo, conf, sim);
