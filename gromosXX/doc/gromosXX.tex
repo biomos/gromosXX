@@ -123,6 +123,43 @@ Features included are (non-complete):
 A complete description of the available features is included within the
 manual.
 
+\section{Algorithms}
+
+\subsection{MD algorithm}
+
+The complete MD algorithm based on the leap-frog scheme as implemented
+by GROMOS is: 
+
+\begin{enumerate}
+\item Write position and velocity trajectory.
+\item Remove centre of mass motion.
+\item Initial positions and velocities are given, constraints satisfied.
+\item Calculate (unconstrained) forces and energies from the potential energy
+  function (using nearest image convention in case of periodic boundary
+  conditions). At the same time calculate the molecular or atomic virial
+  tensor.
+\item Satisfy position constraints.
+\item Update the velocities using the leap-frog scheme.
+\item Apply temperature coupling (weak coupling or
+  Nose-Hoover(-chains)).
+\item Update the positions using the leap-frog scheme.
+\item Satisfy distance constraints (using SHAKE, M-SHAKE or LINCS).
+\item Calculate temperature(s).
+\item Calculate pressure.
+\item Apply pressure scaling (weak coupling).
+\item Update lambda and topology for slow-growth simulations.
+\item Calculate total energies, averages and fluctuations.
+\item Print energies, write energy trajectories.
+\end{enumerate}
+
+This sequence is repeated for the required number of steps.
+
+\subsection{Temperature coupling}
+
+\subsection{Pressure coupling}
+
+\subsection{Lattice sum methods}
+
 \section{Implementation}
 
 \subsection{promd (Fortran MD engine)}
@@ -193,6 +230,50 @@ bond angles, improper dihedrals and dihedrals), the nonbonded
 interactions (pairlist construction, long-range interactions,
 short-range interactions and virial) and the non-physical forces
 (distance-, dihedral-, NOE- or J-value-restraints).
+
+The corresponding classes to the steps in the MD algorithm are shown in
+{\em table \ref{tab:MD-classes}}.
+
+\begin{table}[htbp]
+\doublespacing
+\begin{center}
+\caption[Classes corresponding to MD algorithm steps.]{}
+\label{tab:MD-classes}
+\vspace{0.7cm}
+\begin{tabular}{lll}
+1. & Write position and velocity trajectory. & - \\
+2. & Remove centre of mass motion. & Remove\_COM\_Motion \\
+3. & Calculate (unconstrained) forces and energies & Forcefield \\
+  & from the potential energ function & Bond\_Interaction \\
+  & (using nearest image convention & Angle\_Interaction \\
+  & in case of periodic boundary conditions). & Improper\_Dihedral\_Interaction \\
+  & & Dihedral\_Interaction \\
+  & & Nonbonded\_Interaction \\
+  & & Position\_Restraints\_Interaction \\
+  & & Distance\_Restraints\_Interaction \\
+  & & NOE\_Restraints\_Interaction \\
+  & & JValue\_Restraints\_Interaction \\
+4. & Satisfy position constraints. & Position\_Constraints\_Interaction \\
+5. & Update the velocities using the leap-frog scheme. &
+Leapfrog\_Velocities \\
+6. & Apply temperature coupling & Berendsen\_Thermostat \\
+&  (weak coupling or Nose-Hoover(-chains)). & Nose\_Hoover\_Thermostat \\
+7. & Update the positions using the leap-frog scheme. &
+Leapfrog\_Positions \\
+8. & Satisfy distance constraints & Shake \\
+&  (using SHAKE, M-SHAKE or LINCS). & MShake \\
+& & Lincs \\
+9. & Calculate temperature(s). & Temperature\_Calculation \\
+10. & Calculate pressure. & Pressure\_Calculation \\
+11. & Apply pressure scaling (weak coupling). & Berendsen\_Barostat \\
+12. & Update lambda and topology for slow-growth simulations. &
+Slow\_Growth \\
+13. & Calculate total energies, averages and fluctuations. &
+Energy\_Calculation \\
+14. & Print energies, write energy trajectories. & - \\
+\end{tabular}
+\end{center}
+\end{table}
 
 \subsubsection{Parallelization}
 
