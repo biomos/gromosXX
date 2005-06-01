@@ -1,0 +1,258 @@
+\documentclass[12pt,a4paper,english]{article} 
+
+\voffset -1.5cm
+\textheight 24cm
+\hoffset -1.2cm
+\textwidth 15.6cm
+
+%%\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc} 
+\usepackage{babel} 
+\usepackage{setspace}
+
+%% \usepackage{fancyheadings}
+\usepackage{pslatex}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{units}
+\usepackage{booktabs}
+
+%%\usepackage{cite}
+\usepackage{citesort}  
+\usepackage{overcite}
+%%\usepackage{latexsym}
+
+\usepackage{listings}
+
+%%\doublespacing
+
+\newcommand{\mbf}[1]{\mathbf{#1}}
+\newcommand{\deri}[2]{\frac{\partial #2}{\partial #1}}
+\renewcommand{\baselinestretch}{2.0}
+\newcommand{\noun}[1]{\textsc{#1}}
+
+\title{GromosXX}
+\date{\today}
+\author{Markus Christen${}^{\dagger}$
+\thanks{Corresponding author (markus@igc.phys.chem.ethz.ch)}}
+
+\begin{document}
+
+\lstset{language=C++}
+
+\maketitle
+\noindent ${}^{\dagger}${Laboratory of Physical Chemistry, Swiss Federal Institute of
+Technology Z\"urich, ETH-H\"onggerberg, CH-8093 Z\"urich, Switzerland}
+
+\newpage
+
+\begin{abstract}
+We present the newest version of the Groningen Molecular Simulation
+program package, GROMOS05. It has been developed for the dynamic
+modelling of (bio)molecules using the methods of molecular dynamics,
+stochastic dynamics, and energy minimization. An overview of GROMOS05 is
+given, highlighting features not present in the last major release,
+GROMOS96. The organization of the program package is outlined and the
+included analysis package Gromos++ is described. Finally, three
+applications illustrating the functionality are presented: gug, bla, and dong.
+\newline
+{\textbf{Keywords:} molecular dynamics simulation, programming, gromos
+}
+\end{abstract}
+
+\newpage
+
+\section{Introduction}
+Starting with GROMOS87 a program package to facilitate research efforts
+in the field of biomolecular simulation in a university environment has
+been developed. After the last major release, GROMOS96, GROMOS has found
+widespread use (hundreds of licences in over 40 countries on all
+continents), helped by the fact that it has been designed for eaese of
+extendability and that the complete source code is made available to
+research establishments for a nominal fee. The program code has been
+further developed in the group for computational chemistry at ETH
+Z\"urich (Switzerland) throughout the recent years, leading now to a new
+major release, GROMOS05. The enhancements were governed by following
+criteria: (1) interest of our research group, (2) ease of use, (3)
+extendability, (4) demonstrated usefulness or efficiency, (5)
+well-defined and correct formulae and algorithms, and (6) computational
+efficiency. The second criterium lead to a complete rewrite of the
+analysis tools, now contained in the Gromos++ analysis package and the
+third criterium lead to a complete rewrite of the MD engine into C++
+while the reliable Fortran MD engine (promd) with many new features
+features is still present in the current release.
+
+In the next section, features of Gromos05 are described, highlighting
+new functionality. Then the organization of the source
+code is discussed. Section 4 gives an overview over the programs present
+in the Gromos++ analysis package and finally in section 5 examples of
+applications are shown.
+
+\section{Features}
+
+Here, the features of the MD engines will be listed. The enhanced
+fortran MD engine (promd) retains all features of GROMOS96 and adds new
+functionality. The C++ version contains most of the GROMOS96 features
+(except 4D and path integral simulation) and a subset of the new
+functionality. 
+
+Features included are (non-complete):
+\begin{itemize}
+  \item Molecular Dynamics, Stochastic Dynamics simulation and energy
+  \item Periodic boundary conditions (vacuum, rectangular, truncated
+  octahedron, monoclinic and triclinic)
+  minimiaation (steepest descent and conjugate gradient)
+  \item Temperature control (weak coupling, Nose-Hoover, Nose-Hoover
+  chains)
+  \item Pressure control (weak coupling: isotropic, anisotropic and full
+    anisotropic), separate coupling of any group of degrees of freedom
+    for internal / rotational or translational temperature baths is possible
+  \item Longrange interactions: straight cutoff, reaction field, ewald,
+    particle-mesh-ewald, particle-partice-partice-mesh 
+  \item Chargegroup based or atomic cutoff for nonbonded interactions
+  \item Non-physical interaction: distance, dihedral, NOE and J-value
+    restraints; distance constraints (SHAKE, M-SHAKE, LINCS)
+  \item Relative free energy calculation, possibly including soft-core
+    nonbonded interactions
+  \item Enhanced sampling (Local elevation, replica exchange)
+  \item Path integral simulation
+  \item Grid based pairlist construction
+  \item MPI and OMP parallelization
+\end{itemize}
+
+A complete description of the available features is included within the
+manual.
+
+\section{Implementation}
+
+\subsection{promd (Fortran MD engine)}
+
+The fortran MD engine promd is an enhancement of the GROMOS96 md
+engine. It is written in Fortran77 with the exception of the use of
+include files. An option to select different nonbonded routines has been
+added. Macros to get rid of unwanted features (like 4D simulation or
+unused periodicity code) have been added. Using these it is possible to
+get a faster specialized build of promd. A cache-effective pairlist
+generation method has been added. It additionally uses OpenMP to run in
+parallel on shared memory multiprocessor systems.
+
+\subsection{xxmd (C++ MD engine)}
+
+The C++ MD engine (xxmd) has been rewritten from scratch. The major
+motivation was to further increase the modularity and therefore the
+extendability of the MD program. The code is split into two parts, the
+first being an MD library containing basic functions necessary to run an
+MD simulation, the second part the actual MD program. This second part
+is very small. It is quite easy to add other specialized MD programs,
+that make use of a subset of the functions provided in the library or
+apply them in a different order. The source code of the library is again
+split up into nine different parts: math, simulation, topology,
+configuration, algorithm, interaction, io, util and check.
+
+\begin{itemize}
+  \item math contains classes for vectors, matrices and vector arrays,
+    mathematical operations, physical constants and periodic boundary
+    treatment.
+  \item simulation contains the simulation parameters supplied to run
+    an MD simulation.
+  \item topology contains the topology of the simulated system, also
+    includes possibly a perturbation topology.
+  \item configuration contains the state of a system: its coordinates,
+    velocities, forces, restraints data and so on.
+  \item algorithm contains classes that use information from simulation
+    and topology to act upon a configuration. All steps during an MD
+    simulation can be described using an algorithm.
+  \item interaction contains the biggest algorithm: the
+    forcefield. Here, all interaction terms and their parameters are
+    defined.
+  \item io contains classes to read in or write out information. All
+    file access is block oriented and human readable.
+  \item util contains a few extra classes that are necessary to setup an
+    MD simulation but don't belong exactly to it. Parsing command line
+    arguments, generation of initial velocities or setting debug levels
+    are examples of classes found herein.
+  \item check contains test routines. Testing includes automatic calculation of
+    energies under different conditions, then calculation of forces,
+    energy lambda derivatives and virial and comparing to values
+    obtained by finite difference calculations.
+\end{itemize}
+
+One step of an MD simulation consists of several algorithms applied to
+the configuration in the right order. The Algorithm_Sequence class is a
+container for all the algorithms, they have to be inserted in the
+correct order. Before the start of a simulation, all algorithms will be
+initialized (by calling the init() function), during an MD step, the
+algorithms are applied (apply()). The forcefield is also an algorithm,
+which, when applied, calculates the forces and interaction energies of
+all forcefield terms for the complete system. The forcefield terms
+itself are Interaction classes. The forcefield is therefore a container
+to store the different interaction objects. When the forcefield gets
+applied, it calls calculate_interactions() on all interaction
+objects. These, in term, calculate the bonded interactions (bond length,
+bond angles, improper dihedrals and dihedrals), the nonbonded
+interactions (pairlist construction, long-range interactions,
+short-range interactions and virial) and the non-physical forces
+(distance-, dihedral-, NOE- or J-value-restraints).
+
+\subsubsection{Parallelization}
+
+\section{Analysis: Gromos++}
+
+\section{Applications}
+
+\section{Conclusions}
+
+%\cite{Gunsteren:99.11}
+
+\section{Acknowledgements}
+
+Financial support by the National Center of Competence in Research (NCCR)
+Structural Biology of the Swiss National Science Foundation (SNSF) is
+gratefully acknowledged.
+
+\begin{thebibliography}{10}
+
+\bibitem{C++standard}
+Programming languages - C++, ISO 14882, 2003.
+
+\bibitem{AllenTildesley}
+M. P. Allen and D. J. Tildesley, Computer Simulations of Liquids (Oxford
+Science, Oxford, 1987).
+
+\bibitem{Gunsteren:96.40}
+  W.F. van Gunsteren, S.R. Billeter, A.A. Eising, P.H. Hünenberger, P. Krüger, 
+  A.E. Mark, W.R.P. Scott, I.G. Tironi, Biomolecular Simulation: The GROMOS96
+  Manual and User Guide, Vdf Hochschulverlag AG an der ETH Zürich, Zürich, Switzerland.
+
+\bibitem{Gunsteren:99.11}
+  W.R.P. Scott, P.H. Hünenberger, I.G. Tironi, A.E. Mark, S.R. Billeter,
+  J. Fennen, A.E. Torda, T. Huber, P. Krüger and W.F. van Gunsteren, 
+  J. Phys. Chem. A {\bf 103}, 3596 (1999).
+
+\bibitem{Gunsteren:01.26}
+  L.D. Schuler, X. Daura and W.F. van Gunsteren,
+  J. Comput. Chem. {\bf 22}, 1205 (2001).
+
+\end{thebibliography}
+
+\pagebreak[4]
+
+\renewcommand{\listtablename}{Table Captions}
+\listoftables
+\clearpage
+\thispagestyle{empty}
+
+\clearpage
+\pagebreak[4] 
+
+\renewcommand{\listfigurename}{Figure Captions}
+\listoffigures
+
+\clearpage
+\pagebreak[4] 
+
+\clearpage
+\pagebreak[4] 
+
+\clearpage
+\end{document}
