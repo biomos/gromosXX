@@ -153,6 +153,17 @@ namespace interaction
      );
     
     /**
+     * print the pairlist
+     */
+    int print_pairlist
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     std::ostream & os = std::cout
+     );
+
+    /**
      * the pairlist update algorithm.
      */
     Pairlist_Algorithm * m_pairlist_algorithm;

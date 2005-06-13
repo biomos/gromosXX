@@ -122,6 +122,13 @@ calculate_interactions(topology::Topology & topo,
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(topo, conf, sim);
 
+  DEBUG(7, "print pairlist...");
+  if (sim.param().pairlist.print &&
+      (!(sim.steps() % sim.param().pairlist.skip_step))){
+
+    print_pairlist(topo, conf, sim);
+  }
+  
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
   m_timing += util::now() - nonbonded_start;
 
@@ -193,7 +200,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   m_nonbonded_set.clear();
   
   if (sim.param().perturbation.perturbation){
-
+    
     for(int i=0; i<m_set_size; ++i)
       m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
 							    m_parameter, i, m_set_size));
@@ -537,3 +544,38 @@ void interaction::Nonbonded_Interaction::expand_configuration
 }
 
 
+/**
+ * calculate nonbonded forces and energies.
+ */
+int interaction::Nonbonded_Interaction::print_pairlist
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ std::ostream & os
+ )
+{
+  DEBUG(4, "Nonbonded_Interaction::print_pairlist");
+  
+  Pairlist temp;
+  temp.resize(topo.num_atoms());
+  
+  for(int atom_i = 0; atom_i < topo.num_atoms(); ++atom_i){
+    
+    for(int i=0; i < m_set_size; ++i){
+      
+      for(int atom_j = 0; atom_j < m_nonbonded_set[i]->pairlist()[atom_i].size();
+	  ++atom_j){
+	
+	if (m_nonbonded_set[i]->pairlist()[atom_i][atom_j] < atom_i)
+	  temp[m_nonbonded_set[i]->pairlist()[atom_i][atom_j]].push_back(atom_i);
+	else
+	  temp[atom_i].push_back(m_nonbonded_set[i]->pairlist()[atom_i][atom_j]);
+      }
+      
+    }
+  }
+  
+  os << temp << std::endl;
+  return 0;
+}
