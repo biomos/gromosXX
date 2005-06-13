@@ -6,6 +6,7 @@ xxinclude_HEADERS = \
 			error.h \
 			debug.h	\
 			timing.h \
+			usage.h \
 			generate_velocities.h \
 			parse_tcouple.h \
 			parse_verbosity.h \
@@ -19,6 +20,7 @@ noinst_LTLIBRARIES = 	libgroutil.la
 
 libgroutil_la_SOURCES =	debug.cc \
 			timing.cc \
+			usage.cc \
 			generate_velocities.cc \
 			parse_tcouple.cc \
 			parse_verbosity.cc \

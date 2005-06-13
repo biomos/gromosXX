@@ -13,6 +13,7 @@ namespace util
 {
   int debug_level = 0;
   int util_debug_level = 0;
+  int replica_debug_level = 0;
 }
 
 #endif

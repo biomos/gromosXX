@@ -6,7 +6,10 @@
 #ifndef INCLUDED_REPLICA_EXCHANGE_H
 #define INCLUDED_REPLICA_EXCHANGE_H
 
-// class gsl_rng;
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 
 namespace topology
 {
@@ -30,6 +33,9 @@ namespace io
 
 namespace util
 {
+
+#ifdef XXMPI
+
   /**
    * @class Replica_Exchange
    * replica exchange
@@ -41,7 +47,13 @@ namespace util
      * Constructor
      */
     Replica_Exchange();
-
+    /**
+     * Destructor
+     */
+    virtual ~Replica_Exchange()
+    {
+    }
+    
     enum state_enum{ waiting=0, ready=1, running=2, terminate=4 };
 
     /**
@@ -50,13 +62,13 @@ namespace util
      */
     struct Replica_Data
     {
+      int        ID;
       double     temperature;
       double     lambda;
       double     energy;
       double     switch_temperature;
       double     switch_lambda;
       double     switch_energy;
-      int        TID;
       int        run;
       state_enum state;
       double     probability;
@@ -96,7 +108,7 @@ namespace util
     /**
      * run
      */
-    virtual int run(io::Argument & args, int tid, int num_threads) = 0;
+    virtual int run(io::Argument & args) = 0;
     
   protected:
 
@@ -118,6 +130,12 @@ namespace util
      * Constructor
      */
     Replica_Exchange_Master();
+    /**
+     * Destructor
+     */
+    virtual ~Replica_Exchange_Master()
+    {
+    }
 
     /**
      * information of all replicas
@@ -143,14 +161,14 @@ namespace util
     /**
      * run the thread
      */
-    virtual int run(io::Argument & args, int tid, int num_threads);
+    virtual int run(io::Argument & args);
     
     /**
      * configuration accessor
      */
     configuration::Configuration & conf(int i)
     {
-      assert(i < m_conf.size() && i >= 0);
+      assert(i>=0 && unsigned(i) < m_conf.size());
       return m_conf[i];
     }
     
@@ -185,7 +203,13 @@ namespace util
      * Constructor
      */
     Replica_Exchange_Slave();
-
+    /**
+     * Destructor
+     */
+    virtual ~Replica_Exchange_Slave()
+    {
+    }
+    
     /**
      * replica information
      */
@@ -199,10 +223,15 @@ namespace util
     /**
      * run the slave
      */
-    virtual int run(io::Argument & args, int tid, int num_threads);
+    virtual int run(io::Argument & args);
     
   private:
-
+    /**
+     * communicator
+     */
+    // MPI::Intracomm master;
+    MPI_Comm master;
+    
     /**
      * get thread state from master
      */
@@ -246,11 +275,7 @@ namespace util
 
   };
 
-  /**
-   * replica exchange accessor
-   * for OMP
-   */
-  extern Replica_Exchange_Master * replica_master;
+#endif
   
 } // util
 

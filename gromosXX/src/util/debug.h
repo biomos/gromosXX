@@ -61,6 +61,7 @@
  *   - integration
  * - simulation
  * - util
+ *   - replica
  *
  * @section Coding
  * in every file MODULE and SUBMODULE have to be defined
@@ -160,6 +161,7 @@ namespace util
 {
   extern int debug_level;
   extern int util_debug_level;
+  extern int replica_debug_level;
 }
 
   

@@ -135,6 +135,7 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
     else if (module == "util"){
       if (submodule == "") util::debug_level = level;
       else if (submodule == "util") util::util_debug_level = level;
+      else if (submodule == "replica") util::replica_debug_level = level;
       else return E_NOT_IMPLEMENTED;
     }
     else{
