@@ -17,6 +17,7 @@
 
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
+#include <util/usage.h>
 #include <util/error.h>
 
 #include <interaction/interaction_types.h>
@@ -49,13 +50,9 @@ int main(int argc, char* argv[])
 {
 
   int total = 0;
-  
-  char *knowns[] = 
-    {
-      "topo", "conf", "input", "pttopo", "verb"
-    };
-  
-  int nknowns = 5;
+
+  util::Known knowns;
+  knowns << "topo" << "pttopo" << "conf" << "input" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo    <topology>]\n";
@@ -65,7 +62,7 @@ int main(int argc, char* argv[])
   usage += "\t[@verb    <[module:][submodule:]level>]\n";
 
   io::Argument args;
-  if (args.parse(argc, argv, nknowns, knowns, true)){
+  if (args.parse(argc, argv, knowns, true)){
     std::cerr << usage << std::endl;
     return 1;
   }

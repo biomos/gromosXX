@@ -157,6 +157,10 @@ int check_lambda_derivative(topology::Topology & topo,
   std::string name = term.name;
 
   if (term.name == "NonBonded"){
+
+    if (sim.param().force.interaction_function == simulation::cgrain_func)
+      name = "CG-" + name;    
+    
     if (sim.param().force.spc_loop == 1)
       if (sim.param().pairlist.grid)
 	name += " (grid, spc loop)";
@@ -253,6 +257,9 @@ int check_interaction(topology::Topology & topo,
   std::string name = term.name;
 
   if (term.name == "NonBonded"){
+    if (sim.param().force.interaction_function == simulation::cgrain_func)
+      name = "CG-" + name;
+    
     if (sim.param().force.spc_loop == 1)
       if (sim.param().pairlist.grid)
 	name += " (grid, spc loop)";
@@ -301,7 +308,8 @@ int check_interaction(topology::Topology & topo,
       
   RESULT(res, total);
   
-  if (term.name == "NonBonded"){
+  if (term.name == "NonBonded" && 
+      sim.param().force.interaction_function != simulation::cgrain_func){
     
     // std::cout << "num atoms : " << topo.num_atoms() << std::endl;
     // std::cout << "num solvents : " << topo.num_solvents() << std::endl;
@@ -422,53 +430,63 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }
     else if ((*it)->name == "NonBonded"){
-      sim.param().force.spc_loop = 1;
-      total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
-      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
-      sim.param().force.spc_loop = 0;
-      total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
-      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
-      if (sim.param().pairlist.grid){
-	// construct a "non-grid" pairlist algorithm
-	interaction::Pairlist_Algorithm * pa = new interaction::Standard_Pairlist_Algorithm;
-	interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
+      if (sim.param().force.interaction_function == simulation::cgrain_func){
 
-	pa->set_parameter(&ni->parameter());
-	interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
-	ni->pairlist_algorithm(pa);
-	
-	sim.param().pairlist.grid = false;
+	sim.param().force.spc_loop = 0;
+	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -7.352312, 0.0000000001, 0.01);
+	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 
-	ni->init(topo, conf, sim, std::cout, true);
-
-	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
-	total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
-
-	sim.param().pairlist.grid = true;
-	ni->pairlist_algorithm(old_pa);
-	ni->init(topo, conf, sim, std::cout, true);
-	delete pa;
       }
       else{
-	// construct a "grid" pairlist algorithm
-	interaction::Pairlist_Algorithm * pa = new interaction::Grid_Pairlist_Algorithm;
-	interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
-	
-	pa->set_parameter(&ni->parameter());
-	interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
-	ni->pairlist_algorithm(pa);
+	sim.param().force.spc_loop = 1;
+	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
+	sim.param().force.spc_loop = 0;
+	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 
-	sim.param().pairlist.grid = true;
-	sim.param().pairlist.grid_size = 0.1;
-	ni->init(topo, conf, sim, std::cout, true);
-	
-	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
-	total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
-
-	sim.param().pairlist.grid = false;
-	ni->pairlist_algorithm(old_pa);
-	ni->init(topo, conf, sim, std::cout, true);
-	delete pa;
+	if (sim.param().pairlist.grid){
+	  // construct a "non-grid" pairlist algorithm
+	  interaction::Pairlist_Algorithm * pa = new interaction::Standard_Pairlist_Algorithm;
+	  interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
+	  
+	  pa->set_parameter(&ni->parameter());
+	  interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
+	  ni->pairlist_algorithm(pa);
+	  
+	  sim.param().pairlist.grid = false;
+	  
+	  ni->init(topo, conf, sim, std::cout, true);
+	  
+	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	  total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
+	  
+	  sim.param().pairlist.grid = true;
+	  ni->pairlist_algorithm(old_pa);
+	  ni->init(topo, conf, sim, std::cout, true);
+	  delete pa;
+	}
+	else{
+	  // construct a "grid" pairlist algorithm
+	  interaction::Pairlist_Algorithm * pa = new interaction::Grid_Pairlist_Algorithm;
+	  interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
+	  
+	  pa->set_parameter(&ni->parameter());
+	  interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
+	  ni->pairlist_algorithm(pa);
+	  
+	  sim.param().pairlist.grid = true;
+	  sim.param().pairlist.grid_size = 0.1;
+	  ni->init(topo, conf, sim, std::cout, true);
+	  
+	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	  total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
+	  
+	  sim.param().pairlist.grid = false;
+	  ni->pairlist_algorithm(old_pa);
+	  ni->init(topo, conf, sim, std::cout, true);
+	  delete pa;
+	}
       }
     }
 
