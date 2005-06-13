@@ -682,6 +682,8 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
 
   math::Vec v, v_box, trans, r;
   
+  assert(num >= 0);
+  
   // put chargegroups into the box (on the fly)
   topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
     cg_to = topo.chargegroup_end();
@@ -703,7 +705,7 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
 
     for( ; at_it != at_to; ++at_it, ++count){
 
-      if (*at_it >= num) return;
+      if (*at_it >= unsigned(num)) return;
 
       DEBUG(10, "atom: " << count);
       r = pos(*at_it) + trans;
@@ -738,7 +740,7 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
     for( ; at_it != at_to; ++at_it, ++count){
       DEBUG(10, "\tatom " << count);
       
-      if (*at_it >= num) return;
+      if (*at_it >= unsigned(num)) return;
 
       r = pos(*at_it) + trans;
 	
@@ -1303,7 +1305,7 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
 {
   DEBUG(10, "FLEXV");
   
-  int k = 0;
+  unsigned int k = 0;
   
   std::vector<topology::two_body_term_struct>::const_iterator
     constr_it = topo.solute().distance_constraints().begin(),
