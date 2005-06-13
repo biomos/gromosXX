@@ -22,6 +22,8 @@
 #define MODULE io
 #define SUBMODULE topology
 
+static std::set<std::string> block_read;
+
 void 
 io::In_Distrest::read(topology::Topology& topo,
 		      configuration::Configuration & conf,
@@ -44,6 +46,8 @@ io::In_Distrest::read(topology::Topology& topo,
       return;
     }
 
+    block_read.insert("DISRESSPEC");
+
     std::vector<std::string>::const_iterator it = buffer.begin()+1,
       to = buffer.end()-1;
 
@@ -52,7 +56,6 @@ io::In_Distrest::read(topology::Topology& topo,
     std::vector<int> atom1(4), atom2(4);
     double r0,w0;
     int rah;
-    
 
     DEBUG(10, "reading in DISTREST data");
 
@@ -155,8 +158,9 @@ io::In_Distrest::read(topology::Topology& topo,
     DEBUG(10, "PERTDISRESSPEC block");
     buffer = m_block["PERTDISRESSPEC"];
     
+    block_read.insert("PERTDISRESSPEC");
+
     if (!buffer.size()){
-      
       return;
     }
 
@@ -168,8 +172,6 @@ io::In_Distrest::read(topology::Topology& topo,
     std::vector<int> atom1(4), atom2(4);
     double A_r0, B_r0,A_w0, B_w0;
     int rah;
-    
-    
 
     DEBUG(10, "reading in DISTREST (PERTDISRESSPEC data");
 
@@ -272,6 +274,19 @@ io::In_Distrest::read(topology::Topology& topo,
     
     std::cout << "END\n";
   
+  }
+
+  for(std::map<std::string, std::vector<std::string> >::const_iterator
+	it = m_block.begin(),
+	to = m_block.end();
+      it != to;
+      ++it){
+    
+    if (block_read.count(it->first) == 0 && it->second.size()){
+      io::messages.add("block " + it->first + " not supported!",
+		       "In_Distrest",
+		       io::message::warning);
+    }
   }
   
 }
