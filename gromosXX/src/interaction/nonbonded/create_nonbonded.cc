@@ -115,8 +115,12 @@ int interaction::create_g96_nonbonded
       os << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "on" << right << "\n";
       if (sim.param().perturbation.scaling)
 	os << "\t" << setw(20) << left << "scaling" << setw(30) << left << "on" << right << "\n";
-      else
+      else{
 	os << "\t" << setw(20) << left << "scaling" << setw(30) << left << "off" << right << "\n";
+	if (topo.perturbed_solute().atoms().size() == 0)
+	  os << "\t\t" << "using unperturbed nonbonded routines as no atoms are perturbed\n";
+	else os << "\t\t" << "with " << topo.perturbed_solute().atoms().size() << " perturbed atoms\n";
+      }
     }
     else{
       os << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "off" << right << "\n";
