@@ -97,6 +97,47 @@ use the following configure options:
 configure --disable-shared --enable-static --enable-allstatic
 
 
+ARCHITECTURE DEPENDENT DETAILS
+******************************
+
+MacOS X (tested on V 10.3.3 Panther):
+------------------------------------
+
+Panther ships with the so-called developertools
+(http://www.apple.com/macosx/developertools/),
+which include a port of the gcc 3.3. The developertools 
+might not be installed by default though, so you should 
+make sure that this is the case (e.g. type: 'which gcc'; 
+if you dont get an answer it is not installed).
+
+Unfortunately, the MacOS version of the libtoolize program (and others) does
+sometimes not work with things you download from GNU and try to
+compile.
+
+Try first, whether there is a glibtoolize, gaclocal, gautomake,
+gautoconf. Use those if they are available.
+
+
+Therefore, do this:
+
+1. Download the GNU autoconf, automake and libtool packages
+   and install them. By default they will be put under /usr/local
+   which is just fine.
+(As an alternative you might just want to install the binary
+ packages from FINK (http://fink.sourceforge.net/), 
+ i.e. the port of the Debian APT package tools.
+ You will need to have FINK installed, though).
+2. Set the path to point to /usr/local/bin so that those versions
+   of automake/autoconf/libtool will be used.
+3. Build the distribution as written above.
+4. In case of linking errors when using the gcc port from Apple
+   build the distribution without support for shared libraries
+  (./configure --enable-shared=NO)
+   If you really need shared library support, it is possible to
+   first compile and install the regular GCC from the GNU tarball
+   and use that one to compile gromos++. This has been tested and
+   works.
+
 ===========================================================================
 
 
