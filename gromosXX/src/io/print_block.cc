@@ -462,10 +462,11 @@ namespace io
       os << std::setw(20) << energroup[j];
       for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
       for(unsigned int i=j; i < numenergygroups; i++){
-	if(i==j)
-	  os << std::setw(12) << e.lj_energy[i][j];
-	else 
-	  os << std::setw(12) << e.lj_energy[i][j] + e.lj_energy[j][i] ;
+	// now in calculate_totals
+	// if(i==j)
+	os << std::setw(12) << e.lj_energy[i][j];
+	// else 
+	// os << std::setw(12) << e.lj_energy[i][j] + e.lj_energy[j][i] ;
       }
       os << "\n";
     }
@@ -477,10 +478,11 @@ namespace io
       os << std::setw(20) << energroup[j];
       for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
       for(unsigned int i=j; i < numenergygroups; i++){
-	if(i==j)
-	  os << std::setw(12) << e.crf_energy[i][j];
-	else
-	  os << std::setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
+	// now in calculate totals
+	// if(i==j)
+	os << std::setw(12) << e.crf_energy[i][j];
+	// else
+	// os << std::setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
       }
       os << "\n";
     }
