@@ -42,13 +42,11 @@ void print_title(io::Argument &args, bool color = false);
 
 int main(int argc, char *argv[]){
 
-  const double start = util::now();
-
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
-	 << "rep" << "master" << "slave"
+	 << "rep" << "master" << "slave" << "control"
 	 << "version";
   
   
@@ -87,13 +85,22 @@ int main(int argc, char *argv[]){
     rep_master.run(args);
     
   }
-  else{
+  else if (args.count("slave") >= 0){
     
-    // and the slaves
+    // and the slave
+    std::cout << "repex: starting slave" << std::endl;
     util::Replica_Exchange_Slave rep_slave;
 
     rep_slave.run(args);
 
+  }
+  else if (args.count("control") >= 0){
+    std::cout << "repex: starting control!" << std::endl;
+    util::Replica_Exchange_Interactive rep_interactive;
+    rep_interactive.run(args);
+  }
+  else{
+    std::cout << "repex: either @master @slave or @interactive required" << std::endl;
   }
   
 #else

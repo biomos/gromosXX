@@ -122,9 +122,6 @@ int util::Replica_Exchange_Master::run
 		     io::message::error);
   }
 
-  // replica output files
-  std::vector<std::ofstream *> rep_out;
-  
   // setup replica information
   replica_data.resize(sim.param().replica.number);
   neighbour.push_back(-1);
@@ -149,22 +146,6 @@ int util::Replica_Exchange_Master::run
     // Change : maybe start from different initial positions!
     m_conf.push_back(conf);
     
-    /*
-      should be written after accepting a job
-    // print header
-    (*rep_out[i]) << "#"
-		  << std::setw(5) << "run"
-		  << std::setw(6) << "pos"
-		  << std::setw(13) << "T"
-		  << std::setw(13) << "l"
-		  << std::setw(13) << "Epot"
-		  << std::setw(13) << "sT"
-		  << std::setw(13) << "sl"
-		  << std::setw(13) << "sEpot"
-		  << std::setw(13) << "p"
-		  << std::setw(4) << "s"
-		  << "\n";
-    */
   }
 
   neighbour.push_back(-1);
@@ -225,6 +206,21 @@ int util::Replica_Exchange_Master::run
 	     << std::setw(5) << "..."
 	     << std::endl;
 
+  std::ofstream rep_out("replica.dat");
+  rep_out << "#"
+	  << std::setw(5) << "ID"
+	  << std::setw(5) << "run"
+	  << std::setw(6) << "pos"
+	  << std::setw(13) << "T"
+	  << std::setw(13) << "l"
+	  << std::setw(13) << "Epot"
+	  << std::setw(13) << "sT"
+	  << std::setw(13) << "sl"
+	  << std::setw(13) << "sEpot"
+	  << std::setw(13) << "p"
+	  << std::setw(4) << "s"
+	  << "\n";
+
   while(true){
     
     if (runs == sim.param().replica.number){
@@ -282,8 +278,6 @@ int util::Replica_Exchange_Master::run
 	  
 	  if(replica_data[r].state == waiting){
 	    // try a switch
-	    // std::cout << "\tmaster: replica " << r 
-	    // << " is waiting (trying switch)" << std::endl;
 	    switch_replica(r);
 	  }
 	    
@@ -292,7 +286,7 @@ int util::Replica_Exchange_Master::run
 		      << trials << "..." << std::endl;
 	    
 	    // print state
-	    std::cout << std::setw(5) << r
+	    std::cout << std::setw(6) << r
 		      << std::setw(6) << replica_data[r].run
 		      << std::setw(6) << neighbour_pos[r]
 		      << std::setw(13) << replica_data[r].temperature
@@ -305,6 +299,19 @@ int util::Replica_Exchange_Master::run
 		      << std::setw(4) << replica_data[r].switched
 		      << std::endl;
 
+	    rep_out << std::setw(6) << r
+		    << std::setw(6) << replica_data[r].run
+		    << std::setw(6) << neighbour_pos[r]
+		    << std::setw(13) << replica_data[r].temperature
+		    << std::setw(13) << replica_data[r].lambda
+		    << std::setw(13) << replica_data[r].energy
+		    << std::setw(13) << replica_data[r].switch_temperature
+		    << std::setw(13) << replica_data[r].switch_lambda
+		    << std::setw(13) << replica_data[r].switch_energy
+		    << std::setw(13) << replica_data[r].probability
+		    << std::setw(4) << replica_data[r].switched
+		    << "\n";
+	    
 	    // assign it!
 	    replica_data[r].state = running;
 
@@ -312,8 +319,23 @@ int util::Replica_Exchange_Master::run
 	    temp_snapshot[r+1] = replica_data[r].temperature;
 	    lambda_snapshot[r+1] = replica_data[r].lambda;
 
+	    // send parameters
 	    MPI_Send(&replica_data[r], sizeof(Replica_Data), MPI_CHAR,
 		     0, 0, client);
+
+	    // positions
+	    DEBUG(9, "sending " << 3 * m_conf[r].current().pos.size() << " coords");
+
+	    MPI_Send(&m_conf[r].current().pos(0)(0), m_conf[r].current().pos.size()*3,
+		     MPI::DOUBLE, 0, 0, client);
+	    
+	    // and velocities
+	    MPI_Send(&m_conf[r].current().vel(0)(0), m_conf[r].current().vel.size()*3,
+		     MPI::DOUBLE, 0, 0, client);
+
+	    DEBUG(10, "master: pos = " << math::v2s(m_conf[r].current().pos(0)));
+	    DEBUG(10, "master: vel = " << math::v2s(m_conf[r].current().vel(0)));
+
 	    break;
 	  }
 	} // replica selected
@@ -326,36 +348,90 @@ int util::Replica_Exchange_Master::run
 	}
 
 	break;
+
       case 2:
 	std::cout << "process " << i << " has finished run\n";
+	
+	MPI_Status status;
+  
+	DEBUG(8, "master: waiting for replica data " << i);
+	MPI_Recv(&replica_data[i], sizeof(Replica_Data), MPI_CHAR,
+		 MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+  
+	if (replica_data[i].state != st_error){
+	  // get configuration
+	  MPI_Recv(&m_conf[i].current().pos(0)(0),
+		   m_conf[i].current().pos.size() * 3,
+		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+	  
+	  if (status.MPI_ERROR != MPI_SUCCESS){
+	    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+	  }
+	  
+	  MPI_Recv(&m_conf[i].current().vel(0)(0),
+		   m_conf[i].current().vel.size()*3,
+		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+	  
+	  if (status.MPI_ERROR != MPI_SUCCESS){
+	    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+	  }
+	}
+	
+	DEBUG(9, "master: got replica " << replica_data[i].ID
+	      << " temperature=" << replica_data[i].temperature
+	      << " lambda=" << replica_data[i].lambda);
 	++runs;
 	break;
+
       case 3:
 	std::cout << "process " << i << " has aborted run\n";
 	break;
+
+      case 4: // interactive session
+	switch(i){
+	  case 1: // replica information
+	    {
+	      int i = replica_data.size();
+	      MPI_Send(&i, 1, MPI_INT, 0, 4, client);
+	      
+	      MPI_Send(&replica_data[0],
+		       sizeof(Replica_Data)*replica_data.size(),
+		       MPI_CHAR, 0, 4, client);
+	      break;
+	    }
+	  case 2: // replica change
+	    {
+	      int i;
+	      MPI_Recv(&i, 1, MPI_INT, MPI_ANY_SOURCE,
+		       MPI_ANY_TAG, client, &status);
+	      
+	      MPI_Recv(&replica_data[i], sizeof(Replica_Data),
+		       MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG,
+		       client, &status);
+	      break;
+	    }
+	  case 3: // quit
+	    {
+	      std::cout << "master: stopping" << std::endl;
+	      trials = sim.param().replica.trials + 1;
+	      break;
+	    }
+	}
+	
+	break;
+
       default:
 	std::cout << "message not understood\n";
     }
 
-    std::cout << "disconnecting..." << std::endl;
+    // std::cout << "disconnecting..." << std::endl;
     MPI_Comm_disconnect(&client);
-
-    // see what the thread wants...
-
-    /*
-      if (slave_data[i].state == waiting){
-	// std::cout << "\tmaster: thread " << i << " is waiting (run = "
-	// << runs << ")..." << std::endl;
-	
-      } // thread waiting
-    */
 
   } // while
     
   // simulation done
   DEBUG(9, "master: done");
 
-  MPI_Comm_free(&client);
   MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
   MPI_Close_port(port_name);
 
@@ -368,6 +444,9 @@ int util::Replica_Exchange_Master::run
   out_lambda.flush();
   out_lambda.close();
 
+  rep_out.flush();
+  rep_out.close();
+  
   return 0;
 }
 
@@ -400,6 +479,11 @@ int util::Replica_Exchange_Master::switch_replica(int i)
       replica_data[i].switch_temperature = replica_data[i].temperature;
       replica_data[i].switch_lambda = replica_data[i].lambda;
     }
+
+    replica_data[i].probability = 0.0;
+    replica_data[j].probability = 0.0;
+    replica_data[i].switched = false;
+    replica_data[j].switched = false;
     
     replica_data[i].state = ready;
     return 0;
@@ -507,14 +591,6 @@ int util::Replica_Exchange_Slave::run
 (
  io::Argument & args)
 {
-  // m_ID = tid;
-  
-  // prepare output file
-  /**
-  std::ostringstream oss;
-  oss << "repex_" << m_ID << ".out";
-  std::ofstream os(oss.str().c_str());
-  */
   // create the simulation classes
   topology::Topology topo;
   configuration::Configuration conf;
@@ -527,41 +603,17 @@ int util::Replica_Exchange_Slave::run
   // initialises everything
   md.init(topo, conf, sim, std::cout);
 
-  // trajectory (per thread!)
-  // create output files...
-  // rename them appropriately
-  // (not necessary anymore...)
-  std::ostringstream suff;
-  // suff << "." << m_ID;
-  
-  std::string fin = "";
-  if (args.count("fin")) fin = args["fin"] + suff.str();
-  std::string trj = "";
-  if (args.count("trj")) trj = args["trj"] + suff.str();
-  std::string tre = "";
-  if (args.count("tre")) tre = args["tre"] + suff.str();
-  std::string trg = "";
-  if (args.count("trg")) trg = args["trg"] + suff.str();
-  std::string bae = "";
-  if (args.count("bae")) bae = args["bae"] + suff.str();
-  std::string bag = "";
-  if (args.count("bag")) bag = args["bag"] + suff.str();
-  std::string trv = "";
-  if (args.count("trv")) trv = args["trv"] + suff.str();
-  std::string trf = "";
-  if (args.count("trf")) trf = args["trf"] + suff.str();
-
   io::Out_Configuration traj("GromosXX\n", std::cout);
   traj.title("GromosXX\n" + sim.param().title);
-  traj.init(fin, trj, trv, trf, tre, trg, bae, bag, sim.param());
+  traj.init(args["fin"], args["trj"], args["trv"], args["trf"], 
+	    args["tre"], args["trg"], args["bae"], args["bag"],
+	    sim.param());
 
   // should be the same as from master...
   std::cout << "\nMESSAGES FROM (SLAVE) INITIALIZATION\n";
   if (io::messages.display(std::cout) >= io::message::error){
-    // exit
     std::cout << "\nErrors during initialization!\n" << std::endl;
-    // os.flush();
-    // os.close();
+    MPI_Finalize();
     return 1;
   }
   io::messages.clear();
@@ -570,7 +622,6 @@ int util::Replica_Exchange_Slave::run
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
   std::cout << "slave " << m_ID << " initialised" << std::endl;
-  // std::cerr << "slave " << m_ID << " initialised" << std::endl;
 
   char port_name[MPI::MAX_PORT_NAME];
 
@@ -584,10 +635,14 @@ int util::Replica_Exchange_Slave::run
   
   MPI::Lookup_name(args["slave"].c_str(), MPI_INFO_NULL, port_name);
 
-  while(slave_data.state != terminate){
+  while(true){
     
     DEBUG(8, "slave: connecting..");
-    sleep(1);
+    //////////////////////////////////////////////////////////////////////////////////
+    // wait apropriate time for master to prepare
+    sleep(3);
+    //////////////////////////////////////////////////////////////////////////////////
+
     MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
 
     DEBUG(9, "slave: connected");
@@ -595,18 +650,12 @@ int util::Replica_Exchange_Slave::run
     // request a job
     int server_response = get_replica_data();
 
-    // get state
-    // get_state();
-
-    // close connection
-    MPI_Comm_disconnect(&master);
-
     if (server_response == 0){
       // accept job
-      std::cout << "slave " << m_ID << " got a job! (replica "
-		<< slave_data.replica << ")" << std::endl;
+      std::cout << "slave: got a job! (replica "
+		<< replica_data.ID << ")" << std::endl;
 	
-      std::cout << "slave " << m_ID << " running replica " << slave_data.replica
+      std::cout << "slave:  running replica " << replica_data.ID
 		<< " at T=" << replica_data.temperature
 		<< " and l=" << replica_data.lambda
 		<< " (run = " << replica_data.run << ")"
@@ -614,73 +663,85 @@ int util::Replica_Exchange_Slave::run
 
       // init replica parameters (t, conf, T, lambda)
       init_replica(topo, conf, sim);
+
+      // close connection
+      MPI_Comm_disconnect(&master);
+
       // run it
-      run_md(topo, conf, sim, md, traj);
-      std::cout << "replica_energy final "
-		<< conf.old().energies.potential_total << std::endl;
-      
-      // do we need to reevaluate the potential energy ?
-      // yes! 'cause otherwise it's just the energy for
-      // the previous configuration...
-      algorithm::Algorithm * ff = md.algorithm("Forcefield");
-      
-      if (ff == NULL){
-	std::cerr << "forcefield not found in MD algorithm sequence"
-		  << std::endl;
-	return 1;
-      }
-      
-      ff->apply(topo, conf, sim);
-      conf.current().energies.calculate_totals();
-      replica_data.energy = conf.current().energies.potential_total;
-      
-      std::cout << "replica_energy " << replica_data.energy 
-		<< " @ " << replica_data.temperature << "K" << std::endl;
-      std::cout << "pos(0) " << math::v2s(conf.current().pos(0)) << std::endl;
-      
-      if (replica_data.lambda != replica_data.switch_lambda){
+      int error = run_md(topo, conf, sim, md, traj);
 
-	// change the lambda value
-	sim.param().perturbation.lambda = replica_data.switch_lambda;
-	topo.lambda(replica_data.switch_lambda);
-	topo.update_for_lambda();
-
-	// recalc energy
+      if (!error){
+	// do we need to reevaluate the potential energy ?
+	// yes! 'cause otherwise it's just the energy for
+	// the previous configuration...
+	algorithm::Algorithm * ff = md.algorithm("Forcefield");
+	
+	if (ff == NULL){
+	  std::cerr << "forcefield not found in MD algorithm sequence"
+		    << std::endl;
+	  MPI_Finalize();
+	  MPI_Comm_free(&master);
+	  return 1;
+	}
+	
 	ff->apply(topo, conf, sim);
 	conf.current().energies.calculate_totals();
-	replica_data.switch_energy = conf.current().energies.potential_total;
+	replica_data.energy = conf.current().energies.potential_total;
+	
+	std::cout << "replica_energy " << replica_data.energy 
+		  << " @ " << replica_data.temperature << "K" << std::endl;
+	
+	if (replica_data.lambda != replica_data.switch_lambda){
+	  
+	  // change the lambda value
+	  sim.param().perturbation.lambda = replica_data.switch_lambda;
+	  topo.lambda(replica_data.switch_lambda);
+	  topo.update_for_lambda();
+	  
+	  // recalc energy
+	  ff->apply(topo, conf, sim);
+	  conf.current().energies.calculate_totals();
+	  replica_data.switch_energy = conf.current().energies.potential_total;
+	} 
+	else{
+	  replica_data.switch_energy = replica_data.energy;
+	}
+	
+	++replica_data.run;
+	replica_data.state = waiting;
       }
-
-      ++replica_data.run;
-      replica_data.state = waiting;
-      slave_data.state = waiting;
+      else{
+	replica_data.state = st_error;
+      }
 	
       DEBUG(8, "slave: connecting (after run)...");
       MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
       
       DEBUG(9, "slave: connected");
 
-      // store configuration on master
-      update_configuration(topo, conf);
-      update_replica_data();
-      // update_slave_data();
+      DEBUG(8, "slave: finished job " << replica_data.ID);
+      MPI_Send(&replica_data.ID, 1, MPI_INT, 0, 2, master);
 
+      if (!error){
+	// store configuration on master
+	update_replica_data();
+	update_configuration(topo, conf);
+      }
+      
       // and disconnect
-      std::cout << "disconnecting..." << std::endl;
+      DEBUG(9, "disconnecting...");
       MPI_Comm_disconnect(&master);
 
     }
     else{
+      MPI_Comm_disconnect(&master);
       std::cout << "slave " << m_ID << " waiting..." << std::endl;
     }
     
   } // while
     
-  MPI_Comm_free(&master);
+  // MPI_Comm_free(&master);
   
-  // os.flush();
-  // os.close();
-
   return 0;
 }
 
@@ -693,7 +754,6 @@ int util::Replica_Exchange_Slave::run_md
  io::Out_Configuration & traj
  )
 {
-
   double end_time = sim.time() + 
     sim.time_step_size() * (sim.param().step.number_of_steps - 1);
     
@@ -707,7 +767,6 @@ int util::Replica_Exchange_Slave::run_md
     if ((error = md.run(topo, conf, sim))){
       
       std::cout << "\nError during MD run!\n" << std::endl;
-      // try to save the final structures...
       break;
     }
 
@@ -718,31 +777,7 @@ int util::Replica_Exchange_Slave::run_md
 
   }
     
-  // std::cout << "writing final configuration" << std::endl;
-    
-  // traj.write(conf, topo, sim, io::final);
-  // traj.print_final(topo, conf, sim);
-    
-  // std::cout << "\nMESSAGES FROM SIMULATION\n";
-  // io::message::severity_enum err_msg = io::messages.display(std::cout);
-
-  // std::cout << "\n\n";
-    
   return error;
-}
-
-int util::Replica_Exchange_Slave::get_slave_data()
-{
-  // slave_data = replica_master->slave_data[m_ID];
-
-  return 0;
-}
-
-int util::Replica_Exchange_Slave::update_slave_data()
-{
-  // replica_master->slave_data[m_ID] = slave_data;
-
-  return 0;
 }
 
 int util::Replica_Exchange_Slave::get_replica_data()
@@ -757,6 +792,10 @@ int util::Replica_Exchange_Slave::get_replica_data()
   MPI_Recv(&replica_data, sizeof(Replica_Data), MPI_CHAR,
 	   MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
   
+  if (status.MPI_ERROR != MPI_SUCCESS){
+    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+  }
+
   DEBUG(9, "tag = " << status.MPI_TAG);
   DEBUG(9, "slave: got replica " << replica_data.ID
 	<< " temperature=" << replica_data.temperature
@@ -767,11 +806,9 @@ int util::Replica_Exchange_Slave::get_replica_data()
 
 int util::Replica_Exchange_Slave::update_replica_data()
 {
-  int i = m_ID;
-  MPI_Status status;
-  
-  DEBUG(8, "slave: finished job");
-  MPI_Send(&i, 1, MPI_INT, 0, 2, master);
+  DEBUG(8, "slave: updating replica data");
+  MPI_Send(&replica_data, sizeof(Replica_Data), MPI_CHAR,
+	   0, 0, master);
 
   return 0;
 }
@@ -782,9 +819,27 @@ int util::Replica_Exchange_Slave::get_configuration
  configuration::Configuration & conf
  )
 {
-  // conf = replica_master->conf(slave_data.replica);
+  MPI_Status status;
+
+  DEBUG(10, "receiving " << 3 * conf.current().pos.size() << " coords");
+  MPI_Recv(&conf.current().pos(0)(0), conf.current().pos.size() * 3,
+	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
+
+  if (status.MPI_ERROR != MPI_SUCCESS){
+    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+  }
   
-  return 0;
+  MPI_Recv(&conf.current().vel(0)(0), conf.current().vel.size()*3,
+	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
+
+  if (status.MPI_ERROR != MPI_SUCCESS){
+    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+  }
+
+  DEBUG(10, "slave: pos = " << math::v2s(conf.current().pos(0)));
+  DEBUG(10, "slave: vel = " << math::v2s(conf.current().vel(0)));
+  
+  return status.MPI_TAG;
 }
 
 int util::Replica_Exchange_Slave::update_configuration
@@ -793,8 +848,16 @@ int util::Replica_Exchange_Slave::update_configuration
  configuration::Configuration & conf
  )
 {
-  // replica_master->conf(slave_data.replica) = conf;
-
+  // positions
+  DEBUG(9, "sending " << 3 * conf.current().pos.size() << " coords");
+  
+  MPI_Send(&conf.current().pos(0)(0), conf.current().pos.size()*3,
+	   MPI::DOUBLE, 0, 0, master);
+  
+  // and velocities
+  MPI_Send(&conf.current().vel(0)(0), conf.current().vel.size()*3,
+	   MPI::DOUBLE, 0, 0, master);
+  
   return 0;
   
 }
@@ -828,6 +891,219 @@ int util::Replica_Exchange_Slave::init_replica
 
   // ready to run ???
 
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// replica interactive    //////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+util::Replica_Exchange_Interactive::Replica_Exchange_Interactive()
+{
+}
+
+int util::Replica_Exchange_Interactive::run
+(
+ io::Argument & args
+ )
+{
+  char port_name[MPI::MAX_PORT_NAME];
+
+  if (args.count("control") < 1){
+    io::messages.add("interactive: connection name required",
+		     "replica exchange",
+		     io::message::error);
+    MPI_Finalize();
+    return 1;
+  }
+  
+  MPI::Lookup_name(args["control"].c_str(), MPI_INFO_NULL, port_name);
+
+  DEBUG(8, "interactive: connecting..");
+  MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
+  
+  int i = 1, nr;
+  MPI_Status status;
+  
+  DEBUG(8, "interactive: requesting replica information");
+  MPI_Send(&i, 1, MPI_INT, 0, 4, master);
+  
+  // number of replicas
+  MPI_Recv(&nr, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
+  
+  replica_data.resize(nr);
+  
+  MPI_Recv(&replica_data[0], sizeof(Replica_Data) * nr,
+	   MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG,
+	   master, &status);
+  
+  MPI_Comm_disconnect(&master);
+
+  if (args.count("control") >= 2){
+    std::map<std::string, std::string>::const_iterator
+      it = args.lower_bound("control"),
+      to = args.upper_bound("control");
+
+    ++it;
+    if (it->second == "change" && args.count("control") == 11){
+      ++it;
+      std::istringstream is(it->second);
+      unsigned int nr;
+      is >> nr;
+      
+      --nr;
+      if (nr >= replica_data.size() || nr <0){
+	std::cout << "wrong replica ID selected!" << std::endl;
+	MPI_Finalize();
+	return 1;
+      }
+      
+      is.clear();
+      ++it;
+      if (it->second != "."){
+	is.str(it->second);
+	is >> replica_data[nr].run;
+      }
+      
+      is.clear();
+      ++it;
+      if (it->second != "."){
+	is.str(it->second);
+	is >> replica_data[nr].temperature;
+      }
+
+      is.clear();
+      ++it;
+      if (it->second != "."){
+	is.str(it->second);
+	is >> replica_data[nr].lambda;
+      }
+
+      is.clear();
+      ++it;
+      if (it->second != "."){
+	is.str(it->second);
+	is >> replica_data[nr].energy;
+      }
+
+      is.clear();
+      ++it;
+      if (it->second != "."){
+	is.str(it->second);
+	is >> replica_data[nr].switch_temperature;
+      }
+
+      is.clear();
+      ++it;
+      if (it->second != "."){
+	is.str(it->second);
+	is >> replica_data[nr].switch_lambda;
+      }
+
+      is.clear();
+      ++it;
+      if (it->second != "."){
+	is.str(it->second);
+	is >> replica_data[nr].switch_energy;
+      }
+
+      is.clear();
+      ++it;
+      if (it->second == "wait") replica_data[nr].state = waiting;
+      if (it->second == "rdy") replica_data[nr].state = ready;
+      if (it->second == "run") replica_data[nr].state = running;
+      if (it->second == "err") replica_data[nr].state = st_error;
+      if (it->second == "term") replica_data[nr].state = terminate;
+
+      DEBUG(8, "interactive: connecting..");
+      MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
+  
+      int i = 2;
+
+      DEBUG(8, "interactive: requesting replica change");
+      MPI_Send(&i, 1, MPI_INT, 0, 4, master);
+  
+      DEBUG(8, "interactive: sending change ID");
+      MPI_Send(&nr, 1, MPI_INT, 0, 4, master);
+  
+      MPI_Send(&replica_data[nr], sizeof(Replica_Data),
+	       MPI_CHAR, 0, 4, master);
+  
+      MPI_Comm_disconnect(&master);
+      
+    }
+    else if (it->second == "stop"){
+      std::cout << "send stop request to master" << std::endl;
+
+      DEBUG(8, "interactive: connecting..");
+      MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
+  
+      int i = 3;
+
+      DEBUG(8, "interactive: requesting server quit");
+      MPI_Send(&i, 1, MPI_INT, 0, 4, master);
+      MPI_Comm_disconnect(&master);
+
+    }
+    else{
+      std::cout << "invalid command\n" << std::endl;
+    }
+  }
+  
+  std::cout.precision(4);
+  std::cout.setf(std::ios::fixed, std::ios::floatfield);
+  
+  std::cout << "\n"
+	    << std::setw(6) << "ID"
+	    << std::setw(6) << "run"
+	    << std::setw(10) << "T"
+	    << std::setw(10) << "l"
+	    << std::setw(10) << "Epot"
+	    << std::setw(10) << "sT"
+	    << std::setw(10) << "sl"
+	    << std::setw(10) << "sEpot"
+	    << std::setw(10) << "p"
+	    << std::setw(5) << "s"
+	    << std::setw(10) << "ste"
+	    << "\n";
+  
+  for(int r=0; r<nr; ++r){
+    std::cout << std::setw(6) << r + 1
+	      << std::setw(6) << replica_data[r].run
+	      << std::setw(10) << replica_data[r].temperature
+	      << std::setw(10) << replica_data[r].lambda
+	      << std::setw(10) << replica_data[r].energy
+	      << std::setw(10) << replica_data[r].switch_temperature
+	      << std::setw(10) << replica_data[r].switch_lambda
+	      << std::setw(10) << replica_data[r].switch_energy
+	      << std::setw(10) << replica_data[r].probability
+	      << std::setw(5) << replica_data[r].switched;
+    switch(replica_data[r].state){
+      case waiting:
+	std::cout << std::setw(10) << "wait";
+	break;
+      case ready:
+	std::cout << std::setw(10) << "rdy";
+	break;
+      case running:
+	std::cout << std::setw(10) << "run";
+	break;
+      case st_error:
+	std::cout << std::setw(10) << "err";
+	break;
+      case terminate:
+	std::cout << std::setw(10) << "term";
+	break;
+      default:
+	std::cout << std::setw(10) << "???";
+    }
+    std::cout << std::endl;
+  }
+  
+  std::cout << "\nuse\n\t@control change ID run T l Epot sT sl sEpot state" 
+	    << "\n\tto change replicas or stop to shutdown master\n" << std::endl;
+  
+  MPI_Finalize();
   return 0;
 }
 

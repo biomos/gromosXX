@@ -54,7 +54,7 @@ namespace util
     {
     }
     
-    enum state_enum{ waiting=0, ready=1, running=2, terminate=4 };
+    enum state_enum{ waiting=0, ready=1, running=2, terminate=4, st_error=5 };
 
     /**
      * @struct Replica_Data
@@ -73,36 +73,6 @@ namespace util
       state_enum state;
       double     probability;
       bool       switched;
-    };
-
-    /**
-     * @struct Slave_Data
-     * slave information
-     */
-    struct Slave_Data
-    {
-      /**
-       * Default Constructor
-       */
-      Slave_Data() : state(waiting), replica(-1) 
-      {
-      }
-      /**
-       * Constructor
-       */
-      Slave_Data(state_enum state, int replica) 
-	: state(state), replica(replica) 
-      {
-      }
-      
-      /**
-       * state of the slave
-       */
-      state_enum state;
-      /**
-       * assigned replica
-       */
-      int        replica;
     };
 
     /**
@@ -138,27 +108,6 @@ namespace util
     }
 
     /**
-     * information of all replicas
-     * gets updated from the slaves
-     */
-    std::vector<Replica_Data> replica_data;
-    
-    /**
-     * information of all slaves
-     */
-    std::vector<Slave_Data>   slave_data;
-    
-    /**
-     * neighbour list for each replica
-     * this should get multi-dimensional later...
-     */
-    std::vector<int>        neighbour;
-    /**
-     * position in the neighbour list for each replica
-     */
-    std::vector<int>        neighbour_pos;
-
-    /**
      * run the thread
      */
     virtual int run(io::Argument & args);
@@ -179,6 +128,23 @@ namespace util
     int switch_replica(int i);
 
     /**
+     * information of all replicas
+     * gets updated from the slaves
+     */
+    std::vector<Replica_Data> replica_data;
+    
+    /**
+     * neighbour list for each replica
+     * this should get multi-dimensional later...
+     */
+    std::vector<int>        neighbour;
+
+    /**
+     * position in the neighbour list for each replica
+     */
+    std::vector<int>        neighbour_pos;
+
+    /**
      * random number generator
      */
     gsl_rng * m_rng;
@@ -194,7 +160,7 @@ namespace util
 
   /**
    * @class Replica_Exchange_Slave
-   * replica exchange master
+   * replica exchange slave
    */
   class Replica_Exchange_Slave : public Replica_Exchange
   {
@@ -211,35 +177,21 @@ namespace util
     }
     
     /**
-     * replica information
-     */
-    Replica_Data replica_data;
-    
-    /**
-     * slave information
-     */
-    Slave_Data slave_data;
-    
-    /**
      * run the slave
      */
     virtual int run(io::Argument & args);
     
   private:
     /**
+     * replica information
+     */
+    Replica_Data replica_data;
+
+    /**
      * communicator
      */
-    // MPI::Intracomm master;
     MPI_Comm master;
-    
-    /**
-     * get thread state from master
-     */
-    int get_slave_data();
-    /**
-     * update thread state on master
-     */
-    int update_slave_data();
+
     /**
      * get replica data from master
      */
@@ -272,6 +224,42 @@ namespace util
 	       simulation::Simulation & sim,
 	       algorithm::Algorithm_Sequence & md,
 	       io::Out_Configuration & traj);
+
+  };
+
+  /**
+   * @class Replica_Exchange_Interactive
+   * replica exchange interactive module
+   */
+  class Replica_Exchange_Interactive : public Replica_Exchange
+  {
+  public:
+    /**
+     * Constructor
+     */
+    Replica_Exchange_Interactive();
+    /**
+     * Destructor
+     */
+    virtual ~Replica_Exchange_Interactive()
+    {
+    }
+    
+    /**
+     * run the slave
+     */
+    virtual int run(io::Argument & args);
+    
+  private:
+    /**
+     * replica information
+     */
+    std::vector<Replica_Data> replica_data;
+    
+    /**
+     * communicator
+     */
+    MPI_Comm master;
 
   };
 
