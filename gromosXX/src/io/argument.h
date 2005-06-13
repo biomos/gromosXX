@@ -6,6 +6,11 @@
 #ifndef INCLUDED_ARGUMENT_H
 #define INCLUDED_ARGUMENT_H
 
+namespace util
+{
+  class Known;
+}
+
 namespace io{
   /**
    * Class Argument
@@ -32,7 +37,7 @@ namespace io{
     /**
      * parse the command line arguments.
      */
-    int parse(int argc, char **args, int nknown, char **known, bool empty_ok = false); 
+    int parse(int argc, char **argv, util::Known &known, bool empty_ok = false); 
     /**
      * Argument destructor.
      * Details.

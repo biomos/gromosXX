@@ -8,6 +8,7 @@
 #include "argument.h"
 #include "blockinput.h"
 #include <util/error.h>
+#include <util/usage.h>
 
 namespace io{
 
@@ -27,16 +28,17 @@ namespace io{
   {
   }
   
-  int Argument::parse(int argc, char**argv, int nknown,
-		      char **known, bool empty_ok)
+  int Argument::parse(int argc, char **argv,
+		      util::Known &known, bool empty_ok) 
   {
 
     if(argc) d_prog = argv[0];
 
     if (argc == 1 && !empty_ok) return E_USAGE;
 
-    for(int i=0;i<nknown;++i)
-      d_known.insert(std::string(known[i]));
+    // for(int i=0; i<known.size(); ++i)
+    // d_known.insert(std::string(known[i]));
+    d_known = known;
 
     std::string s("");
   
