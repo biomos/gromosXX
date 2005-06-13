@@ -215,7 +215,7 @@ configuration, algorithm, interaction, io, util and check.
 \end{itemize}
 
 One step of an MD simulation consists of several algorithms applied to
-the configuration in the right order. The Algorithm_Sequence class is a
+the configuration in the right order. The Algorithm\_Sequence class is a
 container for all the algorithms, they have to be inserted in the
 correct order. Before the start of a simulation, all algorithms will be
 initialized (by calling the init() function), during an MD step, the
@@ -224,7 +224,7 @@ which, when applied, calculates the forces and interaction energies of
 all forcefield terms for the complete system. The forcefield terms
 itself are Interaction classes. The forcefield is therefore a container
 to store the different interaction objects. When the forcefield gets
-applied, it calls calculate_interactions() on all interaction
+applied, it calls calculate\_interactions() on all interaction
 objects. These, in term, calculate the bonded interactions (bond length,
 bond angles, improper dihedrals and dihedrals), the nonbonded
 interactions (pairlist construction, long-range interactions,
@@ -275,9 +275,284 @@ Energy\_Calculation \\
 \end{center}
 \end{table}
 
+\subsubsection{Efficiency}
+
+The main goal of writing a C++ MD engine was to further improve on
+modularity (using some object-oriented features) and extendability
+(using clear and common interfaces between the modules). Nevertheless,
+an MD code has to be reasonably efficient to be of use. The complete
+code is written in standard C++, no language extensions or machine
+specific parts are used anywhere, resulting in a highly portable
+program. This means that the compiler has to do all machine specific
+optimizations. We believe that the easier maintenance of a single code
+base and reasonably fast code with up-to-date compilers for the newest
+hardware satisfy our needs best.
+
+In the innerloops of the interaction calculation, templates are used to
+generate specialized code. There are specialized periodicity classes for
+the different types of periodic boundary conditions. The innerloop is
+called with the boundary type as a template argument. Therefore the
+compiler will generate a different, specialized version of the innerloop
+for all boundary conditions (automatically). In the same manner, also
+the interaction function term of the nonbonded interaction can be chosen
+(switching between a Lennard-Jones type or a coarse-grained type
+potential energy term) without the {\em if} statement showing up in the
+compiled innerloop. An example code snippet is shown in {\em listing
+  \ref{fig:templates}}.
+
+%\begin{table}[htbp]
+%\doublespacing
+%\begin{center}
+%\caption[Specialized code generation using templates.]{}
+%\label{fig:templates}
+%\vspace{0.7cm}
+%\begin{figure}
+\begin{lstlisting}[breaklines=true, caption={Specialized code generation
+    using templates.}, frame=, label=fig:templates]
+  enum boundary_type {vacuum, rectangular, triclinic};
+  
+  template<boundary_type boundary>
+  class Periodicity;
+  
+  template<>
+  class Periodicity<vacuum>{
+    public:
+      void nearest_image(Vec const & v1, Vec const & v2,
+                         Vec & v3);
+  };
+
+  template<>
+  class Periodicity<rectangular>{
+    public:
+      void nearest_image(Vec const & v1, Vec const & v2,
+                         Vec & v3);
+  };
+
+  template<>
+  class Periodicity<triclinic>{
+    public:
+      void nearest_image(Vec const & v1, Vec const & v2,
+                         Vec & v3);
+  };
+
+  template<boundary_type boundary>
+  class Interaction{
+    public:
+      virtual int calculate_interactions(
+        Topology const & topology,
+	Configuration & configuration,
+	Simulation const & simulation){
+
+	  Vec v;
+	  Periodicity<boundary>
+	    periodicity(configuration.current().box);
+
+	  periodicity.nearest_image(
+	    configuration.current().pos(0),
+	    configuration.current().pos(1),
+	    v);
+
+	  // and so on
+
+        }
+  };
+
+  int main(int argc, char **argv){
+
+    Interaction<triclinic> interaction;
+    interaction.calculate_interactions(
+      topology, configuration, simulation);
+      
+    return 0;
+  }
+
+\end{lstlisting}
+%\end{figure}
+%\end{center}
+%\end{table}
+
+
+Some algorithms do rely on information from the previous step. To help
+implementing those kind of algorithms, the complete current and old
+state of the simulation is stored. During the leap-frog algorithm, the
+current state changes to the old state and the updated information is
+stored in the new current state. This is done by a simple (and very
+fast) pointer exchange.
+
+\subsubsection{Debug information}
+
+It is often difficult to find where an error is exactly located. To help
+in searching, a lot of debug information can be printed. Every debug
+message is associated with a debug level. Only if the user requests a
+high enough level, the message is printed. Additionally, every code
+section belongs to a {\em module} and a {\em submodule}. Different debug
+levels can be specified for all combinations. In that way, fine grained
+control is achieved of how much information from which part of the MD
+code should be printed.
+ 
+\subsubsection{Pairlist generation}
+
+Gromos uses a triple-range cutoff scheme for non-lattice-sum
+calculations. A pairlist (chargegroup-based
+or atomic) is calculated every N steps. Atompairs with a distance
+smaller then the short-range cutoff are stored in a pairlist. These
+interactions are calculated at every MD step. Pairs with a distance
+between the short-range and the long-range cutoff are evaluated
+directly, forces and energies stored and added to the short-range forces
+and energies during the N-1 steps without pairlist creation. Outside the
+long-range cutoff, a reaction field is applied.
+ 
+Pairlist generation is a $O(N^2)$ operation. If a cutoff is used, it is
+possible to have close to a $O(N)$ algorithm because every atom has only
+a constant number of neighbours. The problem is to efficiently find
+them. There are a number of grid-based pairlist algorithms
+published. This implementation takes out one horizontal slab in the 3D
+grid and extends it in all directions (using periodic copies of the
+particles in the slab). Afterwards the interactions from all particles
+above this slab within the cutoff (expressed as ranges of grid cells)
+are calculated. In that way, no periodicity operations are necessary
+anymore! For the short-range interactions a code can be stored in the
+pairlist which shift vector to apply to the position (to get the correct
+periodic copy), then no nearest image calls are necessary during the
+nonbonded interaction calculation.
+
+Using this information would make it possible to extract the virial
+calculation from the innerloop of the nonbonded routines. This is
+presently not implemented.
+
 \subsubsection{Parallelization}
 
+The interaction calculation is by far the computationally most expensive
+part of an MD simulation. And then nonbonded interactions are the
+responsible part of it. Again, the C++ code is focused on achieving
+parallelization without comlicating the code. The nonbonded interaction
+is split up into Nonbonded\_Sets, each containing its own storage space
+for a pairlist, forces, energies and a virial tensor. While calculating
+the pairlist, only a subset of atoms is considered, therefore each
+processor creates its own partial pairlist. The interactions are
+calculated from this partial pairlist and stored in the local arrays. In
+the end the forces, energies and virial tensors of all nonbonded sets
+are summed up and stored in the configuration. If the parallelization is
+using distributed memory the positions have to be copied over from the
+master to all other processes in the beginning as well as the reduction
+of the energies, forces and virial in the end. In that case MPI is used
+as communication protocol.
+
+Effective parallelization could be achieved with only a few lines of
+code (almost) completely separate from the nonbonded routines.
+
+\subsubsection{Replica exchange}
+
+The replica exchange method was implemented using MPI as communication
+protocol. A server distributes the jobs to a dynamic number of
+clients. After a given number of simulation steps they report back the
+current energies, the server calculates switching probablilities and
+prepares the next jobs for the clients. Replica exchange can be done in
+temperature or in parameter ($\lambda$) space.
+
 \section{Analysis: Gromos++}
+
+All the analysis programs have been rewritten in C++. They accept a
+standard set of command line arguments to specify input. It is easy to
+add new analysis programs using the functionality provided within the
+Gromos++ library. Following is a short description of the existing
+programs:
+
+\begin{itemize}
+\item preparation
+  \begin{itemize}
+  \item probox puts a simulation box around a molecule and fills it with
+    solvent molecules
+  \item buildbox builds a simulation box containing N molecules at a
+    specified density
+  \item bin\_box builds a simulation box containing a binary mixture at
+    a specified density
+  \item ran\_box builds a simulation box containing N molecules at a
+    specified density placing and orienting them randomly
+  \item ran\_solvation builds a simulation box around a molecule and
+    fills it randomly with solvent molecules
+  \item checkbox checks box properties (size)
+  \item copy\_box multiplies a box in any direction
+  \item explode increase inter-molecule distance to vacuum conditions
+  \item procry applies rotations and translations to a system to create
+    a crystal unit cell
+  \item maketop builds a topology from a building block sequence
+  \item comtop combines two topologies
+  \item contop converts topologies
+  \item redtop reduces topologies by specified parts
+  \item pt\_top combines topologies with perturbation topologies to
+    produce new (perturbation) topologies
+  \item perttopo creates a perturbation topology to perturb specified 
+    atoms to dummies
+  \item checktopo checks topologies for common mistakes
+  \item progch generates or deletes hydrogen atom coordinates of a molecule
+  \item proion replaces solvent molecules by an ion
+  \item progca generates atomic Cartesian coordinates from a set of
+    internal coordinates
+  \item mkscript prepares an MD job script
+  \end{itemize}
+\item analyzation
+  \begin{itemize}
+  \item tstrip removes solvent from a trajectory
+  \item filter filters out specified atoms from a trajectory
+  \item cog calculates centre of geometries for specified atoms
+  \item tser calculates time series of specified properties (distances,
+    angles, torsions, order parameters, ...)
+  \item dist calculates distributions of specified properties
+  \item ditrans monitors dihedral angle transitions
+  \item propertyrmsd calculates root-mean-square deviations over a set
+    of properties
+  \item dipole calculates dipole moments with respect to the centre of molecules
+  \item epsilon calculates the dielectric constant for liquids
+  \item rmsd calculates positional root-mean-square deviation between
+    structures
+  \item rmsf calculates positional room-mean-square fluctuations of
+    specified atoms
+  \item ene\_ana calculates averages, fluctuations and error estimates
+    of energies, pressure and volume
+  \item visco\_ana calculates the viscosity of liquids
+  \item protcf calculates time correlation functions of time series
+  \item rgyr calculates the radius of gyration
+  \item rdf calculates the radial distribution function of selected atoms
+  \item mdf gives the time series of the closest particle to a selected atom
+  \item m\_widom performs particle insertion
+  \item proarse Program to calculate the ARea 'Surface of' Estimate of a
+    specified (part of a) molecule(s). Some (not so many actually)
+    people also call this the Solvent-Accessible-Surface-Area (SASA).
+  \item hbond analyses hydrogen bonding
+  \item dssp analyses secondary structure elements
+  \item prepnoe prepares for a NOE calculation
+  \item noe calculates NOE distances
+  \item postnoe analyses NOE distances
+  \item oparam calculates order parameters for membranes
+  \item nhoparam calculates N-H order parameters for membranes
+  \item diffus calculates the diffusion coefficient
+  \item neighbours prints a list of neighbouring atoms to a selected atom
+  \item clusmol reads in the output of "neighbours" and determines
+    clusters of molecules
+  \item rmsdmat calculates the rmsd between all structure-pairs in a trajectory
+  \item cluster analyses an rmsd-matrix to divide the structures into clusters
+  \item postcluster analyses the cluster output for life-times, folding
+    pathway and central-member structures
+  \item iondens calculates ion densities 
+  \item edyn does an essential dynamics analysis
+  \item rot\_rel calculates the rotational relaxation time for solvent
+  \item ener calculates any energy for a system 
+  \item espmap calculates the vacuum electrostatic-potential on a grid
+    around selected molecules of a given frame from the partial charges of
+    the topology
+  \end{itemize}
+\item visualization / information
+  \begin{itemize}
+  \item g962pdb converts a Gromos topology and coordinates into pdb format
+  \item frameout converts trajectories into other formats
+  \item inbox puts the solute into the centre of the box
+  \item atominfo prints (topological) information of specified atoms
+  \item shake\_analysis analyses a specified configuration
+  \item procmt\_list lists the atoms within a specified distance from a
+    centre atom
+  \end{itemize}
+\end{itemize}
 
 \section{Applications}
 
