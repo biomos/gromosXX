@@ -116,27 +116,25 @@ int interaction::Perturbed_Nonbonded_Set
     // TODO:
     // move decision to pairlist!!!
     DEBUG(6, "create a pairlist");
-    m_pairlist_alg.update_perturbed(topo, conf, sim, 
-				    longrange_storage(),
-				    pairlist(), perturbed_pairlist(),
-				    m_rank, topo.num_atoms(), m_num_threads);
-
-    /*
-    sleep(2*tid);
     
-    std::cout << "PRINTING OUT THE PAIRLIST\n\n";
-    for(unsigned int i=0; i<100; ++i){
-      if (i >= pairlist().size()) break;
-
-      std::cout << "\n\n--------------------------------------------------";
-      std::cout << "\n" << i;
-      for(unsigned int j=0; j<pairlist()[i].size(); ++j){
-
-	if (j % 10 == 0) std::cout << "\n\t";
-	std::cout << std::setw(7) << pairlist()[i][j];
-      }
+    if (topo.perturbed_solute().atoms().size() > 0){
+      m_pairlist_alg.update_perturbed(topo, conf, sim, 
+				      longrange_storage(),
+				      pairlist(), perturbed_pairlist(),
+				      m_rank, topo.num_atoms(), m_num_threads);
     }
-    */
+    else{
+      // assure it's empty
+      assert(perturbed_pairlist().size() == topo.num_atoms());
+      for(unsigned int i=0; i<topo.num_atoms(); ++i){
+	perturbed_pairlist()[i].clear();
+      }
+      
+      m_pairlist_alg.update(topo, conf, sim, 
+			    longrange_storage(), pairlist(),
+			    m_rank, topo.num_atoms(), m_num_threads);
+    }
+    
   }
 
   // calculate forces / energies
@@ -145,33 +143,39 @@ int interaction::Perturbed_Nonbonded_Set
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist, m_shortrange_storage);
 
-  DEBUG(6, "\tperturbed short range");
-  m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim, 
-						   m_perturbed_pairlist,
-						   m_shortrange_storage);
+  if (topo.perturbed_solute().atoms().size() > 0){
+    DEBUG(6, "\tperturbed short range");
+    m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim, 
+						     m_perturbed_pairlist,
+						     m_shortrange_storage);
+  }
+
   // add 1,4 - interactions
   if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
 
-    DEBUG(6, "\tperturbed 1,4 - interactions");
-    m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
-						       m_shortrange_storage);
-  
+    if (topo.perturbed_solute().atoms().size() > 0){
+      DEBUG(6, "\tperturbed 1,4 - interactions");
+      m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
+							 m_shortrange_storage);
+    }
+    
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
       DEBUG(6, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
 
-      DEBUG(6, "\tperturbed RF excluded interactions and self term");
-      m_perturbed_outerloop.perturbed_RF_excluded_outerloop(topo, conf, sim,
-							    m_shortrange_storage);
-
+      if (topo.perturbed_solute().atoms().size() > 0){
+	DEBUG(6, "\tperturbed RF excluded interactions and self term");
+	m_perturbed_outerloop.perturbed_RF_excluded_outerloop(topo, conf, sim,
+							      m_shortrange_storage);
+      }
     }
 
     DEBUG(6, "\tperturbed pairs");
     m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
-
+    
   }
   
   // add long-range force

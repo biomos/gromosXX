@@ -83,7 +83,8 @@ void interaction::Perturbed_Nonbonded_Outerloop
 
   std::vector<unsigned int>::const_iterator j_it, j_to;
   unsigned int i;
-  unsigned int size_i = unsigned(pairlist.size());
+  unsigned int size_i = unsigned(topo.num_solute_atoms());
+  // unsigned int size_i = unsigned(pairlist.size());
 
   DEBUG(6, "pert sr: " << size_i);
 
