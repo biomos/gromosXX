@@ -190,17 +190,26 @@ calculate_interactions(topology::Topology & topo,
       }
     }
   }
+
+  DEBUG(6, "sets are done, adding things up...");
+  store_set_data(topo, conf, sim);
+
+  DEBUG(7, "print pairlist...");
+  if (sim.param().pairlist.print &&
+      (!(sim.steps() % sim.param().pairlist.skip_step))){
+    
+    std::ofstream os("server.pl", std::ios::app);
+    os << "rank " << rank << " of " << num_threads << std::endl;
+    print_pairlist(topo, conf, sim, os);
+  }
   
 #else
   std::cerr << "using MPI code without MPI defined..." << std::endl;
   return E_ILLEGAL;
 #endif
   
-  DEBUG(6, "sets are done, adding things up...");
-  store_set_data(topo, conf, sim);
   
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
-  
   m_timing += util::now() - nonbonded_start;
   
   return 0;
