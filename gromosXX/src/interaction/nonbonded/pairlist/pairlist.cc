@@ -15,8 +15,10 @@
 
 namespace interaction
 {
-  inline std::ostream & 
+  std::ostream & 
   operator<<(std::ostream &os, Pairlist &pl){
+    
+    const bool reduced = true;
     
     os << "Pairlist" << std::endl;
     
@@ -25,18 +27,31 @@ namespace interaction
       to = pl.end();
     
     std::vector<unsigned int>::const_iterator j_it, j_to;
+    std::vector<unsigned int> temp;
     
-    for (unsigned int i=0; it != to; ++i) {
+    for (unsigned int i=0; it != to; ++i, ++it) {
       
       int ind = 0;
-      os << std::setw(5) << i << ": " << std::flush;
+      // if (!reduced)
+      os << std::setw(5) << i << " : " << std::flush;
       
-      for(j_it = it->begin(), j_to = it->end(); j_it != j_to; ++j_it, ++ind){
+      temp = *it;
+      std::sort(temp.begin(), temp.end());
+      
+      for(j_it = temp.begin(), j_to = temp.end(); j_it != j_to; ++j_it, ++ind){
 	
 	os << std::setw(5) << *j_it << " "; 
-	if (!(++ind % 15)) os << "\n\t";
+
+	if (!reduced)
+	  if (!(++ind % 15)) os << "\n\t";
       }
-      if (ind) os << std::endl;
+
+      if (!reduced){
+	if (ind) os << std::endl;
+      }
+      else
+	os << std::endl;
+      
     }    
     return os;
   }

@@ -21,13 +21,13 @@ namespace interaction
      * Constructor.
      */
     Pairlist() {}
-    
+
   protected:
     
   };
   
   /**
-   * print the pairlist.
+   * sort and print the pairlist.
    */
   std::ostream & 
   operator<<(std::ostream &os, Pairlist &pl);
