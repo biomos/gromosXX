@@ -45,7 +45,10 @@ int io::read_input(io::Argument const & args,
 {
   // create an in_parameter
 
-  // double start = util::now();
+  if (args.count("print") > 0){
+    if (args["print"] == "pairlist")
+      sim.param().pairlist.print = true;
+  }
 
   std::ifstream input_file, topo_file, pttopo_file, conf_file;
   
