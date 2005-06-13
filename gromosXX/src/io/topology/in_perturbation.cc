@@ -486,9 +486,18 @@ io::In_Perturbation::read(topology::Topology &topo,
 		      id);
 	
 	if (id_it == topo.solute().dihedrals().end()){
-	  io::messages.add("Perturbation of a non-existing dihedral in "
-			   "PERTDIHEDAL03 block.",
-			   "In_Perturbation", io::message::error);
+	  // try B type
+	  topology::four_body_term_struct idB(i-1, j-1, k-1,l-1, t_B-1);
+	  id_it =  std::find(topo.solute().dihedrals().begin(), 
+			     topo.solute().dihedrals().end(), 
+			     idB);
+
+	  if (id_it == topo.solute().dihedrals().end()){
+	    io::messages.add("Perturbation of a non-existing dihedral in "
+			     "PERTDIHEDAL03 block.",
+			     "In_Perturbation", io::message::error);
+	    return;
+	  }
 	}
 	
 	topo.solute().dihedrals().erase(id_it);
