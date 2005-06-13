@@ -173,6 +173,11 @@ namespace io {
     void read_INNERLOOP(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
+     * read CGRAIN block.
+     */
+    void read_CGRAIN(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
      * read MULTICELL block.
      */
     void read_MULTICELL(simulation::Parameter & param, std::ostream & os = std::cout);

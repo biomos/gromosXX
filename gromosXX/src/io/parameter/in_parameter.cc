@@ -59,12 +59,11 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_WRITE(param);
   read_CONSTRAINTS(param); // read_SHAKE if no CONSTRAINTS
   read_FORCE(param); // and FORCEFIELD
+  read_CGRAIN(param);
   read_PLIST(param);
   read_LONGRANGE(param);
   read_POSREST(param);
-
   read_DISTREST(param);
-  
   read_PERTURB(param);
   read_JVALUE(param);
   read_PSCALE(param);
@@ -1581,6 +1580,39 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param,
   
 }
 
+/**
+ * read the CGRAIN block.
+ */
+void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
+				   std::ostream & os)
+{
+  DEBUG(8, "read CGRAIN");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["CGRAIN"];
+  
+  if (buffer.size()){
+    
+    block_read.insert("CGRAIN");
+    
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.cgrain.EPS;
+
+    param.force.interaction_function = simulation::cgrain_func;
+    
+    if (_lineStream.fail())
+      io::messages.add("bad line in CGRAIN block",
+                       "In_Parameter", io::message::error);
+    
+    io::messages.add("Using the Coarse Grained model (EXPERIMENTAL)",
+		     "In_Parameter", 
+		     io::message::warning);
+  }
+}
 
 /**
  * read MULTIBATH block.
