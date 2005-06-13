@@ -365,6 +365,7 @@ namespace topology
      * is the atom perturbed?
      */
     std::vector<bool> & is_perturbed() { return m_is_perturbed;}
+
     /**
      * recalculate lambda dependent properties.
      */

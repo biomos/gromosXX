@@ -60,7 +60,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   if (mul_solvent == -1) mul_solvent = mul_solute;
   
   const int num_solute = topo.num_solute_atoms();
-  assert(topo.m_is_perturbed.size() == num_solute);
+  assert(num_solute >= 0 && topo.m_is_perturbed.size() == unsigned(num_solute));
   
   m_is_perturbed.clear();
   m_iac.clear();
