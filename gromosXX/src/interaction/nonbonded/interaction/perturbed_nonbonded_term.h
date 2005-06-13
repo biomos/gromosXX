@@ -57,7 +57,6 @@ namespace interaction
 				   double &e_lj, double & e_crf, double &de_lj, 
 				   double & de_crf);
 
-
     /**
      * calculate the reaction field force and energy
      * of a perturbed atom pair
@@ -83,7 +82,19 @@ namespace interaction
 			       math::Vec & force, double & e_rf,
 			       double & de_rf,
 			       bool selfterm_correction = false);
-    
+
+    /**
+     * calculate the force, energy and dh/dl of an atom pair (coarse grain)
+     */
+    void cgrain_soft_interaction(math::Vec const &r,
+				 double const A_c6, double const A_c12,
+				 double const B_c6, double const B_c12,
+				 double const A_q, double const B_q,
+				 double const alpha_lj,
+				 double const alpha_crf,
+				 double & force1, double & force6, double & force12,
+				 double &e_lj, double & e_crf, double &de_lj, 
+				 double & de_crf);
     /**
      * Perturbation:
      * lambda value for state A
@@ -203,7 +214,16 @@ namespace interaction
      * exponent to lambda.
      */
     double m_lambda_exp;
-
+    /**
+     * Coarse grain variables
+     */
+    double A_cg12, A_cg6, A_cg1;
+    double B_cg12, B_cg6, B_cg1;
+    double A_C_cg12, A_C_cg6, A_C_cg1;
+    double B_C_cg12, B_C_cg6, B_C_cg1;
+    double cgrain_eps;
+    double rs_lj, rs_c;
+    double nb_cutoff;
   };
   
 } // interaction

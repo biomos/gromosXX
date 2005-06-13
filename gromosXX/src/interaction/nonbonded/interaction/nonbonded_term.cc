@@ -14,33 +14,101 @@
 inline void interaction::Nonbonded_Term
 ::init(simulation::Simulation const &sim)
 {
-  // Force
-  m_cut3i = 
-    1.0 / ( sim.param().longrange.rf_cutoff
-	    * sim.param().longrange.rf_cutoff
-	    * sim.param().longrange.rf_cutoff);
-
-  m_crf = 2*(sim.param().longrange.epsilon - sim.param().longrange.rf_epsilon) * 
-    (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) -
-    sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					sim.param().longrange.rf_cutoff *
-					sim.param().longrange.rf_kappa  *
-					sim.param().longrange.rf_cutoff);
-
-  m_crf /= (sim.param().longrange.epsilon +2* sim.param().longrange.rf_epsilon) *
-    (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) +
-    sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					sim.param().longrange.rf_cutoff *
-					sim.param().longrange.rf_kappa  *
-					sim.param().longrange.rf_cutoff);
-  m_crf_cut3i = m_crf * m_cut3i;
-
-  // Energy
-  m_crf_2cut3i = m_crf_cut3i / 2.0;
-
-  m_crf_cut = (1 - m_crf / 2.0)
-    / sim.param().longrange.rf_cutoff;
-  
+  switch(sim.param().force.interaction_function){
+  case simulation::lj_crf_func :
+    // Force
+    m_cut3i = 
+      1.0 / ( sim.param().longrange.rf_cutoff
+	      * sim.param().longrange.rf_cutoff
+	      * sim.param().longrange.rf_cutoff);
+    
+    m_crf = 2*(sim.param().longrange.epsilon - sim.param().longrange.rf_epsilon) * 
+      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) -
+      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
+					  sim.param().longrange.rf_cutoff *
+					  sim.param().longrange.rf_kappa  *
+					  sim.param().longrange.rf_cutoff);
+    
+    m_crf /= (sim.param().longrange.epsilon +2* sim.param().longrange.rf_epsilon) *
+      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) +
+      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
+					  sim.param().longrange.rf_cutoff *
+					  sim.param().longrange.rf_kappa  *
+					  sim.param().longrange.rf_cutoff);
+    m_crf_cut3i = m_crf * m_cut3i;
+    
+    // Energy
+    m_crf_2cut3i = m_crf_cut3i / 2.0;
+    
+    m_crf_cut = (1 - m_crf / 2.0)
+      / sim.param().longrange.rf_cutoff;
+    break;
+    
+  case simulation::cgrain_func :
+    // cgrain
+    A_cg12= - ((12 + 4) * sim.param().longrange.rf_cutoff) /
+      ((pow(sim.param().longrange.rf_cutoff, 12 + 2)) * 
+       (sim.param().longrange.rf_cutoff) * 
+       (sim.param().longrange.rf_cutoff));
+    A_cg6=  - ((6  + 4) * sim.param().longrange.rf_cutoff) /
+      ((pow(sim.param().longrange.rf_cutoff, 6  + 2)) * 
+       (sim.param().longrange.rf_cutoff) *
+       (sim.param().longrange.rf_cutoff));
+    A_cg1=  - ((1  + 4) * sim.param().longrange.rf_cutoff) /
+      ((pow(sim.param().longrange.rf_cutoff, 1  + 2)) * 
+       (sim.param().longrange.rf_cutoff) *
+       (sim.param().longrange.rf_cutoff));
+    
+    B_cg12= ((12 + 3) * sim.param().longrange.rf_cutoff) /
+      ((pow(sim.param().longrange.rf_cutoff, 12 + 2)) * 
+       (sim.param().longrange.rf_cutoff) * 
+       (sim.param().longrange.rf_cutoff) * 
+       (sim.param().longrange.rf_cutoff));
+    B_cg6=  ((6  + 3) * sim.param().longrange.rf_cutoff) /
+      ((pow(sim.param().longrange.rf_cutoff, 6  + 2)) * 
+       (sim.param().longrange.rf_cutoff) * 
+       (sim.param().longrange.rf_cutoff) * 
+       (sim.param().longrange.rf_cutoff));
+    B_cg1=  ((1  + 3) * sim.param().longrange.rf_cutoff) /
+      ((pow(sim.param().longrange.rf_cutoff, 1  + 2)) * 
+       (sim.param().longrange.rf_cutoff) * 
+       (sim.param().longrange.rf_cutoff) * 
+       (sim.param().longrange.rf_cutoff));
+    
+    C_cg12 = pow(1.0 / sim.param().longrange.rf_cutoff, 12)
+      - A_cg12  / 3 * (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff)
+      - B_cg12  / 4 * (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) *
+      (sim.param().longrange.rf_cutoff); 
+    
+    C_cg6  = pow(1.0 / sim.param().longrange.rf_cutoff,  6)
+      - A_cg6   / 3 * (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff)
+      - B_cg6   / 4 * (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) *
+      (sim.param().longrange.rf_cutoff); 
+    
+    C_cg1 =     1.0 / sim.param().longrange.rf_cutoff
+      - A_cg1  / 3 * (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff)
+      - B_cg1  / 4 * (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) * 
+      (sim.param().longrange.rf_cutoff) *
+      (sim.param().longrange.rf_cutoff);
+    
+    cgrain_eps = sim.param().cgrain.EPS;
+    break;
+  default:
+    io::messages.add("Nonbonded_Innerloop",
+		     "interaction function not implemented",
+		     io::message::critical);
+  }
 }
 
 /**
@@ -93,6 +161,55 @@ inline void interaction::Nonbonded_Term
   DEBUG(11, "crf_2cut3i " << m_crf_2cut3i);
   DEBUG(11, "crf_cut " << m_crf_cut);
   DEBUG(11, "q*q   " << q );
+  
+}
+
+/**
+ * helper function to calculate the force and energy for
+ * a given atom pair in the coarse grain model
+ */
+inline void interaction::Nonbonded_Term
+::cgrain_interaction(math::Vec const &r,
+                     double const c6, double const c12,
+                     double const q,
+                     double &force, double &e_lj, double &e_crf)
+{
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
+  const double dist2i = 1.0 / dist2;
+  const double disti = sqrt(dist2i);
+  const double dist6i = dist2i * dist2i * dist2i;
+  const double dist12i = dist6i * dist6i;
+  const double dist = 1.0 / disti;
+
+  const double q_eps = q * math::four_pi_eps_i / cgrain_eps;
+
+  // const double c12_dist6i = c12 * dist6i;
+
+  e_crf = (q_eps * (disti
+                    - A_cg1  / 3 * dist2 * dist
+                    - B_cg1  / 4 * dist2 * dist2
+                    - C_cg1 ));
+  
+  e_lj =  (c12 * (dist12i
+		  - A_cg12 / 3 * dist2 * dist
+		  - B_cg12 / 4 * dist2 * dist2
+		  - C_cg12))
+    -     (c6 *  (dist6i
+		  - A_cg6  / 3 * dist2 * dist
+		  - B_cg6  / 4 * dist2 * dist2 
+		  - C_cg6 ));
+  
+  force = 12.0 * c12 * (dist12i * disti + A_cg12 * dist2 + B_cg12 * dist2 * dist) * disti -
+           6.0 *  c6 * (dist6i *  disti + A_cg6  * dist2 + B_cg6  * dist2 * dist) * disti +
+               q_eps * (         dist2i + A_cg1  * dist2 + B_cg1  * dist2 * dist) * disti;
+  
+  
+  // std::cout.precision(10);
+  
+  DEBUG(11, "r_ij= " << dist 
+        << " e_lj=" << e_lj << " e_crf=" << e_crf 
+        << " force=" << force);
   
 }
 

@@ -17,6 +17,9 @@
     case simulation::lj_crf_func : \
       f<Interaction_Spec<bound, vir, simulation::lj_crf_func> >(__VA_ARGS__); \
       break; \
+    case simulation::cgrain_func : \
+      f<Interaction_Spec<bound, vir, simulation::cgrain_func> >(__VA_ARGS__); \
+      break; \
     default: \
       io::messages.add("wrong interaction function", "innerloop_template", io::message::error); \
       \
@@ -79,6 +82,10 @@
   switch(sim.param().force.interaction_function){ \
     case simulation::lj_crf_func : \
       f< Interaction_Spec<bound, vir, simulation::lj_crf_func>, \
+         pertspec > (__VA_ARGS__); break; \
+      break; \
+    case simulation::cgrain_func : \
+      f< Interaction_Spec<bound, vir, simulation::cgrain_func>, \
          pertspec > (__VA_ARGS__); break; \
       break; \
     default: \

@@ -63,7 +63,8 @@ namespace simulation
    * and Perturbed_Nonbonded_Innerloop
    */
   enum interaction_func_enum{
-    /** lj_crf_function */ lj_crf_func
+    /** lj_crf_function */ lj_crf_func,
+    /** cgrain_function */ cgrain_func
   };
 
 
@@ -662,7 +663,8 @@ namespace simulation
        * - atomic_cutoff false
        */
       plist_struct() : grid(false), skip_step(5), cutoff_short(0.8),
-		       cutoff_long(1.4), grid_size(0.4), atomic_cutoff(false) {}
+		       cutoff_long(1.4), grid_size(0.4),
+		       atomic_cutoff(false), print(false) {}
       
       /**
        * algorithm.
@@ -688,6 +690,11 @@ namespace simulation
        * atomic cutoff
        */
       bool atomic_cutoff;
+      
+      /**
+       * print the pairlist
+       */
+      bool print;
       
     } /** Pairlist method parameters */ pairlist;
 
@@ -1018,6 +1025,27 @@ namespace simulation
       
     } /** replica exchange parameters */ replica;
     
+    /**
+     * @struct cgrain_struct
+     * coarse grain potential
+     */
+    struct cgrain_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - EPS (20.0)
+       */
+      cgrain_struct()
+	: EPS(20.0)
+      {
+      }
+      /**
+       * EPS for the CG coulomb
+       */
+      double EPS;
+    } /** coarse grain parameters */ cgrain;
+
     /**
      * @struct multicell_struct
      * multiple unit cell simulations

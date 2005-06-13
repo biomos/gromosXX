@@ -44,6 +44,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 			 topo.charge(j),
 			 f, e_lj, e_crf);
       break;
+    case simulation::cgrain_func :
+      cgrain_interaction(r, lj.c6, lj.c12,
+			 topo.charge(i) * 
+			 topo.charge(j),
+			 f, e_lj, e_crf);
+      break;
     default:
       io::messages.add("Nonbonded_Innerloop",
 		       "interaction function not implemented",
@@ -283,6 +289,12 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   switch(t_nonbonded_spec::interaction_func){
     case simulation::lj_crf_func :
       lj_crf_interaction(r, lj.cs6, lj.cs12,
+			 topo.charge()(i) * 
+			 topo.charge()(j),
+			 f, e_lj, e_crf);
+      break;
+    case simulation::cgrain_func :
+      cgrain_interaction(r, lj.cs6, lj.cs12,
 			 topo.charge()(i) * 
 			 topo.charge()(j),
 			 f, e_lj, e_crf);

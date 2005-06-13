@@ -44,7 +44,13 @@ namespace interaction
      */
     void rf_interaction(math::Vec const &r, double const q,
 			math::Vec & force, double & e_rf);
-
+    /**
+     * calculate the force and energy of an atom pair (coarse grain).
+     */
+    void cgrain_interaction(math::Vec const &r,
+			    double const c6, double const c12,
+			    double const q,
+			    double &force, double &e_lj, double &e_crf); 
     /**
      * calculate the hessian of the lj crf term.
      */
@@ -52,7 +58,7 @@ namespace interaction
 			double const c6, double const c12,
 			double const q,
 			math::Matrix &hess);
-
+    
     /**
      * a constant.
      */
@@ -90,7 +96,14 @@ namespace interaction
      * divided by reaction field cutoff.
      */
     double m_crf_cut;
-
+    
+    /**
+     * Coarse grain variables
+     */
+    double A_cg12, A_cg6, A_cg1;
+    double B_cg12, B_cg6, B_cg1;
+    double C_cg12, C_cg6, C_cg1;
+    double cgrain_eps;
   };
   
 } // interaction
