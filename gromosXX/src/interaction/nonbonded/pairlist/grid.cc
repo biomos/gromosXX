@@ -42,7 +42,7 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
   const int Nab = m_grid.Na * m_grid.Nb;
   
   // this is enough for small cells (when only about one particle fits in anyway)
-  const int space = m_grid.Pcell * 3;
+  const int space = m_grid.Pcell * 3 + m_grid.shift_space;
 
   m_grid.p_cell.resize(m_grid.Nc);
   m_grid.cell_start.resize(m_grid.Nc);
@@ -128,20 +128,30 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
   } // solvent cg's
 
   // check that there was enough space
+  int max = 0;
   for(int z=0; z < m_grid.Nc; ++z){
     for(int i=0; i<Nab; ++i)
       if (m_grid.count[z][i] > space){
-	std::cerr << "not enough space to put chargegroups into cells:\n\t"
-		  << "available space " << space << "\n\t"
-		  << "space required " << m_grid.count[z][i] << "\n\n";
+	if (m_grid.count[z][i] - space > max)
+	  max = m_grid.count[z][i] - space;
 	
-	io::messages.add("Not enough space to put chargegroups into cells!",
-			 "Grid Pairlist Algorithm",
-			 io::message::critical);
-	return 1;
       }
   }
 
+  if (max){
+    std::cout << "not enough space to put chargegroups into cells:\n\t"
+	      << "available space " << space << "\n\t"
+	      << "additional space required " << max << "\n\n";
+    
+    io::messages.add("Not enough space to put chargegroups into cells!",
+		     "Grid Pairlist Algorithm",
+		     io::message::notice);
+
+    m_grid.shift_space += max + 1;
+    
+    return prepare_grid(topo, conf, sim);
+  }
+  
   return 0;
 }
 

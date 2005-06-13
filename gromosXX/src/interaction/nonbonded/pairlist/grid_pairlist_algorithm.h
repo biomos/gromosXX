@@ -129,6 +129,11 @@ namespace interaction
     class Grid
     {
     public:
+      Grid()
+	: shift_space(0)
+      {
+      }
+      
       struct Particle
       {
 	Particle() : i(0), x(0.0), y(0.0), z(0.0), shift_index(0) 
@@ -175,6 +180,11 @@ namespace interaction
        * particles per cell (int()+1)
        */
       int Pcell;
+      
+      /**
+       * additional space to put in particles
+       */
+      int shift_space;
       
       /**
        * particles in cells
