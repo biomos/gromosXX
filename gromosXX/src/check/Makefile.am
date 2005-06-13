@@ -4,6 +4,7 @@ check_PROGRAMS = 		rasn.t \
 				aladip.t \
 				aladip_atomic.t \
 				aladip_special.t \
+				aladip_cg.t \
 				scaling.t
 
 rasn_t_SOURCES = 		rasn.t.cc \
@@ -40,13 +41,21 @@ aladip_atomic_t_SOURCES = 	aladip_atomic.t.cc \
 
 aladip_atomic_t_LDADD = ../libgroxx.la $(extra_lib)
 
+aladip_cg_t_SOURCES = 		aladip_cg.t.cc \
+				check.h \
+				check_forcefield.h \
+				check_forcefield.cc
+
+
+aladip_cg_t_LDADD = ../libgroxx.la $(extra_lib)
+
 
 scaling_t_SOURCES = scaling.t.cc check.h
 
 scaling_t_LDADD = ../libgroxx.la $(extra_lib)
 
 
-TESTS = aladip.t aladip_atomic.t aladip_special.t scaling.t
+TESTS = aladip.t aladip_atomic.t aladip_special.t aladip_cg.t scaling.t
 
 EXTRA_DIST =	data/rasn.topo \
 		data/rasn.conf \
@@ -57,6 +66,7 @@ EXTRA_DIST =	data/rasn.topo \
 		data/aladip.conf \
 		data/aladip.in \
 		data/aladip_special.in \
+		data/aladip_cg.in \
 		data/aladip.distrest \
 		data/aladip_atomic.in \
 		data/scaling.in \
