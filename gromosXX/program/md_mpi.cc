@@ -20,6 +20,7 @@
 
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
+#include <util/usage.h>
 #include <util/error.h>
 
 #include <io/read_input.h>
@@ -46,35 +47,15 @@ int main(int argc, char *argv[]){
 
   const double start = util::now();
 
-  char *knowns[] = 
-    {
-      "topo", "conf", "input", "verb", "pttopo",
-      "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-      "bae", "bag", "posres", "jval", "rep", "version"
-    };
-    
-  int nknowns = 19;
-    
-  std::string usage = argv[0];
-  usage += "\n\t@topo    <topology>\n";
-  usage += "\t[@pttopo <perturbation topology>]\n";
-  usage += "\t@conf    <starting configuration>\n";
-  usage += "\t@input   <input>\n";
-  usage += "\t@trj     <trajectory>\n";
-  usage += "\t@fin     <final structure>\n";
-  usage += "\t[@trv    <velocity trajectory>]\n";
-  usage += "\t[@trf    <force trajectory>]\n";
-  usage += "\t[@tre    <energy trajectory>]\n";
-  usage += "\t[@trg    <free energy trajectory>]\n";
-  usage += "\t[@bae    <block averaged energy trajectory>]\n";
-  usage += "\t[@bag    <block averaged free energy trajectory>]\n";    
-  usage += "\t[@posres <position restraints data>]\n";
-  usage += "\t[@jval   <jvalue restraints data>]\n";
-  usage += "\t[@rep    <replica exchange final data>]\n";
-  usage += "\t[@print  <pairlist/force>]\n";
-  usage += "\t[@trp    <print file>]\n";
-  usage += "\t[@verb   <[module:][submodule:]level>]\n";
-  usage += "\t[@version]\n";
+  util::Known knowns;
+  knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
+	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
+	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
+	 << "print" << "version";
+  
+  
+  std::string usage;
+  util::get_usage(knowns, usage, argv[0]);
 
   // master or slave : that's the question
   MPI::Init(argc, argv);
@@ -96,7 +77,7 @@ int main(int argc, char *argv[]){
 
   io::Argument args;
 
-  if (args.parse(argc, argv, nknowns, knowns)){
+  if (args.parse(argc, argv, knowns)){
     if (rank == 0)
       std::cerr << usage << std::endl;
     MPI::Finalize();

@@ -16,6 +16,7 @@
 
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
+#include <util/usage.h>
 #include <util/error.h>
 
 #include <io/read_input.h>
@@ -33,29 +34,26 @@
 
 #include "BUILD_NUMBER"
 
-void get_usage(std::string &s, std::string name);
 void print_title(bool color = false);
 
 int main(int argc, char *argv[]){
 
   const double start = util::now();
 
-  char *knowns[] = 
-    {
-      "topo", "conf", "input", "verb", "pttopo",
-      "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-      "bae", "bag", "posres","distrest", "jval", "rep", 
-      "anatrj", "version"
-    };
-    
-  int nknowns = 21;
-    
+  util::Known knowns;
+  knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
+	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
+	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
+	 << "anatrj" << "print"
+	 << "version";
+  
+  
   std::string usage;
-  get_usage(usage, argv[0]);
+  util::get_usage(knowns, usage, argv[0]);
 
   io::Argument args;
 
-  if (args.parse(argc, argv, nknowns, knowns)){
+  if (args.parse(argc, argv, knowns)){
     std::cerr << usage << std::endl;
     return 1;
   }
@@ -195,75 +193,6 @@ int main(int argc, char *argv[]){
 ////////////////////////////////////////////////////////////////////////////////
 // helper functions
 ////////////////////////////////////////////////////////////////////////////////
-
-void get_usage(std::string &usage, std::string name)
-{
-  usage = "#\n# " + name + "\n\n";
-  usage += "\t# topology data\n";
-  usage += "\t@topo        filename\n\n";
-
-  usage += "\t# perturbation topology data\n";
-  usage += "\t# @pttopo    filename\n\n";
-
-  usage += "\t# coordinates\n";
-  usage += "\t@conf        filename\n\n";
-
-  usage += "\t# input parameter\n";
-  usage += "\t@input       filename\n\n";
-
-  usage += "\t# output finale coordinates\n";
-  usage += "\t@fin         filename\n\n";
-
-  usage += "\t# output coordinates trajectory\n";
-  usage += "\t@trj         filename\n\n";
-
-  usage += "\t# output velocity trajectory\n";
-  usage += "\t# @trv       filename\n\n";
-
-  usage += "\t# output force trajectory\n";
-  usage += "\t# @trf       filename\n\n";
-
-  usage += "\t# output energy trajectory\n";
-  usage += "\t# @tre       filename\n\n";
-
-  usage += "\t# output block averaged energy trajectory\n";
-  usage += "\t# @bae       filename\n\n";
-
-  usage += "\t# output free energy trajectory\n";
-  usage += "\t# @trg       filename\n\n";
-
-  usage += "\t# output block averaged free energy trajectory\n";
-  usage += "\t# @bag       filename\n\n";    
-
-  usage += "\t# position restraints specification\n";
-  usage += "\t# @posres    filename\n\n";
-
-  usage += "\t# distance restraints specification\n";
-  usage += "\t# @distrest  filename\n\n";
-
-  usage += "\t# J-value restraints specification\n";
-  usage += "\t# @jval      filename\n\n";
-
-  usage += "\t# deprecated: replica exchange information\n";
-  usage += "\t# @rep       filename\n\n";
-
-  usage += "\t# print additional information\n";
-  usage += "\t# @print     <pairlist/force>\n\n";
-
-  usage += "\t# write additional information to file\n";
-  usage += "\t# @trp       filename\n\n";
-
-  usage += "\t# re-analyze trajectory\n";
-  usage += "\t# @anatrj    filename\n\n";
-
-  usage += "\t# control verbosity (in debug builds)\n";
-  usage += "\t# @verb      <[module:][submodule:]level>\n\n";
-
-  usage += "\t# print version information\n";
-  usage += "\t# @version\n\n";
-  usage += "#\n\n";
-
-}
 
 void print_title(bool color)
 {

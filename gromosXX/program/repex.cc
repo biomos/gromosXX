@@ -16,6 +16,7 @@
 
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
+#include <util/usage.h>
 #include <util/error.h>
 
 #include <io/read_input.h>
@@ -29,62 +30,43 @@
 #include <gsl/gsl_rng.h>
 #include <util/replica_exchange.h>
 
-#ifdef REM
-#include <omp.h>
+#ifdef XXMPI
+#include <mpi.h>
 #endif
 
 #pragma hdrstop
 
 #include "BUILD_NUMBER"
 
-void print_title(bool color = false);
+void print_title(io::Argument &args, bool color = false);
 
 int main(int argc, char *argv[]){
 
   const double start = util::now();
 
-  char *knowns[] = 
-    {
-      "topo", "conf", "input", "verb", "pttopo",
-      "trj", "fin", "trv", "trf", "tre", "trg", "print", "trp",
-      "bae", "bag", "posres", "jval", "rep", "version"
-    };
-    
-  int nknowns = 19;
-    
-  std::string usage = argv[0];
-  usage += "\n\t@topo    <topology>\n";
-  usage += "\t[@pttopo <perturbation topology>]\n";
-  usage += "\t@conf    <starting configuration>\n";
-  usage += "\t@input   <input>\n";
-  usage += "\t@trj     <trajectory>\n";
-  usage += "\t@fin     <final structure>\n";
-  usage += "\t[@trv    <velocity trajectory>]\n";
-  usage += "\t[@trf    <force trajectory>]\n";
-  usage += "\t[@tre    <energy trajectory>]\n";
-  usage += "\t[@trg    <free energy trajectory>]\n";
-  usage += "\t[@bae    <block averaged energy trajectory>]\n";
-  usage += "\t[@bag    <block averaged free energy trajectory>]\n";    
-  usage += "\t[@posres <position restraints data>]\n";
-  usage += "\t[@jval   <jvalue restraints data>]\n";
-  usage += "\t[@rep    <replica exchange final data>]\n";
-  usage += "\t[@print  <pairlist/force>]\n";
-  usage += "\t[@trp    <print file>]\n";
-  usage += "\t[@verb   <[module:][submodule:]level>]\n";
-  usage += "\t[@version]\n";
+  util::Known knowns;
+  knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
+	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
+	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
+	 << "rep" << "master" << "slave"
+	 << "version";
+  
+  
+  std::string usage;
+  util::get_usage(knowns, usage, argv[0]);
 
   io::Argument args;
 
-  if (args.parse(argc, argv, nknowns, knowns)){
+  if (args.parse(argc, argv, knowns)){
     std::cerr << usage << std::endl;
     return 1;
   }
     
   if (args.count("version") >= 0){
-    print_title(true);
+    print_title(args, true);
     return 0;
   }
-  else print_title();
+  else print_title(args);
     
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)){
@@ -92,54 +74,31 @@ int main(int argc, char *argv[]){
     return 1;
   }
 
-#ifdef REM
-  int nthreads, tid;
-#pragma omp parallel private(tid)
-  {
-    tid = omp_get_thread_num();
+#ifdef XXMPI
 
-    if (tid == 0)
-      nthreads = omp_get_num_threads();
+  MPI_Init(&argc, &argv);
+
+  if (args.count("master") >= 0){
+
+    // the master
+    util::Replica_Exchange_Master rep_master;
+
+    std::cout << "starting master thread" << std::endl;
+    rep_master.run(args);
+    
+  }
+  else{
+    
+    // and the slaves
+    util::Replica_Exchange_Slave rep_slave;
+
+    rep_slave.run(args);
+
   }
   
-  // the master
-  util::Replica_Exchange_Master rep_master;
-  // and the slaves
-  std::vector<util::Replica_Exchange_Slave> rep_slave(nthreads-1);
-  
-  util::replica_master = &rep_master;
-  std::cout << "starting REM on " << nthreads << " threads" <<  std::endl;
-
-  /*
-  // comment for debug reasons
-  if (nthreads < 2){
-    std::cerr << "replica exchange needs at least 2 threads!"
-	      << std::endl;
-    return 1;
-  }
-  */
-
-#pragma omp parallel private(tid)
-  {
-
-    tid = omp_get_thread_num();
-
-    if (tid == 0){
-      std::cout << "starting master thread" << std::endl;
-      rep_master.run(args, tid, nthreads);
-    }
-    else{
-      sleep(5);
-      std::cout << "running " << tid << " of " << nthreads << std::endl;
-
-      assert(tid > 0 && tid <= rep_slave.size());
-      rep_slave[tid - 1].run(args, tid, nthreads);
-    }
-  }
-
 #else
-
-  std::cout << "OpenMP required! (use configure --enable-rem)" << std::endl;
+  
+  std::cout << "MPI required! (use configure --enable-mpi)" << std::endl;
   return 1;
 
 #endif
@@ -151,7 +110,7 @@ int main(int argc, char *argv[]){
 // helper functions
 ////////////////////////////////////////////////////////////////////////////////
 
-void print_title(bool color)
+void print_title(io::Argument & args, bool color)
 {
   if (color){
 
@@ -181,24 +140,20 @@ void print_title(bool color)
 #endif
 
   // some omp stuff
-#ifdef REM
-  int nthreads, tid;
-#pragma omp parallel private(nthreads, tid)
-  {
-    tid = omp_get_thread_num();
-    if (tid == 0){
-      nthreads = omp_get_num_threads();
-      std::cout << "OpenMP code enabled\n"
-		<< "\tshared memory parallelization\n"
-		<< "\twww.openmp.org\n\n"
-		<< "\tusing "
-		<< omp_get_num_threads() << " threads\n"
-		<< "\tthis can be adjusted by setting the\n"
-		<< "\tOMP_NUM_THREADS environment variable\n"
-		<< std::endl;
-    }
+#ifdef XXMPI
+
+  std::cout << "MPI code enabled\n"
+	    << "\tdistributed memory parallelization\n"
+	    << "\twww.mpi-group.org\n\n"
+	    << std::endl;
+
+  std::cout << "Replica Exchange Method\n\t";
+
+  if (args.count("master") >= 0)
+    std::cout << "master process";
+  else
+    std::cout << "slave process";
     
-  }
 #endif
   
   std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"

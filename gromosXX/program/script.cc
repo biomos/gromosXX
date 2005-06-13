@@ -17,6 +17,7 @@
 
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
+#include <util/usage.h>
 #include <util/error.h>
 
 #include <time.h>
@@ -57,13 +58,11 @@
 
 int main(int argc, char *argv[]){
 
-  char *knowns[] = 
-    {
-      "topo", "pttopo", "conf", "input", "fin", "verb", "limit", "fcon", "stepsize"
-    };
-    
-  int nknowns = 9;
-    
+  util::Known knowns;
+  knowns << "topo" << "pttopo" << "conf" << "input" << "fin" 
+	 << "fcon" << "limit" << "stepsize" << "verb"
+	 << "version";
+
   std::string usage = argv[0];
   usage += "\n\t@topo        <topology>\n";
   usage += "\t@pttopo      <perturbation topology>\n";
@@ -76,7 +75,7 @@ int main(int argc, char *argv[]){
   usage += "\t[@verb   <verbosity>]\n";
 
   io::Argument args;
-  if (args.parse(argc, argv, nknowns, knowns)){
+  if (args.parse(argc, argv, knowns)){
     std::cerr << usage << std::endl;
     return 1;
   }
@@ -206,7 +205,7 @@ int main(int argc, char *argv[]){
 
     sys.conf.exchange_state();
 
-    for(int i=0; i<sys.topo.num_solute_atoms(); ++i){
+    for(unsigned int i=0; i<sys.topo.num_solute_atoms(); ++i){
 
       sys.conf.current().pos(i) = 
 	sys.conf.current().pos(i) +
@@ -215,7 +214,7 @@ int main(int argc, char *argv[]){
       
     }
 
-    for(int k=0; k<sys.conf.special().flexible_constraint.flexible_vel.size(); ++k)
+    for(unsigned int k=0; k<sys.conf.special().flexible_constraint.flexible_vel.size(); ++k)
       sys.conf.special().flexible_constraint.flexible_vel[k] = 0.0;
   
     sys.conf.current().vel = sys.conf.old().vel;
