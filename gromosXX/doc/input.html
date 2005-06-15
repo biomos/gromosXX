@@ -441,21 +441,25 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 REPLICA03
-#       number of replicas
+#       number of replicas with different temperatures
         10
 #       temperatures
         300.0  320.0  340.0 360.0 380.0
 	400.0  420.0  440.0 460.0 480.0
 #	scale temperatures after exchange trial
         1
+#	number of replicas with different lambdas
+        10
 #	lambdas
 	0.0    0.1    0.2   0.3   0.4
 	0.5    0.6    0.7   0.8	  0.9
 #	number of exchange trials
-        1000
-#	number of runs per job
-#	(total number of runs = replicas * trials)
         100
+#	number of runs per job
+#	(total number of runs = replicas * trials
+#        where replicas = T(replicas) * l(replicas)
+#        this example creates 100 replicas!)
+        1000
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

@@ -984,20 +984,25 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - number 0
+       * - num_T 0
+       * - num_l 0
        * - temperature <empty>
        * - scale (false)
        * - lambda <empty>
        * - trials 0
        * - slave_runs 0
        */
-      replica_struct() : number(0), scale(false), trials(0), slave_runs(0)
+      replica_struct() : num_T(0), num_l(0), scale(false), trials(0), slave_runs(0)
       {
       }
       /**
-       * num
+       * number of replicas with different temperature
        */
-      int number;
+      int num_T;
+      /**
+       * number of replicas with different lambdas
+       */
+      int num_l;
       /**
        * tempeartures
        */

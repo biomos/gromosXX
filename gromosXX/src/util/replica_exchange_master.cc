@@ -32,6 +32,8 @@
 
 #include <io/configuration/out_configuration.h>
 
+#include <math/volume.h>
+
 #include "replica_exchange.h"
 
 #undef MODULE
@@ -46,6 +48,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 util::Replica_Exchange_Master::Replica_Exchange_Master()
+  :   switch_T(0),
+      switch_l(0)
 {
   DEBUG(7, "creating replica master");
   
@@ -55,15 +59,12 @@ util::Replica_Exchange_Master::Replica_Exchange_Master()
 
   // get the random number generator
   m_rng = gsl_rng_alloc(rng_type);
-
 }
 
 int util::Replica_Exchange_Master::run
 (
  io::Argument & args)
 {
-  // master writes to std::cout
-  // MPI::Intracomm client;
   MPI_Comm client;
   MPI_Status status;
   
@@ -72,11 +73,14 @@ int util::Replica_Exchange_Master::run
   int mpi_size;
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
   
-  if(mpi_size != 1) 
+  if(mpi_size != 1){
     std::cerr << "Server consists of multiple MPI processes" << std::endl;
+    io::messages.add("Replica Exchange server should only be started once",
+		     "Replica Exchange",
+		     io::message::error);
+  }
   
   MPI::Open_port(MPI_INFO_NULL, port_name);
-  printf("server available at %s or by name: gromosXX\n", port_name);
 
   if (args.count("master") != 1){
     io::messages.add("master: connection name required",
@@ -88,6 +92,8 @@ int util::Replica_Exchange_Master::run
   MPI::Publish_name(args["master"].c_str(), MPI_INFO_NULL, port_name);
 
   DEBUG(8, "replica master registered: " << port_name);
+  std::cout << "Replica Exchange server available at " << port_name
+	    << " or by name: " << args["master"] << "\n";
 
   // create the simulation classes (necessary to store the configurations)
   topology::Topology topo;
@@ -102,7 +108,7 @@ int util::Replica_Exchange_Master::run
   md.init(topo, conf, sim, std::cout);
 
   // check input
-  if (sim.param().replica.number <= 1){
+  if (sim.param().replica.num_T * sim.param().replica.num_l <= 1){
     io::messages.add("replica exchange with less than 2 replicas?!",
 		     "Replica_Exchange",
 		     io::message::error);
@@ -114,37 +120,43 @@ int util::Replica_Exchange_Master::run
 		     io::message::error);
   }
 
+  switch_T = sim.param().replica.num_T;
+  switch_l = sim.param().replica.num_l;
+
+  const int rep_num = switch_T * switch_l;
+
   // setup replica information
-  replica_data.resize(sim.param().replica.number);
-  neighbour.push_back(-1);
-
-  for(int i=0; i<sim.param().replica.number; ++i){
-    replica_data[i].temperature = sim.param().replica.temperature[i];
-    replica_data[i].lambda = sim.param().replica.lambda[i];
-    replica_data[i].energy = 0.0;
-    replica_data[i].switch_temperature = 0.0;
-    replica_data[i].switch_lambda = 0.0;
-    replica_data[i].switch_energy = 0.0;
-    replica_data[i].ID = i;
-    replica_data[i].run = 0;
-    replica_data[i].state = waiting;
-    replica_data[i].probability = 0.0;
-    replica_data[i].switched = false;
-
-    neighbour.push_back(i);
-    neighbour_pos.push_back(i+1);
-
-    // store the positions of the all replicas
-    // Change : maybe start from different initial positions!
-    m_conf.push_back(conf);
+  replica_data.resize(rep_num);
+  
+  {
+    int i=0;
+  
+    for(int l=0; l < switch_l; ++l){
+      for(int t=0; t < switch_T; ++t, ++i){
+	
+	replica_data[i].ID = i;
+	replica_data[i].run = 0;
+	
+	replica_data[i].Ti = t;
+	replica_data[i].Tj = t;
+      
+	replica_data[i].li = l;
+	replica_data[i].lj = l;
+	
+	replica_data[i].epot_i = 0.0;
+	replica_data[i].epot_j = 0.0;
+	
+	replica_data[i].state = waiting;
+	replica_data[i].probability = 0.0;
+	replica_data[i].switched = false;
+	
+	// store the positions of the all replicas
+	// Change : maybe start from different initial positions!
+	m_conf.push_back(conf);
+      }
+    }
   }
-
-  neighbour.push_back(-1);
-
-  std::vector<int> snapshot = neighbour;
-  std::vector<double> temp_snapshot(neighbour.size(), 0.0);
-  std::vector<double> lambda_snapshot(neighbour.size(), 0.0);
-
+  
   std::cout << "\nMESSAGES FROM (MASTER) INITIALIZATION\n";
   if (io::messages.display(std::cout) >= io::message::error){
     std::cout << "\nErrors during initialization!\n" << std::endl;
@@ -154,218 +166,209 @@ int util::Replica_Exchange_Master::run
   io::messages.clear();
 
   // set seed if not set by environment variable
-  // (get from sim.param()...)
   if (gsl_rng_default_seed == 0)
-    gsl_rng_set (m_rng, 123456789);
+    gsl_rng_set (m_rng, sim.param().start.ig);
 
   std::cout << "master thread initialised" << std::endl;
 
   std::cout << "Replica Exchange\n"
-	    << "\treplicas:\t" << sim.param().replica.number << "\n"
-	    << "\tthreads:\t" << "unspecified" << "\n\n"
-	    << "\t" << std::setw(10) << "ID"
+	    << "\treplicas (temperature) :\t" << switch_T << "\n"
+	    << "\treplicas (lambda)      :\t" << switch_l << "\n"
+	    << "\treplicas (total)       :\t" << rep_num  << "\n\t"
+	    << std::setw(10) << "ID"
 	    << std::setw(20) << "Temp"
 	    << std::setw(20) << "lambda\n";
-    
-  for(int i=0; i<sim.param().replica.number; ++i){
-    std::cout << "\t" << std::setw(10) << i+1
-	      << std::setw(20) << replica_data[i].temperature
-	      << std::setw(20) << replica_data[i].lambda
-	      << "\n";
+  
+  {
+    int i=0;
+    for(int l=0; l<switch_l; ++l){
+      for(int t=0; t<switch_T; ++t, ++i){
+	
+	std::cout << "\t"
+		  << std::setw(10) << i+1
+		  << std::setw(20) << sim.param().replica.temperature[replica_data[i].Ti]
+		  << std::setw(20) << sim.param().replica.lambda[replica_data[i].li]
+		  << "\n";
+      }
+    }
   }
-  std::cout << "\n\ttrials:\t" << sim.param().replica.trials << "\n"
-	    << "\nEND\n" << std::endl;
+
+  std::cout << "\n\ttrials       :\t" << sim.param().replica.trials
+	    << "\n\truns (slave) :\t" << sim.param().replica.slave_runs 
+	    << "\n\nEND\n" << std::endl;
 
   int trials = 1;
   int runs = 0;
-    
-  std::ofstream out_neighbour("neighbour.dat");
-  out_neighbour << "#" << std::setw(4) << "time"
-		<< std::setw(5) << "rep1"
-		<< std::setw(5) << "..."
-		<< std::endl;
-
-  std::ofstream out_temp("temperature.dat");
-  out_temp << "#" << std::setw(4) << "time"
-	   << std::setw(5) << "T1"
-	   << std::setw(5) << "..."
-	   << std::endl;
-  
-  std::ofstream out_lambda("lambda.dat");
-  out_lambda << "#" << std::setw(4) << "time"
-	     << std::setw(5) << "l1"
-	     << std::setw(5) << "..."
-	     << std::endl;
 
   std::ofstream rep_out("replica.dat");
+  rep_out << "num_T\t" << switch_T << "\n"
+	  << "num_l\t" << switch_l << "\n";
+
+  rep_out.precision(4);
+  rep_out.setf(std::ios::fixed, std::ios::floatfield);
+
+  rep_out << "T    \t";
+  for(int t=0; t<switch_T; ++t)
+    rep_out << std::setw(12) << sim.param().replica.temperature[t];
+
+  rep_out << "\nl    \t";
+  for(int l=0; l<switch_l; ++l)
+    rep_out << std::setw(12) << sim.param().replica.lambda[l];
+
+  rep_out << "\n\n";
+  
   rep_out << "#"
 	  << std::setw(5) << "ID"
 	  << std::setw(6) << "run"
-	  << std::setw(6) << "ngh"
-	  << std::setw(13) << "T"
-	  << std::setw(13) << "l"
-	  << std::setw(13) << "Epot"
-	  << std::setw(13) << "sT"
-	  << std::setw(13) << "sl"
-	  << std::setw(13) << "sEpot"
+	  << std::setw(13) << "Ti"
+	  << std::setw(13) << "li"
+	  << std::setw(13) << "Epoti"
+	  << std::setw(13) << "Tj"
+	  << std::setw(13) << "lj"
+	  << std::setw(13) << "Epotj"
 	  << std::setw(13) << "p"
 	  << std::setw(4) << "s"
 	  << "\n";
-  std::cout << std::setw(6) << "ID"
-	    << std::setw(6) << "run"
-	    << std::setw(6) << "ngh"
-	    << std::setw(13) << "T"
-	    << std::setw(13) << "l"
-	    << std::setw(13) << "Epot"
-	    << std::setw(13) << "sT"
-	    << std::setw(13) << "sl"
-	    << std::setw(13) << "sEpot"
-	    << std::setw(13) << "p"
-	    << std::setw(4) << "s"
-	    << "\n";
 
-  io::Out_Configuration traj("GromosXX\n", std::cout);
-  traj.title("GromosXX\n" + sim.param().title);
+  io::Out_Configuration traj("GromosXX\n\treplica master\n", std::cout);
+  traj.title("GromosXX\n\treplica master\n" + sim.param().title);
   traj.init(args["fin"], args["trj"], args["trv"], args["trf"], 
 	    args["tre"], args["trg"], args["bae"], args["bag"],
 	    sim.param());
 
+  std::cout << std::setw(6) << "ID"
+	    << std::setw(6) << "run"
+	    << std::setw(13) << "Ti"
+	    << std::setw(13) << "li"
+	    << std::setw(13) << "Epoti"
+	    << std::setw(13) << "Tj"
+	    << std::setw(13) << "lj"
+	    << std::setw(13) << "Epotj"
+	    << std::setw(13) << "p"
+	    << std::setw(4) << "s"
+	    << "\n";
+
   while(true){
     
-    if (runs == sim.param().replica.number){
-
-      DEBUG(9, "master: finished trial period " << trials);
-
-      out_neighbour << std::setw(8) << trials;
-      for(unsigned int i=1; i<snapshot.size()-1; ++i){
-	out_neighbour << std::setw(5) << snapshot[i];
-      }
-      out_neighbour << std::endl;
-
-      out_temp << std::setw(8) << trials;
-      for(unsigned int i=1; i<temp_snapshot.size()-1; ++i){
-	out_temp << std::setw(5) << temp_snapshot[i];
-      }
-      out_temp << std::endl;
-
-      out_lambda << std::setw(8) << trials;
-      for(unsigned int i=1; i<lambda_snapshot.size()-1; ++i){
-	out_lambda << std::setw(5) << lambda_snapshot[i];
-      }
-      out_lambda << std::endl;
-
+    if (runs == rep_num){
+      // replicas run depth-first. so some replicas are further than others
+      // the average finished the trial...
       ++trials;
       runs = 0;
 
-      std::cout << std::setw(6) << "ID"
-		<< std::setw(6) << "run"
-		<< std::setw(6) << "ngh"
-		<< std::setw(13) << "T"
-		<< std::setw(13) << "l"
-		<< std::setw(13) << "Epot"
-		<< std::setw(13) << "sT"
-		<< std::setw(13) << "sl"
-		<< std::setw(13) << "sEpot"
-		<< std::setw(13) << "p"
-		<< std::setw(4) << "s"
-		<< "\n---------------------------------------------------"
-		<< "-------------------------------------------------\n";
+      std::cout 
+	<< "\n=================================================="
+	<< "==================================================\n"
+	<< std::setw(6) << "ID"
+	<< std::setw(6) << "run"
+	<< std::setw(6) << "ngh"
+	<< std::setw(13) << "T"
+	<< std::setw(13) << "l"
+	<< std::setw(13) << "Epot"
+	<< std::setw(13) << "sT"
+	<< std::setw(13) << "sl"
+	<< std::setw(13) << "sEpot"
+	<< std::setw(13) << "p"
+	<< std::setw(4) << "s"
+	<< "\n--------------------------------------------------"
+	<< "--------------------------------------------------\n";
     }
       
     if(trials > sim.param().replica.trials){
       DEBUG(8, "master: finished all trials...");
+      std::cout << "master: finished with all trials...\n";
       break;
     }
     
     // wait for a thread to connect
     DEBUG(9, "master: accepting connection...");
-    MPI_Comm_accept(port_name, MPI_INFO_NULL, 0, MPI_COMM_WORLD,
-		    &client);
-
+    MPI_Comm_accept(port_name, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &client);
     DEBUG(9, "client connected!");
 
     int i;
     MPI_Recv(&i, 1, MPI_INT, MPI_ANY_SOURCE,
 	     MPI_ANY_TAG, client, &status);
 
+    /*
+    if (status.MPI_ERROR != MPI_SUCCESS){
+      std::cerr << "MPI error! slave request" << std::endl;
+      MPI_Finalize();
+      return 1;
+    }
+    */
+
     switch(status.MPI_TAG){
       case 0:
 	std::cout << "process " << i << " says hello\n";
 	break;
       case 1:
-
-	// print state
-	
 	// select a replica to run
+	DEBUG(9, "request a job");
 	int r;
-	for(r=0; r<sim.param().replica.number; ++r){
+	for(r=0; r < rep_num; ++r){
 	  
 	  if(replica_data[r].state == waiting){
 	    // try a switch
-	    switch_replica(r);
+	    switch_replica(r, sim.param());
 	  }
 	    
-	  if(replica_data[r].state == ready && replica_data[r].run == trials){
-	    // std::cout << "\tmaster: replica " << r << " is ready for run "
-	    // << trials << "..." << std::endl;
-	    
+	  if(replica_data[r].state == ready && 
+	     replica_data[r].run < sim.param().replica.trials){
 
-	    std::cout << std::setw(6) << r
+	    if (replica_data[r].run){
+	      std::cout << std::setw(6) << r + 1
+			<< std::setw(6) << replica_data[r].run
+			<< std::setw(13) << sim.param().replica.temperature[replica_data[r].Ti]
+			<< std::setw(13) << sim.param().replica.lambda[replica_data[r].li]
+			<< std::setw(13) << replica_data[r].epot_i
+			<< std::setw(13) << sim.param().replica.temperature[replica_data[r].Tj]
+			<< std::setw(13) << sim.param().replica.lambda[replica_data[r].lj]
+			<< std::setw(13) << replica_data[r].epot_j
+			<< std::setw(13) << replica_data[r].probability
+			<< std::setw(4) << replica_data[r].switched
+			<< std::endl;
+	      
+	      rep_out << std::setw(6) << r + 1
 		      << std::setw(6) << replica_data[r].run
-		      << std::setw(6) << neighbour_pos[r]
-		      << std::setw(13) << replica_data[r].temperature
-		      << std::setw(13) << replica_data[r].lambda
-		      << std::setw(13) << replica_data[r].energy
-		      << std::setw(13) << replica_data[r].switch_temperature
-		      << std::setw(13) << replica_data[r].switch_lambda
-		      << std::setw(13) << replica_data[r].switch_energy
+		      << std::setw(13) << sim.param().replica.temperature[replica_data[r].Ti]
+		      << std::setw(13) << sim.param().replica.lambda[replica_data[r].li]
+		      << std::setw(13) << replica_data[r].epot_i
+		      << std::setw(13) << sim.param().replica.temperature[replica_data[r].Tj]
+		      << std::setw(13) << sim.param().replica.lambda[replica_data[r].lj]
+		      << std::setw(13) << replica_data[r].epot_j
 		      << std::setw(13) << replica_data[r].probability
 		      << std::setw(4) << replica_data[r].switched
-		      << std::endl;
-
-	    rep_out << std::setw(6) << r
-		    << std::setw(6) << replica_data[r].run
-		    << std::setw(6) << neighbour_pos[r]
-		    << std::setw(13) << replica_data[r].temperature
-		    << std::setw(13) << replica_data[r].lambda
-		    << std::setw(13) << replica_data[r].energy
-		    << std::setw(13) << replica_data[r].switch_temperature
-		    << std::setw(13) << replica_data[r].switch_lambda
-		    << std::setw(13) << replica_data[r].switch_energy
-		    << std::setw(13) << replica_data[r].probability
-		    << std::setw(4) << replica_data[r].switched
-		    << "\n";
+		      << "\n";
+	    }
 	    
 	    // assign it!
 	    replica_data[r].state = running;
 
-	    snapshot[neighbour_pos[r]] = r;
-	    temp_snapshot[r+1] = replica_data[r].temperature;
-	    lambda_snapshot[r+1] = replica_data[r].lambda;
-
 	    // send parameters
+	    DEBUG(8, "sending replica data");
 	    MPI_Send(&replica_data[r], sizeof(Replica_Data), MPI_CHAR,
 		     0, 0, client);
 
 	    // positions
 	    DEBUG(9, "sending " << 3 * m_conf[r].current().pos.size() << " coords");
-
 	    MPI_Send(&m_conf[r].current().pos(0)(0), m_conf[r].current().pos.size()*3,
 		     MPI::DOUBLE, 0, 0, client);
 	    
-	    // and velocities
+	    // velocities
+	    DEBUG(9, "sending velocity");
 	    MPI_Send(&m_conf[r].current().vel(0)(0), m_conf[r].current().vel.size()*3,
 		     MPI::DOUBLE, 0, 0, client);
-
-	    DEBUG(10, "master: pos = " << math::v2s(m_conf[r].current().pos(0)));
-	    DEBUG(10, "master: vel = " << math::v2s(m_conf[r].current().vel(0)));
+	    
+	    // and box
+	    DEBUG(9, "sending box");
+	    MPI_Send(&m_conf[r].current().box(0)(0), 9, MPI::DOUBLE, 0, 0, client);
 
 	    break;
 	  }
 	} // replica selected
 
-	if (r==sim.param().replica.number){
-	  // error!
+	if (r==rep_num){
+	  // ERROR!
 	  std::cout << "could not select replica!!!" << std::endl;
 	  MPI_Send(&replica_data[0], sizeof(Replica_Data), MPI_CHAR,
 		   0, 1, client);
@@ -374,36 +377,58 @@ int util::Replica_Exchange_Master::run
 	break;
 
       case 2:
-	// std::cout << "process " << i << " has finished run\n";
-	
 	MPI_Status status;
   
 	DEBUG(8, "master: waiting for replica data " << i);
 	MPI_Recv(&replica_data[i], sizeof(Replica_Data), MPI_CHAR,
 		 MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
-  
+	
 	if (replica_data[i].state != st_error){
 	  // get configuration
 	  MPI_Recv(&m_conf[i].current().pos(0)(0),
 		   m_conf[i].current().pos.size() * 3,
 		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
 	  
+	  /*
 	  if (status.MPI_ERROR != MPI_SUCCESS){
-	    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+	    std::cout << "MPI ERROR! receiving positions" << status.MPI_ERROR << std::endl;
+	    MPI_Finalize();
+	    return 1;
 	  }
+	  */
 	  
 	  MPI_Recv(&m_conf[i].current().vel(0)(0),
 		   m_conf[i].current().vel.size()*3,
 		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
 	  
+	  /*
 	  if (status.MPI_ERROR != MPI_SUCCESS){
-	    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+	    std::cout << "MPI ERROR! receiving velocities" << status.MPI_ERROR << std::endl;
+	    MPI_Finalize();
+	    return 1;
 	  }
+	  */
+
+	  MPI_Recv(&m_conf[i].current().box(0)(0),
+		   9,
+		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+	  
+	  /*
+	  if (status.MPI_ERROR != MPI_SUCCESS){
+	    std::cout << "MPI ERROR! receiving box" << status.MPI_ERROR << std::endl;
+	    MPI_Finalize();
+	    return 1;
+	  }
+	  */
+	}
+	else{
+	  std::cout << "received replica " << i << " with state error!" << std::endl;
 	}
 	
 	DEBUG(9, "master: got replica " << replica_data[i].ID
-	      << " temperature=" << replica_data[i].temperature
-	      << " lambda=" << replica_data[i].lambda);
+	      << " temperature=" << replica_data[i].Ti
+	      << " lambda=" << replica_data[i].li);
+	
 	++runs;
 	break;
 
@@ -448,7 +473,7 @@ int util::Replica_Exchange_Master::run
 	std::cout << "message not understood\n";
     }
 
-    // std::cout << "disconnecting..." << std::endl;
+    DEBUG(9, "disconnecting");
     MPI_Comm_disconnect(&client);
 
   } // while trials to do
@@ -459,15 +484,6 @@ int util::Replica_Exchange_Master::run
   // simulation done
   DEBUG(9, "master: done");
 
-  out_neighbour.flush();
-  out_neighbour.close();
-
-  out_temp.flush();
-  out_temp.close();
-
-  out_lambda.flush();
-  out_lambda.close();
-
   rep_out.flush();
   rep_out.close();
 
@@ -477,72 +493,35 @@ int util::Replica_Exchange_Master::run
   return 0;
 }
 
-int util::Replica_Exchange_Master::switch_replica(int i)
+int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter const & param)
 {
   assert(i>=0 && unsigned(i)<replica_data.size());
   DEBUG(8, "switch replica: " << i);
 
-  if (replica_data[i].state != waiting){
-    // why here???
-    assert(false);
+  // aliases
+  std::vector<double> const & T = param.replica.temperature;
+  // std::vector<double> const & l = param.replica.lambda;
+
+  if (replica_data[i].state != waiting){ assert(false); return i; }
+  
+  const int j = find_switch_partner(i);
+  if (j == -1){
+    // partner not yet ready...
     return 0;
   }
   
-  const int j = ((replica_data[i].run % 2) ==  (neighbour_pos[i] % 2) ) ?
-    neighbour[neighbour_pos[i] - 1] : neighbour[neighbour_pos[i] + 1];
-  
-  if (replica_data[i].run == 0 || j == -1){
+  if (j == i){ // no switch this time...
+    set_next_switch(i);
     
-    const int offset = (((replica_data[i].run + 1) % 2) ==  (neighbour_pos[i] % 2) ) ?
-      -1 : +1;
-    
-    const int neighbour_i = neighbour[neighbour_pos[i] + offset];
-    
-    if (neighbour_i != -1){
-      replica_data[i].switch_temperature = replica_data[neighbour_i].temperature;
-      replica_data[i].switch_lambda = replica_data[neighbour_i].lambda;
-    }
-    else{
-      replica_data[i].switch_temperature = replica_data[i].temperature;
-      replica_data[i].switch_lambda = replica_data[i].lambda;
-    }
-
     replica_data[i].probability = 0.0;
-    replica_data[j].probability = 0.0;
     replica_data[i].switched = false;
-    replica_data[j].switched = false;
-    
     replica_data[i].state = ready;
-    return 0;
-  }
-
-  // j running or not yet at same run
-  if (replica_data[j].state != waiting ||
-      replica_data[i].run != replica_data[j].run){
 
     return 0;
   }
 
   // try switch...
-  // calculate probability
-  double delta = 0;
-  if (replica_data[i].lambda != replica_data[j].lambda){
-    // 2D formula
-    delta = 1.0 / (math::k_Boltzmann * replica_data[i].temperature) *
-      (replica_data[j].switch_energy - replica_data[i].energy) -
-      1.0 / (math::k_Boltzmann * replica_data[j].temperature) *
-      (replica_data[j].energy - replica_data[i].switch_energy);
-  }
-  else{
-    // standard formula
-    delta = (1.0 / (math::k_Boltzmann * replica_data[i].temperature) -
-	     1.0 / (math::k_Boltzmann * replica_data[j].temperature)) *
-      (replica_data[j].energy - replica_data[i].energy);
-  }
-  
-  double probability = 1.0;
-  if (delta > 0.0)
-    probability = exp(-delta);
+  double probability = switch_probability(i, j, param);
   
   replica_data[i].probability = probability;
   replica_data[j].probability = probability;
@@ -551,59 +530,137 @@ int util::Replica_Exchange_Master::switch_replica(int i)
   
   const double r = gsl_rng_uniform(m_rng);
 
-  if (r < probability){
+  if (r < probability){ // SUCCEEDED!!!
     
-    std::cout << "-----> switch: " << replica_data[i].temperature
-	      << " <-> " << replica_data[j].temperature << "\n";
+    std::cout << "-----> switch: " 
+	      << T[replica_data[i].Ti]
+	      << " <-> " 
+	      << T[replica_data[j].Ti]
+	      << "\n";
     
     replica_data[i].switched = true;
     replica_data[j].switched = true;
     
-    const double l = replica_data[i].lambda;
-    const double t = replica_data[i].temperature;
-    replica_data[i].lambda = replica_data[j].lambda;
-    replica_data[i].temperature = replica_data[j].temperature;
-    replica_data[j].lambda = l;
-    replica_data[j].temperature = t;
-      
-    const int p = neighbour_pos[i];
-    neighbour_pos[i] = neighbour_pos[j];
-    neighbour_pos[j] = p;
-    
-    neighbour[neighbour_pos[i]] = i;
-    neighbour[neighbour_pos[j]] = j;
+    replica_data[i].li = replica_data[i].lj;
+    replica_data[i].Ti = replica_data[i].Tj;
+
+    replica_data[j].li = replica_data[j].lj;
+    replica_data[j].Ti = replica_data[j].Tj;
   }
     
-  // get temperature / lambda for next switch
-  const int offset = (((replica_data[i].run + 1) % 2) ==  (neighbour_pos[i] % 2) ) ?
-    -1 : +1;
-
-  const int neighbour_i = neighbour[neighbour_pos[i] + offset];
-  
-  if (neighbour_i != -1){
-    replica_data[i].switch_temperature = replica_data[neighbour_i].temperature;
-    replica_data[i].switch_lambda = replica_data[neighbour_i].lambda;
-  }
-  else{
-    replica_data[i].switch_temperature = replica_data[i].temperature;
-    replica_data[i].switch_lambda = replica_data[i].lambda;
-  }
-
-  const int neighbour_j = neighbour[neighbour_pos[j] - offset];
-  
-  if (neighbour_j != -1){
-    replica_data[j].switch_temperature = replica_data[neighbour_j].temperature;
-    replica_data[j].switch_lambda = replica_data[neighbour_j].lambda;
-  }
-  else{
-    replica_data[j].switch_temperature = replica_data[j].temperature;
-    replica_data[j].switch_lambda = replica_data[j].lambda;
-  }
+  set_next_switch(i);
+  set_next_switch(j);
   
   replica_data[i].state = ready;
   replica_data[j].state = ready;
   
   return 0;
 }
+
+double util::Replica_Exchange_Master::switch_probability(int i, int j, simulation::Parameter const & param)
+{
+  // aliases
+  std::vector<double> const & T = param.replica.temperature;
+  // std::vector<double> const & l = param.replica.lambda;
+
+  double delta = 0;
+  const double bi = 1.0 / (math::k_Boltzmann * T[replica_data[i].Ti]);
+  const double bj = 1.0 / (math::k_Boltzmann * T[replica_data[j].Ti]);
+  
+  if (replica_data[i].li != replica_data[j].li){
+    // 2D formula
+    delta =
+      bi * (replica_data[j].epot_j - replica_data[i].epot_i) -
+      bj * (replica_data[j].epot_i - replica_data[i].epot_j);
+  }
+  else{
+    // standard formula
+    delta =
+      (bi - bj) *
+      (replica_data[j].epot_i - replica_data[i].epot_i);
+  }
+  
+  // and pressure coupling
+  if (param.pcouple.scale != math::pcouple_off){
+    delta += (bi - bj) * 
+      (param.pcouple.pres0(0,0) + param.pcouple.pres0(1,1) + param.pcouple.pres0(2,2)) / 3.0 *
+      (math::volume(m_conf[j].current().box, m_conf[j].boundary_type) -
+       math::volume(m_conf[i].current().box, m_conf[i].boundary_type));
+  }
+
+  double probability = 1.0;
+  if (delta > 0.0)
+    probability = exp(-delta);
+
+  return probability;
+}
+
+
+int util::Replica_Exchange_Master::find_switch_partner(int i)
+{
+  assert(i>=0 && unsigned(i)<replica_data.size());
+  DEBUG(8, "find switch partner of replica: " << i);
+
+  for(unsigned int j=0; j<replica_data.size(); ++j){
+    
+    if (replica_data[j].state != waiting) continue;
+    if (replica_data[j].run != replica_data[i].run) continue;
+    
+    if (replica_data[j].Ti == replica_data[i].Tj &&
+	replica_data[j].li == replica_data[i].lj)
+      return j;
+  }
+
+  return -1;
+}
+
+void util::Replica_Exchange_Master::set_next_switch(int i)
+{
+  int l_change = 0, T_change = 0;
+  
+  if (switch_l > 1 && switch_T > 1){
+    const int c = replica_data[i].run % 4;
+    switch(c){
+      case 0: T_change =  1; break;
+      case 1: l_change =  1; break;
+      case 2: T_change = -1; break;
+      case 3: l_change = -1; break;
+    }
+  }
+  else if (switch_T > 1){
+    const int c = replica_data[i].run % 2;
+    switch(c){
+      case 0: T_change =  1; break;
+      case 1: T_change = -1; break;
+    }
+  }
+  else if (switch_l > 1){
+    const int c = replica_data[i].run % 2;
+    switch(c){
+      case 0: l_change =  1; break;
+      case 1: l_change = -1; break;
+    }
+  }
+  else{
+    std::cerr << "why are you running replica exchange???" << std::endl;
+    io::messages.add("No exchanges in replica exchange?",
+		     "Replica Exchange",
+		     io::message::critical);
+  }
+  
+  // and the modifiers
+  if ((replica_data[i].Ti % 2) == 1) T_change = -T_change;
+  if ((replica_data[i].li % 2) == 1) l_change = -l_change;
+
+  replica_data[i].Tj = replica_data[i].Ti + T_change;
+  replica_data[i].lj = replica_data[i].li + l_change;
+  
+  // check if at the edge...
+  if (replica_data[i].Tj < 0 || replica_data[i].Tj >= switch_T)
+    replica_data[i].Tj = replica_data[i].Ti;
+  if (replica_data[i].lj < 0 || replica_data[i].lj >= switch_l)
+    replica_data[i].lj = replica_data[i].li;
+}
+
 
 #endif

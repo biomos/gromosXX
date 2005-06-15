@@ -2082,28 +2082,53 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> param.replica.number;
-    param.replica.temperature.resize(param.replica.number, 0.0);
-    param.replica.lambda.resize(param.replica.number, 0.0);
+    _lineStream >> param.replica.num_T;
+    std::cerr << "num_T = " << param.replica.num_T << std::endl;
 
-    for(int i=0; i<param.replica.number; ++i){
+    param.replica.temperature.resize(param.replica.num_T, 0.0);
+
+    for(int i=0; i<param.replica.num_T; ++i){
       _lineStream >> param.replica.temperature[i];
+      std::cerr << "T=" << param.replica.temperature[i] << std::endl;
     }
     
     _lineStream >> param.replica.scale;
+    std::cerr << "scale " << param.replica.scale << std::endl;
+
+    if (_lineStream.fail()){
+      std::cerr << "after scale" << std::endl;
+      io::messages.add("bad line in REPLICA03 block",
+		       "In_Parameter", io::message::error);
+      param.replica.num_T = 0;
+      param.replica.num_l = 0;
+
+      param.replica.temperature.clear();
+      param.replica.lambda.clear();
+    }
     
-    for(int i=0; i<param.replica.number; ++i){
+    _lineStream >> param.replica.num_l;
+    std::cerr << "num_l " << param.replica.num_l << std::endl;
+    
+    param.replica.lambda.resize(param.replica.num_l, 0.0);
+    
+    for(int i=0; i<param.replica.num_l; ++i){
       _lineStream >> param.replica.lambda[i];
+      std::cerr << "l " << param.replica.lambda[i] << std::endl;
     }
 
     _lineStream >> param.replica.trials;
+    std::cerr << "trials " << param.replica.trials << std::endl;
     _lineStream >> param.replica.slave_runs;
+    std::cerr << "runs " << param.replica.slave_runs << std::endl;
     
     if (_lineStream.fail()){
+      std::cerr << "at the end" << std::endl;
       io::messages.add("bad line in REPLICA03 block",
 		       "In_Parameter", io::message::error);
 
-      param.replica.number = 0;
+      param.replica.num_T = 0;
+      param.replica.num_l = 0;
+
       param.replica.temperature.clear();
       param.replica.lambda.clear();
     }

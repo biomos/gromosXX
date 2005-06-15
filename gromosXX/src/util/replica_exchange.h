@@ -80,9 +80,7 @@ namespace util
     /**
      * Destructor
      */
-    virtual ~Replica_Exchange_Master()
-    {
-    }
+    virtual ~Replica_Exchange_Master() {}
 
     /**
      * run the thread
@@ -100,27 +98,34 @@ namespace util
     
   private:
     /**
-     * try a switch between i and j
+     * try to switch replica i
      */
-    int switch_replica(int i);
+    int switch_replica(int i, simulation::Parameter const & param);
+
+    /**
+     * calculate switching probability
+     */
+    double switch_probability(int i, int j, simulation::Parameter const & param);
+    
+    /**
+     * find the switch partner of replica i
+     */
+    int find_switch_partner(int i);
+    
+    /**
+     * determine Tj and lj for replica i
+     */
+    void set_next_switch(int i);
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Data  ///////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * information of all replicas
-     * gets updated from the slaves
      */
     std::vector<Replica_Data> replica_data;
     
-    /**
-     * neighbour list for each replica
-     * this should get multi-dimensional later...
-     */
-    std::vector<int>        neighbour;
-
-    /**
-     * position in the neighbour list for each replica
-     */
-    std::vector<int>        neighbour_pos;
-
     /**
      * random number generator
      */
@@ -128,11 +133,19 @@ namespace util
 
     /**
      * (current) configuration of all replicas
-     * this is necessary if there are more replicas than slaves
-     * (very likely true)
      */
     std::vector<configuration::Configuration> m_conf;
 
+    /**
+     * switch temperatures?
+     */
+    int switch_T;
+
+    /**
+     * switch lambdas?
+     */
+    int switch_l;
+    
   };
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////

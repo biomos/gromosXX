@@ -566,8 +566,8 @@ namespace io
     os << "REMD\n" 
        << std::setw(15) << replica_data.ID
        << std::setw(10) << replica_data.run
-       << std::setw(10) << replica_data.temperature
-       << std::setw(10) << replica_data.lambda 
+       << std::setw(10) << replica_data.Ti
+       << std::setw(10) << replica_data.li
        << "\nEND\n";
   }
   

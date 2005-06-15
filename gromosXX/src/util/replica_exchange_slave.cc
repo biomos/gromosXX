@@ -66,6 +66,10 @@ int util::Replica_Exchange_Slave::run
   // initialises everything
   md.init(topo, conf, sim, std::cout);
 
+  // aliases
+  std::vector<double> const & T = sim.param().replica.temperature;
+  std::vector<double> const & l = sim.param().replica.lambda;
+
   io::Out_Configuration traj("GromosXX\n", std::cout);
   traj.title("GromosXX\n" + sim.param().title);
   traj.init(args["fin"], args["trj"], args["trv"], args["trf"], 
@@ -101,9 +105,7 @@ int util::Replica_Exchange_Slave::run
   for(int run=0; run < sim.param().replica.slave_runs; ++run){
     
     DEBUG(8, "slave: connecting..");
-
     MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
-
     DEBUG(9, "slave: connected");
 
     // request a job
@@ -115,13 +117,18 @@ int util::Replica_Exchange_Slave::run
 		<< replica_data.ID << ")" << std::endl;
 	
       std::cout << "slave:  running replica " << replica_data.ID
-		<< " at T=" << replica_data.temperature
-		<< " and l=" << replica_data.lambda
+		<< " at T=" << T[replica_data.Ti]
+		<< " and l=" << l[replica_data.li]
 		<< " (run = " << replica_data.run << ")"
 		<< std::endl;
 
       // init replica parameters (t, conf, T, lambda)
-      init_replica(topo, conf, sim);
+      if (init_replica(topo, conf, sim)){
+	MPI_Comm_disconnect(&master);
+	MPI_Finalize();
+	return 1;
+      }
+      
 
       // close connection
       MPI_Comm_disconnect(&master);
@@ -145,25 +152,25 @@ int util::Replica_Exchange_Slave::run
 	
 	ff->apply(topo, conf, sim);
 	conf.current().energies.calculate_totals();
-	replica_data.energy = conf.current().energies.potential_total;
+	replica_data.epot_i = conf.current().energies.potential_total;
 	
-	std::cout << "replica_energy " << replica_data.energy 
-		  << " @ " << replica_data.temperature << "K" << std::endl;
+	std::cout << "replica_energy " << replica_data.epot_i 
+		  << " @ " << T[replica_data.Ti] << "K" << std::endl;
 	
-	if (replica_data.lambda != replica_data.switch_lambda){
+	if (replica_data.li != replica_data.lj){
 	  
 	  // change the lambda value
-	  sim.param().perturbation.lambda = replica_data.switch_lambda;
-	  topo.lambda(replica_data.switch_lambda);
+	  sim.param().perturbation.lambda = replica_data.lj;
+	  topo.lambda(replica_data.lj);
 	  topo.update_for_lambda();
 	  
 	  // recalc energy
 	  ff->apply(topo, conf, sim);
 	  conf.current().energies.calculate_totals();
-	  replica_data.switch_energy = conf.current().energies.potential_total;
+	  replica_data.epot_j = conf.current().energies.potential_total;
 	} 
 	else{
-	  replica_data.switch_energy = replica_data.energy;
+	  replica_data.epot_j = replica_data.epot_i;
 	}
 	
 	++replica_data.run;
@@ -175,7 +182,6 @@ int util::Replica_Exchange_Slave::run
 	
       DEBUG(8, "slave: connecting (after run)...");
       MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
-      
       DEBUG(9, "slave: connected");
 
       DEBUG(8, "slave: finished job " << replica_data.ID);
@@ -195,10 +201,8 @@ int util::Replica_Exchange_Slave::run
     else{
       MPI_Comm_disconnect(&master);
       std::cout << "slave waiting..." << std::endl;
-      //////////////////////////////////////////////////////////////////////////////////
       // wait apropriate time for master to prepare
       sleep(60);
-      //////////////////////////////////////////////////////////////////////////////////
     }
     
   } // for slave_runs
@@ -266,14 +270,16 @@ int util::Replica_Exchange_Slave::get_replica_data()
   MPI_Recv(&replica_data, sizeof(Replica_Data), MPI_CHAR,
 	   MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
   
+  /*
   if (status.MPI_ERROR != MPI_SUCCESS){
-    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+    std::cout << "MPI ERROR! getting replica data: " << status.MPI_ERROR << std::endl;
+    return 1;
   }
+  */
 
-  DEBUG(9, "tag = " << status.MPI_TAG);
   DEBUG(9, "slave: got replica " << replica_data.ID
-	<< " temperature=" << replica_data.temperature
-	<< " lambda=" << replica_data.lambda);
+	<< " temperature=" << replica_data.Ti
+	<< " lambda=" << replica_data.li);
   
   return status.MPI_TAG;
 }
@@ -293,27 +299,41 @@ int util::Replica_Exchange_Slave::get_configuration
  configuration::Configuration & conf
  )
 {
+  int error = 0;
+  
   MPI_Status status;
 
   DEBUG(10, "receiving " << 3 * conf.current().pos.size() << " coords");
   MPI_Recv(&conf.current().pos(0)(0), conf.current().pos.size() * 3,
 	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
 
+  /*
   if (status.MPI_ERROR != MPI_SUCCESS){
-    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+    std::cout << "MPI ERROR! (pos)" << status.MPI_ERROR << std::endl;
+    error += 1;
   }
+  */
   
   MPI_Recv(&conf.current().vel(0)(0), conf.current().vel.size()*3,
 	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
-
+  /*
   if (status.MPI_ERROR != MPI_SUCCESS){
-    std::cout << "MPI ERROR!!! " << status.MPI_ERROR << std::endl;
+    std::cout << "MPI ERROR! (vel)" << status.MPI_ERROR << std::endl;
+    error += 2;
   }
-
-  DEBUG(10, "slave: pos = " << math::v2s(conf.current().pos(0)));
-  DEBUG(10, "slave: vel = " << math::v2s(conf.current().vel(0)));
+  */
   
-  return status.MPI_TAG;
+  MPI_Recv(&conf.current().box(0)(0), 9,
+	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
+  /*
+  if (status.MPI_ERROR != MPI_SUCCESS){
+    std::cout << "MPI ERROR! (box)" << status.MPI_ERROR << std::endl;
+    error += 4;
+  }
+  */
+  
+  // return status.MPI_TAG;
+  return error;
 }
 
 int util::Replica_Exchange_Slave::update_configuration
@@ -328,12 +348,15 @@ int util::Replica_Exchange_Slave::update_configuration
   MPI_Send(&conf.current().pos(0)(0), conf.current().pos.size()*3,
 	   MPI::DOUBLE, 0, 0, master);
   
-  // and velocities
+  // velocities
   MPI_Send(&conf.current().vel(0)(0), conf.current().vel.size()*3,
+	   MPI::DOUBLE, 0, 0, master);
+
+  // and box
+  MPI_Send(&conf.current().box(0)(0), 9,
 	   MPI::DOUBLE, 0, 0, master);
   
   return 0;
-  
 }
 
 int util::Replica_Exchange_Slave::init_replica
@@ -344,16 +367,17 @@ int util::Replica_Exchange_Slave::init_replica
  )
 {
   // get configuration from master
-  get_configuration(topo, conf);
+  if (get_configuration(topo, conf))
+    return 1;
   
   // change all the temperature coupling temperatures
   for(unsigned int i=0; i<sim.multibath().size(); ++i){
-    sim.multibath()[i].temperature = replica_data.temperature;
+    sim.multibath()[i].temperature = replica_data.Ti;
   }
   
   // change the lambda value
-  sim.param().perturbation.lambda = replica_data.lambda;
-  topo.lambda(replica_data.lambda);
+  sim.param().perturbation.lambda = replica_data.li;
+  topo.lambda(replica_data.li);
   topo.update_for_lambda();
   
   // change simulation time
@@ -362,8 +386,6 @@ int util::Replica_Exchange_Slave::init_replica
     sim.param().step.t0;
   
   sim.steps() = replica_data.run * sim.param().step.number_of_steps;
-
-  // ready to run ???
 
   return 0;
 }

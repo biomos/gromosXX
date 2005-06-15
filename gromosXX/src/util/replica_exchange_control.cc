@@ -117,42 +117,46 @@ int util::Replica_Exchange_Control::run
       ++it;
       if (it->second != "."){
 	is.str(it->second);
-	is >> replica_data[nr].temperature;
+	is >> replica_data[nr].Ti;
+	--replica_data[nr].Ti;
       }
 
       is.clear();
       ++it;
       if (it->second != "."){
 	is.str(it->second);
-	is >> replica_data[nr].lambda;
+	is >> replica_data[nr].li;
+	--replica_data[nr].li;
       }
 
       is.clear();
       ++it;
       if (it->second != "."){
 	is.str(it->second);
-	is >> replica_data[nr].energy;
+	is >> replica_data[nr].epot_i;
       }
 
       is.clear();
       ++it;
       if (it->second != "."){
 	is.str(it->second);
-	is >> replica_data[nr].switch_temperature;
+	is >> replica_data[nr].Tj;
+	--replica_data[nr].Tj;
       }
 
       is.clear();
       ++it;
       if (it->second != "."){
 	is.str(it->second);
-	is >> replica_data[nr].switch_lambda;
+	is >> replica_data[nr].lj;
+	--replica_data[nr].lj;
       }
 
       is.clear();
       ++it;
       if (it->second != "."){
 	is.str(it->second);
-	is >> replica_data[nr].switch_energy;
+	is >> replica_data[nr].epot_j;
       }
 
       is.clear();
@@ -218,14 +222,15 @@ int util::Replica_Exchange_Control::run
   for(int r=0; r<nr; ++r){
     std::cout << std::setw(6) << r + 1
 	      << std::setw(6) << replica_data[r].run
-	      << std::setw(10) << replica_data[r].temperature
-	      << std::setw(10) << replica_data[r].lambda
-	      << std::setw(10) << replica_data[r].energy
-	      << std::setw(10) << replica_data[r].switch_temperature
-	      << std::setw(10) << replica_data[r].switch_lambda
-	      << std::setw(10) << replica_data[r].switch_energy
+	      << std::setw(10) << replica_data[r].Ti + 1
+	      << std::setw(10) << replica_data[r].li + 1
+	      << std::setw(10) << replica_data[r].epot_i
+	      << std::setw(10) << replica_data[r].Tj + 1
+	      << std::setw(10) << replica_data[r].lj + 1
+	      << std::setw(10) << replica_data[r].epot_j
 	      << std::setw(10) << replica_data[r].probability
 	      << std::setw(5) << replica_data[r].switched;
+
     switch(replica_data[r].state){
       case waiting:
 	std::cout << std::setw(10) << "wait";

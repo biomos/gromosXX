@@ -177,7 +177,7 @@ void io::Out_Configuration::init(io::Argument & args,
 		       io::message::error);
   }
 
-  if (param.replica.number){
+  if (param.replica.num_T * param.replica.num_l){
     m_replica = true;
   }
   
@@ -1599,13 +1599,12 @@ void io::Out_Configuration::_print_replica_information
     
     os << std::setw(6) << it->ID
        << std::setw(6) << it->run
-      // << std::setw(6) << neighbour[i]
-       << std::setw(13) << it->temperature
-       << std::setw(13) << it->lambda
-       << std::setw(13) << it->energy
-       << std::setw(13) << it->switch_temperature
-       << std::setw(13) << it->switch_lambda
-       << std::setw(13) << it->switch_energy
+       << std::setw(13) << it->Ti
+       << std::setw(13) << it->li
+       << std::setw(13) << it->epot_i
+       << std::setw(13) << it->Tj
+       << std::setw(13) << it->Tj
+       << std::setw(13) << it->epot_j
        << std::setw(13) << it->probability
        << std::setw(4) << it->switched
        << "\n";
