@@ -118,7 +118,7 @@ case "$compiler" in
 	   dnl maybe some inline control: -Qoption,c,-ip_ninl_max_stats=2000
 	   dnl or maybe -ipo if your lucky...
        CXX_OPTIMIZE_FLAGS="-O3 -ip -restrict -align -DNDEBUG -vec_report"
-       CXX_DEBUG_FLAGS="-g -pch"
+       CXX_DEBUG_FLAGS="-g"
        CXXLD="xild"
 
        if eval "test x$enable_openmp = xyes"; then
