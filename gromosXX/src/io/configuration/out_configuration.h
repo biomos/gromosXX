@@ -6,6 +6,11 @@
 #ifndef INCLUDED_OUT_CONFIGURATION_H
 #define INCLUDED_OUT_CONFIGURATION_H
 
+namespace util
+{
+  struct Replica_Data;
+}
+
 namespace io {
   
   class Argument;
@@ -67,6 +72,15 @@ namespace io {
 	       topology::Topology const & topo,
 	       simulation::Simulation const &sim,
 	       output_format const form = reduced);
+
+    /**
+     * write out replicas
+     */
+    void write_replica(std::vector<util::Replica_Data> & replica_data,
+		       std::vector<configuration::Configuration> & conf,
+		       topology::Topology const & topo,
+		       simulation::Simulation const &sim,
+		       output_format const form = reduced);
 
     /**
      * print out data (per time step).
@@ -150,6 +164,12 @@ namespace io {
     {
       _print_timestep(sim, os);
     }
+    /**
+     * write replica information to the output streams as necessary
+     */
+    void write_replica_step(simulation::Simulation const &sim,
+			    util::Replica_Data const & replica_data,
+			    output_format const form = reduced);
 
     // make them available for scripting!
     void _print_title(std::string title, std::string name, 
@@ -222,10 +242,9 @@ namespace io {
 					     double dlamt,
 					     std::ostream & os);
 
-    void _print_replica_data(configuration::Configuration const & conf,
-			     simulation::Simulation const & sim,
-			     std::ostream & os);
-
+    void _print_replica_information(std::vector<util::Replica_Data> const & replica_data,
+				    std::ostream & os);
+    
   protected:
     std::ofstream m_pos_traj;
     std::ofstream m_final_conf;
@@ -235,7 +254,6 @@ namespace io {
     std::ofstream m_free_energy_traj;
     std::ofstream m_blockaveraged_energy;
     std::ofstream m_blockaveraged_free_energy;
-    std::ofstream m_replica_data;
     
     std::ostream & m_output;
     

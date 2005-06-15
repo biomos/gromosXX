@@ -20,6 +20,7 @@
 
 #include "out_configuration.h"
 
+#include <util/replica_data.h>
 #include <util/template_split.h>
 #include <util/debug.h>
 
@@ -78,11 +79,6 @@ io::Out_Configuration::~Out_Configuration()
     m_final_conf.close();
   }
 
-  if (m_replica){
-    m_replica_data.flush();
-    m_replica_data.close();
-  }
-  
   if (m_every_vel){
     m_vel_traj.flush();
     m_vel_traj.close();
@@ -181,13 +177,8 @@ void io::Out_Configuration::init(io::Argument & args,
 		       io::message::error);
   }
 
-  if (args.count("rep") > 0){
+  if (param.replica.number){
     m_replica = true;
-    m_replica_data.open(args["rep"].c_str());
-    if (!m_replica_data)
-      io::messages.add("could not open replica exchange final data file!",
-		       "Out_Configuration",
-		       io::message::error);
   }
   
 }
@@ -255,18 +246,6 @@ void io::Out_Configuration::init
 		       io::message::error);
   }
 
-  /*
-    // deprecated ...
-  if (args.count("rep") > 0){
-    m_replica = true;
-    m_replica_data.open(args["rep"].c_str());
-    if (!m_replica_data)
-      io::messages.add("could not open replica exchange final data file!",
-		       "Out_Configuration",
-		       io::message::error);
-  }
-  */
-  
 }
 
 void io::Out_Configuration::write(configuration::Configuration &conf,
@@ -404,6 +383,128 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   // done writing!
 
 }
+
+
+/**
+ * write out replicas
+ */
+void io::Out_Configuration::write_replica
+(
+ std::vector<util::Replica_Data> & replica_data,
+ std::vector<configuration::Configuration> & conf,
+ topology::Topology const & topo,
+ simulation::Simulation const &sim,
+ output_format const form)
+{
+  // standard trajectories
+  if (form == reduced){
+
+    if(m_every_pos && (sim.steps() % m_every_pos) == 0){
+      _print_timestep(sim, m_pos_traj);
+      _print_replica_information(replica_data, m_pos_traj);
+      
+      if (sim.param().write.solute_only)
+	_print_positionred(conf[0], topo,  topo.num_solute_atoms(), m_pos_traj);
+      else
+	_print_positionred(conf[0], topo,  topo.num_atoms(), m_pos_traj);
+
+      if (conf[0].boundary_type != math::vacuum)
+	_print_box(conf[0], m_pos_traj);
+    }
+    
+    if (m_every_vel && (sim.steps() % m_every_vel) == 0){
+      _print_timestep(sim, m_vel_traj);
+      _print_velocityred(conf[0], m_vel_traj);
+    }
+    
+    if(m_every_force && ((sim.steps()) % m_every_force) == 0){
+      if(sim.steps()){
+	_print_old_timestep(sim, m_force_traj);
+	_print_forcered(conf[0], m_force_traj);
+      }
+    }
+    
+    if(m_every_energy && (sim.steps() % m_every_energy) == 0){
+      if(sim.steps()){
+	_print_old_timestep(sim, m_energy_traj);
+	_print_energyred(conf[0], m_energy_traj);
+	_print_volumepressurered(topo, conf[0], sim, m_energy_traj);
+      }
+    }
+    
+    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
+      if(sim.steps()){
+	_print_old_timestep(sim, m_free_energy_traj);
+	_print_free_energyred(conf[0], topo, m_free_energy_traj);
+      }
+    }
+
+    if (m_every_blockaverage && (sim.steps() % m_every_blockaverage) == 0){
+      
+      if(m_write_blockaverage_energy){
+	if(sim.steps()){
+	  _print_old_timestep(sim, m_blockaveraged_energy);
+	  _print_blockaveraged_energyred(conf[0], m_blockaveraged_energy);
+	  _print_blockaveraged_volumepressurered(conf[0], sim, m_blockaveraged_energy);
+	}
+      }
+
+      if(m_write_blockaverage_free_energy){
+	if(sim.steps()){
+	  _print_old_timestep(sim, m_blockaveraged_free_energy);
+	  _print_blockaveraged_free_energyred(conf[0], sim.param().perturbation.dlamt,
+					      m_blockaveraged_free_energy);
+	}
+      }
+      conf[0].current().averages.block().zero();
+    }
+    
+  }
+  else if(form == final && m_final){
+    _print_timestep(sim, m_final_conf);
+    _print_position(conf[0], topo, m_final_conf);
+
+    if(sim.param().minimise.ntem == 0)
+      _print_velocity(conf[0], topo, m_final_conf);
+
+    _print_box(conf[0], m_final_conf);
+
+    if(sim.param().constraint.solute.algorithm
+       == simulation::constr_flexshake){
+      _print_flexv(conf[0], topo, m_final_conf);
+    }
+
+    if(sim.param().jvalue.mode != simulation::restr_off){
+      _print_jvalue(conf[0], topo, m_final_conf);
+    }
+
+    if(sim.param().pscale.jrest){
+      _print_pscale_jrest(conf[0], topo, m_final_conf);
+    }
+    
+    // forces and energies still go to their trajectories
+    if (m_every_force && ((sim.steps()) % m_every_force) == 0){
+      _print_old_timestep(sim, m_force_traj);
+      _print_forcered(conf[0], m_force_traj);
+    }
+
+    if(m_every_energy && (sim.steps() % m_every_energy) == 0){
+      _print_old_timestep(sim, m_energy_traj);
+      _print_energyred(conf[0], m_energy_traj);
+      _print_volumepressurered(topo, conf[0], sim, m_energy_traj);
+    }
+
+    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
+      _print_old_timestep(sim, m_free_energy_traj);
+      _print_free_energyred(conf[0], topo, m_free_energy_traj);
+    }
+
+  }
+  // done writing replicas!
+
+}
+
+
 
 void io::Out_Configuration
 ::final_configuration(std::string name)
@@ -1189,9 +1290,6 @@ void io::Out_Configuration
     }
   }
 
-  if (m_replica)
-    _print_replica_data(conf, sim, m_replica_data);
-
 }
 
 void io::Out_Configuration
@@ -1354,37 +1452,81 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
 
 }
 
-void io::Out_Configuration::_print_replica_data(configuration::Configuration const & conf,
-						simulation::Simulation const & sim,
-						std::ostream & os)
+void io::Out_Configuration::write_replica_step
+(
+ simulation::Simulation const & sim,
+ util::Replica_Data const & replica_data,
+ output_format const form
+ )
 {
   DEBUG(10, "REPLICA");
   
-  _print_title(title(), "REPLICA EXCHANGE DATA", os);
+  // print to all trajectories
+  if (form == reduced){
 
-  double ekin, ekin_mol, ekin_ir,
-    temp, temp_mol, temp_ir,
-    scale;
-  sim.multibath().calc_totals(conf.old().energies,
-			      ekin, ekin_mol, ekin_ir,
-			      temp, temp_mol, temp_ir,
-			      scale);
-  
-  os << "REPEXDATA\n";
-  
-  os << std::setw(20) << "ID"
-     << std::setw(20) << "T0"
-     << std::setw(20) << "Epot"
-     << std::setw(20) << "T"
-     << "\n";
+    if(m_every_pos && (sim.steps() % m_every_pos) == 0)
+      print_REMD(m_pos_traj, replica_data);
+    
+    if (m_every_vel && (sim.steps() % m_every_vel) == 0)
+      print_REMD(m_vel_traj, replica_data);
+    
+    if(m_every_force && ((sim.steps()) % m_every_force) == 0){
+      if(sim.steps())
+	print_REMD(m_force_traj, replica_data);
+    }
+    
+    if(m_every_energy && (sim.steps() % m_every_energy) == 0){
+      if(sim.steps())
+	print_REMD(m_energy_traj, replica_data);
+    }
+    
+    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
+      if(sim.steps())
+	print_REMD(m_free_energy_traj, replica_data);
+    }
 
-  os << std::setw(20) << sim.param().replica.ID
-     << std::setw(20) << sim.param().replica.T
-     << std::setw(20) << conf.old().energies.potential_total
-     << std::setw(20) << temp
-     << "\n";
+    if (m_every_blockaverage && (sim.steps() % m_every_blockaverage) == 0){
+      if(m_write_blockaverage_energy){
+	if(sim.steps())
+	  print_REMD(m_blockaveraged_energy, replica_data);
+      }
 
-  os << "END\n";
+      if(m_write_blockaverage_free_energy){
+	if(sim.steps())
+	  print_REMD(m_blockaveraged_free_energy, replica_data);
+      }
+    }
+  } // reduced
+
+  else if(form == final && m_final){
+    print_REMD(m_final_conf, replica_data);
+    
+    // forces and energies still go to their trajectories
+    if (m_every_force && ((sim.steps()) % m_every_force) == 0)
+      print_REMD(m_force_traj, replica_data);
+
+    if(m_every_energy && (sim.steps() % m_every_energy) == 0)
+      print_REMD(m_energy_traj, replica_data);
+
+    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0)
+      print_REMD(m_free_energy_traj, replica_data);
+  } // final
+
+  else{
+
+    // not reduced or final (so: decorated)
+
+    if(m_every_pos && (sim.steps() % m_every_pos) == 0)
+      print_REMD(m_pos_traj, replica_data);
+    
+    if (m_every_vel && (sim.steps() % m_every_vel) == 0)
+      print_REMD(m_vel_traj, replica_data);
+    
+    if(m_every_force && (sim.steps() % m_every_force) == 0){
+      if (sim.steps())
+	print_REMD(m_force_traj, replica_data);
+    }
+  } // decorated
 
 }
 
@@ -1434,6 +1576,38 @@ void io::Out_Configuration::_print_pscale_jrest(configuration::Configuration con
        << std::setw(10) << jval_it->l+1
        << std::setw(10) << conf.special().pscale.scaling[i]
        << std::setw(15) << conf.special().pscale.t[i]
+       << "\n";
+  }
+  os << "END\n";
+}
+
+void io::Out_Configuration::_print_replica_information
+(
+ std::vector<util::Replica_Data> const & replica_data,
+ std::ostream &os
+ )
+{
+  DEBUG(10, "replica information");
+  
+  std::vector<util::Replica_Data>::const_iterator
+    it = replica_data.begin(),
+    to = replica_data.end();
+  
+  os << "REPDATA\n";
+
+  for(int i=0; it != to; ++it, ++i){
+    
+    os << std::setw(6) << it->ID
+       << std::setw(6) << it->run
+      // << std::setw(6) << neighbour[i]
+       << std::setw(13) << it->temperature
+       << std::setw(13) << it->lambda
+       << std::setw(13) << it->energy
+       << std::setw(13) << it->switch_temperature
+       << std::setw(13) << it->switch_lambda
+       << std::setw(13) << it->switch_energy
+       << std::setw(13) << it->probability
+       << std::setw(4) << it->switched
        << "\n";
   }
   os << "END\n";

@@ -128,17 +128,6 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     // calculate initial temperature
     tcalc->apply(topo, conf, sim);
 
-    // do we scale the initial temperatures?
-    if (sim.param().replica.scale){
-      os << "\tscale initial velocities (replica exchange)\n";
-      
-      algorithm::Berendsen_Thermostat tcoup;
-      tcoup.calc_scaling(topo, conf, sim, true);
-      tcoup.scale(topo, conf, sim);
-
-      tcalc->apply(topo, conf, sim);
-    }
-
     io::print_MULTIBATH_COUPLING(os, sim.multibath());
 
     io::print_DEGREESOFFREEDOM(os, sim.multibath());

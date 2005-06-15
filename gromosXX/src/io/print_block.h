@@ -6,6 +6,11 @@
 #ifndef INCLUDED_PRINT_BLOCK_H
 #define INCLUDED_PRINT_BLOCK_H
 
+namespace util
+{
+  struct Replica_Data;
+}
+
 namespace io
 {
   /**
@@ -61,6 +66,8 @@ namespace io
    * Print the CENTREOFMASS block.
    */
   void print_CENTREOFMASS(std::ostream &os, double const ekin_trans, double const ekin_rot);
+
+  void print_REMD(std::ostream &os, util::Replica_Data const & replica_data);
   
 } // io
 

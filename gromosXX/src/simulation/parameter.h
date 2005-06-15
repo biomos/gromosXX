@@ -984,11 +984,14 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - ID 0
-       * - T 0
-       * - scale 0
+       * - number 0
+       * - temperature <empty>
+       * - scale (false)
+       * - lambda <empty>
+       * - trials 0
+       * - slave_runs 0
        */
-      replica_struct() : number(0), ID(0), T(0.0), scale(0), trials(0)
+      replica_struct() : number(0), scale(false), trials(0), slave_runs(0)
       {
       }
       /**
@@ -996,32 +999,25 @@ namespace simulation
        */
       int number;
       /**
-       * job ID
-       */
-      int ID;
-      /**
-       * @deprecated
-       * temperature
-       */
-      double T;
-      /**
-       * @deprecated
-       * scale initial velocities to T?
-       */
-      int scale;
-      /**
        * tempeartures
        */
       std::vector<double> temperature;
       /**
+       * scale
+       */
+      bool scale;
+      /**
        * lambdas
        */
       std::vector<double> lambda;
-
       /**
        * trial moves
        */
       int trials;
+      /**
+       * runs per slave
+       */
+      int slave_runs;
       
     } /** replica exchange parameters */ replica;
     

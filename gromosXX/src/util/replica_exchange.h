@@ -10,6 +10,7 @@
 #include <mpi.h>
 #endif
 
+#include <util/replica_data.h>
 
 namespace topology
 {
@@ -46,35 +47,12 @@ namespace util
     /**
      * Constructor
      */
-    Replica_Exchange();
+    Replica_Exchange() {}
     /**
      * Destructor
      */
-    virtual ~Replica_Exchange()
-    {
-    }
+    virtual ~Replica_Exchange() {}
     
-    enum state_enum{ waiting=0, ready=1, running=2, terminate=4, st_error=5 };
-
-    /**
-     * @struct Replica_Data
-     * replica information
-     */
-    struct Replica_Data
-    {
-      int        ID;
-      double     temperature;
-      double     lambda;
-      double     energy;
-      double     switch_temperature;
-      double     switch_lambda;
-      double     switch_energy;
-      int        run;
-      state_enum state;
-      double     probability;
-      bool       switched;
-    };
-
     /**
      * run
      */
@@ -82,13 +60,12 @@ namespace util
     
   protected:
 
-    /**
-     * thread ID
-     */
-    int m_ID;
-
   };
   
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  //  Master  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
   /**
    * @class Replica_Exchange_Master
    * replica exchange master
@@ -158,6 +135,10 @@ namespace util
 
   };
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  //  Slave  /////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
   /**
    * @class Replica_Exchange_Slave
    * replica exchange slave
@@ -172,9 +153,7 @@ namespace util
     /**
      * Destructor
      */
-    virtual ~Replica_Exchange_Slave()
-    {
-    }
+    virtual ~Replica_Exchange_Slave() {}
     
     /**
      * run the slave
@@ -227,23 +206,25 @@ namespace util
 
   };
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  //  Control  ///////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
   /**
-   * @class Replica_Exchange_Interactive
+   * @class Replica_Exchange_Control
    * replica exchange interactive module
    */
-  class Replica_Exchange_Interactive : public Replica_Exchange
+  class Replica_Exchange_Control : public Replica_Exchange
   {
   public:
     /**
      * Constructor
      */
-    Replica_Exchange_Interactive();
+    Replica_Exchange_Control();
     /**
      * Destructor
      */
-    virtual ~Replica_Exchange_Interactive()
-    {
-    }
+    virtual ~Replica_Exchange_Control() {}
     
     /**
      * run the slave

@@ -96,8 +96,8 @@ int main(int argc, char *argv[]){
   }
   else if (args.count("control") >= 0){
     std::cout << "repex: starting control!" << std::endl;
-    util::Replica_Exchange_Interactive rep_interactive;
-    rep_interactive.run(args);
+    util::Replica_Exchange_Control rep_control;
+    rep_control.run(args);
   }
   else{
     std::cout << "repex: either @master @slave or @interactive required" << std::endl;

@@ -12,6 +12,7 @@ xxinclude_HEADERS = \
 			parse_verbosity.h \
 			prepare_virial.h \
 			create_simulation.h \
+			replica_data.h \
 			replica_exchange.h \
 			template_split.h \
 			virtual_atom.h
@@ -25,7 +26,9 @@ libgroutil_la_SOURCES =	debug.cc \
 			parse_tcouple.cc \
 			parse_verbosity.cc \
 			prepare_virial.cc \
-			replica_exchange.cc \
+			replica_exchange_master.cc \
+			replica_exchange_slave.cc \
+			replica_exchange_control.cc \
 			create_simulation.cc \
 			virtual_atom.cc
 libgroutil_la_LIBADD =

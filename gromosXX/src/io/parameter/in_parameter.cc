@@ -51,8 +51,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_STEP(param);
   read_BOUNDARY(param);
   read_SUBMOLECULES(param);
-  read_REPLICA(param); // has to be read in before MULTIBATH (to overwrite temps)
-  read_REPLICA03(param);
+  read_REPLICA03(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
   read_PCOUPLE(param);
   read_PRINT(param);
@@ -1700,12 +1699,6 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 			 "In_Parameter", io::message::error);
       }
 
-      if (param.replica.T){
-	os << "\tsetting temperature to " << param.replica.T << "K "
-		  << "for replica exchange\n";
-	temp = param.replica.T;
-      }
-      
       param.multibath.multibath.add_bath(temp, tau);
       if (tau != -1) param.multibath.couple = true;
     }
@@ -1755,14 +1748,6 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 			 "In_Parameter", io::message::error);
 	return;
       }	
-
-      if (param.replica.T){
-	os << "\tsetting temperature to " << param.replica.T << "K "
-		  << "for replica exchange\n";
-	param.multibath.tcouple.temp0[0] = param.replica.T;
-	param.multibath.tcouple.temp0[1] = param.replica.T;
-	param.multibath.tcouple.temp0[2] = param.replica.T;
-      }
     }
     else{
       param.multibath.found_multibath=false;
@@ -2078,41 +2063,6 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
 }
 
 /**
- * read the REPLICA block.
- */
-void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
-				    std::ostream & os)
-{
-  DEBUG(8, "read REPLICA");
-
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["REPLICA"];
-
-  if (buffer.size()){
-
-    block_read.insert("REPLICA");
-
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-    
-    _lineStream >> param.replica.ID >> param.replica.T >> param.replica.scale;
-    
-    if (_lineStream.fail()){
-      io::messages.add("bad line in REPLICA block",
-		       "In_Parameter", io::message::error);
-
-      param.replica.ID = 0;
-      param.replica.T = 0.0;
-      param.replica.scale = 0;
-    }
-
-  }
-  
-}
-
-/**
  * read the REPLICA03 block.
  */
 void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
@@ -2139,11 +2089,15 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     for(int i=0; i<param.replica.number; ++i){
       _lineStream >> param.replica.temperature[i];
     }
+    
+    _lineStream >> param.replica.scale;
+    
     for(int i=0; i<param.replica.number; ++i){
       _lineStream >> param.replica.lambda[i];
     }
 
     _lineStream >> param.replica.trials;
+    _lineStream >> param.replica.slave_runs;
     
     if (_lineStream.fail()){
       io::messages.add("bad line in REPLICA03 block",

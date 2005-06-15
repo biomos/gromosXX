@@ -127,8 +127,8 @@ case "$compiler" in
        fi
 
        if eval "test x$enable_mpi = xyes"; then
-	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI"
-	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI"
+	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
        fi
 
        if eval "test x$enable_rem = xyes"; then
@@ -160,7 +160,7 @@ case "$compiler" in
      gnu*)              # EGCS  http://egcs.cygnus.com/
        echo "Configuring for GNU C++"
        CXX_PICKY_FLAGS="-Wall"
-       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -fno-exceptions -DNDEBUG -g"
+       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -DNDEBUG -g"
        CXX_DEBUG_FLAGS="-g"
        CXXLD="$CXX"
 
@@ -170,8 +170,8 @@ case "$compiler" in
        fi
 
        if eval "test x$enable_mpi = xyes"; then
-	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI"
-	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI"
+	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
        fi
 
 #      debug

@@ -29,6 +29,7 @@
 #include <interaction/forcefield/forcefield.h>
 
 #include <math/volume.h>
+#include <util/replica_data.h>
 
 #include "print_block.h"
 
@@ -555,6 +556,19 @@ namespace io
        << std::setw(15) << "E-KIN COM " << std::setw(15) << ekin_trans + ekin_rot
        << "\nEND\n";
 
+  }
+  
+  void print_REMD(std::ostream &os,
+		  util::Replica_Data const & replica_data)
+  {
+    os.precision(4);
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os << "REMD\n" 
+       << std::setw(15) << replica_data.ID
+       << std::setw(10) << replica_data.run
+       << std::setw(10) << replica_data.temperature
+       << std::setw(10) << replica_data.lambda 
+       << "\nEND\n";
   }
   
 } // io
