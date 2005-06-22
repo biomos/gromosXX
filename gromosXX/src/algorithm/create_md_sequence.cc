@@ -57,7 +57,6 @@
 
 int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 				  topology::Topology &topo,
-				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
 				  io::In_Topology &it,
 				  std::ostream & os)
@@ -65,22 +64,20 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
-  interaction::create_g96_forcefield(*ff, topo, sim, conf, it, os);
+  interaction::create_g96_forcefield(*ff, topo, sim, it, os);
   
   //==================================================
   // construct the md algorithm
   //==================================================
 
   // center of mass removal
-  algorithm::Remove_COM_Motion * rcom =
-    new algorithm::Remove_COM_Motion(os);
-  
   if (sim.param().centreofmass.remove_trans ||
-      sim.param().centreofmass.remove_rot)
+      sim.param().centreofmass.remove_rot){
+
+    algorithm::Remove_COM_Motion * rcom =
+      new algorithm::Remove_COM_Motion(os);
+      
     md_seq.push_back(rcom);
-  else{
-    rcom->apply(topo, conf, sim);
-    delete rcom;
   }
   
   // add the forcefield
@@ -119,23 +116,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   // CONSTRAINTS
-  create_constraints(md_seq, topo, conf, sim, it);
+  create_constraints(md_seq, topo, sim, it);
 
   // temperature calculation (always!)
   {
     algorithm::Temperature_Calculation * tcalc =
       new algorithm::Temperature_Calculation;
-    // calculate initial temperature
-    tcalc->apply(topo, conf, sim);
-
-    io::print_MULTIBATH_COUPLING(os, sim.multibath());
-
-    io::print_DEGREESOFFREEDOM(os, sim.multibath());
-    
-    io::print_MULTIBATH(os, sim.multibath(),
-			conf.old().energies,
-			"INITIAL TEMPERATURES");
-
 
     DEBUG(7, tcalc->name);
     md_seq.push_back(tcalc);

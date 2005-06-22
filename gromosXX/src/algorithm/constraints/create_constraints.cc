@@ -52,7 +52,6 @@
 
 int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 				  topology::Topology &topo,
-				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
 				  io::In_Topology &it,
 				  bool quiet)
@@ -91,7 +90,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Shake
 	    (sim.param().constraint.solute.shake_tolerance);
 	  it.read_harmonic_bonds(s->parameter());
-	  // s->init(topo, conf, sim, quiet);
 	  md_seq.push_back(s);
 	  
 	}
@@ -101,7 +99,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Perturbed_Shake
 	    (sim.param().constraint.solute.shake_tolerance);
 	  it.read_harmonic_bonds(ps->parameter());
-	  // ps->init(topo, conf, sim, quiet);
 	  md_seq.push_back(ps);
 
 	}
@@ -112,7 +109,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	algorithm::Lincs * s =
 	  new algorithm::Lincs;
 	it.read_harmonic_bonds(s->parameter());
-	// s->init(topo, conf, sim, quiet);
 	md_seq.push_back(s);
 
 	if (sim.param().perturbation.perturbation){
@@ -185,7 +181,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	    new algorithm::Shake
 	    (sim.param().constraint.solvent.shake_tolerance);
 	  it.read_harmonic_bonds(s->parameter());
-	  // s->init(topo, conf, sim, quiet);
 	  md_seq.push_back(s);
 	  
 	  break;
@@ -195,7 +190,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  algorithm::Lincs * s =
 	    new algorithm::Lincs;
 	  it.read_harmonic_bonds(s->parameter());
-	  // s->init(topo, conf, sim, quiet);
 	  md_seq.push_back(s);
 	  
 	  break;

@@ -44,6 +44,7 @@ int interaction::Forcefield
       it != to;
       ++it){
 
+    DEBUG(8, "init " << (*it)->name);
     i += (*it)->init(topo, conf, sim, os, quiet);
   }
 

@@ -10,9 +10,6 @@
 namespace topology{
 	class Topology;
 }
-namespace configuration{
-	class Configuration;
-}
 namespace simulation{
 	class Simulation;
 }
@@ -31,7 +28,6 @@ namespace algorithm
 	 */
   int create_md_sequence(algorithm::Algorithm_Sequence & md_seq,
 			 topology::Topology & topo,
-			 configuration::Configuration & conf,
 			 simulation::Simulation & sim,
 			 io::In_Topology &it,
 			 std::ostream & os = std::cout);

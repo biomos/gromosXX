@@ -8,7 +8,6 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
-#include <configuration/configuration.h>
 
 #include <interaction/interaction.h>
 #include <interaction/interaction_types.h>
@@ -16,6 +15,7 @@
 
 #include <interaction/forcefield/forcefield.h>
 
+#include <configuration/energy.h>
 #include <interaction/nonbonded/interaction/storage.h>
 
 #include <interaction/nonbonded/pairlist/pairlist.h>
@@ -53,7 +53,6 @@ int interaction::create_g96_nonbonded
  interaction::Forcefield & ff,
  topology::Topology const & topo,
  simulation::Simulation const & sim,
- configuration::Configuration const & conf,
  io::IFP & it,
  std::ostream & os,
  bool quiet

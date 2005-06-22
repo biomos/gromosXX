@@ -13,10 +13,6 @@ namespace simulation
 {
   class Simulation;
 }
-namespace configuration
-{
-  class Configuration;
-}
 namespace io
 {
   class IFP;
@@ -32,7 +28,6 @@ namespace interaction
   int create_g96_forcefield(interaction::Forcefield & ff,
 			    topology::Topology const & topo,
 			    simulation::Simulation const & sim,
-			    configuration::Configuration const & conf,
 			    io::IFP & it,
 			    std::ostream & os = std::cout,
 			    bool quiet = false);

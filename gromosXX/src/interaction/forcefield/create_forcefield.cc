@@ -31,7 +31,6 @@
 int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 				       topology::Topology const & topo,
 				       simulation::Simulation const & sim,
-				       configuration::Configuration const & conf,
 				       io::IFP & it,
 				       std::ostream & os,
 				       bool quiet)
@@ -46,7 +45,7 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 
   // the nonbonded
   DEBUG(8, "creating the nonbonded terms");
-  if (create_g96_nonbonded(ff, topo, sim, conf, it, os, quiet))
+  if (create_g96_nonbonded(ff, topo, sim, it, os, quiet))
     return 1;
 
   // the special
