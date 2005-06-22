@@ -176,9 +176,9 @@ configuration::Configuration & configuration::Configuration::operator=
   return *this;
 }
 
-void configuration::Configuration::initialise(topology::Topology const & topo,
-					      simulation::Parameter const & param,
-					      bool gather)
+void configuration::Configuration::init(topology::Topology const & topo,
+					simulation::Parameter const & param,
+					bool gather)
 {
   // resize the energy arrays
   const unsigned int num = unsigned(topo.energy_groups().size());

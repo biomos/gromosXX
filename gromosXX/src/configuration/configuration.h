@@ -265,9 +265,9 @@ namespace configuration
      * - if coordinates have been read in it is usually necessary to gather them
      * to keep chargegroups together.
      */
-    void initialise(topology::Topology const & topo,
-		    simulation::Parameter const & param,
-		    bool gather = true);
+    void init(topology::Topology const & topo,
+	      simulation::Parameter const & param,
+	      bool gather = true);
 
      //////////////////////////////////////////////////////////////////////
     // data
