@@ -21,6 +21,7 @@
 <li><a href="#write">WRITE</a></li>
 <li><a href="#constraint">CONSTRAINT</a></li>
 <li><a href="#force">FORCE</a></li>
+<li><a href="#forcefield">FORCEFIELD</a></li>
 <li><a href="#plist">PAIRLIST</a></li>
 <li><a href="#longrange">LONGRANGE</a></li>
 <li><a href="#posrest">POSREST</a></li>
@@ -305,6 +306,18 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
+<h2><a name="forcefield">FORCEFIELD</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+FORCEFIELD
+#       bonds    angles
+#       0: gromos96 form
+#	2: harmonic form
+        2        0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
 <h2><a name="plist">PAIRLIST</a></h2>
 new format:
 <table cellpadding="2" cellspacing="2" border="0" width="600"
@@ -455,11 +468,17 @@ REPLICA03
 	0.5    0.6    0.7   0.8	  0.9
 #	number of exchange trials
         100
+#	equilibrate: no switching for first N trials
+#	useful if starting from identical structures
+	10
 #	number of runs per job
 #	(total number of runs = replicas * trials
 #        where replicas = T(replicas) * l(replicas)
 #        this example creates 100 replicas!)
         1000
+#	write trajectory of all replicas on master
+#	every n trials
+	10
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
