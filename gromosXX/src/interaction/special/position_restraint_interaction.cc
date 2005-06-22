@@ -52,7 +52,7 @@ static int _calculate_position_restraint_interactions
 
     periodicity.nearest_image(pos(it->seq), it->pos, v);
 
-    double dist = sqrt(abs2(v));
+    // double dist = sqrt(abs2(v));
     
     f = (- sim.param().posrest.force_constant / it->bfactor) * v;
 
@@ -67,7 +67,7 @@ static int _calculate_position_restraint_interactions
       DEBUG(7, "\tatomic virial done");
     }
 
-    energy = 0.5 * sim.param().posrest.force_constant / it->bfactor * dist;
+    energy = 0.5 * sim.param().posrest.force_constant / it->bfactor * abs2(v);
 
     conf.current().energies.posrest_energy[topo.atom_energy_group()
 					  [it->seq]] += energy;
