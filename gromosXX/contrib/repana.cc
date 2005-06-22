@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 	  prob[rr] += rep_data[i][rr].p;
 	  swi[rr] += rep_data[i][rr].s;
 	  
-	  epot << std::setw(12) << rep_data[i][rr].epot_i;
+	  epot << std::setw(18) << rep_data[i][rr].epot_i;
 	  probfile << std::setw(12) << rep_data[i][rr].p;
 	  switchedfile << std::setw(4) << rep_data[i][rr].s;
 
