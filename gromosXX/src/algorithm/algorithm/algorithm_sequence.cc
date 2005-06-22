@@ -11,6 +11,8 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
+#include <algorithm/constraints/remove_com_motion.h>
+
 #include <algorithm/algorithm/algorithm_sequence.h>
 
 #undef MODULE
@@ -44,6 +46,13 @@ int algorithm::Algorithm_Sequence
 
   int ret;
   
+  // centre of mass removal
+  if(!(sim.param().centreofmass.remove_trans ||
+       sim.param().centreofmass.remove_rot)){
+    algorithm::Remove_COM_Motion rcom;
+    rcom.apply(topo, conf, sim);
+  }
+
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();
       it != to;

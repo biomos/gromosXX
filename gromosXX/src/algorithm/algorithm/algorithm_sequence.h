@@ -19,10 +19,12 @@ namespace algorithm
      * Constructor
      */
     Algorithm_Sequence();
+
     /**
      * Destructor
      */
     ~Algorithm_Sequence();
+
     /**
      * init
      */
