@@ -124,7 +124,6 @@ int main(int argc, char *argv[]){
   if (interaction::create_g96_forcefield(*ff, 
 					 sys.topo,
 					 sys.sim,
-					 sys.conf,
 					 in_topo
 					 )
       != 0){
