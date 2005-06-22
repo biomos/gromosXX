@@ -129,7 +129,6 @@ int main(int argc, char* argv[])
     if (interaction::create_g96_forcefield(*ff, 
 					   rasn_sim.topo,
 					   rasn_sim.sim,
-					   rasn_sim.conf,
 					   in_topo,
 					   std::cout,
 					   quiet)
@@ -149,7 +148,6 @@ int main(int argc, char* argv[])
 	
     algorithm::create_md_sequence(rasn_sim.md,
 				  rasn_sim.topo,
-				  rasn_sim.conf,
 				  rasn_sim.sim,
 				  in_topo,
 				  std::cout);

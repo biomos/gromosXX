@@ -141,7 +141,6 @@ int main(int argc, char* argv[])
   if (interaction::create_g96_forcefield(*ff, 
 					 aladip_sim.topo,
 					 aladip_sim.sim,
-					 aladip_sim.conf,
 					 in_topo,
 					 std::cout,
 					 quiet)
@@ -159,7 +158,6 @@ int main(int argc, char* argv[])
   if (interaction::create_g96_forcefield(*lambdadep_ff, 
 					 aladip_lambdadep_sim.topo,
 					 aladip_lambdadep_sim.sim,
-					 aladip_lambdadep_sim.conf,
 					 in_lambdadep_topo,
 					 std::cout,
 					 quiet)

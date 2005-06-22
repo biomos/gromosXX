@@ -128,7 +128,6 @@ int main(int argc, char* argv[])
   if (interaction::create_g96_forcefield(*ff, 
 					 aladip_sim.topo,
 					 aladip_sim.sim,
-					 aladip_sim.conf,
 					 in_topo,
 					 std::cout,
 					 quiet)

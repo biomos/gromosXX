@@ -129,7 +129,6 @@ int main(int argc, char* argv[])
     if (interaction::create_g96_forcefield(*ff, 
 					   aladip_sim.topo,
 					   aladip_sim.sim,
-					   aladip_sim.conf,
 					   in_topo,
 					   std::cout,
 					   quiet)
@@ -156,7 +155,6 @@ int main(int argc, char* argv[])
 	
     algorithm::create_md_sequence(aladip_sim.md,
 				  aladip_sim.topo,
-				  aladip_sim.conf,
 				  aladip_sim.sim,
 				  in_topo);
     
