@@ -81,7 +81,7 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
-  assert((!sim.param().force.spc_loop) || 
+  assert((sim.param().force.spc_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
   const double nonbonded_start = util::now();
@@ -223,6 +223,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   }
 
   check_spc_loop(topo, conf, sim, os, quiet);
+  DEBUG(9, "nonbonded init done");
   return 0;
 }
 
@@ -264,10 +265,12 @@ void interaction::Nonbonded_Interaction::check_spc_loop
  bool quiet)
 {
   DEBUG(7, "checking for spc interaction loops");
+  DEBUG(10, " param: spc_loop = " << sim.param().force.spc_loop);
   
-  if (sim.param().force.spc_loop == -1){
 
-    sim.param().force.spc_loop = 0;
+  if (sim.param().force.spc_loop == -1){
+    DEBUG(8, "standard loops, user request");
+    // sim.param().force.spc_loop = 0;
     if (!quiet)
       os << "\tusing standard solvent loops (user request)\n";
     return;
@@ -280,26 +283,46 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     return;
   }
   
-  if (topo.num_solvents() != 1 || topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) != 3 ||
-      topo.num_solvent_molecules(0) < 1){
-
+  DEBUG(10, "num_solvents = " << topo.num_solvents());
+  DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
+  DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
+  
+  if (topo.num_solvents() != 1 ||
+      topo.num_solvent_molecules(0) < 1 ||
+      topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) != 3
+      ){
+  
+    DEBUG(10, "standard loops...");
+    
     sim.param().force.spc_loop = 0;
     if (!quiet)
-	if (topo.num_solvents() > 0)
-      os << "\tusing standard solvent loops (num solvents doesn't match)\n"
-		<< "\t\tnum solvents: " << topo.num_solvents() << "\n"
-		<< "\t\tsolvent atoms: " << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
-		<< "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
-	else
-      os << "\tusing standard solvent loops (no solvent present!)\n\n";
+      if (topo.num_solvents() > 0){
+	if (topo.num_solvent_molecules(0) == 0){
+	  os << "\tusing standard solvent loops (no solvent present!)\n\n";
+	}
+	else{
+	  os << "\tusing standard solvent loops (num solvents doesn't match)\n"
+	     << "\t\tnum solvents: " 
+	     << topo.num_solvents() << "\n"
+	     << "\t\tsolvent atoms: " 
+	     << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
+	     << "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
+	}
+      }
+      else{
+	os << "\tusing standard solvent loops (no solvent in topology!)\n\n";
+      }
     return;
   }
   
+  DEBUG(10, "checking charges...");
+
   // check charges
   if (topo.charge()(topo.num_solute_atoms()) != -0.82 ||
       topo.charge()(topo.num_solute_atoms()+1) != 0.41 ||
       topo.charge()(topo.num_solute_atoms()+2) != 0.41){
     
+    DEBUG(10, "charges don't match, standard loops");
     sim.param().force.spc_loop = 0;
     if (!quiet)
 	os << "\tusing standard solvent loops (charges don't match)\n"
@@ -311,6 +334,7 @@ void interaction::Nonbonded_Interaction::check_spc_loop
   }
   
   // check lj parameters
+  DEBUG(10, "checking LJ parameter...");
   const lj_parameter_struct &lj_OO = 
     m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
 			     topo.iac(topo.num_solute_atoms()));
@@ -336,13 +360,14 @@ void interaction::Nonbonded_Interaction::check_spc_loop
       lj_H1H2.c6 != 0.0 ||
       lj_H1H2.c12 != 0.0){
     
+    DEBUG(10, "don't match, force standard loop");
     sim.param().force.spc_loop = 0;
     if (!quiet)
       os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
     return;
-    
   }
   
+  DEBUG(10, "happy to force spc loops");
   sim.param().force.spc_loop = 1;
   if (!quiet)
     os << "\tusing spc solvent loops\n";
@@ -392,8 +417,8 @@ void interaction::Nonbonded_Interaction::store_set_data
       conf.current().force(i) += (*it)->shortrange_storage().force(i);
 
     DEBUG(7, "adding energies from set " << it - m_nonbonded_set.begin());
-    for(unsigned int i = 0; i < ljs; ++i){
-      for(unsigned int j = 0; j < ljs; ++j){
+    for(int i = 0; i < ljs; ++i){
+      for(int j = 0; j < ljs; ++j){
 
 	DEBUG(8, "set " << it - m_nonbonded_set.begin() << " group["
 	      << i << "][" << j <<"] e_lj = " 
@@ -434,19 +459,23 @@ void interaction::Nonbonded_Interaction::store_set_data
 	
       configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
 	
-      for(unsigned int i = 0; i < ljs; ++i){
-	for(unsigned int j = 0; j < ljs; ++j){
+      for(int i = 0; i < ljs; ++i){
+	for(int j = 0; j < ljs; ++j){
       
-	  assert(pe.lj_energy.size() > i);
-	  assert(pe.lj_energy[i].size() > j);
+	  assert(pe.lj_energy.size() > unsigned(i));
+	  assert(pe.lj_energy[i].size() > unsigned(j));
 
-	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy.size() > i);
-	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i].size() > j);
-
+	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.
+		 lj_energy.size() > unsigned(i));
+	  assert((*it)->shortrange_storage().perturbed_energy_derivatives.
+		 lj_energy[i].size() > (unsigned(j)));
+	  
 	  pe.lj_energy[i][j] += 
-	    (*it)->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
+	    (*it)->shortrange_storage().perturbed_energy_derivatives.
+	    lj_energy[i][j];
 	  pe.crf_energy[i][j] += 
-	    (*it)->shortrange_storage().perturbed_energy_derivatives.crf_energy[i][j];
+	    (*it)->shortrange_storage().perturbed_energy_derivatives.
+	    crf_energy[i][j];
 	}
       }
     } // sets
@@ -477,7 +506,7 @@ void interaction::Nonbonded_Interaction::expand_configuration
   // resize the configuration
   // exp_conf.resize(topo.multicell_topo().num_atoms());
 
-  exp_conf.initialise(topo.multicell_topo(), sim.param(), false);
+  exp_conf.init(topo.multicell_topo(), sim.param(), false);
   DEBUG(10, "\texp_conf initialised");
   
   math::Vec shift(0.0);
@@ -494,9 +523,9 @@ void interaction::Nonbonded_Interaction::expand_configuration
 	  z * conf.current().box(2);
 
 	// this should be the NORMAL topo!
-	for(int i=0; i<topo.num_solute_atoms(); ++i, ++exp_i){
+	for(unsigned int i=0; i<topo.num_solute_atoms(); ++i, ++exp_i){
 	  
-	  assert(exp_conf.current().pos.size() > exp_i);
+	  assert(exp_conf.current().pos.size() > unsigned(exp_i));
 	  assert(conf.current().pos.size() > i);
 	  
 	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
@@ -515,9 +544,9 @@ void interaction::Nonbonded_Interaction::expand_configuration
 	  y * conf.current().box(1) + 
 	  z * conf.current().box(2);
 
-	for(int i=topo.num_solute_atoms(); i<topo.num_atoms(); ++i, ++exp_i){
+	for(unsigned int i=topo.num_solute_atoms(); i<topo.num_atoms(); ++i, ++exp_i){
 	  
-	  assert(exp_conf.current().pos.size() > exp_i);
+	  assert(exp_conf.current().pos.size() > unsigned(exp_i));
 	  assert(conf.current().pos.size() > i);
 	  
 	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
@@ -560,11 +589,12 @@ int interaction::Nonbonded_Interaction::print_pairlist
   Pairlist temp;
   temp.resize(topo.num_atoms());
   
-  for(int atom_i = 0; atom_i < topo.num_atoms(); ++atom_i){
+  for(unsigned int atom_i = 0; atom_i < topo.num_atoms(); ++atom_i){
     
     for(int i=0; i < m_set_size; ++i){
       
-      for(int atom_j = 0; atom_j < m_nonbonded_set[i]->pairlist()[atom_i].size();
+      for(unsigned int atom_j = 0;
+	  atom_j < m_nonbonded_set[i]->pairlist()[atom_i].size();
 	  ++atom_j){
 	
 	if (m_nonbonded_set[i]->pairlist()[atom_i][atom_j] < atom_i)

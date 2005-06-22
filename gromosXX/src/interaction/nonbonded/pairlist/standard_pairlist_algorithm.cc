@@ -317,7 +317,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(10, "solvent - solvent");
 
   // solvent - solvent
-  if (sim.param().force.spc_loop)
+  if (sim.param().force.spc_loop > 0)
     _spc_loop(topo, conf, sim, storage, pairlist, innerloop, cg1, stride, periodicity);    
   else
     _solvent_solvent(topo, conf, sim, storage, pairlist, innerloop, cg1, stride, periodicity);
@@ -684,7 +684,7 @@ _update_pert_cg(topology::Topology & topo,
   } // cg1
 
   // solvent - solvent
-  if (sim.param().force.spc_loop)
+  if (sim.param().force.spc_loop > 0)
     _spc_loop(topo, conf, sim,
 				  storage, pairlist, innerloop, 
 				  cg1, stride, periodicity);    

@@ -71,7 +71,7 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "OMP_Nonbonded_Interaction::calculate_interactions");
 
-  assert((!sim.param().force.spc_loop) || 
+  assert((sim.param().force.spc_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
   const double nonbonded_start = util::now();

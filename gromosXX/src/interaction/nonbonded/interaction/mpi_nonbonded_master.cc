@@ -71,7 +71,7 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "MPI_Nonbonded_Master::calculate_interactions");
 
-  assert((!sim.param().force.spc_loop) || 
+  assert((sim.param().force.spc_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
   const double nonbonded_start = util::now();

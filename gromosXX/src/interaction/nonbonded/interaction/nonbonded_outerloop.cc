@@ -86,7 +86,7 @@ void interaction::Nonbonded_Outerloop
   
   unsigned int end = size_i;
 
-  if (sim.param().force.spc_loop){
+  if (sim.param().force.spc_loop > 0){
     end = topo.num_solute_atoms();
     size_i = topo.num_solute_atoms() + topo.num_chargegroups() 
       - topo.num_solute_chargegroups();
