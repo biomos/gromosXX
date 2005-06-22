@@ -11,6 +11,8 @@
 #include <configuration/configuration.h>
 #include <configuration/state_properties.h>
 
+#include <io/print_block.h>
+
 #include "temperature_calculation.h"
 
 #undef MODULE
@@ -153,3 +155,24 @@ int algorithm::Temperature_Calculation
   return 0;
   
 }
+
+int algorithm::Temperature_Calculation
+::init(topology::Topology & topo,
+       configuration::Configuration & conf,
+       simulation::Simulation & sim,
+       std::ostream & os,
+       bool quiet)
+{
+  apply(topo, conf, sim);
+  
+  if (!quiet){
+    os << "Temperature calculation\n";
+    io::print_MULTIBATH_COUPLING(os, sim.multibath());
+    io::print_DEGREESOFFREEDOM(os, sim.multibath());
+    io::print_MULTIBATH(os, sim.multibath(),
+			conf.old().energies,
+			"INITIAL TEMPERATURES");
+  }
+  return 0;
+}
+

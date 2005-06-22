@@ -40,11 +40,7 @@ namespace algorithm
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false) 
-    {
-      os << "Temperature calculation\n";
-      return 0;
-    };
+		     bool quiet = false);
         
   private:
 
