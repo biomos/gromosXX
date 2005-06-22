@@ -403,108 +403,43 @@ void io::Out_Configuration::write_replica
       _print_timestep(sim, m_pos_traj);
       _print_replica_information(replica_data, m_pos_traj);
       
-      if (sim.param().write.solute_only)
-	_print_positionred(conf[0], topo,  topo.num_solute_atoms(), m_pos_traj);
-      else
-	_print_positionred(conf[0], topo,  topo.num_atoms(), m_pos_traj);
-
-      if (conf[0].boundary_type != math::vacuum)
-	_print_box(conf[0], m_pos_traj);
-    }
-    
-    if (m_every_vel && (sim.steps() % m_every_vel) == 0){
-      _print_timestep(sim, m_vel_traj);
-      _print_velocityred(conf[0], m_vel_traj);
-    }
-    
-    if(m_every_force && ((sim.steps()) % m_every_force) == 0){
-      if(sim.steps()){
-	_print_old_timestep(sim, m_force_traj);
-	_print_forcered(conf[0], m_force_traj);
+      for(unsigned int i=0; i<conf.size(); ++i){
+	_print_positionred(conf[i], topo,  topo.num_atoms(), m_pos_traj);
+	_print_velocityred(conf[0], m_vel_traj);
+	
+	if (conf[i].boundary_type != math::vacuum)
+	  _print_box(conf[i], m_pos_traj);
       }
     }
-    
-    if(m_every_energy && (sim.steps() % m_every_energy) == 0){
-      if(sim.steps()){
-	_print_old_timestep(sim, m_energy_traj);
-	_print_energyred(conf[0], m_energy_traj);
-	_print_volumepressurered(topo, conf[0], sim, m_energy_traj);
-      }
-    }
-    
-    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
-      if(sim.steps()){
-	_print_old_timestep(sim, m_free_energy_traj);
-	_print_free_energyred(conf[0], topo, m_free_energy_traj);
-      }
-    }
-
-    if (m_every_blockaverage && (sim.steps() % m_every_blockaverage) == 0){
-      
-      if(m_write_blockaverage_energy){
-	if(sim.steps()){
-	  _print_old_timestep(sim, m_blockaveraged_energy);
-	  _print_blockaveraged_energyred(conf[0], m_blockaveraged_energy);
-	  _print_blockaveraged_volumepressurered(conf[0], sim, m_blockaveraged_energy);
-	}
-      }
-
-      if(m_write_blockaverage_free_energy){
-	if(sim.steps()){
-	  _print_old_timestep(sim, m_blockaveraged_free_energy);
-	  _print_blockaveraged_free_energyred(conf[0], sim.param().perturbation.dlamt,
-					      m_blockaveraged_free_energy);
-	}
-      }
-      conf[0].current().averages.block().zero();
-    }
-    
   }
   else if(form == final && m_final){
-    _print_timestep(sim, m_final_conf);
-    _print_position(conf[0], topo, m_final_conf);
+    for(unsigned int i=0; i<conf.size(); ++i){
+      
+      m_final_conf << "REPLICAFRAME\n"
+		   << std::setw(12) << i + 1
+		   << "\nEND\n";
 
-    if(sim.param().minimise.ntem == 0)
-      _print_velocity(conf[0], topo, m_final_conf);
-
-    _print_box(conf[0], m_final_conf);
-
-    if(sim.param().constraint.solute.algorithm
-       == simulation::constr_flexshake){
-      _print_flexv(conf[0], topo, m_final_conf);
+      if (i==0){
+	_print_timestep(sim, m_final_conf);
+	_print_replica_information(replica_data, m_final_conf);
+      }
+      
+      _print_position(conf[i], topo, m_final_conf);
+      _print_velocity(conf[i], topo, m_final_conf);
+      _print_box(conf[i], m_final_conf);
     }
-
+    
+    /*
     if(sim.param().jvalue.mode != simulation::restr_off){
       _print_jvalue(conf[0], topo, m_final_conf);
     }
-
     if(sim.param().pscale.jrest){
       _print_pscale_jrest(conf[0], topo, m_final_conf);
     }
-    
-    // forces and energies still go to their trajectories
-    if (m_every_force && ((sim.steps()) % m_every_force) == 0){
-      _print_old_timestep(sim, m_force_traj);
-      _print_forcered(conf[0], m_force_traj);
-    }
-
-    if(m_every_energy && (sim.steps() % m_every_energy) == 0){
-      _print_old_timestep(sim, m_energy_traj);
-      _print_energyred(conf[0], m_energy_traj);
-      _print_volumepressurered(topo, conf[0], sim, m_energy_traj);
-    }
-
-    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
-      _print_old_timestep(sim, m_free_energy_traj);
-      _print_free_energyred(conf[0], topo, m_free_energy_traj);
-    }
-
+    */
   }
   // done writing replicas!
-
 }
-
-
 
 void io::Out_Configuration
 ::final_configuration(std::string name)
@@ -1465,51 +1400,51 @@ void io::Out_Configuration::write_replica_step
   if (form == reduced){
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0)
-      print_REMD(m_pos_traj, replica_data);
+      print_REMD(m_pos_traj, replica_data, sim.param());
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0)
-      print_REMD(m_vel_traj, replica_data);
+      print_REMD(m_vel_traj, replica_data, sim.param());
     
     if(m_every_force && ((sim.steps()) % m_every_force) == 0){
       if(sim.steps())
-	print_REMD(m_force_traj, replica_data);
+	print_REMD(m_force_traj, replica_data, sim.param());
     }
     
     if(m_every_energy && (sim.steps() % m_every_energy) == 0){
       if(sim.steps())
-	print_REMD(m_energy_traj, replica_data);
+	print_REMD(m_energy_traj, replica_data, sim.param());
     }
     
     if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
       if(sim.steps())
-	print_REMD(m_free_energy_traj, replica_data);
+	print_REMD(m_free_energy_traj, replica_data, sim.param());
     }
 
     if (m_every_blockaverage && (sim.steps() % m_every_blockaverage) == 0){
       if(m_write_blockaverage_energy){
 	if(sim.steps())
-	  print_REMD(m_blockaveraged_energy, replica_data);
+	  print_REMD(m_blockaveraged_energy, replica_data, sim.param());
       }
 
       if(m_write_blockaverage_free_energy){
 	if(sim.steps())
-	  print_REMD(m_blockaveraged_free_energy, replica_data);
+	  print_REMD(m_blockaveraged_free_energy, replica_data, sim.param());
       }
     }
   } // reduced
 
   else if(form == final && m_final){
-    print_REMD(m_final_conf, replica_data);
+    print_REMD(m_final_conf, replica_data, sim.param());
     
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0)
-      print_REMD(m_force_traj, replica_data);
+      print_REMD(m_force_traj, replica_data, sim.param());
 
     if(m_every_energy && (sim.steps() % m_every_energy) == 0)
-      print_REMD(m_energy_traj, replica_data);
+      print_REMD(m_energy_traj, replica_data, sim.param());
 
     if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0)
-      print_REMD(m_free_energy_traj, replica_data);
+      print_REMD(m_free_energy_traj, replica_data, sim.param());
   } // final
 
   else{
@@ -1517,14 +1452,14 @@ void io::Out_Configuration::write_replica_step
     // not reduced or final (so: decorated)
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0)
-      print_REMD(m_pos_traj, replica_data);
+      print_REMD(m_pos_traj, replica_data, sim.param());
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0)
-      print_REMD(m_vel_traj, replica_data);
+      print_REMD(m_vel_traj, replica_data, sim.param());
     
     if(m_every_force && (sim.steps() % m_every_force) == 0){
       if (sim.steps())
-	print_REMD(m_force_traj, replica_data);
+	print_REMD(m_force_traj, replica_data, sim.param());
     }
   } // decorated
 
@@ -1599,14 +1534,15 @@ void io::Out_Configuration::_print_replica_information
     
     os << std::setw(6) << it->ID
        << std::setw(6) << it->run
-       << std::setw(13) << it->Ti
-       << std::setw(13) << it->li
-       << std::setw(13) << it->epot_i
-       << std::setw(13) << it->Tj
-       << std::setw(13) << it->Tj
-       << std::setw(13) << it->epot_j
-       << std::setw(13) << it->probability
+       << std::setw(6) << it->Ti
+       << std::setw(6) << it->li
+       << std::setw(18) << it->epot_i
+       << std::setw(6) << it->Tj
+       << std::setw(6) << it->lj
+       << std::setw(18) << it->epot_j
+       << std::setw(18) << it->probability
        << std::setw(4) << it->switched
+       << std::setw(4) << it->state
        << "\n";
   }
   os << "END\n";
@@ -1632,9 +1568,9 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.crf_total << "\n"
      << std::setw(18) << e.constraints_total << "\n"
      << std::setw(18) << e.posrest_total << "\n"
-     << std::setw(18) << e.distrest_total << "\n" // disres
+     << std::setw(18) << e.distrest_total << "\n"
      << std::setw(18) << 0.0 << "\n" // dihedral res
-     << std::setw(18) << 0.0 << "\n" // jval
+     << std::setw(18) << e.jvalue_total << "\n"
      << std::setw(18) << 0.0 << "\n" // local elevation
      << std::setw(18) << 0.0 << "\n"; // path integral
   
@@ -1660,8 +1596,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   for(int i=0; i<numenergygroups; i++){
     for(int j=i; j<numenergygroups; j++){
 
-      os << std::setw(18) << e.lj_energy[i][j]
-	 << std::setw(18) << e.crf_energy[i][j] << "\n";
+      os << std::setw(18) << e.lj_energy[j][i]
+	 << std::setw(18) << e.crf_energy[j][i] << "\n";
 
     }
   }

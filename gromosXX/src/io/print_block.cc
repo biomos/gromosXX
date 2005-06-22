@@ -559,15 +559,19 @@ namespace io
   }
   
   void print_REMD(std::ostream &os,
-		  util::Replica_Data const & replica_data)
+		  util::Replica_Data const & replica_data,
+		  simulation::Parameter const & param)
   {
+    assert(unsigned(replica_data.Ti) < param.replica.temperature.size());
+    assert(unsigned(replica_data.li) < param.replica.lambda.size());
+    
     os.precision(4);
     os.setf(std::ios::fixed, std::ios::floatfield);
     os << "REMD\n" 
-       << std::setw(15) << replica_data.ID
+       << std::setw(15) << replica_data.ID + 1
        << std::setw(10) << replica_data.run
-       << std::setw(10) << replica_data.Ti
-       << std::setw(10) << replica_data.li
+       << std::setw(10) << param.replica.temperature[replica_data.Ti]
+       << std::setw(10) << param.replica.lambda[replica_data.li]
        << "\nEND\n";
   }
   

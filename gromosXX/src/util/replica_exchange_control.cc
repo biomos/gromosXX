@@ -210,10 +210,10 @@ int util::Replica_Exchange_Control::run
 	    << std::setw(6) << "run"
 	    << std::setw(10) << "T"
 	    << std::setw(10) << "l"
-	    << std::setw(10) << "Epot"
+	    << std::setw(18) << "Epot"
 	    << std::setw(10) << "sT"
 	    << std::setw(10) << "sl"
-	    << std::setw(10) << "sEpot"
+	    << std::setw(18) << "sEpot"
 	    << std::setw(10) << "p"
 	    << std::setw(5) << "s"
 	    << std::setw(10) << "ste"
@@ -224,10 +224,10 @@ int util::Replica_Exchange_Control::run
 	      << std::setw(6) << replica_data[r].run
 	      << std::setw(10) << replica_data[r].Ti + 1
 	      << std::setw(10) << replica_data[r].li + 1
-	      << std::setw(10) << replica_data[r].epot_i
+	      << std::setw(18) << replica_data[r].epot_i
 	      << std::setw(10) << replica_data[r].Tj + 1
 	      << std::setw(10) << replica_data[r].lj + 1
-	      << std::setw(10) << replica_data[r].epot_j
+	      << std::setw(18) << replica_data[r].epot_j
 	      << std::setw(10) << replica_data[r].probability
 	      << std::setw(5) << replica_data[r].switched;
 

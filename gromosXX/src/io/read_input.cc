@@ -27,6 +27,8 @@
 
 #include <interaction/forcefield/forcefield.h>
 
+#include <util/replica_data.h>
+
 #include "read_input.h"
 #include "read_special.h"
 
@@ -43,24 +45,58 @@ int io::read_input(io::Argument const & args,
 		   algorithm::Algorithm_Sequence & md_seq,
 		   std::ostream & os)
 {
-  // create an in_parameter
 
-  if (args.count("print") > 0){
-    if (args["print"] == "pairlist")
-      sim.param().pairlist.print = true;
+  if (read_parameter(args, sim, os) != 0) return -1;
+
+  if (read_topology(args, topo, sim, md_seq, os) != 0) return -1;
+
+  if (read_configuration(args, topo, conf, sim, os) != 0) return -1;
+  
+  if (read_special(args, topo, conf, sim) != 0) return -1;
+
+  return 0;
+}
+
+int io::read_replica_input
+(
+ io::Argument const & args,
+ topology::Topology & topo,
+ std::vector<configuration::Configuration> & conf,
+ simulation::Simulation & sim,
+ algorithm::Algorithm_Sequence & md_seq,
+ std::vector<util::Replica_Data> & replica_data,
+ std::ostream & os)
+{
+  if (read_parameter(args, sim, os) != 0) return -1;
+
+  if (read_topology(args, topo, sim, md_seq, os) != 0) return -1;
+
+  if (read_replica_configuration(args, topo, conf, sim, replica_data, os) != 0)
+    return -1;
+  
+  for(unsigned int i=0; i<conf.size(); ++i){
+    if (read_special(args, topo, conf[i], sim) != 0) return -1;
   }
 
-  std::ifstream input_file, topo_file, pttopo_file, conf_file;
+  return 0;
+}
+
+
+int io::read_parameter(io::Argument const & args,
+		       simulation::Simulation & sim,
+		       std::ostream & os)
+{
+  std::ifstream input_file;
   
   input_file.open(args["input"].c_str());
-
+  
   if (!input_file.is_open()){
     os << "\n\ncould not open " << args["input"] << "!\n" << std::endl;
     io::messages.add("opening input failed", "read_input",
 		     io::message::critical);
     return -1;
   }
-
+  
   io::messages.add("parameter read from " + args["input"],
 		   "read input",
 		   io::message::notice);
@@ -69,7 +105,7 @@ int io::read_input(io::Argument const & args,
   ip.read(sim.param(), os);
   sim.time_step_size() = sim.param().step.dt;
   sim.time() = sim.param().step.t0;
-
+  
   if (sim.param().analyze.analyze){
     if (args.count("anatrj") < 1){
       os << "\n\nno analyzation trajectory specified (@anatrj)\n";
@@ -81,9 +117,25 @@ int io::read_input(io::Argument const & args,
     else
       sim.param().analyze.trajectory = args["anatrj"];
   }
+  
+  if (args.count("print") > 0){
+    if (args["print"] == "pairlist")
+      sim.param().pairlist.print = true;
+  }
+  
+  return 0;
+}
 
+int io::read_topology(io::Argument const & args,
+		      topology::Topology & topo,
+		      simulation::Simulation & sim,
+		      algorithm::Algorithm_Sequence & md_seq,
+		      std::ostream & os)
+{
+  std::ifstream topo_file, pttopo_file;
+  
   topo_file.open(args["topo"].c_str());
-  if (!topo_file.is_open()){
+    if (!topo_file.is_open()){
     os << "\n\ncould not open " << args["topo"] << "!\n" << std::endl;
     io::messages.add("opening topology failed", "read_input",
 		     io::message::critical);
@@ -95,16 +147,16 @@ int io::read_input(io::Argument const & args,
   
   io::In_Topology it(topo_file);
   it.read(topo, sim.param(), os);
-
+  
   if(sim.param().perturbation.perturbation){
     if(args.count("pttopo")<1){
       io::messages.add("No perturbation topology specified",
 		       "read_input", io::message::critical);
       return -1;
     }
-
+    
     pttopo_file.open(args["pttopo"].c_str());
-
+    
     if (!pttopo_file.is_open()){
       os << "\n\ncould not open " << args["pttopo"] << "!\n" << std::endl;
       io::messages.add("opening perturbation topology failed", "read_input",
@@ -117,17 +169,29 @@ int io::read_input(io::Argument const & args,
     
     io::In_Perturbation ipt(pttopo_file);
     ipt.read(topo, sim.param());
-
+    
   }
-
+  
   topo.init(sim, os);
-
+  
   // do this after reading in a perturbation topology
-  sim.multibath().calculate_degrees_of_freedom(topo, sim.param().rottrans.rottrans);
+  sim.multibath().calculate_degrees_of_freedom
+    (topo, sim.param().rottrans.rottrans);
 
-  // read in the special data
-  DEBUG(7, "reading special data");
-  io::read_special(args, topo, conf, sim);
+  // and create the algorithms
+  // (among them the forcefield!)
+  algorithm::create_md_sequence(md_seq, topo, sim, it, os);
+
+  return 0;
+}
+
+int io::read_configuration(io::Argument const & args,
+			   topology::Topology & topo,
+			   configuration::Configuration & conf,
+			   simulation::Simulation & sim,
+			   std::ostream & os)
+{
+  std::ifstream conf_file;
 
   DEBUG(7, "reading configuration");
   conf_file.open(args["conf"].c_str());
@@ -139,19 +203,52 @@ int io::read_input(io::Argument const & args,
     return -1;
   }
 
-
   io::messages.add("configuration read from " + args["conf"],
 		   "read input",
 		   io::message::notice);
   
   io::In_Configuration ic(conf_file);
   ic.read(conf, topo, sim, os);
-  // and initialise
-  conf.initialise(topo, sim.param());
-    
-  // and create the algorithms
-  // (among them the forcefield!)
-  algorithm::create_md_sequence(md_seq, topo, conf, sim, it, os);
 
+  conf.init(topo, sim.param());
+    
   return 0;
 }
+
+/**
+ * read in a configuration
+ */
+int io::read_replica_configuration
+(
+ io::Argument const &args,
+ topology::Topology &topo,
+ std::vector<configuration::Configuration> & conf,
+ simulation::Simulation & sim,
+ std::vector<util::Replica_Data> & replica_data,
+ std::ostream & os
+ )
+{
+  std::ifstream conf_file;
+
+  DEBUG(7, "reading replica configurations");
+  conf_file.open(args["conf"].c_str());
+
+  if (!conf_file.is_open()){
+    os << "\n\ncould not open " << args["conf"] << "!\n" << std::endl;
+    io::messages.add("opening configuration failed", "read_input",
+		     io::message::critical);
+    return -1;
+  }
+
+  io::messages.add("replica configurations read from " + args["conf"],
+		   "read input", io::message::notice);
+  
+  io::In_Configuration ic(conf_file);
+  ic.read_replica(conf, topo, sim, replica_data, os);
+
+  for(unsigned int i=0; i<conf.size(); ++i)
+    conf[i].init(topo, sim.param());
+    
+  return 0;
+}
+

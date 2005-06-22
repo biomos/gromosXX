@@ -85,11 +85,6 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @jval      filename\n\n";
   }
   
-  if (knowns.count("rep")){
-    usage += "\t# deprecated: replica exchange information\n";
-    usage += "\t# @rep       filename\n\n";
-  }
-
   if (knowns.count("master")){
     usage += "\t# replica exchange: master process\n";
     usage += "\t# @master    name\n\n";

@@ -8,6 +8,11 @@
 
 #include <gromosXX/io/configuration/inframe.h>
 
+namespace util
+{
+  struct Replica_Data;
+}
+
 namespace io {
 
   /**
@@ -35,6 +40,17 @@ namespace io {
 	      topology::Topology &topo, 
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
+
+    /**
+     * Read in replica exchange MD configurations
+     */
+    void read_replica
+    (
+     std::vector<configuration::Configuration> & conf, 
+     topology::Topology &topo, 
+     simulation::Simulation & sim,
+     std::vector<util::Replica_Data> & replica_data,
+     std::ostream & os = std::cout);
 
     /**
      * read the next frame, topology has to be already prepared.
@@ -107,6 +123,15 @@ namespace io {
 		    simulation::Simulation & sim,
 		    std::ostream & os = std::cout);
     
+    /**
+     * read replica information
+     */
+    bool read_replica_information
+    (
+     std::vector<util::Replica_Data> & replica_data,
+     std::ostream & os = std::cout
+     );
+				  
     /**
      * read POSITION block.
      */

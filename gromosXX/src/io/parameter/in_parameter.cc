@@ -2059,7 +2059,6 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
     param.force.spc_loop = spc;
 
   }
-  
 }
 
 /**
@@ -2083,20 +2082,15 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
     _lineStream >> param.replica.num_T;
-    std::cerr << "num_T = " << param.replica.num_T << std::endl;
-
     param.replica.temperature.resize(param.replica.num_T, 0.0);
 
     for(int i=0; i<param.replica.num_T; ++i){
       _lineStream >> param.replica.temperature[i];
-      std::cerr << "T=" << param.replica.temperature[i] << std::endl;
     }
     
     _lineStream >> param.replica.scale;
-    std::cerr << "scale " << param.replica.scale << std::endl;
 
     if (_lineStream.fail()){
-      std::cerr << "after scale" << std::endl;
       io::messages.add("bad line in REPLICA03 block",
 		       "In_Parameter", io::message::error);
       param.replica.num_T = 0;
@@ -2107,19 +2101,16 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     }
     
     _lineStream >> param.replica.num_l;
-    std::cerr << "num_l " << param.replica.num_l << std::endl;
-    
     param.replica.lambda.resize(param.replica.num_l, 0.0);
     
     for(int i=0; i<param.replica.num_l; ++i){
       _lineStream >> param.replica.lambda[i];
-      std::cerr << "l " << param.replica.lambda[i] << std::endl;
     }
 
     _lineStream >> param.replica.trials;
-    std::cerr << "trials " << param.replica.trials << std::endl;
+    _lineStream >> param.replica.equilibrate;
     _lineStream >> param.replica.slave_runs;
-    std::cerr << "runs " << param.replica.slave_runs << std::endl;
+    _lineStream >> param.replica.write;
     
     if (_lineStream.fail()){
       std::cerr << "at the end" << std::endl;

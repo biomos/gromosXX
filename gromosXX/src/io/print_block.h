@@ -67,7 +67,8 @@ namespace io
    */
   void print_CENTREOFMASS(std::ostream &os, double const ekin_trans, double const ekin_rot);
 
-  void print_REMD(std::ostream &os, util::Replica_Data const & replica_data);
+  void print_REMD(std::ostream &os, util::Replica_Data const & replica_data,
+		  simulation::Parameter const & param);
   
 } // io
 

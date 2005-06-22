@@ -990,9 +990,12 @@ namespace simulation
        * - scale (false)
        * - lambda <empty>
        * - trials 0
+       * - equilibrate 0
        * - slave_runs 0
+       * - write 0
        */
-      replica_struct() : num_T(0), num_l(0), scale(false), trials(0), slave_runs(0)
+      replica_struct() : num_T(0), num_l(0), scale(false), trials(0),
+			 equilibrate(0), slave_runs(0), write(0)
       {
       }
       /**
@@ -1020,9 +1023,17 @@ namespace simulation
        */
       int trials;
       /**
+       * equilibrate: no switching for the first N trials
+       */
+      int equilibrate;
+      /**
        * runs per slave
        */
       int slave_runs;
+      /**
+       * write replicas (to master trajectory) every n steps
+       */
+      int write;
       
     } /** replica exchange parameters */ replica;
     

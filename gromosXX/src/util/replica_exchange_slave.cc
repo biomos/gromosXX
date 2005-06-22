@@ -90,8 +90,8 @@ int util::Replica_Exchange_Slave::run
 
   std::cout << "slave initialised" << std::endl;
 
-  char port_name[MPI::MAX_PORT_NAME];
-
+  char port_name[MPI_MAX_PORT_NAME];
+  
   if (args.count("slave") != 1){
     io::messages.add("slave: connection name required",
 		     "replica exchange",
@@ -99,13 +99,31 @@ int util::Replica_Exchange_Slave::run
     MPI_Finalize();
     return 1;
   }
-  
+  if (args["slave"].length() > MPI_MAX_PORT_NAME){
+    io::messages.add("slave: connection name too long",
+		     "replica exchange",
+		     io::message::error);
+    MPI_Finalize();
+    return 1;
+  }
+
   MPI::Lookup_name(args["slave"].c_str(), MPI_INFO_NULL, port_name);
 
+  DEBUG(9, "setting error handlers to return error codes");
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+  MPI_Errhandler_set(master, MPI_ERRORS_RETURN);
+  DEBUG(9, "error handlers in place");
+  
   for(int run=0; run < sim.param().replica.slave_runs; ++run){
     
     DEBUG(8, "slave: connecting..");
-    MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
+    if (MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master)
+	!= MPI_SUCCESS){
+      std::cout << "could not connect to master. master finished?"
+		<< std::endl;
+      MPI_Finalize();
+      return 1;
+    }
     DEBUG(9, "slave: connected");
 
     // request a job
@@ -128,7 +146,6 @@ int util::Replica_Exchange_Slave::run
 	MPI_Finalize();
 	return 1;
       }
-      
 
       // close connection
       MPI_Comm_disconnect(&master);
@@ -195,14 +212,19 @@ int util::Replica_Exchange_Slave::run
       
       // and disconnect
       DEBUG(9, "disconnecting...");
-      MPI_Comm_disconnect(&master);
-
+      if (MPI_Comm_disconnect(&master) != MPI_SUCCESS){
+	std::cout << "could not disconnect. master finished?"
+		  << std::endl;
+	MPI_Finalize();
+	return 1;
+      }
+      DEBUG(9, "disconnected!");
     }
     else{
       MPI_Comm_disconnect(&master);
       std::cout << "slave waiting..." << std::endl;
       // wait apropriate time for master to prepare
-      sleep(60);
+      sleep(120);
     }
     
   } // for slave_runs

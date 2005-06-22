@@ -17,6 +17,8 @@
 #include <io/configuration/inframe.h>
 
 #include <util/generate_velocities.h>
+#include <util/replica_data.h>
+
 #include <math/volume.h>
 
 #include "in_configuration.h"
@@ -95,6 +97,168 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     os << "\n\n";
   }
   
+
+  // warn for unread input data
+  for(std::map<std::string, std::vector<std::string> >::const_iterator
+	it = m_block.begin(),
+	to = m_block.end();
+      it != to;
+      ++it){
+
+    if (block_read.count(it->first) == 0 && it->second.size()){
+      io::messages.add("block " + it->first + " not read in!",
+		       "In_Configuration",
+		       io::message::warning);
+    }
+  }
+  
+  if (!quiet)
+    os << "\n\nEND\n\n";
+}
+
+/**
+ * read in a trajectory.
+ */
+void io::In_Configuration::read_replica
+(
+ std::vector<configuration::Configuration> & conf, 
+ topology::Topology &topo, 
+ simulation::Simulation & sim,
+ std::vector<util::Replica_Data> & replica_data,
+ std::ostream & os)
+{
+  if (!quiet)
+    os << "\nREPLICA CONFIGURATION\n";
+  
+  simulation::Parameter const & param = sim.param();
+
+  const int switch_T = sim.param().replica.num_T;
+  const int switch_l = sim.param().replica.num_l;
+
+  const int rep_num = switch_T * switch_l;
+  conf.resize(rep_num);
+  replica_data.resize(rep_num);
+
+  block_read.clear();
+  
+  DEBUG(8, "reading in a frame");
+  read_frame();
+
+  // is it a multi-configuration (replica) file?
+  std::vector<std::string> buffer = m_block["REPLICAFRAME"];
+  
+  if(!buffer.size()){
+    conf[0].resize(topo.num_atoms());
+
+    read_time(topo, conf[0], sim, os);
+    read_position(topo, conf[0], sim, os);
+    read_velocity(topo, conf[0], sim, os);
+    read_box(topo, conf[0], sim, os);
+    read_jvalue(topo, conf[0], sim, os);
+    read_pscale(topo, conf[0], sim, os);
+    read_flexv(topo, conf[0], sim, os);
+  
+    conf[0].boundary_type = param.boundary.boundary;
+
+    for(unsigned int i=1; i<conf.size(); ++i)
+      conf[i] = conf[0];
+
+    // setup replica information
+    {
+      int i=0;
+      for(int l=0; l < switch_l; ++l){
+	for(int t=0; t < switch_T; ++t, ++i){
+	  
+	  replica_data[i].ID = i;
+	  replica_data[i].run = 0;
+	  
+	  replica_data[i].Ti = t;
+	  replica_data[i].Tj = t;
+	  
+	  replica_data[i].li = l;
+	  replica_data[i].lj = l;
+	  
+	  replica_data[i].epot_i = 0.0;
+	  replica_data[i].epot_j = 0.0;
+	  
+	  replica_data[i].state = util::waiting;
+	  replica_data[i].probability = 0.0;
+	  replica_data[i].switched = false;
+	}
+      }
+    }
+  }
+  else{
+    read_replica_information(replica_data, os);
+
+    for(unsigned int i=0; i<conf.size(); ++i){
+      conf[i].resize(topo.num_atoms());
+      
+      read_time(topo, conf[i], sim, os);
+      read_position(topo, conf[i], sim, os);
+      read_velocity(topo, conf[i], sim, os);
+      read_box(topo, conf[i], sim, os);
+      read_jvalue(topo, conf[i], sim, os);
+      read_pscale(topo, conf[i], sim, os);
+      read_flexv(topo, conf[i], sim, os);
+      
+      conf[i].boundary_type = param.boundary.boundary;
+      
+      // warn for unread input data
+      for(std::map<std::string, std::vector<std::string> >::const_iterator
+	    it = m_block.begin(),
+	    to = m_block.end();
+	  it != to;
+	  ++it){
+	
+	if (block_read.count(it->first) == 0 && it->second.size()){
+	  io::messages.add("block " + it->first + " not read in!",
+			   "In_Configuration",
+			   io::message::warning);
+	}
+      }
+      
+      block_read.clear();
+      read_frame();
+    }
+  }
+
+  // print some information
+  if (!quiet){
+    os << "\n\t";
+    switch(conf[0].boundary_type){
+      case math::vacuum:
+	os << "PBC            = vacuum\n";
+	break;
+      case math::rectangular:
+	os << "PBC            = rectangular\n";
+	break;
+      case math::triclinic:
+	os << "PBC            = triclinic\n";
+	break;
+      case math::truncoct:
+	os << "PBC            = truncoct\n";
+	break;
+      default:
+	os << "wrong periodic boundary conditions!";
+	io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+    }
+  }
+
+  if (!quiet){
+    os << "\ttotal mass     = " << math::sum(topo.mass()) << "\n";
+    
+    if (conf[0].boundary_type != math::vacuum){
+      const double v = math::volume(conf[0].current().box, 
+				    conf[0].boundary_type);
+      os << "\tvolume         = " 
+	 << std::setw(18) << v
+	 << "\n\tdensity        = " 
+	 << std::setw(18) << math::sum(topo.mass()) / v;
+    }
+    
+    os << "\n\n";
+  }
 
   // warn for unread input data
   for(std::map<std::string, std::vector<std::string> >::const_iterator
@@ -1024,5 +1188,62 @@ _read_time_step(std::vector<std::string> &buffer,
   sim.steps() = i;
   sim.time() = t;
   
+  return true;
+}
+
+bool io::In_Configuration::read_replica_information
+(
+ std::vector<util::Replica_Data> & replica_data,
+ std::ostream & os
+ )
+{
+  DEBUG(8, "read replica information");
+  std::vector<std::string> buffer;
+  buffer = m_block["REPDATA"];
+  if (!m_block.size()){
+    io::messages.add("no REPDATA block in first REPLICAFRAME!",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  block_read.insert("REPDATA");
+  
+  if (!quiet)
+    os << "\treading REPDATA...\n";
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  for(int i=0; it!=to; ++it, ++i){
+    _lineStream.clear();
+    _lineStream.str(*it);
+  
+    assert(unsigned(i) < replica_data.size());
+
+    int st;
+    
+    _lineStream >> replica_data[i].ID 
+		>> replica_data[i].run
+		>> replica_data[i].Ti
+		>> replica_data[i].li
+		>> replica_data[i].epot_i
+		>> replica_data[i].Tj
+		>> replica_data[i].lj
+		>> replica_data[i].epot_j
+		>> replica_data[i].probability
+		>> replica_data[i].switched
+		>> st;
+
+    replica_data[i].state = (util::state_enum)st;
+
+    if (_lineStream.fail()){
+      io::messages.add("Could not read replica information (REPDATA)",
+		       "In_Configuration", io::message::error);
+      return false;
+    }
+  }
+
   return true;
 }
