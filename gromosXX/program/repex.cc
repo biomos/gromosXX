@@ -75,6 +75,9 @@ int main(int argc, char *argv[]){
 #ifdef XXMPI
 
   MPI_Init(&argc, &argv);
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+  
+  int error = 0;
 
   if (args.count("master") >= 0){
 
@@ -82,7 +85,7 @@ int main(int argc, char *argv[]){
     util::Replica_Exchange_Master rep_master;
 
     std::cout << "starting master thread" << std::endl;
-    rep_master.run(args);
+    error = rep_master.run(args);
     
   }
   else if (args.count("slave") >= 0){
@@ -91,17 +94,29 @@ int main(int argc, char *argv[]){
     std::cout << "repex: starting slave" << std::endl;
     util::Replica_Exchange_Slave rep_slave;
 
-    rep_slave.run(args);
+    error = rep_slave.run(args);
 
   }
   else if (args.count("control") >= 0){
     std::cout << "repex: starting control!" << std::endl;
     util::Replica_Exchange_Control rep_control;
-    rep_control.run(args);
+    error = rep_control.run(args);
   }
   else{
     std::cout << "repex: either @master @slave or @interactive required" << std::endl;
   }
+
+  if (error){
+    std::cerr << "errors during MPI run! (error code " << error << ")\n"
+	      << std::endl;
+
+    io::messages.display();
+    
+    MPI_Abort(MPI_COMM_WORLD, error);
+    return 1;
+  }
+  
+  MPI_Finalize();
   
 #else
   
