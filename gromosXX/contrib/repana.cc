@@ -14,14 +14,16 @@ struct Replica_Data
 {
   int ID;
   int run;
-  double Ti;
-  double li;
-  double epot_i;
+  double Ti, Tj;
+  double li, lj;
+  double epot_i, epot_j;
   double p;
   int s;
 };
 
 int find_replica(vector<Replica_Data> const & v, double T, double l);
+int find_lambda(vector<double> l, double lam);
+int find_temperature(vector<double> T, double temp);
 
 int main(int argc, char *argv[])
 {
@@ -55,6 +57,9 @@ int main(int argc, char *argv[])
   vector<Replica_Data> entry(num_rep);
   vector<vector<Replica_Data> > rep_data;
 
+  vector<int> lastT(num_rep);
+  vector<int> lastl(num_rep);
+
   vector<double> T;
   vector<double> lam;
   
@@ -81,7 +86,6 @@ int main(int argc, char *argv[])
   getline(rep, l); // header
   
   Replica_Data r;
-  double Tj, lj, epot_j;
   
   while(true){
     getline(rep, l);
@@ -91,15 +95,34 @@ int main(int argc, char *argv[])
     is.str(l);
     
     is >> r.ID >> r.run >> r.Ti >> r.li >> r.epot_i
-       >> Tj >> lj >> epot_j >> r.p >> r.s;
+       >> r.Tj >> r.lj >> r.epot_j >> r.p >> r.s;
+
+    if (r.run == 0){
+      lastT[r.ID-1] = find_temperature(T, r.Ti);
+      lastl[r.ID-1] = find_lambda(lam, r.li);
+    }
+    else{
+
+      int newT = find_temperature(T, r.Ti);
+      int newl = find_lambda(lam, r.li);
+
+      if (abs(lastT[r.ID-1] - newT) + abs(lastl[r.ID-1] - newl) > 1){
+	cout << "file corrupt: change T "
+	     << lastT[r.ID-1] << " -> " << newT << " and l "
+	     << lastl[r.ID-1] << " -> " << newl << "\n";
+      }
+      lastT[r.ID-1] = newT;
+      lastl[r.ID-1] = newl;
+    }
   
-    if ((unsigned)r.run > rep_data.size())
+    if ((unsigned)r.run >= rep_data.size())
       rep_data.push_back(entry);
     
-    rep_data[r.run-1][r.ID-1] = r;
+    rep_data[r.run][r.ID-1] = r;
+    
   }
   
-  std::cerr << "read " << rep_data.size() << " runs.\n";
+      cerr << "read " << rep_data.size() << " runs.\n";
 
   // write the files
   {
@@ -131,8 +154,15 @@ int main(int argc, char *argv[])
   }
   
   {
-    vector<double> prob(num_rep, 0.0);
-    vector<int> swi(num_rep, 0);
+    vector<double> probT(num_T, 0.0);
+    vector<vector<double> > probTv(num_T);
+    vector<int> swiT(num_T, 0);
+    vector<int> trT(num_T, 0);
+
+    vector<double> probl(num_l, 0.0);
+    vector<vector<double> > problv(num_l);
+    vector<int> swil(num_l, 0);
+    vector<int> trl(num_l, 0);
 
     ofstream epot("epot.dat");
     epot.precision(4);
@@ -143,6 +173,14 @@ int main(int argc, char *argv[])
     probfile.setf(ios::fixed, ios::floatfield);
     
     ofstream switchedfile("switches.dat");
+
+    ofstream prob_l("prob_l.dat");
+    prob_l.precision(4);
+    prob_l.setf(ios::fixed, ios::floatfield);
+
+    ofstream prob_T("prob_T.dat");
+    prob_T.precision(4);
+    prob_T.setf(ios::fixed, ios::floatfield);
 
     for(unsigned int i=0; i<rep_data.size(); ++i){
       
@@ -160,9 +198,37 @@ int main(int argc, char *argv[])
 		 << " and l=" << lam[ll] << endl;
 	    return 1;
 	  }
-	  
-	  prob[rr] += rep_data[i][rr].p;
-	  swi[rr] += rep_data[i][rr].s;
+
+	  if (rep_data[i][rr].li < rep_data[i][rr].lj){
+	    // lambda switch (up)
+
+	    const int lind = find_lambda(lam, rep_data[i][rr].li);
+	    if (lind < 0){
+	      cerr << "could not find lambda!" << endl;
+	      return 1;
+	    }
+	    
+	    probl[lind] += rep_data[i][rr].p;
+	    problv[lind].push_back(rep_data[i][rr].p);
+
+	    swil[lind] += rep_data[i][rr].s;
+	    ++trl[lind];
+	  }
+
+	  if (rep_data[i][rr].Ti < rep_data[i][rr].Tj){
+	    // temperature switch (up)
+	    const int Tind = find_temperature(T, rep_data[i][rr].Ti);
+	    if (Tind < 0){
+	      cerr << "could not find temperature!" << endl;
+	      return 1;
+	    }
+	    
+	    probT[Tind] += rep_data[i][rr].p;
+	    probTv[Tind].push_back(rep_data[i][rr].p);
+
+	    swiT[Tind] += rep_data[i][rr].s;
+	    ++trT[Tind];
+	  }
 	  
 	  epot << std::setw(18) << rep_data[i][rr].epot_i;
 	  probfile << std::setw(12) << rep_data[i][rr].p;
@@ -180,22 +246,96 @@ int main(int argc, char *argv[])
     probfile.close();
     switchedfile.close();
 
-    cout << "average switching probabilities:\n";
-    double ppp = 0;
-    for(unsigned int rr=0; rr<prob.size(); ++rr){
-      cout << setw(12) << prob[rr] / num_rep;
-      ppp += prob[rr];
+    prob_l << "# switching probabilities per lambda\n\n";
+    unsigned int q = 0;
+    while(true){
+      bool br = true;
+      for(int i=0; i<num_l-1; ++i){
+	if (problv[i].size() > q){
+	  br = false;
+	  prob_l << std::setw(12) << problv[i][q];
+	}
+	else{
+	  prob_l << std::setw(12) << "-";
+	}
+      }
+      prob_l << "\n";
+      if (br) break;
+      ++q;
     }
-    cout << "\n\ntotal average switching probability = " 
-	 << ppp / num_rep / num_rep;
+
+    prob_T << "# switching probabilities per temperature\n\n";
+    q = 0;
+    while(true){
+      bool br = true;
+      for(int i=0; i<num_T-1; ++i){
+	if (probTv[i].size() > q){
+	  br = false;
+	  prob_T << std::setw(12) << probTv[i][q];
+	}
+	else{
+	  prob_T << std::setw(12) << "-";
+	}
+      }
+      prob_T << "\n";
+      if (br) break;
+      ++q;
+    }
+    
+    prob_l.close();
+    prob_T.close();
+
+    cout << "average switching probabilities:\n"
+	 << "\tTemperature:\n";
+    
+    double ppp = 0;
+    for(unsigned int rr=0; rr<probT.size() - 1; ++rr){
+      if (trT[rr] > 0){
+	cout << setw(12) << probT[rr] / trT[rr];
+	ppp += probT[rr] / trT[rr];
+      }
+      else
+	cout << setw(12) << 0.0;
+    }
+    cout << "\n\ntotal average switching probability = ";
+    if (probT.size() > 1)
+      cout << ppp / (probT.size() - 1);
+    else
+      cout << 0;
 
     cout << "\n\nnumber of switches:\n";
     int sss = 0;
-    for(unsigned int rr=0; rr<swi.size(); ++rr){
-      cout << setw(12) << swi[rr];
-      sss += swi[rr];
+    for(unsigned int rr=0; rr<swiT.size() - 1; ++rr){
+      cout << setw(12) << swiT[rr];
+      sss += swiT[rr];
     }
-    cout << "\n\ntotal number of switches = " << sss / 2;
+    cout << "\n\ntotal number of switches = " << sss;
+
+    cout << "\n\naverage switching probabilities:\n"
+	 << "\tlambda:\n";
+    
+    ppp = 0;
+    for(unsigned int rr=0; rr<probl.size() - 1; ++rr){
+      if (trl[rr] > 0){
+	cout << setw(12) << probl[rr] / trl[rr];
+	ppp += probl[rr] / trl[rr];	
+      }
+      else
+	cout << setw(12) << 0.0;
+    }
+    cout << "\n\ntotal average switching probability = ";
+    if (probl.size() > 1)
+      cout << ppp / (probl.size() - 1);
+    else
+      cout << 0.0;
+
+    cout << "\n\nnumber of switches:\n";
+    sss = 0;
+    for(unsigned int rr=0; rr<swil.size() - 1; ++rr){
+      cout << setw(12) << swil[rr];
+      sss += swil[rr];
+    }
+    cout << "\n\ntotal number of switches = " << sss;
   }
 
   cout << "\n\n" << endl;
@@ -214,3 +354,18 @@ int find_replica(vector<Replica_Data> const & v, double T, double l)
   return -1;
 }
 
+int find_lambda(vector<double> l, double lam)
+{
+  for(unsigned int i=0; i<l.size(); ++i){
+    if (lam == l[i]) return i;
+  }
+  return -1;
+}
+
+int find_temperature(vector<double> T, double temp)
+{
+  for(unsigned int i=0; i<T.size(); ++i){
+    if (temp == T[i]) return i;
+  }
+  return -1;
+}

@@ -69,9 +69,13 @@ int util::Replica_Exchange_Master::run
   MPI_Status status;
   
   char port_name[MPI::MAX_PORT_NAME];
-
+  char server_name[MPI_MAX_PORT_NAME];
+  
   int mpi_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  if (MPI_Comm_size(MPI_COMM_WORLD, &mpi_size) != MPI_SUCCESS){
+    std::cerr << "MPI: could not get size" << std::endl;
+    return 1;
+  }
   
   if(mpi_size != 1){
     std::cerr << "Server consists of multiple MPI processes" << std::endl;
@@ -80,16 +84,34 @@ int util::Replica_Exchange_Master::run
 		     io::message::error);
   }
   
-  MPI::Open_port(MPI_INFO_NULL, port_name);
+  if (MPI_Open_port(MPI_INFO_NULL, port_name) != MPI_SUCCESS){
+    std::cerr << "MPI: could not open port!" << std::endl;
+    return 1;
+  }
 
   if (args.count("master") != 1){
     io::messages.add("master: connection name required",
 		     "replica exchange",
 		     io::message::error);
-    MPI_Finalize();
     return 1;
   }
-  MPI::Publish_name(args["master"].c_str(), MPI_INFO_NULL, port_name);
+  if (args["master"].length() > MPI_MAX_PORT_NAME){
+    io::messages.add("master: connection name too long",
+		     "replica exchange",
+		     io::message::error);
+    std::cerr << "master: connection name too long" << std::endl;
+    return 1;
+  }
+    
+  strcpy(server_name, args["master"].c_str());
+
+  if(MPI_Publish_name(server_name, MPI_INFO_NULL, port_name)
+     != MPI_SUCCESS){
+
+    MPI_Close_port(port_name);
+    std::cerr << "MPI: Could not publish name" << std::endl;
+    return 1;
+  }
 
   DEBUG(8, "replica master registered: " << port_name);
   std::cout << "Replica Exchange server available at " << port_name
@@ -107,18 +129,33 @@ int util::Replica_Exchange_Master::run
     io::messages.add("replica exchange: could not read input!",
 		     "replica exchange",
 		     io::message::critical);
-    return -1;
+    MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
+    MPI_Close_port(port_name);
+    return 2;
   }
 
+  // write whenever we want!
+  sim.param().write.position = 1;
+
   // initialises everything
-  for(int i=0; i<m_conf.size(); ++i)
-    md.init(topo, m_conf[i], sim, std::cout);
+  for(unsigned int i=0; i<m_conf.size(); ++i){
+    if (md.init(topo, m_conf[i], sim, std::cout)){
+      std::cerr << "md init failed!" << std::endl;
+      MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
+      MPI_Close_port(port_name);
+      return 3;
+    }
+  }
 
   // check input
   if (sim.param().replica.num_T * sim.param().replica.num_l <= 1){
     io::messages.add("replica exchange with less than 2 replicas?!",
 		     "Replica_Exchange",
 		     io::message::error);
+    std::cerr << "RE: not enough replicas" << std::endl;
+    MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
+    MPI_Close_port(port_name);
+    return 4;
   }
 
   if (sim.param().replica.trials < 1){
@@ -135,9 +172,13 @@ int util::Replica_Exchange_Master::run
   std::cout << "\nMESSAGES FROM (MASTER) INITIALIZATION\n";
   if (io::messages.display(std::cout) >= io::message::error){
     std::cout << "\nErrors during initialization!\n" << std::endl;
-    return 1;
+    std::cerr << "RE: not enough trials" << std::endl;
+    MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
+    MPI_Close_port(port_name);
+    return 4;
   }
-  
+
+  io::messages.display();
   io::messages.clear();
 
   // set seed if not set by environment variable
@@ -177,7 +218,7 @@ int util::Replica_Exchange_Master::run
   int trials = 1;
   int runs = 0;
 
-  std::ofstream rep_out("replica.dat");
+  rep_out.open("replica.dat");
   rep_out << "num_T\t" << switch_T << "\n"
 	  << "num_l\t" << switch_l << "\n";
 
@@ -225,17 +266,20 @@ int util::Replica_Exchange_Master::run
 	    << std::setw(4) << "s"
 	    << "\n";
 
-  while(true){
+  bool quit = false;
+  while(quit == false){
     
     if (runs == rep_num){
       // replicas run depth-first. so some replicas are further than others
       // the average finished the trial...
 
       // write recovery trajectory
-      if ((sim.param().replica.write &&
-	   trials % sim.param().replica.write) == 0)
+      if (sim.param().replica.write &&
+	  ((trials % sim.param().replica.write) == 0)){
+	std::cout << "writing trajectory..." << std::endl;
 	traj.write_replica(replica_data, m_conf, topo, sim);
-
+      }
+      
       ++trials;
       ++sim.steps();
       sim.time() += sim.param().step.number_of_steps * sim.param().step.dt;
@@ -266,23 +310,48 @@ int util::Replica_Exchange_Master::run
       DEBUG(8, "master: finished all trials...");
       rep_out.flush();
       std::cout << "master: finished with all trials...\n";
-      break;
+      // keep around 'till slaves have finished
+      // break;
     }
     
     // wait for a thread to connect
     DEBUG(9, "master: accepting connection...");
-    MPI_Comm_accept(port_name, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &client);
+    // std::cerr << "master: accepting..." << std::endl;
+    if (MPI_Comm_accept(port_name, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &client) != MPI_SUCCESS){
+      std::cerr << "MPI ERROR: accepting connection failed!" << std::endl;
+      continue;
+    }
+    MPI_Errhandler_set(client, MPI_ERRORS_RETURN);
     DEBUG(9, "client connected!");
 
     int i;
-    MPI_Recv(&i, 1, MPI_INT, MPI_ANY_SOURCE,
-	     MPI_ANY_TAG, client, &status);
+    if (MPI_Recv(&i, 1, MPI_INT, MPI_ANY_SOURCE,
+		 MPI_ANY_TAG, client, &status) != MPI_SUCCESS){
+
+      std::cerr << "MPI: receive client request failed" << std::endl;
+      std::cerr << "master: disconnecting..." << std::endl;
+      MPI_Comm_disconnect(&client);
+      // MPI_Comm_free(&client);
+      
+      MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
+      MPI_Close_port(port_name);
+      return 4;
+    }
 
     switch(status.MPI_TAG){
       case 0:
 	std::cout << "process " << i << " says hello\n";
 	break;
       case 1:
+
+	if(trials > sim.param().replica.trials){
+	  // terminate...
+	  std::cerr << "master: sending quit (9) signal..." << std::endl;
+	  MPI_Send(&replica_data[0], sizeof(Replica_Data), MPI_CHAR,
+		   0, 9, client);
+	  break;
+	}
+
 	// select a replica to run
 	DEBUG(9, "request a job");
 	int r;
@@ -296,32 +365,6 @@ int util::Replica_Exchange_Master::run
 	  if(replica_data[r].state == ready && 
 	     replica_data[r].run < sim.param().replica.trials){
 
-	    if (replica_data[r].run){
-	      std::cout << std::setw(6) << r + 1
-			<< std::setw(6) << replica_data[r].run
-			<< std::setw(13) << sim.param().replica.temperature[replica_data[r].Ti]
-			<< std::setw(13) << sim.param().replica.lambda[replica_data[r].li]
-			<< std::setw(18) << replica_data[r].epot_i
-			<< std::setw(13) << sim.param().replica.temperature[replica_data[r].Tj]
-			<< std::setw(13) << sim.param().replica.lambda[replica_data[r].lj]
-			<< std::setw(18) << replica_data[r].epot_j
-			<< std::setw(13) << replica_data[r].probability
-			<< std::setw(4) << replica_data[r].switched
-			<< std::endl;
-	      
-	      rep_out << std::setw(6) << r + 1
-		      << std::setw(6) << replica_data[r].run
-		      << std::setw(13) << sim.param().replica.temperature[replica_data[r].Ti]
-		      << std::setw(13) << sim.param().replica.lambda[replica_data[r].li]
-		      << std::setw(18) << replica_data[r].epot_i
-		      << std::setw(13) << sim.param().replica.temperature[replica_data[r].Tj]
-		      << std::setw(13) << sim.param().replica.lambda[replica_data[r].lj]
-		      << std::setw(18) << replica_data[r].epot_j
-		      << std::setw(13) << replica_data[r].probability
-		      << std::setw(4) << replica_data[r].switched
-		      << "\n";
-	    }
-	    
 	    // assign it!
 	    replica_data[r].state = running;
 
@@ -420,7 +463,7 @@ int util::Replica_Exchange_Master::run
 	  case 3: // quit
 	    {
 	      std::cout << "master: stopping" << std::endl;
-	      trials = sim.param().replica.trials + 1;
+	      quit = true;
 	      break;
 	    }
 	}
@@ -432,7 +475,9 @@ int util::Replica_Exchange_Master::run
     }
 
     DEBUG(9, "disconnecting");
+    // std::cerr << "master: disconnecting..." << std::endl;
     MPI_Comm_disconnect(&client);
+    // MPI_Comm_free(&client);
 
   } // while trials to do
 
@@ -461,7 +506,7 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
 
   // aliases
   std::vector<double> const & T = param.replica.temperature;
-  // std::vector<double> const & l = param.replica.lambda;
+  std::vector<double> const & l = param.replica.lambda;
 
   if (replica_data[i].state != waiting){ assert(false); return i; }
   
@@ -477,6 +522,9 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
     replica_data[i].probability = 0.0;
     replica_data[i].switched = false;
     replica_data[i].state = ready;
+
+    print_replica(i, param, std::cout);
+    print_replica(i, param, rep_out);
 
     return 0;
   }
@@ -498,14 +546,32 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
   if (r < probability){
     // SUCCEEDED!!!
     
-    std::cout << "-----> switch: " 
-	      << T[replica_data[i].Ti]
-	      << " <-> " 
-	      << T[replica_data[j].Ti]
-	      << "\n";
+    if (replica_data[i].Ti != replica_data[j].Ti){
+      std::cout << "-----> switch: " 
+		<< T[replica_data[i].Ti]
+		<< " <-> " 
+		<< T[replica_data[j].Ti]
+		<< "\n";
+    }
+    else{
+      std::cout << "-----> switch: " 
+		<< l[replica_data[i].li]
+		<< " <-> " 
+		<< l[replica_data[j].li]
+		<< "\n";
+    }
     
     replica_data[i].switched = true;
     replica_data[j].switched = true;
+  }
+  
+  print_replica(i, param, std::cout);
+  print_replica(i, param, rep_out);
+  
+  print_replica(j, param, std::cout);
+  print_replica(j, param, rep_out);
+  
+  if (replica_data[i].switched){
     
     replica_data[i].li = replica_data[i].lj;
     replica_data[i].Ti = replica_data[i].Tj;
@@ -513,7 +579,7 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
     replica_data[j].li = replica_data[j].lj;
     replica_data[j].Ti = replica_data[j].Tj;
   }
-    
+  
   set_next_switch(i);
   set_next_switch(j);
   
@@ -545,10 +611,12 @@ double util::Replica_Exchange_Master::switch_probability(int i, int j, simulatio
       (bi - bj) *
       (replica_data[j].epot_i - replica_data[i].epot_i);
 
+    /*
     std::cout << "bi=" << bi << "  bj=" << bj 
 	      << "  epot_i=" << replica_data[i].epot_i
 	      << "  epot_j=" << replica_data[j].epot_i
 	      << "\n";
+    */
   }
   
   // and pressure coupling
@@ -634,6 +702,24 @@ void util::Replica_Exchange_Master::set_next_switch(int i)
   if (replica_data[i].lj < 0 || replica_data[i].lj >= switch_l)
     replica_data[i].lj = replica_data[i].li;
 }
+
+void util::Replica_Exchange_Master::print_replica(int r,
+						  simulation::Parameter const & param,
+						  std::ostream & os)
+{
+  os << std::setw(6) << r + 1
+     << std::setw(6) << replica_data[r].run
+     << std::setw(13) << param.replica.temperature[replica_data[r].Ti]
+     << std::setw(13) << param.replica.lambda[replica_data[r].li]
+     << std::setw(18) << replica_data[r].epot_i
+     << std::setw(13) << param.replica.temperature[replica_data[r].Tj]
+     << std::setw(13) << param.replica.lambda[replica_data[r].lj]
+     << std::setw(18) << replica_data[r].epot_j
+     << std::setw(13) << replica_data[r].probability
+     << std::setw(4) << replica_data[r].switched
+     << std::endl;
+}
+
 
 
 #endif
