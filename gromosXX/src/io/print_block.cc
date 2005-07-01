@@ -538,7 +538,8 @@ namespace io
     
     os << "TIMESTEP"
        << std::setw(15) << steps
-       << std::setw(15) << time
+       << " "
+       << std::setw(14) << time
        << "\n";
 
   }

@@ -526,7 +526,8 @@ void io::Out_Configuration
   
   os << "TIMESTEP\n"
      << std::setw(m_width) << sim.steps()
-     << std::setw(m_width) << sim.time()
+     << " "
+     << std::setw(m_width-1) << sim.time()
      << "\nEND\n";
   
 }
@@ -540,7 +541,8 @@ void io::Out_Configuration
   
   os << "TIMESTEP\n"
      << std::setw(m_width) << sim.steps()-1
-     << std::setw(m_width) << sim.time() - sim.time_step_size()
+     << " "
+     << std::setw(m_width-1) << sim.time() - sim.time_step_size()
      << "\nEND\n";
   
 }
