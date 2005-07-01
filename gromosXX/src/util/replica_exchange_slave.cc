@@ -80,7 +80,6 @@ int util::Replica_Exchange_Slave::run
   std::cout << "\nMESSAGES FROM (SLAVE) INITIALIZATION\n";
   if (io::messages.display(std::cout) >= io::message::error){
     std::cout << "\nErrors during initialization!\n" << std::endl;
-    MPI_Finalize();
     return 1;
   }
   io::messages.clear();
@@ -91,40 +90,45 @@ int util::Replica_Exchange_Slave::run
   std::cout << "slave initialised" << std::endl;
 
   char port_name[MPI_MAX_PORT_NAME];
+  char server_name[MPI_MAX_PORT_NAME];
   
   if (args.count("slave") != 1){
     io::messages.add("slave: connection name required",
 		     "replica exchange",
 		     io::message::error);
-    MPI_Finalize();
+
+    std::cerr << "slave: name required" << std::endl;
     return 1;
   }
+
   if (args["slave"].length() > MPI_MAX_PORT_NAME){
     io::messages.add("slave: connection name too long",
 		     "replica exchange",
 		     io::message::error);
-    MPI_Finalize();
+    std::cerr << "slave: connection name too long" << std::endl;
     return 1;
   }
 
-  MPI::Lookup_name(args["slave"].c_str(), MPI_INFO_NULL, port_name);
+  strcpy(server_name, args["slave"].c_str());
+  if (MPI_Lookup_name(server_name, MPI_INFO_NULL, port_name) != MPI_SUCCESS){
+    std::cerr << "MPI: could not lookup name!" << std::endl;
+    return 1;
+  }
 
-  DEBUG(9, "setting error handlers to return error codes");
-  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-  MPI_Errhandler_set(master, MPI_ERRORS_RETURN);
-  DEBUG(9, "error handlers in place");
-  
   for(int run=0; run < sim.param().replica.slave_runs; ++run){
     
     DEBUG(8, "slave: connecting..");
-    if (MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master)
+    // std::cerr << "slave: connecting..." << std::endl;
+    if (MPI_Comm_connect(port_name, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &master)
 	!= MPI_SUCCESS){
       std::cout << "could not connect to master. master finished?"
 		<< std::endl;
-      MPI_Finalize();
+      std::cerr << "MPI: could not connect to master" << std::endl;
       return 1;
     }
+
     DEBUG(9, "slave: connected");
+    MPI_Errhandler_set(master, MPI_ERRORS_RETURN);
 
     // request a job
     int server_response = get_replica_data();
@@ -142,13 +146,16 @@ int util::Replica_Exchange_Slave::run
 
       // init replica parameters (t, conf, T, lambda)
       if (init_replica(topo, conf, sim)){
+	std::cerr << "slave: disconnecting..." << std::endl;
 	MPI_Comm_disconnect(&master);
-	MPI_Finalize();
+	// MPI_Comm_free(&master);	
 	return 1;
       }
 
       // close connection
+      // std::cerr << "slave: disconnecting" << std::endl;
       MPI_Comm_disconnect(&master);
+      // MPI_Comm_free(&master);
 
       // run it
       int error = run_md(topo, conf, sim, md, traj);
@@ -162,8 +169,7 @@ int util::Replica_Exchange_Slave::run
 	if (ff == NULL){
 	  std::cerr << "forcefield not found in MD algorithm sequence"
 		    << std::endl;
-	  MPI_Finalize();
-	  MPI_Comm_free(&master);
+	  // MPI_Comm_free(&master);
 	  return 1;
 	}
 	
@@ -198,11 +204,16 @@ int util::Replica_Exchange_Slave::run
       }
 	
       DEBUG(8, "slave: connecting (after run)...");
+      // std::cerr << "salve: connecting..." << std::endl;
       MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
+      MPI_Errhandler_set(master, MPI_ERRORS_RETURN);
       DEBUG(9, "slave: connected");
 
       DEBUG(8, "slave: finished job " << replica_data.ID);
-      MPI_Send(&replica_data.ID, 1, MPI_INT, 0, 2, master);
+      if (MPI_Send(&replica_data.ID, 1, MPI_INT, 0, 2, master) != MPI_SUCCESS){
+	std::cerr << "MPI: sending request to master failed" << std::endl;
+	return 1;
+      }
 
       if (!error){
 	// store configuration on master
@@ -211,26 +222,38 @@ int util::Replica_Exchange_Slave::run
       }
       
       // and disconnect
+      // std::cerr << "slave: disconnecting..." << std::endl;
       DEBUG(9, "disconnecting...");
       if (MPI_Comm_disconnect(&master) != MPI_SUCCESS){
 	std::cout << "could not disconnect. master finished?"
 		  << std::endl;
-	MPI_Finalize();
+	std::cerr << "MPI: disconnecting failed" << std::endl;
 	return 1;
       }
+      // MPI_Comm_free(&master);
       DEBUG(9, "disconnected!");
     }
-    else{
+    else if (server_response == 9){
+      std::cout << "server has finished!\n"
+		<< "exiting...\n"
+		<< std::endl;
+      std::cerr << "slave: disconnecting..." << std::endl;
       MPI_Comm_disconnect(&master);
+      return 0;
+    }
+    else{
+      // std::cerr << "slave: disconnecting..." << std::endl;
+      MPI_Comm_disconnect(&master);
+      // MPI_Comm_free(&master);
+
       std::cout << "slave waiting..." << std::endl;
       // wait apropriate time for master to prepare
       sleep(120);
     }
     
   } // for slave_runs
-    
-  // MPI_Comm_free(&master);
   
+  std::cerr << "slave: finished runs. terminating..." << std::endl;
   return 0;
 }
 
@@ -289,19 +312,20 @@ int util::Replica_Exchange_Slave::get_replica_data()
   MPI_Send(&i, 1, MPI_INT, 0, 1, master);
   
   DEBUG(8, "slave: waiting for replica data");
-  MPI_Recv(&replica_data, sizeof(Replica_Data), MPI_CHAR,
-	   MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
-  
-  /*
-  if (status.MPI_ERROR != MPI_SUCCESS){
+  if (MPI_Recv(&replica_data, sizeof(Replica_Data), MPI_CHAR,
+	       MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status) != MPI_SUCCESS){
+
     std::cout << "MPI ERROR! getting replica data: " << status.MPI_ERROR << std::endl;
-    return 1;
+    return 9;
   }
-  */
 
   DEBUG(9, "slave: got replica " << replica_data.ID
 	<< " temperature=" << replica_data.Ti
 	<< " lambda=" << replica_data.li);
+
+  if (status.MPI_TAG == 9){
+    std::cout << "received killing signal" << std::endl;
+  }
   
   return status.MPI_TAG;
 }

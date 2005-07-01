@@ -55,20 +55,37 @@ int util::Replica_Exchange_Control::run
  io::Argument & args
  )
 {
-  char port_name[MPI::MAX_PORT_NAME];
-
+  char port_name[MPI_MAX_PORT_NAME];
+  char server_name[MPI_MAX_PORT_NAME];
+  
   if (args.count("control") < 1){
     io::messages.add("control: connection name required",
 		     "replica exchange",
 		     io::message::error);
-    MPI_Finalize();
+    std::cerr << "control: connection name required!" << std::endl;
     return 1;
   }
   
-  MPI::Lookup_name(args["control"].c_str(), MPI_INFO_NULL, port_name);
+  if (args["control"].length() > MPI_MAX_PORT_NAME){
+    io::messages.add("control: connection name too long",
+		     "replica exchange",
+		     io::message::error);
+    std::cerr << "control: connection name too long" << std::endl;
+    return 1;
+  }
+    
+  strcpy(server_name, args["control"].c_str());
+
+  if (MPI_Lookup_name(server_name, MPI_INFO_NULL, port_name) != MPI_SUCCESS){
+    std::cerr << "MPI: could not lookup name!" << std::endl;
+    return 1;
+  }
 
   DEBUG(8, "control: connecting..");
-  MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
+  if (MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master) != MPI_SUCCESS){
+    std::cerr << "MPI: could not connect!" << std::endl;
+    return 1;
+  }
   
   int i = 1, nr;
   MPI_Status status;
@@ -78,13 +95,15 @@ int util::Replica_Exchange_Control::run
   
   // number of replicas
   MPI_Recv(&nr, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
-  
+  std::cerr << nr << " replicas." << std::endl;
+
   replica_data.resize(nr);
   
   MPI_Recv(&replica_data[0], sizeof(Replica_Data) * nr,
 	   MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG,
 	   master, &status);
   
+  std::cerr << "Control: disconnecting..." << std::endl;
   MPI_Comm_disconnect(&master);
 
   if (args.count("control") >= 2){
@@ -168,6 +187,7 @@ int util::Replica_Exchange_Control::run
       if (it->second == "term") replica_data[nr].state = terminate;
 
       DEBUG(8, "control: connecting..");
+      std::cerr << "Control: connecting again..." << std::endl;
       MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
   
       int i = 2;
@@ -181,6 +201,7 @@ int util::Replica_Exchange_Control::run
       MPI_Send(&replica_data[nr], sizeof(Replica_Data),
 	       MPI_CHAR, 0, 4, master);
   
+      std::cerr << "control: disconnecting..." << std::endl;
       MPI_Comm_disconnect(&master);
       
     }
@@ -188,12 +209,15 @@ int util::Replica_Exchange_Control::run
       std::cout << "send stop request to master" << std::endl;
 
       DEBUG(8, "control: connecting..");
+      std::cerr << "control: connecting to stop..." << std::endl;
       MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
   
       int i = 3;
 
       DEBUG(8, "control: requesting server quit");
       MPI_Send(&i, 1, MPI_INT, 0, 4, master);
+
+      std::cerr << "control: disconnecting..." << std::endl;
       MPI_Comm_disconnect(&master);
 
     }
@@ -256,7 +280,6 @@ int util::Replica_Exchange_Control::run
   std::cout << "\nuse\n\t@control change ID run T l Epot sT sl sEpot state" 
 	    << "\n\tto change replicas or stop to shutdown master\n" << std::endl;
   
-  MPI_Finalize();
   return 0;
 }
 
