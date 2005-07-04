@@ -23,9 +23,15 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
 		   topology::Topology const & topo)
 {
   // the last solute atom (and really the last index)
-  int last_solute = topo.num_solute_atoms() - 1;
+  int last_solute = int(topo.num_solute_atoms()) - 1;
   // the last solvent atom
   int last_solvent = topo.num_atoms() - 1;
+
+  if (topo.num_atoms() <= 0){
+    io::messages.add("no atoms in the topology??",
+		     "parse_tcouple",
+		     io::message::error);
+  }
 
   // cases to handle
   // 0 0 0
@@ -39,11 +45,18 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
 	   param.multibath.tcouple.ntt[1] == 0 && 
 	   param.multibath.tcouple.ntt[2] == 0){
 
+    if (topo.num_solute_atoms() == 0){
+      io::messages.add("no solute atoms in the topology, but coupling to a bath?",
+		       "parse_tcouple",
+		       io::message::error);
+      return;
+    }
+
     param.multibath.couple = true;
     
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
-			     param.multibath.tcouple.tau[0]);
+				       param.multibath.tcouple.tau[0]);
     param.multibath.multibath.add_bath(0, -1);
     // the atoms in the baths
     param.multibath.multibath.add_bath_index(last_solute, 0, 1, 0);
@@ -56,6 +69,14 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 0 && 
 	   param.multibath.tcouple.ntt[1] == 1 && 
 	   param.multibath.tcouple.ntt[2] == 0){
+
+    if (topo.num_solute_atoms() == 0){
+      io::messages.add("no solute atoms in the topology, but coupling to a bath?",
+		       "parse_tcouple",
+		       io::message::error);
+      return;
+    }
+    
     param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[1], 
@@ -72,19 +93,33 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 0 && 
 	   param.multibath.tcouple.ntt[1] == 0 && 
 	   param.multibath.tcouple.ntt[2] == 1){
+
     param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[2], 
-			     param.multibath.tcouple.tau[2]);
-    param.multibath.multibath.add_bath(0, -1);
+				       param.multibath.tcouple.tau[2]);
+
+    if (topo.num_solute_atoms())
+      param.multibath.multibath.add_bath(0, -1);
+
     // the atoms in the baths
-    param.multibath.multibath.add_bath_index(last_solute, 0, 1, 1);
+    if (topo.num_solute_atoms())
+      param.multibath.multibath.add_bath_index(last_solute, 0, 1, 1);
+    
     param.multibath.multibath.add_bath_index(last_solvent, 0, 0, 0);
   }
   // 1 1 0
   else if (param.multibath.tcouple.ntt[0] == 1 && 
 	   param.multibath.tcouple.ntt[1] == 1 && 
 	   param.multibath.tcouple.ntt[2] == 0){
+
+    if (topo.num_solute_atoms() == 0){
+      io::messages.add("no solute atoms in the topology, but coupling to a bath?",
+		       "parse_tcouple",
+		       io::message::error);
+      return;
+    }
+
     param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
@@ -105,6 +140,14 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 1 && 
 	   param.multibath.tcouple.ntt[1] == 1 && 
 	   param.multibath.tcouple.ntt[2] == 1){
+
+    if (topo.num_solute_atoms() == 0){
+      io::messages.add("no solute atoms in the topology, but coupling to a bath?",
+		       "parse_tcouple",
+		       io::message::error);
+      return;
+    }
+
     param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
@@ -121,6 +164,14 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 2 && 
 	   param.multibath.tcouple.ntt[1] == -2 && 
 	   param.multibath.tcouple.ntt[2] == 0){
+
+    if (topo.num_solute_atoms() == 0){
+      io::messages.add("no solute atoms in the topology, but coupling to a bath?",
+		       "parse_tcouple",
+		       io::message::error);
+      return;
+    }
+
     param.multibath.couple = true;
     // the bath
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
@@ -138,6 +189,14 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 2 && 
 	   param.multibath.tcouple.ntt[1] == -2 && 
 	   param.multibath.tcouple.ntt[2] == 1){
+
+    if (topo.num_solute_atoms() == 0){
+      io::messages.add("no solute atoms in the topology, but coupling to a bath?",
+		       "parse_tcouple",
+		       io::message::error);
+      return;
+    }
+
     param.multibath.couple = true;
     // the baths
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
@@ -152,6 +211,14 @@ void util::parse_TCOUPLE(simulation::Parameter &param,
   else if (param.multibath.tcouple.ntt[0] == 3 && 
 	   param.multibath.tcouple.ntt[1] == -3 && 
 	   param.multibath.tcouple.ntt[2] == -3){
+
+    if (topo.num_solute_atoms() == 0){
+      io::messages.add("no solute atoms in the topology, but coupling to a bath?",
+		       "parse_tcouple",
+		       io::message::error);
+      return;
+    }
+
     param.multibath.couple = true;
     // the bath
     param.multibath.multibath.add_bath(param.multibath.tcouple.temp0[0], 
