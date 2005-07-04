@@ -68,7 +68,7 @@ int util::Replica_Exchange_Master::run
   MPI_Comm client;
   MPI_Status status;
   
-  char port_name[MPI::MAX_PORT_NAME];
+  char port_name[MPI_MAX_PORT_NAME];
   char server_name[MPI_MAX_PORT_NAME];
   
   int mpi_size;

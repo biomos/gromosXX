@@ -211,8 +211,8 @@ case "$compiler" in
         CXXLD="mwld"
         AC_DEFINE_UNQUOTED(COMPILER_MWERK, 1, [Metrowerks Codewarrior C++ compiler])
      ;;
-    suncc*)             # SUN studio (tested with SUN studio 9)
-       echo "Configuring for SUN C++"
+    suncc*)             # SUN studio (tested with SUN studio 10)
+       echo "Configuring for SUN Studio"
        dnl CXX_PICKY_FLAGS="+w2 -xcheck -xsb"
        CXX_PICKY_FLAGS="+w2"
        dnl CXX_OPTIMIZE_FLAGS="-fast -xdepend -xvector -DNDEBUG"
@@ -226,8 +226,8 @@ case "$compiler" in
        fi
 
        if eval "test x$enable_mpi = xyes"; then
-	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI"
-	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI"
+	  	CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+	  	CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
        fi
 
        if eval "test x$enable_debug = xyes"; then

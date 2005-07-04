@@ -51,7 +51,7 @@ namespace simulation
     /**
      * biquadratic (time averaged & instantaneous) restraints
      */
-    restr_biq = 3,
+    restr_biq = 3
   };
 
   /**

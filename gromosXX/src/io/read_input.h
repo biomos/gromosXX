@@ -31,7 +31,7 @@ namespace io
   /**
    * read replica information
    */
-  int io::read_replica_input
+  int read_replica_input
   (
    io::Argument const & args,
    topology::Topology & topo,
