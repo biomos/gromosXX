@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -195,7 +196,41 @@ int main(int argc, char *argv[])
 	  int rr = find_replica(rep_data[i], T[tt], lam[ll]);
 	  if (rr == -1){
 	    cerr << "could not find replica for T=" << T[tt]
-		 << " and l=" << lam[ll] << endl;
+		 << " and l=" << lam[ll] << " run=" << i+1 <<  endl;
+	    cerr << "there are only " << rep_data[i].size() << " replicas this far" << endl;
+	    cerr << "(T/l) :\n";
+	    vector<string> sval, sind;
+	    ostringstream os;
+	    
+	    os.precision(4);
+	    os.setf(ios::fixed, ios::floatfield);
+	    
+	    for(unsigned int rrr=0; rrr<rep_data[i].size(); ++rrr){
+	      os.clear();
+	      os.str("");
+	      os << "(" << std::setw(10) << rep_data[i][rrr].Ti << "," << std::setw(10) << rep_data[i][rrr].li << ")";
+	      sval.push_back(os.str());
+	      os.clear();
+	      os.str("");
+	      os << "(" << std::setw(3) << find_temperature(T, rep_data[i][rrr].Ti) 
+		 << "," << std::setw(3) << find_lambda(lam, rep_data[i][rrr].li) << ")";
+	      sind.push_back(os.str());
+	    }
+
+	    sort(sval.begin(), sval.end());
+	    sort(sind.begin(), sind.end());
+
+	    for(unsigned int rrr=0; rrr<sval.size(); ++rrr){
+	      cerr << std::setw(25) << sval[rrr];
+	      if (((rrr + 1) % 5) == 0) cerr << endl;
+	    }
+	    cerr << endl;
+	    for(unsigned int rrr=0; rrr<rep_data[i].size(); ++rrr){
+	      cerr << std::setw(10)  << sind[rrr];
+	      if (((rrr + 1) % 5) == 0) cerr << endl;
+	    }
+	    cerr << endl;
+
 	    return 1;
 	  }
 
@@ -288,6 +323,11 @@ int main(int argc, char *argv[])
     cout << "average switching probabilities:\n"
 	 << "\tTemperature:\n";
     
+    for(unsigned int rr=0; rr<probT.size() - 1; ++rr){
+      cout << setw(12) << T[rr];
+    }
+    cout << "\n";
+
     double ppp = 0;
     for(unsigned int rr=0; rr<probT.size() - 1; ++rr){
       if (trT[rr] > 0){
@@ -313,6 +353,11 @@ int main(int argc, char *argv[])
 
     cout << "\n\naverage switching probabilities:\n"
 	 << "\tlambda:\n";
+    
+    for(unsigned int rr=0; rr<probl.size() - 1; ++rr){
+      cout << setw(12) << lam[rr];
+    }
+    cout << "\n";
     
     ppp = 0;
     for(unsigned int rr=0; rr<probl.size() - 1; ++rr){
