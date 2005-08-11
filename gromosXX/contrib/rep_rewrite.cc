@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
     for(unsigned int i=0; i<reprun.size(); ++i){
 
       if (repid[i] == -1) continue;
-      done = false;
       
       const int T_ind = find_ind(T, repT[i]);
       const int l_ind = find_ind(l, repl[i]);
@@ -94,16 +93,19 @@ int main(int argc, char *argv[])
 	break;
       }
 
-      if (reprun[i] == orun[T_ind][l_ind] + 1){
+      if ((reprun[i] == orun[T_ind][l_ind] + 1)){
 	// ready to write!
+	done = false;
 
 	if (write_frame(i, ifile, ofile, T, l, repid, reprun, repT, repl, orun)){
 	  cout << "error while writing frame!" << endl;
 	  done = true;
 	  break;
-	} // error
-      } // ready to write
-    } // trajectories
+	}
+
+      } // selecte a trajectory that is ready to write
+
+    } // for all input trajectories
   } // frames
   
   finish(ifile, ofile);
@@ -198,6 +200,8 @@ int read_conf(string fn,
       string fn = prefix + "_" + T[tt] + "_" + l[ll] + "." + suffix;
       ofile[tt][ll] = new ofstream(fn.c_str());
       cout << "output file " << fn << " opened" << endl;
+      *ofile[tt][ll] << "TITLE\n\tT = " << T[tt] << "\tl = " << l[ll]
+		     << "\nEND\n";
     }
   }
   
@@ -263,7 +267,7 @@ int write_frame(int i,
     return 1;
   }
 
-  if (reprun[i] != orun[T_ind][l_ind] + 1){
+  if ((reprun[i] != orun[T_ind][l_ind] + 1)){
     cout << "\nwrong run number!\n"
 	 << "last run " << orun[T_ind][l_ind]
 	 << " current run: " << reprun[i] << endl;
@@ -275,8 +279,6 @@ int write_frame(int i,
     return 2;
   }
   
-  ++orun[T_ind][l_ind];
-
   string line;
   while(true){
     getline(*ifile[i], line);
@@ -288,6 +290,9 @@ int write_frame(int i,
       repT[i] = "";
       repl[i] = "";
       cout << "done: end of trajectory" << endl;
+
+      ++orun[T_ind][l_ind];
+
       return 0;
     }
 
@@ -296,7 +301,16 @@ int write_frame(int i,
   
   getline(*ifile[i], line);
   istringstream is(line);
+  int old_id = repid[i], old_run = reprun[i];
+  string old_T = repT[i], old_l = repl[i];
+  
   is >> repid[i] >> reprun[i] >> repT[i] >> repl[i];
+
+  if (old_id == repid[i] && old_run == reprun[i] && old_T == repT[i] && old_l == repl[i]){
+    cout << "(multiframe) ";
+  }
+  else
+    ++orun[T_ind][l_ind];
   
   if (is.fail()){
     cout << "error while reading file: " << i << ", line " << line << endl;
