@@ -430,6 +430,11 @@ int util::Replica_Exchange_Master::run
 	      << " temperature=" << replica_data[i].Ti
 	      << " lambda=" << replica_data[i].li);
 	
+	if(replica_data[i].state == waiting){
+	  // try a switch
+	  switch_replica(i, sim.param());
+	}
+
 	++runs;
 	break;
 
@@ -517,14 +522,15 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
   }
   
   if (j == i){ // no switch this time...
-    set_next_switch(i);
     
     replica_data[i].probability = 0.0;
     replica_data[i].switched = false;
-    replica_data[i].state = ready;
 
     print_replica(i, param, std::cout);
     print_replica(i, param, rep_out);
+
+    set_next_switch(i);
+    replica_data[i].state = ready;
 
     return 0;
   }

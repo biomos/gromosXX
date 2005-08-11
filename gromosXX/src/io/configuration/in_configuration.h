@@ -62,6 +62,15 @@ namespace io {
 
   private:
     /**
+     * check coordinates / velocities
+     */
+    bool check_coordinates(topology::Topology & topo,
+			   configuration::Configuration & conf,
+			   simulation::Simulation & sim,
+			   int num_coords,
+			   std::ostream & os = std::cout);
+
+    /**
      * try to get positions
      */
     bool read_position(topology::Topology & topo,

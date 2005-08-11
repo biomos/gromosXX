@@ -12,6 +12,11 @@
 
 namespace io{
 
+  std::string argname_topo    = "topo";
+  std::string argname_pttopo  = "pttopo";
+  std::string argname_conf    = "conf";
+  std::string argname_input   = "input";
+
   typedef std::multimap<std::string,std::string>::value_type argType;
 
   // checks if an argument is known

@@ -17,6 +17,7 @@
 #include <interaction/bonded/quartic_bond_interaction.h>
 #include <interaction/bonded/harmonic_bond_interaction.h>
 #include <interaction/bonded/angle_interaction.h>
+#include <interaction/bonded/harm_angle_interaction.h>
 #include <interaction/bonded/dihedral_interaction.h>
 #include <interaction/bonded/improper_dihedral_interaction.h>
 // perturbed interactions
@@ -88,7 +89,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   
   if (param.force.angle == 1){
     if (!quiet)
-      os <<"\tbond angle interaction\n";
+      os <<"\tbond angle (cosine) interaction\n";
     interaction::Angle_Interaction *a =
       new interaction::Angle_Interaction();
     
@@ -105,8 +106,25 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   }
 
   if (param.force.angle == 2){
-    io::messages.add("harmonic (g87) angle potential not implemented",
-		     "create bonded", io::message::error);
+    if (!quiet)
+      os <<"\tharmonic bond angle interaction\n";
+    interaction::Harm_Angle_Interaction *a =
+      new interaction::Harm_Angle_Interaction();
+    
+    it.read_harm_angles(a->parameter());
+    ff.push_back(a);
+
+    if (param.perturbation.perturbation){
+      io::messages.add("perturbed harmonic (g87) angle potential not implemented",
+		       "create bonded", io::message::error);
+      /*
+      if (!quiet)
+	os <<"\tperturbed bond angle interaction\n";
+      interaction::Perturbed_Angle_Interaction * pa =
+	new interaction::Perturbed_Angle_Interaction(*a);
+      ff.push_back(pa);
+      */
+    }
   }
   
   if (param.force.improper == 1){

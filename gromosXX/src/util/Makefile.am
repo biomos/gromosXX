@@ -15,7 +15,8 @@ xxinclude_HEADERS = \
 			replica_data.h \
 			replica_exchange.h \
 			template_split.h \
-			virtual_atom.h
+			virtual_atom.h \
+			virtual_grain.h
 
 noinst_LTLIBRARIES = 	libgroutil.la
 
@@ -30,7 +31,8 @@ libgroutil_la_SOURCES =	debug.cc \
 			replica_exchange_slave.cc \
 			replica_exchange_control.cc \
 			create_simulation.cc \
-			virtual_atom.cc
+			virtual_atom.cc \
+			virtual_grain.cc
 libgroutil_la_LIBADD =
 
 

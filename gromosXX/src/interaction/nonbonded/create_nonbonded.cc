@@ -159,8 +159,15 @@ int interaction::create_g96_nonbonded
 
 #endif
 
-  it.read_lj_parameter(ni->parameter().lj_parameter());
-
+  // standard LJ parameter
+  if (sim.param().force.interaction_function ==
+      simulation::lj_crf_func)
+    it.read_lj_parameter(ni->parameter().lj_parameter());
+  // and coarse-grained parameter
+  if (sim.param().force.interaction_function ==
+      simulation::cgrain_func)
+    it.read_cg_parameter(ni->parameter().cg_parameter());
+  
   pa->set_parameter(&ni->parameter());
   
   ff.push_back(ni);

@@ -3,8 +3,8 @@
  * angle interaction.
  */
 
-#ifndef INCLUDED_ANGLE_INTERACTION_H
-#define INCLUDED_ANGLE_INTERACTION_H
+#ifndef INCLUDED_HARM_ANGLE_INTERACTION_H
+#define INCLUDED_HARM_ANGLE_INTERACTION_H
 
 namespace configuration{
 	class Configuration;
@@ -19,20 +19,20 @@ namespace simulation{
 namespace interaction
 {
   /**
-   * @class Angle_Interaction
-   * calculates the angle interactions.
+   * @class Harm_Angle_Interaction
+   * calculates the harmonic angle interactions.
    */
-  class Angle_Interaction : public Interaction
+  class Harm_Angle_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    Angle_Interaction() : Interaction("Angle") {}
+    Harm_Angle_Interaction() : Interaction("HarmAngle") {}
     /**
      * Destructor.
      */
-    virtual ~Angle_Interaction() {}
+    virtual ~Harm_Angle_Interaction() {}
     /**
      * init
      */
@@ -42,7 +42,7 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Bond angle (cosine) interaction\n";
+      os << "Harmonic bond angle interaction\n";
       return 0;
     };
     /**

@@ -117,8 +117,8 @@ inline void interaction::Nonbonded_Term
  */
 inline void interaction::Nonbonded_Term
 ::lj_crf_interaction(math::Vec const &r,
-		     double const c6, double const c12,
-		     double const q,
+		     double c6, double c12,
+		     double q,
 		     double &force, double &e_lj, double &e_crf)
 {
   DEBUG(14, "\t\tnonbonded term");
@@ -149,7 +149,7 @@ inline void interaction::Nonbonded_Term
  * the reaction field contribution for a given pair
  */
 inline void interaction::Nonbonded_Term
-::rf_interaction(math::Vec const &r,double const q,
+::rf_interaction(math::Vec const &r,double q,
 		 math::Vec &force, double &e_crf)
 {
   const double dist2 = abs2(r);
@@ -170,8 +170,8 @@ inline void interaction::Nonbonded_Term
  */
 inline void interaction::Nonbonded_Term
 ::cgrain_interaction(math::Vec const &r,
-                     double const c6, double const c12,
-                     double const q,
+                     double c6, double c12,
+                     double q,
                      double &force, double &e_lj, double &e_crf)
 {
   assert(abs2(r) != 0);
@@ -213,7 +213,7 @@ inline void interaction::Nonbonded_Term
   
 }
 
-inline double const  interaction::Nonbonded_Term
+inline double interaction::Nonbonded_Term
 ::crf_2cut3i()const
 {
   return m_crf_2cut3i;
@@ -221,8 +221,8 @@ inline double const  interaction::Nonbonded_Term
 
 inline void
 interaction::Nonbonded_Term::lj_crf_hessian(math::Vec const &r,
-				    double const c6, double const c12,
-				    double const q,
+				    double c6, double c12,
+				    double q,
 				    math::Matrix &hess)
 {
   const double r2 = math::abs2(r);

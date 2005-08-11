@@ -29,6 +29,9 @@
 <li><a href="#jval">J-Value</a></li>
 <li><a href="#pscale">Periodic Scaling</a></li>
 <li><a href="#replica">Replica Exchange</a></li>
+<li><a href="#analyze">Analyze trajectory</a></li>
+<li><a href="#integrate">Integration method</a></li>
+<li><a href="#cgrain">CGRAIN</a></li>
 </ul>
 
 <br>
@@ -479,6 +482,45 @@ REPLICA03
 #	write trajectory of all replicas on master
 #	every n trials
 	10
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="analyze">ANALYZE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+ANALYZE
+#       re-analyze trajectory
+        1
+#       copy positions to old positions after reading
+#	(useful if you want to SHAKE them)
+        0
+#
+#       specify trajectory name with @anatrj filename
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="integrate">INTEGRATE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+INTEGRATE
+#       select integration method
+#	0: off
+#	1: leap-frog
+        1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="cgrain">CGRAIN</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+CGRAIN
+#       cgrain
+        1
+#	epsilon
+        20
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

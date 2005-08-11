@@ -70,6 +70,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_INNERLOOP(param);
   read_MULTICELL(param);
   read_ANALYZE(param);
+  read_INTEGRATE(param);
   
   DEBUG(7, "input read...");
 
@@ -960,6 +961,7 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
       
       if(css.fail()){
 	std::cerr << "got " << s2 << std::endl;
+	std::cout << "got " << s2 << std::endl;
 	io::messages.add("bad value for SCALING in PERTURB block\n"
 			 "on,off,0,1",
 			 "In_Parameter", io::message::error);
@@ -1119,19 +1121,19 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   if(param.force.bond < 0 || param.force.bond > 2)
     io::messages.add("Illegal value for force switch for bond",
 		     "In_Parameter", io::message::error);
-  if(param.force.bond < 0 || param.force.angle > 2)
+  if(param.force.angle < 0 || param.force.angle > 2)
     io::messages.add("Illegal value for force switch for angle",
 		     "In_Parameter", io::message::error);
-  if(param.force.bond < 0 || param.force.angle == 2)
-    io::messages.add("Force switch for angle = 2 currently not implemented",
-		     "In_Parameter", io::message::error);
-  if(param.force.bond < 0 || param.force.improper > 1)
+  if(param.force.angle == 2)
+    io::messages.add("Force switch for angle = 2 (harmonic) experimental",
+		     "In_Parameter", io::message::warning);
+  if(param.force.improper < 0 || param.force.improper > 1)
     io::messages.add("Illegal value for force switch for improper dihedral",
 		     "In_Parameter", io::message::error);
-  if(param.force.bond < 0 || param.force.dihedral > 1)
+  if(param.force.dihedral < 0 || param.force.dihedral > 1)
     io::messages.add("Illegal value for force switch for dihedral",
 		     "In_Parameter", io::message::error);
-  if(param.force.bond < 0 || param.force.nonbonded > 1)
+  if(param.force.nonbonded < 0 || param.force.nonbonded > 1)
     io::messages.add("Illegal value for force switch for nonbonded",
 		     "In_Parameter", io::message::error);
 }
@@ -1178,22 +1180,24 @@ void io::In_Parameter::read_FORCEFIELD(simulation::Parameter &param,
     }
   }
   
-  if (angle != 0){
-    io::messages.add("FORCEFIELD: only Gromos96 functional form for angle "
-		     "bending allowed.",
-		     "In_Parameter", io::message::error);
+  if (angle == 2 && param.force.angle != 0){
+    if (param.force.angle != 2){
+      io::messages.add("using FORCEFIELD block to determine angle term",
+		       "In_Parameter", io::message::notice);
+      param.force.angle = 2;
+    }
+  }
+  if (angle == 0 && param.force.angle != 0){
+    if (param.force.angle != 1){
+      io::messages.add("using FORCEFIELD block to determine angle term",
+		       "In_Parameter", io::message::notice);
+      param.force.angle = 1;
+    }
   }
   
   if (_lineStream.fail())
     io::messages.add("bad line in FORCEFIELD block",
 		     "In_Parameter", io::message::error);
-  
-  /*
-  if (!_lineStream.eof())
-    io::messages.add("end of line not reached in FORCEFIELD block,"
-		     " but should have been: \n" + s +  "\n",
-		     "In_Parameter", io::message::warning);
-  */
 }
 
 /**
@@ -1599,9 +1603,17 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> param.cgrain.EPS;
+    int cg;
+    
+    _lineStream >> cg >> param.cgrain.EPS;
 
-    param.force.interaction_function = simulation::cgrain_func;
+    if (cg == 1)
+      param.force.interaction_function = simulation::cgrain_func;
+    else if (cg == 0)
+      {}
+    else
+      io::messages.add("bad line in CGRAIN block",
+                       "In_Parameter", io::message::error);
     
     if (_lineStream.fail())
       io::messages.add("bad line in CGRAIN block",
@@ -2174,7 +2186,8 @@ void io::In_Parameter::read_ANALYZE(simulation::Parameter & param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> param.analyze.analyze;
+    _lineStream >> param.analyze.analyze
+		>> param.analyze.copy_pos;
     
     if (_lineStream.fail()){
       io::messages.add("bad line in ANALYZE block",
@@ -2183,6 +2196,34 @@ void io::In_Parameter::read_ANALYZE(simulation::Parameter & param,
       param.analyze.analyze = false;
     }
   }
+}
+
+void io::In_Parameter::read_INTEGRATE(simulation::Parameter & param,
+				      std::ostream & os)
+{
+  DEBUG(8, "read INTEGRATE");
+
+  std::vector<std::string> buffer;
+  std::string s;
   
+  buffer = m_block["INTEGRATE"];
+  int i;
+  
+  if (buffer.size()){
+
+    block_read.insert("INTEGRATE");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> i;
+    param.integrate.method = simulation::integrate_enum(i);
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in INTEGRATE block",
+		       "In_Parameter", io::message::error);
+      
+    }
+  }
 }
 

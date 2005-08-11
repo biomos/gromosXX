@@ -12,6 +12,24 @@ namespace util
 }
 
 namespace io{
+
+  /**
+   * topology argument
+   */
+  extern std::string argname_topo;
+  /**
+   * perturbation topology argument
+   */
+  extern std::string argname_pttopo;
+  /**
+   * configuration argument
+   */
+  extern std::string argname_conf;
+  /**
+   * input argument
+   */
+  extern std::string argname_input;
+
   /**
    * Class Argument
    * Purpose: Parse arguments from the command line or an input file.

@@ -19,6 +19,7 @@
 #include <interaction/special/distance_restraint_interaction.h>
 #include <interaction/special/perturbed_distance_restraint_interaction.h>
 #include <interaction/special/jvalue_restraint_interaction.h>
+#include <interaction/special/external_interaction.h>
 
 #include <interaction/bonded/dihedral_interaction.h>
 #include <interaction/special/pscale.h>
@@ -45,7 +46,7 @@ int interaction::create_special(interaction::Forcefield & ff,
       os <<"\tPosition restraints\n";
 
     interaction::Position_Restraint_Interaction *pr =
-      new interaction::Position_Restraint_Interaction();
+      new interaction::Position_Restraint_Interaction;
 
     ff.push_back(pr);
     
@@ -78,7 +79,7 @@ int interaction::create_special(interaction::Forcefield & ff,
 	  os <<"\tPerturbed distance restraints\n";
 	
 	interaction::Perturbed_Distance_Restraint_Interaction *pdr =
-	  new interaction::Perturbed_Distance_Restraint_Interaction();
+	  new interaction::Perturbed_Distance_Restraint_Interaction;
 
 	ff.push_back(pdr); 
       }
@@ -107,7 +108,7 @@ int interaction::create_special(interaction::Forcefield & ff,
     }
 
     interaction::Jvalue_Restraint_Interaction *jr =
-      new interaction::Jvalue_Restraint_Interaction();
+      new interaction::Jvalue_Restraint_Interaction;
     
     ff.push_back(jr);
   }
@@ -126,5 +127,14 @@ int interaction::create_special(interaction::Forcefield & ff,
     ff.push_back(ps);
   }
 
+  if (param.force.external_interaction){
+    if (!quiet){
+      os << "\tadding external interaction\n";
+    }
+    interaction::External_Interaction * ei =
+      new interaction::External_Interaction;
+    ff.push_back(ei);
+  }
+  
   return 0;
 }

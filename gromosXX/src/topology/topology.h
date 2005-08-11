@@ -131,6 +131,13 @@ namespace topology
      * @param num_molecules the number of solvent molecules to add.
      */
     void solvate(unsigned int solv, unsigned int num_molecules);
+
+    /**
+     * change the number of solvents in the simulation.
+     * @param solv the solvent (has to be 0).
+     * @param num_molecules the number of solvent molecules to add.
+     */
+    void resolvate(unsigned int solv, unsigned int num_molecules);
     
     /**
      * set the capacity of solute atoms
@@ -245,6 +252,17 @@ namespace topology
      * the number of solute chargegroups.
      */
     unsigned int num_solute_chargegroups()const {return m_num_solute_chargegroups;}
+
+    /**
+     * the number of solute (sub)molecules
+     */
+    unsigned int num_solute_molecules()const {return m_num_solute_molecules;}
+
+    /**
+     * the number of solute (sub)molecules
+     */
+    unsigned int & num_solute_molecules() {return m_num_solute_molecules;}
+
     /**
      * iterator over the chargegrops
      */
@@ -504,6 +522,22 @@ namespace topology
     }
 
     /**
+     * virtual grains accessor
+     */
+    std::vector<virtual_grain_struct> & virtual_grains() 
+    {
+      return m_virtual_grain;
+    }
+    
+    /**
+     * const virtual grains accessor
+     */
+    std::vector<virtual_grain_struct> const & virtual_grains()const
+    {
+      return m_virtual_grain;
+    }
+    
+    /**
      * initialise the topology.
      * - adjust submolecules if empty
      */
@@ -587,6 +621,11 @@ namespace topology
     unsigned int m_num_solute_chargegroups;
     
     /**
+     * the number of solute molecules.
+     */
+    unsigned int m_num_solute_molecules;
+    
+    /**
      * residue names (solute and solvent).
      */
     std::vector<std::string> m_residue_name;
@@ -666,7 +705,11 @@ namespace topology
      * expanded topology for multiple unit cell simulations
      */
     Topology * m_multicell_topo;
-    
+
+    /**
+     * virtual grains
+     */
+    std::vector<virtual_grain_struct> m_virtual_grain;
     
   }; // topology
   

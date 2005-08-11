@@ -33,6 +33,12 @@ namespace io
 			     std::ostream & os = std::cout) = 0;
 
     /**
+     * Read in the harmonic bond angle parameter.
+     */    
+    virtual void read_harm_angles(std::vector<interaction::angle_type_struct> &a,
+				  std::ostream & os = std::cout) = 0;
+
+    /**
      * Read in the improper dihedral parameter.
      */
     virtual void read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i,
@@ -50,6 +56,14 @@ namespace io
     virtual void read_lj_parameter(std::vector<std::vector
 				   <interaction::lj_parameter_struct> > 
 				   & lj_parameter,
+				   std::ostream & os = std::cout) = 0;
+
+    /**
+     * Read in the nonbonded interaction types (Coarse - grained lennard-jones).
+     */
+    virtual void read_cg_parameter(std::vector<std::vector
+				   <interaction::cg_parameter_struct> > 
+				   & cg_parameter,
 				   std::ostream & os = std::cout) = 0;
   };
   

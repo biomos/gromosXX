@@ -98,8 +98,7 @@ calculate_interactions(topology::Topology & topo,
 	    << tid << " of " << m_set_size << ")");
 
       m_nonbonded_set[tid]->calculate_interactions(topo.multicell_topo(), 
-						   exp_conf, sim,
-						   tid, m_set_size);
+						   exp_conf, sim);
     }
     
 #else
@@ -124,8 +123,7 @@ calculate_interactions(topology::Topology & topo,
       DEBUG(8, "calculating nonbonded interactions (thread " 
 	    << tid << " of " << m_set_size << ")");
       
-      m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim,
-						   tid, m_set_size);
+      m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim);
     }
     
 #else

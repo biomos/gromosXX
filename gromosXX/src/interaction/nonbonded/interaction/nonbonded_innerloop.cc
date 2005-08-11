@@ -30,26 +30,39 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 			    conf.current().pos(j), r);
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
   
-  const lj_parameter_struct &lj = 
-    m_param->lj_parameter(topo.iac(i),
-			  topo.iac(j));
-  
-  DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
-  DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-  
   switch(t_nonbonded_spec::interaction_func){
     case simulation::lj_crf_func :
-      lj_crf_interaction(r, lj.c6, lj.c12,
-			 topo.charge(i) * 
-			 topo.charge(j),
-			 f, e_lj, e_crf);
-      break;
+      {
+	const lj_parameter_struct & lj = 
+	  m_param->lj_parameter(topo.iac(i),
+				topo.iac(j));
+	
+	DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+	
+	lj_crf_interaction(r, lj.c6, lj.c12,
+			   topo.charge(i) * 
+			   topo.charge(j),
+			   f, e_lj, e_crf);
+	break;
+      }
+    
     case simulation::cgrain_func :
-      cgrain_interaction(r, lj.c6, lj.c12,
-			 topo.charge(i) * 
-			 topo.charge(j),
-			 f, e_lj, e_crf);
-      break;
+      {
+	const cg_parameter_struct & cg = 
+	  m_param->cg_parameter(topo.iac(i),
+				topo.iac(j));
+	
+	DEBUG(11, "\tcg-parameter c6=" << cg.c6 << " c12=" << cg.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+	
+	cgrain_interaction(r, cg.c6, cg.c12,
+			   topo.charge(i) * 
+			   topo.charge(j),
+			   f, e_lj, e_crf);
+	break;
+      }
+    
     default:
       io::messages.add("Nonbonded_Innerloop",
 		       "interaction function not implemented",
@@ -132,11 +145,45 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_central
   
   DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
   DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-  
-  lj_crf_interaction(r, lj.c6, lj.c12,
-		     topo.charge()(i) * 
-		     topo.charge()(j),
-		     f, e_lj, e_crf);
+
+  switch(t_nonbonded_spec::interaction_func){
+    case simulation::lj_crf_func :
+      {
+	const lj_parameter_struct & lj = 
+	  m_param->lj_parameter(topo.iac(i),
+				topo.iac(j));
+	
+	DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+	
+	lj_crf_interaction(r, lj.c6, lj.c12,
+			   topo.charge(i) * 
+			   topo.charge(j),
+			   f, e_lj, e_crf);
+	break;
+      }
+    
+    case simulation::cgrain_func :
+      {
+	const cg_parameter_struct & cg = 
+	  m_param->cg_parameter(topo.iac(i),
+				topo.iac(j));
+	
+	DEBUG(11, "\tcg-parameter c6=" << cg.c6 << " c12=" << cg.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+	
+	cgrain_interaction(r, cg.c6, cg.c12,
+			   topo.charge(i) * 
+			   topo.charge(j),
+			   f, e_lj, e_crf);
+	break;
+      }
+    
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+		       "interaction function not implemented",
+		       io::message::critical);
+  }
   
   // most common case
   if (t_nonbonded_spec::do_virial == math::molecular_virial){
@@ -210,11 +257,45 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_shift
   
   DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
   DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-  
-  lj_crf_interaction(r, lj.c6, lj.c12,
-		     topo.charge()(i) * 
-		     topo.charge()(j),
-		     f, e_lj, e_crf);
+
+  switch(t_nonbonded_spec::interaction_func){
+    case simulation::lj_crf_func :
+      {
+	const lj_parameter_struct & lj = 
+	  m_param->lj_parameter(topo.iac(i),
+				topo.iac(j));
+	
+	DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+	
+	lj_crf_interaction(r, lj.c6, lj.c12,
+			   topo.charge(i) * 
+			   topo.charge(j),
+			   f, e_lj, e_crf);
+	break;
+      }
+    
+    case simulation::cgrain_func :
+      {
+	const cg_parameter_struct & cg = 
+	  m_param->cg_parameter(topo.iac(i),
+				topo.iac(j));
+	
+	DEBUG(11, "\tcg-parameter c6=" << cg.c6 << " c12=" << cg.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+	
+	cgrain_interaction(r, cg.c6, cg.c12,
+			   topo.charge(i) * 
+			   topo.charge(j),
+			   f, e_lj, e_crf);
+	break;
+      }
+    
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+		       "interaction function not implemented",
+		       io::message::critical);
+  }
   
   // most common case
   if (t_nonbonded_spec::do_virial == math::molecular_virial){
@@ -294,10 +375,10 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
 			 f, e_lj, e_crf);
       break;
     case simulation::cgrain_func :
-      cgrain_interaction(r, lj.cs6, lj.cs12,
-			 topo.charge()(i) * 
-			 topo.charge()(j),
-			 f, e_lj, e_crf);
+      io::messages.add("Nonbonded_Innerloop",
+		       "no 1,4 interactions for coarse-grained simulations!",
+		       io::message::critical);
+      assert(false);
       break;
     default:
       io::messages.add("Nonbonded_Innerloop",

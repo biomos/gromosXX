@@ -40,12 +40,12 @@ namespace interaction
      * adds additional types for the dihedral potentials,
      * sets up a map between j-value restraint and dihedral angle.
      */
-    int init(topology::Topology &topo, 
-	     configuration::Configuration &conf,
-	     simulation::Simulation &sim,
-	     std::ostream & os = std::cout,
-	     bool quiet = false);
-
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream & os = std::cout,
+		     bool quiet = false);
+    
   private:
     /**
      * scale a force constant

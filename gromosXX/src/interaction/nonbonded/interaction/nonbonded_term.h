@@ -34,35 +34,36 @@ namespace interaction
      * calculate the force and energy of an atom pair.
      */
     void lj_crf_interaction(math::Vec const &r,
-			    double const c6, double const c12,
-			    double const q,
+			    double c6, double c12,
+			    double q,
 			    double & force, double & e_lj,
 			    double & e_crf);
 
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
-    void rf_interaction(math::Vec const &r, double const q,
+    void rf_interaction(math::Vec const &r, double q,
 			math::Vec & force, double & e_rf);
     /**
      * calculate the force and energy of an atom pair (coarse grain).
      */
     void cgrain_interaction(math::Vec const &r,
-			    double const c6, double const c12,
-			    double const q,
+			    double c6, double c12,
+			    double q,
 			    double &force, double &e_lj, double &e_crf); 
+
     /**
      * calculate the hessian of the lj crf term.
      */
     void lj_crf_hessian(math::Vec const &r,
-			double const c6, double const c12,
-			double const q,
+			double c6, double c12,
+			double  q,
 			math::Matrix &hess);
     
     /**
      * a constant.
      */
-    double const crf_2cut3i()const;
+    double crf_2cut3i()const;
 
   protected:
     /**

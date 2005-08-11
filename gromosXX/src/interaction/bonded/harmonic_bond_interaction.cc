@@ -59,10 +59,12 @@ static int _calculate_harmonic_bond_interactions
     DEBUG(7, "bond " << b_it->i << "-" << b_it->j << " type " << b_it->type);
     DEBUG(10, "K " << param[b_it->type].K << " r0 " 
 	  << param[b_it->type].r0);
-
+    DEBUG(10, "pos i " << math::v2s(pos(b_it->i)));
+    DEBUG(10, "pos j " << math::v2s(pos(b_it->j)));
+    DEBUG(10, "dist " << dist);
     DEBUG(10, "DF " << (-param[b_it->type].K * 
 			(dist - param[b_it->type].r0) / dist) 
-	  << "\n" << math::v2s(v));
+	  << "\nr(ij) " << math::v2s(v));
 
     diff = dist - param[b_it->type].r0;
 
@@ -84,6 +86,8 @@ static int _calculate_harmonic_bond_interactions
     energy = 0.5 * param[b_it->type].K * diff * diff;
     conf.current().energies.bond_energy[topo.atom_energy_group()
 					[b_it->i]] += energy;
+
+    DEBUG(9, "\tenergy = " << energy);
     
   }
 

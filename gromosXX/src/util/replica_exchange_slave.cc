@@ -177,15 +177,22 @@ int util::Replica_Exchange_Slave::run
 	conf.current().energies.calculate_totals();
 	replica_data.epot_i = conf.current().energies.potential_total;
 	
-	std::cout << "replica_energy " << replica_data.epot_i 
-		  << " @ " << T[replica_data.Ti] << "K" << std::endl;
+	if (replica_data.Ti != replica_data.Tj)
+	  std::cout << "replica_energy " << replica_data.epot_i 
+		    << " @ " << T[replica_data.Ti] << "K" << std::endl;
+	else if (replica_data.li != replica_data.lj)
+	  std::cout << "replica_energy " << replica_data.epot_i 
+		    << " @ " << l[replica_data.li] << std::endl;
 	
 	if (replica_data.li != replica_data.lj){
 	  
 	  // change the lambda value
-	  sim.param().perturbation.lambda = replica_data.lj;
-	  topo.lambda(replica_data.lj);
+	  sim.param().perturbation.lambda = l[replica_data.lj];
+	  topo.lambda(l[replica_data.lj]);
+	  // twice: set old lambda as well
+	  topo.lambda(l[replica_data.lj]);
 	  topo.update_for_lambda();
+	  std::cout << "\tlambda = " << topo.lambda() << "\n";
 	  
 	  // recalc energy
 	  ff->apply(topo, conf, sim);
@@ -416,15 +423,21 @@ int util::Replica_Exchange_Slave::init_replica
   if (get_configuration(topo, conf))
     return 1;
   
+  std::vector<double> const & T = sim.param().replica.temperature;
+  std::vector<double> const & l = sim.param().replica.lambda;
+
   // change all the temperature coupling temperatures
   for(unsigned int i=0; i<sim.multibath().size(); ++i){
-    sim.multibath()[i].temperature = replica_data.Ti;
+    sim.multibath()[i].temperature = T[replica_data.Ti];
   }
   
   // change the lambda value
-  sim.param().perturbation.lambda = replica_data.li;
-  topo.lambda(replica_data.li);
+  sim.param().perturbation.lambda = l[replica_data.li];
+  topo.lambda(l[replica_data.li]);
+  // twice, to set old_lambda...
+  topo.lambda(l[replica_data.li]);
   topo.update_for_lambda();
+  std::cout << "\tlambda = " << topo.lambda() << "\n";
   
   // change simulation time
   sim.time() = replica_data.run * 

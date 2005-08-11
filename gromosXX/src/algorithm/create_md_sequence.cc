@@ -62,6 +62,14 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 				  std::ostream & os)
 {
 
+  // analyze trajectory:
+  // overwrite current configuration with trajectory data
+  if (sim.param().analyze.analyze){
+    algorithm::Analyze_Step * as = 
+      new algorithm::Analyze_Step(sim.param().analyze.trajectory);
+    md_seq.push_back(as);
+  }
+
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
   interaction::create_g96_forcefield(*ff, topo, sim, it, os);
@@ -95,7 +103,13 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(sd);
   }
   else{
-    md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+
+    if(sim.param().integrate.method == simulation::integrate_leap_frog){
+      md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+    }
+    else{
+      std::cout << "\tno integration (velocities) selected!\n";
+    }
 
     // temperature scaling? -> has to be done before temperature calculation!!!
     if (sim.param().multibath.couple){
@@ -112,7 +126,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       }
     }
     
-    md_seq.push_back(new algorithm::Leap_Frog_Position);
+    if(sim.param().integrate.method == simulation::integrate_leap_frog){
+      md_seq.push_back(new algorithm::Leap_Frog_Position);
+    }
+    else{
+      std::cout << "\tno integration (position) selected!\n";
+    }
   }
   
   // CONSTRAINTS
@@ -181,14 +200,6 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     algorithm::Energy_Calculation * ec = 
       new algorithm::Energy_Calculation();
     md_seq.push_back(ec);
-  }
-
-  // analyze trajectory:
-  // overwrite current configuration with trajectory data
-  if (sim.param().analyze.analyze){
-    algorithm::Analyze_Step * as = 
-      new algorithm::Analyze_Step(sim.param().analyze.trajectory);
-    md_seq.push_back(as);
   }
 
   return 0;

@@ -11,6 +11,7 @@ xxinclude_HEADERS =		interaction.h \
 				bonded/quartic_bond_interaction.h \
 				bonded/harmonic_bond_interaction.h \
 				bonded/angle_interaction.h \
+				bonded/harm_angle_interaction.h \
 				bonded/improper_dihedral_interaction.h \
 				bonded/dihedral_interaction.h \
 				bonded/perturbed_quartic_bond_interaction.h \
@@ -49,7 +50,8 @@ xxinclude_HEADERS =		interaction.h \
 				special/distance_restraint_interaction.h \
 				special/perturbed_distance_restraint_interaction.h \
 				special/jvalue_restraint_interaction.h \
-				special/pscale.h
+				special/pscale.h \
+				special/external_interaction.h
 
 
 noinst_LTLIBRARIES =		libgrointeraction.la
@@ -78,6 +80,7 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				bonded/harmonic_bond_interaction.cc \
 				bonded/perturbed_harmonic_bond_interaction.cc \
 				bonded/angle_interaction.cc \
+				bonded/harm_angle_interaction.cc \
 				bonded/perturbed_angle_interaction.cc \
 				bonded/improper_dihedral_interaction.cc \
 				bonded/perturbed_improper_dihedral_interaction.cc \
@@ -86,9 +89,10 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				special/create_special.cc \
 				special/position_restraint_interaction.cc \
 				special/distance_restraint_interaction.cc \
- 				special/perturbed_distance_restraint_interaction.cc \
+				special/perturbed_distance_restraint_interaction.cc \
 				special/jvalue_restraint_interaction.cc \
-				special/pscale.cc
+				special/pscale.cc \
+				special/external_interaction.cc
 
 bin_PROGRAMS =			
 

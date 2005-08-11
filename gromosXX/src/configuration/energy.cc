@@ -38,7 +38,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     distrest_total = 0.0;
     jvalue_total = 0.0;
     constraints_total = 0.0;
-    
+    external_total = 0.0;
     
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
@@ -159,7 +159,7 @@ int configuration::Energy::calculate_totals()
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;
   
-  special_total = posrest_total + distrest_total + constraints_total + jvalue_total;
+  special_total = posrest_total + distrest_total + constraints_total + jvalue_total + external_total;
 
   total = potential_total + kinetic_total + special_total;
 

@@ -78,9 +78,13 @@ namespace configuration
      */
     double jvalue_total;
     /**
-     * total energy (=0.0) of the (distance) constraint itneraction(s).
+     * total energy (=0.0) of the (distance) constraint interaction(s).
      */
     double constraints_total;
+    /**
+     * total energy of an external interaction
+     */
+    double external_total;
     
     // this should be size of bath
     /**

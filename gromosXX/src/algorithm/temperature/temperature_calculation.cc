@@ -57,6 +57,7 @@ int algorithm::Temperature_Calculation
 				   com_v, com_ekin, ekin,
 				   new_com_v, new_com_ekin, new_ekin);
 
+    DEBUG(9, "molecule: " << *m_it.begin() << " - " << *m_it.end());
     DEBUG(10, "average com_v:" << math::v2s(com_v) << " com_ekin:" 
 	  << com_ekin << " ekin:" << ekin);
     

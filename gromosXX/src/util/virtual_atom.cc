@@ -29,7 +29,7 @@ static const double TETHSI=0.816497;
 
 
 util::Virtual_Atom::Virtual_Atom()
-  :  m_type(0),
+  :  m_type(va_explicit),
      m_atom(),
      m_dish(0.1),
      m_disc(0.153),
@@ -37,7 +37,7 @@ util::Virtual_Atom::Virtual_Atom()
 {
 }
 
-util::Virtual_Atom::Virtual_Atom(int type, std::vector<int> atom,
+util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
 				 double dish, double disc,int orientation)
   :  m_type(type),
      m_atom(atom),
@@ -160,6 +160,20 @@ void util::Virtual_Atom::_pos
       s = posi - posj;
       p = posi +  (m_disc + m_dish / 3.0) / (3 * math::abs(s)) * s;
       break;
+
+    case 10: // cog
+      {
+	assert(m_atom.size() > 0);
+	math::Vec cog(0.0, 0.0, 0.0);
+	for(unsigned int i=1; i<m_atom.size(); ++i){
+	  math::Vec v;
+	  periodicity.nearest_image(position(m_atom[i]), position(m_atom[0]), v);
+	  cog += v;
+	}
+	cog /= m_atom.size();
+	p = cog + position(m_atom[0]);
+	break;
+      }
       
     default:
       io::messages.add("Virual Atom", "wrong type", io::message::critical);
@@ -641,6 +655,14 @@ void util::Virtual_Atom::_force
 			   -(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s);
       force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
+
+    case 10:
+      {
+	for(unsigned int i=0; i<m_atom.size(); ++i){
+	  force(m_atom[i]) += f / m_atom.size();
+	}
+	break;
+      }
       
     default:
       std::cerr <<"Type not implemented";

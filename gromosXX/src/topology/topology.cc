@@ -37,6 +37,7 @@ topology::Topology::Topology()
   : m_mass(0),
     m_charge(0),
     m_num_solute_chargegroups(0),
+    m_num_solute_molecules(0),
     m_multicell_topo(NULL)
 {
   m_chargegroup.push_back(0);
@@ -76,6 +77,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   DEBUG(10, "solute chargegrous = " << topo.num_solute_chargegroups());
   
   m_num_solute_chargegroups = topo.num_solute_chargegroups() * mul_solute;
+  m_num_solute_molecules = m_num_solute_molecules * mul_solute;
 
   m_molecule.clear();
   m_molecule.push_back(0);
@@ -106,17 +108,17 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     DEBUG(10, "\tcg");
-    for(int i=1; i<=topo.num_solute_chargegroups(); ++i){
+    for(unsigned int i=1; i<=topo.num_solute_chargegroups(); ++i){
       m_chargegroup.push_back(topo.m_chargegroup[i] + m * num_solute);
     }
 
     DEBUG(10, "\tmol");
-    for(int i=1; i<topo.molecules().size() - topo.num_solvent_molecules(0); ++i){
+    for(unsigned int i=1; i<topo.molecules().size() - topo.num_solvent_molecules(0); ++i){
       m_molecule.push_back(topo.molecules()[i] + m * num_solute);
     }
 
     DEBUG(10, "\tbonds");
-    for(int i=0; i<topo.solute().bonds().size(); ++i){
+    for(unsigned int i=0; i<topo.solute().bonds().size(); ++i){
       solute().bonds().push_back
 	(two_body_term_struct(topo.solute().bonds()[i].i + m * num_solute,
 			      topo.solute().bonds()[i].j + m * num_solute,
@@ -124,7 +126,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     DEBUG(10, "\tdistance constraints");
-    for(int i=0; i<topo.solute().distance_constraints().size(); ++i){
+    for(unsigned int i=0; i<topo.solute().distance_constraints().size(); ++i){
       solute().add_distance_constraint
 	(two_body_term_struct(topo.solute().distance_constraints()[i].i + m * num_solute,
 			      topo.solute().distance_constraints()[i].j + m * num_solute,
@@ -132,7 +134,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     DEBUG(10, "\tangles");
-    for(int i=0; i<topo.solute().angles().size(); ++i){
+    for(unsigned int i=0; i<topo.solute().angles().size(); ++i){
       solute().angles().push_back
 	(three_body_term_struct(topo.solute().angles()[i].i + m * num_solute,
 				topo.solute().angles()[i].j + m * num_solute,
@@ -141,7 +143,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     DEBUG(10, "\timps");
-    for(int i=0; i<topo.solute().improper_dihedrals().size(); ++i){
+    for(unsigned int i=0; i<topo.solute().improper_dihedrals().size(); ++i){
       solute().improper_dihedrals().push_back
 	(four_body_term_struct(topo.solute().improper_dihedrals()[i].i + m * num_solute,
 			       topo.solute().improper_dihedrals()[i].j + m * num_solute,
@@ -151,7 +153,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     DEBUG(10, "\tdihedrals");
-    for(int i=0; i<topo.solute().dihedrals().size(); ++i){
+    for(unsigned int i=0; i<topo.solute().dihedrals().size(); ++i){
       solute().dihedrals().push_back
 	(four_body_term_struct(topo.solute().dihedrals()[i].i + m * num_solute,
 			       topo.solute().dihedrals()[i].j + m * num_solute,
@@ -197,6 +199,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
  */
 void topology::Topology::resize(unsigned int const atoms)
 {
+  DEBUG(8, "resizing topology for " << atoms << " atoms!");
+  
   // if you want to shrink, first change num_atoms...
   assert(atoms >= num_solute_atoms() + num_solvent_atoms());
 
@@ -330,6 +334,61 @@ void topology::Topology::solvate(unsigned int solv, unsigned int num_molecules)
 
   }
     
+}
+
+void topology::Topology::resolvate(unsigned int solv, unsigned int num_molecules)
+{
+  if (solv != 0){
+    io::messages.add("resolvation for multiple solvents not implemented",
+		     "topology",
+		     io::message::error);
+    return;
+  }
+  
+  assert(m_num_solvent_atoms.size() == 1);
+  assert(m_solvent.size() == 1);
+
+  int n = num_solute_atoms();
+
+  m_num_solvent_molecules[m_num_solvent_molecules.size() - 1] = num_molecules;
+  m_num_solvent_atoms[m_num_solvent_atoms.size() - 1] = num_molecules * m_solvent[solv].num_atoms();
+  
+  DEBUG(5, "solvate: solvent atoms: " << num_solvent_atoms());
+  DEBUG(10, "solvate: total atoms: " << num_solute_atoms() + num_solvent_atoms());
+  
+  DEBUG(8, "resizing for solute: " << num_solute_atoms() << " and solvent: "
+	<< num_solvent_atoms() << " (total: " << num_solute_atoms() + num_solvent_atoms());
+  resize(num_solute_atoms() + num_solvent_atoms());
+
+  m_chargegroup.erase(m_chargegroup.begin() + m_num_solute_chargegroups + 1, m_chargegroup.end());
+  m_molecule.erase(m_molecule.begin() + m_num_solute_molecules + 1, m_molecule.end());
+
+  DEBUG(9, "solute chargegroups: " << m_num_solute_chargegroups
+	<< " size: " << m_chargegroup.size());
+  DEBUG(9, "solute molecules: " << m_num_solute_molecules
+	<< " size: " << m_molecule.size());
+
+  // add to iac, mass, charge
+  for(unsigned int i=0; i<num_molecules; ++i){
+    for(unsigned int j=0; j<m_solvent[solv].num_atoms(); ++j, ++n){
+
+      DEBUG(15, "iac[" << n << "]=" << m_solvent[solv].atom(j).iac);
+      DEBUG(15, "charge[" << n << "]=" << m_solvent[solv].atom(j).charge);
+      
+      m_iac[n] = m_solvent[solv].atom(j).iac;
+      m_mass(n) = m_solvent[solv].atom(j).mass;
+      m_charge(n) = m_solvent[solv].atom(j).charge;
+      // no exclusions or 1-4 interactions for solvent
+    }
+
+    // add to the chargegroups
+    DEBUG(8, "solvent cg: " << n);
+    m_chargegroup.push_back(n);
+
+    // and to the molecules
+    DEBUG(8, "solvent mol: " << n);
+    m_molecule.push_back(n);
+  }
 }
 
 /**

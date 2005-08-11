@@ -42,9 +42,10 @@ bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
 	return false;
       }
     }
+    return true;
   }
-  else return false;
-  return true;
+  if (!term.size()) return true;
+  return false;
 }
 
 void 
@@ -62,8 +63,70 @@ io::In_Topology::read(topology::Topology& topo,
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
-  // double start = util::now();
+  std::string bond_bname = "BONDTYPE";
+  if (param.force.bond == 2 && m_block["HARMBONDTYPE"].size())
+    bond_bname = "HARMBONDTYPE";
+
+  std::string angle_bname = "BONDANGLETYPE";
+  // no automatic conversion for angles!
+  if (param.force.angle == 2)
+    angle_bname = "HARMBONDANGLETYPE";
   
+  {
+    buffer = m_block["TYPE"];
+    if (buffer.size()){
+      if (buffer.size() != 3){
+	io::messages.add("Bad line in TYPE block",
+			 "InTopology", io::message::error);
+      }
+
+      _lineStream.clear();
+      _lineStream.str(buffer[1]);
+      std::string s;
+      _lineStream >> s;
+      
+      if (_lineStream.fail())
+	io::messages.add("Bad line in TYPE block",
+			 "InTopology", io::message::error);
+      
+      std::transform(s.begin(), s.end(), s.begin(), tolower);
+      
+      if (s == "atomistic"){
+	if (!quiet)
+	  os << "\tatomistic topology\n";
+	
+	if (param.force.interaction_function != simulation::lj_crf_func){
+	  io::messages.add("wrong interaction function selected for atomistic topology",
+			   "InTopology", io::message::error);
+	}
+      }
+      else if (s == "coarse-grained"){
+	if (!quiet)
+	  os << "\tcoarse-grained topology\n";
+	
+	if (param.force.interaction_function != simulation::cgrain_func){
+	  io::messages.add("wrong interaction function selected for coarse-grained topology",
+			   "InTopology", io::message::error);
+	}
+      }
+      else{
+	io::messages.add("TYPE block: unknown topology type",
+			 "InTopology", io::message::error);
+      }
+    }
+    else{
+      if (!quiet){
+	os << "\tunknown topology type (atomistic / coarse-grained)\n";
+	if (param.force.interaction_function == simulation::lj_crf_func)
+	  os << "\tusing atomistic parameters\n";
+	else if (param.force.interaction_function == simulation::cgrain_func)
+	  os << "\tusing coarse-grained parameters\n";
+	else
+	  os << "\tunknown interaction function selected!\n";
+      }
+    }
+  }
+
   { // TOPPHYSCON
     buffer = m_block["TOPPHYSCON"];
     
@@ -422,16 +485,16 @@ io::In_Topology::read(topology::Topology& topo,
 
     } // BOND
 
-    // os << "time after BONDS: " << util::now() - start << std::endl;
+    { // check the bonds
 
-    // check the bonds
-    if (!check_type(m_block["BONDTYPE"], topo.solute().bonds())){
-      io::messages.add("Illegal bond type in BOND(H) block",
-		       "In_Topology", io::message::error);
+      if (param.force.bond){
+	if (!check_type(m_block[bond_bname], topo.solute().bonds())){
+	  io::messages.add("Illegal bond type in BOND(H) block",
+			   "In_Topology", io::message::error);
+	}
+      }
     }
-
-    // os << "time after CHECKBONDS: " << util::now() - start << std::endl;
-
+    
     { // CONSTRAINT
       DEBUG(10, "CONSTRAINT block");
       buffer = m_block["CONSTRAINT"];
@@ -483,15 +546,11 @@ io::In_Topology::read(topology::Topology& topo,
     
     } // CONSTRAINT
 
-    // os << "time after CONSTRAINTS: " << util::now() - start << std::endl;
-
     // check the bonds in constraints
-    if (!check_type(m_block["BONDTYPE"], topo.solute().distance_constraints())){
-      io::messages.add("Illegal bond type in CONSTRAINT (or BOND(H)) block",
+    if (!check_type(m_block[bond_bname], topo.solute().distance_constraints())){
+      io::messages.add("Illegal bond type in CONSTRAINT block",
 		       "In_Topology", io::message::error);
     }
-
-    // os << "time after check CONSTRAINTS: " << util::now() - start << std::endl;
 
     { // BONDANGLEH
 
@@ -599,12 +658,10 @@ io::In_Topology::read(topology::Topology& topo,
     // os << "time after BONDANGLE: " << util::now() - start << std::endl;
 
     // check the angles
-    if (!check_type(m_block["BONDANGLETYPE"], topo.solute().angles())){
+    if (!check_type(m_block[angle_bname], topo.solute().angles())){
       io::messages.add("Illegal bond angle type in BONDANGLE(H) block",
 		       "In_Topology", io::message::error);
     }
-
-    // os << "time after check BONDANGLE: " << util::now() - start << std::endl;
 
     { // IMPDIHEDRAL
       DEBUG(10, "IMPDIHEDRAL block");
@@ -820,13 +877,66 @@ io::In_Topology::read(topology::Topology& topo,
     
     } // DIHEDRALH
 
-    // os << "time after DIHEDRAL: " << util::now() - start << std::endl;
-
     // check the dihedrals
     if (!check_type(m_block["DIHEDRALTYPE"], topo.solute().dihedrals())){
       io::messages.add("Illegal dihedral type in DIHEDRAL(H) block",
 		       "In_Topology", io::message::error);
     }
+
+    { // VIRTUALGRAIN
+      DEBUG(10, "VIRTUALGRAIN block");
+      buffer.clear();
+      buffer = m_block["VIRTUALGRAIN"];
+      if(buffer.size()){
+      
+	it = buffer.begin() + 1;
+
+	_lineStream.clear();
+	_lineStream.str(*it);
+
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  os << "\n\t\tVirtual Grains : "
+		    << num;
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+
+	  // number of real atoms to define virtual atom
+	  int index, i, q;
+	  _lineStream >> index >> i;
+
+	  std::vector<int> cog;
+	  
+	  for(int j=0; j<i; ++j){
+	    _lineStream >> q;
+	    cog.push_back(q-1);
+	  }
+      
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in VIRTUALGRAIN block",
+			     "In_Topology", io::message::error);
+	  }
+            
+	  topo.virtual_grains().
+	    push_back(topology::virtual_grain_struct(index-1, 
+						     util::Virtual_Atom(util::va_cog, cog)));
+	}
+    
+	if(n != num){
+	  io::messages.add("Wrong number of elements in VIRTUALGRAIN block",
+			   "In_Topology", io::message::error);
+	}
+      }
+    
+      if (!quiet)
+	os << "\n\tEND\n";
+    
+    } // VIRTUALGRAIN
 
     // add the submolecules (should be done before solvate ;-)
     topo.molecules() = param.submolecules.submolecules;
@@ -844,8 +954,9 @@ io::In_Topology::read(topology::Topology& topo,
 		       "last submolecule has to end with last solute atom",
 		       "In_Topology", io::message::error);
     }
+    
+    topo.num_solute_molecules() = topo.molecules().size() - 1;
 
-  
   } // npm != 0
     
   { // SOLVENTATOM and SOLVENTCONSTR
@@ -889,7 +1000,6 @@ io::In_Topology::read(topology::Topology& topo,
 	  io::messages.add("Bad line in SOLVENTATOM block",
 			   "In_Topology", io::message::error);	
 	}
-      
 
 	s.add_atom(name, res_nr, iac-1, mass, charge);
       }
@@ -898,12 +1008,21 @@ io::In_Topology::read(topology::Topology& topo,
 	io::messages.add("Error in SOLVENTATOM block (num != n)",
 			 "In_Topology", io::message::error);
       }
+
+      // solvent atoms have been read into s
     
+      //--------------------------------------------------
       // lookup the number of bond types
       // add additional ones for the solvent constraints
-      int num_bond_types;
-    
-      buffer = m_block["BONDTYPE"];
+      int num_bond_types = 0;
+      if (param.force.bond == 1){
+	buffer = m_block["BONDTYPE"];
+      }
+      else if (param.force.bond == 2){
+	buffer = m_block["HARMBONDTYPE"];
+	if (!buffer.size())
+	  buffer = m_block["BONDTYPE"];
+      }
       if (!buffer.size())
 	num_bond_types = 0;
       else{
@@ -911,57 +1030,62 @@ io::In_Topology::read(topology::Topology& topo,
 	_lineStream.clear();
 	_lineStream.str(*it);
 	_lineStream >> num_bond_types;
-      
+	
 	if (num_bond_types < 0){
-	  io::messages.add("Illegal value for number of bond types in BONDTYPE block",
+	  io::messages.add("Illegal value for number of bond types in (HARM)BONDTYPE block",
 			   "In_Topology", io::message::error);	
 	  num_bond_types = 0;
 	}
       }
+      //--------------------------------------------------
     
+      // now read the solvent constraints
       buffer = m_block["SOLVENTCONSTR"];
       if (!buffer.size()){
-	io::messages.add("SOLVENTCONSTR block missing.",
-			 "In_Topology", io::message::error);	
-
+	io::messages.add("no SOLVENTCONST (block missing).",
+			 "In_Topology", io::message::notice);	
       }
-    
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      _lineStream >> num;
-      ++it;
-    
-      if (!quiet)
-	os << "\n\t\tconstraints : " << num;
-      
-      int j;
-      double b0;
-    
-      for(n=0; it != buffer.end()-1; ++it, ++n){
+      else{
+	it = buffer.begin() + 1;
 	_lineStream.clear();
 	_lineStream.str(*it);
-      
-	_lineStream >> i >> j >> b0;
-      
-	if (_lineStream.fail() || ! _lineStream.eof()){
-	  io::messages.add("Bad line in SOLVENTCONSTR block",
-			   "In_Topology", io::message::error);	
-	}
-      
-	// the solvent (distance constraints) bond types
-	s.add_distance_constraint
-	  (topology::two_body_term_struct(i-1, j-1, num_bond_types + n));
-      }
 
-      if (n!=num){
-	io::messages.add("Error in SOLVENTCONSTR block (num != n)",
-			 "In_Topology", io::message::error);
+	_lineStream >> num;
+	++it;
+    
+	if (!quiet)
+	  os << "\n\t\tconstraints : " << num;
+	
+	int j;
+	double b0;
+	
+	for(n=0; it != buffer.end()-1; ++it, ++n){
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  
+	  _lineStream >> i >> j >> b0;
+	  
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in SOLVENTCONSTR block",
+			     "In_Topology", io::message::error);	
+	  }
+	  
+	  // the solvent (distance constraints) bond types
+	  s.add_distance_constraint
+	    (topology::two_body_term_struct(i-1, j-1, num_bond_types + n));
+	}
+
+	if (n!=num){
+	  io::messages.add("Error in SOLVENTCONSTR block (num != n)",
+			   "In_Topology", io::message::error);
+	}
       }
       topo.add_solvent(s);
     }
-
+    else{
+      io::messages.add("no solvent topology specified",
+		       "In_Topology", io::message::warning);
+    }
   }
 
   // add the solvent to the topology
@@ -1147,7 +1271,7 @@ void io::In_Topology
     }
   }
 
-  // also add the solent constraints to the bond types...
+  // also add the solvent constraints to the bond types...
   // (if there is one)
   buffer = m_block["SOLVENTCONSTR"];
   if (buffer.size()){
@@ -1200,10 +1324,12 @@ void io::In_Topology
 
   buffer = m_block["BONDTYPE"];
 
-  if (buffer.size()==0)
+  if (buffer.size()==0){
     io::messages.add("BONDTYPE block not found!",
 		     "In_Topology",
 		     io::message::error);
+    return;
+  }
 
   // 1. BONDTYPE 2. number of types
   for (it = buffer.begin() + 2; 
@@ -1283,9 +1409,11 @@ void io::In_Topology
 
   buffer = m_block["BONDANGLETYPE"];
 
-  if (buffer.size()==0)
+  if (buffer.size()==0){
     io::messages.add("BONDANGLETYPE block not found!", "In_Topology",
 		     io::message::error);
+    return;
+  }
 
   // 1. BONDTYPE 2. number of types
   for (it = buffer.begin() + 2; 
@@ -1315,6 +1443,50 @@ void io::In_Topology
 }
 
 void io::In_Topology
+::read_harm_angles(std::vector<interaction::angle_type_struct> &b,
+		   std::ostream & os)
+{
+  
+  DEBUG(10, "HARMBONDANGLETYPE block");
+
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  buffer = m_block["HARMBONDANGLETYPE"];
+
+  if (buffer.size()==0){
+    io::messages.add("HARMBONDANGLETYPE block not found!", "In_Topology",
+		     io::message::error);
+    return;
+  }
+
+  // 1. BONDANGLETYPE 2. number of types
+  for (it = buffer.begin() + 2; 
+       it != buffer.end() - 1; ++it) {
+
+    double k, theta;
+    _lineStream.clear();
+    _lineStream.str(*it);
+      
+    _lineStream >> k >> theta;
+      
+    if (_lineStream.fail()){
+      os << *it << std::endl;
+      io::messages.add("bad line in HARMBONDANGLETYPE block", "In_Topology",
+		       io::message::error);
+    }
+    if (! _lineStream.eof()){
+      os << *it << std::endl;
+      io::messages.add("eof not reached in HARMBONDANGLETYPE block",
+		       "InTopology", io::message::warning);
+    }
+    
+    // and add...
+    b.push_back(interaction::angle_type_struct(k, theta * 2 * math::Pi / 360.0));
+  }
+}
+
+void io::In_Topology
 ::read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i,
 			  std::ostream & os)
 {
@@ -1326,10 +1498,12 @@ void io::In_Topology
 
   buffer = m_block["IMPDIHEDRALTYPE"];
 
-  if (buffer.size()==0)
+  if (buffer.size()==0){
     io::messages.add("IMPDIHEDRALTYPE block not found!", "In_Topology",
 		     io::message::error);
-
+    return;
+  }
+  
   // 1. IMPDIHEDRALTYPE 2. number of types
   for (it = buffer.begin() + 2; 
        it != buffer.end() - 1; ++it) {
@@ -1370,10 +1544,12 @@ void io::In_Topology
 
   buffer = m_block["DIHEDRALTYPE"];
 
-  if (buffer.size()==0)
+  if (buffer.size()==0){
     io::messages.add("DIHEDRALTYPE block not found!", "In_Topology",
 		     io::message::error);
-
+    return;
+  }
+  
   // 1. DIHEDRALTYPE 2. number of types
   for (it = buffer.begin() + 2; 
        it != buffer.end() - 1; ++it) {
@@ -1482,5 +1658,87 @@ void io::In_Topology
     }
   } // LJPARAMETER
 
+}
+
+
+void io::In_Topology
+::read_cg_parameter(std::vector<std::vector
+		    <interaction::cg_parameter_struct> > 
+		    & cg_parameter,
+		    std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+
+  { // CGPARAMETERS
+    
+    DEBUG(10, "CGPARAMETERS block");
+    
+    buffer = m_block["CGPARAMETERS"];
+    if (!buffer.size()){
+      io::messages.add("No CGPARAMETERS block found in topology!",
+		       "In_Topology",
+		       io::message::notice);
+      return;
+    }
+    
+    int num, n;
+    
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> num;
+    
+    // calculate the matrix size from: x = n*(n+1)/2
+    unsigned int sz = unsigned(sqrt(double((8*num+1)-1))/2);
+
+    cg_parameter.resize(sz);
+    std::vector< std::vector<interaction::cg_parameter_struct> >::iterator
+      cg_it = cg_parameter.begin(),
+      cg_to = cg_parameter.end();
+  
+    for(; cg_it!=cg_to; ++cg_it)
+      cg_it->resize(sz);
+    
+    ++it;
+    
+    for (n=0; it != buffer.end() - 1; ++it, ++n) {
+      
+      interaction::cg_parameter_struct s;
+      int i, j;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> i >> j >> s.c6 >> s.c12;
+
+      --i;
+      --j;
+      
+      if (_lineStream.fail() || ! _lineStream.eof())
+	io::messages.add("bad line in CGPARAMETERS block", "In_Topology",
+			 io::message::error);
+      
+      if (i >= int(sz) || j >= int(sz)){
+	DEBUG(7, "wrong iac in CGPARAMETERS: i=" << i << " j=" << j
+	      << " sz=" << sz);
+	io::messages.add("wrong integer atom code in CGPARAMETERS block",
+			 "In_Topology", 
+			 io::message::error);
+	break;
+      }
+      
+      cg_parameter[i][j] = s;
+      cg_parameter[j][i] = s;
+      
+    }
+
+    if (num != n){
+      io::messages.add("Reading the CGPARAMETERS failed (n != num)",
+		       "InTopology",
+		       io::message::error);
+    }
+   
+  } // CGPARAMETER
 }
 

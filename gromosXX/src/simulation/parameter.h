@@ -55,6 +55,21 @@ namespace simulation
   };
 
   /**
+   * @enum integrate_enum
+   * integration method
+   */
+  enum integrate_enum{
+    /**
+     * off
+     */
+    integrate_off = 0,
+    /**
+     * leap-frog
+     */
+    integrate_leap_frog = 1
+  };
+
+  /**
    * @enum interaction_func_enum
    * which interaction function to use.
    * if a interaction function is added, it has to be added
@@ -604,10 +619,13 @@ namespace simulation
        * - nonbonded 1
        * - energy_group empty
        * - spc_loop -1
+       * - interaction function lj_crf_func
+       * - external interaction 0
        */
       force_struct() : bond(1), angle(1), improper(1),
 		       dihedral(1), nonbonded(1), spc_loop(-1),
-		       interaction_function(lj_crf_func)
+		       interaction_function(lj_crf_func),
+		       external_interaction(0)
       {}
       
       /**
@@ -638,12 +656,15 @@ namespace simulation
        * fast spc loops
        */
       int spc_loop;
-
       /**
        * nonbonded interaction function
        */
       interaction_func_enum interaction_function;
-
+      /**
+       * add an external interaction
+       */
+      int external_interaction;
+      
     } /** Force(field) parameters */ force;
 
     /**
@@ -1103,9 +1124,10 @@ namespace simulation
        * Constructor
        * Default values:
        * - analyze(false)
+       * - copy_pos(false)
        * - trajectory("")
        */
-      analyze_struct() : analyze(false), trajectory("")
+      analyze_struct() : analyze(false), copy_pos(false), trajectory("")
       {
       }
       /** 
@@ -1113,11 +1135,36 @@ namespace simulation
        */
       bool analyze;
       /**
+       * copy position (to old position)
+       */
+      bool copy_pos;
+      /**
        * trajectory filename
        */
       std::string trajectory;
       
     } /** analyze parameter */ analyze;
+
+    /**
+     * @struct integrate_struct
+     * select integration routine
+     */
+    struct integrate_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - method(integrate_leap_frog)
+       */
+      integrate_struct() : method(integrate_leap_frog)
+      {
+      }
+      /** 
+       * select integration method
+       */
+      integrate_enum method;
+
+    } /** integration parameter */ integrate;
 
   };
 

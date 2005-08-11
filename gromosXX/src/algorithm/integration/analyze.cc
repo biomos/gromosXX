@@ -62,7 +62,13 @@ int algorithm::Analyze_Step
     os << "TRAJECTORY ANALYZATION\n";
     // os << "END\n";
   }
-  
+
+  if (sim.param().analyze.copy_pos){
+    os << "\tcopying current position to old\n";
+  }
+  // os << "\treading first frame...\n";
+  // return apply(topo, conf, sim);
+
   return 0;
 }
 
@@ -75,9 +81,17 @@ int algorithm::Analyze_Step
 	simulation::Simulation &sim)
 {
   // just overwrite current conf
-  if (m_trajectory.read_next(topo, conf, sim))
-    return 0;
+  DEBUG(8, "analyze: reading next frame!");
+  if (m_trajectory.read_next(topo, conf, sim)){
 
+    if (sim.param().analyze.copy_pos){
+      DEBUG(9, "analyze: copy current() pos to old()");
+      conf.old().pos = conf.current().pos;
+    }
+    
+    return 0;
+  }
+  
   return E_UNSPECIFIED;
 }
 

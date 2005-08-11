@@ -20,6 +20,8 @@
 #define MODULE io
 #define SUBMODULE topology
 
+static std::set<std::string> block_read;
+
 /**
  * Constructor.
  */
@@ -81,6 +83,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   { // PERTBOND03
     buffer = m_block["PERTBOND03"];
     if (buffer.size()){
+      block_read.insert("PERTBOND03");
+      
       if (!quiet)
 	std::cout << "\tPERTBOND03\n";
 
@@ -212,7 +216,8 @@ io::In_Perturbation::read(topology::Topology &topo,
     buffer = m_block["PERTCONSTRAINT03"];
   
     if (buffer.size() && param.constraint.ntc != 1){
-      
+      block_read.insert("PERTCONSTRAINT03");
+
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
@@ -295,6 +300,8 @@ io::In_Perturbation::read(topology::Topology &topo,
     buffer = m_block["PERTBANGLE03"];
     if (buffer.size()){
 
+      block_read.insert("PERTBANGLE03");
+
       if (!quiet)
 	std::cout << "\tPERTANGLES\n";
 
@@ -370,6 +377,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   { // PERTIMPDIHEDRAL03
     buffer = m_block["PERTIMPDIHEDRAL03"];
     if (buffer.size()){
+      block_read.insert("PERTIMPDIHEDRAL03");
+
       if (!quiet)
 	std::cout << "\tPERTIMPDIHEDRALS\n";
 
@@ -448,6 +457,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   { // PERTDIHEDRAL03
     buffer = m_block["PERTDIHEDRAL03"];
     if (buffer.size()){
+      block_read.insert("PERTDIHEDRAL03");
+
       if (!quiet)
 	std::cout << "\tPERTDIHEDRALS\n";
 
@@ -539,6 +550,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 
     buffer = m_block["PERTATOMPAIR03"];
     if (buffer.size()){
+      block_read.insert("PERTATOMPAIR03");
 
       if (!quiet)
 	std::cout << "\tPERTATOMPAIRS\n";
@@ -628,6 +640,8 @@ io::In_Perturbation::read(topology::Topology &topo,
     
     buffer = m_block["PERTATOM03"];
     if (buffer.size()){
+      block_read.insert("PERTATOM03");
+
       if (!quiet)
 	std::cout << "\tPERTATOMS\n";
       DEBUG(7, "PERTATOM03 block");
@@ -675,13 +689,14 @@ io::In_Perturbation::read(topology::Topology &topo,
 	--a_iac;
 	--b_iac;
 
-	if (seq < 0 || seq >= topo.num_solute_atoms()){
+	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
 	  io::messages.add("atom sequence number wrong in PERTATOM03 block",
 			   "In_Perturbation", io::message::critical);
 	  return;
 	}
 
 	if (a_iac < 0 || b_iac < 0){
+	  std::cout << "n=" << n << "a_iac=" << a_iac << " b_iac=" << b_iac << std::endl;
 	  io::messages.add("integer atom code wrong in PERTATOM03 block",
 			   "In_Perturbation", io::message::critical);
 	  return;
@@ -766,6 +781,8 @@ io::In_Perturbation::read(topology::Topology &topo,
 
     buffer = m_block["SCALEDINTERACTIONS"];
     if (buffer.size()){
+      block_read.insert("SCALEDINTERACTIONS");
+
       if(!param.perturbation.scaling){
 	io::messages.add("Scaled interactions not turned on, ignoring SCALEDINTERACTIONS block.",
 			 "InPerturbation", io::message::warning);
@@ -851,6 +868,8 @@ io::In_Perturbation::read(topology::Topology &topo,
 
     buffer = m_block["LAMBDADEP"];
     if (buffer.size()){
+      block_read.insert("LAMBDADEP");
+
       if(!param.perturbation.scaling){
 	io::messages.add("Changed lambda dependence for interactions requires scaling to"
 			 " be turned on. Ignoring LAMBDADEP block.",
@@ -949,6 +968,19 @@ io::In_Perturbation::read(topology::Topology &topo,
       // "In_Perturbation", io::message::warning);
     }
   } // LAMBDADEP
+
+  for(std::map<std::string, std::vector<std::string> >::const_iterator
+	it = m_block.begin(),
+	to = m_block.end();
+      it != to;
+      ++it){
+    
+    if (block_read.count(it->first) == 0 && it->second.size()){
+      io::messages.add("block " + it->first + " not supported!",
+		       "In_Parameter",
+		       io::message::warning);
+    }
+  }
 
   if (!quiet)
     std::cout << "END\n";

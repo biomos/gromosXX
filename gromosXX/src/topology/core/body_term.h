@@ -298,12 +298,14 @@ namespace topology
     double bfactor;
   };
 
-struct distance_restraint_struct
+  struct distance_restraint_struct
   {
     /**
      * Constructor.
      */
-    distance_restraint_struct(util::Virtual_Atom v1, util::Virtual_Atom v2, double r0, double w0, int rah)
+    distance_restraint_struct(util::Virtual_Atom v1,
+			      util::Virtual_Atom v2,
+			      double r0, double w0, int rah)
       :v1(v1), v2(v2),
        r0(r0),
        w0(w0),
@@ -314,7 +316,7 @@ struct distance_restraint_struct
      * Virtual Atom 1.
      */
     util::Virtual_Atom v1;
-
+    
     /**
      * Virtual Atom 2.
      */
@@ -334,8 +336,8 @@ struct distance_restraint_struct
     int rah;
     
   };
-
-/**
+  
+  /**
    *Perturbed distance restraints information.
    */
   struct perturbed_distance_restraint_struct
@@ -343,7 +345,10 @@ struct distance_restraint_struct
     /**
      * Constructor.
      */
-    perturbed_distance_restraint_struct(util::Virtual_Atom v1, util::Virtual_Atom v2, double A_r0, double B_r0, double A_w0, double B_w0, int rah)
+    perturbed_distance_restraint_struct(util::Virtual_Atom v1,
+					util::Virtual_Atom v2,
+					double A_r0, double B_r0, 
+					double A_w0, double B_w0, int rah)
       :v1(v1), v2(v2),
        A_r0(A_r0), B_r0(B_r0),
        A_w0(A_w0), B_w0(B_w0),
@@ -380,10 +385,29 @@ struct distance_restraint_struct
      *repulsiv, attractiv, harmonic
      */
     int rah;
-    
   };
 
-  
+  /**
+   * Virtual Grain
+   */
+  struct virtual_grain_struct
+  {
+    /**
+     * Constructor
+     */
+    virtual_grain_struct(int i, util::Virtual_Atom va)
+      : i(i), atom(va)
+    {
+    }
+    /**
+     * virtual atom index
+     */
+    int i;
+    /**
+     * virtual atom
+     */
+    util::Virtual_Atom atom;
+  };
   
   /**
    * J-Value restraints.

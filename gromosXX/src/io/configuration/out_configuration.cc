@@ -257,15 +257,18 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   if (form == reduced){
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0){
-      _print_timestep(sim, m_pos_traj);
-
-      if (sim.param().write.solute_only)
-	_print_positionred(conf, topo,  topo.num_solute_atoms(), m_pos_traj);
-      else
-	_print_positionred(conf, topo,  topo.num_atoms(), m_pos_traj);
-
-      if (conf.boundary_type != math::vacuum)
-	_print_box(conf, m_pos_traj);
+      // don't write starting configuration if analyzing a trajectory
+      if (sim.steps() || !sim.param().analyze.analyze){
+	_print_timestep(sim, m_pos_traj);
+	
+	if (sim.param().write.solute_only)
+	  _print_positionred(conf, topo,  topo.num_solute_atoms(), m_pos_traj);
+	else
+	  _print_positionred(conf, topo,  topo.num_atoms(), m_pos_traj);
+	
+	if (conf.boundary_type != math::vacuum)
+	  _print_box(conf, m_pos_traj);
+      }
     }
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0){

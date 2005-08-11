@@ -186,6 +186,11 @@ namespace io {
      * read ANALYZE block.
      */
     void read_ANALYZE(simulation::Parameter & param, std::ostream & os = std::cout);
+
+    /**
+     * read INTEGRATE block.
+     */
+    void read_INTEGRATE(simulation::Parameter & param, std::ostream & os = std::cout);
     
   };
   

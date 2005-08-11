@@ -37,7 +37,6 @@
 #define MODULE io
 #define SUBMODULE parameter
 
-
 int io::read_input(io::Argument const & args,
 		   topology::Topology & topo,
 		   configuration::Configuration & conf,
@@ -88,16 +87,16 @@ int io::read_parameter(io::Argument const & args,
 {
   std::ifstream input_file;
   
-  input_file.open(args["input"].c_str());
+  input_file.open(args[argname_input].c_str());
   
   if (!input_file.is_open()){
-    os << "\n\ncould not open " << args["input"] << "!\n" << std::endl;
+    os << "\n\ncould not open " << args[argname_input] << "!\n" << std::endl;
     io::messages.add("opening input failed", "read_input",
 		     io::message::critical);
     return -1;
   }
   
-  io::messages.add("parameter read from " + args["input"],
+  io::messages.add("parameter read from " + args[argname_input],
 		   "read input",
 		   io::message::notice);
   
@@ -134,14 +133,14 @@ int io::read_topology(io::Argument const & args,
 {
   std::ifstream topo_file, pttopo_file;
   
-  topo_file.open(args["topo"].c_str());
+  topo_file.open(args[argname_topo].c_str());
     if (!topo_file.is_open()){
-    os << "\n\ncould not open " << args["topo"] << "!\n" << std::endl;
+    os << "\n\ncould not open " << args[argname_topo] << "!\n" << std::endl;
     io::messages.add("opening topology failed", "read_input",
 		     io::message::critical);
   }
 
-  io::messages.add("topology read from " + args["topo"],
+  io::messages.add("topology read from " + args[argname_topo],
 		   "read input",
 		   io::message::notice);
   
@@ -149,21 +148,21 @@ int io::read_topology(io::Argument const & args,
   it.read(topo, sim.param(), os);
   
   if(sim.param().perturbation.perturbation){
-    if(args.count("pttopo")<1){
+    if(args.count(argname_pttopo)<1){
       io::messages.add("No perturbation topology specified",
 		       "read_input", io::message::critical);
       return -1;
     }
     
-    pttopo_file.open(args["pttopo"].c_str());
+    pttopo_file.open(args[argname_pttopo].c_str());
     
     if (!pttopo_file.is_open()){
-      os << "\n\ncould not open " << args["pttopo"] << "!\n" << std::endl;
+      os << "\n\ncould not open " << args[argname_pttopo] << "!\n" << std::endl;
       io::messages.add("opening perturbation topology failed", "read_input",
 		       io::message::critical);
     }
     
-    io::messages.add("perturbation topology read from " + args["pttopo"],
+    io::messages.add("perturbation topology read from " + args[argname_pttopo],
 		     "read input",
 		     io::message::notice);
     
@@ -194,16 +193,16 @@ int io::read_configuration(io::Argument const & args,
   std::ifstream conf_file;
 
   DEBUG(7, "reading configuration");
-  conf_file.open(args["conf"].c_str());
+  conf_file.open(args[argname_conf].c_str());
 
   if (!conf_file.is_open()){
-    os << "\n\ncould not open " << args["conf"] << "!\n" << std::endl;
+    os << "\n\ncould not open " << args[argname_conf] << "!\n" << std::endl;
     io::messages.add("opening configuration failed", "read_input",
 		     io::message::critical);
     return -1;
   }
 
-  io::messages.add("configuration read from " + args["conf"],
+  io::messages.add("configuration read from " + args[argname_conf],
 		   "read input",
 		   io::message::notice);
   
@@ -231,16 +230,16 @@ int io::read_replica_configuration
   std::ifstream conf_file;
 
   DEBUG(7, "reading replica configurations");
-  conf_file.open(args["conf"].c_str());
+  conf_file.open(args[argname_conf].c_str());
 
   if (!conf_file.is_open()){
-    os << "\n\ncould not open " << args["conf"] << "!\n" << std::endl;
+    os << "\n\ncould not open " << args[argname_conf] << "!\n" << std::endl;
     io::messages.add("opening configuration failed", "read_input",
 		     io::message::critical);
     return -1;
   }
 
-  io::messages.add("replica configurations read from " + args["conf"],
+  io::messages.add("replica configurations read from " + args[argname_conf],
 		   "read input", io::message::notice);
   
   io::In_Configuration ic(conf_file);

@@ -296,8 +296,10 @@ bool io::In_Configuration::read_next
 
   block_read.clear();
 
+  // ignore errors reading time step
+  read_time_step(topo, conf, sim, os);
+  
   if (!(
-	read_time_step(topo, conf, sim, os) &&
 	read_position(topo, conf, sim, os) &&
 	read_box(topo, conf, sim, os)
 
@@ -307,6 +309,7 @@ bool io::In_Configuration::read_next
 	// read_flexv(topo, conf, sim, os);
 
 	)){
+    std::cout << "could not read frame!!!" << std::endl;
     return false;
   }
 
@@ -346,6 +349,9 @@ bool io::In_Configuration::read_position
   std::vector<std::string> buffer;
   buffer = m_block["POSITION"];
   if (buffer.size()){
+    
+    check_coordinates(topo, conf, sim, buffer.size() - 1, os);
+    
     if (!quiet)
       os << "\treading POSITION...\n";
     _read_position(conf.current().pos, buffer, topo.num_atoms());
@@ -354,6 +360,9 @@ bool io::In_Configuration::read_position
   else{
     buffer = m_block["POSITIONRED"];
     if (buffer.size()){
+
+      check_coordinates(topo, conf, sim, buffer.size() - 1, os);
+
       if (!quiet)
 	os << "\treading POSITIONRED...\n";
       _read_positionred(conf.current().pos, buffer, topo.num_atoms());
@@ -660,6 +669,15 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
     to = buffer.end()-1;
   
   int i;
+
+  if (pos.size() < unsigned(num)){
+    io::messages.add("configuration: too many coordinates for given topology",
+		     "in_configuration",
+		     io::message::critical);
+    std::cout << "position size is : " << pos.size() << " and num is : " << num << std::endl;
+    return false;
+  }
+
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
       io::messages.add("configuration file does not match topology: "
@@ -679,7 +697,6 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
 		       io::message::error);      
       return false;
     }
-    
   }
 
   if (i != num){
@@ -1247,3 +1264,56 @@ bool io::In_Configuration::read_replica_information
 
   return true;
 }
+
+bool io::In_Configuration::check_coordinates
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ int num_coords,
+ std::ostream & os)
+{
+  // do a quick estimate of the number of solvents
+  if (topo.num_solvents() == 1){
+    const unsigned int coords = num_coords - topo.num_solute_atoms();
+    const unsigned int mols = coords / topo.solvent(0).num_atoms();
+    
+    if (mols * topo.solvent(0).num_atoms() != coords){
+      io::messages.add("wrong number of coordinates!",
+		       "in_configuration",
+		       io::message::warning);
+      os << "\twrong number of coordinates: " << mols * topo.solvent(0).num_atoms()
+	 << " != " << coords << "\n";
+    }
+    if (topo.num_solvent_atoms() != coords){
+      std::ostringstream os;
+      os << "[Frame " << sim.steps() << "] resolvating: " 
+	 << topo.num_solvent_atoms() / topo.solvent(0).num_atoms()
+	 << " -> " << mols << " solvents";
+      
+      io::messages.add(os.str(),
+		       "in_configuration",
+		       io::message::notice);
+      
+      os << "\tresolvating! expected solvent atoms = " << topo.num_solvent_atoms()
+	 << " got " << coords << std::endl;
+      os << "\t(total coords: " << num_coords
+	 << "\n\t solute coords: " << topo.num_solute_atoms()
+	 << "\n\t solvent mols: " << mols
+	 << "\n\t)" << std::endl;
+      
+      topo.resolvate(0, mols);
+      conf.resize(num_coords);
+      
+      if (sim.multibath().bath_index()[sim.multibath().bath_index().size()-1].last_atom
+	  != topo.num_atoms() - 1){
+	sim.multibath().bath_index()[sim.multibath().bath_index().size()-1].last_atom
+	  = topo.num_atoms() - 1;
+	os << "\tadjusting temperature bath index\n";
+      }
+    }
+  }
+  
+  return true;
+}
+

@@ -65,7 +65,8 @@ int interaction::Grid_Pairlist_Algorithm::init
     return 1;
   }
   
-  if (sim.param().pcouple.virial != math::molecular_virial){
+  if (sim.param().pcouple.virial != math::molecular_virial &&
+      sim.param().pcouple.virial != math::no_virial){
     io::messages.add("Grid Pairlist Algorithm",
 		     "only implemented for molecular virial",
 		     io::message::error);

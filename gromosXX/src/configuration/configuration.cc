@@ -301,7 +301,8 @@ void configuration::Configuration::resize(unsigned int s)
   
   current().resize(s);
   old().resize(s);
-    
+
+  special().rel_mol_com_pos.resize(s);
 }
 
 /**
