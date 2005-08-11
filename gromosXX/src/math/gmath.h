@@ -163,6 +163,13 @@ namespace math
       assert( i>=0 && i<3 && j>=0 && j<3 );
       return m[i][j];
     }
+    Matrix & operator+=(Matrix const & mat)
+    {
+      for(int i=0; i<3; ++i)
+	for(int j=0; j<3; ++j)
+	  m[i][j] += mat(i,j);
+      return *this;
+    }
   };
 
   /**
