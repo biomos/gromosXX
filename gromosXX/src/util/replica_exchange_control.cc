@@ -111,6 +111,7 @@ int util::Replica_Exchange_Control::run
     }
   }
   
+  /* solaris
   struct hostent *hostinfo;
   int error;
   std::cerr << "trying to get hostinfo for: " << server_name << std::endl;
@@ -130,7 +131,7 @@ int util::Replica_Exchange_Control::run
     return 1;
   }
   
-  cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+
   struct sockaddr_in address;
 
   std::cerr << "port = " << server_port << std::endl;
@@ -141,12 +142,45 @@ int util::Replica_Exchange_Control::run
   socklen_t len = sizeof(address);
 
   freehostent(hostinfo);
+  */
+
+  struct addrinfo *addrinfo_p;
+  struct addrinfo hints;
+  hints.ai_flags = 0;
+  hints.ai_family = PF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = 0;
+  hints.ai_addrlen = 0;
+  hints.ai_addr = NULL;
+  hints.ai_canonname = NULL;
+  hints.ai_next = NULL;
+
+  int error = getaddrinfo(server_name.c_str(), NULL,
+			  &hints, &addrinfo_p);
+  
+  if (error){
+    std::cerr << "getaddrinfo error!\n"
+	      << gai_strerror(error)
+	      << std::endl;
+    return 1;
+  }
+
+  // addrinfo_p->ai_addr->sin_port = htons(server_port);
+  ((sockaddr_in *)addrinfo_p->ai_addr)->sin_port = htons(server_port);
+
+  sockaddr * s_addr_p = addrinfo_p->ai_addr;
+  int len = addrinfo_p->ai_addrlen;
+
+  // cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+  cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
+		     addrinfo_p->ai_protocol);
 
   DEBUG(8, "control: connecting..");
 
   int trials = 0, result;
   
-  while((result = connect(cl_socket, (sockaddr *) &address, len)) == -1 && trials < retry){
+  // while((result = connect(cl_socket, (sockaddr *) &address, len)) == -1 && trials < retry){
+  while((result = connect(cl_socket, s_addr_p, len)) == -1 && trials < retry){
     std::cout << "could not connect." << std::endl;
     ++trials;
     sleep(timeout);

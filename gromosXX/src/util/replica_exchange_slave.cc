@@ -36,6 +36,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+// linux includes?
+#include <sys/types.h>
+#include <sys/socket.h>
+// end linux includes
 #include <netdb.h>
 
 #undef MODULE
@@ -91,7 +95,14 @@ int util::Replica_Exchange_Slave::run
   std::cout << "slave initialised" << std::endl;
   
   std::string server_name;
-  int server_port;
+  {
+    char buffer[256];
+    gethostname(buffer, 255);
+    server_name = buffer;
+  }
+  std::cerr << "running on host " << server_name << std::endl;
+
+  int server_port = 29375;
 
   if (args.count("slave") > 0){
     io::Argument::const_iterator iter=args.lower_bound("slave");
@@ -113,6 +124,7 @@ int util::Replica_Exchange_Slave::run
     }
   }
 
+  /* SOLARIS
   struct hostent *hostinfo;
   int error;
   hostinfo = getipnodebyname(server_name.c_str(), AF_INET, AI_DEFAULT, &error);
@@ -130,7 +142,6 @@ int util::Replica_Exchange_Slave::run
     return 1;
   }
   
-  cl_socket = socket(AF_INET, SOCK_STREAM, 0);
   struct sockaddr_in address;
 
   address.sin_family = AF_INET;
@@ -139,11 +150,44 @@ int util::Replica_Exchange_Slave::run
   socklen_t len = sizeof(address);
 
   freehostent(hostinfo);
+  */
+
+  struct addrinfo *addrinfo_p;
+  struct addrinfo hints;
+  hints.ai_flags = 0;
+  hints.ai_family = PF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = 0;
+  hints.ai_addrlen = 0;
+  hints.ai_addr = NULL;
+  hints.ai_canonname = NULL;
+  hints.ai_next = NULL;
+
+  int error = getaddrinfo(server_name.c_str(), NULL,
+			  &hints, &addrinfo_p);
+  
+  if (error){
+    std::cerr << "getaddrinfo error!\n"
+	      << gai_strerror(error)
+	      << std::endl;
+    return 1;
+  }
+
+  // addrinfo_p->ai_addr->sin_port = htons(server_port);
+  ((sockaddr_in *)addrinfo_p->ai_addr)->sin_port = htons(server_port);
+
+  sockaddr * s_addr_p = addrinfo_p->ai_addr;
+  int len = addrinfo_p->ai_addrlen;
 
   for(int run=0; run < sim.param().replica.slave_runs; ++run){
+
+    // cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+    cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
+		       addrinfo_p->ai_protocol);
     
     DEBUG(8, "slave: connecting..");
-    int result = connect(cl_socket, (sockaddr *) &address, len);
+    // int result = connect(cl_socket, (sockaddr *) &address, len);
+    int result = connect(cl_socket, s_addr_p, len);
 
     if (result == -1){
       std::cout << "could not connect to master. master finished?"
@@ -231,8 +275,11 @@ int util::Replica_Exchange_Slave::run
 	
       DEBUG(8, "slave: connecting (after run)...");
       // std::cerr << "salve: connecting..." << std::endl;
-      cl_socket = socket(AF_INET, SOCK_STREAM, 0);
-      result = connect(cl_socket, (sockaddr *) &address, len);
+      // cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+      cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
+			 addrinfo_p->ai_protocol);
+      // result = connect(cl_socket, (sockaddr *) &address, len);
+      result = connect(cl_socket, s_addr_p, len);
       if (result == -1){
 	std::cout << "could not (re-)connect to master. master finished?"
 		  << std::endl;
@@ -253,6 +300,7 @@ int util::Replica_Exchange_Slave::run
 	return 1;
       }
       
+      std::cout << "updating configuration" << std::endl;
       update_replica_data();
       update_configuration(topo, conf);
       
@@ -278,6 +326,9 @@ int util::Replica_Exchange_Slave::run
   } // for slave_runs
   
   std::cerr << "slave: finished runs. terminating..." << std::endl;
+
+  freeaddrinfo(addrinfo_p);
+
   return 0;
 }
 
