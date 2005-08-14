@@ -30,6 +30,8 @@
 #include <omp.h>
 #endif
 
+#include <sys/utsname.h>
+
 #pragma hdrstop
 
 #include "BUILD_NUMBER"
@@ -250,4 +252,14 @@ void print_title(bool color)
 	    << "Zuerich\n\n"
 	    << "Bugreports to http://www.igc.ethz.ch:5555\n\n";
 
+  struct utsname sysinf;
+  if (uname(&sysinf) != -1){
+    std::cout << "running on"
+	      << "\n\t" << sysinf.nodename
+	      << "\n\t" << sysinf.sysname
+	      << " " << sysinf.release
+	      << " " << sysinf.version
+	      << " " << sysinf.machine
+	      << "\n\n";
+  }
 }
