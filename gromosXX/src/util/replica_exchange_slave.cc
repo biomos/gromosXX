@@ -28,19 +28,20 @@
 #include <io/print_block.h>
 
 #include <time.h>
-#include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
 
 #include "replica_exchange.h"
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netdb.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica
-
-#ifdef XXMPI
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // replica slave    ////////////////////////////////////////////////////////////
@@ -88,47 +89,69 @@ int util::Replica_Exchange_Slave::run
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
   std::cout << "slave initialised" << std::endl;
-
-  char port_name[MPI_MAX_PORT_NAME];
-  char server_name[MPI_MAX_PORT_NAME];
   
-  if (args.count("slave") != 1){
-    io::messages.add("slave: connection name required",
-		     "replica exchange",
+  std::string server_name;
+  int server_port;
+
+  if (args.count("slave") > 0){
+    io::Argument::const_iterator iter=args.lower_bound("slave");
+    if(iter!=args.upper_bound("slave")){
+
+      std::cerr << "setting server name to: " << iter->second << std::endl;
+      server_name = iter->second;
+      ++iter;
+      if(iter!=args.upper_bound("slave")){
+
+	std::istringstream is(iter->second);
+	if (!(is >> server_port)){
+	  io::messages.add("control [server [port number]]",
+			   "replica_exchange",
+			   io::message::error);
+	  return 1;
+	}
+      }
+    }
+  }
+
+  struct hostent *hostinfo;
+  int error;
+  hostinfo = getipnodebyname(server_name.c_str(), AF_INET, AI_DEFAULT, &error);
+  if (hostinfo == NULL){
+    io::messages.add("could not get hostinfo on server",
+		     "replica_exchange",
 		     io::message::error);
-
-    std::cerr << "slave: name required" << std::endl;
+    std::cerr << "could not get hostinfo: error = " << error << std::endl;
     return 1;
   }
-
-  if (args["slave"].length() > MPI_MAX_PORT_NAME){
-    io::messages.add("slave: connection name too long",
-		     "replica exchange",
+  if (hostinfo->h_addrtype != AF_INET){
+    io::messages.add("host is not an IP host",
+		     "replica_exchange",
 		     io::message::error);
-    std::cerr << "slave: connection name too long" << std::endl;
     return 1;
   }
+  
+  cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+  struct sockaddr_in address;
 
-  strcpy(server_name, args["slave"].c_str());
-  if (MPI_Lookup_name(server_name, MPI_INFO_NULL, port_name) != MPI_SUCCESS){
-    std::cerr << "MPI: could not lookup name!" << std::endl;
-    return 1;
-  }
+  address.sin_family = AF_INET;
+  address.sin_port = htons(server_port);
+  address.sin_addr = *(struct in_addr *) *hostinfo->h_addr_list;
+  socklen_t len = sizeof(address);
+
+  freehostent(hostinfo);
 
   for(int run=0; run < sim.param().replica.slave_runs; ++run){
     
     DEBUG(8, "slave: connecting..");
-    // std::cerr << "slave: connecting..." << std::endl;
-    if (MPI_Comm_connect(port_name, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &master)
-	!= MPI_SUCCESS){
+    int result = connect(cl_socket, (sockaddr *) &address, len);
+
+    if (result == -1){
       std::cout << "could not connect to master. master finished?"
 		<< std::endl;
-      std::cerr << "MPI: could not connect to master" << std::endl;
       return 1;
     }
 
     DEBUG(9, "slave: connected");
-    MPI_Errhandler_set(master, MPI_ERRORS_RETURN);
 
     // request a job
     int server_response = get_replica_data();
@@ -137,7 +160,7 @@ int util::Replica_Exchange_Slave::run
       // accept job
       std::cout << "slave: got a job! (replica "
 		<< replica_data.ID << ")" << std::endl;
-	
+      
       std::cout << "slave:  running replica " << replica_data.ID
 		<< " at T=" << T[replica_data.Ti]
 		<< " and l=" << l[replica_data.li]
@@ -147,15 +170,12 @@ int util::Replica_Exchange_Slave::run
       // init replica parameters (t, conf, T, lambda)
       if (init_replica(topo, conf, sim)){
 	std::cerr << "slave: disconnecting..." << std::endl;
-	MPI_Comm_disconnect(&master);
-	// MPI_Comm_free(&master);	
+	close(cl_socket);
 	return 1;
       }
 
       // close connection
-      // std::cerr << "slave: disconnecting" << std::endl;
-      MPI_Comm_disconnect(&master);
-      // MPI_Comm_free(&master);
+      close(cl_socket);
 
       // run it
       int error = run_md(topo, conf, sim, md, traj);
@@ -169,7 +189,6 @@ int util::Replica_Exchange_Slave::run
 	if (ff == NULL){
 	  std::cerr << "forcefield not found in MD algorithm sequence"
 		    << std::endl;
-	  // MPI_Comm_free(&master);
 	  return 1;
 	}
 	
@@ -212,52 +231,50 @@ int util::Replica_Exchange_Slave::run
 	
       DEBUG(8, "slave: connecting (after run)...");
       // std::cerr << "salve: connecting..." << std::endl;
-      MPI_Comm_connect(port_name, MPI::INFO_NULL, 0, MPI::COMM_WORLD, &master);
-      MPI_Errhandler_set(master, MPI_ERRORS_RETURN);
-      DEBUG(9, "slave: connected");
-
-      DEBUG(8, "slave: finished job " << replica_data.ID);
-      if (MPI_Send(&replica_data.ID, 1, MPI_INT, 0, 2, master) != MPI_SUCCESS){
-	std::cerr << "MPI: sending request to master failed" << std::endl;
+      cl_socket = socket(AF_INET, SOCK_STREAM, 0);
+      result = connect(cl_socket, (sockaddr *) &address, len);
+      if (result == -1){
+	std::cout << "could not (re-)connect to master. master finished?"
+		  << std::endl;
 	return 1;
       }
 
-      if (!error){
-	// store configuration on master
-	update_replica_data();
-	update_configuration(topo, conf);
+      DEBUG(9, "slave: connected");
+      DEBUG(8, "slave: finished job " << replica_data.ID);
+
+      char ch = 2;
+      write(cl_socket, &ch, 1);
+      read(cl_socket, &ch, 1);
+      if (ch != 0){
+	io::messages.add("server reported error",
+			 "replica_exchange",
+			 io::message::error);
+	close(cl_socket);
+	return 1;
       }
       
+      update_replica_data();
+      update_configuration(topo, conf);
+      
       // and disconnect
-      // std::cerr << "slave: disconnecting..." << std::endl;
-      DEBUG(9, "disconnecting...");
-      if (MPI_Comm_disconnect(&master) != MPI_SUCCESS){
-	std::cout << "could not disconnect. master finished?"
-		  << std::endl;
-	std::cerr << "MPI: disconnecting failed" << std::endl;
-	return 1;
-      }
-      // MPI_Comm_free(&master);
-      DEBUG(9, "disconnected!");
+      close(cl_socket);
     }
     else if (server_response == 9){
       std::cout << "server has finished!\n"
 		<< "exiting...\n"
 		<< std::endl;
+
       std::cerr << "slave: disconnecting..." << std::endl;
-      MPI_Comm_disconnect(&master);
+      close(cl_socket);
+
       return 0;
     }
     else{
-      // std::cerr << "slave: disconnecting..." << std::endl;
-      MPI_Comm_disconnect(&master);
-      // MPI_Comm_free(&master);
-
+      close(cl_socket);
       std::cout << "slave waiting..." << std::endl;
       // wait apropriate time for master to prepare
-      sleep(120);
+      sleep(timeout);
     }
-    
   } // for slave_runs
   
   std::cerr << "slave: finished runs. terminating..." << std::endl;
@@ -312,36 +329,33 @@ int util::Replica_Exchange_Slave::run_md
 
 int util::Replica_Exchange_Slave::get_replica_data()
 {
-  int i = 1;
-  MPI_Status status;
-  
   DEBUG(8, "slave: requesting job");
-  MPI_Send(&i, 1, MPI_INT, 0, 1, master);
-  
-  DEBUG(8, "slave: waiting for replica data");
-  if (MPI_Recv(&replica_data, sizeof(Replica_Data), MPI_CHAR,
-	       MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status) != MPI_SUCCESS){
+  char ch = 1;
+  write(cl_socket, &ch, 1);
 
-    std::cout << "MPI ERROR! getting replica data: " << status.MPI_ERROR << std::endl;
-    return 9;
+  read(cl_socket, &ch, 1);
+  if (ch != 0){
+    std::cout << "no job received from server (" << ch << ")" << std::endl;
+  }
+  else{
+    
+    DEBUG(8, "slave: waiting for replica data");
+    read(cl_socket, (char *) &replica_data, sizeof(Replica_Data));
+
+    DEBUG(9, "slave: got replica " << replica_data.ID
+	  << " temperature=" << replica_data.Ti
+	  << " lambda=" << replica_data.li);
   }
 
-  DEBUG(9, "slave: got replica " << replica_data.ID
-	<< " temperature=" << replica_data.Ti
-	<< " lambda=" << replica_data.li);
-
-  if (status.MPI_TAG == 9){
-    std::cout << "received killing signal" << std::endl;
-  }
-  
-  return status.MPI_TAG;
+  return int(ch);
 }
 
 int util::Replica_Exchange_Slave::update_replica_data()
 {
   DEBUG(8, "slave: updating replica data");
-  MPI_Send(&replica_data, sizeof(Replica_Data), MPI_CHAR,
-	   0, 0, master);
+
+  write(cl_socket, (char *) &replica_data.ID, sizeof(int));
+  write(cl_socket, (char *) &replica_data, sizeof(Replica_Data));
 
   return 0;
 }
@@ -352,40 +366,18 @@ int util::Replica_Exchange_Slave::get_configuration
  configuration::Configuration & conf
  )
 {
-  int error = 0;
-  
-  MPI_Status status;
-
   DEBUG(10, "receiving " << 3 * conf.current().pos.size() << " coords");
-  MPI_Recv(&conf.current().pos(0)(0), conf.current().pos.size() * 3,
-	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
+  int error = 0;
 
-  /*
-  if (status.MPI_ERROR != MPI_SUCCESS){
-    std::cout << "MPI ERROR! (pos)" << status.MPI_ERROR << std::endl;
-    error += 1;
-  }
-  */
-  
-  MPI_Recv(&conf.current().vel(0)(0), conf.current().vel.size()*3,
-	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
-  /*
-  if (status.MPI_ERROR != MPI_SUCCESS){
-    std::cout << "MPI ERROR! (vel)" << status.MPI_ERROR << std::endl;
-    error += 2;
-  }
-  */
-  
-  MPI_Recv(&conf.current().box(0)(0), 9,
-	   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, master, &status);
-  /*
-  if (status.MPI_ERROR != MPI_SUCCESS){
-    std::cout << "MPI ERROR! (box)" << status.MPI_ERROR << std::endl;
-    error += 4;
-  }
-  */
-  
-  // return status.MPI_TAG;
+  read(cl_socket, (char *) &conf.current().pos(0)(0),
+       conf.current().pos.size() * 3 * sizeof(double));
+
+  read(cl_socket, (char *) &conf.current().vel(0)(0),
+       conf.current().vel.size() * 3 * sizeof(double));
+
+  read(cl_socket, (char *) &conf.current().box(0)(0),
+       9 * sizeof(double));
+
   return error;
 }
 
@@ -397,18 +389,16 @@ int util::Replica_Exchange_Slave::update_configuration
 {
   // positions
   DEBUG(9, "sending " << 3 * conf.current().pos.size() << " coords");
-  
-  MPI_Send(&conf.current().pos(0)(0), conf.current().pos.size()*3,
-	   MPI::DOUBLE, 0, 0, master);
-  
-  // velocities
-  MPI_Send(&conf.current().vel(0)(0), conf.current().vel.size()*3,
-	   MPI::DOUBLE, 0, 0, master);
 
-  // and box
-  MPI_Send(&conf.current().box(0)(0), 9,
-	   MPI::DOUBLE, 0, 0, master);
-  
+  write(cl_socket, (char *) &conf.current().pos(0)(0),
+	conf.current().pos.size() * 3 * sizeof(double));
+
+  write(cl_socket, (char *) &conf.current().vel(0)(0),
+	conf.current().vel.size() * 3 * sizeof(double));
+
+  write(cl_socket, (char *) &conf.current().box(0)(0),
+	9 * sizeof(double));
+
   return 0;
 }
 
@@ -448,5 +438,3 @@ int util::Replica_Exchange_Slave::init_replica
 
   return 0;
 }
-
-#endif

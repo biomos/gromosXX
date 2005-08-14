@@ -36,12 +36,16 @@
 
 #include "replica_exchange.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica
-
-#ifdef XXMPI
 
 ////////////////////////////////////////////////////////////////////////////////
 // replica master   ////////////////////////////////////////////////////////////
@@ -65,57 +69,41 @@ int util::Replica_Exchange_Master::run
 (
  io::Argument & args)
 {
-  MPI_Comm client;
-  MPI_Status status;
-  
-  char port_name[MPI_MAX_PORT_NAME];
-  char server_name[MPI_MAX_PORT_NAME];
-  
-  int mpi_size;
-  if (MPI_Comm_size(MPI_COMM_WORLD, &mpi_size) != MPI_SUCCESS){
-    std::cerr << "MPI: could not get size" << std::endl;
-    return 1;
-  }
-  
-  if(mpi_size != 1){
-    std::cerr << "Server consists of multiple MPI processes" << std::endl;
-    io::messages.add("Replica Exchange server should only be started once",
-		     "Replica Exchange",
-		     io::message::error);
-  }
-  
-  if (MPI_Open_port(MPI_INFO_NULL, port_name) != MPI_SUCCESS){
-    std::cerr << "MPI: could not open port!" << std::endl;
-    return 1;
-  }
+  ////////////////////////////////////////////////////////////
+  // socket
+  sockaddr_in server_address;
+  sockaddr_in client_address;
 
-  if (args.count("master") != 1){
-    io::messages.add("master: connection name required",
-		     "replica exchange",
-		     io::message::error);
-    return 1;
+  serv_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+  server_address.sin_family = AF_INET;
+  server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  int port_nr = 29375;
+  if (args.count("master") > 0){
+    std::istringstream is(args["master"]);
+    if (!(is >> port_nr)){
+      io::messages.add("master [port number]",
+		       "replica_exchange",
+		       io::message::error);
+      return 1;
+    }
   }
-  if (args["master"].length() > MPI_MAX_PORT_NAME){
-    io::messages.add("master: connection name too long",
-		     "replica exchange",
-		     io::message::error);
-    std::cerr << "master: connection name too long" << std::endl;
-    return 1;
-  }
+  server_address.sin_port = htons(port_nr);
+  socklen_t server_len = sizeof(server_address);
+
+  if (bind(serv_socket, (sockaddr *) &server_address, server_len)){
     
-  strcpy(server_name, args["master"].c_str());
+    io::messages.add("could not bind address",
+		     "replica_exchange",
+		     io::message::error);
+    
+    std::cout << "replica exchange: could not bind address (error = " 
+	      << errno << ")" << std::endl;
 
-  if(MPI_Publish_name(server_name, MPI_INFO_NULL, port_name)
-     != MPI_SUCCESS){
-
-    MPI_Close_port(port_name);
-    std::cerr << "MPI: Could not publish name" << std::endl;
+    close(serv_socket);
     return 1;
   }
-
-  DEBUG(8, "replica master registered: " << port_name);
-  std::cout << "Replica Exchange server available at " << port_name
-	    << " or by name: " << args["master"] << "\n";
 
   // create the simulation classes (necessary to store the configurations)
   topology::Topology topo;
@@ -129,8 +117,7 @@ int util::Replica_Exchange_Master::run
     io::messages.add("replica exchange: could not read input!",
 		     "replica exchange",
 		     io::message::critical);
-    MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
-    MPI_Close_port(port_name);
+    close(serv_socket);
     return 2;
   }
 
@@ -141,8 +128,7 @@ int util::Replica_Exchange_Master::run
   for(unsigned int i=0; i<m_conf.size(); ++i){
     if (md.init(topo, m_conf[i], sim, std::cout)){
       std::cerr << "md init failed!" << std::endl;
-      MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
-      MPI_Close_port(port_name);
+      close(serv_socket);
       return 3;
     }
   }
@@ -153,8 +139,7 @@ int util::Replica_Exchange_Master::run
 		     "Replica_Exchange",
 		     io::message::error);
     std::cerr << "RE: not enough replicas" << std::endl;
-    MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
-    MPI_Close_port(port_name);
+    close (serv_socket);
     return 4;
   }
 
@@ -173,8 +158,6 @@ int util::Replica_Exchange_Master::run
   if (io::messages.display(std::cout) >= io::message::error){
     std::cout << "\nErrors during initialization!\n" << std::endl;
     std::cerr << "RE: not enough trials" << std::endl;
-    MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
-    MPI_Close_port(port_name);
     return 4;
   }
 
@@ -267,6 +250,11 @@ int util::Replica_Exchange_Master::run
 	    << "\n";
 
   bool quit = false;
+
+  // listen, keep a queue for max all replicas
+  // that should be enough, i guess
+  listen(serv_socket, switch_l * switch_T);
+
   while(quit == false){
     
     if (runs == rep_num){
@@ -316,39 +304,33 @@ int util::Replica_Exchange_Master::run
     
     // wait for a thread to connect
     DEBUG(9, "master: accepting connection...");
-    // std::cerr << "master: accepting..." << std::endl;
-    if (MPI_Comm_accept(port_name, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &client) != MPI_SUCCESS){
-      std::cerr << "MPI ERROR: accepting connection failed!" << std::endl;
-      continue;
-    }
-    MPI_Errhandler_set(client, MPI_ERRORS_RETURN);
-    DEBUG(9, "client connected!");
-
-    int i;
-    if (MPI_Recv(&i, 1, MPI_INT, MPI_ANY_SOURCE,
-		 MPI_ANY_TAG, client, &status) != MPI_SUCCESS){
-
-      std::cerr << "MPI: receive client request failed" << std::endl;
-      std::cerr << "master: disconnecting..." << std::endl;
-      MPI_Comm_disconnect(&client);
-      // MPI_Comm_free(&client);
-      
-      MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
-      MPI_Close_port(port_name);
+    socklen_t client_len = sizeof(client_address);
+    cl_socket = accept(serv_socket, (struct sockaddr *) &client_address, &client_len);
+    if (cl_socket == -1){
+      std::cout << "accept failed!" << std::endl;
+      io::messages.add("accept failed",
+		       "replica_exchange",
+		       io::message::error);
+      close(serv_socket);
       return 4;
     }
 
-    switch(status.MPI_TAG){
+    char ch;
+    read(cl_socket, &ch, 1);
+
+    DEBUG(9, "client connected!");
+
+    switch(ch){
       case 0:
-	std::cout << "process " << i << " says hello\n";
+	std::cout << "master: got a 'hello'\n";
 	break;
       case 1:
 
-	if(trials > sim.param().replica.trials){
-	  // terminate...
+	if(trials > sim.param().replica.trials){ // terminate...
 	  std::cerr << "master: sending quit (9) signal..." << std::endl;
-	  MPI_Send(&replica_data[0], sizeof(Replica_Data), MPI_CHAR,
-		   0, 9, client);
+	  // quit signal
+	  ch = 9;
+	  write(cl_socket, &ch, 1);
 	  break;
 	}
 
@@ -368,59 +350,61 @@ int util::Replica_Exchange_Master::run
 	    // assign it!
 	    replica_data[r].state = running;
 
+	    // all ok, sending replica
+	    ch = 0;
+	    write(cl_socket, &ch, 1);
+
 	    // send parameters
 	    DEBUG(8, "sending replica data");
-	    MPI_Send(&replica_data[r], sizeof(Replica_Data), MPI_CHAR,
-		     0, 0, client);
-
+	    write(cl_socket, (char *) &replica_data[r], sizeof(Replica_Data));
+	    
 	    // positions
 	    DEBUG(9, "sending " << 3 * m_conf[r].current().pos.size() << " coords");
-	    MPI_Send(&m_conf[r].current().pos(0)(0), m_conf[r].current().pos.size()*3,
-		     MPI::DOUBLE, 0, 0, client);
+	    write(cl_socket, (char *) &m_conf[r].current().pos(0)(0),
+		  m_conf[r].current().pos.size() * 3 * sizeof(double));
 	    
 	    // velocities
 	    DEBUG(9, "sending velocity");
-	    MPI_Send(&m_conf[r].current().vel(0)(0), m_conf[r].current().vel.size()*3,
-		     MPI::DOUBLE, 0, 0, client);
-	    
+	    write(cl_socket, (char *) &m_conf[r].current().vel(0)(0),
+		  m_conf[r].current().vel.size() * 3 * sizeof(double));
+
 	    // and box
 	    DEBUG(9, "sending box");
-	    MPI_Send(&m_conf[r].current().box(0)(0), 9, MPI::DOUBLE, 0, 0, client);
-
+	    write(cl_socket, (char *) &m_conf[r].current().box(0)(0), 9 * sizeof(double));
+	    
 	    break;
 	  }
 	} // replica selected
 
 	if (r==rep_num){
-	  // ERROR!
+	  // no replica available, wait...
 	  std::cout << "could not select replica!!!" << std::endl;
-	  MPI_Send(&replica_data[0], sizeof(Replica_Data), MPI_CHAR,
-		   0, 1, client);
+	  ch=1;
+	  write(cl_socket, &ch, 1);
 	}
 
 	break;
 
       case 2:
-	MPI_Status status;
-  
+	ch = 0;
+	write(cl_socket, &ch, 1);
+	
+	int i;
+	read(cl_socket, (char *) &i, sizeof(int));
+
 	DEBUG(8, "master: waiting for replica data " << i);
-	MPI_Recv(&replica_data[i], sizeof(Replica_Data), MPI_CHAR,
-		 MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+	read(cl_socket, (char *) &replica_data[i], sizeof(Replica_Data));
 	
 	if (replica_data[i].state != st_error){
 	  // get configuration
-	  MPI_Recv(&m_conf[i].current().pos(0)(0),
-		   m_conf[i].current().pos.size() * 3,
-		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+	  read(cl_socket, (char *) &m_conf[r].current().pos(0)(0),
+	       m_conf[r].current().pos.size() * 3 * sizeof(double));
 	  
-	  MPI_Recv(&m_conf[i].current().vel(0)(0),
-		   m_conf[i].current().vel.size()*3,
-		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+	  read(cl_socket, (char *) &m_conf[r].current().vel(0)(0),
+	       m_conf[r].current().vel.size() * 3 * sizeof(double));
 	  
-	  MPI_Recv(&m_conf[i].current().box(0)(0),
-		   9,
-		   MPI::DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
-	  
+	  read(cl_socket, (char *) &m_conf[r].current().box(0)(0),
+	       9 * sizeof(double));
 	}
 	else{
 	  std::cout << "received replica " << i << " with state error!" << std::endl;
@@ -439,30 +423,54 @@ int util::Replica_Exchange_Master::run
 	break;
 
       case 3:
+	ch = 0;
+	write(cl_socket, &ch, 1);
+
 	std::cout << "process " << i << " has aborted run\n";
 	break;
 
       case 4: // interactive session
-	switch(i){
+	ch = 0;
+	write(cl_socket, &ch, 1);
+	read(cl_socket, &ch, 1);
+
+	switch(ch){
 	  case 1: // replica information
 	    {
-	      int i = replica_data.size();
-	      MPI_Send(&i, 1, MPI_INT, 0, 4, client);
+	      int sz = replica_data.size();
+	      write(cl_socket, (char *) &sz, sizeof(int));
 	      
-	      MPI_Send(&replica_data[0],
-		       sizeof(Replica_Data)*replica_data.size(),
-		       MPI_CHAR, 0, 4, client);
+	      write(cl_socket, (char *) &replica_data[0],
+		    sz * sizeof(Replica_Data));
 	      break;
 	    }
 	  case 2: // replica change
 	    {
-	      int i;
-	      MPI_Recv(&i, 1, MPI_INT, MPI_ANY_SOURCE,
-		       MPI_ANY_TAG, client, &status);
+	      int sz = replica_data.size();
+	      std::cerr << "sending size" << std::endl;
+	      write(cl_socket, (char *) &sz, sizeof(int));
 	      
-	      MPI_Recv(&replica_data[i], sizeof(Replica_Data),
-		       MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG,
-		       client, &status);
+	      std::cerr << "sending data" << std::endl;
+	      write(cl_socket, (char *) &replica_data[0],
+		    sz * sizeof(Replica_Data));
+
+	      int r;
+	      std::cerr << "reading ID" << std::endl;
+	      read(cl_socket, (char *) &r, sizeof(int));
+
+	      if (r < 0 || r >= replica_data.size()){
+		io::messages.add("replica ID out of range",
+				 "replica_exchange",
+				 io::message::error);
+		close(cl_socket);
+		close(serv_socket);
+		return 1;
+	      }
+	      
+	      std::cerr << "reading data for " << r << std::endl;
+	      if (read(cl_socket, (char *) &replica_data[r], sizeof(Replica_Data)) != sizeof(Replica_Data)){
+		std::cerr << "could not read replica data!" << std::endl;
+	      }
 	      break;
 	    }
 	  case 3: // quit
@@ -480,9 +488,7 @@ int util::Replica_Exchange_Master::run
     }
 
     DEBUG(9, "disconnecting");
-    // std::cerr << "master: disconnecting..." << std::endl;
-    MPI_Comm_disconnect(&client);
-    // MPI_Comm_free(&client);
+    close(cl_socket);
 
   } // while trials to do
 
@@ -496,11 +502,8 @@ int util::Replica_Exchange_Master::run
   rep_out.close();
 
   std::cout << "exiting..." << std::endl;
-  MPI_Unpublish_name((char *) args["master"].c_str(), MPI_INFO_NULL, port_name);
-  std::cout << "name unpublished" << std::endl;
-  MPI_Close_port(port_name);
-  std::cout << "port closed" << std::endl;
-
+  close(serv_socket);
+  
   return 0;
 }
 
@@ -726,6 +729,3 @@ void util::Replica_Exchange_Master::print_replica(int r,
      << std::endl;
 }
 
-
-
-#endif

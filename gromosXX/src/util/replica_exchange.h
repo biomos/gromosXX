@@ -35,7 +35,7 @@ namespace io
 namespace util
 {
 
-#ifdef XXMPI
+  // #ifdef XXMPI
 
   /**
    * @class Replica_Exchange
@@ -47,7 +47,7 @@ namespace util
     /**
      * Constructor
      */
-    Replica_Exchange() {}
+    Replica_Exchange() : serv_socket(-1), cl_socket(-1), retry(5), timeout(60) {}
     /**
      * Destructor
      */
@@ -60,6 +60,23 @@ namespace util
     
   protected:
 
+    /**
+     * unix network socket
+     * @todo try to remove MPI from replica exchange
+     */
+    int serv_socket;
+    /**
+     * client socket
+     */
+    int cl_socket;
+    /**
+     * connecting is re-attempted in case of failure
+     */
+    int retry;
+    /**
+     * timeout in [s]
+     */
+    int timeout;
   };
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,7 +205,7 @@ namespace util
     /**
      * communicator
      */
-    MPI_Comm master;
+    // MPI_Comm master;
 
     /**
      * get replica data from master
@@ -259,11 +276,11 @@ namespace util
     /**
      * communicator
      */
-    MPI_Comm master;
+    // MPI_Comm master;
 
   };
 
-#endif
+  // #endif
   
 } // util
 

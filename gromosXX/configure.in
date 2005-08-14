@@ -325,6 +325,8 @@ esac
 
 dnl Checks for libraries.
 AC_CHECK_LIB(m, sqrt)
+AC_CHECK_LIB(socket, listen)
+AC_CHECK_LIB(nsl, uname)
 
 dnl check if full STL support
 AC_CV_CXX_VERSION_OK

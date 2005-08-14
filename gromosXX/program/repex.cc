@@ -34,6 +34,12 @@
 #include <mpi.h>
 #endif
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
+#include <sys/utsname.h>
+
 #pragma hdrstop
 
 #include "BUILD_NUMBER"
@@ -72,10 +78,10 @@ int main(int argc, char *argv[]){
     return 1;
   }
 
-#ifdef XXMPI
+  // #ifdef XXMPI
 
-  MPI_Init(&argc, &argv);
-  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+  // MPI_Init(&argc, &argv);
+  // MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
   
   int error = 0;
 
@@ -107,23 +113,23 @@ int main(int argc, char *argv[]){
   }
 
   if (error){
-    std::cerr << "errors during MPI run! (error code " << error << ")\n"
+    std::cerr << "errors during repex run! (error code " << error << ")\n"
 	      << std::endl;
 
     io::messages.display();
     
-    MPI_Abort(MPI_COMM_WORLD, error);
+    // MPI_Abort(MPI_COMM_WORLD, error);
     return 1;
   }
   
-  MPI_Finalize();
+  // MPI_Finalize();
   
-#else
+  // #else
   
-  std::cout << "MPI required! (use configure --enable-mpi)" << std::endl;
-  return 1;
+  // std::cout << "MPI required! (use configure --enable-mpi)" << std::endl;
+  // return 1;
 
-#endif
+  // #endif
   
   return 0;
 }
@@ -161,13 +167,33 @@ void print_title(io::Argument & args, bool color)
   std::cout << "standard library debugging enabled.\n";
 #endif
 
-  // some omp stuff
+#ifdef OMP
+  int nthreads, tid;
+#pragma omp parallel private(nthreads, tid)
+  {
+    tid = omp_get_thread_num();
+    if (tid == 0){
+      nthreads = omp_get_num_threads();
+      std::cout << "OpenMP code enabled\n"
+		<< "\tshared memory parallelization\n"
+		<< "\twww.openmp.org\n\n"
+		<< "\tusing "
+		<< omp_get_num_threads() << " threads\n"
+		<< "\tthis can be adjusted by setting the\n"
+		<< "\tOMP_NUM_THREADS environment variable\n"
+		<< std::endl;
+    }
+    
+  }
+#endif
+
 #ifdef XXMPI
 
   std::cout << "MPI code enabled\n"
 	    << "\tdistributed memory parallelization\n"
 	    << "\twww.mpi-group.org\n\n"
 	    << std::endl;
+#endif
 
   std::cout << "Replica Exchange Method\n\t";
 
@@ -176,12 +202,23 @@ void print_title(io::Argument & args, bool color)
   else
     std::cout << "slave process";
     
-#endif
   
   std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"
 	    << "Professor W. F. van Gunsteren\n"
 	    << "Swiss Federal Institute of Technology\n"
 	    << "Zuerich\n\n"
 	    << "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+
+
+  struct utsname sysinf;
+  if (uname(&sysinf) != -1){
+    std::cout << "running on"
+	      << "\n\t" << sysinf.nodename
+	      << "\n\t" << sysinf.sysname
+	      << " " << sysinf.release
+	      << " " << sysinf.version
+	      << " " << sysinf.machine
+	      << "\n\n";
+  }
 
 }
