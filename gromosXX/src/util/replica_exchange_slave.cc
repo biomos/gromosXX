@@ -124,34 +124,6 @@ int util::Replica_Exchange_Slave::run
     }
   }
 
-  /* SOLARIS
-  struct hostent *hostinfo;
-  int error;
-  hostinfo = getipnodebyname(server_name.c_str(), AF_INET, AI_DEFAULT, &error);
-  if (hostinfo == NULL){
-    io::messages.add("could not get hostinfo on server",
-		     "replica_exchange",
-		     io::message::error);
-    std::cerr << "could not get hostinfo: error = " << error << std::endl;
-    return 1;
-  }
-  if (hostinfo->h_addrtype != AF_INET){
-    io::messages.add("host is not an IP host",
-		     "replica_exchange",
-		     io::message::error);
-    return 1;
-  }
-  
-  struct sockaddr_in address;
-
-  address.sin_family = AF_INET;
-  address.sin_port = htons(server_port);
-  address.sin_addr = *(struct in_addr *) *hostinfo->h_addr_list;
-  socklen_t len = sizeof(address);
-
-  freehostent(hostinfo);
-  */
-
   struct addrinfo *addrinfo_p;
   struct addrinfo hints;
   hints.ai_flags = 0;
@@ -173,7 +145,6 @@ int util::Replica_Exchange_Slave::run
     return 1;
   }
 
-  // addrinfo_p->ai_addr->sin_port = htons(server_port);
   ((sockaddr_in *)addrinfo_p->ai_addr)->sin_port = htons(server_port);
 
   sockaddr * s_addr_p = addrinfo_p->ai_addr;
@@ -181,12 +152,10 @@ int util::Replica_Exchange_Slave::run
 
   for(int run=0; run < sim.param().replica.slave_runs; ++run){
 
-    // cl_socket = socket(AF_INET, SOCK_STREAM, 0);
     cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
 		       addrinfo_p->ai_protocol);
     
     DEBUG(8, "slave: connecting..");
-    // int result = connect(cl_socket, (sockaddr *) &address, len);
     int result = connect(cl_socket, s_addr_p, len);
 
     if (result == -1){
@@ -274,11 +243,9 @@ int util::Replica_Exchange_Slave::run
       }
 	
       DEBUG(8, "slave: connecting (after run)...");
-      // std::cerr << "salve: connecting..." << std::endl;
-      // cl_socket = socket(AF_INET, SOCK_STREAM, 0);
       cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
 			 addrinfo_p->ai_protocol);
-      // result = connect(cl_socket, (sockaddr *) &address, len);
+
       result = connect(cl_socket, s_addr_p, len);
       if (result == -1){
 	std::cout << "could not (re-)connect to master. master finished?"
