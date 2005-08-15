@@ -458,7 +458,7 @@ int util::Replica_Exchange_Master::run
 	      std::cerr << "reading ID" << std::endl;
 	      read(cl_socket, (char *) &r, sizeof(int));
 
-	      if (r < 0 || r >= replica_data.size()){
+	      if (r < 0 || r >= int(replica_data.size())){
 		io::messages.add("replica ID out of range",
 				 "replica_exchange",
 				 io::message::error);
