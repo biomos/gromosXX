@@ -1,3 +1,952 @@
+2005-08-14 21:47  markus
+
+	* src/util/: replica_exchange_control.cc,
+	  replica_exchange_slave.cc: linux compatibility
+
+2005-08-14 19:47  markus
+
+	* program/md.cc: uname support
+
+2005-08-14 19:46  markus
+
+	* program/repex.cc, src/util/replica_exchange.h,
+	  src/util/replica_exchange_control.cc,
+	  src/util/replica_exchange_master.cc,
+	  src/util/replica_exchange_slave.cc, configure.in: socket based
+	  communication
+
+2005-08-11 13:00  markus
+
+	* doc/gromosXX.tex, doc/input.html, program/Makefile.am,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/integration/analyze.cc,
+	  src/algorithm/temperature/temperature_calculation.cc,
+	  src/configuration/average.cc, src/configuration/configuration.cc,
+	  src/configuration/energy.cc, src/configuration/energy.h,
+	  src/interaction/Makefile.am, src/interaction/interaction_types.h,
+	  src/interaction/bonded/angle_interaction.h,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/bonded/harm_angle_interaction.cc,
+	  src/interaction/bonded/harm_angle_interaction.h,
+	  src/interaction/bonded/harmonic_bond_interaction.cc,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_innerloop.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_parameter.h,
+	  src/interaction/nonbonded/interaction/nonbonded_set.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_term.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_term.h,
+	  src/interaction/nonbonded/interaction/omp_nonbonded_interaction.cc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc,
+	  src/interaction/special/create_special.cc,
+	  src/interaction/special/external_interaction.cc,
+	  src/interaction/special/external_interaction.h,
+	  src/interaction/special/pscale.h, src/io/argument.cc,
+	  src/io/argument.h, src/io/ifp.h, src/io/read_input.cc,
+	  src/io/configuration/in_configuration.cc,
+	  src/io/configuration/in_configuration.h,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/parameter/in_parameter.h, src/io/topology/in_distrest.cc,
+	  src/io/topology/in_perturbation.cc,
+	  src/io/topology/in_topology.cc, src/io/topology/in_topology.h,
+	  src/simulation/parameter.h, src/topology/topology.cc,
+	  src/topology/topology.h, src/topology/core/body_term.h,
+	  src/util/Makefile.am, src/util/replica_exchange_master.cc,
+	  src/util/replica_exchange_slave.cc, src/util/virtual_atom.cc,
+	  src/util/virtual_atom.h, src/util/virtual_grain.cc,
+	  src/util/virtual_grain.h: doc/gromosXX.tex
+
+2005-08-11 13:00  markus
+
+	* contrib/repana.cc: [no log message]
+
+2005-08-11 12:59  markus
+
+	* contrib/rep_rewrite.cc: multiframe support
+
+2005-08-11 12:58  markus
+
+	* src/math/gmath.h: matrix operator +=
+
+2005-08-11 12:58  markus
+
+	* configure.in: profiling
+
+2005-07-14 09:33  markus
+
+	* contrib/rep_rewrite.cc: sort replica exchange trajectories
+
+2005-07-04 11:06  markus
+
+	* configure.in, src/io/read_input.h, src/simulation/parameter.h,
+	  src/util/replica_exchange_master.cc: SUN studio fixes
+
+2005-07-04 11:05  markus
+
+	* src/util/parse_tcouple.cc: 0 solute fix
+
+2005-07-01 18:40  markus
+
+	* VERSION, doc/doxygen.conf.in, program/BUILD_NUMBER: release
+
+2005-07-01 18:24  markus
+
+	* src/util/: replica_exchange_control.cc,
+	  replica_exchange_slave.cc: error handling
+
+2005-07-01 18:24  markus
+
+	* contrib/repana.cc, src/util/replica_exchange.h,
+	  src/util/replica_exchange_master.cc: cleaner replica.dat output
+	  (before set_next_T/l)
+
+2005-07-01 18:22  markus
+
+	* src/io/: print_block.cc, configuration/out_configuration.cc:
+	  guaranteed space between STEPS and TIME
+
+2005-07-01 18:21  markus
+
+	* program/repex.cc: error checking
+
+2005-06-22 19:15  markus
+
+	* program/script.cc: no configuration in create forcefield
+
+2005-06-22 19:14  markus
+
+	* doc/input.html: replica exchange block
+
+2005-06-22 19:14  markus
+
+	* contrib/repana.cc: formatting
+
+2005-06-22 18:40  markus
+
+	* src/: io/print_block.cc, io/print_block.h, io/read_input.cc,
+	  io/read_input.h, io/configuration/in_configuration.cc,
+	  io/configuration/in_configuration.h,
+	  io/configuration/out_configuration.cc,
+	  io/parameter/in_parameter.cc, simulation/parameter.h,
+	  util/create_simulation.cc, util/replica_exchange_control.cc,
+	  util/replica_exchange_master.cc, util/replica_exchange_slave.cc,
+	  util/usage.cc: reading / writing of replica information
+
+2005-06-22 18:39  markus
+
+	* src/configuration/: configuration.cc, configuration.h: name
+	  cleanup
+
+2005-06-22 18:39  markus
+
+	* src/check/: aladip.t.cc, aladip_atomic.t.cc, aladip_cg.t.cc,
+	  aladip_special.t.cc, rasn.t.cc, scaling.t.cc: no configuration in
+	  create_forcefield, create_md_seq
+
+2005-06-22 18:38  markus
+
+	* src/algorithm/algorithm/: algorithm_sequence.cc,
+	  algorithm_sequence.h: centre of mass removal in init, not
+	  construction
+
+2005-06-22 18:37  markus
+
+	* src/algorithm/temperature/: temperature_calculation.cc,
+	  temperature_calculation.h: initial temperature calculation moved
+	  to init
+
+2005-06-22 18:36  markus
+
+	* src/: interaction/forcefield/create_forcefield.cc,
+	  interaction/forcefield/create_forcefield.h,
+	  interaction/forcefield/forcefield.cc,
+	  interaction/nonbonded/create_nonbonded.cc,
+	  interaction/nonbonded/create_nonbonded.h,
+	  algorithm/constraints/create_constraints.cc,
+	  algorithm/constraints/create_constraints.h,
+	  algorithm/create_md_sequence.cc, algorithm/create_md_sequence.h:
+	  no configuration in construction
+
+2005-06-22 18:36  markus
+
+	* src/interaction/nonbonded/: interaction/mpi_nonbonded_master.cc,
+	  interaction/mpi_nonbonded_slave.cc,
+	  interaction/nonbonded_interaction.cc,
+	  interaction/nonbonded_outerloop.cc,
+	  interaction/omp_nonbonded_interaction.cc,
+	  pairlist/standard_pairlist_algorithm.cc: solvent loop check fix,
+	  warning fixes
+
+2005-06-22 18:25  markus
+
+	* src/interaction/special/position_restraint_interaction.cc:
+	  bugfix: position restraint energies
+
+2005-06-15 18:50  markus
+
+	* contrib/repana.cc: replica exchange analysis
+
+2005-06-15 18:49  markus
+
+	* doc/input.html, src/io/print_block.cc,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/parameter/in_parameter.cc, src/simulation/parameter.h,
+	  src/util/replica_data.h, src/util/replica_exchange.h,
+	  src/util/replica_exchange_control.cc,
+	  src/util/replica_exchange_master.cc,
+	  src/util/replica_exchange_slave.cc: replica exchange: lambda and
+	  temperature exchanges
+
+2005-06-15 18:48  markus
+
+	* configure.in: no precompiled headers with mpi?
+
+2005-06-15 10:04  markus
+
+	* src/util/: replica_data.h, replica_exchange.cc,
+	  replica_exchange_control.cc, replica_exchange_master.cc,
+	  replica_exchange_slave.cc: replica exchange restructuring
+
+2005-06-15 10:03  markus
+
+	* configure.in, doc/input.html, program/repex.cc,
+	  src/algorithm/create_md_sequence.cc, src/io/print_block.cc,
+	  src/io/print_block.h, src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h,
+	  src/io/parameter/in_parameter.cc, src/simulation/parameter.h,
+	  src/util/Makefile.am, src/util/replica_exchange.cc,
+	  src/util/replica_exchange.h: MPICH2 defines
+
+2005-06-13 21:01  markus
+
+	* program/repex.cc, src/util/replica_exchange.cc,
+	  src/util/replica_exchange.h: replica exchange: client server
+	  model
+
+2005-06-13 10:10  markus
+
+	* src/topology/: topology.cc, topology.h: asserts
+
+2005-06-13 10:09  markus
+
+	* src/io/topology/in_distrest.cc: block names check
+
+2005-06-13 10:09  markus
+
+	* src/io/topology/in_perturbation.cc: perturbing dihedrals with
+	  B-type
+
+2005-06-13 10:07  markus
+
+	* src/io/read_input.cc: pairlist printing
+
+2005-06-13 10:07  markus
+
+	* src/io/parameter/: in_parameter.cc, in_parameter.h: coarse
+	  graining
+
+2005-06-13 10:06  markus
+
+	* src/io/configuration/out_configuration.cc: sign warnings
+
+2005-06-13 10:06  markus
+
+	* src/io/print_block.cc: energy group bugfix
+
+2005-06-13 10:05  markus
+
+	* src/io/: argument.cc, argument.h: usage: knowns
+
+2005-06-13 09:56  markus
+
+	* src/util/: Makefile.am, debug.cc, debug.h, parse_verbosity.cc,
+	  replica_exchange.cc, replica_exchange.h: MPI replica exchange:
+	  part I
+
+2005-06-13 09:54  markus
+
+	* src/interaction/nonbonded/pairlist/: grid.cc,
+	  grid_pairlist_algorithm.h: automatic grid space growing
+
+2005-06-13 09:53  markus
+
+	* src/interaction/nonbonded/pairlist/: pairlist.cc, pairlist.h:
+	  pairlist printing
+
+2005-06-13 09:53  markus
+
+	* src/interaction/nonbonded/interaction/:
+	  perturbed_nonbonded_outerloop.cc, perturbed_nonbonded_set.cc:
+	  perturbed / non-perturbed selection, pairlist printing
+
+2005-06-13 09:53  markus
+
+	* src/:
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_term.cc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_term.h,
+	  simulation/parameter.h: coarse graining
+
+2005-06-13 09:49  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_term.cc,
+	  nonbonded_term.h: coarse graining
+
+2005-06-13 09:48  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_interaction.cc,
+	  nonbonded_interaction.h: print pairlist
+
+2005-06-13 09:47  markus
+
+	* src/interaction/nonbonded/interaction/: mpi_nonbonded_master.cc,
+	  mpi_nonbonded_slave.cc: pairlist printing
+
+2005-06-13 09:46  markus
+
+	* src/interaction/nonbonded/: innerloop_template.h,
+	  interaction/nonbonded_innerloop.cc: coarse graining
+
+2005-06-13 09:46  markus
+
+	* src/interaction/nonbonded/create_nonbonded.cc: only perturbed
+	  nonbonded if there are perturbed atoms
+
+2005-06-13 09:43  markus
+
+	* src/check/: aladip.t.cc, aladip_atomic.t.cc, aladip_special.t.cc,
+	  check.h, check_forcefield.cc, rasn.t.cc, scaling.t.cc: automatic
+	  usage
+
+2005-06-13 09:41  markus
+
+	* src/check/: aladip_cg.t.cc, data/aladip_cg.in, Makefile.am:
+	  coarse grain test
+
+2005-06-13 09:41  markus
+
+	* program/: md.cc, md_mpi.cc, repex.cc, script.cc: new automatic
+	  usage
+
+2005-06-13 09:39  markus
+
+	* doc/gromosXX.tex: [no log message]
+
+2005-06-13 09:38  markus
+
+	* INSTALL: mac installation instruction
+
+2005-06-12 15:09  markus
+
+	* src/util/: usage.cc, usage.h: automated usage string
+
+2005-06-01 20:04  markus
+
+	* doc/gromosXX.tex: [no log message]
+
+2005-06-01 17:43  markus
+
+	* doc/gromosXX.tex: documentation
+
+2005-05-30 09:54  markus
+
+	* src/interaction/nonbonded/interaction/: mpi_nonbonded_slave.cc,
+	  mpi_nonbonded_master.cc: bugfix: pairlist prepare only after
+	  updating positions
+
+2005-05-29 13:42  markus
+
+	* src/interaction/: forcefield/forcefield.cc,
+	  nonbonded/interaction/nonbonded_interaction.cc,
+	  nonbonded/pairlist/grid.cc,
+	  nonbonded/pairlist/grid_pairlist_algorithm.cc,
+	  nonbonded/pairlist/grid_pairlist_algorithm.h,
+	  nonbonded/pairlist/pairlist_algorithm.h,
+	  nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  nonbonded/pairlist/standard_pairlist_algorithm.h: grid pairlist
+	  error messages
+
+2005-04-27 19:58  markus
+
+	* src/configuration/energy.cc: bugfix: nonbonded energy (if
+	  perturbation enabled)
+
+2005-04-27 19:48  markus
+
+	* src/algorithm/constraints/perturbed_shake.cc: bugfix: shake
+	  initial coordinates
+
+2005-04-21 15:50  markus
+
+	* src/: io/configuration/out_configuration.cc,
+	  io/configuration/out_configuration.h,
+	  io/parameter/in_parameter.cc, simulation/parameter.h: solute only
+	  trajectory
+
+2005-04-21 15:50  markus
+
+	* src/interaction/special/distance_restraint_interaction.cc: remove
+	  debug output
+
+2005-04-21 15:48  markus
+
+	* configure.in: libtool
+
+2005-04-15 17:49  markus
+
+	* src/interaction/special/distance_restraint_interaction.cc:
+	  periodicity error check
+
+2005-04-14 16:24  markus
+
+	* src/: interaction/special/distance_restraint_interaction.cc,
+	  interaction/special/perturbed_distance_restraint_interaction.cc,
+	  util/virtual_atom.cc, util/virtual_atom.h: nearest image calls
+	  for virtual / pseudo atoms
+
+2005-04-14 16:24  markus
+
+	* src/algorithm/integration/steepest_descent.cc: also use special
+	  energy in minimisation
+
+2005-04-13 21:37  markus
+
+	* program/md.cc: print all energies in case of error
+
+2005-04-13 20:21  markus
+
+	* src/interaction/special/distance_restraint_interaction.cc:
+	  DISTREST print out
+
+2005-04-13 15:24  markus
+
+	* src/io/topology/in_topology.cc: add energy group if not in input
+
+2005-04-13 15:23  markus
+
+	* src/interaction/Makefile.am: added perturbed dist rest header
+
+2005-04-13 15:22  markus
+
+	* src/algorithm/temperature/berendsen_thermostat.cc: removed unused
+	  variable
+
+2005-04-10 22:12  markus
+
+	* program/md.cc, src/algorithm/Makefile.am,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/integration/analyze.cc,
+	  src/algorithm/integration/analyze.h, src/io/read_input.cc,
+	  src/io/configuration/in_configuration.cc,
+	  src/io/configuration/in_configuration.h,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/parameter/in_parameter.h, src/simulation/parameter.h:
+	  (re-) analyzation of trajectories
+
+2005-04-09 22:20  markus
+
+	* program/md.cc: NaN error: print energies
+
+2005-04-09 22:16  markus
+
+	* src/: io/Makefile.am, io/print_block.cc, io/read_special.cc,
+	  io/configuration/out_configuration.cc,
+	  io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  configuration/average.cc, configuration/energy.cc,
+	  configuration/energy.h, topology/topology.h,
+	  topology/core/body_term.h, topology/core/core.h,
+	  check/Makefile.am, check/aladip.t.cc, check/aladip_atomic.t.cc,
+	  check/aladip_special.t.cc, check/check_forcefield.cc,
+	  check/check_special_forcefield.cc, check/rasn.t.cc,
+	  check/scaling.t.cc, check/special.t.cc,
+	  check/data/aladip.distrest, check/data/aladip_special.in:
+	  distance restraints --pitschna
+
+2005-04-09 22:15  markus
+
+	* src/io/instream.cc: debug output
+
+2005-04-09 22:12  markus
+
+	* src/io/topology/: in_distrest.cc, in_distrest.cc~, in_distrest.h,
+	  in_distrest.h~, in_posres.cc, in_topology.cc: distance restraints
+	  --pitschna
+
+2005-04-09 22:11  markus
+
+	* src/interaction/: Makefile.am,
+	  bonded/improper_dihedral_interaction.cc: check for NaN in
+	  impropers
+
+2005-04-09 22:09  markus
+
+	* src/: simulation/parameter.h,
+	  interaction/special/create_special.cc,
+	  interaction/special/distance_restraint_interaction.cc,
+	  interaction/special/distance_restraint_interaction.h,
+	  interaction/special/perturbed_distance_restraint_interaction.cc,
+	  interaction/special/perturbed_distance_restraint_interaction.h:
+	  distance restraints --pitschna
+
+2005-04-09 22:09  markus
+
+	* src/math/gmath.h: abs(Vec)
+
+2005-04-09 22:08  markus
+
+	* src/util/: Makefile.am, create_simulation.cc,
+	  create_simulation.h, virtual_atom.cc, virtual_atom.h: adding
+	  virtual atoms for distance restraining --pitschna
+
+2005-04-08 17:08  markus
+
+	* src/algorithm/temperature/berendsen_thermostat.cc: divide by zero
+	  measure
+
+2005-03-17 19:20  markus
+
+	* src/io/read_special.cc: fixed possible segfault if argument
+	  missing
+
+2005-02-18 16:37  markus
+
+	* program/BUILD_NUMBER: MPI support
+
+2005-02-18 16:37  markus
+
+	* src/io/parameter/in_parameter.cc: error message
+
+2005-02-18 16:36  markus
+
+	* src/simulation/simulation.h: enable mpi code?
+
+2005-02-18 16:36  markus
+
+	* src/math/gmath.h: matrix operator =
+
+2005-02-18 16:35  markus
+
+	* src/io/configuration/out_configuration.cc: pretty print
+
+2005-02-18 16:35  markus
+
+	* configure.in, program/Makefile.am, program/md_mpi.cc,
+	  src/interaction/Makefile.am: mpi support
+
+2005-02-18 16:34  markus
+
+	* src/interaction/nonbonded/: create_nonbonded.cc,
+	  interaction/mpi_nonbonded_master.cc,
+	  interaction/mpi_nonbonded_master.h,
+	  interaction/mpi_nonbonded_slave.cc,
+	  interaction/mpi_nonbonded_slave.h,
+	  interaction/nonbonded_interaction.cc,
+	  interaction/nonbonded_interaction.h,
+	  interaction/nonbonded_set.cc, interaction/nonbonded_set.h,
+	  interaction/omp_nonbonded_interaction.cc,
+	  interaction/omp_nonbonded_interaction.h,
+	  interaction/perturbed_nonbonded_set.cc,
+	  interaction/perturbed_nonbonded_set.h: MPI for the nonbonded
+	  interaction
+
+2005-02-18 16:33  markus
+
+	* src/configuration/: configuration.cc, configuration.h: assignemnt
+	  operator
+
+2005-02-18 16:32  markus
+
+	* src/algorithm/algorithm/: algorithm_sequence.cc,
+	  algorithm_sequence.h: get algorithm by name
+
+2005-02-18 16:31  markus
+
+	* program/repex.cc: replica exchange (omp)
+
+2005-02-18 16:30  markus
+
+	* src/util/error.h: new error code: E_ILLEGAL
+
+2005-02-18 16:30  markus
+
+	* src/util/: replica_exchange.cc, replica_exchange.h: fixes
+	  switching replicas
+
+2005-02-14 18:30  markus
+
+	* src/util/: replica_exchange.cc, replica_exchange.h: store /
+	  update configuration, initialise replicas
+
+2005-02-13 12:31  markus
+
+	* src/: io/argument.cc, io/argument.h,
+	  io/configuration/out_configuration.cc,
+	  io/configuration/out_configuration.h, util/replica_exchange.cc:
+	  removed copying of arguments
+
+2005-02-13 11:50  markus
+
+	* program/repex.cc, src/util/replica_exchange.cc,
+	  src/util/replica_exchange.h: master / slave separation
+
+2005-02-12 15:53  markus
+
+	* program/repex.cc, src/algorithm/algorithm.h,
+	  src/algorithm/create_md_sequence.cc,
+	  src/algorithm/create_md_sequence.h,
+	  src/algorithm/algorithm/algorithm_sequence.cc,
+	  src/algorithm/algorithm/algorithm_sequence.h,
+	  src/algorithm/constraints/flexible_constraint.cc,
+	  src/algorithm/constraints/flexible_constraint.h,
+	  src/algorithm/constraints/lincs.cc,
+	  src/algorithm/constraints/lincs.h,
+	  src/algorithm/constraints/perturbed_flexible_constraint.cc,
+	  src/algorithm/constraints/perturbed_flexible_constraint.h,
+	  src/algorithm/constraints/perturbed_shake.cc,
+	  src/algorithm/constraints/perturbed_shake.h,
+	  src/algorithm/constraints/position_constraints.cc,
+	  src/algorithm/constraints/position_constraints.h,
+	  src/algorithm/constraints/remove_com_motion.cc,
+	  src/algorithm/constraints/remove_com_motion.h,
+	  src/algorithm/constraints/rottrans.cc,
+	  src/algorithm/constraints/rottrans.h,
+	  src/algorithm/constraints/shake.cc,
+	  src/algorithm/constraints/shake.h,
+	  src/algorithm/integration/energy_calculation.cc,
+	  src/algorithm/integration/energy_calculation.h,
+	  src/algorithm/integration/leap_frog.h,
+	  src/algorithm/integration/slow_growth.h,
+	  src/algorithm/integration/steepest_descent.cc,
+	  src/algorithm/integration/steepest_descent.h,
+	  src/algorithm/pressure/berendsen_barostat.h,
+	  src/algorithm/pressure/pressure_calculation.h,
+	  src/algorithm/temperature/berendsen_thermostat.cc,
+	  src/algorithm/temperature/berendsen_thermostat.h,
+	  src/algorithm/temperature/nosehoover_thermostat.cc,
+	  src/algorithm/temperature/nosehoover_thermostat.h,
+	  src/algorithm/temperature/temperature_calculation.h,
+	  src/configuration/average.h, src/interaction/interaction.h,
+	  src/interaction/bonded/angle_interaction.h,
+	  src/interaction/bonded/create_bonded.cc,
+	  src/interaction/bonded/create_bonded.h,
+	  src/interaction/bonded/dihedral_interaction.h,
+	  src/interaction/bonded/harmonic_bond_interaction.h,
+	  src/interaction/bonded/improper_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_angle_interaction.h,
+	  src/interaction/bonded/perturbed_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.h,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.h,
+	  src/interaction/bonded/quartic_bond_interaction.h,
+	  src/interaction/forcefield/create_forcefield.cc,
+	  src/interaction/forcefield/create_forcefield.h,
+	  src/interaction/forcefield/forcefield.cc,
+	  src/interaction/forcefield/forcefield.h,
+	  src/interaction/nonbonded/create_nonbonded.cc,
+	  src/interaction/nonbonded/create_nonbonded.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_set.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_set.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_set.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_set.h,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/special/create_special.cc,
+	  src/interaction/special/create_special.h,
+	  src/interaction/special/jvalue_restraint_interaction.h,
+	  src/interaction/special/position_restraint_interaction.h,
+	  src/interaction/special/pscale.cc,
+	  src/interaction/special/pscale.h, src/io/argument.cc,
+	  src/io/argument.h, src/io/read_input.cc,
+	  src/io/configuration/in_configuration.cc,
+	  src/io/configuration/in_configuration.h,
+	  src/util/generate_velocities.cc, src/util/generate_velocities.h,
+	  src/util/replica_exchange.cc, src/util/replica_exchange.h:
+	  standard output redirection
+
+2005-02-11 20:59  markus
+
+	* program/repex.cc: tentative beginning
+
+2005-02-11 20:03  markus
+
+	* configure.in, program/Makefile.am,
+	  src/configuration/configuration.cc,
+	  src/configuration/configuration.h, src/io/ifp.h,
+	  src/io/read_input.cc, src/io/read_input.h,
+	  src/io/forcefield/in_ifp.cc, src/io/forcefield/in_ifp.h,
+	  src/io/parameter/in_parameter.cc,
+	  src/io/parameter/in_parameter.h, src/io/topology/in_topology.cc,
+	  src/io/topology/in_topology.h, src/simulation/parameter.h,
+	  src/topology/topology.cc, src/topology/topology.h,
+	  src/util/Makefile.am, src/util/replica_exchange.cc,
+	  src/util/replica_exchange.h: preparation for mpi
+
+2005-02-09 16:05  markus
+
+	* program/script.cc,
+	  src/algorithm/constraints/flexible_constraint.cc,
+	  src/algorithm/constraints/flexible_constraint.h,
+	  src/algorithm/constraints/perturbed_flexible_constraint.cc,
+	  src/algorithm/constraints/perturbed_flexible_constraint.h,
+	  src/algorithm/constraints/perturbed_shake.cc,
+	  src/algorithm/constraints/shake.cc,
+	  src/interaction/bonded/angle_interaction.cc,
+	  src/io/configuration/in_configuration.cc,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h: flexible constraint
+	  lengths
+
+2005-02-09 16:03  markus
+
+	* src/util/create_simulation.cc: initialisation fix
+
+2005-02-09 16:02  markus
+
+	* src/: math/gmath.h, topology/topology.h: signed / unsigned
+	  warnings
+
+2005-02-09 16:01  markus
+
+	* Config.sh: autoheader test
+
+2005-02-03 11:51  markus
+
+	* src/io/topology/in_posres.cc: print out information
+
+2005-02-03 11:50  markus
+
+	* src/io/topology/in_perturbation.cc: remove end of line checks
+
+2005-02-03 11:49  markus
+
+	* src/: algorithm/pressure/berendsen_barostat.cc,
+	  configuration/configuration.cc, util/error.h: check boxsize for
+	  rectangular / truncoct
+
+2005-02-03 11:26  markus
+
+	* src/io/configuration/out_configuration.cc: printing final
+	  energies in energy minimisation
+
+2005-01-11 12:55  markus
+
+	* configure.in: sun studio
+
+2005-01-11 12:05  markus
+
+	* configure.in, src/math/gmath.h: sunstudio
+
+2005-01-11 12:05  markus
+
+	* program/md.cc: end time adjust
+
+2005-01-10 15:26  markus
+
+	* src/util/generate_velocities.cc: use seed from parameter
+
+2005-01-10 14:39  markus
+
+	* src/: interaction/special/jvalue_restraint_interaction.cc,
+	  io/configuration/out_configuration.cc,
+	  io/topology/in_perturbation.cc, io/topology/in_topology.cc:
+	  remove static template functions
+
+2005-01-10 14:37  markus
+
+	* src/interaction/nonbonded/:
+	  interaction/perturbed_nonbonded_pair.cc,
+	  interaction/perturbed_nonbonded_pair.h,
+	  pairlist/grid_pairlist_algorithm.cc,
+	  pairlist/grid_pairlist_algorithm.h,
+	  pairlist/standard_pairlist_algorithm.cc,
+	  pairlist/standard_pairlist_algorithm.h,
+	  pairlist/standard_pairlist_algorithm_atomic.cc: innerloop
+	  reverted to class template
+
+2005-01-10 14:37  markus
+
+	* src/interaction/nonbonded/interaction/nonbonded_outerloop.cc:
+	  innerloop back to class template
+
+2005-01-10 14:36  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_innerloop.cc,
+	  nonbonded_innerloop.h: change template member functions to class
+	  template
+
+2005-01-10 14:35  markus
+
+	* src/interaction/bonded/perturbed_quartic_bond_interaction.cc:
+	  remove static template function
+
+2005-01-10 14:34  markus
+
+	* src/configuration/energy.h: const correctness
+
+2005-01-10 14:31  markus
+
+	* src/algorithm/constraints/perturbed_flexible_constraint.h: const
+	  correctness in declaration
+
+2005-01-10 14:30  markus
+
+	* src/algorithm/constraints/lincs.cc: remove static template
+	  functions
+
+2004-12-17 16:04  markus
+
+	* src/: interaction/nonbonded/interaction/nonbonded_innerloop.cc,
+	  interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  interaction/nonbonded/interaction/nonbonded_outerloop.cc,
+	  interaction/nonbonded/interaction/nonbonded_set.cc,
+	  interaction/nonbonded/interaction/nonbonded_term.cc,
+	  interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  io/parameter/in_parameter.cc, topology/topology.cc,
+	  topology/topology.h: MULTICELL nonbonded interaction: basics
+
+2004-12-17 16:04  markus
+
+	* src/topology/core/compound.h: comment
+
+2004-12-17 16:04  markus
+
+	* src/topology/core/chargegroup_iterator.h: debug statements
+
+2004-12-17 16:03  markus
+
+	* src/math/: periodicity.cc, periodicity.h: const fix, SUBMOLECULES
+	  check
+
+2004-12-17 16:02  markus
+
+	* src/util/prepare_virial.cc: comments
+
+2004-12-17 16:02  markus
+
+	* src/interaction/Makefile.am: innerloop_template.h
+
+2004-12-17 16:01  markus
+
+	* src/configuration/: configuration.cc, configuration.h: const fix
+
+2004-12-17 16:00  markus
+
+	* src/algorithm/constraints/flexible_constraint.cc: debug
+	  statements
+
+2004-12-17 16:00  markus
+
+	* src/algorithm/constraints/create_constraints.cc: bugfix: read
+	  parameters for perturbed flexible constraints
+
+2004-12-17 15:59  markus
+
+	* src/math/gmath.h: assert statements
+
+2004-12-17 15:59  markus
+
+	* Makefile.am, doc/install.html: documentation
+
+2004-12-12 12:36  markus
+
+	* program/script.cc, src/configuration/configuration.h,
+	  src/io/read_input.cc, src/io/parameter/in_parameter.cc,
+	  src/io/parameter/in_parameter.h, src/io/topology/in_topology.cc,
+	  src/simulation/parameter.h, src/topology/solute.h,
+	  src/topology/topology.cc, src/topology/topology.h,
+	  src/util/create_simulation.cc, src/util/generate_velocities.cc:
+	  multiple unit cell simulations -> multiply topology
+
+2004-12-11 21:51  markus
+
+	* src/topology/solute.h: solute: member variables private
+
+2004-12-11 21:50  markus
+
+	* doc/release.html: release notes
+
+2004-12-11 21:50  markus
+
+	* contrib/script.py: repex single threaded
+
+2004-11-28 12:12  markus
+
+	* Makefile.am, doc/doxygen.conf.in, doc/install.doxy,
+	  doc/install.html, doc/main.doxy, doc/release.doxy,
+	  doc/release.html, src/namespaces.doxy: documentation
+
+2004-11-27 22:46  markus
+
+	* src/util/debug.h: updated debug doc
+
+2004-11-27 22:46  markus
+
+	* doc/: arguments.doxy, arguments.html, doxygen.conf, input.doxy,
+	  main.doxy, output.doxy, output.html, posres.doxy, pttopo.doxy:
+	  doxygen generated documentation
+
+2004-11-27 21:19  markus
+
+	* doc/: index.html, input.html, output.html, posres.html,
+	  pttopo.html: adding documentation
+
+2004-11-27 14:00  markus
+
+	* configure.in, src/check/Makefile.am,
+	  src/check/check_forcefield.cc, src/interaction/Makefile.am,
+	  src/interaction/nonbonded/innerloop_template.h,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.h,
+	  src/interaction/nonbonded/interaction/nonbonded_set.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.cc,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h,
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_set.cc,
+	  src/interaction/nonbonded/pairlist/grid.cc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc,
+	  src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc:
+	  perturbed grid based pairlist
+
+2004-11-26 20:44  markus
+
+	* src/interaction/nonbonded/innerloop_template.h: nonbonded
+	  interaction term function as template parameter
+
+2004-11-26 18:00  markus
+
+	* src/: interaction/nonbonded/interaction_spec.h,
+	  interaction/nonbonded/interaction/nonbonded_innerloop.cc,
+	  interaction/nonbonded/interaction/nonbonded_outerloop.cc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.cc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_pair.cc,
+	  interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  interaction/nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc,
+	  simulation/parameter.h, util/template_split.h: nonbonded
+	  interaction function as template parameter
+
+2004-11-25 17:50  markus
+
+	* INSTALL, configure.in,
+	  src/interaction/nonbonded/interaction/nonbonded_outerloop.cc,
+	  src/util/create_simulation.cc: intel icc 8.1 static build
+
+2004-11-24 16:20  markus
+
+	* ChangeLog, program/BUILD_NUMBER, src/namespaces.doxy: minor
+	  release 0.2.1
+
 2004-11-24 16:19  markus
 
 	* doc/doxygen.conf: start of namespace descriptions
