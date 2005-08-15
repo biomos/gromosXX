@@ -110,39 +110,6 @@ int util::Replica_Exchange_Control::run
       }
     }
   }
-  
-  /* solaris
-  struct hostent *hostinfo;
-  int error;
-  std::cerr << "trying to get hostinfo for: " << server_name << std::endl;
-  hostinfo = getipnodebyname(server_name.c_str(), AF_INET, AI_DEFAULT, &error);
-  if (hostinfo == NULL){
-    io::messages.add("could not get hostinfo on server",
-		     "replica_exchange",
-		     io::message::error);
-    std::cerr << "could not get hostinfo: error = " << error << std::endl;
-    // hstrerror(error); // needs -lresolv
-    return 1;
-  }
-  if (hostinfo->h_addrtype != AF_INET){
-    io::messages.add("host is not an IP host",
-		     "replica_exchange",
-		     io::message::error);
-    return 1;
-  }
-  
-
-  struct sockaddr_in address;
-
-  std::cerr << "port = " << server_port << std::endl;
-  
-  address.sin_family = AF_INET;
-  address.sin_port = htons(server_port);
-  address.sin_addr = *(struct in_addr *) *hostinfo->h_addr_list;
-  socklen_t len = sizeof(address);
-
-  freehostent(hostinfo);
-  */
 
   struct addrinfo *addrinfo_p;
   struct addrinfo hints;
@@ -165,27 +132,20 @@ int util::Replica_Exchange_Control::run
     return 1;
   }
 
-  // addrinfo_p->ai_addr->sin_port = htons(server_port);
   ((sockaddr_in *)addrinfo_p->ai_addr)->sin_port = htons(server_port);
 
   sockaddr * s_addr_p = addrinfo_p->ai_addr;
   int len = addrinfo_p->ai_addrlen;
 
-  // cl_socket = socket(AF_INET, SOCK_STREAM, 0);
   cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
 		     addrinfo_p->ai_protocol);
 
   DEBUG(8, "control: connecting..");
 
-  int trials = 0, result;
+  int result;
   
-  // while((result = connect(cl_socket, (sockaddr *) &address, len)) == -1 && trials < retry){
-  while((result = connect(cl_socket, s_addr_p, len)) == -1 && trials < retry){
-    std::cout << "could not connect." << std::endl;
-    ++trials;
-    sleep(timeout);
-    std::cout << "\tretrying..." << std::endl;
-  }
+  result = connect(cl_socket, s_addr_p, len);
+  freeaddrinfo(addrinfo_p);
   
   if (result == -1){
     io::messages.add("could not connect to server",
@@ -257,7 +217,7 @@ int util::Replica_Exchange_Control::run
       is >> nr;
       
       --nr;
-      if (nr >= replica_data.size()){
+      if (nr >= int(replica_data.size())){
 	std::cout << "wrong replica ID selected!" << std::endl;
 	return 1;
       }
@@ -350,7 +310,7 @@ int util::Replica_Exchange_Control::run
 
     std::cerr << "writing to master! (nr = " << nr << ")" << std::endl;
 
-    if (nr >= 0 && nr < replica_data.size()){
+    if (nr >= 0 && nr < int(replica_data.size())){
 
       DEBUG(8, "control: sending change ID");
       if (write(cl_socket, (char *) &nr, sizeof(int)) != sizeof(int)){
@@ -385,7 +345,7 @@ int util::Replica_Exchange_Control::run
 	    << std::setw(10) << "ste"
 	    << "\n";
   
-  for(int r=0; r<replica_data.size(); ++r){
+  for(unsigned int r=0; r<replica_data.size(); ++r){
     std::cout << std::setw(6) << r + 1
 	      << std::setw(6) << replica_data[r].run
 	      << std::setw(10) << replica_data[r].Ti + 1
