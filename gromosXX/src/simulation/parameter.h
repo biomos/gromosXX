@@ -1010,6 +1010,7 @@ namespace simulation
        * - temperature <empty>
        * - scale (false)
        * - lambda <empty>
+       * - dt <empty>
        * - trials 0
        * - equilibrate 0
        * - slave_runs 0
@@ -1040,6 +1041,10 @@ namespace simulation
        */
       std::vector<double> lambda;
       /**
+       * time step to use when running at corresponding lambda
+       */
+      std::vector<double> dt;
+      /**
        * trial moves
        */
       int trials;
@@ -1057,7 +1062,7 @@ namespace simulation
       int write;
       
     } /** replica exchange parameters */ replica;
-    
+
     /**
      * @struct cgrain_struct
      * coarse grain potential
@@ -1067,12 +1072,29 @@ namespace simulation
       /**
        * Constructor
        * Default values:
+       * - level (0)
        * - EPS (20.0)
        */
       cgrain_struct()
-	: EPS(20.0)
+	: level(0), EPS(20.0)
       {
       }
+      /**
+       * do coarse graining
+       * - 0 atomistic (off)
+       * - 1 coarse-graining (on)
+       * - 2 multi-graining (mixed)
+       *
+       * multigraining requires a set of topology,
+       * configuration and input parameters for an
+       * atomistic and for a coarse-grained simulation.
+       * The coarse-grained files are indicated by
+       * cg_topo, cg_conf and cg_input.
+       * the coarse-grained topology should contain an
+       * additional block VIRTUALGRAINS that specifies
+       * the virtual atoms from "real" atomistic atoms.
+       */
+      int level;
       /**
        * EPS for the CG coulomb
        */

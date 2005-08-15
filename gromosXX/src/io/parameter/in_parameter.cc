@@ -1603,13 +1603,11 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    int cg;
-    
-    _lineStream >> cg >> param.cgrain.EPS;
+    _lineStream >> param.cgrain.level >> param.cgrain.EPS;
 
-    if (cg == 1)
+    if (param.cgrain.level == 1 || param.cgrain.level == 2)
       param.force.interaction_function = simulation::cgrain_func;
-    else if (cg == 0)
+    else if (param.cgrain.level == 0)
       {}
     else
       io::messages.add("bad line in CGRAIN block",
@@ -2114,9 +2112,13 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     
     _lineStream >> param.replica.num_l;
     param.replica.lambda.resize(param.replica.num_l, 0.0);
+    param.replica.dt.resize(param.replica.num_l, 0.0);
     
     for(int i=0; i<param.replica.num_l; ++i){
       _lineStream >> param.replica.lambda[i];
+    }
+    for(int i=0; i<param.replica.num_l; ++i){
+      _lineStream >> param.replica.dt[i];
     }
 
     _lineStream >> param.replica.trials;
