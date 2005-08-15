@@ -1710,7 +1710,7 @@ void io::In_Topology
       _lineStream.clear();
       _lineStream.str(*it);
       
-      _lineStream >> i >> j >> s.c6 >> s.c12;
+      _lineStream >> i >> j >> s.c12 >> s.c6;
 
       --i;
       --j;
