@@ -13,8 +13,7 @@ usage(){
 	    printf "nightly\n"
 	    printf "\tprepare\n"
 	    printf "\tdistcheck\n"
-	    printf "\tsol_x86\n"
-	    printf "\tsol\n"
+	    printf "\tsolaris\n"
 	    printf "\tdebian\n"
 	    printf "\trpm\n"
 	    printf "\n"
@@ -50,7 +49,7 @@ while [ ! -z "$1" ] ; do
 	;;
 	"distcheck") distcheck
 	;;
-	"sol_x86") pkg_solaris
+	"solaris") pkg_solaris
 	;;
 	"debian") pkg_debian
 	;;
