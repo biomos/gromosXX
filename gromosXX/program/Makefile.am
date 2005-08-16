@@ -2,18 +2,16 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 include_HEADERS =
 
-# bin_PROGRAMS =			md md_mpi mg script repex
-bin_PROGRAMS =			md mg
+bin_PROGRAMS =			md md_mpi repex
+# bin_PROGRAMS =		md md_mpi script repex
 
 md_SOURCES =			md.cc
 
-# md_mpi_SOURCES =		md_mpi.cc
-
-mg_SOURCES =                    mg.cc
+md_mpi_SOURCES =		md_mpi.cc
 
 # script_SOURCES =		script.cc
 
-# repex_SOURCES = 		repex.cc
+repex_SOURCES = 		repex.cc
 
 LDADD = ../src/libgroxx.la $(extra_lib)
 
