@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+CONFIGURE_OPT="--disable-shared --enable-allstatic CC=icc CXX=icpc LD=xild AR=xiar"
+CONFIGURE_REL_OPT="${CONFIGURE_OPT} --disable-debug --enable-openmp --prefix=/usr/local/gromos/gromosXX"
+TAR=tar
+TMP=/scrloc/markus
