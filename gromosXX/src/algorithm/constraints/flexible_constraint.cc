@@ -1015,7 +1015,7 @@ void algorithm::Flexible_Constraint::_store_lengths
   if (conf.special().flexible_constraint.flex_len.size() < m_flex_len.size())
     conf.special().flexible_constraint.flex_len.resize(m_flex_len.size());
   
-  for(int k=0; k<m_flex_len.size(); ++k)
+  for(unsigned int k=0; k<m_flex_len.size(); ++k)
     conf.special().flexible_constraint.flex_len[k] = m_flex_len[k];
   
 }

@@ -40,8 +40,8 @@ static int _calculate_distance_restraint_interactions
     it = topo.distance_restraints().begin(),
     to = topo.distance_restraints().end();
 
-  math::VArray &pos   = conf.current().pos;
-  math::VArray &force = conf.current().force;
+  // math::VArray &pos   = conf.current().pos;
+  // math::VArray &force = conf.current().force;
   math::Vec v, f;
 
   double energy;

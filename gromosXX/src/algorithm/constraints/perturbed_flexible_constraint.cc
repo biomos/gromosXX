@@ -601,11 +601,11 @@ void algorithm::Perturbed_Flexible_Constraint::_store_lengths
     conf.special().flexible_constraint.flex_len.resize(m_flex_len.size() + 
 						       m_perturbed_flex_len.size());
 
-  int k=0;
+  unsigned int k=0;
   for( ; k<m_flex_len.size(); ++k)
     conf.special().flexible_constraint.flex_len[k] = m_flex_len[k];
 
-  for(int kk=0; kk<m_perturbed_flex_len.size(); ++k, ++kk)
+  for(unsigned int kk=0; kk<m_perturbed_flex_len.size(); ++k, ++kk)
     conf.special().flexible_constraint.flex_len[k] = m_perturbed_flex_len[kk];
   
 }

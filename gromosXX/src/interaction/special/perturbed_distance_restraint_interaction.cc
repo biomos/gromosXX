@@ -40,8 +40,8 @@ static int _calculate_perturbed_distance_restraint_interactions
     it = topo.perturbed_distance_restraints().begin(),
     to = topo.perturbed_distance_restraints().end();
 
-  math::VArray &pos   = conf.current().pos;
-  math::VArray &force = conf.current().force;
+  // math::VArray &pos   = conf.current().pos;
+  // math::VArray &force = conf.current().force;
   math::Vec v, f;
 
   double energy, energy_derivativ;
