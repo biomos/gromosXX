@@ -33,5 +33,8 @@ EXTRA_DIST = VERSION \
 	doc/pttopo.html \
 	doc/release.doxy \
 	doc/release.html \
-	doc/tail.html
+	doc/tail.html \
+	packaging/solaris.depend \
+	packaging/debian.control \
+	packaging/copyright
 
