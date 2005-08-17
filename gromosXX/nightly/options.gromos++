@@ -1,0 +1,12 @@
+
+NAME=gromos++
+PKGNAME=IGCgromos++
+
+MAINTAINER="Markus Christen <markus@igc.phys.chem.ethz.ch>"
+
+DESCRIPTION="Gromos++ (Groningen Molecular Simulation Analysis)"
+
+VERSIONFILE=~/projects/gromos++/VERSION
+
+CVSROOT=:pserver:igc@igc.ethz.ch:/home/cvs/gromos++
+

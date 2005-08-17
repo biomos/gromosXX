@@ -1,0 +1,5 @@
+Depends: libc6
+Depends: libgcc1
+Depends: libstdc++5
+Depends: libgsl0
+

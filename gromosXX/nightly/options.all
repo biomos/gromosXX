@@ -1,0 +1,9 @@
+
+NAME=gromosXX
+PKGNAME=IGCgromosxx
+
+VERSIONFILE=~/projects/gromosXX/VERSION
+
+NIGHT=~/RELEASE/nightly
+BUILD=`date "+%d%m%y"`
+DATE=`date +%d.%m.%y`
