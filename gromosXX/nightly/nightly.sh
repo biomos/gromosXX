@@ -1,12 +1,9 @@
 #!/usr/bin/bash
 
-BUILD=`date "+%d%m%y"`
-VERSION=`awk -F= 'BEGIN{x=0} {if (x==1) printf "."; x=1; printf $2} END{printf "\n"}' ../VERSION`
-NIGHT=~/RELEASE/nightly
-NIGHTLOG=${NIGHT}/night_${BUILD}.log
+export NIGHTHOME=~/projects/gromosXX/nightly
 
-OS=`uname -s`"_"`uname -m`
-source options.${OS}
+cd ${NIGHTHOME}
+source ${NIGHTHOME}/options.all
 
 usage(){
 	    printf "\n"
@@ -20,23 +17,36 @@ usage(){
 }
 prepare(){
     echo "creating a tar.gz archive"
-    source prepare.sh
+    source ${NIGHTHOME}/prepare.sh
 }
 
 distcheck(){
     echo "running distcheck"
-    source distcheck.sh
+    source ${NIGHTHOME}/distcheck.sh
 }
 
 pkg_solaris(){
     echo "creating a solaris package"
-    source pkg_solaris.sh
+    source ${NIGHTHOME}/pkg_solaris.sh
 }
 
 pkg_debian(){
     echo "creating a debian package"
-    source pkg_debian.sh
+    source ${NIGHTHOME}/pkg_debian.sh
 }
+
+if [ -z "$1" ] ; then
+    usage
+fi
+
+NIGHTLOG=${NIGHT}/night_${BUILD}.log
+VERSION=`awk -F= 'BEGIN{x=0} {if (x==1) printf "."; x=1; printf $2} END{printf "\n"}' ${VERSIONFILE}`
+OS=`uname -s`"_"`uname -m`
+source ${NIGHTHOME}/options.${OS}
+
+OPTIONNAME=$1
+source ${NIGHTHOME}/options.${OPTIONNAME}
+shift
 
 if [ -z "$1" ] ; then
     usage

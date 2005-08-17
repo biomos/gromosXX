@@ -1,19 +1,59 @@
 #/bin/sh
 
 echo "build ${BUILD}"
+echo "build ${BUILD}" >> ${NIGHTLOG}
 
-mkdir -p /tmp/nightly_gromosXX_${BUILD}
-cd /tmp/nightly_gromosXX_${BUILD}
+echo `date "+%d.%m.%y %T"`"     distribution creation started" >> ${NIGHTLOG}
 
-CVSROOT=:pserver:igc@igc.ethz.ch:/home/cvs/gromosXX
-cvs co gromosXX
+BUILDDIR=${TMP}/nightly_${NAME}_${BUILD}
+SCRIPT=prepare
+LOG=${NIGHT}/log/${SCRIPT}.log
 
-cd gromosXX
-./Config.sh
-./configure ${CONFIGURE_OPT}
+cat /dev/null > ${LOG}
 
-make dist && echo "gromosXX-${VERSION}.tar.gz created" >> ${NIGHTLOG}
+rm -rf ${BUILDDIR}
+mkdir -p ${BUILDDIR}
 
-cp gromosXX-${VERSION}.tar.gz ~/RELEASE/nightly/gromosXX-${VERSION}-${BUILD}.tar.gz
+cd ${BUILDDIR}
+
+ok=1
+echo "     cvs co ${NAME}" >> ${LOG}
+cvs co ${NAME} >> /dev/null 2>&1 || ok=0
+
+if [ ${ok} == 0 ] ; then
+    echo "cvs co ${NAME} failed"
+    echo "cvs co ${NAME} failed" >> ${LOG}
+    exit 1
+fi
+
+cd ${NAME}
+if [ -x Config.sh ] ; then
+    ./Config.sh >> ${LOG} 2>&1 || ok=0
+
+    if [ ${ok} == 0 ] ; then
+	echo "Config.sh failed!"
+	echo "Config.sh failed!" >> ${LOG}
+	exit 1
+    fi
+fi
+
+./configure ${CONFIGURE_OPT} >> ${LOG} 2>&1 || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "./configure ${CONFIGURE_OPT} failed"
+    echo "./configure ${CONFIGURE_OPT} failed" >> ${LOG}
+    exit 1
+fi
+
+make dist >> ${LOG} 2>&1 || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "make dist failed"
+    echo "make dist failed" >> ${LOG}
+    exit 1
+fi
+
+echo `date "+%d.%m.%y %T"`"     distribution created" >> ${NIGHTLOG}
+
+cp ${NAME}-${VERSION}.tar.gz ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz
+
 cd ~
-rm -rf /tmp/nightly_gromosXX_${BUILD}
+rm -rf ${BUILDDIR}

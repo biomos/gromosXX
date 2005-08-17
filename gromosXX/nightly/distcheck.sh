@@ -1,21 +1,51 @@
 #!/usr/bin/bash
 
-mkdir -p /tmp/nightly_gromosXX_${BUILD}
-cp ~/RELEASE/nightly/gromosXX-${VERSION}-${BUILD}.tar.gz /tmp/nightly_gromosXX_${BUILD}
-cd /tmp/nightly_gromosXX_${BUILD}
+SCRIPT=distcheck
+LOG=${NIGHT}/log/${SCRIPT}.log
+BUILDDIR=${TMP}/nightly_${NAME}_${BUILD}
+INSTALLDIR=${TMP}/${NAME}_${SCRIPT}
 
-${TAR} zxvf gromosXX-${VERSION}-${BUILD}.tar.gz > ${NIGHT}/log/distcheck_tar.log 2>&1
-cd gromosXX-${VERSION}
+cat /dev/null > ${LOG}
 
-./configure ${CONFIGURE_OPT} > ${NIGHT}/log/distcheck_configure.log 2>&1
-make DISTCHECK_CONFIGURE_FLAGS="${CONFIGURE_OPT}" distcheck > ${NIGHT}/log/distcheck_make.log 2>&1
+echo `date "+%d.%m.%y %T"`"     distcheck started" >> ${NIGHTLOG}
 
-if [ $? == 0 ] ; then
-    echo "distcheck succeeded" >> ${NIGHTLOG}
-else
-    echo "distcheck failed" >> ${NIGHTLOG}
+rm -rf ${BUILDDIR}
+mkdir -p ${BUILDDIR}
+
+ok=1
+cp ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz ${BUILDDIR} || ok=0
+cd ${BUILDDIR} || ok=0
+
+if [ ${ok} == 0 ] ; then
+    echo "preparing directory failed"
+    echo "preparing directory failed" >> ${LOG}
+    exit 1
 fi
 
+${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz >> ${LOG} 2>&1 || ok=0
+cd ${NAME}-${VERSION} || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "unpacking sources failed"
+    echo "unpacking sources failed" >> ${LOG}
+    exit 1
+fi
+
+./configure ${CONFIGURE_OPT} >> ${LOG} 2>&1 || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "configure ${CONFIGURE_OPT} failed"
+    echo "configure ${CONFIGURE_OPT} failed" >> ${LOG}
+    exit 1
+fi
+
+make DISTCHECK_CONFIGURE_FLAGS="${CONFIGURE_OPT}" distcheck >> ${LOG} 2>&1 || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "make DISTCHECK_CONFIGURE_FLAGS=${CONFIGURE_OPT} distcheck failed"
+    echo "make DISTCHECK_CONFIGURE_FLAGS=${CONFIGURE_OPT} distcheck failed" >> ${LOG}
+    exit 1
+fi
+
+echo `date "+%d.%m.%y %T"`"     distcheck succeeded" >> ${NIGHTLOG}
+
 cd ~
-rm -rf /tmp/nightly_gromosXX_${BUILD} > /dev/null 2>&1
+rm -rf ${BUILDDIR}
 

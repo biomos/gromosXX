@@ -1,56 +1,118 @@
-#!/usr/bin/bash
+#!/bin/bash
 
-echo "Debian package" >> ${NIGHT}/log/pkg_debian.log
-echo "     preparing directory"	>> ${NIGHT}/log/pkg_debian.log
-mkdir -p ${TMP}/nightly_gromosXX_${BUILD}
-cp ~/RELEASE/nightly/gromosXX-${VERSION}-${BUILD}.tar.gz ${TMP}/nightly_gromosXX_${BUILD}
-cd ${TMP}/nightly_gromosXX_${BUILD}
+SCRIPT=pkg_debian
+LOG=${NIGHT}/log/${SCRIPT}.log
+BUILDDIR=${TMP}/nightly_${NAME}_${BUILD}
+INSTALLDIR=${TMP}/${NAME}_${SCRIPT}
 
-${TAR} zxvf gromosXX-${VERSION}-${BUILD}.tar.gz > ${NIGHT}/log/pkg_debian.log 2>&1
-cd gromosXX-${VERSION}
+cat /dev/null > ${LOG}
+
+echo `date "+%d.%m.%y %T"`"     debian package creation started" >> ${NIGHTLOG}
+
+echo "creating a debian package" >> ${LOG}
+echo "     preparing directory" >> ${LOG}
+ok=1
+export PATH=/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/home/markus/programs/x86/bin:/home/markus/programs/x86/mpich2/bin:/home/markus/programs/x86/opt/intel/cc/9.0/bin:.
+
+rm -rf ${BUILDDIR}
+mkdir -p ${BUILDDIR} || ok=0
+cp ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz ${BUILDDIR} || ok=0
+cd ${BUILDDIR}
+if [ ${ok} == 0 ] ; then
+    echo "preparing directory failed"
+    echo "preparing directory failed" >> ${LOG}
+    exit 1
+fi
+
+echo "    tar" >> ${LOG}
+${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz > /dev/null 2>&1 || ok=0
+cd ${NAME}-${VERSION} || ok=0
+
+if [ ${ok} == 0 ] ; then
+    echo "${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz failed"
+    echo "${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz failed" >> ${LOG}
+    exit 1
+fi
 
 export LD_LIBRARY_PATH=~/programs/x86/opt/intel/cc/9.0/lib
 
-echo "     configuring" >> ${NIGHT}/log/pkg_debian.log
-./configure ${CONFIGURE_REL_OPT} >> ${NIGHT}/log/pkg_debian.log 2>&1 &&
-    echo "     make" >> ${NIGHT}/log/pkg_debian.log &&
-    make >> ${NIGHT}/log/pkg_debian.log 2>&1 &&
-    echo "     enter fakeroot" &&
-    fakeroot /usr/bin/bash nightly/pkg_debian_fakeroot.sh
+echo "" >> ${LOG}
+echo "     configuring" >> ${LOG}
+./configure ${CONFIGURE_REL_OPT} >> ${LOG} 2>&1 || ok=0
+echo "     make" >> ${LOG}
+make >> ${LOG} 2>&1 || ok=0
+
+if [ ${ok} == 0 ] ; then
+    echo "configure or make failed"
+    echo "configure or make failed" >> ${LOG}
+    cp config.log ${NIGHT}/log/${SCRIPT}.config.log
+    exit 1
+fi
+
+echo "     enter fakeroot" >> ${LOG}
+echo "     fakeroot ${BASH} ${NIGHTHOME}/${SCRIPT}_fakeroot.sh" >> ${LOG}
+fakeroot ${BASH} ${NIGHTHOME}/${SCRIPT}_fakeroot.sh || ok=0
+
+if [ ${ok} == 0 ] ; then
+    echo "enter fakeroot failed"
+    echo "enter fakeroot failed" >> ${LOG}
+    exit 1
+fi
+
+cd ${INSTALLDIR} || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "cd ${INSTALLDIR} failed"
+    echo "cd ${INSTALLDIR} failed" >> ${LOG}
+    exit 1
+fi
 
 unset LD_LIBRARY_PATH
 
-cd ${TMP}/gromosXX_pkg_debian
+cd ${INSTALLDIR} || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "cd ${INSTALLDIR} failed"
+    echo "cd ${INSTALLDIR} failed" >> ${LOG}
+    exit 1
+fi
 
-mkdir DEBIAN
+mkdir DEBIAN || ok=0
 
-ARCH=`uname -p`
+ARCH=`uname -m`
 DATE=`date +%d.%m.%y`
 
-echo 'Package: IGCgromosxx' > DEBIAN/control
-echo "Version: ${VERSION} ${BUILD}" >> DEBIAN/control
-echo "Section: simulation" >> DEBIAN/control
-echo "Priority: optional" >> DEBIAN/control
-echo "Architecture: ${ARCH}" >> DEBIAN/control
-echo "Depends: libc6" >> DEBIAN/control
-echo "Depends: libgcc1" >> DEBIAN/control
-echo "Depends: libstdc++5" >> DEBIAN/control
-echo "Depends: libgsl0" >> DEBIAN/control
-echo "Source: IGCgromosxx-src" >> DEBIAN/control
-echo "Maintainer: Markus Christen <markus@igc.phys.chem.ethz.ch>" >> DEBIAN/control
-echo "Description: GromosXX (Groningen Molecular Simulation)" >> DEBIAN/control
+echo "Package: ${PKGNAME}" > DEBIAN/control || ok=0
+echo "Version: ${VERSION} ${BUILD}" >> DEBIAN/control || ok=0
+echo "Section: simulation" >> DEBIAN/control || ok=0
+echo "Priority: optional" >> DEBIAN/control || ok=0
+echo "Architecture: ${ARCH}" >> DEBIAN/control || ok=0
+cat ${BUILDDIR}/${NAME}-${VERSION}/packaging/debian.depend >> DEBIAN/control || ok=0
+echo "Source: ${PKGNAME}-src" >> DEBIAN/control || ok=0
+echo "Maintainer: ${MAINTAINER}" >> DEBIAN/control || ok=0
+echo "Description: ${DESCRIPTION}" >> DEBIAN/control || ok=0
+
+if [ ${ok} == 0 ] ; then
+    echo "creating control file failed"
+    echo "creating control file failed" >> ${LOG}
+    exit 1
+fi
 
 cd ..
-dpkg --build gromosXX_pkg_debian
+dpkg --build ${NAME}_${SCRIPT} >> ${LOG} 2>&1 || ok=0
 
-mv ${TMP}/IGCgromosXX.deb ~/RELEASE/nightly/IGCGromosXX-${VERSION}-${BUILD}-${OS}.deb
-rm -r ${TMP}/IGCgromosxx.deb
+if [ ${ok} == 0 ] ; then
+    echo "dpkg --build ${NAME}_${SCRIPT} failed"
+    echo "dpkg --build ${NAME}_${SCRIPT} failed" >> ${LOG}
+    exit 1
+fi
 
+mv ${TMP}/${PKGNAME}.deb ${NIGHT}/${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb
+
+echo "     ${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb created" > ${NIGHTLOG}
 echo `date "+%d.%m.%y %T"`"     debian package creation succeeded" >> ${NIGHTLOG}
 
 # create documentation ?
 
 cd ~
-rm -rf ${TMP}/nightly_gromosXX_${BUILD} > /dev/null 2>&1
-rm -rf ${TMP}/gromosXX_pkg_debian
 
+rm -rf ${BUILDDIR}
+rm -rf ${INSTALLDIR}
