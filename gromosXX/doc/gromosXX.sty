@@ -1,0 +1,705 @@
+\usepackage{graphics}
+\usepackage{ifthen}
+\usepackage{amsfonts}
+
+\newcommand{\nc}{\newcommand}
+\newcommand{\rnc}{\renewcommand}
+
+
+\newcommand\freeline{\par\mbox{}\par}
+\newcommand\horline{\hspace*{2cm}\hrulefill\hspace*{2cm}\par}
+
+
+% ----- This is for typing a text and writing a paragraph left-aligned after it
+%
+\newlength{\textlength}
+%
+\newenvironment{alignpar}[1]{%
+\settowidth{\textlength}{#1}%
+\setlength{\textlength}{-\textlength}%
+\addtolength{\textlength}{\textwidth}%
+{#1}%
+\begin{minipage}[t]{\textlength}%
+}{%
+\end{minipage}%
+}
+%\begin{alignpar}{the header :}
+% the text
+%\end{alignpar}
+%
+%---------------------------------------------------------------------------%
+
+
+
+% ----- This is for handling internal tables (requires the ifthen package) -----
+%
+\newboolean{lgotit}\newcounter{varget}\newcounter{varput}
+\newcommand{\varget}{0}
+%
+%%%\nc{\entry}[2]{%
+%%%\setcounter{varput}{#1}%
+%%%\ifthenelse{\value{varget}=#1}{#2\setboolean{lgotit}{true}}{}%
+%%%}
+%
+
+\nc{\entry}[2]{%
+%%%\setcounter{varput}{#1}%
+\ifthenelse{\equal{\varget}{#1}}{#2\setboolean{lgotit}{true}}{}%
+}
+
+%%%\nc{\nextentry}[1]{%
+%%%\addtocounter{varput}{1}%
+%%%\ifthenelse{\value{varget}=\value{varput}}{#1\setboolean{lgotit}{true}}{}%
+%%%}
+%
+\nc{\getentry}[2]{%
+\setboolean{lgotit}{false}%
+%%%\setcounter{varget}{#1}\setcounter{varput}{0}%
+\renewcommand{\varget}{#1}%
+#2%
+\ifthenelse{\boolean{lgotit}}{}{{\bf?}}%
+}
+%
+% USE THE INITIALIZATION SYNTAX
+%\nc{\inttabstore}{
+%\entry{1}{this is one}\nextentry{this is two}\entry{3}{this is three}
+%}
+%\nc{\inttab}[1]{\getentry{#1}{\inttabstore}}
+%
+% AND THE READING SYNTAX
+%\inttable{1}
+%---------------------------------------------------------------------------%
+
+
+
+
+\nc{\hsym}[1]{\Huge{#1}\,}
+
+\nc{\compon}[1]{[{#1}]_{\gamma\delta}}
+
+
+
+
+%---------------------------------------------------------------------------%
+
+\nc{\captabext}[1]{%
+\noindent%
+\begin{alignpar}{\bf\reftab{#1}: }%
+{\bf\tittab{#1}}%
+\end{alignpar}%
+\vspace{0.3cm}%
+}
+
+\nc{\capfigext}[1]{%
+\noindent%
+\begin{alignpar}{\bf\reffig{#1}: }%
+{\bf\titfig{#1}}%
+\end{alignpar}%
+\vspace{0.3cm}%
+}
+
+
+
+%---------------------------------------------------------------------------%
+
+
+
+
+
+%
+% A FEW VERY GENERAL TEXT THINGS
+%
+\nc{\dummy}{\mbox{}}      % this is a dummy character
+\nc{\printalone}[1]{\par\noindent\hfill{#1}
+                    \hfill\dummy\par\noindent} % object centered on own line
+\nc{\SuS}[1]{$^{#1}$}       % superscript
+\nc{\sus}[1]{$_{#1}$}       % subscript
+\nc{\Sus}[2]{$^{#1}_{#2}$}  % superscript and subscript
+\nc{\return}{\dummy\hfill\dummy\linebreak[4]} % jump directly to the next line
+%\nc{\setspacing}[1]{\renewcommand{\baselineskip}{#1}}
+%\nc{\setspacingrel}[1]{\renewcommand{\baselineskip}{#1\baselinestretch}}
+%\nc{\resetspacing}{\renewcommand{\baselineskip}{\baselinestretch}}
+
+\nc{\ie}{{\em i.e.} }      % italic i.e. + space
+\nc{\eg}{{\em e.g.} }      % italic e.g. + space
+
+\nc{\newsection}[1]{\newpage\section{#1}}  % newpage + section 
+
+%
+% TO INCLUDE GRAPHICS
+%
+\nc{\bfig}[1]{\begin{figure}\label{fig:#1}}      % labelled figure
+\nc{\efig}{\end{figure}}
+%
+\nc{\igr}{\includegraphics*}   % The *-form clips everything outside of
+                               % the specified box - better do that
+\nc{\getpic}[1]{\igr{#1}}      % get picture #1
+\nc{\wholepic}[1]{\resizebox{\textwidth}{!}{
+    \igr[0in,0in][8in,10in]{#1}}}   % get whole picture #1
+
+\nc{\sizpic}[2]{\resizebox{#2\textwidth}{!}{
+    \getpic{#1}}}              % scale picture #1 to fraction #2 of p. width
+
+
+\nc{\sizpicr}[2]{\resizebox{#2\textwidth}{!}{
+    \rotatebox{90}{\igr{#1}}}}              % rot 90 scale picture #1 to fraction #2 of p. width
+
+\nc{\sizpicrr}[2]{\resizebox{#2\textwidth}{!}{
+    \rotatebox{180}{\igr{#1}}}}              % rot 180 scale picture #1 to fraction #2 of p. width
+
+\nc{\sizpicrrr}[2]{\resizebox{#2\textwidth}{!}{
+    \rotatebox{270}{\igr{#1}}}}              % rot 270 scale picture #1 to fraction #2 of p. width
+
+
+
+
+\nc{\fsizpic}[2]{\framebox{\sizpic{#1}{#2}}} % idem, but frame it
+%
+% TO FRAME EQUATIONS
+%
+\newsavebox{\savepar}
+\newenvironment{boxit}{\begin{lrbox}{\savepar}
+  \begin{minipage}[b]{\textwidth}}
+{\end{minipage}\end{lrbox}\fbox{\usebox{\savepar}}}
+%
+% EQUATION RELATED MACROS
+%
+\nc{\beq}[1]{\begin{equation}\label{eq:#1}}      % labelled equation
+\nc{\bfeqold}[1]{\begin{equation}\label{eq:#1}}      % labelled equatio
+\nc{\eeq}{\end{equation}}
+\nc{\efeqold}{\end{equation}}
+\nc{\beqa}[1]{\begin{eqnarray}\label{eq:#1}}     % labelled equation arra
+\nc{\bfeqolda}[1]{\begin{eqnarray}\label{eq:#1}}     % labelled equation array
+\nc{\eeqa}{\end{eqnarray}}
+\nc{\efeqolda}{\end{eqnarray}}
+%\nc{\bear}[1]{\renewcommand{\arraystretch}{1.2}\begin{array}{#1}}
+                                                 % begin an array in equations
+                                                 % \left. is expected !
+%\nc{\eear}{\end{array}\right.\renewcommand{\arraystretch}{1}}
+                                                 % begin an array in equations
+
+\nc{\nn}{\nonumber\\}                            % eqa, end line, no number
+\nc{\bfeq}[1]{\par\noindent\vspace{0.0in}\begin{boxit}\beq{#1}}  % framed and labelled
+\nc{\efeq}{\eeq\end{boxit}\vspace{0.0in}\par\noindent}      % equation
+\nc{\bfeqa}[1]{\par\noindent\vspace{0.0in}\begin{boxit}\beqa{#1}}  % framed and labelled
+\nc{\efeqa}{\eeqa\end{boxit}\vspace{0.0in}\par\noindent}      % equation array
+%
+
+
+
+\newcounter{subeq}
+%
+\nc{\neweqref}[1]{%
+\protected@write\@auxout{}%
+  {\string\newlabel{eq:#1}{{\theequationdef}{\thepage}}}%
+}
+%
+\nc{\beqs}[1]{%                                      % labelled equation array
+\setcounter{subeq}{1}%                               % subequations : a,b,c,...
+\rnc{\theequation}{\theequationdef\alph{subeq}}%
+\begin{eqnarray}%
+\neweqref{#1}%
+\addtocounter{equation}{1}%
+\addtocounter{subeq}{-1}%
+}
+%
+\nc{\eeqs}{%
+\end{eqnarray}%
+\rnc{\theequation}{\theequationdef}%
+}
+%
+\nc{\subeq}[1]{%
+\addtocounter{equation}{-1}%
+\addtocounter{subeq}{1}%
+\labeq{#1}%
+}
+%
+
+
+
+%
+\nc{\refeq}[1]{Equation~(\ref{eq:#1})}     % to reference equations
+\nc{\refeqs}[1]{Equations~(\ref{eq:#1})}   % more than one needs a 's'
+\nc{\refeqn}[1]{(\ref{eq:#1})}             % to get only the number in (
+%
+\nc{\refsec}[1]{Section~\ref{sec:#1}}    % to reference sections
+\nc{\refsecs}[1]{Sections~\ref{sec:#1}}    % to reference sections
+\nc{\refsecn}[1]{\ref{sec:#1}}    % to reference sections
+\nc{\refapp}[1]{Appendix~\ref{app:#1}}   % to reference appendices
+%
+\nc{\tittabentry}[2]{\entry{\ref{tab:#1}}{#2}}
+\nc{\tittab}[1]{\getentry{\ref{tab:#1}}{\tittabstore}}
+\nc{\labtab}[1]{\label{tab:#1}}              % to label tables
+\nc{\reftab}[2][]{Table~(\ref{tab:#2}{#1})}  % to reference tables
+                                             % opt = add string to figure num
+\nc{\reftabs}[2][]{Tables~(\ref{tab:#2}{#1})}  % to reference tables
+                                             % opt = add string to figure num
+\nc{\reftabn}[2][]{(\ref{tab:#2}{#1})}  % to reference tables
+                                             % opt = add string to figure num
+\nc{\reftabnp}[2][]{Table~\ref{tab:#2}{#1}}  % to reference tables (no paren)
+%
+\nc{\titfigentry}[2]{\entry{\ref{fig:#1}}{#2}}
+\nc{\titfig}[1]{\getentry{\ref{fig:#1}}{\titfigstore}}
+\nc{\labfig}[1]{\label{fig:#1}}              % to label figures
+\nc{\reffig}[2][]{Figure~(\ref{fig:#2}{#1})} % to reference figures
+                                             % opt = add string to figure num
+\nc{\reffigs}[2][]{Figures~(\ref{fig:#2}{#1})} % to reference figures
+                                             % opt = add string to figure num
+\nc{\reffign}[2][]{(\ref{fig:#2}{#1})} % to reference figures
+                                             % opt = add string to figure num
+
+
+\nc{\reffignp}[2][]{Figure~\ref{fig:#2}{#1}} % to reference figures (no paren)
+%
+\nc{\mathscript}[1]{\mbox{\em{\scriptsize{#1}}}}
+% use for a nice printing long sub/super-scripts in math mode
+\nc{\bensleft}{\resizebox{0.6\width}{1.8\height}{$<$}\,}    
+\nc{\bensright}{\,\resizebox{0.6\width}{1.8\height}{$>$}} % big, ensemble notation
+\nc{\bsqleft}{\resizebox{1.0\width}{1.8\height}{[}\,}    
+\nc{\bsqright}{\,\resizebox{1.0\width}{1.8\height}{]}}    % big, square brackets
+
+\nc{\partdif}[2]{\frac{\partial{#1}}{\partial{#2}}}
+
+\nc{\labeq}[1]{\label{eq:#1}}
+\nc{\labsec}[1]{\label{sec:#1}}
+\nc{\labapp}[1]{\label{app:#1}}
+
+%
+% LINEAR ALGEBRA
+%
+\nc{\bldgr}[1]{\mbox{\makebox[0pt][l]{$#1$}\hspace{0.8pt}$#1$}} % bold by repeat,for greeks
+\nc{\bldgrb}[1]{\mbox{\makebox[0pt][l]{$#1$}\hspace{0.6pt}$#1$}} % bold by repeat,for greeks, less thick
+
+\nc{\bldgrbs}[1]{\mbox{\makebox[0pt][l]{${\scriptstyle #1}$}\hspace{0.5pt}${\scriptstyle #1}$}} % bold by repeat,for greeks, less thick
+
+\nc{\vct}[1]{{\bf{#1}}}
+\nc{\norm}[1]{{\parallel{#1}\parallel}}
+\nc{\abs}[1]{{\mid\!\!{#1}\!\!\mid}}
+\nc{\sgn}[1]{{\mbox{sgn}({#1})}}
+\nc{\mtr}[1]{{\underline{\bf{#1}}}}
+% -- common vectors --
+\nc{\zerovec}{\vct{0}}
+
+
+
+\nc{\rhov}{\bldgrb{\rho}}
+\nc{\rhomtr}{\underline{\bldgrb{\rho}}}
+\nc{\rhohat}{\ft{\rho}}
+\nc{\rhovhat}{\ft{\bldgrb{\rho}}}
+
+
+
+\nc{\phihat}{\ft{\phi}}
+\nc{\Phihat}{\ft{\Phi}}
+\nc{\Psihat}{\ft{\Psi}}
+\nc{\chihat}{\ft{\chi}}
+\nc{\gammahat}{\ft{\gamma}}
+\nc{\Gammahat}{\ft{\Gamma}}
+\nc{\Gammamtr}{\underline{\bldgrb{\Gamma}}}
+\nc{\gammav}{\bldgrb{\gamma}}
+\nc{\gammavs}{\bldgrbs{\gamma}}
+\nc{\Gammamtrhat}{\widehat{\underline{\bldgrb{\Gamma}}}}
+
+
+\nc{\iotav}{\bldgrb{\iota}}
+
+%
+% COMPLEX NUMBERS
+%
+\nc{\real}[1]{Re[{#1}]}
+\nc{\imag}[1]{Im[{#1}]}
+
+% BRACKET NOTATION
+\nc{\bra}[1]{<{#1}\mid}
+\nc{\ket}[1]{\mid{#1}>}
+\nc{\braket}[2]{<{#1}\mid{#2}>}
+
+% MULTIPLE INTEGRALS
+\nc{\intv}{\int\!\!\int\!\!\int}
+\nc{\ints}{\int\!\!\int}
+
+% SOME FUNCTIONS TO BE USED IN EQUATIONS
+\nc{\erfc}{\mbox{erfc}}
+\nc{\erf}{\mbox{erf}}
+\nc{\INT}{\mbox{INT}}
+\nc{\NINT}{\mbox{NINT}}
+\nc{\MAX}{\mbox{MAX}}
+\nc{\MIN}{\mbox{MIN}}
+
+% DIFFERENTIAL OPERATORS
+\nc{\nab}{\vct{\nabla}}
+\nc{\nabnab}{\vct{\nabla\nabla}}
+\nc{\nabtimes}{\vct{\nabla}\cdot}
+\nc{\nabsq}{\vct{\nabla}^2}
+\nc{\nabpsq}{{\vct{\nabla}'}^2}
+\nc{\nabcross}{\vct{\nabla}\times}
+
+
+% FT RELATED THINGS
+\nc{\ft}[1]{\widehat{#1}}
+\nc{\vft}[1]{\vct{\ft{#1}}}
+\nc{\mft}[1]{\mtr{\ft{#1}}}
+% -- common objects --
+\nc{\eikr}{e^{i\kv\rv}}
+\nc{\emikr}{e^{-i\kv\rv}}
+\nc{\eikx}{e^{ikx}}
+\nc{\emikx}{e^{-ikx}}
+
+
+\nc{\ham}{{\mathcal H}}
+\nc{\lag}{{\mathcal L}}
+\nc{\kin}{{\mathcal K}}
+\nc{\tem}{{\mathcal T}}
+\nc{\pot}{{\mathcal U}}
+\nc{\vol}{{\mathcal V}}
+\nc{\pres}{{\mathcal P}}
+\nc{\vir}{{\mathcal W}}
+
+\nc{\presmtr}{\underline{\bldgrb{\pres}}}
+\nc{\virmtr}{\underline{\bldgrb{\vir}}}
+\nc{\kinmtr}{\underline{\bldgrb{\kin}}}
+
+
+% --- A FEW COMMON OBJECTS ---
+
+
+\nc{\av}{\vct{a}}
+\nc{\aaa}{{\mathrm a}}
+\nc{\Av}{\vct{A}}
+\nc{\Amtr}{\mtr{A}}
+
+\nc{\alphav}{\bldgrb{\alpha}}
+\nc{\alphamtr}{\underline{\bldgrb{\alpha}}}
+
+\nc{\bv}{\vct{b}}
+\nc{\Bv}{\vct{B}}
+\nc{\Bmtr}{\mtr{B}}
+
+\nc{\cv}{\vct{c}}
+\nc{\Cv}{\vct{C}}
+\nc{\chat}{\ft{c}}
+\nc{\Cmtr}{\mtr{C}}
+
+\nc{\chiv}{\bldgrb{\chi}}
+
+\nc{\dv}{\vct{d}}
+\nc{\dvhat}{\vft{d}}
+\nc{\dhat}{\ft{d}}
+\nc{\Dv}{\vct{D}}
+\nc{\Dhat}{\ft{D}}
+\nc{\Dvhat}{\vft{D}}
+\nc{\Dmtr}{\mtr{D}}
+
+\nc{\Deltamtr}{\underline{\bldgrb{\Delta}}}
+
+\nc{\ev}{\vct{e}}
+\nc{\evhat}{\vft{e}}
+\nc{\ehat}{\ft{e}}
+\nc{\Ev}{\vct{E}}
+\nc{\Eov}{\vct{E}_o}
+\nc{\Eovhat}{\vft{E}_o}
+\nc{\Evhat}{\vft{E}}
+\nc{\Emtr}{\mtr{E}}
+\nc{\Eens}{{\mathbb E}}
+\nc{\Ehat}{\ft{E}}
+
+
+\nc{\epsilonmtr}{\underline{\bldgr{\epsilon}}}
+
+\nc{\etav}{\bldgrb{\eta}}
+
+\nc{\fhat}{\ft{f}}
+\nc{\fv}{\vct{f}}
+\nc{\Fhat}{\ft{F}}
+\nc{\Fv}{\vct{F}}
+\nc{\Fmtr}{\mtr{F}}
+\nc{\Fvhat}{\vft{F}}
+
+\nc{\gv}{\vct{g}}
+\nc{\ghat}{\ft{g}}
+\nc{\Ghat}{\ft{G}}
+
+\nc{\hv}{\vct{h}}
+\nc{\Hv}{\vct{H}}
+\nc{\Hmtr}{\mtr{H}}
+\nc{\Hhat}{\ft{H}}
+
+\nc{\Iv}{\vct{I}}
+\nc{\Ihat}{\ft{I}}
+\nc{\Imtr}{\mtr{I}}
+
+\nc{\jv}{\vct{j}}
+\nc{\Jv}{\vct{J}}
+\nc{\Jhat}{\ft{J}}
+\nc{\Jmtr}{\mtr{J}}
+
+\nc{\kv}{\vct{k}}
+\nc{\Kv}{\vct{K}}
+\nc{\kpv}{\vct{k'}}
+\nc{\ksv}{\vct{k''}}
+\nc{\kappav}{\bldgrb{\kappa}}
+\nc{\Kmtr}{\mtr{K}}
+
+
+\nc{\lv}{\vct{l}}
+\nc{\Lv}{\vct{L}}
+\nc{\lpv}{\vct{l'}}
+\nc{\lsv}{\vct{l''}}
+\nc{\Lhat}{\ft{L}}
+\nc{\Lmtr}{\mtr{L}}
+
+\nc{\lambdav}{\bldgrb{\lambda}}
+\nc{\Lambdamtr}{\underline{\bldgrb{\Lambda}}}
+\nc{\lambdamtr}{\underline{\bldgr{\lambda}}}
+
+\nc{\mv}{\vct{m}}
+\nc{\mvhat}{\vft{m}}
+\nc{\Mv}{\vct{M}}
+\nc{\Mmtr}{\mtr{M}}
+
+\nc{\muv}{\bldgrb{\mu}}
+\nc{\mumtr}{\underline{\bldgr{\mu}}}
+
+\nc{\nv}{\vct{n}}
+\nc{\Nens}{{\mathbb N}}
+\nc{\Nmtr}{\mtr{N}}
+\nc{\nuv}{\bldgrb{\nu}}
+
+\nc{\omegahat}{\ft{\omega}}
+\nc{\Omegamtr}{\underline{\bldgrb{\Omega}}}
+\nc{\omegav}{\bldgrb{\omega}}
+
+\nc{\pimtr}{\underline{\bldgrb{\pi}}}
+
+\nc{\psimtr}{\underline{\bldgrb{\psi}}}
+
+
+\nc{\pv}{\vct{p}}
+\nc{\pvhat}{\vft{p}}
+\nc{\Pv}{\vct{P}}
+\nc{\Pmtr}{\mtr{P}}
+\nc{\Pvhat}{\vft{P}}
+\nc{\Phiv}{\vct{\Phi}}
+\nc{\phiv}{\bldgrb{\phi}}
+\nc{\Phat}{\ft{P}}
+
+
+\nc{\qv}{\vct{q}}
+\nc{\Qv}{\vct{Q}}
+\nc{\Qmtr}{\mtr{Q}}
+\nc{\Qmtrhat}{\mft{Q}}
+
+\nc{\rv}{\vct{r}}
+\nc{\rpv}{\vct{r'}}
+\nc{\rsv}{\vct{r''}}
+\nc{\Rhat}{\ft{R}}
+\nc{\Rens}{{\mathbb R}}
+\nc{\Rv}{\vct{R}}
+\nc{\Rmtr}{\mtr{R}}
+
+\nc{\Sv}{\vct{S}}
+\nc{\sv}{\vct{s}}
+\nc{\shat}{\ft{s}}
+\nc{\Shat}{\ft{S}}
+\nc{\Smtr}{\mtr{S}}
+
+\nc{\sigmamtr}{\underline{\bldgrb{\sigma}}}
+\nc{\sigmav}{\bldgrb{\sigma}}
+\nc{\sigv}{\sigmav}
+\nc{\Sigmav}{\bldgr{\Sigma}}
+\nc{\Sigv}{\Sigmav}
+\nc{\sigmahat}{\ft{\sigma}}
+
+\nc{\taumtr}{\underline{\bldgrb{\tau}}}
+\nc{\tauv}{\bldgrb{\tau}}
+
+
+\nc{\that}{\ft{t}}
+\nc{\tv}{\vct{t}}
+
+\nc{\Tv}{\vct{T}}
+\nc{\Tvhat}{\vft{T}}
+\nc{\That}{\ft{T}}
+\nc{\Tmtr}{\mtr{T}}
+\nc{\Tmtrhat}{\mft{T}}
+\nc{\tmtr}{\mtr{t}}
+\nc{\tmtrhat}{\mft{t}}
+
+\nc{\thetav}{\bldgrb{\theta}}
+\nc{\Thetav}{\bldgrb{\Theta}}
+\nc{\thv}{\thetav}
+\nc{\thetavhat}{\ft{\thetav}}
+\nc{\thvhat}{\thetavhat}
+
+\nc{\Uhat}{\ft{U}}
+
+\nc{\vv}{\vct{v}}
+\nc{\Vv}{\vct{V}}
+\nc{\Vvhat}{\vft{V}}
+\nc{\Vhat}{\ft{V}}
+
+\nc{\what}{\ft{w}}
+\nc{\What}{\ft{W}}
+
+\nc{\Wens}{{\mathbb W}}
+\nc{\Wmtr}{\mtr{W}}
+
+\nc{\xiv}{\bldgrb{\xi}}
+
+\nc{\xmtr}{\mtr{x}}
+\nc{\xhat}{\ft{x}}
+\nc{\xv}{\vct{x}}
+\nc{\Xv}{\vct{X}}
+\nc{\Xvhat}{\vft{X}}
+\nc{\Xmtr}{\mtr{X}}
+
+\nc{\yv}{\vct{y}}
+\nc{\ymtr}{\mtr{y}}
+\nc{\Yv}{\vct{Y}}
+\nc{\yhat}{\ft{y}}
+\nc{\yvhat}{\vft{y}}
+
+\nc{\Zens}{{\mathbb Z}}
+
+
+\nc{\zetav}{\bldgrb{\zeta}}
+
+
+
+
+
+
+
+
+\nc{\ral}{r_{\alpha}}
+\nc{\rbe}{r_{\beta}}
+\nc{\rga}{r_{\gamma}}
+\nc{\pral}{\partial r_{\alpha}}
+\nc{\prbe}{\partial r_{\beta}}
+\nc{\prga}{\partial r_{\gamma}}
+
+
+
+
+\nc{\kal}{k_{\alpha}}
+\nc{\kbe}{k_{\beta}}
+\nc{\kga}{k_{\gamma}}
+
+
+% OLD STUFF
+%\nc{\pofr}{\vct{P}(\rv)}
+%\nc{\pofk}{\vct{\widehat{P}}(\kv)}
+%\nc{\eofr}{\vct{E}(\rv)}
+%\nc{\eofk}{\vct{\widehat{E}}(\kv)}
+%\nc{\enotofr}{\vct{E_{o}}(\rv)}
+%\nc{\enotofk}{\vct{\widehat{E_{o}}}(\kv)}
+%\nc{\tofk}{\mft{T}(\kv)}
+
+% get proper bold greeks...
+%\nc{\muv}{\mu\!\!\!\!\mu}                  
+%\nc{\sigv}{\sigma\!\!\!\!\hspace{0.05cm}\sigma}           
+%\nc{\thv}{\theta\!\!\!\theta}              
+%\nc{\thvhat}{\ft{\thv}}
+%\nc{\Sigv}{\Sigma\!\!\!\!\Sigma}           
+%\nc{\epsilonmtr}{\underline{\epsilon\!\!\!\epsilon}}
+
+%\nc{\epszero}{\epsilon_o}
+%\nc{\cbfac}[1]{\frac{{#1}}{4\pi\epszero}}
+
+% for remarks
+\nc{\rem}[1]{[\emph{#1}]}
+
+
+% graphical symbols
+\nc{\orifulltriangle}{%
+\hspace{2mm}%
+\makebox[0mm]{$\triangle$}%
+\makebox[0mm]{\scalebox{0.9}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.85}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.8}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.75}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.7}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.65}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.6}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.55}{$\triangle$}}%
+\makebox[0mm]{\scalebox{0.5}{$\triangle$}}%
+%\makebox[0mm]{\scalebox{0.4}{$\triangle$}}%
+%\makebox[0mm]{\scalebox{0.3}{$\triangle$}}%
+%\makebox[0mm]{\scalebox{0.2}{$\triangle$}}%
+%\makebox[0mm]{\scalebox{0.1}{$\triangle$}}%
+\makebox[0mm]{\rule{1.5mm}{1.5mm}}%
+\makebox[2mm]{}}
+
+\nc{\emptysquare}{\scalebox{0.8}{\raisebox{1.4mm}{\framebox[2.3mm]{}}}}
+\nc{\fullsquare}{\rule[0.2mm]{2mm}{2mm}}
+\nc{\emptytriangle}{\scalebox{0.7}{$\triangle$}}
+\nc{\fulltriangle}{\scalebox{0.7}{$\orifulltriangle$}}
+
+
+\nc{\rrht}{1mm} % vertical position of the line
+\nc{\onedash}[3]{\rule[\rrht]{#1}{#3}\rule[\rrht]{#2}{0mm}}
+\nc{\lastdash}[3]{\rule[\rrht]{#1}{#3}}
+% use \onedash for start #1=black length, $2=white length, #3=line thickness
+% use \lastdash for end.
+
+\nc{\solidline}{%
+\lastdash{10mm}{0mm}{1pt}%
+}
+%
+\nc{\longdashedline}{%
+\onedash{3.6mm}{1.5mm}{1pt}\onedash{3.6mm}{1.5mm}{1pt}\lastdash{3.6mm}{0mm}{1pt}%
+}
+%
+\nc{\dashedline}{%
+\onedash{1.3mm}{1.3mm}{1pt}\onedash{1.3mm}{1.3mm}{1pt}\onedash{1.3mm}{1.3mm}{1pt}%
+\onedash{1.3mm}{1.3mm}{1pt}\lastdash{1.3mm}{0mm}{1pt}%
+}
+%
+\nc{\dottedline}{%
+\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}%
+\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}%
+\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}%
+\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}%
+\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}\onedash{0.4mm}{0.4mm}{1pt}%
+\lastdash{0.4mm}{0mm}{1pt}%
+}
+%
+
+
+
+% for fig referencing
+\nc{\captionfig}[2]{%
+\noindent\begin{alignpar}{\bf\reffig{#1}: }%
+{\bf #2.}%
+\end{alignpar}\vspace{0.5cm}%
+}
+% for tab referencing
+\nc{\captiontab}[2]{%
+\noindent\begin{alignpar}{\bf\reftab{#1}: }%
+{\bf #2.}%
+\end{alignpar}\vspace{0.5cm}%
+}
+
+
+
+\nc{\reseteq}{
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+\setcounter{equation}{0}}
+\nc{\reseteqapp}{
+\renewcommand{\thesection}{\Alph{section}}
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+\setcounter{equation}{0}}
+
+
+\nc{\reseteqb}{
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\theequation}{\arabic{equation}}
+\setcounter{equation}{0}}
+\nc{\reseteqappb}{
+\renewcommand{\thesection}{\Alph{section}}
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+\setcounter{equation}{0}}
+
+
+
