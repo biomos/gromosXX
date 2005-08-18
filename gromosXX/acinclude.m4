@@ -330,7 +330,7 @@ fi
 dnl check for GSL
 AC_DEFUN([AM_PATH_GSL],
 [
-AC_ARG_WITH(gsl-prefix,[  --with-gsl-prefix=PFX   Prefix where GSL is installed (optional)],
+AC_ARG_WITH(gsl,[  --with-gsl=PFX   Prefix where GSL is installed (optional)],
             gsl_prefix="$withval", gsl_prefix="")
 AC_ARG_WITH(gsl-exec-prefix,[  --with-gsl-exec-prefix=PFX Exec prefix where GSL is installed (optional)],
             gsl_exec_prefix="$withval", gsl_exec_prefix="")
@@ -379,6 +379,9 @@ AC_ARG_ENABLE(gsltest, [  --disable-gsltest       Do not try to compile and run 
       ac_save_LIBS="$LIBS"
       CFLAGS="$CFLAGS $GSL_CFLAGS"
       LIBS="$LIBS $GSL_LIBS"
+
+      ac_save_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+      LD_LIBRARY_PATH="$LD_LIBRARY_PATH $gsl_prefix/lib"
 
       rm -f conf.gsltest
       AC_TRY_RUN([
@@ -443,6 +446,7 @@ int main (void)
 ],, no_gsl=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
+       LD_LIBRARY_PATH="$ac_save_LD_LIBRARY_PATH"
      fi
   fi
   if test "x$no_gsl" = x ; then

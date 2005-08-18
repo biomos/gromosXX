@@ -36,6 +36,7 @@ EXTRA_DIST = VERSION \
 	doc/tail.html \
 	packaging/solaris.depend \
 	packaging/debian.control \
+	packaging/debian.depend \
 	packaging/copyright \
 	nightly/nightly.sh \
 	nightly/prepare.sh \
