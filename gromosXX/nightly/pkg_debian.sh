@@ -1,13 +1,13 @@
 #!/bin/bash
 
 SCRIPT=pkg_debian
-LOG=${NIGHT}/log/${SCRIPT}.log
+LOG=${NIGHT}/log/${NAME}_${SCRIPT}.log
 BUILDDIR=${TMP}/nightly_${NAME}_${BUILD}
 INSTALLDIR=${TMP}/${NAME}_${SCRIPT}
 
 cat /dev/null > ${LOG}
 
-echo `date "+%d.%m.%y %T"`"     debian package creation started" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation started" >> ${NIGHTLOG}
 
 echo "creating a debian package" >> ${LOG}
 echo "     preparing directory" >> ${LOG}
@@ -108,7 +108,7 @@ fi
 mv ${TMP}/${PKGNAME}.deb ${NIGHT}/${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb
 
 echo "     ${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb created" > ${NIGHTLOG}
-echo `date "+%d.%m.%y %T"`"     debian package creation succeeded" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation succeeded" >> ${NIGHTLOG}
 
 # create documentation ?
 

@@ -1,13 +1,11 @@
 #/bin/sh
 
 echo "build ${BUILD}"
-echo "build ${BUILD}" >> ${NIGHTLOG}
-
-echo `date "+%d.%m.%y %T"`"     distribution creation started" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} distribution creation started" >> ${NIGHTLOG}
 
 BUILDDIR=${TMP}/nightly_${NAME}_${BUILD}
 SCRIPT=prepare
-LOG=${NIGHT}/log/${SCRIPT}.log
+LOG=${NIGHT}/log/${NAME}_${SCRIPT}.log
 
 cat /dev/null > ${LOG}
 
@@ -18,6 +16,7 @@ cd ${BUILDDIR}
 
 ok=1
 echo "     cvs co ${NAME}" >> ${LOG}
+export CVSROOT
 cvs co ${NAME} >> /dev/null 2>&1 || ok=0
 
 if [ ${ok} == 0 ] ; then
@@ -51,9 +50,16 @@ if [ ${ok} == 0 ] ; then
     exit 1
 fi
 
-echo `date "+%d.%m.%y %T"`"     distribution created" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} distribution created" >> ${NIGHTLOG}
 
-cp ${NAME}-${VERSION}.tar.gz ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz
+cp ${NAME}-${VERSION}.tar.gz ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "cp ${NAME}-${VERSION}.tar.gz ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz failed"
+    echo "cp ${NAME}-${VERSION}.tar.gz ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz failed" >> ${LOG}
+    ls -l >> ${LOG}
+    exit 1
+fi
+
 
 cd ~
 rm -rf ${BUILDDIR}

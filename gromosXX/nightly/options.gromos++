@@ -10,3 +10,4 @@ VERSIONFILE=~/projects/gromos++/VERSION
 
 CVSROOT=:pserver:igc@igc.ethz.ch:/home/cvs/gromos++
 
+PREFIX=/usr/local/gromos/gromos++

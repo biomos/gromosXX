@@ -40,13 +40,19 @@ if [ -z "$1" ] ; then
 fi
 
 NIGHTLOG=${NIGHT}/night_${BUILD}.log
-VERSION=`awk -F= 'BEGIN{x=0} {if (x==1) printf "."; x=1; printf $2} END{printf "\n"}' ${VERSIONFILE}`
+
 OS=`uname -s`"_"`uname -m`
 source ${NIGHTHOME}/options.${OS}
 
 OPTIONNAME=$1
 source ${NIGHTHOME}/options.${OPTIONNAME}
 shift
+
+VERSION=`awk -F= 'BEGIN{x=0} {if (x==1) printf "."; \
+			x=1; printf $2} END{printf "\n"}' \
+	 ${VERSIONFILE}`
+
+echo "${NAME}"
 
 if [ -z "$1" ] ; then
     usage

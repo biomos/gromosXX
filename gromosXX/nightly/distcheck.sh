@@ -7,7 +7,7 @@ INSTALLDIR=${TMP}/${NAME}_${SCRIPT}
 
 cat /dev/null > ${LOG}
 
-echo `date "+%d.%m.%y %T"`"     distcheck started" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} distcheck started" >> ${NIGHTLOG}
 
 rm -rf ${BUILDDIR}
 mkdir -p ${BUILDDIR}
@@ -44,7 +44,7 @@ if [ ${ok} == 0 ] ; then
     exit 1
 fi
 
-echo `date "+%d.%m.%y %T"`"     distcheck succeeded" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} distcheck succeeded" >> ${NIGHTLOG}
 
 cd ~
 rm -rf ${BUILDDIR}

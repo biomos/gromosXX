@@ -1,13 +1,13 @@
 #!/usr/bin/bash
 
 SCRIPT=pkg_solaris
-LOG=${NIGHT}/log/${SCRIPT}.log
+LOG=${NIGHT}/log/${NAME}_${SCRIPT}.log
 BUILDDIR=${TMP}/nightly_${NAME}_${BUILD}
 INSTALLDIR=${TMP}/${NAME}_${SCRIPT}
 
 cat /dev/null > ${LOG}
 
-echo `date "+%d.%m.%y %T"`"     solaris package creation started" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation started" >> ${NIGHTLOG}
 
 echo "creating a solaris package" >> ${LOG}
 echo "     preparing directory" >> ${LOG}
@@ -102,7 +102,7 @@ mv ${TMP}/${PKGLONGNAME} ${NIGHT}
 rm -r /var/spool/pkg/${PKGNAME}
 
 echo "     ${PKGLONGNAME} created" >> ${NIGHTLOG}
-echo `date "+%d.%m.%y %T"`"     solaris package creation succeeded" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation succeeded" >> ${NIGHTLOG}
 
 # create documentation ?
 

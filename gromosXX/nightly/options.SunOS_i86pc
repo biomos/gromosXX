@@ -1,7 +1,12 @@
 #!/usr/bin/bash
 
-CONFIGURE_OPT="--with-gsl-prefix=/usr/local/gsl-1.6 --disable-shared"
-CONFIGURE_REL_OPT="${CONFIGURE_OPT} --disable-debug --prefix=/usr/local/gromos/gromosXX"
+CONFIGURE_OPT=" \
+     --with-gsl=/usr/local/gsl-1.6 \
+     --disable-shared"
+CONFIGURE_REL_OPT=" \
+     ${CONFIGURE_OPT} \
+     --disable-debug \
+     --prefix=${PREFIX}"
 TAR=/opt/csw/bin/gtar
 TMP=/tmp
 BASH=/usr/bin/bash
