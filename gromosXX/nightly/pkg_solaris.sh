@@ -20,6 +20,7 @@ cd ${BUILDDIR} || ok=0
 if [ ${ok} == 0 ] ; then
     echo "preparing directory failed"
     echo "preparing directory failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -30,6 +31,7 @@ cd ${NAME}-${VERSION} || ok=0
 if [ ${ok} == 0 ] ; then
     echo "${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz failed"
     echo "${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -43,6 +45,7 @@ if [ ${ok} == 0 ] ; then
     echo "configure or make failed"
     echo "configure or make failed" >> ${LOG}
     cp config.log ${NIGHT}/log/${SCRIPT}.config.log
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -52,6 +55,7 @@ fakeroot ${BASH} ${NIGHTHOME}/${SCRIPT}_fakeroot.sh || ok=0
 if [ ${ok} == 0 ] ; then
     echo "enter fakeroot failed"
     echo "enter fakeroot failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -59,6 +63,7 @@ cd ${INSTALLDIR} || ok=0
 if [ ${ok} == 0 ] ; then
     echo "cd ${INSTALLDIR} failed"
     echo "cd ${INSTALLDIR} failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -80,6 +85,7 @@ echo "BASEDIR=/" >> pkginfo || ok=0
 if [ ${ok} == 0 ] ; then
     echo "creating pkginfo failed"
     echo "creating pkginfo failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -87,21 +93,30 @@ pkgmk -r ${TMP}/${NAME}_${SCRIPT} >> ${LOG} 2>&1 || ok=0
 if [ ${ok} == 0 ] ; then
     echo "pkgmk -r ${TMP}/${NAME}_${SCRIPT} failed"
     echo "pkgmk -r ${TMP}/${NAME}_${SCRIPT} failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
 PKGLONGNAME=${PKGNAME}-${VERSION}-${BUILD}-${OS}.pkg
-pkgtrans -s /var/spool/pkg ${TMP}/${PKGLONGNAME} ${PKGNAME} >> ${LOG} || ok=0
+pkgtrans -s /var/spool/pkg ${TMP}/${PKGLONGNAME} ${PKGNAME} >> ${LOG} 2>&1 || ok=0
 if [ ${ok} == 0 ] ; then
     echo "pkgtrans -s /var/spool/pkg ${TMP}/${PKGLONGNAME}.pkg ${PKGNAME} failed"
     echo "pkgtrans -s /var/spool/pkg ${TMP}/${PKGLONGNAME}.pkg ${PKGNAME} failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
-mv ${TMP}/${PKGLONGNAME} ${NIGHT}
+mv ${TMP}/${PKGLONGNAME} ${NIGHT} || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "copying package failed"
+    echo "copying failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation failed" >> ${NIGHTLOG}
+    exit 1
+fi
+
 rm -r /var/spool/pkg/${PKGNAME}
 
-echo "     ${PKGLONGNAME} created" >> ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${PKGLONGNAME} created" >> ${NIGHTLOG}
 echo `date "+%d.%m.%y %T"`"   ${NAME} solaris package creation succeeded" >> ${NIGHTLOG}
 
 # create documentation ?

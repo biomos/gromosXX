@@ -21,6 +21,7 @@ cd ${BUILDDIR}
 if [ ${ok} == 0 ] ; then
     echo "preparing directory failed"
     echo "preparing directory failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -31,6 +32,7 @@ cd ${NAME}-${VERSION} || ok=0
 if [ ${ok} == 0 ] ; then
     echo "${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz failed"
     echo "${TAR} zxvf ${NAME}-${VERSION}-${BUILD}.tar.gz failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -56,6 +58,7 @@ fakeroot ${BASH} ${NIGHTHOME}/${SCRIPT}_fakeroot.sh || ok=0
 if [ ${ok} == 0 ] ; then
     echo "enter fakeroot failed"
     echo "enter fakeroot failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -63,6 +66,7 @@ cd ${INSTALLDIR} || ok=0
 if [ ${ok} == 0 ] ; then
     echo "cd ${INSTALLDIR} failed"
     echo "cd ${INSTALLDIR} failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -72,6 +76,7 @@ cd ${INSTALLDIR} || ok=0
 if [ ${ok} == 0 ] ; then
     echo "cd ${INSTALLDIR} failed"
     echo "cd ${INSTALLDIR} failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -81,7 +86,7 @@ ARCH=`uname -m`
 DATE=`date +%d.%m.%y`
 
 echo "Package: ${PKGNAME}" > DEBIAN/control || ok=0
-echo "Version: ${VERSION} ${BUILD}" >> DEBIAN/control || ok=0
+echo "Version: ${VERSION}_${BUILD}" >> DEBIAN/control || ok=0
 echo "Section: simulation" >> DEBIAN/control || ok=0
 echo "Priority: optional" >> DEBIAN/control || ok=0
 echo "Architecture: ${ARCH}" >> DEBIAN/control || ok=0
@@ -93,6 +98,7 @@ echo "Description: ${DESCRIPTION}" >> DEBIAN/control || ok=0
 if [ ${ok} == 0 ] ; then
     echo "creating control file failed"
     echo "creating control file failed" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
@@ -102,12 +108,20 @@ dpkg --build ${NAME}_${SCRIPT} >> ${LOG} 2>&1 || ok=0
 if [ ${ok} == 0 ] ; then
     echo "dpkg --build ${NAME}_${SCRIPT} failed"
     echo "dpkg --build ${NAME}_${SCRIPT} failed" >> ${LOG}
+    cat ${NAME}_${SCRIPT}/DEBIAN/control >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
     exit 1
 fi
 
-mv ${TMP}/${PKGNAME}.deb ${NIGHT}/${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb
+mv ${TMP}/${NAME}_${SCRIPT}.deb ${NIGHT}/${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb || ok=0
+if [ ${ok} == 0 ] ; then
+    echo "could not copy package"
+    echo "could not copy package" >> ${LOG}
+    echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation failed" >> ${NIGHTLOG}
+    exit 1
+fi
 
-echo "     ${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb created" > ${NIGHTLOG}
+echo `date "+%d.%m.%y %T"`"   ${PKGNAME}-${VERSION}-${BUILD}-${OS}.deb created" >> ${NIGHTLOG}
 echo `date "+%d.%m.%y %T"`"   ${NAME} debian package creation succeeded" >> ${NIGHTLOG}
 
 # create documentation ?

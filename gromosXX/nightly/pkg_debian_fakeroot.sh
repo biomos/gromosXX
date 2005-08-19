@@ -1,5 +1,6 @@
 
 source ${NIGHTHOME}/options.all
+source ${NIGHTHOME}/options.${OPTIONNAME}
 OS=`uname -s`"_"`uname -m`
 source ${NIGHTHOME}/options.${OS}
 

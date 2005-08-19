@@ -45,6 +45,7 @@ OS=`uname -s`"_"`uname -m`
 source ${NIGHTHOME}/options.${OS}
 
 OPTIONNAME=$1
+export OPTIONNAME
 source ${NIGHTHOME}/options.${OPTIONNAME}
 shift
 
