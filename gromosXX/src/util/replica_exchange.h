@@ -6,10 +6,6 @@
 #ifndef INCLUDED_REPLICA_EXCHANGE_H
 #define INCLUDED_REPLICA_EXCHANGE_H
 
-#ifdef XXMPI
-#include <mpi.h>
-#endif
-
 #include <util/replica_data.h>
 
 namespace topology
@@ -34,8 +30,6 @@ namespace io
 
 namespace util
 {
-
-  // #ifdef XXMPI
 
   /**
    * @class Replica_Exchange
@@ -203,9 +197,9 @@ namespace util
     Replica_Data replica_data;
 
     /**
-     * communicator
+     * do multigraining
      */
-    // MPI_Comm master;
+    bool multigraining;
 
     /**
      * get replica data from master
@@ -230,7 +224,9 @@ namespace util
      */
     int init_replica(topology::Topology & topo,
 		     configuration::Configuration & conf,
-		     simulation::Simulation & sim);
+		     simulation::Simulation & sim,
+		     topology::Topology & cg_topo,
+		     simulation::Simulation & cg_sim);
     /**
      * run the replica
      */
@@ -238,6 +234,10 @@ namespace util
 	       configuration::Configuration & conf,
 	       simulation::Simulation & sim,
 	       algorithm::Algorithm_Sequence & md,
+	       topology::Topology & cg_topo,
+	       configuration::Configuration & cg_conf,
+	       simulation::Simulation & cg_sim,
+	       interaction::Forcefield * cg_ff,
 	       io::Out_Configuration & traj);
 
   };
@@ -273,15 +273,8 @@ namespace util
      */
     std::vector<Replica_Data> replica_data;
     
-    /**
-     * communicator
-     */
-    // MPI_Comm master;
-
   };
 
-  // #endif
-  
 } // util
 
 #endif

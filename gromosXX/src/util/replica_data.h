@@ -73,6 +73,10 @@ namespace util
      * last switch successfull?
      */
     bool       switched;
+    /**
+     * current simulation time
+     */
+    double     time;
   };
 }
 

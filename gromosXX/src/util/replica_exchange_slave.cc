@@ -16,6 +16,7 @@
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
+#include <interaction/special/external_interaction.h>
 
 #include <algorithm/temperature/temperature_calculation.h>
 #include <algorithm/temperature/berendsen_thermostat.h>
@@ -23,6 +24,7 @@
 #include <io/argument.h>
 #include <util/parse_verbosity.h>
 #include <util/error.h>
+#include <util/virtual_grain.h>
 
 #include <io/read_input.h>
 #include <io/print_block.h>
@@ -59,21 +61,68 @@ int util::Replica_Exchange_Slave::run
 (
  io::Argument & args)
 {
+   multigraining = false;
+  if (args.count("cg_topo")){
+    multigraining = true;
+  }
+
   // create the simulation classes
   topology::Topology topo;
   configuration::Configuration conf;
   algorithm::Algorithm_Sequence md;
   simulation::Simulation sim;
 
-  // read the files (could also be copied from the master)
-  io::read_input(args, topo, conf, sim,  md, std::cout);
+  // and the coarse-grained stuff
+  topology::Topology cg_topo;
+  configuration::Configuration cg_conf;
+  algorithm::Algorithm_Sequence cg_md;
+  simulation::Simulation cg_sim;
 
-  // initialises everything
+  // read the files (could also be copied from the master)
+
+  // add an external interaction
+  if (multigraining)
+    sim.param().force.external_interaction = 1;
+
+  io::read_input(args, topo, conf, sim,  md, std::cout);
   md.init(topo, conf, sim, std::cout);
+
+  interaction::Forcefield * cg_ff;
+  if (multigraining){
+    interaction::Forcefield * ff = 
+      dynamic_cast<interaction::Forcefield *>(md.algorithm("Forcefield"));
+    if (ff == NULL){
+      std::cout << "Error: no forcefield in MD" << std::endl;
+      return 1;
+    }
+    interaction::External_Interaction * ei = 
+      dynamic_cast<interaction::External_Interaction *>(ff->interaction("External"));
+    if (ei == NULL){
+      std::cout << "Error: no external interaction in forcefield" << std::endl;
+      return 1;
+    }
+    
+    ei->set_coarsegraining(cg_topo, cg_conf);
+    
+    io::argname_conf = "cg_conf";
+    io::argname_topo = "cg_topo";
+    io::argname_pttopo = "cg_pttopo";
+    io::argname_input = "cg_input";
+    
+    io::read_input(args, cg_topo, cg_conf, cg_sim, cg_md);
+    cg_ff = dynamic_cast<interaction::Forcefield *>(cg_md.algorithm("Forcefield"));
+    if (cg_ff == NULL){
+      std::cout << "Error: no forcefield in cg_MD" << std::endl;
+      return 1;
+    }
+
+    cg_md.init(cg_topo, cg_conf, cg_sim);
+  }
 
   // aliases
   std::vector<double> const & T = sim.param().replica.temperature;
   std::vector<double> const & l = sim.param().replica.lambda;
+  std::vector<double> const & dt = sim.param().replica.dt;
 
   io::Out_Configuration traj("GromosXX\n", std::cout);
   traj.title("GromosXX\n" + sim.param().title);
@@ -81,7 +130,7 @@ int util::Replica_Exchange_Slave::run
 	    args["tre"], args["trg"], args["bae"], args["bag"],
 	    sim.param());
 
-  // should be the same as from master...
+  // should be the same as from master... (more or less, multigraining)
   std::cout << "\nMESSAGES FROM (SLAVE) INITIALIZATION\n";
   if (io::messages.display(std::cout) >= io::message::error){
     std::cout << "\nErrors during initialization!\n" << std::endl;
@@ -93,6 +142,9 @@ int util::Replica_Exchange_Slave::run
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
   std::cout << "slave initialised" << std::endl;
+  if (multigraining){
+    std::cout <<"\tmultigrained simulation" << std::endl;
+  }
   
   std::string server_name;
   {
@@ -100,7 +152,6 @@ int util::Replica_Exchange_Slave::run
     gethostname(buffer, 255);
     server_name = buffer;
   }
-  std::cerr << "running on host " << server_name << std::endl;
 
   int server_port = 29375;
 
@@ -108,7 +159,6 @@ int util::Replica_Exchange_Slave::run
     io::Argument::const_iterator iter=args.lower_bound("slave");
     if(iter!=args.upper_bound("slave")){
 
-      std::cerr << "setting server name to: " << iter->second << std::endl;
       server_name = iter->second;
       ++iter;
       if(iter!=args.upper_bound("slave")){
@@ -123,6 +173,8 @@ int util::Replica_Exchange_Slave::run
       }
     }
   }
+
+  std::cout << "\trunning on host " << server_name << " : " << server_port << std::endl;
 
   struct addrinfo *addrinfo_p;
   struct addrinfo hints;
@@ -139,6 +191,9 @@ int util::Replica_Exchange_Slave::run
 			  &hints, &addrinfo_p);
   
   if (error){
+    io::messages.add("could not get server address info",
+		     "replica_exchange",
+		     io::message::error);
     std::cerr << "getaddrinfo error!\n"
 	      << gai_strerror(error)
 	      << std::endl;
@@ -146,7 +201,6 @@ int util::Replica_Exchange_Slave::run
   }
 
   ((sockaddr_in *)addrinfo_p->ai_addr)->sin_port = htons(server_port);
-
   sockaddr * s_addr_p = addrinfo_p->ai_addr;
   int len = addrinfo_p->ai_addrlen;
 
@@ -154,6 +208,10 @@ int util::Replica_Exchange_Slave::run
 
     cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
 		       addrinfo_p->ai_protocol);
+    if (cl_socket < 0){
+      std::cerr << "could not create client socket" << std::endl;
+      return 1;
+    }
     
     DEBUG(8, "slave: connecting..");
     int result = connect(cl_socket, s_addr_p, len);
@@ -177,11 +235,12 @@ int util::Replica_Exchange_Slave::run
       std::cout << "slave:  running replica " << replica_data.ID
 		<< " at T=" << T[replica_data.Ti]
 		<< " and l=" << l[replica_data.li]
-		<< " (run = " << replica_data.run << ")"
+		<< " (run = " << replica_data.run 
+		<< " and dt = " << dt[replica_data.li] << ")"
 		<< std::endl;
 
       // init replica parameters (t, conf, T, lambda)
-      if (init_replica(topo, conf, sim)){
+      if (init_replica(topo, conf, sim, cg_topo, cg_sim)){
 	std::cerr << "slave: disconnecting..." << std::endl;
 	close(cl_socket);
 	return 1;
@@ -191,12 +250,35 @@ int util::Replica_Exchange_Slave::run
       close(cl_socket);
 
       // run it
-      int error = run_md(topo, conf, sim, md, traj);
+      int error = run_md(topo, conf, sim, md, cg_topo, cg_conf, cg_sim, cg_ff, traj);
 
       if (!error){
 	// do we need to reevaluate the potential energy ?
 	// yes! 'cause otherwise it's just the energy for
 	// the previous configuration...
+
+	if (multigraining){
+	  // coarse grained atom positions are based upon
+	  // real atom positions
+	  std::cerr << "update virtual pos" << std::endl;
+	  util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
+	  
+	  // calculate the cg forces first!
+	  std::cerr << "cg step" << std::endl;
+	  if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
+	    io::print_ENERGY(traj.output(), cg_conf.current().energies,
+			     cg_topo.energy_groups(),
+			     "CGOLDERROR", "CGOLDERR_");
+	    
+	    io::print_ENERGY(traj.output(), cg_conf.old().energies, 
+			     cg_topo.energy_groups(),
+			     "CGERROR", "CGERR_");
+	    
+	    std::cout << "\nError during CG final energy calc!\n" << std::endl;
+	    return 1;
+	  }
+	}
+	
 	algorithm::Algorithm * ff = md.algorithm("Forcefield");
 	
 	if (ff == NULL){
@@ -205,9 +287,22 @@ int util::Replica_Exchange_Slave::run
 	  return 1;
 	}
 	
-	ff->apply(topo, conf, sim);
+	if (ff->apply(topo, conf, sim)){
+	  io::print_ENERGY(traj.output(), conf.current().energies,
+			   topo.energy_groups(),
+			   "OLDERROR", "OLDERR_");
+	  
+	  io::print_ENERGY(traj.output(), conf.old().energies, 
+			   topo.energy_groups(),
+			   "ERROR", "ERR_");
+	  
+	  std::cout << "\nError during final energy calc!\n" << std::endl;
+	  return 1;
+	}
+
 	conf.current().energies.calculate_totals();
-	replica_data.epot_i = conf.current().energies.potential_total;
+	replica_data.epot_i = conf.current().energies.potential_total +
+	  conf.current().energies.special_total;
 	
 	if (replica_data.Ti != replica_data.Tj)
 	  std::cout << "replica_energy " << replica_data.epot_i 
@@ -225,17 +320,50 @@ int util::Replica_Exchange_Slave::run
 	  topo.lambda(l[replica_data.lj]);
 	  topo.update_for_lambda();
 	  std::cout << "\tlambda = " << topo.lambda() << "\n";
-	  
+
+	  if (multigraining){
+	    cg_sim.param().perturbation.lambda = l[replica_data.lj];
+	    cg_topo.lambda(l[replica_data.lj]);
+	    cg_topo.lambda(l[replica_data.lj]);
+	    cg_topo.update_for_lambda();
+
+	    if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
+	      io::print_ENERGY(traj.output(), cg_conf.current().energies,
+			       cg_topo.energy_groups(),
+			       "CGOLDERROR", "CGOLDERR_");
+	      
+	      io::print_ENERGY(traj.output(), cg_conf.old().energies, 
+			       cg_topo.energy_groups(),
+			       "CGERROR", "CGERR_");
+	      
+	      std::cout << "\nError during CG force recalc at different lambda!\n" << std::endl;
+	      return 1;
+	    }
+	  }
+
 	  // recalc energy
-	  ff->apply(topo, conf, sim);
+	  if (ff->apply(topo, conf, sim)){
+	    io::print_ENERGY(traj.output(), conf.current().energies,
+			     topo.energy_groups(),
+			     "OLDERROR", "OLDERR_");
+	    
+	    io::print_ENERGY(traj.output(), conf.old().energies, 
+			     topo.energy_groups(),
+			     "ERROR", "ERR_");
+	    
+	    std::cout << "\nError during force recalc at different lambda!\n" << std::endl;
+	  }
+	  
 	  conf.current().energies.calculate_totals();
-	  replica_data.epot_j = conf.current().energies.potential_total;
+	  replica_data.epot_j = conf.current().energies.potential_total +
+	    conf.current().energies.special_total;
 	} 
 	else{
 	  replica_data.epot_j = replica_data.epot_i;
 	}
 	
 	++replica_data.run;
+	replica_data.time = sim.time();
 	replica_data.state = waiting;
       }
       else{
@@ -305,6 +433,10 @@ int util::Replica_Exchange_Slave::run_md
  configuration::Configuration & conf,
  simulation::Simulation & sim,
  algorithm::Algorithm_Sequence & md,
+ topology::Topology & cg_topo,
+ configuration::Configuration & cg_conf,
+ simulation::Simulation & cg_sim,
+ interaction::Forcefield *cg_ff,
  io::Out_Configuration & traj
  )
 {
@@ -328,18 +460,48 @@ int util::Replica_Exchange_Slave::run_md
     traj.write_replica_step(sim, replica_data);
     traj.write(conf, topo, sim, io::reduced);
 
+    if (multigraining){
+      // coarse grained atom positions are based upon
+      // real atom positions
+      std::cerr << "update virtual pos" << std::endl;
+      util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
+
+      // calculate the cg forces first!
+      std::cerr << "cg step" << std::endl;
+      if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
+	io::print_ENERGY(traj.output(), cg_conf.current().energies,
+			 cg_topo.energy_groups(),
+			 "CGOLDERROR", "CGOLDERR_");
+	
+	io::print_ENERGY(traj.output(), cg_conf.old().energies, 
+			 cg_topo.energy_groups(),
+			 "CGERROR", "CGERR_");
+	
+	std::cout << "\nError during CG MD run!\n" << std::endl;
+	break;
+      }
+    }
+
     // run a step
     if ((error = md.run(topo, conf, sim))){
+
+      io::print_ENERGY(traj.output(), conf.current().energies,
+		       topo.energy_groups(),
+		       "OLDERROR", "OLDERR_");
+      
+      io::print_ENERGY(traj.output(), conf.old().energies, 
+		       topo.energy_groups(),
+		       "ERROR", "ERR_");
       
       std::cout << "\nError during MD run!\n" << std::endl;
       break;
     }
-
+    
     traj.print(topo, conf, sim);
 
     sim.time() += sim.time_step_size();
     ++sim.steps();
-
+    
   }
     
   return error;
@@ -424,7 +586,9 @@ int util::Replica_Exchange_Slave::init_replica
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim
+ simulation::Simulation & sim,
+ topology::Topology & cg_topo,
+ simulation::Simulation & cg_sim
  )
 {
   // get configuration from master
@@ -437,6 +601,7 @@ int util::Replica_Exchange_Slave::init_replica
   // change all the temperature coupling temperatures
   for(unsigned int i=0; i<sim.multibath().size(); ++i){
     sim.multibath()[i].temperature = T[replica_data.Ti];
+    if (multigraining) cg_sim.multibath()[i].temperature = T[replica_data.Ti];
   }
   
   // change the lambda value
@@ -446,12 +611,17 @@ int util::Replica_Exchange_Slave::init_replica
   topo.lambda(l[replica_data.li]);
   topo.update_for_lambda();
   std::cout << "\tlambda = " << topo.lambda() << "\n";
+
+  if (multigraining){
+    cg_sim.param().perturbation.lambda = l[replica_data.li];
+    cg_topo.lambda(l[replica_data.li]);
+    cg_topo.lambda(l[replica_data.li]);
+    cg_topo.update_for_lambda();
+  }
   
   // change simulation time
-  sim.time() = replica_data.run * 
-    sim.param().step.number_of_steps * sim.param().step.dt +
-    sim.param().step.t0;
-  
+  sim.time() = replica_data.time;
+  sim.time_step_size() = sim.param().replica.dt[replica_data.li];
   sim.steps() = replica_data.run * sim.param().step.number_of_steps;
 
   return 0;
