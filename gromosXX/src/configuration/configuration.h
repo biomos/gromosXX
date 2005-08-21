@@ -266,7 +266,7 @@ namespace configuration
      * to keep chargegroups together.
      */
     void init(topology::Topology const & topo,
-	      simulation::Parameter const & param,
+	      simulation::Parameter & param,
 	      bool gather = true);
 
      //////////////////////////////////////////////////////////////////////

@@ -177,7 +177,7 @@ configuration::Configuration & configuration::Configuration::operator=
 }
 
 void configuration::Configuration::init(topology::Topology const & topo,
-					simulation::Parameter const & param,
+					simulation::Parameter & param,
 					bool gather)
 {
   // resize the energy arrays
@@ -287,6 +287,14 @@ void configuration::Configuration::init(topology::Topology const & topo,
     default:
       std::cout << "wrong periodic boundary conditions!";
       io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+  }
+
+  if (boundary_type != math::vacuum){
+    if (param.centreofmass.remove_rot){
+      io::messages.add("disabling removing of centre of mass rotation (PBC)",
+		       "configuration",
+		       io::message::notice);
+    }
   }
 }
 

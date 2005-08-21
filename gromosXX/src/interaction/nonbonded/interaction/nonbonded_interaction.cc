@@ -492,7 +492,7 @@ void interaction::Nonbonded_Interaction::expand_configuration
 (
  topology::Topology const & topo,
  configuration::Configuration const & conf,
- simulation::Simulation const & sim,
+ simulation::Simulation & sim,
  configuration::Configuration & exp_conf
  )
 {

@@ -78,9 +78,9 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   // construct the md algorithm
   //==================================================
 
-  // center of mass removal
-  if (sim.param().centreofmass.remove_trans ||
-      sim.param().centreofmass.remove_rot){
+  // center of mass motion printing / removal
+  if (sim.param().centreofmass.skip_step ||
+      sim.param().print.centreofmass){
 
     algorithm::Remove_COM_Motion * rcom =
       new algorithm::Remove_COM_Motion(os);
