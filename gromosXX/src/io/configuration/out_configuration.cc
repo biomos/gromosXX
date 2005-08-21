@@ -1548,6 +1548,7 @@ void io::Out_Configuration::_print_replica_information
        << std::setw(18) << it->probability
        << std::setw(4) << it->switched
        << std::setw(4) << it->state
+       << std::setw(18) << it->time
        << "\n";
   }
   os << "END\n";

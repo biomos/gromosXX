@@ -130,13 +130,27 @@ void io::In_Configuration::read_replica
   if (!quiet)
     os << "\nREPLICA CONFIGURATION\n";
   
+  DEBUG(8, "read replica");
   simulation::Parameter const & param = sim.param();
 
   const int switch_T = sim.param().replica.num_T;
   const int switch_l = sim.param().replica.num_l;
+	
+  DEBUG(9, "switch_T = " << switch_T << " switch_l = " << switch_l);
 
   const int rep_num = switch_T * switch_l;
+  DEBUG(9, "=> " << rep_num << " replicas");
+
+  if (rep_num <= 1){
+	io::messages.add("replica exchange with <= 1 replica!",
+				     "in_configuration",
+					 io::message::error);
+    return;
+  }
+
+  DEBUG(9, "resizing conf: " << rep_num);
   conf.resize(rep_num);
+  DEBUG(9, "resizing replica data: " << rep_num);
   replica_data.resize(rep_num);
 
   block_read.clear();
@@ -148,6 +162,8 @@ void io::In_Configuration::read_replica
   std::vector<std::string> buffer = m_block["REPLICAFRAME"];
   
   if(!buffer.size()){
+	DEBUG(8, "no REPLICAFRAME block. reading all into first configuration");
+    assert(conf.size() > 0);
     conf[0].resize(topo.num_atoms());
 
     read_time(topo, conf[0], sim, os);
@@ -158,17 +174,21 @@ void io::In_Configuration::read_replica
     read_pscale(topo, conf[0], sim, os);
     read_flexv(topo, conf[0], sim, os);
   
+	DEBUG(10, "setting boundary type");
     conf[0].boundary_type = param.boundary.boundary;
 
+	DEBUG(10, "copying configurations");
     for(unsigned int i=1; i<conf.size(); ++i)
       conf[i] = conf[0];
 
+	DEBUG(10, "setting up replica information");
     // setup replica information
     {
       int i=0;
       for(int l=0; l < switch_l; ++l){
 	for(int t=0; t < switch_T; ++t, ++i){
 	  
+	  assert(replica_data.size() > i);
 	  replica_data[i].ID = i;
 	  replica_data[i].run = 0;
 	  
@@ -184,14 +204,19 @@ void io::In_Configuration::read_replica
 	  replica_data[i].state = util::waiting;
 	  replica_data[i].probability = 0.0;
 	  replica_data[i].switched = false;
+	  
+	  replica_data[i].time = param.step.t0;
 	}
       }
     }
   }
   else{
+	DEBUG(8, "got REPLICAFRAME, it's a replica exchange configuration file!");
     read_replica_information(replica_data, os);
 
+	DEBUG(8, "REPLICAFRAME block. reading " << conf.size() << " configurations");
     for(unsigned int i=0; i<conf.size(); ++i){
+	  DEBUG(9, "topo contains " << topo.num_atoms() << " atoms");
       conf[i].resize(topo.num_atoms());
       
       read_time(topo, conf[i], sim, os);
@@ -1251,6 +1276,7 @@ bool io::In_Configuration::read_replica_information
 		>> replica_data[i].epot_j
 		>> replica_data[i].probability
 		>> replica_data[i].switched
+		>> replica_data[i].time
 		>> st;
 
     replica_data[i].state = (util::state_enum)st;

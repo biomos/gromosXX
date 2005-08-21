@@ -1605,8 +1605,12 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
     
     _lineStream >> param.cgrain.level >> param.cgrain.EPS;
 
-    if (param.cgrain.level == 1 || param.cgrain.level == 2)
+    if (param.cgrain.level == 1 || param.cgrain.level == 2){
       param.force.interaction_function = simulation::cgrain_func;
+      io::messages.add("Using the Coarse Grained model (EXPERIMENTAL)",
+	  	     "In_Parameter", 
+		     io::message::warning);
+    }
     else if (param.cgrain.level == 0)
       {}
     else
@@ -1617,9 +1621,6 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
       io::messages.add("bad line in CGRAIN block",
                        "In_Parameter", io::message::error);
     
-    io::messages.add("Using the Coarse Grained model (EXPERIMENTAL)",
-		     "In_Parameter", 
-		     io::message::warning);
   }
 }
 
@@ -2101,13 +2102,14 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     _lineStream >> param.replica.scale;
 
     if (_lineStream.fail()){
-      io::messages.add("bad line in REPLICA03 block",
+      io::messages.add("bad line in REPLICA03 block (numT, T or scale)",
 		       "In_Parameter", io::message::error);
       param.replica.num_T = 0;
       param.replica.num_l = 0;
 
       param.replica.temperature.clear();
       param.replica.lambda.clear();
+	  param.replica.dt.clear();
     }
     
     _lineStream >> param.replica.num_l;
@@ -2121,6 +2123,16 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
       _lineStream >> param.replica.dt[i];
     }
 
+    if (_lineStream.fail()){
+      io::messages.add("bad line in REPLICA03 block (numl, l or dt)",
+		       "In_Parameter", io::message::error);
+      param.replica.num_T = 0;
+      param.replica.num_l = 0;
+
+      param.replica.temperature.clear();
+      param.replica.lambda.clear();
+	  param.replica.dt.clear();
+    }
     _lineStream >> param.replica.trials;
     _lineStream >> param.replica.equilibrate;
     _lineStream >> param.replica.slave_runs;
@@ -2128,7 +2140,7 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     
     if (_lineStream.fail()){
       std::cerr << "at the end" << std::endl;
-      io::messages.add("bad line in REPLICA03 block",
+      io::messages.add("bad line in REPLICA03 block (trials, equi, slave or write)",
 		       "In_Parameter", io::message::error);
 
       param.replica.num_T = 0;
@@ -2136,6 +2148,7 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
 
       param.replica.temperature.clear();
       param.replica.lambda.clear();
+      param.replica.dt.clear();
     }
   }
   
