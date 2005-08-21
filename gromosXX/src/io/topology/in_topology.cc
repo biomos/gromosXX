@@ -489,7 +489,8 @@ io::In_Topology::read(topology::Topology& topo,
 
       if (param.force.bond){
 	if (!check_type(m_block[bond_bname], topo.solute().bonds())){
-	  io::messages.add("Illegal bond type in BOND(H) block",
+	  io::messages.add("Illegal bond type in BOND(H) block (type not in "
+			   + bond_bname + ")",
 			   "In_Topology", io::message::error);
 	}
       }
@@ -1186,7 +1187,7 @@ void io::In_Topology
 ::read_harmonic_bonds(std::vector<interaction::bond_type_struct> &b,
 		      std::ostream & os)
 {
-  
+  DEBUG(8, "read_harmonic_bonds");
   DEBUG(10, "(HARM)BONDTYPE block");
 
   std::vector<std::string> buffer;
@@ -1316,7 +1317,7 @@ void io::In_Topology
 ::read_g96_bonds(std::vector<interaction::bond_type_struct> &b,
 		 std::ostream & os)
 {
-  
+  DEBUG(8, "read_g96_bonds");
   DEBUG(10, "BONDTYPE block");
 
   std::vector<std::string> buffer;

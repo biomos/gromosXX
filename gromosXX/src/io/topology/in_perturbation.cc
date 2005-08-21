@@ -137,11 +137,22 @@ io::In_Perturbation::read(topology::Topology &topo,
 			b);
 	
 	  if (b_it == topo.solute().bonds().end()){
-	    io::messages.add("Perturbation of a non-existing bond "
-			     "in PERTBOND03 block.",
-			     "In_Perturbation", io::message::error);
+		// or B-type
+		b.type = t_B-1;
+		b_it = std::find(topo.solute().bonds().begin(),
+						 topo.solute().bonds().end(),
+						 b);
+		if (b_it == topo.solute().bonds().end()){
+		  // should this be a warning?
+		  std::cout << "perturbing " << i << " - " << j << " type " << t_A << std::endl;
+		  std::cout << "\tnot in topology!" << std::endl;
+
+	      io::messages.add("Perturbation of a non-existing bond "
+		          	       "in PERTBOND03 block.",
+			     		   "In_Perturbation", io::message::error);
+	    }
 	  }
-	
+
 	  topo.solute().bonds().erase(b_it);
 	  topology::perturbed_two_body_term_struct 
 	    pb(i-1, j-1, t_A-1, t_B-1);
