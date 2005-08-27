@@ -93,7 +93,7 @@ namespace io {
      * Read in the nonbonded interaction types (lennard-jones).
      */
     virtual void read_cg_parameter(std::vector<std::vector
-				   <interaction::cg_parameter_struct> > 
+				   <interaction::lj_parameter_struct> > 
 				   & cg_parameter,
 				   std::ostream & os = std::cout);
     

@@ -1664,7 +1664,7 @@ void io::In_Topology
 
 void io::In_Topology
 ::read_cg_parameter(std::vector<std::vector
-		    <interaction::cg_parameter_struct> > 
+		    <interaction::lj_parameter_struct> > 
 		    & cg_parameter,
 		    std::ostream & os)
 {
@@ -1694,7 +1694,7 @@ void io::In_Topology
     unsigned int sz = unsigned(sqrt(double((8*num+1)-1))/2);
 
     cg_parameter.resize(sz);
-    std::vector< std::vector<interaction::cg_parameter_struct> >::iterator
+    std::vector< std::vector<interaction::lj_parameter_struct> >::iterator
       cg_it = cg_parameter.begin(),
       cg_to = cg_parameter.end();
   
@@ -1705,7 +1705,7 @@ void io::In_Topology
     
     for (n=0; it != buffer.end() - 1; ++it, ++n) {
       
-      interaction::cg_parameter_struct s;
+      interaction::lj_parameter_struct s;
       int i, j;
       
       _lineStream.clear();
@@ -1728,6 +1728,10 @@ void io::In_Topology
 			 io::message::error);
 	break;
       }
+
+      // no different 1,4 interactions
+      s.cs6 = s.c6;
+      s.cs12 = s.c12;
       
       cg_parameter[i][j] = s;
       cg_parameter[j][i] = s;

@@ -67,28 +67,25 @@ namespace interaction
    */
   struct lj_parameter_struct : public interaction_type_struct
   {
+    /**
+     * Constructor
+     */
     lj_parameter_struct(double c6, double c12, double cs6, double cs12)
       : c6(c6), c12(c12), cs6(cs6), cs12(cs12) {}
+    /**
+     * Coarse grained constructor (no cs6, cs12)
+     */
+    lj_parameter_struct(double c6, double c12)
+      : c6(c6), c12(c12), cs6(c6), cs12(c12) {}
+    /**
+     * default constructor
+     */
     lj_parameter_struct()
       : c6(0), c12(0), cs6(0), cs12(0) {}
     double c6;
     double c12;
     double cs6;
     double cs12;
-  };
-
-  /**
-   * @struct cg_parameter_struct
-   * Lennard Jones interaction parameter for coarse-grained simulations.
-   */
-  struct cg_parameter_struct : public interaction_type_struct
-  {
-    cg_parameter_struct(double c6, double c12)
-      : c6(c6), c12(c12) {}
-    cg_parameter_struct()
-      : c6(0), c12(0) {}
-    double c6;
-    double c12;
   };
 
 }

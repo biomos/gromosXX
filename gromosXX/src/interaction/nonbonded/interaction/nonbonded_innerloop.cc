@@ -49,7 +49,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
     
     case simulation::cgrain_func :
       {
-	const cg_parameter_struct & cg = 
+	const lj_parameter_struct & cg = 
 	  m_param->cg_parameter(topo.iac(i),
 				topo.iac(j));
 	
@@ -165,7 +165,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_central
     
     case simulation::cgrain_func :
       {
-	const cg_parameter_struct & cg = 
+	const lj_parameter_struct & cg = 
 	  m_param->cg_parameter(topo.iac(i),
 				topo.iac(j));
 	
@@ -277,7 +277,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_shift
     
     case simulation::cgrain_func :
       {
-	const cg_parameter_struct & cg = 
+	const lj_parameter_struct & cg = 
 	  m_param->cg_parameter(topo.iac(i),
 				topo.iac(j));
 	

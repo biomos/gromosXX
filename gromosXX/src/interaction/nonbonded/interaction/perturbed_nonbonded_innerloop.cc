@@ -41,10 +41,24 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   if(j < topo.num_solute_atoms() && 
      topo.is_perturbed(j) == true){
 
-    A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				 topo.perturbed_solute().atoms()[j].A_IAC());
-    B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				 topo.perturbed_solute().atoms()[j].B_IAC());
+    switch(t_interaction_spec::interaction_func){
+      case simulation::lj_crf_func :
+	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.perturbed_solute().atoms()[j].A_IAC());
+	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.perturbed_solute().atoms()[j].B_IAC());
+	break;
+      case simulation::cgrain_func :
+	A_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.perturbed_solute().atoms()[j].A_IAC());
+	B_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.perturbed_solute().atoms()[j].B_IAC());
+	break;
+      default:
+	io::messages.add("Nonbonded_Innerloop",
+			 "interaction function not implemented",
+			 io::message::critical);
+    }
 
     A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
       topo.perturbed_solute().atoms()[j].A_charge();
@@ -60,10 +74,25 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
   }
   else{
-    A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				 topo.iac(j));
-    B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				 topo.iac(j));
+    switch(t_interaction_spec::interaction_func){
+      case simulation::lj_crf_func :
+	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.iac(j));
+	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.iac(j));
+	break;
+      case simulation::cgrain_func :
+	A_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.iac(j));
+	B_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.iac(j));
+	break;
+      default:
+	io::messages.add("Nonbonded_Innerloop",
+			 "interaction function not implemented",
+			 io::message::critical);
+	return;
+    }
     DEBUG(10, "\tiac-i (A) : " << topo.perturbed_solute().atoms()[i].A_IAC() 
 	  << " iac-i (B) : " << topo.perturbed_solute().atoms()[i].B_IAC()
 	  << " iac-j : " << topo.iac(j));
@@ -85,9 +114,14 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   DEBUG(8, "\talpha lj = " << alpha_lj);
   DEBUG(8, "\talpha crf = " << alpha_crf);
 
-
   if (t_perturbation_details::do_scaling){
     // SCALING ON
+    if (t_interaction_spec::interaction_func == simulation::cgrain_func){
+      io::messages.add("Nonbonded Innerloop",
+		       "scaling not implemented for coarse-grained simulations!",
+		       io::message::critical);
+      return;
+    }
 
     // check whether we need to do scaling
     // based on energy groups
@@ -307,10 +341,28 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   if(j < topo.num_solute_atoms() && 
      topo.is_perturbed(j) == true){
 
-    A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+    switch(t_interaction_spec::interaction_func){
+      case simulation::lj_crf_func :
+	A_lj = 
+	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
 				 topo.perturbed_solute().atoms()[j].A_IAC());
-    B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+	B_lj =
+	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
 				 topo.perturbed_solute().atoms()[j].B_IAC());
+	break;
+      case simulation::cgrain_func :
+	A_lj = 
+	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				 topo.perturbed_solute().atoms()[j].A_IAC());
+	B_lj = 
+	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				 topo.perturbed_solute().atoms()[j].B_IAC());
+	break;
+      default:
+	io::messages.add("Nonbonded_Innerloop",
+			 "interaction function not implemented",
+			 io::message::critical);
+    }
 
     A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
       topo.perturbed_solute().atoms()[j].A_charge();
@@ -326,10 +378,30 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
   }
   else{
-    A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+    switch(t_interaction_spec::interaction_func){
+      case simulation::lj_crf_func :
+	A_lj =
+	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
 				 topo.iac(j));
-    B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+	B_lj = 
+	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
 				 topo.iac(j));
+	break;
+      case simulation::cgrain_func :
+	A_lj = 
+	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				 topo.iac(j));
+	B_lj =
+	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				 topo.iac(j));
+	break;
+      default:
+	io::messages.add("Nonbonded_Innerloop",
+			 "interaction function not implemented",
+			 io::message::critical);
+	return;
+    }
+
     DEBUG(10, "\tiac-i (A) : " << topo.perturbed_solute().atoms()[i].A_IAC() 
 	  << " iac-i (B) : " << topo.perturbed_solute().atoms()[i].B_IAC()
 	  << " iac-j : " << topo.iac(j));
@@ -365,21 +437,25 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     // check whether we have changing lambda dependencies
     if (topo.energy_group_lambdadep().count(energy_group_pair)){
       
-      energy_derivative_index = topo.energy_group_lambdadep()[energy_group_pair].first;
+      energy_derivative_index =
+	topo.energy_group_lambdadep()[energy_group_pair].first;
 
       DEBUG(8, "energy_derivative_index=" << energy_derivative_index);
       assert(energy_derivative_index >= 0);
 
       assert(energy_derivative_index < int(topo.lambda_prime().size()));
-      assert(energy_derivative_index < int(topo.lambda_prime_derivative().size()));
+      assert(energy_derivative_index < 
+	     int(topo.lambda_prime_derivative().size()));
 
       // set lambdas
       DEBUG(8, "lambda dep l=" << topo.lambda() 
-	    << " alpha=" << topo.energy_group_lambdadep()[energy_group_pair].second
+	    << " alpha=" 
+	    << topo.energy_group_lambdadep()[energy_group_pair].second
 	    << " lp=" << topo.lambda_prime()[energy_derivative_index]);
       
 
-      set_lambda(topo.lambda_prime()[energy_derivative_index], topo.lambda_exp());
+      set_lambda(topo.lambda_prime()[energy_derivative_index],
+		 topo.lambda_exp());
       reset_lambda = true;
 
     }
@@ -387,23 +463,27 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     if (topo.energy_group_scaling().count(energy_group_pair)){
     
     // YES, we do scale the interactions!
-      lj_crf_scaled_interaction(r, A_lj->c6, A_lj->c12,
-				B_lj->c6, B_lj->c12,
-				A_q, B_q,
-				alpha_lj, alpha_crf,
-				topo.energy_group_scaling()[energy_group_pair].first,
-				topo.energy_group_scaling()[energy_group_pair].second,
-				f1, f6, f12,
-				e_lj, e_crf, de_lj, de_crf);
+      lj_crf_scaled_interaction
+	(r, A_lj->c6, A_lj->c12,
+	 B_lj->c6, B_lj->c12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 topo.energy_group_scaling()[energy_group_pair].first,
+	 topo.energy_group_scaling()[energy_group_pair].second,
+	 f1, f6, f12,
+	 e_lj, e_crf, de_lj, de_crf
+	 );
     }
     else{
       // no scaling
-      lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-			      B_lj->c6, B_lj->c12,
-			      A_q, B_q,
-			      alpha_lj, alpha_crf,
-			      f1, f6, f12,
-			      e_lj, e_crf, de_lj, de_crf);
+      lj_crf_soft_interaction
+	(r, A_lj->c6, A_lj->c12,
+	 B_lj->c6, B_lj->c12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 f1, f6, f12,
+	 e_lj, e_crf, de_lj, de_crf
+	 );
     }
     
     if (reset_lambda)
@@ -416,20 +496,24 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
     switch(t_interaction_spec::interaction_func){
     case simulation::lj_crf_func :
-      lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-			      B_lj->c6, B_lj->c12,
-			      A_q, B_q,
-			      alpha_lj, alpha_crf,
-			      f1, f6, f12,
-			      e_lj, e_crf, de_lj, de_crf);
+      lj_crf_soft_interaction
+	(r, A_lj->c6, A_lj->c12,
+	 B_lj->c6, B_lj->c12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 f1, f6, f12,
+	 e_lj, e_crf, de_lj, de_crf
+	 );
       break;
     case simulation::cgrain_func :
-      cgrain_soft_interaction(r, A_lj->c6, A_lj->c12,
-			      B_lj->c6, B_lj->c12,
-			      A_q, B_q,
-			      alpha_lj, alpha_crf,
-			      f1, f6, f12,
-			      e_lj, e_crf, de_lj, de_crf);
+      cgrain_soft_interaction
+	(r, A_lj->c6, A_lj->c12,
+	 B_lj->c6, B_lj->c12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 f1, f6, f12,
+	 e_lj, e_crf, de_lj, de_crf
+	 );
       break;
     default:
       io::messages.add("Nonbonded_Innerloop",
@@ -492,14 +576,18 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	<< " pert der index = " << energy_derivative_index);
   
   assert(storage.perturbed_energy_derivatives.
-	 lj_energy.size() > topo.atom_energy_group(i) &&
-	 storage.perturbed_energy_derivatives.
+	 lj_energy.size() > topo.atom_energy_group(i));
+
+  assert(storage.perturbed_energy_derivatives.
 	 lj_energy.size() > topo.atom_energy_group(j));
   
   assert(storage.perturbed_energy_derivatives.
-	 lj_energy[topo.atom_energy_group(i)].size() > topo.atom_energy_group(i) &&
-	 storage.perturbed_energy_derivatives.
-	 lj_energy[topo.atom_energy_group(i)].size() > topo.atom_energy_group(j));
+	 lj_energy[topo.atom_energy_group(i)].size()
+	 > topo.atom_energy_group(i));
+
+  assert(storage.perturbed_energy_derivatives.
+	 lj_energy[topo.atom_energy_group(i)].size()
+	 > topo.atom_energy_group(j));
 
   if (t_perturbation_details::do_scaling &&
       energy_derivative_index != -1){
@@ -549,6 +637,14 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   Periodicity_type const & periodicity)
 {
   DEBUG(7, "\tone four pair\t" << i << "\t" << j);
+
+  if (t_interaction_spec::interaction_func == simulation::cgrain_func){
+    // if this is removed, make sure to get correct LJ parameters (CG)
+    io::messages.add("nonbonded_interaction",
+		     "no one-four pairs in coarse grained simulations!",
+		     io::message::critical);
+    return;
+  }
   
   math::Vec r, f;
 
@@ -643,23 +739,27 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     if (topo.energy_group_scaling().count(energy_group_pair)){
     
       // YES, we do scale the interactions!
-      lj_crf_scaled_interaction(r, A_lj->cs6, A_lj->cs12,
-				B_lj->cs6, B_lj->cs12,
-				A_q, B_q,
-				alpha_lj, alpha_crf,
-				topo.energy_group_scaling()[energy_group_pair].first,
+      lj_crf_scaled_interaction
+	(r, A_lj->cs6, A_lj->cs12,
+	 B_lj->cs6, B_lj->cs12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 topo.energy_group_scaling()[energy_group_pair].first,
 				topo.energy_group_scaling()[energy_group_pair].second,
-				f1, f6, f12,
-				e_lj, e_crf, de_lj, de_crf);
+	 f1, f6, f12,
+	 e_lj, e_crf, de_lj, de_crf
+	 );
     }
     else{
       // no scaling
-      lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-			      B_lj->cs6, B_lj->cs12,
-			      A_q, B_q,
-			      alpha_lj, alpha_crf,
-			      f1, f6, f12, 
-			      e_lj, e_crf, de_lj, de_crf);
+      lj_crf_soft_interaction
+	(r, A_lj->cs6, A_lj->cs12,
+	 B_lj->cs6, B_lj->cs12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 f1, f6, f12, 
+	 e_lj, e_crf, de_lj, de_crf
+	 );
     }
     
     if (reset_lambda)
@@ -671,20 +771,24 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   else{
     switch(t_interaction_spec::interaction_func){
     case simulation::lj_crf_func :
-      lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-			      B_lj->cs6, B_lj->cs12,
-			      A_q, B_q,
-				alpha_lj, alpha_crf,
-			      f1, f6, f12,
-			      e_lj, e_crf, de_lj, de_crf);
+      lj_crf_soft_interaction
+	(r, A_lj->cs6, A_lj->cs12,
+	 B_lj->cs6, B_lj->cs12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 f1, f6, f12,
+	 e_lj, e_crf, de_lj, de_crf
+	 );
       break;
     case simulation::cgrain_func :
-      cgrain_soft_interaction(r, A_lj->cs6, A_lj->cs12,
-			      B_lj->cs6, B_lj->cs12,
-			      A_q, B_q,
-				alpha_lj, alpha_crf,
-			      f1, f6, f12,
-			      e_lj, e_crf, de_lj, de_crf);
+      cgrain_soft_interaction
+	(r, A_lj->cs6, A_lj->cs12,
+	 B_lj->cs6, B_lj->cs12,
+	 A_q, B_q,
+	 alpha_lj, alpha_crf,
+	 f1, f6, f12,
+	 e_lj, e_crf, de_lj, de_crf
+	 );
       break;
     default:
       io::messages.add("Nonbonded_Innerloop",

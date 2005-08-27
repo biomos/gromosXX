@@ -336,7 +336,8 @@ int util::Replica_Exchange_Slave::run
 			       cg_topo.energy_groups(),
 			       "CGERROR", "CGERR_");
 	      
-	      std::cout << "\nError during CG force recalc at different lambda!\n" << std::endl;
+	      std::cout << "\nError during CG force recalc at different lambda!\n"
+			<< std::endl;
 	      return 1;
 	    }
 	  }
@@ -501,6 +502,11 @@ int util::Replica_Exchange_Slave::run_md
 
     sim.time() += sim.time_step_size();
     ++sim.steps();
+
+    if (multigraining){
+      cg_sim.time() += cg_sim.time_step_size();
+      ++cg_sim.steps();
+    }
     
   }
     

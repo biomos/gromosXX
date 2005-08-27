@@ -51,7 +51,7 @@ namespace interaction
     void cg_resize(unsigned int i)
     {
       m_cg_parameter.resize(i);
-      std::vector< std::vector<cg_parameter_struct> >::iterator
+      std::vector< std::vector<lj_parameter_struct> >::iterator
 	it = m_cg_parameter.begin(),
 	to = m_cg_parameter.end();
       
@@ -68,9 +68,9 @@ namespace interaction
     }
 
     /**
-     * the cg parameter.
+     * the cg (lj) parameter.
      */
-    std::vector<std::vector<cg_parameter_struct> > & cg_parameter()
+    std::vector<std::vector<lj_parameter_struct> > & cg_parameter()
     {
       return m_cg_parameter;
     }
@@ -87,7 +87,7 @@ namespace interaction
     /**
      * get the cg parameters for atom type i and j.
      */
-    cg_parameter_struct const & cg_parameter(unsigned int iac_i, unsigned int iac_j){
+    lj_parameter_struct const & cg_parameter(unsigned int iac_i, unsigned int iac_j){
       assert(iac_i < m_cg_parameter.size());
       assert(iac_j < m_cg_parameter[iac_i].size());      
       return m_cg_parameter[iac_i][iac_j];
@@ -112,7 +112,7 @@ namespace interaction
      * add the cg parameters for atom type i and j.
      */
     void add_cg_parameter(unsigned int iac_i, unsigned int iac_j,
-			  cg_parameter_struct lj)
+			  lj_parameter_struct lj)
     {
       assert(iac_i < m_cg_parameter.size());
       assert(iac_j < m_cg_parameter.size());
@@ -132,7 +132,7 @@ namespace interaction
     /**
      * the cg parameter.
      */
-    std::vector< std::vector<cg_parameter_struct> > m_cg_parameter;
+    std::vector< std::vector<lj_parameter_struct> > m_cg_parameter;
 
   };
   

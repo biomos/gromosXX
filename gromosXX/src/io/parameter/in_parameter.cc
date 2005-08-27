@@ -1010,20 +1010,20 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
       io::messages.add("PERTURB: nrdgl != 0 not allowed",
 		       "In_Parameter", io::message::error);
     
-    if (alpha_lj || alpha_crf){
-      io::messages.add("PERTURB: softness constants taken from topology!",
-		       "In_Parameter", io::message::notice);
-    }
-    
-    param.perturbation.perturbation=(ntg!=0);
-    
     if (ntg != 0 && ntg != 1)
       io::messages.add("PERTURB: only ntg = 0 or ntg = 1 allowed",
 		       "In_Parameter", io::message::error);
+
+    param.perturbation.perturbation=(ntg!=0);
+    
+    if (param.perturbation.perturbation && (alpha_lj || alpha_crf)){
+      io::messages.add("PERTURB: softness constants taken from topology!",
+		       "In_Parameter", io::message::notice);
+    }
   }
   
   if (param.perturbation.lambda_exponent<=0){
-    io::messages.add("PERTURB: nlam > 0",
+    io::messages.add("PERTURB: nlam must be > 0",
 		     "In_Parameter", io::message::error);
   }
 }
