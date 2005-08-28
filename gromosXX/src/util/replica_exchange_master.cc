@@ -247,13 +247,21 @@ int util::Replica_Exchange_Master::run
 	    << std::setw(13) << "Epotj"
 	    << std::setw(13) << "p"
 	    << std::setw(4) << "s"
-	    << "\n";
+	    << std::endl;
 
   bool quit = false;
 
   // listen, keep a queue for max all replicas
   // that should be enough, i guess
-  listen(serv_socket, switch_l * switch_T);
+  if (listen(serv_socket, switch_l * switch_T)){
+
+    io::messages.add("could not listen on address", "replica_exchange",
+		     io::message::error);
+    
+    std::cout << "replica exchange: could not listen" << std::endl;
+    close(serv_socket);
+    return 1;
+  }
 
   while(quit == false){
     
@@ -315,8 +323,37 @@ int util::Replica_Exchange_Master::run
       return 4;
     }
 
+    double magic[4] = { 3.1415927, 29375, 243, 8.3116 };
+    double magic_buff[4];
+    
+    // magic cookie exchange
+    if (write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
+      std::cerr << "could not write magic cookie" << std::endl;
+      close(cl_socket);
+      continue;
+    }
+    if (read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
+      std::cerr << "could not read magic cookie" << std::endl;
+      close(cl_socket);
+      continue;
+    }
+    if (magic[0] != magic_buff[0] || magic[1] != magic_buff[1] ||
+	magic[2] != magic_buff[2] || magic[3] != magic_buff[3]){
+
+      std::cerr << "magic cookie exchange failed" << std::endl;
+      close(cl_socket);
+      continue;
+    }
+    else{
+      std::cout << "magic cookie test succeeded" << std::endl;
+    }
+
     char ch;
-    read(cl_socket, &ch, 1);
+    if (read(cl_socket, &ch, 1) != 1){
+      std::cerr << "could not read from socket!" << std::endl;
+      close(cl_socket);
+      return 1;
+    }
 
     DEBUG(9, "client connected!");
 
@@ -352,25 +389,63 @@ int util::Replica_Exchange_Master::run
 
 	    // all ok, sending replica
 	    ch = 0;
-	    write(cl_socket, &ch, 1);
+	    if (write(cl_socket, &ch, 1) != 1){
+	      std::cerr << "could not write to socket" << std::endl;
+	      close(cl_socket);
+	      return 1;
+	    }
 
 	    // send parameters
 	    DEBUG(8, "sending replica data");
-	    write(cl_socket, (char *) &replica_data[r], sizeof(Replica_Data));
+	    if (write(cl_socket, (char *) &replica_data[r], sizeof(Replica_Data)) != sizeof(Replica_Data)){
+	      std::cerr << "could not write to socket" << std::endl;
+	      close(cl_socket);
+	      return 1;
+	    }
+	    
+	    const ssize_t num = m_conf[r].current().pos.size() * 3 * sizeof(double);
+	    if (num >= SSIZE_MAX){
+	      std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
+	      return 1;
+	    }
+	    
+	    // std::cerr << "sizeof(double) = " << sizeof(double) << std::endl;
+	    // std::cerr << "positions = " << m_conf[r].current().pos.size() << std::endl;
+	    // std::cerr << "expected = " << num << std::endl;
 	    
 	    // positions
+	    ssize_t n_write = 0;
 	    DEBUG(9, "sending " << 3 * m_conf[r].current().pos.size() << " coords");
-	    write(cl_socket, (char *) &m_conf[r].current().pos(0)(0),
-		  m_conf[r].current().pos.size() * 3 * sizeof(double));
+	    /*
+	    if ((n_write = write(cl_socket, (char *) &m_conf[r].current().pos(0)(0), num)) != num){
+	      std::cerr << "could not transfer positions!" << std::endl;
+	      close(cl_socket);
+	      return 1;
+	    }
+	    else{
+	      std::cerr << "wrote " << n_write << " bytes" << std::endl;
+	    }
+	    */
+	    writeblock((char *) &m_conf[r].current().pos(0)(0), num);
 	    
 	    // velocities
 	    DEBUG(9, "sending velocity");
-	    write(cl_socket, (char *) &m_conf[r].current().vel(0)(0),
-		  m_conf[r].current().vel.size() * 3 * sizeof(double));
+	    /*
+	    if (write(cl_socket, (char *) &m_conf[r].current().vel(0)(0), num) != num){
+	      std::cerr << "could not transfer velocities!" << std::endl;
+	      close(cl_socket);
+	      return 1;
+	    }
+	    */
+	    writeblock((char *) &m_conf[r].current().vel(0)(0), num);
 
 	    // and box
 	    DEBUG(9, "sending box");
-	    write(cl_socket, (char *) &m_conf[r].current().box(0)(0), 9 * sizeof(double));
+	    if (write(cl_socket, (char *) &m_conf[r].current().box(0)(0),
+		      9 * sizeof(double)) != 9 * sizeof(double)){
+	      std::cerr << "could not transfer box" << std::endl;
+	      return 1;
+	    }
 	    
 	    break;
 	  }
@@ -380,31 +455,72 @@ int util::Replica_Exchange_Master::run
 	  // no replica available, wait...
 	  std::cout << "could not select replica!!!" << std::endl;
 	  ch=1;
-	  write(cl_socket, &ch, 1);
+	  if (write(cl_socket, &ch, 1) != 1){
+	    std::cerr << "could not set job to waiting" << std::endl;
+	    close(cl_socket);
+	    return 1;
+	  }
 	}
 
 	break;
 
       case 2:
 	ch = 0;
-	write(cl_socket, &ch, 1);
+	if (write(cl_socket, &ch, 1) != 1){
+	  std::cerr << "could not wirte to socket" << std::endl;
+	  close(cl_socket);
+	  return 1;
+	}
+	
 	
 	int i;
-	read(cl_socket, (char *) &i, sizeof(int));
+	if (read(cl_socket, (char *) &i, sizeof(int)) != sizeof(int)){
+	  std::cerr << "could not read from socket" << std::endl;
+	  close(cl_socket);
+	  return 1;
+	}
 
 	DEBUG(8, "master: waiting for replica data " << i);
-	read(cl_socket, (char *) &replica_data[i], sizeof(Replica_Data));
+	if (read(cl_socket, (char *) &replica_data[i], sizeof(Replica_Data)) != sizeof(Replica_Data)){
+	  std::cerr << "could not read replica data" << std::endl;
+	  close(cl_socket);
+	  return 1;
+	}
 	
 	if (replica_data[i].state != st_error){
 	  // get configuration
-	  read(cl_socket, (char *) &m_conf[r].current().pos(0)(0),
-	       m_conf[r].current().pos.size() * 3 * sizeof(double));
+
+	  const ssize_t num = m_conf[r].current().pos.size() * 3 * sizeof(double);
 	  
-	  read(cl_socket, (char *) &m_conf[r].current().vel(0)(0),
-	       m_conf[r].current().vel.size() * 3 * sizeof(double));
+	  if (num >= SSIZE_MAX){
+	    std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
+	    return 1;
+	  }
 	  
-	  read(cl_socket, (char *) &m_conf[r].current().box(0)(0),
-	       9 * sizeof(double));
+	  /*
+	  if (read(cl_socket, (char *) &m_conf[r].current().pos(0)(0), num) != num){
+	    std::cerr << "could not read positions" << std::endl;
+	    close(cl_socket);
+	    return 1;
+	  }
+	  */
+	  readblock((char *) &m_conf[r].current().pos(0)(0), num);
+	  
+	  /*
+	  if (read(cl_socket, (char *) &m_conf[r].current().vel(0)(0), num) != num){
+	    std::cerr << "could not read velocities" << std::endl;
+	    close(cl_socket);
+	    return 1;
+	  }
+	  */
+	  readblock((char *) &m_conf[r].current().vel(0)(0), num);
+	  
+	  if (read(cl_socket, (char *) &m_conf[r].current().box(0)(0),
+		   9 * sizeof(double)) != 9*sizeof(double)){
+	    std::cerr << "could not read box" << std::endl;
+	    close(cl_socket);
+	    return 1;
+	  }
 	}
 	else{
 	  std::cout << "received replica " << i << " with state error!" << std::endl;
@@ -424,39 +540,72 @@ int util::Replica_Exchange_Master::run
 
       case 3:
 	ch = 0;
-	write(cl_socket, &ch, 1);
+	if (write(cl_socket, &ch, 1) != 1){
+	  std::cerr << "could not write to socket" << std::endl;
+	  close(cl_socket);
+	  return 1;
+	}
 
 	std::cout << "process " << i << " has aborted run\n";
 	break;
 
       case 4: // interactive session
 	ch = 0;
-	write(cl_socket, &ch, 1);
-	read(cl_socket, &ch, 1);
+	if (write(cl_socket, &ch, 1) != 1){
+	  std::cerr << "could not write to socket" << std::endl;
+	  close(cl_socket);
+	  return 1;
+	}
+	
+	if (read(cl_socket, &ch, 1) != 1){
+	  std::cerr << "could not read from socket" << std::endl;
+	  close(cl_socket);
+	  return 1;
+	}
 
 	switch(ch){
 	  case 1: // replica information
 	    {
 	      int sz = replica_data.size();
-	      write(cl_socket, (char *) &sz, sizeof(int));
+	      if (write(cl_socket, (char *) &sz, sizeof(int)) != sizeof(int)){
+		std::cerr << "could not write replica id" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
 	      
-	      write(cl_socket, (char *) &replica_data[0],
-		    sz * sizeof(Replica_Data));
+	      if (write(cl_socket, (char *) &replica_data[0],
+			sz * sizeof(Replica_Data)) != sz * sizeof(Replica_Data)){
+		std::cerr << "could not write replica data" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
 	      break;
 	    }
 	  case 2: // replica change
 	    {
 	      int sz = replica_data.size();
 	      std::cerr << "sending size" << std::endl;
-	      write(cl_socket, (char *) &sz, sizeof(int));
+	      if (write(cl_socket, (char *) &sz, sizeof(int)) != sizeof(int)){
+		std::cerr << "could not write replica ID" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
 	      
-	      std::cerr << "sending data" << std::endl;
-	      write(cl_socket, (char *) &replica_data[0],
-		    sz * sizeof(Replica_Data));
+	      // std::cerr << "sending data" << std::endl;
+	      if (write(cl_socket, (char *) &replica_data[0],
+			sz * sizeof(Replica_Data)) != sz * sizeof(Replica_Data)){
+		std::cerr << "could not write replica data" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
 
 	      int r;
-	      std::cerr << "reading ID" << std::endl;
-	      read(cl_socket, (char *) &r, sizeof(int));
+	      // std::cerr << "reading ID" << std::endl;
+	      if (read(cl_socket, (char *) &r, sizeof(int)) != sizeof(int)){
+		std::cerr << "could not read replica ID" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
 
 	      if (r < 0 || r >= int(replica_data.size())){
 		io::messages.add("replica ID out of range",

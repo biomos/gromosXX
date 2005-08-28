@@ -222,6 +222,31 @@ int util::Replica_Exchange_Slave::run
       return 1;
     }
 
+    double magic[4] = { 3.1415927, 29375, 243, 8.3116 };
+    double magic_buff[4];
+    
+    // magic cookie exchange
+    if (read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
+      std::cerr << "could not read magic cookie" << std::endl;
+      close(cl_socket);
+      continue;
+    }
+    if (write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
+      std::cerr << "could not write magic cookie" << std::endl;
+      close(cl_socket);
+      continue;
+    }
+    if (magic[0] != magic_buff[0] || magic[1] != magic_buff[1] ||
+	magic[2] != magic_buff[2] || magic[3] != magic_buff[3]){
+
+      std::cerr << "magic cookie exchange failed" << std::endl;
+      close(cl_socket);
+      continue;
+    }
+    else{
+      std::cout << "magic cookie test succeeded!" << std::endl;
+    }
+
     DEBUG(9, "slave: connected");
 
     // request a job
@@ -241,6 +266,7 @@ int util::Replica_Exchange_Slave::run
 
       // init replica parameters (t, conf, T, lambda)
       if (init_replica(topo, conf, sim, cg_topo, cg_sim)){
+	std::cerr << "init_replica returned error!" << std::endl;
 	std::cerr << "slave: disconnecting..." << std::endl;
 	close(cl_socket);
 	return 1;
@@ -250,8 +276,10 @@ int util::Replica_Exchange_Slave::run
       close(cl_socket);
 
       // run it
+      std::cerr << "running md" << std::endl;
       int error = run_md(topo, conf, sim, md, cg_topo, cg_conf, cg_sim, cg_ff, traj);
-
+      std::cerr << "run finished" << std::endl;
+      
       if (!error){
 	// do we need to reevaluate the potential energy ?
 	// yes! 'cause otherwise it's just the energy for
@@ -260,11 +288,12 @@ int util::Replica_Exchange_Slave::run
 	if (multigraining){
 	  // coarse grained atom positions are based upon
 	  // real atom positions
-	  std::cerr << "update virtual pos" << std::endl;
+
+	  // std::cerr << "update virtual pos" << std::endl;
 	  util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
 	  
 	  // calculate the cg forces first!
-	  std::cerr << "cg step" << std::endl;
+	  // std::cerr << "cg step" << std::endl;
 	  if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
 	    io::print_ENERGY(traj.output(), cg_conf.current().energies,
 			     cg_topo.energy_groups(),
@@ -383,11 +412,47 @@ int util::Replica_Exchange_Slave::run
       }
 
       DEBUG(9, "slave: connected");
+
+      double magic[4] = { 3.1415927, 29375, 243, 8.3116 };
+      double magic_buff[4];
+      
+      // magic cookie exchange
+      if (read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
+	std::cerr << "could not read magic cookie" << std::endl;
+	close(cl_socket);
+	continue;
+      }
+      if (write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
+	std::cerr << "could not write magic cookie" << std::endl;
+	close(cl_socket);
+	continue;
+      }
+      if (magic[0] != magic_buff[0] || magic[1] != magic_buff[1] ||
+	  magic[2] != magic_buff[2] || magic[3] != magic_buff[3]){
+	
+	std::cerr << "magic cookie exchange failed" << std::endl;
+	close(cl_socket);
+	continue;
+      }
+      else{
+	std::cout << "magic cookie test succeeded" << std::endl;
+      }
+
       DEBUG(8, "slave: finished job " << replica_data.ID);
 
       char ch = 2;
-      write(cl_socket, &ch, 1);
-      read(cl_socket, &ch, 1);
+      if (write(cl_socket, &ch, 1) != 1){
+	std::cerr << "could not write to socket" << std::endl;
+	close(cl_socket);
+	return 1;
+      }
+      
+      if (read(cl_socket, &ch, 1) != 1){
+	std::cerr << "could not read" << std::endl;
+	close(cl_socket);
+	return 1;
+      }
+      
       if (ch != 0){
 	io::messages.add("server reported error",
 			 "replica_exchange",
@@ -464,11 +529,11 @@ int util::Replica_Exchange_Slave::run_md
     if (multigraining){
       // coarse grained atom positions are based upon
       // real atom positions
-      std::cerr << "update virtual pos" << std::endl;
+      // std::cerr << "update virtual pos" << std::endl;
       util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
 
       // calculate the cg forces first!
-      std::cerr << "cg step" << std::endl;
+      // std::cerr << "cg step" << std::endl;
       if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
 	io::print_ENERGY(traj.output(), cg_conf.current().energies,
 			 cg_topo.energy_groups(),
@@ -517,16 +582,29 @@ int util::Replica_Exchange_Slave::get_replica_data()
 {
   DEBUG(8, "slave: requesting job");
   char ch = 1;
-  write(cl_socket, &ch, 1);
+  if (write(cl_socket, &ch, 1) != 1){
+    std::cerr << "could not write to socket" << std::endl;
+    close(cl_socket);
+    return 1;
+  }  
 
-  read(cl_socket, &ch, 1);
+  if (read(cl_socket, &ch, 1) != 1){
+    std::cerr << "could not read" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+    
   if (ch != 0){
     std::cout << "no job received from server (" << ch << ")" << std::endl;
   }
   else{
     
     DEBUG(8, "slave: waiting for replica data");
-    read(cl_socket, (char *) &replica_data, sizeof(Replica_Data));
+    if (read(cl_socket, (char *) &replica_data, sizeof(Replica_Data)) != sizeof(Replica_Data)){
+      std::cerr << "could not read" << std::endl;
+      close(cl_socket);
+      return 1;
+    }
 
     DEBUG(9, "slave: got replica " << replica_data.ID
 	  << " temperature=" << replica_data.Ti
@@ -540,8 +618,17 @@ int util::Replica_Exchange_Slave::update_replica_data()
 {
   DEBUG(8, "slave: updating replica data");
 
-  write(cl_socket, (char *) &replica_data.ID, sizeof(int));
-  write(cl_socket, (char *) &replica_data, sizeof(Replica_Data));
+  if (write(cl_socket, (char *) &replica_data.ID, sizeof(int)) != sizeof(int)){
+    std::cerr << "could not write to socket" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+    
+  if (write(cl_socket, (char *) &replica_data, sizeof(Replica_Data)) != sizeof(Replica_Data)){
+    std::cerr << "could not write to socket" << std::endl;
+    close(cl_socket);
+    return 1;
+  }    
 
   return 0;
 }
@@ -552,19 +639,50 @@ int util::Replica_Exchange_Slave::get_configuration
  configuration::Configuration & conf
  )
 {
-  DEBUG(10, "receiving " << 3 * conf.current().pos.size() << " coords");
-  int error = 0;
+  const ssize_t num = 3 * conf.current().pos.size() * sizeof(double);
+  
+  DEBUG(10, "receiving " << num / sizeof(double) << " coords");
 
-  read(cl_socket, (char *) &conf.current().pos(0)(0),
-       conf.current().pos.size() * 3 * sizeof(double));
+  if (num >= SSIZE_MAX){
+    std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
 
-  read(cl_socket, (char *) &conf.current().vel(0)(0),
-       conf.current().vel.size() * 3 * sizeof(double));
+  ssize_t n_rec = 0;
 
-  read(cl_socket, (char *) &conf.current().box(0)(0),
-       9 * sizeof(double));
+  /*
+  if((n_rec = read(cl_socket, (char *) &conf.current().pos(0)(0), num)) != num){
+    std::cerr << "could not read positions" << std::endl;
+    std::cerr << "got: " << n_rec << "\texpected: " << num << std::endl;
+    std::cerr << "sizeof(double) = " << sizeof(double) << std::endl;
+    std::cerr << "positions = " << conf.current().pos.size() << std::endl;
 
-  return error;
+    close(cl_socket);
+    return 1;
+  }
+  */
+  readblock((char *) &conf.current().pos(0)(0), num);
+
+  /*
+  if ((n_rec = read(cl_socket, (char *) &conf.current().vel(0)(0), num)) != num){
+    std::cerr << "could not read velocities" << std::endl;
+    std::cerr << "got: " << n_rec << "\texpected: " << num << std::endl;
+    close(cl_socket);
+    return 1;
+  } 
+  */
+  readblock((char *) &conf.current().vel(0)(0), num);   
+
+  if ((n_rec = read(cl_socket, (char *) &conf.current().box(0)(0),
+	   9 * sizeof(double))) != 9 * sizeof(double)){
+    std::cerr << "could not read box" << std::endl;
+    std::cerr << "got: " << n_rec << "\texpected: " << num << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+
+  return 0;
 }
 
 int util::Replica_Exchange_Slave::update_configuration
@@ -576,14 +694,37 @@ int util::Replica_Exchange_Slave::update_configuration
   // positions
   DEBUG(9, "sending " << 3 * conf.current().pos.size() << " coords");
 
-  write(cl_socket, (char *) &conf.current().pos(0)(0),
-	conf.current().pos.size() * 3 * sizeof(double));
+  const ssize_t num = 3 * conf.current().pos.size() * sizeof(double);
 
-  write(cl_socket, (char *) &conf.current().vel(0)(0),
-	conf.current().vel.size() * 3 * sizeof(double));
-
-  write(cl_socket, (char *) &conf.current().box(0)(0),
-	9 * sizeof(double));
+  if (num >= SSIZE_MAX){
+    std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
+    return 1;
+  }
+  
+  /*
+  if (write(cl_socket, (char *) &conf.current().pos(0)(0), num) != num){
+    std::cerr << "could not write to socket" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+  */
+  writeblock((char *) &conf.current().pos(0)(0), num);
+    
+  /*
+  if (write(cl_socket, (char *) &conf.current().vel(0)(0), num) != num){
+    std::cerr << "could not write to socket" << std::endl;
+    close(cl_socket);
+    return 1;
+  } 
+  */
+  writeblock((char *) &conf.current().vel(0)(0), num);  
+  
+  if (write(cl_socket, (char *) &conf.current().box(0)(0),
+	    9 * sizeof(double)) != 9 * sizeof(double)){
+    std::cerr << "could not write to socket" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
 
   return 0;
 }
@@ -598,8 +739,10 @@ int util::Replica_Exchange_Slave::init_replica
  )
 {
   // get configuration from master
-  if (get_configuration(topo, conf))
+  if (get_configuration(topo, conf)){
+    std::cerr << "get configuration failed" << std::endl;
     return 1;
+  }
   
   std::vector<double> const & T = sim.param().replica.temperature;
   std::vector<double> const & l = sim.param().replica.lambda;

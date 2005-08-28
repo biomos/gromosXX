@@ -157,6 +157,28 @@ int util::Replica_Exchange_Control::run
 
   std::cerr << "connected!" << std::endl;
 
+  double magic[4] = { 3.1415927, 29375, 243, 8.3116 };
+  double magic_buff[4];
+  
+  // magic cookie exchange
+  if (read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
+    std::cerr << "could not read magic cookie" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+  if (write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
+    std::cerr << "could not write magic cookie" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+  if (magic[0] != magic_buff[0] || magic[1] != magic_buff[1] ||
+      magic[2] != magic_buff[2] || magic[3] != magic_buff[3]){
+    
+    std::cerr << "magic cookie exchange failed" << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+  
   // interactive
   char ch = 4;
   write(cl_socket, &ch, 1);

@@ -28,7 +28,7 @@ void util::update_virtual_pos(topology::Topology & cg_topo,
 			      topology::Topology & topo,
 			      configuration::Configuration & conf)
 {
-  std::cerr << "update virtual pos" << std::endl;
+  // std::cerr << "update virtual pos" << std::endl;
 
   cg_conf.current().box = conf.current().box;
   

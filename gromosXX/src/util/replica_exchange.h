@@ -55,6 +55,16 @@ namespace util
   protected:
 
     /**
+     * readblock
+     */
+    ssize_t readblock(char * source, ssize_t size);
+
+    /**
+     * writeblock
+     */
+    ssize_t writeblock(char * dest, ssize_t size);
+
+    /**
      * unix network socket
      * @todo try to remove MPI from replica exchange
      */
@@ -275,6 +285,67 @@ namespace util
     
   };
 
+  inline ssize_t Replica_Exchange::readblock(char * source, ssize_t size)
+  {
+    ssize_t current;
+    const ssize_t window = 4096;
+    while(size > 0){
+      if (size > window)
+	current = window;
+      else current = size;
+      
+      // std::cerr << "reading " << current << " bytes\t";
+      // std::cerr << "(of " << size << " remaining)" << std::endl;
+
+      ssize_t count;
+      if ((count = read(cl_socket, source, current)) != current){
+	std::cerr << "received only " << count << " bytes!" << std::endl;
+	throw std::runtime_error("could not read data block");
+      }
+      
+      char c = 0;
+      if (write(cl_socket, &c, 1) != 1){
+	std::cerr << "ACK failed" << std::endl;
+	throw std::runtime_error("could not send ACK");
+      }
+
+      source += current;
+      size -= current;
+    }
+  }
+  
+  inline ssize_t Replica_Exchange::writeblock(char * dest, ssize_t size)
+  {
+    ssize_t current;
+    const ssize_t window = 4096;
+    while(size > 0){
+      if (size > window)
+	current = window;
+      else current = size;
+      
+      // std::cerr << "writing " << current << " bytes\t";
+      // std::cerr << "(of " << size << " remaining)" << std::endl;
+
+      if (write(cl_socket, dest, current) != current){
+	throw std::runtime_error("could not write data block");
+      }
+
+      char c = 0;
+      if (read(cl_socket, &c, 1) != 1){
+	std::cerr << "getting ACK failed" << std::endl;
+	throw std::runtime_error("could not read ACK");
+      }
+      if (c != 0){
+	std::cerr << "wrong ACK received" << std::endl;
+	throw std::runtime_error("got wrong ACK");
+      }
+      
+      dest += current;
+      size -= current;
+    }
+  }
+  
 } // util
+
 
 #endif
