@@ -200,12 +200,12 @@ inline void interaction::Nonbonded_Term
 		  - B_cg6  / 4 * dist2 * dist2 
 		  - C_cg6 ));
   
-  force = 12.0 * c12 * (dist12i * disti + A_cg12 * dist2 + B_cg12 * dist2 * dist) * disti -
-           6.0 *  c6 * (dist6i *  disti + A_cg6  * dist2 + B_cg6  * dist2 * dist) * disti +
+  force = c12 * (12.0 * dist12i * disti + A_cg12 * dist2 + B_cg12 * dist2 * dist) * disti -
+           c6 * ( 6.0 * dist6i *  disti + A_cg6  * dist2 + B_cg6  * dist2 * dist) * disti +
                q_eps * (         dist2i + A_cg1  * dist2 + B_cg1  * dist2 * dist) * disti;
   
   
-  // std::cout.precision(10);
+  std::cout.precision(10);
   
   DEBUG(11, "r_ij= " << dist 
         << " e_lj=" << e_lj << " e_crf=" << e_crf 

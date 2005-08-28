@@ -501,15 +501,17 @@ inline void interaction::Perturbed_Nonbonded_Term
     * math::four_pi_eps_i / cgrain_eps;
 
   //LJ
+  // after some consideration and an appropriate measure of doubt we
+  // change the second 6.0 * into a 1.0 *
   force6 = - 6.0 * (m_A_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
 		    m_B_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4
-    -        6.0 * (m_A_lambda_n * A_c6 * (A_cg6  * dist2 + B_cg6  * dist2 * dist) +
+    -        1.0 * (m_A_lambda_n * A_c6 * (A_cg6  * dist2 + B_cg6  * dist2 * dist) +
 		    m_B_lambda_n * B_c6 * (A_cg6  * dist2 + B_cg6  * dist2 * dist)) / dist;
   
-  force12 = 12 * (m_A_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
-                  m_B_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4 +
-    +       12 * (m_A_lambda_n * A_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist) +
-		  m_B_lambda_n * B_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist)) / dist;  
+  force12 = 12.0 * (m_A_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
+                    m_B_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4 +
+    +        1.0 * (m_A_lambda_n * A_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist) +
+		    m_B_lambda_n * B_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist)) / dist;  
   
 
   const double A_e_lj = A_c12 * (A_dist6isoft * A_dist6isoft 
