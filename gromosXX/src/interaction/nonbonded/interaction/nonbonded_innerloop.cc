@@ -49,6 +49,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
     
     case simulation::cgrain_func :
       {
+	DEBUG(11, "\tiac(i) = " << topo.iac(i) << " iac(j) = " << topo.iac(j));
+	DEBUG(11, "\tcg_parameter.size() = " << m_param->cg_parameter().size());
+	DEBUG(11, "\tcg_parameter()[i].size() = " << m_param->cg_parameter()[i].size());
+
 	const lj_parameter_struct & cg = 
 	  m_param->cg_parameter(topo.iac(i),
 				topo.iac(j));
