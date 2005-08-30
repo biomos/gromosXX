@@ -312,6 +312,7 @@ namespace util
       source += current;
       size -= current;
     }
+    return 0;
   }
   
   inline ssize_t Replica_Exchange::writeblock(char * dest, ssize_t size)
@@ -343,6 +344,7 @@ namespace util
       dest += current;
       size -= current;
     }
+    return 0;
   }
   
 } // util

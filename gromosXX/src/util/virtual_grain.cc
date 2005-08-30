@@ -61,9 +61,18 @@ void util::update_virtual_force(topology::Topology & cg_topo,
   cg_conf.current().energies.calculate_totals();
   conf.current().energies.external_total += cg_conf.current().energies.potential_total;
   
+  // std::cerr << "virtual energy = " << cg_conf.current().energies.potential_total << std::endl;
+
   conf.current().virial_tensor += cg_conf.current().virial_tensor;
   
   for(unsigned int i=0; i<cg_topo.virtual_grains().size(); ++i){
+
+    /*
+    if (math::abs(cg_conf.current().force(cg_topo.virtual_grains()[i].i)) > 5000)
+      std::cerr << "virtual force " << cg_topo.virtual_grains()[i].i
+		<< " = " << math::v2s(cg_conf.current().force(cg_topo.virtual_grains()[i].i))
+		<< std::endl;
+    */
 
     DEBUG(10, "virtual force " << cg_topo.virtual_grains()[i].i
 	  << " = " << math::v2s(cg_conf.current().force(cg_topo.virtual_grains()[i].i)));

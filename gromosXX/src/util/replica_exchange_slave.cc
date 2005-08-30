@@ -461,8 +461,8 @@ int util::Replica_Exchange_Slave::run
 	return 1;
       }
       
-      std::cout << "updating configuration" << std::endl;
       update_replica_data();
+
       update_configuration(topo, conf);
       
       // and disconnect
@@ -480,7 +480,7 @@ int util::Replica_Exchange_Slave::run
     }
     else{
       close(cl_socket);
-      std::cout << "slave waiting..." << std::endl;
+      std::cout << "slave sleeping ..." << std::endl;
       // wait apropriate time for master to prepare
       sleep(timeout);
     }
@@ -529,11 +529,9 @@ int util::Replica_Exchange_Slave::run_md
     if (multigraining){
       // coarse grained atom positions are based upon
       // real atom positions
-      // std::cerr << "update virtual pos" << std::endl;
       util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
 
       // calculate the cg forces first!
-      // std::cerr << "cg step" << std::endl;
       if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
 	io::print_ENERGY(traj.output(), cg_conf.current().energies,
 			 cg_topo.energy_groups(),
@@ -595,7 +593,8 @@ int util::Replica_Exchange_Slave::get_replica_data()
   }
     
   if (ch != 0){
-    std::cout << "no job received from server (" << ch << ")" << std::endl;
+    std::cout << "no job received from server (" << int(ch) << ")"
+	      << std::endl;
   }
   else{
     
@@ -623,8 +622,10 @@ int util::Replica_Exchange_Slave::update_replica_data()
     close(cl_socket);
     return 1;
   }
-    
-  if (write(cl_socket, (char *) &replica_data, sizeof(Replica_Data)) != sizeof(Replica_Data)){
+
+  if (write(cl_socket, (char *) &replica_data, sizeof(Replica_Data))
+      != sizeof(Replica_Data)){
+
     std::cerr << "could not write to socket" << std::endl;
     close(cl_socket);
     return 1;
@@ -651,27 +652,8 @@ int util::Replica_Exchange_Slave::get_configuration
 
   ssize_t n_rec = 0;
 
-  /*
-  if((n_rec = read(cl_socket, (char *) &conf.current().pos(0)(0), num)) != num){
-    std::cerr << "could not read positions" << std::endl;
-    std::cerr << "got: " << n_rec << "\texpected: " << num << std::endl;
-    std::cerr << "sizeof(double) = " << sizeof(double) << std::endl;
-    std::cerr << "positions = " << conf.current().pos.size() << std::endl;
-
-    close(cl_socket);
-    return 1;
-  }
-  */
   readblock((char *) &conf.current().pos(0)(0), num);
 
-  /*
-  if ((n_rec = read(cl_socket, (char *) &conf.current().vel(0)(0), num)) != num){
-    std::cerr << "could not read velocities" << std::endl;
-    std::cerr << "got: " << n_rec << "\texpected: " << num << std::endl;
-    close(cl_socket);
-    return 1;
-  } 
-  */
   readblock((char *) &conf.current().vel(0)(0), num);   
 
   if ((n_rec = read(cl_socket, (char *) &conf.current().box(0)(0),
@@ -695,30 +677,16 @@ int util::Replica_Exchange_Slave::update_configuration
   DEBUG(9, "sending " << 3 * conf.current().pos.size() << " coords");
 
   const ssize_t num = 3 * conf.current().pos.size() * sizeof(double);
-
+  
   if (num >= SSIZE_MAX){
     std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
     return 1;
   }
-  
-  /*
-  if (write(cl_socket, (char *) &conf.current().pos(0)(0), num) != num){
-    std::cerr << "could not write to socket" << std::endl;
-    close(cl_socket);
-    return 1;
-  }
-  */
+
   writeblock((char *) &conf.current().pos(0)(0), num);
     
-  /*
-  if (write(cl_socket, (char *) &conf.current().vel(0)(0), num) != num){
-    std::cerr << "could not write to socket" << std::endl;
-    close(cl_socket);
-    return 1;
-  } 
-  */
   writeblock((char *) &conf.current().vel(0)(0), num);  
-  
+
   if (write(cl_socket, (char *) &conf.current().box(0)(0),
 	    9 * sizeof(double)) != 9 * sizeof(double)){
     std::cerr << "could not write to socket" << std::endl;
@@ -750,7 +718,12 @@ int util::Replica_Exchange_Slave::init_replica
   // change all the temperature coupling temperatures
   for(unsigned int i=0; i<sim.multibath().size(); ++i){
     sim.multibath()[i].temperature = T[replica_data.Ti];
-    if (multigraining) cg_sim.multibath()[i].temperature = T[replica_data.Ti];
+    if (multigraining){
+      cg_sim.multibath()[i].temperature = T[replica_data.Ti];
+      // temperature constraining
+      sim.multibath()[i].tau = sim.param().replica.dt[replica_data.li];
+      cg_sim.multibath()[i].tau = sim.param().replica.dt[replica_data.li];
+    }
   }
   
   // change the lambda value
