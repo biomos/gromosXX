@@ -497,6 +497,9 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_distrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 195.899012, 0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     }
+    else if ((*it)->name == "MolecularVirial"){
+      // no real interaction...
+    }
     else {
       CHECKING((*it)->name << " no check implemented!", res);
       CHECK_EQUAL(1, 2, res);
