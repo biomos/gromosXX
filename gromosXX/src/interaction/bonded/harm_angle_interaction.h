@@ -42,7 +42,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Harmonic bond angle interaction\n";
+      if (!quiet)
+	os << "Harmonic bond angle interaction\n";
       return 0;
     };
     /**

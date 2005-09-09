@@ -225,6 +225,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   
   DEBUG(8, "\tforces stored");
   
+  /*
   if (t_interaction_spec::do_virial == math::molecular_virial){
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
@@ -234,8 +235,9 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
     DEBUG(8, "\tvirial done");
   }
+  */
   
-  if (t_interaction_spec::do_virial == math::atomic_virial){
+  if (t_interaction_spec::do_virial != math::no_virial){
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
 	storage.virial_tensor(a, b) += 
@@ -540,6 +542,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   
   DEBUG(8, "\tforces stored");
   
+  /*
   if (t_interaction_spec::do_virial == math::molecular_virial){
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
@@ -549,8 +552,9 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
     DEBUG(8, "\tvirial done");
   }
+  */
   
-  if (t_interaction_spec::do_virial == math::atomic_virial){
+  if (t_interaction_spec::do_virial != math::no_virial){
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
 	storage.virial_tensor(a, b) += 
@@ -815,7 +819,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
   DEBUG(7, "\tforces stored");
     
-  if (t_interaction_spec::do_virial == math::atomic_virial){
+  if (t_interaction_spec::do_virial != math::no_virial){
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
 	conf.current().virial_tensor(a, b) += 
@@ -968,7 +972,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     force(i) += f_rf;
     force(*it) -=f_rf;
 
-    if (t_interaction_spec::do_virial == math::atomic_virial){
+    if (t_interaction_spec::do_virial != math::no_virial){
       for(int a=0; a<3; ++a)
 	for(int b=0; b<3; ++b)
 	  conf.current().virial_tensor(a, b) += 

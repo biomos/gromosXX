@@ -110,7 +110,7 @@ static int _calculate_perturbed_angle_interactions
     force(a_it->j) += fj;
     force(a_it->k) += fk;
 
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
@@ -118,7 +118,7 @@ static int _calculate_perturbed_angle_interactions
 	    rkj(a) * fk(bb);
 
       DEBUG(11, "\tatomic virial done");
-    }
+      // }
 
     energy = 0.5 * K * (cost - cos0) * (cost - cos0);
 

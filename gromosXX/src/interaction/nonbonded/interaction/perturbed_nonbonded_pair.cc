@@ -482,7 +482,7 @@ void interaction::Perturbed_Nonbonded_Pair
   conf.current().force(it->i) += f;
   conf.current().force(it->j) -= f;
   
-  if (t_interaction_spec::do_virial == math::atomic_virial){
+  if (t_interaction_spec::do_virial != math::atomic_virial){
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
 	conf.current().virial_tensor(a, b) += 

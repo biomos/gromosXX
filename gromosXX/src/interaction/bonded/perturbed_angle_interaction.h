@@ -47,7 +47,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Perturbed bond angle interaction\n";
+      if (!quiet)
+	os << "Perturbed bond angle interaction\n";
       return 0;
     };
     /**

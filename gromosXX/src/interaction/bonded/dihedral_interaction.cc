@@ -138,7 +138,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     force(d_it->k) += fk;
     force(d_it->l) += fl;
 
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       periodicity.nearest_image(pos(d_it->l), pos(d_it->j), rlj);
 
       for(int a=0; a<3; ++a)
@@ -149,7 +149,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
 	    rlj(a) * fl(bb);
 
       DEBUG(11, "\tatomic virial done");
-    }
+      // }
 
     energy = K * (1 + delta * cosmphi);
     conf.current().energies.dihedral_energy

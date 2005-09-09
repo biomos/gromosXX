@@ -1,29 +1,29 @@
 /**
- * @file distance_restraint_interaction.h
- * distance restraining
+ * @file molecular_virial_interaction.h
+ * recover molecular virial from atomic virial
  */
 
-#ifndef INCLUDED_DISTANCE_RESTRAINT_INTERACTION_H
-#define INCLUDED_DISTANCE_RESTRAINT_INTERACTION_H
+#ifndef INCLUDED_MOLECULAR_VIRIAL_INTERACTION_H
+#define INCLUDED_MOLECULAR_VIRIAL_INTERACTION_H
 
 namespace interaction
 {
   /**
-   * @class distance_restraint_interaction
-   * calculates the distance restraining interaction
+   * @class molecular_virial_interaction
+   * recovers a molecular virial from an atomic one
    */
-  class Distance_Restraint_Interaction : public Interaction
+  class Molecular_Virial_Interaction : public Interaction
   {
   public:
     /**
-     * Constructor.
+     * Constructor
      */
-    Distance_Restraint_Interaction() : Interaction("DistanceRestraint") {}
+    Molecular_Virial_Interaction() : Interaction("MolecularVirial") {}
     
     /**
-     * Destructor.
+     * Destructor
      */
-    virtual ~Distance_Restraint_Interaction() {}
+    virtual ~Molecular_Virial_Interaction() {}
 
     /**
      * init
@@ -35,20 +35,19 @@ namespace interaction
 		     bool quiet = false) 
     {
       if (!quiet)
-	os << "Distance restraint interaction\n";
+	os << "Molecular virial (calculated from atomic virial)\n";
       return 0;
     };
+    
     /**
      * calculate the interactions.
      */
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
-
-  protected:
-    
   };
   
 } // interaction
 
 #endif
+    

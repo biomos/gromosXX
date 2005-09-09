@@ -193,6 +193,9 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 					     std::ostream & os,
 					     bool quiet)
 {
+  if (!quiet)
+    os << "Nonbonded interaction\n";
+
   // initialise the pairlist...
   m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
 

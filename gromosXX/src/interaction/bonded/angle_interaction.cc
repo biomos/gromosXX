@@ -35,8 +35,8 @@ static int _calculate_angle_interactions(topology::Topology & topo,
 					 std::vector<interaction::angle_type_struct> const & param)
 {
   // loop over the bonds
-  std::vector<topology::three_body_term_struct>::const_iterator a_it =
-    topo.solute().angles().begin(),
+  std::vector<topology::three_body_term_struct>::const_iterator
+    a_it = topo.solute().angles().begin(),
     a_to = topo.solute().angles().end();
 
   math::VArray &pos   = conf.current().pos;
@@ -48,6 +48,8 @@ static int _calculate_angle_interactions(topology::Topology & topo,
   
   double energy;
 
+  DEBUG(7, "bond angles : " << topo.solute().angles().size());
+
   math::Periodicity<B> periodicity(conf.current().box);
   
   for( ; a_it != a_to; ++a_it){
@@ -55,7 +57,7 @@ static int _calculate_angle_interactions(topology::Topology & topo,
     periodicity.nearest_image(pos(a_it->i), pos(a_it->j), rij);
     periodicity.nearest_image(pos(a_it->k), pos(a_it->j), rkj);
 
-    DEBUG(9, "angle: " << a_it->i << " - " << a_it->j << " - " << a_it->k);
+    DEBUG(9, "g96 angle: " << a_it->i << " - " << a_it->j << " - " << a_it->k);
 
     DEBUG(10, "\tpos(i) = " << math::v2s(pos(a_it->i)));
     DEBUG(10, "\tpos(j) = " << math::v2s(pos(a_it->j)));
@@ -85,13 +87,13 @@ static int _calculate_angle_interactions(topology::Topology & topo,
 
     DEBUG(10, "\tK=" << K << " cos0=" << cos0 << " dij=" << dij << " dkj=" << dkj);
 
-    double ki = -K * (cost - cos0) / dij;
-    double kk = -K * (cost - cos0) / dkj;
-    
-    DEBUG(10, "\tcost=" << cost << " ki=" << ki << " kk=" << kk);
+    const double df = -K * (cost - cos0);
 
-    fi = ki*(rkj/dkj - rij/dij * cost);
-    fk = kk*(rij/dij - rkj/dkj * cost);
+    DEBUG(10, "\tcost=" << cost << " df=" << df);
+
+    fi = df / dij * (rkj/dkj - rij/dij * cost);
+    fk = df / dkj * (rij/dij - rkj/dkj * cost);
+
     fj = -1.0 * fi - fk;
 
     DEBUG(10, "\tfi=" << math::v2s(fi));
@@ -102,7 +104,7 @@ static int _calculate_angle_interactions(topology::Topology & topo,
     force(a_it->j) += fj;
     force(a_it->k) += fk;
 
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
@@ -110,7 +112,7 @@ static int _calculate_angle_interactions(topology::Topology & topo,
 	    rkj(a) * fk(bb);
 
       DEBUG(11, "\tatomic virial done");
-    }
+      // }
 
 
     energy = 0.5 * K * (cost - cos0) * (cost - cos0);

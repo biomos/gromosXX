@@ -13,9 +13,12 @@
 #include <interaction/interaction_types.h>
 #include <interaction/forcefield/forcefield.h>
 
+#include <interaction/molecular_virial_interaction.h>
+
 #include <io/ifp.h>
 
 #include "create_forcefield.h"
+
 #include <interaction/bonded/create_bonded.h>
 #include <interaction/nonbonded/create_nonbonded.h>
 #include <interaction/special/create_special.h>
@@ -47,6 +50,13 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   DEBUG(8, "creating the nonbonded terms");
   if (create_g96_nonbonded(ff, topo, sim, it, os, quiet))
     return 1;
+
+  // correct the virial (if molecular virial is required)
+  if (sim.param().pcouple.virial == math::molecular_virial){
+    
+    Molecular_Virial_Interaction * mvi = new Molecular_Virial_Interaction;
+    ff.push_back(mvi);
+  }
 
   // the special
   DEBUG(8, "creating the special terms");

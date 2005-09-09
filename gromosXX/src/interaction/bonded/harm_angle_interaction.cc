@@ -128,7 +128,7 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
     force(a_it->j) += fj;
     force(a_it->k) += fk;
 
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
@@ -136,7 +136,7 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
 	    rkj(a) * fk(bb);
 
       DEBUG(11, "\tatomic virial done");
-    }
+      // }
 
     conf.current().energies.angle_energy[topo.atom_energy_group()[a_it->i]]
       += energy;

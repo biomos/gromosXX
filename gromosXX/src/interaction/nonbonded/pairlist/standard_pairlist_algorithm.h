@@ -52,7 +52,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Standard pairlist algorithm\n";
+      if (!quiet)
+	os << "Standard pairlist algorithm\n";
       return 0;
     };
 
@@ -274,6 +275,9 @@ namespace interaction
      * spc specialized solvent - solvent pairlist + longrange
      */
     double m_spc_timing;
+
+    math::Vec m_half_box;
+    math::Vec m_box;
 
   };
 } // interaction

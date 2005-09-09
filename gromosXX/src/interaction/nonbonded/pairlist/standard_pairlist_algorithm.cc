@@ -201,10 +201,10 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 	     m_cg_cog.size() > unsigned(cg2));
     
       periodicity.nearest_image(m_cg_cog(cg1), m_cg_cog(cg2), r);
-    
+      
       // the distance
       const double d = math::abs2(r);
-    
+      
       if (d > m_cutoff_long_2){        // OUTSIDE
 	continue;
       }
@@ -317,6 +317,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(10, "solvent - solvent");
 
   // solvent - solvent
+
   if (sim.param().force.spc_loop > 0)
     _spc_loop(topo, conf, sim, storage, pairlist, innerloop, cg1, stride, periodicity);    
   else
@@ -430,7 +431,7 @@ void interaction::Standard_Pairlist_Algorithm::_spc_loop
       periodicity.nearest_image(conf.current().pos(topo.chargegroup(cg1)),
 				conf.current().pos(topo.chargegroup(cg2)),
 				r);
-    
+
       // the distance
       const double d = math::abs2(r);
     
@@ -444,7 +445,6 @@ void interaction::Standard_Pairlist_Algorithm::_spc_loop
 				cg1 - num_solute_cg,
 				cg2 - num_solute_cg,
 				storage, periodicity);
-	
 	continue;
       } // longrange
       
@@ -684,15 +684,16 @@ _update_pert_cg(topology::Topology & topo,
   } // cg1
 
   // solvent - solvent
+
   if (sim.param().force.spc_loop > 0)
     _spc_loop(topo, conf, sim,
-				  storage, pairlist, innerloop, 
-				  cg1, stride, periodicity);    
+	      storage, pairlist, innerloop, 
+	      cg1, stride, periodicity);    
   else
     _solvent_solvent(topo, conf, sim,
-					 storage, pairlist, innerloop, 
-					 cg1, stride, periodicity);
-
+		     storage, pairlist, innerloop, 
+		     cg1, stride, periodicity);
+  
   this->m_timing += util::now() - update_start;
   DEBUG(7, "pairlist done");
 

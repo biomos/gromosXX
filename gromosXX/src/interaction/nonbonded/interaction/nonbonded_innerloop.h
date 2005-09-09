@@ -17,8 +17,6 @@ namespace interaction
     public Nonbonded_Term
   {
   public:
-    // typedef math::Periodicity<t_nonbonded_spec::boundary_type> Periodicity_type;
-    
     /**
      * Constructor
      */
@@ -27,7 +25,6 @@ namespace interaction
     /**
      * (normal) interaction
      */
-    // template<typename t_nonbonded_spec>
     void lj_crf_innerloop
     (
      topology::Topology & topo, 
@@ -73,7 +70,6 @@ namespace interaction
      * 1-4 interaction
      * (always shortrange)
      */
-    // template<typename t_nonbonded_spec>
     void one_four_interaction_innerloop
     (
      topology::Topology & topo,
@@ -87,7 +83,6 @@ namespace interaction
      * RF interaction (solute).
      * (always shortrange)
      */
-    // template<typename t_nonbonded_spec>
     void RF_excluded_interaction_innerloop
     (
      topology::Topology & topo,
@@ -100,7 +95,6 @@ namespace interaction
      * RF solvent interaction.
      * (always shortrange)
      */
-    // template<typename t_nonbonded_spec>
     void RF_solvent_interaction_innerloop
     (
      topology::Topology & topo,
@@ -109,13 +103,12 @@ namespace interaction
      math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity
      );
 
-    // template<typename t_nonbonded_spec>
     void spc_innerloop
     (
      topology::Topology & topo,
      configuration::Configuration & conf,
-     int i,
-     int j,
+     int start,
+     int end,
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );

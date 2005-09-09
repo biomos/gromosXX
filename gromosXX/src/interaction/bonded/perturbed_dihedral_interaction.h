@@ -47,7 +47,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Perturbed dihedral interaction\n";
+      if (!quiet)
+	os << "Perturbed dihedral interaction\n";
       return 0;
     };
     /**

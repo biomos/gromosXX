@@ -74,14 +74,14 @@ static int _calculate_harmonic_bond_interactions
     force(b_it->i) += f;
     force(b_it->j) -= f;
 
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
 	    v(a) * f(bb);
 
       DEBUG(7, "\tatomic virial done");
-    }
+      // }
 
     energy = 0.5 * param[b_it->type].K * diff * diff;
     conf.current().energies.bond_energy[topo.atom_energy_group()

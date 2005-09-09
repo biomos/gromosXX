@@ -5,6 +5,7 @@ xxincludedir = 			$(includedir)/gromosXX/interaction
 
 xxinclude_HEADERS =		interaction.h \
 				interaction_types.h \
+				molecular_virial_interaction.h \
 				forcefield/forcefield.h \
 				forcefield/create_forcefield.h \
 				bonded/create_bonded.h \
@@ -57,6 +58,7 @@ xxinclude_HEADERS =		interaction.h \
 noinst_LTLIBRARIES =		libgrointeraction.la
 
 libgrointeraction_la_SOURCES =	interaction.cc \
+				molecular_virial_interaction.cc \
 				forcefield/forcefield.cc \
 				forcefield/create_forcefield.cc \
 				nonbonded/create_nonbonded.cc \

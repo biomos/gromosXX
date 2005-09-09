@@ -70,14 +70,14 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
     force(b_it->i) += f;
     force(b_it->j) -= f;
 
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int c=0; c<3; ++c)
 	  conf.current().virial_tensor(a, c) += 
 	    v(a) * f(c);
       
       DEBUG(7, "\tatomic virial done");
-    }
+      // }
 
     e = 0.25 * param[b_it->type].K *
       (dist2 -r02) * (dist2 - r02);

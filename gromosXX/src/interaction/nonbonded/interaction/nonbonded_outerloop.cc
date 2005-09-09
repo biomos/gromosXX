@@ -86,10 +86,15 @@ void interaction::Nonbonded_Outerloop
   
   unsigned int end = size_i;
 
+  // std::cerr << "force: spc loop = " << sim.param().force.spc_loop << std::endl;
+  
   if (sim.param().force.spc_loop > 0){
     end = topo.num_solute_atoms();
     size_i = topo.num_solute_atoms() + topo.num_chargegroups() 
       - topo.num_solute_chargegroups();
+
+    // std::cerr << "running spc loop with size_i = " << size_i
+    // << " and end = " << end << std::endl;
   }
   
   for(i=0; i < end; ++i){

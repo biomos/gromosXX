@@ -215,7 +215,7 @@ static int _calculate_perturbed_dihedral_interactions
     force(d_it->k) += (1.0-l) * A_fk + l * B_fk;
     force(d_it->l) += (1.0-l) * A_fl + l * B_fl;
 
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       periodicity.nearest_image(pos(d_it->l), pos(d_it->j), rlj);
 
       for(int a=0; a<3; ++a)
@@ -226,7 +226,7 @@ static int _calculate_perturbed_dihedral_interactions
 	    rlj(a) * ((1.0-l) * A_fl(bb) + l * B_fl(bb));
 
       DEBUG(11, "\tatomic virial done");
-    }
+      // }
 
     energy = (1.0-l) * A_energy + l * B_energy;
     e_lambda = (B_energy - A_energy);

@@ -115,7 +115,7 @@ static int _calculate_improper_interactions(topology::Topology & topo,
     force(i_it->k) += fk;
     force(i_it->l) += fl;
     
-    if (V == math::atomic_virial){
+    // if (V == math::atomic_virial){
       periodicity.nearest_image(pos(i_it->l), pos(i_it->j), rlj);
 
       for(int a=0; a<3; ++a)
@@ -126,7 +126,7 @@ static int _calculate_improper_interactions(topology::Topology & topo,
 	    rlj(a) * fl(bb);
 
       DEBUG(11, "\tatomic virial done");
-    }
+      // }
 
 
     energy = 0.5 * K * (q-q0) * (q-q0);
