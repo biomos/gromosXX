@@ -15,8 +15,15 @@ namespace configuration
   class Energy
   {
   public:
+    /**
+     * Constructor
+     */
     Energy(){}
-
+    /**
+     * Destructor
+     */
+    ~Energy(){}
+    
     /**
      * total energy of the system
      */
