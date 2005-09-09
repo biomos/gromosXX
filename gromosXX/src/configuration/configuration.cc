@@ -224,6 +224,11 @@ void configuration::Configuration::init(topology::Topology const & topo,
 
   // gather the molecules!
   // check box size
+
+  // mc: bugfix: chargegroups should be gathered
+  //             problem if submolecules are set to 1 atom
+  //             (for whatever esoteric reasons)
+
   if (gather){
     switch(boundary_type){
       case math::vacuum:
@@ -231,20 +236,26 @@ void configuration::Configuration::init(topology::Topology const & topo,
       case math::rectangular:
 	{
 	  math::Periodicity<math::rectangular> periodicity(current().box);
-	  periodicity.gather_molecules_into_box(*this, topo);
+	  // periodicity.gather_molecules_into_box(*this, topo);
+	  periodicity.gather_chargegroups(*this, topo);
+	  
 	  break;
 	}
       case math::triclinic:
 	{
 	  // NO CUTOFF CHECK -- IMPLEMENT!!!
 	  math::Periodicity<math::triclinic> periodicity(current().box);
-	  periodicity.gather_molecules_into_box(*this, topo);
+	  // periodicity.gather_molecules_into_box(*this, topo);
+	  periodicity.gather_chargegroups(*this, topo);
+	  
 	  break;
 	}
       case math::truncoct:
 	{
 	  math::Periodicity<math::truncoct> periodicity(current().box);
-	  periodicity.gather_molecules_into_box(*this, topo);
+	  // periodicity.gather_molecules_into_box(*this, topo);
+	  periodicity.gather_chargegroups(*this, topo);
+
 	  break;
 	}
       default:
@@ -294,6 +305,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
       io::messages.add("disabling removing of centre of mass rotation (PBC)",
 		       "configuration",
 		       io::message::notice);
+      param.centreofmass.remove_rot = false;
     }
   }
 }

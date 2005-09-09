@@ -39,6 +39,10 @@ namespace math
     void put_chargegroups_into_box(configuration::Configuration & conf,
 				   topology::Topology const & topo )const;
 
+
+    void gather_chargegroups(configuration::Configuration & conf, 
+			     topology::Topology const & topo)const;
+
     void gather_molecules_into_box(configuration::Configuration & conf, 
 				   topology::Topology const & topo)const;
     
