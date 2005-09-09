@@ -95,6 +95,12 @@ int check::check_state(topology::Topology & topo,
   const double epsilon = 0.000001;
   int res=0, total=0;
 
+  CHECKING("molecular virial (finite diff)",res);
+
+  conf.exchange_state();
+  conf.current().pos = conf.old().pos;
+  conf.current().box = conf.old().box;
+
   // nach uns die sintflut
   // na ons de zondvloed
   // apres nous le deluge
@@ -108,14 +114,26 @@ int check::check_state(topology::Topology & topo,
     }
   }
 
-  CHECKING("molecular virial (finite diff)",res);
-
-  conf.exchange_state();
-  conf.current().pos = conf.old().pos;
-  conf.current().box = conf.old().box;
-
   // prepare rel_mol_com_pos
   util::prepare_virial(topo, conf, sim);
+
+  // calculate the virial (real)
+  ff.apply(topo, conf, sim);
+
+  conf.exchange_state();
+  
+  algorithm::Pressure_Calculation * pcalc =
+    new algorithm::Pressure_Calculation;
+
+  pcalc->apply(topo, conf, sim);
+
+  delete pcalc;
+
+  math::Matrix realP(conf.old().virial_tensor);
+
+  // std::cout << "real virial is\n"
+  // << math::m2s(realP)
+  // << "\n--------------------------------------------------\n" << std::endl;
   
   math::Matrix finP;
   finP=0;
@@ -127,6 +145,7 @@ int check::check_state(topology::Topology & topo,
     scale_positions(topo, conf, s1);
     ff.apply(topo, conf, sim);
     conf.current().energies.calculate_totals();
+    
     double e1 = conf.current().energies.nonbonded_total;
       
     conf.current().pos = conf.old().pos;
@@ -138,6 +157,7 @@ int check::check_state(topology::Topology & topo,
     scale_positions(topo, conf, s2);
     ff.apply(topo, conf, sim);
     conf.current().energies.calculate_totals();
+
     double e2 = conf.current().energies.nonbonded_total;
 
     conf.current().pos = conf.old().pos;
@@ -147,20 +167,13 @@ int check::check_state(topology::Topology & topo,
       conf.current().box(i)(i);
   }
   
-    
-  // calculate the energy
-  ff.apply(topo, conf, sim);
+  // std::cout << "finit diff virial is\n"
+  // << math::m2s(finP)
+  // << "\n--------------------------------------------------\n" << std::endl;
 
-  conf.exchange_state();
-  
-  algorithm::Pressure_Calculation * pcalc =
-    new algorithm::Pressure_Calculation;
-
-  pcalc->apply(topo, conf, sim);
-  
   for(int i=0; i < 3; i++){
 
-    CHECK_APPROX_EQUAL(conf.old().virial_tensor(i,i), finP(i,i), 0.00001, res);
+    CHECK_APPROX_EQUAL(realP(i,i), finP(i,i), 0.00001, res);
   }
 
   RESULT(res,total);
