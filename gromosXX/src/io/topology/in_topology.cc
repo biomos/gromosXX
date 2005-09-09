@@ -574,7 +574,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  os << "\n\t\tbondangles not containing hydrogens : " << num;
+	  os << "\n\t\tbondangles containing hydrogens : " << num;
 
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
 	  int i, j, k, t;
@@ -620,7 +620,7 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  os << "\n\t\tbondangles containing hydrogens : " << num;
+	  os << "\n\t\tbondangles not containing hydrogens : " << num;
     
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
 	  int i, j, k, t;
