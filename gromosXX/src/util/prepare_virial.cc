@@ -22,6 +22,10 @@
 #define SUBMODULE util
 
 
+/**
+ * @TODO should be changed according to phil's plan
+ * of following diffusive particles.
+ */
 template<math::boundary_enum b>
 static void _center_of_mass(topology::Atom_Iterator start, 
 			    topology::Atom_Iterator end,
@@ -138,4 +142,78 @@ void util::prepare_virial(topology::Topology const & topo,
 
   SPLIT_BOUNDARY(_prepare_virial, topo, conf, sim);
     
+}
+
+template<math::boundary_enum boundary>
+static void _atomic_to_molecular_virial(topology::Topology const & topo,
+					configuration::Configuration & conf,
+					simulation::Simulation const & sim)
+{
+  // this should be done after bonded and nonbonded forces have been calculated
+  // but before any special forces are added (because they don't contribute to
+  // the virial)
+
+  if (sim.param().pcouple.virial == math::molecular_virial){
+
+    DEBUG(7, "recovering molecular virial from atomic virial");
+    DEBUG(10, "lambda = " << topo.lambda());
+
+    math::Periodicity<boundary> periodicity(conf.current().box);
+    math::VArray const &pos = conf.current().pos;
+    math::Vec r;
+
+    math::Matrix corrP(0.0);
+    
+    topology::Molecule_Iterator
+      m_it = topo.molecule_begin(),
+      m_to = topo.molecule_end();
+
+    math::Vec com_pos;
+    math::Matrix com_ekin;
+
+    for( ; m_it != m_to; ++m_it){
+      _center_of_mass(m_it.begin(),
+		      m_it.end(),
+		      topo, conf,
+		      com_pos, com_ekin,
+		      periodicity);
+
+      topology::Atom_Iterator a_it = m_it.begin(),
+	a_to = m_it.end();
+
+      for( ; a_it != a_to; ++a_it){
+
+	// this should be changed to
+	// the vector between the free floating atom position
+	// and the free floating virial group centre of mass position
+	periodicity.nearest_image(pos(*a_it), com_pos, r);
+
+	for(int a=0; a<3; ++a){
+	  for(int b=0; b<3; ++b){
+
+	    // conf.current().virial_tensor(b, a) +=
+	    corrP(b, a)  +=
+	      conf.current().force(*a_it)(a) * r(b);
+	  }
+	}
+
+      } // loop over virial group
+    }
+
+    conf.current().virial_tensor -= corrP;
+
+  } // molecular virial
+
+}
+
+
+void util::atomic_to_molecular_virial(topology::Topology const & topo,
+				      configuration::Configuration & conf,
+				      simulation::Simulation const & sim)
+{
+  
+  if (conf.boundary_type == math::vacuum) return;
+
+  SPLIT_BOUNDARY(_atomic_to_molecular_virial, topo, conf, sim);
+  
 }

@@ -24,6 +24,13 @@ namespace util
   void prepare_virial(topology::Topology const & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation const & sim);
+
+  /**
+   * recover molecular virial from atomic virial
+   */
+  void atomic_to_molecular_virial(topology::Topology const & topo,
+				  configuration::Configuration & conf,
+				  simulation::Simulation const & sim);
   
 } // util
 
