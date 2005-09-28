@@ -31,7 +31,8 @@ io::In_Distrest::read(topology::Topology& topo,
   
   DEBUG(7, "reading in a distance restraints file");
 
-  std::cout << "DISTRANCE RESTRAINTS\n";
+  if (!quiet)
+    std::cout << "DISTRANCE RESTRAINTS\n";
   
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -59,22 +60,26 @@ io::In_Distrest::read(topology::Topology& topo,
 
     DEBUG(10, "reading in DISTREST data");
 
-    switch(sim.param().distrest.distrest){
-      case 0:
-	std::cout << "\tDistance restraints OFF\n";
-	// how did you get here?
-	break;
-      case 1:
-	std::cout << "\tDistance restraints ON\n";
-	
-	break;
-      case 2:
-	std::cout << "\tDistance restraints ON\n"
-		  << "\t\t(using force constant K*w0)\n";
-	break;
-	
+    if (!quiet){
+      
+      switch(sim.param().distrest.distrest){
+	case 0:
+	  std::cout << "\tDistance restraints OFF\n";
+	  // how did you get here?
+	  break;
+	case 1:
+	  std::cout << "\tDistance restraints ON\n";
+	  
+	  break;
+	case 2:
+	  std::cout << "\tDistance restraints ON\n"
+		    << "\t\t(using force constant K*w0)\n";
+	  break;
+	default:
+	  std::cout << "\tDistance restraints ERROR\n";
+      }
     }
-
+    
 
     _lineStream.clear();
     _lineStream.str(*it);
@@ -82,28 +87,29 @@ io::In_Distrest::read(topology::Topology& topo,
     _lineStream >> dish >> disc;
 
     ++it;
-    std::cout << std::setw(10) << "DISH"
-	      << std::setw(10) << "DISC"
-	      << "\n" 
-	      <<  std::setw(10)<< dish 
-	      <<  std::setw(10)<< disc
-	      << "\n";
-    
-    std::cout << std::setw(10) << "i"
-	      << std::setw(8) << "j"
-	      << std::setw(8) << "k"
-	      << std::setw(8) << "l"
-	      << std::setw(5) << "type"
-	      << std::setw(10) << "i"
-	      << std::setw(8) << "j"
-	      << std::setw(8) << "k"
-	      << std::setw(8) << "l"
-	      << std::setw(5) << "type"
-	      << std::setw(8) << "r0"
-	      << std::setw(8) << "w0"
-	      << std::setw(4) << "rah"
-	      << "\n";
-    
+    if (!quiet){
+      std::cout << std::setw(10) << "DISH"
+		<< std::setw(10) << "DISC"
+		<< "\n" 
+		<<  std::setw(10)<< dish 
+		<<  std::setw(10)<< disc
+		<< "\n";
+      
+      std::cout << std::setw(10) << "i"
+		<< std::setw(8) << "j"
+		<< std::setw(8) << "k"
+		<< std::setw(8) << "l"
+		<< std::setw(5) << "type"
+		<< std::setw(10) << "i"
+		<< std::setw(8) << "j"
+		<< std::setw(8) << "k"
+		<< std::setw(8) << "l"
+		<< std::setw(5) << "type"
+		<< std::setw(8) << "r0"
+		<< std::setw(8) << "w0"
+		<< std::setw(4) << "rah"
+		<< "\n";
+    }
     
     for(int i=0; it != to; ++i, ++it){
       
@@ -129,27 +135,29 @@ io::In_Distrest::read(topology::Topology& topo,
 	  --atom2[j];
 	}
       
-
       util::Virtual_Atom v1(util::virtual_type(type1), atom1, dish, disc);
       util::Virtual_Atom v2(util::virtual_type(type2), atom2, dish, disc);
     
       topo.distance_restraints().push_back
 	(topology::distance_restraint_struct(v1,v2,r0,w0,rah));
 
-      std::cout << std::setw(10) << atom1[0]+1
-		<< std::setw(8) << atom1[1]+1
-		<< std::setw(8) << atom1[2]+1
-		<< std::setw(8) << atom1[3]+1
-		<< std::setw(5) << type1
-		<< std::setw(10) << atom2[0]+1
-		<< std::setw(8) <<  atom2[1]+1
-		<< std::setw(8) << atom2[2]+1
-		<< std::setw(8) << atom2[3]+1
-		<< std::setw(5) << type2
-		<< std::setw(8) << r0
-		<< std::setw(8) << w0
-		<< std::setw(4) << rah
-		<< "\n";
+      if (!quiet){
+	std::cout << std::setw(10) << atom1[0]+1
+		  << std::setw(8) << atom1[1]+1
+		  << std::setw(8) << atom1[2]+1
+		  << std::setw(8) << atom1[3]+1
+		  << std::setw(5) << type1
+		  << std::setw(10) << atom2[0]+1
+		  << std::setw(8) <<  atom2[1]+1
+		  << std::setw(8) << atom2[2]+1
+		  << std::setw(8) << atom2[3]+1
+		  << std::setw(5) << type2
+		  << std::setw(8) << r0
+		  << std::setw(8) << w0
+		  << std::setw(4) << rah
+		  << "\n";
+      }
+      
     }
     
   } // DISTREST
@@ -175,22 +183,24 @@ io::In_Distrest::read(topology::Topology& topo,
 
     DEBUG(10, "reading in DISTREST (PERTDISRESSPEC data");
 
-    switch(sim.param().distrest.distrest){
-      case 0:
-	std::cout << "\tPerturbed Distance restraints OFF\n";
-	// how did you get here?
-	break;
-      case 1:
-	std::cout << "\tPerturbed Distance restraints ON\n";
-	
-	break;
-      case 2:
-	std::cout << "\tPerturbed Distance restraints ON\n"
-		  << "\t\t(using force constant K*w0)\n";
-	break;
-	
+    if (!quiet){
+      switch(sim.param().distrest.distrest){
+	case 0:
+	  std::cout << "\tPerturbed Distance restraints OFF\n";
+	  // how did you get here?
+	  break;
+	case 1:
+	  std::cout << "\tPerturbed Distance restraints ON\n";
+	  
+	  break;
+	case 2:
+	  std::cout << "\tPerturbed Distance restraints ON\n"
+		    << "\t\t(using force constant K*w0)\n";
+	  break;
+	default:
+	  std::cout << "\tPerturbed Distance restraints ERROR\n";
+      }
     }
-
 
     _lineStream.clear();
     _lineStream.str(*it);
@@ -198,30 +208,31 @@ io::In_Distrest::read(topology::Topology& topo,
     _lineStream >> dish >> disc;
 
     ++it;
-    std::cout << std::setw(10) << "DISH"
-	      << std::setw(10) << "DISC"
-	      << "\n" 
-	      <<  std::setw(10)<< dish 
-	      <<  std::setw(10)<< disc
-	      << "\n";
-    
-    std::cout << std::setw(10) << "i"
-	      << std::setw(8) << "j"
-	      << std::setw(8) << "k"
-	      << std::setw(8) << "l"
-	      << std::setw(5) << "type"
-	      << std::setw(10) << "i"
-	      << std::setw(8) << "j"
-	      << std::setw(8) << "k"
-	      << std::setw(8) << "l"
-	      << std::setw(5) << "type"
-	      << std::setw(8) << "A_r0"
-	      << std::setw(8) << "A_w0"
-	      << std::setw(8) << "B_r0"
-	      << std::setw(8) << "B_w0"
-	      << std::setw(4) << "rah"
-	      << "\n";
-    
+    if (!quiet){
+      std::cout << std::setw(10) << "DISH"
+		<< std::setw(10) << "DISC"
+		<< "\n" 
+		<<  std::setw(10)<< dish 
+		<<  std::setw(10)<< disc
+		<< "\n";
+      
+      std::cout << std::setw(10) << "i"
+		<< std::setw(8) << "j"
+		<< std::setw(8) << "k"
+		<< std::setw(8) << "l"
+		<< std::setw(5) << "type"
+		<< std::setw(10) << "i"
+		<< std::setw(8) << "j"
+		<< std::setw(8) << "k"
+		<< std::setw(8) << "l"
+		<< std::setw(5) << "type"
+		<< std::setw(8) << "A_r0"
+		<< std::setw(8) << "A_w0"
+		<< std::setw(8) << "B_r0"
+		<< std::setw(8) << "B_w0"
+		<< std::setw(4) << "rah"
+		<< "\n";
+    }
     
     for(int i=0; it != to; ++i, ++it){
       
@@ -254,25 +265,28 @@ io::In_Distrest::read(topology::Topology& topo,
       topo.perturbed_distance_restraints().push_back
 	(topology::perturbed_distance_restraint_struct(v1,v2,A_r0,B_r0,A_w0,B_w0, rah));
 
-      std::cout << std::setw(10) << atom1[0]+1
-		<< std::setw(8) << atom1[1]+1
-		<< std::setw(8) << atom1[2]+1
-		<< std::setw(8) << atom1[3]+1
-		<< std::setw(5) << type1
-		<< std::setw(10) << atom2[0]+1
-		<< std::setw(8) <<  atom2[1]+1
-		<< std::setw(8) << atom2[2]+1
-		<< std::setw(8) << atom2[3]+1
-		<< std::setw(5) << type2
-		<< std::setw(8) << A_r0	    
-		<< std::setw(8) << A_w0
-		<< std::setw(8) << B_r0
-		<< std::setw(8) << B_w0
-		<< std::setw(8) << rah
-		<< "\n";
+      if (!quiet){
+	std::cout << std::setw(10) << atom1[0]+1
+		  << std::setw(8) << atom1[1]+1
+		  << std::setw(8) << atom1[2]+1
+		  << std::setw(8) << atom1[3]+1
+		  << std::setw(5) << type1
+		  << std::setw(10) << atom2[0]+1
+		  << std::setw(8) <<  atom2[1]+1
+		  << std::setw(8) << atom2[2]+1
+		  << std::setw(8) << atom2[3]+1
+		  << std::setw(5) << type2
+		  << std::setw(8) << A_r0	    
+		  << std::setw(8) << A_w0
+		  << std::setw(8) << B_r0
+		  << std::setw(8) << B_w0
+		  << std::setw(8) << rah
+		  << "\n";
+      }
+      
     }//PERTDISRESPEC DISTREST
     
-    std::cout << "END\n";
+    if (!quiet) std::cout << "END\n";
   
   }
 
