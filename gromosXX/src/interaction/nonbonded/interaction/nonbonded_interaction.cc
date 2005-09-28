@@ -567,12 +567,6 @@ void interaction::Nonbonded_Interaction::expand_configuration
   exp_conf.current().perturbed_energy_derivatives.zero();
   exp_conf.boundary_type = conf.boundary_type;
 
-  for(int m=0; m<mul; ++m){
-    exp_conf.special().rel_mol_com_pos.insert(exp_conf.special().rel_mol_com_pos.end(), 
-					      conf.special().rel_mol_com_pos.begin(),
-					      conf.special().rel_mol_com_pos.end());
-  }
-  
 }
 
 

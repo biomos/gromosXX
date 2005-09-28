@@ -95,7 +95,6 @@ configuration::Configuration::Configuration
   old().perturbed_energy_derivatives =
     conf.old().perturbed_energy_derivatives;
   
-  special().rel_mol_com_pos = conf.special().rel_mol_com_pos;
   special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
   special().flexible_constraint = conf.special().flexible_constraint;
   
@@ -160,7 +159,6 @@ configuration::Configuration & configuration::Configuration::operator=
   old().perturbed_energy_derivatives =
     conf.old().perturbed_energy_derivatives;
   
-  special().rel_mol_com_pos = conf.special().rel_mol_com_pos;
   special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
   special().flexible_constraint = conf.special().flexible_constraint;
   
@@ -195,9 +193,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
 
   current().averages.resize(topo, *this, param);
   old().averages.resize(topo, *this, param);
-
-  // resize some special data
-  special().rel_mol_com_pos.resize(topo.num_atoms());
 
   // possibly resize the dihedral angle monitoring array
   // initialize or set to such a value that it is recalculated in
@@ -321,8 +316,6 @@ void configuration::Configuration::resize(unsigned int s)
   
   current().resize(s);
   old().resize(s);
-
-  special().rel_mol_com_pos.resize(s);
 }
 
 /**

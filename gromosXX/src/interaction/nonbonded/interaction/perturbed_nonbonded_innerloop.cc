@@ -224,27 +224,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   storage.force(j) -= f;
   
   DEBUG(8, "\tforces stored");
+
+  // if (t_interaction_spec::do_virial != math::no_virial){
+  for(int a=0; a<3; ++a)
+    for(int b=0; b<3; ++b)
+      storage.virial_tensor(a, b) += 
+	r(a) * f(b);
   
-  /*
-  if (t_interaction_spec::do_virial == math::molecular_virial){
-    for(int a=0; a<3; ++a)
-      for(int b=0; b<3; ++b)
-	storage.virial_tensor(a, b) += 
-	  (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
-	   conf.special().rel_mol_com_pos(j)(a)) * f(b);
-    
-    DEBUG(8, "\tvirial done");
-  }
-  */
-  
-  if (t_interaction_spec::do_virial != math::no_virial){
-    for(int a=0; a<3; ++a)
-      for(int b=0; b<3; ++b)
-	storage.virial_tensor(a, b) += 
-	  r(a) * f(b);
-    
-    DEBUG(8, "\tatomic virial done");
-  }
+  DEBUG(8, "\tatomic virial done");
+  // }
   
   // energy
   assert(storage.energies.lj_energy.size() > 
@@ -302,11 +290,9 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     storage.perturbed_energy_derivatives.crf_energy
       [topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_crf;
-    
   }
   
   DEBUG(7, "\tperturbed lj_crf_innerloop " << i << " - " << j << " done!");
-  
 }
 
 /**
@@ -541,27 +527,15 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   storage.force(j) -= f;
   
   DEBUG(8, "\tforces stored");
+
+  // if (t_interaction_spec::do_virial != math::no_virial){
+  for(int a=0; a<3; ++a)
+    for(int b=0; b<3; ++b)
+      storage.virial_tensor(a, b) += 
+	r(a) * f(b);
   
-  /*
-  if (t_interaction_spec::do_virial == math::molecular_virial){
-    for(int a=0; a<3; ++a)
-      for(int b=0; b<3; ++b)
-	storage.virial_tensor(a, b) += 
-	  (r(a) - conf.special().rel_mol_com_pos(i)(a) + 
-	   conf.special().rel_mol_com_pos(j)(a)) * f(b);
-    
-    DEBUG(8, "\tvirial done");
-  }
-  */
-  
-  if (t_interaction_spec::do_virial != math::no_virial){
-    for(int a=0; a<3; ++a)
-      for(int b=0; b<3; ++b)
-	storage.virial_tensor(a, b) += 
-	  r(a) * f(b);
-    
-    DEBUG(8, "\tatomic virial done");
-  }
+  DEBUG(8, "\tatomic virial done");
+  // }
   
   // energy
   assert(storage.energies.lj_energy.size() > 
@@ -819,14 +793,14 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
   DEBUG(7, "\tforces stored");
     
-  if (t_interaction_spec::do_virial != math::no_virial){
-    for(int a=0; a<3; ++a)
-      for(int b=0; b<3; ++b)
-	conf.current().virial_tensor(a, b) += 
-	  r(a) * f(b);
-
-    DEBUG(7, "\tatomic virial done");
-  }
+  // if (t_interaction_spec::do_virial != math::no_virial){
+  for(int a=0; a<3; ++a)
+    for(int b=0; b<3; ++b)
+      conf.current().virial_tensor(a, b) += 
+	r(a) * f(b);
+  
+  DEBUG(7, "\tatomic virial done");
+  // }
 
   // energy
   assert(conf.current().energies.lj_energy.size() > 
@@ -972,14 +946,14 @@ interaction::Perturbed_Nonbonded_Innerloop<
     force(i) += f_rf;
     force(*it) -=f_rf;
 
-    if (t_interaction_spec::do_virial != math::no_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  conf.current().virial_tensor(a, b) += 
-	    r(a) * f_rf(b);
-
-      DEBUG(7, "\tatomic virial done");
-    }
+    // if (t_interaction_spec::do_virial != math::no_virial){
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+	conf.current().virial_tensor(a, b) += 
+	  r(a) * f_rf(b);
+    
+    DEBUG(7, "\tatomic virial done");
+    // }
 
   }
 }

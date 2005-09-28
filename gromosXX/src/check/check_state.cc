@@ -35,7 +35,10 @@
 #include <util/create_simulation.h>
 #include <algorithm/create_md_sequence.h>
 
+#include <math/periodicity.h>
 #include <math/volume.h>
+
+#include <util/template_split.h>
 #include <util/prepare_virial.h>
 
 #include <time.h>
@@ -47,17 +50,39 @@
 
 using namespace std;
 
-
+template<math::boundary_enum b>
 void scale_positions(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     math::Vec const scale)
 {
-  for(size_t i = 0; i< topo.num_atoms(); ++i){
-    for(unsigned int j=0; j<3; ++j)
-      conf.current().pos(i)(j) = 
-      (conf.current().pos(i)(j) - conf.special().rel_mol_com_pos(i)(j)) *
-      scale(j) + conf.special().rel_mol_com_pos(i)(j);
+  // calculate rel_mol_com_pos ;-)
+  math::Periodicity<b> periodicity(conf.current().box);
+
+  std::vector<math::Vec> com_pos;
+  std::vector<math::Matrix> com_ekin;
+  
+  util::centre_of_mass(topo, conf, com_pos, com_ekin);
+
+  topology::Molecule_Iterator
+    m_it = topo.molecule_begin(),
+    m_to = topo.molecule_end();
+
+  for(int i=0; m_it != m_to; ++m_it, ++i){
+    
+    topology::Atom_Iterator a_it = m_it.begin(),
+      a_to = m_it.end();
+
+    math::VArray &pos = conf.current().pos;
+
+    for( ; a_it != a_to; ++a_it){
+      math::Vec v;
+      periodicity.nearest_image(pos(*a_it), com_pos[i], v);
+
+      for(int i=0; i<3; ++i)
+	pos(*a_it)(i) = (pos(*a_it)(i) - v(i)) * scale(i) + v(i);
+    }
   }
+
   for(unsigned int i=0; i<3; ++i){
     conf.current().box(0)(i) *=scale(i);
     conf.current().box(1)(i) *=scale(i);
@@ -142,7 +167,7 @@ int check::check_state(topology::Topology & topo,
     math::Vec s1(1);
     s1(i) += epsilon;
       
-    scale_positions(topo, conf, s1);
+    SPLIT_BOUNDARY(scale_positions, topo, conf, s1);
     ff.apply(topo, conf, sim);
     conf.current().energies.calculate_totals();
     
@@ -154,7 +179,7 @@ int check::check_state(topology::Topology & topo,
     math::Vec s2(1);
     s2(i) -= epsilon;
 
-    scale_positions(topo, conf, s2);
+    SPLIT_BOUNDARY(scale_positions, topo, conf, s2);
     ff.apply(topo, conf, sim);
     conf.current().energies.calculate_totals();
 

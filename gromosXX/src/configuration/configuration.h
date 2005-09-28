@@ -113,12 +113,6 @@ namespace configuration
     struct special_struct
     {
       /**
-       * const rel_mol_com_pos
-       * relative molecular com position
-       */
-      math::VArray rel_mol_com_pos;
-
-      /**
        * the dihedral angle minima for monitoring
        */
       std::vector<double> dihedral_angle_minimum;

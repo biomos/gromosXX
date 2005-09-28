@@ -27,7 +27,7 @@
  * of following diffusive particles.
  */
 template<math::boundary_enum b>
-static void _center_of_mass(topology::Atom_Iterator start, 
+static void _centre_of_mass(topology::Atom_Iterator start, 
 			    topology::Atom_Iterator end,
 			    topology::Topology const & topo,
 			    configuration::Configuration const & conf,
@@ -89,26 +89,20 @@ static void _prepare_virial(topology::Topology const & topo,
     conf.current().kinetic_energy_tensor = 0.0;
 
     for( ; m_it != m_to; ++m_it){
-      _center_of_mass(m_it.begin(),
+      _centre_of_mass(m_it.begin(),
 		      m_it.end(),
 		      topo, conf,
 		      com_pos, com_ekin,
 		      periodicity);
 
+      conf.current().kinetic_energy_tensor += com_ekin;
+
+      /*
       for(int i=0; i<3; ++i)
 	for(int j=0; j<3; ++j)
 	  conf.current().kinetic_energy_tensor(i,j) += com_ekin(i,j);
+      */
 
-      topology::Atom_Iterator a_it = m_it.begin(),
-	a_to = m_it.end();
-
-      math::VArray const &pos = conf.current().pos;
-
-      for( ; a_it != a_to; ++a_it){
-	assert(unsigned(conf.special().rel_mol_com_pos.size()) > *a_it);
-	periodicity.nearest_image(pos(*a_it), com_pos,
-				  conf.special().rel_mol_com_pos(*a_it));
-      }
     }
   }
   
@@ -172,7 +166,7 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     math::Matrix com_ekin;
 
     for( ; m_it != m_to; ++m_it){
-      _center_of_mass(m_it.begin(),
+      _centre_of_mass(m_it.begin(),
 		      m_it.end(),
 		      topo, conf,
 		      com_pos, com_ekin,
@@ -216,4 +210,36 @@ void util::atomic_to_molecular_virial(topology::Topology const & topo,
 
   SPLIT_BOUNDARY(_atomic_to_molecular_virial, topo, conf, sim);
   
+}
+
+template<math::boundary_enum b>
+void _centre_of_mass_loop(topology::Topology const & topo,
+			  configuration::Configuration & conf,
+			  std::vector<math::Vec> & com_pos,
+			  std::vector<math::Matrix> & com_ekin)
+{
+  math::Periodicity<b> periodicity(conf.current().box);
+  
+  const size_t num = topo.molecules().size();
+  com_pos.assign(num, math::Vec(0.0));
+  com_ekin.assign(num, math::Matrix(0.0));
+  
+  topology::Molecule_Iterator
+    m_it = topo.molecule_begin(),
+    m_to = topo.molecule_end();
+  
+  for(int i=0; m_it != m_to; ++m_it, ++i){
+    _centre_of_mass(m_it.begin(), m_it.end(),
+		    topo, conf,
+		    com_pos[i], com_ekin[i],
+		    periodicity);
+  }
+}
+
+void util::centre_of_mass(topology::Topology const & topo,
+			  configuration::Configuration & conf,
+			  std::vector<math::Vec> & com_pos,
+			  std::vector<math::Matrix> & com_ekin)
+{
+  SPLIT_BOUNDARY(_centre_of_mass_loop, topo, conf, com_pos, com_ekin);
 }

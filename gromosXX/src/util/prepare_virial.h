@@ -32,6 +32,15 @@ namespace util
 				  configuration::Configuration & conf,
 				  simulation::Simulation const & sim);
   
+  /**
+   * calculate centre of mass, centre of mass kinetic energy
+   * of the (sub) molecules
+   */
+  void centre_of_mass(topology::Topology const & topo,
+		      configuration::Configuration & conf,
+		      std::vector<math::Vec> & com_pos,
+		      std::vector<math::Matrix> & com_ekin);
+
 } // util
 
 #endif

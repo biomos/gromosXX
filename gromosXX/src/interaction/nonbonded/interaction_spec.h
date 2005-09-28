@@ -21,20 +21,20 @@ namespace interaction
    */
   template<
     math::boundary_enum t_boundary = math::rectangular,
-    math::virial_enum t_virial = math::molecular_virial,
+    // math::virial_enum t_virial = math::molecular_virial,
     simulation::interaction_func_enum t_interaction_func = simulation::lj_crf_func
   >
   class Interaction_Spec
   {
   public:
     typedef Interaction_Spec<t_boundary,
-      t_virial,
-      t_interaction_func
-    >
+			     // t_virial,
+			     t_interaction_func
+			     >
     interaction_spec_type;
 
     static const math::boundary_enum boundary_type = t_boundary;
-    static const math::virial_enum do_virial = t_virial;
+    // static const math::virial_enum do_virial = t_virial;
     static const simulation::interaction_func_enum interaction_func = t_interaction_func;
   };
 
@@ -53,7 +53,6 @@ namespace interaction
     
     static const bool do_scaling = t_scaling;
   };
-
 
 } // interaction
 

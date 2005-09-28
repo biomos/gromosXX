@@ -74,47 +74,22 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   }
   
   //////////////////////////////////////////////////
-  // this should be now handled as a
+  // molecular virial is calculated by a
   // correction to the atomic virial
   //////////////////////////////////////////////////
 
-  // most common case
-  /*
-  if (t_nonbonded_spec::do_virial == math::molecular_virial){
-    DEBUG(10, "\t\tmolecular virial");
-
-    math::Vec rf = f * r;
-    storage.force(i) += rf;
-    storage.force(j) -= rf;
+  DEBUG(10, "\t\tatomic / no virial");
+  for (int a=0; a<3; ++a){
+    const double term = f * r(a);
+    storage.force(i)(a) += term;
+    storage.force(j)(a) -= term;
     
-    assert(conf.special().rel_mol_com_pos.size() > i &&
-	   conf.special().rel_mol_com_pos.size() > j);
-    
+    // if (t_nonbonded_spec::do_virial != math::no_virial){
     for(int b=0; b<3; ++b){
-      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) 
-	+ conf.special().rel_mol_com_pos(j)(b);
-      for(int a=0; a<3; ++a){
-	storage.virial_tensor(b, a) += rr * rf(a);
-      }
+      storage.virial_tensor(b, a) += 
+	r(b) * term;
     }
-  }
-  else
-  */
-
-  {
-    DEBUG(10, "\t\tatomic / no virial");
-    for (int a=0; a<3; ++a){
-      const double term = f * r(a);
-      storage.force(i)(a) += term;
-      storage.force(j)(a) -= term;
-      
-      if (t_nonbonded_spec::do_virial != math::no_virial){
-	for(int b=0; b<3; ++b){
-	  storage.virial_tensor(b, a) += 
-	    r(b) * term;
-	}
-      }
-    }
+    // }
   }
   
   // energy
@@ -131,7 +106,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   
   storage.energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
-  
 }
 
 template<typename t_nonbonded_spec>
@@ -197,41 +171,19 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_central
 		       "interaction function not implemented",
 		       io::message::critical);
   }
-  
-  //////////////////////////////////////////////////
-  // should be corrected later
-  //////////////////////////////////////////////////
 
-  // most common case
-  /*
-  if (t_nonbonded_spec::do_virial == math::molecular_virial){
-    math::Vec rf = f * r;
-    storage.force(i) += rf;
-    storage.force(j) -= rf;
-  
+  for (int a=0; a<3; ++a){
+    
+    const double term = f * r(a);
+    storage.force(i)(a) += term;
+    storage.force(j)(a) -= term;
+    
+    // if (t_nonbonded_spec::do_virial != math::no_virial){
     for(int b=0; b<3; ++b){
-      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
-      for(int a=0; a<3; ++a){
-        storage.virial_tensor(b, a) += rr * rf(a);
-      }
+      storage.virial_tensor(b, a) += 
+	r(b) * term;
     }
-  }
-  else
-  */
-  {
-    for (int a=0; a<3; ++a){
-      
-      const double term = f * r(a);
-      storage.force(i)(a) += term;
-      storage.force(j)(a) -= term;
-      
-      if (t_nonbonded_spec::do_virial != math::no_virial){
-	for(int b=0; b<3; ++b){
-	  storage.virial_tensor(b, a) += 
-	    r(b) * term;
-	}
-      }
-    }
+    // }
   }
 
   // energy
@@ -248,7 +200,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_central
   
   storage.energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
-  
 }
 
 template<typename t_nonbonded_spec>
@@ -316,41 +267,19 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_shift
 		       "interaction function not implemented",
 		       io::message::critical);
   }
-  
-  //////////////////////////////////////////////////
-  // later correction
-  //////////////////////////////////////////////////
 
-  // most common case
-  /*
-  if (t_nonbonded_spec::do_virial == math::molecular_virial){
-    math::Vec rf = f * r;
-    storage.force(i) += rf;
-    storage.force(j) -= rf;
-  
+  for (int a=0; a<3; ++a){
+    
+    const double term = f * r(a);
+    storage.force(i)(a) += term;
+    storage.force(j)(a) -= term;
+    
+    // if (t_nonbonded_spec::do_virial != math::no_virial){
     for(int b=0; b<3; ++b){
-      const double rr = r(b) - conf.special().rel_mol_com_pos(i)(b) + conf.special().rel_mol_com_pos(j)(b);
-      for(int a=0; a<3; ++a){
-        storage.virial_tensor(b, a) += rr * rf(a);
-      }
+      storage.virial_tensor(b, a) += 
+	r(b) * term;
     }
-  }
-  else
-  */
-  {
-    for (int a=0; a<3; ++a){
-      
-      const double term = f * r(a);
-      storage.force(i)(a) += term;
-      storage.force(j)(a) -= term;
-      
-      if (t_nonbonded_spec::do_virial != math::no_virial){
-	for(int b=0; b<3; ++b){
-	  storage.virial_tensor(b, a) += 
-	    r(b) * term;
-	}
-      }
-    }
+    //  }
   }
   
   // energy
@@ -416,17 +345,15 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   for (int a=0; a<3; ++a){
 
     const double term = f * r(a);
-    // storage.force(i)(a) += term;
-    // storage.force(j)(a) -= term;
     conf.current().force(i)(a) += term;
     conf.current().force(j)(a) -= term;
     
-    if (t_nonbonded_spec::do_virial != math::no_virial){
-      for(int b=0; b<3; ++b){
-	conf.current().virial_tensor(b, a) += 
-	  r(b) * term;
-      }
+    // if (t_nonbonded_spec::do_virial != math::no_virial){
+    for(int b=0; b<3; ++b){
+      conf.current().virial_tensor(b, a) += 
+	r(b) * term;
     }
+    // }
   }
   
   // energy
@@ -476,7 +403,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     
     periodicity.nearest_image(pos(i), pos(*it), r);
     
-    
     rf_interaction(r, topo.charge()(i) * 
 		   topo.charge()(*it),
 		   f, e_crf);
@@ -484,13 +410,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     force(i) += f;
     force(*it) -= f;
     
-    if (t_nonbonded_spec::do_virial != math::no_virial){
-      for(int a=0; a<3; ++a)
-	for(int b=0; b<3; ++b)
-	  conf.current().virial_tensor(a, b) += 
-	    r(a) * f(b);
-      DEBUG(11, "\tatomic virial done");
-    }
+    // if (t_nonbonded_spec::do_virial != math::no_virial){
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+	conf.current().virial_tensor(a, b) += 
+	  r(a) * f(b);
+    DEBUG(11, "\tatomic virial done");
+    // }
 
     // energy
     conf.current().energies.crf_energy[topo.atom_energy_group(i)]
@@ -499,7 +425,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     DEBUG(11, "\tcontribution " << e_crf);
     
   } // loop over excluded pairs
-  
 }
 
 template<typename t_nonbonded_spec>
@@ -549,9 +474,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
   
 }
 
-/**
- * @todo take out rel_mol_com_pos
- */
 template<typename t_nonbonded_spec>
 inline void 
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
@@ -613,6 +535,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*force_i)(2) += fz;
   (*force_j)(2) -= fz;
       
+  /*
   rx = r(0) -
     conf.special().rel_mol_com_pos(ii)(0) +
     conf.special().rel_mol_com_pos(jj)(0);
@@ -622,16 +545,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = r(2) -
     conf.special().rel_mol_com_pos(ii)(2) +
     conf.special().rel_mol_com_pos(jj)(2);
-      
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  */
+  
+  storage.virial_tensor(0, 0) += r(0) * fx;
+  storage.virial_tensor(0, 1) += r(0) * fy;
+  storage.virial_tensor(0, 2) += r(0) * fz;
+  storage.virial_tensor(1, 0) += r(1) * fx;
+  storage.virial_tensor(1, 1) += r(1) * fy;
+  storage.virial_tensor(1, 2) += r(1) * fz;
+  storage.virial_tensor(2, 0) += r(2) * fx;
+  storage.virial_tensor(2, 1) += r(2) * fy;
+  storage.virial_tensor(2, 2) += r(2) * fz;
       
   storage.energies.lj_energy[egroup][egroup] += e_lj;
       
@@ -687,6 +611,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*force_i)(2) += fz;
   (*(force_j+1))(2) -= fz;
       
+  /*
   rx = x[0] -
     conf.special().rel_mol_com_pos(ii)(0) +
     conf.special().rel_mol_com_pos(jj+1)(0);
@@ -696,16 +621,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[0] -
     conf.special().rel_mol_com_pos(ii)(2) +
     conf.special().rel_mol_com_pos(jj+1)(2);
-      
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  */    
+  
+  storage.virial_tensor(0, 0) += x[0] * fx;
+  storage.virial_tensor(0, 1) += x[0] * fy;
+  storage.virial_tensor(0, 2) += x[0] * fz;
+  storage.virial_tensor(1, 0) += y[0] * fx;
+  storage.virial_tensor(1, 1) += y[0] * fy;
+  storage.virial_tensor(1, 2) += y[0] * fz;
+  storage.virial_tensor(2, 0) += z[0] * fx;
+  storage.virial_tensor(2, 1) += z[0] * fy;
+  storage.virial_tensor(2, 2) += z[0] * fz;
       
   fx = ff[1] * x[1];
   fy = ff[1] * y[1];
@@ -717,7 +643,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*(force_j+2))(1) -= fy;
   (*force_i)(2) += fz;
   (*(force_j+2))(2) -= fz;
-      
+    
+  /*
   rx = x[1] -
     conf.special().rel_mol_com_pos(ii)(0) +
     conf.special().rel_mol_com_pos(jj+2)(0);
@@ -727,16 +654,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[1] -
     conf.special().rel_mol_com_pos(ii)(2) +
     conf.special().rel_mol_com_pos(jj+2)(2);
-      
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  */
+  
+  storage.virial_tensor(0, 0) += x[1] * fx;
+  storage.virial_tensor(0, 1) += x[1] * fy;
+  storage.virial_tensor(0, 2) += x[1] * fz;
+  storage.virial_tensor(1, 0) += y[1] * fx;
+  storage.virial_tensor(1, 1) += y[1] * fy;
+  storage.virial_tensor(1, 2) += y[1] * fz;
+  storage.virial_tensor(2, 0) += z[1] * fx;
+  storage.virial_tensor(2, 1) += z[1] * fy;
+  storage.virial_tensor(2, 2) += z[1] * fz;
       
   fx = ff[2] * x[2];
   fy = ff[2] * y[2];
@@ -749,6 +677,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*(force_i+1))(2) += fz;
   (*(force_j))(2) -= fz;
       
+  /*
   rx = x[2] -
     conf.special().rel_mol_com_pos(ii+1)(0) +
     conf.special().rel_mol_com_pos(jj)(0);
@@ -758,16 +687,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[2] -
     conf.special().rel_mol_com_pos(ii+1)(2) +
     conf.special().rel_mol_com_pos(jj)(2);
-      
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  */
+  
+  storage.virial_tensor(0, 0) += x[2] * fx;
+  storage.virial_tensor(0, 1) += x[2] * fy;
+  storage.virial_tensor(0, 2) += x[2] * fz;
+  storage.virial_tensor(1, 0) += y[2] * fx;
+  storage.virial_tensor(1, 1) += y[2] * fy;
+  storage.virial_tensor(1, 2) += y[2] * fz;
+  storage.virial_tensor(2, 0) += z[2] * fx;
+  storage.virial_tensor(2, 1) += z[2] * fy;
+  storage.virial_tensor(2, 2) += z[2] * fz;
       
   fx = ff[3] * x[3];
   fy = ff[3] * y[3];
@@ -780,6 +710,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*(force_i+2))(2) += fz;
   (*(force_j))(2) -= fz;
 
+  /*
   rx = x[3] -
     conf.special().rel_mol_com_pos(ii+2)(0) +
     conf.special().rel_mol_com_pos(jj)(0);
@@ -789,16 +720,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[3] -
     conf.special().rel_mol_com_pos(ii+2)(2) +
     conf.special().rel_mol_com_pos(jj)(2);
-      
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  */
+  
+  storage.virial_tensor(0, 0) += x[3] * fx;
+  storage.virial_tensor(0, 1) += x[3] * fy;
+  storage.virial_tensor(0, 2) += x[3] * fz;
+  storage.virial_tensor(1, 0) += y[3] * fx;
+  storage.virial_tensor(1, 1) += y[3] * fy;
+  storage.virial_tensor(1, 2) += y[3] * fz;
+  storage.virial_tensor(2, 0) += z[3] * fx;
+  storage.virial_tensor(2, 1) += z[3] * fy;
+  storage.virial_tensor(2, 2) += z[3] * fz;
       
   // H - H interactions...
       
@@ -852,6 +784,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*(force_i+1))(2) += fz;
   (*(force_j+1))(2) -= fz;
 
+  /*
   rx = x[0] -
     conf.special().rel_mol_com_pos(ii+1)(0) +
     conf.special().rel_mol_com_pos(jj+1)(0);
@@ -861,16 +794,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[0] -
     conf.special().rel_mol_com_pos(ii+1)(2) +
     conf.special().rel_mol_com_pos(jj+1)(2);
+  */
 
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  storage.virial_tensor(0, 0) += x[0] * fx;
+  storage.virial_tensor(0, 1) += x[0] * fy;
+  storage.virial_tensor(0, 2) += x[0] * fz;
+  storage.virial_tensor(1, 0) += y[0] * fx;
+  storage.virial_tensor(1, 1) += y[0] * fy;
+  storage.virial_tensor(1, 2) += y[0] * fz;
+  storage.virial_tensor(2, 0) += z[0] * fx;
+  storage.virial_tensor(2, 1) += z[0] * fy;
+  storage.virial_tensor(2, 2) += z[0] * fz;
 
   fx = ff[1] * x[1];
   fy = ff[1] * y[1];
@@ -883,6 +817,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*(force_i+1))(2) += fz;
   (*(force_j+2))(2) -= fz;
 
+  /*
   rx = x[1] -
     conf.special().rel_mol_com_pos(ii+1)(0) +
     conf.special().rel_mol_com_pos(jj+2)(0);
@@ -892,16 +827,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[1] -
     conf.special().rel_mol_com_pos(ii+1)(2) +
     conf.special().rel_mol_com_pos(jj+2)(2);
+  */
 
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  storage.virial_tensor(0, 0) += x[1] * fx;
+  storage.virial_tensor(0, 1) += x[1] * fy;
+  storage.virial_tensor(0, 2) += x[1] * fz;
+  storage.virial_tensor(1, 0) += y[1] * fx;
+  storage.virial_tensor(1, 1) += y[1] * fy;
+  storage.virial_tensor(1, 2) += y[1] * fz;
+  storage.virial_tensor(2, 0) += z[1] * fx;
+  storage.virial_tensor(2, 1) += z[1] * fy;
+  storage.virial_tensor(2, 2) += z[1] * fz;
 
   fx = ff[2] * x[2];
   fy = ff[2] * y[2];
@@ -914,6 +850,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*(force_i+2))(2) += fz;
   (*(force_j+1))(2) -= fz;
 
+  /*
   rx = x[2] -
     conf.special().rel_mol_com_pos(ii+2)(0) +
     conf.special().rel_mol_com_pos(jj+1)(0);
@@ -923,16 +860,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[2] -
     conf.special().rel_mol_com_pos(ii+2)(2) +
     conf.special().rel_mol_com_pos(jj+1)(2);
+  */
 
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  storage.virial_tensor(0, 0) += x[2] * fx;
+  storage.virial_tensor(0, 1) += x[2] * fy;
+  storage.virial_tensor(0, 2) += x[2] * fz;
+  storage.virial_tensor(1, 0) += y[2] * fx;
+  storage.virial_tensor(1, 1) += y[2] * fy;
+  storage.virial_tensor(1, 2) += y[2] * fz;
+  storage.virial_tensor(2, 0) += z[2] * fx;
+  storage.virial_tensor(2, 1) += z[2] * fy;
+  storage.virial_tensor(2, 2) += z[2] * fz;
 
   fx = ff[3] * x[3];
   fy = ff[3] * y[3];
@@ -945,6 +883,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   (*(force_i+2))(2) += fz;
   (*(force_j+2))(2) -= fz;
 
+  /*
   rx = x[3] -
     conf.special().rel_mol_com_pos(ii+2)(0) +
     conf.special().rel_mol_com_pos(jj+2)(0);
@@ -954,16 +893,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   rz = z[3] -
     conf.special().rel_mol_com_pos(ii+2)(2) +
     conf.special().rel_mol_com_pos(jj+2)(2);
+  */
 
-  storage.virial_tensor(0, 0) += rx * fx;
-  storage.virial_tensor(0, 1) += rx * fy;
-  storage.virial_tensor(0, 2) += rx * fz;
-  storage.virial_tensor(1, 0) += ry * fx;
-  storage.virial_tensor(1, 1) += ry * fy;
-  storage.virial_tensor(1, 2) += ry * fz;
-  storage.virial_tensor(2, 0) += rz * fx;
-  storage.virial_tensor(2, 1) += rz * fy;
-  storage.virial_tensor(2, 2) += rz * fz;
+  storage.virial_tensor(0, 0) += x[3] * fx;
+  storage.virial_tensor(0, 1) += x[3] * fy;
+  storage.virial_tensor(0, 2) += x[3] * fz;
+  storage.virial_tensor(1, 0) += y[3] * fx;
+  storage.virial_tensor(1, 1) += y[3] * fy;
+  storage.virial_tensor(1, 2) += y[3] * fz;
+  storage.virial_tensor(2, 0) += z[3] * fx;
+  storage.virial_tensor(2, 1) += z[3] * fy;
+  storage.virial_tensor(2, 2) += z[3] * fz;
     
   storage.energies.crf_energy[egroup][egroup] += e_crf;
       
