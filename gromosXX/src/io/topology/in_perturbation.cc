@@ -700,6 +700,10 @@ io::In_Perturbation::read(topology::Topology &topo,
 	--a_iac;
 	--b_iac;
 
+	// overrule if disabled in input
+	if (!param.perturbation.soft_vdw) lj_soft = 0.0;
+	if (!param.perturbation.soft_crf) crf_soft = 0.0;
+
 	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
 	  io::messages.add("atom sequence number wrong in PERTATOM03 block",
 			   "In_Perturbation", io::message::critical);
