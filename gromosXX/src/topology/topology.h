@@ -209,6 +209,22 @@ namespace topology
     }
 
     /**
+     * chargegroup exclusions for chargegroup i.
+     */
+    std::set<int> & chargegroup_exclusion(unsigned int i){
+      assert(i < m_chargegroup_exclusion.size());
+      return m_chargegroup_exclusion[i];
+    }
+
+    /**
+     * chargegroup exclusions for chargegroup i.
+     */
+    std::set<int> const & chargegroup_exclusion(unsigned int i)const{
+      assert(i < m_chargegroup_exclusion.size());
+      return m_chargegroup_exclusion[i];
+    }
+
+    /**
      * exclusions for atom i.
      */
     std::set<int> & exclusion(unsigned int const i){
@@ -604,6 +620,11 @@ namespace topology
      * atom exclusions and 1-4 interactions.
      */
     std::vector< std::set<int> > m_all_exclusion;
+    
+    /**
+     * chargegroup exclusions
+     */
+    std::vector<std::set<int> > m_chargegroup_exclusion;
     
     /**
      * the molecules.

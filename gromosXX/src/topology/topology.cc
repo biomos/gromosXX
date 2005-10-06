@@ -248,6 +248,31 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
 		<< "\n\tEND\n";
     }
   }
+
+  // add chargegroup exclusions (a clever technique to improve pairlisting...)
+  m_chargegroup_exclusion.resize(num_solute_chargegroups());
+
+  for(int cg1=0; cg1<num_solute_chargegroups(); ++cg1){
+
+    for(int cg2=cg1; cg2 < num_solute_chargegroups(); ++cg2){
+
+      for(int at1 = m_chargegroup[cg1]; at1 < m_chargegroup[cg1+1]; ++at1){
+
+	std::set<int>::iterator ex = m_all_exclusion[at1].begin(),
+	  ex_to = m_all_exclusion[at1].end();
+	for( ; ex != ex_to; ++ex){
+
+	  if (m_chargegroup[cg2] <= *ex &&
+	      m_chargegroup[cg2+1] > *ex){
+	  
+	    m_chargegroup_exclusion[cg1].insert(cg2);
+	    m_chargegroup_exclusion[cg2].insert(cg1);
+
+	  } // exclude cg
+	} // exclusions of at1
+      } // at1 in cg1
+    } // cg2
+  } // cg1
 }
 
 /**
