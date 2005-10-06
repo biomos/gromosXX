@@ -54,7 +54,8 @@ static void _apply(topology::Topology & topo,
   // blitz::TinyVector<double, 6U> c(0.0), lambda(0.0);
   math::Vec c_trans(0.0), c_rot(0.0), lambda_trans(0.0), lambda_rot(0.0);
   
-  for(unsigned int i=0; i<topo.num_solute_atoms(); ++i){
+  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
+
     const math::Vec diff = conf.current().pos(i) - conf.old().pos(i);
     
     c_trans(0) += topo.mass()(i) * diff(0);
@@ -87,7 +88,7 @@ static void _apply(topology::Topology & topo,
   }
   
   // update the positions
-  for(unsigned int i=0; i<topo.num_solute_atoms(); ++i){
+  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
 
     conf.current().pos(i)(0) +=
       ( lambda_trans(0) +
@@ -119,7 +120,7 @@ static void _apply(topology::Topology & topo,
   //==================================================
 
   math::Vec v(0.0);
-  for(unsigned int i=0; i<topo.num_solute_atoms(); ++i){
+  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
     v += topo.mass()(i) * (math::cross(conf.special().rottrans_constr.pos(i),
 				       conf.current().pos(i)));
   }
@@ -169,7 +170,7 @@ static void _init(topology::Topology & topo,
   math::Matrix com_e_kin;
   
   periodicity.put_chargegroups_into_box(conf, topo);
-  sp.center_of_mass(0, topo.num_solute_atoms(), topo.mass(), com_pos, com_e_kin);
+  sp.center_of_mass(0, sim.param().rottrans.last, topo.mass(), com_pos, com_e_kin);
 
   DEBUG(12, "com: " << math::v2s(com_pos));
 
@@ -183,12 +184,13 @@ static void _init(topology::Topology & topo,
   conf.exchange_state();
 
   // check
-  sp.center_of_mass(0, topo.num_solute_atoms(), topo.mass(), com_pos, com_e_kin);
-  DEBUG(10, "com (centered): " << math::v2s(com_pos));
+  // sp.center_of_mass(0, topo.num_solute_atoms(), topo.mass(), com_pos, com_e_kin);
+  // DEBUG(10, "com (centered): " << math::v2s(com_pos));
 
   // store initial (reference) positions
-  conf.special().rottrans_constr.pos.resize(topo.num_solute_atoms());
-  for(unsigned int i=0; i < topo.num_solute_atoms(); ++i){
+  conf.special().rottrans_constr.pos.resize(sim.param().rottrans.last);
+
+  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
     conf.special().rottrans_constr.pos(i) = conf.current().pos(i);
   }
   
@@ -198,7 +200,8 @@ static void _init(topology::Topology & topo,
   const int Y = 1;
   const int Z = 2;
   
-  for(unsigned int i=0; i < topo.num_solute_atoms(); ++i){
+  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
+
     theta[0](X) += topo.mass()(i);
     theta[1](Y) += topo.mass()(i);
     theta[2](Z) += topo.mass()(i);
@@ -236,8 +239,6 @@ static void _init(topology::Topology & topo,
   const double d = math::dot(math::cross(theta[3], theta[4]), theta[5]);
 
   // inverse that
-  // blitz::TinyMatrix<double, 6U, 6U> & theta_inv = conf.special().rottrans_constr.theta_inv;
-
   math::Matrix & theta_inv_trans = conf.special().rottrans_constr.theta_inv_trans;
   math::Matrix & theta_inv_rot = conf.special().rottrans_constr.theta_inv_rot;
 
@@ -280,5 +281,3 @@ int algorithm::Rottrans_Constraints
   
   return 0;
 }
-  
-
