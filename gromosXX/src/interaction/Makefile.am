@@ -52,7 +52,8 @@ xxinclude_HEADERS =		interaction.h \
 				special/perturbed_distance_restraint_interaction.h \
 				special/jvalue_restraint_interaction.h \
 				special/pscale.h \
-				special/external_interaction.h
+				special/external_interaction.h \
+				nonbonded/vector/vgrid.h
 
 
 noinst_LTLIBRARIES =		libgrointeraction.la
@@ -94,7 +95,8 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				special/perturbed_distance_restraint_interaction.cc \
 				special/jvalue_restraint_interaction.cc \
 				special/pscale.cc \
-				special/external_interaction.cc
+				special/external_interaction.cc \
+				nonbonded/vector/vgrid.cc
 
 bin_PROGRAMS =			
 

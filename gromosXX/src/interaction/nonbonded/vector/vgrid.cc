@@ -1,0 +1,563 @@
+/**
+ * @file vgrid.cc
+ * contains the grid nonbonded interaction implementation
+ */
+
+#include <stdheader.h>
+
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+
+#include "vgrid.h"
+
+#include <algorithm>
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE nonbonded
+
+namespace interaction
+{
+
+  typedef float cg_real_t;
+  typedef double at_real_t;
+
+  // grid properties
+  cg_real_t box_x, box_y, box_z;
+  at_real_t ex_box_x, ex_box_y, ex_box_z;
+
+  cg_real_t dx, dy, dz;
+  int Nx, Ny, Nz;
+  int Cx, Cy, Cz;
+  std::vector<int> cell_start;
+  std::vector<int> cell_num;
+  std::vector<int> mask;
+
+  std::vector<cg_real_t> cg_shift_x, cg_shift_y, cg_shift_z;
+  std::vector<at_real_t> at_shift_x, at_shift_y, at_shift_z;
+  
+  // chargegroup properties
+  std::vector<int> cg_index, cg_tmp_index;
+  std::vector<int> cg_ex_index;
+  
+  std::vector<cg_real_t> cg_x, cg_y, cg_z;
+  std::vector<cg_real_t> cg_tmp_x, cg_tmp_y, cg_tmp_z;
+  
+  std::vector<int> cg_shift;
+  std::vector<int> cg_tmp_shift;
+  
+  std::vector<int> cg_at_start;
+  std::vector<int> cg_cell;
+  std::vector<int> cg_tmp_cell;
+
+  // atom properties
+  std::vector<at_real_t> at_x, at_y, at_z;
+  std::vector<int> at_iac;
+  std::vector<at_real_t> at_q;
+  std::vector<at_real_t> at_fx, at_fy, at_fz;
+
+  // calculation vectors have to be on the stack => OMP parallelization!
+
+  // forward declarations
+  void grid_properties(topology::Topology const & topo,
+		       configuration::Configuration & conf,
+		       simulation::Simulation const & sim);
+
+  void calc_mask(cg_real_t cutoff, std::vector<int> & mask);
+
+  void grid_extend(topology::Topology const & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation const & sim);
+  
+  void grid_cg(topology::Topology const & topo,
+	       configuration::Configuration & conf,
+	       simulation::Simulation const & sim);
+
+  void grid_pl(std::vector<int> & pl, cg_real_t cutl, cg_real_t cuts);
+
+  void grid_print_pl(std::vector<int> const & pl);
+  
+  // the fun begins
+  void grid(topology::Topology const & topo,
+	    configuration::Configuration & conf,
+	    simulation::Simulation const & sim)
+  {
+    std::cerr << "grid properties" << std::endl;
+    grid_properties(topo, conf, sim);
+    
+    std::cerr << "grid extend" << std::endl;
+    grid_extend(topo, conf, sim);
+
+    grid_cg(topo, conf, sim);
+    
+    std::vector<int> pl;
+    
+    grid_pl(pl, sim.param().pairlist.cutoff_long,
+	    sim.param().pairlist.cutoff_short);
+
+    std::cerr << "grid done" << std::endl;
+  }
+  
+  void grid_properties(topology::Topology const & topo,
+		       configuration::Configuration & conf,
+		       simulation::Simulation const & sim)
+  {
+    cg_real_t cutoff = sim.param().pairlist.cutoff_long;
+
+    math::Vec const & K = conf.current().box(0);
+    math::Vec const & L = conf.current().box(1);
+    math::Vec const & M = conf.current().box(2);
+
+    box_x = cg_real_t(K(0));
+    box_y = cg_real_t(L(1));
+    box_z = cg_real_t(M(2));
+
+    ex_box_x = K(0) + 2.0 * cutoff;
+    ex_box_y = L(1) + 2.0 * cutoff;
+    ex_box_z = M(2) + 2.0 * cutoff;
+
+    std::cerr << "ex box: (" << ex_box_x << ", " << ex_box_y
+	      << ", " << ex_box_z << ")" << std::endl;
+
+    cg_real_t ideal_length = sim.param().pairlist.grid_size;
+    
+    dx = box_x / rint(box_x / ideal_length);
+    dy = box_y / rint(box_y / ideal_length);
+    dz = box_z / rint(box_z / ideal_length);
+  
+    Cx = int((box_x) / dx + 1);
+    Cy = int((box_y) / dy + 1);
+    Cz = int((box_z) / dz + 1);
+
+    Nx = int((box_x + 2.0 * cutoff) / dx + 1);
+    Ny = int((box_y + 2.0 * cutoff) / dy + 1);
+    Nz = int((box_z + 2.0 * cutoff) / dz + 1);
+
+    cell_num.assign(Nx * Ny * Nz, 0);
+    cell_start.resize(Nx * Ny * Nz + 1);
+
+    std::cerr << "grid: C(" << Cx << ", " << Cy << ", " << Cz << ")"
+	      << " N(" << Nx << ", " << Ny << ", " << Nz << ")"
+	      << " d(" << dx << ", " << dy << ", " << dz << ")"
+	      << std::endl;
+
+    cg_shift_x.resize(27);
+    cg_shift_y.resize(27);
+    cg_shift_z.resize(27);
+    at_shift_x.resize(27);
+    at_shift_y.resize(27);
+    at_shift_z.resize(27);
+    
+    int c = 0;
+    
+    for(int k=-1; k<2; ++k){
+      for(int l=-1; l<2; ++l){
+	for(int m=-1; m<2; ++m){
+	    
+	  cg_shift_x[c] = cg_real_t(k*K(0) + l*L(0) + m*M(0));
+	  cg_shift_y[c] = cg_real_t(k*K(1) + l*L(1) + m*M(1));
+	  cg_shift_z[c] = cg_real_t(k*K(2) + l*L(2) + m*M(2));
+
+	  at_shift_x[c] = at_real_t(k*K(0) + l*L(0) + m*M(0));
+	  at_shift_y[c] = at_real_t(k*K(1) + l*L(1) + m*M(1));
+	  at_shift_z[c] = at_real_t(k*K(2) + l*L(2) + m*M(2));
+	    
+	  ++c;
+	}
+      }
+    }
+
+    calc_mask(cutoff, mask);
+  }
+
+  void calc_mask(cg_real_t cutoff, std::vector<int> & mask)
+  {
+    cg_real_t distx2, disty2, distz2;
+    cg_real_t cutoff2 = cutoff * cutoff;
+    cg_real_t dx2 = dx*dx, dy2 = dy*dy, dz2 = dz*dz;
+    int p = Ny * Nz;
+    int min_y, max_y;
+    int ay;
+    
+    mask.clear();
+
+    for(int x=0; true; ++x){
+
+      if (x>1)
+	distx2 = (x-1)*(x-1) * dx2;
+      else distx2 = 0.0;
+    
+      if (distx2 > cutoff2) break;
+    
+      // calculate max y
+      max_y = int(sqrt((cutoff2 - distx2) / dy2)) + 1;
+      if (x)
+	min_y = -max_y;
+      else
+	min_y = 0;
+      
+      for(int y=min_y; y<=max_y; ++y){
+	
+	ay = abs(y);
+	
+	if (ay>1)
+	  disty2 = (ay-1) * (ay-1) * dy2;
+	else disty2 = 0.0;
+	
+	if (distx2 + disty2 > cutoff2) break;
+	
+	for(int z=1; true; ++z){
+	  
+	  if (z>1)
+	    distz2 = (z-1)*(z-1) * dz2;
+	  else distz2 = 0.0;
+	  
+	  if (distx2 + disty2 + distz2 > cutoff2){
+	    
+	    int beg, end;
+	    if (x || y){
+	      beg = x*p + y*Nz - z + 1;
+	      end = x*p + y*Nz + z;
+	    }
+	    else{
+	      beg = 1;
+	      end = z;
+	    }
+	    mask.push_back(beg);
+	    mask.push_back(end);
+	    
+	    /*
+	      cout << "mask: " 
+	      << setw(3) << x << " | " << setw(3) << y << " | " << setw(3) << z
+	      << "    ( "
+	      << setw(5) << beg << " -> " << setw(5) << end 
+	      << " )" << endl;
+	    */
+	    
+	    break;
+	  }
+	  
+	} // z
+      } // y
+    } // x
+  }
+
+  // put into brick-wall rectangular box around
+  // 0.5 * (box_x+2*cutoff, box_y+2*cutoff, box_z+2*cutoff)
+  void grid_box(math::Vec & v, math::Box const & box)
+  {
+    math::Vec const & K = box(0);
+    math::Vec const & L = box(1);
+    math::Vec const & M = box(2);
+
+    double center_x = 0.5 * ex_box_x,
+      center_y = 0.5 * ex_box_y,
+      center_z = 0.5 * ex_box_z;
+
+    double dd = center_z - v(2);
+    if (fabs(dd) > 0.5 * ex_box_z){
+      v(0) += rint(dd / ex_box_z) * M(0);
+      v(1) += rint(dd / ex_box_z) * M(1);
+      v(2) += rint(dd / ex_box_z) * M(2);
+    }
+
+    dd = center_y - v(1);
+    if (fabs(dd) > 0.5 * ex_box_y){
+      v(0) += rint(dd / ex_box_y) * L(0);
+      v(1) += rint(dd / ex_box_y) * L(1);
+    }
+
+    dd = center_x - v(0);
+    if (fabs(dd) > 0.5 * ex_box_x){
+      v(0) += rint(dd / ex_box_x) * K(0);
+    }
+  }
+
+  void grid_extend(topology::Topology const & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation const & sim)
+  {
+    math::VArray &pos = conf.current().pos;
+    math::Vec v, v_box, trans;
+
+    cg_ex_index.clear();
+    cg_tmp_index.clear();
+    cg_tmp_x.clear();
+    cg_tmp_y.clear();
+    cg_tmp_z.clear();
+    cg_tmp_shift.clear();
+    cg_tmp_cell.clear();
+
+    topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
+      cg_to = topo.chargegroup_end();
+
+    // solute chargegroups...
+    int cg_index = 0;
+    int new_cg_index = 0;
+    int solute_cg = topo.num_solute_chargegroups();
+    
+    for( ; cg_it != cg_to; ++cg_it, ++cg_index){
+
+      // std::cerr << "cg " << cg_index << std::endl;
+      
+      if (cg_index < solute_cg)
+	cg_it.cog(pos, v);
+      else
+	v = pos(**cg_it);
+      
+      v_box = v;
+      grid_box(v_box, conf.current().box);
+      trans = v_box - v;
+      
+      // atoms in a chargegroup
+      // std::cerr << "moving atoms" << std::endl;
+      topology::Atom_Iterator at_it = cg_it.begin(),
+	at_to = cg_it.end();
+      for( ; at_it != at_to; ++at_it){
+	assert(pos.size() > *at_it);
+	pos(*at_it) += trans;
+      } // loop over atoms
+
+      // try extensions (bot not for k=-1)
+      for(int s=9; s<27; ++s){
+      
+	cg_real_t sx = v_box(0) + cg_shift_x[s];
+	cg_real_t sy = v_box(1) + cg_shift_y[s];
+	cg_real_t sz = v_box(2) + cg_shift_z[s];
+
+	// check if still inside
+	if (sx >= 0 && sx <= box_x &&
+	    sy >= 0 && sy <= box_y &&
+	    sz >= 0 && sz <= box_z){
+	
+	  // std::cerr << "\tshift " << s << " inside!" << std::endl;
+
+	  cg_tmp_index.push_back(cg_index);
+	  cg_ex_index.push_back(new_cg_index);
+	  cg_tmp_x.push_back(sx);
+	  cg_tmp_y.push_back(sy);
+	  cg_tmp_z.push_back(sz);
+	  cg_tmp_shift.push_back(s);
+	  
+	  // calculate grid cell
+	  int grid_index =
+	    int(sx / dx) * Ny * Nz +
+	    int(sy / dy) * Nz +
+	    int(sz / dz);
+	  cg_tmp_cell.push_back(grid_index);
+	  ++cell_num[grid_index];
+
+	  // std::cerr << "\tgrid " << grid_index << std::endl;
+
+	  ++new_cg_index;
+	}
+	else{
+	  // cerr << "outside" << endl;
+	}
+      } // shifts
+    } // loop over cg's
+
+    int cs = 0;
+    for(int i=0; i<Nx*Ny*Nz; ++i){
+      cell_start[i] = cs;
+      cs += cell_num[i];
+    }
+    cell_start[Nx*Ny*Nz] = cs;
+  }
+
+  struct cg_grid_less : std::binary_function<int, int, bool>
+  {
+    bool operator()(int const & cg1,
+		    int const & cg2)const
+    {
+      if (cg_tmp_cell[cg1] < cg_tmp_cell[cg2])
+	return true;
+      if (cg_tmp_cell[cg1] > cg_tmp_cell[cg2])
+	return false;
+      
+      return cg1 < cg2;
+    }
+  };
+
+  void grid_cg(topology::Topology const & topo,
+	       configuration::Configuration & conf,
+	       simulation::Simulation const & sim)
+  {
+    std::cerr << "grid cg" << std::endl;
+    std::sort(cg_ex_index.begin(), cg_ex_index.end(), cg_grid_less());
+
+    size_t s = cg_ex_index.size();
+
+    cg_index.resize(s);
+    cg_x.resize(s);
+    cg_y.resize(s);
+    cg_z.resize(s);
+    cg_shift.resize(s);
+    cg_cell.resize(s);
+    cg_at_start.resize(s);
+    
+    at_x.clear();
+    at_y.clear();
+    at_z.clear();
+    at_iac.clear();
+    at_q.clear();
+
+    int at_start = 0;
+
+    for(size_t i=0; i<s; ++i){
+      
+      const int ind = cg_ex_index[i];
+      
+      cg_index[i] = cg_tmp_index[ind];
+
+      cg_x[i] = cg_tmp_x[ind];
+      cg_y[i] = cg_tmp_y[ind];
+      cg_z[i] = cg_tmp_z[ind];
+
+      cg_shift[i] = cg_tmp_shift[ind];
+      cg_cell[i] = cg_tmp_cell[ind];
+
+      cg_at_start[i] = at_start;
+      
+      // and atom lists
+      int at_index = topo.chargegroup(cg_index[i]),
+	at_to = topo.chargegroup(cg_index[i]+1);
+
+      std::cerr << "cg " << cg_index[i] 
+		<< " atoms " << at_index << " - " << at_to - 1 
+		<< "\tcell " << cg_cell[i] << std::endl;
+      
+      for( ; at_index < at_to; ++at_index, ++at_start){
+	at_x.push_back(conf.current().pos(at_index)(0) 
+		       + at_shift_x[cg_shift[i]]);
+	at_y.push_back(conf.current().pos(at_index)(1)
+		       + at_shift_y[cg_shift[i]]);
+	at_z.push_back(conf.current().pos(at_index)(2)
+		       + at_shift_z[cg_shift[i]]);
+	
+	at_iac.push_back(topo.iac(at_index));
+	at_q.push_back(topo.charge(at_index));
+      }
+
+    }
+
+    size_t as = at_x.size();
+    at_fx.assign(as, 0.0);
+    at_fy.assign(as, 0.0);
+    at_fz.assign(as, 0.0);
+
+  }
+
+  void grid_pl(std::vector<int> & pl, cg_real_t cutl, cg_real_t cuts)
+  {
+    std::cerr << "grid pl" << std::endl;
+    
+    cg_real_t cutl2 = cutl * cutl;
+    cg_real_t cuts2 = cuts * cuts;
+
+    pl.clear();
+    
+    int mask_size = mask.size();
+
+    std::vector<int> lr_pl;
+
+    const int num_cg = cg_index.size();
+    
+    std::cout << "longrange pairlist" << std::endl;
+    
+    // loop over chargegroups in central computational box
+    for(int cg1 = 0; cg1 < num_cg; ++cg1){
+
+      if (cg_shift[cg1] != 13) continue;
+      const int cell = cg_cell[cg1];
+	
+      pl.push_back(cg1);
+      int range_ind = pl.size();
+      pl.push_back(0); // placeholder
+
+      lr_pl.clear();
+      lr_pl.push_back(cg1);
+      lr_pl.push_back(0); // placeholder
+	  
+      bool sr_range = false, lr_range = false;
+	    
+      for(int m=0; m<mask_size; m+=2){
+	
+	int cg2 = cell_start[cell + mask[m]];
+	int cg2_end = cell_start[cell + mask[m+1]];
+	
+	for( ; cg2 < cg2_end; ++cg2){
+	  
+	  cg_real_t dist2 = 0.0;
+	  cg_real_t dd = cg_x[cg1] - cg_x[cg2];
+	  dist2 += dd * dd;
+	  dd = cg_y[cg1] - cg_y[cg2];
+	  dist2 += dd * dd;
+	  dd = cg_z[cg1] - cg_z[cg2];
+	  dist2 += dd * dd;
+	  
+	  if (dist2 > cutl2){
+	    if (lr_range){
+	      lr_pl.push_back(cg_at_start[cg2]);
+	    }
+	    if (sr_range){
+	      pl.push_back(cg_at_start[cg2]);
+	    }
+	  }
+	  else if (dist2 > cuts2){
+	    if (lr_range) continue;
+	    if (sr_range){
+	      pl.push_back(cg_at_start[cg2]);
+	      sr_range = false;
+	    }
+	    lr_pl.push_back(cg_at_start[cg2]);
+	    lr_range = true;
+	  }
+	  else{
+	    if (sr_range) continue;
+	    if (lr_range){
+	      lr_pl.push_back(cg_at_start[cg2]);
+	      lr_range = false;
+	    }
+	    pl.push_back(cg_at_start[cg2]);
+	    sr_range = true;
+	  }
+	  
+	} // cg2 range
+      } // mask
+
+      lr_pl[1] = (lr_pl.size() - 2) / 2;
+      grid_print_pl(lr_pl);
+      
+      pl[range_ind] = (pl.size() - range_ind - 1) / 2;
+      
+    } // central cg's (cg1)
+
+    std::cout << "shortrange pairlist" << std::endl;
+    grid_print_pl(pl);
+	    
+  } // cg_pl()
+
+  
+  void grid_print_pl(std::vector<int> const & pl)
+  {
+    size_t i = 0;
+    
+    while(i < pl.size() - 2){
+
+      std::cout << std::setw(4) << pl[i] << " : ";
+      
+      size_t i_to = i + pl[i+1] * 2 + 2;
+      i += 2;
+
+      for( ; i < i_to; i += 2){
+	std::cout << std::setw(4) << pl[i] << " - " << std::setw(4) << pl[i+1] << "  ";
+      }
+      std::cout << "\n";
+    }
+  }
+
+} // interaction
