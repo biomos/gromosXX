@@ -676,21 +676,21 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - grid false
+       * - grid 0
        * - skip_step 5
        * - cutoff_short 0.8
        * - cutoff_long 1.4
        * - grid_size 0.4
        * - atomic_cutoff false
        */
-      plist_struct() : grid(false), skip_step(5), cutoff_short(0.8),
+      plist_struct() : grid(0), skip_step(5), cutoff_short(0.8),
 		       cutoff_long(1.4), grid_size(0.4),
 		       atomic_cutoff(false), print(false) {}
       
       /**
        * algorithm.
        */
-      bool grid;
+      int grid;
       /**
        * skip step
        */
@@ -860,9 +860,12 @@ namespace simulation
        * - dlamt 0
        * - scaling false
        * - scaled_only false
+       * - soft_lj false
+       * - soft_crf false
        */
       perturb_struct() : perturbation(false), lambda(0), lambda_exponent(1),
-			 dlamt(0), scaling(false), scaled_only(false) {}
+			 dlamt(0), scaling(false), scaled_only(false),
+			 soft_vdw(false), soft_crf(false) {}
       
       /**
        * perturbation?
@@ -888,6 +891,14 @@ namespace simulation
        * perturb only scaled interactions.
        */
       bool scaled_only;
+      /**
+       * soft van der Waals interaction
+       */
+      bool soft_vdw;
+      /**
+       * soft crf interaction
+       */
+      bool soft_crf;
       
     } /** Perturbation parameters */ perturbation;
 
@@ -986,14 +997,19 @@ namespace simulation
        * Constructor
        * Default values:
        * - rottrans false
+       * - last 0
        */
-      rottrans_struct() : rottrans(false)
+      rottrans_struct() : rottrans(false), last(0)
       {
       }
       /**
        * apply rotational translational constraints?
        */
       bool rottrans;
+      /**
+       * last atom to be roto-translationally constrained
+       */
+      int last;
     } /** rottrans parameters */ rottrans;
 
     /**
