@@ -1002,6 +1002,9 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
     param.perturbation.scaling = false;
     param.perturbation.scaled_only = false;
     
+    if (alpha_lj > 0.0) param.perturbation.soft_vdw = true;
+    if (alpha_crf > 0.0) param.perturbation.soft_crf = true;
+
     if (_lineStream.fail())
       io::messages.add("bad line in PERTURB block",
 		       "In_Parameter", io::message::error);
@@ -1016,10 +1019,20 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
 
     param.perturbation.perturbation=(ntg!=0);
     
-    if (param.perturbation.perturbation && (alpha_lj || alpha_crf)){
+    if (param.perturbation.perturbation &&
+	(param.perturbation.soft_vdw || param.perturbation.soft_crf)){
       io::messages.add("PERTURB: softness constants taken from topology!",
 		       "In_Parameter", io::message::notice);
     }
+    if (param.perturbation.perturbation && param.perturbation.soft_vdw){
+      io::messages.add("PERTURB: lj softness set to 0 (overruling topology)",
+		       "In_Parameter", io::message::notice);
+    }
+    if (param.perturbation.perturbation && param.perturbation.soft_crf){
+      io::messages.add("PERTURB: crf softness set to 0 (overruling topology)",
+		       "In_Parameter", io::message::notice);
+    }
+    
   }
   
   if (param.perturbation.lambda_exponent<=0){
@@ -1493,9 +1506,10 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param,
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
     std::transform(s3.begin(), s3.end(), s3.begin(), tolower);
-    
-    if (s1 == "grid") param.pairlist.grid = true;
-    else if (s1 == "standard") param.pairlist.grid = false;
+
+    if (s1 == "grid") param.pairlist.grid = 1;    
+    else if (s1 == "vgrid") param.pairlist.grid = 2;
+    else if (s1 == "standard") param.pairlist.grid = 0;
     else{
       io::messages.add("wrong pairlist algorithm chosen (allowed: standard, grid) in PLIST03 block",
 		       "In_Parameter", io::message::error);
@@ -2022,7 +2036,7 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> i;
+    _lineStream >> i >> param.rottrans.last;
     
     if (_lineStream.fail())
       io::messages.add("bad line in ROTTRANS block",
@@ -2030,8 +2044,10 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param,
 
     param.rottrans.rottrans = (i != 0);
 
+    if (param.rottrans.rottrans && param.rottrans.last <= 0)
+      io::messages.add("last atom <= 0 in ROTTRANS block not allowed",
+		       "In_Parameter", io::message::error);
   }
-  
 }
 
 /**
