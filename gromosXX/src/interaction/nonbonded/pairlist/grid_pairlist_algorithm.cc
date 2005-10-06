@@ -85,19 +85,23 @@ int interaction::Grid_Pairlist_Algorithm::init
   grid_properties(topo, conf, sim);
 
   if (!quiet){
-    std::cout << "GridPairlistAlgorithm\n"
-	      << "\tcells             " 
-	      << std::setw(10) << m_grid.Na
-	      << std::setw(10) << m_grid.Nb
-	      << std::setw(10) << m_grid.Nc << "\n"
-	      << "\textenced cells    "
-	      << std::setw(10) << m_grid.Na_ex
-	      << std::setw(10) << m_grid.Nb_ex
-	      << std::setw(10) << m_grid.Nc_ex << "\n"
-	      << "\tcell size         "
-	      << std::setw(10) << m_grid.a
-	      << std::setw(10) << m_grid.b
-	      << std::setw(10) << m_grid.c << "\n";
+    
+    os.precision(4);
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    
+    os << "GridPairlistAlgorithm\n"
+       << "\tcells             " 
+       << std::setw(10) << m_grid.Na
+       << std::setw(10) << m_grid.Nb
+       << std::setw(10) << m_grid.Nc << "\n"
+       << "\textenced cells    "
+       << std::setw(10) << m_grid.Na_ex
+       << std::setw(10) << m_grid.Nb_ex
+       << std::setw(10) << m_grid.Nc_ex << "\n"
+       << "\tcell size         "
+       << std::setw(10) << m_grid.a
+       << std::setw(10) << m_grid.b
+       << std::setw(10) << m_grid.c << "\n";
 
     const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
     const int N = m_grid.Na * m_grid.Nb;
@@ -112,8 +116,8 @@ int interaction::Grid_Pairlist_Algorithm::init
     const double Pcell = P / Ncell;
     const double Player = P / m_grid.Nc;
     
-    std::cout << "\tparticles / cell    " << std::setw(10) << Pcell << "\n"
-	      << "\tparticles / layer   " << std::setw(10) << Player << "\n";
+    os << "\tparticles / cell    " << std::setw(10) << Pcell << "\n"
+       << "\tparticles / layer   " << std::setw(10) << Player << "\n";
 
     // mask size:
     int Nmask = 0;
@@ -123,14 +127,14 @@ int interaction::Grid_Pairlist_Algorithm::init
       }
     }
     
-    std::cout << "\tcells in mask       " << std::setw(10) << Nmask << "\n"
-	      << "\tpairs               " << std::setw(10) << 0.5 * P * P << "\n"
-	      << "\tpairs (grid)        " << std::setw(10) << P * Nmask * Pcell << "\n"
-	      << "\tpairs (cutoff)      " << std::setw(10) << 0.5 * P * Pcut << "\n";
+    os << "\tcells in mask       " << std::setw(10) << Nmask << "\n"
+       << "\tpairs               " << std::setw(10) << 0.5 * P * P << "\n"
+       << "\tpairs (grid)        " << std::setw(10) << P * Nmask * Pcell << "\n"
+       << "\tpairs (cutoff)      " << std::setw(10) << 0.5 * P * Pcut << "\n";
 
     // just for fun, already try this
     if (prepare_grid(topo, conf, sim)){
-      std::cout << "\terror during grid preparation!\n";
+      os << "\terror during grid preparation!\n";
       io::messages.add("Grid_Pairlist_Algorithm",
 		       "error during grid preparation",
 		       io::message::error);
@@ -146,13 +150,14 @@ int interaction::Grid_Pairlist_Algorithm::init
       }
     }
 
-    std::cout << "\toccupied            " << std::setw(10) << occupied << "\n"
-	      << "\tparticle / occ cell " << std::setw(10) << double(P) / occupied << "\n";
-    
+    if (!quiet){
+      os << "\toccupied            " << std::setw(10) << occupied << "\n"
+	 << "\tparticle / occ cell " << std::setw(10) << double(P) / occupied << "\n";
+      
+      // print_mask();
 
-    // print_mask();
-
-    std::cout << "END\n";
+      // os << "END\n";
+    }
   }
 
   return 0;

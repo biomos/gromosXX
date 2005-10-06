@@ -31,6 +31,8 @@
 
 #include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 
+#include <interaction/nonbonded/vector/vgrid.h>
+
 #include <util/debug.h>
 
 #ifdef OMP
@@ -108,25 +110,30 @@ calculate_interactions(topology::Topology & topo,
   }
   else{ // no MULTICELL
     
-    // shared memory do this only once
-    if (m_pairlist_algorithm->prepare(topo, conf, sim))
-      return 1;
-    
-    // have to do all from here (probably it's only one,
-    // but then maybe it's clearer like it is...)
-    for(int i=0; i < m_set_size; ++i){
-      m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
+    if (sim.param().pairlist.grid == 2){
+      grid(topo, conf, sim, parameter());
     }
-  }
-  
-  DEBUG(6, "sets are done, adding things up...");
-  store_set_data(topo, conf, sim);
-
-  DEBUG(7, "print pairlist...");
-  if (sim.param().pairlist.print &&
-      (!(sim.steps() % sim.param().pairlist.skip_step))){
-
-    print_pairlist(topo, conf, sim);
+    else{
+      // shared memory do this only once
+      if (m_pairlist_algorithm->prepare(topo, conf, sim))
+	return 1;
+      
+      // have to do all from here (probably it's only one,
+      // but then maybe it's clearer like it is...)
+      for(int i=0; i < m_set_size; ++i){
+	m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
+      }
+    }
+    
+    DEBUG(6, "sets are done, adding things up...");
+    store_set_data(topo, conf, sim);
+    
+    DEBUG(7, "print pairlist...");
+    if (sim.param().pairlist.print &&
+	(!(sim.steps() % sim.param().pairlist.skip_step))){
+      
+      print_pairlist(topo, conf, sim);
+    }
   }
   
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
@@ -217,14 +224,20 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   std::vector<Nonbonded_Set *>::iterator
     it = m_nonbonded_set.begin(),
     to = m_nonbonded_set.end();
-  
+
+  bool q = quiet;
   for( ; it != to; ++it){
     if (sim.param().multicell.multicell)
       (*it)->init(topo.multicell_topo(), conf, sim, os, quiet);
     else
-      (*it)->init(topo, conf, sim, os, quiet);
+      (*it)->init(topo, conf, sim, os, q);
+    // only print first time...
+    q = true;
   }
 
+  if (!quiet)
+    os << "\n";
+  
   check_spc_loop(topo, conf, sim, os, quiet);
   DEBUG(9, "nonbonded init done");
   return 0;

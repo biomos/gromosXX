@@ -223,7 +223,7 @@ int interaction::Nonbonded_Set
 
     if (!quiet)
       os << "\n\testimated pairlist size (per atom) : "
-	 << pairs << "\n\n";
+	 << pairs << "\n";
     
     for(int i=0; i<num_atoms; ++i)
       pairlist()[i].reserve(pairs);
