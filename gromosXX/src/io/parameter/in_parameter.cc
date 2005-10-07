@@ -1735,10 +1735,35 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
     
     // now the ranges
     _lineStream >> num;
-    
+
+    if (param.multibath.multibath.size() == 0 &&
+	num > 0){
+      
+      io::messages.add("Multibath: no baths but coupling groups specified",
+		       "In_Parameter", io::message::error);
+      num = 0;
+    }
+
     for(int i=0; i<num; ++i){
       _lineStream >> last >> com_bath >> ir_bath;
       // let it figure out the last molecule on its own
+      
+      if (last < 1 || com_bath < 1 || ir_bath < 1){
+	io::messages.add("bad line in MULTIBATH block: range parameter < 1",
+			 "In_Parameter", io::message::error);
+	if (last < 1) last = 1;
+	if (com_bath < 1) com_bath = 1;
+	if (ir_bath < 1) ir_bath = 1;
+      }
+
+      if (com_bath > param.multibath.multibath.size() ||
+	  ir_bath > param.multibath.multibath.size()){
+	io::messages.add("bad line in MULTIBATH block: ir bath or com bath index too large",
+			 "In_Parameter", io::message::error);
+	if (com_bath > param.multibath.multibath.size()) com_bath = param.multibath.multibath.size();
+	if (ir_bath > param.multibath.multibath.size()) ir_bath = param.multibath.multibath.size();
+      }
+
       param.multibath.multibath.add_bath_index(last - 1, 0, com_bath - 1, ir_bath - 1);
     }
     
