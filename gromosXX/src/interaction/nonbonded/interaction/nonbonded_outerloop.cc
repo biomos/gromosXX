@@ -186,6 +186,63 @@ void interaction::Nonbonded_Outerloop
 
 /**
  * helper function to calculate the forces and energies from the
+ * 1,4 interactions.
+ */
+void interaction::Nonbonded_Outerloop
+::cg_exclusions_outerloop(topology::Topology & topo,
+			  configuration::Configuration & conf,
+			  simulation::Simulation & sim,
+			  Storage & storage)
+{
+  SPLIT_INNERLOOP(_cg_exclusions_outerloop, topo, conf, sim, storage);
+}
+
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_cg_exclusions_outerloop(topology::Topology & topo,
+			  configuration::Configuration & conf,
+			  simulation::Simulation & sim,
+			  Storage & storage)
+{
+  DEBUG(7, "\tcalculate 1,4-interactions");
+
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+  innerloop.init(sim);
+  
+  std::set<int>::const_iterator cg2_it, cg2_to;
+
+  for(unsigned int cg1=0; cg1<topo.num_solute_chargegroups(); ++cg1){
+    
+    cg2_it = topo.chargegroup_exclusion(cg1).begin();
+    cg2_to = topo.chargegroup_exclusion(cg1).end();
+    
+    for( ; cg2_it != cg2_to; ++cg2_it){
+
+      // only once...
+      if (cg1 > (unsigned) *cg2_it) continue;
+      
+      for(int a1 = topo.chargegroup(cg1); a1 < topo.chargegroup(cg1 + 1); ++a1){
+	for(int a2 = topo.chargegroup(*cg2_it); a2 < topo.chargegroup(*cg2_it + 1); ++a2){
+	  
+	  if (a1 == a2) continue;
+	  
+	  if (topo.exclusion(a1).find(a2) != topo.exclusion(a1).end()) continue;
+	  
+	  if (topo.one_four_pair(a1).find(a2) != topo.one_four_pair(a1).end())
+	    innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, periodicity);
+	  else
+	    innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	} // atoms of cg 2
+      } // atoms of cg 1
+
+    } // cg 2 (excluded from cg 1)
+  } // solute cg's
+}  
+
+
+/**
+ * helper function to calculate the forces and energies from the
  * RF contribution of excluded atoms and self term
  */
 void interaction::Nonbonded_Outerloop

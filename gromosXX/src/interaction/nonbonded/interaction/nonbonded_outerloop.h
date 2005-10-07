@@ -46,6 +46,11 @@ namespace interaction
 			  Pairlist const & pairlist,
 			  Storage & storage);
 
+    void cg_exclusions_outerloop(topology::Topology & topo,
+				 configuration::Configuration & conf,
+				 simulation::Simulation & sim,
+				 Storage & storage);
+
     /**
      * calculate the 1,4-interactions.
      */
@@ -101,6 +106,12 @@ namespace interaction
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
 			     Storage & storage);
+
+    template<typename t_interaction_spec>
+    void _cg_exclusions_outerloop(topology::Topology & topo,
+				  configuration::Configuration & conf,
+				  simulation::Simulation & sim,
+				  Storage & storage);
 
     template<typename t_interaction_spec>
     void _RF_excluded_outerloop(topology::Topology & topo,

@@ -35,8 +35,10 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/interaction/perturbed_nonbonded_innerloop.cc \
 				nonbonded/interaction/perturbed_nonbonded_outerloop.h \
 				nonbonded/interaction/perturbed_nonbonded_pair.h \
+				nonbonded/interaction/nonbonded_set_interface.h \
 				nonbonded/interaction/nonbonded_set.h \
 				nonbonded/interaction/perturbed_nonbonded_set.h \
+				nonbonded/interaction/vgrid_nonbonded_set.h \
 				nonbonded/interaction/nonbonded_interaction.h \
 				nonbonded/interaction/omp_nonbonded_interaction.h \
 				nonbonded/interaction/mpi_nonbonded_master.h \
@@ -46,6 +48,7 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/pairlist/pairlist_algorithm.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.h \
 				nonbonded/pairlist/grid_pairlist_algorithm.h \
+				nonbonded/pairlist/vgrid_pairlist_algorithm.h \
 				special/create_special.h \
 				special/position_restraint_interaction.h \
 				special/distance_restraint_interaction.h \
@@ -65,14 +68,16 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				nonbonded/create_nonbonded.cc \
 				nonbonded/pairlist/pairlist.cc \
 				nonbonded/pairlist/standard_pairlist_algorithm.cc \
+				nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc \
 				nonbonded/pairlist/grid.cc \
 				nonbonded/pairlist/grid_pairlist_algorithm.cc \
-				nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc \
+				nonbonded/pairlist/vgrid_pairlist_algorithm.cc \
 				nonbonded/interaction/nonbonded_interaction.cc \
 				nonbonded/interaction/omp_nonbonded_interaction.cc \
 				nonbonded/interaction/mpi_nonbonded_master.cc \
 				nonbonded/interaction/mpi_nonbonded_slave.cc \
 				nonbonded/interaction/nonbonded_set.cc \
+				nonbonded/interaction/vgrid_nonbonded_set.cc \
 				nonbonded/interaction/nonbonded_outerloop.cc \
 				nonbonded/interaction/perturbed_nonbonded_set.cc \
 				nonbonded/interaction/perturbed_nonbonded_outerloop.cc \

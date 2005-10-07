@@ -46,6 +46,13 @@ namespace interaction
 				       simulation::Simulation & sim);
 
     /**
+     * store results in configuration
+     */
+    virtual int update_configuration(topology::Topology const & topo,
+				     configuration::Configuration & conf,
+				     simulation::Simulation const & sim);
+
+    /**
      * calculate the hessian for a given atom.
      */
     virtual int calculate_hessian(topology::Topology & topo,

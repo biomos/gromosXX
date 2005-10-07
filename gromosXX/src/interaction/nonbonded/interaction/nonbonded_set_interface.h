@@ -5,33 +5,51 @@
  * perturbed and non-perturbed.
  */
 
-#ifndef INCLUDED_NONBONDED_SET_H
-#define INCLUDED_NONBONDED_SET_H
+#ifndef INCLUDED_NONBONDED_SET_INTERFACE_H
+#define INCLUDED_NONBONDED_SET_INTERFACE_H
 
 #include "pairlist.h"
-#include "storage.h"
-#include "nonbonded_outerloop.h"
-#include "nonbonded_set_interface.h"
+// #include "storage.h"
+// #include "nonbonded_outerloop.h"
+
+namespace topology
+{
+  class Topology;
+}
+namespace configuration
+{
+  class Configuration;
+}
+namespace simulation
+{
+  class Simulation;
+}
 
 namespace interaction
 {
+  class Pairlist_Algorithm;
+  class Nonbonded_Parameter;
+  
   /**
-   * @class Nonbonded_Set
-   * calculates the nonbonded interactions.
+   * @class Nonbonded_Set_Interface
    */
-  class Nonbonded_Set : public Nonbonded_Set_Interface
+  class Nonbonded_Set_Interface
   {
   public:    
     /**
      * Constructor.
      */
-    Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
-		  int rank, int num_threads);
-    
+    Nonbonded_Set_Interface(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
+			    int rank, int num_threads)
+      : m_pairlist_alg(pairlist_alg), 
+	m_rank(rank),
+	m_num_threads(num_threads)
+    {}
+
     /**
      * Destructor
      */
-    virtual ~Nonbonded_Set() {}
+    virtual ~Nonbonded_Set_Interface() {}
     
     /**
      * initialize some things
@@ -40,34 +58,30 @@ namespace interaction
 		     configuration::Configuration const & conf,
 		     simulation::Simulation const & sim,
 		     std::ostream & os = std::cout,
-		     bool quiet = false);
+		     bool quiet = false) = 0;
     
     /**
      * calculate the interactions.
      */
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
-				       simulation::Simulation & sim);
+				       simulation::Simulation & sim) = 0;
 
-    /**
-     * store results in configuration
-     */
     virtual int update_configuration(topology::Topology const & topo,
 				     configuration::Configuration & conf,
-				     simulation::Simulation const & sim);
-    
+				     simulation::Simulation const & sim) = 0;
 
     /**
      * calculate the interaction for a given atom pair.
      * SLOW! as it has to create the periodicity...
      */
     virtual int calculate_interaction(topology::Topology & topo,
-			      configuration::Configuration & conf,
-			      simulation::Simulation & sim,
-			      unsigned int atom_i, unsigned int atom_j,
-			      math::Vec & force, 
-			      double &e_lj, double &e_crf);
-
+				      configuration::Configuration & conf,
+				      simulation::Simulation & sim,
+				      unsigned int atom_i, unsigned int atom_j,
+				      math::Vec & force, 
+				      double &e_lj, double &e_crf) = 0;
+    
     /**
      * calculate the hessian for a given atom.
      */
@@ -75,27 +89,41 @@ namespace interaction
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
 				  unsigned int atom_i, unsigned int atom_j,
-				  math::Matrix & hessian);
+				  math::Matrix & hessian) = 0;
 
-    Storage & shortrange_storage()
-    {
+    /*
+      Storage & shortrange_storage()
+      {
       return m_shortrange_storage;
-    }
-    Storage & longrange_storage()
-    {
+      }
+      Storage & longrange_storage()
+      {
       return m_longrange_storage;
-    }
-    
+      }
+    */
+
     Pairlist & pairlist() { return m_pairlist; }
     Pairlist const & pairlist()const { return m_pairlist; }
 
   protected:
-    Storage m_shortrange_storage;
-    Storage m_longrange_storage;
+    Pairlist_Algorithm & m_pairlist_alg;
+    
+    // Storage m_shortrange_storage;
+    // Storage m_longrange_storage;
 
     Pairlist m_pairlist;
 
-    Nonbonded_Outerloop m_outerloop;
+    // Nonbonded_Outerloop m_outerloop;
+
+    /**
+     * OpenMP / MPI rank of thread running this set
+     */
+    int m_rank;
+    /**
+     * total number of OpenMP / MPI threads
+     */
+    int m_num_threads;
+
   };
   
 } // interaction

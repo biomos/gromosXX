@@ -299,7 +299,6 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_shift
   
 }
 
-
 template<typename t_nonbonded_spec>
 void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_innerloop
 (
@@ -487,7 +486,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
  )
 {
   math::Vec r;
-  double x[4], y[4], z[4], r2[4], r2i[4], ri[4], ff[4], tx, ty, tz, fx, fy, fz, rx, ry, rz;
+  double x[4], y[4], z[4], r2[4], r2i[4], ri[4], ff[4], tx, ty, tz, fx, fy, fz;
+  // , rx, ry, rz;
 
   // only one energy group
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());

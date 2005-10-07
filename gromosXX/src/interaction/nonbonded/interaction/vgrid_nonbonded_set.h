@@ -1,12 +1,12 @@
 /**
- * @file nonbonded_set.h
+ * @file vgrid_nonbonded_set.h
  * the non bonded interactions for a set of atoms:
  * Lennard-Jones and Coulomb interactions
  * perturbed and non-perturbed.
  */
 
-#ifndef INCLUDED_NONBONDED_SET_H
-#define INCLUDED_NONBONDED_SET_H
+#ifndef INCLUDED_VGRID_NONBONDED_SET_H
+#define INCLUDED_VGRID_NONBONDED_SET_H
 
 #include "pairlist.h"
 #include "storage.h"
@@ -16,22 +16,22 @@
 namespace interaction
 {
   /**
-   * @class Nonbonded_Set
+   * @class VGrid_Nonbonded_Set
    * calculates the nonbonded interactions.
    */
-  class Nonbonded_Set : public Nonbonded_Set_Interface
+  class VGrid_Nonbonded_Set : public Nonbonded_Set_Interface
   {
   public:    
     /**
      * Constructor.
      */
-    Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
-		  int rank, int num_threads);
+    VGrid_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
+			int rank, int num_threads);
     
     /**
      * Destructor
      */
-    virtual ~Nonbonded_Set() {}
+    virtual ~VGrid_Nonbonded_Set() {}
     
     /**
      * initialize some things
@@ -77,19 +77,11 @@ namespace interaction
 				  unsigned int atom_i, unsigned int atom_j,
 				  math::Matrix & hessian);
 
-    Storage & shortrange_storage()
-    {
-      return m_shortrange_storage;
-    }
-    Storage & longrange_storage()
-    {
-      return m_longrange_storage;
-    }
-    
     Pairlist & pairlist() { return m_pairlist; }
     Pairlist const & pairlist()const { return m_pairlist; }
 
   protected:
+    // not really needed. think of a better organization
     Storage m_shortrange_storage;
     Storage m_longrange_storage;
 

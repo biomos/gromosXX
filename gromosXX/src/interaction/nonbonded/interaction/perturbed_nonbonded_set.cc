@@ -251,6 +251,39 @@ int interaction::Perturbed_Nonbonded_Set
   return 0;
 }
 
+int interaction::Perturbed_Nonbonded_Set::update_configuration
+(
+ topology::Topology const & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation const & sim)
+{
+  const int ljs = conf.current().energies.lj_energy.size();
+  configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
+
+  Nonbonded_Set::update_configuration(topo, conf, sim);
+	
+  for(int i = 0; i < ljs; ++i){
+    for(int j = 0; j < ljs; ++j){
+      
+      assert(pe.lj_energy.size() > unsigned(i));
+      assert(pe.lj_energy[i].size() > unsigned(j));
+
+      assert(m_shortrange_storage.perturbed_energy_derivatives.
+	     lj_energy.size() > unsigned(i));
+      assert(m_shortrange_storage.perturbed_energy_derivatives.
+	     lj_energy[i].size() > (unsigned(j)));
+	  
+      pe.lj_energy[i][j] += 
+	m_shortrange_storage.perturbed_energy_derivatives.
+	lj_energy[i][j];
+      pe.crf_energy[i][j] += 
+	m_shortrange_storage.perturbed_energy_derivatives.
+	crf_energy[i][j];
+    }
+  }
+  return 0;
+}
+
 /**
  * calculate the hessian for a given atom.
  * this will be VERY SLOW !

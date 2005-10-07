@@ -22,6 +22,7 @@
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/vgrid_pairlist_algorithm.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
 #include <interaction/nonbonded/interaction/nonbonded_set.h>
@@ -61,12 +62,16 @@ int interaction::create_g96_nonbonded
   if (sim.param().force.nonbonded == 0) return 0;
   
   if(!quiet){
-    if (!sim.param().pairlist.grid)
-      os << "\t" << setw(20) << left << "PairlistAlgorithm" << setw(30) 
-	   << left << "Standard_Pairlist_Algorithm" << right << "\n";
-    else{
-      os << "\t" << setw(20) << left << "PairlistAlgorithm" << setw(30) 
-	   << left << "Grid_Pairlist_Algorithm" << right << "\n";
+    if (sim.param().pairlist.grid == 0)
+      os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
+	   << left << "Standard Pairlist Algorithm" << right << "\n";
+    else if (sim.param().pairlist.grid == 1){
+      os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
+	   << left << "Grid Pairlist Algorithm" << right << "\n";
+    }
+    else if (sim.param().pairlist.grid == 2){
+      os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
+	   << left << "Vector Grid Pairlist Algorithm" << right << "\n";
     }
     
     if (sim.param().pairlist.atomic_cutoff)
@@ -128,11 +133,14 @@ int interaction::create_g96_nonbonded
   }
   
   Pairlist_Algorithm * pa;
-  if (!sim.param().pairlist.grid){
+  if (sim.param().pairlist.grid == 0){
     pa = new Standard_Pairlist_Algorithm();
   }
-  else{
+  else if (sim.param().pairlist.grid == 1){
     pa = new Grid_Pairlist_Algorithm();
+  }
+  else if (sim.param().pairlist.grid == 2){
+    pa = new VGrid_Pairlist_Algorithm();
   }
   
 #if defined(OMP)

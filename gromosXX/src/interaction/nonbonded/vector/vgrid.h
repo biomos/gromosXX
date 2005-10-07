@@ -23,10 +23,14 @@ namespace interaction
 {
   class Nonbonded_Parameter;
   
-  void grid(topology::Topology const & topo,
-	    configuration::Configuration & conf,
-	    simulation::Simulation const & sim,
-	    Nonbonded_Parameter & param);
+  void grid_prepare(topology::Topology const & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation const & sim,
+		    Nonbonded_Parameter & param);
+
+  void grid_update(topology::Topology const & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation const & sim);
   
 } // interaction
 

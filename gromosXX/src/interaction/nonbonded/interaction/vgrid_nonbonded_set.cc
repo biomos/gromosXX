@@ -1,5 +1,5 @@
 /**
- * @file nonbonded_set.cc
+ * @file vgrid_nonbonded_set.cc
  */
 
 #include <stdheader.h>
@@ -21,7 +21,7 @@
 #include <math/periodicity.h>
 #include <math/volume.h>
 
-#include <interaction/nonbonded/interaction/nonbonded_set.h>
+#include <interaction/nonbonded/interaction/vgrid_nonbonded_set.h>
 
 #include <util/debug.h>
 
@@ -33,9 +33,9 @@
 /**
  * Constructor.
  */
-interaction::Nonbonded_Set
-::Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
-		int rank, int num_threads)
+interaction::VGrid_Nonbonded_Set
+::VGrid_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
+		      int rank, int num_threads)
   : Nonbonded_Set_Interface(pairlist_alg, param, rank, num_threads),
     m_outerloop(param)
 {
@@ -44,65 +44,67 @@ interaction::Nonbonded_Set
 /**
  * calculate nonbonded forces and energies.
  */
-int interaction::Nonbonded_Set
+int interaction::VGrid_Nonbonded_Set
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim)
 {
-  DEBUG(4, "Nonbonded_Set::calculate_interactions");
+  DEBUG(4, "VGrid_Nonbonded_Set::calculate_interactions");
   
   // zero forces, energies, virial...
   m_shortrange_storage.zero();
 
   // need to update pairlist?
-  if(!(sim.steps() % sim.param().pairlist.skip_step)){
-    DEBUG(6, "\tdoing longrange...");
+  // if(!(sim.steps() % sim.param().pairlist.skip_step)){
+  // DEBUG(6, "\tdoing longrange...");
     
-    //====================
-    // create a pairlist
-    //====================
-    
-    // zero the longrange forces, energies, virial
-    m_longrange_storage.zero();
+  //====================
+  // create a pairlist
+  //====================
+  
+  // zero the longrange forces, energies, virial
+  // m_longrange_storage.zero();
+  
+  // parallelisation using STRIDE:
+  // chargegroup based pairlist can only use this one!!!!
+  // TODO:
+  // move decision to pairlist!!!
 
-    // parallelisation using STRIDE:
-    // chargegroup based pairlist can only use this one!!!!
-    // TODO:
-    // move decision to pairlist!!!
-    m_pairlist_alg.update(topo, conf, sim, 
-			  longrange_storage(), pairlist(),
-			  m_rank, topo.num_atoms(), m_num_threads);
-
-    /*
+  m_pairlist_alg.update(topo, conf, sim, 
+			m_longrange_storage, pairlist(),
+			m_rank, topo.num_atoms(), m_num_threads);
+  
+  /*
     sleep(2*tid);
     
     std::cout << "PRINTING OUT THE PAIRLIST\n\n";
     for(unsigned int i=0; i<100; ++i){
-      if (i >= pairlist().size()) break;
-
-      std::cout << "\n\n--------------------------------------------------";
-      std::cout << "\n" << i;
-      for(unsigned int j=0; j<pairlist()[i].size(); ++j){
-
-	if (j % 10 == 0) std::cout << "\n\t";
-	std::cout << std::setw(7) << pairlist()[i][j];
-      }
+    if (i >= pairlist().size()) break;
+    
+    std::cout << "\n\n--------------------------------------------------";
+    std::cout << "\n" << i;
+    for(unsigned int j=0; j<pairlist()[i].size(); ++j){
+    
+    if (j % 10 == 0) std::cout << "\n\t";
+    std::cout << std::setw(7) << pairlist()[i][j];
     }
-    */
-  }
+    }
+  */
+  // }
 
   // calculate forces / energies
-  DEBUG(6, "\tshort range interactions");
+  // DEBUG(6, "\tshort range interactions");
 
   //  double shortrange_start = now();
 
-  m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			       m_pairlist, m_shortrange_storage);
+  // m_outerloop.lj_crf_outerloop(topo, conf, sim,
+  // m_pairlist, m_shortrange_storage);
   
   // add 1,4 - interactions
   if (m_rank == 0){
-    DEBUG(6, "\t1,4 - interactions");
-    m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
+    DEBUG(6, "\tcg - interactions");
+
+    m_outerloop.cg_exclusions_outerloop(topo, conf, sim, m_shortrange_storage);
   
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
@@ -112,42 +114,42 @@ int interaction::Nonbonded_Set
   }
   
   // add long-range force
-  DEBUG(6, "\t(set) add long range forces");
+  // DEBUG(6, "\t(set) add long range forces");
 
-  m_shortrange_storage.force += m_longrange_storage.force;
+  // m_shortrange_storage.force += m_longrange_storage.force;
   
-  // and long-range energies
-  DEBUG(6, "\t(set) add long range energies");
-  const unsigned int lj_e_size = unsigned(m_shortrange_storage.energies.lj_energy.size());
+  // and energies
+  // DEBUG(6, "\t(set) add energies");
+  // const unsigned int lj_e_size = unsigned(m_shortrange_storage.energies.lj_energy.size());
   
-  for(unsigned int i = 0; i < lj_e_size; ++i){
-    for(unsigned int j = 0; j < lj_e_size; ++j){
-      m_shortrange_storage.energies.lj_energy[i][j] += 
-	m_longrange_storage.energies.lj_energy[i][j];
-      m_shortrange_storage.energies.crf_energy[i][j] += 
-	m_longrange_storage.energies.crf_energy[i][j];
-    }
-  }
+  // for(unsigned int i = 0; i < lj_e_size; ++i){
+  // for(unsigned int j = 0; j < lj_e_size; ++j){
+  // m_shortrange_storage.energies.lj_energy[i][j] += 
+  // m_longrange_storage.energies.lj_energy[i][j];
+  // m_shortrange_storage.energies.crf_energy[i][j] += 
+  // m_longrange_storage.energies.crf_energy[i][j];
+  // }
+  // }
 
-  // add longrange virial
-  if (sim.param().pcouple.virial){
-    DEBUG(6, "\t(set) add long range virial");
-    for(unsigned int i=0; i<3; ++i){
-      for(unsigned int j=0; j<3; ++j){
-
-	DEBUG(8, "longrange virial = " << m_longrange_storage.virial_tensor(i,j)
-	      << "\tshortrange virial = " << m_shortrange_storage.virial_tensor(i,j));
-
-	m_shortrange_storage.virial_tensor(i,j) +=
-	  m_longrange_storage.virial_tensor(i,j);
-      }
-    }
-  }
+  // add virial
+  // if (sim.param().pcouple.virial){
+  // DEBUG(6, "\t(set) add virial");
+  // for(unsigned int i=0; i<3; ++i){
+  // for(unsigned int j=0; j<3; ++j){
+  // 
+  // DEBUG(8, "longrange virial = " << m_longrange_storage.virial_tensor(i,j)
+  // << "\tshortrange virial = " << m_shortrange_storage.virial_tensor(i,j));
+  // 
+  // m_shortrange_storage.virial_tensor(i,j) +=
+  // m_longrange_storage.virial_tensor(i,j);
+  // }
+  // }
+  // }
   
   return 0;
 }
 
-int interaction::Nonbonded_Set::update_configuration
+int interaction::VGrid_Nonbonded_Set::update_configuration
 (
  topology::Topology const & topo,
  configuration::Configuration & conf,
@@ -187,7 +189,7 @@ int interaction::Nonbonded_Set::update_configuration
  * calculate the interaction for a given atom pair.
  * SLOW! as it has to create the periodicity...
  */
-int interaction::Nonbonded_Set::calculate_interaction
+int interaction::VGrid_Nonbonded_Set::calculate_interaction
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -207,7 +209,7 @@ int interaction::Nonbonded_Set::calculate_interaction
  * calculate the hessian for a given atom.
  * this will be VERY SLOW !
  */
-int interaction::Nonbonded_Set
+int interaction::VGrid_Nonbonded_Set
 ::calculate_hessian(topology::Topology & topo,
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
@@ -219,7 +221,7 @@ int interaction::Nonbonded_Set
 				       m_pairlist);
 }
 
-int interaction::Nonbonded_Set
+int interaction::VGrid_Nonbonded_Set
 ::init(topology::Topology const & topo,
        configuration::Configuration const & conf,
        simulation::Simulation const & sim,
@@ -232,18 +234,18 @@ int interaction::Nonbonded_Set
   const int num_atoms = topo.num_atoms();
 
   m_shortrange_storage.force.resize(num_atoms);
-  m_longrange_storage.force.resize(num_atoms);
+  // m_longrange_storage.force.resize(num_atoms);
 
   m_shortrange_storage.energies.
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()));
-  m_longrange_storage.energies.
-    resize(unsigned(conf.current().energies.bond_energy.size()),
-	   unsigned(conf.current().energies.kinetic_energy.size()));
+  // m_longrange_storage.energies.
+  // resize(unsigned(conf.current().energies.bond_energy.size()),
+  // unsigned(conf.current().energies.kinetic_energy.size()));
   
   // and the pairlists
-  DEBUG(10, "pairlist size: " << num_atoms);
-  pairlist().resize(num_atoms);
+  // DEBUG(10, "pairlist size: " << num_atoms);
+  // pairlist().resize(num_atoms);
 
   // check if we can guess the number of pairs
   const double vol = math::volume(conf.current().box, conf.boundary_type);
@@ -259,8 +261,8 @@ int interaction::Nonbonded_Set
       os << "\n\testimated pairlist size (per atom) : "
 	 << pairs << "\n";
     
-    for(int i=0; i<num_atoms; ++i)
-      pairlist()[i].reserve(pairs);
+    // for(int i=0; i<num_atoms; ++i)
+    // pairlist()[i].reserve(pairs);
   }
   return 0;
 }

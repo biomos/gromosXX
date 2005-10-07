@@ -27,7 +27,7 @@ namespace interaction
 {
 
   class Pairlist_Algorithm;
-  class Nonbonded_Set;
+  class Nonbonded_Set_Interface;
   
   /**
    * @class Nonbonded_Interaction
@@ -171,7 +171,7 @@ namespace interaction
     /**
      * a vector of nonbonded sets
      */
-    std::vector<Nonbonded_Set *> m_nonbonded_set;
+    std::vector<Nonbonded_Set_Interface *> m_nonbonded_set;
 
     /**
      * nonbonded parameter

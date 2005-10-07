@@ -107,25 +107,26 @@ namespace interaction
 		  configuration::Configuration & conf);
 
   // the fun begins
-  void grid(topology::Topology const & topo,
-	    configuration::Configuration & conf,
-	    simulation::Simulation const & sim,
-	    Nonbonded_Parameter & param)
+  void grid_prepare(topology::Topology const & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation const & sim,
+		    Nonbonded_Parameter & param)
   {
     parameter = &param;
-
-    // need to update pairlist?
+  
     if(!(sim.steps() % sim.param().pairlist.skip_step)){
-      DEBUG(6, "\tdoing longrange...");
-
       grid_init(sim);
-    
       grid_properties(topo, conf, sim);
-      
       grid_extend(topo, conf, sim);
-
       grid_cg(topo, conf, sim);
-    
+    }
+  }
+  
+  void grid_update(topology::Topology const & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation const & sim)
+  {
+    if(!(sim.steps() % sim.param().pairlist.skip_step)){
       grid_pl(topo, 
 	      pl, sim.param().pairlist.cutoff_long,
 	      sim.param().pairlist.cutoff_short);
@@ -140,7 +141,6 @@ namespace interaction
     grid_interaction(pl);
 
     grid_store(topo, conf);
-
   }
   
   void grid_properties(topology::Topology const & topo,
