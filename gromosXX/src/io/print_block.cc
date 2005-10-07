@@ -58,8 +58,8 @@ namespace io
     for(; it!=to; ++it){
       os << std::setw(12) << it->last_atom + 1
 	 << std::setw(12) << it->last_molecule + 1
-	 << std::setw(12) << it->com_bath
-	 << std::setw(12) << it->ir_bath
+	 << std::setw(12) << it->com_bath + 1
+	 << std::setw(12) << it->ir_bath + 1
 	 << "\n";
     }
     
@@ -544,6 +544,9 @@ namespace io
 
   }
 
+  /**
+   * @TODO don't print rotation in periodic system
+   */
   void print_CENTREOFMASS(std::ostream &os, 
 			  double const ekin_trans, 
 			  double const ekin_rot)
