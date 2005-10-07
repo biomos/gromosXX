@@ -38,6 +38,8 @@ namespace interaction
   std::vector<int> cell_num;
   std::vector<int> mask;
 
+  std::vector<int> pl;
+
   std::vector<cg_real_t> cg_shift_x, cg_shift_y, cg_shift_z;
   std::vector<at_real_t> at_shift_x, at_shift_y, at_shift_z;
   
@@ -60,6 +62,7 @@ namespace interaction
   std::vector<int> at_iac;
   std::vector<at_real_t> at_q;
   std::vector<at_real_t> at_fx, at_fy, at_fz;
+  std::vector<at_real_t> at_lr_fx, at_lr_fy, at_lr_fz;
 
   // constants
   at_real_t cut3i;
@@ -96,33 +99,48 @@ namespace interaction
   
   void grid_init(simulation::Simulation const & sim);
   
+  void grid_store_lr();
+  
+  void grid_restore_lr();
+  
+  void grid_store(topology::Topology const & topo,
+		  configuration::Configuration & conf);
+
   // the fun begins
   void grid(topology::Topology const & topo,
 	    configuration::Configuration & conf,
 	    simulation::Simulation const & sim,
 	    Nonbonded_Parameter & param)
   {
-    std::cout << "vector grid nonbonded interaction!" << std::endl;
-
     parameter = &param;
 
-    grid_init(sim);
-    
-    // std::cerr << "grid properties" << std::endl;
-    grid_properties(topo, conf, sim);
-    
-    // std::cerr << "grid extend" << std::endl;
-    grid_extend(topo, conf, sim);
+    // need to update pairlist?
+    if(!(sim.steps() % sim.param().pairlist.skip_step)){
+      DEBUG(6, "\tdoing longrange...");
 
-    grid_cg(topo, conf, sim);
+      grid_init(sim);
     
-    std::vector<int> pl;
-    
-    grid_pl(topo, 
-	    pl, sim.param().pairlist.cutoff_long,
-	    sim.param().pairlist.cutoff_short);
+      grid_properties(topo, conf, sim);
+      
+      grid_extend(topo, conf, sim);
 
-    // std::cerr << "grid done" << std::endl;
+      grid_cg(topo, conf, sim);
+    
+      grid_pl(topo, 
+	      pl, sim.param().pairlist.cutoff_long,
+	      sim.param().pairlist.cutoff_short);
+      
+      grid_store_lr();
+    }
+    else{
+      grid_restore_lr();
+    }
+    
+    // short-range
+    grid_interaction(pl);
+
+    grid_store(topo, conf);
+
   }
   
   void grid_properties(topology::Topology const & topo,
@@ -610,10 +628,8 @@ namespace interaction
       
     } // central cg's (cg1)
 
-    // std::cout << "shortrange pairlist" << std::endl;
     // grid_print_pl(pl);
-    grid_interaction(pl);
-	    
+    
   } // cg_pl()
 
   
@@ -688,6 +704,7 @@ namespace interaction
 
 	  // prepare c6, c12, rx, ry, rz
 	  int nr=0;
+	  // not vectorized: dependencies (nr?)
 	  for(int at2 = at2_beg; at2 < at2_to; ++at2){
 	    c6[nr] = lj_param[at_iac[at1]][at_iac[at2]].c6;
 	    c12[nr] = lj_param[at_iac[at1]][at_iac[at2]].c12;
@@ -729,6 +746,7 @@ namespace interaction
 	  }
 
 	  nr=0;
+	  // dependencies ? (nr?)
 	  for(int at2 = at2_beg; at2 < at2_to; ++at2){
 	    at_fx[at1] += f[nr] * rx[nr];
 	    at_fx[at2] -= f[nr] * rx[nr];
@@ -745,6 +763,49 @@ namespace interaction
       } // range
     } // pairlist cg1
 
+  }
+
+  void grid_store_lr()
+  {
+    // store long-range forces
+    at_lr_fx = at_fx;
+    at_lr_fy = at_fy;
+    at_lr_fz = at_fz;
+    
+    // and energies
+    
+  }
+
+  void grid_restore_lr()
+  {
+    // set forces to the long-range forces
+    at_fx = at_lr_fx;
+    at_fy = at_lr_fy;
+    at_fz = at_lr_fz;
+
+    // and energies
+
+  }
+
+  void grid_store(topology::Topology const & topo,
+		  configuration::Configuration & conf)
+  {
+    // loop over all cg's
+    for(size_t cg = 0; cg < cg_index.size(); ++cg){
+
+      int sat = topo.chargegroup(cg_index[cg]);
+      
+      // unsupported loop structure
+      for(int at=cg_at_start[cg]; at<cg_at_start[cg+1]; ++at, ++sat){
+
+	conf.current().force(sat)(0) += at_fx[at];
+	conf.current().force(sat)(1) += at_fy[at];
+	conf.current().force(sat)(2) += at_fz[at];
+	
+	
+
+      }
+    }
   }
 
 } // interaction
