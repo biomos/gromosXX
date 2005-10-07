@@ -1683,8 +1683,8 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
     else if (alg == "nose-hoover-chains")
       param.multibath.nosehoover = 2;
     else{
-      std::stringstream ss(alg);
-      if (!(ss >> param.multibath.nosehoover) ||
+      std::stringstream s(alg);
+      if (!(s >> param.multibath.nosehoover) ||
 	  param.multibath.nosehoover < 0 || param.multibath.nosehoover > 2){
 	io::messages.add("algorithm not understood in multibath block",
 			 "In_Parameter", io::message::error);
@@ -1738,6 +1738,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
     
     for(int i=0; i<num; ++i){
       _lineStream >> last >> com_bath >> ir_bath;
+      // let it figure out the last molecule on its own
       param.multibath.multibath.add_bath_index(last - 1, 0, com_bath - 1, ir_bath - 1);
     }
     
