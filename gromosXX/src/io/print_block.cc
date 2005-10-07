@@ -158,13 +158,13 @@ namespace io
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
   
     os << std::setw(10) << "BATH"
-       << std::setw(12) << "EKIN"
-       << std::setw(12) << "EKIN-MOL"
-       << std::setw(12) << "EKIN-IR"
-       << std::setw(10) << "TEMP"
-       << std::setw(10) << "TEMP-MOL"
-       << std::setw(10) << "TEMP-IR"
-       << std::setw(10) << "SCALE"
+       << std::setw(13) << "EKIN"
+       << std::setw(13) << "EKIN-MOL-TR"
+       << std::setw(13) << "EKIN-MOL-IR"
+       << std::setw(10) << "T"
+       << std::setw(10) << "T-MOL-TR"
+       << std::setw(10) << "T-MOL-IR"
+       << std::setw(12) << "SCALE"
        << "\n";
   
     double avg_temp0 = 0, avg_tau = 0, sum_dof = 0, sum_soluc = 0,
@@ -184,11 +184,11 @@ namespace io
       const double e_kin_ir = energy.ir_kinetic_energy[i];
 
       os << std::setw(10) << i
-	 << std::setw(12) << std::setprecision(4) << std::scientific 
+	 << std::setw(13) << std::setprecision(4) << std::scientific 
 	 << e_kin
-	 << std::setw(12) 
+	 << std::setw(13) 
 	 << e_kin_com
-	 << std::setw(12) 
+	 << std::setw(13) 
 	 << e_kin_ir
 	 << std::setprecision(2) << std::fixed;
       if (it->dof == 0){
@@ -215,7 +215,7 @@ namespace io
 	  (math::k_Boltzmann * it->ir_dof);
       }
       if (it->tau != -1){
-	os << std::setw(10)
+	os << std::setw(12)
 	<< std::setprecision(7)
 	   << it->scale;
       }
@@ -249,10 +249,10 @@ namespace io
        << "---------------------------------------\n";
 
     os << std::setw(10) << "T_avg"
-       << std::setw(12) << std::setprecision(4) << std::scientific
+       << std::setw(13) << std::setprecision(4) << std::scientific
        << sum_ekin
-       << std::setw(12) << sum_com_ekin
-       << std::setw(12) << sum_ir_ekin
+       << std::setw(13) << sum_com_ekin
+       << std::setw(13) << sum_ir_ekin
 	   << std::setprecision(2) << std::fixed;
 	if (sum_dof)
        os << std::setw(10) << 2 * sum_ekin / (math::k_Boltzmann * sum_dof);
@@ -264,9 +264,9 @@ namespace io
 		os << std::setw(10) << 2 * sum_ir_ekin / (math::k_Boltzmann * sum_ir_dof);
 	else os << std::setw(10) << "-";
     if (tau_dof)
-      os << std::setw(10) << std::setprecision(7) << avg_scale / tau_dof;
+      os << std::setw(12) << std::setprecision(7) << avg_scale / tau_dof;
     else
-      os << std::setw(10) << std::right << "-";
+      os << std::setw(12) << std::right << "-";
 
     os << "\n";
     
