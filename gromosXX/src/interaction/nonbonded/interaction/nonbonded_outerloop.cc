@@ -225,14 +225,21 @@ void interaction::Nonbonded_Outerloop
       for(int a1 = topo.chargegroup(cg1); a1 < topo.chargegroup(cg1 + 1); ++a1){
 	for(int a2 = topo.chargegroup(*cg2_it); a2 < topo.chargegroup(*cg2_it + 1); ++a2){
 	  
-	  if (a1 == a2) continue;
+	  // std::cout << "cg1=" << cg1 << " cg2=" << *cg2_it 
+	  // << " a1=" << a1 << " a2=" << a2 << std::endl;
+	  
+	  if (a1 >= a2) continue;
 	  
 	  if (topo.exclusion(a1).find(a2) != topo.exclusion(a1).end()) continue;
 	  
-	  if (topo.one_four_pair(a1).find(a2) != topo.one_four_pair(a1).end())
+	  if (topo.one_four_pair(a1).find(a2) != topo.one_four_pair(a1).end()){
+	    // std::cout << "\t1,4" << std::endl;
 	    innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, periodicity);
-	  else
+	  }
+	  else{
+	    // std::cout << "\tstandard interaction" << std::endl;
 	    innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	  }
 	} // atoms of cg 2
       } // atoms of cg 1
 

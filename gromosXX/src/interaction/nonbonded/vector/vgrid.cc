@@ -11,6 +11,7 @@
 #include <configuration/configuration.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include <interaction/nonbonded/pairlist/pairlist.h>
 
 #include "vgrid.h"
 
@@ -39,6 +40,10 @@ namespace interaction
   std::vector<int> mask;
 
   std::vector<int> pl;
+  std::vector<std::vector<double> > lj_energy;
+  std::vector<std::vector<double> > crf_energy;
+  std::vector<std::vector<double> > lr_lj_energy;
+  std::vector<std::vector<double> > lr_crf_energy;
 
   std::vector<cg_real_t> cg_shift_x, cg_shift_y, cg_shift_z;
   std::vector<at_real_t> at_shift_x, at_shift_y, at_shift_z;
@@ -61,6 +66,7 @@ namespace interaction
   std::vector<at_real_t> at_x, at_y, at_z;
   std::vector<int> at_iac;
   std::vector<at_real_t> at_q;
+  std::vector<int> at_egroup;
   std::vector<at_real_t> at_fx, at_fy, at_fz;
   std::vector<at_real_t> at_lr_fx, at_lr_fy, at_lr_fz;
 
@@ -91,9 +97,12 @@ namespace interaction
 	       simulation::Simulation const & sim);
 
   void grid_pl(topology::Topology const & topo,
-	       std::vector<int> & pl, cg_real_t cutl, cg_real_t cuts);
+	       std::vector<int> & pl, cg_real_t cutl, cg_real_t cuts,
+	       bool print = false);
 
   void grid_print_pl(std::vector<int> const & pl);
+  void grid_print_pl_atomic(topology::Topology const & topo,
+			    std::vector<int> const & pl);
   
   void grid_interaction(std::vector<int> const & pl);
   
@@ -129,9 +138,13 @@ namespace interaction
     if(!(sim.steps() % sim.param().pairlist.skip_step)){
       grid_pl(topo, 
 	      pl, sim.param().pairlist.cutoff_long,
-	      sim.param().pairlist.cutoff_short);
+	      sim.param().pairlist.cutoff_short,
+	      sim.param().pairlist.print);
       
       grid_store_lr();
+
+      if (sim.param().pairlist.print) 
+	grid_print_pl_atomic(topo, pl);
     }
     else{
       grid_restore_lr();
@@ -141,6 +154,7 @@ namespace interaction
     grid_interaction(pl);
 
     grid_store(topo, conf);
+
   }
   
   void grid_properties(topology::Topology const & topo,
@@ -299,22 +313,28 @@ namespace interaction
       center_y = 0.5 * ex_box_y,
       center_z = 0.5 * ex_box_z;
 
+    // std::cerr << "vx=" << v(0) << " vy=" << v(1) << " vz=" << v(2) << std::endl;
+    // std::cerr << "box center " << center_x << " " << center_y << " " << center_z << std::endl;
+    
     double dd = center_z - v(2);
-    if (fabs(dd) > 0.5 * ex_box_z){
-      v(0) += rint(dd / ex_box_z) * M(0);
-      v(1) += rint(dd / ex_box_z) * M(1);
-      v(2) += rint(dd / ex_box_z) * M(2);
+    // std::cerr << "dz=" << dd << " Mz=" << M(2) << std::endl;
+    if (fabs(dd) > 0.5 * M(2)){
+      v(0) += rint(dd / M(2)) * M(0);
+      v(1) += rint(dd / M(2)) * M(1);
+      v(2) += rint(dd / M(2)) * M(2);
     }
 
     dd = center_y - v(1);
-    if (fabs(dd) > 0.5 * ex_box_y){
-      v(0) += rint(dd / ex_box_y) * L(0);
-      v(1) += rint(dd / ex_box_y) * L(1);
+    // std::cerr << "dy=" << dd << " Ly=" << L(1) << std::endl;
+    if (fabs(dd) > 0.5 * L(1)){
+      v(0) += rint(dd / L(1)) * L(0);
+      v(1) += rint(dd / L(1)) * L(1);
     }
 
     dd = center_x - v(0);
-    if (fabs(dd) > 0.5 * ex_box_x){
-      v(0) += rint(dd / ex_box_x) * K(0);
+    // std::cerr << "dx=" << dd << " Kx=" << K(0) << std::endl;
+    if (fabs(dd) > 0.5 * K(0)){
+      v(0) += rint(dd / K(0)) * K(0);
     }
   }
 
@@ -364,16 +384,22 @@ namespace interaction
       } // loop over atoms
 
       // try extensions (bot not for k=-1)
-      for(int s=9; s<27; ++s){
+      for(int s=0; s<27; ++s){
       
 	cg_real_t sx = v_box(0) + cg_shift_x[s];
 	cg_real_t sy = v_box(1) + cg_shift_y[s];
 	cg_real_t sz = v_box(2) + cg_shift_z[s];
 
+	// std::cerr << "cg[" << cg_index << "] x=" << v_box(0)
+	// << " y=" << v_box(1) << " z=" << v_box(2)
+	// << " sx=" << sx << " sy=" << sy << " sz=" << sz << "\t";
+
 	// check if still inside
-	if (sx >= 0 && sx <= box_x &&
-	    sy >= 0 && sy <= box_y &&
-	    sz >= 0 && sz <= box_z){
+	if (sx >= 0 && sx <= ex_box_x &&
+	    sy >= 0 && sy <= ex_box_y &&
+	    sz >= 0 && sz <= ex_box_z){
+
+	  // std::cerr << "adding s=" << s << std::endl;
 	
 	  // std::cerr << "\tshift " << s << " inside!" << std::endl;
 
@@ -397,7 +423,7 @@ namespace interaction
 	  ++new_cg_index;
 	}
 	else{
-	  // cerr << "outside" << endl;
+	  // std::cerr << "outside" << std::endl;
 	}
       } // shifts
     } // loop over cg's
@@ -446,6 +472,7 @@ namespace interaction
     at_z.clear();
     at_iac.clear();
     at_q.clear();
+    at_egroup.clear();
 
     int at_start = 0;
 
@@ -482,8 +509,8 @@ namespace interaction
 	
 	at_iac.push_back(topo.iac(at_index));
 	at_q.push_back(topo.charge(at_index));
+	at_egroup.push_back(topo.atom_energy_group(at_index));
       }
-
     }
 
     cg_at_start[s] = at_start;
@@ -496,7 +523,9 @@ namespace interaction
   }
 
   void grid_pl(topology::Topology const & topo, 
-	       std::vector<int> & pl, cg_real_t cutl, cg_real_t cuts)
+	       std::vector<int> & pl, 
+	       cg_real_t cutl, cg_real_t cuts,
+	       bool print)
   {
     // std::cerr << "grid pl" << std::endl;
     
@@ -560,8 +589,12 @@ namespace interaction
 	  }
 
 	  // check exclusions: SOLVENT ?
-	  if (cg1 > solute_cg || cg2 > solute_cg){
-	    if (cg1 == cg2){
+	  // std::cerr << "pl: cg1=" << cg1 << " (real " << cg_index[cg1] << ")"
+	  // << " cg2="  << cg2 << " (real " << cg_index[cg2] << ")"
+	  // << std::endl;
+
+	  if (cg_index[cg1] > solute_cg || cg_index[cg2] > solute_cg){
+	    if (cg_index[cg1] == cg_index[cg2]){
 	      if (lr_range){
 		lr_pl.push_back(cg_at_start[cg2]);
 		lr_range = false;
@@ -573,10 +606,12 @@ namespace interaction
 	      continue;
 	    }
 	  }
-	  else if (std::find(topo.chargegroup_exclusion(cg1).begin(), 
-			     topo.chargegroup_exclusion(cg1).end(), cg2)
-		   != topo.chargegroup_exclusion(cg1).end()) {
+	  else if (std::find(topo.chargegroup_exclusion(cg_index[cg1]).begin(), 
+			     topo.chargegroup_exclusion(cg_index[cg1]).end(), cg_index[cg2])
+		   != topo.chargegroup_exclusion(cg_index[cg1]).end()) {
 	    // excluded
+	    // std::cerr << "\texcluded" << std::endl;
+	    
 	    if (lr_range){
 	      lr_pl.push_back(cg_at_start[cg2]);
 	      lr_range = false;
@@ -588,6 +623,8 @@ namespace interaction
 	    continue;
 	  }
 
+	  // std::cerr << "\tnot excluded" << std::endl;
+	  
 	  if (dist2 > cuts2){
 	    if (lr_range) continue;
 	    if (sr_range){
@@ -627,9 +664,6 @@ namespace interaction
       pl[range_ind] = (pl.size() - range_ind - 1) / 2;
       
     } // central cg's (cg1)
-
-    // grid_print_pl(pl);
-    
   } // cg_pl()
 
   
@@ -673,6 +707,20 @@ namespace interaction
     crf_2cut3i = crf_cut3i / 2.0;
     
     crf_cut = (1 - crf / 2.0) / sim.param().longrange.rf_cutoff;
+
+    const int egroups = sim.param().force.energy_group.size();
+    
+    lj_energy.resize(egroups);
+    crf_energy.resize(egroups);
+    lr_lj_energy.resize(egroups);
+    lr_crf_energy.resize(egroups);
+    
+    for(int i=0; i < egroups; ++i){
+      lj_energy[i].assign(egroups, 0.0);
+      crf_energy[i].assign(egroups, 0.0);
+      lr_lj_energy[i].assign(egroups, 0.0);
+      lr_crf_energy[i].assign(egroups, 0.0);
+    }
   }
 
   at_real_t c6[100], c12[100], q[100];
@@ -699,62 +747,63 @@ namespace interaction
 	int at1 = cg_at_start[cg1], at1_to = cg_at_start[cg1+1];
 	for( ; at1 != at1_to; ++at1){
 	  // at2
-	  int at2_beg = pl[i], at2_to = pl[i+1];
-	  int num = at2_to - at2_beg;
+	  int at2 = pl[i], at2_to = pl[i+1];
+	  int num = at2_to - at2;
 
 	  // prepare c6, c12, rx, ry, rz
-	  int nr=0;
-	  // not vectorized: dependencies (nr?)
-	  for(int at2 = at2_beg; at2 < at2_to; ++at2){
-	    c6[nr] = lj_param[at_iac[at1]][at_iac[at2]].c6;
-	    c12[nr] = lj_param[at_iac[at1]][at_iac[at2]].c12;
-	    q[nr] = at_q[at1] * at_q[at2];
-	    rx[nr] = at_x[at1] - at_x[at2];
-	    ry[nr] = at_y[at1] - at_y[at2];
-	    rz[nr] = at_z[at1] - at_z[at2];
-	    ++nr;
+
+	  // not vectorized: dependencies (nr?), still?
+	  for(int nr = 0; nr < num; ++nr){
+	    c6[nr] = lj_param[at_iac[at1]][at_iac[nr + at2]].c6;
+	    c12[nr] = lj_param[at_iac[at1]][at_iac[nr + at2]].c12;
+	    q[nr] = at_q[at1] * at_q[nr + at2];
+	    rx[nr] = at_x[at1] - at_x[nr + at2];
+	    ry[nr] = at_y[at1] - at_y[nr + at2];
+	    rz[nr] = at_z[at1] - at_z[nr + at2];
 	  } // at2
 	  // calc r2
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    r2[nr] = rx[nr] * rx[nr] + ry[nr] * ry[nr] + rz[nr]*rz[nr];
 	  }
 	  // calc 1/sqrt(r2)
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    ir2[nr] = 1.0 / r2[nr];
 	  }
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    ir[nr] = sqrt(ir2[nr]);
 	  }
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    ir6[nr] = ir2[nr] * ir2[nr] * ir2[nr];
 	  }
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    c12_ir6[nr] = c12[nr] * ir6[nr];
 	  }
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    e_lj[nr] = (c12_ir6[nr] - c6[nr]) * ir6[nr];
 	  }
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    q_eps[nr] = math::four_pi_eps_i * q[nr];
 	  }
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    e_crf[nr] = q_eps[nr] * (ir[nr] - crf_2cut3i * r2[nr] - crf_cut);
 	  }
-	  for(nr = 0; nr < num; ++nr){
+	  for(int nr = 0; nr < num; ++nr){
 	    f[nr] = (c12_ir6[nr] + c12_ir6[nr] - c6[nr]) * 6.0 * ir6[nr] * ir2[nr] + 
 	      q_eps[nr] * (ir[nr] * ir2[nr] + crf_cut3i);
 	  }
 
-	  nr=0;
-	  // dependencies ? (nr?)
-	  for(int at2 = at2_beg; at2 < at2_to; ++at2){
+	  // dependencies ? (nr?), still?
+	  for(int nr = 0; nr < num; ++nr){
 	    at_fx[at1] += f[nr] * rx[nr];
-	    at_fx[at2] -= f[nr] * rx[nr];
+	    at_fx[nr + at2] -= f[nr] * rx[nr];
 	    at_fy[at1] += f[nr] * ry[nr];
-	    at_fy[at2] -= f[nr] * ry[nr];
+	    at_fy[nr + at2] -= f[nr] * ry[nr];
 	    at_fz[at1] += f[nr] * rz[nr];
-	    at_fz[at2] -= f[nr] * rz[nr];
-	    ++nr;
+	    at_fz[nr + at2] -= f[nr] * rz[nr];
+	    
+	    lj_energy[at_egroup[at1]][at_egroup[nr+at2]] += e_lj[nr];
+	    crf_energy[at_egroup[at1]][at_egroup[nr+at2]] += e_crf[nr];
+	    
 	  } // at2
 
 	  // store the energies...
@@ -773,7 +822,13 @@ namespace interaction
     at_lr_fz = at_fz;
     
     // and energies
-    
+    const int egroups = lj_energy.size();
+    for(int i=0; i<egroups; ++i){
+      for(int j=0; j<egroups; ++j){
+	lr_lj_energy[i][j] = lj_energy[i][j];
+	lr_crf_energy[i][j] = crf_energy[i][j];
+      }
+    }
   }
 
   void grid_restore_lr()
@@ -784,6 +839,13 @@ namespace interaction
     at_fz = at_lr_fz;
 
     // and energies
+    const int egroups = lj_energy.size();
+    for(int i=0; i<egroups; ++i){
+      for(int j=0; j<egroups; ++j){
+	lj_energy[i][j] = lr_lj_energy[i][j];
+	crf_energy[i][j] = lr_crf_energy[i][j];
+      }
+    }
 
   }
 
@@ -806,6 +868,69 @@ namespace interaction
 
       }
     }
+
+    const int ljs = conf.current().energies.lj_energy.size();
+    configuration::Energy & e = conf.current().energies;
+
+    for(int i = 0; i < ljs; ++i){
+      for(int j = 0; j < ljs; ++j){
+	
+	e.lj_energy[i][j] += lj_energy[i][j];
+	e.crf_energy[i][j] += crf_energy[i][j];
+      }
+    }
+    
   }
 
+  void grid_print_pl_atomic(topology::Topology const & topo,
+			    std::vector<int> const & pl)
+  {
+    std::map<int, int> at_map;
+
+    int grid_at = 0;
+    
+    for(size_t cg = 0; cg < cg_index.size(); ++cg){
+      for(int at = topo.chargegroup(cg_index[cg]); at < topo.chargegroup(cg_index[cg]+1);
+	  ++at, ++grid_at){
+	at_map[grid_at] = at;
+      }
+    }
+
+    Pairlist tmp_pl;
+    tmp_pl.resize(topo.num_atoms());
+    
+    { // create temporary atomic pairlist
+      size_t i = 0;
+      while(i < pl.size() - 1){
+	
+	int cg1 = pl[i];
+	
+	size_t i_to = i + pl[i+1] * 2 + 2;
+	i += 2;
+	
+	for( ; i < i_to; i += 2){
+	  
+	  int at2_beg = pl[i], at2_end = pl[i+1];
+	  
+	  for(int at1 = cg_at_start[cg1]; at1 < cg_at_start[cg1+1]; ++at1){
+	    for(int at2 = at2_beg; at2 < at2_end; ++at2){
+	      
+	      int at1_real = at_map[at1];
+	      int at2_real = at_map[at2];
+	      
+	      if (at1_real < at2_real) tmp_pl[at1_real].push_back(at2_real);
+	      else tmp_pl[at2_real].push_back(at1_real);
+	    }
+	  }
+	}
+      }
+    }
+    
+    for(size_t i=0; i<tmp_pl.size(); ++i)
+      std::sort(tmp_pl[i].begin(), tmp_pl[i].end());
+
+    std::cout << tmp_pl << std::endl;
+
+  }
+  
 } // interaction

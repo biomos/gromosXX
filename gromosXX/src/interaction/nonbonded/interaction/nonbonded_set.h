@@ -86,14 +86,9 @@ namespace interaction
       return m_longrange_storage;
     }
     
-    Pairlist & pairlist() { return m_pairlist; }
-    Pairlist const & pairlist()const { return m_pairlist; }
-
   protected:
     Storage m_shortrange_storage;
     Storage m_longrange_storage;
-
-    Pairlist m_pairlist;
 
     Nonbonded_Outerloop m_outerloop;
   };

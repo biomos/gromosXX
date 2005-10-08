@@ -229,6 +229,8 @@ int interaction::Nonbonded_Set
   // ?????
   // m_outerloop.initialize(sim);
 
+  std::cerr << "nonbonded set: init" << std::endl;
+  
   const int num_atoms = topo.num_atoms();
 
   m_shortrange_storage.force.resize(num_atoms);

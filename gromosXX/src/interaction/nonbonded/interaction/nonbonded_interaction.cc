@@ -127,7 +127,9 @@ calculate_interactions(topology::Topology & topo,
     if (sim.param().pairlist.print &&
 	(!(sim.steps() % sim.param().pairlist.skip_step))){
       
-      print_pairlist(topo, conf, sim);
+      std::cerr << "printing pairlist!" << std::endl;
+      if (sim.param().pairlist.grid != 2)
+	print_pairlist(topo, conf, sim);
     }
   }
   
@@ -206,6 +208,8 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   
   if (sim.param().perturbation.perturbation){
     
+    std::cerr << "creating " << m_set_size << " Perturbed_Nonbonded_Sets" << std::endl;
+
     for(int i=0; i<m_set_size; ++i)
       m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
 							    m_parameter, i, m_set_size));
@@ -213,10 +217,12 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   else{
     for(int i=0; i<m_set_size; ++i){
       if (sim.param().pairlist.grid == 2){
+	std::cerr << "creating VGrid_Nonbonded_Set" << std::endl;
 	m_nonbonded_set.push_back(new VGrid_Nonbonded_Set(*m_pairlist_algorithm, 
 							  m_parameter, i, m_set_size));
       }
       else{
+	std::cerr << "creating Nonbonded_Set" << std::endl;
 	m_nonbonded_set.push_back(new Nonbonded_Set(*m_pairlist_algorithm, 
 						    m_parameter, i, m_set_size));
       }
@@ -518,11 +524,17 @@ int interaction::Nonbonded_Interaction::print_pairlist
   for(unsigned int atom_i = 0; atom_i < topo.num_atoms(); ++atom_i){
     
     for(int i=0; i < m_set_size; ++i){
+
+      assert (m_nonbonded_set.size() > i);
+      assert (m_nonbonded_set[i]->pairlist().size() > atom_i);
       
       for(unsigned int atom_j = 0;
 	  atom_j < m_nonbonded_set[i]->pairlist()[atom_i].size();
 	  ++atom_j){
 	
+	assert(temp.size() > atom_i);
+	assert(temp.size() > m_nonbonded_set[i]->pairlist()[atom_i][atom_j]);
+
 	if (m_nonbonded_set[i]->pairlist()[atom_i][atom_j] < atom_i)
 	  temp[m_nonbonded_set[i]->pairlist()[atom_i][atom_j]].push_back(atom_i);
 	else
