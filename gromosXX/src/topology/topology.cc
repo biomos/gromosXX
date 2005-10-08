@@ -219,6 +219,8 @@ void topology::Topology::resize(unsigned int const atoms)
 
 void topology::Topology::init(simulation::Simulation const & sim, std::ostream & os, bool quiet)
 {
+  // std::cerr << "topology::init" << std::endl;
+  
   if (!m_molecule.size()){
     m_molecule.push_back(0);
     // do it gromos++ like and determine by bonds???
@@ -252,19 +254,28 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
   // add chargegroup exclusions (a clever technique to improve pairlisting...)
   m_chargegroup_exclusion.resize(num_solute_chargegroups());
 
-  for(int cg1=0; cg1<num_solute_chargegroups(); ++cg1){
+  for(size_t cg1=0; cg1<num_solute_chargegroups(); ++cg1){
 
-    for(int cg2=cg1; cg2 < num_solute_chargegroups(); ++cg2){
+    m_chargegroup_exclusion[cg1].insert(cg1);
+    
+    for(size_t cg2=cg1+1; cg2 < num_solute_chargegroups(); ++cg2){
 
+      // std::cerr << "\tchecking cg1=" << cg1 << " cg2=" << cg2 << std::endl;
+      
       for(int at1 = m_chargegroup[cg1]; at1 < m_chargegroup[cg1+1]; ++at1){
 
 	std::set<int>::iterator ex = m_all_exclusion[at1].begin(),
 	  ex_to = m_all_exclusion[at1].end();
 	for( ; ex != ex_to; ++ex){
 
+	  // std::cerr << "cg2: " << m_chargegroup[cg2] << " - " << m_chargegroup[cg2+1]
+	  // << " ex=" << *ex << std::endl;
+	  
 	  if (m_chargegroup[cg2] <= *ex &&
 	      m_chargegroup[cg2+1] > *ex){
 	  
+	    // std::cerr << "cg1=" << cg1 << " cg2=" << cg2 << " : excluded!" << std::endl;
+
 	    m_chargegroup_exclusion[cg1].insert(cg2);
 	    m_chargegroup_exclusion[cg2].insert(cg1);
 
