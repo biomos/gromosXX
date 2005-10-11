@@ -38,6 +38,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 				simulation::Simulation & sim,
 				std::ostream & os)
 {
+  DEBUG(7, "read configuration");
+  
   if (!quiet)
     os << "\nCONFIGURATION\n";
 
@@ -114,6 +116,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   
   if (!quiet)
     os << "\n\nEND\n\n";
+  
+  DEBUG(8, "configuration read");
 }
 
 /**
