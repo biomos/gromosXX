@@ -193,7 +193,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     os << "END\n";
   }
   else
-    os << "PERTURATION OFF\n";
+    os << "PERTURBATION OFF\n";
   
   // total energy calculation and energy average update
   {
