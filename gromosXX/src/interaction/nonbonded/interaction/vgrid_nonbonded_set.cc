@@ -39,6 +39,8 @@ interaction::VGrid_Nonbonded_Set
   : Nonbonded_Set_Interface(pairlist_alg, param, rank, num_threads),
     m_outerloop(param)
 {
+  m_shortrange_storage.zero();
+  m_longrange_storage.zero();
 }
 
 /**
@@ -55,9 +57,10 @@ int interaction::VGrid_Nonbonded_Set
   m_shortrange_storage.zero();
 
   // need to update pairlist?
+  
   // if(!(sim.steps() % sim.param().pairlist.skip_step)){
   // DEBUG(6, "\tdoing longrange...");
-    
+  
   //====================
   // create a pairlist
   //====================

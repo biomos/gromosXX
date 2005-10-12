@@ -45,6 +45,8 @@ namespace interaction
   std::vector<std::vector<double> > lr_lj_energy;
   std::vector<std::vector<double> > lr_crf_energy;
 
+  at_real_t virial[9], lr_virial[9];
+
   std::vector<cg_real_t> cg_shift_x, cg_shift_y, cg_shift_z;
   std::vector<at_real_t> at_shift_x, at_shift_y, at_shift_z;
   
@@ -110,11 +112,16 @@ namespace interaction
   
   void grid_store_lr();
   
-  void grid_restore_lr();
+  void grid_zero();
   
   void grid_store(topology::Topology const & topo,
 		  configuration::Configuration & conf);
 
+  void grid_update_atom_pos(topology::Topology const & topo,
+			    configuration::Configuration & conf);
+  
+  void calc_virial(double v[]);
+  
   // the fun begins
   void grid_prepare(topology::Topology const & topo,
 		    configuration::Configuration & conf,
@@ -141,20 +148,26 @@ namespace interaction
 	      sim.param().pairlist.cutoff_short,
 	      sim.param().pairlist.print);
       
+      calc_virial(lr_virial);
+      
       grid_store_lr();
 
       if (sim.param().pairlist.print) 
-	grid_print_pl_atomic(topo, pl);
+	// grid_print_pl_atomic(topo, pl);
+	grid_print_pl(pl);
     }
     else{
-      grid_restore_lr();
+      grid_update_atom_pos(topo, conf);
     }
     
+    grid_zero();
+
     // short-range
     grid_interaction(pl);
 
+    calc_virial(virial);
+    
     grid_store(topo, conf);
-
   }
   
   void grid_properties(topology::Topology const & topo,
@@ -216,6 +229,13 @@ namespace interaction
 	  cg_shift_x[c] = cg_real_t(k*K(0) + l*L(0) + m*M(0));
 	  cg_shift_y[c] = cg_real_t(k*K(1) + l*L(1) + m*M(1));
 	  cg_shift_z[c] = cg_real_t(k*K(2) + l*L(2) + m*M(2));
+
+	  /*
+	  std::cerr << "cg_shift[" << c << "] = "
+		    << std::setw(20) << cg_shift_x[c]
+		    << std::setw(20) << cg_shift_y[c]
+		    << std::setw(20) << cg_shift_z[c] << std::endl;
+	  */
 
 	  at_shift_x[c] = at_real_t(k*K(0) + l*L(0) + m*M(0));
 	  at_shift_y[c] = at_real_t(k*K(1) + l*L(1) + m*M(1));
@@ -400,7 +420,6 @@ namespace interaction
 	    sz >= 0 && sz <= ex_box_z){
 
 	  // std::cerr << "adding s=" << s << std::endl;
-	
 	  // std::cerr << "\tshift " << s << " inside!" << std::endl;
 
 	  cg_tmp_index.push_back(cg_index);
@@ -417,8 +436,13 @@ namespace interaction
 	    int(sz / dz);
 	  cg_tmp_cell.push_back(grid_index);
 	  ++cell_num[grid_index];
-
-	  // std::cerr << "\tgrid " << grid_index << std::endl;
+	  
+	  /*
+	  std::cerr << "cg " << cg_index
+		    << " new " << new_cg_index
+		    << "\tgrid " << grid_index
+		    << "\tshift " << s << std::endl;
+	  */
 
 	  ++new_cg_index;
 	}
@@ -542,14 +566,15 @@ namespace interaction
 
     const int num_cg = cg_index.size();
     
-    std::cout << "longrange pairlist" << std::endl;
+    // std::cout << "longrange pairlist" << std::endl;
     
     // loop over chargegroups in central computational box
     for(int cg1 = 0; cg1 < num_cg; ++cg1){
 
       if (cg_shift[cg1] != 13) continue;
       const int cell = cg_cell[cg1];
-      // std::cerr << "central cg " << cg1 << std::endl;
+
+      // std::cerr << "central cg " << cg1 << " cell=" << cell << std::endl;
       
       pl.push_back(cg1);
       int range_ind = pl.size();
@@ -565,6 +590,12 @@ namespace interaction
 	
 	int cg2 = cell_start[cell + mask[m]];
 	int cg2_end = cell_start[cell + mask[m+1]];
+
+	if (mask[m] == 0){
+	  while(cg2 != cg1)
+	    ++cg2;
+	  ++cg2;
+	}
 	
 	for( ; cg2 < cg2_end; ++cg2){
 	  
@@ -578,10 +609,12 @@ namespace interaction
 	  
 	  if (dist2 > cutl2){
 	    if (lr_range){
+	      // std::cerr << " - " << cg2 << std::endl;
 	      lr_pl.push_back(cg_at_start[cg2]);
 	      lr_range = false;
 	    }
 	    if (sr_range){
+	      // std::cerr << " - " << cg2 << std::endl;
 	      pl.push_back(cg_at_start[cg2]);
 	      sr_range = false;
 	    }
@@ -596,10 +629,12 @@ namespace interaction
 	  if (cg_index[cg1] > solute_cg || cg_index[cg2] > solute_cg){
 	    if (cg_index[cg1] == cg_index[cg2]){
 	      if (lr_range){
+		// std::cerr << " - " << cg2 << std::endl;
 		lr_pl.push_back(cg_at_start[cg2]);
 		lr_range = false;
 	      }
 	      if (sr_range){
+		// std::cerr << " - " << cg2 << std::endl;
 		pl.push_back(cg_at_start[cg2]);
 		sr_range = false;
 	      }
@@ -607,16 +642,19 @@ namespace interaction
 	    }
 	  }
 	  else if (std::find(topo.chargegroup_exclusion(cg_index[cg1]).begin(), 
-			     topo.chargegroup_exclusion(cg_index[cg1]).end(), cg_index[cg2])
+			     topo.chargegroup_exclusion(cg_index[cg1]).end(),
+			     cg_index[cg2])
 		   != topo.chargegroup_exclusion(cg_index[cg1]).end()) {
 	    // excluded
 	    // std::cerr << "\texcluded" << std::endl;
 	    
 	    if (lr_range){
+	      // std::cerr << " - " << cg2 << std::endl;
 	      lr_pl.push_back(cg_at_start[cg2]);
 	      lr_range = false;
 	    }
 	    if (sr_range){
+	      // std::cerr << " - " << cg2 << std::endl;
 	      pl.push_back(cg_at_start[cg2]);
 	      sr_range = false;
 	    }
@@ -628,18 +666,22 @@ namespace interaction
 	  if (dist2 > cuts2){
 	    if (lr_range) continue;
 	    if (sr_range){
+	      // std::cerr << " - " << cg2 << std::endl;
 	      pl.push_back(cg_at_start[cg2]);
 	      sr_range = false;
 	    }
+	    // std::cerr << cg2 << " (" << cg_shift[cg2] << ")";
 	    lr_pl.push_back(cg_at_start[cg2]);
 	    lr_range = true;
 	  }
 	  else{
 	    if (sr_range) continue;
 	    if (lr_range){
+	      // std::cerr << " - " << cg2 << std::endl;
 	      lr_pl.push_back(cg_at_start[cg2]);
 	      lr_range = false;
 	    }
+	    // std::cerr << cg2 << " (" << cg_shift[cg2] << ")";
 	    pl.push_back(cg_at_start[cg2]);
 	    sr_range = true;
 	  }
@@ -648,10 +690,12 @@ namespace interaction
 
 	// don't forget to close the ranges
 	if (sr_range){
+	  // std::cerr << " - " << cg2 << std::endl;
 	  pl.push_back(cg_at_start[cg2_end]);
 	  sr_range = false;
 	}
 	if (lr_range){
+	  // std::cerr << " - " << cg2 << std::endl;
 	  lr_pl.push_back(cg_at_start[cg2_end]);
 	  lr_range = false;
 	}
@@ -728,7 +772,7 @@ namespace interaction
   at_real_t r2[100], ir2[100], ir[100], ir6[100];
   at_real_t q_eps[100], c12_ir6[100];
   at_real_t e_lj[100], e_crf[100], f[100];
-  
+
   void grid_interaction(std::vector<int> const & pl)
   {
     std::vector<std::vector<lj_parameter_struct> > const & lj_param
@@ -760,6 +804,18 @@ namespace interaction
 	    rx[nr] = at_x[at1] - at_x[nr + at2];
 	    ry[nr] = at_y[at1] - at_y[nr + at2];
 	    rz[nr] = at_z[at1] - at_z[nr + at2];
+
+	    /*
+	    std::cerr << "at1[" << nr << "] = "
+		      << std::setw(20) << at_x[at1]
+		      << std::setw(20) << at_y[at1]
+		      << std::setw(20) << at_z[at1]  << "\n"
+		      << "at2[" << nr << "] = "
+		      << std::setw(20) << at_x[nr+at2]
+		      << std::setw(20) << at_y[nr+at2]
+		      << std::setw(20) << at_z[nr+at2]  << std::endl;
+	    */
+
 	  } // at2
 	  // calc r2
 	  for(int nr = 0; nr < num; ++nr){
@@ -831,22 +887,63 @@ namespace interaction
     }
   }
 
-  void grid_restore_lr()
+  void grid_zero()
   {
     // set forces to the long-range forces
-    at_fx = at_lr_fx;
-    at_fy = at_lr_fy;
-    at_fz = at_lr_fz;
+    at_fx.assign(at_fx.size(), 0.0);
+    at_fy.assign(at_fy.size(), 0.0);
+    at_fz.assign(at_fz.size(), 0.0);
 
     // and energies
     const int egroups = lj_energy.size();
     for(int i=0; i<egroups; ++i){
       for(int j=0; j<egroups; ++j){
-	lj_energy[i][j] = lr_lj_energy[i][j];
-	crf_energy[i][j] = lr_crf_energy[i][j];
+	lj_energy[i][j] = 0.0;
+	crf_energy[i][j] = 0.0;
       }
     }
+  }
 
+  void calc_virial(double v[])
+  {
+    for(int i=0; i<9; ++i)
+      v[i] = 0.0;
+    
+    // loop over all cg's
+    for(size_t cg = 0; cg < cg_index.size(); ++cg){
+
+      int shift = cg_shift[cg];
+   
+      for(int at=cg_at_start[cg]; at<cg_at_start[cg+1]; ++at){
+	
+	v[0] += (at_x[at] - at_shift_x[shift]) * at_fx[at];
+	v[1] += (at_x[at] - at_shift_x[shift]) * at_fy[at];
+	v[2] += (at_x[at] - at_shift_x[shift]) * at_fz[at];
+	
+	v[3] += (at_y[at] - at_shift_y[shift]) * at_fx[at];
+	v[4] += (at_y[at] - at_shift_y[shift]) * at_fy[at];
+	v[5] += (at_y[at] - at_shift_y[shift]) * at_fz[at];
+	
+	v[6] += (at_z[at] - at_shift_z[shift]) * at_fx[at];
+	v[7] += (at_z[at] - at_shift_z[shift]) * at_fy[at];	
+	v[8] += (at_z[at] - at_shift_z[shift]) * at_fz[at];
+
+	if (shift != 13) {
+	  
+	  v[0] += at_shift_x[shift] * at_fx[at];
+	  v[1] += at_shift_x[shift] * at_fy[at];
+	  v[2] += at_shift_x[shift] * at_fz[at];
+
+	  v[3] += at_shift_y[shift] * at_fx[at];
+	  v[4] += at_shift_y[shift] * at_fy[at];
+	  v[5] += at_shift_y[shift] * at_fz[at];
+
+	  v[6] += at_shift_z[shift] * at_fx[at];
+	  v[7] += at_shift_z[shift] * at_fy[at];	
+	  v[8] += at_shift_z[shift] * at_fz[at];
+	}
+      }
+    }
   }
 
   void grid_store(topology::Topology const & topo,
@@ -860,12 +957,9 @@ namespace interaction
       // unsupported loop structure
       for(int at=cg_at_start[cg]; at<cg_at_start[cg+1]; ++at, ++sat){
 
-	conf.current().force(sat)(0) += at_fx[at];
-	conf.current().force(sat)(1) += at_fy[at];
-	conf.current().force(sat)(2) += at_fz[at];
-	
-	
-
+	conf.current().force(sat)(0) += at_fx[at] + at_lr_fx[at];
+	conf.current().force(sat)(1) += at_fy[at] + at_lr_fy[at];
+	conf.current().force(sat)(2) += at_fz[at] + at_lr_fz[at];
       }
     }
 
@@ -875,11 +969,19 @@ namespace interaction
     for(int i = 0; i < ljs; ++i){
       for(int j = 0; j < ljs; ++j){
 	
-	e.lj_energy[i][j] += lj_energy[i][j];
-	e.crf_energy[i][j] += crf_energy[i][j];
+	e.lj_energy[i][j] += lj_energy[i][j] + lr_lj_energy[i][j];
+	e.crf_energy[i][j] += crf_energy[i][j] + lr_crf_energy[i][j];
       }
     }
     
+    int q = 0;
+    for(int i=0; i<3; ++i){
+      for(int j=0; j<3; ++j){
+	conf.current().virial_tensor(i,j) += virial[q] + lr_virial[q];
+	++q;
+      }
+    }
+
   }
 
   void grid_print_pl_atomic(topology::Topology const & topo,
@@ -932,5 +1034,26 @@ namespace interaction
     std::cout << tmp_pl << std::endl;
 
   }
+
+  void grid_update_atom_pos(topology::Topology const & topo,
+		  configuration::Configuration & conf)
+  {
+    // loop over all cg's
+    for(size_t cg = 0; cg < cg_index.size(); ++cg){
+
+      int sat = topo.chargegroup(cg_index[cg]);
+      int shift = cg_shift[cg];
+      
+      // unsupported loop structure
+      for(int at=cg_at_start[cg]; at<cg_at_start[cg+1]; ++at, ++sat){
+
+	// needs recalculated shift index!
+	at_x[at] = conf.current().pos(sat)(0) + at_shift_x[shift];
+	at_y[at] = conf.current().pos(sat)(1) + at_shift_y[shift];
+	at_z[at] = conf.current().pos(sat)(2) + at_shift_z[shift];
+      }
+    }
+  }
+
   
 } // interaction
