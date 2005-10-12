@@ -65,6 +65,7 @@ int interaction::Grid_Pairlist_Algorithm::init
     return 1;
   }
   
+  /*
   if (sim.param().pcouple.virial != math::molecular_virial &&
       sim.param().pcouple.virial != math::no_virial){
     io::messages.add("Grid Pairlist Algorithm",
@@ -72,6 +73,7 @@ int interaction::Grid_Pairlist_Algorithm::init
 		     io::message::error);
     return 1;
   }
+  */
 
   if (sim.param().multicell.multicell){
     io::messages.add("Grid Pairlist Algorithm",
