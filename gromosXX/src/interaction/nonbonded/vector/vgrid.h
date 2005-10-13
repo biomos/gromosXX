@@ -31,7 +31,9 @@ namespace interaction
   void grid_update(topology::Topology const & topo,
 		   configuration::Configuration & conf,
 		   simulation::Simulation const & sim);
-  
+
+  extern double grid_timing;
+
 } // interaction
 
 #endif

@@ -67,6 +67,7 @@ update(topology::Topology & topo,
        unsigned int stride)
 {
   grid_update(topo, conf, sim);
+  m_timing += grid_timing;
 }
 
 void interaction::VGrid_Pairlist_Algorithm::

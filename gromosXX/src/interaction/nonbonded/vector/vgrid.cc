@@ -79,6 +79,8 @@ namespace interaction
   at_real_t crf_2cut3i;
   at_real_t crf_cut;
 
+  double grid_timing;
+
   Nonbonded_Parameter * parameter;
 
   // calculation vectors have to be on the stack => OMP parallelization!
@@ -143,6 +145,9 @@ namespace interaction
 		   simulation::Simulation const & sim)
   {
     if(!(sim.steps() % sim.param().pairlist.skip_step)){
+
+      double grid_start = util::now();
+
       grid_pl(topo, 
 	      pl, sim.param().pairlist.cutoff_long,
 	      sim.param().pairlist.cutoff_short,
@@ -152,12 +157,18 @@ namespace interaction
       
       grid_store_lr();
 
-      if (sim.param().pairlist.print) 
+      if (sim.param().pairlist.print){
 	// grid_print_pl_atomic(topo, pl);
 	grid_print_pl(pl);
+      }
+      
+      grid_timing = util::now() - grid_start;
     }
     else{
       grid_update_atom_pos(topo, conf);
+
+      // only long-range timing
+      grid_timing = 0.0;
     }
     
     grid_zero();
