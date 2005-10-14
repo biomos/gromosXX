@@ -109,6 +109,7 @@ namespace interaction
 			    std::vector<int> const & pl);
   
   void grid_interaction(std::vector<int> const & pl);
+  void grid_simple_interaction(std::vector<int> const & pl);
   
   void grid_init(simulation::Simulation const & sim);
   
@@ -174,7 +175,7 @@ namespace interaction
     grid_zero();
 
     // short-range
-    grid_interaction(pl);
+    grid_simple_interaction(pl);
 
     calc_virial(virial);
     
@@ -714,7 +715,7 @@ namespace interaction
 
       lr_pl[1] = (lr_pl.size() - 2) / 2;
       // grid_print_pl(lr_pl);
-      grid_interaction(lr_pl);
+      grid_simple_interaction(lr_pl);
       
       pl[range_ind] = (pl.size() - range_ind - 1) / 2;
       
@@ -807,7 +808,7 @@ namespace interaction
 
 	  // prepare c6, c12, rx, ry, rz
 
-	  // not vectorized: dependencies (nr?), still?
+	  // not vectorized: dependencies
 	  for(int nr = 0; nr < num; ++nr){
 	    c6[nr] = lj_param[at_iac[at1]][at_iac[nr + at2]].c6;
 	    c12[nr] = lj_param[at_iac[at1]][at_iac[nr + at2]].c12;
@@ -859,7 +860,7 @@ namespace interaction
 	      q_eps[nr] * (ir[nr] * ir2[nr] + crf_cut3i);
 	  }
 
-	  // dependencies ? (nr?), still?
+	  // dependencies ? (nr?)
 	  for(int nr = 0; nr < num; ++nr){
 	    at_fx[at1] += f[nr] * rx[nr];
 	    at_fx[nr + at2] -= f[nr] * rx[nr];
@@ -880,6 +881,74 @@ namespace interaction
     } // pairlist cg1
 
   }
+
+  void grid_simple_interaction(std::vector<int> const & pl)
+  {
+    std::vector<std::vector<lj_parameter_struct> > const & lj_param
+      = parameter->lj_parameter();
+
+    size_t i = 0;
+    while(i < pl.size() - 1){
+      
+      int cg1 = pl[i];
+      size_t i_to = i + pl[i+1] * 2 + 2;
+      i += 2;
+      int at1_start = cg_at_start[cg1],
+	at1_to = cg_at_start[cg1+1];
+      
+      // ranges
+      for( ; i < i_to; i += 2){
+	// at1
+
+	// at2
+	const int at2_to = pl[i+1];
+	for(int at2 = pl[i]; at2 < at2_to; ++at2){
+
+	  for(int at1 = at1_start; at1 != at1_to; ++at1){
+
+	    const at_real_t c6 = lj_param[at_iac[at1]][at_iac[at2]].c6;
+	    const at_real_t c12 = lj_param[at_iac[at1]][at_iac[at2]].c12;
+
+	    const at_real_t rx = at_x[at1] - at_x[at2];
+	    const at_real_t ry = at_y[at1] - at_y[at2];
+	    const at_real_t rz = at_z[at1] - at_z[at2];
+
+	    const at_real_t r2 = rx * rx + ry * ry + rz * rz;
+
+	    const at_real_t ir2 = 1.0 / r2;
+	    const at_real_t ir = sqrt(ir2);
+	    const at_real_t ir6 = ir2 * ir2 * ir2;
+
+	    const at_real_t c12_ir6 = c12 * ir6;
+
+	    lj_energy[at_egroup[at1]][at_egroup[at2]] += 
+	      (c12_ir6 - c6) * ir6;
+
+	    const at_real_t q_eps = math::four_pi_eps_i * 
+	      at_q[at1] * at_q[at2];
+
+	    crf_energy[at_egroup[at1]][at_egroup[at2]] += 
+	      q_eps * (ir - crf_2cut3i * r2 - crf_cut);
+
+	    const at_real_t f = (c12_ir6 + c12_ir6 - c6) * 6.0 * ir6 * ir2 + 
+	      q_eps * (ir * ir2 + crf_cut3i);
+
+	    at_fx[at1] += f * rx;
+	    at_fx[at2] -= f * rx;
+	    at_fy[at1] += f * ry;
+	    at_fy[at2] -= f * ry;
+	    at_fz[at1] += f * rz;
+	    at_fz[at2] -= f * rz;
+	    
+	  } // at1
+
+	} // at2
+
+      } // range
+    } // pairlist cg1
+
+  }
+
 
   void grid_store_lr()
   {
