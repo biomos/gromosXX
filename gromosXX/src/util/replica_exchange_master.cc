@@ -34,13 +34,13 @@
 
 #include <math/volume.h>
 
-#include "replica_exchange.h"
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+
+#include "replica_exchange.h"
 
 #undef MODULE
 #undef SUBMODULE

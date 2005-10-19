@@ -135,8 +135,12 @@ io::In_Distrest::read(topology::Topology& topo,
 	  --atom2[j];
 	}
       
-      util::Virtual_Atom v1(util::virtual_type(type1), atom1, dish, disc);
-      util::Virtual_Atom v2(util::virtual_type(type2), atom2, dish, disc);
+      // g++ 3.2 fix
+      util::virtual_type t1 = util::virtual_type(type1);
+      util::virtual_type t2 = util::virtual_type(type2);
+      
+      util::Virtual_Atom v1(t1, atom1, dish, disc);
+      util::Virtual_Atom v2(t2, atom2, dish, disc);
     
       topo.distance_restraints().push_back
 	(topology::distance_restraint_struct(v1,v2,r0,w0,rah));
@@ -259,8 +263,11 @@ io::In_Distrest::read(topology::Topology& topo,
 	}
       
 
-      util::Virtual_Atom v1(util::virtual_type(type1), atom1, dish, disc);
-      util::Virtual_Atom v2(util::virtual_type(type2), atom2, dish, disc);
+      util::virtual_type t1 = util::virtual_type(type1);
+      util::virtual_type t2 = util::virtual_type(type2);
+      
+      util::Virtual_Atom v1(t1, atom1, dish, disc);
+      util::Virtual_Atom v2(t2, atom2, dish, disc);
     
       topo.perturbed_distance_restraints().push_back
 	(topology::perturbed_distance_restraint_struct(v1,v2,A_r0,B_r0,A_w0,B_w0, rah));

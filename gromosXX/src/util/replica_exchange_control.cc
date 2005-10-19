@@ -31,12 +31,12 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include "replica_exchange.h"
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
+
+#include "replica_exchange.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -404,7 +404,7 @@ int util::Replica_Exchange_Control::run
   
   std::cout << "\nuse\n\t@control change ID run T l Epot sT sl sEpot state" 
 	    << "\n\tto change replicas or"
-	    << "\n\t@control stop to shutdown master\n" << std::endl;
+	    << "\n\t@control quit to shutdown master\n" << std::endl;
   
   return 0;
 }

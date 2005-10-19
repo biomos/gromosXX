@@ -33,8 +33,6 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include "replica_exchange.h"
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -43,6 +41,8 @@
 #include <sys/socket.h>
 // end linux includes
 #include <netdb.h>
+
+#include "replica_exchange.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -61,8 +61,8 @@ int util::Replica_Exchange_Slave::run
 (
  io::Argument & args)
 {
-   multigraining = false;
-  if (args.count("cg_topo")){
+  multigraining = false;
+  if (args.count("cg_topo") >= 0){
     multigraining = true;
   }
 
@@ -84,6 +84,7 @@ int util::Replica_Exchange_Slave::run
   if (multigraining)
     sim.param().force.external_interaction = 1;
 
+  std::cout << "reading (standard) input" << std::endl;
   io::read_input(args, topo, conf, sim,  md, std::cout);
   md.init(topo, conf, sim, std::cout);
 
