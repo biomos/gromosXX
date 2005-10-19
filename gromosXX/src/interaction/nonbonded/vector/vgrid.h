@@ -32,6 +32,12 @@ namespace interaction
 		   configuration::Configuration & conf,
 		   simulation::Simulation const & sim);
 
+  void grid_info(topology::Topology const & topo,
+		 configuration::Configuration const & conf,
+		 simulation::Simulation const & sim,
+		 std::ostream & os,
+		 bool quiet);
+
   extern double grid_timing;
 
 } // interaction

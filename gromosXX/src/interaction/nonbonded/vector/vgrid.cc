@@ -87,7 +87,7 @@ namespace interaction
 
   // forward declarations
   void grid_properties(topology::Topology const & topo,
-		       configuration::Configuration & conf,
+		       configuration::Configuration const & conf,
 		       simulation::Simulation const & sim);
 
   void calc_mask(cg_real_t cutoff, std::vector<int> & mask);
@@ -125,6 +125,85 @@ namespace interaction
   
   void calc_virial(double v[]);
   
+  void grid_info(topology::Topology const & topo,
+		 configuration::Configuration const & conf,
+		 simulation::Simulation const & sim,
+		 std::ostream & os,
+		 bool quiet)
+  {
+    if (!quiet){
+      grid_init(sim);
+      grid_properties(topo, conf, sim);
+      // grid_extend(topo, conf, sim);
+      // grid_cg(topo, conf, sim);
+      
+      os.setf(std::ios::fixed, std::ios::floatfield);
+      
+      os << "VectorGrid Pairlist\n";
+
+      os << "\tbox            " << std::setw(20) << box_x
+	 << std::setw(15) << box_y
+	 << std::setw(15) << box_z
+	 << "\n";
+
+      os << "\tex box         " << std::setw(20) << ex_box_x
+	 << std::setw(15) << ex_box_y
+	 << std::setw(15) << ex_box_z
+	 << "\n";
+      
+      os << "\tcentral grid:  " << std::setw(20) << Cx
+	 << std::setw(15) << Cy 
+	 << std::setw(15) << Cz
+	 << "\n";      
+      const int C = Cx * Cy * Cz;
+      
+      os << "\textended grid: " << std::setw(20) << Nx
+	 << std::setw(15) << Ny 
+	 << std::setw(15) << Nz
+	 << "\n";
+      const int N = Nx * Ny * Nz;
+
+      os << "\tgrid size:     " << std::setw(20) << dx
+	 << std::setw(15) << dy
+	 << std::setw(15) << dz
+	 << "\n";
+      
+      int cg = topo.num_chargegroups();
+      
+      os << "\tsolute cg:     "
+	 << std::setw(20) << topo.num_solute_chargegroups() << "\n";
+      os << "\tcg:            "
+	 << std::setw(20) << cg << "\n";
+      os << "\test. ex. cg:   "
+	 << std::setw(20) << cg * (double(N) / double(C)) << "\n";
+    
+      os << "\test. cg/cell:  "
+	 << std::setw(20) << double(cg) / C << "\n";
+
+      int M=0;
+      for(unsigned int m=0; m<mask.size(); m+=2){
+	M += mask[m+1] - mask[m];
+      }
+      
+      os << "\tcells in mask: " << std::setw(20) << M << "\n";
+      double Mcg = double(cg) / C * M;
+
+      os << "\tcg in mask:    " << std::setw(20) << Mcg << "\n";
+      os << "\tpairs:         " << std::setw(20) << cg * (cg-1) * 0.5 << "\n";
+      os << "\tpairs (grid):  " << std::setw(20) << cg * Mcg << "\n";
+      
+      const double Vcut = 4.0 / 3.0 * math::Pi * sim.param().pairlist.cutoff_long *
+	sim.param().pairlist.cutoff_long * sim.param().pairlist.cutoff_long;
+      const double Vbox = box_x * box_y * box_z;
+      
+      os << "\tpairs (cutoff):" << std::setw(20) << 0.5 * cg * cg / Vbox * Vcut << "\n";
+      
+      os << "\nEND\n\n";
+
+
+    }
+  }
+
   // the fun begins
   void grid_prepare(topology::Topology const & topo,
 		    configuration::Configuration & conf,
@@ -183,7 +262,7 @@ namespace interaction
   }
   
   void grid_properties(topology::Topology const & topo,
-		       configuration::Configuration & conf,
+		       configuration::Configuration const & conf,
 		       simulation::Simulation const & sim)
   {
     cg_real_t cutoff = sim.param().pairlist.cutoff_long;
@@ -392,6 +471,7 @@ namespace interaction
     int cg_index = 0;
     int new_cg_index = 0;
     int solute_cg = topo.num_solute_chargegroups();
+    std::cerr << "solute cgs: " << topo.num_solute_chargegroups() << std::endl;
     
     for( ; cg_it != cg_to; ++cg_it, ++cg_index){
 
@@ -638,7 +718,7 @@ namespace interaction
 	  // << " cg2="  << cg2 << " (real " << cg_index[cg2] << ")"
 	  // << std::endl;
 
-	  if (cg_index[cg1] > solute_cg || cg_index[cg2] > solute_cg){
+	  if ((cg_index[cg1] >= solute_cg) || (cg_index[cg2] >= solute_cg)){
 	    if (cg_index[cg1] == cg_index[cg2]){
 	      if (lr_range){
 		// std::cerr << " - " << cg2 << std::endl;

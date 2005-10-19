@@ -22,6 +22,7 @@
 #include <math/volume.h>
 
 #include <interaction/nonbonded/interaction/vgrid_nonbonded_set.h>
+#include <interaction/nonbonded/vector/vgrid.h>
 
 #include <util/debug.h>
 
@@ -267,6 +268,10 @@ int interaction::VGrid_Nonbonded_Set
     // for(int i=0; i<num_atoms; ++i)
     // pairlist()[i].reserve(pairs);
   }
+
+  if (m_rank == 0)
+    grid_info(topo, conf, sim, os, quiet);
+
   return 0;
 }
 
