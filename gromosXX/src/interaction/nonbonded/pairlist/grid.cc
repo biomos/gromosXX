@@ -44,6 +44,12 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
   // this is enough for small cells (when only about one particle fits in anyway)
   const int space = m_grid.Pcell * 3 + m_grid.shift_space;
 
+  /*
+  std::cout << "grid: Nab=" << Nab << " space=" << space
+	    << " shift_space=" << m_grid.shift_space
+	    << " Pcell=" << m_grid.Pcell << std::endl;
+  */
+
   m_grid.p_cell.resize(m_grid.Nc);
   m_grid.cell_start.resize(m_grid.Nc);
   m_grid.count.resize(m_grid.Nc);
@@ -85,6 +91,14 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
   
     const int c = y * m_grid.Na + x;
 
+    assert(m_grid.cell_start.size() > unsigned(z) &&
+	   m_grid.cell_start[z].size() > unsigned(c));
+    assert(m_grid.p_cell.size() > unsigned(z) &&
+	   m_grid.p_cell[z].size() > unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c]));
+
+    assert(m_grid.count.size() > unsigned(z) &&
+	   m_grid.count[z].size() > unsigned(c));
+    
     m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] =
       Grid::Particle(i, v_box);
 
@@ -114,11 +128,31 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
     const int z = int((v_box(2) + 0.5 * conf.current().box(2)(2)) / m_grid.c);
     
     const int c = y * m_grid.Na + x;
-    
-    m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] = 
-      Grid::Particle(i, v_box);
-    ++m_grid.count[z][c];
 
+    assert(m_grid.cell_start.size() > unsigned(z) &&
+	   m_grid.cell_start[z].size() > unsigned(c));
+    assert(m_grid.p_cell.size() > unsigned(z));
+
+    if (m_grid.p_cell[z].size() <= unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])){
+
+      /*
+      std::cout << "ERROR: " << " z=" << z
+		<< " cell_start=" << m_grid.cell_start[z][c]
+		<< " count=" << m_grid.count[z][c]
+		<< std::endl;
+      */
+      // don't add particle to grid. not enough space!
+    }
+    else{
+      assert(m_grid.p_cell[z].size() > unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c]));
+      assert(m_grid.count.size() > unsigned(z) &&
+	     m_grid.count[z].size() > unsigned(c));
+
+      m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] = 
+	Grid::Particle(i, v_box);
+    }
+    ++m_grid.count[z][c];
+    
     // loop over the atoms
     topology::Atom_Iterator at_it = cg_it.begin(),
       at_to = cg_it.end();
@@ -130,12 +164,18 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
   // check that there was enough space
   int max = 0;
   for(int z=0; z < m_grid.Nc; ++z){
-    for(int i=0; i<Nab; ++i)
-      if (m_grid.count[z][i] > space){
-	if (m_grid.count[z][i] - space > max)
-	  max = m_grid.count[z][i] - space;
-	
+    for(int c=0; c<Nab; ++c){
+      assert(m_grid.count.size() > unsigned(z) &&
+	     m_grid.count[z].size() > unsigned(c));
+      
+      if (m_grid.count[z][c] > space){
+	if (m_grid.count[z][c] - space > max){
+	  max = m_grid.count[z][c] - space;
+	  std::cout << "grid[" << z << "][" << c << "] count = " << m_grid.count[z][c]
+		    << " space = " << space << " new max = " << max << std::endl;
+	}
       }
+    }    
   }
 
   if (max){
