@@ -229,7 +229,7 @@ int interaction::Nonbonded_Set
   // ?????
   // m_outerloop.initialize(sim);
 
-  std::cerr << "nonbonded set: init" << std::endl;
+  // std::cerr << "nonbonded set: init" << std::endl;
   
   const int num_atoms = topo.num_atoms();
 
