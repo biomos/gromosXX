@@ -1,0 +1,51 @@
+<HTML>
+<head>
+<title>GromosXX J-Value Restraints</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1>GromosXX J-Value Restraints</h1>
+
+<h2><a name="title">TITLE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+TITLE
+	GromosXX
+	j-value restraints
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="JVALRESSPEC">J-Value Restraints</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+JVALRESSPEC
+#
+# for each J-coupling constant restraint is to be specified:
+# IPJR, JPJR, KPJR, LPJR: atom sequence numbers defining the angle phi
+# CPJR: weight factor of interaction
+# PJR0: reference J-coupling constant value
+# PSJR: phase shift delta = theta-phi
+# A,B, C: Karplus parameters
+# H:    1 (harmonic), 2 (attractive), 3 (repulsive)
+#
+#IPJR JPJR KPJR LPJR       CPJR   PJR0 PSJR  A      B     C      H
+# 1VAL
+  109    1    3    7       10.0   7.3  -60   9.4    -1.1  0.4    1
+# 4ALA
+   21   23   25   27       10.0   8.6  -60   9.4    -1.1  0.4    1
+# 5PHE
+   27   29   31   44       10.0   6.8  -60   9.4    -1.1  0.4    1
+# 6PHE
+   44   46   48   61       10.0   6.6  -60   9.4    -1.1  0.4    1
+# 9PHE
+   75   77   79   92       10.0   8.3  -60   9.4    -1.1  0.4    1
+# 10PHE
+   92   94   96  109       10.0   6.7  -60   9.4    -1.1  0.4    1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<br>
+</body>
