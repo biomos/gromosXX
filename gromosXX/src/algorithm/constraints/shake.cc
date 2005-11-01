@@ -134,9 +134,9 @@ int algorithm::Shake::shake_iteration
 	DEBUG(5, "r " << math::v2s(r));
 
 	std::cout << "SHAKE ERROR\n"
-		  << "\tatom i    : " << it->i + 1 << "\n"
-		  << "\tatom j    : " << it->j + 1 << "\n"
-		  << "\tfirst     : " << first << "\n"
+		  << "\tatom i    : " << first + it->i + 1 << "\n"
+		  << "\tatom j    : " << first + it->j + 1 << "\n"
+	  // << "\tfirst     : " << first << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
 		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
@@ -322,9 +322,9 @@ void algorithm::Shake
 	    periodicity, false)){
 	  
 	  io::messages.add("SHAKE error. vectors orthogonal",
-			   "Shake::solute", io::message::error);
+			   "Shake::solvent", io::message::error);
 	  
-	  std::cout << "SHAKE failure in solute!" << std::endl;
+	  std::cout << "SHAKE failure in solvent!" << std::endl;
 	  error = E_SHAKE_FAILURE_SOLVENT;
 	  return;
 	}
