@@ -216,11 +216,11 @@ namespace io
       }
       if (it->tau != -1){
 	os << std::setw(12)
-	<< std::setprecision(7)
+	   << std::setprecision(7)
 	   << it->scale;
       }
       else{
-	os << std::setw(10)
+	os << std::setw(12)
 	   << "-";
       }
 	  
@@ -246,7 +246,7 @@ namespace io
     }
 
     os << "    ---------------------------------------------"
-       << "---------------------------------------\n";
+       << "------------------------------------------\n";
 
     os << std::setw(10) << "T_avg"
        << std::setw(13) << std::setprecision(4) << std::scientific
@@ -564,7 +564,8 @@ namespace io
   
   void print_REMD(std::ostream &os,
 		  util::Replica_Data const & replica_data,
-		  simulation::Parameter const & param)
+		  simulation::Parameter const & param,
+		  int reeval)
   {
     assert(unsigned(replica_data.Ti) < param.replica.temperature.size());
     assert(unsigned(replica_data.li) < param.replica.lambda.size());
@@ -576,6 +577,12 @@ namespace io
        << std::setw(10) << replica_data.run
        << std::setw(10) << param.replica.temperature[replica_data.Ti]
        << std::setw(10) << param.replica.lambda[replica_data.li]
+       << "\n"
+       << std::setw(15) << replica_data.Ti + 1
+       << std::setw(10) << replica_data.li + 1
+       << std::setw(10) << replica_data.Tj + 1
+       << std::setw(10) << replica_data.lj + 1
+       << std::setw(10) << reeval
        << "\nEND\n";
   }
   

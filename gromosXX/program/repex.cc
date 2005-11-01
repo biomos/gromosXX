@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf"
      << "input" << "cg_input" << "verb" << "pttopo" << "cg_pttopo"
-	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
+	 << "trj" << "fin" << "trv" << "trf" << "tre" << "re" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
 	 << "rep" << "master" << "slave" << "control"
 	 << "version";
@@ -59,6 +59,7 @@ int main(int argc, char *argv[]){
   
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);
+  usage += "#\n\n";
 
   io::Argument args;
 

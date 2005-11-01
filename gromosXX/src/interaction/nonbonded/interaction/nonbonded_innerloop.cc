@@ -77,6 +77,16 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   // molecular virial is calculated by a
   // correction to the atomic virial
   //////////////////////////////////////////////////
+  
+  /*
+  if (fabs(f) > 10000){
+    std::cerr << "pair " << i << " - " << j << " force = " << f << std::endl;
+    std::cerr << "\tiac " << topo.iac(i) << " " << topo.iac(j)
+	      << "\tq " << topo.charge(i) << " " << topo.charge(j)
+	      << "\n\tr " << math::v2s(r)
+	      << "\n\tr2 " << abs2(r) << std::endl;
+  }
+  */
 
   DEBUG(10, "\t\tatomic / no virial");
   for (int a=0; a<3; ++a){

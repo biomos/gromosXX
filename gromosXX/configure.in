@@ -173,7 +173,7 @@ case "$compiler" in
      gnu*)              # EGCS  http://egcs.cygnus.com/
        echo "Configuring for GNU C++"
        CXX_PICKY_FLAGS="-Wall"
-       CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -DNDEBUG -g"
+       CXX_OPTIMIZE_FLAGS="-O6 -march=k8 -mfpmath=sse -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -Winline -DNDEBUG -g -finline-limit=5000"
        CXX_DEBUG_FLAGS="-g"
        CXXLD="$CXX"
 
@@ -362,6 +362,7 @@ AC_CONFIG_FILES([
 	src/util/Makefile
 	src/check/Makefile
 	program/Makefile
+	contrib/Makefile
 	Makefile
 ])
 	

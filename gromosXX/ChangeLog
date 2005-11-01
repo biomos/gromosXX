@@ -1,3 +1,339 @@
+2005-10-07 10:46  markus
+
+	* src/interaction/nonbonded/vector/: grid.cc, grid.h, vgrid.cc:
+	  store longrange forces
+
+2005-10-06 17:28  markus
+
+	* doc/input.html: last atom for rototranslational constraints
+
+2005-10-06 17:28  markus
+
+	* src/topology/: topology.cc, topology.h: chargegroup based
+	  exclusions
+
+2005-10-06 17:28  markus
+
+	* src/simulation/parameter.h: vector pairlist
+
+2005-10-06 17:27  markus
+
+	* src/algorithm/temperature/berendsen_thermostat.cc: init message
+
+2005-10-06 17:27  markus
+
+	* src/algorithm/constraints/rottrans.cc: only constrain a given
+	  number of atoms
+
+2005-10-06 17:26  markus
+
+	* src/io/topology/in_perturbation.cc: allow disabling of softness
+
+2005-10-06 17:26  markus
+
+	* src/io/parameter/in_parameter.cc: overwriting of softness, last
+	  rottrans atom, vector grid pairlist
+
+2005-10-06 17:25  markus
+
+	* src/interaction/nonbonded/: interaction/nonbonded_interaction.cc,
+	  interaction/nonbonded_set.cc,
+	  pairlist/grid_pairlist_algorithm.cc, vector/vgrid.cc,
+	  vector/vgrid.h: vector grid pairlist creation - not complete
+
+2005-10-06 10:31  markus
+
+	* src/interaction/: nonbonded/vector/grid.cc,
+	  nonbonded/vector/grid.h, nonbonded/vector/vgrid.cc,
+	  nonbonded/vector/vgrid.h, Makefile.am: vectorizable grid based
+	  pairlist
+
+2005-09-28 17:45  markus
+
+	* src/: check/check_state.cc, configuration/configuration.cc,
+	  configuration/configuration.h,
+	  interaction/nonbonded/innerloop_template.h,
+	  interaction/nonbonded/interaction_spec.h,
+	  interaction/nonbonded/interaction/nonbonded_innerloop.cc,
+	  interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_pair.cc,
+	  util/prepare_virial.cc, util/prepare_virial.h: molecular virial
+	  through correction of atomic virial
+
+2005-09-28 17:36  markus
+
+	* src/io/topology/in_distrest.cc: quiet flag
+
+2005-09-28 17:32  markus
+
+	* doc/: input.html, main.doxy: input blocks, cvs access
+
+2005-09-09 17:37  markus
+
+	* doc/input.html: typo
+
+2005-09-09 17:35  markus
+
+	* src/check/check_state.cc: checking molecular virial (as a
+	  correction of an atomic virial)
+
+2005-09-09 17:34  markus
+
+	* src/check/check_forcefield.cc: no checks for MolecularVirial
+	  (correction)
+
+2005-09-09 17:32  markus
+
+	* src/configuration/energy.h: provide constructor/destructor for
+	  inlining ?!
+
+2005-09-09 17:31  markus
+
+	* src/math/gmath.h: matrix: operator-=
+
+2005-09-09 17:31  markus
+
+	* src/io/topology/in_topology.cc: typo in topology output
+
+2005-09-09 17:30  markus
+
+	* src/util/: prepare_virial.cc, prepare_virial.h: calculate
+	  molecular virial from atomic virial
+
+2005-09-09 17:29  markus
+
+	* src/: configuration/configuration.cc, math/periodicity.cc,
+	  math/periodicity.h: bugfix: submolecules smaller chargegroups:
+	  gather chargegroups
+
+2005-09-09 17:27  markus
+
+	* src/interaction/: Makefile.am, molecular_virial_interaction.cc,
+	  molecular_virial_interaction.h, bonded/angle_interaction.cc,
+	  bonded/angle_interaction.h, bonded/dihedral_interaction.cc,
+	  bonded/dihedral_interaction.h, bonded/harm_angle_interaction.cc,
+	  bonded/harm_angle_interaction.h,
+	  bonded/harmonic_bond_interaction.cc,
+	  bonded/harmonic_bond_interaction.h,
+	  bonded/improper_dihedral_interaction.cc,
+	  bonded/improper_dihedral_interaction.h,
+	  bonded/perturbed_angle_interaction.cc,
+	  bonded/perturbed_angle_interaction.h,
+	  bonded/perturbed_dihedral_interaction.cc,
+	  bonded/perturbed_dihedral_interaction.h,
+	  bonded/perturbed_harmonic_bond_interaction.cc,
+	  bonded/perturbed_harmonic_bond_interaction.h,
+	  bonded/perturbed_improper_dihedral_interaction.cc,
+	  bonded/perturbed_improper_dihedral_interaction.h,
+	  bonded/perturbed_quartic_bond_interaction.cc,
+	  bonded/perturbed_quartic_bond_interaction.h,
+	  bonded/quartic_bond_interaction.cc,
+	  bonded/quartic_bond_interaction.h,
+	  forcefield/create_forcefield.cc,
+	  nonbonded/interaction/nonbonded_innerloop.cc,
+	  nonbonded/interaction/nonbonded_innerloop.h,
+	  nonbonded/interaction/nonbonded_interaction.cc,
+	  nonbonded/interaction/nonbonded_outerloop.cc,
+	  nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  nonbonded/interaction/perturbed_nonbonded_pair.cc,
+	  nonbonded/pairlist/standard_pairlist_algorithm.cc,
+	  nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  special/distance_restraint_interaction.h: calculate molecular
+	  virial as correction to an atomic one
+
+2005-08-30 19:01  markus
+
+	* src/util/: replica_exchange.h, replica_exchange_master.cc,
+	  replica_exchange_slave.cc, virtual_grain.cc: replica exchange:
+	  bugfix
+
+2005-08-30 18:59  markus
+
+	* src/interaction/nonbonded/interaction/nonbonded_innerloop.cc:
+	  debug messages
+
+2005-08-28 17:47  markus
+
+	* src/util/: replica_exchange.h, replica_exchange_control.cc,
+	  replica_exchange_master.cc, replica_exchange_slave.cc,
+	  virtual_grain.cc: socket: remote connection needs ACK to work
+
+2005-08-28 17:46  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_term.cc,
+	  perturbed_nonbonded_term.cc: coarse-grain fix: shift term
+	  multiplication bug
+
+2005-08-27 13:50  markus
+
+	* src/: interaction/interaction_types.h,
+	  interaction/nonbonded/interaction/nonbonded_innerloop.cc,
+	  interaction/nonbonded/interaction/nonbonded_parameter.h,
+	  interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc,
+	  io/ifp.h, io/parameter/in_parameter.cc,
+	  io/topology/in_topology.cc, io/topology/in_topology.h,
+	  util/replica_exchange_slave.cc: cg param to lj param
+
+2005-08-21 11:31  markus
+
+	* program/repex.cc: multigraining arguments
+
+2005-08-21 11:30  markus
+
+	* src/util/: replica_data.h, replica_exchange.h,
+	  replica_exchange_slave.cc: add timestep selection to replica
+	  exchange
+
+2005-08-21 11:30  markus
+
+	* src/interaction/nonbonded/interaction/nonbonded_interaction.h:
+	  centre of mass: select between rotation and translation removing
+
+2005-08-21 11:29  markus
+
+	* src/io/: configuration/in_configuration.cc,
+	  configuration/out_configuration.cc, parameter/in_parameter.cc:
+	  add timestep selection to REPLICA block
+
+2005-08-21 11:28  markus
+
+	* src/io/topology/: in_perturbation.cc, in_topology.cc: allow
+	  perturbation of B->A (for bonds)
+
+2005-08-21 11:25  markus
+
+	* src/: algorithm/create_md_sequence.cc,
+	  algorithm/constraints/remove_com_motion.cc,
+	  algorithm/constraints/remove_com_motion.h,
+	  configuration/configuration.cc, configuration/configuration.h,
+	  interaction/nonbonded/interaction/nonbonded_interaction.cc:
+	  centre of mass: split translation and rotation
+
+2005-08-19 08:37  markus
+
+	* nightly/: nightly.sh, options.all, pkg_debian.sh,
+	  pkg_debian_fakeroot.sh, pkg_solaris.sh, pkg_solaris_fakeroot.sh:
+	  working nightly scripts
+
+2005-08-18 19:01  markus
+
+	* packaging/debian.depend: nightly
+
+2005-08-18 09:58  markus
+
+	* Makefile.am, acinclude.m4: nightly fixes
+
+2005-08-18 09:58  markus
+
+	* nightly/: distcheck.sh, nightly.sh, options.Linux_i686,
+	  options.SunOS_i86pc, options.SunOS_sun4u, options.gromos++,
+	  options.gromosXX, pkg_debian.sh, pkg_debian_fakeroot.sh,
+	  pkg_solaris.sh, prepare.sh: bugfixes
+
+2005-08-17 17:14  markus
+
+	* Makefile.am: nightly files
+
+2005-08-17 17:11  markus
+
+	* nightly/: distcheck.sh, nightly.sh, options.Linux_i686,
+	  options.SunOS_i86pc, options.SunOS_sun4u, pkg_debian.sh,
+	  pkg_debian_fakeroot.sh, pkg_solaris.sh, pkg_solaris_fakeroot.sh,
+	  prepare.sh: automatic build system (nightly)
+
+2005-08-17 17:10  markus
+
+	* doc/input.html: coarse grain level
+
+2005-08-17 17:10  markus
+
+	* doc/: gromosXX.sty, gromosXX.tex: figure name change
+
+2005-08-17 17:10  markus
+
+	* configure.in: intel: ipo too slow
+
+2005-08-17 17:09  markus
+
+	* nightly/options.all, nightly/options.gromos++,
+	  nightly/options.gromosXX, packaging/debian.depend,
+	  packaging/solaris.pkginfo: autobuild system (nightly)
+
+2005-08-17 17:06  markus
+
+	* doc/figures/: figure_13.pdf, figure_3.pdf, figure_4.pdf,
+	  figure_6.pdf, figure_7.pdf: pdf figures
+
+2005-08-17 16:55  markus
+
+	* doc/figures/: figure_1.eps, figure_10.ps, figure_11.ps,
+	  figure_12.ps, figure_13.eps, figure_2.eps, figure_3.ps,
+	  figure_4.ps, figure_5.eps, figure_5.ps, figure_6.ps, figure_7.ps,
+	  figure_8.eps, figure_9.ps: gromos paper figures
+
+2005-08-16 19:54  markus
+
+	* packaging/control.debian: [no log message]
+
+2005-08-16 19:54  markus
+
+	* packaging/debian.control: debian.control
+
+2005-08-16 19:48  markus
+
+	* nightly/: nightly.sh, options.SunOS_sun4u: nightly builds
+
+2005-08-16 19:39  markus
+
+	* src/: algorithm/constraints/flexible_constraint.cc,
+	  algorithm/constraints/perturbed_flexible_constraint.cc,
+	  interaction/special/distance_restraint_interaction.cc,
+	  interaction/special/perturbed_distance_restraint_interaction.cc:
+	  signed/unsigned fixes
+
+2005-08-16 19:38  markus
+
+	* nightly/: distcheck.sh, nightly.sh, options.Linux_i686,
+	  options.SunOS_i86pc, pkg_debian.sh, pkg_debian_fakeroot.sh,
+	  pkg_solaris.sh, pkg_solaris_fakeroot.sh, prepare.sh,
+	  setup_chroot.sh: nightly builds
+
+2005-08-16 18:15  markus
+
+	* Makefile.am, packaging/copyright, packaging/solaris.depend:
+	  packaging
+
+2005-08-16 14:16  markus
+
+	* program/Makefile.am: removed mg, script from standard build
+
+2005-08-15 21:13  markus
+
+	* src/util/replica_exchange_master.cc: signed / unsigned fix
+
+2005-08-15 21:13  markus
+
+	* src/util/replica_exchange_slave.cc: removed deprecated code
+
+2005-08-15 21:12  markus
+
+	* src/util/replica_exchange_control.cc: unsigned int fixes,
+	  deprecated code removed
+
+2005-08-15 21:11  markus
+
+	* src/: io/parameter/in_parameter.cc, simulation/parameter.h:
+	  multigraining
+
+2005-08-15 21:11  markus
+
+	* src/io/topology/in_topology.cc: CGPARAMETERS: c12 c6 order
+
+2005-08-15 21:10  markus
+
+	* ChangeLog, doc/release.html: update release doc
+
 2005-08-14 21:47  markus
 
 	* src/util/: replica_exchange_control.cc,

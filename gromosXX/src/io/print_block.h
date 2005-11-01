@@ -66,9 +66,17 @@ namespace io
    * Print the CENTREOFMASS block.
    */
   void print_CENTREOFMASS(std::ostream &os, double const ekin_trans, double const ekin_rot);
-
+  
+  /**
+   * print replica exchange information
+   * will precede standard blocks in trajectories,
+   * identifying the current replica
+   * reeval 0: data is from Ti,li
+   *        1: data is from Tj,lj
+   */
   void print_REMD(std::ostream &os, util::Replica_Data const & replica_data,
-		  simulation::Parameter const & param);
+		  simulation::Parameter const & param,
+		  int reeval = 0);
   
 } // io
 

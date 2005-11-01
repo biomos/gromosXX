@@ -208,7 +208,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   
   if (sim.param().perturbation.perturbation){
     
-    std::cerr << "creating " << m_set_size << " Perturbed_Nonbonded_Sets" << std::endl;
+    // std::cerr << "creating " << m_set_size << " Perturbed_Nonbonded_Sets" << std::endl;
 
     for(int i=0; i<m_set_size; ++i)
       m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
@@ -217,12 +217,12 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   else{
     for(int i=0; i<m_set_size; ++i){
       if (sim.param().pairlist.grid == 2){
-	std::cerr << "creating VGrid_Nonbonded_Set" << std::endl;
+	// std::cerr << "creating VGrid_Nonbonded_Set" << std::endl;
 	m_nonbonded_set.push_back(new VGrid_Nonbonded_Set(*m_pairlist_algorithm, 
 							  m_parameter, i, m_set_size));
       }
       else{
-	std::cerr << "creating Nonbonded_Set" << std::endl;
+	// std::cerr << "creating Nonbonded_Set" << std::endl;
 	m_nonbonded_set.push_back(new Nonbonded_Set(*m_pairlist_algorithm, 
 						    m_parameter, i, m_set_size));
       }

@@ -52,6 +52,7 @@ int main(int argc, char *argv[]){
   
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);
+  usage += "#\n\n";
 
   io::Argument args;
 

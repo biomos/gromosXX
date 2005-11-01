@@ -56,6 +56,7 @@ int main(int argc, char *argv[]){
   
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);
+  usage += "#\n\n";
 
   // master or slave : that's the question
   MPI::Init(argc, argv);

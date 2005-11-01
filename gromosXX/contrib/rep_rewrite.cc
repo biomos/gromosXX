@@ -1,106 +1,211 @@
+#include <stdheader.h>
 
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <string>
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
+
+#include <io/argument.h>
+#include <util/usage.h>
+#include <util/error.h>
+
+#include <io/parameter/in_parameter.h>
 
 using namespace std;
 
-int read_conf(string fn,
-	      vector<string> & T, vector<string> & l,
-	      vector<ifstream *> & ifile,
-	      vector<vector<ofstream *> > & ofile);
+struct repframe
+{
+  int id;
+  int run;
+  std::string T;
+  std::string l;
+  int Ti;
+  int li;
+  int Tj;
+  int lj;
+  bool reeval;
 
-int init(vector<ifstream*> &traj, 
-	 vector<int> &repid, vector<int> &reprun,
-	 vector<string> &repT, vector<string> &repl);
+  bool operator==(repframe const & r)
+  {
+    return (id == r.id && run == r.run && T == r.T &&
+	    l == r.l && Ti == r.Ti && li == r.li &&
+	    Tj == r.Tj && lj == r.lj && reeval == r.reeval);
+  }
+};
 
-int write_frame(int i, 
-		vector<ifstream *> & ifile, 
-		vector<vector<ofstream *> > & ofile,
-		vector<string> & T,
-		vector<string> & l,
-		vector<int> & repid,
-		vector<int> & reprun, 
-		vector<string> & repT,
-		vector<string> &repl,
-		vector<vector<int> > & orun);
+std::string get_name(std::string prefix, std::string suffix, repframe const & rep, simulation::Parameter const & param);
+
+int read_repframe(ifstream & traj, repframe & stream_state);
+
+int init(vector<ifstream*> & traj,
+	 vector<repframe> & stream_state);
+
+int write_frame(ifstream & ifile, 
+		ofstream & ofile,
+		repframe & stream_state,
+		simulation::Parameter const & param);
 
 void finish(vector<ifstream * > & ifile,
-	    vector<vector<ofstream *> > & ofile);
+	    map<string, ofstream *> & ofile);
 
 int find_ind(vector<string> const &v, string s);
 
 int main(int argc, char *argv[])
 {
 
-  if (argc < 2){
-    cout << "usage: " << argv[0]
-	 << " filename"
-	 << endl;
-    return 1;
-  }
+  util::Known knowns;
+  knowns << "input"
+	 << "name"
+	 << "trj";
   
-  vector<string> T;
-  vector<string> l;
-  
-  vector<vector<ofstream* > > ofile;
-  vector<ifstream*> ifile;
-  
-  if (read_conf(argv[1], T, l, ifile, ofile)){
-    cout << "error while reading configuration file!" << endl;
-    return 1;
-  }
-  
-  vector<int> repid(ifile.size(), -1);
-  vector<int> reprun(ifile.size(), -1);
-  vector<string> repT(ifile.size(), "");
-  vector<string> repl(ifile.size(), "");
+  std::string usage;
+  util::get_usage(knowns, usage, argv[0]);
+  usage += "#\n\n";
 
-  vector<vector<int> > orun(T.size(), vector<int>(l.size(), -1));
+  usage += "\t# prefix and postfix of output trajectories\n";
+  usage += "\t@name       prefix  postfix\n";
+
+  io::Argument args;
+
+  if (args.parse(argc, argv, knowns)){
+    std::cerr << usage << std::endl;
+    return 1;
+  }
   
-  if (init(ifile, repid, reprun, repT, repl)){
+  simulation::Parameter param;
+  {
+    std::ifstream input_file;
+    input_file.open(args["input"].c_str());
+    
+    if (!input_file.is_open()){
+      std::cerr << "\n\ncould not open " << args["input"] << "!\n" << std::endl;
+      return -1;
+    }
+    io::In_Parameter ip(input_file);
+    ip.read(param, std::cout);
+  }
+  
+  std::string prefix, suffix;
+  {
+    io::Argument::const_iterator iter=args.lower_bound("name");
+    io::Argument::const_iterator to=args.upper_bound("name");
+    if (iter == to){
+      cerr << "argument @name is required" << endl;
+      return 1;
+    }
+    
+    {
+      std::istringstream is(iter->second);
+      is >> prefix;
+    }
+    
+    if (++iter == to){
+      cerr << "argument @name prefix suffix is required" << endl;
+      return 1;
+    }
+    
+    {
+      std::istringstream is(iter->second);
+      is >> suffix;
+    }
+  }
+  
+  vector<ifstream*> ifile;
+  map<string, ofstream *> ofile;
+  
+  {
+    io::Argument::const_iterator iter=args.lower_bound("trj");
+    io::Argument::const_iterator to=args.upper_bound("trj");
+    
+    for( ; iter != to; ++iter){
+      ifstream * ifp = new ifstream(iter->second.c_str());
+      if (!(ifp->is_open())){
+	cerr << "could not open trajectory " + iter->second << endl;
+	return 1;
+      }
+      
+      ifile.push_back(ifp);
+    }
+  }
+
+  vector<repframe> stream_state(ifile.size());
+  map<string, int> out_run;
+  
+  if (init(ifile, stream_state)){
     cout << "error in init!" << endl;
     return 1;
   }
 
-  for(unsigned int i=0; i<repid.size(); ++i){
-    cout << "\t" << repid[i] << " (" << reprun[i] << ")";
-  }
-  cout << endl;
-
-  // select lowest run number, write to file
+  // select any frame that is ready to be written
   bool done = false;
   
   while(!done){
 
     done = true;
-    for(unsigned int i=0; i<reprun.size(); ++i){
-
-      if (repid[i] == -1) continue;
+    for(unsigned int i=0; i<stream_state.size(); ++i){
       
-      const int T_ind = find_ind(T, repT[i]);
-      const int l_ind = find_ind(l, repl[i]);
+      if (stream_state[i].id == -1) continue;
+      
+      std::string filename = get_name(prefix, suffix, stream_state[i], param);
+      
+      // check whether filename is open
+      if (ofile.count(filename) == 0){
+	ofstream * ofp = new ofstream(filename.c_str());
+	out_run[filename] = -1;
+	ofile[filename] = ofp;
+	
+	(*ofp) << "TITLE\n";
+	
+	(*ofp) << "\ttrajectory for\n";
+	
+	if (param.replica.temperature.size() > 1)
+	  (*ofp) << "\tTi " << param.replica.temperature[stream_state[i].Ti] << "\n";
 
-      if (T_ind < 0 || l_ind < 0){
-	cout << "\ncould not lookup indices!\n"
-	     << "T_ind = " << T_ind << " ("
-	     << repT[i] << ")\n"
-	     << "l_ind = " << l_ind << " ("
-	     << repl[i] << ")\n" << endl;
-	break;
+	if (param.replica.lambda.size() > 1)
+	  (*ofp) << "\tlambda " << param.replica.lambda[stream_state[i].li] << "\n";
+	
+	if (stream_state[i].reeval){
+	  (*ofp) << "\treevaluating at";
+	  if (stream_state[i].Ti != stream_state[i].Tj)
+	    (*ofp) << " T " << param.replica.temperature[stream_state[i].Tj];
+	  if (stream_state[i].li != stream_state[i].lj)
+	    (*ofp) << " lambda " << param.replica.lambda[stream_state[i].lj];
+	  (*ofp) << "\n";
+	}
+	
+	(*ofp) << "END\n";
+
+	cout << "created " << filename << endl;
       }
+      /*
+      else{
+	cout << "using " << filename 
+	     << " run=" << stream_state[i].run
+	     << " out=" << out_run[filename] + 1
+	     << endl;
+      }
+      */
 
-      if ((reprun[i] == orun[T_ind][l_ind] + 1)){
+      // reeval is allowed to skip one
+      if ((stream_state[i].run == out_run[filename] + 1) ||
+	  (stream_state[i].reeval && stream_state[i].run == out_run[filename] + 2)){
+	
 	// ready to write!
 	done = false;
 
-	if (write_frame(i, ifile, ofile, T, l, repid, reprun, repT, repl, orun)){
+	repframe old_state = stream_state[i];
+	
+	if (write_frame(*ifile[i],
+			*ofile[filename],
+			stream_state[i], param)){
 	  cout << "error while writing frame!" << endl;
 	  done = true;
 	  break;
+	}
+	if (stream_state[i] == old_state){
+	  cout << " (multiframe)" << endl;
+	}
+	else{
+	  out_run[filename] = old_state.run;
+	  cout << endl;
 	}
 
       } // selecte a trajectory that is ready to write
@@ -112,8 +217,42 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-int init(vector<ifstream*> &traj, vector<int> &repid, vector<int> &reprun,
-	 vector<string> & repT, vector<string> & repl)
+int read_repframe(ifstream & traj, repframe & stream_state)
+{
+  std::string line;
+  { // ID RUN T l
+    getline(traj, line);
+    istringstream is(line);
+    is >> stream_state.id >> stream_state.run
+       >> stream_state.T >> stream_state.l;
+    if (is.fail()){
+      cout << "error while reading file on line " << line << endl;
+      return 1;
+    }
+  }
+  { // Ti li Tj lj reeval
+    getline(traj, line);
+    istringstream is(line);
+    is >> stream_state.Ti >> stream_state.li
+       >> stream_state.Tj >> stream_state.lj
+       >> stream_state.reeval;
+    if (is.fail()){
+      cout << "error while reading file on line " << line << endl;
+      return 1;
+    }
+  }
+  --stream_state.id;
+  --stream_state.Ti;
+  --stream_state.Tj;
+  --stream_state.li;
+  --stream_state.lj;
+  
+  // and the END
+  getline(traj, line);
+  return 0;
+}
+
+int init(vector<ifstream*> &traj, vector<repframe> &stream_state)
 {
   string line;
   for(unsigned int i=0; i<traj.size(); ++i){
@@ -121,18 +260,9 @@ int init(vector<ifstream*> &traj, vector<int> &repid, vector<int> &reprun,
     do{
       getline(*traj[i], line);
     } while (line != "REMD");
-    
-    getline(*traj[i], line);
-    istringstream is(line);
-    is >> repid[i] >> reprun[i] >> repT[i] >> repl[i];
-    
-    if (is.fail()){
-      cout << "error while reading file: " << i << ", line " << line << endl;
-      return 1;
-    }
 
-    // and the END
-    getline(*traj[i], line);
+    if (read_repframe(*traj[i], stream_state[i]))
+      return 1;
   }
 
   return 0;
@@ -226,108 +356,92 @@ int read_conf(string fn,
 }
 
 void finish(vector<ifstream * > & ifile,
-	    vector<vector<ofstream *> > & ofile)
+	    map<string, ofstream *> & ofile)
 {
-  for(unsigned int i=0; i<ifile.size(); ++i)
+  for(unsigned int i=0; i<ifile.size(); ++i){
+    ifile[i]->close();
     delete ifile[i];
+  }
 
-  for(unsigned int i=0; i<ofile.size(); ++i)
-    for(unsigned int j=0; j<ofile[i].size(); ++j)
-      delete ofile[i][j];
+  map<string, ofstream *>::iterator
+    it = ofile.begin(),
+    to = ofile.end();
+  
+  for( ; it != to; ++it){
+    it->second->close();
+    delete(it->second);
+  }
 }
 
 
-int write_frame(int i, 
-		vector<ifstream *> & ifile, 
-		vector<vector<ofstream *> > & ofile,
-		vector<string> & T,
-		vector<string> & l,
-		vector<int> & repid,
-		vector<int> & reprun, 
-		vector<string> & repT,
-		vector<string> &repl,
-		vector<vector<int> > & orun)
+int write_frame(ifstream & ifile, 
+		ofstream & ofile,
+		repframe & stream_state,
+		simulation::Parameter const & param)
 {
-  const int T_ind = find_ind(T, repT[i]);
-  const int l_ind = find_ind(l, repl[i]);
+  cout << "writing frame "
+       << setw(4) << stream_state.id << " " 
+       << setw(4) << stream_state.run;
+  
+  cout.precision(3);
+  cout.setf(ios::fixed, ios::floatfield);
+  
+  if (param.replica.temperature.size() > 1)
+    cout << " " << setw(10) << param.replica.temperature[stream_state.Ti];
+  
+  if (param.replica.lambda.size() > 1)
+    cout << " " << setw(10) << param.replica.lambda[stream_state.li];
+  
+  if (stream_state.reeval)
+    cout << " (reeval)";
 
-  cout << "writing frame " 
-       << repid[i] << " " 
-       << reprun[i] << " "
-       << repT[i] << " " 
-       << repl[i] << " ... ";
+  cout << " ... ";
   cout.flush();
-
-  if (T_ind < 0 || l_ind < 0){
-    cout << "\ncould not lookup indices!\n"
-	 << "T_ind = " << T_ind << " ("
-	 << repT[i] << ")\n"
-	 << "l_ind = " << l_ind << " ("
-	 << repl[i] << ")\n" << endl;
-    return 1;
-  }
-
-  if ((reprun[i] != orun[T_ind][l_ind] + 1)){
-    cout << "\nwrong run number!\n"
-	 << "last run " << orun[T_ind][l_ind]
-	 << " current run: " << reprun[i] << endl;
-    cout << "all last runs:\n";
-    for(unsigned int i=0; i<orun.size(); ++i)
-      for(unsigned int j=0; j<orun[i].size(); ++j)
-	cout << setw(8) << orun[i][j];
-    cout << endl;
-    return 2;
-  }
   
   string line;
   while(true){
-    getline(*ifile[i], line);
+    getline(ifile, line);
     if (line == "REMD") break;
 
-    if (ifile[i]->eof()){
-      repid[i] = -1;
-      ++reprun[i];
-      repT[i] = "";
-      repl[i] = "";
+    if (ifile.eof()){
+      stream_state.id = -1;
+      ++stream_state.run;
+      
       cout << "done: end of trajectory" << endl;
-
-      ++orun[T_ind][l_ind];
-
       return 0;
     }
 
-    *ofile[T_ind][l_ind] << line << "\n";
+    ofile << line << "\n";
   }
   
-  getline(*ifile[i], line);
-  istringstream is(line);
-  int old_id = repid[i], old_run = reprun[i];
-  string old_T = repT[i], old_l = repl[i];
-  
-  is >> repid[i] >> reprun[i] >> repT[i] >> repl[i];
-
-  if (old_id == repid[i] && old_run == reprun[i] && old_T == repT[i] && old_l == repl[i]){
-    cout << "(multiframe) ";
-  }
-  else
-    ++orun[T_ind][l_ind];
-  
-  if (is.fail()){
-    cout << "error while reading file: " << i << ", line " << line << endl;
-    return 1;
-  }
-  
-  // and the END
-  getline(*ifile[i], line);
-
-  cout << "done" << endl;
+  read_repframe(ifile, stream_state);
+  cout << "done";
 
   return 0;
 }
 
-int find_ind(vector<string> const &v, string s)
+std::string get_name(std::string prefix, std::string suffix, repframe const & rep, simulation::Parameter const & param)
 {
-  for(unsigned int i=0; i<v.size(); ++i)
-    if (v[i] == s) return i;
-  return -1;
+  std::ostringstream os;
+  os << prefix;
+
+  if (param.replica.temperature.size() > 1)
+    os << "_" << param.replica.temperature[rep.Ti];
+  
+  if (param.replica.lambda.size() > 1)
+    os << "_" << param.replica.lambda[rep.li];
+  
+  if (rep.reeval){
+    os << "_reeval";
+    
+    if (rep.Ti != rep.Tj)
+      os << "_" << param.replica.temperature[rep.Tj];
+    if (rep.li != rep.lj)
+      os << "_" << param.replica.lambda[rep.lj];
+  }
+  
+  os << "." << suffix;
+
+  return os.str();
 }
+

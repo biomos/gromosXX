@@ -1065,12 +1065,12 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
-  int bondH, angleH, impH, dihedralH, charge;
+  int bondH, angleH, impH, dihedralH;
   unsigned int num, e, old_e=0;
   
   _lineStream >> bondH >> param.force.bond >> angleH >> param.force.angle
 	      >> impH >> param.force.improper >> dihedralH >> param.force.dihedral
-	      >> charge >> param.force.nonbonded;
+	      >> param.force.nonbonded_crf >> param.force.nonbonded_vdw;
   _lineStream >> num;
   if(num<=0){
     DEBUG(10, "number of energy group < 0?");
@@ -1115,10 +1115,14 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
     io::messages.add("Force switch for dihedral and dihedral H has to be equal",
 		     "In_Parameter", io::message::error);
 
-  if (charge ^ param.force.nonbonded)
-    io::messages.add("Force switch for lj and charge has to be equal",
-		     "In_Parameter", io::message::error);
-
+  if ((!param.force.nonbonded_crf) && param.force.nonbonded_vdw)
+    io::messages.add("Force: setting charges to zero",
+		     "In_Parameter", io::message::notice);
+  
+  if (param.force.nonbonded_crf && (!param.force.nonbonded_vdw))
+    io::messages.add("Force: setting atom types to dummy (fishy implemented)",
+		     "In_Parameter", io::message::warning);
+  
   if (_lineStream.fail())
     io::messages.add("bad line in FORCE block",
 		       "In_Parameter", io::message::error);
@@ -1146,8 +1150,11 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   if(param.force.dihedral < 0 || param.force.dihedral > 1)
     io::messages.add("Illegal value for force switch for dihedral",
 		     "In_Parameter", io::message::error);
-  if(param.force.nonbonded < 0 || param.force.nonbonded > 1)
-    io::messages.add("Illegal value for force switch for nonbonded",
+  if(param.force.nonbonded_vdw < 0 || param.force.nonbonded_vdw > 1)
+    io::messages.add("Illegal value for force switch for nonbonded (vdw)",
+		     "In_Parameter", io::message::error);
+  if(param.force.nonbonded_crf < 0 || param.force.nonbonded_crf > 1)
+    io::messages.add("Illegal value for force switch for nonbonded (crf)",
 		     "In_Parameter", io::message::error);
 }
 

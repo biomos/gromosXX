@@ -59,9 +59,18 @@ int interaction::create_g96_nonbonded
  bool quiet
  )
 {
-  if (sim.param().force.nonbonded == 0) return 0;
+  if (sim.param().force.nonbonded_vdw == 0 &&
+      sim.param().force.nonbonded_crf == 0) return 0;
   
   if(!quiet){
+    
+    os << "\t" << setw(20) << left << "Force calculation";
+    if (sim.param().force.nonbonded_vdw)
+      os << setw(30) << left << "van-der-Waals";
+    if (sim.param().force.nonbonded_crf)
+      os << setw(30) << left << "Coulomb-reaction-field";    
+    os << "\n";
+    
     if (sim.param().pairlist.grid == 0)
       os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
 	   << left << "Standard Pairlist Algorithm" << right << "\n";
@@ -75,9 +84,9 @@ int interaction::create_g96_nonbonded
     }
     
     if (sim.param().pairlist.atomic_cutoff)
-      os << "\t" << setw(20) << left << "atomic-cutoff" << setw(30) << left << "on" << right << "\n";
+      os << "\t" << setw(20) << left << "cutoff" << setw(30) << left << "atomic" << right << "\n";
     else
-      os << "\t" << setw(20) << left << "atomic-cutoff" << setw(30) << left << "off" << right << "\n";
+      os << "\t" << setw(20) << left << "cutoff" << setw(30) << left << "chargegroup" << right << "\n";
 
     switch(sim.param().boundary.boundary){
       case math::vacuum:
@@ -182,19 +191,19 @@ int interaction::create_g96_nonbonded
 
   if (!quiet){
     os
-      << "\t\t\tshortrange cutoff      : "
+      << "\tshortrange cutoff      : "
       << sim.param().pairlist.cutoff_short << "\n"
-      << "\t\t\tlongrange cutoff       : "
+      << "\tlongrange cutoff       : "
       << sim.param().pairlist.cutoff_long << "\n"
-      << "\t\t\tepsilon                : "
+      << "\tepsilon                : "
       << sim.param().longrange.epsilon << "\n"
-      << "\t\t\treactionfield epsilon  : "
+      << "\treactionfield epsilon  : "
       << sim.param().longrange.rf_epsilon << "\n"
-      << "\t\t\tkappa                  : "
+      << "\tkappa                  : "
       << sim.param().longrange.rf_kappa << "\n"
-      << "\t\t\treactionfield cutoff   : "
+      << "\treactionfield cutoff   : "
       << sim.param().longrange.rf_cutoff << "\n"
-      << "\t\t\tpairlist creation every "
+      << "\tpairlist creation every "
       << sim.param().pairlist.skip_step
       << " steps\n\n";
   }

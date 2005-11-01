@@ -16,6 +16,8 @@ doc-install:	doc
 	cp -r doc/html $(docdir)
 
 EXTRA_DIST = VERSION \
+    contrib/repana.cc \
+	contrib/rep_rewrite.cc \
 	doc/doxygen.conf.in \
 	doc/newinput.txt \
 	doc/arguments.doxy \
