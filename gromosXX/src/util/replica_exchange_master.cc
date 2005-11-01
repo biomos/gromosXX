@@ -233,9 +233,13 @@ int util::Replica_Exchange_Master::run
 
   io::Out_Configuration traj("GromosXX\n\treplica master\n", std::cout);
   traj.title("GromosXX\n\treplica master\n" + sim.param().title);
+
+  traj.init(args, sim.param());
+  /*
   traj.init(args["fin"], args["trj"], args["trv"], args["trf"], 
 	    args["tre"], args["trg"], args["bae"], args["bag"],
 	    sim.param());
+  */
 
   std::cout << std::setw(6) << "ID"
 	    << std::setw(6) << "run"

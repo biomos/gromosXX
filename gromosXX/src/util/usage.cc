@@ -54,6 +54,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# output energy trajectory\n";
     usage += "\t# @tre       filename\n\n";
   }
+
+  if (knowns.count("re")){
+    usage += "\t# output replica energy trajectory (per switch)\n";
+    usage += "\t# @re        filename\n\n";
+  }
   
   if (knowns.count("bae")){
     usage += "\t# output block averaged energy trajectory\n";
@@ -125,7 +130,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @print pairlist/force\n";
   }
 
-  usage += "#\n\n";
+  // usage += "#\n\n";
 
 }
 

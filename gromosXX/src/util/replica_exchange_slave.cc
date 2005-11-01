@@ -127,9 +127,13 @@ int util::Replica_Exchange_Slave::run
 
   io::Out_Configuration traj("GromosXX\n", std::cout);
   traj.title("GromosXX\n" + sim.param().title);
+
+  traj.init(args, sim.param());
+  /*
   traj.init(args["fin"], args["trj"], args["trv"], args["trf"], 
 	    args["tre"], args["trg"], args["bae"], args["bag"],
 	    sim.param());
+  */
 
   // should be the same as from master... (more or less, multigraining)
   std::cout << "\nMESSAGES FROM (SLAVE) INITIALIZATION\n";
@@ -142,7 +146,7 @@ int util::Replica_Exchange_Slave::run
   std::cout.precision(5);
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
-  std::cout << "slave initialised" << std::endl;
+  std::cout << "\n\nslave initialised\n" << std::endl;
   if (multigraining){
     std::cout <<"\tmultigrained simulation" << std::endl;
   }
@@ -281,6 +285,9 @@ int util::Replica_Exchange_Slave::run
       int error = run_md(topo, conf, sim, md, cg_topo, cg_conf, cg_sim, cg_ff, traj);
       std::cerr << "run finished" << std::endl;
       
+      std::cout << "\nslave: run finished!\n\n";
+      std::cout << "\tcalculating potential energies of last configuration\n\n";
+      
       if (!error){
 	// do we need to reevaluate the potential energy ?
 	// yes! 'cause otherwise it's just the energy for
@@ -296,6 +303,7 @@ int util::Replica_Exchange_Slave::run
 	  // calculate the cg forces first!
 	  // std::cerr << "cg step" << std::endl;
 	  if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
+	    cg_conf.current().energies.calculate_totals();
 	    io::print_ENERGY(traj.output(), cg_conf.current().energies,
 			     cg_topo.energy_groups(),
 			     "CGOLDERROR", "CGOLDERR_");
@@ -307,7 +315,12 @@ int util::Replica_Exchange_Slave::run
 	    std::cout << "\nError during CG final energy calc!\n" << std::endl;
 	    return 1;
 	  }
-	}
+
+	  cg_conf.current().energies.calculate_totals();
+	  io::print_ENERGY(traj.output(), cg_conf.current().energies,
+			   cg_topo.energy_groups(),
+			   "CGENERGY_Li", "CGELi_");
+	} // multigraining
 	
 	algorithm::Algorithm * ff = md.algorithm("Forcefield");
 	
@@ -320,11 +333,11 @@ int util::Replica_Exchange_Slave::run
 	if (ff->apply(topo, conf, sim)){
 	  io::print_ENERGY(traj.output(), conf.current().energies,
 			   topo.energy_groups(),
-			   "OLDERROR", "OLDERR_");
+			   "ERROR", "ERR_");
 	  
 	  io::print_ENERGY(traj.output(), conf.old().energies, 
 			   topo.energy_groups(),
-			   "ERROR", "ERR_");
+			   "OLDERROR", "OLDERR_");
 	  
 	  std::cout << "\nError during final energy calc!\n" << std::endl;
 	  return 1;
@@ -334,6 +347,14 @@ int util::Replica_Exchange_Slave::run
 	replica_data.epot_i = conf.current().energies.potential_total +
 	  conf.current().energies.special_total;
 	
+	io::print_ENERGY(traj.output(), conf.current().energies,
+			 topo.energy_groups(),
+			 "ENERGY_Li", "ELi_");
+	
+	traj.write_replica_energy(replica_data, sim,
+				  conf.current().energies,
+				  0);
+
 	if (replica_data.Ti != replica_data.Tj)
 	  std::cout << "replica_energy " << replica_data.epot_i 
 		    << " @ " << T[replica_data.Ti] << "K" << std::endl;
@@ -343,6 +364,8 @@ int util::Replica_Exchange_Slave::run
 	
 	if (replica_data.li != replica_data.lj){
 	  
+	  std::cout << "energies at switched lambda:\n\n";
+
 	  // change the lambda value
 	  sim.param().perturbation.lambda = l[replica_data.lj];
 	  topo.lambda(l[replica_data.lj]);
@@ -358,6 +381,7 @@ int util::Replica_Exchange_Slave::run
 	    cg_topo.update_for_lambda();
 
 	    if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
+	      cg_conf.current().energies.calculate_totals();
 	      io::print_ENERGY(traj.output(), cg_conf.current().energies,
 			       cg_topo.energy_groups(),
 			       "CGOLDERROR", "CGOLDERR_");
@@ -370,6 +394,12 @@ int util::Replica_Exchange_Slave::run
 			<< std::endl;
 	      return 1;
 	    }
+
+	    cg_conf.current().energies.calculate_totals();
+	    io::print_ENERGY(traj.output(), cg_conf.current().energies,
+			     cg_topo.energy_groups(),
+			     "CGENERGY_Lj", "CGELj_");
+
 	  }
 
 	  // recalc energy
@@ -388,6 +418,15 @@ int util::Replica_Exchange_Slave::run
 	  conf.current().energies.calculate_totals();
 	  replica_data.epot_j = conf.current().energies.potential_total +
 	    conf.current().energies.special_total;
+
+	  io::print_ENERGY(traj.output(), conf.current().energies,
+			   topo.energy_groups(),
+			   "ENERGY_Lj", "ELj_");
+
+	  traj.write_replica_energy(replica_data, sim,
+				    conf.current().energies,
+				    1);
+
 	} 
 	else{
 	  replica_data.epot_j = replica_data.epot_i;

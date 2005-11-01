@@ -94,6 +94,11 @@ io::Out_Configuration::~Out_Configuration()
     m_energy_traj.close();
   }
 
+  if (m_replica_traj.is_open()){
+    m_replica_traj.flush();
+    m_replica_traj.close();
+  }
+
   if (m_every_free_energy){
     m_free_energy_traj.flush();
     m_free_energy_traj.close();
@@ -145,6 +150,9 @@ void io::Out_Configuration::init(io::Argument & args,
   if (args.count("trf") > 0)
     force_trajectory(args["trf"], 1);
 
+  if (args.count("re") > 0)
+    replica_trajectory(args["re"]);
+  
   if (args.count("tre") > 0)
     energy_trajectory(args["tre"], param.write.energy);
   else if (param.write.energy)
@@ -181,71 +189,6 @@ void io::Out_Configuration::init(io::Argument & args,
     m_replica = true;
   }
   
-}
-
-void io::Out_Configuration::init
-(
- std::string fin, std::string trj, std::string trv, 
- std::string trf, std::string tre, std::string trg,
- std::string bae, std::string bag,
- simulation::Parameter const & param
- )
-{
-  if (fin != "")
-    final_configuration(fin);
-  else io::messages.add("argument fin for final configuration required!",
-			"Out_Configuration",
-			io::message::error);
-
-  if (trj != "")
-    trajectory(trj, param.write.position);
-  else if (param.write.position)
-    io::messages.add("write trajectory but no trj argument",
-		     "Out_Configuration",
-		     io::message::error);
-
-  if (trv != "")
-    velocity_trajectory(trv, param.write.velocity);
-  else if (param.write.velocity)
-    io::messages.add("write velocity trajectory but no trv argument",
-		     "Out_Configuration",
-		     io::message::error);
-
-  // use same step as position writing
-  if (trf != "")
-    force_trajectory(trf, param.write.position);
-
-  if (tre != "")
-    energy_trajectory(tre, param.write.energy);
-  else if (param.write.energy)
-    io::messages.add("write energy trajectory but no tre argument",
-		     "Out_Configuration",
-		     io::message::error);
-
-  if (trg != "")
-    free_energy_trajectory(trg, param.write.free_energy);
-  else if (param.write.free_energy)
-    io::messages.add("write free energy trajectory but no trg argument",
-		     "Out_Configuration",
-		     io::message::error);
-
-  if (bae != "")
-    block_averaged_energy(bae, param.write.block_average);
-  else if (param.write.block_average && param.write.energy)
-    io::messages.add("write block averaged energy but no bae argument",
-		     "Out_Configuration",
-		     io::message::error);
-
-  if (param.perturbation.perturbation){
-    if (bag != "")
-      block_averaged_free_energy(bag, param.write.block_average);
-    else if (param.write.block_average && param.write.free_energy)
-      io::messages.add("write block averaged free energy "
-			"but no bag argument",
-		       "Out_Configuration",
-		       io::message::error);
-  }
-
 }
 
 void io::Out_Configuration::write(configuration::Configuration &conf,
@@ -482,6 +425,13 @@ void io::Out_Configuration
   m_energy_traj.open(name.c_str());
   m_every_energy = every;
   _print_title(m_title, "energy trajectory", m_energy_traj);
+}
+
+void io::Out_Configuration
+::replica_trajectory(std::string name)
+{
+  m_replica_traj.open(name.c_str());
+  _print_title(m_title, "replica trajectory", m_replica_traj);
 }
 
 void io::Out_Configuration
@@ -1009,6 +959,24 @@ void io::Out_Configuration
   os << "ENERGY03\n";
   _print_energyred_helper(os, conf.old().energies);
   os << "END\n";
+  
+}
+
+void io::Out_Configuration
+::write_replica_energy(util::Replica_Data const & replica_data,
+		       simulation::Simulation const & sim,
+		       configuration::Energy const & energy,
+		       int reeval)
+{
+  m_replica_traj.setf(std::ios::scientific, std::ios::floatfield);
+  m_replica_traj.precision(m_precision);
+  
+  print_REMD(m_replica_traj, replica_data, sim.param(), reeval);
+  _print_timestep(sim, m_replica_traj);
+
+  m_replica_traj << "ENERGY03\n";
+  _print_energyred_helper(m_replica_traj, energy);
+  m_replica_traj << "END\n";
   
 }
 

@@ -193,6 +193,15 @@ namespace topology
     std::vector<std::string> const & residue_names()const {return m_residue_name;}
 
     /**
+     * atom names.
+     */
+    std::map<std::string, int> & atom_names() {return m_atom_name;}
+    /**
+     * const atom names.
+     */
+    std::map<std::string, int> const & atom_names()const {return m_atom_name;}
+
+    /**
      * all exclusions for atom i. Exclusions and 1,4 interactions.
      */
     std::set<int> & all_exclusion(unsigned int const i){
@@ -650,6 +659,11 @@ namespace topology
      * residue names (solute and solvent).
      */
     std::vector<std::string> m_residue_name;
+
+    /**
+     * store all possible atom names (with their iac)
+     */
+    std::map<std::string, int> m_atom_name;
 
     /**
      * energy groups.

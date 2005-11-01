@@ -58,14 +58,6 @@ namespace io {
     void init(io::Argument & args, simulation::Parameter const & param);
     
     /**
-     * initialise the files.
-     */
-    void init(std::string fin, std::string trj, std::string trv, 
-	      std::string trf, std::string tre, std::string trg,
-	      std::string bae, std::string bag,
-	      simulation::Parameter const & param);
-
-    /**
      * write out a timestep.
      */
     void write(configuration::Configuration & conf,
@@ -81,6 +73,11 @@ namespace io {
 		       topology::Topology const & topo,
 		       simulation::Simulation const &sim,
 		       output_format const form = reduced);
+
+    void write_replica_energy(util::Replica_Data const & replica_data,
+			      simulation::Simulation const & sim,
+			      configuration::Energy const & energy,
+			      int reeval = 0);
 
     /**
      * print out data (per time step).
@@ -116,6 +113,10 @@ namespace io {
      * write an energy trajectory.
      */
     void energy_trajectory(std::string const name, int every=1);
+    /**
+     * write a replica trajectory.
+     */
+    void replica_trajectory(std::string const name);
     /**
      * write a free energy trajectory
      */
@@ -251,6 +252,7 @@ namespace io {
     std::ofstream m_vel_traj;
     std::ofstream m_force_traj;
     std::ofstream m_energy_traj;
+    std::ofstream m_replica_traj;
     std::ofstream m_free_energy_traj;
     std::ofstream m_blockaveraged_energy;
     std::ofstream m_blockaveraged_free_energy;

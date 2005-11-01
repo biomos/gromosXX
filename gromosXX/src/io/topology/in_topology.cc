@@ -190,6 +190,42 @@ io::In_Topology::read(topology::Topology& topo,
     
     } // RESNAME
 
+    { // ATOMTYPENAME
+      if (!quiet)
+	os << "\tATOMTYPENAME\n\t";
+    
+      DEBUG(10, "ATOMTYPENAME block");
+      buffer = m_block["ATOMTYPENAME"];
+      it = buffer.begin()+1;
+      int n, num;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> num;
+      ++it;
+    
+      if (!quiet)
+	os << "\t" << num << " atom types\n";
+      
+      for(n=0; it != buffer.end() - 1; ++it, ++n){
+	std::string s;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> s;
+      
+	topo.atom_names()[s] = n;
+      }
+
+      if (n != num){
+	io::messages.add("Error in ATOMTYPENAME block: n!=num.",
+			 "InTopology", io::message::error);
+      }
+
+      if (!quiet)
+	os << "\tEND\n";
+    
+    } // ATOMTYPENAME
+
+
     // os << "time after RESNAME: " << util::now() - start << std::endl;
 
     { // SOLUTEATOM

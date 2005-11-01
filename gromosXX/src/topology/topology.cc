@@ -284,6 +284,29 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
       } // at1 in cg1
     } // cg2
   } // cg1
+
+  if ((!sim.param().force.nonbonded_crf) && sim.param().force.nonbonded_vdw){
+    
+    for(int i=0; i<m_charge.size(); ++i){
+      m_charge(i) = 0.0;
+    }
+  }
+
+  if ((sim.param().force.nonbonded_crf) && (!sim.param().force.nonbonded_vdw)){
+
+    if (m_atom_name.find("DUM") == m_atom_name.end()){
+      io::messages.add("no dummy atomtype (DUM) found in topology",
+		       "topology",
+		       io::message::error);
+    }
+    else{
+      for(int i=0; i<m_iac.size(); ++i){
+	// is this dummy for all forcefields ???
+	m_iac[i] = 18;
+      }
+    }
+  }
+
 }
 
 /**
