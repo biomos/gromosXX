@@ -440,6 +440,7 @@ namespace io
     os << type << "Distrest     : " << std::setw(30) << e.distrest_total << "\n";
     os << type << "Posrest      : " << std::setw(30) << e.posrest_total << "\n";
     os << type << "Jrest        : " << std::setw(30) << e.jvalue_total << "\n";
+    os << type << "Entropy      : " << std::setw(30) << e.entropy_term << "\n";
     os << "\n";
 
     os << std::setw(20) << "COV";

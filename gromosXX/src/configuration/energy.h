@@ -150,7 +150,11 @@ namespace configuration
      * (has to be 0.0 always)
      */
     std::vector<double> constraints_energy;
-
+    /**
+     * entropy estimation
+     * dH/dl * dH
+     */
+    double entropy_term;
     /**
      * energy group names
      */

@@ -498,6 +498,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(posrest_total);
   ENERGY_RES(distrest_total);
   ENERGY_RES(constraints_total);
+  ENERGY_RES(entropy_term);
   ENERGY_RES(external_total);
 
   // std::cout << e.kinetic_energy.size() << std::endl;

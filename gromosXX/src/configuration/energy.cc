@@ -38,6 +38,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     distrest_total = 0.0;
     jvalue_total = 0.0;
     constraints_total = 0.0;
+    entropy_term = 0.0;
     external_total = 0.0;
     
     bond_energy.assign(bond_energy.size(), 0.0);

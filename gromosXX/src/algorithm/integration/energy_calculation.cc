@@ -64,6 +64,10 @@ int algorithm::Energy_Calculation::apply
 		<< std::endl;
       return E_NAN;
     }
+
+    conf.old().perturbed_energy_derivatives.entropy_term =
+      conf.old().perturbed_energy_derivatives.potential_total *
+      conf.old().energies.potential_total;
   }
 
   conf.current().averages.apply(topo, conf, sim);
