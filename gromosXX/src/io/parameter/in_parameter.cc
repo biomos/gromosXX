@@ -71,6 +71,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTICELL(param);
   read_ANALYZE(param);
   read_INTEGRATE(param);
+  read_STOCHASTIC(param);
   
   DEBUG(7, "input read...");
 
@@ -2291,3 +2292,33 @@ void io::In_Parameter::read_INTEGRATE(simulation::Parameter & param,
   }
 }
 
+void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
+				       std::ostream & os)
+{
+  DEBUG(8, "read STOCHASTIC");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["STOCHASTIC"];
+  int i;
+  
+  if (buffer.size()){
+
+    block_read.insert("STOCHASTIC");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.stochastic.ntfr >> param.stochastic.nsfr >> param.stochastic.nbref
+		>> param.stochastic.rcutf >> param.stochastic.cfric >> param.stochastic.temp;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in STOCHASTIC block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
+    
+    param.stochastic.sd = 1;
+  }
+}

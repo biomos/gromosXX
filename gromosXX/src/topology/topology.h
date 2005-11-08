@@ -11,6 +11,7 @@
 #include <gromosXX/topology/solvent.h>
 #include <gromosXX/topology/perturbed_atom.h>
 #include <gromosXX/topology/perturbed_solute.h>
+#include <gromosXX/topology/sd.h>
 
 namespace simulation
 {
@@ -63,10 +64,7 @@ namespace topology
     /**
      * mass of atom i
      */
-    double mass(int i)const 
-    {
-      return m_mass(i);
-    }
+    double mass(int i)const { return m_mass(i); }
     
     /**
      * charge accessor
@@ -77,12 +75,22 @@ namespace topology
      * charge const accessor
      */
     math::SArray const & charge()const{return m_charge;}
-
-    double charge(int i)const
-    {
-      return m_charge(i);
-    }
     
+    /**
+     * charge accessor
+     */
+    double charge(int i)const { return m_charge(i); }
+    
+    /**
+     * stochastic dynamics const accessor
+     */
+    stochastic_struct const & stochastic()const { return m_stochastic; }
+
+    /**
+     * stochastic dynamics accessor
+     */
+    stochastic_struct & stochastic() { return m_stochastic; }
+
     /**
      * solute accessor.
      */
@@ -615,6 +623,11 @@ namespace topology
      */
      math::SArray m_charge;
 
+    /**
+     * stochastic dynamics variables
+     */
+    stochastic_struct m_stochastic;
+    
     /**
      * the atom exclusions.
      */

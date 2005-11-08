@@ -133,6 +133,14 @@ namespace io {
 		    std::ostream & os = std::cout);
     
     /**
+     * read stochastic integral
+     */
+    bool read_stochastic_integral(topology::Topology & topo,
+				  configuration::Configuration & conf,
+				  simulation::Simulation & sim,
+				  std::ostream & os = std::cout);
+
+    /**
      * read replica information
      */
     bool read_replica_information
@@ -180,6 +188,10 @@ namespace io {
 		     const & constr,
 		     std::vector<topology::perturbed_two_body_term_struct>
 		     const & pert_constr);
+
+    bool _read_stochastic_integral(math::VArray & stochastic_integral,
+				   std::vector<std::string> &buffer,
+				   int num_atoms);
     
     /**
      * read JVALUE averages.

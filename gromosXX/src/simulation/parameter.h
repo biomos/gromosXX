@@ -1209,8 +1209,63 @@ namespace simulation
 
     } /** integration parameter */ integrate;
 
+    struct stochastic_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - SD(0)
+       * - NTFR(0)
+       * - NSFR(0)
+       * - NBREF(0)
+       * - RCUTF(0.0)
+       * - CFRIC(0.0)
+       * - TEMP(0.0)
+       * - generate_integral(false)
+       */
+      stochastic_struct() : sd(0), ntfr(0), nsfr(0), nbref(0), rcutf(0.0),
+			    cfric(0.0), temp(0.0), generate_integral(false)
+      {
+      }
+      /**
+       * do stochastic dynamics
+       */
+      int sd;
+      /**
+       * calculate friction coefficients?
+       * - 0: set gamma to 0.0
+       * - 1: set gamma to CFRIC
+       * - 2: set gamma to CFRIC * gamma(0), gamma(0) read from file (not implemented)
+       * - 3: calculate gamma
+       */
+      int ntfr;
+      /**
+       * recalculate gamma every nsfr steps
+       */
+      int nsfr;
+      /**
+       * number of neighbour atoms within RCUTF distance to be considered buried
+       */
+      int nbref;
+      /**
+       * inter atom distance to consider when calculating gamma
+       */
+      double rcutf;
+      /**
+       * global weighting for gamma
+       */
+      double cfric;
+      /**
+       * temperature of the stochastic bath
+       */
+      double temp;
+      /**
+       * initially generate stochastic integral
+       */
+      bool generate_integral;
+      
+    } /** stochastic dynamics */ stochastic;
   };
-
 }
 
 #endif

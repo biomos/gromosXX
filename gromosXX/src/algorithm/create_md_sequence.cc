@@ -21,6 +21,7 @@
 #include <algorithm/constraints/position_constraints.h>
 #include <algorithm/integration/energy_calculation.h>
 #include <algorithm/integration/leap_frog.h>
+#include <algorithm/integration/stochastic.h>
 
 #include <io/blockinput.h>
 #include <io/instream.h>
@@ -103,16 +104,31 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(sd);
   }
   else{
-
-    if(sim.param().integrate.method == simulation::integrate_leap_frog){
+    
+    // SD ?
+    algorithm::Stochastic_Dynamics_Pos * sd_pos = NULL;
+    if (sim.param().stochastic.sd){
+      sd_pos = new algorithm::Stochastic_Dynamics_Pos;
+      md_seq.push_back(sd_pos);
+    }
+    // MD ?
+    else if(sim.param().integrate.method == simulation::integrate_leap_frog){
       md_seq.push_back(new algorithm::Leap_Frog_Velocity);
     }
+    // ??
     else{
       std::cout << "\tno integration (velocities) selected!\n";
     }
 
     // temperature scaling? -> has to be done before temperature calculation!!!
     if (sim.param().multibath.couple){
+      
+      if (sim.param().stochastic.sd){
+	io::messages.add("temperature coupling only of atoms with gamma=0 not implemented,"
+			 " couples ALL ATOMS!",
+			 "create_md_sequence",
+			 io::message::warning);
+      }
 
       if (sim.param().multibath.nosehoover == 0){
 	algorithm::Berendsen_Thermostat * tcoup =
@@ -126,7 +142,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       }
     }
     
-    if(sim.param().integrate.method == simulation::integrate_leap_frog){
+    if (sim.param().stochastic.sd){
+      // do constraints twice...
+      create_constraints(md_seq, topo, sim, it);
+      md_seq.push_back(new algorithm::Stochastic_Dynamics_Int(sd_pos->rng()));
+    }
+    else if (sim.param().integrate.method == simulation::integrate_leap_frog){
       md_seq.push_back(new algorithm::Leap_Frog_Position);
     }
     else{

@@ -192,6 +192,11 @@ namespace io {
      */
     void read_INTEGRATE(simulation::Parameter & param, std::ostream & os = std::cout);
     
+    /**
+     * read STOCHASTIC block.
+     */
+    void read_STOCHASTIC(simulation::Parameter & param, std::ostream & os = std::cout);
+
   };
   
 } // io

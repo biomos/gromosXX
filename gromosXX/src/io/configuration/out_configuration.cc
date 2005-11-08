@@ -276,6 +276,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_flexv(conf, topo, m_final_conf);
     }
 
+    if(sim.param().stochastic.sd){
+      _print_stochastic_integral(conf, topo, m_final_conf);
+    }
+    
     if(sim.param().jvalue.mode != simulation::restr_off){
       _print_jvalue(conf, topo, m_final_conf);
     }
@@ -1360,6 +1364,57 @@ void io::Out_Configuration::_print_flexv(configuration::Configuration const &con
 
 }
 
+void io::Out_Configuration::_print_stochastic_integral(configuration::Configuration const &conf,
+						      topology::Topology const &topo,
+						      std::ostream &os)
+{
+  topology::Solute const &solute = topo.solute();
+  std::vector<std::string> const &residue_name = topo.residue_names();
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+
+  os << "STOCHINT\n";
+  os << "# first 24 chars ignored\n";
+  
+  for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
+
+    os << std::setw(5)  << solute.atom(i).residue_nr+1 << " "
+       << std::setw(5)  << std::left 
+       << residue_name[solute.atom(i).residue_nr] << " "
+       << std::setw(6)  << std::left << solute.atom(i).name << std::right
+       << std::setw(6)  << i+1
+       << std::setw(m_width) << conf.current().stochastic_integral(i)(0)
+       << std::setw(m_width) << conf.current().stochastic_integral(i)(1)
+       << std::setw(m_width) << conf.current().stochastic_integral(i)(2)
+       << "\n";
+  }
+
+  int index = topo.num_solute_atoms();
+  int res_nr = 1;
+
+  for(unsigned int s=0; s < topo.num_solvents(); ++s){
+
+    for(unsigned int m=0; m < topo.num_solvent_molecules(s); ++m, ++res_nr){
+      
+      for(unsigned int a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
+
+	os << std::setw(5)  << res_nr
+	   << ' ' << std::setw(5)  << std::left
+	   << residue_name[topo.solvent(s).atom(a).residue_nr] << " "
+	   << std::setw(6)  << std::left 
+	   << topo.solvent(s).atom(a).name << std::right
+	   << std::setw(6)  << index + 1
+	   << std::setw(m_width) << conf.current().stochastic_integral(index)(0)
+	   << std::setw(m_width) << conf.current().stochastic_integral(index)(1)
+	   << std::setw(m_width) << conf.current().stochastic_integral(index)(2)
+	   << "\n";
+      }
+    }
+  }
+  os << "END\n";
+}
+
 void io::Out_Configuration::write_replica_step
 (
  simulation::Simulation const & sim,
@@ -1547,6 +1602,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.jvalue_total << "\n"
      << std::setw(18) << 0.0 << "\n" // local elevation
      << std::setw(18) << 0.0 << "\n"; // path integral
+  // << std::setw(18) << e.entropy_term << "\n"; // dH/dl * H
   
   os << "# baths\n";
   os << numbaths << "\n";

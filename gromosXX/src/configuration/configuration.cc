@@ -81,6 +81,8 @@ configuration::Configuration::Configuration
   old().vel = conf.old().vel;
   current().force = conf.current().force;
   old().force = conf.old().force;
+  current().stochastic_integral = conf.current().stochastic_integral;
+  old().stochastic_integral = conf.old().stochastic_integral;
   
   current().box = conf.current().box;
   old().box = conf.old().box;
@@ -110,7 +112,7 @@ configuration::Configuration::Configuration
 }
 
 /**
- * copy constructor
+ * operator equal
  */
 configuration::Configuration & configuration::Configuration::operator=
 (
@@ -145,6 +147,8 @@ configuration::Configuration & configuration::Configuration::operator=
   old().vel = conf.old().vel;
   current().force = conf.current().force;
   old().force = conf.old().force;
+  current().stochastic_integral = conf.current().stochastic_integral;
+  old().stochastic_integral = conf.old().stochastic_integral;
   
   current().box = conf.current().box;
   old().box = conf.old().box;
@@ -334,9 +338,7 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
   pos.resize(s);
   vel.resize(s);
   force.resize(s);
-  // pos.resizeAndPreserve(s);
-  // vel.resizeAndPreserve(s);
-  // force.resizeAndPreserve(s);
+  stochastic_integral.resize(s);
 }
 
 namespace configuration

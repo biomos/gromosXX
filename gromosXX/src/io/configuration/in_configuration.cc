@@ -60,6 +60,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_jvalue(topo, conf, sim, os);
   read_pscale(topo, conf, sim, os);
   read_flexv(topo, conf, sim, os);
+  read_stochastic_integral(topo, conf, sim, os);
   
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
@@ -177,6 +178,7 @@ void io::In_Configuration::read_replica
     read_jvalue(topo, conf[0], sim, os);
     read_pscale(topo, conf[0], sim, os);
     read_flexv(topo, conf[0], sim, os);
+    read_stochastic_integral(topo, conf[0], sim, os);
   
 	DEBUG(10, "setting boundary type");
     conf[0].boundary_type = param.boundary.boundary;
@@ -192,7 +194,7 @@ void io::In_Configuration::read_replica
       for(int l=0; l < switch_l; ++l){
 	for(int t=0; t < switch_T; ++t, ++i){
 	  
-	  assert(replica_data.size() > i);
+	  assert(replica_data.size() > unsigned(i));
 	  replica_data[i].ID = i;
 	  replica_data[i].run = 0;
 	  
@@ -230,6 +232,7 @@ void io::In_Configuration::read_replica
       read_jvalue(topo, conf[i], sim, os);
       read_pscale(topo, conf[i], sim, os);
       read_flexv(topo, conf[i], sim, os);
+      read_stochastic_integral(topo, conf[i], sim, os);
       
       conf[i].boundary_type = param.boundary.boundary;
       
@@ -336,6 +339,7 @@ bool io::In_Configuration::read_next
 	// read_jvalue(topo, conf, sim, os);
 	// read_pscale(topo, conf, sim, os);
 	// read_flexv(topo, conf, sim, os);
+	// read_stochastic_integral(topo, conf, sim, os);
 
 	)){
     std::cout << "could not read frame!!!" << std::endl;
@@ -629,6 +633,38 @@ bool io::In_Configuration::read_flexv
 	io::messages.add("no FLEXV block found, assuming SHAKEd positions (and velocities)",
 			 "in_configuration",
 			 io::message::notice);
+    }
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_stochastic_integral
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().stochastic.sd){
+
+    conf.old().stochastic_integral.resize(topo.num_atoms());
+    conf.current().stochastic_integral.resize(topo.num_atoms());
+    
+    buffer = m_block["STOCHINT"];
+    if (buffer.size()){
+      block_read.insert("STOCHINT");
+      if (!quiet)
+	os << "\treading STOCHINT...\n";
+
+      _read_stochastic_integral(conf.current().stochastic_integral, buffer,
+				topo.num_atoms());
+    }
+    else{
+      sim.param().stochastic.generate_integral = true;
+      io::messages.add("generating initial stochastic integrals",
+		       "in_configuration",
+		       io::message::notice);
     }
   }
   return true;
@@ -1058,6 +1094,70 @@ bool io::In_Configuration::_read_flexv
   
 }
 
+bool io::In_Configuration::_read_stochastic_integral
+(
+ math::VArray & stochastic_integral,
+ std::vector<std::string> &buffer,
+ int num_atoms)
+{
+  DEBUG(8, "read stochastic integral");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  int i, j, c;
+  std::string a, r;
+
+  for(c=0; it != to; ++it, ++c){
+
+    if (c >= num_atoms){
+      std::cout << "too much data in STOCHINT block! got: " << c
+		<< " expected: " << num_atoms << std::endl;
+      
+      io::messages.add("too much data in STOCHINT block!",
+		       "in_configuration",
+		       io::message::error);
+      return false;
+    }
+    
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> i >> a >> r >> j
+		>> stochastic_integral(c)(0)
+		>> stochastic_integral(c)(1)
+		>> stochastic_integral(c)(2);
+
+    if(_lineStream.fail()){
+      std::cout << "failed to read stochastic integral (STOCHINT block) line: " << c
+		<< "\n" << *it << std::endl;
+      
+      io::messages.add("failed to read stochastic integral (STOCHINT block)",
+		       "In_Configuration",
+		       io::message::error);
+      return false;
+    }
+    
+    if (!_lineStream.eof()) {
+      std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
+      DEBUG(10, msg);
+    }
+  }
+
+  if (c && !quiet)
+    std::cout << "\tstochastic integrals for " << c << " atoms read\n";
+
+  if (c != num_atoms){
+    std::cout << "not enough stochastic integrals in STOCHINT block! : "
+	      << " got: " << c << " expected: " << num_atoms << std::endl;
+    
+    io::messages.add("not enough stochastic integrals in STOCHINT block!",
+		     "In_Configuration",
+		     io::message::error);
+  }
+  return true;
+}
 
 bool io::In_Configuration::
 _read_jvalue_av(std::vector<std::string> &buffer,

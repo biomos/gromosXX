@@ -63,7 +63,11 @@ namespace configuration
        * force
        */
       math::VArray force; 
-
+      /**
+       * stochastic integrals (SD)
+       */
+      math::VArray stochastic_integral;
+      
       /**
        * the box.
        */
