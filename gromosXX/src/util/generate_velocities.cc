@@ -46,4 +46,6 @@ void util::generate_velocities(double const temp, math::SArray const &mass,
       vel(i)(d) = old_vel(i)(d);
     }
   }
+
+  gsl_rng_free(rng);
 }
