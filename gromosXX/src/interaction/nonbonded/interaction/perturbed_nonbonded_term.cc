@@ -51,34 +51,13 @@ inline void interaction::Perturbed_Nonbonded_Term
     m_lambda_exp = sim.param().perturbation.lambda_exponent;
     
     // cgrain
-    A_cg12= - ((12 + 4) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 12 + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
-    A_cg6=  - ((6  + 4) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 6  + 2)) * 
-       (sim.param().longrange.rf_cutoff) *
-       (sim.param().longrange.rf_cutoff));
-    A_cg1=  - ((1  + 4) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 1  + 2)) * 
-       (sim.param().longrange.rf_cutoff) *
-       (sim.param().longrange.rf_cutoff));
-    
-    B_cg12= ((12 + 3) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 12 + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
-    B_cg6=  ((6  + 3) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 6  + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
-    B_cg1=  ((1  + 3) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 1  + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
+    A_cg12= - (12 * (12 + 4)) / (pow(sim.param().longrange.rf_cutoff, 12 + 3));
+    A_cg6=  - (6  * (6  + 4)) / (pow(sim.param().longrange.rf_cutoff, 6  + 3));
+    A_cg1=  - (1  * (1  + 4)) / (pow(sim.param().longrange.rf_cutoff, 1  + 3));     
+
+    B_cg12=   (12 * (12 + 3)) / (pow(sim.param().longrange.rf_cutoff, 12 + 4));
+    B_cg6=    (6  * (6  + 3)) / (pow(sim.param().longrange.rf_cutoff, 6  + 4));
+    B_cg1=    (1  * (1  + 3)) / (pow(sim.param().longrange.rf_cutoff, 1  + 4));     
     
     cgrain_eps = sim.param().cgrain.EPS;
     nb_cutoff = sim.param().longrange.rf_cutoff;
@@ -438,10 +417,6 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_dist6isoft_cut = 1.0 / A_distsoft_cut;
   const double B_dist6isoft_cut = 1.0 / B_distsoft_cut;
 
-  // const double A_dist_cut2 = A_distsoft_cut * A_distsoft_cut; 
-  // const double B_dist_cut2 = B_distsoft_cut * B_distsoft_cut;
-  
-
   // state A
   A_C_cg12 = A_dist6isoft_cut * A_dist6isoft_cut 
 	      - A_cg12  / 3 * nb_cutoff * nb_cutoff * nb_cutoff
@@ -534,13 +509,19 @@ inline void interaction::Perturbed_Nonbonded_Term
   
   e_lj = m_A_lambda_n * A_e_lj + m_B_lambda_n * B_e_lj; 
   
+  // there is a bug here from the previous version
+  // the constant C also depends on lambda (correct for coulomb)
+  // we have then to subtract the term at the cut off distance
   de_lj = -2.0 * alpha_lj * (m_A_lambda_n * m_B_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
                              (2 * A_c12 * A_dist6isoft - A_c6) -
                              m_B_lambda_n * m_A_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
                              (2 * B_c12 * B_dist6isoft - B_c6))
+    +      2.0 * alpha_lj * (m_A_lambda_n * m_B_lambda * A_c126 * A_dist6isoft_cut * A_dist6isoft_cut *
+                             (2 * A_c12 * A_dist6isoft_cut - A_c6) -
+                             m_B_lambda_n * m_A_lambda * B_c126 * B_dist6isoft_cut * B_dist6isoft_cut *
+                             (2 * B_c12 * B_dist6isoft_cut - B_c6))
     + m_lambda_exp * (m_B_lambda_n_1 * B_e_lj - m_A_lambda_n_1 * A_e_lj);
   
-  // std::cout.precision(10); 
   DEBUG(11, "cgrain_pert\nr_ij " << dist
 	<< "\nf1 "  << force1
 	<< "\ne_c " << e_crf
