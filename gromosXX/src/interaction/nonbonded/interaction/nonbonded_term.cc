@@ -46,61 +46,17 @@ inline void interaction::Nonbonded_Term
     
   case simulation::cgrain_func :
     // cgrain
-    A_cg12= - ((12 + 4) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 12 + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
-    A_cg6=  - ((6  + 4) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 6  + 2)) * 
-       (sim.param().longrange.rf_cutoff) *
-       (sim.param().longrange.rf_cutoff));
-    A_cg1=  - ((1  + 4) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 1  + 2)) * 
-       (sim.param().longrange.rf_cutoff) *
-       (sim.param().longrange.rf_cutoff));
+    A_cg12= - (12.0 * (12 + 4)) / (pow(sim.param().longrange.rf_cutoff, 12 + 3));
+    A_cg6=  - (6.0  * (6  + 4)) / (pow(sim.param().longrange.rf_cutoff, 6  + 3));
+    A_cg1=  - (1.0  * (1  + 4)) / (pow(sim.param().longrange.rf_cutoff, 1  + 3));     
     
-    B_cg12= ((12 + 3) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 12 + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
-    B_cg6=  ((6  + 3) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 6  + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
-    B_cg1=  ((1  + 3) * sim.param().longrange.rf_cutoff) /
-      ((pow(sim.param().longrange.rf_cutoff, 1  + 2)) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff) * 
-       (sim.param().longrange.rf_cutoff));
-    
-    C_cg12 = pow(1.0 / sim.param().longrange.rf_cutoff, 12)
-      - A_cg12  / 3 * (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff)
-      - B_cg12  / 4 * (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) *
-      (sim.param().longrange.rf_cutoff); 
-    
-    C_cg6  = pow(1.0 / sim.param().longrange.rf_cutoff,  6)
-      - A_cg6   / 3 * (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff)
-      - B_cg6   / 4 * (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) *
-      (sim.param().longrange.rf_cutoff); 
-    
-    C_cg1 =     1.0 / sim.param().longrange.rf_cutoff
-      - A_cg1  / 3 * (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff)
-      - B_cg1  / 4 * (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) * 
-      (sim.param().longrange.rf_cutoff) *
-      (sim.param().longrange.rf_cutoff);
+    B_cg12=   (12.0 * (12 + 3)) / (pow(sim.param().longrange.rf_cutoff, 12 + 4));
+    B_cg6=    (6.0  * (6  + 3)) / (pow(sim.param().longrange.rf_cutoff, 6  + 4));
+    B_cg1=    (1.0  * (1  + 3)) / (pow(sim.param().longrange.rf_cutoff, 1  + 4));     
+
+    C_cg12=   ((12 + 3) * (12 + 4)) / (12.0 * pow(sim.param().longrange.rf_cutoff, 12));
+    C_cg6=    ((6  + 3) * (6  + 4)) / (12.0 * pow(sim.param().longrange.rf_cutoff, 6 ));
+    C_cg1=    ((1  + 3) * (1  + 4)) / (12.0 * pow(sim.param().longrange.rf_cutoff, 1 ));
     
     cgrain_eps = sim.param().cgrain.EPS;
     break;
