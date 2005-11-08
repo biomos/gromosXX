@@ -465,7 +465,7 @@ int util::Replica_Exchange_Master::run
 	  return 1;
 	}
 
-	if (i < 0 || i >= replica_data.size()){
+	if (i < 0 || unsigned(i) >= replica_data.size()){
 	  std::cerr << "received invalid replica index! (" << i << ")" <<  std::endl;
 	  close(cl_socket);
 	  return 1;
@@ -637,7 +637,7 @@ int util::Replica_Exchange_Master::run
 
 int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter const & param)
 {
-  if (i<0 || i >= replica_data.size()){
+  if (i<0 || unsigned(i) >= replica_data.size()){
     std::cerr << "trying to switch replica: index out of range (" << i << ")" << std::endl;
     return 0;
   }
@@ -656,7 +656,7 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
     // partner not yet ready...
     return 0;
   }
-  if (j<0 || j >= replica_data.size()){
+  if (j<0 || unsigned(j) >= replica_data.size()){
     std::cerr << "trying to switch replica: index j out of range (" << j << ")" << std::endl;
     return 0;
   }
