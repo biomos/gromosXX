@@ -40,8 +40,7 @@ interaction::VGrid_Nonbonded_Set
   : Nonbonded_Set_Interface(pairlist_alg, param, rank, num_threads),
     m_outerloop(param)
 {
-  m_shortrange_storage.zero();
-  m_longrange_storage.zero();
+  m_storage.zero();
 }
 
 /**
@@ -55,7 +54,7 @@ int interaction::VGrid_Nonbonded_Set
   DEBUG(4, "VGrid_Nonbonded_Set::calculate_interactions");
   
   // zero forces, energies, virial...
-  m_shortrange_storage.zero();
+  m_storage.zero();
 
   // need to update pairlist?
   
@@ -74,8 +73,10 @@ int interaction::VGrid_Nonbonded_Set
   // TODO:
   // move decision to pairlist!!!
 
+  // here it would be nicer to pass nothing instead of
+  // the storage. it should NOT be used!!!
   m_pairlist_alg.update(topo, conf, sim, 
-			m_longrange_storage, pairlist(),
+			m_storage, pairlist(),
 			m_rank, topo.num_atoms(), m_num_threads);
   
   /*
@@ -101,19 +102,16 @@ int interaction::VGrid_Nonbonded_Set
 
   //  double shortrange_start = now();
 
-  // m_outerloop.lj_crf_outerloop(topo, conf, sim,
-  // m_pairlist, m_shortrange_storage);
-  
   // add 1,4 - interactions
   if (m_rank == 0){
     DEBUG(6, "\tcg - interactions");
 
-    m_outerloop.cg_exclusions_outerloop(topo, conf, sim, m_shortrange_storage);
+    m_outerloop.cg_exclusions_outerloop(topo, conf, sim, m_storage);
   
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
-      m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+      m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
     }
   }
   
@@ -163,15 +161,15 @@ int interaction::VGrid_Nonbonded_Set::update_configuration
   configuration::Energy & e = conf.current().energies;
 
   for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().force(i) += m_shortrange_storage.force(i);
+    conf.current().force(i) += m_storage.force(i);
 
   for(int i = 0; i < ljs; ++i){
     for(int j = 0; j < ljs; ++j){
       
       e.lj_energy[i][j] += 
-	m_shortrange_storage.energies.lj_energy[i][j];
+	m_storage.energies.lj_energy[i][j];
       e.crf_energy[i][j] += 
-	m_shortrange_storage.energies.crf_energy[i][j];
+	m_storage.energies.crf_energy[i][j];
     }
   }
 
@@ -182,7 +180,7 @@ int interaction::VGrid_Nonbonded_Set::update_configuration
       for(unsigned int j=0; j<3; ++j){
 
 	conf.current().virial_tensor(i,j) +=
-	  m_shortrange_storage.virial_tensor(i,j);
+	  m_storage.virial_tensor(i,j);
       }
     }
   }
@@ -237,10 +235,10 @@ int interaction::VGrid_Nonbonded_Set
 
   const int num_atoms = topo.num_atoms();
 
-  m_shortrange_storage.force.resize(num_atoms);
+  m_storage.force.resize(num_atoms);
   // m_longrange_storage.force.resize(num_atoms);
 
-  m_shortrange_storage.energies.
+  m_storage.energies.
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()));
   // m_longrange_storage.energies.
@@ -274,4 +272,3 @@ int interaction::VGrid_Nonbonded_Set
 
   return 0;
 }
-

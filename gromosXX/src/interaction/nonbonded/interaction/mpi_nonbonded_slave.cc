@@ -107,9 +107,9 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 
   // collect the forces, energies, energy-derivatives, virial
   // MPI::IN_PLACE ???
-  MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->shortrange_storage().force(0)(0),
+  MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().force(0)(0),
 			 NULL,
-			 m_nonbonded_set[0]->shortrange_storage().force.size() * 3,
+			 m_nonbonded_set[0]->storage().force.size() * 3,
 			 MPI::DOUBLE,
 			 MPI::SUM,
 			 0);
@@ -121,9 +121,9 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
   for(unsigned int i = 0; i < ljs; ++i){
     for(unsigned int j = 0; j < ljs; ++j){
       lj_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->shortrange_storage().energies.lj_energy[i][j];
+	m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
       crf_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->shortrange_storage().energies.crf_energy[i][j];
+	m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
     }
   }
   MPI::COMM_WORLD.Reduce(&lj_scratch[0],
@@ -140,7 +140,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 			 0);
 
   if (sim.param().pcouple.virial){
-    double * dvt2 = &m_nonbonded_set[0]->shortrange_storage().virial_tensor(0,0);
+    double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor(0,0);
     MPI::COMM_WORLD.Reduce(dvt2,
 			   NULL,
 			   9,
@@ -154,9 +154,9 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
 	lj_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
+	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j];
 	crf_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->shortrange_storage().perturbed_energy_derivatives.crf_energy[i][j];
+	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j];
       }
     }
     MPI::COMM_WORLD.Reduce(&lj_scratch[0],

@@ -98,7 +98,7 @@ int interaction::Perturbed_Nonbonded_Set
   }
     
   // zero forces, energies, virial...
-  m_shortrange_storage.zero();
+  m_storage.zero();
 
   // need to update pairlist?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
@@ -141,57 +141,57 @@ int interaction::Perturbed_Nonbonded_Set
   DEBUG(6, "\tshort range interactions");
 
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			       m_pairlist, m_shortrange_storage);
+			       m_pairlist, m_storage);
 
   if (topo.perturbed_solute().atoms().size() > 0){
     DEBUG(6, "\tperturbed short range");
     m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim, 
 						     m_perturbed_pairlist,
-						     m_shortrange_storage);
+						     m_storage);
   }
 
   // add 1,4 - interactions
   if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
-    m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
+    m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
 
     if (topo.perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\tperturbed 1,4 - interactions");
       m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
-							 m_shortrange_storage);
+							 m_storage);
     }
     
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
       DEBUG(6, "\tRF excluded interactions and self term");
-      m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+      m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
 
       if (topo.perturbed_solute().atoms().size() > 0){
 	DEBUG(6, "\tperturbed RF excluded interactions and self term");
 	m_perturbed_outerloop.perturbed_RF_excluded_outerloop(topo, conf, sim,
-							      m_shortrange_storage);
+							      m_storage);
       }
     }
 
     DEBUG(6, "\tperturbed pairs");
-    m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_shortrange_storage);
+    m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_storage);
     
   }
   
   // add long-range force
   DEBUG(6, "\t(set) add long range forces");
 
-  m_shortrange_storage.force += m_longrange_storage.force;
+  m_storage.force += m_longrange_storage.force;
   
   // and long-range energies
   DEBUG(6, "\t(set) add long range energies");
-  const unsigned int lj_e_size = unsigned(m_shortrange_storage.energies.lj_energy.size());
+  const unsigned int lj_e_size = unsigned(m_storage.energies.lj_energy.size());
   
   for(unsigned int i = 0; i < lj_e_size; ++i){
     for(unsigned int j = 0; j < lj_e_size; ++j){
-      m_shortrange_storage.energies.lj_energy[i][j] += 
+      m_storage.energies.lj_energy[i][j] += 
 	m_longrange_storage.energies.lj_energy[i][j];
-      m_shortrange_storage.energies.crf_energy[i][j] += 
+      m_storage.energies.crf_energy[i][j] += 
 	m_longrange_storage.energies.crf_energy[i][j];
     }
   }
@@ -203,9 +203,9 @@ int interaction::Perturbed_Nonbonded_Set
       for(unsigned int j=0; j<3; ++j){
 
 	DEBUG(8, "longrange virial = " << m_longrange_storage.virial_tensor(i,j)
-	      << "\tshortrange virial = " << m_shortrange_storage.virial_tensor(i,j));
+	      << "\tshortrange virial = " << m_storage.virial_tensor(i,j));
 
-	m_shortrange_storage.virial_tensor(i,j) +=
+	m_storage.virial_tensor(i,j) +=
 	  m_longrange_storage.virial_tensor(i,j);
       }
     }
@@ -215,18 +215,18 @@ int interaction::Perturbed_Nonbonded_Set
   DEBUG(7, "(set) add long-range lambda-derivatives");
   
   const unsigned int lj_size 
-    = unsigned(m_shortrange_storage.perturbed_energy_derivatives.lj_energy.size());
+    = unsigned(m_storage.perturbed_energy_derivatives.lj_energy.size());
   
   for(unsigned int i = 0; i < lj_size; ++i){
     for(unsigned int j = 0; j < lj_size; ++j){
       
-      assert(m_shortrange_storage.perturbed_energy_derivatives.
+      assert(m_storage.perturbed_energy_derivatives.
 	     lj_energy.size() > i);
-      assert(m_shortrange_storage.perturbed_energy_derivatives.
+      assert(m_storage.perturbed_energy_derivatives.
 	     lj_energy[i].size() > j);
-      assert(m_shortrange_storage.perturbed_energy_derivatives.
+      assert(m_storage.perturbed_energy_derivatives.
 	     lj_energy.size() > j);
-      assert(m_shortrange_storage.perturbed_energy_derivatives.
+      assert(m_storage.perturbed_energy_derivatives.
 	     lj_energy[j].size() > i);
       assert(m_longrange_storage.perturbed_energy_derivatives.
 	     lj_energy.size() > i);
@@ -237,10 +237,10 @@ int interaction::Perturbed_Nonbonded_Set
       assert(m_longrange_storage.perturbed_energy_derivatives.
 	     lj_energy[j].size() > i);
       
-      m_shortrange_storage.perturbed_energy_derivatives.lj_energy[i][j] += 
+      m_storage.perturbed_energy_derivatives.lj_energy[i][j] += 
 	m_longrange_storage.perturbed_energy_derivatives.lj_energy[i][j];
       
-      m_shortrange_storage.perturbed_energy_derivatives.crf_energy[i][j] += 
+      m_storage.perturbed_energy_derivatives.crf_energy[i][j] += 
 	m_longrange_storage.perturbed_energy_derivatives.crf_energy[i][j];
       
     }
@@ -268,16 +268,16 @@ int interaction::Perturbed_Nonbonded_Set::update_configuration
       assert(pe.lj_energy.size() > unsigned(i));
       assert(pe.lj_energy[i].size() > unsigned(j));
 
-      assert(m_shortrange_storage.perturbed_energy_derivatives.
+      assert(m_storage.perturbed_energy_derivatives.
 	     lj_energy.size() > unsigned(i));
-      assert(m_shortrange_storage.perturbed_energy_derivatives.
+      assert(m_storage.perturbed_energy_derivatives.
 	     lj_energy[i].size() > (unsigned(j)));
 	  
       pe.lj_energy[i][j] += 
-	m_shortrange_storage.perturbed_energy_derivatives.
+	m_storage.perturbed_energy_derivatives.
 	lj_energy[i][j];
       pe.crf_energy[i][j] += 
-	m_shortrange_storage.perturbed_energy_derivatives.
+	m_storage.perturbed_energy_derivatives.
 	crf_energy[i][j];
     }
   }
@@ -320,7 +320,7 @@ int interaction::Perturbed_Nonbonded_Set
 
   Nonbonded_Set::init(topo, conf, sim, os, quiet);
   
-  m_shortrange_storage.perturbed_energy_derivatives.resize
+  m_storage.perturbed_energy_derivatives.resize
     (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
      unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
 

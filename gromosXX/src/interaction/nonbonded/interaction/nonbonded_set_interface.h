@@ -91,16 +91,7 @@ namespace interaction
 				  unsigned int atom_i, unsigned int atom_j,
 				  math::Matrix & hessian) = 0;
 
-    /*
-      Storage & shortrange_storage()
-      {
-      return m_shortrange_storage;
-      }
-      Storage & longrange_storage()
-      {
-      return m_longrange_storage;
-      }
-    */
+    Storage & storage(){ return m_storage; }
 
     Pairlist & pairlist() { return m_pairlist; }
     Pairlist const & pairlist()const { return m_pairlist; }
@@ -108,12 +99,9 @@ namespace interaction
   protected:
     Pairlist_Algorithm & m_pairlist_alg;
     
-    // Storage m_shortrange_storage;
-    // Storage m_longrange_storage;
+    Storage m_storage;
 
     Pairlist m_pairlist;
-
-    // Nonbonded_Outerloop m_outerloop;
 
     /**
      * OpenMP / MPI rank of thread running this set

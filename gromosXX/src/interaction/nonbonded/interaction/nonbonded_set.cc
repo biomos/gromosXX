@@ -52,7 +52,7 @@ int interaction::Nonbonded_Set
   DEBUG(4, "Nonbonded_Set::calculate_interactions");
   
   // zero forces, energies, virial...
-  m_shortrange_storage.zero();
+  m_storage.zero();
 
   // need to update pairlist?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
@@ -97,34 +97,34 @@ int interaction::Nonbonded_Set
   //  double shortrange_start = now();
 
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			       m_pairlist, m_shortrange_storage);
+			       m_pairlist, m_storage);
   
   // add 1,4 - interactions
   if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
-    m_outerloop.one_four_outerloop(topo, conf, sim, m_shortrange_storage);
+    m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
   
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
-      m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_shortrange_storage);
+      m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
     }
   }
   
   // add long-range force
   DEBUG(6, "\t(set) add long range forces");
 
-  m_shortrange_storage.force += m_longrange_storage.force;
+  m_storage.force += m_longrange_storage.force;
   
   // and long-range energies
   DEBUG(6, "\t(set) add long range energies");
-  const unsigned int lj_e_size = unsigned(m_shortrange_storage.energies.lj_energy.size());
+  const unsigned int lj_e_size = unsigned(m_storage.energies.lj_energy.size());
   
   for(unsigned int i = 0; i < lj_e_size; ++i){
     for(unsigned int j = 0; j < lj_e_size; ++j){
-      m_shortrange_storage.energies.lj_energy[i][j] += 
+      m_storage.energies.lj_energy[i][j] += 
 	m_longrange_storage.energies.lj_energy[i][j];
-      m_shortrange_storage.energies.crf_energy[i][j] += 
+      m_storage.energies.crf_energy[i][j] += 
 	m_longrange_storage.energies.crf_energy[i][j];
     }
   }
@@ -136,9 +136,9 @@ int interaction::Nonbonded_Set
       for(unsigned int j=0; j<3; ++j){
 
 	DEBUG(8, "longrange virial = " << m_longrange_storage.virial_tensor(i,j)
-	      << "\tshortrange virial = " << m_shortrange_storage.virial_tensor(i,j));
+	      << "\tshortrange virial = " << m_storage.virial_tensor(i,j));
 
-	m_shortrange_storage.virial_tensor(i,j) +=
+	m_storage.virial_tensor(i,j) +=
 	  m_longrange_storage.virial_tensor(i,j);
       }
     }
@@ -157,15 +157,15 @@ int interaction::Nonbonded_Set::update_configuration
   configuration::Energy & e = conf.current().energies;
 
   for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().force(i) += m_shortrange_storage.force(i);
+    conf.current().force(i) += m_storage.force(i);
 
   for(int i = 0; i < ljs; ++i){
     for(int j = 0; j < ljs; ++j){
       
       e.lj_energy[i][j] += 
-	m_shortrange_storage.energies.lj_energy[i][j];
+	m_storage.energies.lj_energy[i][j];
       e.crf_energy[i][j] += 
-	m_shortrange_storage.energies.crf_energy[i][j];
+	m_storage.energies.crf_energy[i][j];
     }
   }
 
@@ -176,7 +176,7 @@ int interaction::Nonbonded_Set::update_configuration
       for(unsigned int j=0; j<3; ++j){
 
 	conf.current().virial_tensor(i,j) +=
-	  m_shortrange_storage.virial_tensor(i,j);
+	  m_storage.virial_tensor(i,j);
       }
     }
   }
@@ -233,10 +233,10 @@ int interaction::Nonbonded_Set
   
   const int num_atoms = topo.num_atoms();
 
-  m_shortrange_storage.force.resize(num_atoms);
+  m_storage.force.resize(num_atoms);
   m_longrange_storage.force.resize(num_atoms);
 
-  m_shortrange_storage.energies.
+  m_storage.energies.
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()));
   m_longrange_storage.energies.

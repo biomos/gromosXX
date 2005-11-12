@@ -79,7 +79,7 @@ namespace interaction
 
     Storage & shortrange_storage()
     {
-      return m_shortrange_storage;
+      return m_storage;
     }
     Storage & longrange_storage()
     {
@@ -87,7 +87,6 @@ namespace interaction
     }
     
   protected:
-    Storage m_shortrange_storage;
     Storage m_longrange_storage;
 
     Nonbonded_Outerloop m_outerloop;

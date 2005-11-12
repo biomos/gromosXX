@@ -106,10 +106,10 @@ calculate_interactions(topology::Topology & topo,
 
   // collect the forces, energies, energy-derivatives, virial
   // MPI::IN_PLACE ???
-  m_storage.force = m_nonbonded_set[0]->shortrange_storage().force;
+  m_storage.force = m_nonbonded_set[0]->storage().force;
   MPI::COMM_WORLD.Reduce(&m_storage.force(0)(0),
-			 &m_nonbonded_set[0]->shortrange_storage().force(0),
-			 m_nonbonded_set[0]->shortrange_storage().force.size() * 3,
+			 &m_nonbonded_set[0]->storage().force(0),
+			 m_nonbonded_set[0]->storage().force.size() * 3,
 			 MPI::DOUBLE,
 			 MPI::SUM,
 			 0);
@@ -120,9 +120,9 @@ calculate_interactions(topology::Topology & topo,
   for(unsigned int i = 0; i < ljs; ++i){
     for(unsigned int j = 0; j < ljs; ++j){
       lj_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->shortrange_storage().energies.lj_energy[i][j];
+	m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
       crf_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->shortrange_storage().energies.crf_energy[i][j];
+	m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
     }
   }
   MPI::COMM_WORLD.Reduce(&lj_scratch[0],
@@ -140,16 +140,16 @@ calculate_interactions(topology::Topology & topo,
   
   for(unsigned int i = 0; i < ljs; ++i){
     for(unsigned int j = 0; j < ljs; ++j){
-      m_nonbonded_set[0]->shortrange_storage().energies.lj_energy[i][j] = rlj_scratch[i*ljs + j];
-      m_nonbonded_set[0]->shortrange_storage().energies.crf_energy[i][j] = rcrf_scratch[i*ljs + j];
+      m_nonbonded_set[0]->storage().energies.lj_energy[i][j] = rlj_scratch[i*ljs + j];
+      m_nonbonded_set[0]->storage().energies.crf_energy[i][j] = rcrf_scratch[i*ljs + j];
     }
   }
 
   if (sim.param().pcouple.virial){
 
-    m_storage.virial_tensor = m_nonbonded_set[0]->shortrange_storage().virial_tensor;
+    m_storage.virial_tensor = m_nonbonded_set[0]->storage().virial_tensor;
     double * dvt = &m_storage.virial_tensor(0,0);
-    double * dvt2 = &m_nonbonded_set[0]->shortrange_storage().virial_tensor(0,0);
+    double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor(0,0);
     MPI::COMM_WORLD.Reduce(dvt,
 			   dvt2,
 			   9,
@@ -163,9 +163,9 @@ calculate_interactions(topology::Topology & topo,
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
 	lj_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j];
+	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j];
 	crf_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->shortrange_storage().perturbed_energy_derivatives.crf_energy[i][j];
+	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j];
       }
     }
     MPI::COMM_WORLD.Reduce(&lj_scratch[0],
@@ -183,9 +183,9 @@ calculate_interactions(topology::Topology & topo,
   
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
-	m_nonbonded_set[0]->shortrange_storage().perturbed_energy_derivatives.lj_energy[i][j]
+	m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j]
 	  = rlj_scratch[i*ljs + j];
-	m_nonbonded_set[0]->shortrange_storage().perturbed_energy_derivatives.crf_energy[i][j]
+	m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j]
 	  = rcrf_scratch[i*ljs + j];
       }
     }
