@@ -387,8 +387,7 @@ int algorithm::Stochastic_Dynamics_Int
 
   if (sim.param().constraint.solute.algorithm == simulation::constr_shake){ 
     // --- call SHAKE before ! ---
-    // System.out.println("SHAKE!");
-    // cons.docorrection();
+    // (without velocity correction)
 
     // do the SD-velocity correction right away...
     // velocity correction, if constraints are turned on
@@ -449,7 +448,7 @@ int algorithm::Stochastic_Dynamics_Int
   } // loop over atoms
          
   // --- call SHAKE again ---
-  // if (constrain) cons.docorrection();
+  // (without velocity correction!)
 
   m_timing += util::now() - start;
   return 0;

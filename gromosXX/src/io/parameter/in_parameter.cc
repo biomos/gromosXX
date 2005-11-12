@@ -63,6 +63,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LONGRANGE(param);
   read_POSREST(param);
   read_DISTREST(param);
+  read_DIHREST(param);
   read_PERTURB(param);
   read_JVALUE(param);
   read_PSCALE(param);
@@ -1904,19 +1905,17 @@ void io::In_Parameter::read_DISTREST(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   
   if(param.distrest.distrest <0) {
-    io::messages.add("Distance restrain averaging not implemented",
+    io::messages.add("Distance restraint averaging not implemented",
 		     "In_Parameter", 
-		     io::message::warning);
+		     io::message::error);
   }
   
-  if(param.distrest.distrest >2) {
+  if(param.distrest.distrest > 2) {
     io::messages.add("bad input in DISTREST block, NTDR must be <=2",
 		     "In_Parameter", 
-		     io::message::warning);
+		     io::message::error);
     
   }
-  
-
 
   if(param.distrest.K <0)
     io::messages.add("Illegal value for force constant"
@@ -1924,6 +1923,60 @@ void io::In_Parameter::read_DISTREST(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
 
 } // DISTREST
+
+/**
+ * read DIHREST block.
+ */
+void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
+				    std::ostream & os)
+{
+  DEBUG(8, "read DIHREST");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  double phi_lin;
+  
+  DEBUG(10, "dihrest block");
+  buffer = m_block["DIHREST"];
+  
+  if (!buffer.size()){
+    return;
+  }
+  
+  block_read.insert("DIHREST");
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+  
+  _lineStream >> param.dihrest.dihrest
+	      >> param.dihrest.K
+	      >> phi_lin;
+
+  param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
+  
+  if (_lineStream.fail())
+    io::messages.add("bad line in DIHREST block",
+		     "In_Parameter", io::message::error);
+  
+  if(param.dihrest.dihrest < 0){
+    io::messages.add("Dihedral restraint averaging not implemented",
+		     "In_Parameter", 
+		     io::message::error);
+  }
+  
+  if(param.dihrest.dihrest > 2) {
+    io::messages.add("bad input in DIHREST block, NTDR must be <=2",
+		     "In_Parameter", 
+		     io::message::error);
+    
+  }
+
+  if(param.distrest.K < 0)
+    io::messages.add("Illegal value for force constant"
+		     " in DIHREST block (>=0)",
+		     "In_Parameter", io::message::error);
+  
+} // DIHREST
 
 /**
  * read the JVALUE block.

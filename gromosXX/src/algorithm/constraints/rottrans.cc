@@ -54,7 +54,7 @@ static void _apply(topology::Topology & topo,
   // blitz::TinyVector<double, 6U> c(0.0), lambda(0.0);
   math::Vec c_trans(0.0), c_rot(0.0), lambda_trans(0.0), lambda_rot(0.0);
   
-  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
+  for(int i=0; i < sim.param().rottrans.last; ++i){
 
     const math::Vec diff = conf.current().pos(i) - conf.old().pos(i);
     
@@ -88,7 +88,7 @@ static void _apply(topology::Topology & topo,
   }
   
   // update the positions
-  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
+  for(int i=0; i < sim.param().rottrans.last; ++i){
 
     conf.current().pos(i)(0) +=
       ( lambda_trans(0) +
@@ -120,7 +120,7 @@ static void _apply(topology::Topology & topo,
   //==================================================
 
   math::Vec v(0.0);
-  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
+  for(int i=0; i < sim.param().rottrans.last; ++i){
     v += topo.mass()(i) * (math::cross(conf.special().rottrans_constr.pos(i),
 				       conf.current().pos(i)));
   }
@@ -190,7 +190,7 @@ static void _init(topology::Topology & topo,
   // store initial (reference) positions
   conf.special().rottrans_constr.pos.resize(sim.param().rottrans.last);
 
-  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
+  for(int i=0; i < sim.param().rottrans.last; ++i){
     conf.special().rottrans_constr.pos(i) = conf.current().pos(i);
   }
   
@@ -200,7 +200,7 @@ static void _init(topology::Topology & topo,
   const int Y = 1;
   const int Z = 2;
   
-  for(unsigned int i=0; i < sim.param().rottrans.last; ++i){
+  for(int i=0; i < sim.param().rottrans.last; ++i){
 
     theta[0](X) += topo.mass()(i);
     theta[1](Y) += topo.mass()(i);

@@ -128,6 +128,11 @@ namespace io {
     void read_DISTREST(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
+     * read DIHREST block.
+     */
+    void read_DIHREST(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
      * read LONGRANGE block.
      */
     void read_LONGRANGE(simulation::Parameter &param, std::ostream & os = std::cout);

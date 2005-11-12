@@ -800,7 +800,6 @@ namespace simulation
      * @struct distrest_struct
      * DISTREST block
      */
-
     struct distrest_struct
     {
       /**
@@ -848,7 +847,42 @@ namespace simulation
       bool read;
       
     }/** Distance restraints parameters */ distrest;
-    
+
+    /**
+     * @struct dihrest_struct
+     * DIHREST block
+     */
+    struct dihrest_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - dihrest 0 (no dihedral restraints)
+       * - K 0
+       */
+      dihrest_struct()
+	: dihrest(0),
+	  K(0.0),
+	  phi_lin(0.0) {}
+      
+      /** 
+       * dihedral restraints
+       * method:
+       * - 0: off
+       * - 1: uniform K
+       * - 2: K * Ki (weight by Ki in dihedral restraint file)
+       */
+      int dihrest;
+      /**
+       * force constant K
+       */
+      double K;
+      /**
+       * deviation larger phi_lin leads to linear potential
+       */
+      double phi_lin;
+      
+    }/** dihedral restraint parameters */ dihrest;
 
     /**
      * @struct perturb_struct

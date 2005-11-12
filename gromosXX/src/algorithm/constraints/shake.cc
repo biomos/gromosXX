@@ -405,11 +405,15 @@ int algorithm::Shake::apply(topology::Topology & topo,
     return E_SHAKE_FAILURE_SOLVENT;
   }
       
-  // shaken velocity
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
-      sim.time_step_size();
-
+  // shaken velocity:
+  // stochastic dynamics needs to shake without velocity correction
+  // (once; it shakes twice...)
+  if (!sim.param().stochastic.sd){
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
+      conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+	sim.time_step_size();
+  }
+  
   // return success!
   return 0;
 		   
