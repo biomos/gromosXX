@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
-	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
+	 << "bae" << "bag" << "posres" <<"distrest" << "dihrest" << "jval"
 	 << "anatrj" << "print"
 	 << "version";
   
@@ -76,8 +76,8 @@ int main(int argc, char *argv[]){
   // create the simulation classes
   topology::Topology topo;
   configuration::Configuration conf;
-  algorithm::Algorithm_Sequence md;
   simulation::Simulation sim;
+  algorithm::Algorithm_Sequence md;
 
   io::Out_Configuration traj("GromosXX\n");
 

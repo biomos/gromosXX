@@ -17,7 +17,9 @@
 
 #include <interaction/special/position_restraint_interaction.h>
 #include <interaction/special/distance_restraint_interaction.h>
+#include <interaction/special/dihedral_restraint_interaction.h>
 #include <interaction/special/perturbed_distance_restraint_interaction.h>
+#include <interaction/special/perturbed_dihedral_restraint_interaction.h>
 #include <interaction/special/jvalue_restraint_interaction.h>
 #include <interaction/special/external_interaction.h>
 
@@ -73,17 +75,38 @@ int interaction::create_special(interaction::Forcefield & ff,
 
     ff.push_back(dr);
     
-    if(param.perturbation.perturbation)
-      {
-	if(!quiet)
-	  os <<"\tPerturbed distance restraints\n";
-	
-	interaction::Perturbed_Distance_Restraint_Interaction *pdr =
-	  new interaction::Perturbed_Distance_Restraint_Interaction;
+    if(param.perturbation.perturbation){
+      if(!quiet)
+	os <<"\tPerturbed distance restraints\n";
+      
+      interaction::Perturbed_Distance_Restraint_Interaction *pdr =
+	new interaction::Perturbed_Distance_Restraint_Interaction;
 
-	ff.push_back(pdr); 
-      }
+      ff.push_back(pdr); 
+    }
+  }
+  
+  // Dihedral restraints 
+  if (param.dihrest.dihrest == 1 || 
+      param.dihrest.dihrest == 2){
+
+    if(!quiet)
+      os <<"\tDihedral restraints\n";
+
+    interaction::Dihedral_Restraint_Interaction *dr =
+      new interaction::Dihedral_Restraint_Interaction();
+
+    ff.push_back(dr);
     
+    if(param.perturbation.perturbation){
+      if(!quiet)
+	os <<"\tPerturbed dihedral restraints\n";
+      
+      interaction::Perturbed_Dihedral_Restraint_Interaction *pdr =
+	new interaction::Perturbed_Dihedral_Restraint_Interaction;
+      
+      ff.push_back(pdr); 
+    }
   }
 
   // J-Value restraints

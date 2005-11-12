@@ -77,9 +77,14 @@ namespace configuration
      * total energy of the position restraint interaction
      */
     double posrest_total;
-    /** total energy of the distance restraint interaction
+    /** 
+     * total energy of the distance restraint interaction
      */
     double distrest_total;
+    /**
+     *  total energy of the distance restraint interaction
+     */
+    double dihrest_total;
     /**
      * total energy of the J-value restraint interaction
      */
@@ -141,6 +146,10 @@ namespace configuration
      * distance restraint energy term
      */
     std::vector<double> distrest_energy;
+    /**
+     * dihedral restraint energy term
+     */
+    std::vector<double> dihrest_energy;
     /**
      * jvalue restraint energy term
      */

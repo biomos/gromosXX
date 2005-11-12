@@ -387,6 +387,110 @@ namespace topology
     int rah;
   };
 
+  struct dihedral_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    dihedral_restraint_struct(int i, int j, int k, int l, double delta, double phi, double w0)
+      : i(i), j(j), k(k), l(l),
+	delta(delta), phi(phi),
+	w0(w0)
+    {}
+
+    /**
+     * atom i
+     */
+    int i;
+    /**
+     * atom j
+     */
+    int j;
+    /**
+     * atom k
+     */
+    int k;
+    /**
+     * atom l
+     */
+    int l;
+
+    /**
+     * restraint maximum
+     * (periodicity shift)
+     */
+    double delta;
+    /**
+     * restraint angle
+     */
+    double phi;
+    /**
+     * weighting factor.
+     */
+    double w0;
+  };
+
+  struct perturbed_dihedral_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    perturbed_dihedral_restraint_struct(int i, int j, int k, int l, int m, int n, double delta, 
+					double A_phi, double A_w0, double B_phi, double B_w0)
+      : i(i), j(j), k(k), l(l),
+	m(m), n(n),
+	delta(delta),
+	A_phi(A_phi), A_w0(A_w0),
+	B_phi(B_phi), B_w0(B_w0)
+    {}
+
+    /**
+     * atom i
+     */
+    int i;
+    /**
+     * atom j
+     */
+    int j;
+    /**
+     * atom k
+     */
+    int k;
+    /**
+     * atom l
+     */
+    int l;
+    /**
+     * exponent m
+     */
+    int m;
+    /**
+     * exponent n
+     */
+    int n;
+    /**
+     * restraint maximum
+     * (periodicity shift)
+     */
+    double delta;
+    /**
+     * restraint angle state A
+     */
+    double A_phi;
+    /**
+     * weighting factor state A
+     */
+    double A_w0;
+    /**
+     * restraint angle state B
+     */
+    double B_phi;
+    /**
+     * weighting factor state B
+     */
+    double B_w0;
+  };
+  
   /**
    * Virtual Grain
    */

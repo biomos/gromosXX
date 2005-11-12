@@ -438,6 +438,7 @@ namespace io
     os << type << "Special      : " << std::setw(21) << e.special_total << "\n";
     os << type << "Constraints  : " << std::setw(30) << e.constraints_total << "\n";
     os << type << "Distrest     : " << std::setw(30) << e.distrest_total << "\n";
+    os << type << "Dihrest      : " << std::setw(30) << e.dihrest_total << "\n";
     os << type << "Posrest      : " << std::setw(30) << e.posrest_total << "\n";
     os << type << "Jrest        : " << std::setw(30) << e.jvalue_total << "\n";
     os << type << "Entropy      : " << std::setw(30) << e.entropy_term << "\n";
@@ -501,6 +502,9 @@ namespace io
 
     os << "\n" << std::setw(20) << type + "Distrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.distrest_energy[i];
+
+    os << "\n" << std::setw(20) << type + "Dihrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihrest_energy[i];
 
     os << "\n" << std::setw(20) << type + "JRest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.jvalue_energy[i];

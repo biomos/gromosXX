@@ -17,6 +17,7 @@ xxinclude_HEADERS = 	argument.h \
 			configuration/out_configuration.h \
 			topology/in_posres.h \
 			topology/in_distrest.h \
+			topology/in_dihrest.h \
 			topology/in_jvalue.h \
 			ifp.h \
 			forcefield/in_ifp.h
@@ -39,6 +40,7 @@ libgroio_la_SOURCES =	io.cc \
 			configuration/out_configuration.cc \
 			topology/in_posres.cc \
 			topology/in_distrest.cc \
+			topology/in_dihrest.cc \
 			topology/in_jvalue.cc \
 			forcefield/in_ifp.cc
 

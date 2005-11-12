@@ -23,6 +23,7 @@
 #include <io/parameter/in_parameter.h>
 #include <io/topology/in_posres.h>
 #include <io/topology/in_distrest.h>
+#include <io/topology/in_dihrest.h>
 #include <io/topology/in_jvalue.h>
 
 #include "read_special.h"
@@ -69,7 +70,7 @@ int io::read_special(io::Argument const & args,
     std::ifstream distrest_file;
 
     if (args.count("distrest") != 1){
-      io::messages.add("distance restraints: no data file specified (use @posres)",
+      io::messages.add("distance restraints: no data file specified (use @distrest)",
 		       "read special",
 		       io::message::error);
     }
@@ -89,6 +90,31 @@ int io::read_special(io::Argument const & args,
       ip.read(topo, conf, sim);
     }    
   } // DISTREST
+
+  // DIHREST
+  if (sim.param().dihrest.dihrest){
+    std::ifstream dihrest_file;
+
+    if (args.count("dihrest") != 1){
+      io::messages.add("dihedral restraints: no data file specified (use @dihrest)",
+		       "read special",
+		       io::message::error);
+    }
+    else{
+      dihrest_file.open(args["dihrest"].c_str());
+      if (!dihrest_file){
+	io::messages.add("opening dihrest file '" + args["dihrest"] + "'failed!\n",
+			 "read_special", 
+			 io::message::error);
+      }
+      io::messages.add("dihedral restraints read from " + args["dihrest"],
+		       "read special",
+		       io::message::notice);
+      
+      io::In_Dihrest ip(dihrest_file);
+      ip.read(topo, conf, sim);
+    }    
+  } // DIHREST
 
   // J-Value restraints
   if (sim.param().jvalue.mode != simulation::restr_off){

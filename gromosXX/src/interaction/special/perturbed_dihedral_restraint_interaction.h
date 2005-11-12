@@ -1,29 +1,29 @@
 /**
- * @file perturbed_distance_restraint_interaction.h
- * perturbed distance restraining
+ * @file perturbed_dihedral_restraint_interaction.h
+ * perturbed dihedral restraining
  */
 
-#ifndef INCLUDED_PERTURBED_DISTANCE_RESTRAINT_INTERACTION_H
-#define INCLUDED_PERTURBED_DISTANCE_RESTRAINT_INTERACTION_H
+#ifndef INCLUDED_PERTURBED_DIHEDRAL_RESTRAINT_INTERACTION_H
+#define INCLUDED_PERTURBED_DIHEDRAL_RESTRAINT_INTERACTION_H
 
 namespace interaction
 {
   /**
-   * @class Perturbed_Distance_Restraint_Interaction
-   * calculates the perturbed distance restraining interaction
+   * @class Perturbed_Dihedral_Restraint_Interaction
+   * calculates the perturbed dihedral restraining interaction
    */
-  class Perturbed_Distance_Restraint_Interaction : public Interaction
+  class Perturbed_Dihedral_Restraint_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    Perturbed_Distance_Restraint_Interaction() : Interaction("PerturbedDistanceRestraint") {}
+    Perturbed_Dihedral_Restraint_Interaction() : Interaction("PerturbedDihedralRestraint") {}
     
     /**
      * Destructor.
      */
-    virtual ~Perturbed_Distance_Restraint_Interaction() {}
+    virtual ~Perturbed_Dihedral_Restraint_Interaction() {}
 
     /**
      * init
@@ -34,18 +34,17 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Perturbed distance restraint interaction\n";
+      if (!quiet)
+	os << "Perturbed dihedral restraint interaction\n";
       return 0;
     };
+
     /**
      * calculate the interactions.
      */
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
-
-  protected:
-    
   };
   
 } // interaction

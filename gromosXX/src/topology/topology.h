@@ -498,7 +498,6 @@ namespace topology
     {
       return m_distance_restraint;
     }
-
     /**
      *  distance restraints accessor.
      */
@@ -519,6 +518,35 @@ namespace topology
     std::vector<perturbed_distance_restraint_struct>  & perturbed_distance_restraints()
     {
       return m_perturbed_distance_restraint;
+    }
+
+    /**
+     * const dihedral restraints accessor.
+     */
+    std::vector<dihedral_restraint_struct> const & dihedral_restraints()const
+    {
+      return m_dihedral_restraint;
+    }
+    /**
+     * dihedral restraints accessor.
+     */
+    std::vector<dihedral_restraint_struct> & dihedral_restraints()
+    {
+      return m_dihedral_restraint;
+    }
+    /**
+     * const perturbed dihedral restraints accessor.
+     */
+    std::vector<perturbed_dihedral_restraint_struct> const & perturbed_dihedral_restraints()const
+    {
+      return m_perturbed_dihedral_restraint;
+    }
+    /**
+     * perturbed dihedral restraints accessor.
+     */
+    std::vector<perturbed_dihedral_restraint_struct> & perturbed_dihedral_restraints()
+    {
+      return m_perturbed_dihedral_restraint;
     }
 
     /**
@@ -744,6 +772,14 @@ namespace topology
      * perturbed distance restraints 
      */
     std::vector<perturbed_distance_restraint_struct> m_perturbed_distance_restraint;
+    /**
+     * dihedral restraints 
+     */
+    std::vector<dihedral_restraint_struct> m_dihedral_restraint;
+    /**
+     * perturbed dihedral restraints 
+     */
+    std::vector<perturbed_dihedral_restraint_struct> m_perturbed_dihedral_restraint;
     /**
      * jvalue restraints / constraints
      */

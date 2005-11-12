@@ -36,6 +36,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     special_total = 0.0;
     posrest_total = 0.0;
     distrest_total = 0.0;
+    dihrest_total = 0.0;
     jvalue_total = 0.0;
     constraints_total = 0.0;
     entropy_term = 0.0;
@@ -47,6 +48,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     dihedral_energy.assign(dihedral_energy.size(), 0.0);
     posrest_energy.assign(posrest_energy.size(), 0.0);
     distrest_energy.assign(distrest_energy.size(), 0.0);
+    dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
     constraints_energy.assign(constraints_energy.size(), 0.0);
 
@@ -92,6 +94,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
 
     posrest_energy.resize(energy_groups);
     distrest_energy.resize(energy_groups);
+    dihrest_energy.resize(energy_groups);
     jvalue_energy.resize(energy_groups);
     constraints_energy.resize(energy_groups);
     
@@ -151,6 +154,7 @@ int configuration::Energy::calculate_totals()
     dihedral_total     += dihedral_energy[i];
     posrest_total      += posrest_energy[i];
     distrest_total     += distrest_energy[i];
+    dihrest_total      += dihrest_energy[i];
     jvalue_total       += jvalue_energy[i];
     constraints_total  += constraints_energy[i];
   }
@@ -160,7 +164,8 @@ int configuration::Energy::calculate_totals()
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;
   
-  special_total = posrest_total + distrest_total + constraints_total + jvalue_total + external_total;
+  special_total = posrest_total + distrest_total + dihrest_total
+    + constraints_total + jvalue_total + external_total;
 
   total = potential_total + kinetic_total + special_total;
 

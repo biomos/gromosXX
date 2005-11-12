@@ -1598,7 +1598,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.constraints_total << "\n"
      << std::setw(18) << e.posrest_total << "\n"
      << std::setw(18) << e.distrest_total << "\n"
-     << std::setw(18) << 0.0 << "\n" // dihedral res
+     << std::setw(18) << e.dihrest_total << "\n"
      << std::setw(18) << e.jvalue_total << "\n"
      << std::setw(18) << 0.0 << "\n" // local elevation
      << std::setw(18) << 0.0 << "\n"; // path integral
@@ -1637,7 +1637,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
     os << std::setw(18) << e.constraints_energy[i] 
        << std::setw(18) << e.posrest_energy[i] 
        << std::setw(18) << e.distrest_energy[i] // disres
-       << std::setw(18) << 0.0 // dihedral res
+       << std::setw(18) << e.dihrest_energy[i] // dihedral res
        << std::setw(18) << 0.0 // jval
        << std::setw(18) << 0.0 // local elevation
        << std::setw(18) << 0.0 << "\n"; // path integral
