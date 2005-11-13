@@ -228,7 +228,8 @@ namespace io {
 				    topology::Topology const &topo,
 				    std::ostream &os);
 
-    void _print_jvalue(configuration::Configuration const &conf,
+    void _print_jvalue(simulation::Parameter const & param,
+		       configuration::Configuration const &conf,
 		       topology::Topology const &topo,
 		       std::ostream &os);
 

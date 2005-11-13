@@ -555,11 +555,15 @@ namespace topology
     double delta;
     /**
      * functional form.
-     * half harmonic attractive,
-     * half harmonic repulsive,
-     * harmonic
+     * - half harmonic attractive,
+     * - half harmonic repulsive,
+     * - harmonic
      */
     functional_form H;
+    /**
+     * local elevation counter
+     */
+    std::vector<double> epsilon;
   };
 
 }

@@ -431,6 +431,29 @@ Example <a href="pttopo.html">perturbation topology</a>
 <h2><a name="jval">J-VAL</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+J-VAL03
+# NTJR
+#       off (0)              no J-Value restraints
+#       instantaneous (1)    instantaneous J-Value restraints
+#       averaged (2)         time averaged J-Value restraints
+#       biquadratic (3)      biquadratic J-Value restraints
+#       scaled (4)           periodic scaling (?)
+# LE    local elevation restraining
+# NGRID number of grid points in LE restraining
+# K     force constant (weighted by individual w0)
+# TAUJR
+#       coupling time
+# NRDJR
+#    0: start from initial values (J0)
+#    1: read in time averages (for continuation run)
+#        NTJR  LE   NGRID      K  TAUJR   NRDJR
+  biquadratic   1      16   10.0    5.0       0 
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+or old format:
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 J-VAL
 # NTJR
 #       off (0)                          no J-Value restraints

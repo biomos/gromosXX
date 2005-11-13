@@ -281,7 +281,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
     
     if(sim.param().jvalue.mode != simulation::restr_off){
-      _print_jvalue(conf, topo, m_final_conf);
+      _print_jvalue(sim.param(), conf, topo, m_final_conf);
     }
 
     if(sim.param().pscale.jrest){
@@ -381,7 +381,7 @@ void io::Out_Configuration::write_replica
     
     /*
     if(sim.param().jvalue.mode != simulation::restr_off){
-      _print_jvalue(conf[0], topo, m_final_conf);
+      _print_jvalue(sim.param(), conf[0], topo, m_final_conf);
     }
     if(sim.param().pscale.jrest){
       _print_pscale_jrest(conf[0], topo, m_final_conf);
@@ -1493,7 +1493,8 @@ void io::Out_Configuration::write_replica_step
 
 }
 
-void io::Out_Configuration::_print_jvalue(configuration::Configuration const &conf,
+void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
+					  configuration::Configuration const &conf,
 					  topology::Topology const &topo,
 					  std::ostream &os)
 {
@@ -1517,6 +1518,11 @@ void io::Out_Configuration::_print_jvalue(configuration::Configuration const &co
   }
   os << "END\n";
 
+  if (param.jvalue.le){
+
+    print_JVALUE_EPSILON(os, topo, true);
+
+  }
 }
 
 void io::Out_Configuration::_print_pscale_jrest(configuration::Configuration const &conf,

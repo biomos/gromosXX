@@ -51,7 +51,7 @@ namespace simulation
     /**
      * biquadratic (time averaged & instantaneous) restraints
      */
-    restr_biq = 3
+    restr_biq = 3,
   };
 
   /**
@@ -951,12 +951,18 @@ namespace simulation
        * Constructor
        * Default values:
        * - mode restr_off
+       * - le 0
        * - tau 0
+       * - ngrid 1
+       * - K 1.0
        * - read_av false
        */
       jvalue_struct()
 	: mode(restr_off),
+	  le(0),
 	  tau(0.0),
+	  ngrid(1),
+	  K(1.0),
 	  read_av(false)
       {
       }
@@ -965,9 +971,22 @@ namespace simulation
        */
       restr_enum mode;
       /**
+       * local elevation restraining
+       */
+      int le;
+      /**
        * coupling time.
        */
       double tau;
+      /**
+       * number of local elevation grid points
+       */
+      int ngrid;
+      /**
+       * force constant
+       * (multiplied by individual restraint weighting)
+       */
+      double K;
       /**
        * read averages.
        */

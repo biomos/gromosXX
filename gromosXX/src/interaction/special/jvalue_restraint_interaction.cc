@@ -30,14 +30,15 @@
 #define SUBMODULE special
 
 double _calculate_derivative(topology::Topology & topo,
-				    configuration::Configuration &conf,
-				    simulation::Parameter const & param,
-				    std::vector<topology::jvalue_restraint_struct>::const_iterator it,
-				    double Jcurr, double Jav,
-				    double cos_phi_delta, double sin_phi_delta);
+			     configuration::Configuration &conf,
+			     simulation::Parameter const & param,
+			     std::vector<topology::jvalue_restraint_struct>::const_iterator it,
+			     double phi, double Jcurr, double Jav,
+			     double cos_phi_delta, double sin_phi_delta);
+
 
 /**
- * calculate position restraint interactions
+ * calculate jvalue restraint interactions
  */
 template<math::boundary_enum B, math::virial_enum V>
 int _calculate_jvalue_restraint_interactions
@@ -46,14 +47,12 @@ int _calculate_jvalue_restraint_interactions
  simulation::Simulation & sim)
 {
   // loop over the jvalue restraints
-  std::vector<topology::jvalue_restraint_struct>::const_iterator 
+  std::vector<topology::jvalue_restraint_struct>::iterator 
     it = topo.jvalue_restraints().begin(),
     to = topo.jvalue_restraints().end();
 
-  math::VArray &pos   = conf.current().pos;
+  math::VArray & pos = conf.current().pos;
   math::Vec rij, rkj, rkl, rmj, rnk, rim, rln;
-
-  // math::Vec v, f;
 
   double dkj2, dmj2, dnk2, dim, dln;
 
@@ -94,7 +93,8 @@ int _calculate_jvalue_restraint_interactions
       phi = -phi;
     }
     
-    DEBUG(10, "JVAL phi: " << phi);
+    // check this!!!!
+    DEBUG(10, "JVAL phi: " << 180 * phi / math::Pi);
     
     const double cos_phi_delta = cos(phi + it->delta);
     const double sin_phi_delta = sin(phi + it->delta);
@@ -124,18 +124,15 @@ int _calculate_jvalue_restraint_interactions
     // calculate J-value
     assert(conf.special().jvalue_av.size() > unsigned(n));
     
-    const double Jav =   it->a * memory_decay * cos_phi_delta * cos_phi_delta 
-      + it->b * memory_decay * cos_phi_delta    
-      + it->c * memory_decay
-      + conf.special().jvalue_av[n] * exp_term;
- 
-    const double Jcurr = it->a * cos_phi_delta * cos_phi_delta
-      + it->b * cos_phi_delta
-      + it->c;
+    const double Jcurr =
+      it->a * cos_phi_delta * cos_phi_delta +
+      it->b * cos_phi_delta +
+      it->c;
 
-    // save current J
-    // d_it->J = Jcurr;
-    
+    const double Jav =
+      memory_decay * Jcurr +
+      conf.special().jvalue_av[n] * exp_term;
+
     DEBUG(10, "JDATA time: " << sim.time() << "   Jcurr: " << Jcurr
 	  << "\tJav: " << Jav);
     
@@ -143,10 +140,22 @@ int _calculate_jvalue_restraint_interactions
     conf.special().jvalue_av[n] = Jav;
     conf.special().jvalue_curr[n] = Jcurr;
     
+    if (sim.param().jvalue.le){
+      while(phi < 0.0)
+	phi += 2 * math::Pi;
+      while(phi >= 2 * math::Pi)
+	phi -= 2 * math::Pi;
+
+      // 0 .. ngrid-1
+      const int bin = int(2 * math::Pi * sim.param().jvalue.ngrid / phi);
+      
+      it->epsilon[bin] += (Jcurr - it->J0)*(Jcurr - it->J0) * (Jav - it->J0) * (Jav - it->J0);
+    }
+
     const double dV_dphi = 
       _calculate_derivative(topo, conf, sim.param(),
 			    it,
-			    Jcurr, Jav,
+			    phi, Jcurr, Jav,
 			    cos_phi_delta, sin_phi_delta);
     
     //calculate forces 		 
@@ -164,8 +173,7 @@ int _calculate_jvalue_restraint_interactions
     DEBUG(10, "JVAL Force on j " << math::v2s(fj) );
     DEBUG(10, "JVAL Force on k " << math::v2s(fk) );
     DEBUG(10, "JVAL Force on l " << math::v2s(fl) );
- 
-  
+   
     conf.current().force(it->i) += fi;
     conf.current().force(it->j) += fj;
     conf.current().force(it->k) += fk;
@@ -174,7 +182,7 @@ int _calculate_jvalue_restraint_interactions
     if (V == math::atomic_virial){
       math::Vec rlj;
       periodicity.nearest_image(pos(it->l), pos(it->j), rlj);
-
+      
       for(int d0=0; d0<3; ++d0)
 	for(int d1=0; d1<3; ++d1)
 	  conf.current().virial_tensor(d0, d1) += 
@@ -184,86 +192,184 @@ int _calculate_jvalue_restraint_interactions
       
       DEBUG(7, "\tatomic virial done");
     }
-
   }
 
   return 0;
 }
 
-int interaction::Jvalue_Restraint_Interaction
-::calculate_interactions(topology::Topology & topo,
-			 configuration::Configuration & conf,
-			 simulation::Simulation & sim)
+int interaction::Jvalue_Restraint_Interaction::calculate_interactions
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim)
 {
   SPLIT_VIRIAL_BOUNDARY(_calculate_jvalue_restraint_interactions,
 			topo, conf, sim);
   return 0;
 }
 
-double _calculate_derivative(topology::Topology & topo,
-				    configuration::Configuration &conf,
-				    simulation::Parameter const & param,
-				    std::vector<topology::jvalue_restraint_struct>::const_iterator it,
-				    double Jcurr, double Jav,
-				    double cos_phi_delta, double sin_phi_delta)
+/**
+ * init
+ */
+int interaction::Jvalue_Restraint_Interaction::init
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf,
+ simulation::Simulation &sim,
+ std::ostream &os,
+ bool quiet) 
 {
-  // instantaneous / time averaged
-  if (param.jvalue.mode == simulation::restr_inst ||
-      param.jvalue.mode == simulation::restr_av){
+  if (!quiet){
+    os << "J-value restraint interaction\n";
+    switch(sim.param().jvalue.mode){
+      case simulation::restr_off:
+	os << "\trestraining off\n";
+	break;
+      case simulation::restr_inst:
+	os << "\tinstantaneous restraining\n";
+	break;
+      case simulation::restr_av:
+	os << "\ttime averaged restraining\n";
+	break;
+      case simulation::restr_biq:
+	os << "\tbiquadratic restraining\n";
+	break;
+    }
 
-    // check for half - harmoic functional forms
-    if ( (it->H == topology::repulsive && Jav - it->J0 > 0) || 
+    if (sim.param().jvalue.read_av)
+      os << "\treading jvalue averages from file\n";
+  }
+  
+  // loop over the jvalue restraints
+  std::vector<topology::jvalue_restraint_struct>::iterator 
+    it = topo.jvalue_restraints().begin(),
+    to = topo.jvalue_restraints().end();
+
+  if (sim.param().jvalue.le){
+    if (!quiet)
+      os << "\tlocal elevation restraining enabled\n";
+    
+    if (!sim.param().jvalue.read_av){
+      for( ; it != to; ++it){
+	it->epsilon.resize(sim.param().jvalue.ngrid, 0.0);
+      }
+    } 
+    else
+      os << "\treading local elevation epsilon from file\n";
+  }
+  
+  return 0;
+};
+
+double _calculate_derivative(topology::Topology & topo,
+			     configuration::Configuration &conf,
+			     simulation::Parameter const & param,
+			     std::vector<topology::jvalue_restraint_struct>::const_iterator it,
+			     double phi, double Jcurr, double Jav,
+			     double cos_phi_delta, double sin_phi_delta)
+{
+  if (param.jvalue.le){
+    
+    // LOCAL ELEVATION RESTRAINING
+
+    double energy = 0.0, dV_dphi = 0.0;
+    const double K = it->K * param.jvalue.K;
+    
+    for(int i=0; i < param.jvalue.ngrid; ++it){
+      
+      const double phi0 = (i + 0.5) * 2 * math::Pi / param.jvalue.ngrid;
+      const double w = 2 * math::Pi / param.jvalue.ngrid;
+
+      // adjust periodicity
+      while(phi < phi0 - math::Pi)
+	phi += 2 * math::Pi;
+      while(phi >= phi0 + math::Pi)
+	phi -= 2 * math::Pi;
+      
+      const double delta_phi = phi - phi0;
+      
+      const double Vpen = it->epsilon[i] * K *
+	exp(- delta_phi * delta_phi / (2 * w * w));
+      
+      energy += Vpen;
+      dV_dphi += Vpen * delta_phi / (w * w);
+
+    }
+
+    conf.current().energies.jvalue_energy[topo.atom_energy_group()[it->i]]
+      += energy;
+    return dV_dphi;
+        
+  }
+  else{
+
+    // STANDARD RESTRAINIG
+
+    // instantaneous / time averaged
+    if (param.jvalue.mode == simulation::restr_inst ||
+	param.jvalue.mode == simulation::restr_av){
+      
+      // check for half - harmoic functional forms
+      if ( (it->H == topology::repulsive && Jav - it->J0 > 0) || 
 	 (it->H == topology::attractive && Jav - it->J0 <= 0) ){
-      return 0;
+	return 0;
+      }
+      else{
+	const double K = it->K * param.jvalue.K;
+	
+	// calculate derivatives + energy	
+	// Jav == Jcurr for instantaneous...
+	const double dV_dJ = K * (Jav - it->J0);
+	
+	// memory_decay factor is omitted for practical reasons.
+	const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
+	
+	const double energy = 0.5 * K * (Jav - it->J0) * (Jav - it->J0);
+	// and store...
+	conf.current().energies.jvalue_energy[topo.atom_energy_group()[it->i]]
+	  += energy;
+	
+	return dV_dJ * dJ_dphi;
+      }
     }
-    else{
-      // calculate derivatives + energy	
-      // Jav == Jcurr for instantaneous...
-      const double dV_dJ = it->K * (Jav - it->J0);
+    else if (param.jvalue.mode == simulation::restr_biq){
       
-      //memory_decay factor is omitted for practical reasons.
-      const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
-      
-      const double energy = 0.5 * it->K * (Jav - it->J0) * (Jav - it->J0);
-      conf.current().energies.jvalue_energy[topo.atom_energy_group()
-					   [it->i]]
-	+= energy;
-
-      return dV_dJ * dJ_dphi;
+      // check for half - harmoic functional forms
+      if ( (it->H == topology::repulsive && (Jcurr - it->J0 > 0 || Jav - it->J0 > 0)) || 
+	   (it->H == topology::attractive && (Jcurr - it->J0 <= 0 || Jav - it->J0 <= 0)) ){
+	return 0;
+      }
+      else{
+	// calculate derivatives + energy	
+	const double K = it->K * param.jvalue.K;
+	const double delta_Jcurr = Jcurr - it->J0;
+	const double delta_Jav = Jav - it->J0;
+	
+	// --- dV / dJ ---
+	const double dV_dJ = K * delta_Jcurr * delta_Jav * delta_Jav;
+	// memory_decay factor is omitted for practical reasons.
+	const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
+	
+	// --- dV / dJav ---
+	const double dV_dJav = K * delta_Jcurr * delta_Jcurr * delta_Jav;
+	// memory_decay factor is omitted for practical reasons.
+	const double dJav_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
+	
+	const double energy = 0.5 * K
+	  * delta_Jcurr * delta_Jcurr * delta_Jav * delta_Jav;
+	
+	conf.current().energies.jvalue_energy[topo.atom_energy_group()[it->i]]
+	  += energy;
+	
+	return dV_dJ * dJ_dphi + dV_dJav * dJav_dphi;
+      }
     }
+    
+    io::messages.add("JValue restrints: derivative not implemented!",
+		     "JValue_Restraint_Interaction",
+		     io::message::critical);
   }
-  else if (param.jvalue.mode == simulation::restr_biq){
 
-    // check for half - harmoic functional forms
-    if ( (it->H == topology::repulsive && (Jcurr - it->J0 > 0 || Jav - it->J0 > 0)) || 
-	 (it->H == topology::attractive && (Jcurr - it->J0 <= 0 || Jav - it->J0 <= 0)) ){
-      return 0;
-    }
-    else{
-      // calculate derivatives + energy	
-
-      const double dV_dJ = it->K * (Jcurr - it->J0) * (Jav - it->J0) * (Jav - it->J0);
-      //memory_decay factor is omitted for practical reasons.
-      const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
-      
-
-      const double dV_dJav = it->K * (Jcurr - it->J0) * (Jcurr - it->J0) * (Jav - it->J0);
-      //memory_decay factor is omitted for practical reasons.
-      const double dJav_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
-      
-      const double energy = 0.5 * it->K
-	* (Jcurr - it->J0) * (Jcurr - it->J0) * (Jav - it->J0) * (Jav - it->J0);
-
-      conf.current().energies.jvalue_energy[topo.atom_energy_group()[it->i]]
-	+= energy;
-
-      return dV_dJ * dJ_dphi + dV_dJav * dJav_dphi;
-    }
-  }
-
-  io::messages.add("JValue restrints: derivative not implemented!",
-		   "JValue_Restraint_Interaction",
-		   io::message::critical);
   return 0;
   
 }

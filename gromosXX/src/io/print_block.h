@@ -77,6 +77,14 @@ namespace io
   void print_REMD(std::ostream &os, util::Replica_Data const & replica_data,
 		  simulation::Parameter const & param,
 		  int reeval = 0);
+
+  /**
+   * print J-Value local elevation epsilon
+   */
+  void print_JVALUE_EPSILON(std::ostream & os,
+			    topology::Topology const & topo,
+			    bool formated);
+			    
   
 } // io
 
