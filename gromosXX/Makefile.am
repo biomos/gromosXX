@@ -1,4 +1,4 @@
-SUBDIRS = src program
+SUBDIRS = src program contrib
 
 docdir = $(prefix)/doc/$(PACKAGE)-$(VERSION)
 
