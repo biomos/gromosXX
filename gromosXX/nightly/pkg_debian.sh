@@ -17,7 +17,8 @@ export PATH=/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/home/markus/programs/x
 rm -rf ${BUILDDIR}
 mkdir -p ${BUILDDIR} || ok=0
 cp ${NIGHT}/${NAME}-${VERSION}-${BUILD}.tar.gz ${BUILDDIR} || ok=0
-cd ${BUILDDIR}
+cd ${BUILDDIR} || ok=0
+
 if [ ${ok} == 0 ] ; then
     echo "preparing directory failed"
     echo "preparing directory failed" >> ${LOG}

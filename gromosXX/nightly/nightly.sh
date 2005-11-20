@@ -41,13 +41,13 @@ fi
 
 NIGHTLOG=${NIGHT}/night_${BUILD}.log
 
-OS=`uname -s`"_"`uname -m`
-source ${NIGHTHOME}/options.${OS}
-
 OPTIONNAME=$1
 export OPTIONNAME
 source ${NIGHTHOME}/options.${OPTIONNAME}
 shift
+
+OS=`uname -s`"_"`uname -m`
+source ${NIGHTHOME}/options.${OS}
 
 VERSION=`awk -F= 'BEGIN{x=0} {if (x==1) printf "."; \
 			x=1; printf $2} END{printf "\n"}' \

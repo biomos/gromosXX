@@ -11,3 +11,11 @@ VERSIONFILE=~/projects/gromos++/VERSION
 CVSROOT=:pserver:igc@igc.ethz.ch:/home/cvs/gromos++
 
 PREFIX=/usr/local/gromos/gromos++
+
+export NAME
+export PKGNAME
+export MAINTAINER
+export DESCRIPTION
+export VERSIONFILE
+export CVSROOT
+export PREFIX
