@@ -47,10 +47,12 @@ namespace interaction
     
 
     void set_coarsegraining(topology::Topology & cg_topo,
-			    configuration::Configuration & cg_conf)
+			    configuration::Configuration & cg_conf,
+			    simulation::Simulation & cg_sim)
     {
       this->cg_topo = &cg_topo;
       this->cg_conf = &cg_conf;
+      this->cg_sim = & cg_sim;
     }
     
   private:
@@ -64,7 +66,12 @@ namespace interaction
      * (forces on virtual atoms (grains))
      */
     configuration::Configuration * cg_conf;
-
+    /**
+     * coarse grained simulation
+     * (input parameters might be different!)
+     */
+    simulation::Simulation * cg_sim;
+    
   };
   
 } // interaction

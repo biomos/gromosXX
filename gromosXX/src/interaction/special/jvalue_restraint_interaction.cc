@@ -46,6 +46,9 @@ int _calculate_jvalue_restraint_interactions
  configuration::Configuration & conf,
  simulation::Simulation & sim)
 {
+  std::cout.precision(5);
+  std::cout.setf(std::ios::fixed, std::ios::floatfield);
+  
   // loop over the jvalue restraints
   std::vector<topology::jvalue_restraint_struct>::iterator 
     it = topo.jvalue_restraints().begin(),
@@ -133,8 +136,8 @@ int _calculate_jvalue_restraint_interactions
       memory_decay * Jcurr +
       conf.special().jvalue_av[n] * exp_term;
 
-    DEBUG(10, "JDATA time: " << sim.time() << "   Jcurr: " << Jcurr
-	  << "\tJav: " << Jav);
+    DEBUG(8, "JDATA time: " << sim.time() << "\t\tJcurr: " << Jcurr
+	  << "\tJav: " << Jav << "\tJ0: " << it->J0);
     
     //write new average and current value
     conf.special().jvalue_av[n] = Jav;
@@ -145,11 +148,26 @@ int _calculate_jvalue_restraint_interactions
 	phi += 2 * math::Pi;
       while(phi >= 2 * math::Pi)
 	phi -= 2 * math::Pi;
-
-      // 0 .. ngrid-1
-      const int bin = int(2 * math::Pi * sim.param().jvalue.ngrid / phi);
       
-      it->epsilon[bin] += (Jcurr - it->J0)*(Jcurr - it->J0) * (Jav - it->J0) * (Jav - it->J0);
+      // 0 .. ngrid-1
+      const int bin = int(phi * sim.param().jvalue.ngrid / (2 * math::Pi));
+      DEBUG(8, "jelevation: phi=" << 180 * phi / math::Pi 
+	    << " phi0=" << (bin + 0.5) * 360 / sim.param().jvalue.ngrid << " bin=" << bin);
+      
+      assert(it->epsilon.size() > unsigned(bin));
+      double delta_epsilon;
+      
+      if (sim.param().jvalue.mode == simulation::restr_biq)
+	delta_epsilon = (Jcurr - it->J0)*(Jcurr - it->J0) * (Jav - it->J0) * (Jav - it->J0);
+      else if (sim.param().jvalue.mode == simulation::restr_inst)
+	delta_epsilon = (Jcurr - it->J0)*(Jcurr - it->J0);	
+      else if (sim.param().jvalue.mode == simulation::restr_av)
+	delta_epsilon = (Jav - it->J0) * (Jav - it->J0);
+
+      it->epsilon[bin] += delta_epsilon;
+
+      DEBUG(8, "jelevation: epsilon += " << delta_epsilon);
+
     }
 
     const double dV_dphi = 
@@ -158,6 +176,8 @@ int _calculate_jvalue_restraint_interactions
 			    phi, Jcurr, Jav,
 			    cos_phi_delta, sin_phi_delta);
     
+    DEBUG(10, "derivative calculated");
+
     //calculate forces 		 
     const math::Vec dphi_dri =  (sqrt(dkj2)/dmj2)*rmj;
     const math::Vec dphi_drl = -(sqrt(dkj2)/dnk2)*rnk;			
@@ -275,7 +295,9 @@ double _calculate_derivative(topology::Topology & topo,
     double energy = 0.0, dV_dphi = 0.0;
     const double K = it->K * param.jvalue.K;
     
-    for(int i=0; i < param.jvalue.ngrid; ++it){
+    for(int i=0; i < param.jvalue.ngrid; ++i){
+      
+      DEBUG(10, "le potential " << i);
       
       const double phi0 = (i + 0.5) * 2 * math::Pi / param.jvalue.ngrid;
       const double w = 2 * math::Pi / param.jvalue.ngrid;
@@ -287,12 +309,15 @@ double _calculate_derivative(topology::Topology & topo,
 	phi -= 2 * math::Pi;
       
       const double delta_phi = phi - phi0;
+      DEBUG(10, "\tdelta_phi = " << delta_phi);
       
       const double Vpen = it->epsilon[i] * K *
 	exp(- delta_phi * delta_phi / (2 * w * w));
       
+      DEBUG(10, "\tenergy = " << Vpen);
+
       energy += Vpen;
-      dV_dphi += Vpen * delta_phi / (w * w);
+      dV_dphi -= Vpen * delta_phi / (w * w);
 
     }
 

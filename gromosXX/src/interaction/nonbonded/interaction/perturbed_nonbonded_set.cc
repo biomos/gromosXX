@@ -142,13 +142,20 @@ int interaction::Perturbed_Nonbonded_Set
 
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist, m_storage);
-
+  
   if (topo.perturbed_solute().atoms().size() > 0){
     DEBUG(6, "\tperturbed short range");
     m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim, 
 						     m_perturbed_pairlist,
 						     m_storage);
   }
+
+  // DEBUG
+  // for(int i=0; i<topo.num_atoms(); ++i){
+  // std::cout << "force " << i << " = " << math::v2s(m_storage.force(i)) << "\n";
+  // }
+  // DEBUG
+  
 
   // add 1,4 - interactions
   if (m_rank == 0){
@@ -180,8 +187,14 @@ int interaction::Perturbed_Nonbonded_Set
   
   // add long-range force
   DEBUG(6, "\t(set) add long range forces");
-
   m_storage.force += m_longrange_storage.force;
+
+  // DEBUG
+  // std::cout << "total nb" << std::endl;
+  // for(int i=0; i<topo.num_atoms(); ++i){
+  // std::cout << "force " << i << " = " << math::v2s(m_storage.force(i)) << "\n";
+  // }
+  // DEBUG
   
   // and long-range energies
   DEBUG(6, "\t(set) add long range energies");
