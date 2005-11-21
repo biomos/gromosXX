@@ -601,7 +601,7 @@ namespace io
     
     os << "JVALRESEPSILON\n";
     os.precision(5);
-    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.setf(std::ios::scientific, std::ios::floatfield);
     
     for( ; jval_it != jval_to; ++jval_it){
       
@@ -613,7 +613,7 @@ namespace io
 	   << "\n";
       
       for(unsigned int i=0; i<jval_it->epsilon.size(); ++i)
-	os << std::setw(10) << jval_it->epsilon[i];
+	os << std::setw(12) << jval_it->epsilon[i];
       
       os << "\n";
     }
