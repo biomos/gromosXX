@@ -146,10 +146,10 @@ void io::In_Configuration::read_replica
   const int rep_num = switch_T * switch_l;
   DEBUG(9, "=> " << rep_num << " replicas");
 
-  if (rep_num <= 1){
-	io::messages.add("replica exchange with <= 1 replica!",
-				     "in_configuration",
-					 io::message::error);
+  if (rep_num < 1){
+    io::messages.add("replica exchange with < 1 replica!",
+		     "in_configuration",
+		     io::message::error);
     return;
   }
 
