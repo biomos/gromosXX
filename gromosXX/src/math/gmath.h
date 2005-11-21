@@ -203,7 +203,13 @@ namespace math
     Vec const & operator()(int i)const { return d_b[i]; }
     Vec & operator()(int i) { return d_b[i]; }
     Box & operator*=(double d) { d_b[0] *= d; d_b[1] *= d; d_b[2] *= d; return *this; }
-
+    Box & operator=(Box const & box) 
+    {
+      d_b[0] = box.d_b[0];
+      d_b[1] = box.d_b[1];
+      d_b[2] = box.d_b[2];
+      return *this;
+    }
   };
 
   /**
