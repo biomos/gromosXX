@@ -202,6 +202,11 @@ namespace io {
      */
     void read_STOCHASTIC(simulation::Parameter & param, std::ostream & os = std::cout);
 
+    /**
+     * read EWARN block.
+     */
+    void read_EWARN(simulation::Parameter & param, std::ostream & os = std::cout);
+
   };
   
 } // io

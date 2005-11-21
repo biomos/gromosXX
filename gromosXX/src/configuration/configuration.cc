@@ -192,6 +192,9 @@ void configuration::Configuration::init(topology::Topology const & topo,
   current().energies.resize(num, numb);
   old().energies.resize(num, numb);
   
+  current().energies.ewarn(param.ewarn.limit);
+  old().energies.ewarn(param.ewarn.limit);
+
   current().perturbed_energy_derivatives.resize(num, numb);
   old().perturbed_energy_derivatives.resize(num, numb);
 

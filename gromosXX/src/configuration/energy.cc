@@ -129,6 +129,10 @@ int configuration::Energy::calculate_totals()
   crf_total = 0.0;
     
   for(size_t i=0; i<kinetic_energy.size(); ++i){
+    if (kinetic_energy[i] > m_ewarn){
+      std::cout << "EWARN: kinetic energy " << i+1 << " = " << kinetic_energy[i] << "\n";
+    }
+    
     kinetic_total += kinetic_energy[i];
   }
 
@@ -144,17 +148,48 @@ int configuration::Energy::calculate_totals()
 	crf_energy[i][j] = 0.0;
       }
 
+      if (lj_energy[i][j] > m_ewarn){
+	std::cout << "EWARN: lj energy " << i+1 << ", " << j+1 << " = " << lj_energy[j][i] << "\n";
+      }
+      if (crf_energy[i][j] > m_ewarn){
+	std::cout << "EWARN: crf energy " << i+1 << ", " << j+1 << " = " << crf_energy[j][i] << "\n";
+      }
+      
       lj_total   += lj_energy[j][i];
       crf_total  += crf_energy[j][i];
     }
 
+    if (bond_energy[i] > m_ewarn){
+      std::cout << "EWARN: bond energy " << i+1 << " = " << bond_energy[i] << "\n";
+    }
     bond_total         += bond_energy[i];
+    if (angle_energy[i] > m_ewarn){
+      std::cout << "EWARN: angle energy " << i+1 << " = " << angle_energy[i] << "\n";
+    }
     angle_total        += angle_energy[i];
+    if (improper_energy[i] > m_ewarn){
+      std::cout << "EWARN: improper energy " << i+1 << " = " << improper_energy[i] << "\n";
+    }
     improper_total     += improper_energy[i];
+    if (dihedral_energy[i] > m_ewarn){
+      std::cout << "EWARN: dihedral energy " << i+1 << " = " << dihedral_energy[i] << "\n";
+    }
     dihedral_total     += dihedral_energy[i];
+    if (posrest_energy[i] > m_ewarn){
+      std::cout << "EWARN: posrest energy " << i+1 << " = " << posrest_energy[i] << "\n";
+    }
     posrest_total      += posrest_energy[i];
+    if (distrest_energy[i] > m_ewarn){
+      std::cout << "EWARN: distrest energy " << i+1 << " = " << distrest_energy[i] << "\n";
+    }
     distrest_total     += distrest_energy[i];
+    if (dihrest_energy[i] > m_ewarn){
+      std::cout << "EWARN: dihrest energy " << i+1 << " = " << dihrest_energy[i] << "\n";
+    }
     dihrest_total      += dihrest_energy[i];
+    if (jvalue_energy[i] > m_ewarn){
+      std::cout << "EWARN: jvalue energy " << i+1 << " = " << jvalue_energy[i] << "\n";
+    }
     jvalue_total       += jvalue_energy[i];
     constraints_total  += constraints_energy[i];
   }

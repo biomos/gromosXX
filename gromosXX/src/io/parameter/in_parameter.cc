@@ -73,6 +73,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_ANALYZE(param);
   read_INTEGRATE(param);
   read_STOCHASTIC(param);
+  read_EWARN(param);
   
   DEBUG(7, "input read...");
 
@@ -2000,9 +2001,9 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
     std::string s1;
     _lineStream >> s1
 		>> param.jvalue.le
-		>> param.jvalue.tau
 		>> param.jvalue.ngrid
 		>> param.jvalue.K
+		>> param.jvalue.tau
 		>> param.jvalue.read_av;
     
     if (_lineStream.fail())
@@ -2425,7 +2426,6 @@ void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
   std::string s;
   
   buffer = m_block["STOCHASTIC"];
-  int i;
   
   if (buffer.size()){
 
@@ -2444,5 +2444,32 @@ void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
     }
     
     param.stochastic.sd = 1;
+  }
+}
+
+void io::In_Parameter::read_EWARN(simulation::Parameter & param,
+				  std::ostream & os)
+{
+  DEBUG(8, "read EWARN");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["EWARN"];
+  
+  if (buffer.size()){
+
+    block_read.insert("EWARN");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.ewarn.limit;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in EWARN block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
   }
 }

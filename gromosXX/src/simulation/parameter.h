@@ -1318,6 +1318,18 @@ namespace simulation
       bool generate_integral;
       
     } /** stochastic dynamics */ stochastic;
+
+    struct ewarn_struct
+    {
+      /**
+       * ewarn
+       */
+      ewarn_struct() : limit(1E99)
+      {
+      }
+      double limit;
+    } /** ewarn */ ewarn;
+    
   };
 }
 

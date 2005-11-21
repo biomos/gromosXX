@@ -18,7 +18,7 @@ namespace configuration
     /**
      * Constructor
      */
-    Energy(){}
+    Energy() : m_ewarn(1E99) {}
     /**
      * Destructor
      */
@@ -181,6 +181,14 @@ namespace configuration
      * calculate the totals of the individual energy terms.
      */
     int  calculate_totals();
+
+    /**
+     * set energy warning
+     */
+    void ewarn(double ew) { m_ewarn = ew; }
+
+  private:
+    double m_ewarn;
     
   };
 
