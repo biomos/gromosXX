@@ -1,6 +1,6 @@
 /**
- * 
- * 
+ * @file virtual_atom.cc
+ * virtual atoms
  */
 
 #include <stdheader.h>
@@ -656,7 +656,7 @@ void util::Virtual_Atom::_force
       force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
 
-    case 10:
+    case 10: // cog
       {
 	for(unsigned int i=0; i<m_atom.size(); ++i){
 	  force(m_atom[i]) += f / m_atom.size();

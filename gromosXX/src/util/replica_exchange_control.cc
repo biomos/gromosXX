@@ -111,6 +111,12 @@ int util::Replica_Exchange_Control::run
     }
   }
 
+  if (cmd_change)
+    std::cerr << "changing replica" << std::endl;
+  
+  if (cmd_quit)
+    std::cerr << "quitting master" << std::endl;
+
   struct addrinfo *addrinfo_p;
   struct addrinfo hints;
   hints.ai_flags = 0;

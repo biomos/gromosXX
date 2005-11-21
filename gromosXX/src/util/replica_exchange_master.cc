@@ -134,8 +134,8 @@ int util::Replica_Exchange_Master::run
   }
 
   // check input
-  if (sim.param().replica.num_T * sim.param().replica.num_l <= 1){
-    io::messages.add("replica exchange with less than 2 replicas?!",
+  if (sim.param().replica.num_T * sim.param().replica.num_l < 1){
+    io::messages.add("replica exchange with no replicas?!",
 		     "Replica_Exchange",
 		     io::message::error);
     std::cerr << "RE: not enough replicas" << std::endl;
@@ -830,10 +830,12 @@ void util::Replica_Exchange_Master::set_next_switch(int i)
     }
   }
   else{
-    std::cerr << "why are you running replica exchange???" << std::endl;
+    std::cout << "Only one replica: why are you running replica exchange???" << std::endl;
+    /*
     io::messages.add("No exchanges in replica exchange?",
 		     "Replica Exchange",
 		     io::message::critical);
+    */
   }
   
   // and the modifiers

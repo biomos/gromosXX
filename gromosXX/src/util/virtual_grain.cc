@@ -31,6 +31,7 @@ void util::update_virtual_pos(topology::Topology & cg_topo,
   // std::cerr << "update virtual pos" << std::endl;
 
   cg_conf.current().box = conf.current().box;
+  DEBUG(10, "boundary = " << cg_conf.boundary_type);
   
   for(unsigned int i=0; i<cg_topo.virtual_grains().size(); ++i){
     
@@ -39,7 +40,7 @@ void util::update_virtual_pos(topology::Topology & cg_topo,
 
     DEBUG(10, "virtual pos " << cg_topo.virtual_grains()[i].i
 	  << " = " << math::v2s(cg_topo.virtual_grains()[i].atom.pos(conf)));
-
+    
     // std::cerr << "virtual pos [" << i << "] : " << cg_topo.virtual_grains()[i].i << std::endl;
     // std::cerr << "\t(" << cg_topo.virtual_grains()[i].atom.size() << ")";
     // std::cerr << std::endl;
@@ -77,7 +78,8 @@ void util::update_virtual_force(topology::Topology & cg_topo,
     DEBUG(10, "virtual force " << cg_topo.virtual_grains()[i].i
 	  << " = " << math::v2s(cg_conf.current().force(cg_topo.virtual_grains()[i].i)));
     
-    cg_topo.virtual_grains()[i].atom.force(conf, cg_conf.current().force(cg_topo.virtual_grains()[i].i));
+    cg_topo.virtual_grains()[i].atom.force
+      (conf, cg_conf.current().force(cg_topo.virtual_grains()[i].i));
 
   }
 }

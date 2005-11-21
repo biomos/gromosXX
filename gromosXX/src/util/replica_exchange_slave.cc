@@ -90,6 +90,13 @@ int util::Replica_Exchange_Slave::run
 
   interaction::Forcefield * cg_ff;
   if (multigraining){
+    
+    std::cout << "\n\n"
+	      << "==================================================\n"
+	      << "MULTIGRAINING\n" 
+	      << "==================================================\n"
+	      << std::endl;
+
     interaction::Forcefield * ff = 
       dynamic_cast<interaction::Forcefield *>(md.algorithm("Forcefield"));
     if (ff == NULL){
@@ -103,7 +110,7 @@ int util::Replica_Exchange_Slave::run
       return 1;
     }
     
-    ei->set_coarsegraining(cg_topo, cg_conf);
+    ei->set_coarsegraining(cg_topo, cg_conf, cg_sim);
     
     io::argname_conf = "cg_conf";
     io::argname_topo = "cg_topo";
@@ -286,6 +293,10 @@ int util::Replica_Exchange_Slave::run
       std::cerr << "run finished" << std::endl;
       
       std::cout << "\nslave: run finished!\n\n";
+      std::cout << "\tlast energies were: potential=" << conf.old().energies.potential_total
+		<< "  special=" << conf.old().energies.special_total
+		<< "  kinetic=" << conf.old().energies.kinetic_total << "\n\n";
+      
       std::cout << "\tcalculating potential energies of last configuration\n\n";
       
       if (!error){
