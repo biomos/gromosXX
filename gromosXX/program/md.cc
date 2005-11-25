@@ -81,7 +81,11 @@ int main(int argc, char *argv[]){
 
   io::Out_Configuration traj("GromosXX\n");
 
-  io::read_input(args, topo, conf, sim,  md);
+  if (io::read_input(args, topo, conf, sim,  md)){
+    io::messages.display(std::cout);
+    std::cout << "\nErrors during initialization!\n" << std::endl;
+    return 1;
+  }
 
   traj.title("GromosXX\n" + sim.param().title);
 
@@ -93,7 +97,6 @@ int main(int argc, char *argv[]){
 
   std::cout << "\nMESSAGES FROM INITIALIZATION\n";
   if (io::messages.display(std::cout) >= io::message::error){
-    // exit
     std::cout << "\nErrors during initialization!\n" << std::endl;
     return 1;
   }
@@ -149,6 +152,7 @@ int main(int argc, char *argv[]){
       }
 
       std::cout << "\nError during MD run!\n" << std::endl;
+      std::cout << "\tat step " << sim.steps() << " (time " << sim.time() << ")\n" << std::endl;
       // try to save the final structures...
       break;
     }
