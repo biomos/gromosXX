@@ -31,7 +31,7 @@ int algorithm::Berendsen_Thermostat::init
  )
 {
   if (!quiet){
-    os << "Weak-Coupling temperature coupling\n";
+    os << "\tWeak-Coupling temperature coupling\n";
   }
   return 0;
 }

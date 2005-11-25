@@ -11,7 +11,8 @@ namespace io
   int read_special(io::Argument const &args,
 		   topology::Topology &topo,
 		   configuration::Configuration &conf,
-		   simulation::Simulation & sim);
+		   simulation::Simulation & sim,
+		   std::ostream & os = std::cout);
   
 }
 

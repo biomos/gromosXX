@@ -126,7 +126,8 @@ int algorithm::Temperature_Calculation
 		<< " in bath " << bath);
 	  DEBUG(11, "\tA_mass: " << topo.perturbed_solute().atoms()[i].A_mass() 
 		<< " B_mass: " << topo.perturbed_solute().atoms()[i].B_mass());
-
+	  DEBUG(11, "\tabs2(vel): " << math::abs2(vel(i)));
+	  
 	  DEBUG(10, "\tbefore dE_kin/dl: " << e_kin[bath]);
 
 	  // for some reason we take the new velocities here
@@ -167,7 +168,7 @@ int algorithm::Temperature_Calculation
   apply(topo, conf, sim);
   
   if (!quiet){
-    os << "Temperature calculation\n";
+    // os << "Temperature calculation\n";
     io::print_MULTIBATH_COUPLING(os, sim.multibath());
     io::print_DEGREESOFFREEDOM(os, sim.multibath());
     io::print_MULTIBATH(os, sim.multibath(),

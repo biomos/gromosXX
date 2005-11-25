@@ -41,7 +41,7 @@ namespace algorithm
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Leap frog position\n";
+      os << "\tLeap frog position\nEND\n";
       return 0;
     };
 
@@ -79,7 +79,7 @@ namespace algorithm
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Leap frog velocity\n";
+      os << "INTEGRATION\n\tLeap frog velocity\n";
       return 0;
     };
 

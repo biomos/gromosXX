@@ -37,7 +37,8 @@
 int io::read_special(io::Argument const & args,
 		     topology::Topology & topo,
 		     configuration::Configuration & conf,
-		     simulation::Simulation & sim)
+		     simulation::Simulation & sim,
+		     std::ostream & os)
 {
 
   // POSRES
@@ -61,7 +62,7 @@ int io::read_special(io::Argument const & args,
 		       io::message::notice);
       
       io::In_Posres ip(posres_file);
-      ip.read(topo, conf, sim);
+      ip.read(topo, conf, sim, os);
     }
   } // POSRES
 
@@ -87,7 +88,7 @@ int io::read_special(io::Argument const & args,
 		       io::message::notice);
       
       io::In_Distrest ip(distrest_file);
-      ip.read(topo, conf, sim);
+      ip.read(topo, conf, sim, os);
     }    
   } // DISTREST
 
@@ -112,7 +113,7 @@ int io::read_special(io::Argument const & args,
 		       io::message::notice);
       
       io::In_Dihrest ip(dihrest_file);
-      ip.read(topo, conf, sim);
+      ip.read(topo, conf, sim, os);
     }    
   } // DIHREST
 
@@ -137,7 +138,7 @@ int io::read_special(io::Argument const & args,
 		       io::message::notice);
       
       io::In_Jvalue ij(jval_file);
-      ij.read(topo, conf, sim);
+      ij.read(topo, conf, sim, os);
     }
   } // JVALUE
   

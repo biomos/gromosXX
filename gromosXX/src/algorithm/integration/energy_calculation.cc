@@ -33,7 +33,7 @@ int algorithm::Energy_Calculation::init
  bool quiet
  )
 {
-  os << "Energy calculation\n";
+  // os << "Energy calculation\n";
   
   // the resizing of the energy-arrays could be moved here...
   return 0;

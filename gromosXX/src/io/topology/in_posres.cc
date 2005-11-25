@@ -25,12 +25,13 @@
 
 void 
 io::In_Posres::read(topology::Topology& topo,
-		      configuration::Configuration & conf,
-		      simulation::Simulation & sim){
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    std::ostream & os){
   
   DEBUG(7, "reading in a position restraints file");
 
-  std::cout << "POSITION RESTRAINTS\n";
+  os << "POSITION RESTRAINTS\n";
   
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -92,7 +93,7 @@ io::In_Posres::read(topology::Topology& topo,
 
     if (buffer.size()){
       DEBUG(10, "BFACTOR block");
-      std::cout << "\tBFACTOR";
+      os << "\tBFACTOR";
 
       io::messages.add("reading in atomic bfactors for position restraints",
 		       "in_posres", io::message::notice);
@@ -150,39 +151,39 @@ io::In_Posres::read(topology::Topology& topo,
   
   switch(sim.param().posrest.posrest){
     case 0:
-      std::cout << "\tPosition restraints OFF\n";
+      os << "\tPosition restraints OFF\n";
       // how did you get here?
       break;
     case 1:
-      std::cout << "\tPosition restraints ON\n"
-		<< "\t\trestraining to following positions:\n";
+      os << "\tPosition restraints ON\n"
+	 << "\t\trestraining to following positions:\n";
       break;
     case 2:
-      std::cout << "\tPosition restraints ON\n"
-		<< "\t\trestraining to following positions\n"
-		<< "\t\t(using atomic B-factors):\n";
+      os << "\tPosition restraints ON\n"
+	 << "\t\trestraining to following positions\n"
+	 << "\t\t(using atomic B-factors):\n";
       break;
     case 3:
-      std::cout << "\tPosition constraints ON\n"
-		<< "\t\tconstraining following atoms"
-		<< " to their initial positions:\n";
+      os << "\tPosition constraints ON\n"
+	 << "\t\tconstraining following atoms"
+	 << " to their initial positions:\n";
       break;
   }
 
-  std::cout << std::setw(10) << "SEQ"
-	    << std::setw(20) << "POS(X)"
-	    << std::setw(20) << "POS(Y)"
-	    << std::setw(20) << "POS(Z)"
-	    << std::setw(15) << "BFACTOR"
-	    << "\n";
-
+  os << std::setw(10) << "SEQ"
+     << std::setw(20) << "POS(X)"
+     << std::setw(20) << "POS(Y)"
+     << std::setw(20) << "POS(Z)"
+     << std::setw(15) << "BFACTOR"
+     << "\n";
+  
   for( ; posres_it != posres_to; ++posres_it)
-    std::cout << std::setw(10) << posres_it->seq
-	      << std::setw(20) << posres_it->pos(0)
-	      << std::setw(20) << posres_it->pos(1)
-	      << std::setw(20) << posres_it->pos(2)
-	      << std::setw(15) << posres_it->bfactor
-	      << "\n";
-  std::cout << "END\n";
+    os << std::setw(10) << posres_it->seq
+       << std::setw(20) << posres_it->pos(0)
+       << std::setw(20) << posres_it->pos(1)
+       << std::setw(20) << posres_it->pos(2)
+       << std::setw(15) << posres_it->bfactor
+       << "\n";
+  os << "END\n";
   
 }

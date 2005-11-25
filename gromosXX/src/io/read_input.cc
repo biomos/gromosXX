@@ -51,7 +51,7 @@ int io::read_input(io::Argument const & args,
 
   if (read_configuration(args, topo, conf, sim, os) != 0) return -1;
   
-  if (read_special(args, topo, conf, sim) != 0) return -1;
+  if (read_special(args, topo, conf, sim, os) != 0) return -1;
 
   return 0;
 }

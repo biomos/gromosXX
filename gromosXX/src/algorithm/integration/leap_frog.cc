@@ -59,10 +59,16 @@ int algorithm::Leap_Frog_Velocity
 
   
   // v = v + f * dt / m
-  for(int i=0; i < num_atoms; ++i)
+  for(int i=0; i < num_atoms; ++i){
     conf.current().vel(i) =
       conf.old().vel(i) + conf.old().force(i) * sim.time_step_size() / topo.mass()(i);
 
+    DEBUG(10, "atom " << i
+	  << "\n\tf=" << math::v2s(conf.old().force(i))
+	  << "\n\tmass=" << topo.mass()(i)
+	  << "\n\tvel=" << math::v2s(conf.old().vel(i)));
+  }
+  
   m_timing += util::now() - start;
   
   return 0;

@@ -49,7 +49,9 @@ int algorithm::Algorithm_Sequence
   // centre of mass removal
   if(!(sim.param().centreofmass.remove_trans ||
        sim.param().centreofmass.remove_rot)){
+
     algorithm::Remove_COM_Motion rcom;
+    rcom.init(topo, conf, sim, os, quiet);
     rcom.apply(topo, conf, sim);
   }
 

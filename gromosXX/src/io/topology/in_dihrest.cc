@@ -26,12 +26,13 @@ static std::set<std::string> block_read;
 
 void io::In_Dihrest::read(topology::Topology& topo,
 			  configuration::Configuration & conf,
-			  simulation::Simulation & sim){
+			  simulation::Simulation & sim,
+			  std::ostream & os){
   
   DEBUG(7, "reading in a dihedral restraints file");
   
   if (!quiet)
-    std::cout << "DIHEDRAL RESTRAINTS\n";
+    os << "DIHEDRAL RESTRAINTS\n";
   
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -59,19 +60,19 @@ void io::In_Dihrest::read(topology::Topology& topo,
     if (!quiet){
       switch(sim.param().dihrest.dihrest){
 	case 0:
-	  std::cout << "\tDihedral restraints OFF\n";
+	  os << "\tDihedral restraints OFF\n";
 	  // how did you get here?
 	  break;
 	case 1:
-	  std::cout << "\tDihedral restraints ON\n"
-		    << "\t\t(uniform force constant K)\n";
+	  os << "\tDihedral restraints ON\n"
+	     << "\t\t(uniform force constant K)\n";
 	  break;
 	case 2:
-	  std::cout << "\tDihedral restraints ON\n"
-		    << "\t\t(force constant K*w0)\n";
+	  os << "\tDihedral restraints ON\n"
+	     << "\t\t(force constant K*w0)\n";
 	  break;
 	default:
-	  std::cout << "\tDihedral restraints: ERROR\n";
+	  os << "\tDihedral restraints: ERROR\n";
 	  io::messages.add("wrong value for method in dihedral restraints block",
 			   "in_dihedral", io::message::error);
 	  return;
@@ -80,17 +81,17 @@ void io::In_Dihrest::read(topology::Topology& topo,
     
     if (!quiet){
 
-      std::cout << std::setw(10) << "i"
-		<< std::setw(8) << "j"
-		<< std::setw(8) << "k"
-		<< std::setw(8) << "l"
-		<< std::setw(8) << "delta"
-		<< std::setw(8) << "phi"
-		<< std::setw(8) << "w0"
-		<< "\n";
+      os << std::setw(10) << "i"
+	 << std::setw(8) << "j"
+	 << std::setw(8) << "k"
+	 << std::setw(8) << "l"
+	 << std::setw(8) << "delta"
+	 << std::setw(8) << "phi"
+	 << std::setw(8) << "w0"
+	 << "\n";
 
-      std::cout.precision(2);
-      std::cout.setf(std::ios::fixed, std::ios::floatfield);
+      os.precision(2);
+      os.setf(std::ios::fixed, std::ios::floatfield);
 
     }
     
@@ -113,14 +114,14 @@ void io::In_Dihrest::read(topology::Topology& topo,
 					     delta * 2 * math::Pi / 360, phi * 2 * math::Pi / 360, w0));
       
       if (!quiet){
-	std::cout << std::setw(10) << i
-		  << std::setw(8) << j
-		  << std::setw(8) << k
-		  << std::setw(8) << l
-		  << std::setw(8) << delta
-		  << std::setw(8) << phi
-		  << std::setw(8) <<  w0
-		  << "\n";
+	os << std::setw(10) << i
+	   << std::setw(8) << j
+	   << std::setw(8) << k
+	   << std::setw(8) << l
+	   << std::setw(8) << delta
+	   << std::setw(8) << phi
+	   << std::setw(8) <<  w0
+	   << "\n";
       }
     }
   } // DIHREST
@@ -145,19 +146,19 @@ void io::In_Dihrest::read(topology::Topology& topo,
     if (!quiet){
       switch(sim.param().distrest.distrest){
 	case 0:
-	  std::cout << "\tPerturbed Dihedral restraints OFF\n";
+	  os << "\tPerturbed Dihedral restraints OFF\n";
 	  // how did you get here?
 	  break;
 	case 1:
-	  std::cout << "\tPerturbed Dihedral restraints ON\n"
-		    << "\t\t(using uniform force constant K\n";
+	  os << "\tPerturbed Dihedral restraints ON\n"
+	     << "\t\t(using uniform force constant K\n";
 	  break;
 	case 2:
-	  std::cout << "\tPerturbed Dihedral restraints ON\n"
-		    << "\t\t(using force constant K*w0)\n";
+	  os << "\tPerturbed Dihedral restraints ON\n"
+	     << "\t\t(using force constant K*w0)\n";
 	  break;
 	default:
-	  std::cout << "\tPerturbed Dihedral restraints ERROR\n";
+	  os << "\tPerturbed Dihedral restraints ERROR\n";
 	  io::messages.add("wrong method for dihedral restraints",
 			   "in_dihrest", io::message::error);
 	  return;
@@ -165,21 +166,21 @@ void io::In_Dihrest::read(topology::Topology& topo,
     }
 
     if (!quiet){
-      std::cout << std::setw(10) << "i"
-		<< std::setw(8) << "j"
-		<< std::setw(8) << "k"
-		<< std::setw(8) << "l"
-		<< std::setw(8) << "m"
-		<< std::setw(8) << "n"
-		<< std::setw(8) << "delta"
-		<< std::setw(8) << "A_phi"
-		<< std::setw(8) << "A_w0"
-		<< std::setw(8) << "B_phi"
-		<< std::setw(8) << "B_w0"
-		<< "\n";
+      os << std::setw(10) << "i"
+	 << std::setw(8) << "j"
+	 << std::setw(8) << "k"
+	 << std::setw(8) << "l"
+	 << std::setw(8) << "m"
+	 << std::setw(8) << "n"
+	 << std::setw(8) << "delta"
+	 << std::setw(8) << "A_phi"
+	 << std::setw(8) << "A_w0"
+	 << std::setw(8) << "B_phi"
+	 << std::setw(8) << "B_w0"
+	 << "\n";
 
-      std::cout.precision(2);
-      std::cout.setf(std::ios::fixed, std::ios::floatfield);
+      os.precision(2);
+      os.setf(std::ios::fixed, std::ios::floatfield);
     }
     
     for(int c=0; it != to; ++c, ++it){
@@ -203,23 +204,23 @@ void io::In_Dihrest::read(topology::Topology& topo,
 						       B_phi * 2 * math::Pi / 360, B_w0 ));
 
       if (!quiet){
-	std::cout << std::setw(10) << i
-		  << std::setw(8) << j
-		  << std::setw(8) << k
-		  << std::setw(8) << l
-		  << std::setw(8) << m
-		  << std::setw(8) << n
-		  << std::setw(8) << delta
-		  << std::setw(8) << A_phi
-		  << std::setw(8) << A_w0
-		  << std::setw(8) << B_phi
-		  << std::setw(8) << B_w0    
-		  << "\n";
+	os << std::setw(10) << i
+	   << std::setw(8) << j
+	   << std::setw(8) << k
+	   << std::setw(8) << l
+	   << std::setw(8) << m
+	   << std::setw(8) << n
+	   << std::setw(8) << delta
+	   << std::setw(8) << A_phi
+	   << std::setw(8) << A_w0
+	   << std::setw(8) << B_phi
+	   << std::setw(8) << B_w0    
+	   << "\n";
       }
       
     } // PERTDIHRESPEC
     
-    if (!quiet) std::cout << "END\n";
+    if (!quiet) os << "END\n";
   }
   
   for(std::map<std::string, std::vector<std::string> >::const_iterator

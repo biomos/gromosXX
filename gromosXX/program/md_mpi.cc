@@ -70,11 +70,16 @@ int main(int argc, char *argv[]){
   oss << "slave_" << rank << ".out";
   std::ofstream ofs(oss.str().c_str());
   
+  bool quiet = false;
   std::ostream * os;
-  if (rank == 0)
+  if (rank == 0){
     os = &std::cout;
-  else
+  }
+  else{
     os = &ofs;
+    quiet = true;
+  }
+  
 
   io::Argument args;
 
@@ -109,9 +114,9 @@ int main(int argc, char *argv[]){
   // enable mpi for the nonbonded terms
   sim.mpi = true;
   
-  io::read_input(args, topo, conf, sim,  md, *os);
+  io::read_input(args, topo, conf, sim,  md, *os, quiet);
   // initialises all algorithms (and therefore also the forcefield)
-  md.init(topo, conf, sim);
+  md.init(topo, conf, sim, *os, quiet);
 
   double end_time = sim.time() + 
     sim.time_step_size() * (sim.param().step.number_of_steps - 1);

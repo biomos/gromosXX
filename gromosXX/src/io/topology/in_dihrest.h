@@ -30,7 +30,8 @@ namespace io {
      */
     void read(topology::Topology &topo,
 	      configuration::Configuration & conf,
-	      simulation::Simulation & sim);
+	      simulation::Simulation & sim,
+	      std::ostream & os = std::cout);
   };
 } // io
 
