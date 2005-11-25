@@ -32,7 +32,8 @@ namespace util
   void update_virtual_force(topology::Topology & cg_topo,
 			    configuration::Configuration & cg_conf,
 			    topology::Topology & topo,
-			    configuration::Configuration & conf);
+			    configuration::Configuration & conf,
+			    simulation::Simulation const & sim);
 }
 
 #endif

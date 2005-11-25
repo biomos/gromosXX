@@ -66,7 +66,6 @@ namespace util
 
     /**
      * unix network socket
-     * @todo try to remove MPI from replica exchange
      */
     int serv_socket;
     /**
@@ -288,29 +287,33 @@ namespace util
   inline ssize_t Replica_Exchange::readblock(char * source, ssize_t size)
   {
     ssize_t current;
-    const ssize_t window = 4096;
+    ssize_t window = 1024;
     while(size > 0){
       if (size > window)
 	current = window;
       else current = size;
       
-      // std::cerr << "reading " << current << " bytes\t";
-      // std::cerr << "(of " << size << " remaining)" << std::endl;
-
       ssize_t count;
-      if ((count = read(cl_socket, source, current)) != current){
-	std::cerr << "received only " << count << " bytes!" << std::endl;
+      if ((count = read(cl_socket, source, current)) == 0){
+	std::cerr << "received zero bytes instead of "
+		  << current << " !!!" << std::endl;
 	throw std::runtime_error("could not read data block");
       }
       
+      if (current != count){
+	std::cerr << "received only " << count << " bytes..." << std::endl;
+	// make window smaller...
+	window = count;
+      }
+
       char c = 0;
       if (write(cl_socket, &c, 1) != 1){
-	std::cerr << "ACK failed" << std::endl;
+	std::cerr << "sending ACK failed" << std::endl;
 	throw std::runtime_error("could not send ACK");
       }
 
-      source += current;
-      size -= current;
+      source += count;
+      size -= count;
     }
     return 0;
   }
@@ -318,19 +321,25 @@ namespace util
   inline ssize_t Replica_Exchange::writeblock(char * dest, ssize_t size)
   {
     ssize_t current;
-    const ssize_t window = 4096;
+    ssize_t window = 1024;
     while(size > 0){
       if (size > window)
 	current = window;
       else current = size;
       
-      // std::cerr << "writing " << current << " bytes\t";
-      // std::cerr << "(of " << size << " remaining)" << std::endl;
-
-      if (write(cl_socket, dest, current) != current){
+      ssize_t count;
+      if ((count = write(cl_socket, dest, current)) == 0){
+	std::cerr << "could not write a single byte!\n"
+		  << "tried to send " << current << std::endl;
 	throw std::runtime_error("could not write data block");
       }
 
+      if (current != count){
+	std::cerr << "sent only " << count << " bytes..." << std::endl;
+	// make window smaller...
+	window = count;
+      }
+      
       char c = 0;
       if (read(cl_socket, &c, 1) != 1){
 	std::cerr << "getting ACK failed" << std::endl;
@@ -338,16 +347,15 @@ namespace util
       }
       if (c != 0){
 	std::cerr << "wrong ACK received" << std::endl;
-	throw std::runtime_error("got wrong ACK");
+	throw std::runtime_error("wrong ACK received");
       }
       
-      dest += current;
-      size -= current;
+      dest += count;
+      size -= count;
     }
     return 0;
   }
   
 } // util
-
 
 #endif

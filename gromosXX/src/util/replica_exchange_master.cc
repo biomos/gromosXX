@@ -363,160 +363,219 @@ int util::Replica_Exchange_Master::run
 
     switch(ch){
       case 0:
-	std::cout << "master: got a 'hello'\n";
-	break;
-      case 1:
-
-	if(trials > sim.param().replica.trials){ // terminate...
-	  std::cerr << "master: sending quit (9) signal..." << std::endl;
-	  // quit signal
-	  ch = 9;
-	  write(cl_socket, &ch, 1);
+	{
+	  std::cout << "master: got a 'hello'\n";
 	  break;
 	}
 
-	// select a replica to run
-	DEBUG(9, "request a job");
-	// std::cout << "requesting a job" << std::endl;
-
-	int r;
-	for(r=0; r < rep_num; ++r){
+      case 1:
+	{
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
+	  // client asks for job
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
 	  
-	  if(replica_data[r].state == waiting){
-	    // try a switch
-	    switch_replica(r, sim.param());
+	  if(trials > sim.param().replica.trials){ // terminate...
+	    std::cerr << "master: sending quit (9) signal..." << std::endl;
+	    // quit signal
+	    ch = 9;
+	    write(cl_socket, &ch, 1);
+	    break;
 	  }
+	  
+	  // select a replica to run
+	  DEBUG(9, "request a job");
+	  // std::cout << "requesting a job" << std::endl;
+	  
+	  int r;
+	  for(r=0; r < rep_num; ++r){
 	    
-	  if(replica_data[r].state == ready && 
-	     replica_data[r].run < sim.param().replica.trials){
-
-	    // assign it!
-	    replica_data[r].state = running;
-
-	    // all ok, sending replica
-	    // std::cout << "sending job" << std::endl;
-	    ch = 0;
+	    if(replica_data[r].state == waiting){
+	      // try a switch
+	      switch_replica(r, sim.param());
+	    }
+	    
+	    if(replica_data[r].state == ready && 
+	       replica_data[r].run < sim.param().replica.trials){
+	      
+	      // assign it!
+	      replica_data[r].state = running;
+	      
+	      // all ok, sending replica
+	      // std::cout << "sending job" << std::endl;
+	      ch = 0;
+	      if (write(cl_socket, &ch, 1) != 1){
+		std::cerr << "could not write to socket" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
+	      
+	      // send parameters
+	      DEBUG(8, "sending replica data");
+	      if (write(cl_socket, (char *) &replica_data[r], sizeof(Replica_Data))
+		  != sizeof(Replica_Data)){
+		std::cerr << "could not write to socket" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
+	      
+	      const ssize_t num = m_conf[r].current().pos.size() * 3 * sizeof(double);
+	      if (num >= SSIZE_MAX){
+		std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
+		return 1;
+	      }
+	      
+	      try{
+		// positions
+		DEBUG(9, "sending " << 3 * m_conf[r].current().pos.size() << " coords");
+		writeblock((char *) &m_conf[r].current().pos(0)(0), num);
+		
+		// velocities
+		DEBUG(9, "sending velocity");
+		writeblock((char *) &m_conf[r].current().vel(0)(0), num);
+		
+		// and box
+		DEBUG(9, "sending box");
+		if (write(cl_socket, (char *) &m_conf[r].current().box(0)(0),
+			  9 * sizeof(double)) != 9 * sizeof(double)){
+		  std::cerr << "could not transfer box" << std::endl;
+		  return 1;
+		}
+	      }
+	      catch (std::runtime_error e){
+		std::cout << "Exception: " << e.what() << std::endl;
+		// job has crashed now
+		// reset replica data
+		replica_data[r].state = ready;
+		// just wait for next connection...
+	      }
+	      
+	      break;
+	    }
+	  } // replica selected
+	  
+	  if (r==rep_num){
+	    // no replica available, wait...
+	    std::cout << "could not select replica!!!" << std::endl;
+	    ch=1;
 	    if (write(cl_socket, &ch, 1) != 1){
-	      std::cerr << "could not write to socket" << std::endl;
+	      std::cerr << "could not set job to waiting" << std::endl;
 	      close(cl_socket);
-	      return 1;
 	    }
-
-	    // send parameters
-	    DEBUG(8, "sending replica data");
-	    if (write(cl_socket, (char *) &replica_data[r], sizeof(Replica_Data))
-		!= sizeof(Replica_Data)){
-	      std::cerr << "could not write to socket" << std::endl;
-	      close(cl_socket);
-	      return 1;
-	    }
+	  }
+	  
+	  break;
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
+	  // client asks for job
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
+	}
+    
+      case 2:
+	{
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
+	  // client finished job
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
+	  
+	  ch = 0;
+	  if (write(cl_socket, &ch, 1) != 1){
+	    std::cerr << "could not wirte to socket" << std::endl;
+	    close(cl_socket);
+	    break;
+	  }
+	  
+	  int i;
+	  if (read(cl_socket, (char *) &i, sizeof(int)) != sizeof(int)){
+	    std::cerr << "could not read from socket" << std::endl;
+	    close(cl_socket);
+	    break;
+	  }
+	  
+	  if (i < 0 || unsigned(i) >= replica_data.size()){
+	    std::cerr << "received invalid replica index! (" << i << ")" <<  std::endl;
+	    close(cl_socket);
+	    break;
+	  }
+	  
+	  // make a backup copy
+	  // (if transaction fails)
+	  Replica_Data tmp_rep = replica_data[i];
+	  tmp_rep.state = ready;
+	  
+	  DEBUG(8, "master: waiting for replica data " << i);
+	  if (read(cl_socket, (char *) &replica_data[i], sizeof(Replica_Data))
+	      != sizeof(Replica_Data)){
 	    
-	    const ssize_t num = m_conf[r].current().pos.size() * 3 * sizeof(double);
+	    std::cerr << "could not read replica data" << std::endl;
+	    close(cl_socket);
+	    // restore original replica data
+	    replica_data[i] = tmp_rep;
+	    break;
+	  }
+	  
+	  if (replica_data[i].state != st_error){
+	    
+	    // get configuration
+	    const ssize_t num = m_conf[i].current().pos.size() * 3 * sizeof(double);
+	    
 	    if (num >= SSIZE_MAX){
 	      std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
 	      return 1;
 	    }
 	    
-	    DEBUG(9, "sending " << 3 * m_conf[r].current().pos.size() << " coords");
-	    writeblock((char *) &m_conf[r].current().pos(0)(0), num);
+	    // backup pos / vel / box
+	    math::VArray tmp_pos = m_conf[i].current().pos;
+	    math::VArray tmp_vel = m_conf[i].current().vel;
+	    math::Box tmp_box = m_conf[i].current().box;
 	    
-	    // velocities
-	    DEBUG(9, "sending velocity");
-	    writeblock((char *) &m_conf[r].current().vel(0)(0), num);
-
-	    // and box
-	    DEBUG(9, "sending box");
-	    if (write(cl_socket, (char *) &m_conf[r].current().box(0)(0),
-		      9 * sizeof(double)) != 9 * sizeof(double)){
-	      std::cerr << "could not transfer box" << std::endl;
-	      return 1;
+	    try{
+	      readblock((char *) &m_conf[i].current().pos(0)(0), num);
+	      readblock((char *) &m_conf[i].current().vel(0)(0), num);
+	      
+	      if (read(cl_socket, (char *) &m_conf[i].current().box(0)(0), 9 * sizeof(double))
+		  != 9*sizeof(double)){
+		std::cerr << "could not read box" << std::endl;
+		close(cl_socket);
+		return 1;
+	      }
+	    }
+	    catch(std::runtime_error e){
+	      std::cout << "could not read replica configuration!" << std::endl;
+	      std::cout << "Exception: " << e.what() << std::endl;
+	      
+	      // restore original replica data
+	      replica_data[i] = tmp_rep;
+	      // restore pos / vel / box
+	      m_conf[i].current().pos = tmp_pos;
+	      m_conf[i].current().vel = tmp_vel;
+	      m_conf[i].current().box = tmp_box;
+	      
+	      break;
 	    }
 	    
-	    break;
+	    DEBUG(9, "master: got replica " << replica_data[i].ID
+		  << " temperature=" << replica_data[i].Ti
+		  << " lambda=" << replica_data[i].li);
+	    
+	    if(replica_data[i].state == waiting){ // should always be true (after run) ?!
+	      // try a switch
+	      switch_replica(i, sim.param());
+	    }
+	    
+	    ++runs;
 	  }
-	} // replica selected
-
-	if (r==rep_num){
-	  // no replica available, wait...
-	  std::cout << "could not select replica!!!" << std::endl;
-	  ch=1;
-	  if (write(cl_socket, &ch, 1) != 1){
-	    std::cerr << "could not set job to waiting" << std::endl;
-	    close(cl_socket);
-	    return 1;
-	  }
-	}
-
-	break;
-
-      case 2:
-	ch = 0;
-	if (write(cl_socket, &ch, 1) != 1){
-	  std::cerr << "could not wirte to socket" << std::endl;
-	  close(cl_socket);
-	  return 1;
-	}
-	
-	
-	int i;
-	if (read(cl_socket, (char *) &i, sizeof(int)) != sizeof(int)){
-	  std::cerr << "could not read from socket" << std::endl;
-	  close(cl_socket);
-	  return 1;
-	}
-
-	if (i < 0 || unsigned(i) >= replica_data.size()){
-	  std::cerr << "received invalid replica index! (" << i << ")" <<  std::endl;
-	  close(cl_socket);
-	  return 1;
-	}
-
-	DEBUG(8, "master: waiting for replica data " << i);
-	if (read(cl_socket, (char *) &replica_data[i], sizeof(Replica_Data))
-	    != sizeof(Replica_Data)){
-
-	  std::cerr << "could not read replica data" << std::endl;
-	  close(cl_socket);
-	  return 1;
-	}
-	
-	if (replica_data[i].state != st_error){
-	  // get configuration
-
-	  const ssize_t num = m_conf[i].current().pos.size() * 3 * sizeof(double);
-	  
-	  if (num >= SSIZE_MAX){
-	    std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
-	    return 1;
+	  else{ // state error
+	    std::cout << "received replica " << i << " with state error!" << std::endl;
+	    std::cout << "ID = " << replica_data[i].ID
+		      << "\ntemperature = " << replica_data[i].Ti
+		      << "\nlambda = " << replica_data[i].li
+		      << "\n" << std::endl;
 	  }
 	  
-	  readblock((char *) &m_conf[i].current().pos(0)(0), num);
-
-	  readblock((char *) &m_conf[i].current().vel(0)(0), num);
-
-	  if (read(cl_socket, (char *) &m_conf[i].current().box(0)(0), 9 * sizeof(double))
-	      != 9*sizeof(double)){
-
-	    std::cerr << "could not read box" << std::endl;
-	    close(cl_socket);
-	    return 1;
-	  }
+	  break;
+	  
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
+	  // end client finished job
+	  //////////////////////////////////////////////////////////////////////////////////////////////////////
 	}
-	else{
-	  std::cout << "received replica " << i << " with state error!" << std::endl;
-	}
-	
-	DEBUG(9, "master: got replica " << replica_data[i].ID
-	      << " temperature=" << replica_data[i].Ti
-	      << " lambda=" << replica_data[i].li);
-	
-	if(replica_data[i].state == waiting){
-	  // try a switch
-	  switch_replica(i, sim.param());
-	}
-
-	++runs;
-	break;
 
       case 3:
 	ch = 0;
@@ -526,7 +585,7 @@ int util::Replica_Exchange_Master::run
 	  return 1;
 	}
 
-	std::cout << "process " << i << " has aborted run\n";
+	std::cout << "process " << ch << " has aborted run\n";
 	break;
 
       case 4: // interactive session

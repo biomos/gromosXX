@@ -8,6 +8,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <configuration/configuration.h>
+#include <simulation/simulation.h>
 
 #include "virtual_grain.h"
 
@@ -28,8 +29,6 @@ void util::update_virtual_pos(topology::Topology & cg_topo,
 			      topology::Topology & topo,
 			      configuration::Configuration & conf)
 {
-  // std::cerr << "update virtual pos" << std::endl;
-
   cg_conf.current().box = conf.current().box;
   DEBUG(10, "boundary = " << cg_conf.boundary_type);
   
@@ -57,30 +56,32 @@ void util::update_virtual_pos(topology::Topology & cg_topo,
 void util::update_virtual_force(topology::Topology & cg_topo,
 				configuration::Configuration & cg_conf,
 				topology::Topology & topo,
-				configuration::Configuration & conf)
+				configuration::Configuration & conf,
+				simulation::Simulation const & sim)
 {
   cg_conf.current().energies.calculate_totals();
-  conf.current().energies.external_total += cg_conf.current().energies.potential_total;
+  conf.current().energies.external_total
+    += cg_conf.current().energies.potential_total;
   
-  // std::cerr << "virtual energy = " << cg_conf.current().energies.potential_total << std::endl;
-
   conf.current().virial_tensor += cg_conf.current().virial_tensor;
+
+  ////////////////////////////////////////////////////
+  // multiple time stepping
+  ////////////////////////////////////////////////////
+  int steps = sim.param().multistep.steps;
+  if (steps < 1) steps = 1;
   
-  for(unsigned int i=0; i<cg_topo.virtual_grains().size(); ++i){
+  if ((sim.steps() % steps) == 0){
+    std::cout << "adding virtual force (multistep " << steps << ")\n";
 
-    /*
-    if (math::abs(cg_conf.current().force(cg_topo.virtual_grains()[i].i)) > 5000)
-      std::cerr << "virtual force " << cg_topo.virtual_grains()[i].i
-		<< " = " << math::v2s(cg_conf.current().force(cg_topo.virtual_grains()[i].i))
-		<< std::endl;
-    */
-
-    DEBUG(10, "virtual force " << cg_topo.virtual_grains()[i].i
-	  << " = " << math::v2s(cg_conf.current().force(cg_topo.virtual_grains()[i].i)));
-    
-    cg_topo.virtual_grains()[i].atom.force
-      (conf, cg_conf.current().force(cg_topo.virtual_grains()[i].i));
-
+    for(unsigned int i=0; i<cg_topo.virtual_grains().size(); ++i){
+      
+      DEBUG(10, "virtual force " << cg_topo.virtual_grains()[i].i << " = " 
+	    << math::v2s(cg_conf.current().force(cg_topo.virtual_grains()[i].i)));
+      
+      cg_topo.virtual_grains()[i].atom.force
+	(conf, cg_conf.current().force(cg_topo.virtual_grains()[i].i));
+      
+    }
   }
 }
-

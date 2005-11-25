@@ -514,8 +514,11 @@ int util::Replica_Exchange_Slave::run
       
       update_replica_data();
 
-      update_configuration(topo, conf);
-      
+      if (update_configuration(topo, conf)){
+	std::cout << "could not update configuration!" << std::endl;
+	return 1;
+      }
+
       // and disconnect
       close(cl_socket);
     }
@@ -567,8 +570,12 @@ int util::Replica_Exchange_Slave::run_md
     tcoup.scale(topo, conf, sim);
   }
 
-  double end_time = sim.time() + 
-    sim.time_step_size() * (sim.param().step.number_of_steps - 1);
+  int msteps = sim.param().multistep.steps;
+  if (msteps < 1) msteps = 1;
+  
+  const double end_time = sim.time() + 
+    sim.time_step_size() *
+    (sim.param().step.number_of_steps * msteps - 1);
     
   int error;
 
@@ -577,7 +584,14 @@ int util::Replica_Exchange_Slave::run_md
     traj.write_replica_step(sim, replica_data);
     traj.write(conf, topo, sim, io::reduced);
 
-    if (multigraining){
+    ////////////////////////////////////////////////////
+    // multigraining
+    // and
+    // multiple time stepping
+    ////////////////////////////////////////////////////
+    if (multigraining &&
+	((sim.steps() % msteps) == 0)){
+      std::cout << "MULTISTEP: doing coarse-grained calculation\n";
       // coarse grained atom positions are based upon
       // real atom positions
       util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
@@ -703,12 +717,19 @@ int util::Replica_Exchange_Slave::get_configuration
 
   ssize_t n_rec = 0;
 
-  readblock((char *) &conf.current().pos(0)(0), num);
-
-  readblock((char *) &conf.current().vel(0)(0), num);   
-
+  try{
+    readblock((char *) &conf.current().pos(0)(0), num);
+    readblock((char *) &conf.current().vel(0)(0), num);   
+  }
+  catch (std::runtime_error e){
+    std::cerr << "Exception: " << e.what() << std::endl;
+    std::cout << "Exception: " << e.what() << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+  
   if ((n_rec = read(cl_socket, (char *) &conf.current().box(0)(0),
-	   9 * sizeof(double))) != 9 * sizeof(double)){
+		    9 * sizeof(double))) != 9 * sizeof(double)){
     std::cerr << "could not read box" << std::endl;
     std::cerr << "got: " << n_rec << "\texpected: " << num << std::endl;
     close(cl_socket);
@@ -734,10 +755,17 @@ int util::Replica_Exchange_Slave::update_configuration
     return 1;
   }
 
-  writeblock((char *) &conf.current().pos(0)(0), num);
-    
-  writeblock((char *) &conf.current().vel(0)(0), num);  
-
+  try{
+    writeblock((char *) &conf.current().pos(0)(0), num);
+    writeblock((char *) &conf.current().vel(0)(0), num);  
+  }
+  catch(std::runtime_error e){
+    std::cout << "Exception: " << e.what() << std::endl;
+    std::cerr << "Exception: " << e.what() << std::endl;
+    close(cl_socket);
+    return 1;
+  }
+  
   if (write(cl_socket, (char *) &conf.current().box(0)(0),
 	    9 * sizeof(double)) != 9 * sizeof(double)){
     std::cerr << "could not write to socket" << std::endl;
@@ -794,7 +822,16 @@ int util::Replica_Exchange_Slave::init_replica
   
   // change simulation time
   sim.time() = replica_data.time;
-  sim.time_step_size() = sim.param().replica.dt[replica_data.li];
+  // don't change time_step_size
+  // sim.time_step_size() = sim.param().replica.dt[replica_data.li];
+  // but enable multistepping
+  sim.param().multistep.steps =
+    int(rint(sim.param().replica.dt[replica_data.li] / sim.time_step_size()));
+  std::cout << "\tmultistepping steps = "
+	    << int(rint(sim.param().replica.dt[replica_data.li] / sim.time_step_size()))
+	    << "\n";
+  
+  // this will be WRONG !!!
   sim.steps() = replica_data.run * sim.param().step.number_of_steps;
 
   return 0;
