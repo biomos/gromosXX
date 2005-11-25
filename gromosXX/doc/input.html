@@ -401,14 +401,23 @@ PERTURB03
 #					   with a scaled interaction,
 #					   otherwise off
 #				bonded: normal perturbation on
+#
+#       RLAM            lambda
+#
+#       DLAMT           delta lambda (1/ps) for slow growth simulations
+#
+#       ALJ             alpha lj (weighted by perturbation topology)
+#
+#       ACRF            alpha crf (weighted by perturbation topology)
+#
 #	SCALING:
 #			on (activate interaction scaling)
 #  			off (deactivate interaction scaling)
 #			the scaling information is in the
 #			perturbation topology.
-#	NTG:		on / off
-#	NTG	RLAM	DLAMT	NLAM	SCALING
-	on	0.5	1.0	1.0	off
+#
+#	NTG	RLAM	DLAMT	NLAM    ALJ   ACRF    SCALING
+	on	0.5	1.0	1	1.0    1.0    off
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
@@ -443,11 +452,13 @@ J-VAL03
 # K     force constant (weighted by individual w0)
 # TAUJR
 #       coupling time
+# DELTA
+#       no elevation of potential if J is within delta to J0  
 # NRDJR
 #    0: start from initial values (J0)
 #    1: read in time averages (for continuation run)
-#        NTJR  LE   NGRID      K  TAUJR   NRDJR
-  biquadratic   1      16   10.0    5.0       0 
+#        NTJR  LE   NGRID      K  TAUJR   DELTA	  NRDJR
+  biquadratic   1      16   10.0    5.0     0.2       0 
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
