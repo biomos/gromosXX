@@ -2,7 +2,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 include_HEADERS =
 
-bin_PROGRAMS =			md repex
+bin_PROGRAMS =			md_mpi md repex
 
 md_SOURCES =			md.cc
 
