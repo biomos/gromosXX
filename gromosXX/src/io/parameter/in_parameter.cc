@@ -74,6 +74,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_INTEGRATE(param);
   read_STOCHASTIC(param);
   read_EWARN(param);
+  read_MULTISTEP(param);
   
   DEBUG(7, "input read...");
 
@@ -921,6 +922,8 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
 		>> param.perturbation.lambda
 		>> param.perturbation.dlamt
 		>> param.perturbation.lambda_exponent
+		>> param.perturbation.soft_vdw
+		>> param.perturbation.soft_crf
 		>> s2;
     
     if (_lineStream.fail())
@@ -998,16 +1001,14 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
 		>> param.perturbation.lambda 
 		>> param.perturbation.dlamt 
 		>> dmu >> dmut
-		>> alpha_lj >> alpha_crf 
+		>> param.perturbation.soft_vdw
+		>> param.perturbation.soft_crf
 		>> param.perturbation.lambda_exponent
 		>> mmu;
     
     param.perturbation.scaling = false;
     param.perturbation.scaled_only = false;
     
-    if (alpha_lj > 0.0) param.perturbation.soft_vdw = true;
-    if (alpha_crf > 0.0) param.perturbation.soft_crf = true;
-
     if (_lineStream.fail())
       io::messages.add("bad line in PERTURB block",
 		       "In_Parameter", io::message::error);
@@ -2004,6 +2005,7 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
 		>> param.jvalue.ngrid
 		>> param.jvalue.K
 		>> param.jvalue.tau
+		>> param.jvalue.delta
 		>> param.jvalue.read_av;
     
     if (_lineStream.fail())
@@ -2468,6 +2470,32 @@ void io::In_Parameter::read_EWARN(simulation::Parameter & param,
     
     if (_lineStream.fail()){
       io::messages.add("bad line in EWARN block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
+  }
+}
+
+void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
+				      std::ostream & os)
+{
+  DEBUG(8, "read MULTISTEP");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["MULTISTEP"];
+  
+  if (buffer.size()){
+    block_read.insert("MULTISTEP");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.multistep.steps;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in MULTISTEP block",
 		       "In_Parameter", io::message::error);
       return;
     }

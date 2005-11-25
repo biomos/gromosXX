@@ -207,6 +207,11 @@ namespace io {
      */
     void read_EWARN(simulation::Parameter & param, std::ostream & os = std::cout);
 
+    /**
+     * read MULTISTEP block.
+     */
+    void read_MULTISTEP(simulation::Parameter & param, std::ostream & os = std::cout);
+
   };
   
 } // io

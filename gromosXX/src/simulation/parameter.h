@@ -899,12 +899,12 @@ namespace simulation
        * - dlamt 0
        * - scaling false
        * - scaled_only false
-       * - soft_lj false
-       * - soft_crf false
+       * - soft_lj 0.0
+       * - soft_crf 0.0
        */
       perturb_struct() : perturbation(false), lambda(0), lambda_exponent(1),
 			 dlamt(0), scaling(false), scaled_only(false),
-			 soft_vdw(false), soft_crf(false) {}
+			 soft_vdw(0.0), soft_crf(0.0) {}
       
       /**
        * perturbation?
@@ -933,11 +933,11 @@ namespace simulation
       /**
        * soft van der Waals interaction
        */
-      bool soft_vdw;
+      double soft_vdw;
       /**
        * soft crf interaction
        */
-      bool soft_crf;
+      double soft_crf;
       
     } /** Perturbation parameters */ perturbation;
 
@@ -955,6 +955,7 @@ namespace simulation
        * - tau 0
        * - ngrid 1
        * - K 1.0
+       * - delta 0.0
        * - read_av false
        */
       jvalue_struct()
@@ -963,6 +964,7 @@ namespace simulation
 	  tau(0.0),
 	  ngrid(1),
 	  K(1.0),
+	  delta(0.0),
 	  read_av(false)
       {
       }
@@ -987,6 +989,10 @@ namespace simulation
        * (multiplied by individual restraint weighting)
        */
       double K;
+      /**
+       * no elevation of potential if J is whitin delta to J0
+       */
+      double delta;
       /**
        * read averages.
        */
@@ -1319,16 +1325,45 @@ namespace simulation
       
     } /** stochastic dynamics */ stochastic;
 
+    /**
+     * @struct ewarn_struct
+     * warn about too high energy terms
+     */
     struct ewarn_struct
     {
       /**
-       * ewarn
+       * Constructor
+       * default values
+       * - ewarn 1e99
        */
       ewarn_struct() : limit(1E99)
       {
       }
+      /**
+       * maximum allowed energy (per term)
+       */
       double limit;
     } /** ewarn */ ewarn;
+
+    /**
+     * @struct multistep_struct
+     * multiple time stepping
+     */
+    struct multistep_struct
+    {
+      /**
+       * constructor
+       */
+      multistep_struct() : steps(1) 
+      {
+      }
+      /**
+       * number of steps to boost the
+       * nonbonded (and external; multigraining ;-)
+       * terms
+       */
+      int steps;
+    } /** multistep */ multistep;
     
   };
 }
