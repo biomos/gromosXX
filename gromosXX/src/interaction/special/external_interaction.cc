@@ -31,8 +31,7 @@ int interaction::External_Interaction
   // virtual graining external force
   if (cg_topo != NULL &&
       cg_conf != NULL){
-    util::update_virtual_force(*cg_topo, *cg_conf,
-				topo, conf);
+    util::update_virtual_force(*cg_topo, *cg_conf, topo, conf, sim);
   }
   
   return 0;
