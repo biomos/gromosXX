@@ -143,6 +143,9 @@ int _calculate_jvalue_restraint_interactions
     conf.special().jvalue_av[n] = Jav;
     conf.special().jvalue_curr[n] = Jcurr;
     
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    // LOCAL ELEVATION RESTRAINING
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
     if (sim.param().jvalue.le){
       while(phi < 0.0)
 	phi += 2 * math::Pi;
@@ -156,13 +159,39 @@ int _calculate_jvalue_restraint_interactions
       
       assert(it->epsilon.size() > unsigned(bin));
       double delta_epsilon;
+      double delta_Jav = Jav - it->J0;
+      double delta_Jinst = Jcurr - it->J0;
+
+      // zero potential energy within J0 +- delta
+      // (no elevation if J is ~ correct)
+      if (delta_Jav > 0){
+	if (delta_Jav > sim.param().jvalue.delta)
+	  delta_Jav -= sim.param().jvalue.delta;
+	else delta_Jav = 0.0;
+      }
+      else{
+	if (delta_Jav < sim.param().jvalue.delta)
+	  delta_Jav += sim.param().jvalue.delta;
+	else delta_Jav = 0.0;
+      }
+
+      if (delta_Jinst > 0){
+	if (delta_Jinst > sim.param().jvalue.delta)
+	  delta_Jinst -= sim.param().jvalue.delta;
+	else delta_Jinst = 0.0;
+      }
+      else{
+	if (delta_Jinst < sim.param().jvalue.delta)
+	  delta_Jinst += sim.param().jvalue.delta;
+	else delta_Jinst = 0.0;
+      }
       
       if (sim.param().jvalue.mode == simulation::restr_biq)
-	delta_epsilon = (Jcurr - it->J0)*(Jcurr - it->J0) * (Jav - it->J0) * (Jav - it->J0);
+	delta_epsilon = delta_Jinst*delta_Jinst * delta_Jav * delta_Jav;
       else if (sim.param().jvalue.mode == simulation::restr_inst)
-	delta_epsilon = (Jcurr - it->J0)*(Jcurr - it->J0);	
+	delta_epsilon = delta_Jinst * delta_Jinst;	
       else if (sim.param().jvalue.mode == simulation::restr_av)
-	delta_epsilon = (Jav - it->J0) * (Jav - it->J0);
+	delta_epsilon = delta_Jav * delta_Jav;
 
       it->epsilon[bin] += delta_epsilon;
 
