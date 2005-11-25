@@ -88,11 +88,20 @@ calculate_interactions(topology::Topology & topo,
   assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
 	 ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
 
+  // std::cerr << "master: bcast pos" << std::endl;
   MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),
 			conf.current().pos.size() * 3, 
 			MPI::DOUBLE,
 			0);
 
+  // don't forget the box (or are you stupid or what????)
+  // std::cerr << "master: bcast box" << std::endl;
+  MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
+			9,
+			MPI::DOUBLE,
+			0);  
+  // std::cerr << "ready to calc" << std::endl;
+  
   // --------------------------------------------------
   // calculate interactions
 

@@ -88,10 +88,18 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
   assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
 	 ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
 
+  // std::cerr << "slave: receiving pos" << std::endl;
   MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),
 			conf.current().pos.size() * 3, 
 			MPI::DOUBLE,
 			0);
+  
+  // std::cerr << "slave: receiving box" << std::endl;
+  MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
+			9,
+			MPI::DOUBLE,
+			0);
+  // std::cerr << "slave: clfldsa; d" << std::endl;
 
   // do this on the master and on the slaves...
   m_pairlist_algorithm->prepare(topo, conf, sim);
