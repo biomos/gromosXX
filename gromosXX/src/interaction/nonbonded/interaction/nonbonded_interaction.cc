@@ -88,49 +88,69 @@ calculate_interactions(topology::Topology & topo,
 
   const double nonbonded_start = util::now();
 
-  // multiple unit cell
-  if (sim.param().multicell.multicell){
+  // check if we want to calculate nonbonded
+  // might not be necessary if multiple time-stepping is enabled
+  if ((sim.steps() % sim.param().multistep.steps) == 0){
+    std::cout << "MULTISTEP: full calculation\n";
     
-    DEBUG(6, "nonbonded: MULTICELL");
-    configuration::Configuration exp_conf;
-    expand_configuration(topo, conf, sim, exp_conf);
-    DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
-    
-    // shared memory do this only once
-    if(m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim))
-      return 1;
-
-    // have to do all from here (probably it's only one,
-    // but then maybe it's clearer like it is...)
-    for(int i=0; i < m_set_size; ++i){
-      m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
-						 exp_conf, 
-						 sim);
-    }
-  }
-  else{ // no MULTICELL
-    
-    // shared memory do this only once
-    if (m_pairlist_algorithm->prepare(topo, conf, sim))
-      return 1;
-    
-    // have to do all from here (probably it's only one,
-    // but then maybe it's clearer like it is...)
-    for(int i=0; i < m_set_size; ++i){
-      m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
-    }
-
-    DEBUG(6, "sets are done, adding things up...");
-    store_set_data(topo, conf, sim);
-    
-    DEBUG(7, "print pairlist...");
-    if (sim.param().pairlist.print &&
-	(!(sim.steps() % sim.param().pairlist.skip_step))){
+    ////////////////////////////////////////////////////
+    // multiple unit cell
+    ////////////////////////////////////////////////////
+    if (sim.param().multicell.multicell){
       
-      std::cerr << "printing pairlist!" << std::endl;
-      if (sim.param().pairlist.grid != 2)
-	print_pairlist(topo, conf, sim);
+      DEBUG(6, "nonbonded: MULTICELL");
+      configuration::Configuration exp_conf;
+      expand_configuration(topo, conf, sim, exp_conf);
+      DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
+      
+      // shared memory do this only once
+      if(m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim))
+	return 1;
+      
+      // have to do all from here (probably it's only one,
+      // but then maybe it's clearer like it is...)
+      for(int i=0; i < m_set_size; ++i){
+	m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
+						   exp_conf, 
+						   sim);
+      }
     }
+    ////////////////////////////////////////////////////
+    // end of MULTICELL
+    ////////////////////////////////////////////////////
+    else{
+      
+      // shared memory do this only once
+      if (m_pairlist_algorithm->prepare(topo, conf, sim))
+	return 1;
+      
+      // have to do all from here (probably it's only one,
+      // but then maybe it's clearer like it is...)
+      for(int i=0; i < m_set_size; ++i){
+	m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
+      }
+    }
+
+    ////////////////////////////////////////////////////
+    // end of multiple time stepping: calculate
+    ////////////////////////////////////////////////////
+  }
+  else{
+    std::cout << "MULTISTEP: no recalculation...\n";
+  }
+  
+  DEBUG(6, "sets are done, adding things up...");
+  store_set_data(topo, conf, sim);
+
+  ////////////////////////////////////////////////////
+  // printing pairlist
+  ////////////////////////////////////////////////////
+  if (sim.param().pairlist.print &&
+      (!(sim.steps() % sim.param().pairlist.skip_step))){
+    DEBUG(7, "print pairlist...");
+    std::cerr << "printing pairlist!" << std::endl;
+    if (sim.param().pairlist.grid != 2)
+      print_pairlist(topo, conf, sim);
   }
   
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
@@ -416,7 +436,6 @@ void interaction::Nonbonded_Interaction::store_set_data
   // add the forces, energies, virial...
   for( ; it != to; ++it){
     DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
-
     (*it)->update_configuration(topo, conf, sim);
   }
 }
@@ -525,7 +544,7 @@ int interaction::Nonbonded_Interaction::print_pairlist
     
     for(int i=0; i < m_set_size; ++i){
 
-      assert (m_nonbonded_set.size() > i);
+      assert (m_nonbonded_set.size() > unsigned(i));
       assert (m_nonbonded_set[i]->pairlist().size() > atom_i);
       
       for(unsigned int atom_j = 0;

@@ -156,9 +156,21 @@ int interaction::Nonbonded_Set::update_configuration
   const int ljs = conf.current().energies.lj_energy.size();
   configuration::Energy & e = conf.current().energies;
 
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().force(i) += m_storage.force(i);
-
+  // use the IMPULSE method for multiple time stepping
+  if (sim.param().multistep.steps > 1){
+    const int steps = sim.param().multistep.steps;
+    // only add when calculated
+    if ((sim.steps() % steps) == 0){
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+	conf.current().force(i) += sim.param().multistep.steps * m_storage.force(i);
+    }
+  }
+  else{
+    for(unsigned int i=0; i<topo.num_atoms(); ++i)
+      conf.current().force(i) += m_storage.force(i);
+  }
+  
+  // (MULTISTEP: and keep energy constant)
   for(int i = 0; i < ljs; ++i){
     for(int j = 0; j < ljs; ++j){
       
@@ -169,6 +181,7 @@ int interaction::Nonbonded_Set::update_configuration
     }
   }
 
+  // (MULTISTEP: and the virial???)
   if (sim.param().pcouple.virial){
     DEBUG(7, "\tadd set virial");
 
