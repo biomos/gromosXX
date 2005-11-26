@@ -21,12 +21,16 @@ namespace io
    * - read_special
    * - read_configuration
    */
-  int read_input(io::Argument const &args,
-		 topology::Topology &topo,
-		 configuration::Configuration &conf,
-		 simulation::Simulation & sim,
-		 algorithm::Algorithm_Sequence &md_seq,
-		 std::ostream & os = std::cout);
+  int read_input
+  (
+   io::Argument const &args,
+   topology::Topology &topo,
+   configuration::Configuration &conf,
+   simulation::Simulation & sim,
+   algorithm::Algorithm_Sequence &md_seq,
+   std::ostream & os = std::cout,
+   bool quiet = false
+   );
 
   /**
    * read replica information
@@ -39,32 +43,45 @@ namespace io
    simulation::Simulation & sim,
    algorithm::Algorithm_Sequence & md_seq,
    std::vector<util::Replica_Data> & replica_data,
-   std::ostream & os);
+   std::ostream & os,
+   bool quiet = false);
 
   /**
    * read in simulation parameter
    */
-  int read_parameter(io::Argument const &args,
-		     simulation::Simulation & sim,
-		     std::ostream & os = std::cout);
+  int read_parameter
+  (
+   io::Argument const &args,
+   simulation::Simulation & sim,
+   std::ostream & os = std::cout,
+   bool quiet = false
+   );
 
   /**
    * read in topology, perturbation topology, MD sequence
    */
-  int read_topology(io::Argument const &args,
-		    topology::Topology &topo,
-		    simulation::Simulation & sim,
-		    algorithm::Algorithm_Sequence &md_seq,
-		    std::ostream & os = std::cout);
+  int read_topology
+  (
+   io::Argument const &args,
+   topology::Topology &topo,
+   simulation::Simulation & sim,
+   algorithm::Algorithm_Sequence &md_seq,
+   std::ostream & os = std::cout,
+   bool quiet = false
+   );
 
   /**
    * read in a configuration
    */
-  int read_configuration(io::Argument const &args,
-			 topology::Topology &topo,
-			 configuration::Configuration &conf,
-			 simulation::Simulation & sim,
-			 std::ostream & os = std::cout);
+  int read_configuration
+  (
+   io::Argument const &args,
+   topology::Topology &topo,
+   configuration::Configuration &conf,
+   simulation::Simulation & sim,
+   std::ostream & os = std::cout,
+   bool quiet = false
+   );
 
   /**
    * read in a configuration
@@ -76,7 +93,8 @@ namespace io
    std::vector<configuration::Configuration> & conf,
    simulation::Simulation & sim,
    std::vector<util::Replica_Data> & replica_data,
-   std::ostream & os = std::cout
+   std::ostream & os = std::cout,
+   bool quiet = false
    );
   
 }

@@ -42,16 +42,17 @@ int io::read_input(io::Argument const & args,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   algorithm::Algorithm_Sequence & md_seq,
-		   std::ostream & os)
+		   std::ostream & os,
+		   bool quiet)
 {
 
-  if (read_parameter(args, sim, os) != 0) return -1;
+  if (read_parameter(args, sim, os, quiet) != 0) return -1;
 
-  if (read_topology(args, topo, sim, md_seq, os) != 0) return -1;
+  if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
 
-  if (read_configuration(args, topo, conf, sim, os) != 0) return -1;
+  if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
   
-  if (read_special(args, topo, conf, sim, os) != 0) return -1;
+  if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
 
   return 0;
 }
@@ -64,17 +65,18 @@ int io::read_replica_input
  simulation::Simulation & sim,
  algorithm::Algorithm_Sequence & md_seq,
  std::vector<util::Replica_Data> & replica_data,
- std::ostream & os)
+ std::ostream & os,
+ bool quiet)
 {
-  if (read_parameter(args, sim, os) != 0) return -1;
+  if (read_parameter(args, sim, os, quiet) != 0) return -1;
 
-  if (read_topology(args, topo, sim, md_seq, os) != 0) return -1;
+  if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
 
-  if (read_replica_configuration(args, topo, conf, sim, replica_data, os) != 0)
+  if (read_replica_configuration(args, topo, conf, sim, replica_data, os, quiet) != 0)
     return -1;
   
   for(unsigned int i=0; i<conf.size(); ++i){
-    if (read_special(args, topo, conf[i], sim) != 0) return -1;
+    if (read_special(args, topo, conf[i], sim, os, quiet) != 0) return -1;
   }
 
   return 0;
@@ -83,7 +85,8 @@ int io::read_replica_input
 
 int io::read_parameter(io::Argument const & args,
 		       simulation::Simulation & sim,
-		       std::ostream & os)
+		       std::ostream & os,
+		       bool quiet)
 {
   std::ifstream input_file;
   
@@ -101,6 +104,8 @@ int io::read_parameter(io::Argument const & args,
 		   io::message::notice);
   
   io::In_Parameter ip(input_file);
+  ip.quiet = quiet;
+  
   ip.read(sim.param(), os);
   sim.time_step_size() = sim.param().step.dt;
   sim.time() = sim.param().step.t0;
@@ -129,7 +134,8 @@ int io::read_topology(io::Argument const & args,
 		      topology::Topology & topo,
 		      simulation::Simulation & sim,
 		      algorithm::Algorithm_Sequence & md_seq,
-		      std::ostream & os)
+		      std::ostream & os,
+		      bool quiet)
 {
   std::ifstream topo_file, pttopo_file;
   
@@ -145,6 +151,8 @@ int io::read_topology(io::Argument const & args,
 		   io::message::notice);
   
   io::In_Topology it(topo_file);
+  it.quiet = quiet;
+  
   it.read(topo, sim.param(), os);
   
   if(sim.param().perturbation.perturbation){
@@ -167,11 +175,13 @@ int io::read_topology(io::Argument const & args,
 		     io::message::notice);
     
     io::In_Perturbation ipt(pttopo_file);
+    ipt.quiet = quiet;
+    
     ipt.read(topo, sim.param());
     
   }
   
-  topo.init(sim, os);
+  topo.init(sim, os, quiet);
   
   // do this after reading in a perturbation topology
   sim.multibath().calculate_degrees_of_freedom
@@ -188,7 +198,8 @@ int io::read_configuration(io::Argument const & args,
 			   topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
-			   std::ostream & os)
+			   std::ostream & os,
+			   bool quiet)
 {
   std::ifstream conf_file;
 
@@ -207,6 +218,8 @@ int io::read_configuration(io::Argument const & args,
 		   io::message::notice);
   
   io::In_Configuration ic(conf_file);
+  ic.quiet = quiet;
+  
   ic.read(conf, topo, sim, os);
 
   conf.init(topo, sim.param());
@@ -224,7 +237,8 @@ int io::read_replica_configuration
  std::vector<configuration::Configuration> & conf,
  simulation::Simulation & sim,
  std::vector<util::Replica_Data> & replica_data,
- std::ostream & os
+ std::ostream & os,
+ bool quiet
  )
 {
   std::ifstream conf_file;
@@ -243,6 +257,8 @@ int io::read_replica_configuration
 		   "read input", io::message::notice);
   
   io::In_Configuration ic(conf_file);
+  ic.quiet = quiet;
+  
   ic.read_replica(conf, topo, sim, replica_data, os);
 
   for(unsigned int i=0; i<conf.size(); ++i)
@@ -250,4 +266,3 @@ int io::read_replica_configuration
     
   return 0;
 }
-

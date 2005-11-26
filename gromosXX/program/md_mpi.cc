@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
   // enable mpi for the nonbonded terms
   sim.mpi = true;
   
-  if (io::read_input(args, topo, conf, sim,  md, *os)){
+  if (io::read_input(args, topo, conf, sim,  md, *os, quiet)){
     io::messages.display(std::cout);
     std::cout << "\nErrors during initialization!\n" << std::endl;
     MPI::Finalize();

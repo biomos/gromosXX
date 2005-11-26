@@ -995,7 +995,6 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
     int ntg, nrdgl;
     double dmu, dmut;
     double mmu;
-    double alpha_lj, alpha_crf;
     
     _lineStream >> ntg >> nrdgl 
 		>> param.perturbation.lambda 

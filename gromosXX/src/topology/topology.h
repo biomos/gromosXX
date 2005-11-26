@@ -602,7 +602,9 @@ namespace topology
      * initialise the topology.
      * - adjust submolecules if empty
      */
-    void init(simulation::Simulation const & sim, std::ostream & os = std::cout, bool quiet = false);
+    void init(simulation::Simulation const & sim,
+	      std::ostream & os = std::cout, 
+	      bool quiet = false);
     
   private:
     /**
