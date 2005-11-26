@@ -48,8 +48,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      if (!quiet)
-	os << "Perturbed harmonic bond interaction\n";
+      // if (!quiet)
+      // os << "Perturbed harmonic bond interaction\n";
       return 0;
     };
 

@@ -30,7 +30,7 @@ io::In_Jvalue::read(topology::Topology& topo,
   
   DEBUG(7, "reading in a jvalue restraints specification file");
 
-  os << "JVALUE RESTRAINTS\n";
+  if (!quiet) os << "JVALUE RESTRAINTS\n";
   
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -59,20 +59,22 @@ io::In_Jvalue::read(topology::Topology& topo,
     os.precision(2);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
-    os << std::setw(6) << "i"
-       << std::setw(6) << "j"
-       << std::setw(6) << "k"
-       << std::setw(6) << "l"
-       << std::setw(8) << "K"
-       << std::setw(8) << "J"
-       << std::setw(8) << "a"
-       << std::setw(8) << "b"
-       << std::setw(8) << "c"
-       << std::setw(8) << "delta"
-       << std::setw(7) << "H"
-       << std::setw(8) << "Jav"
-       << "\n";
-      
+    if (!quiet){
+      os << std::setw(6) << "i"
+	 << std::setw(6) << "j"
+	 << std::setw(6) << "k"
+	 << std::setw(6) << "l"
+	 << std::setw(8) << "K"
+	 << std::setw(8) << "J"
+	 << std::setw(8) << "a"
+	 << std::setw(8) << "b"
+	 << std::setw(8) << "c"
+	 << std::setw(8) << "delta"
+	 << std::setw(7) << "H"
+	 << std::setw(8) << "Jav"
+	 << "\n";
+    }
+    
     for(int n=0; it != to; ++i, ++it, ++n){
       
       _lineStream.clear();
@@ -110,26 +112,27 @@ io::In_Jvalue::read(topology::Topology& topo,
       if (conf.special().jvalue_av.size() < unsigned(n+1))
 	conf.special().jvalue_av.push_back(J);
 
-      os << std::setw(6) << i
-	 << std::setw(6) << j
-	 << std::setw(6) << k
-	 << std::setw(6) << l
-	 << std::setw(8) << K
-	 << std::setw(8) << J
-	 << std::setw(8) << a
-	 << std::setw(8) << b
-	 << std::setw(8) << c
-	 << std::setw(8) << delta
-	 << std::setw(7) << H
-	 << std::setw(8) << conf.special().jvalue_av[n]
-	 << "\n";
-
+      if (!quiet){
+	os << std::setw(6) << i
+	   << std::setw(6) << j
+	   << std::setw(6) << k
+	   << std::setw(6) << l
+	   << std::setw(8) << K
+	   << std::setw(8) << J
+	   << std::setw(8) << a
+	   << std::setw(8) << b
+	   << std::setw(8) << c
+	   << std::setw(8) << delta
+	   << std::setw(7) << H
+	   << std::setw(8) << conf.special().jvalue_av[n]
+	   << "\n";
+      }
     }
 
     assert(conf.special().jvalue_av.size() == topo.jvalue_restraints().size());
     conf.special().jvalue_curr.resize(conf.special().jvalue_av.size());
 
-    os << "END\n";
+    if (!quiet) os << "END\n";
 
   } // JVALRESSPEC
     

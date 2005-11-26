@@ -31,7 +31,8 @@ io::In_Posres::read(topology::Topology& topo,
   
   DEBUG(7, "reading in a position restraints file");
 
-  os << "POSITION RESTRAINTS\n";
+  if (!quiet)
+    os << "POSITION RESTRAINTS\n";
   
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
@@ -93,7 +94,7 @@ io::In_Posres::read(topology::Topology& topo,
 
     if (buffer.size()){
       DEBUG(10, "BFACTOR block");
-      os << "\tBFACTOR";
+      if (!quiet) os << "\tBFACTOR";
 
       io::messages.add("reading in atomic bfactors for position restraints",
 		       "in_posres", io::message::notice);
@@ -149,41 +150,43 @@ io::In_Posres::read(topology::Topology& topo,
     posres_it = topo.position_restraints().begin(),
     posres_to = topo.position_restraints().end();
   
-  switch(sim.param().posrest.posrest){
-    case 0:
-      os << "\tPosition restraints OFF\n";
-      // how did you get here?
-      break;
-    case 1:
-      os << "\tPosition restraints ON\n"
-	 << "\t\trestraining to following positions:\n";
-      break;
-    case 2:
-      os << "\tPosition restraints ON\n"
-	 << "\t\trestraining to following positions\n"
-	 << "\t\t(using atomic B-factors):\n";
-      break;
-    case 3:
-      os << "\tPosition constraints ON\n"
-	 << "\t\tconstraining following atoms"
-	 << " to their initial positions:\n";
-      break;
-  }
-
-  os << std::setw(10) << "SEQ"
-     << std::setw(20) << "POS(X)"
-     << std::setw(20) << "POS(Y)"
-     << std::setw(20) << "POS(Z)"
-     << std::setw(15) << "BFACTOR"
-     << "\n";
-  
-  for( ; posres_it != posres_to; ++posres_it)
-    os << std::setw(10) << posres_it->seq
-       << std::setw(20) << posres_it->pos(0)
-       << std::setw(20) << posres_it->pos(1)
-       << std::setw(20) << posres_it->pos(2)
-       << std::setw(15) << posres_it->bfactor
+  if (!quiet){
+    switch(sim.param().posrest.posrest){
+      case 0:
+	os << "\tPosition restraints OFF\n";
+	// how did you get here?
+	break;
+      case 1:
+	os << "\tPosition restraints ON\n"
+	   << "\t\trestraining to following positions:\n";
+	break;
+      case 2:
+	os << "\tPosition restraints ON\n"
+	   << "\t\trestraining to following positions\n"
+	   << "\t\t(using atomic B-factors):\n";
+	break;
+      case 3:
+	os << "\tPosition constraints ON\n"
+	   << "\t\tconstraining following atoms"
+	   << " to their initial positions:\n";
+	break;
+    }
+    
+    os << std::setw(10) << "SEQ"
+       << std::setw(20) << "POS(X)"
+       << std::setw(20) << "POS(Y)"
+       << std::setw(20) << "POS(Z)"
+       << std::setw(15) << "BFACTOR"
        << "\n";
-  os << "END\n";
+    
+    for( ; posres_it != posres_to; ++posres_it)
+      os << std::setw(10) << posres_it->seq
+	 << std::setw(20) << posres_it->pos(0)
+	 << std::setw(20) << posres_it->pos(1)
+	 << std::setw(20) << posres_it->pos(2)
+	 << std::setw(15) << posres_it->bfactor
+	 << "\n";
+    os << "END\n";
+  }
   
 }

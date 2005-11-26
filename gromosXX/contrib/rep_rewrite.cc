@@ -128,11 +128,15 @@ int main(int argc, char *argv[])
 
   vector<repframe> stream_state(ifile.size());
   map<string, int> out_run;
+
+  std::cout << "initialising..." << std::endl;
   
   if (init(ifile, stream_state)){
     cout << "error in init!" << endl;
     return 1;
   }
+
+  std::cout << "reading trajectories..." << std::endl;
 
   // select any frame that is ready to be written
   bool done = false;
@@ -257,6 +261,8 @@ int init(vector<ifstream*> &traj, vector<repframe> &stream_state)
   string line;
   for(unsigned int i=0; i<traj.size(); ++i){
 
+    cout << "reading first frame of trajectory " << i+1 << std::endl;
+    
     do{
       getline(*traj[i], line);
     } while (line != "REMD");

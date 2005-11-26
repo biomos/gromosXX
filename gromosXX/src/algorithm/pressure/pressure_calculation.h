@@ -42,7 +42,7 @@ namespace algorithm
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Pressure calculation\n";
+      // os << "Pressure calculation\n";
       return 0;
     };
 

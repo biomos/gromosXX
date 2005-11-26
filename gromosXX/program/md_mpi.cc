@@ -39,7 +39,7 @@
 
 #include "BUILD_NUMBER"
 
-void print_title(bool color = false, std::ostream & os = std::cout);
+void print_title(bool color = false, int size = 1, std::ostream & os = std::cout);
 
 int main(int argc, char *argv[]){
 
@@ -92,11 +92,11 @@ int main(int argc, char *argv[]){
     
   if (args.count("version") >= 0){
     if (rank == 0)
-      print_title(true);
+      print_title(true, size);
     MPI::Finalize();
     return 0;
   }
-  else print_title(false, *os);
+  else print_title(false, size, *os);
     
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)){
@@ -114,7 +114,13 @@ int main(int argc, char *argv[]){
   // enable mpi for the nonbonded terms
   sim.mpi = true;
   
-  io::read_input(args, topo, conf, sim,  md, *os, quiet);
+  if (io::read_input(args, topo, conf, sim,  md, *os)){
+    io::messages.display(std::cout);
+    std::cout << "\nErrors during initialization!\n" << std::endl;
+    MPI::Finalize();
+    return 1;    
+  }
+  
   // initialises all algorithms (and therefore also the forcefield)
   md.init(topo, conf, sim, *os, quiet);
 
@@ -123,7 +129,7 @@ int main(int argc, char *argv[]){
 
   if(rank == 0){
     
-    std::cout << "we're the master of the universe! muhahahahahah" << std::endl;
+    std::cout << "MPI master node (of " << size << " nodes)" << std::endl;
     
     io::Out_Configuration traj("GromosXX\n");
     traj.title("GromosXX\n" + sim.param().title);
@@ -222,55 +228,55 @@ int main(int argc, char *argv[]){
   ////////////////////////////////////////////////////////////////////////////////
 
   else{
-    (*os) << "We poor slave we. we want precious!" << std::endl;
+    (*os) << "MPI slave " << rank << " of " << size << std::endl;
     
     // let's get the forcefield
     interaction::Forcefield * ff = 
       dynamic_cast<interaction::Forcefield *>(md.algorithm("Forcefield"));
     
     if (ff == NULL){
-      std::cerr << "we could not get the Forcefield!!!" << std::endl;
+      std::cerr << "MPI slave: could not access forcefield\n\t(internal error)" << std::endl;
       MPI::Finalize();
       return 1;
     }
     
     interaction::Interaction * nb = ff->interaction("NonBonded");
     if (nb == NULL){
-      std::cerr << "could not get NonBonded interactions from forcefield"
-		<< "\ndon't know what to do now, think i'll exit"
+      std::cerr << "MPI slave: could not get NonBonded interactions from forcefield"
+		<< "\n\t(internal error)"
 		<< std::endl;
       MPI::Finalize();
       return 1;
     }
     
-    // now sit on our hunches and wait for the simulation to get to us!
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    // run the simulation
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
     const double init_time = util::now() - start;
-    
     while(sim.time() < end_time + math::epsilon){
-      
       // run a step
-      (*os) << "waiting for master (nonbonded interaction)" << std::endl;
+      // (*os) << "waiting for master (nonbonded interaction)" << std::endl;
+      // DEBUG(10, "slave " << rank << " waiting for master");
       nb->calculate_interactions(topo, conf, sim);
-      (*os) << "step done (it really worked?)" << std::endl;
+      // DEBUG(10, "slave " << rank << " step done");
+      // (*os) << "step done (it really worked?)" << std::endl;
 
       sim.time() += sim.time_step_size();
       ++sim.steps();
     }
-    
-  }
+  } // end of slave
 
   os = NULL;
   
   ofs.flush();
   ofs.close();
-    
 
+  // and exit...
   MPI::Finalize();
-
   return 0;
 
 #else
-  std::cout << "needs MPI to run. use --enable-mpi at configure\n" << std::endl;
+  std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure\n" << std::endl;
   return 1;
 #endif
 
@@ -280,7 +286,7 @@ int main(int argc, char *argv[]){
 // helper functions
 ////////////////////////////////////////////////////////////////////////////////
 
-void print_title(bool color, std::ostream & os)
+void print_title(bool color, int size, std::ostream & os)
 {
   if (color){
 
@@ -330,9 +336,19 @@ void print_title(bool color, std::ostream & os)
   }
 #endif
   
+  os << "MPI code enabled\n"
+     << "\tdistributed memory parallelization\n"
+     << "\twww.mpi-forum.org\n\n";
+  if (size > 1)
+    os << "\trunning on " << size << " nodes\n";
+  else
+    os << "\trunning on " << size << " node\n";
+  
   os << "\nGruppe fuer Informatikgestuetzte Chemie\n"
      << "Professor W. F. van Gunsteren\n"
      << "Swiss Federal Institute of Technology\n"
      << "Zuerich\n\n"
-     << "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+     << "Bugreports to http://www.igc.ethz.ch:5555\n"
+     << std::endl;
+  
 }

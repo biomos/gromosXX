@@ -41,7 +41,7 @@ namespace algorithm
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      os << "Berendsen barostat\n";
+      // os << "Berendsen barostat\n";
       return 0;
     };
 

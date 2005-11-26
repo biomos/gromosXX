@@ -42,8 +42,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      if (!quiet)
-	os << "Bond angle (cosine) interaction\n";
+      // if (!quiet)
+      // os << "Bond angle (cosine) interaction\n";
       return 0;
     };
     /**

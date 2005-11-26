@@ -47,8 +47,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      if (!quiet)
-	os << "Perturbed quartic bond interaction\n";
+      // if (!quiet)
+      // os << "Perturbed quartic bond interaction\n";
       return 0;
     };
 
