@@ -30,7 +30,7 @@ int algorithm::Remove_COM_Motion::init
 {
   if (quiet) return 0;
   
-  os << "centre of mass motion\n";
+  os << "CENTRE OF MASS MOTION\n";
 
   if (sim.param().centreofmass.skip_step){
     if (sim.param().centreofmass.skip_step > 1)
@@ -60,7 +60,7 @@ int algorithm::Remove_COM_Motion::init
   if (sim.param().start.remove_com)
     os << "\n\tremoving initial centre of mass motion\n";
   
-  os << "\n";
+  os << "\nEND\n";
   
   return 0;
 };

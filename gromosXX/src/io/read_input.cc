@@ -189,7 +189,7 @@ int io::read_topology(io::Argument const & args,
 
   // and create the algorithms
   // (among them the forcefield!)
-  algorithm::create_md_sequence(md_seq, topo, sim, it, os);
+  algorithm::create_md_sequence(md_seq, topo, sim, it, os, quiet);
 
   return 0;
 }

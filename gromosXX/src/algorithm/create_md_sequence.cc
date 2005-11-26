@@ -60,7 +60,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 				  topology::Topology &topo,
 				  simulation::Simulation & sim,
 				  io::In_Topology &it,
-				  std::ostream & os)
+				  std::ostream & os,
+				  bool quiet)
 {
 
   // analyze trajectory:
@@ -73,7 +74,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
-  interaction::create_g96_forcefield(*ff, topo, sim, it, os);
+  interaction::create_g96_forcefield(*ff, topo, sim, it, os, quiet);
   
   //==================================================
   // construct the md algorithm
@@ -151,7 +152,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       md_seq.push_back(new algorithm::Leap_Frog_Position);
     }
     else{
-      std::cout << "\tno integration (position) selected!\n";
+      if (!quiet)
+	std::cout << "\tno integration (position) selected!\n";
     }
   }
   
@@ -169,12 +171,14 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   // pressure calculation?
-  io::print_PCOUPLE(os, sim.param().pcouple.calculate,
-		    sim.param().pcouple.scale,
-		    sim.param().pcouple.pres0,
-		    sim.param().pcouple.compressibility,
-		    sim.param().pcouple.tau,
-		    sim.param().pcouple.virial);
+  if (!quiet){
+    io::print_PCOUPLE(os, sim.param().pcouple.calculate,
+		      sim.param().pcouple.scale,
+		      sim.param().pcouple.pres0,
+		      sim.param().pcouple.compressibility,
+		      sim.param().pcouple.tau,
+		      sim.param().pcouple.virial);
+  }
   
   if (sim.param().pcouple.calculate){
     algorithm::Pressure_Calculation * pcalc =
@@ -196,25 +200,27 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	new algorithm::Slow_Growth;
       md_seq.push_back(sg);
     }
-    
-    os << "PERTURBATION\n"
-       << "\tlambda         : " << sim.param().perturbation.lambda << "\n"
-       << "\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
-       << "\tdlambda        : " << sim.param().perturbation.dlamt << "\n"
-       << "\tscaling        : ";
 
-    if (sim.param().perturbation.scaling){
-      if (sim.param().perturbation.scaled_only)
-	os << "perturbing only scaled interactions\n";
+    if (!quiet){
+      os << "PERTURBATION\n"
+	 << "\tlambda         : " << sim.param().perturbation.lambda << "\n"
+	 << "\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
+	 << "\tdlambda        : " << sim.param().perturbation.dlamt << "\n"
+	 << "\tscaling        : ";
+      
+      if (sim.param().perturbation.scaling){
+	if (sim.param().perturbation.scaled_only)
+	  os << "perturbing only scaled interactions\n";
+	else
+	  os << "on\n";
+      }
       else
-	os << "on\n";
+	os << "off\n";
+      os << "END\n";
     }
-    else
-      os << "off\n";
-    os << "END\n";
   }
   else
-    os << "PERTURBATION OFF\n";
+    if (!quiet) os << "PERTURBATION OFF\n";
   
   // total energy calculation and energy average update
   {
