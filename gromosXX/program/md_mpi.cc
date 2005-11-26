@@ -253,17 +253,48 @@ int main(int argc, char *argv[]){
     // run the simulation
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     const double init_time = util::now() - start;
+    int error;
+
     while(sim.time() < end_time + math::epsilon){
       // run a step
       // (*os) << "waiting for master (nonbonded interaction)" << std::endl;
       // DEBUG(10, "slave " << rank << " waiting for master");
-      nb->calculate_interactions(topo, conf, sim);
+      if ((error = nb->calculate_interactions(topo, conf, sim)) != 0){
+	std::cout << "MPI slave " << rank << ": error in nonbonded calculation!\n" << std::endl;
+	break;
+      }
+      
       // DEBUG(10, "slave " << rank << " step done");
       // (*os) << "step done (it really worked?)" << std::endl;
 
       sim.time() += sim.time_step_size();
       ++sim.steps();
     }
+
+    std::cout << "\nMESSAGES FROM SIMULATION\n";
+    io::message::severity_enum err_msg = io::messages.display(std::cout);
+    
+    std::cout << "\n\n";
+    
+    md.print_timing(std::cout);
+    
+    std::cout << "Overall time used:\t" << util::now() - start << "\n"
+	      << "(initialization took " << init_time << ")\n\n";
+    
+    const time_t time_now = time_t(util::now());
+    std::cout << ctime(&time_now) << "\n\n";
+    
+    if (error)
+      std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
+    else if(err_msg > io::message::notice){
+      std::cout << "\nGromosXX MPI slave " << rank << " finished. "
+		<< "Check the messages for possible problems during the run."
+		<< std::endl;
+    }
+    else{
+      std::cout << "\nGromosXX MPI slave " << rank << " finished successfully\n" << std::endl;
+    }
+    
   } // end of slave
 
   os = NULL;
