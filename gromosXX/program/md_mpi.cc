@@ -271,28 +271,28 @@ int main(int argc, char *argv[]){
       ++sim.steps();
     }
 
-    std::cout << "\nMESSAGES FROM SIMULATION\n";
-    io::message::severity_enum err_msg = io::messages.display(std::cout);
+    (*os) << "\nMESSAGES FROM SIMULATION\n";
+    io::message::severity_enum err_msg = io::messages.display(*os);
     
-    std::cout << "\n\n";
+    (*os) << "\n\n";
     
-    md.print_timing(std::cout);
+    md.print_timing(*os);
     
-    std::cout << "Overall time used:\t" << util::now() - start << "\n"
-	      << "(initialization took " << init_time << ")\n\n";
+    (*os) << "Overall time used:\t" << util::now() - start << "\n"
+	  << "(initialization took " << init_time << ")\n\n";
     
     const time_t time_now = time_t(util::now());
-    std::cout << ctime(&time_now) << "\n\n";
+    (*os) << ctime(&time_now) << "\n\n";
     
     if (error)
-      std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
+      (*os) << "\nErrors encountered during run - check above!\n" << std::endl;
     else if(err_msg > io::message::notice){
-      std::cout << "\nGromosXX MPI slave " << rank << " finished. "
-		<< "Check the messages for possible problems during the run."
-		<< std::endl;
+      (*os) << "\nGromosXX MPI slave " << rank << " finished. "
+	    << "Check the messages for possible problems during the run."
+	    << std::endl;
     }
     else{
-      std::cout << "\nGromosXX MPI slave " << rank << " finished successfully\n" << std::endl;
+      (*os) << "\nGromosXX MPI slave " << rank << " finished successfully\n" << std::endl;
     }
     
   } // end of slave
