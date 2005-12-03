@@ -70,17 +70,20 @@ void util::update_virtual_force(topology::Topology & cg_topo,
   ////////////////////////////////////////////////////
   int steps = sim.param().multistep.steps;
   if (steps < 1) steps = 1;
+  // to boost or not
+  if (sim.param().multistep.boost == 0) steps = 1;
   
   if ((sim.steps() % steps) == 0){
     std::cout << "adding virtual force (multistep " << steps << ")\n";
-
+    
     for(unsigned int i=0; i<cg_topo.virtual_grains().size(); ++i){
       
       DEBUG(10, "virtual force " << cg_topo.virtual_grains()[i].i << " = " 
 	    << math::v2s(cg_conf.current().force(cg_topo.virtual_grains()[i].i)));
       
+      // boost if step != 1 ...
       cg_topo.virtual_grains()[i].atom.force
-	(conf, cg_conf.current().force(cg_topo.virtual_grains()[i].i));
+	(conf, steps * cg_conf.current().force(cg_topo.virtual_grains()[i].i));
       
     }
   }

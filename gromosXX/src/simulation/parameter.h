@@ -1354,7 +1354,7 @@ namespace simulation
       /**
        * constructor
        */
-      multistep_struct() : steps(1) 
+      multistep_struct() : steps(1), boost(0)
       {
       }
       /**
@@ -1363,6 +1363,11 @@ namespace simulation
        * terms
        */
       int steps;
+      /**
+       * use boost method (impulse)
+       */
+      int boost;
+      
     } /** multistep */ multistep;
     
   };
