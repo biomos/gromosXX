@@ -202,7 +202,7 @@ PERTURB
 #      NTG     NRDGL     RLAM     DLAMT        RMU   DMUT
          1         0      0.125   0.000    0.00000   0.00
 #   ALPHLJ     ALPHC     NLAM       MMU
-       0.3       0.6        1         1
+       1.0       1.0        1         1
 END
 #-------
 #PATHINT
