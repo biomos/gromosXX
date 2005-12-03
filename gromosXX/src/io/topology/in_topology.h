@@ -97,6 +97,12 @@ namespace io {
 				   & cg_parameter,
 				   std::ostream & os = std::cout);
     
+  private:
+    /**
+     * solute bond types
+     */
+    int num_solute_bondtypes;
+
   };
 
 } // io

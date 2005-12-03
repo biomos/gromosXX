@@ -968,10 +968,10 @@ io::In_Topology::read(topology::Topology& topo,
 	  io::messages.add("Wrong number of elements in VIRTUALGRAIN block",
 			   "In_Topology", io::message::error);
 	}
+
+	if (!quiet)
+	  os << "\n\tEND\n";
       }
-    
-      if (!quiet)
-	os << "\n\tEND\n";
     
     } // VIRTUALGRAIN
 
@@ -1051,29 +1051,12 @@ io::In_Topology::read(topology::Topology& topo,
       //--------------------------------------------------
       // lookup the number of bond types
       // add additional ones for the solvent constraints
-      int num_bond_types = 0;
-      if (param.force.bond == 1){
-	buffer = m_block["BONDTYPE"];
+      {
+	std::vector<interaction::bond_type_struct> b;
+	std::ostringstream os;
+	read_harmonic_bonds(b, os);
       }
-      else if (param.force.bond == 2){
-	buffer = m_block["HARMBONDTYPE"];
-	if (!buffer.size())
-	  buffer = m_block["BONDTYPE"];
-      }
-      if (!buffer.size())
-	num_bond_types = 0;
-      else{
-	it = buffer.begin() + 1;
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> num_bond_types;
-	
-	if (num_bond_types < 0){
-	  io::messages.add("Illegal value for number of bond types in (HARM)BONDTYPE block",
-			   "In_Topology", io::message::error);	
-	  num_bond_types = 0;
-	}
-      }
+
       //--------------------------------------------------
     
       // now read the solvent constraints
@@ -1083,6 +1066,7 @@ io::In_Topology::read(topology::Topology& topo,
 			 "In_Topology", io::message::notice);	
       }
       else{
+
 	it = buffer.begin() + 1;
 	_lineStream.clear();
 	_lineStream.str(*it);
@@ -1109,7 +1093,7 @@ io::In_Topology::read(topology::Topology& topo,
 	  
 	  // the solvent (distance constraints) bond types
 	  s.add_distance_constraint
-	    (topology::two_body_term_struct(i-1, j-1, num_bond_types + n));
+	    (topology::two_body_term_struct(i-1, j-1, num_solute_bondtypes + n));
 	}
 
 	if (n!=num){
@@ -1310,9 +1294,12 @@ void io::In_Topology
 
   // also add the solvent constraints to the bond types...
   // (if there is one)
+  
+  num_solute_bondtypes = b.size();
+
   buffer = m_block["SOLVENTCONSTR"];
   if (buffer.size()){
-    
+
     it = buffer.begin() + 1;
     _lineStream.clear();
     _lineStream.str(*it);
@@ -1394,7 +1381,9 @@ void io::In_Topology
     b.push_back(interaction::bond_type_struct(k, r));
   }
 
-  // also add the solent constraints to the bond types...
+  num_solute_bondtypes = b.size();
+
+  // also add the solvent constraints to the bond types...
   // (if there is one)
   buffer = m_block["SOLVENTCONSTR"];
   if (buffer.size()){
