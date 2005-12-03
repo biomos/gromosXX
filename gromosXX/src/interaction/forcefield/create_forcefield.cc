@@ -63,9 +63,38 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   if(create_special(ff, topo, sim.param(), os, quiet))
     return 1;
 
-  if (!quiet)
-    os << "END\n";
+  if (!quiet){
+  
+    if (sim.param().perturbation.perturbation){
+      os << "\t" << std::setw(20) << std::left << "perturbation" 
+	 << std::setw(30) << "on" << std::right << "\n"
+	 << "\t\tlambda         : " << sim.param().perturbation.lambda << "\n"
+	 << "\t\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
+	 << "\t\tdlambda        : " << sim.param().perturbation.dlamt << "\n"
+	 << "\t\tscaling        : ";
+      
+      if (sim.param().perturbation.scaling){
+	if (sim.param().perturbation.scaled_only)
+	  os << "perturbing only scaled interactions\n";
+	else
+	  os << "on\n";
+      }
+      else
+	os << "off\n";
 
+      if (topo.perturbed_solute().atoms().size() == 0)
+	os << "\t\t" << "using unperturbed nonbonded routines as no atoms are perturbed\n";
+      else os << "\t\t" << "with " << topo.perturbed_solute().atoms().size() << " perturbed atoms\n";
+
+    }
+    else{
+      os << "\t" << std::setw(20) << std::left << "perturbation" 
+	 << std::setw(30) << std::left << "off" << std::right << "\n";
+    }
+    
+    os << "END\n";
+  }
+  
   return 0;
 
 }

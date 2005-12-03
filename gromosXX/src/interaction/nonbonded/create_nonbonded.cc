@@ -64,7 +64,7 @@ int interaction::create_g96_nonbonded
   
   if(!quiet){
     
-    os << "\t" << setw(20) << left << "Force calculation";
+    os << "\t" << setw(20) << left << "nonbonded force";
     if (sim.param().force.nonbonded_vdw)
       os << setw(30) << left << "van-der-Waals";
     if (sim.param().force.nonbonded_crf)
@@ -83,11 +83,6 @@ int interaction::create_g96_nonbonded
 	   << left << "Vector Grid Pairlist Algorithm" << right << "\n";
     }
     
-    if (sim.param().pairlist.atomic_cutoff)
-      os << "\t" << setw(20) << left << "cutoff" << setw(30) << left << "atomic" << right << "\n";
-    else
-      os << "\t" << setw(20) << left << "cutoff" << setw(30) << left << "chargegroup" << right << "\n";
-
     switch(sim.param().boundary.boundary){
       case math::vacuum:
 	os << "\t" << setw(20) << left << "boundary" << setw(30) 
@@ -123,21 +118,11 @@ int interaction::create_g96_nonbonded
       default:
 	os << "\t" << setw(20) << left << "virial" << setw(30) << left << "unknown" << right << "\n";
     }
-    
-    if (sim.param().perturbation.perturbation){
-      os << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "on" << right << "\n";
-      if (sim.param().perturbation.scaling)
-	os << "\t" << setw(20) << left << "scaling" << setw(30) << left << "on" << right << "\n";
-      else{
-	os << "\t" << setw(20) << left << "scaling" << setw(30) << left << "off" << right << "\n";
-	if (topo.perturbed_solute().atoms().size() == 0)
-	  os << "\t\t" << "using unperturbed nonbonded routines as no atoms are perturbed\n";
-	else os << "\t\t" << "with " << topo.perturbed_solute().atoms().size() << " perturbed atoms\n";
-      }
-    }
-    else{
-      os << "\t" << setw(20) << left << "perturbation" << setw(30) << left << "off" << right << "\n";
-    }
+
+    if (sim.param().pairlist.atomic_cutoff)
+      os << "\t" << setw(20) << left << "cutoff" << setw(30) << left << "atomic" << right << "\n";
+    else
+      os << "\t" << setw(20) << left << "cutoff" << setw(30) << left << "chargegroup" << right << "\n";
 
   }
   
@@ -195,14 +180,14 @@ int interaction::create_g96_nonbonded
       << sim.param().pairlist.cutoff_short << "\n"
       << "\tlongrange cutoff       : "
       << sim.param().pairlist.cutoff_long << "\n"
+      << "\treactionfield cutoff   : "
+      << sim.param().longrange.rf_cutoff << "\n"
       << "\tepsilon                : "
       << sim.param().longrange.epsilon << "\n"
       << "\treactionfield epsilon  : "
       << sim.param().longrange.rf_epsilon << "\n"
       << "\tkappa                  : "
       << sim.param().longrange.rf_kappa << "\n"
-      << "\treactionfield cutoff   : "
-      << sim.param().longrange.rf_cutoff << "\n"
       << "\tpairlist creation every "
       << sim.param().pairlist.skip_step
       << " steps\n\n";

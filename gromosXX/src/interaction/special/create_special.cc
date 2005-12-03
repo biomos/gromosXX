@@ -37,8 +37,8 @@ int interaction::create_special(interaction::Forcefield & ff,
 				std::ostream & os,
 				bool quiet)
 {
-  if (!quiet)
-    os << "SPECIAL\n";
+  // if (!quiet)
+  // os << "SPECIAL\n";
   
   // Position restraints / constraints
   if (param.posrest.posrest == 1 || 
