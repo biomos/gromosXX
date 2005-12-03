@@ -2491,7 +2491,7 @@ void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> param.multistep.steps;
+    _lineStream >> param.multistep.steps >> param.multistep.boost;
     
     if (_lineStream.fail()){
       io::messages.add("bad line in MULTISTEP block",
