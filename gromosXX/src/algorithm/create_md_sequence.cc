@@ -200,27 +200,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 	new algorithm::Slow_Growth;
       md_seq.push_back(sg);
     }
-
-    if (!quiet){
-      os << "PERTURBATION\n"
-	 << "\tlambda         : " << sim.param().perturbation.lambda << "\n"
-	 << "\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
-	 << "\tdlambda        : " << sim.param().perturbation.dlamt << "\n"
-	 << "\tscaling        : ";
-      
-      if (sim.param().perturbation.scaling){
-	if (sim.param().perturbation.scaled_only)
-	  os << "perturbing only scaled interactions\n";
-	else
-	  os << "on\n";
-      }
-      else
-	os << "off\n";
-      os << "END\n";
-    }
   }
-  else
-    if (!quiet) os << "PERTURBATION OFF\n";
   
   // total energy calculation and energy average update
   {
