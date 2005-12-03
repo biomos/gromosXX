@@ -90,8 +90,14 @@ calculate_interactions(topology::Topology & topo,
 
   // check if we want to calculate nonbonded
   // might not be necessary if multiple time-stepping is enabled
-  if ((sim.steps() % sim.param().multistep.steps) == 0){
-    std::cout << "MULTISTEP: full calculation\n";
+
+  int steps = sim.param().multistep.steps;
+  if (steps == 0) steps = 1;
+  
+  // std::cerr << "Nonbonded: steps = " << steps << std::endl;
+  
+  if ((sim.steps() % steps) == 0){
+    // std::cout << "MULTISTEP: full calculation\n";
     
     ////////////////////////////////////////////////////
     // multiple unit cell
@@ -136,7 +142,7 @@ calculate_interactions(topology::Topology & topo,
     ////////////////////////////////////////////////////
   }
   else{
-    std::cout << "MULTISTEP: no recalculation...\n";
+    // std::cout << "MULTISTEP: no recalculation...\n";
   }
   
   DEBUG(6, "sets are done, adding things up...");
@@ -155,7 +161,7 @@ calculate_interactions(topology::Topology & topo,
   
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
   m_timing += util::now() - nonbonded_start;
-
+  
   return 0;
 }
 

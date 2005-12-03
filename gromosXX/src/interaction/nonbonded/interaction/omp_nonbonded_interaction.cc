@@ -76,61 +76,81 @@ calculate_interactions(topology::Topology & topo,
 
   const double nonbonded_start = util::now();
 
-  // multiple unit cell
-  if (sim.param().multicell.multicell){
-    
-    DEBUG(6, "nonbonded: MULTICELL");
-    configuration::Configuration exp_conf;
-    expand_configuration(topo, conf, sim, exp_conf);
-    DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
-    
-    // shared memory do this only once
-    m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim);
+  // check if we want to calculate nonbonded
+  // might not be necessary if multiple time-stepping is enabled
 
-#ifdef OMP
-    int tid;
-#pragma omp parallel private(tid)
-    {
-      tid = omp_get_thread_num();
-      // calculate the corresponding interactions
-      assert(m_nonbonded_set.size() > tid);
-      DEBUG(8, "calculating nonbonded interactions (thread " 
-	    << tid << " of " << m_set_size << ")");
+  int steps = sim.param().multistep.steps;
+  if (steps == 0) steps = 1;
+  
+  if ((sim.steps() % steps) == 0){
+    // std::cout << "MULTISTEP: full calculation\n";
 
-      m_nonbonded_set[tid]->calculate_interactions(topo.multicell_topo(), 
-						   exp_conf, sim);
-    }
-    
-#else
-    
-    std::cerr << "using OMP code without OMP defined..." << std::endl;
-    return E_ILLEGAL;
-    
-#endif
-  }
-  else{ // no MULTICELL
-    
-    // shared memory do this only once
-    m_pairlist_algorithm->prepare(topo, conf, sim);
-    
-#ifdef OMP
-    int tid;
-#pragma omp parallel private(tid)
-    {
-      tid = omp_get_thread_num();
-      // calculate the corresponding interactions
-      assert(m_nonbonded_set.size() > tid);
-      DEBUG(8, "calculating nonbonded interactions (thread " 
-	    << tid << " of " << m_set_size << ")");
+    ////////////////////////////////////////////////////
+    // multiple unit cell
+    ////////////////////////////////////////////////////
+    if (sim.param().multicell.multicell){
       
-      m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim);
+      DEBUG(6, "nonbonded: MULTICELL");
+      configuration::Configuration exp_conf;
+      expand_configuration(topo, conf, sim, exp_conf);
+      DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
+      
+      // shared memory do this only once
+      m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim);
+      
+#ifdef OMP
+      int tid;
+#pragma omp parallel private(tid)
+      {
+	tid = omp_get_thread_num();
+	// calculate the corresponding interactions
+	assert(m_nonbonded_set.size() > tid);
+	DEBUG(8, "calculating nonbonded interactions (thread " 
+	      << tid << " of " << m_set_size << ")");
+	
+	m_nonbonded_set[tid]->calculate_interactions(topo.multicell_topo(), 
+						     exp_conf, sim);
+      }
+      
+#else
+    
+      std::cerr << "using OMP code without OMP defined..." << std::endl;
+      return E_ILLEGAL;
+      
+#endif
+    }
+    else{ // no MULTICELL
+    
+      // shared memory do this only once
+      m_pairlist_algorithm->prepare(topo, conf, sim);
+      
+#ifdef OMP
+      int tid;
+#pragma omp parallel private(tid)
+      {
+	tid = omp_get_thread_num();
+	// calculate the corresponding interactions
+	assert(m_nonbonded_set.size() > tid);
+	DEBUG(8, "calculating nonbonded interactions (thread " 
+	      << tid << " of " << m_set_size << ")");
+	
+	m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim);
+      }
+      
+#else
+      std::cerr << "using OMP code without OMP defined..." << std::endl;
+      return E_ILLEGAL;
+#endif
     }
     
-#else
-    std::cerr << "using OMP code without OMP defined..." << std::endl;
-    return E_ILLEGAL;
-#endif
+    ////////////////////////////////////////////////////
+    // end of multiple time stepping: calculate
+    ////////////////////////////////////////////////////
   }
+  else{
+    // std::cout << "MULTISTEP: no recalculation...\n";
+  }
+  
   
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(topo, conf, sim);

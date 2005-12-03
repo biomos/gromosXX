@@ -158,11 +158,14 @@ int interaction::Nonbonded_Set::update_configuration
 
   // use the IMPULSE method for multiple time stepping
   if (sim.param().multistep.steps > 1){
-    const int steps = sim.param().multistep.steps;
+    int steps = sim.param().multistep.steps;
+    if (sim.param().multistep.boost == 0)
+      steps = 1;
+    
     // only add when calculated
     if ((sim.steps() % steps) == 0){
       for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().force(i) += sim.param().multistep.steps * m_storage.force(i);
+	conf.current().force(i) += steps * m_storage.force(i);
     }
   }
   else{

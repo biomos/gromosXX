@@ -74,107 +74,81 @@ calculate_interactions(topology::Topology & topo,
   assert((sim.param().force.spc_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
+  if (sim.param().multicell.multicell){
+    io::messages.add("MPI code with multiple unit cell simulations not implemented",
+		     "mpi_nonbonded_interaction",
+		     io::message::critical);
+    return 1;
+  }
+
   const double nonbonded_start = util::now();
 
 #ifdef XXMPI
-  int rank = MPI::COMM_WORLD.Get_rank();
-  int num_threads = MPI::COMM_WORLD.Get_size();
 
-  // --------------------------------------------------
-  // distribute the positions
-
-  // if this is true, the positions (and forces) can be copied
-  // directly from theVArray
-  assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
-	 ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
-
-  // std::cerr << "master: bcast pos" << std::endl;
-  MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),
-			conf.current().pos.size() * 3, 
-			MPI::DOUBLE,
-			0);
-
-  // don't forget the box (or are you stupid or what????)
-  // std::cerr << "master: bcast box" << std::endl;
-  MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
-			9,
-			MPI::DOUBLE,
-			0);  
-  // std::cerr << "ready to calc" << std::endl;
+  // check if we want to calculate nonbonded
+  // might not be necessary if multiple time-stepping is enabled
   
-  // --------------------------------------------------
-  // calculate interactions
+  int steps = sim.param().multistep.steps;
+  if (steps == 0) steps = 1;
+  
+  if ((sim.steps() % steps) == 0){
+    // std::cout << "MULTISTEP: full calculation\n";
 
-  DEBUG(8, "calculating nonbonded interactions (thread " 
-	<< rank << " of " << num_threads << ")");
+    int rank = MPI::COMM_WORLD.Get_rank();
+    int num_threads = MPI::COMM_WORLD.Get_size();
     
-  // do this on the master and on the slaves...
-  m_pairlist_algorithm->prepare(topo, conf, sim);
-  
-  m_nonbonded_set[0]->calculate_interactions(topo, conf, sim);
-
-  // collect the forces, energies, energy-derivatives, virial
-  // MPI::IN_PLACE ???
-  m_storage.force = m_nonbonded_set[0]->storage().force;
-  MPI::COMM_WORLD.Reduce(&m_storage.force(0)(0),
-			 &m_nonbonded_set[0]->storage().force(0),
-			 m_nonbonded_set[0]->storage().force.size() * 3,
-			 MPI::DOUBLE,
-			 MPI::SUM,
-			 0);
-
-  const unsigned int ljs = conf.current().energies.lj_energy.size();
-  std::vector<double> lj_scratch(ljs*ljs), rlj_scratch(ljs*ljs);
-  std::vector<double> crf_scratch(ljs*ljs), rcrf_scratch(ljs*ljs);
-  for(unsigned int i = 0; i < ljs; ++i){
-    for(unsigned int j = 0; j < ljs; ++j){
-      lj_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
-      crf_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
-    }
-  }
-  MPI::COMM_WORLD.Reduce(&lj_scratch[0],
-			 &rlj_scratch[0],
-			 ljs * ljs,
-			 MPI::DOUBLE,
-			 MPI::SUM,
-			 0);
-  MPI::COMM_WORLD.Reduce(&crf_scratch[0],
-			 &rcrf_scratch[0],
-			 ljs * ljs,
-			 MPI::DOUBLE,
-			 MPI::SUM,
-			 0);
-  
-  for(unsigned int i = 0; i < ljs; ++i){
-    for(unsigned int j = 0; j < ljs; ++j){
-      m_nonbonded_set[0]->storage().energies.lj_energy[i][j] = rlj_scratch[i*ljs + j];
-      m_nonbonded_set[0]->storage().energies.crf_energy[i][j] = rcrf_scratch[i*ljs + j];
-    }
-  }
-
-  if (sim.param().pcouple.virial){
-
-    m_storage.virial_tensor = m_nonbonded_set[0]->storage().virial_tensor;
-    double * dvt = &m_storage.virial_tensor(0,0);
-    double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor(0,0);
-    MPI::COMM_WORLD.Reduce(dvt,
-			   dvt2,
-			   9,
+    // --------------------------------------------------
+    // distribute the positions
+    
+    // if this is true, the positions (and forces) can be copied
+    // directly from theVArray
+    assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
+	   ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
+    
+    // std::cerr << "master: bcast pos" << std::endl;
+    MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),
+			  conf.current().pos.size() * 3, 
+			  MPI::DOUBLE,
+			  0);
+    
+    // don't forget the box (or are you stupid or what????)
+    // std::cerr << "master: bcast box" << std::endl;
+    MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
+			  9,
+			  MPI::DOUBLE,
+			  0);  
+    // std::cerr << "ready to calc" << std::endl;
+    
+    // --------------------------------------------------
+    // calculate interactions
+    
+    DEBUG(8, "calculating nonbonded interactions (thread " 
+	  << rank << " of " << num_threads << ")");
+    
+    // do this on the master and on the slaves...
+    m_pairlist_algorithm->prepare(topo, conf, sim);
+    
+    m_nonbonded_set[0]->calculate_interactions(topo, conf, sim);
+    
+    // collect the forces, energies, energy-derivatives, virial
+    // MPI::IN_PLACE ???
+    m_storage.force = m_nonbonded_set[0]->storage().force;
+    MPI::COMM_WORLD.Reduce(&m_storage.force(0)(0),
+			   &m_nonbonded_set[0]->storage().force(0),
+			   m_nonbonded_set[0]->storage().force.size() * 3,
 			   MPI::DOUBLE,
 			   MPI::SUM,
 			   0);
-  }
-  
-  if (sim.param().perturbation.perturbation){
-
+    
+    const unsigned int ljs = conf.current().energies.lj_energy.size();
+    std::vector<double> lj_scratch(ljs*ljs), rlj_scratch(ljs*ljs);
+    std::vector<double> crf_scratch(ljs*ljs), rcrf_scratch(ljs*ljs);
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
 	lj_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j];
+	  m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
 	crf_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j];
+	  m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
       }
     }
     MPI::COMM_WORLD.Reduce(&lj_scratch[0],
@@ -189,24 +163,75 @@ calculate_interactions(topology::Topology & topo,
 			   MPI::DOUBLE,
 			   MPI::SUM,
 			   0);
-  
+    
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
-	m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j]
-	  = rlj_scratch[i*ljs + j];
-	m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j]
-	  = rcrf_scratch[i*ljs + j];
+	m_nonbonded_set[0]->storage().energies.lj_energy[i][j] = rlj_scratch[i*ljs + j];
+	m_nonbonded_set[0]->storage().energies.crf_energy[i][j] = rcrf_scratch[i*ljs + j];
       }
     }
+    
+    if (sim.param().pcouple.virial){
+      
+      m_storage.virial_tensor = m_nonbonded_set[0]->storage().virial_tensor;
+      double * dvt = &m_storage.virial_tensor(0,0);
+      double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor(0,0);
+      MPI::COMM_WORLD.Reduce(dvt,
+			     dvt2,
+			     9,
+			     MPI::DOUBLE,
+			     MPI::SUM,
+			     0);
+    }
+    
+    if (sim.param().perturbation.perturbation){
+      
+      for(unsigned int i = 0; i < ljs; ++i){
+	for(unsigned int j = 0; j < ljs; ++j){
+	  lj_scratch[i*ljs + j] = 
+	    m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j];
+	  crf_scratch[i*ljs + j] = 
+	    m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j];
+	}
+      }
+      MPI::COMM_WORLD.Reduce(&lj_scratch[0],
+			     &rlj_scratch[0],
+			     ljs * ljs,
+			     MPI::DOUBLE,
+			     MPI::SUM,
+			     0);
+      MPI::COMM_WORLD.Reduce(&crf_scratch[0],
+			     &rcrf_scratch[0],
+			     ljs * ljs,
+			     MPI::DOUBLE,
+			     MPI::SUM,
+			     0);
+  
+      for(unsigned int i = 0; i < ljs; ++i){
+	for(unsigned int j = 0; j < ljs; ++j){
+	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j]
+	    = rlj_scratch[i*ljs + j];
+	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j]
+	    = rcrf_scratch[i*ljs + j];
+	}
+      }
+    }
+
+    ////////////////////////////////////////////////////
+    // end of multiple time stepping: calculate
+    ////////////////////////////////////////////////////
+  }
+  else{
+    // std::cout << "MULTISTEP: no recalculation...\n";
   }
 
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(topo, conf, sim);
 
-  DEBUG(7, "print pairlist...");
   if (sim.param().pairlist.print &&
       (!(sim.steps() % sim.param().pairlist.skip_step))){
-    
+
+    DEBUG(7, "print pairlist...");
     std::ofstream os("server.pl", std::ios::app);
     os << "rank " << rank << " of " << num_threads << std::endl;
     print_pairlist(topo, conf, sim, os);

@@ -81,90 +81,67 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
   const double nonbonded_start = util::now();
 
 #ifdef XXMPI
-  int rank = MPI::COMM_WORLD.Get_rank();
-  int num_threads = MPI::COMM_WORLD.Get_size();
 
-  // distribute the positions
-  assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
-	 ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
-
-  // std::cerr << "slave: receiving pos" << std::endl;
-  MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),
-			conf.current().pos.size() * 3, 
-			MPI::DOUBLE,
-			0);
+  // check if we want to calculate nonbonded
+  // might not be necessary if multiple time-stepping is enabled
   
-  // std::cerr << "slave: receiving box" << std::endl;
-  MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
-			9,
-			MPI::DOUBLE,
-			0);
-  // std::cerr << "slave: clfldsa; d" << std::endl;
-
-  // do this on the master and on the slaves...
-  m_pairlist_algorithm->prepare(topo, conf, sim);
-
-  // prepare for the virial
-  util::prepare_virial(topo, conf, sim);
-
-  // calculate interactions for our rank
-  DEBUG(8, "calculating nonbonded interactions (thread " 
-	<< rank << " of " << num_threads << ")");
+  int steps = sim.param().multistep.steps;
+  if (steps == 0) steps = 1;
   
-  m_nonbonded_set[0]->calculate_interactions(topo, conf, sim);
+  if ((sim.steps() % steps) == 0){
+    std::cout << "MULTISTEP: full calculation\n";
 
-  // collect the forces, energies, energy-derivatives, virial
-  // MPI::IN_PLACE ???
-  MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().force(0)(0),
-			 NULL,
-			 m_nonbonded_set[0]->storage().force.size() * 3,
-			 MPI::DOUBLE,
-			 MPI::SUM,
-			 0);
-
-  const unsigned int ljs = conf.current().energies.lj_energy.size();
-  std::vector<double> lj_scratch(ljs*ljs);
-  std::vector<double> crf_scratch(ljs*ljs);
-
-  for(unsigned int i = 0; i < ljs; ++i){
-    for(unsigned int j = 0; j < ljs; ++j){
-      lj_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
-      crf_scratch[i*ljs + j] = 
-	m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
-    }
-  }
-  MPI::COMM_WORLD.Reduce(&lj_scratch[0],
-			 NULL,
-			 ljs * ljs,
-			 MPI::DOUBLE,
-			 MPI::SUM,
-			 0);
-  MPI::COMM_WORLD.Reduce(&crf_scratch[0],
-			 NULL,
-			 ljs * ljs,
-			 MPI::DOUBLE,
-			 MPI::SUM,
-			 0);
-
-  if (sim.param().pcouple.virial){
-    double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor(0,0);
-    MPI::COMM_WORLD.Reduce(dvt2,
+    int rank = MPI::COMM_WORLD.Get_rank();
+    int num_threads = MPI::COMM_WORLD.Get_size();
+    
+    // distribute the positions
+    assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
+	   ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
+    
+    // std::cerr << "slave: receiving pos" << std::endl;
+    MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),
+			  conf.current().pos.size() * 3, 
+			  MPI::DOUBLE,
+			  0);
+    
+    // std::cerr << "slave: receiving box" << std::endl;
+    MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
+			  9,
+			  MPI::DOUBLE,
+			  0);
+    // std::cerr << "slave: clfldsa; d" << std::endl;
+    
+    // do this on the master and on the slaves...
+    m_pairlist_algorithm->prepare(topo, conf, sim);
+    
+    // prepare for the virial
+    util::prepare_virial(topo, conf, sim);
+    
+    // calculate interactions for our rank
+    DEBUG(8, "calculating nonbonded interactions (thread " 
+	  << rank << " of " << num_threads << ")");
+    
+    m_nonbonded_set[0]->calculate_interactions(topo, conf, sim);
+    
+    // collect the forces, energies, energy-derivatives, virial
+    // MPI::IN_PLACE ???
+    MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().force(0)(0),
 			   NULL,
-			   9,
+			   m_nonbonded_set[0]->storage().force.size() * 3,
 			   MPI::DOUBLE,
 			   MPI::SUM,
 			   0);
-  }
-  
-  if (sim.param().perturbation.perturbation){
-
+    
+    const unsigned int ljs = conf.current().energies.lj_energy.size();
+    std::vector<double> lj_scratch(ljs*ljs);
+    std::vector<double> crf_scratch(ljs*ljs);
+    
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
 	lj_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j];
+	  m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
 	crf_scratch[i*ljs + j] = 
-	  m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j];
+	  m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
       }
     }
     MPI::COMM_WORLD.Reduce(&lj_scratch[0],
@@ -179,13 +156,54 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 			   MPI::DOUBLE,
 			   MPI::SUM,
 			   0);
-
+    
+    if (sim.param().pcouple.virial){
+      double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor(0,0);
+      MPI::COMM_WORLD.Reduce(dvt2,
+			     NULL,
+			     9,
+			     MPI::DOUBLE,
+			     MPI::SUM,
+			     0);
+    }
+    
+    if (sim.param().perturbation.perturbation){
+      
+      for(unsigned int i = 0; i < ljs; ++i){
+	for(unsigned int j = 0; j < ljs; ++j){
+	  lj_scratch[i*ljs + j] = 
+	    m_nonbonded_set[0]->storage().perturbed_energy_derivatives.lj_energy[i][j];
+	  crf_scratch[i*ljs + j] = 
+	    m_nonbonded_set[0]->storage().perturbed_energy_derivatives.crf_energy[i][j];
+	}
+      }
+      MPI::COMM_WORLD.Reduce(&lj_scratch[0],
+			     NULL,
+			     ljs * ljs,
+			     MPI::DOUBLE,
+			     MPI::SUM,
+			     0);
+      MPI::COMM_WORLD.Reduce(&crf_scratch[0],
+			     NULL,
+			     ljs * ljs,
+			     MPI::DOUBLE,
+			     MPI::SUM,
+			     0);
+      
+    }
+    
+    ////////////////////////////////////////////////////
+    // end of multiple time stepping: calculate
+    ////////////////////////////////////////////////////
   }
-  
-  DEBUG(7, "print pairlist...");
+  else{
+    std::cout << "MULTISTEP: no recalculation...\n";
+  }
+
   if (sim.param().pairlist.print &&
       (!(sim.steps() % sim.param().pairlist.skip_step))){
-    
+
+    DEBUG(7, "print pairlist...");
     std::ofstream os("slave.pl", std::ios::app);
     os << "rank " << rank << " of " << num_threads << std::endl;
     print_pairlist(topo, conf, sim, os);
