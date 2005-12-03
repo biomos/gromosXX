@@ -91,7 +91,7 @@ void math::Periodicity<b>
 {
   math::VArray &pos = conf.current().pos;
   math::Vec v, v_box, trans;
-  
+
   DEBUG(10, "num cg = " << topo.num_chargegroups());
   DEBUG(10, "num atoms = " << topo.num_atoms());
   DEBUG(10, "pos.size() = " << pos.size());
@@ -103,6 +103,8 @@ void math::Periodicity<b>
 
     v_box = pos(**cg_it);
     put_into_box(v_box);
+
+    // std::cout << "--- cg ---" << std::endl;
     
     // loop over the atoms
     topology::Atom_Iterator at_it = cg_it.begin(),
@@ -113,6 +115,8 @@ void math::Periodicity<b>
       
       this->nearest_image(pos(*at_it), v_box, v);
       pos(*at_it) = v_box + v;
+      
+      // std::cout << "  " << math::v2s(v_box + v) << "\n";
 
     } // atoms
   } // solvent cg's

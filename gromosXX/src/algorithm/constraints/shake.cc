@@ -104,6 +104,7 @@ int algorithm::Shake::shake_iteration
     
     double dist2 = abs2(r);
 	
+    assert(parameter().size() > it->type);
     double constr_length2 = parameter()[it->type].r0 * parameter()[it->type].r0;
     double diff = constr_length2 - dist2;
 
