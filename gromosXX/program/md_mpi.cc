@@ -330,12 +330,12 @@ void print_title(bool color, int size, std::ostream & os)
 #else
     os << "\033[1;31m";
 #endif
-    os << "\n\nGromosXX 0.2.1 development\033[22;0m\n\n"
-       << "26th October 2004\n";
+    os << "\n\nGromosXX 0.2.3 development\033[22;0m\n\n"
+       << "3rd December 2005\n";
   }
   else
-    os << "\n\nGromosXX 0.2.1 development\n\n"
-       << "26th October 2004\n";
+    os << "\n\nGromosXX 0.2.3 development\n\n"
+       << "3rd December 2005\n";
   
   os << "build date    " << BUILD_DATE << "\n"
      << "build number  " << BUILD_NUMBER << "\n\n";

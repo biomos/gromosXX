@@ -153,12 +153,12 @@ void print_title(io::Argument & args, bool color)
 #else
     std::cout << "\033[1;31m";
 #endif
-    std::cout << "\n\nGromosXX 0.2.1 development\033[22;0m\n\n"
-	      << "26th October 2004\n";
+    std::cout << "\n\nGromosXX 0.2.3 development\033[22;0m\n\n"
+	      << "3rd December 2005\n";
   }
   else
-    std::cout << "\n\nGromosXX 0.2.1 development\n\n"
-	      << "26th October 2004\n";
+    std::cout << "\n\nGromosXX 0.2.3 development\n\n"
+	      << "3rd December 2005\n";
   
   std::cout << "build date    " << BUILD_DATE << "\n"
 	    << "build number  " << BUILD_NUMBER << "\n\n";
