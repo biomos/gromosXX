@@ -34,6 +34,8 @@
 <li><a href="#integrate">Integration method</a></li>
 <li><a href="#cgrain">CGRAIN</a></li>
 <li><a href="#rottrans">ROTTRANS</a></li>
+<li><a href="#distrest">DISTREST</a></li>
+<li><a href="#dihrest">DIHREST</a></li>
 </ul>
 
 <br>
@@ -224,16 +226,6 @@ CENTREOFMASS
 #
 #   NDFMIN      NTCM      NSCM
          0         0   1000000
-END
-ROTTRANS
-# roto-translational constraints
-# use either centre of mass removal or roto-translational constraints
-# not both!
-#
-#  RTC  : on (1), off (0)
-#  last : last atom to be roto-translationally constrained
-#  RTC    last
-     1    100
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
@@ -580,11 +572,55 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 ROTTRANS
-# enable roto-translational constraints
-     1
+# roto-translational constraints
+# use either centre of mass removal or roto-translational constraints
+# not both!
+#
+#  RTC  : on (1), off (0)
+#  last : last atom to be roto-translationally constrained
+#  RTC    last
+     1    100
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
+
+<h2><a name="distrest">DISTREST</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+DISTREST
+# method  0 : off
+#         1 : instantaneous
+#         2 : time-averaged
+#         3 : biquadratic
+# K       force constant (multiplied by w0 of individual restraints)
+# r_lin   deviation after which the potential energy function is linearized
+# tau     time averaging memory time
+# read    read averages from file
+#
+# method     K  rlin  tau  read
+  1       10.0   0.2    5     0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+Example <a href="disres.html">distance restraints specification</a>
+
+<h2><a name="dihrest">DIHREST</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+DIHREST
+# method  0 : off
+#         1 : instantaneous
+#         2 : time-averaged
+#         3 : biquadratic
+# K       force constant (multiplied by w0 of individual restraints)
+# phi_lin deviation after which the potential energy function is linearized
+#
+# method     K  rlin  tau  read
+  1       10.0   0.2    5     0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+Example <a href="dihres.html">dihedral restraints specification</a>
 
 </body>
 </html>

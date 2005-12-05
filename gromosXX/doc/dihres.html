@@ -1,0 +1,39 @@
+<HTML>
+<head>
+<title>GromosXX Dihedral Restraints</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1>GromosXX Dihedral Restraints</h1>
+
+<h2><a name="title">TITLE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+TITLE
+	GromosXX
+	dihedral restraints specification
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="dihres">Dihedral Restraints</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+DIHRESSPEC
+# i  j  k  l   delta    phi   w0
+  1  2  3  4    90.0  120.0  1.0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<br>
+where <tt>i</tt>, <tt>j</tt>, <tt>k</tt> and <tt>l</tt> specify the
+dihedral angle, <tt>phi</tt> the restraint angle value and <tt>w0</tt>
+is a weight factor (multiplied by the force constant specified in the
+input file).
+<tt>delta</tt> specifies where the maximum of the harmonic potential
+will be. The restraint is periodic from <tt>delta</tt> to <tt>delta +
+360</tt>.
+
+</body>
