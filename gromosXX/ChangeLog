@@ -1,3 +1,455 @@
+2005-12-05 10:01  markus
+
+	* src/interaction/nonbonded/interaction/: mpi_nonbonded_master.cc,
+	  mpi_nonbonded_slave.cc: mpi compiling error
+
+2005-12-03 11:29  markus
+
+	* program/: BUILD_NUMBER, md.cc, md_mpi.cc, repex.cc: version
+	  string
+
+2005-12-03 11:28  markus
+
+	* src/algorithm/create_md_sequence.cc: output clean-up
+
+2005-12-03 11:28  markus
+
+	* src/: algorithm/constraints/shake.cc, math/periodicity.cc:
+	  debugging
+
+2005-12-03 11:27  markus
+
+	* src/: simulation/parameter.h, util/virtual_grain.cc: boost
+	  multistepping
+
+2005-12-03 11:26  markus
+
+	* src/check/data/: aladip.in, aladip_cg.in: perturbation alpha in
+	  input used as weight
+
+2005-12-03 11:23  markus
+
+	* src/io/topology/: in_topology.cc, in_topology.h: bugfix (59):
+	  constraint parameters
+
+2005-12-03 11:19  markus
+
+	* src/io/parameter/in_parameter.cc: boost multistepping
+
+2005-12-03 11:18  markus
+
+	* src/interaction/: forcefield/create_forcefield.cc,
+	  nonbonded/create_nonbonded.cc, special/create_special.cc: output
+	  clean-up
+
+2005-12-03 11:17  markus
+
+	* src/interaction/nonbonded/interaction/: mpi_nonbonded_master.cc,
+	  mpi_nonbonded_slave.cc, nonbonded_interaction.cc,
+	  nonbonded_set.cc, omp_nonbonded_interaction.cc,
+	  vgrid_nonbonded_set.cc: boost multistepping. correction term
+	  missing!
+
+2005-11-26 14:23  markus
+
+	* program/md_mpi.cc: quiet algorithm initialization
+
+2005-11-26 14:11  markus
+
+	* program/md_mpi.cc: quiet algorithm initialization
+
+2005-11-26 13:51  markus
+
+	* src/algorithm/integration/leap_frog.h: quiet algorithm
+	  initialization
+
+2005-11-26 13:46  markus
+
+	* src/: algorithm/create_md_sequence.cc,
+	  algorithm/create_md_sequence.h,
+	  algorithm/constraints/remove_com_motion.cc, io/read_input.cc:
+	  quiet algorithm initialization
+
+2005-11-26 13:32  markus
+
+	* program/md_mpi.cc, src/io/read_input.cc, src/io/read_input.h,
+	  src/io/read_special.cc, src/io/read_special.h,
+	  src/io/parameter/in_parameter.cc, src/topology/topology.h: quiet
+	  initialization
+
+2005-11-26 12:57  markus
+
+	* program/: Makefile.am, mg.cc: multigraining standalone program
+	  (not REMD)
+
+2005-11-26 12:56  markus
+
+	* contrib/rep_rewrite.cc, program/md_mpi.cc,
+	  src/algorithm/pressure/berendsen_barostat.h,
+	  src/algorithm/pressure/pressure_calculation.h,
+	  src/interaction/bonded/angle_interaction.h,
+	  src/interaction/bonded/dihedral_interaction.h,
+	  src/interaction/bonded/harm_angle_interaction.h,
+	  src/interaction/bonded/harmonic_bond_interaction.h,
+	  src/interaction/bonded/improper_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_harmonic_bond_interaction.h,
+	  src/interaction/bonded/perturbed_improper_dihedral_interaction.h,
+	  src/interaction/bonded/perturbed_quartic_bond_interaction.h,
+	  src/interaction/bonded/quartic_bond_interaction.h,
+	  src/interaction/nonbonded/pairlist/standard_pairlist_algorithm.h,
+	  src/io/topology/in_jvalue.cc, src/io/topology/in_posres.cc:
+	  output separation for MPI
+
+2005-11-25 20:14  markus
+
+	* src/interaction/special/external_interaction.cc: complete
+	  argument list
+
+2005-11-25 20:09  markus
+
+	* program/Makefile.am: re-add md_mpi
+
+2005-11-25 20:09  markus
+
+	* program/md_mpi.cc: output separation for MPI
+
+2005-11-25 20:09  markus
+
+	* program/md.cc: exit if opening files fails
+
+2005-11-25 20:08  markus
+
+	* doc/input.html: doc update
+
+2005-11-25 20:07  markus
+
+	* src/interaction/nonbonded/interaction/: nonbonded_interaction.cc,
+	  nonbonded_set.cc, vgrid_nonbonded_set.cc: multiple time stepping
+
+2005-11-25 20:06  markus
+
+	* src/util/: replica_exchange.h, replica_exchange_master.cc,
+	  replica_exchange_slave.cc, virtual_grain.cc, virtual_grain.h:
+	  multiple time stepping, error resistance
+
+2005-11-25 20:04  markus
+
+	* src/: io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  simulation/parameter.h: read alpha in perturb, add multiple
+	  timestepping
+
+2005-11-25 20:04  markus
+
+	* src/io/topology/in_perturbation.cc: use alpha*w from parameter
+	  and topology
+
+2005-11-25 20:03  markus
+
+	* src/: io/read_input.cc, io/read_special.cc, io/read_special.h,
+	  io/topology/in_dihrest.cc, io/topology/in_dihrest.h,
+	  io/topology/in_distrest.cc, io/topology/in_distrest.h,
+	  io/topology/in_jvalue.cc, io/topology/in_jvalue.h,
+	  io/topology/in_posres.cc, io/topology/in_posres.h,
+	  algorithm/algorithm/algorithm_sequence.cc,
+	  algorithm/integration/energy_calculation.cc,
+	  algorithm/integration/leap_frog.cc,
+	  algorithm/integration/leap_frog.h,
+	  algorithm/temperature/berendsen_thermostat.cc,
+	  algorithm/temperature/temperature_calculation.cc: output
+	  separation for MPI
+
+2005-11-25 19:21  markus
+
+	* program/Makefile.am: re-adding md_mpi
+
+2005-11-25 19:19  markus
+
+	* src/interaction/nonbonded/interaction/: mpi_nonbonded_master.cc,
+	  mpi_nonbonded_slave.cc: bugfix: MPI exchange box
+
+2005-11-25 19:18  markus
+
+	* src/interaction/special/jvalue_restraint_interaction.cc: flat
+	  bottom potentials
+
+2005-11-21 20:25  markus
+
+	* src/math/gmath.h: explicit operator=
+
+2005-11-21 20:25  markus
+
+	* src/io/topology/in_perturbation.cc: perturbation topology output
+
+2005-11-21 20:25  markus
+
+	* src/io/configuration/in_configuration.cc: REMD with 1 replica
+
+2005-11-21 20:24  markus
+
+	* src/io/print_block.cc: j-elevation output
+
+2005-11-21 20:23  markus
+
+	* src/: configuration/energy.cc, configuration/energy.h,
+	  io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  simulation/parameter.h, configuration/configuration.cc: energy
+	  value monitoring
+
+2005-11-21 20:23  markus
+
+	* src/util/: replica_exchange_control.cc,
+	  replica_exchange_master.cc, replica_exchange_slave.cc,
+	  virtual_atom.cc, virtual_grain.cc: debug & output
+
+2005-11-21 20:22  markus
+
+	* src/interaction/:
+	  nonbonded/interaction/perturbed_nonbonded_set.cc,
+	  special/external_interaction.h,
+	  special/jvalue_restraint_interaction.cc: j-elevation
+
+2005-11-20 17:13  markus
+
+	* Makefile.am: automake contrib
+
+2005-11-20 17:12  markus
+
+	* nightly/: nightly.sh, options.Linux_i686, options.gromos++,
+	  options.gromosXX, pkg_debian.sh: prefix bugfix
+
+2005-11-13 13:57  markus
+
+	* src/interaction/special/jvalue_restraint_interaction.cc,
+	  src/interaction/special/jvalue_restraint_interaction.h,
+	  src/io/print_block.cc, src/io/print_block.h,
+	  src/io/configuration/out_configuration.cc,
+	  src/io/configuration/out_configuration.h,
+	  src/io/parameter/in_parameter.cc, src/simulation/parameter.h,
+	  src/topology/core/body_term.h, doc/input.html: local elevation
+	  (j-value) restraints
+
+2005-11-12 10:11  markus
+
+	* configure.in: less optimisation
+
+2005-11-12 10:10  markus
+
+	* src/topology/topology.h, src/topology/core/body_term.h,
+	  src/util/usage.cc, program/md.cc: dihedral restraints
+
+2005-11-12 10:09  markus
+
+	* src/: io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  simulation/parameter.h, algorithm/constraints/rottrans.cc,
+	  algorithm/constraints/shake.cc,
+	  algorithm/integration/stochastic.cc: stochastic dynamics and
+	  dihedral restraints
+
+2005-11-12 10:06  markus
+
+	* src/: interaction/Makefile.am,
+	  interaction/special/create_special.cc,
+	  interaction/special/dihedral_restraint_interaction.cc,
+	  interaction/special/dihedral_restraint_interaction.h,
+	  interaction/special/perturbed_dihedral_restraint_interaction.cc,
+	  interaction/special/perturbed_dihedral_restraint_interaction.h,
+	  interaction/special/perturbed_distance_restraint_interaction.h,
+	  configuration/average.cc, configuration/energy.cc,
+	  configuration/energy.h, io/Makefile.am, io/print_block.cc,
+	  io/read_special.cc, io/configuration/out_configuration.cc,
+	  io/topology/in_dihrest.cc, io/topology/in_dihrest.h: dihedral
+	  restraints
+
+2005-11-12 10:06  markus
+
+	* src/interaction/nonbonded/interaction/: mpi_nonbonded_master.cc,
+	  mpi_nonbonded_slave.cc, nonbonded_set.cc, nonbonded_set.h,
+	  nonbonded_set_interface.h, perturbed_nonbonded_set.cc,
+	  vgrid_nonbonded_set.cc, vgrid_nonbonded_set.h: bugfix: mpi
+	  compilation -> shortrange_storage
+
+2005-11-08 16:00  markus
+
+	*
+	  src/interaction/nonbonded/interaction/perturbed_nonbonded_term.cc:
+	  bugfix: dE/dl cutoff part missing for LJ
+
+2005-11-08 15:51  markus
+
+	* src/interaction/nonbonded/interaction/nonbonded_term.cc: simplify
+	  because of removal of switching
+
+2005-11-08 15:45  markus
+
+	* src/util/replica_exchange_master.cc: compiler warnings:
+	  signed/unsigned
+
+2005-11-08 15:44  markus
+
+	* src/util/generate_velocities.cc: bugfix: free rng
+
+2005-11-08 15:41  markus
+
+	* src/: algorithm/Makefile.am, algorithm/create_md_sequence.cc,
+	  algorithm/integration/stochastic.cc,
+	  algorithm/integration/stochastic.h,
+	  configuration/configuration.cc, configuration/configuration.h,
+	  io/configuration/in_configuration.cc,
+	  io/configuration/in_configuration.h,
+	  io/configuration/out_configuration.cc,
+	  io/configuration/out_configuration.h,
+	  io/parameter/in_parameter.cc, io/parameter/in_parameter.h,
+	  simulation/parameter.h, topology/Makefile.am, topology/sd.h,
+	  topology/topology.h: stochastic dynamics
+
+2005-11-08 15:41  markus
+
+	* src/: algorithm/integration/energy_calculation.cc,
+	  configuration/average.cc, configuration/energy.cc,
+	  configuration/energy.h, io/print_block.cc: entropy calculation
+	  (covariance, christine)
+
+2005-11-01 09:59  markus
+
+	* src/: io/configuration/out_configuration.cc,
+	  io/configuration/out_configuration.h, io/topology/in_topology.cc,
+	  simulation/parameter.h, topology/topology.cc,
+	  topology/topology.h, util/replica_exchange_master.cc,
+	  util/replica_exchange_slave.cc, util/usage.cc: release
+	  preparation
+
+2005-11-01 09:58  markus
+
+	* src/interaction/nonbonded/create_nonbonded.cc,
+	  src/io/parameter/in_parameter.cc, ChangeLog, Makefile.am,
+	  configure.in, contrib/Makefile.am, contrib/rep_rewrite.cc,
+	  program/Makefile.am, program/md.cc, program/md_mpi.cc,
+	  program/repex.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_innerloop.cc,
+	  src/interaction/nonbonded/interaction/nonbonded_interaction.cc,
+	  src/io/print_block.cc, src/io/print_block.h: vdw / crf terms only
+
+2005-11-01 09:54  markus
+
+	* src/algorithm/constraints/shake.cc: better error message
+
+2005-11-01 09:54  markus
+
+	* doc/: arguments.html, input.html, jval.doxy, jval.html: jvalue
+	  documentation
+
+2005-10-19 19:14  markus
+
+	* src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc:
+	  debug: assertions
+
+2005-10-19 19:14  markus
+
+	* src/interaction/nonbonded/: interaction/vgrid_nonbonded_set.cc,
+	  vector/vgrid.cc, vector/vgrid.h: bugfix: solvent cgs, grid
+	  information
+
+2005-10-19 19:13  markus
+
+	* src/interaction/nonbonded/pairlist/grid.cc: bugfix: not enough
+	  space in last grid cell
+
+2005-10-19 19:12  markus
+
+	* src/interaction/nonbonded/interaction/nonbonded_set.cc: remove
+	  debug output
+
+2005-10-19 10:24  markus
+
+	* src/: io/topology/in_distrest.cc,
+	  util/replica_exchange_control.cc,
+	  util/replica_exchange_master.cc, util/replica_exchange_slave.cc:
+	  redhat compilation bugfixes
+
+2005-10-14 08:29  markus
+
+	* src/interaction/nonbonded/vector/vgrid.cc: non-vectorized
+	  interaction function (faster?!)
+
+2005-10-13 17:27  markus
+
+	* src/interaction/nonbonded/: pairlist/vgrid_pairlist_algorithm.cc,
+	  vector/vgrid.cc, vector/vgrid.h: shortrange timing information
+
+2005-10-12 19:09  markus
+
+	* src/interaction/nonbonded/: interaction/vgrid_nonbonded_set.cc,
+	  vector/vgrid.cc: vector grid pairlist bekker virial calculation
+
+2005-10-12 19:08  markus
+
+	* src/interaction/nonbonded/pairlist/grid_pairlist_algorithm.cc:
+	  grid pairlist now works for atomic virial
+
+2005-10-12 19:08  markus
+
+	* src/algorithm/create_md_sequence.cc: typo
+
+2005-10-12 19:06  markus
+
+	* program/md.cc: return error code
+
+2005-10-11 16:02  markus
+
+	* src/io/configuration/in_configuration.cc: debug messages
+
+2005-10-08 16:54  markus
+
+	* src/topology/topology.cc: bugfix: vector grid pairlist
+
+2005-10-08 16:53  markus
+
+	* src/interaction/nonbonded/: interaction/nonbonded_interaction.cc,
+	  interaction/nonbonded_outerloop.cc, interaction/nonbonded_set.cc,
+	  interaction/nonbonded_set.h, vector/vgrid.cc: bugfixes for vector
+	  grid pairlist
+
+2005-10-07 17:02  markus
+
+	* src/io/print_block.cc: clean up multibath output
+
+2005-10-07 17:02  markus
+
+	* src/interaction/: Makefile.am, nonbonded/create_nonbonded.cc,
+	  nonbonded/interaction/nonbonded_innerloop.cc,
+	  nonbonded/interaction/nonbonded_interaction.cc,
+	  nonbonded/interaction/nonbonded_interaction.h,
+	  nonbonded/interaction/nonbonded_outerloop.cc,
+	  nonbonded/interaction/nonbonded_outerloop.h,
+	  nonbonded/interaction/nonbonded_set.cc,
+	  nonbonded/interaction/nonbonded_set.h,
+	  nonbonded/interaction/nonbonded_set_interface.h,
+	  nonbonded/interaction/perturbed_nonbonded_set.cc,
+	  nonbonded/interaction/perturbed_nonbonded_set.h,
+	  nonbonded/interaction/vgrid_nonbonded_set.cc,
+	  nonbonded/interaction/vgrid_nonbonded_set.h,
+	  nonbonded/pairlist/vgrid_pairlist_algorithm.cc,
+	  nonbonded/pairlist/vgrid_pairlist_algorithm.h,
+	  nonbonded/vector/vgrid.cc, nonbonded/vector/vgrid.h: integrating
+	  vector grid pairlist into standard nonbonded classes
+
+2005-10-07 14:23  markus
+
+	* src/io/parameter/in_parameter.cc: multibath range checks
+
+2005-10-07 13:03  markus
+
+	* src/io/parameter/in_parameter.cc: commenting
+
+2005-10-07 13:02  markus
+
+	* src/io/print_block.cc: print multibath correctly
+
+2005-10-07 13:01  markus
+
+	* program/BUILD_NUMBER: [no log message]
+
 2005-10-07 10:46  markus
 
 	* src/interaction/nonbonded/vector/: grid.cc, grid.h, vgrid.cc:
