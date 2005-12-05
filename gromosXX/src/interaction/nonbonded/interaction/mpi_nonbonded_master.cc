@@ -220,6 +220,16 @@ calculate_interactions(topology::Topology & topo,
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
     ////////////////////////////////////////////////////
+
+    if (sim.param().pairlist.print &&
+	(!(sim.steps() % sim.param().pairlist.skip_step))){
+      
+      DEBUG(7, "print pairlist...");
+      std::ofstream os("server.pl", std::ios::app);
+      os << "rank " << rank << " of " << num_threads << std::endl;
+      print_pairlist(topo, conf, sim, os);
+    }
+
   }
   else{
     // std::cout << "MULTISTEP: no recalculation...\n";
@@ -228,14 +238,6 @@ calculate_interactions(topology::Topology & topo,
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(topo, conf, sim);
 
-  if (sim.param().pairlist.print &&
-      (!(sim.steps() % sim.param().pairlist.skip_step))){
-
-    DEBUG(7, "print pairlist...");
-    std::ofstream os("server.pl", std::ios::app);
-    os << "rank " << rank << " of " << num_threads << std::endl;
-    print_pairlist(topo, conf, sim, os);
-  }
   
 #else
   std::cerr << "using MPI code without MPI defined..." << std::endl;

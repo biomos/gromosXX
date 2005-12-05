@@ -191,6 +191,15 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 			     0);
       
     }
+
+    if (sim.param().pairlist.print &&
+	 (!(sim.steps() % sim.param().pairlist.skip_step))){
+      
+      DEBUG(7, "print pairlist...");
+      std::ofstream os("slave.pl", std::ios::app);
+      os << "rank " << rank << " of " << num_threads << std::endl;
+      print_pairlist(topo, conf, sim, os);
+    }
     
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
@@ -198,15 +207,6 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
   }
   else{
     std::cout << "MULTISTEP: no recalculation...\n";
-  }
-
-  if (sim.param().pairlist.print &&
-      (!(sim.steps() % sim.param().pairlist.skip_step))){
-
-    DEBUG(7, "print pairlist...");
-    std::ofstream os("slave.pl", std::ios::app);
-    os << "rank " << rank << " of " << num_threads << std::endl;
-    print_pairlist(topo, conf, sim, os);
   }
 
 #else
