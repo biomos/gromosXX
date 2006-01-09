@@ -96,34 +96,8 @@ static int _calculate_dihedral_restraint_interactions
 
     DEBUG(10, "raw phi="<< 180.0 * phi / math::Pi);
     
-    ip = -dot(rij, rnk);
+    ip = dot(rij, rnk);
     if(ip < 0) phi *= -1.0;
-
-    /*
-    periodicity.nearest_image(pos(it->i), pos(it->j), rij);
-    periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
-    periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
-    
-    rmj = cross(rij, rkj);
-    rnk = cross(rkj, rkl);
-    
-    dkj2 = abs2(rkj);
-    
-    double frim = dot(rij, rkj)/dkj2;
-    double frln = dot(rkl, rkj)/dkj2;
-    
-    rim = rij - frim * rkj;
-    rln = frln * rkj - rkl;
-    dim = sqrt(abs2(rim));
-    dln = sqrt(abs2(rln));
-    
-    ip = dot(rim, rln);
-    double cosphi = ip / (dim*dln);
-    double phi = acos(cosphi);
-    
-    double sgn = dot(rij, rnk);
-    if(sgn < 0) phi *= -1.0;
-    */
 
     DEBUG(9, "uncorrected phi=" << 180.0 * phi / math::Pi);
 
@@ -131,11 +105,17 @@ static int _calculate_dihedral_restraint_interactions
       phi += 2 * math::Pi;
     while(phi > it->delta + 2 * math::Pi)
       phi -= 2 * math::Pi;
+    
+    double phi_0 = it->phi;
+    while(phi_0 < it->delta)
+      phi_0 += 2 * math::Pi;
+    while(phi_0 > it->delta + 2 * math::Pi)
+      phi_0 -= 2 * math::Pi;
 
-    DEBUG(9, "phi=" << 180 * phi / math::Pi << " phi0=" << 180 * it->phi / math::Pi
+    DEBUG(9, "phi=" << 180 * phi / math::Pi << " phi0=" << 180 * phi_0 / math::Pi
 	  << " delta=" << 180 * it->delta / math::Pi);
 
-    double delta_phi = phi - it->phi;
+    double delta_phi = phi - phi_0;
     DEBUG(9, "delta_phi=" << 180 * delta_phi / math::Pi);
     
     double phi_lin = sim.param().dihrest.phi_lin;
@@ -152,7 +132,7 @@ static int _calculate_dihedral_restraint_interactions
       energy = K * (zeta * delta_phi - 0.5 * phi_lin) * phi_lin;
       f = -K * zeta * phi_lin;
     }
-    {
+    else {
       // HARMONIC
       DEBUG(10, "harmonic");
       energy = 0.5 * K * delta_phi * delta_phi;
@@ -174,27 +154,10 @@ static int _calculate_dihedral_restraint_interactions
     fj = kj1 * fi - kj2 * fl;
     fk = -1.0*(fi + fj + fl);
     
-    force(it->i) -= fi;
-    force(it->j) -= fj;
-    force(it->k) -= fk;
-    force(it->l) -= fl;
-
-    /*
-    double ki = f / dim;
-    double kl = f / dln;
-    double kj1 = frim - 1.0;
-    double kj2 = frln;
-    
-    fi = ki * (rln / dln - rim / dim * cosphi);
-    fl = kl * (rim / dim - rln / dln * cosphi);
-    fj = kj1 * fi - kj2 * fl;
-    fk = -1.0 * (fi + fj + fl);
-    
     force(it->i) += fi;
     force(it->j) += fj;
     force(it->k) += fk;
     force(it->l) += fl;
-    */
 
   }
   
