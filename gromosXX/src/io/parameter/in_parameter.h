@@ -211,6 +211,11 @@ namespace io {
      * read MULTISTEP block.
      */
     void read_MULTISTEP(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read MONTECARLO block.
+     */
+    void read_MONTECARLO(simulation::Parameter & param, std::ostream & os = std::cout);
 
   };
   

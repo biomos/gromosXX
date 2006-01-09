@@ -1180,6 +1180,10 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   double av;
   
   if (buffer.size() - 1 != jval_res.size()){
+    std::cout << "JVALRESPECAVE: " << buffer.size() - 1
+	      << " but restraints: " << jval_res.size()
+	      << std::endl;
+
     io::messages.add("number of J-restraints does not match with number of "
 		     "continuation data", "in_configuration",
 		     io::message::error);

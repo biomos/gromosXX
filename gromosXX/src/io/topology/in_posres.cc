@@ -25,7 +25,6 @@
 
 void 
 io::In_Posres::read(topology::Topology& topo,
-		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
 		    std::ostream & os){
   

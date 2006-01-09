@@ -936,8 +936,8 @@ io::In_Topology::read(topology::Topology& topo,
 	++it;
 
 	if (!quiet)
-	  os << "\n\t\tVirtual Grains : "
-		    << num;
+	  os << "\tVIRTUALGRAIN\n\t\tVirtual Grains : "
+	     << num;
 
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
 	  _lineStream.clear();
@@ -987,6 +987,11 @@ io::In_Topology::read(topology::Topology& topo,
     if (topo.molecules().back()
 	!= topo.num_solute_atoms()){
     
+      std::cout << "ERROR: Submolecules wrong\n"
+		<< "\tlast atom in submol block = " << topo.molecules().back()
+		<< "\n\tlast atom in topology = " << topo.num_solute_atoms()
+		<< std::endl;
+      
       io::messages.add("Error in SUBMOLECULE block: "
 		       "last submolecule has to end with last solute atom",
 		       "In_Topology", io::message::error);

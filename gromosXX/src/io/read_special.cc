@@ -33,7 +33,9 @@
 #define MODULE simulation
 #define SUBMODULE read_input
 
-
+/**
+ * WARNING: configuration has not been read yet
+ */
 int io::read_special(io::Argument const & args,
 		     topology::Topology & topo,
 		     configuration::Configuration & conf,
@@ -65,7 +67,7 @@ int io::read_special(io::Argument const & args,
       io::In_Posres ip(posres_file);
       ip.quiet = quiet;
       
-      ip.read(topo, conf, sim, os);
+      ip.read(topo, sim, os);
     }
   } // POSRES
 
@@ -93,7 +95,7 @@ int io::read_special(io::Argument const & args,
       io::In_Distrest ip(distrest_file);
       ip.quiet = quiet;
       
-      ip.read(topo, conf, sim, os);
+      ip.read(topo, sim, os);
     }    
   } // DISTREST
 
@@ -120,7 +122,7 @@ int io::read_special(io::Argument const & args,
       io::In_Dihrest ip(dihrest_file);
       ip.quiet = quiet;
       
-      ip.read(topo, conf, sim, os);
+      ip.read(topo, sim, os);
     }    
   } // DIHREST
 

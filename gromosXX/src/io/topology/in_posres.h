@@ -29,7 +29,6 @@ namespace io {
      * Read in a position restraining file.
      */
     void read(topology::Topology &topo,
-	      configuration::Configuration & conf,
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
 

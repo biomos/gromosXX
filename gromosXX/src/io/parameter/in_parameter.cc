@@ -75,6 +75,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_STOCHASTIC(param);
   read_EWARN(param);
   read_MULTISTEP(param);
+  read_MONTECARLO(param);
   
   DEBUG(7, "input read...");
 
@@ -1021,20 +1022,6 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
 		       "In_Parameter", io::message::error);
 
     param.perturbation.perturbation=(ntg!=0);
-    
-    if (param.perturbation.perturbation &&
-	(param.perturbation.soft_vdw || param.perturbation.soft_crf)){
-      io::messages.add("PERTURB: softness constants taken from topology!",
-		       "In_Parameter", io::message::notice);
-    }
-    if (param.perturbation.perturbation && param.perturbation.soft_vdw){
-      io::messages.add("PERTURB: lj softness set to 0 (overruling topology)",
-		       "In_Parameter", io::message::notice);
-    }
-    if (param.perturbation.perturbation && param.perturbation.soft_crf){
-      io::messages.add("PERTURB: crf softness set to 0 (overruling topology)",
-		       "In_Parameter", io::message::notice);
-    }
     
   }
   
@@ -2495,6 +2482,32 @@ void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
     
     if (_lineStream.fail()){
       io::messages.add("bad line in MULTISTEP block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
+  }
+}
+
+void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
+				       std::ostream & os)
+{
+  DEBUG(8, "read MONTECARLO");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["MONTECARLO"];
+  
+  if (buffer.size()){
+    block_read.insert("MONTECARLO");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    _lineStream >> param.montecarlo.mc >> param.montecarlo.steps;
+
+    if (_lineStream.fail()){
+      io::messages.add("bad line in MONTECARLO block",
 		       "In_Parameter", io::message::error);
       return;
     }

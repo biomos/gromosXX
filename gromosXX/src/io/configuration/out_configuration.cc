@@ -127,16 +127,16 @@ void io::Out_Configuration::_print_title(std::string title,
 void io::Out_Configuration::init(io::Argument & args,
 				 simulation::Parameter const & param)
 {
-  if (args.count("fin") > 0)
-    final_configuration(args["fin"]);
-  else io::messages.add("argument fin for final configuration required!",
+  if (args.count(argname_fin) > 0)
+    final_configuration(args[argname_fin]);
+  else io::messages.add("argument "+argname_fin+" for final configuration required!",
 			"Out_Configuration",
 			io::message::error);
 
-  if (args.count("trj") > 0)
-    trajectory(args["trj"], param.write.position);
+  if (args.count(argname_trj) > 0)
+    trajectory(args[argname_trj], param.write.position);
   else if (param.write.position)
-    io::messages.add("write trajectory but no trj argument",
+    io::messages.add("write trajectory but no "+argname_trj+" argument",
 		     "Out_Configuration",
 		     io::message::error);
 
@@ -153,10 +153,10 @@ void io::Out_Configuration::init(io::Argument & args,
   if (args.count("re") > 0)
     replica_trajectory(args["re"]);
   
-  if (args.count("tre") > 0)
-    energy_trajectory(args["tre"], param.write.energy);
+  if (args.count(argname_tre) > 0)
+    energy_trajectory(args[argname_tre], param.write.energy);
   else if (param.write.energy)
-    io::messages.add("write energy trajectory but no tre argument",
+    io::messages.add("write energy trajectory but no "+argname_tre+" argument",
 		     "Out_Configuration",
 		     io::message::error);
 

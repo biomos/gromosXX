@@ -29,7 +29,19 @@ namespace io{
    * input argument
    */
   extern std::string argname_input;
-
+  /**
+   * trajectory argument
+   */
+  extern std::string argname_trj;
+  /**
+   * final configuration argument
+   */
+  extern std::string argname_fin;
+  /**
+   * energy trajectory argument
+   */
+  extern std::string argname_tre;
+  
   /**
    * Class Argument
    * Purpose: Parse arguments from the command line or an input file.

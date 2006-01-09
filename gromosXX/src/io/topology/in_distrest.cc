@@ -26,7 +26,6 @@ static std::set<std::string> block_read;
 
 void 
 io::In_Distrest::read(topology::Topology& topo,
-		      configuration::Configuration & conf,
 		      simulation::Simulation & sim,
 		      std::ostream & os){
   

@@ -25,7 +25,6 @@
 static std::set<std::string> block_read;
 
 void io::In_Dihrest::read(topology::Topology& topo,
-			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
 			  std::ostream & os){
   
@@ -144,7 +143,7 @@ void io::In_Dihrest::read(topology::Topology& topo,
     DEBUG(10, "reading in perturbed DIHREST (PERTDIHRESSPEC data");
 
     if (!quiet){
-      switch(sim.param().distrest.distrest){
+      switch(sim.param().dihrest.dihrest){
 	case 0:
 	  os << "\tPerturbed Dihedral restraints OFF\n";
 	  // how did you get here?
