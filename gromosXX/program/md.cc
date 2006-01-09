@@ -110,6 +110,7 @@ int main(int argc, char *argv[]){
 	    << "dynamics simulations\n" << std::endl;
 
     
+  int percent = 0;
   double end_time = sim.time() + 
     sim.time_step_size() * (sim.param().step.number_of_steps - 1);
     
@@ -161,7 +162,28 @@ int main(int argc, char *argv[]){
 
     sim.time() += sim.time_step_size();
     ++sim.steps();
+    
+    
+    if (sim.steps() % (sim.param().step.number_of_steps / 10) == 0){
+      ++percent;
+      const double spent = util::now() - start;
+      const int hh = int(spent / 3600);
+      const int mm = int((spent - hh * 3600) / 60);
+      const int ss = int(spent - hh * 3600 - mm * 60);
 
+      std::cerr << "MD:       " << std::setw(4) << percent * 10 << "% done..." << std::endl;
+      std::cout << "MD:       " << std::setw(4) << percent * 10 << "% done..." << std::endl;
+      std::cerr << "MD: spent " << hh << ":" << mm << ":" << ss << std::endl;
+      std::cout << "MD: spent " << hh << ":" << mm << ":" << ss << std::endl;
+
+      const double eta_spent = spent / sim.steps() * sim.param().step.number_of_steps - spent;
+      const int eta_hh = int(eta_spent / 3600);
+      const int eta_mm = int((eta_spent - eta_hh * 3600) / 60);
+      const int eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
+      
+      std::cerr << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+      std::cout << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+    }
   }
     
   std::cout << "writing final configuration" << std::endl;

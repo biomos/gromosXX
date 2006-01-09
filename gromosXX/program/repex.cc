@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf"
      << "input" << "cg_input" << "verb" << "pttopo" << "cg_pttopo"
-	 << "trj" << "fin" << "trv" << "trf" << "tre" << "re" << "trg"
+	 << "trj" << "cg_trj" << "fin" << "cg_fin" << "trv" << "trf" << "tre" << "re" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
 	 << "rep" << "master" << "slave" << "control"
 	 << "version";
@@ -120,18 +120,8 @@ int main(int argc, char *argv[]){
 
     io::messages.display();
     
-    // MPI_Abort(MPI_COMM_WORLD, error);
     return 1;
   }
-  
-  // MPI_Finalize();
-  
-  // #else
-  
-  // std::cout << "MPI required! (use configure --enable-mpi)" << std::endl;
-  // return 1;
-
-  // #endif
   
   return 0;
 }

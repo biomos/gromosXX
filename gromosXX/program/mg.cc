@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf" << "input" << "cg_input" 
 	 << "verb" << "pttopo" << "cg_pttopo"
-	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
+	 << "trj" << "cg_trj" << "fin" << "cg_fin" << "trv" << "trf" << "tre" << "cg_tre" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
 	 << "anatrj" << "print"
 	 << "version";
@@ -85,8 +85,9 @@ int main(int argc, char *argv[]){
   algorithm::Algorithm_Sequence cg_md;
   simulation::Simulation cg_sim;
 
-  io::Out_Configuration traj("GromosXX\n");
-
+  io::Out_Configuration traj("GromosXX\n\tfine grained\n");
+  io::Out_Configuration cg_traj("GromosXX\n\tcoarse grained\n");
+  
   // add an external interaction
   sim.param().force.external_interaction = 1;
   io::read_input(args, topo, conf, sim,  md);
@@ -106,10 +107,16 @@ int main(int argc, char *argv[]){
 
   ei->set_coarsegraining(cg_topo, cg_conf, cg_sim);
 
+  traj.title("GromosXX\n\tfine-grained\n" + sim.param().title);
+  traj.init(args, sim.param());
+
   io::argname_conf = "cg_conf";
   io::argname_topo = "cg_topo";
   io::argname_pttopo = "cg_pttopo";
   io::argname_input = "cg_input";
+  io::argname_trj = "cg_trj";
+  io::argname_fin = "cg_fin";
+  io::argname_tre = "cg_tre";
   
   io::read_input(args, cg_topo, cg_conf, cg_sim, cg_md);
   interaction::Forcefield * cg_ff =
@@ -119,10 +126,8 @@ int main(int argc, char *argv[]){
     return 1;
   }
   
-  traj.title("GromosXX\n" + sim.param().title);
-
-  // create output files...
-  traj.init(args, sim.param());
+  cg_traj.title("GromosXX\n\tcoarse-grained\n" + sim.param().title);
+  cg_traj.init(args, cg_sim.param());
 
   // initialises all algorithms (and therefore also the forcefield)
   md.init(topo, conf, sim);
@@ -148,19 +153,20 @@ int main(int argc, char *argv[]){
   const double end_time = sim.time() + 
     sim.time_step_size() * 
     (sim.param().step.number_of_steps * msteps - 1);
-    
+
   std::cout << "==================================================\n"
 	    << " MAIN MD LOOP\n"
 	    << "==================================================\n"
 	    << std::endl;
 
   int error;
-
+  int percent = 0;
   const double init_time = util::now() - start;
     
   while(sim.time() < end_time + math::epsilon){
       
     traj.write(conf, topo, sim, io::reduced);
+    cg_traj.write(cg_conf, cg_topo, cg_sim, io::reduced);
 
     // coarse grained atom positions are based upon
     // real atom positions
@@ -170,24 +176,32 @@ int main(int argc, char *argv[]){
     cg_topo.lambda(topo.lambda());
     cg_topo.update_for_lambda();
 
-    if ((sim.steps() % msteps) == 0){
+    // if ((sim.steps() % msteps) == 0){
       
-      util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
+    // std::cerr << "----- cg md --------------------" << std::endl;
+    // std::cerr << "\tupdate_virtual_pos " << sim.steps() << std::endl;
+    util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
 
-      // calculate the cg forces first!
-      if ((error = cg_ff->apply(cg_topo, cg_conf, cg_sim))){
+    // calculate the cg forces first!
+    if ((error = cg_md.run(cg_topo, cg_conf, cg_sim))){
+
+      if (error == E_MINIMUM_REACHED) // ignore this...
+	error = 0;
+      else{
 	io::print_ENERGY(traj.output(), cg_conf.current().energies,
 			 cg_topo.energy_groups(),
-			 "CGOLDERROR", "CGOLDERR_");
+			 "CGERROR", "CGERR_");
 	
 	io::print_ENERGY(traj.output(), cg_conf.old().energies, 
 			 cg_topo.energy_groups(),
-			 "CGERROR", "CGERR_");
+			 "CGOLDERROR", "CGOLDERR_");
 	
 	std::cout << "\nError during CG MD run!\n" << std::endl;
 	break;
       }
     }
+    // std::cerr << "----- cg md done ---------------" << std::endl;
+    // std::cerr << "----- at md --------------------" << std::endl;
 
     // run a step
     if ((error = md.run(topo, conf, sim))){
@@ -218,6 +232,7 @@ int main(int argc, char *argv[]){
       // try to save the final structures...
       break;
     }
+    // std::cerr << "----- at md done ---------------" << std::endl;
 
     // HACKHACKHACK
     // lambda sweep...
@@ -232,12 +247,47 @@ int main(int argc, char *argv[]){
 
     sim.time() += sim.time_step_size();
     ++sim.steps();
+
+    cg_sim.time() += cg_sim.time_step_size();
+    ++cg_sim.steps();
+
+    if ((sim.steps() % (sim.param().step.number_of_steps * msteps / 10)) == 0){
+      ++percent;
+      const double spent = util::now() - start;
+      const int hh = int(spent / 3600);
+      const int mm = int((spent - hh * 3600) / 60);
+      const int ss = int(spent - hh * 3600 - mm * 60);
+
+      std::cerr << "MD:       " << std::setw(3) << percent * 10 << "% done..." << std::endl;
+      std::cout << "MD:       " << std::setw(3) << percent * 10 << "% done..." << std::endl;
+      std::cerr << "MD: spent " << std::setw(3) << hh << ":" 
+		<< std::setw(2) << mm << ":" 
+		<< std::setw(2) << ss << std::endl;
+      std::cout << "MD: spent " << std::setw(3) << hh << ":" 
+		<< std::setw(2) << mm << ":" 
+		<< std::setw(2) << ss << std::endl;
+
+      const double eta_spent = spent / sim.steps() * (msteps * sim.param().step.number_of_steps) - spent;
+      const int eta_hh = int(eta_spent / 3600);
+      const int eta_mm = int((eta_spent - eta_hh * 3600) / 60);
+      const int eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
+      
+      std::cerr << "MD: ETA   " << std::setw(3) << eta_hh << ":" 
+		<< std::setw(2) << eta_mm << ":"
+		<< std::setw(2) << eta_ss << std::endl;
+      std::cout << "MD: ETA   " << std::setw(3) << eta_hh << ":"
+		<< std::setw(2) << eta_mm << ":" 
+		<< std::setw(2) << eta_ss << std::endl;
+    }
   }
     
   std::cout << "writing final configuration" << std::endl;
     
   traj.write(conf, topo, sim, io::final);
   traj.print_final(topo, conf, sim);
+
+  util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
+  cg_traj.write(cg_conf, cg_topo, cg_sim, io::final);
     
   std::cout << "\nMESSAGES FROM SIMULATION\n";
   io::message::severity_enum err_msg = io::messages.display(std::cout);
