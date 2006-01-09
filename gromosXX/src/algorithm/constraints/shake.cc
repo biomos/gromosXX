@@ -363,7 +363,9 @@ int algorithm::Shake::apply(topology::Topology & topo,
 			    simulation::Simulation & sim)
 {
   DEBUG(7, "applying SHAKE");
-  bool do_vel = false;
+  bool do_vel_solute = false;
+  bool do_vel_solvent = false;
+  
   int error = 0;
   
   // check whether we shake
@@ -372,47 +374,52 @@ int algorithm::Shake::apply(topology::Topology & topo,
       sim.param().constraint.ntc > 1){
 
     DEBUG(8, "\twe need to shake SOLUTE");
-    do_vel = true;
+    do_vel_solute = true;
 
     SPLIT_VIRIAL_BOUNDARY(solute,
 			  topo, conf, sim.time_step_size(), 
 			  m_max_iterations, error);
-  }
-  
-  if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
-	      << "at step " << sim.steps() << std::endl;
-    // save old positions to final configuration... (even before free-flight!)
-    conf.current().pos = conf.old().pos;
-    return E_SHAKE_FAILURE_SOLUTE;
+    if (error){
+      std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
+		<< "at step " << sim.steps() << std::endl;
+      // save old positions to final configuration... (even before free-flight!)
+      conf.current().pos = conf.old().pos;
+      return E_SHAKE_FAILURE_SOLUTE;
+    }
   }
   
   if (sim.param().system.nsm &&
       sim.param().constraint.solvent.algorithm == simulation::constr_shake){
 
     DEBUG(8, "\twe need to shake SOLVENT");
-    do_vel = true;
+    do_vel_solvent = true;
 
     SPLIT_VIRIAL_BOUNDARY(solvent, 
 			  topo, conf, sim.time_step_size(), 
 			  m_max_iterations, error);
+    if (error){
+      std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
+		<< "at step " << sim.steps() << std::endl;
+      // save old positions to final configuration... (even before free-flight!)
+      conf.current().pos = conf.old().pos;
+      return E_SHAKE_FAILURE_SOLVENT;
+    }
   }
   
-  if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
-	      << "at step " << sim.steps() << std::endl;
-    // save old positions to final configuration... (even before free-flight!)
-    conf.current().pos = conf.old().pos;
-    return E_SHAKE_FAILURE_SOLVENT;
-  }
-      
   // shaken velocity:
   // stochastic dynamics needs to shake without velocity correction
   // (once; it shakes twice...)
   if (!sim.param().stochastic.sd){
-    for(unsigned int i=0; i<topo.num_atoms(); ++i)
-      conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
-	sim.time_step_size();
+    if (do_vel_solute){
+      for(unsigned int i=0; i<topo.num_solute_atoms(); ++i)
+	conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+	  sim.time_step_size();
+    }
+    if (do_vel_solvent){
+      for(unsigned int i=topo.num_solute_atoms(); i < topo.num_atoms(); ++i)
+	conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+	  sim.time_step_size();
+    }
   }
   
   // return success!
