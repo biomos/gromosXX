@@ -164,9 +164,16 @@ int interaction::Nonbonded_Set::update_configuration
     
     // only add when calculated
     if ((sim.steps() % steps) == 0){
+
+      // std::cerr << "\tadding boosted (" << steps << ") non-bonded forces" << std::endl;
+
       for(unsigned int i=0; i<topo.num_atoms(); ++i)
 	conf.current().force(i) += steps * m_storage.force(i);
     }
+    else{
+      // std::cerr << "\tnot adding non-bonded forces" << std::endl;
+    }
+    
   }
   else{
     for(unsigned int i=0; i<topo.num_atoms(); ++i)

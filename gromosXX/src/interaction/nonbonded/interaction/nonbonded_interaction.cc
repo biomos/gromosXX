@@ -97,7 +97,8 @@ calculate_interactions(topology::Topology & topo,
   // std::cerr << "Nonbonded: steps = " << steps << std::endl;
   
   if ((sim.steps() % steps) == 0){
-    // std::cout << "MULTISTEP: full calculation\n";
+
+    // std::cerr << "\tMULTISTEP: full non-bonded calculation" << std::endl;
     
     ////////////////////////////////////////////////////
     // multiple unit cell
@@ -142,7 +143,7 @@ calculate_interactions(topology::Topology & topo,
     ////////////////////////////////////////////////////
   }
   else{
-    // std::cout << "MULTISTEP: no recalculation...\n";
+    // std::cerr << "\tMULTISTEP: no non-bonded calculation" << std::endl;
   }
   
   DEBUG(6, "sets are done, adding things up...");

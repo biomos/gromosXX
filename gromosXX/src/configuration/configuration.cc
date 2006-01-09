@@ -31,7 +31,7 @@ configuration::Configuration::Configuration()
   m_current = &m_state1;
   m_old = &m_state2;
 
-  for(int i=0; i<3; ++i)
+  for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
       current().virial_tensor(i,j) = 0.0;
       old().virial_tensor(i,j) = 0.0;
@@ -42,7 +42,7 @@ configuration::Configuration::Configuration()
       current().pressure_tensor(i,j) = 0.0;
       old().pressure_tensor(i,j) = 0.0;
     }
-  
+  }
 }
 
 /**
@@ -108,7 +108,6 @@ configuration::Configuration::Configuration
   special().rottrans_constr = conf.special().rottrans_constr;
   
   boundary_type = conf.boundary_type;
-
 }
 
 /**
@@ -172,7 +171,7 @@ configuration::Configuration & configuration::Configuration::operator=
   special().pscale = conf.special().pscale;
   
   special().rottrans_constr = conf.special().rottrans_constr;
-  
+
   boundary_type = conf.boundary_type;
 
   return *this;

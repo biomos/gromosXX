@@ -23,6 +23,11 @@
 #define MODULE configuration
 #define SUBMODULE configuration
 
+/**
+ * calculates the centre of mass of a  group of atoms,
+ * accessed by an Atom_Iterator.
+ * In addition, calculates the centre of mass kinetic energy tensor (of this group).
+ */
 template <math::boundary_enum b>
 static void
 _centre_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
@@ -115,10 +120,12 @@ molecular_translational_ekin(topology::Atom_Iterator start,
   double tot_mass = 0.0;
   math::Vec v, new_v;
 
-  DEBUG(9, "mol trans ekin: first atom: " << *start);  
+  DEBUG(9, "mol trans ekin: first atom: " << *start << " till last atom: " << *end);  
 
   math::VArray const & vel = m_configuration.current().vel;
   math::VArray const & old_vel = m_configuration.old().vel;
+
+  assert(*start <= *end);
 
   for( ; start != end; ++start){
 	
@@ -129,6 +136,8 @@ molecular_translational_ekin(topology::Atom_Iterator start,
     m = mass(*start);
     tot_mass += m;
 
+    DEBUG(11, "old v=" << math::v2s(old_vel(*start)) << "\n    v=" << math::v2s(vel(*start)));
+    
     v = 0.5 * (vel(*start) + old_vel(*start));
     new_v = vel(*start);
     
