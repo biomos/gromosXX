@@ -28,6 +28,8 @@ namespace io
   class Argument;
 }
 
+struct addrinfo;
+
 namespace util
 {
 
@@ -55,6 +57,31 @@ namespace util
   protected:
 
     /**
+     * get replica data from network
+     */
+    int get_replica_data(Replica_Data & r, int &i);
+
+    /**
+     * get replica data from network
+     */
+    int get_replica_data(std::vector<Replica_Data> & r, int &i);
+
+    /**
+     * put replica data on network
+     */
+    int put_replica_data(Replica_Data & r);
+
+    /**
+     * get configuration from network
+     */
+    int get_configuration(configuration::Configuration & conf);
+
+    /**
+     * put configuration on network
+     */
+    int put_configuration(configuration::Configuration & conf);
+
+    /**
      * readblock
      */
     ssize_t readblock(char * source, ssize_t size);
@@ -63,6 +90,14 @@ namespace util
      * writeblock
      */
     ssize_t writeblock(char * dest, ssize_t size);
+
+    /**
+     * magic cookie exchange
+     * @param master send first, receive after if true
+     */
+    bool magic_cookie(bool master);
+
+    addrinfo * get_server(io::Argument & args, addrinfo & hints, std::string server_name);
 
     /**
      * unix network socket
@@ -100,7 +135,10 @@ namespace util
     /**
      * Destructor
      */
-    virtual ~Replica_Exchange_Master() {}
+    virtual ~Replica_Exchange_Master()
+    {
+      gsl_rng_free(m_rng);
+    }
 
     /**
      * run the thread
@@ -115,8 +153,32 @@ namespace util
       assert(i>=0 && unsigned(i) < m_conf.size());
       return m_conf[i];
     }
+
+    /**
+     * coarse-grained configuration accessor
+     */
+    configuration::Configuration & cg_conf(int i)
+    {
+      assert(i>=0 && unsigned(i) < m_cg_conf.size());
+      return m_cg_conf[i];
+    }
     
   private:
+    /**
+     * select a job for a client
+     */
+    int select_job(simulation::Simulation & sim);
+    
+    /**
+     * finish a job of a client
+     */
+    int finish_job(simulation::Simulation & sim);
+
+    /**
+     * interactive session
+     */
+    int interactive(simulation::Simulation & sim);
+    
     /**
      * try to switch replica i
      */
@@ -137,6 +199,9 @@ namespace util
      */
     void set_next_switch(int i);
 
+    /**
+     * print replica stuff
+     */
     void print_replica(int r,
 		       simulation::Parameter const & param,
 		       std::ostream & os);
@@ -144,6 +209,11 @@ namespace util
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // Data  ///////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * do multigraining ?
+     */
+    bool multigraining;
 
     /**
      * information of all replicas
@@ -156,9 +226,15 @@ namespace util
     gsl_rng * m_rng;
 
     /**
-     * (current) configuration of all replicas
+     * (current) (fine-grained) configuration of all replicas
      */
     std::vector<configuration::Configuration> m_conf;
+
+    /**
+     * (current) (coarse-grained) configuration of all replicas
+     * (only used for multigraining)
+     */
+    std::vector<configuration::Configuration> m_cg_conf;
 
     /**
      * switch temperatures?
@@ -170,7 +246,19 @@ namespace util
      */
     int switch_l;
     
+    /**
+     * output
+     */
     std::ofstream rep_out;
+    
+    /**
+     * trials done
+     */
+    int trials;
+    /**
+     * runs completed
+     */
+    int runs;
 
   };
 
@@ -211,43 +299,68 @@ namespace util
     bool multigraining;
 
     /**
-     * get replica data from master
+     * initialise slave
      */
-    int get_replica_data();
-    /**
-     * update replica data on master
-     */
-    int update_replica_data();
-    /**
-     * get configuration from master
-     */
-    int get_configuration(topology::Topology const & topo,
-			  configuration::Configuration & conf);
-    /**
-     * update configuration on master
-     */
-    int update_configuration(topology::Topology const & topo,
-			     configuration::Configuration & conf);
+    int init
+    (
+     io::Argument & args,
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     algorithm::Algorithm_Sequence & md,
+     io::Out_Configuration & traj,
+     topology::Topology & cg_topo,
+     configuration::Configuration & cg_conf,
+     simulation::Simulation & cg_sim,
+     algorithm::Algorithm_Sequence & cg_md,
+     io::Out_Configuration & cg_traj
+     );
+
     /**
      * initialise run (coordinates, time, temperature, lambda)
      */
-    int init_replica(topology::Topology & topo,
-		     configuration::Configuration & conf,
-		     simulation::Simulation & sim,
-		     topology::Topology & cg_topo,
-		     simulation::Simulation & cg_sim);
+    int init_replica
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     topology::Topology & cg_topo,
+     configuration::Configuration & cg_conf,
+     simulation::Simulation & cg_sim
+     );
     /**
      * run the replica
      */
-    int run_md(topology::Topology & topo,
-	       configuration::Configuration & conf,
-	       simulation::Simulation & sim,
-	       algorithm::Algorithm_Sequence & md,
-	       topology::Topology & cg_topo,
-	       configuration::Configuration & cg_conf,
-	       simulation::Simulation & cg_sim,
-	       interaction::Forcefield * cg_ff,
-	       io::Out_Configuration & traj);
+    int run_md
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     algorithm::Algorithm_Sequence & md,
+     io::Out_Configuration & traj,
+     topology::Topology & cg_topo,
+     configuration::Configuration & cg_conf,
+     simulation::Simulation & cg_sim,
+     algorithm::Algorithm_Sequence & cg_md,
+     io::Out_Configuration & cg_traj
+     );
+
+    /**
+     * run the replica
+     */
+    int recalc_energy
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     algorithm::Algorithm_Sequence & md,
+     io::Out_Configuration & traj,
+     topology::Topology & cg_topo,
+     configuration::Configuration & cg_conf,
+     simulation::Simulation & cg_sim,
+     algorithm::Algorithm_Sequence & cg_md,
+     io::Out_Configuration & cg_traj
+     );
 
   };
 
@@ -284,77 +397,6 @@ namespace util
     
   };
 
-  inline ssize_t Replica_Exchange::readblock(char * source, ssize_t size)
-  {
-    ssize_t current;
-    ssize_t window = 1024;
-    while(size > 0){
-      if (size > window)
-	current = window;
-      else current = size;
-      
-      ssize_t count;
-      if ((count = read(cl_socket, source, current)) == 0){
-	std::cerr << "received zero bytes instead of "
-		  << current << " !!!" << std::endl;
-	throw std::runtime_error("could not read data block");
-      }
-      
-      if (current != count){
-	std::cerr << "received only " << count << " bytes..." << std::endl;
-	// make window smaller...
-	window = count;
-      }
-
-      char c = 0;
-      if (write(cl_socket, &c, 1) != 1){
-	std::cerr << "sending ACK failed" << std::endl;
-	throw std::runtime_error("could not send ACK");
-      }
-
-      source += count;
-      size -= count;
-    }
-    return 0;
-  }
-  
-  inline ssize_t Replica_Exchange::writeblock(char * dest, ssize_t size)
-  {
-    ssize_t current;
-    ssize_t window = 1024;
-    while(size > 0){
-      if (size > window)
-	current = window;
-      else current = size;
-      
-      ssize_t count;
-      if ((count = write(cl_socket, dest, current)) == 0){
-	std::cerr << "could not write a single byte!\n"
-		  << "tried to send " << current << std::endl;
-	throw std::runtime_error("could not write data block");
-      }
-
-      if (current != count){
-	std::cerr << "sent only " << count << " bytes..." << std::endl;
-	// make window smaller...
-	window = count;
-      }
-      
-      char c = 0;
-      if (read(cl_socket, &c, 1) != 1){
-	std::cerr << "getting ACK failed" << std::endl;
-	throw std::runtime_error("could not read ACK");
-      }
-      if (c != 0){
-	std::cerr << "wrong ACK received" << std::endl;
-	throw std::runtime_error("wrong ACK received");
-      }
-      
-      dest += count;
-      size -= count;
-    }
-    return 0;
-  }
   
 } // util
 
