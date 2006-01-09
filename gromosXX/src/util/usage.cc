@@ -14,15 +14,30 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# topology data\n";
     usage += "\t@topo        filename\n\n";
   }
+
+  if (knowns.count("cg_topo")){
+    usage += "\t# coarse-grained topology data\n";
+    usage += "\t@cg_topo     filename\n\n";
+  }
   
   if (knowns.count("pttopo")){
     usage += "\t# perturbation topology data\n";
     usage += "\t# @pttopo    filename\n\n";
   }
+
+  if (knowns.count("cg_pttopo")){
+    usage += "\t# coarse-grained perturbation topology data\n";
+    usage += "\t# @cg_pttopo filename\n\n";
+  }
   
   if (knowns.count("conf")){
     usage += "\t# coordinates\n";
     usage += "\t@conf        filename\n\n";
+  }
+
+  if (knowns.count("cg_conf")){
+    usage += "\t# coarse-grained coordinates\n";
+    usage += "\t@cg_conf     filename\n\n";
   }
   
   if (knowns.count("input")){
@@ -30,14 +45,29 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t@input       filename\n\n";
   }
 
+  if (knowns.count("cg_input")){
+    usage += "\t# coarse-grained input parameter\n";
+    usage += "\t@cg_input    filename\n\n";
+  }
+
   if (knowns.count("fin")){
     usage += "\t# output finale coordinates\n";
     usage += "\t@fin         filename\n\n";
+  }
+
+  if (knowns.count("cg_fin")){
+    usage += "\t# coarse-grained output finale coordinates\n";
+    usage += "\t@cg_fin      filename\n\n";
   }
   
   if (knowns.count("trj")){
     usage += "\t# output coordinates trajectory\n";
     usage += "\t@trj         filename\n\n";
+  }
+
+  if (knowns.count("cg_trj")){
+    usage += "\t# coarse-grained output coordinates trajectory\n";
+    usage += "\t@cg_trj      filename\n\n";
   }
   
   if (knowns.count("trv")){
@@ -53,6 +83,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
   if (knowns.count("tre")){
     usage += "\t# output energy trajectory\n";
     usage += "\t# @tre       filename\n\n";
+  }
+
+  if (knowns.count("cg_tre")){
+    usage += "\t# output coarse-grained energy trajectory\n";
+    usage += "\t# @cg_tre    filename\n\n";
   }
 
   if (knowns.count("re")){
