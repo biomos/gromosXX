@@ -27,7 +27,7 @@ inline int rint(float param)
 #endif
 
 /*
- * Constructors.
+ * Constructor : vacuum
  */
 inline math::Boundary_Implementation<math::vacuum>
 ::Boundary_Implementation(math::Box const & b)
@@ -35,6 +35,9 @@ inline math::Boundary_Implementation<math::vacuum>
 {
 }
 
+/**
+ * Constructor : rectangular
+ */
 inline math::Boundary_Implementation<math::rectangular>
 ::Boundary_Implementation(math::Box const & b)
  : m_box(b)
@@ -43,6 +46,9 @@ inline math::Boundary_Implementation<math::rectangular>
     m_half_box(i) = 0.5 * m_box(i)(i);
 }
 
+/**
+ * Constructor : triclinic
+ */
 inline math::Boundary_Implementation<math::triclinic>
 ::Boundary_Implementation(math::Box const & b)
   : m_box(b)
@@ -53,9 +59,11 @@ inline math::Boundary_Implementation<math::triclinic>
   m_cross_K_L_M(0) = cross(m_box(L), m_box(M)) / -volume;
   m_cross_K_L_M(1) = cross(m_box(K), m_box(M)) / volume;
   m_cross_K_L_M(2) = cross(m_box(K), m_box(L)) / -volume;
-  
 }
 
+/**
+ * Constructor : truncated octahedron
+ */
 inline math::Boundary_Implementation<math::truncoct>
 ::Boundary_Implementation(math::Box const & b)
  : m_box(b)
@@ -64,54 +72,81 @@ inline math::Boundary_Implementation<math::truncoct>
     m_half_box(i) = 0.5 * m_box(i)(i);
 }
 
-// the box stuff
-// -------------
+////////////////////////////////////////////////////////////////////////////////
+// box / shift vector accessors
+////////////////////////////////////////////////////////////////////////////////
 
-// accessors
+/**
+ * const box accessor : vacuum
+ */
 inline math::Box const math::Boundary_Implementation<math::vacuum>::box()const
 {
   return m_box;
 }
 
+/**
+ * const box accessor : rectangular
+ */
 inline math::Box const & math::Boundary_Implementation<math::rectangular>::box()const
 {
   return m_box;
 }
 
+/**
+ * const box accessor : triclinic
+ */
 inline math::Box const & math::Boundary_Implementation<math::triclinic>::box()const
 {
   return m_box;
 }
 
+/**
+ * const box accessor : truncated octahedron
+ */
 inline math::Box const & math::Boundary_Implementation<math::truncoct>::box()const
 {
   return m_box;
 }
 
+/**
+ * box element accessor (d1,d2) : vacuum
+ */
 inline double math::Boundary_Implementation<math::vacuum>
 ::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
 }
 
+/**
+ * box element accessor (d1,d2) : rectangular
+ */
 inline double math::Boundary_Implementation<math::rectangular>
 ::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
 }
 
+/**
+ * box element accessor (d1,d2) : triclinic
+ */
 inline double math::Boundary_Implementation<math::triclinic>
 ::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
 }
 
+/**
+ * box element accessor (d1,d2) : truncated octahedron
+ */
 inline double math::Boundary_Implementation<math::truncoct>
 ::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
 }
 
+/**
+ * shift struct accessor : vacuum
+ */
 inline math::Boundary_Implementation<math::vacuum>::shift_struct &
 math::Boundary_Implementation<math::vacuum>
 ::shift(unsigned int i)
@@ -120,6 +155,9 @@ math::Boundary_Implementation<math::vacuum>
   return m_shift[i];
 }
 
+/**
+ * const shift struct accessor : vacuum
+ */
 inline math::Boundary_Implementation<math::vacuum>::shift_struct const &
 math::Boundary_Implementation<math::vacuum>
 ::shift(unsigned int i)const
@@ -128,6 +166,9 @@ math::Boundary_Implementation<math::vacuum>
   return m_shift[i];
 }
 
+/**
+ * shift struct accessor : rectangular
+ */
 inline math::Boundary_Implementation<math::rectangular>::shift_struct &
 math::Boundary_Implementation<math::rectangular>
 ::shift(unsigned int i)
@@ -136,6 +177,9 @@ math::Boundary_Implementation<math::rectangular>
   return m_shift[i];
 }
 
+/**
+ * const shift struct accessor : rectangular
+ */
 inline math::Boundary_Implementation<math::rectangular>::shift_struct const &
 math::Boundary_Implementation<math::rectangular>
 ::shift(unsigned int i)const
@@ -144,6 +188,9 @@ math::Boundary_Implementation<math::rectangular>
   return m_shift[i];
 }
 
+/**
+ * shift struct accessor : triclininc
+ */
 inline math::Boundary_Implementation<math::triclinic>::shift_struct &
 math::Boundary_Implementation<math::triclinic>
 ::shift(unsigned int i)
@@ -152,6 +199,9 @@ math::Boundary_Implementation<math::triclinic>
   return m_shift[i];
 }
 
+/**
+ * const shift struct accessor : triclinic
+ */
 inline math::Boundary_Implementation<math::triclinic>::shift_struct const &
 math::Boundary_Implementation<math::triclinic>
 ::shift(unsigned int i)const
@@ -160,10 +210,13 @@ math::Boundary_Implementation<math::triclinic>
   return m_shift[i];
 }
 
-//==================================================
+////////////////////////////////////////////////////////////////////////////////
 // nearest image functions
-//==================================================
+////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * nearest image : vacuum
+ */
 inline void math::Boundary_Implementation<math::vacuum>
 ::nearest_image(Vec const &v1,
 		Vec const &v2,
@@ -172,6 +225,9 @@ inline void math::Boundary_Implementation<math::vacuum>
   nim = v1 - v2;
 }
 
+/**
+ * nearest image : rectangular
+ */
 inline void math::Boundary_Implementation<math::rectangular>
 ::nearest_image(Vec const &v1, Vec const &v2,
 		Vec &nim)const
@@ -188,6 +244,9 @@ inline void math::Boundary_Implementation<math::rectangular>
   }
 }      
 
+/**
+ * nearest image : triclinic
+ */
 inline void math::Boundary_Implementation<math::triclinic>
 ::nearest_image(Vec const &v1,
 		Vec const &v2,
@@ -203,6 +262,9 @@ inline void math::Boundary_Implementation<math::triclinic>
   }
 }
 
+/**
+ * nearest image : truncated octahedron
+ */
 inline void math::Boundary_Implementation<math::truncoct>
 ::nearest_image(Vec const &v1,
 		Vec const &v2,
@@ -227,16 +289,25 @@ inline void math::Boundary_Implementation<math::truncoct>
 }
 
 
-//==================================================
+////////////////////////////////////////////////////////////////////////////////
 // grid stuff
-//==================================================
+////////////////////////////////////////////////////////////////////////////////
 
+
+/**
+ * calculate box components of vector v : vacuum
+ * (lattice vector multipliers)
+ */
 inline void math::Boundary_Implementation<math::vacuum>
 ::box_components(Vec const &v, Vec & n)const
 {
   n = 0;
 }
 
+/**
+ * calculate box components of vector v : rectangular
+ * (lattice vector multipliers)
+ */
 inline void math::Boundary_Implementation<math::rectangular>
 ::box_components(Vec const &v, Vec & n)const
 {
@@ -245,6 +316,10 @@ inline void math::Boundary_Implementation<math::rectangular>
   }
 }
 
+/**
+ * calculate box components of vector v : triclinic
+ * (lattice vector multipliers)
+ */
 inline void math::Boundary_Implementation<math::triclinic>
 ::box_components(Vec const &v, Vec & n)const
 {
@@ -253,6 +328,10 @@ inline void math::Boundary_Implementation<math::triclinic>
   }
 }
 
+/**
+ * recalc shift vectors
+ * and also update cell index shifts : rectangular
+ */
 inline void math::Boundary_Implementation<math::rectangular>
 ::recalc_shift_vectors(unsigned int num_cells[3])
 {
@@ -275,6 +354,9 @@ inline void math::Boundary_Implementation<math::rectangular>
   }  
 }
 
+/**
+ * recalc shift vectors : rectangular
+ */
 inline void math::Boundary_Implementation<math::rectangular>
 ::recalc_shift_vectors()
 {
@@ -290,6 +372,10 @@ inline void math::Boundary_Implementation<math::rectangular>
   }  
 }
 
+/**
+ * recalc shift vectors
+ * and also update cell index shifts : triclinic
+ */
 inline void math::Boundary_Implementation<math::triclinic>
 ::recalc_shift_vectors(unsigned int num_cells[3])
 {
@@ -312,6 +398,9 @@ inline void math::Boundary_Implementation<math::triclinic>
   }  
 }
 
+/**
+ * recalc shift vectors : triclinic
+ */
 inline void math::Boundary_Implementation<math::triclinic>
 ::recalc_shift_vectors()
 {
@@ -330,6 +419,10 @@ inline void math::Boundary_Implementation<math::triclinic>
   }  
 }
 
+/**
+ * recalc shift vectors: vacuum
+ * (everything is 0)
+ */
 inline void math::Boundary_Implementation<math::vacuum>
 ::recalc_shift_vectors(unsigned int num_cells[3])
 {
@@ -352,6 +445,10 @@ inline void math::Boundary_Implementation<math::vacuum>
   }  
 }
 
+/**
+ * recalc shift vector : vacuum
+ * (everything 0)
+ */
 inline void math::Boundary_Implementation<math::vacuum>
 ::recalc_shift_vectors()
 {
