@@ -21,6 +21,7 @@
 #include <algorithm/constraints/position_constraints.h>
 #include <algorithm/integration/energy_calculation.h>
 #include <algorithm/integration/leap_frog.h>
+#include <algorithm/integration/monte_carlo.h>
 #include <algorithm/integration/stochastic.h>
 
 #include <io/blockinput.h>
@@ -97,6 +98,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   if (sim.param().posrest.posrest == 3){
     algorithm::Position_Constraints * pc = new algorithm::Position_Constraints;
     md_seq.push_back(pc);
+  }
+
+  // monte-carlo steps?
+  if (sim.param().montecarlo.mc){
+    algorithm::Monte_Carlo * mc = new algorithm::Monte_Carlo(ff);
+    md_seq.push_back(mc);
   }
 
   // energy minimisation or MD?
