@@ -12,6 +12,7 @@
 <li><a href="#system">SYSTEM</a></li>
 <li><a href="#start">START</a></li>
 <li><a href="#step">STEP</a></li>
+<li><a href="#stochastic">STOCHASTIC</a></li>
 <li><a href="#minimise">MINIMISE</a></li>
 <li><a href="#boundary">BOUNDARY</a></li>
 <li><a href="#submolecules">SUBMOLECULES</a></li>
@@ -100,6 +101,21 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
+<h2><a name="stochastic">STOCHASTIC</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+STOCHASTIC
+#NTFR
+#0 = set to zero
+#1 = set to CFRIC
+#2 = set to CFRIC*GAM
+#3 = calculate using SUBR. FRIC
+#     NTFR     NSFR   NBREF  RCUTF    CFRIC    TEMPSD
+         1        0       6    0.3     91.0     300.0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
 <h2><a name="minimise">MINIMISE</a></h2>
 Only steepest descent is implemented.
 <table cellpadding="2" cellspacing="2" border="0" width="600"
@@ -163,9 +179,9 @@ MULTIBATH
 #   different couplings
     1
 #   last   com-bath  ir-bath
-    60     0         1
-#   (this couples the first 60 atoms com motion to bath 0 and
-#    the internal / rotational motion to bath 1)
+    60     1         2
+#   (this couples the first 60 atoms com motion to bath 1 and
+#    the internal / rotational motion to bath 2)
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
@@ -481,7 +497,7 @@ Example <a href="jvalue.html">J-Value Restraints</a> file
 PSCALE
 #       what kind of periodic scaling?
 #               JREST (based on J-Value restraints)
-#       JREST
+        JREST
 #       parameters for J-Value restraints periodic scaling
 #       KDIH            maximum scaling factor for dihedral angle potential
 #       KJ                      maximum scaling factor for J-Value restraint potential
@@ -615,8 +631,8 @@ DIHREST
 # K       force constant (multiplied by w0 of individual restraints)
 # phi_lin deviation after which the potential energy function is linearized
 #
-# method     K  rlin  tau  read
-  1       10.0   0.2    5     0
+# method     K  phi_lin
+  1      100.0     -1.0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

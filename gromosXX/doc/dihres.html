@@ -35,5 +35,23 @@ input file).
 <tt>delta</tt> specifies where the maximum of the harmonic potential
 will be. The restraint is periodic from <tt>delta</tt> to <tt>delta +
 360</tt>.
+<br>
+<br>
+<h2><a name="dihres">Perturbed Dihedral Restraints</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTDIHRESSPEC
+# i  j  k  l  m    n    delta  A_phi  A_w0  B_phi  B_w0
+  1  2  3  4  2.0  2.0   90.0  120.0   1.0  160.0   1.0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<br>
+With <tt>m</tt> and <tt>n</tt> the exponents of the prefactor
+l^n*(1-l)^m, <tt>A_phi</tt> and <tt>A_w0</tt> restraint angle and weight
+factor in state <tt>A</tt>, and <tt>B_phi</tt> and <tt>B_w0</tt> the
+corresponding quantities in state <tt>B</tt>.
+<br>
+
 
 </body>
