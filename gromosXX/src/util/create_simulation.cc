@@ -124,7 +124,7 @@ int util::create_simulation(std::string topo,
 
     io::In_Distrest idr(distrest_file);
     idr.quiet = quiet;
-    idr.read(sim.topo, sim.conf, sim.sim);
+    idr.read(sim.topo, sim.sim);
   }
     
 
