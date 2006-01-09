@@ -1369,7 +1369,29 @@ namespace simulation
       int boost;
       
     } /** multistep */ multistep;
-    
+
+    /**
+     * @struct montecarlo_struct
+     * monte-carlo simulation
+     */
+    struct montecarlo_struct
+    {
+      /**
+       * Constructor
+       */
+      montecarlo_struct() : mc(0), steps(0)
+      {
+      }
+      /**
+       * monte-carlo
+       */
+      int mc;
+      /**
+       * number of md steps between mc trials
+       */
+      int steps;
+    } /** montecarlo */ montecarlo;
+
   };
 }
 

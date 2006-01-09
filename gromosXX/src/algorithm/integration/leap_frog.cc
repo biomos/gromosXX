@@ -55,9 +55,7 @@ int algorithm::Leap_Frog_Velocity
   conf.current().box = conf.old().box;
 
   const int num_atoms = topo.num_atoms();
-  
 
-  
   // v = v + f * dt / m
   for(int i=0; i < num_atoms; ++i){
     conf.current().vel(i) =

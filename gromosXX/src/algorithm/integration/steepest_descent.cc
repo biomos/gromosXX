@@ -104,7 +104,10 @@ int algorithm::Steepest_Descent
   for(unsigned int i=0; i<topo.num_atoms(); ++i)
     f += math::abs2(conf.current().force(i));
   
-  f = 1.0 / sqrt(f);
+  if (f < math::epsilon)
+    f = 1.0;
+  else
+    f = 1.0 / sqrt(f);
 
 #ifdef HAVE_ISNAN
   if (isnan(f)){

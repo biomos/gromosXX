@@ -7,6 +7,7 @@ xxinclude_HEADERS =		algorithm.h \
 			  	algorithm/algorithm_sequence.h \
 				integration/energy_calculation.h \
 				integration/leap_frog.h \
+				integration/monte_carlo.h \
 				integration/stochastic.h \
 				integration/slow_growth.h \
 				integration/steepest_descent.h \
@@ -33,6 +34,7 @@ libgroalgorithm_la_SOURCES =	algorithm.cc \
 				create_md_sequence.cc \
 				algorithm/algorithm_sequence.cc \
 				integration/leap_frog.cc \
+				integration/monte_carlo.cc \
 				integration/stochastic.cc \
 				temperature/temperature_calculation.cc \
 				temperature/thermostat.cc \
