@@ -54,6 +54,8 @@ static int _calculate_dihedral_restraint_interactions
 
   for(; it != to; ++it){
 
+    DEBUG(9, "dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
+
     periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
     periodicity.nearest_image(pos(it->i), pos(it->j), rij);
     periodicity.nearest_image(pos(it->k), pos(it->l), rkl);

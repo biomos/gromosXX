@@ -27,6 +27,8 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
+#include "perturbed_dihedral_constraint.cc"
+
 /**
  * Constructor.
  */
@@ -60,9 +62,7 @@ int algorithm::Perturbed_Shake
 			    std::vector<topology::perturbed_two_body_term_struct>
 			    const & constr,
 			    double const dt,
-			    math::Periodicity<B> const & periodicity,
-			    bool do_constraint_force,
-			    unsigned int force_offset)
+			    math::Periodicity<B> const & periodicity)
 {
   convergence = true;
 
@@ -157,16 +157,6 @@ int algorithm::Perturbed_Shake
 
       DEBUG(10, "lagrange multiplier " << lambda);
 
-      /*
-      if (do_constraint_force == true){
-	
-	//if it is a solute sum up constraint forces
-	assert(unsigned(sys.constraint_force().size()) > k + force_offset);
-	sys.constraint_force()(k+force_offset) += (lambda * ref_r);
-	// m_lambda(k) += lambda;
-      }
-      */
-
       if (V == math::atomic_virial){
 	for(int a=0; a<3; ++a){
 	  for(int aa=0; aa<3; ++aa){
@@ -212,7 +202,8 @@ template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Perturbed_Shake
 ::perturbed_solute(topology::Topology const & topo,
 		   configuration::Configuration & conf,
-		   double dt, int const max_iterations,
+		   simulation::Simulation const & sim,
+		   int max_iterations,
 		   int &error)
 {
   // for now shake the whole solute in one go,
@@ -225,9 +216,6 @@ void algorithm::Perturbed_Shake
   
   math::Periodicity<B> periodicity(conf.current().box);
   
-  // conf.constraint_force() = 0.0;
-  // m_lambda = 0.0;
-
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
   int num_iterations = 0;
@@ -238,38 +226,82 @@ void algorithm::Perturbed_Shake
   skip_next.assign(topo.solute().num_atoms(), true);
   
   bool convergence = false;
-  bool pert_convergence = false;
-  
+
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    DEBUG(8, "perturbed shake iteration");
-    if(perturbed_shake_iteration<B, V>
-       (topo, conf, pert_convergence, first, skip_now, skip_next,
-	topo.perturbed_solute().distance_constraints(), dt,
-	periodicity, true)){
-      io::messages.add("Perturbed SHAKE error. vectors orthogonal",
-		       "Perturbed_Shake::solute",
-		       io::message::error);
-      std::cout << "Perturbed SHAKE failure in solute!" << std::endl;
-      error = E_SHAKE_FAILURE_SOLUTE;
-      return;
+    // distance constraints
+    bool dist_convergence = true, pert_dist_convergence = true;
+    
+    if (topo.perturbed_solute().distance_constraints().size() && 
+	sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+	sim.param().constraint.ntc > 1){
+
+      DEBUG(8, "perturbed shake iteration (solute distance)");
+      if(perturbed_shake_iteration<B, V>
+	 (topo, conf, pert_dist_convergence, first, skip_now, skip_next,
+	  topo.perturbed_solute().distance_constraints(), sim.time_step_size(),
+	  periodicity)){
+	io::messages.add("Perturbed SHAKE error. vectors orthogonal",
+			 "Perturbed_Shake::solute",
+			 io::message::error);
+	std::cout << "Perturbed SHAKE failure in solute!" << std::endl;
+	error = E_SHAKE_FAILURE_SOLUTE;
+	return;
+      }
     }
     
-    DEBUG(8, "unperturbed shake iteration");
-    if(Shake::shake_iteration<B, V>(topo, conf, convergence, 
-				    first, skip_now, skip_next,
-				    topo.solute().distance_constraints(), dt,
-				    periodicity, true) != 0){
-      io::messages.add("SHAKE error. vectors orthogonal",
-		       "Shake::solute",
-		       io::message::error);
-      std::cout << "SHAKE failure in solute!" << std::endl;
-      error = E_SHAKE_FAILURE_SOLUTE;
-      return;
+    if (topo.solute().distance_constraints().size() && 
+	sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+	sim.param().constraint.ntc > 1){
+      
+      DEBUG(8, "unperturbed shake iteration (solute distance)");
+      if(Shake::shake_iteration<B, V>
+	 (topo, conf, dist_convergence, 
+	  first, skip_now, skip_next,
+	  topo.solute().distance_constraints(), sim.time_step_size(),
+	  periodicity) != 0){
+
+	io::messages.add("SHAKE error. vectors orthogonal",
+			 "Shake::solute",
+			 io::message::error);
+	std::cout << "SHAKE failure in solute!" << std::endl;
+	error = E_SHAKE_FAILURE_SOLUTE;
+	return;
+      }
+    }
+    
+    // dihedral constraints
+    bool dih_convergence = true, pert_dih_convergence = true;
+    if (sim.param().dihrest.dihrest == 3){
+      
+      DEBUG(7, "SHAKE: perturbed dihedral constraints iteration");
+      if(perturbed_dih_constr_iteration<B, V>
+	 (topo, conf, sim, pert_dih_convergence, skip_now, skip_next, periodicity)
+	 ){
+	io::messages.add("SHAKE error: perturbed dihedral constraints",
+			 "Shake::solute",
+			 io::message::error);
+	std::cout << "SHAKE failure in solute perturbed dihedral constraints!" << std::endl;
+	error = E_SHAKE_FAILURE_SOLUTE;
+	return;
+      }
+
+      DEBUG(7, "SHAKE: dihedral constraints iteration");
+      if(dih_constr_iteration<B, V>
+	 (topo, conf, sim, dih_convergence, skip_now, skip_next, periodicity)
+	 ){
+	io::messages.add("SHAKE error: dihedral constraints",
+			 "Shake::solute",
+			 io::message::error);
+	std::cout << "SHAKE failure in solute dihedral constraints!" << std::endl;
+	error = E_SHAKE_FAILURE_SOLUTE;
+	return;
+      }
     }
 
-    convergence = pert_convergence && convergence;
+    convergence = pert_dist_convergence && dist_convergence 
+      && pert_dih_convergence && dih_convergence;
 
     if(++num_iterations > max_iterations){
       io::messages.add("Perturbed SHAKE error. too many iterations",
@@ -283,14 +315,6 @@ void algorithm::Perturbed_Shake
     skip_next.assign(skip_next.size(), true);
 
   } // convergence?
-
-  // constraint_force
-  /*
-  for (unsigned int i=0; i < topo.solute().distance_constraints().size();++i){
-    conf.constraint_force()(i) *= 1 /(dt * dt);
-    DEBUG(5, "constraint_force " << sqrt(abs2(conf.constraint_force()(i)) ));
-  }
-  */
 
   this->m_timing += util::now() - start;
 
@@ -341,7 +365,7 @@ void algorithm::Perturbed_Shake
 	if(shake_iteration<B, V>
 	   (topo, conf, convergence, first, skip_now, skip_next,
 	    topo.solvent(i).distance_constraints(), dt,
-	    periodicity, false)){
+	    periodicity)){
 	  
 	  io::messages.add("SHAKE error. vectors orthogonal",
 			   "Shake::solute", io::message::error);
@@ -394,16 +418,17 @@ int algorithm::Perturbed_Shake
   int error = 0;
   
   // check whether we shake solute
-  if ((topo.perturbed_solute().distance_constraints().size() ||
-       topo.solute().distance_constraints().size()) && 
-      sim.param().constraint.solute.algorithm == simulation::constr_shake &&
-      sim.param().constraint.ntc > 1){
-
+  if (((topo.perturbed_solute().distance_constraints().size() ||
+	topo.solute().distance_constraints().size()) && 
+       sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+       sim.param().constraint.ntc > 1) ||
+      sim.param().dihrest.dihrest == 3) {
+    
     DEBUG(8, "\twe need to shake perturbed SOLUTE");
     do_vel = true;
 
     SPLIT_VIRIAL_BOUNDARY(perturbed_solute, 
-			  topo, conf, sim.time_step_size(), 
+			  topo, conf, sim, 
 			  this->max_iterations(), error);
   }
 

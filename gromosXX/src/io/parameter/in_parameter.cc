@@ -63,7 +63,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LONGRANGE(param);
   read_POSREST(param);
   read_DISTREST(param);
-  read_DIHREST(param);
+  read_DIHREST(param); // needs to be called after CONSTRAINTS!
   read_PERTURB(param);
   read_JVALUE(param);
   read_PSCALE(param);
@@ -1952,8 +1952,8 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
 		     io::message::error);
   }
   
-  if(param.dihrest.dihrest > 2) {
-    io::messages.add("bad input in DIHREST block, NTDR must be <=2",
+  if(param.dihrest.dihrest > 3) {
+    io::messages.add("bad input in DIHREST block, NTDHR must be <=3",
 		     "In_Parameter", 
 		     io::message::error);
     
@@ -1963,6 +1963,17 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
     io::messages.add("Illegal value for force constant"
 		     " in DIHREST block (>=0)",
 		     "In_Parameter", io::message::error);
+
+  if (param.dihrest.dihrest == 3){
+    if (param.constraint.ntc == 1 && param.constraint.solute.algorithm == simulation::constr_off)
+      param.constraint.solute.algorithm = simulation::constr_shake;
+
+    if (param.constraint.solute.algorithm != simulation::constr_shake){
+      io::messages.add("Dihedral angle constraints: needs SHAKE as (solute) constraints algorithm",
+		       "In_Parameter",
+		       io::message::error);
+    }
+  }
   
 } // DIHREST
 

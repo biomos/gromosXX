@@ -50,19 +50,34 @@ namespace algorithm
      * do one iteration
      */
     template<math::boundary_enum B, math::virial_enum V>
-    int perturbed_shake_iteration(topology::Topology const &topo,
-				  configuration::Configuration & conf,
-				  bool & convergence,
-				  int first,
-				  std::vector<bool> &skip_now,
-				  std::vector<bool> &skip_next,
-				  std::vector<topology::perturbed_two_body_term_struct>
-				  const & constr,
-				  double dt,
-				  math::Periodicity<B> const & periodicity,
-				  bool do_constraint_force = false,
-				  unsigned int force_offset = 0);
-    
+    int perturbed_shake_iteration
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     bool & convergence,
+     int first,
+     std::vector<bool> &skip_now,
+     std::vector<bool> &skip_next,
+     std::vector<topology::perturbed_two_body_term_struct>
+     const & constr,
+     double dt,
+     math::Periodicity<B> const & periodicity
+     );
+
+    /**
+     * do a perturbed dihedral constraint iteration
+     */
+    template<math::boundary_enum B, math::virial_enum V>
+    int perturbed_dih_constr_iteration
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     bool & convergence,
+     std::vector<bool> &skip_now,
+     std::vector<bool> &skip_next,
+     math::Periodicity<B> const & periodicity
+     );
 
     /**
      * shake (perturbed) solute
@@ -70,7 +85,8 @@ namespace algorithm
     template<math::boundary_enum B, math::virial_enum V>
     void perturbed_solute(topology::Topology const & topo,
 			  configuration::Configuration & conf,
-			  double dt, int max_iterations,
+			  simulation::Simulation const & sim,
+			  int max_iterations,
 			  int & error);
 
     // overwrites the other one, as g++ seems unable to compile this...!!!

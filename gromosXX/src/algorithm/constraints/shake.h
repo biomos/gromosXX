@@ -97,29 +97,51 @@ namespace algorithm
     double m_solvent_timing;
 
     template<math::boundary_enum B, math::virial_enum V>
-    int shake_iteration(topology::Topology const &topo,
-			configuration::Configuration & conf,
-			bool & convergence,
-			int first,
-			std::vector<bool> &skip_now,
-			std::vector<bool> &skip_next,
-			std::vector<topology::two_body_term_struct> const & constr,
-			double dt,
-			math::Periodicity<B> const & periodicity,
-			bool do_constraint_force = false, unsigned int force_offset = 0);
+    int shake_iteration
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     bool & convergence,
+     int first,
+     std::vector<bool> &skip_now,
+     std::vector<bool> &skip_next,
+     std::vector<topology::two_body_term_struct> const & constr,
+     double dt,
+     math::Periodicity<B> const & periodicity
+     );
+    
     
     template<math::boundary_enum B, math::virial_enum V>
-    void solute(topology::Topology const & topo,
-		configuration::Configuration & conf,
-		double dt, int const max_iterations,
-		int & error);
+    int dih_constr_iteration
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     bool & convergence,
+     std::vector<bool> & skip_now,
+     std::vector<bool> & skip_next,
+     math::Periodicity<B> const & periodicity
+     );
+
+
+    template<math::boundary_enum B, math::virial_enum V>
+    void solute
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     int const max_iterations,
+     int & error
+     );
     
     template<math::boundary_enum B, math::virial_enum V>
-    void solvent(topology::Topology const & topo,
-		 configuration::Configuration & conf,
-		 double dt, int const max_iterations,
-		 int & error);
-    
+    void solvent
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
+     double dt, int const max_iterations,
+     int & error
+     );
 
   };
   

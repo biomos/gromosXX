@@ -386,6 +386,8 @@ int util::Replica_Exchange_Slave::init
   if (multigraining){
     std::cout <<"\tmultigrained simulation" << std::endl;
   }
+
+  return 0;
 }
 
 

@@ -27,6 +27,9 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
+// dihedral constraints template method
+#include "dihedral_constraint.cc"
+
 /**
  * Constructor.
  */
@@ -68,8 +71,7 @@ int algorithm::Shake::shake_iteration
  std::vector<bool> &skip_next,
  std::vector<topology::two_body_term_struct> const & constr,
  double dt,
- math::Periodicity<B> const & periodicity,
- bool do_constraint_force, unsigned int force_offset
+ math::Periodicity<B> const & periodicity
  )
 
 {
@@ -210,7 +212,8 @@ template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Shake::
 solute(topology::Topology const & topo,
        configuration::Configuration & conf,
-       double dt, int const max_iterations,
+       simulation::Simulation const & sim,
+       int const max_iterations,
        int & error)
 {
   // for now shake the whole solute in one go,
@@ -237,18 +240,48 @@ solute(topology::Topology const & topo,
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-    if(shake_iteration<B, V>
-       (topo, conf, convergence, first, skip_now, skip_next,
-	topo.solute().distance_constraints(), dt,
-	periodicity, true)
-       ){
-      io::messages.add("SHAKE error. vectors orthogonal",
-		       "Shake::solute",
-		       io::message::error);
-      std::cout << "SHAKE failure in solute!" << std::endl;
-      error = E_SHAKE_FAILURE_SOLUTE;
-      return;
+    // distance constraints
+    bool dist_convergence = true;
+
+    if (topo.solute().distance_constraints().size() && 
+	sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+	sim.param().constraint.ntc > 1){
+
+      DEBUG(7, "SHAKE: distance constraints iteration");
+
+      if(shake_iteration<B, V>
+	 (topo, conf, dist_convergence, first, skip_now, skip_next,
+	  topo.solute().distance_constraints(), sim.time_step_size(),
+	  periodicity)
+	 ){
+	io::messages.add("SHAKE error. vectors orthogonal",
+			 "Shake::solute",
+			 io::message::error);
+	std::cout << "SHAKE failure in solute!" << std::endl;
+	error = E_SHAKE_FAILURE_SOLUTE;
+	return;
+      }
     }
+
+    // dihedral constraints
+    bool dih_convergence = true;
+    if (sim.param().dihrest.dihrest == 3){
+
+      DEBUG(7, "SHAKE: dihedral constraints iteration");
+      
+      if(dih_constr_iteration<B, V>
+	 (topo, conf, sim, dih_convergence, skip_now, skip_next, periodicity)
+	 ){
+	io::messages.add("SHAKE error: dihedral constraints",
+			 "Shake::solute",
+			 io::message::error);
+	std::cout << "SHAKE failure in solute dihedral constraints!" << std::endl;
+	error = E_SHAKE_FAILURE_SOLUTE;
+	return;
+      }
+    }
+
+    convergence = dist_convergence && dih_convergence;
     
     if(++num_iterations > max_iterations){
       io::messages.add("SHAKE error. too many iterations",
@@ -320,7 +353,7 @@ void algorithm::Shake
 	if(shake_iteration<B, V>
 	   (topo, conf, convergence, first, skip_now, skip_next,
 	    topo.solvent(i).distance_constraints(), dt,
-	    periodicity, false)){
+	    periodicity)){
 	  
 	  io::messages.add("SHAKE error. vectors orthogonal",
 			   "Shake::solvent", io::message::error);
@@ -369,16 +402,19 @@ int algorithm::Shake::apply(topology::Topology & topo,
   int error = 0;
   
   // check whether we shake
-  if (topo.solute().distance_constraints().size() && 
-      sim.param().constraint.solute.algorithm == simulation::constr_shake &&
-      sim.param().constraint.ntc > 1){
-
+  if ((topo.solute().distance_constraints().size() && 
+       sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+       sim.param().constraint.ntc > 1) ||
+      sim.param().dihrest.dihrest == 3){
+    
     DEBUG(8, "\twe need to shake SOLUTE");
+
     do_vel_solute = true;
 
     SPLIT_VIRIAL_BOUNDARY(solute,
-			  topo, conf, sim.time_step_size(), 
+			  topo, conf, sim, 
 			  m_max_iterations, error);
+
     if (error){
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
 		<< "at step " << sim.steps() << std::endl;

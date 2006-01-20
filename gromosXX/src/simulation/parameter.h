@@ -871,6 +871,7 @@ namespace simulation
        * - 0: off
        * - 1: uniform K
        * - 2: K * Ki (weight by Ki in dihedral restraint file)
+       * - 3: constraints
        */
       int dihrest;
       /**

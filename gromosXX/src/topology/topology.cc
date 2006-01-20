@@ -287,7 +287,7 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
 
   if ((!sim.param().force.nonbonded_crf) && sim.param().force.nonbonded_vdw){
     
-    for(int i=0; i<m_charge.size(); ++i){
+    for(unsigned int i=0; i<m_charge.size(); ++i){
       m_charge(i) = 0.0;
     }
   }
@@ -300,7 +300,7 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
 		       io::message::error);
     }
     else{
-      for(int i=0; i<m_iac.size(); ++i){
+      for(unsigned int i=0; i<m_iac.size(); ++i){
 	// is this dummy for all forcefields ???
 	m_iac[i] = 18;
       }

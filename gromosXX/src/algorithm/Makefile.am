@@ -22,6 +22,8 @@ xxinclude_HEADERS =		algorithm.h \
 				constraints/position_constraints.h \
 				constraints/shake.h \
 				constraints/perturbed_shake.h \
+				constraints/dihedral_constraint.cc \
+				constraints/perturbed_dihedral_constraint.cc \
 				constraints/lincs.h \
 				constraints/flexible_constraint.h \
 				constraints/perturbed_flexible_constraint.h \

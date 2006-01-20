@@ -80,6 +80,8 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 		       io::message::warning);
   }
 
+  // solute constraints have to be set to SHAKE, but NTC may be 1
+  // for dihedral constraints to be used.
   switch(sim.param().constraint.solute.algorithm){
     case simulation::constr_shake:
       {

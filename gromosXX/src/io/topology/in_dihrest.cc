@@ -70,6 +70,9 @@ void io::In_Dihrest::read(topology::Topology& topo,
 	  os << "\tDihedral restraints ON\n"
 	     << "\t\t(force constant K*w0)\n";
 	  break;
+	case 3:
+	  os << "\tDihedral constraints ON\n";
+	  break;
 	default:
 	  os << "\tDihedral restraints: ERROR\n";
 	  io::messages.add("wrong value for method in dihedral restraints block",
@@ -101,7 +104,7 @@ void io::In_Dihrest::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
 
-      _lineStream >> i >> k >> j >> l >> delta >> phi >> w0;
+      _lineStream >> i >> j >> k >> l >> delta >> phi >> w0;
     
       if(_lineStream.fail()){
 	io::messages.add("bad line in DIHREST block",
@@ -155,6 +158,9 @@ void io::In_Dihrest::read(topology::Topology& topo,
 	case 2:
 	  os << "\tPerturbed Dihedral restraints ON\n"
 	     << "\t\t(using force constant K*w0)\n";
+	  break;
+	case 3:
+	  os << "\tPerturbed Dihedral constraints ON\n";
 	  break;
 	default:
 	  os << "\tPerturbed Dihedral restraints ERROR\n";
