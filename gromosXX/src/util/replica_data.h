@@ -77,6 +77,10 @@ namespace util
      * current simulation time
      */
     double     time;
+    /**
+     * number of steps simulated
+     */
+    unsigned int steps;
   };
 }
 

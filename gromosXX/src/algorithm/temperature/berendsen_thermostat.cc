@@ -76,7 +76,7 @@ void algorithm::Berendsen_Thermostat
   
   for(unsigned int num=0; b_it != b_to; ++b_it, ++num){
     // do temperature coupling for that bath?
-    if (b_it->tau != -1){
+    if (b_it->tau != -1 || immediate){
 
       DEBUG(7, "pre-scale ekin: " << b_it->ekin);
 

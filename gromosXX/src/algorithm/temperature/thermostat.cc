@@ -44,7 +44,7 @@ void algorithm::Thermostat
     // decide whether molecular translational kinetic energy and
     // internal, rotational kinetic energies are jointly coupled
     if (r_it->com_bath == r_it->ir_bath){
-      if (sim.multibath()[r_it->com_bath].tau == -1) continue;
+      if (sim.multibath()[r_it->com_bath].scale == 1.0) continue;
       
       DEBUG(8, "jointly coupled, scaling with "
 	    << sim.multibath()[r_it->com_bath].scale);
@@ -56,6 +56,9 @@ void algorithm::Thermostat
     }
     else{
   
+      if (sim.multibath()[r_it->com_bath].scale == 1.0 && 
+	  sim.multibath()[r_it->ir_bath].scale == 1.0) continue;
+
       topology::Molecule_Iterator 
 	m_it = topo.molecule_begin(),
 	m_to = topo.molecule_begin();

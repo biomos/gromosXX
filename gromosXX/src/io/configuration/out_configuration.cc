@@ -1567,6 +1567,7 @@ void io::Out_Configuration::_print_replica_information
   for(int i=0; it != to; ++it, ++i){
     
     os << std::setw(6) << it->ID
+       << " "
        << std::setw(6) << it->run
        << std::setw(6) << it->Ti
        << std::setw(6) << it->li
