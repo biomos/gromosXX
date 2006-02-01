@@ -48,6 +48,8 @@ void print_title(io::Argument &args, bool color = false);
 
 int main(int argc, char *argv[]){
 
+#ifdef REPEX
+
   util::Known knowns;
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf"
      << "input" << "cg_input" << "verb" << "pttopo" << "cg_pttopo"
@@ -124,6 +126,12 @@ int main(int argc, char *argv[]){
   }
   
   return 0;
+
+#else
+  std::cout << argv[0] << " needs REPEX to run\n\tuse --enable-repex at configure\n" << std::endl;
+  return 1;
+#endif
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////

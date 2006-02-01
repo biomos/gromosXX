@@ -20,6 +20,9 @@
 
 #include <algorithm>
 #include <typeinfo>
+
+#include <config.h>
+
 #include <math/gmath.h>
 #include <util/debug.h>
 
@@ -27,10 +30,10 @@
 
 #include <util/timing.h>
 
-#ifdef COMPILER_GCC
-#include <cxxabi.h>
-using namespace ranlib;
-#endif
+// #ifdef COMPILER_GCC
+// #include <cxxabi.h>
+// using namespace ranlib;
+// #endif
 
 #endif
 

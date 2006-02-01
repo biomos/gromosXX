@@ -5,6 +5,8 @@
 
 #include <stdheader.h>
 
+#ifdef REPEX
+
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
@@ -48,7 +50,6 @@
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -295,7 +296,7 @@ bool util::Replica_Exchange::magic_cookie(bool master)
     return false;
   }
   else{
-    std::cout << "magic cookie test succeeded!" << std::endl;
+    // std::cout << "magic cookie test succeeded!" << std::endl;
     return true;
   }
 }
@@ -363,3 +364,5 @@ addrinfo * util::Replica_Exchange::get_server(io::Argument & args, addrinfo &hin
   return addrinfo_p;
   
 }
+
+#endif

@@ -33,6 +33,8 @@ struct addrinfo;
 namespace util
 {
 
+#ifdef REPEX
+
   /**
    * @class Replica_Exchange
    * replica exchange
@@ -55,6 +57,8 @@ namespace util
     virtual int run(io::Argument & args) = 0;
     
   protected:
+
+    static const bool quiet = true;
 
     /**
      * get replica data from network
@@ -397,6 +401,7 @@ namespace util
     
   };
 
+#endif
   
 } // util
 

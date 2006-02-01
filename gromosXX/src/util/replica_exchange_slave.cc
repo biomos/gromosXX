@@ -5,6 +5,8 @@
 
 #include <stdheader.h>
 
+#ifdef REPEX
+
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
@@ -160,16 +162,18 @@ int util::Replica_Exchange_Slave::run
 	return 1;
       }
 
-      std::cout << "slave: got a job! (replica "
-		<< replica_data.ID << ")" << std::endl;
+      if (!quiet){
+	// std::cout << "slave: got a job! (replica "
+	// << replica_data.ID << ")" << std::endl;
       
-      std::cout << "slave:  running replica " << replica_data.ID
-		<< " at T=" << T[replica_data.Ti]
-		<< " and l=" << l[replica_data.li]
-		<< " (run = " << replica_data.run 
-		<< " and dt = " << dt[replica_data.li] << ")"
-		<< std::endl;
-
+	std::cout << "slave:  running replica " << replica_data.ID
+		  << " at T=" << T[replica_data.Ti]
+		  << " and l=" << l[replica_data.li]
+		  << " (run = " << replica_data.run 
+		  << " and dt = " << dt[replica_data.li] << ")"
+		  << std::endl;
+      }
+      
       // init replica parameters (t, conf, T, lambda)
       if (init_replica(topo, conf, sim, cg_topo, cg_conf, cg_sim)){
 	std::cerr << "init_replica returned error!" << std::endl;
@@ -185,10 +189,12 @@ int util::Replica_Exchange_Slave::run
       // SLAVE: run the MD
       ////////////////////////////////////////////////////////////////////////////////
 
-      std::cerr << "running md" << std::endl;
+      if (!quiet)
+	std::cerr << "running md" << std::endl;
       int error = run_md(topo, conf, sim, md, traj,
 			 cg_topo, cg_conf, cg_sim, cg_md, cg_traj);
-      std::cerr << "run finished" << std::endl;
+      if (!quiet)
+	std::cerr << "run finished" << std::endl;
 
       ////////////////////////////////////////////////////////////////////////////////
       // POSTPROCESSING
@@ -201,6 +207,7 @@ int util::Replica_Exchange_Slave::run
 	
 	++replica_data.run;
 	replica_data.time = sim.time();
+	replica_data.steps = sim.steps();
 	replica_data.state = waiting;
       }
       else{
@@ -284,7 +291,8 @@ int util::Replica_Exchange_Slave::run
     }
     else{
       close(cl_socket);
-      std::cout << "slave sleeping ..." << std::endl;
+      if (!quiet)
+	std::cout << "slave sleeping ..." << std::endl;
       // wait apropriate time for master to prepare
       sleep(timeout);
     }
@@ -431,13 +439,19 @@ int util::Replica_Exchange_Slave::run_md
   int msteps = sim.param().multistep.steps;
   if (msteps < 1) msteps = 1;
   
+  /*
   const double end_time = sim.time() + 
     sim.time_step_size() *
     (sim.param().step.number_of_steps * msteps - 1);
-    
+  */
+
   int error;
 
-  while(sim.time() < end_time + math::epsilon){
+  const unsigned int end_steps =
+    sim.steps() + sim.param().step.number_of_steps * msteps;
+
+  // while(sim.time() < end_time + math::epsilon){
+  while(sim.steps() < end_steps){
       
     traj.write_replica_step(sim, replica_data);
     traj.write(conf, topo, sim, io::reduced);
@@ -451,7 +465,8 @@ int util::Replica_Exchange_Slave::run_md
     // multiple time stepping
     ////////////////////////////////////////////////////
     if (multigraining){
-      std::cout << "MULTISTEP: doing coarse-grained calculation\n";
+
+      // std::cout << "MULTISTEP: doing coarse-grained calculation\n";
       // coarse grained atom positions are based upon
       // real atom positions
       util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
@@ -490,7 +505,7 @@ int util::Replica_Exchange_Slave::run_md
     traj.print(topo, conf, sim);
 
     sim.time() += sim.time_step_size();
-    cg_sim.time() += cg_sim.time_step_size();
+    ++sim.steps();
     
     if (multigraining){
       cg_sim.time() += cg_sim.time_step_size();
@@ -500,11 +515,13 @@ int util::Replica_Exchange_Slave::run_md
 
   util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
 
-  std::cout << "\nslave: run finished!\n\n";
-  std::cout << "\tlast energies were: potential=" << conf.old().energies.potential_total
-	    << "  special=" << conf.old().energies.special_total
-	    << "  kinetic=" << conf.old().energies.kinetic_total << "\n\n";
-    
+  if (!quiet){
+    std::cout << "\nslave: run finished!\n\n";
+    std::cout << "\tlast energies were: potential=" << conf.old().energies.potential_total
+	      << "  special=" << conf.old().energies.special_total
+	      << "  kinetic=" << conf.old().energies.kinetic_total << "\n\n";
+  }
+  
   return error;
 }
 
@@ -550,6 +567,9 @@ int util::Replica_Exchange_Slave::init_replica
       cg_sim.multibath()[i].tau = sim.param().replica.dt[replica_data.li];
     }
   }
+  sim.param().stochastic.temp = T[replica_data.Ti];
+  if (multigraining)
+    cg_sim.param().stochastic.temp = T[replica_data.Ti];
   
   // change the lambda value
   sim.param().perturbation.lambda = l[replica_data.li];
@@ -557,7 +577,9 @@ int util::Replica_Exchange_Slave::init_replica
   // twice, to set old_lambda...
   topo.lambda(l[replica_data.li]);
   topo.update_for_lambda();
-  std::cout << "\tlambda = " << topo.lambda() << "\n";
+
+  if (!quiet)
+    std::cout << "\tlambda = " << topo.lambda() << "\n";
 
   if (multigraining){
     cg_sim.param().perturbation.lambda = l[replica_data.li];
@@ -568,24 +590,25 @@ int util::Replica_Exchange_Slave::init_replica
   
   // change simulation time
   sim.time() = replica_data.time;
-  // this will be WRONG !!!
-  sim.steps() = replica_data.run * sim.param().step.number_of_steps;
+  sim.steps() = replica_data.steps;
 
   // don't change time_step_size
   // sim.time_step_size() = sim.param().replica.dt[replica_data.li];
   // but enable multistepping
   sim.param().multistep.steps =
     int(rint(sim.param().replica.dt[replica_data.li] / sim.time_step_size()));
-  std::cout << "\tmultistepping steps = "
-	    << int(rint(sim.param().replica.dt[replica_data.li] / sim.time_step_size()))
-	    << "\n";
 
+  if (!quiet)
+    std::cout << "\tmultistepping steps = "
+	      << int(rint(sim.param().replica.dt[replica_data.li] / sim.time_step_size()))
+	      << "\n";
+  
   if (multigraining){
     cg_sim.time() = replica_data.time;
     cg_sim.param().multistep.steps =
       int(rint(sim.param().replica.dt[replica_data.li] / sim.time_step_size()));
-    // this will be WRONG !!!
-    cg_sim.steps() = replica_data.run * cg_sim.param().step.number_of_steps;
+
+    cg_sim.steps() = replica_data.steps;
   }
 
   return 0;
@@ -616,7 +639,8 @@ int util::Replica_Exchange_Slave::recalc_energy
 
   int error = 0;
   
-  std::cout << "\tcalculating potential energies of last configuration\n\n";
+  if (!quiet)
+    std::cout << "\tcalculating potential energies of last configuration\n\n";
 
   // do we need to reevaluate the potential energy ?
   // yes! 'cause otherwise it's just the energy for
@@ -652,9 +676,13 @@ int util::Replica_Exchange_Slave::recalc_energy
     }
 
     cg_conf.current().energies.calculate_totals();
-    io::print_ENERGY(traj.output(), cg_conf.current().energies,
-		     cg_topo.energy_groups(),
-		     "CGENERGY_Li", "CGELi_");
+
+    if (!quiet){
+      io::print_ENERGY(traj.output(), cg_conf.current().energies,
+		       cg_topo.energy_groups(),
+		       "CGENERGY_Li", "CGELi_");
+    }
+    
   } // multigraining
 	
   algorithm::Algorithm * ff = md.algorithm("Forcefield");
@@ -681,25 +709,30 @@ int util::Replica_Exchange_Slave::recalc_energy
   conf.current().energies.calculate_totals();
   replica_data.epot_i = conf.current().energies.potential_total +
     conf.current().energies.special_total;
-	
-  io::print_ENERGY(traj.output(), conf.current().energies,
-		   topo.energy_groups(),
-		   "ENERGY_Li", "ELi_");
-	
+
+  if (!quiet){
+    io::print_ENERGY(traj.output(), conf.current().energies,
+		     topo.energy_groups(),
+		     "ENERGY_Li", "ELi_");
+  }
+
   traj.write_replica_energy(replica_data, sim,
 			    conf.current().energies,
 			    0);
 
-  if (replica_data.Ti != replica_data.Tj)
-    std::cout << "replica_energy " << replica_data.epot_i 
-	      << " @ " << T[replica_data.Ti] << "K" << std::endl;
-  else if (replica_data.li != replica_data.lj)
-    std::cout << "replica_energy " << replica_data.epot_i 
-	      << " @ " << l[replica_data.li] << std::endl;
-	
+  if (!quiet){
+    if (replica_data.Ti != replica_data.Tj)
+      std::cout << "replica_energy " << replica_data.epot_i 
+		<< " @ " << T[replica_data.Ti] << "K" << std::endl;
+    else if (replica_data.li != replica_data.lj)
+      std::cout << "replica_energy " << replica_data.epot_i 
+		<< " @ " << l[replica_data.li] << std::endl;
+  }
+  
   if (replica_data.li != replica_data.lj){
-	  
-    std::cout << "energies at switched lambda:\n\n";
+    
+    if (!quiet)
+      std::cout << "energies at switched lambda:\n\n";
 
     // change the lambda value
     sim.param().perturbation.lambda = l[replica_data.lj];
@@ -707,7 +740,8 @@ int util::Replica_Exchange_Slave::recalc_energy
     // twice: set old lambda as well
     topo.lambda(l[replica_data.lj]);
     topo.update_for_lambda();
-    std::cout << "\tlambda = " << topo.lambda() << "\n";
+    if (!quiet)
+      std::cout << "\tlambda = " << topo.lambda() << "\n";
 
     if (multigraining){
       cg_sim.param().perturbation.lambda = l[replica_data.lj];
@@ -731,10 +765,11 @@ int util::Replica_Exchange_Slave::recalc_energy
       }
 
       cg_conf.current().energies.calculate_totals();
-      io::print_ENERGY(traj.output(), cg_conf.current().energies,
-		       cg_topo.energy_groups(),
-		       "CGENERGY_Lj", "CGELj_");
-
+      if (!quiet){
+	io::print_ENERGY(traj.output(), cg_conf.current().energies,
+			 cg_topo.energy_groups(),
+			 "CGENERGY_Lj", "CGELj_");
+      }
     }
 
     // recalc energy
@@ -754,9 +789,11 @@ int util::Replica_Exchange_Slave::recalc_energy
     replica_data.epot_j = conf.current().energies.potential_total +
       conf.current().energies.special_total;
 
-    io::print_ENERGY(traj.output(), conf.current().energies,
-		     topo.energy_groups(),
-		     "ENERGY_Lj", "ELj_");
+    if (!quiet){
+      io::print_ENERGY(traj.output(), conf.current().energies,
+		       topo.energy_groups(),
+		       "ENERGY_Lj", "ELj_");
+    }
 
     traj.write_replica_energy(replica_data, sim,
 			      conf.current().energies,
@@ -768,3 +805,5 @@ int util::Replica_Exchange_Slave::recalc_energy
   }
   return 0;
 }
+
+#endif

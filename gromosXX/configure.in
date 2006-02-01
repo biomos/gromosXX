@@ -48,6 +48,10 @@ AC_ARG_ENABLE(mpi,
   [  --enable-mpi	compile with MPI support],
   , enable_mpi=no)
 
+AC_ARG_ENABLE(repex,
+  [  --disable-repex    compile without replica exchange support],
+  , enable_repex=yes)
+
 AC_ARG_ENABLE(profile,
   [  --enable-profile	compile with profiling on],
   , enable_profile=no)
@@ -337,6 +341,16 @@ if test "$ac_cv_cxx_version_ok" = no; then
   echo "to the right extent. Check your C++ comipler..."
   exit
 fi
+
+if eval "test x$enable_repex = xno"; then
+  echo "   replica-exchange disabled"
+  REPEX=no
+else
+  REPEX=yes
+  AC_SUBST(REPEX)
+  AC_DEFINE_UNQUOTED(REPEX, "$REPEX", [replica-exchange simulation])
+fi
+
 
 AC_CACHE_SAVE
 

@@ -3,7 +3,10 @@
  * replica exchange control client
  */
 
+
 #include <stdheader.h>
+
+#ifdef REPEX
 
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
@@ -361,13 +364,13 @@ int util::Replica_Exchange_Control::run
   
   std::cout << "\n"
 	    << std::setw(6) << "ID"
-	    << std::setw(6) << "run"
+	    << std::setw(7) << "run"
 	    << std::setw(10) << "T"
-	    << std::setw(10) << "l"
-	    << std::setw(18) << "Epot"
+	    << std::setw(10) << "l"    
+	    << std::setw(19) << "Epot"
 	    << std::setw(10) << "sT"
 	    << std::setw(10) << "sl"
-	    << std::setw(18) << "sEpot"
+	    << std::setw(19) << "sEpot"
 	    << std::setw(10) << "p"
 	    << std::setw(5) << "s"
 	    << std::setw(10) << "ste"
@@ -375,12 +378,15 @@ int util::Replica_Exchange_Control::run
   
   for(unsigned int r=0; r<replica_data.size(); ++r){
     std::cout << std::setw(6) << r + 1
+	      << " "
 	      << std::setw(6) << replica_data[r].run
 	      << std::setw(10) << replica_data[r].Ti + 1
 	      << std::setw(10) << replica_data[r].li + 1
+	      << " "
 	      << std::setw(18) << replica_data[r].epot_i
 	      << std::setw(10) << replica_data[r].Tj + 1
 	      << std::setw(10) << replica_data[r].lj + 1
+	      << " "
 	      << std::setw(18) << replica_data[r].epot_j
 	      << std::setw(10) << replica_data[r].probability
 	      << std::setw(5) << replica_data[r].switched;
@@ -414,3 +420,5 @@ int util::Replica_Exchange_Control::run
   
   return 0;
 }
+
+#endif

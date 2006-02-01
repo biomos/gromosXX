@@ -5,6 +5,8 @@
 
 #include <stdheader.h>
 
+#ifdef REPEX
+
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
@@ -281,29 +283,31 @@ int util::Replica_Exchange_Master::run
   
   rep_out << "#"
 	  << std::setw(5) << "ID"
-	  << std::setw(6) << "run"
+	  << std::setw(7) << "run"
 	  << std::setw(13) << "Ti"
 	  << std::setw(13) << "li"
-	  << std::setw(13) << "Epoti"
+	  << std::setw(14) << "Epoti"
 	  << std::setw(13) << "Tj"
 	  << std::setw(13) << "lj"
-	  << std::setw(13) << "Epotj"
+	  << std::setw(14) << "Epotj"
 	  << std::setw(13) << "p"
 	  << std::setw(4) << "s"
 	  << "\n";
 
-  std::cout << std::setw(6) << "ID"
-	    << std::setw(6) << "run"
-	    << std::setw(13) << "Ti"
-	    << std::setw(13) << "li"
-	    << std::setw(13) << "Epoti"
-	    << std::setw(13) << "Tj"
-	    << std::setw(13) << "lj"
-	    << std::setw(13) << "Epotj"
-	    << std::setw(13) << "p"
-	    << std::setw(4) << "s"
-	    << std::endl;
-
+  if (!quiet){
+    std::cout << std::setw(6) << "ID"
+	      << std::setw(7) << "run"
+	      << std::setw(13) << "Ti"
+	      << std::setw(13) << "li"
+	      << std::setw(14) << "Epoti"
+	      << std::setw(13) << "Tj"
+	      << std::setw(13) << "lj"
+	      << std::setw(14) << "Epotj"
+	      << std::setw(13) << "p"
+	      << std::setw(4) << "s"
+	      << std::endl;
+  }
+  
   bool quit = false;
 
   // listen, keep a queue for max all replicas
@@ -338,22 +342,24 @@ int util::Replica_Exchange_Master::run
       sim.time() += sim.param().step.number_of_steps * sim.param().step.dt;
       runs = 0;
 
-      std::cout 
-	<< "\n======================================================="
-	<< "==============================================================\n"
-	<< std::setw(6) << "ID"
-	<< std::setw(6) << "run"
-	<< std::setw(13) << "T"
-	<< std::setw(13) << "l"
-	<< std::setw(18) << "Epot"
-	<< std::setw(13) << "sT"
-	<< std::setw(13) << "sl"
-	<< std::setw(18) << "sEpot"
-	<< std::setw(13) << "p"
-	<< std::setw(4) << "s"
-	<< "\n-------------------------------------------------------"
-	<< "--------------------------------------------------------------"
-	<< std::endl;
+      if (!quiet){
+	std::cout 
+	  << "\n======================================================="
+	  << "==============================================================\n"
+	  << std::setw(6) << "ID"
+	  << std::setw(7) << "run"
+	  << std::setw(13) << "T"
+	  << std::setw(13) << "l"
+	  << std::setw(19) << "Epot"
+	  << std::setw(13) << "sT"
+	  << std::setw(13) << "sl"
+	  << std::setw(19) << "sEpot"
+	  << std::setw(13) << "p"
+	  << std::setw(4) << "s"
+	  << "\n-------------------------------------------------------"
+	  << "--------------------------------------------------------------"
+	  << std::endl;
+      }
       
       rep_out.flush();
     }
@@ -752,7 +758,8 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
     replica_data[i].probability = 0.0;
     replica_data[i].switched = false;
 
-    print_replica(i, param, std::cout);
+    if (!quiet)
+      print_replica(i, param, std::cout);
     print_replica(i, param, rep_out);
 
     set_next_switch(i);
@@ -779,28 +786,34 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
     // SUCCEEDED!!!
     
     if (replica_data[i].Ti != replica_data[j].Ti){
-      std::cout << "-----> switch: " 
-		<< T[replica_data[i].Ti]
-		<< " <-> " 
-		<< T[replica_data[j].Ti]
-		<< "\n";
+      if (!quiet){
+	std::cout << "-----> switch: " 
+		  << T[replica_data[i].Ti]
+		  << " <-> " 
+		  << T[replica_data[j].Ti]
+		  << "\n";
+      }
     }
     else{
-      std::cout << "-----> switch: " 
-		<< l[replica_data[i].li]
-		<< " <-> " 
-		<< l[replica_data[j].li]
-		<< "\n";
+      if (!quiet){
+	std::cout << "-----> switch: " 
+		  << l[replica_data[i].li]
+		  << " <-> " 
+		  << l[replica_data[j].li]
+		  << "\n";
+      }
     }
     
     replica_data[i].switched = true;
     replica_data[j].switched = true;
   }
   
-  print_replica(i, param, std::cout);
+  if (!quiet)
+    print_replica(i, param, std::cout);
   print_replica(i, param, rep_out);
   
-  print_replica(j, param, std::cout);
+  if (!quiet)
+    print_replica(j, param, std::cout);
   print_replica(j, param, rep_out);
   
   if (replica_data[i].switched){
@@ -821,8 +834,11 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
   return 0;
 }
 
-double util::Replica_Exchange_Master::switch_probability(int i, int j, 
-							 simulation::Parameter const & param)
+double util::Replica_Exchange_Master::switch_probability
+(
+ int i, int j, 
+ simulation::Parameter const & param
+ )
 {
   // aliases
   std::vector<double> const & T = param.replica.temperature;
@@ -860,7 +876,8 @@ double util::Replica_Exchange_Master::switch_probability(int i, int j,
        math::volume(m_conf[i].current().box, m_conf[i].boundary_type));
   }
 
-  std::cout << "\tswitching: delta = " << std::setw(18) << delta << "\n";
+  if (!quiet)
+    std::cout << "\tswitching: delta = " << std::setw(18) << delta << "\n";
 
   double probability = 1.0;
   if (delta > 0.0)
@@ -948,14 +965,19 @@ void util::Replica_Exchange_Master::print_replica(int r,
 						  std::ostream & os)
 {
   os << std::setw(6) << r + 1
+     << " "
      << std::setw(6) << replica_data[r].run
      << std::setw(13) << param.replica.temperature[replica_data[r].Ti]
      << std::setw(13) << param.replica.lambda[replica_data[r].li]
+     << " "
      << std::setw(18) << replica_data[r].epot_i
      << std::setw(13) << param.replica.temperature[replica_data[r].Tj]
      << std::setw(13) << param.replica.lambda[replica_data[r].lj]
+     << " "
      << std::setw(18) << replica_data[r].epot_j
      << std::setw(13) << replica_data[r].probability
      << std::setw(4) << replica_data[r].switched
      << std::endl;
 }
+
+#endif
