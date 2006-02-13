@@ -338,7 +338,7 @@ dnl check if full STL support
 AC_CV_CXX_VERSION_OK
 if test "$ac_cv_cxx_version_ok" = no; then
   echo "Your C++ compiler does not support the STL"
-  echo "to the right extent. Check your C++ comipler..."
+  echo "to the right extent. Check your C++ compiler..."
   exit
 fi
 
