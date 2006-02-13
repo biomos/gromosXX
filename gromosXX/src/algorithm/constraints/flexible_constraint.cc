@@ -121,8 +121,7 @@ int algorithm::Flexible_Constraint::_iteration
  std::vector<bool> & skip_now,
  std::vector<bool> & skip_next,
  double dt,
- math::Periodicity<B> const & periodicity,
- bool do_constraint_force
+ math::Periodicity<B> const & periodicity
  )
 {
   convergence = true;
@@ -205,16 +204,6 @@ int algorithm::Flexible_Constraint::_iteration
 			       1.0 / topo.mass()(it->j) ));      
 
       DEBUG(10, "lagrange multiplier " << lambda);
-
-      /*
-      if (do_constraint_force == true){
-	
-	//if it is a solute sum up constraint forces
-	assert(unsigned(sys.constraint_force().size()) > k + force_offset);
-	sys.constraint_force()(k+force_offset) += (lambda * ref_r);
-	// m_lambda(k) += lambda;
-      }
-      */
 
       if (V == math::atomic_virial){
 	for(int a=0; a<3; ++a){
@@ -384,11 +373,10 @@ void algorithm::Flexible_Constraint::calc_distance
  simulation::Simulation const & sim
  )
 {
-  SPLIT_VIRIAL_BOUNDARY(_calc_distance,
-			topo, conf, sim);
+  SPLIT_BOUNDARY(_calc_distance, topo, conf, sim);
 }
 
-template<math::boundary_enum B, math::virial_enum V>
+template<math::boundary_enum B>
 void algorithm::Flexible_Constraint::_calc_distance
 (
  topology::Topology const &topo,
@@ -763,7 +751,7 @@ void algorithm::Flexible_Constraint::_solute
       if(_iteration<B, V>
 	 (topo, conf, convergence, skip_now, skip_next,
 	  sim.time_step_size(),
-	  periodicity, true)
+	  periodicity)
 	 ){
 	io::messages.add("Flexible SHAKE error. vectors orthogonal",
 			 "Flexible_Constraint::solute",

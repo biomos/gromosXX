@@ -83,11 +83,10 @@ namespace algorithm
      std::vector<bool> &skip_now,
      std::vector<bool> &skip_next,
      double dt,
-     math::Periodicity<B> const & periodicity,
-     bool do_constraint_force = false
+     math::Periodicity<B> const & periodicity
      );
 
-    template<math::boundary_enum B, math::virial_enum V>
+    template<math::boundary_enum B>
     void _calc_distance
     (
      topology::Topology const &topo,

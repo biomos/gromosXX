@@ -63,6 +63,9 @@ int algorithm::Perturbed_Flexible_Constraint
   bool do_vel = false;
   int error = 0;
   
+  conf.special().flexible_constraint.flexible_ekin.assign
+    (conf.special().flexible_constraint.flexible_ekin.size(), 0.0);
+  
   // check whether we shake
   if (topo.perturbed_solute().distance_constraints().size() && 
       sim.param().constraint.solute.algorithm == 
@@ -78,9 +81,6 @@ int algorithm::Perturbed_Flexible_Constraint
     
     _store_lengths(conf);
     
-    // SPLIT_VIRIAL_BOUNDARY(solute,
-    // topo, conf, sim, error);
-
   }
   
   if (error){
@@ -94,7 +94,7 @@ int algorithm::Perturbed_Flexible_Constraint
   }
 
   // shake velocity
-  unsigned int num_atoms = topo.num_atoms();
+  unsigned int num_atoms = topo.num_solute_atoms();
   for(unsigned int i=0; i<num_atoms; ++i)
     conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
       sim.time_step_size();
@@ -115,8 +115,7 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
  std::vector<bool> &skip_now,
  std::vector<bool> &skip_next,
  double dt,
- math::Periodicity<B> const & periodicity,
- bool do_constraint_force
+ math::Periodicity<B> const & periodicity
  )
 {
   convergence = true;
@@ -133,11 +132,17 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
       ++it, ++k ){
 	
     // check whether we can skip this constraint
+    assert(skip_now.size() > it->i);
+    assert(skip_now.size() > it->j);
+    
     if (skip_now[it->i] && skip_now[it->j]) continue;
 
     DEBUG(10, "\ti: " << it->i << " j: " << it->j);
 
     // the position
+    assert(conf.current().pos.size() > it->i);
+    assert(conf.current().pos.size() > it->j);
+    
     math::Vec &pos_i = conf.current().pos(it->i);
     math::Vec &pos_j = conf.current().pos(it->j);
 
@@ -148,7 +153,19 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = math::abs2(r);
-	
+
+    assert(m_perturbed_flex_len.size() > k);
+
+    /*
+    if (sqrt(dist2) > 2 * m_perturbed_flex_len[k]){
+      std::cerr << "Iteration Error: free distance too large\n"
+		<< "\t" << it->i + 1 << " - " << it->j + 1 << "\n"
+		<< "\tfree_r = " << sqrt(dist2)
+		<< "\tpert_flex_len = " << m_perturbed_flex_len[k]
+		<< std::endl;
+    }
+    */
+
     DEBUG(10, "\tdist2 = " << dist2);
     DEBUG(10, "\tconstraint " << k << ":");
     DEBUG(10, "\tflex len = " << m_perturbed_flex_len[k]);
@@ -163,11 +180,22 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
       DEBUG(10, "perturbed flexible shaking");
       
       // the reference position
+      assert(conf.old().pos.size() > it->i);
+      assert(conf.old().pos.size() > it->j);
+      
       const math::Vec &ref_i = conf.old().pos(it->i);
       const math::Vec &ref_j = conf.old().pos(it->j);
       
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
+
+      /*
+      if (math::abs(ref_r) > 2 * sqrt(constr_length2)){
+	std::cerr << "Iteration Error: reference distance too large\n"
+		  << "\tref_r = " << math::abs(ref_r)
+		  << std::endl;
+      }
+      */
 
       double sp = dot(ref_r, r);
 	  
@@ -187,7 +215,8 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
 		  << "\tref r     : " << math::v2s(ref_r) << "\n"
 		  << "\tr         : " << math::v2s(r) << "\n"
 		  << "\tsp        : " << sp << "\n"
-		  << "\tconstr    : " << constr_length2 << "\n"
+		  << "\tconstr2   : " << constr_length2 << " (" << sqrt(constr_length2) << ")\n"
+		  << "\tdist2     : " << dist2 << " (" << sqrt(dist2) << ")\n"
 		  << "\tdiff      : " << diff << "\n"
 		  << "\tforce i   : " << math::v2s(conf.old().force(it->i)) << "\n"
 		  << "\tforce j   : " << math::v2s(conf.old().force(it->j)) << "\n"
@@ -206,16 +235,6 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
 			       1.0 / topo.mass()(it->j) ));      
 
       DEBUG(10, "lagrange multiplier " << lambda);
-
-      /*
-      if (do_constraint_force == true){
-	
-	//if it is a solute sum up constraint forces
-	assert(unsigned(sys.constraint_force().size()) > k + force_offset);
-	sys.constraint_force()(k+force_offset) += (lambda * ref_r);
-	// m_lambda(k) += lambda;
-      }
-      */
 
       if (V == math::atomic_virial){
 	for(int a=0; a<3; ++a){
@@ -281,7 +300,7 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
       // consider atoms in the next step
       skip_next[it->i] = false;
       skip_next[it->j] = false;
-      
+
     } // we have to shake
   } // constraints
       
@@ -298,11 +317,10 @@ void algorithm::Perturbed_Flexible_Constraint::calc_distance
 
   Flexible_Constraint::calc_distance(topo, conf, sim);
 
-  SPLIT_VIRIAL_BOUNDARY(_calc_distance,
-			topo, conf, sim);
+  SPLIT_BOUNDARY(_calc_distance, topo, conf, sim);
 }
 
-template<math::boundary_enum B, math::virial_enum V>
+template<math::boundary_enum B>
 void algorithm::Perturbed_Flexible_Constraint::_calc_distance
 (
  topology::Topology const &topo,
@@ -319,6 +337,8 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
   //loop over all constraints
   unsigned int k = unsigned(topo.solute().distance_constraints().size());
   unsigned int com, ir;
+
+  const double dt2 = sim.time_step_size() * sim.time_step_size();
   
   for(std::vector<topology::perturbed_two_body_term_struct>::const_iterator
 	it = topo.perturbed_solute().distance_constraints().begin(),
@@ -340,6 +360,7 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
 
     // unconstrained distance
     const double dist2 = math::abs2(r);
+    const double dist = sqrt(dist2);
     
     assert(conf.old().pos.size() > (it->i));
     assert(conf.old().pos.size() > (it->j));
@@ -352,21 +373,33 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
 
     // reference distance
     const double ref_dist2 = math::abs2(ref_r);
-
+    const double ref_dist  = sqrt(ref_dist2);
+    
     // standard formula with velocity along contsraints correction
     // (not the velocityless formula):
     assert(topo.mass().size() > (it->i));
     assert(topo.mass().size() > (it->j));
 
-    const double red_mass = 1 / (1/topo.mass()(it->i) + 1/topo.mass()(it->j));
-    const double dt2 = sim.time_step_size() * sim.time_step_size();
+    const double red_mass = 1.0 / (1.0/topo.mass()(it->i) + 1.0/topo.mass()(it->j));
       
     // calculate the force on constraint k
     assert(conf.special().flexible_constraint.flexible_vel.size() > k);
 
     const double force_on_constraint  = (red_mass / dt2) * 
-      (sqrt(dist2) - sqrt(ref_dist2) - 
+      (dist -  ref_dist - 
        conf.special().flexible_constraint.flexible_vel[k] * sim.time_step_size());
+
+    /*
+    if (fabs(force_on_constraint) > 1E6){
+      std::cerr << "ForceOnConstraint Error"
+		<< "\n\tf      = " << force_on_constraint
+		<< "\n\tdist   = " << dist
+		<< "\n\tref_dist = " << ref_dist
+		<< "\n\tv        = " << conf.special().flexible_constraint.flexible_vel[k]
+		<< "\n\tred_mass = " << red_mass
+		<< std::endl;
+    }
+    */
 
     // zero energy distance
 
@@ -378,24 +411,53 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
     // const double constr_length2 = m_parameter(it->type).r0 * m_parameter(it->type).r0;
     
     // calculate the flexible constraint distance
+    assert(m_parameter.size() > it->A_type);
+    assert(m_parameter.size() > it->B_type);
+    
     const double K = (1.0 - topo.lambda()) * m_parameter[it->A_type].K +
       topo.lambda() * m_parameter[it->B_type].K;
     const double r0 = (1.0 - topo.lambda()) * m_parameter[it->A_type].r0 + 
       topo.lambda() * m_parameter[it->B_type].r0;
-    
+
     const double new_len = force_on_constraint / K + r0;
+
+    /*
+    if (dist > 2 * r0){
+      std::cerr << "Calc Distance Error: free dist abnormally large: "
+		<< dist
+		<< "\tr0 = " << r0
+		<< std::endl;
+    }
+
+    if (ref_dist > 2 * r0){
+      std::cerr << "Calc Distance Error: ref dist abnormally large: "
+		<< ref_dist
+		<< "\tr0 = " << r0
+		<< std::endl;
+    }
     
+    if (new_len < 0 || new_len > 2 * r0){
+      std::cerr << "CALC_DIST ERROR:"
+		<< "\n\tnew_len = " << new_len
+		<< "\n\tK =       " << K
+		<< "\n\tr0 =      " << r0
+		<< "\n\tf =       " << force_on_constraint
+		<< std::endl;
+    }
+    */
+
     // store for shake
     m_perturbed_flex_len.push_back(new_len);
 
     // update the velocity array
     conf.special().flexible_constraint.flexible_vel[k] = 
-      (new_len - sqrt(ref_dist2)) / sim.time_step_size();
+      (new_len - ref_dist) / sim.time_step_size();
 
     // now we have to store the kinetic energy of the constraint
     // length change in the correct temperature bath...
     sim.multibath().in_bath(it->i, com, ir);
 
+    assert(conf.special().flexible_constraint.flexible_ekin.size() > ir);
     conf.special().flexible_constraint.flexible_ekin[ir] +=
       0.5 * red_mass * conf.special().flexible_constraint.flexible_vel[k] *
       conf.special().flexible_constraint.flexible_vel[k];
@@ -404,8 +466,9 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
 	  << 0.5 * red_mass * conf.special().flexible_constraint.flexible_vel[k] * 
 	  conf.special().flexible_constraint.flexible_vel[k]);
 
-
     // calculate Epot in the bond length constraints
+    assert(topo.atom_energy_group().size() > it->i);
+    assert(conf.old().energies.constraints_energy.size() > topo.atom_energy_group()[it->i]);
     conf.old().energies.constraints_energy[topo.atom_energy_group()[it->i]] += 
       0.5 * K * (r0 - new_len) * (r0 - new_len);
       
@@ -448,9 +511,6 @@ void algorithm::Perturbed_Flexible_Constraint::_solute
 
   math::Periodicity<B> periodicity(conf.current().box);
   
-  // conf.constraint_force() = 0.0;
-  // m_lambda = 0.0;
-
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
   int num_iterations = 0;
@@ -465,28 +525,35 @@ void algorithm::Perturbed_Flexible_Constraint::_solute
 
     if(_iteration<B, V>
        (topo, conf, pert_convergence, skip_now, skip_next,
-	sim.time_step_size(), periodicity, true))
+	sim.time_step_size(), periodicity))
       {
+	std::cout << "Perturbed Flexible SHAKE failure in solute!" << std::endl;
+	std::cout << "after " << num_iterations << " iterations" << std::endl;
+
 	io::messages.add("Perturbed Flexible SHAKE error. vectors orthogonal",
 			 "Perturbed_Flexible_Constraint::solute",
 			 io::message::error);
-	std::cout << "Perturbed Flexible SHAKE failure in solute!" << std::endl;
 	error = E_SHAKE_FAILURE_SOLUTE;
 	return;
       }
 
+    // pert_convergence = true;
+
     if(Flexible_Constraint::_iteration<B, V>
        (topo, conf, convergence, skip_now, skip_next,
-	sim.time_step_size(), periodicity, true))
+	sim.time_step_size(), periodicity))
       {
+	std::cout << "Flexible SHAKE failure in solute!" << std::endl;
+	std::cout << "after " << num_iterations << " iterations" << std::endl;
+
 	io::messages.add("Flexible SHAKE error. vectors orthogonal",
 			 "(Perturbed) Flexible_Constraint::solute",
 			 io::message::error);
-	std::cout << "Perturbed Flexible SHAKE failure in solute!" << std::endl;
 	error = E_SHAKE_FAILURE_SOLUTE;
 	return;
       }
-      
+    // convergence = true;
+    
     if(++num_iterations > m_max_iterations){
       io::messages.add("Perturbed Flexible SHAKE error. too many iterations",
 		       "Perturbed_Flexible_Constraint::solute",
@@ -499,14 +566,6 @@ void algorithm::Perturbed_Flexible_Constraint::_solute
     skip_next.assign(skip_next.size(), true);
 
   } // convergence?
-
-  // constraint_force
-  /*
-  for (unsigned int i=0; i < topo.solute().distance_constraints().size();++i){
-    conf.constraint_force()(i) *= 1 /(sim.time_step_size() * sim.time_step_size());
-    DEBUG(5, "constraint_force " << sqrt(math::abs2(conf.constraint_force()(i)) ));
-  }
-  */
 
   m_timing += util::now() - start;
   error = 0;
@@ -602,10 +661,17 @@ void algorithm::Perturbed_Flexible_Constraint::_store_lengths
 						       m_perturbed_flex_len.size());
 
   unsigned int k=0;
-  for( ; k<m_flex_len.size(); ++k)
+  for( ; k<m_flex_len.size(); ++k){
+    assert(conf.special().flexible_constraint.flex_len.size() > k);
+    assert(m_flex_len.size() > k);
     conf.special().flexible_constraint.flex_len[k] = m_flex_len[k];
+  }
+  
 
-  for(unsigned int kk=0; kk<m_perturbed_flex_len.size(); ++k, ++kk)
+  for(unsigned int kk=0; kk<m_perturbed_flex_len.size(); ++k, ++kk){
+    assert(conf.special().flexible_constraint.flex_len.size() > k);
+    assert(m_perturbed_flex_len.size() > kk);
     conf.special().flexible_constraint.flex_len[k] = m_perturbed_flex_len[kk];
+  }
   
 }
