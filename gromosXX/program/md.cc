@@ -164,7 +164,8 @@ int main(int argc, char *argv[]){
     ++sim.steps();
     
     
-    if (sim.steps() % (sim.param().step.number_of_steps / 10) == 0){
+    if ((sim.param().step.number_of_steps / 10 > 0) &&
+	(sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
       ++percent;
       const double spent = util::now() - start;
       const int hh = int(spent / 3600);
