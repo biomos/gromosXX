@@ -27,7 +27,8 @@ namespace interaction
   /**
    * @class Forcefield
    * contains the specific interactions.
-   * clear does not call them (i guess).
+   * (clear does not call them (i guess) -- sorry, don't know what this means anymore)
+   * Strategy Pattern.
    */
   class Forcefield : public std::vector<Interaction *>,
 		     public algorithm::Algorithm

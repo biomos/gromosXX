@@ -11,6 +11,7 @@ namespace algorithm
   /**
    * @class Algorithm_Sequence
    * contains the specific algorithms.
+   * An almost clean implementation of the Strategy pattern.
    */
   class Algorithm_Sequence : public std::vector<Algorithm *>
   {
