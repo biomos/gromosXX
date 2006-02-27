@@ -453,12 +453,6 @@ int util::Replica_Exchange_Slave::run_md
   // while(sim.time() < end_time + math::epsilon){
   while(sim.steps() < end_steps){
       
-    traj.write_replica_step(sim, replica_data);
-    traj.write(conf, topo, sim, io::reduced);
-
-    cg_traj.write_replica_step(cg_sim, replica_data);
-    cg_traj.write(cg_conf, cg_topo, cg_sim, io::reduced);
-
     ////////////////////////////////////////////////////
     // multigraining
     // and
@@ -506,11 +500,23 @@ int util::Replica_Exchange_Slave::run_md
 
     sim.time() += sim.time_step_size();
     ++sim.steps();
-    
+
+    // the very first position will be missing...
+    // still, this is much easier than any of the other
+    // variants.
+    // otherwise, the very last position is missing ;-)
+
+    traj.write_replica_step(sim, replica_data);
+    traj.write(conf, topo, sim, io::reduced);
+
     if (multigraining){
       cg_sim.time() += cg_sim.time_step_size();
       ++cg_sim.steps();
+
+      cg_traj.write_replica_step(cg_sim, replica_data);
+      cg_traj.write(cg_conf, cg_topo, cg_sim, io::reduced);
     }
+    
   }
 
   util::update_virtual_pos(cg_topo, cg_conf, topo, conf);
