@@ -495,53 +495,25 @@ int util::Replica_Exchange_Master::select_job(simulation::Simulation & sim)
   DEBUG(9, "request a job");
   // std::cout << "requesting a job" << std::endl;
 	  
-  int r;
-  for(r=0; r < rep_num; ++r){
+  int min_run = sim.param().replica.trials;
+  int select_replica = -1;
+  
+  for(int r=0; r < rep_num; ++r){
 	    
     if(replica_data[r].state == waiting){
       // try a switch
       switch_replica(r, sim.param());
     }
-	    
-    if(replica_data[r].state == ready && 
-       replica_data[r].run < sim.param().replica.trials){
-	      
-      // assign it!
-      replica_data[r].state = running;
-	      
-      // all ok, sending replica
-      ch = 0;
-      if (write(cl_socket, &ch, 1) != 1){
-	std::cerr << "could not write to socket" << std::endl;
-	return 1;
-      }
-	      
-      if (put_replica_data(replica_data[r])){
-	std::cerr << "could not write replica information" << std::endl;
-	return 1;
-      }
-	      
-      if (put_configuration(m_conf[r])){
-	std::cerr << "could not write configuration" << std::endl;
-	replica_data[r].state = ready;
-	return 1;
-      }
 
-      if (multigraining){
-
-	if (put_configuration(m_cg_conf[r])){
-	  std::cerr << "could not write configuration" << std::endl;
-	  replica_data[r].state = ready;
-	  return 1;
-	}
-      } // multigraining
-	      
-      return 0;
-    } // replica ready, now running
-
-  } // replica selected
-	  
-  if (r==rep_num){
+    if (replica_data[r].state == ready &&
+	replica_data[r].run < min_run){
+      
+      min_run = replica_data[r].run;
+      select_replica = r;
+    }
+  }
+  
+  if (select_replica == -1){
     // no replica available, wait...
     std::cout << "could not select replica!!!" << std::endl;
     ch=1;
@@ -550,7 +522,41 @@ int util::Replica_Exchange_Master::select_job(simulation::Simulation & sim)
       return 1;
     }
   }
+  else{
 
+    // assign it!
+    replica_data[select_replica].state = running;
+    
+    // all ok, sending replica
+    ch = 0;
+    if (write(cl_socket, &ch, 1) != 1){
+      std::cerr << "could not write to socket" << std::endl;
+      return 1;
+    }
+	      
+    if (put_replica_data(replica_data[select_replica])){
+      std::cerr << "could not write replica information" << std::endl;
+      return 1;
+    }
+    
+    if (put_configuration(m_conf[select_replica])){
+      std::cerr << "could not write configuration" << std::endl;
+      // try again
+      replica_data[select_replica].state = ready;
+      return 1;
+    }
+    
+    if (multigraining){
+      
+      if (put_configuration(m_cg_conf[select_replica])){
+	std::cerr << "could not write configuration" << std::endl;
+	// try again
+	replica_data[select_replica].state = ready;
+	return 1;
+      }
+    } // multigraining
+  }
+  
   return 0;
 }
 
