@@ -456,11 +456,11 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - stepblock 0               (print out every step)
-       * - centreofmass 0            (print centre of mass information every step)
+       * - stepblock 1               (print out every step)
+       * - centreofmass 1            (print centre of mass information every step)
        * - monitor_dihedrals false   (do not monitor dihedral angle transitions)
        */
-      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(false) {}
+      print_struct() : stepblock(1), centreofmass(1), monitor_dihedrals(false) {}
       
       /**
        * print stepblock
