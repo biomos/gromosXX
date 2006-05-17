@@ -873,7 +873,6 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param,
     // n=atoi(ntb.c_str());
     cs >> n;
     if(cs.fail()){
-      std::cerr << "boundary error number = " << n << std::endl;
       io::messages.add("wrong value for NTB in BOUNDARY block: "+ntb+"\n"
 		       "vacuum, rectangular, triclinic, 0, +/-1, +/-2",
 		       "In_Parameter", io::message::error);
@@ -967,8 +966,6 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
       css >> param.perturbation.scaling;
       
       if(css.fail()){
-	std::cerr << "got " << s2 << std::endl;
-	std::cout << "got " << s2 << std::endl;
 	io::messages.add("bad value for SCALING in PERTURB block\n"
 			 "on,off,0,1",
 			 "In_Parameter", io::message::error);
@@ -2313,7 +2310,6 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
     _lineStream >> param.replica.write;
     
     if (_lineStream.fail()){
-      std::cerr << "at the end" << std::endl;
       io::messages.add("bad line in REPLICA03 block (trials, equi, slave or write)",
 		       "In_Parameter", io::message::error);
 
