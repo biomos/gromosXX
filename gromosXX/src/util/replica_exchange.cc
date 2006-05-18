@@ -132,13 +132,14 @@ int util::Replica_Exchange::get_configuration
   }
 
   try{
+    // current pos
     readblock((char *) &conf.current().pos(0)(0), num);
+    // current vel
     readblock((char *) &conf.current().vel(0)(0), num);   
-
+    // box
     if (read(cl_socket, (char *) &conf.current().box(0)(0),
 		      9 * sizeof(double))
 	!= 9 * sizeof(double))
-
       throw std::runtime_error("could not read box");      
   }
   catch (std::runtime_error e){
