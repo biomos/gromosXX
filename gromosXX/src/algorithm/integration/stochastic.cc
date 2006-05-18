@@ -226,15 +226,15 @@ int algorithm::Stochastic_Dynamics_Pos
   
   //first we count the number of neighbours if SASA weighting is applied...
  
-  if (conf.boundary_type != math::vacuum){
-    io::messages.add("SD only implemented for vacuum!",
-		     "Stochastic_Dynamics",
-		     io::message::critical);
-    return 1;
-  }
-  
   if (sim.param().stochastic.ntfr == 3){
 
+    if (conf.boundary_type != math::vacuum){
+      io::messages.add("SD only implemented for vacuum!",
+		       "Stochastic_Dynamics",
+		       io::message::critical);
+      return 1;
+    }
+    
     for (int i = 0; i < size; ++i){
       for (int j = i+1; j < size; ++j){
 
