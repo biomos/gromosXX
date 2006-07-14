@@ -471,7 +471,7 @@ namespace interaction
     int cg_index = 0;
     int new_cg_index = 0;
     int solute_cg = topo.num_solute_chargegroups();
-    std::cerr << "solute cgs: " << topo.num_solute_chargegroups() << std::endl;
+    // std::cerr << "solute cgs: " << topo.num_solute_chargegroups() << std::endl;
     
     for( ; cg_it != cg_to; ++cg_it, ++cg_index){
 
