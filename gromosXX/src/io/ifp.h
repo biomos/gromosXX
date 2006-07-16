@@ -15,6 +15,10 @@ namespace io
   class IFP
   {
   public:
+    /**
+     * destructor
+     */
+    virtual ~IFP() {}
 
     /**
      * Read in the harmonic bond parameter.
