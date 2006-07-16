@@ -29,9 +29,12 @@ bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
   if (buffer.size()){
     std::istringstream is(buffer[1]);
     int num;
-    if (!(is >> num) || num < 0)
+    if (!(is >> num) || num < 0){
+      std::cout << "ERROR:\tcould not read num or smaller 0!"
+		<< std::endl;
       return false;
-      
+    }
+    
     for(typename std::vector<T>::const_iterator
 	  it = term.begin(),
 	  to = term.end();
@@ -39,12 +42,18 @@ bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
 	++it){
       
       if (int(it->type) >= num){
+	std::cout << "ERROR:\tused type " << it->type + 1
+		  << " larger than max type (" << num << ")" 
+		  << std::endl;
+	
 	return false;
       }
     }
     return true;
   }
-  if (!term.size()) return true;
+  if (term.size() == 0) return true;
+
+  std::cout << "ERROR:\tblock not found!" << std::endl;
   return false;
 }
 
@@ -65,6 +74,11 @@ io::In_Topology::read(topology::Topology& topo,
 
   std::string bond_bname = "BONDTYPE";
   if (param.force.bond == 2 && m_block["HARMBONDTYPE"].size())
+    bond_bname = "HARMBONDTYPE";
+
+  if (param.force.bond == 0 &&
+      m_block["BONDTYPE"].size() == 0 &&
+      m_block["HARMBONDTYPE"].size() > 0)
     bond_bname = "HARMBONDTYPE";
 
   std::string angle_bname = "BONDANGLETYPE";
@@ -585,7 +599,7 @@ io::In_Topology::read(topology::Topology& topo,
 
     // check the bonds in constraints
     if (!check_type(m_block[bond_bname], topo.solute().distance_constraints())){
-      io::messages.add("Illegal bond type in CONSTRAINT block",
+      io::messages.add("Illegal bond type in " + bond_bname + " block",
 		       "In_Topology", io::message::error);
     }
 
