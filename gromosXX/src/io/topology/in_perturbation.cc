@@ -348,27 +348,27 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  = std::find(topo.solute().angles().begin(), 
 		      topo.solute().angles().end(), 
 		      a);
-
-	// try the other way round:
-	topology::three_body_term_struct a2(i-1, j-1, k-1, t_B-1);
-	std::vector<topology::three_body_term_struct>::iterator a_it2
-	  = std::find(topo.solute().angles().begin(), 
-		      topo.solute().angles().end(), 
-		      a2);
 	
-	if (a_it == topo.solute().angles().end() &&
-	    a_it2 == topo.solute().angles().end()){
-
-
-	  io::messages.add("Perturbation of a non-existing angle in "
-			   "PERTBANGLE03 block.",
-			   "In_Perturbation", io::message::error);	
+	if (a_it == topo.solute().angles().end()){
+	  
+	  // try for B
+	  topology::three_body_term_struct a2(i-1, j-1, k-1, t_B-1);
+	  a_it = std::find(topo.solute().angles().begin(), 
+			   topo.solute().angles().end(), 
+			   a2);
+	  if(a_it == topo.solute().angles().end()){
+	    
+	    io::messages.add("Perturbation of a non-existing angle in "
+			     "PERTBANGLE03 block.",
+			     "In_Perturbation", io::message::error);	
+	  }
 	}
+	
 	
 	if (a_it != topo.solute().angles().end())
 	  topo.solute().angles().erase(a_it);
-	if (a_it2 != topo.solute().angles().end())
-	  topo.solute().angles().erase(a_it2);
+	//	if (a_it2 != topo.solute().angles().end())
+	// topo.solute().angles().erase(a_it2);
 
 	topology::perturbed_three_body_term_struct pa(i-1, j-1, k-1, t_A-1, t_B-1);
 	topo.perturbed_solute().angles().push_back(pa);
@@ -384,7 +384,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 
       }
       if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTBANGLE03 block.",
+	  io::messages.add("Wrong number of angles in PERTBANGLE03 block.",
 			   "In_Perturbation", io::message::error);	
       }
       else if (_lineStream.fail()){
