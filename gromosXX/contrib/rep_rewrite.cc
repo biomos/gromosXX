@@ -265,9 +265,13 @@ int init(vector<ifstream*> &traj, vector<repframe> &stream_state)
     
     do{
       getline(*traj[i], line);
-    } while (line != "REMD");
+    } while (line != "REMD" && !traj[i]->eof());
 
-    if (read_repframe(*traj[i], stream_state[i]))
+    if(traj[i]->eof()){
+      stream_state[i].id = -1;
+      cout << "done: empty trajectory file" << endl;
+    }
+    else if (read_repframe(*traj[i], stream_state[i]))
       return 1;
   }
 
