@@ -110,7 +110,7 @@ int algorithm::Steepest_Descent
     f = 1.0 / sqrt(f);
 
 #ifdef HAVE_ISNAN
-  if (isnan(f)){
+  if (std::isnan(f)){
     io::messages.add("force is NaN", "Steepest_Descent", io::message::error);
     return E_NAN;
   }
