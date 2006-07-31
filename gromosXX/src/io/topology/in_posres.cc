@@ -79,22 +79,28 @@ io::In_Posres::read(topology::Topology& topo,
 			 "In_Posres",
 			 io::message::error);
       }
-      if (n-1 != topo.solute().atom(nr-1).residue_nr ){
-	      io::messages.add("residue numbers do not match in POSRES block:\n\t" + *it,
-			      "In_Posres",
-			      io::message::error);
+      
+      if(nr <= topo.num_solute_atoms()){
+	if (s2 != topo.solute().atom(nr-1).name ){
+	  io::messages.add("atom names do not match in POSRES block:\n\t"
+			   + topo.solute().atom(nr-1).name + "\n\t" + *it,
+			   "In_Posres",
+			   io::message::error);
+	}
+        if (n-1 != topo.solute().atom(nr-1).residue_nr ){
+          io::messages.add("residue numbers do not match in POSRES block:\n\t" 
+			   + *it,
+                           "In_Posres",
+                           io::message::error);
+        }
+	if (s1 != topo.residue_names()[n-1]){
+	  io::messages.add("residue names do not match in POSRES block:\n\t"
+			   + topo.residue_names()[n-1] + "\n\t" + *it,
+			   "In_Posres",
+			   io::message::error);
+	}
       }
-      if (s1 != topo.residue_names()[n-1]){
-	      io::messages.add("residue names do not match in POSRES block:\n\t" + *it,
-			      "In_Posres",
-			      io::message::error);
-      }
-      if (s2 != topo.solute().atom(nr-1).name ){
-	      io::messages.add("atom names do not match in POSRES block:\n\t"+ *it,
-			      "In_Posres",
-			      io::message::error);
-      }
-
+      
       topo.position_restraints().push_back
 	(topology::position_restraint_struct(nr-1, pos));
 
