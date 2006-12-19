@@ -24,3 +24,7 @@
 #DEFAULT (echo ""; id; echo %s; date; cat) >> $CVSROOT/CVSROOT/commitlog
 # or
 #DEFAULT (echo ""; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog
+ALL      /usr/ucb/Mail -s %s oostnbrk@few.vu.nl
+ALL      /usr/ucb/Mail -s %s pitschna@igc.phys.chem.ethz.ch
+ALL      /usr/ucb/Mail -s %s cchrist@igc.phys.chem.ethz.ch
+ALL      /usr/ucb/Mail -s %s markus@igc.phys.chem.ethz.ch
