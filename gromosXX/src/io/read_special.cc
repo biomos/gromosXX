@@ -55,7 +55,7 @@ int io::read_special(io::Argument const & args,
     }
     else{
       posres_file.open(args["posres"].c_str());
-      if (!posres_file){
+      if (!posres_file.is_open()){
 	io::messages.add("opening posres file failed!\n",
 			 "read_special", 
 			 io::message::error);
@@ -83,7 +83,7 @@ int io::read_special(io::Argument const & args,
     else{
   
       distrest_file.open(args["distrest"].c_str());
-      if (!distrest_file){
+      if (!distrest_file.is_open()){
 	io::messages.add("opening distrest file failed!\n",
 			 "read_special", 
 			 io::message::error);
@@ -110,7 +110,7 @@ int io::read_special(io::Argument const & args,
     }
     else{
       dihrest_file.open(args["dihrest"].c_str());
-      if (!dihrest_file){
+      if (!dihrest_file.is_open()){
 	io::messages.add("opening dihrest file '" + args["dihrest"] + "'failed!\n",
 			 "read_special", 
 			 io::message::error);
@@ -137,7 +137,7 @@ int io::read_special(io::Argument const & args,
     }
     else{
       jval_file.open(args["jval"].c_str());
-      if (!jval_file){
+      if (!jval_file.is_open()){
 	io::messages.add("opening jvalue restraints file failed!\n",
 			 "read_special", io::message::error);
 	return 1;
