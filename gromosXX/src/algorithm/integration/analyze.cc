@@ -88,7 +88,11 @@ int algorithm::Analyze_Step
       DEBUG(9, "analyze: copy current() pos to old()");
       conf.old().pos = conf.current().pos;
     }
-    
+    if (sim.param().integrate.method == simulation::integrate_off){
+       conf.exchange_state();
+       // copy the box
+       conf.current().box = conf.old().box;
+    }
     return 0;
   }
   
