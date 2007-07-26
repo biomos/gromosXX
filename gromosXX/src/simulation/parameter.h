@@ -1393,6 +1393,55 @@ namespace simulation
       int steps;
     } /** montecarlo */ montecarlo;
 
+    
+    /**
+     * @struct ramd_struct
+     * random acceleration simulation
+     */
+    struct ramd_struct
+    {
+      /**
+       * Constructor
+       */
+      ramd_struct() : fc(0.0), steps(0), r_min(0.0), every(0), 
+		      do_ta(false), tau(0.0), ta_min(0.0)
+      {
+      }
+      
+      /**
+       * force constant
+       */
+      double fc;
+      /**
+       * number of md steps between change of direction
+       */
+      int steps;
+      /**
+       * minimum distance to travel 
+       */
+      double r_min;
+      /**
+       * print the ramd force and com position every steps
+       */
+      int every;
+      /**
+       * logical to turn time-averaged thingies on
+       */
+      bool do_ta;
+      /**
+       * averaging time for time averaged distances
+       */
+      double tau;
+      /**
+       * minimum distance to travel on the time averaged scale
+       */
+      double ta_min;
+      /**
+       * atoms to apply force to
+       */
+      std::set<unsigned int> atom;
+      
+    } /** ramd */ ramd;
   };
 }
 

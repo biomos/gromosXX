@@ -106,6 +106,8 @@ configuration::Configuration::Configuration
   special().pscale = conf.special().pscale;
   
   special().rottrans_constr = conf.special().rottrans_constr;
+
+  special().ramd = conf.special().ramd;
   
   boundary_type = conf.boundary_type;
 }
@@ -172,6 +174,8 @@ configuration::Configuration & configuration::Configuration::operator=
   
   special().rottrans_constr = conf.special().rottrans_constr;
 
+  special().ramd = conf.special().ramd;
+  
   boundary_type = conf.boundary_type;
 
   return *this;
@@ -218,6 +222,14 @@ void configuration::Configuration::init(topology::Topology const & topo,
 
     special().flexible_constraint.flexible_ekin.resize(numb);
   }
+
+  if(param.ramd.fc!=0.0){
+    special().ramd.force_direction = math::Vec(0.0,0.0,0.0);
+    // initialize the ta_average to the minimum distance.
+    special().ramd.ta_average = param.ramd.ta_min * exp(1);
+    
+  }
+  
   
   // resize the arrays
   // to make scripting easier...
