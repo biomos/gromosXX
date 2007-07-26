@@ -22,6 +22,7 @@
 #include <interaction/special/perturbed_dihedral_restraint_interaction.h>
 #include <interaction/special/jvalue_restraint_interaction.h>
 #include <interaction/special/external_interaction.h>
+#include <interaction/special/ramd_interaction.h>
 
 #include <interaction/bonded/dihedral_interaction.h>
 #include <interaction/special/pscale.h>
@@ -157,6 +158,15 @@ int interaction::create_special(interaction::Forcefield & ff,
     interaction::External_Interaction * ei =
       new interaction::External_Interaction;
     ff.push_back(ei);
+  }
+
+  if (param.ramd.fc!=0.0){
+    if(!quiet){
+      os << "\tadding ramd forces\n";
+    }
+    interaction::RAMD_Interaction * ri = 
+      new interaction::RAMD_Interaction;
+    ff.push_back(ri);
   }
   
   return 0;
