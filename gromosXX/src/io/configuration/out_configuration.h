@@ -130,6 +130,10 @@ namespace io {
      */
     void block_averaged_free_energy(std::string const name, int every=1);
     /**
+     * RAMD trajectory
+     */
+    void ramd_trajectory(std::string const name, int every=1);
+    /**
      * precision of output.
      */
     void precision(int prec, int add=6);
@@ -207,6 +211,11 @@ namespace io {
 
     void _print_energyred(configuration::Configuration const &conf,
 			  std::ostream &os);
+    
+    void _print_ramd(topology::Topology const & topo,
+		     configuration::Configuration const &conf,
+		     simulation::Simulation const &sim,
+		     std::ostream &os);
 
     void _print_volumepressurered(topology::Topology const &topo,
 				  configuration::Configuration const &conf, 
@@ -261,6 +270,7 @@ namespace io {
     std::ofstream m_free_energy_traj;
     std::ofstream m_blockaveraged_energy;
     std::ofstream m_blockaveraged_free_energy;
+    std::ofstream m_ramd_traj;
     
     std::ostream & m_output;
     
@@ -273,6 +283,7 @@ namespace io {
     int m_every_energy;
     int m_every_free_energy;
     int m_every_blockaverage;
+    int m_every_ramd;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;
