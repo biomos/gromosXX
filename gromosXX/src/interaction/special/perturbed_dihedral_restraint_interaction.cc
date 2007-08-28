@@ -198,6 +198,10 @@ static int _calculate_perturbed_dihedral_restraint_interactions
     if (it->m == 0) dprefmdl = 0;
     else dprefmdl = it->m * pow(l, it->n) * pow(1 - l, it->m-1);
 
+    // CHRIS: This seems to be wrong!
+    // energy was already multiplied by prefactor. Here we should only use
+    // the restraining part of the energy, before the multiplication with 
+    // prefactor
     double dprefdl = pow(2, it->m + it->n) * 
       (dprefndl - dprefmdl) * energy;
     
