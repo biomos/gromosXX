@@ -339,6 +339,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(distrest_total);
   ENERGY_AVG(dihrest_total);
   ENERGY_AVG(constraints_total);
+  ENERGY_AVG(entropy_term);
   ENERGY_AVG(external_total);
 
   // kinetic energies...

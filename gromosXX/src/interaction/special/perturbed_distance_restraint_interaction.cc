@@ -44,7 +44,7 @@ static int _calculate_perturbed_distance_restraint_interactions
   // math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double energy, energy_derivativ;
+  double en_term, dlam_term, energy, energy_derivativ;
 
 
   math::Periodicity<B> periodicity(conf.current().box);
@@ -74,103 +74,96 @@ static int _calculate_perturbed_distance_restraint_interactions
     const double D_r0 = it->B_r0 - it->A_r0;
     DEBUG(9, "PERTDISTREST dist : " << dist << " r0 " << r0 << " rah " << it->rah);  
 
-    if(it->rah*dist < it->rah*(r0))
-      {
-	DEBUG(9, "PERTDISTREST  : (rep / attr) restraint fulfilled");
-	f=0*v;		
-      }    
-    else if(fabs(r0 - dist) < r_l)
-      {
-	DEBUG(9, "PERTDISTREST  :  harmonic");
-	f = -4*( l*(1-l)*K*(dist - (r0))*v / dist); 
-      }    
+    double prefactor = pow(2, it->n + it->m) * pow(l, it->n) * pow(1-l, it->m);
+    
+    if(it->rah*dist < it->rah*(r0)){
+	
+      DEBUG(9, "PERTDISTREST  : (rep / attr) restraint fulfilled");
+      f=0*v;
+      en_term = 0;
+    }    
+    else if(fabs(r0 - dist) < r_l){
+
+      DEBUG(9, "PERTDISTREST  :  harmonic");
+      f = -K*(dist - (r0))*v / dist; 
+      en_term = 0.5 * K * (dist - r0)*(dist - r0);
+    }    
     else{
       DEBUG(9, "PERTDISTREST  : (rep / attr) linear");
-      if(dist<r0)
-	f =4*( l*(1-l) * r_l * K * v / dist);
-      else
-	f =-4*( l*(1-l) * r_l * K * v / dist);
+      if(dist<r0){
+	f = r_l * K * v / dist;
+	en_term = -K * (dist + 0.5 * r_l - r0);
+      }
+      else{
+	f = -r_l * K * v / dist;
+	en_term = K * (dist + 0.5 * r_l - r0);
+      }
     }
   
     if(sim.param().distrest.distrest == 1)
       ;      
-    else if(sim.param().distrest.distrest == 2)
+    else if(sim.param().distrest.distrest == 2){
       f=f*w0;
-    else
+      en_term = en_term*w0;
+    }
+    else{
       f=f*0;
-
-       
+      en_term=0;
+    }
+    f = prefactor*f;
+    energy = prefactor*en_term;
+    
     it->v1.force(conf,  f);
     it->v2.force(conf, -f);  
-  
-    if(it->rah*dist < it->rah*r0)
-      {
-	DEBUG(10, "PERTDISTREST: (rep / att ) restraint fulfilled");
-      	energy = 0;
-      }
-    else if(fabs(r0 - dist) < r_l)
-      {
-	DEBUG(10, "PERTDISTREST: harmonic");	
-	energy = 2 * l * (1-l) * K * (dist - r0)* (dist - r0);
-      }
-    else 
-      {
-	DEBUG(10, "PERTDISTREST: (rep / att ) linear");	
-	if(dist<r0)
-	  energy= -4*l*(1-l)* K *r_l *(dist  + 0.5 * r_l - r0);
-	else
-	  energy=  4*l*(1-l)* K *r_l *(dist  - 0.5 * r_l - r0);
-      }
-    
-    
-    if(sim.param().distrest.distrest == 1)
-      ;
-    else if(sim.param().distrest.distrest == 2)
-      energy = energy*w0;
-    else
-      energy=0;
-    
     
     DEBUG(10, "PERTDISTREST Energy : " << energy);
     conf.current().energies.distrest_energy[topo.atom_energy_group()
 					    [it->v1.atom(0)]] += energy;
     
     if(it->rah*dist <it->rah*(r0))
-      energy_derivativ = 0;
+      dlam_term = 0;
     
-    else if(sim.param().distrest.distrest == 1)
-      {
-	if(fabs(r0-dist)<r_l)
-	  energy_derivativ = 2*((1-2*l)*K*(dist - (r0)) * (dist - (r0)))
-	    -4*(l*(1-l)*K*(dist - (r0))* (D_r0));
-       	else 
-	  {
-	    if(dist<r0)
-	      energy_derivativ= -4*r_l*K*((1-2*l)*(dist  +0.5 *r_l - (r0)) -l*(1-l)*(D_r0));
-	    else
-	      energy_derivativ= 4*r_l*K*((1-2*l)*(dist  - 0.5 *r_l - (r0)) -l*(1-l)*(D_r0));
-	    }	
-      }
-    
-    else if(sim.param().distrest.distrest == 2)
-      {
-	if(fabs(r0-dist)<r_l)
-	  energy_derivativ = 2*(K*((1-4*l+3*l2)*it->A_w0 +(2*l-3*l2)*it->B_w0)*
-				(dist - (r0))*(dist - (r0)))
-	    -4*l*K*(((1-2*l+l2)*it->A_w0+ l*(1-l)*it->B_w0)*(dist - (r0)) * (D_r0));
-	
-	else 
-	  {
-	    if(dist<r0)
-	      energy_derivativ=- 4*r_l*K*(((1-4*l+3*l2)*it->A_w0 + (2*l-3*l2)*it->B_w0)*(dist  + 0.5*r_l - (r0))
-				     -l*((1-2*l+l2)*it->A_w0 +l*(1-l)*it->B_w0)*(D_r0));
-	    else   
-	      energy_derivativ= 4*r_l*K*(((1-4*l+3*l2)*it->A_w0 + (2*l-3*l2)*it->B_w0)*(dist  - 0.5*r_l - (r0))
-					 -l*((1-2*l+l2)*it->A_w0 +l*(1-l)*it->B_w0)*(D_r0));
-	  }
-
+    else if(sim.param().distrest.distrest == 1){
+      if(fabs(r0-dist)<r_l)
+	dlam_term = -K * ( dist - r0 ) * D_r0;
+      else {
+	if(dist<r0)
+	  dlam_term = K * D_r0 * r_l;
+	else
+	  dlam_term = -K * D_r0 * r_l;
+      }	
+    }
+    else if(sim.param().distrest.distrest == 2){
+      if(fabs(r0-dist)<r_l)
+	dlam_term = 0.5 * K * (it->B_w0 - it->A_w0) * (dist - r0)*(dist - r0)
+	  - K * w0 * (dist - r0) * D_r0;
+      else {
+	if(dist<r0)
+	  dlam_term = -K *(it->B_w0 - it->A_w0) * (dist + 0.5*r_l - r0) * r_l
+	    + K * w0 * D_r0 * r_l;
+	else   
+	  dlam_term =  K *(it->B_w0 - it->A_w0) * (dist + 0.5 * r_l - r0) * r_l
+	    - K * w0 * D_r0 * r_l;
       }
 
+    }
+
+    // the derivative of the prefactor
+    // division by zero precaution
+    double dprefndl, dprefmdl;
+    if (it->n==0) dprefndl = 0;
+    else dprefndl = it->n * pow(l, it->n-1) * pow(1 - l, it->m);
+    
+    if (it->m == 0) dprefmdl = 0;
+    else dprefmdl = it->m * pow(l, it->n) * pow(1 - l, it->m-1);
+
+    double dprefdl = pow(2, it->m + it->n) * 
+      (dprefndl - dprefmdl) * en_term;
+    
+    double dpotdl = prefactor * dlam_term;
+
+    energy_derivativ = dprefdl + dpotdl;
+    
     conf.current().perturbed_energy_derivatives.distrest_energy[topo.atom_energy_group()
 								[it->v1.atom(0)]] += energy_derivativ;
     

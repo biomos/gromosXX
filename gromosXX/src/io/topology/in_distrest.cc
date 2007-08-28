@@ -181,6 +181,7 @@ io::In_Distrest::read(topology::Topology& topo,
 
     double dish,disc;
     int type1, type2;
+    int n,m;
     std::vector<int> atom1(4), atom2(4);
     double A_r0, B_r0,A_w0, B_w0;
     int rah;
@@ -230,6 +231,8 @@ io::In_Distrest::read(topology::Topology& topo,
 	 << std::setw(8) << "k"
 	 << std::setw(8) << "l"
 	 << std::setw(5) << "type"
+	 << std::setw(5) << "n"
+	 << std::setw(5) << "m"
 	 << std::setw(8) << "A_r0"
 	 << std::setw(8) << "A_w0"
 	 << std::setw(8) << "B_r0"
@@ -247,7 +250,7 @@ io::In_Distrest::read(topology::Topology& topo,
 
       _lineStream >> atom1[0] >> atom1[1] >> atom1[2] >>atom1[3] >> type1;
       _lineStream >> atom2[0] >> atom2[1] >> atom2[2] >>atom2[3] >> type2;
-      _lineStream >> A_r0 >> A_w0 >> B_r0 >> B_w0 >> rah;
+      _lineStream >> n >> m >> A_r0 >> A_w0 >> B_r0 >> B_w0 >> rah;
 
     
       if(_lineStream.fail()){
@@ -270,7 +273,7 @@ io::In_Distrest::read(topology::Topology& topo,
       util::Virtual_Atom v2(t2, atom2, dish, disc);
     
       topo.perturbed_distance_restraints().push_back
-	(topology::perturbed_distance_restraint_struct(v1,v2,A_r0,B_r0,A_w0,B_w0, rah));
+	(topology::perturbed_distance_restraint_struct(v1,v2,n,m,A_r0,B_r0,A_w0,B_w0, rah));
 
       if (!quiet){
 	os << std::setw(10) << atom1[0]+1
@@ -283,6 +286,8 @@ io::In_Distrest::read(topology::Topology& topo,
 	   << std::setw(8) << atom2[2]+1
 	   << std::setw(8) << atom2[3]+1
 	   << std::setw(5) << type2
+	   << std::setw(5) << n
+	   << std::setw(5) << m
 	   << std::setw(8) << A_r0	    
 	   << std::setw(8) << A_w0
 	   << std::setw(8) << B_r0
