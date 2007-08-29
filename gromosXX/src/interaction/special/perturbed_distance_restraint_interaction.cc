@@ -66,7 +66,6 @@ static int _calculate_perturbed_distance_restraint_interactions
     double dist = abs(v);
 
     const double l = topo.lambda();
-    const double l2 = l*l;
     const double w0 = (1-l)*it->A_w0 + l*it->B_w0;
     const double r0 = (1-l)*it->A_r0 + l*it->B_r0;
     const double K = sim.param().distrest.K;
@@ -86,17 +85,19 @@ static int _calculate_perturbed_distance_restraint_interactions
 
       DEBUG(9, "PERTDISTREST  :  harmonic");
       f = -K*(dist - (r0))*v / dist; 
-      en_term = 0.5 * K * (dist - r0)*(dist - r0);
+      en_term = 0.5 * K * (dist - r0) * (dist - r0);
     }    
     else{
       DEBUG(9, "PERTDISTREST  : (rep / attr) linear");
       if(dist<r0){
+ 	DEBUG(9, "PERTDISTREST   : (rep / attr) linear negative");
 	f = r_l * K * v / dist;
-	en_term = -K * (dist + 0.5 * r_l - r0);
+	en_term = -K * (dist + 0.5 * r_l - r0) * r_l;
       }
       else{
+ 	DEBUG(9, "PERTDISTREST   : (rep / attr) linear positive");
 	f = -r_l * K * v / dist;
-	en_term = K * (dist + 0.5 * r_l - r0);
+	en_term = K * (dist - 0.5 * r_l - r0) * r_l;
       }
     }
   
@@ -124,26 +125,39 @@ static int _calculate_perturbed_distance_restraint_interactions
       dlam_term = 0;
     
     else if(sim.param().distrest.distrest == 1){
-      if(fabs(r0-dist)<r_l)
+      if(fabs(r0-dist)<r_l){
+	// harmonic
 	dlam_term = -K * ( dist - r0 ) * D_r0;
+      }
       else {
-	if(dist<r0)
+	if(dist<r0){
+	  // linear negative
 	  dlam_term = K * D_r0 * r_l;
-	else
+	}
+	else{
+	  // linear positive
 	  dlam_term = -K * D_r0 * r_l;
+	}
+	
       }	
     }
     else if(sim.param().distrest.distrest == 2){
-      if(fabs(r0-dist)<r_l)
+      if(fabs(r0-dist)<r_l){
+	// harmonic
 	dlam_term = 0.5 * K * (it->B_w0 - it->A_w0) * (dist - r0)*(dist - r0)
 	  - K * w0 * (dist - r0) * D_r0;
+      }
       else {
-	if(dist<r0)
+	if(dist<r0){
+	  // linear negative
 	  dlam_term = -K *(it->B_w0 - it->A_w0) * (dist + 0.5*r_l - r0) * r_l
 	    + K * w0 * D_r0 * r_l;
-	else   
-	  dlam_term =  K *(it->B_w0 - it->A_w0) * (dist + 0.5 * r_l - r0) * r_l
+	}
+	else{   
+	  // linear positive
+	  dlam_term =  K *(it->B_w0 - it->A_w0) * (dist - 0.5 * r_l - r0) * r_l
 	    - K * w0 * D_r0 * r_l;
+	}
       }
 
     }
@@ -163,7 +177,8 @@ static int _calculate_perturbed_distance_restraint_interactions
     double dpotdl = prefactor * dlam_term;
 
     energy_derivativ = dprefdl + dpotdl;
-    
+    DEBUG(10, "PERTDISTREST Energy derivative : " << energy_derivativ);
+
     conf.current().perturbed_energy_derivatives.distrest_energy[topo.atom_energy_group()
 								[it->v1.atom(0)]] += energy_derivativ;
     

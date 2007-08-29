@@ -46,7 +46,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
-  double energy, f, dlam;
+  double energy, en_term, f, energy_derivative, dlam_term;
 
   /*
     math::VArray &pos   = conf.current().pos;
@@ -146,18 +146,31 @@ static int _calculate_perturbed_dihedral_restraint_interactions
       // LINEAR
       double zeta = 1;
       if (delta_phi < 0) zeta = -1;
+      en_term = K * (zeta * delta_phi - 0.5 * phi_lin) * phi_lin;
+      dlam_term = phi_lin * ( (B_K - A_K) * (zeta * delta_phi - 0.5 * phi_lin)
+			      + K * zeta * (phi0_A - phi0_B));
       
-      energy = prefactor * K * (zeta * delta_phi - 0.5 * phi_lin) * phi_lin;
+      // this, I call now the en_term, without the prefactor
+      // energy = prefactor * K * (zeta * delta_phi - 0.5 * phi_lin) * phi_lin;
       f = - prefactor * K * zeta * phi_lin;
-      dlam = 0.5 * phi_lin * ( (B_K - A_K) * (zeta * delta_phi - 0.5 * phi_lin) +
-			       K * zeta * (phi0_A - phi0_B));
+
+      // where does the first factor 0.5 come from?
+      //dlam = 0.5 * phi_lin * ( (B_K - A_K) * (zeta * delta_phi - 0.5 * phi_lin) +
+      //		       K * zeta * (phi0_A - phi0_B));
     }
     else {
       // HARMONIC
-      energy = prefactor * 0.5 * K * delta_phi * delta_phi;
+      en_term = 0.5 * K * delta_phi * delta_phi;
+      dlam_term = 0.5 * (B_K - A_K) * delta_phi * delta_phi 
+	+ K * delta_phi * (phi0_A - phi0_B);
       f = -prefactor * K * delta_phi;
-      dlam = 0.5 * ( (B_K - A_K) * delta_phi * delta_phi +
-		     2 * K * delta_phi * (phi0_A - phi0_B));
+
+      // Again, we first store them as the term of the restraint, without
+      // the prefactor
+      //energy = prefactor * 0.5 * K * delta_phi * delta_phi;
+      //
+      //dlam = 0.5 * ( (B_K - A_K) * delta_phi * delta_phi +
+      //	     2 * K * delta_phi * (phi0_A - phi0_B));
     }
 
     /*
@@ -170,6 +183,8 @@ static int _calculate_perturbed_dihedral_restraint_interactions
 	      << std::endl;
     */
 
+    energy = prefactor * en_term;
+    
     conf.current().energies.dihrest_energy[topo.atom_energy_group()
 					   [it->i]] += energy;
     
@@ -198,17 +213,15 @@ static int _calculate_perturbed_dihedral_restraint_interactions
     if (it->m == 0) dprefmdl = 0;
     else dprefmdl = it->m * pow(l, it->n) * pow(1 - l, it->m-1);
 
-    // CHRIS: This seems to be wrong!
-    // energy was already multiplied by prefactor. Here we should only use
-    // the restraining part of the energy, before the multiplication with 
-    // prefactor
     double dprefdl = pow(2, it->m + it->n) * 
-      (dprefndl - dprefmdl) * energy;
+      (dprefndl - dprefmdl) * en_term;
     
-    double dpotdl = prefactor * dlam;
+    double dpotdl = prefactor * dlam_term;
 
+    energy_derivative = dprefdl + dpotdl;
+    
     conf.current().perturbed_energy_derivatives.dihrest_energy
-      [topo.atom_energy_group()[it->i]] += dprefdl + dpotdl;
+      [topo.atom_energy_group()[it->i]] += energy_derivative;
 
   }
   

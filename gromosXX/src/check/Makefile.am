@@ -68,6 +68,7 @@ EXTRA_DIST =	data/rasn.topo \
 		data/aladip_special.in \
 		data/aladip_cg.in \
 		data/aladip.distrest \
+		data/aladip.dihrest \
 		data/aladip_atomic.in \
 		data/scaling.in \
 		data/scaling.lambdadep.in \

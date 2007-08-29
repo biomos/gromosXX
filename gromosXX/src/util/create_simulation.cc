@@ -23,6 +23,7 @@
 #include <io/topology/in_topology.h>
 #include <io/topology/in_perturbation.h>
 #include <io/topology/in_distrest.h>
+#include <io/topology/in_dihrest.h>
 #include <io/parameter/in_parameter.h>
 
 #include <algorithm/algorithm/algorithm_sequence.h>
@@ -44,6 +45,7 @@ int util::create_simulation(std::string topo,
 			    util::simulation_struct & sim,
 			    io::In_Topology & in_topo,
 			    std::string distrest,
+			    std::string dihrest,
 			    bool quiet)
 {
 
@@ -55,7 +57,8 @@ int util::create_simulation(std::string topo,
     return 1;
   }
 
-  std::ifstream input_file, topo_file, pttopo_file, conf_file, distrest_file;
+  std::ifstream input_file, topo_file, pttopo_file, conf_file, 
+    distrest_file, dihrest_file;
   
   // if we got a parameter file, try to read it...
   if (param != ""){
@@ -126,7 +129,21 @@ int util::create_simulation(std::string topo,
     idr.quiet = quiet;
     idr.read(sim.topo, sim.sim);
   }
+  if (dihrest != ""){
     
+    dihrest_file.open(dihrest.c_str());
+    
+    if(!dihrest_file.is_open()){
+      std::cout << "\n\ncould not open " << dihrest << "!\n" << std::endl;
+      io::messages.add("opening dihedral restraints failed", "read_input",
+		       io::message::error);
+      return -1;
+    }
+
+    io::In_Dihrest idr(dihrest_file);
+    idr.quiet = quiet;
+    idr.read(sim.topo, sim.sim);
+  }
 
   // do this after reading in a perturbation topology
   sim.sim.multibath().calculate_degrees_of_freedom(sim.topo, 

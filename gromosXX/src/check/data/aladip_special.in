@@ -117,14 +117,14 @@ DISTREST
 #     NTDR      CDIS       DR0     TAUDR     NRDDR
          2    1000.0   0.300000      10.0         0
 END
-#DIHEREST
+DIHREST
 # values for NTDLR
 # 0: no dihedral angle restraining
 # 1: use CDLR
 # 2: use CDLR * CPLR
-#    NTDLR      CDLR
-#        0       0.1
-#END
+#    NTDLR      CDLR   PHILIN
+        2       100.0  -1
+END
 #J-VAL
 # values for NTJR
 #     0: no J-value restraining

@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      rasn_sim,
 			      in_topo,
-			      "",
+			      "", "",
 			      quiet
 			      )
       != 0){
