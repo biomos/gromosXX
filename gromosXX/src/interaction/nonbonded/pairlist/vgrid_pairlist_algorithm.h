@@ -42,13 +42,7 @@ namespace interaction
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false) 
-    {
-      if (!quiet)
-	os << "vector grid pairlist algorithm\n";
-      return 0;
-    };
-
+		     bool quiet = false);
     /**
      * prepare the pairlists
      */    

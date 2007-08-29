@@ -35,6 +35,34 @@ interaction::VGrid_Pairlist_Algorithm::VGrid_Pairlist_Algorithm()
 {
 }
 /**
+ * initialize
+ */
+int interaction::VGrid_Pairlist_Algorithm::
+init(topology::Topology &topo,
+        configuration::Configuration &conf,
+        simulation::Simulation &sim,
+        std::ostream &os,
+        bool quiet)
+{
+  if (!quiet)
+    os << "vector grid pairlist algorithm\n";
+  if (conf.boundary_type != math::rectangular){
+    io::messages.add("VGrid Pairlist Algorithm",
+                     "only implemented for rectangular boundary conditions?",
+                     io::message::error);
+    return 1;
+  }
+
+  if (sim.param().perturbation.perturbation ||
+      sim.param().pairlist.atomic_cutoff){
+    io::messages.add("VGrid pairlist algorithm: no perturbation / atomic cutoff allowed",
+		     "vgrid_pairlist_algorithm",
+		     io::message::error);
+  }
+  return 0;
+};
+
+/**
  * prepare the pairlist
  */
 int interaction::VGrid_Pairlist_Algorithm::
@@ -44,14 +72,6 @@ prepare(topology::Topology & topo,
 {
   DEBUG(7, "vgrid pairlist algorithm : prepare");
 
-  // should go to init()!
-  if (sim.param().perturbation.perturbation ||
-      sim.param().pairlist.atomic_cutoff){
-    io::messages.add("VGrid pairlist algorithm: no perturbation / atomic cutoff allowed",
-		     "vgrid_pairlist_algorithm",
-		     io::message::error);
-  }
-  
   grid_prepare(topo, conf, sim, *m_param);
 
   return 0;
