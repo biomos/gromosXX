@@ -1199,7 +1199,11 @@ void io::Out_Configuration
     m_output.flush();
 
   }
-  
+  if (sim.param().ramd.fc!=0.0 && 
+      sim.param().ramd.every &&
+      (sim.steps() % sim.param().ramd.every) == 0){
+    print_RAMD(m_output, conf, topo.old_lambda());
+  }
 }
 
 void io::Out_Configuration
@@ -1276,6 +1280,8 @@ void io::Out_Configuration
       m_output << "\n";
     }
   }
+  if(sim.param().ramd.fc!=0.0 && sim.param().ramd.every)
+    print_RAMD(m_output, conf, topo.old_lambda());
 
 }
 

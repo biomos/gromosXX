@@ -621,4 +621,28 @@ namespace io
     
   }
   
+  /*
+   * Print the RAMD block.
+   */
+  void print_RAMD(std::ostream &os,
+		  configuration::Configuration const & conf,
+		  double lambda)
+  {
+    os << "RAMD\n";
+    os.precision(5);
+    os.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    
+    os << "\ttime averaged COM-distance:  "
+       << conf.special().ramd.ta_average
+       << "\tlambda-value: "
+       << lambda
+       << "\n";
+    
+    os << "\nEND\n";
+
+    os.precision(5);
+    os.setf(std::ios_base::fixed, std::ios_base::floatfield);
+    
+  }
+
 } // io

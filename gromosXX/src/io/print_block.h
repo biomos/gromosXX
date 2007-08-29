@@ -85,7 +85,11 @@ namespace io
 			    topology::Topology const & topo,
 			    bool formated);
 			    
-  
+   /** 
+    * print RAMD information
+    */
+   void print_RAMD(std::ostream &os, configuration::Configuration const & conf, double lambda);
+
 } // io
 
 #endif

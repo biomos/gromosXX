@@ -171,7 +171,8 @@ int interaction::RAMD_Interaction::init
 
   // come up with initial direction
   math::Vec r;
-  
+  // initialize random number seed
+  gsl_rng_set(m_rng, sim.param().start.ig);
   r(0) = gsl_rng_uniform(m_rng) - 0.5;
   r(1) = gsl_rng_uniform(m_rng) - 0.5;
   r(2) = gsl_rng_uniform(m_rng) - 0.5;
