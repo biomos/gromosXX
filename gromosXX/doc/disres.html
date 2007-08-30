@@ -62,14 +62,15 @@ And <tt>r0</tt> is the restraint distance, <tt>w0</tt> a weight factor
 PERTDISRESSPEC
 # KDISH  KDISC
   0.1    0.153
-# i  j  k  l  type    i  j  k  l  type    A_r0  A_w0  B_r0   B_w0  rah
-  1  0  0  0  0       10 12 11 13 3       0.2   1.0   0.5    2.0   0
+# i  j  k  l  type    i  j  k  l  type n m   A_r0  A_w0  B_r0   B_w0  rah
+  1  0  0  0  0       10 12 11 13 3    1 1    0.2   1.0   0.5    2.0   0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 <br>
 With <tt>A_r0</tt> and <tt>A_w0</tt> the restraint distance and weight
 factor in state <tt>A</tt> and <tt>B_r0</tt> and <tt>B_w0</tt> the
-corresponding quantities in state <tt>B</tt>.
+corresponding quantities in state <tt>B</tt>. <tt>n</tt> and <tt>m</tt>
+are the parameters for hidden restraints.
 
 </body>

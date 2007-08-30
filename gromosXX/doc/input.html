@@ -608,10 +608,9 @@ END
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 DISTREST
 # method  0 : off
-#         1 : instantaneous
-#         2 : time-averaged
-#         3 : biquadratic
-# K       force constant (multiplied by w0 of individual restraints)
+#         1 : instantaneous, using force constant K
+#         2 : instantaneous, using force constant K*w0
+# K       force constant 
 # r_lin   deviation after which the potential energy function is linearized
 # tau     time averaging memory time
 # read    read averages from file
@@ -628,10 +627,10 @@ Example <a href="disres.html">distance restraints specification</a>
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 DIHREST
 # method  0 : off
-#         1 : instantaneous
-#         2 : time-averaged
-#         3 : biquadratic
-# K       force constant (multiplied by w0 of individual restraints)
+#         1 : instantaneous, using force constant K
+#         2 : instantaneous, using force constant K*w0
+#         3 : dihedral constraining
+# K       force constant
 # phi_lin deviation after which the potential energy function is linearized
 #
 # method     K  phi_lin
