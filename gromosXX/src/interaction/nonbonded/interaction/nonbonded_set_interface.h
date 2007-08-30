@@ -1,5 +1,5 @@
 /**
- * @file nonbonded_set.h
+ * @file nonbonded_set_interface.h
  * the non bonded interactions for a set of atoms:
  * Lennard-Jones and Coulomb interactions
  * perturbed and non-perturbed.

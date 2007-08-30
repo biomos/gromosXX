@@ -1,6 +1,6 @@
 /**
- * @file jvalue_restraint_interaction.cc
- * template methods of Jvalue_Restraint_Interaction
+ * @file ramd_interaction.cc
+ * template methods of ramd_interaction
  */
 
 #include <stdheader.h>

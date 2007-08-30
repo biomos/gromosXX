@@ -1,6 +1,6 @@
 /**
- * @file md.cc
- * the main md program
+ * @file repex.cc
+ * the main md program for replica exchange simulations
  */
 
 #include <stdheader.h>

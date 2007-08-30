@@ -1,6 +1,6 @@
 /**
- * @file angle_interaction.h
- * angle interaction.
+ * @file harm_angle_interaction.h
+ * harmonic angle interaction.
  */
 
 #ifndef INCLUDED_HARM_ANGLE_INTERACTION_H

@@ -1,6 +1,6 @@
 /**
- * @file standard_pairlist_algorithm.h
- * standard pairlist algorithm (reference implementation)
+ * @file vgrid_pairlist_algorithm.h
+ * vgrid pairlist algorithm (reference implementation)
  */
 
 #ifndef INCLUDED_VGRID_PAIRLIST_ALGORITHM_H

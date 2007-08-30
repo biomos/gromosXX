@@ -1,7 +1,7 @@
 /**
- * @file steepest_descent.cc
+ * @file analyze.cc
  * contains the implementation
- * for steepest descent energy minimisation
+ * for trajectory analysis
  */
 
 #include <stdheader.h>
