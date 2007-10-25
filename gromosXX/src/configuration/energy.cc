@@ -127,7 +127,12 @@ int configuration::Energy::calculate_totals()
   dihedral_total = 0.0;
   lj_total = 0.0;
   crf_total = 0.0;
-    
+  posrest_total = 0.0; 
+  distrest_total =0.0; 
+  dihrest_total = 0.0;
+  jvalue_total = 0.0; 
+  constraints_total = 0.0;
+  
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
       std::cout << "EWARN: kinetic energy " << i+1 << " = " << kinetic_energy[i] << "\n";
@@ -191,6 +196,9 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: jvalue energy " << i+1 << " = " << jvalue_energy[i] << "\n";
     }
     jvalue_total       += jvalue_energy[i];
+    if (constraints_energy[i] > m_ewarn){
+      std::cout << "EWARN: constraints energy " << i+1 << " = " << constraints_energy[i] << "\n";
+    }
     constraints_total  += constraints_energy[i];
   }
 
