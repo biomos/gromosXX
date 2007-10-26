@@ -29,13 +29,13 @@ GromosXX (the C++ version)
 <ul>
 <li><a href="#documentation">Documentation</a></li>
 <li><a href="#download">Download</a></li>
-<li><a href="#cvs">CVS access</a></li>
+<li><a href="#svn">SVN access</a></li>
 <li><a href="#bugreport">Bug reports</a></li>
 </ul>
 
 <h3><a name="documentation">Documentation</a></h3>
 <ul>
-<li><a href="http://www.igc.ethz.ch/~markus/gromosXX/DOC/index.html"
+<li><a href="file:///home/markus/DOC/index.html"
 target="new">Doxygen documentation</a></li>
 <li>input files
 <ul>
@@ -56,9 +56,9 @@ target="new">Doxygen documentation</a></li>
 
 <h3><a name="download">Status</a></h3>
 Current release:
-<a href="http://www.igc.ethz.ch/~markus/gromosXX/RELEASE/gromosXX-0.2.1.tar.gz">
+<a href="file:///home/markus/RELEASE/gromosXX-0.2.1.tar.gz">
 <b>0.2.1</b></a> (24/11/2004) 
-(<a href="http://www.igc.ethz.ch/~markus/gromosXX/RELEASE/gromosXX-0.2.1.deb"><b>debian package</b></a>)
+(<a href="file:///home/markus/RELEASE/gromosXX-0.2.1.deb"><b>debian package</b></a>)
 <p>
 Changes with respect to 0.2.0:<br>
 <ul>
@@ -132,40 +132,40 @@ Changes: <br>
 Previous releases:
 <ul>
 <li><a
-href="http://www.igc.ethz.ch/~markus/gromosXX/RELEASE/gromosXX-0.2.0.tar.gz">
+href="file:///home/markus/RELEASE/gromosXX-0.2.0.tar.gz">
 0.2.0 (26/10/2004)</a>
 <li><a
-href="http://www.igc.ethz.ch/~markus/gromosXX/RELEASE/gromosXX-0.1.3.tar.gz">
+href="file:///home/markus/RELEASE/gromosXX-0.1.3.tar.gz">
 0.1.3</a>
 <li><a
-href="http://www.igc.ethz.ch/~markus/gromosXX/RELEASE/gromosXX-0.1.2.tar.gz">
+href="file:///home/markus/RELEASE/gromosXX-0.1.2.tar.gz">
 0.1.2</a>
 <li> 0.1.1 
 <li> 0.1.0 (does not compile: remove LDADD from Makefile.am)
 <li> 0.0.3 (upgrade recommended)
 </ul>
 
-<h3><a name="cvs">CVS access</a></h3>
-web cvs access:
-<a href="http://wwi.igc.ethz.ch:5555/viewcvs.cgi/">CVS
+<h3><a name="svn">SVN access</a></h3>
+web svn access:
+<a href="https://gromos.ethz.ch/svn/trac/gromosXXc%2B%2B">SVN
 repository</a><br>
 
-To check out GromosXX for the first time
+To check out GromosXX (from ray) for the first time
 <ol>
-<li>setenv CVSROOT :pserver:igc@igc.ethz.ch:/home/cvs/gromosXX</li>
-<li>cvs login</li>
-<li>password: gromosXX</li>
-<li>cvs checkout -P gromosXX</li>
+<li>setenv PATH ${PATH}:/opt/csw/CollabNet_Subversion/bin</li>
+<li>setenv LD_LIBRARY_PATH /opt/csw/CollabNet_Subversion/lib</li>
+<li>svn checkout https://gromos/svn/repos/gromosXXc++/trunk/gromosXX --username igc_svn</li>
 </ol>
 
 To update your distribution (back up any changes you made first)
 <ol>
-<li>cvs update -d -P</li>
+<li>svn update</li>
 </ol>
 
 <h3><a name="bugreport">Bug reports</a></h3>
-bug reports can be viewed or new ones submitted to our Bugzilla server:
-<a href="http://wwi.igc.ethz.ch:5555/bugzilla/index.cgi">Bug reports</a><br>
+bug reports can be viewed or new ones submitted to our Trac server:
+<li><a href="https://gromos/svn/trac/gromosXXc%2B%2B/report/3">view tickets</a><br>
+<li><a href="https://gromos/svn/trac/gromosXXc%2B%2B/newticket">write ticket</a><br>
 
 <p>
 

@@ -28,9 +28,9 @@
  * - @ref install "installation instructions"
  *
  *
- * <h3>CVS webaccess</h3>
- * - <a href="release.html#cvs">CVS server</a>
+ * <h3>SVN webaccess</h3>
+ * - <a href="release.html#svn">SVN server</a>
  *
  * <h3>Bug reports</h3>
- * - <a href="release.html#bugreport">Bugzilla server</a>
+ * - <a href="release.html#bugreport">Trac server</a>
  */
