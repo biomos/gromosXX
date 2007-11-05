@@ -126,6 +126,8 @@ int main(int argc, char *argv[]){
 
   double end_time = sim.time() + 
     sim.time_step_size() * (sim.param().step.number_of_steps - 1);
+  
+  int error;
 
   if(rank == 0){
     
@@ -158,9 +160,9 @@ int main(int argc, char *argv[]){
 	      << "==================================================\n"
 	      << std::endl;
     
-    int error;
-    
     const double init_time = util::now() - start;
+
+    int next_step = 1;
 
     while(sim.time() < end_time + math::epsilon){
       
@@ -181,9 +183,17 @@ int main(int argc, char *argv[]){
 	}
 	
 	std::cout << "\nError during MD run!\n" << std::endl;
+        // send error status to slaves
+        next_step = 0;
+        std::cout << "Telling slaves to quit." << std::endl;
+        MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
+
 	// try to save the final structures...
 	break;
       }
+
+      // tell the slaves to continue
+      MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
       
       traj.print(topo, conf, sim);
       
@@ -253,7 +263,7 @@ int main(int argc, char *argv[]){
     // run the simulation
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     const double init_time = util::now() - start;
-    int error;
+    int next_step = 0 ;
 
     while(sim.time() < end_time + math::epsilon){
       // run a step
@@ -266,6 +276,15 @@ int main(int argc, char *argv[]){
       
       // DEBUG(10, "slave " << rank << " step done");
       // (*os) << "step done (it really worked?)" << std::endl;
+ 
+      MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
+
+      if (!next_step) {
+        (*os) << "There was an error in the master. Check output file for details." << std::endl
+              << "Exiting from MD main loop." << std::endl;
+        error = 1;
+        break;
+      }
 
       sim.time() += sim.time_step_size();
       ++sim.steps();
@@ -304,7 +323,7 @@ int main(int argc, char *argv[]){
 
   // and exit...
   MPI::Finalize();
-  return 0;
+  return error;
 
 #else
   std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure\n" << std::endl;
