@@ -69,12 +69,12 @@ namespace math
     
     Vec const & operator()(int i)const 
     {
-      assert(i < int(size()));
+      assert(i >= 0 && i < int(size()));
       return operator[](i);
     }
     Vec & operator()(int i)
     {
-      assert(i < int(size()));
+      assert(i >= 0 && i < int(size()));
       return operator[](i);
     }
 
@@ -109,12 +109,12 @@ namespace math
 #endif
     double operator()(int i)const 
     {
-      assert(i < int(size()));
+      assert(i >= 0 && i < int(size()));
       return operator[](i);
     }
     double & operator()(int i)
     {
-      assert(i < int(size()));
+      assert(i >= 0 && i < int(size()));
       return operator[](i);
     }
   };

@@ -53,10 +53,6 @@ io::In_Distrest::read(topology::Topology& topo,
       to = buffer.end()-1;
 
     double dish,disc;
-    int type1, type2;
-    std::vector<int> atom1(4), atom2(4);
-    double r0,w0;
-    int rah;
 
     DEBUG(10, "reading in DISTREST data");
 
@@ -115,11 +111,29 @@ io::In_Distrest::read(topology::Topology& topo,
       
       DEBUG(11, "\tnr " << i);
       
+      int type1, type2;
+      std::vector<int> atom1, atom2;
+      double r0,w0;
+      int rah;
+      
       _lineStream.clear();
       _lineStream.str(*it);
 
-      _lineStream >> atom1[0] >> atom1[1] >> atom1[2] >>atom1[3] >> type1;
-      _lineStream >> atom2[0] >> atom2[1] >> atom2[2] >>atom2[3] >> type2;
+      for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+         int atom;
+         _lineStream >> atom;
+         // -1 because we directly convert to array indices
+         if (atom > 0) atom1.push_back(atom - 1); 
+      }      
+      _lineStream >> type1;
+      
+      for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+         int atom;
+         _lineStream >> atom;
+         if (atom > 0) atom2.push_back(atom - 1);
+      }      
+      _lineStream >> type2;
+      
       _lineStream >> r0>> w0 >> rah;
 
     
@@ -128,12 +142,6 @@ io::In_Distrest::read(topology::Topology& topo,
 			 "In_Distrest",
 			 io::message::error);
       }
-      
-      for(int j=0; j<4; ++j)
-	{
-	  --atom1[j];
-	  --atom2[j];
-	}
       
       // g++ 3.2 fix
       util::virtual_type t1 = util::virtual_type(type1);
@@ -146,22 +154,22 @@ io::In_Distrest::read(topology::Topology& topo,
 	(topology::distance_restraint_struct(v1,v2,r0,w0,rah));
 
       if (!quiet){
-	os << std::setw(10) << atom1[0]+1
-	   << std::setw(8) << atom1[1]+1
-	   << std::setw(8) << atom1[2]+1
-	   << std::setw(8) << atom1[3]+1
-	   << std::setw(5) << type1
-	   << std::setw(10) << atom2[0]+1
-	   << std::setw(8) <<  atom2[1]+1
-	   << std::setw(8) << atom2[2]+1
-	   << std::setw(8) << atom2[3]+1
-	   << std::setw(5) << type2
+        for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+          // the first element has the width 10, if i is bigger then the number of atoms
+          // specified, just print 0.
+	  os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
+        }
+        os << std::setw(5) << type1;
+        
+        for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	  os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
+        }
+        os << std::setw(5) << type2
 	   << std::setw(8) << r0
 	   << std::setw(8) << w0
 	   << std::setw(4) << rah
 	   << "\n";
-      }
-      
+      }  
     }
     
   } // DISTREST
@@ -179,12 +187,7 @@ io::In_Distrest::read(topology::Topology& topo,
     std::vector<std::string>::const_iterator it = buffer.begin()+1,
       to = buffer.end()-1;
 
-    double dish,disc;
-    int type1, type2;
-    int n,m;
-    std::vector<int> atom1(4), atom2(4);
-    double A_r0, B_r0,A_w0, B_w0;
-    int rah;
+    double dish, disc;
 
     DEBUG(10, "reading in DISTREST (PERTDISRESSPEC data");
 
@@ -245,11 +248,29 @@ io::In_Distrest::read(topology::Topology& topo,
       
       DEBUG(11, "\tnr " << i);
       
+      int type1, type2;
+      int n,m;
+      std::vector<int> atom1, atom2;
+      double A_r0, B_r0,A_w0, B_w0;
+      int rah;
+      
       _lineStream.clear();
       _lineStream.str(*it);
 
-      _lineStream >> atom1[0] >> atom1[1] >> atom1[2] >>atom1[3] >> type1;
-      _lineStream >> atom2[0] >> atom2[1] >> atom2[2] >>atom2[3] >> type2;
+      for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+         int atom;
+         _lineStream >> atom;
+         if (atom > 0) atom1.push_back(atom - 1);
+      }      
+      _lineStream >> type1;
+      
+      for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+         int atom;
+         _lineStream >> atom;
+         if (atom > 0) atom2.push_back(atom - 1);
+      }      
+      
+      _lineStream >> type2;
       _lineStream >> n >> m >> A_r0 >> A_w0 >> B_r0 >> B_w0 >> rah;
 
     
@@ -258,13 +279,6 @@ io::In_Distrest::read(topology::Topology& topo,
 			 "In_Distrest",
 			 io::message::error);
       }
-      
-      for(int j=0; j<4; ++j)
-	{
-	  --atom1[j];
-	  --atom2[j];
-	}
-      
 
       util::virtual_type t1 = util::virtual_type(type1);
       util::virtual_type t2 = util::virtual_type(type2);
@@ -276,16 +290,15 @@ io::In_Distrest::read(topology::Topology& topo,
 	(topology::perturbed_distance_restraint_struct(v1,v2,n,m,A_r0,B_r0,A_w0,B_w0, rah));
 
       if (!quiet){
-	os << std::setw(10) << atom1[0]+1
-	   << std::setw(8) << atom1[1]+1
-	   << std::setw(8) << atom1[2]+1
-	   << std::setw(8) << atom1[3]+1
-	   << std::setw(5) << type1
-	   << std::setw(10) << atom2[0]+1
-	   << std::setw(8) <<  atom2[1]+1
-	   << std::setw(8) << atom2[2]+1
-	   << std::setw(8) << atom2[3]+1
-	   << std::setw(5) << type2
+        for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	  os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
+        }
+        os << std::setw(5) << type1;
+        
+        for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	  os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
+        }
+        os << std::setw(5) << type2
 	   << std::setw(5) << n
 	   << std::setw(5) << m
 	   << std::setw(8) << A_r0	    

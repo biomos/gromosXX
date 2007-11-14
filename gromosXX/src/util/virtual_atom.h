@@ -59,8 +59,7 @@ namespace util
     /**
      * real atom accessor
      */
-    int atom(int i)const { return m_atom[i]; }
-
+    int atom(int i)const { assert(i >= 0 && i < int(m_atom.size())); return m_atom[i]; } 
     /**
      * number of atoms that define virtual atom
      */

@@ -55,12 +55,15 @@ static int _calculate_perturbed_distance_restraint_interactions
   for( ; it != to; ++it){
 
     periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
- 
-    DEBUG(10, "v1 : " << it->v1.atom(0) << " - " << it->v1.atom(1)
-	  <<  " - " <<it->v1.atom(2) << " - " << it->v1.atom(3));
-    DEBUG(10, "v2 : " << it->v2.atom(0) << " - " << it->v2.atom(1)
-	  <<  " - " << it->v2.atom(2) << " - " << it->v2.atom(3));
-    
+#ifndef NDEBUG
+    for(int i=0;i<it->v1.size();i++){
+      DEBUG(10, "v1 (atom " << i+1 << "): " << it->v1.atom(i)+1);
+    }
+    for(int i=0;i<it->v2.size();i++){
+      DEBUG(10, "v2 (atom " << i+1 << "): " << it->v2.atom(i)+1);
+    }
+#endif 
+  
     DEBUG(9, "PERTDISTREST v : " << math::v2s(v));
    
     double dist = abs(v);
