@@ -89,7 +89,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
   if (steps == 0) steps = 1;
   
   if ((sim.steps() % steps) == 0){
-    std::cout << "MULTISTEP: full calculation\n";
+    // std::cout << "MULTISTEP: full calculation\n";
 
     int rank = MPI::COMM_WORLD.Get_rank();
     int num_threads = MPI::COMM_WORLD.Get_size();
@@ -206,7 +206,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     ////////////////////////////////////////////////////
   }
   else{
-    std::cout << "MULTISTEP: no recalculation...\n";
+    // std::cout << "MULTISTEP: no recalculation...\n";
   }
 
 #else
