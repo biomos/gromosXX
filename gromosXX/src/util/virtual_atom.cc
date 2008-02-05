@@ -211,9 +211,11 @@ void util::Virtual_Atom::_force
     
     case 0: // explicit atom
     case 7: // rotating ring
+      assert(m_atom.size()>0);
       force(m_atom[0])+=f;
       break;
     case 1: // CH1
+      assert(m_atom.size()>3);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
       periodicity.nearest_image(position(m_atom[2]), posi, posk);
@@ -252,6 +254,7 @@ void util::Virtual_Atom::_force
       break;
 
     case 2: // aromatic H
+      assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
       periodicity.nearest_image(position(m_atom[2]), posi, posk);
@@ -286,12 +289,11 @@ void util::Virtual_Atom::_force
 
       break;
     case 3: // non-stereospecific CH2
+      assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
       periodicity.nearest_image(position(m_atom[2]), posi, posk);
       posk += posi;
-      periodicity.nearest_image(position(m_atom[3]), posi, posl);
-      posl += posi;
 
       s = 2.0 * posi - posj - posk;
       abs_s = math::abs(s);
@@ -323,6 +325,7 @@ void util::Virtual_Atom::_force
       break;
       
    case 4: // stereospecific CH2
+      assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
       periodicity.nearest_image(position(m_atom[2]), posi, posk);
@@ -527,6 +530,7 @@ void util::Virtual_Atom::_force
       break;
       
     case 5: // CH3
+      assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
 
@@ -558,6 +562,7 @@ void util::Virtual_Atom::_force
       break;
       
     case 6: // non-stereospecific CH3 (Leu, Val)
+      assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
       periodicity.nearest_image(position(m_atom[2]), posi, posk);
@@ -592,6 +597,7 @@ void util::Virtual_Atom::_force
       
       break;
     case 8: // NH2-group (one pseudosite)
+      assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
       periodicity.nearest_image(position(m_atom[2]), posi, posk);
@@ -626,6 +632,7 @@ void util::Virtual_Atom::_force
       break;
       
     case 9: // (CH3)3-group (one psuedosite)
+      assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
 
@@ -657,6 +664,7 @@ void util::Virtual_Atom::_force
       break;
 
     case 10: // cog
+      assert(m_atom.size() > 0);
       {
 	for(unsigned int i=0; i<m_atom.size(); ++i){
 	  force(m_atom[i]) += f / m_atom.size();
