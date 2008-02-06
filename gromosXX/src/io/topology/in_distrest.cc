@@ -107,9 +107,9 @@ io::In_Distrest::read(topology::Topology& topo,
 	 << "\n";
     }
     
-    for(int i=0; it != to; ++i, ++it){
+    for(unsigned int line_number=2; it != to; ++line_number, ++it){
       
-      DEBUG(11, "\tnr " << i);
+      DEBUG(11, "\tnr " << line_number - 2);
       
       int type1, type2;
       std::vector<int> atom1, atom2;
@@ -138,7 +138,10 @@ io::In_Distrest::read(topology::Topology& topo,
 
     
       if(_lineStream.fail()){
-	io::messages.add("bad line in DISTREST block",
+        std::ostringstream msg;
+        msg << "bad line in DISTREST block: " << line_number << std::endl
+            << "          " << *it;
+	io::messages.add(msg.str(),
 			 "In_Distrest",
 			 io::message::error);
       }
@@ -244,9 +247,9 @@ io::In_Distrest::read(topology::Topology& topo,
 	 << "\n";
     }
     
-    for(int i=0; it != to; ++i, ++it){
+    for(unsigned int line_number=0; it != to; ++line_number, ++it){
       
-      DEBUG(11, "\tnr " << i);
+      DEBUG(11, "\tnr " << line_number-2);
       
       int type1, type2;
       int n,m;
@@ -273,11 +276,13 @@ io::In_Distrest::read(topology::Topology& topo,
       _lineStream >> type2;
       _lineStream >> n >> m >> A_r0 >> A_w0 >> B_r0 >> B_w0 >> rah;
 
-    
       if(_lineStream.fail()){
-	io::messages.add("bad line in PERTDISTREST block",
-			 "In_Distrest",
-			 io::message::error);
+        std::ostringstream msg;
+        msg << "bad line in PERTDISTREST block: " << line_number << std::endl
+            << "          " << *it;
+        io::messages.add(msg.str(),
+                         "In_Distrest",
+                         io::message::error);
       }
 
       util::virtual_type t1 = util::virtual_type(type1);

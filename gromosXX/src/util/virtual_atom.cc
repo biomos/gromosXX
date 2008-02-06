@@ -45,6 +45,45 @@ util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
      m_disc(disc),
      m_orientation(orientation)
 {
+  bool strict = true; // do the test?
+  unsigned int expected = 0; // number of atoms expected for virtual atom
+                             // type
+  switch(m_type) {
+    case 0: // explicit atom
+    case 7: // rotating ring
+      expected = 1;
+      break;
+    case 1: // CH1
+      expected = 4;
+      break;
+    case 2: // aromatic H
+    case 3: // non-stereospecific CH2
+    case 4: // stereospecific CH2
+    case 6: // non-stereospecific CH3 (Leu, Val)
+      expected = 3;
+      break;
+    case 5: // CH3
+    case 8: // NH2-group (one pseudosite)
+    case 9: // (CH3)3-group (one psuedosite)
+      expected = 2;
+      break;
+    case 10: // cog
+      strict = false;
+      break;
+    default:
+      io::messages.add("Virual Atom", "wrong type", io::message::error);
+  }
+
+  if (strict && expected != m_atom.size()) {
+    std::ostringstream oss;
+    oss << "VA ";
+    std::vector<int>::const_iterator it = m_atom.begin(), to = m_atom.end();
+    for(; it != to; ++it)
+      oss << *it << ' ';
+    oss << "of type " << m_type << " has " << m_atom.size() << " atom(s) but "
+           "expected " << expected << " atom(s)";
+    io::messages.add("Virtual Atom", oss.str(), io::message::error);
+  }
 }
 
 template<math::boundary_enum B>
