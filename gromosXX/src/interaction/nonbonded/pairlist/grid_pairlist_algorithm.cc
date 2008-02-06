@@ -50,8 +50,7 @@ int interaction::Grid_Pairlist_Algorithm::init
  std::ostream & os,
  bool quiet)
 {
-
-  if (!sim.param().pairlist.grid){
+  if (!sim.param().pairlist.grid || !sim.param().pairlist.grid_size){
     io::messages.add("Grid_Pairlist_Algorithm",
 		     "wrong input parameters",
 		     io::message::error);
@@ -125,7 +124,7 @@ int interaction::Grid_Pairlist_Algorithm::init
     int Nmask = 0;
     for(int z=0; z<=m_grid.mask_z; ++z){
       for(unsigned int y=0; y<m_grid.mask[z].size(); y+=2){
-	assert(m_grid.mask.size() > z);
+	assert(int(m_grid.mask.size()) > z);
 	assert(m_grid.mask[z].size() > y+1);
 	Nmask += m_grid.mask[z][y+1] - m_grid.mask[z][y] - 1;
       }
@@ -149,8 +148,8 @@ int interaction::Grid_Pairlist_Algorithm::init
     int occupied = 0;
     for(int z=0; z<m_grid.Nc; ++z){
       for(int i=0; i<N; ++i){
-	assert(m_grid.count.size() > z &&
-	       m_grid.count[z].size() > i);
+	assert(int(m_grid.count.size()) > z &&
+	       int(m_grid.count[z].size()) > i);
 	if (m_grid.count[z][i])
 	  ++occupied;
       }
