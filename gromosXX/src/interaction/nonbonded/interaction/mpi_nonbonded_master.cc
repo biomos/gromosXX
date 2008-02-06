@@ -103,7 +103,7 @@ calculate_interactions(topology::Topology & topo,
     // if this is true, the positions (and forces) can be copied
     // directly from theVArray
     assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
-	   ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
+	   ((double *) &conf.current().pos(0)(0)) == int((conf.current().pos.size() - 1)*3));
     
     // std::cerr << "master: bcast pos" << std::endl;
     MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),

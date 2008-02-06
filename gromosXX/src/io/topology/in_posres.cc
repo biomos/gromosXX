@@ -87,7 +87,7 @@ io::In_Posres::read(topology::Topology& topo,
 			   "In_Posres",
 			   io::message::error);
 	}
-        if (n-1 != topo.solute().atom(nr-1).residue_nr ){
+        if (int(n-1) != topo.solute().atom(nr-1).residue_nr ){
           io::messages.add("residue numbers do not match in POSRES block:\n\t" 
 			   + *it,
                            "In_Posres",

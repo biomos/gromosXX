@@ -28,7 +28,7 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration
  )
 {
   const double tolerance = 1.0 / 180.0 * math::Pi;
-  const double delta = 45.0 / 180.0 * math::Pi;
+  // const double delta = 45.0 / 180.0 * math::Pi;
   
   convergence = true;
 
