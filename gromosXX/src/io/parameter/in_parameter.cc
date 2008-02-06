@@ -588,11 +588,11 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param,
     io::messages.add("End of line not reached in PRINT, but should have been: \n" + s +  "\n",
 		     "In_Parameter", io::message::warning);
   */
-  if(param.print.stepblock<=0)
-    io::messages.add("PRINT block: print stepblock should be >0",
+  if(param.print.stepblock < 0)
+    io::messages.add("PRINT block: print stepblock should be >=0",
 		     "In_Parameter", io::message::error);
   if(param.print.centreofmass < 0)
-    io::messages.add("PRINT block: print centre of mass should be >0",
+    io::messages.add("PRINT block: print centre of mass should be >=0",
 		     "In_Parameter", io::message::error);
 }
 

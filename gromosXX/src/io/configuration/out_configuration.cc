@@ -1165,7 +1165,7 @@ void io::Out_Configuration
 	configuration::Configuration & conf,
 	simulation::Simulation const & sim)
 {
-  if ((sim.steps() % sim.param().print.stepblock) == 0){
+  if (sim.param().print.stepblock && (sim.steps() % sim.param().print.stepblock) == 0){
 
     m_output << "\n---------------------------------------------------"
 	     << "-----------------------------\n";
