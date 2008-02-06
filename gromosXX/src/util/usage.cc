@@ -170,11 +170,6 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @version\n\n";
   }
   
-  if (knowns.count("print")){
-    usage += "\t# print pairlist / force\n";
-    usage += "\t# @print pairlist/force\n";
-  }
-
   // usage += "#\n\n";
 
 }
