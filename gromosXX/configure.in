@@ -233,8 +233,8 @@ case "$compiler" in
        echo "Configuring for SUN Studio"
        dnl CXX_PICKY_FLAGS="+w2 -xcheck -xsb"
        CXX_PICKY_FLAGS="+w2"
-       dnl CXX_OPTIMIZE_FLAGS="-fast -xdepend -xvector -DNDEBUG"
-       CXX_OPTIMIZE_FLAGS="-fast -DNDEBUG"
+       CXX_OPTIMIZE_FLAGS="-fast -xdepend -xvector -DNDEBUG"
+       dnl CXX_OPTIMIZE_FLAGS="-fast -DNDEBUG"
        CXX_DEBUG_FLAGS="-g"
        CXXLD="$CXX"
 
@@ -288,36 +288,32 @@ AC_CHECK_FUNCS(acosh)
 AC_CHECK_FUNCS(asinh)
 AC_CHECK_FUNCS(atanh)
 
-AC_CHECK_FUNCS(isinf, ,[
-    AC_MSG_CHECKING([for isinf with <math.h>])
-    AC_TRY_LINK([#include <math.h>], [float f = 0.0; isinf(f)],[
+AC_MSG_CHECKING([for isinf with <cmath>])
+AC_TRY_LINK([#include <cmath>], [float f = 0.0; std::isinf(f)],[
         AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_ISINF)],
-        AC_MSG_RESULT(no))])
+        AC_DEFINE([HAVE_ISINF],[1],[has isinf])],
+        AC_MSG_RESULT(no))
 
-AC_CHECK_FUNCS(finite, ,[
-    AC_MSG_CHECKING([for finite with <math.h>])
-    AC_TRY_LINK([#include <math.h>], [float f = 0.0; finite(f)],[
+AC_MSG_CHECKING([for finite with <cmath>])
+AC_TRY_LINK([#include <cmath>], [float f = 0.0; std::finite(f)],[
         AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_FINITE)
+        AC_DEFINE([HAVE_FINITE],[1],[have finite])
         ac_cv_func_finite=yes],
-        AC_MSG_RESULT(no))])
+        AC_MSG_RESULT(no))
 
 if test "x${ac_cv_func_finite}" != "xyes" ; then
-  AC_CHECK_FUNCS(isfinite, ,[
-      AC_MSG_CHECKING([for isfinite with <math.h>])
-      AC_TRY_LINK([#include <math.h>], [float f = 0.0; isfinite(f)],[
+    AC_MSG_CHECKING([for isfinite with <cmath>])
+    AC_TRY_LINK([#include <cmath>], [float f = 0.0; std::isfinite(f)],[
           AC_MSG_RESULT(yes)
-          AC_DEFINE(HAVE_ISFINITE)],
-          AC_MSG_RESULT(no))])
+          AC_DEFINE([HAVE_ISFINITE],[1],[have isfinite])],
+          AC_MSG_RESULT(no))
 fi
 
-AC_CHECK_FUNCS(isnan, ,[
-    AC_MSG_CHECKING([for isnan with <math.h>])
-    AC_TRY_LINK([#include <math.h>], [float f = 0.0; isnan(f)],[
+AC_MSG_CHECKING([for isnan with <cmath>])
+AC_TRY_LINK([#include <cmath>], [float f = 0.0; std::isnan(f)],[
         AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_ISNAN)],
-        AC_MSG_RESULT(no))])
+        AC_DEFINE([HAVE_ISNAN],[1],[have isnan])],
+        AC_MSG_RESULT(no))
 
 dnl OpenBSD has a broken implementation of log1p.
 case "$host" in
