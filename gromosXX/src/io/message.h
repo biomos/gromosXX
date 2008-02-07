@@ -57,6 +57,10 @@ namespace io
      * clear the messages.
      */
     void clear();
+    /**
+     * Checks whether the messages contain a message with a certain severity.
+     */
+    bool contains(severity_enum severity);
   private:
     typedef std::multimap<severity_enum, std::string>
       ::value_type message_type;

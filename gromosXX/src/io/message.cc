@@ -72,3 +72,8 @@ void io::message::clear()
 {
   m_message.clear();
 }
+
+bool io::message::contains(severity_enum severity)
+{
+  return m_message.lower_bound(severity) != m_message.end();
+}

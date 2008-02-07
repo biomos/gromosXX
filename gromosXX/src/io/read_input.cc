@@ -128,6 +128,11 @@ int io::read_parameter(io::Argument const & args,
     if (args["print"] == "pairlist")
       sim.param().pairlist.print = true;
   }
+
+  // check for errors and abort if there are some
+  if (io::messages.contains(io::message::error) ||
+      io::messages.contains(io::message::critical))
+    return -1;
   
   return 0;
 }
@@ -156,6 +161,11 @@ int io::read_topology(io::Argument const & args,
   it.quiet = quiet;
   
   it.read(topo, sim.param(), os);
+
+  // check for errors and about before initialization
+  if(io::messages.contains(io::message::error) ||
+     io::messages.contains(io::message::critical))
+    return -1;
   
   if(sim.param().perturbation.perturbation){
     if(args.count(argname_pttopo)<1){
@@ -225,6 +235,11 @@ int io::read_configuration(io::Argument const & args,
   ic.read(conf, topo, sim, os);
 
   conf.init(topo, sim.param());
+
+  // check for errors and abort
+  if (io::messages.contains(io::message::error) || 
+      io::messages.contains(io::message::critical))
+    return -1;
     
   return 0;
 }
@@ -265,6 +280,11 @@ int io::read_replica_configuration
 
   for(unsigned int i=0; i<conf.size(); ++i)
     conf[i].init(topo, sim.param());
+
+  // check for errors and abort
+  if (io::messages.contains(io::message::error) || 
+      io::messages.contains(io::message::critical))
+    return -1;
     
   return 0;
 }

@@ -152,6 +152,11 @@ int io::read_special(io::Argument const & args,
       ij.read(topo, conf, sim, os);
     }
   } // JVALUE
+
+  // check for errors and abort
+  if (io::messages.contains(io::message::error) ||
+      io::messages.contains(io::message::critical))
+    return -1;
   
   return 0;
 }
