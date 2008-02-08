@@ -23,7 +23,9 @@ namespace interaction
     /**
      * Destructor.
      */
-    virtual ~Perturbed_Distance_Restraint_Interaction() {}
+    virtual ~Perturbed_Distance_Restraint_Interaction() {
+      DEBUG(2, "Perturbed_Distance_Restraint_Interaction: destructor");
+    }
 
     /**
      * init
