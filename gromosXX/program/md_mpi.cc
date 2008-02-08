@@ -34,6 +34,7 @@
 #include <omp.h>
 #endif
 
+#include <sys/utsname.h>
 
 #pragma hdrstop
 
@@ -49,9 +50,10 @@ int main(int argc, char *argv[]){
 
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
-	 << "trj" << "fin" << "trv" << "trf" << "tre" << "trg"
-	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
-	 << "print" << "version";
+	 << "trj" << "fin" << "trv" << "trf" << "tramd" << "tre" << "trg"
+	 << "bae" << "bag" << "posres" <<"distrest" << "dihrest" << "jval"
+	 << "anatrj" << "print" 
+	 << "version";
   
   
   std::string usage;
@@ -108,8 +110,8 @@ int main(int argc, char *argv[]){
   // create the simulation classes
   topology::Topology topo;
   configuration::Configuration conf;
-  algorithm::Algorithm_Sequence md;
   simulation::Simulation sim;
+  algorithm::Algorithm_Sequence md;
 
   // enable mpi for the nonbonded terms
   sim.mpi = true;
@@ -143,6 +145,7 @@ int main(int argc, char *argv[]){
     if (io::messages.display(std::cout) >= io::message::error){
       // exit
       std::cout << "\nErrors during initialization!\n" << std::endl;
+      MPI::Finalize();
       return 1;
     }
     
@@ -154,6 +157,8 @@ int main(int argc, char *argv[]){
     std::cout << "\nenter the next level of molecular "
 	      << "dynamics simulations\n" << std::endl;
     
+    
+    int percent = 0;
     
     std::cout << "==================================================\n"
 	      << " MAIN MD LOOP\n"
@@ -200,6 +205,28 @@ int main(int argc, char *argv[]){
       sim.time() += sim.time_step_size();
       ++sim.steps();
       
+      
+      if ((sim.param().step.number_of_steps / 10 > 0) &&
+	  (sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
+        ++percent;
+        const double spent = util::now() - start;
+        const int hh = int(spent / 3600);
+        const int mm = int((spent - hh * 3600) / 60);
+        const int ss = int(spent - hh * 3600 - mm * 60);
+
+        std::cerr << "MD:       " << std::setw(4) << percent * 10 << "% done..." << std::endl;
+        std::cout << "MD:       " << std::setw(4) << percent * 10 << "% done..." << std::endl;
+        std::cerr << "MD: spent " << hh << ":" << mm << ":" << ss << std::endl;
+        std::cout << "MD: spent " << hh << ":" << mm << ":" << ss << std::endl;
+
+        const double eta_spent = spent / sim.steps() * sim.param().step.number_of_steps - spent;
+        const int eta_hh = int(eta_spent / 3600);
+        const int eta_mm = int((eta_spent - eta_hh * 3600) / 60);
+        const int eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
+      
+        std::cerr << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+        std::cout << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+      }
     }
     
     std::cout << "writing final configuration" << std::endl;
@@ -400,5 +427,15 @@ void print_title(bool color, int size, std::ostream & os)
      << "Zuerich\n\n"
      << "Bugreports to http://www.igc.ethz.ch:5555\n"
      << std::endl;
-  
+
+  struct utsname sysinf;
+  if (uname(&sysinf) != -1){
+    std::cout << "running on"
+	      << "\n\t" << sysinf.nodename
+	      << "\n\t" << sysinf.sysname
+	      << " " << sysinf.release
+	      << " " << sysinf.version
+	      << " " << sysinf.machine
+	      << "\n\n";
+  }
 }
