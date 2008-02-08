@@ -134,7 +134,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions
     double A_K = sim.param().dihrest.K;
     double B_K = sim.param().dihrest.K;
     
-    if (sim.param().dihrest.dihrest == 3){
+    if (sim.param().dihrest.dihrest == 2){
       K *= (1-l) * it->A_w0 + l * it->B_w0;
       A_K *= it->A_w0;
       B_K *= it->B_w0;
