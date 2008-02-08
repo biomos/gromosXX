@@ -1,24 +1,33 @@
 INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special
 
 xxincludedir = 			$(includedir)/gromosXX/algorithm
-
 xxinclude_HEADERS =		algorithm.h \
-				create_md_sequence.h \
-			  	algorithm/algorithm_sequence.h \
-				integration/energy_calculation.h \
+				create_md_sequence.h
+
+xxalgalgdir =                   $(includedir)/gromosXX/algorithm/algorithm
+xxalgalg_HEADERS =              algorithm/algorithm_sequence.h
+
+xxalgintegrationdir =           $(includedir)/gromosXX/algorithm/integration
+xxalgintegration_HEADERS =      integration/energy_calculation.h \
 				integration/leap_frog.h \
 				integration/monte_carlo.h \
 				integration/stochastic.h \
 				integration/slow_growth.h \
 				integration/steepest_descent.h \
-				integration/analyze.h \
-			 	temperature/temperature_calculation.h \
+				integration/analyze.h
+
+xxalgtempdir =                  $(includedir)/gromosXX/algorithm/temperature
+xxalgtemp_HEADERS =             temperature/temperature_calculation.h \
 				temperature/thermostat.h \
 				temperature/berendsen_thermostat.h \
-				temperature/nosehoover_thermostat.h \
-			  	pressure/pressure_calculation.h \
-			  	pressure/berendsen_barostat.h \
-			  	constraints/create_constraints.h \
+				temperature/nosehoover_thermostat.h
+
+xxalgpressudir =                $(includedir)/gromosXX/algorithm/pressure
+xxalgpressu_HEADERS =           pressure/pressure_calculation.h \
+			  	pressure/berendsen_barostat.h
+
+xxalgconstdir =                 $(includedir)/gromosXX/algorithm/constraints
+xxalgconst_HEADERS =            constraints/create_constraints.h \
 				constraints/position_constraints.h \
 				constraints/shake.h \
 				constraints/perturbed_shake.h \

@@ -1,7 +1,6 @@
 INCLUDES = -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/simulation
-
 xxinclude_HEADERS =	simulation.h \
 			multibath.h \
 			parameter.h

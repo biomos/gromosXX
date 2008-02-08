@@ -10,17 +10,27 @@ xxinclude_HEADERS = 	argument.h \
 			read_input.h \
 			read_special.h \
 			parameter/in_parameter.h \
-			topology/in_topology.h \
-			topology/in_perturbation.h \
-			configuration/inframe.h \
-			configuration/in_configuration.h \
-			configuration/out_configuration.h \
-			topology/in_posres.h \
-			topology/in_distrest.h \
-			topology/in_dihrest.h \
-			topology/in_jvalue.h \
 			ifp.h \
 			forcefield/in_ifp.h
+
+xxiotopodir   = $(includedir)/gromosXX/io/topology
+xxiotopo_HEADERS =      topology/in_jvalue.h \
+                        topology/in_posres.h \
+                        topology/in_topology.h \
+                        topology/in_perturbation.h \
+                        topology/in_distrest.h \
+                        topology/in_dihrest.h
+
+xxioconfdir   = $(includedir)/gromosXX/io/configuration
+xxioconf_HEADERS =      configuration/in_configuration.h \
+                        configuration/out_configuration.h \
+                        configuration/inframe.h
+
+xxioparamdir  = $(includedir)/gromosXX/io/parameter
+xxioparam_HEADERS =     parameter/in_parameter.h
+
+xxioffdir     = $(includedir)/gromosXX/io/forcefield
+xxioff_HEADERS =        forcefield/in_ifp.h
 
 noinst_LTLIBRARIES =	libgroio.la
 

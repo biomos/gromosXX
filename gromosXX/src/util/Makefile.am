@@ -1,9 +1,7 @@
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/util
-
-xxinclude_HEADERS = \
-			error.h \
+xxinclude_HEADERS =     error.h \
 			debug.h	\
 			timing.h \
 			usage.h \

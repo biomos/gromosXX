@@ -7,7 +7,7 @@
 #undef SUBMODULE
 #define MODULE math
 
-#include <util/debug.h>
+#include <gromosXX/util/debug.h>
 
 #ifdef WIN32
 // Converts a floating point value to an integer, very fast.

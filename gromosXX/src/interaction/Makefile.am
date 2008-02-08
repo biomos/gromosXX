@@ -2,13 +2,16 @@ INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/s
 
 
 xxincludedir = 			$(includedir)/gromosXX/interaction
-
 xxinclude_HEADERS =		interaction.h \
 				interaction_types.h \
-				molecular_virial_interaction.h \
-				forcefield/forcefield.h \
-				forcefield/create_forcefield.h \
-				bonded/create_bonded.h \
+				molecular_virial_interaction.h
+
+xxintffdir =                    $(includedir)/gromosXX/interaction/forcefield
+xxintff_HEADERS =               forcefield/forcefield.h \
+				forcefield/create_forcefield.h
+
+xxintbondeddir =                $(includedir)/gromosXX/interaction/bonded
+xxintbonded_HEADERS =           bonded/create_bonded.h \
 				bonded/quartic_bond_interaction.h \
 				bonded/harmonic_bond_interaction.h \
 				bonded/angle_interaction.h \
@@ -19,11 +22,15 @@ xxinclude_HEADERS =		interaction.h \
 				bonded/perturbed_harmonic_bond_interaction.h \
 				bonded/perturbed_angle_interaction.h \
 				bonded/perturbed_improper_dihedral_interaction.h \
-				bonded/perturbed_dihedral_interaction.h \
-				nonbonded/create_nonbonded.h \
+				bonded/perturbed_dihedral_interaction.h
+
+xxintnbdir =                    $(includedir)/gromosXX/interaction/nonbonded
+xxintnb_HEADERS =               nonbonded/create_nonbonded.h \
 				nonbonded/interaction_spec.h \
-				nonbonded/innerloop_template.h \
-				nonbonded/interaction/nonbonded_parameter.h \
+				nonbonded/innerloop_template.h
+
+xxintnbintdir =                 $(includedir)/gromosXX/interaction/nonbonded/interaction
+xxintnbint_HEADERS =            nonbonded/interaction/nonbonded_parameter.h \
 				nonbonded/interaction/nonbonded_term.h \
 				nonbonded/interaction/nonbonded_term.cc \
 				nonbonded/interaction/nonbonded_innerloop.h \
@@ -43,13 +50,17 @@ xxinclude_HEADERS =		interaction.h \
 				nonbonded/interaction/omp_nonbonded_interaction.h \
 				nonbonded/interaction/mpi_nonbonded_master.h \
 				nonbonded/interaction/mpi_nonbonded_slave.h \
-				nonbonded/interaction/storage.h \
-				nonbonded/pairlist/pairlist.h \
+				nonbonded/interaction/storage.h
+
+xxintnbpairlistdir =            $(includedir)/gromosXX/interaction/nonbonded/pairlist
+xxintnbpairlist_HEADERS =       nonbonded/pairlist/pairlist.h \
 				nonbonded/pairlist/pairlist_algorithm.h \
 				nonbonded/pairlist/standard_pairlist_algorithm.h \
 				nonbonded/pairlist/grid_pairlist_algorithm.h \
-				nonbonded/pairlist/vgrid_pairlist_algorithm.h \
-				special/create_special.h \
+				nonbonded/pairlist/vgrid_pairlist_algorithm.h 
+
+xxintnbspecialdir =             $(includedir)/gromosXX/interaction/nonbonded/special
+xxintnbspecial_HEADERS =        special/create_special.h \
 				special/position_restraint_interaction.h \
 				special/distance_restraint_interaction.h \
 				special/dihedral_restraint_interaction.h \
@@ -58,9 +69,10 @@ xxinclude_HEADERS =		interaction.h \
 				special/jvalue_restraint_interaction.h \
 				special/pscale.h \
 				special/external_interaction.h \
-				special/ramd_interaction.h \
-				nonbonded/vector/vgrid.h
+				special/ramd_interaction.h
 
+xxintnbvectordir =              $(includedir)/gromosXX/interaction/nonbonded/vector
+xxintnbvector_HEADERS =         nonbonded/vector/vgrid.h
 
 noinst_LTLIBRARIES =		libgrointeraction.la
 

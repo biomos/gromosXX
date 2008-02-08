@@ -1,7 +1,6 @@
 INCLUDES = -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/math
-
 xxinclude_HEADERS = 		gmath.h \
 				boundary_implementation.h \
 				boundary_implementation.cc \

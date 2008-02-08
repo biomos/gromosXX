@@ -6,11 +6,11 @@ xxcoreincludedir = $(includedir)/gromosXX/topology/core
 xxcoreinclude_HEADERS =	core/atomgroup_iterator.h	core/chargegroup_iterator.h \
 			core/atom_iterator.h		core/compound.h \
 			core/body_term.h 		core/molecule_iterator.h \
-			core/core.h			sd.h
+			core/core.h
 
 xxinclude_HEADERS =	solute.h			solvent.h \
 			perturbed_atom.h 		perturbed_solute.h \
-			topology.h			
+			topology.h			sd.h
 
 noinst_LTLIBRARIES =	libgrotopology.la
 
