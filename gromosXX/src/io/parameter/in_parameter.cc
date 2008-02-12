@@ -1839,10 +1839,6 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   
   if(param.posrest.posrest == 3) {
-    io::messages.add("Position constraining is experimental",
-		     "In_Parameter", 
-		     io::message::warning);
-
     if (param.pcouple.scale != math::pcouple_off){
       io::messages.add("Position constraining together with pressure coupling not allowed",
 		       "In_Parameter",

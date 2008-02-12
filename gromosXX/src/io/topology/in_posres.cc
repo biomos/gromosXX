@@ -187,8 +187,11 @@ io::In_Posres::read(topology::Topology& topo,
 	break;
       case 3:
 	os << "\tPosition constraints ON\n"
-	   << "\t\tconstraining following atoms"
-	   << " to their initial positions:\n";
+	   << "\t\tconstraining following atoms to ";
+        if (sim.param().posrest.nrdrx) 
+          os <<  "the following positions:\n";
+        else
+	  os << "their initial positions:\n";
 	break;
     }
     

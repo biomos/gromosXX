@@ -75,9 +75,47 @@ int algorithm::Position_Constraints
   if (!quiet){
     os << "POSITION CONSTRAINTS\n"
        << "\tenabled\n"
-       << "\tSHAKEing of bonds containing positionally constrained"
-       << " atoms is NOT implemented (results will be wrong)!\n"
        << "END\n";
+  }
+  
+  // Set the particles to their position if the coordinates are read from
+  // the position restraints file.
+  if (sim.param().posrest.nrdrx) {
+    // loop over restraints and set the position
+    std::vector<topology::position_restraint_struct>::const_iterator 
+      it = topo.position_restraints().begin(),
+      to = topo.position_restraints().end();
+
+    math::VArray &pos   = conf.current().pos;
+  
+    for( ; it != to; ++it)
+      pos(it->seq) = it->pos;
+  }
+  
+  // Here, we have to check whether no atoms that are positionally
+  // contrained are at the same time member of a distance constraint.
+  
+  // loop over distance constraints
+  for(std::vector<topology::two_body_term_struct>::const_iterator
+      dist_it = topo.solute().distance_constraints().begin(),
+      dist_to = topo.solute().distance_constraints().end();
+      dist_it != dist_to; ++dist_it) {
+    // search for positinally contrained atoms in distance constraint
+    for(std::vector<topology::position_restraint_struct>::const_iterator 
+       pos_it = topo.position_restraints().begin(),
+       pos_to = topo.position_restraints().end();
+       pos_it != pos_to; ++pos_it) {
+      
+      unsigned int atom = pos_it->seq;
+      if (dist_it->i == atom || dist_it->j == atom) {
+        std::ostringstream msg;
+        msg << "One of the atoms in bond " << dist_it->i+1 << "-" << dist_it->j+1
+            << " is positionally constrained. This SHAKEing of positionally "
+               "constraint atoms is not implemented.";
+        io::messages.add(msg.str(), "Position_Contraints", io::message::error);
+        return -1;
+      }
+    }
   }
 
   return 0;
