@@ -1407,6 +1407,14 @@ bool io::In_Configuration::check_coordinates
  int num_coords,
  std::ostream & os)
 {
+  if (topo.num_solute_atoms() != 0) {
+    const unsigned int coords = num_coords;
+    if (topo.num_solute_atoms() > coords) {
+      // Here, we have to abort: seg faults in resolvate.
+      return false;
+    }
+  }
+  
   // do a quick estimate of the number of solvents
   if (topo.num_solvents() == 1){
     const unsigned int coords = num_coords - topo.num_solute_atoms();
