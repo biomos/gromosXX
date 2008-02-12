@@ -102,7 +102,7 @@ int algorithm::Berendsen_Barostat
 	math::Matrix mu;
 
 	for(int i=0; i<3; ++i){
-	  for(int j=0; j<3; ++i){
+	  for(int j=0; j<3; ++j){
 	  
 	    mu(i, j) = pow(1.0 - sim.param().pcouple.compressibility
 			   * sim.time_step_size() / sim.param().pcouple.tau
