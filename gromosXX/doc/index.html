@@ -1,0 +1,173 @@
+<HTML>
+<head>
+<title>GromosXX (the C++ version)</title>
+<script language="JavaScript">
+
+<!--
+function MM_openBrWindow(theURL,winName,features) { //v2.0
+  window.open(theURL,winName,features);
+}
+//-->
+</script>
+
+</head>
+
+<body bgcolor="#FFFFFF">
+<br><center>
+<h1><b>The van Gunsteren group's intranet</b></h1>
+</center>
+<a href="../intranet/intranet.html" target="middle">
+intranet</a> -> Gromos04<br>
+
+<hr>
+<br>
+<h2>
+GromosXX (the C++ version)
+</h2>
+<p>
+
+<ul>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#download">Download</a></li>
+<li><a href="#svn">SVN access</a></li>
+<li><a href="#bugreport">Bug reports</a></li>
+</ul>
+
+<h3><a name="documentation">Documentation</a></h3>
+<ul>
+<li><a href="file:///home/markus/DOC/index.html"
+target="new">Doxygen documentation</a></li>
+<li>input files
+<ul>
+<li><a href="input.html">simulation parameter</a></li>
+<li><a href="pttopo.html">perturbation topology</a></li>
+<li><a href="posres.html">position restraints</a></li>
+<li><a href="output.html">output</a></li>
+</ul>
+</li>
+<li>tutorials to help you get started writing code for GromosXX:
+<UL>
+<LI><a href="autotools.html">getting started with GNU autotools</a></LI>
+<LI><a href="tutorial/tutorial.html">getting started with GromosXX</a></LI>
+</UL>
+</li>
+</ul>
+<p>
+
+<h3><a name="download">Status</a></h3>
+Current release:
+<a href="file:///home/markus/RELEASE/gromosXX-0.2.1.tar.gz">
+<b>0.2.1</b></a> (24/11/2004) 
+(<a href="file:///home/markus/RELEASE/gromosXX-0.2.1.deb"><b>debian package</b></a>)
+<p>
+Changes with respect to 0.2.0:<br>
+<ul>
+<li> documentation updates (html)
+<li> moved (total) energy calculation to a seperate algorithm
+<li> remove com motion: NaN fix if det(angular momentum) = 0
+<li> position constraints (not for SHAKE!)
+<li> allow empty lines and spaces after block-names
+<li> TCOUPLE : ir and molecular com bath index interchanged
+<li> building statically linked executables
+</ul>
+
+Changes with respect to 0.1.3:<br>
+<ul>
+<li> bugfix: anisotropic pressure coupling
+<li> fast solvent (spc) loops per default off
+<li> Grid pairlist algorithm (rectangular box)
+<li> removed bekker specification
+<li> replica exchange support
+<li> fast solvent loops
+<li> Intel C++ 8.1 support
+<li> Nose-Hoover temperature coupling
+<li> Flexible Constraints Bugfix: perturbed / non-perturbed coupling
+<li> removed Blitz++
+<li> steepest descent initialization bug
+<li> removed exceptions
+<li> changed template instantiation
+<li> truncated octahedron support
+</ul>
+
+Changes with respect to 0.1.2:<br>
+<ul>
+<li> Roto-translational constraints
+<li> Scaling of individual interactions: dihedral angle
+<li> J-value restraints
+<li> exact flexible constraints
+<li> Different lambda values for specific interactions (nonbonded)
+<li> some Windows support
+<li> removed size_t variables
+<li> file name changes tcc -> cc
+<li> gromosXX scripting example: script added
+<li> gromosXX scripting support: easier initialization
+<li> block averages
+
+</ul>
+Changes with respect to 0.1.1:<br>
+<ul>
+<li> Internal checks on energy, force, energy derivative, pressure, etc. 
+<li> Split up of non-bonded routines
+<li> Perturbed SHAKE fix
+<li> Atomic virial fix
+<li> Different lambda dependencies
+<li> New library structure
+<li> Dihedral angle monitoring
+<li> Open MP
+</ul>
+
+Changes: <br>
+<ul>
+<li> precompiled header support (intel)
+<li> template split up
+<li> timing information
+<li> convenience libraries
+<li> energy trajectories
+<li> generating velocities
+<li> lincs
+<li> thermodynamic integration
+</ul>
+
+<p>
+Previous releases:
+<ul>
+<li><a
+href="file:///home/markus/RELEASE/gromosXX-0.2.0.tar.gz">
+0.2.0 (26/10/2004)</a>
+<li><a
+href="file:///home/markus/RELEASE/gromosXX-0.1.3.tar.gz">
+0.1.3</a>
+<li><a
+href="file:///home/markus/RELEASE/gromosXX-0.1.2.tar.gz">
+0.1.2</a>
+<li> 0.1.1 
+<li> 0.1.0 (does not compile: remove LDADD from Makefile.am)
+<li> 0.0.3 (upgrade recommended)
+</ul>
+
+<h3><a name="svn">SVN access</a></h3>
+web svn access:
+<a href="https://gromos.ethz.ch/svn/trac/gromosXXc%2B%2B">SVN
+repository</a><br>
+
+To check out GromosXX (from ray) for the first time
+<ol>
+<li>setenv PATH ${PATH}:/opt/csw/CollabNet_Subversion/bin</li>
+<li>setenv LD_LIBRARY_PATH /opt/csw/CollabNet_Subversion/lib</li>
+<li>svn checkout https://gromos/svn/repos/gromosXXc++/trunk/gromosXX --username igc_svn</li>
+</ol>
+
+To update your distribution (back up any changes you made first)
+<ol>
+<li>svn update</li>
+</ol>
+
+<h3><a name="bugreport">Bug reports</a></h3>
+bug reports can be viewed or new ones submitted to our Trac server:
+<li><a href="https://gromos/svn/trac/gromosXXc%2B%2B/report/3">view tickets</a><br>
+<li><a href="https://gromos/svn/trac/gromosXXc%2B%2B/newticket">write ticket</a><br>
+
+<p>
+
+</body>
+</html>

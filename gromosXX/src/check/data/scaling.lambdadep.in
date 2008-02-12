@@ -1,0 +1,108 @@
+#$Id$
+TITLE
+	alanine dipeptide test system
+END
+SYSTEM
+#      NPM      NSM 
+         1       20
+END
+START
+# values for INIT -- starting procedures in RUNMD.f
+#  INIT
+#     shake X
+#            shake V
+# centre of mass motion removal if NTCM=1
+#     1   yes    yes   yes
+#     2    no    yes   yes
+#     3    no     no   yes
+#     4    no     no    no
+#      NTX     INIT      IG     TEMPI      HEAT  NTXO   BOLTZ
+         2        4  210185       0.0   0.00000     1   8.31441E-3
+END
+STEP
+#   NSTLIM         T        DT
+         1       0.0     0.002
+END
+BOUNDARY
+#      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
+         2       0.0       0.0       0.0      90.0       1
+END
+SUBMOLECULES
+#     NSPM  NSP(1.. NSPM)
+         1   12
+END
+TCOUPLE
+#      NTT     TEMP0      TAUT
+         2    298.15    0.0100
+        -2    298.15    0.0100
+         1    298.15    0.0100
+END
+PCOUPLE
+#     NTP     PRES0      COMP      TAUP  
+        1  0.061020  4.575E-4   0.50000
+END
+CENTREOFMASS
+#   NDFMIN      NTCM      NSCM
+         0         0      100000
+END
+PRINT
+#NTPR: print out energies, etc. every NTPR steps
+#NTPL: print out C.O.M motion and total energy fitting every NTPL steps
+#NTPP: =1 perform dihedral angle transition monitoring
+#     NTPR      NTPL      NTPP
+        25        25         1
+END
+WRITE
+# NTPW = 0 : binary
+# NTPW = 1 : formatted
+# NTWSE = configuration selection parameter
+# =0: write normal trajectory
+# >0: chose min energy for writing configurations
+#     NTWX     NTWSE      NTWV      NTWE      NTWG      NTBA	NTPW
+       100         0         0         0         0         0	   1
+END
+SHAKE
+#      NTC       TOL
+         1    0.0001
+END
+FORCE
+#      NTF array
+# bonds    angles    imp.     dihe     charge nonbonded
+# H        H         H        H
+  1  1     1  1      1  1     1  1     1  1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     3      4	12   72
+END
+PLIST
+#     NTNB      NSNB     RCUTP     RCUTL
+         1         5       0.8       1.4
+END
+LONGRANGE
+# EPSRF     APPAK      RCRF
+    62.0       0.0       1.4
+END
+#
+POSREST
+#     values for NTR
+#     0: no position re(con)straining
+#     1: use CHO
+#     2: use CHO/ ATOMIC B-FACTORS
+#     3: position constraining
+#      NTR       CHO   NRDRX
+         0     1.0E1       0
+END
+#PERTURB
+# NTG: 0 no perturbation is applied
+#    : 1 calculate dV/dRLAM perturbation
+#    : 2 calculate dV/dRMU perturbation
+#    : 3 calculate both derivatives
+#      NTG     NRDGL     RLAM     DLAMT        RMU   DMUT
+#         1         0      0.125   0.000    0.00000   0.00
+#   ALPHLJ     ALPHC     NLAM       MMU
+#       0.3       0.6        1         1
+#END
+PERTURB03
+#	NTG	RLAM	DLAMT	NLAM	SCALING
+	on	0.125	0.0	1	on
+END
+

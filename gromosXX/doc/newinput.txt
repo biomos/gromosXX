@@ -1,0 +1,252 @@
+
+==================================================
+ changes in the MD input file
+==================================================
+
+SYSTEM
+# NPM is limited to 1
+#      NPM      NSM 
+         1      100
+END
+
+WRITE
+# NTPW = 0 : binary
+# NTPW = 1 : formatted
+# NTWSE = configuration selection parameter
+# =0: write normal trajectory
+# >0: chose min energy for writing configurations
+# NTWB block averaged energies (and free energies if NTWG != 0)
+#     NTWX     NTWSE      NTWV      NTWE      NTWG      NTWB    NTPW
+      100          0         0       100         0       100       1
+END
+
+BOUNDARY
+# the boundary conditions are read from the TRICLINICBOX block.
+# BOX and BETA are not read in, 
+# NRDBOX has to be 1 if NTB not equal 0
+#      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
+         2       0.0       0.0       0.0      90.0       1
+END
+
+MULTIBATH
+# replaces the TCOUPLE block (which is still recognized)
+#	algorithm
+#		weak-coupling
+#		nose-hoover
+#		nose-hoover-chains	num
+#		(where num is the number of chains to use)
+	nose-hoover-chains	3
+#   number of baths
+    2
+#   temp0  tau
+    300    0.010
+    300    0.010
+#   different couplings
+    1
+#   last   com-bath  ir-bath
+    60     0         1
+END
+
+
+PCOUPLE03
+#	COUPLE:	off, calc, scale
+#	SCALE:  off, iso, aniso, full
+#	VIRIAL: none, atomic, molecular
+#
+#   COUPLE  SCALE   COMP        TAUP    VIRIAL
+    calc    iso     4.575E-4    0.5     atomic
+#   reference pressure
+    0.06102     0.00000     0.00000
+    0.00000     0.06102     0.00000
+    0.00000     0.00000     0.06102
+END
+
+FORCE
+#      NTF array
+# if bonds are set to 2, harmonic force field terms are used
+# bonds    angles    imp.     dihe     charge nonbonded
+# H        H         H        H
+  0  0     1  1      1  1     1  1     1  1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     1         60
+END
+
+FORCEFIELD
+#   IDIBND                       IDIANG
+#   bond stretching potential    angle bending potential
+#   0: standard GROMOS96         0: standard GROMOS96
+#   2: harmonic                  1: harmonic
+#	IDIANG not equal 0 is not yet supported
+  0 0
+END
+
+CONSTRAINT
+#	NTC
+#		1	"solvent"	solvent only
+#		2	"hydrogen"	solvent and solute bonds containing hydrogens
+#		3	"all"		solvent and solute all bonds
+#		4	"specified"	solvent and constraints in the CONSTRAINTS block
+	3
+#
+#	solute algorithm
+#		shake
+#		lincs
+#		flexshake
+		lincs
+#			lincs options
+#			order
+			4
+#
+#	solvent algorithm
+		shake
+#			shake options
+#			tolerance
+			0.0001
+END
+
+PLIST03
+#	algorithm: standard (gromos96 like pairlist)
+#		       grid (bekker like pairlist)
+#	SIZE:	   grid cell size (or auto = 0.5 * RCUTP)
+#	TYPE:	   chargegoup (chargegroup based cutoff)
+#			   atomic (atom based cutoff)
+#
+#	algorithm	NSNB	RCUTP	RCUTL	SIZE	TYPE
+	grid		5	0.8	1.4	auto	chargegroup
+END
+
+PERTURB03
+#	NTG:
+#			on	perturbation on 
+#				(nonbonded: all atom pairs involving a perturbed atom)
+#			off	perturbation off
+#			scaled	nonbonded: perturbation on for all atom pairs 
+					   with a scaled interaction,
+#					   otherwise off
+#				bonded: normal perturbation on
+#	SCALING:
+#			on (activate interaction scaling)
+#  			off (deactivate interaction scaling)
+#			the scaling information is in the
+#			perturbation topology.
+#	NTG:		on / off
+#	NTG	RLAM	DLAMT	NLAM	SCALING
+	on	0.5		1.0		1.0		off
+END
+
+============================================================================
+if scaling is requested, the PERTURBATION TOPOLOGY needs an additional
+block
+
+SCALEDINTERACTIONS
+# example:
+# for all nonbonded interactions between atoms belonging to
+# energy group 1 and atoms belonging into energy group 2, the forces and
+# energies will be scaled by a lambda dependent scaling factor (varying
+# linearly from 0.5 at lambda=0 to 1 at lambda=1. Interactions between
+# energy group 1 and energy group 3 are always scaled by 0.25.
+#
+#	number of scaled interactions
+2
+#	energy group 1	energy group 2	scaling A	scaling B
+	1		2		0.5		1
+	1		3		0.25		0.25
+END
+
+
+LAMBDADEP
+#	provides the possibility to change the linear dependence
+#	on lambda for specified interactions (to a parabolic one)
+#
+#	number of changed lambda dependencies
+	2
+#	energy group 1	energy group 2	paramater
+	1		3		 0.25
+	2		5		-0.6
+#
+#	l' = a * l^2 + (1-a) * l
+#	this ensures l' = 0 if l = 0 
+#	and          l' = 1 if l = 1
+#
+#	now the extremum should be outside (0, 1) so that
+#	l' always lies in the range [0, 1].
+#
+#	extremum is at:
+#	0 = 2 * a * l + (1 - a)
+#	l = (a - 1) / (2 * a)
+#	max @ >= 1, a must be negative
+#	     1 <= -1/(2a) + 1/2
+#	     1 <= -1/a
+#	     a >= -1
+#
+#	min @ <= 0, a must be positive:
+#	     0  >= -1/(2a) + 1/2
+#	     -1 >= -1/a
+#	     a  <= 1
+#
+#	acceptable values for a:
+#	a = 0 (linear dependence)
+#	-1 <= a <= 1
+END
+
+J-VAL
+# J-Value restraints
+# method:
+#   off
+#   instantaneous
+#   averaged
+#   biquadratic
+# tau
+# read averages
+# method  tau  read
+  averaged 10.0   0
+END
+
+J-Value restraints file:
+JVALRESSPEC
+#
+# for each J-coupling constant restraint is to be specified:
+# IPJR, JPJR, KPJR, LPJR: atom sequence numbers defining the angle phi
+# CPJR: weight factor of interaction
+# PJR0: reference J-coupling constant value
+# PSJR: phase shift delta = theta-phi
+# A,B, C: Karplus parameters
+# H heavy side function
+# 1 : harmonic
+# 2 : half harmonic, attractive
+# 3 : half harmonic, repulsive
+#
+#IPJR JPJR KPJR LPJR       CPJR   PJR0 PSJR  A      B     C      H
+# 1VAL
+  109    1    3    7       10.0   7.3  -60   9.4    -1.1  0.4    1
+# 4ALA
+   21   23   25   27       10.0   8.6  -60   9.4    -1.1  0.4    1
+END
+
+PSCALE
+# periodic scaling of interactions
+# interaction
+#   jrest (j-value restraining)
+#   K(dihedral) K(J) T    difference  ratio  read
+    10.0	10.0 1.0  1.0	      0.9    0
+END
+
+
+position restraints
+-------------------
+normal gromos96 input block.
+@posres argument to md
+
+POSRES
+    1 HEXA  CH31       1    3.003183500    2.472059119    3.983607307
+    1 HEXA  CH22       2    2.944583705    2.441994145    4.121706839
+    1 HEXA  CH23       3    3.050801324    2.493790966    4.218887665
+...
+END
+
+residue number, residue name and atom name is ignored.
+atom sequence number has to match sequence number in topology of the
+positional restrained atom for which the coordinates are specified.
+Only the atoms that should be restrained must be listed.
+position constraining is (currently) not implemented.
+

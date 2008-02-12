@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# icc
+CONFIGURE_OPT=" \
+   --disable-shared \
+   --enable-allstatic \
+   CC=icc CXX=icpc LD=xild AR=xiar"
+
+#CONFIGURE_OPT=" \
+#   --disable-shared \
+#   CC=gcc CXX=g++"
+
+CONFIGURE_REL_OPT=" \
+   ${CONFIGURE_OPT} \
+   --disable-debug \
+   --enable-openmp \
+   --prefix=${PREFIX}"
+
+TAR=tar
+TMP=/scrloc/markus
+BASH=/bin/bash
+
+export CONFIGURE_OPT
+export CONFUGURE_REL_OPT
+export TAR
+export TMP
+export BASH

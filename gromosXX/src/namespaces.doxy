@@ -1,0 +1,141 @@
+/**
+ * @file namespaces.doxy
+ * namespace description for doxygen
+ */
+
+/**
+ * @namespace math
+ * mathematical library
+ *
+ * @section mathoverview Overview
+ * - standard mathematical functions, mainly concerned with vector
+ *   and matrix manipulations.
+ *    @sa math::Vec
+ *    @sa math::Matrix
+ *
+ * - Physical constants and standard enumeration declarations
+ *   (like the boundary type or what virial to calculate), as well as
+ *   some physical constants.
+ *
+ * - Boundary treatment
+ *   the basic routines are in math::Boundary_Implementation
+ *   the higher level functions in math::Periodicity
+ *   when using Periodicity a template parameter for the boundary shape
+ *   has to be passed.
+ */
+namespace math
+{
+  // empty here...
+}
+
+/**
+ * @namespace util
+ * utility library
+ * 
+ * 
+ */
+namespace util
+{
+  // empty here...
+}
+
+/**
+ * @namespace algorithm
+ * Collects the algorithm implemented in GromosXX.
+ *
+ * @section algorithmoverview Overview
+ * this namespace contains the following subgroups:
+ * - algorithm: the md simulation which is a sequence 
+ *   of algorithms which are in turn applied.
+ * - integration: leap frog, energy minimization, slow growth.
+ * - constraints: shake, lincs and their perturbed equivalents.
+ * - temperature: temperature calculation and weak coupling.
+ * - pressure: pressure calculation and weak coupling.
+ * - forcefield: the forcefield is also an algorithm, but as it
+ *   is so huge, it resides in it's own namespace interaction.
+ *   @sa interaction
+ */
+namespace algorithm
+{
+  // empty here...
+}
+
+/**
+ * @namespace configuration
+ * the configurational properties of the simulated system.
+ *
+ * @section configurationoverview Overview
+ * properties stored here include
+ * - positions, velocities, forces
+ * - energies
+ * - energy lambda derivatives
+ * - virial-, kinetic energy-, pressure-tensor
+ * - special information (like j-value averages)
+ */
+namespace configuration
+{
+  // empty here...
+}
+
+/**
+ * @namespace topology
+ * the topology (including perturbation information) of the simulated system.
+ * everything that makes up the topology of the system is stored here:
+ * - atom properties (iac, mass, charge): @sa Solute
+ * - bonded properties (bonds, angles, impropers, dihedrals, constraints)
+ * - atom groups (chargegroups, (sub)molecules)
+ * - solvent information: @sa Solvent
+ * - the perturbation information: @sa Perturbed_Solute
+ *
+ * some of the very basic properties are in the core subspace
+ * ( @sa core.h )
+ */
+namespace topology
+{
+  // empty here...
+}
+
+/**
+ * @namespace simulation
+ * Simulation parameter.
+ * the input parameter and some additional information 
+ * (like the @sa Multibath )
+ */
+namespace simulation
+{
+  // empty here...
+}
+
+/**
+ * @namespace io
+ * the input / output routines.
+ * the namespace is subdivided into
+ * - topology: read in topology / perturbation topology
+ * - parameter: read in the "input" file, the parameter are then
+ *   stored in @sa simulation::Parameter
+ * - configuration: read in configuration, write out all sorts of trajectories
+ * - general routines to parse command line arguments or write out all kinds
+ *   of output blocks ( @sa print_block.cc ), and the @sa message class.
+ */
+namespace io
+{
+  // emtpy here...
+}
+
+/*
+ * @namespace ranlib
+ * gcc namespace to access template type information.
+ */
+namespace ranlib
+{
+  // empty here...
+}
+
+/**
+ * @namespace check
+ * test programs to check correctness of code.
+ */
+namespace check
+{
+  // empty here
+}
