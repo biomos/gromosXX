@@ -333,12 +333,12 @@ void print_title(bool color)
 #else
     std::cout << "\033[1;31m";
 #endif
-    std::cout << "\n\nGromosXX 0.2.1 development\033[22;0m\n\n"
-	      << "26th October 2004\n";
+    std::cout << "\n\nGromosXX 0.3.0 development\033[22;0m\n\n"
+	      << "12 February 2008\n";
   }
   else
-    std::cout << "\n\nGromosXX 0.2.1 development\n\n"
-	      << "26th October 2004\n";
+    std::cout << "\n\nGromosXX 0.3.0 development\n\n"
+	      << "12 February 2008\n";
   
   std::cout << "build date    " << BUILD_DATE << "\n"
 	    << "build number  " << BUILD_NUMBER << "\n\n";
@@ -374,6 +374,6 @@ void print_title(bool color)
 	    << "Professor W. F. van Gunsteren\n"
 	    << "Swiss Federal Institute of Technology\n"
 	    << "Zuerich\n\n"
-	    << "Bugreports to http://www.igc.ethz.ch:5555\n\n";
+	    << "Bugreports to https://gromos/svn/trac/gromosXXc++\n\n";
 
 }

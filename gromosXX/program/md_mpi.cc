@@ -376,12 +376,12 @@ void print_title(bool color, int size, std::ostream & os)
 #else
     os << "\033[1;31m";
 #endif
-    os << "\n\nGromosXX 0.2.3 development\033[22;0m\n\n"
-       << "3rd December 2005\n";
+    os << "\n\nGromosXX 0.3.0 development\033[22;0m\n\n"
+       << "12 February 2008\n";
   }
   else
-    os << "\n\nGromosXX 0.2.3 development\n\n"
-       << "3rd December 2005\n";
+    os << "\n\nGromosXX 0.3.0 development\n\n"
+       << "12 February 2008\n";
   
   os << "build date    " << BUILD_DATE << "\n"
      << "build number  " << BUILD_NUMBER << "\n\n";
@@ -425,7 +425,7 @@ void print_title(bool color, int size, std::ostream & os)
      << "Professor W. F. van Gunsteren\n"
      << "Swiss Federal Institute of Technology\n"
      << "Zuerich\n\n"
-     << "Bugreports to http://www.igc.ethz.ch:5555\n"
+     << "Bugreports to https://gromos/svn/trac/gromosXXc++\n"
      << std::endl;
 
   struct utsname sysinf;
