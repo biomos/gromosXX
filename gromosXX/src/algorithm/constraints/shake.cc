@@ -443,9 +443,9 @@ int algorithm::Shake::apply(topology::Topology & topo,
   }
   
   // shaken velocity:
-  // stochastic dynamics needs to shake without velocity correction
-  // (once; it shakes twice...)
-  if (!sim.param().stochastic.sd){
+  // stochastic dynamics and energy minimisation needs to shake without
+  // velocity correction (once; it shakes twice...)
+  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem){
     if (do_vel_solute){
       for(unsigned int i=0; i<topo.num_solute_atoms(); ++i)
 	conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 

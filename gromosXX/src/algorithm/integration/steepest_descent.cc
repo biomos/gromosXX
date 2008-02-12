@@ -46,6 +46,10 @@ int algorithm::Steepest_Descent
   
   if (!quiet)
     os << "END\n";
+  
+  conf.old().vel = 0.0;
+  conf.current().vel = 0.0;
+  
   return 0;
 }
 

@@ -414,7 +414,8 @@ int algorithm::Perturbed_Shake
 	simulation::Simulation & sim)
 {
   DEBUG(7, "applying SHAKE");
-  bool do_vel = false;
+  bool do_vel_solute = false;
+  bool do_vel_solvent = false;
   int error = 0;
   
   // check whether we shake solute
@@ -425,7 +426,7 @@ int algorithm::Perturbed_Shake
       sim.param().dihrest.dihrest == 3) {
     
     DEBUG(8, "\twe need to shake perturbed SOLUTE");
-    do_vel = true;
+    do_vel_solute = true;
 
     SPLIT_VIRIAL_BOUNDARY(perturbed_solute, 
 			  topo, conf, sim, 
@@ -445,7 +446,7 @@ int algorithm::Perturbed_Shake
       sim.param().constraint.solvent.algorithm == simulation::constr_shake){
 
     DEBUG(8, "\twe need to shake SOLVENT");
-    do_vel = true;
+    do_vel_solvent = true;
 
     SPLIT_VIRIAL_BOUNDARY(solvent, 
 			  topo, conf, sim.time_step_size(), 
@@ -459,11 +460,22 @@ int algorithm::Perturbed_Shake
     conf.current().pos = conf.old().pos;
     return E_SHAKE_FAILURE_SOLVENT;
   }
-
-  // shaken velocity
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
-      sim.time_step_size();
+  
+  // shaken velocity:
+  // stochastic dynamics and energy minimisation needs to shake without
+  // velocity correction (once; it shakes twice...)
+  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem){
+    if (do_vel_solute){
+      for(unsigned int i=0; i<topo.num_solute_atoms(); ++i)
+	conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+	  sim.time_step_size();
+    }
+    if (do_vel_solvent){
+      for(unsigned int i=topo.num_solute_atoms(); i < topo.num_atoms(); ++i)
+	conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+	  sim.time_step_size();
+    }
+  }
 
   // return success!
   return error;
