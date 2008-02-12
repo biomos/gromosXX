@@ -1,3 +1,48 @@
+/**
+ * @file repana.cc
+ * analyses the REMD output file replica.dat
+ * and suggests an optimized temperature
+ * and lambda set.
+ */
+
+/**
+ * @page programs Program Documentation
+ *
+ * @anchor repana
+ * @section repana analyze replica.dat
+ * @author @ref mc cc
+ * @date 3. 12. 2007
+ *
+ * repana extracts the information stored in the replica
+ * exchange molecular dynamics (REMD) output file replica.dat.
+ * It produces seven multi column output files:
+ * temperature.dat: run number vs. temperature of replica 
+ * (column 2 corresponds to replica 1, column 3 to replica 2 etc.)
+ * lambda.dat: run number vs. lambda value of replica
+ * epot.dat: run number vs. potential energy of replica
+ * probability.dat: run number vs. switching probability of replica
+ * switches.dat: run number vs. switching data of replica 
+ * (0 = no switch in this run, 1 = switch in this run)
+ * prob_T.dat: switching probabilities per temperature
+ * prob_l.dat: switching probabilities per lambda
+ *
+ * Furthermore it calculates an optimized temperature or lambda set
+ * based on the fraction of replicas diffusing from the lowest
+ * to the highest temperature (lambda value). This algorithm is 
+ * based on:
+ * Katzgraber, H. G.; Trebst, S.; Huse, D. A. & Troyer, M.
+ * Feedback-optimized parallel tempering Monte Carlo
+ * Journal of Statistical Mechanics-Theory And Experiment,
+ * Iop Publishing Ltd, 2006, P03018"
+ * 
+ * The 'opt' function is based on a perl script by H.G. Katzgraber.
+ *
+ * <b>usage:</b>
+ * <table border=0 cellpadding=0>
+ * <tr><td>./repana replica.dat</td><td>&lt;REMD output file&gt; </td></tr>
+ * </table>
+ *
+ */
 
 #include <string>
 #include <iostream>
@@ -5,7 +50,9 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <map>
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -22,14 +69,24 @@ struct Replica_Data
   int s;
 };
 
+struct hist
+{
+  hist(): nup(0.0),ndown(0.0),f(0.0){}
+  double nup;
+  double ndown;
+  double f;
+};
+
 int find_replica(vector<Replica_Data> const & v, double T, double l);
 int find_lambda(vector<double> l, double lam);
 int find_temperature(vector<double> T, double temp);
+void fraction(vector<vector<Replica_Data> > rep_data, vector<double> T, vector<double> lam,ostream &os = cout);
+void opt(vector<hist> f_T, vector<double>T,ostream &os = cout);
 
 int main(int argc, char *argv[])
 {
   if (argc < 2){
-    cerr << "usage: " << argv[0] << " filename\n\n";
+    cerr << "usage: " << argv[0] << " replica.dat\n\n";
     return 1;
   }
   
@@ -123,7 +180,7 @@ int main(int argc, char *argv[])
     
   }
   
-      cerr << "read " << rep_data.size() << " runs.\n";
+      cout << "# read " << rep_data.size() << " runs.\n";
 
   // write the files
   {
@@ -320,70 +377,69 @@ int main(int argc, char *argv[])
     prob_l.close();
     prob_T.close();
 
-    cout << "average switching probabilities:\n"
-	 << "\tTemperature:\n";
-    
-    for(unsigned int rr=0; rr<probT.size() - 1; ++rr){
-      cout << setw(12) << T[rr];
-    }
-    cout << "\n";
-
+    cout << "# average switching probabilities:" << endl;
+        
+    cout << setw(12) << "# T" << setw(12) << "P(T)" << endl;
     double ppp = 0;
     for(unsigned int rr=0; rr<probT.size() - 1; ++rr){
+      cout << setw(12) << T[rr];
       if (trT[rr] > 0){
 	cout << setw(12) << probT[rr] / trT[rr];
 	ppp += probT[rr] / trT[rr];
       }
       else
 	cout << setw(12) << 0.0;
+      cout << endl;
     }
-    cout << "\n\ntotal average switching probability = ";
+    cout << "\n\n# total average switching probability = ";
     if (probT.size() > 1)
       cout << ppp / (probT.size() - 1);
     else
       cout << 0;
 
-    cout << "\n\nnumber of switches:\n";
+    cout << "\n\n# number of switches:\n";
+    cout << setw(12) << "# T" << setw(12) << "switches" << endl;
     int sss = 0;
     for(unsigned int rr=0; rr<swiT.size() - 1; ++rr){
-      cout << setw(12) << swiT[rr];
+      cout << setw(12) << T[rr]
+	   << setw(12) << swiT[rr] << endl;
       sss += swiT[rr];
     }
-    cout << "\n\ntotal number of switches = " << sss;
+    cout << "\n\n# total number of switches = " << sss;
 
-    cout << "\n\naverage switching probabilities:\n"
-	 << "\tlambda:\n";
-    
-    for(unsigned int rr=0; rr<probl.size() - 1; ++rr){
-      cout << setw(12) << lam[rr];
-    }
-    cout << "\n";
-    
+    cout << "\n\n# average switching probabilities:" << endl;
+
+    cout << setw(12) << "# l" << setw(12) << "P(l)" << endl;
     ppp = 0;
     for(unsigned int rr=0; rr<probl.size() - 1; ++rr){
       if (trl[rr] > 0){
-	cout << setw(12) << probl[rr] / trl[rr];
+	cout << setw(12) << lam[rr];
+	cout << setw(12) << probl[rr] / trl[rr] << endl;
 	ppp += probl[rr] / trl[rr];	
       }
       else
 	cout << setw(12) << 0.0;
     }
-    cout << "\n\ntotal average switching probability = ";
+    cout << "\n\n# total average switching probability = ";
     if (probl.size() > 1)
       cout << ppp / (probl.size() - 1);
     else
       cout << 0.0;
 
-    cout << "\n\nnumber of switches:\n";
+    cout << "\n\n# number of switches:\n";
+    cout << setw(12) << "# l" << setw(12) << "switches" << endl;
     sss = 0;
     for(unsigned int rr=0; rr<swil.size() - 1; ++rr){
-      cout << setw(12) << swil[rr];
+      cout << setw(12) << lam[rr]; 
+      cout << setw(12) << swil[rr] << endl;
       sss += swil[rr];
     }
-    cout << "\n\ntotal number of switches = " << sss;
+    cout << "\n\n# total number of switches = " << sss;
   }
 
   cout << "\n\n" << endl;
+  
+  fraction(rep_data, T, lam);
   
   return 0;
 }
@@ -414,3 +470,201 @@ int find_temperature(vector<double> T, double temp)
   }
   return -1;
 }
+void fraction(vector<vector<Replica_Data> > rep_data, vector<double> T, vector<double> lam,ostream &os)
+{
+  os << "# Optimization of temperature and lambda set\n"
+     << "# according to:\n"
+     << "# Katzgraber, H. G.; Trebst, S.; Huse, D. A. & Troyer, M. \n"
+     << "# Feedback-optimized parallel tempering Monte Carlo \n"
+     << "# Journal of Statistical Mechanics-Theory And Experiment, \n"
+     << "# Iop Publishing Ltd, 2006, P03018" << endl;
+
+  // get min and max temperature and lambda values
+  double minT=*(T.begin());
+  double maxT=*(T.end()-1);
+  double minlam=*(lam.begin());
+  double maxlam=*(lam.end()-1);
+    
+  // vector of labels
+  vector<std::string> T_label(rep_data[0].size(),"none");
+  vector<std::string> lam_label(rep_data[0].size(),"none");
+
+  // map temperature and lambda values to index
+  map<double,unsigned int> map_T;
+  for(unsigned int i=0; i<T.size();i++){
+    map_T[T[i]]=i;
+  }
+  map<double,unsigned int> map_lam;
+  for(unsigned int i=0; i<lam.size();i++){
+    map_lam[lam[i]]=i;
+  }
+  
+  // record the histograms
+  hist temp;
+  vector<hist> f_T(rep_data[0].size(),temp);
+  vector<hist> f_lam(rep_data[0].size(),temp);
+
+  // loop over all runs
+  for(unsigned int i=0; i<rep_data.size(); i++){
+    // loop over the number of replicas
+    for(unsigned int rr=0; rr<rep_data[i].size(); rr++){
+      // temperature 
+      int index =map_T[rep_data[i][rr].Ti];
+      if(T_label[rr]=="up"){
+	if(rep_data[i][rr].Ti==maxT){
+	  T_label[rr]="down";
+	  f_T[index].ndown++;
+	}
+	else
+	  f_T[index].nup++;
+      }
+      else if (T_label[rr]=="down"){
+	if(rep_data[i][rr].Ti==minT){
+	  T_label[rr]="up";
+	  f_T[index].nup++;
+	}
+	else
+	  f_T[index].ndown++;
+      }
+      else if (T_label[rr]=="none"){
+	if(rep_data[i][rr].Ti==minT)
+	  T_label[rr]="up";
+	else if(rep_data[i][rr].Ti==maxT)
+	  T_label[rr]="down";
+      }
+      // lambda 
+      index=map_lam[rep_data[i][rr].li];
+      if(lam_label[rr]=="up"){
+	if(rep_data[i][rr].li==maxlam){
+	  lam_label[rr]="down";
+	  f_lam[index].ndown++;
+	}
+	else
+	  f_lam[index].nup++;
+      }
+      else if (lam_label[rr]=="down"){
+	if(rep_data[i][rr].li==minlam){
+	  lam_label[rr]="up";
+	  f_lam[index].nup++;
+	}
+	else
+	  f_lam[index].ndown++;
+      }
+      else if (lam_label[rr]=="none"){
+	if(rep_data[i][rr].li==minlam)
+	  lam_label[rr]="up";
+	else if(rep_data[i][rr].li==maxlam)
+	  lam_label[rr]="down";
+      }
+    } // loop over all replicas
+  } // loop over all runs
+  
+  // output results
+  os.precision(4);
+  // temperature
+  if(T.size()>1){
+    os << "\n# fraction T" << endl;
+    os << setw(12) << "# ID" 
+	 << setw(12) << "f(T)"
+	 << setw(12) << "T" << endl;
+    
+    for(unsigned int i=0;i<T.size();i++){
+      double sum = f_T[i].nup+f_T[i].ndown;
+      if(sum!=0)
+	f_T[i].f=f_T[i].nup/sum;
+      os << setw(12) << i+1 
+	   << setw(12) << f_T[i].f
+	   << setw(12) << T[i] << endl;
+    }
+    os << "\n# optimized temperature set" << endl;
+    opt(f_T,T,os);
+    os << endl;
+  }
+  
+  // lambda
+  if(lam.size()>1){
+    os << "\n# fraction lambda" << endl;
+    os << setw(12) << "# ID" 
+	 << setw(12) << "f(lam)"
+	 << setw(12) << "lam" << endl;
+    for(unsigned int i=0;i<lam.size();i++){
+      double sum = f_lam[i].nup+f_lam[i].ndown;
+      if(sum!=0)
+	f_lam[i].f=f_lam[i].nup/sum;
+      os << setw(12) << i+1 
+	   << setw(12) << f_lam[i].f
+	   << setw(12) << lam[i] << endl;            
+    }
+    // optimize the lambda set
+    os << "\n# optimized lambda set" << endl;
+    opt(f_lam,lam,os);
+    os << endl;
+  }
+ 
+}
+
+void opt(vector<hist> f_T, vector<double>T,ostream &os)
+{
+  os.precision(5);
+  // optimize the temperature (or lambda) set
+  vector<double> fnew;
+  vector<double> Tnew;
+  for(unsigned int i=0;i<T.size();i++){
+    if(i==(T.size()-1) || f_T[i+1].f!=f_T[i].f){
+      fnew.push_back(f_T[i].f);
+      Tnew.push_back(T[i]);
+    }    
+  }
+  vector<double> dTnew(fnew.size(),0.0);
+  vector<double> derivative(fnew.size(),0.0);
+  vector<double> dTnewprime(fnew.size(),0.0);
+  for(unsigned int i=0;i<(fnew.size()-1);i++){
+    dTnew[i]=Tnew[i+1]-Tnew[i];
+    derivative[i]=(fnew[i+1]-fnew[i])/dTnew[i];
+    dTnewprime[i]=1.0/sqrt(fabs((1.0/dTnew[i])*derivative[i]));        
+  }
+
+  double constant=0.0;
+  for(unsigned int i=0;i<fnew.size()-1;i++){
+    constant+=dTnew[i]/dTnewprime[i];
+  }
+  constant = (T.size()-1)/constant;
+  unsigned int n = 0;
+  double n_prime = 0.0;
+  unsigned int t = 0;
+  double this_dT = 0.0;
+  int dtc = 0;
+  vector<double> Tnewprime(T.size(),0.0);
+  Tnewprime[0]=T[0];
+  do{
+    if(n_prime+constant*dTnew[t]/dTnewprime[t] >= n+1){
+      double tau=dTnewprime[t]/constant*(n-n_prime+1);
+      if(tau>dTnew[t]){
+	cerr << "ERROR: Inconsistent tau " << tau << endl;
+      }
+      this_dT+=tau;
+      Tnewprime[dtc+1] = Tnewprime[dtc] + this_dT;
+      os << setw(12) << Tnewprime[dtc] << endl;
+      dtc++;
+      n++;
+      n_prime+=constant*tau/dTnewprime[t];
+      dTnew[t]-=tau;
+      if(dTnew[t] < 0){
+	os << "ERROR: Inconsistent deltaT" << dTnew[t] << endl;
+      }
+      this_dT = 0;
+    }
+    else{
+      n_prime += constant * dTnew[t] / dTnewprime[t];
+      this_dT += dTnew[t];
+      t++;
+    }             
+  }
+  while(n<(T.size()-1) && t < (fnew.size()-1));
+  // check whether the following two lines are really necessary      
+  os << "# WARNING: printing fishy line for second to last T value" << endl;
+  os << setw(12) << Tnewprime[T.size()-2] << endl;
+  os << setw(12) << T[T.size()-1] << endl;
+}
+
+  
