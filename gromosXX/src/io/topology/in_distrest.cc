@@ -192,10 +192,9 @@ io::In_Distrest::read(topology::Topology& topo,
 
     // we don't have a PERTDISRESSPEC block
     if (!buffer.size()){
-      return;
     }
     // check whether there is s.th. in the block
-    if (buffer.size()<=2){
+    else if (buffer.size()<=2){
       io::messages.add("empty PERTDISRESSPEC block in distance restraints file",
 		       "in_distrest", io::message::warning);
     }
