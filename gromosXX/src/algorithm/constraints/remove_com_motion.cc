@@ -216,7 +216,7 @@ int algorithm::Remove_COM_Motion
   // check if nothing to do
   if (sim.steps() == 0){
     if (sim.param().start.remove_com) remove_it = true;
-    print_it = true;
+    if (sim.param().print.centreofmass) print_it = true;
   }
   else{
     if (sim.param().centreofmass.skip_step &&
