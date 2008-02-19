@@ -181,6 +181,13 @@ case "$compiler" in
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -pg"
     fi
 
+    dnl OpenMP
+    if eval "test x$enable_openmp = xyes"; then
+      echo "   OpenMP enabled"
+      CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -fopenmp -DOMP"
+      CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -fopenmp -DOMP"
+    fi
+
     if eval "test x$enable_mpi = xyes"; then
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
