@@ -102,6 +102,14 @@ io::In_Topology::read(topology::Topology& topo,
       if (_lineStream.fail())
 	io::messages.add("Bad line in TYPE block",
 			 "InTopology", io::message::error);
+
+      if (s.length() > 5) {
+        std::ostringstream msg;
+        msg << "Error in TYPE block: type " << s 
+            << " is too long (> 5 characters).";
+        io::messages.add(msg.str(), "InTopology", io::message::error);
+      }
+
       
       std::transform(s.begin(), s.end(), s.begin(), tolower);
       
@@ -189,6 +197,13 @@ io::In_Topology::read(topology::Topology& topo,
 	  if (n && ((n) % 10) == 0) os << std::setw(10) << n << "\n\t";
 	  os << std::setw(8) << s;      
 	}
+
+        if (s.length() > 5) {
+          std::ostringstream msg;
+          msg << "Error in RESNAME block: residue name " << s 
+              << " is too long (> 5 characters).";
+          io::messages.add(msg.str(), "InTopology", io::message::error);
+        }
       
 	topo.residue_names().push_back(s);
       }
@@ -225,6 +240,13 @@ io::In_Topology::read(topology::Topology& topo,
 	_lineStream.clear();
 	_lineStream.str(*it);
 	_lineStream >> s;
+
+        if (s.length() > 5) {
+          std::ostringstream msg;
+          msg << "Error in ATOMTYPENAME block: type " << s 
+              << " is too long (> 5 characters).";
+          io::messages.add(msg.str(), "InTopology", io::message::error);
+        }
       
 	topo.atom_names()[s] = n;
       }
@@ -291,6 +313,14 @@ io::In_Topology::read(topology::Topology& topo,
 	  io::messages.add("Error in SOLUTEATOM block: residue number out of range.",
 			   "InTopology", io::message::error);
 	}
+
+        if (s.length() > 5) {
+          std::ostringstream msg;
+          msg << "Error in SOLUTEATOM block: atom name " << s
+              << " is too long (> 5 characters).";
+          io::messages.add(msg.str(), "InTopology", io::message::error);
+        }
+
       
 	if (t < 1){
 	  io::messages.add("Error in SOLUTEATOM block: iac < 1.",
@@ -1056,6 +1086,13 @@ io::In_Topology::read(topology::Topology& topo,
 	  io::messages.add("Bad line in SOLVENTATOM block",
 			   "In_Topology", io::message::error);	
 	}
+
+        if (name.length() > 5) {
+          std::ostringstream msg;
+          msg << "Error in SOLVENTATOM block: name " << name 
+              << " is too long (> 5 characters).";
+          io::messages.add(msg.str(), "InTopology", io::message::error);
+        }
 
 	s.add_atom(name, res_nr, iac-1, mass, charge);
       }
