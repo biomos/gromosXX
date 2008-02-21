@@ -5,10 +5,10 @@ echo ""
 
 mkdir -p config
 aclocal &&
-libtoolize --copy &&
-autoconf &&
-autoheader &&
-automake --add-missing --copy &&
+libtoolize --copy --force &&
+autoconf --force &&
+autoheader --force &&
+automake --add-missing --copy  --force&&
 autoheader ||
 echo "setup failed. try doing it manually"
 
