@@ -561,10 +561,10 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     }
     else if ((*it)->name == "DihedralRestraint"){
-      total += check_dihrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 1067.01448, 0.0000000001, 0.001);
+      total += check_dihrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 2127.910749, 0.0000000001, 0.001);
     }
     else if ((*it)->name == "PerturbedDihedralRestraint"){
-      total += check_dihrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 152.729398, 0.0000000001, 0.001);
+      total += check_dihrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 279.207857, 0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     }
     else if ((*it)->name == "MolecularVirial"){
