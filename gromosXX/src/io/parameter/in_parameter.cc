@@ -77,6 +77,15 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MONTECARLO(param);
   read_RAMD(param);
   read_CONSISTENCYCHECK(param);
+  read_THERMOSTAT(param);
+  read_BAROSTAT(param);
+  read_VIRIAL(param);
+  read_GROMOS96COMPAT(param);
+  read_PATHINT(param);
+  read_NEIGHBOURLIST(param);
+  read_NONBONDED(param);
+  read_LOCALELEVATION(param);
+  read_UMBRELLA(param);
   
   DEBUG(7, "input read...");
 
@@ -2611,9 +2620,173 @@ void io::In_Parameter::read_CONSISTENCYCHECK(simulation::Parameter & param,
   
   buffer = m_block["CONSISTENCYCHECK"];
   
-  if (buffer.size())
+  if (buffer.size()) {
+    block_read.insert("CONSISTENCYCHECK");
     io::messages.add("CONSISTENCYCHECK is not supported in this version. "
                      "Use \"make check\" instead.", "In_Parameter",
                      io::message::error);
-  
+  }
 }
+
+void io::In_Parameter::read_THERMOSTAT(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read THERMOSTAT");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["THERMOSTAT"];
+  
+  if (buffer.size()) {
+    block_read.insert("THERMOSTAT");
+    io::messages.add("The THERMOSTAT block is not supported in this version. "
+                     "Use the MULTIBATH block instead.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_BAROSTAT(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read BAROSTAT");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["BAROSTAT"];
+  
+  if (buffer.size()) {
+    block_read.insert("BAROSTAT");
+    io::messages.add("The BAROSTAT block is not supported in this version. "
+                     "Use the PRESSURESCALE block instead.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_VIRIAL(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read VIRIAL");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["VIRIAL"];
+  
+  if (buffer.size()) {
+    block_read.insert("VIRIAL");
+    io::messages.add("The VIRIAL block is not supported in this version. "
+                     "Use the PRESSURESCALE block instead.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_NEIGHBOURLIST(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read NEIGHBOURLIST");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["NEIGHBOURLIST"];
+  
+  if (buffer.size()) {
+    block_read.insert("NEIGHBOURLIST");
+    io::messages.add("The NEIGHBOURLIST block is not supported in this version. "
+                     "Use the PAIRLIST block instead.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read NONBONDED");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["NONBONDED"];
+  
+  if (buffer.size()) {
+    block_read.insert("NONBONDED");
+    io::messages.add("The NONBONDED block is not supported in this version. "
+                     "Use the LONGRANGE block instead.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read GROMOS96COMPAT");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["GROMOS96COMPAT"];
+  
+  if (buffer.size()) {
+    block_read.insert("GROMOS96COMPAT");
+    io::messages.add("The GROMOS96COMPAT block is not supported in this version. "
+                     "Use promd for this feature.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_PATHINT(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read PATHINT");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["PATHINT"];
+  
+  if (buffer.size()) {
+    block_read.insert("PATHINT");
+    io::messages.add("The PATHINT block is not supported in this version. "
+                     "Use promd for this feature.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_LOCALELEVATION(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read LOCALELEVATION");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["LOCALELEVATION"];
+  
+  if (buffer.size()) {
+    block_read.insert("LOCALELEVATION");
+    io::messages.add("The LOCALELEVATION block is not supported in this version. "
+                     "Use promd for this feature.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+void io::In_Parameter::read_UMBRELLA(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read UMBRELLA");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["UMBRELLA"];
+  
+  if (buffer.size()) {
+    block_read.insert("UMBRELLA");
+    io::messages.add("The UMBRELLA block is not supported in this version. "
+                     "Use promd for this feature.", "In_Parameter",
+                     io::message::error);
+  }
+}
+

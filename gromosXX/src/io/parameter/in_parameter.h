@@ -221,7 +221,51 @@ namespace io {
      * read CONSISTENCYCHECK block.
      */
     void read_CONSISTENCYCHECK(simulation::Parameter & param, std::ostream & os = std::cout);
+
+    /**
+     * read THERMOSTAT block.
+     */
+    void read_THERMOSTAT(simulation::Parameter & param, std::ostream & os = std::cout);
     
+    /**
+     * read BAROSTAT block.
+     */
+    void read_BAROSTAT(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read VIRIAL block.
+     */
+    void read_VIRIAL(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read GROMOS96COMPAT block.
+     */
+    void read_GROMOS96COMPAT(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read PATHINT block.
+     */
+    void read_PATHINT(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read NEIGHBOURLIST block.
+     */
+    void read_NEIGHBOURLIST(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read NONBONDED block.
+     */
+    void read_NONBONDED(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read LOCALELEVATION block.
+     */
+    void read_LOCALELEVATION(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read UMBRELLA block.
+     */
+    void read_UMBRELLA(simulation::Parameter & param, std::ostream & os = std::cout);
 
   };
   
