@@ -2363,8 +2363,10 @@ void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> param.stochastic.ntfr >> param.stochastic.nsfr >> param.stochastic.nbref
-		>> param.stochastic.rcutf >> param.stochastic.cfric >> param.stochastic.temp;
+    _lineStream >> param.stochastic.sd >> param.stochastic.ntfr
+                >> param.stochastic.nsfr >> param.stochastic.nbref
+		>> param.stochastic.rcutf >> param.stochastic.cfric
+                >> param.stochastic.temp;
     
     if (_lineStream.fail()){
       io::messages.add("bad line in STOCHASTIC block",
@@ -2372,7 +2374,36 @@ void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
       return;
     }
     
-    param.stochastic.sd = 1;
+    if(param.stochastic.sd < 0 || param.stochastic.sd > 1)
+      io::messages.add("Error in STOCHASTIC block: NTSD must be 0 or 1",
+                       "In_Parameter", io::message::error);
+    
+    if(param.stochastic.ntfr < 0 || param.stochastic.ntfr > 3)
+      io::messages.add("Error in STOCHASTIC block: NTFR must be 0 to 3",
+                       "In_Parameter", io::message::error);
+    
+    io::messages.add("Behaviour of NTFR not clear.", "In_Parameter", 
+                     io::message::warning);
+    
+    if(param.stochastic.nsfr <= 0)
+      io::messages.add("Error in STOCHASTIC block: NSFR must be > 0",
+                       "In_Parameter", io::message::error);
+    
+    if(param.stochastic.nbref <= 0)
+      io::messages.add("Error in STOCHASTIC block: NBREF must be > 0",
+                       "In_Parameter", io::message::error);
+    
+    if(param.stochastic.rcutf < 0)
+      io::messages.add("Error in STOCHASTIC block: RCUTF must be >= 0",
+                       "In_Parameter", io::message::error);
+    
+    if(param.stochastic.cfric < 0)
+      io::messages.add("Error in STOCHASTIC block: CFRIC must be >= 0",
+                       "In_Parameter", io::message::error);
+    
+    if(param.stochastic.temp < 0)
+      io::messages.add("Error in STOCHASTIC block: TEMPSD must be >= 0",
+                       "In_Parameter", io::message::error);
   }
 }
 
