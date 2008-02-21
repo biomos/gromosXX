@@ -172,23 +172,13 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param,
 	      >> param.minimise.ncyc
 	      >> param.minimise.dele
 	      >> param.minimise.dx0
-	      >> param.minimise.dxm;
+	      >> param.minimise.dxm
+              >> param.minimise.nmin
+              >> param.minimise.flim;
   
   if (_lineStream.fail())
     io::messages.add("bad line in MINIMISE block",
 		       "In_Parameter", io::message::error);
-
-  if (!(_lineStream >> param.minimise.nmin)){
-    // support standard input format...
-    param.minimise.nmin = 1;
-    param.minimise.flim = 0.0;
-    _lineStream.clear();
-  }
-  else if (!(_lineStream >> param.minimise.flim)){
-    // or only number of steps...
-    param.minimise.flim = 0.0;
-    _lineStream.clear();
-  }
  
   // allow 0 to disable feature...
   if (param.minimise.nmin == 0)
@@ -198,18 +188,26 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param,
     io::messages.add("MINIMISE: currently only steepest descent implemented",
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
+  if(param.minimise.ntem == 1 && param.minimise.ncyc > 0)
+    io::messages.add("MINIMISE: NCYC > 0 has no effect for steepest descent",
+		     "io::In_Parameter::read_MINIMISE",
+		     io::message::warning);
+    
   if(param.minimise.ncyc < 0)
     io::messages.add("MINIMISE: NCYC should be >0",
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
+    
   if(param.minimise.dele < 0)
     io::messages.add("MINIMISE: DELE should be >0",
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
+    
   if(param.minimise.dx0 < 0)
     io::messages.add("MINIMISE: DX0 should be >0",
 		     "io::In_Parameter::read_MINIMISE",
 		     io::message::error);
+    
   if(param.minimise.dxm < param.minimise.dx0)
     io::messages.add("MINIMISE: DXM should be > DX0",
 		     "io::In_Parameter::read_MINIMISE",
