@@ -529,17 +529,21 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="analyze">ANALYZE</a></h2>
+<h2><a name="analyze">READTRAJ</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-ANALYZE
-#       re-analyze trajectory
-        1
-#       copy positions to old positions after reading
-#	(useful if you want to SHAKE them)
-        0
+READTRAJ
+# NTRD  0,1 controls trajectory-reevaluation mode
+#       0: do not use trajectory-reevaluation mode
+#       1: use trajectory-reevaluation mode
+# NTRN  number of files (ignored)
+# NTRB  read box (must be 1)
+# NTSHK 0,1 controls SHAKE on old coordinates
+#       0 perform SHAKE with respect to previous coordinates
+#       1 perform SHAKE with respect to current coordinates
 #
-#       specify trajectory name with @anatrj filename
+#   NTRD    NTRN    NTRB   NTSHK
+       0       0       1       0    
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

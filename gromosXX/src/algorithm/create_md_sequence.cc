@@ -111,8 +111,9 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     algorithm::Steepest_Descent * sd = new algorithm::Steepest_Descent;
     md_seq.push_back(sd);
   }
-  else{
-    
+  else if (sim.param().analyze.analyze){
+    md_seq.push_back(new algorithm::Analyze_Exchange);
+  } else {    
     // SD ?
     algorithm::Stochastic_Dynamics_Pos * sd_pos = NULL;
     if (sim.param().stochastic.sd){

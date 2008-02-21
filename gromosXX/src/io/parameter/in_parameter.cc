@@ -69,7 +69,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_ROTTRANS(param);
   read_INNERLOOP(param);
   read_MULTICELL(param);
-  read_ANALYZE(param);
+  read_READTRAJ(param);
   read_INTEGRATE(param);
   read_STOCHASTIC(param);
   read_EWARN(param);
@@ -2288,32 +2288,68 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
   
 }
 
-void io::In_Parameter::read_ANALYZE(simulation::Parameter & param,
+void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
 				    std::ostream & os)
 {
-  DEBUG(8, "read ANALYZE");
+  DEBUG(8, "read READTRAJ");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["ANALYZE"];
+  buffer = m_block["READTRAJ"];
 
   if (buffer.size()){
 
-    block_read.insert("ANALYZE");
+    block_read.insert("READTRAJ");
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> param.analyze.analyze
-		>> param.analyze.copy_pos;
+    int ntrd, ntrn, ntrb, ntshk;
+    _lineStream >> ntrd >> ntrn >> ntrb >> ntshk;
     
     if (_lineStream.fail()){
-      io::messages.add("bad line in ANALYZE block",
+      io::messages.add("bad line in READTRAJ block",
 		       "In_Parameter", io::message::error);
       
       param.analyze.analyze = false;
+      return;
     }
+    
+    switch(ntrd) {
+      case 1 :
+        param.analyze.analyze = true;
+        break;
+      case 0 :
+        param.analyze.analyze = false;
+        break;
+      default :
+        param.analyze.analyze = false;
+        io::messages.add("Error in READTRAJ block: NTRD must be 0 or 1",
+                         "In_Parameter", io::message::error);
+    }
+    
+    if (ntrn)
+      io::messages.add("READTRAJ block: NTRN was ignored", "In_Parameter",
+                       io::message::warning);
+    
+    if (ntrb != 1)
+      io::messages.add("READTRAJ block: NTRB must be 1.", "In_Parameter",
+                       io::message::error);
+    
+    switch(ntshk) {
+      case 1 :
+        param.analyze.copy_pos = true;
+        break;
+      case 0 :
+        param.analyze.copy_pos = false;
+        break;
+      default :
+        param.analyze.copy_pos = false;
+        io::messages.add("Error in READTRAJ block: NTSHK must be 0 or 1",
+                         "In_Parameter", io::message::error);
+    }
+    
   }
 }
 

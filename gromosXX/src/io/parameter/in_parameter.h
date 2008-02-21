@@ -183,9 +183,9 @@ namespace io {
     void read_MULTICELL(simulation::Parameter & param, std::ostream & os = std::cout);
 
     /**
-     * read ANALYZE block.
+     * read READTRAJ block.
      */
-    void read_ANALYZE(simulation::Parameter & param, std::ostream & os = std::cout);
+    void read_READTRAJ(simulation::Parameter & param, std::ostream & os = std::cout);
 
     /**
      * read INTEGRATE block.
