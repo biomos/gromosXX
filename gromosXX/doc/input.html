@@ -22,6 +22,7 @@
 <li><a href="#print">PRINT</a></li>
 <li><a href="#write">WRITE</a></li>
 <li><a href="#constraint">CONSTRAINT</a></li>
+<li><a href="#shake">SHAKE</a><li>
 <li><a href="#force">FORCE</a></li>
 <li><a href="#forcefield">FORCEFIELD</a></li>
 <li><a href="#plist">PAIRLIST</a></li>
@@ -266,13 +267,13 @@ WRITE
 # NTWX  : write position trajectory every NTWX steps
 # NTWSE : write normal trajectory (0)
 # NTWV  : write velocity trajectory every NTWV steps
+# NTWF  : write force trajectory every NTWF steps
 # NTWE  : write energy trajectory every NTWE steps
 # NTWG  : write free energy trajectory every NTWG steps
 # NTWB  : write block averaged energies (and free energies if NTWG > 0) trajectory
-# NTPW  : write formatted (1)
 #
-#     NTWX     NTWSE      NTWV      NTWE      NTWG      NTWB    NTPW
-      100          0         0       100         0       100       1
+#     NTWX     NTWSE      NTWV      NTWF      NTWE      NTWG      NTWB
+      100          0         0         0       100         0       100
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
@@ -307,7 +308,7 @@ CONSTRAINT
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
-old format:
+old format:<a name="shake">
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 SHAKE

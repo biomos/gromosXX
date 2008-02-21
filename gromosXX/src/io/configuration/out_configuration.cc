@@ -149,7 +149,11 @@ void io::Out_Configuration::init(io::Argument & args,
 		     io::message::error);
 
   if (args.count("trf") > 0)
-    force_trajectory(args["trf"], 1);
+    force_trajectory(args["trf"], param.write.force);
+  else if (param.write.force)
+    io::messages.add("write force trajectory but no trf argument",
+		     "Out_Configuration",
+		     io::message::error);
 
   if (args.count("re") > 0)
     replica_trajectory(args["re"]);
@@ -211,7 +215,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       if (sim.steps() || !sim.param().analyze.analyze){
 	_print_timestep(sim, m_pos_traj);
 	
-	if (sim.param().write.solute_only)
+	if (sim.param().write.position_solute_only)
 	  _print_positionred(conf, topo,  topo.num_solute_atoms(), m_pos_traj);
 	else
 	  _print_positionred(conf, topo,  topo.num_atoms(), m_pos_traj);
@@ -223,13 +227,19 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0){
       _print_timestep(sim, m_vel_traj);
-      _print_velocityred(conf, m_vel_traj);
+      if (sim.param().write.velocity_solute_only)
+        _print_velocityred(conf, topo.num_solute_atoms(), m_vel_traj);
+      else
+        _print_velocityred(conf, topo.num_atoms(), m_vel_traj);
     }
     
     if(m_every_force && ((sim.steps()) % m_every_force) == 0){
       if(sim.steps()){
 	_print_old_timestep(sim, m_force_traj);
-	_print_forcered(conf, m_force_traj);
+        if (sim.param().write.force_solute_only)
+	  _print_forcered(conf, topo.num_solute_atoms(), m_force_traj);
+        else
+          _print_forcered(conf, topo.num_atoms(), m_force_traj);
       }
     }
     
@@ -303,7 +313,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0){
       _print_old_timestep(sim, m_force_traj);
-      _print_forcered(conf, m_force_traj);
+      if (sim.param().write.force_solute_only)
+	_print_forcered(conf, topo.num_solute_atoms(), m_force_traj);
+      else
+        _print_forcered(conf, topo.num_atoms(), m_force_traj);
     }
 
     if(m_every_energy && (sim.steps() % m_every_energy) == 0){
@@ -367,7 +380,7 @@ void io::Out_Configuration::write_replica
       
       for(unsigned int i=0; i<conf.size(); ++i){
 	_print_positionred(conf[i], topo,  topo.num_atoms(), m_pos_traj);
-	_print_velocityred(conf[0], m_vel_traj);
+	_print_velocityred(conf[0], topo.num_atoms(), m_vel_traj);
 	
 	if (conf[i].boundary_type != math::vacuum)
 	  _print_box(conf[i], m_pos_traj);
@@ -874,6 +887,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::_print_velocityred(configuration::Configuration const &conf,
+	             int num,
 		     std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -883,7 +897,9 @@ void io::Out_Configuration
   
   math::VArray const &vel = conf.current().vel;
   
-  for(int i=0,to = vel.size(); i<to; ++i){
+  assert(num <= int(vel.size()));
+  
+  for(int i=0; i<num; ++i){
 
     os << std::setw(m_width) << vel(i)(0)
        << std::setw(m_width) << vel(i)(1)
@@ -951,6 +967,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::_print_forcered(configuration::Configuration const &conf,
+                  int num,
 		  std::ostream &os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -960,7 +977,9 @@ void io::Out_Configuration
   
   math::VArray const & force = conf.current().force;
   
-  for(int i=0,to = force.size(); i<to; ++i){
+  assert(num <= int(force.size()));
+  
+  for(int i=0; i<num; ++i){
     
     os << std::setw(m_force_width) << force(i)(0)
        << std::setw(m_force_width) << force(i)(1)

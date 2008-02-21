@@ -78,13 +78,11 @@ PRINT
         25        25         1
 END
 WRITE
-# NTPW = 0 : binary
-# NTPW = 1 : formatted
 # NTWSE = configuration selection parameter
 # =0: write normal trajectory
 # >0: chose min energy for writing configurations
-#     NTWX     NTWSE      NTWV      NTWE      NTWG      NTBA	NTPW
-       100         0         0         0         0         0	   1
+#     NTWX     NTWSE      NTWV      NTWF      NTWE      NTWG      NTWB
+       100         0         0         0         0         0         0
 END
 SHAKE
 #      NTC       TOL

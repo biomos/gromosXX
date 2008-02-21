@@ -204,9 +204,11 @@ namespace io {
 			    std::ostream &os);
 
     void _print_velocityred(configuration::Configuration const &conf, 
+			    int num,
 			    std::ostream &os);
 
     void _print_forcered(configuration::Configuration const &conf, 
+			 int num,
 			 std::ostream &os);
 
     void _print_energyred(configuration::Configuration const &conf,

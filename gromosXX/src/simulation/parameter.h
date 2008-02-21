@@ -487,13 +487,17 @@ namespace simulation
        * Default values:
        * - position 0        (write position trajectory)
        * - velocity 0        (write velocity trajectory)
+       * - force    0        (write force trajectory)
        * - energy   0        (write energy trajectory)
        * - free_energy 0     (write energy lambda derivative trajectory)
        * - block_average 0   (write block averaged energy trajectories)
-       * - solute_only false (write solute and solvent)
+       * - position_solute_only false (write solute and solvent)
+       * - velocity_solute_only false (write solute and solvent)
+       * - force_solute_only false (write solute and solvent)
        */
       write_struct() : position(0), velocity(0), energy(0), free_energy(0), 
-		       block_average(0), solute_only(false) {}
+		       block_average(0), position_solute_only(false),
+                       velocity_solute_only(false), force_solute_only(false) {}
       
       /**
        * position.
@@ -503,6 +507,10 @@ namespace simulation
        * velocity.
        */
       int velocity;
+      /**
+       * force
+       */
+      int force;
       /**
        * energy
        */
@@ -516,9 +524,17 @@ namespace simulation
        */
       int block_average;
       /**
-       * write solute only trajectory
+       * write solute only for position trajectory
        */
-      bool solute_only;
+      bool position_solute_only;
+      /**
+       * write solute only for velocity trajectory
+       */
+      bool velocity_solute_only;
+      /**
+       * write solute only for force trajectory
+       */
+      bool force_solute_only;
       
     } /** write out paramters (trajectories) */ write;
 

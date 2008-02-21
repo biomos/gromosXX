@@ -619,15 +619,15 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
-  int ntwse, ntpw;
+  int ntwse;
   
   _lineStream >> param.write.position
 	      >> ntwse
 	      >> param.write.velocity
+              >> param.write.force
 	      >> param.write.energy
 	      >> param.write.free_energy
-	      >> param.write.block_average
-	      >> ntpw;
+	      >> param.write.block_average;
   
   if (_lineStream.fail())
     io::messages.add("bad line in WRITE block",
@@ -641,20 +641,28 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param,
   if(ntwse!=0)
     io::messages.add("NTWSE != 0 not supported",
 		     "In_Parameter", io::message::error);
-  if(ntpw!=1)
-    io::messages.add("NTPW != 1 not supported",
-		     "In_Parameter", io::message::error);
 
   if(param.write.position < 0){
-    param.write.solute_only = true;
+    param.write.position_solute_only = true;
     param.write.position = -param.write.position;
-    io::messages.add("writing solute only trajectory",
+    io::messages.add("writing solute only position trajectory",
 		     "In_Parameter", io::message::notice);
   }
   
-  if(param.write.velocity < 0)
-    io::messages.add("WRITE block: NTWV should be >= 0",
-		     "In_Parameter", io::message::error);
+  if(param.write.velocity < 0){
+    param.write.velocity_solute_only = true;
+    param.write.velocity = -param.write.velocity;
+    io::messages.add("writing solute only velocity trajectory",
+		     "In_Parameter", io::message::notice);
+  }
+  
+  if(param.write.force < 0){
+    param.write.force_solute_only = true;
+    param.write.force = -param.write.force;
+    io::messages.add("writing solute only force trajectory",
+		     "In_Parameter", io::message::notice);
+  }
+  
   if(param.write.energy < 0)
     io::messages.add("WRITE block: NTWE should be >= 0",
 		     "In_Parameter", io::message::error);
