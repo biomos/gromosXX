@@ -76,6 +76,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTISTEP(param);
   read_MONTECARLO(param);
   read_RAMD(param);
+  read_CONSISTENCYCHECK(param);
   
   DEBUG(7, "input read...");
 
@@ -2600,3 +2601,19 @@ void io::In_Parameter::read_RAMD(simulation::Parameter & param,
   }
 }
 
+void io::In_Parameter::read_CONSISTENCYCHECK(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read CONSISTENCYCHECK");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["CONSISTENCYCHECK"];
+  
+  if (buffer.size())
+    io::messages.add("CONSISTENCYCHECK is not supported in this version. "
+                     "Use \"make check\" instead.", "In_Parameter",
+                     io::message::error);
+  
+}

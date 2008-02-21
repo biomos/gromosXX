@@ -211,10 +211,16 @@ namespace io {
      * read MONTECARLO block.
      */
     void read_MONTECARLO(simulation::Parameter & param, std::ostream & os = std::cout);
+    
     /**
      * read RAND block.
      */
     void read_RAMD(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read CONSISTENCYCHECK block.
+     */
+    void read_CONSISTENCYCHECK(simulation::Parameter & param, std::ostream & os = std::cout);
     
 
   };
