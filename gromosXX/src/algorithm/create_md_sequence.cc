@@ -125,7 +125,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     }
     // ??
     else{
-      std::cout << "\tno integration (velocities) selected!\n";
+      if (!quiet)
+        std::cout << "\tno integration (velocities) selected!\n";
     }
 
     // temperature scaling? -> has to be done before temperature calculation!!!
