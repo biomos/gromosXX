@@ -37,8 +37,8 @@ STEP
          1       0.0     0.002
 END
 BOUNDARY
-#      NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
-         2       0.0       0.0       0.0      90.0       1
+#      NTB    NDFMIN
+         1         1
 END
 SUBMOLECULES
 #     NSPM  NSP(1.. NSPM)
@@ -50,9 +50,17 @@ TCOUPLE
         -2    298.15    0.0100
          1    298.15    0.0100
 END
-PCOUPLE
-#     NTP     PRES0      COMP      TAUP  
-        1  0.061020  4.575E-4   0.50000
+PCOUPLE03
+#       COUPLE: off, calc, scale
+#       SCALE:  off, iso, aniso, full
+#       VIRIAL: none, atomic, molecular
+#
+#   COUPLE  SCALE   COMP        TAUP    VIRIAL
+    scale   iso     4.575E-4    0.5     atomic
+#   reference pressure
+    0.06102     0.00000     0.00000
+    0.00000     0.06102     0.00000
+    0.00000     0.00000     0.06102
 END
 CENTREOFMASS
 #   NDFMIN      NTCM      NSCM

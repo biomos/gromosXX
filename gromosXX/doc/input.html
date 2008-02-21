@@ -132,19 +132,15 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 BOUNDARY
-#  NTB
-#    vacuum, rectangular, triclinic, truncoct
-#    old form:
-#      <0 : truncoct
-#      0  : vacuum
-#      >0 : rectangular
-#      |NTB| = 2 : pressure calculation
+#  NTB: boundary conditions
+#       -1 : truncoct
+#        0 : vacuum
+#        1 : rectangular
+#        2 : triclinic
+#  NDFMIN: number of degrees of freedin subtracted for temperature
 #
-#  BOX, BETA ignored
-#  NRDBOX : read box from coordinates file (1)
-#
-#         NTB    BOX(1)    BOX(2)    BOX(3)      BETA  NRDBOX
-  rectangular       0.0       0.0       0.0      90.0       1
+#         NTB    NDFMIN
+            1         0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

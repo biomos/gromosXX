@@ -861,47 +861,35 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
-  std::string ntb;
-  int n, nrdbox;
-  double b1, b2, b3, beta;
-  std::istringstream cs;
-  
-  _lineStream >> ntb >> b1 >> b2 >> b3 >> beta >> nrdbox;
+  int ntb;
+  _lineStream >> ntb >> param.boundary.dof_to_subtract;
   
   if (_lineStream.fail())
     io::messages.add("bad line in BOUNDARY block",
 		     "In_Parameter", io::message::error);
 
-  std::transform(ntb.begin(), ntb.end(), ntb.begin(), tolower);
-  if(ntb=="vacuum") param.boundary.boundary=math::vacuum;
-  else if(ntb=="rectangular") param.boundary.boundary=math::rectangular;
-  else if(ntb=="triclinic") param.boundary.boundary=math::triclinic;
-  else if(ntb=="truncoct") param.boundary.boundary=math::truncoct;
+  if(ntb==0) param.boundary.boundary=math::vacuum;
+  else if(ntb==1) param.boundary.boundary=math::rectangular;
+  else if(ntb==2) param.boundary.boundary=math::triclinic;
+  else if(ntb==-1) param.boundary.boundary=math::truncoct;
   else {
-    cs.str(ntb);
-    // n=atoi(ntb.c_str());
-    cs >> n;
-    if(cs.fail()){
-      io::messages.add("wrong value for NTB in BOUNDARY block: "+ntb+"\n"
-		       "vacuum, rectangular, triclinic, 0, +/-1, +/-2",
-		       "In_Parameter", io::message::error);
-      param.boundary.boundary=math::vacuum;
-      return;
-    }
-    if(n==0) param.boundary.boundary=math::vacuum;
-    else if(n>0) param.boundary.boundary=math::rectangular;
-    else param.boundary.boundary=math::truncoct;
-    
-    if(abs(n)==2){
-      param.pcouple.calculate=true;
-      if(param.pcouple.virial==math::no_virial)
-	param.pcouple.virial=math::molecular_virial;
-    }
+    std::ostringstream msg;
+    msg << "wrong value for NTB in BOUNDARY block: "
+        << ntb << "\nvacuum (0), rectangular (1), triclinic (2), truncoct (-1)";
+    io::messages.add(msg.str(), "In_Parameter", io::message::error);
+    param.boundary.boundary=math::vacuum;
   }
-
-  if(!nrdbox && param.boundary.boundary != math::vacuum){
-    io::messages.add("Illegal value for NRDBOX in BOUNDARY block (should be 1)",
+  
+  if (param.boundary.dof_to_subtract < 0) {
+    io::messages.add("Error in BOUNDARY block: NDFMIN must be >= 0.",
+		     "In_Parameter", io::message::error);
+    param.boundary.dof_to_subtract = 0;    
+  }
+  
+  if (param.boundary.dof_to_subtract > 0) {
+    io::messages.add("NDFMIN > 0 not implemented",
 		     "In_Parameter", io::message::warning);
+    param.boundary.dof_to_subtract = 0;    
   }
 }
 
