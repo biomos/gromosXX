@@ -88,7 +88,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
     if (block_read.count(it->first) == 0 && it->second.size()){
       io::messages.add("block " + it->first + " not supported!",
 		       "In_Parameter",
-		       io::message::warning);
+		       io::message::error);
     }
   }
 
