@@ -256,13 +256,19 @@ namespace simulation
        * Constructor
        * Default values:
        * - boundary math::vacuum
+       * - dof_to_subtract 0
        */
-      boundary_struct() : boundary(math::vacuum) {}
+      boundary_struct() : boundary(math::vacuum), dof_to_subtract(0) {}
       
       /**
        * NTB switch
        */
       math::boundary_enum boundary;
+      /**
+       * Number of degrees of freedom subtracted for temperature
+       * NDFMIN switch
+       */
+      int dof_to_subtract;
     } /** boundary parameters */ boundary;
  
     /**
