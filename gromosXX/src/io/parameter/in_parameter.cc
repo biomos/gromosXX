@@ -50,7 +50,6 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_START(param); // and CENTREOFMASS
   read_STEP(param);
   read_BOUNDARY(param);
-  read_SUBMOLECULES(param);
   read_REPLICA03(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
   read_PCOUPLE(param);
@@ -1398,66 +1397,6 @@ void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param,
 		     " in LONGRANGE block (>=0)",
 		     "In_Parameter", io::message::error);
 } // LONGRANGE
-
-/**
- * read SUBMOLECULES block.
- */
-void io::In_Parameter::read_SUBMOLECULES(simulation::Parameter &param,
-					 std::ostream & os)
-{
-  DEBUG(8, "read SUBMOLECULES");
-
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  DEBUG(10, "submolecules block");
-  buffer = m_block["SUBMOLECULES"];
-  
-  if (!buffer.size()){
-    io::messages.add("no SUBMOLECULES block in input",
-		     "In_Parameter", io::message::error);
-    return;
-  }
-
-  block_read.insert("SUBMOLECULES");
-
-  _lineStream.clear();
-  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-  
-  int num;
-  
-  _lineStream >> num;
-
-  if(num<0){
-    io::messages.add("negative number of SUBMOLECULES is not allowed",
-		     "In_Parameter", io::message::error);
-    return;
-  }
-  
-  unsigned int m;
-  unsigned int old_m=0;
-  
-  param.submolecules.submolecules.push_back(0);
-
-  for(int i=0; i<num; ++i){
-    _lineStream >> m;
-    param.submolecules.submolecules.push_back(m);
-    DEBUG(10, "add submol " << m);
-    if(m<old_m){
-      io::messages.add("wrong order in SUBMOLECULES block",
-		       "In_Parameter", io::message::error);
-      return;
-    }
-    old_m=m;
-  }
-  
-  if (_lineStream.fail())
-    io::messages.add("bad line in SUBMOLECULES block",
-		     "In_Parameter", io::message::error);
-  
-  
-} // SUBMOLECULES
-
 
 /**
  * read PLIST block.

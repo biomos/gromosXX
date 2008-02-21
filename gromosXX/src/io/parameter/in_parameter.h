@@ -138,11 +138,6 @@ namespace io {
     void read_LONGRANGE(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read SUBMOLECULES block.
-     */
-    void read_SUBMOLECULES(simulation::Parameter &param, std::ostream & os = std::cout);
-
-    /**
      * read MULTIBATH block.
      */
     void read_MULTIBATH(simulation::Parameter &param, std::ostream & os = std::cout);

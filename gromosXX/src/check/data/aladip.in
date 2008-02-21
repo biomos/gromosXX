@@ -40,10 +40,6 @@ BOUNDARY
 #      NTB    NDFMIN
          1         0
 END
-SUBMOLECULES
-#     NSPM  NSP(1.. NSPM)
-         1   12
-END
 TCOUPLE
 #      NTT     TEMP0      TAUT
          2    298.15    0.0100

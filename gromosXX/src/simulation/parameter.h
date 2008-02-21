@@ -270,25 +270,6 @@ namespace simulation
        */
       int dof_to_subtract;
     } /** boundary parameters */ boundary;
- 
-    /**
-     * @struct submolecules_struct
-     * submolecules block
-     */
-    struct submolecules_struct
-    {
-      /**
-       * Constructor
-       * Default values:
-       * - submolecules empty (if it stays empty, all atoms are considered to be in one submolecule)
-       */
-      submolecules_struct() {}
-      
-      /**
-       * Vector containing the last atom of every molecule
-       */
-      std::vector<unsigned int> submolecules;
-    } /** submolecule array */ submolecules;
 
     /**
      * @struct multibath_struct

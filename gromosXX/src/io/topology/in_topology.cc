@@ -1020,7 +1020,51 @@ io::In_Topology::read(topology::Topology& topo,
     } // VIRTUALGRAIN
 
     // add the submolecules (should be done before solvate ;-)
-    topo.molecules() = param.submolecules.submolecules;
+    
+    { // SUBMOLECULES
+      DEBUG(10, "read SUBMOLECULES");
+
+      buffer.clear();
+      std::string s;
+  
+      buffer = m_block["SUBMOLECULES"];
+  
+      if (!buffer.size()){
+        io::messages.add("no SUBMOLECULES block in topology",
+                         "In_Topology", io::message::error);
+      } else {
+        _lineStream.clear();
+        _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+  
+        int num;
+  
+        _lineStream >> num;
+
+        if(num<0){
+          io::messages.add("negative number of SUBMOLECULES is not allowed",
+		     "In_Topology", io::message::error);
+        }
+  
+        unsigned int m;
+        unsigned int old_m=0;
+
+        for(int i=0; i<num; ++i){
+          _lineStream >> m;
+          topo.molecules().push_back(m);
+          DEBUG(11, "add submol " << m);
+          if(m<old_m){
+            io::messages.add("wrong order in SUBMOLECULES block",
+                             "In_Topology", io::message::error);
+            break;
+          }
+          old_m=m;
+        }
+  
+        if (_lineStream.fail())
+          io::messages.add("bad line in SUBMOLECULES block",
+                           "In_Topology", io::message::error);
+      }
+    } // SUBMOLECULES
 
     if (topo.molecules().size() == 0){
       topo.molecules().push_back(0);
