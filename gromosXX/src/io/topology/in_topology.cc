@@ -73,18 +73,28 @@ io::In_Topology::read(topology::Topology& topo,
   std::vector<std::string>::const_iterator it;
 
   std::string bond_bname = "BONDTYPE";
-  if (param.force.bond == 2 && m_block["HARMBONDTYPE"].size())
-    bond_bname = "HARMBONDTYPE";
-
+  if (param.force.bond == 2){
+    if(m_block["HARMBONDTYPE"].size())
+      bond_bname = "HARMBONDTYPE";
+  }
   if (param.force.bond == 0 &&
-      m_block["BONDTYPE"].size() == 0 &&
-      m_block["HARMBONDTYPE"].size() > 0)
+          m_block["BONDTYPE"].size() == 0 &&
+          m_block["HARMBONDTYPE"].size() > 0)
     bond_bname = "HARMBONDTYPE";
-
+ 
+  if(m_block["BONDSTRETCHTYPE"].size())
+    bond_bname = "BONDSTRETCHTYPE";
+  
   std::string angle_bname = "BONDANGLETYPE";
   // no automatic conversion for angles!
   if (param.force.angle == 2)
     angle_bname = "HARMBONDANGLETYPE";
+  if(m_block["BONDANGLEBENDTYPE"].size())
+    angle_bname = "BONDANGLEBENDTYPE";
+  
+  std::string dihedral_bname = "DIHEDRALTYPE";
+  if(m_block["TORSDIHEDRALTYPE"].size())
+    dihedral_bname = "TORSDIHEDRALTYPE";
   
   {
     buffer = m_block["TYPE"];
@@ -149,21 +159,27 @@ io::In_Topology::read(topology::Topology& topo,
     }
   }
 
-  { // TOPPHYSCON
-    buffer = m_block["TOPPHYSCON"];
+  { // PHYSICALCONSTANTS
+    buffer = m_block["PHYSICALCONSTANTS"];
+    if(buffer.size()){
+      std::string s;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin()+1,
+              buffer.end()-1, s));
+      double four_pi_eps0_i;
+      
+      _lineStream >> four_pi_eps0_i >> math::h_bar >> math::k_Boltzmann;
+      math::four_pi_eps_i = four_pi_eps0_i / param.longrange.epsilon;
+      
+      if (_lineStream.fail())
+        io::messages.add("Bad line in PHYSICALCONSTANTS block",
+                "InTopology", io::message::error);
+    }
+    else{
+      io::messages.add("no PHYSICALCONSTANTS block in topology",
+              "InTopology", io::message::error);
+    }
     
-    std::string s;
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1,
-				buffer.end()-1, s));
-    double four_pi_eps0_i;
-    
-    _lineStream >> four_pi_eps0_i >> math::h_bar;
-    math::four_pi_eps_i = four_pi_eps0_i / param.longrange.epsilon;
-    
-    if (_lineStream.fail())
-      io::messages.add("Bad line in TOPPHYSCON block",
-		       "InTopology", io::message::error);
   }
 
   if (param.system.npm){
@@ -959,7 +975,7 @@ io::In_Topology::read(topology::Topology& topo,
     } // DIHEDRALH
 
     // check the dihedrals
-    if (!check_type(m_block["DIHEDRALTYPE"], topo.solute().dihedrals())){
+    if (!check_type(m_block[dihedral_bname], topo.solute().dihedrals())){
       io::messages.add("Illegal dihedral type in DIHEDRAL(H) block",
 		       "In_Topology", io::message::error);
     }
@@ -1019,18 +1035,18 @@ io::In_Topology::read(topology::Topology& topo,
     
     } // VIRTUALGRAIN
 
-    // add the submolecules (should be done before solvate ;-)
+    // add the solute molecules (should be done before solvate ;-)
     
-    { // SUBMOLECULES
-      DEBUG(10, "read SUBMOLECULES");
+    { // SOLUTEMOLECULES
+      DEBUG(10, "read SOLUTEMOLECULES");
 
       buffer.clear();
       std::string s;
   
-      buffer = m_block["SUBMOLECULES"];
+      buffer = m_block["SOLUTEMOLECULES"];
   
       if (!buffer.size()){
-        io::messages.add("no SUBMOLECULES block in topology",
+        io::messages.add("no SOLUTEMOLECULES block in topology",
                          "In_Topology", io::message::error);
       } else {
         _lineStream.clear();
@@ -1041,7 +1057,7 @@ io::In_Topology::read(topology::Topology& topo,
         _lineStream >> num;
 
         if(num<0){
-          io::messages.add("negative number of SUBMOLECULES is not allowed",
+          io::messages.add("negative number of SOLUTEMOLECULES is not allowed",
 		     "In_Topology", io::message::error);
         }
   
@@ -1053,7 +1069,7 @@ io::In_Topology::read(topology::Topology& topo,
           topo.molecules().push_back(m);
           DEBUG(11, "add submol " << m);
           if(m<old_m){
-            io::messages.add("wrong order in SUBMOLECULES block",
+            io::messages.add("wrong order in SOLUTEMOLECULES block",
                              "In_Topology", io::message::error);
             break;
           }
@@ -1061,32 +1077,50 @@ io::In_Topology::read(topology::Topology& topo,
         }
   
         if (_lineStream.fail())
-          io::messages.add("bad line in SUBMOLECULES block",
+          io::messages.add("bad line in SOLUTEMOLECULES block",
                            "In_Topology", io::message::error);
       }
-    } // SUBMOLECULES
+    } // SOLUTEMOLECULES
 
     if (topo.molecules().size() == 0){
       topo.molecules().push_back(0);
       topo.molecules().push_back(topo.num_solute_atoms());
     }
 
-    // submolecules check
+    // solutemolecules check
     if (topo.molecules().back()
 	!= topo.num_solute_atoms()){
     
-      std::cout << "ERROR: Submolecules wrong\n"
-		<< "\tlast atom in submol block = " << topo.molecules().back()
+      std::cout << "ERROR: Solute molecules wrong\n"
+		<< "\tlast atom in SOLUTEMOLECULES block = " << topo.molecules().back()
 		<< "\n\tlast atom in topology = " << topo.num_solute_atoms()
 		<< std::endl;
       
-      io::messages.add("Error in SUBMOLECULE block: "
-		       "last submolecule has to end with last solute atom",
+      io::messages.add("Error in SOLUTEMOLECULES block: "
+		       "last solute molecule has to end with last solute atom",
 		       "In_Topology", io::message::error);
     }
     
     topo.num_solute_molecules() = topo.molecules().size() - 1;
 
+    { // TEMPERATUREGROUPS
+      buffer = m_block["TEMPERATUREGROUPS"];
+      if (buffer.size())
+        io::messages.add("md++ currently does not use the information supplied in the TEMPERATUREGROUPS block.",
+                "InTopology", io::message::notice);
+    } 
+    { // PRESSUREGROUPS
+      buffer = m_block["PRESSUREGROUPS"];
+      if (buffer.size())
+        io::messages.add("md++ currently does not use the information supplied in the PRESSUREGROUPS block.",
+                "InTopology", io::message::notice);
+    }
+     { // PATHINTSPEC
+      buffer = m_block["PATHINTSPEC"];
+      if (buffer.size())
+        io::messages.add("md++ does not support path-integral simulations (PATHINTSPEC block).",
+                "InTopology", io::message::warning);
+     }
   } // npm != 0
     
   { // SOLVENTATOM and SOLVENTCONSTR
@@ -1230,12 +1264,12 @@ io::In_Topology::read(topology::Topology& topo,
   // CHECKING
   //==================================================
     
-  // submolecules check
+  // solute molecule check
   if (topo.molecules().back()
       != topo.num_atoms()){
     
-    io::messages.add("Error in SUBMOLECULE / solvation block: "
-		     "last submolecule has to end with last atom",
+    io::messages.add("Error in SOLUTEMOLECULE / solvation block: "
+		     "last solute molecule has to end with last atom",
 		     "In_Topology", io::message::error);
   }
 
@@ -1348,7 +1382,7 @@ void io::In_Topology
 		       "In_Topology",
 		       io::message::error);
   }
-  else{
+  else if (m_block["BONDTYPE"].size()){
     buffer = m_block["BONDTYPE"];
 
     /*
@@ -1356,12 +1390,12 @@ void io::In_Topology
       "to harmonic form", "InTopology::bondtype",
       io::message::notice);
     */
-
+    /*
     if (buffer.size()==0)
       io::messages.add("BONDTYPE block not found!",
 		       "In_Topology",
 		       io::message::error);
-
+    */
     // 1. BONDTYPE 2. number of types
     for (it = buffer.begin() + 2; 
 	 it != buffer.end() - 1; ++it) {
@@ -1390,6 +1424,48 @@ void io::In_Topology
       // and add...
       b.push_back(interaction::bond_type_struct(k, r));
     }
+  }
+  else if (m_block["BONDSTRETCHTYPE"].size()){
+    // read in the new block
+    buffer = m_block["BONDSTRETCHTYPE"];
+    // we are reading into harmonic bond term, so only read the harmonic force constant (kh)
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2; 
+	 it != buffer.end() - 1; ++it) {
+      double k, kh, r;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> kh >> r;
+      
+      if (_lineStream.fail()){
+	os << *it << std::endl;
+	io::messages.add("bad line in BONDSTRETCHTYPE block!",
+			 "In_Topology",
+			 io::message::error);
+      }
+      if (! _lineStream.eof()){
+	os << *it << std::endl;
+	io::messages.add("eof not reached in BONDSTRETCHTYPE block",
+			 "InTopology", io::message::warning);
+      }
+      // check for consistency
+      //if (fabs(kh-(k*2*r*r)) > math::epsilon){
+      if (fabs(kh-(k*2*r*r)) > 0.01){
+        std::ostringstream msg;
+        msg << "harmonic and quartic force constant do not match (CHB!=CB*2*B0*B0): " << std::endl
+            << "CHB = " << kh << ", CB*2*B0*B0 = " << k*2*r*r
+                << "CHB-CB*2*B0*B0 = " << kh-(k*2*r*r) << std::endl;
+        io::messages.add(msg.str(), "InTopology", io::message::warning);
+      }
+      // and add r and the harmonic force constant
+      b.push_back(interaction::bond_type_struct(kh, r));
+    }
+  }
+  else{
+    io::messages.add("either BONDTYPE, BONDSTRETCHTYPE or HARMBONDTYPE block must be present!",
+		       "In_Topology",
+		       io::message::error);
   }
 
   // also add the solvent constraints to the bond types...
@@ -1445,40 +1521,74 @@ void io::In_Topology
 
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
+  
+  if (m_block["BONDTYPE"].size()){
+    buffer = m_block["BONDTYPE"];
 
-  buffer = m_block["BONDTYPE"];
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2; 
+	 it != buffer.end() - 1; ++it) {
 
-  if (buffer.size()==0){
-    io::messages.add("BONDTYPE block not found!",
-		     "In_Topology",
-		     io::message::error);
-    return;
+      double k, r;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> r;
+      
+      if (_lineStream.fail()){
+	os << *it << std::endl;
+	io::messages.add("bad line in BONDTYPE block!",
+			 "In_Topology",
+			 io::message::error);
+      }
+      if (! _lineStream.eof()){
+	os << *it << std::endl;
+	io::messages.add("eof not reached in BONDTYPE block",
+			 "InTopology", io::message::warning);
+      }
+
+      // and add...
+      b.push_back(interaction::bond_type_struct(k, r));
+    }
   }
-
-  // 1. BONDTYPE 2. number of types
-  for (it = buffer.begin() + 2; 
-       it != buffer.end() - 1; ++it) {
-
-    double k, r;
-    _lineStream.clear();
-    _lineStream.str(*it);
+  else if (m_block["BONDSTRETCHTYPE"].size()){
+    // read in the new block
+    buffer = m_block["BONDSTRETCHTYPE"];
+    // we are reading into quartic bond term, so only read the quartic force constant (k)
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2; 
+	 it != buffer.end() - 1; ++it) {
+      double k, kh, r;
+      _lineStream.clear();
+      _lineStream.str(*it);
       
-    _lineStream >> k >> r;
+      _lineStream >> k >> kh >> r;
       
-    if (_lineStream.fail()){
-      os << *it << std::endl;
-      io::messages.add("bad line in BONDTYPE block",
+      if (_lineStream.fail()){
+	os << *it << std::endl;
+	io::messages.add("bad line in BONDSTRETCHTYPE block!",
+			 "In_Topology",
+			 io::message::error);
+      }
+      if (! _lineStream.eof()){
+	os << *it << std::endl;
+	io::messages.add("eof not reached in BONDSTRETCHTYPE block",
+			 "InTopology", io::message::warning);
+      }
+      // check for consistency
+      if (kh!=k*2*r*r){
+        os << *it << std::endl;
+        io::messages.add("harmonic and quartic force constant do not match (CHB!=CB*2*B0*B0)",
+			 "InTopology", io::message::warning);
+      }
+      // and add r and the quartic force constant
+      b.push_back(interaction::bond_type_struct(k, r));
+    }
+  }
+  else{
+    io::messages.add("either BONDTYPE or BONDSTRETCHTYPE block must be present!",
 		       "In_Topology",
 		       io::message::error);
-    }
-    if (! _lineStream.eof()){
-      os << *it << std::endl;
-      io::messages.add("eof not reached in BONDTYPE block",
-		       "InTopology", io::message::warning);
-    }
-
-    // and add...
-    b.push_back(interaction::bond_type_struct(k, r));
   }
 
   num_solute_bondtypes = b.size();
@@ -1524,92 +1634,151 @@ void io::In_Topology
 }
 
 void io::In_Topology
-::read_angles(std::vector<interaction::angle_type_struct> &b,
-	      std::ostream & os)
-{
-  
-  DEBUG(10, "BONDANGLETYPE block");
-
+        ::read_angles(std::vector<interaction::angle_type_struct> &b,
+        std::ostream & os) {
+    
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
-
-  buffer = m_block["BONDANGLETYPE"];
-
-  if (buffer.size()==0){
-    io::messages.add("BONDANGLETYPE block not found!", "In_Topology",
-		     io::message::error);
-    return;
-  }
-
-  // 1. BONDTYPE 2. number of types
-  for (it = buffer.begin() + 2; 
-       it != buffer.end() - 1; ++it) {
-
-    double k, cos0;
-    _lineStream.clear();
-    _lineStream.str(*it);
+  
+  if(m_block["BONDANGLEBENDTYPE"].size()){
+    DEBUG(10, "BONDANGLEBENDTYPE block");
+    buffer = m_block["BONDANGLEBENDTYPE"];
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2;
+    it != buffer.end() - 1; ++it) {
       
-    _lineStream >> k >> cos0;
+      double k, kh, cos0;
+      _lineStream.clear();
+      _lineStream.str(*it);
       
-    if (_lineStream.fail()){
-      os << *it << std::endl;
-      io::messages.add("bad line in BONDANGLETYPE block", "In_Topology",
-		       io::message::error);
+      _lineStream >> k >> kh >> cos0;
+      
+      if (_lineStream.fail()){
+        os << *it << std::endl;
+        io::messages.add("bad line in BONDANGLEBENDTYPE block", "In_Topology",
+                io::message::error);
+      }
+      if (! _lineStream.eof()){
+        os << *it << std::endl;
+        io::messages.add("eof not reached in BONDANGLEBENDTYPE block",
+                "InTopology", io::message::warning);
+      }
+      
+      // and add (force constant based on a potential harmonic in the angle cosine)
+      b.push_back(interaction::angle_type_struct(k, cos(cos0 * 2 * math::Pi / 360.0)));
     }
-    if (! _lineStream.eof()){
-      os << *it << std::endl;
-      io::messages.add("eof not reached in BONDANGLETYPE block",
-		       "InTopology", io::message::warning);
-    }
-
-    // and add...
-    b.push_back(interaction::angle_type_struct(k, cos(cos0 * 2 * math::Pi / 360.0)));
   }
-
+  else if(m_block["BONDANGLETYPE"].size()){
+    DEBUG(10, "BONDANGLETYPE block");
+    buffer = m_block["BONDANGLETYPE"];
+      
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2;
+    it != buffer.end() - 1; ++it) {
+      
+      double k, cos0;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> cos0;
+      
+      if (_lineStream.fail()){
+        os << *it << std::endl;
+        io::messages.add("bad line in BONDANGLETYPE block", "In_Topology",
+                io::message::error);
+      }
+      if (! _lineStream.eof()){
+        os << *it << std::endl;
+        io::messages.add("eof not reached in BONDANGLETYPE block",
+                "InTopology", io::message::warning);
+      }
+      
+      // and add...
+      b.push_back(interaction::angle_type_struct(k, cos(cos0 * 2 * math::Pi / 360.0)));
+    }
+  }
+  else{
+    io::messages.add("either BONDANGLEBENDTYPE or BONDANGLETYPE block must be present",
+            "In_Topology", io::message::error);
+  }
+  
 }
 
 void io::In_Topology
 ::read_harm_angles(std::vector<interaction::angle_type_struct> &b,
 		   std::ostream & os)
 {
-  
-  DEBUG(10, "HARMBONDANGLETYPE block");
-
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
-
-  buffer = m_block["HARMBONDANGLETYPE"];
-
-  if (buffer.size()==0){
-    io::messages.add("HARMBONDANGLETYPE block not found!", "In_Topology",
-		     io::message::error);
-    return;
-  }
-
-  // 1. BONDANGLETYPE 2. number of types
-  for (it = buffer.begin() + 2; 
-       it != buffer.end() - 1; ++it) {
-
-    double k, theta;
-    _lineStream.clear();
-    _lineStream.str(*it);
+  if(m_block["BONDANGLEBENDTYPE"].size()){
+    DEBUG(10, "BONDANGLEBENDTYPE block");
+    buffer = m_block["BONDANGLEBENDTYPE"];
+    // 1. BONDTYPE 2. number of types
+    for (it = buffer.begin() + 2;
+    it != buffer.end() - 1; ++it) {
       
-    _lineStream >> k >> theta;
+      double k, kh, cos0;
+      _lineStream.clear();
+      _lineStream.str(*it);
       
-    if (_lineStream.fail()){
-      os << *it << std::endl;
-      io::messages.add("bad line in HARMBONDANGLETYPE block", "In_Topology",
-		       io::message::error);
+      _lineStream >> k >> kh >> cos0;
+      
+      if (_lineStream.fail()){
+        os << *it << std::endl;
+        io::messages.add("bad line in BONDANGLEBENDTYPE block", "In_Topology",
+                io::message::error);
+      }
+      if (! _lineStream.eof()){
+        os << *it << std::endl;
+        io::messages.add("eof not reached in BONDANGLEBENDTYPE block",
+                "InTopology", io::message::warning);
+      }
+      
+      // and add (force constant based on a potential harmonic in the angle cosine)
+      b.push_back(interaction::angle_type_struct(kh, cos0 * 2 * math::Pi / 360.0));
     }
-    if (! _lineStream.eof()){
-      os << *it << std::endl;
-      io::messages.add("eof not reached in HARMBONDANGLETYPE block",
-		       "InTopology", io::message::warning);
+  }
+  else if (m_block["HARMBONDANGLETYPE"].size()){
+    DEBUG(10, "HARMBONDANGLETYPE block");
+     
+    buffer = m_block["HARMBONDANGLETYPE"];
+    
+    if (buffer.size()==0){
+      io::messages.add("HARMBONDANGLETYPE block not found!", "In_Topology",
+              io::message::error);
+      return;
     }
     
-    // and add...
-    b.push_back(interaction::angle_type_struct(k, theta * 2 * math::Pi / 360.0));
+    // 1. BONDANGLETYPE 2. number of types
+    for (it = buffer.begin() + 2;
+    it != buffer.end() - 1; ++it) {
+      
+      double k, theta;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> theta;
+      
+      if (_lineStream.fail()){
+        os << *it << std::endl;
+        io::messages.add("bad line in HARMBONDANGLETYPE block", "In_Topology",
+                io::message::error);
+      }
+      if (! _lineStream.eof()){
+        os << *it << std::endl;
+        io::messages.add("eof not reached in HARMBONDANGLETYPE block",
+                "InTopology", io::message::warning);
+      }
+      
+      // and add...
+      b.push_back(interaction::angle_type_struct(k, theta * 2 * math::Pi / 360.0));
+    }
   }
+  else{
+    io::messages.add("either BONDANGLEBENDTYPE or HARMBONDANGLETYPE block must be present",
+            "In_Topology", io::message::error);
+  }
+
 }
 
 void io::In_Topology
@@ -1662,47 +1831,98 @@ void io::In_Topology
 ::read_dihedrals(std::vector<interaction::dihedral_type_struct> &d,
 		 std::ostream & os)
 {
-  
-  DEBUG(10, "DIHEDRALTYPE block");
-
-  std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
-
-  buffer = m_block["DIHEDRALTYPE"];
-
-  if (buffer.size()==0){
-    io::messages.add("DIHEDRALTYPE block not found!", "In_Topology",
-		     io::message::error);
-    return;
-  }
-  
-  // 1. DIHEDRALTYPE 2. number of types
-  for (it = buffer.begin() + 2; 
-       it != buffer.end() - 1; ++it) {
-
-    double k, pd;
-    int m;
-
-    _lineStream.clear();
-    _lineStream.str(*it);
-      
-    _lineStream >> k >> pd >> m;
-      
-    if (_lineStream.fail()){
-      os << *it << std::endl;
-      io::messages.add("bad line in DIHEDRALTYPE block", "In_Topology",
-		       io::message::error);
+  if (m_block["TORSDIHEDRALTYPE"].size()){
+    DEBUG(10, "TORSDIHEDRALTYPE block");
+    
+    io::messages.add("parsing TORSDIHEDRALTYPE to DIHEDRALTYPE format i.e. PD=cos(PDL)", "In_Topology",
+                io::message::warning);
+    
+    DEBUG(10, "TORSDIHEDRALTYPE block");
+    
+    std::vector<std::string> buffer;
+    std::vector<std::string>::const_iterator it;
+    
+    buffer = m_block["TORSDIHEDRALTYPE"];
+    
+    if (buffer.size()==0){
+      io::messages.add("TORSDIHEDRALTYPE block not found!", "In_Topology",
+              io::message::error);
+      return;
     }
-    if (! _lineStream.eof()){
-      os << *it << std::endl;
-      io::messages.add("eof not reached in DIHEDRALTYPE block",
-		       "InTopology", io::message::warning);
+    
+    // 1. DIHEDRALTYPE 2. number of types
+    for (it = buffer.begin() + 2;
+    it != buffer.end() - 1; ++it) {
+      
+      double k, pdl;
+      int m;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> pdl >> m;
+      
+      if (_lineStream.fail()){
+        os << *it << std::endl;
+        io::messages.add("bad line in TORSDIHEDRALTYPE block", "In_Topology",
+                io::message::error);
+      }
+      if (! _lineStream.eof()){
+        os << *it << std::endl;
+        io::messages.add("eof not reached in TORSDIHEDRALTYPE block",
+                "InTopology", io::message::warning);
+      }
+      
+      // and add...
+      d.push_back(interaction::dihedral_type_struct(k, cos(pdl*math::Pi/180.0), m));
     }
-
-    // and add...
-    d.push_back(interaction::dihedral_type_struct(k, pd, m));
   }
-
+  else if(m_block["DIHEDRALTYPE"].size()){
+    DEBUG(10, "DIHEDRALTYPE block");
+    
+    std::vector<std::string> buffer;
+    std::vector<std::string>::const_iterator it;
+    
+    buffer = m_block["DIHEDRALTYPE"];
+    
+    if (buffer.size()==0){
+      io::messages.add("DIHEDRALTYPE block not found!", "In_Topology",
+              io::message::error);
+      return;
+    }
+    
+    // 1. DIHEDRALTYPE 2. number of types
+    for (it = buffer.begin() + 2;
+    it != buffer.end() - 1; ++it) {
+      
+      double k, pd;
+      int m;
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+      
+      _lineStream >> k >> pd >> m;
+      
+      if (_lineStream.fail()){
+        os << *it << std::endl;
+        io::messages.add("bad line in DIHEDRALTYPE block", "In_Topology",
+                io::message::error);
+      }
+      if (! _lineStream.eof()){
+        os << *it << std::endl;
+        io::messages.add("eof not reached in DIHEDRALTYPE block",
+                "InTopology", io::message::warning);
+      }
+      
+      // and add...
+      d.push_back(interaction::dihedral_type_struct(k, pd, m));
+    }
+  }
+  else{
+    // complain that we need a block
+    io::messages.add("either TORSDIHEDRALTYPE or DIHEDRALTYPE block must be present", "In_Topology",
+                io::message::error);
+  }
 }
 
 

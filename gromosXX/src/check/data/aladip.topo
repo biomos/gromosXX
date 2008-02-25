@@ -6,9 +6,13 @@ Topology checked, Ric 16.12.2002.
 REDTOP molecules: 1:4-15 
 from: gmt_DIPEP_ALA.fmt
 END
-TOPPHYSCON
-138.935
+PHYSICALCONSTANTS
+# FPEPSI: 1.0/(4.0*PI*EPS0) (EPS0 is the permittivity of vacuum)
+138.935 
+# HBAR: Planck's constant HBAR = H/(2* PI)
 0.0635078
+# BOLTZ:
+0.00831441
 END
 TOPVERSION
 1.7
@@ -286,7 +290,7 @@ DIHEDRAL
     4    6    8   10   20
     6    8   10   12    4
 END
-SUBMOLECULES
+SOLUTEMOLECULES
 #     NSPM  NSP(1.. NSPM)
          1   12
 END

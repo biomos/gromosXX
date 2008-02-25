@@ -3,9 +3,13 @@ TOPOLOGY for ASN, blocked amino-acid, neutral
 SPC-WATER, FORCE FIELD 45a4, 1-5-2001
 CONTOP parameters: /flock1/chris/HYDR/PARAM/ifp45a3.dat
 END
-TOPPHYSCON
+PHYSICALCONSTANTS
+# FPEPSI: 1.0/(4.0*PI*EPS0) (EPS0 is the permittivity of vacuum)
 138.935
+# HBAR: Planck's constant HBAR = H/(2* PI)
 0.0635078
+# BOLTZ:
+0.00831441
 END
 TOPVERSION
 1.7
@@ -250,7 +254,7 @@ END
 DIHEDRAL
 0
 END
-SUBMOLECULES
+SOLUTEMOLECULES
 #     NSPM  NSP(1.. NSPM)
          1   6
 END
