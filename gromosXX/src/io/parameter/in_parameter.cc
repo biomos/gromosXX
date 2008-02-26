@@ -1602,8 +1602,8 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
     param.multibath.found_tcouple=false;
     
     DEBUG(11, "MULTIBATH present");
-    io::messages.add("using MULTIBATH block",
-		     "In_Parameter", io::message::notice);
+    /*io::messages.add("using MULTIBATH block",
+		     "In_Parameter", io::message::notice);*/
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -1721,6 +1721,9 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
       param.multibath.found_multibath=false;
       param.multibath.found_tcouple=true;
       DEBUG(11, "TCOUPLE present");
+      
+      io::messages.add("The TCOUPLE block is replaced by the MULTISTEP block.",
+			 "In_Parameter", io::message::warning);
       
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));

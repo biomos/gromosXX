@@ -40,11 +40,23 @@ BOUNDARY
 #      NTB    NDFMIN
          1         1
 END
-TCOUPLE
-#      NTT     TEMP0      TAUT
-         2    298.15    0.0100
-        -2    298.15    0.0100
-         1    298.15    0.0100
+MULTIBATH
+#       algorithm
+#               weak-coupling
+#               nose-hoover
+#               nose-hoover-chains      num
+#               (where num is the number of chains to use)
+    weak-coupling
+#   NBATHS: number of baths
+    2
+#   TEMP0  TAU
+    298.15 0.010
+    298.15 0.010
+#   DOFSET: different couplings
+    2
+#   LAST   COM-BATH  IR-BATH
+    12     1         1
+    72     2         2
 END
 PCOUPLE03
 #       COUPLE: off, calc, scale

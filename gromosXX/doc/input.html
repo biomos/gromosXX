@@ -170,20 +170,21 @@ new format:
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 MULTIBATH
-#	algorithm
+# ALGORITHM: temperture coupling algorithm
 #		weak-coupling
 #		nose-hoover
 #		nose-hoover-chains	num
 #		(where num is the number of chains to use)
-	nose-hoover-chains	3
-#   number of baths
+#   ALGORITHM           NUM
+    nose-hoover-chains	3
+#   NBATHS: number of baths
     2
-#   temp0  tau
+#   TEMP0  TAU
     300    0.010
     300    0.010
-#   different couplings
+#   DOFSET: number of different couplings
     1
-#   last   com-bath  ir-bath
+#   LAST   COM-BATH  IR-BATH
     60     1         2
 #   (this couples the first 60 atoms com motion to bath 1 and
 #    the internal / rotational motion to bath 2)
