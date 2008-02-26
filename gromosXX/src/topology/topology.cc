@@ -61,7 +61,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   if (mul_solvent == -1) mul_solvent = mul_solute;
   
   const int num_solute = topo.num_solute_atoms();
-  assert(num_solute >= 0 && topo.m_is_perturbed.size() == unsigned(num_solute));
+  //assert(num_solute >= 0 && topo.m_is_perturbed.size() == unsigned(num_solute));
   
   m_is_perturbed.clear();
   m_iac.clear();
@@ -184,13 +184,23 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_position_restraint = topo.m_position_restraint;
   m_jvalue_restraint = topo.m_jvalue_restraint;
 
-  // solvent
-  DEBUG(8, "\tmultiplying solvent");
-  
-  assert(topo.num_solvents() == 1);
-  add_solvent(topo.solvent(0));
-  solvate(0, topo.num_solvent_atoms() * mul_solvent);
+  DEBUG(8, "\tnum_solute_atoms()=" << num_solute_atoms());
 
+  if (topo.num_solvent_atoms()) {
+    // solvent
+    DEBUG(8, "\tmultiplying solvent");
+
+    assert(topo.num_solvents() == 1);
+    add_solvent(topo.solvent(0));
+    solvate(0, topo.num_solvent_atoms() * mul_solvent / topo.solvent(0).num_atoms());
+    
+    for(unsigned int m = 0; m < mul_solvent; ++m)
+      for(int s = topo.num_solute_atoms(); s < topo.num_atoms(); ++s){
+        m_atom_energy_group.push_back(topo.m_atom_energy_group[s]);
+    }
+  
+    DEBUG(8, "\tnum_atoms()=" << num_atoms());
+  }
 }
 
 /**
@@ -236,7 +246,11 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
   if (sim.param().multicell.multicell){
     
     const int num = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
+    simulation::Simulation multi_sim = sim;
+    multi_sim.param().multicell.multicell = false;
     m_multicell_topo = new Topology(*this, num);
+    m_multicell_topo->init(multi_sim, os, true);
+    m_multicell_topo->check_state();
 
     if (!quiet){
       os << "\tMULTICELL\n" << "\t\t"

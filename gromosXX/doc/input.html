@@ -15,6 +15,7 @@
 <li><a href="#stochastic">STOCHASTIC</a></li>
 <li><a href="#minimise">MINIMISE</a></li>
 <li><a href="#boundary">BOUNDARY</a></li>
+<li><a href="#multicell">MULTICELL</a><li>
 <li><a href="#tcouple">TCOUPLE</a></li>
 <li><a href="#pcouple">PCOUPLE</a></li>
 <li><a href="#centreofmass">CENTREOFMASS</a></li>
@@ -140,6 +141,26 @@ BOUNDARY
 #
 #         NTB    NDFMIN
             1         0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="multicell">MULTICELL</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+MULTICELL
+#  NTM: 0,1 switch of multiple-unit-cell simulation.
+#       0 : single-unit-cell simulation [default]
+#       1 : multiple-unit-cell simulation
+#         NTM
+            0
+#  number of subdivisions along axis
+#   NCELLA    NCELLB    NCELLC  
+         1         1         1
+#  periodicity checks (relative tolerance)
+#  not available in md++ -> 0.0
+#    TOLPX     TOLPV     TOLPF    TOLPFW
+       0.0       0.0       0.0       0.0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

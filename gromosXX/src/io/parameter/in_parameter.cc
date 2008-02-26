@@ -2284,9 +2284,11 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-    
-    _lineStream >> param.multicell.multicell 
-		>> param.multicell.x >> param.multicell.y >> param.multicell.z;
+    int ntm;
+    double tolpx, tolpv, tolpf, tolpfw;
+    _lineStream >> ntm 
+		>> param.multicell.x >> param.multicell.y >> param.multicell.z
+                >> tolpx >> tolpv >> tolpf >> tolpfw;
     
     if (_lineStream.fail()){
       io::messages.add("bad line in MULTICELL block",
@@ -2294,8 +2296,58 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
 
       param.multicell.multicell = false;
     }
+    
+    switch(ntm) {
+      case 1 :
+        param.multicell.multicell = true;
+        break;
+      case 0 :
+        param.multicell.multicell = false;
+        break;
+      default :
+        param.multicell.multicell = false;
+        io::messages.add("Error in MULTICELL block: NTM must be 0 or 1.",
+                         "In_Parameter", io::message::error);
+    }
+    
+    if (param.multicell.multicell) {
+      // disable because broken
+      param.multicell.multicell = false;
+      io::messages.add("MULTICELL simulations are broken in md++",
+                         "In_Parameter", io::message::error);      
+      
+      
+      // do these checks only if mutlicell is really used.
+      if (param.multicell.x < 1 || param.multicell.y < 1 ||
+          param.multicell.z < 1) {
+        io::messages.add("Error in MULTICELL block: NCELLA, NCELLB and NCELLC "
+                         "must be >= 1.", "In_Parameter", io::message::error);
+      }
+    
+      if (param.multicell.x == 1 && param.multicell.y == 1 && 
+          param.multicell.z == 1) {
+        io::messages.add("MULTICELL block: NCELLA, NCELLB and NCELLC are all 1.\n"
+                         "disabling MULTICELL simulation.", "In_Parameter",
+                         io::message::warning);    
+        param.multicell.multicell = false;
+      }
+    
+      if (param.boundary.boundary != math::rectangular &&
+          param.boundary.boundary != math::triclinic) {
+        io::messages.add("MULTICELL is only available for rectangular or "
+                         "triclinic periodic boundary conditions.", "In_Parameter",
+                         io::message::error);   
+      }
+    
+      if (tolpx || tolpv || tolpf || tolpfw) {
+        io::messages.add("MULTICELL block: Periodicity checks not available in "
+                         "this version.\n"
+                         "disabling MULTICELL simulation.", "In_Parameter",
+                         io::message::warning);    
+        param.multicell.multicell = false;
+      }  
+    }
   }
-  
 }
 
 void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
