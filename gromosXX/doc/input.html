@@ -17,7 +17,7 @@
 <li><a href="#boundary">BOUNDARY</a></li>
 <li><a href="#multicell">MULTICELL</a><li>
 <li><a href="#tcouple">TCOUPLE</a></li>
-<li><a href="#pcouple">PCOUPLE</a></li>
+<li><a href="#pressurescale">PRESSURESCALE</a></li>
 <li><a href="#centreofmass">CENTREOFMASS</a></li>
 <li><a href="#print">PRINT</a></li>
 <li><a href="#write">WRITE</a></li>
@@ -204,12 +204,10 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="pcouple">PCOUPLE</a></h2>
-
-new format:
+<h2><a name="pressurescale">PRESSURESCALE</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PCOUPLE03
+PRESSURESCALE
 #	COUPLE:	off, calc, scale
 #	SCALE:  off, iso, aniso, full
 #	VIRIAL: none, atomic, molecular
@@ -220,16 +218,6 @@ PCOUPLE03
     0.06102     0.00000     0.00000
     0.00000     0.06102     0.00000
     0.00000     0.00000     0.06102
-END
-</PRE></CODE></td></tr></tbody>
-</TABLE>
-
-old format:
-<table cellpadding="2" cellspacing="2" border="0" width="600"
- bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PCOUPLE
-#      NTP     PRES0      COMP      TAUP  
-         0  0.061020  4.575E-4   0.10000
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

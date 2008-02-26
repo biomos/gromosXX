@@ -64,7 +64,7 @@ TCOUPLE
         -2    298.15    0.0100
          1    298.15    0.0100
 END
-PCOUPLE03
+PRESSURESCALE
     scale   iso     4.575E-4    0.5     molecular
     0.06102     0.00000     0.00000
     0.00000     0.06102     0.00000

@@ -687,18 +687,18 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param,
 void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
 				    std::ostream & os)
 {
-  DEBUG(8, "read PCOUPLE");
+  DEBUG(8, "read PRESSURESCALE");
 
   std::vector<std::string> buffer;
   std::string s;
   
 
-  // first try for a PCOUPLE03 block
-  buffer = m_block["PCOUPLE03"];
+  // first try for a PCOUPLESCALE block
+  buffer = m_block["PRESSURESCALE"];
 
   if (buffer.size()){
 
-    block_read.insert("PCOUPLE03");
+    block_read.insert("PRESSURESCALE");
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -717,7 +717,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
     }
 
     if (_lineStream.fail())
-      io::messages.add("bad line in PCOUPLE03 block",
+      io::messages.add("bad line in PRESSURESCALE block",
 		       "In_Parameter", io::message::error);
     
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
@@ -747,7 +747,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
       else if (s2 == "full")
 	param.pcouple.scale = math::pcouple_full_anisotropic;
       else{
-	io::messages.add("bad value for SCALE switch in PCOUPLE03 block\n"
+	io::messages.add("bad value for SCALE switch in PRESSURESCALE block\n"
 			 "(off,iso,aniso,full)",
 			 "In_Parameter", io::message::error);
 	param.pcouple.scale = math::pcouple_off;
@@ -755,7 +755,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
 
     }
     else{
-      io::messages.add("bad value for calc switch in PCOUPLE03 block\n"
+      io::messages.add("bad value for calc switch in PRESSURESCALE block\n"
 		       "(off,calc,scale)",
 		       "In_Parameter", io::message::error);
       param.pcouple.calculate = false;
@@ -773,7 +773,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
       else if (s3 == "molecular")
 	param.pcouple.virial = math::molecular_virial;
       else{
-	io::messages.add("bad value for virial switch in PCOUPLE03 block\n"
+	io::messages.add("bad value for virial switch in PRESSURESCALE block\n"
 			 "(none,atomic,molecular)",
 			 "In_Parameter", io::message::error);
 	param.pcouple.virial = math::no_virial;
@@ -783,50 +783,28 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
       param.pcouple.virial = math::no_virial;
     
   } // PCOUPLE03 block
-  else{
     
-    buffer = m_block["PCOUPLE"];
-    if (!buffer.size()){
-      // everything should be initialized to nothing
-      return;
-    }
+  buffer = m_block["PCOUPLE"];
+  if (buffer.size()){
+    io::messages.add("The PCOUPLE block is not available in this version. "
+                     "Use the PRESSURESCALE block instead.",
+                     "In_Parameter",
+                     io::message::error);
 
     block_read.insert("PCOUPLE");
- 
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-
-    int ntp;    
-    double p0;
-    
-    _lineStream >> ntp >> p0 
-		>> param.pcouple.compressibility 
-		>> param.pcouple.tau;
-    
-    if (_lineStream.fail())
-      io::messages.add("bad line in PCOUPLE block",
-		       "In_Parameter", io::message::error);
-
-    for(int i=0; i<3; ++i){
-      for(int j=0; j<3; ++j){
-	if (i == j)
-	  param.pcouple.pres0(i,j) = p0;
-	else param.pcouple.pres0(i,j) = 0.0;
-      }
-    }
-    if(ntp==1){
-      param.pcouple.scale = math::pcouple_isotropic;
-      param.pcouple.virial = math::molecular_virial;
-    }
-    else if(ntp==2){
-      param.pcouple.scale = math::pcouple_anisotropic;
-      param.pcouple.virial = math::molecular_virial;
-    }
-    else if(ntp>0 || ntp <0)
-      io::messages.add("PCOUPLE block: illegal value for ntp (0,1,2)",
-		       "In_Parameter",
-		       io::message::error);
+    return;
   }
+    
+  buffer = m_block["PCOUPLE03"];
+  if (buffer.size()){
+    io::messages.add("The PCOUPLE03 block was renamed to PRESSURESCALE",
+                     "In_Parameter",
+                     io::message::error);
+
+    block_read.insert("PCOUPLE03");
+    return;
+  }
+  
   if (param.pcouple.calculate==false && param.pcouple.scale!=math::pcouple_off)
     io::messages.add("pressure coupling activated but "
 		     "not calculating pressure",

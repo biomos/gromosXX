@@ -45,7 +45,7 @@ MULTIBATH
     12     1         1
     72     2         2
 END
-PCOUPLE03
+PRESSURESCALE
 #       COUPLE: off, calc, scale
 #       SCALE:  off, iso, aniso, full
 #       VIRIAL: none, atomic, molecular

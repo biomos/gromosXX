@@ -62,7 +62,7 @@ END
 #     NTP     PRES0      COMP      TAUP  
 #        1  0.061020  4.575E-4   0.50000
 #END
-PCOUPLE03
+PRESSURESCALE
 #       COUPLE: off, calc, scale
 #       SCALE:  off, iso, aniso, full
 #       VIRIAL: none, atomic, molecular
