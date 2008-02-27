@@ -57,6 +57,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_WRITE(param);
   read_CONSTRAINTS(param); // read_SHAKE if no CONSTRAINTS
   read_FORCE(param); // and FORCEFIELD
+  read_COVALENTFORM(param); // and FORCEFIELD
   read_CGRAIN(param);
   read_PLIST(param);
   read_LONGRANGE(param);
@@ -86,6 +87,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_NONBONDED(param);
   read_LOCALELEVATION(param);
   read_UMBRELLA(param);
+  read_FORCEFIELD(param);
   
   DEBUG(7, "input read...");
 
@@ -1101,8 +1103,6 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
     io::messages.add("End of line not reached in FORCE block, but should have been: \n" + s +  "\n",
 		     "In_Parameter", io::message::warning);
   */
-  //from here read the force field block
-  read_FORCEFIELD(param);
   
   if(param.force.bond < 0 || param.force.bond > 1)
     io::messages.add("Illegal value for force switch for bond",
@@ -1125,65 +1125,77 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
 }
 
 /**
- * read FORCEFIELD block.
+ * read COVALENTFORM block.
  */
-void io::In_Parameter::read_FORCEFIELD(simulation::Parameter &param,
+void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
 				       std::ostream & os)
 {
-  DEBUG(8, "read FORCEFIELD");
+  DEBUG(8, "read COVALENTFORM");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["FORCEFIELD"];
+  buffer = m_block["COVALENTFORM"];
 
   if (!buffer.size()){
     return;
   }
   
-  block_read.insert("FORCEFIELD");
+  block_read.insert("COVALENTFORM");
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
-  int bond, angle;
+  int bond, angle, dihedral;
   
   _lineStream >> bond 
-	      >> angle;
-
-  if (bond == 2 && param.force.bond != 0){
-    if (param.force.bond != 2){
-      io::messages.add("using FORCEFIELD block to determine bond term",
-		       "In_Parameter", io::message::notice);
-      param.force.bond = 2;
-    }
-  }
-  if (bond == 0 && param.force.bond != 0){
-    if (param.force.bond != 1){
-      io::messages.add("using FORCEFIELD block to determine bond term",
-		       "In_Parameter", io::message::notice);
-      param.force.bond = 1;
-    }
-  }
+	      >> angle
+              >> dihedral;
   
-  if (angle == 2 && param.force.angle != 0){
-    if (param.force.angle != 2){
-      io::messages.add("using FORCEFIELD block to determine angle term",
-		       "In_Parameter", io::message::notice);
-      param.force.angle = 2;
-    }
-  }
-  if (angle == 0 && param.force.angle != 0){
-    if (param.force.angle != 1){
-      io::messages.add("using FORCEFIELD block to determine angle term",
-		       "In_Parameter", io::message::notice);
-      param.force.angle = 1;
-    }
-  }
-  
-  if (_lineStream.fail())
-    io::messages.add("bad line in FORCEFIELD block",
+  if (bond != 0 && bond != 1) {
+    io::messages.add("Error in COVALENTFORM block: NTBBH must be 0 (quartic) "
+                     "or 1 (harmonic).",
 		     "In_Parameter", io::message::error);
+  } else {
+    if (param.force.bond != 0) {
+      switch (bond) {
+        case 1: param.force.bond = 2; break;
+        case 0:
+        default: param.force.bond = 1;
+      }
+    }
+  }
+  
+  if (angle != 0 && angle != 1) {
+    io::messages.add("Error in COVALENTFORM block: NTBAH must be 0 (quartic) "
+                     "or 1 (harmonic).",
+		     "In_Parameter", io::message::error);
+  } else {
+    if (param.force.angle != 0) {
+      switch (angle) {
+        case 1: param.force.angle = 2; break;
+        case 0:
+        default: param.force.angle = 1;
+      }
+    }
+  }
+  
+  if (dihedral != 0 && dihedral != 1) {
+    io::messages.add("Error in COVALENTFORM block: NTBDN must be 0 (arbitray "
+                     "phase shifts) or 1 (phase shifts limited).",
+		     "In_Parameter", io::message::error);
+  } else {
+    if (dihedral != 0) {
+      switch (angle) {
+        case 1: 
+         io::messages.add("Error in COVALENTFORM block: NTBDN 1 not implemented.",
+		          "In_Parameter", io::message::error);
+          break;
+        case 0:
+        default: ;
+      }
+    }
+  }
 }
 
 /**
@@ -2820,3 +2832,20 @@ void io::In_Parameter::read_UMBRELLA(simulation::Parameter & param,
   }
 }
 
+void io::In_Parameter::read_FORCEFIELD(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read FORCEFIELD");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["FORCEFIELD"];
+  
+  if (buffer.size()) {
+    block_read.insert("FORCEFIELD");
+    io::messages.add("The FORCEFIELD block is not supported in this version. "
+                     "Use the COVALENTFORM block instead.", "In_Parameter",
+                     io::message::error);
+  }
+}

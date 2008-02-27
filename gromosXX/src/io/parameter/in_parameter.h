@@ -66,16 +66,16 @@ namespace io {
      * read FORCE block.
      */
     void read_FORCE(simulation::Parameter &param, std::ostream & os = std::cout);
+    
+    /**
+     * read COVALENTFORM block.
+     */
+    void read_COVALENTFORM(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read ENERGYGROUP block. (right now from the FORCE block)
      */
     void read_ENERGYGROUP(simulation::Parameter &param, std::ostream & os = std::cout);
-
-    /**
-     * read FORCEFIELD block.
-     */
-    void read_FORCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read PRINT block.
@@ -266,6 +266,11 @@ namespace io {
      * read UMBRELLA block.
      */
     void read_UMBRELLA(simulation::Parameter & param, std::ostream & os = std::cout);
+    
+    /**
+     * read FORCEFIELD block.
+     */
+    void read_FORCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
 
   };
   

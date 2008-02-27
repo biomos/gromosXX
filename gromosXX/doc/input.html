@@ -24,7 +24,7 @@
 <li><a href="#constraint">CONSTRAINT</a></li>
 <li><a href="#shake">SHAKE</a><li>
 <li><a href="#force">FORCE</a></li>
-<li><a href="#forcefield">FORCEFIELD</a></li>
+<li><a href="#covalentform">COVALENTFORM</a></li>
 <li><a href="#plist">PAIRLIST</a></li>
 <li><a href="#longrange">LONGRANGE</a></li>
 <li><a href="#posrest">POSREST</a></li>
@@ -325,14 +325,21 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="forcefield">FORCEFIELD</a></h2>
+<h2><a name="covalentform">COVALENTFORM</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-FORCEFIELD
-#       bonds    angles
-#       0: gromos96 form
-#	2: harmonic form
-        2        0
+COVALENTFORM
+# NTBBH: 0,1 controls bond-stretching potential
+#        0: quartic form (default)
+#        1: harmonic form
+# NTBAH: 0,1 controls bond-angle bending potential
+#        0: cosine-harmonic (default)
+#        1: harmonic
+# NTBDN: 0,1 controls torsional dihedral potential
+#        0: arbitrary phase shifts (default)
+#        1: phase shifts limited to 0 and 180 degrees.
+#   NTBBH    NTBAH    NTBDN
+        0        0        0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
