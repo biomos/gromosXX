@@ -170,8 +170,29 @@ int interaction::create_g96_nonbonded
       simulation::cgrain_func)
     it.read_cg_parameter(ni->parameter().cg_parameter());
   
+  // check if DUM really has no LJ interactons.
   pa->set_parameter(&ni->parameter());
-  
+  if (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
+      simulation::lj_crf_func){
+    unsigned int dum = topo.iac(0); // has been previously set to DUM.
+
+    bool error = false;
+    for(unsigned int i = 0; i < dum; i++) {
+      interaction::lj_parameter_struct& s = ni->parameter().lj_parameter()[i][dum];
+      if (s.c6 != 0.0 || s.c12 != 0.0 || s.cs6 != 0.0 || s.cs12 != 0.0 )
+        error = true;
+    }
+    for(unsigned int i = dum + 1; i < topo.atom_names().size(); i++)  {
+      interaction::lj_parameter_struct& s = ni->parameter().lj_parameter()[dum][i];
+      if (s.c6 != 0.0 || s.c12 != 0.0 || s.cs6 != 0.0 || s.cs12 != 0.0 )
+        error = true;
+    }
+      
+    if (error) {
+      io::messages.add("Dummy atomtype (DUM) in topology has Lennard-Jones "
+                       "interactions.", "topology", io::message::error);
+    }
+  }
   ff.push_back(ni);
 
   if (!quiet){

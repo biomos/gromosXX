@@ -25,6 +25,8 @@ namespace simulation
 #include <simulation/multibath.h>
 #include <simulation/simulation.h>
 
+#include <interaction/interaction_types.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE topology
@@ -299,25 +301,22 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
     } // cg2
   } // cg1
 
-  if ((!sim.param().force.nonbonded_crf) && sim.param().force.nonbonded_vdw){
-    
+  if (!sim.param().force.nonbonded_crf){
     for(unsigned int i=0; i<m_charge.size(); ++i){
       m_charge(i) = 0.0;
     }
   }
 
-  if ((sim.param().force.nonbonded_crf) && (!sim.param().force.nonbonded_vdw)){
-
+  if (!sim.param().force.nonbonded_vdw){
     if (m_atom_name.find("DUM") == m_atom_name.end()){
       io::messages.add("no dummy atomtype (DUM) found in topology",
 		       "topology",
 		       io::message::error);
     }
     else{
-      for(unsigned int i=0; i<m_iac.size(); ++i){
-	// is this dummy for all forcefields ???
-	m_iac[i] = 18;
-      }
+      int dum = m_atom_name["DUM"];
+      for(unsigned int i=0; i<m_iac.size(); ++i)
+	m_iac[i] = dum;
     }
   }
 

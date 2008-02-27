@@ -93,9 +93,7 @@ int interaction::Nonbonded_Set
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-
-  //  double shortrange_start = now();
-
+  
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist, m_storage);
   

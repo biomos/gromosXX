@@ -1089,8 +1089,8 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
 		     "In_Parameter", io::message::notice);
   
   if (param.force.nonbonded_crf && (!param.force.nonbonded_vdw))
-    io::messages.add("Force: setting atom types to dummy (fishy implemented)",
-		     "In_Parameter", io::message::warning);
+    io::messages.add("Force: setting atom types to dummy",
+		     "In_Parameter", io::message::notice);
   
   if (_lineStream.fail())
     io::messages.add("bad line in FORCE block",
@@ -1104,15 +1104,12 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   //from here read the force field block
   read_FORCEFIELD(param);
   
-  if(param.force.bond < 0 || param.force.bond > 2)
+  if(param.force.bond < 0 || param.force.bond > 1)
     io::messages.add("Illegal value for force switch for bond",
 		     "In_Parameter", io::message::error);
-  if(param.force.angle < 0 || param.force.angle > 2)
+  if(param.force.angle < 0 || param.force.angle > 1)
     io::messages.add("Illegal value for force switch for angle",
 		     "In_Parameter", io::message::error);
-  if(param.force.angle == 2)
-    io::messages.add("Force switch for angle = 2 (harmonic) experimental",
-		     "In_Parameter", io::message::warning);
   if(param.force.improper < 0 || param.force.improper > 1)
     io::messages.add("Illegal value for force switch for improper dihedral",
 		     "In_Parameter", io::message::error);
