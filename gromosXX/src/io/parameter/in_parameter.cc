@@ -59,7 +59,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_FORCE(param); // and FORCEFIELD
   read_COVALENTFORM(param); // and FORCEFIELD
   read_CGRAIN(param);
-  read_PLIST(param);
+  read_PAIRLIST(param);
   read_LONGRANGE(param);
   read_POSREST(param);
   read_DISTREST(param);
@@ -1338,22 +1338,22 @@ void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param,
 } // LONGRANGE
 
 /**
- * read PLIST block.
+ * read PAIRLIST block.
  */
-void io::In_Parameter::read_PLIST(simulation::Parameter &param,
+void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
 				  std::ostream & os)
 {
-  DEBUG(8, "read PLIST");
+  DEBUG(8, "read PAIRLIST");
 
   std::vector<std::string> buffer;
   std::string s;
 
   DEBUG(10, "pairlist block");
   
-  // try a PLIST03
-  buffer = m_block["PLIST03"];
+  // try a PAIRLIST
+  buffer = m_block["PAIRLIST"];
   if (buffer.size()){
-    block_read.insert("PLIST03");
+    block_read.insert("PAIRLIST");
 
     std::string s1, s2, s3;
     _lineStream.clear();
@@ -1367,7 +1367,7 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param,
 		>> s3;
     
     if (_lineStream.fail()){
-      io::messages.add("bad line in PLIST03 block",
+      io::messages.add("bad line in PAIRLIST block",
 		       "In_Parameter",
 		       io::message::error);
     }
@@ -1380,7 +1380,8 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param,
     else if (s1 == "vgrid") param.pairlist.grid = 2;
     else if (s1 == "standard") param.pairlist.grid = 0;
     else{
-      io::messages.add("wrong pairlist algorithm chosen (allowed: standard, grid) in PLIST03 block",
+      io::messages.add("wrong pairlist algorithm chosen (allowed: standard, "
+                       "grid) in PAIRLIST block",
 		       "In_Parameter", io::message::error);
       param.pairlist.grid = false;
     }
@@ -1394,7 +1395,8 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param,
 	css >> param.pairlist.grid_size;
 	// param.pairlist.grid_size = atof(s2.c_str());
 	if (css.fail()){
-	  io::messages.add("wrong pairlist grid size chosen (allowed: auto, [size]) in PLIST03 block",
+	  io::messages.add("wrong pairlist grid size chosen (allowed: auto, "
+                           "[size]) in PAIRLIST block",
 			   "In_Parameter", io::message::error);
 	  param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
 	}
@@ -1412,55 +1414,37 @@ void io::In_Parameter::read_PLIST(simulation::Parameter &param,
       // param.pairlist.atomic_cutoff = (atoi(s3.c_str()) != 0);
       if (css.fail()){
 	io::messages.add("wrong cutoff type chosen (allowed: atomic, chargegroup)"
-			 " in PLIST03 block",
+			 " in PAIRLIST block",
 			 "In_Parameter", io::message::error);
 	param.pairlist.atomic_cutoff = false;
       }
     }
   }
-  else{
-    buffer = m_block["PLIST"];
-    
-    if (!buffer.size()){
-      io::messages.add("no PLIST block in input","In_Parameter",io::message::error);
-      return;
-    }
 
+  buffer = m_block["PLIST"]; 
+  if (buffer.size()){
+    io::messages.add("There is no PLIST block in this version. Use the "
+                     "PAIRLIST block instead.","In_Parameter",
+                     io::message::error);
     block_read.insert("PLIST");
-
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-    int i;
-    
-    _lineStream >> i 
-		>> param.pairlist.skip_step  
-		>> param.pairlist.cutoff_short 
-		>> param.pairlist.cutoff_long;
-
-    param.pairlist.grid_size = 0;
-    param.pairlist.grid = false;
-    param.pairlist.atomic_cutoff = false;
-
-    if (_lineStream.fail()){
-      io::messages.add("bad line in PLIST block",
-		       "In_Parameter", io::message::error);
-    }
-    
-    DEBUG(7, "pairlist update=" << param.pairlist.skip_step);
-    DEBUG(7, "setting short cutoff=" << param.pairlist.cutoff_short 
-	  << " long cutoff=" << param.pairlist.cutoff_long);
-    
-    
   }
+  
+  buffer = m_block["PLIST03"]; 
+  if (buffer.size()){
+    io::messages.add("The PLIST03 block was renamed to PAIRLIST","In_Parameter",
+                     io::message::error);
+    block_read.insert("PLIST03");
+  }
+  
   if(param.pairlist.grid && param.pairlist.grid_size <=0)
-    io::messages.add("Illegal value for grid size in PLIST03 block (>0)",
+    io::messages.add("Illegal value for grid size in PAIRLIST block (>0)",
 		     "In_Parameter", io::message::error);
   if(param.pairlist.cutoff_short < 0){
-    io::messages.add("Illegal value for short range cutoff in PLIST block (>0)",
+    io::messages.add("Illegal value for short range cutoff in PAIRLIST block (>0)",
 		     "In_Parameter", io::message::error);
   }
   if(param.pairlist.cutoff_long < param.pairlist.cutoff_short){
-    io::messages.add("Illegal value for long range cutoff in PLIST block (>=RCUTP)",
+    io::messages.add("Illegal value for long range cutoff in PAIRLIST block (>=RCUTP)",
 		     "In_Parameter", io::message::error);
   }
   

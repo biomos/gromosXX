@@ -24,7 +24,7 @@
 <li><a href="#constraint">CONSTRAINT</a></li>
 <li><a href="#force">FORCE</a></li>
 <li><a href="#covalentform">COVALENTFORM</a></li>
-<li><a href="#plist">PAIRLIST</a></li>
+<li><a href="#pairlist">PAIRLIST</a></li>
 <li><a href="#longrange">LONGRANGE</a></li>
 <li><a href="#posrest">POSREST</a></li>
 <li><a href="#perturb">PERTURBATION</a></li>
@@ -337,28 +337,19 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="plist">PAIRLIST</a></h2>
-new format:
+<h2><a name="pairlist">PAIRLIST</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PLIST03
-#	algorithm: standard (gromos96 like pairlist)
-#		       grid (XX grid pairlist)
-#	SIZE:	   grid cell size (or auto = 0.5 * RCUTP)
-#	TYPE:	   chargegoup (chargegroup based cutoff)
-#			   atomic (atom based cutoff)
+PAIRLIST
+#       ALGORITHM: standard (gromos96 like pairlist)
+#                  grid (md++ grid pairlist)
+#                  vgrid (md++ vector grid pairlist)
+#       SIZE:      grid cell size (or auto = 0.5 * RCUTP)
+#       TYPE:      chargegoup (chargegroup based cutoff)
+#                  atomic (atom based cutoff)
 #
-#	algorithm	NSNB	RCUTP	RCUTL	SIZE	TYPE
-	grid		5	0.8	1.4	auto	chargegroup
-END
-</PRE></CODE></td></tr></tbody>
-</TABLE>
-old format:
-<table cellpadding="2" cellspacing="2" border="0" width="600"
- bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PLIST
-#     NTNB      NSNB     RCUTP     RCUTL
-         1         5       0.8       1.4
+#       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
+	grid            5       0.8     1.4     auto    chargegroup
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

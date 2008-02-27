@@ -127,9 +127,16 @@ FORCE
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      2      6      3738
 END
-PLIST
-#     NTNB      NSNB     RCUTP     RCUTL
-         1       5       0.8       1.4
+PAIRLIST
+#       ALGORITHM: standard (gromos96 like pairlist)
+#                  grid (md++ grid pairlist)
+#                  vgrid (md++ vector grid pairlist)
+#       SIZE:      grid cell size (or auto = 0.5 * RCUTP)
+#       TYPE:      chargegoup (chargegroup based cutoff)
+#                  atomic (atom based cutoff)
+#
+#       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
+        standard        5       0.8     1.4     auto    chargegroup
 END
 LONGRANGE
 # EPSRF     APPAK      RCRF

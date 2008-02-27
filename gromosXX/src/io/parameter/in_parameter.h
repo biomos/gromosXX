@@ -113,9 +113,9 @@ namespace io {
     void read_CENTREOFMASS(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read PLIST block.
+     * read PAIRLIST block.
      */
-    void read_PLIST(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_PAIRLIST(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read POSRES block.
