@@ -55,7 +55,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_PCOUPLE(param);
   read_PRINT(param);
   read_WRITE(param);
-  read_CONSTRAINTS(param); // read_SHAKE if no CONSTRAINTS
+  read_CONSTRAINT(param);
   read_FORCE(param); // and FORCEFIELD
   read_COVALENTFORM(param); // and FORCEFIELD
   read_CGRAIN(param);
@@ -63,7 +63,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LONGRANGE(param);
   read_POSREST(param);
   read_DISTREST(param);
-  read_DIHREST(param); // needs to be called after CONSTRAINTS!
+  read_DIHREST(param); // needs to be called after CONSTRAINT!
   read_PERTURB(param);
   read_JVALUE(param);
   read_PSCALE(param);
@@ -294,97 +294,41 @@ void io::In_Parameter::read_SHAKE(simulation::Parameter &param,
   std::string s, sntc;
   
   buffer = m_block["SHAKE"];
+  
+  if (buffer.size()){
+    block_read.insert("SHAKE");
+
+    io::messages.add("There is no SHAKE block in this version. Use the "
+                     "CONSTRAINT block instead.", "In_Parameter",
+		     io::message::error);
+
+  }
+}
+
+/**
+ * the CONSTRAINT block.
+ */
+void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
+					std::ostream & os)
+{
+  DEBUG(8, "read CONSTRAINT");
+
+  std::vector<std::string> buffer;
+  std::string s, salg;
+  
+  buffer = m_block["CONSTRAINT"];
 
   if (!buffer.size()){
     param.constraint.ntc = 1;
     param.constraint.solute.algorithm = simulation::constr_off;
     param.constraint.solvent.algorithm = simulation::constr_shake;
 
-    io::messages.add("no SHAKE / CONSTRAINTS block", "In_Parameter",
+    io::messages.add("no CONSTRAINT block", "In_Parameter",
 		     io::message::warning);
-
     return;
   }
   
-  block_read.insert("SHAKE");
-  
-  _lineStream.clear();
-  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-
-  _lineStream >> sntc
-	      >> param.constraint.solvent.shake_tolerance;
-  
-  if (_lineStream.fail())
-    io::messages.add("bad line in SHAKE block",
-		       "In_Parameter", io::message::error);
-
-  std::transform(sntc.begin(), sntc.end(), sntc.begin(), tolower);
-
-  if(sntc=="solvent") param.constraint.ntc=1;
-  else if(sntc=="hydrogen") param.constraint.ntc=2;
-  else if(sntc=="all") param.constraint.ntc=3;
-  else if(sntc=="specified") param.constraint.ntc=4;
-  else {
-    std::stringstream ss(sntc);
-    if (!(ss >> param.constraint.ntc)){
-      io::messages.add("NTC not understood in CONSTRAINTS block",
-		       "In_Parameter", io::message::error);
-
-      param.constraint.solute.algorithm = simulation::constr_off;
-      param.constraint.solvent.algorithm = simulation::constr_off;
-      
-      return;
-    }
-  }
-
-  if(param.constraint.ntc<1 || param.constraint.ntc > 4){
-    io::messages.add("NTC out of range in CONSTRAINTS block",
-		     "In_Parameter", io::message::error);
-    
-    param.constraint.solute.algorithm = simulation::constr_off;
-    param.constraint.solvent.algorithm = simulation::constr_off;
-    
-    return;
-  }
-  
-
-  if(param.constraint.solvent.shake_tolerance<=0.0)
-    io::messages.add("tolerance in SHAKE block should be > 0",
-		       "In_Parameter", io::message::error);
-
-  if (param.constraint.ntc > 1){
-
-    param.constraint.solute.algorithm = simulation::constr_shake;
-    param.constraint.solute.shake_tolerance = param.constraint.solvent.shake_tolerance;
-  }
-  else
-    param.constraint.solute.algorithm = simulation::constr_off;
-  
-  param.constraint.solvent.algorithm = simulation::constr_shake;
-
-}
-
-/**
- * the CONSTRAINTS block.
- */
-void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
-					std::ostream & os)
-{
-  DEBUG(8, "read CONSTRAINTS");
-
-  std::vector<std::string> buffer;
-  std::string s, salg;
-  
-  buffer = m_block["CONSTRAINTS"];
-
-  if (!buffer.size()){
-    // try reading a shake block
-    DEBUG(8, "no CONSTRAINTS block, trying SHAKE block");
-    read_SHAKE(param);
-    return;
-  }
-  
-  block_read.insert("CONSTRAINTS");
+  block_read.insert("CONSTRAINT");
   
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -399,12 +343,12 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
   else {
     std::stringstream ss(sntc);
     if (!(ss >> param.constraint.ntc))
-      io::messages.add("NTC not understood in CONSTRAINTS block",
+      io::messages.add("NTC not understood in CONSTRAINT block",
 		       "In_Parameter", io::message::error);
   }
   
   if(param.constraint.ntc<1 || param.constraint.ntc > 4){
-    io::messages.add("NTC out of range in CONSTRAINTS block",
+    io::messages.add("NTC out of range in CONSTRAINT block",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solute.algorithm = simulation::constr_off;
@@ -419,7 +363,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
   DEBUG(8, "Constraints (solute): " << salg);
 
   if (_lineStream.fail())
-    io::messages.add("bad line in CONSTRAINTS block",
+    io::messages.add("bad line in CONSTRAINT block",
 		     "In_Parameter", io::message::error);
 
   std::transform(salg.begin(), salg.end(), salg.begin(), tolower);
@@ -435,7 +379,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
     _lineStream >> param.constraint.solute.shake_tolerance;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
 		       "In_Parameter", io::message::error);
   }
   else if (salg == "flexshake"){
@@ -451,7 +395,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
 		>> param.constraint.solute.flexshake_mode;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
 		       "In_Parameter", io::message::error);
 
     if(param.centreofmass.remove_rot || param.centreofmass.remove_trans)
@@ -460,7 +404,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
 
     if(param.constraint.solute.flexshake_mode < 0 ||
        param.constraint.solute.flexshake_mode > 3)
-      io::messages.add("flexshake mode in CONSTRAINTS block should be >= 0 and <= 3",
+      io::messages.add("flexshake mode in CONSTRAINT block should be >= 0 and <= 3",
 		       "In_Parameter", io::message::error);
     
   }
@@ -476,7 +420,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
     _lineStream >> param.constraint.solute.lincs_order;
     
     if(param.constraint.solute.lincs_order < 1)
-      io::messages.add("lincs order should be >1 in CONSTRAINTS block",
+      io::messages.add("lincs order should be >1 in CONSTRAINT block",
 		       "In_Parameter", io::message::error);
 
   }
@@ -489,7 +433,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
 
     DEBUG(9, "constraints solute error");
     
-    io::messages.add("unknown algorithm in CONSTRAINTS block (solute)",
+    io::messages.add("unknown algorithm in CONSTRAINT block (solute)",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solute.algorithm = simulation::constr_off;
@@ -502,7 +446,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
   DEBUG(8, "constraints solvent: " << salg);
 
   if (_lineStream.fail())
-    io::messages.add("bad line in CONSTRAINTS block",
+    io::messages.add("bad line in CONSTRAINT block",
 		     "In_Parameter", io::message::error);
 
   std::transform(salg.begin(), salg.end(), salg.begin(), tolower);
@@ -515,7 +459,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
     _lineStream >> param.constraint.solvent.shake_tolerance;
     
     if(param.constraint.solvent.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
 		       "In_Parameter", io::message::error);
   }
   else if (salg == "flexshake"){
@@ -526,7 +470,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
     _lineStream >> param.constraint.solvent.shake_tolerance;
     
     if(param.constraint.solvent.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINTS block should be > 0",
+      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
 		       "In_Parameter", io::message::error);
   }
   else if (salg == "lincs"){
@@ -537,7 +481,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
     _lineStream >> param.constraint.solvent.lincs_order;
     
     if(param.constraint.solvent.lincs_order < 1)
-      io::messages.add("lincs order should be >1 in CONSTRAINTS block",
+      io::messages.add("lincs order should be >1 in CONSTRAINT block",
 		       "In_Parameter", io::message::error);
 
   }
@@ -552,7 +496,7 @@ void io::In_Parameter::read_CONSTRAINTS(simulation::Parameter &param,
   else{
 
     DEBUG(9, "constraints solvent error");
-    io::messages.add("unknown algorithm in CONSTRAINTS block (solvent)",
+    io::messages.add("unknown algorithm in CONSTRAINT block (solvent)",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solvent.algorithm = simulation::constr_off;

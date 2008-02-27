@@ -53,9 +53,9 @@ namespace io {
     void read_SHAKE(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read the CONSTRAINTS block.
+     * read the CONSTRAINT block.
      */
-    void read_CONSTRAINTS(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_CONSTRAINT(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read the FLEXCON block.
