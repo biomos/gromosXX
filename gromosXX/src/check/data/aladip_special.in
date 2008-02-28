@@ -196,18 +196,22 @@ POSREST
 #   NTPOR  NTPORB  NTPORS    CPOR
         0       0       0   1.0E1
 END
-#
 DISTREST
-#     NTDR
-#     0 : no distance restraining
-#     -1,1 : use CDIS
-#     -2,2:  use W0*CDIS
-#     NTDR < 0 : time averaging
-#     NTDR > 0 : no time averaging
-# NRDDR = 1: read in time averaged distances (for continuation run)
-# NRDDR = 0: don't read them in, recalc from scratch
-#     NTDR      CDIS       DR0     TAUDR     NRDDR
-         2    1000.0   0.300000      10.0         0
+#   NTDIR -2..2 controls distance restraining
+#         0: no distrance restraining (default)
+#         1: instantaneous, using force constant CDIR
+#         2: instantaneous, using force constant CDIR x W0
+#       < 0: time-averaged: not implemented.
+#  NTDIRA 0,1 controls values for initial distance averages
+#         0: zero initial averages
+#      != 0: not implemented.
+#    CDIR >= 0.0 force constant for distance restraining
+#    DIR0 >= 0.0 distance offset in restraining function
+#  TAUDIR >= 0.0 coupling time for time averaging
+#      != 0: not implemented
+#
+#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR
+        2       0  1000.0     0.3     0.0
 END
 DIHREST
 # values for NTDLR

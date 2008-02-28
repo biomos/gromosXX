@@ -1844,33 +1844,41 @@ void io::In_Parameter::read_DISTREST(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
+  int ntdira;
   _lineStream >> param.distrest.distrest
+  	      >> ntdira
 	      >> param.distrest.K
 	      >> param.distrest.r_linear
-	      >> param.distrest.tau
-	      >> param.distrest.read;
+	      >> param.distrest.tau;
   
   if (_lineStream.fail())
     io::messages.add("bad line in DISTREST block",
 		     "In_Parameter", io::message::error);
   
-  if(param.distrest.distrest <0) {
-    io::messages.add("Distance restraint averaging not implemented",
-		     "In_Parameter", 
-		     io::message::error);
+  if(param.distrest.distrest <0 || ntdira != 0 || param.distrest.tau != 0.0) {
+    io::messages.add("DISTREST block: Distance restraint averaging "
+                     "not implemented", "In_Parameter", io::message::notice);
   }
   
-  if(param.distrest.distrest > 2) {
-    io::messages.add("bad input in DISTREST block, NTDR must be <=2",
-		     "In_Parameter", 
-		     io::message::error);
-    
+  if(param.distrest.distrest <0 || param.distrest.distrest > 2) {
+    io::messages.add("Error in DISTREST block: NTDIR must 0 to 2.",
+                     "In_Parameter", io::message::error);
+  }
+  
+  if(ntdira != 0) {
+    io::messages.add("Error in DISTREST block: NTDIRA must be 0.",
+                     "In_Parameter", io::message::error);
+  }
+  
+  if(param.distrest.tau != 0.0) {
+    io::messages.add("Error in DISTREST block: TAUDIR must be 0.0.",
+                     "In_Parameter", io::message::error);
   }
 
-  if(param.distrest.K <0)
-    io::messages.add("Illegal value for force constant"
-		     " in DISTREST block (>=0)",
+  if(param.distrest.K <0) {
+    io::messages.add("Error in DISTREST block: CDIR must be >= 0.0.",
 		     "In_Parameter", io::message::error);
+  }
 
 } // DISTREST
 

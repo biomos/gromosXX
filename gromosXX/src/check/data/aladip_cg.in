@@ -197,18 +197,6 @@ POSREST
         0       0       0   1.0E1
 END
 #
-#DISTREST
-#     NTDR
-#     0 : no distance restraining
-#     -1,1 : use CDIS
-#     -2,2:  use W0*CDIS
-#     NTDR < 0 : time averaging
-#     NTDR > 0 : no time averaging
-# NRDDR = 1: read in time averaged distances (for continuation run)
-# NRDDR = 0: don't read them in, recalc from scratch
-#     NTDR      CDIS       DR0     TAUDR     NRDDR
-#        0    1000.0   1.00000      10.0         0
-#END
 #DIHEREST
 # values for NTDLR
 # 0: no dihedral angle restraining

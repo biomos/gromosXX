@@ -629,16 +629,21 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 DISTREST
-# method  0 : off
-#         1 : instantaneous, using force constant K
-#         2 : instantaneous, using force constant K*w0
-# K       force constant 
-# r_lin   deviation after which the potential energy function is linearized
-# tau     time averaging memory time
-# read    read averages from file
+#   NTDIR -2..2 controls distance restraining
+#         0: no distrance restraining (default)
+#         1: instantaneous, using force constant CDIR
+#         2: instantaneous, using force constant CDIR x W0
+#       < 0: time-averaged: not implemented.
+#  NTDIRA 0,1 controls values for initial distance averages
+#         0: zero initial averages
+#      != 0: not implemented.
+#    CDIR >= 0.0 force constant for distance restraining
+#    DIR0 >= 0.0 distance offset in restraining function
+#  TAUDIR >= 0.0 coupling time for time averaging
+#      != 0: not implemented
 #
-# method     K  rlin  tau  read
-  1       10.0   0.2    5     0
+#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR
+        0       0     0.0     0.0     0.0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
