@@ -2615,13 +2615,29 @@ void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-    
-    _lineStream >> param.multistep.steps >> param.multistep.boost;
-    
+    int boost; 
+    _lineStream >> param.multistep.steps >> boost;
+
     if (_lineStream.fail()){
       io::messages.add("bad line in MULTISTEP block",
 		       "In_Parameter", io::message::error);
       return;
+    }
+
+    if (param.multistep.steps < 0) {
+      io::messages.add("Error in MULTISTEP block: STEPS must be >= 0.",
+                       "In_Parameter", io::message::error);
+    }
+    switch(boost) {
+      case 0 :
+        param.multistep.boost = false;
+        break;
+      case 1 :
+        param.multistep.boost = true;
+        break;
+      default :
+        io::messages.add("Error in MULTISTEP block: BOOST must be 0 or 1",
+                         "In_Parameter", io::message::error);
     }
   }
 }

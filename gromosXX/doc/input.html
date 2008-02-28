@@ -37,6 +37,7 @@
 <li><a href="#rottrans">ROTTRANS</a></li>
 <li><a href="#distrest">DISTREST</a></li>
 <li><a href="#dihrest">DIHREST</a></li>
+<li><a href="#multistep">MULTISTEP</a></li>
 </ul>
 
 <br>
@@ -671,5 +672,20 @@ END
 </TABLE>
 Example <a href="dihres.html">dihedral restraints specification</a>
 
+<h2><a name="dihrest">MULTISTEP</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+MULTISTEP
+#   STEPS calculate non-bonded every STEPSth step.
+#   BOOST 0,1 
+#         0: stored forces of STEPSth step are added every step
+#         1: stored forces of STEPSth setp are multiplied by STEPS 
+#            and added every STEPSth step.
+#
+#   STEPS   BOOST
+        0       0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
 </body>
 </html>
