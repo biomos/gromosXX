@@ -527,28 +527,32 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param,
 
   block_read.insert("PRINT");
 
+  int ntpp;
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
   _lineStream >> param.print.stepblock
-	      >> param.print.centreofmass
-	      >> param.print.monitor_dihedrals;
+	      >> ntpp;
   
   if (_lineStream.fail())
     io::messages.add("bad line in PRINT block",
 		     "In_Parameter", io::message::error);
-
-  /*
-  if (!_lineStream.eof())
-    io::messages.add("End of line not reached in PRINT, but should have been: \n" + s +  "\n",
-		     "In_Parameter", io::message::warning);
-  */
+  
   if(param.print.stepblock < 0)
-    io::messages.add("PRINT block: print stepblock should be >=0",
+    io::messages.add("Error in PRINT block: NTPR should be >=0.",
 		     "In_Parameter", io::message::error);
-  if(param.print.centreofmass < 0)
-    io::messages.add("PRINT block: print centre of mass should be >=0",
-		     "In_Parameter", io::message::error);
+  
+  switch(ntpp) {
+    case 0 : 
+      param.print.monitor_dihedrals = false;
+      break;
+    case 1 :
+      param.print.monitor_dihedrals = true;
+      break;
+    default:
+    io::messages.add("Error in PRINT block: NTPP should be 0 or 1.",
+		     "In_Parameter", io::message::error);      
+  }
 }
 
 /**

@@ -111,10 +111,9 @@ CENTREOFMASS
 END
 PRINT
 #NTPR: print out energies, etc. every NTPR steps
-#NTPL: print out C.O.M motion and total energy fitting every NTPL steps
 #NTPP: =1 perform dihedral angle transition monitoring
-#     NTPR      NTPL      NTPP
-        25        25         1
+#     NTPR      NTPP
+        25         1
 END
 WRITE
 # NTWSE = configuration selection parameter
