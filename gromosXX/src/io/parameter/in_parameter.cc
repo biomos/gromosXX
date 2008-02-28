@@ -1313,31 +1313,39 @@ void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param,
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-  int ntcm;
+  int nscm, npcm, npcon;
   
-  _lineStream >> param.centreofmass.ndfmin 
-	      >> ntcm 
-	      >> param.centreofmass.skip_step;
-
-  if (param.centreofmass.skip_step){
-    param.centreofmass.remove_rot = true;
-    param.centreofmass.remove_trans = true;
-  }
-  else{
-    param.centreofmass.remove_rot = false;
-    param.centreofmass.remove_trans = false;
-  }
+  _lineStream >> nscm 
+	      >> npcm 
+	      >> npcon;
 
   if (_lineStream.fail())
     io::messages.add("bad line in CENTREOFMASS block",
 		     "In_Parameter", io::message::error);
   
-  if(param.centreofmass.ndfmin < 0)
-    io::messages.add("Illegal value for NDFMIN in CENTREOFMASS block (>=0)",
+  if (nscm > 0){
+    param.centreofmass.skip_step = nscm;
+    param.centreofmass.remove_rot = false;
+    param.centreofmass.remove_trans = true;
+  } else if (nscm < 0) {
+    param.centreofmass.skip_step = -nscm;
+    param.centreofmass.remove_rot = true;
+    param.centreofmass.remove_trans = true;    
+  } else { // nscm == 0;
+    param.centreofmass.skip_step = 0;
+    param.centreofmass.remove_rot = false;
+    param.centreofmass.remove_trans = false;
+  }
+
+  if (npcm != 0) {
+    io::messages.add("Error in CENTREOFMASS block: NPCM != 0 not implemented.",
 		     "In_Parameter", io::message::error);
-  if(param.centreofmass.skip_step <0)
-    io::messages.add("Illegal value for NSCM in CENTREOFMASS block (>=0)",
+  }
+  
+  if (npcon != 0) {
+    io::messages.add("Error in CENTREOFMASS block: NPCON != 0 not implemented.",
 		     "In_Parameter", io::message::error);
+  }
 }
 
 /**

@@ -434,17 +434,12 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - ndfmin 0            (number of degrees of freedom to substract)
        * - skip_step 0         (number of steps to skip between removal of com motion)
        * - remove_rot false    (remove center of mass rotation)
        * - remove_trans false  (remove center of mass translation)
        */
-      centreofmass_struct() : ndfmin(0), skip_step(0), remove_rot(false), remove_trans(false) {}
+      centreofmass_struct() : skip_step(0), remove_rot(false), remove_trans(false) {}
       
-      /**
-       * Number of degrees of freedom to substract
-       */
-      int ndfmin;
       /**
        * NSCM parameter
        */

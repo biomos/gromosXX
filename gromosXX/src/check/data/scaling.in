@@ -81,8 +81,20 @@ PRESSURESCALE
     0.00000     0.00000     0.06102
 END
 CENTREOFMASS
-#   NDFMIN      NTCM      NSCM
-         0         0      100000
+#    NSCM : controls system centre-of-mass (com) motion removal
+#           0: no com motion removal (default)
+#         < 0: com translation and rotation are removed every abs(NSCM)
+#              steps.
+#         > 0: com tranlsation is removed every NSCM steps.
+#    NPCM : controls solute centre-of-mass (com) motion removal
+#           0: no com motion removal (default)
+#        != 0: not implemented.
+#   NPCON : 1..NRP atoms per solute molecule for defining solute com
+#           0: no definition
+#        != 0: not implemented
+#
+#     NSCM      NPCM     NPCON
+    100000         0         0
 END
 PRINT
 #NTPR: print out energies, etc. every NTPR steps
