@@ -57,8 +57,10 @@ int algorithm::Remove_COM_Motion::init
     os << "\tprinting centre of mass motion every step\n";
   }
 
-  if (sim.param().start.remove_com)
-    os << "\n\tremoving initial centre of mass motion\n";
+  if (sim.param().start.remove_com_translation)
+    os << "\n\tremoving initial centre of mass translation\n";
+  if (sim.param().start.remove_com_rotation)
+    os << "\n\tremoving initial centre of mass rotation\n";
   
   os << "\nEND\n";
   
@@ -208,29 +210,36 @@ int algorithm::Remove_COM_Motion
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  bool remove_it = false;
+  bool remove_rot = false;
+  bool remove_trans = false;
   bool print_it = false;
   
   const double start = util::now();
 
   // check if nothing to do
   if (sim.steps() == 0){
-    if (sim.param().start.remove_com) remove_it = true;
+    remove_rot = sim.param().start.remove_com_rotation;
+    remove_trans = sim.param().start.remove_com_translation;
     if (sim.param().print.centreofmass) print_it = true;
   }
   else{
     if (sim.param().centreofmass.skip_step &&
 	(sim.steps() % sim.param().centreofmass.skip_step) == 0)
-      remove_it = true;
+      remove_rot = remove_trans = true;
     if (sim.param().print.centreofmass &&
 	(sim.steps() % sim.param().print.centreofmass) == 0)
       print_it = true;
   }
 
-  DEBUG(9, "centre of mass: print " << print_it << " remove " << remove_it);
-  if (!print_it && !remove_it) return 0;
-  bool remove_rot = remove_it && sim.param().centreofmass.remove_rot;
-  bool remove_trans = remove_it && sim.param().centreofmass.remove_trans;
+  DEBUG(9, "centre of mass: print " << print_it << " remove " <<
+           (remove_trans || remove_rot) );
+  if (!print_it && !remove_trans && !remove_rot) return 0;
+  
+  if (sim.steps() != 0){
+    remove_rot = remove_rot && sim.param().centreofmass.remove_rot;
+    remove_trans = remove_trans && sim.param().centreofmass.remove_trans;
+  }
+  
   DEBUG(9, "centre of mass: trans " << remove_trans << " rot " << remove_rot);
   
   double ekin_trans = 0.0, ekin_rot = 0.0;

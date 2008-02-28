@@ -181,15 +181,24 @@ namespace simulation
       /**
        * Constructor.
        * Default values:
-       * - shake_pos           false  (no initial SHAKE of positions)
-       * - shake_vel           false  (no initial SHAKE of velocities)
-       * - remove_com          false  (no initial removal of COM motion)
-       * - generate_velocities false  (no generation of initial velocities)
-       * - ig                      0  (random number seed)
-       * - tempi                 0.0  (temperature to generate initial velocities)
+       * - shake_pos              false  (no initial SHAKE of positions)
+       * - shake_vel              false  (no initial SHAKE of velocities)
+       * - remove_com_translation false  (no initial removal of COM translation)
+       * - remove_com_rotation    false  (no initial removal of COM rotation)
+       * - generate_velocities    false  (no generation of initial velocities)
+       * - read_nosehoover_chains true   (read them from configuration)
+       * - read_rottrans          true   (read initial setting of positions
+       *                                  and orientations for rot-trans constraints)
+       * - read_stochastic        true   (read stochastic integrals and IG from
+       *                                  configuration)
+       * - ig                     0      (random number seed)
+       * - tempi                  0.0    (temperature to generate initial velocities)
        */
-      start_struct() : shake_pos(false), shake_vel(false), remove_com(false),
-		       generate_velocities(false), ig(0), tempi(0.0) {}
+      start_struct() : shake_pos(false), shake_vel(false), 
+                       remove_com_translation(false), remove_com_rotation(false),
+		       generate_velocities(false), ig(0), tempi(0.0),
+                       read_nosehoover_chains(true), read_rottrans(true),
+                       read_stochastic(true) {}
       
       /**
        * shake initial positions
@@ -200,9 +209,13 @@ namespace simulation
        */
       bool shake_vel;
       /**
-       * COM removal.
+       * COM translation removal.
        */
-      bool remove_com;
+      bool remove_com_translation;
+      /**
+       * COM rotation removal.
+       */
+      bool remove_com_rotation;
       /**
        * generate velocities.
        */
@@ -215,6 +228,19 @@ namespace simulation
        * Initial temperature
        */
       double tempi;
+      /**
+       * Read Nose-Hoover Chain variables from configuration or reset them
+       */
+      bool read_nosehoover_chains;
+      /**
+       * Read initial setting of positions and orientations for roto-translational
+       * constraints from configuration or reset them
+       */
+      bool read_rottrans;
+      /**
+       * Read stochastic integrals and IG from configuration or reset them
+       */
+      bool read_stochastic;
     } /** startup parameters */ start;
 
     /**

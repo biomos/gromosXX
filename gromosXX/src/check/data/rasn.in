@@ -22,18 +22,41 @@ SYSTEM
 #      NPM      NSM 
          1     1244
 END
-START
-# values for INIT -- starting procedures in RUNMD.f
-#  INIT
-#     shake X
-#            shake V
-# centre of mass motion removal if NTCM=1
-#     1   yes    yes   yes
-#     2    no    yes   yes
-#     3    no     no   yes
-#     4    no     no    no
-#      NTX     INIT      IG     TEMPI      HEAT  NTXO   BOLTZ
-         2        4  210185       0.0   0.00000     1   8.31441E-3
+INITIALISE
+# NTIVEL: 0,1 controls generation of initial velocities.
+#         0: read from configuration (default)
+#         1: generate from Maxell distribution at temperature TEMPI
+# NTISHK: 0..3 controls shaking of initial configuration
+#         0: no intial SHAKE (default)
+#         1: initial SHAKE on coordinates only
+#         2: initial SHAKE on velocities only
+#         3: initial SHAKE on coordinates and velocities
+# NTINHC: 0,1 controls generation of initial Nose-Hoover chain variables
+#         0: read from configuration (default)
+#         1: reset variables to zero.
+# NTISHI: 0,1 unsed in md++
+# NTIRTC: 0,1 controls initial setting of positions and orientations for
+#             roto-translational constraints
+#         0: read from configuration (default)
+#         1: reset based on initial configuraion of startup file
+# NTICOM: 0,1 controls initial removal of COM motion
+#         0: no initial system COM motion removal (default)
+#         1: initial COM translation is removed
+#         2: initial COM rotation is removed
+# NTISTI: 0,1 controls generation of stochastic integrals
+#         0: read stochastic integrals and IG from configuration (default)
+#         1: set stochastic integrals to zero and use IG from here.
+# IG:     randum number generator seed
+# TEMPI:  initial temperature
+#
+#  NTIVEL  NTISHK  NTINHC
+        0       0       0
+#  NTISHI  NTIRTC  NTICOM
+        0       0       0
+#  NTISTI
+        0
+#      IG   TEMPI
+   210185     0.0
 END
 STEP
 #   NSTLIM         T        DT

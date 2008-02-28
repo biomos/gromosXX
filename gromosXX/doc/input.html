@@ -10,7 +10,7 @@
 <ul>
 <li><a href="#title">TITLE</a></li>
 <li><a href="#system">SYSTEM</a></li>
-<li><a href="#start">START</a></li>
+<li><a href="#initialise">INITIALISE</a></li>
 <li><a href="#step">STEP</a></li>
 <li><a href="#stochastic">STOCHASTIC</a></li>
 <li><a href="#minimise">MINIMISE</a></li>
@@ -62,27 +62,44 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="start">START</a></h2>
+<h2><a name="initialise">INITIALISE</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-START
-#  NTX
-#       read X
-#              set V to zero if TEMPI=0.0
-#                      read V
-#    1  yes    yes     no
-#    2  yes    no      yes
+INITIALISE
+# NTIVEL: 0,1 controls generation of initial velocities.
+#         0: read from configuration (default)
+#         1: generate from Maxell distribution at temperature TEMPI
+# NTISHK: 0..3 controls shaking of initial configuration
+#         0: no intial SHAKE (default)
+#         1: initial SHAKE on coordinates only
+#         2: initial SHAKE on velocities only
+#         3: initial SHAKE on coordinates and velocities
+# NTINHC: 0,1 controls generation of initial Nose-Hoover chain variables
+#         0: read from configuration (default)
+#         1: reset variables to zero.
+# NTISHI: 0,1 unsed in md++
+# NTIRTC: 0,1 controls initial setting of positions and orientations for
+#             roto-translational constraints
+#         0: read from configuration (default)
+#         1: reset based on initial configuraion of startup file
+# NTICOM: 0,1 controls initial removal of COM motion
+#         0: no initial system COM motion removal (default)
+#         1: initial COM translation is removed
+#         2: initial COM rotation is removed
+# NTISTI: 0,1 controls generation of stochastic integrals
+#         0: read stochastic integrals and IG from configuration (default)
+#         1: set stochastic integrals to zero and use IG from here.
+# IG:     randum number generator seed
+# TEMPI:  initial temperature
 #
-#  INIT
-#     shake X
-#            shake V
-#	               centre of mass motion removal if NTCM=1
-#     1   yes    yes   yes
-#     2    no    yes   yes
-#     3    no     no   yes
-#     4    no     no    no
-#      NTX     INIT      IG     TEMPI      HEAT  NTXO   BOLTZ
-         1        1  210185       0.0   0.00000     1   8.31441E-3
+#  NTIVEL  NTISHK  NTINHC
+        0       0       0
+#  NTISHI  NTIRTC  NTICOM
+        0       0       0
+#  NTISTI
+        0
+#      IG   TEMPI
+        0     0.0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

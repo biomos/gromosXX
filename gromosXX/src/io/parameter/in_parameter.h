@@ -106,6 +106,11 @@ namespace io {
      * read START block.
      */
     void read_START(simulation::Parameter &param, std::ostream & os = std::cout);
+    
+    /**
+     * read INITIALISE block.
+     */
+    void read_INITIALISE(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read CENTREOFMASS block.

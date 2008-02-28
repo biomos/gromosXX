@@ -47,7 +47,9 @@ void io::In_Parameter::read(simulation::Parameter &param,
 
   read_MINIMISE(param);
   read_SYSTEM(param);
-  read_START(param); // and CENTREOFMASS
+  read_CENTREOFMASS(param); // has to be read before START/INITIALISE
+  read_START(param); 
+  read_INITIALISE(param);
   read_STEP(param);
   read_BOUNDARY(param);
   read_REPLICA03(param); // has to be read in before MULTIBATH
@@ -1155,68 +1157,138 @@ void io::In_Parameter::read_START(simulation::Parameter &param,
   
   buffer = m_block["START"];
   
+  if (buffer.size()){
+    io::messages.add("There is no START block in this version. Use the "
+                     "INITIALISE block instead.", "In_Parameter",
+                     io::message::error);
+  }
+}
+
+/**
+ * read INITIALISE block.
+ */
+void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
+				  std::ostream & os)
+{
+  DEBUG(8, "read INITIALISE");
+
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["INITIALISE"];
+  
   if (!buffer.size()){
-    io::messages.add("no START block", "In_Parameter", io::message::error);
+    io::messages.add("no INITIALISE block", "In_Parameter", io::message::error);
     return;
   }
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
-  block_read.insert("START");
+  block_read.insert("INITIALISE");
 
-  int ntx, init, ntx0;
-  double heat;
-  
-  _lineStream >> ntx >> init 
+  int ntivel, ntishk, ntinhc, ntishi, ntirtc, nticom, ntisti;
+  _lineStream >> ntivel >> ntishk >> ntinhc 
+              >> ntishi >> ntirtc >> nticom >> ntisti
 	      >> param.start.ig 
-	      >> param.start.tempi >> heat >> ntx0 
-	      >> math::k_Boltzmann;
+	      >> param.start.tempi;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in START block",
+    io::messages.add("bad line in INITIALISE block",
 		     "In_Parameter", io::message::error);
   
-  read_CENTREOFMASS(param);
+  // generation of initial velocities
+  switch(ntivel) {
+    case 0 : param.start.generate_velocities = false; break;
+    case 1 : param.start.generate_velocities = true; break;
+    default : io::messages.add("Error in INITIALISE block: NTIVEL must be 0 or 1",
+		     "In_Parameter", io::message::error);
+  }
   
-  if(ntx==1 || param.start.tempi)
-    param.start.generate_velocities = true;
-  else
-    param.start.generate_velocities = false;
-  
-  switch(init){
-    case 1:
+  // controls initial SHAKE
+  switch(ntishk) {
+    case 0 : // no initial SHAKE
+      param.start.shake_pos=false;
+      param.start.shake_vel=false;
+      break;
+    case 1 : // SHAKE coordinates
+      param.start.shake_pos=true;
+      param.start.shake_vel=false;
+      break;
+    case 2 : // SHAKE velocities
+      param.start.shake_pos=false;
+      param.start.shake_vel=true;
+      break;
+    case 3 : // SHAKE coordinates & velocities
       param.start.shake_pos=true;
       param.start.shake_vel=true;
       break;
-    case 2:
-      param.start.shake_pos=false;
-      param.start.shake_vel=true;
-      break;
-    case 3:
-      param.start.shake_pos=false;
-      param.start.shake_vel=false;
-      break;
-    case 4:
-      param.start.shake_pos=false;
-      param.start.shake_vel=false;
-      param.start.remove_com=false;
-      break;
-    default:
-      io::messages.add("Illegal option for init in START block",
-		       "In_Parameter", io::message::error); 
+    default: io::messages.add("Error in INITIALISE block: NTISHK must be 0 to 3",
+		     "In_Parameter", io::message::error);
   }
+  
+  // controls reading of Nose-Hoover chain variables: not implemented.
+  switch(ntinhc) {
+    case 0 : param.start.read_nosehoover_chains = true; break;
+    case 1 : param.start.read_nosehoover_chains = false; break; // reset them
+    default : io::messages.add("Error in INITIALISE block: NTINHC must be 0 or 1",
+		     "In_Parameter", io::message::error);
+  }
+  
+  io::messages.add("INITIALISE block: NTINHC is ignored.",
+		   "In_Parameter", io::message::notice);
+  
+  // only for lattice sum. ignored without warning
+  switch(ntishi) { 
+    case 0: break;
+    case 1: break;
+    default : io::messages.add("Error in INITIALISE block: NTISHI must be 0 or 1",
+		     "In_Parameter", io::message::error);
+  }
+  
+  // controls reading of restart data for roto-translational constraints:
+  // not implemented.
+  switch(ntirtc) {
+    case 0: param.start.read_rottrans = true; break;
+    case 1: param.start.read_rottrans = false; break;
+    default : io::messages.add("Error in INITIALISE block: NTIRTC must be 0 or 1",
+		     "In_Parameter", io::message::error);
+  }
+  
+  io::messages.add("INITIALISE block: NTIRTC is ignored.",
+		     "In_Parameter", io::message::notice);
+  
+  // controls removal of COM translation and rotation.
+  switch(nticom) {
+    case 0:
+      param.start.remove_com_rotation = false; 
+      param.start.remove_com_translation = false;
+      break;
+    case 1: 
+      param.start.remove_com_rotation = false; 
+      param.start.remove_com_translation = true;
+      break;
+    case 2:
+      param.start.remove_com_rotation = true; 
+      param.start.remove_com_translation = true;
+      break;
+    default : io::messages.add("Error in INITIALISE block: NTICOM must be 0 to 2",
+		     "In_Parameter", io::message::error);
+  }
+  
+  // controls reading of stochastic integrals: not implemented.
+  switch(ntisti) {
+    case 0: param.start.read_stochastic = true; break;
+    case 1: param.start.read_stochastic = false; break;
+    default : io::messages.add("Error in INITIALISE block: NTISTI must be 0 or 1",
+		     "In_Parameter", io::message::error);
+  }
+  
+  io::messages.add("INITIALISE block: NTISTI is ignored.",
+		     "In_Parameter", io::message::notice);
+  
   if(param.start.tempi <0)
     io::messages.add("Illegal value for TEMPI in START block (>=0)",
-		     "In_Parameter", io::message::error);
-  if(heat)
-    io::messages.add("HEAT != 0 is not supported in START block",
-		     "In_Parameter", io::message::error);
-  if(ntx0!=1)
-    io::messages.add("NTX0 != 1 is not supported in START block",
-		     "In_Parameter", io::message::error);
-  if(math::k_Boltzmann <=0)
-    io::messages.add("BOLTZ <=0 is not appreciated in START block",
 		     "In_Parameter", io::message::error);
 }
 /**
@@ -1259,8 +1331,6 @@ void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param,
   if (_lineStream.fail())
     io::messages.add("bad line in CENTREOFMASS block",
 		     "In_Parameter", io::message::error);
-  if(ntcm!=0) 
-    param.start.remove_com=true;
   
   if(param.centreofmass.ndfmin < 0)
     io::messages.add("Illegal value for NDFMIN in CENTREOFMASS block (>=0)",
