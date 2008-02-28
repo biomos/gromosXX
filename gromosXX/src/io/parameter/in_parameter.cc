@@ -1730,7 +1730,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
       param.multibath.found_tcouple=true;
       DEBUG(11, "TCOUPLE present");
       
-      io::messages.add("The TCOUPLE block is replaced by the MULTISTEP block.",
+      io::messages.add("The TCOUPLE block is replaced by the MULTIBATH block.",
 			 "In_Parameter", io::message::warning);
       
       _lineStream.clear();
