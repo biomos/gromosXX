@@ -1769,25 +1769,54 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
+  int ntpors;
   _lineStream >> param.posrest.posrest
-	      >> param.posrest.force_constant
-	      >> param.posrest.nrdrx;
+              >> param.posrest.nrdrx
+              >> ntpors
+	      >> param.posrest.force_constant;
   
   if (_lineStream.fail())
     io::messages.add("bad line in POSREST block",
 		     "In_Parameter", io::message::error);
   
-  if(param.posrest.posrest == 3) {
-    if (param.pcouple.scale != math::pcouple_off){
-      io::messages.add("Position constraining together with pressure coupling not allowed",
-		       "In_Parameter",
-		       io::message::error);
-    }
+  if (param.posrest.posrest < 0 || param.posrest.posrest > 3) {
+    io::messages.add("Error in POSREST block: NTPOR must be 0 to 3.",
+		     "In_Parameter", io::message::error);    
+  }
+  
+  if (param.posrest.nrdrx < 0 || param.posrest.nrdrx > 3) {
+    io::messages.add("Error in POSREST block: NTPORB must be 0 or 1.",
+		     "In_Parameter", io::message::error);    
   }
 
+  switch(ntpors) {
+    case 0 :
+      param.posrest.scale_reference_positions=false;
+      break;
+    case 1 :
+      param.posrest.scale_reference_positions=true;
+      break;
+    default:
+      param.posrest.scale_reference_positions=false;
+      io::messages.add("Error in POSREST block: NTPORS must be 0 or 1.",
+		       "In_Parameter", io::message::error);          
+  }
+  
+  if(param.posrest.posrest == 3 && param.pcouple.scale != math::pcouple_off &&
+     param.posrest.scale_reference_positions != true) {
+    io::messages.add("Error in POSREST block: Position constraining together "
+                     "with pressure coupling only allowed if reference positions"
+                     " are scaled (NTPORS = 1).",
+                     "In_Parameter", io::message::error);
+  }
+  
+  if(param.posrest.posrest == 2 && param.posrest.nrdrx == false) {
+    io::messages.add("Error in POSREST block: NTPOR = 2 requires NTPORB = 1",
+                     "In_Parameter", io::message::error);
+  }
+  
   if(param.posrest.force_constant <0)
-    io::messages.add("Illegal value for CHO"
-		     " in POSREST block (>=0)",
+    io::messages.add("Error in POSREST block: Illegal value for CPOR.",
 		     "In_Parameter", io::message::error);
 
 } // POSREST

@@ -176,13 +176,25 @@ LONGRANGE
 END
 #
 POSREST
-#     values for NTR
-#     0: no position re(con)straining
-#     1: use CHO
-#     2: use CHO/ ATOMIC B-FACTORS
-#     3: position constraining
-#      NTR       CHO   NRDRX
-         0     1.0E1       0
+#    NTPOR 0..3 controls atom positions re(con)straining.
+#          0: no position re(con)straints.
+#          1: restraining with force constant CPOR
+#          2: restraining with force constant CPOR wieghted by
+#             atomic B-factors
+#          3: constraining
+#   NTPORB 0,1 controls reading of reference positions and
+#              B-factors
+#          0: read reference positions from startup file.
+#          1: read reference positions and B-factors from
+#             special file
+#   NTPORS 0,1 controls scaling of reference positions upon
+#              pressure scaling
+#          0: do not scale reference positions
+#          1: scale reference positions
+#     CPOR >= 0 position restraining force constant
+#
+#   NTPOR  NTPORB  NTPORS    CPOR
+        0       0       0   1.0E1
 END
 #
 #DISTREST

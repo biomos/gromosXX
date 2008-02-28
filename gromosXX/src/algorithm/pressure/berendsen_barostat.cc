@@ -64,6 +64,15 @@ int algorithm::Berendsen_Barostat
 	for(unsigned int i=0; i<pos.size(); ++i)
 	  pos(i) = mu * pos(i);
 
+        // scale the reference positions
+        if (sim.param().posrest.scale_reference_positions){
+          std::vector<topology::position_restraint_struct>::iterator
+              it = topo.position_restraints().begin(),
+              to = topo.position_restraints().end();
+          for(; it != to; ++it) 
+            it->pos *= mu;
+        }
+
 	break;
       }
     case math::pcouple_anisotropic:
@@ -93,7 +102,17 @@ int algorithm::Berendsen_Barostat
 	for(unsigned int i=0; i<pos.size(); ++i)
 	  for(int j=0; j<3; ++j)
 	    pos(i)(j) *= mu(j);
-	
+        
+	// scale the reference positions
+        if (sim.param().posrest.scale_reference_positions){
+          std::vector<topology::position_restraint_struct>::iterator
+              it = topo.position_restraints().begin(),
+              to = topo.position_restraints().end();
+          for(; it != to; ++it) 
+            for(int j=0; j<3; ++j)
+              it->pos(j) *= mu(j);
+        }
+        
 	break;
       }
     case math::pcouple_full_anisotropic:
@@ -118,6 +137,15 @@ int algorithm::Berendsen_Barostat
 	// scale the positions
 	for(unsigned int i=0; i<pos.size(); ++i)
 	  pos(i) = math::product(mu, pos(i));
+        
+        // scale the reference positions
+        if (sim.param().posrest.scale_reference_positions){
+          std::vector<topology::position_restraint_struct>::iterator
+              it = topo.position_restraints().begin(),
+              to = topo.position_restraints().end();
+          for(; it != to; ++it) 
+            it->pos = math::product(mu, it->pos);
+        }
 
       }
     default:

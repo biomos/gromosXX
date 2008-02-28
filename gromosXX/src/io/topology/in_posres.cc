@@ -178,7 +178,11 @@ io::In_Posres::read(topology::Topology& topo,
 	break;
       case 1:
 	os << "\tPosition restraints ON\n"
-	   << "\t\trestraining to following positions:\n";
+	   << "\t\trestraining to ";
+        if (sim.param().posrest.nrdrx) 
+          os <<  "the following positions:\n";
+        else
+	  os << "their initial positions:\n";
 	break;
       case 2:
 	os << "\tPosition restraints ON\n"
@@ -195,6 +199,7 @@ io::In_Posres::read(topology::Topology& topo,
 	break;
     }
     
+    
     os << std::setw(10) << "SEQ"
        << std::setw(20) << "POS(X)"
        << std::setw(20) << "POS(Y)"
@@ -209,6 +214,10 @@ io::In_Posres::read(topology::Topology& topo,
 	 << std::setw(20) << posres_it->pos(2)
 	 << std::setw(15) << posres_it->bfactor
 	 << "\n";
+    
+    if (sim.param().posrest.scale_reference_positions)
+      os << "\n\tReference positions are scaled upon pressure scaling.\n";
+    
     os << "END\n";
   }
   

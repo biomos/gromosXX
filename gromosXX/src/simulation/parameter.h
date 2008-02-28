@@ -804,7 +804,8 @@ namespace simulation
        * - nrdrx true
        * - force_constant 10000
        */
-      posrest_struct() : posrest(0), nrdrx(true), force_constant(1E4) {}
+      posrest_struct() : posrest(0), nrdrx(true), force_constant(1E4),
+                         scale_reference_positions(false) {}
       
       /**
        * posrest
@@ -815,9 +816,13 @@ namespace simulation
        */
       bool nrdrx;
       /**
-       * CHO
+       * CPOR
        */
       double force_constant;
+      /**
+       * scale reference positions.
+       */
+      bool scale_reference_positions;
     } /** Position restraint parameters */ posrest;
 
     /**
