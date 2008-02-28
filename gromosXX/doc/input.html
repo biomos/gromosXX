@@ -27,7 +27,7 @@
 <li><a href="#pairlist">PAIRLIST</a></li>
 <li><a href="#longrange">LONGRANGE</a></li>
 <li><a href="#posrest">POSREST</a></li>
-<li><a href="#perturb">PERTURBATION</a></li>
+<li><a href="#perturb">PERTURB</a></li>
 <li><a href="#jval">J-Value</a></li>
 <li><a href="#pscale">Periodic Scaling</a></li>
 <li><a href="#replica">Replica Exchange</a></li>
@@ -418,32 +418,32 @@ Example <a href="posres.html">Position Restraints</a> file
 new format:
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTURB03
-#	NTG:
-#			on	perturbation on 
-#				(nonbonded: all atom pairs involving a perturbed atom)
-#			off	perturbation off
-#			scaled	nonbonded: perturbation on for all atom pairs 
-#					   with a scaled interaction,
-#					   otherwise off
-#				bonded: normal perturbation on
+PERTURB
+#    NTG: 0..3 controls use of free-energy calculation.
+#         0: no free-energy calculation (default)
+#         1: calculate dH/dRLAM
+#       2-3: not implemented
+#  NRDGL: 0,1 controls reading of initial value for RLAM.
+#         0: use initial RLAM parameter from PERTURB block
+#         1: read from configuration
+#   RLAM: 0.0..1.0 initial value for lambda
+#  DLAMT: >= 0.0 rate of lambda increase in time.
+#    RMU: 0.0..1.0 not implemented
+#   DMUT: >= 0.0 not implemented
+# ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter
+#  ALPHC: >= 0.0 Coulomb-RF soft-core parameter
+#   NLAM: > 0 power dependence of lambda coupling
+#    MMU: > 0 not implemented
+# NSCALE: 0..2 controls use of interaction scaling
+#         0: no interaction scaling
+#         1: interaction scaling
+#         2: perturbation for all atom pairs with scaled
+#            interactions. No perturbation for others.
 #
-#       RLAM            lambda
-#
-#       DLAMT           delta lambda (1/ps) for slow growth simulations
-#
-#       ALJ             alpha lj (weighted by perturbation topology)
-#
-#       ACRF            alpha crf (weighted by perturbation topology)
-#
-#	SCALING:
-#			on (activate interaction scaling)
-#  			off (deactivate interaction scaling)
-#			the scaling information is in the
-#			perturbation topology.
-#
-#	NTG	RLAM	DLAMT	NLAM    ALJ   ACRF    SCALING
-	on	0.5	1.0	1	1.0    1.0    off
+#     NTG   NRDGL    RLAM   DLAMT     RMU    DMUT
+        0       0     0.0     0.0     0.0     0.0
+#  ALPHLJ   ALPHC    NLAM     MMU  NSCALE
+      0.0     0.0       1       0       0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

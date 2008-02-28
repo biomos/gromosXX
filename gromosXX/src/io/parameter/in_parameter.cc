@@ -837,124 +837,125 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
   std::vector<std::string> buffer;
   std::string s;
   
-  // try the new PERTURB03 block
   buffer = m_block["PERTURB03"];
   if (buffer.size()){
-
     block_read.insert("PERTURB03");
-
-
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-
-    std::string b, s1, s2;
-    _lineStream >> s1 
-		>> param.perturbation.lambda
-		>> param.perturbation.dlamt
-		>> param.perturbation.lambda_exponent
-		>> param.perturbation.soft_vdw
-		>> param.perturbation.soft_crf
-		>> s2;
     
-    if (_lineStream.fail())
-      io::messages.add("bad line in PERTURB block",
-		       "In_Parameter", io::message::error);
-    
-    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
-    std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
-    
-    if (s1 == "on"){
-      param.perturbation.perturbation = true;
-      param.perturbation.scaled_only = false;
-    }
-    else if (s1 == "off") param.perturbation.perturbation = false;
-    else if (s1 == "scaled") {
-      param.perturbation.perturbation = true;
-      param.perturbation.scaled_only = true;
-    }
-    else {
-      std::istringstream css;
-      css.str(s1);
-      
-      // param.perturbation.perturbation = (atoi(s1.c_str())==1);
-      param.perturbation.scaled_only = false;
-      css >> param.perturbation.perturbation;
-      if(css.fail()){
-	io::messages.add("bad value for NTG in PERTURB block:"+s1+"\n"
-			 "on, scaled, off, 0, 1",
-			 "In_Parameter", io::message::error);
-	param.perturbation.perturbation=false;
-	return;
-      }
-    }
-    
-    if (s2 == "on") param.perturbation.scaling = true;
-    else if (s2 == "off") param.perturbation.scaling = false;
-    else {
-      // param.perturbation.scaling = (atoi(s2.c_str())==1);
-      std::istringstream css(s2);
-      css >> param.perturbation.scaling;
-      
-      if(css.fail()){
-	io::messages.add("bad value for SCALING in PERTURB block\n"
-			 "on,off,0,1",
-			 "In_Parameter", io::message::error);
-	param.perturbation.scaling=false;
-	return;
-      }
-    }
-    if(param.perturbation.scaled_only && !param.perturbation.scaling){
-      io::messages.add("inconsistent input: perturbing only scaled interactions, but scaling not turned on",
-		       "In_Parameter", io::message::error);
-    }
+    io::messages.add("The PERTURB03 block was renamed to PERTURB.",
+		     "In_Parameter", io::message::error);
   }
-  else{
-    // a common PERTURB block...
-    buffer = m_block["PERTURB"];
-    if (!buffer.size()){
-      return;
-    }
+  
+  buffer = m_block["PERTURB"];
+  if (!buffer.size()) 
+    return;
 
-    block_read.insert("PERTURB");
+  block_read.insert("PERTURB");
 
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
-    int ntg, nrdgl;
-    double dmu, dmut;
-    double mmu;
-    
-    _lineStream >> ntg >> nrdgl 
-		>> param.perturbation.lambda 
-		>> param.perturbation.dlamt 
-		>> dmu >> dmut
-		>> param.perturbation.soft_vdw
-		>> param.perturbation.soft_crf
-		>> param.perturbation.lambda_exponent
-		>> mmu;
-    
-    param.perturbation.scaling = false;
-    param.perturbation.scaled_only = false;
-    
-    if (_lineStream.fail())
-      io::messages.add("bad line in PERTURB block",
-		       "In_Parameter", io::message::error);
-    
-    if (nrdgl)
-      io::messages.add("PERTURB: nrdgl != 0 not allowed",
-		       "In_Parameter", io::message::error);
-    
-    if (ntg != 0 && ntg != 1)
-      io::messages.add("PERTURB: only ntg = 0 or ntg = 1 allowed",
-		       "In_Parameter", io::message::error);
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
-    param.perturbation.perturbation=(ntg!=0);
+  std::string b, s1, s2;
+  int ntg, scale;
+  int nrdgl;
+  param.perturbation;
+  double mu, dmut, mexp;
+  _lineStream >> ntg 
+              >> nrdgl
+              >> param.perturbation.lambda
+              >> param.perturbation.dlamt
+              >> mu >> dmut
+              >> param.perturbation.soft_vdw
+              >> param.perturbation.soft_crf
+              >> param.perturbation.lambda_exponent
+              >> mexp
+              >> scale;
     
+  if (_lineStream.fail())
+    io::messages.add("bad line in PERTURB block",
+                     "In_Parameter", io::message::error);
+    
+  switch(ntg) {
+    case 0 :
+      param.perturbation.perturbation = false;
+      break;
+    case 1 :
+      param.perturbation.perturbation = true;
+      break;
+    case 2 :
+    case 3 :
+      io::messages.add("Error in PERTURB block: NTG 2/3 not implemented.",
+                       "In_Parameter", io::message::error);
+      break;
+    default:
+      io::messages.add("Error in PERTURB block: NTG must be 0 or 1.",
+                       "In_Parameter", io::message::error);
+  }
+  
+  switch(nrdgl) {
+    case 0 : // use from input file
+      param.perturbation.read_initial = false;
+      break;
+    case 1 : // use from configuration
+      param.perturbation.read_initial = true;
+      break;
+    default :
+      io::messages.add("Error in PERTURB block: NRDGL must be 0 or 1.",
+                       "In_Parameter", io::message::error);
+  }
+  
+  if (param.perturbation.read_initial) {
+    io::messages.add("Error in PERTURB block: NRDGL != 0 not implemented.",
+                     "In_Parameter", io::message::error);    
+  }
+  
+  if (param.perturbation.lambda < 0.0 ||
+      param.perturbation.lambda > 1.0) {
+    io::messages.add("Error in PERTURB block: RLAM must be 0.0 to 1.0.",
+                     "In_Parameter", io::message::error);        
+  }
+  
+  if (param.perturbation.dlamt < 0.0){
+    io::messages.add("Error in PERTURB block: DLAMT must be >= 0.",
+                     "In_Parameter", io::message::error);
   }
   
   if (param.perturbation.lambda_exponent<=0){
-    io::messages.add("PERTURB: nlam must be > 0",
-		     "In_Parameter", io::message::error);
+    io::messages.add("Error in PERTURB block: NLAM must be > 0.",
+                     "In_Parameter", io::message::error);
+  }
+  
+  if (mu != 0.0 || dmut != 0.0 || dmut != 0.0) {
+    io::messages.add("PERTURB block: RMU and related values are ignored.",
+                     "In_Parameter", io::message::warning);    
+  }
+  
+  if (param.perturbation.soft_vdw < 0.0){
+    io::messages.add("Error in PERTURB block: ALPHLJ must be >= 0.",
+                     "In_Parameter", io::message::error);
+  }
+  
+  if (param.perturbation.soft_vdw < 0.0){
+    io::messages.add("Error in PERTURB block: ALPHC must be >= 0.",
+                     "In_Parameter", io::message::error);
+  }
+    
+  switch(scale) {
+    case 0 : // no scaling
+      param.perturbation.scaling = false;
+      param.perturbation.scaled_only = false;
+      break;
+    case 1 : // scaling on
+      param.perturbation.scaling = true;
+      param.perturbation.scaled_only = false;
+      break;
+    case 2 : // scaled only
+      param.perturbation.scaling = true;
+      param.perturbation.scaled_only = true;
+      break;
+    default :
+      io::messages.add("Error in PERTURB block: NSCALE must be 0 to 2.",
+                       "In_Parameter", io::message::error);
   }
 }
 

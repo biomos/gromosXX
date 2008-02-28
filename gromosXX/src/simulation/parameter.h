@@ -932,7 +932,8 @@ namespace simulation
        * - soft_lj 0.0
        * - soft_crf 0.0
        */
-      perturb_struct() : perturbation(false), lambda(0), lambda_exponent(1),
+      perturb_struct() : perturbation(false), read_initial(false), 
+                         lambda(0), lambda_exponent(1),
 			 dlamt(0), scaling(false), scaled_only(false),
 			 soft_vdw(0.0), soft_crf(0.0) {}
       
@@ -940,6 +941,10 @@ namespace simulation
        * perturbation?
        */
       bool perturbation;
+      /**
+       * read initial lambda from configuration
+       */
+      bool read_initial;
       /**
        * lambda
        */
