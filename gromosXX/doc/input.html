@@ -599,13 +599,14 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 CGRAIN
-#       level
-#	0   atomistic (off)
-#	1   coarse-grained (on)
-#	2   multi-grained (mixed)
-        1
-#	epsilon
-        20
+# NTCGRAN 0..2 coarse grain selection
+#         0: atomistic (off)
+#         1: coarse-grained (on)
+#         2: multi-grained (mixed)
+#     EPS >= 0.0 dielectric constant for coarse grained coulombic
+#            interaction
+# NTCGRAN     EPS
+        1       0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

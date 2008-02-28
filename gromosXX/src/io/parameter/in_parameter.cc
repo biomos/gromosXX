@@ -1553,22 +1553,33 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> param.cgrain.level >> param.cgrain.EPS;
-
-    if (param.cgrain.level == 1 || param.cgrain.level == 2){
-      param.force.interaction_function = simulation::cgrain_func;
-      io::messages.add("Using the Coarse Grained model (EXPERIMENTAL)",
-	  	     "In_Parameter", 
-		     io::message::warning);
-    }
-    else if (param.cgrain.level == 0)
-      {}
-    else
-      io::messages.add("bad line in CGRAIN block",
-                       "In_Parameter", io::message::error);
+    int ntcgran;
+    _lineStream >> ntcgran >> param.cgrain.EPS;
     
     if (_lineStream.fail())
       io::messages.add("bad line in CGRAIN block",
+                       "In_Parameter", io::message::error);
+
+    switch(ntcgran) {
+      case 0 :
+        param.cgrain.level = 0;
+        break;
+      case 1 :
+        param.cgrain.level = 1;
+        param.force.interaction_function = simulation::cgrain_func;
+        break;
+      case 2 :
+        param.cgrain.level = 2;
+        param.force.interaction_function = simulation::cgrain_func;
+        break;
+      default :
+        param.cgrain.level = 0;
+        io::messages.add("Error in CGRAIN block: NTCGRAN must be 0 to 2.",
+                         "In_Parameter", io::message::error);       
+    }
+    
+    if (param.cgrain.EPS < 0)
+      io::messages.add("Error in CGRAIN block: EPS must be >= 0.0.",
                        "In_Parameter", io::message::error);
     
   }
