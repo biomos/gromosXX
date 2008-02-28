@@ -619,10 +619,12 @@ ROTTRANS
 # use either centre of mass removal or roto-translational constraints
 # not both!
 #
-#  RTC  : on (1), off (0)
-#  last : last atom to be roto-translationally constrained
-#  RTC    last
-     1    100
+#     RTC: 0,1 controls roto-translational constraints
+#          0 don't use roto-translational constraints
+#          1 use roto-translational constraints
+# RTCLAST: last atom to be roto-translationally constrained
+#     RTC RTCLAST
+        0       0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

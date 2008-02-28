@@ -862,7 +862,6 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
   std::string b, s1, s2;
   int ntg, scale;
   int nrdgl;
-  param.perturbation;
   double mu, dmut, mexp;
   _lineStream >> ntg 
               >> nrdgl
@@ -2173,23 +2172,32 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param,
   buffer = m_block["ROTTRANS"];
 
   if (buffer.size()){
-    int i;
-
     block_read.insert("ROTTRANS");
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> i >> param.rottrans.last;
+    int rtc;
+    _lineStream >> rtc >> param.rottrans.last;
     
     if (_lineStream.fail())
       io::messages.add("bad line in ROTTRANS block",
 		       "In_Parameter", io::message::error);
 
-    param.rottrans.rottrans = (i != 0);
+    switch(rtc) {
+      case 0 :
+        param.rottrans.rottrans = false;
+        break;
+      case 1 :
+        param.rottrans.rottrans = true;
+        break;
+      default :
+      io::messages.add("Error in ROTTRANS block: RTC must be 0 or 1",
+                       "In_Parameter", io::message::error);
+    }
 
-    if (param.rottrans.rottrans && param.rottrans.last <= 0)
-      io::messages.add("last atom <= 0 in ROTTRANS block not allowed",
+    if (param.rottrans.last <= 0)
+      io::messages.add("Error in ROTTRANS block: RTCLAST must be > 0.",
 		       "In_Parameter", io::message::error);
   }
 }
