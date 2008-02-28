@@ -2462,7 +2462,6 @@ void io::In_Parameter::read_INTEGRATE(simulation::Parameter & param,
   std::string s;
   
   buffer = m_block["INTEGRATE"];
-  int i;
   
   if (buffer.size()){
 
@@ -2471,13 +2470,25 @@ void io::In_Parameter::read_INTEGRATE(simulation::Parameter & param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    _lineStream >> i;
-    param.integrate.method = simulation::integrate_enum(i);
+    int nint;
+    _lineStream >> nint;
     
     if (_lineStream.fail()){
       io::messages.add("bad line in INTEGRATE block",
 		       "In_Parameter", io::message::error);
       
+    }
+    
+    switch(nint) {
+      case 0 :
+        param.integrate.method = simulation::integrate_off;
+        break;
+      case 1 :
+        param.integrate.method = simulation::integrate_leap_frog;
+        break;
+      default :
+        io::messages.add("Error in INTEGRATE block: NINT must be 0 or 1",
+                         "In_Parameter", io::message::error);        
     }
   }
 }
