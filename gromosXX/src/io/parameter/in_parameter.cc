@@ -68,7 +68,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_DIHREST(param); // needs to be called after CONSTRAINT!
   read_PERTURB(param);
   read_JVALUE(param);
-  read_PSCALE(param);
+  read_PERSCALE(param);
   read_ROTTRANS(param);
   read_INNERLOOP(param);
   read_MULTICELL(param);
@@ -2097,65 +2097,80 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
 } // JVALUE
 
 /**
- * read the PSCALE block.
+ * read the PERSCALE block.
  */
-void io::In_Parameter::read_PSCALE(simulation::Parameter &param,
+void io::In_Parameter::read_PERSCALE(simulation::Parameter &param,
 				   std::ostream & os)
 {
-  DEBUG(8, "read PSCALE");
+  DEBUG(8, "read PERSCALE");
 
   std::vector<std::string> buffer;
   std::string s;
   
   buffer = m_block["PSCALE"];
+  if (buffer.size()) {
+    block_read.insert("PSCALE"); 
+    io::messages.add("The PSCALE block was renamed to PERSCALE.", "In_Parameter",
+                     io::message::error);
+  }
+  
+  buffer = m_block["PERSCALE"];
   if (buffer.size()){
 
-    block_read.insert("PSCALE");
+    block_read.insert("PERSCALE");
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
     std::string s1;
-    _lineStream >> s1;
-    
+    int read;
+    _lineStream >> s1
+                >> param.pscale.KDIH >> param.pscale.KJ 
+                >> param.pscale.T >> param.pscale.difference
+		>> param.pscale.ratio >> read;
     if (_lineStream.fail()){
-      io::messages.add("bad line in PSCALE block",
+      io::messages.add("bad line in PERSCALE block",
 		       "In_Parameter", io::message::error);
       return;
     }
     
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
     
-    if (s1 == "jrest"){
-
+    if (s1 == "jrest" || s1 == "1"){
       param.pscale.jrest = true;
-
-      _lineStream >> param.pscale.KDIH >> param.pscale.KJ 
-		  >> param.pscale.T >> param.pscale.difference
-		  >> param.pscale.ratio >> param.pscale.read_data;
-
-      if (_lineStream.fail())
-	io::messages.add("bad line in PSCALE block",
-			 "In_Parameter", io::message::error);
-      if (param.pscale.KDIH < 0.0)
-	io::messages.add("bad value for KDIH in PSCALE block (negative)",
-			 "In_Parameter", io::message::error);
-      if (param.pscale.KJ < 0.0)
-	io::messages.add("bad value for KJ in PSCALE block (negative)",
-			 "In_Parameter", io::message::error);
-      if (param.pscale.T < 0.0)
-	io::messages.add("bad value for T in PSCALE block (negative)",
-			 "In_Parameter", io::message::error);
-      if (param.pscale.difference < 0.0)
-	io::messages.add("bad value for difference in PSCALE block (negative)",
-			 "In_Parameter", io::message::error);
+    } else if(s1 == "off" || s1 == "0") {
+      param.pscale.jrest = false;
+    } else {
+      io::messages.add("Error in PERSCALE block: RESTYPE must be jrest or off.",
+		       "In_Parameter", io::message::error);     
     }
-    else{
-      io::messages.add("bad value for periodic scaling mode", "In_Parameter", io::message::error);
-      return;
+
+    if (param.pscale.KDIH < 0.0)
+      io::messages.add("Error in PERSCALE block: KDIH must be >= 0.0.",
+                       "In_Parameter", io::message::error);
+    if (param.pscale.KJ < 0.0)
+      io::messages.add("Error in PERSCALE block: KJ must be >= 0.0.",
+                       "In_Parameter", io::message::error);
+    if (param.pscale.T < 0.0)
+      io::messages.add("Error in PERSCALE block: T must be >= 0.0.",
+                       "In_Parameter", io::message::error);
+    if (param.pscale.difference < 0.0)
+      io::messages.add("Error in PERSCALE block: DIFF must be >= 0.0.",
+                       "In_Parameter", io::message::error);
+    
+    switch(read) {
+      case 0 :
+         param.pscale.read_data = false;
+         break;
+      case 1 :
+         param.pscale.read_data = true;
+         break;
+      default :
+      io::messages.add("Error in PERSCALE block: READ must be 0 or 1.",
+                       "In_Parameter", io::message::error);        
     }
   }
-} // PSCALE
+} // PERSCALE
 
 
 /**

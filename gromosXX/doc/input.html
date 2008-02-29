@@ -29,7 +29,7 @@
 <li><a href="#posrest">POSREST</a></li>
 <li><a href="#perturb">PERTURB</a></li>
 <li><a href="#jval">J-Value</a></li>
-<li><a href="#pscale">Periodic Scaling</a></li>
+<li><a href="#perscale">Periodic Scaling</a></li>
 <li><a href="#replica">Replica Exchange</a></li>
 <li><a href="#analyze">Analyze trajectory</a></li>
 <li><a href="#integrate">Integration method</a></li>
@@ -510,20 +510,31 @@ END
 </TABLE>
 Example <a href="jvalue.html">J-Value Restraints</a> file
 
-<h2><a name="pscale">PSCALE</a></h2>
+<h2><a name="perscale">PERSCALE</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PSCALE
-#       what kind of periodic scaling?
-#               JREST (based on J-Value restraints)
-        JREST
-#       parameters for J-Value restraints periodic scaling
-#       KDIH            maximum scaling factor for dihedral angle potential
-#       KJ                      maximum scaling factor for J-Value restraint potential
-#       T                       periode of cosine scaling function (ps)
-#       difference      minimum difference in J-Value to start a scaling period
-#       KDIH    KJ      T       difference      ratio   read
-        0.1     0.1     0.2     0.7             1.0     0
+PERSCALE
+# RESTYPE special energy term to which periodic scaling should
+#         be applied.
+#         off: don't apply periodic scaling
+#         jrest: apply periodic scaling to J-value restraints
+#
+# parameters for J-Value restraints periodic scaling
+#    KDIH >= 0 maximum scaling factor for dihedral angle potential
+#      KJ >= 0 maximum scaling factor for J-Value restraint potential
+#       T >= 0 period of cosine scaling function
+#    DIFF >= 0 minimum deviation from target value to start scaling
+#              period
+#   RATIO >= 0 minimum fraction of T that needs to be passed before
+#              starting a new scaling period
+#    READ 0,1 controls reading of scaling parameters
+#         0: reset scaling parameters
+#         1: read from configuration
+#
+# RESTYPE
+      off
+#    KDIH      KJ       T   DIFF    RATIO    READ
+      0.1     0.1     0.2    0.7      1.0       0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

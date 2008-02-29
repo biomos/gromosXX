@@ -153,9 +153,9 @@ namespace io {
     void read_JVALUE(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read PSCALE block.
+     * read PERSCALE block.
      */
-    void read_PSCALE(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_PERSCALE(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read ROTTRANS block.
