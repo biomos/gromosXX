@@ -539,38 +539,46 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="replica">REPLICA03</a></h2>
+<h2><a name="replica">REPLICA</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-REPLICA03
-#       number of replicas with different temperatures
-        10
-#       temperatures
-        300.0  320.0  340.0 360.0 380.0
-	400.0  420.0  440.0 460.0 480.0
-#	scale temperatures after exchange trial
-        1
-#	number of replicas with different lambdas
-        10
-#	lambdas
-	0.0    0.1    0.2   0.3   0.4
-	0.5    0.6    0.7   0.8	  0.9
-#       timesteps (for every lambda-replica)
-        0.002  0.001  0.001 0.001 0.002
-        0.003  0.002  0.001 0.001 0.002
-#	number of exchange trials
-        100
-#	equilibrate: no switching for first N trials
-#	useful if starting from identical structures
-	10
-#	number of runs per job
-#	(total number of runs = replicas * trials
-#        where replicas = T(replicas) * l(replicas)
-#        this example creates 100 replicas!)
-        1000
-#	write trajectory of all replicas on master
-#	every n trials
-	10
+REPLICA
+#     NRET >= 0 number of replica exchange temperatures
+#    RET() >= 0.0 temperature for earch replica
+# LRESCALE 0,1 controls temperature scaling
+#          0 don't scale temperatures after exchange trial
+#          1 scale temperatures after exchange trial
+#   NRELAM >= 0 number of replica exchange lambda values
+#  RELAM() >= 0.0 lambda value for each lambda-replica
+#   RETS() >= 0.0 timestep of each lambda-replica
+# NRETRIAL >= 0 number of overall exchange trials
+#  NREQUIL >= 0 number of exchange periods to equilibrate
+#               (disallow switches)
+#   NREJOB >= 0 number of simulations to run per slave job
+#   NREWRT >= 0 write trajectory of replica exchange master
+#               every NREWRT trials
+#   
+# NRET
+  10
+# RET(1..NRET)
+  300.0  320.0  340.0 360.0 380.0
+  400.0  420.0  440.0 460.0 480.0
+# LRESCALE
+  1
+# NRELAM
+  10
+# RELAM(1..NRELAM)
+  0.0    0.1    0.2   0.3   0.4
+  0.5    0.6    0.7   0.8   0.9
+# RETS(1..NRELAM)
+  0.002  0.001  0.001 0.001 0.002
+  0.003  0.002  0.001 0.001 0.002
+# NERTRIAL
+  100
+# NREQUIL
+  10
+# NREJOB  NREWRT
+  1000    10
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

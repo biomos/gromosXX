@@ -168,11 +168,6 @@ namespace io {
     void read_REPLICA(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read REPLICA03 block.
-     */
-    void read_REPLICA03(simulation::Parameter &param, std::ostream & os = std::cout);
-
-    /**
      * read INNERLOOP block.
      */
     void read_INNERLOOP(simulation::Parameter &param, std::ostream & os = std::cout);

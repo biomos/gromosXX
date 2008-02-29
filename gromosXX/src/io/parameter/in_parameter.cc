@@ -52,7 +52,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_INITIALISE(param);
   read_STEP(param);
   read_BOUNDARY(param);
-  read_REPLICA03(param); // has to be read in before MULTIBATH
+  read_REPLICA(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
   read_PCOUPLE(param);
   read_PRINT(param);
@@ -2260,12 +2260,12 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
 }
 
 /**
- * read the REPLICA03 block.
+ * read the REPLICA block.
  */
-void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
+void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
 				      std::ostream & os)
 {
-  DEBUG(8, "read REPLICA03");
+  DEBUG(8, "read REPLICA");
 
   std::vector<std::string> buffer;
   std::string s;
@@ -2273,60 +2273,135 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
   buffer = m_block["REPLICA03"];
 
   if (buffer.size()){
-
     block_read.insert("REPLICA03");
+    io::messages.add("The REPLICA03 block was renamed to REPLICA.",
+                     "In_Parameter", io::message::error);
+  }
+  
+  buffer = m_block["REPLICA"];
+  if (buffer.size()){
+    block_read.insert("REPLICA");
 
+    bool error = false;
+    
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
     _lineStream >> param.replica.num_T;
-    param.replica.temperature.resize(param.replica.num_T, 0.0);
+    
+    if (_lineStream.fail() || param.replica.num_T < 0) {
+      io::messages.add("Error in REPLICA block: NRET must be >= 0.",
+		       "In_Parameter", io::message::error);
+      error = true;
+    }
+    
+    if (!error)
+      param.replica.temperature.resize(param.replica.num_T, 0.0);
 
     for(int i=0; i<param.replica.num_T; ++i){
       _lineStream >> param.replica.temperature[i];
+      if (_lineStream.fail() || param.replica.temperature[i] < 0.0) {
+        std::ostringstream msg;
+        msg << "Error in REPLICA block: RET(" << i+1 << ") must be >= 0.0";
+        io::messages.add(msg.str(), "In_Parameter", io::message::error);
+        error = true;
+      }
     }
     
-    _lineStream >> param.replica.scale;
+    int scale;
+    _lineStream >> scale;
+    switch(scale) {
+      case 0 : 
+        param.replica.scale = false;
+        break;
+      case 1 :
+        param.replica.scale = true;
+        break;
+      default :
+       io::messages.add("Error in REPLICA block: LRSCALE must be 0 or 1",
+		       "In_Parameter", io::message::error); 
+       error = true;
+    }
 
-    if (_lineStream.fail()){
-      io::messages.add("bad line in REPLICA03 block (numT, T or scale)",
-		       "In_Parameter", io::message::error);
+    if (_lineStream.fail() || error){
       param.replica.num_T = 0;
       param.replica.num_l = 0;
 
       param.replica.temperature.clear();
       param.replica.lambda.clear();
-	  param.replica.dt.clear();
+      param.replica.dt.clear();
+      error = false;
     }
     
     _lineStream >> param.replica.num_l;
-    param.replica.lambda.resize(param.replica.num_l, 0.0);
-    param.replica.dt.resize(param.replica.num_l, 0.0);
+    
+    if (_lineStream.fail() || param.replica.num_l < 0) {
+      io::messages.add("Error in REPLICA block: NRELAM must be >= 0.",
+		       "In_Parameter", io::message::error);
+      error = true;
+    }
+    
+    if (!error) {
+      param.replica.lambda.resize(param.replica.num_l, 0.0);
+      param.replica.dt.resize(param.replica.num_l, 0.0);
+    }
     
     for(int i=0; i<param.replica.num_l; ++i){
       _lineStream >> param.replica.lambda[i];
+      if (_lineStream.fail() || param.replica.lambda[i] < 0.0) {
+        std::ostringstream msg;
+        msg << "Error in REPLICA block: RELAM(" << i+1 << ") must be >= 0.0";
+        io::messages.add(msg.str(), "In_Parameter", io::message::error);
+        error = true;
+      }
     }
     for(int i=0; i<param.replica.num_l; ++i){
       _lineStream >> param.replica.dt[i];
+      if (_lineStream.fail() || param.replica.dt[i] < 0.0) {
+        std::ostringstream msg;
+        msg << "Error in REPLICA block: RETS(" << i+1 << ") must be >= 0.0";
+        io::messages.add(msg.str(), "In_Parameter", io::message::error);
+        error = true;
+      }
     }
 
-    if (_lineStream.fail()){
-      io::messages.add("bad line in REPLICA03 block (numl, l or dt)",
-		       "In_Parameter", io::message::error);
+    if (_lineStream.fail() || error){
       param.replica.num_T = 0;
       param.replica.num_l = 0;
 
       param.replica.temperature.clear();
       param.replica.lambda.clear();
-	  param.replica.dt.clear();
+      param.replica.dt.clear();
+      error = false;
     }
-    _lineStream >> param.replica.trials;
-    _lineStream >> param.replica.equilibrate;
-    _lineStream >> param.replica.slave_runs;
-    _lineStream >> param.replica.write;
     
-    if (_lineStream.fail()){
-      io::messages.add("bad line in REPLICA03 block (trials, equi, slave or write)",
+    _lineStream >> param.replica.trials;
+    if (_lineStream.fail() || param.replica.trials < 0) {
+      io::messages.add("Error in REPLICA block: NRETRIAL must be >= 0.",
+		       "In_Parameter", io::message::error);
+      error = true;
+    }
+    _lineStream >> param.replica.equilibrate;
+    if (_lineStream.fail() || param.replica.equilibrate < 0) {
+      io::messages.add("Error in REPLICA block: NREQUIL must be >= 0.",
+		       "In_Parameter", io::message::error);
+      error = true;
+    }
+    _lineStream >> param.replica.slave_runs;
+    if (_lineStream.fail() || param.replica.slave_runs < 0) {
+      io::messages.add("Error in REPLICA block: NREJOB must be >= 0.",
+		       "In_Parameter", io::message::error);
+      error = true;
+    }
+    _lineStream >> param.replica.write;
+    if (_lineStream.fail() || param.replica.write < 0) {
+      io::messages.add("Error in REPLICA block: NREWRT must be >= 0.",
+		       "In_Parameter", io::message::error);
+      error = true;
+    }
+    
+    if (_lineStream.fail() || error){
+      io::messages.add("bad line in REPLICA block (trials, equi, slave or write)",
 		       "In_Parameter", io::message::error);
 
       param.replica.num_T = 0;
@@ -2337,7 +2412,6 @@ void io::In_Parameter::read_REPLICA03(simulation::Parameter &param,
       param.replica.dt.clear();
     }
   }
-  
 }
 
 void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
