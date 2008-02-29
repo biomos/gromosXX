@@ -2597,6 +2597,12 @@ void io::In_Parameter::read_EWARN(simulation::Parameter & param,
 		       "In_Parameter", io::message::error);
       return;
     }
+  } else {
+#ifndef HAVE_ISNAN
+      io::messages.add("std::isnan() is not available for your compilation. "
+                       "Consider using the EWARN block.",
+		       "In_Parameter", io::message::warning);    
+#endif
   }
 }
 

@@ -38,6 +38,7 @@
 <li><a href="#distrest">DISTREST</a></li>
 <li><a href="#dihrest">DIHREST</a></li>
 <li><a href="#multistep">MULTISTEP</a></li>
+<li><a href="#ewarn">EWARN</a></li>
 </ul>
 
 <br>
@@ -672,7 +673,7 @@ END
 </TABLE>
 Example <a href="dihres.html">dihedral restraints specification</a>
 
-<h2><a name="dihrest">MULTISTEP</a></h2>
+<h2><a name="multistep">MULTISTEP</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 MULTISTEP
@@ -687,5 +688,17 @@ MULTISTEP
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
+<h2><a name="ewarn">EWARN</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+EWARN
+# MAXENER issue a warning if total energy is larger than this value
+#
+# MAXENER
+   100000
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
 </body>
 </html>
