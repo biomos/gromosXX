@@ -2,6 +2,9 @@
  * @file create_nonbonded.cc
  * create the nonbonded interaction.
  */
+#ifdef XXMPI
+#include <mpi.h>
+#endif
 
 #include <stdheader.h>
 
@@ -37,10 +40,6 @@
 #include <interaction/nonbonded/create_nonbonded.h>
 
 #include <util/debug.h>
-
-#ifdef XXMPI
-#include <mpi.h>
-#endif
 
 #undef MODULE
 #undef SUBMODULE

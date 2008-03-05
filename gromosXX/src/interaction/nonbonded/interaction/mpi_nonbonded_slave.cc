@@ -2,6 +2,9 @@
  * @file mpi_nonbonded_slave.cc
  * methods of MPI_Nonbonded_Slave
  */
+#ifdef XXMPI
+#include <mpi.h>
+#endif
 
 #include <stdheader.h>
 
@@ -36,10 +39,6 @@
 
 #include <util/debug.h>
 #include <util/error.h>
-
-#ifdef XXMPI
-#include <mpi.h>
-#endif
 
 #undef MODULE
 #undef SUBMODULE

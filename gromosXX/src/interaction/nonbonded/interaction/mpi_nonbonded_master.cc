@@ -2,6 +2,9 @@
  * @file mpi_nonbonded_master.cc
  * methods of MPI_Nonbonded_Master
  */
+#ifdef XXMPI
+#include <mpi.h>
+#endif
 
 #include <stdheader.h>
 
@@ -34,10 +37,6 @@
 
 #include <util/debug.h>
 #include <util/error.h>
-
-#ifdef XXMPI
-#include <mpi.h>
-#endif
 
 #undef MODULE
 #undef SUBMODULE

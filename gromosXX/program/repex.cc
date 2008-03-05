@@ -3,6 +3,10 @@
  * the main md program for replica exchange simulations
  */
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -29,10 +33,6 @@
 
 #include <gsl/gsl_rng.h>
 #include <util/replica_exchange.h>
-
-#ifdef XXMPI
-#include <mpi.h>
-#endif
 
 #ifdef OMP
 #include <omp.h>
