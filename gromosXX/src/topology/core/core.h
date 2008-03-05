@@ -7,7 +7,7 @@
  * - @sa topology::Chargegroup_Iterator
  * - @sa topology::Molecule_Iterator
  * - interaction term defintion: @sa body_term.h
- * - @sa Compund
+ * - @sa Compound
  */
 
 
