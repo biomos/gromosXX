@@ -734,7 +734,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
     else
       param.pcouple.virial = math::no_virial;
     
-  } // PCOUPLE03 block
+  } // PRESSURESCALE block
     
   buffer = m_block["PCOUPLE"];
   if (buffer.size()){
