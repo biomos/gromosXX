@@ -43,10 +43,10 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="pertatom">Atoms</a></h2>
+<h2><a name="pertatomparam">Atoms</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTATOM03
+PERTATOMPARAM
 # number of perturbed atoms
    2
 #  
@@ -75,10 +75,10 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="pertbond">Bonds</a></h2>
+<h2><a name="pertbondstretch">Bonds</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTBOND03
+PERTBONDSTRETCH
 # number of perturbed bonds
 	3
 #   atom(i) atom(j) bond_type(A) bond_type(B)
@@ -89,10 +89,24 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="pertangle">Bond Angles</a></h2>
+<h2><a name="pertbondstretchh">H Bonds</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTBANGLE03
+PERTBONDSTRETCHH
+# number of perturbed hydrogen bonds
+        3
+#   atom(i) atom(j) bond_type(A) bond_type(B)
+       4       6           15           26
+       6      12           15           25
+       3       8           15           25
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="pertbondangle">Bond Angles</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTBONDANGLE
 # number of perturbed bond angles
     3
 #    atom(i) atom(j) atom(k) type(A) type(B)
@@ -103,10 +117,25 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="pertimp">Imporoper Dihedral Angles</a></h2>
+<h2><a name="pertbondangleh">H Bond Angles</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTIMPDIHEDRAL03
+PERTBONDANGLEH
+# number of perturbed hydrogen bond angles
+    3
+#    atom(i) atom(j) atom(k) type(A) type(B)
+        2       3       8      26       8
+        4       6      12      26       7
+        3       8      10      26       7
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+
+<h2><a name="pertimproperdih">Improper Dihedral Angles</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTIMPROPERDIH
 # number of perturbed improper dihedrals
     2
 #    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)
@@ -116,10 +145,24 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="pertdih">Dihedral Angles</a></h2>
+<h2><a name="pertimproperdihh">H Improper Dihedral Angles</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTDIHEDRAL03
+PERTIMPROPERDIHH
+# number of perturbed hydrogen improper dihedrals
+    2
+#    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)
+       12      13      10       6        1       2
+       18      19      13      16        1       2
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+
+<h2><a name="pertproperdih">Dihedral Angles</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTPROPERDIH
 # number of perturbed dihedrals
     2
 #    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)
@@ -128,5 +171,19 @@ PERTDIHEDRAL03
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
+
+<h2><a name="pertproperdihh">H Dihedral Angles</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTPROPERDIHH
+# number of perturbed hydrogen dihedrals
+    2
+#    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)
+        6      12      13      14        1      17
+       12      13      18      19        4      17
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
 
 </body>

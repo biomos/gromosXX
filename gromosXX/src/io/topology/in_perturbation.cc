@@ -80,13 +80,25 @@ io::In_Perturbation::read(topology::Topology &topo,
   // prepare arrays
   topo.is_perturbed().resize(topo.num_solute_atoms(), false);
 
-  { // PERTBOND03
-    buffer = m_block["PERTBOND03"];
+  { // PERTBONDSTRETCH(H)
+      
     if (buffer.size()){
-      block_read.insert("PERTBOND03");
+        
+    block_read.insert("PERTBOND03");
+    io::messages.add("The PERTBOND03 block was renamed to PERTBONDSTRETCH.",
+             "In_Perturbation", io::message::error); 
+    }
+    std::vector<std::string> pertbondstretch;  
+    pertbondstretch.push_back("PERTBONDSTRETCHH");
+    pertbondstretch.push_back("PERTBONDSTRETCH");
+    for (unsigned int hh=0; hh < pertbondstretch.size(); hh++) {
+    buffer = m_block[pertbondstretch.at(hh)];
+    if (buffer.size()){
+            
+      block_read.insert(pertbondstretch.at(hh));
       
       if (!quiet)
-	std::cout << "\tPERTBOND03\n";
+	std::cout << "\t" << pertbondstretch.at(hh) << "\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -105,7 +117,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	if (!quiet)
 	  std::cout << "\n\t\t"
 		    << num
-		    << " perturbed bonds from PERTBOND03 block added to "
+		    << " perturbed bonds from " << pertbondstretch.at(hh) << " block added to "
 		    << "perturbed distance constraints.";
       }
 
@@ -124,7 +136,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream >> i >> j >> t_A >> t_B;
 	
 	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTBOND03 block.",
+	  io::messages.add("Bad line in " + pertbondstretch.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);
 	}
 	
@@ -148,7 +160,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 		  std::cout << "\tnot in topology!" << std::endl;
 
 	      io::messages.add("Perturbation of a non-existing bond "
-		          	       "in PERTBOND03 block.",
+		          	       "in " + pertbondstretch.at(hh) + " block.",
 			     		   "In_Perturbation", io::message::error);
 	    }
 	  }
@@ -175,7 +187,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  
 	  if (b_it == topo.solute().distance_constraints().end()){
 	    io::messages.add("Perturbation of a non-existing distance "
-			     "constraint in PERTBOND03 block.",
+			     "constraint in " + pertbondstretch.at(hh) + " block.",
 			     "In_Perturbation", io::message::error);
 	  }
 	
@@ -198,11 +210,11 @@ io::In_Perturbation::read(topology::Topology &topo,
       }
       
       if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTBOND03 block.",
+	  io::messages.add("Wrong number of bonds in " + pertbondstretch.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);	
       }
       else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTBOND03 block.",
+	io::messages.add("Bad line in " + pertbondstretch.at(hh) + " block.",
 			 "In_Perturbation", io::message::error);
       }
 
@@ -219,8 +231,8 @@ io::In_Perturbation::read(topology::Topology &topo,
 		  << "\tEND\n";
 
     } // if block present
-    
-  } // PERTBOND03
+   }  // loop over H/non H blocks
+  } // PERTBONDSTRETCH(H)
 
   { // PERTCONSTRAINT03
     DEBUG(10, "PERTCONSTRAINT03 block");
@@ -307,15 +319,26 @@ io::In_Perturbation::read(topology::Topology &topo,
     
   } // PERTCONSTRAINT03
 
-  { // PERTBANGLE03
-    buffer = m_block["PERTBANGLE03"];
+  { // PERTBONDANGLE(H)
+      
     if (buffer.size()){
-
-      block_read.insert("PERTBANGLE03");
-
+        
+    block_read.insert("PERTBANGLE03");
+    io::messages.add("The PERTBANGLE03 block was renamed to PERTBONDANGLE.",
+             "In_Perturbation", io::message::error); 
+    }
+      
+    std::vector<std::string> pertbondangle;  
+    pertbondangle.push_back("PERTBONDANGLEH");
+    pertbondangle.push_back("PERTBONDANGLE");
+    for (unsigned int hh=0; hh < pertbondangle.size(); hh++) {
+    buffer = m_block[pertbondangle.at(hh)];
+    if (buffer.size()){
+      block_read.insert(pertbondangle.at(hh));
+      
       if (!quiet)
-	std::cout << "\tPERTANGLES\n";
-
+	std::cout << "\t" << pertbondangle.at(hh) << "\n";
+   
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
@@ -339,7 +362,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream >> i >> j >> k >> t_A >> t_B;
 	
 	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTBANGLE03 block.",
+	  io::messages.add("Bad line in " + pertbondangle.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);
 	}
 	
@@ -359,7 +382,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	  if(a_it == topo.solute().angles().end()){
 	    
 	    io::messages.add("Perturbation of a non-existing angle in "
-			     "PERTBANGLE03 block.",
+			     + pertbondangle.at(hh) + " block.",
 			     "In_Perturbation", io::message::error);	
 	  }
 	}
@@ -384,11 +407,11 @@ io::In_Perturbation::read(topology::Topology &topo,
 
       }
       if (n != num){
-	  io::messages.add("Wrong number of angles in PERTBANGLE03 block.",
+	  io::messages.add("Wrong number of angles in " + pertbondangle.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);	
       }
       else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTBANGLE03 block.",
+	io::messages.add("Bad line in " + pertbondangle.at(hh) + " block.",
 			 "In_Perturbation", io::message::error);
       }
       
@@ -396,16 +419,29 @@ io::In_Perturbation::read(topology::Topology &topo,
 	std::cout << "\tEND\n";
       
     } // if block present
-  } // PERTANGLE03
+   } // loop over H/non H blocks
+  } // PERTBONDANGLE(H)
   
-  { // PERTIMPDIHEDRAL03
-    buffer = m_block["PERTIMPDIHEDRAL03"];
+  { // PERTIMPROPERDIH(H)
+      
     if (buffer.size()){
-      block_read.insert("PERTIMPDIHEDRAL03");
-
+        
+    block_read.insert("PERTIMPDIHEDRAL03");
+    io::messages.add("The PERTIMPDIHEDRAL03 block was renamed to PERTIMPROPERDIH.",
+             "In_Perturbation", io::message::error); 
+    }
+      
+    std::vector<std::string> pertimproperdih;  
+    pertimproperdih.push_back("PERTIMPROPERDIHH");
+    pertimproperdih.push_back("PERTIMPROPERDIH");
+    for (unsigned int hh=0; hh < pertimproperdih.size(); hh++) {
+    buffer = m_block[pertimproperdih.at(hh)];
+    if (buffer.size()){
+      block_read.insert(pertimproperdih.at(hh));
+      
       if (!quiet)
-	std::cout << "\tPERTIMPDIHEDRALS\n";
-
+	std::cout << "\t" << pertimproperdih.at(hh) << "\n";
+   
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
@@ -430,7 +466,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
 	
 	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTIMPDIHEDRAL03 block.",
+	  io::messages.add("Bad line in " + pertimproperdih.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);
 	}
 	
@@ -442,7 +478,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	if (id_it == topo.solute().improper_dihedrals().end()){
 	  io::messages.add("Perturbation of a non-existing improper dihedral in "
-			   "PERTIMPDIHEDAL03 block.",
+			   + pertimproperdih.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);
 	}
 	
@@ -464,28 +500,33 @@ io::In_Perturbation::read(topology::Topology &topo,
       }
       
       if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTIMPDIHEDRAL03 block.",
+	  io::messages.add("Wrong number of bonds in " + pertimproperdih.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);	
       }
       else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTIMPDIHEDRAL03 block.",
+	io::messages.add("Bad line in " + pertimproperdih.at(hh) + " block.",
 			 "In_Perturbation", io::message::error);
       }
       if (!quiet)
 	std::cout << "\tEND\n";
 
     } // if block present
-   
-  } // PERTIMPDIHEDRAL03
+   } // loop over H/non H blocks
+  } // PERTIMPROPERDIH(H)
 
-  { // PERTDIHEDRAL03
-    buffer = m_block["PERTDIHEDRAL03"];
+  { // PERTPROPERDIH(H)
+      
+    std::vector<std::string> pertproperdih;  
+    pertproperdih.push_back("PERTPROPERDIHH");
+    pertproperdih.push_back("PERTPROPERDIH");
+    for (unsigned int hh=0; hh < pertproperdih.size(); hh++) {
+    buffer = m_block[pertproperdih.at(hh)];
     if (buffer.size()){
-      block_read.insert("PERTDIHEDRAL03");
-
+      block_read.insert(pertproperdih.at(hh));
+      
       if (!quiet)
-	std::cout << "\tPERTDIHEDRALS\n";
-
+	std::cout << "\t" << pertproperdih.at(hh) << "\n"; 
+    
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
@@ -510,7 +551,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
 	
 	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTDIHEDRAL03 block.",
+	  io::messages.add("Bad line in " + pertproperdih.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);	  
 	}
 	
@@ -529,7 +570,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 
 	  if (id_it == topo.solute().dihedrals().end()){
 	    io::messages.add("Perturbation of a non-existing dihedral in "
-			     "PERTDIHEDAL03 block.",
+			     + pertproperdih.at(hh) + " block.",
 			     "In_Perturbation", io::message::error);
 	    return;
 	  }
@@ -553,11 +594,11 @@ io::In_Perturbation::read(topology::Topology &topo,
       }
       
       if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTDIHEDRAL03 block.",
+	  io::messages.add("Wrong number of bonds in " + pertproperdih.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);	
       }
       else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTDIHEDRAL03 block.",
+	io::messages.add("Bad line in " + pertproperdih.at(hh) + " block.",
 			 "In_Perturbation", io::message::error);
       }
 
@@ -565,11 +606,11 @@ io::In_Perturbation::read(topology::Topology &topo,
 	std::cout << "\tEND\n";
 
     } // if block present
-   
-  } // PERTDIHEDRAL03
+   } // loop over H/non H blocks
+  } // PERTPROPERDIH(H)
 
   { // PERTATOMPAIR03
-    // has to be read in before(!!) PERTATOM03
+    // has to be read in before(!!) PERTATOMPARAM
     // because the exclusions and 1,4 exclusions have to be adapted...
 
     buffer = m_block["PERTATOMPAIR03"];
@@ -577,7 +618,7 @@ io::In_Perturbation::read(topology::Topology &topo,
       block_read.insert("PERTATOMPAIR03");
 
       if (!quiet)
-	std::cout << "\tPERTATOMPAIRS\n";
+	std::cout << "\tPERTATOMPAIR\n";
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -660,15 +701,22 @@ io::In_Perturbation::read(topology::Topology &topo,
     } // if block present
   } // PERTATOMPAIR03
   
-  { // PERTATOM03
+  { // PERTATOMPARAM
     
-    buffer = m_block["PERTATOM03"];
     if (buffer.size()){
-      block_read.insert("PERTATOM03");
+        
+    block_read.insert("PERTATOM03");
+    io::messages.add("The PERTATOM03 block was renamed to PERTATOMPARAM.",
+             "In_Perturbation", io::message::error); 
+    }
+    
+    buffer = m_block["PERTATOMPARAM"];
+    if (buffer.size()){
+      block_read.insert("PERTATOMPARAM");
 
       if (!quiet)
-	std::cout << "\tPERTATOMS\n";
-      DEBUG(7, "PERTATOM03 block");
+	std::cout << "\tPERTATOMPARAM\n";
+      DEBUG(7, "PERTATOMPARAM block");
       
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -705,7 +753,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 		    >> lj_soft >> crf_soft;
 	
 	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTATOM03 block.",
+	  io::messages.add("Bad line in PERTATOMPARAM block.",
 			   "In_Perturbation", io::message::error);
 	}
 	
@@ -718,14 +766,14 @@ io::In_Perturbation::read(topology::Topology &topo,
 	crf_soft *= param.perturbation.soft_crf;
 
 	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
-	  io::messages.add("atom sequence number wrong in PERTATOM03 block",
+	  io::messages.add("atom sequence number wrong in PERTATOMPARAM block",
 			   "In_Perturbation", io::message::critical);
 	  return;
 	}
 
 	if (a_iac < 0 || b_iac < 0){
 	  std::cout << "n=" << n << "a_iac=" << a_iac << " b_iac=" << b_iac << std::endl;
-	  io::messages.add("integer atom code wrong in PERTATOM03 block",
+	  io::messages.add("integer atom code wrong in PERTATOMPARAM block",
 			   "In_Perturbation", io::message::critical);
 	  return;
 	}
@@ -791,11 +839,11 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
       }
       if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTATOM03 block.",
+	  io::messages.add("Wrong number of bonds in PERTATOMPARAM block.",
 			   "In_Perturbation", io::message::error);	
       }
       else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTATOM03 block.",
+	io::messages.add("Bad line in PERTATOMPARAM block.",
 			 "In_Perturbation", io::message::error);
       }
 
@@ -805,7 +853,7 @@ io::In_Perturbation::read(topology::Topology &topo,
       
     } // if block present
     
-  } // PERTATOM03
+  } // PERTATOMPARAM
     
   { // SCALEDINTERACTIONS
 
