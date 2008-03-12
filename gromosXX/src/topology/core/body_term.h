@@ -351,7 +351,7 @@ namespace topology
 					double A_r0, double B_r0, 
 					double A_w0, double B_w0, int rah)
       :v1(v1), v2(v2),
-       n(m), m(m),
+       n(n), m(m),
        A_r0(A_r0), B_r0(B_r0),
        A_w0(A_w0), B_w0(B_w0),
        rah(rah)
