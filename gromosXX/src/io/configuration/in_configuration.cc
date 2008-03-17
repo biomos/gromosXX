@@ -61,6 +61,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_pscale(topo, conf, sim, os);
   read_flexv(topo, conf, sim, os);
   read_stochastic_integral(topo, conf, sim, os);
+  read_distance_restraint_averages(topo, conf, sim, os);
   
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
@@ -670,6 +671,41 @@ bool io::In_Configuration::read_stochastic_integral
   return true;
 }
 
+bool io::In_Configuration::read_distance_restraint_averages
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().distrest.distrest < 0){
+    
+    buffer = m_block["DISRESEXPAVE"];
+    if (buffer.size()){
+      block_read.insert("DISRESEXPAVE");
+      if (!quiet)
+	os << "\treading DISRESEXPAVE...\n";
+
+      if (sim.param().distrest.read)
+        _read_distance_restraint_averages(buffer, topo.distance_restraints(),
+                                          conf.special().distrest_av);
+      else
+        io::messages.add("distance restraint averages found but not read.",
+                         "in_configuration",
+                         io::message::warning);
+    }
+    else{
+      if (sim.param().distrest.read)
+        io::messages.add("no DISRESEXPAVE block in configuration.",
+                         "in_configuration",
+                         io::message::error);
+    }
+  }
+  return true;
+}
+
+
 bool io::In_Configuration::read_time
 (
  topology::Topology &topo, 
@@ -1156,6 +1192,66 @@ bool io::In_Configuration::_read_stochastic_integral
 		     "In_Configuration",
 		     io::message::error);
   }
+  return true;
+}
+
+bool io::In_Configuration::_read_distance_restraint_averages
+(
+ std::vector<std::string> &buffer,
+ const std::vector<topology::distance_restraint_struct> &distrests,
+ std::vector<double> &distrest_av
+ )
+{
+  DEBUG(8, "read distance restaint averages");
+  
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  std::vector<topology::distance_restraint_struct>::const_iterator 
+    distrests_it = distrests.begin(),
+    distrests_to = distrests.end();
+  
+  _lineStream.clear();
+  _lineStream.str(*it++);
+  unsigned int num_rest;
+  _lineStream >> num_rest;
+  if (_lineStream.fail()) {
+    io::messages.add("DISRESEXPAVE block: could not read number of distance "
+                     "restraints.", "in_configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  if (num_rest  != distrests.size()){
+    io::messages.add("number of distance restraints does not match with number of "
+		     "continuation data", "in_configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  double ave;
+  for( ; (it != to) && (distrests_it != distrests_to); ++it, ++distrests_it){
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> ave;
+    
+    if (_lineStream.fail() || ave < 0.0) {
+      io::messages.add("Wrong average value in DISRESEXPAVE block",
+		       "In_Configuration",
+		       io::message::error);
+      return false;
+    }
+    distrest_av.push_back(ave);
+  }  
+  
+  if (distrests_it != distrests_to || it != to){
+    io::messages.add("Wrong number of averages in DISRESEXPAVE block",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+  
   return true;
 }
 

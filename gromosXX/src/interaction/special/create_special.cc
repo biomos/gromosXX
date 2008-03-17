@@ -65,8 +65,8 @@ int interaction::create_special(interaction::Forcefield & ff,
 		     "create_special", io::message::error);
   }
   // Distance restraints 
-  if (param.distrest.distrest == 1 || 
-      param.distrest.distrest == 2){
+  if (abs(param.distrest.distrest) == 1 || 
+      abs(param.distrest.distrest) == 2){
 
     if(!quiet)
       os <<"\tDistance restraints\n";

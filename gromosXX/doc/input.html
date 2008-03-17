@@ -658,14 +658,14 @@ DISTREST
 #         0: no distrance restraining (default)
 #         1: instantaneous, using force constant CDIR
 #         2: instantaneous, using force constant CDIR x W0
-#       < 0: time-averaged: not implemented.
+#        -1: time-averaged, using force constant CDIR
+#        -2: time-averaged, using force constant CDIR x W0
 #  NTDIRA 0,1 controls values for initial distance averages
-#         0: zero initial averages
-#      != 0: not implemented.
+#         0: generate initial averages
+#         1: read from configuration
 #    CDIR >= 0.0 force constant for distance restraining
 #    DIR0 >= 0.0 distance offset in restraining function
 #  TAUDIR >= 0.0 coupling time for time averaging
-#      != 0: not implemented
 #
 #   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR
         0       0     0.0     0.0     0.0

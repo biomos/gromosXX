@@ -33,12 +33,15 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_distance_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim)
+ simulation::Simulation & sim,
+ double exponential_term)
 {
   // loop over the perturbed distance restraints
   std::vector<topology::perturbed_distance_restraint_struct>::const_iterator 
     it = topo.perturbed_distance_restraints().begin(),
     to = topo.perturbed_distance_restraints().end();
+  
+  std::vector<double>::iterator ave_it = conf.special().distrest_av.begin();
 
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
@@ -67,14 +70,21 @@ static int _calculate_perturbed_distance_restraint_interactions
     DEBUG(9, "PERTDISTREST v : " << math::v2s(v));
    
     double dist = abs(v);
-
+   
     const double l = topo.lambda();
     const double w0 = (1-l)*it->A_w0 + l*it->B_w0;
     const double r0 = (1-l)*it->A_r0 + l*it->B_r0;
     const double K = sim.param().distrest.K;
     const double r_l = sim.param().distrest.r_linear; 
     const double D_r0 = it->B_r0 - it->A_r0;
+    
     DEBUG(9, "PERTDISTREST dist : " << dist << " r0 " << r0 << " rah " << it->rah);  
+    if (sim.param().distrest.distrest < 0) {
+      (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
+                   exponential_term * (*ave_it);
+      dist = pow(*ave_it, -1.0 / 3.0);
+      DEBUG(9, "PERTDISTREST average dist : " << dist);
+    }
 
     double prefactor = pow(2, it->n + it->m) * pow(l, it->n) * pow(1-l, it->m);
     
@@ -104,9 +114,9 @@ static int _calculate_perturbed_distance_restraint_interactions
       }
     }
   
-    if(sim.param().distrest.distrest == 1)
+    if(abs(sim.param().distrest.distrest) == 1)
       ;      
-    else if(sim.param().distrest.distrest == 2){
+    else if(abs(sim.param().distrest.distrest) == 2){
       f=f*w0;
       en_term = en_term*w0;
     }
@@ -127,7 +137,7 @@ static int _calculate_perturbed_distance_restraint_interactions
     if(it->rah*dist <it->rah*(r0))
       dlam_term = 0;
     
-    else if(sim.param().distrest.distrest == 1){
+    else if(abs(sim.param().distrest.distrest) == 1){
       if(fabs(r0-dist)<r_l){
 	// harmonic
 	dlam_term = -K * ( dist - r0 ) * D_r0;
@@ -144,7 +154,7 @@ static int _calculate_perturbed_distance_restraint_interactions
 	
       }	
     }
-    else if(sim.param().distrest.distrest == 2){
+    else if(abs(sim.param().distrest.distrest) == 2){
       if(fabs(r0-dist)<r_l){
 	// harmonic
 	dlam_term = 0.5 * K * (it->B_w0 - it->A_w0) * (dist - r0)*(dist - r0)
@@ -190,14 +200,58 @@ static int _calculate_perturbed_distance_restraint_interactions
   return 0;
 }
 
+/**
+ * calculate position restraint interactions
+ */
+template<math::boundary_enum B>
+static void _init_averages
+(topology::Topology & topo,
+ configuration::Configuration & conf)
+{
+  math::Periodicity<B> periodicity(conf.current().box);
+  math::Vec v;
+  
+  for(std::vector<topology::perturbed_distance_restraint_struct>::const_iterator
+        it = topo.perturbed_distance_restraints().begin(),
+        to = topo.perturbed_distance_restraints().end(); it != to; ++it) {
+    periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
+    conf.special().distrest_av.push_back(pow(math::abs(v), -3.0));
+  }
+}
+
 int interaction::Perturbed_Distance_Restraint_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_distance_restraint_interactions,
-			topo, conf, sim);
+			topo, conf, sim, exponential_term);
   
+  return 0;
+}
+
+int interaction::Perturbed_Distance_Restraint_Interaction
+::init(topology::Topology &topo, 
+       configuration::Configuration &conf,
+       simulation::Simulation &sim,
+       std::ostream &os,
+       bool quiet) 
+{
+  if (sim.param().distrest.distrest < 0) {
+    exponential_term = std::exp(- sim.time_step_size() / 
+                                  sim.param().distrest.tau);
+    
+    if (!sim.param().distrest.read) {
+      // reset averages to r_0
+      SPLIT_BOUNDARY(_init_averages, topo, conf);
+    }
+  }
+  
+  if (!quiet) {
+    os << "Perturbed distance restraint interaction";
+    if (sim.param().distrest.distrest < 0)
+      os << "with time-averaging";
+    os << std::endl;
+  }
   return 0;
 }

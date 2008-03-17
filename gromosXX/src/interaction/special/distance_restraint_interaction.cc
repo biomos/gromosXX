@@ -33,12 +33,14 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_distance_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim)
+ simulation::Simulation & sim, double exponential_term)
 {
   // loop over the position restraints
   std::vector<topology::distance_restraint_struct>::const_iterator 
     it = topo.distance_restraints().begin(),
     to = topo.distance_restraints().end();
+  
+  std::vector<double>::iterator ave_it = conf.special().distrest_av.begin();
 
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
@@ -49,7 +51,7 @@ static int _calculate_distance_restraint_interactions
   math::Periodicity<B> periodicity(conf.current().box);
 
   // for(int i=0; it != to; ++it, ++i){
-  for(; it != to; ++it){
+  for(; it != to; ++it, ++ave_it){
 
     periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
 #ifndef NDEBUG
@@ -66,8 +68,14 @@ static int _calculate_distance_restraint_interactions
     DEBUG(9, "DISTREST v : " << math::v2s(v));
     
     double dist = math::abs(v);
-
     DEBUG(9, "DISTREST dist : " << dist << " r0 : " << it->r0);
+    if (sim.param().distrest.distrest < 0) {
+      (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
+                   exponential_term * (*ave_it);
+      dist = pow(*ave_it, -1.0 / 3.0);
+      DEBUG(9, "DISTREST average dist : " << dist);
+    }
+      
 
     if(it->rah*dist < it->rah * it->r0){
       DEBUG(9, "DISTREST  : restraint fulfilled");
@@ -85,9 +93,9 @@ static int _calculate_distance_restraint_interactions
 	f = -sim.param().distrest.r_linear * sim.param().distrest.K  * v / dist;
     }
     
-    if(sim.param().distrest.distrest == 1)
+    if(abs(sim.param().distrest.distrest) == 1)
       ;
-    else if(sim.param().distrest.distrest == 2)
+    else if(abs(sim.param().distrest.distrest) == 2)
       f *= it->w0;
     else 
       f = 0;
@@ -110,9 +118,9 @@ static int _calculate_distance_restraint_interactions
 	  (dist - it->r0 - 0.5 * sim.param().distrest.r_linear);
     }
     
-    if(sim.param().distrest.distrest == 1)
+    if(abs(sim.param().distrest.distrest) == 1)
       ;
-    else if(sim.param().distrest.distrest == 2)
+    else if(abs(sim.param().distrest.distrest) == 2)
      energy *= it->w0;
     else
       energy=0;
@@ -138,9 +146,52 @@ int interaction::Distance_Restraint_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-
   SPLIT_VIRIAL_BOUNDARY(_calculate_distance_restraint_interactions,
-			topo, conf, sim);
+			topo, conf, sim, exponential_term);
   
+  return 0;
+}
+
+/**
+ * calculate position restraint interactions
+ */
+template<math::boundary_enum B>
+static void _init_averages
+(topology::Topology & topo,
+ configuration::Configuration & conf)
+{
+  math::Periodicity<B> periodicity(conf.current().box);
+  math::Vec v;
+  
+  for(std::vector<topology::distance_restraint_struct>::const_iterator
+        it = topo.distance_restraints().begin(),
+        to = topo.distance_restraints().end(); it != to; ++it) {
+    periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
+    conf.special().distrest_av.push_back(pow(math::abs(v), -3.0));
+  }
+}
+
+int interaction::Distance_Restraint_Interaction::init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os,
+		     bool quiet) 
+{
+  if (sim.param().distrest.distrest < 0) {
+    exponential_term = std::exp(- sim.time_step_size() / 
+                                  sim.param().distrest.tau);
+    
+    if (!sim.param().distrest.read) {
+      // reset averages to r_0
+      SPLIT_BOUNDARY(_init_averages, topo, conf);
+    }
+  }
+  
+  if (!quiet) {
+    os << "Distance restraint interaction";
+    if (sim.param().distrest.distrest < 0)
+      os << "with time-averaging";
+    os << std::endl;
+  }
   return 0;
 }

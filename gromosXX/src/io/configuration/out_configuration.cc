@@ -302,6 +302,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_stochastic_integral(conf, topo, m_final_conf);
     }
     
+    if(sim.param().distrest.distrest < 0){
+      _print_distance_restraint_averages(conf, topo, m_final_conf);
+    }
+    
     if(sim.param().jvalue.mode != simulation::restr_off){
       _print_jvalue(sim.param(), conf, topo, m_final_conf);
     }
@@ -1624,6 +1628,28 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
     print_JVALUE_EPSILON(os, topo, true);
 
   }
+}
+
+void io::Out_Configuration::_print_distance_restraint_averages(
+					  configuration::Configuration const &conf,
+					  topology::Topology const &topo,
+					  std::ostream &os)
+{
+  DEBUG(10, "distance restraint averages");
+  
+  std::vector<double>::const_iterator it = conf.special().distrest_av.begin(),
+          to = conf.special().distrest_av.end();
+  
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "DISRESEXPAVE" << std::endl;
+  os << std::setw(5) << conf.special().distrest_av.size() << std::endl;
+
+  for( ; it != to; ++it)
+    os << std::setw(m_width) << *it << std::endl;
+  
+  os << "END" << std::endl;
 }
 
 void io::Out_Configuration::_print_pscale_jrest(configuration::Configuration const &conf,

@@ -238,6 +238,11 @@ namespace io {
     void _print_stochastic_integral(configuration::Configuration const &conf,
 				    topology::Topology const &topo,
 				    std::ostream &os);
+    
+    void _print_distance_restraint_averages(
+                                    configuration::Configuration const &conf,
+				    topology::Topology const &topo,
+				    std::ostream &os);
 
     void _print_jvalue(simulation::Parameter const & param,
 		       configuration::Configuration const &conf,

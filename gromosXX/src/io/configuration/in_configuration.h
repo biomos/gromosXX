@@ -139,6 +139,13 @@ namespace io {
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
 				  std::ostream & os = std::cout);
+    /**
+     * read distance restraint averages
+     */
+    bool read_distance_restraint_averages(topology::Topology &topo, 
+                                          configuration::Configuration &conf, 
+                                          simulation::Simulation & sim,
+                                          std::ostream & os);
 
     /**
      * read replica information
@@ -192,6 +199,14 @@ namespace io {
     bool _read_stochastic_integral(math::VArray & stochastic_integral,
 				   std::vector<std::string> &buffer,
 				   int num_atoms);
+    
+    /**
+     * read DISRESEXPAVE block
+     */
+    bool _read_distance_restraint_averages(
+                 std::vector<std::string> &buffer,
+                 const std::vector<topology::distance_restraint_struct> & distrests,
+                 std::vector<double> &distrest_av);
     
     /**
      * read JVALUE averages.

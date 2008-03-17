@@ -152,8 +152,13 @@ namespace configuration
        * current j value
        */
       std::vector<double> jvalue_curr;
-
       //////////////////////////////////////////////////
+      
+      /**
+       * distance restraint average
+       */
+      std::vector<double> distrest_av;
+
       /**
        * @struct pscale_struct
        * stores periodic scaling information

@@ -102,6 +102,8 @@ configuration::Configuration::Configuration
   
   special().jvalue_av = conf.special().jvalue_av;
   special().jvalue_curr = conf.special().jvalue_curr;
+  
+  special().distrest_av = conf.special().distrest_av;
 
   special().pscale = conf.special().pscale;
   
@@ -169,6 +171,8 @@ configuration::Configuration & configuration::Configuration::operator=
   
   special().jvalue_av = conf.special().jvalue_av;
   special().jvalue_curr = conf.special().jvalue_curr;
+  
+  special().distrest_av = conf.special().distrest_av;
 
   special().pscale = conf.special().pscale;
   
