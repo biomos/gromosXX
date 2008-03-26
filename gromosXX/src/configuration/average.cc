@@ -341,6 +341,8 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(constraints_total);
   ENERGY_AVG(entropy_term);
   ENERGY_AVG(external_total);
+  
+  ENERGY_AVG(self_total);
 
   // kinetic energies...
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
@@ -394,6 +396,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(distrest_energy[i]);
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
+    ENERGY_AVG(self_energy[i]);
   }
 
 #undef ENERGY_AVG
@@ -504,6 +507,8 @@ void configuration::Average::Block_Average
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
   ENERGY_RES(external_total);
+  
+  ENERGY_RES(self_total);
 
   // std::cout << e.kinetic_energy.size() << std::endl;
 
@@ -545,6 +550,8 @@ void configuration::Average::Block_Average
     ENERGY_RES(distrest_energy[i]);
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(constraints_energy[i]);
+    
+    ENERGY_RES(self_energy[i]);
   }
 
 #undef ENERGY_RES

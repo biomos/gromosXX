@@ -27,6 +27,11 @@ namespace interaction
      */
     math::VArray force;
     /**
+      * longrange electric field storage.
+      */
+    math::VArray electric_field;
+
+    /**
      * (longrange) energy storage.
      */
     configuration::Energy energies;
@@ -45,6 +50,7 @@ namespace interaction
     void zero()
     {
       force = 0.0;
+      electric_field = 0.0;
       energies.zero();
       perturbed_energy_derivatives.zero();
       virial_tensor = 0.0;

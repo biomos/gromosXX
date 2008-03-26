@@ -98,6 +98,11 @@ namespace configuration
      */
     double external_total;
     
+    /**
+     * total energy of the dipole-dipole interaction (self energy)
+     */
+    double self_total;
+    
     // this should be size of bath
     /**
      * kinetic energy term
@@ -159,6 +164,10 @@ namespace configuration
      * (has to be 0.0 always)
      */
     std::vector<double> constraints_energy;
+    /**
+     * self energy term (polarization)
+     */
+    std::vector<double> self_energy;
     /**
      * entropy estimation
      * dH/dl * dH

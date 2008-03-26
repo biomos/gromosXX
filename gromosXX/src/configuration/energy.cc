@@ -41,6 +41,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     constraints_total = 0.0;
     entropy_term = 0.0;
     external_total = 0.0;
+    self_total = 0.0;
     
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
@@ -51,6 +52,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
     constraints_energy.assign(constraints_energy.size(), 0.0);
+    self_energy.assign(self_energy.size(), 0.0);
 
     DEBUG(15, "energy groups: " << unsigned(lj_energy.size()) 
 			<< " - " << unsigned(crf_energy.size()));
@@ -98,6 +100,8 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     jvalue_energy.resize(energy_groups);
     constraints_energy.resize(energy_groups);
     
+    self_energy.resize(energy_groups);
+    
     for(unsigned int i=0; i<energy_groups; ++i){
       lj_energy[i].resize(energy_groups);
       crf_energy[i].resize(energy_groups);  
@@ -132,6 +136,7 @@ int configuration::Energy::calculate_totals()
   dihrest_total = 0.0;
   jvalue_total = 0.0; 
   constraints_total = 0.0;
+  self_total = 0.0;
   
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
@@ -200,9 +205,13 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: constraints energy " << i+1 << " = " << constraints_energy[i] << "\n";
     }
     constraints_total  += constraints_energy[i];
+    if (self_energy[i] > m_ewarn){
+       std::cout << "EWARN: self energy " << i+1 << " = " << self_energy[i] << "\n";
+    }
+    self_total += self_energy[i];
   }
 
-  nonbonded_total = lj_total + crf_total;
+  nonbonded_total = lj_total + crf_total + self_total;
   bonded_total    = bond_total + angle_total + 
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;
