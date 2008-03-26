@@ -79,9 +79,25 @@ namespace simulation
    */
   enum interaction_func_enum{
     /** lj_crf_function */ lj_crf_func,
+    /** pol_lj_crf_function */ pol_lj_crf_function,
+    /** damped_pol_lj_crf_function */ damped_pol_lj_crf_function,
     /** cgrain_function */ cgrain_func
   };
-
+  
+  /**
+   * @enum efield_site_enum
+   * determines on which site the electric field is calculated
+   */
+  enum efield_site_enum {
+    /**
+     * electric field at the atom
+     */
+    ef_atom = 0, 
+    /**
+     * electric field at the carge-on-spring
+     */
+    ef_cos = 1
+  };
 
   /**
    * @class Parameter
@@ -1476,6 +1492,39 @@ namespace simulation
       std::set<unsigned int> atom;
       
     } /** ramd */ ramd;
+    
+    /**
+     * @struct polarize_struct
+     * polarization simulation
+     */
+    struct polarize_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - cos, no charge-on-spring polarization
+       * - minfield: 2.5
+       * - damp, no damping of polarizability
+       */
+      polarize_struct() : cos(false), minfield(2.5), efield_site(ef_atom),
+                          damp(false)
+      {}
+      /**
+       * use charge-on-spring polarization
+       */
+      bool cos;
+      /** 
+       * minfield
+       */
+      double minfield;
+      /**
+       * site to calculate the electric field
+       */
+      efield_site_enum efield_site;
+      /**
+       * use damping
+       */
+      bool damp;
+    } /** polarize */ polarize;
   };
 }
 

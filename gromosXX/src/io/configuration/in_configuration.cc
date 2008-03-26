@@ -55,6 +55,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   read_time(topo, conf, sim, os);
   read_position(topo, conf, sim, os);
+  read_cos_position(topo, conf, sim, os);
   read_velocity(topo, conf, sim, os);
   read_box(topo, conf, sim, os);
   read_jvalue(topo, conf, sim, os);
@@ -174,12 +175,14 @@ void io::In_Configuration::read_replica
 
     read_time(topo, conf[0], sim, os);
     read_position(topo, conf[0], sim, os);
+    read_cos_position(topo, conf[0], sim, os);
     read_velocity(topo, conf[0], sim, os);
     read_box(topo, conf[0], sim, os);
     read_jvalue(topo, conf[0], sim, os);
     read_pscale(topo, conf[0], sim, os);
     read_flexv(topo, conf[0], sim, os);
     read_stochastic_integral(topo, conf[0], sim, os);
+    read_distance_restraint_averages(topo, conf[0], sim, os);
   
 	DEBUG(10, "setting boundary type");
     conf[0].boundary_type = param.boundary.boundary;
@@ -228,12 +231,14 @@ void io::In_Configuration::read_replica
       
       read_time(topo, conf[i], sim, os);
       read_position(topo, conf[i], sim, os);
+      read_cos_position(topo, conf[i], sim, os);
       read_velocity(topo, conf[i], sim, os);
       read_box(topo, conf[i], sim, os);
       read_jvalue(topo, conf[i], sim, os);
       read_pscale(topo, conf[i], sim, os);
       read_flexv(topo, conf[i], sim, os);
       read_stochastic_integral(topo, conf[i], sim, os);
+      read_distance_restraint_averages(topo, conf[i], sim, os);
       
       conf[i].boundary_type = param.boundary.boundary;
       
@@ -407,6 +412,44 @@ bool io::In_Configuration::read_position
 		       "in_configuration",
 		       io::message::error);
       return false;
+    }
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_cos_position
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+    // read virtual sites for polarization
+  std::vector<std::string> buffer;
+
+  if (sim.param().polarize.cos) {
+    buffer = m_block["COSPOSITION"];
+    if (buffer.size()){
+      
+      check_coordinates(topo, conf, sim, buffer.size() - 1, os);
+      
+      if (!quiet)
+        os << "\treading COSPOSITION...\n";
+      _read_cos_position(conf.current().posV, buffer, topo.num_atoms());
+      
+      conf.old().posV = conf.current().posV;
+      
+      block_read.insert("COSPOSITION");
+    }
+    
+    else{
+      io::messages.add("no COSPOSITION block found in input configuration."
+              " Setting COS position to zero.",
+              "in_configuration",
+              io::message::notice);
+      
+      conf.current().posV = 0.0;
+      conf.old().posV = 0.0;
     }
   }
   return true;
@@ -810,6 +853,59 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
 
   return true;
   
+}
+
+bool io::In_Configuration::_read_cos_position(math::VArray &pos, 
+					     std::vector<std::string> &buffer,
+					     int const num)
+{
+  DEBUG(8, "read COSPOSITION");
+  
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  int i;
+
+  if (pos.size() < unsigned(num)){
+    io::messages.add("configuration: too many cos coordinates for given topology",
+		     "in_configuration",
+		     io::message::critical);
+    std::cout << "cos position size is : " << pos.size() << " and num is : " << 
+              num << std::endl;
+    return false;
+  }
+
+  for(i=0; it != to; ++i, ++it){
+    if (i >= num){
+      io::messages.add("configuration file does not match topology: "
+		       "too many coordinates in COSPOSITION block",
+		       "In_Configuration",
+		       io::message::error);
+      break;
+    }
+    
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
+    
+    if(_lineStream.fail()){
+      io::messages.add("bad line in COSPOSITION block",
+		       "In_Configuration",
+		       io::message::error);      
+      return false;
+    }
+  }
+
+  if (i != num){
+    io::messages.add("configuration file does not match topology: "
+		     "not enough coordinates in COSPOSITION block",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+
+  return true;
 }
 
 bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::string> &buffer,

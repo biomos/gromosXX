@@ -90,6 +90,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LOCALELEVATION(param);
   read_UMBRELLA(param);
   read_FORCEFIELD(param);
+  read_POLARIZE(param);
   
   DEBUG(7, "input read...");
 
@@ -3035,5 +3036,66 @@ void io::In_Parameter::read_FORCEFIELD(simulation::Parameter & param,
     io::messages.add("The FORCEFIELD block is not supported in this version. "
                      "Use the COVALENTFORM block instead.", "In_Parameter",
                      io::message::error);
+  }
+}
+
+void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
+				 std::ostream & os)
+{
+  DEBUG(8, "read POLARIZE");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["POLARIZE"];
+  
+  if (buffer.size()) {
+    block_read.insert("POLARIZE");
+    
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    int cos, damp, efield;
+    _lineStream >> cos >> efield >> param.polarize.minfield >> damp;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in POLARIZE block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
+    
+    switch(cos) {
+      case 0 : param.polarize.cos = false; break;
+      case 1 : param.polarize.cos = true; break;
+      default:
+        io::messages.add("Error in POLARIZE block: COS must be 0 or 1.",
+                         "In_Parameter", io::message::error);
+    }
+    
+    switch(efield) {
+      case 0 : param.polarize.efield_site = simulation::ef_atom; break;
+      case 1 : param.polarize.efield_site = simulation::ef_cos; break;
+      default:
+        io::messages.add("Error in POLARIZE block: EFIELD must be 0 or 1.",
+                         "In_Parameter", io::message::error);
+    }
+    
+    if (param.polarize.minfield <= 0.0) {
+      io::messages.add("Error in POLARIZE block: MINFIELD must be > 0.0",
+                         "In_Parameter", io::message::error); 
+    }
+    
+    switch(damp) {
+      case 0 : param.polarize.damp = false; break;
+      case 1 : param.polarize.damp = true; break;
+      default:
+        io::messages.add("Error in POLARIZE block: DAMP must be 0 or 1.",
+                         "In_Parameter", io::message::error);
+    }
+    
+    if (param.polarize.damp && !param.polarize.cos) {
+      io::messages.add("POLARIZE block: DAMP is ignored if no polarization is used",
+                       "In_Parameter", io::message::warning);
+    }   
   }
 }

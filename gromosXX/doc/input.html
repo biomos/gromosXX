@@ -39,6 +39,7 @@
 <li><a href="#dihrest">DIHREST</a></li>
 <li><a href="#multistep">MULTISTEP</a></li>
 <li><a href="#ewarn">EWARN</a></li>
+<li><a href="#polarize">POLARIZE</a></li>
 </ul>
 
 <br>
@@ -715,6 +716,26 @@ EWARN
 #
 # MAXENER
    100000
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<h2><a name="polarize">POLARIZE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+POLARIZE
+# COS      0,1 use polarization
+#          0: don't use polarization
+#          1: use charge-on-spring model for dipolar polarization
+# EFIELD   0,1 controls evaluation site for electric field
+#          0: evaluate at atom position
+#          1: evaluate at cos position
+# MINFIELD >0.0 convergence criterium
+# DAMP     0,1 controls polarizability damping
+#          0: don't damp polarizability
+#          1: damp polarizability (with paramaters from topology)
+#
+#     COS  EFIELD MINFIELD    DAMP
+        0       0      2.5       0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

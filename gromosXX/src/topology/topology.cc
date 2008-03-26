@@ -40,7 +40,12 @@ topology::Topology::Topology()
     m_charge(0),
     m_num_solute_chargegroups(0),
     m_num_solute_molecules(0),
-    m_multicell_topo(NULL)
+    m_multicell_topo(NULL),
+    m_polarizability(0),
+    m_coscharge(0),
+    m_dadl(0),
+    m_damping_level(0),
+    m_damping_power(0)
 {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
@@ -66,9 +71,15 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   //assert(num_solute >= 0 && topo.m_is_perturbed.size() == unsigned(num_solute));
   
   m_is_perturbed.clear();
+  m_is_polarizable.clear();
   m_iac.clear();
   m_mass.clear();
   m_charge.clear();
+  m_polarizability.clear();
+  m_coscharge.clear();
+  m_dadl.clear();
+  m_damping_level.clear();
+  m_damping_power.clear();
   m_exclusion.clear();
   m_one_four_pair.clear();
   m_all_exclusion.clear();
@@ -95,11 +106,17 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     DEBUG(10, "\tmul " << m);
 
     m_is_perturbed.insert(m_is_perturbed.end(), topo.m_is_perturbed.begin(), topo.m_is_perturbed.end());
+    m_is_polarizable.insert(m_is_polarizable.end(), topo.m_is_polarizable.begin(), topo.m_is_polarizable.end());
 
     for(int i=0; i<num_solute; ++i){
       m_iac.push_back(topo.m_iac[i]);
       m_mass.push_back(topo.m_mass[i]);
       m_charge.push_back(topo.m_charge[i]);
+      m_polarizability.push_back(topo.m_polarizability[i]);
+      m_coscharge.push_back(topo.m_coscharge[i]);
+      m_dadl.push_back(topo.m_dadl[i]);
+      m_damping_level.push_back(topo.m_damping_level[i]);
+      m_damping_power.push_back(topo.m_damping_power[i]);
       m_exclusion.push_back(topo.m_exclusion[i]);
       m_one_four_pair.push_back(topo.m_one_four_pair[i]);
       m_all_exclusion.push_back(topo.m_all_exclusion[i]);
@@ -196,8 +213,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     add_solvent(topo.solvent(0));
     solvate(0, topo.num_solvent_atoms() * mul_solvent / topo.solvent(0).num_atoms());
     
-    for(unsigned int m = 0; m < mul_solvent; ++m)
-      for(int s = topo.num_solute_atoms(); s < topo.num_atoms(); ++s){
+    for(int m = 0; m < mul_solvent; ++m)
+      for(unsigned int s = topo.num_solute_atoms(); s < topo.num_atoms(); ++s){
         m_atom_energy_group.push_back(topo.m_atom_energy_group[s]);
     }
   
@@ -220,6 +237,11 @@ void topology::Topology::resize(unsigned int const atoms)
   m_mass.resize(atoms);
   // m_charge.resizeAndPreserve(atoms);
   m_charge.resize(atoms);
+  m_polarizability.resize(atoms);
+  m_coscharge.resize(atoms);
+  m_dadl.resize(atoms);
+  m_damping_level.resize(atoms);
+  m_damping_power.resize(atoms);
   m_exclusion.resize(atoms);
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);
@@ -227,6 +249,7 @@ void topology::Topology::resize(unsigned int const atoms)
   m_iac.resize(atoms);
   // chargegroups???
   m_is_perturbed.resize(atoms, false);
+  m_is_polarizable.resize(atoms, false);
 }
 
 void topology::Topology::init(simulation::Simulation const & sim, std::ostream & os, bool quiet)
@@ -341,6 +364,12 @@ void topology::Topology
   
   Topology::mass()(num_solute_atoms()) = mass;
   Topology::charge()(num_solute_atoms()) = charge;
+  
+  Topology::polarizability()(num_solute_atoms()) = 0.0;
+  Topology::coscharge()(num_solute_atoms()) = 0.0;
+  Topology::dadl()(num_solute_atoms()) = 0.0;
+  Topology::damping_level()(num_solute_atoms()) = 0.0;
+  Topology::damping_power()(num_solute_atoms()) = 0.0;
 
   if (chargegroup){
     m_chargegroup.push_back(num_solute_atoms()+1);
@@ -393,6 +422,11 @@ void topology::Topology::solvate(unsigned int solv, unsigned int num_molecules)
       m_iac[n] = m_solvent[solv].atom(j).iac;
       m_mass(n) = m_solvent[solv].atom(j).mass;
       m_charge(n) = m_solvent[solv].atom(j).charge;
+      
+      m_polarizability[n] = m_solvent[solv].atom(j).polarizability;
+      m_coscharge(n) = m_solvent[solv].atom(j).coscharge;
+      m_damping_level(n) = m_solvent[solv].atom(j).damping_level;
+      m_damping_power(n) = m_solvent[solv].atom(j).damping_power;
       // no exclusions or 1-4 interactions for solvent ?!
 
     }
@@ -450,6 +484,12 @@ void topology::Topology::resolvate(unsigned int solv, unsigned int num_molecules
       m_iac[n] = m_solvent[solv].atom(j).iac;
       m_mass(n) = m_solvent[solv].atom(j).mass;
       m_charge(n) = m_solvent[solv].atom(j).charge;
+      
+      m_polarizability(n) = m_solvent[solv].atom(j).polarizability;
+      m_coscharge(n) = m_solvent[solv].atom(j).coscharge;
+      m_damping_level(n) = m_solvent[solv].atom(j).damping_level;
+      m_damping_power(n) = m_solvent[solv].atom(j).damping_power;
+      
       // no exclusions or 1-4 interactions for solvent
     }
 

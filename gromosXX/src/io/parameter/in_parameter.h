@@ -271,6 +271,10 @@ namespace io {
      * read FORCEFIELD block.
      */
     void read_FORCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read POLARIZE block.
+     */
+    void read_POLARIZE(simulation::Parameter &param, std::ostream & os = std::cout);
 
   };
   

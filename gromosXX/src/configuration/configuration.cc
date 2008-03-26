@@ -77,6 +77,8 @@ configuration::Configuration::Configuration
   
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
+  current().posV = conf.current().posV;
+  old().posV = conf.old().posV;
   current().vel = conf.current().vel;
   old().vel = conf.old().vel;
   current().force = conf.current().force;
@@ -146,6 +148,8 @@ configuration::Configuration & configuration::Configuration::operator=
   
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
+  current().posV = conf.current().posV;
+  old().posV = conf.old().posV;
   current().vel = conf.current().vel;
   old().vel = conf.old().vel;
   current().force = conf.current().force;
@@ -354,6 +358,7 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
   DEBUG(7, "state struct resize: " << s);
 
   pos.resize(s);
+  posV.resize(s);
   vel.resize(s);
   force.resize(s);
   stochastic_integral.resize(s);

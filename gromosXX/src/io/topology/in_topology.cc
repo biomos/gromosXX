@@ -452,8 +452,58 @@ io::In_Topology::read(topology::Topology& topo,
 	os << "\n\tEND\n";
     
     } // SOLUTEATOM
-  
+    
     // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
+    
+    { // SOLUTEPOLARIZATION
+      DEBUG(10, "SOLUTEPOLARIZATION block");
+
+      if (!quiet)
+	os << "\tSOLUTEPOLARIZATION";
+    
+      buffer.clear();
+      buffer = m_block["SOLUTEPOLARIZATION"];
+      if (buffer.size()){
+	it = buffer.begin() + 1;
+      
+	_lineStream.clear();
+	_lineStream.str(*it);
+      
+	int num, n;
+	_lineStream >> num;
+	++it;
+        
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i;
+          double polarizability, coscharge, damping_level, damping_power;
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> polarizability >> coscharge >> damping_level
+                      >> damping_power;
+	
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in SOLUTEPOLARIZATION block",
+			     "In_Topology", io::message::error);
+	  } 
+          
+          if (i > int(topo.num_solute_atoms()) || i < 1){
+	    io::messages.add("Atom number out of range in SOLUTEPOLARIZATION block",
+			     "In_Topology", io::message::error);
+          } else {
+	    DEBUG(10, "\tpolarizable atom: " << i);
+	    topo.polarizability()[i-1] = polarizability;
+            topo.coscharge()[i-1] = coscharge;
+            topo.damping_level()[i-1] = damping_level;
+            topo.damping_power()[i-1] = damping_power;
+          }
+	}
+      
+	if(n != num){
+	  io::messages.add("Wrong number of polarizable atoms in SOLUTEPOLARIZATION block",
+			   "In_Topology", io::message::error);
+	}
+      }
+    } // SOLUTEPOLARIZATION
   
     { // BONDH
       DEBUG(10, "BONDH block");
@@ -1180,6 +1230,56 @@ io::In_Topology::read(topology::Topology& topo,
 			 "In_Topology", io::message::error);
       }
 
+      // end SOLVENTATOM
+      
+      DEBUG(10, "SOLVENTEPOLARIZATION block");
+      
+      if (!quiet)
+        os << "\tSOLVENTEPOLARIZATION";
+      
+      buffer.clear();
+      buffer = m_block["SOLVENTPOLARIZATION"];
+      if (buffer.size()){
+        it = buffer.begin() + 1;
+        
+        _lineStream.clear();
+        _lineStream.str(*it);
+        
+        int num, n;
+        _lineStream >> num;
+        ++it;
+        
+        for(n=0; it != buffer.end() - 1; ++it, ++n){
+          int i;
+          double polarizability, coscharge, damping_level, damping_power;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          _lineStream >> i >> polarizability >> coscharge >> damping_level
+                  >> damping_power;
+          
+          if (_lineStream.fail() || ! _lineStream.eof()){
+            io::messages.add("Bad line in SOLVENTPOLARIZATION block",
+                    "In_Topology", io::message::error);
+          }
+          
+          if (i > int(s.num_atoms()) || i < 1){
+            io::messages.add("Atom number out of range in SOLVENTPOLARIZATION block",
+                    "In_Topology", io::message::error);
+          } else {  
+            DEBUG(10, "\tpolarizable atom: " << i);
+          
+            s.atoms()[i-1].polarizability = polarizability;
+            s.atoms()[i-1].coscharge = coscharge;
+            s.atoms()[i-1].damping_level = damping_level;
+            s.atoms()[i-1].damping_power = damping_power;
+          }
+        }
+        
+        if(n != num){
+          io::messages.add("Wrong number of polarizable atoms in SOLVENTPOLARIZATION block",
+                  "In_Topology", io::message::error);
+        }
+      }
       // solvent atoms have been read into s
     
       //--------------------------------------------------
@@ -1241,7 +1341,7 @@ io::In_Topology::read(topology::Topology& topo,
       io::messages.add("no solvent topology specified",
 		       "In_Topology", io::message::warning);
     }
-  }
+  } // SOLVENTCONSTR
 
   // add the solvent to the topology
   if (!quiet)
@@ -1420,7 +1520,7 @@ void io::In_Topology
 
       // we are reading into harmonic bond term, so convert k
       k *= 2 * r * r;
-      
+      DEBUG(10, "\t\tbond type k: " << k << ", r: " << r << "\n");
       // and add...
       b.push_back(interaction::bond_type_struct(k, r));
     }

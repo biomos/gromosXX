@@ -55,6 +55,10 @@ namespace configuration
        * position
        */
       math::VArray pos;
+      /** 
+       * charge-on-spring (distance vector between cos and real atom)
+       */
+      math::VArray posV;
       /**
        * velocity
        */

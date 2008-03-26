@@ -287,6 +287,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   else if(form == final && m_final){
     _print_timestep(sim, m_final_conf);
     _print_position(conf, topo, m_final_conf);
+    
+    if (sim.param().polarize.cos)
+      _print_cos_position(conf, topo, m_final_conf);
 
     if(sim.param().minimise.ntem == 0)
       _print_velocity(conf, topo, m_final_conf);
@@ -404,6 +407,8 @@ void io::Out_Configuration::write_replica
       }
       
       _print_position(conf[i], topo, m_final_conf);
+      if (sim.param().polarize.cos)
+        _print_velocity(conf[i], topo, m_final_conf);
       _print_velocity(conf[i], topo, m_final_conf);
       _print_box(conf[i], m_final_conf);
     }
@@ -833,6 +838,31 @@ inline void io::Out_Configuration
   
   os << "END\n";
 
+}
+
+inline void io::Out_Configuration
+::_print_cos_position(configuration::Configuration const &conf,
+		      topology::Topology const &topo,
+		      std::ostream &os)
+{
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "COSPOSITION\n";
+  
+  math::VArray const &posV = conf.current().posV;
+  
+  for(int i=0; i<posV.size(); ++i){
+
+    os << std::setw(m_width) << posV(i)(0)
+       << std::setw(m_width) << posV(i)(1)
+       << std::setw(m_width) << posV(i)(2)
+       << "\n";
+
+    if((i+1)% 10 == 0) os << '#' << std::setw(10) << i+1 << "\n";
+  }  
+  
+  os << "END\n";
 }
 
 void io::Out_Configuration

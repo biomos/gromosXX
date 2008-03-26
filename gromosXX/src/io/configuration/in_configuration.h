@@ -78,6 +78,14 @@ namespace io {
 		       simulation::Simulation & sim,
 		       std::ostream & os = std::cout);
     /**
+     * try to get cos positions
+     */
+    bool read_cos_position(topology::Topology & topo,
+		           configuration::Configuration & conf,
+		           simulation::Simulation & sim,
+		           std::ostream & os = std::cout);
+    
+    /**
      * try to get velocities
      */
     bool read_velocity(topology::Topology & topo,
@@ -166,6 +174,13 @@ namespace io {
      */
     bool _read_positionred(math::VArray &pos, std::vector<std::string> &buffer,
 			   int const num);
+    
+    /**
+     * read COSPOSITION block.
+     */
+    bool _read_cos_position(math::VArray &pos, std::vector<std::string> &buffer,
+			   int const num);
+    
     /**
      * read VELOCITY block.
      */

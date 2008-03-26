@@ -202,6 +202,10 @@ namespace io {
 			    topology::Topology const &topo,
 			    int num,
 			    std::ostream &os);
+    
+    void _print_cos_position(configuration::Configuration const &conf,
+		 	     topology::Topology const &topo,
+		 	     std::ostream &os);
 
     void _print_velocityred(configuration::Configuration const &conf, 
 			    int num,
