@@ -10,27 +10,15 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
-#include <interaction/interaction_types.h>
 #include <math/periodicity.h>
 
 #include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
-
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
-
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
 
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 
-#include <interaction/nonbonded/interaction_spec.h>
-
 #include <util/debug.h>
 #include <util/template_split.h>
-#include <interaction/nonbonded/innerloop_template.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -39,18 +27,15 @@
 
 interaction::Standard_Pairlist_Algorithm::
 Standard_Pairlist_Algorithm()
-  : interaction::Pairlist_Algorithm(),
-		 m_solvent_solvent_timing(0.0),
-		 m_spc_timing(0.0)
-{
-}
-
-/**
- * put the chargegroups into the box
- */
+: interaction::Pairlist_Algorithm(),
+  m_solvent_solvent_timing(0.0) {}
+        
+ /**
+   * put the chargegroups into the box
+   */
 template<math::boundary_enum b>
 void _prepare_cog(configuration::Configuration & conf,
- 		  topology::Topology & topo)
+topology::Topology & topo)
 {
   DEBUG(10, "putting chargegroups into box");
   math::Periodicity<b> periodicity(conf.current().box);
@@ -105,44 +90,38 @@ void interaction::Standard_Pairlist_Algorithm::
 update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
-       interaction::Storage & storage,
-       interaction::Pairlist & pairlist,
+       interaction::PairlistContainer & pairlist,
        unsigned int begin, unsigned int end,
        unsigned int stride)
 {
   if (sim.param().pairlist.atomic_cutoff){
     // see standard_pairlist_algorithm_atomic.cc
-    update_atomic(topo, conf, sim, storage, pairlist, begin, end, stride);
+    update_atomic(topo, conf, sim, pairlist, begin, end, stride);
   }
   else{
-    update_cg(topo, conf, sim, storage, pairlist, begin, end, stride);
+    update_cg(topo, conf, sim, pairlist, begin, end, stride);
   }
 }
 
-
-void interaction::Standard_Pairlist_Algorithm::update_cg
-(
- topology::Topology & topo,
- configuration::Configuration & conf,
- simulation::Simulation & sim, 
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
- unsigned int begin, unsigned int end,
- unsigned int stride
- )
-{
-  SPLIT_INNERLOOP(_update_cg, topo, conf, sim, storage,
-		  pairlist, begin, end, stride);
+void interaction::Standard_Pairlist_Algorithm::update_cg(
+  topology::Topology & topo,
+  configuration::Configuration & conf,
+  simulation::Simulation & sim,
+  interaction::PairlistContainer & pairlist,
+  unsigned int begin, unsigned int end,
+  unsigned int stride) {
+  SPLIT_BOUNDARY(_update_cg, topo, conf, sim,
+    	          pairlist, begin, end, stride);
 }
 
-template<typename t_interaction_spec>
+//template<typename t_interaction_spec>
+template<math::boundary_enum b>
 void interaction::Standard_Pairlist_Algorithm::_update_cg
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
+ interaction::PairlistContainer & pairlist,
  unsigned int begin, unsigned int end,
  unsigned int stride
  )
@@ -151,15 +130,9 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(7, "standard pairlist update");
   const double update_start = util::now();
   
-  // create the innerloop
-  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
-  innerloop.init(sim);
-
-  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
-
+  math::Periodicity<b> periodicity(conf.current().box);
   // empty the pairlist
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    pairlist[i].clear();
+  pairlist.clear();
 
   // loop over the chargegroups
   const int num_solute_cg = topo.num_solute_chargegroups();
@@ -185,7 +158,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 	  continue;
 	
 	assert(int(pairlist.size()) > a1);
-	pairlist[a1].push_back(a2);
+	pairlist.solute_short[a1].push_back(a2);
 	
       }
     }
@@ -218,8 +191,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 
-	    // the interactions
-	    innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	    pairlist.solute_long[a1].push_back(a2);
 
 	  } // loop over atom of cg2
 	} // loop over atom of cg1
@@ -251,7 +223,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 	  
 	  assert(int(pairlist.size()) > a1);
 	  DEBUG(16, "push back a1=" << a1 << " in a pairlist " << pairlist.size());
-	  pairlist[a1].push_back(a2);
+	  pairlist.solute_short[a1].push_back(a2);
 	  DEBUG(16, "a2=" << a2 << " done");
 	  
 	} // loop over atom of cg2
@@ -290,7 +262,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 	      a2 != a2_to; ++a2){
 	    
 	    // the interactions
-	    innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	    pairlist.solute_long[a1].push_back(a2);
 	    
 	  } // loop over atom of cg2
 	} // loop over atom of cg1
@@ -306,7 +278,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 	      a2_to = topo.chargegroup(cg2+1);
 	    a2 != a2_to; ++a2){
 	  
-	  pairlist[a1].push_back(a2);
+	  pairlist.solute_short[a1].push_back(a2);
 	  
 	} // loop over atom of cg2
       } // loop over atom of cg1
@@ -317,28 +289,22 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(10, "solvent - solvent");
 
   // solvent - solvent
-
-  if (sim.param().force.spc_loop > 0)
-    _spc_loop(topo, conf, sim, storage, pairlist, innerloop, cg1, stride, periodicity);    
-  else
-    _solvent_solvent(topo, conf, sim, storage, pairlist, innerloop, cg1, stride, periodicity);
+  _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity);
 
   this->m_timing += util::now() - update_start;
   DEBUG(7, "pairlist done");
 
 }
 
-template<typename t_interaction_spec>
+template<math::boundary_enum b>
 void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
- Nonbonded_Innerloop<t_interaction_spec> & innerloop,
+ interaction::PairlistContainer & pairlist,
  int cg1,  int stride,
- math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
+ math::Periodicity<b> const & periodicity
  )
 {
   const double start = util::now();
@@ -370,8 +336,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 	    
-	    // the interactions
-	    innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	    pairlist.solvent_long[a1].push_back(a2);
 	    
 	  } // loop over atom of cg2
 	} // loop over atom of cg1
@@ -387,7 +352,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 	      a2_to = topo.chargegroup(cg2+1);
 	    a2 != a2_to; ++a2){
 	  
-	  pairlist[a1].push_back(a2);
+	  pairlist.solvent_short[a1].push_back(a2);
 	  
 	} // loop over atom of cg2
       } // loop over atom of cg1
@@ -400,66 +365,6 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
   
 }
 
-template<typename t_interaction_spec>
-void interaction::Standard_Pairlist_Algorithm::_spc_loop
-(
- topology::Topology & topo,
- configuration::Configuration & conf,
- simulation::Simulation & sim,
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
- Nonbonded_Innerloop<t_interaction_spec> & innerloop,
- int cg1,  int stride,
- math::Periodicity<t_interaction_spec::boundary_type> const & periodicity
- )
-{
-  const double start = util::now();
-  
-  const int num_cg = topo.num_chargegroups();
-  const int num_solute_cg = topo.num_solute_chargegroups();
-  math::Vec r;
-
-  int pl_index = topo.num_solute_atoms() + cg1 - topo.num_solute_chargegroups();
-  
-  DEBUG(7, "spc loop: solute cg=" << num_solute_cg << " cg=" << num_cg
-	<< " cg1=" << cg1 << " pl index=" << pl_index << " stride=" << stride);
-
-  for( ; cg1 < num_cg; cg1+=stride, pl_index += stride){
-
-    for(int cg2 = cg1+1; cg2 < num_cg; ++cg2){
-
-      periodicity.nearest_image(conf.current().pos(topo.chargegroup(cg1)),
-				conf.current().pos(topo.chargegroup(cg2)),
-				r);
-
-      // the distance
-      const double d = math::abs2(r);
-    
-      if (d > m_cutoff_long_2){        // OUTSIDE
-	continue;
-      }
-  
-      if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
-	
-	innerloop.spc_innerloop(topo, conf, 
-				cg1 - num_solute_cg,
-				cg2 - num_solute_cg,
-				storage, periodicity);
-	continue;
-      } // longrange
-      
-      // SHORTRANGE : at least the second cg is solvent => no exclusions
-      pairlist[pl_index].push_back(cg2 - num_solute_cg);
-      
-    }
-    
-  } // cg1
-
-  m_spc_timing += util::now() - start;
-
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // perturbation
 ////////////////////////////////////////////////////////////////////////////////
@@ -469,33 +374,31 @@ void interaction::Standard_Pairlist_Algorithm::
 update_perturbed(topology::Topology & topo,
 		 configuration::Configuration & conf,
 		 simulation::Simulation & sim,
-		 interaction::Storage & storage,
-		 interaction::Pairlist & pairlist,
-		 interaction::Pairlist & perturbed_pairlist,
+		 interaction::PairlistContainer & pairlist,
+		 interaction::PairlistContainer & perturbed_pairlist,
 		 unsigned int begin, unsigned int end,
 		 unsigned int stride)
 {
   if (sim.param().pairlist.atomic_cutoff){
-    update_perturbed_atomic(topo, conf, sim, storage,
+    update_perturbed_atomic(topo, conf, sim, 
 			    pairlist, perturbed_pairlist,
 			    begin, end, stride);
   }
   else{
-    SPLIT_PERT_INNERLOOP(_update_pert_cg,
-			 topo, conf, sim, storage,
+    SPLIT_BOUNDARY(_update_pert_cg,
+			 topo, conf, sim,
 			 pairlist, perturbed_pairlist, 
 			 begin, end, stride);
   }
 }
 
-template<typename t_interaction_spec, typename t_perturbation_details>
+template<math::boundary_enum b>
 void interaction::Standard_Pairlist_Algorithm::
 _update_pert_cg(topology::Topology & topo,
 		configuration::Configuration & conf,
 		simulation::Simulation & sim,
-		interaction::Storage & storage,
-		interaction::Pairlist & pairlist,
-		interaction::Pairlist & perturbed_pairlist,
+		interaction::PairlistContainer & pairlist,
+		interaction::PairlistContainer & perturbed_pairlist,
 		unsigned int begin, unsigned int end,
 		unsigned int stride)
 {
@@ -503,24 +406,16 @@ _update_pert_cg(topology::Topology & topo,
   const double update_start = util::now();
   
   // create the innerloops
-  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
-  
-  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
-  innerloop.init(sim);
-  
-  Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details>
-    perturbed_innerloop(*m_param);
-  perturbed_innerloop.init(sim);
-  perturbed_innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
+  math::Periodicity<b> periodicity(conf.current().box);
 
+  // check whether we do scaling && scaling only
+  bool scaled_only = (sim.param().perturbation.scaling && sim.param().perturbation.scaled_only);
   // empty the pairlist
   assert(pairlist.size() == topo.num_atoms());
   assert(perturbed_pairlist.size() == topo.num_atoms());
-  
-  for(unsigned int i=0; i<topo.num_atoms(); ++i){
-    pairlist[i].clear();
-    perturbed_pairlist[i].clear();
-  }
+
+  pairlist.clear();
+  perturbed_pairlist.clear();
 
   DEBUG(7, "pairlist cleared");
 
@@ -545,14 +440,14 @@ _update_pert_cg(topology::Topology & topo,
 	if (excluded_solute_pair(topo, a1, a2))
 	  continue;
 
-	if (insert_pair<t_perturbation_details>(topo, pairlist, perturbed_pairlist,
-						a1, a2, sim.param().perturbation.scaled_only))
+	if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+						a1, a2, scaled_only))
 	  ;
-	else if (insert_pair<t_perturbation_details>(topo, pairlist, perturbed_pairlist,
-						     a2, a1, sim.param().perturbation.scaled_only))
+	else if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+						     a2, a1, scaled_only))
 	  ;
 	else
-	  pairlist[a1].push_back(a2);
+	  pairlist.solute_short[a1].push_back(a2);
 	
       }
     }
@@ -572,7 +467,7 @@ _update_pert_cg(topology::Topology & topo,
 	continue;
       }
   
-      if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
+      if (d > m_cutoff_short_2){       // LONGRANGE
       
 	for(int a1 = topo.chargegroup(cg1),
 	      a1_to = topo.chargegroup(cg1+1);
@@ -581,16 +476,14 @@ _update_pert_cg(topology::Topology & topo,
 		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 
-	    if (calculate_pair
-		(topo, conf, storage, innerloop, perturbed_innerloop, a1, a2,
-		 periodicity, sim.param().perturbation.scaled_only))
-	      {}
-	    else if (calculate_pair
-		(topo, conf, storage, innerloop, perturbed_innerloop, a2, a1,
-		 periodicity, sim.param().perturbation.scaled_only))
+	    if (insert_pair(topo, pairlist.solute_long, perturbed_pairlist.solute_long,
+						a1, a2, scaled_only))
+              {}
+	    else if (insert_pair(topo, pairlist.solute_long, perturbed_pairlist.solute_long,
+						a2, a1, scaled_only))
 	      {}
 	    else
-	      innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	      pairlist.solute_long[a1].push_back(a2);
 
 	  } // loop over atom of cg2
 	} // loop over atom of cg1
@@ -609,14 +502,14 @@ _update_pert_cg(topology::Topology & topo,
 	    if (excluded_solute_pair(topo, a1, a2))
 	      continue;
 
-	    if (insert_pair<t_perturbation_details>(topo, pairlist, perturbed_pairlist,
-						    a1, a2, sim.param().perturbation.scaled_only))
+	    if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+						    a1, a2, scaled_only))
 	      {}
-	    else if (insert_pair<t_perturbation_details>(topo, pairlist, perturbed_pairlist,
-							 a2, a1, sim.param().perturbation.scaled_only))
+	    else if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+							 a2, a1, scaled_only))
 	      {}
 	    else
-	      pairlist[a1].push_back(a2);
+	      pairlist.solute_short[a1].push_back(a2);
 
 	  } // loop over atom of cg2
 	} // loop over atom of cg1
@@ -639,7 +532,7 @@ _update_pert_cg(topology::Topology & topo,
 	continue;
       }
   
-      if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
+      if (d > m_cutoff_short_2){       // LONGRANGE
 	
 	for(int a1 = topo.chargegroup(cg1),
 	      a1_to = topo.chargegroup(cg1+1);
@@ -648,13 +541,11 @@ _update_pert_cg(topology::Topology & topo,
 		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
 	    
-	    // the interactions
-	    if (calculate_pair
-		(topo, conf, storage, innerloop, perturbed_innerloop, a1, a2,
-		 periodicity, sim.param().perturbation.scaled_only))
+	    if (insert_pair(topo, pairlist.solute_long, perturbed_pairlist.solute_long,
+						    a1, a2, scaled_only))
 	      {}
 	    else
-	      innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+	      pairlist.solute_long[a1].push_back(a2);
 	    
 	  } // loop over atom of cg2
 	} // loop over atom of cg1
@@ -670,11 +561,11 @@ _update_pert_cg(topology::Topology & topo,
 	      a2_to = topo.chargegroup(cg2+1);
 	    a2 != a2_to; ++a2){
 	  
-	  if (insert_pair<t_perturbation_details>(topo, pairlist, perturbed_pairlist,
-						  a1, a2, sim.param().perturbation.scaled_only))
+	  if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+						  a1, a2, scaled_only))
 	    ;
 	  else
-	    pairlist[a1].push_back(a2);
+	    pairlist.solute_short[a1].push_back(a2);
 	  
 	} // loop over atom of cg2
       } // loop over atom of cg1
@@ -684,23 +575,15 @@ _update_pert_cg(topology::Topology & topo,
   } // cg1
 
   // solvent - solvent
-
-  if (sim.param().force.spc_loop > 0)
-    _spc_loop(topo, conf, sim,
-	      storage, pairlist, innerloop, 
-	      cg1, stride, periodicity);    
-  else
-    _solvent_solvent(topo, conf, sim,
-		     storage, pairlist, innerloop, 
-		     cg1, stride, periodicity);
+  _solvent_solvent(topo, conf, sim,
+                   pairlist,  
+                   cg1, stride, periodicity);
   
   this->m_timing += util::now() - update_start;
   DEBUG(7, "pairlist done");
 
 }
 
-
-template<typename t_perturbation_details>
 inline bool interaction::Standard_Pairlist_Algorithm::insert_pair
 (
  topology::Topology & topo,
@@ -711,7 +594,7 @@ inline bool interaction::Standard_Pairlist_Algorithm::insert_pair
  )
 {
   if (topo.is_perturbed(a1)){
-    if (t_perturbation_details::do_scaling && scaled_only){
+    if (scaled_only){
       // ok, only perturbation if it is a scaled pair...
       std::pair<int, int> 
 	energy_group_pair(topo.atom_energy_group(a1),
@@ -728,45 +611,6 @@ inline bool interaction::Standard_Pairlist_Algorithm::insert_pair
     return true;
   }
 
-  return false;
-}
-
-template<typename t_interaction_spec, typename t_perturbation_details>
-inline bool interaction::Standard_Pairlist_Algorithm::calculate_pair
-(
- topology::Topology & topo,
- configuration::Configuration & conf,
- interaction::Storage & storage,
- Nonbonded_Innerloop<t_interaction_spec> & innerloop,
- Perturbed_Nonbonded_Innerloop
- <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
- int a1, int a2,
- math::Periodicity<t_interaction_spec::boundary_type> const & periodicity,
- bool scaled_only
- )
-{
-
-  if (topo.is_perturbed(a1)){
-    if (t_perturbation_details::do_scaling && scaled_only){
-      // ok, only perturbation if it is a scaled pair...
-      std::pair<int, int> 
-	energy_group_pair(topo.atom_energy_group(a1),
-			  topo.atom_energy_group(a2));
-	      
-      if (topo.energy_group_scaling().count(energy_group_pair))
-	perturbed_innerloop.
-	  perturbed_lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
-      else
-	innerloop.
-	  lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
-    } // scaling
-    else{
-      perturbed_innerloop.
-	perturbed_lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
-    }
-
-    return true;
-  }
   return false;
 }
 
@@ -791,3 +635,4 @@ bool interaction::Standard_Pairlist_Algorithm
   DEBUG(12, "\tnot excluded");
   return false;
 }
+

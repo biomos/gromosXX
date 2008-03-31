@@ -10,25 +10,12 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
-#include <interaction/interaction_types.h>
-#include <math/periodicity.h>
 #include <math/volume.h>
 
 #include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
-
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
-
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
 
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
-
-#include <interaction/nonbonded/interaction_spec.h>
-#include <interaction/nonbonded/innerloop_template.h>
 
 #include <util/debug.h>
 
@@ -210,8 +197,7 @@ void interaction::Grid_Pairlist_Algorithm::update
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
+ interaction::PairlistContainer & pairlist,
  unsigned int begin,
  unsigned int end,
  unsigned int stride
@@ -225,30 +211,23 @@ void interaction::Grid_Pairlist_Algorithm::update
     assert(false);
   }
   else{
-    SPLIT_INNERLOOP(_update, topo, conf, sim, storage,
-		    pairlist, begin, end, stride);
+    _update(topo, conf, sim, pairlist, begin, end, stride);
   }    
 }
 
-template<typename t_interaction_spec>
 void interaction::Grid_Pairlist_Algorithm::_update
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
+ interaction::PairlistContainer & pairlist,
  unsigned int begin,
  unsigned int end,
  unsigned int stride
  )
 {
-  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
-  innerloop.init(sim);
-
   // empty the pairlist
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    pairlist[i].clear();
+  pairlist.clear();
   
   const double update_start = util::now();
 
@@ -284,7 +263,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 	    for(int a2 = a1+1; a2 < a_to; ++a2){
 	      if (excluded_solute_pair(topo, a1, a2))
 		continue;
-	      pairlist[a1].push_back(a2);
+	      pairlist.solute_short[a1].push_back(a2);
 	    }
 	  }
 	}
@@ -315,7 +294,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		    
 		    if (excluded_solute_pair(topo, a1, a2))
 		      continue;
-		    pairlist[a1].push_back(a2);
+		    pairlist.solute_short[a1].push_back(a2);
 		  }
 		}
 	      }
@@ -326,7 +305,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		  for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
 			a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		      a2 < a2_to; ++a2){
-		    pairlist[a1].push_back(a2);
+		    pairlist.solute_short[a1].push_back(a2);
 		  }
 		}
 
@@ -344,7 +323,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
 		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		    a2 < a2_to; ++a2){
-		  pairlist[a2].push_back(a1);
+		  pairlist.solute_short[a2].push_back(a1);
 		}
 	      }
 	    }
@@ -404,7 +383,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 	      if (p_plane[j].i < num_solute_cg){ 
 		// solute - solute
 
-		if (d2 > m_cutoff_short_2){
+		if (d2 > m_cutoff_short_2){ // LONGRANGE
 
 		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 			a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
@@ -412,13 +391,12 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		    for(int a2 = topo.chargegroups()[p_plane[j].i],
 			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
 			a2 < a2_to; ++a2){
-		      
-		      innerloop.lj_crf_innerloop_shift(topo, conf, a1, a2, storage,
-						       m_shift_vector[p_plane[j].shift_index]);
+		      pairlist.solute_long[a1].push_back(a2);
+                      pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
 		    }
 		  }
 		}
-		else{
+		else{ // SHORTRANGE
 		  
 		  const int ii = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
 		    m_grid.p_cell[i_level][i].i : p_plane[j].i;
@@ -437,13 +415,13 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		      
 		      if (excluded_solute_pair(topo, a1, a2))
 			continue;
-		      pairlist[a1].push_back(a2);
+		      pairlist.solute_short[a1].push_back(a2);
 		    }
 		  }
 		}
 	      }
 	      else{ // solute - solvent
-		if (d2 > m_cutoff_short_2){
+		if (d2 > m_cutoff_short_2){ // LONGRANGE
 
 		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 			a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
@@ -452,12 +430,12 @@ void interaction::Grid_Pairlist_Algorithm::_update
 			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
 			a2 < a2_to; ++a2){
 		      
-		      innerloop.lj_crf_innerloop_shift(topo, conf, a1, a2, storage,
-						       m_shift_vector[p_plane[j].shift_index]);
+		      pairlist.solute_long[a1].push_back(a2);
+                      pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
 		    }
 		  }
 		}
-		else{
+		else{ // SHORTRANGE
 
 		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 			a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
@@ -465,7 +443,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		    for(int a2 = topo.chargegroups()[p_plane[j].i],
 			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
 			a2 < a2_to; ++a2){
-		      pairlist[a1].push_back(a2);
+		      pairlist.solute_short[a1].push_back(a2);
 		    }
 		  }
 		}
@@ -499,7 +477,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 	      DEBUG(8, "inter (solvent - ?): " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
 	      DEBUG(8, "i_level=" << i_level << " d2=" << d2);
 	      
-	      if (d2 > m_cutoff_short_2){
+	      if (d2 > m_cutoff_short_2){ // LONGRANGE
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
 		    a1 < a_to; ++a1){
@@ -507,20 +485,19 @@ void interaction::Grid_Pairlist_Algorithm::_update
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2){
 
-		    // maybe for fast solvent loop, check cg of j...
-		    innerloop.lj_crf_innerloop_shift(topo, conf, a1, a2, storage,
-						     m_shift_vector[p_plane[j].shift_index]);
+		    pairlist.solute_long[a1].push_back(a2);
+                    pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
 		  }
 		}
 	      }
-	      else{
+	      else{ // SHORTRANGE
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
 		    a1 < a_to; ++a1){
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2){
-		    pairlist[a2].push_back(a1);
+		    pairlist.solute_short[a2].push_back(a1);
 		  }
 		}
 	      }
@@ -551,52 +528,37 @@ void interaction::Grid_Pairlist_Algorithm::update_perturbed
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
- interaction::Pairlist & perturbed_pairlist,
+ interaction::PairlistContainer & pairlist,
+ interaction::PairlistContainer & perturbed_pairlist,
  unsigned int begin,
  unsigned int end, 
  unsigned int stride
  )
 {
-  SPLIT_PERT_INNERLOOP(_update_perturbed,
-		       topo, conf, sim,
-		       storage, pairlist, perturbed_pairlist,
-		       begin, end, stride);
+  _update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
 }
 
-
-template<typename t_interaction_spec, typename t_perturbation_details>
 void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- interaction::Storage & storage,
- interaction::Pairlist & pairlist,
- interaction::Pairlist & perturbed_pairlist,
+ interaction::PairlistContainer & pairlist,
+ interaction::PairlistContainer & perturbed_pairlist,
  unsigned int begin,
  unsigned int end, 
  unsigned int stride
  )
 {
-  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
-
-  Nonbonded_Innerloop<t_interaction_spec> innerloop(*m_param);
-  innerloop.init(sim);
-
-  Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details>
-    perturbed_innerloop(*m_param);
-  perturbed_innerloop.init(sim);
-  perturbed_innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
-
+  // check whether we do scaling && scaling only
+  bool scaled_only = (sim.param().perturbation.scaling && sim.param().perturbation.scaled_only);
+  
   // empty the pairlist
   assert(pairlist.size() == topo.num_atoms());
   assert(perturbed_pairlist.size() == topo.num_atoms());
-  for(unsigned int i=0; i<topo.num_atoms(); ++i){
-    pairlist[i].clear();
-    perturbed_pairlist[i].clear();
-  }
+
+  pairlist.clear();
+  perturbed_pairlist.clear();
   
   const double update_start = util::now();
 
@@ -630,16 +592,16 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 	    for(int a2 = a1+1; a2 < a_to; ++a2){
 	      if (excluded_solute_pair(topo, a1, a2))
 		continue;
-	      if (insert_pair<t_perturbation_details>
-		  (topo, pairlist, perturbed_pairlist,
-		   a1, a2, sim.param().perturbation.scaled_only))
+	      if (insert_pair
+		  (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+		   a1, a2, scaled_only))
 		;
-	      else if (insert_pair<t_perturbation_details>
-		       (topo, pairlist, perturbed_pairlist,
-			a2, a1, sim.param().perturbation.scaled_only))
+	      else if (insert_pair
+		       (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+			a2, a1, scaled_only))
 		;
 	      else
-		pairlist[a1].push_back(a2);
+		pairlist.solute_short[a1].push_back(a2);
 	    }
 	  }
 	}
@@ -671,16 +633,16 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 		    if (excluded_solute_pair(topo, a1, a2))
 		      continue;
 
-		    if (insert_pair<t_perturbation_details>
-			(topo, pairlist, perturbed_pairlist,
-			 a1, a2, sim.param().perturbation.scaled_only))
+		    if (insert_pair
+			(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+			 a1, a2, scaled_only))
 		      ;
-		    else if (insert_pair<t_perturbation_details>
-			     (topo, pairlist, perturbed_pairlist,
-			      a2, a1, sim.param().perturbation.scaled_only))
+		    else if (insert_pair
+			     (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+			      a2, a1, scaled_only))
 		      ;
 		    else
-		      pairlist[a1].push_back(a2);
+		      pairlist.solute_short[a1].push_back(a2);
 		  }
 		}
 	      }
@@ -692,12 +654,12 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 			a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		      a2 < a2_to; ++a2){
 
-		    if (insert_pair<t_perturbation_details>
-			(topo, pairlist, perturbed_pairlist,
-			 a1, a2, sim.param().perturbation.scaled_only))
+		    if (insert_pair
+			(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+			 a1, a2, scaled_only))
 		      ;
 		    else
-		      pairlist[a1].push_back(a2);
+		      pairlist.solute_short[a1].push_back(a2);
 		  }
 		}
 
@@ -716,12 +678,12 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		    a2 < a2_to; ++a2){
 
-		  if (insert_pair<t_perturbation_details>
-		      (topo, pairlist, perturbed_pairlist,
-		       a2, a1, sim.param().perturbation.scaled_only))
+		  if (insert_pair
+		      (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+		       a2, a1, scaled_only))
 		    ;
 		  else
-		    pairlist[a2].push_back(a1);
+		    pairlist.solute_short[a2].push_back(a1);
 		}
 	      }
 	    }
@@ -781,33 +743,34 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 	      if (p_plane[j].i < num_solute_cg){ 
 		// solute - solute
 
-		if (d2 > m_cutoff_short_2){
-
-		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
-			a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
-		      a1 < a_to; ++a1){
-		    for(int a2 = topo.chargegroups()[p_plane[j].i],
-			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
-			a2 < a2_to; ++a2){
-		      
-		      if (calculate_pair<t_interaction_spec, t_perturbation_details>
-			  (topo, conf, storage, innerloop, perturbed_innerloop, a1, a2,
-			   m_shift_vector[p_plane[j].shift_index],
-			   sim.param().perturbation.scaled_only))
-			;
-		      // careful: shift index needs to change here !!!
-		      else if (calculate_pair<t_interaction_spec, t_perturbation_details>
-			       (topo, conf, storage, innerloop, perturbed_innerloop, a2, a1,
-				m_reverse_shift_vector[p_plane[j].shift_index],
-				sim.param().perturbation.scaled_only))
-			;
-		      else
-			innerloop.lj_crf_innerloop_shift(topo, conf, a1, a2, storage,
-							 m_shift_vector[p_plane[j].shift_index]);
-		    }
-		  }
-		}
-		else{
+                if (d2 > m_cutoff_short_2){ // LONGRANGE
+                  
+                  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
+                          a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
+                  a1 < a_to; ++a1){
+                    for(int a2 = topo.chargegroups()[p_plane[j].i],
+                            a2_to = topo.chargegroups()[p_plane[j].i + 1];
+                    a2 < a2_to; ++a2){
+                      
+                      if (insert_pair
+                              (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
+                              a1, a2, scaled_only,
+                              m_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
+                        ;
+                      // careful: shift index needs to change here !!!
+                      else if (insert_pair
+                              (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
+                              a2, a1, scaled_only,
+                              m_reverse_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
+                        ;
+                      else {
+                        pairlist.solute_long[a1].push_back(a2);
+                        pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
+                      }
+                    }
+                  }
+                }
+		else{ // SHORTRANGE
 		  // exclusions => order
 		  const int ii = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
 		    m_grid.p_cell[i_level][i].i : p_plane[j].i;
@@ -819,30 +782,51 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 		  
 		  for(int a1 = topo.chargegroups()[ii],
 			a_to = topo.chargegroups()[ii + 1];
-		      a1 < a_to; ++a1){
-		    for(int a2 = topo.chargegroups()[jj],
-			  a2_to = topo.chargegroups()[jj + 1];
-			a2 < a2_to; ++a2){
-		      
-		      if (excluded_solute_pair(topo, a1, a2))
-			continue;
-
-		      if (insert_pair<t_perturbation_details>
-			  (topo, pairlist, perturbed_pairlist,
-			   a1, a2, sim.param().perturbation.scaled_only))
-			;
-		      else if (insert_pair<t_perturbation_details>
-			       (topo, pairlist, perturbed_pairlist,
-				a2, a1, sim.param().perturbation.scaled_only))
-			;
-		      else
-			pairlist[a1].push_back(a2);
-		    }
+                        a1 < a_to; ++a1){
+                    for(int a2 = topo.chargegroups()[jj],
+                            a2_to = topo.chargegroups()[jj + 1];
+                            a2 < a2_to; ++a2){
+                      
+                      if (excluded_solute_pair(topo, a1, a2))
+                        continue;
+                      
+                      if (insert_pair
+                              (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+                              a1, a2, scaled_only))
+                        ;
+                      else if (insert_pair
+                              (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+                              a2, a1, scaled_only))
+                        ;
+                      else
+                        pairlist.solute_short[a1].push_back(a2);
+                    }
 		  }
 		}
 	      }
-	      else{ // solute - solvent
-		if (d2 > m_cutoff_short_2){
+              else{ // solute - solvent
+                if (d2 > m_cutoff_short_2){ // LONGRANGE
+                  
+                  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
+                          a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
+                  a1 < a_to; ++a1){
+                    for(int a2 = topo.chargegroups()[p_plane[j].i],
+                            a2_to = topo.chargegroups()[p_plane[j].i + 1];
+                    a2 < a2_to; ++a2){
+                      
+                      if (insert_pair
+                              (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
+                              a1, a2, scaled_only,
+                              m_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
+                        ;
+                      else {
+                        pairlist.solute_long[a1].push_back(a2);
+                        pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
+                      }
+                    }
+                  }
+                }
+                else{ // SHORTRANGE
 
 		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 			a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
@@ -850,33 +834,13 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 		    for(int a2 = topo.chargegroups()[p_plane[j].i],
 			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
 			a2 < a2_to; ++a2){
-		      
-		      if (calculate_pair<t_interaction_spec, t_perturbation_details>
-			  (topo, conf, storage, innerloop, perturbed_innerloop, a1, a2,
-			   m_shift_vector[p_plane[j].shift_index],
-			   sim.param().perturbation.scaled_only))
+
+		      if (insert_pair
+			  (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+			   a1, a2, scaled_only))
 			;
 		      else
-			innerloop.lj_crf_innerloop_shift(topo, conf, a1, a2, storage,
-							 m_shift_vector[p_plane[j].shift_index]);
-		    }
-		  }
-		}
-		else{
-
-		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
-			a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
-		      a1 < a_to; ++a1){
-		    for(int a2 = topo.chargegroups()[p_plane[j].i],
-			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
-			a2 < a2_to; ++a2){
-
-		      if (insert_pair<t_perturbation_details>
-			  (topo, pairlist, perturbed_pairlist,
-			   a1, a2, sim.param().perturbation.scaled_only))
-			;
-		      else
-			pairlist[a1].push_back(a2);
+			pairlist.solute_short[a1].push_back(a2);
 		    }
 		  }
 		}
@@ -910,7 +874,7 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 	      DEBUG(8, "inter (solvent - ?): " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
 	      DEBUG(8, "i_level=" << i_level << " d2=" << d2);
 	      
-	      if (d2 > m_cutoff_short_2){
+	      if (d2 > m_cutoff_short_2){ // LONGRANGE
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
 		    a1 < a_to; ++a1){
@@ -921,18 +885,19 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 		    // maybe for fast solvent loop, check cg of j...
 
 		    // careful : shift index needs to change!
-		    if (calculate_pair<t_interaction_spec, t_perturbation_details>
-			(topo, conf, storage, innerloop, perturbed_innerloop, a2, a1,
-			 m_reverse_shift_vector[p_plane[j].shift_index],
-			 sim.param().perturbation.scaled_only))
+		    if (insert_pair
+			(topo, pairlist.solute_long, perturbed_pairlist.solute_long,
+			 a2, a1, scaled_only,
+                         m_reverse_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
 		      ;
-		    else
-		      innerloop.lj_crf_innerloop_shift(topo, conf, a1, a2, storage,
-						       m_shift_vector[p_plane[j].shift_index]);
+                    else {
+		      pairlist.solute_long[a1].push_back(a2);
+                      pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
+                    }
 		  }
 		}
 	      }
-	      else{
+	      else{ // SHORTRANGE
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
 		    a1 < a_to; ++a1){
@@ -940,12 +905,12 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2){
 
-		    if (insert_pair<t_perturbation_details>
-			(topo, pairlist, perturbed_pairlist,
-			 a2, a1, sim.param().perturbation.scaled_only))
+		    if (insert_pair
+			(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+			 a2, a1, scaled_only))
 		      ;
 		    else
-		      pairlist[a2].push_back(a1);
+		      pairlist.solute_short[a2].push_back(a1);
 		  }
 		}
 	      }
@@ -965,8 +930,6 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
   m_timing += util::now() - update_start;
 }
 
-
-template<typename t_perturbation_details>
 inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
 (
  topology::Topology & topo,
@@ -977,7 +940,7 @@ inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
  )
 {
   if (topo.is_perturbed(a1)){
-    if (t_perturbation_details::do_scaling && scaled_only){
+    if (scaled_only){
       // ok, only perturbation if it is a scaled pair...
       std::pair<int, int> 
 	energy_group_pair(topo.atom_energy_group(a1),
@@ -997,46 +960,41 @@ inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
   return false;
 }
 
-
-template<typename t_interaction_spec, typename t_perturbation_details>
-inline bool interaction::Grid_Pairlist_Algorithm::calculate_pair
+inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
 (
  topology::Topology & topo,
- configuration::Configuration & conf,
- interaction::Storage & storage,
- Nonbonded_Innerloop<t_interaction_spec> & innerloop,
- Perturbed_Nonbonded_Innerloop
- <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
+ interaction::Pairlist & pairlist,
+ interaction::Pairlist & perturbed_pairlist,
  int a1, int a2,
- math::Vec const & shift,
- bool scaled_only
+ bool scaled_only,
+ const math::Vec & shift, std::vector<std::vector<math::Vec> > & shifts,
+ std::vector<std::vector<math::Vec> > & perturbed_shifts
  )
 {
-
   if (topo.is_perturbed(a1)){
-    if (t_perturbation_details::do_scaling && scaled_only){
+    if (scaled_only){
       // ok, only perturbation if it is a scaled pair...
       std::pair<int, int> 
 	energy_group_pair(topo.atom_energy_group(a1),
 			  topo.atom_energy_group(a2));
-	      
-      if (topo.energy_group_scaling().count(energy_group_pair))
-	perturbed_innerloop.
-	  perturbed_lj_crf_innerloop_shift(topo, conf, a1, a2, storage, shift);
-      else
-	innerloop.
-	  lj_crf_innerloop_shift(topo, conf, a1, a2, storage, shift);
+      
+      if (topo.energy_group_scaling().count(energy_group_pair)) {
+	perturbed_pairlist[a1].push_back(a2);
+        perturbed_shifts[a1].push_back(shift);
+      } else {
+	pairlist[a1].push_back(a2);
+        shifts[a1].push_back(shift);
+      }
     } // scaling
     else{
-      perturbed_innerloop.
-	perturbed_lj_crf_innerloop_shift(topo, conf, a1, a2, storage, shift);
+      perturbed_pairlist[a1].push_back(a2);
+      perturbed_shifts[a1].push_back(shift);
     }
-
     return true;
   }
+
   return false;
 }
-
 
 bool interaction::Grid_Pairlist_Algorithm
 ::excluded_solute_pair(topology::Topology & topo,
@@ -1059,3 +1017,4 @@ bool interaction::Grid_Pairlist_Algorithm
   DEBUG(12, "\tnot excluded");
   return false;
 }
+

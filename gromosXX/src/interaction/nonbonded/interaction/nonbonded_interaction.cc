@@ -51,7 +51,6 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
   : Interaction("NonBonded"),
     m_pairlist_algorithm(pa),
     m_parameter(),
-    m_longrange_timing(0.0),
     m_set_size(1)
 {
 }
@@ -289,22 +288,16 @@ void interaction::Nonbonded_Interaction::print_timing(std::ostream & os)
      << std::setw(36) << std::left << name
      << std::setw(20) << m_timing << "\n"
      << "            "
-     << std::setw(32) << std::left << "shortrange"
-     << std::setw(20) 
-     << m_timing - m_pairlist_algorithm->timing()
-     << "\n"
-     << "            "
-     << std::setw(32) << std::left << "longrange"
-    // << std::setw(20) << m_longrange_timing << "\n"
-     << std::setw(20) << "not measured: too expensive" << "\n";
-
-  m_pairlist_algorithm->print_timing(os);
-
+     << std::setw(32) << std::left << "interaction"
+     << std::setw(20) << m_timing - m_pairlist_algorithm->timing() << "\n";
+         
   os << "            "
      << std::setw(32) << std::left << "pairlist"
      << std::setw(20) 
-     << m_pairlist_algorithm->timing() - m_longrange_timing<< "\n"
+     << m_pairlist_algorithm->timing() << "\n"
      << "\n";
+  
+  m_pairlist_algorithm->print_timing(os);
 }
 
 void interaction::Nonbonded_Interaction::check_spc_loop
@@ -532,7 +525,7 @@ void interaction::Nonbonded_Interaction::expand_configuration
 
 
 /**
- * calculate nonbonded forces and energies.
+ * print the pairlist
  */
 int interaction::Nonbonded_Interaction::print_pairlist
 (
@@ -544,32 +537,46 @@ int interaction::Nonbonded_Interaction::print_pairlist
 {
   DEBUG(4, "Nonbonded_Interaction::print_pairlist");
   
-  Pairlist temp;
-  temp.resize(topo.num_atoms());
+  Pairlist temp_solute, temp_solvent;
+  temp_solute.resize(topo.num_atoms());
+  temp_solvent.resize(topo.num_atoms());
   
   for(unsigned int atom_i = 0; atom_i < topo.num_atoms(); ++atom_i){
     
     for(int i=0; i < m_set_size; ++i){
 
       assert (m_nonbonded_set.size() > unsigned(i));
-      assert (m_nonbonded_set[i]->pairlist().size() > atom_i);
+      assert (m_nonbonded_set[i]->pairlist().solute_short.size() > atom_i);
+      assert (m_nonbonded_set[i]->pairlist().solvent_short.size() > atom_i);
       
       for(unsigned int atom_j = 0;
-	  atom_j < m_nonbonded_set[i]->pairlist()[atom_i].size();
+	  atom_j < m_nonbonded_set[i]->pairlist().solute_short[atom_i].size();
 	  ++atom_j){
 	
-	assert(temp.size() > atom_i);
-	assert(temp.size() > m_nonbonded_set[i]->pairlist()[atom_i][atom_j]);
+	assert(temp_solute.size() > atom_i);
+	assert(temp_solute.size() > m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]);
 
-	if (m_nonbonded_set[i]->pairlist()[atom_i][atom_j] < atom_i)
-	  temp[m_nonbonded_set[i]->pairlist()[atom_i][atom_j]].push_back(atom_i);
+	if (m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j] < atom_i)
+	  temp_solute[m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]].push_back(atom_i);
 	else
-	  temp[atom_i].push_back(m_nonbonded_set[i]->pairlist()[atom_i][atom_j]);
+	  temp_solute[atom_i].push_back(m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]);
       }
-      
+      for(unsigned int atom_j = 0;
+	  atom_j < m_nonbonded_set[i]->pairlist().solvent_short[atom_i].size();
+	  ++atom_j){
+	
+	assert(temp_solvent.size() > atom_i);
+	assert(temp_solvent.size() > m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]);
+
+	if (m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j] < atom_i)
+	  temp_solvent[m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]].push_back(atom_i);
+	else
+	  temp_solvent[atom_i].push_back(m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]);
+      }
     }
   }
   
-  os << temp << std::endl;
+  os << temp_solute << std::endl
+     << temp_solvent << std::endl;
   return 0;
 }

@@ -119,34 +119,54 @@ int interaction::Perturbed_Nonbonded_Set
     
     if (topo.perturbed_solute().atoms().size() > 0){
       m_pairlist_alg.update_perturbed(topo, conf, sim, 
-				      longrange_storage(),
 				      pairlist(), perturbed_pairlist(),
 				      m_rank, topo.num_atoms(), m_num_threads);
     }
     else{
       // assure it's empty
       assert(perturbed_pairlist().size() == topo.num_atoms());
-      for(unsigned int i=0; i<topo.num_atoms(); ++i){
-	perturbed_pairlist()[i].clear();
-      }
+      perturbed_pairlist().clear();
+      
       
       m_pairlist_alg.update(topo, conf, sim, 
-			    longrange_storage(), pairlist(),
+			    pairlist(),
 			    m_rank, topo.num_atoms(), m_num_threads);
     }
     
+    if(sim.param().pairlist.grid) { // using stored shifts for calculation
+      m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
+			          m_pairlist.solute_long, m_pairlist.shifts ,
+                                  m_longrange_storage);      
+    } else {
+      m_outerloop.lj_crf_outerloop(topo, conf, sim,
+			       m_pairlist.solute_long, m_pairlist.solvent_long,
+                               m_longrange_storage);
+    }
+    if (topo.perturbed_solute().atoms().size() > 0){
+      DEBUG(6, "\tperturbed long range");
+      if(sim.param().pairlist.grid) { // using stored shifts for calculation
+        m_perturbed_outerloop.perturbed_lj_crf_outerloop_shift(topo, conf, sim,
+              m_perturbed_pairlist.solute_long, m_perturbed_pairlist.shifts,
+              m_longrange_storage);
+      } else {
+        m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim,
+              m_perturbed_pairlist.solute_long,
+              m_longrange_storage);
+      }
+    }
   }
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
 
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			       m_pairlist, m_storage);
+			       m_pairlist.solute_short, m_pairlist.solvent_short,
+                               m_storage);
   
   if (topo.perturbed_solute().atoms().size() > 0){
     DEBUG(6, "\tperturbed short range");
     m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim, 
-						     m_perturbed_pairlist,
+						     m_perturbed_pairlist.solute_short,
 						     m_storage);
   }
 

@@ -8,6 +8,7 @@
 
 namespace interaction
 {
+  
   /**
    * @class Nonbonded_Innerloop
    * standard non bonded inner loop.

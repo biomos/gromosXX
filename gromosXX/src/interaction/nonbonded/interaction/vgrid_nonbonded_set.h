@@ -77,12 +77,12 @@ namespace interaction
 				  unsigned int atom_i, unsigned int atom_j,
 				  math::Matrix & hessian);
 
-    Pairlist & pairlist() { return m_pairlist; }
-    Pairlist const & pairlist()const { return m_pairlist; }
+    PairlistContainer & pairlist() { return m_pairlist; }
+    PairlistContainer const & pairlist()const { return m_pairlist; }
 
   protected:
     // not really needed. think of a better organization
-    Pairlist m_pairlist;
+    PairlistContainer m_pairlist;
     Nonbonded_Outerloop m_outerloop;
   };
   

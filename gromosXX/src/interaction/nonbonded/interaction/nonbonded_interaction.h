@@ -105,12 +105,7 @@ namespace interaction
 		     simulation::Simulation & sim,
 		     std::ostream & os = std::cout,
 		     bool quiet = false);
-    
-    /**
-     * accessor to the longrange timing
-     */
-    double & longrange_timing() { return m_longrange_timing; }
-    
+  
     /**
      * parameter
      */
@@ -177,11 +172,6 @@ namespace interaction
      * nonbonded parameter
      */
     Nonbonded_Parameter m_parameter;
-    
-    /**
-     * longrange timing.
-     */
-    double m_longrange_timing;
 
     /**
      * number of sets to create

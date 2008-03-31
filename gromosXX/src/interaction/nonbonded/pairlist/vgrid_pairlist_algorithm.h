@@ -8,12 +8,8 @@
 
 namespace interaction
 {
-  class Storage;
   class Pairlist;
- 
-  template<typename t_interaction_spec>
-  class Nonbonded_Innerloop;
-  
+   
   /**
    * @class VGrid_Pairlist_Algorithm
    * create a triple - range (atom - range) pairlist
@@ -61,8 +57,7 @@ namespace interaction
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     interaction::Storage & storage,
-     interaction::Pairlist & pairlist,
+     interaction::PairlistContainer & pairlist,
      unsigned int begin, unsigned int end,
      unsigned int stride
      );
@@ -75,9 +70,8 @@ namespace interaction
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     interaction::Storage & storage,
-     interaction::Pairlist & pairlist,
-     interaction::Pairlist & perturbed_pairlist,
+     interaction::PairlistContainer & pairlist,
+     interaction::PairlistContainer & perturbed_pairlist,
      unsigned int begin, unsigned int end,
      unsigned int stride
      );

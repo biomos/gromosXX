@@ -10,11 +10,7 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
-#include <interaction/interaction_types.h>
-
 #include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
 
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/vgrid_pairlist_algorithm.h>
@@ -81,8 +77,7 @@ void interaction::VGrid_Pairlist_Algorithm::
 update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
-       interaction::Storage & storage,
-       interaction::Pairlist & pairlist,
+       interaction::PairlistContainer & pairlist,
        unsigned int begin, unsigned int end,
        unsigned int stride)
 {
@@ -94,9 +89,8 @@ void interaction::VGrid_Pairlist_Algorithm::
 update_perturbed(topology::Topology & topo,
 		 configuration::Configuration & conf,
 		 simulation::Simulation & sim,
-		 interaction::Storage & storage,
-		 interaction::Pairlist & pairlist,
-		 interaction::Pairlist & perturbed_pairlist,
+		 interaction::PairlistContainer & pairlist,
+		 interaction::PairlistContainer & perturbed_pairlist,
 		 unsigned int begin, unsigned int end,
 		 unsigned int stride)
 {

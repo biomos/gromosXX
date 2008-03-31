@@ -70,9 +70,20 @@ int interaction::Nonbonded_Set
     // TODO:
     // move decision to pairlist!!!
     m_pairlist_alg.update(topo, conf, sim, 
-			  longrange_storage(), pairlist(),
+			  pairlist(),
 			  m_rank, topo.num_atoms(), m_num_threads);
 
+    DEBUG(8, "doing longrange calculation");
+    if(sim.param().pairlist.grid) { // using stored shifts for calculation
+      m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
+			          m_pairlist.solute_long, m_pairlist.shifts ,
+                                  m_longrange_storage);      
+    } else {
+      m_outerloop.lj_crf_outerloop(topo, conf, sim,
+			          m_pairlist.solute_long, m_pairlist.solvent_long,
+                                  m_longrange_storage);
+    }
+    
     /*
     sleep(2*tid);
     
@@ -95,7 +106,8 @@ int interaction::Nonbonded_Set
   DEBUG(6, "\tshort range interactions");
   
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			       m_pairlist, m_storage);
+			       m_pairlist.solute_short, m_pairlist.solvent_short,
+                               m_storage);
   
   // add 1,4 - interactions
   if (m_rank == 0){
@@ -282,8 +294,7 @@ int interaction::Nonbonded_Set
       os << "\n\testimated pairlist size (per atom) : "
 	 << pairs << "\n";
     
-    for(int i=0; i<num_atoms; ++i)
-      pairlist()[i].reserve(pairs);
+    pairlist().reserve(pairs);
   }
   return 0;
 }

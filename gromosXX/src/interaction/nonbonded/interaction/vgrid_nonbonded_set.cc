@@ -76,7 +76,7 @@ int interaction::VGrid_Nonbonded_Set
   // here it would be nicer to pass nothing instead of
   // the storage. it should NOT be used!!!
   m_pairlist_alg.update(topo, conf, sim, 
-			m_storage, pairlist(),
+			pairlist(),
 			m_rank, topo.num_atoms(), m_num_threads);
   
   /*

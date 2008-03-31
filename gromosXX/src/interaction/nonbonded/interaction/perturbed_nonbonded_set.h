@@ -61,12 +61,12 @@ namespace interaction
 				  unsigned int atom_i, unsigned int atom_j,
 				  math::Matrix & hessian);
     
-    Pairlist & perturbed_pairlist() { return m_perturbed_pairlist; }
-    Pairlist const & perturbed_pairlist()const { return m_perturbed_pairlist; }
+    PairlistContainer & perturbed_pairlist() { return m_perturbed_pairlist; }
+    PairlistContainer const & perturbed_pairlist()const { return m_perturbed_pairlist; }
 
   protected:
 
-    Pairlist m_perturbed_pairlist;
+    PairlistContainer m_perturbed_pairlist;
 
     Perturbed_Nonbonded_Outerloop m_perturbed_outerloop;
 

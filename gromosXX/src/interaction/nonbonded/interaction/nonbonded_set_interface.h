@@ -29,6 +29,7 @@ namespace interaction
 {
   class Pairlist_Algorithm;
   class Nonbonded_Parameter;
+  class Storage;
   
   /**
    * @class Nonbonded_Set_Interface
@@ -93,15 +94,15 @@ namespace interaction
 
     Storage & storage(){ return m_storage; }
 
-    Pairlist & pairlist() { return m_pairlist; }
-    Pairlist const & pairlist()const { return m_pairlist; }
+    PairlistContainer & pairlist() { return m_pairlist; }
+    PairlistContainer const & pairlist()const { return m_pairlist; }
 
   protected:
     Pairlist_Algorithm & m_pairlist_alg;
     
     Storage m_storage;
 
-    Pairlist m_pairlist;
+    PairlistContainer m_pairlist;
 
     /**
      * OpenMP / MPI rank of thread running this set

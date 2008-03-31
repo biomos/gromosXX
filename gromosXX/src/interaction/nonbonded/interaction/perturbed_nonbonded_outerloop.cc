@@ -106,6 +106,61 @@ void interaction::Perturbed_Nonbonded_Outerloop
   DEBUG(7, "end of function perturbed nonbonded interaction");  
 }
 
+void interaction::Perturbed_Nonbonded_Outerloop
+::perturbed_lj_crf_outerloop_shift(topology::Topology & topo,
+			     configuration::Configuration & conf,
+			     simulation::Simulation & sim,
+			     Pairlist const & pairlist,
+                             std::vector<std::vector<math::Vec> > const & shifts,
+			     Storage & storage)
+{
+  SPLIT_PERT_INNERLOOP(_perturbed_lj_crf_outerloop_shift,
+		       topo, conf, sim,
+		       pairlist, shifts, storage);
+}
+
+template<typename t_interaction_spec, typename  t_perturbation_details>
+void interaction::Perturbed_Nonbonded_Outerloop
+::_perturbed_lj_crf_outerloop_shift(topology::Topology & topo,
+			      configuration::Configuration & conf,
+			      simulation::Simulation & sim,
+			      Pairlist const & pairlist,
+                              std::vector<std::vector<math::Vec> > const & shifts,
+			      Storage & storage)
+{  
+  DEBUG(7, "\tcalculate perturbed interactions using shifts");  
+
+  Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
+  innerloop.init(sim);
+  innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
+
+  std::vector<unsigned int>::const_iterator j_it, j_to;
+  std::vector<math::Vec>::const_iterator k_it;
+  unsigned int i;
+  unsigned int size_i = unsigned(topo.num_solute_atoms());
+  // unsigned int size_i = unsigned(pairlist.size());
+
+  DEBUG(6, "pert sr: " << size_i);
+
+  for(i=0; i < size_i; ++i){
+    
+    for(j_it = pairlist[i].begin(),
+	  j_to = pairlist[i].end(),
+          k_it = shifts[i].begin();
+	j_it != j_to;
+	++j_it, ++k_it){
+      
+      DEBUG(10, "\tperturbed nonbonded_interaction: i "
+	    << i << " j " << *j_it);
+      
+      innerloop.perturbed_lj_crf_innerloop_shift(topo, conf, i, *j_it, storage, *k_it);
+    }
+    
+  }
+
+  DEBUG(7, "end of function perturbed nonbonded interaction");  
+}
+
 /**
  * helper function to calculate the forces and energies from the
  * 1,4 interactions.

@@ -505,11 +505,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   
   double dist6i, e_lj, e_crf, f;
   
-  const int ii = topo.num_solute_atoms() + i * 3;
+  const int ii = i;
   math::Vec const * const pos_i = &conf.current().pos(ii);
   math::Vec * const force_i = &storage.force(ii);
 
-  const int jj = topo.num_solute_atoms() + j * 3;
+  const int jj = j;
   math::Vec const * const pos_j = &conf.current().pos(jj);
   math::Vec * const force_j = &storage.force(jj);
   DEBUG(9, "ii = " << ii << " jj = " << jj);    

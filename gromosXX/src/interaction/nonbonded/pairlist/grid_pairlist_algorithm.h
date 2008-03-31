@@ -14,7 +14,6 @@ namespace math
 
 namespace interaction
 {
-  class Storage;
   class Pairlist;
   class Nonbonded_Parameter;
   
@@ -73,24 +72,22 @@ namespace interaction
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     interaction::Storage & storage,
-     interaction::Pairlist & pairlist,
+     interaction::PairlistContainer & pairlist,
      unsigned int begin,
      unsigned int end,
      unsigned int stride
      );
 
     /**
-     * update the perturbed pairlist (hmmm, bla)
+     * update the perturbed pairlist
      */
     virtual void update_perturbed
     (
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     interaction::Storage & storage,
-     interaction::Pairlist & pairlist,
-     interaction::Pairlist & perturbed_pairlist,
+     interaction::PairlistContainer & pairlist,
+     interaction::PairlistContainer & perturbed_pairlist,
      unsigned int begin,
      unsigned int end, 
      unsigned int stride
@@ -273,50 +270,30 @@ namespace interaction
     /**
      * update the pairlist
      */
-    template<typename t_interaction_spec>
     void _update
     (
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     interaction::Storage & storage,
-     interaction::Pairlist & pairlist,
+     interaction::PairlistContainer & pairlist,
      unsigned int begin,
      unsigned int end,
      unsigned int stride
      );
      
-    template<typename t_interaction_spec, typename t_perturbation_details>
     void _update_perturbed
     (
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     interaction::Storage & storage,
-     interaction::Pairlist & pairlist,
-     interaction::Pairlist & perturbed_pairlist,
+     interaction::PairlistContainer & pairlist,
+     interaction::PairlistContainer & perturbed_pairlist,
      unsigned int begin,
      unsigned int end, 
      unsigned int stride
      );
-
-    // copied from standard pairlist algorithm...
-    template<typename t_interaction_spec, typename t_perturbation_details>
-    bool calculate_pair
-    (
-     topology::Topology & topo,
-     configuration::Configuration & conf,
-     interaction::Storage & storage,
-     Nonbonded_Innerloop<t_interaction_spec> & innerloop,
-     Perturbed_Nonbonded_Innerloop
-     <t_interaction_spec, t_perturbation_details> & perturbed_innerloop,
-     int a1, int a2,
-     math::Vec const & shift,
-     bool scaled_only
-     );
     
     // copied from standard pairlist algorithm...
-    template<typename t_perturbation_details>
     bool insert_pair
     (
      topology::Topology & topo,
@@ -326,6 +303,18 @@ namespace interaction
      bool scaled_only
      );
 
+    bool insert_pair
+    (
+     topology::Topology & topo,
+     interaction::Pairlist & pairlist,
+     interaction::Pairlist & perturbed_pairlist,
+     int a1, int a2,
+     bool scaled_only,
+     const math::Vec & shift,
+     std::vector<std::vector<math::Vec> > & shifts,
+     std::vector<std::vector<math::Vec> > & perturbed_shifts
+    );
+    
     bool excluded_solute_pair
     (
      topology::Topology & topo,
