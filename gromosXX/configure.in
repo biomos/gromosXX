@@ -172,13 +172,17 @@ case "$compiler" in
     CXX_PICKY_FLAGS="-Wall"
     dnl CXX_OPTIMIZE_FLAGS="-O6 -march=k8 -mfpmath=sse -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -Winline -DNDEBUG -g -finline-limit=5000"
     dnl CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -DNDEBUG -g"
-    CXX_OPTIMIZE_FLAGS="-O3 -funroll-loops -fomit-frame-pointer -fno-gcse -DNDEBUG"
+    CXX_OPTIMIZE_FLAGS="-O3 -funroll-loops -fno-gcse -DNDEBUG"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"
 
     #      profile support...       
     if eval "test x$enable_profile = xyes"; then
+      echo "   profiling enabled"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -pg"
+    else
+      # this opt flag is incompatible with profiling
+      CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -fomit-frame-pointer"
     fi
 
     dnl OpenMP
