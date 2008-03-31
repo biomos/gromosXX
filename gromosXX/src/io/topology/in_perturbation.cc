@@ -320,12 +320,13 @@ io::In_Perturbation::read(topology::Topology &topo,
   } // PERTCONSTRAINT03
 
   { // PERTBONDANGLE(H)
-      
+    DEBUG(10, "PERTBANGLE03 block");
+    buffer = m_block["PERTBANGLE03"];
     if (buffer.size()){
-        
-    block_read.insert("PERTBANGLE03");
-    io::messages.add("The PERTBANGLE03 block was renamed to PERTBONDANGLE.",
-             "In_Perturbation", io::message::error); 
+      
+      block_read.insert("PERTBANGLE03");
+      io::messages.add("The PERTBANGLE03 block was renamed to PERTBONDANGLE.",
+              "In_Perturbation", io::message::error);
     }
       
     std::vector<std::string> pertbondangle;  
@@ -423,12 +424,13 @@ io::In_Perturbation::read(topology::Topology &topo,
   } // PERTBONDANGLE(H)
   
   { // PERTIMPROPERDIH(H)
-      
+    DEBUG(10, "PERTIMPDIHEDRAL03 block");
+    buffer = m_block["PERTIMPDIHEDRAL03"];
     if (buffer.size()){
-        
-    block_read.insert("PERTIMPDIHEDRAL03");
-    io::messages.add("The PERTIMPDIHEDRAL03 block was renamed to PERTIMPROPERDIH.",
-             "In_Perturbation", io::message::error); 
+      
+      block_read.insert("PERTIMPDIHEDRAL03");
+      io::messages.add("The PERTIMPDIHEDRAL03 block was renamed to PERTIMPROPERDIH.",
+              "In_Perturbation", io::message::error);
     }
       
     std::vector<std::string> pertimproperdih;  
@@ -703,11 +705,14 @@ io::In_Perturbation::read(topology::Topology &topo,
   
   { // PERTATOMPARAM
     
+    DEBUG(10, "PERTATOM03 block");
+    buffer = m_block["PERTATOM03"];
+    
     if (buffer.size()){
-        
-    block_read.insert("PERTATOM03");
-    io::messages.add("The PERTATOM03 block was renamed to PERTATOMPARAM.",
-             "In_Perturbation", io::message::error); 
+      
+      block_read.insert("PERTATOM03");
+      io::messages.add("The PERTATOM03 block was renamed to PERTATOMPARAM.",
+              "In_Perturbation", io::message::error);
     }
     
     buffer = m_block["PERTATOMPARAM"];
