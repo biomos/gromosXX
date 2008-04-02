@@ -4,10 +4,6 @@
  * implements methods of In_Parameter
  */
 
-#ifdef XXMPI
-#include <mpi.h>
-#endif
-
 #include <stdheader.h>
 
 #include <topology/core/core.h>
@@ -3145,12 +3141,6 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
       io::messages.add("Error in POLARIZE block: No OMP parallelization when running polarization.",
                          "In_Parameter", io::message::error);
     }
-#endif
-#ifdef XXMPI
-    if (MPI::COMM_WORLD.Get_size() > 1 && param.polarize.cos) {
-      io::messages.add("Error in POLARIZE block: No MPI parallelization when running polarization.",
-                         "In_Parameter", io::message::error);
-    }
-#endif    
+#endif 
   }
 }
