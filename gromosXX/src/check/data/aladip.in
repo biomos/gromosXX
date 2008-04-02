@@ -81,12 +81,6 @@ MULTIBATH
     12     1         1
     72     2         2
 END
-TCOUPLE
-#      NTT     TEMP0      TAUT
-         2    298.15    0.0100
-        -2    298.15    0.0100
-         1    298.15    0.0100
-END
 PRESSURESCALE
     scale   iso     4.575E-4    0.5     molecular
     0.06102     0.00000     0.00000
