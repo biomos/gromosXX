@@ -154,6 +154,13 @@ void io::Out_Configuration::init(io::Argument & args,
     io::messages.add("write force trajectory but no trf argument",
 		     "Out_Configuration",
 		     io::message::error);
+  
+  if (args.count("trs") > 0)
+    special_trajectory(args["trs"], param.polarize.write);
+  else if (param.polarize.write) // check for other that also go to this traj.
+    io::messages.add("write special trajectory but no trs argument",
+		     "Out_Configuration",
+		     io::message::error);
 
   if (args.count("re") > 0)
     replica_trajectory(args["re"]);
@@ -206,9 +213,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 				  topology::Topology const &topo,
 				  simulation::Simulation const &sim,
 				  output_format const form)
-{
+{ 
   // standard trajectories
   if (form == reduced){
+    /**
+     * set this to true when you print the timestep to the special traj.
+     * make sure you don't print it twice. 
+     */
+    bool special_timestep_printed = false; 
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0){
       // don't write starting configuration if analyzing a trajectory
@@ -241,6 +253,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         else
           _print_forcered(conf, topo.num_atoms(), m_force_traj);
       }
+    }
+    
+    if(m_every_cos_pos && (sim.steps() % m_every_cos_pos) == 0){
+      if (!special_timestep_printed){
+	_print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+       _print_cos_position(conf, topo, m_special_traj);
     }
     
     if(m_every_energy && (sim.steps() % m_every_energy) == 0){
@@ -408,7 +428,7 @@ void io::Out_Configuration::write_replica
       
       _print_position(conf[i], topo, m_final_conf);
       if (sim.param().polarize.cos)
-        _print_velocity(conf[i], topo, m_final_conf);
+        _print_cos_position(conf[i], topo, m_final_conf);
       _print_velocity(conf[i], topo, m_final_conf);
       _print_box(conf[i], m_final_conf);
     }
@@ -455,6 +475,14 @@ void io::Out_Configuration
   m_force_traj.open(name.c_str());
   m_every_force = every;
   _print_title(m_title, "force trajectory", m_force_traj);
+}
+
+void io::Out_Configuration
+::special_trajectory(std::string name, int every_cos)
+{
+  m_special_traj.open(name.c_str());
+  m_every_cos_pos = every_cos;
+  _print_title(m_title, "special trajectory", m_special_traj);
 }
 
 void io::Out_Configuration
@@ -852,7 +880,7 @@ inline void io::Out_Configuration
   
   math::VArray const &posV = conf.current().posV;
   
-  for(int i=0; i<posV.size(); ++i){
+  for(unsigned int i=0; i<posV.size(); ++i){
 
     os << std::setw(m_width) << posV(i)(0)
        << std::setw(m_width) << posV(i)(1)
@@ -1764,7 +1792,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.distrest_total << "\n"
      << std::setw(18) << e.dihrest_total << "\n"
      << std::setw(18) << e.jvalue_total << "\n"
-     << std::setw(18) << 0.0 << "\n" // local elevation
+     << std::setw(18) << e.self_total << "\n" // self energy from polarization
+     //<< std::setw(18) << 0.0 << "\n" // local elevation
      << std::setw(18) << 0.0 << "\n"; // path integral
   // << std::setw(18) << e.entropy_term << "\n"; // dH/dl * H
   

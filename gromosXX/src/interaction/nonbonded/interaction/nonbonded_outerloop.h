@@ -78,6 +78,24 @@ namespace interaction
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
 			       Storage & storage);
+    
+    /**
+     * calculate the self energy (polarization).
+     */
+    void self_energy_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+			    Storage & storage);
+
+    /**
+     * calculate the electric field (polarization).
+     */
+    void electric_field_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+		            PairlistContainer const & pairlist,
+                            Storage & storage,
+                            Storage & storage_lr);
 
     /**
      * calculate the interaction for a given atom pair.
@@ -139,7 +157,21 @@ namespace interaction
 				configuration::Configuration & conf,
 				simulation::Simulation & sim,
 				Storage & storage);
+    
+    template<typename t_interaction_spec>
+    void _self_energy_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+			    Storage & storage);
 
+    template<typename t_interaction_spec>
+    void _electric_field_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+		            PairlistContainer const & pairlist,
+			    Storage & storage,
+                            Storage & storage_lr);
+    
     template<typename t_interaction_spec>
     int _calculate_interaction(topology::Topology & topo,
 			       configuration::Configuration & conf,

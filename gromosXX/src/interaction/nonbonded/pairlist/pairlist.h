@@ -77,7 +77,7 @@ namespace interaction
     /**
      * gives size of pairlists
      */
-    inline unsigned int size() {
+    inline unsigned int size() const {
       assert(solute_short.size() == solute_long.size() && 
              solute_short.size() == solvent_short.size() &&
              solute_short.size() == solvent_long.size() &&

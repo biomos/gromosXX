@@ -38,12 +38,57 @@ namespace interaction
 			    double q,
 			    double & force, double & e_lj,
 			    double & e_crf);
+    
+    /**
+     * calculate the force and energy of an atom pair. (polarizable)
+     */
+    void pol_lj_crf_interaction(math::Vec const &r,
+                     math::Vec const &rp1,
+                     math::Vec const &rp2,
+                     math::Vec const &rpp,
+		     double c6, double c12,
+		     double qi, double qj, double cgi, double cgj,
+		     std::vector<double> &f, double &e_lj, double &e_crf);
 
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
     void rf_interaction(math::Vec const &r, double q,
 			math::Vec & force, double & e_rf);
+    
+    /**
+     * helper function to calculate the force and energy for
+     * the reaction field contribution for a given pair
+     * with polarization
+     */
+    inline void pol_rf_interaction(math::Vec const &r,
+                 math::Vec const &rp1,
+                 math::Vec const &rp2,
+                 math::Vec const &rpp,
+                 double qi, double qj, 
+                 double cgi, double cgj,
+		 math::VArray &force, double &e_crf);
+    
+    /**
+     * calculate a term of the electric field for polarization
+     */
+    void electric_field_interaction(math::Vec const &r,
+			      math::Vec const &rprime,
+			      double qj, double charge,
+			      math::Vec  &e_el);
+
+
+    /**
+     * calculate the self energy - dipole-dipole interaction (polarization)
+     */
+    void self_energy_interaction(double alpha, double e_i2, double &self_e);
+    
+    /**
+     * calculate the damped self energy - dipole-dipole interaction (polarization)
+     */
+    void self_energy_interaction(double alpha, double e_i2, double e_0, double p,
+                       double &self_e);
+
     /**
      * calculate the force and energy of an atom pair (coarse grain).
      */

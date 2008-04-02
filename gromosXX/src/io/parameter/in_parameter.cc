@@ -4,6 +4,10 @@
  * implements methods of In_Parameter
  */
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <stdheader.h>
 
 #include <topology/core/core.h>
@@ -22,6 +26,10 @@
 #include <io/blockinput.h>
 
 #include "in_parameter.h"
+
+#ifdef OMP
+#include <omp.h>
+#endif
 
 #undef MODULE
 #define MODULE io
@@ -3056,7 +3064,8 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
     int cos, damp, efield;
-    _lineStream >> cos >> efield >> param.polarize.minfield >> damp;
+    _lineStream >> cos >> efield >> param.polarize.minfield >> damp
+                >> param.polarize.write;
     
     if (_lineStream.fail()){
       io::messages.add("bad line in POLARIZE block",
@@ -3066,7 +3075,11 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
     
     switch(cos) {
       case 0 : param.polarize.cos = false; break;
-      case 1 : param.polarize.cos = true; break;
+      case 1 : {
+        param.polarize.cos = true; 
+        param.force.interaction_function = simulation::pol_lj_crf_func;
+        break;
+      }
       default:
         io::messages.add("Error in POLARIZE block: COS must be 0 or 1.",
                          "In_Parameter", io::message::error);
@@ -3093,9 +3106,51 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
                          "In_Parameter", io::message::error);
     }
     
+    if (!param.polarize.cos)
+      param.polarize.write = 0;
+    
+    if (param.polarize.write < 0) {
+      io::messages.add("Error in POLARIZE block: WRITE must be >= 0",
+                         "In_Parameter", io::message::error);
+    }
+    
     if (param.polarize.damp && !param.polarize.cos) {
       io::messages.add("POLARIZE block: DAMP is ignored if no polarization is used",
                        "In_Parameter", io::message::warning);
     }   
+    if (param.cgrain.level>1 && param.polarize.cos) {
+      io::messages.add("Error in POLARIZE block: No polarization for coarse-grained and multi-grained simulations.",
+                         "In_Parameter", io::message::error);
+    }
+    if (param.constraint.solute.algorithm == simulation::constr_flexshake && param.polarize.cos){
+      io::messages.add("Error in POLARIZE block: No flexible shake when running polarization.",
+                         "In_Parameter", io::message::error);
+    }
+    if (param.perturbation.perturbation && param.polarize.cos){
+      io::messages.add("Error in POLARIZE block: No perturbation when running polarization.",
+                         "In_Parameter", io::message::error);
+    }
+    
+#ifdef OMP
+    int size, tid;
+#pragma omp parallel private(tid)
+    {
+      tid = omp_get_thread_num();
+      if (tid == 0){
+	size = omp_get_num_threads();
+      }
+    }
+
+    if (size > 1 && param.polarize.cos) {
+      io::messages.add("Error in POLARIZE block: No OMP parallelization when running polarization.",
+                         "In_Parameter", io::message::error);
+    }
+#endif
+#ifdef XXMPI
+    if (MPI::COMM_WORLD.Get_size() > 1 && param.polarize.cos) {
+      io::messages.add("Error in POLARIZE block: No MPI parallelization when running polarization.",
+                         "In_Parameter", io::message::error);
+    }
+#endif    
   }
 }

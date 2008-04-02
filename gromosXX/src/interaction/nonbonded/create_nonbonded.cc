@@ -67,8 +67,9 @@ int interaction::create_g96_nonbonded
     if (sim.param().force.nonbonded_vdw)
       os << setw(30) << left << "van-der-Waals";
     if (sim.param().force.nonbonded_crf)
-      os << setw(30) << left << "Coulomb-reaction-field";    
+      os << setw(30) << left << "Coulomb-reaction-field";      
     os << "\n";
+   
     
     if (sim.param().pairlist.grid == 0)
       os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
@@ -80,6 +81,26 @@ int interaction::create_g96_nonbonded
     else if (sim.param().pairlist.grid == 2){
       os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
 	   << left << "Vector Grid Pairlist Algorithm" << right << "\n";
+    }
+    
+    if (sim.param().polarize.cos) {
+      os << "\t" << setw(20) << left << "Polarization enabled" << right << "\n";
+      os << "\t" << setw(20) << left << "Eletric Field";
+      switch(sim.param().polarize.efield_site) {
+        case simulation::ef_atom :
+          os << setw(30) << left << "calculated at atom position" << right << "\n";
+          break;
+        case simulation::ef_cos :
+          os << setw(30) << left << "calculated at charge-on-spring position" << right << "\n";
+          break;
+        default :
+          os << setw(30) << left << "calculated at unknown site" << right << "\n";
+      }
+      if (sim.param().polarize.damp) {
+        os << "\t" << setw(20) << left
+           << "Polarization is damped using parameters from topology" << right << "\n";
+      }
+        
     }
     
     switch(sim.param().boundary.boundary){
@@ -162,7 +183,9 @@ int interaction::create_g96_nonbonded
 
   // standard LJ parameter
   if (sim.param().force.interaction_function ==
-      simulation::lj_crf_func)
+      simulation::lj_crf_func || 
+      sim.param().force.interaction_function ==
+      simulation::pol_lj_crf_func)
     it.read_lj_parameter(ni->parameter().lj_parameter());
   // and coarse-grained parameter
   if (sim.param().force.interaction_function ==
@@ -172,7 +195,9 @@ int interaction::create_g96_nonbonded
   // check if DUM really has no LJ interactons.
   pa->set_parameter(&ni->parameter());
   if (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
-      simulation::lj_crf_func){
+      simulation::lj_crf_func ||
+      !sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
+      simulation::pol_lj_crf_func    ){
     unsigned int dum = topo.iac(0); // has been previously set to DUM.
 
     bool error = false;

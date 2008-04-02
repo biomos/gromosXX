@@ -14,6 +14,8 @@ namespace interaction
   const bool perturbation_off = false;
   const bool scaling_on = true;
   const bool scaling_off = false;
+  const bool pol_damping_on = true;
+  const bool pol_damping_off = false;
   
   /**
    * @class Interaction_Spec
@@ -22,7 +24,9 @@ namespace interaction
   template<
     math::boundary_enum t_boundary = math::rectangular,
     // math::virial_enum t_virial = math::molecular_virial,
-    simulation::interaction_func_enum t_interaction_func = simulation::lj_crf_func
+    simulation::interaction_func_enum t_interaction_func = simulation::lj_crf_func,
+    bool t_pol_damping = false,
+    simulation::efield_site_enum t_efield_site = simulation::ef_atom
   >
   class Interaction_Spec
   {
@@ -36,6 +40,8 @@ namespace interaction
     static const math::boundary_enum boundary_type = t_boundary;
     // static const math::virial_enum do_virial = t_virial;
     static const simulation::interaction_func_enum interaction_func = t_interaction_func;
+    static const bool pol_damping = t_pol_damping;
+    static const simulation::efield_site_enum efield_site = t_efield_site;
   };
 
   /**

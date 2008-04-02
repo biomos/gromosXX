@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf"
      << "input" << "cg_input" << "verb" << "pttopo" << "cg_pttopo"
-	 << "trj" << "cg_trj" << "fin" << "cg_fin" << "trv" << "trf" << "tre" << "re" << "trg"
+	 << "trj" << "cg_trj" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "re" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
 	 << "rep" << "master" << "slave" << "control"
 	 << "version";

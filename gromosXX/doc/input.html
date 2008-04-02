@@ -733,9 +733,12 @@ POLARIZE
 # DAMP     0,1 controls polarizability damping
 #          0: don't damp polarizability
 #          1: damp polarizability (with paramaters from topology)
+# WRITE    > 0 write COS positions to special trajectory
+#          0: don't write
+#         >0: write COS positions every WRITEth step
 #
-#     COS  EFIELD MINFIELD    DAMP
-        0       0      2.5       0
+#     COS  EFIELD MINFIELD    DAMP  WRITE
+        0       0      2.5       0      0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

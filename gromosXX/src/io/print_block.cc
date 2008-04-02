@@ -435,6 +435,7 @@ namespace io
     os << type << "Non-bonded   : " << std::setw(30) << e.nonbonded_total  << "\n";
     os << type << "Vdw          : " << std::setw(39) << e.lj_total << "\n";
     os << type << "El (RF)      : " << std::setw(39) << e.crf_total  << "\n";
+    os << type << "Self-energy  : " << std::setw(39) << e.self_total << "\n";
     os << type << "Special      : " << std::setw(21) << e.special_total << "\n";
     os << type << "Constraints  : " << std::setw(30) << e.constraints_total << "\n";
     os << type << "Distrest     : " << std::setw(30) << e.distrest_total << "\n";
@@ -489,6 +490,10 @@ namespace io
       }
       os << "\n";
     }
+    
+      
+    os << "\n" << std::setw(20) << type + "Self-energy";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.self_energy[i];
 
     os << "\n" << "\n";
     os << std::setw(20) << type + "SPECIAL";

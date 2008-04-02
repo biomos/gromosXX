@@ -313,12 +313,16 @@ void interaction::Nonbonded_Outerloop
 			simulation::Simulation & sim,
 			Storage & storage)
 {
+  /*
   if (sim.param().force.interaction_function !=
-      simulation::lj_crf_func){
+      simulation::lj_crf_func &&
+      sim.param().force.interaction_function !=
+      simulation::pol_lj_crf_func){
     io::messages.add("Nonbonded_Outerloop",
 		     "RF excluded term for non-lj_crf_func called",
 		     io::message::error);
   }
+   */
   
   SPLIT_INNERLOOP(_RF_excluded_outerloop, topo, conf, sim, storage);  
 }
@@ -361,6 +365,209 @@ void interaction::Nonbonded_Outerloop
 
   } // loop over solvent charge groups
 }  
+
+void interaction::Nonbonded_Outerloop
+::self_energy_outerloop(topology::Topology & topo,
+		        configuration::Configuration & conf,
+		        simulation::Simulation & sim, 
+			Storage & storage)
+{
+  SPLIT_INNERLOOP(_self_energy_outerloop, topo, conf, sim, storage);
+}
+
+/**
+ * helper function to calculate self energy, 
+ * stores them in the arrays pointed to by parameters
+ * to make it usable for longrange calculations.
+ */
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_self_energy_outerloop(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim, 
+                    Storage & storage)
+{  
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+  innerloop.init(sim);
+
+  for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+    if(topo.is_polarizable(i)){
+    
+      DEBUG(10, "\tself energy: i " << i);
+      innerloop.self_energy_innerloop (
+           topo, conf, i, storage, periodicity);
+    }
+  }
+}
+
+
+void interaction::Nonbonded_Outerloop
+::electric_field_outerloop(topology::Topology & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation & sim, 
+		   PairlistContainer const & pairlist,
+                   Storage & storage,
+                   Storage & storage_lr)
+{
+  SPLIT_INNERLOOP(_electric_field_outerloop, topo, conf, sim, 
+                  pairlist, storage, storage_lr);
+}
+/**
+ * helper function to calculate polarization, 
+ * stores them in the arrays pointed to by parameters
+ * to make it usable for longrange calculations.
+ */
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_electric_field_outerloop(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim, 
+		    PairlistContainer const & pairlist,
+		    Storage & storage,
+                    Storage & storage_lr)
+{  
+  DEBUG(7, "\tcalculate polarization (electric field outerloop)");  
+
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+  innerloop.init(sim);
+  unsigned int i;
+  unsigned int size_i = unsigned(pairlist.size());
+  unsigned int size_lr = size_i;
+  DEBUG(11, "outerloop pairlist size " << size_i);
+  
+  unsigned int end = size_i;
+  unsigned int end_lr = size_lr;
+  
+
+  math::VArray e_el_new(topo.num_atoms());
+
+  double minfield = sim.param().polarize.minfield;
+  const double minfield_param = minfield;
+  double maxfield;
+  int turni = 0;
+
+  // longrange ?
+  if(!(sim.steps() % sim.param().pairlist.skip_step)){
+
+    // loop over all molecules in longrange pairlist
+    for(i=0; i < end_lr; ++i){
+      // solute longrange
+      for(std::vector<unsigned int>::const_iterator 
+              j_it = pairlist.solute_long[i].begin(),
+              j_to = pairlist.solute_long[i].end();
+              j_it != j_to; ++j_it){
+        
+        math::Vec e_eli_lr, e_elj_lr;
+        
+        innerloop.electric_field_innerloop(topo, conf, i, *j_it,
+                e_eli_lr, e_elj_lr, periodicity);
+        
+        storage_lr.electric_field[i] += e_eli_lr;
+        storage_lr.electric_field[*j_it] += e_elj_lr;
+      }
+      // solvent longrange
+      for(std::vector<unsigned int>::const_iterator 
+              j_it = pairlist.solvent_long[i].begin(),
+              j_to = pairlist.solvent_long[i].end();
+              j_it != j_to; ++j_it){
+        
+        math::Vec e_eli_lr, e_elj_lr;
+        
+        innerloop.electric_field_innerloop(topo, conf, i, *j_it,
+                e_eli_lr, e_elj_lr, periodicity);
+        
+        storage_lr.electric_field[i] += e_eli_lr;
+        storage_lr.electric_field[*j_it] += e_elj_lr;
+      }
+    }
+  }
+
+  // shortrange
+  while (minfield >= minfield_param) {
+
+    maxfield = 0.0;
+    e_el_new = 0.0;
+
+    // loop over all molecules in shortrange pairlist
+    for(i=0; i < end; ++i){
+      // solute short
+      for(std::vector<unsigned int>::const_iterator 
+              j_it = pairlist.solute_short[i].begin(),
+	      j_to = pairlist.solute_short[i].end();
+              j_it != j_to; ++j_it){
+
+        math::Vec e_eli, e_elj;
+
+        innerloop.electric_field_innerloop(topo, conf, 
+           i, *j_it, e_eli, e_elj, periodicity);
+
+        e_el_new(i) += e_eli;
+        e_el_new(*j_it) += e_elj;
+      }
+      // solvent short
+      for(std::vector<unsigned int>::const_iterator 
+              j_it = pairlist.solvent_short[i].begin(),
+	      j_to = pairlist.solvent_short[i].end();
+              j_it != j_to; ++j_it){
+
+        math::Vec e_eli, e_elj;
+
+        innerloop.electric_field_innerloop(topo, conf, 
+           i, *j_it, e_eli, e_elj, periodicity);
+
+        e_el_new(i) += e_eli;
+        e_el_new(*j_it) += e_elj;
+      }
+    }
+  
+    for (i=0; i<topo.num_atoms(); ++i) {
+      if(topo.is_polarizable(i)){
+        e_el_new(i) += storage_lr.electric_field(i);
+
+	//delta r
+        math::Vec delta_r;
+        
+        //////////////////////////////////////////////////
+        // implementation of polarizability damping
+        /////////////////////////////////////////////////
+        
+        if (sim.param().polarize.damp) { // damp the polarizability
+          const double e_i = sqrt(math::abs2(e_el_new(i))),
+                       e_0 = topo.damping_level(i);
+          if (e_i <= e_0) 
+            delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
+          else {
+            const double p = topo.damping_power(i);
+            delta_r = topo.polarizability(i) * e_0 / p * 
+                      (p + 1.0 - pow(e_0/e_i, p)) / 
+                      (topo.coscharge(i) * e_i) * e_el_new(i);
+          }
+        } else { // no damping
+          delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
+        }
+        // store the new position
+        conf.current().posV(i) = delta_r;
+        
+        // calculation of convergence criterium
+        for(int j=0; j<3; ++j) {
+          double delta_e = fabs(storage.electric_field(i)(j)-e_el_new(i)(j))* 7.911492226513023 * 0.1;
+          if (delta_e > maxfield) {
+	     maxfield = delta_e;
+          }
+        }
+      }
+      storage.electric_field(i) = e_el_new(i);
+    }
+
+    turni++;
+    minfield = maxfield;
+    DEBUG(11, "\tminfield: "<<minfield<<" iteration round: "<<turni);
+  }
+}
+
+
 
 /**
  * calculate the interaction for a given atom pair.

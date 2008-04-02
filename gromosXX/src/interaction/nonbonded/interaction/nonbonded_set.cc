@@ -55,7 +55,8 @@ int interaction::Nonbonded_Set
   m_storage.zero();
 
   // need to update pairlist?
-  if(!(sim.steps() % sim.param().pairlist.skip_step)){
+  const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
+  if(pairlist_update){
     DEBUG(6, "\tdoing longrange...");
     
     //====================
@@ -72,17 +73,6 @@ int interaction::Nonbonded_Set
     m_pairlist_alg.update(topo, conf, sim, 
 			  pairlist(),
 			  m_rank, topo.num_atoms(), m_num_threads);
-
-    DEBUG(8, "doing longrange calculation");
-    if(sim.param().pairlist.grid) { // using stored shifts for calculation
-      m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
-			          m_pairlist.solute_long, m_pairlist.shifts ,
-                                  m_longrange_storage);      
-    } else {
-      m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			          m_pairlist.solute_long, m_pairlist.solvent_long,
-                                  m_longrange_storage);
-    }
     
     /*
     sleep(2*tid);
@@ -102,12 +92,44 @@ int interaction::Nonbonded_Set
     */
   }
 
+  if (sim.param().polarize.cos) {
+    //===============
+    // polarization
+    //===============
+
+    // calculate explicit polarization of the molecules
+    DEBUG(6, "\texplicit polarization");
+  
+    m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist,
+				       m_storage, m_longrange_storage);
+  }
+  
+  //DEBUG(1, "field 1 [" << m_storage.electric_field(0)(0) << " " << m_storage.electric_field(0)(1) << " "  << m_storage.electric_field(0)(2) << "]");
+  //DEBUG(1, "lr field 1 [" << m_longrange_storage.electric_field(0)(0) << " " << m_longrange_storage.electric_field(0)(1) << " "  << m_longrange_storage.electric_field(0)(2) << "]");
+  
+  if (pairlist_update) {
+    DEBUG(8, "doing longrange calculation");
+    if(sim.param().pairlist.grid) { // using stored shifts for calculation
+      m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
+			          m_pairlist.solute_long, m_pairlist.shifts ,
+                                  m_longrange_storage);      
+    } else {
+      m_outerloop.lj_crf_outerloop(topo, conf, sim,
+			          m_pairlist.solute_long, m_pairlist.solvent_long,
+                                  m_longrange_storage);
+    }
+  }
+  
+  
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
   
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage);
+  
+  if (sim.param().polarize.cos)
+    m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
   
   // add 1,4 - interactions
   if (m_rank == 0){
@@ -200,6 +222,10 @@ int interaction::Nonbonded_Set::update_configuration
 	m_storage.energies.crf_energy[i][j];
     }
   }
+  
+  for(int i = 0; i < ljs; ++i){
+    e.self_energy[i] +=  m_storage.energies.self_energy[i];
+  }
 
   // (MULTISTEP: and the virial???)
   if (sim.param().pcouple.virial){
@@ -275,6 +301,9 @@ int interaction::Nonbonded_Set
   m_longrange_storage.energies.
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()));
+  
+  m_storage.electric_field.resize(num_atoms);
+  m_longrange_storage.electric_field.resize(num_atoms);
   
   // and the pairlists
   DEBUG(10, "pairlist size: " << num_atoms);

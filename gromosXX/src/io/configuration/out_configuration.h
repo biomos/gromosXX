@@ -110,6 +110,10 @@ namespace io {
      */
     void force_trajectory(std::string const name, int every=1);
     /**
+     * write a special trajectory.
+     */
+    void special_trajectory(std::string const name, int every_cos=1);
+    /**
      * write an energy trajectory.
      */
     void energy_trajectory(std::string const name, int every=1);
@@ -282,6 +286,7 @@ namespace io {
     std::ofstream m_blockaveraged_energy;
     std::ofstream m_blockaveraged_free_energy;
     std::ofstream m_ramd_traj;
+    std::ofstream m_special_traj;
     
     std::ostream & m_output;
     
@@ -295,6 +300,7 @@ namespace io {
     int m_every_free_energy;
     int m_every_blockaverage;
     int m_every_ramd;
+    int m_every_cos_pos;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;
@@ -306,8 +312,6 @@ namespace io {
     int m_force_width;
 
     std::string m_title;
-
-
   };
   
 } // io

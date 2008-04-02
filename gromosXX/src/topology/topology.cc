@@ -427,8 +427,8 @@ void topology::Topology::solvate(unsigned int solv, unsigned int num_molecules)
       m_coscharge(n) = m_solvent[solv].atom(j).coscharge;
       m_damping_level(n) = m_solvent[solv].atom(j).damping_level;
       m_damping_power(n) = m_solvent[solv].atom(j).damping_power;
+      m_is_polarizable[n] = bool(m_solvent[solv].atom(j).polarizability > 0.0);
       // no exclusions or 1-4 interactions for solvent ?!
-
     }
 
     // add to the chargegroups
@@ -489,6 +489,7 @@ void topology::Topology::resolvate(unsigned int solv, unsigned int num_molecules
       m_coscharge(n) = m_solvent[solv].atom(j).coscharge;
       m_damping_level(n) = m_solvent[solv].atom(j).damping_level;
       m_damping_power(n) = m_solvent[solv].atom(j).damping_power;
+      m_is_polarizable[n] = bool(m_solvent[solv].atom(j).polarizability > 0.0);
       
       // no exclusions or 1-4 interactions for solvent
     }

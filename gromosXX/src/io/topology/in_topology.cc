@@ -127,7 +127,8 @@ io::In_Topology::read(topology::Topology& topo,
 	if (!quiet)
 	  os << "\tatomistic topology\n";
 	
-	if (param.force.interaction_function != simulation::lj_crf_func){
+	if (param.force.interaction_function != simulation::lj_crf_func &&
+            param.force.interaction_function != simulation::pol_lj_crf_func){
 	  io::messages.add("wrong interaction function selected for atomistic topology",
 			   "InTopology", io::message::error);
 	}
@@ -149,7 +150,8 @@ io::In_Topology::read(topology::Topology& topo,
     else{
       if (!quiet){
 	os << "\tunknown topology type (atomistic / coarse-grained)\n";
-	if (param.force.interaction_function == simulation::lj_crf_func)
+	if (param.force.interaction_function == simulation::lj_crf_func ||
+            param.force.interaction_function == simulation::pol_lj_crf_func)
 	  os << "\tusing atomistic parameters\n";
 	else if (param.force.interaction_function == simulation::cgrain_func)
 	  os << "\tusing coarse-grained parameters\n";
@@ -491,10 +493,11 @@ io::In_Topology::read(topology::Topology& topo,
 			     "In_Topology", io::message::error);
           } else {
 	    DEBUG(10, "\tpolarizable atom: " << i);
-	    topo.polarizability()[i-1] = polarizability;
+	    topo.polarizability()[i-1] = polarizability / math::four_pi_eps_i;
             topo.coscharge()[i-1] = coscharge;
             topo.damping_level()[i-1] = damping_level;
             topo.damping_power()[i-1] = damping_power;
+            topo.is_polarizable()[i-1] = bool(polarizability > 0.0);
           }
 	}
       
@@ -1268,7 +1271,7 @@ io::In_Topology::read(topology::Topology& topo,
           } else {  
             DEBUG(10, "\tpolarizable atom: " << i);
           
-            s.atoms()[i-1].polarizability = polarizability;
+            s.atoms()[i-1].polarizability = polarizability / math::four_pi_eps_i;
             s.atoms()[i-1].coscharge = coscharge;
             s.atoms()[i-1].damping_level = damping_level;
             s.atoms()[i-1].damping_power = damping_power;

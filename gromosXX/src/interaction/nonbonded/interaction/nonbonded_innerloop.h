@@ -41,7 +41,7 @@ namespace interaction
      * nearest image free implementation
      * like this only works for molecular virial!
      * this is for interactions in the central computational box
-     */
+     *
     void lj_crf_innerloop_central
     (
      topology::Topology & topo,
@@ -49,7 +49,7 @@ namespace interaction
      unsigned int i,
      unsigned int j,
      Storage & storage
-     );
+     );*/
 
     /**
      * lennard-jones interaction
@@ -104,6 +104,9 @@ namespace interaction
      math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity
      );
 
+    /**
+     * fast innerloop for SPC water model
+     */
     void spc_innerloop
     (
      topology::Topology & topo,
@@ -113,6 +116,29 @@ namespace interaction
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );
+    
+    /**
+     * Calculation of the electric field (polarization)
+     */
+    void electric_field_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, unsigned int j, math::Vec &e_eli, math::Vec &e_elj,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+    );
+    
+    /**
+     * Calculation of the self energy (polarization)
+     */
+    void self_energy_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i,
+     Storage & storage,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+    );
     
   protected:
     Nonbonded_Parameter * m_param;

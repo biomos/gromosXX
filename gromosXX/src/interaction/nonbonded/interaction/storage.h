@@ -26,12 +26,7 @@ namespace interaction
      * (longrange) force storage.
      */
     math::VArray force;
-    /**
-      * longrange electric field storage.
-      */
-    math::VArray electric_field;
-
-    /**
+     /**
      * (longrange) energy storage.
      */
     configuration::Energy energies;
@@ -43,6 +38,10 @@ namespace interaction
      * (longrange) virial storage.
      */
     math::Matrix virial_tensor;
+     /**
+      * (longrange) electric field storage.
+      */
+    math::VArray electric_field;
 
     /**
      * zero all entities

@@ -16,6 +16,7 @@ inline void interaction::Nonbonded_Term
 {
   switch(sim.param().force.interaction_function){
   case simulation::lj_crf_func :
+  case simulation::pol_lj_crf_func :
     // Force
     m_cut3i = 
       1.0 / ( sim.param().longrange.rf_cutoff
@@ -102,6 +103,64 @@ inline void interaction::Nonbonded_Term
 
 /**
  * helper function to calculate the force and energy for
+ * a given atom pair (polarizable).
+ */
+inline void interaction::Nonbonded_Term
+::pol_lj_crf_interaction(math::Vec const &r,
+                     math::Vec const &rp1,
+                     math::Vec const &rp2,
+                     math::Vec const &rpp,
+		     double c6, double c12,
+		     double qi, double qj, double cgi, double cgj,
+		     std::vector<double> &f, double &e_lj, double &e_crf)
+{
+  DEBUG(14, "\t\tnonbonded term");
+  
+  assert(abs2(r) != 0);
+
+  const double dist2 = abs2(r);
+  const double dist2p1 = abs2(rp1);
+  const double dist2p2 = abs2(rp2);
+  const double dist2pp = abs2(rpp);
+  const double dist2i = 1.0 / dist2;
+  const double dist2p1i = 1.0 / dist2p1;
+  const double dist2p2i = 1.0 / dist2p2;
+  const double dist2ppi = 1.0 / dist2pp;
+
+  const double dist6i = dist2i * dist2i * dist2i;
+
+  const double disti = sqrt(dist2i);
+  const double distp1i = sqrt(dist2p1i);
+  const double distp2i = sqrt(dist2p2i);
+  const double distppi = sqrt(dist2ppi);
+
+  const double c12_dist6i = c12 * dist6i;
+  const double eps = math::four_pi_eps_i;
+  const double q_eps = (qi-cgi)*(qj-cgj) * eps;
+  const double q_epsp1 = (qi-cgi)*cgj * eps;
+  const double q_epsp2 = cgi*(qj-cgj) * eps;
+  const double q_epspp = cgi*cgj * eps;
+  
+  e_lj = (c12_dist6i - c6) * dist6i;
+
+  e_crf = q_eps * (disti - m_crf_2cut3i * dist2 - m_crf_cut)
+    + q_epsp1 * (distp1i - m_crf_2cut3i * dist2p1 - m_crf_cut)
+    + q_epsp2 * (distp2i - m_crf_2cut3i * dist2p2 - m_crf_cut)
+    + q_epspp * (distppi - m_crf_2cut3i * dist2pp - m_crf_cut);
+
+  f[0] = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i + 
+         q_eps * (disti * dist2i + m_crf_cut3i);
+  f[1] = q_epsp1 * (distp1i * dist2p1i + m_crf_cut3i);
+  f[2] = q_epsp2 * (distp2i * dist2p2i + m_crf_cut3i);
+  f[3] = q_epspp * (distppi * dist2ppi + m_crf_cut3i);
+
+  DEBUG(15, "\t\tq=" << qi*qj << " 4pie=" << math::four_pi_eps_i 
+	<< " crf_cut2i=" << m_crf_cut3i);
+  
+}
+
+/**
+ * helper function to calculate the force and energy for
  * the reaction field contribution for a given pair
  */
 inline void interaction::Nonbonded_Term
@@ -119,6 +178,43 @@ inline void interaction::Nonbonded_Term
   DEBUG(11, "q*q   " << q );
   
 }
+
+/**
+ * helper function to calculate the force and energy for
+ * the reaction field contribution for a given pair
+ * with polarization
+ */
+inline void interaction::Nonbonded_Term
+::pol_rf_interaction(math::Vec const &r,
+                 math::Vec const &rp1,
+                 math::Vec const &rp2,
+                 math::Vec const &rpp,
+                 double qi, double qj, 
+                 double cgi, double cgj,
+		 math::VArray &force, double &e_crf)
+{
+  const double dist2 = abs2(r);
+  const double dist2p1 = abs2(rp1);
+  const double dist2p2 = abs2(rp2);
+  const double dist2pp = abs2(rpp);
+
+  const double eps = math::four_pi_eps_i;
+  const double qeps = (qi-cgi)*(qj-cgj) * eps;
+  const double qepsp1 = (qi-cgi)*cgj * eps;
+  const double qepsp2 = cgi*(qj-cgj) * eps;
+  const double qepspp = cgi*cgj * eps;
+  
+  force(0) = qeps *  m_crf_cut3i * r;
+  force(1) = qepsp1 *  m_crf_cut3i * rp1;
+  force(2) = qepsp2 *  m_crf_cut3i * rp2;
+  force(3) = qepspp *  m_crf_cut3i * rpp;
+
+  e_crf = qeps*( -m_crf_2cut3i*dist2 - m_crf_cut)
+          + qepsp1*( -m_crf_2cut3i*dist2p1 - m_crf_cut)
+          + qepsp2*( -m_crf_2cut3i*dist2p2 - m_crf_cut)
+          + qepspp*( -m_crf_2cut3i*dist2pp - m_crf_cut);
+}
+
 
 /**
  * helper function to calculate the force and energy for
@@ -173,6 +269,59 @@ inline double interaction::Nonbonded_Term
 ::crf_2cut3i()const
 {
   return m_crf_2cut3i;
+}
+
+/**
+ * helper function to calculate a term of the electric field 
+ * at a given position for the polarization
+ */
+inline void interaction::Nonbonded_Term
+::electric_field_interaction(math::Vec const &r, 
+                       math::Vec const &rprime, 
+                       double qj, double charge, 
+                       math::Vec &e_el) {
+
+  DEBUG(14, "\t\tenergy field term for polarization");
+
+  assert(abs2(r) != 0);
+  assert(abs2(rprime) != 0);
+  const double distj = abs2(r);
+  const double distp = abs2(rprime);
+  const double distji = 1/(distj*sqrt(distj));
+  const double distpi = 1/(distp*sqrt(distp));
+  const double q_eps = (qj-charge) * math::four_pi_eps_i;
+  const double q_epsp = charge * math::four_pi_eps_i;
+
+  e_el = q_eps*(distji + m_crf_cut3i)*r + q_epsp*(distpi + m_crf_cut3i)*rprime;
+}
+
+/**
+ * helper function to calculate the self energy 
+ * at a given atom.
+ */
+inline void interaction::Nonbonded_Term
+::self_energy_interaction(double alpha, double e_i2, double &self_e) {
+
+  DEBUG(14, "\t\tself energy - dipole-dipole interaction");
+  self_e = 0.5 * alpha * e_i2;
+}
+
+/**
+ * helper function to calculate the self energy 
+ * at a given atom (damped).
+ */
+inline void interaction::Nonbonded_Term
+::self_energy_interaction(double alpha, double e_i2, double e_0, double p,
+                       double &self_e) {
+
+  DEBUG(14, "\t\tself energy - dipole-dipole interaction");
+  const double e_02 = e_0 * e_0; 
+  if (e_i2 <= e_02) {
+    self_e = 0.5 * alpha * e_i2;
+  } else {
+    self_e = 0.5 * alpha * e_02 / (p - 1) *
+             (p + 1 - 2 * pow(e_0 / sqrt(e_i2), p - 1));
+  } 
 }
 
 inline void

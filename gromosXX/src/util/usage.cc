@@ -79,6 +79,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# output force trajectory\n";
     usage += "\t# @trf       filename\n\n";
   }
+
+  if (knowns.count("trs")){
+    usage += "\t# output special trajectory\n";
+    usage += "\t# @trs       filename\n\n";
+  }  
   
   if (knowns.count("tramd")){
     usage += "\t# output RAMD trajectory\n";

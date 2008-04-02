@@ -79,8 +79,7 @@ namespace simulation
    */
   enum interaction_func_enum{
     /** lj_crf_function */ lj_crf_func,
-    /** pol_lj_crf_function */ pol_lj_crf_function,
-    /** damped_pol_lj_crf_function */ damped_pol_lj_crf_function,
+    /** pol_lj_crf_function */ pol_lj_crf_func,
     /** cgrain_function */ cgrain_func
   };
   
@@ -1504,9 +1503,10 @@ namespace simulation
        * - cos, no charge-on-spring polarization
        * - minfield: 2.5
        * - damp, no damping of polarizability
+       * - output cospositions every 'write'th block to special trajectory
        */
       polarize_struct() : cos(false), minfield(2.5), efield_site(ef_atom),
-                          damp(false)
+                          damp(false), write(0)
       {}
       /**
        * use charge-on-spring polarization
@@ -1524,6 +1524,10 @@ namespace simulation
        * use damping
        */
       bool damp;
+      /**
+       * write cos positions every write-th step to special trajectory
+       */
+      int write;
     } /** polarize */ polarize;
   };
 }
