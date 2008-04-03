@@ -624,7 +624,7 @@ void interaction::Nonbonded_Outerloop
       MPI::COMM_WORLD.Bcast(&minfield, 1, MPI::DOUBLE, 0);
     }
 #endif
-    DEBUG(1, "\trank: " << rank << " minfield: "<<minfield<<" iteration round: "<<turni);
+    DEBUG(11, "\trank: " << rank << " minfield: "<<minfield<<" iteration round: "<<turni);
   }
 }
 
