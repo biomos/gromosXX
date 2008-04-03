@@ -95,7 +95,8 @@ namespace interaction
 		            simulation::Simulation & sim, 
 		            PairlistContainer const & pairlist,
                             Storage & storage,
-                            Storage & storage_lr);
+                            Storage & storage_lr,
+                            int rank);
 
     /**
      * calculate the interaction for a given atom pair.
@@ -170,7 +171,8 @@ namespace interaction
 		            simulation::Simulation & sim, 
 		            PairlistContainer const & pairlist,
 			    Storage & storage,
-                            Storage & storage_lr);
+                            Storage & storage_lr,
+                            int rank);
     
     template<typename t_interaction_spec>
     int _calculate_interaction(topology::Topology & topo,

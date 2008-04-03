@@ -3,6 +3,10 @@
  * template methods of Nonbonded_Outerloop.
  */
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -408,10 +412,10 @@ void interaction::Nonbonded_Outerloop
 		   simulation::Simulation & sim, 
 		   PairlistContainer const & pairlist,
                    Storage & storage,
-                   Storage & storage_lr)
+                   Storage & storage_lr, int rank)
 {
   SPLIT_INNERLOOP(_electric_field_outerloop, topo, conf, sim, 
-                  pairlist, storage, storage_lr);
+                  pairlist, storage, storage_lr, rank);
 }
 /**
  * helper function to calculate polarization, 
@@ -425,7 +429,8 @@ void interaction::Nonbonded_Outerloop
 		    simulation::Simulation & sim, 
 		    PairlistContainer const & pairlist,
 		    Storage & storage,
-                    Storage & storage_lr)
+                    Storage & storage_lr,
+                    int rank)
 {  
   DEBUG(7, "\tcalculate polarization (electric field outerloop)");  
 
@@ -442,12 +447,24 @@ void interaction::Nonbonded_Outerloop
   
 
   math::VArray e_el_new(topo.num_atoms());
+#ifdef XXMPI
+  // because we need some place to reduce the field to
+  math::VArray e_el_master(topo.num_atoms());
+#endif
 
   double minfield = sim.param().polarize.minfield;
   const double minfield_param = minfield;
   double maxfield;
   int turni = 0;
 
+#ifdef XXMPI
+  // broadcast posV to slaves. We only have to do this here at the very first step because
+  // posV is also broadcasted at the end of every electric field iteration.
+  if (sim.mpi && sim.steps() == 0) {
+    MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
+  }
+#endif
+ 
   // longrange ?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
 
@@ -482,6 +499,21 @@ void interaction::Nonbonded_Outerloop
         storage_lr.electric_field[*j_it] += e_elj_lr;
       }
     }
+#ifdef XXMPI
+    if (sim.mpi) {
+      // reduce the longrange electric field to some temp. variable and then set this
+      // variable to the longrange electric field on the master. The lr e field
+      // is only needed on the master node
+      if (rank) {
+        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), NULL,
+                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      } else {
+        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), &e_el_master(0)(0),
+                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        storage_lr.electric_field = e_el_master;
+      }
+    }
+#endif
   }
 
   // shortrange
@@ -489,6 +521,12 @@ void interaction::Nonbonded_Outerloop
 
     maxfield = 0.0;
     e_el_new = 0.0;
+#ifdef XXMPI
+    // again set the temporary variable to 0 as we need it again for 
+    // the short range eletric field
+    if (sim.mpi)
+      e_el_master = 0.0;
+#endif
 
     // loop over all molecules in shortrange pairlist
     for(i=0; i < end; ++i){
@@ -521,49 +559,72 @@ void interaction::Nonbonded_Outerloop
         e_el_new(*j_it) += e_elj;
       }
     }
-  
-    for (i=0; i<topo.num_atoms(); ++i) {
-      if(topo.is_polarizable(i)){
-        e_el_new(i) += storage_lr.electric_field(i);
 
-	//delta r
-        math::Vec delta_r;
-        
-        //////////////////////////////////////////////////
-        // implementation of polarizability damping
-        /////////////////////////////////////////////////
-        
-        if (sim.param().polarize.damp) { // damp the polarizability
-          const double e_i = sqrt(math::abs2(e_el_new(i))),
-                       e_0 = topo.damping_level(i);
-          if (e_i <= e_0) 
-            delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
-          else {
-            const double p = topo.damping_power(i);
-            delta_r = topo.polarizability(i) * e_0 / p * 
-                      (p + 1.0 - pow(e_0/e_i, p)) / 
-                      (topo.coscharge(i) * e_i) * e_el_new(i);
-          }
-        } else { // no damping
-          delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
-        }
-        // store the new position
-        conf.current().posV(i) = delta_r;
-        
-        // calculation of convergence criterium
-        for(int j=0; j<3; ++j) {
-          double delta_e = fabs(storage.electric_field(i)(j)-e_el_new(i)(j))* 7.911492226513023 * 0.1;
-          if (delta_e > maxfield) {
-	     maxfield = delta_e;
-          }
-        }
+#ifdef XXMPI
+    // also reduce the shortrange electric field the same way as the longrange
+    // electric field
+    if (sim.mpi) {
+      if (rank) {
+        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      } else {
+        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), &e_el_master(0)(0), e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        e_el_new = e_el_master;
       }
-      storage.electric_field(i) = e_el_new(i);
     }
+#endif
 
+    if (rank == 0) {
+      for (i=0; i<topo.num_atoms(); ++i) {
+        if(topo.is_polarizable(i)){
+          e_el_new(i) += storage_lr.electric_field(i);
+
+          //delta r
+          math::Vec delta_r;
+        
+          //////////////////////////////////////////////////
+          // implementation of polarizability damping
+          /////////////////////////////////////////////////
+        
+          if (sim.param().polarize.damp) { // damp the polarizability
+            const double e_i = sqrt(math::abs2(e_el_new(i))),
+                         e_0 = topo.damping_level(i);
+            if (e_i <= e_0) 
+              delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
+            else {
+              const double p = topo.damping_power(i);
+              delta_r = topo.polarizability(i) * e_0 / p * 
+                        (p + 1.0 - pow(e_0/e_i, p)) / 
+                        (topo.coscharge(i) * e_i) * e_el_new(i);
+            }
+          } else { // no damping
+            delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
+          }
+          // store the new position
+          conf.current().posV(i) = delta_r;
+        
+          // calculation of convergence criterium
+          for(int j=0; j<3; ++j) {
+            double delta_e = fabs(storage.electric_field(i)(j)-e_el_new(i)(j))* 7.911492226513023 * 0.1;
+            if (delta_e > maxfield) {
+              maxfield = delta_e;
+            }
+          }
+        }
+        storage.electric_field(i) = e_el_new(i);
+      }
+    }
     turni++;
     minfield = maxfield;
-    DEBUG(11, "\tminfield: "<<minfield<<" iteration round: "<<turni);
+
+#ifdef XXMPI
+    // broadcast the new posV and also the convergence criterium (minfield)
+    // to the slaves. Otherwise they don't know when to stop.
+    if (sim.mpi) {
+      MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
+      MPI::COMM_WORLD.Bcast(&minfield, 1, MPI::DOUBLE, 0);
+    }
+#endif
+    DEBUG(1, "\trank: " << rank << " minfield: "<<minfield<<" iteration round: "<<turni);
   }
 }
 

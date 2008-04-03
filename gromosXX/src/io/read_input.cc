@@ -3,10 +3,6 @@
  * implementation of function read_input
  */
 
-#ifdef XXMPI
-#include <mpi.h>
-#endif
-
 #include <stdheader.h>
 #include <fstream>
 
@@ -52,14 +48,6 @@ int io::read_input(io::Argument const & args,
 
   if (read_parameter(args, sim, os, quiet) != 0) return -1;
 
-  // need to do this here because otherwise we don't have sim.mpi
-#ifdef XXMPI
-    if (sim.mpi && MPI::COMM_WORLD.Get_size() > 1 && sim.param().polarize.cos) {
-      io::messages.add("Error in POLARIZE block: No MPI parallelization when running polarization.",
-                         "In_Parameter", io::message::error);
-    }
-#endif     
-  
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
 
   // read this before configuration, as it contains topological data...

@@ -101,7 +101,7 @@ int interaction::Nonbonded_Set
     DEBUG(6, "\texplicit polarization");
   
     m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist,
-				       m_storage, m_longrange_storage);
+				       m_storage, m_longrange_storage, m_rank);
   }
   
   //DEBUG(1, "field 1 [" << m_storage.electric_field(0)(0) << " " << m_storage.electric_field(0)(1) << " "  << m_storage.electric_field(0)(2) << "]");
@@ -128,9 +128,6 @@ int interaction::Nonbonded_Set
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage);
   
-  if (sim.param().polarize.cos)
-    m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
-  
   // add 1,4 - interactions
   if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
@@ -140,6 +137,11 @@ int interaction::Nonbonded_Set
     if(sim.param().longrange.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
+    }
+    
+    if (sim.param().polarize.cos) {
+      DEBUG(6, "\tself-energy of polarization");
+      m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
     }
   }
   
