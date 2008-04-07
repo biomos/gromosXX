@@ -611,13 +611,23 @@ io::In_Perturbation::read(topology::Topology &topo,
    } // loop over H/non H blocks
   } // PERTPROPERDIH(H)
 
-  { // PERTATOMPAIR03
+  { // PERTATOMPAIR
     // has to be read in before(!!) PERTATOMPARAM
     // because the exclusions and 1,4 exclusions have to be adapted...
-
+      
+    DEBUG(10, "PERTATOMPAIR03 block");
     buffer = m_block["PERTATOMPAIR03"];
+    
     if (buffer.size()){
+      
       block_read.insert("PERTATOMPAIR03");
+      io::messages.add("The PERTATOMPAIR03 block was renamed to PERTATOMPAIR.",
+              "In_Perturbation", io::message::error);
+    }
+    
+    buffer = m_block["PERTATOMPAIR"];
+    if (buffer.size()){
+      block_read.insert("PERTATOMPAIR");
 
       if (!quiet)
 	std::cout << "\tPERTATOMPAIR\n";
@@ -645,7 +655,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	_lineStream >> i >> j >> A >> B;
 	
 	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTATOMPAIR03 block.",
+	  io::messages.add("Bad line in PERTATOMPAIR block.",
 			   "In_Perturbation", io::message::error);
 	}
 	
@@ -689,11 +699,11 @@ io::In_Perturbation::read(topology::Topology &topo,
       }
       
       if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTATOMPAIR03 block.",
+	  io::messages.add("Wrong number of bonds in PERTATOMPAIR block.",
 			   "In_Perturbation", io::message::error);	
       }
       else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTATOMPAIR03 block.",
+	io::messages.add("Bad line in PERTATOMPAIR block.",
 			 "In_Perturbation", io::message::error);
       }
 
@@ -701,7 +711,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 	std::cout << "\tEND\n";
       
     } // if block present
-  } // PERTATOMPAIR03
+  } // PERTATOMPAIR
   
   { // PERTATOMPARAM
     

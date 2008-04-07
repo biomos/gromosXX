@@ -286,10 +286,10 @@ int check::check_forcefield(topology::Topology & topo,
     }
     else if ((*it)->name == "NonBonded"){
       sim.param().force.spc_loop = 1;
-      total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+      total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
       sim.param().force.spc_loop = 0;
-      total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+      total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
       if (sim.param().pairlist.grid){
 	// construct a "non-grid" pairlist algorithm
@@ -304,7 +304,7 @@ int check::check_forcefield(topology::Topology & topo,
 
 	ni->init(topo, conf, sim, std::cout, true);
 
-	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
 	total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
 
 	sim.param().pairlist.grid = true;
@@ -325,7 +325,7 @@ int check::check_forcefield(topology::Topology & topo,
 	sim.param().pairlist.grid_size = 0.1;
 	ni->init(topo, conf, sim, std::cout, true);
 	
-	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.353066, 0.00000001, 0.001);
+	total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
 	total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
 
 	sim.param().pairlist.grid = false;
@@ -370,7 +370,7 @@ int check::check_atomic_cutoff(topology::Topology & topo,
       
       conf.current().energies.calculate_totals();
       CHECK_APPROX_EQUAL(conf.current().energies.potential_total,
-			 -50.068, 0.001, res);
+			 -49.912, 0.001, res);
       RESULT(res, total);
     }
   }
