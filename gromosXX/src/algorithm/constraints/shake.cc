@@ -3,6 +3,9 @@
  * contains the template methods for
  * the class Shake.
  */
+#ifdef XXMPI
+#include <mpi.h>
+#endif
 
 #include <stdheader.h>
 
@@ -318,6 +321,7 @@ template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Shake
 ::solvent(topology::Topology const & topo,
 	  configuration::Configuration & conf,
+          simulation::Simulation & sim,
 	  double dt, int const max_iterations,
 	  int & error)
 {
@@ -333,17 +337,54 @@ void algorithm::Shake
   std::vector<bool> skip_next;
   int tot_iterations = 0;
 
+  error = 0;
+  int my_error = error;
+
   math::Periodicity<B> periodicity(conf.current().box);
+
+#ifdef XXMPI
+  math::VArray & pos = conf.current().pos;
+  if (sim.mpi) {
+    // broadcast current and old coordinates and pos.
+
+    MPI::COMM_WORLD.Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, 0);
+    MPI::COMM_WORLD.Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, 0);
+    MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, 0);
+
+    // set virial tensor and solute coordinates of slaves to zero
+    if (m_rank) { // slave
+      conf.old().virial_tensor = 0.0;
+      for(unsigned int i = 0; i < first; ++i) {
+        pos(i) = 0.0;
+      }
+    } 
+  }
+#endif
 
   // for all solvents
   for(unsigned int i=0; i<topo.num_solvents(); ++i){
-
+    const unsigned int num_solvent_atoms = topo.solvent(i).num_atoms();
     // loop over the molecules
     for(unsigned int nm=0; nm<topo.num_solvent_molecules(i);
-	++nm, first+=topo.solvent(i).num_atoms()){
+	++nm, first+=num_solvent_atoms){
 
-      skip_now.assign(topo.solvent(i).num_atoms(), false);
-      skip_next.assign(topo.solvent(i).num_atoms(), true);
+#ifdef XXMPI
+      if (sim.mpi) {
+        int stride = nm + m_rank;
+        DEBUG(12, "rank: " << m_rank << " nm: " << nm << " stride: " << stride);
+        if (stride % m_size != 0) {
+          // set current coordinates to zero.
+          for(unsigned int a = 0; a < num_solvent_atoms; ++a) {
+            pos(a + first) = 0.0;
+          }
+          // do next molecule
+          continue;
+        }
+      }
+#endif
+
+      skip_now.assign(num_solvent_atoms, false);
+      skip_next.assign(num_solvent_atoms, true);
 
       int num_iterations = 0;
       bool convergence = false;
@@ -359,8 +400,8 @@ void algorithm::Shake
 			   "Shake::solvent", io::message::error);
 	  
 	  std::cout << "SHAKE failure in solvent!" << std::endl;
-	  error = E_SHAKE_FAILURE_SOLVENT;
-	  return;
+	  my_error = E_SHAKE_FAILURE_SOLVENT;
+	  break;
 	}
 	
 	// std::cout << num_iterations+1 << std::endl;
@@ -368,24 +409,61 @@ void algorithm::Shake
 	  io::messages.add("SHAKE error. too many iterations",
 			   "Shake::solvent",
 			   io::message::critical);
-	  error = E_SHAKE_FAILURE_SOLVENT;
-	  return;
+	  my_error = E_SHAKE_FAILURE_SOLVENT;
+	  break;
 	}
 
 	skip_now = skip_next;
 	skip_next.assign(skip_next.size(), true);
 
       } // while(!convergence)
+      if (my_error != error) break;
       
       tot_iterations += num_iterations;
       
     } // molecules
+    if (my_error != error) break;
     
   } // solvents
 
+  // reduce everything
+#ifdef XXMPI
+  if (sim.mpi) {
+    if (m_rank == 0) {
+      // Master 
+      // reduce the error to all processors
+      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+      //
+      // reduce current positions, store them in new_pos and assign them to current positions
+      math::VArray new_pos(topo.num_atoms(), math::Vec(0.0));
+      MPI::COMM_WORLD.Reduce(&pos(0)(0), &new_pos(0)(0),
+                             pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      pos = new_pos;     
+
+      // reduce current virial tensor, store it in virial_new and reduce it to current tensor
+      math::Matrix virial_new(0.0);
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0,0), &virial_new(0,0),
+                             9, MPI::DOUBLE, MPI::SUM, 0);
+      conf.old().virial_tensor = virial_new;
+    } else {
+      // reduce the error to all processors
+      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+
+      // slave
+      // reduce pos
+      MPI::COMM_WORLD.Reduce(&pos(0)(0), NULL,
+                             pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      // reduce virial
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0,0), NULL,
+                             9, MPI::DOUBLE, MPI::SUM, 0);
+    }
+  }
+#else
+  error = my_error;
+#endif
+
   m_solvent_timing += util::now() - start;
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
-  error = 0;
 } // shake solvent
 
 /**
@@ -402,10 +480,11 @@ int algorithm::Shake::apply(topology::Topology & topo,
   int error = 0;
   
   // check whether we shake
-  if ((topo.solute().distance_constraints().size() && 
+  if (m_rank == 0 && 
+      ((topo.solute().distance_constraints().size() && 
        sim.param().constraint.solute.algorithm == simulation::constr_shake &&
        sim.param().constraint.ntc > 1) ||
-      sim.param().dihrest.dihrest == 3){
+      sim.param().dihrest.dihrest == 3)){
     
     DEBUG(8, "\twe need to shake SOLUTE");
 
@@ -431,7 +510,7 @@ int algorithm::Shake::apply(topology::Topology & topo,
     do_vel_solvent = true;
 
     SPLIT_VIRIAL_BOUNDARY(solvent, 
-			  topo, conf, sim.time_step_size(), 
+			  topo, conf, sim, sim.time_step_size(), 
 			  m_max_iterations, error);
     if (error){
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
@@ -483,12 +562,27 @@ int algorithm::Shake::init(topology::Topology & topo,
     os << "\tsolvent\t";
   
     if (sim.param().constraint.solvent.algorithm == simulation::constr_shake){
-      os << "ON\n";
+      if (sim.mpi)
+        os << "ON (MPI parallel version)\n";
+      else 
+        os << "ON\n";
       os << "\t\ttolerance = " 
 		<< sim.param().constraint.solvent.shake_tolerance << "\n";
     }  else os << "OFF\n";
   }
-  
+
+#ifdef XXMPI
+  if (sim.mpi) {
+    m_rank = MPI::COMM_WORLD.Get_rank();
+    m_size = MPI::COMM_WORLD.Get_size();
+  } else {
+    m_rank = 0;
+    m_size = 1;
+  }
+#else
+  m_rank = 0;
+  m_size = 1;
+#endif
   if (sim.param().start.shake_pos){
     if (!quiet)
       os << "\n\tshaking initial positions\n";

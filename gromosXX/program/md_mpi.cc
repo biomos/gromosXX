@@ -15,6 +15,8 @@
 #include <configuration/configuration.h>
 
 #include <algorithm/algorithm/algorithm_sequence.h>
+#include <math/periodicity.h>
+#include <algorithm/constraints/shake.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
 
@@ -285,6 +287,20 @@ int main(int argc, char *argv[]){
       MPI::Finalize();
       return 1;
     }
+
+    // get shake and check whether we do it for solvent
+    bool do_shake = sim.param().system.nsm &&
+      sim.param().constraint.solvent.algorithm == simulation::constr_shake;
+
+    algorithm::Shake * shake =
+      dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
+    if (do_shake && shake == NULL) {
+        std::cerr << "MPI slave: could not get Shake algorithm from MD sequence."
+                << "\n\t(internal error)"
+                << std::endl;
+      MPI::Finalize();
+      return 1;
+    }
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     // run the simulation
@@ -298,11 +314,14 @@ int main(int argc, char *argv[]){
       // DEBUG(10, "slave " << rank << " waiting for master");
       if ((error = nb->calculate_interactions(topo, conf, sim)) != 0){
 	std::cout << "MPI slave " << rank << ": error in nonbonded calculation!\n" << std::endl;
-	break;
       }
       
       // DEBUG(10, "slave " << rank << " step done");
       // (*os) << "step done (it really worked?)" << std::endl;
+
+      if ((error = shake->apply(topo, conf, sim)) != 0) {
+        std::cout << "MPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
+      }
  
       MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
 

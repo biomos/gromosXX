@@ -6,6 +6,10 @@
 #ifndef INCLUDED_SHAKE_H
 #define INCLUDED_SHAKE_H
 
+namespace interaction {
+  struct bond_type_struct;
+}
+
 namespace algorithm
 {
   /**
@@ -95,6 +99,10 @@ namespace algorithm
      * time spent for solvent
      */
     double m_solvent_timing;
+    /** 
+     * rank and size for parallelization
+     */
+    int m_rank, m_size;
 
     template<math::boundary_enum B, math::virial_enum V>
     int shake_iteration
@@ -139,6 +147,7 @@ namespace algorithm
     (
      topology::Topology const & topo,
      configuration::Configuration & conf,
+     simulation::Simulation & sim,
      double dt, int const max_iterations,
      int & error
      );
