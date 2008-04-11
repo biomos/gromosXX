@@ -43,7 +43,6 @@ topology::Topology::Topology()
     m_multicell_topo(NULL),
     m_polarizability(0),
     m_coscharge(0),
-    m_dadl(0),
     m_damping_level(0),
     m_damping_power(0)
 {
@@ -77,7 +76,6 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_charge.clear();
   m_polarizability.clear();
   m_coscharge.clear();
-  m_dadl.clear();
   m_damping_level.clear();
   m_damping_power.clear();
   m_exclusion.clear();
@@ -114,7 +112,6 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_charge.push_back(topo.m_charge[i]);
       m_polarizability.push_back(topo.m_polarizability[i]);
       m_coscharge.push_back(topo.m_coscharge[i]);
-      m_dadl.push_back(topo.m_dadl[i]);
       m_damping_level.push_back(topo.m_damping_level[i]);
       m_damping_power.push_back(topo.m_damping_power[i]);
       m_exclusion.push_back(topo.m_exclusion[i]);
@@ -239,7 +236,6 @@ void topology::Topology::resize(unsigned int const atoms)
   m_charge.resize(atoms);
   m_polarizability.resize(atoms);
   m_coscharge.resize(atoms);
-  m_dadl.resize(atoms);
   m_damping_level.resize(atoms);
   m_damping_power.resize(atoms);
   m_exclusion.resize(atoms);
@@ -367,7 +363,6 @@ void topology::Topology
   
   Topology::polarizability()(num_solute_atoms()) = 0.0;
   Topology::coscharge()(num_solute_atoms()) = 0.0;
-  Topology::dadl()(num_solute_atoms()) = 0.0;
   Topology::damping_level()(num_solute_atoms()) = 0.0;
   Topology::damping_power()(num_solute_atoms()) = 0.0;
 

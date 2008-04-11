@@ -3122,10 +3122,6 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
       io::messages.add("Error in POLARIZE block: No flexible shake when running polarization.",
                          "In_Parameter", io::message::error);
     }
-    if (param.perturbation.perturbation && param.polarize.cos){
-      io::messages.add("Error in POLARIZE block: No perturbation when running polarization.",
-                         "In_Parameter", io::message::error);
-    }
     
 #ifdef OMP
     int size, tid;

@@ -20,10 +20,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
  )
 {
   DEBUG(8, "\tperturbed pair\t" << i << "\t" << j << " (inner loop)");
-
-  math::Vec r, f;
-  double f1, f6, f12;
-  
+  math::Vec r;
   double e_lj, e_crf, de_lj, de_crf;
   
   int energy_derivative_index = -1;
@@ -33,7 +30,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   
   lj_parameter_struct const *A_lj;
   lj_parameter_struct const *B_lj;
-  double A_q, B_q;
+  double A_q, B_q, A_qi, A_qj, B_qi, B_qj;
+  
   double alpha_lj=0, alpha_crf=0;
   
   // const double l = topo.lambda();
@@ -43,6 +41,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
     switch(t_interaction_spec::interaction_func){
       case simulation::lj_crf_func :
+      case simulation::pol_lj_crf_func : 
 	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
 				      topo.perturbed_solute().atoms()[j].A_IAC());
 	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
@@ -60,10 +59,12 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 			 io::message::critical);
     }
 
-    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-      topo.perturbed_solute().atoms()[j].A_charge();
-    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-      topo.perturbed_solute().atoms()[j].B_charge();
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge();
+    A_qj = topo.perturbed_solute().atoms()[j].A_charge();
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.perturbed_solute().atoms()[j].B_charge();
+    A_q = A_qi * A_qj;
+    B_q = B_qi * B_qj;
     
     alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
 		topo.perturbed_solute().atoms()[j].LJ_softcore()) /
@@ -76,6 +77,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   else{
     switch(t_interaction_spec::interaction_func){
       case simulation::lj_crf_func :
+      case simulation::pol_lj_crf_func : 
 	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
 				      topo.iac(j));
 	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
@@ -97,10 +99,12 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	  << " iac-i (B) : " << topo.perturbed_solute().atoms()[i].B_IAC()
 	  << " iac-j : " << topo.iac(j));
     
-    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-      topo.charge()(j);
-    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-      topo.charge()(j);
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge();
+    A_qj = topo.charge()(j);
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.charge()(j);
+    A_q = A_qi * A_qj;
+    B_q = B_qi * B_qj;
     
     alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
     alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
@@ -116,9 +120,17 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
   if (t_perturbation_details::do_scaling){
     // SCALING ON
+    math::Vec f;
+    double f1, f6, f12;
     if (t_interaction_spec::interaction_func == simulation::cgrain_func){
       io::messages.add("Nonbonded Innerloop",
 		       "scaling not implemented for coarse-grained simulations!",
+		       io::message::critical);
+      return;
+    }
+    if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
+      io::messages.add("Nonbonded Innerloop",
+		       "scaling not implemented for COS polarization simulations!",
 		       io::message::critical);
       return;
     }
@@ -164,6 +176,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 				topo.energy_group_scaling()[energy_group_pair].second,
 				f1, f6, f12,
 				e_lj, e_crf, de_lj, de_crf);
+
     }
     else{
       // no scaling
@@ -177,62 +190,164 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
     if (reset_lambda)
       set_lambda(topo.lambda(), topo.lambda_exp());
-
-  } 
+    
+    //--------------------------------------------------
+    // interactions have been calculated
+    //--------------------------------------------------
+    
+    DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+            << f1 << " f6: " << f6 << " f12: " << f12
+            << "\n\t\te_lj: " << e_lj
+            << " e_crf: " << e_crf
+            << " de_lj: " << de_lj << " de_crf: " << de_crf
+            << "\n\t\tr: " << sqrt(math::abs2(r)));
+    
+    // now combine everything
+    f      = (f1 + f6 + f12) * r;
+    
+    storage.force(i) += f;
+    storage.force(j) -= f;
+    
+    DEBUG(8, "\tforces stored");
+    
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+        storage.virial_tensor(a, b) +=
+        r(a) * f(b);
+    
+    DEBUG(8, "\tatomic virial done");
+    
+  }
   // END OF SCALING ON ---
   //
   else{
     
     switch(t_interaction_spec::interaction_func){
-    case simulation::lj_crf_func :
-      lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
-			      B_lj->c6, B_lj->c12,
-			      A_q, B_q,
-			      alpha_lj, alpha_crf,
-			      f1, f6, f12,
-			      e_lj, e_crf, de_lj, de_crf);
-      break;
-    case simulation::cgrain_func :
-      cgrain_soft_interaction(r, A_lj->c6, A_lj->c12,
-			      B_lj->c6, B_lj->c12,
-			      A_q, B_q,
-			      alpha_lj, alpha_crf,
-			      f1, f6, f12,
-			      e_lj, e_crf, de_lj, de_crf);
-      break;
-    default:
-      io::messages.add("Nonbonded_Innerloop",
-		       "interaction function not implemented",
-		       io::message::critical);
+      case simulation::lj_crf_func : {
+        math::Vec f;
+        double f1, f6, f12;
+      
+        lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+                B_lj->c6, B_lj->c12,
+                A_q, B_q,
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+        
+        DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+                << f1 << " f6: " << f6 << " f12: " << f12
+                << "\n\t\te_lj: " << e_lj
+                << " e_crf: " << e_crf
+                << " de_lj: " << de_lj << " de_crf: " << de_crf
+                << "\n\t\tr: " << sqrt(math::abs2(r)));
+        
+        // now combine everything
+        f      = (f1 + f6 + f12) * r;
+        
+        storage.force(i) += f;
+        storage.force(j) -= f;
+        
+        DEBUG(8, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(a, b) +=
+            r(a) * f(b);
+        
+        DEBUG(8, "\tatomic virial done");
+        break;
+      }
+      case simulation::cgrain_func : {
+        math::Vec f;
+        double f1, f6, f12;
+      
+        cgrain_soft_interaction(r, A_lj->c6, A_lj->c12,
+                B_lj->c6, B_lj->c12,
+                A_q, B_q,
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+        
+        DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+                << f1 << " f6: " << f6 << " f12: " << f12
+                << "\n\t\te_lj: " << e_lj
+                << " e_crf: " << e_crf
+                << " de_lj: " << de_lj << " de_crf: " << de_crf
+                << "\n\t\tr: " << sqrt(math::abs2(r)));
+        
+        // now combine everything
+        f      = (f1 + f6 + f12) * r;
+        
+        storage.force(i) += f;
+        storage.force(j) -= f;
+        
+        DEBUG(8, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(a, b) +=
+            r(a) * f(b);
+        
+        DEBUG(8, "\tatomic virial done");
+        break;
+      }
+      case simulation::pol_lj_crf_func : {
+        math::Vec rp1, rp2, rpp;
+        std::vector<double> f1;
+        math::VArray f(4);
+        f1.resize(4, 0.0);
+        f = 0.0;
+        double f6, f12;
+        
+        rp1 = r - conf.current().posV(j);
+        rp2 = r + conf.current().posV(i);
+        rpp = r + conf.current().posV(i) - conf.current().posV(j);
+
+        pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
+                A_lj->c6, A_lj->c12,
+                B_lj->c6, B_lj->c12,
+                A_qi, B_qi, A_qj, B_qj,
+                topo.coscharge(i),
+                topo.coscharge(j),
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+        
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+        
+        // now combine everything
+        f(0) = (f1[0] + f6 + f12) * r;
+        f(1) = f1[1] * rp1;
+        f(2) = f1[2] * rp2;
+        f(3) = f1[3] * rpp;
+        
+        storage.force(i) += f(0) + f(1) + f(2) + f(3);
+        storage.force(j) -= f(0) + f(1) + f(2) + f(3);
+        
+        DEBUG(7, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(a, b) += r(a)*f(0)(b) +
+            rp1(a)*f(1)(b) + rp2(a)*f(2)(b) + rpp(a)*f(3)(b);
+        
+        DEBUG(7, "\tatomic virial done");
+        break;
+      }
+      default:
+        io::messages.add("Nonbonded_Innerloop",
+                "interaction function not implemented",
+                io::message::critical);
     }
   }
-  //--------------------------------------------------
-  // interactions have been calculated
-  //--------------------------------------------------
-  
-  DEBUG(8, "\tcalculated interaction state A:\n\t\tf: " 
-	<< f1 << " f6: " << f6 << " f12: " << f12 
-	<< "\n\t\te_lj: " << e_lj 
-	<< " e_crf: " << e_crf 
-	<< " de_lj: " << de_lj << " de_crf: " << de_crf
-	<< "\n\t\tr: " << sqrt(math::abs2(r)));
-  
-  // now combine everything
-  f      = (f1 + f6 + f12) * r;
-  
-  storage.force(i) += f;
-  storage.force(j) -= f;
-  
-  DEBUG(8, "\tforces stored");
-
-  // if (t_interaction_spec::do_virial != math::no_virial){
-  for(int a=0; a<3; ++a)
-    for(int b=0; b<3; ++b)
-      storage.virial_tensor(a, b) += 
-	r(a) * f(b);
-  
-  DEBUG(8, "\tatomic virial done");
-  // }
   
   // energy
   assert(storage.energies.lj_energy.size() > 
@@ -314,37 +429,34 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   math::Vec r = conf.current().pos(i) - conf.current().pos(j);
   r -= shift;
 
-  math::Vec f;
-  double f1, f6, f12;
-  
   double e_lj, e_crf, de_lj, de_crf;
   
   int energy_derivative_index = -1;
-
+  
   lj_parameter_struct const *A_lj;
   lj_parameter_struct const *B_lj;
-  double A_q, B_q;
+  double A_q, B_q, A_qi, A_qj, B_qi, B_qj;
+  
   double alpha_lj=0, alpha_crf=0;
+  
+  // const double l = topo.lambda();
   
   if(j < topo.num_solute_atoms() && 
      topo.is_perturbed(j) == true){
 
     switch(t_interaction_spec::interaction_func){
       case simulation::lj_crf_func :
-	A_lj = 
-	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				 topo.perturbed_solute().atoms()[j].A_IAC());
-	B_lj =
-	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				 topo.perturbed_solute().atoms()[j].B_IAC());
+      case simulation::pol_lj_crf_func : 
+	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.perturbed_solute().atoms()[j].A_IAC());
+	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.perturbed_solute().atoms()[j].B_IAC());
 	break;
       case simulation::cgrain_func :
-	A_lj = 
-	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				 topo.perturbed_solute().atoms()[j].A_IAC());
-	B_lj = 
-	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				 topo.perturbed_solute().atoms()[j].B_IAC());
+	A_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.perturbed_solute().atoms()[j].A_IAC());
+	B_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.perturbed_solute().atoms()[j].B_IAC());
 	break;
       default:
 	io::messages.add("Nonbonded_Innerloop",
@@ -352,10 +464,12 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 			 io::message::critical);
     }
 
-    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-      topo.perturbed_solute().atoms()[j].A_charge();
-    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-      topo.perturbed_solute().atoms()[j].B_charge();
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge();
+    A_qj = topo.perturbed_solute().atoms()[j].A_charge();
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.perturbed_solute().atoms()[j].B_charge();
+    A_q = A_qi * A_qj;
+    B_q = B_qi * B_qj;
     
     alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
 		topo.perturbed_solute().atoms()[j].LJ_softcore()) /
@@ -368,20 +482,17 @@ void interaction::Perturbed_Nonbonded_Innerloop<
   else{
     switch(t_interaction_spec::interaction_func){
       case simulation::lj_crf_func :
-	A_lj =
-	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				 topo.iac(j));
-	B_lj = 
-	  &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				 topo.iac(j));
+      case simulation::pol_lj_crf_func : 
+	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.iac(j));
+	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.iac(j));
 	break;
       case simulation::cgrain_func :
-	A_lj = 
-	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
-				 topo.iac(j));
-	B_lj =
-	  &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
-				 topo.iac(j));
+	A_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
+				      topo.iac(j));
+	B_lj = &m_param->cg_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
+				      topo.iac(j));
 	break;
       default:
 	io::messages.add("Nonbonded_Innerloop",
@@ -389,21 +500,22 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 			 io::message::critical);
 	return;
     }
-
     DEBUG(10, "\tiac-i (A) : " << topo.perturbed_solute().atoms()[i].A_IAC() 
 	  << " iac-i (B) : " << topo.perturbed_solute().atoms()[i].B_IAC()
 	  << " iac-j : " << topo.iac(j));
     
-    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-      topo.charge()(j);
-    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-      topo.charge()(j);
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge();
+    A_qj = topo.charge()(j);
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.charge()(j);
+    A_q = A_qi * A_qj;
+    B_q = B_qi * B_qj;
     
     alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
     alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
     
   }
-  
+
   DEBUG(8, "\tlj-parameter state A c6=" << A_lj->c6 << " c12=" << A_lj->c12);
   DEBUG(8, "\tlj-parameter state B c6=" << B_lj->c6 << " c12=" << B_lj->c12);
   DEBUG(8, "\tcharges state A i*j = " << A_q);
@@ -413,6 +525,20 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
   if (t_perturbation_details::do_scaling){
     // SCALING ON
+    math::Vec f;
+    double f1, f6, f12;
+    if (t_interaction_spec::interaction_func == simulation::cgrain_func){
+      io::messages.add("Nonbonded Innerloop",
+              "scaling not implemented for coarse-grained simulations!",
+	       io::message::critical);
+      return;
+    }
+    if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
+      io::messages.add("Nonbonded Innerloop",
+		       "scaling not implemented for COS polarization simulations!",
+		       io::message::critical);
+      return;
+    }
 
     // check whether we need to do scaling
     // based on energy groups
@@ -425,25 +551,21 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     // check whether we have changing lambda dependencies
     if (topo.energy_group_lambdadep().count(energy_group_pair)){
       
-      energy_derivative_index =
-	topo.energy_group_lambdadep()[energy_group_pair].first;
+      energy_derivative_index = topo.energy_group_lambdadep()[energy_group_pair].first;
 
       DEBUG(8, "energy_derivative_index=" << energy_derivative_index);
       assert(energy_derivative_index >= 0);
 
       assert(energy_derivative_index < int(topo.lambda_prime().size()));
-      assert(energy_derivative_index < 
-	     int(topo.lambda_prime_derivative().size()));
+      assert(energy_derivative_index < int(topo.lambda_prime_derivative().size()));
 
       // set lambdas
       DEBUG(8, "lambda dep l=" << topo.lambda() 
-	    << " alpha=" 
-	    << topo.energy_group_lambdadep()[energy_group_pair].second
+	    << " alpha=" << topo.energy_group_lambdadep()[energy_group_pair].second
 	    << " lp=" << topo.lambda_prime()[energy_derivative_index]);
       
 
-      set_lambda(topo.lambda_prime()[energy_derivative_index],
-		 topo.lambda_exp());
+      set_lambda(topo.lambda_prime()[energy_derivative_index], topo.lambda_exp());
       reset_lambda = true;
 
     }
@@ -451,91 +573,185 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     if (topo.energy_group_scaling().count(energy_group_pair)){
     
     // YES, we do scale the interactions!
-      lj_crf_scaled_interaction
-	(r, A_lj->c6, A_lj->c12,
-	 B_lj->c6, B_lj->c12,
-	 A_q, B_q,
-	 alpha_lj, alpha_crf,
-	 topo.energy_group_scaling()[energy_group_pair].first,
-	 topo.energy_group_scaling()[energy_group_pair].second,
-	 f1, f6, f12,
-	 e_lj, e_crf, de_lj, de_crf
-	 );
+      lj_crf_scaled_interaction(r, A_lj->c6, A_lj->c12,
+				B_lj->c6, B_lj->c12,
+				A_q, B_q,
+				alpha_lj, alpha_crf,
+				topo.energy_group_scaling()[energy_group_pair].first,
+				topo.energy_group_scaling()[energy_group_pair].second,
+				f1, f6, f12,
+				e_lj, e_crf, de_lj, de_crf);
     }
     else{
       // no scaling
-      lj_crf_soft_interaction
-	(r, A_lj->c6, A_lj->c12,
-	 B_lj->c6, B_lj->c12,
-	 A_q, B_q,
-	 alpha_lj, alpha_crf,
-	 f1, f6, f12,
-	 e_lj, e_crf, de_lj, de_crf
-	 );
+      lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+			      B_lj->c6, B_lj->c12,
+			      A_q, B_q,
+			      alpha_lj, alpha_crf,
+			      f1, f6, f12,
+			      e_lj, e_crf, de_lj, de_crf);
     }
     
     if (reset_lambda)
       set_lambda(topo.lambda(), topo.lambda_exp());
-
-  } 
+    
+    //--------------------------------------------------
+    // interactions have been calculated
+    //--------------------------------------------------
+    
+    DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+            << f1 << " f6: " << f6 << " f12: " << f12
+            << "\n\t\te_lj: " << e_lj
+            << " e_crf: " << e_crf
+            << " de_lj: " << de_lj << " de_crf: " << de_crf
+            << "\n\t\tr: " << sqrt(math::abs2(r)));
+    
+    // now combine everything
+    f      = (f1 + f6 + f12) * r;
+    
+    storage.force(i) += f;
+    storage.force(j) -= f;
+    
+    DEBUG(8, "\tforces stored");
+    
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+        storage.virial_tensor(a, b) +=
+        r(a) * f(b);
+    
+    DEBUG(8, "\tatomic virial done");
+    
+  }
   // END OF SCALING ON ---
   //
   else{
-
+    
     switch(t_interaction_spec::interaction_func){
-    case simulation::lj_crf_func :
-      lj_crf_soft_interaction
-	(r, A_lj->c6, A_lj->c12,
-	 B_lj->c6, B_lj->c12,
-	 A_q, B_q,
-	 alpha_lj, alpha_crf,
-	 f1, f6, f12,
-	 e_lj, e_crf, de_lj, de_crf
-	 );
-      break;
-    case simulation::cgrain_func :
-      cgrain_soft_interaction
-	(r, A_lj->c6, A_lj->c12,
-	 B_lj->c6, B_lj->c12,
-	 A_q, B_q,
-	 alpha_lj, alpha_crf,
-	 f1, f6, f12,
-	 e_lj, e_crf, de_lj, de_crf
-	 );
-      break;
-    default:
-      io::messages.add("Nonbonded_Innerloop",
-		       "interaction function not implemented",
-		       io::message::critical);
+      case simulation::lj_crf_func : {
+        math::Vec f;
+        double f1, f6, f12;
+      
+        lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+                B_lj->c6, B_lj->c12,
+                A_q, B_q,
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+        
+        DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+                << f1 << " f6: " << f6 << " f12: " << f12
+                << "\n\t\te_lj: " << e_lj
+                << " e_crf: " << e_crf
+                << " de_lj: " << de_lj << " de_crf: " << de_crf
+                << "\n\t\tr: " << sqrt(math::abs2(r)));
+        
+        // now combine everything
+        f      = (f1 + f6 + f12) * r;
+        
+        storage.force(i) += f;
+        storage.force(j) -= f;
+        
+        DEBUG(8, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(a, b) +=
+            r(a) * f(b);
+        
+        DEBUG(8, "\tatomic virial done");
+        break;
+      }
+      case simulation::cgrain_func : {
+        math::Vec f;
+        double f1, f6, f12;
+      
+        cgrain_soft_interaction(r, A_lj->c6, A_lj->c12,
+                B_lj->c6, B_lj->c12,
+                A_q, B_q,
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+        
+        DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+                << f1 << " f6: " << f6 << " f12: " << f12
+                << "\n\t\te_lj: " << e_lj
+                << " e_crf: " << e_crf
+                << " de_lj: " << de_lj << " de_crf: " << de_crf
+                << "\n\t\tr: " << sqrt(math::abs2(r)));
+        
+        // now combine everything
+        f      = (f1 + f6 + f12) * r;
+        
+        storage.force(i) += f;
+        storage.force(j) -= f;
+        
+        DEBUG(8, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(a, b) +=
+            r(a) * f(b);
+        
+        DEBUG(8, "\tatomic virial done");
+        break;
+      }
+      case simulation::pol_lj_crf_func : {
+        math::Vec rp1, rp2, rpp;
+        std::vector<double> f1;
+        math::VArray f(4);
+        f1.resize(4, 0.0);
+        f = 0.0;
+        double f6, f12;
+        
+        rp1 = r - conf.current().posV(j);
+        rp2 = r + conf.current().posV(i);
+        rpp = r + conf.current().posV(i) - conf.current().posV(j);
+
+        pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
+                A_lj->c6, A_lj->c12,
+                B_lj->c6, B_lj->c12,
+                A_qi, B_qi, A_qj, B_qj,
+                topo.coscharge(i),
+                topo.coscharge(j),
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+        
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+        
+        // now combine everything
+        f(0) = (f1[0] + f6 + f12) * r;
+        f(1) = f1[1] * rp1;
+        f(2) = f1[2] * rp2;
+        f(3) = f1[3] * rpp;
+        
+        storage.force(i) += f(0) + f(1) + f(2) + f(3);
+        storage.force(j) -= f(0) + f(1) + f(2) + f(3);
+        
+        DEBUG(7, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(a, b) += r(a)*f(0)(b) +
+            rp1(a)*f(1)(b) + rp2(a)*f(2)(b) + rpp(a)*f(3)(b);
+        
+        DEBUG(7, "\tatomic virial done");
+        break;
+      }
+      default:
+        io::messages.add("Nonbonded_Innerloop",
+                "interaction function not implemented",
+                io::message::critical);
     }
   }
-  //--------------------------------------------------
-  // interactions have been calculated
-  //--------------------------------------------------
-  
-  DEBUG(8, "\tcalculated interaction state A:\n\t\tf: " 
-	<< f1 << " f6: " << f6 << " f12: " << f12 
-	<< "\n\t\te_lj: " << e_lj 
-	<< " e_crf: " << e_crf 
-	<< " de_lj: " << de_lj << " de_crf: " << de_crf
-	<< "\n\t\tr: " << sqrt(math::abs2(r)));
-  
-  // now combine everything
-  f = (f1 + f6 + f12) * r;
-  
-  storage.force(i) += f;
-  storage.force(j) -= f;
-  
-  DEBUG(8, "\tforces stored");
-
-  // if (t_interaction_spec::do_virial != math::no_virial){
-  for(int a=0; a<3; ++a)
-    for(int b=0; b<3; ++b)
-      storage.virial_tensor(a, b) += 
-	r(a) * f(b);
-  
-  DEBUG(8, "\tatomic virial done");
-  // }
   
   // energy
   assert(storage.energies.lj_energy.size() > 
@@ -554,18 +770,14 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	<< " pert der index = " << energy_derivative_index);
   
   assert(storage.perturbed_energy_derivatives.
-	 lj_energy.size() > topo.atom_energy_group(i));
-
-  assert(storage.perturbed_energy_derivatives.
+	 lj_energy.size() > topo.atom_energy_group(i) &&
+	 storage.perturbed_energy_derivatives.
 	 lj_energy.size() > topo.atom_energy_group(j));
   
   assert(storage.perturbed_energy_derivatives.
-	 lj_energy[topo.atom_energy_group(i)].size()
-	 > topo.atom_energy_group(i));
-
-  assert(storage.perturbed_energy_derivatives.
-	 lj_energy[topo.atom_energy_group(i)].size()
-	 > topo.atom_energy_group(j));
+	 lj_energy[topo.atom_energy_group(i)].size() > topo.atom_energy_group(i) &&
+	 storage.perturbed_energy_derivatives.
+	 lj_energy[topo.atom_energy_group(i)].size() > topo.atom_energy_group(j));
 
   if (t_perturbation_details::do_scaling &&
       energy_derivative_index != -1){
@@ -597,7 +809,6 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     storage.perturbed_energy_derivatives.crf_energy
       [topo.atom_energy_group(i)]
       [topo.atom_energy_group(j)] += de_crf;
-    
   }
   
   DEBUG(7, "\tperturbed lj_crf_innerloop " << i << " - " << j << " done!");
@@ -624,11 +835,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     return;
   }
   
-  math::Vec r, f;
-
+  math::Vec r;
   double e_lj, e_crf, de_lj, de_crf;
-  double f1, f6, f12;
-    
   int energy_derivative_index = -1;
   
   periodicity.nearest_image(conf.current().pos(i), 
@@ -636,7 +844,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 
   lj_parameter_struct const * A_lj;
   lj_parameter_struct const * B_lj;
-  double A_q, B_q;
+  double A_q, B_q, A_qi, A_qj, B_qi, B_qj;
   double alpha_lj=0, alpha_crf=0;
     
   // const double l = topo.lambda();
@@ -646,11 +854,14 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 				  topo.perturbed_solute().atoms()[j].A_IAC());
     B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
 				  topo.perturbed_solute().atoms()[j].B_IAC());
-    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-      topo.perturbed_solute().atoms()[j].A_charge();
-    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-      topo.perturbed_solute().atoms()[j].B_charge();
 
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge();
+    A_qj = topo.perturbed_solute().atoms()[j].A_charge();
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.perturbed_solute().atoms()[j].B_charge();
+    A_q = A_qi * A_qj;
+    B_q = B_qi * B_qj;
+    
     alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
 		topo.perturbed_solute().atoms()[j].LJ_softcore()) /
       2.0;
@@ -664,10 +875,13 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 				  topo.iac(j));
     B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
 				  topo.iac(j));
-    A_q = topo.perturbed_solute().atoms()[i].A_charge() * 
-      topo.charge()(j);
-    B_q = topo.perturbed_solute().atoms()[i].B_charge() *
-      topo.charge()(j);
+
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge();
+    A_qj = topo.charge()(j);
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.charge()(j);
+    A_q = A_qi * A_qj;
+    B_q = B_qi * B_qj;
 
     alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
     alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
@@ -680,10 +894,17 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 	<< " c12=" << B_lj->cs12);
   DEBUG(7, "\tcharges state A i*j = " << A_q);
   DEBUG(7, "\tcharges state B i*j = " << B_q);
-
+  
   if (t_perturbation_details::do_scaling){
     // SCALING ON
-
+    math::Vec f;
+    double f1, f6, f12;
+    if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
+      io::messages.add("Nonbonded Innerloop",
+              "scaling not implemented for COS polarization simulations!",
+              io::message::critical);
+      return;
+    }
     // check whether we need to do scaling
     // based on energy groups
     
@@ -742,65 +963,126 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     
     if (reset_lambda)
       set_lambda(topo.lambda(), topo.lambda_exp());
+    //--------------------------------------------------
+    // interactions have been calculated
+    //--------------------------------------------------
+    
+    DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
+            << f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj
+            << " e_crf: " << e_crf
+            << " de_lj: " << de_lj  << " de_crf: " << de_crf);
+    
+    // now combine everything
+    f      = (f1 + f6 + f12) * r;
+    
+    conf.current().force(i) += f;
+    conf.current().force(j) -= f;
+    
+    DEBUG(7, "\tforces stored");
+    
+    for(int a=0; a<3; ++a)
+      for(int b=0; b<3; ++b)
+        conf.current().virial_tensor(a, b) +=
+        r(a) * f(b);
+    
+    DEBUG(7, "\tatomic virial done");
 
   } 
   // END OF SCALING ON ---
   //
   else{
     switch(t_interaction_spec::interaction_func){
-    case simulation::lj_crf_func :
-      lj_crf_soft_interaction
-	(r, A_lj->cs6, A_lj->cs12,
-	 B_lj->cs6, B_lj->cs12,
-	 A_q, B_q,
-	 alpha_lj, alpha_crf,
-	 f1, f6, f12,
-	 e_lj, e_crf, de_lj, de_crf
-	 );
-      break;
-    case simulation::cgrain_func :
-      cgrain_soft_interaction
-	(r, A_lj->cs6, A_lj->cs12,
-	 B_lj->cs6, B_lj->cs12,
-	 A_q, B_q,
-	 alpha_lj, alpha_crf,
-	 f1, f6, f12,
-	 e_lj, e_crf, de_lj, de_crf
-	 );
-      break;
-    default:
+      case simulation::lj_crf_func :{
+        math::Vec f;
+        double f1, f6, f12;
+        
+        lj_crf_soft_interaction
+               (r, A_lj->cs6, A_lj->cs12,
+                B_lj->cs6, B_lj->cs12,
+                A_q, B_q,
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf
+                );
+        
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+               
+        DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
+                << f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj
+                << " e_crf: " << e_crf
+                << " de_lj: " << de_lj  << " de_crf: " << de_crf);
+        
+        // now combine everything
+        f      = (f1 + f6 + f12) * r;
+        
+        conf.current().force(i) += f;
+        conf.current().force(j) -= f;
+        
+        DEBUG(7, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            conf.current().virial_tensor(a, b) +=
+            r(a) * f(b);
+        
+        DEBUG(7, "\tatomic virial done");
+      
+        break;
+      }
+      case simulation::pol_lj_crf_func : {
+        math::Vec rp1, rp2, rpp;
+        std::vector<double> f1;
+        math::VArray f(4);
+        f1.resize(4, 0.0);
+        f = 0.0;
+        double f6, f12;
+        
+        rp1 = r - conf.current().posV(j);
+        rp2 = r + conf.current().posV(i);
+        rpp = r + conf.current().posV(i) - conf.current().posV(j);
+
+        pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
+                A_lj->cs6, A_lj->cs12,
+                B_lj->cs6, B_lj->cs12,
+                A_qi, B_qi, A_qj, B_qj,
+                topo.coscharge(i),
+                topo.coscharge(j),
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+          
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+        
+        // now combine everything
+        f(0) = (f1[0] + f6 + f12) * r;
+        f(1) = f1[1] * rp1;
+        f(2) = f1[2] * rp2;
+        f(3) = f1[3] * rpp;
+        
+        conf.current().force(i) += f(0) + f(1) + f(2) + f(3);
+        conf.current().force(j) -= f(0) + f(1) + f(2) + f(3);
+        
+        DEBUG(7, "\tforces stored");
+        
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            conf.current().virial_tensor(a, b) += r(a)*f(0)(b) +
+            rp1(a)*f(1)(b) + rp2(a)*f(2)(b) + rpp(a)*f(3)(b);
+        
+        DEBUG(7, "\tatomic virial done");
+        break;
+      }
+      default:
       io::messages.add("Nonbonded_Innerloop",
 			 "interaction function not implemented",
 		       io::message::critical);
     }
   }
-  //--------------------------------------------------
-  // interactions have been calculated
-  //--------------------------------------------------
 
-    
-    
-  DEBUG(7, "\tcalculated interaction state A:\n\t\tf: " 
-	<< f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj 
-	<< " e_crf: " << e_crf 
-	<< " de_lj: " << de_lj  << " de_crf: " << de_crf);
-    
-  // now combine everything
-  f      = (f1 + f6 + f12) * r;
-
-  conf.current().force(i) += f;
-  conf.current().force(j) -= f;
-
-  DEBUG(7, "\tforces stored");
-    
-  // if (t_interaction_spec::do_virial != math::no_virial){
-  for(int a=0; a<3; ++a)
-    for(int b=0; b<3; ++b)
-      conf.current().virial_tensor(a, b) += 
-	r(a) * f(b);
-  
-  DEBUG(7, "\tatomic virial done");
-  // }
 
   // energy
   assert(conf.current().energies.lj_energy.size() > 
@@ -860,7 +1142,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
 
-  math::Vec r, f_rf;
+  math::Vec r;
   double e_rf, de_rf;
   // const double l=topo.lambda();
   
@@ -874,14 +1156,41 @@ interaction::Perturbed_Nonbonded_Innerloop<
   const int i=mit->second.sequence_number();
   const double q_i_a = mit->second.A_charge();
   const double q_i_b = mit->second.B_charge();
+  double q_j_a, q_j_b;
   
   // now calculate everything
   // rf_interaction(r, q_i_a*q_i_a, f_old_A, e_crf_old_A);
-
-  rf_soft_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
-		      B_lambda(), mit->second.CRF_softcore(),
-		      f_rf, e_rf, de_rf, true);
-  
+  switch(t_interaction_spec::interaction_func){
+    case simulation::lj_crf_func :{
+      math::Vec f_rf;
+      rf_soft_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
+              B_lambda(), mit->second.CRF_softcore(),
+              f_rf, e_rf, de_rf, true);
+      break;
+    }
+    case simulation::pol_lj_crf_func:{
+      math::Vec rp1, rp2, rpp;
+      std::vector<double> f_rf(4, 0.0);
+      r = 0.0;
+      rp1 = -conf.current().posV(*it);
+      rp2 = conf.current().posV(i);
+      rpp = 0.0;
+      
+      // now calculate everything
+      // rf_interaction(r, q_i_a*q_i_a, f_old_A, e_crf_old_A);
+      
+      pol_rf_soft_interaction(r, rp1, rp2, rpp,
+              q_i_a, q_i_a, q_i_b, q_i_b,
+              topo.coscharge(i), topo.coscharge(i),
+              B_lambda(), mit->second.CRF_softcore(),
+              f_rf, e_rf, de_rf, true);
+      break;
+    }
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+              "interaction function not implemented",
+              io::message::critical);
+  }
   DEBUG(7, "Self term for atom " << i << " = "
 	<< e_rf);
     
@@ -904,14 +1213,15 @@ interaction::Perturbed_Nonbonded_Innerloop<
     
     double q_ij_a;
     double q_ij_b;
+    
     double alpha_crf=0;
     
     if(unsigned(*it) < topo.num_solute_atoms() && topo.is_perturbed(*it)){
       // j perturbed
-      q_ij_a = q_i_a * 
-	topo.perturbed_solute().atoms()[*it].A_charge();
-      q_ij_b = q_i_b *
-	topo.perturbed_solute().atoms()[*it].B_charge();
+      q_j_a = topo.perturbed_solute().atoms()[*it].A_charge();
+      q_ij_a = q_i_a * q_j_a;
+      q_j_b = topo.perturbed_solute().atoms()[*it].B_charge();
+      q_ij_b = q_i_b * q_j_b;
       
       alpha_crf = (mit->second.CRF_softcore() +
 		   topo.perturbed_solute().
@@ -919,8 +1229,10 @@ interaction::Perturbed_Nonbonded_Innerloop<
     }
     else{
 	// only i perturbed
-      q_ij_a = q_i_a * topo.charge()(*it);
-      q_ij_b = q_i_b * topo.charge()(*it);
+      q_j_a = topo.charge()(*it); 
+      q_ij_a = q_i_a * q_j_a;
+      q_j_b = topo.charge()(*it);
+      q_ij_b = q_i_b * q_j_b;
       
       alpha_crf = mit->second.CRF_softcore();
       
@@ -929,32 +1241,191 @@ interaction::Perturbed_Nonbonded_Innerloop<
 	  << " q_ij_a " << q_ij_a << " q_ij_b " << q_ij_b
 	  << " A_l " << A_lambda() << " B_l " << B_lambda());
     
-    rf_soft_interaction(r, q_ij_a, q_ij_b, B_lambda(),
-			alpha_crf, f_rf, e_rf, de_rf);
-
-    DEBUG(8, "alpha_crf : " << alpha_crf);
-    DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
-    DEBUG(7, "\tde_rf: " << de_rf);
     
-    // and add everything to the correct arrays 
-    conf.current().energies.crf_energy 
-      [topo.atom_energy_group(i)]
-      [topo.atom_energy_group(*it)] += e_rf;
-    conf.current().perturbed_energy_derivatives.crf_energy 
-      [topo.atom_energy_group(i)]
-      [topo.atom_energy_group(*it)] += de_rf;
-    force(i) += f_rf;
-    force(*it) -=f_rf;
+    switch(t_interaction_spec::interaction_func){
+      case simulation::lj_crf_func :{
+        math::Vec f_rf;
 
-    // if (t_interaction_spec::do_virial != math::no_virial){
-    for(int a=0; a<3; ++a)
-      for(int b=0; b<3; ++b)
-	conf.current().virial_tensor(a, b) += 
-	  r(a) * f_rf(b);
-    
-    DEBUG(7, "\tatomic virial done");
-    // }
-
+        rf_soft_interaction(r, q_ij_a, q_ij_b, B_lambda(),
+                alpha_crf, f_rf, e_rf, de_rf);
+        
+        DEBUG(8, "alpha_crf : " << alpha_crf);
+        DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
+        DEBUG(7, "\tde_rf: " << de_rf);
+        
+        // and add everything to the correct arrays
+        conf.current().energies.crf_energy
+        [topo.atom_energy_group(i)]
+        [topo.atom_energy_group(*it)] += e_rf;
+        conf.current().perturbed_energy_derivatives.crf_energy
+        [topo.atom_energy_group(i)]
+        [topo.atom_energy_group(*it)] += de_rf;
+        force(i) += f_rf;
+        force(*it) -=f_rf;
+        
+        // if (t_interaction_spec::do_virial != math::no_virial){
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            conf.current().virial_tensor(a, b) +=
+            r(a) * f_rf(b);
+        
+        DEBUG(7, "\tatomic virial done");
+        // }
+        break;
+      }
+      case simulation::pol_lj_crf_func:{
+        math::Vec rp1, rp2, rpp;
+        std::vector<double> f_rf(4, 0.0);
+        rp1 = r - conf.current().posV(*it);
+        rp2 = r + conf.current().posV(i);
+        rpp = r + conf.current().posV(i) - conf.current().posV(*it);
+        
+        pol_rf_soft_interaction(r, rp1, rp2, rpp,
+                q_i_a, q_j_a, q_i_b, q_j_b,
+                topo.coscharge(i), topo.coscharge(*it),
+                B_lambda(), alpha_crf,
+                f_rf, e_rf, de_rf);
+              
+        // and add everything to the correct arrays
+        conf.current().energies.crf_energy
+        [topo.atom_energy_group(i)]
+        [topo.atom_energy_group(*it)] += e_rf;
+        conf.current().perturbed_energy_derivatives.crf_energy
+        [topo.atom_energy_group(i)]
+        [topo.atom_energy_group(*it)] += de_rf;
+        force(i) += f_rf[0]*r + f_rf[1]*rp1 + f_rf[2]*rp2 + f_rf[3]*rpp;
+        force(*it) -= f_rf[0]*r + f_rf[1]*rp1 + f_rf[2]*rp2 + f_rf[3]*rpp;
+                
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            conf.current().virial_tensor(a, b) +=
+            r(a)*f_rf[0]*r(b) + rp1(a)*f_rf[1]*rp1(b) +
+            rp2(a)*f_rf[2]*rp2(b) + rpp(a)*f_rf[3]*rpp(b);
+        
+         break;
+       }
+      default:
+        io::messages.add("Nonbonded_Innerloop",
+                "interaction function not implemented",
+                io::message::critical);
+    }    
   }
 }
+
+template<typename t_interaction_spec,
+	 typename t_perturbation_details>
+inline void interaction::Perturbed_Nonbonded_Innerloop<
+  t_interaction_spec, t_perturbation_details>::perturbed_electric_field_innerloop
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i, unsigned int j, math::Vec &e_eli, math::Vec &e_elj,
+ Periodicity_type const & periodicity
+ )
+{
+  math::Vec r, rp1, rp2, e_el1, e_el2;
+  double alpha_crf, A_qi, A_qj, B_qi, B_qj;
+
+  if(topo.is_perturbed(j) == true){
+    // both i and j are perturbed
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge();
+    A_qj = topo.perturbed_solute().atoms()[j].A_charge();
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.perturbed_solute().atoms()[j].B_charge();
+    
+    alpha_crf = (topo.perturbed_solute().atoms()[i].CRF_softcore() +
+		 topo.perturbed_solute().atoms()[j].CRF_softcore()) / 2.0;
+    }
+  else{
+    // only i is perturbed
+    A_qi = topo.perturbed_solute().atoms()[i].A_charge(); 
+    A_qj = topo.charge()(j);
+    B_qi = topo.perturbed_solute().atoms()[i].B_charge();
+    B_qj = topo.charge()(j);
+
+    alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
+    }
+
+  // energy field term at position i and j
+  DEBUG(11, "\tenergy field calculation i: "<<i<<" j: "<<j);
+
+  periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(j), r);
+  
+  switch(t_interaction_spec::efield_site) {
+    case simulation::ef_atom : {
+      
+      rp1 = r - conf.current().posV(j);
+      rp2 = -r - conf.current().posV(i);
+      
+      electric_field_soft_interaction(r, rp1, alpha_crf, A_qj, B_qj,
+              topo.coscharge(j), e_el1);
+      electric_field_soft_interaction(-r, rp2, alpha_crf, A_qi, B_qi,
+              topo.coscharge(i), e_el2);
+      break;
+    }
+    case simulation::ef_cos : {
+      const math::Vec r_cos1 = conf.current().posV(i) + r,
+                      r_cos2 = conf.current().posV(j) - r;
+      rp1 = r_cos1 - conf.current().posV(j);
+      rp2 = r_cos2 - conf.current().posV(i);
+      
+      electric_field_soft_interaction(r_cos1, rp1, alpha_crf, A_qj, B_qj,
+              topo.coscharge(j), e_el1);
+      electric_field_soft_interaction(r_cos2, rp2, alpha_crf, A_qi, B_qi,
+              topo.coscharge(i), e_el2);
+      break;
+    }
+    default :
+      io::messages.add("electric_field_innerloop",
+                       "this site for electric field calculation was not implemented.",
+		       io::message::critical);
+      
+  }
+
+  e_eli = e_el1;
+  e_elj = e_el2;
+
+}
+
+template<typename t_interaction_spec,
+	 typename t_perturbation_details>
+inline void 
+interaction::Perturbed_Nonbonded_Innerloop<
+  t_interaction_spec, t_perturbation_details>::perturbed_self_energy_innerloop
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i,
+ Storage & storage,
+ Periodicity_type const & periodicity
+ )
+{
+  DEBUG(8, "\tself energy of molecule i " << i);
+
+  double self_e, de_self;
+  const double e_i2 = math::abs2(storage.electric_field(i));
+  const double alpha_A = topo.perturbed_solute().atom(i).A_polarizability(),
+               alpha_B = topo.perturbed_solute().atom(i).B_polarizability(),
+               e0_A = topo.perturbed_solute().atom(i).A_damping_level(),
+               e0_B = topo.perturbed_solute().atom(i).B_damping_level();
+  
+  if (t_interaction_spec::pol_damping)
+    self_energy_soft_interaction(alpha_A, alpha_B, e_i2, 
+                                 e0_A, e0_B, topo.damping_power(i), 
+                                 self_e, de_self);  
+  else 
+    self_energy_soft_interaction(alpha_A, alpha_B, e_i2, self_e, de_self);
+
+    
+  // self energy term
+  DEBUG(10, "\tself energy storage:\t" << self_e);
+  storage.energies.self_energy[topo.atom_energy_group(i)] += self_e;
+  
+  DEBUG(11, "\tself energy derivative storage:\t" << de_self);
+  storage.perturbed_energy_derivatives.self_energy[topo.atom_energy_group(i)]
+    += de_self;
+}
+
+
 

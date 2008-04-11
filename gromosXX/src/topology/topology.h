@@ -100,16 +100,6 @@ namespace topology
      * polarizability const accessor
      */
     double polarizability(int i)const {return m_polarizability(i);}
-
-    /**
-     * polarizability derivative accessor
-     */
-    math::SArray &dadl() {return m_dadl;}
-
-    /**
-     * polarizability derivative const accessor
-     */
-    double dadl(int i)const {return m_dadl(i);}
     
     /**
      * polarizability damping E0 accessor
@@ -874,11 +864,6 @@ namespace topology
      * the polarization cos-charge.
      */
      math::SArray m_coscharge;
-
-    /**
-     * the polarizability derivatives
-     */
-     math::SArray m_dadl;
      
     /**
      * the polarizability damping E0

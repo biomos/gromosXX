@@ -69,6 +69,29 @@ namespace interaction
       configuration::Configuration & conf,
       std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
       Periodicity_type const & periodicity);
+    
+    /**
+     * Calculation of the perturbed electric field (polarization)
+     */
+    void perturbed_electric_field_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, unsigned int j, math::Vec &e_eli, math::Vec &e_elj,
+     Periodicity_type const & periodicity
+    );
+    
+    /**
+     * Calculation of the perturbed self energy (polarization)
+     */
+    void perturbed_self_energy_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i,
+     Storage & storage,
+     Periodicity_type const & periodicity
+    );
 
   protected:
 

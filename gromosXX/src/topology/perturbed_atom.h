@@ -23,10 +23,14 @@ namespace topology
 	m_A_IAC(0),
 	m_A_mass(0),
 	m_A_charge(0),
-	m_B_IAC(0),
+        m_A_polarizability(0.0),
+        m_A_damping_level(0.0),
+  	m_B_IAC(0),
 	m_B_mass(0),
 	m_B_charge(0),
-	m_LJ_softcore(0),
+        m_B_polarizability(0.0),
+        m_B_damping_level(0.0),
+       	m_LJ_softcore(0),
         m_crf_softcore(0),
         m_exclusion(),
         m_one_four_pair()
@@ -46,16 +50,22 @@ namespace topology
      */
     Perturbed_Atom(unsigned int JLA, unsigned int IACA,
 		   double WMA, double CGA,
+                   double pol_A, double lev_A,
 		   unsigned int IACB, double WMB,
 		   double CGB,
+                   double pol_B, double lev_B,
 		   double SCLJ, double SCC)
       : m_sequence_number(JLA),
 	m_A_IAC(IACA),
 	m_A_mass(WMA),
 	m_A_charge(CGA),
+        m_A_polarizability(pol_A),
+        m_A_damping_level(lev_A),
 	m_B_IAC(IACB),
 	m_B_mass(WMB),
 	m_B_charge(CGB),
+        m_B_polarizability(pol_B),
+        m_B_damping_level(lev_B),
 	m_LJ_softcore(SCLJ),
         m_crf_softcore(SCC),
         m_exclusion(),
@@ -78,6 +88,12 @@ namespace topology
     double A_charge()const;
     void A_charge(double);
     
+    double A_polarizability()const;
+    void A_polarizability(double);
+    
+    double A_damping_level()const;
+    void A_damping_level(double);
+   
     unsigned int B_IAC()const;
     void B_IAC(unsigned int);
     
@@ -86,7 +102,13 @@ namespace topology
     
     double B_charge()const;
     void B_charge(double);
+ 
+    double B_polarizability()const;
+    void B_polarizability(double);
     
+    double B_damping_level()const;
+    void B_damping_level(double);
+   
     double LJ_softcore()const;
     void LJ_softcore(double);
     
@@ -107,9 +129,13 @@ namespace topology
     unsigned int m_A_IAC;
     double m_A_mass;
     double m_A_charge;
+    double m_A_polarizability;
+    double m_A_damping_level;
     unsigned int m_B_IAC;
     double m_B_mass;
     double m_B_charge;
+    double m_B_polarizability;
+    double m_B_damping_level;
     double m_LJ_softcore;
     double m_crf_softcore;
     std::set<int> m_exclusion;
@@ -134,6 +160,14 @@ inline double topology::Perturbed_Atom::A_charge()const{
   return m_A_charge; 
 }
 
+inline double topology::Perturbed_Atom::A_polarizability()const{
+  return m_A_polarizability; 
+}
+
+inline double topology::Perturbed_Atom::A_damping_level()const{
+  return m_A_damping_level; 
+}
+
 inline unsigned int topology::Perturbed_Atom::B_IAC()const{
   return m_B_IAC; 
 }
@@ -144,6 +178,14 @@ inline double topology::Perturbed_Atom::B_mass()const{
 
 inline double topology::Perturbed_Atom::B_charge()const{
   return m_B_charge; 
+}
+
+inline double topology::Perturbed_Atom::B_polarizability()const{
+  return m_B_polarizability; 
+}
+
+inline double topology::Perturbed_Atom::B_damping_level()const{
+  return m_B_damping_level; 
 }
 
 inline double topology::Perturbed_Atom::LJ_softcore()const{
@@ -166,6 +208,12 @@ inline void topology::Perturbed_Atom::A_mass(double a){
 inline void topology::Perturbed_Atom::A_charge(double a){
   m_A_charge = a;
 }
+inline void topology::Perturbed_Atom::A_polarizability(double a){ 
+  m_A_polarizability = a;
+}
+inline void topology::Perturbed_Atom::A_damping_level(double a){ 
+  m_A_damping_level = a;
+}
 inline void topology::Perturbed_Atom::B_IAC(unsigned int a){
   m_B_IAC = a;
 }
@@ -174,6 +222,12 @@ inline void topology::Perturbed_Atom::B_mass(double a){
 }
 inline void topology::Perturbed_Atom::B_charge(double a){
   m_B_charge = a;
+}
+inline void topology::Perturbed_Atom::B_polarizability(double a){ 
+  m_B_polarizability = a;
+}
+inline void topology::Perturbed_Atom::B_damping_level(double a){ 
+  m_B_damping_level = a;
 }
 inline void topology::Perturbed_Atom::LJ_softcore(double a){
   m_LJ_softcore = a;

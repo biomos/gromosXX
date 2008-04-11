@@ -16,6 +16,7 @@
 <li><a href="#pertangle">angles</a></li>
 <li><a href="#pertimp">improper dihedral angles</a></li>
 <li><a href="#pertdih">dihedral angles</a></li>
+<li><a href="#pertpolparam">Perturbed polarizable atoms</a></li>
 </ul>
 
 <h2><a name="title">TITLE</a></h2>
@@ -61,7 +62,7 @@ END
 Interactions might change from excluded to 1,4 or to not excluded
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTATOMPAIR03
+PERTATOMPAIR
 # number of perturbed atom pairs
    1
 #  interaction:
@@ -184,6 +185,20 @@ PERTPROPERDIHH
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
+
+<h2><a name="pertpolparam">Perturbed polarizable atoms</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTPOLPARAM
+# number of perturbed polarizable atoms 
+# (atoms must also appear in PERTATOMPARAM)
+  1
+#   NR RES NAME   ALPHA(A) E_0(A)   ALPHA(B) E_0(B)
+     1  1   OW    0.00093  80.0     0.00093  80.0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
 
 
 </body>

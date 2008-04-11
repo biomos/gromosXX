@@ -42,6 +42,22 @@ namespace interaction
 				 double & force1, double & force6, double & force12,
 				 double &e_lj, double & e_crf, double &de_lj, 
 				 double & de_crf);
+    
+    /**
+     * calculate the force, energy and dh/dl of an atom pair. for polarization
+     */
+    void pol_lj_crf_soft_interaction(math::Vec const &r, math::Vec const &rp1,
+                                     math::Vec const &rp2, math::Vec const &rpp,
+                                     double const A_c6, double const A_c12,
+                                     double const B_c6, double const B_c12,
+                                     double const A_qi, double const B_qi,
+                                     double const A_qj, double const B_qj,
+                                     double const cqi, double const cqj,
+                                     double const alpha_lj, double const alpha_crf,
+                                     std::vector<double> &force1,
+                                     double &force6, double &force12,
+                                     double &e_lj, double &e_crf,
+                                     double &de_lj, double &de_crf);
 
     /**
      * calculate the force, energy and dh/dl of an atom pair for
@@ -66,6 +82,22 @@ namespace interaction
 			     double const l,
 			     double const alpha_crf,
 			     math::Vec & force, double & e_rf,
+			     double & de_rf,
+			     bool selfterm_correction = false);
+    /**
+     * calculate the reaction field force and energy
+     * of a perturbed atom pair (with polarization)
+     */
+    void pol_rf_soft_interaction(math::Vec const &r,
+                             math::Vec const &rp1,
+                             math::Vec const &rp2,
+                             math::Vec const &rpp,
+			     double const A_qi, double const A_qj,
+                             double const B_qi, double const B_qj,
+                             double cqi, double cqj,
+			     double const l,
+			     double const alpha_crf,
+			     std::vector<double> & force, double & e_rf,
 			     double & de_rf,
 			     bool selfterm_correction = false);
 
@@ -95,6 +127,29 @@ namespace interaction
 				 double & force1, double & force6, double & force12,
 				 double &e_lj, double & e_crf, double &de_lj, 
 				 double & de_crf);
+    
+    /**
+     * calculate the perturbed electric field term.
+     */
+    void electric_field_soft_interaction(math::Vec const &r, 
+                       math::Vec const &rprime, 
+		       double const alpha_crf,
+                       double A_qj, double B_qj, double cgj, 
+		       math::Vec &e_el);
+    
+    /**
+     * calculate the self energy - dipole-dipole interaction (polarization)
+     */
+    void self_energy_soft_interaction(double A_alpha, double B_alpha, 
+                                      double e_i2, double &self_e, double &self_de);
+    
+    /**
+     * calculate the damped self energy - dipole-dipole interaction (polarization)
+     */
+    void self_energy_soft_interaction(double A_alpha, double B_alpha, double e_i2, 
+                                      double A_e_0, double B_e_0, double p,
+                                      double &self_e, double &self_de);
+
     /**
      * Perturbation:
      * lambda value for state A
@@ -105,6 +160,11 @@ namespace interaction
      * lambda value for state B
      */
     double const B_lambda()const;
+    /**
+     * Perturbation:
+     * lambda exponent:
+     */
+    int const n()const;
     /**
      * Perturbation:
      * lambda value for state A to the power nlam
@@ -189,6 +249,11 @@ namespace interaction
      * square lambda value for state B
      */
     double m_B_lambda2;
+    /**
+     * Perturbation:
+     * lambda exponent
+     */
+    int m_n;
     /**
      * Perturbation:
      * lambda value for state A to the power nlam

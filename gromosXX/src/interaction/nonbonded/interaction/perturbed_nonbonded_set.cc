@@ -101,7 +101,8 @@ int interaction::Perturbed_Nonbonded_Set
   m_storage.zero();
 
   // need to update pairlist?
-  if(!(sim.steps() % sim.param().pairlist.skip_step)){
+  const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
+  if(pairlist_update){
     DEBUG(6, "\tdoing longrange...");
     
     //====================
@@ -133,6 +134,27 @@ int interaction::Perturbed_Nonbonded_Set
 			    m_rank, topo.num_atoms(), m_num_threads);
     }
     
+  }
+
+  if (sim.param().polarize.cos) {
+    //===============
+    // polarization
+    //===============
+
+    // calculate explicit polarization of the molecules
+    DEBUG(6, "\texplicit polarization");
+    
+    if (topo.perturbed_solute().atoms().size() > 0) {
+      m_perturbed_outerloop.perturbed_electric_field_outerloop(topo, conf, sim,
+                                       m_pairlist, m_perturbed_pairlist,
+				       m_storage, m_longrange_storage, m_rank);
+    } else {
+      m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist, 
+				       m_storage, m_longrange_storage, m_rank);
+    }
+  }  
+
+  if(pairlist_update){    
     if(sim.param().pairlist.grid) { // using stored shifts for calculation
       m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
 			          m_pairlist.solute_long, m_pairlist.shifts ,
@@ -176,9 +198,16 @@ int interaction::Perturbed_Nonbonded_Set
   // }
   // DEBUG
   
-
   // add 1,4 - interactions
   if (m_rank == 0){
+    if (sim.param().polarize.cos) {
+      if (topo.perturbed_solute().atoms().size()) {
+        m_perturbed_outerloop.perturbed_self_energy_outerloop(topo, conf, sim, m_storage);
+      } else {
+        m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
+      }
+    } 
+    
     DEBUG(6, "\t1,4 - interactions");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
 
@@ -313,7 +342,9 @@ int interaction::Perturbed_Nonbonded_Set::update_configuration
 	m_storage.perturbed_energy_derivatives.
 	crf_energy[i][j];
     }
+    pe.self_energy[i] += m_storage.perturbed_energy_derivatives.self_energy[i];
   }
+  
   return 0;
 }
 

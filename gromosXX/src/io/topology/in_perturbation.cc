@@ -794,8 +794,10 @@ io::In_Perturbation::read(topology::Topology &topo,
 	}
 
 	topology::Perturbed_Atom atom(seq, a_iac, a_mass, a_charge,
-					b_iac, b_mass, b_charge,
-					lj_soft, crf_soft);
+                topo.polarizability(seq), topo.damping_level(seq),
+		b_iac, b_mass, b_charge,
+                topo.polarizability(seq), topo.damping_level(seq),
+		lj_soft, crf_soft);
 
 	DEBUG(10, "\tcreated an atom");
 	
@@ -1061,6 +1063,115 @@ io::In_Perturbation::read(topology::Topology &topo,
       // "In_Perturbation", io::message::warning);
     }
   } // LAMBDADEP
+  
+  { // PERTPOLPARAM
+    DEBUG(10, "PERTPOLPARAM block");
+    
+    buffer = m_block["PERTPOLPARAM"];
+    if (buffer.size()){
+      block_read.insert("PERTPOLPARAM");
+
+      if (!quiet)
+	std::cout << "\tPERTPOLPARAM\n";
+      DEBUG(7, "PERTPOLPARAM block");
+      
+      it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      _lineStream >> num;
+      ++it;
+      
+      int seq, res;
+      double a_pol, b_pol, a_lev, b_lev;
+      std::string name;
+
+      if (!quiet)
+	std::cout << "\t"
+		  << std::setw(5) << "seq"
+		  << std::setw(12) << "POL(A)"
+		  << std::setw(12) << "DAMPLEV(A)"
+		  << std::setw(12) << "POL(B)"
+		  << std::setw(12) << "DAMPLEV(B)"
+		  << "\n";
+      
+      for(n = 0; it != buffer.end() - 1; ++it, ++n){
+	DEBUG(10, "\treading a line: " << n);
+	
+	_lineStream.clear();
+	_lineStream.str(*it);
+	_lineStream >> seq >> res >> name 
+                    >> a_pol >> a_lev 
+                    >> b_pol >> b_lev;
+	
+	if (_lineStream.fail()){
+	  io::messages.add("Bad line in PERTPOLPARAM block.",
+			   "In_Perturbation", io::message::error);
+	}
+	
+	--seq;
+	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
+	  io::messages.add("atom sequence number wrong in PERTPOLPARAM block",
+			   "In_Perturbation", io::message::error);
+	  return;
+	}
+        
+        if (!topo.is_perturbed(seq)) {
+          std::ostringstream msg;
+          msg << "Atom " << seq + 1 << " appears in the PERTPOLPARAM block but"
+              << " is not perturbed i.e. does not appear in the PERTATOMPARAM block.";
+          io::messages.add(msg.str(), "In_Perturbation", io::message::error);
+	  return;
+        }
+
+        if (a_pol < 0.0 || b_pol < 0.0){
+	  io::messages.add("PERTPOLPARAM block: polarizability must be >= 0.0",
+			   "In_Perturbation", io::message::error);
+	  return;
+	}
+        
+        if (a_lev < 0.0 || b_lev < 0.0){
+	  io::messages.add("PERTPOLPARAM block: damping level must be >= 0.0",
+			   "In_Perturbation", io::message::error);
+	  return;
+	}
+        
+             
+        topo.perturbed_solute().atom(seq).A_polarizability(a_pol/ math::four_pi_eps_i);
+        topo.perturbed_solute().atom(seq).B_polarizability(b_pol/ math::four_pi_eps_i);
+        
+        topo.perturbed_solute().atom(seq).A_damping_level(a_lev);
+        topo.perturbed_solute().atom(seq).B_damping_level(b_lev);
+
+        topo.is_polarizable()[seq] = true;
+        
+	DEBUG(10, "\tassigned perturbed polarization parameters to atom");
+	
+	if (!quiet)
+	  std::cout << "\t"
+		  << std::setw(5) << seq + 1
+		  << std::setw(12) << topo.perturbed_solute().atom(seq).A_polarizability()* math::four_pi_eps_i
+		  << std::setw(12) << topo.perturbed_solute().atom(seq).A_damping_level()
+		  << std::setw(12) << topo.perturbed_solute().atom(seq).B_polarizability()* math::four_pi_eps_i
+		  << std::setw(12) << topo.perturbed_solute().atom(seq).B_damping_level()
+		  << "\n";
+      }
+      if (n != num){
+	  io::messages.add("Wrong number of bonds in PERTPOLPARAM block.",
+			   "In_Perturbation", io::message::error);	
+      }
+      else if (_lineStream.fail()){
+	io::messages.add("Bad line in PERTPOLPARAM block.",
+			 "In_Perturbation", io::message::error);
+      }
+
+
+      if (!quiet)
+	std::cout << "\tEND\n";
+      
+    } // if block present
+    
+  } // PERTPOLPARAM
 
   for(std::map<std::string, std::vector<std::string> >::const_iterator
 	it = m_block.begin(),
