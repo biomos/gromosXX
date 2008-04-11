@@ -4,6 +4,10 @@
  * the class Perturbed_Shake.
  */
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -322,85 +326,6 @@ void algorithm::Perturbed_Shake
 
 } // solute
 
-
-/**
- * shake solvent.
- */
-template<math::boundary_enum B, math::virial_enum V>
-void algorithm::Perturbed_Shake
-::solvent(topology::Topology const & topo,
-	  configuration::Configuration & conf,
-	  double dt, int const max_iterations,
-	  int & error)
-{
-
-  DEBUG(8, "\tshaking SOLVENT");
-  
-  const double start = util::now();
-
-  // the first atom of a solvent
-  unsigned int first = topo.num_solute_atoms();
-
-  std::vector<bool> skip_now;
-  std::vector<bool> skip_next;
-  int tot_iterations = 0;
-
-  math::Periodicity<B> periodicity(conf.current().box);
-
-  // for all solvents
-  for(unsigned int i=0; i<topo.num_solvents(); ++i){
-
-    // loop over the molecules
-    for(unsigned int nm=0; nm<topo.num_solvent_molecules(i);
-	++nm, first+=topo.solvent(i).num_atoms()){
-
-      skip_now.assign(topo.solvent(i).num_atoms(), false);
-      skip_next.assign(topo.solvent(i).num_atoms(), true);
-
-      int num_iterations = 0;
-      bool convergence = false;
-      while(!convergence){
-	DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
-
-	if(shake_iteration<B, V>
-	   (topo, conf, convergence, first, skip_now, skip_next,
-	    topo.solvent(i).distance_constraints(), dt,
-	    periodicity)){
-	  
-	  io::messages.add("SHAKE error. vectors orthogonal",
-			   "Shake::solute", io::message::error);
-	  
-	  std::cout << "SHAKE failure in solute!" << std::endl;
-	  error = E_SHAKE_FAILURE_SOLVENT;
-	  return;
-	}
-	
-	// std::cout << num_iterations+1 << std::endl;
-	if(++num_iterations > max_iterations){
-	  io::messages.add("SHAKE error. too many iterations",
-			   "Shake::solvent",
-			   io::message::critical);
-	  error = E_SHAKE_FAILURE_SOLVENT;
-	  return;
-	}
-	
-	skip_now = skip_next;
-	skip_next.assign(skip_next.size(), true);
-
-      } // while(!convergence)
-      
-      tot_iterations += num_iterations;
-      
-    } // molecules
-    
-  } // solvents
-
-  this->m_solvent_timing += util::now() - start;
-  DEBUG(3, "total shake solvent iterations: " << tot_iterations);
-  error = 0;
-  
-} // shake solvent
-
 //================================================================================
 //         apply PERTURBED SHAKE
 //================================================================================
@@ -418,27 +343,29 @@ int algorithm::Perturbed_Shake
   bool do_vel_solvent = false;
   int error = 0;
   
-  // check whether we shake solute
-  if (((topo.perturbed_solute().distance_constraints().size() ||
-	topo.solute().distance_constraints().size()) && 
-       sim.param().constraint.solute.algorithm == simulation::constr_shake &&
-       sim.param().constraint.ntc > 1) ||
-      sim.param().dihrest.dihrest == 3) {
+  if (m_rank == 0) {
+    // check whether we shake solute
+    if (((topo.perturbed_solute().distance_constraints().size() ||
+            topo.solute().distance_constraints().size()) &&
+            sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+            sim.param().constraint.ntc > 1) ||
+            sim.param().dihrest.dihrest == 3) {
+      
+      DEBUG(8, "\twe need to shake perturbed SOLUTE");
+      do_vel_solute = true;
+      
+      SPLIT_VIRIAL_BOUNDARY(perturbed_solute,
+              topo, conf, sim,
+              this->max_iterations(), error);
+    }
     
-    DEBUG(8, "\twe need to shake perturbed SOLUTE");
-    do_vel_solute = true;
-
-    SPLIT_VIRIAL_BOUNDARY(perturbed_solute, 
-			  topo, conf, sim, 
-			  this->max_iterations(), error);
-  }
-
-  if (error){
-    std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
-	      << "at step " << sim.steps() << std::endl;
-    // save old positions to final configuration... (even before free-flight!)
-    conf.current().pos = conf.old().pos;
-    return E_SHAKE_FAILURE_SOLUTE;
+    if (error){
+      std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
+      << "at step " << sim.steps() << std::endl;
+      // save old positions to final configuration... (even before free-flight!)
+      conf.current().pos = conf.old().pos;
+      return E_SHAKE_FAILURE_SOLUTE;
+    }
   }
 
   // solvent
@@ -447,9 +374,9 @@ int algorithm::Perturbed_Shake
 
     DEBUG(8, "\twe need to shake SOLVENT");
     do_vel_solvent = true;
-
+    
     SPLIT_VIRIAL_BOUNDARY(solvent, 
-			  topo, conf, sim.time_step_size(), 
+			  topo, conf, sim, sim.time_step_size(), 
 			  this->max_iterations(), error);
   }
   
@@ -494,7 +421,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
 				     bool quiet)
 {
   if (!quiet){
-    os << "Perturbed SHAKE\n"
+    os << "PERTURBED SHAKE\n"
 	    << "\tsolute\t";
     if (sim.param().constraint.solute.algorithm == simulation::constr_shake
 	&& topo.perturbed_solute().distance_constraints().size()){    
@@ -503,10 +430,20 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
 		<< sim.param().constraint.solute.shake_tolerance << "\n";
     }
     else os << "OFF\n";
-    
-    os << "\tsolvent\t"
-	      << "OFF\n";
   }
+  
+  #ifdef XXMPI
+  if (sim.mpi) {
+    m_rank = MPI::COMM_WORLD.Get_rank();
+    m_size = MPI::COMM_WORLD.Get_size();
+  } else {
+    m_rank = 0;
+    m_size = 1;
+  }
+#else
+  m_rank = 0;
+  m_size = 1;
+#endif
   
   if (sim.param().start.shake_pos){
     if (!quiet)
@@ -553,8 +490,21 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
 		     "shake", io::message::error);
   }
 
-  if (!quiet)
+  if (!quiet) {
+    os << "END\n"
+       << "SHAKE\n" 
+       << "\tsolvent\t";
+  
+    if (sim.param().constraint.solvent.algorithm == simulation::constr_shake){
+      if (sim.mpi)
+        os << "ON (MPI parallel version)\n";
+      else 
+        os << "ON\n";
+      os << "\t\ttolerance = " 
+		<< sim.param().constraint.solvent.shake_tolerance << "\n";
+    }  else os << "OFF\n";
     os << "END\n";
+  }
   
   return 0;
 }

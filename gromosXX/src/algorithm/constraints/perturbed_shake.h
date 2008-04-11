@@ -8,6 +8,7 @@
 
 namespace algorithm
 {
+  
   /**
    * @class Perturbed_Shake
    * implements the shake algorithm for perturbed distance constraints.
@@ -88,17 +89,19 @@ namespace algorithm
 			  simulation::Simulation const & sim,
 			  int max_iterations,
 			  int & error);
-
+    
     // overwrites the other one, as g++ seems unable to compile this...!!!
+    // seems to work with gcc 4.1 (by Clara & Nathan)
     /**
      * shake solvent (not perturbed)
      */
+    /*
     template<math::boundary_enum B, math::virial_enum V>
     void solvent(topology::Topology const & topo,
 		 configuration::Configuration & conf,
 		 double dt, int const max_iterations,
-		 int & error);
-
+		 int & error);*/
+    
   };
   
 } //algorithm

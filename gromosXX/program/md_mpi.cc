@@ -319,7 +319,7 @@ int main(int argc, char *argv[]){
       // DEBUG(10, "slave " << rank << " step done");
       // (*os) << "step done (it really worked?)" << std::endl;
 
-      if ((error = shake->apply(topo, conf, sim)) != 0) {
+      if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
         std::cout << "MPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
       }
  
