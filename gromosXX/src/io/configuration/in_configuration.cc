@@ -1300,52 +1300,27 @@ bool io::In_Configuration::_read_distance_restraint_averages
 {
   DEBUG(8, "read distance restaint averages");
   
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end()-1;
-  
   std::vector<topology::distance_restraint_struct>::const_iterator 
     distrests_it = distrests.begin(),
     distrests_to = distrests.end();
   
+  std::string s;
+  
   _lineStream.clear();
-  _lineStream.str(*it++);
-  unsigned int num_rest;
-  _lineStream >> num_rest;
-  if (_lineStream.fail()) {
-    io::messages.add("DISRESEXPAVE block: could not read number of distance "
-                     "restraints.", "in_configuration",
-		     io::message::error);
-    return false;
-  }
+  _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
   
-  if (num_rest  != distrests.size()){
-    io::messages.add("number of distance restraints does not match with number of "
-		     "continuation data", "in_configuration",
-		     io::message::error);
-    return false;
-  }
-  
-  double ave;
-  for( ; (it != to) && (distrests_it != distrests_to); ++it, ++distrests_it){
-
-    _lineStream.clear();
-    _lineStream.str(*it);
+  for( ;distrests_it != distrests_to; ++distrests_it){
+    double ave;
     _lineStream >> ave;
     
     if (_lineStream.fail() || ave < 0.0) {
-      io::messages.add("Wrong average value in DISRESEXPAVE block",
+      io::messages.add("Could not read averages from DISRESEXPAVE block",
 		       "In_Configuration",
 		       io::message::error);
       return false;
     }
-    distrest_av.push_back(ave);
-  }  
-  
-  if (distrests_it != distrests_to || it != to){
-    io::messages.add("Wrong number of averages in DISRESEXPAVE block",
-		     "In_Configuration",
-		     io::message::error);
-    return false;
+    
+    distrest_av.push_back(ave);  
   }
   
   return true;

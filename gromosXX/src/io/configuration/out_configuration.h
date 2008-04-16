@@ -307,6 +307,7 @@ namespace io {
 
     int m_precision;
     int m_force_precision;
+    int m_distance_restraint_precision;
     
     int m_width;
     int m_force_width;

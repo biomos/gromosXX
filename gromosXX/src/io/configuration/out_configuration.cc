@@ -60,6 +60,7 @@ io::Out_Configuration::Out_Configuration(std::string title,
     m_write_blockaverage_free_energy(false),
     m_precision(9),
     m_force_precision(9),
+    m_distance_restraint_precision(7),
     m_width(15),
     m_force_width(18),
     m_title(title)
@@ -1699,13 +1700,17 @@ void io::Out_Configuration::_print_distance_restraint_averages(
           to = conf.special().distrest_av.end();
   
   os.setf(std::ios::fixed, std::ios::floatfield);
-  os.precision(m_precision);
+  os.precision(m_distance_restraint_precision);
   
   os << "DISRESEXPAVE" << std::endl;
-  os << std::setw(5) << conf.special().distrest_av.size() << std::endl;
-
-  for( ; it != to; ++it)
-    os << std::setw(m_width) << *it << std::endl;
+  int i;
+  for(i = 1 ; it != to; ++it, ++i) {
+    os << std::setw(m_width) << *it;
+    if (i % 5 == 0) 
+      os << std::endl;
+  }
+  if (i % 5 != 0) 
+    os << std::endl;  
   
   os << "END" << std::endl;
 }
