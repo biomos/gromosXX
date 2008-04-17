@@ -79,7 +79,7 @@ _update_atomic(topology::Topology & topo,
   const int num_atoms = topo.num_atoms();
   
   int a1 = begin;
-
+  DEBUG(9, "\tbegin (1st) = " << begin);  
   for( ; a1 < num_solute; a1 += stride) {
 
     DEBUG(9, "solute (" << a1 << ") - solute");
@@ -151,26 +151,28 @@ _update_atomic(topology::Topology & topo,
     
   }
 
-  // int a1 = num_solute;
+  int solv_start = num_solute;
 
   // multiple solvents
   DEBUG(9, "solvent - solvent");
+  DEBUG(10, "\tnum_atoms = " << num_atoms);
 
   for(unsigned int s = 0; s < topo.num_solvents(); ++s){
     DEBUG(11, "solvent " << s);
-    int end = a1 + topo.num_solvent_molecules(s);
+
+    int end = solv_start + topo.num_solvent_atoms(s);
     DEBUG(11, "\tends at atom " << end);
-    
-    const int num_solv_at = topo.num_solvent_atoms(s);
-    int a2_start = a1 + num_solv_at;
-      
+
+    const int num_solv_at = topo.num_solvent_atoms(s) / topo.num_solvent_molecules(s);
+    int a2_start = solv_start + num_solv_at;
     DEBUG(11, "\twith " << num_solv_at << " atoms");
-    
-    for( ; a1 < end; a1 += stride){
+    DEBUG(11, "\ta1 starts with " << a1 << "\ta2 starts with " << a2_start);
+
+    for( ; a1 < end; a1+=stride){
       
-      if (a1 == a2_start) a2_start += num_solv_at;
+      while (a1 >= a2_start) a2_start += num_solv_at;
       
-      for(int a2 = a2_start; a2_start < num_atoms; ++a2){
+      for(int a2 = a2_start; a2 < num_atoms; ++a2){
 	
 	assert(a1 != a2);
 	
@@ -179,30 +181,32 @@ _update_atomic(topology::Topology & topo,
 	
 	// the distance
 	const double d = math::abs2(v);
-	
-	DEBUG(10, "\t" << a1 << " - " << a2);
+
+	DEBUG(1, "\t" << a1 << " - " << a2);
 	
 	if (d > m_cutoff_long_2){        // OUTSIDE
 	  DEBUG(11, "\t\toutside");
 	  continue;
 	}
-	
+  
 	if (d > m_cutoff_short_2){       // LONGRANGE
 	  DEBUG(11, "\t\tlongrange");	  
-	  pairlist.solvent_long[a1].push_back(a2);
-	  
+
+          pairlist.solvent_long[a1].push_back(a2);
 	  continue;
 	} // longrange
+
+	DEBUG(11, "\t\tshortrange");	
+	pairlist.solvent_short[a1].push_back(a2);
 	
-	  DEBUG(11, "\t\tshortrange");	
-	  pairlist.solvent_short[a1].push_back(a2);
-	  
       } // solvent - solvent
-      
+
     } // a1 of solvent s
-    
+
+    // start of next solvent
+    solv_start += topo.num_solvent_atoms(s);    
+
   } // multiple solvents
-  
   this->m_timing += util::now() - update_start;
   
   DEBUG(7, "pairlist done");
@@ -219,7 +223,7 @@ _update_pert_atomic(topology::Topology & topo,
 		    unsigned int begin, unsigned int end,
 		    unsigned int stride)
 {
-  DEBUG(7, "standard pairlist update (atomic cutoff)");
+  DEBUG(7, "perturbed standard pairlist update (atomic cutoff)");
   const double update_start = util::now();
   
   math::Periodicity<b> periodicity(conf.current().box);
