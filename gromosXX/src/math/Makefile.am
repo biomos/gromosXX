@@ -6,12 +6,14 @@ xxinclude_HEADERS = 		gmath.h \
 				boundary_implementation.cc \
 				periodicity.h \
 				periodicity.cc \
-				volume.h
+				volume.h \
+                                random.h
 
 noinst_LTLIBRARIES = 		libgromath.la
 
 libgromath_la_SOURCES =		math.cc \
-				volume.cc
+				volume.cc \
+                                random.cc
 
 libgromath_la_LIBADD =
 
