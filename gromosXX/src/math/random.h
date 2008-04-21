@@ -15,7 +15,14 @@ namespace math {
    */
   class RandomGenerator {
     public :
-    virtual ~RandomGenerator() = 0;
+    /**
+     * default constructor
+     */
+    RandomGenerator() : gauss_m(0.0), gauss_s(1.0) {}
+    /** 
+     * default destructor
+     */  
+    virtual ~RandomGenerator() {};
 
     /**
      * accessor to the data needed to restart the random number generator
@@ -120,7 +127,7 @@ namespace math {
   };
 
   /**
-   * @class
+   * @class RandomGeneratorGSL
    * GSL random number generator
    *
    * This random number genertor can be tuned using environment variables and
