@@ -28,7 +28,7 @@
 <li><a href="#longrange">LONGRANGE</a></li>
 <li><a href="#posrest">POSREST</a></li>
 <li><a href="#perturb">PERTURB</a></li>
-<li><a href="#jval">J-Value</a></li>
+<li><a href="#jval">JVALUERES</a></li>
 <li><a href="#perscale">Periodic Scaling</a></li>
 <li><a href="#replica">Replica Exchange</a></li>
 <li><a href="#analyze">Analyze trajectory</a></li>
@@ -465,47 +465,29 @@ END
 <br>
 Example <a href="pttopo.html">perturbation topology</a>
 
-<h2><a name="jval">J-VAL</a></h2>
+<h2><a name="jval">JVALUERES</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-J-VAL03
-# NTJR
-#       off (0)              no J-Value restraints
-#       instantaneous (1)    instantaneous J-Value restraints
-#       averaged (2)         time averaged J-Value restraints
-#       biquadratic (3)      biquadratic J-Value restraints
-#       scaled (4)           periodic scaling (?)
-# LE    local elevation restraining
-# NGRID number of grid points in LE restraining
-# K     force constant (weighted by individual w0)
-# TAUJR
-#       coupling time
-# DELTA
-#       no elevation of potential if J is within delta to J0  
-# NRDJR
-#    0: start from initial values (J0)
-#    1: read in time averages (for continuation run)
-#        NTJR  LE   NGRID      K  TAUJR   DELTA	  NRDJR
-  biquadratic   1      16   10.0    5.0     0.2       0 
-END
-</PRE></CODE></td></tr></tbody>
-</TABLE>
-or old format:
-<table cellpadding="2" cellspacing="2" border="0" width="600"
- bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-J-VAL
-# NTJR
-#       off (0)                          no J-Value restraints
-#       instantaneous (1)        instantaneous J-Value restraints
-#       averaged (2)             time averaged J-Value restraints
-#       biquadratic (3)      biquadratic J-Value restraints
-# TAUJR
-#       coupling time
-# NRDJR
-#    0: start from initial values (J0)
-#    1: read in time averages (for continuation run)
-#        NTJR    TAUJR     NRDJR
-  biquadratic      5.0         0 
+JVALUERES
+# NTJVR
+#        off (0)              no J-Value restraints [default]
+#        instantaneous (1)    instantaneous J-Value restraints
+#        averaged (2)         time averaged J-Value restraints
+#        biquadratic (3)      biquadratic J-Value restraints
+# NTJVRA 0,1                  controls reading of averages from startup file
+#        0:                   start from initial values J0
+#        1:                   read time averages from startup file (for continuation run)
+# CJVR   >= 0                 J-value restraining force constant 
+#                             (weighted by individual WJVR)
+# TAUJVR >= 0                 coupling time for time averaging
+# LE    0,1                   local elevation restraining
+#       0:                    local elevation off
+#       1:                    local elevation on
+# NGRID >0                    number of grid points in local elevation restraining
+# DELTA >= 0.0                no elevation of poetential if J is within DELTA to J0
+#
+#       NTJVR  NTJVRA  CJVR   TAUJVR   LE    NGRID   DELTA
+  biquadratic  0       10.0      5.0    1       16     0.2
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

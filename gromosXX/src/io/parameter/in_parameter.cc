@@ -1979,27 +1979,38 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
   
   buffer = m_block["J-VAL03"];
   if (buffer.size()){
+    io::messages.add("J-VAL03 block not supported. Use JVALUERES block.",
+            "In_Parameter", io::message::error);
+  }
+  buffer = m_block["J-VAL"];
+  if (buffer.size()){
+    io::messages.add("J-VAL block not supported. Use JVALUERES block.",
+            "In_Parameter", io::message::error);
+  }
+  buffer = m_block["JVALUERES"];
+  if (buffer.size()){
 
-    block_read.insert("J-VAL03");
+    block_read.insert("JVALUERES");
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
     std::string s1;
-    _lineStream >> s1
-		>> param.jvalue.le
-		>> param.jvalue.ngrid
-		>> param.jvalue.K
-		>> param.jvalue.tau
-		>> param.jvalue.delta
-		>> param.jvalue.read_av;
-    
+    _lineStream >> s1 // NTJVR
+                >> param.jvalue.read_av // NTJVRA
+                >> param.jvalue.K // CJVR
+                >> param.jvalue.tau // TAUJVR
+                >> param.jvalue.le // LE
+                >> param.jvalue.ngrid // NGRID
+                >> param.jvalue.delta; // DELTA
+      
     if (_lineStream.fail())
-      io::messages.add("bad line in J-VAL03 block",
+      io::messages.add("bad line in JVALUERES block",
 		       "In_Parameter", io::message::error);
     
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
     
+    // NTJVR 0...3
     if (s1 == "off") param.jvalue.mode = simulation::restr_off;
     else if (s1 == "instantaneous") param.jvalue.mode = simulation::restr_inst;
     else if (s1 == "averaged") param.jvalue.mode = simulation::restr_av;
@@ -2011,8 +2022,8 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
       int i;
       css >> i;
       if(css.fail() || i < 0 || i > 3){
-	io::messages.add("bad value for MODE in J-VAL03 block:"+s1+"\n"
-			 "off, instantaneous, averaged, biquadratic, scaled (0-4)",
+	io::messages.add("bad value for MODE in JVALUERES block:"+s1+"\n"
+			 "off, instantaneous, averaged, biquadratic (0-3)",
 			 "In_Parameter", io::message::error);
 	param.jvalue.mode = simulation::restr_off;
 	return;
@@ -2025,79 +2036,35 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
     if (param.jvalue.tau < 0 ||
 	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
 				   param.jvalue.mode != simulation::restr_inst))){
-      io::messages.add("bad value for TAU in J-VAL03 block\n"
+      io::messages.add("bad value for TAU in JVALUERES block\n"
 		       "should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
     if (param.jvalue.mode != simulation::restr_off && param.jvalue.K < 0.0){
-      io::messages.add("bad value for K in J-VAL03 block\n"
+      io::messages.add("bad value for K in JVALUERES block\n"
 		       "should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
     if (param.jvalue.le > 0){
       
       if (param.jvalue.ngrid < 1){
-	io::messages.add("bad value for NGRID in J-VAL03 block\n"
+	io::messages.add("bad value for NGRID in JVALUERES block\n"
 			 "should be > 1",
 			 "In_Parameter", io::message::error);
       }
     }
-
-  } // J-VAL03
-
-  else{
-
-    buffer = m_block["J-VAL"];
-    if (buffer.size()){
-      
-      block_read.insert("J-VAL");
-      
-      _lineStream.clear();
-      _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-      
-      std::string s1;
-      _lineStream >> s1 
-		  >> param.jvalue.tau
-		  >> param.jvalue.read_av;
-      
-      if (_lineStream.fail())
-	io::messages.add("bad line in J-VAL block",
-			 "In_Parameter", io::message::error);
-      
-      std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
-      
-      if (s1 == "off") param.jvalue.mode = simulation::restr_off;
-      else if (s1 == "instantaneous") param.jvalue.mode = simulation::restr_inst;
-      else if (s1 == "averaged") param.jvalue.mode = simulation::restr_av;
-      else if (s1 == "biquadratic") param.jvalue.mode = simulation::restr_biq;
-      else{
-	std::istringstream css;
-	css.str(s1);
-	
-	int i;
-	css >> i;
-	if(css.fail() || i < 0 || i > 3){
-	  io::messages.add("bad value for MODE in J-VAL block:"+s1+"\n"
-			   "off, instantaneous, averaged, biquadratic, scaled (0-4)",
-			   "In_Parameter", io::message::error);
-	  param.jvalue.mode = simulation::restr_off;
-	  return;
-	}
-	param.jvalue.mode = simulation::restr_enum(i);
-	
-	DEBUG(10, "setting jvalue mode to " << param.jvalue.mode);
-	
-      }
-      if (param.jvalue.tau < 0 ||
-	  (param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
-				     param.jvalue.mode != simulation::restr_inst))){
-	io::messages.add("bad value for TAU in J-VAL block\n"
-			 "should be > 0.0",
-			 "In_Parameter", io::message::error);
-      }
+    if (param.jvalue.read_av && param.jvalue.mode != simulation::restr_av){
+      io::messages.add("NTJVRA != 0 requires NTJVR = 2 in JVALUERES block\n",
+		       "In_Parameter", io::message::error);
     }
-  } // J-VAL
-  
+    if (!param.jvalue.read_av && param.jvalue.mode == simulation::restr_av){
+      io::messages.add("NTJVRA = 0 and NTJVR = 2 in JVALUERES block.\n"
+                       "In case of continuation runs NTJVRA should be 1\n"
+                       "(read time averages from startup file).",
+		       "In_Parameter", io::message::warning);
+    }
+
+  } // JVALUERES
 } // JVALUE
 
 /**

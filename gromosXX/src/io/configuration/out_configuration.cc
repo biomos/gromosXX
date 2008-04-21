@@ -1662,7 +1662,7 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
 					  topology::Topology const &topo,
 					  std::ostream &os)
 {
-  DEBUG(10, "JVALUE Aversages");
+  DEBUG(10, "JVALUE Averages");
   
   std::vector<double>::const_iterator av_it = conf.special().jvalue_av.begin();
   std::vector<topology::jvalue_restraint_struct>::const_iterator
