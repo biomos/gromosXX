@@ -17,6 +17,7 @@
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <math/periodicity.h>
 #include <algorithm/constraints/shake.h>
+#include <algorithm/integration/monte_carlo.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
 
@@ -302,6 +303,19 @@ int main(int argc, char *argv[]){
       return 1;
     }
     
+    // get chemical monte carlo
+    bool do_cmc = sim.param().montecarlo.mc;
+    
+    algorithm::Monte_Carlo * monte_carlo = 
+            dynamic_cast<algorithm::Monte_Carlo *>(md.algorithm("MonteCarlo"));
+    if(do_cmc && monte_carlo == NULL){
+      std::cerr << "MPI slave: could not get Monte Carlo algorithm from MD sequence."
+              << "\n\t(internal error)"
+              << std:: endl;
+      MPI::Finalize();
+      return 1;
+    }
+    
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     // run the simulation
     //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -318,11 +332,17 @@ int main(int argc, char *argv[]){
       
       // DEBUG(10, "slave " << rank << " step done");
       // (*os) << "step done (it really worked?)" << std::endl;
+      
+      if (do_cmc && (error = monte_carlo->apply(topo, conf, sim)) != 0){
+        std::cout << "MPI slave " << rank << ": error in Monte Carlo algorithm!\n" 
+                << std::endl;
+      }
 
       if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
         std::cout << "MPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
       }
  
+
       MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
 
       if (!next_step) {

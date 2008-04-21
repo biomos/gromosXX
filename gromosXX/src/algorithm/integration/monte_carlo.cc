@@ -4,6 +4,10 @@
  * for the Monte_Carlo class
  */
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
@@ -25,37 +29,61 @@
 #define SUBMODULE integration
 
 /**
- * Monte-Carlo step.
+ * Chemical Monte-Carlo step.
  */
-int algorithm::Monte_Carlo::apply
-(
- topology::Topology & topo,
- configuration::Configuration & conf,
- simulation::Simulation &sim
- )
-{
+int algorithm::Monte_Carlo::apply(
+topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation &sim
+) {
+  DEBUG(12, "Chemical Monte-Carlo apply");
   if (sim.steps() == 0) return 0;
-  
+  // do a CMC step?
   if ((sim.steps() % sim.param().montecarlo.steps) == 0){
-    move(topo, conf, sim);
-    // reevaluate the forces
-    m_ff.apply(topo, conf, sim);
-    // see whether we accept
-    accept(topo, conf, sim);
+    int rank=0;
+#ifdef XXMPI
+    if (sim.mpi) {
+      rank = MPI::COMM_WORLD.Get_rank();
+    }
+#endif
+    DEBUG(14,"Chemical Monte-Carlo apply, rank = " << rank);
+    // MASTER
+    if(rank == 0){
+      move(topo, conf, sim);
+      // reevaluate the forces
+      DEBUG(14, "Chemical Monte-Carlo apply, MASTER");
+      m_ff.apply(topo, conf, sim);
+    }
+    
+#ifdef XXMPI
+    // SLAVE
+    
+    else{
+      DEBUG(14, "Chemical Monte-Carlo apply, SLAVE");
+      interaction::Interaction * nb = m_ff.interaction("NonBonded");
+      if (nb == NULL){
+        std::cerr << "MPI slave: could not get NonBonded interactions from forcefield"
+        << "\n\t(internal error)"
+        << std::endl;
+        MPI::Finalize();
+        return 1;
+      }
+ 
+      if ((nb->calculate_interactions(topo, conf, sim)) != 0){
+        std::cerr << "MPI slave " << rank << ": error in nonbonded calculation!\n" << std::endl;
+      }
+    }
+    
+#endif
+    if(rank==0){
+      // see whether we accept
+      accept(topo, conf, sim);
+    }
+
   }
 
   return 0;
 }
-
-// HARDCODE HARDCODE HARDCODE
-const double q_max = 0.30;
-const double q_min = -0.30;
-const int atom = 0;
-const double dq = 0.10;
-const double T = 300;
-// EDOCDRAH EDOCDRAH EDOCDRAH
-
-double q_old;
 
 /**
  * Monte-Carlo move.
@@ -67,6 +95,7 @@ int algorithm::Monte_Carlo::move
  simulation::Simulation &sim
  )
 {
+  DEBUG(12,"Chemical Monte-Carlo move");
   conf.exchange_state();
   conf.current().box = conf.old().box;
 
@@ -76,28 +105,28 @@ int algorithm::Monte_Carlo::move
     conf.current().pos(i) = conf.old().pos(i);
     conf.current().force(i) = conf.old().force(i);
   }
-
-  const int mc_step = sim.steps() / sim.param().montecarlo.steps;
-
-  int sign = 1;
-  if (false){
-    sign = (mc_step % 2) ? 1 : -1;
+  
+  // This function returns a double precision floating
+  // point number uniformly distributed in the range [0,1). 
+  // The range includes 0.0 but excludes 1.0.
+  // should we have [0,1]?
+  double ran = gsl_rng_uniform(m_rng)-0.5;
+  double lambda_new = topo.lambda() + ran*sim.param().montecarlo.dlambda;
+  m_lambda_old=topo.lambda();
+ 
+  // wrap around
+  if(lambda_new < 0){
+     lambda_new = lambda_new - static_cast<int>(lambda_new) + 1;
   }
   else{
-    double r =  gsl_rng_uniform(m_rng);
-    if (r < 0.5) sign = -sign;
+    lambda_new = lambda_new - static_cast<int>(lambda_new);
   }
+  DEBUG(14,"CMC: trying lambda " << topo.lambda() << " -> " << lambda_new);
+  // change the lambda value
+  topo.lambda(lambda_new);
+  // update masses
+  topo.update_for_lambda();
   
-  double q_new = topo.charge(atom) +  sign * dq;
-  q_old = topo.charge(atom);
-
-  // wrap around...
-  if (q_new > q_max) q_new = q_min;
-  if (q_new < q_min) q_new = q_max;
-  
-  std::cout << "MC: trying " << topo.charge(atom) << " -> " << q_new << std::endl;
-  topo.charge()[atom] = q_new;
-
   return 0;
 }
 
@@ -108,40 +137,54 @@ int algorithm::Monte_Carlo::accept
  simulation::Simulation &sim
  )
 {
+  DEBUG(12,"Chemcial Monte-Carlo accept");
   const int mc_step = (sim.steps()-1) / sim.param().montecarlo.steps;
-  // const int sign = (mc_step % 2) ? 1 : -1;
-
+    
   // get probability
   double delta = 0;
-  const double beta = 1.0 / (math::k_Boltzmann * T);
-
+  // change T to the actual temperature!!!
+  // --> make sure we only have one T! (in_parameter.cc)
+  //sim.param().multibath.multibath.bath(0)
+  double temperature = sim.param().multibath.multibath.bath(0).temperature;
+  const double beta = 1.0 / (math::k_Boltzmann * temperature);
+  
   conf.current().energies.calculate_totals();
   conf.old().energies.calculate_totals();
   
-  delta =
-    beta * (conf.current().energies.potential_total - conf.old().energies.potential_total);
-
-  std::cout << "MC: delta = " << delta << std::endl;
-
   double probability = 1.0;
-  if (delta > 0.0)
-    probability = exp(-delta);
   
-  std::cout << "MC: old E_pot = " << conf.old().energies.potential_total
-	    << "\tnew E_pot = " << conf.current().energies.potential_total << std::endl;
-  std::cout << "MC: probability = " << probability << std::endl;
+  delta =beta *
+          (conf.current().energies.potential_total
+          - conf.old().energies.potential_total);
   
+   DEBUG(12, "CMC: beta*(Epot(new)-Epot(old)) = " << delta );
+  
+  
+  /*
+   * if Epot(new) > Epot(old) only accept with probability exp(-delta)
+   * else if Epot(new) < Epot(old) accept always (prob.=1.0)
+   */
+  
+  if (delta > 0.0) probability = exp(-delta);
+  
+  DEBUG(12, "CMC: old E_pot = " << conf.old().energies.potential_total
+           << "\tnew E_pot = " << conf.current().energies.potential_total);
+  DEBUG(12, "CMC: probability = " << probability);
+ 
   const double r = gsl_rng_uniform(m_rng);
   if (r < probability){
-    std::cout << "MC: switch succeeded!" << std::endl;
+    DEBUG(12, "CMC: switch succeeded!");
   }
   else{
-    std::cout << "MC: reverting to charge " << q_old << std::endl;
-    topo.charge()[atom] = q_old;
-    // get old state back!
+    DEBUG(12,"CMC: reverting to lambda " << m_lambda_old);
+    // change the lambda value back
+    topo.lambda(m_lambda_old);
+    // update masses
+    topo.update_for_lambda();
+    
+    // get old state back! - does this work?
     conf.exchange_state();
   }
-
-  std::cout << "MC: " << std::setw(7) << mc_step << "\tcharge " << std::setw(18) << topo.charge()[atom] << std::endl;
+  DEBUG(12, "MC: " << std::setw(7) << mc_step << "\tlambda " << std::setw(18) <<topo.lambda() );
   return 0;
 }

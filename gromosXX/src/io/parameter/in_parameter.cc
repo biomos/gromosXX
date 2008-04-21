@@ -2742,8 +2742,7 @@ void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
 }
 
 void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
-				       std::ostream & os)
-{
+        std::ostream & os) {
   DEBUG(8, "read MONTECARLO");
   
   std::vector<std::string> buffer;
@@ -2753,18 +2752,65 @@ void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
   
   if (buffer.size()){
     block_read.insert("MONTECARLO");
-
+    
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-    
-    _lineStream >> param.montecarlo.mc >> param.montecarlo.steps;
+    int mc;
+    _lineStream >> mc >> param.montecarlo.steps >> param.montecarlo.dlambda;
 
     if (_lineStream.fail()){
       io::messages.add("bad line in MONTECARLO block",
-		       "In_Parameter", io::message::error);
+              "In_Parameter", io::message::error);
       return;
     }
+    
+    switch(mc){
+      case 0: param.montecarlo.mc = mc; break;
+      case 1: param.montecarlo.mc = mc; break;
+      default : {
+        io::messages.add("MC in MONTECARLO block must be 0 or 1",
+                "In_Parameter", io::message::error);
+        break;
+      }
+    }
+          
+    // parameters are all positive
+    if(param.montecarlo.steps < 0 || param.montecarlo.dlambda < 0){
+      io::messages.add("Negative parameter in MONTECARLO block.",
+              "In_Parameter", io::message::error);
+      return;
+    }
+    // perturbation
+    if(param.montecarlo.mc && !param.perturbation.perturbation){
+      io::messages.add("Chemical MONTECARLO only possible if perturbation is on."
+      " Set NTG to 1.",
+              "In_Parameter", io::message::error);
+      return;
+    }
+    
+    // slow growth
+    if(param.montecarlo.mc && param.perturbation.dlamt > 0){
+      io::messages.add("Chemical MONTECARLO not possible when doing slow growth."
+      " Set DLAMT to 0.0.",
+              "In_Parameter", io::message::error);
+      return;
+    }
+    
+    // all baths have the same temperature
+    if(param.montecarlo.mc){
+      for(unsigned int i = 1; i < param.multibath.multibath.bath_index().size(); ++i){
+        if(param.multibath.multibath.bath(i).temperature !=
+                param.multibath.multibath.bath(0).temperature){
+          io::messages.add("Chemical MONTECARLO only possible if all baths "
+          " have the same temperature.",
+                  "In_Parameter", io::message::error);
+        }
+      }
+    }
+    
   }
+  
+  
 }
 
 void io::In_Parameter::read_RAMD(simulation::Parameter & param,

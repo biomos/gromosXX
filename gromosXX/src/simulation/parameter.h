@@ -1429,18 +1429,22 @@ namespace simulation
       /**
        * Constructor
        */
-      montecarlo_struct() : mc(0), steps(0)
+      montecarlo_struct() : mc(0), steps(0), dlambda(0)
       {
       }
       /**
-       * monte-carlo
+       * chemical monte-carlo
        */
       int mc;
       /**
        * number of md steps between mc trials
        */
       int steps;
-    } /** montecarlo */ montecarlo;
+      /**
+       * value of dlambda in MC move 
+       */
+      double dlambda;
+    } /** chemical monte-carlo */ montecarlo;
 
     
     /**

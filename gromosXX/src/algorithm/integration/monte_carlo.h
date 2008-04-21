@@ -92,6 +92,11 @@ namespace algorithm
      * Forcefield
      */
     interaction::Forcefield & m_ff;
+    
+    /**
+     * lambda before MC move (for rejected moves)
+     */
+    double m_lambda_old;
 
   };
  
