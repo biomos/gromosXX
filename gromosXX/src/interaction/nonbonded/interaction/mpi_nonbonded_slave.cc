@@ -105,10 +105,16 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     
     // std::cerr << "slave: receiving box" << std::endl;
     MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
-			  9,
-			  MPI::DOUBLE,
-			  0);
+	                  9,
+                          MPI::DOUBLE,
+                          0);
     // std::cerr << "slave: clfldsa; d" << std::endl;
+    
+    // bcast lambda for slow growth and chemical monte carlo
+    MPI::COMM_WORLD.Bcast(&topo.lambda(),
+                          1,
+                          MPI::DOUBLE,
+                          0);
     
     // do this on the master and on the slaves...
     m_pairlist_algorithm->prepare(topo, conf, sim);

@@ -422,6 +422,11 @@ namespace topology
      * return lambda
      */
     double lambda()const {return m_lambda;}
+    
+    /**
+     * return lambda (Bcast lambda to slaves)
+     */
+    double & lambda() {return m_lambda;}
 
     /**
      * set lambda
