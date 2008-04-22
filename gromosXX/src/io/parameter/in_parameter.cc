@@ -1909,55 +1909,78 @@ void io::In_Parameter::read_DISTREST(simulation::Parameter &param,
 } // DISTREST
 
 /**
- * read DIHREST block.
+ * read DIHEDRALRES block.
  */
 void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
 				    std::ostream & os)
 {
-  DEBUG(8, "read DIHREST");
+  DEBUG(8, "read DIHEDRALRES");
 
   std::vector<std::string> buffer;
   std::string s;
   double phi_lin;
   
-  DEBUG(10, "dihrest block");
-  buffer = m_block["DIHREST"];
+  DEBUG(10, "DIHEDRALRES block");
+  buffer = m_block["DIHEDRALRES"];
   
   if (!buffer.size()){
     return;
   }
   
-  block_read.insert("DIHREST");
+  block_read.insert("DIHEDRALRES");
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
-  _lineStream >> param.dihrest.dihrest
+  /*
+   * old format:     
+   * # method  0 : off
+   * #         1 : instantaneous, using force constant K
+   * #         2 : instantaneous, using force constant K*w0
+   * #         3 : dihedral constraining
+   * new format:
+   * #         0:    off [default]
+   * #         1:    instantaneous dihedral restraining using CDLR
+   * #         2:    time-averaged dihedral restraining using CDLR
+   * #         3:    biquadratic dihedral restraining using CDLR
+   * #         4:    dihedral constraining
+   * # CDLR    >=0.0 force constant for dihedral restraining (multiplied by WDLR)
+   */
+  
+   int ntdlr;
+  _lineStream >> ntdlr // param.dihrest.dihrest
 	      >> param.dihrest.K
 	      >> phi_lin;
 
   param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in DIHREST block",
+    io::messages.add("bad line in DIHEDRALRES block",
 		     "In_Parameter", io::message::error);
   
-  if(param.dihrest.dihrest < 0){
-    io::messages.add("Dihedral restraint averaging not implemented",
-		     "In_Parameter", 
-		     io::message::error);
+  switch(ntdlr){
+    case 0: param.dihrest.dihrest = ntdlr; break;
+    case 1: param.dihrest.dihrest = 2; break;
+    case 2: {
+      io::messages.add("NTDLR = 2 (DIHEDRALRES block) not implemented.",
+                       "In_Parameter", io::message::error);
+      break;
+    }
+    case 3: {
+      io::messages.add("NTDLR = 3 (DIHEDRALRES block) not implemented.",
+                       "In_Parameter", io::message::error);
+      break;
+    }
+    case 4: param.dihrest.dihrest = 3; break;
+    default: {
+       io::messages.add("DIHEDRALRES block: NTDLR must be 0...4.",
+                        "In_Parameter", io::message::error);     
+    }
   }
   
-  if(param.dihrest.dihrest > 3) {
-    io::messages.add("bad input in DIHREST block, NTDHR must be <=3",
-		     "In_Parameter", 
-		     io::message::error);
-    
-  }
-
   if(param.distrest.K < 0)
     io::messages.add("Illegal value for force constant"
-		     " in DIHREST block (>=0)",
+		     " in DIHEDRALRES block (>=0)",
 		     "In_Parameter", io::message::error);
 
   if (param.dihrest.dihrest == 3){

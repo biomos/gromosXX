@@ -133,7 +133,7 @@ namespace io {
     void read_DISTREST(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read DIHREST block.
+     * read DIHEDRALRES block.
      */
     void read_DIHREST(simulation::Parameter &param, std::ostream & os = std::cout);
 

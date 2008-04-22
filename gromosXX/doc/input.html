@@ -1,6 +1,6 @@
 <HTML>
 <head>
-<title>GromosXX Input File</title>
+<title>md++ Input File</title>
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -661,15 +661,17 @@ Example <a href="disres.html">distance restraints specification</a>
 <h2><a name="dihrest">DIHREST</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-DIHREST
-# method  0 : off
-#         1 : instantaneous, using force constant K
-#         2 : instantaneous, using force constant K*w0
-#         3 : dihedral constraining
-# K       force constant
-# phi_lin deviation after which the potential energy function is linearized
+DIHEDRALRES
+# NTDLR   0...4 controls dihedral-angle restraining and constraining 
+#         0:    off [default]
+#         1:    instantaneous dihedral restraining using CDLR
+#         2:    time-averaged dihedral restraining using CDLR
+#         3:    biquadratic dihedral restraining using CDLR
+#         4:    dihedral constraining
+# CDLR    >=0.0 force constant for dihedral restraining (multiplied by WDLR)
+# PHILIN  deviation after which the potential energy function is linearized
 #
-# method     K  phi_lin
+# NTDLR  CDLR      PHILIN
   1      100.0     -1.0
 END
 </PRE></CODE></td></tr></tbody>
