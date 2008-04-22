@@ -2,9 +2,11 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 include_HEADERS =
 
-bin_PROGRAMS =			rep_rewrite
+bin_PROGRAMS =			rep_rewrite \
+                                rng_gsl
 
 rep_rewrite_SOURCES =		rep_rewrite.cc
+rng_gsl_SOURCES =               rng_gsl.cc
 
 LDADD = ../src/libgroxx.la $(extra_lib)
 

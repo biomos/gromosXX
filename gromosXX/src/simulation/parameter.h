@@ -97,6 +97,21 @@ namespace simulation
      */
     ef_cos = 1
   };
+  
+  /**
+   * @enum randomgenerator_enum
+   * determines which random number generator is used
+   */
+  enum randomgenerator_enum {
+    /**
+     * g96 algorithm
+     */
+    random_g96 = 0, 
+    /**
+     * GSL library
+     */
+    random_gsl = 1
+  };
 
   /**
    * @class Parameter
@@ -204,16 +219,13 @@ namespace simulation
        * - read_nosehoover_chains true   (read them from configuration)
        * - read_rottrans          true   (read initial setting of positions
        *                                  and orientations for rot-trans constraints)
-       * - read_stochastic        true   (read stochastic integrals and IG from
-       *                                  configuration)
        * - ig                     0      (random number seed)
        * - tempi                  0.0    (temperature to generate initial velocities)
        */
       start_struct() : shake_pos(false), shake_vel(false), 
                        remove_com_translation(false), remove_com_rotation(false),
 		       generate_velocities(false), ig(0), tempi(0.0),
-                       read_nosehoover_chains(true), read_rottrans(true),
-                       read_stochastic(true) {}
+                       read_nosehoover_chains(true), read_rottrans(true) {}
       
       /**
        * shake initial positions
@@ -252,10 +264,6 @@ namespace simulation
        * constraints from configuration or reset them
        */
       bool read_rottrans;
-      /**
-       * Read stochastic integrals and IG from configuration or reset them
-       */
-      bool read_stochastic;
     } /** startup parameters */ start;
 
     /**
@@ -1533,6 +1541,28 @@ namespace simulation
        */
       int write;
     } /** polarize */ polarize;
+    
+    /**
+     * @struct rng_struct
+     * random number generator settings
+     */
+    struct rng_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - g96
+       */
+      rng_struct() : rng(random_g96), gsl_rng(-1) {}
+      /**
+       * random number generator
+       */
+      randomgenerator_enum rng;
+      /** 
+       * GSL random number generator
+       * use the rng_gsl contrib program to find out which values are supported.
+       */
+      int gsl_rng;
+    } /** random number generator */ rng;    
   };
 }
 

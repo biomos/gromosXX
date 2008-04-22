@@ -493,7 +493,7 @@ bool io::In_Configuration::read_velocity
   }
   else{
     // generate initial velocities
-    util::generate_velocities(sim.param().start.tempi, 
+    util::generate_velocities(sim.param(), sim.param().start.tempi, 
 			      topo.mass(),
 			      conf.current().vel,
 			      conf.old().vel,
@@ -696,19 +696,19 @@ bool io::In_Configuration::read_stochastic_integral
     conf.current().stochastic_integral.resize(topo.num_atoms());
     
     buffer = m_block["STOCHINT"];
-    if (buffer.size()){
-      block_read.insert("STOCHINT");
-      if (!quiet)
-	os << "\treading STOCHINT...\n";
-
-      _read_stochastic_integral(conf.current().stochastic_integral, buffer,
-				topo.num_atoms());
-    }
-    else{
-      sim.param().stochastic.generate_integral = true;
-      io::messages.add("generating initial stochastic integrals",
-		       "in_configuration",
-		       io::message::notice);
+    if (sim.param().stochastic.generate_integral == false) {
+      if (buffer.size()){
+        block_read.insert("STOCHINT");
+        if (!quiet)
+          os << "\treading STOCHINT...\n";
+        
+        _read_stochastic_integral(conf.current().stochastic_integral, buffer,
+                topo.num_atoms());
+      }
+      else {
+        io::messages.add("could not read stochastic integrals from configuration",
+                "In_Configuration", io::message::error);
+      }
     }
   }
   return true;

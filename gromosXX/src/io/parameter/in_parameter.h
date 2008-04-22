@@ -275,6 +275,10 @@ namespace io {
      * read POLARIZE block.
      */
     void read_POLARIZE(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read RANDOMNUMBERS block.
+     */
+    void read_RANDOMNUMBERS(simulation::Parameter &param, std::ostream & os = std::cout);
 
   };
   

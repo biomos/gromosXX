@@ -21,6 +21,8 @@
 #include <io/instream.h>
 #include <io/blockinput.h>
 
+#include <math/random.h>
+
 #include "in_parameter.h"
 
 #ifdef OMP
@@ -95,6 +97,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_UMBRELLA(param);
   read_FORCEFIELD(param);
   read_POLARIZE(param);
+  read_RANDOMNUMBERS(param);
   
   DEBUG(7, "input read...");
 
@@ -1287,8 +1290,12 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
   
   // controls reading of stochastic integrals: not implemented.
   switch(ntisti) {
-    case 0: param.start.read_stochastic = true; break;
-    case 1: param.start.read_stochastic = false; break;
+    case 0: 
+      param.stochastic.generate_integral = false; 
+      break;
+    case 1: 
+      param.stochastic.generate_integral = true;
+      break;
     default : io::messages.add("Error in INITIALISE block: NTISTI must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
@@ -3151,5 +3158,46 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
                          "In_Parameter", io::message::error);
     }
 #endif 
+  }
+}
+
+void io::In_Parameter::read_RANDOMNUMBERS(simulation::Parameter & param, 
+        std::ostream & os)
+{
+  DEBUG(8, "read RANDOMNUMBERS");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["RANDOMNUMBERS"];
+  
+  if (buffer.size()) {
+    block_read.insert("RANDOMNUMBERS");
+    
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    int rng;
+    _lineStream >> rng >> param.rng.gsl_rng;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in RANDOMNUMBERS block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
+    
+    switch(rng) {
+      case 0 : 
+        param.rng.rng = simulation::random_g96;
+        break;
+      case 1 :
+        param.rng.rng = simulation::random_gsl;
+        break;
+      default :
+       io::messages.add("Error in RANDOMNUMBERS block: NTRNG must be 0 (G96) "
+                        "or 1 (GSL)", "In_Parameter", io::message::error);       
+    }  
+    
+    math::RandomGenerator::check(param);
   }
 }

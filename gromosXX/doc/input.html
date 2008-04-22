@@ -40,6 +40,7 @@
 <li><a href="#multistep">MULTISTEP</a></li>
 <li><a href="#ewarn">EWARN</a></li>
 <li><a href="#polarize">POLARIZE</a></li>
+<li><a href="#randomnumbers">RANDOMNUMBERS</a></li>
 </ul>
 
 <br>
@@ -724,6 +725,21 @@ POLARIZE
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
-
+<h2><a name="randomnumbers">RANDOMNUMBERS</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+RANDOMNUMBERS
+# NTRNG 0,1 random number generator
+#         0 use G96 algorithm (default)
+#         1 use GSL library
+# NTGSL -1.. GSL random number generation algorithm
+#         -1: use default algorithm (mt19937)
+#       >=0 : run contrib/rng_gsl for a list of possible arguments
+#
+#   NTRNG   NTGSL
+        1      -1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
 </body>
 </html>
