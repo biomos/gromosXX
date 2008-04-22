@@ -6,11 +6,44 @@
 #include <stdheader.h>
 #include <gromosXX/math/random.h>
 #include <gromosXX/util/coding.h>
+#include <gromosXX/simulation/multibath.h>
+#include <gromosXX/simulation/parameter.h>
+
+#include <gromosXX/util/debug.h>
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE math
+#define SUBMODULE math
 
 #include <gsl/gsl_randist.h>
 
+math::RandomGenerator * math::RandomGenerator::create(
+const simulation::Parameter &param, std::string s) {
+  switch(param.rng.rng) {
+    case simulation::random_g96 :
+      return new RandomGeneratorG96(s);
+    case simulation::random_gsl :
+      return new RandomGeneratorGSL(s, param.rng.gsl_rng);
+    default :
+      throw std::runtime_error("invalid random number algorithm");
+  }
+}
+
+bool math::RandomGenerator::check(const simulation::Parameter &param) {
+  try {
+    math::RandomGenerator::create(param, "0");
+    return true;
+  } catch(std::runtime_error &e) {
+    io::messages.add(e.what(), "RandomGenerator", io::message::error);  
+  }
+  return false;
+}
+
 std::string math::RandomGeneratorG96::seed() {
   std::ostringstream buf; buf << ig;
+  ig = std::abs(ig) % m;
+  stored = false;
   return buf.str();
 }
 
@@ -23,29 +56,23 @@ void math::RandomGeneratorG96::seed(std::string s) {
 double math::RandomGeneratorG96::get() {
 
   // this code was more or less copied from GROMOS96
-
-  const int m    = 100000000;
-  const int m1   = 10000;
-  const int mult = 31425821;
-
   int irand = std::abs(ig) % m;
 
 //  MULTIPLY IRAND BY MULT, BUT TAKE INTO ACCOUNT THAT OVERFLOW
 //  MUST BE DISCARDED, AND DO NOT GENERATE AN ERROR.
 
-  int irandh = int(irand / m1);
+  int irandh = irand / m1;
   int irandl = irand % m1;
-  int multh  = int(mult / m1);
+  int multh  = mult / m1;
   int multl  = mult % m1;
 
-  irand = ((irandh*multl+irandl*multh) % m1) * m1 + irandl+multl;
+  irand = ((irandh*multl+irandl*multh) % m1) * m1 + irandl*multl;
   irand = (irand + 1) % m;
 
 //  CONVERT IRAND TO A REAL RANDOM NUMBER BETWEEN 0 AND 1.
 
-  double r = int(irand / 10) * 10.0;
-  r = r / m;
-  if ((r <= 0.0) || (r > 1.0))
+  double r = int(irand / 10) * 10.0 / double(m);
+  if ((r <= 0.0f) || (r > 1.0f))
       r = 0.0;
   ig = irand;
   return r;
@@ -53,6 +80,12 @@ double math::RandomGeneratorG96::get() {
 
 double math::RandomGeneratorG96::get_gauss() {
   // Box-Muller from GROMOS96
+  
+  if (stored) { // then just return the stored value
+    stored = false;
+    return stored_gaussian;
+  }
+  
   double w1, w2, r;
   do {
     w1 = 2.0 * get() - 1.0;
@@ -61,17 +94,26 @@ double math::RandomGeneratorG96::get_gauss() {
     r = w1 * w1 + w2 * w2;
   } while( r > 1.0 || r == 0.0);
 
+  // store the second gaussian
+  stored = true;
+  stored_gaussian = mean() + stddev() * w2 * sqrt(-2.0 * log(r) / r);
+  
   return mean() + stddev() * w1 * sqrt(-2.0 * log(r) / r);
 }
 
-math::RandomGeneratorGSL::RandomGeneratorGSL() {
-  create_instance();
+std::string math::RandomGeneratorG96::description() {
+  return "GROMOS random number generator";
+}
+
+
+math::RandomGeneratorGSL::RandomGeneratorGSL(const int algorithm) {
+  create_instance(algorithm);
   std::ostringstream buf; buf << gsl_rng_default_seed;
   seed(buf.str());
 }
 
-math::RandomGeneratorGSL::RandomGeneratorGSL(std::string s) {
-  create_instance();
+math::RandomGeneratorGSL::RandomGeneratorGSL(std::string s, const int algorithm) {
+  create_instance(algorithm);
   seed(s);
 }
 
@@ -80,29 +122,50 @@ math::RandomGeneratorGSL::~RandomGeneratorGSL() {
   gsl_rng_free(rng);
 }
 
-void math::RandomGeneratorGSL::create_instance() {
-  // get a random number generator type
-  const gsl_rng_type *rng_type;
-  //enable control via environment variables
+void math::RandomGeneratorGSL::create_instance(const int algorithm) {
   gsl_rng_env_setup();
-  rng_type = gsl_rng_default;
-  // get the rundom number generator
-  rng = gsl_rng_alloc(rng_type);
+  const gsl_rng_type **t, **t0;
+          
+  t0 = gsl_rng_types_setup();
+         
+  bool hasDefault = false; 
+  int i;
+  for(i = 0, t = t0; *t != 0; t++, i++) {
+    std::string name((*t)->name);
+    if (name == "mt19937" && algorithm == -1) {
+      hasDefault = true;
+      rng = gsl_rng_alloc(*t);
+      return;
+    }
+    
+    if (i == algorithm) {
+      rng = gsl_rng_alloc(*t);
+      return;     
+    }
+  }
+  
+  if (algorithm == -1 && !hasDefault) {
+    throw std::runtime_error("GSL default algorithm (mt19937) not available");
+  }
+  
+  throw std::runtime_error("GSL rng algorithm not found");
 }
 
 void math::RandomGeneratorGSL::seed(std::string s) {
   std::istringstream str(s);
-  unsigned long int init;
-
+  unsigned int init;
   // try to decode it to a string of binary data
   std::string decoded = util::base64_decode(s);
   if (decoded != "") {
+    DEBUG(10, "\trandom: setting state to: " << decoded);
     // copy the binary data to the gsl state
     memcpy(gsl_rng_state(rng), decoded.c_str(), decoded.length());
-  } else if ((str >> init))  // try to read an integer
+  } else if ((str >> init)) {  // try to read an integer
+    DEBUG(10, "\trandom: setting seed to: " << init);
     gsl_rng_set(rng, init);
-  else
+  } else {
     throw std::runtime_error("invalid seed");
+  }
 }
 
 std::string math::RandomGeneratorGSL::seed() {
@@ -122,5 +185,11 @@ double math::RandomGeneratorGSL::get() {
 double math::RandomGeneratorGSL::get_gauss() {
   // sample gaussian
   return mean() + gsl_ran_gaussian(rng, stddev());
+}
+
+std::string math::RandomGeneratorGSL::description() {
+  std::ostringstream desc;
+  desc << "GSL random number generator (" << gsl_rng_name(rng) << ")";
+  return desc.str();
 }
 

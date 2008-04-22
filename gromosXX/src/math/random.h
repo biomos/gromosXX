@@ -8,6 +8,10 @@
 
 #include <gsl/gsl_rng.h>
 
+namespace simulation {
+  class Parameter;
+}
+
 namespace math {
   /** 
    * @class RandomGenerator
@@ -62,6 +66,22 @@ namespace math {
      * sets the standard deviation of the gaussian distribution
      */
     void stddev(double s) { gauss_s = s;}
+    /**
+     * explains which algorithm it is
+     */
+    virtual std::string description() = 0;
+    /**
+     * creates a RandomGenerator instance accoring to the
+     * simulation's parameters.
+     * Throws a std::runtime_error on failure.
+     */
+    static RandomGenerator* create(const simulation::Parameter &param,
+                                   std::string seed);
+    /**
+     * checks the simulation parameters for valid values
+     * and sets errors accordingly
+     */
+    static bool check(const simulation::Parameter &param);
 
     protected:
     /**
@@ -118,12 +138,36 @@ namespace math {
       * method
       */
     double get_gauss();
+    /**
+     * explains which random number generator is used
+     */
+    std::string description();
  
     protected:
     /**
      * internal seed
      */
     int ig;
+    /**
+     * constant for random number generator
+     */
+    static const int m    = 100000000;
+    /**
+     * constant for random number generator
+     */
+    static const int m1   = 10000;
+    /**
+     * constant for random number generator
+     */
+    static const int mult = 31415821;
+    /**
+     * is there a gaussian ready?
+     */
+    bool stored;
+    /**
+     * the stored gaussian
+     */
+    double stored_gaussian;
   };
 
   /**
@@ -142,11 +186,11 @@ namespace math {
     /**
      * creates an instance
      */
-    RandomGeneratorGSL();
+    RandomGeneratorGSL(const int algorithm);
     /**
      * creates an instance unsing the given seed
      */
-    RandomGeneratorGSL(std::string s);
+    RandomGeneratorGSL(std::string s, const int algorithm);
 
     /**
      * destroys the instance
@@ -177,12 +221,16 @@ namespace math {
      * method (GSL implementation)
      */
     double get_gauss();
+    /**
+     * explains which random number generator is used
+     */
+    std::string description();
 
     protected:
     /*
      * creates the GSL random number generator
      */
-    void create_instance();
+    void create_instance(const int algorithm);
     /*
      * the GSL random number generator
      */
