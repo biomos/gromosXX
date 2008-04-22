@@ -1036,7 +1036,7 @@ void io::Out_Configuration
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_force_precision);
   
-  os << "FORCERED\n";
+  os << "CONSFORCERED\n";
   
   math::VArray const & force = conf.current().force;
   
