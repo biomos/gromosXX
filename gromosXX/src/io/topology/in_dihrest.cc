@@ -104,8 +104,7 @@ void io::In_Dihrest::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
 
-      _lineStream >> i >> j >> k >> l >> delta >> phi >> w0;
-    
+      _lineStream >> i >> j >> k >> l >> w0 >> phi >> delta;
       if(_lineStream.fail()){
 	io::messages.add("bad line in DIHREST block",
 			 "In_Dihrest", io::message::error);

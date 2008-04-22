@@ -213,13 +213,18 @@ DISTREST
 #   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR
         2       0  1000.0     0.3     0.0
 END
-DIHREST
-# values for NTDLR
-# 0: no dihedral angle restraining
-# 1: use CDLR
-# 2: use CDLR * CPLR
-#    NTDLR      CDLR   PHILIN
-        2       100.0  -1
+DIHEDRALRES
+# NTDLR   0...4 controls dihedral-angle restraining and constraining 
+#         0:    off [default]
+#         1:    instantaneous dihedral restraining using CDLR
+#         2:    time-averaged dihedral restraining using CDLR
+#         3:    biquadratic dihedral restraining using CDLR
+#         4:    dihedral constraining
+# CDLR    >=0.0 force constant for dihedral restraining (multiplied by WDLR)
+# PHILIN  deviation after which the potential energy function is linearized
+#
+# NTDLR  CDLR      PHILIN
+  1      100.0     -1.0
 END
 #J-VAL
 # values for NTJR
