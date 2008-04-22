@@ -93,12 +93,17 @@ io::In_Jvalue::read(topology::Topology& topo,
       }
 
       // restr_func_enum:
-      // 1 : harmonic
-      // 2 : attractive
-      // 3 : repulsive
-      if (H < 1 || H > 3){
+      /*
+       * full harmonic (attractive and repulsive)
+        harmonic = 0,
+       * half harmonic, attractive
+        attractive = 1,
+       * half harmonic, repulsive
+       repulsive = -1
+       */
+      if (H < -1 || H > 1){
 	io::messages.add("bad value for H in JVALRESSPEC block "
-			 "(harmonic: 1, attractive: 2, repulsive: 3)",
+			 "(harmonic: 0, attractive: 1, repulsive: -1)",
 			 "In_Jvalue",
 			 io::message::error);
       }

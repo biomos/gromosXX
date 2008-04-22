@@ -363,7 +363,7 @@ double _calculate_derivative(topology::Topology & topo,
     if (param.jvalue.mode == simulation::restr_inst ||
 	param.jvalue.mode == simulation::restr_av){
       
-      // check for half - harmoic functional forms
+      // check for half - harmonic functional forms
       if ( (it->H == topology::repulsive && Jav - it->J0 > 0) || 
 	 (it->H == topology::attractive && Jav - it->J0 <= 0) ){
 	return 0;
@@ -388,7 +388,7 @@ double _calculate_derivative(topology::Topology & topo,
     }
     else if (param.jvalue.mode == simulation::restr_biq){
       
-      // check for half - harmoic functional forms
+      // check for half - harmonic functional forms
       if ( (it->H == topology::repulsive && (Jcurr - it->J0 > 0 || Jav - it->J0 > 0)) || 
 	   (it->H == topology::attractive && (Jcurr - it->J0 <= 0 || Jav - it->J0 <= 0)) ){
 	return 0;

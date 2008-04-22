@@ -17,15 +17,15 @@ namespace topology
     /**
      * full harmonic (attractive and repulsive)
      */
-    harmonic = 1,
+    harmonic = 0,
     /**
      * half harmonic, attractive
      */
-    attractive = 2,
+    attractive = 1,
     /**
      * half harmonic, repulsive
      */
-    repulsive = 3
+    repulsive = -1
   };
   
   /**
