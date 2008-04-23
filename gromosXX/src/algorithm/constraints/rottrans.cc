@@ -51,7 +51,6 @@ static void _apply(topology::Topology & topo,
   // calculate c
   DEBUG(8, "Roto-constrational translaints");
   
-  // blitz::TinyVector<double, 6U> c(0.0), lambda(0.0);
   math::Vec c_trans(0.0), c_rot(0.0), lambda_trans(0.0), lambda_rot(0.0);
   
   for(int i=0; i < sim.param().rottrans.last; ++i){
@@ -124,7 +123,7 @@ static void _apply(topology::Topology & topo,
     v += topo.mass()(i) * (math::cross(conf.special().rottrans_constr.pos(i),
 				       conf.current().pos(i)));
   }
-  DEBUG(10, "testestest: " << math::v2s(v));
+  DEBUG(10, "v: " << math::v2s(v));
 
 #endif
 

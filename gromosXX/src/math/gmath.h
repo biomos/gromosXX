@@ -14,15 +14,9 @@
 
 namespace math
 {
-
-  // using namespace blitz;
-  // BZ_USING_NAMESPACE(blitz)
-
   /**
    * 3 dimensional vector.
    */
-  // typedef blitz::TinyVector<double, 3U> Vec;
-  // typedef double Vec[3];
   class Vec
   {
   private:
@@ -45,8 +39,6 @@ namespace math
   /**
    * Array of 3D vectors.
    */
-  // typedef blitz::Array<Vec, 1>         VArray;
-  // typedef std::vector<Vec> VArray;
   class VArray : public std::vector<Vec>
   {
   public:
@@ -92,8 +84,6 @@ namespace math
   /**
    * Array of scalars.
    */
-  // typedef blitz::Array<double, 1>      SArray;
-  // typedef std::vector<double> SArray;
   class SArray : public std::vector<double>
   {
   public:
@@ -122,8 +112,6 @@ namespace math
   /**
    * Matrix.
    */
-  // typedef blitz::TinyMatrix<double, 3U, 3U> Matrix;
-  // typedef double Matrix[3][3];
   class Matrix
   {
   private:
