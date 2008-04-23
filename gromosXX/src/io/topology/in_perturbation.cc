@@ -56,6 +56,48 @@ bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
   return true;
 }
 
+/**
+ * @class bondMatcher
+ * helper function object to match two_body_term_structs
+ */
+class bondMatcher {
+  public:
+  bondMatcher(const topology::two_body_term_struct& arg) : a(arg) {}
+  bool operator()(const topology::two_body_term_struct &x) {
+    return (a.i == x.i && a.j == x.j);
+  }
+  private:
+  topology::two_body_term_struct a;
+};
+
+/**
+ * @class angleMatcher
+ * helper function object to match three_body_term_structs
+ */
+class angleMatcher {
+  public:
+  angleMatcher(const topology::three_body_term_struct& arg) : a(arg) {}
+  bool operator()(const topology::three_body_term_struct &x) {
+    return (a.i == x.i && a.j == x.j && a.k == x.k);
+  }
+  private:
+  topology::three_body_term_struct a;
+};
+
+/**
+ * @class dihedralMatcher
+ * helper function object to match four_body_term_structs
+ */
+class dihedralMatcher {
+  public:
+  dihedralMatcher(const topology::four_body_term_struct& arg) : a(arg) {}
+  bool operator()(const topology::four_body_term_struct &x) {
+    return (a.i == x.i && a.j == x.j && a.k == x.k && a.l == x.l);
+  }
+  private:
+  topology::four_body_term_struct a;
+};
+
 void
 io::In_Perturbation::read(topology::Topology &topo,
 			  simulation::Parameter &param)
@@ -76,6 +118,9 @@ io::In_Perturbation::read(topology::Topology &topo,
     std::cout << "PERTURBATION TOPOLOGY\n";
     std::cout << title << "\n";
   }
+  
+  // lets do a warning because state A information is overwritten?
+  bool warn = false;
 
   // prepare arrays
   topo.is_perturbed().resize(topo.num_solute_atoms(), false);
@@ -143,28 +188,21 @@ io::In_Perturbation::read(topology::Topology &topo,
 	topology::two_body_term_struct b(i-1, j-1, t_A-1);
 
 	if (param.constraint.ntc != 3){
-	  std::vector<topology::two_body_term_struct>::iterator b_it
-	    = std::find(topo.solute().bonds().begin(), 
-			topo.solute().bonds().end(), 
-			b);
+          std::vector<topology::two_body_term_struct>::iterator b_it
+	    = std::find_if(topo.solute().bonds().begin(), 
+			   topo.solute().bonds().end(), 
+                           bondMatcher(b));
 	
 	  if (b_it == topo.solute().bonds().end()){
-		// or B-type
-		b.type = t_B-1;
-		b_it = std::find(topo.solute().bonds().begin(),
-						 topo.solute().bonds().end(),
-						 b);
-		if (b_it == topo.solute().bonds().end()){
-		  // should this be a warning?
-		  std::cout << "perturbing " << i << " - " << j << " type " << t_A << std::endl;
-		  std::cout << "\tnot in topology!" << std::endl;
-
-	      io::messages.add("Perturbation of a non-existing bond "
-		          	       "in " + pertbondstretch.at(hh) + " block.",
-			     		   "In_Perturbation", io::message::error);
-	    }
+            io::messages.add("Perturbation of a non-existing bond "
+                             "in " + pertbondstretch.at(hh) + " block.",
+                             "In_Perturbation", io::message::error);
+              return;
 	  }
 
+          if (b_it->type != b.type)
+            warn = true;
+          
 	  topo.solute().bonds().erase(b_it);
 	  topology::perturbed_two_body_term_struct 
 	    pb(i-1, j-1, t_A-1, t_B-1);
@@ -178,19 +216,22 @@ io::In_Perturbation::read(topology::Topology &topo,
 		      << "\n";
 	  
 	  topo.perturbed_solute().bonds().push_back(pb);
-	}
-	else{
+	} else { // we have constraints
 	  std::vector<topology::two_body_term_struct>::iterator b_it
-	    = std::find(topo.solute().distance_constraints().begin(), 
-			topo.solute().distance_constraints().end(), 
-			b);
+	    = std::find_if(topo.solute().distance_constraints().begin(), 
+			  topo.solute().distance_constraints().end(), 
+			  bondMatcher(b));
 	  
 	  if (b_it == topo.solute().distance_constraints().end()){
 	    io::messages.add("Perturbation of a non-existing distance "
 			     "constraint in " + pertbondstretch.at(hh) + " block.",
 			     "In_Perturbation", io::message::error);
+            return;
 	  }
-	
+
+          if (b_it->type != b.type)
+            warn = true;
+          
 	  topo.solute().distance_constraints().erase(b_it);
 	  topology::perturbed_two_body_term_struct 
 	    pb(i-1, j-1, t_A-1, t_B-1);
@@ -204,9 +245,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 		      << "\n";
 	  
 	  topo.perturbed_solute().distance_constraints().push_back(pb);
-
 	}
-
       }
       
       if (n != num){
@@ -284,9 +323,9 @@ io::In_Perturbation::read(topology::Topology &topo,
 	topology::two_body_term_struct b(i-1, j-1, t_A-1);
 	
 	std::vector<topology::two_body_term_struct>::iterator b_it
-	  = std::find(topo.solute().distance_constraints().begin(), 
-		      topo.solute().distance_constraints().end(), 
-		      b);
+	  = std::find_if(topo.solute().distance_constraints().begin(), 
+		         topo.solute().distance_constraints().end(), 
+		         bondMatcher(b));
 	  
 	if (b_it == topo.solute().distance_constraints().end()){
 	  io::messages.add("Perturbation of a non-existing distance "
@@ -294,6 +333,9 @@ io::In_Perturbation::read(topology::Topology &topo,
 			   "In_Perturbation", io::message::error);
 	  
 	}
+        
+        if (b_it->type != b.type)
+          warn = true;
 	
 	topo.solute().distance_constraints().erase(b_it);
 	topology::perturbed_two_body_term_struct 
@@ -369,31 +411,21 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	topology::three_body_term_struct a(i-1, j-1, k-1, t_A-1);
 	std::vector<topology::three_body_term_struct>::iterator a_it
-	  = std::find(topo.solute().angles().begin(), 
-		      topo.solute().angles().end(), 
-		      a);
+	  = std::find_if(topo.solute().angles().begin(), 
+		         topo.solute().angles().end(), 
+		         angleMatcher(a));
 	
 	if (a_it == topo.solute().angles().end()){
-	  
-	  // try for B
-	  topology::three_body_term_struct a2(i-1, j-1, k-1, t_B-1);
-	  a_it = std::find(topo.solute().angles().begin(), 
-			   topo.solute().angles().end(), 
-			   a2);
-	  if(a_it == topo.solute().angles().end()){
-	    
-	    io::messages.add("Perturbation of a non-existing angle in "
+          io::messages.add("Perturbation of a non-existing angle in "
 			     + pertbondangle.at(hh) + " block.",
-			     "In_Perturbation", io::message::error);	
-	  }
+			     "In_Perturbation", io::message::error);
+          return;
 	}
 	
+        if (a_it->type != a.type)
+          warn = true;
 	
-	if (a_it != topo.solute().angles().end())
-	  topo.solute().angles().erase(a_it);
-	//	if (a_it2 != topo.solute().angles().end())
-	// topo.solute().angles().erase(a_it2);
-
+        topo.solute().angles().erase(a_it);
 	topology::perturbed_three_body_term_struct pa(i-1, j-1, k-1, t_A-1, t_B-1);
 	topo.perturbed_solute().angles().push_back(pa);
 
@@ -474,29 +506,33 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	topology::four_body_term_struct id(i-1, j-1, k-1,l-1, t_A-1);
 	std::vector<topology::four_body_term_struct>::iterator id_it
-	  = std::find(topo.solute().improper_dihedrals().begin(), 
-		      topo.solute().improper_dihedrals().end(), 
-		      id);
+	  = std::find_if(topo.solute().improper_dihedrals().begin(), 
+		        topo.solute().improper_dihedrals().end(), 
+		        dihedralMatcher(id));
 	
 	if (id_it == topo.solute().improper_dihedrals().end()){
 	  io::messages.add("Perturbation of a non-existing improper dihedral in "
 			   + pertimproperdih.at(hh) + " block.",
 			   "In_Perturbation", io::message::error);
+          return;
 	}
 	
+        if (id_it->type != id.type)
+          warn = true;
+        
 	topo.solute().improper_dihedrals().erase(id_it);
 	topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1, 
 						      t_A-1, t_B-1);
-	
-	  if (!quiet)
-	    std::cout << "\t"
-		      << std::setw(10) << pid.i+1 
-		      << std::setw(10) << pid.j+1
-		      << std::setw(10) << pid.k+1
-		      << std::setw(10) << pid.l+1
-		      << std::setw(10) << pid.A_type+1 
-		      << std::setw(10) << pid.B_type+1 
-		      << "\n";
+        
+        if (!quiet)
+          std::cout << "\t"
+                    << std::setw(10) << pid.i+1
+                    << std::setw(10) << pid.j+1
+                    << std::setw(10) << pid.k+1
+                    << std::setw(10) << pid.l+1
+                    << std::setw(10) << pid.A_type+1
+                    << std::setw(10) << pid.B_type+1
+                    << "\n";
 	
 	topo.perturbed_solute().improper_dihedrals().push_back(pid);
       }
@@ -559,25 +595,20 @@ io::In_Perturbation::read(topology::Topology &topo,
 	
 	topology::four_body_term_struct id(i-1, j-1, k-1,l-1, t_A-1);
 	std::vector<topology::four_body_term_struct>::iterator id_it
-	  = std::find(topo.solute().dihedrals().begin(), 
-		      topo.solute().dihedrals().end(), 
-		      id);
+	  = std::find_if(topo.solute().dihedrals().begin(), 
+		        topo.solute().dihedrals().end(), 
+		        dihedralMatcher(id));
 	
 	if (id_it == topo.solute().dihedrals().end()){
-	  // try B type
-	  topology::four_body_term_struct idB(i-1, j-1, k-1,l-1, t_B-1);
-	  id_it =  std::find(topo.solute().dihedrals().begin(), 
-			     topo.solute().dihedrals().end(), 
-			     idB);
-
-	  if (id_it == topo.solute().dihedrals().end()){
-	    io::messages.add("Perturbation of a non-existing dihedral in "
-			     + pertproperdih.at(hh) + " block.",
-			     "In_Perturbation", io::message::error);
-	    return;
-	  }
+	  io::messages.add("Perturbation of a non-existing dihedral in "
+                           + pertproperdih.at(hh) + " block.",
+                           "In_Perturbation", io::message::error);
+	  return;
 	}
-	
+
+        if (id_it->type != id.type)
+          warn = true;
+        
 	topo.solute().dihedrals().erase(id_it);
 	topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1, 
 						      t_A-1, t_B-1);
@@ -801,6 +832,11 @@ io::In_Perturbation::read(topology::Topology &topo,
 
 	DEBUG(10, "\tcreated an atom");
 	
+        if (topo.mass(seq) != atom.A_mass() ||
+            topo.iac(seq) != int(atom.A_IAC()) ||
+            topo.charge(seq) != atom.A_charge())
+          warn = true;
+        
 	if (!quiet)
 	  std::cout << "\t"
 		    << std::setw(5) << seq + 1
@@ -1135,7 +1171,6 @@ io::In_Perturbation::read(topology::Topology &topo,
 			   "In_Perturbation", io::message::error);
 	  return;
 	}
-        
              
         topo.perturbed_solute().atom(seq).A_polarizability(a_pol/ math::four_pi_eps_i);
         topo.perturbed_solute().atom(seq).B_polarizability(b_pol/ math::four_pi_eps_i);
@@ -1144,6 +1179,12 @@ io::In_Perturbation::read(topology::Topology &topo,
         topo.perturbed_solute().atom(seq).B_damping_level(b_lev);
 
         topo.is_polarizable()[seq] = true;
+        
+        if (topo.polarizability(seq) != 
+                topo.perturbed_solute().atom(seq).A_polarizability() ||
+            topo.damping_level(seq) != 
+                topo.perturbed_solute().atom(seq).A_damping_level())
+          warn = true;
         
 	DEBUG(10, "\tassigned perturbed polarization parameters to atom");
 	
@@ -1189,6 +1230,11 @@ io::In_Perturbation::read(topology::Topology &topo,
   if (!quiet)
     std::cout << "END\n";
 
+  if (warn) {
+    io::messages.add("Some parameters in state A do not match the unperturbed topology.",
+                     "In_Perturbation", io::message::warning);
+  }  
+  
   // and update the properties for lambda
   topo.update_for_lambda();
   
