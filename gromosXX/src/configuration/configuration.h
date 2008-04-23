@@ -71,6 +71,10 @@ namespace configuration
        * stochastic integrals (SD)
        */
       math::VArray stochastic_integral;
+      /**
+       * stochastic dynamics random number seed
+       */
+      std::string stochastic_seed;
       
       /**
        * the box.

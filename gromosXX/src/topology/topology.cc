@@ -84,6 +84,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_atom_energy_group.clear();
   m_chargegroup.clear();
   m_chargegroup.push_back(0);
+  m_stochastic.clear();
   
   DEBUG(10, "solute chargegrous = " << topo.num_solute_chargegroups());
   
@@ -118,6 +119,17 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_one_four_pair.push_back(topo.m_one_four_pair[i]);
       m_all_exclusion.push_back(topo.m_all_exclusion[i]);
       m_atom_energy_group.push_back(topo.m_atom_energy_group[i]);
+      
+      m_stochastic.gamma.push_back(topo.stochastic().gamma[i]);
+      m_stochastic.c1.push_back(topo.stochastic().c1[i]);
+      m_stochastic.c2.push_back(topo.stochastic().c2[i]);
+      m_stochastic.c3.push_back(topo.stochastic().c3[i]);
+      m_stochastic.c4.push_back(topo.stochastic().c4[i]);
+      m_stochastic.c5.push_back(topo.stochastic().c5[i]);
+      m_stochastic.c6.push_back(topo.stochastic().c6[i]);
+      m_stochastic.c7.push_back(topo.stochastic().c7[i]);
+      m_stochastic.c8.push_back(topo.stochastic().c8[i]);
+      m_stochastic.c9.push_back(topo.stochastic().c9[i]);
       
       solute().add_atom(topo.solute().atom(i).name, topo.solute().atom(i).residue_nr);
 
@@ -241,6 +253,8 @@ void topology::Topology::resize(unsigned int const atoms)
   m_exclusion.resize(atoms);
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);
+  
+  m_stochastic.resize(atoms);
   
   m_iac.resize(atoms);
   // chargegroups???

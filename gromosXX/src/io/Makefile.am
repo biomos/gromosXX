@@ -19,7 +19,8 @@ xxiotopo_HEADERS =      topology/in_jvalue.h \
                         topology/in_topology.h \
                         topology/in_perturbation.h \
                         topology/in_distrest.h \
-                        topology/in_dihrest.h
+                        topology/in_dihrest.h \
+                        topology/in_friction.h
 
 xxioconfdir   = $(includedir)/gromosXX/io/configuration
 xxioconf_HEADERS =      configuration/in_configuration.h \
@@ -52,6 +53,7 @@ libgroio_la_SOURCES =	io.cc \
 			topology/in_distrest.cc \
 			topology/in_dihrest.cc \
 			topology/in_jvalue.cc \
+                        topology/in_friction.cc \
 			forcefield/in_ifp.cc
 
 libgroio_la_LIBADD =

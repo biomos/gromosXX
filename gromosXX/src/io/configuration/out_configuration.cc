@@ -1536,19 +1536,20 @@ void io::Out_Configuration::_print_stochastic_integral(configuration::Configurat
   std::vector<std::string> const &residue_name = topo.residue_names();
 
   os.setf(std::ios::fixed, std::ios::floatfield);
-  os.precision(m_precision);
+  os.precision(m_precision - 2); // because it's scientific
 
   os << "STOCHINT\n";
   os << "# first 24 chars ignored\n";
   
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
-
+    os.setf(std::ios::fixed, std::ios::floatfield);
     os << std::setw(5)  << solute.atom(i).residue_nr+1 << " "
        << std::setw(5)  << std::left 
        << residue_name[solute.atom(i).residue_nr] << " "
        << std::setw(6)  << std::left << solute.atom(i).name << std::right
-       << std::setw(6)  << i+1
-       << std::setw(m_width) << conf.current().stochastic_integral(i)(0)
+       << std::setw(6)  << i+1;
+    os.setf(std::ios::scientific, std::ios::floatfield);
+    os << std::setw(m_width) << conf.current().stochastic_integral(i)(0)
        << std::setw(m_width) << conf.current().stochastic_integral(i)(1)
        << std::setw(m_width) << conf.current().stochastic_integral(i)(2)
        << "\n";
@@ -1562,20 +1563,24 @@ void io::Out_Configuration::_print_stochastic_integral(configuration::Configurat
     for(unsigned int m=0; m < topo.num_solvent_molecules(s); ++m, ++res_nr){
       
       for(unsigned int a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
-
+        os.setf(std::ios::fixed, std::ios::floatfield);
 	os << std::setw(5)  << res_nr
 	   << ' ' << std::setw(5)  << std::left
 	   << residue_name[topo.solvent(s).atom(a).residue_nr] << " "
 	   << std::setw(6)  << std::left 
 	   << topo.solvent(s).atom(a).name << std::right
-	   << std::setw(6)  << index + 1
-	   << std::setw(m_width) << conf.current().stochastic_integral(index)(0)
+	   << std::setw(6)  << index + 1;
+        os.setf(std::ios::scientific, std::ios::floatfield);
+	os << std::setw(m_width) << conf.current().stochastic_integral(index)(0)
 	   << std::setw(m_width) << conf.current().stochastic_integral(index)(1)
 	   << std::setw(m_width) << conf.current().stochastic_integral(index)(2)
 	   << "\n";
       }
     }
   }
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os << "# seed\n" << std::setw(10) << std::right 
+     << conf.current().stochastic_seed << "\n";
   os << "END\n";
 }
 

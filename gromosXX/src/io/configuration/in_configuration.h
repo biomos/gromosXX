@@ -213,7 +213,7 @@ namespace io {
 
     bool _read_stochastic_integral(math::VArray & stochastic_integral,
 				   std::vector<std::string> &buffer,
-				   int num_atoms);
+				   int num_atoms, std::string &seed);
     
     /**
      * read DISRESEXPAVE block

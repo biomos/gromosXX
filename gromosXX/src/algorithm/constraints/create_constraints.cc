@@ -172,7 +172,8 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
   }
 
   // sovlent (if not the same as solute)
-  if (sim.param().constraint.solute.algorithm != 
+  if (topo.num_solvent_atoms() > 0 &&
+      sim.param().constraint.solute.algorithm != 
       sim.param().constraint.solvent.algorithm){
 
     switch(sim.param().constraint.solvent.algorithm){

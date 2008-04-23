@@ -25,6 +25,7 @@
 #include <io/topology/in_distrest.h>
 #include <io/topology/in_dihrest.h>
 #include <io/topology/in_jvalue.h>
+#include <io/topology/in_friction.h>
 
 #include "read_special.h"
 
@@ -152,6 +153,30 @@ int io::read_special(io::Argument const & args,
       ij.read(topo, conf, sim, os);
     }
   } // JVALUE
+  
+    // FRICTION
+  if (sim.param().stochastic.sd && sim.param().stochastic.ntfr == 2){
+    std::ifstream friction_file;
+  
+    if (args.count("friction") != 1){
+      io::messages.add("friction specification: no data file specified (use @friction)",
+		       "read special", io::message::error);
+    }
+    else{
+      friction_file.open(args["friction"].c_str());
+      if (!friction_file.is_open()){
+	io::messages.add("opening friction file failed!\n",
+			 "read_special", io::message::error);
+      }
+      io::messages.add("atomic friction coefficients read from " + args["friction"],
+		       "read special",  io::message::notice);
+      
+      io::In_Friction infr(friction_file);
+      infr.quiet = quiet;
+      
+      infr.read(topo, sim, os);
+    }
+  } // FRICTION
 
   // check for errors and abort
   if (io::messages.contains(io::message::error) ||

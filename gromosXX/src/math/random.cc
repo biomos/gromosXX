@@ -83,7 +83,7 @@ double math::RandomGeneratorG96::get_gauss() {
   
   if (stored) { // then just return the stored value
     stored = false;
-    return stored_gaussian;
+    return mean() + stddev() * stored_gaussian;
   }
   
   double w1, w2, r;
@@ -96,7 +96,8 @@ double math::RandomGeneratorG96::get_gauss() {
 
   // store the second gaussian
   stored = true;
-  stored_gaussian = mean() + stddev() * w2 * sqrt(-2.0 * log(r) / r);
+  // only store gassian(0.0, 1.0) part. stddev and mean may change!
+  stored_gaussian = w2 * sqrt(-2.0 * log(r) / r);
   
   return mean() + stddev() * w1 * sqrt(-2.0 * log(r) / r);
 }

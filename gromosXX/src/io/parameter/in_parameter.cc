@@ -2645,9 +2645,6 @@ void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
       io::messages.add("Error in STOCHASTIC block: NTFR must be 0 to 3",
                        "In_Parameter", io::message::error);
     
-    io::messages.add("Behaviour of NTFR not clear.", "In_Parameter", 
-                     io::message::warning);
-    
     if(param.stochastic.nsfr <= 0)
       io::messages.add("Error in STOCHASTIC block: NSFR must be > 0",
                        "In_Parameter", io::message::error);

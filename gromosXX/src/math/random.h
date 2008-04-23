@@ -49,6 +49,18 @@ namespace math {
      * samples a gaussian distributed random number
      */
     virtual double get_gauss() = 0;
+    /**
+     * samples a vector with gaussian distributed coordinates
+     */
+    math::Vec get_gaussian_vec() {
+      math::Vec result;
+      // this is NOT math::Vec(get_gauss(), get_gauss(), get_gauss()) !!!
+      // evaluation order is arbitrary in C++!!!
+      result(0) = get_gauss();
+      result(1) = get_gauss();
+      result(2) = get_gauss();
+      return result; 
+    }
  
     /**
      * gets the mean of the gaussian distribution
@@ -123,7 +135,7 @@ namespace math {
      * std::runtime_error is thrown.
      */
     void seed(std::string s);
-
+   
     /**
      * use the GROMOS96 algorithm to get a random number between [0;1]
      * This uses a pretty default UNIX random number generator

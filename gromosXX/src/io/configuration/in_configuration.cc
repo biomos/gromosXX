@@ -703,7 +703,7 @@ bool io::In_Configuration::read_stochastic_integral
           os << "\treading STOCHINT...\n";
         
         _read_stochastic_integral(conf.current().stochastic_integral, buffer,
-                topo.num_atoms());
+                topo.num_atoms(), conf.current().stochastic_seed);
       }
       else {
         io::messages.add("could not read stochastic integrals from configuration",
@@ -1230,13 +1230,13 @@ bool io::In_Configuration::_read_stochastic_integral
 (
  math::VArray & stochastic_integral,
  std::vector<std::string> &buffer,
- int num_atoms)
+ int num_atoms, std::string &seed)
 {
   DEBUG(8, "read stochastic integral");
 
   // no title in buffer!
   std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end()-1;
+    to = buffer.end()-2;
   
   int i, j, c;
   std::string a, r;
@@ -1284,10 +1284,22 @@ bool io::In_Configuration::_read_stochastic_integral
     std::cout << "not enough stochastic integrals in STOCHINT block! : "
 	      << " got: " << c << " expected: " << num_atoms << std::endl;
     
-    io::messages.add("not enough stochastic integrals in STOCHINT block!",
-		     "In_Configuration",
-		     io::message::error);
+    io::messages.add("not enough stochastic integrals or seed missing in "
+                     "STOCHINT block!", "In_Configuration", io::message::error);
+    return false;
   }
+  
+  // get the seed and trimm of whitespace
+  seed = *it;
+  std::string::size_type pos = seed.find_last_not_of(' ');
+  if(pos != std::string::npos) {
+    seed.erase(pos + 1);
+    pos = seed.find_first_not_of(' ');
+    if(pos != std::string::npos) seed.erase(0, pos);
+  }
+  else seed.erase(seed.begin(), seed.end());
+  
+  DEBUG(12, "trimmed seed: '" << seed << "'");
   return true;
 }
 

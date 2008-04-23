@@ -85,6 +85,8 @@ configuration::Configuration::Configuration
   old().force = conf.old().force;
   current().stochastic_integral = conf.current().stochastic_integral;
   old().stochastic_integral = conf.old().stochastic_integral;
+  current().stochastic_seed = conf.current().stochastic_seed;
+  old().stochastic_seed = conf.old().stochastic_seed;
   
   current().box = conf.current().box;
   old().box = conf.old().box;
@@ -156,6 +158,8 @@ configuration::Configuration & configuration::Configuration::operator=
   old().force = conf.old().force;
   current().stochastic_integral = conf.current().stochastic_integral;
   old().stochastic_integral = conf.old().stochastic_integral;
+  current().stochastic_seed = conf.current().stochastic_seed;
+  old().stochastic_seed = conf.old().stochastic_seed;
   
   current().box = conf.current().box;
   old().box = conf.old().box;

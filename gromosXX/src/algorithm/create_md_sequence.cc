@@ -117,7 +117,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     // SD ?
     algorithm::Stochastic_Dynamics_Pos * sd_pos = NULL;
     if (sim.param().stochastic.sd){
-      sd_pos = new algorithm::Stochastic_Dynamics_Pos;
+      sd_pos = new algorithm::Stochastic_Dynamics_Pos(sim.param());
       md_seq.push_back(sd_pos);
     }
     // MD ?
@@ -155,7 +155,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     if (sim.param().stochastic.sd){
       // do constraints twice...
       create_constraints(md_seq, topo, sim, it);
-      md_seq.push_back(new algorithm::Stochastic_Dynamics_Int(sd_pos->rng()));
+      md_seq.push_back(new algorithm::Stochastic_Dynamics_Int(sd_pos->rng(), 
+              &sd_pos->random_vectors()));
     }
     else if (sim.param().integrate.method == simulation::integrate_leap_frog){
       md_seq.push_back(new algorithm::Leap_Frog_Position);
