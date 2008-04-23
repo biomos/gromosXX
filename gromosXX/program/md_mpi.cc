@@ -270,18 +270,22 @@ int main(int argc, char *argv[]){
   else{
     (*os) << "MPI slave " << rank << " of " << size << std::endl;
     
+    // check whether we have nonbonded interactions
+    bool do_nonbonded = (sim.param().force.nonbonded_crf || 
+                         sim.param().force.nonbonded_vdw);
+    
     // let's get the forcefield
     interaction::Forcefield * ff = 
       dynamic_cast<interaction::Forcefield *>(md.algorithm("Forcefield"));
     
-    if (ff == NULL){
+    if (do_nonbonded && ff == NULL){
       std::cerr << "MPI slave: could not access forcefield\n\t(internal error)" << std::endl;
       MPI::Finalize();
       return 1;
     }
     
     interaction::Interaction * nb = ff->interaction("NonBonded");
-    if (nb == NULL){
+    if (do_nonbonded && nb == NULL){
       std::cerr << "MPI slave: could not get NonBonded interactions from forcefield"
 		<< "\n\t(internal error)"
 		<< std::endl;
@@ -326,7 +330,7 @@ int main(int argc, char *argv[]){
       // run a step
       // (*os) << "waiting for master (nonbonded interaction)" << std::endl;
       // DEBUG(10, "slave " << rank << " waiting for master");
-      if ((error = nb->calculate_interactions(topo, conf, sim)) != 0){
+      if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
 	std::cout << "MPI slave " << rank << ": error in nonbonded calculation!\n" << std::endl;
       }
       
