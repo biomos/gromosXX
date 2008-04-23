@@ -327,6 +327,13 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     return;
   }
   
+  if (sim.param().pairlist.atomic_cutoff){
+    sim.param().force.spc_loop = 0;
+    if (!quiet)
+      os << "\tusing standard solvent loops (atomic cutoff)\n";
+    return;
+  }
+  
   DEBUG(10, "num_solvents = " << topo.num_solvents());
   DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
   DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
@@ -411,6 +418,29 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     return;
   }
   
+  // check four_pi_eps_i
+  DEBUG(10, "checking (4 pi eps0)^-1 ...");
+  if(math::four_pi_eps_i!=138.9354){
+    DEBUG(10, " does not match, force standard loop");
+    sim.param().force.spc_loop = 0;
+    if(!quiet)
+      os << "\tusing standard solvent loops ((4 pi eps0)^-1 does not match)\n";
+    return;
+  }
+   
+  // check energy groups
+  DEBUG(10, "checking energy groups ...");
+
+  if(topo.atom_energy_group(topo.num_solute_atoms())!=
+          topo.atom_energy_group(topo.num_atoms()-1)){
+    DEBUG(10, "- incompatible.");
+    sim.param().force.spc_loop = 0;
+    if(!quiet)
+      os << "\tusing standard solvent loops (energy group partitioning incompatible).\n"
+              << "\tAll solvent atoms must be in one single energy group. ";
+    return;
+  }
+    
   DEBUG(10, "happy to force spc loops");
   sim.param().force.spc_loop = 1;
   if (!quiet)

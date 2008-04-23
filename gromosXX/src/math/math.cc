@@ -17,7 +17,7 @@ namespace math
 
   double k_Boltzmann = 0.00831441;
 
-  double four_pi_eps_i = 138.935;
+  double four_pi_eps_i = 138.9354;
 
 #ifndef NDEBUG
   int debug_level = 0;

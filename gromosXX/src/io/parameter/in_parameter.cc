@@ -2232,13 +2232,9 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
   buffer = m_block["INNERLOOP"];
 
   if (buffer.size()){
-    // to be taken out once spc loops are fully implemented and tested
-    io::messages.add("special solvent loops not implemented (INNERLOOP block)",
-            "In_Parameter", io::message::error);
-        
+ 
     block_read.insert("INNERLOOP");
-    // uncomment the following once spc loops are fully implemented and tested
-    /*
+    
     int spc;
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -2249,14 +2245,25 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
       io::messages.add("bad line in INNERLOOP block",
                        "In_Parameter", io::message::error);
  
-    if (spc != -1 && spc != 0){
-      io::messages.add("bad value for SPCL in INNERLOOP: allowed : -1, 0",
-                       "In_Parameter",
-                       io::message::error);
-      spc = -1;
+    switch(spc){
+      case 0: {
+        // standard solvent loops
+        param.force.spc_loop = -1;
+        break;
+      }
+      case 1: {
+        // fast spc loops
+        param.force.spc_loop = 0;
+        // spc_loop will be set to 1 in check_spc_loop (if all tests are ok).
+        break;
+      }
+      default: {
+        param.force.spc_loop = -1;
+        io::messages.add("bad value for SPC in INNERLOOP: allowed : 1 (on), 0 (off)",
+                "In_Parameter",
+                io::message::error);
+      }
     }
-    param.force.spc_loop = spc;
-     */
   }
 }
 

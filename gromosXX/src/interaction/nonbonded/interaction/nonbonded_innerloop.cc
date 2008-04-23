@@ -757,10 +757,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   ri[0] = sqrt(r2i[0]);
       
   e_lj = (2.634129E-6 * dist6i - 2.617346E-3) * dist6i;
-  e_crf = 0.82 * 0.82 * 138.935 * (ri[0] - m_crf_2cut3i * r2[0] - m_crf_cut);
+  e_crf = 0.82 * 0.82 * 138.9354 * (ri[0] - m_crf_2cut3i * r2[0] - m_crf_cut);
       
   f = (12 * 2.634129E-6 * dist6i - 6 * 2.617346E-3) * dist6i * r2i[0] +
-    0.82 * 0.82 * 138.935 * (ri[0] * r2i[0] + m_crf_cut3i);
+    0.82 * 0.82 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i);
       
   fx = f * r(0);
   fy = f * r(1);
@@ -830,13 +830,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   ri[2] = sqrt(r2i[2]);
   ri[3] = sqrt(r2i[3]);
       
-  e_crf -= 0.82 * 0.41 * 138.935 * (ri[0] + ri[1] + ri[2] + ri[3] -
+  e_crf -= 0.82 * 0.41 * 138.9354 * (ri[0] + ri[1] + ri[2] + ri[3] -
 				    m_crf_2cut3i * (r2[0] + r2[1] + r2[2] + r2[3]) - 4 * m_crf_cut);
       
-  ff[0] = -0.82 * 0.41 * 138.935 * (ri[0] * r2i[0] + m_crf_cut3i);
-  ff[1] = -0.82 * 0.41 * 138.935 * (ri[1] * r2i[1] + m_crf_cut3i);
-  ff[2] = -0.82 * 0.41 * 138.935 * (ri[2] * r2i[2] + m_crf_cut3i);
-  ff[3] = -0.82 * 0.41 * 138.935 * (ri[3] * r2i[3] + m_crf_cut3i);
+  ff[0] = -0.82 * 0.41 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i);
+  ff[1] = -0.82 * 0.41 * 138.9354 * (ri[1] * r2i[1] + m_crf_cut3i);
+  ff[2] = -0.82 * 0.41 * 138.9354 * (ri[2] * r2i[2] + m_crf_cut3i);
+  ff[3] = -0.82 * 0.41 * 138.9354 * (ri[3] * r2i[3] + m_crf_cut3i);
       
   fx = ff[0] * x[0];
   fy = ff[0] * y[0];
@@ -1003,13 +1003,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   ri[2] = sqrt(r2i[2]);
   ri[3] = sqrt(r2i[3]);
 
-  e_crf += 0.41 * 0.41 * 138.935 * (ri[0] + ri[1] + ri[2] + ri[3] -
+  e_crf += 0.41 * 0.41 * 138.9354 * (ri[0] + ri[1] + ri[2] + ri[3] -
 				    m_crf_2cut3i * (r2[0] + r2[1] + r2[2] + r2[3]) - 4 * m_crf_cut);
 
-  ff[0] = 0.41 * 0.41 * 138.935 * (ri[0] * r2i[0] + m_crf_cut3i);
-  ff[1] = 0.41 * 0.41 * 138.935 * (ri[1] * r2i[1] + m_crf_cut3i);
-  ff[2] = 0.41 * 0.41 * 138.935 * (ri[2] * r2i[2] + m_crf_cut3i);
-  ff[3] = 0.41 * 0.41 * 138.935 * (ri[3] * r2i[3] + m_crf_cut3i);
+  ff[0] = 0.41 * 0.41 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i);
+  ff[1] = 0.41 * 0.41 * 138.9354 * (ri[1] * r2i[1] + m_crf_cut3i);
+  ff[2] = 0.41 * 0.41 * 138.9354 * (ri[2] * r2i[2] + m_crf_cut3i);
+  ff[3] = 0.41 * 0.41 * 138.9354 * (ri[3] * r2i[3] + m_crf_cut3i);
   
   fx = ff[0] * x[0];
   fy = ff[0] * y[0];

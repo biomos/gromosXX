@@ -41,6 +41,7 @@
 <li><a href="#ewarn">EWARN</a></li>
 <li><a href="#polarize">POLARIZE</a></li>
 <li><a href="#randomnumbers">RANDOMNUMBERS</a></li>
+<li><a href="#spc_loops">INNERLOOP</a></li>
 </ul>
 
 <br>
@@ -93,7 +94,7 @@ INITIALISE
 # NTISTI: 0,1 controls generation of stochastic integrals
 #         0: read stochastic integrals and IG from configuration (default)
 #         1: set stochastic integrals to zero and use IG from here.
-# IG:     randum number generator seed
+# IG:     random number generator seed
 # TEMPI:  initial temperature
 #
 #  NTIVEL  NTISHK  NTINHC
@@ -333,9 +334,9 @@ END
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 FORCE
 #      NTF array
-# bonds    angles    imp.     dihe     charge nonbonded
+# bonds    angles    imp.     dihe     charge vdW
 # H        H         H        H
-  0  0     1  1      1  1     1  1     1  1
+  0  0     1  1      1  1     1  1     1      1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      1        60           
 END
@@ -740,6 +741,25 @@ RANDOMNUMBERS
 #
 #   NTRNG   NTGSL
         1      -1
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<h2><a name="spc_loops">INNERLOOP</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+INNERLOOP
+# SPC 0,1  
+#       0: use standard solvent loops [default]
+#       1: use fast SPC solvent loops
+#          note that standard solvent loops will be used also if SPC == 1, if
+#          - solvent parameters (LJ, charges) in topology do not match SPC model;
+#          - FPEPSI != 138.9354 in topology,
+#          - solvent atoms are in more than one energy group,
+#          - grid based pairlist is used,
+#          - atomic cutoff is used.
+#
+#   SPC
+     1 
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
