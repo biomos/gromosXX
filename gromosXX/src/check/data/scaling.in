@@ -161,7 +161,7 @@ LONGRANGE
     62.0       0.0       1.4
 END
 #
-POSREST
+POSITIONRES
 #    NTPOR 0..3 controls atom positions re(con)straining.
 #          0: no position re(con)straints.
 #          1: restraining with force constant CPOR

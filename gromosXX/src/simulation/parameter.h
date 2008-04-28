@@ -816,7 +816,7 @@ namespace simulation
 
     /**
      * @struct posrest_struct
-     * POSREST block
+     * POSITONRES block
      */
     struct posrest_struct
     {
