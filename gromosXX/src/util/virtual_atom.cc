@@ -33,16 +33,19 @@ util::Virtual_Atom::Virtual_Atom()
      m_atom(),
      m_dish(0.1),
      m_disc(0.153),
+     m_disn(0.1),
      m_orientation(0)
 {
 }
 
 util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
-				 double dish, double disc,int orientation)
+				 double dish, double disc, double disn, 
+                                 int orientation)
   :  m_type(type),
      m_atom(atom),
      m_dish(dish),
      m_disc(disc),
+     m_disn(disn),
      m_orientation(orientation)
 {
   bool strict = true; // do the test?
@@ -188,7 +191,7 @@ void util::Virtual_Atom::_pos
       posj += posi;
       
       s = 2.0 * posi - posj - posk;
-      p = posi - (m_dish * 0.5) * s / math::abs(s);
+      p = posi - (m_disn * 0.5) * s / math::abs(s);
       break;
       
     case 9: // (CH3)3-group (one psuedosite)
@@ -645,24 +648,25 @@ void util::Virtual_Atom::_force
       s = 2.0 * posi - posj - posk;
       abs_s=math::abs(s);
      
-      calc1= math::Vec(-m_dish*(abs_s*abs_s - s(0)*s(0)),
-		       m_dish*s(1)*s(0), 
-		       m_dish*s(2)*s(0))/(abs_s*abs_s*abs_s)+math::Vec(1,0,0);
-      calc2= math::Vec(m_dish*s(1)*s(0),
-		       -m_dish*(abs_s*abs_s - s(1)*s(1)),
-		       m_dish*s(2)*s(1))/(abs_s*abs_s*abs_s)+math::Vec(0,1,0);
-      calc3= math::Vec(m_dish*s(2)*s(0),
-		       m_dish*s(2)*s(1),
-		       -m_dish*(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s)+math::Vec(0,0,1);     
+      calc1= math::Vec(-m_disn*(abs_s*abs_s - s(0)*s(0)),
+		       m_disn*s(1)*s(0), 
+		       m_disn*s(2)*s(0))/(abs_s*abs_s*abs_s)+math::Vec(1,0,0);
+      calc2= math::Vec(m_disn*s(1)*s(0),
+		       -m_disn*(abs_s*abs_s - s(1)*s(1)),
+		       m_disn*s(2)*s(1))/(abs_s*abs_s*abs_s)+math::Vec(0,1,0);
+      calc3= math::Vec(m_disn*s(2)*s(0),
+		       m_disn*s(2)*s(1),
+		       -m_disn*(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s)+
+                       math::Vec(0,0,1);     
       force(m_atom[0])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       
-      calc1=-0.5*m_dish*math::Vec(-(abs_s*abs_s - s(0)*s(0)),
+      calc1=-0.5*m_disn*math::Vec(-(abs_s*abs_s - s(0)*s(0)),
 				  s(1)*s(0), 
 				  s(2)*s(0))/(abs_s*abs_s*abs_s);
-      calc2=-0.5*m_dish*math::Vec(s(1)*s(0),
+      calc2=-0.5*m_disn*math::Vec(s(1)*s(0),
 				  -(abs_s*abs_s - s(1)*s(1)),
 				  s(2)*s(1))/(abs_s*abs_s*abs_s);
-      calc3=-0.5*m_dish*math::Vec(s(2)*s(0),
+      calc3=-0.5*m_disn*math::Vec(s(2)*s(0),
 				  s(2)*s(1),
 				  -(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s);
       force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));

@@ -70,7 +70,8 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_PAIRLIST(param);
   read_LONGRANGE(param);
   read_POSREST(param);
-  read_DISTREST(param);
+  //read_DISTANCERES(param);
+  read_DISTANCERES(param); //new name
   read_DIHREST(param); // needs to be called after CONSTRAINT!
   read_PERTURB(param);
   read_JVALUE(param);
@@ -1849,64 +1850,64 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
 } // POSREST
 
 /**
- * read DISTREST block.
+ * read DISTANCERES block.
  */
-void io::In_Parameter::read_DISTREST(simulation::Parameter &param,
+void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
 				    std::ostream & os)
 {
-  DEBUG(8, "read DISTREST");
+  DEBUG(8, "read DISTANCERES");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  DEBUG(10, "distrest block");
-  buffer = m_block["DISTREST"];
+  DEBUG(10, "distenceres block");
+  buffer = m_block["DISTANCERES"];
   
   if (!buffer.size()){
     return;
   }
   
-  block_read.insert("DISTREST");
+  block_read.insert("DISTANCERES");
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
   int ntdira;
-  _lineStream >> param.distrest.distrest
+  _lineStream >> param.distanceres.distanceres
   	      >> ntdira
-	      >> param.distrest.K
-	      >> param.distrest.r_linear
-	      >> param.distrest.tau;
+	      >> param.distanceres.K
+	      >> param.distanceres.r_linear
+	      >> param.distanceres.tau;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in DISTREST block",
+    io::messages.add("bad line in DISTANCERES block",
 		     "In_Parameter", io::message::error);
   
   
-  if(param.distrest.distrest < -2 || param.distrest.distrest > 2) {
-    io::messages.add("Error in DISTREST block: NTDIR must 0 to 2.",
+  if(param.distanceres.distanceres < -2 || param.distanceres.distanceres > 2) {
+    io::messages.add("Error in DISTANCERES block: NTDIR must 0 to 2.",
                      "In_Parameter", io::message::error);
   }
   
   switch(ntdira) {
-    case 0 : param.distrest.read = false; break;
-    case 1 : param.distrest.read = true; break;
-    default:  param.distrest.read = false; 
-      io::messages.add("Error in DISTREST block: NTDIRA must be 0 or 1.",
+    case 0 : param.distanceres.read = false; break;
+    case 1 : param.distanceres.read = true; break;
+    default:  param.distanceres.read = false; 
+      io::messages.add("Error in DISTANCERES block: NTDIRA must be 0 or 1.",
                        "In_Parameter", io::message::error);
   }
   
-  if(param.distrest.tau < 0.0) {
-    io::messages.add("Error in DISTREST block: TAUDIR must be >= 0.0.",
+  if(param.distanceres.tau < 0.0) {
+    io::messages.add("Error in DISTANCERES block: TAUDIR must be >= 0.0.",
                      "In_Parameter", io::message::error);
   }
 
-  if(param.distrest.K <0) {
-    io::messages.add("Error in DISTREST block: CDIR must be >= 0.0.",
+  if(param.distanceres.K <0) {
+    io::messages.add("Error in DISTANCERES block: CDIR must be >= 0.0.",
 		     "In_Parameter", io::message::error);
   }
 
-} // DISTREST
+} // DISTANCERES
 
 /**
  * read DIHEDRALRES block.
@@ -1978,7 +1979,7 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
     }
   }
   
-  if(param.distrest.K < 0)
+  if(param.distanceres.K < 0)
     io::messages.add("Illegal value for force constant"
 		     " in DIHEDRALRES block (>=0)",
 		     "In_Parameter", io::message::error);

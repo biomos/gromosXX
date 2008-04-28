@@ -18,7 +18,7 @@ xxiotopo_HEADERS =      topology/in_jvalue.h \
                         topology/in_posres.h \
                         topology/in_topology.h \
                         topology/in_perturbation.h \
-                        topology/in_distrest.h \
+                        topology/in_distanceres.h \
                         topology/in_dihrest.h \
                         topology/in_friction.h
 
@@ -50,7 +50,7 @@ libgroio_la_SOURCES =	io.cc \
 			configuration/in_configuration.cc \
 			configuration/out_configuration.cc \
 			topology/in_posres.cc \
-			topology/in_distrest.cc \
+			topology/in_distanceres.cc \
 			topology/in_dihrest.cc \
 			topology/in_jvalue.cc \
                         topology/in_friction.cc \

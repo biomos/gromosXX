@@ -1,30 +1,30 @@
 /**
- * @file in_distrest.h
+ * @file in_distanceres.h
  * read in a distrance restraints file.
  */
 
-#ifndef INCLUDED_IN_DISTREST_H
-#define INCLUDED_IN_DISTREST_H
+#ifndef INCLUDED_IN_DISTANCERES_H
+#define INCLUDED_IN_DISTANCERES_H
 
 #include <gromosXX/io/instream.h>
 
 namespace io {
 
   /**
-   * @class In_Distrest
+   * @class In_Distanceres
    * reads in a position restraints file
    */
-  class In_Distrest : public GInStream {
+  class In_Distanceres : public GInStream {
 
   public:
     /**
      * Default constructor.
      */
-    In_Distrest() {}
+    In_Distanceres() {}
     /**
      * Constructor.
      */
-    In_Distrest(std::istream& is) : GInStream(is) { readStream(); };
+    In_Distanceres(std::istream& is) : GInStream(is) { readStream(); };
     /**
      * Read in a position restraints file.
      */

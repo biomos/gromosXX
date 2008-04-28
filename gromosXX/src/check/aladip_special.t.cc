@@ -52,14 +52,14 @@ int main(int argc, char* argv[])
   int total = 0;
 
   util::Known knowns;
-  knowns << "topo" << "pttopo" << "conf" << "input" << "distrest" << "dihrest" << "verb";
+  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo      <topology>]\n";
   usage += "\t[@pttopo   <perturbation topology>]\n";
   usage += "\t[@conf      <starting configuration>]\n";
   usage += "\t[@input     <input>]\n";
-  usage += "\t[@distrest  <distrest>]\n";
+  usage += "\t[@distanceres  <distanceres>]\n";
   usage += "\t[@dihrest   <dihrest>]\n";
   usage += "\t[@verb     <[module:][submodule:]level>]\n";
 
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput, sdistrest, sdihrest;
+  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -97,10 +97,10 @@ int main(int argc, char* argv[])
   else
     GETFILEPATH(sinput, "aladip_special.in", "src/check/data/");
 
-  if(args.count("distrest") == 1)
-    sdistrest = args["distrest"];
+  if(args.count("distanceres") == 1)
+    sdistanceres = args["distanceres"];
   else
-    GETFILEPATH(sdistrest, "aladip.distrest", "src/check/data/");
+    GETFILEPATH(sdistanceres, "aladip.distrest", "src/check/data/");
 
   if(args.count("dihrest") ==1)
     sdihrest = args["dihrest"];
@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 	      << "topology :      " << stopo << "\n"
 	      << "perturbation :  " << spttopo << "\n"
 	      << "input :         " << sinput << "\n"
-	      << "distrest :      " << sdistrest << "\n"
+	      << "distanceres :   " << sdistanceres << "\n"
 	      << "dihrest :       " << sdihrest << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      sdistrest,
+			      sdistanceres,
 			      sdihrest,
 			      quiet
 			      )

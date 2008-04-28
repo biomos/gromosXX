@@ -80,7 +80,7 @@ namespace configuration
     /** 
      * total energy of the distance restraint interaction
      */
-    double distrest_total;
+    double distanceres_total;
     /**
      *  total energy of the distance restraint interaction
      */
@@ -150,7 +150,7 @@ namespace configuration
     /**
      * distance restraint energy term
      */
-    std::vector<double> distrest_energy;
+    std::vector<double> distanceres_energy;
     /**
      * dihedral restraint energy term
      */

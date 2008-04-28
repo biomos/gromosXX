@@ -326,7 +326,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_stochastic_integral(conf, topo, m_final_conf);
     }
     
-    if(sim.param().distrest.distrest < 0){
+    if(sim.param().distanceres.distanceres < 0){
       _print_distance_restraint_averages(conf, topo, m_final_conf);
     }
     
@@ -1701,8 +1701,8 @@ void io::Out_Configuration::_print_distance_restraint_averages(
 {
   DEBUG(10, "distance restraint averages");
   
-  std::vector<double>::const_iterator it = conf.special().distrest_av.begin(),
-          to = conf.special().distrest_av.end();
+  std::vector<double>::const_iterator it = conf.special().distanceres_av.begin(),
+          to = conf.special().distanceres_av.end();
   
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_distance_restraint_precision);
@@ -1799,7 +1799,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.crf_total << "\n"
      << std::setw(18) << e.constraints_total << "\n"
      << std::setw(18) << e.posrest_total << "\n"
-     << std::setw(18) << e.distrest_total << "\n"
+     << std::setw(18) << e.distanceres_total << "\n"
      << std::setw(18) << e.dihrest_total << "\n"
      << std::setw(18) << e.jvalue_total << "\n"
      << std::setw(18) << e.self_total << "\n" // self energy from polarization
@@ -1839,7 +1839,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   for(int i=0; i<numenergygroups; i++){
     os << std::setw(18) << e.constraints_energy[i] 
        << std::setw(18) << e.posrest_energy[i] 
-       << std::setw(18) << e.distrest_energy[i] // disres
+       << std::setw(18) << e.distanceres_energy[i] // disres
        << std::setw(18) << e.dihrest_energy[i] // dihedral res
        << std::setw(18) << 0.0 // jval
        << std::setw(18) << 0.0 // local elevation

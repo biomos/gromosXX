@@ -128,9 +128,9 @@ namespace io {
     void read_POSREST(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read DISTREST block.
+     * read DISTANCERES block.
      */
-    void read_DISTREST(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_DISTANCERES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read DIHEDRALRES block.

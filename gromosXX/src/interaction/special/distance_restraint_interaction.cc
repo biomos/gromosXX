@@ -40,7 +40,7 @@ static int _calculate_distance_restraint_interactions
     it = topo.distance_restraints().begin(),
     to = topo.distance_restraints().end();
   
-  std::vector<double>::iterator ave_it = conf.special().distrest_av.begin();
+  std::vector<double>::iterator ave_it = conf.special().distanceres_av.begin();
 
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
@@ -65,74 +65,74 @@ static int _calculate_distance_restraint_interactions
     DEBUG(10, "pos(v1) = " << math::v2s(it->v1.pos(conf)));
     DEBUG(10, "pos(v2) = " << math::v2s(it->v2.pos(conf)));
 
-    DEBUG(9, "DISTREST v : " << math::v2s(v));
+    DEBUG(9, "DISTANCERES v : " << math::v2s(v));
     
     double dist = math::abs(v);
-    DEBUG(9, "DISTREST dist : " << dist << " r0 : " << it->r0);
-    if (sim.param().distrest.distrest < 0) {
+    DEBUG(9, "DISTANCERES dist : " << dist << " r0 : " << it->r0);
+    if (sim.param().distanceres.distanceres < 0) {
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);
       dist = pow(*ave_it, -1.0 / 3.0);
-      DEBUG(9, "DISTREST average dist : " << dist);
+      DEBUG(9, "DISTANCERES average dist : " << dist);
     }
       
 
     if(it->rah*dist < it->rah * it->r0){
-      DEBUG(9, "DISTREST  : restraint fulfilled");
+      DEBUG(9, "DISTANCERES  : restraint fulfilled");
       f=0;
     }
-    else if(fabs(it->r0 - dist) < sim.param().distrest.r_linear){
-      DEBUG(9, "DISTREST  : harmonic");
-      f = - sim.param().distrest.K * (dist - it->r0) * v / dist;
+    else if(fabs(it->r0 - dist) < sim.param().distanceres.r_linear){
+      DEBUG(9, "DISTANCERES  : harmonic");
+      f = - sim.param().distanceres.K * (dist - it->r0) * v / dist;
     }
     else{
-      DEBUG(9, "DISTREST  : linear");
+      DEBUG(9, "DISTANCERES  : linear");
       if(dist < it->r0)
-	f =  sim.param().distrest.r_linear * sim.param().distrest.K  * v / dist;
+	f =  sim.param().distanceres.r_linear * sim.param().distanceres.K  * v / dist;
       else
-	f = -sim.param().distrest.r_linear * sim.param().distrest.K  * v / dist;
+	f = -sim.param().distanceres.r_linear * sim.param().distanceres.K  * v / dist;
     }
     
-    if(abs(sim.param().distrest.distrest) == 1)
+    if(abs(sim.param().distanceres.distanceres) == 1)
       ;
-    else if(abs(sim.param().distrest.distrest) == 2)
+    else if(abs(sim.param().distanceres.distanceres) == 2)
       f *= it->w0;
     else 
       f = 0;
     
-    DEBUG(9, "Distrest force : " << math::v2s(f));
+    DEBUG(9, "Distanceres force : " << math::v2s(f));
 
     it->v1.force(conf,  f);
     it->v2.force(conf, -f);  
 
     if(it->rah * dist < it->rah * it->r0)
       energy = 0;
-    else if(fabs(it->r0 - dist) < sim.param().distrest.r_linear)
-      energy = 0.5 * sim.param().distrest.K * (dist - it->r0) * (dist - it->r0);
+    else if(fabs(it->r0 - dist) < sim.param().distanceres.r_linear)
+      energy = 0.5 * sim.param().distanceres.K * (dist - it->r0) * (dist - it->r0);
     else{
       if(dist < it->r0)
-	energy = -sim.param().distrest.K * sim.param().distrest.r_linear *
-	  (dist - it->r0 + 0.5 * sim.param().distrest.r_linear);
+	energy = -sim.param().distanceres.K * sim.param().distanceres.r_linear *
+	  (dist - it->r0 + 0.5 * sim.param().distanceres.r_linear);
       else
-	energy =  sim.param().distrest.K * sim.param().distrest.r_linear *
-	  (dist - it->r0 - 0.5 * sim.param().distrest.r_linear);
+	energy =  sim.param().distanceres.K * sim.param().distanceres.r_linear *
+	  (dist - it->r0 - 0.5 * sim.param().distanceres.r_linear);
     }
     
-    if(abs(sim.param().distrest.distrest) == 1)
+    if(abs(sim.param().distanceres.distanceres) == 1)
       ;
-    else if(abs(sim.param().distrest.distrest) == 2)
+    else if(abs(sim.param().distanceres.distanceres) == 2)
      energy *= it->w0;
     else
       energy=0;
 
-    DEBUG(9, "Distrest energy : " << energy);
+    DEBUG(9, "Distanceres energy : " << energy);
 
-    conf.current().energies.distrest_energy[topo.atom_energy_group()
+    conf.current().energies.distanceres_energy[topo.atom_energy_group()
 					    [it->v1.atom(0)]] += energy;
     
     // std::cout.precision(9);
     // std::cout.setf(std::ios::fixed, std::ios::floatfield);
-    // std::cout << "DISTREST_" << i << ": " 
+    // std::cout << "DISTANCERES_" << i << ": " 
     // << dist << "\t\t" << math::dot(f, v) / dist 
     // << "\t\t" << energy << "\n";
     
@@ -167,7 +167,7 @@ static void _init_averages
         it = topo.distance_restraints().begin(),
         to = topo.distance_restraints().end(); it != to; ++it) {
     periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
-    conf.special().distrest_av.push_back(pow(math::abs(v), -3.0));
+    conf.special().distanceres_av.push_back(pow(math::abs(v), -3.0));
   }
 }
 
@@ -177,11 +177,11 @@ int interaction::Distance_Restraint_Interaction::init(topology::Topology &topo,
 		     std::ostream &os,
 		     bool quiet) 
 {
-  if (sim.param().distrest.distrest < 0) {
+  if (sim.param().distanceres.distanceres < 0) {
     exponential_term = std::exp(- sim.time_step_size() / 
-                                  sim.param().distrest.tau);
+                                  sim.param().distanceres.tau);
     
-    if (!sim.param().distrest.read) {
+    if (!sim.param().distanceres.read) {
       // reset averages to r_0
       SPLIT_BOUNDARY(_init_averages, topo, conf);
     }
@@ -189,7 +189,7 @@ int interaction::Distance_Restraint_Interaction::init(topology::Topology &topo,
   
   if (!quiet) {
     os << "Distance restraint interaction";
-    if (sim.param().distrest.distrest < 0)
+    if (sim.param().distanceres.distanceres < 0)
       os << "with time-averaging";
     os << std::endl;
   }

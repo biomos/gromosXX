@@ -438,7 +438,7 @@ namespace io
     os << type << "Self-energy  : " << std::setw(39) << e.self_total << "\n";
     os << type << "Special      : " << std::setw(21) << e.special_total << "\n";
     os << type << "Constraints  : " << std::setw(30) << e.constraints_total << "\n";
-    os << type << "Distrest     : " << std::setw(30) << e.distrest_total << "\n";
+    os << type << "Distanceres     : " << std::setw(30) << e.distanceres_total << "\n";
     os << type << "Dihrest      : " << std::setw(30) << e.dihrest_total << "\n";
     os << type << "Posrest      : " << std::setw(30) << e.posrest_total << "\n";
     os << type << "Jrest        : " << std::setw(30) << e.jvalue_total << "\n";
@@ -505,8 +505,8 @@ namespace io
     os << "\n" << std::setw(20) << type + "Posrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];
 
-    os << "\n" << std::setw(20) << type + "Distrest";
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.distrest_energy[i];
+    os << "\n" << std::setw(20) << type + "Distanceres";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.distanceres_energy[i];
 
     os << "\n" << std::setw(20) << type + "Dihrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihrest_energy[i];

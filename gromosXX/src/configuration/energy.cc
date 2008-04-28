@@ -35,7 +35,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     crf_total = 0.0;
     special_total = 0.0;
     posrest_total = 0.0;
-    distrest_total = 0.0;
+    distanceres_total = 0.0;
     dihrest_total = 0.0;
     jvalue_total = 0.0;
     constraints_total = 0.0;
@@ -48,7 +48,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     improper_energy.assign(improper_energy.size(), 0.0);
     dihedral_energy.assign(dihedral_energy.size(), 0.0);
     posrest_energy.assign(posrest_energy.size(), 0.0);
-    distrest_energy.assign(distrest_energy.size(), 0.0);
+    distanceres_energy.assign(distanceres_energy.size(), 0.0);
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
     constraints_energy.assign(constraints_energy.size(), 0.0);
@@ -95,7 +95,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     crf_energy.resize(energy_groups);
 
     posrest_energy.resize(energy_groups);
-    distrest_energy.resize(energy_groups);
+    distanceres_energy.resize(energy_groups);
     dihrest_energy.resize(energy_groups);
     jvalue_energy.resize(energy_groups);
     constraints_energy.resize(energy_groups);
@@ -132,7 +132,7 @@ int configuration::Energy::calculate_totals()
   lj_total = 0.0;
   crf_total = 0.0;
   posrest_total = 0.0; 
-  distrest_total =0.0; 
+  distanceres_total =0.0; 
   dihrest_total = 0.0;
   jvalue_total = 0.0; 
   constraints_total = 0.0;
@@ -189,10 +189,10 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: posrest energy " << i+1 << " = " << posrest_energy[i] << "\n";
     }
     posrest_total      += posrest_energy[i];
-    if (distrest_energy[i] > m_ewarn){
-      std::cout << "EWARN: distrest energy " << i+1 << " = " << distrest_energy[i] << "\n";
+    if (distanceres_energy[i] > m_ewarn){
+      std::cout << "EWARN: distanceres energy " << i+1 << " = " << distanceres_energy[i] << "\n";
     }
-    distrest_total     += distrest_energy[i];
+    distanceres_total     += distanceres_energy[i];
     if (dihrest_energy[i] > m_ewarn){
       std::cout << "EWARN: dihrest energy " << i+1 << " = " << dihrest_energy[i] << "\n";
     }
@@ -216,7 +216,7 @@ int configuration::Energy::calculate_totals()
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;
   
-  special_total = posrest_total + distrest_total + dihrest_total
+  special_total = posrest_total + distanceres_total + dihrest_total
     + constraints_total + jvalue_total + external_total;
 
   total = potential_total + kinetic_total + special_total;

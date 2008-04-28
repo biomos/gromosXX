@@ -336,7 +336,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
 
   ENERGY_AVG(special_total);
   ENERGY_AVG(posrest_total);
-  ENERGY_AVG(distrest_total);
+  ENERGY_AVG(distanceres_total);
   ENERGY_AVG(dihrest_total);
   ENERGY_AVG(constraints_total);
   ENERGY_AVG(entropy_term);
@@ -393,7 +393,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   
     // special energies
     ENERGY_AVG(posrest_energy[i]);
-    ENERGY_AVG(distrest_energy[i]);
+    ENERGY_AVG(distanceres_energy[i]);
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
     ENERGY_AVG(self_energy[i]);
@@ -502,7 +502,7 @@ void configuration::Average::Block_Average
 
   ENERGY_RES(special_total);
   ENERGY_RES(posrest_total);
-  ENERGY_RES(distrest_total);
+  ENERGY_RES(distanceres_total);
   ENERGY_RES(dihrest_total);
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
@@ -547,7 +547,7 @@ void configuration::Average::Block_Average
   
     // special energies
     ENERGY_RES(posrest_energy[i]);
-    ENERGY_RES(distrest_energy[i]);
+    ENERGY_RES(distanceres_energy[i]);
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(constraints_energy[i]);
     

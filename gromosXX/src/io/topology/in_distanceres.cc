@@ -1,5 +1,5 @@
 /**
- * @file in_distrest.cc
+ * @file in_distanceres.cc
  * implements methods of In_Topology.
  */
 
@@ -15,7 +15,7 @@
 #include <io/instream.h>
 #include <io/blockinput.h>
 
-#include "in_distrest.h"
+#include "in_distanceres.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -25,7 +25,7 @@
 static std::set<std::string> block_read;
 
 void 
-io::In_Distrest::read(topology::Topology& topo,
+io::In_Distanceres::read(topology::Topology& topo,
 		      simulation::Simulation & sim,
 		      std::ostream & os){
   
@@ -37,25 +37,25 @@ io::In_Distrest::read(topology::Topology& topo,
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
-  { // DISTREST
+  { // DISTANCERES
     DEBUG(10, "DISRESSPEC block");
     buffer = m_block["DISRESSPEC"];
     block_read.insert("DISRESSPEC");
     if (buffer.size()<=2){
       io::messages.add("no or empty DISRESSPEC block in distance restraints file",
-		       "in_distrest", io::message::warning);
+		       "in_distanceres", io::message::warning);
     }
     else{      
       std::vector<std::string>::const_iterator it = buffer.begin()+1,
 	to = buffer.end()-1;
       
-      double dish,disc;
+      double dish,disc,disn;
       
-      DEBUG(10, "reading in DISTREST data");
+      DEBUG(10, "reading in DISTANCERES data");
       
       if (!quiet){
 	
-	switch(sim.param().distrest.distrest){
+	switch(sim.param().distanceres.distanceres){
 	  case 0:
 	    os << "\tDistance restraints OFF\n";
 	    // how did you get here?
@@ -77,13 +77,13 @@ io::In_Distrest::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
       
-      _lineStream >> dish >> disc;
+      _lineStream >> dish >> disc >> disn;
       
       if(_lineStream.fail()){
 	std::ostringstream msg;
-	msg << "bad line in DISRESSPEC block: failed to read in KDISH and KDISC"  << std::endl;
+	msg << "bad line in DISRESSPEC block: failed to read in DISH , DISC and DISN"  << std::endl;
 	io::messages.add(msg.str(),
-			 "In_Distrest",
+			 "In_Distanceres",
 			 io::message::error);
       }
       
@@ -92,9 +92,11 @@ io::In_Distrest::read(topology::Topology& topo,
       if (!quiet){
 	os << std::setw(10) << "DISH"
 	   << std::setw(10) << "DISC"
+           << std::setw(10) << "DISN"
 	   << "\n" 
 	   <<  std::setw(10)<< dish 
 	   <<  std::setw(10)<< disc
+           <<  std::setw(10)<< disn
 	   << "\n";
 	
 	os << std::setw(10) << "i"
@@ -125,7 +127,7 @@ io::In_Distrest::read(topology::Topology& topo,
 	_lineStream.clear();
 	_lineStream.str(*it);
 	
-	for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	  int atom;
 	  _lineStream >> atom;
 	  // -1 because we directly convert to array indices
@@ -133,7 +135,7 @@ io::In_Distrest::read(topology::Topology& topo,
 	}      
 	_lineStream >> type1;
 	
-	for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	  int atom;
 	  _lineStream >> atom;
 	  if (atom > 0) atom2.push_back(atom - 1);
@@ -148,7 +150,7 @@ io::In_Distrest::read(topology::Topology& topo,
 	  msg << "bad line in DISRESSPEC block: " << line_number << std::endl
 	      << "          " << *it;
 	  io::messages.add(msg.str(),
-			   "In_Distrest",
+			   "In_Distanceres",
 			   io::message::error);
 	}
 	
@@ -156,21 +158,21 @@ io::In_Distrest::read(topology::Topology& topo,
 	util::virtual_type t1 = util::virtual_type(type1);
 	util::virtual_type t2 = util::virtual_type(type2);
 	
-	util::Virtual_Atom v1(t1, atom1, dish, disc);
-	util::Virtual_Atom v2(t2, atom2, dish, disc);
+	util::Virtual_Atom v1(t1, atom1, dish, disc, disn);
+	util::Virtual_Atom v2(t2, atom2, dish, disc, disn);
 	
 	topo.distance_restraints().push_back
 	  (topology::distance_restraint_struct(v1,v2,r0,w0,rah));
 	
 	if (!quiet){
-	  for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	    // the first element has the width 10, if i is bigger then the number of atoms
 	    // specified, just print 0.
 	    os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
 	  }
 	  os << std::setw(5) << type1;
 	  
-	  for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	    os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
 	  }
 	  os << std::setw(5) << type2
@@ -182,9 +184,9 @@ io::In_Distrest::read(topology::Topology& topo,
       }
     }
     
-  } // DISTREST
+  } // DISTANCERES
   
-  { // PERTDISRESPEC DISTREST
+  { // PERTDISRESPEC DISTANCERES
     DEBUG(10, "PERTDISRESSPEC block");
     buffer = m_block["PERTDISRESSPEC"];
     
@@ -196,18 +198,18 @@ io::In_Distrest::read(topology::Topology& topo,
     // check whether there is s.th. in the block
     else if (buffer.size()<=2){
       io::messages.add("empty PERTDISRESSPEC block in distance restraints file",
-		       "in_distrest", io::message::warning);
+		       "in_distanceres", io::message::warning);
     }
     else{
       std::vector<std::string>::const_iterator it = buffer.begin()+1,
 	to = buffer.end()-1;
       
-      double dish, disc;
+      double dish, disc, disn;
       
-      DEBUG(10, "reading in DISTREST (PERTDISRESSPEC data");
+      DEBUG(10, "reading in DISTANCERES (PERTDISRESSPEC data");
       
       if (!quiet){
-	switch(sim.param().distrest.distrest){
+	switch(sim.param().distanceres.distanceres){
 	  case 0:
 	    os << "\tPerturbed Distance restraints OFF\n";
 	    // how did you get here?
@@ -228,13 +230,13 @@ io::In_Distrest::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
       
-      _lineStream >> dish >> disc;
+      _lineStream >> dish >> disc >> disn;
       
       if(_lineStream.fail()){
 	std::ostringstream msg;
-	msg << "bad line in PERTDISRESSPEC block: failed to read in KDISH and KDISC"  << std::endl;
+	msg << "bad line in PERTDISRESSPEC block: failed to read in DISH, DISC and DISN"  << std::endl;
 	io::messages.add(msg.str(),
-			 "In_Distrest",
+			 "In_Distanceres",
 			 io::message::error);
       }
       
@@ -242,9 +244,11 @@ io::In_Distrest::read(topology::Topology& topo,
       if (!quiet){
 	os << std::setw(10) << "DISH"
 	   << std::setw(10) << "DISC"
+           << std::setw(10) << "DISN"
 	   << "\n" 
 	   <<  std::setw(10)<< dish 
 	   <<  std::setw(10)<< disc
+           <<  std::setw(10)<< disn
 	   << "\n";
 	
 	os << std::setw(10) << "i"
@@ -280,14 +284,14 @@ io::In_Distrest::read(topology::Topology& topo,
 	_lineStream.clear();
 	_lineStream.str(*it);
 	
-	for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	  int atom;
 	  _lineStream >> atom;
 	  if (atom > 0) atom1.push_back(atom - 1);
 	}      
 	_lineStream >> type1;
 	
-	for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	  int atom;
 	  _lineStream >> atom;
 	  if (atom > 0) atom2.push_back(atom - 1);
@@ -301,26 +305,26 @@ io::In_Distrest::read(topology::Topology& topo,
 	  msg << "bad line in PERTDISRESSPEC block: " << line_number << std::endl
 	      << "          " << *it;
 	  io::messages.add(msg.str(),
-			   "In_Distrest",
+			   "In_Distanceres",
 			   io::message::error);
 	}
 	
 	util::virtual_type t1 = util::virtual_type(type1);
 	util::virtual_type t2 = util::virtual_type(type2);
 	
-	util::Virtual_Atom v1(t1, atom1, dish, disc);
-	util::Virtual_Atom v2(t2, atom2, dish, disc);
+	util::Virtual_Atom v1(t1, atom1, dish, disc, disn);
+	util::Virtual_Atom v2(t2, atom2, dish, disc, disn);
 	
 	topo.perturbed_distance_restraints().push_back
 	  (topology::perturbed_distance_restraint_struct(v1,v2,n,m,A_r0,B_r0,A_w0,B_w0, rah));
 	
 	if (!quiet){
-	  for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	    os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
 	  }
 	  os << std::setw(5) << type1;
 	  
-	  for(unsigned int i = 0; i < io::In_Distrest::MAX_ATOMS; i++) {
+	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
 	    os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
 	  }
 	  os << std::setw(5) << type2
@@ -335,7 +339,7 @@ io::In_Distrest::read(topology::Topology& topo,
 	}
       }
       
-    }//PERTDISRESPEC DISTREST
+    }//PERTDISRESPEC DISTANCERES
     
     if (!quiet) os << "END\n";
     
@@ -349,7 +353,7 @@ io::In_Distrest::read(topology::Topology& topo,
     
     if (block_read.count(it->first) == 0 && it->second.size()){
       io::messages.add("block " + it->first + " not supported!",
-		       "In_Distrest",
+		       "In_Distanceres",
 		       io::message::warning);
     }
   }

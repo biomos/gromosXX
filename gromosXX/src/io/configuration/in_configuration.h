@@ -220,8 +220,8 @@ namespace io {
      */
     bool _read_distance_restraint_averages(
                  std::vector<std::string> &buffer,
-                 const std::vector<topology::distance_restraint_struct> & distrests,
-                 std::vector<double> &distrest_av);
+                 const std::vector<topology::distance_restraint_struct> & distanceress,
+                 std::vector<double> &distanceres_av);
     
     /**
      * read JVALUE averages.

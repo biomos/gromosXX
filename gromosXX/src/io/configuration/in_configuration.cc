@@ -722,7 +722,7 @@ bool io::In_Configuration::read_distance_restraint_averages
  std::ostream & os)
 {
   std::vector<std::string> buffer;
-  if (sim.param().distrest.distrest < 0){
+  if (sim.param().distanceres.distanceres < 0){
     
     buffer = m_block["DISRESEXPAVE"];
     if (buffer.size()){
@@ -730,16 +730,16 @@ bool io::In_Configuration::read_distance_restraint_averages
       if (!quiet)
 	os << "\treading DISRESEXPAVE...\n";
 
-      if (sim.param().distrest.read)
+      if (sim.param().distanceres.read)
         _read_distance_restraint_averages(buffer, topo.distance_restraints(),
-                                          conf.special().distrest_av);
+                                          conf.special().distanceres_av);
       else
         io::messages.add("distance restraint averages found but not read.",
                          "in_configuration",
                          io::message::warning);
     }
     else{
-      if (sim.param().distrest.read)
+      if (sim.param().distanceres.read)
         io::messages.add("no DISRESEXPAVE block in configuration.",
                          "in_configuration",
                          io::message::error);
@@ -1306,22 +1306,22 @@ bool io::In_Configuration::_read_stochastic_integral
 bool io::In_Configuration::_read_distance_restraint_averages
 (
  std::vector<std::string> &buffer,
- const std::vector<topology::distance_restraint_struct> &distrests,
- std::vector<double> &distrest_av
+ const std::vector<topology::distance_restraint_struct> &distanceress,
+ std::vector<double> &distanceres_av
  )
 {
   DEBUG(8, "read distance restaint averages");
   
   std::vector<topology::distance_restraint_struct>::const_iterator 
-    distrests_it = distrests.begin(),
-    distrests_to = distrests.end();
+    distanceress_it = distanceress.begin(),
+    distanceress_to = distanceress.end();
   
   std::string s;
   
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
   
-  for( ;distrests_it != distrests_to; ++distrests_it){
+  for( ;distanceress_it != distanceress_to; ++distanceress_it){
     double ave;
     _lineStream >> ave;
     
@@ -1332,7 +1332,7 @@ bool io::In_Configuration::_read_distance_restraint_averages
       return false;
     }
     
-    distrest_av.push_back(ave);  
+    distanceres_av.push_back(ave);  
   }
   
   return true;

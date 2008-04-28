@@ -47,7 +47,7 @@ namespace util
      * Constructor
      */
     Virtual_Atom(virtual_type type, std::vector<int> atom, double dish = 0.1, 
-		 double disc = 0.153,int orientation = 0);
+		 double disc = 0.153, double disn = 0.1, int orientation = 0);
     /**
      * calculate the position of the virtual atom
      */
@@ -94,6 +94,10 @@ namespace util
      * C-C bond length
      */
     double m_disc;
+    /**
+     * N-H bond length
+     */
+    double m_disn;
     /**
      * orientation
      */

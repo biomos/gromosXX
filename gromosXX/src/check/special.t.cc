@@ -98,10 +98,10 @@ int main(int argc, char* argv[])
   else
     GETFILEPATH(sinput, "aladip_special.in", "src/check/data/");
 
-  if(args.count("distrest") == 1)
-    sinput = args["distrest"];
+  if(args.count("distanceres") == 1)
+    sinput = args["distanceres"];
   else
-    GETFILEPATH(sinput, "aladip.distrest", "src/check/data/");
+    GETFILEPATH(sinput, "aladip.distanceres", "src/check/data/");
 
   if (!quiet)
     std::cout << "\n\n"

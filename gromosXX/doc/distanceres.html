@@ -1,0 +1,77 @@
+<HTML>
+<head>
+<title>GromosXX Distance Restraints</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1>GromosXX Distance Restraints</h1>
+
+<h2><a name="title">TITLE</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+TITLE
+	GromosXX
+	distance restraints specification
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="distanceres">Distance Restraints</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+DISRESSPEC
+# DISH  DISC   DISN
+  0.1   0.153  0.1
+# i  j  k  l  type    i  j  k  l  type    r0    w0    rah
+  1  0  0  0  0       10 12 11 13 3       0.2   1.0   0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<br>
+The distance restraint is specified in terms of two virtual atoms.
+The following virtual atom types are known:
+<table>
+<tr> <td> 0 </td> <td> explicit atom </td> </tr>
+<tr> <td> 1 </td> <td> aliphatic CH1 </td> </tr>
+<tr> <td> 2 </td> <td> CH1 (aromatic) </td> </tr>
+<tr> <td> 3 </td> <td> CH2 (stereospecific) </td> </tr>
+<tr> <td> 4 </td> <td> CH2 (non-stereospecific) </td> </tr>
+<tr> <td> 5 </td> <td> CH3 </td> </tr>
+<tr> <td> 6 </td> <td> CH3 (non-stereospecific, Val, Leu) </td> </tr>
+<tr> <td> 7 </td> <td> CH1 (aromatic at C(delta) or C(epsilon) in Phe or
+Tyr </td> </tr>
+<tr> <td> 8 </td> <td> NH2 </td> </tr>
+<tr> <td> cog </td> <td> centre of geometry </td> </tr>
+<tr> <td> com </td> <td> centre of mass </td> </tr>
+</table>
+<br>
+
+And <tt>r0</tt> is the restraint distance, <tt>w0</tt> a weight factor
+(multiplied by the force constant specified in the input file) and
+<tt>rah</tt> specifies the type of restraint:
+<table>
+<tr> <td> -1 </td> <td> half harmonic repulsive </td> </tr>
+<tr> <td> 0 </td> <td> full harmonic </td> </tr>
+<tr> <td> +1 </td> <td> half harmonic attractive </td> </tr>
+</table>
+<br>
+<h2><a name="disres">Perturbed Distance Restraints</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+PERTDISRESSPEC
+# DISH  DISC   DISN
+  0.1   0.153  0.1
+# i  j  k  l  type    i  j  k  l  type n m   A_r0  A_w0  B_r0   B_w0  rah
+  1  0  0  0  0       10 12 11 13 3    1 1    0.2   1.0   0.5    2.0   0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<br>
+With <tt>A_r0</tt> and <tt>A_w0</tt> the restraint distance and weight
+factor in state <tt>A</tt> and <tt>B_r0</tt> and <tt>B_w0</tt> the
+corresponding quantities in state <tt>B</tt>. <tt>n</tt> and <tt>m</tt>
+are the parameters for hidden restraints.
+
+</body>

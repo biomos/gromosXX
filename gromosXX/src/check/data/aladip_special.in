@@ -196,7 +196,7 @@ POSREST
 #   NTPOR  NTPORB  NTPORS    CPOR
         0       0       0   1.0E1
 END
-DISTREST
+DISTANCERES
 #   NTDIR -2..2 controls distance restraining
 #         0: no distrance restraining (default)
 #         1: instantaneous, using force constant CDIR

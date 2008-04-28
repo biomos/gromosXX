@@ -165,7 +165,7 @@ namespace configuration
       /**
        * distance restraint average
        */
-      std::vector<double> distrest_av;
+      std::vector<double> distanceres_av;
 
       /**
        * @struct pscale_struct

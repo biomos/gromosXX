@@ -330,7 +330,7 @@ int check_interaction(topology::Topology & topo,
 
 }
 
-int check_distrest_interaction(topology::Topology & topo,
+int check_distanceres_interaction(topology::Topology & topo,
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
 			       interaction::Interaction &term,
@@ -554,10 +554,10 @@ int check::check_forcefield(topology::Topology & topo,
     }
 
     else if ((*it)->name == "DistanceRestraint"){
-      total += check_distrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 257.189539, 0.0000000001, 0.001);
+      total += check_distanceres_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 257.189539, 0.0000000001, 0.001);
     }
     else if ((*it)->name == "PerturbedDistanceRestraint"){
-      total += check_distrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 195.899012, 0.0000000001, 0.001);
+      total += check_distanceres_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 195.899012, 0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     }
     else if ((*it)->name == "DihedralRestraint"){

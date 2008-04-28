@@ -41,7 +41,7 @@ static int _calculate_perturbed_distance_restraint_interactions
     it = topo.perturbed_distance_restraints().begin(),
     to = topo.perturbed_distance_restraints().end();
   
-  std::vector<double>::iterator ave_it = conf.special().distrest_av.begin();
+  std::vector<double>::iterator ave_it = conf.special().distanceres_av.begin();
 
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
@@ -67,56 +67,56 @@ static int _calculate_perturbed_distance_restraint_interactions
     }
 #endif 
   
-    DEBUG(9, "PERTDISTREST v : " << math::v2s(v));
+    DEBUG(9, "PERTDISTANCERES v : " << math::v2s(v));
    
     double dist = abs(v);
    
     const double l = topo.lambda();
     const double w0 = (1-l)*it->A_w0 + l*it->B_w0;
     const double r0 = (1-l)*it->A_r0 + l*it->B_r0;
-    const double K = sim.param().distrest.K;
-    const double r_l = sim.param().distrest.r_linear; 
+    const double K = sim.param().distanceres.K;
+    const double r_l = sim.param().distanceres.r_linear; 
     const double D_r0 = it->B_r0 - it->A_r0;
     
-    DEBUG(9, "PERTDISTREST dist : " << dist << " r0 " << r0 << " rah " << it->rah);  
-    if (sim.param().distrest.distrest < 0) {
+    DEBUG(9, "PERTDISTANCERES dist : " << dist << " r0 " << r0 << " rah " << it->rah);  
+    if (sim.param().distanceres.distanceres < 0) {
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);
       dist = pow(*ave_it, -1.0 / 3.0);
-      DEBUG(9, "PERTDISTREST average dist : " << dist);
+      DEBUG(9, "PERTDISTANCERES average dist : " << dist);
     }
 
     double prefactor = pow(2, it->n + it->m) * pow(l, it->n) * pow(1-l, it->m);
     
     if(it->rah*dist < it->rah*(r0)){
 	
-      DEBUG(9, "PERTDISTREST  : (rep / attr) restraint fulfilled");
+      DEBUG(9, "PERTDISTANCERES  : (rep / attr) restraint fulfilled");
       f=0*v;
       en_term = 0;
     }    
     else if(fabs(r0 - dist) < r_l){
 
-      DEBUG(9, "PERTDISTREST  :  harmonic");
+      DEBUG(9, "PERTDISTANCERES  :  harmonic");
       f = -K*(dist - (r0))*v / dist; 
       en_term = 0.5 * K * (dist - r0) * (dist - r0);
     }    
     else{
-      DEBUG(9, "PERTDISTREST  : (rep / attr) linear");
+      DEBUG(9, "PERTDISTANCERES  : (rep / attr) linear");
       if(dist<r0){
- 	DEBUG(9, "PERTDISTREST   : (rep / attr) linear negative");
+ 	DEBUG(9, "PERTDISTANCERES   : (rep / attr) linear negative");
 	f = r_l * K * v / dist;
 	en_term = -K * (dist + 0.5 * r_l - r0) * r_l;
       }
       else{
- 	DEBUG(9, "PERTDISTREST   : (rep / attr) linear positive");
+ 	DEBUG(9, "PERTDISTANCERES   : (rep / attr) linear positive");
 	f = -r_l * K * v / dist;
 	en_term = K * (dist - 0.5 * r_l - r0) * r_l;
       }
     }
   
-    if(abs(sim.param().distrest.distrest) == 1)
+    if(abs(sim.param().distanceres.distanceres) == 1)
       ;      
-    else if(abs(sim.param().distrest.distrest) == 2){
+    else if(abs(sim.param().distanceres.distanceres) == 2){
       f=f*w0;
       en_term = en_term*w0;
     }
@@ -130,14 +130,14 @@ static int _calculate_perturbed_distance_restraint_interactions
     it->v1.force(conf,  f);
     it->v2.force(conf, -f);  
     
-    DEBUG(10, "PERTDISTREST Energy : " << energy);
-    conf.current().energies.distrest_energy[topo.atom_energy_group()
+    DEBUG(10, "PERTDISTANCERES Energy : " << energy);
+    conf.current().energies.distanceres_energy[topo.atom_energy_group()
 					    [it->v1.atom(0)]] += energy;
     
     if(it->rah*dist <it->rah*(r0))
       dlam_term = 0;
     
-    else if(abs(sim.param().distrest.distrest) == 1){
+    else if(abs(sim.param().distanceres.distanceres) == 1){
       if(fabs(r0-dist)<r_l){
 	// harmonic
 	dlam_term = -K * ( dist - r0 ) * D_r0;
@@ -154,7 +154,7 @@ static int _calculate_perturbed_distance_restraint_interactions
 	
       }	
     }
-    else if(abs(sim.param().distrest.distrest) == 2){
+    else if(abs(sim.param().distanceres.distanceres) == 2){
       if(fabs(r0-dist)<r_l){
 	// harmonic
 	dlam_term = 0.5 * K * (it->B_w0 - it->A_w0) * (dist - r0)*(dist - r0)
@@ -190,9 +190,9 @@ static int _calculate_perturbed_distance_restraint_interactions
     double dpotdl = prefactor * dlam_term;
 
     energy_derivativ = dprefdl + dpotdl;
-    DEBUG(10, "PERTDISTREST Energy derivative : " << energy_derivativ);
+    DEBUG(10, "PERTDISTANCERES Energy derivative : " << energy_derivativ);
 
-    conf.current().perturbed_energy_derivatives.distrest_energy[topo.atom_energy_group()
+    conf.current().perturbed_energy_derivatives.distanceres_energy[topo.atom_energy_group()
 								[it->v1.atom(0)]] += energy_derivativ;
     
   }
@@ -215,7 +215,7 @@ static void _init_averages
         it = topo.perturbed_distance_restraints().begin(),
         to = topo.perturbed_distance_restraints().end(); it != to; ++it) {
     periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
-    conf.special().distrest_av.push_back(pow(math::abs(v), -3.0));
+    conf.special().distanceres_av.push_back(pow(math::abs(v), -3.0));
   }
 }
 
@@ -237,11 +237,11 @@ int interaction::Perturbed_Distance_Restraint_Interaction
        std::ostream &os,
        bool quiet) 
 {
-  if (sim.param().distrest.distrest < 0) {
+  if (sim.param().distanceres.distanceres < 0) {
     exponential_term = std::exp(- sim.time_step_size() / 
-                                  sim.param().distrest.tau);
+                                  sim.param().distanceres.tau);
     
-    if (!sim.param().distrest.read) {
+    if (!sim.param().distanceres.read) {
       // reset averages to r_0
       SPLIT_BOUNDARY(_init_averages, topo, conf);
     }
@@ -249,7 +249,7 @@ int interaction::Perturbed_Distance_Restraint_Interaction
   
   if (!quiet) {
     os << "Perturbed distance restraint interaction";
-    if (sim.param().distrest.distrest < 0)
+    if (sim.param().distanceres.distanceres < 0)
       os << "with time-averaging";
     os << std::endl;
   }

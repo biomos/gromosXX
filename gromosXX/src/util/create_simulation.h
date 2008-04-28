@@ -47,7 +47,7 @@ namespace util
 			std::string param,
 			util::simulation_struct & sim,
 			io::In_Topology & in_topo,
-			std::string distrest = "",
+			std::string distanceres = "",
 			std::string dihrest = "",
 			bool quiet = false);
 }

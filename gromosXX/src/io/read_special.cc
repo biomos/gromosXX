@@ -22,7 +22,7 @@
 #include <io/topology/in_perturbation.h>
 #include <io/parameter/in_parameter.h>
 #include <io/topology/in_posres.h>
-#include <io/topology/in_distrest.h>
+#include <io/topology/in_distanceres.h>
 #include <io/topology/in_dihrest.h>
 #include <io/topology/in_jvalue.h>
 #include <io/topology/in_friction.h>
@@ -72,9 +72,9 @@ int io::read_special(io::Argument const & args,
     }
   } // POSRES
 
-  // DISTREST
-  if (sim.param().distrest.distrest){
-    std::ifstream distrest_file;
+  // DISTANCERES
+  if (sim.param().distanceres.distanceres){
+    std::ifstream distanceres_file;
 
     if (args.count("distrest") != 1){
       io::messages.add("distance restraints: no data file specified (use @distrest)",
@@ -83,9 +83,9 @@ int io::read_special(io::Argument const & args,
     }
     else{
   
-      distrest_file.open(args["distrest"].c_str());
-      if (!distrest_file.is_open()){
-	io::messages.add("opening distrest file failed!\n",
+      distanceres_file.open(args["distrest"].c_str());
+      if (!distanceres_file.is_open()){
+	io::messages.add("opening distanceres file failed!\n",
 			 "read_special", 
 			 io::message::error);
       }
@@ -93,12 +93,12 @@ int io::read_special(io::Argument const & args,
 		       "read special",
 		       io::message::notice);
       
-      io::In_Distrest ip(distrest_file);
+      io::In_Distanceres ip(distanceres_file);
       ip.quiet = quiet;
       
       ip.read(topo, sim, os);
     }    
-  } // DISTREST
+  } // DISTANCERES
 
   // DIHREST
   if (sim.param().dihrest.dihrest){

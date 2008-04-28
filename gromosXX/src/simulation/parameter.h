@@ -849,23 +849,23 @@ namespace simulation
     } /** Position restraint parameters */ posrest;
 
     /**
-     * @struct distrest_struct
-     * DISTREST block
+     * @struct distanceres_struct
+     * DISTANCERES block
      */
-    struct distrest_struct
+    struct distanceres_struct
     {
       /**
        * Constructor
        * Default values:
-       * - distrest 0 (no distance restraints)
+       * - distanceres 0 (no distance restraints)
        * - K 0
        * - r_linear 0
        * - tau 10
        * - read 0
        */
 
-      distrest_struct()
-	: distrest(0),
+      distanceres_struct()
+	: distanceres(0),
 	  K(0),
 	  r_linear(0),
 	  tau(10),
@@ -876,7 +876,7 @@ namespace simulation
       /** 
        * distance restraints on/off
        */
-      int distrest;
+      int distanceres;
       
       /**
        * force constant K
@@ -898,7 +898,7 @@ namespace simulation
        */
       bool read;
       
-    }/** Distance restraints parameters */ distrest;
+    }/** Distance restraints parameters */ distanceres;
 
     /**
      * @struct dihrest_struct
