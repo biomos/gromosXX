@@ -1667,30 +1667,34 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
 					  topology::Topology const &topo,
 					  std::ostream &os)
 {
-  DEBUG(10, "JVALUE Averages");
-  
-  std::vector<double>::const_iterator av_it = conf.special().jvalue_av.begin();
-  std::vector<topology::jvalue_restraint_struct>::const_iterator
-    jval_it = topo.jvalue_restraints().begin(),
-    jval_to = topo.jvalue_restraints().end();
-  
-  os << "JVALRESEXPAVE03\n";
+  DEBUG(10, "JVALUE Averages and LE data");
 
-  for( ; jval_it != jval_to; ++jval_it, ++av_it){
-    
-    os << std::setw(15) << jval_it->i+1
-       << std::setw(10) << jval_it->j+1
-       << std::setw(10) << jval_it->k+1
-       << std::setw(10) << jval_it->l+1
-       << std::setw(20) << *av_it
-       << "\n";
+  if (param.jvalue.mode != simulation::restr_inst) {
+    os << "JVALRESEXPAVE03\n";
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.precision(7);
+    std::vector<double>::const_iterator av_it = conf.special().jvalue_av.begin(),
+            av_to = conf.special().jvalue_av.end();
+    for( ;av_it != av_to; ++av_it){
+      os << std::setw(15) << *av_it << "\n";
+    }
+    os << "END\n";
   }
-  os << "END\n";
 
   if (param.jvalue.le){
-
-    print_JVALUE_EPSILON(os, topo, true);
-
+    os << "JVALRESEPSILON\n";
+    os.setf(std::ios::scientific, std::ios::floatfield); 
+    os.precision(7);
+    std::vector<std::vector<double> >::const_iterator
+        le_it = conf.special().jvalue_epsilon.begin(),
+        le_to = conf.special().jvalue_epsilon.end();
+    
+    for( ;le_it != le_to; ++le_it){ 
+      for(unsigned int i=0; i < le_it->size(); ++i)
+	os << std::setw(15) << (*le_it)[i];   
+      os << "\n";
+    }
+    os << "END\n";
   }
 }
 

@@ -20,7 +20,7 @@ namespace io {
    * reads in a trajectory file and parses
    * it into configuration::Configuration
    */
-  class In_Configuration : public In_Frame {
+  class In_Configuration : public In_Frame {  
 
   public:
     /**
@@ -230,6 +230,14 @@ namespace io {
 			 std::vector<double> & jvalue_av,
 			 std::vector<topology::jvalue_restraint_struct> const & jval_res);
 
+    /**
+     * read JVALUE local elevation epsilons.
+     */
+    bool _read_jvalue_le(std::vector<std::string> &buffer,
+			 std::vector<std::vector<double> > & jvalue_epsilon,
+			 std::vector<topology::jvalue_restraint_struct> const & jval_res,
+                         unsigned int const & grid_size);
+    
     /**
      * read Periodic Scaling (PSCALE) data.
      */

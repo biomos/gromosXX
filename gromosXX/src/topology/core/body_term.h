@@ -572,10 +572,6 @@ namespace topology
      * - harmonic
      */
     functional_form H;
-    /**
-     * local elevation counter
-     */
-    std::vector<double> epsilon;
   };
 
 }

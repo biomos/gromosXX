@@ -2067,34 +2067,29 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
     if (param.jvalue.tau < 0 ||
 	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
 				   param.jvalue.mode != simulation::restr_inst))){
-      io::messages.add("bad value for TAU in JVALUERES block\n"
+      io::messages.add("bad value for TAU in JVALUERES block,"
 		       "should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
     if (param.jvalue.mode != simulation::restr_off && param.jvalue.K < 0.0){
-      io::messages.add("bad value for K in JVALUERES block\n"
+      io::messages.add("bad value for K in JVALUERES block,"
 		       "should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
     if (param.jvalue.le > 0){
       
       if (param.jvalue.ngrid < 1){
-	io::messages.add("bad value for NGRID in JVALUERES block\n"
+	io::messages.add("bad value for NGRID in JVALUERES block, "
 			 "should be > 1",
 			 "In_Parameter", io::message::error);
       }
     }
-    if (param.jvalue.read_av && param.jvalue.mode != simulation::restr_av){
-      io::messages.add("NTJVRA != 0 requires NTJVR = 2 in JVALUERES block\n",
+    if (param.jvalue.read_av && (param.jvalue.mode != simulation::restr_av
+        && !param.jvalue.le)){
+      io::messages.add("Error in JVALUERES block: Continuation only needed "
+                       "with averaging or LE.",
 		       "In_Parameter", io::message::error);
     }
-    if (!param.jvalue.read_av && param.jvalue.mode == simulation::restr_av){
-      io::messages.add("NTJVRA = 0 and NTJVR = 2 in JVALUERES block.\n"
-                       "In case of continuation runs NTJVRA should be 1\n"
-                       "(read time averages from startup file).",
-		       "In_Parameter", io::message::warning);
-    }
-
   } // JVALUERES
 } // JVALUE
 

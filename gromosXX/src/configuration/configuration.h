@@ -160,6 +160,10 @@ namespace configuration
        * current j value
        */
       std::vector<double> jvalue_curr;
+      /**
+       * local elevation counter
+       */
+      std::vector<std::vector<double> > jvalue_epsilon;
       //////////////////////////////////////////////////
       
       /**

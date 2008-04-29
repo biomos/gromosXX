@@ -33,6 +33,7 @@ double _calculate_derivative(topology::Topology & topo,
 			     configuration::Configuration &conf,
 			     simulation::Parameter const & param,
 			     std::vector<topology::jvalue_restraint_struct>::const_iterator it,
+                             int i,
 			     double phi, double Jcurr, double Jav,
 			     double cos_phi_delta, double sin_phi_delta);
 
@@ -157,7 +158,7 @@ int _calculate_jvalue_restraint_interactions
       DEBUG(8, "jelevation: phi=" << 180 * phi / math::Pi 
 	    << " phi0=" << (bin + 0.5) * 360 / sim.param().jvalue.ngrid << " bin=" << bin);
       
-      assert(it->epsilon.size() > unsigned(bin));
+      assert(conf.special().jvalue_epsilon[n].size() > unsigned(bin));
       double delta_epsilon;
       double delta_Jav = Jav - it->J0;
       double delta_Jinst = Jcurr - it->J0;
@@ -193,7 +194,7 @@ int _calculate_jvalue_restraint_interactions
       else if (sim.param().jvalue.mode == simulation::restr_av)
 	delta_epsilon = delta_Jav * delta_Jav;
 
-      it->epsilon[bin] += delta_epsilon;
+      conf.special().jvalue_epsilon[n][bin] += delta_epsilon;
 
       DEBUG(8, "jelevation: epsilon += " << delta_epsilon);
 
@@ -201,7 +202,7 @@ int _calculate_jvalue_restraint_interactions
 
     const double dV_dphi = 
       _calculate_derivative(topo, conf, sim.param(),
-			    it,
+			    it, n, 
 			    phi, Jcurr, Jav,
 			    cos_phi_delta, sin_phi_delta);
     
@@ -290,17 +291,14 @@ int interaction::Jvalue_Restraint_Interaction::init
   }
   
   // loop over the jvalue restraints
-  std::vector<topology::jvalue_restraint_struct>::iterator 
-    it = topo.jvalue_restraints().begin(),
-    to = topo.jvalue_restraints().end();
-
   if (sim.param().jvalue.le){
     if (!quiet)
       os << "\tlocal elevation restraining enabled\n";
     
     if (!sim.param().jvalue.read_av){
-      for( ; it != to; ++it){
-	it->epsilon.resize(sim.param().jvalue.ngrid, 0.0);
+      for(unsigned int n = 0; n < topo.jvalue_restraints().size(); ++n){
+        assert(n < conf.special().jvalue_epsilon.size());
+	conf.special().jvalue_epsilon[n].resize(sim.param().jvalue.ngrid, 0.0);
       }
     } 
     else
@@ -314,6 +312,7 @@ double _calculate_derivative(topology::Topology & topo,
 			     configuration::Configuration &conf,
 			     simulation::Parameter const & param,
 			     std::vector<topology::jvalue_restraint_struct>::const_iterator it,
+                             int n,
 			     double phi, double Jcurr, double Jav,
 			     double cos_phi_delta, double sin_phi_delta)
 {
@@ -340,7 +339,7 @@ double _calculate_derivative(topology::Topology & topo,
       const double delta_phi = phi - phi0;
       DEBUG(10, "\tdelta_phi = " << delta_phi);
       
-      const double Vpen = it->epsilon[i] * K *
+      const double Vpen = conf.special().jvalue_epsilon[n][i] * K *
 	exp(- delta_phi * delta_phi / (2 * w * w));
       
       DEBUG(10, "\tenergy = " << Vpen);

@@ -136,6 +136,8 @@ io::In_Jvalue::read(topology::Topology& topo,
 
     assert(conf.special().jvalue_av.size() == topo.jvalue_restraints().size());
     conf.special().jvalue_curr.resize(conf.special().jvalue_av.size());
+    if (sim.param().jvalue.le)
+      conf.special().jvalue_epsilon.resize(conf.special().jvalue_av.size());
 
     if (!quiet) os << "END\n";
 

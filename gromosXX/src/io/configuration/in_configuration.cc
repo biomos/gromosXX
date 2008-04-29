@@ -594,6 +594,39 @@ bool io::In_Configuration::read_jvalue
       }
     }
   } // jvalue averages
+  
+  if (sim.param().jvalue.le) {
+    if (!sim.param().jvalue.read_av){
+
+      buffer = m_block["JVALRESEPSILON"];
+      if (buffer.size()){
+	block_read.insert("JVALRESEPSILON");
+	io::messages.add("re-initialising J-restraint local elevation epsilons, non-continuous simulation",
+			 "in_configuration",
+			 io::message::warning);
+      }
+      else{
+	io::messages.add("initializing J-restraint local elevation epsilons",
+			 "in_configuration",
+			 io::message::notice);
+      }
+    } else {
+      buffer = m_block["JVALRESEPSILON"];
+      if (buffer.size())
+      {
+	block_read.insert("JVALRESEPSILON");
+	_read_jvalue_le(buffer, conf.special().jvalue_epsilon, 
+                        topo.jvalue_restraints(), 
+                        sim.param().jvalue.ngrid);
+      } else{
+	io::messages.add("reading in of J-restraints local elevation epsilons "
+                         "requested but JVALRESEPSILON block not found",
+                         "in_configuration",
+                         io::message::error);
+	return false;
+      }
+    }
+  } // jvalue local elevation
   return true;
 }
 
@@ -1355,7 +1388,6 @@ _read_jvalue_av(std::vector<std::string> &buffer,
 
   jval_av.clear();
   
-  int i, j, k, l;
   double av;
   
   if (buffer.size() - 1 != jval_res.size()){
@@ -1374,20 +1406,12 @@ _read_jvalue_av(std::vector<std::string> &buffer,
     _lineStream.clear();
     _lineStream.str(*it);
 
-    _lineStream >> i >> j >> k >> l >> av;
-    
-    if (int(jval_it->i) != i-1 ||
-	int(jval_it->j) != j-1 ||
-	int(jval_it->k) != k-1 ||
-	int(jval_it->l) != l-1){
-
-      io::messages.add("Wrong J-Value in JVALAVERAGE block",
-		       "In_Configuration",
-		       io::message::error);
+    _lineStream >> av;
+    if (_lineStream.fail()){
+      io::messages.add("Bad value in JVALAVERAGE block",
+		       "In_Configuration", io::message::error);
       return false;
-
     }
-    
     jval_av.push_back(av);
   }
   
@@ -1401,6 +1425,60 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   return true;
 }
 
+bool io::In_Configuration::
+_read_jvalue_le(std::vector<std::string> &buffer,
+		std::vector<std::vector<double> > & jval_epsilon,
+		std::vector<topology::jvalue_restraint_struct> const & jval_res,
+                unsigned int const & grid_size)
+{
+  DEBUG(8, "read jvalue local elevation epsilon");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  std::vector<topology::jvalue_restraint_struct>::const_iterator 
+    jval_it = jval_res.begin(),
+    jval_to = jval_res.end();
+
+  jval_epsilon.clear();
+  
+  if (buffer.size() - 1 != jval_res.size()){
+    std::cout << "JVALRESEPSILON size: " << buffer.size() - 1
+	      << " but restraints size: " << jval_res.size()
+	      << std::endl;
+
+    io::messages.add("number of J-restraints does not match with number of "
+		     "LE continuation data", "in_configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
+    std::vector<double> eps(grid_size, 0.0);
+    _lineStream.clear();
+    _lineStream.str(*it);
+    
+    for(unsigned int i = 0; i < grid_size; ++i) 
+      _lineStream >> eps[i];
+    
+    if (_lineStream.fail()){
+      io::messages.add("Bad value in JVALRESEPSILON block",
+		       "In_Configuration", io::message::error);
+      return false;
+    }
+    jval_epsilon.push_back(eps);
+  }
+  
+  if (jval_it != jval_to || it != to){
+    io::messages.add("Wrong number of J-Values in JVALRESEPSILON block",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+  
+  return true;
+}
 
 bool io::In_Configuration::
 _read_pscale_jrest(std::vector<std::string> &buffer,

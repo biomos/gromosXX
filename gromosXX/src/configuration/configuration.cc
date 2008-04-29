@@ -106,6 +106,7 @@ configuration::Configuration::Configuration
   
   special().jvalue_av = conf.special().jvalue_av;
   special().jvalue_curr = conf.special().jvalue_curr;
+  special().jvalue_epsilon = conf.special().jvalue_epsilon;
   
   special().distanceres_av = conf.special().distanceres_av;
 
@@ -179,6 +180,7 @@ configuration::Configuration & configuration::Configuration::operator=
   
   special().jvalue_av = conf.special().jvalue_av;
   special().jvalue_curr = conf.special().jvalue_curr;
+  special().jvalue_epsilon = conf.special().jvalue_epsilon;
   
   special().distanceres_av = conf.special().distanceres_av;
 

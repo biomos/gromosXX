@@ -595,36 +595,6 @@ namespace io
        << std::setw(10) << reeval
        << "\nEND\n";
   }
-
-  void print_JVALUE_EPSILON(std::ostream &os, 
-			    topology::Topology const & topo,
-			    bool formated)
-  {
-    std::vector<topology::jvalue_restraint_struct>::const_iterator
-      jval_it = topo.jvalue_restraints().begin(),
-      jval_to = topo.jvalue_restraints().end();
-    
-    os << "JVALRESEPSILON\n";
-    os.precision(5);
-    os.setf(std::ios::scientific, std::ios::floatfield);
-    
-    for( ; jval_it != jval_to; ++jval_it){
-      
-      if (formated)
-	os << std::setw(15) << jval_it->i+1
-	   << std::setw(10) << jval_it->j+1
-	   << std::setw(10) << jval_it->k+1
-	   << std::setw(10) << jval_it->l+1
-	   << "\n";
-      
-      for(unsigned int i=0; i<jval_it->epsilon.size(); ++i)
-	os << std::setw(12) << jval_it->epsilon[i];
-      
-      os << "\n";
-    }
-    os << "END\n";
-    
-  }
   
   /*
    * Print the RAMD block.
