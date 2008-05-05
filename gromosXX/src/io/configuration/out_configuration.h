@@ -251,6 +251,10 @@ namespace io {
                                     configuration::Configuration const &conf,
 				    topology::Topology const &topo,
 				    std::ostream &os);
+    
+    void _print_position_restraints(simulation::Simulation const &sim,
+				    topology::Topology const &topo,
+				    std::ostream &os);
 
     void _print_jvalue(simulation::Parameter const & param,
 		       configuration::Configuration const &conf,

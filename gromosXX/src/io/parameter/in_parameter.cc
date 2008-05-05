@@ -1797,9 +1797,9 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
-  int ntpors;
-  _lineStream >> param.posrest.posrest
-              >> param.posrest.nrdrx
+  int ntpor, ntpors, read;
+  _lineStream >> ntpor
+              >> read
               >> ntpors
 	      >> param.posrest.force_constant;
   
@@ -1807,30 +1807,52 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
     io::messages.add("bad line in POSITIONRES block",
 		     "In_Parameter", io::message::error);
   
-  if (param.posrest.posrest < 0 || param.posrest.posrest > 3) {
-    io::messages.add("Error in POSITIONRES block: NTPOR must be 0 to 3.",
-		     "In_Parameter", io::message::error);    
+    switch(ntpor) {
+    case 0 :
+      param.posrest.posrest = simulation::posrest_off;
+      break;
+    case 1 :
+      param.posrest.posrest = simulation::posrest_on;
+      break;
+    case 2 :
+      param.posrest.posrest = simulation::posrest_bfactor;
+      break;
+    case 3 :
+      param.posrest.posrest = simulation::posrest_const;
+      break;
+    default:
+      io::messages.add("Error in POSITIONRES block: NTPOR must be 0 to 3.",
+		       "In_Parameter", io::message::error);             
   }
-  
-  if (param.posrest.nrdrx < 0 || param.posrest.nrdrx > 3) {
-    io::messages.add("Error in POSITIONRES block: NTPORB must be 0 or 1.",
-		     "In_Parameter", io::message::error);    
+
+  switch(read) {
+    case 0 :
+      param.posrest.read = false;
+      break;
+    case 1 :
+      param.posrest.read = true;
+      break;
+    default:
+      param.posrest.read = false;
+      io::messages.add("Error in POSITIONRES block: NTPORS must be 0 or 1.",
+		       "In_Parameter", io::message::error);          
   }
 
   switch(ntpors) {
     case 0 :
-      param.posrest.scale_reference_positions=false;
+      param.posrest.scale_reference_positions = false;
       break;
     case 1 :
-      param.posrest.scale_reference_positions=true;
+      param.posrest.scale_reference_positions = true;
       break;
     default:
-      param.posrest.scale_reference_positions=false;
+      param.posrest.scale_reference_positions = false;
       io::messages.add("Error in POSITIONRES block: NTPORS must be 0 or 1.",
 		       "In_Parameter", io::message::error);          
   }
   
-  if(param.posrest.posrest == 3 && param.pcouple.scale != math::pcouple_off &&
+  if(param.posrest.posrest == simulation::posrest_const && 
+     param.pcouple.scale != math::pcouple_off &&
      param.posrest.scale_reference_positions != true) {
     io::messages.add("Error in POSITIONRES block: Position constraining together "
                      "with pressure coupling only allowed if reference positions"
@@ -1838,12 +1860,7 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
                      "In_Parameter", io::message::error);
   }
   
-  if(param.posrest.posrest == 2 && param.posrest.nrdrx == false) {
-    io::messages.add("Error in POSITIONRES block: NTPOR = 2 requires NTPORB = 1",
-                     "In_Parameter", io::message::error);
-  }
-  
-  if(param.posrest.force_constant <0)
+  if(param.posrest.force_constant < 0.0)
     io::messages.add("Error in POSITIONRES block: Illegal value for CPOR.",
 		     "In_Parameter", io::message::error);
 

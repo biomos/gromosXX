@@ -59,6 +59,21 @@ namespace io {
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   std::ostream & os = std::cout);
+    
+    /**
+     * read reference positions for position restraining
+     * @param hasTitle the buffer has a title
+     */
+    static bool _read_refposition(
+            std::vector<topology::position_restraint_struct> &res,
+            std::vector<std::string> &buffer, bool hasTitle);
+    /**
+     * read B-factors for position restraining
+     * @param hasTitle the buffer has a title
+     */
+    static bool _read_bfactor(
+            std::vector<topology::position_restraint_struct> &res,
+            std::vector<std::string> &buffer, bool hasTitle);
 
   private:
     /**
@@ -154,6 +169,13 @@ namespace io {
                                           configuration::Configuration &conf, 
                                           simulation::Simulation & sim,
                                           std::ostream & os);
+    
+    /**
+     * read position restraint averages and bfactors
+     */
+    bool read_position_restraints(topology::Topology &topo, 
+                                  simulation::Simulation & sim,
+                                  std::ostream & os);
 
     /**
      * read replica information

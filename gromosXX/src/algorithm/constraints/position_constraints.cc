@@ -78,19 +78,17 @@ int algorithm::Position_Constraints
        << "END\n";
   }
   
-  // Set the particles to their position if the coordinates are read from
-  // the position restraints file.
-  if (sim.param().posrest.nrdrx) {
-    // loop over restraints and set the position
-    std::vector<topology::position_restraint_struct>::const_iterator 
-      it = topo.position_restraints().begin(),
-      to = topo.position_restraints().end();
-
-    math::VArray &pos   = conf.current().pos;
+  // Set the particles to their position
   
-    for( ; it != to; ++it)
-      pos(it->seq) = it->pos;
-  }
+  // loop over restraints and set the position
+  std::vector<topology::position_restraint_struct>::const_iterator
+          it = topo.position_restraints().begin(),
+          to = topo.position_restraints().end();
+  
+  math::VArray &pos   = conf.current().pos;
+  
+  for( ; it != to; ++it)
+    pos(it->seq) = it->pos;
   
   // Here, we have to check whether no atoms that are positionally
   // contrained are at the same time member of a distance constraint.

@@ -42,8 +42,8 @@ int interaction::create_special(interaction::Forcefield & ff,
   // os << "SPECIAL\n";
   
   // Position restraints / constraints
-  if (param.posrest.posrest == 1 || 
-      param.posrest.posrest == 2){
+  if (param.posrest.posrest == simulation::posrest_on || 
+      param.posrest.posrest == simulation::posrest_bfactor) {
 
     if(!quiet)
       os <<"\tPosition restraints\n";
@@ -59,8 +59,8 @@ int interaction::create_special(interaction::Forcefield & ff,
     else if (param.pcouple.virial == math::molecular_virial)
       io::messages.add("Position restraint forces not added to molecular virial",
 		       "create_special", io::message::warning);
-  }
-  else if (param.posrest.posrest != 0 && param.posrest.posrest != 3){
+  } else if (param.posrest.posrest != simulation::posrest_off &&
+             param.posrest.posrest != simulation::posrest_const){
     io::messages.add("Wrong value for position restraints",
 		     "create_special", io::message::error);
   }

@@ -330,6 +330,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_distance_restraint_averages(conf, topo, m_final_conf);
     }
     
+    if (sim.param().posrest.posrest != simulation::posrest_off) {
+      _print_position_restraints(sim, topo, m_final_conf);
+    }
+    
     if(sim.param().jvalue.mode != simulation::restr_off){
       _print_jvalue(sim.param(), conf, topo, m_final_conf);
     }
@@ -1915,4 +1919,73 @@ static void _print_volumepressurered_helper(std::ostream &os,
      << std::setw(18) << k(1,0) << std::setw(18) << k(1,1) << std::setw(18) << k(1,2) << "\n"
      << std::setw(18) << k(2,0) << std::setw(18) << k(2,1) << std::setw(18) << k(2,2) << "\n";
   
+}
+
+void io::Out_Configuration
+::_print_position_restraints(simulation::Simulation const & sim,
+		             topology::Topology const &topo, 
+		             std::ostream &os)
+{
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "REFPOSITION\n";
+  
+  std::vector<topology::position_restraint_struct>::const_iterator it
+          = topo.position_restraints().begin(),
+          to = topo.position_restraints().end();
+  topology::Solute const &solute = topo.solute();
+  std::vector<std::string> const &residue_name = topo.residue_names();
+  
+  for(; it != to; ++it) {
+    if (it->seq < topo.num_solute_atoms()) {
+      os << std::setw(5)  << solute.atom(it->seq).residue_nr+1 << " "
+         << std::setw(5)  << std::left << residue_name[solute.atom(it->seq).residue_nr] << " "
+         << std::setw(6)  << std::left << solute.atom(it->seq).name << std::right
+         << std::setw(6)  << it->seq+1
+         << std::setw(m_width) << it->pos(0)
+         << std::setw(m_width) << it->pos(1)
+         << std::setw(m_width) << it->pos(2)
+         << "\n";
+    } else { // just writing out dummy values for first 17 chars
+      os << std::setw(5)  << "0" << " "
+	 << std::setw(5)  << std::left 
+	 << "SOLV" << " "
+	 << std::setw(6)  << std::left << "AT" << std::right
+	 << std::setw(6)  << it->seq + 1
+	 << std::setw(m_width) << it->pos(0)
+	 << std::setw(m_width) << it->pos(1)
+	 << std::setw(m_width) << it->pos(2)
+	 << "\n";      
+    }
+  }
+  
+  os << "END\n";
+  
+  if (sim.param().posrest.posrest == simulation::posrest_bfactor) {
+    it = topo.position_restraints().begin();
+    os << "BFACTOR\n";
+    
+    for(; it != to; ++it) {
+      if (it->seq < topo.num_solute_atoms()) {
+        os << std::setw(5)  << solute.atom(it->seq).residue_nr+1 << " "
+           << std::setw(5)  << std::left << residue_name[solute.atom(it->seq).residue_nr] << " "
+           << std::setw(6)  << std::left << solute.atom(it->seq).name << std::right
+           << std::setw(6)  << it->seq+1
+           << std::setw(m_width) << it->bfactor
+           << "\n";
+      } else {
+        os << std::setw(5)  << "0" << " "
+           << std::setw(5)  << std::left
+           << "SOLV" << " "
+           << std::setw(6)  << std::left << "AT" << std::right
+           << std::setw(6)  << it->seq + 1
+           << std::setw(m_width) << it->bfactor
+           << "\n";
+      }
+    }
+    
+    os << "END\n";
+  }
+
 }

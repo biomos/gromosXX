@@ -113,6 +113,29 @@ namespace simulation
     random_gsl = 1
   };
 
+    /**
+   * @enum posrest_enum
+   * position restraints enumeration
+   */
+  enum posrest_enum{
+    /**
+     * no restraints
+     */
+    posrest_off = 0,
+    /**
+     * normal harmonic position restraints
+     */
+    posrest_on = 1,
+    /**
+     * position restraints with force constant weighted by B-factor
+     */
+    posrest_bfactor = 2,
+    /**
+     * position constraints
+     */
+    posrest_const = 3,
+  };
+  
   /**
    * @class Parameter
    * input parameters.
@@ -824,20 +847,20 @@ namespace simulation
        * Constructor
        * Default values:
        * - posrest 0 (no position restraints)
-       * - nrdrx true
+       * - read true
        * - force_constant 10000
        */
-      posrest_struct() : posrest(0), nrdrx(true), force_constant(1E4),
+      posrest_struct() : posrest(posrest_off), read(true), force_constant(1E4),
                          scale_reference_positions(false) {}
       
       /**
        * posrest
        */
-      int posrest;
+      posrest_enum posrest;
       /**
-       * NRDRX
+       * read from specification file (otherwise from startup file)
        */
-      bool nrdrx;
+      bool read;
       /**
        * CPOR
        */
