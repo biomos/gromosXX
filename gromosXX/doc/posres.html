@@ -20,7 +20,17 @@ END
 <h2><a name="posres">Position Restraints</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-POSRES
+POSRESSPEC
+    1 HEXA  CH31       1
+    1 HEXA  CH22       2
+    1 HEXA  CH23       3
+    1 HEXA  CH24       4
+    2 HEXA  CH23       9
+    2 HEXA  CH24      10
+    2 HEXA  CH25      11
+    2 HEXA  CH36      12
+END
+REFPOSITION
     1 HEXA  CH31       1    3.003183500    2.472059119    3.983607307
     1 HEXA  CH22       2    2.944583705    2.441994145    4.121706839
     1 HEXA  CH23       3    3.050801324    2.493790966    4.218887665
@@ -47,14 +57,14 @@ is specified in the input parameter file.
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 BFACTOR
-    1   20.0
-    2   15.0
-    3   25.0
-    4   10.0
-    9   28.0
-   10   24.0
-   11   28.0
-   12   30.0
+    1 HEXA  CH31       1   20.0
+    1 HEXA  CH22       2   15.0
+    1 HEXA  CH23       3   25.0
+    1 HEXA  CH24       4   10.0
+    2 HEXA  CH23       9   28.0
+    2 HEXA  CH24      10   24.0
+    2 HEXA  CH25      11   28.0
+    2 HEXA  CH36      12   30.0
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
