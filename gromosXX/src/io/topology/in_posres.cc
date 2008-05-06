@@ -53,19 +53,6 @@ io::In_Posres::read(topology::Topology& topo,
       to = buffer.end()-1;
 
     DEBUG(10, "reading in POSRESSPEC data");
-    
-    unsigned int num_posres;
-    _lineStream.clear();
-    _lineStream.str(*it);    
-    _lineStream >> num_posres;
-    if (_lineStream.fail()) {
-       io::messages.add("Could not read number of position restraints in "
-                        "POSRESSPEC block.", "in_posres", io::message::error);
-      return;     
-    }
-
-    // jump to next line
-    ++it;
 
     unsigned int i, nr;
     for(i=0; it != to; ++i, ++it){
@@ -104,13 +91,6 @@ io::In_Posres::read(topology::Topology& topo,
       (topology::position_restraint_struct(nr-1, math::Vec(0.0)));
       
     }
-
-    if (i != num_posres) {
-      io::messages.add("number of position restraints and lines in POSRESSPEC block "
-      "do not correspond.", "In_Posres", io::message::error);
-      return;
-    }
-    
   } // POSRESSPEC  
   
   // read the reference positions from this file
