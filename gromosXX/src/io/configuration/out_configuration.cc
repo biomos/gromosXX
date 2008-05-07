@@ -1674,7 +1674,7 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
   DEBUG(10, "JVALUE Averages and LE data");
 
   if (param.jvalue.mode != simulation::restr_inst) {
-    os << "JVALRESEXPAVE03\n";
+    os << "JVALUERESEXPAVE\n";
     os.setf(std::ios::fixed, std::ios::floatfield);
     os.precision(7);
     std::vector<double>::const_iterator av_it = conf.special().jvalue_av.begin(),
@@ -1686,7 +1686,7 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
   }
 
   if (param.jvalue.le){
-    os << "JVALRESEPSILON\n";
+    os << "JVALUERESEPS\n";
     os.setf(std::ios::scientific, std::ios::floatfield); 
     os.precision(7);
     std::vector<std::vector<double> >::const_iterator

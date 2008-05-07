@@ -564,9 +564,9 @@ bool io::In_Configuration::read_jvalue
     }
     else if (!sim.param().jvalue.read_av && sim.param().jvalue.mode != simulation::restr_inst){
 
-      buffer = m_block["JVALRESEXPAVE03"];
+      buffer = m_block["JVALUERESEXPAVE"];
       if (buffer.size()){
-	block_read.insert("JVALRESEXPAVE03");
+	block_read.insert("JVALUERESEXPAVE");
 
 	io::messages.add("re-initialising J-restraint averages, non-continuous simulation",
 			 "in_configuration",
@@ -580,15 +580,15 @@ bool io::In_Configuration::read_jvalue
     }
     else {
 
-      buffer = m_block["JVALRESEXPAVE03"];
+      buffer = m_block["JVALUERESEXPAVE"];
       if (buffer.size())
       {
-	block_read.insert("JVALRESEXPAVE03");
+	block_read.insert("JVALUERESEXPAVE");
 	_read_jvalue_av(buffer, conf.special().jvalue_av, topo.jvalue_restraints());
       }
       else{
 	io::messages.add("reading in of J-restraints averages requested "
-			 "but JVALRESEXPAVE03 block not found",
+			 "but JVALUERESEXPAVE block not found",
 			 "in_configuration",
 			 io::message::error);
 	return false;
@@ -597,31 +597,27 @@ bool io::In_Configuration::read_jvalue
   } // jvalue averages
   
   if (sim.param().jvalue.le) {
+    buffer = m_block["JVALUERESEPS"];
     if (!sim.param().jvalue.read_av){
-
-      buffer = m_block["JVALRESEPSILON"];
       if (buffer.size()){
-	block_read.insert("JVALRESEPSILON");
+	block_read.insert("JVALUERESEPS");
 	io::messages.add("re-initialising J-restraint local elevation epsilons, non-continuous simulation",
 			 "in_configuration",
 			 io::message::warning);
-      }
-      else{
+      } else{
 	io::messages.add("initializing J-restraint local elevation epsilons",
 			 "in_configuration",
 			 io::message::notice);
       }
     } else {
-      buffer = m_block["JVALRESEPSILON"];
-      if (buffer.size())
-      {
-	block_read.insert("JVALRESEPSILON");
+      if (buffer.size()) {
+	block_read.insert("JVALUERESEPS");
 	_read_jvalue_le(buffer, conf.special().jvalue_epsilon, 
                         topo.jvalue_restraints(), 
                         sim.param().jvalue.ngrid);
       } else{
 	io::messages.add("reading in of J-restraints local elevation epsilons "
-                         "requested but JVALRESEPSILON block not found",
+                         "requested but JVALUERESEPS block not found",
                          "in_configuration",
                          io::message::error);
 	return false;
