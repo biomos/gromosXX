@@ -46,7 +46,7 @@ STEP
 #   NSTLIM         T        DT
          1       0.0     0.002
 END
-BOUNDARY
+BOUNDCOND
 #      NTB    NDFMIN
          1         0
 END
@@ -80,30 +80,24 @@ PRESSURESCALE
     0.00000     0.06102     0.00000
     0.00000     0.00000     0.06102
 END
-CENTREOFMASS
+COMTRANSROT
 #    NSCM : controls system centre-of-mass (com) motion removal
 #           0: no com motion removal (default)
 #         < 0: com translation and rotation are removed every abs(NSCM)
 #              steps.
 #         > 0: com tranlsation is removed every NSCM steps.
-#    NPCM : controls solute centre-of-mass (com) motion removal
-#           0: no com motion removal (default)
-#        != 0: not implemented.
-#   NPCON : 1..NRP atoms per solute molecule for defining solute com
-#           0: no definition
-#        != 0: not implemented
 #
-#     NSCM      NPCM     NPCON
-    100000         0         0
+#     NSCM
+    100000
 END
-PRINT
+PRINTOUT
 #NTPR: print out energies, etc. every NTPR steps
 #NTPL: print out C.O.M motion and total energy fitting every NTPL steps
 #NTPP: =1 perform dihedral angle transition monitoring
 #     NTPR      NTPP
         25         1
 END
-WRITE
+WRITETRAJ
 # NTWSE = configuration selection parameter
 # =0: write normal trajectory
 # >0: chose min energy for writing configurations
@@ -183,30 +177,26 @@ POSITIONRES
 #   NTPOR  NTPORB  NTPORS    CPOR
         0       0       0   1.0E1
 END
-PERTURB
-#    NTG: 0..3 controls use of free-energy calculation.
+PERTURBATION
+#    NTG: 0..1 controls use of free-energy calculation.
 #         0: no free-energy calculation (default)
 #         1: calculate dH/dRLAM
-#       2-3: not implemented
 #  NRDGL: 0,1 controls reading of initial value for RLAM.
-#         0: use initial RLAM parameter from PERTURB block
+#         0: use initial RLAM parameter from PERTURBATION block
 #         1: read from configuration
 #   RLAM: 0.0..1.0 initial value for lambda
 #  DLAMT: >= 0.0 rate of lambda increase in time.
-#    RMU: 0.0..1.0 not implemented
-#   DMUT: >= 0.0 not implemented
 # ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter
 #  ALPHC: >= 0.0 Coulomb-RF soft-core parameter
 #   NLAM: > 0 power dependence of lambda coupling
-#    MMU: > 0 not implemented
 # NSCALE: 0..2 controls use of interaction scaling
 #         0: no interaction scaling
 #         1: interaction scaling
 #         2: perturbation for all atom pairs with scaled
 #            interactions. No perturbation for others.
 #
-#     NTG   NRDGL    RLAM   DLAMT     RMU    DMUT
-        1       0   0.125     0.0     0.0     0.0
-#  ALPHLJ   ALPHC    NLAM     MMU  NSCALE
-      1.0     1.0       1       0       0
+#     NTG   NRDGL    RLAM   DLAMT
+        1       0   0.125     0.0
+#  ALPHLJ   ALPHC    NLAM  NSCALE
+      1.0     1.0       1       0
 END

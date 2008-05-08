@@ -2,11 +2,11 @@
 TITLE
 	alanine dipeptide test system
 END
-#MINIMISE
+#ENERGYMIN
 #     NTEM    NCYC    DELE    DX0     DXM
 #        1      20     0.01   0.01    0.05
 #END
-#STOCHASTIC
+#STOCHDYN
 #NTFR
 #0 = set to zero
 #1 = set to CFRIC
@@ -59,7 +59,7 @@ STEP
 #   NSTLIM         T        DT
          1       0.0     0.002
 END
-BOUNDARY
+BOUNDCOND
 #      NTB    NDFMIN
          1         0
 END
@@ -93,30 +93,24 @@ PRESSURESCALE
     0.00000     0.06102     0.00000
     0.00000     0.00000     0.06102
 END
-CENTREOFMASS
+COMTRANSROT
 #    NSCM : controls system centre-of-mass (com) motion removal
 #           0: no com motion removal (default)
 #         < 0: com translation and rotation are removed every abs(NSCM)
 #              steps.
 #         > 0: com tranlsation is removed every NSCM steps.
-#    NPCM : controls solute centre-of-mass (com) motion removal
-#           0: no com motion removal (default)
-#        != 0: not implemented.
-#   NPCON : 1..NRP atoms per solute molecule for defining solute com
-#           0: no definition
-#        != 0: not implemented
 #
-#     NSCM      NPCM     NPCON
-    100000         0         0
+#     NSCM
+    100000
 END
-PRINT
+PRINTOUT
 #NTPR: print out energies, etc. every NTPR steps
 #NTPL: print out C.O.M motion and total energy fitting every NTPL steps
 #NTPP: =1 perform dihedral angle transition monitoring
 #     NTPR      NTPP
         25         1
 END
-WRITE
+WRITETRAJ
 # NTWSE = configuration selection parameter
 # =0: write normal trajectory
 # >0: chose min energy for writing configurations
@@ -226,101 +220,28 @@ DIHEDRALRES
 # NTDLR  CDLR      PHILIN
   1      100.0     -1.0
 END
-#J-VAL
-# values for NTJR
-#     0: no J-value restraining
-#     -1,1: use CJR*(a*cos^^2 + b*cos + c)
-#     -2,2: use CJR*CPJR*(a*cos^^2 + b*cos + c)
-#     NTJR < 0: time averaging
-#     NTJR > 0: no time averaging
-#---
-# values for NTJRH
-#    0: use half harmonic potential
-#    1: use harmonic potential
-# values for NRDJR
-#    0: start from initial values
-#    1: read in time averages (for continuation run)
-#     NTJR     NTJRH       CJR     TAUJR     NRDJR
-#        0         1      10.0      10.0         0 
-#END
-#---------
-#LOCALELEVATION
-# NTLE
-# 0: off
-# 1: gaussian potential energy function
-# 2: inverse quadratic energy fuction
-#--
-# NRDLE
-# 0: don't read in memory
-# 1: read in memory (for continuation run)
-#   NTLE   CWLE  NRDLE
-#      0    2.5      0
-#END
-#---------
-#FOURDIM
-#  NT4DIM	meaning
-#	0	perform 3D simulation
-#	>0	perform 4D simulation
-#	1	use CW4DA
-#	2	use CW4DA*C4D
-#---
-# NT4XI determines initial coordinates and
-# velocities in the 4'th dimension
-#		init coords	init velocities
-#	1	0		max dist
-#	2	boltz		set to 0
-#	3	read coords	max dist
-#	4	read coords and velocities from unit 'XVI' (for continuation run)
-#---
-# NT4XO : 1 write out 4'th dimensional data to trajectory
-#       : 0 write out only 3 dimensions to trajectory
-#---
-#  NT4DIM	CW4DA	TEMP4I	NDFMI4   NT4XI NT4XO
-#       0      5000.0     30.0	     0       1     0
-#------
-# temperature coupling in the 4'th dimension
-#    NTT4      TEMP04	  TAUT4
-#       1        30.0   0.10000
-# NTCW4D 0: constant reference temperature and using CW4DA as force constant
-# 1: reference temperature is linearly changed from TEMP04 to TEMP0B,
-#    force constant is changed from CW4DA to CW4DB over NSTLIM steps.
-#  NTCW4D	CW4DB    TEMP0B
-#       0        10.0     300.0
-# NTF4: 4D force terms: 0 = perform in 3D, 1 = perform in 4D
-#     	bond/shake
-#               bond angle
-#                       dihedral
-#                               non-bonded
-#                                   	dist rest
-#                                      		4d harm osc
-#       0       0       0       1       0       1
-#END
-PERTURB
-#    NTG: 0..3 controls use of free-energy calculation.
+PERTURBATION
+#    NTG: 0..1 controls use of free-energy calculation.
 #         0: no free-energy calculation (default)
 #         1: calculate dH/dRLAM
-#       2-3: not implemented
 #  NRDGL: 0,1 controls reading of initial value for RLAM.
-#         0: use initial RLAM parameter from PERTURB block
+#         0: use initial RLAM parameter from PERTURBATION block
 #         1: read from configuration
 #   RLAM: 0.0..1.0 initial value for lambda
 #  DLAMT: >= 0.0 rate of lambda increase in time.
-#    RMU: 0.0..1.0 not implemented
-#   DMUT: >= 0.0 not implemented
 # ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter
 #  ALPHC: >= 0.0 Coulomb-RF soft-core parameter
 #   NLAM: > 0 power dependence of lambda coupling
-#    MMU: > 0 not implemented
 # NSCALE: 0..2 controls use of interaction scaling
 #         0: no interaction scaling
 #         1: interaction scaling
 #         2: perturbation for all atom pairs with scaled
 #            interactions. No perturbation for others.
 #
-#     NTG   NRDGL    RLAM   DLAMT     RMU    DMUT
-        1       0   0.125     0.0     0.0     0.0
-#  ALPHLJ   ALPHC    NLAM     MMU  NSCALE
-      0.3     0.6       1       0       0
+#     NTG   NRDGL    RLAM   DLAMT
+        1       0   0.125     0.0
+#  ALPHLJ   ALPHC    NLAM  NSCALE
+      0.3     0.6       1       0
 END
 #-------
 #PATHINT

@@ -33,9 +33,9 @@ namespace io {
     void read(simulation::Parameter &param, std::ostream & os = std::cout);
     
     /**
-     * read minimise block.
+     * read energymin block.
      */
-    void read_MINIMISE(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_ENERGYMIN(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read step block.
@@ -46,21 +46,11 @@ namespace io {
      * read the SYSTEM block.
      */
     void read_SYSTEM(simulation::Parameter &param, std::ostream & os = std::cout);
-    
-    /**
-     * read the SHAKE block.
-     */
-    void read_SHAKE(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read the CONSTRAINT block.
      */
     void read_CONSTRAINT(simulation::Parameter &param, std::ostream & os = std::cout);
-
-    /**
-     * read the FLEXCON block.
-     */
-    // void read_FLEXCON(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read FORCE block.
@@ -78,34 +68,29 @@ namespace io {
     void read_ENERGYGROUP(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read PRINT block.
+     * read PRINTOUT block.
      */
-    void read_PRINT(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_PRINTOUT(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read WRITE block.
+     * read WRITETRAJ block.
      */
-    void read_WRITE(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_WRITETRAJ(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read the PCOUPLE03 block.
+     * read the PRESSURESCALE block.
      */
-    void read_PCOUPLE(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_PRESSURESCALE(simulation::Parameter &param, std::ostream & os = std::cout);
     
     /**
-     * read the BOUNDARY block.
+     * read the BOUNDCOND block.
      */
-    void read_BOUNDARY(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_BOUNDCOND(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read the PERTURB block.
+     * read the PERTURBATION block.
      */
-    void read_PERTURB(simulation::Parameter &param, std::ostream & os = std::cout);
-
-    /**
-     * read START block.
-     */
-    void read_START(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_PERTURBATION(simulation::Parameter &param, std::ostream & os = std::cout);
     
     /**
      * read INITIALISE block.
@@ -113,9 +98,9 @@ namespace io {
     void read_INITIALISE(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read CENTREOFMASS block.
+     * read COMTRANSROT block.
      */
-    void read_CENTREOFMASS(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_COMTRANSROT(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read PAIRLIST block.
@@ -125,7 +110,7 @@ namespace io {
     /**
      * read POSRES block.
      */
-    void read_POSREST(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_POSITIONRES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read DISTANCERES block.
@@ -135,7 +120,7 @@ namespace io {
     /**
      * read DIHEDRALRES block.
      */
-    void read_DIHREST(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_DIHEDRALRES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read LONGRANGE block.
@@ -148,9 +133,9 @@ namespace io {
     void read_MULTIBATH(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read J-VAL block.
+     * read JVALUERES block.
      */
-    void read_JVALUE(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_JVALUERES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read PERSCALE block.
@@ -193,9 +178,9 @@ namespace io {
     void read_INTEGRATE(simulation::Parameter & param, std::ostream & os = std::cout);
     
     /**
-     * read STOCHASTIC block.
+     * read STOCHDYN block.
      */
-    void read_STOCHASTIC(simulation::Parameter & param, std::ostream & os = std::cout);
+    void read_STOCHDYN(simulation::Parameter & param, std::ostream & os = std::cout);
 
     /**
      * read EWARN block.
@@ -218,67 +203,24 @@ namespace io {
     void read_RAMD(simulation::Parameter & param, std::ostream & os = std::cout);
     
     /**
-     * read CONSISTENCYCHECK block.
-     */
-    void read_CONSISTENCYCHECK(simulation::Parameter & param, std::ostream & os = std::cout);
-
-    /**
-     * read THERMOSTAT block.
-     */
-    void read_THERMOSTAT(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read BAROSTAT block.
-     */
-    void read_BAROSTAT(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read VIRIAL block.
-     */
-    void read_VIRIAL(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read GROMOS96COMPAT block.
-     */
-    void read_GROMOS96COMPAT(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read PATHINT block.
-     */
-    void read_PATHINT(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read NEIGHBOURLIST block.
-     */
-    void read_NEIGHBOURLIST(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read NONBONDED block.
-     */
-    void read_NONBONDED(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read LOCALELEVATION block.
-     */
-    void read_LOCALELEVATION(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read UMBRELLA block.
-     */
-    void read_UMBRELLA(simulation::Parameter & param, std::ostream & os = std::cout);
-    
-    /**
-     * read FORCEFIELD block.
-     */
-    void read_FORCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
-    /**
      * read POLARIZE block.
      */
     void read_POLARIZE(simulation::Parameter &param, std::ostream & os = std::cout);
+    
     /**
      * read RANDOMNUMBERS block.
      */
     void read_RANDOMNUMBERS(simulation::Parameter &param, std::ostream & os = std::cout);
+    
+    /*
+     * read LAMBDAS block.
+     */
+    void read_LAMBDAS(simulation::Parameter &param, std::ostream & os = std::cout);
+    
+    /**
+     * read blocks that are either g96 or promd specific and tell user what to do
+     */
+    void read_known_unsupported_blocks();
 
   };
   

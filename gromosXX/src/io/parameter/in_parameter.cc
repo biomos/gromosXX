@@ -51,54 +51,43 @@ void io::In_Parameter::read(simulation::Parameter &param,
   // store the title...
   param.title = title;
 
-  read_MINIMISE(param);
+  read_ENERGYMIN(param);
   read_SYSTEM(param);
-  read_CENTREOFMASS(param); // has to be read before START/INITIALISE
-  read_START(param); 
+  read_COMTRANSROT(param); // has to be read before INITIALISE
   read_INITIALISE(param);
   read_STEP(param);
-  read_BOUNDARY(param);
+  read_BOUNDCOND(param);
   read_REPLICA(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
-  read_PCOUPLE(param);
-  read_PRINT(param);
-  read_WRITE(param);
+  read_PRESSURESCALE(param);
+  read_PRINTOUT(param);
+  read_WRITETRAJ(param);
   read_CONSTRAINT(param);
-  read_FORCE(param); // and FORCEFIELD
-  read_COVALENTFORM(param); // and FORCEFIELD
+  read_FORCE(param); 
+  read_COVALENTFORM(param);
   read_CGRAIN(param);
   read_PAIRLIST(param);
   read_LONGRANGE(param);
-  read_POSREST(param);
-  //read_DISTANCERES(param);
-  read_DISTANCERES(param); //new name
-  read_DIHREST(param); // needs to be called after CONSTRAINT!
-  read_PERTURB(param);
-  read_JVALUE(param);
+  read_POSITIONRES(param);
+  read_DISTANCERES(param);
+  read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
+  read_PERTURBATION(param);
+  read_JVALUERES(param);
   read_PERSCALE(param);
   read_ROTTRANS(param);
   read_INNERLOOP(param);
   read_MULTICELL(param);
   read_READTRAJ(param);
   read_INTEGRATE(param);
-  read_STOCHASTIC(param);
+  read_STOCHDYN(param);
   read_EWARN(param);
   read_MULTISTEP(param);
   read_MONTECARLO(param);
   read_RAMD(param);
-  read_CONSISTENCYCHECK(param);
-  read_THERMOSTAT(param);
-  read_BAROSTAT(param);
-  read_VIRIAL(param);
-  read_GROMOS96COMPAT(param);
-  read_PATHINT(param);
-  read_NEIGHBOURLIST(param);
-  read_NONBONDED(param);
-  read_LOCALELEVATION(param);
-  read_UMBRELLA(param);
-  read_FORCEFIELD(param);
   read_POLARIZE(param);
   read_RANDOMNUMBERS(param);
+  read_LAMBDAS(param);
+  read_known_unsupported_blocks();
   
   DEBUG(7, "input read...");
 
@@ -170,15 +159,15 @@ void io::In_Parameter::read_SYSTEM(simulation::Parameter &param,
 } 
 
 /**
- * read the MINIMISE block.
+ * read the ENERGYMIN block.
  */
-void io::In_Parameter::read_MINIMISE(simulation::Parameter &param,
+void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
 				     std::ostream & os)
 {
-  DEBUG(8, "reading MINIMISE");
+  DEBUG(8, "reading ENERGYMIN");
 
   std::vector<std::string> buffer;
-  buffer = m_block["MINIMISE"];
+  buffer = m_block["ENERGYMIN"];
   std::string s;
   
   if (!buffer.size()){
@@ -186,7 +175,9 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param,
     return;
   }
 
-  block_read.insert("MINIMISE");
+  buffer = m_block["ENERGYMIN"];
+  
+  block_read.insert("ENERGYMIN");
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -200,7 +191,7 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param,
               >> param.minimise.flim;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in MINIMISE block",
+    io::messages.add("bad line in ENERGYMIN block",
 		       "In_Parameter", io::message::error);
  
   // allow 0 to disable feature...
@@ -208,42 +199,39 @@ void io::In_Parameter::read_MINIMISE(simulation::Parameter &param,
     param.minimise.nmin = 1;
 
   if (param.minimise.ntem != 0 && param.minimise.ntem != 1)
-    io::messages.add("MINIMISE: currently only steepest descent implemented",
-		     "io::In_Parameter::read_MINIMISE",
+    io::messages.add("ENERGYMIN block: currently only steepest descent implemented",
+		     "io::In_Parameter",
 		     io::message::error);
   if(param.minimise.ntem == 1 && param.minimise.ncyc > 0)
-    io::messages.add("MINIMISE: NCYC > 0 has no effect for steepest descent",
-		     "io::In_Parameter::read_MINIMISE",
+    io::messages.add("ENERGYMIN block: NCYC > 0 has no effect for steepest descent",
+		     "io::In_Parameter",
 		     io::message::warning);
     
   if(param.minimise.ncyc < 0)
-    io::messages.add("MINIMISE: NCYC should be >0",
-		     "io::In_Parameter::read_MINIMISE",
+    io::messages.add("ENERGYMIN block: NCYC should be >0",
+		     "io::In_Parameter",
 		     io::message::error);
     
   if(param.minimise.dele < 0)
-    io::messages.add("MINIMISE: DELE should be >0",
-		     "io::In_Parameter::read_MINIMISE",
+    io::messages.add("ENERGYMIN block: DELE should be >0",
+		     "io::In_Parameter",
 		     io::message::error);
     
   if(param.minimise.dx0 < 0)
-    io::messages.add("MINIMISE: DX0 should be >0",
-		     "io::In_Parameter::read_MINIMISE",
-		     io::message::error);
+    io::messages.add("ENERGYMIN block: DX0 should be >0",
+		     "io::In_Parameter", io::message::error);
     
   if(param.minimise.dxm < param.minimise.dx0)
-    io::messages.add("MINIMISE: DXM should be > DX0",
-		     "io::In_Parameter::read_MINIMISE",
-		     io::message::error);
+    io::messages.add("ENERGYMIN block: DXM should be > DX0",
+		     "io::In_Parameter", io::message::error);
 
   if(param.minimise.nmin <= 0)
-    io::messages.add("MINIMISE: NMIN should be >= 0",
-		     "io::In_Parameter::read_MINIMISE",
-		     io::message::error);
+    io::messages.add("ENERGYMIN block: NMIN should be >= 0",
+		     "io::In_Parameter", io::message::error);
   
   if(param.minimise.flim < 0)
-    io::messages.add("MINIMISE: FLIM should be >= 0",
-		     "io::In_Parameter::read_MINIMISE",
+    io::messages.add("ENERGYMIN: FLIM should be >= 0",
+		     "io::In_Parameter",
 		     io::message::error);
 
 } 
@@ -276,8 +264,7 @@ void io::In_Parameter::read_STEP(simulation::Parameter &param,
 	      >> param.step.dt;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in STEP block",
-		       "In_Parameter", io::message::error);
+    io::messages.add("bad line in STEP block", "In_Parameter", io::message::error);
 
   /*
   if (!_lineStream.eof())
@@ -286,34 +273,11 @@ void io::In_Parameter::read_STEP(simulation::Parameter &param,
   */
 
   if(param.step.t0 < 0 && param.step.t0 != -1.0)
-    io::messages.add("Negative time in STEP block is not supported",
+    io::messages.add("STEP block: Negative time is not supported",
 		     "In_Parameter", io::message::error);
   if(param.step.number_of_steps <= 0)
-    io::messages.add("We want to do at least one step...",
+    io::messages.add("STEP block: We want to do at least one step...",
 		     "In_Parameter", io::message::error);
-}
-
-/**
- * the SHAKE block.
- */
-void io::In_Parameter::read_SHAKE(simulation::Parameter &param,
-				  std::ostream & os)
-{
-  DEBUG(8, "read SHAKE");
-
-  std::vector<std::string> buffer;
-  std::string s, sntc;
-  
-  buffer = m_block["SHAKE"];
-  
-  if (buffer.size()){
-    block_read.insert("SHAKE");
-
-    io::messages.add("There is no SHAKE block in this version. Use the "
-                     "CONSTRAINT block instead.", "In_Parameter",
-		     io::message::error);
-
-  }
 }
 
 /**
@@ -354,12 +318,12 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
   else {
     std::stringstream ss(sntc);
     if (!(ss >> param.constraint.ntc))
-      io::messages.add("NTC not understood in CONSTRAINT block",
+      io::messages.add("CONSTRAINT block: NTC not understood",
 		       "In_Parameter", io::message::error);
   }
   
   if(param.constraint.ntc<1 || param.constraint.ntc > 4){
-    io::messages.add("NTC out of range in CONSTRAINT block",
+    io::messages.add("CONSTRAINT block: NTC out of rangek",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solute.algorithm = simulation::constr_off;
@@ -380,7 +344,6 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
   std::transform(salg.begin(), salg.end(), salg.begin(), tolower);
 
   if (salg == "shake"){
-
     DEBUG(9, "constraints solute shake");
     
     if (param.constraint.ntc > 1)
@@ -390,11 +353,9 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     _lineStream >> param.constraint.solute.shake_tolerance;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("CONSTRAINT block: shake tolerance should be > 0",
 		       "In_Parameter", io::message::error);
-  }
-  else if (salg == "flexshake"){
-
+  } else if (salg == "flexshake"){
     DEBUG(9, "constraints solute flexshake");
     
     if (param.constraint.ntc > 1)
@@ -406,21 +367,19 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
 		>> param.constraint.solute.flexshake_mode;
     
     if(param.constraint.solute.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("CONSTRAINT block: shake tolerance should be > 0.0",
 		       "In_Parameter", io::message::error);
 
     if(param.centreofmass.remove_rot || param.centreofmass.remove_trans)
-      io::messages.add("flexible shake and removal of centre of mass motion "
+      io::messages.add("CONSTRAINT block: flexible shake and removal of centre of mass motion "
 		       "needs extra care!", "In_Parameter", io::message::warning);
 
     if(param.constraint.solute.flexshake_mode < 0 ||
        param.constraint.solute.flexshake_mode > 3)
-      io::messages.add("flexshake mode in CONSTRAINT block should be >= 0 and <= 3",
+      io::messages.add("CONSTRAINT block: flexshake mode should be >= 0 and <= 3",
 		       "In_Parameter", io::message::error);
     
-  }
-  else if (salg == "lincs"){
-
+  } else if (salg == "lincs"){
     DEBUG(9, "constraints solute lincs");
 
     if (param.constraint.ntc > 1)
@@ -431,24 +390,18 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     _lineStream >> param.constraint.solute.lincs_order;
     
     if(param.constraint.solute.lincs_order < 1)
-      io::messages.add("lincs order should be >1 in CONSTRAINT block",
+      io::messages.add("CONSTRAINT block: lincs order should be > 1",
 		       "In_Parameter", io::message::error);
 
-  }
-  else if (salg == "off"){
-
+  } else if (salg == "off"){
     DEBUG(9, "constraints solute off");
     param.constraint.solute.algorithm = simulation::constr_off;
-  }
-  else{
-
+  } else{
     DEBUG(9, "constraints solute error");
     
-    io::messages.add("unknown algorithm in CONSTRAINT block (solute)",
+    io::messages.add("CONSTRAINT block: unknown algorithm (solute)",
 		     "In_Parameter", io::message::error);
-    
     param.constraint.solute.algorithm = simulation::constr_off;
-
   }
 
   // SOLVENT
@@ -462,79 +415,69 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
 
   std::transform(salg.begin(), salg.end(), salg.begin(), tolower);
 
-  if (salg == "shake"){
-
+  if (salg == "shake") {
     DEBUG(9, "constraints solvent shake");
 
     param.constraint.solvent.algorithm = simulation::constr_shake;
     _lineStream >> param.constraint.solvent.shake_tolerance;
     
     if(param.constraint.solvent.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("CONSTRAINT block: shake tolerance should be > 0.0",
 		       "In_Parameter", io::message::error);
-  }
-  else if (salg == "flexshake"){
-
+  } else if (salg == "flexshake"){
     DEBUG(9, "constraints solvent flexshake");
 
     param.constraint.solvent.algorithm = simulation::constr_flexshake;
     _lineStream >> param.constraint.solvent.shake_tolerance;
     
     if(param.constraint.solvent.shake_tolerance <= 0.0)
-      io::messages.add("shake tolerance in CONSTRAINT block should be > 0",
+      io::messages.add("CONSTRAINT block: shake tolerance should be > 0.0",
 		       "In_Parameter", io::message::error);
-  }
-  else if (salg == "lincs"){
-
+  } else if (salg == "lincs"){
     DEBUG(9, "constraints solvent lincs");
 
     param.constraint.solvent.algorithm = simulation::constr_lincs;
     _lineStream >> param.constraint.solvent.lincs_order;
     
     if(param.constraint.solvent.lincs_order < 1)
-      io::messages.add("lincs order should be >1 in CONSTRAINT block",
+      io::messages.add("CONSTRAINT block: lincs order should be >1",
 		       "In_Parameter", io::message::error);
 
-  }
-  else if (salg == "off"){
-
+  } else if (salg == "off") {
     DEBUG(9, "constraints solvent off");
 
     param.constraint.solvent.algorithm = simulation::constr_off;
-    io::messages.add("no constraints for SOLVENT: are you sure???",
+    io::messages.add("CONSTRAINT block: no constraints for SOLVENT",
 		     "In_Parameter", io::message::warning);
-  }
-  else{
+  } else{
 
     DEBUG(9, "constraints solvent error");
-    io::messages.add("unknown algorithm in CONSTRAINT block (solvent)",
+    io::messages.add("CONSTRAINT block: unknown algorithm (solvent)",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solvent.algorithm = simulation::constr_off;
-
   }
-  
 }
 
 /**
- * read the PRINT
+ * read the PRINTOUT
  */
-void io::In_Parameter::read_PRINT(simulation::Parameter &param,
+void io::In_Parameter::read_PRINTOUT(simulation::Parameter &param,
 				  std::ostream & os)
 {
-  DEBUG(8, "read PRINT");
+  DEBUG(8, "read PRINTOUT");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["PRINT"];
+  buffer = m_block["PRINTOUT"];
 
   if (!buffer.size()){
-    io::messages.add("no PRINT block", "In_Parameter", io::message::notice);
+    io::messages.add("no PRINTOUT block", "In_Parameter", io::message::notice);
     return;
   }
 
-  block_read.insert("PRINT");
+  block_read.insert("PRINTOUT");
 
   int ntpp;
   _lineStream.clear();
@@ -544,11 +487,11 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param,
 	      >> ntpp;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in PRINT block",
+    io::messages.add("bad line in PRINTOUT block",
 		     "In_Parameter", io::message::error);
   
   if(param.print.stepblock < 0)
-    io::messages.add("Error in PRINT block: NTPR should be >=0.",
+    io::messages.add("PRINTOUT block: NTPR should be >=0.",
 		     "In_Parameter", io::message::error);
   
   switch(ntpp) {
@@ -559,30 +502,30 @@ void io::In_Parameter::read_PRINT(simulation::Parameter &param,
       param.print.monitor_dihedrals = true;
       break;
     default:
-    io::messages.add("Error in PRINT block: NTPP should be 0 or 1.",
+    io::messages.add("PRINTOUT block: NTPP should be 0 or 1.",
 		     "In_Parameter", io::message::error);      
   }
 }
 
 /**
- * read the WRITE
+ * read the WRITETRAJ
  */
-void io::In_Parameter::read_WRITE(simulation::Parameter &param,
+void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
 				  std::ostream & os)
 {
-  DEBUG(8, "read WRITE");
+  DEBUG(8, "read WRITETRAJ");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["WRITE"];
+  buffer = m_block["WRITETRAJ"];
 
   if (!buffer.size()){
-    io::messages.add("no WRITE block", "In_Parameter", io::message::notice);
+    io::messages.add("no WRITETRAJ block", "In_Parameter", io::message::notice);
     return;
   }
 
-  block_read.insert("WRITE");
+  block_read.insert("WRITETRAJ");
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -598,16 +541,11 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param,
 	      >> param.write.block_average;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in WRITE block",
+    io::messages.add("bad line in WRITETRAJ block",
 		     "In_Parameter", io::message::error);
-  /*
-  if (!_lineStream.eof())
-    io::messages.add("End of line not reached in WRITE block, "
-		     "but should have been: \n" + s +  "\n",
-		     "In_Parameter", io::message::warning);
-  */
+
   if(ntwse!=0)
-    io::messages.add("NTWSE != 0 not supported",
+    io::messages.add("WRITETRAJ block: NTWSE != 0 not supported",
 		     "In_Parameter", io::message::error);
 
   if(param.write.position < 0){
@@ -632,20 +570,20 @@ void io::In_Parameter::read_WRITE(simulation::Parameter &param,
   }
   
   if(param.write.energy < 0)
-    io::messages.add("WRITE block: NTWE should be >= 0",
+    io::messages.add("WRITETRAJ block: NTWE should be >= 0",
 		     "In_Parameter", io::message::error);
   if(param.write.free_energy < 0)
-    io::messages.add("WRITE block: NTWG should be >= 0",
+    io::messages.add("WRITETRAJ block: NTWG should be >= 0",
 		     "In_Parameter", io::message::error);
   if(param.write.block_average < 0)
-    io::messages.add("WRITE block: NTWB should be >= 0",
+    io::messages.add("WRITETRAJ block: NTWB should be >= 0",
 		     "In_Parameter", io::message::error);
 }
 
 /**
- * read the PCOUPLE block.
+ * read the PRESSURESCALE block.
  */
-void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
+void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
 				    std::ostream & os)
 {
   DEBUG(8, "read PRESSURESCALE");
@@ -654,7 +592,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
   std::string s;
   
 
-  // first try for a PCOUPLESCALE block
+  // first try for a PRESSURESCALE block
   buffer = m_block["PRESSURESCALE"];
 
   if (buffer.size()){
@@ -697,7 +635,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
       param.pcouple.calculate = true;
 
       if (s2 == "off"){
-	io::messages.add("requesting scaling but SCALE set to OFF\n",
+	io::messages.add("PRESSURESCALE block: requesting scaling but SCALE set to OFF",
 			 "In_Parameter", io::message::error);
 	param.pcouple.scale = math::pcouple_off;
       }
@@ -708,7 +646,7 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
       else if (s2 == "full")
 	param.pcouple.scale = math::pcouple_full_anisotropic;
       else{
-	io::messages.add("bad value for SCALE switch in PRESSURESCALE block\n"
+	io::messages.add("PRESSURESCALE block: bad value for SCALE switch "
 			 "(off,iso,aniso,full)",
 			 "In_Parameter", io::message::error);
 	param.pcouple.scale = math::pcouple_off;
@@ -744,27 +682,6 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
       param.pcouple.virial = math::no_virial;
     
   } // PRESSURESCALE block
-    
-  buffer = m_block["PCOUPLE"];
-  if (buffer.size()){
-    io::messages.add("The PCOUPLE block is not available in this version. "
-                     "Use the PRESSURESCALE block instead.",
-                     "In_Parameter",
-                     io::message::error);
-
-    block_read.insert("PCOUPLE");
-    return;
-  }
-    
-  buffer = m_block["PCOUPLE03"];
-  if (buffer.size()){
-    io::messages.add("The PCOUPLE03 block was renamed to PRESSURESCALE",
-                     "In_Parameter",
-                     io::message::error);
-
-    block_read.insert("PCOUPLE03");
-    return;
-  }
   
   if (param.pcouple.calculate==false && param.pcouple.scale!=math::pcouple_off)
     io::messages.add("pressure coupling activated but "
@@ -772,37 +689,37 @@ void io::In_Parameter::read_PCOUPLE(simulation::Parameter &param,
 		     "In_Parameter",
 		     io::message::error);
   if (param.pcouple.calculate == true && param.pcouple.virial == math::no_virial)
-    io::messages.add("PCOUPLE03 block: pressure calculation requested but"
+    io::messages.add("PRESSURESCALE block: pressure calculation requested but"
 		     " no virial specified!", "In_Parameter",
 		     io::message::error);
   if(param.pcouple.compressibility <=0)
-    io::messages.add("PCOUPLE block: compressibility should be >0 ",
+    io::messages.add("PRESSURESCALE block: compressibility should be >0 ",
 		     "In_Parameter", io::message::error);
   if(param.pcouple.tau <=0)
-    io::messages.add("PCOUPLE block: tau should be >0 ",
+    io::messages.add("PRESSURESCALE block: tau should be >0 ",
 		     "In_Parameter", io::message::error);
 }
 
 /**
- * read the BOUNDARY block.
+ * read the BOUNDCOND block.
  */
-void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param,
+void io::In_Parameter::read_BOUNDCOND(simulation::Parameter &param,
 				     std::ostream & os)
 {
-  DEBUG(8, "read BOUNDARY");
+  DEBUG(8, "read BOUNDCOND");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["BOUNDARY"];
+  buffer = m_block["BOUNDCOND"];
   
   if (!buffer.size()){
-    io::messages.add("no BOUNDARY block", "In_Parameter", io::message::error);
+    io::messages.add("no BOUNDCOND block", "In_Parameter", io::message::error);
     param.boundary.boundary = math::vacuum;
     return;
   }
 
-  block_read.insert("BOUNDARY");
+  block_read.insert("BOUNDCOND");
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -811,7 +728,7 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param,
   _lineStream >> ntb >> param.boundary.dof_to_subtract;
   
   if (_lineStream.fail())
-    io::messages.add("bad line in BOUNDARY block",
+    io::messages.add("bad line in BOUNDCOND block",
 		     "In_Parameter", io::message::error);
 
   if(ntb==0) param.boundary.boundary=math::vacuum;
@@ -820,49 +737,41 @@ void io::In_Parameter::read_BOUNDARY(simulation::Parameter &param,
   else if(ntb==-1) param.boundary.boundary=math::truncoct;
   else {
     std::ostringstream msg;
-    msg << "wrong value for NTB in BOUNDARY block: "
+    msg << "BOUNDCOND block: wrong value for NTB "
         << ntb << "\nvacuum (0), rectangular (1), triclinic (2), truncoct (-1)";
     io::messages.add(msg.str(), "In_Parameter", io::message::error);
     param.boundary.boundary=math::vacuum;
   }
   
   if (param.boundary.dof_to_subtract < 0) {
-    io::messages.add("Error in BOUNDARY block: NDFMIN must be >= 0.",
+    io::messages.add("BOUNDCOND block: NDFMIN must be >= 0.",
 		     "In_Parameter", io::message::error);
     param.boundary.dof_to_subtract = 0;    
   }
   
   if (param.boundary.dof_to_subtract > 0) {
-    io::messages.add("NDFMIN > 0 not implemented",
+    io::messages.add("BOUNDCOND block: NDFMIN > 0 not implemented",
 		     "In_Parameter", io::message::warning);
     param.boundary.dof_to_subtract = 0;    
   }
 }
 
 /**
- * read the PERTURB block.
+ * read the PERTURBATION block.
  */
-void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
+void io::In_Parameter::read_PERTURBATION(simulation::Parameter &param,
 				    std::ostream & os)
 {
-  DEBUG(8, "read PERTURB");
+  DEBUG(8, "read PERTURBATION");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["PERTURB03"];
-  if (buffer.size()){
-    block_read.insert("PERTURB03");
-    
-    io::messages.add("The PERTURB03 block was renamed to PERTURB.",
-		     "In_Parameter", io::message::error);
-  }
-  
-  buffer = m_block["PERTURB"];
+  buffer = m_block["PERTURBATION"];
   if (!buffer.size()) 
     return;
 
-  block_read.insert("PERTURB");
+  block_read.insert("PERTURBATION");
 
 
   _lineStream.clear();
@@ -871,20 +780,18 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
   std::string b, s1, s2;
   int ntg, scale;
   int nrdgl;
-  double mu, dmut, mexp;
+
   _lineStream >> ntg 
               >> nrdgl
               >> param.perturbation.lambda
               >> param.perturbation.dlamt
-              >> mu >> dmut
               >> param.perturbation.soft_vdw
               >> param.perturbation.soft_crf
               >> param.perturbation.lambda_exponent
-              >> mexp
               >> scale;
     
   if (_lineStream.fail())
-    io::messages.add("bad line in PERTURB block",
+    io::messages.add("bad line in PERTURBATION block",
                      "In_Parameter", io::message::error);
     
   switch(ntg) {
@@ -894,13 +801,8 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
     case 1 :
       param.perturbation.perturbation = true;
       break;
-    case 2 :
-    case 3 :
-      io::messages.add("Error in PERTURB block: NTG 2/3 not implemented.",
-                       "In_Parameter", io::message::error);
-      break;
     default:
-      io::messages.add("Error in PERTURB block: NTG must be 0 or 1.",
+      io::messages.add("PERTURBATION block: NTG must be 0 or 1.",
                        "In_Parameter", io::message::error);
   }
   
@@ -912,43 +814,38 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
       param.perturbation.read_initial = true;
       break;
     default :
-      io::messages.add("Error in PERTURB block: NRDGL must be 0 or 1.",
+      io::messages.add("PERTURBATION block: NRDGL must be 0 or 1.",
                        "In_Parameter", io::message::error);
   }
   
   if (param.perturbation.read_initial) {
-    io::messages.add("Error in PERTURB block: NRDGL != 0 not implemented.",
+    io::messages.add("PERTURBATION block: NRDGL != 0 not implemented.",
                      "In_Parameter", io::message::error);    
   }
   
   if (param.perturbation.lambda < 0.0 ||
       param.perturbation.lambda > 1.0) {
-    io::messages.add("Error in PERTURB block: RLAM must be 0.0 to 1.0.",
+    io::messages.add("PERTURBATION block: RLAM must be 0.0 to 1.0.",
                      "In_Parameter", io::message::error);        
   }
   
   if (param.perturbation.dlamt < 0.0){
-    io::messages.add("Error in PERTURB block: DLAMT must be >= 0.",
+    io::messages.add("PERTURBATION block: DLAMT must be >= 0.",
                      "In_Parameter", io::message::error);
   }
   
   if (param.perturbation.lambda_exponent<=0){
-    io::messages.add("Error in PERTURB block: NLAM must be > 0.",
-                     "In_Parameter", io::message::error);
-  }
-  
-  if (mu != 0.0 || dmut != 0.0 || dmut != 0.0) {
-    io::messages.add("PERTURB block: RMU and related values are ignored.",
-                     "In_Parameter", io::message::warning);    
-  }
-  
-  if (param.perturbation.soft_vdw < 0.0){
-    io::messages.add("Error in PERTURB block: ALPHLJ must be >= 0.",
+    io::messages.add("PERTURBATION block: NLAM must be > 0.",
                      "In_Parameter", io::message::error);
   }
   
   if (param.perturbation.soft_vdw < 0.0){
-    io::messages.add("Error in PERTURB block: ALPHC must be >= 0.",
+    io::messages.add("PERTURBATION block: ALPHLJ must be >= 0.",
+                     "In_Parameter", io::message::error);
+  }
+  
+  if (param.perturbation.soft_vdw < 0.0){
+    io::messages.add("PERTURBATION block: ALPHC must be >= 0.",
                      "In_Parameter", io::message::error);
   }
     
@@ -966,7 +863,7 @@ void io::In_Parameter::read_PERTURB(simulation::Parameter &param,
       param.perturbation.scaled_only = true;
       break;
     default :
-      io::messages.add("Error in PERTURB block: NSCALE must be 0 to 2.",
+      io::messages.add("PERTURBATION block: NSCALE must be 0 to 2.",
                        "In_Parameter", io::message::error);
   }
 }
@@ -1004,7 +901,7 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   _lineStream >> num;
   if(num<=0){
     DEBUG(10, "number of energy group < 0?");
-    io::messages.add("number of energy groups in FORCE block should be > 0",
+    io::messages.add("FORCE block: number of energy groups should be > 0",
 		     "In_Parameter", io::message::error);
     return;
   }
@@ -1015,7 +912,7 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
     param.force.energy_group.push_back(e-1);
     if(e<=old_e){
       DEBUG(10, "energy groups not in order...");
-      io::messages.add("energy groups are not in order in FORCE block",
+      io::messages.add("FORCE block: energy groups are not in order",
 		       "In_Parameter", io::message::error);
       return;
     }
@@ -1025,37 +922,36 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   DEBUG(10, "number of energy groups: " << param.force.energy_group.size());
 
   if (_lineStream.fail())
-    io::messages.add("bad line in ENERGYGROUP (FORCE) block",
+    io::messages.add("FORCE block: bad line in ENERGYGROUP",
 		     "In_Parameter", io::message::error);
   
   
   if (bondH ^ param.force.bond)
-    io::messages.add("Force switch for bond and bond H has to be equal",
+    io::messages.add("FORCE block: switch for bond and bond H has to be equal",
 		     "In_Parameter", io::message::error);
 
   if (angleH ^ param.force.angle)
-    io::messages.add("Force switch for angle and angle H has to be equal",
+    io::messages.add("FORCE block: switch for angle and angle H has to be equal",
 		     "In_Parameter", io::message::error);
 
   if (impH ^ param.force.improper)
-    io::messages.add("Force switch for improper and improper H has to be equal",
+    io::messages.add("FORCE block: switch for improper and improper H has to be equal",
 		     "In_Parameter", io::message::error);
 
   if (dihedralH ^ param.force.dihedral)
-    io::messages.add("Force switch for dihedral and dihedral H has to be equal",
+    io::messages.add("FORCE block: switch for dihedral and dihedral H has to be equal",
 		     "In_Parameter", io::message::error);
 
   if ((!param.force.nonbonded_crf) && param.force.nonbonded_vdw)
-    io::messages.add("Force: setting charges to zero",
+    io::messages.add("FORCE block: setting charges to zero",
 		     "In_Parameter", io::message::notice);
   
   if (param.force.nonbonded_crf && (!param.force.nonbonded_vdw))
-    io::messages.add("Force: setting atom types to dummy",
+    io::messages.add("FORCE block: setting atom types to dummy",
 		     "In_Parameter", io::message::notice);
   
   if (_lineStream.fail())
-    io::messages.add("bad line in FORCE block",
-		       "In_Parameter", io::message::error);
+    io::messages.add("bad line in FORCE block", "In_Parameter", io::message::error);
 
   /*
   if (!_lineStream.eof())
@@ -1064,22 +960,22 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   */
   
   if(param.force.bond < 0 || param.force.bond > 1)
-    io::messages.add("Illegal value for force switch for bond",
+    io::messages.add("FORCE block: Illegal value for force switch for bond",
 		     "In_Parameter", io::message::error);
   if(param.force.angle < 0 || param.force.angle > 1)
-    io::messages.add("Illegal value for force switch for angle",
+    io::messages.add("FORCE block: Illegal value for force switch for angle",
 		     "In_Parameter", io::message::error);
   if(param.force.improper < 0 || param.force.improper > 1)
-    io::messages.add("Illegal value for force switch for improper dihedral",
+    io::messages.add("FORCE block: Illegal value for force switch for improper dihedral",
 		     "In_Parameter", io::message::error);
   if(param.force.dihedral < 0 || param.force.dihedral > 1)
-    io::messages.add("Illegal value for force switch for dihedral",
+    io::messages.add("FORCE block: Illegal value for force switch for dihedral",
 		     "In_Parameter", io::message::error);
   if(param.force.nonbonded_vdw < 0 || param.force.nonbonded_vdw > 1)
-    io::messages.add("Illegal value for force switch for nonbonded (vdw)",
+    io::messages.add("FORCE block: Illegal value for force switch for nonbonded (vdw)",
 		     "In_Parameter", io::message::error);
   if(param.force.nonbonded_crf < 0 || param.force.nonbonded_crf > 1)
-    io::messages.add("Illegal value for force switch for nonbonded (crf)",
+    io::messages.add("FORCE block: Illegal value for force switch for nonbonded (crf)",
 		     "In_Parameter", io::message::error);
 }
 
@@ -1112,7 +1008,7 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
               >> dihedral;
   
   if (bond != 0 && bond != 1) {
-    io::messages.add("Error in COVALENTFORM block: NTBBH must be 0 (quartic) "
+    io::messages.add("COVALENTFORM block: NTBBH must be 0 (quartic) "
                      "or 1 (harmonic).",
 		     "In_Parameter", io::message::error);
   } else {
@@ -1126,7 +1022,7 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
   }
   
   if (angle != 0 && angle != 1) {
-    io::messages.add("Error in COVALENTFORM block: NTBAH must be 0 (quartic) "
+    io::messages.add("COVALENTFORM block: NTBAH must be 0 (quartic) "
                      "or 1 (harmonic).",
 		     "In_Parameter", io::message::error);
   } else {
@@ -1140,40 +1036,20 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
   }
   
   if (dihedral != 0 && dihedral != 1) {
-    io::messages.add("Error in COVALENTFORM block: NTBDN must be 0 (arbitray "
+    io::messages.add("COVALENTFORM block: NTBDN must be 0 (arbitray "
                      "phase shifts) or 1 (phase shifts limited).",
 		     "In_Parameter", io::message::error);
   } else {
     if (dihedral != 0) {
       switch (angle) {
         case 1: 
-         io::messages.add("Error in COVALENTFORM block: NTBDN 1 not implemented.",
+         io::messages.add("COVALENTFORM block: NTBDN 1 not implemented.",
 		          "In_Parameter", io::message::error);
           break;
         case 0:
         default: ;
       }
     }
-  }
-}
-
-/**
- * read START block.
- */
-void io::In_Parameter::read_START(simulation::Parameter &param,
-				  std::ostream & os)
-{
-  DEBUG(8, "read START");
-
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["START"];
-  
-  if (buffer.size()){
-    io::messages.add("There is no START block in this version. Use the "
-                     "INITIALISE block instead.", "In_Parameter",
-                     io::message::error);
   }
 }
 
@@ -1214,7 +1090,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
   switch(ntivel) {
     case 0 : param.start.generate_velocities = false; break;
     case 1 : param.start.generate_velocities = true; break;
-    default : io::messages.add("Error in INITIALISE block: NTIVEL must be 0 or 1",
+    default : io::messages.add("INITIALISE block: NTIVEL must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
   
@@ -1236,7 +1112,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
       param.start.shake_pos=true;
       param.start.shake_vel=true;
       break;
-    default: io::messages.add("Error in INITIALISE block: NTISHK must be 0 to 3",
+    default: io::messages.add("INITIALISE block: NTISHK must be 0 to 3",
 		     "In_Parameter", io::message::error);
   }
   
@@ -1244,7 +1120,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
   switch(ntinhc) {
     case 0 : param.start.read_nosehoover_chains = true; break;
     case 1 : param.start.read_nosehoover_chains = false; break; // reset them
-    default : io::messages.add("Error in INITIALISE block: NTINHC must be 0 or 1",
+    default : io::messages.add("INITIALISE block: NTINHC must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
   
@@ -1255,7 +1131,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
   switch(ntishi) { 
     case 0: break;
     case 1: break;
-    default : io::messages.add("Error in INITIALISE block: NTISHI must be 0 or 1",
+    default : io::messages.add("INITIALISE block: NTISHI must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
   
@@ -1264,7 +1140,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
   switch(ntirtc) {
     case 0: param.start.read_rottrans = true; break;
     case 1: param.start.read_rottrans = false; break;
-    default : io::messages.add("Error in INITIALISE block: NTIRTC must be 0 or 1",
+    default : io::messages.add("INITIALISE block: NTIRTC must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
   
@@ -1285,7 +1161,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
       param.start.remove_com_rotation = true; 
       param.start.remove_com_translation = true;
       break;
-    default : io::messages.add("Error in INITIALISE block: NTICOM must be 0 to 2",
+    default : io::messages.add("INITIALISE block: NTICOM must be 0 to 2",
 		     "In_Parameter", io::message::error);
   }
   
@@ -1297,7 +1173,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
     case 1: 
       param.stochastic.generate_integral = true;
       break;
-    default : io::messages.add("Error in INITIALISE block: NTISTI must be 0 or 1",
+    default : io::messages.add("INITIALISE block: NTISTI must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
   
@@ -1305,39 +1181,37 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
 		     "In_Parameter", io::message::notice);
   
   if(param.start.tempi <0)
-    io::messages.add("Illegal value for TEMPI in START block (>=0)",
+    io::messages.add("Illegal value for TEMPI in INITIALISE block (>=0)",
 		     "In_Parameter", io::message::error);
 }
 /**
- * read CENTREOFMASS block.
+ * read COMTRANSROT block.
  */
-void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param,
+void io::In_Parameter::read_COMTRANSROT(simulation::Parameter &param,
 					 std::ostream & os)
 {
-  DEBUG(8, "read CENTREOFMASS");
+  DEBUG(8, "read COMTRANSROT");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  DEBUG(10, "reading CENTREOFMASS block");
-  buffer = m_block["CENTREOFMASS"];
+  DEBUG(10, "reading COMTRANSROT block");
+  buffer = m_block["COMTRANSROT"];
   
   if (!buffer.size()){
     return;
   }
 
-  block_read.insert("CENTREOFMASS");
+  block_read.insert("COMTRANSROT");
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-  int nscm, npcm, npcon;
+  int nscm;
   
-  _lineStream >> nscm 
-	      >> npcm 
-	      >> npcon;
+  _lineStream >> nscm;
 
   if (_lineStream.fail())
-    io::messages.add("bad line in CENTREOFMASS block",
+    io::messages.add("bad line in COMTRANSROT block",
 		     "In_Parameter", io::message::error);
   
   if (nscm > 0){
@@ -1352,16 +1226,6 @@ void io::In_Parameter::read_CENTREOFMASS(simulation::Parameter &param,
     param.centreofmass.skip_step = 0;
     param.centreofmass.remove_rot = false;
     param.centreofmass.remove_trans = false;
-  }
-
-  if (npcm != 0) {
-    io::messages.add("Error in CENTREOFMASS block: NPCM != 0 not implemented.",
-		     "In_Parameter", io::message::error);
-  }
-  
-  if (npcon != 0) {
-    io::messages.add("Error in CENTREOFMASS block: NPCON != 0 not implemented.",
-		     "In_Parameter", io::message::error);
   }
 }
 
@@ -1424,11 +1288,10 @@ void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param,
     */
   }
   if(param.longrange.rf_epsilon!=0 && param.longrange.rf_epsilon<1)
-    io::messages.add("Illegal value for EPSRF in LONGRANGE block (0  / >=1)", 
+    io::messages.add("LONGRANGE block: Illegal value for EPSRF (0  / >=1)", 
 		     "In_Parameter", io::message::error);
   if(param.longrange.rf_kappa <0)
-    io::messages.add("Illegal value for APPAK (who came up with this name?)"
-		     " in LONGRANGE block (>=0)",
+    io::messages.add("LONGRANGE block: Illegal value for APPAK (>=0)",
 		     "In_Parameter", io::message::error);
 } // LONGRANGE
 
@@ -1463,8 +1326,7 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
     
     if (_lineStream.fail()){
       io::messages.add("bad line in PAIRLIST block",
-		       "In_Parameter",
-		       io::message::error);
+		       "In_Parameter", io::message::error);
     }
     
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
@@ -1475,8 +1337,7 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
     else if (s1 == "vgrid") param.pairlist.grid = 2;
     else if (s1 == "standard") param.pairlist.grid = 0;
     else{
-      io::messages.add("wrong pairlist algorithm chosen (allowed: standard, "
-                       "grid) in PAIRLIST block",
+      io::messages.add("PAIRLIST block: wrong pairlist algorithm chosen",
 		       "In_Parameter", io::message::error);
       param.pairlist.grid = false;
     }
@@ -1490,8 +1351,7 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
 	css >> param.pairlist.grid_size;
 	// param.pairlist.grid_size = atof(s2.c_str());
 	if (css.fail()){
-	  io::messages.add("wrong pairlist grid size chosen (allowed: auto, "
-                           "[size]) in PAIRLIST block",
+	  io::messages.add("PAIRLIST block: wrong pairlist grid size chosen",
 			   "In_Parameter", io::message::error);
 	  param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
 	}
@@ -1508,41 +1368,25 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
       
       // param.pairlist.atomic_cutoff = (atoi(s3.c_str()) != 0);
       if (css.fail()){
-	io::messages.add("wrong cutoff type chosen (allowed: atomic, chargegroup)"
-			 " in PAIRLIST block",
+	io::messages.add("PAIRLIST block: wrong cutoff type chosen "
+                         "(allowed: atomic, chargegroup)",
 			 "In_Parameter", io::message::error);
 	param.pairlist.atomic_cutoff = false;
       }
     }
   }
-
-  buffer = m_block["PLIST"]; 
-  if (buffer.size()){
-    io::messages.add("There is no PLIST block in this version. Use the "
-                     "PAIRLIST block instead.","In_Parameter",
-                     io::message::error);
-    block_read.insert("PLIST");
-  }
-  
-  buffer = m_block["PLIST03"]; 
-  if (buffer.size()){
-    io::messages.add("The PLIST03 block was renamed to PAIRLIST","In_Parameter",
-                     io::message::error);
-    block_read.insert("PLIST03");
-  }
   
   if(param.pairlist.grid && param.pairlist.grid_size <=0)
-    io::messages.add("Illegal value for grid size in PAIRLIST block (>0)",
+    io::messages.add("PAIRLIST block: Illegal value for grid size (>0)",
 		     "In_Parameter", io::message::error);
   if(param.pairlist.cutoff_short < 0){
-    io::messages.add("Illegal value for short range cutoff in PAIRLIST block (>0)",
+    io::messages.add("PAIRLIST block: Illegal value for short range cutoff (>0)",
 		     "In_Parameter", io::message::error);
   }
   if(param.pairlist.cutoff_long < param.pairlist.cutoff_short){
-    io::messages.add("Illegal value for long range cutoff in PAIRLIST block (>=RCUTP)",
+    io::messages.add("PAIRLIST block: Illegal value for long range cutoff (>=RCUTP)",
 		     "In_Parameter", io::message::error);
   }
-  
 }
 
 /**
@@ -1586,12 +1430,12 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
         break;
       default :
         param.cgrain.level = 0;
-        io::messages.add("Error in CGRAIN block: NTCGRAN must be 0 to 2.",
+        io::messages.add("CGRAIN block: NTCGRAN must be 0 to 2.",
                          "In_Parameter", io::message::error);       
     }
     
     if (param.cgrain.EPS < 0)
-      io::messages.add("Error in CGRAIN block: EPS must be >= 0.0.",
+      io::messages.add("CGRAIN block: EPS must be >= 0.0.",
                        "In_Parameter", io::message::error);
     
   }
@@ -1645,7 +1489,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
       std::stringstream s(alg);
       if (!(s >> param.multibath.nosehoover) ||
 	  param.multibath.nosehoover < 0 || param.multibath.nosehoover > 2){
-	io::messages.add("algorithm not understood in multibath block",
+	io::messages.add("MUTLIBATH block: algorithm not understood",
 			 "In_Parameter", io::message::error);
 
 	param.multibath.nosehoover = 0;
@@ -1659,7 +1503,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
       _lineStream >> num;
 
       if (num < 2){
-	io::messages.add("wrong number of Nose-Hoover chains in multibath block",
+	io::messages.add("MULTIBATH block: wrong number of Nose-Hoover chains",
 			 "In_Parameter", io::message::error);
 	param.multibath.nosehoover = 0;
 	return;
@@ -1679,7 +1523,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
       _lineStream >> temp >> tau;
 
       if (temp < 0.0 || (tau <= 0.0 && tau != -1)){
-	io::messages.add("illegal value for temp or tau in MULTIBATH block",
+	io::messages.add("MULTIBATH block: illegal value for temp or tau",
 			 "In_Parameter", io::message::error);
       }
 
@@ -1698,7 +1542,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
     if (param.multibath.multibath.size() == 0 &&
 	num > 0){
       
-      io::messages.add("Multibath: no baths but coupling groups specified",
+      io::messages.add("MULTIBATH block: no baths but coupling groups specified",
 		       "In_Parameter", io::message::error);
       num = 0;
     }
@@ -1708,7 +1552,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
       // let it figure out the last molecule on its own
       
       if (last < 1 || com_bath < 1 || ir_bath < 1){
-	io::messages.add("bad line in MULTIBATH block: range parameter < 1",
+	io::messages.add("MULTIBATH block: range parameter < 1",
 			 "In_Parameter", io::message::error);
 	if (last < 1) last = 1;
 	if (com_bath < 1) com_bath = 1;
@@ -1717,7 +1561,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 
       if (com_bath > param.multibath.multibath.size() ||
 	  ir_bath > param.multibath.multibath.size()){
-	io::messages.add("bad line in MULTIBATH block: ir bath or com bath index too large",
+	io::messages.add("MULTIBATH block: ir bath or com bath index too large",
 			 "In_Parameter", io::message::error);
 	if (com_bath > param.multibath.multibath.size()) com_bath = param.multibath.multibath.size();
 	if (ir_bath > param.multibath.multibath.size()) ir_bath = param.multibath.multibath.size();
@@ -1732,52 +1576,12 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
     }
     
   }
-  else{
-    // try a TCOUPLE block
-    
-    buffer = m_block["TCOUPLE"];
-    if (buffer.size()){
-      block_read.insert("TCOUPLE");
-
-      param.multibath.found_multibath=false;
-      param.multibath.found_tcouple=true;
-      DEBUG(11, "TCOUPLE present");
-      
-      io::messages.add("The TCOUPLE block is replaced by the MULTIBATH block.",
-			 "In_Parameter", io::message::warning);
-      
-      _lineStream.clear();
-      _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-
-      
-      for(int i=0; i<3; ++i){
-	_lineStream >> param.multibath.tcouple.ntt[i] 
-		    >> param.multibath.tcouple.temp0[i]
-		    >> param.multibath.tcouple.tau[i];
-      }
-      
-      if (_lineStream.fail()){
-	io::messages.add("bad line in TCOUPLE block",
-			 "In_Parameter", io::message::error);
-	return;
-      }	
-    }
-    else{
-      param.multibath.found_multibath=false;
-      param.multibath.found_tcouple=false;
-      DEBUG(11, "no TEMPERATURE COUPLING block");
-      // no TCOUPLE block
-      // that's fine, same as 0,0,0
-    }
-    
-  }
-  
-} // TEMPERATURE coupling
+} // MULTIBATH
 
 /**
  * read POSITIONRES block.
  */
-void io::In_Parameter::read_POSREST(simulation::Parameter &param,
+void io::In_Parameter::read_POSITIONRES(simulation::Parameter &param,
 				    std::ostream & os)
 {
   DEBUG(8, "read POSITIONRES");
@@ -1821,7 +1625,7 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
       param.posrest.posrest = simulation::posrest_const;
       break;
     default:
-      io::messages.add("Error in POSITIONRES block: NTPOR must be 0 to 3.",
+      io::messages.add("POSITIONRES block: NTPOR must be 0 to 3.",
 		       "In_Parameter", io::message::error);             
   }
 
@@ -1834,7 +1638,7 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
       break;
     default:
       param.posrest.read = false;
-      io::messages.add("Error in POSITIONRES block: NTPORS must be 0 or 1.",
+      io::messages.add("POSITIONRES block: NTPORS must be 0 or 1.",
 		       "In_Parameter", io::message::error);          
   }
 
@@ -1847,21 +1651,21 @@ void io::In_Parameter::read_POSREST(simulation::Parameter &param,
       break;
     default:
       param.posrest.scale_reference_positions = false;
-      io::messages.add("Error in POSITIONRES block: NTPORS must be 0 or 1.",
+      io::messages.add("POSITIONRES block: NTPORS must be 0 or 1.",
 		       "In_Parameter", io::message::error);          
   }
   
   if(param.posrest.posrest == simulation::posrest_const && 
      param.pcouple.scale != math::pcouple_off &&
      param.posrest.scale_reference_positions != true) {
-    io::messages.add("Error in POSITIONRES block: Position constraining together "
+    io::messages.add("POSITIONRES block: Position constraining together "
                      "with pressure coupling only allowed if reference positions"
                      " are scaled (NTPORS = 1).",
                      "In_Parameter", io::message::error);
   }
   
   if(param.posrest.force_constant < 0.0)
-    io::messages.add("Error in POSITIONRES block: Illegal value for CPOR.",
+    io::messages.add("POSITIONRES block: Illegal value for CPOR.",
 		     "In_Parameter", io::message::error);
 
 } // POSITIONRES
@@ -1902,7 +1706,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
   
   
   if(param.distanceres.distanceres < -2 || param.distanceres.distanceres > 2) {
-    io::messages.add("Error in DISTANCERES block: NTDIR must 0 to 2.",
+    io::messages.add("DISTANCERES block: NTDIR must 0 to 2.",
                      "In_Parameter", io::message::error);
   }
   
@@ -1910,17 +1714,17 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
     case 0 : param.distanceres.read = false; break;
     case 1 : param.distanceres.read = true; break;
     default:  param.distanceres.read = false; 
-      io::messages.add("Error in DISTANCERES block: NTDIRA must be 0 or 1.",
+      io::messages.add("DISTANCERES block: NTDIRA must be 0 or 1.",
                        "In_Parameter", io::message::error);
   }
   
   if(param.distanceres.tau < 0.0) {
-    io::messages.add("Error in DISTANCERES block: TAUDIR must be >= 0.0.",
+    io::messages.add("DISTANCERES block: TAUDIR must be >= 0.0.",
                      "In_Parameter", io::message::error);
   }
 
   if(param.distanceres.K <0) {
-    io::messages.add("Error in DISTANCERES block: CDIR must be >= 0.0.",
+    io::messages.add("DISTANCERES block: CDIR must be >= 0.0.",
 		     "In_Parameter", io::message::error);
   }
 
@@ -1929,7 +1733,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
 /**
  * read DIHEDRALRES block.
  */
-void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
+void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 				    std::ostream & os)
 {
   DEBUG(8, "read DIHEDRALRES");
@@ -1951,12 +1755,6 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
   
   /*
-   * old format:     
-   * # method  0 : off
-   * #         1 : instantaneous, using force constant K
-   * #         2 : instantaneous, using force constant K*w0
-   * #         3 : dihedral constraining
-   * new format:
    * #         0:    off [default]
    * #         1:    instantaneous dihedral restraining using CDLR
    * #         2:    time-averaged dihedral restraining using CDLR
@@ -1980,12 +1778,12 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
     case 0: param.dihrest.dihrest = ntdlr; break;
     case 1: param.dihrest.dihrest = 2; break;
     case 2: {
-      io::messages.add("NTDLR = 2 (DIHEDRALRES block) not implemented.",
+      io::messages.add("DIHEDRALRES block: NTDLR = 2 not implemented.",
                        "In_Parameter", io::message::error);
       break;
     }
     case 3: {
-      io::messages.add("NTDLR = 3 (DIHEDRALRES block) not implemented.",
+      io::messages.add("DIHEDRALRES block: NTDLR = 3 not implemented.",
                        "In_Parameter", io::message::error);
       break;
     }
@@ -1997,8 +1795,7 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
   }
   
   if(param.distanceres.K < 0)
-    io::messages.add("Illegal value for force constant"
-		     " in DIHEDRALRES block (>=0)",
+    io::messages.add("DIHEDRALRES block: Illegal value for force constant (>=0)",
 		     "In_Parameter", io::message::error);
 
   if (param.dihrest.dihrest == 3){
@@ -2006,7 +1803,7 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
       param.constraint.solute.algorithm = simulation::constr_shake;
 
     if (param.constraint.solute.algorithm != simulation::constr_shake){
-      io::messages.add("Dihedral angle constraints: needs SHAKE as (solute) constraints algorithm",
+      io::messages.add("DIHEDRALRES block: needs SHAKE as (solute) constraints algorithm",
 		       "In_Parameter",
 		       io::message::error);
     }
@@ -2015,9 +1812,9 @@ void io::In_Parameter::read_DIHREST(simulation::Parameter &param,
 } // DIHREST
 
 /**
- * read the JVALUE block.
+ * read the JVALUERES block.
  */
-void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
+void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
 				   std::ostream & os)
 {
   DEBUG(8, "read J-VAL");
@@ -2025,16 +1822,6 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["J-VAL03"];
-  if (buffer.size()){
-    io::messages.add("J-VAL03 block not supported. Use JVALUERES block.",
-            "In_Parameter", io::message::error);
-  }
-  buffer = m_block["J-VAL"];
-  if (buffer.size()){
-    io::messages.add("J-VAL block not supported. Use JVALUERES block.",
-            "In_Parameter", io::message::error);
-  }
   buffer = m_block["JVALUERES"];
   if (buffer.size()){
 
@@ -2070,7 +1857,7 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
       int i;
       css >> i;
       if(css.fail() || i < 0 || i > 3){
-	io::messages.add("bad value for MODE in JVALUERES block:"+s1+"\n"
+	io::messages.add("JVALURES block: bad value for MODE:"+s1+"\n"
 			 "off, instantaneous, averaged, biquadratic (0-3)",
 			 "In_Parameter", io::message::error);
 	param.jvalue.mode = simulation::restr_off;
@@ -2084,26 +1871,25 @@ void io::In_Parameter::read_JVALUE(simulation::Parameter &param,
     if (param.jvalue.tau < 0 ||
 	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
 				   param.jvalue.mode != simulation::restr_inst))){
-      io::messages.add("bad value for TAU in JVALUERES block,"
-		       "should be > 0.0",
+      io::messages.add("JVALUERES block: bad value for TAU, should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
     if (param.jvalue.mode != simulation::restr_off && param.jvalue.K < 0.0){
-      io::messages.add("bad value for K in JVALUERES block,"
+      io::messages.add("JVALUERES block: bad value for K in JVALUERES block,"
 		       "should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
     if (param.jvalue.le > 0){
       
       if (param.jvalue.ngrid < 1){
-	io::messages.add("bad value for NGRID in JVALUERES block, "
+	io::messages.add("JVALUERES block: bad value for NGRID in JVALUERES block, "
 			 "should be > 1",
 			 "In_Parameter", io::message::error);
       }
     }
     if (param.jvalue.read_av && (param.jvalue.mode != simulation::restr_av
         && !param.jvalue.le)){
-      io::messages.add("Error in JVALUERES block: Continuation only needed "
+      io::messages.add("JVALUERES block: Continuation only needed "
                        "with averaging or LE.",
 		       "In_Parameter", io::message::error);
     }
@@ -2120,13 +1906,6 @@ void io::In_Parameter::read_PERSCALE(simulation::Parameter &param,
 
   std::vector<std::string> buffer;
   std::string s;
-  
-  buffer = m_block["PSCALE"];
-  if (buffer.size()) {
-    block_read.insert("PSCALE"); 
-    io::messages.add("The PSCALE block was renamed to PERSCALE.", "In_Parameter",
-                     io::message::error);
-  }
   
   buffer = m_block["PERSCALE"];
   if (buffer.size()){
@@ -2155,21 +1934,21 @@ void io::In_Parameter::read_PERSCALE(simulation::Parameter &param,
     } else if(s1 == "off" || s1 == "0") {
       param.pscale.jrest = false;
     } else {
-      io::messages.add("Error in PERSCALE block: RESTYPE must be jrest or off.",
+      io::messages.add("PERSCALE block: RESTYPE must be jrest or off.",
 		       "In_Parameter", io::message::error);     
     }
 
     if (param.pscale.KDIH < 0.0)
-      io::messages.add("Error in PERSCALE block: KDIH must be >= 0.0.",
+      io::messages.add("PERSCALE block: KDIH must be >= 0.0.",
                        "In_Parameter", io::message::error);
     if (param.pscale.KJ < 0.0)
-      io::messages.add("Error in PERSCALE block: KJ must be >= 0.0.",
+      io::messages.add("PERSCALE block: KJ must be >= 0.0.",
                        "In_Parameter", io::message::error);
     if (param.pscale.T < 0.0)
-      io::messages.add("Error in PERSCALE block: T must be >= 0.0.",
+      io::messages.add("PERSCALE block: T must be >= 0.0.",
                        "In_Parameter", io::message::error);
     if (param.pscale.difference < 0.0)
-      io::messages.add("Error in PERSCALE block: DIFF must be >= 0.0.",
+      io::messages.add("PERSCALE block: DIFF must be >= 0.0.",
                        "In_Parameter", io::message::error);
     
     switch(read) {
@@ -2180,7 +1959,7 @@ void io::In_Parameter::read_PERSCALE(simulation::Parameter &param,
          param.pscale.read_data = true;
          break;
       default :
-      io::messages.add("Error in PERSCALE block: READ must be 0 or 1.",
+      io::messages.add("PERSCALE block: READ must be 0 or 1.",
                        "In_Parameter", io::message::error);        
     }
   }
@@ -2221,12 +2000,12 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param,
         param.rottrans.rottrans = true;
         break;
       default :
-      io::messages.add("Error in ROTTRANS block: RTC must be 0 or 1",
+      io::messages.add("ROTTRANS block: RTC must be 0 or 1",
                        "In_Parameter", io::message::error);
     }
 
     if (param.rottrans.last <= 0)
-      io::messages.add("Error in ROTTRANS block: RTCLAST must be > 0.",
+      io::messages.add("ROTTRANS block: RTCLAST must be > 0.",
 		       "In_Parameter", io::message::error);
   }
 }
@@ -2272,7 +2051,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
       }
       default: {
         param.force.spc_loop = -1;
-        io::messages.add("bad value for SPC in INNERLOOP: allowed : 1 (on), 0 (off)",
+        io::messages.add("INNERLOOP block: bad value for SPC, allowed : 1 (on), 0 (off)",
                 "In_Parameter",
                 io::message::error);
       }
@@ -2291,14 +2070,6 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["REPLICA03"];
-
-  if (buffer.size()){
-    block_read.insert("REPLICA03");
-    io::messages.add("The REPLICA03 block was renamed to REPLICA.",
-                     "In_Parameter", io::message::error);
-  }
-  
   buffer = m_block["REPLICA"];
   if (buffer.size()){
     block_read.insert("REPLICA");
@@ -2311,7 +2082,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     _lineStream >> param.replica.num_T;
     
     if (_lineStream.fail() || param.replica.num_T < 0) {
-      io::messages.add("Error in REPLICA block: NRET must be >= 0.",
+      io::messages.add("REPLICA block: NRET must be >= 0.",
 		       "In_Parameter", io::message::error);
       error = true;
     }
@@ -2323,7 +2094,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
       _lineStream >> param.replica.temperature[i];
       if (_lineStream.fail() || param.replica.temperature[i] < 0.0) {
         std::ostringstream msg;
-        msg << "Error in REPLICA block: RET(" << i+1 << ") must be >= 0.0";
+        msg << "REPLICA block: RET(" << i+1 << ") must be >= 0.0";
         io::messages.add(msg.str(), "In_Parameter", io::message::error);
         error = true;
       }
@@ -2339,7 +2110,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
         param.replica.scale = true;
         break;
       default :
-       io::messages.add("Error in REPLICA block: LRSCALE must be 0 or 1",
+       io::messages.add("REPLICA block: LRSCALE must be 0 or 1",
 		       "In_Parameter", io::message::error); 
        error = true;
     }
@@ -2357,7 +2128,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     _lineStream >> param.replica.num_l;
     
     if (_lineStream.fail() || param.replica.num_l < 0) {
-      io::messages.add("Error in REPLICA block: NRELAM must be >= 0.",
+      io::messages.add("REPLICA block: NRELAM must be >= 0.",
 		       "In_Parameter", io::message::error);
       error = true;
     }
@@ -2371,7 +2142,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
       _lineStream >> param.replica.lambda[i];
       if (_lineStream.fail() || param.replica.lambda[i] < 0.0) {
         std::ostringstream msg;
-        msg << "Error in REPLICA block: RELAM(" << i+1 << ") must be >= 0.0";
+        msg << "REPLICA block: RELAM(" << i+1 << ") must be >= 0.0";
         io::messages.add(msg.str(), "In_Parameter", io::message::error);
         error = true;
       }
@@ -2380,7 +2151,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
       _lineStream >> param.replica.dt[i];
       if (_lineStream.fail() || param.replica.dt[i] < 0.0) {
         std::ostringstream msg;
-        msg << "Error in REPLICA block: RETS(" << i+1 << ") must be >= 0.0";
+        msg << "REPLICA block: RETS(" << i+1 << ") must be >= 0.0";
         io::messages.add(msg.str(), "In_Parameter", io::message::error);
         error = true;
       }
@@ -2398,25 +2169,25 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     
     _lineStream >> param.replica.trials;
     if (_lineStream.fail() || param.replica.trials < 0) {
-      io::messages.add("Error in REPLICA block: NRETRIAL must be >= 0.",
+      io::messages.add("REPLICA block: NRETRIAL must be >= 0.",
 		       "In_Parameter", io::message::error);
       error = true;
     }
     _lineStream >> param.replica.equilibrate;
     if (_lineStream.fail() || param.replica.equilibrate < 0) {
-      io::messages.add("Error in REPLICA block: NREQUIL must be >= 0.",
+      io::messages.add("REPLICA block: NREQUIL must be >= 0.",
 		       "In_Parameter", io::message::error);
       error = true;
     }
     _lineStream >> param.replica.slave_runs;
     if (_lineStream.fail() || param.replica.slave_runs < 0) {
-      io::messages.add("Error in REPLICA block: NREJOB must be >= 0.",
+      io::messages.add("REPLICA block: NREJOB must be >= 0.",
 		       "In_Parameter", io::message::error);
       error = true;
     }
     _lineStream >> param.replica.write;
     if (_lineStream.fail() || param.replica.write < 0) {
-      io::messages.add("Error in REPLICA block: NREWRT must be >= 0.",
+      io::messages.add("REPLICA block: NREWRT must be >= 0.",
 		       "In_Parameter", io::message::error);
       error = true;
     }
@@ -2473,7 +2244,7 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
         break;
       default :
         param.multicell.multicell = false;
-        io::messages.add("Error in MULTICELL block: NTM must be 0 or 1.",
+        io::messages.add("MULTICELL block: NTM must be 0 or 1.",
                          "In_Parameter", io::message::error);
     }
     
@@ -2487,7 +2258,7 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
       // do these checks only if mutlicell is really used.
       if (param.multicell.x < 1 || param.multicell.y < 1 ||
           param.multicell.z < 1) {
-        io::messages.add("Error in MULTICELL block: NCELLA, NCELLB and NCELLC "
+        io::messages.add("MULTICELL block: NCELLA, NCELLB and NCELLC "
                          "must be >= 1.", "In_Parameter", io::message::error);
       }
     
@@ -2501,7 +2272,7 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
     
       if (param.boundary.boundary != math::rectangular &&
           param.boundary.boundary != math::triclinic) {
-        io::messages.add("MULTICELL is only available for rectangular or "
+        io::messages.add("MULTICELL block: only available for rectangular or "
                          "triclinic periodic boundary conditions.", "In_Parameter",
                          io::message::error);   
       }
@@ -2554,7 +2325,7 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
         break;
       default :
         param.analyze.analyze = false;
-        io::messages.add("Error in READTRAJ block: NTRD must be 0 or 1",
+        io::messages.add("READTRAJ block: NTRD must be 0 or 1",
                          "In_Parameter", io::message::error);
     }
     
@@ -2575,7 +2346,7 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
         break;
       default :
         param.analyze.copy_pos = false;
-        io::messages.add("Error in READTRAJ block: NTSHK must be 0 or 1",
+        io::messages.add("READTRAJ block: NTSHK must be 0 or 1",
                          "In_Parameter", io::message::error);
     }
     
@@ -2616,25 +2387,25 @@ void io::In_Parameter::read_INTEGRATE(simulation::Parameter & param,
         param.integrate.method = simulation::integrate_leap_frog;
         break;
       default :
-        io::messages.add("Error in INTEGRATE block: NINT must be 0 or 1",
+        io::messages.add("INTEGRATE block: NINT must be 0 or 1",
                          "In_Parameter", io::message::error);        
     }
   }
 }
 
-void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
+void io::In_Parameter::read_STOCHDYN(simulation::Parameter & param,
 				       std::ostream & os)
 {
-  DEBUG(8, "read STOCHASTIC");
+  DEBUG(8, "read STOCHDYN");
 
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["STOCHASTIC"];
+  buffer = m_block["STOCHDYN"];
   
   if (buffer.size()){
 
-    block_read.insert("STOCHASTIC");
+    block_read.insert("STOCHDYN");
 
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
@@ -2645,37 +2416,37 @@ void io::In_Parameter::read_STOCHASTIC(simulation::Parameter & param,
                 >> param.stochastic.temp;
     
     if (_lineStream.fail()){
-      io::messages.add("bad line in STOCHASTIC block",
+      io::messages.add("bad line in STOCHDYN block",
 		       "In_Parameter", io::message::error);
       return;
     }
     
     if(param.stochastic.sd < 0 || param.stochastic.sd > 1)
-      io::messages.add("Error in STOCHASTIC block: NTSD must be 0 or 1",
+      io::messages.add("STOCHDYN block: NTSD must be 0 or 1",
                        "In_Parameter", io::message::error);
     
     if(param.stochastic.ntfr < 0 || param.stochastic.ntfr > 3)
-      io::messages.add("Error in STOCHASTIC block: NTFR must be 0 to 3",
+      io::messages.add("STOCHDYN block: NTFR must be 0 to 3",
                        "In_Parameter", io::message::error);
     
     if(param.stochastic.nsfr <= 0)
-      io::messages.add("Error in STOCHASTIC block: NSFR must be > 0",
+      io::messages.add("STOCHDYN block: NSFR must be > 0",
                        "In_Parameter", io::message::error);
     
     if(param.stochastic.nbref <= 0)
-      io::messages.add("Error in STOCHASTIC block: NBREF must be > 0",
+      io::messages.add("STOCHDYN block: NBREF must be > 0",
                        "In_Parameter", io::message::error);
     
     if(param.stochastic.rcutf < 0)
-      io::messages.add("Error in STOCHASTIC block: RCUTF must be >= 0",
+      io::messages.add("STOCHDYN block: RCUTF must be >= 0",
                        "In_Parameter", io::message::error);
     
     if(param.stochastic.cfric < 0)
-      io::messages.add("Error in STOCHASTIC block: CFRIC must be >= 0",
+      io::messages.add("STOCHDYN block: CFRIC must be >= 0",
                        "In_Parameter", io::message::error);
     
     if(param.stochastic.temp < 0)
-      io::messages.add("Error in STOCHASTIC block: TEMPSD must be >= 0",
+      io::messages.add("STOCHDYN block: TEMPSD must be >= 0",
                        "In_Parameter", io::message::error);
   }
 }
@@ -2738,7 +2509,7 @@ void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
     }
 
     if (param.multistep.steps < 0) {
-      io::messages.add("Error in MULTISTEP block: STEPS must be >= 0.",
+      io::messages.add("MULTISTEP block: STEPS must be >= 0.",
                        "In_Parameter", io::message::error);
     }
     switch(boost) {
@@ -2749,7 +2520,7 @@ void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
         param.multistep.boost = true;
         break;
       default :
-        io::messages.add("Error in MULTISTEP block: BOOST must be 0 or 1",
+        io::messages.add("MULTISTEP block: BOOST must be 0 or 1",
                          "In_Parameter", io::message::error);
     }
   }
@@ -2782,7 +2553,7 @@ void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
       case 0: param.montecarlo.mc = mc; break;
       case 1: param.montecarlo.mc = mc; break;
       default : {
-        io::messages.add("MC in MONTECARLO block must be 0 or 1",
+        io::messages.add("MONTECARLO block: MC must be 0 or 1",
                 "In_Parameter", io::message::error);
         break;
       }
@@ -2790,7 +2561,7 @@ void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
           
     // parameters are all positive
     if(param.montecarlo.steps < 0 || param.montecarlo.dlambda < 0){
-      io::messages.add("Negative parameter in MONTECARLO block.",
+      io::messages.add("MONTECARLO block: Negative parameter",
               "In_Parameter", io::message::error);
       return;
     }
@@ -2820,11 +2591,8 @@ void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
                   "In_Parameter", io::message::error);
         }
       }
-    }
-    
+    } 
   }
-  
-  
 }
 
 void io::In_Parameter::read_RAMD(simulation::Parameter & param,
@@ -2868,238 +2636,40 @@ void io::In_Parameter::read_RAMD(simulation::Parameter & param,
     }
 
     if(param.ramd.fc < 0)
-      io::messages.add("RAMD: FC should be >=0",
+      io::messages.add("RAMD block: FC should be >=0",
 		       "io::In_Parameter::read_RAMD",
 		       io::message::error);
     if(param.ramd.steps < 0)
-      io::messages.add("RAMD: STEPS should be >0",
+      io::messages.add("RAMD block: STEPS should be >0",
 		       "io::In_Parameter::read_RAMD",
 		       io::message::error);
     if(param.ramd.r_min < 0)
-      io::messages.add("RAMD: R_MIN should be >0",
+      io::messages.add("RAMD block: R_MIN should be >0",
 		       "io::In_Parameter::read_RAMD",
 		       io::message::error);
     if(param.ramd.every < 0)
-      io::messages.add("RAMD: NWRITE should be >=0",
+      io::messages.add("RAMD block: NWRITE should be >=0",
 		       "io::In_Parameter::read_RAMD",
 		       io::message::error);
     if(param.ramd.tau ==0)
       param.ramd.do_ta=false;
     else if(param.ramd.tau < 0)
-      io::messages.add("RAMD: TAU should be >=0",
+      io::messages.add("RAMD block: TAU should be >=0",
 		      "io::In_Parameter::read_RAMD",
 		      io::message::error);
     else
       param.ramd.do_ta=true;
     if(param.ramd.do_ta && param.ramd.ta_min <= 0)
-      io::messages.add("RAMD: TA_MIN should be >0 if time averaging is included",
+      io::messages.add("RAMD block: TA_MIN should be >0 if time averaging is included",
 		       "io::In_Parameter::read_RAMD",
 		       io::message::error);
 
     if(param.ramd.fc!=0.0 && param.ramd.atom.size()==0)
-      io::messages.add("RAMD: no atoms read in to apply random force",
+      io::messages.add("RAMD block: no atoms read in to apply random force",
 		       "io::In_Parameter::read_RAMD",
 		       io::message::warning);
 
 
-  }
-}
-
-void io::In_Parameter::read_CONSISTENCYCHECK(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read CONSISTENCYCHECK");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["CONSISTENCYCHECK"];
-  
-  if (buffer.size()) {
-    block_read.insert("CONSISTENCYCHECK");
-    io::messages.add("CONSISTENCYCHECK is not supported in this version. "
-                     "Use \"make check\" instead.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_THERMOSTAT(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read THERMOSTAT");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["THERMOSTAT"];
-  
-  if (buffer.size()) {
-    block_read.insert("THERMOSTAT");
-    io::messages.add("The THERMOSTAT block is not supported in this version. "
-                     "Use the MULTIBATH block instead.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_BAROSTAT(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read BAROSTAT");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["BAROSTAT"];
-  
-  if (buffer.size()) {
-    block_read.insert("BAROSTAT");
-    io::messages.add("The BAROSTAT block is not supported in this version. "
-                     "Use the PRESSURESCALE block instead.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_VIRIAL(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read VIRIAL");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["VIRIAL"];
-  
-  if (buffer.size()) {
-    block_read.insert("VIRIAL");
-    io::messages.add("The VIRIAL block is not supported in this version. "
-                     "Use the PRESSURESCALE block instead.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_NEIGHBOURLIST(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read NEIGHBOURLIST");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["NEIGHBOURLIST"];
-  
-  if (buffer.size()) {
-    block_read.insert("NEIGHBOURLIST");
-    io::messages.add("The NEIGHBOURLIST block is not supported in this version. "
-                     "Use the PAIRLIST block instead.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read NONBONDED");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["NONBONDED"];
-  
-  if (buffer.size()) {
-    block_read.insert("NONBONDED");
-    io::messages.add("The NONBONDED block is not supported in this version. "
-                     "Use the LONGRANGE block instead.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read GROMOS96COMPAT");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["GROMOS96COMPAT"];
-  
-  if (buffer.size()) {
-    block_read.insert("GROMOS96COMPAT");
-    io::messages.add("The GROMOS96COMPAT block is not supported in this version. "
-                     "Use promd for this feature.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_PATHINT(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read PATHINT");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["PATHINT"];
-  
-  if (buffer.size()) {
-    block_read.insert("PATHINT");
-    io::messages.add("The PATHINT block is not supported in this version. "
-                     "Use promd for this feature.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_LOCALELEVATION(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read LOCALELEVATION");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["LOCALELEVATION"];
-  
-  if (buffer.size()) {
-    block_read.insert("LOCALELEVATION");
-    io::messages.add("The LOCALELEVATION block is not supported in this version. "
-                     "Use promd for this feature.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_UMBRELLA(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read UMBRELLA");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["UMBRELLA"];
-  
-  if (buffer.size()) {
-    block_read.insert("UMBRELLA");
-    io::messages.add("The UMBRELLA block is not supported in this version. "
-                     "Use promd for this feature.", "In_Parameter",
-                     io::message::error);
-  }
-}
-
-void io::In_Parameter::read_FORCEFIELD(simulation::Parameter & param,
-				 std::ostream & os)
-{
-  DEBUG(8, "read FORCEFIELD");
-  
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  buffer = m_block["FORCEFIELD"];
-  
-  if (buffer.size()) {
-    block_read.insert("FORCEFIELD");
-    io::messages.add("The FORCEFIELD block is not supported in this version. "
-                     "Use the COVALENTFORM block instead.", "In_Parameter",
-                     io::message::error);
   }
 }
 
@@ -3137,7 +2707,7 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
         break;
       }
       default:
-        io::messages.add("Error in POLARIZE block: COS must be 0 or 1.",
+        io::messages.add("POLARIZE block: COS must be 0 or 1.",
                          "In_Parameter", io::message::error);
     }
     
@@ -3145,12 +2715,12 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
       case 0 : param.polarize.efield_site = simulation::ef_atom; break;
       case 1 : param.polarize.efield_site = simulation::ef_cos; break;
       default:
-        io::messages.add("Error in POLARIZE block: EFIELD must be 0 or 1.",
+        io::messages.add("POLARIZE block: EFIELD must be 0 or 1.",
                          "In_Parameter", io::message::error);
     }
     
     if (param.polarize.minfield <= 0.0) {
-      io::messages.add("Error in POLARIZE block: MINFIELD must be > 0.0",
+      io::messages.add("POLARIZE block: MINFIELD must be > 0.0",
                          "In_Parameter", io::message::error); 
     }
     
@@ -3158,7 +2728,7 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
       case 0 : param.polarize.damp = false; break;
       case 1 : param.polarize.damp = true; break;
       default:
-        io::messages.add("Error in POLARIZE block: DAMP must be 0 or 1.",
+        io::messages.add("POLARIZE block: DAMP must be 0 or 1.",
                          "In_Parameter", io::message::error);
     }
     
@@ -3166,7 +2736,7 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
       param.polarize.write = 0;
     
     if (param.polarize.write < 0) {
-      io::messages.add("Error in POLARIZE block: WRITE must be >= 0",
+      io::messages.add("POLARIZE block: WRITE must be >= 0",
                          "In_Parameter", io::message::error);
     }
     
@@ -3175,11 +2745,11 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
                        "In_Parameter", io::message::warning);
     }   
     if (param.cgrain.level>1 && param.polarize.cos) {
-      io::messages.add("Error in POLARIZE block: No polarization for coarse-grained and multi-grained simulations.",
+      io::messages.add("POLARIZE block: No polarization for coarse-grained and multi-grained simulations.",
                          "In_Parameter", io::message::error);
     }
     if (param.constraint.solute.algorithm == simulation::constr_flexshake && param.polarize.cos){
-      io::messages.add("Error in POLARIZE block: No flexible shake when running polarization.",
+      io::messages.add("POLARIZE block: No flexible shake when running polarization.",
                          "In_Parameter", io::message::error);
     }
     
@@ -3194,7 +2764,7 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
     }
 
     if (size > 1 && param.polarize.cos) {
-      io::messages.add("Error in POLARIZE block: No OMP parallelization when running polarization.",
+      io::messages.add("POLARIZE block: No OMP parallelization when running polarization.",
                          "In_Parameter", io::message::error);
     }
 #endif 
@@ -3234,10 +2804,137 @@ void io::In_Parameter::read_RANDOMNUMBERS(simulation::Parameter & param,
         param.rng.rng = simulation::random_gsl;
         break;
       default :
-       io::messages.add("Error in RANDOMNUMBERS block: NTRNG must be 0 (G96) "
+       io::messages.add("RANDOMNUMBERS block: NTRNG must be 0 (G96) "
                         "or 1 (GSL)", "In_Parameter", io::message::error);       
     }  
     
     math::RandomGenerator::check(param);
   }
+}  
+
+void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param, 
+        std::ostream & os)
+{
+  DEBUG(8, "read LAMBDAS");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["LAMBDAS"];
+  
+  if (buffer.size()) {
+    block_read.insert("LAMBDAS");
+    
+    io::messages.add("LAMBDAS block: not implemented",
+		     "In_Parameter", io::message::error);
+  }
+}  
+
+// two helper data types to simply unsupported block handling
+enum unsupported_block_type { 
+  ub_unknown, // I know it and know that I don't use it but I have no idea why
+  ub_renamed, // it was renamed. e.g. from previous versions
+  ub_promd, // it is a PROMD block. Tell alternative if there is any
+  ub_g96 // it is a G96 block. Tell alternative if there is any
+};
+
+// give a valid block name as an alternative and it will tell the user to
+// use it.
+struct unsupported_block {
+  unsupported_block() : 
+        alternative (""), type(ub_unknown) {}
+  unsupported_block(std::string a, unsupported_block_type t) :
+        alternative(a), type(t) {}
+        
+        std::string alternative;
+        unsupported_block_type type;
+};
+
+void io::In_Parameter::read_known_unsupported_blocks() {
+  std::map<std::string,unsupported_block> ub;
+  // add all those unknown blocks
+  ub["ANATRAJ"] = unsupported_block("READTRAJ", ub_renamed);
+  ub["MINIMISE"] = unsupported_block("ENERGYMIN", ub_renamed);
+  ub["STOCHASTIC"] = unsupported_block("STOCHDYN", ub_renamed);
+  ub["BOUNDARY"] = unsupported_block("BOUNDCOND", ub_renamed);
+  ub["THERMOSTAT"] = unsupported_block("MULTIBATH", ub_promd);
+  ub["TCOUPLE"] = unsupported_block("MULTIBATH", ub_g96);
+  ub["BAROSTAT"] = unsupported_block("PRESSURESCALE", ub_promd);
+  ub["VIRIAL"] = unsupported_block("PRESSURESCALE", ub_promd);
+  ub["PCOUPLE"] = unsupported_block("PRESSURESCALE", ub_g96);
+  ub["PCOUPLE03"] = unsupported_block("PRESSURESCALE", ub_renamed);
+  ub["GEOMCONSTRAINT"] = unsupported_block("CONSTRAINT", ub_promd);
+  ub["SHAKE"] = unsupported_block("CONSTRAINT", ub_g96);
+  ub["GROMOS96COMPAT"] = unsupported_block("", ub_promd);
+  ub["PATHINT"] = unsupported_block("", ub_promd);
+  ub["NEIGHBOURLIST"] = unsupported_block("PAIRLIST", ub_promd);
+  ub["PLIST"] = unsupported_block("PAIRLIST", ub_g96);
+  ub["PLIST03"] = unsupported_block("PAIRLIST", ub_renamed);
+  ub["NONBONDED"] = unsupported_block("LONGRANGE", ub_promd);
+  ub["START"] = unsupported_block("INITIALISE", ub_g96);
+  ub["OVERALLTRANSROT"] = unsupported_block("COMTRANSROT", ub_promd);
+  ub["CENTREOFMASS"] = unsupported_block("COMTRANSROT", ub_g96);
+  ub["POSREST"] = unsupported_block("POSITIONRES", ub_g96);
+  ub["DISTREST"] = unsupported_block("DISTANCERES", ub_g96);
+  ub["DIHEREST"] = unsupported_block("DIHEDRALRES", ub_g96);
+  ub["J-VAL"] = unsupported_block("JVALUERES", ub_g96);
+  ub["J-VAL03"] = unsupported_block("JVALUERES", ub_renamed);
+  ub["PERTURB"] = unsupported_block("PERTURBATION", ub_g96);
+  ub["PERTURB03"] = unsupported_block("PERTURBATION", ub_renamed);
+  ub["UMBRELLA"] = unsupported_block("", ub_promd);
+  ub["PRINT"] = unsupported_block("PRINTOUT", ub_g96);
+  ub["WRITE"] = unsupported_block("WRITETRAJ", ub_g96);
+#ifdef NDEBUG
+  ub["DEBUG"] = unsupported_block("--enable-debug at compile time and "
+                                  "the @verb argument", ub_promd);
+#else
+  ub["DEBUG"] = unsupported_block("the @verb argument", ub_promd);
+#endif
+  ub["FOURDIM"] = unsupported_block("", ub_g96);
+  ub["LOCALELEV"] = unsupported_block("", ub_promd);
+  ub["LOCALELEVATION"] = unsupported_block("LOCALELEV in PROMD", ub_g96);
+  ub["SUBMOLECULES"] = unsupported_block("SOLUTEMOLECULES and moved to "
+                                         "the topology", ub_renamed);
+  ub["FORCEFIELD"] = unsupported_block("COVALENTFORM", ub_renamed);
+  ub["PSCALE"] = unsupported_block("PERSCALE", ub_renamed);
+  ub["REPLICA03"] = unsupported_block("REPLICA", ub_renamed);
+  
+  std::map<std::string,unsupported_block>::const_iterator
+          it = ub.begin(),
+          to = ub.end();
+  
+  // loop over unsupported blocks;
+  for(; it != to; ++it) {
+    // if it is present
+    if (m_block[it->first].size()) {
+      block_read.insert(it->first);
+      
+      std::ostringstream msg;
+      msg << it->first << " block";
+      
+      switch(it->second.type) {
+        case ub_renamed :
+          msg << " was renamed to " << it->second.alternative;
+          break;
+        case ub_promd :
+          msg << " is PROMD specific.";
+          if (it->second.alternative != "") 
+            msg << " Use " << it->second.alternative << " instead.";
+          break;
+        case ub_g96 :
+          msg << " is GROMOS96 specific.";
+          if (it->second.alternative != "") 
+            msg << " Use " << it->second.alternative << " instead.";
+          break;
+        default : // don't know what to do.
+          msg << " is known to be not supported.";
+      }
+      
+      io::messages.add(msg.str(), "In_Parameter", io::message::error);       
+    }
+  }
 }
+
+
+
+
