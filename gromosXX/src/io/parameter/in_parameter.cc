@@ -266,12 +266,6 @@ void io::In_Parameter::read_STEP(simulation::Parameter &param,
   if (_lineStream.fail())
     io::messages.add("bad line in STEP block", "In_Parameter", io::message::error);
 
-  /*
-  if (!_lineStream.eof())
-    io::messages.add("End of line not reached in STEP block, but should have been: \n" + s +  "\n",
-		       "In_Parameter", io::message::warning);
-  */
-
   if(param.step.t0 < 0 && param.step.t0 != -1.0)
     io::messages.add("STEP block: Negative time is not supported",
 		     "In_Parameter", io::message::error);
@@ -369,10 +363,6 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     if(param.constraint.solute.shake_tolerance <= 0.0)
       io::messages.add("CONSTRAINT block: shake tolerance should be > 0.0",
 		       "In_Parameter", io::message::error);
-
-    if(param.centreofmass.remove_rot || param.centreofmass.remove_trans)
-      io::messages.add("CONSTRAINT block: flexible shake and removal of centre of mass motion "
-		       "needs extra care!", "In_Parameter", io::message::warning);
 
     if(param.constraint.solute.flexshake_mode < 0 ||
        param.constraint.solute.flexshake_mode > 3)
@@ -663,7 +653,7 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
     if (param.pcouple.calculate){
       if (s3 == "none"){
 	io::messages.add("requesting pressure calculation but "
-			 "no virial specified\n",
+			 "no virial specified",
 			 "In_Parameter", io::message::error);
 	param.pcouple.virial = math::no_virial;
       }
@@ -684,7 +674,7 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
   } // PRESSURESCALE block
   
   if (param.pcouple.calculate==false && param.pcouple.scale!=math::pcouple_off)
-    io::messages.add("pressure coupling activated but "
+    io::messages.add("PRESSURESCALE block: pressure coupling activated but "
 		     "not calculating pressure",
 		     "In_Parameter",
 		     io::message::error);
@@ -1263,29 +1253,13 @@ void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param,
     io::messages.add("bad line in LONGRANGE block",
 		     "In_Parameter", io::message::error);
   
-  /*
-  if (!_lineStream.eof())
-    io::messages.add("End of line not reached, but should have been: \n" + s +  "\n",
-		     "In_Parameter", io::message::warning);
-  */
 
   if(param.longrange.rf_cutoff < 0) {
     param.longrange.rf_excluded=true;
     param.longrange.rf_cutoff = -param.longrange.rf_cutoff;
-    
-    /**
-    io::messages.add("Reaction field contribution of excluded atoms is " 
-		     "taken into account", "In_Parameter", 
-		     io::message::notice);
-    */
   }
   else{
     param.longrange.rf_excluded=false;
-    /**
-    io::messages.add("Reaction field contribution of excluded atoms is " 
-		     "NOT taken into account", "In_Parameter", 
-		     io::message::notice);
-    */
   }
   if(param.longrange.rf_epsilon!=0 && param.longrange.rf_epsilon<1)
     io::messages.add("LONGRANGE block: Illegal value for EPSRF (0  / >=1)", 
@@ -1655,15 +1629,6 @@ void io::In_Parameter::read_POSITIONRES(simulation::Parameter &param,
 		       "In_Parameter", io::message::error);          
   }
   
-  if(param.posrest.posrest == simulation::posrest_const && 
-     param.pcouple.scale != math::pcouple_off &&
-     param.posrest.scale_reference_positions != true) {
-    io::messages.add("POSITIONRES block: Position constraining together "
-                     "with pressure coupling only allowed if reference positions"
-                     " are scaled (NTPORS = 1).",
-                     "In_Parameter", io::message::error);
-  }
-  
   if(param.posrest.force_constant < 0.0)
     io::messages.add("POSITIONRES block: Illegal value for CPOR.",
 		     "In_Parameter", io::message::error);
@@ -1817,7 +1782,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
 				   std::ostream & os)
 {
-  DEBUG(8, "read J-VAL");
+  DEBUG(8, "read JVALUERES");
 
   std::vector<std::string> buffer;
   std::string s;
@@ -2251,7 +2216,7 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
     if (param.multicell.multicell) {
       // disable because broken
       param.multicell.multicell = false;
-      io::messages.add("MULTICELL simulations are broken in md++",
+      io::messages.add("MULTICELL simulations are broken in MD++",
                          "In_Parameter", io::message::error);      
       
       
@@ -2270,18 +2235,10 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
         param.multicell.multicell = false;
       }
     
-      if (param.boundary.boundary != math::rectangular &&
-          param.boundary.boundary != math::triclinic) {
-        io::messages.add("MULTICELL block: only available for rectangular or "
-                         "triclinic periodic boundary conditions.", "In_Parameter",
-                         io::message::error);   
-      }
-    
       if (tolpx || tolpv || tolpf || tolpfw) {
         io::messages.add("MULTICELL block: Periodicity checks not available in "
-                         "this version.\n"
-                         "disabling MULTICELL simulation.", "In_Parameter",
-                         io::message::warning);    
+                         "this version. Disabling MULTICELL simulation.", 
+                         "In_Parameter", io::message::warning);    
         param.multicell.multicell = false;
       }  
     }
@@ -2572,26 +2529,6 @@ void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
               "In_Parameter", io::message::error);
       return;
     }
-    
-    // slow growth
-    if(param.montecarlo.mc && param.perturbation.dlamt > 0){
-      io::messages.add("Chemical MONTECARLO not possible when doing slow growth."
-      " Set DLAMT to 0.0.",
-              "In_Parameter", io::message::error);
-      return;
-    }
-    
-    // all baths have the same temperature
-    if(param.montecarlo.mc){
-      for(unsigned int i = 1; i < param.multibath.multibath.bath_index().size(); ++i){
-        if(param.multibath.multibath.bath(i).temperature !=
-                param.multibath.multibath.bath(0).temperature){
-          io::messages.add("Chemical MONTECARLO only possible if all baths "
-          " have the same temperature.",
-                  "In_Parameter", io::message::error);
-        }
-      }
-    } 
   }
 }
 
@@ -2744,30 +2681,6 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
       io::messages.add("POLARIZE block: DAMP is ignored if no polarization is used",
                        "In_Parameter", io::message::warning);
     }   
-    if (param.cgrain.level>1 && param.polarize.cos) {
-      io::messages.add("POLARIZE block: No polarization for coarse-grained and multi-grained simulations.",
-                         "In_Parameter", io::message::error);
-    }
-    if (param.constraint.solute.algorithm == simulation::constr_flexshake && param.polarize.cos){
-      io::messages.add("POLARIZE block: No flexible shake when running polarization.",
-                         "In_Parameter", io::message::error);
-    }
-    
-#ifdef OMP
-    int size, tid;
-#pragma omp parallel private(tid)
-    {
-      tid = omp_get_thread_num();
-      if (tid == 0){
-	size = omp_get_num_threads();
-      }
-    }
-
-    if (size > 1 && param.polarize.cos) {
-      io::messages.add("POLARIZE block: No OMP parallelization when running polarization.",
-                         "In_Parameter", io::message::error);
-    }
-#endif 
   }
 }
 

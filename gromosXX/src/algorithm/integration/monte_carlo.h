@@ -66,6 +66,16 @@ namespace algorithm
       if (gsl_rng_default_seed == 0)
 	gsl_rng_set (m_rng, sim.param().start.ig);
 
+      for(unsigned int i = 1; i < sim.param().multibath.multibath.bath_index().size(); ++i){
+        if(sim.param().multibath.multibath.bath(i).temperature !=
+                sim.param().multibath.multibath.bath(0).temperature){
+          io::messages.add("Chemical MONTECARLO only possible if all baths "
+                           " have the same temperature.",
+                           "Monte_Carlo", io::message::error);
+          return -1;
+        }
+      }
+      
       return 0;
     };
 

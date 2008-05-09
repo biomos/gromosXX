@@ -21,6 +21,7 @@
 #include <io/topology/in_topology.h>
 #include <io/topology/in_perturbation.h>
 #include <io/parameter/in_parameter.h>
+#include <io/parameter/check_parameter.h>
 
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <algorithm/create_md_sequence.h>
@@ -47,8 +48,10 @@ int io::read_input(io::Argument const & args,
 {
 
   if (read_parameter(args, sim, os, quiet) != 0) return -1;
+  if (check_parameter(sim) != 0) return -1;
 
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
+  
 
   // read this before configuration, as it contains topological data...
   // does this work???

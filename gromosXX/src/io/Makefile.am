@@ -28,7 +28,8 @@ xxioconf_HEADERS =      configuration/in_configuration.h \
                         configuration/inframe.h
 
 xxioparamdir  = $(includedir)/gromosXX/io/parameter
-xxioparam_HEADERS =     parameter/in_parameter.h
+xxioparam_HEADERS =     parameter/in_parameter.h \
+                        parameter/check_parameter.h
 
 xxioffdir     = $(includedir)/gromosXX/io/forcefield
 xxioff_HEADERS =        forcefield/in_ifp.h
@@ -44,6 +45,7 @@ libgroio_la_SOURCES =	io.cc \
 			read_input.cc \
 			read_special.cc \
 			parameter/in_parameter.cc \
+                        parameter/check_parameter.cc \
 			topology/in_topology.cc \
 			topology/in_perturbation.cc \
 			configuration/inframe.cc \

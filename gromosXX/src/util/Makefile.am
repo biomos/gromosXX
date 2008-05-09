@@ -15,7 +15,8 @@ xxinclude_HEADERS =     error.h \
 			template_split.h \
 			virtual_atom.h \
 			virtual_grain.h \
-                        coding.h
+                        coding.h \
+                        feature.h
 
 noinst_LTLIBRARIES = 	libgroutil.la
 
@@ -33,7 +34,8 @@ libgroutil_la_SOURCES =	debug.cc \
 			create_simulation.cc \
 			virtual_atom.cc \
 			virtual_grain.cc \
-                        coding.cc
+                        coding.cc \
+                        feature.cc
 libgroutil_la_LIBADD =
 
 
