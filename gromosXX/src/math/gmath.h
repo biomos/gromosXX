@@ -26,15 +26,15 @@ namespace math
     explicit Vec(double d) { d_v[0] = d_v[1] = d_v[2] = d; }
     Vec(Vec const & v) { d_v[0] = v(0); d_v[1] = v(1); d_v[2] = v(2); }
     Vec(double d1, double d2, double d3) { d_v[0] = d1; d_v[1] = d2; d_v[2] = d3; }
-    
+
     double operator()(int i)const { assert(i>=0 && i<3); return d_v[i]; }
     double & operator()(int i) { assert(i >= 0 && i < 3); return d_v[i]; }
     Vec & operator=(double d) { d_v[0] = d_v[1] = d_v[2] = d; return *this; }
     Vec & operator+=(Vec const &v) { d_v[0] += v(0); d_v[1] += v(1); d_v[2] += v(2); return *this; }
-    Vec & operator-=(Vec const &v) { d_v[0] -= v(0); d_v[1] -= v(1); d_v[2] -= v(2); return *this; }
+    Vec & operator-=(Vec const &v) { d_v[0] -= v(0); d_v[1] -= v(1); d_v[2] -= v(2); return *this; } 
     Vec & operator*=(double d) { d_v[0] *= d; d_v[1] *= d; d_v[2] *= d; return *this; }
     Vec & operator/=(double d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
-  };
+    };
   
   /**
    * Array of 3D vectors.
@@ -125,6 +125,14 @@ namespace math
 	m[2][0] = m[2][1] = m[2][2] = d;
     }
     
+    Matrix(const Vec &u, const Vec &v, const Vec &w){
+    for (int i=0;i<3;++i){
+      m[0][i]=u(i);
+      m[1][i]=v(i);
+      m[2][i]=w(i);
+    }
+  }
+   
     Matrix & operator=(double d)
     {
       m[0][0] = m[0][1] = m[0][2] = 
@@ -421,6 +429,16 @@ namespace math
     return m;
   }
 
+    inline Matrix product(Box const &m1, Matrix const &m2)
+  {
+    Matrix m(0.0);   
+    for(int i=0; i<3; ++i)
+      for(int j=0; j<3; ++j)
+	for(int k=0; k<3; ++k)
+	  m(i,j) += m1(i)(k) * m2(k,j);
+    return m;
+  }
+  
   inline std::string m2s(Matrix const & m)
   {
     std::stringstream s;
@@ -442,8 +460,22 @@ namespace math
     
     return s.str();
   }
+  inline int sign (double signum ){
+    if(signum<0)
+        return -1;
+    else
+        return 1;
+  }
 
-
+  inline long double costest (double acos_param){
+      if(fabs(acos_param)>1)
+          if(fabs(acos_param)>1+epsilon)
+              return sign(acos_param)*1.0; 
+          else 
+              return acos_param;
+      else return acos_param;
+  }
+  
 } // math
 
 #endif

@@ -1200,20 +1200,127 @@ void io::Out_Configuration
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
-  
-  os << "TRICLINICBOX\n";
+  //change to GENBOX
+  os << "GENBOX\n";
   
   math::Box const &box = conf.current().box;
   
   os << std::setw(5) << conf.boundary_type << "\n";
   
-  for(int i=0,to = 3; i<to; ++i){
-    
-    os << std::setw(m_width) << box(0)(i)
-       << std::setw(m_width) << box(1)(i)
-       << std::setw(m_width) << box(2)(i)
-       << "\n";
+  long double a, b, c, alpha, beta, gamma, phi, theta, psi;
+  
+  a=math::abs(box(0));
+  b=math::abs(box(1));
+  c=math::abs(box(2));
+
+  os << std::setw(m_width) << a
+     << std::setw(m_width) << b
+     << std::setw(m_width) << c
+     << "\n";
+  
+  alpha = acos(math::costest(dot(box(1),box(2))/(abs(box(1))*abs(box(2))))); 
+  beta  = acos(math::costest(dot(box(0),box(2))/(abs(box(0))*abs(box(2)))));
+  gamma = acos(math::costest(dot(box(0),box(1))/(abs(box(0))*abs(box(1)))));
+  
+  os << std::setw(m_width) << alpha*180/math::Pi
+     << std::setw(m_width) << beta*180/math::Pi
+     << std::setw(m_width) << gamma*180/math::Pi
+     << "\n";
+  
+  long double cosdelta=(cosl(alpha)-cosl(beta)*cosl(gamma))/(sinl(beta)*sinl(gamma));
+  long double delta=acos(cosdelta);   
+  
+  long double sindelta=sqrtl(1-cosdelta*cosdelta); 
+  long double cotdelta=cosdelta/sindelta;
+  
+  long double cotgamma, cotbeta;
+  //check for cot(gamma)
+  if(gamma==90){
+        cotgamma=0;
   }
+  else{
+        cotgamma=1/(tanl(gamma));
+  }
+  //check for cot(beta)
+  if(beta==90){
+        cotbeta=0;
+  }
+  else{
+        cotbeta=1/(tanl(beta));
+  }
+
+  math::Vec BSx(1/a,0.0,0.0);
+  math::Vec BSy(-cotdelta/a,
+          1/(b*sinl(gamma)),0.0);
+  math::Vec BSz((cotdelta*cotgamma-cotbeta/sindelta)/a, 
+          -cotdelta/(b*sinl(gamma)),
+          1/(c*sinl(beta)*sindelta));
+  
+  
+  math::Matrix BSmat(BSx,BSy,BSz);
+  math::Matrix boxmat(box(0),box(1),box(2));
+ // math::Matrix Rmat=product(box,BSmat);
+  math::Matrix Rmat=product(BSmat,boxmat);
+ /* 
+  os <<"boxmat\n" ;
+  for (int i=0;i<3; i++){
+  os << std::setw(m_width) << box(0)(i)
+     << std::setw(m_width) << box(1)(i)
+     << std::setw(m_width) << box(2)(i)
+    << "\n";  
+  }
+
+    os <<"Bsmat\n" ;
+  for (int i=0;i<3; i++){
+  os << std::setw(m_width) << BSmat(0,i)
+     << std::setw(m_width) << BSmat(1,i)
+     << std::setw(m_width) << BSmat(2,i)
+     << "\n";  
+  }
+  
+  os <<"Rmat\n" ;
+  for (int i=0;i<3; i++){
+    os << std::setw(m_width) << Rmat(0,i)
+     << std::setw(m_width) << Rmat(1,i)
+     << std::setw(m_width) << Rmat(2,i)
+     << "\n";  
+  }
+ */   
+  long double R11R21=sqrt(Rmat(0,0)*Rmat(0,0)+Rmat(0,1)*Rmat(0,1));
+  if(R11R21==0.0)
+  {
+      theta = -math::sign(Rmat(0,2))*M_PI/2;
+      psi   = 0.0;
+      phi   =-math::sign(Rmat(1,0))*acosl(math::costest(Rmat(1,1)));
+  }
+  else
+  {
+      theta = -math::sign(Rmat(0,2))*acosl(math::costest(R11R21));
+      long double costheta=cosl(theta);
+      psi   = math::sign(Rmat(1,2)/costheta)*acosl(math::costest(Rmat(2,2)/costheta));
+      phi   = math::sign(Rmat(0,1)/costheta)*acosl(math::costest(Rmat(0,0)/costheta));
+
+  }
+  
+ 
+  
+  if(theta==-0) theta =0;
+  if(psi==-0)   psi=0;
+  if(phi==-0)   phi=0;
+          
+          
+  os << std::setw(m_width) << phi*180/math::Pi
+     << std::setw(m_width) << theta*180/math::Pi
+     << std::setw(m_width) << psi*180/math::Pi
+     << "\n";
+  
+  double origin=0.0;
+  
+  os << std::setw(m_width) << origin
+     << std::setw(m_width) << origin
+     << std::setw(m_width) << origin
+     << "\n";
+
   
   os << "END\n";
   

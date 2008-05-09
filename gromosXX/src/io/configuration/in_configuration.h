@@ -219,6 +219,11 @@ namespace io {
     bool _read_box(math::Box &box, std::vector<std::string> &buffer,
 		   math::boundary_enum const boundary);
     /**
+     * read GENBOX block.
+     */
+    bool _read_genbox(math::Box &box, std::vector<std::string> &buffer,
+		   math::boundary_enum const boundary);
+    /**
      * read BOX block.
      */
     bool _read_g96_box(math::Box &box, std::vector<std::string> &buffer);

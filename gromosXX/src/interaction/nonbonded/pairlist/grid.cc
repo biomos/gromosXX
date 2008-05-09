@@ -85,9 +85,10 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
     trans = v_box - v;
 
     // now grid the cg
-    const int x = int((v_box(0) + 0.5 * conf.current().box(0)(0)) / m_grid.a);
-    const int y = int((v_box(1) + 0.5 * conf.current().box(1)(1)) / m_grid.b);
-    const int z = int((v_box(2) + 0.5 * conf.current().box(2)(2)) / m_grid.c);
+       
+    const int x = int((v_box(0) + 0.5 * abs(conf.current().box(0))) / m_grid.a);
+    const int y = int((v_box(1) + 0.5 * abs(conf.current().box(1))) / m_grid.b);
+    const int z = int((v_box(2) + 0.5 * abs(conf.current().box(2))) / m_grid.c);
   
     const int c = y * m_grid.Na + x;
 
@@ -121,11 +122,12 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
     v_box = v;
     periodicity.put_into_box(v_box);
     trans = v_box - v;
-    
-    // now grid the cg
-    const int x = int((v_box(0) + 0.5 * conf.current().box(0)(0)) / m_grid.a);
-    const int y = int((v_box(1) + 0.5 * conf.current().box(1)(1)) / m_grid.b);
-    const int z = int((v_box(2) + 0.5 * conf.current().box(2)(2)) / m_grid.c);
+
+        // now grid the cg
+      
+    const int x = int((v_box(0) + 0.5 * abs(conf.current().box(0))) / m_grid.a);
+    const int y = int((v_box(1) + 0.5 * abs(conf.current().box(1))) / m_grid.b);
+    const int z = int((v_box(2) + 0.5 * abs(conf.current().box(2))) / m_grid.c);
     
     const int c = y * m_grid.Na + x;
 
@@ -276,13 +278,13 @@ void interaction::Grid_Pairlist_Algorithm::grid_properties
 {
   const double s = sim.param().pairlist.grid_size;
   
-  m_grid.Na = int(rint(conf.current().box(0)(0) / s));
-  m_grid.Nb = int(rint(conf.current().box(1)(1) / s));
-  m_grid.Nc = int(rint(conf.current().box(2)(2) / s));
+  m_grid.Na = int(rint(abs(conf.current().box(0)) / s));
+  m_grid.Nb = int(rint(abs(conf.current().box(1)) / s));
+  m_grid.Nc = int(rint(abs(conf.current().box(2)) / s));
   
-  m_grid.a = conf.current().box(0)(0) / m_grid.Na;
-  m_grid.b = conf.current().box(1)(1) / m_grid.Nb;
-  m_grid.c = conf.current().box(2)(2) / m_grid.Nc;  
+  m_grid.a =  abs(conf.current().box(0)) / m_grid.Na;
+  m_grid.b =  abs(conf.current().box(1)) / m_grid.Nb;
+  m_grid.c =  abs(conf.current().box(2))/ m_grid.Nc;  
 
   const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
   

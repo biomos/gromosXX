@@ -514,6 +514,18 @@ bool io::In_Configuration::read_box
   // read box
   std::vector<std::string> buffer;
   if(sim.param().boundary.boundary != math::vacuum){
+    //read in GENBOX
+    buffer = m_block["GENBOX"];
+    if(buffer.size()){
+       if (!quiet)
+           os <<"\treading GENBOX...";
+       _read_genbox(conf.current().box, buffer, sim.param().boundary.boundary);
+       conf.old().box = conf.current().box;
+       os <<"\nBOX:\n";
+       block_read.insert("GENBOX");
+
+    }
+    else{
     buffer = m_block["TRICLINICBOX"];
     if (buffer.size()){
       if (!quiet)
@@ -521,6 +533,9 @@ bool io::In_Configuration::read_box
       _read_box(conf.current().box, buffer, sim.param().boundary.boundary);
       conf.old().box = conf.current().box;
       block_read.insert("TRICLINICBOX");
+      io::messages.add("TRICLINICBOX given"
+		     " - output will be GENBOX",
+		     "In_Configuration", io::message::notice);
     }
     else{
       buffer = m_block["BOX"];
@@ -540,7 +555,8 @@ bool io::In_Configuration::read_box
 			 io::message::error);
 	return false;
       }
-    }    
+    } 
+   }
   }
   return true;
 }
@@ -599,7 +615,7 @@ bool io::In_Configuration::read_jvalue
   if (sim.param().jvalue.le) {
     buffer = m_block["JVALUERESEPS"];
     if (!sim.param().jvalue.read_av){
-      if (buffer.size()){
+        if (buffer.size()){
 	block_read.insert("JVALUERESEPS");
 	io::messages.add("re-initialising J-restraint local elevation epsilons, non-continuous simulation",
 			 "in_configuration",
@@ -1126,6 +1142,111 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
   return true;
   
 }
+bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string> &buffer,
+				     math::boundary_enum const boundary)
+{
+  DEBUG(8, "read genbox");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  int bound;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  _lineStream >> bound;
+
+  ++it;
+  
+  int i;
+  
+  for(i=0; it != to; ++i, ++it){
+
+    if (i>=4){
+      io::messages.add("bad line in GENBOX block","In_Configuration", io::message::error);
+      return false;
+    }
+    
+    _lineStream.clear();
+    _lineStream.str(*it);
+    //point of origin is ignored so far
+    if(i<3)
+     _lineStream >> box(0)(i) >> box(1)(i) >> box(2)(i);
+    
+    if(_lineStream.fail())
+      return false;
+    if (!_lineStream.eof()) {
+      std::string msg = "Warning, end of line not reached, but should have been: \n" + *it +  "\n";
+      DEBUG(10, msg);
+    }
+  }
+  
+  // and check the boundary condition...
+  if (math::boundary_enum(bound) != boundary){
+    io::messages.add("Boundary condition from input file and from GENBOX do not match!"
+		     " - using input file",
+		     "In_Configuration", io::message::warning);
+  }
+  //change from genbox to triclinicbox...
+  long double a, b, c, alpha, beta, gamma, phi, theta, psi;
+  a = box(0)(0);
+  b = box(1)(0);
+  c = box(2)(0);
+  alpha = math::Pi*box(0)(1)/180;
+  beta  = math::Pi*box(1)(1)/180;
+  gamma = math::Pi*box(2)(1)/180;
+  
+  long double cosdelta=(cosl(alpha)-cosl(beta)*cosl(gamma))/(sinl(beta)*sinl(gamma));
+  long double sindelta=sqrtl(1-cosdelta*cosdelta);  
+   
+  math::Vec SBx(a, 0.0, 0.0);
+  math::Vec SBy(b*cosl(gamma), 
+          b*sinl(gamma), 
+          0.0);
+  math::Vec SBz(c*cosl(beta), 
+          c*cosdelta*sinl(beta), 
+          c*sindelta*sinl(beta));
+  
+
+  
+  phi   = math::Pi*box(0)(2)/180;
+  theta = math::Pi*box(1)(2)/180;
+  psi   = math::Pi*box(2)(2)/180;
+  
+  const math::Vec Rx(cosl(theta)*cosl(phi),
+          cosl(theta)*sinl(phi),
+          -sinl(theta));
+  const math::Vec Ry(sinl(psi)*sinl(theta)*cosl(phi)-cosl(psi)*sinl(phi),
+          sinl(psi)*sinl(theta)*sinl(phi)+cosl(psi)*cosl(phi),
+          sinl(psi)*cosl(theta));
+  const math::Vec Rz(cosl(psi)*sinl(theta)*cosl(phi)+sinl(psi)*sinl(phi),
+          cosl(psi)*sinl(theta)*sinl(phi)+(-sinl(psi)*cosl(phi)),
+          cosl(psi)*cosl(theta));
+  
+  math::Matrix Rmat(Rx,Ry,Rz);
+  
+  box(0)=product(Rmat,SBx);
+  box(1)=product(Rmat,SBy);
+  box(2)=product(Rmat,SBz);
+ 
+  
+
+  // and check the boundary condition...
+  if (math::boundary_enum(bound) != boundary){
+    io::messages.add("Boundary condition from input file and from TRICLINICBOX do not match!"
+		     " - using input file",
+		     "In_Configuration", io::message::warning);
+  }
+  for(int i=0; i<3; i++){
+      for(int j=0; j<3; j++){
+          if(fabs(box(i)(j))<math::epsilon)
+              box(i)(j)=0.0;                    
+      }
+  }
+  
+  return true;
+}
+
 
 bool io::In_Configuration::_read_box(math::Box &box, std::vector<std::string> &buffer,
 				     math::boundary_enum const boundary)

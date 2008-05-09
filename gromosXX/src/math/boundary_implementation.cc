@@ -43,7 +43,7 @@ inline math::Boundary_Implementation<math::rectangular>
  : m_box(b)
 {
   for(int i=0; i<3; ++i)
-    m_half_box(i) = 0.5 * m_box(i)(i);
+    m_half_box(i) = 0.5 * abs(m_box(i));
 }
 
 /**
@@ -69,7 +69,7 @@ inline math::Boundary_Implementation<math::truncoct>
  : m_box(b)
 {
   for(int i=0; i<3; ++i)
-    m_half_box(i) = 0.5 * m_box(i)(i);
+    m_half_box(i) = 0.5 * abs(m_box(i));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -238,7 +238,7 @@ inline void math::Boundary_Implementation<math::rectangular>
     nim(d) = v1(d) - v2(d);
 
     if (fabs(nim(d)) >= m_half_box(d)){
-      nim(d) -= m_box(d)(d) * rint(nim(d)/m_box(d)(d));
+      nim(d) -= abs(m_box(d)) * rint(nim(d)/abs(m_box(d)));
 
     }
   }
@@ -257,7 +257,7 @@ inline void math::Boundary_Implementation<math::triclinic>
   for(int d=0; d<3; ++d){
     // i think the if statement might be wrong for really 
     // triclinic cases!
-    if (fabs(nim(d)) >= m_box(d)(d) * 0.5)
+    if (fabs(nim(d)) >= abs(m_box(d)) * 0.5)
       nim += m_box(d) * rint(dot(m_cross_K_L_M(d), nim));
   }
 }
@@ -274,11 +274,11 @@ inline void math::Boundary_Implementation<math::truncoct>
     nim(d) = v1(d) - v2(d);
 
     if (fabs(nim(d)) >= m_half_box(0)){
-      nim(d) -= m_box(0)(0) * rint(nim(d)/m_box(0)(0));
+      nim(d) -= abs(m_box(0)) * rint(nim(d)/abs(m_box(0)));
 
     }
   }
-  if (fabs(nim(0)) + fabs(nim(1)) + fabs(nim(2)) > 0.75 * m_box(0)(0)){
+  if (fabs(nim(0)) + fabs(nim(1)) + fabs(nim(2)) > 0.75 *abs(m_box(0))){
     for(int d=0; d<3; ++d){
       if (nim(d) < 0)
 	nim(d) += m_half_box(0);

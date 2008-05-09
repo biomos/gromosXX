@@ -158,13 +158,13 @@ int algorithm::Berendsen_Barostat
       break;
     case math::rectangular:
       {
-	if (conf.current().box(0)(0) <= 2*sim.param().pairlist.cutoff_long ||
-	    conf.current().box(1)(1) <= 2*sim.param().pairlist.cutoff_long ||
-	    conf.current().box(2)(2) <= 2*sim.param().pairlist.cutoff_long){
+        
+	if (abs(conf.current().box(0)) <= 2*sim.param().pairlist.cutoff_long ||
+	    abs(conf.current().box(1)) <= 2*sim.param().pairlist.cutoff_long ||
+	    abs(conf.current().box(2)) <= 2*sim.param().pairlist.cutoff_long){
 	  io::messages.add("box is too small: not twice the cutoff!",
 			   "configuration",
-			   io::message::critical);
-	  return E_BOUNDARY_ERROR;
+			   io::message::error);
 	}
 	
 	break;
@@ -176,7 +176,7 @@ int algorithm::Berendsen_Barostat
       }
     case math::truncoct:
       {
-	if (0.5 * sqrt(3.0) * conf.current().box(0)(0) <= 2 * sim.param().pairlist.cutoff_long){
+	if (0.5 * sqrt(3.0) * abs(conf.current().box(0)) <= 2 * sim.param().pairlist.cutoff_long){
 	  
 	  io::messages.add("box is too small: not 4 / sqrt(3) * cutoff!",
 			   "configuration",
