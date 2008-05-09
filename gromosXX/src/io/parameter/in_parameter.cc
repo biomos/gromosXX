@@ -1794,7 +1794,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     }
   }
   
-  if(param.distanceres.K < 0)
+  if(param.dihrest.K < 0)
     io::messages.add("DIHEDRALRES block: Illegal value for force constant (>=0)",
 		     "In_Parameter", io::message::error);
 
