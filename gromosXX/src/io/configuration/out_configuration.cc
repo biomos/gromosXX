@@ -1227,8 +1227,7 @@ void io::Out_Configuration
      << std::setw(m_width) << gamma*180/math::Pi
      << "\n";
   
-  long double cosdelta=(cosl(alpha)-cosl(beta)*cosl(gamma))/(sinl(beta)*sinl(gamma));
-  long double delta=acos(cosdelta);   
+  long double cosdelta=(cosl(alpha)-cosl(beta)*cosl(gamma))/(sinl(beta)*sinl(gamma)); 
   
   long double sindelta=sqrtl(1-cosdelta*cosdelta); 
   long double cotdelta=cosdelta/sindelta;
@@ -1259,7 +1258,7 @@ void io::Out_Configuration
   
   math::Matrix BSmat(BSx,BSy,BSz);
   math::Matrix boxmat(box(0),box(1),box(2));
- // math::Matrix Rmat=product(box,BSmat);
+
   math::Matrix Rmat=product(BSmat,boxmat);
  /* 
   os <<"boxmat\n" ;
