@@ -1,3 +1,4 @@
+AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/io
@@ -34,7 +35,10 @@ xxioparam_HEADERS =     parameter/in_parameter.h \
 xxioffdir     = $(includedir)/gromosXX/io/forcefield
 xxioff_HEADERS =        forcefield/in_ifp.h
 
-noinst_LTLIBRARIES =	libgroio.la
+noinst_LTLIBRARIES =	libgroio.la libgroiocheck.la
+
+libgroiocheck_la_SOURCES =      parameter/check_parameter.cc 
+libgroiocheck_la_CXXFLAGS = @CXX_NDEBUG_FLAGS@
 
 libgroio_la_SOURCES =	io.cc \
 			argument.cc \
@@ -45,7 +49,6 @@ libgroio_la_SOURCES =	io.cc \
 			read_input.cc \
 			read_special.cc \
 			parameter/in_parameter.cc \
-                        parameter/check_parameter.cc \
 			topology/in_topology.cc \
 			topology/in_perturbation.cc \
 			configuration/inframe.cc \
@@ -58,7 +61,7 @@ libgroio_la_SOURCES =	io.cc \
                         topology/in_friction.cc \
 			forcefield/in_ifp.cc
 
-libgroio_la_LIBADD =
+libgroio_la_LIBADD = libgroiocheck.la
 
 bin_PROGRAMS =			
 

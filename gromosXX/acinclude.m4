@@ -14,48 +14,6 @@ AC_DEFUN([AC_CV_CXX_VERSION_OK],
   ])
 ])
 
-AC_DEFUN([AC_PROG_CXX_MWERKS],
-[AC_CACHE_CHECK(whether we are using Metrowerks Codewarrior C++, MWERKS_CXX,
-[cat > conftest.c <<EOF
-#ifdef __MWERKS__
-  yes;
-#endif
-EOF
-if AC_TRY_COMMAND(${CXX} -E conftest.c) | egrep yes >/dev/null 2>&1; then
-  MWERKS_CXX=yes
-  compiler=mwerks
-else
-  MWERKS_CXX=no
-fi])])
-
-AC_DEFUN([AC_PROG_CXX_MSVCPP],
-[AC_CACHE_CHECK(whether we are using Visual C++, MSVCPP_CXX,
-[cat > conftest.c <<EOF
-#if defined(_MSC_VER) && !defined(__MWERKS__) && !defined(__ICL)
-  yes;
-#endif
-EOF
-if AC_TRY_COMMAND(${CXX} -E conftest.c) | egrep yes >/dev/null 2>&1; then
-  MSVCPP_CXX=yes
-  compiler=msvcpp
-else
-  MSVCPP_CXX=no
-fi])])
-
-AC_DEFUN([AC_PROG_CXX_SGICC],
-[AC_CACHE_CHECK(whether we are using SGI MIPSpro C++, SGI_CXX,
-[cat > conftest.c <<EOF
-# if defined(__sgi) && !defined(__GNUC__)
-  yes;
-#endif
-EOF
-if AC_TRY_COMMAND(${CXX} -E conftest.c) | egrep yes >/dev/null 2>&1; then
-  SGI_CXX=yes
-  compiler=sgicc
-else
-  SGI_CXX=no
-fi])])
-
 AC_DEFUN([AC_PROG_CXX_SUNCC],
 [AC_CACHE_CHECK(whether we are using Sun C++, SUN_CXX,
 [cat > conftest.c <<EOF
@@ -83,37 +41,6 @@ if AC_TRY_COMMAND(${CXX} -E conftest.c) | egrep yes >/dev/null 2>&1; then
 else
   INTEL_CXX=no
 fi])])
-
-AC_DEFUN([AC_PROG_CXX_KAICC],
-[AC_CACHE_CHECK(whether we are using KAI C++, KAI_CXX,
-[cat > conftest.c <<EOF
-# if defined(__KCC)
-  yes;
-#endif
-EOF
-if AC_TRY_COMMAND(${CXX} -E conftest.c) | egrep yes >/dev/null 2>&1; then
-  KAI_CXX=yes
-  compiler=kaicc
-else
-  KAI_CXX=no
-fi])])
-
-AC_DEFUN([AC_BZ_SET_COMPILER],
-  [cxxwith=`echo $1 | sed -e 's/ /@/'`
-   case "$cxxwith" in
-     *:*@*)                 # Full initialization syntax
-       CXX=`echo "$cxxwith" | sed  -n -e 's/.*:\(.*\)@.*/\1/p'`
-       CXXFLAGS=`echo "$cxxwith" | sed  -n -e 's/.*:.*@\(.*\)/\1/p'`
-     ;;
-     *:*)                   # Simple initialization syntax
-       CXX=`echo "$cxxwith" | sed  -n -e 's/.*:\(.*\)/\1/p'`
-       CXXFLAGS="$CXXFLAGS $3"
-     ;;
-     *)                     # Default values
-       CXX=$2
-       CXXFLAGS="$CXXFLAGS $3"
-     ;;
-   esac])
 
 dnl Determine a Fortran 77 compiler to use.  If `F77' is not already set
 dnl in the environment, check for `g77', `f77' and `f2c', in that order.

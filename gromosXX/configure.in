@@ -89,10 +89,6 @@ if eval "test x$compiler = xnone"; then
     echo "using GNU c++ compiler"
   fi
 fi
-if eval "test x$compiler = xnone"; then AC_PROG_CXX_KAICC   ; fi
-if eval "test x$compiler = xnone"; then AC_PROG_CXX_SGICC   ; fi
-if eval "test x$compiler = xnone"; then AC_PROG_CXX_MWERKS  ; fi
-if eval "test x$compiler = xnone"; then AC_PROG_CXX_MSVCPP  ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
 
 dnl set some defaults to CXXFLAGS and LDFLAGS
@@ -106,10 +102,6 @@ CFLAGS=`echo $CFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
 LDFLAGS=`echo $LDFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
 
 case "$compiler" in
-  kai*)               # KAI C++  http://www.kai.com/
-    echo "Configuring for KAI C++"
-    AC_MSG_ERROR([No compiler flags for KAI C++ provided])
-  ;;
   intel*)             # Intel C++.  tested with version 8.0beta (precompiled headers)
     echo "Configuring for Intel C++"
     CXX_PICKY_FLAGS="-w1"
@@ -118,6 +110,7 @@ case "$compiler" in
     dnl or maybe -ipo if your lucky...
     dnl CXX_OPTIMIZE_FLAGS="-O3 -ipo -restrict -align -DNDEBUG -vec_report"
     CXX_OPTIMIZE_FLAGS="-O3 -ip -restrict -align -DNDEBUG -vec_report"
+    CXX_NDEBUG_FLAGS="-DNDEBUG"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="xild"
 
@@ -125,6 +118,7 @@ case "$compiler" in
     if eval "test x$enable_openmp = xyes"; then
       echo "   OpenMP enabled"
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -openmp -openmp_report -DOMP"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -openmp -openmp_report -DOMP"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -openmp -openmp_report -DOMP"
     fi
 
@@ -132,6 +126,7 @@ case "$compiler" in
     if eval "test x$enable_mpi = xyes"; then
       echo "   MPI enabled"
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
     fi
        
@@ -141,6 +136,7 @@ case "$compiler" in
       mkdir -p profile
       PROFDIR=`pwd`
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -prof-genx -prof-dir=${PROFDIR}/profile"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -prof-genx -prof-dir=${PROFDIR}/profile"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -prof-genx -prof-dir=${PROFDIR}/profile"
     fi
 
@@ -149,30 +145,26 @@ case "$compiler" in
       echo "   using profile data for optimisation"
       PROFDIR=`pwd`
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -prof-use -prof-dir=${PROFDIR}/profile"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -prof-use -prof-dir=${PROFDIR}/profile"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -prof-use -prof-dir=${PROFDIR}/profile"
     fi
 
     if eval "test x$enable_debug = xyes"; then
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS $CXX_PICKY_FLAGS"
-      AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_DEBUG_FLAGS")
+      MY_CXXFLAGS="$CXX_DEBUG_FLAGS"
       echo "   configuring for debug build"
     else
-      AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_OPTIMIZE_FLAGS")
+      MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
       echo "   configuring for release build"
     fi
 
     AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
   ;;
-  sgi*)               # SGI C++  http://www.sgi.com
-    echo "Configuring for SGI C++"
-    AC_MSG_ERROR([No compiler flags provided for SGI C++ ])
-  ;;
   gnu*)               # EGCS  http://egcs.cygnus.com/
     echo "Configuring for GNU C++"
     CXX_PICKY_FLAGS="-Wall"
-    dnl CXX_OPTIMIZE_FLAGS="-O6 -march=k8 -mfpmath=sse -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -Winline -DNDEBUG -g -finline-limit=5000"
-    dnl CXX_OPTIMIZE_FLAGS="-O6 -funroll-loops -fstrict-aliasing -fno-gcse -fomit-frame-pointer -DNDEBUG -g"
     CXX_OPTIMIZE_FLAGS="-O3 -funroll-loops -fno-gcse -DNDEBUG"
+    CXX_NDEBUG_FLAGS="-DNDEBUG"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"
 
@@ -180,6 +172,7 @@ case "$compiler" in
     if eval "test x$enable_profile = xyes"; then
       echo "   profiling enabled"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -pg"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -pg"
     else
       # this opt flag is incompatible with profiling
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -fomit-frame-pointer"
@@ -189,6 +182,7 @@ case "$compiler" in
     if eval "test x$enable_openmp = xyes"; then
       echo "   OpenMP enabled"
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -fopenmp -DOMP"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -fopenmp -DOMP"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -fopenmp -DOMP"
     fi
 
@@ -200,10 +194,10 @@ case "$compiler" in
     #      debug
     if eval "test x$enable_debug = xyes"; then
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS $CXX_PICKY_FLAGS"
-      AC_BZ_SET_COMPILER($withval,"$CXX","$CXX_DEBUG_FLAGS")
+      MY_CXXFLAGS="$CXX_DEBUG_FLAGS"
        echo "configuring for debug build"
     else
-      AC_BZ_SET_COMPILER($withval,"$CXX","$CXX_OPTIMIZE_FLAGS")
+      MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
       echo "configuring for release build"
     fi
 
@@ -213,54 +207,33 @@ case "$compiler" in
     FORTLIBS=-lg2c
     AC_DEFINE_UNQUOTED(COMPILER_GCC, 1, [GNU C++ compiler])
   ;;
-  msvc*) # Microsoft Visual C++
-    echo "Configuring for Microsoft Visual C++"
-    CXX_PICKY_FLAGS="/W0" # VC++ gives warnings for its own headers!
-    AC_BZ_SET_COMPILER($withval,"cl","")
-    # had to move this below AC_PROG_CC
-    #       CPPFLAGS="/TP /ML /GX /YX /FD $CXX_PICKY_FLAGS /Fo\$*.o"
-    CXX_OPTIMIZE_FLAGS="/Ox"
-    CXX_DEBUG_FLAGS="/Zi"
-    LDOUT="/out:"
-    CXXLD="link"
-    AC_DEFINE_UNQUOTED(COMPILER_MSVC, 1, [Microsoft Visual C++ compiler])
-  ;;
-  mwerk*)
-    echo "Configuring for Metrowerks Codewarrior (x86)"
-    CXX_PICKY_FLAGS="-w on"
-    AC_BZ_SET_COMPILER($withval,"mwcc -i-","")
-    # had to move this below AC_PROG_CC
-    #       CPPFLAGS="$CXX_PICKY_FLAGS -o \$*.o"
-    CXX_OPTIMIZE_FLAGS="-opt all -DNDEBUG"
-    CXX_DEBUG_FLAGS="-g"
-    CXXLD="mwld"
-    AC_DEFINE_UNQUOTED(COMPILER_MWERK, 1, [Metrowerks Codewarrior C++ compiler])
-  ;;
   suncc*)             # SUN studio (tested with SUN studio 10)
     echo "Configuring for SUN Studio"
     dnl CXX_PICKY_FLAGS="+w2 -xcheck -xsb"
     CXX_PICKY_FLAGS="+w2"
     CXX_OPTIMIZE_FLAGS="-fast -xdepend -xvector -DNDEBUG"
-    dnl CXX_OPTIMIZE_FLAGS="-fast -DNDEBUG"
+    CXX_NDEBUG_FLAGS="-DNDEBUG"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"
 
     if eval "test x$enable_openmp = xyes"; then
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -xopenmp -DOMP"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -xopenmp -DOMP"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -xopenmp -DOMP"
     fi
 
     if eval "test x$enable_mpi = xyes"; then
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
       CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
     fi
 
     if eval "test x$enable_debug = xyes"; then
       CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS $CXX_PICKY_FLAGS"
-      AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_DEBUG_FLAGS")
+      MY_CXXFLAGS="$CXX_DEBUG_FLAGS"
       echo "configuring for debug build"
     else
-      AC_BZ_SET_COMPILER($withval,"$CXX", "$CXX_OPTIMIZE_FLAGS")
+      MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
       echo "configuring for release build"
     fi
 
@@ -271,6 +244,10 @@ case "$compiler" in
     AC_MSG_WARN([Compiler not recognized])
   ;;
 esac
+
+dnl subst compiler flags
+AC_SUBST(MY_CXXFLAGS)
+AC_SUBST(CXX_NDEBUG_FLAGS)
 
 AC_PREFIX_DEFAULT(`pwd`)
 

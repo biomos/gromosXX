@@ -1,3 +1,4 @@
+AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/math
