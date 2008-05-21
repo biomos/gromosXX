@@ -70,6 +70,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   //assert(num_solute >= 0 && topo.m_is_perturbed.size() == unsigned(num_solute));
   
   m_is_perturbed.clear();
+  m_is_eds_perturbed.clear();
   m_is_polarizable.clear();
   m_iac.clear();
   m_mass.clear();
@@ -105,6 +106,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     DEBUG(10, "\tmul " << m);
 
     m_is_perturbed.insert(m_is_perturbed.end(), topo.m_is_perturbed.begin(), topo.m_is_perturbed.end());
+    m_is_eds_perturbed.insert(m_is_eds_perturbed.end(), topo.m_is_eds_perturbed.begin(), topo.m_is_eds_perturbed.end());
     m_is_polarizable.insert(m_is_polarizable.end(), topo.m_is_polarizable.begin(), topo.m_is_polarizable.end());
 
     for(int i=0; i<num_solute; ++i){
@@ -259,6 +261,7 @@ void topology::Topology::resize(unsigned int const atoms)
   m_iac.resize(atoms);
   // chargegroups???
   m_is_perturbed.resize(atoms, false);
+  m_is_eds_perturbed.resize(atoms, false);
   m_is_polarizable.resize(atoms, false);
 }
 

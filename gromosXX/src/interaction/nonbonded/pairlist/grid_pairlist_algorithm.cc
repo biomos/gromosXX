@@ -939,7 +939,7 @@ inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
  bool scaled_only
  )
 {
-  if (topo.is_perturbed(a1)){
+  if (topo.is_perturbed(a1) || topo.is_eds_perturbed(a1)){
     if (scaled_only){
       // ok, only perturbation if it is a scaled pair...
       std::pair<int, int> 
@@ -971,7 +971,7 @@ inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
  std::vector<std::vector<math::Vec> > & perturbed_shifts
  )
 {
-  if (topo.is_perturbed(a1)){
+  if (topo.is_perturbed(a1) || topo.is_eds_perturbed(a1)){
     if (scaled_only){
       // ok, only perturbation if it is a scaled pair...
       std::pair<int, int> 

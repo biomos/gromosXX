@@ -102,7 +102,7 @@ int io::check_parameter(simulation::Simulation & sim)
   // POSITIONRES block
   add("position_rest", "position restraints", param.posrest.posrest != simulation::posrest_off &&
                                               param.posrest.posrest != simulation::posrest_const);
-  add("possition_const", "position constraints without reference position scaling", 
+  add("position_const", "position constraints without reference position scaling", 
       param.posrest.posrest == simulation::posrest_const && 
       !param.posrest.scale_reference_positions);
   add("position_const_scaled", "position constraints with reference position scaling", 
@@ -150,6 +150,8 @@ int io::check_parameter(simulation::Simulation & sim)
           param.rng.rng == simulation::random_g96);
   add("random_gsl", "GROMOS96 random numbers", 
           param.rng.rng == simulation::random_gsl);
+  // EDS block
+  add("eds", "Enveloping distribution sampling", param.eds.eds);
   
   // parallelization
   add("parallel_mpi", "MPI parallelization", sim.mpi);
@@ -213,7 +215,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute", "temp_nosehoover");
   fc.unlock("solute", "temp_nosehoover_chains");
   fc.unlock("solute", "position_rest");
-  fc.unlock("solute", "possition_const");
+  fc.unlock("solute", "position_const");
   fc.unlock("solute", "position_const_scaled");
   fc.unlock("solute", "distance_rest");
   fc.unlock("solute", "dihedral_rest");
@@ -275,7 +277,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent", "temp_nosehoover");
   fc.unlock("solvent", "temp_nosehoover_chains");
   fc.unlock("solvent", "position_rest");
-  fc.unlock("solvent", "possition_const");
+  fc.unlock("solvent", "position_const");
   fc.unlock("solvent", "position_const_scaled");
   fc.unlock("solvent", "distance_rest");
   fc.unlock("solvent", "dihedral_rest");
@@ -328,7 +330,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_only", "temp_nosehoover");
   fc.unlock("solvent_only", "temp_nosehoover_chains");
   fc.unlock("solvent_only", "position_rest");
-  fc.unlock("solvent_only", "possition_const");
+  fc.unlock("solvent_only", "position_const");
   fc.unlock("solvent_only", "position_const_scaled");
   fc.unlock("solvent_only", "distance_rest");
   fc.unlock("solvent_only", "dihedral_rest");
@@ -381,7 +383,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "temp_nosehoover");
   fc.unlock("steepest_descent", "temp_nosehoover_chains");
   fc.unlock("steepest_descent", "position_rest");
-  fc.unlock("steepest_descent", "possition_const");
+  fc.unlock("steepest_descent", "position_const");
   fc.unlock("steepest_descent", "position_const_scaled");
   fc.unlock("steepest_descent", "distance_rest");
   fc.unlock("steepest_descent", "dihedral_rest");
@@ -434,7 +436,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_constraint_off", "temp_nosehoover");
   fc.unlock("solute_constraint_off", "temp_nosehoover_chains");
   fc.unlock("solute_constraint_off", "position_rest");
-  fc.unlock("solute_constraint_off", "possition_const");
+  fc.unlock("solute_constraint_off", "position_const");
   fc.unlock("solute_constraint_off", "position_const_scaled");
   fc.unlock("solute_constraint_off", "distance_rest");
   fc.unlock("solute_constraint_off", "dihedral_rest");
@@ -489,7 +491,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_shake", "temp_nosehoover");
   fc.unlock("solute_shake", "temp_nosehoover_chains");
   fc.unlock("solute_shake", "position_rest");
-  fc.unlock("solute_shake", "possition_const");
+  fc.unlock("solute_shake", "position_const");
   fc.unlock("solute_shake", "position_const_scaled");
   fc.unlock("solute_shake", "distance_rest");
   fc.unlock("solute_shake", "dihedral_rest");
@@ -546,7 +548,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_lincs", "temp_nosehoover");
   fc.unlock("solute_lincs", "temp_nosehoover_chains");
   fc.unlock("solute_lincs", "position_rest");
-  fc.unlock("solute_lincs", "possition_const");
+  fc.unlock("solute_lincs", "position_const");
   fc.unlock("solute_lincs", "position_const_scaled");
   fc.unlock("solute_lincs", "distance_rest");
   fc.unlock("solute_lincs", "dihedral_rest");
@@ -600,7 +602,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "temp_nosehoover");
   fc.unlock("solute_flexshake", "temp_nosehoover_chains");
   fc.unlock("solute_flexshake", "position_rest");
-  fc.unlock("solute_flexshake", "possition_const");
+  fc.unlock("solute_flexshake", "position_const");
   fc.unlock("solute_flexshake", "position_const_scaled");
   fc.unlock("solute_flexshake", "distance_rest");
   fc.unlock("solute_flexshake", "dihedral_rest");
@@ -649,7 +651,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_constraint_off", "temp_nosehoover");
   fc.unlock("solvent_constraint_off", "temp_nosehoover_chains");
   fc.unlock("solvent_constraint_off", "position_rest");
-  fc.unlock("solvent_constraint_off", "possition_const");
+  fc.unlock("solvent_constraint_off", "position_const");
   fc.unlock("solvent_constraint_off", "position_const_scaled");
   fc.unlock("solvent_constraint_off", "distance_rest");
   fc.unlock("solvent_constraint_off", "dihedral_rest");
@@ -703,7 +705,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_shake", "temp_nosehoover");
   fc.unlock("solvent_shake", "temp_nosehoover_chains");
   fc.unlock("solvent_shake", "position_rest");
-  fc.unlock("solvent_shake", "possition_const");
+  fc.unlock("solvent_shake", "position_const");
   fc.unlock("solvent_shake", "position_const_scaled");
   fc.unlock("solvent_shake", "distance_rest");
   fc.unlock("solvent_shake", "dihedral_rest");
@@ -754,7 +756,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_calculation", "temp_nosehoover");
   fc.unlock("pressure_calculation", "temp_nosehoover_chains");
   fc.unlock("pressure_calculation", "position_rest");
-  fc.unlock("pressure_calculation", "possition_const");
+  fc.unlock("pressure_calculation", "position_const");
   fc.unlock("pressure_calculation", "position_const_scaled");
   fc.unlock("pressure_calculation", "distance_rest");
   fc.unlock("pressure_calculation", "dihedral_rest");
@@ -804,7 +806,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_scale_berendsen", "temp_nosehoover");
   fc.unlock("pressure_scale_berendsen", "temp_nosehoover_chains");
   fc.unlock("pressure_scale_berendsen", "position_rest");
-  fc.unlock("pressure_scale_berendsen", "possition_const");
+  fc.unlock("pressure_scale_berendsen", "position_const");
   fc.unlock("pressure_scale_berendsen", "position_const_scaled");
   fc.unlock("pressure_scale_berendsen", "distance_rest");
   fc.unlock("pressure_scale_berendsen", "dihedral_rest");
@@ -853,7 +855,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_off", "temp_nosehoover");
   fc.unlock("virial_off", "temp_nosehoover_chains");
   fc.unlock("virial_off", "position_rest");
-  fc.unlock("virial_off", "possition_const");
+  fc.unlock("virial_off", "position_const");
   fc.unlock("virial_off", "distance_rest");
   fc.unlock("virial_off", "dihedral_rest");
   fc.unlock("virial_off", "dihedral_const");
@@ -901,7 +903,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_atomic", "temp_nosehoover");
   fc.unlock("virial_atomic", "temp_nosehoover_chains");
   fc.unlock("virial_atomic", "position_rest");
-  fc.unlock("virial_atomic", "possition_const");
+  fc.unlock("virial_atomic", "position_const");
   fc.unlock("virial_atomic", "position_const_scaled");
   fc.unlock("virial_atomic", "distance_rest");
   fc.unlock("virial_atomic", "dihedral_rest");
@@ -950,7 +952,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_molecular", "temp_nosehoover");
   fc.unlock("virial_molecular", "temp_nosehoover_chains");
   fc.unlock("virial_molecular", "position_rest");
-  fc.unlock("virial_molecular", "possition_const");
+  fc.unlock("virial_molecular", "position_const");
   fc.unlock("virial_molecular", "position_const_scaled");
   fc.unlock("virial_molecular", "distance_rest");
   fc.unlock("virial_molecular", "dihedral_rest");
@@ -993,7 +995,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("vacuum", "temp_nosehoover");
   fc.unlock("vacuum", "temp_nosehoover_chains");
   fc.unlock("vacuum", "position_rest");
-  fc.unlock("vacuum", "possition_const");
+  fc.unlock("vacuum", "position_const");
   fc.unlock("vacuum", "distance_rest");
   fc.unlock("vacuum", "dihedral_rest");
   fc.unlock("vacuum", "dihedral_const");
@@ -1036,7 +1038,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_r", "temp_nosehoover");
   fc.unlock("pbc_r", "temp_nosehoover_chains");
   fc.unlock("pbc_r", "position_rest");
-  fc.unlock("pbc_r", "possition_const");
+  fc.unlock("pbc_r", "position_const");
   fc.unlock("pbc_r", "position_const_scaled");
   fc.unlock("pbc_r", "distance_rest");
   fc.unlock("pbc_r", "dihedral_rest");
@@ -1080,7 +1082,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_c", "temp_nosehoover");
   fc.unlock("pbc_c", "temp_nosehoover_chains");
   fc.unlock("pbc_c", "position_rest");
-  fc.unlock("pbc_c", "possition_const");
+  fc.unlock("pbc_c", "position_const");
   fc.unlock("pbc_c", "position_const_scaled");
   fc.unlock("pbc_c", "distance_rest");
   fc.unlock("pbc_c", "dihedral_rest");
@@ -1122,7 +1124,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_t", "temp_nosehoover");
   fc.unlock("pbc_t", "temp_nosehoover_chains");
   fc.unlock("pbc_t", "position_rest");
-  fc.unlock("pbc_t", "possition_const");
+  fc.unlock("pbc_t", "position_const");
   fc.unlock("pbc_t", "position_const_scaled");
   fc.unlock("pbc_t", "distance_rest");
   fc.unlock("pbc_t", "dihedral_rest");
@@ -1163,7 +1165,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation", "temp_nosehoover");
   fc.unlock("perturbation", "temp_nosehoover_chains");
   fc.unlock("perturbation", "position_rest");
-  fc.unlock("perturbation", "possition_const");
+  fc.unlock("perturbation", "position_const");
   fc.unlock("perturbation", "position_const_scaled");
   fc.unlock("perturbation", "distance_rest");
   fc.unlock("perturbation", "dihedral_rest");
@@ -1204,7 +1206,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation_scaling", "temp_nosehoover");
   fc.unlock("perturbation_scaling", "temp_nosehoover_chains");
   fc.unlock("perturbation_scaling", "position_rest");
-  fc.unlock("perturbation_scaling", "possition_const");
+  fc.unlock("perturbation_scaling", "position_const");
   fc.unlock("perturbation_scaling", "position_const_scaled");
   fc.unlock("perturbation_scaling", "distance_rest");
   fc.unlock("perturbation_scaling", "dihedral_rest");
@@ -1244,7 +1246,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bond", "temp_nosehoover");
   fc.unlock("bond", "temp_nosehoover_chains");
   fc.unlock("bond", "position_rest");
-  fc.unlock("bond", "possition_const");
+  fc.unlock("bond", "position_const");
   fc.unlock("bond", "position_const_scaled");
   fc.unlock("bond", "distance_rest");
   fc.unlock("bond", "dihedral_rest");
@@ -1285,7 +1287,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("angle", "temp_nosehoover");
   fc.unlock("angle", "temp_nosehoover_chains");
   fc.unlock("angle", "position_rest");
-  fc.unlock("angle", "possition_const");
+  fc.unlock("angle", "position_const");
   fc.unlock("angle", "position_const_scaled");
   fc.unlock("angle", "distance_rest");
   fc.unlock("angle", "dihedral_rest");
@@ -1325,7 +1327,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral", "temp_nosehoover");
   fc.unlock("dihedral", "temp_nosehoover_chains");
   fc.unlock("dihedral", "position_rest");
-  fc.unlock("dihedral", "possition_const");
+  fc.unlock("dihedral", "position_const");
   fc.unlock("dihedral", "position_const_scaled");
   fc.unlock("dihedral", "distance_rest");
   fc.unlock("dihedral", "dihedral_rest");
@@ -1364,7 +1366,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("improper", "temp_nosehoover");
   fc.unlock("improper", "temp_nosehoover_chains");
   fc.unlock("improper", "position_rest");
-  fc.unlock("improper", "possition_const");
+  fc.unlock("improper", "position_const");
   fc.unlock("improper", "position_const_scaled");
   fc.unlock("improper", "distance_rest");
   fc.unlock("improper", "dihedral_rest");
@@ -1402,7 +1404,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("crf", "temp_nosehoover");
   fc.unlock("crf", "temp_nosehoover_chains");
   fc.unlock("crf", "position_rest");
-  fc.unlock("crf", "possition_const");
+  fc.unlock("crf", "position_const");
   fc.unlock("crf", "position_const_scaled");
   fc.unlock("crf", "distance_rest");
   fc.unlock("crf", "dihedral_rest");
@@ -1439,7 +1441,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("lj", "temp_nosehoover");
   fc.unlock("lj", "temp_nosehoover_chains");
   fc.unlock("lj", "position_rest");
-  fc.unlock("lj", "possition_const");
+  fc.unlock("lj", "position_const");
   fc.unlock("lj", "position_const_scaled");
   fc.unlock("lj", "distance_rest");
   fc.unlock("lj", "dihedral_rest");
@@ -1475,7 +1477,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("com_removal", "temp_nosehoover");
   fc.unlock("com_removal", "temp_nosehoover_chains");
   fc.unlock("com_removal", "position_rest");
-  fc.unlock("com_removal", "possition_const");
+  fc.unlock("com_removal", "position_const");
   fc.unlock("com_removal", "position_const_scaled");
   fc.unlock("com_removal", "distance_rest");
   fc.unlock("com_removal", "dihedral_rest");
@@ -1510,7 +1512,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("rf_excluded", "temp_nosehoover");
   fc.unlock("rf_excluded", "temp_nosehoover_chains");
   fc.unlock("rf_excluded", "position_rest");
-  fc.unlock("rf_excluded", "possition_const");
+  fc.unlock("rf_excluded", "position_const");
   fc.unlock("rf_excluded", "position_const_scaled");
   fc.unlock("rf_excluded", "distance_rest");
   fc.unlock("rf_excluded", "dihedral_rest");
@@ -1542,7 +1544,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_standard", "temp_nosehoover");
   fc.unlock("pairlist_standard", "temp_nosehoover_chains");
   fc.unlock("pairlist_standard", "position_rest");
-  fc.unlock("pairlist_standard", "possition_const");
+  fc.unlock("pairlist_standard", "position_const");
   fc.unlock("pairlist_standard", "position_const_scaled");
   fc.unlock("pairlist_standard", "distance_rest");
   fc.unlock("pairlist_standard", "dihedral_rest");
@@ -1573,7 +1575,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_grid", "temp_nosehoover");
   fc.unlock("pairlist_grid", "temp_nosehoover_chains");
   fc.unlock("pairlist_grid", "position_rest");
-  fc.unlock("pairlist_grid", "possition_const");
+  fc.unlock("pairlist_grid", "position_const");
   fc.unlock("pairlist_grid", "position_const_scaled");
   fc.unlock("pairlist_grid", "distance_rest");
   fc.unlock("pairlist_grid", "dihedral_rest");
@@ -1601,7 +1603,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_vgrid", "temp_nosehoover");
   fc.unlock("pairlist_vgrid", "temp_nosehoover_chains");
   fc.unlock("pairlist_vgrid", "position_rest");
-  fc.unlock("pairlist_vgrid", "possition_const");
+  fc.unlock("pairlist_vgrid", "position_const");
   fc.unlock("pairlist_vgrid", "position_const_scaled");
   fc.unlock("pairlist_vgrid", "distance_rest");
   fc.unlock("pairlist_vgrid", "dihedral_rest");
@@ -1624,7 +1626,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_atomic", "temp_nosehoover");
   fc.unlock("cutoff_atomic", "temp_nosehoover_chains");
   fc.unlock("cutoff_atomic", "position_rest");
-  fc.unlock("cutoff_atomic", "possition_const");
+  fc.unlock("cutoff_atomic", "position_const");
   fc.unlock("cutoff_atomic", "position_const_scaled");
   fc.unlock("cutoff_atomic", "distance_rest");
   fc.unlock("cutoff_atomic", "dihedral_rest");
@@ -1652,7 +1654,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("coarse_grain", "temp_nosehoover");
   fc.unlock("coarse_grain", "temp_nosehoover_chains");
   fc.unlock("coarse_grain", "position_rest");
-  fc.unlock("coarse_grain", "possition_const");
+  fc.unlock("coarse_grain", "position_const");
   fc.unlock("coarse_grain", "position_const_scaled");
   fc.unlock("coarse_grain", "distance_rest");
   fc.unlock("coarse_grain", "perscale");
@@ -1674,7 +1676,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("multi_grain", "temp_nosehoover");
   fc.unlock("multi_grain", "temp_nosehoover_chains");
   fc.unlock("multi_grain", "position_rest");
-  fc.unlock("multi_grain", "possition_const");
+  fc.unlock("multi_grain", "position_const");
   fc.unlock("multi_grain", "position_const_scaled");
   fc.unlock("multi_grain", "distance_rest");
   fc.unlock("multi_grain", "rottrans");
@@ -1691,7 +1693,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("multi_grain", "parallel_mpi");
   fc.unlock("multi_grain", "parallel_omp");
   fc.unlock("temp_berendsen", "position_rest");
-  fc.unlock("temp_berendsen", "possition_const");
+  fc.unlock("temp_berendsen", "position_const");
   fc.unlock("temp_berendsen", "position_const_scaled");
   fc.unlock("temp_berendsen", "distance_rest");
   fc.unlock("temp_berendsen", "dihedral_rest");
@@ -1717,7 +1719,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_berendsen", "parallel_mpi");
   fc.unlock("temp_berendsen", "parallel_omp");
   fc.unlock("temp_nosehoover", "position_rest");
-  fc.unlock("temp_nosehoover", "possition_const");
+  fc.unlock("temp_nosehoover", "position_const");
   fc.unlock("temp_nosehoover", "position_const_scaled");
   fc.unlock("temp_nosehoover", "distance_rest");
   fc.unlock("temp_nosehoover", "dihedral_rest");
@@ -1743,7 +1745,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_nosehoover", "parallel_mpi");
   fc.unlock("temp_nosehoover", "parallel_omp");
   fc.unlock("temp_nosehoover_chains", "position_rest");
-  fc.unlock("temp_nosehoover_chains", "possition_const");
+  fc.unlock("temp_nosehoover_chains", "position_const");
   fc.unlock("temp_nosehoover_chains", "position_const_scaled");
   fc.unlock("temp_nosehoover_chains", "distance_rest");
   fc.unlock("temp_nosehoover_chains", "dihedral_rest");
@@ -1791,28 +1793,28 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_rest", "random_gsl");
   fc.unlock("position_rest", "parallel_mpi");
   fc.unlock("position_rest", "parallel_omp");
-  fc.unlock("possition_const", "distance_rest");
-  fc.unlock("possition_const", "dihedral_rest");
-  fc.unlock("possition_const", "jvalue_rest");
-  fc.unlock("possition_const", "perscale");
-  fc.unlock("possition_const", "rottrans");
-  fc.unlock("possition_const", "innerloop_spc");
-  fc.unlock("possition_const", "repex_temp");
-  fc.unlock("possition_const", "repex_lambda");
-  fc.unlock("possition_const", "multicell");
-  fc.unlock("possition_const", "analysis");
-  fc.unlock("possition_const", "no_integration");
-  fc.unlock("possition_const", "stochdyn");
-  fc.unlock("possition_const", "multistep");
-  fc.unlock("possition_const", "multistep_boost");
-  fc.unlock("possition_const", "montecarlo");
-  fc.unlock("possition_const", "ramd");
-  fc.unlock("possition_const", "polarization_cos");
-  fc.unlock("possition_const", "polarization_cos_damped");
-  fc.unlock("possition_const", "random_gromos");
-  fc.unlock("possition_const", "random_gsl");
-  fc.unlock("possition_const", "parallel_mpi");
-  fc.unlock("possition_const", "parallel_omp");
+  fc.unlock("position_const", "distance_rest");
+  fc.unlock("position_const", "dihedral_rest");
+  fc.unlock("position_const", "jvalue_rest");
+  fc.unlock("position_const", "perscale");
+  fc.unlock("position_const", "rottrans");
+  fc.unlock("position_const", "innerloop_spc");
+  fc.unlock("position_const", "repex_temp");
+  fc.unlock("position_const", "repex_lambda");
+  fc.unlock("position_const", "multicell");
+  fc.unlock("position_const", "analysis");
+  fc.unlock("position_const", "no_integration");
+  fc.unlock("position_const", "stochdyn");
+  fc.unlock("position_const", "multistep");
+  fc.unlock("position_const", "multistep_boost");
+  fc.unlock("position_const", "montecarlo");
+  fc.unlock("position_const", "ramd");
+  fc.unlock("position_const", "polarization_cos");
+  fc.unlock("position_const", "polarization_cos_damped");
+  fc.unlock("position_const", "random_gromos");
+  fc.unlock("position_const", "random_gsl");
+  fc.unlock("position_const", "parallel_mpi");
+  fc.unlock("position_const", "parallel_omp");
   fc.unlock("position_const_scaled", "distance_rest");
   fc.unlock("position_const_scaled", "dihedral_rest");
   fc.unlock("position_const_scaled", "jvalue_rest");
@@ -2096,7 +2098,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("slow_growth", "temp_nosehoover");
   fc.unlock("slow_growth", "temp_nosehoover_chains");
   fc.unlock("slow_growth", "position_rest");
-  fc.unlock("slow_growth", "possition_const");
+  fc.unlock("slow_growth", "position_const");
   fc.unlock("slow_growth", "position_const_scaled");
   fc.unlock("slow_growth", "distance_rest");
   fc.unlock("slow_growth", "dihedral_rest");
@@ -2119,6 +2121,71 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("slow_growth", "random_gsl");
   fc.unlock("slow_growth", "parallel_mpi");
   fc.unlock("slow_growth", "parallel_omp");
+  fc.unlock("eds", "solute");
+  fc.unlock("eds", "solvent");
+  fc.unlock("eds", "steepest_descent");
+  fc.unlock("eds", "solute_constraint_off");
+  fc.unlock("eds", "solute_shake");
+  fc.unlock("eds", "solute_lincs");
+  //fc.unlock("eds", "solute_flexshake"); // probably works
+  //fc.unlock("eds", "solvent_constraint_off");
+  fc.unlock("eds", "solvent_shake");
+  fc.unlock("eds", "pressure_calculation");
+  fc.unlock("eds", "pressure_scale_berendsen");
+  fc.unlock("eds", "virial_off");
+  fc.unlock("eds", "virial_atomic");
+  fc.unlock("eds", "virial_molecular");
+  fc.unlock("eds", "vacuum");
+  fc.unlock("eds", "pbc_r");
+  //fc.unlock("eds", "pbc_c"); // probably works - test!
+  //fc.unlock("eds", "pbc_t"); // probably works - test!
+  //fc.unlock("eds", "perturbation");
+  //fc.unlock("eds", "perturbation_scaling");
+  //fc.unlock("eds", "slow_growth");
+  fc.unlock("eds", "bond");
+  fc.unlock("eds", "angle");
+  fc.unlock("eds", "dihedral");
+  fc.unlock("eds", "improper");
+  fc.unlock("eds", "crf");
+  fc.unlock("eds", "lj");
+  fc.unlock("eds", "com_removal");
+  fc.unlock("eds", "rf_excluded"); // fix!
+  fc.unlock("eds", "pairlist_standard");
+  fc.unlock("eds", "pairlist_grid");
+  //fc.unlock("eds", "pairlist_vgrid");
+  fc.unlock("eds", "cutoff_atomic");
+  //fc.unlock("eds", "coarse_grain");
+  //fc.unlock("eds", "multi_grain");
+  fc.unlock("eds", "temp_berendsen");
+  fc.unlock("eds", "temp_nosehoover");
+  fc.unlock("eds", "temp_nosehoover_chains");
+  fc.unlock("eds", "position_rest"); 
+  fc.unlock("eds", "position_const"); 
+  fc.unlock("eds", "position_const_scaled"); 
+  fc.unlock("eds", "distance_rest");
+  fc.unlock("eds", "dihedral_rest");
+  fc.unlock("eds", "dihedral_const");
+  //fc.unlock("eds", "jvalue_rest");
+  //fc.unlock("eds", "perscale");
+  fc.unlock("eds", "rottrans");
+  fc.unlock("eds", "innerloop_spc");
+  //fc.unlock("eds", "repex_temp");
+  //fc.unlock("eds", "repex_lambda");
+  //fc.unlock("eds", "multicell");
+  //fc.unlock("eds", "analysis");
+  //fc.unlock("eds", "no_integration");
+  //fc.unlock("eds", "stochdyn"); // test! probably works!
+  //fc.unlock("eds", "multistep");
+  //fc.unlock("eds", "multistep_boost");
+  //fc.unlock("eds", "montecarlo");
+  //fc.unlock("eds", "ramd");
+  //fc.unlock("eds", "polarization_cos");
+  // fc.unlock("eds", "polarization_cos_damped");
+  fc.unlock("eds", "random_gromos");
+  fc.unlock("eds", "random_gsl");
+  fc.unlock("eds", "parallel_mpi");
+  fc.unlock("eds", "parallel_omp");
+
 
   
   if (fc.check()) 

@@ -240,6 +240,18 @@ namespace configuration
 	double ta_average;
 	
       } /** ramd information */ ramd;
+      struct eds_struct 
+      {
+        /**
+         * (longrange) force storage (perturbed part of multiple states)
+         */
+        std::vector<math::VArray> force_endstates;
+        /**
+         * virial tensor (perturbed part of multiple states)
+         */
+        std::vector<math::Matrix> virial_tensor_endstates;
+
+      } /** enveloping distribution sampling information */ eds;
       
     }; // special
 

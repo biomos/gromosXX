@@ -26,6 +26,10 @@ namespace interaction
      * (longrange) force storage.
      */
     math::VArray force;
+    /**
+     * eds endstates (longrange) force storage.
+     */
+    std::vector<math::VArray> force_endstates;
      /**
      * (longrange) energy storage.
      */
@@ -38,6 +42,10 @@ namespace interaction
      * (longrange) virial storage.
      */
     math::Matrix virial_tensor;
+    /**
+     * eds endstates (longrange) virial storage.
+     */
+    std::vector<math::Matrix> virial_tensor_endstates;
      /**
       * (longrange) electric field storage.
       */
@@ -53,6 +61,11 @@ namespace interaction
       energies.zero();
       perturbed_energy_derivatives.zero();
       virial_tensor = 0.0;
+      assert(force_endstates.size() == virial_tensor_endstates.size());
+      for(unsigned int i = 0; i< force_endstates.size(); i++){
+        force_endstates[i] = 0.0;
+        virial_tensor_endstates[i] = 0.0;
+      }
     }
 
   };

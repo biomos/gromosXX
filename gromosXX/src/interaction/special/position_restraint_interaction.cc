@@ -57,7 +57,8 @@ static int _calculate_position_restraint_interactions
     f = (- sim.param().posrest.force_constant / it->bfactor) * v;
 
     force(it->seq) += f;
-
+  
+    // should there be a contribution of this special ia to the virial?
     if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)

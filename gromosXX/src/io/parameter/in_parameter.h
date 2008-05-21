@@ -221,7 +221,10 @@ namespace io {
      * read blocks that are either g96 or promd specific and tell user what to do
      */
     void read_known_unsupported_blocks();
-
+    /**
+     * read EDS block.
+     */
+    void read_EDS(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io

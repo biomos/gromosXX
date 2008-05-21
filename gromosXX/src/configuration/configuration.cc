@@ -31,6 +31,7 @@ configuration::Configuration::Configuration()
   m_current = &m_state1;
   m_old = &m_state2;
 
+  // is this really needed? operator = is overloaded! see gmath.h
   for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
       current().virial_tensor(i,j) = 0.0;
@@ -41,6 +42,10 @@ configuration::Configuration::Configuration()
 
       current().pressure_tensor(i,j) = 0.0;
       old().pressure_tensor(i,j) = 0.0;
+      
+      for(unsigned int k=0; k<special().eds.virial_tensor_endstates.size(); ++k){
+        special().eds.virial_tensor_endstates[k](i,j) = 0.0;
+      }    
     }
   }
 }
@@ -55,7 +60,7 @@ configuration::Configuration::Configuration
 {
   m_current = &m_state1;
   m_old = &m_state2;
-
+ // is this really needed?? operator = is overloaded! see gmath.h
   for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
       current().virial_tensor(i,j) =
@@ -72,6 +77,11 @@ configuration::Configuration::Configuration
 	conf.current().pressure_tensor(i,j);
       old().pressure_tensor(i,j) = 
 	conf.old().pressure_tensor(i,j);
+      
+      for(unsigned int k=0; k<special().eds.virial_tensor_endstates.size(); ++k){
+        special().eds.virial_tensor_endstates[k](i, j) =
+          conf.special().eds.virial_tensor_endstates[k](i, j);
+      }
     }
   }
   
@@ -115,6 +125,8 @@ configuration::Configuration::Configuration
   special().rottrans_constr = conf.special().rottrans_constr;
 
   special().ramd = conf.special().ramd;
+  // if this works just like this, why do we need to explicitly copy the virial tensor?
+  special().eds = conf.special().eds;
   
   boundary_type = conf.boundary_type;
 }
@@ -129,7 +141,7 @@ configuration::Configuration & configuration::Configuration::operator=
 {
   m_current = &m_state1;
   m_old = &m_state2;
-
+ // is this really needed?? operator = is overloaded! see gmath.h
   for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
       current().virial_tensor(i,j) =
@@ -146,6 +158,11 @@ configuration::Configuration & configuration::Configuration::operator=
 	conf.current().pressure_tensor(i,j);
       old().pressure_tensor(i,j) = 
 	conf.old().pressure_tensor(i,j);
+      
+      for(unsigned int k=0; k<special().eds.virial_tensor_endstates.size(); ++k){
+        special().eds.virial_tensor_endstates[k](i, j) =
+                conf.special().eds.virial_tensor_endstates[k](i, j);
+      }
     }
   }
   
@@ -189,6 +206,8 @@ configuration::Configuration & configuration::Configuration::operator=
   special().rottrans_constr = conf.special().rottrans_constr;
 
   special().ramd = conf.special().ramd;
+  
+  special().eds = conf.special().eds;
   
   boundary_type = conf.boundary_type;
 
@@ -208,6 +227,16 @@ void configuration::Configuration::init(topology::Topology const & topo,
 
   current().energies.resize(num, numb);
   old().energies.resize(num, numb);
+  
+  // check whether this can really stay here! see resize function below
+  special().eds.force_endstates.resize(param.eds.numstates);
+  for (unsigned int i = 0;
+       i < special().eds.force_endstates.size(); i++){
+    special().eds.force_endstates[i].resize(topo.num_atoms());
+  }  
+  special().eds.virial_tensor_endstates.resize(param.eds.numstates);
+  current().energies.eds_vi.resize(param.eds.numstates);
+  old().energies.eds_vi.resize(param.eds.numstates);
   
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);

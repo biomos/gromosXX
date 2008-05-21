@@ -144,6 +144,40 @@ namespace topology
   };
       
 
+  /**
+   * @class EDS_Perturbed_Solute
+   * holds the information about EDS-perturbation of
+   * the solute.
+   */
+  class EDS_Perturbed_Solute
+  {
+  public:
+     
+    /**
+     * perturbed atoms accessor.
+     */
+    std::map<unsigned int, EDS_Perturbed_Atom> & atoms() {return m_atom;}
+
+    /**
+     * const perturbed atoms accessor.
+     */
+    std::map<unsigned int, EDS_Perturbed_Atom> const & atoms()const {return m_atom;}
+
+    /**
+     * perturbed atom accessor
+     */
+    EDS_Perturbed_Atom & atom(unsigned int i) {return m_atom[i];}
+      
+  private:
+     
+    /**
+     * the perturbed atoms.
+     */
+    std::map<unsigned int, EDS_Perturbed_Atom> m_atom; 
+ 
+  };
+      
+
 } // topology
 
 

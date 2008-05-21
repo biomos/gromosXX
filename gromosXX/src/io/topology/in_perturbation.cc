@@ -103,7 +103,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 			  simulation::Parameter &param)
 {
 
-  if (!param.perturbation.perturbation){
+  if (!param.perturbation.perturbation && !param.eds.eds){
     io::messages.add("Ignoring perturbation topology because perturbation is not enabled.",
 		     "In_Perturbation",
 		     io::message::warning);
@@ -119,1100 +119,1252 @@ io::In_Perturbation::read(topology::Topology &topo,
     std::cout << title << "\n";
   }
   
+  
   // lets do a warning because state A information is overwritten?
   bool warn = false;
-
-  // prepare arrays
-  topo.is_perturbed().resize(topo.num_solute_atoms(), false);
-
-  { // PERTBONDSTRETCH(H)
+  if(!param.eds.eds){
+    // prepare arrays
+    topo.is_perturbed().resize(topo.num_solute_atoms(), false);
+    
+    { // PERTBONDSTRETCH(H)
       
-    if (buffer.size()){
+      if (buffer.size()){
         
-    block_read.insert("PERTBOND03");
-    io::messages.add("The PERTBOND03 block was renamed to PERTBONDSTRETCH.",
-             "In_Perturbation", io::message::error); 
-    }
-    std::vector<std::string> pertbondstretch;  
-    pertbondstretch.push_back("PERTBONDSTRETCHH");
-    pertbondstretch.push_back("PERTBONDSTRETCH");
-    for (unsigned int hh=0; hh < pertbondstretch.size(); hh++) {
-    buffer = m_block[pertbondstretch.at(hh)];
-    if (buffer.size()){
+        block_read.insert("PERTBOND03");
+        io::messages.add("The PERTBOND03 block was renamed to PERTBONDSTRETCH.",
+                "In_Perturbation", io::message::error);
+      }
+      std::vector<std::string> pertbondstretch;
+      pertbondstretch.push_back("PERTBONDSTRETCHH");
+      pertbondstretch.push_back("PERTBONDSTRETCH");
+      for (unsigned int hh=0; hh < pertbondstretch.size(); hh++) {
+        buffer = m_block[pertbondstretch.at(hh)];
+        if (buffer.size()){
+          
+          block_read.insert(pertbondstretch.at(hh));
+          
+          if (!quiet)
+            std::cout << "\t" << pertbondstretch.at(hh) << "\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          if (param.constraint.ntc == 2){
+            io::messages.add("No perturbed distance constraints for "
+            "NTC = 2 from perturbed bonds",
+                    "in_perturbation",
+                    io::message::warning);
+          }
+          else if (param.constraint.ntc == 3){
+            if (!quiet)
+              std::cout << "\n\t\t"
+              << num
+              << " perturbed bonds from " << pertbondstretch.at(hh) << " block added to "
+              << "perturbed distance constraints.";
+          }
+          
+          if (!quiet)
+            std::cout << "\n\t"
+            << std::setw(10) << "atom i"
+            << std::setw(10) << "atom j"
+            << std::setw(10) << "type A"
+            << std::setw(10) << "type B"
+            << "\n";
+          
+          for(n=0; it != buffer.end() -1; ++it, ++n){
+            int i, j, t_A, t_B;
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> t_A >> t_B;
             
-      block_read.insert(pertbondstretch.at(hh));
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in " + pertbondstretch.at(hh) + " block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            topology::two_body_term_struct b(i-1, j-1, t_A-1);
+            
+            if (param.constraint.ntc != 3){
+              std::vector<topology::two_body_term_struct>::iterator b_it
+                      = std::find_if(topo.solute().bonds().begin(),
+                      topo.solute().bonds().end(),
+                      bondMatcher(b));
+              
+              if (b_it == topo.solute().bonds().end()){
+                io::messages.add("Perturbation of a non-existing bond "
+                "in " + pertbondstretch.at(hh) + " block.",
+                        "In_Perturbation", io::message::error);
+                return;
+              }
+              
+              if (b_it->type != b.type)
+                warn = true;
+              
+              topo.solute().bonds().erase(b_it);
+              topology::perturbed_two_body_term_struct
+              pb(i-1, j-1, t_A-1, t_B-1);
+              
+              if (!quiet)
+                std::cout << "\t"
+                << std::setw(10) << pb.i+1
+                << std::setw(10) << pb.j+1
+                << std::setw(10) << pb.A_type+1
+                << std::setw(10) << pb.B_type+1
+                << "\n";
+              
+              topo.perturbed_solute().bonds().push_back(pb);
+            } else { // we have constraints
+              std::vector<topology::two_body_term_struct>::iterator b_it
+                      = std::find_if(topo.solute().distance_constraints().begin(),
+                      topo.solute().distance_constraints().end(),
+                      bondMatcher(b));
+              
+              if (b_it == topo.solute().distance_constraints().end()){
+                io::messages.add("Perturbation of a non-existing distance "
+                "constraint in " + pertbondstretch.at(hh) + " block.",
+                        "In_Perturbation", io::message::error);
+                return;
+              }
+              
+              if (b_it->type != b.type)
+                warn = true;
+              
+              topo.solute().distance_constraints().erase(b_it);
+              topology::perturbed_two_body_term_struct
+              pb(i-1, j-1, t_A-1, t_B-1);
+              
+              if (!quiet)
+                std::cout << "\t"
+                << std::setw(10) << pb.i+1
+                << std::setw(10) << pb.j+1
+                << std::setw(10) << pb.A_type+1
+                << std::setw(10) << pb.B_type+1
+                << "\n";
+              
+              topo.perturbed_solute().distance_constraints().push_back(pb);
+            }
+          }
+          
+          if (n != num){
+            io::messages.add("Wrong number of bonds in " + pertbondstretch.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in " + pertbondstretch.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          if (!quiet)
+            std::cout << "\n\t\tbonds :                          "
+            << unsigned(topo.solute().bonds().size())
+            << "\n\t\tperturbed bonds :                "
+            << unsigned(topo.perturbed_solute().bonds().size())
+            << "\n\t\tdistance constraints :           "
+            << unsigned(topo.solute().distance_constraints().size())
+            << "\n\t\tperturbed distance constraints : "
+            << unsigned(topo.perturbed_solute().distance_constraints().size())
+            << "\n\n"
+            << "\tEND\n";
+          
+        } // if block present
+      }  // loop over H/non H blocks
+    } // PERTBONDSTRETCH(H)
+    
+    { // PERTCONSTRAINT03
+      DEBUG(10, "PERTCONSTRAINT03 block");
+      buffer = m_block["PERTCONSTRAINT03"];
       
-      if (!quiet)
-	std::cout << "\t" << pertbondstretch.at(hh) << "\n";
-
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-      
-      if (param.constraint.ntc == 2){
-	io::messages.add("No perturbed distance constraints for "
-			 "NTC = 2 from perturbed bonds",
-			 "in_perturbation",
-			 io::message::warning);
-      }
-      else if (param.constraint.ntc == 3){
-	if (!quiet)
-	  std::cout << "\n\t\t"
-		    << num
-		    << " perturbed bonds from " << pertbondstretch.at(hh) << " block added to "
-		    << "perturbed distance constraints.";
-      }
-
-      if (!quiet)
-	std::cout << "\n\t"
-		  << std::setw(10) << "atom i"
-		  << std::setw(10) << "atom j"
-		  << std::setw(10) << "type A"
-		  << std::setw(10) << "type B"
-		  << "\n";
-      
-      for(n=0; it != buffer.end() -1; ++it, ++n){
-	int i, j, t_A, t_B;
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> t_A >> t_B;
-	
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in " + pertbondstretch.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);
-	}
-	
-	topology::two_body_term_struct b(i-1, j-1, t_A-1);
-
-	if (param.constraint.ntc != 3){
+      if (buffer.size() && param.constraint.ntc != 1){
+        block_read.insert("PERTCONSTRAINT03");
+        
+        it = buffer.begin() + 1;
+        _lineStream.clear();
+        _lineStream.str(*it);
+        int num, n;
+        _lineStream >> num;
+        ++it;
+        
+        if (!quiet)
+          std::cout << "\tPERTCONSTRAINT03\n\t\t"
+          << num
+          << " bonds in PERTCONSTRAINT03 block."
+          << "\n\t\ttotal of perturbed constraint bonds : "
+          << unsigned(num + topo.perturbed_solute().distance_constraints().size())
+          << "\n"
+          << "\t"
+          << std::setw(10) << "atom i"
+          << std::setw(10) << "atom j"
+          << std::setw(10) << "type A"
+          << std::setw(10) << "type B"
+          << "\n";
+        
+        for(n=0; it != buffer.end() - 1; ++it, ++n){
+          int i, j, t_A, t_B;
+          
+          _lineStream.clear();
+          _lineStream.str(*it);
+          _lineStream >> i >> j >> t_A >> t_B;
+          
+          if (_lineStream.fail()){
+            io::messages.add("Bad line in PERTCONSTRAINT03 block",
+                    "In_Topology", io::message::error);
+          }
+          
+          if (i > int(topo.num_solute_atoms()) ||
+                  j > int(topo.num_solute_atoms()) ||
+                  i < 1 || j < 1){
+            io::messages.add("Atom number out of range in PERTCONSTRAINT03 "
+            " block", "In_Topology", io::message::error);
+          }
+          
+          topology::two_body_term_struct b(i-1, j-1, t_A-1);
+          
           std::vector<topology::two_body_term_struct>::iterator b_it
-	    = std::find_if(topo.solute().bonds().begin(), 
-			   topo.solute().bonds().end(), 
-                           bondMatcher(b));
-	
-	  if (b_it == topo.solute().bonds().end()){
-            io::messages.add("Perturbation of a non-existing bond "
-                             "in " + pertbondstretch.at(hh) + " block.",
-                             "In_Perturbation", io::message::error);
+                  = std::find_if(topo.solute().distance_constraints().begin(),
+                  topo.solute().distance_constraints().end(),
+                  bondMatcher(b));
+          
+          if (b_it == topo.solute().distance_constraints().end()){
+            io::messages.add("Perturbation of a non-existing distance "
+            "constraint in PERTCONSTRAINT03 block.",
+                    "In_Perturbation", io::message::error);
+            
+          }
+          
+          if (b_it->type != b.type)
+            warn = true;
+          
+          topo.solute().distance_constraints().erase(b_it);
+          topology::perturbed_two_body_term_struct
+          pb(i-1, j-1, t_A-1, t_B-1);
+          
+          topo.perturbed_solute().distance_constraints().push_back(pb);
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(10) << pb.i+1
+            << std::setw(10) << pb.j+1
+            << std::setw(10) << pb.A_type+1
+            << std::setw(10) << pb.B_type+1
+            << "\n";
+          
+        }
+        
+        if(n != num){
+          io::messages.add("Wrong number of bonds in PERTCONSTRAINT03 block",
+                  "In_Perturbation", io::message::error);
+        }
+      }
+      
+    } // PERTCONSTRAINT03
+    
+    { // PERTBONDANGLE(H)
+      DEBUG(10, "PERTBANGLE03 block");
+      buffer = m_block["PERTBANGLE03"];
+      if (buffer.size()){
+        
+        block_read.insert("PERTBANGLE03");
+        io::messages.add("The PERTBANGLE03 block was renamed to PERTBONDANGLE.",
+                "In_Perturbation", io::message::error);
+      }
+      
+      std::vector<std::string> pertbondangle;
+      pertbondangle.push_back("PERTBONDANGLEH");
+      pertbondangle.push_back("PERTBONDANGLE");
+      for (unsigned int hh=0; hh < pertbondangle.size(); hh++) {
+        buffer = m_block[pertbondangle.at(hh)];
+        if (buffer.size()){
+          block_read.insert(pertbondangle.at(hh));
+          
+          if (!quiet)
+            std::cout << "\t" << pertbondangle.at(hh) << "\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(10) << "atom i"
+            << std::setw(10) << "atom j"
+            << std::setw(10) << "atom k"
+            << std::setw(10) << "type A"
+            << std::setw(10) << "type B"
+            << "\n";
+          
+          for(n=0; it != buffer.end() -1; ++it, ++n){
+            int i, j, k, t_A, t_B;
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> k >> t_A >> t_B;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in " + pertbondangle.at(hh) + " block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            topology::three_body_term_struct a(i-1, j-1, k-1, t_A-1);
+            std::vector<topology::three_body_term_struct>::iterator a_it
+                    = std::find_if(topo.solute().angles().begin(),
+                    topo.solute().angles().end(),
+                    angleMatcher(a));
+            
+            if (a_it == topo.solute().angles().end()){
+              io::messages.add("Perturbation of a non-existing angle in "
+              + pertbondangle.at(hh) + " block.",
+                      "In_Perturbation", io::message::error);
               return;
-	  }
-
-          if (b_it->type != b.type)
-            warn = true;
+            }
+            
+            if (a_it->type != a.type)
+              warn = true;
+            
+            topo.solute().angles().erase(a_it);
+            topology::perturbed_three_body_term_struct pa(i-1, j-1, k-1, t_A-1, t_B-1);
+            topo.perturbed_solute().angles().push_back(pa);
+            
+            if (!quiet)
+              std::cout << "\t"
+              << std::setw(10) << pa.i+1
+              << std::setw(10) << pa.j+1
+              << std::setw(10) << pa.k+1
+              << std::setw(10) << pa.A_type+1
+              << std::setw(10) << pa.B_type+1
+              << "\n";
+            
+          }
+          if (n != num){
+            io::messages.add("Wrong number of angles in " + pertbondangle.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in " + pertbondangle.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
           
-	  topo.solute().bonds().erase(b_it);
-	  topology::perturbed_two_body_term_struct 
-	    pb(i-1, j-1, t_A-1, t_B-1);
-
-	  if (!quiet)
-	    std::cout << "\t" 
-		      << std::setw(10) << pb.i+1 
-		      << std::setw(10) << pb.j+1
-		      << std::setw(10) << pb.A_type+1 
-		      << std::setw(10) << pb.B_type+1 
-		      << "\n";
-	  
-	  topo.perturbed_solute().bonds().push_back(pb);
-	} else { // we have constraints
-	  std::vector<topology::two_body_term_struct>::iterator b_it
-	    = std::find_if(topo.solute().distance_constraints().begin(), 
-			  topo.solute().distance_constraints().end(), 
-			  bondMatcher(b));
-	  
-	  if (b_it == topo.solute().distance_constraints().end()){
-	    io::messages.add("Perturbation of a non-existing distance "
-			     "constraint in " + pertbondstretch.at(hh) + " block.",
-			     "In_Perturbation", io::message::error);
-            return;
-	  }
-
-          if (b_it->type != b.type)
-            warn = true;
+          if (!quiet)
+            std::cout << "\tEND\n";
           
-	  topo.solute().distance_constraints().erase(b_it);
-	  topology::perturbed_two_body_term_struct 
-	    pb(i-1, j-1, t_A-1, t_B-1);
-
-	  if (!quiet)
-	    std::cout << "\t" 
-		      << std::setw(10) << pb.i+1 
-		      << std::setw(10) << pb.j+1
-		      << std::setw(10) << pb.A_type+1 
-		      << std::setw(10) << pb.B_type+1 
-		      << "\n";
-	  
-	  topo.perturbed_solute().distance_constraints().push_back(pb);
-	}
-      }
-      
-      if (n != num){
-	  io::messages.add("Wrong number of bonds in " + pertbondstretch.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);	
-      }
-      else if (_lineStream.fail()){
-	io::messages.add("Bad line in " + pertbondstretch.at(hh) + " block.",
-			 "In_Perturbation", io::message::error);
-      }
-
-      if (!quiet)
-	std::cout << "\n\t\tbonds :                          " 
-		  << unsigned(topo.solute().bonds().size())
-		  << "\n\t\tperturbed bonds :                "
-		  << unsigned(topo.perturbed_solute().bonds().size())
-		  << "\n\t\tdistance constraints :           "
-		  << unsigned(topo.solute().distance_constraints().size())
-		  << "\n\t\tperturbed distance constraints : "
-		  << unsigned(topo.perturbed_solute().distance_constraints().size())
-		  << "\n\n"
-		  << "\tEND\n";
-
-    } // if block present
-   }  // loop over H/non H blocks
-  } // PERTBONDSTRETCH(H)
-
-  { // PERTCONSTRAINT03
-    DEBUG(10, "PERTCONSTRAINT03 block");
-    buffer = m_block["PERTCONSTRAINT03"];
-  
-    if (buffer.size() && param.constraint.ntc != 1){
-      block_read.insert("PERTCONSTRAINT03");
-
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      if (!quiet)
-	std::cout << "\tPERTCONSTRAINT03\n\t\t"
-		  << num
-		  << " bonds in PERTCONSTRAINT03 block."
-		  << "\n\t\ttotal of perturbed constraint bonds : " 
-		  << unsigned(num + topo.perturbed_solute().distance_constraints().size())
-		  << "\n"  
-		  << "\t"
-		  << std::setw(10) << "atom i"
-		  << std::setw(10) << "atom j"
-		  << std::setw(10) << "type A"
-		  << std::setw(10) << "type B"
-		  << "\n";
+        } // if block present
+      } // loop over H/non H blocks
+    } // PERTBONDANGLE(H)
     
-      for(n=0; it != buffer.end() - 1; ++it, ++n){
-	int i, j, t_A, t_B;
-	
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> t_A >> t_B;
-	
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTCONSTRAINT03 block",
-			   "In_Topology", io::message::error);
-	}
-      
-	if (i > int(topo.num_solute_atoms()) || 
-	    j > int(topo.num_solute_atoms()) ||
-	    i < 1 || j < 1){
-	  io::messages.add("Atom number out of range in PERTCONSTRAINT03 "
-			   " block", "In_Topology", io::message::error);
-	}
-      
-	topology::two_body_term_struct b(i-1, j-1, t_A-1);
-	
-	std::vector<topology::two_body_term_struct>::iterator b_it
-	  = std::find_if(topo.solute().distance_constraints().begin(), 
-		         topo.solute().distance_constraints().end(), 
-		         bondMatcher(b));
-	  
-	if (b_it == topo.solute().distance_constraints().end()){
-	  io::messages.add("Perturbation of a non-existing distance "
-			   "constraint in PERTCONSTRAINT03 block.",
-			   "In_Perturbation", io::message::error);
-	  
-	}
+    { // PERTIMPROPERDIH(H)
+      DEBUG(10, "PERTIMPDIHEDRAL03 block");
+      buffer = m_block["PERTIMPDIHEDRAL03"];
+      if (buffer.size()){
         
-        if (b_it->type != b.type)
-          warn = true;
-	
-	topo.solute().distance_constraints().erase(b_it);
-	topology::perturbed_two_body_term_struct 
-	  pb(i-1, j-1, t_A-1, t_B-1);
-
-	topo.perturbed_solute().distance_constraints().push_back(pb);
-
-	if (!quiet)
-	  std::cout << "\t" 
-		    << std::setw(10) << pb.i+1 
-		    << std::setw(10) << pb.j+1
-		    << std::setw(10) << pb.A_type+1 
-		    << std::setw(10) << pb.B_type+1 
-		    << "\n";
-	
+        block_read.insert("PERTIMPDIHEDRAL03");
+        io::messages.add("The PERTIMPDIHEDRAL03 block was renamed to PERTIMPROPERDIH.",
+                "In_Perturbation", io::message::error);
       }
+      
+      std::vector<std::string> pertimproperdih;
+      pertimproperdih.push_back("PERTIMPROPERDIHH");
+      pertimproperdih.push_back("PERTIMPROPERDIH");
+      for (unsigned int hh=0; hh < pertimproperdih.size(); hh++) {
+        buffer = m_block[pertimproperdih.at(hh)];
+        if (buffer.size()){
+          block_read.insert(pertimproperdih.at(hh));
+          
+          if (!quiet)
+            std::cout << "\t" << pertimproperdih.at(hh) << "\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(10) << "atom i"
+            << std::setw(10) << "atom j"
+            << std::setw(10) << "atom k"
+            << std::setw(10) << "atom l"
+            << std::setw(10) << "type A"
+            << std::setw(10) << "type B"
+            << "\n";
+          
+          for(n=0; it != buffer.end() -1; ++it, ++n){
+            int i, j, k, l, t_A, t_B;
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> k >> l >> t_A >> t_B;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in " + pertimproperdih.at(hh) + " block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            topology::four_body_term_struct id(i-1, j-1, k-1, l-1, t_A-1);
+            std::vector<topology::four_body_term_struct>::iterator id_it
+                    = std::find_if(topo.solute().improper_dihedrals().begin(),
+                    topo.solute().improper_dihedrals().end(),
+                    dihedralMatcher(id));
+            
+            if (id_it == topo.solute().improper_dihedrals().end()){
+              io::messages.add("Perturbation of a non-existing improper dihedral in "
+              + pertimproperdih.at(hh) + " block.",
+                      "In_Perturbation", io::message::error);
+              return;
+            }
+            
+            if (id_it->type != id.type)
+              warn = true;
+            
+            topo.solute().improper_dihedrals().erase(id_it);
+            topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1,
+                    t_A-1, t_B-1);
+            
+            if (!quiet)
+              std::cout << "\t"
+              << std::setw(10) << pid.i+1
+              << std::setw(10) << pid.j+1
+              << std::setw(10) << pid.k+1
+              << std::setw(10) << pid.l+1
+              << std::setw(10) << pid.A_type+1
+              << std::setw(10) << pid.B_type+1
+              << "\n";
+            
+            topo.perturbed_solute().improper_dihedrals().push_back(pid);
+          }
+          
+          if (n != num){
+            io::messages.add("Wrong number of bonds in " + pertimproperdih.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in " + pertimproperdih.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
+          if (!quiet)
+            std::cout << "\tEND\n";
+          
+        } // if block present
+      } // loop over H/non H blocks
+    } // PERTIMPROPERDIH(H)
     
-      if(n != num){
-	io::messages.add("Wrong number of bonds in PERTCONSTRAINT03 block",
-			 "In_Perturbation", io::message::error);
-      }
-    }
+    { // PERTPROPERDIH(H)
+      
+      std::vector<std::string> pertproperdih;
+      pertproperdih.push_back("PERTPROPERDIHH");
+      pertproperdih.push_back("PERTPROPERDIH");
+      for (unsigned int hh=0; hh < pertproperdih.size(); hh++) {
+        buffer = m_block[pertproperdih.at(hh)];
+        if (buffer.size()){
+          block_read.insert(pertproperdih.at(hh));
+          
+          if (!quiet)
+            std::cout << "\t" << pertproperdih.at(hh) << "\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(10) << "atom i"
+            << std::setw(10) << "atom j"
+            << std::setw(10) << "atom k"
+            << std::setw(10) << "atom l"
+            << std::setw(10) << "type A"
+            << std::setw(10) << "type B"
+            << "\n";
+          
+          for(n=0; it != buffer.end() -1; ++it, ++n){
+            int i, j, k, l, t_A, t_B;
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> k >> l >> t_A >> t_B;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in " + pertproperdih.at(hh) + " block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            topology::four_body_term_struct id(i-1, j-1, k-1, l-1, t_A-1);
+            std::vector<topology::four_body_term_struct>::iterator id_it
+                    = std::find_if(topo.solute().dihedrals().begin(),
+                    topo.solute().dihedrals().end(),
+                    dihedralMatcher(id));
+            
+            if (id_it == topo.solute().dihedrals().end()){
+              io::messages.add("Perturbation of a non-existing dihedral in "
+              + pertproperdih.at(hh) + " block.",
+                      "In_Perturbation", io::message::error);
+              return;
+            }
+            
+            if (id_it->type != id.type)
+              warn = true;
+            
+            topo.solute().dihedrals().erase(id_it);
+            topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1,
+                    t_A-1, t_B-1);
+            
+            if (!quiet)
+              std::cout << "\t"
+              << std::setw(10) << pid.i+1
+              << std::setw(10) << pid.j+1
+              << std::setw(10) << pid.k+1
+              << std::setw(10) << pid.l+1
+              << std::setw(10) << pid.A_type+1
+              << std::setw(10) << pid.B_type+1
+              << "\n";
+            
+            topo.perturbed_solute().dihedrals().push_back(pid);
+          }
+          
+          if (n != num){
+            io::messages.add("Wrong number of bonds in " + pertproperdih.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in " + pertproperdih.at(hh) + " block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          if (!quiet)
+            std::cout << "\tEND\n";
+          
+        } // if block present
+      } // loop over H/non H blocks
+    } // PERTPROPERDIH(H)
     
-  } // PERTCONSTRAINT03
-
-  { // PERTBONDANGLE(H)
-    DEBUG(10, "PERTBANGLE03 block");
-    buffer = m_block["PERTBANGLE03"];
-    if (buffer.size()){
+    { // PERTATOMPAIR
+      // has to be read in before(!!) PERTATOMPARAM
+      // because the exclusions and 1,4 exclusions have to be adapted...
       
-      block_read.insert("PERTBANGLE03");
-      io::messages.add("The PERTBANGLE03 block was renamed to PERTBONDANGLE.",
-              "In_Perturbation", io::message::error);
-    }
+      DEBUG(10, "PERTATOMPAIR03 block");
+      buffer = m_block["PERTATOMPAIR03"];
       
-    std::vector<std::string> pertbondangle;  
-    pertbondangle.push_back("PERTBONDANGLEH");
-    pertbondangle.push_back("PERTBONDANGLE");
-    for (unsigned int hh=0; hh < pertbondangle.size(); hh++) {
-    buffer = m_block[pertbondangle.at(hh)];
-    if (buffer.size()){
-      block_read.insert(pertbondangle.at(hh));
-      
-      if (!quiet)
-	std::cout << "\t" << pertbondangle.at(hh) << "\n";
-   
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-      
-      if (!quiet)
-	std::cout << "\t"
-		  << std::setw(10) << "atom i"
-		  << std::setw(10) << "atom j"
-		  << std::setw(10) << "atom k"
-		  << std::setw(10) << "type A"
-		  << std::setw(10) << "type B"
-		  << "\n";
-
-      for(n=0; it != buffer.end() -1; ++it, ++n){
-	int i, j, k, t_A, t_B;
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> t_A >> t_B;
-	
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in " + pertbondangle.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);
-	}
-	
-	topology::three_body_term_struct a(i-1, j-1, k-1, t_A-1);
-	std::vector<topology::three_body_term_struct>::iterator a_it
-	  = std::find_if(topo.solute().angles().begin(), 
-		         topo.solute().angles().end(), 
-		         angleMatcher(a));
-	
-	if (a_it == topo.solute().angles().end()){
-          io::messages.add("Perturbation of a non-existing angle in "
-			     + pertbondangle.at(hh) + " block.",
-			     "In_Perturbation", io::message::error);
-          return;
-	}
-	
-        if (a_it->type != a.type)
-          warn = true;
-	
-        topo.solute().angles().erase(a_it);
-	topology::perturbed_three_body_term_struct pa(i-1, j-1, k-1, t_A-1, t_B-1);
-	topo.perturbed_solute().angles().push_back(pa);
-
-	if (!quiet)
-	  std::cout << "\t"
-		    << std::setw(10) << pa.i+1 
-		    << std::setw(10) << pa.j+1
-		    << std::setw(10) << pa.k+1
-		    << std::setw(10) << pa.A_type+1 
-		    << std::setw(10) << pa.B_type+1 
-		    << "\n";
-
-      }
-      if (n != num){
-	  io::messages.add("Wrong number of angles in " + pertbondangle.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);	
-      }
-      else if (_lineStream.fail()){
-	io::messages.add("Bad line in " + pertbondangle.at(hh) + " block.",
-			 "In_Perturbation", io::message::error);
-      }
-      
-      if (!quiet)
-	std::cout << "\tEND\n";
-      
-    } // if block present
-   } // loop over H/non H blocks
-  } // PERTBONDANGLE(H)
-  
-  { // PERTIMPROPERDIH(H)
-    DEBUG(10, "PERTIMPDIHEDRAL03 block");
-    buffer = m_block["PERTIMPDIHEDRAL03"];
-    if (buffer.size()){
-      
-      block_read.insert("PERTIMPDIHEDRAL03");
-      io::messages.add("The PERTIMPDIHEDRAL03 block was renamed to PERTIMPROPERDIH.",
-              "In_Perturbation", io::message::error);
-    }
-      
-    std::vector<std::string> pertimproperdih;  
-    pertimproperdih.push_back("PERTIMPROPERDIHH");
-    pertimproperdih.push_back("PERTIMPROPERDIH");
-    for (unsigned int hh=0; hh < pertimproperdih.size(); hh++) {
-    buffer = m_block[pertimproperdih.at(hh)];
-    if (buffer.size()){
-      block_read.insert(pertimproperdih.at(hh));
-      
-      if (!quiet)
-	std::cout << "\t" << pertimproperdih.at(hh) << "\n";
-   
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-      
-      if (!quiet)
-	std::cout << "\t"
-		  << std::setw(10) << "atom i"
-		  << std::setw(10) << "atom j"
-		  << std::setw(10) << "atom k"
-		  << std::setw(10) << "atom l"
-		  << std::setw(10) << "type A"
-		  << std::setw(10) << "type B"
-		  << "\n";
-
-      for(n=0; it != buffer.end() -1; ++it, ++n){
-	int i, j, k, l, t_A, t_B;
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
-	
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in " + pertimproperdih.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);
-	}
-	
-	topology::four_body_term_struct id(i-1, j-1, k-1,l-1, t_A-1);
-	std::vector<topology::four_body_term_struct>::iterator id_it
-	  = std::find_if(topo.solute().improper_dihedrals().begin(), 
-		        topo.solute().improper_dihedrals().end(), 
-		        dihedralMatcher(id));
-	
-	if (id_it == topo.solute().improper_dihedrals().end()){
-	  io::messages.add("Perturbation of a non-existing improper dihedral in "
-			   + pertimproperdih.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);
-          return;
-	}
-	
-        if (id_it->type != id.type)
-          warn = true;
+      if (buffer.size()){
         
-	topo.solute().improper_dihedrals().erase(id_it);
-	topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1, 
-						      t_A-1, t_B-1);
+        block_read.insert("PERTATOMPAIR03");
+        io::messages.add("The PERTATOMPAIR03 block was renamed to PERTATOMPAIR.",
+                "In_Perturbation", io::message::error);
+      }
+      
+      buffer = m_block["PERTATOMPAIR"];
+      if (buffer.size()){
+        block_read.insert("PERTATOMPAIR");
+        
+        if (!quiet)
+          std::cout << "\tPERTATOMPAIR\n";
+        
+        it = buffer.begin() + 1;
+        _lineStream.clear();
+        _lineStream.str(*it);
+        int num, n;
+        _lineStream >> num;
+        ++it;
+        
+        int i, j, A, B;
         
         if (!quiet)
           std::cout << "\t"
-                    << std::setw(10) << pid.i+1
-                    << std::setw(10) << pid.j+1
-                    << std::setw(10) << pid.k+1
-                    << std::setw(10) << pid.l+1
-                    << std::setw(10) << pid.A_type+1
-                    << std::setw(10) << pid.B_type+1
-                    << "\n";
-	
-	topo.perturbed_solute().improper_dihedrals().push_back(pid);
-      }
-      
-      if (n != num){
-	  io::messages.add("Wrong number of bonds in " + pertimproperdih.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);	
-      }
-      else if (_lineStream.fail()){
-	io::messages.add("Bad line in " + pertimproperdih.at(hh) + " block.",
-			 "In_Perturbation", io::message::error);
-      }
-      if (!quiet)
-	std::cout << "\tEND\n";
-
-    } // if block present
-   } // loop over H/non H blocks
-  } // PERTIMPROPERDIH(H)
-
-  { // PERTPROPERDIH(H)
-      
-    std::vector<std::string> pertproperdih;  
-    pertproperdih.push_back("PERTPROPERDIHH");
-    pertproperdih.push_back("PERTPROPERDIH");
-    for (unsigned int hh=0; hh < pertproperdih.size(); hh++) {
-    buffer = m_block[pertproperdih.at(hh)];
-    if (buffer.size()){
-      block_read.insert(pertproperdih.at(hh));
-      
-      if (!quiet)
-	std::cout << "\t" << pertproperdih.at(hh) << "\n"; 
-    
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      if (!quiet)
-	std::cout << "\t"
-		  << std::setw(10) << "atom i"
-		  << std::setw(10) << "atom j"
-		  << std::setw(10) << "atom k"
-		  << std::setw(10) << "atom l"
-		  << std::setw(10) << "type A"
-		  << std::setw(10) << "type B"
-		  << "\n";
-      
-      for(n=0; it != buffer.end() -1; ++it, ++n){
-	int i, j, k, l, t_A, t_B;
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> k >> l >> t_A >> t_B;
-	
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in " + pertproperdih.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);	  
-	}
-	
-	topology::four_body_term_struct id(i-1, j-1, k-1,l-1, t_A-1);
-	std::vector<topology::four_body_term_struct>::iterator id_it
-	  = std::find_if(topo.solute().dihedrals().begin(), 
-		        topo.solute().dihedrals().end(), 
-		        dihedralMatcher(id));
-	
-	if (id_it == topo.solute().dihedrals().end()){
-	  io::messages.add("Perturbation of a non-existing dihedral in "
-                           + pertproperdih.at(hh) + " block.",
-                           "In_Perturbation", io::message::error);
-	  return;
-	}
-
-        if (id_it->type != id.type)
-          warn = true;
+          << std::setw(10) << "atom i"
+          << std::setw(10) << "atom j"
+          << std::setw(10) << "type A"
+          << std::setw(10) << "type B"
+          << "\n";
         
-	topo.solute().dihedrals().erase(id_it);
-	topology::perturbed_four_body_term_struct pid(i-1, j-1, k-1, l-1, 
-						      t_A-1, t_B-1);
-
-	if (!quiet)
-	  std::cout << "\t"
-		    << std::setw(10) << pid.i+1 
-		    << std::setw(10) << pid.j+1
-		    << std::setw(10) << pid.k+1
-		    << std::setw(10) << pid.l+1
-		    << std::setw(10) << pid.A_type+1 
-		    << std::setw(10) << pid.B_type+1 
-		    << "\n";
-	
-	topo.perturbed_solute().dihedrals().push_back(pid);
-      }
-      
-      if (n != num){
-	  io::messages.add("Wrong number of bonds in " + pertproperdih.at(hh) + " block.",
-			   "In_Perturbation", io::message::error);	
-      }
-      else if (_lineStream.fail()){
-	io::messages.add("Bad line in " + pertproperdih.at(hh) + " block.",
-			 "In_Perturbation", io::message::error);
-      }
-
-      if (!quiet)
-	std::cout << "\tEND\n";
-
-    } // if block present
-   } // loop over H/non H blocks
-  } // PERTPROPERDIH(H)
-
-  { // PERTATOMPAIR
-    // has to be read in before(!!) PERTATOMPARAM
-    // because the exclusions and 1,4 exclusions have to be adapted...
-      
-    DEBUG(10, "PERTATOMPAIR03 block");
-    buffer = m_block["PERTATOMPAIR03"];
-    
-    if (buffer.size()){
-      
-      block_read.insert("PERTATOMPAIR03");
-      io::messages.add("The PERTATOMPAIR03 block was renamed to PERTATOMPAIR.",
-              "In_Perturbation", io::message::error);
-    }
-    
-    buffer = m_block["PERTATOMPAIR"];
-    if (buffer.size()){
-      block_read.insert("PERTATOMPAIR");
-
-      if (!quiet)
-	std::cout << "\tPERTATOMPAIR\n";
-
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-
-      int i, j, A, B;
-
-      if (!quiet)
-	std::cout << "\t"
-		  << std::setw(10) << "atom i"
-		  << std::setw(10) << "atom j"
-		  << std::setw(10) << "type A"
-		  << std::setw(10) << "type B"
-		  << "\n";
-
-      for(n = 0; it != buffer.end() - 1; ++it, ++n){
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> i >> j >> A >> B;
-	
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTATOMPAIR block.",
-			   "In_Perturbation", io::message::error);
-	}
-	
-	if(j<i) { int t=j; j=i; i=t; }
-
-	topology::perturbed_two_body_term_struct ap(i-1,j-1,A,B);
-	
-	if (!quiet)
-	  std::cout << "\t"
-		    << std::setw(10) << ap.i+1
-		    << std::setw(10) << ap.j+1
-		    << std::setw(10) << ap.A_type
-		    << std::setw(10) << ap.B_type
-		    << std::endl;
-	
-	topo.perturbed_solute().atompairs().push_back(ap);
-
-	// make sure it's excluded
-	if (topo.all_exclusion(ap.i).count(ap.j) != 1){
-	  topo.all_exclusion(ap.i).insert(ap.j);
-	  DEBUG(7, "excluding perturbed pair " << ap.i << " and " << ap.j);
-	  
-	}
-	else{
-	  // it was already excluded, let's remove it from the
-	  // exclusions or 1,4 pairs...
-	  
-	  // is it in the exclusions
-	  if (topo.exclusion(ap.i).count(ap.j)){
-	    DEBUG(7, "removing perturbed pair from exclusion " 
-		  << ap.i << " and " << ap.j);
-	    topo.exclusion(ap.i).erase(ap.j);
-	  }
-	  if (topo.one_four_pair(ap.i).count(ap.j)){
-	    DEBUG(7, "removing perturbed pair from one four " 
-		  << ap.i << " and " << ap.j);
-	    topo.one_four_pair(ap.i).erase(ap.j);
-	  }
-	  
-	}
-      }
-      
-      if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTATOMPAIR block.",
-			   "In_Perturbation", io::message::error);	
-      }
-      else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTATOMPAIR block.",
-			 "In_Perturbation", io::message::error);
-      }
-
-      if (!quiet)
-	std::cout << "\tEND\n";
-      
-    } // if block present
-  } // PERTATOMPAIR
-  
-  { // PERTATOMPARAM
-    
-    DEBUG(10, "PERTATOM03 block");
-    buffer = m_block["PERTATOM03"];
-    
-    if (buffer.size()){
-      
-      block_read.insert("PERTATOM03");
-      io::messages.add("The PERTATOM03 block was renamed to PERTATOMPARAM.",
-              "In_Perturbation", io::message::error);
-    }
-    
-    buffer = m_block["PERTATOMPARAM"];
-    if (buffer.size()){
-      block_read.insert("PERTATOMPARAM");
-
-      if (!quiet)
-	std::cout << "\tPERTATOMPARAM\n";
-      DEBUG(7, "PERTATOMPARAM block");
-      
-      it = buffer.begin() + 1;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
-      ++it;
-      
-      int seq, res, a_iac, b_iac;
-      double a_mass, b_mass, a_charge, b_charge;
-      double lj_soft, crf_soft;
-      std::string name;
-
-      if (!quiet)
-	std::cout << "\t"
-		  << std::setw(5) << "seq"
-		  << std::setw(8) << "IAC(A)"
-		  << std::setw(10) << "mass(A)"
-		  << std::setw(10) << "charge(A)"
-		  << std::setw(8) << "IAC(B)"
-		  << std::setw(10) << "mass(B)"
-		  << std::setw(10) << "charge(B)"
-		  << std::setw(10) << "LJ(soft)"
-		<< std::setw(10) << "CRF(soft)"
-		  << "\n";
-      
-      for(n = 0; it != buffer.end() - 1; ++it, ++n){
-	DEBUG(10, "\treading a line: " << n);
-	
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> seq >> res >> name >> a_iac >> a_mass >> a_charge
-		    >> b_iac >> b_mass >> b_charge
-		    >> lj_soft >> crf_soft;
-	
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTATOMPARAM block.",
-			   "In_Perturbation", io::message::error);
-	}
-	
-	--seq;
-	--a_iac;
-	--b_iac;
-
-	// weight by input
-	lj_soft *= param.perturbation.soft_vdw;
-	crf_soft *= param.perturbation.soft_crf;
-
-	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
-	  io::messages.add("atom sequence number wrong in PERTATOMPARAM block",
-			   "In_Perturbation", io::message::critical);
-	  return;
-	}
-
-	if (a_iac < 0 || b_iac < 0){
-	  std::cout << "n=" << n << "a_iac=" << a_iac << " b_iac=" << b_iac << std::endl;
-	  io::messages.add("integer atom code wrong in PERTATOMPARAM block",
-			   "In_Perturbation", io::message::critical);
-	  return;
-	}
-
-	topology::Perturbed_Atom atom(seq, a_iac, a_mass, a_charge,
-                topo.polarizability(seq), topo.damping_level(seq),
-		b_iac, b_mass, b_charge,
-                topo.polarizability(seq), topo.damping_level(seq),
-		lj_soft, crf_soft);
-
-	DEBUG(10, "\tcreated an atom");
-	
-        if (topo.mass(seq) != atom.A_mass() ||
-            topo.iac(seq) != int(atom.A_IAC()) ||
-            topo.charge(seq) != atom.A_charge())
-          warn = true;
+        for(n = 0; it != buffer.end() - 1; ++it, ++n){
+          _lineStream.clear();
+          _lineStream.str(*it);
+          _lineStream >> i >> j >> A >> B;
+          
+          if (_lineStream.fail()){
+            io::messages.add("Bad line in PERTATOMPAIR block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          if(j<i) { int t=j; j=i; i=t; }
+          
+          topology::perturbed_two_body_term_struct ap(i-1, j-1, A, B);
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(10) << ap.i+1
+            << std::setw(10) << ap.j+1
+            << std::setw(10) << ap.A_type
+            << std::setw(10) << ap.B_type
+            << std::endl;
+          
+          topo.perturbed_solute().atompairs().push_back(ap);
+          
+          // make sure it's excluded
+          if (topo.all_exclusion(ap.i).count(ap.j) != 1){
+            topo.all_exclusion(ap.i).insert(ap.j);
+            DEBUG(7, "excluding perturbed pair " << ap.i << " and " << ap.j);
+            
+          }
+          else{
+            // it was already excluded, let's remove it from the
+            // exclusions or 1,4 pairs...
+            
+            // is it in the exclusions
+            if (topo.exclusion(ap.i).count(ap.j)){
+              DEBUG(7, "removing perturbed pair from exclusion "
+                      << ap.i << " and " << ap.j);
+              topo.exclusion(ap.i).erase(ap.j);
+            }
+            if (topo.one_four_pair(ap.i).count(ap.j)){
+              DEBUG(7, "removing perturbed pair from one four "
+                      << ap.i << " and " << ap.j);
+              topo.one_four_pair(ap.i).erase(ap.j);
+            }
+            
+          }
+        }
         
-	if (!quiet)
-	  std::cout << "\t"
-		    << std::setw(5) << seq + 1
-		    << std::setw(5) << a_iac + 1
-		    << "   "
-		    << std::setw(10) << a_mass
-		    << std::setw(10) << a_charge
-		    << std::setw(5) << b_iac + 1
-		    << "   "
-		    << std::setw(10) << b_mass
-		    << std::setw(10) << b_charge
-		    << std::setw(10) << lj_soft
-		    << std::setw(10) << crf_soft
-		    << "\n";
-	
-	atom.exclusion() = topo.exclusion(seq);
-	topo.exclusion(seq).clear();
-	DEBUG(10, "\treplace the exclusions to perturbation");
-
-	std::vector<std::set<int> > & ex = topo.exclusion();
-	int seq2=0;
-	
-	for(std::vector<std::set<int> >::iterator eit=ex.begin(),
-	      eto=ex.end(); eit!=eto; ++eit, ++seq2){
-	  if(eit->count(seq)){
-	    atom.exclusion().insert(seq2);
-	    eit->erase(seq);
-	  }
-	}
-	DEBUG(10, "\tadapted perturbed exclusions");
-	
-	atom.one_four_pair() = topo.one_four_pair(seq);
-	topo.one_four_pair(seq).clear();
-	DEBUG(10, "\treplaced the 14 interactions");
-	
-	std::vector<std::set<int> > & ofp = topo.one_four_pair();
-	seq2=0;
-	
-	for(std::vector<std::set<int> >::iterator pit=ofp.begin(), 
-	      pito= ofp.end(); pit!=pito; ++pit, ++seq2){
-	  if(pit->count(seq)){
-	    atom.one_four_pair().insert(seq2);
-	    pit->erase(seq);
-	  }
-	}
-	DEBUG(10, "\tadapted 14 interactions");
-	
-	
-	topo.perturbed_solute().atoms()[seq] = atom;
-
-	assert(seq<int(topo.is_perturbed().size()));
-	topo.is_perturbed()[seq] = true;
-	
+        if (n != num){
+          io::messages.add("Wrong number of bonds in PERTATOMPAIR block.",
+                  "In_Perturbation", io::message::error);
+        }
+        else if (_lineStream.fail()){
+          io::messages.add("Bad line in PERTATOMPAIR block.",
+                  "In_Perturbation", io::message::error);
+        }
+        
+        if (!quiet)
+          std::cout << "\tEND\n";
+        
+      } // if block present
+    } // PERTATOMPAIR
+    
+    { // PERTATOMPARAM
+      
+      DEBUG(10, "PERTATOM03 block");
+      buffer = m_block["PERTATOM03"];
+      
+      if (buffer.size()){
+        
+        block_read.insert("PERTATOM03");
+        io::messages.add("The PERTATOM03 block was renamed to PERTATOMPARAM.",
+                "In_Perturbation", io::message::error);
       }
-      if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTATOMPARAM block.",
-			   "In_Perturbation", io::message::error);	
+      
+      buffer = m_block["PERTATOMPARAM"];
+      if (buffer.size()){
+        block_read.insert("PERTATOMPARAM");
+        
+        if (!quiet)
+          std::cout << "\tPERTATOMPARAM\n";
+        DEBUG(7, "PERTATOMPARAM block");
+        
+        it = buffer.begin() + 1;
+        _lineStream.clear();
+        _lineStream.str(*it);
+        int num, n;
+        _lineStream >> num;
+        ++it;
+        
+        int seq, res, a_iac, b_iac;
+        double a_mass, b_mass, a_charge, b_charge;
+        double lj_soft, crf_soft;
+        std::string name;
+        
+        if (!quiet)
+          std::cout << "\t"
+          << std::setw(5) << "seq"
+          << std::setw(8) << "IAC(A)"
+          << std::setw(10) << "mass(A)"
+          << std::setw(10) << "charge(A)"
+          << std::setw(8) << "IAC(B)"
+          << std::setw(10) << "mass(B)"
+          << std::setw(10) << "charge(B)"
+          << std::setw(10) << "LJ(soft)"
+          << std::setw(10) << "CRF(soft)"
+          << "\n";
+        
+        for(n = 0; it != buffer.end() - 1; ++it, ++n){
+          DEBUG(10, "\treading a line: " << n);
+          
+          _lineStream.clear();
+          _lineStream.str(*it);
+          _lineStream >> seq >> res >> name >> a_iac >> a_mass >> a_charge
+                  >> b_iac >> b_mass >> b_charge
+                  >> lj_soft >> crf_soft;
+          
+          if (_lineStream.fail()){
+            io::messages.add("Bad line in PERTATOMPARAM block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          --seq;
+          --a_iac;
+          --b_iac;
+          
+          // weight by input
+          lj_soft *= param.perturbation.soft_vdw;
+          crf_soft *= param.perturbation.soft_crf;
+          
+          if (seq < 0 || seq >= int(topo.num_solute_atoms())){
+            io::messages.add("atom sequence number wrong in PERTATOMPARAM block",
+                    "In_Perturbation", io::message::critical);
+            return;
+          }
+          
+          if (a_iac < 0 || b_iac < 0){
+            std::cout << "n=" << n << "a_iac=" << a_iac << " b_iac=" << b_iac << std::endl;
+            io::messages.add("integer atom code wrong in PERTATOMPARAM block",
+                    "In_Perturbation", io::message::critical);
+            return;
+          }
+          
+          topology::Perturbed_Atom atom(seq, a_iac, a_mass, a_charge,
+                  topo.polarizability(seq), topo.damping_level(seq),
+                  b_iac, b_mass, b_charge,
+                  topo.polarizability(seq), topo.damping_level(seq),
+                  lj_soft, crf_soft);
+          
+          DEBUG(10, "\tcreated an atom");
+          
+          if (topo.mass(seq) != atom.A_mass() ||
+                  topo.iac(seq) != int(atom.A_IAC()) ||
+                  topo.charge(seq) != atom.A_charge())
+            warn = true;
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(5) << seq + 1
+            << std::setw(5) << a_iac + 1
+            << "   "
+            << std::setw(10) << a_mass
+            << std::setw(10) << a_charge
+            << std::setw(5) << b_iac + 1
+            << "   "
+            << std::setw(10) << b_mass
+            << std::setw(10) << b_charge
+            << std::setw(10) << lj_soft
+            << std::setw(10) << crf_soft
+            << "\n";
+          
+          atom.exclusion() = topo.exclusion(seq);
+          topo.exclusion(seq).clear();
+          DEBUG(10, "\treplace the exclusions to perturbation");
+          
+          std::vector<std::set<int> > & ex = topo.exclusion();
+          int seq2=0;
+          
+          for(std::vector<std::set<int> >::iterator eit=ex.begin(),
+                  eto=ex.end(); eit!=eto; ++eit, ++seq2){
+            if(eit->count(seq)){
+              atom.exclusion().insert(seq2);
+              eit->erase(seq);
+            }
+          }
+          DEBUG(10, "\tadapted perturbed exclusions");
+          
+          atom.one_four_pair() = topo.one_four_pair(seq);
+          topo.one_four_pair(seq).clear();
+          DEBUG(10, "\treplaced the 14 interactions");
+          
+          std::vector<std::set<int> > & ofp = topo.one_four_pair();
+          seq2=0;
+          
+          for(std::vector<std::set<int> >::iterator pit=ofp.begin(),
+                  pito= ofp.end(); pit!=pito; ++pit, ++seq2){
+            if(pit->count(seq)){
+              atom.one_four_pair().insert(seq2);
+              pit->erase(seq);
+            }
+          }
+          DEBUG(10, "\tadapted 14 interactions");
+          
+          
+          topo.perturbed_solute().atoms()[seq] = atom;
+          
+          assert(seq<int(topo.is_perturbed().size()));
+          topo.is_perturbed()[seq] = true;
+          
+        }
+        if (n != num){
+          io::messages.add("Wrong number of bonds in PERTATOMPARAM block.",
+                  "In_Perturbation", io::message::error);
+        }
+        else if (_lineStream.fail()){
+          io::messages.add("Bad line in PERTATOMPARAM block.",
+                  "In_Perturbation", io::message::error);
+        }
+        
+        
+        if (!quiet)
+          std::cout << "\tEND\n";
+        
+      } // if block present
+      
+    } // PERTATOMPARAM
+    
+    { // SCALEDINTERACTIONS
+      
+      buffer = m_block["SCALEDINTERACTIONS"];
+      if (buffer.size()){
+        block_read.insert("SCALEDINTERACTIONS");
+        
+        if(!param.perturbation.scaling){
+          io::messages.add("Scaled interactions not turned on, ignoring SCALEDINTERACTIONS block.",
+                  "InPerturbation", io::message::warning);
+        }
+        else{
+          if (!quiet)
+            std::cout << "\tSCALED INTERACTIONS\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          int i, j;
+          double A, B;
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(10) << "group i"
+            << std::setw(10) << "group j"
+            << std::setw(10) << "scale A"
+            << std::setw(10) << "scale B"
+            << "\n";
+          
+          for(n = 0; it != buffer.end() - 1; ++it, ++n){
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> A >> B;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in SCALEDINTERACTIONS block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            --i;
+            --j;
+            
+            std::pair<int, int> energy_pair(i, j);
+            std::pair<int, int> energy_pair2(j, i);
+            
+            std::pair<double, double> scale_pair(A, B);
+            
+            topo.energy_group_scaling()[energy_pair]=scale_pair;
+            topo.energy_group_scaling()[energy_pair2]=scale_pair;
+            
+            if (!quiet)
+              std::cout << "\t"
+              << std::setw(10) << i+1
+              << std::setw(10) << j+1
+              << std::setw(10) << A
+              << std::setw(10) << B
+              << std::endl;
+            
+          }
+          
+          if (n != num){
+            io::messages.add("Wrong number of pairs in SCALEDINTERACTIONS block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in SCALEDINTERACTIONS block.",
+                    "In_Perturbation", io::message::error);
+          }
+          if (!quiet)
+            std::cout << "\tEND\n";
+        } // if scaling turned on
+        
+      } // if block present
+      else{
+        if(param.perturbation.scaling){
+          io::messages.add("Scaling turned on but no SCALEDINTERACTIONS block.",
+                  "In_Perturbation", io::message::error);
+        }
       }
-      else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTATOMPARAM block.",
-			 "In_Perturbation", io::message::error);
+    } // SCALEDINTERACTIONS
+    
+    { // LAMBDADEP
+      
+      // the standard lambda derivatives
+      topo.perturbed_energy_derivative_alpha().push_back(0.0);
+      
+      buffer = m_block["LAMBDADEP"];
+      if (buffer.size()){
+        block_read.insert("LAMBDADEP");
+        
+        if(!param.perturbation.scaling){
+          io::messages.add("Changed lambda dependence for interactions requires scaling to"
+          " be turned on. Ignoring LAMBDADEP block.",
+                  "InPerturbation", io::message::warning);
+        }
+        else{
+          if (!quiet)
+            std::cout << "\tINTERACTIONS with changed lambda dependence\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          int i, j;
+          double a;
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(10) << "index"
+            << std::setw(10) << "group i"
+            << std::setw(10) << "group j"
+            << std::setw(10) << "parameter"
+            << "\n";
+          
+          for(n = 0; it != buffer.end() - 1; ++it, ++n){
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> a;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in LAMBDADEP block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            --i;
+            --j;
+            
+            std::pair<int, int> energy_pair(i, j);
+            std::pair<int, int> energy_pair2(j, i);
+            
+            // check a
+            // this is limited now
+            if (a < -1 || a > 1){
+              /*
+               * io::messages.add("LAMBDADEP: parameter a results in l' >1 or <0 "
+               * "in the range [0,1] for l (recommended: -1<=a<=1).",
+               * "In_Perturbation",
+               * io::message::warning);
+               */
+              io::messages.add("LAMBDADEP: limiting l' because -1.0 <= a <= 1.0 not fulfilled",
+                      "In_Perturbation",
+                      io::message::notice);
+            }
+            
+            std::pair<int, double> lambdadep_pair(n, a);
+            
+            topo.energy_group_lambdadep()[energy_pair]  = lambdadep_pair;
+            topo.energy_group_lambdadep()[energy_pair2] = lambdadep_pair;
+            
+            topo.perturbed_energy_derivative_alpha().push_back(a);
+            
+            if (!quiet)
+              std::cout << "\t"
+              << std::setw(10) << n+1
+              << std::setw(10) << i+1
+              << std::setw(10) << j+1
+              << std::setw(10) << a
+              << std::endl;
+            
+          }
+          
+          // resize the arrays to cache the lambda primes
+          // and the lambda prime / lambda derivative
+          topo.lambda_prime().resize(n);
+          topo.lambda_prime_derivative().resize(n);
+          
+          if (n != num){
+            io::messages.add("Wrong number of pairs in LAMBDADEP block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in LAMBDADEP block.",
+                    "In_Perturbation", io::message::error);
+          }
+          if (!quiet)
+            std::cout << "\tEND\n";
+        } // if scaling turned on
+        
+      } // if block present
+      else{
+        // if(param.perturbation.scaling){
+        // io::messages.add("Scaling turned on but no LAMBDADEP block.",
+        // "In_Perturbation", io::message::warning);
       }
-
+    } // LAMBDADEP
+    
+    { // PERTPOLPARAM
+      DEBUG(10, "PERTPOLPARAM block");
+      
+      buffer = m_block["PERTPOLPARAM"];
+      if (buffer.size()){
+        block_read.insert("PERTPOLPARAM");
+        
+        if (!quiet)
+          std::cout << "\tPERTPOLPARAM\n";
+        DEBUG(7, "PERTPOLPARAM block");
+        
+        it = buffer.begin() + 1;
+        _lineStream.clear();
+        _lineStream.str(*it);
+        int num, n;
+        _lineStream >> num;
+        ++it;
+        
+        int seq, res;
+        double a_pol, b_pol, a_lev, b_lev;
+        std::string name;
+        
+        if (!quiet)
+          std::cout << "\t"
+          << std::setw(5) << "seq"
+          << std::setw(12) << "POL(A)"
+          << std::setw(12) << "DAMPLEV(A)"
+          << std::setw(12) << "POL(B)"
+          << std::setw(12) << "DAMPLEV(B)"
+          << "\n";
+        
+        for(n = 0; it != buffer.end() - 1; ++it, ++n){
+          DEBUG(10, "\treading a line: " << n);
+          
+          _lineStream.clear();
+          _lineStream.str(*it);
+          _lineStream >> seq >> res >> name
+                  >> a_pol >> a_lev
+                  >> b_pol >> b_lev;
+          
+          if (_lineStream.fail()){
+            io::messages.add("Bad line in PERTPOLPARAM block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          --seq;
+          if (seq < 0 || seq >= int(topo.num_solute_atoms())){
+            io::messages.add("atom sequence number wrong in PERTPOLPARAM block",
+                    "In_Perturbation", io::message::error);
+            return;
+          }
+          
+          if (!topo.is_perturbed(seq)) {
+            std::ostringstream msg;
+            msg << "Atom " << seq + 1 << " appears in the PERTPOLPARAM block but"
+                    << " is not perturbed i.e. does not appear in the PERTATOMPARAM block.";
+            io::messages.add(msg.str(), "In_Perturbation", io::message::error);
+            return;
+          }
+          
+          if (a_pol < 0.0 || b_pol < 0.0){
+            io::messages.add("PERTPOLPARAM block: polarizability must be >= 0.0",
+                    "In_Perturbation", io::message::error);
+            return;
+          }
+          
+          if (a_lev < 0.0 || b_lev < 0.0){
+            io::messages.add("PERTPOLPARAM block: damping level must be >= 0.0",
+                    "In_Perturbation", io::message::error);
+            return;
+          }
+          
+          topo.perturbed_solute().atom(seq).A_polarizability(a_pol/ math::four_pi_eps_i);
+          topo.perturbed_solute().atom(seq).B_polarizability(b_pol/ math::four_pi_eps_i);
+          
+          topo.perturbed_solute().atom(seq).A_damping_level(a_lev);
+          topo.perturbed_solute().atom(seq).B_damping_level(b_lev);
+          
+          topo.is_polarizable()[seq] = true;
+          
+          if (topo.polarizability(seq) !=
+                  topo.perturbed_solute().atom(seq).A_polarizability() ||
+                  topo.damping_level(seq) !=
+                  topo.perturbed_solute().atom(seq).A_damping_level())
+            warn = true;
+          
+          DEBUG(10, "\tassigned perturbed polarization parameters to atom");
+          
+          if (!quiet)
+            std::cout << "\t"
+            << std::setw(5) << seq + 1
+            << std::setw(12) << topo.perturbed_solute().atom(seq).A_polarizability()* math::four_pi_eps_i
+            << std::setw(12) << topo.perturbed_solute().atom(seq).A_damping_level()
+            << std::setw(12) << topo.perturbed_solute().atom(seq).B_polarizability()* math::four_pi_eps_i
+            << std::setw(12) << topo.perturbed_solute().atom(seq).B_damping_level()
+            << "\n";
+        }
+        if (n != num){
+          io::messages.add("Wrong number of bonds in PERTPOLPARAM block.",
+                  "In_Perturbation", io::message::error);
+        }
+        else if (_lineStream.fail()){
+          io::messages.add("Bad line in PERTPOLPARAM block.",
+                  "In_Perturbation", io::message::error);
+        }
+        
+        
+        if (!quiet)
+          std::cout << "\tEND\n";
+        
+      } // if block present
+      
+    } // PERTPOLPARAM
+  } // end of if(!param.eds.eds)
+  { // EDSATOMPARAM
+    DEBUG(10, "EDSATOMPARAM block");
+    
+    buffer = m_block["EDSATOMPARAM"];
+    if (buffer.size()){
+      block_read.insert("EDSATOMPARAM");
 
       if (!quiet)
-	std::cout << "\tEND\n";
-      
-    } // if block present
-    
-  } // PERTATOMPARAM
-    
-  { // SCALEDINTERACTIONS
-
-    buffer = m_block["SCALEDINTERACTIONS"];
-    if (buffer.size()){
-      block_read.insert("SCALEDINTERACTIONS");
-
-      if(!param.perturbation.scaling){
-	io::messages.add("Scaled interactions not turned on, ignoring SCALEDINTERACTIONS block.",
-			 "InPerturbation", io::message::warning);
-      }
-      else{
-	if (!quiet)
-	  std::cout << "\tSCALED INTERACTIONS\n";
-	
-	it = buffer.begin() + 1;
-	_lineStream.clear();
-	_lineStream.str(*it);
-	int num, n;
-	_lineStream >> num;
-	++it;
-	
-	int i, j;
-	double A, B;
-	
-	if (!quiet)
-	  std::cout << "\t"
-		    << std::setw(10) << "group i"
-		    << std::setw(10) << "group j"
-		    << std::setw(10) << "scale A"
-		    << std::setw(10) << "scale B"
-		    << "\n";
-	
-	for(n = 0; it != buffer.end() - 1; ++it, ++n){
-	  _lineStream.clear();
-	  _lineStream.str(*it);
-	  _lineStream >> i >> j >> A >> B;
-	  
-	  if (_lineStream.fail()){
-	    io::messages.add("Bad line in SCALEDINTERACTIONS block.",
-			     "In_Perturbation", io::message::error);
-	  }
-	  
-	  --i;
-	  --j;
-	  
-	  std::pair<int, int> energy_pair(i,j);
-	  std::pair<int, int> energy_pair2(j,i);
-	  
-	  std::pair<double, double> scale_pair(A,B);
-	  
-	  topo.energy_group_scaling()[energy_pair]=scale_pair;
-	  topo.energy_group_scaling()[energy_pair2]=scale_pair;
-	  
-	  if (!quiet)
-	    std::cout << "\t"
-		      << std::setw(10) << i+1
-		      << std::setw(10) << j+1
-		      << std::setw(10) << A
-		      << std::setw(10) << B
-		      << std::endl;
-	  
-	}
-	
-	if (n != num){
-	  io::messages.add("Wrong number of pairs in SCALEDINTERACTIONS block.",
-			   "In_Perturbation", io::message::error);	
-	}
-	else if (_lineStream.fail()){
-	  io::messages.add("Bad line in SCALEDINTERACTIONS block.",
-			   "In_Perturbation", io::message::error);
-	}
-	if (!quiet)
-	  std::cout << "\tEND\n";
-      } // if scaling turned on
-      
-    } // if block present
-    else{
-      if(param.perturbation.scaling){
-	io::messages.add("Scaling turned on but no SCALEDINTERACTIONS block.",
-			 "In_Perturbation", io::message::error);
-      }
-    }
-  } // SCALEDINTERACTIONS
-
-  { // LAMBDADEP
-    
-    // the standard lambda derivatives
-    topo.perturbed_energy_derivative_alpha().push_back(0.0);
-
-    buffer = m_block["LAMBDADEP"];
-    if (buffer.size()){
-      block_read.insert("LAMBDADEP");
-
-      if(!param.perturbation.scaling){
-	io::messages.add("Changed lambda dependence for interactions requires scaling to"
-			 " be turned on. Ignoring LAMBDADEP block.",
-			 "InPerturbation", io::message::warning);
-      }
-      else{
-	if (!quiet)
-	  std::cout << "\tINTERACTIONS with changed lambda dependence\n";
-	
-	it = buffer.begin() + 1;
-	_lineStream.clear();
-	_lineStream.str(*it);
-	int num, n;
-	_lineStream >> num;
-	++it;
-	
-	int i, j;
-	double a;
-	
-	if (!quiet)
-	  std::cout << "\t"
-		    << std::setw(10) << "index"
-		    << std::setw(10) << "group i"
-		    << std::setw(10) << "group j"
-		    << std::setw(10) << "parameter"
-		    << "\n";
-	
-	for(n = 0; it != buffer.end() - 1; ++it, ++n){
-	  _lineStream.clear();
-	  _lineStream.str(*it);
-	  _lineStream >> i >> j >> a;
-	  
-	  if (_lineStream.fail()){
-	    io::messages.add("Bad line in LAMBDADEP block.",
-			     "In_Perturbation", io::message::error);
-	  }
-	  
-	  --i;
-	  --j;
-	  
-	  std::pair<int, int> energy_pair(i,j);
-	  std::pair<int, int> energy_pair2(j,i);
-
-	  // check a
-	  // this is limited now
-	  if (a < -1 || a > 1){
-	    /*
-	    io::messages.add("LAMBDADEP: parameter a results in l' >1 or <0 "
-			     "in the range [0,1] for l (recommended: -1<=a<=1).",
-			     "In_Perturbation",
-			     io::message::warning);
-	    */
-	    io::messages.add("LAMBDADEP: limiting l' because -1.0 <= a <= 1.0 not fulfilled",
-			    "In_Perturbation",
-			    io::message::notice);
-	  }
-	  
-	  std::pair<int, double> lambdadep_pair(n, a);
-	  
-	  topo.energy_group_lambdadep()[energy_pair]  = lambdadep_pair;
-	  topo.energy_group_lambdadep()[energy_pair2] = lambdadep_pair;
-
-	  topo.perturbed_energy_derivative_alpha().push_back(a);
-	  
-	  if (!quiet)
-	    std::cout << "\t"
-		      << std::setw(10) << n+1
-		      << std::setw(10) << i+1
-		      << std::setw(10) << j+1
-		      << std::setw(10) << a
-		      << std::endl;
-	  
-	}
-
-	// resize the arrays to cache the lambda primes
-	// and the lambda prime / lambda derivative
-	topo.lambda_prime().resize(n);
-	topo.lambda_prime_derivative().resize(n);
-
-	if (n != num){
-	  io::messages.add("Wrong number of pairs in LAMBDADEP block.",
-			   "In_Perturbation", io::message::error);	
-	}
-	else if (_lineStream.fail()){
-	  io::messages.add("Bad line in LAMBDADEP block.",
-			   "In_Perturbation", io::message::error);
-	}
-	if (!quiet)
-	  std::cout << "\tEND\n";
-      } // if scaling turned on
-      
-    } // if block present
-    else{
-      // if(param.perturbation.scaling){
-      // io::messages.add("Scaling turned on but no LAMBDADEP block.",
-      // "In_Perturbation", io::message::warning);
-    }
-  } // LAMBDADEP
-  
-  { // PERTPOLPARAM
-    DEBUG(10, "PERTPOLPARAM block");
-    
-    buffer = m_block["PERTPOLPARAM"];
-    if (buffer.size()){
-      block_read.insert("PERTPOLPARAM");
-
-      if (!quiet)
-	std::cout << "\tPERTPOLPARAM\n";
-      DEBUG(7, "PERTPOLPARAM block");
+	std::cout << "\tEDSATOMPARAM\n";
+      DEBUG(7, "EDSATOMPARAM block");
       
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
-      int num, n;
-      _lineStream >> num;
+      unsigned int numstates, numatoms, n;
+      numstates = param.eds.numstates;
+     
+      _lineStream >> numatoms;
       ++it;
+      if (_lineStream.fail()){
+        io::messages.add("Bad line (numatoms) in EDSATOMPARAM block.",
+                         "In_Perturbation", io::message::error);
+      }
+      if (!quiet){
+        std::cout << "\t" << std::setw(5) << "seq"
+                          << std::setw(12) << "IAC[";
+        for(unsigned int i = 0; i < numstates; i++){
+          std::cout << std::setw(8) << i+1;
+        }
+        std::cout << std::setw(12) << "] charge["; 
+        for(unsigned int i = 0; i < numstates; i++){
+          std::cout << std::setw(10) << i+1;
+        }
+        std::cout << "]\n";
+      }
       
       int seq, res;
-      double a_pol, b_pol, a_lev, b_lev;
       std::string name;
-
-      if (!quiet)
-	std::cout << "\t"
-		  << std::setw(5) << "seq"
-		  << std::setw(12) << "POL(A)"
-		  << std::setw(12) << "DAMPLEV(A)"
-		  << std::setw(12) << "POL(B)"
-		  << std::setw(12) << "DAMPLEV(B)"
-		  << "\n";
+      std::vector<unsigned int> m_iac(numstates);
+      std::vector<double> m_charge(numstates);
+      
+      // prepare arrays
+      topo.is_eds_perturbed().resize(topo.num_solute_atoms(), false);
       
       for(n = 0; it != buffer.end() - 1; ++it, ++n){
-	DEBUG(10, "\treading a line: " << n);
-	
+        DEBUG(10, "\treading a line: " << n);
+
 	_lineStream.clear();
 	_lineStream.str(*it);
-	_lineStream >> seq >> res >> name 
-                    >> a_pol >> a_lev 
-                    >> b_pol >> b_lev;
-	
+	_lineStream >> seq >> res >> name;
+        for(unsigned int i = 0; i < numstates; i++){
+          _lineStream >> m_iac[i];
+        }
+        for(unsigned int i = 0; i < numstates; i++){
+          _lineStream >> m_charge[i];
+        }
+ 
 	if (_lineStream.fail()){
-	  io::messages.add("Bad line in PERTPOLPARAM block.",
+	  io::messages.add("Bad line in EDSATOMPARAM block.",
 			   "In_Perturbation", io::message::error);
 	}
 	
 	--seq;
-	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
-	  io::messages.add("atom sequence number wrong in PERTPOLPARAM block",
-			   "In_Perturbation", io::message::error);
-	  return;
-	}
-        
-        if (!topo.is_perturbed(seq)) {
-          std::ostringstream msg;
-          msg << "Atom " << seq + 1 << " appears in the PERTPOLPARAM block but"
-              << " is not perturbed i.e. does not appear in the PERTATOMPARAM block.";
-          io::messages.add(msg.str(), "In_Perturbation", io::message::error);
-	  return;
+        for(unsigned int i = 0; i < numstates; i++){
+          --m_iac[i];
+          if(m_iac[i] < 0){
+ 	  io::messages.add("Negative IAC in EDSATOMPARAM block.",
+			   "In_Perturbation", io::message::critical); 
+          return;
+          }        
         }
-
-        if (a_pol < 0.0 || b_pol < 0.0){
-	  io::messages.add("PERTPOLPARAM block: polarizability must be >= 0.0",
+        
+	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
+	  io::messages.add("atom sequence number wrong in EDSATOMPARAM block",
 			   "In_Perturbation", io::message::error);
 	  return;
 	}
         
-        if (a_lev < 0.0 || b_lev < 0.0){
-	  io::messages.add("PERTPOLPARAM block: damping level must be >= 0.0",
-			   "In_Perturbation", io::message::error);
-	  return;
-	}
-             
-        topo.perturbed_solute().atom(seq).A_polarizability(a_pol/ math::four_pi_eps_i);
-        topo.perturbed_solute().atom(seq).B_polarizability(b_pol/ math::four_pi_eps_i);
+        // create an eds perturbed atom
+        topology::EDS_Perturbed_Atom atom(seq,m_iac,m_charge);
+        DEBUG(10, "\tcreated an atom");
+              
         
-        topo.perturbed_solute().atom(seq).A_damping_level(a_lev);
-        topo.perturbed_solute().atom(seq).B_damping_level(b_lev);
-
-        topo.is_polarizable()[seq] = true;
+        atom.exclusion() = topo.exclusion(seq);
+        topo.exclusion(seq).clear();
+        DEBUG(10, "\treplace the exclusions to perturbation");
         
-        if (topo.polarizability(seq) != 
-                topo.perturbed_solute().atom(seq).A_polarizability() ||
-            topo.damping_level(seq) != 
-                topo.perturbed_solute().atom(seq).A_damping_level())
-          warn = true;
+        std::vector<std::set<int> > & ex = topo.exclusion();
+        int seq2=0;
         
-	DEBUG(10, "\tassigned perturbed polarization parameters to atom");
-	
-	if (!quiet)
-	  std::cout << "\t"
-		  << std::setw(5) << seq + 1
-		  << std::setw(12) << topo.perturbed_solute().atom(seq).A_polarizability()* math::four_pi_eps_i
-		  << std::setw(12) << topo.perturbed_solute().atom(seq).A_damping_level()
-		  << std::setw(12) << topo.perturbed_solute().atom(seq).B_polarizability()* math::four_pi_eps_i
-		  << std::setw(12) << topo.perturbed_solute().atom(seq).B_damping_level()
-		  << "\n";
+        for(std::vector<std::set<int> >::iterator eit=ex.begin(),
+                eto=ex.end(); eit!=eto; ++eit, ++seq2){
+          if(eit->count(seq)){
+            atom.exclusion().insert(seq2);
+            eit->erase(seq);
+          }
+        }
+        DEBUG(10, "\tadapted perturbed exclusions");
+        
+        atom.one_four_pair() = topo.one_four_pair(seq);
+        topo.one_four_pair(seq).clear();
+        DEBUG(10, "\treplaced the 14 interactions");
+        
+        std::vector<std::set<int> > & ofp = topo.one_four_pair();
+        seq2=0;
+        
+        for(std::vector<std::set<int> >::iterator pit=ofp.begin(),
+                pito= ofp.end(); pit!=pito; ++pit, ++seq2){
+          if(pit->count(seq)){
+            atom.one_four_pair().insert(seq2);
+            pit->erase(seq);
+          }
+        }
+        DEBUG(10, "\tadapted 14 interactions");
+        
+        topo.eds_perturbed_solute().atoms()[seq] = atom;
+        assert(seq < int(topo.is_eds_perturbed().size()));
+        topo.is_eds_perturbed()[seq] = true;
+	        
+         if (!quiet){
+           std::cout << "\t" << std::setw(5) << seq + 1
+           << std::setw(12) << "";
+           for(unsigned int i = 0; i < numstates; i++){
+             std::cout << std::setw(8) << m_iac[i];
+           }
+           std::cout << std::setw(12) << "";
+           for(unsigned int i = 0; i < numstates; i++){
+             std::cout << std::setw(10) << m_charge[i];
+           }
+           std::cout << "\n";
+         }
+        
       }
-      if (n != num){
-	  io::messages.add("Wrong number of bonds in PERTPOLPARAM block.",
-			   "In_Perturbation", io::message::error);	
+      if (n != numatoms){
+        io::messages.add("Wrong number of perturbed atoms in EDSATOMPARAM block.",
+                         "In_Perturbation", io::message::error);
       }
       else if (_lineStream.fail()){
-	io::messages.add("Bad line in PERTPOLPARAM block.",
-			 "In_Perturbation", io::message::error);
+        io::messages.add("Bad line in EDSATOMPARAM block.",
+                         "In_Perturbation", io::message::error);
       }
-
-
+           
       if (!quiet)
-	std::cout << "\tEND\n";
-      
+        std::cout << "\tEND\n";
+         
+      DEBUG(10,"We have " << unsigned(topo.eds_perturbed_solute().atoms().size()) 
+              << " eds perturbed atoms.");
     } // if block present
     
-  } // PERTPOLPARAM
+  } // EDSATOMPARAM
 
   for(std::map<std::string, std::vector<std::string> >::const_iterator
 	it = m_block.begin(),
@@ -1221,12 +1373,20 @@ io::In_Perturbation::read(topology::Topology &topo,
       ++it){
     
     if (block_read.count(it->first) == 0 && it->second.size()){
-      io::messages.add("block " + it->first + " not supported!",
-		       "In_Perturbation (Topology)",
-		       io::message::warning);
+      if(param.eds.eds){
+        io::messages.add("block " + it->first + " not supported for eds!",
+                "In_Perturbation (Topology)",
+                io::message::warning);
+      }
+      else{
+        io::messages.add("block " + it->first + " not supported!",
+                "In_Perturbation (Topology)",
+                io::message::warning);
+      }
+      
     }
   }
-
+  
   if (!quiet)
     std::cout << "END\n";
 

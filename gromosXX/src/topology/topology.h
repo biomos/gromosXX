@@ -140,6 +140,11 @@ namespace topology
      * perturbed solute accessor.
      */
     Perturbed_Solute & perturbed_solute() {return m_perturbed_solute;}
+    
+    /**
+     * eds-perturbed solute accessor.
+     */
+    EDS_Perturbed_Solute & eds_perturbed_solute() {return m_eds_perturbed_solute;}
 
     /**
      * const solute accessor.
@@ -150,6 +155,11 @@ namespace topology
      * const perturbed solute accessor.
      */
     Perturbed_Solute const & perturbed_solute()const{return m_perturbed_solute;}
+    
+    /**
+     * const eds-perturbed solute accessor.
+     */
+    EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
     
     /**
      * number of solvents.
@@ -461,7 +471,21 @@ namespace topology
      * is the atom perturbed?
      */
     std::vector<bool> & is_perturbed() { return m_is_perturbed;}
-
+    
+    /**
+     * is the atom eds-perturbed?
+     */
+    bool is_eds_perturbed(unsigned int const i)const {
+      if (i >= num_solute_atoms()) return false;
+      
+      assert(i < m_is_eds_perturbed.size()); 
+      return m_is_eds_perturbed[i];
+    }
+    /**
+     * is the atom eds-perturbed?
+     */
+    std::vector<bool> & is_eds_perturbed() { return m_is_eds_perturbed;}
+    
     /**
      * is the atom polarizable?
      */
@@ -674,11 +698,21 @@ namespace topology
      * the perturbed solute.
      */
     Perturbed_Solute m_perturbed_solute;
+    
+    /**
+     * the eds-perturbed solute
+     */
+    EDS_Perturbed_Solute m_eds_perturbed_solute;
 
     /**
      * is the atom perturbed?
      */
     std::vector<bool> m_is_perturbed;
+    
+    /**
+     * is the atom eds-perturbed?
+     */
+    std::vector<bool> m_is_eds_perturbed;   
     
     /**
      * is the atom polarizable?

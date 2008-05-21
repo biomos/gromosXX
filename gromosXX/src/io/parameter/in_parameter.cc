@@ -1,7 +1,8 @@
 
 /**
  * @file in_parameter.cc
- * implements methods of In_Parameter
+ * implemes
+ * nts methods of In_Parameter
  */
 
 #include <stdheader.h>
@@ -86,6 +87,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_RAMD(param);
   read_POLARIZE(param);
   read_RANDOMNUMBERS(param);
+  read_EDS(param);
   read_LAMBDAS(param);
   read_known_unsupported_blocks();
   
@@ -2725,6 +2727,82 @@ void io::In_Parameter::read_RANDOMNUMBERS(simulation::Parameter & param,
   }
 }  
 
+void io::In_Parameter::read_EDS(simulation::Parameter & param, 
+        std::ostream & os)
+{
+  DEBUG(8, "read EDS");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["EDS"];
+  
+  if (buffer.size()) {
+    block_read.insert("EDS");
+    
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+    
+    int eds;
+    _lineStream >> eds >> param.eds.s >> param.eds.numstates;
+    
+    if (_lineStream.fail()){
+      io::messages.add("bad line in EDS block",
+		       "In_Parameter", io::message::error);
+      return;
+    }
+    param.eds.eir.resize(param.eds.numstates,0.0);
+    for (unsigned int i = 0; i < param.eds.numstates; i++){
+      _lineStream >> param.eds.eir[i];
+    }
+    if (_lineStream.fail()){
+      io::messages.add("Error when reading EIR from EDS block",
+                       "In_Parameter", io::message::error);
+      return;
+    }
+    
+    switch(eds) {
+      case 0 : 
+        param.eds.eds = false;
+        param.eds.numstates = 0;
+        break;
+      case 1 :
+        param.eds.eds = true;
+        break;
+      default :
+       io::messages.add("Error in EDS block: EDS must be 0 (no EDS) "
+       "or 1 (EDS)", "In_Parameter", io::message::error);
+    }
+    if(param.eds.eds){
+      if(param.eds.s <= 0){
+        io::messages.add("Error in EDS block: S must be >0",
+                "In_Parameter", io::message::error);
+      }
+      
+      if(param.eds.numstates < 1){
+        io::messages.add("Error in EDS block: NUMSTATES must be >=1.",
+                "In_Parameter", io::message::error);
+      }
+      // make sure we simulate at a given temperature (unambiguous kT)
+      if(!param.multibath.couple){
+        io::messages.add("Error in EDS block: EDS requires temperature coupling.",
+                "In_Parameter", io::message::error);
+      }
+      // check whether all baths have the same temperature (unambiguous kT)
+      for(unsigned int i = 1; i < param.multibath.multibath.size(); i++){
+        if(param.multibath.multibath.bath(i).temperature !=
+                param.multibath.multibath.bath(0).temperature){
+          io::messages.add("Error in EDS block: all baths must have the same temperature.",
+                  "In_Parameter", io::message::error);
+        }
+      }
+    }
+
+    
+    
+  }
+}
+
 void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param, 
         std::ostream & os)
 {
@@ -2847,7 +2925,6 @@ void io::In_Parameter::read_known_unsupported_blocks() {
     }
   }
 }
-
 
 
 

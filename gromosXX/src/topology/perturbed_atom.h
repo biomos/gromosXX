@@ -255,5 +255,115 @@ inline std::set<int> const & topology::Perturbed_Atom::one_four_pair()const
 }
 
 
+namespace topology
+{
+  /**
+   * @class EDS_Perturbed_Atom
+   * holds the EDS-perturbed atom information.
+   */
+  class EDS_Perturbed_Atom
+  {
+  public:
+    /**
+     * Default Constructor.
+     */
+    EDS_Perturbed_Atom()
+          : m_sequence_number(0),
+            m_M_IAC(),
+            m_M_charge(),
+            m_exclusion(),
+            m_one_four_pair()
+    {};
+
+    /**
+     * Constructor.
+     * @param JLA atom sequence number.
+     * @param IACM integer atom code of states 0...N.
+     * @param CGM  charge of states 0...N.
+     */
+    EDS_Perturbed_Atom(unsigned int JLA,
+            std::vector<unsigned int> IACM,
+            std::vector<double> CGM)
+          : m_sequence_number(JLA),
+            m_M_IAC(IACM),
+            m_M_charge(CGM),
+            m_exclusion(),
+            m_one_four_pair()
+    {};
+
+  public:
+    /**
+     * @name accessors
+     * @{
+     */
+    unsigned int sequence_number();
+    unsigned int sequence_number()const;
+    void sequence_number(unsigned int);
+    
+    std::vector<unsigned int> M_IAC()const;
+    void M_IAC(std::vector<unsigned int>);
+
+    std::vector<double> M_charge()const;
+    void M_charge(std::vector<double>);
+    
+    std::set<int> & exclusion();
+    std::set<int> const & exclusion()const;
+    
+    std::set<int> & one_four_pair();
+    std::set<int> const & one_four_pair()const;
+    
+    /**
+     * @}
+     */
+
+  private:
+    unsigned int m_sequence_number;
+    std::vector<unsigned int> m_M_IAC;
+    std::vector<double> m_M_charge;
+    std::set<int> m_exclusion;
+    std::set<int> m_one_four_pair;
+  };
+  
+} // topology
+
+inline unsigned int topology::EDS_Perturbed_Atom::sequence_number()const{
+  return m_sequence_number;
+}
+inline std::vector<unsigned int> topology::EDS_Perturbed_Atom::M_IAC()const{
+  return m_M_IAC; 
+}
+inline std::vector<double> topology::EDS_Perturbed_Atom::M_charge()const{
+  return m_M_charge; 
+}
+
+inline void topology::EDS_Perturbed_Atom::sequence_number(unsigned int a){
+  m_sequence_number = a;
+}
+inline void topology::EDS_Perturbed_Atom::M_IAC(std::vector<unsigned int> a){
+  m_M_IAC = a;
+}
+inline void topology::EDS_Perturbed_Atom::M_charge(std::vector<double> a){
+  m_M_charge = a;
+}
+inline std::set<int> & topology::EDS_Perturbed_Atom::exclusion()
+{
+  return m_exclusion;
+}
+inline std::set<int> const & topology::EDS_Perturbed_Atom::exclusion()const
+{
+  return m_exclusion;
+}
+
+inline std::set<int> & topology::EDS_Perturbed_Atom::one_four_pair()
+{
+  return m_one_four_pair;
+}
+
+inline std::set<int> const & topology::EDS_Perturbed_Atom::one_four_pair()const
+{
+  return m_one_four_pair;
+}
+
+
 #endif
   

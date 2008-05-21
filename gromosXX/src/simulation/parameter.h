@@ -1586,6 +1586,38 @@ namespace simulation
        */
       int gsl_rng;
     } /** random number generator */ rng;    
+    
+    /**
+     * @struct eds_struct
+     * parameters for enveloping distribution sampling (eds)
+     */
+    struct eds_struct{
+      /** 
+       * Constructor:
+       * Default values:
+       * - eds: no eds sampling
+       * - s: 1.0
+       */
+      eds_struct() : eds(false), s(1.0), numstates(0) {}
+      /**
+       * do enveloping distribution sampling using the Hamiltonian:
+       * @f$ V_R = - \left(\beta s \right)^{-1} \ln \sum_i e^{-\beta s \left(V_i-E_i^R\right)} @f$
+       * 
+       */
+      bool eds;
+      /**
+       * smoothness parameter @f$ s@f$ used in reference state Hamiltonian.
+       */
+      double s;
+      /**
+       * number of eds states
+       */
+      unsigned int numstates;
+      /**
+       * energy offsets @f$E_i^R@f$ of states
+       */
+      std::vector<double> eir;
+    } /** enveloping distribution sampling*/ eds;
   };
 }
 

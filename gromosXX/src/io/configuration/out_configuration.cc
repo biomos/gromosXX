@@ -1918,8 +1918,11 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.jvalue_total << "\n"
      << std::setw(18) << e.self_total << "\n" // self energy from polarization
      //<< std::setw(18) << 0.0 << "\n" // local elevation
-     << std::setw(18) << 0.0 << "\n"; // path integral
+     << std::setw(18) << e.eds_vr << "\n"; // eds energy of reference state
+     //<< std::setw(18) << 0.0 << "\n"; // path integral
   // << std::setw(18) << e.entropy_term << "\n"; // dH/dl * H
+  
+  // put eds V_R energy here
   
   os << "# baths\n";
   os << numbaths << "\n";
@@ -1959,6 +1962,16 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
        << std::setw(18) << 0.0 // local elevation
        << std::setw(18) << 0.0 << "\n"; // path integral
   }
+  
+  // eds energy of end states
+  os << "# eds\n";
+  const unsigned int numstates = e.eds_vi.size();
+  os << numstates << "\n";
+  for(unsigned i = 0; i < e.eds_vi.size(); i++){
+    os << std::setw(18) << e.eds_vi[i] << "\n";
+  }
+  
+  // write eds energies (vr,{V_i}) here
 }
 
 static void _print_volumepressurered_helper(std::ostream &os,

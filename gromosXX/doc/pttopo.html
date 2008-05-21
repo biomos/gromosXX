@@ -17,6 +17,7 @@
 <li><a href="#pertimp">improper dihedral angles</a></li>
 <li><a href="#pertdih">dihedral angles</a></li>
 <li><a href="#pertpolparam">Perturbed polarizable atoms</a></li>
+<li><a href="#edsatomparam">EDS-perturbed atoms</a></li>
 </ul>
 
 <h2><a name="title">TITLE</a></h2>
@@ -199,6 +200,26 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
+<h2><a name="edsatomparam">EDS-perturbed atoms</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+EDSATOMPARAM
+# number of eds-perturbed atoms 
+  6
+# NR res name mass iac 0...N charge 0...N
+# needed information is only: NR, IAC 0...N, charge 0...N
+# NR    RES  NAME  IAC[0...N]  CHARGE[0...N]
+# first water
+  1      1    OW   4  19       -0.82  0     
+  2      1    HW1  18 19        0.41  0     
+  3      1    HW2  18 19        0.41  0    
+# second water
+  4      2    OW   19 4         0    -0.82  
+  5      2    HW1  19 18        0     0.41 
+  6      2    HW2  19 18        0     0.41 
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
 
 
 </body>

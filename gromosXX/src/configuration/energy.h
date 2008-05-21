@@ -103,6 +103,16 @@ namespace configuration
      */
     double self_total;
     
+    /**
+     * energy of the reference state in eds
+     */
+    double eds_vr;
+    
+    /**
+     * energy of the endstates in eds
+     */
+    std::vector<double> eds_vi;
+           
     // this should be size of bath
     /**
      * kinetic energy term

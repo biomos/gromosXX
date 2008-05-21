@@ -42,6 +42,7 @@
 <li><a href="#polarize">POLARIZE</a></li>
 <li><a href="#randomnumbers">RANDOMNUMBERS</a></li>
 <li><a href="#spc_loops">INNERLOOP</a></li>
+<li><a href="#EDS">EDS</a></li>
 </ul>
 
 <br>
@@ -749,6 +750,26 @@ INNERLOOP
 #
 #   SPC
      1 
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<h2><a name="EDS">EDS</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+EDS
+# EDS        0,1  
+#              0: no enveloping distribution sampling (EDS) [default]
+#              1: enveloping distribution sampling
+# S         >0.0: smoothness parameter
+# NUMSTATES >1  : number of states
+# EIR           : energy offsets for states
+#
+#   EDS     S     
+     1    0.05
+# NUMSTATES
+  3
+# EIR 
+  0   20   40
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

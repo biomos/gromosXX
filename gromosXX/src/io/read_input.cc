@@ -170,7 +170,7 @@ int io::read_topology(io::Argument const & args,
      io::messages.contains(io::message::critical))
     return -1;
   
-  if(sim.param().perturbation.perturbation){
+  if(sim.param().perturbation.perturbation || sim.param().eds.eds){
     if(args.count(argname_pttopo)<1){
       io::messages.add("No perturbation topology specified",
 		       "read_input", io::message::critical);

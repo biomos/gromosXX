@@ -152,11 +152,16 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     DEBUG(7, "recovering molecular virial from atomic virial");
     DEBUG(10, "lambda = " << topo.lambda());
 
+    
+    
     math::Periodicity<boundary> periodicity(conf.current().box);
     math::VArray const &pos = conf.current().pos;
     math::Vec r;
 
     math::Matrix corrP(0.0);
+    // EDS
+    const int numstates = conf.special().eds.virial_tensor_endstates.size();
+    std::vector<math::Matrix> corrPendstates(numstates,corrP);
     
     topology::Molecule_Iterator
       m_it = topo.molecule_begin(),
@@ -188,6 +193,14 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
 	    // conf.current().virial_tensor(b, a) +=
 	    corrP(b, a)  +=
 	      conf.current().force(*a_it)(a) * r(b);
+            
+            // EDS
+            for(int state = 0; state < numstates; state++){
+              corrPendstates[state](b, a) +=
+                      conf.special().eds.force_endstates[state](*a_it)(a) * r(b);
+            }
+             
+            
 	  }
 	}
 
@@ -195,6 +208,11 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     }
 
     conf.current().virial_tensor -= corrP;
+    
+    // EDS
+    for(int state = 0; state < numstates; state++){
+      conf.special().eds.virial_tensor_endstates[state] -= corrPendstates[state];
+    }
 
   } // molecular virial
 

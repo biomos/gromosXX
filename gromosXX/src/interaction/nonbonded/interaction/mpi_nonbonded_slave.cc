@@ -27,10 +27,13 @@
 
 #include <interaction/nonbonded/interaction/nonbonded_term.h>
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
+#include <interaction/nonbonded/interaction/eds_nonbonded_term.h>
 
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/eds_nonbonded_outerloop.h>
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_set.h>
+#include <interaction/nonbonded/interaction/eds_nonbonded_set.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 #include <interaction/nonbonded/interaction/mpi_nonbonded_slave.h>
@@ -206,6 +209,47 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
       print_pairlist(topo, conf, sim, os);
     }
     
+    if (sim.param().eds.eds){
+      const unsigned int numstates = sim.param().eds.numstates;
+      
+      assert(m_nonbonded_set[0]->storage().virial_tensor_endstates.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().force_endstates.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().energies.eds_vi.size() == numstates);
+      
+      for(unsigned int state = 0; state < numstates; state++){
+        
+        // reduce forces of endstates
+        MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().force_endstates[state](0)(0),
+                NULL,
+                m_nonbonded_set[0]->storage().force_endstates[state].size() * 3,
+                MPI::DOUBLE,
+                MPI::SUM,
+                0);
+         
+        // reduce energies of endstates
+        MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi[state],
+                NULL,
+                1,
+                MPI::DOUBLE,
+                MPI::SUM,
+                0);
+          
+        // reduce virial tensors of endstates
+        if (sim.param().pcouple.virial){
+          
+          double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor_endstates[state](0, 0);
+          MPI::COMM_WORLD.Reduce(dvt2,
+                  NULL,
+                  9,
+                  MPI::DOUBLE,
+                  MPI::SUM,
+                  0);
+           
+        }
+         
+      } // loop over states
+    } // eds
+      
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
     ////////////////////////////////////////////////////
@@ -254,6 +298,10 @@ int interaction::MPI_Nonbonded_Slave::init
     // only one set per MPI process
     m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
 							  m_parameter, rank, num_threads));
+  }
+  else if (sim.param().eds.eds){
+    m_nonbonded_set.push_back(new Eds_Nonbonded_Set(*m_pairlist_algorithm,
+            m_parameter, rank, num_threads));
   }
   else{
     // only one set per MPI process

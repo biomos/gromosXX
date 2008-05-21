@@ -229,6 +229,7 @@ int _calculate_jvalue_restraint_interactions
     conf.current().force(it->k) += fk;
     conf.current().force(it->l) += fl;
 
+    // should there be a contribution of this special ia to the virial?
     if (V == math::atomic_virial){
       math::Vec rlj;
       periodicity.nearest_image(pos(it->l), pos(it->j), rlj);

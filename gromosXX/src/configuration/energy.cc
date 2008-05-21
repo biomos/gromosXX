@@ -42,7 +42,9 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     entropy_term = 0.0;
     external_total = 0.0;
     self_total = 0.0;
-    
+    eds_vr = 0.0;
+    eds_vi.assign(eds_vi.size(), 0.0);
+
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
     improper_energy.assign(improper_energy.size(), 0.0);
@@ -217,7 +219,7 @@ int configuration::Energy::calculate_totals()
   potential_total = nonbonded_total + bonded_total;
   
   special_total = posrest_total + distanceres_total + dihrest_total
-    + constraints_total + jvalue_total + external_total;
+    + constraints_total + jvalue_total + external_total + eds_vr;
 
   total = potential_total + kinetic_total + special_total;
 

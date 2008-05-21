@@ -146,7 +146,7 @@
  * Nonbonded_Innerloop : split perturbation
  */
 #define SPLIT_PERT_INNERLOOP(f, ...) \
-  assert(sim.param().perturbation.perturbation); \
+  assert(sim.param().perturbation.perturbation || sim.param().eds.eds); \
   if (sim.param().perturbation.scaling){ \
     PERT_SPLIT_BOUNDARY(f, Perturbation_Spec<scaling_on>, __VA_ARGS__); \
     } \
