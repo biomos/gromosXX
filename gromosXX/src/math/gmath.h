@@ -35,6 +35,26 @@ namespace math
     Vec & operator*=(double d) { d_v[0] *= d; d_v[1] *= d; d_v[2] *= d; return *this; }
     Vec & operator/=(double d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
     };
+    
+    
+  class Vecl
+  {
+  private:
+    long double d_v[3];
+  public:
+    Vecl() {}
+    explicit Vecl(long double d) { d_v[0] = d_v[1] = d_v[2] = d; }
+    Vecl(Vecl const & v) { d_v[0] = v(0); d_v[1] = v(1); d_v[2] = v(2); }
+    Vecl(long double d1, long double d2, long double d3) { d_v[0] = d1; d_v[1] = d2; d_v[2] = d3; }
+
+    long double operator()(int i)const { assert(i>=0 && i<3); return d_v[i]; }
+    long double & operator()(int i) { assert(i >= 0 && i < 3); return d_v[i]; }
+    Vecl & operator=(double d) { d_v[0] = d_v[1] = d_v[2] = d; return *this; }
+    Vecl & operator+=(Vecl const &v) { d_v[0] += v(0); d_v[1] += v(1); d_v[2] += v(2); return *this; }
+    Vecl & operator-=(Vecl const &v) { d_v[0] -= v(0); d_v[1] -= v(1); d_v[2] -= v(2); return *this; } 
+    Vecl & operator*=(double d) { d_v[0] *= d; d_v[1] *= d; d_v[2] *= d; return *this; }
+    Vecl & operator/=(double d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
+    };
   
   /**
    * Array of 3D vectors.
@@ -174,7 +194,57 @@ namespace math
       return *this;
     }
   };
-
+  /**
+   * Matrixl.
+   */
+  class Matrixl
+  {
+  private:
+    long double m[3][3];
+  public:
+    Matrixl() {}
+    explicit Matrixl(long double d) 
+    {
+      m[0][0] = m[0][1] = m[0][2] = 
+	m[1][0] = m[1][1] = m[1][2] =
+	m[2][0] = m[2][1] = m[2][2] = d;
+    }
+    
+    Matrixl(const Vecl &u, const Vecl &v, const Vecl &w){
+    for (int i=0;i<3;++i){
+      m[0][i]=u(i);
+      m[1][i]=v(i);
+      m[2][i]=w(i);
+    }
+  }
+   
+    Matrixl & operator=(long double d)
+    {
+      m[0][0] = m[0][1] = m[0][2] = 
+	m[1][0] = m[1][1] = m[1][2] =
+	m[2][0] = m[2][1] = m[2][2] = d;
+      return *this;
+    }
+    
+    Matrixl & operator=(Matrixl mat)
+    {
+      for(int i=0; i<3; ++i)
+	for(int j=0; j<3; ++j)
+	  m[i][j] = mat(i,j);
+      return *this;
+    }
+    
+    long double operator()(int i, int j)const 
+    {
+      assert( i>=0 && i<3 && j>=0 && j<3 );
+      return m[i][j];
+    }
+    long double & operator()(int i, int j)
+    {
+      assert( i>=0 && i<3 && j>=0 && j<3 );
+      return m[i][j];
+    }
+  };
   /**
    * Box.
    */
@@ -418,7 +488,16 @@ namespace math
 	  m(i,j) += m1(i,k) * m2(k,j);
     return m;
   }
-
+  
+  inline Matrixl product(Matrixl const &m1, Matrix const &m2)
+  {
+    Matrixl m(0.0);
+    for(int i=0; i<3; ++i)
+      for(int j=0; j<3; ++j)
+	for(int k=0; k<3; ++k)
+	  m(i,j) += m1(i,k) * m2(k,j);
+    return m;
+  }
   inline Box product(Matrix const &m1, Box const &m2)
   {
     Box m(0.0);

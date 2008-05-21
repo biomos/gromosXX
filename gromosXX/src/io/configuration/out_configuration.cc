@@ -1248,18 +1248,18 @@ void io::Out_Configuration
         cotbeta=1/(tanl(beta));
   }
 
-  math::Vec BSx(1/a,0.0,0.0);
-  math::Vec BSy(-cotdelta/a,
+  math::Vecl BSx(1/a,0.0,0.0);
+  math::Vecl BSy(-cotdelta/a,
           1/(b*sinl(gamma)),0.0);
-  math::Vec BSz((cotdelta*cotgamma-cotbeta/sindelta)/a, 
+  math::Vecl BSz((cotdelta*cotgamma-cotbeta/sindelta)/a, 
           -cotdelta/(b*sinl(gamma)),
           1/(c*sinl(beta)*sindelta));
   
   
-  math::Matrix BSmat(BSx,BSy,BSz);
+  math::Matrixl BSmat(BSx,BSy,BSz);
   math::Matrix boxmat(box(0),box(1),box(2));
 
-  math::Matrix Rmat=product(BSmat,boxmat);
+  math::Matrixl Rmat=product(BSmat,boxmat);
  /* 
   os <<"boxmat\n" ;
   for (int i=0;i<3; i++){
@@ -1285,7 +1285,7 @@ void io::Out_Configuration
      << "\n";  
   }
  */   
-  long double R11R21=sqrt(Rmat(0,0)*Rmat(0,0)+Rmat(0,1)*Rmat(0,1));
+  long double R11R21=sqrtl(Rmat(0,0)*Rmat(0,0)+Rmat(0,1)*Rmat(0,1));
   if(R11R21==0.0)
   {
       theta = -math::sign(Rmat(0,2))*M_PI/2;
