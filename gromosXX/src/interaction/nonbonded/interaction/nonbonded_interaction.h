@@ -138,6 +138,19 @@ namespace interaction
      );
 
     /**
+     * reduce a configuration for
+     * multiple unit cell
+     * simulations
+     */
+    void reduce_configuration
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     configuration::Configuration & exp_conf
+     );
+    
+    /**
      * store data from sets into the configuration
      */
     void store_set_data

@@ -98,7 +98,7 @@ calculate_interactions(topology::Topology & topo,
   if (steps == 0) steps = 1;
   
   // std::cerr << "Nonbonded: steps = " << steps << std::endl;
-  
+  configuration::Configuration *exp_conf = NULL;
   if ((sim.steps() % steps) == 0){
 
     // std::cerr << "\tMULTISTEP: full non-bonded calculation" << std::endl;
@@ -106,22 +106,23 @@ calculate_interactions(topology::Topology & topo,
     ////////////////////////////////////////////////////
     // multiple unit cell
     ////////////////////////////////////////////////////
+    
     if (sim.param().multicell.multicell){
       
       DEBUG(6, "nonbonded: MULTICELL");
-      configuration::Configuration exp_conf;
-      expand_configuration(topo, conf, sim, exp_conf);
-      DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
-      
+      exp_conf = new configuration::Configuration();
+      expand_configuration(topo, conf, sim, *exp_conf);
+      DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf->current().pos.size());
+
       // shared memory do this only once
-      if(m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim))
+      if(m_pairlist_algorithm->prepare(topo.multicell_topo(), *exp_conf, sim))
 	return 1;
       
       // have to do all from here (probably it's only one,
       // but then maybe it's clearer like it is...)
       for(int i=0; i < m_set_size; ++i){
 	m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
-						   exp_conf, 
+						   *exp_conf, 
 						   sim);
       }
     }
@@ -151,6 +152,9 @@ calculate_interactions(topology::Topology & topo,
   
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(topo, conf, sim);
+  
+  if (sim.param().multicell.multicell)  
+    reduce_configuration(topo, conf, sim, *exp_conf);
 
   ////////////////////////////////////////////////////
   // printing pairlist
@@ -506,6 +510,11 @@ void interaction::Nonbonded_Interaction::expand_configuration
   // resize the configuration
   // exp_conf.resize(topo.multicell_topo().num_atoms());
 
+  exp_conf.boundary_type = conf.boundary_type;
+  exp_conf.current().box(0) = sim.param().multicell.x * conf.current().box(0);
+  exp_conf.current().box(1) = sim.param().multicell.y * conf.current().box(1);
+  exp_conf.current().box(2) = sim.param().multicell.z * conf.current().box(2);
+  
   exp_conf.init(topo.multicell_topo(), sim.param(), false);
   DEBUG(10, "\texp_conf initialised");
   
@@ -529,6 +538,7 @@ void interaction::Nonbonded_Interaction::expand_configuration
 	  assert(conf.current().pos.size() > i);
 	  
 	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
+          exp_conf.current().posV(exp_i) = conf.current().posV(i);
 	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
 	}
       }
@@ -550,20 +560,79 @@ void interaction::Nonbonded_Interaction::expand_configuration
 	  assert(conf.current().pos.size() > i);
 	  
 	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
+          exp_conf.current().posV(exp_i) = conf.current().posV(i);
 	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
 	}
       }
     }
   }
-
-  exp_conf.current().box(0) = sim.param().multicell.x * conf.current().box(0);
-  exp_conf.current().box(1) = sim.param().multicell.y * conf.current().box(1);
-  exp_conf.current().box(2) = sim.param().multicell.z * conf.current().box(2);
   
   exp_conf.current().energies.zero();
   exp_conf.current().perturbed_energy_derivatives.zero();
-  exp_conf.boundary_type = conf.boundary_type;
+  exp_conf.current().virial_tensor = 0.0;
 
+}
+
+/**
+ * reduce a configuration for
+ * multiple unit cell
+ * simulations
+ */
+void interaction::Nonbonded_Interaction::reduce_configuration
+(
+ topology::Topology const & topo,
+ configuration::Configuration & conf,
+ simulation::Simulation & sim,
+ configuration::Configuration & exp_conf
+ )
+ {
+  // add one-four, rf excluded etc... all those things that go directly into 
+  // the configuration and not into storages of the sets
+  
+  // reduce the forces
+  const unsigned int cells = (sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
+  unsigned int i = 0;
+  for(; i < topo.num_solute_atoms(); ++i) {
+    conf.current().force(i) += exp_conf.current().force(i);
+    conf.current().posV(i) += exp_conf.current().posV(i);
+  }
+  
+  // one cell is is already contained in i!! -> cells - 1
+  const unsigned int offset = topo.num_solute_atoms() * (cells - 1);
+  for(; i < topo.num_atoms(); ++i) {
+    conf.current().force(i) += exp_conf.current().force(offset + i);
+    conf.current().posV(i) += exp_conf.current().posV(offset + i);
+  }
+  
+  const int ljs = conf.current().energies.lj_energy.size();
+  configuration::Energy & e = conf.current().energies;
+  configuration::Energy & exp_e = exp_conf.current().energies;
+  configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
+  configuration::Energy & exp_pe = exp_conf.current().perturbed_energy_derivatives;
+
+  const double cells_i = 1.0 / cells;
+  
+  // reduce the energies
+  for(int i = 0; i < ljs; ++i){
+    for(int j = 0; j < ljs; ++j){
+      e.lj_energy[i][j] += exp_e.lj_energy[i][j] * cells_i;
+      e.crf_energy[i][j] += exp_e.crf_energy[i][j] * cells_i;
+      pe.lj_energy[i][j] += exp_pe.lj_energy[i][j] * cells_i;
+      pe.crf_energy[i][j] += exp_pe.crf_energy[i][j] * cells_i;
+    }
+  }
+  // reduce the virial
+  if (sim.param().pcouple.virial){
+    DEBUG(7, "\tadd set virial");
+    
+    for(unsigned int i=0; i<3; ++i){
+      for(unsigned int j=0; j<3; ++j){
+        
+        conf.current().virial_tensor(i, j) +=
+        exp_conf.current().virial_tensor(i, j) * cells_i;
+      }
+    }
+  }
 }
 
 

@@ -117,9 +117,28 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_coscharge.push_back(topo.m_coscharge[i]);
       m_damping_level.push_back(topo.m_damping_level[i]);
       m_damping_power.push_back(topo.m_damping_power[i]);
-      m_exclusion.push_back(topo.m_exclusion[i]);
-      m_one_four_pair.push_back(topo.m_one_four_pair[i]);
-      m_all_exclusion.push_back(topo.m_all_exclusion[i]);
+      
+      std::set<int> ex;
+      std::set<int>::const_iterator it = topo.m_exclusion[i].begin(),
+              to = topo.m_exclusion[i].end();
+      for(; it != to; ++it)
+        ex.insert(*it + num_solute * m);
+      m_exclusion.push_back(ex);
+      
+      ex.clear();
+      it = topo.m_one_four_pair[i].begin();
+      to = topo.m_one_four_pair[i].end();
+      for(; it != to; ++it)
+        ex.insert(*it + num_solute * m);
+      m_one_four_pair.push_back(ex);
+      
+      ex.clear();
+      it = topo.m_all_exclusion[i].begin();
+      to = topo.m_all_exclusion[i].end();
+      for(; it != to; ++it)
+        ex.insert(*it + num_solute * m);
+      m_all_exclusion.push_back(ex);
+
       m_atom_energy_group.push_back(topo.m_atom_energy_group[i]);
       
       m_stochastic.gamma.push_back(topo.stochastic().gamma[i]);
@@ -193,8 +212,95 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     // perturbed solute
-    DEBUG(10, "\tperturbed solute: MISSING");
+    DEBUG(10, "\tmultiplying perturbed solute...");
+    DEBUG(10, "\tperturbed solute: atoms");
+    std::map<unsigned int, Perturbed_Atom>::const_iterator it, to;
+    it = topo.perturbed_solute().atoms().begin();
+    to = topo.perturbed_solute().atoms().end();
+    for(; it != to; ++it) {
+      unsigned int seq = it->first + m * num_solute;
+      perturbed_solute().atoms()[seq] = it->second;
+      perturbed_solute().atoms()[seq].sequence_number(seq);
+      
+      // and the exlusions and one-four pairs... again!
+      perturbed_solute().atoms()[seq].exclusion().clear();
+      perturbed_solute().atoms()[seq].one_four_pair().clear();
+      
+      std::set<int>::const_iterator ex_it, ex_to;
+      ex_it = it->second.exclusion().begin();
+      ex_to = it->second.exclusion().end();
+      for(; ex_it != ex_to; ++ex_it)
+        perturbed_solute().atoms()[seq].exclusion().insert(*ex_it + m * num_solute);
+      
+      ex_it = it->second.one_four_pair().begin();
+      ex_to = it->second.one_four_pair().end();
+      for(; ex_it != ex_to; ++ex_it)
+        perturbed_solute().atoms()[seq].one_four_pair().insert(*ex_it + m * num_solute);
+      
+    }
     
+    DEBUG(10, "\tperturbed solute: bonds");
+    for(unsigned int i=0; i<topo.perturbed_solute().bonds().size(); ++i){
+      perturbed_solute().bonds().push_back
+              (perturbed_two_body_term_struct(
+              topo.perturbed_solute().bonds()[i].i + m * num_solute,
+              topo.perturbed_solute().bonds()[i].j + m * num_solute,
+              topo.perturbed_solute().bonds()[i].A_type,
+              topo.perturbed_solute().bonds()[i].B_type));
+    }
+    
+    DEBUG(10, "\tperturbed solute: atom pairs");
+    for(unsigned int i=0; i<topo.perturbed_solute().atompairs().size(); ++i){
+      perturbed_solute().atompairs().push_back
+              (perturbed_two_body_term_struct(
+              topo.perturbed_solute().atompairs()[i].i + m * num_solute,
+              topo.perturbed_solute().atompairs()[i].j + m * num_solute,
+              topo.perturbed_solute().atompairs()[i].A_type,
+              topo.perturbed_solute().atompairs()[i].B_type));
+    }
+    
+    DEBUG(10, "\tperturbed solute: distance constraints");
+    for(unsigned int i=0; i<topo.perturbed_solute().distance_constraints().size(); ++i){
+      perturbed_solute().distance_constraints().push_back
+              (perturbed_two_body_term_struct(
+              topo.perturbed_solute().distance_constraints()[i].i + m * num_solute,
+              topo.perturbed_solute().distance_constraints()[i].j + m * num_solute,
+              topo.perturbed_solute().distance_constraints()[i].A_type,
+              topo.perturbed_solute().distance_constraints()[i].B_type));
+    }
+
+    DEBUG(10, "\tperturbed solute: angles");
+    for(unsigned int i=0; i<topo.perturbed_solute().angles().size(); ++i){
+      perturbed_solute().angles().push_back
+              (perturbed_three_body_term_struct(topo.perturbed_solute().angles()[i].i + m * num_solute,
+              topo.perturbed_solute().angles()[i].j + m * num_solute,
+              topo.perturbed_solute().angles()[i].k + m * num_solute,
+              topo.perturbed_solute().angles()[i].A_type,
+              topo.perturbed_solute().angles()[i].B_type));
+    }
+
+    DEBUG(10, "\tperturbed solute: imps");
+    for(unsigned int i=0; i<topo.perturbed_solute().improper_dihedrals().size(); ++i){
+      perturbed_solute().improper_dihedrals().push_back
+              (perturbed_four_body_term_struct(topo.perturbed_solute().improper_dihedrals()[i].i + m * num_solute,
+              topo.perturbed_solute().improper_dihedrals()[i].j + m * num_solute,
+              topo.perturbed_solute().improper_dihedrals()[i].k + m * num_solute,
+              topo.perturbed_solute().improper_dihedrals()[i].l + m * num_solute,
+              topo.perturbed_solute().improper_dihedrals()[i].A_type,
+              topo.perturbed_solute().improper_dihedrals()[i].B_type));
+    }
+
+    DEBUG(10, "\tperturbed solute: dihedrals");
+    for(unsigned int i=0; i<topo.solute().dihedrals().size(); ++i){
+      perturbed_solute().dihedrals().push_back
+              (perturbed_four_body_term_struct(topo.perturbed_solute().dihedrals()[i].i + m * num_solute,
+              topo.perturbed_solute().dihedrals()[i].j + m * num_solute,
+              topo.perturbed_solute().dihedrals()[i].k + m * num_solute,
+              topo.perturbed_solute().dihedrals()[i].l + m * num_solute,
+              topo.perturbed_solute().dihedrals()[i].A_type,
+              topo.perturbed_solute().dihedrals()[i].B_type));
+    }
+
   }
   
   DEBUG(10, "\tegroups");
@@ -223,11 +329,13 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     assert(topo.num_solvents() == 1);
     add_solvent(topo.solvent(0));
     solvate(0, topo.num_solvent_atoms() * mul_solvent / topo.solvent(0).num_atoms());
+
     
     for(int m = 0; m < mul_solvent; ++m)
       for(unsigned int s = topo.num_solute_atoms(); s < topo.num_atoms(); ++s){
         m_atom_energy_group.push_back(topo.m_atom_energy_group[s]);
     }
+    
   
     DEBUG(8, "\tnum_atoms()=" << num_atoms());
   }
@@ -292,9 +400,12 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
 
     if (!quiet){
       os << "\tMULTICELL\n" << "\t\t"
-		<< std::setw(10) << sim.param().multicell.x
-		<< std::setw(10) << sim.param().multicell.y
-		<< std::setw(10) << sim.param().multicell.z
+                << std::setw(4) << "X"
+		<< std::setw(6) << sim.param().multicell.x
+                << std::setw(4) << "Y"
+		<< std::setw(6) << sim.param().multicell.y
+                << std::setw(4) << "Z"
+		<< std::setw(6) << sim.param().multicell.z
 		<< "\n\t\t"
 		<< "molecules : " << m_multicell_topo->molecules().size() - 1
 		<< "\n\t\t"

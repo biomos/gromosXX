@@ -98,7 +98,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     
     // distribute the positions
     assert(((double *) &conf.current().pos(conf.current().pos.size()-1)(0)) -
-	   ((double *) &conf.current().pos(0)(0)) == (conf.current().pos.size() - 1)*3);
+	   ((double *) &conf.current().pos(0)(0)) == int((conf.current().pos.size() - 1)*3));
     
     // std::cerr << "slave: receiving pos" << std::endl;
     MPI::COMM_WORLD.Bcast(&conf.current().pos(0)(0),

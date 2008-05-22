@@ -1993,7 +1993,9 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("multicell", "stochdyn");
   fc.unlock("multicell", "ramd");
   fc.unlock("multicell", "random_gromos");
-  fc.unlock("multicell", "random_gsl");
+  fc.unlock("multicell", "polarization_cos");
+  fc.unlock("multicell", "polarization_cos_damped");
+  fc.unlock("multicell", "analysis");
   fc.unlock("analysis", "no_integration");
   fc.unlock("analysis", "stochdyn");
   fc.unlock("analysis", "multistep");

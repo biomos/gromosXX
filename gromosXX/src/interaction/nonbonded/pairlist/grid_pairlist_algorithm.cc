@@ -60,13 +60,13 @@ int interaction::Grid_Pairlist_Algorithm::init
     return 1;
   }
   */
-
+/*
   if (sim.param().multicell.multicell){
     io::messages.add("Grid Pairlist Algorithm",
 		     "not compatible with MULTICELL simulations",
 		     io::message::error);
   }
-
+*/
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
 

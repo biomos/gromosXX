@@ -2216,10 +2216,11 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
     }
     
     if (param.multicell.multicell) {
+      /*
       // disable because broken
       param.multicell.multicell = false;
       io::messages.add("MULTICELL simulations are broken in MD++",
-                         "In_Parameter", io::message::error);      
+                         "In_Parameter", io::message::error);      */
       
       
       // do these checks only if mutlicell is really used.
@@ -2238,11 +2239,13 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
       }
     
       if (tolpx || tolpv || tolpf || tolpfw) {
-        io::messages.add("MULTICELL block: Periodicity checks not available in "
-                         "this version. Disabling MULTICELL simulation.", 
+        io::messages.add("MULTICELL block: Periodicity checks are not needed "
+                         "in the MD++ implementation of MULTICELL.", 
                          "In_Parameter", io::message::warning);    
-        param.multicell.multicell = false;
       }  
+    } else {
+      // make sure all values are set to one in a normal, non-multicell, simulation!
+      param.multicell.x = param.multicell.y = param.multicell.z = 1;
     }
   }
 }
@@ -2682,7 +2685,13 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
     if (param.polarize.damp && !param.polarize.cos) {
       io::messages.add("POLARIZE block: DAMP is ignored if no polarization is used",
                        "In_Parameter", io::message::warning);
-    }   
+    } 
+    
+    if (param.polarize.cos && param.multicell.multicell) {
+       io::messages.add("multiple unit cell simulation using polarization may "
+                        "converge differently. Use a small MINFIELD parameter.",
+                       "In_Parameter", io::message::warning);     
+    }
   }
 }
 

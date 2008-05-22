@@ -190,6 +190,8 @@ int interaction::Nonbonded_Set::update_configuration
   const int ljs = conf.current().energies.lj_energy.size();
   configuration::Energy & e = conf.current().energies;
 
+  const unsigned int cells = (sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
+  
   // use the IMPULSE method for multiple time stepping
   if (sim.param().multistep.steps > 1){
     int steps = sim.param().multistep.steps;
@@ -210,24 +212,36 @@ int interaction::Nonbonded_Set::update_configuration
     
   }
   else{
-    for(unsigned int i=0; i<topo.num_atoms(); ++i)
-      conf.current().force(i) += m_storage.force(i);
+    if (sim.param().multicell.multicell) {
+      unsigned int i = 0;
+      for(; i < topo.num_solute_atoms(); ++i)
+        conf.current().force(i) += m_storage.force(i);
+      
+      // one cell is is already contained in i!! -> cells - 1
+      const unsigned int offset = topo.num_solute_atoms() * (cells - 1); 
+      for(; i < topo.num_atoms(); ++i) {
+        conf.current().force(i) += m_storage.force(offset + i);
+      }
+      
+    } else {
+      for(unsigned int i=0; i<topo.num_atoms(); ++i)
+        conf.current().force(i) += m_storage.force(i);
+    }
   }
   
   // (MULTISTEP: and keep energy constant)
+  const double cells_i = 1.0 / cells;
   for(int i = 0; i < ljs; ++i){
     for(int j = 0; j < ljs; ++j){
       
       e.lj_energy[i][j] += 
-	m_storage.energies.lj_energy[i][j];
+	m_storage.energies.lj_energy[i][j] * cells_i;
       e.crf_energy[i][j] += 
-	m_storage.energies.crf_energy[i][j];
+	m_storage.energies.crf_energy[i][j] * cells_i;
     }
+    e.self_energy[i] +=  m_storage.energies.self_energy[i] * cells_i;
   }
-  
-  for(int i = 0; i < ljs; ++i){
-    e.self_energy[i] +=  m_storage.energies.self_energy[i];
-  }
+
 
   // (MULTISTEP: and the virial???)
   if (sim.param().pcouple.virial){
@@ -237,7 +251,7 @@ int interaction::Nonbonded_Set::update_configuration
       for(unsigned int j=0; j<3; ++j){
 
 	conf.current().virial_tensor(i,j) +=
-	  m_storage.virial_tensor(i,j);
+	  m_storage.virial_tensor(i,j) * cells_i;
       }
     }
   }
