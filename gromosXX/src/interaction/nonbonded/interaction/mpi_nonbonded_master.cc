@@ -240,6 +240,26 @@ calculate_interactions(topology::Topology & topo,
       m_storage.force_endstates = m_nonbonded_set[0]->storage().force_endstates;
       m_storage.virial_tensor_endstates = m_nonbonded_set[0]->storage().virial_tensor_endstates;
        
+      // reduce energies of endstates
+      MPI::COMM_WORLD.Reduce(&m_storage.energies.eds_vi[0],
+              &m_nonbonded_set[0]->storage().energies.eds_vi[0],
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      
+      // reduce virial tensors of endstates
+      if (sim.param().pcouple.virial){
+        double * dvt = &m_storage.virial_tensor_endstates[0](0, 0);
+        double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor_endstates[0](0, 0);
+        MPI::COMM_WORLD.Reduce(dvt,
+                dvt2,
+                9 * numstates,
+                MPI::DOUBLE,
+                MPI::SUM,
+                0);
+      }
+
       for(unsigned int state = 0; state < numstates; state++){
         
         // reduce forces of endstates
@@ -249,7 +269,7 @@ calculate_interactions(topology::Topology & topo,
                 MPI::DOUBLE,
                 MPI::SUM,
                 0);
-         
+         /*
         // reduce energies of endstates
         MPI::COMM_WORLD.Reduce(&m_storage.energies.eds_vi[state],
                 &m_nonbonded_set[0]->storage().energies.eds_vi[state],
@@ -269,7 +289,7 @@ calculate_interactions(topology::Topology & topo,
                   MPI::SUM,
                   0);
         }
-         
+         */
       } // loop over states
     } // eds
      

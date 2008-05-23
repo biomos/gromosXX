@@ -33,11 +33,11 @@ namespace interaction
     /**
      * calculate the force and energy of an atom pair.
      */
-    void eds_lj_crf_interaction(math::Vec const &r,
-			        std::vector<double> const &c6, std::vector<double> const &c12,
-			        std::vector<double> const &q,
-			        std::vector<double> & force, std::vector<double> & e_nb,
-                                const unsigned int & numstates);
+    void eds_lj_crf_interaction(const double dist2, const double dist2i, 
+                                const double dist6i, const double disti,
+			        const double &c6, const double &c12,
+			        const double &q,
+			        double & force, double & e_nb);
 
     /**
      * calculate the reaction field force and energy of an atom pair.

@@ -58,39 +58,26 @@ inline void interaction::Eds_Nonbonded_Term
  * a given atom pair.
  */
 inline void interaction::Eds_Nonbonded_Term
-::eds_lj_crf_interaction(math::Vec const &r,
-                         std::vector<double> const &c6, std::vector<double> const &c12,
-                         std::vector<double> const &q,
-                         std::vector<double> & force, 
-                         std::vector<double> & e_nb, 
-                         const unsigned int & numstates)
+::eds_lj_crf_interaction(const double dist2, const double dist2i, 
+                         const double dist6i, const double disti,
+			 const double &c6, const double  &c12,
+			 const double &q,
+			 double & force, double & e_nb)
 {
   DEBUG(14, "\t\tnonbonded term");
-  
-  assert(abs2(r) != 0);
-  const double dist2 = abs2(r);
-  const double dist2i = 1.0 / dist2;
-  const double dist6i = dist2i * dist2i * dist2i;
-  const double disti = sqrt(dist2i);
-  
-  assert(numstates == c6.size() && 
-         numstates == c12.size() && 
-         numstates == q.size() && 
-         numstates == force.size() &&
-         numstates == e_nb.size());
-  
+   
   // loop over eds states
-  for(unsigned int i = 0; i < numstates; i++){
-    const double q_eps = q[i] * math::four_pi_eps_i;
-    const double c12_dist6i = c12[i] * dist6i;
-    e_nb[i] = (c12_dist6i - c6[i]) * dist6i +
-            q_eps * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
-    
-    force[i] = (c12_dist6i + c12_dist6i - c6[i]) * 6.0 * dist6i * dist2i +
-            q_eps * (disti * dist2i + m_crf_cut3i);
-    DEBUG(15, "\t\tq=" << q[i] << " 4pie=" << math::four_pi_eps_i
-            << " crf_cut2i=" << m_crf_cut3i);
-  }
+  
+  const double q_eps = q * math::four_pi_eps_i;
+  const double c12_dist6i = c12 * dist6i;
+  e_nb = (c12_dist6i - c6) * dist6i +
+          q_eps * (disti - m_crf_2cut3i * dist2 - m_crf_cut);
+  
+  force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
+          q_eps * (disti * dist2i + m_crf_cut3i);
+  DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i
+          << " crf_cut2i=" << m_crf_cut3i);
+  
 
  
   

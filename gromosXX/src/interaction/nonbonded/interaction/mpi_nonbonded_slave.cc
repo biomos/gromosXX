@@ -216,6 +216,27 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
       assert(m_nonbonded_set[0]->storage().force_endstates.size() == numstates);
       assert(m_nonbonded_set[0]->storage().energies.eds_vi.size() == numstates);
       
+      // reduce energies of endstates
+      MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi[0],
+              NULL,
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      
+      // reduce virial tensors of endstates
+      if (sim.param().pcouple.virial){
+        
+        double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor_endstates[0](0, 0);
+        MPI::COMM_WORLD.Reduce(dvt2,
+                NULL,
+                9 * numstates,
+                MPI::DOUBLE,
+                MPI::SUM,
+                0);
+        
+      }
+      
       for(unsigned int state = 0; state < numstates; state++){
         
         // reduce forces of endstates
@@ -225,7 +246,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
                 MPI::DOUBLE,
                 MPI::SUM,
                 0);
-         
+         /*
         // reduce energies of endstates
         MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi[state],
                 NULL,
@@ -246,7 +267,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
                   0);
            
         }
-         
+         */
       } // loop over states
     } // eds
       
