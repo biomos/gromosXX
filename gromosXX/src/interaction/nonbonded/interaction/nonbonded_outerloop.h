@@ -46,17 +46,6 @@ namespace interaction
 			  Pairlist const & pairlist_solute,
                           Pairlist const & pairlist_solvent,
 			  Storage & storage);
-    
-    /**
-     * calculate the lj crf interactions using shift vectors 
-     * (nearest image free version)
-     */
-    void lj_crf_outerloop_shift(topology::Topology & topo,
-			  configuration::Configuration & conf,
-			  simulation::Simulation & sim,
-			  Pairlist const & pairlist,
-                          std::vector<std::vector<math::Vec> > const & shifts,
-			  Storage & storage);
 
     void cg_exclusions_outerloop(topology::Topology & topo,
 				 configuration::Configuration & conf,
@@ -132,14 +121,6 @@ namespace interaction
 			   Pairlist const & pairlist_solute,
                            Pairlist const & pairlist_solvent,
 			   Storage & storage);
-   
-    template<typename t_interaction_spec>
-    void _lj_crf_outerloop_shift(topology::Topology & topo,
-		                 configuration::Configuration & conf,
-		                 simulation::Simulation & sim, 
-	                         Pairlist const & pairlist,
-                                 std::vector<std::vector<math::Vec> > const & shifts,
-		                 Storage & storage);
 
     template<typename t_interaction_spec>
     void _one_four_outerloop(topology::Topology & topo,

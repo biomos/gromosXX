@@ -116,16 +116,9 @@ int interaction::Nonbonded_Set
     if (m_rank == 0)
       m_pairlist_alg.timer().start("longrange");
     
-    if(sim.param().pairlist.grid) { // using stored shifts for calculation
-      m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
-			          m_pairlist.solute_long, m_pairlist.shifts ,
-                                  m_longrange_storage);      
-    } else {
       m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			          m_pairlist.solute_long, m_pairlist.solvent_long,
                                   m_longrange_storage);
-    }
-    
     if (m_rank == 0)
       m_pairlist_alg.timer().stop("longrange");
     

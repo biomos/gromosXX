@@ -100,15 +100,10 @@ int interaction::Eds_Nonbonded_Set
   if(pairlist_update){
     if (m_rank == 0)
       m_pairlist_alg.timer().start("longrange");
-    if(sim.param().pairlist.grid) { // using stored shifts for calculation
-      m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
-			          m_pairlist.solute_long, m_pairlist.shifts ,
-                                  m_longrange_storage);      
-    } else {
-      m_outerloop.lj_crf_outerloop(topo, conf, sim,
+
+    m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
                                m_longrange_storage);
-    }
      
     if (topo.eds_perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\teds-perturbed long range");

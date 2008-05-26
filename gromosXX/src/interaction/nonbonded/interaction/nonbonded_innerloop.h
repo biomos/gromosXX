@@ -37,37 +37,6 @@ namespace interaction
      );
 
     /**
-     * lennard-jones interaction
-     * nearest image free implementation
-     * like this only works for molecular virial!
-     * this is for interactions in the central computational box
-     *
-    void lj_crf_innerloop_central
-    (
-     topology::Topology & topo,
-     configuration::Configuration & conf,
-     unsigned int i,
-     unsigned int j,
-     Storage & storage
-     );*/
-
-    /**
-     * lennard-jones interaction
-     * nearest image free implementation
-     * like this only works for molecular virial!
-     * interactions where one atom has to be shifted
-     */
-    void lj_crf_innerloop_shift
-    (
-     topology::Topology & topo,
-     configuration::Configuration & conf,
-     unsigned int i,
-     unsigned int j,
-     Storage & storage,
-     math::Vec const & shift
-     );
-
-    /**
      * 1-4 interaction
      * (always shortrange)
      */

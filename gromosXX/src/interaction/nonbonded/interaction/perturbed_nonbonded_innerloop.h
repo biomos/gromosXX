@@ -39,19 +39,6 @@ namespace interaction
      );
 
     /**
-     * perturbed interaction,
-     * nearest image free (shift vector)
-     */
-    void perturbed_lj_crf_innerloop_shift
-    (
-     topology::Topology & topo,
-     configuration::Configuration & conf,
-     unsigned int i, unsigned int j,
-     Storage &storage,
-     math::Vec const & shift
-     );
-
-    /**
      * perturbed 1-4 interaction
      * (always shortrange)
      */

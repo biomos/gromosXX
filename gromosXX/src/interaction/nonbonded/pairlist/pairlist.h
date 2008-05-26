@@ -45,7 +45,6 @@ namespace interaction
       solute_long.resize(length);
       solvent_short.resize(length);
       solvent_long.resize(length);
-      shifts.resize(length);
     }
     
     /**
@@ -58,7 +57,6 @@ namespace interaction
         solute_long[i].reserve(pairs);
         solvent_short[i].reserve(pairs);
         solvent_long[i].reserve(pairs);
-        shifts[i].reserve(pairs);
       }
     }
     
@@ -71,7 +69,6 @@ namespace interaction
         solute_long[i].clear();
         solvent_short[i].clear();
         solvent_long[i].clear();
-        shifts[i].clear();
       }
     }
     /**
@@ -80,8 +77,7 @@ namespace interaction
     inline unsigned int size() const {
       assert(solute_short.size() == solute_long.size() && 
              solute_short.size() == solvent_short.size() &&
-             solute_short.size() == solvent_long.size() &&
-             solute_short.size() == shifts.size());
+             solute_short.size() == solvent_long.size());
       return solute_short.size();
     }
     /**
@@ -100,10 +96,6 @@ namespace interaction
      * longrange pairlists that holds: solvent-solvent pairs
      */
     Pairlist solvent_long;   
-    /**
-     * shift vectors for longrange solute pairlist
-     */
-    std::vector<std::vector<math::Vec> > shifts;
   };
   
 } // interaction

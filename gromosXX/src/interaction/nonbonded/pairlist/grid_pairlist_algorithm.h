@@ -292,16 +292,6 @@ namespace interaction
      unsigned int end, 
      unsigned int stride
      );
-    
-    // copied from standard pairlist algorithm...
-    bool insert_pair
-    (
-     topology::Topology & topo,
-     interaction::Pairlist & pairlist,
-     interaction::Pairlist & perturbed_pairlist,
-     int a1, int a2,
-     bool scaled_only
-     );
 
     bool insert_pair
     (
@@ -309,10 +299,7 @@ namespace interaction
      interaction::Pairlist & pairlist,
      interaction::Pairlist & perturbed_pairlist,
      int a1, int a2,
-     bool scaled_only,
-     const math::Vec & shift,
-     std::vector<std::vector<math::Vec> > & shifts,
-     std::vector<std::vector<math::Vec> > & perturbed_shifts
+     bool scaled_only
     );
     
     bool excluded_solute_pair

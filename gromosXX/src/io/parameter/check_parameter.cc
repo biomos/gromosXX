@@ -1583,6 +1583,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_grid", "jvalue_rest");
   fc.unlock("pairlist_grid", "perscale");
   fc.unlock("pairlist_grid", "rottrans");
+  fc.unlock("pairlist_grid", "innerloop_spc");
   fc.unlock("pairlist_grid", "repex_temp");
   fc.unlock("pairlist_grid", "repex_lambda");
   fc.unlock("pairlist_grid", "multicell");

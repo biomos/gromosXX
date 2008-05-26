@@ -31,18 +31,6 @@ namespace interaction
 				    simulation::Simulation & sim,
 				    Pairlist const & pairlist,
 				    Storage & storage);
-    
-    /**
-     * calculate the perturbed interactions using shift vectors 
-     * (nearest image free version)
-     */
-    void perturbed_lj_crf_outerloop_shift(topology::Topology & topo,
-				    configuration::Configuration & conf,
-				    simulation::Simulation & sim,
-				    Pairlist const & pairlist,
-                                    std::vector<std::vector<math::Vec> > const & shifts,
-				    Storage & storage);
-
 
     /**
      * calculate the perturbed 1,4-interactions.
@@ -89,17 +77,6 @@ namespace interaction
 				     configuration::Configuration & conf,
 				     simulation::Simulation & sim,
 				     Pairlist const & pairlist,
-				     Storage & storage);
-    
-    /**
-     * calculate the perturbed interactions using shifts.
-     */
-    template<typename t_interaction_spec, typename t_perturbation_spec>
-    void _perturbed_lj_crf_outerloop_shift(topology::Topology & topo,
-				     configuration::Configuration & conf,
-				     simulation::Simulation & sim,
-				     Pairlist const & pairlist,
-                                     std::vector<std::vector<math::Vec> > const & shifts,
 				     Storage & storage);
     
     /**

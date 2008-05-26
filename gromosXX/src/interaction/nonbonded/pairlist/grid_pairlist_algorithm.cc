@@ -239,6 +239,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
   const int c_ex = (m_grid.Nc_ex - m_grid.Nc) / 2;
   const int N = m_grid.Na * m_grid.Nb;
   const int num_solute_cg = topo.num_solute_chargegroups();
+  const int num_solute_atoms = topo.num_solute_atoms();
 
   for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
 
@@ -325,7 +326,10 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
 		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		    a2 < a2_to; ++a2){
-		  pairlist.solute_short[a2].push_back(a1);
+                  if (a2 >= num_solute_atoms)
+		    pairlist.solvent_short[a2].push_back(a1);
+                  else
+                    pairlist.solute_short[a2].push_back(a1);
 		}
 	      }
 	    }
@@ -394,7 +398,6 @@ void interaction::Grid_Pairlist_Algorithm::_update
 			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
 			a2 < a2_to; ++a2){
 		      pairlist.solute_long[a1].push_back(a2);
-                      pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
 		    }
 		  }
 		}
@@ -433,7 +436,6 @@ void interaction::Grid_Pairlist_Algorithm::_update
 			a2 < a2_to; ++a2){
 		      
 		      pairlist.solute_long[a1].push_back(a2);
-                      pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
 		    }
 		  }
 		}
@@ -486,9 +488,10 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2){
-
-		    pairlist.solute_long[a1].push_back(a2);
-                    pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
+                      if (a2 >= num_solute_atoms)
+		        pairlist.solvent_long[a2].push_back(a1);
+                      else
+                        pairlist.solute_long[a2].push_back(a1);
 		  }
 		}
 	      }
@@ -499,7 +502,10 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2){
-		    pairlist.solute_short[a2].push_back(a1);
+                    if (a2 >= num_solute_atoms)
+		      pairlist.solvent_short[a2].push_back(a1);
+                    else
+                      pairlist.solute_short[a2].push_back(a1);
 		  }
 		}
 	      }
@@ -570,6 +576,7 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
   const int c_ex = (m_grid.Nc_ex - m_grid.Nc) / 2;
   const int N = m_grid.Na * m_grid.Nb;
   const int num_solute_cg = topo.num_solute_chargegroups();
+  const int num_solute_atoms = topo.num_solute_atoms();
 
   for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
 
@@ -684,8 +691,10 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 		      (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
 		       a2, a1, scaled_only))
 		    ;
-		  else
-		    pairlist.solute_short[a2].push_back(a1);
+                  else if (a2 >= num_solute_atoms)
+		    pairlist.solvent_short[a2].push_back(a1);
+                  else
+                    pairlist.solute_short[a2].push_back(a1);
 		}
 	      }
 	    }
@@ -756,18 +765,15 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
                       
                       if (insert_pair
                               (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-                              a1, a2, scaled_only,
-                              m_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
+                              a1, a2, scaled_only))
                         ;
                       // careful: shift index needs to change here !!!
                       else if (insert_pair
                               (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-                              a2, a1, scaled_only,
-                              m_reverse_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
+                              a2, a1, scaled_only))
                         ;
                       else {
                         pairlist.solute_long[a1].push_back(a2);
-                        pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
                       }
                     }
                   }
@@ -818,12 +824,10 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
                       
                       if (insert_pair
                               (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-                              a1, a2, scaled_only,
-                              m_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
+                              a1, a2, scaled_only))
                         ;
                       else {
                         pairlist.solute_long[a1].push_back(a2);
-                        pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
                       }
                     }
                   }
@@ -889,13 +893,13 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 		    // careful : shift index needs to change!
 		    if (insert_pair
 			(topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-			 a2, a1, scaled_only,
-                         m_reverse_shift_vector[p_plane[j].shift_index], pairlist.shifts, perturbed_pairlist.shifts))
+			 a2, a1, scaled_only))
 		      ;
-                    else {
-		      pairlist.solute_long[a1].push_back(a2);
-                      pairlist.shifts[a1].push_back(m_shift_vector[p_plane[j].shift_index]);
-                    }
+                    else if (a1 >= num_solute_atoms && a1 >= num_solute_atoms)
+		      pairlist.solvent_long[a1].push_back(a2);
+                    else
+                      pairlist.solute_long[a1].push_back(a2);
+                    
 		  }
 		}
 	      }
@@ -911,8 +915,10 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 			(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
 			 a2, a1, scaled_only))
 		      ;
-		    else
-		      pairlist.solute_short[a2].push_back(a1);
+                    else if (a2 >= num_solute_atoms)
+		      pairlist.solvent_short[a2].push_back(a1);
+                    else
+                      pairlist.solute_short[a2].push_back(a1);
 		  }
 		}
 	      }
@@ -956,42 +962,6 @@ inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
     } // scaling
     else{
       perturbed_pairlist[a1].push_back(a2);
-    }
-    return true;
-  }
-
-  return false;
-}
-
-inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
-(
- topology::Topology & topo,
- interaction::Pairlist & pairlist,
- interaction::Pairlist & perturbed_pairlist,
- int a1, int a2,
- bool scaled_only,
- const math::Vec & shift, std::vector<std::vector<math::Vec> > & shifts,
- std::vector<std::vector<math::Vec> > & perturbed_shifts
- )
-{
-  if (topo.is_perturbed(a1) || topo.is_eds_perturbed(a1)){
-    if (scaled_only){
-      // ok, only perturbation if it is a scaled pair...
-      std::pair<int, int> 
-	energy_group_pair(topo.atom_energy_group(a1),
-			  topo.atom_energy_group(a2));
-      
-      if (topo.energy_group_scaling().count(energy_group_pair)) {
-	perturbed_pairlist[a1].push_back(a2);
-        perturbed_shifts[a1].push_back(shift);
-      } else {
-	pairlist[a1].push_back(a2);
-        shifts[a1].push_back(shift);
-      }
-    } // scaling
-    else{
-      perturbed_pairlist[a1].push_back(a2);
-      perturbed_shifts[a1].push_back(shift);
     }
     return true;
   }

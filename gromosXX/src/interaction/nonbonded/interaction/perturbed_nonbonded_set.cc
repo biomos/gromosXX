@@ -161,26 +161,14 @@ int interaction::Perturbed_Nonbonded_Set
     if (m_rank == 0)
       m_pairlist_alg.timer().start("longrange");
 
-    if(sim.param().pairlist.grid) { // using stored shifts for calculation
-      m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
-			          m_pairlist.solute_long, m_pairlist.shifts ,
-                                  m_longrange_storage);      
-    } else {
-      m_outerloop.lj_crf_outerloop(topo, conf, sim,
+    m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
                                m_longrange_storage);
-    }
     if (topo.perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\tperturbed long range");
-      if(sim.param().pairlist.grid) { // using stored shifts for calculation
-        m_perturbed_outerloop.perturbed_lj_crf_outerloop_shift(topo, conf, sim,
-              m_perturbed_pairlist.solute_long, m_perturbed_pairlist.shifts,
-              m_longrange_storage);
-      } else {
-        m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim,
+      m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim,
               m_perturbed_pairlist.solute_long,
               m_longrange_storage);
-      }
     }
     if (m_rank == 0)
       m_pairlist_alg.timer().stop("longrange");

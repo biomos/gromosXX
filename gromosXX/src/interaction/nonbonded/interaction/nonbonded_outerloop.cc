@@ -91,11 +91,7 @@ void interaction::Nonbonded_Outerloop
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "outerloop pairlist size " << size_i);
   
-  unsigned int end;
-  if (sim.param().pairlist.grid) 
-    end = size_i; // because there is no solvent pairlist for grid
-  else 
-    end = topo.num_solute_atoms();
+  const unsigned int end = topo.num_solute_atoms();
   
   unsigned int i;
   for(i=0; i < end; ++i){
@@ -138,64 +134,6 @@ void interaction::Nonbonded_Outerloop
     }
   }
 }
-
-void interaction::Nonbonded_Outerloop
-::lj_crf_outerloop_shift(topology::Topology & topo,
-		   configuration::Configuration & conf,
-		   simulation::Simulation & sim, 
-                   Pairlist const & pairlist,
-                   std::vector<std::vector<math::Vec> > const & shifts,
-                   Storage & storage)
-{
-  SPLIT_INNERLOOP(_lj_crf_outerloop_shift, topo, conf, sim,
-                  pairlist, shifts, storage);
-}
-
-
-/**
- * helper function to calculate forces and energies, 
- * stores them in the arrays pointed to by parameters
- * to make it usable for longrange calculations.
- */
-template<typename t_interaction_spec>
-void interaction::Nonbonded_Outerloop
-::_lj_crf_outerloop_shift(topology::Topology & topo,
-		    configuration::Configuration & conf,
-		    simulation::Simulation & sim, 
-	            Pairlist const & pairlist,
-                    std::vector<std::vector<math::Vec> > const & shifts,
-		    Storage & storage)
-{  
-  DEBUG(7, "\tcalculate interactions using shift vectors");  
-
-  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
-  innerloop.init(sim);
-
-  /*
-    variables for a OMP parallelizable loop.
-    outer index has to be integer...
-  */
-  std::vector<unsigned int>::const_iterator j_it, j_to;
-  std::vector<math::Vec>::const_iterator k_it;
-  
-  const unsigned int end = unsigned(pairlist.size());
-  DEBUG(10, "outerloop pairlist size " << end);
-     
-  unsigned int i;
-  for(i=0; i < end; ++i){
-    assert(pairlist[i].size()==shifts[i].size());
-    for(j_it = pairlist[i].begin(), k_it = shifts[i].begin(),
-        j_to = pairlist[i].end();
-	j_it != j_to;
-	++j_it, ++k_it){
-      
-      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
-
-      innerloop.lj_crf_innerloop_shift(topo, conf, i, *j_it, storage, *k_it);      
-    }
-  }
-}
-
 
 /**
  * helper function to calculate the forces and energies from the
