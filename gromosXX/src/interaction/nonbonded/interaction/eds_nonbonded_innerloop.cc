@@ -206,9 +206,9 @@ void interaction::Eds_Nonbonded_Innerloop<
           std::vector<math::Matrix> & conf_special_eds_virial_tensor_endstates = conf.special().eds.virial_tensor_endstates;
           std::vector<double> & conf_current_energies_eds_vi = conf.current().energies.eds_vi;
           for (unsigned int state=0;state<numstates;state++){
-            math::Vec & conf_special_eds_force_endstates_state_i = conf.special().eds.force_endstates[state](i);
-            math::Vec & conf_special_eds_force_endstates_state_j = conf.special().eds.force_endstates[state](j);
-            math::Matrix & conf_special_eds_virial_tensor_endstates_state = conf.special().eds.virial_tensor_endstates[state];
+            math::Vec & conf_special_eds_force_endstates_state_i = conf_special_eds_force_endstates[state](i);
+            math::Vec & conf_special_eds_force_endstates_state_j = conf_special_eds_force_endstates[state](j);
+            math::Matrix & conf_special_eds_virial_tensor_endstates_state = conf_special_eds_virial_tensor_endstates[state];
             const lj_parameter_struct &lj =m_param_lj_parameter[(pert_i_M_IAC[state])][iac_j];
             c6 = lj.cs6;
             c12 = lj.cs12;
@@ -238,9 +238,9 @@ void interaction::Eds_Nonbonded_Innerloop<
           std::vector<math::Matrix> & conf_special_eds_virial_tensor_endstates = conf.special().eds.virial_tensor_endstates;
           std::vector<double> & conf_current_energies_eds_vi = conf.current().energies.eds_vi;
           for (unsigned int state=0;state<numstates;state++){
-            math::Vec & conf_special_eds_force_endstates_state_i = conf.special().eds.force_endstates[state](i);
-            math::Vec & conf_special_eds_force_endstates_state_j = conf.special().eds.force_endstates[state](j);
-            math::Matrix & conf_special_eds_virial_tensor_endstates_state = conf.special().eds.virial_tensor_endstates[state];
+            math::Vec & conf_special_eds_force_endstates_state_i = conf_special_eds_force_endstates[state](i);
+            math::Vec & conf_special_eds_force_endstates_state_j = conf_special_eds_force_endstates[state](j);
+            math::Matrix & conf_special_eds_virial_tensor_endstates_state = conf_special_eds_virial_tensor_endstates[state];
             const lj_parameter_struct &lj =
             m_param_lj_parameter[(pert_i_M_IAC[state])][(pert_j_M_IAC[state])];
             c6 = lj.cs6;
