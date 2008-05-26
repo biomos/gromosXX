@@ -116,11 +116,6 @@ namespace interaction
      * total number of OpenMP / MPI threads
      */
     int m_num_threads;
-    /**
-     * timer
-     */
-    util::Algorithm_Timer m_timer;
-
   };
   
 } // interaction
