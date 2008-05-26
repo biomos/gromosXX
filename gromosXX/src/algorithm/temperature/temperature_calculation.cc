@@ -30,7 +30,7 @@ int algorithm::Temperature_Calculation
 {
   DEBUG(7, "Temperature calculation");
   
-  const double start = util::now();
+  m_timer.start();
   
   // zero previous (temperature scaling) energies
   conf.old().energies.zero(false, true);
@@ -152,7 +152,7 @@ int algorithm::Temperature_Calculation
     
   } // if perturbation...
 
-  m_timing += util::now() - start;
+  m_timer.stop();
   
   return 0;
   

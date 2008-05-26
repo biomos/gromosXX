@@ -74,7 +74,7 @@ calculate_interactions(topology::Topology & topo,
   assert((sim.param().force.spc_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
-  const double nonbonded_start = util::now();
+  m_timer.start();
 
   // check if we want to calculate nonbonded
   // might not be necessary if multiple time-stepping is enabled
@@ -157,7 +157,7 @@ calculate_interactions(topology::Topology & topo,
 
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
 
-  m_timing += util::now() - nonbonded_start;
+  m_timer.stop();
 
   return 0;
   

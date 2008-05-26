@@ -213,7 +213,7 @@ void algorithm::Perturbed_Shake
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
 
-  const double start = util::now();
+  m_timer.start();
 
   DEBUG(8, "\tshaking perturbed SOLUTE");
   DEBUG(8, "\tlambda is " << topo.lambda());
@@ -320,7 +320,7 @@ void algorithm::Perturbed_Shake
 
   } // convergence?
 
-  this->m_timing += util::now() - start;
+  m_timer.stop();
 
   error = 0;
 

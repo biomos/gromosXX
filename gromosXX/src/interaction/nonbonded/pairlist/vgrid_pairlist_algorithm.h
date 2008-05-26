@@ -75,32 +75,6 @@ namespace interaction
      unsigned int begin, unsigned int end,
      unsigned int stride
      );
-
-  protected:
-    
-    /**
-     * timing information.
-     */
-    virtual void print_timing(std::ostream & os)
-    {
-      os << "            "
-	 << std::setw(32) << std::left << "solv - solv"
-	 << std::setw(20) << m_solvent_solvent_timing << "\n"
-	 << "            "
-	 << std::setw(32) << std::left << "spc - spc"
-	 << std::setw(20) << m_spc_timing << "\n";
-    }
-      
-  private:
-    /**
-     * solvent - solvent pairlist + longrange
-     */
-    double m_solvent_solvent_timing;
-    /**
-     * spc specialized solvent - solvent pairlist + longrange
-     */
-    double m_spc_timing;
-
   };
 } // interaction
 

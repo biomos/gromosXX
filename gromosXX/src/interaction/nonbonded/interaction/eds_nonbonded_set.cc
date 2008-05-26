@@ -97,7 +97,9 @@ int interaction::Eds_Nonbonded_Set
     
   }  
 
-  if(pairlist_update){    
+  if(pairlist_update){
+    if (m_rank == 0)
+      m_pairlist_alg.timer().start("longrange");
     if(sim.param().pairlist.grid) { // using stored shifts for calculation
       m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
 			          m_pairlist.solute_long, m_pairlist.shifts ,
@@ -115,12 +117,14 @@ int interaction::Eds_Nonbonded_Set
                                                  m_perturbed_pairlist.solute_long,
                                                  m_longrange_storage);      
     }
-     
+    if (m_rank == 0)
+      m_pairlist_alg.timer().stop("longrange");     
   }
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("shortrange");
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage);
@@ -131,21 +135,26 @@ int interaction::Eds_Nonbonded_Set
 						     m_perturbed_pairlist.solute_short,
 						     m_storage);
   }
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("shortrange");
   
   // add 1,4 - interactions
   if (m_rank == 0){
     
     DEBUG(6, "\t1,4 - interactions");
+    m_pairlist_alg.timer().start("1,4 interaction");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
- 
+    
     if (topo.eds_perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\teds-perturbed 1,4 - interactions");
       m_eds_outerloop.eds_one_four_outerloop(topo, conf, sim, 
 							 m_storage);
     }
+    m_pairlist_alg.timer().stop("1,4 interaction");
     
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
+      m_pairlist_alg.timer().start("RF excluded");
       DEBUG(6, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
 
@@ -155,6 +164,7 @@ int interaction::Eds_Nonbonded_Set
  							      m_storage);
        
       }
+      m_pairlist_alg.timer().stop("RF excluded");
     }
   }
   

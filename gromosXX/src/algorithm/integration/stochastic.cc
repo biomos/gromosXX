@@ -129,7 +129,7 @@ int algorithm::Stochastic_Dynamics_Pos
 {
   DEBUG(7, "doing stochastic dynamics positions")
   
-  const double start = util::now();
+  m_timer.start();
 
   // calculate atomic friction oefficients?
   if (sim.param().stochastic.ntfr == 3){
@@ -226,7 +226,7 @@ int algorithm::Stochastic_Dynamics_Pos
     
   } // loop over atoms
 
-  m_timing += util::now() - start;
+  m_timer.stop();
   return 0;
 }
 
@@ -248,7 +248,7 @@ int algorithm::Stochastic_Dynamics_Int
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  const double start = util::now();
+  m_timer.start();
   //now comes the second part, after calling shake
   //as given by 2.11.2.24
 
@@ -287,7 +287,7 @@ int algorithm::Stochastic_Dynamics_Int
   // save the seed
   conf.current().stochastic_seed = m_rng->seed();
   
-  m_timing += util::now() - start;
+  m_timer.stop();
   return 0;
 }
 

@@ -24,6 +24,10 @@ namespace simulation
 {
   class Simulation;
 }
+namespace util 
+{
+  class Algorithm_Timer;
+}
 
 namespace interaction
 {
@@ -112,6 +116,10 @@ namespace interaction
      * total number of OpenMP / MPI threads
      */
     int m_num_threads;
+    /**
+     * timer
+     */
+    util::Algorithm_Timer m_timer;
 
   };
   

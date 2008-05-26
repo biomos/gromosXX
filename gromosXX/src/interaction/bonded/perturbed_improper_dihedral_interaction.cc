@@ -173,12 +173,12 @@ int interaction::Perturbed_Improper_Dihedral_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  const double start = util::now();
+  m_timer.start();
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_improper_interactions,
 			topo, conf, sim, m_interaction);
 
-  m_timing += util::now() - start;
+  m_timer.stop();
 
   return 0;
 }

@@ -91,11 +91,6 @@ namespace interaction
     {
       m_pairlist_algorithm = pa;
     }
-    
-    /**
-     * printing function for timings
-     */  
-    virtual void print_timing(std::ostream & os);
       
     /**
      * size the arrays of storage.

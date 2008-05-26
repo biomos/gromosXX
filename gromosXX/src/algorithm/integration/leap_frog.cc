@@ -26,7 +26,7 @@ int algorithm::Leap_Frog_Position
 	configuration::Configuration & conf,
 	simulation::Simulation &sim)
 {
-  const double start = util::now();
+  m_timer.start();
   
   const int num_atoms = topo.num_atoms();
   
@@ -41,7 +41,7 @@ int algorithm::Leap_Frog_Position
       conf.current().posV(i) = conf.old().posV(i);
   }
   
-  m_timing += util::now() - start;
+  m_timer.stop();
   
   return 0;
 }
@@ -54,7 +54,7 @@ int algorithm::Leap_Frog_Velocity
 	configuration::Configuration & conf,
 	simulation::Simulation &sim)
 {
-  const double start = util::now();
+  m_timer.start();
 
   conf.exchange_state();
   // copy the box
@@ -73,7 +73,7 @@ int algorithm::Leap_Frog_Velocity
 	  << "\n\tvel=" << math::v2s(conf.old().vel(i)));
   }
   
-  m_timing += util::now() - start;
+  m_timer.stop();
   
   return 0;
   

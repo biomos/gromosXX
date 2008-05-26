@@ -59,7 +59,7 @@ int algorithm::NoseHoover_Thermostat::apply
  simulation::Simulation & sim
  )
 {
-  const double start = util::now();
+  m_timer.start();
 
   assert(sim.param().multibath.nosehoover > 0);
   
@@ -74,7 +74,7 @@ int algorithm::NoseHoover_Thermostat::apply
 
   scale(topo, conf, sim);
 
-  m_timing += util::now() - start;
+  m_timer.stop();
 
   return 0;
   

@@ -143,7 +143,8 @@ int interaction::Perturbed_Nonbonded_Set
 
     // calculate explicit polarization of the molecules
     DEBUG(6, "\texplicit polarization");
-    
+    if (m_rank == 0)
+      m_pairlist_alg.timer().start("explicit polarization");
     if (topo.perturbed_solute().atoms().size() > 0) {
       m_perturbed_outerloop.perturbed_electric_field_outerloop(topo, conf, sim,
                                        m_pairlist, m_perturbed_pairlist,
@@ -152,9 +153,14 @@ int interaction::Perturbed_Nonbonded_Set
       m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist, 
 				       m_storage, m_longrange_storage, m_rank);
     }
+    if (m_rank == 0)
+      m_pairlist_alg.timer().stop("explicit polarization");
   }  
 
-  if(pairlist_update){    
+  if(pairlist_update){
+    if (m_rank == 0)
+      m_pairlist_alg.timer().start("longrange");
+
     if(sim.param().pairlist.grid) { // using stored shifts for calculation
       m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
 			          m_pairlist.solute_long, m_pairlist.shifts ,
@@ -176,11 +182,15 @@ int interaction::Perturbed_Nonbonded_Set
               m_longrange_storage);
       }
     }
+    if (m_rank == 0)
+      m_pairlist_alg.timer().stop("longrange");
   }
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("shortrange");
+  
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage);
@@ -192,6 +202,9 @@ int interaction::Perturbed_Nonbonded_Set
 						     m_storage);
   }
 
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("shortrange");
+  
   // DEBUG
   // for(int i=0; i<topo.num_atoms(); ++i){
   // std::cout << "force " << i << " = " << math::v2s(m_storage.force(i)) << "\n";
@@ -200,6 +213,7 @@ int interaction::Perturbed_Nonbonded_Set
   
   // add 1,4 - interactions
   if (m_rank == 0){
+    m_pairlist_alg.timer().start("polarization self-energy");
     if (sim.param().polarize.cos) {
       if (topo.perturbed_solute().atoms().size()) {
         m_perturbed_outerloop.perturbed_self_energy_outerloop(topo, conf, sim, m_storage);
@@ -207,8 +221,10 @@ int interaction::Perturbed_Nonbonded_Set
         m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
       }
     } 
+    m_pairlist_alg.timer().stop("polarization self-energy");
     
     DEBUG(6, "\t1,4 - interactions");
+    m_pairlist_alg.timer().start("1,4 interaction");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
 
     if (topo.perturbed_solute().atoms().size() > 0){
@@ -216,9 +232,11 @@ int interaction::Perturbed_Nonbonded_Set
       m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
 							 m_storage);
     }
+    m_pairlist_alg.timer().stop("1,4 interaction");
     
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
+      m_pairlist_alg.timer().start("RF excluded");
       DEBUG(6, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
 
@@ -227,11 +245,13 @@ int interaction::Perturbed_Nonbonded_Set
 	m_perturbed_outerloop.perturbed_RF_excluded_outerloop(topo, conf, sim,
 							      m_storage);
       }
+      m_pairlist_alg.timer().stop("RF excluded");
     }
 
     DEBUG(6, "\tperturbed pairs");
+    m_pairlist_alg.timer().start("perturbed pair");
     m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_storage);
-    
+    m_pairlist_alg.timer().stop("perturbed pair");
   }
   
   // add long-range force

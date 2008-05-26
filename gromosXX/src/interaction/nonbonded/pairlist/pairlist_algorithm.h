@@ -69,12 +69,6 @@ namespace interaction
      * no output... (done from forcefield)
      */
     virtual void print_timing(std::ostream & os) {}
-    
-    /**
-     * timing accessor.
-     * so needs to be accessed...
-     */
-    double timing() { return m_timing; }
 
     /**
      * apply the algorithm
@@ -87,12 +81,42 @@ namespace interaction
       assert(false);
       return 1;
     }
+    
+    /**
+     * accessor to the timer pointer
+     */
+    void timer_pointer(util::Algorithm_Timer *t) {
+      p_timer = t;
+    }
+    /**
+     * accessor to the timer pointer
+     */
+    util::Algorithm_Timer * timer_pointer() {
+      return p_timer;
+    }
+    
+    /**
+     * accessor to the timer
+     */
+    util::Algorithm_Timer & timer() {
+      return *p_timer;
+    }
+    /**
+     * const accessor to the timer
+     */
+    const util::Algorithm_Timer & timer() const {
+      return *p_timer;
+    }
 
   protected:
     /**
      * nonbonded parameters (needed to construct the Innerloop).
      */
     Nonbonded_Parameter * m_param;
+    /**
+     * timer as pointer
+     */
+    util::Algorithm_Timer * p_timer;
 
   };
 } // interaction

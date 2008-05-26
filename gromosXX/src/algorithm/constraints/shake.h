@@ -76,11 +76,6 @@ namespace algorithm
 		     std::ostream & os = std::cout,
 		     bool quiet = false);
 
-    /**
-     * print out timing results.
-     */
-    virtual void print_timing(std::ostream & os);
-
   protected:
 
     /**
@@ -95,10 +90,6 @@ namespace algorithm
      * bond parameter
      */
     std::vector<interaction::bond_type_struct> m_parameter;
-    /**
-     * time spent for solvent
-     */
-    double m_solvent_timing;
     /** 
      * rank and size for parallelization
      */

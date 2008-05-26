@@ -82,7 +82,7 @@ int interaction::Forcefield
 {
   DEBUG(5, "forcefield: calculate interaction");
 
-  const double start = util::now();
+  m_timer.start();
 
   conf.current().force = 0.0;
   
@@ -155,7 +155,7 @@ int interaction::Forcefield
      
   }
  
-  m_timing += util::now() - start;
+  m_timer.stop();
   
   return 0;
 }
@@ -164,9 +164,7 @@ int interaction::Forcefield
 void interaction::Forcefield
 ::print_timing(std::ostream & os)
 {
-  os << "    " 
-     << std::setw(40) << std::left << name
-     << std::setw(20) << m_timing << "\n";
+  // m_timer.print(os);
 
   for(iterator it = begin(), to = end();
       it != to;

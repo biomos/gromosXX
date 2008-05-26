@@ -25,9 +25,7 @@
 #define SUBMODULE pairlist
 
 interaction::VGrid_Pairlist_Algorithm::VGrid_Pairlist_Algorithm()
-  : interaction::Pairlist_Algorithm(),
-    m_solvent_solvent_timing(0.0),
-    m_spc_timing(0.0)
+  : interaction::Pairlist_Algorithm()
 {
 }
 /**
@@ -81,8 +79,11 @@ update(topology::Topology & topo,
        unsigned int begin, unsigned int end,
        unsigned int stride)
 {
+  if (begin == 0)
+    timer().start("vgrid algorithm");
   grid_update(topo, conf, sim);
-  m_timing += grid_timing;
+  if (begin == 0)
+    timer().stop("vgrid algorithm");
 }
 
 void interaction::VGrid_Pairlist_Algorithm::

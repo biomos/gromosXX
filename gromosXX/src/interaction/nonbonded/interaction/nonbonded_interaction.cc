@@ -57,6 +57,7 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
     m_parameter(),
     m_set_size(1)
 {
+  m_pairlist_algorithm->timer_pointer(&m_timer);
 }
 
 /**
@@ -89,7 +90,7 @@ calculate_interactions(topology::Topology & topo,
   assert((sim.param().force.spc_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
-  const double nonbonded_start = util::now();
+  m_timer.start();
 
   // check if we want to calculate nonbonded
   // might not be necessary if multiple time-stepping is enabled
@@ -168,7 +169,7 @@ calculate_interactions(topology::Topology & topo,
   }
   
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
-  m_timing += util::now() - nonbonded_start;
+  m_timer.stop();
   
   return 0;
 }
@@ -298,24 +299,6 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 //***************************************************************************
 // helper functions 
 //***************************************************************************
-
-void interaction::Nonbonded_Interaction::print_timing(std::ostream & os)
-{
-  os << "        "
-     << std::setw(36) << std::left << name
-     << std::setw(20) << m_timing << "\n"
-     << "            "
-     << std::setw(32) << std::left << "interaction"
-     << std::setw(20) << m_timing - m_pairlist_algorithm->timing() << "\n";
-         
-  os << "            "
-     << std::setw(32) << std::left << "pairlist"
-     << std::setw(20) 
-     << m_pairlist_algorithm->timing() << "\n"
-     << "\n";
-  
-  m_pairlist_algorithm->print_timing(os);
-}
 
 void interaction::Nonbonded_Interaction::check_spc_loop
 (

@@ -228,8 +228,10 @@ void interaction::Grid_Pairlist_Algorithm::_update
 {
   // empty the pairlist
   pairlist.clear();
+  if (begin == 0) // master
+    timer().start("pairlist");
   
-  const double update_start = util::now();
+  DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
 
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
@@ -515,8 +517,8 @@ void interaction::Grid_Pairlist_Algorithm::_update
     } // mask levels
 
   } // the extended planes
-
-  m_timing += util::now() - update_start;
+  if (begin == 0) // master
+    timer().stop("pairlist");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -559,8 +561,8 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 
   pairlist.clear();
   perturbed_pairlist.clear();
-  
-  const double update_start = util::now();
+  if (begin == 0) // master
+    timer().start("perturbed pairlist");
 
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
@@ -927,7 +929,8 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 
   } // the extended planes
 
-  m_timing += util::now() - update_start;
+  if (begin == 0) // master
+    timer().stop("perturbed pairlist");
 }
 
 inline bool interaction::Grid_Pairlist_Algorithm::insert_pair

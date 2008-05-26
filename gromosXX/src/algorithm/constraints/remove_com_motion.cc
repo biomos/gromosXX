@@ -214,7 +214,7 @@ int algorithm::Remove_COM_Motion
   bool remove_trans = false;
   bool print_it = false;
   
-  const double start = util::now();
+  m_timer.start();
 
   // check if nothing to do
   if (sim.steps() == 0){
@@ -255,7 +255,7 @@ int algorithm::Remove_COM_Motion
     io::print_CENTREOFMASS(os, ekin_trans, ekin_rot);
   }
 
-  m_timing += util::now() - start;
+  m_timer.stop();
 
   return 0;		   
 }

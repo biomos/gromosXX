@@ -55,13 +55,9 @@ namespace algorithm
 	     std::ostream & os = std::cout,
 	     bool quiet = false);
 
-    virtual void print_timing(std::ostream & os);
-
   protected:
 
     std::vector<interaction::bond_type_struct> m_parameter;
-
-    double m_solvent_timing;
 
   };
   

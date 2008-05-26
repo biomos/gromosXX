@@ -30,7 +30,7 @@ int algorithm::Pressure_Calculation
 {
   DEBUG(7, "Pressure calculation");
 
-  const double start = util::now();
+  m_timer.start();
 
   // calculate the pressure tensor
   for(int i=0; i<3; ++i){
@@ -44,7 +44,7 @@ int algorithm::Pressure_Calculation
     }
   }
   
-  m_timing += util::now() - start;
+  m_timer.stop();
   
   return 0;
   

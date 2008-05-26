@@ -83,7 +83,7 @@ calculate_interactions(topology::Topology & topo,
     return 1;
   }
   
-  const double nonbonded_start = util::now();
+  m_timer.start();
   
 #ifdef XXMPI
   
@@ -322,7 +322,7 @@ calculate_interactions(topology::Topology & topo,
   
   
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
-  m_timing += util::now() - nonbonded_start;
+  m_timer.stop();
   
   return 0;
   

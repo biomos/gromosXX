@@ -102,12 +102,12 @@ int interaction::Harmonic_Bond_Interaction
 			 simulation::Simulation &sim)
 {
 
-  const double start = util::now();
+  m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_harmonic_bond_interactions,
 			topo, conf, sim, m_parameter);
 
-  m_timing += util::now() - start;
+  m_timer.stop();
 
   return 0;
   

@@ -226,7 +226,7 @@ namespace interaction
   {
     if(!(sim.steps() % sim.param().pairlist.skip_step)){
 
-      double grid_start = util::now();
+      //m_timer.start();
 
       grid_pl(topo, 
 	      pl, sim.param().pairlist.cutoff_long,
@@ -242,7 +242,7 @@ namespace interaction
 	grid_print_pl(pl);
       }
       
-      grid_timing = util::now() - grid_start;
+      //m_timer.stop();
     }
     else{
       grid_update_atom_pos(topo, conf);

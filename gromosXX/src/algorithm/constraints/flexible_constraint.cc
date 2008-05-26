@@ -720,7 +720,7 @@ void algorithm::Flexible_Constraint::_solute
 
   DEBUG(8, "\tFlexible shaking SOLUTE");
 
-  const double start = util::now();
+  m_timer.start();
 
   math::Periodicity<B> periodicity(conf.current().box);
   
@@ -801,7 +801,7 @@ void algorithm::Flexible_Constraint::_solute
   // store the constraint lengths
   _store_lengths(conf);
 
-  m_timing += util::now() - start;
+  m_timer.stop();
 
   error = 0;
 }

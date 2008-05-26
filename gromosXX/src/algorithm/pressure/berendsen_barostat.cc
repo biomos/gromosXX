@@ -29,7 +29,7 @@ int algorithm::Berendsen_Barostat
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  const double start = util::now();
+  m_timer.start();
   
   DEBUG(8, "Berendsen Barostat == apply");
 
@@ -190,7 +190,7 @@ int algorithm::Berendsen_Barostat
       io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
   }
 
-  m_timing += util::now() - start;
+  m_timer.stop();
 
   return 0;
   

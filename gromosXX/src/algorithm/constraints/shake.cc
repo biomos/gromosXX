@@ -41,10 +41,8 @@ algorithm::Shake
 	std::string const name)
   : Algorithm(name),
     m_tolerance(tolerance),
-    m_max_iterations(max_iterations),
-    m_solvent_timing(0.0)
-{
-}
+    m_max_iterations(max_iterations)
+{}
 
 /**
  * Destructor.
@@ -228,7 +226,7 @@ solute(topology::Topology const & topo,
   // conf.constraint_force() = 0.0;
   // m_lambda = 0.0;
 
-  const double start = util::now();
+  m_timer.start("solute");
   
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -307,7 +305,7 @@ solute(topology::Topology const & topo,
   }
   */
 
-  m_timing += util::now() - start;
+  m_timer.stop("solute");
 
   error = 0;
 
@@ -328,7 +326,7 @@ void algorithm::Shake
 
   DEBUG(8, "\tshaking SOLVENT");
   
-  const double start = util::now();
+  m_timer.start("solvent");
 
   // the first atom of a solvent
   unsigned int first = topo.num_solute_atoms();
@@ -462,7 +460,7 @@ void algorithm::Shake
   error = my_error;
 #endif
 
-  m_solvent_timing += util::now() - start;
+  m_timer.stop("solvent");
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
 } // shake solvent
 
@@ -474,6 +472,8 @@ int algorithm::Shake::apply(topology::Topology & topo,
 			    simulation::Simulation & sim)
 {
   DEBUG(7, "applying SHAKE");
+  m_timer.start();
+  
   bool do_vel_solute = false;
   bool do_vel_solvent = false;
   
@@ -499,6 +499,7 @@ int algorithm::Shake::apply(topology::Topology & topo,
 		<< "at step " << sim.steps() << std::endl;
       // save old positions to final configuration... (even before free-flight!)
       conf.current().pos = conf.old().pos;
+      m_timer.stop();
       return E_SHAKE_FAILURE_SOLUTE;
     }
   }
@@ -517,6 +518,7 @@ int algorithm::Shake::apply(topology::Topology & topo,
 		<< "at step " << sim.steps() << std::endl;
       // save old positions to final configuration... (even before free-flight!)
       conf.current().pos = conf.old().pos;
+      m_timer.stop();
       return E_SHAKE_FAILURE_SOLVENT;
     }
   }
@@ -538,6 +540,7 @@ int algorithm::Shake::apply(topology::Topology & topo,
     }
   }
   
+  m_timer.stop();
   // return success!
   return 0;
 		   
@@ -632,14 +635,4 @@ int algorithm::Shake::init(topology::Topology & topo,
     os << "END\n";
   
   return 0;
-}
-
-void algorithm::Shake::print_timing(std::ostream & os)
-{
-  os << "    "
-     << std::setw(40) << std::left << "Shake::solute"
-     << std::setw(20) << m_timing << "\n"
-     << "    "
-     << std::setw(40) << std::left << "Shake::solvent"
-     << std::setw(20) << m_solvent_timing << "\n";
 }

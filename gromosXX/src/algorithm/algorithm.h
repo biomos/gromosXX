@@ -18,6 +18,10 @@ namespace simulation
 {
   class Simulation;
 }
+namespace util
+{
+  class Algorithm_Timer;
+}
 
 namespace algorithm
 {
@@ -32,7 +36,7 @@ namespace algorithm
      * Constructor.
      * @param name of the algorithm.
      */
-    Algorithm(std::string name) : name(name), m_timing(0.0) {}
+    Algorithm(std::string name) : name(name), m_timer(name) {}
 
     /**
      * Destructor.
@@ -67,17 +71,32 @@ namespace algorithm
      */
     virtual void print_timing(std::ostream & os)
     {
-      os << "    " 
-	 << std::setw(40) << std::left << name
-	 << std::setw(20) << m_timing << "\n";
+      m_timer.print(os);
+    }
+    /**
+     * const accessor to timer
+     */
+    const util::Algorithm_Timer & timer() const {
+      return m_timer;
+    }
+    /**
+     * accessor to timer
+     */
+    util::Algorithm_Timer & timer() {
+      return m_timer;
+    }
+    /**
+     * accessor to timer
+     */
+    void timer(util::Algorithm_Timer &t) {
+      m_timer = t;
     }
     
   protected:
     /**
      * store time used in algorithm.
      */
-    double m_timing;
-    
+    util::Algorithm_Timer m_timer;
   };
 }
 

@@ -36,10 +36,8 @@ struct coupling_struct
  * Constructor.
  */
 algorithm::Lincs::Lincs()
-  : Algorithm("Lincs"),
-    m_solvent_timing(0.0)
-{
-}
+  : Algorithm("Lincs")
+{}
 
 /**
  * Destructor.
@@ -99,10 +97,10 @@ int _lincs(topology::Topology & topo,
 		  topology::Compound::lincs_struct const & lincs,
 		  std::vector<interaction::bond_type_struct> const & param,
 		  int lincs_order,
-		  double & timing,
+		  util::Algorithm_Timer & m_timer,
 		  unsigned int offset = 0)
 {
-  const double start = util::now();
+  m_timer.start("solute");
   
   const unsigned int num_constr = unsigned(constr.size());
   math::VArray & old_pos = conf.old().pos;
@@ -185,7 +183,7 @@ int _lincs(topology::Topology & topo,
   if (count)
     std::cout << "LINCS:\ttoo much rotation in " << count << " cases!\n";
 
-  timing += util::now() - start;
+  m_timer.stop("solute");
 
   return 0;
 }
@@ -195,8 +193,9 @@ void _solvent(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
 		     std::vector<interaction::bond_type_struct> const & param,
-		     double & timing, int & error)
+		     util::Algorithm_Timer & m_timer, int & error)
 {
+  m_timer.start("solvent");
   // the first atom of a solvent
   unsigned int first = unsigned(topo.num_solute_atoms());
 
@@ -210,10 +209,11 @@ void _solvent(topology::Topology & topo,
       _lincs<B>(topo, conf, sim, topo.solvent(i).distance_constraints(),
 		topo.solvent(i).lincs(), 
 		param, sim.param().constraint.solvent.lincs_order,
-		timing, first);
+		m_timer, first);
     }
   }
  
+  m_timer.stop("solvent");
   error = 0;
 }
 
@@ -226,6 +226,8 @@ int algorithm::Lincs::apply(topology::Topology & topo,
 {
   DEBUG(7, "applying LINCS");
 
+  
+  m_timer.start();
   bool do_vel = false;
   
   // check whether we "shake" solute
@@ -238,7 +240,7 @@ int algorithm::Lincs::apply(topology::Topology & topo,
 
     SPLIT_BOUNDARY(_lincs, topo, conf, sim, topo.solute().distance_constraints(),
 		   topo.solute().lincs(), parameter(),
-		   sim.param().constraint.solute.lincs_order, m_timing);
+		   sim.param().constraint.solute.lincs_order, m_timer);
  
   }
 
@@ -251,7 +253,7 @@ int algorithm::Lincs::apply(topology::Topology & topo,
     int error = 0;
 
     SPLIT_VIRIAL_BOUNDARY(_solvent,
-			  topo, conf, sim, parameter(), m_solvent_timing, error);
+			  topo, conf, sim, parameter(), m_timer, error);
     
   }
   
@@ -262,6 +264,7 @@ int algorithm::Lincs::apply(topology::Topology & topo,
 	sim.time_step_size();
 
   // return success!
+  m_timer.stop();
   return 0;
 		   
 }
@@ -419,16 +422,6 @@ int algorithm::Lincs::init(topology::Topology & topo,
     os << "END\n";
 
   return 0;
-}
-
-void algorithm::Lincs::print_timing(std::ostream & os)
-{
-  os << "    "
-     << std::setw(40) << std::left << "Lincs::solute"
-     << std::setw(20) << m_timing << "\n"
-     << "    "
-     << std::setw(40) << std::left << "Lincs::solvent"
-     << std::setw(20) << m_solvent_timing << "\n";
 }
 
 

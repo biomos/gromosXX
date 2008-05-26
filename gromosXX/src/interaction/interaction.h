@@ -7,13 +7,16 @@
 #define INCLUDED_INTERACTION_H
 
 namespace configuration{
-	class Configuration;
+  class Configuration;
 }
 namespace topology{
-	class Topology;
+  class Topology;
 }
 namespace simulation{
-	class Simulation;
+  class Simulation;
+}
+namespace util {
+  class Algorithm_Timer;
 }
 
 namespace interaction
@@ -29,7 +32,7 @@ namespace interaction
     /**
      * Constructor.
      */
-    Interaction(std::string name) : name(name), m_timing(0.0) {};
+    Interaction(std::string name) : name(name), m_timer(name) {};
     /**
      * Destructor.
      */
@@ -60,16 +63,14 @@ namespace interaction
      */
     virtual void print_timing(std::ostream & os)
     {
-      os << "        "
-	 << std::setw(36) << std::left << name
-	 << std::setw(20) << m_timing << "\n";
+      m_timer.print(os);
     }
 
   protected:
     /**
      * store time used in algorithm.
      */
-    double m_timing;
+    util::Algorithm_Timer m_timer;
 
   };  
   

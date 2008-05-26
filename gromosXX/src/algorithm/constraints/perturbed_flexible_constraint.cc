@@ -507,7 +507,7 @@ void algorithm::Perturbed_Flexible_Constraint::_solute
   // not bothering about submolecules...
 
   DEBUG(8, "\tflexible shaking perturbed SOLUTE");
-  const double start = util::now();
+  m_timer.start();
 
   math::Periodicity<B> periodicity(conf.current().box);
   
@@ -567,7 +567,7 @@ void algorithm::Perturbed_Flexible_Constraint::_solute
 
   } // convergence?
 
-  m_timing += util::now() - start;
+  m_timer.stop();
   error = 0;
 } // solute
 

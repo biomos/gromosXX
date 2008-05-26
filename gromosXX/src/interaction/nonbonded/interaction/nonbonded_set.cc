@@ -99,9 +99,13 @@ int interaction::Nonbonded_Set
 
     // calculate explicit polarization of the molecules
     DEBUG(6, "\texplicit polarization");
-  
+    if (m_rank == 0)
+      m_pairlist_alg.timer().start("explicit polarization");
+    
     m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist,
 				       m_storage, m_longrange_storage, m_rank);
+    if (m_rank == 0)
+      m_pairlist_alg.timer().stop("explicit polarization");
   }
   
   //DEBUG(1, "field 1 [" << m_storage.electric_field(0)(0) << " " << m_storage.electric_field(0)(1) << " "  << m_storage.electric_field(0)(2) << "]");
@@ -109,6 +113,9 @@ int interaction::Nonbonded_Set
   
   if (pairlist_update) {
     DEBUG(8, "doing longrange calculation");
+    if (m_rank == 0)
+      m_pairlist_alg.timer().start("longrange");
+    
     if(sim.param().pairlist.grid) { // using stored shifts for calculation
       m_outerloop.lj_crf_outerloop_shift(topo, conf, sim,
 			          m_pairlist.solute_long, m_pairlist.shifts ,
@@ -118,30 +125,44 @@ int interaction::Nonbonded_Set
 			          m_pairlist.solute_long, m_pairlist.solvent_long,
                                   m_longrange_storage);
     }
+    
+    if (m_rank == 0)
+      m_pairlist_alg.timer().stop("longrange");
+    
   }
   
   
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-  
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("shortrange");
+
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage);
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("shortrange");  
   
   // add 1,4 - interactions
   if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
+    m_pairlist_alg.timer().start("1,4 interaction");
     m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
+    m_pairlist_alg.timer().stop("1,4 interaction");
   
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().longrange.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
+      m_pairlist_alg.timer().start("RF excluded interaction");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
+      m_pairlist_alg.timer().stop("RF excluded interaction");
     }
     
     if (sim.param().polarize.cos) {
       DEBUG(6, "\tself-energy of polarization");
+      m_pairlist_alg.timer().start("polarization self-energy");
       m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
+      m_pairlist_alg.timer().stop("polarization self-energy");
     }
   }
   

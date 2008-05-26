@@ -80,7 +80,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
   assert((sim.param().force.spc_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
-  const double nonbonded_start = util::now();
+  m_timer.start();
 
 #ifdef XXMPI
 
@@ -285,7 +285,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 #endif
   
   DEBUG(6, "MPI_Nonbonded_Slave::calculate_interactions done");
-  m_timing += util::now() - nonbonded_start;
+  m_timer.stop();
   
   return 0;
   
