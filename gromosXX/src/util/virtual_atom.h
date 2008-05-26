@@ -57,6 +57,10 @@ namespace util
      */
     void force(configuration::Configuration & conf, math::Vec const f)const;
     /**
+     * distribute force f of virtual atom on the real atoms (for eds).
+     */
+    void force(configuration::Configuration & conf, math::Vec const f, math::VArray & force)const;
+    /**
      * real atom accessor
      */
     int atom(int i)const { assert(i >= 0 && i < int(m_atom.size())); return m_atom[i]; } 

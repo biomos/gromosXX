@@ -109,9 +109,14 @@ namespace configuration
     double eds_vr;
     
     /**
-     * energy of the endstates in eds
+     * nonbonded energy of the endstates in eds
      */
     std::vector<double> eds_vi;
+    
+    /**
+     * special energy of the endstates in eds
+     */
+    std::vector<double> eds_vi_special;
            
     // this should be size of bath
     /**

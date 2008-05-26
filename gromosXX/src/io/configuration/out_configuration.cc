@@ -1965,10 +1965,16 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   
   // eds energy of end states
   os << "# eds\n";
+  os << "# numstates\n";
   const unsigned int numstates = e.eds_vi.size();
   os << numstates << "\n";
+  os << std::setw(18) << "# total" 
+     << std::setw(18) << "nonbonded"
+     << std::setw(18) << "special\n"; 
   for(unsigned i = 0; i < e.eds_vi.size(); i++){
-    os << std::setw(18) << e.eds_vi[i] << "\n";
+    os << std::setw(18) << e.eds_vi[i] 
+       << std::setw(18) << e.eds_vi[i] - e.eds_vi_special[i]
+       << std::setw(18) << e.eds_vi_special[i] << "\n";
   }
   
   // write eds energies (vr,{V_i}) here

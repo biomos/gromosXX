@@ -74,4 +74,19 @@ factor in state <tt>A</tt> and <tt>B_r0</tt> and <tt>B_w0</tt> the
 corresponding quantities in state <tt>B</tt>. <tt>n</tt> and <tt>m</tt>
 are the parameters for hidden restraints.
 
+<h2><a name="edsdistanceres">EDS Distance Restraints</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+EDSDISRESSPEC
+# DISH  DISC   DISN
+  0.1   0.153  0.1
+# N: number of eds states (3 in this example)
+# i  j  k  l  type    i  j  k  l  type    r0[1 ... N]    w0[1 ... N]    rah
+  1  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  1.0  0.0 0.0    0
+  5  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  0.0  1.0 0.0    0
+  8  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  0.0  0.0 1.0    0
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
 </body>

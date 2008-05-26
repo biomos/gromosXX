@@ -730,3 +730,13 @@ void util::Virtual_Atom::force
 {
   SPLIT_BOUNDARY(_force, conf.current().pos, conf.current().box, f, conf.current().force);
 }
+
+void util::Virtual_Atom::force
+(
+ configuration::Configuration & conf,
+ math::Vec const f,
+ math::VArray & force
+)const
+{
+  SPLIT_BOUNDARY(_force, conf.current().pos, conf.current().box, f, force);
+}

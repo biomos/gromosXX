@@ -398,7 +398,48 @@ namespace topology
      */
     int rah;
   };
-
+  /**
+   * eds distance restraints information.
+   */
+  struct eds_distance_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    eds_distance_restraint_struct(util::Virtual_Atom v1,
+                                 util::Virtual_Atom v2,
+			         std::vector<double> r0, std::vector<double> w0, int rah)
+      :v1(v1), v2(v2),
+       r0(r0),
+       w0(w0),
+       rah(rah)
+    {}
+    
+    /**
+     * Virtual Atom 1.
+     */
+    util::Virtual_Atom v1;
+    
+    /**
+     * Virtual Atom 2.
+     */
+    util::Virtual_Atom v2;
+    
+    /**
+     * restraint distance in the different states.
+     */
+    std::vector<double> r0;
+    /**
+     * weighting factor in the different states.
+     */
+    std::vector<double> w0;
+    /**
+     *repulsive, attractiv, harmonic
+     */
+    int rah;
+    
+  };
+   
   struct dihedral_restraint_struct
   {
     /**

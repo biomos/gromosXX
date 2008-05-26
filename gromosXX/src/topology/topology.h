@@ -601,6 +601,20 @@ namespace topology
     {
       return m_perturbed_distance_restraint;
     }
+    /**
+     * const eds distance restraints accessor.
+     */
+    std::vector<eds_distance_restraint_struct> const & eds_distance_restraints()const
+    {
+      return m_eds_distance_restraint;
+    }
+    /**
+     *  distance restraints accessor.
+     */
+    std::vector<eds_distance_restraint_struct>  & eds_distance_restraints()
+    {
+      return m_eds_distance_restraint;
+    } 
 
     /**
      * const dihedral restraints accessor.
@@ -871,6 +885,10 @@ namespace topology
      * perturbed distance restraints 
      */
     std::vector<perturbed_distance_restraint_struct> m_perturbed_distance_restraint;
+    /**
+     * eds distance restraints 
+     */
+    std::vector<eds_distance_restraint_struct> m_eds_distance_restraint;
     /**
      * dihedral restraints 
      */

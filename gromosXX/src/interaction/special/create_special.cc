@@ -19,6 +19,7 @@
 #include <interaction/special/distance_restraint_interaction.h>
 #include <interaction/special/dihedral_restraint_interaction.h>
 #include <interaction/special/perturbed_distance_restraint_interaction.h>
+#include <interaction/special/eds_distance_restraint_interaction.h>
 #include <interaction/special/perturbed_dihedral_restraint_interaction.h>
 #include <interaction/special/jvalue_restraint_interaction.h>
 #include <interaction/special/external_interaction.h>
@@ -84,6 +85,14 @@ int interaction::create_special(interaction::Forcefield & ff,
 	new interaction::Perturbed_Distance_Restraint_Interaction;
 
       ff.push_back(pdr); 
+    }
+    if(param.eds.eds){
+      if(!quiet)
+        os << "\tEDS perturbed distance restraints\n";
+      interaction::Eds_Distance_Restraint_Interaction *edr =
+        new interaction::Eds_Distance_Restraint_Interaction;
+      
+      ff.push_back(edr);
     }
   }
   
