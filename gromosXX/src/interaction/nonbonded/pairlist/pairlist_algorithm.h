@@ -27,7 +27,7 @@ namespace interaction
      */
     Pairlist_Algorithm()
       : algorithm::Algorithm("PairlistAlgorithm"),
-	m_param(NULL)
+	m_param(NULL), p_timer(NULL)
     {}
 
     /**
@@ -99,13 +99,19 @@ namespace interaction
      * accessor to the timer
      */
     util::Algorithm_Timer & timer() {
-      return *p_timer;
+      if (p_timer != NULL)
+        return *p_timer;
+
+      return m_timer;
     }
     /**
      * const accessor to the timer
      */
     const util::Algorithm_Timer & timer() const {
-      return *p_timer;
+      if (p_timer != NULL)
+        return *p_timer;
+
+      return m_timer;
     }
 
   protected:
