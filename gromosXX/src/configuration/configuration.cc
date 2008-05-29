@@ -26,27 +26,21 @@ double configuration_ver = 0.10;
 /**
  * Constructor
  */
-configuration::Configuration::Configuration()
-{
+configuration::Configuration::Configuration() {
   m_current = &m_state1;
   m_old = &m_state2;
 
-  // is this really needed? operator = is overloaded! see gmath.h
-  for(int i=0; i<3; ++i){
-    for(int j=0; j<3; ++j){
-      current().virial_tensor(i,j) = 0.0;
-      old().virial_tensor(i,j) = 0.0;
+  current().virial_tensor = 0.0;
+  old().virial_tensor = 0.0;
 
-      current().kinetic_energy_tensor(i,j) = 0.0;
-      old().kinetic_energy_tensor(i,j) = 0.0;
+  current().kinetic_energy_tensor = 0.0;
+  old().kinetic_energy_tensor = 0.0;
 
-      current().pressure_tensor(i,j) = 0.0;
-      old().pressure_tensor(i,j) = 0.0;
-      
-      for(unsigned int k=0; k<special().eds.virial_tensor_endstates.size(); ++k){
-        special().eds.virial_tensor_endstates[k](i,j) = 0.0;
-      }    
-    }
+  current().pressure_tensor = 0.0;
+  old().pressure_tensor = 0.0;
+
+  for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
+    special().eds.virial_tensor_endstates[k] = 0.0;
   }
 }
 
@@ -60,31 +54,22 @@ configuration::Configuration::Configuration
 {
   m_current = &m_state1;
   m_old = &m_state2;
- // is this really needed?? operator = is overloaded! see gmath.h
-  for(int i=0; i<3; ++i){
-    for(int j=0; j<3; ++j){
-      current().virial_tensor(i,j) =
-	conf.current().virial_tensor(i,j);
-      old().virial_tensor(i,j) =
-	conf.old().virial_tensor(i,j);
 
-      current().kinetic_energy_tensor(i,j) = 
-	conf.current().kinetic_energy_tensor(i,j);
-      old().kinetic_energy_tensor(i,j) = 
-	conf.old().kinetic_energy_tensor(i,j);
+  current().virial_tensor = conf.current().virial_tensor;
+  old().virial_tensor = conf.old().virial_tensor;
 
-      current().pressure_tensor(i,j) = 
-	conf.current().pressure_tensor(i,j);
-      old().pressure_tensor(i,j) = 
-	conf.old().pressure_tensor(i,j);
-      
-      for(unsigned int k=0; k<special().eds.virial_tensor_endstates.size(); ++k){
-        special().eds.virial_tensor_endstates[k](i, j) =
-          conf.special().eds.virial_tensor_endstates[k](i, j);
-      }
-    }
+  current().kinetic_energy_tensor = conf.current().kinetic_energy_tensor;
+  old().kinetic_energy_tensor = conf.old().kinetic_energy_tensor;
+
+  current().pressure_tensor = conf.current().pressure_tensor;
+  old().pressure_tensor = conf.old().pressure_tensor;
+
+  for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
+    special().eds.virial_tensor_endstates[k] =
+            conf.special().eds.virial_tensor_endstates[k];
   }
-  
+
+
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
   current().posV = conf.current().posV;
@@ -141,30 +126,21 @@ configuration::Configuration & configuration::Configuration::operator=
 {
   m_current = &m_state1;
   m_old = &m_state2;
- // is this really needed?? operator = is overloaded! see gmath.h
-  for(int i=0; i<3; ++i){
-    for(int j=0; j<3; ++j){
-      current().virial_tensor(i,j) =
-	conf.current().virial_tensor(i,j);
-      old().virial_tensor(i,j) =
-	conf.old().virial_tensor(i,j);
 
-      current().kinetic_energy_tensor(i,j) = 
-	conf.current().kinetic_energy_tensor(i,j);
-      old().kinetic_energy_tensor(i,j) = 
-	conf.old().kinetic_energy_tensor(i,j);
+  current().virial_tensor = conf.current().virial_tensor;
+  old().virial_tensor = conf.old().virial_tensor;
 
-      current().pressure_tensor(i,j) = 
-	conf.current().pressure_tensor(i,j);
-      old().pressure_tensor(i,j) = 
-	conf.old().pressure_tensor(i,j);
-      
-      for(unsigned int k=0; k<special().eds.virial_tensor_endstates.size(); ++k){
-        special().eds.virial_tensor_endstates[k](i, j) =
-                conf.special().eds.virial_tensor_endstates[k](i, j);
-      }
-    }
+  current().kinetic_energy_tensor = conf.current().kinetic_energy_tensor;
+  old().kinetic_energy_tensor = conf.old().kinetic_energy_tensor;
+
+  current().pressure_tensor = conf.current().pressure_tensor;
+  old().pressure_tensor = conf.old().pressure_tensor;
+
+  for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
+    special().eds.virial_tensor_endstates[k] =
+            conf.special().eds.virial_tensor_endstates[k];
   }
+
   
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
@@ -230,8 +206,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
   
   // check whether this can really stay here! see resize function below
   special().eds.force_endstates.resize(param.eds.numstates);
-  for (unsigned int i = 0;
-       i < special().eds.force_endstates.size(); i++){
+  for (unsigned int i = 0; i < special().eds.force_endstates.size(); i++){
     special().eds.force_endstates[i].resize(topo.num_atoms());
   }  
   special().eds.virial_tensor_endstates.resize(param.eds.numstates);

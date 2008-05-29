@@ -144,14 +144,28 @@ namespace math
 	m[1][0] = m[1][1] = m[1][2] =
 	m[2][0] = m[2][1] = m[2][2] = d;
     }
-    
-    Matrix(const Vec &u, const Vec &v, const Vec &w){
-    for (int i=0;i<3;++i){
-      m[0][i]=u(i);
-      m[1][i]=v(i);
-      m[2][i]=w(i);
+
+    Matrix(const Vec &u, const Vec &v, const Vec &w) {
+      for (int i = 0; i < 3; ++i) {
+        m[0][i] = u(i);
+        m[1][i] = v(i);
+        m[2][i] = w(i);
+      }
     }
-  }
+
+    inline Matrix(const double &d1, const double &d2, const double &d3,
+            const double &d4, const double &d5, const double &d6,
+            const double &d7, const double &d8, const double &d9) {
+      m[0][0] = d1;
+      m[0][1] = d2;
+      m[0][2] = d3;
+      m[1][0] = d4;
+      m[1][1] = d5;
+      m[1][2] = d6;
+      m[2][0] = d7;
+      m[2][1] = d8;
+      m[2][2] = d9;
+    }
    
     Matrix & operator=(double d)
     {
@@ -179,18 +193,32 @@ namespace math
       assert( i>=0 && i<3 && j>=0 && j<3 );
       return m[i][j];
     }
-    Matrix & operator+=(Matrix const & mat)
-    {
-      for(int i=0; i<3; ++i)
-	for(int j=0; j<3; ++j)
-	  m[i][j] += mat(i,j);
+
+    inline Matrix & operator+=(Matrix const & mat) {
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          m[i][j] += mat(i, j);
       return *this;
     }
-    Matrix & operator-=(Matrix const & mat)
-    {
-      for(int i=0; i<3; ++i)
-	for(int j=0; j<3; ++j)
-	  m[i][j] -= mat(i,j);
+
+    inline Matrix & operator-=(Matrix const & mat) {
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          m[i][j] -= mat(i, j);
+      return *this;
+    }
+    
+    inline Matrix & operator*=(const double & d) {
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          m[i][j] *= d;
+      return *this;
+    }
+    
+    inline Matrix & operator/=(const double & d) {
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          m[i][j] /= d;
       return *this;
     }
   };
@@ -269,11 +297,24 @@ namespace math
     Vec const & operator()(int i)const { return d_b[i]; }
     Vec & operator()(int i) { return d_b[i]; }
     Box & operator*=(double d) { d_b[0] *= d; d_b[1] *= d; d_b[2] *= d; return *this; }
+    Box & operator/=(double d) { d_b[0] /= d; d_b[1] /= d; d_b[2] /= d; return *this; }
     Box & operator=(Box const & box) 
     {
       d_b[0] = box.d_b[0];
       d_b[1] = box.d_b[1];
       d_b[2] = box.d_b[2];
+      return *this;
+    }
+    inline Box & operator+=(Box const & box) {
+      d_b[0] += box.d_b[0];
+      d_b[1] += box.d_b[1];
+      d_b[2] += box.d_b[2];
+      return *this;
+    }
+    inline Box & operator-=(Box const & box) {
+      d_b[0] -= box.d_b[0];
+      d_b[1] -= box.d_b[1];
+      d_b[2] -= box.d_b[2];
       return *this;
     }
   };
@@ -555,6 +596,100 @@ namespace math
       else return acos_param;
   }
   
+  inline Matrix operator*(Matrix const &ma, double d)
+  {
+    return Matrix(ma(0,0) * d, ma(0,1) * d, ma(0,2) * d,
+            ma(1,0) * d, ma(1,1) * d, ma(1,2) * d,
+            ma(2,0) * d, ma(2,1) * d, ma(2,2) * d);
+  }
+  
+  inline Matrix operator+(Matrix const &ma, Matrix const &mb)
+  {
+    Matrix m;
+    for(int i = 0; i < 3; ++i)
+      for(int j = 0; j < 3; ++j)
+        m(i,j) = ma(i,j) + mb(i,j);
+    return m;
+  }
+  
+  inline Matrix operator-(Matrix const &ma, Matrix const &mb)
+  {
+    Matrix m;
+    for(int i = 0; i < 3; ++i)
+      for(int j = 0; j < 3; ++j)
+        m(i,j) = ma(i,j) - mb(i,j);
+    return m;
+  }
+  
+  /**
+   * square a matric
+   */
+  inline Matrix square(Matrix const &ma)
+  {
+    Matrix m;
+    for(int i = 0; i < 3; ++i)
+      for(int j = 0; j < 3; ++j)
+        m(i,j) = ma(i,j) * ma(i,j);
+    return m;
+  } 
+  /**
+   * matrix to the power of x
+   */
+    /**
+   * square a matric
+   */
+  inline Matrix square(Matrix const &ma, const double & x)
+  {
+    Matrix m;
+    for(int i = 0; i < 3; ++i)
+      for(int j = 0; j < 3; ++j)
+        m(i,j) = std::pow(ma(i,j), x);
+    return m;
+  } 
+  
+  inline Box operator*(Box const &ba, double d)
+  {
+    Box b(ba);
+    b *= d;
+    return b;
+  }
+  
+  inline Box operator+(Box const &ba, Box const &bb)
+  {
+    Box b(ba);
+    b += bb;
+    return b;
+  }
+  
+  inline Box operator-(Box const &ba, Box const &bb)
+  {
+    Box b(ba);
+    b -= bb;
+    return b;
+  }
+  
+  /**
+   * square a box
+   */
+  inline Box square(Box const &ba)
+  {
+    Box b;
+    for(int i = 0; i < 3; ++i)
+      for(int j = 0; j < 3; ++j)
+        b(i)(j) = ba(i)(j) * ba(i)(j);
+    return b;
+  } 
+  /**
+   * Box to the power of x
+   */
+  inline Box pow(Box const &ba, const double & x)
+  {
+    Box b;
+    for(int i = 0; i < 3; ++i)
+      for(int j = 0; j < 3; ++j)
+        b(i)(j) = std::pow(ba(i)(j), x);
+    return b;
+  }
 } // math
 
 #endif

@@ -31,18 +31,12 @@ int algorithm::Pressure_Calculation
   DEBUG(7, "Pressure calculation");
 
   m_timer.start();
-
+  // virial -0.5 factor applied here!
+  conf.old().virial_tensor *= -0.5;
   // calculate the pressure tensor
-  for(int i=0; i<3; ++i){
-    for(int j=0; j<3; ++j){
-      // virial -0.5 factor applied here!
-      conf.old().virial_tensor(i,j) *= -0.5;
-      conf.old().pressure_tensor(i,j) = 2 * 
-	(conf.old().kinetic_energy_tensor(i,j)
-	 - conf.old().virial_tensor(i,j)) /
-	math::volume(conf.old().box, conf.boundary_type);
-    }
-  }
+  conf.old().pressure_tensor = 
+          (conf.old().kinetic_energy_tensor - conf.old().virial_tensor) * 
+          (2.0 / math::volume(conf.old().box, conf.boundary_type));
   
   m_timer.stop();
   

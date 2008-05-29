@@ -269,16 +269,8 @@ int interaction::Perturbed_Nonbonded_Set
   // add longrange virial
   if (sim.param().pcouple.virial){
     DEBUG(7, "\t(set) add long range virial");
-    for(unsigned int i=0; i<3; ++i){
-      for(unsigned int j=0; j<3; ++j){
 
-	DEBUG(8, "longrange virial = " << m_longrange_storage.virial_tensor(i,j)
-	      << "\tshortrange virial = " << m_storage.virial_tensor(i,j));
-
-	m_storage.virial_tensor(i,j) +=
-	  m_longrange_storage.virial_tensor(i,j);
-      }
-    }
+	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
   }
   
   // and long-range energy lambda-derivatives

@@ -177,13 +177,13 @@ int algorithm::Shake::shake_iteration
       }
       */
 
-      if (V == math::atomic_virial){
-	for(int a=0; a<3; ++a){
-	  for(int aa=0; aa<3; ++aa){
-	    conf.old().virial_tensor(a,aa) +=
-	      ref_r(a) * ref_r(aa) * lambda / dt2;
-	  }
-	}
+      if (V == math::atomic_virial) {
+        for (int a = 0; a < 3; ++a) {
+          for (int aa = 0; aa < 3; ++aa) {
+            conf.old().virial_tensor(a, aa) +=
+                    ref_r(a) * ref_r(aa) * lambda / dt2;
+          }
+        }
 	DEBUG(12, "\tatomic virial done");
       }
       

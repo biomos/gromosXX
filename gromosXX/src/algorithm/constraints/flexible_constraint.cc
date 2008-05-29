@@ -205,14 +205,14 @@ int algorithm::Flexible_Constraint::_iteration
 
       DEBUG(10, "lagrange multiplier " << lambda);
 
-      if (V == math::atomic_virial){
-	for(int a=0; a<3; ++a){
-	  for(int aa=0; aa<3; ++aa){
-	    conf.old().virial_tensor(a,aa) +=
-	      ref_r(a) * ref_r(aa) * lambda / dt2;
-	  }
-	}
-	DEBUG(12, "\tatomic virial done");
+      if (V == math::atomic_virial) {
+        for (int a = 0; a < 3; ++a) {
+          for (int aa = 0; aa < 3; ++aa) {
+            conf.old().virial_tensor(a, aa) +=
+                    ref_r(a) * ref_r(aa) * lambda / dt2;
+          }
+        }
+        DEBUG(12, "\tatomic virial done");
       }
       
       // update positions
@@ -332,16 +332,16 @@ int algorithm::Flexible_Constraint::_exact_iteration
       const double lambda = diff / (- 4 * dt2 * sp);
       DEBUG(10, "lagrange multiplier " << lambda);
 
-      if (V == math::atomic_virial){
-	/*
-	for(int a=0; a<3; ++a){
-	  for(int aa=0; aa<3; ++aa){
-	    conf.old().virial_tensor(a,aa) +=
-	      ref_r(a) * ref_r(aa) * lambda / dt2;
-	  }
-	}
-	DEBUG(12, "\tatomic virial done");
-	*/
+      if (V == math::atomic_virial) {
+        /*
+        for(int a=0; a<3; ++a){
+          for(int aa=0; aa<3; ++aa){
+            conf.old().virial_tensor(a,aa) +=
+              ref_r(a) * ref_r(aa) * lambda / dt2;
+          }
+        }
+        DEBUG(12, "\tatomic virial done");
+         */
 	// not implemented
 	assert(false);
       }

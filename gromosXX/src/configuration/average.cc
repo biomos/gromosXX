@@ -409,35 +409,20 @@ void configuration::Average::Block_Average
 			Block_Average const & old)
 {
   const double dt = sim.time_step_size();
-  
-  for(int a=0; a<3; ++a){
-    for(int b=0; b<3; ++b){
-      // pressure
-      pressure_avg(a,b) = old.pressure_avg(a,b) + 
-	dt * conf.old().pressure_tensor(a,b);
-      pressure_fluct(a,b) = old.pressure_fluct(a,b) +
-	dt * conf.old().pressure_tensor(a,b) * conf.old().pressure_tensor(a,b);
-      // virial
-      virial_avg(a,b) = old.virial_avg(a,b) + 
-	dt * conf.old().virial_tensor(a,b);
-      virial_fluct(a,b) = old.virial_fluct(a,b) +
-	dt * conf.old().virial_tensor(a,b) * conf.old().virial_tensor(a,b);
-      // ekin_tensor
-      ekin_tensor_avg(a,b) = old.ekin_tensor_avg(a,b) + 
-	dt * conf.old().kinetic_energy_tensor(a,b);
-      ekin_tensor_fluct(a,b) = old.ekin_tensor_fluct(a,b) +
-	dt * conf.old().kinetic_energy_tensor(a,b) * 
-	conf.old().kinetic_energy_tensor(a,b);
 
-      // box
-      box_avg(a)(b) = old.box_avg(a)(b) + 
-	dt * conf.old().box(a)(b);
-      box_fluct(a)(b) = old.box_fluct(a)(b) +
-	dt * conf.old().box(a)(b) * 
-	conf.old().box(a)(b);
+  // pressure
+  pressure_avg = old.pressure_avg + conf.old().pressure_tensor * dt;
+  pressure_fluct = old.pressure_fluct + math::square(conf.old().pressure_tensor) * dt;
+  // virial
+  virial_avg = old.virial_avg + conf.old().virial_tensor * dt;
+  virial_fluct = old.virial_fluct + math::square(conf.old().virial_tensor) * dt;
+  // ekin_tensor
+  ekin_tensor_avg = old.ekin_tensor_avg + conf.old().kinetic_energy_tensor * dt;
+  ekin_tensor_fluct = old.ekin_tensor_fluct + math::square(conf.old().kinetic_energy_tensor) * dt;
 
-    }
-  }
+  // box
+  box_avg = old.box_avg + conf.old().box * dt;
+  box_fluct = old.box_fluct + math::square(conf.old().box) * dt;
 
   const double tot_mass = math::sum(topo.mass());
   mass_avg = old.mass_avg + dt * tot_mass;
