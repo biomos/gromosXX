@@ -519,7 +519,14 @@ namespace math
 	       m(0,2) * v(0) + m(1,2) * v(1) + m(2,2) * v(2)
 	       );
   }
-
+  inline Vec product(Matrixl const &m, Vecl const &v)
+  {
+    return Vec(
+	       m(0,0) * v(0) + m(1,0) * v(1) + m(2,0) * v(2),
+	       m(0,1) * v(0) + m(1,1) * v(1) + m(2,1) * v(2),
+	       m(0,2) * v(0) + m(1,2) * v(1) + m(2,2) * v(2)
+	       );
+  }
   inline Matrix product(Matrix const &m1, Matrix const &m2)
   {
     Matrix m(0.0);
@@ -548,6 +555,7 @@ namespace math
 	  m(i)(j) += m1(i,k) * m2(k)(j);
     return m;
   }
+  
 
     inline Matrix product(Box const &m1, Matrix const &m2)
   {

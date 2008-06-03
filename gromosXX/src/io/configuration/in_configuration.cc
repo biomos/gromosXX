@@ -1,4 +1,4 @@
-/**
+ /**
  * @file in_configuration.cc
  * implements methods of In_Configuration.
  */
@@ -1199,11 +1199,11 @@ bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string>
   long double cosdelta=(cosl(alpha)-cosl(beta)*cosl(gamma))/(sinl(beta)*sinl(gamma));
   long double sindelta=sqrtl(1-cosdelta*cosdelta);  
    
-  math::Vec SBx(a, 0.0, 0.0);
-  math::Vec SBy(b*cosl(gamma), 
+  math::Vecl SBx(a, 0.0, 0.0);
+  math::Vecl SBy(b*cosl(gamma), 
           b*sinl(gamma), 
           0.0);
-  math::Vec SBz(c*cosl(beta), 
+  math::Vecl SBz(c*cosl(beta), 
           c*cosdelta*sinl(beta), 
           c*sindelta*sinl(beta));
   
@@ -1213,17 +1213,17 @@ bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string>
   theta = math::Pi*box(1)(2)/180;
   psi   = math::Pi*box(2)(2)/180;
   
-  const math::Vec Rx(cosl(theta)*cosl(phi),
+  const math::Vecl Rx(cosl(theta)*cosl(phi),
           cosl(theta)*sinl(phi),
           -sinl(theta));
-  const math::Vec Ry(sinl(psi)*sinl(theta)*cosl(phi)-cosl(psi)*sinl(phi),
+  const math::Vecl Ry(sinl(psi)*sinl(theta)*cosl(phi)-cosl(psi)*sinl(phi),
           sinl(psi)*sinl(theta)*sinl(phi)+cosl(psi)*cosl(phi),
           sinl(psi)*cosl(theta));
-  const math::Vec Rz(cosl(psi)*sinl(theta)*cosl(phi)+sinl(psi)*sinl(phi),
+  const math::Vecl Rz(cosl(psi)*sinl(theta)*cosl(phi)+sinl(psi)*sinl(phi),
           cosl(psi)*sinl(theta)*sinl(phi)+(-sinl(psi)*cosl(phi)),
           cosl(psi)*cosl(theta));
   
-  math::Matrix Rmat(Rx,Ry,Rz);
+  math::Matrixl Rmat(Rx,Ry,Rz);
   
   box(0)=product(Rmat,SBx);
   box(1)=product(Rmat,SBy);
