@@ -230,6 +230,8 @@ int _calculate_jvalue_restraint_interactions
     conf.current().force(it->l) += fl;
 
     // should there be a contribution of this special ia to the virial?
+    // no there should be NO contribution.
+    /*
     if (V == math::atomic_virial){
       math::Vec rlj;
       periodicity.nearest_image(pos(it->l), pos(it->j), rlj);
@@ -243,6 +245,7 @@ int _calculate_jvalue_restraint_interactions
       
       DEBUG(7, "\tatomic virial done");
     }
+     */
   }
 
   return 0;

@@ -59,6 +59,8 @@ static int _calculate_position_restraint_interactions
     force(it->seq) += f;
   
     // should there be a contribution of this special ia to the virial?
+    // no there should be NO contribution
+    /*
     if (V == math::atomic_virial){
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
@@ -67,6 +69,7 @@ static int _calculate_position_restraint_interactions
 
       DEBUG(7, "\tatomic virial done");
     }
+     */
 
     energy = 0.5 * sim.param().posrest.force_constant / it->bfactor * abs2(v);
 
