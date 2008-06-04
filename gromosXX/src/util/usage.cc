@@ -140,6 +140,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @jval      filename\n\n";
   }
   
+  if (knowns.count("friction")){
+    usage += "\t# atomic friction coefficients\n";
+    usage += "\t# @friction   filename\n\n";
+  }
+  
   if (knowns.count("master")){
     usage += "\t# replica exchange: master process\n";
     usage += "\t# @master    name\n\n";
@@ -173,6 +178,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
   if (knowns.count("version")){
     usage += "\t# print version information\n";
     usage += "\t# @version\n\n";
+  }
+  
+  if (knowns.count("gzip")){
+    usage += "\t# write trajectories and the final configuration compressed (gzip)\n";
+    usage += "\t# @gzip\n\n";
   }
   
   // usage += "#\n\n";

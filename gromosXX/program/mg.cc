@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
 	 << "trj" << "cg_trj" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "cg_tre" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "jval"
 	 << "anatrj" << "print" << "friction"
-	 << "version";
+	 << "version" << "gzip";
   
   
   std::string usage;

@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "pttopo" << "conf" << "input" << "fin" 
 	 << "fcon" << "limit" << "stepsize" << "verb"
-	 << "version";
+	 << "version" << "gzip";
 
   std::string usage = argv[0];
   usage += "\n\t@topo        <topology>\n";

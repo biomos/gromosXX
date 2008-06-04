@@ -46,7 +46,19 @@ static void _print_volumepressurered_helper(std::ostream &os,
 
 io::Out_Configuration::Out_Configuration(std::string title,
 					 std::ostream & os)
-  : m_output(os),
+  : m_pos_traj(NULL),
+    m_final_conf(NULL),
+    m_vel_traj(NULL),
+    m_force_traj(NULL),
+    m_energy_traj(NULL),
+    m_has_replica_traj(false),
+    m_replica_traj(NULL),
+    m_free_energy_traj(NULL),
+    m_blockaveraged_energy(NULL),
+    m_blockaveraged_free_energy(NULL),
+    m_ramd_traj(NULL),
+    m_special_traj(NULL),
+    m_output(os),
     m_final(false),
     m_replica(false),
     m_every_pos(0),
@@ -63,7 +75,8 @@ io::Out_Configuration::Out_Configuration(std::string title,
     m_distance_restraint_precision(7),
     m_width(15),
     m_force_width(18),
-    m_title(title)
+    m_title(title),
+    m_compressed(false)
 {
   _print_title(m_title, "output file", os);
 }
@@ -71,49 +84,126 @@ io::Out_Configuration::Out_Configuration(std::string title,
 io::Out_Configuration::~Out_Configuration()
 {
   // std::cout << "out_configuration destructor" << std::endl;
-  
-  if (m_every_pos){
-    m_pos_traj.flush();
-    m_pos_traj.close();
+
+  if (m_every_pos) {
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_pos_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_pos_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_pos_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_pos_traj)->close();
+    }
+    delete m_pos_traj;
   }
   if (m_final){
-    m_final_conf.flush();
-    m_final_conf.close();
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_final_conf)->flush();
+      dynamic_cast<io::ogzstream*> (m_final_conf)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_final_conf)->flush();
+      dynamic_cast<std::ofstream*> (m_final_conf)->close();
+    }
+    delete m_final_conf;
   }
 
   if (m_every_vel){
-    m_vel_traj.flush();
-    m_vel_traj.close();
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_vel_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_vel_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_vel_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_vel_traj)->close();
+    }
+    delete m_vel_traj;
   }
     
   if (m_every_force){
-    m_force_traj.flush();
-    m_force_traj.close();
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_force_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_force_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_force_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_force_traj)->close();
+    }
+    delete m_force_traj;
   }
     
   if (m_every_energy){
-    m_energy_traj.flush();
-    m_energy_traj.close();
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_energy_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_energy_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_energy_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_energy_traj)->close();
+    }
+    delete m_energy_traj;
   }
 
-  if (m_replica_traj.is_open()){
-    m_replica_traj.flush();
-    m_replica_traj.close();
+  if (m_has_replica_traj){
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_replica_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_replica_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_replica_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_replica_traj)->close();
+    }
+    delete m_replica_traj;
   }
 
   if (m_every_free_energy){
-    m_free_energy_traj.flush();
-    m_free_energy_traj.close();
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_free_energy_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_free_energy_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_free_energy_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_free_energy_traj)->close();
+    }
+    delete m_free_energy_traj;
   }
 
   if (m_write_blockaverage_energy){
-	  m_blockaveraged_energy.flush();
-	  m_blockaveraged_energy.close();
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_blockaveraged_energy)->flush();
+      dynamic_cast<io::ogzstream*> (m_blockaveraged_energy)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_blockaveraged_energy)->flush();
+      dynamic_cast<std::ofstream*> (m_blockaveraged_energy)->close();
+    }
+    delete m_blockaveraged_energy;
   }
+  
   if (m_write_blockaverage_free_energy){
-	  m_blockaveraged_free_energy.flush();
-	  m_blockaveraged_free_energy.close();
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_blockaveraged_free_energy)->flush();
+      dynamic_cast<io::ogzstream*> (m_blockaveraged_free_energy)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_blockaveraged_free_energy)->flush();
+      dynamic_cast<std::ofstream*> (m_blockaveraged_free_energy)->close();
+    }
+    delete m_blockaveraged_free_energy;
   }
+  
+  if (m_every_ramd){
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_ramd_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_ramd_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_ramd_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_ramd_traj)->close();
+    }
+    delete m_ramd_traj;
+  }  
+  
+  if (m_every_cos_pos){ // add others if there are any
+    if (m_compressed) {
+      dynamic_cast<io::ogzstream*> (m_special_traj)->flush();
+      dynamic_cast<io::ogzstream*> (m_special_traj)->close();
+    } else {
+      dynamic_cast<std::ofstream*> (m_special_traj)->flush();
+      dynamic_cast<std::ofstream*> (m_special_traj)->close();
+    }
+    delete m_special_traj;
+  }  
 }
 
 void io::Out_Configuration::_print_title(std::string title,
@@ -129,6 +219,10 @@ void io::Out_Configuration::_print_title(std::string title,
 void io::Out_Configuration::init(io::Argument & args,
 				 simulation::Parameter const & param)
 {
+   // has to be the first so that all streams get initialised correctly
+  if (args.count(argname_gzip) >= 0)
+    compressed(true);  
+  
   if (args.count(argname_fin) > 0)
     final_configuration(args[argname_fin]);
   else io::messages.add("argument "+argname_fin+" for final configuration required!",
@@ -142,29 +236,29 @@ void io::Out_Configuration::init(io::Argument & args,
 		     "Out_Configuration",
 		     io::message::error);
 
-  if (args.count("trv") > 0)
-    velocity_trajectory(args["trv"], param.write.velocity);
+  if (args.count(argname_trv) > 0)
+    velocity_trajectory(args[argname_trv], param.write.velocity);
   else if (param.write.velocity)
     io::messages.add("write velocity trajectory but no trv argument",
 		     "Out_Configuration",
 		     io::message::error);
 
-  if (args.count("trf") > 0)
-    force_trajectory(args["trf"], param.write.force);
+  if (args.count(argname_trf) > 0)
+    force_trajectory(args[argname_trf], param.write.force);
   else if (param.write.force)
     io::messages.add("write force trajectory but no trf argument",
 		     "Out_Configuration",
 		     io::message::error);
   
-  if (args.count("trs") > 0)
-    special_trajectory(args["trs"], param.polarize.write);
+  if (args.count(argname_trs) > 0)
+    special_trajectory(args[argname_trs], param.polarize.write);
   else if (param.polarize.write) // check for other that also go to this traj.
     io::messages.add("write special trajectory but no trs argument",
 		     "Out_Configuration",
 		     io::message::error);
 
-  if (args.count("re") > 0)
-    replica_trajectory(args["re"]);
+  if (args.count(argname_re) > 0)
+    replica_trajectory(args[argname_re]);
   
   if (args.count(argname_tre) > 0)
     energy_trajectory(args[argname_tre], param.write.energy);
@@ -173,23 +267,23 @@ void io::Out_Configuration::init(io::Argument & args,
 		     "Out_Configuration",
 		     io::message::error);
 
-  if (args.count("trg") > 0)
-    free_energy_trajectory(args["trg"], param.write.free_energy);
+  if (args.count(argname_trg) > 0)
+    free_energy_trajectory(args[argname_trg], param.write.free_energy);
   else if (param.write.free_energy)
     io::messages.add("write free energy trajectory but no trg argument",
 		     "Out_Configuration",
 		     io::message::error);
 
-  if (args.count("bae") > 0)
-    block_averaged_energy(args["bae"], param.write.block_average);
+  if (args.count(argname_bae) > 0)
+    block_averaged_energy(args[argname_bae], param.write.block_average);
   else if (param.write.block_average && param.write.energy)
     io::messages.add("write block averaged energy but no bae argument",
 		     "Out_Configuration",
 		     io::message::error);
 
   if (param.perturbation.perturbation){
-    if (args.count("bag") > 0)
-      block_averaged_free_energy(args["bag"], 
+    if (args.count(argname_bag) > 0)
+      block_averaged_free_energy(args[argname_bag], 
 				 param.write.block_average);
     else if (param.write.block_average && param.write.free_energy)
       io::messages.add("write block averaged free energy "
@@ -197,8 +291,8 @@ void io::Out_Configuration::init(io::Argument & args,
 		       "Out_Configuration",
 		       io::message::error);
   }
-  if (args.count("tramd") > 0)
-    ramd_trajectory(args["tramd"], param.ramd.every);
+  if (args.count(argname_tramd) > 0)
+    ramd_trajectory(args[argname_tramd], param.ramd.every);
   else if (param.ramd.fc!=0.0 && param.ramd.every)
     io::messages.add("write RAMD trajectory but no tramd argument",
 		     "Out_Configuration",
@@ -226,56 +320,56 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if(m_every_pos && (sim.steps() % m_every_pos) == 0){
       // don't write starting configuration if analyzing a trajectory
       if (sim.steps() || !sim.param().analyze.analyze){
-	_print_timestep(sim, m_pos_traj);
+	_print_timestep(sim, *m_pos_traj);
 	
 	if (sim.param().write.position_solute_only)
-	  _print_positionred(conf, topo,  topo.num_solute_atoms(), m_pos_traj);
+	  _print_positionred(conf, topo,  topo.num_solute_atoms(), *m_pos_traj);
 	else
-	  _print_positionred(conf, topo,  topo.num_atoms(), m_pos_traj);
+	  _print_positionred(conf, topo,  topo.num_atoms(), *m_pos_traj);
 	
 	if (conf.boundary_type != math::vacuum)
-	  _print_box(conf, m_pos_traj);
+	  _print_box(conf, *m_pos_traj);
       }
     }
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0){
-      _print_timestep(sim, m_vel_traj);
+      _print_timestep(sim, *m_vel_traj);
       if (sim.param().write.velocity_solute_only)
-        _print_velocityred(conf, topo.num_solute_atoms(), m_vel_traj);
+        _print_velocityred(conf, topo.num_solute_atoms(), *m_vel_traj);
       else
-        _print_velocityred(conf, topo.num_atoms(), m_vel_traj);
+        _print_velocityred(conf, topo.num_atoms(), *m_vel_traj);
     }
     
     if(m_every_force && ((sim.steps()) % m_every_force) == 0){
       if(sim.steps()){
-	_print_old_timestep(sim, m_force_traj);
+	_print_old_timestep(sim, *m_force_traj);
         if (sim.param().write.force_solute_only)
-	  _print_forcered(conf, topo.num_solute_atoms(), m_force_traj);
+	  _print_forcered(conf, topo.num_solute_atoms(), *m_force_traj);
         else
-          _print_forcered(conf, topo.num_atoms(), m_force_traj);
+          _print_forcered(conf, topo.num_atoms(), *m_force_traj);
       }
     }
     
     if(m_every_cos_pos && (sim.steps() % m_every_cos_pos) == 0){
       if (!special_timestep_printed){
-	_print_timestep(sim, m_special_traj);
+	_print_timestep(sim, *m_special_traj);
         special_timestep_printed = true;
       }
-       _print_cos_position(conf, topo, m_special_traj);
+       _print_cos_position(conf, topo, *m_special_traj);
     }
     
     if(m_every_energy && (sim.steps() % m_every_energy) == 0){
       if(sim.steps()){
-	_print_old_timestep(sim, m_energy_traj);
-	_print_energyred(conf, m_energy_traj);
-	_print_volumepressurered(topo, conf, sim, m_energy_traj);
+	_print_old_timestep(sim, *m_energy_traj);
+	_print_energyred(conf, *m_energy_traj);
+	_print_volumepressurered(topo, conf, sim, *m_energy_traj);
       }
     }
     
     if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
       if(sim.steps()){
-	_print_old_timestep(sim, m_free_energy_traj);
-	_print_free_energyred(conf, topo, m_free_energy_traj);
+	_print_old_timestep(sim, *m_free_energy_traj);
+	_print_free_energyred(conf, topo, *m_free_energy_traj);
       }
     }
 
@@ -283,83 +377,83 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       
       if(m_write_blockaverage_energy){
 	if(sim.steps()){
-	  _print_old_timestep(sim, m_blockaveraged_energy);
-	  _print_blockaveraged_energyred(conf, m_blockaveraged_energy);
-	  _print_blockaveraged_volumepressurered(conf, sim, m_blockaveraged_energy);
+	  _print_old_timestep(sim, *m_blockaveraged_energy);
+	  _print_blockaveraged_energyred(conf, *m_blockaveraged_energy);
+	  _print_blockaveraged_volumepressurered(conf, sim, *m_blockaveraged_energy);
 	}
       }
 
       if(m_write_blockaverage_free_energy){
 	if(sim.steps()){
-	  _print_old_timestep(sim, m_blockaveraged_free_energy);
+	  _print_old_timestep(sim, *m_blockaveraged_free_energy);
 	  _print_blockaveraged_free_energyred(conf, sim.param().perturbation.dlamt,
-					      m_blockaveraged_free_energy);
+					      *m_blockaveraged_free_energy);
 	}
       }
       conf.current().averages.block().zero();
     }
     
     if (m_every_ramd && (sim.steps() % m_every_ramd) == 0){
-      _print_timestep(sim, m_ramd_traj);
-      _print_ramd(topo, conf, sim, m_ramd_traj);
+      _print_timestep(sim, *m_ramd_traj);
+      _print_ramd(topo, conf, sim, *m_ramd_traj);
     }
     
   }
   else if(form == final && m_final){
-    _print_timestep(sim, m_final_conf);
-    _print_position(conf, topo, m_final_conf);
+    _print_timestep(sim, *m_final_conf);
+    _print_position(conf, topo, *m_final_conf);
     
     if (sim.param().polarize.cos)
-      _print_cos_position(conf, topo, m_final_conf);
+      _print_cos_position(conf, topo, *m_final_conf);
 
     if(sim.param().minimise.ntem == 0)
-      _print_velocity(conf, topo, m_final_conf);
+      _print_velocity(conf, topo, *m_final_conf);
 
-    _print_box(conf, m_final_conf);
+    _print_box(conf, *m_final_conf);
 
     if(sim.param().constraint.solute.algorithm
        == simulation::constr_flexshake){
-      _print_flexv(conf, topo, m_final_conf);
+      _print_flexv(conf, topo, *m_final_conf);
     }
 
     if(sim.param().stochastic.sd){
-      _print_stochastic_integral(conf, topo, m_final_conf);
+      _print_stochastic_integral(conf, topo, *m_final_conf);
     }
     
     if(sim.param().distanceres.distanceres < 0){
-      _print_distance_restraint_averages(conf, topo, m_final_conf);
+      _print_distance_restraint_averages(conf, topo, *m_final_conf);
     }
     
     if (sim.param().posrest.posrest != simulation::posrest_off) {
-      _print_position_restraints(sim, topo, m_final_conf);
+      _print_position_restraints(sim, topo, *m_final_conf);
     }
     
     if(sim.param().jvalue.mode != simulation::restr_off){
-      _print_jvalue(sim.param(), conf, topo, m_final_conf);
+      _print_jvalue(sim.param(), conf, topo, *m_final_conf);
     }
 
     if(sim.param().pscale.jrest){
-      _print_pscale_jrest(conf, topo, m_final_conf);
+      _print_pscale_jrest(conf, topo, *m_final_conf);
     }
     
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0){
-      _print_old_timestep(sim, m_force_traj);
+      _print_old_timestep(sim, *m_force_traj);
       if (sim.param().write.force_solute_only)
-	_print_forcered(conf, topo.num_solute_atoms(), m_force_traj);
+	_print_forcered(conf, topo.num_solute_atoms(), *m_force_traj);
       else
-        _print_forcered(conf, topo.num_atoms(), m_force_traj);
+        _print_forcered(conf, topo.num_atoms(), *m_force_traj);
     }
 
     if(m_every_energy && (sim.steps() % m_every_energy) == 0){
-      _print_old_timestep(sim, m_energy_traj);
-      _print_energyred(conf, m_energy_traj);
-      _print_volumepressurered(topo, conf, sim, m_energy_traj);
+      _print_old_timestep(sim, *m_energy_traj);
+      _print_energyred(conf, *m_energy_traj);
+      _print_volumepressurered(topo, conf, sim, *m_energy_traj);
     }
 
     if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
-      _print_old_timestep(sim, m_free_energy_traj);
-      _print_free_energyred(conf, topo, m_free_energy_traj);
+      _print_old_timestep(sim, *m_free_energy_traj);
+      _print_free_energyred(conf, topo, *m_free_energy_traj);
     }
 
   }
@@ -368,21 +462,21 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     // not reduced or final (so: decorated)
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0){
-      _print_timestep(sim, m_pos_traj);
-      _print_position(conf, topo, m_pos_traj);
+      _print_timestep(sim, *m_pos_traj);
+      _print_position(conf, topo, *m_pos_traj);
       if (conf.boundary_type != math::vacuum)
-	_print_box(conf, m_pos_traj);
+	_print_box(conf, *m_pos_traj);
     }
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0){
-      _print_timestep(sim, m_vel_traj);
-      _print_velocity(conf, topo, m_vel_traj);
+      _print_timestep(sim, *m_vel_traj);
+      _print_velocity(conf, topo, *m_vel_traj);
     }
     
     if(m_every_force && (sim.steps() % m_every_force) == 0){
       if (sim.steps()){
-	_print_timestep(sim, m_force_traj);	
-	_print_force(conf, topo, m_force_traj);
+	_print_timestep(sim, *m_force_traj);	
+	_print_force(conf, topo, *m_force_traj);
       }
     }
   }
@@ -407,43 +501,43 @@ void io::Out_Configuration::write_replica
   if (form == reduced){
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0){
-      _print_timestep(sim, m_pos_traj);
-      _print_replica_information(replica_data, m_pos_traj);
+      _print_timestep(sim, *m_pos_traj);
+      _print_replica_information(replica_data, *m_pos_traj);
       
       for(unsigned int i=0; i<conf.size(); ++i){
-	_print_positionred(conf[i], topo,  topo.num_atoms(), m_pos_traj);
-	_print_velocityred(conf[0], topo.num_atoms(), m_vel_traj);
+	_print_positionred(conf[i], topo,  topo.num_atoms(), *m_pos_traj);
+	_print_velocityred(conf[0], topo.num_atoms(), *m_vel_traj);
 	
 	if (conf[i].boundary_type != math::vacuum)
-	  _print_box(conf[i], m_pos_traj);
+	  _print_box(conf[i], *m_pos_traj);
       }
     }
   }
   else if(form == final && m_final){
     for(unsigned int i=0; i<conf.size(); ++i){
       
-      m_final_conf << "REPLICAFRAME\n"
+      *m_final_conf << "REPLICAFRAME\n"
 		   << std::setw(12) << i + 1
 		   << "\nEND\n";
 
       if (i==0){
-	_print_timestep(sim, m_final_conf);
-	_print_replica_information(replica_data, m_final_conf);
+	_print_timestep(sim, *m_final_conf);
+	_print_replica_information(replica_data, *m_final_conf);
       }
       
-      _print_position(conf[i], topo, m_final_conf);
+      _print_position(conf[i], topo, *m_final_conf);
       if (sim.param().polarize.cos)
-        _print_cos_position(conf[i], topo, m_final_conf);
-      _print_velocity(conf[i], topo, m_final_conf);
-      _print_box(conf[i], m_final_conf);
+        _print_cos_position(conf[i], topo, *m_final_conf);
+      _print_velocity(conf[i], topo, *m_final_conf);
+      _print_box(conf[i], *m_final_conf);
     }
     
     /*
     if(sim.param().jvalue.mode != simulation::restr_off){
-      _print_jvalue(sim.param(), conf[0], topo, m_final_conf);
+      _print_jvalue(sim.param(), conf[0], topo, *m_final_conf);
     }
     if(sim.param().pscale.jrest){
-      _print_pscale_jrest(conf[0], topo, m_final_conf);
+      _print_pscale_jrest(conf[0], topo, *m_final_conf);
     }
     */
   }
@@ -453,70 +547,107 @@ void io::Out_Configuration::write_replica
 void io::Out_Configuration
 ::final_configuration(std::string name)
 {
-  m_final_conf.open(name.c_str());
-  _print_title(m_title, "final configuration", m_final_conf);
+  if (m_compressed)
+    m_final_conf = new io::ogzstream(name.c_str());
+  else
+    m_final_conf = new std::ofstream(name.c_str());
+  
+  _print_title(m_title, "final configuration", *m_final_conf);
   m_final = true;
 }
 
 void io::Out_Configuration
 ::trajectory(std::string name, int every)
 {
-  m_pos_traj.open(name.c_str());
+  if (m_compressed) 
+    m_pos_traj = new io::ogzstream(name.c_str());
+  else
+    m_pos_traj = new std::ofstream(name.c_str());
+  
   m_every_pos = every;
-  _print_title(m_title, "position trajectory", m_pos_traj);
+  _print_title(m_title, "position trajectory", *m_pos_traj);
 }
 
 void io::Out_Configuration
 ::velocity_trajectory(std::string name, int every)
 {
-  m_vel_traj.open(name.c_str());
+  if (m_compressed)
+    m_vel_traj = new io::ogzstream(name.c_str());
+  else
+    m_vel_traj = new std::ofstream(name.c_str());
+  
   m_every_vel = every;
-  _print_title(m_title, "velocity trajectory", m_vel_traj);
+  _print_title(m_title, "velocity trajectory", *m_vel_traj);
 }
 
 void io::Out_Configuration
 ::force_trajectory(std::string name, int every)
 {
-  m_force_traj.open(name.c_str());
+  if (m_compressed)
+    m_force_traj = new io::ogzstream(name.c_str());
+  else
+    m_force_traj = new std::ofstream(name.c_str());
+  
   m_every_force = every;
-  _print_title(m_title, "force trajectory", m_force_traj);
+  _print_title(m_title, "force trajectory", *m_force_traj);
 }
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos)
 {
-  m_special_traj.open(name.c_str());
+  if (m_compressed)
+    m_special_traj = new io::ogzstream(name.c_str());
+  else
+    m_special_traj = new std::ofstream(name.c_str());
+  
   m_every_cos_pos = every_cos;
-  _print_title(m_title, "special trajectory", m_special_traj);
+  _print_title(m_title, "special trajectory", *m_special_traj);
 }
 
 void io::Out_Configuration
 ::energy_trajectory(std::string name, int every)
 {
-  m_energy_traj.open(name.c_str());
+  if (m_compressed)
+    m_energy_traj = new io::ogzstream(name.c_str());
+  else
+    m_energy_traj = new std::ofstream(name.c_str());
+  
   m_every_energy = every;
-  _print_title(m_title, "energy trajectory", m_energy_traj);
+  _print_title(m_title, "energy trajectory", *m_energy_traj);
 }
 
 void io::Out_Configuration
 ::replica_trajectory(std::string name)
 {
-  m_replica_traj.open(name.c_str());
-  _print_title(m_title, "replica trajectory", m_replica_traj);
+  if (m_compressed)
+    m_replica_traj = new io::ogzstream(name.c_str());
+  else
+    m_replica_traj = new std::ofstream(name.c_str());
+  
+  m_has_replica_traj = true;
+  _print_title(m_title, "replica trajectory", *m_replica_traj);
 }
 
 void io::Out_Configuration
 ::free_energy_trajectory(std::string name, int every)
 {
-  m_free_energy_traj.open(name.c_str());
+  if (m_compressed)
+    m_free_energy_traj = new io::ogzstream(name.c_str());
+  else
+    m_free_energy_traj = new std::ofstream(name.c_str());
+  
   m_every_free_energy = every;
-  _print_title(m_title, "free energy trajectory", m_free_energy_traj);
+  _print_title(m_title, "free energy trajectory", *m_free_energy_traj);
 }
 
 void io::Out_Configuration
 ::block_averaged_energy(std::string name, int every)
 {
-  m_blockaveraged_energy.open(name.c_str());
+  if (m_compressed)
+    m_blockaveraged_energy = new io::ogzstream(name.c_str());
+  else
+    m_blockaveraged_energy = new std::ofstream(name.c_str());
+  
   if (m_every_blockaverage && m_every_blockaverage != every){
     io::messages.add("overwriting how often block averages are written out illegal",
 		     "Out_Configuration",
@@ -524,13 +655,17 @@ void io::Out_Configuration
   }
   m_every_blockaverage = every;
   m_write_blockaverage_energy = true;
-  _print_title(m_title, "block averaged energies", m_blockaveraged_energy);
+  _print_title(m_title, "block averaged energies", *m_blockaveraged_energy);
 }
 
 void io::Out_Configuration
 ::block_averaged_free_energy(std::string name, int every)
 {
-  m_blockaveraged_free_energy.open(name.c_str());
+  if (m_compressed)
+    m_blockaveraged_free_energy = new io::ogzstream(name.c_str());
+  else
+    m_blockaveraged_free_energy = new std::ofstream(name.c_str());
+  
   if (m_every_blockaverage && m_every_blockaverage != every){
     io::messages.add("overwriting how often block averages are written out illegal",
 		     "Out_Configuration",
@@ -538,15 +673,19 @@ void io::Out_Configuration
   }
   m_every_blockaverage = every;
   m_write_blockaverage_free_energy = true;
-  _print_title(m_title, "block averaged free energies", m_blockaveraged_free_energy);
+  _print_title(m_title, "block averaged free energies", *m_blockaveraged_free_energy);
 }
 
 void io::Out_Configuration
 ::ramd_trajectory(std::string name, int every)
 {
-  m_ramd_traj.open(name.c_str());
+  if (m_compressed)
+    m_ramd_traj = new io::ogzstream(name.c_str());
+  else
+    m_ramd_traj = new std::ofstream(name.c_str());
+  
   m_every_ramd = every;
-  _print_title(m_title, "RAMD trajectory", m_ramd_traj);
+  _print_title(m_title, "RAMD trajectory", *m_ramd_traj);
 }
 
 
@@ -1042,12 +1181,10 @@ void io::Out_Configuration
   
   os << "CONSFORCERED\n";
   
-  math::VArray const & force = conf.current().force;
-  
+  const math::VArray &force = conf.current().force;
   assert(num <= int(force.size()));
   
   for(int i=0; i<num; ++i){
-    
     os << std::setw(m_force_width) << force(i)(0)
        << std::setw(m_force_width) << force(i)(1)
        << std::setw(m_force_width) << force(i)(2)
@@ -1079,15 +1216,16 @@ void io::Out_Configuration
 		       configuration::Energy const & energy,
 		       int reeval)
 {
-  m_replica_traj.setf(std::ios::scientific, std::ios::floatfield);
-  m_replica_traj.precision(m_precision);
+  std::ostream &replica_traj = *m_replica_traj;
+  replica_traj.setf(std::ios::scientific, std::ios::floatfield);
+  replica_traj.precision(m_precision);
   
-  print_REMD(m_replica_traj, replica_data, sim.param(), reeval);
-  _print_timestep(sim, m_replica_traj);
+  print_REMD(replica_traj, replica_data, sim.param(), reeval);
+  _print_timestep(sim, replica_traj);
 
-  m_replica_traj << "ENERGY03\n";
-  _print_energyred_helper(m_replica_traj, energy);
-  m_replica_traj << "END\n";
+  replica_traj << "ENERGY03\n";
+  _print_energyred_helper(replica_traj, energy);
+  replica_traj << "END\n";
   
 }
 
@@ -1707,51 +1845,52 @@ void io::Out_Configuration::write_replica_step
   if (form == reduced){
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0)
-      print_REMD(m_pos_traj, replica_data, sim.param());
+      print_REMD(*m_pos_traj, replica_data, sim.param());
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0)
-      print_REMD(m_vel_traj, replica_data, sim.param());
+      print_REMD(*m_vel_traj, replica_data, sim.param());
     
     if(m_every_force && ((sim.steps()) % m_every_force) == 0){
       if(sim.steps())
-	print_REMD(m_force_traj, replica_data, sim.param());
+	print_REMD(*m_force_traj, replica_data, sim.param());
     }
     
     if(m_every_energy && (sim.steps() % m_every_energy) == 0){
       if(sim.steps())
-	print_REMD(m_energy_traj, replica_data, sim.param());
+	print_REMD(*m_energy_traj, replica_data, sim.param());
     }
     
     if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
       if(sim.steps())
-	print_REMD(m_free_energy_traj, replica_data, sim.param());
+	print_REMD(*m_free_energy_traj, replica_data, sim.param());
     }
 
     if (m_every_blockaverage && (sim.steps() % m_every_blockaverage) == 0){
       if(m_write_blockaverage_energy){
 	if(sim.steps())
-	  print_REMD(m_blockaveraged_energy, replica_data, sim.param());
+	  print_REMD(*m_blockaveraged_energy, replica_data, sim.param());
       }
 
       if(m_write_blockaverage_free_energy){
 	if(sim.steps())
-	  print_REMD(m_blockaveraged_free_energy, replica_data, sim.param());
+	  print_REMD(*m_blockaveraged_free_energy, replica_data, sim.param());
       }
     }
   } // reduced
 
   else if(form == final && m_final){
-    print_REMD(m_final_conf, replica_data, sim.param());
+    print_REMD(*m_final_conf, replica_data, sim.param());
     
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0)
-      print_REMD(m_force_traj, replica_data, sim.param());
+      if (sim.steps())
+        print_REMD(*m_force_traj, replica_data, sim.param());
 
     if(m_every_energy && (sim.steps() % m_every_energy) == 0)
-      print_REMD(m_energy_traj, replica_data, sim.param());
+      print_REMD(*m_energy_traj, replica_data, sim.param());
 
     if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0)
-      print_REMD(m_free_energy_traj, replica_data, sim.param());
+      print_REMD(*m_free_energy_traj, replica_data, sim.param());
   } // final
 
   else{
@@ -1759,14 +1898,14 @@ void io::Out_Configuration::write_replica_step
     // not reduced or final (so: decorated)
 
     if(m_every_pos && (sim.steps() % m_every_pos) == 0)
-      print_REMD(m_pos_traj, replica_data, sim.param());
+      print_REMD(*m_pos_traj, replica_data, sim.param());
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0)
-      print_REMD(m_vel_traj, replica_data, sim.param());
+      print_REMD(*m_vel_traj, replica_data, sim.param());
     
     if(m_every_force && (sim.steps() % m_every_force) == 0){
       if (sim.steps())
-	print_REMD(m_force_traj, replica_data, sim.param());
+	print_REMD(*m_force_traj, replica_data, sim.param());
     }
   } // decorated
 

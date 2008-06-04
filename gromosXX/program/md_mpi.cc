@@ -56,7 +56,7 @@ int main(int argc, char *argv[]){
 	 << "trj" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "dihrest" << "jval"
 	 << "anatrj" << "print" << "friction"
-	 << "version";
+	 << "version" << "gzip";
   
   
   std::string usage;

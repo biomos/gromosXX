@@ -41,7 +41,42 @@ namespace io{
    * energy trajectory argument
    */
   extern std::string argname_tre;
-  
+  /**
+   * velocity trajectory argument
+   */
+  extern std::string argname_trv;
+  /**
+   * force trajectory argument
+   */
+  extern std::string argname_trf;  
+  /**
+   * special trajectory argument
+   */
+  extern std::string argname_trs;
+  /**
+   * replica exchange trajectory argument
+   */
+  extern std::string argname_re;
+  /**
+   * free energy trajectory argument
+   */
+  extern std::string argname_trg;
+  /**
+   * block averaged energy trajectory argument
+   */
+  extern std::string argname_bae;
+  /**
+   * block averaged free energy trajectory argument
+   */
+  extern std::string argname_bag;
+  /**
+   * RAMD trajectory argument
+   */
+  extern std::string argname_tramd;
+  /**
+   * gzip compression argument
+   */
+  extern std::string argname_gzip;
   /**
    * Class Argument
    * Purpose: Parse arguments from the command line or an input file.

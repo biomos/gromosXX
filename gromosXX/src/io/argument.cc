@@ -12,13 +12,22 @@
 
 namespace io{
 
-  std::string argname_topo    = "topo";
-  std::string argname_pttopo  = "pttopo";
-  std::string argname_conf    = "conf";
-  std::string argname_input   = "input";
-  std::string argname_trj     = "trj";
-  std::string argname_fin     = "fin";
-  std::string argname_tre     = "tre";
+  std::string argname_topo       = "topo";
+  std::string argname_pttopo     = "pttopo";
+  std::string argname_conf       = "conf";
+  std::string argname_input      = "input";
+  std::string argname_trj        = "trj";
+  std::string argname_fin        = "fin";
+  std::string argname_tre        = "tre";
+  std::string argname_trg        = "trg";
+  std::string argname_trv        = "trv";
+  std::string argname_trf        = "trf";
+  std::string argname_trs        = "trs";
+  std::string argname_re         = "re";
+  std::string argname_bae        = "bae";
+  std::string argname_bag        = "bag";
+  std::string argname_tramd      = "tramd";
+  std::string argname_gzip       = "gzip";
   
   typedef std::multimap<std::string,std::string>::value_type argType;
 
