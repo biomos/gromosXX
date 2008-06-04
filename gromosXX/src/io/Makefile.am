@@ -10,9 +10,8 @@ xxinclude_HEADERS = 	argument.h \
 			print_block.h \
 			read_input.h \
 			read_special.h \
-			parameter/in_parameter.h \
 			ifp.h \
-			forcefield/in_ifp.h
+                        gzstream.h
 
 xxiotopodir   = $(includedir)/gromosXX/io/topology
 xxiotopo_HEADERS =      topology/in_jvalue.h \
@@ -48,6 +47,7 @@ libgroio_la_SOURCES =	io.cc \
 			print_block.cc \
 			read_input.cc \
 			read_special.cc \
+                        gzstream.cc \
 			parameter/in_parameter.cc \
 			topology/in_topology.cc \
 			topology/in_perturbation.cc \

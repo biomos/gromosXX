@@ -93,7 +93,7 @@ int io::read_parameter(io::Argument const & args,
 		       std::ostream & os,
 		       bool quiet)
 {
-  std::ifstream input_file;
+  io::igzstream input_file;
   
   input_file.open(args[argname_input].c_str());
   
@@ -147,7 +147,7 @@ int io::read_topology(io::Argument const & args,
 		      std::ostream & os,
 		      bool quiet)
 {
-  std::ifstream topo_file, pttopo_file;
+  io::igzstream topo_file, pttopo_file;
   
   topo_file.open(args[argname_topo].c_str());
     if (!topo_file.is_open()){
@@ -216,7 +216,7 @@ int io::read_configuration(io::Argument const & args,
 			   std::ostream & os,
 			   bool quiet)
 {
-  std::ifstream conf_file;
+  io::igzstream conf_file;
 
   DEBUG(7, "reading configuration");
   conf_file.open(args[argname_conf].c_str());
@@ -261,7 +261,7 @@ int io::read_replica_configuration
  bool quiet
  )
 {
-  std::ifstream conf_file;
+  io::igzstream conf_file;
 
   DEBUG(7, "reading replica configurations");
   conf_file.open(args[argname_conf].c_str());

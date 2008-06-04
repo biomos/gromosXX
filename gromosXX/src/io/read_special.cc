@@ -47,7 +47,7 @@ int io::read_special(io::Argument const & args,
 
   // POSRES
   if (sim.param().posrest.posrest){
-    std::ifstream posres_file;
+    io::igzstream posres_file;
   
     if (args.count("posres") != 1){
       io::messages.add("position restraints: no data file specified (use @posres)",
@@ -74,7 +74,7 @@ int io::read_special(io::Argument const & args,
 
   // DISTANCERES
   if (sim.param().distanceres.distanceres){
-    std::ifstream distanceres_file;
+    io::igzstream distanceres_file;
 
     if (args.count("distrest") != 1){
       io::messages.add("distance restraints: no data file specified (use @distrest)",
@@ -102,7 +102,7 @@ int io::read_special(io::Argument const & args,
 
   // DIHREST
   if (sim.param().dihrest.dihrest){
-    std::ifstream dihrest_file;
+    io::igzstream dihrest_file;
 
     if (args.count("dihrest") != 1){
       io::messages.add("dihedral restraints: no data file specified (use @dihrest)",
@@ -129,7 +129,7 @@ int io::read_special(io::Argument const & args,
 
   // J-Value restraints
   if (sim.param().jvalue.mode != simulation::restr_off){
-    std::ifstream jval_file;
+    io::igzstream jval_file;
     
     if (args.count("jval") != 1){
       io::messages.add("jvalue restraints: no data file specified (use @jval)",
@@ -156,7 +156,7 @@ int io::read_special(io::Argument const & args,
   
     // FRICTION
   if (sim.param().stochastic.sd && sim.param().stochastic.ntfr == 2){
-    std::ifstream friction_file;
+    io::igzstream friction_file;
   
     if (args.count("friction") != 1){
       io::messages.add("friction specification: no data file specified (use @friction)",

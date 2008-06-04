@@ -57,7 +57,7 @@ int util::create_simulation(std::string topo,
     return 1;
   }
 
-  std::ifstream input_file, topo_file, pttopo_file, conf_file, 
+  io::igzstream input_file, topo_file, pttopo_file, conf_file, 
     distanceres_file, dihrest_file;
   
   // if we got a parameter file, try to read it...

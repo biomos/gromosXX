@@ -27,6 +27,7 @@
 #include <util/debug.h>
 
 #include <io/message.h>
+#include <io/gzstream.h>
 
 #include <util/timing.h>
 

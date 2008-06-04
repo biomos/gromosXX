@@ -51,7 +51,7 @@ namespace algorithm
     /**
      * trajectory file
      */
-    std::ifstream m_trajectory_file;
+   io::igzstream m_trajectory_file;
     
   };
   
