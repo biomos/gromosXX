@@ -810,11 +810,6 @@ void io::In_Parameter::read_PERTURBATION(simulation::Parameter &param,
                        "In_Parameter", io::message::error);
   }
   
-  if (param.perturbation.read_initial) {
-    io::messages.add("PERTURBATION block: NRDGL != 0 not implemented.",
-                     "In_Parameter", io::message::error);    
-  }
-  
   if (param.perturbation.lambda < 0.0 ||
       param.perturbation.lambda > 1.0) {
     io::messages.add("PERTURBATION block: RLAM must be 0.0 to 1.0.",

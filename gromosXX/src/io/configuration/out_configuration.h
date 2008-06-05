@@ -266,6 +266,11 @@ namespace io {
     void _print_stochastic_integral(configuration::Configuration const &conf,
 				    topology::Topology const &topo,
 				    std::ostream &os);
+   /**
+    * perturbation (slow groth) restart data
+    */ 
+   void _print_pertdata(topology::Topology const &topo,
+                        std::ostream &os);
     
     void _print_distance_restraint_averages(
                                     configuration::Configuration const &conf,

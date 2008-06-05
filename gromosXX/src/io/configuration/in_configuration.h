@@ -163,6 +163,12 @@ namespace io {
 				  simulation::Simulation & sim,
 				  std::ostream & os = std::cout);
     /**
+     * read perturbation restart data
+     */
+    bool read_perturbation(topology::Topology & topo,
+            simulation::Simulation & sim,
+            std::ostream & os = std::cout);
+    /**
      * read distance restraint averages
      */
     bool read_distance_restraint_averages(topology::Topology &topo, 
@@ -238,9 +244,17 @@ namespace io {
 		     std::vector<topology::perturbed_two_body_term_struct>
 		     const & pert_constr);
 
+    /**
+     * read STOCHINT block
+     */
     bool _read_stochastic_integral(math::VArray & stochastic_integral,
 				   std::vector<std::string> &buffer,
 				   int num_atoms, std::string &seed);
+    /**
+     * read PERTDATA block
+     */
+    bool _read_pertdata(topology::Topology & topo,
+                        std::vector<std::string> & buffer);
     
     /**
      * read DISRESEXPAVE block

@@ -62,6 +62,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_pscale(topo, conf, sim, os);
   read_flexv(topo, conf, sim, os);
   read_stochastic_integral(topo, conf, sim, os);
+  read_perturbation(topo, sim, os);
   read_distance_restraint_averages(topo, conf, sim, os);
   read_position_restraints(topo, sim, os);
   
@@ -183,6 +184,7 @@ void io::In_Configuration::read_replica
     read_pscale(topo, conf[0], sim, os);
     read_flexv(topo, conf[0], sim, os);
     read_stochastic_integral(topo, conf[0], sim, os);
+    read_perturbation(topo, sim, os);
     read_distance_restraint_averages(topo, conf[0], sim, os);
   
 	DEBUG(10, "setting boundary type");
@@ -239,6 +241,7 @@ void io::In_Configuration::read_replica
       read_pscale(topo, conf[i], sim, os);
       read_flexv(topo, conf[i], sim, os);
       read_stochastic_integral(topo, conf[i], sim, os);
+      read_perturbation(topo, sim, os);
       read_distance_restraint_averages(topo, conf[i], sim, os);
       
       conf[i].boundary_type = param.boundary.boundary;
@@ -753,6 +756,31 @@ bool io::In_Configuration::read_stochastic_integral
       }
       else {
         io::messages.add("could not read stochastic integrals from configuration",
+                "In_Configuration", io::message::error);
+      }
+    }
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_perturbation
+(
+ topology::Topology &topo, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().perturbation.perturbation){    
+    buffer = m_block["PERTDATA"];
+    if (sim.param().perturbation.read_initial) {
+      if (buffer.size()){
+        block_read.insert("PERTDATA");
+        if (!quiet)
+          os << "\treading PERTDATA...\n";
+        
+        _read_pertdata(topo, buffer);
+      } else {
+        io::messages.add("could not read perturbation data (PERTDATA) from configuration",
                 "In_Configuration", io::message::error);
       }
     }
@@ -1498,6 +1526,29 @@ bool io::In_Configuration::_read_stochastic_integral
   else seed.erase(seed.begin(), seed.end());
   
   DEBUG(12, "trimmed seed: '" << seed << "'");
+  return true;
+}
+
+bool io::In_Configuration::_read_pertdata(topology::Topology & topo,
+        std::vector<std::string> & buffer)
+{
+  std::string s;
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
+  
+  double lambda;
+  _lineStream >> lambda;
+  if (_lineStream.fail()) {
+    io::messages.add("Bad line in PERTDATA block.", "In_Configuration",
+            io::message::error);
+    return false;
+  }
+  
+  // we have to set lambda twice to make sure old_lambda() is also
+  // set to lambda.
+  topo.lambda(lambda);
+  topo.lambda(lambda);
+  topo.update_for_lambda();
   return true;
 }
 

@@ -420,6 +420,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_stochastic_integral(conf, topo, *m_final_conf);
     }
     
+    if(sim.param().perturbation.perturbation){
+      _print_pertdata(topo, *m_final_conf);
+    }
+    
     if(sim.param().distanceres.distanceres < 0){
       _print_distance_restraint_averages(conf, topo, *m_final_conf);
     }
@@ -1830,6 +1834,16 @@ void io::Out_Configuration::_print_stochastic_integral(configuration::Configurat
   os << "# seed\n" << std::setw(10) << std::right 
      << conf.current().stochastic_seed << "\n";
   os << "END\n";
+}
+
+void io::Out_Configuration::_print_pertdata(topology::Topology const &topo,
+					    std::ostream &os)
+{
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(7);
+  os << "PERTDATA" << std::endl
+     << std::setw(15) << topo.lambda() << std::endl
+     << "END" << std::endl;
 }
 
 void io::Out_Configuration::write_replica_step
