@@ -760,14 +760,21 @@ EDS
 # EDS        0,1  
 #              0: no enveloping distribution sampling (EDS) [default]
 #              1: enveloping distribution sampling
-# S         >0.0: smoothness parameter
+# FORM       1,2
+#              1: Single s Hamiltonian
+#              2: Hamiltonian with NUMSTATES*(NUMSTATES-1)/2 (pairwise) s parameters
 # NUMSTATES >1  : number of states
+# S         >0.0: smoothness parameter(s)
 # EIR           : energy offsets for states
 #
-#   EDS     S     
-     1    0.05
+# EDS          
+  1    
+# FUNCTIONAL FORM
+  2
 # NUMSTATES
   3
+# S
+  0.2  0.01 0.1
 # EIR 
   0   20   40
 END

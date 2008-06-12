@@ -113,7 +113,7 @@ namespace simulation
     random_gsl = 1
   };
 
-    /**
+  /**
    * @enum posrest_enum
    * position restraints enumeration
    */
@@ -135,7 +135,33 @@ namespace simulation
      */
     posrest_const = 3,
   };
-  
+  /**
+   * @enum eds_enum
+   * eds functional form enumeration
+   */
+  enum eds_enum {
+    /**
+     * single s parameter i.e.
+     * @f$ V_R = - \left(\beta s \right)^{-1} \ln \sum_i e^{-\beta s \left(V_i-E_i^R\right)} @f$
+     */
+    single_s = 1,
+    /** 
+     * pairwise s parameters i.e.
+     * @f$ V_R = - \beta ^{-1} \ln \left\{
+       \left[
+       \sum_{i,j pairs}
+       \left(
+       e^{-\beta s_{ij} \left(V_i-E_i^R\right)} + e^{-\beta s_{ij} \left(V_j-E_j^R\right)}
+       \right)^{1/s_{ij}}
+       \right]
+       \frac{1}{N-1}
+       \right\}
+       @f$
+     */
+    multi_s = 2,
+  };
+
+
   /**
    * @class Parameter
    * input parameters.
@@ -1596,23 +1622,26 @@ namespace simulation
        * Constructor:
        * Default values:
        * - eds: no eds sampling
-       * - s: 1.0
+       * - form: single_s
        */
-      eds_struct() : eds(false), s(1.0), numstates(0) {}
+      eds_struct() : eds(false), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
-       * @f$ V_R = - \left(\beta s \right)^{-1} \ln \sum_i e^{-\beta s \left(V_i-E_i^R\right)} @f$
        * 
        */
       bool eds;
       /**
-       * smoothness parameter @f$ s@f$ used in reference state Hamiltonian.
+       * functional form of eds Hamiltonian
        */
-      double s;
+      eds_enum form;
       /**
        * number of eds states
        */
       unsigned int numstates;
+      /**
+       * smoothness parameter(s) @f$ s@f$ of @f$ s_{ij}@f$ used in reference state Hamiltonian.
+       */
+      std::vector<double> s;
       /**
        * energy offsets @f$E_i^R@f$ of states
        */

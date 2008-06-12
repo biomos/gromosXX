@@ -2743,6 +2743,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
   
   std::vector<std::string> buffer;
   std::string s;
+  int form;
   
   buffer = m_block["EDS"];
   
@@ -2753,22 +2754,14 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
     int eds;
-    _lineStream >> eds >> param.eds.s >> param.eds.numstates;
-    
+    _lineStream >> eds >> form >> param.eds.numstates;
+    //std::cerr << "eds = " <<  eds << ", form = " << form << ", numstates=" << param.eds.numstates;
     if (_lineStream.fail()){
       io::messages.add("bad line in EDS block",
 		       "In_Parameter", io::message::error);
       return;
     }
-    param.eds.eir.resize(param.eds.numstates,0.0);
-    for (unsigned int i = 0; i < param.eds.numstates; i++){
-      _lineStream >> param.eds.eir[i];
-    }
-    if (_lineStream.fail()){
-      io::messages.add("Error when reading EIR from EDS block",
-                       "In_Parameter", io::message::error);
-      return;
-    }
+    
     
     switch(eds) {
       case 0 : 
@@ -2782,13 +2775,54 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
        io::messages.add("Error in EDS block: EDS must be 0 (no EDS) "
        "or 1 (EDS)", "In_Parameter", io::message::error);
     }
-    if(param.eds.eds){
-      if(param.eds.s <= 0){
-        io::messages.add("Error in EDS block: S must be >0",
+    if (param.eds.eds) {
+      switch(form) {
+        case 1 :{
+          param.eds.form = simulation::single_s;
+          // read in 1 s value
+          param.eds.s.resize(1,1.0);
+          _lineStream >> param.eds.s[0];
+          //std::cerr << " s[0] = " << param.eds.s[0] <<  std::endl;
+          if (param.eds.s[0] <= 0) {
+            io::messages.add("Error in EDS block: S must be >0",
                 "In_Parameter", io::message::error);
+          }
+          break;
+        }
+        case 2: {
+          param.eds.form = simulation::multi_s;
+          const unsigned int n = param.eds.numstates;
+          param.eds.s.resize((n*(n-1))/2,1.0);
+          for (unsigned int pair = 0; pair < param.eds.s.size(); pair++) {
+            _lineStream >> param.eds.s[pair];
+            if (param.eds.s[pair] <= 0) {
+              io::messages.add("Error in EDS block: S must be >0",
+                  "In_Parameter", io::message::error);
+            }
+          }
+          break;
+        }
+        default:
+          io::messages.add("Error in EDS block: functional form must be 1 (single s) "
+              "or 2 (multiple s)", "In_Parameter", io::message::error);
+      }
+      if (_lineStream.fail()) {
+        io::messages.add("Error when reading S from EDS block",
+            "In_Parameter", io::message::error);
+        return;
+      }
+      param.eds.eir.resize(param.eds.numstates, 0.0);
+      for (unsigned int i = 0; i < param.eds.numstates; i++) {
+        _lineStream >> param.eds.eir[i];
+        //std::cerr << "eir = " << param.eds.eir[i] << std::endl;
+      }
+      if (_lineStream.fail()) {
+        io::messages.add("Error when reading EIR from EDS block",
+            "In_Parameter", io::message::error);
+        return;
       }
       
-      if(param.eds.numstates < 1){
+      if(param.eds.numstates < 2){
         io::messages.add("Error in EDS block: NUMSTATES must be >=1.",
                 "In_Parameter", io::message::error);
       }
@@ -2806,9 +2840,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
         }
       }
     }
-
-    
-    
+    //std::cerr << "eds (at end) = " <<  eds << ", form = " << form << ", numstates=" << param.eds.numstates;
   }
 }
 
