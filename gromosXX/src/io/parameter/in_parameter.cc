@@ -25,6 +25,7 @@
 #include <math/random.h>
 
 #include "in_parameter.h"
+#include "gromosXX/simulation/parameter.h"
 
 #ifdef OMP
 #include <omp.h>
@@ -2637,7 +2638,11 @@ void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
     }
     
     switch(cos) {
-      case 0 : param.polarize.cos = false; break;
+      case 0 : {
+        param.polarize.cos = false;
+        param.polarize.write = 0;
+        break;
+      }
       case 1 : {
         param.polarize.cos = true; 
         param.force.interaction_function = simulation::pol_lj_crf_func;

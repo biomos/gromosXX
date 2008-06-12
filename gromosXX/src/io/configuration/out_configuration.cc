@@ -68,6 +68,7 @@ io::Out_Configuration::Out_Configuration(std::string title,
     m_every_free_energy(0),
     m_every_blockaverage(0),
     m_every_ramd(0),
+    m_every_cos_pos(0),
     m_write_blockaverage_energy(false),
     m_write_blockaverage_free_energy(false),
     m_precision(9),
@@ -351,7 +352,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
     
     if(m_every_cos_pos && (sim.steps() % m_every_cos_pos) == 0){
-      if (!special_timestep_printed){
+      if (!special_timestep_printed) {
 	_print_timestep(sim, *m_special_traj);
         special_timestep_printed = true;
       }
