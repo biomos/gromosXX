@@ -21,8 +21,8 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 DISRESSPEC
-# DISH  DISC   DISN
-  0.1   0.153  0.1
+# DISH  DISC   
+  0.1   0.153  
 # i  j  k  l  type    i  j  k  l  type    r0    w0    rah
   1  0  0  0  0       10 12 11 13 3       0.2   1.0   0
 END
@@ -40,11 +40,9 @@ The following virtual atom types are known:
 <tr> <td> 4 </td> <td> CH2 (non-stereospecific) </td> </tr>
 <tr> <td> 5 </td> <td> CH3 </td> </tr>
 <tr> <td> 6 </td> <td> CH3 (non-stereospecific, Val, Leu) </td> </tr>
-<tr> <td> 7 </td> <td> CH1 (aromatic at C(delta) or C(epsilon) in Phe or
-Tyr </td> </tr>
-<tr> <td> 8 </td> <td> NH2 </td> </tr>
-<tr> <td> cog </td> <td> centre of geometry </td> </tr>
-<tr> <td> com </td> <td> centre of mass </td> </tr>
+<tr> <td> 7 </td> <td> 3CH3 (non-stereospecific)</td> </tr>
+<tr> <td> -1 </td> <td> centre of geometry </td> </tr>
+<tr> <td> -2 </td> <td> centre of mass </td> </tr>
 </table>
 <br>
 
@@ -61,8 +59,8 @@ And <tt>r0</tt> is the restraint distance, <tt>w0</tt> a weight factor
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 PERTDISRESSPEC
-# DISH  DISC   DISN
-  0.1   0.153  0.1
+# DISH  DISC   
+  0.1   0.153  
 # i  j  k  l  type    i  j  k  l  type n m   A_r0  A_w0  B_r0   B_w0  rah
   1  0  0  0  0       10 12 11 13 3    1 1    0.2   1.0   0.5    2.0   0
 END
@@ -78,8 +76,8 @@ are the parameters for hidden restraints.
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 EDSDISRESSPEC
-# DISH  DISC   DISN
-  0.1   0.153  0.1
+# DISH  DISC  
+  0.1   0.153  
 # N: number of eds states (3 in this example)
 # i  j  k  l  type    i  j  k  l  type    r0[1 ... N]    w0[1 ... N]    rah
   1  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  1.0  0.0 0.0    0
