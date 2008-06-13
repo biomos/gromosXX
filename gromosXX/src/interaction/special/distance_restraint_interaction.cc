@@ -53,7 +53,7 @@ static int _calculate_distance_restraint_interactions
   // for(int i=0; it != to; ++it, ++i){
   for(; it != to; ++it, ++ave_it){
 
-    periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
+    periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
 #ifndef NDEBUG
     for(int i=0;i<it->v1.size();i++){
       DEBUG(10, "v1 (atom " << i+1 << "): " << it->v1.atom(i)+1);
@@ -62,8 +62,8 @@ static int _calculate_distance_restraint_interactions
       DEBUG(10, "v2 (atom " << i+1 << "): " << it->v2.atom(i)+1);
     }
 #endif
-    DEBUG(10, "pos(v1) = " << math::v2s(it->v1.pos(conf)));
-    DEBUG(10, "pos(v2) = " << math::v2s(it->v2.pos(conf)));
+    DEBUG(10, "pos(v1) = " << math::v2s(it->v1.pos(conf,topo)));
+    DEBUG(10, "pos(v2) = " << math::v2s(it->v2.pos(conf,topo)));
 
     DEBUG(9, "DISTANCERES v : " << math::v2s(v));
     
@@ -102,8 +102,8 @@ static int _calculate_distance_restraint_interactions
     
     DEBUG(9, "Distanceres force : " << math::v2s(f));
 
-    it->v1.force(conf,  f);
-    it->v2.force(conf, -f);  
+    it->v1.force(conf, topo,  f);
+    it->v2.force(conf, topo, -f);  
 
     if(it->rah * dist < it->rah * it->r0)
       energy = 0;
@@ -166,7 +166,7 @@ static void _init_averages
   for(std::vector<topology::distance_restraint_struct>::const_iterator
         it = topo.distance_restraints().begin(),
         to = topo.distance_restraints().end(); it != to; ++it) {
-    periodicity.nearest_image(it->v1.pos(conf), it->v2.pos(conf), v);
+    periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
     conf.special().distanceres_av.push_back(pow(math::abs(v), -3.0));
   }
 }

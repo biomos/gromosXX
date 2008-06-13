@@ -49,7 +49,8 @@ io::In_Distanceres::read(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin()+1,
 	to = buffer.end()-1;
       
-      double dish,disc,disn;
+      double dish,disc;
+      bool nr_atoms=true;      
       
       DEBUG(10, "reading in DISTANCERES data");
       
@@ -77,26 +78,26 @@ io::In_Distanceres::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
       
-      _lineStream >> dish >> disc >> disn;
+             
+      _lineStream >> dish >> disc;
       
       if(_lineStream.fail()){
 	std::ostringstream msg;
-	msg << "bad line in DISRESSPEC block: failed to read in DISH , DISC and DISN"  << std::endl;
+	msg << "bad line in DISRESSPEC block: failed to read in DISH and DISC"  << std::endl;
 	io::messages.add(msg.str(),
 			 "In_Distanceres",
 			 io::message::error);
       }
       
+    
       ++it;
       
       if (!quiet){
 	os << std::setw(10) << "DISH"
 	   << std::setw(10) << "DISC"
-           << std::setw(10) << "DISN"
 	   << "\n" 
 	   <<  std::setw(10)<< dish 
 	   <<  std::setw(10)<< disc
-           <<  std::setw(10)<< disn
 	   << "\n";
 	
 	os << std::setw(10) << "i"
@@ -131,7 +132,16 @@ io::In_Distanceres::read(topology::Topology& topo,
 	  int atom;
 	  _lineStream >> atom;
 	  // -1 because we directly convert to array indices
-	  if (atom > 0) atom1.push_back(atom - 1); 
+	  if (atom > 0) atom1.push_back(atom - 1);
+          else if (atom <0){
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than " 
+                    << io::In_Distanceres::MAX_ATOMS << " atoms"  << std::endl;
+            io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);              
+            nr_atoms=false;
+          }
 	}      
 	_lineStream >> type1;
 	
@@ -139,6 +149,16 @@ io::In_Distanceres::read(topology::Topology& topo,
 	  int atom;
 	  _lineStream >> atom;
 	  if (atom > 0) atom2.push_back(atom - 1);
+          else if (atom <0){
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than " 
+                    << io::In_Distanceres::MAX_ATOMS << " atoms"  << std::endl;
+            io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);              
+            nr_atoms=false;
+          }
+          
 	}      
 	_lineStream >> type2;
 	
@@ -155,31 +175,34 @@ io::In_Distanceres::read(topology::Topology& topo,
 	}
 	
 	// g++ 3.2 fix
-	util::virtual_type t1 = util::virtual_type(type1);
-	util::virtual_type t2 = util::virtual_type(type2);
+        if( nr_atoms){
+	  util::virtual_type t1 = util::virtual_type(type1);
+	  util::virtual_type t2 = util::virtual_type(type2);
+
+	  util::Virtual_Atom v1(t1, atom1, dish, disc);
+	  util::Virtual_Atom v2(t2, atom2, dish, disc);
+        
 	
-	util::Virtual_Atom v1(t1, atom1, dish, disc, disn);
-	util::Virtual_Atom v2(t2, atom2, dish, disc, disn);
+	  topo.distance_restraints().push_back
+	    (topology::distance_restraint_struct(v1,v2,r0,w0,rah));
 	
-	topo.distance_restraints().push_back
-	  (topology::distance_restraint_struct(v1,v2,r0,w0,rah));
-	
-	if (!quiet){
-	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-	    // the first element has the width 10, if i is bigger then the number of atoms
-	    // specified, just print 0.
-	    os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
-	  }
-	  os << std::setw(5) << type1;
+	  if (!quiet){
+	    for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
+	      // the first element has the width 10, if i is bigger then the number of atoms
+	      // specified, just print 0.
+	      os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
+	    }
+	    os << std::setw(5) << type1;
 	  
-	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-	    os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
-	  }
-	  os << std::setw(5) << type2
-	     << std::setw(8) << r0
-	     << std::setw(8) << w0
-	     << std::setw(4) << rah
-	     << "\n";
+	    for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
+	      os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
+	    }
+	    os << std::setw(5) << type2
+	       << std::setw(8) << r0
+	       << std::setw(8) << w0
+	       << std::setw(4) << rah
+	       << "\n";
+          }
 	}  
       }
     }
@@ -204,7 +227,8 @@ io::In_Distanceres::read(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin()+1,
 	to = buffer.end()-1;
       
-      double dish, disc, disn;
+      double dish, disc;
+      bool nr_atoms=true;
       
       DEBUG(10, "reading in DISTANCERES (PERTDISRESSPEC data");
       
@@ -230,25 +254,23 @@ io::In_Distanceres::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
       
-      _lineStream >> dish >> disc >> disn;
+      _lineStream >> dish >> disc ;
       
       if(_lineStream.fail()){
 	std::ostringstream msg;
-	msg << "bad line in PERTDISRESSPEC block: failed to read in DISH, DISC and DISN"  << std::endl;
+	msg << "bad line in PERTDISRESSPEC block: failed to read in DISH and DISC"  << std::endl;
 	io::messages.add(msg.str(),
 			 "In_Distanceres",
 			 io::message::error);
       }
-      
+  
       ++it;
       if (!quiet){
 	os << std::setw(10) << "DISH"
 	   << std::setw(10) << "DISC"
-           << std::setw(10) << "DISN"
 	   << "\n" 
 	   <<  std::setw(10)<< dish 
 	   <<  std::setw(10)<< disc
-           <<  std::setw(10)<< disn
 	   << "\n";
 	
 	os << std::setw(10) << "i"
@@ -288,6 +310,16 @@ io::In_Distanceres::read(topology::Topology& topo,
 	  int atom;
 	  _lineStream >> atom;
 	  if (atom > 0) atom1.push_back(atom - 1);
+          else if (atom <0){
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than " 
+                    << io::In_Distanceres::MAX_ATOMS << " atoms"  << std::endl;
+            io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);              
+            nr_atoms=false;              
+          
+          }
 	}      
 	_lineStream >> type1;
 	
@@ -295,6 +327,16 @@ io::In_Distanceres::read(topology::Topology& topo,
 	  int atom;
 	  _lineStream >> atom;
 	  if (atom > 0) atom2.push_back(atom - 1);
+          else if (atom  <0){
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than  " 
+                    << io::In_Distanceres::MAX_ATOMS << " atoms"  << std::endl;
+            io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);              
+            nr_atoms=false;              
+          
+          }
 	}      
 	
 	_lineStream >> type2;
@@ -308,35 +350,36 @@ io::In_Distanceres::read(topology::Topology& topo,
 			   "In_Distanceres",
 			   io::message::error);
 	}
+	if( nr_atoms){
+	  util::virtual_type t1 = util::virtual_type(type1);
+	  util::virtual_type t2 = util::virtual_type(type2);
 	
-	util::virtual_type t1 = util::virtual_type(type1);
-	util::virtual_type t2 = util::virtual_type(type2);
+	  util::Virtual_Atom v1(t1, atom1, dish, disc);
+	  util::Virtual_Atom v2(t2, atom2, dish, disc);
 	
-	util::Virtual_Atom v1(t1, atom1, dish, disc, disn);
-	util::Virtual_Atom v2(t2, atom2, dish, disc, disn);
+	  topo.perturbed_distance_restraints().push_back
+	    (topology::perturbed_distance_restraint_struct(v1,v2,n,m,A_r0,B_r0,A_w0,B_w0, rah));
 	
-	topo.perturbed_distance_restraints().push_back
-	  (topology::perturbed_distance_restraint_struct(v1,v2,n,m,A_r0,B_r0,A_w0,B_w0, rah));
-	
-	if (!quiet){
-	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-	    os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
-	  }
-	  os << std::setw(5) << type1;
+	  if (!quiet){
+	    for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
+	      os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
+	    }
+	    os << std::setw(5) << type1;
 	  
-	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-	    os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
+	    for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
+	      os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
+	    }
+	    os << std::setw(5) << type2
+	       << std::setw(5) << n
+	       << std::setw(5) << m
+	       << std::setw(8) << A_r0	    
+	       << std::setw(8) << A_w0
+	       << std::setw(8) << B_r0
+	       << std::setw(8) << B_w0
+	       << std::setw(8) << rah
+	       << "\n";
 	  }
-	  os << std::setw(5) << type2
-	     << std::setw(5) << n
-	     << std::setw(5) << m
-	     << std::setw(8) << A_r0	    
-	     << std::setw(8) << A_w0
-	     << std::setw(8) << B_r0
-	     << std::setw(8) << B_w0
-	     << std::setw(8) << rah
-	     << "\n";
-	}
+        }
       }
       
     }//PERTDISRESPEC DISTANCERES
@@ -365,8 +408,9 @@ io::In_Distanceres::read(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin()+1,
 	to = buffer.end()-1;
       
-      double dish,disc,disn;
-            
+      double dish,disc;
+      bool nr_atoms=true;
+      
       DEBUG(10, "reading in EDSDISRESSPEC data");
       
       if (!quiet){
@@ -393,16 +437,15 @@ io::In_Distanceres::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
       
-      _lineStream >> dish >> disc >> disn;
+      _lineStream >> dish >> disc;
       
       if(_lineStream.fail()){
 	std::ostringstream msg;
-	msg << "bad line in EDSDISRESSPEC block: failed to read in DISH , DISC and DISN"  << std::endl;
+	msg << "bad line in EDSDISRESSPEC block: failed to read in DISH and  DISC"  << std::endl;
 	io::messages.add(msg.str(),
 			 "In_Distanceres",
 			 io::message::error);
-      }
-      
+      }     
       ++it;
       
       const unsigned int numstates = sim.param().eds.numstates;
@@ -410,11 +453,9 @@ io::In_Distanceres::read(topology::Topology& topo,
       if (!quiet){
 	os << std::setw(10) << "DISH"
 	   << std::setw(10) << "DISC"
-           << std::setw(10) << "DISN"
 	   << "\n" 
 	   <<  std::setw(10)<< dish 
 	   <<  std::setw(10)<< disc
-           <<  std::setw(10)<< disn
 	   << "\n";
 	
 	os << std::setw(10) << "i"
@@ -459,6 +500,16 @@ io::In_Distanceres::read(topology::Topology& topo,
 	  _lineStream >> atom;
 	  // -1 because we directly convert to array indices
 	  if (atom > 0) atom1.push_back(atom - 1); 
+          else if (atom <0){
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than " 
+                    << io::In_Distanceres::MAX_ATOMS << " atoms"  << std::endl;
+            io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);              
+            nr_atoms=false;
+          
+          }
 	}      
 	_lineStream >> type1;
 	
@@ -466,6 +517,16 @@ io::In_Distanceres::read(topology::Topology& topo,
 	  int atom;
 	  _lineStream >> atom;
 	  if (atom > 0) atom2.push_back(atom - 1);
+          else if (atom <0){
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than " 
+                    << io::In_Distanceres::MAX_ATOMS << " atoms"  << std::endl;
+            io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);              
+            nr_atoms=false;              
+          
+          }          
 	}      
 	_lineStream >> type2;
         
@@ -488,40 +549,42 @@ io::In_Distanceres::read(topology::Topology& topo,
 	}
 	
 	// g++ 3.2 fix
-	util::virtual_type t1 = util::virtual_type(type1);
-	util::virtual_type t2 = util::virtual_type(type2);
+        if( nr_atoms){
+	  util::virtual_type t1 = util::virtual_type(type1);
+	  util::virtual_type t2 = util::virtual_type(type2);
 	
-	util::Virtual_Atom v1(t1, atom1, dish, disc, disn);
-	util::Virtual_Atom v2(t2, atom2, dish, disc, disn);
+	  util::Virtual_Atom v1(t1, atom1, dish, disc);
+	  util::Virtual_Atom v2(t2, atom2, dish, disc);
 	
-	topo.eds_distance_restraints().push_back
-	  (topology::eds_distance_restraint_struct(v1,v2,r0,w0,rah));
+	  topo.eds_distance_restraints().push_back
+	    (topology::eds_distance_restraint_struct(v1,v2,r0,w0,rah));
 	
-	if (!quiet){
-	  for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-	    // the first element has the width 10, if i is bigger then the number of atoms
-	    // specified, just print 0.
-	    os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
+	  if (!quiet){
+	    for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
+	      // the first element has the width 10, if i is bigger then the number of atoms
+	      // specified, just print 0.
+	      os << std::setw(i == 0 ? 10 : 8) << (i < atom1.size() ? atom1[i]+1 : 0);
+	    }
+	    os << std::setw(5) << type1;
+	
+            for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
+              os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
+            }
+            os << std::setw(5) << type2;
+            os << "\t" << std::setw(12) << "   ";
+            for(unsigned int i = 0; i < numstates; i++){
+              os << std::setw(8) << r0[i];
+            }
+            os << std::setw(12) << "     ";
+            for(unsigned int i = 0; i < numstates; i++){
+              os << std::setw(10) << w0[i];
+            }
+            os << "  ";
+          
+            os << std::setw(4) << rah << "\n";
+          
 	  }
-	  os << std::setw(5) << type1;
-	
-          for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-            os << std::setw(i == 0 ? 10 : 8) << (i < atom2.size() ? atom2[i]+1 : 0);
-          }
-          os << std::setw(5) << type2;
-          os << "\t" << std::setw(12) << "   ";
-          for(unsigned int i = 0; i < numstates; i++){
-            os << std::setw(8) << r0[i];
-          }
-          os << std::setw(12) << "     ";
-          for(unsigned int i = 0; i < numstates; i++){
-            os << std::setw(10) << w0[i];
-          }
-          os << "  ";
-          
-          os << std::setw(4) << rah << "\n";
-          
-	}
+        }
       }
       
     }

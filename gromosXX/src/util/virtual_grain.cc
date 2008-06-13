@@ -38,7 +38,7 @@ void util::update_virtual_pos(topology::Topology & cg_topo,
     assert(cg_conf.current().pos.size() > unsigned(cg_topo.virtual_grains()[i].i));
 
     DEBUG(10, "virtual pos " << cg_topo.virtual_grains()[i].i
-	  << " = " << math::v2s(cg_topo.virtual_grains()[i].atom.pos(conf)));
+	  << " = " << math::v2s(cg_topo.virtual_grains()[i].atom.pos(conf, topo)));
     
     // std::cerr << "virtual pos [" << i << "] : " << cg_topo.virtual_grains()[i].i << std::endl;
     // std::cerr << "\t(" << cg_topo.virtual_grains()[i].atom.size() << ")";
@@ -46,7 +46,7 @@ void util::update_virtual_pos(topology::Topology & cg_topo,
     // std::cerr << std::endl;
     
     cg_conf.current().pos(cg_topo.virtual_grains()[i].i)
-      = cg_topo.virtual_grains()[i].atom.pos(conf);
+      = cg_topo.virtual_grains()[i].atom.pos(conf, topo);
   }
 }
 
@@ -108,7 +108,7 @@ void util::update_virtual_force(topology::Topology & cg_topo,
     // (conf, steps * cg_conf.old().force(cg_topo.virtual_grains()[i].i));
 
     cg_topo.virtual_grains()[i].atom.force
-      (conf, cg_conf.old().force(cg_topo.virtual_grains()[i].i));
+      (conf, topo, cg_conf.old().force(cg_topo.virtual_grains()[i].i));
     
     // }
   }

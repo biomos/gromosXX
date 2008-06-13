@@ -22,8 +22,8 @@
 #define MODULE util
 #define SUBMODULE util
 
-static const double TETHCO=0.577350;
-static const double TETHSI=0.816497;
+static const double TETHCO=0.5773502692;
+static const double TETHSI=0.8164965809;
 
 
 
@@ -33,19 +33,17 @@ util::Virtual_Atom::Virtual_Atom()
      m_atom(),
      m_dish(0.1),
      m_disc(0.153),
-     m_disn(0.1),
      m_orientation(0)
 {
 }
 
 util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
-				 double dish, double disc, double disn, 
+				 double dish, double disc,
                                  int orientation)
   :  m_type(type),
      m_atom(atom),
      m_dish(dish),
      m_disc(disc),
-     m_disn(disn),
      m_orientation(orientation)
 {
   bool strict = true; // do the test?
@@ -53,7 +51,6 @@ util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
                              // type
   switch(m_type) {
     case 0: // explicit atom
-    case 7: // rotating ring
       expected = 1;
       break;
     case 1: // CH1
@@ -62,19 +59,19 @@ util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
     case 2: // aromatic H
     case 3: // non-stereospecific CH2
     case 4: // stereospecific CH2
-    case 6: // non-stereospecific CH3 (Leu, Val)
+    case 6: // non-stereospecific CH3 (Leu, Val)     
       expected = 3;
       break;
     case 5: // CH3
-    case 8: // NH2-group (one pseudosite)
-    case 9: // (CH3)3-group (one psuedosite)
+    case va_3CH3: // (CH3)3-group (one psuedosite)
       expected = 2;
       break;
-    case 10: // cog
+    case va_cog: // cog
+    case va_com:
       strict = false;
       break;
     default:
-      io::messages.add("Virual Atom", "wrong type", io::message::error);
+      io::messages.add("Virtual Atom", "wrong type", io::message::error);
   }
 
   if (strict && expected != m_atom.size()) {
@@ -93,6 +90,7 @@ template<math::boundary_enum B>
 void util::Virtual_Atom::_pos
 (
  math::VArray const & position,
+ topology::Topology const & topo,
  math::Box const & box,
  math::Vec & p
 )const
@@ -105,7 +103,6 @@ void util::Virtual_Atom::_pos
   switch(m_type){
     
     case 0: // explicit atom
-    case 7: // rotating ring
       assert(m_atom.size()>0);
       p = posi; 
       break;
@@ -148,7 +145,7 @@ void util::Virtual_Atom::_pos
       p = posi + m_dish * TETHCO / math::abs(s) * s;
       break;
       
-    case 4: // stereospecific CH2
+      case 4: // stereospecific CH2
       assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -185,16 +182,7 @@ void util::Virtual_Atom::_pos
       p = posi - TETHCO * (m_disc + m_dish / 3.0) / math::abs(s) * s;
       break;
       
-    case 8: // NH2-group (one pseudosite)
-      assert(m_atom.size()>1);
-      periodicity.nearest_image(position(m_atom[1]), posi, posj);
-      posj += posi;
-      
-      s = 2.0 * posi - posj - posk;
-      p = posi - (m_disn * 0.5) * s / math::abs(s);
-      break;
-      
-    case 9: // (CH3)3-group (one psuedosite)
+    case va_3CH3: // (CH3)3-group (one psuedosite)
       assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -203,7 +191,7 @@ void util::Virtual_Atom::_pos
       p = posi +  (m_disc + m_dish / 3.0) / (3 * math::abs(s)) * s;
       break;
 
-    case 10: // cog
+    case va_cog: // cog
       {
 	assert(m_atom.size() > 0);
 	math::Vec cog(0.0, 0.0, 0.0);
@@ -211,22 +199,40 @@ void util::Virtual_Atom::_pos
 	  math::Vec v;
 	  periodicity.nearest_image(position(m_atom[i]), position(m_atom[0]), v);
 	  cog += v;
+          DEBUG(10, "virtual atom m_atom[i] " << m_atom[i] << ", i  " << i );
 	}
 	cog /= m_atom.size();
-	p = cog + position(m_atom[0]);
+	p = cog + posi;
 	break;
       }
-      
+    case va_com: // cog
+      {
+        
+	assert(m_atom.size() > 0);
+	math::Vec cog(0.0, 0.0, 0.0);
+        double mass_com=topo.mass()(m_atom[0]);
+	for(unsigned int i=1; i<m_atom.size(); ++i){
+	  math::Vec v;
+	  periodicity.nearest_image(position(m_atom[i]), position(m_atom[0]), v);
+	  cog += topo.mass()(m_atom[i])*v;
+          mass_com+=topo.mass()(m_atom[i]);
+          DEBUG(10, "virtual atom m_atom[i] " << m_atom[i] << ", mass  " << topo.mass()(m_atom[i]) );
+	}
+        DEBUG(10, "Virtual atom cog " << cog(0) << ", " << cog(1) << ", " << cog(2));
+	cog /= mass_com;
+	p = cog + posi;
+	break;
+      } 
     default:
       io::messages.add("Virual Atom", "wrong type", io::message::critical);
       p = math::Vec(0,0,0);
   }
 }
 
-math::Vec util::Virtual_Atom::pos(configuration::Configuration & conf)const
+math::Vec util::Virtual_Atom::pos(configuration::Configuration & conf,  topology::Topology & topo)const
 {
   math::Vec p;
-  SPLIT_BOUNDARY(_pos, conf.current().pos, conf.current().box, p);
+  SPLIT_BOUNDARY(_pos, conf.current().pos, topo, conf.current().box, p);
   return p;
 }
 
@@ -234,6 +240,7 @@ template<math::boundary_enum B>
 void util::Virtual_Atom::_force
 (
  math::VArray const & position,
+ topology::Topology const & topo,       
  math::Box const & box,
  math::Vec const & f,
  math::VArray & force
@@ -252,7 +259,6 @@ void util::Virtual_Atom::_force
   switch(m_type){
     
     case 0: // explicit atom
-    case 7: // rotating ring
       assert(m_atom.size()>0);
       force(m_atom[0])+=f;
       break;
@@ -638,43 +644,8 @@ void util::Virtual_Atom::_force
       force(m_atom[2])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       
       break;
-    case 8: // NH2-group (one pseudosite)
-      assert(m_atom.size()>1);
-      periodicity.nearest_image(position(m_atom[1]), posi, posj);
-      posj += posi;
-      periodicity.nearest_image(position(m_atom[2]), posi, posk);
-      posk += posi;
-
-      s = 2.0 * posi - posj - posk;
-      abs_s=math::abs(s);
-     
-      calc1= math::Vec(-m_disn*(abs_s*abs_s - s(0)*s(0)),
-		       m_disn*s(1)*s(0), 
-		       m_disn*s(2)*s(0))/(abs_s*abs_s*abs_s)+math::Vec(1,0,0);
-      calc2= math::Vec(m_disn*s(1)*s(0),
-		       -m_disn*(abs_s*abs_s - s(1)*s(1)),
-		       m_disn*s(2)*s(1))/(abs_s*abs_s*abs_s)+math::Vec(0,1,0);
-      calc3= math::Vec(m_disn*s(2)*s(0),
-		       m_disn*s(2)*s(1),
-		       -m_disn*(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s)+
-                       math::Vec(0,0,1);     
-      force(m_atom[0])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       
-      calc1=-0.5*m_disn*math::Vec(-(abs_s*abs_s - s(0)*s(0)),
-				  s(1)*s(0), 
-				  s(2)*s(0))/(abs_s*abs_s*abs_s);
-      calc2=-0.5*m_disn*math::Vec(s(1)*s(0),
-				  -(abs_s*abs_s - s(1)*s(1)),
-				  s(2)*s(1))/(abs_s*abs_s*abs_s);
-      calc3=-0.5*m_disn*math::Vec(s(2)*s(0),
-				  s(2)*s(1),
-				  -(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s);
-      force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
-      force(m_atom[2])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
-      
-      break;
-      
-    case 9: // (CH3)3-group (one psuedosite)
+    case va_3CH3: // (CH3)3-group (one psuedosite)
       assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -706,11 +677,23 @@ void util::Virtual_Atom::_force
       force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
 
-    case 10: // cog
+    case va_cog: // cog
       assert(m_atom.size() > 0);
       {
 	for(unsigned int i=0; i<m_atom.size(); ++i){
 	  force(m_atom[i]) += f / m_atom.size();
+	}
+	break;
+      }
+    case va_com: // com
+      assert(m_atom.size() > 0);
+      {
+        double mass_com=0.0;
+        for(unsigned int i=0; i<m_atom.size(); ++i){
+            mass_com += topo.mass()(i);
+        }
+	for(unsigned int i=0; i<m_atom.size(); ++i){
+	  force(m_atom[i]) += f * topo.mass()(i) /  mass_com ;
 	}
 	break;
       }
@@ -725,18 +708,20 @@ void util::Virtual_Atom::_force
 void util::Virtual_Atom::force
 (
  configuration::Configuration & conf,
+ topology::Topology & topo,
  math::Vec const f
 )const
 {
-  SPLIT_BOUNDARY(_force, conf.current().pos, conf.current().box, f, conf.current().force);
+  SPLIT_BOUNDARY(_force, conf.current().pos, topo, conf.current().box, f, conf.current().force);
 }
 
 void util::Virtual_Atom::force
 (
  configuration::Configuration & conf,
+ topology::Topology & topo,
  math::Vec const f,
  math::VArray & force
 )const
 {
-  SPLIT_BOUNDARY(_force, conf.current().pos, conf.current().box, f, force);
+  SPLIT_BOUNDARY(_force, conf.current().pos, topo , conf.current().box, f, force);
 }

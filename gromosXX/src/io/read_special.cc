@@ -44,7 +44,6 @@ int io::read_special(io::Argument const & args,
 		     std::ostream & os,
 		     bool quiet)
 {
-
   // POSRES
   if (sim.param().posrest.posrest){
     io::igzstream posres_file;
