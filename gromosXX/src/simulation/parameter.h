@@ -575,7 +575,7 @@ namespace simulation
        * - velocity_solute_only false (write solute and solvent)
        * - force_solute_only false (write solute and solvent)
        */
-      write_struct() : position(0), velocity(0), energy(0), free_energy(0), 
+      write_struct() : position(0), velocity(0), force(0), energy(0), free_energy(0), 
 		       block_average(0), position_solute_only(false),
                        velocity_solute_only(false), force_solute_only(false) {}
       
