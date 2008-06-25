@@ -111,7 +111,7 @@ namespace interaction
      * check whether "fast" spc loops
      * should be used
      */
-    void check_spc_loop
+    int check_spc_loop
     (
      topology::Topology const & topo,
      configuration::Configuration const & conf,

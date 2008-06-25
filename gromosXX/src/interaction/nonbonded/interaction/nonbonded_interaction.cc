@@ -87,9 +87,6 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
-  assert((sim.param().force.spc_loop <= 0) || 
-	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
-
   m_timer.start();
 
   // check if we want to calculate nonbonded
@@ -290,7 +287,10 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (!quiet)
     os << "\n";
   
-  check_spc_loop(topo, conf, sim, os, quiet);
+  if (check_spc_loop(topo, conf, sim, os, quiet) != 0) {
+    io::messages.add("SPC loop was disabled", "Nonbonded_Interaction",
+            io::message::warning);
+  }
   DEBUG(9, "nonbonded init done");
   return 0;
 }
@@ -300,7 +300,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 // helper functions 
 //***************************************************************************
 
-void interaction::Nonbonded_Interaction::check_spc_loop
+int interaction::Nonbonded_Interaction::check_spc_loop
 (
  topology::Topology const & topo,
  configuration::Configuration const & conf,
@@ -311,27 +311,19 @@ void interaction::Nonbonded_Interaction::check_spc_loop
   DEBUG(7, "checking for spc interaction loops");
   DEBUG(10, " param: spc_loop = " << sim.param().force.spc_loop);
   
-
   if (sim.param().force.spc_loop == -1){
     DEBUG(8, "standard loops, user request");
     // sim.param().force.spc_loop = 0;
     if (!quiet)
       os << "\tusing standard solvent loops (user request)\n";
-    return;
-  }
-
-  if (sim.param().pairlist.grid){
-    sim.param().force.spc_loop = 0;
-    if (!quiet)
-      os << "\tusing standard solvent loops (grid based pairlist)\n";
-    return;
+    return 0;
   }
   
   if (sim.param().pairlist.atomic_cutoff){
     sim.param().force.spc_loop = 0;
     if (!quiet)
       os << "\tusing standard solvent loops (atomic cutoff)\n";
-    return;
+    return 1;
   }
   
   DEBUG(10, "num_solvents = " << topo.num_solvents());
@@ -363,7 +355,7 @@ void interaction::Nonbonded_Interaction::check_spc_loop
       else{
 	os << "\tusing standard solvent loops (no solvent in topology!)\n\n";
       }
-    return;
+    return 1;
   }
   
   DEBUG(10, "checking charges...");
@@ -381,7 +373,7 @@ void interaction::Nonbonded_Interaction::check_spc_loop
 		  << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms()+1) << "\n"
 		  << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms()+2) << "\n\n";
 	  
-    return;
+    return 1;
   }
   
   // check lj parameters
@@ -415,7 +407,7 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     sim.param().force.spc_loop = 0;
     if (!quiet)
       os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
-    return;
+    return 1;
   }
   
   // check four_pi_eps_i
@@ -425,7 +417,7 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     sim.param().force.spc_loop = 0;
     if(!quiet)
       os << "\tusing standard solvent loops ((4 pi eps0)^-1 does not match)\n";
-    return;
+    return 1;
   }
    
   // check energy groups
@@ -438,14 +430,15 @@ void interaction::Nonbonded_Interaction::check_spc_loop
     if(!quiet)
       os << "\tusing standard solvent loops (energy group partitioning incompatible).\n"
               << "\tAll solvent atoms must be in one single energy group. ";
-    return;
+    return 1;
   }
     
   DEBUG(10, "happy to force spc loops");
   sim.param().force.spc_loop = 1;
   if (!quiet)
     os << "\tusing spc solvent loops\n";
-    return;
+  
+  return 0;
     
 }
 
