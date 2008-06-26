@@ -309,18 +309,18 @@ int interaction::Nonbonded_Interaction::check_spc_loop
  bool quiet)
 {
   DEBUG(7, "checking for spc interaction loops");
-  DEBUG(10, " param: spc_loop = " << sim.param().force.spc_loop);
+  DEBUG(10, " param: special_loop = " << sim.param().force.special_loop);
   
-  if (sim.param().force.spc_loop == -1){
+  if (sim.param().force.special_loop ==  simulation::special_loop_off){
     DEBUG(8, "standard loops, user request");
-    // sim.param().force.spc_loop = 0;
+    // sim.param().force.special_loop = 0;
     if (!quiet)
       os << "\tusing standard solvent loops (user request)\n";
     return 0;
   }
   
   if (sim.param().pairlist.atomic_cutoff){
-    sim.param().force.spc_loop = 0;
+    sim.param().force.special_loop =  simulation::special_loop_off;
     if (!quiet)
       os << "\tusing standard solvent loops (atomic cutoff)\n";
     return 1;
@@ -337,7 +337,7 @@ int interaction::Nonbonded_Interaction::check_spc_loop
   
     DEBUG(10, "standard loops...");
     
-    sim.param().force.spc_loop = 0;
+    sim.param().force.special_loop =  simulation::special_loop_off;
     if (!quiet)
       if (topo.num_solvents() > 0){
 	if (topo.num_solvent_molecules(0) == 0){
@@ -366,7 +366,7 @@ int interaction::Nonbonded_Interaction::check_spc_loop
       topo.charge()(topo.num_solute_atoms()+2) != 0.41){
     
     DEBUG(10, "charges don't match, standard loops");
-    sim.param().force.spc_loop = 0;
+    sim.param().force.special_loop =  simulation::special_loop_off;
     if (!quiet)
 	os << "\tusing standard solvent loops (charges don't match)\n"
 		  << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
@@ -404,7 +404,7 @@ int interaction::Nonbonded_Interaction::check_spc_loop
       lj_H1H2.c12 != 0.0){
     
     DEBUG(10, "don't match, force standard loop");
-    sim.param().force.spc_loop = 0;
+    sim.param().force.special_loop = simulation::special_loop_off;
     if (!quiet)
       os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
     return 1;
@@ -414,7 +414,7 @@ int interaction::Nonbonded_Interaction::check_spc_loop
   DEBUG(10, "checking (4 pi eps0)^-1 ...");
   if(math::four_pi_eps_i!=138.9354){
     DEBUG(10, " does not match, force standard loop");
-    sim.param().force.spc_loop = 0;
+    sim.param().force.special_loop = simulation::special_loop_off;
     if(!quiet)
       os << "\tusing standard solvent loops ((4 pi eps0)^-1 does not match)\n";
     return 1;
@@ -426,7 +426,7 @@ int interaction::Nonbonded_Interaction::check_spc_loop
   if(topo.atom_energy_group(topo.num_solute_atoms())!=
           topo.atom_energy_group(topo.num_atoms()-1)){
     DEBUG(10, "- incompatible.");
-    sim.param().force.spc_loop = 0;
+    sim.param().force.special_loop = simulation::special_loop_off;
     if(!quiet)
       os << "\tusing standard solvent loops (energy group partitioning incompatible).\n"
               << "\tAll solvent atoms must be in one single energy group. ";
@@ -434,7 +434,7 @@ int interaction::Nonbonded_Interaction::check_spc_loop
   }
     
   DEBUG(10, "happy to force spc loops");
-  sim.param().force.spc_loop = 1;
+  sim.param().force.special_loop = simulation::special_loop_off;
   if (!quiet)
     os << "\tusing spc solvent loops\n";
   

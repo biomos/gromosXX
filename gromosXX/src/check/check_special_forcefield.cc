@@ -8,6 +8,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
+#include <simulation/parameter.h>
 #include <configuration/configuration.h>
 
 #include <algorithm/algorithm/algorithm_sequence.h>
@@ -48,7 +49,6 @@
 #include "check_forcefield.h"
 
 using namespace std;
-
 
 double finite_diff(topology::Topology & topo, 
 		   configuration::Configuration &conf, 
@@ -171,10 +171,10 @@ int check_interaction(topology::Topology & topo,
   std::string name = term.name;
 
   if (term.name == "NonBonded"){
-    if (sim.param().force.spc_loop == 1)
+    if (sim.param().force.special_loop == simulation::special_loop_spc)
       if (sim.param().pairlist.grid)
 	name += " (grid, spc loop)";
-      else
+      else  
 	name += " (std, spc loop)";
     else
       if (sim.param().pairlist.grid)
@@ -285,10 +285,10 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }
     else if ((*it)->name == "NonBonded"){
-      sim.param().force.spc_loop = 1;
+      sim.param().force.special_loop = simulation::special_loop_spc;
       total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
-      sim.param().force.spc_loop = 0;
+      sim.param().force.special_loop = simulation::special_loop_off;
       total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
       if (sim.param().pairlist.grid){
@@ -361,7 +361,7 @@ int check::check_atomic_cutoff(topology::Topology & topo,
   
       CHECKING((*it)->name + ": atomic cutoff", res);
 
-      sim.param().force.spc_loop = 0;
+      sim.param().force.special_loop = simulation::special_loop_off;
       
       conf.current().force = 0;
       conf.current().energies.zero();

@@ -107,7 +107,7 @@ void interaction::Nonbonded_Outerloop
     }
   }
   
-  if (sim.param().force.spc_loop > 0) { // special solvent loop
+  if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
     for(; i < size_i; i += 3){ // use every third pairlist (OW's)
       for(j_it = pairlist_solvent[i].begin(),

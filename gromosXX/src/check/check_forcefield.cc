@@ -8,6 +8,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
+#include <simulation/parameter.h>
 #include <configuration/configuration.h>
 
 #include <algorithm/algorithm/algorithm_sequence.h>
@@ -58,12 +59,12 @@ double finite_diff(topology::Topology & topo,
 		   double const epsilon,
 		   bool physical=true)
 {
-  conf.current().pos(atom)(coord) += epsilon;
+  conf.current().pos(atom)(coord) += epsilon; //epsilon from end of file check::check_forcefield
   conf.current().force = 0;
   conf.current().energies.zero();
   
-  term.calculate_interactions(topo, conf, sim);
-  conf.current().energies.calculate_totals();
+  term.calculate_interactions(topo, conf, sim); // from interaction/interaction.h set to 0?
+  conf.current().energies.calculate_totals(); // from configuration/energy.cc
 
   double e1;
   if(physical)
@@ -102,9 +103,9 @@ int nonbonded_hessian(topology::Topology & topo,
 		      double const delta,
 		      int & res)
 {
-
+//hessian matrix is square matrix of second-order partial derivatives of a function
   math::Vec pos_i = conf.current().pos(atom_i);
-  math::Vec f1, f2;
+  math::Vec f1, f2; //from algorithm/constraints/flexible_constraint.cc they are hessian functions
   double e_lj, e_crf;
   math::Matrix fd_h, h;
 
@@ -112,7 +113,7 @@ int nonbonded_hessian(topology::Topology & topo,
     
     conf.current().pos(atom_i)(d) += epsilon;
 
-    term.calculate_interaction(topo, conf, sim, atom_i, atom_j, f1, e_lj, e_crf);
+    term.calculate_interaction(topo, conf, sim, atom_i, atom_j, f1, e_lj, e_crf); //calculate interaction for a given atom pair
 
     conf.current().pos(atom_i)(d) -= 2 * epsilon;
     
@@ -148,11 +149,11 @@ int check_lambda_derivative(topology::Topology & topo,
 			    simulation::Simulation & sim,
 			    interaction::Interaction &term,
 			    double const epsilon,
-			    double const delta,
+			    double const delta, //from end of file check::check_forcefield
 			    bool physical=true
 )
 {
-  int res, total = 0;
+  int res, total = 0; // checking how many test, how many negative results
   
   std::string name = term.name;
 
@@ -161,7 +162,7 @@ int check_lambda_derivative(topology::Topology & topo,
     if (sim.param().force.interaction_function == simulation::cgrain_func)
       name = "CG-" + name;    
     
-    if (sim.param().force.spc_loop == 1)
+    if (sim.param().force.special_loop == simulation::special_loop_spc)
       if (sim.param().pairlist.grid)
 	name += " (grid, spc loop)";
       else
@@ -248,7 +249,7 @@ int check_interaction(topology::Topology & topo,
 		      simulation::Simulation & sim,
 		      interaction::Interaction &term,
 		      size_t atoms,
-		      double const energy,
+		      double const energy, //from end of file check::check_forcefield
 		      double const epsilon,
 		      double const delta)
 {
@@ -260,7 +261,7 @@ int check_interaction(topology::Topology & topo,
     if (sim.param().force.interaction_function == simulation::cgrain_func)
       name = "CG-" + name;
     
-    if (sim.param().force.spc_loop == 1)
+    if (sim.param().force.special_loop == simulation::special_loop_spc)
       if (sim.param().pairlist.grid)
 	name += " (grid, spc loop)";
       else
@@ -297,7 +298,7 @@ int check_interaction(topology::Topology & topo,
     math::Vec f = conf.current().force(atom);
 
     math::Vec finf;
-    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon);
+    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon); // 0 is coord x,y or z
     finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon);
     finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon);
 	
@@ -370,10 +371,10 @@ int check_distanceres_interaction(topology::Topology & topo,
     math::Vec f = conf.current().force(atom);
 
     math::Vec finf;
-    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon, false);
+    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon, false); 
     finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon, false);
     finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon, false);
-	
+	//finite_diff from upwards
     CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
     CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
     CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
@@ -457,7 +458,7 @@ int check::check_forcefield(topology::Topology & topo,
   int res=0, total=0;
   
   for(vector<interaction::Interaction *>::iterator
-	it = ff.begin(),
+	it = ff.begin(),  //pointer to begin of a c++ vector
 	to = ff.end();
       it != to;
       ++it){
@@ -495,21 +496,21 @@ int check::check_forcefield(topology::Topology & topo,
     else if ((*it)->name == "NonBonded"){
       if (sim.param().force.interaction_function == simulation::cgrain_func){
 
-	sim.param().force.spc_loop = 0;
+	sim.param().force.special_loop = simulation::special_loop_off;
 	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -7.352312, 0.0000000001, 0.01);
 	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 
       }
       else{
-	sim.param().force.spc_loop = 1;
+	sim.param().force.special_loop = simulation::special_loop_spc;
 	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
 	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
-	sim.param().force.spc_loop = 0;
+	sim.param().force.special_loop = simulation::special_loop_off;
 	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
 	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 
-	if (sim.param().pairlist.grid){
-	  // construct a "non-grid" pairlist algorithm
+	if (! sim.param().pairlist.grid){ //if not 1, eg grid see in_parameter.cc
+	  // construct a "standard" pairlist algorithm 
 	  interaction::Pairlist_Algorithm * pa = new interaction::Standard_Pairlist_Algorithm;
 	  interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
 	  
@@ -530,7 +531,7 @@ int check::check_forcefield(topology::Topology & topo,
 	  delete pa;
 	}
 	else{
-	  // construct a "grid" pairlist algorithm
+	  // construct a "grid" pairlist algorithm 
 	  interaction::Pairlist_Algorithm * pa = new interaction::Grid_Pairlist_Algorithm;
 	  interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
 	  
@@ -597,7 +598,7 @@ int check::check_atomic_cutoff(topology::Topology & topo,
   
       CHECKING((*it)->name + ": atomic cutoff", res);
 
-      sim.param().force.spc_loop = 0;
+      sim.param().force.special_loop = simulation::special_loop_off;
       
       conf.current().force = 0;
       conf.current().energies.zero();

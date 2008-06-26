@@ -45,11 +45,11 @@ void io::In_Parameter::read(simulation::Parameter &param,
 			    std::ostream & os)
 {
   DEBUG(7, "reading input");
-
+  
   if (!quiet)
     os << "\nINPUT\n"
 	      << title << "\n";
-
+ 
   // store the title...
   param.title = title;
 
@@ -2003,17 +2003,17 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
     switch(spc){
       case 0: {
         // standard solvent loops
-        param.force.spc_loop = -1;
+        param.force.special_loop = simulation::special_loop_off ;
         break;
       }
       case 1: {
         // fast spc loops
-        param.force.spc_loop = 0;
-        // spc_loop will be set to 1 in check_spc_loop (if all tests are ok).
+        param.force.special_loop = simulation::special_loop_spc_check;
+        // special_loop will be set to 1 in check_spc_loop (if all tests are ok).
         break;
       }
       default: {
-        param.force.spc_loop = -1;
+        param.force.special_loop = simulation::special_loop_off;
         io::messages.add("INNERLOOP block: bad value for SPC, allowed : 1 (on), 0 (off)",
                 "In_Parameter",
                 io::message::error);

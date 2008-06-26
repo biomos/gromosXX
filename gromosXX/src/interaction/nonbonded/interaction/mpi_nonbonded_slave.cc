@@ -11,6 +11,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
+#include <simulation/parameter.h>
 #include <configuration/configuration.h>
 
 #include <interaction/interaction.h>
@@ -77,7 +78,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 {
   DEBUG(4, "MPI_Nonbonded_Slave::calculate_interactions");
 
-  assert((sim.param().force.spc_loop <= 0) || 
+  assert((sim.param().force.special_loop <= 0) || 
 	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
 
   m_timer.start();

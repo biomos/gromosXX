@@ -121,7 +121,7 @@ int io::check_parameter(simulation::Simulation & sim)
   // ROTTRANS block
   add("rottrans", "roto-translational constraints", param.rottrans.rottrans);
   // INNERLOOP block
-  add("innerloop_spc", "SPC special solvent loop", param.force.spc_loop == 0);
+  add("innerloop_spc", "SPC special solvent loop", param.force.special_loop == simulation::special_loop_spc_check);
   // REPLICA block
   add("repex_temp", "temperature replica exchange", param.replica.num_T > 0);
   add("repex_lambda", "lambda replica exchange", param.replica.num_l > 0);

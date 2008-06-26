@@ -11,6 +11,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
+#include <simulation/parameter.h>
 #include <configuration/configuration.h>
 
 #include <interaction/interaction.h>
@@ -40,6 +41,8 @@
 
 #include <util/debug.h>
 #include <util/error.h>
+
+
 
 #undef MODULE
 #undef SUBMODULE
@@ -73,7 +76,7 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "MPI_Nonbonded_Master::calculate_interactions");
   
-  assert((sim.param().force.spc_loop <= 0) ||
+  assert((sim.param().force.special_loop <= 0) ||
           (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
   
   if (sim.param().multicell.multicell){

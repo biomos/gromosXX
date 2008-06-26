@@ -58,7 +58,7 @@ void scale_positions(topology::Topology & topo,
   // calculate rel_mol_com_pos ;-)
   math::Periodicity<b> periodicity(conf.current().box);
 
-  std::vector<math::Vec> com_pos;
+  std::vector<math::Vec> com_pos; //center of mass position
   std::vector<math::Matrix> com_ekin;
   
   util::centre_of_mass(topo, conf, com_pos, com_ekin);

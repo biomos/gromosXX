@@ -30,6 +30,24 @@ namespace simulation
      */
     constr_flexshake
   };
+  /**
+   * @enum special_loop_enum
+   * special solvent loop
+   */
+  enum special_loop_enum{
+    /**
+     * no special loop
+     */
+    special_loop_off = -1,
+    /**
+     * spc loop check
+     */
+    special_loop_spc_check = 0,
+    /**
+     * spc loop
+     */
+    special_loop_spc = 1,
+  };
   
   /**
    * @enum restr_enum
@@ -714,13 +732,13 @@ namespace simulation
        * - dihedral 1
        * - nonbonded 1
        * - energy_group empty
-       * - spc_loop -1
+       * - special_loop -1
        * - interaction function lj_crf_func
        * - external interaction 0
        */
       force_struct() : bond(1), angle(1), improper(1),
 		       dihedral(1), nonbonded_vdw(1),
-		       nonbonded_crf(1), spc_loop(-1),
+		       nonbonded_crf(1), special_loop(-1),
 		       interaction_function(lj_crf_func),
 		       external_interaction(0)
       {}
@@ -754,9 +772,9 @@ namespace simulation
        */
       std::vector<unsigned int> energy_group;
       /**
-       * fast spc loops
+       * special loops
        */
-      int spc_loop;
+      int special_loop;
       /**
        * nonbonded interaction function
        */
