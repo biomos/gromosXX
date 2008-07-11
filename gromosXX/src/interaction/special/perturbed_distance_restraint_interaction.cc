@@ -70,8 +70,18 @@ static int _calculate_perturbed_distance_restraint_interactions
     DEBUG(9, "PERTDISTANCERES v : " << math::v2s(v));
    
     double dist = abs(v);
-   
-    const double l = topo.lambda();
+    
+    // the first atom of the first virtual atom 
+    // determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    const double l = topo.individual_lambda(simulation::disres_lambda)
+      [topo.atom_energy_group()[it->v1.atom(0)]]
+      [topo.atom_energy_group()[it->v1.atom(0)]];
+    const double l_deriv = topo.individual_lambda_derivative
+      (simulation::disres_lambda)
+      [topo.atom_energy_group()[it->v1.atom(0)]]
+      [topo.atom_energy_group()[it->v1.atom(0)]];
+    
     const double w0 = (1-l)*it->A_w0 + l*it->B_w0;
     const double r0 = (1-l)*it->A_r0 + l*it->B_r0;
     const double K = sim.param().distanceres.K;
@@ -132,7 +142,7 @@ static int _calculate_perturbed_distance_restraint_interactions
     
     DEBUG(10, "PERTDISTANCERES Energy : " << energy);
     conf.current().energies.distanceres_energy[topo.atom_energy_group()
-					    [it->v1.atom(0)]] += energy;
+					       [it->v1.atom(0)]] += energy;
     
     if(it->rah*dist <it->rah*(r0))
       dlam_term = 0;
@@ -189,11 +199,12 @@ static int _calculate_perturbed_distance_restraint_interactions
     
     double dpotdl = prefactor * dlam_term;
 
-    energy_derivativ = dprefdl + dpotdl;
+    energy_derivativ = l_deriv * (dprefdl + dpotdl);
     DEBUG(10, "PERTDISTANCERES Energy derivative : " << energy_derivativ);
 
-    conf.current().perturbed_energy_derivatives.distanceres_energy[topo.atom_energy_group()
-								[it->v1.atom(0)]] += energy_derivativ;
+    conf.current().perturbed_energy_derivatives.
+      distanceres_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 
+      energy_derivativ;
     
   }
 

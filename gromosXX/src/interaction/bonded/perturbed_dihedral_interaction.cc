@@ -59,17 +59,23 @@ static int _calculate_perturbed_dihedral_interactions
   double dkj2, dim, dln, ip;
   double A_energy, B_energy, energy, e_lambda;
 
-  const double l=topo.lambda();
-
   math::Periodicity<B> periodicity(conf.current().box);
 
   for( ; d_it != d_to; ++d_it){
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    const double lambda = topo.individual_lambda(simulation::dihedral_lambda)
+      [topo.atom_energy_group()[d_it->i]][topo.atom_energy_group()[d_it->i]];
+    const double lambda_derivative = topo.individual_lambda_derivative
+      (simulation::dihedral_lambda)
+      [topo.atom_energy_group()[d_it->i]][topo.atom_energy_group()[d_it->i]];
+    
     DEBUG(7, "dihedral " << d_it->i << "-" << d_it->j << "-" 
 	  << d_it->k << "-" << d_it->l
 	  << " A-type " << d_it->A_type
 	  << " B-type " << d_it->B_type
-	  << " lambda " << topo.lambda());
+	  << " lambda " << lambda);
     
     assert(pos.size() > (d_it->i) && pos.size() > (d_it->j) && 
 	   pos.size() > (d_it->k) && pos.size() > (d_it->l));
@@ -210,10 +216,10 @@ static int _calculate_perturbed_dihedral_interactions
     B_energy = K * (1 + delta * cosmphi);
 
     // now combine
-    force(d_it->i) += (1.0-l) * A_fi + l * B_fi;
-    force(d_it->j) += (1.0-l) * A_fj + l * B_fj;
-    force(d_it->k) += (1.0-l) * A_fk + l * B_fk;
-    force(d_it->l) += (1.0-l) * A_fl + l * B_fl;
+    force(d_it->i) += (1.0 - lambda) * A_fi + lambda * B_fi;
+    force(d_it->j) += (1.0 - lambda) * A_fj + lambda * B_fj;
+    force(d_it->k) += (1.0 - lambda) * A_fk + lambda * B_fk;
+    force(d_it->l) += (1.0 - lambda) * A_fl + lambda * B_fl;
 
     // if (V == math::atomic_virial){
       periodicity.nearest_image(pos(d_it->l), pos(d_it->j), rlj);
@@ -221,15 +227,15 @@ static int _calculate_perturbed_dihedral_interactions
       for(int a=0; a<3; ++a)
 	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
-	    rij(a) * ((1.0-l) * A_fi(bb) + l * B_fi(bb)) +
-	    rkj(a) * ((1.0-l) * A_fk(bb) + l * B_fk(bb)) +
-	    rlj(a) * ((1.0-l) * A_fl(bb) + l * B_fl(bb));
+	    rij(a) * ((1.0-lambda) * A_fi(bb) + lambda * B_fi(bb)) +
+	    rkj(a) * ((1.0-lambda) * A_fk(bb) + lambda * B_fk(bb)) +
+	    rlj(a) * ((1.0-lambda) * A_fl(bb) + lambda * B_fl(bb));
 
       DEBUG(11, "\tatomic virial done");
       // }
 
-    energy = (1.0-l) * A_energy + l * B_energy;
-    e_lambda = (B_energy - A_energy);
+    energy = (1.0 - lambda) * A_energy + lambda * B_energy;
+    e_lambda = lambda_derivative * (B_energy - A_energy);
 
     assert(conf.current().energies.dihedral_energy.size() >
 	   topo.atom_energy_group()[d_it->i]);

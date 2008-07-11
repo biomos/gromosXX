@@ -94,6 +94,7 @@ int algorithm::Temperature_Calculation
 
   // and the perturbed energy derivatives (if there are any)
   if (sim.param().perturbation.perturbation){
+    
     math::VArray &vel = conf.current().vel;
 
     // loop over the baths
@@ -130,12 +131,20 @@ int algorithm::Temperature_Calculation
 	  
 	  DEBUG(10, "\tbefore dE_kin/dl: " << e_kin[bath]);
 
+	  const double l_deriv = 
+	    topo.individual_lambda_derivative(simulation::mass_lambda)
+	    [topo.atom_energy_group()[i]][topo.atom_energy_group()[i]];
+	
+          DEBUG(10, "\tmass:    " << topo.mass()[i]);
+	  
+	  DEBUG(10, "\tl_deriv: " << l_deriv);
+	  
 	  // for some reason we take the new velocities here
-	  e_kin[bath] -=
+	  e_kin[bath] -= l_deriv * 
 	    (topo.perturbed_solute().atoms()[i].B_mass() -
 	     topo.perturbed_solute().atoms()[i].A_mass()) 
 	    * math::abs2(vel(i));
-
+	  
 	  DEBUG(10, "\tdE_kin/dl: " << e_kin[bath]);
 	
 	}

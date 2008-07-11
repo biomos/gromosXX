@@ -118,7 +118,8 @@ int check_lambda_derivative(topology::Topology & topo,
   
   // change lambda, calculate energies
   topo.lambda(topo.lambda()+epsilon);
-    
+  topo.update_for_lambda();
+  
   conf.current().force = 0;
   conf.current().energies.zero();
   conf.current().perturbed_energy_derivatives.zero();
@@ -132,7 +133,8 @@ int check_lambda_derivative(topology::Topology & topo,
 
   // change lambda, calculate energies
   topo.lambda(topo.lambda()-2*epsilon);
- 
+  topo.update_for_lambda();
+  
   conf.current().force = 0;
   conf.current().energies.zero();
   conf.current().perturbed_energy_derivatives.zero();
@@ -148,8 +150,9 @@ int check_lambda_derivative(topology::Topology & topo,
   
   CHECK_APPROX_EQUAL(dE, dfE, delta, res);
 
-  topo.lambda(origin);
-
+  topo.lambda(orig);
+  topo.update_for_lambda();
+  
   RESULT(res, total);
 
   return total;

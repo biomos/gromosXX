@@ -45,6 +45,15 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration
     if (skip_now[it->i] && skip_now[it->j] &&
 	skip_now[it->k] && skip_now[it->l]) continue;
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    // we use the dihedral restaints lambda
+    const double lambda = topo.individual_lambda(simulation::dihres_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+    const double lambda_derivative = topo.individual_lambda_derivative
+      (simulation::dihres_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+
     // first equation in Dihedral-angle constraints (Appendix)
     // is number 36.
     
@@ -69,7 +78,7 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration
     const double cos_phi = math::dot(r52, r63) / (d52 * d63);
     double phi = sign_phi * acos(cos_phi);
 
-    const double phi0 = (1.0 - topo.lambda()) * it->A_phi + topo.lambda() * it->B_phi;
+    const double phi0 = (1.0 - lambda) * it->A_phi + lambda * it->B_phi;
 
     while(phi < phi0 - math::Pi)
       phi += 2 * math::Pi;
@@ -222,7 +231,8 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration
 
       // dH/dl
       // eq 61
-      const double dHdl = l * sin_2phi * (it->B_phi - it->A_phi);
+      const double dHdl = lambda_derivative * l * sin_2phi * 
+	(it->B_phi - it->A_phi);
       conf.old().perturbed_energy_derivatives.
 	constraints_energy[topo.atom_energy_group()[it->i]] += dHdl;
       

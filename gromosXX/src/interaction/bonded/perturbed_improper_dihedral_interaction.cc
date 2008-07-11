@@ -27,7 +27,7 @@
 #define SUBMODULE bonded
 
 /**
- * calculate angle forces and energies and lambda derivatives.
+ * calculate improper dihedral forces and energies and lambda derivatives.
  */
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_improper_interactions
@@ -58,11 +58,19 @@ static int _calculate_perturbed_improper_interactions
 
   for( ; i_it != i_to; ++i_it){
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    const double lambda = topo.individual_lambda(simulation::improper_lambda)
+      [topo.atom_energy_group()[i_it->i]][topo.atom_energy_group()[i_it->i]];
+    const double lambda_derivative = topo.individual_lambda_derivative
+      (simulation::improper_lambda)
+      [topo.atom_energy_group()[i_it->i]][topo.atom_energy_group()[i_it->i]];
+
     DEBUG(7, "improper dihedral " << i_it->i << "-" << i_it->j << "-" 
 	  << i_it->k << "-" << i_it->l
 	  << " A-type " << i_it->A_type
 	  << " B-type " << i_it->B_type
-	  << " lambda " << topo.lambda());
+	  << " lambda " << lambda);
 
     assert(pos.size() > (i_it->i) && pos.size() > (i_it->j) && 
 	   pos.size() > (i_it->k) && pos.size() > (i_it->l));
@@ -98,13 +106,13 @@ static int _calculate_perturbed_improper_interactions
     
     assert(unsigned(i_it->A_type) < m_interaction.parameter().size());
 
-    double K    = (1-topo.lambda()) *
+    double K    = (1 - lambda) *
       m_interaction.parameter()[i_it->A_type].K +
-      topo.lambda() *
+      lambda *
       m_interaction.parameter()[i_it->B_type].K;
-    double q0 =  (1-topo.lambda()) *
+    double q0 =  (1 - lambda) *
       m_interaction.parameter()[i_it->A_type].q0 +
-      topo.lambda() *
+      lambda *
       m_interaction.parameter()[i_it->B_type].q0;
 
     const double K_diff = 
@@ -146,8 +154,8 @@ static int _calculate_perturbed_improper_interactions
 
     energy = 0.5 * K * (q-q0) * (q-q0);
     
-    e_lambda = 0.5 * ( -2.0 * K * q_diff * (q-q0) +
-		       K_diff * (q-q0) * (q-q0));
+    e_lambda = 0.5 * lambda_derivative* ( -2.0 * K * q_diff * (q-q0) +
+					  K_diff * (q-q0) * (q-q0));
     
     assert(conf.current().energies.improper_energy.size() >
 	   topo.atom_energy_group()[i_it->i]);

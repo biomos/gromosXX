@@ -57,9 +57,18 @@ static int _calculate_perturbed_dihedral_restraint_interactions
   */
 
   math::Periodicity<B> periodicity(conf.current().box);
-  const double l = topo.lambda();
 
   for(; it != to; ++it){
+
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    const double l = topo.individual_lambda(simulation::dihres_lambda)
+      [topo.atom_energy_group()[it->i]]
+      [topo.atom_energy_group()[it->i]];
+    const double l_deriv = topo.individual_lambda_derivative
+      (simulation::dihres_lambda)
+      [topo.atom_energy_group()[it->i]]
+      [topo.atom_energy_group()[it->i]];
 
     periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
     periodicity.nearest_image(pos(it->i), pos(it->j), rij);
@@ -218,7 +227,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions
     
     double dpotdl = prefactor * dlam_term;
 
-    energy_derivative = dprefdl + dpotdl;
+    energy_derivative = l_deriv * (dprefdl + dpotdl);
     
     conf.current().perturbed_energy_derivatives.dihrest_energy
       [topo.atom_energy_group()[it->i]] += energy_derivative;

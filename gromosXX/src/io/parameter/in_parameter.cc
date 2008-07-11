@@ -89,7 +89,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_POLARIZE(param);
   read_RANDOMNUMBERS(param);
   read_EDS(param);
-  read_LAMBDAS(param);
+  read_LAMBDAS(param); // needs to be called after FORCE
   read_known_unsupported_blocks();
   
   DEBUG(7, "input read...");
@@ -905,6 +905,23 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
       return;
     }
     old_e = e;
+  }
+
+  // Now that we have the energy groups, we initialize the 
+  // LAMBDAS parameters that depend on them. 
+  // Is this very ugly to do it here?
+  // maybe it is nicer to do it in the topology::init function?
+
+  int maxnilg=param.force.energy_group.size();
+
+  std::vector< double > one(maxnilg, 1.0);
+  std::vector< double > zero(maxnilg, 0.0);
+  for(unsigned int i=0; i< param.lambdas.a.size(); i++){
+    param.lambdas.a[i].resize(maxnilg, zero);
+    param.lambdas.b[i].resize(maxnilg, zero);
+    param.lambdas.c[i].resize(maxnilg, zero);
+    param.lambdas.d[i].resize(maxnilg, one);
+    param.lambdas.e[i].resize(maxnilg, zero);
   }
   
   DEBUG(10, "number of energy groups: " << param.force.energy_group.size());
@@ -2855,10 +2872,109 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
   buffer = m_block["LAMBDAS"];
   
   if (buffer.size()) {
+
     block_read.insert("LAMBDAS");
+
+    int num = buffer.size()-3;
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+ 
+    std::string nm;
+    simulation::interaction_lambda_enum  j;
+    int n1, n2;
+    double a, b, c, d, e;
+    _lineStream >> nm;
+    DEBUG(10, "read NTIL " << nm);
     
-    io::messages.add("LAMBDAS block: not implemented",
-		     "In_Parameter", io::message::error);
+    if(nm=="on" || nm=="1")
+      param.lambdas.individual_lambdas=true;
+    else if(nm=="off" || nm=="0"){
+      param.lambdas.individual_lambdas=false;
+      return;
+    }
+    else 
+      io::messages.add("illegal value for NTIL in LAMBDAS block (on,off,1,0)",
+		       "In_Parameter", io::message::error);
+    
+    if(param.perturbation.perturbation == false)
+      io::messages.add("LAMBDAS block without perturbation is ignored",
+		       "In_Parameter", io::message::warning);
+    
+    // the full matrices for the energy groups were created and
+    // filled with a, b, c, e = 0 and d=1 when the FORCE block was read in
+    // that way, they are also defined if you do not give the LAMBDAS block
+    // we cannot initialize them earlier, because they depend on the 
+    // energy groups
+    
+    int maxnilg=param.force.energy_group.size();
+
+    for(int i=0; i< num; ++i){
+      _lineStream >> nm >> n1 >> n2 >> a >> b >> c >> d >> e;
+      DEBUG(10, "read : " << nm << n1 << n2 << a << b << c << d << e);
+      
+      if (_lineStream.fail()){
+        io::messages.add("bad line in LAMBDAS block" + s,
+                         "In_Parameter", io::message::error);
+        return;
+      }
+      if (n2 < n1)
+	io::messages.add("only give NILG2 >= NILG1 in LAMBDAS BLOCK",
+			 "In_Parameter", io::message::error);
+      if (n1 > maxnilg)
+	io::messages.add("NILG1 larger than number of energy groups in FORCE block",
+			 "In_Parameter", io::message::error);
+      if (n2 > maxnilg)
+	io::messages.add("NILG2 larger than number of energy groups in FORCE block",
+			 "In_Parameter", io::message::error);
+      n1--;
+      n2--;
+      
+      if(nm=="bond" || nm=="1")
+        j=simulation::bond_lambda;
+      else if(nm=="angle" || nm=="2")
+        j=simulation::angle_lambda;
+      else if(nm=="dihedral" || nm=="3")
+        j=simulation::dihedral_lambda;
+      else if(nm=="improper" || nm=="4")
+        j=simulation::improper_lambda;
+      else if(nm=="vdw" || nm=="5") 
+        j=simulation::lj_lambda;
+      else if(nm=="vdw_soft" || nm=="6")
+        j=simulation::lj_softness_lambda;
+      else if(nm=="crf" || nm=="7")
+        j=simulation::crf_lambda;
+      else if(nm=="crf_soft" || nm=="8")
+        j=simulation::crf_softness_lambda;
+      else if(nm=="distanceres" || nm=="9")
+	j=simulation::disres_lambda;
+      else if(nm=="dihedralres" || nm=="10")
+	j=simulation::dihres_lambda;
+      else if(nm=="mass" || nm=="11")
+	j=simulation::mass_lambda;
+      else
+        io::messages.add("unknown lambda type in LAMBDAS block: " + nm,
+                         "In_Parameter", io::message::error);
+    
+      // and now replace the matrix with the numbers we just read in
+      if(j != simulation::lj_lambda &&
+	 j != simulation::lj_softness_lambda &&
+	 j != simulation::crf_lambda &&
+	 j != simulation::crf_softness_lambda &&
+	 n1 != n2)
+	io::messages.add("NILG1 != NILG2 in LAMBDAS block only allowed for nonbonded interactions",
+			 "In_Parameter", io::message::warning);
+      
+      param.lambdas.a[j][n1][n2] = a;
+      param.lambdas.a[j][n2][n1] = a;
+      param.lambdas.b[j][n1][n2] = b;
+      param.lambdas.b[j][n2][n1] = b;
+      param.lambdas.c[j][n1][n2] = c;
+      param.lambdas.c[j][n2][n1] = c;
+      param.lambdas.d[j][n1][n2] = d;
+      param.lambdas.d[j][n2][n1] = d;
+      param.lambdas.e[j][n1][n2] = e;
+      param.lambdas.e[j][n2][n1] = e;
+    }
   }
 }  
 

@@ -11,12 +11,14 @@ namespace check
   int check_forcefield(topology::Topology & topo,
 		       configuration::Configuration & conf,
 		       simulation::Simulation & sim,
-		       interaction::Forcefield & ff);
+		       interaction::Forcefield & ff,
+		       std::map<std::string, double> & ref);
 
   int check_atomic_cutoff(topology::Topology & topo,
 			  configuration::Configuration & conf,
 			  simulation::Simulation & sim,
-			  interaction::Forcefield & ff);
+			  interaction::Forcefield & ff,
+			  std::map<std::string, double> &ref);
   
 } // check
 

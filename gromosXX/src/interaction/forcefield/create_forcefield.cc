@@ -66,7 +66,7 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   if (!quiet){
   
     if (sim.param().perturbation.perturbation){
-      os << "\t" << std::setw(20) << std::left << "perturbation" 
+      os << "\n\t" << std::setw(20) << std::left << "perturbation" 
 	 << std::setw(30) << "on" << std::right << "\n"
 	 << "\t\tlambda         : " << sim.param().perturbation.lambda << "\n"
 	 << "\t\texponent       : " << sim.param().perturbation.lambda_exponent << "\n"
@@ -86,6 +86,83 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 	os << "\t\t" << "using unperturbed nonbonded routines as no atoms are perturbed\n";
       else os << "\t\t" << "with " << topo.perturbed_solute().atoms().size() << " perturbed atoms\n";
 
+      if(sim.param().lambdas.individual_lambdas){
+
+	// say what we are doing
+	os << "\n\t\tIndividual lambdas according to l_int = ALI * l^4 + BLI * l^3 + CLI * l^2 + DLI * l + ELI\n"
+	   << "\t\tfor interactions between different chargegroups NILG1 and NILG2"
+	   <<     "\n\t\t" << std::setw(20) << "Interaction         "
+	   << std::setw(6) << "NILG1"
+	   << std::setw(6) << "NILG2"
+	   << std::setw(8) << "ALI"
+	   << std::setw(8) << "BLI"
+	   << std::setw(8) << "CLI"
+	   << std::setw(8) << "DLI"
+	   << std::setw(8) << "ELI"
+	   << "\n";
+	for(int i=0; i < simulation::last_interaction_lambda; i++){
+	  for(unsigned int n1=0; n1 < sim.param().lambdas.a[i].size(); n1++){
+	    for(unsigned int n2=n1; n2 < sim.param().lambdas.a[i].size(); n2++){
+	      if(sim.param().lambdas.a[i][n1][n2] != 0 ||
+		 sim.param().lambdas.b[i][n1][n2] != 0 ||
+		 sim.param().lambdas.c[i][n1][n2] != 0 ||
+		 sim.param().lambdas.d[i][n1][n2] != 1 ||
+		 sim.param().lambdas.e[i][n1][n2] != 0){
+		  
+		os << "\t\t";
+		switch(i) {
+		  case simulation::bond_lambda :
+		    os << "bonds              :";
+		    break;
+		  case simulation::angle_lambda :
+		    os << "angles             :";
+		    break;
+		  case simulation::dihedral_lambda :
+		    os << "dihedrals          :";
+		    break;
+		  case simulation::improper_lambda :
+		    os << "impropers          :";
+		    break;
+		  case simulation::lj_lambda :
+		    os << "vdw interaction    :";
+		    break;
+		  case simulation::lj_softness_lambda :
+		    os << "vdw softness       :";
+		    break;
+		  case simulation::crf_lambda :
+		    os << "crf interaction    :";
+		    break;
+		  case simulation::crf_softness_lambda :
+		    os << "crf softness       :";
+		    break;
+		  case simulation::disres_lambda :
+		    os << "distance restraint :";
+		    break;
+		  case simulation::dihres_lambda :
+		    os << "dihedral restraint :";
+		    break;
+		  case simulation::mass_lambda :
+		    os << "mass scaling       :";
+		    break;
+		}
+		os << std::setw(6) << n1+1 << std::setw(6) << n2+1
+		   << std::setw(8) << sim.param().lambdas.a[i][n1][n2]
+		   << std::setw(8) << sim.param().lambdas.b[i][n1][n2]
+		   << std::setw(8) << sim.param().lambdas.c[i][n1][n2]
+		   << std::setw(8) << sim.param().lambdas.d[i][n1][n2]
+		   << std::setw(8) << sim.param().lambdas.e[i][n1][n2]
+		   << "\n";
+	      }
+	    }
+	  }
+	}
+	os << "\n\t\tall other interactions / interactions for other energy groups are"
+	   << " scaled using overall lambda\n";
+      }
+      else{
+	os << "\t\tall interactions are scaled using overall lambda\n"
+	   << "\t\t(no individual lambdas)\n";
+      }
     }
     else{
       os << "\t" << std::setw(20) << std::left << "perturbation" 

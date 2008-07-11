@@ -520,21 +520,21 @@ namespace topology
      * matrix for changed lambda dependence for interactions
      * between energy groups  energy groups
      */
-    std::map<std::pair<int, int>, std::pair<int, double> > const &
-    energy_group_lambdadep()const { return m_energy_group_lambdadep;}
+    //std::map<std::pair<int, int>, std::pair<int, double> > const &
+    //energy_group_lambdadep()const { return m_energy_group_lambdadep;}
 
     /**
      * matrix for changed lambda dependence for interactions
      * between energy groups  energy groups
      */
-    std::map<std::pair<int, int>, std::pair<int, double> > &
-    energy_group_lambdadep() { return m_energy_group_lambdadep;}
+    //std::map<std::pair<int, int>, std::pair<int, double> > &
+    //energy_group_lambdadep() { return m_energy_group_lambdadep;}
 
     /**
      * lambda prime's for different lambda dependencies.
      * (so that they do not have to be recalculated for every interaction.
      */
-    std::vector<double> & lambda_prime() { return m_lambda_prime; }
+    //std::vector<double> & lambda_prime() { return m_lambda_prime; }
     
     /**
      * d lambda prime / d lambda derivative.
@@ -542,20 +542,50 @@ namespace topology
      * sum d E / d lambda prime * d lambda prime / d lambda 
      * for all lambda prime).
      */
-    std::vector<double> & lambda_prime_derivative() 
-    { return m_lambda_prime_derivative; }
+    //std::vector<double> & lambda_prime_derivative() 
+    //{ return m_lambda_prime_derivative; }
     
     /**
      * alpha parameters for the perturbed energy derivatives.
      */
-    std::vector<double> const & perturbed_energy_derivative_alpha()const
-    { return m_perturbed_energy_derivative_alpha; }
+    //std::vector<double> const & perturbed_energy_derivative_alpha()const
+    //{ return m_perturbed_energy_derivative_alpha; }
 
     /**
      * alpha parameters for the perturbed energy derivatives.
      */
-    std::vector<double> & perturbed_energy_derivative_alpha()
-    { return m_perturbed_energy_derivative_alpha; }
+    //std::vector<double> & perturbed_energy_derivative_alpha()
+    //{ return m_perturbed_energy_derivative_alpha; }
+    
+    /**
+     * individual lambda values 
+     */
+    std::vector< std::vector< double > >  & individual_lambda(int i) 
+    {
+      return m_individual_lambda[i];
+    }
+    /**
+     * individual lambda values as a const
+     */
+    std::vector< std::vector< double > >  const & individual_lambda(int i) const
+    {
+      return m_individual_lambda[i];
+    }
+
+    /**
+     * individual lambda derivative
+     */
+    std::vector< std::vector< double > >  & individual_lambda_derivative(int i)
+    {
+      return m_individual_lambda_derivative[i];
+    }
+    /**
+     * individual lambda derivative as a const
+     */
+    std::vector< std::vector< double > >  const & individual_lambda_derivative(int i)const
+    {
+      return m_individual_lambda_derivative[i];
+    }
     
     /**
      * position restraints accessor.
@@ -854,24 +884,59 @@ namespace topology
      * interaction matrix for interactions with
      * changed lambda dependence
      */
-    std::map<std::pair<int, int>, std::pair<int, double> > 
-    m_energy_group_lambdadep;
+    //std::map<std::pair<int, int>, std::pair<int, double> > 
+    //m_energy_group_lambdadep;
 
     /**
      * lambda primes for current lambda
      */
-    std::vector<double> m_lambda_prime;
+    //std::vector<double> m_lambda_prime;
     
     /**
      * lambda prime / lambda derivatives
      */
-    std::vector<double> m_lambda_prime_derivative;
+    //std::vector<double> m_lambda_prime_derivative;
     
     /**
      * alpha parameter values for the perturbed energy derivatives
      */
-    std::vector<double> m_perturbed_energy_derivative_alpha;
-
+    //std::vector<double> m_perturbed_energy_derivative_alpha;
+    /**
+     * parameter values for the individual lambdas
+     */
+    struct individual_lambdas_struct{
+      /**
+       * a's
+       */
+      std::vector< std::map< std::pair<int, int>, double> > a;
+      /**
+       * b's
+       */
+      std::vector< std::map< std::pair<int, int>, double> > b;
+       /**
+       * c's
+       */
+      std::vector< std::map< std::pair<int, int>, double> > c;
+       /**
+       * d's
+       */
+      std::vector< std::map< std::pair<int, int>, double> > d;
+      /**
+       * e's
+       */
+      std::vector< std::map< std::pair<int, int>, double> > e;
+    } /** individual_lambdas_struct */ m_individual_lambda_parameters;
+    
+    /**
+     * lambda-values for individual lambdas
+     */
+    std::vector< std::vector< std::vector< double > > > m_individual_lambda;
+    
+    /**
+     * lambda-derivative for individual lambdas
+     */
+    std::vector< std::vector< std::vector< double > > > m_individual_lambda_derivative;
+      
     /**
      * position restraints / constraints
      */

@@ -87,6 +87,15 @@ int algorithm::Perturbed_Shake
 
     DEBUG(10, "i: " << it->i << " j: " << it->j << " first: " << first);
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    // we use the bond lambda
+    const double lam = topo.individual_lambda(simulation::bond_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+    const double lam_derivative = topo.individual_lambda_derivative
+      (simulation::bond_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+
     // the position
     math::Vec &pos_i = conf.current().pos(first+it->i);
     math::Vec &pos_j = conf.current().pos(first+it->j);
@@ -97,8 +106,8 @@ int algorithm::Perturbed_Shake
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = math::abs2(r);
 	
-    double r0 = (1.0 - topo.lambda()) * this->parameter()[it->A_type].r0 + 
-      topo.lambda() * this->parameter()[it->B_type].r0;
+    double r0 = (1.0 - lam) * this->parameter()[it->A_type].r0 + 
+      lam * this->parameter()[it->B_type].r0;
 
     DEBUG(10, "constraint length: " << r0);
     DEBUG(10, "r0(A) = " << this->parameter()[it->A_type].r0);
@@ -175,7 +184,7 @@ int algorithm::Perturbed_Shake
 
       conf.old().perturbed_energy_derivatives.
 	constraints_energy[topo.atom_energy_group()[it->i]] +=
-	lambda / dt2 * sqrt(constr_length2) *
+	lam_derivative * lambda / dt2 * sqrt(constr_length2) *
 	(this->parameter()[it->B_type].r0 - this->parameter()[it->A_type].r0);
 
       // update positions
@@ -216,7 +225,6 @@ void algorithm::Perturbed_Shake
   m_timer.start();
 
   DEBUG(8, "\tshaking perturbed SOLUTE");
-  DEBUG(8, "\tlambda is " << topo.lambda());
   
   math::Periodicity<B> periodicity(conf.current().box);
   

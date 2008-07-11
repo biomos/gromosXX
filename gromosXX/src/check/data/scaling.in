@@ -74,7 +74,7 @@ PRESSURESCALE
 #       VIRIAL: none, atomic, molecular
 #
 #   COUPLE  SCALE   COMP        TAUP    VIRIAL
-    sclae   iso     4.575E-4    0.5     atomic
+    scale   iso     4.575E-4    0.5     atomic
 #   reference pressure
     0.06102     0.00000     0.00000
     0.00000     0.06102     0.00000

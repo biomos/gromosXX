@@ -57,10 +57,17 @@ static int _calculate_perturbed_angle_interactions
 
   for( ; a_it != a_to; ++a_it){
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    const double lambda = topo.individual_lambda(simulation::angle_lambda)
+      [topo.atom_energy_group()[a_it->i]][topo.atom_energy_group()[a_it->i]];
+    const double lambda_derivative = topo.individual_lambda_derivative
+      (simulation::angle_lambda)
+      [topo.atom_energy_group()[a_it->i]][topo.atom_energy_group()[a_it->i]];
     DEBUG(7, "angle " << a_it->i << "-" << a_it->j << "-" << a_it->k
 	  << " A-type " << a_it->A_type
 	  << " B-type " << a_it->B_type
-	  << " lambda " << topo.lambda());
+	  << " lambda " << lambda);
 
     assert(pos.size() > (a_it->i) && pos.size() > (a_it->j) && 
 	   pos.size() > (a_it->k));
@@ -80,13 +87,13 @@ static int _calculate_perturbed_angle_interactions
     assert(unsigned(a_it->A_type) < m_interaction.parameter().size());
     assert(unsigned(a_it->B_type) < m_interaction.parameter().size());
     
-    double K    = (1-topo.lambda()) *
+    double K    = (1 - lambda) *
       m_interaction.parameter()[a_it->A_type].K +
-      topo.lambda() *
+      lambda *
       m_interaction.parameter()[a_it->B_type].K;
-    double cos0 =  (1-topo.lambda()) *
+    double cos0 =  (1 - lambda) *
       m_interaction.parameter()[a_it->A_type].cos0 +
-      topo.lambda() *
+      lambda *
       m_interaction.parameter()[a_it->B_type].cos0;
 
     const double K_diff = m_interaction.parameter()[a_it->B_type].K - 
@@ -122,8 +129,9 @@ static int _calculate_perturbed_angle_interactions
 
     energy = 0.5 * K * (cost - cos0) * (cost - cos0);
 
-    e_lambda = 0.5 * ( -2.0 * K * cos_diff * (cost - cos0) +
-		       K_diff * (cost - cos0) * (cost - cos0) );
+    e_lambda = 0.5 * lambda_derivative * 
+      ( -2.0 * K * cos_diff * (cost - cos0) +
+	K_diff * (cost - cos0) * (cost - cos0) );
 
     DEBUG(9, "energy: " << energy);
 

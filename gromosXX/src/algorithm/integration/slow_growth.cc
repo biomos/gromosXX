@@ -30,7 +30,7 @@ int algorithm::Slow_Growth
   // change the lambda value
   topo.lambda(topo.lambda() + sim.param().perturbation.dlamt
 	      * sim.time_step_size());
-  // update masses
+  // update masses and individual lambda-values
   topo.update_for_lambda();
   return 0;
 }

@@ -179,6 +179,60 @@ namespace simulation
     multi_s = 2,
   };
 
+  /**
+   * @enum interaction_lambda_enum
+   * used to refer to interaction with their own lambda dependence
+   */
+  enum interaction_lambda_enum{
+    /**
+     * bond interaction
+     */
+    bond_lambda = 0,
+    /**
+     * angle interaction
+     */
+    angle_lambda = 1,
+    /**
+     * dihedral interaction
+     */
+    dihedral_lambda = 2,
+    /**
+     * improper interaction
+     */
+    improper_lambda = 3,
+    /** 
+     * Van der Waals interaction
+     */
+    lj_lambda = 4,
+    /**
+     * Van der Waals softness value
+     */
+    lj_softness_lambda = 5,
+    /**
+     * Coulomb-reaction field interaction
+     */
+    crf_lambda = 6,
+    /**
+     * Coulomb-reaction field softness value
+     */
+    crf_softness_lambda = 7,
+    /**
+     * position restraint interaction
+     */
+    disres_lambda = 8,
+    /**
+     * dihedral restraint interaction
+     */
+    dihres_lambda = 9,
+    /**
+     * mass-scaling value
+     */
+    mass_lambda = 10,
+    /**
+     * one extra interaction for looping
+     */
+    last_interaction_lambda=11
+  };
 
   /**
    * @class Parameter
@@ -1393,6 +1447,57 @@ namespace simulation
 
     } /** integration parameter */ integrate;
 
+    /** 
+     * @struct lambdas_struct
+     * individual lambdas
+     */
+    struct lambdas_struct
+    {
+      /**
+       * constructor
+       * Default values:
+       * - individual_lambdas(false)
+       * - a(empty)
+       * - b(empty)
+       * - c(empty)
+       * - d(empty)
+       * - e(empty)
+       */
+      lambdas_struct() : individual_lambdas(false), 
+			 a(last_interaction_lambda),
+			 b(last_interaction_lambda),
+			 c(last_interaction_lambda),
+			 d(last_interaction_lambda),
+			 e(last_interaction_lambda)
+      {
+      }
+      /**
+       * use individual values for lambda
+       */
+      bool individual_lambdas;
+      /**
+       * polynomial coefficient a
+       */
+      std::vector< std::vector< std::vector < double > > > a;
+       /**
+       * polynomial coefficient b
+       */
+      std::vector< std::vector< std::vector < double > > > b;
+       /**
+       * polynomial coefficient c
+       */
+      std::vector< std::vector< std::vector < double > > > c;
+       /**
+       * polynomial coefficient d
+       */
+      std::vector< std::vector< std::vector < double > > > d;
+        /**
+       * polynomial coefficient e
+       */
+      std::vector< std::vector< std::vector < double > > > e;
+
+    } /** lambdas struct */ lambdas;
+ 
     struct stochastic_struct
     {
       /**

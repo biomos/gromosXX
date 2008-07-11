@@ -6,7 +6,7 @@ check_PROGRAMS = 		rasn.t \
 				aladip_atomic.t \
 				aladip_special.t \
 				aladip_cg.t \
-				scaling.t
+				lambdas.t
 
 rasn_t_SOURCES = 		rasn.t.cc \
 				check.h \
@@ -51,12 +51,17 @@ aladip_cg_t_SOURCES = 		aladip_cg.t.cc \
 aladip_cg_t_LDADD = ../libgroxx.la $(extra_lib)
 
 
-scaling_t_SOURCES = scaling.t.cc check.h
+lambdas_t_SOURCES = 		lambdas.t.cc \
+				check.h \
+				check_forcefield.h \
+				check_forcefield.cc \
+				check_state.h \
+				check_state.cc
 
-scaling_t_LDADD = ../libgroxx.la $(extra_lib)
+lambdas_t_LDADD = ../libgroxx.la $(extra_lib)
 
 
-TESTS = aladip.t aladip_atomic.t aladip_special.t aladip_cg.t scaling.t
+TESTS = aladip.t aladip_atomic.t aladip_special.t aladip_cg.t lambdas.t
 
 EXTRA_DIST =	data/rasn.topo \
 		data/rasn.conf \
@@ -71,7 +76,6 @@ EXTRA_DIST =	data/rasn.topo \
 		data/aladip.distrest \
 		data/aladip.dihrest \
 		data/aladip_atomic.in \
-		data/scaling.in \
-		data/scaling.lambdadep.in \
-		data/scaling.pttopo \
-		data/scaling.lambdadep.pttopo
+                data/lambdas.off.in \
+                data/lambdas.on.in \
+                data/lambdas.pttopo

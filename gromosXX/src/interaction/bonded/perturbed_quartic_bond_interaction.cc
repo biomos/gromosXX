@@ -56,10 +56,18 @@ int _calculate_perturbed_qbond_interactions
 
   for( ; b_it != b_to; ++b_it){
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    const double lambda = topo.individual_lambda(simulation::bond_lambda)
+      [topo.atom_energy_group()[b_it->i]][topo.atom_energy_group()[b_it->i]];
+    const double lambda_derivative = topo.individual_lambda_derivative
+      (simulation::bond_lambda)
+      [topo.atom_energy_group()[b_it->i]][topo.atom_energy_group()[b_it->i]];
+    
     DEBUG(7, "bond " << b_it->i << "-" << b_it->j
 	  << " A-type " << b_it->A_type
 	  << " B-type " << b_it->B_type 
-	  << " lambda " << topo.lambda());
+	  << " lambda " << lambda);
 
     assert(pos.size() > (b_it->i) && pos.size() > (b_it->j));
     periodicity.nearest_image(pos(b_it->i), pos(b_it->j), v);
@@ -71,16 +79,14 @@ int _calculate_perturbed_qbond_interactions
     assert(unsigned(b_it->A_type) < m_interaction.parameter().size());
     assert(unsigned(b_it->B_type) < m_interaction.parameter().size());
 
-    const double K = (1-topo.lambda()) *
-      m_interaction.parameter()[b_it->A_type].K +
-      topo.lambda() *
-      m_interaction.parameter()[b_it->B_type].K;
+    const double K = (1 - lambda) * m_interaction.parameter()[b_it->A_type].K +
+      lambda * m_interaction.parameter()[b_it->B_type].K;
     
     DEBUG(7, "K: " << K);
 
-    const double r0 = ((1-topo.lambda()) *
+    const double r0 = ((1 - lambda) *
 		       m_interaction.parameter()[b_it->A_type].r0 +
-		       topo.lambda() *
+		       lambda *
 		       m_interaction.parameter()[b_it->B_type].r0);
 
     const double r02 = r0 * r0;
@@ -119,30 +125,29 @@ int _calculate_perturbed_qbond_interactions
     DEBUG(7, "b_diff: " << b_diff);
     
     const double b_mix = m_interaction.parameter()[b_it->A_type].r0 +
-      topo.lambda() * b_diff;
+      lambda * b_diff;
     DEBUG(7, "b_mix: " << b_mix);
     
-    e_lambda = 0.25 * ( -4 * (m_interaction.parameter()[b_it->A_type].K +
-			      topo.lambda() * K_diff) *
-			b_diff * b_mix *
-			(dist2 - b_mix * b_mix) +
-			K_diff * 
-			(dist2 - b_mix * b_mix) * (dist2 - b_mix * b_mix));
+    e_lambda = 0.25 * lambda_derivative * 
+      ( -4 * (m_interaction.parameter()[b_it->A_type].K +
+	      lambda * K_diff) *
+	b_diff * b_mix *
+	(dist2 - b_mix * b_mix) +
+	K_diff * 
+	(dist2 - b_mix * b_mix) * (dist2 - b_mix * b_mix));
     DEBUG(7, "e_lambda: " << e_lambda);
     
     assert(conf.current().energies.bond_energy.size() >
 	   topo.atom_energy_group()[b_it->i]);
     
     conf.current().energies.
-      bond_energy[topo.atom_energy_group()
-		  [b_it->i]] += e;
+      bond_energy[topo.atom_energy_group()[b_it->i]] += e;
     
     assert(conf.current().perturbed_energy_derivatives.bond_energy.size() >
 	   topo.atom_energy_group()[b_it->i]);
     
     conf.current().perturbed_energy_derivatives.
-      bond_energy[topo.atom_energy_group()
-		  [b_it->i]] += e_lambda;
+      bond_energy[topo.atom_energy_group()[b_it->i]] += e_lambda;
 
   }
 

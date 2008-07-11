@@ -85,7 +85,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
   innerloop.init(sim);
-  innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
+  // Chris:
+  // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
+  // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
 
   std::vector<unsigned int>::const_iterator j_it, j_to;
   unsigned int i;
@@ -138,7 +140,10 @@ void interaction::Perturbed_Nonbonded_Outerloop
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
   innerloop.init(sim);
-  innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
+
+  // Chris:
+  // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
+  // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
   
   std::set<int>::const_iterator it, to;
   std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
@@ -186,7 +191,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
   innerloop.init(sim);
-  innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
+  // Chris:
+  // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
+  // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
 
   std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
     mit=topo.perturbed_solute().atoms().begin(),
@@ -239,7 +246,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // perturbed innerloop
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> p_innerloop(m_param);
   p_innerloop.init(sim);
-  p_innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
+  // Chris:
+  // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
+  // p_innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
   
   unsigned int i;
   unsigned int size_i = unsigned(pairlist.size());
@@ -416,10 +425,17 @@ void interaction::Perturbed_Nonbonded_Outerloop
         
         // (1-l)^n * X + l^n * X
         if (topo.is_perturbed(i)) {
-          alpha = pow((1-topo.lambda()), topo.lambda_exp()) * topo.perturbed_solute().atoms()[i].A_polarizability()
-                  + pow(topo.lambda(), topo.lambda_exp()) * topo.perturbed_solute().atoms()[i].B_polarizability();
-          damp_lev = pow((1-topo.lambda()), topo.lambda_exp()) * topo.perturbed_solute().atoms()[i].A_damping_level()
-                  + pow(topo.lambda(), topo.lambda_exp()) * topo.perturbed_solute().atoms()[i].B_damping_level();
+	  const double lambda = topo.individual_lambda(simulation::crf_lambda)
+	    [topo.atom_energy_group()[i]][topo.atom_energy_group()[i]];
+	  
+          alpha = pow((1-lambda), topo.lambda_exp()) * 
+	    topo.perturbed_solute().atoms()[i].A_polarizability()
+	    + pow(lambda, topo.lambda_exp()) * 
+	    topo.perturbed_solute().atoms()[i].B_polarizability();
+          damp_lev = pow((1-lambda), topo.lambda_exp()) * 
+	    topo.perturbed_solute().atoms()[i].A_damping_level()
+	    + pow(lambda, topo.lambda_exp()) * 
+	    topo.perturbed_solute().atoms()[i].B_damping_level();
         }
         if(topo.is_polarizable(i)){
           e_el_new(i) += storage_lr.electric_field(i);
@@ -502,7 +518,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
   
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop_p(m_param);
   innerloop_p.init(sim);
-  innerloop_p.set_lambda(topo.lambda(), topo.lambda_exp());
+  // Chris:
+  // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
+  // innerloop_p.set_lambda(topo.lambda(), topo.lambda_exp());
 
   for(unsigned int i=0; i<topo.num_atoms(); ++i) {
     if(topo.is_polarizable(i)){

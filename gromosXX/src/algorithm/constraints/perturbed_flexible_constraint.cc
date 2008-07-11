@@ -139,6 +139,16 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
 
     DEBUG(10, "\ti: " << it->i << " j: " << it->j);
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    // we use the bond lambda
+    const double lam = topo.individual_lambda(simulation::bond_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+    const double lam_derivative = topo.individual_lambda_derivative
+      (simulation::bond_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+
+
     // the position
     assert(conf.current().pos.size() > it->i);
     assert(conf.current().pos.size() > it->j);
@@ -272,23 +282,24 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
       DEBUG(10, "m1=" << m1 << " m2=" << m2 << " mu=" << mu << " dm1=" 
 	    << dm1 << " dm2=" << dm2);
 
-      const double mr0 = topo.lambda() * m_parameter[it->B_type].r0 + 
-	(1.0 - topo.lambda()) * m_parameter[it->A_type].r0;
-      const double mK = (1.0 - topo.lambda()) * m_parameter[it->A_type].K +
-	topo.lambda() * m_parameter[it->B_type].K;
+      const double mr0 = (1.0 - lam) * m_parameter[it->A_type].r0 + 
+	lam * m_parameter[it->B_type].r0;
+      const double mK = (1.0 - lam) * m_parameter[it->A_type].K +
+	lam * m_parameter[it->B_type].K;
 
       DEBUG(10, "mixed r0=" << mr0 << " mixed K=" << mK);
 
       conf.old().perturbed_energy_derivatives.constraints_energy
 	[topo.atom_energy_group()[it->i]] +=
-	lambda / dt2  * m_perturbed_flex_len[k] *
-	(m_parameter[it->B_type].r0 - m_parameter[it->A_type].r0 +
-	 (m_perturbed_flex_len[k] -  mr0) * 
-	 ((dm1 + dm2) / (m1 * m2 * mu) -
-	  dm2 / m2 - dm1 / m1 - 
-	  (m_parameter[it->B_type].K - m_parameter[it->A_type].K) / mK
-	  )
-	 );
+	lam_derivative * (lambda / dt2  * m_perturbed_flex_len[k] *
+			  (m_parameter[it->B_type].r0 - 
+			   m_parameter[it->A_type].r0 +
+			   (m_perturbed_flex_len[k] -  mr0) * 
+			   ((dm1 + dm2) / (m1 * m2 * mu) -
+			    dm2 / m2 - dm1 / m1 - 
+			    (m_parameter[it->B_type].K - 
+			     m_parameter[it->A_type].K) / mK
+			    )));
 	 
       // update positions
       ref_r *= lambda;
@@ -352,6 +363,7 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
     assert(conf.current().pos.size() > (it->i));
     assert(conf.current().pos.size() > (it->j));
     
+
     math::Vec const & pos_i = conf.current().pos(it->i);
     math::Vec const & pos_j = conf.current().pos(it->j);
 	
@@ -388,6 +400,14 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
     const double force_on_constraint  = (red_mass / dt2) * 
       (dist -  ref_dist - 
        conf.special().flexible_constraint.flexible_vel[k] * sim.time_step_size());
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    // we use the bond lambda
+    const double lam = topo.individual_lambda(simulation::bond_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+    const double lam_derivative = topo.individual_lambda_derivative
+      (simulation::bond_lambda)
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
 
     /*
     if (fabs(force_on_constraint) > 1E6){
@@ -414,10 +434,10 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
     assert(m_parameter.size() > it->A_type);
     assert(m_parameter.size() > it->B_type);
     
-    const double K = (1.0 - topo.lambda()) * m_parameter[it->A_type].K +
-      topo.lambda() * m_parameter[it->B_type].K;
-    const double r0 = (1.0 - topo.lambda()) * m_parameter[it->A_type].r0 + 
-      topo.lambda() * m_parameter[it->B_type].r0;
+    const double K = (1.0 - lam) * m_parameter[it->A_type].K +
+      lam * m_parameter[it->B_type].K;
+    const double r0 = (1.0 - lam) * m_parameter[it->A_type].r0 + 
+      lam * m_parameter[it->B_type].r0;
 
     const double new_len = force_on_constraint / K + r0;
 
@@ -456,16 +476,16 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
     // now we have to store the kinetic energy of the constraint
     // length change in the correct temperature bath...
     sim.multibath().in_bath(it->i, com, ir);
-
+    
     assert(conf.special().flexible_constraint.flexible_ekin.size() > ir);
     conf.special().flexible_constraint.flexible_ekin[ir] +=
       0.5 * red_mass * conf.special().flexible_constraint.flexible_vel[k] *
       conf.special().flexible_constraint.flexible_vel[k];
-
+    
     DEBUG(8, "constr " << it->i << " bath " << ir << " ekin " 
 	  << 0.5 * red_mass * conf.special().flexible_constraint.flexible_vel[k] * 
 	  conf.special().flexible_constraint.flexible_vel[k]);
-
+    
     // calculate Epot in the bond length constraints
     assert(topo.atom_energy_group().size() > it->i);
     assert(conf.old().energies.constraints_energy.size() > topo.atom_energy_group()[it->i]);

@@ -194,7 +194,8 @@ int check_lambda_derivative(topology::Topology & topo,
   
   // change lambda, calculate energies
   topo.lambda(topo.lambda()+epsilon);
-    
+  topo.update_for_lambda();
+  
   conf.current().force = 0;
   conf.current().energies.zero();
   conf.current().perturbed_energy_derivatives.zero();
@@ -212,7 +213,8 @@ int check_lambda_derivative(topology::Topology & topo,
 
   // change lambda, calculate energies
   topo.lambda(topo.lambda()-2*epsilon);
- 
+  topo.update_for_lambda();
+  
   conf.current().force = 0;
   conf.current().energies.zero();
   conf.current().perturbed_energy_derivatives.zero();
@@ -236,7 +238,8 @@ int check_lambda_derivative(topology::Topology & topo,
   // std::cout << " dE " << dE << " dfE " << dfE << std::endl;
   
   topo.lambda(topo.lambda() + epsilon);
-
+  topo.update_for_lambda();
+  
   RESULT(res, total);
 
   return total;
@@ -453,7 +456,8 @@ int check_dihrest_interaction(topology::Topology & topo,
 int check::check_forcefield(topology::Topology & topo,
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
-			    interaction::Forcefield & ff)
+			    interaction::Forcefield & ff,
+			    std::map<std::string, double> & ref)
 {
   int res=0, total=0;
   
@@ -466,47 +470,75 @@ int check::check_forcefield(topology::Topology & topo,
     // cout << (*it)->name << endl;
 
     if ((*it)->name == "QuarticBond"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 18.055276, 0.0000000001, 0.001);
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(),
+				 ref["QuarticBond"], 
+				 0.0000000001, 0.001);
     }
     else if ((*it)->name == "PerturbedQuarticBond"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 1.149568, 0.0000000001, 0.001);
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(), 
+				 ref["PerturbedQuarticBond"], 
+				 0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }
     else if ((*it)->name == "Angle"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 12.170290, 0.00000001, 0.001);
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(), 
+				 ref["Angle"],
+				 0.00000001, 0.001);
     }
     else if ((*it)->name == "PerturbedAngle"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 0.714818, 0.00000001, 0.001);
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(), 
+				 ref["PerturbedAngle"],
+				 0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }
     else if ((*it)->name == "ImproperDihedral"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 0.965060, 0.00000001, 0.001);      
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(), 
+				 ref["ImproperDihedral"],
+				 0.00000001, 0.001);      
     }
     else if ((*it)->name == "PerturbedImproperDihedral"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 2.642780, 0.00000001, 0.001);      
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(), 
+				 ref["PerturbedImproperDihedral"],
+				 0.00000001, 0.001);      
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }
     else if ((*it)->name == "Dihedral"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 2.255206, 0.00000001, 0.001);    
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(), 
+				 ref["Dihedral"],
+				 0.00000001, 0.001);    
     }
     else if ((*it)->name == "PerturbedDihedral"){
-      total += check_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 13.314602, 0.00000001, 0.001);    
+      total += check_interaction(topo, conf, sim, **it, 
+				 topo.num_solute_atoms(), 
+				 ref["PerturbedDihedral"],
+				 0.00000001, 0.001);    
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     }
     else if ((*it)->name == "NonBonded"){
       if (sim.param().force.interaction_function == simulation::cgrain_func){
 
 	sim.param().force.special_loop = simulation::special_loop_off;
-	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -7.352312, 0.0000000001, 0.01);
+	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), 
+				   ref["NonBonded_cg"],
+				   0.0000000001, 0.01);
 	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 
       }
       else{
 	sim.param().force.special_loop = simulation::special_loop_spc;
-	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
+	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), 
+				   ref["NonBonded"], 0.00000001, 0.001);
 	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 	sim.param().force.special_loop = simulation::special_loop_off;
-	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
+	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), 
+				   ref["NonBonded"], 0.00000001, 0.001);
 	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 
 	if (! sim.param().pairlist.grid){ //if not 1, eg grid see in_parameter.cc
@@ -522,7 +554,8 @@ int check::check_forcefield(topology::Topology & topo,
 	  
 	  ni->init(topo, conf, sim, std::cout, true);
 	  
-	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
+	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), 
+				     ref["NonBonded"], 0.00000001, 0.001);
 	  total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
 	  
 	  sim.param().pairlist.grid = true;
@@ -543,7 +576,8 @@ int check::check_forcefield(topology::Topology & topo,
 	  sim.param().pairlist.grid_size = 0.1;
 	  ni->init(topo, conf, sim, std::cout, true);
 	  
-	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), -50.196817, 0.00000001, 0.001);
+	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), 
+				     ref["NonBonded"], 0.00000001, 0.001);
 	  total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
 	  
 	  sim.param().pairlist.grid = false;
@@ -555,17 +589,29 @@ int check::check_forcefield(topology::Topology & topo,
     }
 
     else if ((*it)->name == "DistanceRestraint"){
-      total += check_distanceres_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 257.189539, 0.0000000001, 0.001);
+      total += check_distanceres_interaction(topo, conf, sim, **it, 
+					     topo.num_solute_atoms(), 
+					     ref["DistanceRestraint"],
+					     0.0000000001, 0.001);
     }
     else if ((*it)->name == "PerturbedDistanceRestraint"){
-      total += check_distanceres_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 195.899012, 0.0000000001, 0.001);
+      total += check_distanceres_interaction(topo, conf, sim, **it, 
+					     topo.num_solute_atoms(), 
+					     ref["PerturbedDistanceRestraint"],
+					     0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     }
     else if ((*it)->name == "DihedralRestraint"){
-      total += check_dihrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 2127.910749, 0.0000000001, 0.001);
+      total += check_dihrest_interaction(topo, conf, sim, **it, 
+					 topo.num_solute_atoms(), 
+					 ref["DihedralRestraint"],
+					 0.0000000001, 0.001);
     }
     else if ((*it)->name == "PerturbedDihedralRestraint"){
-      total += check_dihrest_interaction(topo, conf, sim, **it, topo.num_solute_atoms(), 279.207857, 0.0000000001, 0.001);
+      total += check_dihrest_interaction(topo, conf, sim, **it, 
+					 topo.num_solute_atoms(), 
+					 ref["PerturbedDihedralRestraint"],
+					 0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     }
     else if ((*it)->name == "MolecularVirial"){
@@ -584,7 +630,8 @@ int check::check_forcefield(topology::Topology & topo,
 int check::check_atomic_cutoff(topology::Topology & topo,
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
-			       interaction::Forcefield & ff)
+			       interaction::Forcefield & ff,
+			       std::map<std::string, double> & ref)
 {
   int res=0, total=0;
   
@@ -607,7 +654,7 @@ int check::check_atomic_cutoff(topology::Topology & topo,
       
       conf.current().energies.calculate_totals();
       CHECK_APPROX_EQUAL(conf.current().energies.potential_total,
-			 -49.912, 0.001, res);
+		         ref["NonBonded_atomic"], 0.001, res);
       RESULT(res, total);
     }
   }

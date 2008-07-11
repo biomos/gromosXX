@@ -56,10 +56,18 @@ static int _calculate_perturbed_hbond_interactions
 
   for( ; b_it != b_to; ++b_it){
 
+    // atom i determines the energy group for the output. 
+    // we use the same definition for the individual lambdas
+    const double lambda = topo.individual_lambda(simulation::bond_lambda)
+      [topo.atom_energy_group()[b_it->i]][topo.atom_energy_group()[b_it->i]];
+    const double lambda_derivative = topo.individual_lambda_derivative
+      (simulation::bond_lambda)
+      [topo.atom_energy_group()[b_it->i]][topo.atom_energy_group()[b_it->i]];
+       
     DEBUG(7, "bond " << b_it->i << "-" << b_it->j
 	  << " A-type " << b_it->A_type
 	  << " B-type " << b_it->B_type
-	  << " lambda " << topo.lambda());
+	  << " lambda " << lambda);
 
     assert(pos.size() > (b_it->i) && pos.size() > (b_it->j));
 
@@ -73,16 +81,14 @@ static int _calculate_perturbed_hbond_interactions
     assert(unsigned(b_it->A_type) < m_interaction.parameter().size());
     assert(unsigned(b_it->B_type) < m_interaction.parameter().size());
 
-    const double K = (1-topo.lambda()) *
-      m_interaction.parameter()[b_it->A_type].K +
-      topo.lambda() *
-      m_interaction.parameter()[b_it->B_type].K;
+    const double K = (1 - lambda) * m_interaction.parameter()[b_it->A_type].K +
+      lambda * m_interaction.parameter()[b_it->B_type].K;
     
     DEBUG(7, "K: " << K);
 
-    const double r0 = ((1-topo.lambda()) *
+    const double r0 = ((1 - lambda) *
 		       m_interaction.parameter()[b_it->A_type].r0 +
-		       topo.lambda() *
+		       lambda *
 		       m_interaction.parameter()[b_it->B_type].r0);
     diff = dist - r0;
     
@@ -118,7 +124,7 @@ static int _calculate_perturbed_hbond_interactions
       m_interaction.parameter()[b_it->A_type].r0;
     DEBUG(9, "b_diff: " << b_diff);
     
-    e_lambda = 0.5 * K_diff*diff*diff - K*diff*b_diff;
+    e_lambda = lambda_derivative * (0.5 * K_diff*diff*diff - K*diff*b_diff) ;
 
     DEBUG(9, "e_lambda: " << e_lambda);
     

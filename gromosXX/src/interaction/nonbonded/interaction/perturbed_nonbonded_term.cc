@@ -69,23 +69,139 @@ inline void interaction::Perturbed_Nonbonded_Term
 		     io::message::critical);
   }  
 }
+
 /**
  * Perturbation:
- * lambda value for state A
+ * lambda value for lj interaction for state A
  */
-inline double const interaction::Perturbed_Nonbonded_Term::A_lambda()const
+inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda()const
 {
-  return m_A_lambda;
+  return m_A_lj_lambda;
 }
 
 /**
  * Perturbation:
- * lambda value for state B
+ * lambda value for crf interaction for state A
  */
-inline double const interaction::Perturbed_Nonbonded_Term::B_lambda()const
-{
-  return m_B_lambda;
+inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda()const{
+  return m_A_crf_lambda;
 }
+
+/**
+ * Perturbation:
+ * lambda value for lj interaction for state B
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda()const{
+  return m_B_lj_lambda;
+}
+
+/**
+ * Perturbation:
+ * lambda value for crf interaction for state B
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda()const{
+  return m_B_crf_lambda;
+}
+
+/**
+ * Perturbation:
+ * lambda value for lj interaction for state A to the power nlam
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n()const{
+  return m_A_lj_lambda_n;
+}
+
+/**
+ * Perturbation:
+ * lambda value for crf interaction for state A to the power nlam
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n()const{
+  return m_A_crf_lambda_n;
+}
+
+/**
+ * Perturbation:
+ * lambda value for lj interaction for state B to the power nlam
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n()const{
+  return m_B_lj_lambda_n;
+}
+
+/**
+ * Perturbation:
+ * lambda value for crf interaction for state B to the power nlam
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda_n()const{
+  return m_B_crf_lambda_n;
+}
+
+/**
+ * Perturbation:
+ * lambda value for lj interaction for state A to the power nlam-1
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n_1()const{
+  return m_A_lj_lambda_n_1;
+}
+
+/**
+ * Perturbation:
+ * lambda value for crf interaction for state A to the power nlam-1
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n_1()const{
+  return m_A_crf_lambda_n_1;
+}
+
+/**
+ * Perturbation:
+ * lambda value for lj interaction for state B to the power nlam-1
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n_1()const{
+  return m_B_lj_lambda_n_1;
+}
+
+/**
+ * Perturbation:
+ * lambda value for crf interaction for state B to the power nlam-1
+ */
+inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda_n_1()const{
+  return m_B_crf_lambda_n_1;
+}
+
+/**
+ * Perturbation:
+ * set the lambdas
+ */
+inline void interaction::Perturbed_Nonbonded_Term::
+set_lambda(double const lj_lambda, double const ljs_lambda,
+	   double const crf_lambda, double const crfs_lambda,
+	   double const lj_lambda_derivative, double const ljs_lambda_derivative,
+	   double const crf_lambda_derivative, double const crfs_lambda_derivative,
+	   int const n)
+{
+
+  m_A_ljs_lambda = (1-ljs_lambda) * ljs_lambda_derivative;    // multiplication by lambda interaction derivative 
+  m_A_ljs_lambda2 = (1-ljs_lambda) * (1-ljs_lambda);
+  m_A_crfs_lambda = (1-crfs_lambda) * crfs_lambda_derivative;  /* multiplication by lambda interaction derivative */
+  m_A_crfs_lambda2 = (1-crfs_lambda) * (1-crfs_lambda);
+
+  m_B_ljs_lambda = ljs_lambda * ljs_lambda_derivative;  /* multiplication by lambda interaction derivative */
+  m_B_ljs_lambda2 = ljs_lambda * ljs_lambda;
+  m_B_crfs_lambda = crfs_lambda * crfs_lambda_derivative;  /* multiplication by lambda interaction derivative */
+  m_B_crfs_lambda2 = crfs_lambda * crfs_lambda;
+  
+  m_A_lj_lambda_n  = pow(1-lj_lambda,  n);
+  m_A_crf_lambda_n = pow(1-crf_lambda, n);
+  m_B_lj_lambda_n  = pow(lj_lambda,    n);
+  m_B_crf_lambda_n = pow(crf_lambda,   n);
+  m_A_lj_lambda_n_1  = pow(1-lj_lambda,  n-1) * lj_lambda_derivative;  /* multiplication by lambda interaction derivative */
+  m_A_crf_lambda_n_1 = pow(1-crf_lambda, n-1) * crf_lambda_derivative;  /* multiplication by lambda interaction derivative */
+  m_B_lj_lambda_n_1  = pow(lj_lambda,    n-1) * lj_lambda_derivative;  /* multiplication by lambda interaction derivative */
+  m_B_crf_lambda_n_1 = pow(crf_lambda,   n-1) * crf_lambda_derivative;  /* multiplication by lambda interaction derivative */
+
+  m_n = n;
+  
+}
+
 
 /**
  * Perturbation:
@@ -97,86 +213,19 @@ inline int const interaction::Perturbed_Nonbonded_Term::n()const
 }
 
 /**
- * Perturbation:
- * lambda value for state A to the power nlam
- */
-inline double const interaction::Perturbed_Nonbonded_Term::A_lambda_n()const
-{
-  return m_A_lambda_n;
-}
-
-/**
- * Perturbation:
- * lambda value for state B to the power nlam
- */
-inline double const interaction::Perturbed_Nonbonded_Term::B_lambda_n()const
-{
-  return m_B_lambda_n;
-}
-
-/**
- * Perturbation:
- * lambda value for state A to the power nlam-1
- */
-inline double const interaction::Perturbed_Nonbonded_Term::A_lambda_n_1()const
-{
-  return m_A_lambda_n_1;
-}
-
-/**
- * Perturbation:
- * lambda value for state B to the power nlam-1
- */
-inline double const interaction::Perturbed_Nonbonded_Term::B_lambda_n_1()const
-{
-  return m_B_lambda_n_1;
-}
-
-/**
- * Perturbation:
- * set the lambdas
- */
-inline void interaction::Perturbed_Nonbonded_Term::set_lambda(double const l, 
-						    int const n)
-{
-  DEBUG(9, "initializing lambdas: l=" << l
-	<< " n=" << n);
-  m_A_lambda = 1-l;
-  m_A_lambda2 = m_A_lambda * m_A_lambda;
-
-  m_B_lambda = l;
-  m_B_lambda2 = m_B_lambda * m_B_lambda;
-
-  m_n = n;
-          
-  m_A_lambda_n = pow(m_A_lambda, n);
-  m_B_lambda_n = pow(m_B_lambda, n);
-  m_A_lambda_n_1 = pow(m_A_lambda, n-1);
-  m_B_lambda_n_1 = pow(m_B_lambda, n-1);
-  
-  DEBUG(11, "\tA:     " << m_A_lambda);
-  DEBUG(11, "\tB:     " << m_B_lambda);
-  DEBUG(11, "\tA^n:   " << m_A_lambda_n);
-  DEBUG(11, "\tB^n:   " << m_B_lambda_n);
-  DEBUG(11, "\tA^n-1: " << m_A_lambda_n_1);
-  DEBUG(11, "\tB^n-1: " << m_B_lambda_n_1);
-}
-
-/**
  * helper function to calculate the force and energy for 
  * the reaction field contribution for a given pair
  * using the soft interaction
  */
 inline void interaction::Perturbed_Nonbonded_Term
 ::rf_soft_interaction(math::Vec const &r, double const A_q, double const B_q,
-		      double const l, double const alpha_crf,
-		      math::Vec & force, double &e_rf, double & de_rf,
+		      double const alpha_crf, math::Vec & force, double &e_rf, double & de_rf,
 		      bool selfterm_correction)
 {
   const double dist2 = abs2(r);
 
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
 
   const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
   const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
@@ -190,25 +239,27 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_crf_pert = 3.0*A_crf_2cut3i/A_cut2soft;
   const double B_crf_pert = 3.0*B_crf_2cut3i/B_cut2soft;
  
-  force = (m_A_lambda_n * A_q * A_crf_cut3i +
-	   m_B_lambda_n * B_q * B_crf_cut3i) * math::four_pi_eps_i *r;
+  force = (m_A_crf_lambda_n * A_q * A_crf_cut3i +
+	   m_B_crf_lambda_n * B_q * B_crf_cut3i) * math::four_pi_eps_i *r;
 
   double const A_e_rf = A_q * (- A_crf_2cut3i * dist2 - m_crf_cut);
   double const B_e_rf = B_q * (- B_crf_2cut3i * dist2 - m_crf_cut);
   
-  e_rf = (m_A_lambda_n * A_e_rf + m_B_lambda_n * B_e_rf) * math::four_pi_eps_i;
+  e_rf = (m_A_crf_lambda_n * A_e_rf + m_B_crf_lambda_n * B_e_rf) * math::four_pi_eps_i;
 
   if(selfterm_correction)
     e_rf += A_q * math::four_pi_eps_i * m_crf_cut;
+  // Chris: CHECK! I'm not sure if the self-term correction is not wrong... 
+  //        There is no B state info going in here at all!
+  //        If a B state is added, then there should also be a contribution to de_rf
   
   DEBUG(11, "A_crf_pert: " << A_crf_pert << " B_crf_pert: " << B_crf_pert);
   DEBUG(11, "m_lambda_exp: " << m_lambda_exp);
 
-  de_rf = ((m_A_lambda_n * A_q * m_B_lambda * A_crf_pert -
-	    m_B_lambda_n * B_q * m_A_lambda * B_crf_pert) * dist2 * alpha_crf +
-	   (m_B_lambda_n_1 * B_e_rf -
-	    m_A_lambda_n_1 * A_e_rf) * m_lambda_exp) * math::four_pi_eps_i;
-  
+  de_rf = ((m_A_crf_lambda_n * A_q * m_B_crfs_lambda * A_crf_pert -
+	    m_B_crf_lambda_n * B_q * m_A_crfs_lambda * B_crf_pert) * dist2 * alpha_crf +
+	   (m_B_crf_lambda_n_1 * B_e_rf -
+	    m_A_crf_lambda_n_1 * A_e_rf) * m_lambda_exp) * math::four_pi_eps_i;
 }
 
 /**
@@ -218,15 +269,15 @@ inline void interaction::Perturbed_Nonbonded_Term
  */
 inline void interaction::Perturbed_Nonbonded_Term
 ::pol_rf_soft_interaction(math::Vec const &r, 
-                      math::Vec const &rp1,
-                      math::Vec const &rp2,
-                      math::Vec const &rpp,
-		      double const A_qi, double const A_qj,
-                      double const B_qi, double const B_qj,
-                      double cqi, double cqj,
-		      double const l, double const alpha_crf,
-		      std::vector<double> & force, double &e_rf, double & de_rf,
-		      bool selfterm_correction)
+			  math::Vec const &rp1,
+			  math::Vec const &rp2,
+			  math::Vec const &rpp,
+			  double const A_qi, double const A_qj,
+			  double const B_qi, double const B_qj,
+			  double cqi, double cqj,
+			  double const alpha_crf,
+			  std::vector<double> & force, double &e_rf, double & de_rf,
+			  bool selfterm_correction)
 {
   const double dist2 = abs2(r);
   const double dist2p1 = abs2(rp1);
@@ -242,9 +293,9 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_qepsp1 = (B_qi-cqi) * cqj * math::four_pi_eps_i;
   const double B_qepsp2 = (B_qj-cqj) * cqi * math::four_pi_eps_i;
   const double B_qepspp = cqi * cqj * math::four_pi_eps_i;
-
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
+  
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
 
   const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
   const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
@@ -258,9 +309,9 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_crf_pert = 3.0*A_crf_2cut3i/A_cut2soft;
   const double B_crf_pert = 3.0*B_crf_2cut3i/B_cut2soft;
 
-  const double A_lambda_cut = m_A_lambda_n * A_crf_cut3i;
-  const double B_lambda_cut = m_B_lambda_n * B_crf_cut3i;
- 
+  const double A_lambda_cut = m_A_crf_lambda_n * A_crf_cut3i;
+  const double B_lambda_cut = m_B_crf_lambda_n * B_crf_cut3i;
+  
   force[0] = A_qeps*A_lambda_cut + B_qeps*B_lambda_cut;
   force[1] = A_qepsp1*A_lambda_cut + B_qepsp1*B_lambda_cut;
   force[2] = A_qepsp2*A_lambda_cut + B_qepsp2*B_lambda_cut;
@@ -276,24 +327,24 @@ inline void interaction::Perturbed_Nonbonded_Term
   double const B_erfp2 = B_qepsp2 * (- B_crf_2cut3i * dist2p2 - m_crf_cut);
   double const B_erfpp = B_qepspp * (- B_crf_2cut3i * dist2pp - m_crf_cut);
   
-  e_rf = m_A_lambda_n * (A_erf + A_erfp1 + A_erfp2 + A_erfpp) 
-         + m_B_lambda_n * (B_erf + B_erfp1 + B_erfp2 + B_erfpp);
+  e_rf = m_A_crf_lambda_n * (A_erf + A_erfp1 + A_erfp2 + A_erfpp) 
+         + m_B_crf_lambda_n * (B_erf + B_erfp1 + B_erfp2 + B_erfpp);
 
   if(selfterm_correction)
     e_rf += A_qeps * m_crf_cut;
   
-  de_rf = (m_A_lambda_n * A_qeps * m_B_lambda * A_crf_pert -
-	    m_B_lambda_n * B_qeps * m_A_lambda * B_crf_pert) * dist2 * alpha_crf +
-	   (m_B_lambda_n_1 * B_erf - m_A_lambda_n_1 * A_erf) * m_lambda_exp
-           + (m_A_lambda_n * A_qepsp1 * m_B_lambda * A_crf_pert -
-	    m_B_lambda_n * B_qepsp1 * m_A_lambda * B_crf_pert) * dist2p1 * alpha_crf +
-	   (m_B_lambda_n_1 * B_erfp1 - m_A_lambda_n_1 * A_erfp1) * m_lambda_exp
-           + (m_A_lambda_n * A_qepsp2 * m_B_lambda * A_crf_pert -
-	    m_B_lambda_n * B_qepsp2 * m_A_lambda * B_crf_pert) * dist2p2 * alpha_crf +
-	   (m_B_lambda_n_1 * B_erfp2 - m_A_lambda_n_1 * A_erfp2) * m_lambda_exp
-           + (m_A_lambda_n * A_qepspp * m_B_lambda * A_crf_pert -
-	    m_B_lambda_n * B_qepspp * m_A_lambda * B_crf_pert) * dist2pp * alpha_crf +
-	   (m_B_lambda_n_1 * B_erfpp - m_A_lambda_n_1 * A_erfpp) * m_lambda_exp;
+  de_rf = (m_A_crf_lambda_n * A_qeps * m_B_crfs_lambda * A_crf_pert -
+	   m_B_crf_lambda_n * B_qeps * m_A_crfs_lambda * B_crf_pert) * dist2 * alpha_crf +
+    (m_B_crf_lambda_n_1 * B_erf - m_A_crf_lambda_n_1 * A_erf) * m_lambda_exp
+    + (m_A_crf_lambda_n * A_qepsp1 * m_B_crfs_lambda * A_crf_pert -
+       m_B_crf_lambda_n * B_qepsp1 * m_A_crfs_lambda * B_crf_pert) * dist2p1 * alpha_crf +
+    (m_B_crf_lambda_n_1 * B_erfp1 - m_A_crf_lambda_n_1 * A_erfp1) * m_lambda_exp
+    + (m_A_crf_lambda_n * A_qepsp2 * m_B_crfs_lambda * A_crf_pert -
+       m_B_crf_lambda_n * B_qepsp2 * m_A_crfs_lambda * B_crf_pert) * dist2p2 * alpha_crf +
+    (m_B_crf_lambda_n_1 * B_erfp2 - m_A_crf_lambda_n_1 * A_erfp2) * m_lambda_exp
+    + (m_A_crf_lambda_n * A_qepspp * m_B_crfs_lambda * A_crf_pert -
+       m_B_crf_lambda_n * B_qepspp * m_A_crfs_lambda * B_crf_pert) * dist2pp * alpha_crf +
+    (m_B_crf_lambda_n_1 * B_erfpp - m_A_crf_lambda_n_1 * A_erfpp) * m_lambda_exp;
   
 }
 
@@ -306,8 +357,8 @@ inline void interaction::Perturbed_Nonbonded_Term
 {
   const double dist2 = abs2(r);
 
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
 
   const double A_cut2soft3 = A_cut2soft*A_cut2soft*A_cut2soft;
   const double B_cut2soft3 = B_cut2soft*B_cut2soft*B_cut2soft;
@@ -320,9 +371,9 @@ inline void interaction::Perturbed_Nonbonded_Term
 
   const double A_crf_pert = 3.0*A_crf_2cut3i/A_cut2soft;
   const double B_crf_pert = 3.0*B_crf_2cut3i/B_cut2soft;
- 
-  const double A_scaled_lambda_n = A_scale * m_A_lambda_n;  
-  const double B_scaled_lambda_n = B_scale * m_B_lambda_n;
+  
+  const double A_scaled_lambda_n = A_scale * m_A_crf_lambda_n;  
+  const double B_scaled_lambda_n = B_scale * m_B_crf_lambda_n;
   
   force = (A_scaled_lambda_n * A_q * A_crf_cut3i +
 	   B_scaled_lambda_n * B_q * B_crf_cut3i) * math::four_pi_eps_i *r;
@@ -334,10 +385,10 @@ inline void interaction::Perturbed_Nonbonded_Term
   if(selfterm_correction)
     e_rf += A_q * math::four_pi_eps_i * m_crf_cut;
   
-  de_rf = ((A_scaled_lambda_n * A_q * m_B_lambda * A_crf_pert -
-	    B_scaled_lambda_n * B_q * m_A_lambda * B_crf_pert) * dist2 * alpha_crf +
-	   (B_scale * m_B_lambda_n_1 * B_e_rf - 
-	    A_scale * m_A_lambda_n_1 * A_e_rf) * m_lambda_exp) * math::four_pi_eps_i;
+  de_rf = ((A_scaled_lambda_n * A_q * m_B_crfs_lambda * A_crf_pert -
+	    B_scaled_lambda_n * B_q * m_A_crfs_lambda * B_crf_pert) * dist2 * alpha_crf +
+	   (B_scale * m_B_crf_lambda_n_1 * B_e_rf - 
+	    A_scale * m_A_crf_lambda_n_1 * A_e_rf) * m_lambda_exp) * math::four_pi_eps_i;
 
 }
 
@@ -361,8 +412,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist2 = abs2(r);
   assert(dist2 != 0);
   
-  const double A_dist2soft = dist2 + alpha_crf*m_B_lambda2;
-  const double B_dist2soft = dist2 + alpha_crf*m_A_lambda2;
+  const double A_dist2soft = dist2 + alpha_crf*m_B_crfs_lambda2;
+  const double B_dist2soft = dist2 + alpha_crf*m_A_crfs_lambda2;
 
   const double A_distisoft = 1.0 / sqrt(A_dist2soft);
   const double B_distisoft = 1.0 / sqrt(B_dist2soft);
@@ -373,14 +424,14 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist4 = dist2 * dist2;
   const double dist6 = dist4 * dist2;
 
-  const double A_dist6soft = dist6 + alpha_lj*m_B_lambda2*A_c126;
-  const double B_dist6soft = dist6 + alpha_lj*m_A_lambda2*B_c126;
+  const double A_dist6soft = dist6 + alpha_lj*m_B_ljs_lambda2*A_c126;
+  const double B_dist6soft = dist6 + alpha_lj*m_A_ljs_lambda2*B_c126;
 
   const double A_dist6isoft = 1.0 / A_dist6soft;
   const double B_dist6isoft = 1.0 / B_dist6soft;
   
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
 
   const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
   const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
@@ -395,15 +446,15 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_crf_pert = 3.0 * B_crf_2cut3i / B_cut2soft;
   
    // substitute A_dist3isoft thing. just like here -- daniel 
-  force1 = (m_A_lambda_n * A_q * (A_dist3isoft + A_crf_cut3i) +
-	    m_B_lambda_n * B_q * (B_dist3isoft + B_crf_cut3i)) *
+  force1 = (m_A_crf_lambda_n * A_q * (A_dist3isoft + A_crf_cut3i) +
+	    m_B_crf_lambda_n * B_q * (B_dist3isoft + B_crf_cut3i)) *
     math::four_pi_eps_i;
 
-  force6 = - 6.0 * (m_A_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
-                    m_B_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4;
+  force6 = - 6.0 * (m_A_lj_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
+                    m_B_lj_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4;
   
-  force12 = 12 * (m_A_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
-                  m_B_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4;
+  force12 = 12 * (m_A_lj_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
+                  m_B_lj_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4;
   
   const double A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
   const double B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
@@ -411,30 +462,39 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_e_crf = A_q * (A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut);
   const double B_e_crf = B_q * (B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut);
   
-  DEBUG(11, "just checking\nm_A_lambda " << m_A_lambda
-	<< "\nm_B_lambda " << m_B_lambda
-	<< "\nm_A_lambda2 " << m_A_lambda2
-	<< "\nm_B_lambda2 " << m_B_lambda2
-	<< "\nm_A_lambda_n " << m_A_lambda_n
-	<< "\nm_B_lambda_n" << m_B_lambda_n
-	<< "\nm_A_lambda_n_1 " << m_A_lambda_n_1
-	<< "\nm_B_lambda_n_1 " << m_B_lambda_n_1);
+  DEBUG(11, "just checking\nm_A_ljs_lambda " << m_A_ljs_lambda
+	<< "\nm_B_ljs_lambda " << m_B_ljs_lambda
+	<< "\nm_A_ljs_lambda2 " << m_A_ljs_lambda2
+	<< "\nm_B_ljs_lambda2 " << m_B_ljs_lambda2
+	<< "\nm_A_lj_lambda_n " << m_A_lj_lambda_n
+	<< "\nm_B_lj_lambda_n" << m_B_lj_lambda_n
+	<< "\nm_A_lj_lambda_n_1 " << m_A_lj_lambda_n_1
+	<< "\nm_B_lj_lambda_n_1 " << m_B_lj_lambda_n_1
+	<< "\nm_A_crfs_lambda " << m_A_crfs_lambda
+	<< "\nm_B_crfs_lambda " << m_B_crfs_lambda
+	<< "\nm_A_crfs_lambda2 " << m_A_crfs_lambda2
+	<< "\nm_B_crfs_lambda2 " << m_B_crfs_lambda2
+	<< "\nm_A_crf_lambda_n " << m_A_crf_lambda_n
+	<< "\nm_B_crf_lambda_n" << m_B_crf_lambda_n
+	<< "\nm_A_crf_lambda_n_1 " << m_A_crf_lambda_n_1
+	<< "\nm_B_crf_lambda_n_1 " << m_B_crf_lambda_n_1);
   
 
-  e_lj = m_A_lambda_n * A_e_lj + m_B_lambda_n * B_e_lj;
+  e_lj = m_A_lj_lambda_n * A_e_lj + m_B_lj_lambda_n * B_e_lj;
   
-  e_crf = (m_A_lambda_n * A_e_crf + m_B_lambda_n * B_e_crf) * math::four_pi_eps_i;
+  e_crf = (m_A_crf_lambda_n * A_e_crf + m_B_crf_lambda_n * B_e_crf) * math::four_pi_eps_i;
   
-  de_lj = -2.0 * alpha_lj * (m_A_lambda_n * m_B_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
+  de_lj = -2.0 * alpha_lj * (m_A_lj_lambda_n * m_B_ljs_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
 			     (2 * A_c12 * A_dist6isoft - A_c6) -
-			     m_B_lambda_n * m_A_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
+			     m_B_lj_lambda_n * m_A_ljs_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
 			     (2 * B_c12 * B_dist6isoft - B_c6))
-    + m_lambda_exp * (m_B_lambda_n_1 * B_e_lj - m_A_lambda_n_1 * A_e_lj);
+    + m_lambda_exp * (m_B_lj_lambda_n_1 * B_e_lj - m_A_lj_lambda_n_1 * A_e_lj);
 
-  de_crf = -(m_A_lambda_n * A_q * m_B_lambda * (A_dist3isoft - A_crf_pert * dist2) -
-	     m_B_lambda_n * B_q * m_A_lambda * (B_dist3isoft - B_crf_pert * dist2)) * 
+  de_crf = -(m_A_crf_lambda_n * A_q * m_B_crfs_lambda * (A_dist3isoft - A_crf_pert * dist2) -
+	     m_B_crf_lambda_n * B_q * m_A_crfs_lambda * (B_dist3isoft - B_crf_pert * dist2)) * 
     math::four_pi_eps_i * alpha_crf
-    + m_lambda_exp * (m_B_lambda_n_1 * B_e_crf - m_A_lambda_n_1 * A_e_crf) * math::four_pi_eps_i;
+    + m_lambda_exp * (m_B_crf_lambda_n_1 * B_e_crf - m_A_crf_lambda_n_1 * A_e_crf) * 
+    math::four_pi_eps_i;
   
 }
 inline void interaction::Perturbed_Nonbonded_Term
@@ -474,8 +534,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist2pp = abs2(rpp);
   assert(dist2 != 0);
   
-  const double A_al2 = alpha_crf*m_B_lambda2;
-  const double B_al2 = alpha_crf*m_A_lambda2;
+  const double A_al2 = alpha_crf*m_B_crfs_lambda2;
+  const double B_al2 = alpha_crf*m_A_crfs_lambda2;
   const double A_dist2soft = dist2 + A_al2;
   const double A_dist2p1soft = dist2p1 + A_al2;
   const double A_dist2p2soft = dist2p2 + A_al2;
@@ -506,14 +566,14 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist4 = dist2 * dist2;
   const double dist6 = dist4 * dist2;
 
-  const double A_dist6soft = dist6 + alpha_lj*m_B_lambda2*A_c126;
-  const double B_dist6soft = dist6 + alpha_lj*m_A_lambda2*B_c126;
+  const double A_dist6soft = dist6 + alpha_lj*m_B_ljs_lambda2*A_c126;
+  const double B_dist6soft = dist6 + alpha_lj*m_A_ljs_lambda2*B_c126;
 
   const double A_dist6isoft = 1.0 / A_dist6soft;
   const double B_dist6isoft = 1.0 / B_dist6soft;
   
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
 
   const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
   const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
@@ -528,20 +588,20 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_crf_pert = 3.0 * B_crf_2cut3i / B_cut2soft;
   
    // substitute A_dist3isoft thing. just like here -- daniel 
-  force1[0] = m_A_lambda_n * A_qeps * (A_dist3isoft + A_crf_cut3i) +
-	      m_B_lambda_n * B_qeps * (B_dist3isoft + B_crf_cut3i);
-  force1[1] = m_A_lambda_n * A_qepsp1 * (A_dist3ip1soft + A_crf_cut3i) +
-	      m_B_lambda_n * B_qepsp1 * (B_dist3ip1soft + B_crf_cut3i);
-  force1[2] = m_A_lambda_n * A_qepsp2 * (A_dist3ip2soft + A_crf_cut3i) +
-	      m_B_lambda_n * B_qepsp2 * (B_dist3ip2soft + B_crf_cut3i);
-  force1[3] = m_A_lambda_n * A_qepspp * (A_dist3ippsoft + A_crf_cut3i) +
-              m_B_lambda_n * B_qepspp * (B_dist3ippsoft + B_crf_cut3i);
+  force1[0] = m_A_crf_lambda_n * A_qeps * (A_dist3isoft + A_crf_cut3i) +
+	      m_B_crf_lambda_n * B_qeps * (B_dist3isoft + B_crf_cut3i);
+  force1[1] = m_A_crf_lambda_n * A_qepsp1 * (A_dist3ip1soft + A_crf_cut3i) +
+	      m_B_crf_lambda_n * B_qepsp1 * (B_dist3ip1soft + B_crf_cut3i);
+  force1[2] = m_A_crf_lambda_n * A_qepsp2 * (A_dist3ip2soft + A_crf_cut3i) +
+	      m_B_crf_lambda_n * B_qepsp2 * (B_dist3ip2soft + B_crf_cut3i);
+  force1[3] = m_A_crf_lambda_n * A_qepspp * (A_dist3ippsoft + A_crf_cut3i) +
+              m_B_crf_lambda_n * B_qepspp * (B_dist3ippsoft + B_crf_cut3i);
 
-  force6 = - 6.0 * (m_A_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
-                    m_B_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4;
+  force6 = - 6.0 * (m_A_lj_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
+                    m_B_lj_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4;
   
-  force12 = 12 * (m_A_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
-                  m_B_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4;
+  force12 = 12 * (m_A_lj_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
+                  m_B_lj_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4;
   
   const double A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
   const double B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
@@ -558,31 +618,31 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_e_crf = A_ecrf0 + A_ecrf1 + A_ecrf2 + A_ecrfp;
   const double B_e_crf = B_ecrf0 + B_ecrf1 + B_ecrf2 + B_ecrfp;
 
-  e_lj = m_A_lambda_n * A_e_lj + m_B_lambda_n * B_e_lj;
+  e_lj = m_A_lj_lambda_n * A_e_lj + m_B_lj_lambda_n * B_e_lj;
   
-  e_crf = (m_A_lambda_n * A_e_crf + m_B_lambda_n * B_e_crf);
+  e_crf = (m_A_crf_lambda_n * A_e_crf + m_B_crf_lambda_n * B_e_crf);
   
-  de_lj = -2.0 * alpha_lj * (m_A_lambda_n * m_B_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
+  de_lj = -2.0 * alpha_lj * (m_A_lj_lambda_n * m_B_ljs_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
 			     (2 * A_c12 * A_dist6isoft - A_c6) -
-			     m_B_lambda_n * m_A_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
+			     m_B_lj_lambda_n * m_A_ljs_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
 			     (2 * B_c12 * B_dist6isoft - B_c6))
-          + m_lambda_exp * (m_B_lambda_n_1 * B_e_lj - m_A_lambda_n_1 * A_e_lj);
+          + m_lambda_exp * (m_B_lj_lambda_n_1 * B_e_lj - m_A_lj_lambda_n_1 * A_e_lj);
 
-  de_crf = (-(m_A_lambda_n * A_qeps * m_B_lambda * (A_dist3isoft - A_crf_pert * dist2) -
-	     m_B_lambda_n * B_qeps * m_A_lambda * (B_dist3isoft - B_crf_pert * dist2)) * alpha_crf
-           + m_lambda_exp * (m_B_lambda_n_1 * B_ecrf0 - m_A_lambda_n_1 * A_ecrf0)) +
-             (-(m_A_lambda_n * A_qepsp1 * m_B_lambda * (A_dist3ip1soft 
-             - A_crf_pert * dist2p1) - m_B_lambda_n * B_qepsp1 * m_A_lambda * 
+  de_crf = (-(m_A_crf_lambda_n * A_qeps * m_B_crfs_lambda * (A_dist3isoft - A_crf_pert * dist2) -
+	     m_B_crf_lambda_n * B_qeps * m_A_crfs_lambda * (B_dist3isoft - B_crf_pert * dist2)) * alpha_crf
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrf0 - m_A_crf_lambda_n_1 * A_ecrf0)) +
+             (-(m_A_crf_lambda_n * A_qepsp1 * m_B_crfs_lambda * (A_dist3ip1soft 
+             - A_crf_pert * dist2p1) - m_B_crf_lambda_n * B_qepsp1 * m_A_crfs_lambda * 
              (B_dist3ip1soft - B_crf_pert * dist2p1)) * alpha_crf
-           + m_lambda_exp * (m_B_lambda_n_1 * B_ecrf1 - m_A_lambda_n_1 * A_ecrf1)) +
-             (-(m_A_lambda_n * A_qepsp2 * m_B_lambda * (A_dist3ip2soft 
-             - A_crf_pert * dist2p2) - m_B_lambda_n * B_qepsp2 * m_A_lambda * 
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrf1 - m_A_crf_lambda_n_1 * A_ecrf1)) +
+             (-(m_A_crf_lambda_n * A_qepsp2 * m_B_crfs_lambda * (A_dist3ip2soft 
+             - A_crf_pert * dist2p2) - m_B_crf_lambda_n * B_qepsp2 * m_A_crfs_lambda * 
              (B_dist3ip2soft - B_crf_pert * dist2p2)) * alpha_crf
-           + m_lambda_exp * (m_B_lambda_n_1 * B_ecrf2 - m_A_lambda_n_1 * A_ecrf2)) +
-             (-(m_A_lambda_n * A_qepspp * m_B_lambda * (A_dist3ippsoft 
-             - A_crf_pert * dist2pp) - m_B_lambda_n * B_qepspp * m_A_lambda * 
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrf2 - m_A_crf_lambda_n_1 * A_ecrf2)) +
+             (-(m_A_crf_lambda_n * A_qepspp * m_B_crfs_lambda * (A_dist3ippsoft 
+             - A_crf_pert * dist2pp) - m_B_crf_lambda_n * B_qepspp * m_A_crfs_lambda * 
              (B_dist3ippsoft - B_crf_pert * dist2pp)) * alpha_crf
-           + m_lambda_exp * (m_B_lambda_n_1 * B_ecrfp - m_A_lambda_n_1 * A_ecrfp));
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrfp - m_A_crf_lambda_n_1 * A_ecrfp));
 }
 
 
@@ -607,8 +667,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist2 = abs2(r);
   assert(dist2 != 0);
   
-  const double A_dist2soft = dist2 + alpha_crf*m_B_lambda2;
-  const double B_dist2soft = dist2 + alpha_crf*m_A_lambda2;
+  const double A_dist2soft = dist2 + alpha_crf*m_B_crfs_lambda2;
+  const double B_dist2soft = dist2 + alpha_crf*m_A_crfs_lambda2;
 
   const double A_distisoft = 1.0 / sqrt(A_dist2soft);
   const double B_distisoft = 1.0 / sqrt(B_dist2soft);
@@ -619,14 +679,14 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist4 = dist2 * dist2;
   const double dist6 = dist4 * dist2;
   
-  const double A_dist6soft = dist6 + alpha_lj*m_B_lambda2*A_c126;
-  const double B_dist6soft = dist6 + alpha_lj*m_A_lambda2*B_c126;
+  const double A_dist6soft = dist6 + alpha_lj*m_B_ljs_lambda2*A_c126;
+  const double B_dist6soft = dist6 + alpha_lj*m_A_ljs_lambda2*B_c126;
 
   const double A_dist6isoft = 1.0 / A_dist6soft;
   const double B_dist6isoft = 1.0 / B_dist6soft;
   
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
 
   const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
   const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
@@ -640,19 +700,21 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_crf_pert = 3.0 * A_crf_2cut3i / A_cut2soft;
   const double B_crf_pert = 3.0 * B_crf_2cut3i / B_cut2soft;
   
-  const double A_scaled_lambda_n = A_scale * m_A_lambda_n;
-  const double B_scaled_lambda_n = B_scale * m_B_lambda_n;
+  const double A_lj_scaled_lambda_n = A_scale * m_A_lj_lambda_n;
+  const double B_lj_scaled_lambda_n = B_scale * m_B_lj_lambda_n;
+  const double A_crf_scaled_lambda_n = A_scale * m_A_crf_lambda_n;
+  const double B_crf_scaled_lambda_n = B_scale * m_B_crf_lambda_n;
+ 
   
-  
-  force1 = (A_scaled_lambda_n * A_q * (A_dist3isoft + A_crf_cut3i) +
-	    B_scaled_lambda_n * B_q * (B_dist3isoft + B_crf_cut3i)) *
+  force1 = (A_crf_scaled_lambda_n * A_q * (A_dist3isoft + A_crf_cut3i) +
+	    B_crf_scaled_lambda_n * B_q * (B_dist3isoft + B_crf_cut3i)) *
     math::four_pi_eps_i;
 
-  force6 = - 6.0 * (A_scaled_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
-		    B_scaled_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4;
+  force6 = - 6.0 * (A_lj_scaled_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
+		    B_lj_scaled_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4;
 
-  force12 = 12 * (A_scaled_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
-		  B_scaled_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4;
+  force12 = 12 * (A_lj_scaled_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
+		  B_lj_scaled_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4;
   
   const double A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
   const double B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
@@ -661,20 +723,23 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_e_crf = B_q * (B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut);
   
 
-  e_lj = A_scaled_lambda_n * A_e_lj + B_scaled_lambda_n * B_e_lj;
+  e_lj = A_lj_scaled_lambda_n * A_e_lj + B_lj_scaled_lambda_n * B_e_lj;
   
-  e_crf = (A_scaled_lambda_n * A_e_crf + B_scaled_lambda_n * B_e_crf) * math::four_pi_eps_i;
+  e_crf = (A_crf_scaled_lambda_n * A_e_crf + B_crf_scaled_lambda_n * B_e_crf) *
+    math::four_pi_eps_i;
   
-  de_lj = -2.0 * alpha_lj * (A_scaled_lambda_n * m_B_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
-			     (2 * A_c12 * A_dist6isoft - A_c6) -
-			     B_scaled_lambda_n * m_A_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
-			     (2 * B_c12 * B_dist6isoft - B_c6))
-    + m_lambda_exp * (B_scale * m_B_lambda_n_1 * B_e_lj - A_scale * m_A_lambda_n_1 * A_e_lj);
-
-  de_crf = (-alpha_crf * (A_scaled_lambda_n * A_q * m_B_lambda * (A_dist3isoft - A_crf_pert * dist2) -
-			  B_scaled_lambda_n * B_q * m_A_lambda * (B_dist3isoft - B_crf_pert * dist2))
-	    + m_lambda_exp * (B_scale * m_B_lambda_n_1 * B_e_crf - 
-			      A_scale * m_A_lambda_n_1 * A_e_crf)) 
+  de_lj = -2.0 * alpha_lj * (A_lj_scaled_lambda_n * m_B_ljs_lambda * A_c126 * 
+			     A_dist6isoft * A_dist6isoft * (2 * A_c12 * A_dist6isoft - A_c6) -
+			     B_lj_scaled_lambda_n * m_A_ljs_lambda * B_c126 * 
+			     B_dist6isoft * B_dist6isoft * (2 * B_c12 * B_dist6isoft - B_c6))
+    + m_lambda_exp * (B_scale * m_B_lj_lambda_n_1 * B_e_lj - A_scale * m_A_lj_lambda_n_1 * A_e_lj);
+  
+  de_crf = (-alpha_crf * (A_crf_scaled_lambda_n * A_q * m_B_crfs_lambda * 
+			  (A_dist3isoft - A_crf_pert * dist2) -
+			  B_crf_scaled_lambda_n * B_q * m_A_crfs_lambda * 
+			  (B_dist3isoft - B_crf_pert * dist2))
+	    + m_lambda_exp * (B_scale * m_B_crf_lambda_n_1 * B_e_crf - 
+			      A_scale * m_A_crf_lambda_n_1 * A_e_crf)) 
     * math::four_pi_eps_i;
   
 }
@@ -706,8 +771,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   
   const double dist = sqrt(dist2);
 
-  const double A_dist2soft = dist2 + alpha_crf*m_B_lambda2;
-  const double B_dist2soft = dist2 + alpha_crf*m_A_lambda2;
+  const double A_dist2soft = dist2 + alpha_crf*m_B_crfs_lambda2;
+  const double B_dist2soft = dist2 + alpha_crf*m_A_crfs_lambda2;
 
   const double A_distisoft = 1.0 / sqrt(A_dist2soft);
   const double B_distisoft = 1.0 / sqrt(B_dist2soft);
@@ -715,8 +780,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_dist3isoft = A_distisoft / A_dist2soft;
   const double B_dist3isoft = B_distisoft / B_dist2soft;
   
-  const double A_dist2soft_cut = nb_cutoff * nb_cutoff + alpha_crf * m_B_lambda2;
-  const double B_dist2soft_cut = nb_cutoff * nb_cutoff + alpha_crf * m_A_lambda2;
+  const double A_dist2soft_cut = nb_cutoff * nb_cutoff + alpha_crf * m_B_crfs_lambda2;
+  const double B_dist2soft_cut = nb_cutoff * nb_cutoff + alpha_crf * m_A_crfs_lambda2;
   
   const double A_distisoft_cut = 1.0 / sqrt(A_dist2soft_cut);
   const double B_distisoft_cut = 1.0 / sqrt(B_dist2soft_cut);
@@ -727,8 +792,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist4 = dist2 * dist2;
   const double dist6 = dist4 * dist2;
   
-  const double A_dist6soft = dist6 + alpha_lj*m_B_lambda2*A_c126;
-  const double B_dist6soft = dist6 + alpha_lj*m_A_lambda2*B_c126;
+  const double A_dist6soft = dist6 + alpha_lj*m_B_ljs_lambda2*A_c126;
+  const double B_dist6soft = dist6 + alpha_lj*m_A_ljs_lambda2*B_c126;
   
   const double A_dist6isoft = 1.0 / A_dist6soft;
   const double B_dist6isoft = 1.0 / B_dist6soft;
@@ -737,9 +802,9 @@ inline void interaction::Perturbed_Nonbonded_Term
   // for the cgrain, the const C depends on lambda
   
   const double A_distsoft_cut = (pow(nb_cutoff, 6) 
-				  + A_c126 * alpha_lj * m_B_lambda2);
+				  + A_c126 * alpha_lj * m_B_ljs_lambda2);
   const double B_distsoft_cut = (pow(nb_cutoff, 6) 
-				  + B_c126 * alpha_lj * m_A_lambda2);
+				  + B_c126 * alpha_lj * m_A_ljs_lambda2);
   
   const double A_dist6isoft_cut = 1.0 / A_distsoft_cut;
   const double B_dist6isoft_cut = 1.0 / B_distsoft_cut;
@@ -751,7 +816,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   A_C_cg6  = A_dist6isoft_cut
 	      - A_cg6   / 3 * nb_cutoff * nb_cutoff * nb_cutoff
 	      - B_cg6   / 4 * nb_cutoff * nb_cutoff * nb_cutoff * nb_cutoff;
-  A_C_cg1 = 1.0 / sqrt((nb_cutoff * nb_cutoff + alpha_crf * m_B_lambda2))
+  A_C_cg1 = 1.0 / sqrt((nb_cutoff * nb_cutoff + alpha_crf * m_B_crfs_lambda2))
               - A_cg1   / 3 * nb_cutoff * nb_cutoff * nb_cutoff
               - B_cg1   / 4 * nb_cutoff * nb_cutoff * nb_cutoff * nb_cutoff;
   
@@ -762,27 +827,27 @@ inline void interaction::Perturbed_Nonbonded_Term
   B_C_cg6  = B_dist6isoft_cut
 	      - A_cg6   / 3 * nb_cutoff * nb_cutoff * nb_cutoff
 	      - B_cg6   / 4 * nb_cutoff * nb_cutoff * nb_cutoff * nb_cutoff; 
-  B_C_cg1 = 1.0 / sqrt((nb_cutoff * nb_cutoff + alpha_crf * m_A_lambda2))
+  B_C_cg1 = 1.0 / sqrt((nb_cutoff * nb_cutoff + alpha_crf * m_A_crfs_lambda2))
               - A_cg1   / 3 * nb_cutoff * nb_cutoff * nb_cutoff
               - B_cg1   / 4 * nb_cutoff * nb_cutoff * nb_cutoff * nb_cutoff;
 
 
-  DEBUG(11, "just checking\nm_A_lambda " << m_A_lambda
-	<< "\nm_B_lambda " << m_B_lambda
-	<< "\nm_A_lambda2 " << m_A_lambda2
-	<< "\nm_B_lambda2 " << m_B_lambda2
-	<< "\nm_A_lambda_n " << m_A_lambda_n
-	<< "\nm_B_lambda_n" << m_B_lambda_n
-	<< "\nm_A_lambda_n_1 " << m_A_lambda_n_1
-	<< "\nm_B_lambda_n_1 " << m_B_lambda_n_1);
+  DEBUG(11, "just checking\nm_A_lambda " << m_A_ljs_lambda
+	<< "\nm_B_lambda " << m_B_ljs_lambda
+	<< "\nm_A_lambda2 " << m_A_ljs_lambda2
+	<< "\nm_B_lambda2 " << m_B_ljs_lambda2
+	<< "\nm_A_lambda_n " << m_A_lj_lambda_n
+	<< "\nm_B_lambda_n" << m_B_lj_lambda_n
+	<< "\nm_A_lambda_n_1 " << m_A_lj_lambda_n_1
+	<< "\nm_B_lambda_n_1 " << m_B_lj_lambda_n_1);
   
   // coulomb 
-  force1 = (m_A_lambda_n * A_q * (A_dist3isoft + 
-				  A_cg1 * dist + 
-				  B_cg1 * dist2) +
-	    m_B_lambda_n * B_q * (B_dist3isoft + 
-				  A_cg1 * dist + 
-				  B_cg1 * dist2)) *
+  force1 = (m_A_crf_lambda_n * A_q * (A_dist3isoft + 
+				      A_cg1 * dist + 
+				      B_cg1 * dist2) +
+	    m_B_crf_lambda_n * B_q * (B_dist3isoft + 
+				      A_cg1 * dist + 
+				      B_cg1 * dist2)) *
     math::four_pi_eps_i / cgrain_eps;
   
   const double A_e_crf = A_q * (A_distisoft 
@@ -794,26 +859,26 @@ inline void interaction::Perturbed_Nonbonded_Term
 				- B_cg1  / 4 * dist2 * dist2
 				- B_C_cg1 );
   
-  e_crf = (m_A_lambda_n * A_e_crf + m_B_lambda_n * B_e_crf) * math::four_pi_eps_i / cgrain_eps;
+  e_crf = (m_A_crf_lambda_n * A_e_crf + m_B_crf_lambda_n * B_e_crf) * math::four_pi_eps_i / cgrain_eps;
   
-  de_crf = -(m_A_lambda_n * A_q * m_B_lambda * (A_dist3isoft - A_dist3isoft_cut) -
-	     m_B_lambda_n * B_q * m_A_lambda * (B_dist3isoft - B_dist3isoft_cut)) 
+  de_crf = -(m_A_crf_lambda_n * A_q * m_B_crfs_lambda * (A_dist3isoft - A_dist3isoft_cut) -
+	     m_B_crf_lambda_n * B_q * m_A_crfs_lambda * (B_dist3isoft - B_dist3isoft_cut)) 
     * math::four_pi_eps_i * alpha_crf / cgrain_eps
-    + m_lambda_exp * (m_B_lambda_n_1 * B_e_crf - m_A_lambda_n_1 * A_e_crf) 
+    + m_lambda_exp * (m_B_crf_lambda_n_1 * B_e_crf - m_A_crf_lambda_n_1 * A_e_crf) 
     * math::four_pi_eps_i / cgrain_eps;
-
+  
   //LJ
   // after some consideration and an appropriate measure of doubt we
   // change the second 6.0 * into a 1.0 *
-  force6 = - 6.0 * (m_A_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
-		    m_B_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4
-    -        1.0 * (m_A_lambda_n * A_c6 * (A_cg6  * dist2 + B_cg6  * dist2 * dist) +
-		    m_B_lambda_n * B_c6 * (A_cg6  * dist2 + B_cg6  * dist2 * dist)) / dist;
+  force6 = - 6.0 * (m_A_lj_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
+		    m_B_lj_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4
+    -        1.0 * (m_A_lj_lambda_n * A_c6 * (A_cg6  * dist2 + B_cg6  * dist2 * dist) +
+		    m_B_lj_lambda_n * B_c6 * (A_cg6  * dist2 + B_cg6  * dist2 * dist)) / dist;
   
-  force12 = 12.0 * (m_A_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
-                    m_B_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4 +
-    +        1.0 * (m_A_lambda_n * A_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist) +
-		    m_B_lambda_n * B_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist)) / dist;  
+  force12 = 12.0 * (m_A_lj_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
+                    m_B_lj_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4 +
+    +        1.0 * (m_A_lj_lambda_n * A_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist) +
+		    m_B_lj_lambda_n * B_c12 * (A_cg12 * dist2 + B_cg12 * dist2 * dist)) / dist;  
   
 
   const double A_e_lj = A_c12 * (A_dist6isoft * A_dist6isoft 
@@ -834,20 +899,22 @@ inline void interaction::Perturbed_Nonbonded_Term
 				 - B_cg6   / 4 * dist2 * dist2
 				 - B_C_cg6);
   
-  e_lj = m_A_lambda_n * A_e_lj + m_B_lambda_n * B_e_lj; 
+  e_lj = m_A_lj_lambda_n * A_e_lj + m_B_lj_lambda_n * B_e_lj; 
   
   // there is a bug here from the previous version
   // the constant C also depends on lambda (correct for coulomb)
   // we have then to subtract the term at the cut off distance
-  de_lj = -2.0 * alpha_lj * (m_A_lambda_n * m_B_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
+  de_lj = -2.0 * alpha_lj * (m_A_lj_lambda_n * m_B_ljs_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
                              (2 * A_c12 * A_dist6isoft - A_c6) -
-                             m_B_lambda_n * m_A_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
+                             m_B_lj_lambda_n * m_A_ljs_lambda * B_c126 * B_dist6isoft * B_dist6isoft *
                              (2 * B_c12 * B_dist6isoft - B_c6))
-    +      2.0 * alpha_lj * (m_A_lambda_n * m_B_lambda * A_c126 * A_dist6isoft_cut * A_dist6isoft_cut *
-                             (2 * A_c12 * A_dist6isoft_cut - A_c6) -
-                             m_B_lambda_n * m_A_lambda * B_c126 * B_dist6isoft_cut * B_dist6isoft_cut *
+    +      2.0 * alpha_lj * (m_A_lj_lambda_n * m_B_ljs_lambda * A_c126 * 
+			     A_dist6isoft_cut * A_dist6isoft_cut * 
+			     (2 * A_c12 * A_dist6isoft_cut - A_c6) -
+                             m_B_lj_lambda_n * m_A_ljs_lambda * B_c126 * 
+			     B_dist6isoft_cut * B_dist6isoft_cut *
                              (2 * B_c12 * B_dist6isoft_cut - B_c6))
-    + m_lambda_exp * (m_B_lambda_n_1 * B_e_lj - m_A_lambda_n_1 * A_e_lj);
+    + m_lambda_exp * (m_B_lj_lambda_n_1 * B_e_lj - m_A_lj_lambda_n_1 * A_e_lj);
   
   DEBUG(11, "cgrain_pert\nr_ij " << dist
 	<< "\nf1 "  << force1
@@ -879,10 +946,10 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double dist2j = abs2(r);
   const double dist2p = abs2(rprime);
 
-  const double A_dist2soft = dist2j + alpha_crf*m_B_lambda2;
-  const double A_dist2psoft = dist2p + alpha_crf*m_B_lambda2;
-  const double B_dist2soft = dist2j + alpha_crf*m_A_lambda2;
-  const double B_dist2psoft = dist2p + alpha_crf*m_A_lambda2;
+  const double A_dist2soft = dist2j + alpha_crf*m_B_crfs_lambda2;
+  const double A_dist2psoft = dist2p + alpha_crf*m_B_crfs_lambda2;
+  const double B_dist2soft = dist2j + alpha_crf*m_A_crfs_lambda2;
+  const double B_dist2psoft = dist2p + alpha_crf*m_A_crfs_lambda2;
 
   const double A_dist3isoft = 1.0 / sqrt(A_dist2soft*A_dist2soft*A_dist2soft);
   const double A_dist3ipsoft = 1.0 / sqrt(A_dist2psoft*A_dist2psoft*A_dist2psoft);
@@ -893,8 +960,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_qeps = (B_qj - cgj) * math::four_pi_eps_i;
   const double qepsp = cgj * math::four_pi_eps_i;
 
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_lambda2;
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
 
   const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
   const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
@@ -905,7 +972,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   A_el = A_qeps*(A_dist3isoft + A_crf_cut3i)*r + qepsp*(A_dist3ipsoft + A_crf_cut3i)*rprime;
   B_el = B_qeps*(B_dist3isoft + B_crf_cut3i)*r + qepsp*(B_dist3ipsoft + B_crf_cut3i)*rprime;
 
-  e_el = m_A_lambda_n*A_el + m_B_lambda_n*B_el;
+  e_el = m_A_crf_lambda_n*A_el + m_B_crf_lambda_n*B_el;
 }
 
 /**
@@ -915,13 +982,16 @@ inline void interaction::Perturbed_Nonbonded_Term
 inline void interaction::Perturbed_Nonbonded_Term
 ::self_energy_soft_interaction(double A_alpha, double B_alpha, 
                                double e_i2, double &self_e, double &self_de) {
-
+  // CHRIS:: WHAT DOES THIS FUNCTION DO? WHICH LAMBDAS SHOULD WE USE??
+  //         And why was it not using the member variables?
   DEBUG(14, "\t\tself energy - dipole-dipole interaction");
-  const double alpha = A_lambda_n()*A_alpha + B_lambda_n()*B_alpha;
+  const double alpha = m_A_crf_lambda_n*A_alpha + m_B_crf_lambda_n*B_alpha;
+
   DEBUG(15, "\t\t\talpha(A): " << A_alpha * math::four_pi_eps_i << " alpha(B): " << B_alpha * math::four_pi_eps_i << " alpha(lambda): " << alpha * math::four_pi_eps_i);
   
-  const double d_alpha = n()*(A_lambda_n_1()*A_alpha - B_lambda_n_1()*B_alpha);
-  DEBUG(15, "\t\t\tn(): " << n() << " A_lambda_n_1: " << A_lambda_n_1() << " B_lambda_n_1: " << B_lambda_n_1()); 
+  const double d_alpha = m_n*(m_A_crf_lambda_n_1*A_alpha - m_B_crf_lambda_n_1*B_alpha);
+
+  DEBUG(15, "\t\t\tn(): " << n() << " A_crf_lambda_n_1: " << A_crf_lambda_n_1() << " B_crf_lambda_n_1: " << B_crf_lambda_n_1()); 
   DEBUG(15, "\t\t\td_alpha(lambda)/dlambda:  " << d_alpha* math::four_pi_eps_i ); 
   
   self_e = 0.5 * alpha * e_i2;
@@ -938,10 +1008,11 @@ inline void interaction::Perturbed_Nonbonded_Term
                                double &self_e, double &self_de) {
 
   DEBUG(14, "\t\tself energy - dipole-dipole interaction");
-  const double alpha = A_lambda_n()*A_alpha + B_lambda_n()*B_alpha;
-  const double d_alpha = n()*(A_lambda_n_1()*A_alpha - B_lambda_n_1()*B_alpha);
-  const double e_0 = A_lambda_n()*A_e_0 + B_lambda_n()*B_e_0;
-  const double d_e_0 = n()*(A_lambda_n_1()*A_e_0 - B_lambda_n_1()*B_e_0);
+  const double alpha = m_A_crf_lambda_n * A_alpha + m_B_crf_lambda_n * B_alpha;
+  const double d_alpha = m_n * (m_A_crf_lambda_n_1 * A_alpha - 
+				m_B_crf_lambda_n_1 * B_alpha);
+  const double e_0 = m_A_crf_lambda_n * A_e_0 + m_B_crf_lambda_n * B_e_0;
+  const double d_e_0 = m_n * (m_A_crf_lambda_n_1 * A_e_0 - m_B_crf_lambda_n_1 * B_e_0);
  
   const double e_02 = e_0 * e_0; 
   if (e_i2 <= e_02) {

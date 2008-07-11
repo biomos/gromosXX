@@ -60,43 +60,6 @@ int interaction::Perturbed_Nonbonded_Set
 {
   DEBUG(4, "Nonbonded_Set::calculate_interactions");
 
-  const double l = topo.lambda();
-  
-  if (sim.param().perturbation.scaling){
-    DEBUG(6, "scaling preparation");
-    // calculate lambda primes and d lambda prime / d lambda derivatives
-    std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
-      it = topo.energy_group_lambdadep().begin(),
-      to = topo.energy_group_lambdadep().end();
-    
-    for(unsigned int i=0; it != to; ++i, ++it){
-      
-      const double alpha = it->second.second;
-      double lp = alpha * l * l + (1-alpha) * l;
-      double dlp = (2 * l - 1.0) * alpha + 1;
-      
-      // some additional flexibility
-      if (lp > 1.0) {
-	lp = 1.0;
-	dlp = 0.0;
-      }
-      
-      else if (lp < 0.0){
-	lp = 0.0;
-	dlp = 0.0;
-      }
-      
-      // -1 or not???
-      assert(int(topo.lambda_prime().size()) > it->second.first);
-      assert(int(topo.lambda_prime_derivative().size()) > it->second.first);
-      assert(it->second.first >= 0);
-      
-      topo.lambda_prime()[it->second.first] = lp;
-      topo.lambda_prime_derivative()[it->second.first] = dlp;
-      
-    }
-  }
-    
   // zero forces, energies, virial...
   m_storage.zero();
 

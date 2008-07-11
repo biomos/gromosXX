@@ -311,10 +311,13 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_old_lambda = topo.m_old_lambda;
   m_lambda_exp = topo.m_lambda_exp;
   m_energy_group_scaling = topo.m_energy_group_scaling;
-  m_energy_group_lambdadep = topo.m_energy_group_lambdadep;
-  m_lambda_prime = topo.m_lambda_prime;
-  m_lambda_prime_derivative = topo.m_lambda_prime_derivative;
-  m_perturbed_energy_derivative_alpha =   topo.m_perturbed_energy_derivative_alpha;
+  //m_energy_group_lambdadep = topo.m_energy_group_lambdadep;
+  m_individual_lambda_parameters = topo.m_individual_lambda_parameters;
+  m_individual_lambda = topo.m_individual_lambda;
+  m_individual_lambda_derivative = topo.m_individual_lambda_derivative;
+  //m_lambda_prime = topo.m_lambda_prime;
+  //m_lambda_prime_derivative = topo.m_lambda_prime_derivative;
+  //m_perturbed_energy_derivative_alpha =   topo.m_perturbed_energy_derivative_alpha;
   
   DEBUG(10, "\tspecial");
   m_position_restraint = topo.m_position_restraint;
@@ -467,6 +470,35 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
     }
   }
 
+  // initialize the individual lambdas
+  m_individual_lambda_parameters.a.resize(simulation::last_interaction_lambda);
+  m_individual_lambda_parameters.b.resize(simulation::last_interaction_lambda);
+  m_individual_lambda_parameters.c.resize(simulation::last_interaction_lambda);
+  m_individual_lambda_parameters.d.resize(simulation::last_interaction_lambda);
+  m_individual_lambda_parameters.e.resize(simulation::last_interaction_lambda);
+  m_individual_lambda.resize(simulation::last_interaction_lambda);
+  m_individual_lambda_derivative.resize(simulation::last_interaction_lambda);
+  
+  for(int i=0; i< simulation::last_interaction_lambda; i++){
+    m_individual_lambda[i].resize(m_energy_group.size());
+    m_individual_lambda_derivative[i].resize(m_energy_group.size());
+    for(unsigned int n1=0; n1 < m_energy_group.size(); n1++){
+      m_individual_lambda[i][n1].resize(m_energy_group.size());
+      m_individual_lambda_derivative[i].resize(m_energy_group.size());
+
+      for(unsigned int n2=0; n2 < m_energy_group.size(); n2++){
+	std::pair<int, int> p(n1, n2);
+	m_individual_lambda_parameters.a[i][p] = sim.param().lambdas.a[i][n1][n2];
+	m_individual_lambda_parameters.b[i][p] = sim.param().lambdas.b[i][n1][n2];
+	m_individual_lambda_parameters.c[i][p] = sim.param().lambdas.c[i][n1][n2];
+	m_individual_lambda_parameters.d[i][p] = sim.param().lambdas.d[i][n1][n2];
+	m_individual_lambda_parameters.e[i][p] = sim.param().lambdas.e[i][n1][n2];
+      }
+    }
+  }
+  // And calculate the values for all individual lambdas and their derivatives
+  update_for_lambda();
+  
 }
 
 /**
@@ -789,23 +821,49 @@ calculate_constraint_dof(simulation::Multibath &multibath,
 void
 topology::Topology::update_for_lambda()
 {
+  DEBUG(10, "update for lambda");
+  
+  // update the individual lambdas
+  double lam = lambda();
+  for(unsigned int i=0; i < m_individual_lambda_parameters.a.size(); ++i){
+    for(unsigned int n1=0; n1 < m_energy_group.size(); ++n1){
+      for(unsigned int n2=0; n2 < m_energy_group.size(); ++n2){
+	std::pair<int, int> p(n1, n2);
+	m_individual_lambda[i][n1][n2] = 
+	  m_individual_lambda_parameters.a[i][p] * lam * lam * lam * lam +
+	  m_individual_lambda_parameters.b[i][p] * lam * lam * lam +
+	  m_individual_lambda_parameters.c[i][p] * lam * lam +
+	  m_individual_lambda_parameters.d[i][p] * lam +
+	  m_individual_lambda_parameters.e[i][p];
+	m_individual_lambda_derivative[i][n1][n2] =
+	  4.0 * m_individual_lambda_parameters.a[i][p] * lam * lam * lam +
+	  3.0 * m_individual_lambda_parameters.b[i][p] * lam * lam +
+	  2.0 * m_individual_lambda_parameters.c[i][p] * lam +
+	  m_individual_lambda_parameters.d[i][p];
+	m_individual_lambda[i][n2][n1] = m_individual_lambda[i][n1][n2];
+	m_individual_lambda_derivative[i][n2][n1] = 
+	  m_individual_lambda_derivative[i][n1][n2];
+	
+      }
+    }
+  }
+  // update the masses using the correct lambda
   for(std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
         it = perturbed_solute().atoms().begin(),
         to = perturbed_solute().atoms().end();
       it != to; ++it){
+    const int n1=atom_energy_group()[it->second.sequence_number()];
+    const double lambda = m_individual_lambda[simulation::mass_lambda][n1][n1];
+    
     mass()(it->second.sequence_number()) = 
-      (1-lambda()) * it->second.A_mass() + 
-      lambda() * it->second.B_mass();
+      (1-lambda) * it->second.A_mass() + 
+      lambda * it->second.B_mass();
 
     DEBUG(8, "mass A : " << it->second.A_mass() << " B : "
           << it->second.B_mass());
     DEBUG(8, "mass(" << it->second.sequence_number()
           << ") = " << mass()(it->second.sequence_number()));
   }
-
-  // this is nowadays done directly in the shake routines
-  // perturbed_solute().set_distance_constraints(lambda());
-  
 }
 
 /**

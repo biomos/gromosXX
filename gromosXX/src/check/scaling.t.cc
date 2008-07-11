@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
   double dlp;
 
   // std::cout << "\nscaled only : " << aladip_lambdadep_sim.sim.param().perturbation.scaled_only << std::endl;
-
+  /*
   // for all energy groups which are scaled
   std::map<std::pair<int, int>, std::pair<int, double> >::const_iterator
     it = aladip_lambdadep_sim.topo.energy_group_lambdadep().begin(),
@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
     e /= dlp;
     CHECK_APPROX_EQUAL(normal_e, e, 0.0000001, res);
   }
-
+*/
   RESULT(res, total);
 
   return total;

@@ -46,6 +46,24 @@
 #include "check_forcefield.h"
 #include "check_state.h"
 
+void hard_coded_values(std::map<std::string, double> & m){
+  m["QuarticBond"] = 18.055276;
+  m["PerturbedQuarticBond"] = 1.149568;
+  m["Angle"] = 12.170290;
+  m["PerturbedAngle"] = 0.714818;
+  m["ImproperDihedral"] = 0.965060;
+  m["PerturbedImproperDihedral"] = 2.642780;
+  m["Dihedral"] = 2.255206;
+  m["PerturbedDihedral"] = 13.314602;
+  m["NonBonded_cg"] = -7.352312;
+  m["NonBonded"] = -50.196817;
+  m["NonBonded_atomic"] =  -49.912;
+  m["DistanceRestraint"] = 257.189539;
+  m["PerturbedDistanceRestraint"] = 195.899012;
+  m["DihedralRestraint"] = 2127.910749;
+  m["PerturbedDihedralRestraint"] = 279.207857;
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -103,6 +121,10 @@ int main(int argc, char* argv[])
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
+  // set hard coded values to compare to
+  std::map<std::string, double> ref_values;
+  hard_coded_values(ref_values);
+
   util::simulation_struct aladip_sim;
   io::In_Topology in_topo;
 
@@ -139,7 +161,8 @@ int main(int argc, char* argv[])
   ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
   
   // first check the forcefield
-  total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
+  total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
+				   aladip_sim.sim, *ff, ref_values);
     
   return total;
 }

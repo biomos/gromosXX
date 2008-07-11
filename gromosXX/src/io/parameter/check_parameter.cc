@@ -74,6 +74,10 @@ int io::check_parameter(simulation::Simulation & sim)
   add("perturbation_scaling", "perturbation scaling", param.perturbation.scaling);
   add("slow_growth", "slow growth", param.perturbation.perturbation && 
                                     param.perturbation.dlamt > 0.0);
+  
+  // LAMBDAS block
+  add("individual_lambdas", "individual lambdas", param.lambdas.individual_lambdas);
+  
   // FORCE block
   add("bond", "bond interaction", param.force.bond == 1);
   add("angle", "bond angle interaction", param.force.angle == 1);
@@ -1229,6 +1233,74 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation_scaling", "random_gsl");
   fc.unlock("perturbation_scaling", "parallel_mpi");
   fc.unlock("perturbation_scaling", "parallel_omp");
+  fc.unlock("individual_lambdas", "solute");
+  fc.unlock("individual_lambdas", "solvent");
+  fc.unlock("individual_lambdas", "solvent_only");
+  fc.unlock("individual_lambdas", "steepest_descent");
+  fc.unlock("individual_lambdas", "solute_constraint_off");
+  fc.unlock("individual_lambdas", "solute_shake");
+  fc.unlock("individual_lambdas", "solute_lincs");
+  fc.unlock("individual_lambdas", "solute_flexshake");
+  fc.unlock("individual_lambdas", "solvent_constraint_off");
+  fc.unlock("individual_lambdas", "solvent_shake");
+  fc.unlock("individual_lambdas", "pressure_calculation");
+  fc.unlock("individual_lambdas", "pressure_scale_berendsen");
+  fc.unlock("individual_lambdas", "virial_off");
+  fc.unlock("individual_lambdas", "virial_atomic");
+  fc.unlock("individual_lambdas", "virial_molecular");
+  fc.unlock("individual_lambdas", "vacuum");
+  fc.unlock("individual_lambdas", "pbc_r");
+  fc.unlock("individual_lambdas", "pbc_c");
+  fc.unlock("individual_lambdas", "pbc_t");
+  fc.unlock("individual_lambdas", "perturbation");
+  fc.unlock("individual_lambdas", "perturbation_scaling");
+  //  Chris: not tested yet
+  //  fc.unlock("individual_lambdas", "slow_growth");
+  fc.unlock("individual_lambdas", "bond");
+  fc.unlock("individual_lambdas", "angle");
+  fc.unlock("individual_lambdas", "dihedral");
+  fc.unlock("individual_lambdas", "improper");
+  fc.unlock("individual_lambdas", "crf");
+  fc.unlock("individual_lambdas", "lj");
+  fc.unlock("individual_lambdas", "com_removal");
+  fc.unlock("individual_lambdas", "rf_excluded");
+  fc.unlock("individual_lambdas", "pairlist_standard");
+  fc.unlock("individual_lambdas", "pairlist_grid");
+  fc.unlock("individual_lambdas", "pairlist_vgrid");
+  fc.unlock("individual_lambdas", "cutoff_atomic");
+  fc.unlock("individual_lambdas", "coarse_grain");
+  fc.unlock("individual_lambdas", "multi_grain");
+  fc.unlock("individual_lambdas", "temp_berendsen");
+  fc.unlock("individual_lambdas", "temp_nosehoover");
+  fc.unlock("individual_lambdas", "temp_nosehoover_chains");
+  fc.unlock("individual_lambdas", "position_rest");
+  fc.unlock("individual_lambdas", "position_const");
+  fc.unlock("individual_lambdas", "position_const_scaled");
+  fc.unlock("individual_lambdas", "distance_rest");
+  fc.unlock("individual_lambdas", "dihedral_rest");
+  fc.unlock("individual_lambdas", "dihedral_const");
+  fc.unlock("individual_lambdas", "jvalue_rest");
+  fc.unlock("individual_lambdas", "perscale");
+  fc.unlock("individual_lambdas", "rottrans");
+  fc.unlock("individual_lambdas", "innerloop_spc");
+  fc.unlock("individual_lambdas", "repex_temp");
+  fc.unlock("individual_lambdas", "repex_lambda");
+  fc.unlock("individual_lambdas", "multicell");
+  fc.unlock("individual_lambdas", "analysis");
+  fc.unlock("individual_lambdas", "no_integration");
+  fc.unlock("individual_lambdas", "stochdyn");
+  fc.unlock("individual_lambdas", "multistep");
+  fc.unlock("individual_lambdas", "multistep_boost");
+  fc.unlock("individual_lambdas", "montecarlo");
+  fc.unlock("individual_lambdas", "ramd");
+  fc.unlock("individual_lambdas", "polarization_cos");
+  fc.unlock("individual_lambdas", "polarization_cos_damped");
+  fc.unlock("individual_lambdas", "random_gromos");
+  fc.unlock("individual_lambdas", "random_gsl");
+  fc.unlock("individual_lambdas", "eds");
+  fc.unlock("individual_lambdas", "parallel_mpi");
+  fc.unlock("individual_lambdas", "parallel_omp");
+
   fc.unlock("bond", "angle");
   fc.unlock("bond", "dihedral");
   fc.unlock("bond", "improper");

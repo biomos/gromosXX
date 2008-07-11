@@ -79,7 +79,6 @@ namespace interaction
      */
     void rf_soft_interaction(math::Vec const &r, 
 			     double const A_q, double const B_q, 
-			     double const l,
 			     double const alpha_crf,
 			     math::Vec & force, double & e_rf,
 			     double & de_rf,
@@ -95,7 +94,6 @@ namespace interaction
 			     double const A_qi, double const A_qj,
                              double const B_qi, double const B_qj,
                              double cqi, double cqj,
-			     double const l,
 			     double const alpha_crf,
 			     std::vector<double> & force, double & e_rf,
 			     double & de_rf,
@@ -152,14 +150,24 @@ namespace interaction
 
     /**
      * Perturbation:
-     * lambda value for state A
+     * lambda value for lj interaction for state A
      */
-    double const A_lambda()const;
+    double const A_lj_lambda()const;
     /**
      * Perturbation:
-     * lambda value for state B
+     * lambda value for crf interaction for state A
      */
-    double const B_lambda()const;
+    double const A_crf_lambda()const;
+    /**
+     * Perturbation:
+     * lambda value for lj interaction for state B
+     */
+    double const B_lj_lambda()const;
+    /**
+     * Perturbation:
+     * lambda value for crf interaction for state B
+     */
+    double const B_crf_lambda()const;
     /**
      * Perturbation:
      * lambda exponent:
@@ -167,29 +175,53 @@ namespace interaction
     int const n()const;
     /**
      * Perturbation:
-     * lambda value for state A to the power nlam
+     * lambda value for lj interaction for state A to the power nlam
      */
-    double const A_lambda_n()const;
+    double const A_lj_lambda_n()const;
     /**
      * Perturbation:
-     * lambda value for state B to the power nlam
+     * lambda value for crf interaction for state A to the power nlam
      */
-    double const B_lambda_n()const;
+    double const A_crf_lambda_n()const;
     /**
      * Perturbation:
-     * lambda value for state A to the power nlam-1
+     * lambda value for lj interaction for state B to the power nlam
      */
-    double const A_lambda_n_1()const;
+    double const B_lj_lambda_n()const;
     /**
      * Perturbation:
-     * lambda value for state B to the power nlam-1
+     * lambda value for crf interaction for state B to the power nlam
      */
-    double const B_lambda_n_1()const;
+    double const B_crf_lambda_n()const;
+    /**
+     * Perturbation:
+     * lambda value for lj interaction for state A to the power nlam-1
+     */
+    double const A_lj_lambda_n_1()const;
+    /**
+     * Perturbation:
+     * lambda value for crf interaction for state A to the power nlam-1
+     */
+    double const A_crf_lambda_n_1()const;   
+    /**
+     * Perturbation:
+     * lambda value for lj interaction for state B to the power nlam-1
+     */
+    double const B_lj_lambda_n_1()const;
+     /**
+     * Perturbation:
+     * lambda value for crf interaction for state B to the power nlam-1
+     */
+    double const B_crf_lambda_n_1()const;
     /**
      * Perturbation:
      * set the lambdas
      */
-    void set_lambda(double const l, int const n);
+    void set_lambda(double const lj_lambda, double const ljs_lambda,
+                    double const crf_lambda, double const crfs_lambda,
+                    double const lj_lambda_derivative, double const ljs_lambda_derivative,
+                    double const crf_lambda_derivative, double const crfs_lambda_derivative,
+                    int const n);
     
   protected:
 
@@ -231,54 +263,114 @@ namespace interaction
     double m_cut2;
     /**
      * Perturbation:
-     * lambda value for state A
+     * lambda value for lj interaction for state A
      */
-    double m_A_lambda;
+    double m_A_lj_lambda;
+     /**
+     * Perturbation:
+     * lambda value for lj softness for state A
+     */
+    double m_A_ljs_lambda;
+    /**
+     * Perturbation:
+     * lambda value for crf interaction for state A
+     */
+    double m_A_crf_lambda;
+     /**
+     * Perturbation:
+     * lambda value for crf softness for state A
+     */
+    double m_A_crfs_lambda;
     /**
      * Perturbation
-     * A lambda squared.
+     * lambda value for lj softness for state A squared.
      */
-    double m_A_lambda2;
+    double m_A_ljs_lambda2;
+    /**
+     * Perturbation
+     * lambda value for crf softness for state A squared.
+     */
+    double m_A_crfs_lambda2;
+    /**
+     * Perturbation
+     * lambda value for lj interaction for state A to the power nlam
+     */
+    double m_A_lj_lambda_n;
+    /**
+     * Perturbation
+     * lambda value for crf interaction for state A to the power nlam
+     */
+    double m_A_crf_lambda_n;
+    /**
+     * Perturbation
+     * lambda value for lj interaction for state A to the power nlam-1
+     */
+    double m_A_lj_lambda_n_1;
+    /**
+     * Perturbation
+     * lambda value for crf interaction for state A to the power nlam-1
+     */
+    double m_A_crf_lambda_n_1;
     /**
      * Perturbation:
-     * lambda value for state B
+     * lambda value for lj interaction for state B
      */
-    double m_B_lambda;
+    double m_B_lj_lambda;
+     /**
+     * Perturbation:
+     * lambda value for lj softness for state B
+     */
+    double m_B_ljs_lambda;
     /**
      * Perturbation:
-     * square lambda value for state B
+     * lambda value for crf interaction for state B
      */
-    double m_B_lambda2;
-    /**
+    double m_B_crf_lambda;
+     /**
      * Perturbation:
-     * lambda exponent
+     * lambda value for crf softness for state B
      */
-    int m_n;
+    double m_B_crfs_lambda;
     /**
-     * Perturbation:
-     * lambda value for state A to the power nlam
+     * Perturbation
+     * lambda value for lj softness for state B squared.
      */
-    double m_A_lambda_n;
+    double m_B_ljs_lambda2;
     /**
-     * Perturbation:
-     * lambda value for state B to the power nlam
+     * Perturbation
+     * lambda value for crf softness for state B squared.
      */
-    double m_B_lambda_n;
+    double m_B_crfs_lambda2;
     /**
-     * Perturbation:
-     * lambda value for state A to the power nlam-1
+     * Perturbation
+     * lambda value for lj interaction for state B to the power nlam
      */
-    double m_A_lambda_n_1;
+    double m_B_lj_lambda_n;
     /**
-     * Perturbation:
-     * lambda value for state B to the power nlam-1
+     * Perturbation
+     * lambda value for crf interaction for state B to the power nlam
      */
-    double m_B_lambda_n_1;
+    double m_B_crf_lambda_n;
+    /**
+     * Perturbation
+     * lambda value for lj interaction for state B to the power nlam-1
+     */
+    double m_B_lj_lambda_n_1;
+    /**
+     * Perturbation
+     * lambda value for crf interaction for state B to the power nlam-1
+     */
+    double m_B_crf_lambda_n_1;
     /**
      * Perturbation:
      * exponent to lambda.
      */
     double m_lambda_exp;
+    /**
+     * Perturbation
+     * exponent to lambda as an int
+     */
+    int m_n;
     /**
      * Coarse grain variables
      */

@@ -1,4 +1,4 @@
-#$Id$
+#$Id: aladip.in 997 2008-05-08 13:53:44Z nschmid $
 TITLE
 	alanine dipeptide test system
 END
@@ -204,21 +204,38 @@ PERTURBATION
 #     NTG   NRDGL    RLAM   DLAMT
         1       0   0.125     0.0
 #  ALPHLJ   ALPHC    NLAM  NSCALE
-      1.0     1.0       1       0
+      1.0     1.0       1       1
 END
 LAMBDAS 
 # NTIL
-    off
+    on
 # NTLI      NILG1 NILG2   ALI   BLI   CLI   DLI   ELI
-#bond            1     1     0     0   1.0     0     0
-vdw             1     1     1   0.0    0.0   0.0     0
-vdw             1     2     1     0.0  0.0  -1.0    0
-vdw_soft        1     1     0     0.0  1.0    0     0
-vdw_soft        1     2     0     0     0     0     1
-crf             1     1     1   0.0    0   0.0     0
-crf             1     2     0     0.0  2.0  -1.0    0
-crf_soft        1     1     1     0.0  0    0     0
-crf_soft        1     2     0     0     0     0     1
+bond            1     1   0.0   0.0   1.0   0.0   0.0
+bond            2     2   0.0   1.0   0.0   0.0   0.0
+angle           1     1   1.0   0.0   0.0   0.0   0.0
+angle           2     2   0.5   0.5   0.0   0.0   0.0
+dihedral        1     1   0.5   0.0   0.5   0.0   0.0
+dihedral        2     2   0.5   0.0   0.0   0.5   0.0
+improper        1     1   0.33  0.33  0.34  0.0   0.0
+improper        2     2   0.33  0.33  0.0   0.34  0.0
+dihedralres     1     1   0.25  0.25  0.25  0.25  0.0
+dihedralres     2     2   0.0   0.33  0.67  0.0   0.0
+distanceres     1     1   0.4   0.6   0.0   0.0   0.0
+distanceres     2     2   0.0   0.5   0.5   0.0   0.0
+mass            1     1   0.0   1.0  -1.0   1.0   0.0
+mass            2     2   0.0   1.0  -1.0   1.0   0.0
+vdw             1     1   0.0   0.5   0.5   0.0   0.0
+vdw             1     2   0.0   0.0   0.1   0.9   0.0
+vdw             2     2   0.0   1.0   0.0   0.0   0.0
+vdw_soft	1     1   1.0   0.0   0.0   0.0   0.0
+vdw_soft        1     2   0.5   0.5   0.0   0.0   0.0
+vdw_soft        2     2   0.0   0.0   0.0   0.0   1.0
+crf		1     1   0.4   0.0   0.6   0.0   0.0
+crf		1     2   0.4   0.3   0.3   0.0   0.0
+crf             2     2   0.0   0.5   0.2   0.3   0.0
+crf_soft        1     1   1.0   0.0   0.0   0.0   0.0
+crf_soft        1     2   1.0   1.0  -1.0   0.0   0.0
+crf_soft        2     2   0.0   0.0   0.5   0.5   0.0
 END   
 
 #-------

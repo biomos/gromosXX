@@ -127,7 +127,10 @@ io::In_Perturbation::read(topology::Topology &topo,
     topo.is_perturbed().resize(topo.num_solute_atoms(), false);
     
     { // PERTBONDSTRETCH(H)
-      
+
+      // Chris: the next two lines seemed to be missing...
+      DEBUG(10, "PERTBOND03 block");
+      buffer = m_block["PERTBOND03"];
       if (buffer.size()){
         
         block_read.insert("PERTBOND03");
@@ -995,109 +998,11 @@ io::In_Perturbation::read(topology::Topology &topo,
     
     { // LAMBDADEP
       
-      // the standard lambda derivatives
-      topo.perturbed_energy_derivative_alpha().push_back(0.0);
-      
       buffer = m_block["LAMBDADEP"];
       if (buffer.size()){
         block_read.insert("LAMBDADEP");
-        
-        if(!param.perturbation.scaling){
-          io::messages.add("Changed lambda dependence for interactions requires scaling to"
-          " be turned on. Ignoring LAMBDADEP block.",
-                  "InPerturbation", io::message::warning);
-        }
-        else{
-          if (!quiet)
-            std::cout << "\tINTERACTIONS with changed lambda dependence\n";
-          
-          it = buffer.begin() + 1;
-          _lineStream.clear();
-          _lineStream.str(*it);
-          int num, n;
-          _lineStream >> num;
-          ++it;
-          
-          int i, j;
-          double a;
-          
-          if (!quiet)
-            std::cout << "\t"
-            << std::setw(10) << "index"
-            << std::setw(10) << "group i"
-            << std::setw(10) << "group j"
-            << std::setw(10) << "parameter"
-            << "\n";
-          
-          for(n = 0; it != buffer.end() - 1; ++it, ++n){
-            _lineStream.clear();
-            _lineStream.str(*it);
-            _lineStream >> i >> j >> a;
-            
-            if (_lineStream.fail()){
-              io::messages.add("Bad line in LAMBDADEP block.",
-                      "In_Perturbation", io::message::error);
-            }
-            
-            --i;
-            --j;
-            
-            std::pair<int, int> energy_pair(i, j);
-            std::pair<int, int> energy_pair2(j, i);
-            
-            // check a
-            // this is limited now
-            if (a < -1 || a > 1){
-              /*
-               * io::messages.add("LAMBDADEP: parameter a results in l' >1 or <0 "
-               * "in the range [0,1] for l (recommended: -1<=a<=1).",
-               * "In_Perturbation",
-               * io::message::warning);
-               */
-              io::messages.add("LAMBDADEP: limiting l' because -1.0 <= a <= 1.0 not fulfilled",
-                      "In_Perturbation",
-                      io::message::notice);
-            }
-            
-            std::pair<int, double> lambdadep_pair(n, a);
-            
-            topo.energy_group_lambdadep()[energy_pair]  = lambdadep_pair;
-            topo.energy_group_lambdadep()[energy_pair2] = lambdadep_pair;
-            
-            topo.perturbed_energy_derivative_alpha().push_back(a);
-            
-            if (!quiet)
-              std::cout << "\t"
-              << std::setw(10) << n+1
-              << std::setw(10) << i+1
-              << std::setw(10) << j+1
-              << std::setw(10) << a
-              << std::endl;
-            
-          }
-          
-          // resize the arrays to cache the lambda primes
-          // and the lambda prime / lambda derivative
-          topo.lambda_prime().resize(n);
-          topo.lambda_prime_derivative().resize(n);
-          
-          if (n != num){
-            io::messages.add("Wrong number of pairs in LAMBDADEP block.",
-                    "In_Perturbation", io::message::error);
-          }
-          else if (_lineStream.fail()){
-            io::messages.add("Bad line in LAMBDADEP block.",
-                    "In_Perturbation", io::message::error);
-          }
-          if (!quiet)
-            std::cout << "\tEND\n";
-        } // if scaling turned on
-        
-      } // if block present
-      else{
-        // if(param.perturbation.scaling){
-        // io::messages.add("Scaling turned on but no LAMBDADEP block.",
-        // "In_Perturbation", io::message::warning);
+	io::messages.add("LAMBDADEP block in perturbation topology is deprecated. Use LAMBDAS block in the input file",
+			 "InPerturbation", io::message::error);
       }
     } // LAMBDADEP
     
@@ -1396,7 +1301,8 @@ io::In_Perturbation::read(topology::Topology &topo,
   }  
   
   // and update the properties for lambda
-  topo.update_for_lambda();
+  //topo.update_for_lambda();
   
 }
+
 
