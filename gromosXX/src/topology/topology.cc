@@ -484,7 +484,7 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
     m_individual_lambda_derivative[i].resize(m_energy_group.size());
     for(unsigned int n1=0; n1 < m_energy_group.size(); n1++){
       m_individual_lambda[i][n1].resize(m_energy_group.size());
-      m_individual_lambda_derivative[i].resize(m_energy_group.size());
+      m_individual_lambda_derivative[i][n1].resize(m_energy_group.size());
 
       for(unsigned int n2=0; n2 < m_energy_group.size(); n2++){
 	std::pair<int, int> p(n1, n2);
@@ -824,10 +824,24 @@ topology::Topology::update_for_lambda()
   DEBUG(10, "update for lambda");
   
   // update the individual lambdas
+  const unsigned int size = m_individual_lambda_parameters.a.size();
   double lam = lambda();
-  for(unsigned int i=0; i < m_individual_lambda_parameters.a.size(); ++i){
-    for(unsigned int n1=0; n1 < m_energy_group.size(); ++n1){
-      for(unsigned int n2=0; n2 < m_energy_group.size(); ++n2){
+  assert(size == m_individual_lambda_parameters.b.size() &&
+         size == m_individual_lambda_parameters.c.size() &&
+         size == m_individual_lambda_parameters.d.size() &&
+         size == m_individual_lambda_parameters.e.size());
+  
+  assert(m_individual_lambda.size() == size &&
+        m_individual_lambda_derivative.size() ==  size);
+  
+  const unsigned int num_energy_groups = m_energy_group.size();
+  for(unsigned int i=0; i < size; ++i){
+    assert(m_individual_lambda[i].size() == num_energy_groups);
+    assert(m_individual_lambda_derivative[i].size() == num_energy_groups);
+    for(unsigned int n1=0; n1 < num_energy_groups; ++n1){
+      assert(m_individual_lambda[i][n1].size() == num_energy_groups);
+      assert(m_individual_lambda_derivative[i][n1].size() == num_energy_groups);
+      for(unsigned int n2=0; n2 < num_energy_groups; ++n2){
 	std::pair<int, int> p(n1, n2);
 	m_individual_lambda[i][n1][n2] = 
 	  m_individual_lambda_parameters.a[i][p] * lam * lam * lam * lam +
