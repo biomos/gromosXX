@@ -3017,7 +3017,7 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
        io::messages.add("NONBONDED block: Illegal value for ASHAPE (>0.0)",
             "In_Parameter", io::message::error);
     
-    if (do_ls && param.nonbonded.ls_charge_shape_width <= param.pairlist.cutoff_short)
+    if (do_ls && param.nonbonded.ls_charge_shape_width > param.pairlist.cutoff_short)
        io::messages.add("NONBONDED block: charge width greater than cutoff! (ASHAPE > RCUTP)",
             "In_Parameter", io::message::warning);
       

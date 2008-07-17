@@ -155,12 +155,16 @@ calculate_interactions(topology::Topology & topo,
     const unsigned int ljs = conf.current().energies.lj_energy.size();
     std::vector<double> lj_scratch(ljs*ljs), rlj_scratch(ljs*ljs);
     std::vector<double> crf_scratch(ljs*ljs), rcrf_scratch(ljs*ljs);
+    std::vector<double> ls_real_scratch(ljs*ljs), rls_real_scratch(ljs*ljs);
+    
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
         lj_scratch[i*ljs + j] =
                 m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
         crf_scratch[i*ljs + j] =
                 m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
+        ls_real_scratch[i*ljs + j] =
+                m_nonbonded_set[0]->storage().energies.ls_real_energy[i][j];
       }
     }
     MPI::COMM_WORLD.Reduce(&lj_scratch[0],
@@ -175,11 +179,17 @@ calculate_interactions(topology::Topology & topo,
             MPI::DOUBLE,
             MPI::SUM,
             0);
-    
+    MPI::COMM_WORLD.Reduce(&ls_real_scratch[0],
+            &rls_real_scratch[0],
+            ljs * ljs,
+            MPI::DOUBLE,
+            MPI::SUM,
+            0);
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
         m_nonbonded_set[0]->storage().energies.lj_energy[i][j] = rlj_scratch[i*ljs + j];
         m_nonbonded_set[0]->storage().energies.crf_energy[i][j] = rcrf_scratch[i*ljs + j];
+        m_nonbonded_set[0]->storage().energies.ls_real_energy[i][j] = rls_real_scratch[i*ljs + j];
       }
     }
     

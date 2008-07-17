@@ -584,6 +584,7 @@ void interaction::Nonbonded_Outerloop
         Pairlist const & pairlist_solvent,
         Storage & storage, int rank, int size)
 {  
+  
   DEBUG(7, "\tcalculate LS real space interactions");  
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
@@ -603,7 +604,7 @@ void interaction::Nonbonded_Outerloop
   unsigned int end = topo.num_solute_atoms();
     
   unsigned int i;
-  for(i=0; i < end; ++i){
+  for(i=0; i < end; i++){
     for(j_it = pairlist_solute[i].begin(),
 	  j_to = pairlist_solute[i].end();
 	j_it != j_to;
@@ -616,7 +617,7 @@ void interaction::Nonbonded_Outerloop
     }
   } 
   
-  for(; i < size_i; ++i){
+  for(; i < size_i; i++){
     for(j_it = pairlist_solvent[i].begin(),
             j_to = pairlist_solvent[i].end();
     j_it != j_to;
@@ -632,7 +633,7 @@ void interaction::Nonbonded_Outerloop
   // parrallelization using stride. Then MPI should work
   DEBUG(9, "U_eta due to excluded solute pairs...");
   const unsigned int size_int = topo.num_solute_atoms();
-  for(unsigned int i = rank; i < size_int; ++i) {
+  for(unsigned int i = rank; i < size_int; i+=size) {
     for(ex_it = topo.exclusion(i).begin(),
         ex_to = topo.exclusion(i).end();
     ex_it != ex_to;
@@ -644,7 +645,7 @@ void interaction::Nonbonded_Outerloop
   }
   DEBUG(9, "U_eta due to excluded solvent pairs...");
   const unsigned int num_cg = topo.num_chargegroups();
-  for(unsigned int i = topo.num_solute_chargegroups(); i < num_cg; i++) {
+  for(unsigned int i = topo.num_solute_chargegroups() + rank; i < num_cg; i+=size) {
     for (int a1 = topo.chargegroup(i),
             a_to = topo.chargegroup(i + 1);
             a1 < a_to; ++a1) {

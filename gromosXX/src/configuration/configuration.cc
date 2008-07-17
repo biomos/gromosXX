@@ -16,6 +16,10 @@
 
 #include <math/periodicity.h>
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE configuration
@@ -404,9 +408,20 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
 
 void configuration::Configuration::lattice_sum_struct::init(topology::Topology const & topo,
         simulation::Parameter & param) {
+#ifdef OMP
+  int tid, size;
+#pragma omp parallel private(tid)
+  {
+    tid = omp_get_thread_num();
+    if (tid == 0) {
+      size = omp_get_num_threads();
+    }
+  }
+  fftw_init_threads();
+  fftw_plan_with_nthreads(size);
+#endif
   // get the k space
-  if (param.nonbonded.method == simulation::el_p3m ||
-      param.nonbonded.method == simulation::el_ewald) {
+  if (param.nonbonded.method == simulation::el_ewald) {
     kspace.reserve(param.nonbonded.ewald_max_k_x *
             param.nonbonded.ewald_max_k_y *
             param.nonbonded.ewald_max_k_z);

@@ -144,6 +144,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     const unsigned int ljs = conf.current().energies.lj_energy.size();
     std::vector<double> lj_scratch(ljs*ljs);
     std::vector<double> crf_scratch(ljs*ljs);
+    std::vector<double> ls_real_scratch(ljs*ljs);
     
     for(unsigned int i = 0; i < ljs; ++i){
       for(unsigned int j = 0; j < ljs; ++j){
@@ -151,6 +152,8 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 	  m_nonbonded_set[0]->storage().energies.lj_energy[i][j];
 	crf_scratch[i*ljs + j] = 
 	  m_nonbonded_set[0]->storage().energies.crf_energy[i][j];
+        ls_real_scratch[i*ljs + j] =
+          m_nonbonded_set[0]->storage().energies.ls_real_energy[i][j];      
       }
     }
     MPI::COMM_WORLD.Reduce(&lj_scratch[0],
@@ -160,6 +163,12 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 			   MPI::SUM,
 			   0);
     MPI::COMM_WORLD.Reduce(&crf_scratch[0],
+			   NULL,
+			   ljs * ljs,
+			   MPI::DOUBLE,
+			   MPI::SUM,
+			   0);
+    MPI::COMM_WORLD.Reduce(&ls_real_scratch[0],
 			   NULL,
 			   ljs * ljs,
 			   MPI::DOUBLE,

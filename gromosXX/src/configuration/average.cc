@@ -323,27 +323,31 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(total);
   ENERGY_AVG(kinetic_total);
   ENERGY_AVG(potential_total);
-
-  ENERGY_AVG(bonded_total);
   ENERGY_AVG(bond_total);
   ENERGY_AVG(angle_total);
   ENERGY_AVG(improper_total);
   ENERGY_AVG(dihedral_total);
-
+  ENERGY_AVG(bonded_total);
   ENERGY_AVG(nonbonded_total);
   ENERGY_AVG(lj_total);
   ENERGY_AVG(crf_total);
-
+  ENERGY_AVG(ls_total);
+  ENERGY_AVG(ls_pair_total);
+  ENERGY_AVG(ls_realspace_total);
+  ENERGY_AVG(ls_kspace_total);
+  ENERGY_AVG(ls_self_total);
+  ENERGY_AVG(ls_surface_total);
+  ENERGY_AVG(ls_a_term_total);
   ENERGY_AVG(special_total);
   ENERGY_AVG(posrest_total);
   ENERGY_AVG(distanceres_total);
   ENERGY_AVG(dihrest_total);
+  ENERGY_AVG(jvalue_total);
   ENERGY_AVG(constraints_total);
-  ENERGY_AVG(entropy_term);
   ENERGY_AVG(external_total);
-  
   ENERGY_AVG(self_total);
-
+  ENERGY_AVG(eds_vr);
+  ENERGY_AVG(entropy_term);
   // kinetic energies...
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
 
