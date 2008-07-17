@@ -3,6 +3,9 @@
  * the non bonded outerloops.
  */
 
+#include "latticesum.h"
+
+
 #ifndef INCLUDED_NONBONDED_OUTERLOOP_H
 #define INCLUDED_NONBONDED_OUTERLOOP_H
 
@@ -24,6 +27,8 @@ namespace interaction
   class Nonbonded_Parameter;
   class Storage;
   class Pairlist;
+  class Lattice_Sum;
+  struct KSpace_Element;
   
   /**
    * @class Nonbonded_Outerloop
@@ -86,7 +91,52 @@ namespace interaction
                             Storage & storage,
                             Storage & storage_lr,
                             int rank);
+    
+    /**
+     * calculate the ls interactions. (lattice sum)
+     * in real space
+     */
+    void ls_real_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Pairlist const & pairlist_solute,
+            Pairlist const & pairlist_solvent,
+            Storage & storage, int rank, int size);
+    
+    /**
+     * calculate the ls interactions kspace interactions
+     * using the Ewald method
+     */
+    void ls_ewald_kspace_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage, int rank, int size);
+    
+    /**
+     * calculate the ls interactions kspace interactions
+     * using the P3M method
+     */
+    void ls_p3m_kspace_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage, int rank, int size);
+    
+    /**
+     * calculate the ls self interactions
+     */
+    void ls_self_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage, int rank, int size);
 
+    /** 
+     * calculate the ls surface interaction
+     */
+    void ls_surface_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage, int rank, int size);
+    
     /**
      * calculate the interaction for a given atom pair.
      * SLOW! as it has to create the periodicity...
@@ -148,12 +198,38 @@ namespace interaction
 
     template<typename t_interaction_spec>
     void _electric_field_outerloop(topology::Topology & topo,
-		            configuration::Configuration & conf,
-		            simulation::Simulation & sim, 
-		            PairlistContainer const & pairlist,
-			    Storage & storage,
-                            Storage & storage_lr,
-                            int rank);
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            PairlistContainer const & pairlist,
+            Storage & storage,
+            Storage & storage_lr,
+            int rank);
+    
+    template<typename t_interaction_spec>
+    void _ls_real_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Pairlist const & pairlist_solute,
+            Pairlist const & pairlist_solvent,
+            Storage & storage, int rank, int size);
+    
+    template<typename t_interaction_spec>
+    void _ls_ewald_kspace_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage, int rank, int size);
+
+    template<typename t_interaction_spec>
+    void _ls_p3m_kspace_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage, int rank, int size);
+
+    template<typename t_interaction_spec>
+    void _ls_surface_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage, int rank, int size);
     
     template<typename t_interaction_spec>
     int _calculate_interaction(topology::Topology & topo,

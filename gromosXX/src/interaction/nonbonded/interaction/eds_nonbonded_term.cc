@@ -18,30 +18,30 @@ inline void interaction::Eds_Nonbonded_Term
       
       // Force
       m_cut3i =
-              1.0 / ( sim.param().longrange.rf_cutoff
-              * sim.param().longrange.rf_cutoff
-              * sim.param().longrange.rf_cutoff);
+              1.0 / ( sim.param().nonbonded.rf_cutoff
+              * sim.param().nonbonded.rf_cutoff
+              * sim.param().nonbonded.rf_cutoff);
       
-      m_crf = 2*(sim.param().longrange.epsilon - sim.param().longrange.rf_epsilon) *
-              (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) -
-              sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  *
-              sim.param().longrange.rf_cutoff *
-              sim.param().longrange.rf_kappa  *
-              sim.param().longrange.rf_cutoff);
+      m_crf = 2*(sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) *
+              (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
+              sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  *
+              sim.param().nonbonded.rf_cutoff *
+              sim.param().nonbonded.rf_kappa  *
+              sim.param().nonbonded.rf_cutoff);
       
-      m_crf /= (sim.param().longrange.epsilon +2* sim.param().longrange.rf_epsilon) *
-              (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) +
-              sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  *
-              sim.param().longrange.rf_cutoff *
-              sim.param().longrange.rf_kappa  *
-              sim.param().longrange.rf_cutoff);
+      m_crf /= (sim.param().nonbonded.epsilon +2* sim.param().nonbonded.rf_epsilon) *
+              (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
+              sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  *
+              sim.param().nonbonded.rf_cutoff *
+              sim.param().nonbonded.rf_kappa  *
+              sim.param().nonbonded.rf_cutoff);
       m_crf_cut3i = m_crf * m_cut3i;
       
       // Energy
       m_crf_2cut3i = m_crf_cut3i / 2.0;
       
       m_crf_cut = (1 - m_crf / 2.0)
-              / sim.param().longrange.rf_cutoff;
+              / sim.param().nonbonded.rf_cutoff;
       break;
       
     case simulation::pol_lj_crf_func :

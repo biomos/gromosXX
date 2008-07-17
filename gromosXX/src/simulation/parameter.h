@@ -97,8 +97,32 @@ namespace simulation
    */
   enum interaction_func_enum{
     /** lj_crf_function */ lj_crf_func,
+    /** lj_ls_function */ lj_ls_func,
     /** pol_lj_crf_function */ pol_lj_crf_func,
     /** cgrain_function */ cgrain_func
+  };
+  
+  /**
+   * @enum electrostatic_method_enum
+   * which electrostatic method to use
+   */
+  enum electrostatic_method_enum {
+    /** reaction field */ el_reaction_field,
+    /** Ewald */ el_ewald,
+    /** particle-particle-particle mesh (P3M) */ el_p3m,
+    /** smooth particle mesh Ewald */ el_spme
+  };
+  
+  /**
+   * @enum ls_a2_method_enum
+   * how to calculate the A2 term for lattice sum self energy
+   */
+  enum ls_a2_method_enum {
+    /** a2 and a2_tilde set to zero */ ls_a2_zero,
+    /** a2_tilde exact, a2=a2_tilde */ ls_a2t_exact,
+    /** a2 numerical, a2_tilde = a2 */ ls_a2_numerical,
+    /** a2_tilde exact (ewald or mesh+coords), a2 numerical */ ls_a2t_exact_a2_numerical,
+    /** a2_tilde averaged from mesh only, a2 numerical */ la_a2t_ave_a2_numerical
   };
   
   /**
@@ -893,10 +917,10 @@ namespace simulation
     } /** Pairlist method parameters */ pairlist;
 
     /**
-     * @struct longrange_struct
-     * LONGRANGE block
+     * @struct nonbonded_struct
+     * NONBONDED block
      */
-    struct longrange_struct
+    struct nonbonded_struct
     {
       /**
        * Constructor
@@ -904,26 +928,138 @@ namespace simulation
        * - rf_epsilon 66 (spc water)
        * - rf_kappa    0
        * - rf_cutoff 1.4
-       * - rf_excluded false (old standard)
+       * - rf_excluded true (new standard)
        * - epsilon     1
        */
-      longrange_struct() : rf_epsilon(66), rf_kappa(0), rf_cutoff(1.4),
-			   rf_excluded(false), epsilon(1) {}
-      
+      nonbonded_struct() :      
+        method(el_reaction_field),
+        lserf(false),
+        rf_kappa(0.0),
+        rf_cutoff(1.4),
+        rf_epsilon(66.0),
+        ls_charge_shape(-1),
+        ls_charge_shape_width(0.27),
+        ls_calculate_a2(ls_a2_zero),
+        ls_a2_tolerance(0.0001),
+        ls_epsilon(66.0),
+        ewald_max_k_x(10),
+        ewald_max_k_y(10),
+        ewald_max_k_z(10),
+        ewald_kspace_cutoff(0.8),
+        p3m_grid_points_x(10),
+        p3m_grid_points_y(10),
+        p3m_grid_points_z(10),
+        p3m_charge_assignment(0),
+        p3m_finite_differences_operator(0),
+        p3m_mesh_alias(0),
+        spme_bspline(0),
+        accuracy_evaluation(0),
+        influence_function_rms_force_error(0.001),
+        influence_function_read(false),
+        influence_function_write(false),
+        lj_correction(false),
+        lj_solvent_density(997.0),
+        rf_excluded(true),
+        epsilon(1.0) {}
+
       /**
-       * Reaction field epsilon
+       * method for longrange electrostatics
        */
-      double rf_epsilon;
+      electrostatic_method_enum method;
       /**
-       * Reaction field Kappa
+       * using lattice-sum emulated reaction field (LSERF)?
+       */
+      bool lserf;
+      /**
+       * inverse debye scrining length
        */
       double rf_kappa;
       /**
-       * Reaction field cutoff
+       * reaction field cutoff
        */
       double rf_cutoff;
       /**
-       * include rf contributions from excluded atoms
+       *reaction field permittivity
+       */
+      double rf_epsilon;
+      /**
+       * lattice-sum charge shaping function
+       */
+      int ls_charge_shape;
+      /** 
+       * lattice-sum charge shaping function width
+       */
+      double ls_charge_shape_width;
+      /**
+       * lattice-sum A2 calculation
+       */
+      ls_a2_method_enum ls_calculate_a2;
+      /**
+       * lattice-sum A2 tolaerance
+       */
+      double ls_a2_tolerance;
+      /**
+       * lattice-sum external permittivity
+       */
+      double ls_epsilon;
+      /**
+       * ewald maximum k compontents
+       */
+      int ewald_max_k_x;
+      int ewald_max_k_y;
+      int ewald_max_k_z;
+      /**
+       * ewald k-space cut-off
+       */
+      double ewald_kspace_cutoff;
+      /**
+       * p3m number of grid points
+       */
+      int p3m_grid_points_x;
+      int p3m_grid_points_y;
+      int p3m_grid_points_z;
+      /**
+       * p3m charge assignment function
+       */
+      int p3m_charge_assignment;
+      /**
+       * p3m order of mesh finite-difference operator
+       */
+      int p3m_finite_differences_operator;
+      /**
+       * p3m number of mesh alias vectors consideres
+       */
+      int p3m_mesh_alias;
+      /**
+       * oder of SPME B-spline function
+       */
+      int spme_bspline;
+      /**
+       * accuracy evaluation
+       */
+      int accuracy_evaluation;
+      /**
+       * rms force error
+       */
+      double influence_function_rms_force_error;
+      /**
+       * read influence function from file
+       */
+      bool influence_function_read;
+      /**
+       * write influence function to conf
+       */
+      bool influence_function_write;
+      /**
+       * longrange LJ correction
+       */
+      bool lj_correction;
+      /**
+       * solvent density
+       */
+      double lj_solvent_density;
+      /**
+       * RF contribution of excluded atoms
        */
       bool rf_excluded;
       /**
@@ -932,9 +1068,7 @@ namespace simulation
        * we do so in In_Parameter
        */
       double epsilon;
-      
-    } /** longrange treatment parameters */ longrange;
-
+    } nonbonded;
     /**
      * @struct posrest_struct
      * POSITONRES block

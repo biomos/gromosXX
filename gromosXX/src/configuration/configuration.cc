@@ -10,7 +10,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <configuration/configuration.h>
-
+#include <configuration/mesh.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
 
@@ -365,6 +365,8 @@ void configuration::Configuration::init(topology::Topology const & topo,
       param.centreofmass.remove_rot = false;
     }
   }
+  m_lattice_sum.init(topo, param);
+  
 }
 
 
@@ -400,6 +402,34 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
   stochastic_integral.resize(s);
 }
 
+void configuration::Configuration::lattice_sum_struct::init(topology::Topology const & topo,
+        simulation::Parameter & param) {
+  // get the k space
+  if (param.nonbonded.method == simulation::el_p3m ||
+      param.nonbonded.method == simulation::el_ewald) {
+    kspace.reserve(param.nonbonded.ewald_max_k_x *
+            param.nonbonded.ewald_max_k_y *
+            param.nonbonded.ewald_max_k_z);
+  }
+  
+  if (param.nonbonded.method == simulation::el_p3m) {
+    const unsigned int Nx = param.nonbonded.p3m_grid_points_x;
+    const unsigned int Ny = param.nonbonded.p3m_grid_points_y;
+    const unsigned int Nz = param.nonbonded.p3m_grid_points_z;
+
+    influence_function.resize(Nx, Ny, Nz);
+    charge_density.resize(Nx, Ny, Nz);
+    potential.resize(Nx, Ny, Nz);
+    electric_field.x.resize(Nx, Ny, Nz);
+    electric_field.y.resize(Nx, Ny, Nz);
+    electric_field.z.resize(Nx, Ny, Nz);
+  }
+
+  // reset the A term
+  a2_tilde = 0.0;
+
+
+}
 namespace configuration
 {
   std::ostream &operator<<(std::ostream &os, Configuration &conf)

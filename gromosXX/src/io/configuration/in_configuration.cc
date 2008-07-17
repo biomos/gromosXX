@@ -1253,9 +1253,10 @@ bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string>
   
   math::Matrixl Rmat(Rx,Ry,Rz);
   
-  box(0)=product(Rmat,SBx);
-  box(1)=product(Rmat,SBy);
-  box(2)=product(Rmat,SBz);
+  // we have to convert Vecl to Vec by hand.
+  box(0)=math::Vec(product(Rmat,SBx));
+  box(1)=math::Vec(product(Rmat,SBy));
+  box(2)=math::Vec(product(Rmat,SBz));
  
   
 

@@ -8,6 +8,8 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
+#include <interaction/nonbonded/interaction/latticesum.h>
+
 /**
  * helper function to initialize the constants.
  */
@@ -19,47 +21,54 @@ inline void interaction::Nonbonded_Term
   case simulation::pol_lj_crf_func :
     // Force
     m_cut3i = 
-      1.0 / ( sim.param().longrange.rf_cutoff
-	      * sim.param().longrange.rf_cutoff
-	      * sim.param().longrange.rf_cutoff);
+      1.0 / ( sim.param().nonbonded.rf_cutoff
+	      * sim.param().nonbonded.rf_cutoff
+	      * sim.param().nonbonded.rf_cutoff);
+    DEBUG(15, "nonbonded term init: m_cut3i: " << m_cut3i);
+    m_crf = 2*(sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) * 
+      (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
+      sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  * 
+					  sim.param().nonbonded.rf_cutoff *
+					  sim.param().nonbonded.rf_kappa  *
+					  sim.param().nonbonded.rf_cutoff);
     
-    m_crf = 2*(sim.param().longrange.epsilon - sim.param().longrange.rf_epsilon) * 
-      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) -
-      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					  sim.param().longrange.rf_cutoff *
-					  sim.param().longrange.rf_kappa  *
-					  sim.param().longrange.rf_cutoff);
-    
-    m_crf /= (sim.param().longrange.epsilon +2* sim.param().longrange.rf_epsilon) *
-      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) +
-      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					  sim.param().longrange.rf_cutoff *
-					  sim.param().longrange.rf_kappa  *
-					  sim.param().longrange.rf_cutoff);
+    m_crf /= (sim.param().nonbonded.epsilon +2* sim.param().nonbonded.rf_epsilon) *
+      (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
+      sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  * 
+					  sim.param().nonbonded.rf_cutoff *
+					  sim.param().nonbonded.rf_kappa  *
+					  sim.param().nonbonded.rf_cutoff);
+    DEBUG(15, "nonbonded term init: m_crf: " << m_crf);
     m_crf_cut3i = m_crf * m_cut3i;
     
     // Energy
     m_crf_2cut3i = m_crf_cut3i / 2.0;
+    DEBUG(15, "nonbonded term init: m_crf_2cut3i: " << m_crf_2cut3i);
     
     m_crf_cut = (1 - m_crf / 2.0)
-      / sim.param().longrange.rf_cutoff;
+      / sim.param().nonbonded.rf_cutoff;
     break;
     
   case simulation::cgrain_func :
     // cgrain
-    A_cg12= - (12.0 * (12 + 4)) / (pow(sim.param().longrange.rf_cutoff, 12 + 3));
-    A_cg6=  - (6.0  * (6  + 4)) / (pow(sim.param().longrange.rf_cutoff, 6  + 3));
-    A_cg1=  - (1.0  * (1  + 4)) / (pow(sim.param().longrange.rf_cutoff, 1  + 3));     
+    A_cg12= - (12.0 * (12 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 3));
+    A_cg6=  - (6.0  * (6  + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 6  + 3));
+    A_cg1=  - (1.0  * (1  + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 1  + 3));     
     
-    B_cg12=   (12.0 * (12 + 3)) / (pow(sim.param().longrange.rf_cutoff, 12 + 4));
-    B_cg6=    (6.0  * (6  + 3)) / (pow(sim.param().longrange.rf_cutoff, 6  + 4));
-    B_cg1=    (1.0  * (1  + 3)) / (pow(sim.param().longrange.rf_cutoff, 1  + 4));     
+    B_cg12=   (12.0 * (12 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 4));
+    B_cg6=    (6.0  * (6  + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 6  + 4));
+    B_cg1=    (1.0  * (1  + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 1  + 4));     
 
-    C_cg12=   ((12 + 3) * (12 + 4)) / (12.0 * pow(sim.param().longrange.rf_cutoff, 12));
-    C_cg6=    ((6  + 3) * (6  + 4)) / (12.0 * pow(sim.param().longrange.rf_cutoff, 6 ));
-    C_cg1=    ((1  + 3) * (1  + 4)) / (12.0 * pow(sim.param().longrange.rf_cutoff, 1 ));
+    C_cg12=   ((12 + 3) * (12 + 4)) / (12.0 * pow(sim.param().nonbonded.rf_cutoff, 12));
+    C_cg6=    ((6  + 3) * (6  + 4)) / (12.0 * pow(sim.param().nonbonded.rf_cutoff, 6 ));
+    C_cg1=    ((1  + 3) * (1  + 4)) / (12.0 * pow(sim.param().nonbonded.rf_cutoff, 1 ));
     
     cgrain_eps = sim.param().cgrain.EPS;
+    break;
+  case simulation::lj_ls_func :
+    // lattice sum
+    charge_shape = sim.param().nonbonded.ls_charge_shape;
+    charge_width_i = 1.0 / sim.param().nonbonded.ls_charge_shape_width;
     break;
   default:
     io::messages.add("Nonbonded_Innerloop",
@@ -99,6 +108,83 @@ inline void interaction::Nonbonded_Term
   DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i 
 	<< " crf_cut2i=" << m_crf_cut3i);
   
+}
+
+/**
+ * helper function to calculate the force and energy for
+ * a given atom pair.
+ */
+inline void interaction::Nonbonded_Term
+::lj_interaction(math::Vec const &r,
+		     double c6, double c12,
+		     double &force, double &e_lj)
+{
+  DEBUG(14, "\t\tnonbonded term");
+  
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
+  const double dist2i = 1.0 / dist2;
+  const double dist6i = dist2i * dist2i * dist2i;
+  const double c12_dist6i = c12 * dist6i;
+  
+  e_lj = (c12_dist6i - c6) * dist6i;
+
+  force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i;
+  
+}
+
+inline void interaction::Nonbonded_Term
+::lj_ls_interaction(math::Vec const &r, double c6, double c12, double q,
+		 double &force, double &e_lj, double &e_ls)
+{
+  DEBUG(14, "\t\tnonbonded term");
+  
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
+  const double dist = sqrt(dist2);
+  const double dist2i = 1.0 / dist2;
+  const double dist6i = dist2i * dist2i * dist2i;
+  const double q_eps = q * math::four_pi_eps_i;
+  const double disti = 1.0 / dist;
+  const double c12_dist6i = c12 * dist6i;
+  
+  const double ai_dist = charge_width_i * dist;
+  
+  e_lj = (c12_dist6i - c6) * dist6i;
+  double eta;
+  double d_eta;
+  interaction::Lattice_Sum::charge_shape_switch(charge_shape, ai_dist, eta, d_eta);
+  DEBUG(14, "eta: " << eta << " d_eta: " << d_eta);
+  e_ls = q_eps * disti * eta;
+  //         qi * qj       eta      eta'
+  // force = ------- * (-  ---  +  ---- )
+  //          r_ij^2       r_ij      a
+  const double f_ls = dist2i * (e_ls - q_eps * d_eta * charge_width_i);
+  force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i + f_ls;
+          
+  DEBUG(14, "e_ls: " << e_ls << ", f_ls: " << f_ls);
+}
+
+inline void interaction::Nonbonded_Term
+::ls_excluded_interaction(math::Vec const &r, double q,
+		 double &force, double &e_ls)
+{
+  DEBUG(14, "\t\tnonbonded term");
+  
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
+  const double dist = sqrt(dist2);
+  const double dist2i = 1.0 / dist2;
+  const double q_eps = q * math::four_pi_eps_i;
+  const double disti = 1.0 / dist;
+  const double ai_dist = charge_width_i * dist;
+
+  double eta;
+  double d_eta;
+  interaction::Lattice_Sum::charge_shape_switch(charge_shape, ai_dist, eta, d_eta);
+  DEBUG(14, "eta: " << eta << " d_eta: " << d_eta);
+  e_ls = q_eps * disti * (eta - 1.0);
+  force = dist2i * (e_ls - q_eps * d_eta * charge_width_i);
 }
 
 /**

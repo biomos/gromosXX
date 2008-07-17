@@ -821,28 +821,28 @@ namespace interaction
 
   void grid_init(simulation::Simulation const & sim)
   {
-    cut3i = 1.0 / ( sim.param().longrange.rf_cutoff
-		    * sim.param().longrange.rf_cutoff
-		    * sim.param().longrange.rf_cutoff);
+    cut3i = 1.0 / ( sim.param().nonbonded.rf_cutoff
+		    * sim.param().nonbonded.rf_cutoff
+		    * sim.param().nonbonded.rf_cutoff);
     
-    crf = 2*(sim.param().longrange.epsilon - sim.param().longrange.rf_epsilon) * 
-      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) -
-      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					  sim.param().longrange.rf_cutoff *
-					  sim.param().longrange.rf_kappa  *
-					  sim.param().longrange.rf_cutoff);
+    crf = 2*(sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) * 
+      (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
+      sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  * 
+					  sim.param().nonbonded.rf_cutoff *
+					  sim.param().nonbonded.rf_kappa  *
+					  sim.param().nonbonded.rf_cutoff);
     
-    crf /= (sim.param().longrange.epsilon +2* sim.param().longrange.rf_epsilon) *
-      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) +
-      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					  sim.param().longrange.rf_cutoff *
-					  sim.param().longrange.rf_kappa  *
-					  sim.param().longrange.rf_cutoff);
+    crf /= (sim.param().nonbonded.epsilon +2* sim.param().nonbonded.rf_epsilon) *
+      (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
+      sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  * 
+					  sim.param().nonbonded.rf_cutoff *
+					  sim.param().nonbonded.rf_kappa  *
+					  sim.param().nonbonded.rf_cutoff);
     crf_cut3i = crf * cut3i;
     
     crf_2cut3i = crf_cut3i / 2.0;
     
-    crf_cut = (1 - crf / 2.0) / sim.param().longrange.rf_cutoff;
+    crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
 
     const int egroups = sim.param().force.energy_group.size();
     

@@ -9,6 +9,7 @@
 #include <topology/topology.h>
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
+#include <configuration/energy.h>
 
 #include <math/periodicity.h>
 #include <math/volume.h>
@@ -19,6 +20,7 @@
 #include <sstream>
 
 #include "out_configuration.h"
+
 
 #include <util/replica_data.h>
 #include <util/template_split.h>
@@ -1428,7 +1430,7 @@ void io::Out_Configuration
      << "\n";  
   }
  */   
-  long double R11R21=sqrtl(Rmat(0,0)*Rmat(0,0)+Rmat(0,1)*Rmat(0,1));
+  long double R11R21 = sqrtl(Rmat(0,0)*Rmat(0,0)+Rmat(0,1)*Rmat(0,1));
   if(R11R21==0.0)
   {
       theta = -math::sign(Rmat(0,2))*M_PI/2;
@@ -2065,6 +2067,11 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.dihedral_total << "\n"
      << std::setw(18) << e.lj_total << "\n"
      << std::setw(18) << e.crf_total << "\n"
+     << std::setw(18) << e.ls_realspace_total << "\n"
+     << std::setw(18) << e.ls_kspace_total << "\n"
+     << std::setw(18) << e.ls_a_term_total << "\n"
+     << std::setw(18) << e.ls_self_total << "\n"
+     << std::setw(18) << e.ls_surface_total << "\n"
      << std::setw(18) << e.constraints_total << "\n"
      << std::setw(18) << e.posrest_total << "\n"
      << std::setw(18) << e.distanceres_total << "\n"
@@ -2099,10 +2106,10 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << "# nonbonded\n";
   for(int i=0; i<numenergygroups; i++){
     for(int j=i; j<numenergygroups; j++){
-
       os << std::setw(18) << e.lj_energy[j][i]
-	 << std::setw(18) << e.crf_energy[j][i] << "\n";
-
+	 << std::setw(18) << e.crf_energy[j][i]
+         << std::setw(18) << e.ls_real_energy[j][i] 
+         << std::setw(18) << e.ls_k_energy[j][i] << "\n";
     }
   }
 

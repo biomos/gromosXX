@@ -15,6 +15,8 @@
 #include <interaction/nonbonded/pairlist/pairlist.h>
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 
+#include <interaction/nonbonded/interaction/latticesum.h>
+
 #include <interaction/nonbonded/interaction/storage.h>
 #include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
 
@@ -24,6 +26,8 @@
 #include <interaction/nonbonded/interaction/nonbonded_set.h>
 
 #include <util/debug.h>
+
+#include <configuration/energy.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -115,13 +119,13 @@ int interaction::Nonbonded_Set
     DEBUG(8, "doing longrange calculation");
     if (m_rank == 0)
       m_pairlist_alg.timer().start("longrange");
+      // in case of LS only LJ are calculated
     
       m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			          m_pairlist.solute_long, m_pairlist.solvent_long,
-                                  m_longrange_storage);
+                                  m_longrange_storage); 
     if (m_rank == 0)
-      m_pairlist_alg.timer().stop("longrange");
-    
+      m_pairlist_alg.timer().stop("longrange"); 
   }
   
   
@@ -130,12 +134,91 @@ int interaction::Nonbonded_Set
   if (m_rank == 0)
     m_pairlist_alg.timer().start("shortrange");
 
-  m_outerloop.lj_crf_outerloop(topo, conf, sim,
+  if (sim.param().force.interaction_function == simulation::lj_ls_func) {
+    m_outerloop.ls_real_outerloop(topo, conf, sim,
+          m_pairlist.solute_short, m_pairlist.solvent_short,
+          m_storage, m_rank, m_num_threads);
+  } else {
+    m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage);
+  }
+  
   if (m_rank == 0)
     m_pairlist_alg.timer().stop("shortrange");  
-  
+
+  // calculate k-space energy and forces
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("k-space");
+  switch (sim.param().nonbonded.method) {
+    case simulation::el_ewald :
+    {
+      DEBUG(6, "\tlong range electrostatics: Ewald");
+      if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
+        // the box may have changed. Recalculate the k space
+        configuration::calculate_k_space(topo, conf, sim);
+      }
+      // do the longrange calculation in k space
+      m_outerloop.ls_ewald_kspace_outerloop(topo, conf, sim, m_storage,
+              m_rank, m_num_threads);
+      break;
+    }
+    case simulation::el_p3m :
+    {
+      DEBUG(6, "\tlong range electrostatics: P3M");
+      if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
+        // check whether we have to recalculate the influence function
+      }
+      // do the longrange calculation in k space
+      m_outerloop.ls_p3m_kspace_outerloop(topo, conf, sim, m_storage,
+              m_rank, m_num_threads);
+      break;
+    }
+    default:{} // doing reaction field
+  }
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("k-space");
+
+  // calculate lattice sum self energy and A term
+  // this has to be done after the k-space energy is calculated
+  // as this calculation will also deliver a methodology
+  // dependent A~_2 term if requested
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("ls self energy and A term");
+  switch (sim.param().nonbonded.method) {
+    case simulation::el_ewald :
+    case simulation::el_p3m :
+    {
+      //  NPT                                            ||  NVT
+      if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
+        m_outerloop.ls_self_outerloop(topo, conf, sim, m_storage,
+                m_rank, m_num_threads);
+      } else {
+        // copy from previous step
+        conf.current().energies.ls_self_total = conf.old().energies.ls_self_total;
+        conf.current().energies.ls_a_term_total = conf.old().energies.ls_a_term_total;
+      }
+    }
+    default: ;  // doing reaction field
+  }
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("ls self energy and A term");
+
+  // calculate lattice sum surface energy and force
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("ls surface energy");
+  switch (sim.param().nonbonded.method) {
+    case simulation::el_ewald :
+    case simulation::el_p3m :
+    {
+      m_outerloop.ls_surface_outerloop(topo, conf, sim, m_storage,
+              m_rank, m_num_threads);
+    }
+    default: {} // doing reaction field 
+  }
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("ls surface energy");
+
   // add 1,4 - interactions
   if (m_rank == 0){
     DEBUG(6, "\t1,4 - interactions");
@@ -144,7 +227,7 @@ int interaction::Nonbonded_Set
     m_pairlist_alg.timer().stop("1,4 interaction");
   
     // possibly do the RF contributions due to excluded atoms
-    if(sim.param().longrange.rf_excluded){
+    if(sim.param().nonbonded.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
       m_pairlist_alg.timer().start("RF excluded interaction");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
@@ -244,15 +327,26 @@ int interaction::Nonbonded_Set::update_configuration
 	m_storage.energies.lj_energy[i][j] * cells_i;
       e.crf_energy[i][j] += 
 	m_storage.energies.crf_energy[i][j] * cells_i;
+      e.ls_real_energy[i][j] += 
+	m_storage.energies.ls_real_energy[i][j] * cells_i;
+      e.ls_k_energy[i][j] += 
+	m_storage.energies.ls_k_energy[i][j] * cells_i;
     }
     e.self_energy[i] +=  m_storage.energies.self_energy[i] * cells_i;
   }
+  // no components in lattice sum methods!
+  
+  // lattice sum energies
+  e.ls_kspace_total += m_storage.energies.ls_kspace_total;
+  e.ls_self_total += m_storage.energies.ls_self_total;
+  e.ls_a_term_total += m_storage.energies.ls_a_term_total;
+  e.ls_surface_total += m_storage.energies.ls_surface_total;
 
 
   // (MULTISTEP: and the virial???)
   if (sim.param().pcouple.virial){
     DEBUG(7, "\tadd set virial");
-	conf.current().virial_tensor += m_storage.virial_tensor * cells_i;
+  	conf.current().virial_tensor += m_storage.virial_tensor * cells_i;
   }
   
   return 0;
@@ -341,6 +435,7 @@ int interaction::Nonbonded_Set
     
     pairlist().reserve(pairs);
   }
+  
   return 0;
 }
 

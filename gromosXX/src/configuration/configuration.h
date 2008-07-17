@@ -9,6 +9,8 @@
 // headers needed for configuration
 #include <gromosXX/configuration/energy.h>
 #include <gromosXX/configuration/average.h>
+#include <gromosXX/configuration/mesh.h>
+#include <gromosXX/configuration/kspace.h>
 
 namespace topology
 {
@@ -22,7 +24,7 @@ namespace simulation
 
 namespace configuration
 {
-  /**
+   /**
    * @class Configuration
    * holds the state information of
    * the simulated system.
@@ -252,9 +254,57 @@ namespace configuration
         std::vector<math::Matrix> virial_tensor_endstates;
 
       } /** enveloping distribution sampling information */ eds;
-      
+
     }; // special
 
+    /**
+     * @struct lattice_sum_struct
+     * lattice sum information
+     */
+    struct lattice_sum_struct {
+      
+      /**
+       * a vector holding the k-space elements
+       * (vectors, absolute values, fourier coefficients)
+       */
+      std::vector<KSpace_Element> kspace;
+      
+      /**
+       * influence function
+       */
+      Mesh influence_function;
+      /**
+       * quality of the influence function (q)
+       */
+      double influence_function_quality;
+      /**
+       * charge density
+       */
+      Mesh charge_density;
+      /**
+       * electrostatic potential
+       */
+      Mesh potential;
+
+      /**
+       * electric field
+       */
+      struct electric_field_mesh {
+        Mesh x;
+        Mesh y;
+        Mesh z;
+      }electric_field;
+
+      /**
+       * methodology dependent A2 term
+       */
+      double a2_tilde;
+
+      /**
+       * init lattice sum
+       */
+      void init(topology::Topology const & topo, simulation::Parameter & param);
+    };
     //////////////////////////////////////////////////////////////////////
     // accessors
     //////////////////////////////////////////////////////////////////////
@@ -291,6 +341,15 @@ namespace configuration
      */
     special_struct const & special()const { return m_special; }
     
+    /**
+     * lattice sum information accessor.
+     */
+    lattice_sum_struct & lattice_sum() { return m_lattice_sum; }
+    
+    /**
+     * lattice sum information accessor (const).
+     */
+    lattice_sum_struct const & lattice_sum()const { return m_lattice_sum; }
     /**
      * set the number of atoms in the system.
      */
@@ -343,6 +402,11 @@ namespace configuration
      * special information
      */
     special_struct m_special;
+    
+    /**
+     * lattice sum information
+     */
+    lattice_sum_struct m_lattice_sum;
     
 
   }; // Configuration

@@ -341,4 +341,19 @@ dnl just add it...
   rm -f conf.gsltest
 ])
 
+dnl check for lib FFTW3
+AC_DEFUN([AM_PATH_FFTW3],[
+  AC_ARG_WITH(fftw,
+    [  --with-fftw=DIR  fftw library directory to use],
+    [
+      [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/lib"]
+      [LDFLAGS="$LDFLAGS -L${withval}/lib"]
+    ],
+    [
+      AC_MSG_WARN([fftw path was not specified. Trying default paths...])
+    ]
+  )
+  dnl check for lib with these settings and add flags automatically
+  AC_CHECK_LIB([fftw3], [fftw_version],, AC_MSG_ERROR([FFTW3 library missing.]), [-lm])
+])
 

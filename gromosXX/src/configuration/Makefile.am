@@ -6,7 +6,9 @@ xxinclude_HEADERS =		configuration_global.h \
 				configuration.h \
 				energy.h \
 				average.h \
-				state_properties.h
+				state_properties.h \
+        mesh.h \
+        kspace.h
 
 
 noinst_LTLIBRARIES =		libgroconfiguration.la
@@ -15,7 +17,9 @@ libgroconfiguration_la_SOURCES = configuration_global.cc	\
 				configuration.cc \
 				energy.cc \
 				average.cc \
-				state_properties.cc	
+				state_properties.cc	\
+        mesh.cc \
+        kspace.cc
 
 
 bin_PROGRAMS =			

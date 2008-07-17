@@ -123,11 +123,6 @@ namespace io {
     void read_DIHEDRALRES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-     * read LONGRANGE block.
-     */
-    void read_LONGRANGE(simulation::Parameter &param, std::ostream & os = std::cout);
-
-    /**
      * read MULTIBATH block.
      */
     void read_MULTIBATH(simulation::Parameter &param, std::ostream & os = std::cout);
@@ -225,6 +220,14 @@ namespace io {
      * read EDS block.
      */
     void read_EDS(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read NONBONDED block.
+     */
+    void read_NONBONDED(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read GROMOS96COMPAT block.
+     */
+    void read_GROMOS96COMPAT(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io

@@ -89,7 +89,7 @@ int io::check_parameter(simulation::Simulation & sim)
   add("com_removal", "COM motion removal", param.centreofmass.remove_rot || 
                                            param.centreofmass.remove_trans);
   // LONGRANGE block
-  add("rf_excluded", "reaction field for excluded pairs", param.longrange.rf_excluded);
+  add("rf_excluded", "reaction field for excluded pairs", param.nonbonded.rf_excluded);
   // PAIRLIST block
   add("pairlist_standard", "standard pairlist algorithm", param.pairlist.grid == 0);
   add("pairlist_grid", "grid-based pairlist algorithm", param.pairlist.grid == 1);
@@ -171,6 +171,15 @@ int io::check_parameter(simulation::Simulation & sim)
     }
 #endif 
   add("parallel_omp", "OpenMP parallelization", size > 1);
+  
+  // multiple energy groups
+  add("mult_energy_groups", "multiple energy groups", param.force.energy_group.size() > 1);
+  
+  // lattice sum: Ewald
+  add("ewald", "Ewald sum electrostatics", param.nonbonded.method == simulation::el_ewald);
+  
+  // lattice sum: P3M
+  add("p3m", "P3M electrostatics", param.nonbonded.method == simulation::el_p3m);
 
 // we don't need the add function anymore.
 #undef add
@@ -2260,8 +2269,216 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("eds", "random_gsl");
   fc.unlock("eds", "parallel_mpi");
   fc.unlock("eds", "parallel_omp");
+  
+  fc.unlock("mult_energy_groups", "solute");
+  fc.unlock("mult_energy_groups", "solvent");
+  fc.unlock("mult_energy_groups", "solvent_only");
+  fc.unlock("mult_energy_groups", "steepest_descent");
+  fc.unlock("mult_energy_groups", "solute_constraint_off");
+  fc.unlock("mult_energy_groups", "solute_shake");
+  fc.unlock("mult_energy_groups", "solute_lincs");
+  fc.unlock("mult_energy_groups", "solute_flexshake");
+  fc.unlock("mult_energy_groups", "solvent_constraint_off");
+  fc.unlock("mult_energy_groups", "solvent_shake");
+  fc.unlock("mult_energy_groups", "pressure_calculation");
+  fc.unlock("mult_energy_groups", "pressure_scale_berendsen");
+  fc.unlock("mult_energy_groups", "virial_off");
+  fc.unlock("mult_energy_groups", "virial_atomic");
+  fc.unlock("mult_energy_groups", "virial_molecular");
+  fc.unlock("mult_energy_groups", "vacuum");
+  fc.unlock("mult_energy_groups", "pbc_r");
+  fc.unlock("mult_energy_groups", "pbc_c");
+  fc.unlock("mult_energy_groups", "pbc_t");
+  fc.unlock("mult_energy_groups", "perturbation");
+  fc.unlock("mult_energy_groups", "perturbation_scaling");
+  fc.unlock("mult_energy_groups", "slow_growth");
+  fc.unlock("mult_energy_groups", "individual_lambdas");
+  fc.unlock("mult_energy_groups", "bond");
+  fc.unlock("mult_energy_groups", "angle");
+  fc.unlock("mult_energy_groups", "dihedral");
+  fc.unlock("mult_energy_groups", "improper");
+  fc.unlock("mult_energy_groups", "crf");
+  fc.unlock("mult_energy_groups", "lj");
+  fc.unlock("mult_energy_groups", "com_removal");
+  fc.unlock("mult_energy_groups", "rf_excluded");
+  fc.unlock("mult_energy_groups", "pairlist_standard");
+  fc.unlock("mult_energy_groups", "pairlist_grid");
+  fc.unlock("mult_energy_groups", "pairlist_vgrid");
+  fc.unlock("mult_energy_groups", "cutoff_atomic");
+  fc.unlock("mult_energy_groups", "coarse_grain");
+  fc.unlock("mult_energy_groups", "multi_grain");
+  fc.unlock("mult_energy_groups", "temp_berendsen");
+  fc.unlock("mult_energy_groups", "temp_nosehoover");
+  fc.unlock("mult_energy_groups", "temp_nosehoover_chains");
+  fc.unlock("mult_energy_groups", "position_rest");
+  fc.unlock("mult_energy_groups", "position_const");
+  fc.unlock("mult_energy_groups", "position_const_scaled");
+  fc.unlock("mult_energy_groups", "distance_rest");
+  fc.unlock("mult_energy_groups", "dihedral_rest");
+  fc.unlock("mult_energy_groups", "dihedral_const");
+  fc.unlock("mult_energy_groups", "jvalue_rest");
+  fc.unlock("mult_energy_groups", "perscale");
+  fc.unlock("mult_energy_groups", "rottrans");
+  fc.unlock("mult_energy_groups", "innerloop_spc");
+  fc.unlock("mult_energy_groups", "repex_temp");
+  fc.unlock("mult_energy_groups", "repex_lambda");
+  fc.unlock("mult_energy_groups", "multicell");
+  fc.unlock("mult_energy_groups", "analysis");
+  fc.unlock("mult_energy_groups", "no_integration");
+  fc.unlock("mult_energy_groups", "stochdyn");
+  fc.unlock("mult_energy_groups", "multistep");
+  fc.unlock("mult_energy_groups", "multistep_boost");
+  fc.unlock("mult_energy_groups", "montecarlo");
+  fc.unlock("mult_energy_groups", "ramd");
+  fc.unlock("mult_energy_groups", "polarization_cos");
+  fc.unlock("mult_energy_groups", "polarization_cos_damped");
+  fc.unlock("mult_energy_groups", "random_gromos");
+  fc.unlock("mult_energy_groups", "random_gsl");
+  fc.unlock("mult_energy_groups", "eds");
+  fc.unlock("mult_energy_groups", "parallel_mpi");
+  fc.unlock("mult_energy_groups", "parallel_omp");
 
+  // unlocking features for Ewald sum electrostatics
+  fc.unlock("ewald", "solute");
+  fc.unlock("ewald", "solvent");
+  fc.unlock("ewald", "solvent_only");
+  fc.unlock("ewald", "steepest_descent");
+  fc.unlock("ewald", "solute_constraint_off");
+  fc.unlock("ewald", "solute_shake");
+  fc.unlock("ewald", "solute_lincs");
+  fc.unlock("ewald", "solute_flexshake");
+  fc.unlock("ewald", "solvent_constraint_off");
+  fc.unlock("ewald", "solvent_shake");
+  //fc.unlock("ewald", "pressure_calculation");
+  //fc.unlock("ewald", "pressure_scale_berendsen");
+  fc.unlock("ewald", "virial_off");
+  //fc.unlock("ewald", "virial_atomic");
+  //fc.unlock("ewald", "virial_molecular");
+  //fc.unlock("ewald", "vacuum");
+  fc.unlock("ewald", "pbc_r");
+  fc.unlock("ewald", "pbc_c");
+  //fc.unlock("ewald", "pbc_t");
+  //fc.unlock("ewald", "perturbation");
+  //fc.unlock("ewald", "perturbation_scaling");
+  //fc.unlock("ewald", "slow_growth");
+  //fc.unlock("ewald", "individual_lambdas");
+  fc.unlock("ewald", "bond");
+  fc.unlock("ewald", "angle");
+  fc.unlock("ewald", "dihedral");
+  fc.unlock("ewald", "improper");
+  fc.unlock("ewald", "crf");
+  fc.unlock("ewald", "lj");
+  fc.unlock("ewald", "com_removal");
+  //fc.unlock("ewald", "rf_excluded");
+  fc.unlock("ewald", "pairlist_standard");
+  fc.unlock("ewald", "pairlist_grid");
+  //fc.unlock("ewald", "pairlist_vgrid");
+  fc.unlock("ewald", "cutoff_atomic");
+  //fc.unlock("ewald", "coarse_grain");
+  //fc.unlock("ewald", "multi_grain");
+  fc.unlock("ewald", "temp_berendsen");
+  fc.unlock("ewald", "temp_nosehoover");
+  fc.unlock("ewald", "temp_nosehoover_chains");
+  fc.unlock("ewald", "position_rest");
+  fc.unlock("ewald", "position_const");
+  fc.unlock("ewald", "position_const_scaled");
+  fc.unlock("ewald", "distance_rest");
+  fc.unlock("ewald", "dihedral_rest");
+  fc.unlock("ewald", "dihedral_const");
+  fc.unlock("ewald", "jvalue_rest");
+  fc.unlock("ewald", "perscale");
+  fc.unlock("ewald", "rottrans");
+  //fc.unlock("ewald", "innerloop_spc");
+  //fc.unlock("ewald", "repex_temp"); --probably works
+  //fc.unlock("ewald", "repex_lambda"); --probably works
+  //fc.unlock("ewald", "multicell"); --probably works
+  //fc.unlock("ewald", "analysis"); --works if box invariant (recalculation of infl. func. necessary otherwise)
+  fc.unlock("ewald", "no_integration");
+  //fc.unlock("ewald", "stochdyn");
+  //fc.unlock("ewald", "multistep");
+  //fc.unlock("ewald", "multistep_boost");
+  //fc.unlock("ewald", "montecarlo");
+  //fc.unlock("ewald", "ramd"); --probably works
+  //fc.unlock("ewald", "polarization_cos");
+  //fc.unlock("ewald", "polarization_cos_damped");
+  fc.unlock("ewald", "random_gromos");
+  fc.unlock("ewald", "random_gsl");
+  //fc.unlock("ewald", "eds");
+  //fc.unlock("ewald", "parallel_mpi");
+  //fc.unlock("ewald", "parallel_omp");
+  //fc.unlock("ewald", "mult_energy_groups"); 
+  //fc.unlock("ewald", "p3m");
 
+  // unlocking features for P3M electrostatics
+  fc.unlock("p3m", "solute");
+  fc.unlock("p3m", "solvent");
+  fc.unlock("p3m", "solvent_only");
+  fc.unlock("p3m", "steepest_descent");
+  fc.unlock("p3m", "solute_constraint_off");
+  fc.unlock("p3m", "solute_shake");
+  fc.unlock("p3m", "solute_lincs");
+  fc.unlock("p3m", "solute_flexshake");
+  fc.unlock("p3m", "solvent_constraint_off");
+  fc.unlock("p3m", "solvent_shake");
+  //fc.unlock("p3m", "pressure_calculation");
+  //fc.unlock("p3m", "pressure_scale_berendsen");
+  fc.unlock("p3m", "virial_off");
+  //fc.unlock("p3m", "virial_atomic");
+  //fc.unlock("p3m", "virial_molecular");
+  //fc.unlock("p3m", "vacuum");
+  fc.unlock("p3m", "pbc_r");
+  fc.unlock("p3m", "pbc_c");
+  //fc.unlock("p3m", "pbc_t");
+  //fc.unlock("p3m", "perturbation");
+  //fc.unlock("p3m", "perturbation_scaling");
+  //fc.unlock("p3m", "slow_growth");
+  //fc.unlock("p3m", "individual_lambdas");
+  fc.unlock("p3m", "bond");
+  fc.unlock("p3m", "angle");
+  fc.unlock("p3m", "dihedral");
+  fc.unlock("p3m", "improper");
+  fc.unlock("p3m", "crf");
+  fc.unlock("p3m", "lj");
+  fc.unlock("p3m", "com_removal");
+  //fc.unlock("p3m", "rf_excluded");
+  fc.unlock("p3m", "pairlist_standard");
+  fc.unlock("p3m", "pairlist_grid");
+  //fc.unlock("p3m", "pairlist_vgrid");
+  fc.unlock("p3m", "cutoff_atomic");
+  //fc.unlock("p3m", "coarse_grain");
+  //fc.unlock("p3m", "multi_grain");
+  fc.unlock("p3m", "temp_berendsen");
+  fc.unlock("p3m", "temp_nosehoover");
+  fc.unlock("p3m", "temp_nosehoover_chains");
+  fc.unlock("p3m", "position_rest");
+  fc.unlock("p3m", "position_const");
+  fc.unlock("p3m", "position_const_scaled");
+  fc.unlock("p3m", "distance_rest");
+  fc.unlock("p3m", "dihedral_rest");
+  fc.unlock("p3m", "dihedral_const");
+  fc.unlock("p3m", "jvalue_rest");
+  fc.unlock("p3m", "perscale");
+  fc.unlock("p3m", "rottrans");
+  //fc.unlock("p3m", "innerloop_spc");
+  //fc.unlock("p3m", "repex_temp"); --probably works
+  //fc.unlock("p3m", "repex_lambda"); --probably works
+  //fc.unlock("p3m", "multicell"); --probably works
+  //fc.unlock("p3m", "analysis");  --works if box invariant (recalculation of infl. func. necessary otherwise)
+  fc.unlock("p3m", "no_integration");
+  //fc.unlock("p3m", "stochdyn");
+  //fc.unlock("p3m", "multistep");
+  //fc.unlock("p3m", "multistep_boost");
+  //fc.unlock("p3m", "montecarlo");
+  //fc.unlock("p3m", "ramd"); --probably works
+  //fc.unlock("p3m", "polarization_cos");
+  //fc.unlock("p3m", "polarization_cos_damped");
+  fc.unlock("p3m", "random_gromos");
+  fc.unlock("p3m", "random_gsl");
+  //fc.unlock("p3m", "eds");
+  //fc.unlock("p3m", "parallel_mpi");
+  //fc.unlock("p3m", "parallel_omp");
+  //fc.unlock("p3m", "mult_energy_groups");
+  //fc.unlock("p3m", "ewald");
   
   if (fc.check()) 
     return 0;

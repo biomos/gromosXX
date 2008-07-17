@@ -8,6 +8,8 @@
 
 namespace interaction
 {
+  struct KSpace_Element;
+  
   /**
    * @class Nonbonded_Term
    * nonbonded terms.
@@ -38,6 +40,26 @@ namespace interaction
 			    double q,
 			    double & force, double & e_lj,
 			    double & e_crf);
+
+     /**
+     * calculate the force and energy of an atom pair.
+     */
+    void lj_interaction(math::Vec const &r,
+			    double c6, double c12,
+			    double & force, double & e_lj);   
+    
+    /**
+     * calculate the force and energy of an atom pair. (lattice sum)
+     */
+    void lj_ls_interaction(math::Vec const &r,
+			double c6, double c12, double charge,
+			double & force, double & e_lj, double & e_ls);
+    
+    /**
+     * calculate the force and energy of an excluded atom pair. (lattice sum)
+     */
+    void ls_excluded_interaction(math::Vec const &r,
+			double charge, double & force, double & e_ls);
     
     /**
      * calculate the force and energy of an atom pair. (polarizable)
@@ -150,6 +172,12 @@ namespace interaction
     double B_cg12, B_cg6, B_cg1;
     double C_cg12, C_cg6, C_cg1;
     double cgrain_eps;
+    
+    /**
+     * lattice sum variables
+     */
+    int charge_shape;
+    double charge_width_i;
   };
   
 } // interaction

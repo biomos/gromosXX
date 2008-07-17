@@ -17,44 +17,40 @@ namespace math
   /**
    * 3 dimensional vector.
    */
-  class Vec
+  template<typename numeric_type>
+  class GenericVec
   {
   private:
-    double d_v[3];
+    numeric_type d_v[3];
   public:
-    Vec() {}
-    explicit Vec(double d) { d_v[0] = d_v[1] = d_v[2] = d; }
-    Vec(Vec const & v) { d_v[0] = v(0); d_v[1] = v(1); d_v[2] = v(2); }
-    Vec(double d1, double d2, double d3) { d_v[0] = d1; d_v[1] = d2; d_v[2] = d3; }
+    GenericVec() {}
+    explicit GenericVec(numeric_type d) { d_v[0] = d_v[1] = d_v[2] = d; }
+    template<typename numeric_type_b>
+    GenericVec(GenericVec<numeric_type_b> const & v) { d_v[0] = v(0); d_v[1] = v(1); d_v[2] = v(2); }
+    GenericVec(numeric_type d1, numeric_type d2, numeric_type d3) { d_v[0] = d1; d_v[1] = d2; d_v[2] = d3; }
 
-    double operator()(int i)const { assert(i>=0 && i<3); return d_v[i]; }
-    double & operator()(int i) { assert(i >= 0 && i < 3); return d_v[i]; }
-    Vec & operator=(double d) { d_v[0] = d_v[1] = d_v[2] = d; return *this; }
-    Vec & operator+=(Vec const &v) { d_v[0] += v(0); d_v[1] += v(1); d_v[2] += v(2); return *this; }
-    Vec & operator-=(Vec const &v) { d_v[0] -= v(0); d_v[1] -= v(1); d_v[2] -= v(2); return *this; } 
-    Vec & operator*=(double d) { d_v[0] *= d; d_v[1] *= d; d_v[2] *= d; return *this; }
-    Vec & operator/=(double d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
+    numeric_type operator()(int i)const { assert(i>=0 && i<3); return d_v[i]; }
+    numeric_type & operator()(int i) { assert(i >= 0 && i < 3); return d_v[i]; }
+    template<typename numeric_type_b>
+    GenericVec<numeric_type> & operator=(numeric_type_b d) { d_v[0] = d_v[1] = d_v[2] = d; return *this; }
+    template<typename numeric_type_b>
+    GenericVec<numeric_type> & operator+=(GenericVec<numeric_type_b> const &v) { d_v[0] += v(0); d_v[1] += v(1); d_v[2] += v(2); return *this; }
+    template<typename numeric_type_b>
+    GenericVec<numeric_type> & operator-=(GenericVec<numeric_type_b> const &v) { d_v[0] -= v(0); d_v[1] -= v(1); d_v[2] -= v(2); return *this; } 
+    template<typename numeric_type_b>
+    GenericVec<numeric_type> & operator*=(numeric_type_b d) { d_v[0] *= d; d_v[1] *= d; d_v[2] *= d; return *this; }
+    template<typename numeric_type_b>
+    GenericVec<numeric_type> & operator/=(numeric_type_b d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
     };
     
-    
-  class Vecl
-  {
-  private:
-    long double d_v[3];
-  public:
-    Vecl() {}
-    explicit Vecl(long double d) { d_v[0] = d_v[1] = d_v[2] = d; }
-    Vecl(Vecl const & v) { d_v[0] = v(0); d_v[1] = v(1); d_v[2] = v(2); }
-    Vecl(long double d1, long double d2, long double d3) { d_v[0] = d1; d_v[1] = d2; d_v[2] = d3; }
-
-    long double operator()(int i)const { assert(i>=0 && i<3); return d_v[i]; }
-    long double & operator()(int i) { assert(i >= 0 && i < 3); return d_v[i]; }
-    Vecl & operator=(double d) { d_v[0] = d_v[1] = d_v[2] = d; return *this; }
-    Vecl & operator+=(Vecl const &v) { d_v[0] += v(0); d_v[1] += v(1); d_v[2] += v(2); return *this; }
-    Vecl & operator-=(Vecl const &v) { d_v[0] -= v(0); d_v[1] -= v(1); d_v[2] -= v(2); return *this; } 
-    Vecl & operator*=(double d) { d_v[0] *= d; d_v[1] *= d; d_v[2] *= d; return *this; }
-    Vecl & operator/=(double d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
-    };
+    /**
+     * double vector
+     */
+    typedef GenericVec<double> Vec;
+    /**
+     * long double vector
+     */
+    typedef GenericVec<long double> Vecl;
   
   /**
    * Array of 3D vectors.
@@ -132,30 +128,46 @@ namespace math
   /**
    * Matrix.
    */
-  class Matrix
+  template<typename numeric_type>
+  class GenericMatrix
   {
   private:
-    double m[3][3];
+    numeric_type m[3][3];
   public:
-    Matrix() {}
-    explicit Matrix(double d) 
+    GenericMatrix() {}
+    template<typename numeric_type_b>
+    explicit GenericMatrix(numeric_type_b d) 
     {
       m[0][0] = m[0][1] = m[0][2] = 
 	m[1][0] = m[1][1] = m[1][2] =
 	m[2][0] = m[2][1] = m[2][2] = d;
     }
 
-    Matrix(const Vec &u, const Vec &v, const Vec &w) {
-      for (int i = 0; i < 3; ++i) {
-        m[0][i] = u(i);
-        m[1][i] = v(i);
-        m[2][i] = w(i);
+    template<typename numeric_type_b>
+    GenericMatrix(const GenericVec<numeric_type_b> &u,
+           const GenericVec<numeric_type_b> &v,
+           const GenericVec<numeric_type_b> &w,
+           bool column_wise = false) {
+      if (column_wise) {
+        for (int i = 0; i < 3; ++i) {
+          m[i][0] = u(i);
+          m[i][1] = v(i);
+          m[i][2] = w(i);
+        }
+      } else {
+        for (int i = 0; i < 3; ++i) {
+          m[0][i] = u(i);
+          m[1][i] = v(i);
+          m[2][i] = w(i);
+        }
       }
     }
 
-    inline Matrix(const double &d1, const double &d2, const double &d3,
-            const double &d4, const double &d5, const double &d6,
-            const double &d7, const double &d8, const double &d9) {
+    template<typename numeric_type_b>
+    inline GenericMatrix(
+            const numeric_type_b &d1, const numeric_type_b &d2, const numeric_type_b &d3,
+            const numeric_type_b &d4, const numeric_type_b &d5, const numeric_type_b &d6,
+            const numeric_type_b &d7, const numeric_type_b &d8, const numeric_type_b &d9) {
       m[0][0] = d1;
       m[0][1] = d2;
       m[0][2] = d3;
@@ -167,7 +179,8 @@ namespace math
       m[2][2] = d9;
     }
    
-    Matrix & operator=(double d)
+    template<typename numeric_type_b>
+    GenericMatrix & operator=(numeric_type_b d)
     {
       m[0][0] = m[0][1] = m[0][2] = 
 	m[1][0] = m[1][1] = m[1][2] =
@@ -175,7 +188,8 @@ namespace math
       return *this;
     }
     
-    Matrix & operator=(Matrix mat)
+    template<typename numeric_type_b>
+    GenericMatrix & operator=(GenericMatrix<numeric_type_b> mat)
     {
       for(int i=0; i<3; ++i)
 	for(int j=0; j<3; ++j)
@@ -183,96 +197,59 @@ namespace math
       return *this;
     }
     
-    double operator()(int i, int j)const 
+    numeric_type operator()(int i, int j)const 
     {
       assert( i>=0 && i<3 && j>=0 && j<3 );
       return m[i][j];
     }
-    double & operator()(int i, int j)
+    numeric_type & operator()(int i, int j)
     {
       assert( i>=0 && i<3 && j>=0 && j<3 );
       return m[i][j];
     }
 
-    inline Matrix & operator+=(Matrix const & mat) {
+    template<typename numeric_type_b>
+    inline GenericMatrix<numeric_type> & operator+=(GenericMatrix<numeric_type_b> const & mat) {
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
           m[i][j] += mat(i, j);
       return *this;
     }
 
-    inline Matrix & operator-=(Matrix const & mat) {
+    template<typename numeric_type_b>
+    inline GenericMatrix<numeric_type> & operator-=(GenericMatrix<numeric_type_b> const & mat) {
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
           m[i][j] -= mat(i, j);
       return *this;
     }
     
-    inline Matrix & operator*=(const double & d) {
+    template<typename numeric_type_b>
+    inline GenericMatrix<numeric_type> & operator*=(const numeric_type_b & d) {
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
           m[i][j] *= d;
       return *this;
     }
     
-    inline Matrix & operator/=(const double & d) {
+    template<typename numeric_type_b>
+    inline GenericMatrix<numeric_type> & operator/=(const numeric_type_b & d) {
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
           m[i][j] /= d;
       return *this;
     }
   };
+  
   /**
-   * Matrixl.
+   * a double matrix
    */
-  class Matrixl
-  {
-  private:
-    long double m[3][3];
-  public:
-    Matrixl() {}
-    explicit Matrixl(long double d) 
-    {
-      m[0][0] = m[0][1] = m[0][2] = 
-	m[1][0] = m[1][1] = m[1][2] =
-	m[2][0] = m[2][1] = m[2][2] = d;
-    }
-    
-    Matrixl(const Vecl &u, const Vecl &v, const Vecl &w){
-    for (int i=0;i<3;++i){
-      m[0][i]=u(i);
-      m[1][i]=v(i);
-      m[2][i]=w(i);
-    }
-  }
-   
-    Matrixl & operator=(long double d)
-    {
-      m[0][0] = m[0][1] = m[0][2] = 
-	m[1][0] = m[1][1] = m[1][2] =
-	m[2][0] = m[2][1] = m[2][2] = d;
-      return *this;
-    }
-    
-    Matrixl & operator=(Matrixl mat)
-    {
-      for(int i=0; i<3; ++i)
-	for(int j=0; j<3; ++j)
-	  m[i][j] = mat(i,j);
-      return *this;
-    }
-    
-    long double operator()(int i, int j)const 
-    {
-      assert( i>=0 && i<3 && j>=0 && j<3 );
-      return m[i][j];
-    }
-    long double & operator()(int i, int j)
-    {
-      assert( i>=0 && i<3 && j>=0 && j<3 );
-      return m[i][j];
-    }
-  };
+  typedef GenericMatrix<double> Matrix;
+  /**
+   * a long double matrix
+   */
+  typedef GenericMatrix<long double> Matrixl;
+
   /**
    * Box.
    */
@@ -295,6 +272,11 @@ namespace math
       d_b[2] = v3;
     }
     Vec const & operator()(int i)const { return d_b[i]; }
+    double operator()(int i, int j)const 
+    {
+      assert( i>=0 && i<3 && j>=0 && j<3 );
+      return d_b[j](i);
+    }
     Vec & operator()(int i) { return d_b[i]; }
     Box & operator*=(double d) { d_b[0] *= d; d_b[1] *= d; d_b[2] *= d; return *this; }
     Box & operator/=(double d) { d_b[0] /= d; d_b[1] /= d; d_b[2] /= d; return *this; }
@@ -396,6 +378,10 @@ namespace math
    * 1 / (4 Pi epsilon0).
    */
   extern double four_pi_eps_i;
+  /**
+   * @f$ \epsilon^{-1} @f$
+   */
+  extern double eps0_i;
   
 #ifndef NDEBUG
   /**
@@ -404,8 +390,8 @@ namespace math
   extern int debug_level;
 #endif
 
-
-  inline bool operator==(Vec const &v1, Vec const &v2)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline bool operator==(GenericVec<numeric_type_a> const &v1, GenericVec<numeric_type_b> const &v2)
   {
     if (v1(0) != v2(0)) return false;
     if (v1(1) != v2(1)) return false;
@@ -416,29 +402,34 @@ namespace math
   /**
    * != operator
    */
-  inline bool operator!=(Vec const &t1, Vec const &t2)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline bool operator!=(GenericVec<numeric_type_a> const &v1, GenericVec<numeric_type_b> const &v2)
   {
-    return !(t1 == t2);
+    return !(v1 == v2);
   }
 
-  inline double dot(Vec const &v1, Vec const &v2)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline double dot(GenericVec<numeric_type_a> const &v1, GenericVec<numeric_type_b> const &v2)
   {
     return v1(0) * v2(0) + v1(1) * v2(1) + v1(2) * v2(2);
   }
 
-  inline Vec cross(Vec const &v1, Vec const &v2)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericVec<numeric_type_a> cross(GenericVec<numeric_type_a> const &v1, GenericVec<numeric_type_b> const &v2)
   {
-    return Vec(v1(1) * v2(2) - v1(2) * v2(1),
+    return GenericVec<numeric_type_a>(v1(1) * v2(2) - v1(2) * v2(1),
 	       v1(2) * v2(0) - v1(0) * v2(2),
 	       v1(0) * v2(1) - v1(1) * v2(0));
   }
 
-  inline double abs2(Vec const &v)
+  template<typename numeric_type>
+  inline double abs2(GenericVec<numeric_type> const &v)
   {
     return v(0) * v(0) + v(1) * v(1) + v(2) * v(2);
   }
 
-  inline double abs(Vec const &v)
+  template<typename numeric_type>
+  inline double abs(GenericVec<numeric_type> const &v)
   {
     return sqrt(v(0) * v(0) + v(1) * v(1) + v(2) * v(2));
   }
@@ -450,55 +441,72 @@ namespace math
 	m(d1,d2) = v1(d1) * v2(d2);
   }
 
-  inline Vec operator+(Vec const &v1, Vec const &v2)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericVec<numeric_type_a> operator+(GenericVec<numeric_type_a> const &v1, GenericVec<numeric_type_b> const &v2)
   {
     return Vec(v1(0) + v2(0),
 	       v1(1) + v2(1),
 	       v1(2) + v2(2));
   }
 
-  inline Vec operator-(Vec const &v1)
+  template<typename numeric_type>
+  inline GenericVec<numeric_type> operator-(GenericVec<numeric_type> const &v1)
   {
     return Vec(-v1(0),
 	       -v1(1),
 	       -v1(2));
   }
   
-  inline Vec operator-(Vec const &v1, Vec const &v2)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericVec<numeric_type_a> operator-(GenericVec<numeric_type_a> const &v1, GenericVec<numeric_type_b> const &v2)
   {
     return Vec(v1(0) - v2(0),
 	       v1(1) - v2(1),
 	       v1(2) - v2(2));
   }
 
-  inline Vec operator*(Vec const &v1, double d)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericVec<numeric_type_a> operator*(GenericVec<numeric_type_a> const &v1, numeric_type_b d)
   {
     return Vec(v1(0) * d,
 	       v1(1) * d,
 	       v1(2) * d);
   }
 
-  inline Vec operator*(double d, Vec const &v1)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericVec<numeric_type_a> operator*(numeric_type_b d, GenericVec<numeric_type_a> const &v1)
   {
     return Vec(v1(0) * d,
 	       v1(1) * d,
 	       v1(2) * d);
   }
 
-  inline Vec operator/(Vec const &v1, double d)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericVec<numeric_type_a> operator/(GenericVec<numeric_type_a> const &v1, numeric_type_b d)
   {
     return Vec(v1(0) / d,
 	       v1(1) / d,
 	       v1(2) / d);
   }
 
-  inline std::string v2s(Vec const & v)
+  inline std::string v2s(GenericVec<double> const & v)
   {
     std::stringstream s;
     s << "[" 
       << std::setprecision(9) << std::setw(20) << v(0)
       << std::setprecision(9) << std::setw(20) << v(1)
       << std::setprecision(9) << std::setw(20) << v(2)
+      << "]";
+    return s.str();
+  }
+  
+  inline std::string v2s(GenericVec<int> const & v)
+  {
+    std::stringstream s;
+    s << "[" 
+      << std::setw(8) << v(0)
+      << std::setw(8) << v(1)
+      << std::setw(8) << v(2)
       << "]";
     return s.str();
   }
@@ -511,7 +519,17 @@ namespace math
     return d;
   }
 
-  inline Vec product(Matrix const &m, Vec const &v)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericVec<numeric_type_b> product(GenericMatrix<numeric_type_b> const &m, GenericVec<numeric_type_a> const &v)
+  {
+    return GenericVec<numeric_type_b>(
+	       m(0,0) * v(0) + m(1,0) * v(1) + m(2,0) * v(2),
+	       m(0,1) * v(0) + m(1,1) * v(1) + m(2,1) * v(2),
+	       m(0,2) * v(0) + m(1,2) * v(1) + m(2,2) * v(2)
+	       );
+  }
+  
+  inline Vec product(Box const &m, Vec const &v)
   {
     return Vec(
 	       m(0,0) * v(0) + m(1,0) * v(1) + m(2,0) * v(2),
@@ -519,33 +537,21 @@ namespace math
 	       m(0,2) * v(0) + m(1,2) * v(1) + m(2,2) * v(2)
 	       );
   }
-  inline Vec product(Matrixl const &m, Vecl const &v)
-  {
-    return Vec(
-	       m(0,0) * v(0) + m(1,0) * v(1) + m(2,0) * v(2),
-	       m(0,1) * v(0) + m(1,1) * v(1) + m(2,1) * v(2),
-	       m(0,2) * v(0) + m(1,2) * v(1) + m(2,2) * v(2)
-	       );
-  }
-  inline Matrix product(Matrix const &m1, Matrix const &m2)
-  {
-    Matrix m(0.0);
-    for(int i=0; i<3; ++i)
-      for(int j=0; j<3; ++j)
-	for(int k=0; k<3; ++k)
-	  m(i,j) += m1(i,k) * m2(k,j);
+  
+  
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericMatrix<numeric_type_a> product(
+          GenericMatrix<numeric_type_a> const &m1,
+          GenericMatrix<numeric_type_b> const &m2)
+  {  
+    GenericMatrix<numeric_type_a> m(numeric_type_a(0.0));
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+        for (int k = 0; k < 3; ++k)
+          m(i, j) += m1(i,k) * m2(k,j);
     return m;
   }
   
-  inline Matrixl product(Matrixl const &m1, Matrix const &m2)
-  {
-    Matrixl m(0.0);
-    for(int i=0; i<3; ++i)
-      for(int j=0; j<3; ++j)
-	for(int k=0; k<3; ++k)
-	  m(i,j) += m1(i,k) * m2(k,j);
-    return m;
-  }
   inline Box product(Matrix const &m1, Box const &m2)
   {
     Box m(0.0);
@@ -556,8 +562,7 @@ namespace math
     return m;
   }
   
-
-    inline Matrix product(Box const &m1, Matrix const &m2)
+  inline Matrix product(Box const &m1, Matrix const &m2)
   {
     Matrix m(0.0);   
     for(int i=0; i<3; ++i)
@@ -567,7 +572,7 @@ namespace math
     return m;
   }
   
-  inline std::string m2s(Matrix const & m)
+  inline std::string m2s(GenericMatrix<double> const & m)
   {
     std::stringstream s;
     s << "[[" 
@@ -588,6 +593,7 @@ namespace math
     
     return s.str();
   }
+  
   inline int sign (double signum ){
     if(signum<0)
         return -1;
@@ -604,25 +610,28 @@ namespace math
       else return acos_param;
   }
   
-  inline Matrix operator*(Matrix const &ma, double d)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericMatrix<numeric_type_a> operator*(GenericMatrix<numeric_type_a> const &ma, numeric_type_b d)
   {
-    return Matrix(ma(0,0) * d, ma(0,1) * d, ma(0,2) * d,
+    return GenericMatrix<numeric_type_a>(ma(0,0) * d, ma(0,1) * d, ma(0,2) * d,
             ma(1,0) * d, ma(1,1) * d, ma(1,2) * d,
             ma(2,0) * d, ma(2,1) * d, ma(2,2) * d);
   }
   
-  inline Matrix operator+(Matrix const &ma, Matrix const &mb)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericMatrix<numeric_type_a> operator+(GenericMatrix<numeric_type_a> const &ma, GenericMatrix<numeric_type_b> const &mb)
   {
-    Matrix m;
+    GenericMatrix<numeric_type_a> m;
     for(int i = 0; i < 3; ++i)
       for(int j = 0; j < 3; ++j)
         m(i,j) = ma(i,j) + mb(i,j);
     return m;
   }
   
-  inline Matrix operator-(Matrix const &ma, Matrix const &mb)
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericMatrix<numeric_type_a> operator-(GenericMatrix<numeric_type_a> const &ma, GenericMatrix<numeric_type_b> const &mb)
   {
-    Matrix m;
+    GenericMatrix<numeric_type_a> m;
     for(int i = 0; i < 3; ++i)
       for(int j = 0; j < 3; ++j)
         m(i,j) = ma(i,j) - mb(i,j);
@@ -632,28 +641,75 @@ namespace math
   /**
    * square a matric
    */
-  inline Matrix square(Matrix const &ma)
+  template<typename numeric_type>
+  inline GenericMatrix<numeric_type> square(GenericMatrix<numeric_type> const &ma)
   {
-    Matrix m;
+    GenericMatrix<numeric_type> m;
     for(int i = 0; i < 3; ++i)
       for(int j = 0; j < 3; ++j)
         m(i,j) = ma(i,j) * ma(i,j);
     return m;
   } 
+  
   /**
    * matrix to the power of x
    */
-    /**
-   * square a matric
-   */
-  inline Matrix square(Matrix const &ma, const double & x)
+  template<typename numeric_type>
+  inline GenericMatrix<numeric_type> square(GenericMatrix<numeric_type> const &ma, const double & x)
   {
-    Matrix m;
+    GenericMatrix<numeric_type> m;
     for(int i = 0; i < 3; ++i)
       for(int j = 0; j < 3; ++j)
         m(i,j) = std::pow(ma(i,j), x);
     return m;
   } 
+  /**
+   * determinat of A
+   */
+  template<typename numeric_type>
+  inline numeric_type det(GenericMatrix<numeric_type> const &ma)
+  {
+    
+    return ma(0,1)*ma(1,2)*ma(2,0)
+          -ma(0,2)*ma(1,1)*ma(2,0)
+          +ma(0,2)*ma(1,0)*ma(2,1)
+          -ma(0,0)*ma(1,2)*ma(2,1)
+          -ma(0,1)*ma(1,0)*ma(2,2)
+          +ma(0,0)*ma(1,1)*ma(2,2);
+  }
+  
+  /**
+   * inverse of Matrix X
+   */
+  template<typename numeric_type>
+  inline GenericMatrix<numeric_type> inverse(GenericMatrix<numeric_type> const &ma){
+    GenericMatrix<numeric_type> inv;
+    const double det_ma = det(ma);
+    inv(0, 0) = (ma(1, 1) * ma(2, 2) - ma(1, 2) * ma(2, 1)) / det_ma;
+    inv(1, 0) = (ma(1, 2) * ma(2, 0) - ma(1, 0) * ma(2, 2)) / det_ma;
+    inv(2, 0) = (ma(1, 0) * ma(2, 1) - ma(1, 1) * ma(2, 0)) / det_ma;
+    inv(0, 1) = (ma(0, 2) * ma(2, 1) - ma(0, 1) * ma(2, 2)) / det_ma;
+    inv(1, 1) = (ma(0, 0) * ma(2, 2) - ma(0, 2) * ma(2, 0)) / det_ma;
+    inv(2, 1) = (ma(0, 1) * ma(2, 0) - ma(0, 0) * ma(2, 1)) / det_ma;
+    inv(0, 2) = (ma(0, 1) * ma(1, 2) - ma(0, 2) * ma(1, 1)) / det_ma;
+    inv(1, 2) = (ma(0, 2) * ma(1, 0) - ma(0, 0) * ma(1, 2)) / det_ma;
+    inv(2, 2) = (ma(0, 0) * ma(1, 1) - ma(0, 1) * ma(1, 0)) / det_ma;
+    return inv;
+  }
+  
+  /**
+   * transpose of Matrix X
+   */
+  template<typename numeric_type>
+  inline GenericMatrix<numeric_type> transpose(GenericMatrix<numeric_type> const &ma) {
+    GenericMatrix<numeric_type> trans;
+    for(unsigned int i = 0; i < 3; ++i) {
+      for(unsigned int j = 0; j < 3; ++j) {
+        trans(j,i) = ma(i, j);
+      }
+    }
+    return trans;
+  }
   
   inline Box operator*(Box const &ba, double d)
   {
@@ -697,6 +753,13 @@ namespace math
       for(int j = 0; j < 3; ++j)
         b(i)(j) = std::pow(ba(i)(j), x);
     return b;
+  }
+  /**
+   * Heaviside step function 
+   */
+  inline double heaviside(double xi)
+  {
+    return xi>=0.0 ? 1.0 : 0.0;
   }
 } // math
 

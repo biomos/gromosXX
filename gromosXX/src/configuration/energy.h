@@ -70,6 +70,34 @@ namespace configuration
      */
     double crf_total;
     /**
+     * total energy of the coulomb LS interaction
+     */
+    double ls_total;
+    /**
+     * total pairwise LS interaction energy
+     */
+    double ls_pair_total;
+    /**
+     * total energy of the coulomb LS real space interaction
+     */
+    double ls_realspace_total;
+    /**
+     * total energy of the coulomb LS k space interaction
+     */
+    double ls_kspace_total;
+    /**
+     * total electrostatic self energy (LS)
+     */
+    double ls_self_total;
+    /**
+     * total surface energy
+     */
+    double ls_surface_total;
+    /**
+     * total A term energy
+     */
+    double ls_a_term_total;
+    /**
      * total energy of the "special" interactions
      */
     double special_total;
@@ -157,6 +185,15 @@ namespace configuration
      * coulomb reaction field energy term
      */
     std::vector<std::vector<double> > crf_energy;
+    
+     /**
+     * coulomb LS realspace energy term
+     */
+    std::vector<std::vector<double> > ls_real_energy;
+     /**
+     * coulomb LS kspace energy term
+     */
+    std::vector<std::vector<double> > ls_k_energy;
 
     /**
      * position restraint energy term

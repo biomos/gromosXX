@@ -171,7 +171,8 @@ io::In_Topology::read(topology::Topology& topo,
       double four_pi_eps0_i;
       
       _lineStream >> four_pi_eps0_i >> math::h_bar >> math::k_Boltzmann;
-      math::four_pi_eps_i = four_pi_eps0_i / param.longrange.epsilon;
+      math::eps0_i = four_pi_eps0_i * 4.0 * math::Pi;
+      math::four_pi_eps_i = four_pi_eps0_i / param.nonbonded.epsilon;
       
       if (_lineStream.fail())
         io::messages.add("Bad line in PHYSICALCONSTANTS block",

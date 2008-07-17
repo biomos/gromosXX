@@ -3,6 +3,9 @@
  * template methods of Nonbonded_Innerloop
  */
 
+#include "storage.h"
+
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -120,6 +123,27 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
 	break;
       }
+    case simulation::lj_ls_func : {
+      const lj_parameter_struct & lj =
+      m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+      
+      DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+      
+      lj_interaction(r, lj.c6, lj.c12, f, e_lj);
+      e_crf = 0.0;
+      
+      DEBUG(10, "\t\tatomic virial");
+      for (int a=0; a<3; ++a){
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        
+        for(int b=0; b<3; ++b)
+          storage.virial_tensor(b, a) += r(b) * term;
+      }
+      break;
+    }
     
     default:
       io::messages.add("Nonbonded_Innerloop",
@@ -170,7 +194,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
   
   math::Vec r;
-  double f, e_lj, e_crf;
+  double f, e_lj, e_crf = 0.0, e_ls = 0.0;
   
   periodicity.nearest_image(conf.current().pos(i), 
 			    conf.current().pos(j), r);
@@ -242,8 +266,27 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         }
 
 	break;
+    }
+    case simulation::lj_ls_func : {
+      const lj_parameter_struct & lj =
+      m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+      
+      DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+      lj_interaction(r, lj.cs6, lj.cs12, f, e_lj);
+      e_crf = 0.0;
+           
+      DEBUG(10, "\t\tatomic virial");
+      for (int a=0; a<3; ++a){
+        const double term = f * r(a);
+        conf.current().force(i)(a) += term;
+        conf.current().force(j)(a) -= term;
+        
+        for(int b=0; b<3; ++b)
+          conf.current().virial_tensor(b, a) += r(b) * term;
       }
-    
+      break;
+    }
     default:
       io::messages.add("Nonbonded_Innerloop",
 		       "interaction function not implemented",
@@ -256,6 +299,9 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
     
   conf.current().energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
+  
+  conf.current().energies.ls_real_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_ls;
     
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	<< " j " << topo.atom_energy_group(j));
@@ -422,11 +468,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
                   topo.charge()(*at2_it) *
                   math::four_pi_eps_i *
                   crf_2cut3i() * abs2(r);
-          
+          DEBUG(15,"\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
+          DEBUG(15,"\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
           // energy
           conf.current().energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
+          DEBUG(11,"\tsolvent rf excluded contribution: " << e_crf);
         } // loop over at2_it
       } // loop over at_it
       break;
@@ -1004,3 +1052,129 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::self_energy_innerloop
 
 }
 
+template<typename t_nonbonded_spec>
+inline void 
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i,
+ unsigned int j,
+ Storage & storage,
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+ )
+{
+  DEBUG(8, "\tpair\t" << i << "\t" << j);
+  
+  math::Vec r;
+  double f;
+  double e_lj, e_ls;
+  
+  periodicity.nearest_image(conf.current().pos(i), 
+			    conf.current().pos(j), r);
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+  
+  switch(t_nonbonded_spec::interaction_func){
+    case simulation::lj_ls_func : {
+      const lj_parameter_struct & lj =
+      m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+      
+      DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      
+      lj_ls_interaction(r, lj.c6, lj.c12,
+                        topo.charge(i) * topo.charge(j), 
+                        f, e_lj, e_ls);
+      DEBUG(12,"\t\t e_ls = " << e_ls << " f = " << f);
+      DEBUG(10, "\t\tatomic virial");
+      for (int a=0; a<3; ++a){
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        
+        for(int b=0; b<3; ++b)
+          storage.virial_tensor(b, a) += r(b) * term;
+      }
+      break;
+    }
+    
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+		       "interaction function not implemented",
+		       io::message::critical);
+  }
+  
+  // energy
+  assert(storage.energies.lj_energy.size() > 
+	 topo.atom_energy_group(i));
+  assert(storage.energies.lj_energy.size() >
+	 topo.atom_energy_group(j));
+
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
+  
+  storage.energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
+  
+  storage.energies.ls_real_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_ls;
+}
+
+template<typename t_nonbonded_spec>
+inline void 
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i,
+ unsigned int j,
+ Storage & storage,
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+ )
+{
+  DEBUG(8, "\tpair\t" << i << "\t" << j);
+  
+  math::Vec r;
+  double f;
+  double e_ls;
+  
+  periodicity.nearest_image(conf.current().pos(i), 
+			    conf.current().pos(j), r);
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+  
+  switch(t_nonbonded_spec::interaction_func){
+    case simulation::lj_ls_func : {
+      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      
+      ls_excluded_interaction(r, topo.charge(i) * topo.charge(j), 
+                              f, e_ls);
+      DEBUG(10,"\t\t e_ls (exl. atoms) = " << e_ls);
+      DEBUG(10, "\t\tatomic virial");
+      for (int a=0; a<3; ++a){
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        
+        for(int b=0; b<3; ++b)
+          storage.virial_tensor(b, a) += r(b) * term;
+      }
+      break;
+    }
+    
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+		       "interaction function not implemented",
+		       io::message::critical);
+  }
+  
+  // energy
+  assert(storage.energies.lj_energy.size() >
+	 topo.atom_energy_group(j));
+
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
+  
+  storage.energies.ls_real_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_ls;
+}

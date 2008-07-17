@@ -41,6 +41,8 @@
 
 #include <util/debug.h>
 
+#include <simulation/parameter.h>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -185,7 +187,9 @@ int interaction::create_g96_nonbonded
   if (sim.param().force.interaction_function ==
       simulation::lj_crf_func || 
       sim.param().force.interaction_function ==
-      simulation::pol_lj_crf_func)
+      simulation::pol_lj_crf_func ||
+      sim.param().force.interaction_function ==
+      simulation::lj_ls_func    )
     it.read_lj_parameter(ni->parameter().lj_parameter());
   // and coarse-grained parameter
   if (sim.param().force.interaction_function ==
@@ -225,17 +229,61 @@ int interaction::create_g96_nonbonded
       << sim.param().pairlist.cutoff_short << "\n"
       << "\tlongrange cutoff       : "
       << sim.param().pairlist.cutoff_long << "\n"
-      << "\treactionfield cutoff   : "
-      << sim.param().longrange.rf_cutoff << "\n"
-      << "\tepsilon                : "
-      << sim.param().longrange.epsilon << "\n"
-      << "\treactionfield epsilon  : "
-      << sim.param().longrange.rf_epsilon << "\n"
-      << "\tkappa                  : "
-      << sim.param().longrange.rf_kappa << "\n"
       << "\tpairlist creation every "
       << sim.param().pairlist.skip_step
       << " steps\n\n";
+    
+    if (sim.param().force.interaction_function == simulation::lj_crf_func ||
+        sim.param().force.interaction_function == simulation::cgrain_func || 
+        sim.param().force.interaction_function == simulation::pol_lj_crf_func) {
+      os << "\tREACTION FIELD PARAMETERS\n"
+              << "\treactionfield cutoff   : "
+              << sim.param().nonbonded.rf_cutoff << "\n"
+              << "\tepsilon                : "
+              << sim.param().nonbonded.epsilon << "\n"
+              << "\treactionfield epsilon  : "
+              << sim.param().nonbonded.rf_epsilon << "\n"
+              << "\tkappa                  : "
+              << sim.param().nonbonded.rf_kappa << "\n";
+    }
+    
+     if (sim.param().force.interaction_function == simulation::lj_ls_func) {
+      os << "\tLATTICE SUM PARAMETERS\n"
+              << "\tcharge shaping function         : "
+              << sim.param().nonbonded.ls_charge_shape << "\n"
+              << "\tcharge shaping function width   : "
+              << sim.param().nonbonded.ls_charge_shape_width << "\n"
+              << "\tA2 calculation method           : "
+              << sim.param().nonbonded.ls_calculate_a2 << "\n"
+              << "\tA2 relative tolerance           : "
+              << sim.param().nonbonded.ls_a2_tolerance << "\n"
+              << "\tLS permittivity                 : "
+              << sim.param().nonbonded.ls_epsilon << "\n";
+    }
+    if (sim.param().nonbonded.method == simulation::el_ewald) {
+      os << "\tMax. absolute Ewald k component : \n"
+              << "\t" << std::setw(5) << sim.param().nonbonded.ewald_max_k_x
+              << std::setw(5) << sim.param().nonbonded.ewald_max_k_y
+              << std::setw(5) << sim.param().nonbonded.ewald_max_k_z << "\n"
+              << "\tEwald k space cutoff            : "
+              << sim.param().nonbonded.ewald_kspace_cutoff << "\n";
+    }
+    if (sim.param().nonbonded.method == simulation::el_p3m) {
+      os << "\tP3M number of grid point along axes  : \n"
+              << "\t" << std::setw(5) << sim.param().nonbonded.p3m_grid_points_x
+              << std::setw(5) << sim.param().nonbonded.p3m_grid_points_y
+              << std::setw(5) << sim.param().nonbonded.p3m_grid_points_z << "\n"
+              << "\tP3M assignment function order   : "
+              << sim.param().nonbonded.p3m_charge_assignment << "\n"
+              << "\tP3M finite differences order    : "
+              << sim.param().nonbonded.p3m_finite_differences_operator << "\n"
+              << "\tP3M number of mesh alias vecs   : "
+              << sim.param().nonbonded.p3m_mesh_alias << "\n"
+              << "\tP3M accuracy evaluation         : "
+              << sim.param().nonbonded.accuracy_evaluation << "\n"
+              << "\tP3M RMS force error threshold   : "
+              << sim.param().nonbonded.influence_function_rms_force_error << "\n";
+    }
   }
   
   return 0;

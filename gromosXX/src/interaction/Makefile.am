@@ -57,7 +57,8 @@ xxintnbint_HEADERS =            nonbonded/interaction/nonbonded_parameter.h \
 				nonbonded/interaction/omp_nonbonded_interaction.h \
 				nonbonded/interaction/mpi_nonbonded_master.h \
 				nonbonded/interaction/mpi_nonbonded_slave.h \
-				nonbonded/interaction/storage.h
+				nonbonded/interaction/storage.h \
+				nonbonded/interaction/latticesum.h
 
 xxintnbpairlistdir =            $(includedir)/gromosXX/interaction/nonbonded/pairlist
 xxintnbpairlist_HEADERS =       nonbonded/pairlist/pairlist.h \
@@ -105,6 +106,7 @@ libgrointeraction_la_SOURCES =	interaction.cc \
 				nonbonded/interaction/perturbed_nonbonded_set.cc \
 				nonbonded/interaction/perturbed_nonbonded_outerloop.cc \
 				nonbonded/interaction/perturbed_nonbonded_pair.cc \
+				nonbonded/interaction/latticesum.cc \
 				nonbonded/interaction/eds_nonbonded_set.cc \
 				nonbonded/interaction/eds_nonbonded_outerloop.cc \
 				bonded/create_bonded.cc \

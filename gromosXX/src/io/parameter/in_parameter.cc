@@ -1,4 +1,3 @@
-
 /**
  * @file in_parameter.cc
  * implemes
@@ -21,10 +20,10 @@
 
 #include <io/instream.h>
 #include <io/blockinput.h>
+#include <io/parameter/in_parameter.h>
 
 #include <math/random.h>
 
-#include "in_parameter.h"
 #include "gromosXX/simulation/parameter.h"
 
 #ifdef OMP
@@ -69,7 +68,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_COVALENTFORM(param);
   read_CGRAIN(param);
   read_PAIRLIST(param);
-  read_LONGRANGE(param);
+  read_NONBONDED(param);
   read_POSITIONRES(param);
   read_DISTANCERES(param);
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
@@ -90,6 +89,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_RANDOMNUMBERS(param);
   read_EDS(param);
   read_LAMBDAS(param); // needs to be called after FORCE
+  read_GROMOS96COMPAT(param);
   read_known_unsupported_blocks();
   
   DEBUG(7, "input read...");
@@ -1233,56 +1233,6 @@ void io::In_Parameter::read_COMTRANSROT(simulation::Parameter &param,
     param.centreofmass.remove_trans = false;
   }
 }
-
-/**
- * read LONGRANGE block.
- */
-void io::In_Parameter::read_LONGRANGE(simulation::Parameter &param,
-				      std::ostream & os)
-{
-  DEBUG(8, "read LONGRANGE");
-
-  std::vector<std::string> buffer;
-  std::string s;
-  
-  DEBUG(10, "longrange block");
-  buffer = m_block["LONGRANGE"];
-  
-  if (!buffer.size()){
-    io::messages.add("no LONGRANGE block in input",
-		     "In_Parameter",io::message::error);
-    return;
-  }
-  
-  block_read.insert("LONGRANGE");
-
-  _lineStream.clear();
-  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-  
-  _lineStream >> param.longrange.rf_epsilon 
-	      >> param.longrange.rf_kappa 
-	      >> param.longrange.rf_cutoff;
-  param.longrange.epsilon = 1.0;
-  
-  if (_lineStream.fail())
-    io::messages.add("bad line in LONGRANGE block",
-		     "In_Parameter", io::message::error);
-  
-
-  if(param.longrange.rf_cutoff < 0) {
-    param.longrange.rf_excluded=true;
-    param.longrange.rf_cutoff = -param.longrange.rf_cutoff;
-  }
-  else{
-    param.longrange.rf_excluded=false;
-  }
-  if(param.longrange.rf_epsilon!=0 && param.longrange.rf_epsilon<1)
-    io::messages.add("LONGRANGE block: Illegal value for EPSRF (0  / >=1)", 
-		     "In_Parameter", io::message::error);
-  if(param.longrange.rf_kappa <0)
-    io::messages.add("LONGRANGE block: Illegal value for APPAK (>=0)",
-		     "In_Parameter", io::message::error);
-} // LONGRANGE
 
 /**
  * read PAIRLIST block.
@@ -2976,7 +2926,229 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
       param.lambdas.e[j][n2][n1] = e;
     }
   }
-}  
+}
+
+void io::In_Parameter::read_NONBONDED(simulation::Parameter & param, 
+        std::ostream & os)
+{
+  DEBUG(8, "read NONBONDED");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["NONBONDED"];
+  
+  if (buffer.size()) {
+    block_read.insert("NONBONDED");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));   
+    int method;
+    int ls_calculate_a2;
+    _lineStream >> method  >>
+            param.nonbonded.rf_kappa >> param.nonbonded.rf_cutoff >> param.nonbonded.rf_epsilon >>
+            param.nonbonded.ls_charge_shape >> param.nonbonded.ls_charge_shape_width >>
+            ls_calculate_a2 >> param.nonbonded.ls_a2_tolerance >>
+            param.nonbonded.ls_epsilon >>
+            param.nonbonded.ewald_max_k_x >> param.nonbonded.ewald_max_k_y >> 
+            param.nonbonded.ewald_max_k_z >> param.nonbonded.ewald_kspace_cutoff >>
+            param.nonbonded.p3m_grid_points_x >> param.nonbonded.p3m_grid_points_y >>
+            param.nonbonded.p3m_grid_points_z >> param.nonbonded.p3m_charge_assignment >>
+            param.nonbonded.p3m_finite_differences_operator >> param.nonbonded.p3m_mesh_alias >>
+            param.nonbonded.spme_bspline >> 
+            param.nonbonded.accuracy_evaluation >> param.nonbonded.influence_function_rms_force_error >>
+            param.nonbonded.influence_function_read >> param.nonbonded.influence_function_write >>
+            param.nonbonded.lj_correction >> param.nonbonded.lj_solvent_density;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in NONBONDED block",
+              "In_Parameter", io::message::error);
+    }
+    bool do_ls = false;
+    switch(method) {
+      case 0 :
+        param.force.nonbonded_crf = 0;
+        break;
+      case 1 : 
+        param.nonbonded.method = simulation::el_reaction_field;
+        param.nonbonded.lserf = false;
+        break;
+      case -1 : 
+        param.nonbonded.method = simulation::el_reaction_field;
+        param.nonbonded.lserf = false;
+        break;
+      case 2 : 
+        param.nonbonded.method = simulation::el_ewald;
+        param.nonbonded.lserf = false;
+        param.nonbonded.rf_excluded = false;
+        do_ls = true;
+        break;
+      case 3 :
+        param.nonbonded.method = simulation::el_p3m;
+        param.nonbonded.lserf = false;
+        param.nonbonded.rf_excluded = false;
+        do_ls = true;
+        break;        
+      default:
+         io::messages.add("NONBONDED block: electrostatic method not implemented",
+              "In_Parameter", io::message::error);
+    }
+        
+    if (param.nonbonded.method != simulation::el_reaction_field)
+      param.force.interaction_function = simulation::lj_ls_func;
+
+    if (param.nonbonded.rf_kappa < 0)
+      io::messages.add("NONBONDED block: Illegal value for APPAK (>=0)",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.rf_cutoff < 0) 
+      io::messages.add("NONBONDED block: Illegal value for RCRF (>=0.0)",
+            "In_Parameter", io::message::error);
+    
+    if (param.nonbonded.rf_epsilon != 0.0 && param.nonbonded.rf_epsilon < 1.0)
+      io::messages.add("NONBONDED block: Illegal value for EPSRF (0.0 / >=1.0)",
+            "In_Parameter", io::message::error);
+    
+    if (param.nonbonded.ls_charge_shape < -1 || 
+        param.nonbonded.ls_charge_shape > 10) 
+      io::messages.add("NONBONDED block: Illegal value for NSHAPE (-1..10)",
+            "In_Parameter", io::message::error);
+    
+    if (param.nonbonded.ls_charge_shape_width <= 0.0)
+       io::messages.add("NONBONDED block: Illegal value for ASHAPE (>0.0)",
+            "In_Parameter", io::message::error);
+    
+    if (do_ls && param.nonbonded.ls_charge_shape_width <= param.pairlist.cutoff_short)
+       io::messages.add("NONBONDED block: charge width greater than cutoff! (ASHAPE > RCUTP)",
+            "In_Parameter", io::message::warning);
+      
+    
+    switch(ls_calculate_a2) {
+      case 0 :
+        param.nonbonded.ls_calculate_a2 = simulation::ls_a2_zero;
+        break;
+      case 1 :
+        param.nonbonded.ls_calculate_a2 = simulation::ls_a2t_exact;
+        if (param.nonbonded.method == simulation::el_p3m)
+          io::messages.add("NONBONDED block: A2 calculation method not implemented for P3M",
+                "In_Parameter", io::message::error);
+        break;
+      case 2:
+        param.nonbonded.ls_calculate_a2 = simulation::ls_a2_numerical;
+        break;
+      case 3:
+        param.nonbonded.ls_calculate_a2 = simulation::ls_a2t_exact_a2_numerical;
+        if (param.nonbonded.method == simulation::el_p3m)
+          io::messages.add("NONBONDED block: A2 calculation method not implemented for P3M",
+                "In_Parameter", io::message::error);
+        break;
+      case 4: // not implemented -> default
+      default :
+        io::messages.add("NONBONDED block: A2 calculation method not implemented",
+                         "In_Parameter", io::message::error);
+    }
+    
+    if (param.nonbonded.ls_epsilon != 0.0 && param.nonbonded.ls_epsilon < 1.0)
+      io::messages.add("NONBONDED block: Illegal value for EPSLS (0.0 / >=1.0)",
+                         "In_Parameter", io::message::error);
+    
+    if (param.nonbonded.ewald_max_k_x <= 0 ||
+        param.nonbonded.ewald_max_k_y <= 0 ||
+        param.nonbonded.ewald_max_k_z <= 0)
+      io::messages.add("NONBONDED block: Illegal value for NKX, NKY or NKZ (>0)",
+                         "In_Parameter", io::message::error);
+
+    if (param.nonbonded.ewald_kspace_cutoff <= 0.0)
+      io::messages.add("NONBONDED block: Illegal value for NK2 (>0.0)",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.p3m_grid_points_x <= 0 ||
+            param.nonbonded.p3m_grid_points_y <= 0 ||
+            param.nonbonded.p3m_grid_points_z <= 0)
+      io::messages.add("NONBONDED block: Illegal value for NGA, NGB or NGC (>0)",
+            "In_Parameter", io::message::error);
+    
+    if (param.nonbonded.p3m_grid_points_x % 2 != 0 ||
+            param.nonbonded.p3m_grid_points_y % 2 != 0 ||
+            param.nonbonded.p3m_grid_points_z % 2 != 0)
+      io::messages.add("NONBONDED block: Illegal value for NGA, NGB or NGC (even)",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.p3m_charge_assignment < 1 ||
+            param.nonbonded.p3m_charge_assignment > 5)
+      io::messages.add("NONBONDED block: Illegal value for NASORD (1..5)",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.p3m_finite_differences_operator < 0 ||
+            param.nonbonded.p3m_finite_differences_operator > 5)
+      io::messages.add("NONBONDED block: Illegal value for NFDORD (0..5)",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.p3m_mesh_alias <= 0)
+      io::messages.add("NONBONDED block: Illegal value for NALIAS (>0)",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.accuracy_evaluation < 0)
+      io::messages.add("NONBONDED block: Illegal value for NQEVAL (>=0)",
+            "In_Parameter", io::message::error);
+
+    if (param.pcouple.scale != math::pcouple_off
+        && do_ls
+        && param.nonbonded.accuracy_evaluation == 0)
+      io::messages.add("NONBONDED block: Pressure scaling but no quality evaluation of influence function."
+              " Set NQEVAL > 0.",
+            "In_Parameter", io::message::warning);
+
+    if (param.nonbonded.influence_function_rms_force_error <= 0.0)
+      io::messages.add("NONBONDED block: Illegal value for FACCUR (>0.0)",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.influence_function_read ||
+            param.nonbonded.influence_function_write)
+      io::messages.add("NONBONDED block: Influence function IO not implemented."
+            " Set NRDGRD and NWRGRD to 0.",
+            "In_Parameter", io::message::error);
+
+    if (param.nonbonded.lj_correction)
+      io::messages.add("NONBONDED block: LJ long range correction not implemented."
+            " Set NLRLJ to 0.",
+            "In_Parameter", io::message::error);
+    
+    if (param.nonbonded.lj_solvent_density <= 0.0)
+      io::messages.add("NONBONDED block: Illegal value for SLVDNS (>0.0)",
+            "In_Parameter", io::message::error);      
+    
+  } else {
+    io::messages.add("no NONBONDED block", "In_Parameter", io::message::error);
+    return;
+  }
+}
+
+void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param, 
+        std::ostream & os)
+{
+  DEBUG(8, "read GROMOS96COMPAT");
+  
+  std::vector<std::string> buffer;
+  std::string s;
+  
+  buffer = m_block["GROMOS96COMPAT"];
+
+  if (buffer.size()) {
+    block_read.insert("GROMOS96COMPAT");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+    bool ntr96, ntg96;
+    _lineStream >> ntr96 >> ntg96;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in GROMOS96COMPAT block",
+              "In_Parameter", io::message::error);
+    }
+    // NTR96 false means rf_excluded 
+    param.nonbonded.rf_excluded = !ntr96;
+
+  }
+}
 
 // two helper data types to simply unsupported block handling
 enum unsupported_block_type { 
@@ -3013,12 +3185,11 @@ void io::In_Parameter::read_known_unsupported_blocks() {
   ub["PCOUPLE03"] = unsupported_block("PRESSURESCALE", ub_renamed);
   ub["GEOMCONSTRAINT"] = unsupported_block("CONSTRAINT", ub_promd);
   ub["SHAKE"] = unsupported_block("CONSTRAINT", ub_g96);
-  ub["GROMOS96COMPAT"] = unsupported_block("", ub_promd);
   ub["PATHINT"] = unsupported_block("", ub_promd);
   ub["NEIGHBOURLIST"] = unsupported_block("PAIRLIST", ub_promd);
   ub["PLIST"] = unsupported_block("PAIRLIST", ub_g96);
   ub["PLIST03"] = unsupported_block("PAIRLIST", ub_renamed);
-  ub["NONBONDED"] = unsupported_block("LONGRANGE", ub_promd);
+  ub["LONGRANGE"] = unsupported_block("NONBONDED", ub_g96);
   ub["START"] = unsupported_block("INITIALISE", ub_g96);
   ub["OVERALLTRANSROT"] = unsupported_block("COMTRANSROT", ub_promd);
   ub["CENTREOFMASS"] = unsupported_block("COMTRANSROT", ub_g96);

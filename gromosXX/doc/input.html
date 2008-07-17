@@ -25,7 +25,8 @@
 <li><a href="#force">FORCE</a></li>
 <li><a href="#covalentform">COVALENTFORM</a></li>
 <li><a href="#pairlist">PAIRLIST</a></li>
-<li><a href="#longrange">LONGRANGE</a></li>
+<li><a href="#nonbonded">NONBONDED</a></li>
+<li><a href="#gromos96compat">GROMOS96COMPAT</a></li>
 <li><a href="#positionres">POSITIONRES</a></li>
 <li><a href="#perturbation">PERTURBATION</a></li>
 <li><a href="#jval">JVALUERES</a></li>
@@ -373,12 +374,82 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="longrange">LONGRANGE</a></h2>
+<h2><a name="nonbonded">NONBONDED</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-LONGRANGE
-# EPSRF     APPAK      RCRF
-   54.0       0.0       1.4
+NONBONDED
+# NLRELE    1-3 method to handle electrostatic interactions
+#     1 : reaction-field
+#     2 : Ewald method
+#     3 : P3M method
+# APPAK     >= 0.0 reaction-field inverse Debye screening length
+# RCRF      >= 0.0 reaction-field radius 
+#   0.0 : set to infinity
+# EPSRF     = 0.0 || > 1.0 reaction-field permittivity
+#   0.0 : set to infinity 
+# NSHAPE    -1..10 lattice sum charge-shaping function
+#    -1 : gaussian
+# 0..10 : polynomial 
+# ASHAPE    > 0.0 width of the lattice sum charge-shaping function
+# NA2CALC   0,2 controls evaluation of lattice sum A2 term
+#     0 : set to zero
+#     2 : numerical
+# TOLA2     > 0.0 tolerance for numerical A2 evaluation 
+# EPSLS      = 0.0 || > 1.0 lattice sum permittivity (0.0 = tinfoil)
+# NKX, NKY, NKZ > 0 maximum absolute Ewald k-vector components
+# NK2       > 0.0 Ewald k-space cutoff
+# NGA, NGB, NGC > 0 P3M number of grid points
+# NASORD    1..5 order of mesh charge assignment function
+# NFDORD    0..5 order of the mesh finite difference operator
+#     0 : ik - differentiation
+#  1..5 : finite differentiation
+# NALIAS    > 0 number of mesh alias vectors considered
+# NSPORD        order of SPME B-spline functions (ignored! promd specific)
+# NQEVAL    >= 0 controls accuracy reevaluation
+#     0 : do not reevaluate
+#   > 0 : evaluate every NQEVAL steps
+# FACCUR    >= 0.0 rms force error threshold to recompute influence function
+# NRDGRD    0,1 read influence function
+#     0 : calculate influence function at simulation start up
+#     1 : read influence function from file (not yet implemented)
+# NWRGRD    0,1 write influence function
+#     0 : do not write
+#     1 : write at the end of the simulation (not yet implemented)
+# NLRLJ     0,1 controls long-range Lennard-Jones corrections
+#     0 : no corrections
+#     1 : do corrections (not yet implemented)
+# SLVDNS    > 0.0 average solvent density for long-range LJ correction (ignored)      
+# 
+#   NLRELE
+         1
+#    APPAK      RCRF     EPSRF
+       0.0       1.4      61.0
+#   NSHAPE    ASHAPE    NA2CLC     TOLA2    EPSLS
+        -1       1.4         2    0.1E-9      0.0
+#      NKX       NKY       NKZ       NK2
+        10        10        10      100.0
+#      NGX       NGY       NGZ    NASORD    NFDORD    NALIAS    NSPORD
+        32        32        32         3         2         3         4
+#   NQEVAL    FACCUR    NRDGRD    NWRGDR
+    100000       1.6         0         0
+#    NLRLJ    SLVDNS
+         0      33.3
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+
+<h2><a name="gromos96compat">GROMOS96COMPAT</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+GROMOS96COMPAT
+# NTR96 0,1 controls use of reaction field formula
+#    0 : new reaction field formula [default]
+#    1 : g96 reaction field formula
+# NTG96 0,1 controls use of soft-core formula (ignored)
+#    0 : new soft-core formula
+#    1 : g96 soft-core formula [default]
+# NTR96     NTG96
+    1         1
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

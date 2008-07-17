@@ -19,31 +19,31 @@ inline void interaction::Perturbed_Nonbonded_Term
   case simulation::pol_lj_crf_func :
     // Force
     m_cut3i = 
-      1.0 / ( sim.param().longrange.rf_cutoff
-	      * sim.param().longrange.rf_cutoff
-	      * sim.param().longrange.rf_cutoff);
+      1.0 / ( sim.param().nonbonded.rf_cutoff
+	      * sim.param().nonbonded.rf_cutoff
+	      * sim.param().nonbonded.rf_cutoff);
     
-    m_crf = 2*(sim.param().longrange.epsilon - sim.param().longrange.rf_epsilon) * 
-      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) -
-      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					  sim.param().longrange.rf_cutoff *
-					  sim.param().longrange.rf_kappa  *
-					  sim.param().longrange.rf_cutoff);
+    m_crf = 2*(sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) * 
+      (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
+      sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  * 
+					  sim.param().nonbonded.rf_cutoff *
+					  sim.param().nonbonded.rf_kappa  *
+					  sim.param().nonbonded.rf_cutoff);
     
-    m_crf /= (sim.param().longrange.epsilon +2* sim.param().longrange.rf_epsilon) *
-      (1.0 + sim.param().longrange.rf_kappa * sim.param().longrange.rf_cutoff) +
-      sim.param().longrange.rf_epsilon * (sim.param().longrange.rf_kappa  * 
-					  sim.param().longrange.rf_cutoff *
-					  sim.param().longrange.rf_kappa  *
-					  sim.param().longrange.rf_cutoff);
+    m_crf /= (sim.param().nonbonded.epsilon +2* sim.param().nonbonded.rf_epsilon) *
+      (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
+      sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa  * 
+					  sim.param().nonbonded.rf_cutoff *
+					  sim.param().nonbonded.rf_kappa  *
+					  sim.param().nonbonded.rf_cutoff);
     m_crf_cut3i = m_crf * m_cut3i;
     
     m_crf_cut = (1 - m_crf / 2.0)
-      / sim.param().longrange.rf_cutoff;
+      / sim.param().nonbonded.rf_cutoff;
     
     // Perturbation
     m_crf_2 = m_crf / 2.0;
-    m_cut2 = sim.param().longrange.rf_cutoff * sim.param().longrange.rf_cutoff;
+    m_cut2 = sim.param().nonbonded.rf_cutoff * sim.param().nonbonded.rf_cutoff;
     
     m_lambda_exp = sim.param().perturbation.lambda_exponent;
     break;
@@ -52,16 +52,16 @@ inline void interaction::Perturbed_Nonbonded_Term
     m_lambda_exp = sim.param().perturbation.lambda_exponent;
     
     // cgrain
-    A_cg12= - (12 * (12 + 4)) / (pow(sim.param().longrange.rf_cutoff, 12 + 3));
-    A_cg6=  - (6  * (6  + 4)) / (pow(sim.param().longrange.rf_cutoff, 6  + 3));
-    A_cg1=  - (1  * (1  + 4)) / (pow(sim.param().longrange.rf_cutoff, 1  + 3));     
+    A_cg12= - (12 * (12 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 3));
+    A_cg6=  - (6  * (6  + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 6  + 3));
+    A_cg1=  - (1  * (1  + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 1  + 3));     
 
-    B_cg12=   (12 * (12 + 3)) / (pow(sim.param().longrange.rf_cutoff, 12 + 4));
-    B_cg6=    (6  * (6  + 3)) / (pow(sim.param().longrange.rf_cutoff, 6  + 4));
-    B_cg1=    (1  * (1  + 3)) / (pow(sim.param().longrange.rf_cutoff, 1  + 4));     
+    B_cg12=   (12 * (12 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 4));
+    B_cg6=    (6  * (6  + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 6  + 4));
+    B_cg1=    (1  * (1  + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 1  + 4));     
     
     cgrain_eps = sim.param().cgrain.EPS;
-    nb_cutoff = sim.param().longrange.rf_cutoff;
+    nb_cutoff = sim.param().nonbonded.rf_cutoff;
     break;
   default:
     io::messages.add("Nonbonded_Innerloop",

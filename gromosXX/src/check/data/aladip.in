@@ -157,9 +157,25 @@ PAIRLIST
 #       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
         standard        5       0.8     1.4     auto    chargegroup
 END
-LONGRANGE
+#LONGRANGE
 # EPSRF     APPAK      RCRF
-    62.0       0.0       1.4
+#    62.0       0.0       1.4
+#END
+NONBONDED
+#   NLRELE
+         1
+#    APPAK      RCRF     EPSRF
+       0.0       1.4      62.0
+#   NSHAPE    ASHAPE    NA2CLC     TOLA2    EPSLS
+        -1       1.4         2    0.1E-9      0.0
+#      NKX       NKY       NKZ       NK2
+        10        10        10      100.0
+#      NGX       NGY       NGZ    NASORD    NFDORD    NALIAS    NSPORD
+        32        32        32         3         2         3         4
+#   NQEVAL    FACCUR    NRDGRD    NWRGDR
+    100000       1.6         0         0
+#    NLRLJ    SLVDNS
+         0      33.3
 END
 #
 POSITIONRES
@@ -240,3 +256,13 @@ END
 
 
 
+GROMOS96COMPAT
+# NTR96 0,1 controls use of reaction field formula
+#    0 : new reaction field formula [default]
+#    1 : g96 reaction field formula
+# NTG96 0,1 controls use of soft-core formula (ignored)
+#    0 : new soft-core formula
+#    1 : g96 soft-core formula [default]
+# NTR96     NTG96
+    1         1
+END

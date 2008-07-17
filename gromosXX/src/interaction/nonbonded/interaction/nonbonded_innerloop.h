@@ -21,7 +21,14 @@ namespace interaction
     /**
      * Constructor
      */
-    explicit Nonbonded_Innerloop(Nonbonded_Parameter &nbp) : m_param(&nbp) {}
+    explicit Nonbonded_Innerloop(Nonbonded_Parameter &nbp) : 
+       m_param(&nbp), m_charge_shape(-1) {}
+    
+    /**
+     * accessor to charge shape
+     */
+    inline void charge_shape(int a) { m_charge_shape = a; }
+    inline int charge_shape() { return m_charge_shape; }
     
     /**
      * (normal) interaction
@@ -109,8 +116,37 @@ namespace interaction
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
     );
     
+    /**
+     * calculation of the short range lennard-jones and
+     * real space lattice sum electrostatics
+     */
+    void lj_ls_real_innerloop
+    (
+     topology::Topology & topo, 
+     configuration::Configuration & conf,
+     unsigned int i,
+     unsigned int j,
+     Storage & storage,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+    
+    /**
+     * calculation of the real space lattice sum electrostatics
+     * for excluded neighbors
+     */
+    void ls_real_excluded_innerloop
+    (
+     topology::Topology & topo, 
+     configuration::Configuration & conf,
+     unsigned int i,
+     unsigned int j,
+     Storage & storage,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+    
   protected:
     Nonbonded_Parameter * m_param;
+    int m_charge_shape;
   };
 } // interaction
 

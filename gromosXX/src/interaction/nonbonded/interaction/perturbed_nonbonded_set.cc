@@ -186,7 +186,7 @@ int interaction::Perturbed_Nonbonded_Set
     m_pairlist_alg.timer().stop("1,4 interaction");
     
     // possibly do the RF contributions due to excluded atoms
-    if(sim.param().longrange.rf_excluded){
+    if(sim.param().nonbonded.rf_excluded){
       m_pairlist_alg.timer().start("RF excluded");
       DEBUG(6, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);

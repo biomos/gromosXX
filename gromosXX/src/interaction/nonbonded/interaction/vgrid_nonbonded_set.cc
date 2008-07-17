@@ -109,7 +109,7 @@ int interaction::VGrid_Nonbonded_Set
     m_outerloop.cg_exclusions_outerloop(topo, conf, sim, m_storage);
   
     // possibly do the RF contributions due to excluded atoms
-    if(sim.param().longrange.rf_excluded){
+    if(sim.param().nonbonded.rf_excluded){
       DEBUG(7, "\tRF excluded interactions and self term");
       m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
     }

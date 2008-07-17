@@ -33,6 +33,13 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     nonbonded_total = 0.0;
     lj_total = 0.0;
     crf_total = 0.0;
+    ls_total = 0.0;
+    ls_pair_total = 0.0;
+    ls_realspace_total = 0.0;
+    ls_kspace_total = 0.0;
+    ls_self_total = 0.0;
+    ls_surface_total = 0.0;
+    ls_a_term_total = 0.0;
     special_total = 0.0;
     posrest_total = 0.0;
     distanceres_total = 0.0;
@@ -66,6 +73,12 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     crf_energy.assign(crf_energy.size(), 
 		      std::vector<double>(crf_energy.size(), 0.0));
     
+    ls_real_energy.assign(ls_real_energy.size(),
+            std::vector<double>(ls_real_energy.size(), 0.0));
+    
+    ls_k_energy.assign(ls_k_energy.size(),
+            std::vector<double>(ls_k_energy.size(), 0.0));
+    
   }
 
   if (kinetic){
@@ -96,6 +109,8 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
   
     lj_energy.resize(energy_groups);
     crf_energy.resize(energy_groups);
+    ls_real_energy.resize(energy_groups);
+    ls_k_energy.resize(energy_groups);
 
     posrest_energy.resize(energy_groups);
     distanceres_energy.resize(energy_groups);
@@ -107,7 +122,9 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     
     for(unsigned int i=0; i<energy_groups; ++i){
       lj_energy[i].resize(energy_groups);
-      crf_energy[i].resize(energy_groups);  
+      crf_energy[i].resize(energy_groups);
+      ls_real_energy[i].resize(energy_groups);
+      ls_k_energy[i].resize(energy_groups);
     }
   }
 
@@ -134,6 +151,9 @@ int configuration::Energy::calculate_totals()
   dihedral_total = 0.0;
   lj_total = 0.0;
   crf_total = 0.0;
+  ls_total = 0.0;
+  ls_realspace_total = 0.0;
+  //ls_kspace_total = 0.0;
   posrest_total = 0.0; 
   distanceres_total =0.0; 
   dihrest_total = 0.0;
@@ -154,22 +174,34 @@ int configuration::Energy::calculate_totals()
     for(int j=i; j<num_groups; j++){
 
       if(i!=j){
-	lj_energy[j][i] += lj_energy[i][j];
-	crf_energy[j][i] += crf_energy[i][j];
-	
-	lj_energy[i][j] = 0.0;
-	crf_energy[i][j] = 0.0;
+        lj_energy[j][i] += lj_energy[i][j];
+        crf_energy[j][i] += crf_energy[i][j];
+        ls_real_energy[j][i] += ls_real_energy[i][j];
+        ls_k_energy[j][i] += ls_k_energy[i][j];
+        
+        lj_energy[i][j] = 0.0;
+        crf_energy[i][j] = 0.0;
+        ls_real_energy[i][j] = 0.0;
+        ls_k_energy[i][j] = 0.0;
       }
 
       if (lj_energy[i][j] > m_ewarn){
-	std::cout << "EWARN: lj energy " << i+1 << ", " << j+1 << " = " << lj_energy[j][i] << "\n";
+        std::cout << "EWARN: lj energy " << i+1 << ", " << j+1 << " = " << lj_energy[j][i] << "\n";
       }
       if (crf_energy[i][j] > m_ewarn){
-	std::cout << "EWARN: crf energy " << i+1 << ", " << j+1 << " = " << crf_energy[j][i] << "\n";
+        std::cout << "EWARN: crf energy " << i+1 << ", " << j+1 << " = " << crf_energy[j][i] << "\n";
+      }
+      if (ls_real_energy[i][j] > m_ewarn){
+        std::cout << "EWARN: lj energy " << i+1 << ", " << j+1 << " = " << ls_real_energy[j][i] << "\n";
+      }
+      if (ls_k_energy[i][j] > m_ewarn){
+        std::cout << "EWARN: crf energy " << i+1 << ", " << j+1 << " = " << ls_k_energy[j][i] << "\n";
       }
       
       lj_total   += lj_energy[j][i];
       crf_total  += crf_energy[j][i];
+      ls_realspace_total   += ls_real_energy[j][i];
+      //ls_kspace_total  += ls_k_energy[j][i];
     }
 
     if (bond_energy[i] > m_ewarn){
@@ -214,7 +246,13 @@ int configuration::Energy::calculate_totals()
     self_total += self_energy[i];
   }
 
-  nonbonded_total = lj_total + crf_total + self_total;
+  ls_pair_total = ls_realspace_total + ls_kspace_total + ls_a_term_total;
+  //        E(pair) + DeltaG(self) + DeltaG(surf)
+  ls_total =ls_pair_total + ls_self_total + ls_surface_total;
+  
+  nonbonded_total = lj_total + crf_total + self_total + 
+          ls_realspace_total + ls_kspace_total + ls_self_total + ls_surface_total +
+          ls_a_term_total;
   bonded_total    = bond_total + angle_total + 
     dihedral_total + improper_total;
   potential_total = nonbonded_total + bonded_total;

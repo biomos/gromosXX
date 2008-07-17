@@ -17,6 +17,9 @@
     case simulation::lj_crf_func : \
       f<Interaction_Spec<bound, simulation::lj_crf_func> >(__VA_ARGS__); \
       break; \
+    case simulation::lj_ls_func : \
+      f<Interaction_Spec<bound, simulation::lj_ls_func> >(__VA_ARGS__); \
+      break; \
     case simulation::cgrain_func : \
       f<Interaction_Spec<bound, simulation::cgrain_func> >(__VA_ARGS__); \
       break; \

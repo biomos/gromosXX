@@ -206,7 +206,7 @@ namespace io
 	   << 2 * e_kin_com / 
 	  (math::k_Boltzmann * it->com_dof);
       }
-      if (it->ir_dof == 0){
+      if (it->ir_dof == 0) {
 	os << std::setw(10) << "-";
       }
       else{
@@ -424,25 +424,33 @@ namespace io
 
     os.precision(4);
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
-    os << type << "Total        : " << std::setw(12) << e.total << "\n";
-    os << type << "Kinetic      : " << std::setw(21) << e.kinetic_total << "\n";
-    os << type << "Potential    : " << std::setw(21) << e.potential_total << "\n";
-    os << type << "Covalent     : " << std::setw(30) << e.bonded_total << "\n";
-    os << type << "Bonds        : " << std::setw(39) << e.bond_total << "\n";
-    os << type << "Angles       : " << std::setw(39) << e.angle_total << "\n";
-    os << type << "Improper     : " << std::setw(39) << e.improper_total << "\n";
-    os << type << "Dihedral     : " << std::setw(39) << e.dihedral_total << "\n";
-    os << type << "Non-bonded   : " << std::setw(30) << e.nonbonded_total  << "\n";
-    os << type << "Vdw          : " << std::setw(39) << e.lj_total << "\n";
-    os << type << "El (RF)      : " << std::setw(39) << e.crf_total  << "\n";
-    os << type << "Self-energy  : " << std::setw(39) << e.self_total << "\n";
-    os << type << "Special      : " << std::setw(21) << e.special_total << "\n";
-    os << type << "Constraints  : " << std::setw(30) << e.constraints_total << "\n";
-    os << type << "Distanceres     : " << std::setw(30) << e.distanceres_total << "\n";
-    os << type << "Dihrest      : " << std::setw(30) << e.dihrest_total << "\n";
-    os << type << "Posrest      : " << std::setw(30) << e.posrest_total << "\n";
-    os << type << "Jrest        : " << std::setw(30) << e.jvalue_total << "\n";
-    os << type << "Entropy      : " << std::setw(30) << e.entropy_term << "\n";
+    os << type << "Total                : " << std::setw(12) << e.total << "\n";
+    os << type << "Kinetic              : " << std::setw(21) << e.kinetic_total << "\n";
+    os << type << "Potential            : " << std::setw(21) << e.potential_total << "\n";
+    os << type << "Covalent             : " << std::setw(30) << e.bonded_total << "\n";
+    os << type << "Bonds                : " << std::setw(39) << e.bond_total << "\n";
+    os << type << "Angles               : " << std::setw(39) << e.angle_total << "\n";
+    os << type << "Improper             : " << std::setw(39) << e.improper_total << "\n";
+    os << type << "Dihedral             : " << std::setw(39) << e.dihedral_total << "\n";
+    os << type << "Non-bonded           : " << std::setw(30) << e.nonbonded_total  << "\n";
+    os << type << "Vdw                  : " << std::setw(39) << e.lj_total << "\n";
+    os << type << "El (RF)              : " << std::setw(39) << e.crf_total  << "\n";
+    os << type << "El (LS)              : " << std::setw(39) << e.ls_total << "\n";
+    os << type << "El (pair)            : " << std::setw(48) << e.ls_pair_total << "\n";
+    os << type << "El (real-space)      : " << std::setw(57) << e.ls_realspace_total << "\n";
+    os << type << "El (k-space)         : " << std::setw(57) << e.ls_kspace_total << "\n";
+    os << type << "El (A term)          : " << std::setw(57) << e.ls_a_term_total << "\n";
+    os << type << "El (lattice sum self): " << std::setw(48) << e.ls_self_total << "\n";
+    os << type << "El (surface term)    : " << std::setw(48) << e.ls_surface_total << "\n";
+    os << type << "Polarization self    : " << std::setw(39) << e.self_total << "\n";
+    os << type << "Special              : " << std::setw(21) << e.special_total << "\n";
+    os << type << "Constraints          : " << std::setw(30) << e.constraints_total << "\n";
+    os << type << "Distanceres          : " << std::setw(30) << e.distanceres_total << "\n";
+    os << type << "Dihrest              : " << std::setw(30) << e.dihrest_total << "\n";
+    os << type << "Posrest              : " << std::setw(30) << e.posrest_total << "\n";
+    os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
+    os << type << "Jrest                : " << std::setw(30) << e.jvalue_total << "\n";
+    os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
     os << "\n";
 
     os << std::setw(20) << "COV";
@@ -491,7 +499,34 @@ namespace io
       os << "\n";
     }
     
-      
+    os << "\n" << std::setw(20) << type + "LS (real)";
+    
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
+	os << std::setw(12) << e.ls_real_energy[i][j];
+      }
+      os << "\n";
+    }    
+
+    /*
+    energy groups not implemented for k-space energy.
+    os << "\n" << std::setw(20) << type + "LS (k-space)";
+    
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
+	os << std::setw(12) << e.ls_k_energy[i][j];
+      }
+      os << "\n";
+    }        
+    */
     os << "\n" << std::setw(20) << type + "Self-energy";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.self_energy[i];
 

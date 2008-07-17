@@ -292,7 +292,7 @@ void interaction::Perturbed_Nonbonded_Pair
       A_e_lj = A_e_crf = A_de_lj = A_de_crf = 0.0;
       A_f = 0.0;
       DEBUG(7, "excluded in A");
-      if(sim.param().longrange.rf_excluded){
+      if(sim.param().nonbonded.rf_excluded){
         if (is_perturbed){
           switch(t_interaction_spec::interaction_func){
             case simulation::lj_crf_func : {
@@ -513,7 +513,7 @@ void interaction::Perturbed_Nonbonded_Pair
       B_e_lj = B_e_crf = B_de_lj = B_de_crf = 0.0;
       B_f = 0.0;
       DEBUG(7, "excluded in A");
-      if(sim.param().longrange.rf_excluded){
+      if(sim.param().nonbonded.rf_excluded){
         if (is_perturbed){
           switch(t_interaction_spec::interaction_func){
             case simulation::lj_crf_func : {
