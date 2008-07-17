@@ -405,9 +405,10 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
     // we use the bond lambda
     const double lam = topo.individual_lambda(simulation::bond_lambda)
       [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
-    const double lam_derivative = topo.individual_lambda_derivative
+
+    /* const double lam_derivative = topo.individual_lambda_derivative
       (simulation::bond_lambda)
-      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
+      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]]; */
 
     /*
     if (fabs(force_on_constraint) > 1E6){
