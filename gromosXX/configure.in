@@ -253,9 +253,6 @@ AC_PREFIX_DEFAULT(`pwd`)
 
 AM_PATH_GSL
 AM_PATH_FFTW3
-if eval "test x$enable_openmp = xyes"; then
-  AC_CHECK_LIB([fftw3_threads], [fftw_init_threads],, AC_MSG_ERROR([FFTW3 threads library missing.]), [-fopenmp -lfftw3 -lm])
-fi
 
 dnl check header files
 AC_HEADER_STDC
@@ -311,6 +308,10 @@ AC_CHECK_LIB(m, sqrt)
 AC_CHECK_LIB(socket, listen)
 AC_CHECK_LIB(nsl, uname)
 AC_CHECK_LIB(z, zlibVersion)
+
+if eval "test x$enable_openmp = xyes"; then
+  AC_CHECK_LIB([fftw3_threads], [fftw_init_threads],, AC_MSG_ERROR([FFTW3 threads library missing.]), [-fopenmp -lfftw3 -lm])
+fi
 
 dnl check if full STL support
 AC_CV_CXX_VERSION_OK
