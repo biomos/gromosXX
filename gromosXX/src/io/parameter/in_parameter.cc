@@ -190,8 +190,8 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
 	      >> param.minimise.dele
 	      >> param.minimise.dx0
 	      >> param.minimise.dxm
-              >> param.minimise.nmin
-              >> param.minimise.flim;
+        >> param.minimise.nmin
+        >> param.minimise.flim;
   
   if (_lineStream.fail())
     io::messages.add("bad line in ENERGYMIN block",
@@ -528,7 +528,7 @@ void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
   _lineStream >> param.write.position
 	      >> ntwse
 	      >> param.write.velocity
-              >> param.write.force
+        >> param.write.force
 	      >> param.write.energy
 	      >> param.write.free_energy
 	      >> param.write.block_average;
@@ -577,103 +577,99 @@ void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
  * read the PRESSURESCALE block.
  */
 void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
-				    std::ostream & os)
-{
+				    std::ostream & os) {
   DEBUG(8, "read PRESSURESCALE");
 
   std::vector<std::string> buffer;
   std::string s;
-  
+
 
   // first try for a PRESSURESCALE block
   buffer = m_block["PRESSURESCALE"];
 
-  if (buffer.size()){
+  if (buffer.size()) {
 
     block_read.insert("PRESSURESCALE");
 
     _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-  
-    std::string s1, s2, s3;
-    
-    _lineStream >> s1 >> s2 
-		>> param.pcouple.compressibility 
-		>> param.pcouple.tau 
-		>> s3;
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-    for(int i=0; i<3; ++i){
-      for(int j=0; j<3; ++j){
-	_lineStream >> param.pcouple.pres0(i, j);
+    std::string s1, s2, s3;
+
+    _lineStream >> s1 >> s2
+        >> param.pcouple.compressibility
+        >> param.pcouple.tau
+        >> s3;
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        _lineStream >> param.pcouple.pres0(i, j);
       }
     }
 
     if (_lineStream.fail())
       io::messages.add("bad line in PRESSURESCALE block",
-		       "In_Parameter", io::message::error);
-    
-    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
-    std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
-    std::transform(s3.begin(), s3.end(), s3.begin(), tolower);
+        "In_Parameter", io::message::error);
 
-    if (s1 == "off"){
+    //std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
+    //std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
+    //std::transform(s3.begin(), s3.end(), s3.begin(), tolower);
+
+    if (s1 == "off" || s1 == "0") {
       param.pcouple.calculate = false;
+      param.pcouple.scale = math::pcouple_off;
+    }
+    else if (s1 == "calc" || s1 == "1") {
+      param.pcouple.calculate = true;
       param.pcouple.scale = math::pcouple_off;
     } 
-    else if (s1 == "calc"){
-      param.pcouple.calculate = true;
-      param.pcouple.scale = math::pcouple_off;
-    }
-    else if (s1 == "scale"){
+    else if (s1 == "scale" || s1 == "2") {
       param.pcouple.calculate = true;
 
-      if (s2 == "off"){
-	io::messages.add("PRESSURESCALE block: requesting scaling but SCALE set to OFF",
-			 "In_Parameter", io::message::error);
-	param.pcouple.scale = math::pcouple_off;
-      }
-      else if (s2 == "iso")
-	param.pcouple.scale = math::pcouple_isotropic;
-      else if (s2 == "aniso")
-	param.pcouple.scale = math::pcouple_anisotropic;
-      else if (s2 == "full")
-	param.pcouple.scale = math::pcouple_full_anisotropic;
-      else{
-	io::messages.add("PRESSURESCALE block: bad value for SCALE switch "
-			 "(off,iso,aniso,full)",
-			 "In_Parameter", io::message::error);
-	param.pcouple.scale = math::pcouple_off;
+      if (s2 == "off" || s2 == "0") {
+        io::messages.add("PRESSURESCALE block: requesting scaling but SCALE set to OFF",
+            "In_Parameter", io::message::error);
+        param.pcouple.scale = math::pcouple_off;
+      } 
+      else if (s2 == "iso" || s2 == "1")
+        param.pcouple.scale = math::pcouple_isotropic;
+      else if (s2 == "aniso" || s2 == "2")
+        param.pcouple.scale = math::pcouple_anisotropic;
+      else if (s2 == "full" || s2 == "3")
+        param.pcouple.scale = math::pcouple_full_anisotropic;
+      else {
+        io::messages.add("PRESSURESCALE block: bad value for SCALE switch "
+            "(off,iso,aniso,full)",
+            "In_Parameter", io::message::error);
+        param.pcouple.scale = math::pcouple_off;
       }
 
-    }
-    else{
+    } else {
       io::messages.add("bad value for calc switch in PRESSURESCALE block\n"
-		       "(off,calc,scale)",
-		       "In_Parameter", io::message::error);
+          "(off,calc,scale)",
+          "In_Parameter", io::message::error);
       param.pcouple.calculate = false;
     }
-  
-    if (param.pcouple.calculate){
-      if (s3 == "none"){
-	io::messages.add("requesting pressure calculation but "
-			 "no virial specified",
-			 "In_Parameter", io::message::error);
-	param.pcouple.virial = math::no_virial;
+
+    if (param.pcouple.calculate) {
+      if (s3 == "none" || s3 == "0") {
+        io::messages.add("requesting pressure calculation but "
+            "no virial specified",
+            "In_Parameter", io::message::error);
+        param.pcouple.virial = math::no_virial;
+      } else if (s3 == "atomic" || s3 == "1")
+        param.pcouple.virial = math::atomic_virial;
+      else if (s3 == "molecular" || s3 == "2")
+        param.pcouple.virial = math::molecular_virial;
+      else {
+        io::messages.add("bad value for virial switch in PRESSURESCALE block\n"
+            "(none,atomic,molecular)",
+            "In_Parameter", io::message::error);
+        param.pcouple.virial = math::no_virial;
       }
-      else if (s3 == "atomic")
-	param.pcouple.virial = math::atomic_virial;
-      else if (s3 == "molecular")
-	param.pcouple.virial = math::molecular_virial;
-      else{
-	io::messages.add("bad value for virial switch in PRESSURESCALE block\n"
-			 "(none,atomic,molecular)",
-			 "In_Parameter", io::message::error);
-	param.pcouple.virial = math::no_virial;
-      }
-    }
-    else
+    } else
       param.pcouple.virial = math::no_virial;
-    
+
   } // PRESSURESCALE block
   
   if (param.pcouple.calculate==false && param.pcouple.scale!=math::pcouple_off)
@@ -694,7 +690,8 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
 }
 
 /**
- * read the BOUNDCOND block.
+ * read the BOUNDCOND
+ * block.
  */
 void io::In_Parameter::read_BOUNDCOND(simulation::Parameter &param,
 				     std::ostream & os)
@@ -1007,11 +1004,11 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
   int bond, angle, dihedral;
-  
-  _lineStream >> bond 
-	      >> angle
+
+  _lineStream >> bond
+              >> angle
               >> dihedral;
-  
+
   if (bond != 0 && bond != 1) {
     io::messages.add("COVALENTFORM block: NTBBH must be 0 (quartic) "
                      "or 1 (harmonic).",
@@ -1046,7 +1043,7 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   } else {
     if (dihedral != 0) {
-      switch (angle) {
+      switch (dihedral) {
         case 1: 
          io::messages.add("COVALENTFORM block: NTBDN 1 not implemented.",
 		          "In_Parameter", io::message::error);
@@ -1233,70 +1230,72 @@ void io::In_Parameter::read_COMTRANSROT(simulation::Parameter &param,
     param.centreofmass.remove_trans = false;
   }
 }
-
 /**
  * read PAIRLIST block.
  */
 void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
-				  std::ostream & os)
-{
+    std::ostream & os) {
   DEBUG(8, "read PAIRLIST");
 
   std::vector<std::string> buffer;
   std::string s;
 
   DEBUG(10, "pairlist block");
-  
+
   // try a PAIRLIST
   buffer = m_block["PAIRLIST"];
-  if (buffer.size()){
+  if (buffer.size()) {
     block_read.insert("PAIRLIST");
 
     std::string s1, s2, s3;
     _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-    
-    _lineStream >> s1 
-		>> param.pairlist.skip_step 
-		>> param.pairlist.cutoff_short
-		>> param.pairlist.cutoff_long 
-		>> s2
-		>> s3;
-    
-    if (_lineStream.fail()){
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    _lineStream >> s1
+        >> param.pairlist.skip_step
+        >> param.pairlist.cutoff_short
+        >> param.pairlist.cutoff_long
+        >> s2
+        >> s3;
+
+    if (_lineStream.fail()) {
       io::messages.add("bad line in PAIRLIST block",
-		       "In_Parameter", io::message::error);
+          "In_Parameter", io::message::error);
     }
-    
+
     std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
     std::transform(s3.begin(), s3.end(), s3.begin(), tolower);
 
-    if (s1 == "grid") param.pairlist.grid = 1;    
+    if (s1 == "grid") param.pairlist.grid = 1;
     else if (s1 == "vgrid") param.pairlist.grid = 2;
     else if (s1 == "standard") param.pairlist.grid = 0;
-    else{
-      io::messages.add("PAIRLIST block: wrong pairlist algorithm chosen",
-		       "In_Parameter", io::message::error);
+    else {
+      std::istringstream css;
+      css.str(s1);
+      css >> param.pairlist.grid;
+      if (css.fail()) {
+        io::messages.add("PAIRLIST block: wrong pairlist algorithm chosen",
+            "In_Parameter", io::message::error);
+      }
       param.pairlist.grid = false;
     }
-    
-    if (param.pairlist.grid){
-      if (s2 == "auto") 
-	param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
-      else{
-	std::istringstream css;
-	css.str(s2);
-	css >> param.pairlist.grid_size;
-	// param.pairlist.grid_size = atof(s2.c_str());
-	if (css.fail()){
-	  io::messages.add("PAIRLIST block: wrong pairlist grid size chosen",
-			   "In_Parameter", io::message::error);
-	  param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
-	}
+
+    if (param.pairlist.grid) {
+      if (s2 == "auto")
+        param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
+      else {
+        std::istringstream css;
+        css.str(s2);
+        css >> param.pairlist.grid_size;
+        // param.pairlist.grid_size = atof(s2.c_str());
+        if (css.fail()) {
+          io::messages.add("PAIRLIST block: wrong pairlist grid size chosen",
+              "In_Parameter", io::message::error);
+          param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
+        }
       }
-    }
-    else param.pairlist.grid_size = 0;
+    } else param.pairlist.grid_size = 0;
 
     if (s3 == "atomic") param.pairlist.atomic_cutoff = true;
     else if (s3 == "chargegroup") param.pairlist.atomic_cutoff = false;
@@ -1304,27 +1303,27 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
       std::istringstream css;
       css.str(s3);
       css >> param.pairlist.atomic_cutoff;
-      
+
       // param.pairlist.atomic_cutoff = (atoi(s3.c_str()) != 0);
-      if (css.fail()){
-	io::messages.add("PAIRLIST block: wrong cutoff type chosen "
-                         "(allowed: atomic, chargegroup)",
-			 "In_Parameter", io::message::error);
-	param.pairlist.atomic_cutoff = false;
+      if (css.fail()) {
+        io::messages.add("PAIRLIST block: wrong cutoff type chosen "
+            "(allowed: atomic, chargegroup)",
+            "In_Parameter", io::message::error);
+        param.pairlist.atomic_cutoff = false;
       }
     }
   }
-  
-  if(param.pairlist.grid && param.pairlist.grid_size <=0)
+
+  if (param.pairlist.grid && param.pairlist.grid_size <= 0)
     io::messages.add("PAIRLIST block: Illegal value for grid size (>0)",
-		     "In_Parameter", io::message::error);
-  if(param.pairlist.cutoff_short < 0){
+      "In_Parameter", io::message::error);
+  if (param.pairlist.cutoff_short < 0) {
     io::messages.add("PAIRLIST block: Illegal value for short range cutoff (>0)",
-		     "In_Parameter", io::message::error);
+        "In_Parameter", io::message::error);
   }
-  if(param.pairlist.cutoff_long < param.pairlist.cutoff_short){
+  if (param.pairlist.cutoff_long < param.pairlist.cutoff_short) {
     io::messages.add("PAIRLIST block: Illegal value for long range cutoff (>=RCUTP)",
-		     "In_Parameter", io::message::error);
+        "In_Parameter", io::message::error);
   }
 }
 
@@ -1424,15 +1423,15 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
       param.multibath.nosehoover = 1;
     else if (alg == "nose-hoover-chains")
       param.multibath.nosehoover = 2;
-    else{
+    else {
       std::stringstream s(alg);
       if (!(s >> param.multibath.nosehoover) ||
-	  param.multibath.nosehoover < 0 || param.multibath.nosehoover > 2){
-	io::messages.add("MUTLIBATH block: algorithm not understood",
-			 "In_Parameter", io::message::error);
+          param.multibath.nosehoover < 0 || param.multibath.nosehoover > 2) {
+        io::messages.add("MUTLIBATH block: algorithm not understood",
+            "In_Parameter", io::message::error);
 
-	param.multibath.nosehoover = 0;
-	return;
+        param.multibath.nosehoover = 0;
+        return;
       }
     }
 
@@ -1611,7 +1610,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
   std::vector<std::string> buffer;
   std::string s;
   
-  DEBUG(10, "distenceres block");
+  DEBUG(10, "distanceres block");
   buffer = m_block["DISTANCERES"];
   
   if (!buffer.size()){
@@ -1636,7 +1635,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
   
   
   if(param.distanceres.distanceres < -2 || param.distanceres.distanceres > 2) {
-    io::messages.add("DISTANCERES block: NTDIR must 0 to 2.",
+    io::messages.add("DISTANCERES block: NTDIR must be -2..2.",
                      "In_Parameter", io::message::error);
   }
   
@@ -1683,47 +1682,31 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-  
+   
   /*
-   * #         0:    off [default]
-   * #         1:    instantaneous dihedral restraining using CDLR
-   * #         2:    time-averaged dihedral restraining using CDLR
-   * #         3:    biquadratic dihedral restraining using CDLR
-   * #         4:    dihedral constraining
-   * # CDLR    >=0.0 force constant for dihedral restraining (multiplied by WDLR)
+   # NTDLR   0...3 controls dihedral-angle restraining and constraining 
+   #         0:    off [default]
+   #         1:    dihedral restraining using CDLR
+   #         2:    dihedral restraining using CDLR * WDLR
+   #         3:    dihedral constraining
    */
-  
-   int ntdlr;
-  _lineStream >> ntdlr // param.dihrest.dihrest
-	      >> param.dihrest.K
-	      >> phi_lin;
+   
+  _lineStream >> param.dihrest.dihrest
+	            >> param.dihrest.K
+	            >> phi_lin;
 
   param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
   
   if (_lineStream.fail())
     io::messages.add("bad line in DIHEDRALRES block",
-		     "In_Parameter", io::message::error);
-  
-  switch(ntdlr){
-    case 0: param.dihrest.dihrest = ntdlr; break;
-    case 1: param.dihrest.dihrest = 2; break;
-    case 2: {
-      io::messages.add("DIHEDRALRES block: NTDLR = 2 not implemented.",
-                       "In_Parameter", io::message::error);
-      break;
-    }
-    case 3: {
-      io::messages.add("DIHEDRALRES block: NTDLR = 3 not implemented.",
-                       "In_Parameter", io::message::error);
-      break;
-    }
-    case 4: param.dihrest.dihrest = 3; break;
-    default: {
-       io::messages.add("DIHEDRALRES block: NTDLR must be 0...4.",
-                        "In_Parameter", io::message::error);     
-    }
+      "In_Parameter", io::message::error);
+
+  if (param.dihrest.dihrest > 3 ||
+      param.dihrest.dihrest < 0) {
+    io::messages.add("DIHEDRALRES block: NTDLR must be 0...3.",
+        "In_Parameter", io::message::error);
   }
-  
+   
   if(param.dihrest.K < 0)
     io::messages.add("DIHEDRALRES block: Illegal value for force constant (>=0)",
 		     "In_Parameter", io::message::error);
@@ -1739,7 +1722,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     }
   }
   
-} // DIHREST
+} // DIHEDRALRES
 
 /**
  * read the JVALUERES block.
@@ -1760,8 +1743,8 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
-    std::string s1;
-    _lineStream >> s1 // NTJVR
+    int ntjvr;
+    _lineStream >> ntjvr // NTJVR
                 >> param.jvalue.read_av // NTJVRA
                 >> param.jvalue.K // CJVR
                 >> param.jvalue.tau // TAUJVR
@@ -1773,31 +1756,34 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
       io::messages.add("bad line in JVALUERES block",
 		       "In_Parameter", io::message::error);
     
-    std::transform(s1.begin(), s1.end(), s1.begin(), tolower);
-    
-    // NTJVR 0...3
-    if (s1 == "off") param.jvalue.mode = simulation::restr_off;
-    else if (s1 == "instantaneous") param.jvalue.mode = simulation::restr_inst;
-    else if (s1 == "averaged") param.jvalue.mode = simulation::restr_av;
-    else if (s1 == "biquadratic") param.jvalue.mode = simulation::restr_biq;
-    else{
-      std::istringstream css;
-      css.str(s1);
-      
-      int i;
-      css >> i;
-      if(css.fail() || i < 0 || i > 3){
-	io::messages.add("JVALURES block: bad value for MODE:"+s1+"\n"
-			 "off, instantaneous, averaged, biquadratic (0-3)",
-			 "In_Parameter", io::message::error);
-	param.jvalue.mode = simulation::restr_off;
-	return;
-      }
-      param.jvalue.mode = simulation::restr_enum(i);
-
-      DEBUG(10, "setting jvalue mode to " << param.jvalue.mode);
-
+    switch (ntjvr) {
+      case -3:
+        param.jvalue.mode = simulation::restr_biq;
+        break;
+      case -2:
+        param.jvalue.mode = simulation::restr_av;
+        break;
+      case -1:
+        io::messages.add("JVALUERES block: NTJVR = -1 not implemented."
+                         " Use ntjvr = -2 and WJVR = 0.0 instead.",
+                         "In_Parameter", io::message::error);
+        break;
+      case 0: 
+        param.jvalue.mode = simulation::restr_off;
+        break;
+      case 1: 
+        io::messages.add("JVALUERES block: NTJVR = 1 not implemented."
+                         " Use ntjvr = 2 and WJVR = 0.0 instead.",
+                         "In_Parameter", io::message::error);
+        break;
+      case 2:
+        param.jvalue.mode = simulation::restr_inst;
+        break;
+      default: 
+        io::messages.add("JVALUERES block: NTJVR must be -3..2.",
+                         "In_Parameter", io::message::error);
     }
+
     if (param.jvalue.tau < 0 ||
 	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
 				   param.jvalue.mode != simulation::restr_inst))){
@@ -3137,8 +3123,8 @@ void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
     block_read.insert("GROMOS96COMPAT");
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-    bool ntr96, ntg96;
-    _lineStream >> ntr96 >> ntg96;
+    bool ntnb96, ntr96, ntp96, ntg96;
+    _lineStream >> ntnb96 >> ntr96 >> ntp96 >> ntg96;
 
     if (_lineStream.fail()) {
       io::messages.add("bad line in GROMOS96COMPAT block",

@@ -16,7 +16,7 @@
 <li><a href="#energymin">ENERGYMIN</a></li>
 <li><a href="#boundcond">BOUNDCOND</a></li>
 <li><a href="#multicell">MULTICELL</a><li>
-<li><a href="#tcouple">TCOUPLE</a></li>
+<li><a href="#tcouple">MULTIBATH</a></li>
 <li><a href="#pressurescale">PRESSURESCALE</a></li>
 <li><a href="#centreofmass">CENTREOFMASS</a></li>
 <li><a href="#printout">PRINTOUT</a></li>
@@ -44,6 +44,7 @@
 <li><a href="#randomnumbers">RANDOMNUMBERS</a></li>
 <li><a href="#spc_loops">INNERLOOP</a></li>
 <li><a href="#EDS">EDS</a></li>
+<li><a href="#LAMBDAS">LAMBDAS</a></li>
 </ul>
 
 <br>
@@ -81,7 +82,7 @@ INITIALISE
 #         1: initial SHAKE on coordinates only
 #         2: initial SHAKE on velocities only
 #         3: initial SHAKE on coordinates and velocities
-# NTINHC: 0,1 controls generation of initial Nose-Hoover chain variables
+# NTINHT: 0,1 controls generation of initial Nose-Hoover chain variables
 #         0: read from configuration (default)
 #         1: reset variables to zero.
 # NTISHI: 0,1 not used in md++
@@ -99,7 +100,7 @@ INITIALISE
 # IG:     random number generator seed
 # TEMPI:  initial temperature
 #
-#  NTIVEL  NTISHK  NTINHC
+#  NTIVEL  NTISHK  NTINHT
         0       0       0
 #  NTISHI  NTIRTC  NTICOM
         0       0       0
@@ -129,11 +130,20 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 STOCHDYN
-#NTFR
-#0 = set to zero
-#1 = set to CFRIC
-#2 = set to CFRIC*GAM
-#3 = calculate using SUBR. FRIC
+# NTSD    0,1 controls stochastic dynamics mode
+#         0: do not do stochastic dynamics (default)
+#         1: do stochastic dynamics
+# NTFR    0..3 defines atomic friction coefficients gamma
+#         0: set gamma to 0.0 (default)
+#         1: set gamma to CFRIC
+#         2: set gamma to CFRIC*GAM0
+#         3: calculate gamma using subroutine FRIC (based on CFRIC)
+# NSFR    > 0 recalculate gamma every NSFR steps
+# NBREF   > 0 threshold number of neighbour atoms for a buried atom
+# RCUTF   >= 0.0 interatomic distance considered when calculating gamma
+# CFRIC   >= 0.0 global weighting for gamma
+# TEMPSD  >= 0.0 temperature of stochastic bath
+#
 #     NTSD     NTFR     NSFR   NBREF  RCUTF    CFRIC    TEMPSD
          0        1        0       6    0.3     91.0     300.0
 END
@@ -145,6 +155,16 @@ Only steepest descent is implemented.
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 ENERGYMIN
+# NTEM: 0..2 controls energy minimisation mode
+#       0: do not do energy minimisation (default)
+#       1: steepest-descent minimisation
+#       2: conjugate-gradient minimisation (promd only)
+# NCYC: >0 number of steps before resetting of conjugate-gradient search direction
+# DELE: >0.0 energy threshold for convergence
+# DX0: > 0.0 initial step size
+# DXM: > 0.0 maximum step size
+# NMIN > 0 minimum number of minimisation steps
+# FLIM >= 0.0 limit force to maximum value
 #     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM
          1       0     0.1   0.01    0.05       1       0
 END
@@ -172,7 +192,7 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 MULTICELL
-#  NTM: 0,1 switch of multiple-unit-cell simulation.
+#  NTM: 0,1 switch for multiple-unit-cell simulation.
 #       0 : single-unit-cell simulation [default]
 #       1 : multiple-unit-cell simulation
 #         NTM
@@ -188,15 +208,14 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-<h2><a name="tcouple">TCOUPLE</a></h2>
-new format:
+<h2><a name="tcouple">MULTIBATH</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 MULTIBATH
-# ALGORITHM: temperture coupling algorithm
-#		weak-coupling
-#		nose-hoover
-#		nose-hoover-chains	num
+# ALGORITHM: temperature coupling algorithm
+#		weak-coupling(0)
+#		nose-hoover(1)
+#		nose-hoover-chains(2)	num
 #		(where num is the number of chains to use)
 #   ALGORITHM           NUM
     nose-hoover-chains	3
@@ -215,25 +234,13 @@ END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
 
-old format:
-<table cellpadding="2" cellspacing="2" border="0" width="600"
- bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-TCOUPLE
-#      NTT     TEMP0      TAUT
-         0     300.0     0.010
-         0     300.0     0.010
-         0     300.0     0.010
-END
-</PRE></CODE></td></tr></tbody>
-</TABLE>
-
 <h2><a name="pressurescale">PRESSURESCALE</a></h2>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 PRESSURESCALE
-#	COUPLE:	off, calc, scale
-#	SCALE:  off, iso, aniso, full
-#	VIRIAL: none, atomic, molecular
+#	COUPLE:	off(0), calc(1), scale(2)
+#	SCALE:  off(0), iso(1), aniso(2), full(3)
+#	VIRIAL: none(0), atomic(1), molecular(2)
 #
 #   COUPLE  SCALE   COMP        TAUP    VIRIAL
     calc    iso     4.575E-4    0.5     atomic
@@ -276,13 +283,31 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 WRITETRAJ
-# NTWX  : write position trajectory every NTWX steps
-# NTWSE : write normal trajectory (0)
-# NTWV  : write velocity trajectory every NTWV steps
-# NTWF  : write force trajectory every NTWF steps
-# NTWE  : write energy trajectory every NTWE steps
-# NTWG  : write free energy trajectory every NTWG steps
-# NTWB  : write block averaged energies (and free energies if NTWG > 0) trajectory
+# NTWX       controls writing of coordinate trajectory
+#       0: no coordinate trajectory is written (default)
+#      >0: write solute and solvent coordinates every NTWX steps
+#      <0: write solute coordinates every |NTWX| steps
+# NTWSE >= 0 selection criteria for coordinate trajectory writing
+#       0: write normal coordinate trajectory
+#      >0: (not implemented)
+# NTWV       controls writing of velocity trajectory
+#       0: no velocity trajectory is written (default)
+#      >0: write solute and solvent velocities every NTWV steps
+#      <0: write solute velocities every |NTWV| steps
+# NTWF       controls writing of force trajectory
+#       0: no force trajectory is written (default)
+#      >0: write solute and solvent forces every NTWF steps
+#      <0: write solute forces every |NTWF| steps
+# NTWE >= 0 controls writing of energy trajectory
+#       0: no energy trajectory is written (default)
+#      >0: write energy trajectory every NTWE steps
+# NTWG >= 0 controls writing of free energy trajectory
+#       0: no free energy trajectory is written (default)
+#      >0: write free energy trajectory every NTWG steps
+# NTWB >= 0 controls writing of block-averaged energy trajectory
+#       0: no block averaged energy trajectory is written (default)
+#      >0: write block-averaged energy variables every |NTWB| steps
+#          (and free energies if NTWG > 0) trajectory
 #
 #     NTWX     NTWSE      NTWV      NTWF      NTWE      NTWG      NTWB
       100          0         0         0       100         0       100
@@ -328,10 +353,15 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 FORCE
-#      NTF array
-# bonds    angles    imp.     dihe     charge vdW
-# H        H         H        H
-  0  0     1  1      1  1     1  1     1      1
+# NTF(1..10): 0,1 determines terms used in force calculation
+#             0: do not include terms
+#             1: include terms
+# NEGR: >= 0 number of energy groups
+# NRE(1..NEGR): >= 1.0 last atom in each energy group
+# NTF(1..2) NTF(3..4) NTF(5..6) NTF(7..8) NTF(9)        NTF(10)
+# bonds     angles    improper  dihedral  electrostatic vdW
+# H         H         H         H
+  0  0      1  1      1  1      1  1      1             1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      1        60           
 END
@@ -361,12 +391,12 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 PAIRLIST
-#       ALGORITHM: standard (gromos96 like pairlist)
-#                  grid (md++ grid pairlist)
-#                  vgrid (md++ vector grid pairlist)
+#       ALGORITHM: standard(0) (gromos96 like pairlist)
+#                  grid(1) (md++ grid pairlist)
+#                  vgrid(2) (md++ vector grid pairlist)
 #       SIZE:      grid cell size (or auto = 0.5 * RCUTP)
-#       TYPE:      chargegoup (chargegroup based cutoff)
-#                  atomic (atom based cutoff)
+#       TYPE:      chargegoup(0) (chargegroup based cutoff)
+#                  atomic(1) (atom based cutoff)
 #
 #       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
 	grid            5       0.8     1.4     auto    chargegroup
@@ -397,8 +427,8 @@ NONBONDED
 # TOLA2     > 0.0 tolerance for numerical A2 evaluation 
 # EPSLS      = 0.0 || > 1.0 lattice sum permittivity (0.0 = tinfoil)
 # NKX, NKY, NKZ > 0 maximum absolute Ewald k-vector components
-# NK2       > 0.0 Ewald k-space cutoff
-# NGA, NGB, NGC > 0 P3M number of grid points
+# KCUT       > 0.0 Ewald k-space cutoff
+# NGX, NGY, NGZ > 0 P3M number of grid points
 # NASORD    1..5 order of mesh charge assignment function
 # NFDORD    0..5 order of the mesh finite difference operator
 #     0 : ik - differentiation
@@ -426,7 +456,7 @@ NONBONDED
        0.0       1.4      61.0
 #   NSHAPE    ASHAPE    NA2CLC     TOLA2    EPSLS
         -1       1.4         2    0.1E-9      0.0
-#      NKX       NKY       NKZ       NK2
+#      NKX       NKY       NKZ       KCUT
         10        10        10      100.0
 #      NGX       NGY       NGZ    NASORD    NFDORD    NALIAS    NSPORD
         32        32        32         3         2         3         4
@@ -442,9 +472,15 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 GROMOS96COMPAT
+# NTNB96 0,1 controls use of g96-like nonbonded routines (ignored)
+#    0 : not used [default]
+#    1 : g96-like double-loop routines are used
 # NTR96 0,1 controls use of reaction field formula
 #    0 : new reaction field formula [default]
 #    1 : g96 reaction field formula
+# NTP96 0,1 controls use of g96 pressure calculation (ignored)
+#    0 : new formula using ekin a t 
+#    1 : g96 formulat using ekin at t - dt / 2
 # NTG96 0,1 controls use of soft-core formula (ignored)
 #    0 : new soft-core formula
 #    1 : g96 soft-core formula [default]
@@ -484,10 +520,9 @@ END
 Example <a href="posres.html">Position Restraints</a> file
 
 <h2><a name="perturbation">PERTURBATION</a></h2>
-new format:
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTURB
+PERTURBATION
 #    NTG: 0..1 controls use of free-energy calculation.
 #         0: no free-energy calculation (default)
 #         1: calculate dH/dRLAM
@@ -512,19 +547,7 @@ PERTURB
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
-old format:
-<table cellpadding="2" cellspacing="2" border="0" width="600"
- bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
-PERTURB
-# NTG: 0 no perturbation is applied
-#    : 1 calculate dV/dRLAM perturbation
-#      NTG     NRDGL     RLAM     DLAMT        RMU   DMUT
-         0         0        0   0.00000    0.00000   0.00
-#   ALPHLJ    ALPHC     NLAM       MMU
-         0        0        1         1
-END
-</PRE></CODE></td></tr></tbody>
-</TABLE>
+
 <br>
 Example <a href="pttopo.html">perturbation topology</a>
 
@@ -532,11 +555,13 @@ Example <a href="pttopo.html">perturbation topology</a>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 JVALUERES
-# NTJVR
-#        off (0)              no J-Value restraints [default]
-#        instantaneous (1)    instantaneous J-Value restraints
-#        averaged (2)         time averaged J-Value restraints
-#        biquadratic (3)      biquadratic J-Value restraints
+# NTJVR -3..2
+#       -3                    biquadratic using CJVR * WJVR
+#       -2                    time averaged using CJVR * WJVR
+#       -1                    time avaraged using CJVR (not implemented)
+#        0                    no J-Value restraints [default]
+#        1                    instantaneous using CJVR  (not implemented)
+#        2                    instantaneous using CJVR * WJVR
 # NTJVRA 0,1                  controls reading of averages from startup file
 #        0:                   start from initial values J0
 #        1:                   read time averages from startup file (for continuation run)
@@ -724,13 +749,13 @@ Example <a href="disres.html">distance restraints specification</a>
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 DIHEDRALRES
-# NTDLR   0...4 controls dihedral-angle restraining and constraining 
+# NTDLR   0...3 controls dihedral-angle restraining and constraining 
 #         0:    off [default]
-#         1:    instantaneous dihedral restraining using CDLR
-#         2:    time-averaged dihedral restraining using CDLR
-#         3:    biquadratic dihedral restraining using CDLR
-#         4:    dihedral constraining
-# CDLR    >=0.0 force constant for dihedral restraining (multiplied by WDLR)
+#         1:    dihedral restraining using CDLR
+#         2:    dihedral restraining using CDLR * WDLR
+#         3:    dihedral constraining
+#    
+# CDLR    >=0.0 force constant for dihedral restraining
 # PHILIN  deviation after which the potential energy function is linearized
 #
 # NTDLR  CDLR      PHILIN
@@ -809,7 +834,7 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 INNERLOOP
-# SPC 0,1  
+# SPEC 0,1  
 #       0: use standard solvent loops [default]
 #       1: use fast SPC solvent loops
 #          note that standard solvent loops will be used also if SPC == 1, if
@@ -819,7 +844,7 @@ INNERLOOP
 #          - grid based pairlist is used,
 #          - atomic cutoff is used.
 #
-#   SPC
+#   SPEC
      1 
 END
 </PRE></CODE></td></tr></tbody>
@@ -848,6 +873,29 @@ EDS
   0.2  0.01 0.1
 # EIR 
   0   20   40
+END
+</PRE></CODE></td></tr></tbody>
+</TABLE>
+<h2><a name="LAMBDAS">LAMBDAS</a></h2>
+<table cellpadding="2" cellspacing="2" border="0" width="600"
+ bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
+LAMBDAS
+# NTIL    off(0), on(1)
+#         0: no special treatment of interactions with individual lambda-values
+#         1: interactions are treated with special individual lambda-values
+# NTLI(1..)  interaction type to treat with individual lambda: 
+#            bond(1), angle(2), dihedral(3), improper(4), vdw(5), vdw_soft(6),
+#            crf(7), crf_soft(8), distanceres(9), dihedralres(10), mass(11)
+# NILG1, NILG2 energy groups of interactions that are treated with individual 
+#              lambda values
+# ALI, BLI, CLI, DLI, ELI polynomial coefficients linking the individual lambda-
+#                         values to the overall lambda-value
+# NTIL
+   1
+# NTLI
+  7
+# NILG1  NILG2
+  1      3
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

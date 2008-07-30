@@ -225,17 +225,17 @@ DISTANCERES
         2       0  1000.0     0.3     0.0
 END
 DIHEDRALRES
-# NTDLR   0...4 controls dihedral-angle restraining and constraining 
+# NTDLR   0...3 controls dihedral-angle restraining and constraining 
 #         0:    off [default]
-#         1:    instantaneous dihedral restraining using CDLR
-#         2:    time-averaged dihedral restraining using CDLR
-#         3:    biquadratic dihedral restraining using CDLR
-#         4:    dihedral constraining
-# CDLR    >=0.0 force constant for dihedral restraining (multiplied by WDLR)
+#         1:    dihedral restraining using CDLR
+#         2:    dihedral restraining using CDLR * WDLR
+#         3:    dihedral constraining
+#    
+# CDLR    >=0.0 force constant for dihedral restraining
 # PHILIN  deviation after which the potential energy function is linearized
 #
 # NTDLR  CDLR      PHILIN
-  1      100.0     -1.0
+  2      100.0     -1.0
 END
 PERTURBATION
 #    NTG: 0..1 controls use of free-energy calculation.
