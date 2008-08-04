@@ -9,33 +9,32 @@
 #include <fftw3.h>
 namespace configuration{
   /**
-   * @class Mesh 
-   * the grid used for FFTW calclations
+   * @class GenericMesh 
+   * a generic gridded quantity
+   *
+   * all data types have to be manually instantiated in @file mesh.cc
    */
-  class Mesh {
+  
+  template<typename complex_type>
+  class GenericMesh {
   public:
-    /**
-     * type of the complex number
-     */
-    typedef std::complex<double> complex_type;
-    
     /**
      * Constructor (empty mesh)
      */
-    Mesh();
+    GenericMesh();
             
     /**
      * Constructor
      */
-    Mesh(unsigned int size_x, unsigned int size_y, unsigned int size_z);
+    GenericMesh(unsigned int size_x, unsigned int size_y, unsigned int size_z);
     /**
      * Destructor
      */
-    ~Mesh();
+    ~GenericMesh();
     /**
      * copy constructor
      */
-    Mesh(const Mesh & mesh);
+    GenericMesh(const GenericMesh<complex_type> & mesh);
     
     /**
      * resize the Mesh.
@@ -100,12 +99,19 @@ namespace configuration{
       return m_mesh;
     }
     /**
+     * const accessor to the mesh
+     */
+    inline const complex_type * mesh() const {
+      return m_mesh;
+    }
+    /**
      * @enum fft_type
      *  FFT forward or backward
      */
     enum fft_type { fft_forward = 1, fft_backward = -1};
     /**
      * fft the mesh
+     * This will result in a runtime error for non complex meshs.
      */
     void fft(fft_type type);
     
@@ -125,7 +131,10 @@ namespace configuration{
     /**
      * set the numbers to zero
      */
-    void zero();
+    void zero() {
+      for(unsigned int i = 0; i < m_volume; ++i)
+        m_mesh[i] = 0;
+    }
     
     
   protected:
@@ -158,7 +167,14 @@ namespace configuration{
      */
     fftw_plan plan_backward;
   };
+  
+  typedef std::complex<double> complex_number;
+  /**
+   * @class Mesh
+   * the complex mesh used for FFTW calculations.
+   */
+  typedef GenericMesh<complex_number> Mesh;
 }
-
 #endif	/* INCLUDED_MESH_H */
+
 

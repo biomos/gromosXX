@@ -29,7 +29,7 @@ void interaction::Lattice_Sum::calculate_influence_function(
         configuration::Configuration & conf,
         const simulation::Simulation & sim) {
   DEBUG(8, "\tUpdating influence function");
-  configuration::Mesh & influence_function = conf.lattice_sum().influence_function;
+  configuration::GenericMesh<double> & influence_function = conf.lattice_sum().influence_function;
   const unsigned int Nx = influence_function.x();
   const unsigned int Ny = influence_function.y();
   const unsigned int Nz = influence_function.z();
@@ -190,7 +190,7 @@ void interaction::Lattice_Sum::calculate_influence_function(
       int yy = (Ny - y) % Ny;
       for (int x = 0; x <= Nx_2; ++x) {
         int xx = (Nx - x) % Nx;
-        std::complex<double> & tmp = influence_function(x, y, z);
+        double & tmp = influence_function(x, y, z);
         DEBUG(1, "\tinfluence_function(" << x << "," << y << "," << z << ") = " << tmp);
           
         influence_function(xx, y, z) = tmp;
@@ -220,7 +220,7 @@ void interaction::Lattice_Sum::evaluate_influence_function_quality(
         configuration::Configuration & conf,
         const simulation::Simulation & sim) {
   DEBUG(8, "\tEvaluating the quality of the influence function");
-  configuration::Mesh & influence_function = conf.lattice_sum().influence_function;
+  configuration::GenericMesh<double> & influence_function = conf.lattice_sum().influence_function;
   const unsigned int Nx = influence_function.x();
   const unsigned int Ny = influence_function.y();
   const unsigned int Nz = influence_function.z();
@@ -353,7 +353,7 @@ void interaction::Lattice_Sum::evaluate_influence_function_quality(
         }
         DEBUG(13, "\t D_hat_g = " << math::v2s(D_hat_g));
         // MD99.32 eq. 203
-        double ghat = influence_function(l).real();
+        double ghat = influence_function(l);
         q += ghat*ghat * abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
         q += sum_k2ifourier - 2 * ghat* math::dot(D_hat_g, sum_ghat_numerator);
         DEBUG(20, "running q = " << q);
@@ -475,7 +475,7 @@ void interaction::Lattice_Sum::calculate_potential_and_energy(
   
   
   configuration::Mesh & charge_density = conf.lattice_sum().charge_density;
-  configuration::Mesh & influence_function = conf.lattice_sum().influence_function;
+  configuration::GenericMesh<double> & influence_function = conf.lattice_sum().influence_function;
   configuration::Mesh & potential = conf.lattice_sum().potential;
   
   assert(charge_density.x() == influence_function.x() && charge_density.x() == potential.x());
@@ -511,7 +511,7 @@ void interaction::Lattice_Sum::calculate_potential_and_energy(
         // calculate the energy by MD05.32 eq. 72     
         const std::complex<double> density = charge_density(x, y, z);
         const double abs2_charge_density = density.real() * density.real() + density.imag() * density.imag();
-        energy += influence_function(x, y, z).real() * abs2_charge_density / double(grid_volume);
+        energy += influence_function(x, y, z) * abs2_charge_density / double(grid_volume);
         DEBUG(15, "\t\t abs_charge_density = " << abs2_charge_density / sqrt_grid_volume
                 << ", energy = " << energy);
       }

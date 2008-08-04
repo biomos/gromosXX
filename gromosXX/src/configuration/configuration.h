@@ -270,9 +270,9 @@ namespace configuration
       std::vector<KSpace_Element> kspace;
       
       /**
-       * influence function
+       * influence function (real)
        */
-      Mesh influence_function;
+      GenericMesh<double> influence_function;
       /**
        * quality of the influence function (q)
        */
@@ -293,7 +293,7 @@ namespace configuration
         Mesh x;
         Mesh y;
         Mesh z;
-      }electric_field;
+      } electric_field;
 
       /**
        * methodology dependent A2 term
