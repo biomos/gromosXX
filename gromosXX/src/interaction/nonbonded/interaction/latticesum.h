@@ -300,27 +300,6 @@ namespace interaction {
     }
     
     /**
-     * calculates the optimal influence function for a certain
-     * configuration and stores it in the configuration.
-     * The quality constant Q is also calculated.
-     */
-    static void calculate_influence_function(
-            const topology::Topology & topo,
-            configuration::Configuration & conf,
-            const simulation::Simulation & sim);
-    
-    /**
-     * evaluate the quality the optimal influence function. 
-     * The influence function is taken from the configuration and evaluated against
-     * the current box. The quality constant Q is calculated and stored in the
-     * configuration.
-     */
-    static void evaluate_influence_function_quality(
-            const topology::Topology & topo,
-            configuration::Configuration & conf,
-            const simulation::Simulation & sim);
-    
-    /**
      * assign charges to grid
      *
      * The charges are taken from the topology and assigned to the charge 

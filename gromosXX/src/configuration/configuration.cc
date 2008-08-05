@@ -11,6 +11,7 @@
 #include <topology/topology.h>
 #include <configuration/configuration.h>
 #include <configuration/mesh.h>
+#include <configuration/influence_function.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
 
@@ -432,7 +433,7 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
     const unsigned int Ny = param.nonbonded.p3m_grid_points_y;
     const unsigned int Nz = param.nonbonded.p3m_grid_points_z;
 
-    influence_function.resize(Nx, Ny, Nz);
+    influence_function.init(param);
     charge_density.resize(Nx, Ny, Nz);
     potential.resize(Nx, Ny, Nz);
     electric_field.x.resize(Nx, Ny, Nz);

@@ -783,9 +783,9 @@ void interaction::Nonbonded_Outerloop
   // always calculate at the beginning or read it from file.
   if (sim.steps() == 0 && !sim.param().nonbonded.influence_function_read) {
     DEBUG(10,"\t calculating influence function");
-    interaction::Lattice_Sum::calculate_influence_function(topo, conf, sim);
+    conf.lattice_sum().influence_function.calculate(topo, conf, sim);
 
-    const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function_quality
+    const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
             / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
 
     if (new_rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
@@ -800,19 +800,19 @@ void interaction::Nonbonded_Outerloop
   // check whether we have to update the influence function
   if (sim.steps() && sim.param().nonbonded.accuracy_evaluation &&
       sim.steps() % sim.param().nonbonded.accuracy_evaluation == 0) {
-    interaction::Lattice_Sum::evaluate_influence_function_quality(topo, conf, sim);
+    conf.lattice_sum().influence_function.evaluate_quality(topo, conf, sim);
     // number of charges is set to number of atoms as in promd...
     // see MD02.10 eq. C7
-    const double rms_force_error = sqrt(conf.lattice_sum().influence_function_quality
+    const double rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
             / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
     
     if (rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
       // recalculate the influence function
       DEBUG(10,"\t calculating influence function");
       
-      interaction::Lattice_Sum::calculate_influence_function(topo, conf, sim);
+      conf.lattice_sum().influence_function.calculate(topo, conf, sim);
       
-      const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function_quality
+      const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
             / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
       
       if (new_rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {

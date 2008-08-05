@@ -10,6 +10,7 @@
 #include <gromosXX/configuration/energy.h>
 #include <gromosXX/configuration/average.h>
 #include <gromosXX/configuration/mesh.h>
+#include <gromosXX/configuration/influence_function.h>
 #include <gromosXX/configuration/kspace.h>
 
 namespace topology
@@ -272,11 +273,7 @@ namespace configuration
       /**
        * influence function (real)
        */
-      GenericMesh<double> influence_function;
-      /**
-       * quality of the influence function (q)
-       */
-      double influence_function_quality;
+      Influence_Function influence_function;
       /**
        * charge density
        */

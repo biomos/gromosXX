@@ -13,7 +13,7 @@
 
 
 namespace math
-{
+{  
   /**
    * 3 dimensional vector.
    */
@@ -125,6 +125,9 @@ namespace math
     }
   };
   
+  // the box should be known to the Matrix
+  class Box;
+  
   /**
    * Matrix.
    */
@@ -162,6 +165,8 @@ namespace math
         }
       }
     }
+    
+    GenericMatrix(const Box & box);
 
     template<typename numeric_type_b>
     inline GenericMatrix(
@@ -300,6 +305,15 @@ namespace math
       return *this;
     }
   };
+
+  template<typename numeric_type>
+  GenericMatrix<numeric_type>::GenericMatrix(const Box & box) {
+    for (unsigned int i = 0; i < 3; ++i) {
+      m[i][0] = box(0)(i);
+      m[i][1] = box(1)(i);
+      m[i][2] = box(2)(i);
+    }
+  }
 
   /**
    * @enum boundary_enum
@@ -709,6 +723,14 @@ namespace math
       }
     }
     return trans;
+  }
+ 
+  /**
+   * trace of Matrix X
+   */
+  template<typename numeric_type>
+  inline numeric_type trace(GenericMatrix<numeric_type> const &ma) {
+    return ma(0,0) * ma(1,1) * ma(2,2);
   }
   
   inline Box operator*(Box const &ba, double d)
