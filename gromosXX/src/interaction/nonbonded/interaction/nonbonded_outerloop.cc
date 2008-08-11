@@ -785,7 +785,7 @@ void interaction::Nonbonded_Outerloop
   if (sim.mpi)
     interaction::Lattice_Sum::decompose_into_domains<configuration::ParallelMesh>(topo, conf, sim, r, size);
   else
-    interaction::Lattice_Sum::decompose_into_domains<configuration::Mesh>(topo, conf, sim, r, size);
+    interaction::Lattice_Sum::decompose_into_domains<configuration::Mesh >(topo, conf, sim, r, size);
 
   DEBUG(10,"size domain(" << rank << "): " << conf.lattice_sum().domain.size());
   
@@ -795,9 +795,9 @@ void interaction::Nonbonded_Outerloop
     if (rank == 0)
       timer.start("P3M: influence function");
     if (sim.mpi)
-      conf.lattice_sum().influence_function.calculate<configuration::ParallelMesh>(topo, conf, sim);
+      conf.lattice_sum().influence_function.template calculate< configuration::ParallelMesh >(topo, conf, sim);
     else
-      conf.lattice_sum().influence_function.calculate<configuration::Mesh>(topo, conf, sim);
+      conf.lattice_sum().influence_function.template calculate< configuration::Mesh >(topo, conf, sim);
 
     const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
             / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
@@ -819,9 +819,9 @@ void interaction::Nonbonded_Outerloop
     if (rank == 0)
       timer.start("P3M: accuracy evaluation");
     if (sim.mpi)
-      conf.lattice_sum().influence_function.evaluate_quality<configuration::ParallelMesh>(topo, conf, sim);
+      conf.lattice_sum().influence_function.template evaluate_quality<configuration::ParallelMesh>(topo, conf, sim);
     else
-      conf.lattice_sum().influence_function.evaluate_quality<configuration::Mesh>(topo, conf, sim);
+      conf.lattice_sum().influence_function.template evaluate_quality<configuration::Mesh >(topo, conf, sim);
     // number of charges is set to number of atoms as in promd...
     // see MD02.10 eq. C7
     const double rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
@@ -835,9 +835,9 @@ void interaction::Nonbonded_Outerloop
       if (rank == 0)
         timer.start("P3M: influence function");
       if (sim.mpi)
-        conf.lattice_sum().influence_function.calculate<configuration::ParallelMesh>(topo, conf, sim);
+        conf.lattice_sum().influence_function.template calculate<configuration::ParallelMesh>(topo, conf, sim);
       else
-        conf.lattice_sum().influence_function.calculate<configuration::Mesh>(topo, conf, sim);
+        conf.lattice_sum().influence_function.template calculate<configuration::Mesh >(topo, conf, sim);
       
       const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
             / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
@@ -860,7 +860,7 @@ void interaction::Nonbonded_Outerloop
   if (sim.mpi)
     interaction::Lattice_Sum::calculate_charge_density<configuration::ParallelMesh>(topo, conf, sim, r);
   else
-    interaction::Lattice_Sum::calculate_charge_density<configuration::Mesh>(topo, conf, sim, r);
+    interaction::Lattice_Sum::calculate_charge_density<configuration::Mesh >(topo, conf, sim, r);
 
   DEBUG(10,"\t assigned charge density to grid, starting fft of charge density");
   // FFT the charge density grid
@@ -871,19 +871,19 @@ void interaction::Nonbonded_Outerloop
   if (sim.mpi) {
     interaction::Lattice_Sum::calculate_potential_and_energy<configuration::ParallelMesh>(topo, conf, sim, storage);
   } else {
-    interaction::Lattice_Sum::calculate_potential_and_energy<configuration::Mesh>(topo, conf, sim, storage);
+    interaction::Lattice_Sum::calculate_potential_and_energy<configuration::Mesh >(topo, conf, sim, storage);
   }
   DEBUG(10, "\t done with calculation of elec. potential and energy, calculating electric field...");
   if (sim.mpi) {
     interaction::Lattice_Sum::calculate_electric_field<configuration::ParallelMesh>(topo, conf, sim);
   } else {
-    interaction::Lattice_Sum::calculate_electric_field<configuration::Mesh>(topo, conf, sim);
+    interaction::Lattice_Sum::calculate_electric_field<configuration::Mesh >(topo, conf, sim);
   }
   DEBUG(10, "\t done with electric field calculation, calculating forces");
   if (sim.mpi) {
     interaction::Lattice_Sum::calculate_force<configuration::ParallelMesh>(topo, conf, sim, storage, r);
   } else {
-    interaction::Lattice_Sum::calculate_force<configuration::Mesh>(topo, conf, sim, storage, r);
+    interaction::Lattice_Sum::calculate_force<configuration::Mesh >(topo, conf, sim, storage, r);
   }
   
   if (rank == 0)
