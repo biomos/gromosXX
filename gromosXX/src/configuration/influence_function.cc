@@ -2,7 +2,9 @@
  * @file influence_function.cc
  * influence function logic
  */
-
+#ifdef XXMPI
+#include <mpi.h>
+#endif
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -43,6 +45,7 @@ void configuration::Influence_Function::init(const simulation::Parameter & param
   }
 }
 
+template<class MeshType>
 void configuration::Influence_Function::calculate(const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim) {
@@ -83,20 +86,29 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
   tLi_0 = math::inverse(tL_0);
   math::Matrix tL_inv_2pi = tLi_0 * (2.0 * math::Pi);
 
+  MeshType & potential = *reinterpret_cast<MeshType*>(conf.lattice_sum().potential);
+
+  const int x_to = potential.right_boundary();
+  const int x_from = potential.left_boundary();  
+  
   // loop over reciprocal-space grid G
   DEBUG(10, "\tstarting loop over reciprocal-space grid");
   math::GenericVec<int> l;
 
   // quality control: quantiy q to calculate the RMS force error
-  q = 0.0;
-  for (int l1 = 1 - Nx_2; l1 <= Nx_2; ++l1) {
-    l(0) = l1;
+  double my_q = 0.0;
+  for (int x = x_from; x < x_to; ++x) {
+    if (x > int(Nx_2))
+      l(0) = x - Nx;
+    else
+      l(0) = x;
+
     for (int l2 = 1 - Ny_2; l2 <= Ny_2; ++l2) {
       l(1) = l2;
       for (int l3 = 1 - Nz_2; l3 <= Nz_2; ++l3) {
         l(2) = l3;
 
-        if (l1 == 0 && l2 == 0 && l3 == 0) {
+        if (l(0) == 0 && l(1) == 0 && l(2) == 0) {
           ghat(l) = 0.0;
           if (hasDerivative)
             gammahat(l) = 0.0;
@@ -188,14 +200,24 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
         const double numerator = math::dot(D_hat_g, sum_ghat_numerator);
         const double denominator = abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
         ghat(l) = numerator / denominator;
-        q += sum_k2ifourier - numerator * numerator / denominator;
+        my_q += sum_k2ifourier - numerator * numerator / denominator;
 
         DEBUG(13, "\t influence function (0)" << math::v2s(l) << " ="
                 << ghat(l));
       }
     }
   } // loop over reciprocal space grid
-  q *= 16 * math::Pi * math::Pi / volume;
+  my_q *= 16 * math::Pi * math::Pi / volume;
+
+#ifdef XXMPI
+  if (sim.mpi) {
+    MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
+  } else {
+#endif
+    q = my_q;
+#ifdef XXMPI
+  }
+#endif
   DEBUG(10, "q = " << q);
 
   // symmetrize the influence function
@@ -229,8 +251,18 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
   }
    */
 }
+template void configuration::Influence_Function::calculate<configuration::Mesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
+template void configuration::Influence_Function::calculate<configuration::ParallelMesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
 
-void configuration::Influence_Function::evaluate_quality(const topology::Topology & topo,
+template<class MeshType>
+void configuration::Influence_Function::evaluate_quality(
+        const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim) {
   DEBUG(8, "\tEvaluating the quality of the influence function");
@@ -267,20 +299,30 @@ void configuration::Influence_Function::evaluate_quality(const topology::Topolog
           math::cross(box(1), box(2)) * volume_i_2pi,
           math::cross(box(2), box(0)) * volume_i_2pi,
           math::cross(box(0), box(1)) * volume_i_2pi, true /* column wise */);
+  
+  MeshType & potential = *reinterpret_cast<MeshType*>(conf.lattice_sum().potential);
+
+  const int x_to = potential.right_boundary();
+  const int x_from = potential.left_boundary();  
 
   // loop over reciprocal-space grid G
   DEBUG(10, "\tstarting loop over reciprocal-space grid");
   math::GenericVec<int> l;
   
   // quality control: quantiy q to calculate the RMS force error
-  q = 0.0;
-  for (int l1 = 1 - Nx_2; l1 <= Nx_2; ++l1) {
-    l(0) = l1;
+  double my_q = 0.0;
+  for (int x = x_from; x < x_to; ++x) {
+    if (x > int(Nx_2))
+      l(0) = x - Nx;
+    else
+      l(0) = x;
+
     for (int l2 = 1 - Ny_2; l2 <= Ny_2; ++l2) {
       l(1) = l2;
       for (int l3 = 1 - Nz_2; l3 <= Nz_2; ++l3) {
         l(2) = l3;
-        if (l1 == 0 && l2 == 0 && l3 == 0) {
+        
+        if (l(0) == 0 && l2 == 0 && l3 == 0) {
           continue;
         }
 
@@ -357,20 +399,39 @@ void configuration::Influence_Function::evaluate_quality(const topology::Topolog
           // if this is zero we have to set the influence function terms to zero. 
           // Due to numerical problems!!!
           if (abs2_D_hat_g < math::epsilon) {
-            q += sum_k2ifourier;
+            my_q += sum_k2ifourier;
             continue;
           } 
         }
         DEBUG(13, "\t D_hat_g = " << math::v2s(D_hat_g));
         // MD99.32 eq. 203
         double ghat = (*this)(l);
-        q += ghat*ghat * abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
-        q += sum_k2ifourier - 2 * ghat* math::dot(D_hat_g, sum_ghat_numerator);
+        my_q += ghat*ghat * abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
+        my_q += sum_k2ifourier - 2 * ghat* math::dot(D_hat_g, sum_ghat_numerator);
         DEBUG(20, "running q = " << q);
       }
     }
   } // loop over reciprocal space grid
-  q *= 16 * math::Pi * math::Pi / volume;
+  my_q *= 16 * math::Pi * math::Pi / volume;
+
+#ifdef XXMPI
+  if (sim.mpi) {
+    MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
+  } else {
+#endif
+    q = my_q;
+#ifdef XXMPI
+  }
+#endif
   DEBUG(10, "q = " << q);
 }
+template void configuration::Influence_Function::evaluate_quality<configuration::Mesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
+template void configuration::Influence_Function::evaluate_quality<configuration::ParallelMesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
+
 

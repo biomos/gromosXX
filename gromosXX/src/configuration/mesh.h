@@ -7,6 +7,13 @@
 #define	INCLUDED_MESH_H
 #include <complex>
 #include <fftw3.h>
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE configuration
+#define SUBMODULE configuration
+
+
 namespace configuration{
   /**
    * @class GenericMesh 
@@ -135,7 +142,28 @@ namespace configuration{
       for(unsigned int i = 0; i < m_volume; ++i)
         m_mesh[i] = 0;
     }
-    
+    /**
+     * get the boundaries. Only for parallelization
+     */
+    const unsigned int left_boundary() const {
+      return 0;
+    }
+    /**
+     * get the boundaries. Only for parallelization
+     */
+    const unsigned int & right_boundary() const {
+      return m_x;
+    }
+    /**
+     * get the data from the other processors and fill the caches. Only
+     * for compatibility.
+     */
+    void get_neighbors() { return; }
+    /**
+     * get the caches from the other processors and add them
+     * to the real data. Only for compatibility.
+     */
+    void add_neighbors_caches() { return; }
     
   protected:
     /**
@@ -174,6 +202,143 @@ namespace configuration{
    * the complex mesh used for FFTW calculations.
    */
   typedef GenericMesh<complex_number> Mesh;
+  
+  /**
+   * @class ParallelMesh
+   * A mesh for MPI parallelization
+   */
+  class ParallelMesh : public GenericMesh<complex_number> {
+  public:
+    /**
+     * constructor
+     */
+    ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size);
+    /**
+     * another constructor
+     */
+    ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
+            unsigned int x, unsigned int y, unsigned int z);
+    /**
+     * resize the mesh
+     */
+    void resize(unsigned int x, unsigned int y, unsigned int z);
+    /**
+     * destruct the mesh
+     */
+    ~ParallelMesh();
+    /**
+     * zero the mesh and cache
+     */
+    void zero();
+    /** 
+     * access an element from the grid
+     * we do no error checking in here. Make sure that you don't access elements
+     * that are outside the caches.
+     */
+    inline complex_number & operator() (unsigned int x, unsigned int y, unsigned int z) {
+      assert(x < m_x && y < m_y && z < m_z);
+      
+      const int l = slice_start;
+      const int & r = slice_end_inclusive;
+      
+      int l2 = (l <= m_x2) ? l + m_x : l - m_x;
+      int r2 = (r <= m_x2) ? r + m_x : r - m_x;
+      
+      int dist_l = std::min(abs(l-x), abs(l2-x));
+      int dist_r = std::min(abs(int(x)-r), abs(int(x)-r2));
+
+      if (dist_l + dist_r <= int(slice_width)) {
+        DEBUG(30, "rank("<<rank<<"): middle");
+        return m_mesh[z + m_z*(y + m_y * (x - slice_start))];
+      } else if (dist_l < dist_r) {
+        DEBUG(30, "rank(" << rank << "): left");
+        // x is just to the left of the slice
+        return mesh_left[z + m_z * (y + m_y * (cache_size - dist_l))];
+      } else {
+        DEBUG(30, "rank(" << rank << "): right");
+        // x is just to the right of the slice
+        return mesh_right[z + m_z * (y + m_y * (dist_r - 1))];
+      }
+    }
+    /**
+     * accessor to a grid point via an unsigned int vector argument
+     * periodicity is taken into account by a modulo operation
+     */
+    inline complex_number & operator()(const math::GenericVec<int> &p)  {
+      // convert it to an unsigned int and do the modulo operation
+      // to take the periodicity into account.
+      return (*this)(
+                (p(0) + m_x) % m_x,
+                (p(1) + m_y) % m_y,
+                (p(2) + m_z) % m_z);
+    }
+    /**
+     * get the data from the other processors and fill the caches
+     */
+    void get_neighbors();
+    /**
+     * get the caches from the other processors and add them
+     * to the real data
+     */
+    void add_neighbors_caches();
+    /**
+     * accessor to the left slice boundary
+     */
+    const unsigned int & left_boundary() const {
+      return slice_start;
+    }
+    /**
+     * accessor to the left slice boundary
+     */
+    const unsigned int & right_boundary() const {
+      return slice_end;
+    }
+  protected :
+    /**
+     * the mesh to the leftern side of the real mesh
+     */
+    complex_number *mesh_left;
+    /**
+     * the mesh to the righern side of the real mesh
+     */
+    complex_number *mesh_right;
+    /**
+     * a temporary mesh
+     */
+    complex_number *mesh_tmp;
+    /**
+     * number of threads/cpus
+     */
+    unsigned int num_threads;
+    /**
+     * rank of the thread
+     */
+    unsigned int rank;
+    /**
+     * size of the cach to the left and the right side of the mesh
+     */
+    unsigned int cache_size;
+    /**
+     * slice width
+     */
+    unsigned int slice_width;
+    /**
+     * integer where slice starts
+     */
+    unsigned int slice_start;
+    /**
+     * integer where slice ends (exclusive)
+     */
+    unsigned int slice_end;
+    /**
+     * inetger where slice ends (inclusive)
+     */
+    int slice_end_inclusive;
+    /**
+     * half of the box length along x
+     */
+    int m_x2;
+  };
 }
 #endif	/* INCLUDED_MESH_H */
 

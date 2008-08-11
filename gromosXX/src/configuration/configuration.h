@@ -263,7 +263,19 @@ namespace configuration
      * lattice sum information
      */
     struct lattice_sum_struct {
-      
+      /**
+       * constructor
+       */
+      lattice_sum_struct() : charge_density(NULL), potential(NULL),
+              a2_tilde(0.0)
+      {}
+      /**
+       * destructor
+       *
+      ~lattice_sum_struct() {
+        if (charge_density!=NULL) delete charge_density;
+        if (potential!=NULL) delete potential;
+      }*/
       /**
        * a vector holding the k-space elements
        * (vectors, absolute values, fourier coefficients)
@@ -277,30 +289,42 @@ namespace configuration
       /**
        * charge density
        */
-      Mesh charge_density;
+      Mesh* charge_density;
       /**
        * electrostatic potential
        */
-      Mesh potential;
+      Mesh* potential;
 
       /**
        * electric field
        */
       struct electric_field_mesh {
-        Mesh x;
-        Mesh y;
-        Mesh z;
+        electric_field_mesh() : x(NULL), y(NULL), z(NULL) {}
+        /*
+        ~electric_field_mesh() {
+          if (x!=NULL) delete x;
+          if (y!=NULL) delete y;
+          if (z!=NULL) delete z;
+        }*/
+        Mesh* x;
+        Mesh* y;
+        Mesh* z;
       } electric_field;
 
       /**
        * methodology dependent A2 term
        */
       double a2_tilde;
+      
+      /**
+       * indices of domain decomposition
+       */
+      std::vector<int> domain;
 
       /**
        * init lattice sum
        */
-      void init(topology::Topology const & topo, simulation::Parameter & param);
+      void init(topology::Topology const & topo, simulation::Simulation & sim);
     };
     //////////////////////////////////////////////////////////////////////
     // accessors

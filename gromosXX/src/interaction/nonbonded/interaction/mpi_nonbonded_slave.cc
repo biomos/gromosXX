@@ -280,6 +280,11 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
          */
       } // loop over states
     } // eds
+    
+    if (sim.param().nonbonded.method == simulation::el_p3m) {
+      MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().energies.ls_kspace_total,
+            NULL, 1, MPI::DOUBLE, MPI::SUM, 0);
+    }
       
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
@@ -320,6 +325,10 @@ int interaction::MPI_Nonbonded_Slave::init
   
   // initialise the pairlist...
   m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
+  
+  if (sim.param().nonbonded.method != simulation::el_reaction_field) {
+    conf.lattice_sum().init(topo, sim);
+  }  
 
   DEBUG(15, "MPI_Nonbonded_Slave::initialize");
   m_nonbonded_set.clear();

@@ -21,6 +21,9 @@ namespace simulation
 {
   class Simulation;
 }
+namespace util {
+  class Algorithm_Timer;
+}
 
 namespace interaction
 {
@@ -119,7 +122,8 @@ namespace interaction
     void ls_p3m_kspace_outerloop(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim,
-            Storage & storage, int rank, int size);
+            Storage & storage, int rank, int size,
+            util::Algorithm_Timer & timer);
     
     /**
      * calculate the ls self interactions
@@ -223,7 +227,8 @@ namespace interaction
     void _ls_p3m_kspace_outerloop(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim,
-            Storage & storage, int rank, int size);
+            Storage & storage, int rank, int size,
+            util::Algorithm_Timer & timer);
 
     template<typename t_interaction_spec>
     void _ls_surface_outerloop(topology::Topology & topo,

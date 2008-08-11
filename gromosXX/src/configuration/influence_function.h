@@ -26,6 +26,7 @@ namespace configuration {
      * configuration and stores it in the configuration.
      * The quality constant Q is also calculated.
      */
+    template<class MeshType>
     void calculate(
       const topology::Topology & topo,
       configuration::Configuration & conf,
@@ -92,6 +93,7 @@ namespace configuration {
      * the current box. The quality constant Q is calculated and stored in the
      * configuration.
      */
+    template<class MeshType>
     void evaluate_quality(const topology::Topology & topo,
       configuration::Configuration & conf,
       const simulation::Simulation & sim);

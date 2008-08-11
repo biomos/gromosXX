@@ -3,6 +3,10 @@
  * methods definition
  */
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <stdheader.h>
 
 #include <configuration/configuration_global.h>
@@ -12,8 +16,10 @@
 #include <configuration/configuration.h>
 #include <configuration/mesh.h>
 #include <configuration/influence_function.h>
+#include <simulation/simulation.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
+
 
 #include <math/periodicity.h>
 
@@ -370,8 +376,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
       param.centreofmass.remove_rot = false;
     }
   }
-  m_lattice_sum.init(topo, param);
-  
 }
 
 
@@ -408,7 +412,9 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
 }
 
 void configuration::Configuration::lattice_sum_struct::init(topology::Topology const & topo,
-        simulation::Parameter & param) {
+        simulation::Simulation & sim) {
+  DEBUG(1,"Lattice Sum initalitation.");
+  simulation::Parameter & param = sim.param();
 #ifdef OMP
   int tid, size;
 #pragma omp parallel private(tid)
@@ -433,12 +439,42 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
     const unsigned int Ny = param.nonbonded.p3m_grid_points_y;
     const unsigned int Nz = param.nonbonded.p3m_grid_points_z;
 
+#ifdef XXMPI
+    if (sim.mpi) {
+      int rank = MPI::COMM_WORLD.Get_rank();
+      int num_threads = MPI::COMM_WORLD.Get_size();
+      const int cache_size = std::max(param.nonbonded.p3m_charge_assignment - 1,
+              param.nonbonded.p3m_finite_differences_operator);
+      
+      charge_density = new configuration::ParallelMesh(num_threads, rank, cache_size);
+      
+      potential = new configuration::ParallelMesh(num_threads, rank, cache_size);
+      electric_field.x = new configuration::ParallelMesh(num_threads, rank, cache_size);
+      electric_field.y = new configuration::ParallelMesh(num_threads, rank, cache_size);
+      electric_field.z = new configuration::ParallelMesh(num_threads, rank, cache_size);
+      
+      ((configuration::ParallelMesh*)charge_density)->resize(Nx, Ny, Nz);
+      ((configuration::ParallelMesh*)potential)->resize(Nx, Ny, Nz);
+      ((configuration::ParallelMesh*)electric_field.x)->resize(Nx, Ny, Nz);
+      ((configuration::ParallelMesh*)electric_field.y)->resize(Nx, Ny, Nz);
+      ((configuration::ParallelMesh*)electric_field.z)->resize(Nx, Ny, Nz);
+    } else {
+#endif
+      charge_density = new configuration::Mesh();
+      potential = new configuration::Mesh();
+      electric_field.x = new configuration::Mesh();
+      electric_field.y = new configuration::Mesh();
+      electric_field.z = new configuration::Mesh();
+      charge_density->resize(Nx, Ny, Nz);
+      potential->resize(Nx, Ny, Nz);
+      electric_field.x->resize(Nx, Ny, Nz);
+      electric_field.y->resize(Nx, Ny, Nz);
+      electric_field.z->resize(Nx, Ny, Nz);
+#ifdef XXMPI
+    }
+#endif
+    
     influence_function.init(param);
-    charge_density.resize(Nx, Ny, Nz);
-    potential.resize(Nx, Ny, Nz);
-    electric_field.x.resize(Nx, Ny, Nz);
-    electric_field.y.resize(Nx, Ny, Nz);
-    electric_field.z.resize(Nx, Ny, Nz);
   }
 
   // reset the A term

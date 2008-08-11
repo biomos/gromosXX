@@ -3,14 +3,20 @@
  * Mesh class
  */
 
+#ifdef XXMPI
+// include mpi and the mpi fftw3 library
+#include <mpi.h>
+#include <fftw3-mpi.h>
+#else
+#include <fftw3.h>
+#endif
+
 #include <stdheader.h>
 
 #include <configuration/mesh.h>
 
 #include <util/error.h>
 #include <util/debug.h>
-
-#include <fftw3.h>
 
 // for memcpy
 #include <cstdlib>
@@ -159,11 +165,219 @@ template<typename complex_type>
 void GenericMesh<complex_type>::fft(GenericMesh<complex_type>::fft_type type) {
   throw std::runtime_error("FFT of a complex data type not implemented");
 }
-}
 
 // make sure you instantiate the template with all types you need here.
 // if you fail to do so, linking will fail.
-template class configuration::GenericMesh<double>;
-template class configuration::GenericMesh<configuration::complex_number>;
-template class configuration::GenericMesh<math::Matrix>;
+template class GenericMesh<double>;
+template class GenericMesh<complex_number>;
+template class GenericMesh<math::Matrix>;
+
+ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size) :
+      GenericMesh<complex_number>(), mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
+      num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
+      slice_end(0){
+        DEBUG(15, "Cache size: " << cache_size);
+}
+      
+ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
+      unsigned int x, unsigned int y, unsigned int z) : GenericMesh<complex_number>(),
+      mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
+      num_threads(size), rank(arank), cache_size(cache_size), slice_width(0),
+      slice_start(0), slice_end(0) {
+  resize(x,y,z);
+}
+      
+ParallelMesh::~ParallelMesh() {
+  // destory the plans
+  if (plan_forward != NULL)
+    fftw_destroy_plan(plan_forward);
+  if (plan_backward != NULL)
+    fftw_destroy_plan(plan_backward);
+  
+  if (m_mesh != NULL) {
+    // make sure you free the mesh. It can be big.
+    fftw_free((configuration::complex_number*) m_mesh);
+  }
+  if (mesh_left != NULL)
+    fftw_free(mesh_left);
+  if (mesh_right != NULL)
+    fftw_free(mesh_right);
+  if (mesh_tmp != NULL)
+    fftw_free(mesh_tmp);
+}
+      
+void ParallelMesh::resize(unsigned int x, unsigned int y, unsigned int z) {
+#ifdef XXMPI
+  DEBUG(14, "ParallelMesh: resize.");
+  m_x = x; m_y = y; m_z = z; m_volume = x*y*z;
+  m_x2 = m_x / 2;
+  
+  const unsigned int cache_volume = cache_size * m_y *m_z;
+  
+  if (mesh_left != NULL)
+    fftw_free(mesh_left);
+  
+  if (cache_size != 0)
+    mesh_left = (complex_number *) fftw_malloc(sizeof(fftw_complex) * cache_volume);
+  
+  if (mesh_right != NULL)
+    fftw_free(mesh_right);
+  
+  if (cache_size != 0)
+    mesh_right = (complex_number *) fftw_malloc(sizeof(fftw_complex) * cache_volume);
+  
+  if (mesh_tmp != NULL)
+    fftw_free(mesh_tmp);
+  
+  if (cache_size != 0)
+    mesh_tmp = (complex_number *) fftw_malloc(sizeof(fftw_complex) * cache_volume);
+  
+  
+  // the parallel FFTW library takes care of all the ranges and returns
+  // them.
+  // local_alloc: number of complex numbers in the slice
+  // local_n0: the width of the slice (along x)
+  // local_0_start: the index (x) at which the slice starts
+  ptrdiff_t local_alloc, local_n0, local_0_start;
+  local_alloc = fftw_mpi_local_size_3d(m_x, m_y, m_z, MPI::COMM_WORLD,
+                                              &local_n0, &local_0_start);
+  DEBUG(12,"local_n0: " << local_n0 << " local_0_start" << local_0_start);
+  slice_width = local_n0;
+  slice_start = local_0_start;
+  slice_end = local_0_start + local_n0;
+  slice_end_inclusive = slice_end - 1;
+  DEBUG(12,"slice width: " << slice_width << " left: " << slice_start <<
+          " right: " << slice_end);
+
+  if (slice_width < cache_size) {
+    io::messages.add("Cache bigger than a slice of the grid. Reduce number of CPUs.",
+            "Lattice Sum", io::message::error);
+    return;
+  }
+  
+  if (m_mesh != NULL)
+    fftw_free(m_mesh);
+  
+  m_mesh = (complex_number *) fftw_malloc(sizeof(fftw_complex) * local_alloc);
+  
+  if (plan_forward != NULL)
+    fftw_destroy_plan(plan_forward);  
+  plan_forward = fftw_mpi_plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
+              MPI::COMM_WORLD, FFTW_FORWARD, FFTW_ESTIMATE);
+  
+  if (plan_backward != NULL)
+    fftw_destroy_plan(plan_backward);
+  
+  plan_backward = fftw_mpi_plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
+              MPI::COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE);
+#endif
+}
+
+void ParallelMesh::zero() {
+  // zero the mesh
+  const unsigned int slice_volume = slice_width * m_y * m_z;
+  for(unsigned int i = 0; i < slice_volume; ++i)
+    m_mesh[i] = 0.0;
+  // and the caches
+  const unsigned int cache_volume = cache_size * m_y * m_z;
+  for(unsigned int i = 0; i < cache_volume; ++i) {
+    mesh_left[i] = 0.0;
+    mesh_right[i] = 0.0;
+  }
+}
+
+void ParallelMesh::get_neighbors() {
+#ifdef XXMPI
+  if (cache_size == 0)
+    return;
+  const unsigned int cache_volume = cache_size * m_y * m_z;
+  
+  const unsigned int cpu_left = (rank + num_threads - 1) % num_threads;
+  const unsigned int cpu_right = (rank + 1) % num_threads;
+  
+  // create the cache for the left CPU
+  for(unsigned int x = 0; x < cache_size; ++x) {
+    for(unsigned int y = 0; y < m_y; ++y) {
+      for(unsigned int z = 0; z < m_z; ++z) {
+        const unsigned int index = z + m_z*(y + m_y*x);
+        mesh_tmp[index] = m_mesh[index];
+      }
+    }
+  }
+  
+  // send it to the left cpu (nonblocking)
+  MPI::Request r = MPI::COMM_WORLD.Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 0);
+  // receive the right cache (blocking)
+  MPI::COMM_WORLD.Recv(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 0);
+  // wait before overwriting the mesh_tmp variable
+  r.Wait();
+ 
+  
+  // create the cache for the right CPU
+  for(unsigned int x = 0; x < cache_size; ++x) {
+    const unsigned int mesh_x = slice_width - cache_size + x;
+    for(unsigned int y = 0; y < m_y; ++y) {
+      for(unsigned int z = 0; z < m_z; ++z) {
+        mesh_tmp[z + m_z*(y + m_y*x)] = m_mesh[z + m_z*(y + m_y*mesh_x)];
+      }
+    }
+  }
+ 
+  // send it to the right cpu (nonblocking)
+  r = MPI::COMM_WORLD.Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 1);
+  // receive the left cache (blocking)
+  MPI::COMM_WORLD.Recv(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 1);
+  // wait before overwriting the mesh_tmp variable
+  r.Wait();  
+#endif
+}
+
+void ParallelMesh::add_neighbors_caches() {
+  if (cache_size == 0)
+    return;
+#ifdef XXMPI
+  const unsigned int cache_volume = cache_size * m_y * m_z;
+  
+  const unsigned int cpu_left = (rank + num_threads - 1) % num_threads;
+  const unsigned int cpu_right = (rank + 1) % num_threads;
+  
+  // send the left cache to the left cpu (nonblocking)
+  MPI::Request r = MPI::COMM_WORLD.Isend(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 2);
+  // receive the left cache from the right cpu (blocking)
+  MPI::COMM_WORLD.Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 2);
+  // wait before overwriting the mesh_tmp variable
+  r.Wait();
+
+  // add the cache from the right cpu
+  for(unsigned int x = 0; x < cache_size; ++x) {
+    const unsigned int mesh_x = slice_width - cache_size + x;
+    for(unsigned int y = 0; y < m_y; ++y) {
+      for(unsigned int z = 0; z < m_z; ++z) {
+        m_mesh[z + m_z*(y + m_y*mesh_x)] += mesh_tmp[z + m_z*(y + m_y*x)];
+      }
+    }
+  }
+
+  // send the right cache to the right cpu (nonblocking)
+  r = MPI::COMM_WORLD.Isend(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 3);
+  // receive the right cache from the left cpu (blocking)
+  MPI::COMM_WORLD.Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 3);
+  // wait before overwriting the mesh_tmp variable
+  r.Wait();
+
+  // add the cache from the left cpu
+  for(unsigned int x = 0; x < cache_size; ++x) {
+    for(unsigned int y = 0; y < m_y; ++y) {
+      for(unsigned int z = 0; z < m_z; ++z) {
+        m_mesh[z + m_z*(y + m_y*x)] += mesh_tmp[z + m_z*(y + m_y*x)];
+      }
+    }
+  }
+#endif
+}
+
+} // namespace configuration
+
 

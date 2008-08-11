@@ -10,6 +10,8 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
+#include <simulation/parameter.h>
+
 #include <interaction/interaction.h>
 #include <interaction/interaction_types.h>
 #include <interaction/nonbonded/interaction/nonbonded_parameter.h>
@@ -228,12 +230,16 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 					     simulation::Simulation & sim,
 					     std::ostream & os,
 					     bool quiet)
-{
+{ 
   if (!quiet)
     os << "Nonbonded interaction\n";
 
   // initialise the pairlist...
   m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
+  
+  if (sim.param().nonbonded.method != simulation::el_reaction_field) {
+    conf.lattice_sum().init(topo, sim);
+  }
 
   DEBUG(15, "nonbonded_interaction::initialize");
   m_nonbonded_set.clear();

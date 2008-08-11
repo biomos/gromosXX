@@ -308,6 +308,7 @@ namespace interaction {
      *
      * @param[in] r a VArray containing the positive, in-box atom positions
      */
+    template<class MeshType>
     static void calculate_charge_density(
             const topology::Topology & topo,
             configuration::Configuration & conf,
@@ -326,6 +327,7 @@ namespace interaction {
      *
      * @param[in] storage the storage is used to store the energy
      */
+    template<class MeshType>
     static void calculate_potential_and_energy(
             const topology::Topology & topo,
             configuration::Configuration & conf,
@@ -339,6 +341,7 @@ namespace interaction {
      * is calculated by ik or finite differentiation. The electrostatic field is
      * stored int the configuration
      */
+    template<class MeshType>
     static void calculate_electric_field(
             const topology::Topology & topo,
             configuration::Configuration & conf,
@@ -354,13 +357,30 @@ namespace interaction {
      * @param[in] storage the storage is used to store the force
      * @param[in] a VArray containing the positive, in-box positions of the charges
      */
+    template<class MeshType>
     static void calculate_force(
             const topology::Topology & topo,
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
             Storage & storage,
             const math::VArray & r);
+    
+    /**
+     * decompose domains
+     *
+     * For every atom calculate the x component of the grid assignment. If it
+     * lies in the current domain, add the atom the domain.
+     */
+    template<class MeshType>
+    static void decompose_into_domains(
+            const topology::Topology & topo,
+            configuration::Configuration & conf,
+            const simulation::Simulation & sim,
+            const math::VArray & r,
+            const unsigned int size);
   };
+ 
+  
 }
 
 #endif

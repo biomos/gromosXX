@@ -119,16 +119,16 @@ int interaction::Nonbonded_Set
     DEBUG(8, "doing longrange calculation");
     if (m_rank == 0)
       m_pairlist_alg.timer().start("longrange");
-      // in case of LS only LJ are calculated
-    
-      m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			          m_pairlist.solute_long, m_pairlist.solvent_long,
-                                  m_longrange_storage); 
+    // in case of LS only LJ are calculated
+
+    m_outerloop.lj_crf_outerloop(topo, conf, sim,
+            m_pairlist.solute_long, m_pairlist.solvent_long,
+            m_longrange_storage);
     if (m_rank == 0)
-      m_pairlist_alg.timer().stop("longrange"); 
+      m_pairlist_alg.timer().stop("longrange");
   }
-  
-  
+
+
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
   if (m_rank == 0)
@@ -136,55 +136,53 @@ int interaction::Nonbonded_Set
 
   if (sim.param().force.interaction_function == simulation::lj_ls_func) {
     m_outerloop.ls_real_outerloop(topo, conf, sim,
-          m_pairlist.solute_short, m_pairlist.solvent_short,
-          m_storage, m_rank, m_num_threads);
+            m_pairlist.solute_short, m_pairlist.solvent_short,
+            m_storage, m_rank, m_num_threads);
   } else {
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
-			       m_pairlist.solute_short, m_pairlist.solvent_short,
-                               m_storage);
+            m_pairlist.solute_short, m_pairlist.solvent_short,
+            m_storage);
   }
 
   if (m_rank == 0)
     m_pairlist_alg.timer().stop("shortrange");
 
-
-  // single processor algorithms (k-space, 1-4,...)
-  if (m_rank == 0) {
-
-    // calculate k-space energy and forces
-
+  // calculate k-space energy and forces
+  if (m_rank == 0)
     m_pairlist_alg.timer().start("k-space");
-    switch (sim.param().nonbonded.method) {
-      case simulation::el_ewald :
-      {
-        DEBUG(6, "\tlong range electrostatics: Ewald");
-        if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
-          // the box may have changed. Recalculate the k space
-          configuration::calculate_k_space(topo, conf, sim);
-        }
-        // do the longrange calculation in k space
-        m_outerloop.ls_ewald_kspace_outerloop(topo, conf, sim, m_storage,
-                m_rank, m_num_threads);
-        break;
+  switch (sim.param().nonbonded.method) {
+    case simulation::el_ewald :
+    {
+      DEBUG(6, "\tlong range electrostatics: Ewald");
+      if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
+        // the box may have changed. Recalculate the k space
+        configuration::calculate_k_space(topo, conf, sim);
       }
-      case simulation::el_p3m :
-      {
-        DEBUG(6, "\tlong range electrostatics: P3M");
-        if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
-          // check whether we have to recalculate the influence function
-        }
-        // do the longrange calculation in k space
-        m_outerloop.ls_p3m_kspace_outerloop(topo, conf, sim, m_storage,
-                m_rank, m_num_threads);
-        break;
-      }
-      default:
-      {
-      } // doing reaction field
+      // do the longrange calculation in k space
+      m_outerloop.ls_ewald_kspace_outerloop(topo, conf, sim, m_storage,
+              m_rank, m_num_threads);
+      break;
     }
-
+    case simulation::el_p3m :
+    {
+      DEBUG(6, "\tlong range electrostatics: P3M");
+      if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
+        // check whether we have to recalculate the influence function
+      }
+      // do the longrange calculation in k space
+      m_outerloop.ls_p3m_kspace_outerloop(topo, conf, sim, m_storage,
+              m_rank, m_num_threads, m_pairlist_alg.timer());
+      break;
+    }
+    default:
+    {
+    } // doing reaction field
+  }
+  if (m_rank == 0)
     m_pairlist_alg.timer().stop("k-space");
-
+  
+  // single processor algorithms (1-4,...)
+  if (m_rank == 0) {
     // calculate lattice sum self energy and A term
     // this has to be done after the k-space energy is calculated
     // as this calculation will also deliver a methodology
