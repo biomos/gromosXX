@@ -2755,6 +2755,22 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
           }
           break;
         }
+        case 3: {
+          param.eds.form = simulation::pair_s;
+          const unsigned int n = param.eds.numstates;
+          param.eds.s.resize(n-1,1.0);
+          param.eds.pairs.resize(n-1);
+          for(unsigned int pair = 0; pair < param.eds.s.size(); pair++){
+            _lineStream >> param.eds.pairs[pair].i 
+                        >> param.eds.pairs[pair].j
+                        >> param.eds.s[pair];
+            if (param.eds.s[pair] <= 0) {
+              io::messages.add("Error in EDS block: S must be >0",
+                  "In_Parameter", io::message::error);
+            }
+          }
+          break;
+        }
         default:
           io::messages.add("Error in EDS block: functional form must be 1 (single s) "
               "or 2 (multiple s)", "In_Parameter", io::message::error);

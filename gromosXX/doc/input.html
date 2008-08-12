@@ -484,8 +484,8 @@ GROMOS96COMPAT
 # NTG96 0,1 controls use of soft-core formula (ignored)
 #    0 : new soft-core formula
 #    1 : g96 soft-core formula [default]
-# NTR96     NTG96
-    1         1
+# NTNB96   NTR96     NTP96   NTG96
+    1         1       1        1
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>
@@ -856,11 +856,15 @@ EDS
 # EDS        0,1  
 #              0: no enveloping distribution sampling (EDS) [default]
 #              1: enveloping distribution sampling
-# FORM       1,2
+# FORM       1-3
 #              1: Single s Hamiltonian
 #              2: Hamiltonian with NUMSTATES*(NUMSTATES-1)/2 (pairwise) s parameters
+#              3: Hamiltonian with (NUMSTATES-1) s parameters
 # NUMSTATES >1  : number of states
+# if NUMSTATES != 3:
 # S         >0.0: smoothness parameter(s)
+# if NUMSTATES == 3:
+# i   j   S     : state pair i j and associated s parameter
 # EIR           : energy offsets for states
 #
 # EDS          
@@ -871,6 +875,19 @@ EDS
   3
 # S
   0.2  0.01 0.1
+# EIR 
+  0   20   40
+END
+# example for FORM = 3
+EDS
+  1    
+# FUNCTIONAL FORM
+  3
+# NUMSTATES
+  3
+# i  j  S
+  1  2  0.1
+  2  3  0.5
 # EIR 
   0   20   40
 END

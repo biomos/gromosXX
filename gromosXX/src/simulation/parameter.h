@@ -201,6 +201,21 @@ namespace simulation
        @f$
      */
     multi_s = 2,
+    /**
+     * pairwise s parameters using only (N-1) pairs
+     *
+     * @f$ V_R = - \beta ^{-1} \ln \left\{
+       \left[
+       \sum_{spec. pairs}
+       \left(
+       e^{-\beta s_{ij} \left(V_i-E_i^R\right)} + e^{-\beta s_{ij} \left(V_j-E_j^R\right)}
+       \right)^{1/s_{ij}}
+       \right]
+       \frac{N}{(N-1)*2}
+       \right\}
+       @f$
+     */
+    pair_s = 3,
   };
 
   /**
@@ -1899,6 +1914,13 @@ namespace simulation
        * smoothness parameter(s) @f$ s@f$ of @f$ s_{ij}@f$ used in reference state Hamiltonian.
        */
       std::vector<double> s;
+      /**
+       * vector of indices of specified pairs (for form = pair_s)
+       */
+      struct state_pair{
+        int i,j;
+      };
+      std::vector<state_pair> pairs;
       /**
        * energy offsets @f$E_i^R@f$ of states
        */
