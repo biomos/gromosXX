@@ -1890,7 +1890,8 @@ bool io::In_Configuration::check_coordinates
   }
   
   // do a quick estimate of the number of solvents
-  if (topo.num_solvents() == 1){
+  if (sim.param().system.nsm > 0 &&
+      topo.num_solvents() == 1){
     const unsigned int coords = num_coords - topo.num_solute_atoms();
     const unsigned int mols = coords / topo.solvent(0).num_atoms();
     
