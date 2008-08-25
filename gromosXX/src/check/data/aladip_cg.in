@@ -61,7 +61,7 @@ STEP
 END
 BOUNDCOND
 #      NTB    NDFMIN
-         1         1
+         1         0
 END
 MULTIBATH
 #       algorithm
