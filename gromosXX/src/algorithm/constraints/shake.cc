@@ -118,8 +118,10 @@ int algorithm::Shake::shake_iteration
       DEBUG(10, "shaking");
       
       // the reference position
-      const math::Vec &ref_i = conf.old().pos(first+it->i);
-      const math::Vec &ref_j = conf.old().pos(first+it->j);
+      const unsigned int atom_i = first+it->i;
+      const unsigned int atom_j = first+it->j;
+      const math::Vec &ref_i = conf.old().pos(atom_i);
+      const math::Vec &ref_j = conf.old().pos(atom_j);
       
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
@@ -138,8 +140,8 @@ int algorithm::Shake::shake_iteration
 	DEBUG(5, "r " << math::v2s(r));
 
 	std::cout << "SHAKE ERROR\n"
-		  << "\tatom i    : " << first + it->i + 1 << "\n"
-		  << "\tatom j    : " << first + it->j + 1 << "\n"
+		  << "\tatom i    : " << atom_i + 1 << "\n"
+		  << "\tatom j    : " << atom_j + 1 << "\n"
 	  // << "\tfirst     : " << first << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
@@ -150,32 +152,26 @@ int algorithm::Shake::shake_iteration
 		  << "\tsp        : " << sp << "\n"
 		  << "\tconstr    : " << constr_length2 << "\n"
 		  << "\tdiff      : " << diff << "\n"
-		  << "\tforce i   : " << math::v2s(conf.old().force(first+it->i)) << "\n"
-		  << "\tforce j   : " << math::v2s(conf.old().force(first+it->j)) << "\n"
-		  << "\tvel i     : " << math::v2s(conf.current().vel(first+it->i)) << "\n"
-		  << "\tvel j     : " << math::v2s(conf.current().vel(first+it->j)) << "\n"
-		  << "\told vel i : " << math::v2s(conf.old().vel(first+it->i)) << "\n"
-		  << "\told vel j : " << math::v2s(conf.old().vel(first+it->j)) << "\n\n";
+		  << "\tforce i   : " << math::v2s(conf.old().force(atom_i)) << "\n"
+		  << "\tforce j   : " << math::v2s(conf.old().force(atom_j)) << "\n"
+		  << "\tvel i     : " << math::v2s(conf.current().vel(atom_i)) << "\n"
+		  << "\tvel j     : " << math::v2s(conf.current().vel(atom_j)) << "\n"
+		  << "\told vel i : " << math::v2s(conf.old().vel(atom_i)) << "\n"
+		  << "\told vel j : " << math::v2s(conf.old().vel(atom_j)) << "\n\n";
 	
 	return E_SHAKE_FAILURE;
       }
 	  
       // lagrange multiplier
-      double lambda = diff / (sp * 2 *
-			      (1.0 / topo.mass()(first+it->i) +
-			       1.0 / topo.mass()(first+it->j) ));      
+      double lambda = diff / (sp * 2.0 *
+			      (1.0 / topo.mass()(atom_i) +
+			       1.0 / topo.mass()(atom_j) ));      
 
       DEBUG(10, "lagrange multiplier " << lambda);
 
-      /*
-      if (do_constraint_force == true){
-	
-	//if it is a solute sum up constraint forces
-	assert(unsigned(sys.constraint_force().size()) > k + force_offset);
-	sys.constraint_force()(k+force_offset) += (lambda * ref_r);
-	// m_lambda(k) += lambda;
-      }
-      */
+      const math::Vec cons_force = lambda * ref_r;
+      conf.old().constraint_force(atom_i) += cons_force;
+      conf.old().constraint_force(atom_j) -= cons_force;
 
       if (V == math::atomic_virial) {
         for (int a = 0; a < 3; ++a) {
@@ -222,11 +218,12 @@ solute(topology::Topology const & topo,
 
   DEBUG(8, "\tshaking SOLUTE");
   math::Periodicity<B> periodicity(conf.current().box);
-  
-  // conf.constraint_force() = 0.0;
-  // m_lambda = 0.0;
 
   m_timer.start("solute");
+  
+  const unsigned int num_atoms = topo.num_solute_atoms();
+  for (unsigned int i=0; i < num_atoms; ++i)
+    conf.old().constraint_force(i) = 0.0;
   
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -297,18 +294,16 @@ solute(topology::Topology const & topo,
 
   } // convergence?
 
-  // constraint_force
-  /*
-  for (unsigned int i=0; i < topo.solute().distance_constraints().size();++i){
-    conf.constraint_force()(i) *= 1 /(dt * dt);
-    DEBUG(5, "constraint_force " << sqrt(abs2(conf.constraint_force()(i)) ));
+  // constraint force
+  const double dt2 = sim.time_step_size() * sim.time_step_size();
+  for (unsigned int i=0; i < num_atoms; ++i){
+    conf.old().constraint_force(i) *= 1 / dt2;
+    DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
   }
-  */
-
-  m_timer.stop("solute");
-
   error = 0;
 
+  m_timer.stop("solute");
+  
 } // solute
 
 
@@ -326,7 +321,8 @@ void algorithm::Shake
 
   DEBUG(8, "\tshaking SOLVENT");
   
-  m_timer.start("solvent");
+  if (!sim.mpi || m_rank == 0)
+    m_timer.start("solvent");
 
   // the first atom of a solvent
   unsigned int first = topo.num_solute_atoms();
@@ -337,6 +333,10 @@ void algorithm::Shake
 
   error = 0;
   int my_error = error;
+  
+  const unsigned int num_atoms = topo.num_atoms();
+  for (unsigned int i=first; i < num_atoms; ++i)
+    conf.old().constraint_force(i) = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -352,6 +352,7 @@ void algorithm::Shake
     // set virial tensor and solute coordinates of slaves to zero
     if (m_rank) { // slave
       conf.old().virial_tensor = 0.0;
+      conf.old().constraint_force = 0.0;
       for(unsigned int i = 0; i < first; ++i) {
         pos(i) = 0.0;
       }
@@ -443,6 +444,13 @@ void algorithm::Shake
       MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0,0), &virial_new(0,0),
                              9, MPI::DOUBLE, MPI::SUM, 0);
       conf.old().virial_tensor = virial_new;
+      
+      // reduce current contraint force, store it in cons_force_new and reduce
+      //it to the current constraint force
+      math::VArray cons_force_new(topo.num_atoms(), math::Vec(0.0));
+      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
+                             conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      conf.old().constraint_force = cons_force_new;     
     } else {
       // reduce the error to all processors
       MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
@@ -454,13 +462,24 @@ void algorithm::Shake
       // reduce virial
       MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0,0), NULL,
                              9, MPI::DOUBLE, MPI::SUM, 0);
+      // reduce constraint force
+      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), NULL,
+                             conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
     }
   }
 #else
   error = my_error;
 #endif
+  
+  // constraint force
+  const double dt2 = sim.time_step_size() * sim.time_step_size();
+  for (unsigned int i=topo.num_solute_atoms(); i < num_atoms; ++i) {
+    conf.old().constraint_force(i) *= 1 / dt2;
+    DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
+  }
 
-  m_timer.stop("solvent");
+  if (!sim.mpi || m_rank == 0)
+    m_timer.stop("solvent");
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
 } // shake solvent
 
@@ -472,7 +491,8 @@ int algorithm::Shake::apply(topology::Topology & topo,
 			    simulation::Simulation & sim)
 {
   DEBUG(7, "applying SHAKE");
-  m_timer.start();
+  if (!sim.mpi || m_rank == 0)
+    m_timer.start();
   
   bool do_vel_solute = false;
   bool do_vel_solvent = false;
@@ -540,7 +560,8 @@ int algorithm::Shake::apply(topology::Topology & topo,
     }
   }
   
-  m_timer.stop();
+  if (!sim.mpi || m_rank == 0)
+    m_timer.stop();
   // return success!
   return 0;
 		   

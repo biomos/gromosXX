@@ -71,6 +71,10 @@ namespace configuration
        */
       math::VArray force; 
       /**
+       * the constraint force
+       */
+      math::VArray constraint_force;
+      /**
        * stochastic integrals (SD)
        */
       math::VArray stochastic_integral;

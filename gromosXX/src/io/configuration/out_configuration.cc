@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include "out_configuration.h"
+#include "gromosXX/simulation/parameter.h"
 
 
 #include <util/replica_data.h>
@@ -313,6 +314,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 				  output_format const form)
 { 
   // standard trajectories
+  
+  bool constraint_force = sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+    sim.param().constraint.solvent.algorithm == simulation::constr_shake;
+  
   if (form == reduced){
     /**
      * set this to true when you print the timestep to the special traj.
@@ -347,9 +352,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       if(sim.steps()){
 	_print_old_timestep(sim, *m_force_traj);
         if (sim.param().write.force_solute_only)
-	  _print_forcered(conf, topo.num_solute_atoms(), *m_force_traj);
+	  _print_forcered(conf, topo.num_solute_atoms(), *m_force_traj, constraint_force);
         else
-          _print_forcered(conf, topo.num_atoms(), *m_force_traj);
+          _print_forcered(conf, topo.num_atoms(), *m_force_traj, constraint_force);
       }
     }
     
@@ -447,9 +452,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_force && ((sim.steps()) % m_every_force) == 0){
       _print_old_timestep(sim, *m_force_traj);
       if (sim.param().write.force_solute_only)
-	_print_forcered(conf, topo.num_solute_atoms(), *m_force_traj);
+	_print_forcered(conf, topo.num_solute_atoms(), *m_force_traj, constraint_force);
       else
-        _print_forcered(conf, topo.num_atoms(), *m_force_traj);
+        _print_forcered(conf, topo.num_atoms(), *m_force_traj, constraint_force);
     }
 
     if(m_every_energy && (sim.steps() % m_every_energy) == 0){
@@ -483,7 +488,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if(m_every_force && (sim.steps() % m_every_force) == 0){
       if (sim.steps()){
 	_print_timestep(sim, *m_force_traj);	
-	_print_force(conf, topo, *m_force_traj);
+	_print_force(conf, topo, *m_force_traj, constraint_force);
       }
     }
   }
@@ -1129,21 +1134,19 @@ void io::Out_Configuration
 void io::Out_Configuration
 ::_print_force(configuration::Configuration const &conf,
 	       topology::Topology const &topo,
-	       std::ostream &os)
+	       std::ostream &os, bool constraint_force)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_force_precision);
   
-  os << "FORCE\n";
+  os << "FREEFORCE\n";
   
-  math::VArray const &force = conf.current().force;
+  math::VArray const & force = conf.current().force;
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
 
   os << "# first 24 chars ignored\n";
-  
   for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
-
     os << std::setw(6)  << solute.atom(i).residue_nr+1
        << std::setw(5)  << residue_name[solute.atom(i).residue_nr]
        << std::setw(6)  << solute.atom(i).name
@@ -1153,15 +1156,11 @@ void io::Out_Configuration
        << std::setw(m_force_width) << force(i)(2)
        << "\n";
   }
-  
   int index = topo.num_solute_atoms();
   
   for(unsigned int s=0; s < topo.num_solvents(); ++s){
-
     for(unsigned int m=0; m < topo.num_solvent_molecules(s); ++m){
-      
       for(unsigned int a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
-	
 	os << std::setw(6)  << topo.solvent(s).atom(a).residue_nr+1
 	   << std::setw(5)  << residue_name[topo.solvent(s).atom(a).residue_nr]
 	   << std::setw(6)  << topo.solvent(s).atom(a).name
@@ -1173,20 +1172,54 @@ void io::Out_Configuration
       }
     }
   }
-
   os << "END\n";
 
+  if (constraint_force) {
+    os << "CONSFORCE\n";
+
+    math::VArray const & cons_force = conf.current().constraint_force;
+
+    os << "# first 24 chars ignored\n";
+    for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
+      os << std::setw(6) << solute.atom(i).residue_nr + 1
+              << std::setw(5) << residue_name[solute.atom(i).residue_nr]
+              << std::setw(6) << solute.atom(i).name
+              << std::setw(8) << i + 1
+              << std::setw(m_force_width) << cons_force(i)(0)
+              << std::setw(m_force_width) << cons_force(i)(1)
+              << std::setw(m_force_width) << cons_force(i)(2)
+              << "\n";
+    }
+    index = topo.num_solute_atoms();
+
+    for (unsigned int s = 0; s < topo.num_solvents(); ++s) {
+      for (unsigned int m = 0; m < topo.num_solvent_molecules(s); ++m) {
+        for (unsigned int a = 0; a < topo.solvent(s).num_atoms(); ++a, ++index) {
+          os << std::setw(6) << topo.solvent(s).atom(a).residue_nr + 1
+                  << std::setw(5) << residue_name[topo.solvent(s).atom(a).residue_nr]
+                  << std::setw(6) << topo.solvent(s).atom(a).name
+                  << std::setw(8) << index + 1
+                  << std::setw(m_force_width) << cons_force(index)(0)
+                  << std::setw(m_force_width) << cons_force(index)(1)
+                  << std::setw(m_force_width) << cons_force(index)(2)
+                  << "\n";
+        }
+      }
+    }
+    os << "END\n";
+  }
 }
 
 void io::Out_Configuration
 ::_print_forcered(configuration::Configuration const &conf,
                   int num,
-		  std::ostream &os)
+		  std::ostream &os,
+                  bool constraint_force)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_force_precision);
   
-  os << "CONSFORCERED\n";
+  os << "FREEFORCERED\n";
   
   const math::VArray &force = conf.old().force;
   assert(num <= int(force.size()));
@@ -1201,7 +1234,24 @@ void io::Out_Configuration
   }
   
   os << "END\n";
-  
+
+  if (constraint_force) {
+    os << "CONSFORCERED\n";
+
+    const math::VArray & cons_force = conf.old().constraint_force;
+    assert(num <= int(cons_force.size()));
+
+    for (int i = 0; i < num; ++i) {
+      os << std::setw(m_force_width) << cons_force(i)(0)
+              << std::setw(m_force_width) << cons_force(i)(1)
+              << std::setw(m_force_width) << cons_force(i)(2)
+              << "\n";
+
+      if ((i + 1) % 10 == 0) os << '#' << std::setw(10) << i + 1 << "\n";
+    }
+
+    os << "END\n";
+  }
 }
 
 void io::Out_Configuration

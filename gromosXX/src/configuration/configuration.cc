@@ -88,7 +88,9 @@ configuration::Configuration::Configuration
   current().vel = conf.current().vel;
   old().vel = conf.old().vel;
   current().force = conf.current().force;
+  current().constraint_force = conf.current().constraint_force;
   old().force = conf.old().force;
+  old().constraint_force = conf.current().constraint_force;
   current().stochastic_integral = conf.current().stochastic_integral;
   old().stochastic_integral = conf.old().stochastic_integral;
   current().stochastic_seed = conf.current().stochastic_seed;
@@ -408,6 +410,7 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
   posV.resize(s);
   vel.resize(s);
   force.resize(s);
+  constraint_force.resize(s);
   stochastic_integral.resize(s);
 }
 

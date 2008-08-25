@@ -123,6 +123,8 @@ int algorithm::Perturbed_Shake
       DEBUG(10, "shaking");
       
       // the reference position
+      const unsigned int atom_i = first+it->i;
+      const unsigned int atom_j = first+it->j;
       const math::Vec &ref_i = conf.old().pos(first+it->i);
       const math::Vec &ref_j = conf.old().pos(first+it->j);
       
@@ -141,8 +143,8 @@ int algorithm::Perturbed_Shake
 	DEBUG(5, "r " << math::v2s(r));
 	
 	std::cout << "Perturbed SHAKE ERROR\n"
-		  << "\tatom i    : " << it->i + 1 << "\n"
-		  << "\tatom j    : " << it->j + 1 << "\n"
+		  << "\tatom i    : " << atom_i + 1 << "\n"
+		  << "\tatom j    : " << atom_j + 1 << "\n"
 		  << "\tfirst     : " << first << "\n"
 		  << "\tref i     : " << math::v2s(ref_i) << "\n"
 		  << "\tref j     : " << math::v2s(ref_j) << "\n"
@@ -153,22 +155,26 @@ int algorithm::Perturbed_Shake
 		  << "\tsp        : " << sp << "\n"
 		  << "\tconstr    : " << constr_length2 << "\n"
 		  << "\tdiff      : " << diff << "\n"
-		  << "\tforce i   : " << math::v2s(conf.old().force(first+it->i)) << "\n"
-		  << "\tforce j   : " << math::v2s(conf.old().force(first+it->j)) << "\n"
-		  << "\tvel i     : " << math::v2s(conf.current().vel(first+it->i)) << "\n"
-		  << "\tvel j     : " << math::v2s(conf.current().vel(first+it->j)) << "\n"
-		  << "\told vel i : " << math::v2s(conf.old().vel(first+it->i)) << "\n"
-		  << "\told vel j : " << math::v2s(conf.old().vel(first+it->j)) << "\n\n";
+		  << "\tforce i   : " << math::v2s(conf.old().force(atom_i)) << "\n"
+		  << "\tforce j   : " << math::v2s(conf.old().force(atom_j)) << "\n"
+		  << "\tvel i     : " << math::v2s(conf.current().vel(atom_i)) << "\n"
+		  << "\tvel j     : " << math::v2s(conf.current().vel(atom_j)) << "\n"
+		  << "\told vel i : " << math::v2s(conf.old().vel(atom_i)) << "\n"
+		  << "\told vel j : " << math::v2s(conf.old().vel(atom_j)) << "\n\n";
 	
 	return E_SHAKE_FAILURE;
       }
 	  
       // lagrange multiplier
       double lambda = diff / (sp * 2 *
-			      (1.0 / topo.mass()(first+it->i) +
-			       1.0 / topo.mass()(first+it->j) ));      
+			      (1.0 / topo.mass()(atom_i) +
+			       1.0 / topo.mass()(atom_j) ));      
 
       DEBUG(10, "lagrange multiplier " << lambda);
+
+      const math::Vec cons_force = lambda * ref_r;
+      conf.old().constraint_force(atom_i) += cons_force;
+      conf.old().constraint_force(atom_j) -= cons_force;
 
       if (V == math::atomic_virial) {
         for (int a = 0; a < 3; ++a) {
@@ -222,9 +228,14 @@ void algorithm::Perturbed_Shake
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
 
-  m_timer.start();
+  if (!sim.mpi || m_rank == 0)
+    m_timer.start();
 
   DEBUG(8, "\tshaking perturbed SOLUTE");
+  
+  const unsigned int num_atoms = topo.num_solute_atoms();
+  for (unsigned int i=0; i < num_atoms; ++i)
+    conf.old().constraint_force(i) = 0.0;
   
   math::Periodicity<B> periodicity(conf.current().box);
   
@@ -327,8 +338,16 @@ void algorithm::Perturbed_Shake
     skip_next.assign(skip_next.size(), true);
 
   } // convergence?
+  
+  // constraint force
+  const double dt2 = sim.time_step_size() * sim.time_step_size();
+  for (unsigned int i=0; i < num_atoms; ++i){
+    conf.old().constraint_force(i) *= 1 / dt2;
+    DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
+  }
 
-  m_timer.stop();
+  if (!sim.mpi || m_rank == 0)
+    m_timer.stop();
 
   error = 0;
 
@@ -347,6 +366,10 @@ int algorithm::Perturbed_Shake
 	simulation::Simulation & sim)
 {
   DEBUG(7, "applying SHAKE");
+  
+  if (!sim.mpi || m_rank == 0)
+    m_timer.start();
+  
   bool do_vel_solute = false;
   bool do_vel_solvent = false;
   int error = 0;
@@ -372,6 +395,7 @@ int algorithm::Perturbed_Shake
       << "at step " << sim.steps() << std::endl;
       // save old positions to final configuration... (even before free-flight!)
       conf.current().pos = conf.old().pos;
+      m_timer.stop();
       return E_SHAKE_FAILURE_SOLUTE;
     }
   }
@@ -414,6 +438,8 @@ int algorithm::Perturbed_Shake
   }
 
   // return success!
+  if (!sim.mpi || m_rank == 0)
+    m_timer.stop();
   return error;
 		   
 }

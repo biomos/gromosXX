@@ -220,7 +220,8 @@ namespace io {
 
     void _print_force(configuration::Configuration const &conf,
 		      topology::Topology const &topo,
-		      std::ostream &os);
+		      std::ostream &os,
+                      bool constraint_force);
 
     void _print_positionred(configuration::Configuration const &conf,
 			    topology::Topology const &topo,
@@ -237,7 +238,8 @@ namespace io {
 
     void _print_forcered(configuration::Configuration const &conf, 
 			 int num,
-			 std::ostream &os);
+			 std::ostream &os,
+                         bool constraint_force);
 
     void _print_energyred(configuration::Configuration const &conf,
 			  std::ostream &os);
