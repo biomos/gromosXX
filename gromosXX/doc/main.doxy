@@ -8,6 +8,13 @@
  * <h2>Documentation</h2>
  * <hr>
  * <h3>MD program</h3>
+ * - Available programs
+ *  - @ref md_usage "md"
+ *  - @ref mg_usage "mg"
+ *  - @ref repex_usage "repex"
+ * - @ref formats "File formats"
+ * - @ref features "Feature description"
+ * - @ref pttopo "Perturbation topology"
  * - @ref arguments "md arguments"
  * - @ref input "input file"
  * - @ref output "output file"
@@ -34,3 +41,5 @@
  * <h3>Bug reports</h3>
  * - <a href="release.html#bugreport">Trac server</a>
  */
+
+
