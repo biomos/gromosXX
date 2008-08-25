@@ -21,7 +21,8 @@
 
 void simulation::Multibath
 ::calculate_degrees_of_freedom(topology::Topology &topo,
-			       bool rottrans_constraints)
+			       bool rottrans_constraints,
+                               double dof_to_subtract)
 {
   // check whether we have at least one bath
   if (size() == 0){
@@ -89,8 +90,17 @@ void simulation::Multibath
     last = it->last_atom;
   }
 
-  // substract constraints
+  // subtract constraints
   topo.calculate_constraint_dof(*this, rottrans_constraints);
+  
+  // subtract user dof (NDFMIN in BOUNDCOND block)
+  // loop over bath an remove one (size())th of them from every bath
+  dof_to_subtract /= double(size());
+  for(simulation::Multibath::iterator it = begin(), to = end();
+      it != to; ++it) {
+    it->dof -= dof_to_subtract;
+  }
+  
   
 }
 

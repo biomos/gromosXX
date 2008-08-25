@@ -163,7 +163,8 @@ namespace simulation
      * calculate degrees of freedom.
      */
     void calculate_degrees_of_freedom(topology::Topology & topo,
-				      bool rottrans_constraints);
+				      bool rottrans_constraints,
+                                      double dof_to_subtract);
     
     /**
      * calculate total kinetic energies and temperatures.

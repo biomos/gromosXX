@@ -200,7 +200,7 @@ int io::read_topology(io::Argument const & args,
   
   // do this after reading in a perturbation topology
   sim.multibath().calculate_degrees_of_freedom
-    (topo, sim.param().rottrans.rottrans);
+    (topo, sim.param().rottrans.rottrans, sim.param().boundary.dof_to_subtract);
 
   // and create the algorithms
   // (among them the forcefield!)

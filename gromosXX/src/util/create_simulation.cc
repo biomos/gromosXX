@@ -146,8 +146,9 @@ int util::create_simulation(std::string topo,
   }
 
   // do this after reading in a perturbation topology
-  sim.sim.multibath().calculate_degrees_of_freedom(sim.topo, 
-						   sim.sim.param().rottrans.rottrans);
+  sim.sim.multibath().calculate_degrees_of_freedom(sim.topo,
+          sim.sim.param().rottrans.rottrans,
+          sim.sim.param().boundary.dof_to_subtract);
 
   if (conf != ""){
 

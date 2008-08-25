@@ -738,12 +738,6 @@ void io::In_Parameter::read_BOUNDCOND(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
     param.boundary.dof_to_subtract = 0;    
   }
-  
-  if (param.boundary.dof_to_subtract > 0) {
-    io::messages.add("BOUNDCOND block: NDFMIN > 0 not implemented",
-		     "In_Parameter", io::message::warning);
-    param.boundary.dof_to_subtract = 0;    
-  }
 }
 
 /**
