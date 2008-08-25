@@ -97,6 +97,11 @@ namespace io {
 				   & cg_parameter,
 				   std::ostream & os = std::cout);
     
+    /**
+     * length of strings allowed
+     */
+    static const unsigned int MAX_NAME = 5;
+    
   private:
     /**
      * solute bond types

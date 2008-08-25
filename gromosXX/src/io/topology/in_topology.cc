@@ -22,7 +22,6 @@
 #define MODULE io
 #define SUBMODULE topology
 
-
 template<typename T>
 bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
 {
@@ -113,10 +112,10 @@ io::In_Topology::read(topology::Topology& topo,
 	io::messages.add("Bad line in TYPE block",
 			 "InTopology", io::message::error);
 
-      if (s.length() > 5) {
+      if (s.length() > MAX_NAME) {
         std::ostringstream msg;
         msg << "Error in TYPE block: type " << s 
-            << " is too long (> 5 characters).";
+            << " is too long (> " << MAX_NAME << " characters).";
         io::messages.add(msg.str(), "InTopology", io::message::error);
       }
 
@@ -217,10 +216,10 @@ io::In_Topology::read(topology::Topology& topo,
 	  os << std::setw(8) << s;      
 	}
 
-        if (s.length() > 5) {
+        if (s.length() > MAX_NAME) {
           std::ostringstream msg;
           msg << "Error in RESNAME block: residue name " << s 
-              << " is too long (> 5 characters).";
+              << " is too long (> " << MAX_NAME << " characters).";
           io::messages.add(msg.str(), "InTopology", io::message::error);
         }
       
@@ -260,10 +259,10 @@ io::In_Topology::read(topology::Topology& topo,
 	_lineStream.str(*it);
 	_lineStream >> s;
 
-        if (s.length() > 5) {
+        if (s.length() > MAX_NAME) {
           std::ostringstream msg;
           msg << "Error in ATOMTYPENAME block: type " << s 
-              << " is too long (> 5 characters).";
+              << " is too long (> " << MAX_NAME << " characters).";
           io::messages.add(msg.str(), "InTopology", io::message::error);
         }
       
@@ -333,10 +332,10 @@ io::In_Topology::read(topology::Topology& topo,
 			   "InTopology", io::message::error);
 	}
 
-        if (s.length() > 5) {
+        if (s.length() > MAX_NAME) {
           std::ostringstream msg;
           msg << "Error in SOLUTEATOM block: atom name " << s
-              << " is too long (> 5 characters).";
+              << " is too long (> " << MAX_NAME << " characters).";
           io::messages.add(msg.str(), "InTopology", io::message::error);
         }
 
@@ -1339,10 +1338,10 @@ io::In_Topology::read(topology::Topology& topo,
 			   "In_Topology", io::message::error);	
 	}
 
-        if (name.length() > 5) {
+        if (name.length() > MAX_NAME) {
           std::ostringstream msg;
           msg << "Error in SOLVENTATOM block: name " << name 
-              << " is too long (> 5 characters).";
+              << " is too long (> " << MAX_NAME << " characters).";
           io::messages.add(msg.str(), "InTopology", io::message::error);
         }
 
