@@ -106,6 +106,7 @@ void simulation::Multibath
 
 int simulation::Multibath::check_state(unsigned int num_atoms)const
 {
+  DEBUG(8, "checking multibath state");
   int result = 0;
   unsigned int last_atom = 0;
   std::vector<bath_index_struct>::const_iterator it = m_bath_index.begin(),

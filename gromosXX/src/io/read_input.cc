@@ -2,7 +2,6 @@
  * @file read_input.cc
  * implementation of function read_input
  */
-
 #include <stdheader.h>
 #include <fstream>
 
@@ -201,6 +200,9 @@ int io::read_topology(io::Argument const & args,
   // do this after reading in a perturbation topology
   sim.multibath().calculate_degrees_of_freedom
     (topo, sim.param().rottrans.rottrans, sim.param().boundary.dof_to_subtract);
+  
+  // check the bath parameters
+  sim.multibath().check_state(topo.num_atoms());
 
   // and create the algorithms
   // (among them the forcefield!)
