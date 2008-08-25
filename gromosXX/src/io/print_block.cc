@@ -57,7 +57,7 @@ namespace io
     
     for(; it!=to; ++it){
       os << std::setw(12) << it->last_atom + 1
-	 << std::setw(12) << it->last_molecule + 1
+	 << std::setw(12) << it->last_temperature_group + 1
 	 << std::setw(12) << it->com_bath + 1
 	 << std::setw(12) << it->ir_bath + 1
 	 << "\n";

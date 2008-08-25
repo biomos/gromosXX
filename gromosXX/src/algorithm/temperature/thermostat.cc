@@ -33,13 +33,13 @@ void algorithm::Thermostat
     r_it = sim.multibath().bath_index().begin(),
     r_to = sim.multibath().bath_index().end();
 
-  int last_atom = -1, last_mol = -1;
+  int last_atom = -1, last_tg = -1;
   configuration::State_Properties state_props(conf);
 
   for(; r_it != r_to; ++r_it){
 
     DEBUG(8, "atoms " << last_atom + 1 << " - " << r_it->last_atom
-	  << " mols " << last_mol + 1 << " - " << r_it->last_molecule);
+	  << " temperature groups " << last_tg + 1 << " - " << r_it->last_temperature_group);
     
     // decide whether molecular translational kinetic energy and
     // internal, rotational kinetic energies are jointly coupled
@@ -59,36 +59,36 @@ void algorithm::Thermostat
       if (sim.multibath()[r_it->com_bath].scale == 1.0 && 
 	  sim.multibath()[r_it->ir_bath].scale == 1.0) continue;
 
-      topology::Molecule_Iterator 
-	m_it = topo.molecule_begin(),
-	m_to = topo.molecule_begin();
+      topology::Temperaturegroup_Iterator 
+	tg_it = topo.temperature_group_begin(),
+	tg_to = topo.temperature_group_begin();
       
-      m_it += last_mol + 1;
-      m_to += r_it->last_molecule + 1;
+      tg_it += last_tg + 1;
+      tg_to += r_it->last_temperature_group + 1;
 
       DEBUG(8, "separately coupled");
-      DEBUG(8, "scaling from mol " << last_mol << " to "
-	    << r_it->last_molecule);
+      DEBUG(8, "scaling from temperature group " << last_tg << " to "
+	    << r_it->last_temperature_group);
 
       math::Vec com_v, new_com_v, ir_v;
       double com_ekin, ekin, new_com_ekin, new_ekin;
       unsigned int ir_bath, com_bath;
 
       // which bathes?
-      sim.multibath().in_bath(*(m_it.begin()), com_bath, ir_bath);  
+      sim.multibath().in_bath(*(tg_it.begin()), com_bath, ir_bath);  
 
-      for( ; m_it != m_to; ++m_it){
+      for( ; tg_it != tg_to; ++tg_it){
 	// new molecular translational velocities
 	state_props.
-	  molecular_translational_ekin(m_it.begin(), m_it.end(),
+	  molecular_translational_ekin(tg_it.begin(), tg_it.end(),
 				       topo.mass(),
 				       com_v, com_ekin, ekin,
 				       new_com_v, new_com_ekin, new_ekin);
 
-	topology::Atom_Iterator start = m_it.begin(),
-	  end = m_it.end();
+	topology::Atom_Iterator start = tg_it.begin(),
+	  end = tg_it.end();
     
-	// loop over the atoms in the molecule
+	// loop over the atoms in the temperature group
 	for( ; start != end; ++start){
     
 	  assert(unsigned(vel.size()) > *start);
@@ -102,11 +102,11 @@ void algorithm::Thermostat
 	  DEBUG(10, "com_v=" << math::v2s(new_com_v) << " ir_v=" << math::v2s(ir_v));
 
 	} // loop over atoms
-      } // loop over molecules of bath
+      } // loop over temperature group of bath
     } // seperately coupled
 
     last_atom = r_it->last_atom;
-    last_mol = r_it->last_molecule;
+    last_tg = r_it->last_temperature_group;
   } // loop over baths
 }
 

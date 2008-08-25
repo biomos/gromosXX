@@ -50,13 +50,13 @@ namespace simulation
    */
   struct bath_index_struct
   {
-    bath_index_struct(unsigned int last_atom, unsigned int last_molecule, 
+    bath_index_struct(unsigned int last_atom, unsigned int last_temp_group, 
 		      unsigned int com_bath, unsigned int ir_bath)
-      : last_atom(last_atom), last_molecule(last_molecule), 
+      : last_atom(last_atom), last_temperature_group(last_temp_group), 
 	com_bath(com_bath), ir_bath(ir_bath){}
     
     unsigned int last_atom;
-    unsigned int last_molecule;
+    unsigned int last_temperature_group;
     unsigned int com_bath;
     unsigned int ir_bath;
   };

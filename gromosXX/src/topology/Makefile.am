@@ -4,10 +4,15 @@ INCLUDES = -I$(top_srcdir)/src
 xxincludedir = $(includedir)/gromosXX/topology
 xxcoreincludedir = $(includedir)/gromosXX/topology/core
 
-xxcoreinclude_HEADERS =	core/atomgroup_iterator.h	core/chargegroup_iterator.h \
-			core/atom_iterator.h		core/compound.h \
-			core/body_term.h 		core/molecule_iterator.h \
-			core/core.h
+xxcoreinclude_HEADERS =	core/atomgroup_iterator.h	\
+	core/chargegroup_iterator.h \
+	core/atom_iterator.h
+	core/compound.h \
+	core/body_term.h \
+	core/molecule_iterator.h \
+	core/temperaturegroup_iterator.h \
+	core/pressuregroup_iterator.h \
+	core/core.h
 
 xxinclude_HEADERS =	solute.h			solvent.h \
 			perturbed_atom.h 		perturbed_solute.h \

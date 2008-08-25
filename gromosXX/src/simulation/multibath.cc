@@ -38,7 +38,7 @@ void simulation::Multibath
     io::messages.add("Adding atoms to the last bath!",
 		     "Multibath::calculate_degrees_of_freedom",
 		     io::message::notice);
-    add_bath_index(topo.num_atoms()-1, unsigned(topo.molecules().size())-1, 
+    add_bath_index(topo.num_atoms()-1, unsigned(topo.temperature_groups().size())-1, 
 		   unsigned(size())-1, unsigned(size())-1);
     
   }
@@ -48,43 +48,43 @@ void simulation::Multibath
     to = m_bath_index.end();
 
   DEBUG(8, "number of baths: " << unsigned(size()));
-  DEBUG(8, "molecules " << unsigned(topo.molecules().size()));
+  DEBUG(8, "temperature groups: " << unsigned(topo.temperature_groups().size()));
   
   for(int last=-1; it != to; ++it){
-    // get the number of molecules in the range
-    int num_mol = 0;
-    int mol = 0;
+    // get the number of temperature groups in the range
+    int num_tg = 0;
+    int tg = 0;
 
     DEBUG(8, "last atom: " << it->last_atom);
     DEBUG(8, "end of last group: " << last);
 
-    for(topology::Molecule_Iterator m_it = topo.molecule_begin(),
-	  m_to = topo.molecule_end();
-	m_it != m_to;
-	++m_it, ++mol){
+    for(topology::Temperaturegroup_Iterator tg_it = topo.temperature_group_begin(),
+	  tg_to = topo.temperature_group_end();
+	tg_it != tg_to;
+	++tg_it, ++tg){
 
-      DEBUG(8, "current mol begins: " << (*m_it.begin()));
+      DEBUG(8, "current temperature group begins: " << (*tg_it.begin()));
       
-      if ((*(m_it.begin())) > it->last_atom){
+      if ((*(tg_it.begin())) > it->last_atom){
 	break;
       }
       
-      if (int(*(m_it.begin())) > last)
-	++num_mol;
+      if (int(*(tg_it.begin())) > last)
+	++num_tg;
     }
 
-    // add the last molecule
-    DEBUG(8, "last molecule is " << mol - 1);
-    it->last_molecule = mol - 1;
+    // add the last temperature group
+    DEBUG(8, "last temperature group is " << tg - 1);
+    it->last_temperature_group = tg - 1;
 
-    DEBUG(8, "num molecules is " << num_mol);
+    DEBUG(8, "num temperature groups is " << num_tg);
     // add the molecular translational dof
-    (*this)[it->com_bath].dof += num_mol * 3;
-    (*this)[it->com_bath].com_dof += num_mol * 3;
+    (*this)[it->com_bath].dof += num_tg * 3;
+    (*this)[it->com_bath].com_dof += num_tg * 3;
 
     // and the internal and molecular rotational dof
-    (*this)[it->ir_bath].dof += (it->last_atom - last) * 3 - num_mol * 3;
-    (*this)[it->ir_bath].ir_dof += (it->last_atom - last) * 3 - num_mol * 3;
+    (*this)[it->ir_bath].dof += (it->last_atom - last) * 3 - num_tg * 3;
+    (*this)[it->ir_bath].ir_dof += (it->last_atom - last) * 3 - num_tg * 3;
 
     last = it->last_atom;
   }

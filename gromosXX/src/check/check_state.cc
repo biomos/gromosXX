@@ -63,14 +63,14 @@ void scale_positions(topology::Topology & topo,
   
   util::centre_of_mass(topo, conf, com_pos, com_ekin);
 
-  topology::Molecule_Iterator
-    m_it = topo.molecule_begin(),
-    m_to = topo.molecule_end();
+  topology::Pressuregroup_Iterator
+    pg_it = topo.pressure_group_begin(),
+    pg_to = topo.pressure_group_end();
 
-  for(int i=0; m_it != m_to; ++m_it, ++i){
+  for(int i=0; pg_it != pg_to; ++pg_it, ++i){
     
-    topology::Atom_Iterator a_it = m_it.begin(),
-      a_to = m_it.end();
+    topology::Atom_Iterator a_it = pg_it.begin(),
+      a_to = pg_it.end();
 
     math::VArray &pos = conf.current().pos;
 

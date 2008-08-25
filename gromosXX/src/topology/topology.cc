@@ -40,6 +40,8 @@ topology::Topology::Topology()
     m_charge(0),
     m_num_solute_chargegroups(0),
     m_num_solute_molecules(0),
+    m_num_solute_temperature_groups(0),
+    m_num_solute_pressure_groups(0),
     m_multicell_topo(NULL),
     m_polarizability(0),
     m_coscharge(0),
@@ -48,11 +50,14 @@ topology::Topology::Topology()
 {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
+  m_temperature_group.push_back(0);
+  m_pressure_group.push_back(0);
 }
 
 topology::Topology::~Topology()
 {
-  delete m_multicell_topo;
+  if (m_multicell_topo != NULL)
+    delete m_multicell_topo;
 }
 
 /**
@@ -90,10 +95,18 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   DEBUG(10, "solute chargegrous = " << topo.num_solute_chargegroups());
   
   m_num_solute_chargegroups = topo.num_solute_chargegroups() * mul_solute;
-  m_num_solute_molecules = m_num_solute_molecules * mul_solute;
+  m_num_solute_molecules = topo.num_solute_molecules() * mul_solute;
+  m_num_solute_temperature_groups = topo.num_solute_temperature_groups() * mul_solute;
+  m_num_solute_pressure_groups = topo.num_solute_pressure_groups() * mul_solute;
 
   m_molecule.clear();
   m_molecule.push_back(0);
+  
+  m_temperature_group.clear();
+  m_temperature_group.push_back(0);
+  
+  m_pressure_group.clear();
+  m_pressure_group.push_back(0);
   
   solute().bonds().clear();
   solute().angles().clear();
@@ -165,6 +178,16 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     for(unsigned int i=1; i<topo.molecules().size() - topo.num_solvent_molecules(0); ++i){
       m_molecule.push_back(topo.molecules()[i] + m * num_solute);
     }
+    
+    DEBUG(10, "\ttemperature groups");
+    for(unsigned int i=1; i<topo.temperature_groups().size() - topo.num_solvent_molecules(0); ++i){
+      m_temperature_group.push_back(topo.temperature_groups()[i] + m * num_solute);
+    }
+    
+    DEBUG(10, "\tpressure groups");
+    for(unsigned int i=1; i<topo.pressure_groups().size() - topo.num_solvent_molecules(0); ++i){
+      m_pressure_group.push_back(topo.pressure_groups()[i] + m * num_solute);
+    }    
 
     DEBUG(10, "\tbonds");
     for(unsigned int i=0; i<topo.solute().bonds().size(); ++i){
@@ -378,12 +401,21 @@ void topology::Topology::resize(unsigned int const atoms)
 
 void topology::Topology::init(simulation::Simulation const & sim, std::ostream & os, bool quiet)
 {
-  // std::cerr << "topology::init" << std::endl;
+  DEBUG(6, "Topologi INIT");
   
   if (!m_molecule.size()){
     m_molecule.push_back(0);
-    // do it gromos++ like and determine by bonds???
     m_molecule.push_back(num_solute_atoms());
+  }
+  
+  if (!m_temperature_group.size()){
+    m_temperature_group.push_back(0);
+    m_temperature_group.push_back(num_solute_atoms());
+  }
+  
+  if (!m_pressure_group.size()){
+    m_pressure_group.push_back(0);
+    m_pressure_group.push_back(num_solute_atoms());
   }
 
   if (!m_energy_group.size()){
@@ -592,7 +624,9 @@ void topology::Topology::solvate(unsigned int solv, unsigned int num_molecules)
 
     // and to the molecules
     m_molecule.push_back(n);
-
+    // and temperature and pressure groups
+    m_temperature_group.push_back(n);
+    m_pressure_group.push_back(n);
   }
     
 }
@@ -623,11 +657,17 @@ void topology::Topology::resolvate(unsigned int solv, unsigned int num_molecules
 
   m_chargegroup.erase(m_chargegroup.begin() + m_num_solute_chargegroups + 1, m_chargegroup.end());
   m_molecule.erase(m_molecule.begin() + m_num_solute_molecules + 1, m_molecule.end());
+  m_temperature_group.erase(m_temperature_group.begin() + m_num_solute_temperature_groups + 1, m_temperature_group.end());
+  m_pressure_group.erase(m_pressure_group.begin() + m_num_solute_pressure_groups + 1, m_pressure_group.end());
 
   DEBUG(9, "solute chargegroups: " << m_num_solute_chargegroups
 	<< " size: " << m_chargegroup.size());
   DEBUG(9, "solute molecules: " << m_num_solute_molecules
 	<< " size: " << m_molecule.size());
+  DEBUG(9, "solute temperature groups: " << m_num_solute_temperature_groups
+	<< " size: " << m_temperature_group.size());
+  DEBUG(9, "solute pressure groups: " << m_num_solute_pressure_groups
+	<< " size: " << m_pressure_group.size());
 
   // add to iac, mass, charge
   for(unsigned int i=0; i<num_molecules; ++i){
@@ -656,6 +696,9 @@ void topology::Topology::resolvate(unsigned int solv, unsigned int num_molecules
     // and to the molecules
     DEBUG(8, "solvent mol: " << n);
     m_molecule.push_back(n);
+    // and temperature and pressure groups
+    m_temperature_group.push_back(n);
+    m_pressure_group.push_back(n);
   }
 }
 

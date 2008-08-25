@@ -1158,18 +1158,138 @@ io::In_Topology::read(topology::Topology& topo,
     topo.num_solute_molecules() = topo.molecules().size() - 1;
 
     { // TEMPERATUREGROUPS
+      DEBUG(10, "read TEMPERATUREGROUPS");
+
+      buffer.clear();
+      std::string s;
+  
       buffer = m_block["TEMPERATUREGROUPS"];
-      if (buffer.size())
-        io::messages.add("md++ currently does not use the information supplied in the TEMPERATUREGROUPS block.",
-                "InTopology", io::message::notice);
-    } 
-    { // PRESSUREGROUPS
-      buffer = m_block["PRESSUREGROUPS"];
-      if (buffer.size())
-        io::messages.add("md++ currently does not use the information supplied in the PRESSUREGROUPS block.",
-                "InTopology", io::message::notice);
+  
+      if (!buffer.size()){
+        io::messages.add("no TEMPERATUREGROUPS block in topology",
+                         "In_Topology", io::message::error);
+      } else {
+        _lineStream.clear();
+        _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+  
+        int num;
+  
+        _lineStream >> num;
+
+        if(num<0){
+          io::messages.add("negative number of TEMPERATUREGROUPS is not allowed",
+		     "In_Topology", io::message::error);
+        }
+  
+        unsigned int m;
+        unsigned int old_m=0;
+
+        for(int i=0; i<num; ++i){
+          _lineStream >> m;
+          topo.temperature_groups().push_back(m);
+          DEBUG(11, "add temperature group " << m);
+          if(m<old_m){
+            io::messages.add("wrong order in TEMPERATUREGROUPS block",
+                             "In_Topology", io::message::error);
+            break;
+          }
+          old_m=m;
+        }
+  
+        if (_lineStream.fail())
+          io::messages.add("bad line in TEMPERATUREGROUPS block",
+                           "In_Topology", io::message::error);
+      }
+    } // TEMPERATUREGROUPS
+
+    if (topo.temperature_groups().size() == 0){
+      topo.temperature_groups().push_back(0);
+      topo.temperature_groups().push_back(topo.num_solute_atoms());
     }
-     { // PATHINTSPEC
+
+    // temperature groups check
+    if (topo.temperature_groups().back()
+	!= topo.num_solute_atoms()){
+    
+      std::cout << "ERROR: temperature groups wrong\n"
+		<< "\tlast atom in TEMPERATUREGROUPS block = " << topo.temperature_groups().back()
+		<< "\n\tlast atom in topology = " << topo.num_solute_atoms()
+		<< std::endl;
+      
+      io::messages.add("Error in TEMPERATUREGROUPS block: "
+		       "last temperature group has to end with last solute atom",
+		       "In_Topology", io::message::error);
+    }
+    
+    topo.num_solute_temperature_groups() = topo.temperature_groups().size() - 1;
+    
+    { // PRESSUREGROUPS
+      DEBUG(10, "read PRESSUREGROUPS");
+
+      buffer.clear();
+      std::string s;
+  
+      buffer = m_block["PRESSUREGROUPS"];
+  
+      if (!buffer.size()){
+        io::messages.add("no PRESSUREGROUPS block in topology",
+                         "In_Topology", io::message::error);
+      } else {
+        _lineStream.clear();
+        _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+  
+        int num;
+  
+        _lineStream >> num;
+
+        if(num<0){
+          io::messages.add("negative number of PRESSUREGROUPS is not allowed",
+		     "In_Topology", io::message::error);
+        }
+  
+        unsigned int m;
+        unsigned int old_m=0;
+
+        for(int i=0; i<num; ++i){
+          _lineStream >> m;
+          topo.pressure_groups().push_back(m);
+          DEBUG(11, "add pressure group " << m);
+          if(m<old_m){
+            io::messages.add("wrong order in PRESSUREGROUPS block",
+                             "In_Topology", io::message::error);
+            break;
+          }
+          old_m=m;
+        }
+  
+        if (_lineStream.fail())
+          io::messages.add("bad line in PRESSUREGROUPS block",
+                           "In_Topology", io::message::error);
+      }
+    } // PRESSUREGROUPS
+
+    if (topo.pressure_groups().size() == 0){
+      topo.pressure_groups().push_back(0);
+      topo.pressure_groups().push_back(topo.num_solute_atoms());
+    }
+
+    // pressure groups check
+    if (topo.pressure_groups().back()
+	!= topo.num_solute_atoms()){
+    
+      std::cout << "ERROR: pressure groups wrong\n"
+		<< "\tlast atom in PRESSUREGROUPS block = " << topo.pressure_groups().back()
+		<< "\n\tlast atom in topology = " << topo.num_solute_atoms()
+		<< std::endl;
+      
+      io::messages.add("Error in PRESSUREGROUPS block: "
+		       "last pressure group has to end with last solute atom",
+		       "In_Topology", io::message::error);
+    }
+    
+    topo.num_solute_pressure_groups() = topo.pressure_groups().size() - 1;
+     
+    { // PATHINTSPEC
       buffer = m_block["PATHINTSPEC"];
       if (buffer.size())
         io::messages.add("md++ does not support path-integral simulations (PATHINTSPEC block).",
@@ -1376,6 +1496,24 @@ io::In_Topology::read(topology::Topology& topo,
 		     "last solute molecule has to end with last atom",
 		     "In_Topology", io::message::error);
   }
+  
+  // temperature group check
+  if (topo.temperature_groups().back()
+      != topo.num_atoms()){
+    
+    io::messages.add("Error in TEMPERATUREGROUPS / solvation block: "
+		     "last temperature group has to end with last atom",
+		     "In_Topology", io::message::error);
+  }  
+  
+  // pressure group check
+  if (topo.pressure_groups().back()
+      != topo.num_atoms()){
+    
+    io::messages.add("Error in PRESSUREGROUPS / solvation block: "
+		     "last pressure group has to end with last atom",
+		     "In_Topology", io::message::error);
+  }  
 
   // chargegroup check (starts with 0)
   if (topo.chargegroups()[topo.num_solute_chargegroups()] != int(topo.num_solute_atoms())){
@@ -1394,6 +1532,18 @@ io::In_Topology::read(topology::Topology& topo,
 
   DEBUG(10, "molecules().size: " << unsigned(topo.molecules().size())
 	<< " nsm : " << param.system.nsm);
+  
+  if (!quiet)
+    os << "\n\tSOLUTE temperature groups: " 
+	      << unsigned(topo.temperature_groups().size()) - param.system.nsm - 1 << "\n";
+
+  DEBUG(10, "temperature_groups().size: " << unsigned(topo.temperature_groups().size()));
+  
+  if (!quiet)
+    os << "\n\tSOLUTE pressure groups: " 
+	      << unsigned(topo.pressure_groups().size()) - param.system.nsm - 1 << "\n";
+
+  DEBUG(10, "pressure_groups().size: " << unsigned(topo.pressure_groups().size()));
 
   // energy group check
   if (param.force.energy_group.size() == 0){

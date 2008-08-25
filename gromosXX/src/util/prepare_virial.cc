@@ -79,18 +79,18 @@ static void _prepare_virial(topology::Topology const & topo,
     
     math::Periodicity<b> periodicity(conf.current().box);
 
-    topology::Molecule_Iterator
-      m_it = topo.molecule_begin(),
-      m_to = topo.molecule_end();
+    topology::Pressuregroup_Iterator
+      pg_it = topo.pressure_group_begin(),
+      pg_to = topo.pressure_group_end();
 
     math::Vec com_pos;
     math::Matrix com_ekin;
 
     conf.current().kinetic_energy_tensor = 0.0;
 
-    for( ; m_it != m_to; ++m_it){
-      _centre_of_mass(m_it.begin(),
-		      m_it.end(),
+    for( ; pg_it != pg_to; ++pg_it){
+      _centre_of_mass(pg_it.begin(),
+		      pg_it.end(),
 		      topo, conf,
 		      com_pos, com_ekin,
 		      periodicity);
@@ -163,22 +163,22 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     const int numstates = conf.special().eds.virial_tensor_endstates.size();
     std::vector<math::Matrix> corrPendstates(numstates,corrP);
     
-    topology::Molecule_Iterator
-      m_it = topo.molecule_begin(),
-      m_to = topo.molecule_end();
+    topology::Pressuregroup_Iterator
+      pg_it = topo.pressure_group_begin(),
+      pg_to = topo.pressure_group_end();
 
     math::Vec com_pos;
     math::Matrix com_ekin;
 
-    for( ; m_it != m_to; ++m_it){
-      _centre_of_mass(m_it.begin(),
-		      m_it.end(),
+    for( ; pg_it != pg_to; ++pg_it){
+      _centre_of_mass(pg_it.begin(),
+		      pg_it.end(),
 		      topo, conf,
 		      com_pos, com_ekin,
 		      periodicity);
 
-      topology::Atom_Iterator a_it = m_it.begin(),
-	a_to = m_it.end();
+      topology::Atom_Iterator a_it = pg_it.begin(),
+	a_to = pg_it.end();
 
       for( ; a_it != a_to; ++a_it){
 
@@ -238,16 +238,16 @@ void _centre_of_mass_loop(topology::Topology const & topo,
 {
   math::Periodicity<b> periodicity(conf.current().box);
   
-  const size_t num = topo.molecules().size();
+  const size_t num = topo.pressure_groups().size();
   com_pos.assign(num, math::Vec(0.0));
   com_ekin.assign(num, math::Matrix(0.0));
   
-  topology::Molecule_Iterator
-    m_it = topo.molecule_begin(),
-    m_to = topo.molecule_end();
+  topology::Pressuregroup_Iterator
+    pg_it = topo.pressure_group_begin(),
+    pg_to = topo.pressure_group_end();
   
-  for(int i=0; m_it != m_to; ++m_it, ++i){
-    _centre_of_mass(m_it.begin(), m_it.end(),
+  for(int i=0; pg_it != pg_to; ++pg_it, ++i){
+    _centre_of_mass(pg_it.begin(), pg_it.end(),
 		    topo, conf,
 		    com_pos[i], com_ekin[i],
 		    periodicity);

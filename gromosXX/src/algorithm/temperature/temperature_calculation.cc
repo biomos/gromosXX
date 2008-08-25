@@ -40,8 +40,8 @@ int algorithm::Temperature_Calculation
   for(unsigned int i=0; i < unsigned(sim.multibath().size()); ++i)
     sim.multibath().bath(i).ekin = 0.0;
 
-  topology::Molecule_Iterator m_it = topo.molecule_begin(),
-    m_to = topo.molecule_end();
+  topology::Temperaturegroup_Iterator tg_it = topo.temperature_group_begin(),
+    tg_to = topo.temperature_group_end();
   
   math::Vec com_v, new_com_v;
   double com_ekin, ekin, new_com_ekin, new_ekin;
@@ -50,21 +50,21 @@ int algorithm::Temperature_Calculation
   
   configuration::State_Properties state_props(conf);
 
-  for( ; m_it != m_to; ++m_it){
+  for( ; tg_it != tg_to; ++tg_it){
     state_props.
-      molecular_translational_ekin(m_it.begin(), m_it.end(),
+      molecular_translational_ekin(tg_it.begin(), tg_it.end(),
 				   topo.mass(),
 				   com_v, com_ekin, ekin,
 				   new_com_v, new_com_ekin, new_ekin);
 
-    DEBUG(9, "molecule: " << *m_it.begin() << " - " << *m_it.end());
+    DEBUG(9, "temperature group: " << *tg_it.begin() << " - " << *tg_it.end());
     DEBUG(10, "average com_v:" << math::v2s(com_v) << " com_ekin:" 
 	  << com_ekin << " ekin:" << ekin);
     
     DEBUG(10, "new com_v:" << math::v2s(new_com_v) << " com_ekin:" 
 	  << new_com_ekin << " ekin:" << new_ekin);
     
-    sim.multibath().in_bath(*m_it.begin(), com_bath, ir_bath);
+    sim.multibath().in_bath(*tg_it.begin(), com_bath, ir_bath);
 
     DEBUG(15, "adding to bath: com: "
 	  << com_bath << " ir: " << ir_bath);

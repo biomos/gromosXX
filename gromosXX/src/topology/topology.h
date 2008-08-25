@@ -345,6 +345,26 @@ namespace topology
      * the number of solute (sub)molecules
      */
     unsigned int & num_solute_molecules() {return m_num_solute_molecules;}
+    
+    /**
+     * the number of solute temperature groups (const)
+     */
+    unsigned int num_solute_temperature_groups()const {return m_num_solute_temperature_groups;}
+
+    /**
+     * the number of solute temperature groups
+     */
+    unsigned int & num_solute_temperature_groups() {return m_num_solute_temperature_groups;}
+    
+    /**
+     * the number of solute pressure groups (const)
+     */
+    unsigned int num_solute_pressure_groups()const {return m_num_solute_pressure_groups;}
+
+    /**
+     * the number of solute temperature groups
+     */
+    unsigned int & num_solute_pressure_groups() {return m_num_solute_pressure_groups;}
 
     /**
      * iterator over the chargegrops
@@ -385,6 +405,44 @@ namespace topology
     Molecule_Iterator molecule_end()const{
       return Molecule_Iterator(m_molecule.end()-1);}
 
+    /**
+     * the temperature groups
+     */
+    std::vector<unsigned int> & temperature_groups(){ return m_temperature_group;}
+    /**
+     * the temperature groups (const)
+     */
+    std::vector<unsigned int> const & temperature_groups()const{ return m_temperature_group;}
+    /**
+     * iterator over the temperature groups
+     */
+    Temperaturegroup_Iterator temperature_group_begin()const{
+      return Temperaturegroup_Iterator(m_temperature_group.begin());};
+    /**
+     * end of temperature groups iterator
+     */
+    Temperaturegroup_Iterator temperature_group_end()const{
+      return Temperaturegroup_Iterator(m_temperature_group.end()-1);}    
+ 
+    /**
+     * the pressure groups
+     */
+    std::vector<unsigned int> & pressure_groups(){ return m_pressure_group;}
+    /**
+     * the pressure groups (const)
+     */
+    std::vector<unsigned int> const & pressure_groups()const{ return m_pressure_group;}
+    /**
+     * iterator over the pressure groups
+     */
+    Pressuregroup_Iterator pressure_group_begin()const{
+      return Pressuregroup_Iterator(m_pressure_group.begin());};
+    /**
+     * end of pressure groups iterator
+     */
+    Pressuregroup_Iterator pressure_group_end()const{
+      return Pressuregroup_Iterator(m_pressure_group.end()-1);}       
+    
     /**
      * const energy group accessor.
      */
@@ -823,6 +881,16 @@ namespace topology
      * the molecules.
      */
     std::vector<unsigned int> m_molecule;
+    
+    /**
+     * the temperature groups
+     */
+    std::vector<unsigned int> m_temperature_group;
+    
+    /**
+     * the pressure groups
+     */
+    std::vector<unsigned int> m_pressure_group;
 
     /**
      * the chargegroups.
@@ -838,6 +906,16 @@ namespace topology
      * the number of solute molecules.
      */
     unsigned int m_num_solute_molecules;
+    
+    /**
+     * the number of solute temperature groups
+     */
+    unsigned int m_num_solute_temperature_groups;
+    
+    /**
+     * the number of solute pressure groups
+     */
+    unsigned int m_num_solute_pressure_groups;
     
     /**
      * residue names (solute and solvent).
