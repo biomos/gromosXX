@@ -50,24 +50,22 @@ int io::read_special(io::Argument const & args,
   
     if (args.count("posres") != 1){
       io::messages.add("position restraints: no data file specified (use @posres)",
-		       "read special",
-		       io::message::error);
-    }
-    else{
+		       "read special", io::message::error);
+    } else {
       posres_file.open(args["posres"].c_str());
       if (!posres_file.is_open()){
 	io::messages.add("opening posres file failed!\n",
 			 "read_special", 
 			 io::message::error);
+      } else {
+        io::messages.add("position restraints read from " + args["posres"],
+                "read special", io::message::notice);
+
+        io::In_Posres ip(posres_file);
+        ip.quiet = quiet;
+
+        ip.read(topo, sim, os);
       }
-      io::messages.add("position restraints read from " + args["posres"],
-		       "read special",
-		       io::message::notice);
-      
-      io::In_Posres ip(posres_file);
-      ip.quiet = quiet;
-      
-      ip.read(topo, sim, os);
     }
   } // POSRES
 
@@ -77,25 +75,21 @@ int io::read_special(io::Argument const & args,
 
     if (args.count("distrest") != 1){
       io::messages.add("distance restraints: no data file specified (use @distrest)",
-		       "read special",
-		       io::message::error);
-    }
-    else{
-  
+		       "read special", io::message::error);
+    } else {
       distanceres_file.open(args["distrest"].c_str());
       if (!distanceres_file.is_open()){
 	io::messages.add("opening distanceres file failed!\n",
-			 "read_special", 
-			 io::message::error);
+			 "read_special", io::message::error);
+      } else {
+        io::messages.add("distance restraints read from " + args["distrest"],
+                "read special", io::message::notice);
+
+        io::In_Distanceres ip(distanceres_file);
+        ip.quiet = quiet;
+
+        ip.read(topo, sim, os);
       }
-      io::messages.add("distance restraints read from " + args["distrest"],
-		       "read special",
-		       io::message::notice);
-      
-      io::In_Distanceres ip(distanceres_file);
-      ip.quiet = quiet;
-      
-      ip.read(topo, sim, os);
     }    
   } // DISTANCERES
 
@@ -105,24 +99,21 @@ int io::read_special(io::Argument const & args,
 
     if (args.count("dihrest") != 1){
       io::messages.add("dihedral restraints: no data file specified (use @dihrest)",
-		       "read special",
-		       io::message::error);
-    }
-    else{
+		       "read special", io::message::error);
+    } else{
       dihrest_file.open(args["dihrest"].c_str());
       if (!dihrest_file.is_open()){
 	io::messages.add("opening dihrest file '" + args["dihrest"] + "'failed!\n",
-			 "read_special", 
-			 io::message::error);
+			 "read_special", io::message::error);
+      } else {
+        io::messages.add("dihedral restraints read from " + args["dihrest"],
+                "read special", io::message::notice);
+
+        io::In_Dihrest ip(dihrest_file);
+        ip.quiet = quiet;
+
+        ip.read(topo, sim, os);
       }
-      io::messages.add("dihedral restraints read from " + args["dihrest"],
-		       "read special",
-		       io::message::notice);
-      
-      io::In_Dihrest ip(dihrest_file);
-      ip.quiet = quiet;
-      
-      ip.read(topo, sim, os);
     }    
   } // DIHREST
 
@@ -132,24 +123,21 @@ int io::read_special(io::Argument const & args,
     
     if (args.count("jval") != 1){
       io::messages.add("jvalue restraints: no data file specified (use @jval)",
-		       "read special",
-		       io::message::error);
-    }
-    else{
+		       "read special", io::message::error);
+    } else {
       jval_file.open(args["jval"].c_str());
       if (!jval_file.is_open()){
 	io::messages.add("opening jvalue restraints file failed!\n",
 			 "read_special", io::message::error);
-	return 1;
+      } else {
+        io::messages.add("jvalue restraints read from " + args["jval"],
+                "read special", io::message::notice);
+
+        io::In_Jvalue ij(jval_file);
+        ij.quiet = quiet;
+
+        ij.read(topo, conf, sim, os);
       }
-      io::messages.add("jvalue restraints read from " + args["jval"],
-		       "read special",
-		       io::message::notice);
-      
-      io::In_Jvalue ij(jval_file);
-      ij.quiet = quiet;
-      
-      ij.read(topo, conf, sim, os);
     }
   } // JVALUE
   
@@ -163,17 +151,18 @@ int io::read_special(io::Argument const & args,
     }
     else{
       friction_file.open(args["friction"].c_str());
-      if (!friction_file.is_open()){
-	io::messages.add("opening friction file failed!\n",
-			 "read_special", io::message::error);
+      if (!friction_file.is_open()) {
+        io::messages.add("opening friction file failed!\n",
+                "read_special", io::message::error);
+      } else {
+        io::messages.add("atomic friction coefficients read from " + args["friction"],
+                "read special", io::message::notice);
+
+        io::In_Friction infr(friction_file);
+        infr.quiet = quiet;
+
+        infr.read(topo, sim, os);
       }
-      io::messages.add("atomic friction coefficients read from " + args["friction"],
-		       "read special",  io::message::notice);
-      
-      io::In_Friction infr(friction_file);
-      infr.quiet = quiet;
-      
-      infr.read(topo, sim, os);
     }
   } // FRICTION
 

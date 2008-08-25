@@ -23,8 +23,6 @@ void io::message::add(std::string msg, std::string source,
 {
   std::string s = source + " : " + msg;
   m_message.insert(message_type(severity, s));
-  
-  if (severity == critical) display();
 }
 
 /**

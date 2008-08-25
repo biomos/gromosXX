@@ -153,6 +153,7 @@ int io::read_topology(io::Argument const & args,
     os << "\n\ncould not open " << args[argname_topo] << "!\n" << std::endl;
     io::messages.add("opening topology failed", "read_input",
 		     io::message::critical);
+    return -1;
   }
 
   io::messages.add("topology read from " + args[argname_topo],
@@ -182,6 +183,7 @@ int io::read_topology(io::Argument const & args,
       os << "\n\ncould not open " << args[argname_pttopo] << "!\n" << std::endl;
       io::messages.add("opening perturbation topology failed", "read_input",
 		       io::message::critical);
+      return -1;
     }
     
     io::messages.add("perturbation topology read from " + args[argname_pttopo],
