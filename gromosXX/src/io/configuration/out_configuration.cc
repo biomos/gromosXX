@@ -448,6 +448,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_pscale_jrest(conf, topo, *m_final_conf);
     }
     
+    if (sim.param().multibath.nosehoover > 1) {
+      _print_nose_hoover_chain_variables(sim.multibath(), *m_final_conf);
+    }
+    
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()) % m_every_force) == 0){
       _print_old_timestep(sim, *m_force_traj);
@@ -552,6 +556,10 @@ void io::Out_Configuration::write_replica
       _print_pscale_jrest(conf[0], topo, *m_final_conf);
     }
     */
+
+    if (sim.param().multibath.nosehoover > 1) {
+      _print_nose_hoover_chain_variables(sim.multibath(), *m_final_conf);
+    }
   }
   // done writing replicas!
 }
@@ -2324,4 +2332,23 @@ void io::Out_Configuration
     os << "END\n";
   }
 
+}
+
+void io::Out_Configuration::
+_print_nose_hoover_chain_variables(const simulation::Multibath & multibath,
+        std::ostream & os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "NHCVARIABLES\n";
+  for(simulation::Multibath::const_iterator it = multibath.begin(), to = multibath.end();
+    it != to; ++it) {
+    const std::vector<double> & zeta = it->zeta;
+    for(std::vector<double>::const_iterator z_it = zeta.begin(), z_to = zeta.end();
+      z_it != z_to; ++z_it) {
+      os << std::setw(m_width) << *z_it;
+    }
+    os << "\n";
+  }  
+  os << "END\n";
 }

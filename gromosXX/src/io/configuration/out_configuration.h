@@ -306,6 +306,9 @@ namespace io {
     void _print_replica_information(std::vector<util::Replica_Data> const & replica_data,
 				    std::ostream & os);
     
+    void _print_nose_hoover_chain_variables(const simulation::Multibath & multibath,
+            std::ostream & os);
+    
   protected:
     std::ostream *m_pos_traj;
     std::ostream *m_final_conf;

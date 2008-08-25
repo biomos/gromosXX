@@ -175,7 +175,13 @@ namespace io {
                                           configuration::Configuration &conf, 
                                           simulation::Simulation & sim,
                                           std::ostream & os);
-    
+    /**
+     * read Nose-Hoover-Chains variables
+     */
+    bool read_nose_hoover_chains(topology::Topology &topo, 
+                                 configuration::Configuration &conf, 
+                                 simulation::Simulation & sim,
+                                 std::ostream & os);
     /**
      * read position restraint averages and bfactors
      */
@@ -296,6 +302,11 @@ namespace io {
      */
     bool _read_time_step(std::vector<std::string> &buffer,
 			 simulation::Simulation & sim);
+    /**
+     * read NHCVARIABLES block
+     */
+    bool _read_nose_hoover_chain_variables(std::vector<std::string> &buffer,
+            simulation::Multibath & multibath);
     
   };
 

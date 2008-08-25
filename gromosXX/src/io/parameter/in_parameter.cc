@@ -1120,16 +1120,15 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   }
   
-  io::messages.add("INITIALISE block: NTINHC is ignored.",
-		   "In_Parameter", io::message::notice);
-  
-  // only for lattice sum. ignored without warning
   switch(ntishi) { 
     case 0: break;
     case 1: break;
     default : io::messages.add("INITIALISE block: NTISHI must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
+
+  io::messages.add("INITIALISE block: NTISHI is ignored.",
+		     "In_Parameter", io::message::notice);  
   
   // controls reading of restart data for roto-translational constraints:
   // not implemented.

@@ -64,6 +64,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_stochastic_integral(topo, conf, sim, os);
   read_perturbation(topo, sim, os);
   read_distance_restraint_averages(topo, conf, sim, os);
+  read_nose_hoover_chains(topo, conf, sim, os);
   read_position_restraints(topo, sim, os);
   
   // and set the boundary type!
@@ -186,6 +187,7 @@ void io::In_Configuration::read_replica
     read_stochastic_integral(topo, conf[0], sim, os);
     read_perturbation(topo, sim, os);
     read_distance_restraint_averages(topo, conf[0], sim, os);
+    read_nose_hoover_chains(topo, conf[0], sim, os);
   
 	DEBUG(10, "setting boundary type");
     conf[0].boundary_type = param.boundary.boundary;
@@ -243,6 +245,7 @@ void io::In_Configuration::read_replica
       read_stochastic_integral(topo, conf[i], sim, os);
       read_perturbation(topo, sim, os);
       read_distance_restraint_averages(topo, conf[i], sim, os);
+      read_nose_hoover_chains(topo, conf[i], sim, os);
       
       conf[i].boundary_type = param.boundary.boundary;
       
@@ -815,6 +818,39 @@ bool io::In_Configuration::read_distance_restraint_averages
     else{
       if (sim.param().distanceres.read)
         io::messages.add("no DISRESEXPAVE block in configuration.",
+                         "in_configuration",
+                         io::message::error);
+    }
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_nose_hoover_chains
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().multibath.nosehoover > 1){
+    
+    buffer = m_block["NHCVARIABLES"];
+    if (buffer.size()){
+      block_read.insert("NHCVARIABLES");
+      if (!quiet)
+	os << "\treading NHCVARIABLES...\n";
+
+      if (sim.param().start.read_nosehoover_chains)
+        _read_nose_hoover_chain_variables(buffer, sim.multibath());
+      else
+        io::messages.add("Nose-Hoover-Chains variables found but not read.",
+                         "in_configuration",
+                         io::message::warning);
+    }
+    else{
+      if (sim.param().start.read_nosehoover_chains)
+        io::messages.add("no NHCVARIABLES block in configuration.",
                          "in_configuration",
                          io::message::error);
     }
@@ -2049,5 +2085,47 @@ std::vector<std::string> &buffer, bool hasTitle)
 
   return true;
   
+}
+
+bool io::In_Configuration::_read_nose_hoover_chain_variables(
+std::vector<std::string> &buffer,
+simulation::Multibath & multibath) {
+  DEBUG(8, "read nose hoover chain variables");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  simulation::Multibath::iterator b_it = multibath.begin(),
+          b_to = multibath.end();
+
+  const unsigned int num_zeta = b_it->zeta.size();
+  
+  for (; it != to && b_it != b_to; ++it, ++b_it) {
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    for(unsigned int i = 0; i < num_zeta; ++i)
+      _lineStream >> b_it->zeta[i];
+
+    if (_lineStream.fail()) {
+      io::messages.add("Could not read Nose-Hoover-Chains from configuration file",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+  }
+
+  if (b_it != b_to) {
+    io::messages.add("Could not read Nose-Hoover-Chains: Not enough lines (baths)",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  
+  if (it != to) {
+    io::messages.add("Could not read Nose-Hoover-Chains: Too many lines (baths)",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+
+  return true;  
 }
 
