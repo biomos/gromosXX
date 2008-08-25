@@ -1188,7 +1188,7 @@ void io::Out_Configuration
   
   os << "CONSFORCERED\n";
   
-  const math::VArray &force = conf.current().force;
+  const math::VArray &force = conf.old().force;
   assert(num <= int(force.size()));
   
   for(int i=0; i<num; ++i){
