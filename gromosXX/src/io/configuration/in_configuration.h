@@ -227,7 +227,7 @@ namespace io {
 			   int const num);
     
     /**
-     * read COSPOSITION block.
+     * read COSDISPLACEMENTS block.
      */
     bool _read_cos_position(math::VArray &pos, std::vector<std::string> &buffer,
 			   int const num);

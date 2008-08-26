@@ -441,22 +441,22 @@ bool io::In_Configuration::read_cos_position
   std::vector<std::string> buffer;
 
   if (sim.param().polarize.cos) {
-    buffer = m_block["COSPOSITION"];
+    buffer = m_block["COSDISPLACEMENTS"];
     if (buffer.size()){
       
       check_coordinates(topo, conf, sim, buffer.size() - 1, os);
       
       if (!quiet)
-        os << "\treading COSPOSITION...\n";
+        os << "\treading COSDISPLACEMENTS...\n";
       _read_cos_position(conf.current().posV, buffer, topo.num_atoms());
       
       conf.old().posV = conf.current().posV;
       
-      block_read.insert("COSPOSITION");
+      block_read.insert("COSDISPLACEMENTS");
     }
     
     else{
-      io::messages.add("no COSPOSITION block found in input configuration."
+      io::messages.add("no COSDISPLACEMENTS block found in input configuration."
               " Setting COS position to zero.",
               "in_configuration",
               io::message::notice);
@@ -1088,7 +1088,7 @@ bool io::In_Configuration::_read_cos_position(math::VArray &pos,
 					     std::vector<std::string> &buffer,
 					     int const num)
 {
-  DEBUG(8, "read COSPOSITION");
+  DEBUG(8, "read COSDISPLACEMENTS");
   
   // no title in buffer!
   std::vector<std::string>::const_iterator it = buffer.begin(),
@@ -1108,7 +1108,7 @@ bool io::In_Configuration::_read_cos_position(math::VArray &pos,
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
       io::messages.add("configuration file does not match topology: "
-		       "too many coordinates in COSPOSITION block",
+		       "too many coordinates in COSDISPLACEMENTS block",
 		       "In_Configuration",
 		       io::message::error);
       break;
@@ -1119,7 +1119,7 @@ bool io::In_Configuration::_read_cos_position(math::VArray &pos,
     _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
     
     if(_lineStream.fail()){
-      io::messages.add("bad line in COSPOSITION block",
+      io::messages.add("bad line in COSDISPLACEMENTS block",
 		       "In_Configuration",
 		       io::message::error);      
       return false;
@@ -1128,7 +1128,7 @@ bool io::In_Configuration::_read_cos_position(math::VArray &pos,
 
   if (i != num){
     io::messages.add("configuration file does not match topology: "
-		     "not enough coordinates in COSPOSITION block",
+		     "not enough coordinates in COSDISPLACEMENTS block",
 		     "In_Configuration",
 		     io::message::error);
     return false;

@@ -1061,7 +1061,7 @@ inline void io::Out_Configuration
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
   
-  os << "COSPOSITION\n";
+  os << "COSDISPLACEMENTS\n";
   
   math::VArray const &posV = conf.current().posV;
   
