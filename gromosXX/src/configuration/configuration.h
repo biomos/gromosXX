@@ -260,6 +260,11 @@ namespace configuration
 
       } /** enveloping distribution sampling information */ eds;
 
+      /**
+       * lattice shifts
+       */
+      math::VArray lattice_shifts;
+
     }; // special
 
     /**

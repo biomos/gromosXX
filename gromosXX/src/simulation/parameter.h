@@ -379,13 +379,15 @@ namespace simulation
        * - read_nosehoover_chains true   (read them from configuration)
        * - read_rottrans          true   (read initial setting of positions
        *                                  and orientations for rot-trans constraints)
+       * - read_lattice_shifts    true   (read initial lattice shifts)
        * - ig                     0      (random number seed)
        * - tempi                  0.0    (temperature to generate initial velocities)
        */
       start_struct() : shake_pos(false), shake_vel(false), 
                        remove_com_translation(false), remove_com_rotation(false),
 		       generate_velocities(false), ig(0), tempi(0.0),
-                       read_nosehoover_chains(true), read_rottrans(true) {}
+                       read_nosehoover_chains(true), read_rottrans(true),
+                       read_lattice_shifts(true) {}
       
       /**
        * shake initial positions
@@ -424,6 +426,10 @@ namespace simulation
        * constraints from configuration or reset them
        */
       bool read_rottrans;
+      /**
+       * Read initial lattice shifts from configuration
+       */
+      bool read_lattice_shifts;
     } /** startup parameters */ start;
 
     /**

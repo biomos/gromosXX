@@ -38,6 +38,13 @@ namespace math
      */
     void put_chargegroups_into_box(configuration::Configuration & conf,
 				   topology::Topology const & topo )const;
+    
+    /**
+     * put chargegroups into the box and save the lattice shifts.
+     */
+    void put_chargegroups_into_box_saving_shifts(
+                                   configuration::Configuration & conf,
+				   topology::Topology const & topo )const;
 
 
     void gather_chargegroups(configuration::Configuration & conf, 

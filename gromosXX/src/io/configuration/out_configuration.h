@@ -217,6 +217,10 @@ namespace io {
     void _print_velocity(configuration::Configuration const &conf,
 			 topology::Topology const &topo,
 			 std::ostream &os);
+    
+    void _print_lattice_shifts(configuration::Configuration const &conf,
+			       topology::Topology const &topo,
+			       std::ostream &os);
 
     void _print_force(configuration::Configuration const &conf,
 		      topology::Topology const &topo,

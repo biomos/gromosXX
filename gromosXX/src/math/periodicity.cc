@@ -86,6 +86,63 @@ void math::Periodicity<b>
 
 template<math::boundary_enum b>
 void math::Periodicity<b>
+::put_chargegroups_into_box_saving_shifts(configuration::Configuration & conf, 
+			    topology::Topology const & topo)const
+{
+  math::VArray &pos = conf.current().pos;
+  math::VArray &shift = conf.special().lattice_shifts;
+  math::Vec v, v_box, trans;
+
+  DEBUG(10, "num cg = " << topo.num_chargegroups());
+  DEBUG(10, "num atoms = " << topo.num_atoms());
+  DEBUG(10, "pos.size() = " << pos.size());
+  
+  topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
+    cg_to = topo.chargegroup_end();
+
+  // solute chargegroups...
+  unsigned int i = 0;
+  for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
+    DEBUG(11, "cg cog " << i);
+    cg_it.cog(pos, v);
+    // gather on first atom...
+    // v = pos(*cg_it.begin());
+    v_box = v;
+    put_into_box(v_box);
+    trans = v_box - v;
+    
+    // atoms in a chargegroup
+    topology::Atom_Iterator at_it = cg_it.begin(),
+      at_to = cg_it.end();
+    for( ; at_it != at_to; ++at_it){
+      assert(pos.size() > *at_it && shift.size() > *at_it);
+      pos(*at_it) += trans;
+      shift(*at_it) += trans;
+    } // loop over atoms
+  } // loop over solute cg's
+
+  // solvent chargegroups
+  for( ; cg_it != cg_to; ++cg_it){
+    // on first atom
+    v = pos(**cg_it);
+    v_box = v;
+    put_into_box(v_box);
+    trans = v_box - v;
+    
+    // loop over the atoms
+    topology::Atom_Iterator at_it = cg_it.begin(),
+      at_to = cg_it.end();
+    for( ; at_it != at_to; ++at_it){
+      assert(pos.size() > *at_it && shift.size() > *at_it);
+      pos(*at_it) += trans;
+      shift(*at_it) += trans;
+    } // atoms
+  } // solvent cg's
+
+}
+
+template<math::boundary_enum b>
+void math::Periodicity<b>
 ::gather_chargegroups(configuration::Configuration & conf, 
 		      topology::Topology const & topo)const
 {

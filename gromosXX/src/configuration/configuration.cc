@@ -126,6 +126,8 @@ configuration::Configuration::Configuration
   // if this works just like this, why do we need to explicitly copy the virial tensor?
   special().eds = conf.special().eds;
   
+  special().lattice_shifts = conf.special().lattice_shifts;
+  
   boundary_type = conf.boundary_type;
 }
 
@@ -197,6 +199,8 @@ configuration::Configuration & configuration::Configuration::operator=
   special().ramd = conf.special().ramd;
   
   special().eds = conf.special().eds;
+  
+  special().lattice_shifts = conf.special().lattice_shifts;
   
   boundary_type = conf.boundary_type;
 
@@ -391,6 +395,8 @@ void configuration::Configuration::resize(unsigned int s)
   
   current().resize(s);
   old().resize(s);
+  
+  special().lattice_shifts.resize(s);
 }
 
 /**

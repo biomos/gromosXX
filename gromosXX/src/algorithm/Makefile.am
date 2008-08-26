@@ -15,7 +15,8 @@ xxalgintegration_HEADERS =      integration/energy_calculation.h \
 				integration/stochastic.h \
 				integration/slow_growth.h \
 				integration/steepest_descent.h \
-				integration/analyze.h
+				integration/analyze.h \
+				integration/lattice_shift.h
 
 xxalgtempdir =                  $(includedir)/gromosXX/algorithm/temperature
 xxalgtemp_HEADERS =             temperature/temperature_calculation.h \
@@ -66,7 +67,8 @@ libgroalgorithm_la_SOURCES =	algorithm.cc \
 				integration/slow_growth.cc \
 				integration/steepest_descent.cc \
 				integration/analyze.cc \
-				constraints/rottrans.cc
+				constraints/rottrans.cc \
+				integration/lattice_shift.cc
 
 bin_PROGRAMS =			
 

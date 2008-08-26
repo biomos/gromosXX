@@ -57,6 +57,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_position(topo, conf, sim, os);
   read_cos_position(topo, conf, sim, os);
   read_velocity(topo, conf, sim, os);
+  read_lattice_shifts(topo, conf, sim, os);
   read_box(topo, conf, sim, os);
   read_jvalue(topo, conf, sim, os);
   read_pscale(topo, conf, sim, os);
@@ -180,6 +181,7 @@ void io::In_Configuration::read_replica
     read_position(topo, conf[0], sim, os);
     read_cos_position(topo, conf[0], sim, os);
     read_velocity(topo, conf[0], sim, os);
+    read_lattice_shifts(topo, conf[0], sim, os);
     read_box(topo, conf[0], sim, os);
     read_jvalue(topo, conf[0], sim, os);
     read_pscale(topo, conf[0], sim, os);
@@ -238,6 +240,7 @@ void io::In_Configuration::read_replica
       read_position(topo, conf[i], sim, os);
       read_cos_position(topo, conf[i], sim, os);
       read_velocity(topo, conf[i], sim, os);
+      read_lattice_shifts(topo, conf[i], sim, os);
       read_box(topo, conf[i], sim, os);
       read_jvalue(topo, conf[i], sim, os);
       read_pscale(topo, conf[i], sim, os);
@@ -506,6 +509,39 @@ bool io::In_Configuration::read_velocity
 			      conf.old().vel,
 			      sim.param().start.ig,
 			      os);
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_lattice_shifts
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  // read lattice_shifts
+  std::vector<std::string> buffer;
+  buffer = m_block["LATTICESHIFTS"];
+  if (sim.param().start.read_lattice_shifts) {
+    if (buffer.size()) {
+      if (!quiet)
+        os << "\treading LATTICESHIFTS...\n";
+      _read_lattice_shifts(conf.special().lattice_shifts, buffer, topo.num_atoms());
+      block_read.insert("LATTICESHIFTS");
+    } else {
+      io::messages.add("no LATTICESHIFTS block found in input configuration",
+              "in_configuration",
+              io::message::error);
+      conf.special().lattice_shifts = 0.0;
+      return false;
+    }
+  } else {
+    if (buffer.size()) {
+      io::messages.add("LATTICESHIFTS block provied but shifts reset to zero.",
+              "in_configuration", io::message::warning);
+      conf.special().lattice_shifts = 0.0;
+    }
   }
   return true;
 }
@@ -1206,6 +1242,52 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
   return true;
   
 }
+
+bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift, 
+					  std::vector<std::string> &buffer,
+					  int const num)
+{
+  DEBUG(8, "read lattice shifts");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  std::string s1, s2;
+  int i, n, nr;
+
+  for(i=0; it != to; ++i, ++it){
+    if (i >= num){
+      io::messages.add("configuration file does not match topology: "
+		       "too many coordinates in LATTICESHIFTS block",
+		       "In_Configuration", io::message::error);
+      break;
+    }
+   
+    _lineStream.clear();
+    _lineStream.str(*it);
+    // ignore first 4 fields
+    _lineStream >> n >> s1 >> s2 >> nr;
+    _lineStream >> shift(i)(0) >> shift(i)(1) >> shift(i)(2);
+    
+    if(_lineStream.fail()){
+      io::messages.add("bad line in LATTICESHIFTS block",
+		       "In_Configuration",
+		       io::message::critical);
+      return false;
+    }
+  }
+
+  if (i != num){
+    io::messages.add("configuration file does not match topology: "
+		     "not enough coordinates in LATTICESHIFTS block",
+		     "In_Configuration",
+		     io::message::error);
+    return false;
+  }
+  return true;
+}
+
 bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string> &buffer,
 				     math::boundary_enum const boundary)
 {

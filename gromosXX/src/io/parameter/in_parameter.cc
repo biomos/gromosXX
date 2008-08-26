@@ -1121,14 +1121,11 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
   }
   
   switch(ntishi) { 
-    case 0: break;
-    case 1: break;
+    case 0: param.start.read_lattice_shifts = true; break;
+    case 1: param.start.read_lattice_shifts = false; break;
     default : io::messages.add("INITIALISE block: NTISHI must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
-
-  io::messages.add("INITIALISE block: NTISHI is ignored.",
-		     "In_Parameter", io::message::notice);  
   
   // controls reading of restart data for roto-translational constraints:
   // not implemented.

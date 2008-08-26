@@ -23,6 +23,7 @@
 #include <algorithm/integration/leap_frog.h>
 #include <algorithm/integration/monte_carlo.h>
 #include <algorithm/integration/stochastic.h>
+#include <algorithm/integration/lattice_shift.h>
 
 #include <io/blockinput.h>
 #include <io/instream.h>
@@ -90,6 +91,9 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       
     md_seq.push_back(rcom);
   }
+  
+  // add the lattice shift tracking
+  md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
   
   // add the forcefield
   md_seq.push_back(ff);

@@ -107,6 +107,15 @@ namespace io {
 		       configuration::Configuration & conf,
 		       simulation::Simulation & sim,
 		       std::ostream & os = std::cout);
+    
+    /**
+     * try to get the lattice shifts
+     */
+    bool read_lattice_shifts(topology::Topology & topo,
+		             configuration::Configuration & conf,
+		             simulation::Simulation & sim,
+		             std::ostream & os = std::cout);
+    
     /**
      * try to get time, step
      */
@@ -220,6 +229,13 @@ namespace io {
      */
     bool _read_velocity(math::VArray &vel, std::vector<std::string> &buffer,
 			int const num);
+    
+    /**
+     * read LATTICESHIFTS block.
+     */
+    bool _read_lattice_shifts(math::VArray &vel, std::vector<std::string> &buffer,
+			int const num);
+    
     /**
      * read POSITIONRED block.
      */

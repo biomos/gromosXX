@@ -18,7 +18,9 @@ INITIALISE
 # NTINHC: 0,1 controls generation of initial Nose-Hoover chain variables
 #         0: read from configuration (default)
 #         1: reset variables to zero.
-# NTISHI: 0,1 unsed in md++
+# NTISHI: 0,1 controls initial setting for lattice shift vectors
+#         0: read from configuration (default)
+#         1: reset shifts to zero.
 # NTIRTC: 0,1 controls initial setting of positions and orientations for
 #             roto-translational constraints
 #         0: read from configuration (default)
