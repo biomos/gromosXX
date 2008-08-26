@@ -8,6 +8,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
+#include <simulation/parameter.h>
 #include <configuration/configuration.h>
 #include <configuration/energy.h>
 
@@ -20,8 +21,6 @@
 #include <sstream>
 
 #include "out_configuration.h"
-#include "gromosXX/simulation/parameter.h"
-
 
 #include <util/replica_data.h>
 #include <util/template_split.h>
@@ -444,6 +443,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if(sim.param().jvalue.mode != simulation::restr_off){
       _print_jvalue(sim.param(), conf, topo, *m_final_conf);
     }
+    
+    if (sim.param().rottrans.rottrans) {
+      _print_rottrans(conf, sim, *m_final_conf);
+    }
 
     if(sim.param().pscale.jrest){
       _print_pscale_jrest(conf, topo, *m_final_conf);
@@ -501,7 +504,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   // done writing!
 
 }
-
 
 /**
  * write out replicas
@@ -2399,5 +2401,38 @@ _print_nose_hoover_chain_variables(const simulation::Multibath & multibath,
     }
     os << "\n";
   }  
+  os << "END\n";
+}
+
+void io::Out_Configuration::
+_print_rottrans(configuration::Configuration const &conf,
+        simulation::Simulation const &sim,
+        std::ostream &os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "ROTOTRANSREF\n";
+  os << "# translational matrix\n";
+  for(unsigned int i = 0; i < 3; ++i) {
+    for(unsigned int j = 0; j < 3; ++j) {
+      os << std::setw(m_width) << conf.special().rottrans_constr.theta_inv_trans(i,j);
+    }
+    os << "\n";
+  }
+  os << "# rotational matrix\n";
+  for(unsigned int i = 0; i < 3; ++i) {
+    for(unsigned int j = 0; j < 3; ++j) {
+      os << std::setw(m_width) << conf.special().rottrans_constr.theta_inv_rot(i,j);
+    }
+    os << "\n";
+  }
+  os << "# reference positions\n";
+  unsigned int last = sim.param().rottrans.last;
+  const math::VArray & refpos = conf.special().rottrans_constr.pos;
+  for(unsigned int i = 0; i < last; ++i ) {
+    os << std::setw(m_width) << refpos(i)(0) 
+       << std::setw(m_width) << refpos(i)(1) 
+       << std::setw(m_width) << refpos(i)(2) << "\n";
+  }
   os << "END\n";
 }

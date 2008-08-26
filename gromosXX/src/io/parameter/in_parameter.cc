@@ -1127,17 +1127,13 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   }
   
-  // controls reading of restart data for roto-translational constraints:
-  // not implemented.
+  // controls reading of restart data for roto-translational constraints
   switch(ntirtc) {
     case 0: param.start.read_rottrans = true; break;
     case 1: param.start.read_rottrans = false; break;
     default : io::messages.add("INITIALISE block: NTIRTC must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
-  
-  io::messages.add("INITIALISE block: NTIRTC is ignored.",
-		     "In_Parameter", io::message::notice);
   
   // controls removal of COM translation and rotation.
   switch(nticom) {
@@ -1157,7 +1153,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   }
   
-  // controls reading of stochastic integrals: not implemented.
+  // controls reading of stochastic integrals
   switch(ntisti) {
     case 0: 
       param.stochastic.generate_integral = false; 
@@ -1168,9 +1164,6 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
     default : io::messages.add("INITIALISE block: NTISTI must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
-  
-  io::messages.add("INITIALISE block: NTISTI is ignored.",
-		     "In_Parameter", io::message::notice);
   
   if(param.start.tempi <0)
     io::messages.add("Illegal value for TEMPI in INITIALISE block (>=0)",

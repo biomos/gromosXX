@@ -9,6 +9,7 @@
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
+#include <simulation/parameter.h>
 #include <configuration/configuration.h>
 
 #include <configuration/state_properties.h>
@@ -49,7 +50,7 @@ static void _apply(topology::Topology & topo,
 		  simulation::Simulation & sim)
 {
   // calculate c
-  DEBUG(8, "Roto-constrational translaints");
+  DEBUG(8, "Roto-translational constraints");
   
   math::Vec c_trans(0.0), c_rot(0.0), lambda_trans(0.0), lambda_rot(0.0);
   
@@ -159,111 +160,120 @@ static void _init(topology::Topology & topo,
 		  std::ostream & os,
 		  bool quiet)
 {
-  if (!quiet)
-    os << "Roto-translational constraints\tON\n";
-
-  math::Periodicity<b> periodicity(conf.current().box);
-  configuration::State_Properties sp(conf);
-
-  math::Vec com_pos;
-  math::Matrix com_e_kin;
-  
-  periodicity.put_chargegroups_into_box(conf, topo);
-  sp.center_of_mass(0, sim.param().rottrans.last, topo.mass(), com_pos, com_e_kin);
-
-  DEBUG(12, "com: " << math::v2s(com_pos));
-
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().pos(i) -= com_pos;
-  periodicity.put_chargegroups_into_box(conf, topo);
-  conf.exchange_state();
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().pos(i) -= com_pos;
-  periodicity.put_chargegroups_into_box(conf, topo);
-  conf.exchange_state();
-
-  // check
-  // sp.center_of_mass(0, topo.num_solute_atoms(), topo.mass(), com_pos, com_e_kin);
-  // DEBUG(10, "com (centered): " << math::v2s(com_pos));
-
-  // store initial (reference) positions
-  conf.special().rottrans_constr.pos.resize(sim.param().rottrans.last);
-
-  for(int i=0; i < sim.param().rottrans.last; ++i){
-    conf.special().rottrans_constr.pos(i) = conf.current().pos(i);
+  if (!quiet) {
+    os << "ROTTRANS\n";
+    os << "\tRoto-translational constraints\tON\n";
+    os << "\tusing last atom:\t" << sim.param().rottrans.last << "\n\n";
+    if (sim.param().start.read_rottrans)
+      os << "\treading initial reference orientation and position form configuration";
+    else
+      os << "\treseting initial reference orientation and position.";
+    os << "\nEND\n";
   }
   
-  // now calculate the thetas
-  std::vector<math::Vec> theta(6, math::Vec(0.0));
-  const int X = 0;
-  const int Y = 1;
-  const int Z = 2;
-  
-  for(int i=0; i < sim.param().rottrans.last; ++i){
+  if (!sim.param().start.read_rottrans) {
+    math::Periodicity<b> periodicity(conf.current().box);
+    configuration::State_Properties sp(conf);
 
-    theta[0](X) += topo.mass()(i);
-    theta[1](Y) += topo.mass()(i);
-    theta[2](Z) += topo.mass()(i);
-    
-    theta[3](X) += topo.mass()(i) * (conf.current().pos(i)(Z) * conf.current().pos(i)(Z) +
-				     conf.current().pos(i)(Y) * conf.current().pos(i)(Y));
-    
-    theta[3](Y) += topo.mass()(i) * (-conf.current().pos(i)(Y) * conf.current().pos(i)(X));
-    
-    theta[3](Z) += topo.mass()(i) * (-conf.current().pos(i)(X) * conf.current().pos(i)(Z));
-    
-    
-    theta[4](X) += topo.mass()(i) * (-conf.current().pos(i)(X) * conf.current().pos(i)(Y));
-    
-    theta[4](Y) += topo.mass()(i) * (conf.current().pos(i)(X) * conf.current().pos(i)(X) +
-				     conf.current().pos(i)(Z) * conf.current().pos(i)(Z));
-    
-    theta[4](Z) += topo.mass()(i) * (-conf.current().pos(i)(Y) * conf.current().pos(i)(Z));
-    
+    math::Vec com_pos;
+    math::Matrix com_e_kin;
 
-    theta[5](X) += topo.mass()(i) * (-conf.current().pos(i)(X) * conf.current().pos(i)(Z));
-    
-    
-    theta[5](Y) += topo.mass()(i) * (-conf.current().pos(i)(Y) * conf.current().pos(i)(Z));
-    
-    theta[5](Z) += topo.mass()(i) * (conf.current().pos(i)(X) * conf.current().pos(i)(X) +
-				     conf.current().pos(i)(Y) * conf.current().pos(i)(Y));
-    
+    periodicity.put_chargegroups_into_box(conf, topo);
+    sp.center_of_mass(0, sim.param().rottrans.last, topo.mass(), com_pos, com_e_kin);
+
+    DEBUG(12, "com: " << math::v2s(com_pos));
+
+    for (unsigned int i = 0; i < topo.num_atoms(); ++i)
+      conf.current().pos(i) -= com_pos;
+    periodicity.put_chargegroups_into_box(conf, topo);
+    conf.exchange_state();
+    for (unsigned int i = 0; i < topo.num_atoms(); ++i)
+      conf.current().pos(i) -= com_pos;
+    periodicity.put_chargegroups_into_box(conf, topo);
+    conf.exchange_state();
+
+    // check
+    // sp.center_of_mass(0, topo.num_solute_atoms(), topo.mass(), com_pos, com_e_kin);
+    // DEBUG(10, "com (centered): " << math::v2s(com_pos));
+
+    // store initial (reference) positions
+    conf.special().rottrans_constr.pos.resize(sim.param().rottrans.last);
+
+    for (int i = 0; i < sim.param().rottrans.last; ++i) {
+      conf.special().rottrans_constr.pos(i) = conf.current().pos(i);
+    }
+
+    // now calculate the thetas
+    std::vector<math::Vec> theta(6, math::Vec(0.0));
+    const int X = 0;
+    const int Y = 1;
+    const int Z = 2;
+
+    for (int i = 0; i < sim.param().rottrans.last; ++i) {
+
+      theta[0](X) += topo.mass()(i);
+      theta[1](Y) += topo.mass()(i);
+      theta[2](Z) += topo.mass()(i);
+
+      theta[3](X) += topo.mass()(i) * (conf.current().pos(i)(Z) * conf.current().pos(i)(Z) +
+              conf.current().pos(i)(Y) * conf.current().pos(i)(Y));
+
+      theta[3](Y) += topo.mass()(i) * (-conf.current().pos(i)(Y) * conf.current().pos(i)(X));
+
+      theta[3](Z) += topo.mass()(i) * (-conf.current().pos(i)(X) * conf.current().pos(i)(Z));
+
+
+      theta[4](X) += topo.mass()(i) * (-conf.current().pos(i)(X) * conf.current().pos(i)(Y));
+
+      theta[4](Y) += topo.mass()(i) * (conf.current().pos(i)(X) * conf.current().pos(i)(X) +
+              conf.current().pos(i)(Z) * conf.current().pos(i)(Z));
+
+      theta[4](Z) += topo.mass()(i) * (-conf.current().pos(i)(Y) * conf.current().pos(i)(Z));
+
+
+      theta[5](X) += topo.mass()(i) * (-conf.current().pos(i)(X) * conf.current().pos(i)(Z));
+
+
+      theta[5](Y) += topo.mass()(i) * (-conf.current().pos(i)(Y) * conf.current().pos(i)(Z));
+
+      theta[5](Z) += topo.mass()(i) * (conf.current().pos(i)(X) * conf.current().pos(i)(X) +
+              conf.current().pos(i)(Y) * conf.current().pos(i)(Y));
+
+    }
+
+    DEBUG(10, "theta[4] " << math::v2s(theta[3]));
+    DEBUG(10, "theta[5] " << math::v2s(theta[4]));
+    DEBUG(10, "theta[6] " << math::v2s(theta[5]));
+
+    const double d = math::dot(math::cross(theta[3], theta[4]), theta[5]);
+
+    // inverse that
+    math::Matrix & theta_inv_trans = conf.special().rottrans_constr.theta_inv_trans;
+    math::Matrix & theta_inv_rot = conf.special().rottrans_constr.theta_inv_rot;
+
+    theta_inv_trans = 0.0;
+    theta_inv_rot = 0.0;
+
+    theta_inv_trans(0, 0) = theta_inv_trans(1, 1) = theta_inv_trans(2, 2) =
+            1.0 / theta[0](0);
+
+    math::Vec h = math::cross(theta[4], theta[5]) / d;
+    theta_inv_rot(0, 0) = h(0);
+    theta_inv_rot(1, 0) = h(1);
+    theta_inv_rot(2, 0) = h(2);
+
+    h = math::cross(theta[3], theta[5]) / (-d);
+
+    theta_inv_rot(0, 1) = h(0);
+    theta_inv_rot(1, 1) = h(1);
+    theta_inv_rot(2, 1) = h(2);
+
+    h = math::cross(theta[3], theta[4]) / d;
+
+    theta_inv_rot(0, 2) = h(0);
+    theta_inv_rot(1, 2) = h(1);
+    theta_inv_rot(2, 2) = h(2);
   }
-
-  DEBUG(10, "theta[4] " << math::v2s(theta[3]));
-  DEBUG(10, "theta[5] " << math::v2s(theta[4]));
-  DEBUG(10, "theta[6] " << math::v2s(theta[5]));
-
-  const double d = math::dot(math::cross(theta[3], theta[4]), theta[5]);
-
-  // inverse that
-  math::Matrix & theta_inv_trans = conf.special().rottrans_constr.theta_inv_trans;
-  math::Matrix & theta_inv_rot = conf.special().rottrans_constr.theta_inv_rot;
-
-  theta_inv_trans = 0.0;
-  theta_inv_rot = 0.0;
-  
-  theta_inv_trans(0,0) = theta_inv_trans(1,1) = theta_inv_trans(2,2) = 
-    1.0 / theta[0](0);
-  
-  math::Vec h = math::cross(theta[4], theta[5]) / d;
-  theta_inv_rot(0,0) = h(0);
-  theta_inv_rot(1,0) = h(1);
-  theta_inv_rot(2,0) = h(2);
-  
-  h = math::cross(theta[3], theta[5]) / (-d);
-  
-  theta_inv_rot(0,1) = h(0);
-  theta_inv_rot(1,1) = h(1);
-  theta_inv_rot(2,1) = h(2);
-  
-  h = math::cross(theta[3], theta[4]) / d;
-  
-  theta_inv_rot(0,2) = h(0);
-  theta_inv_rot(1,2) = h(1);
-  theta_inv_rot(2,2) = h(2);
-
 }
 
 int algorithm::Rottrans_Constraints

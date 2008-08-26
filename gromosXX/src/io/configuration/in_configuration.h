@@ -199,6 +199,14 @@ namespace io {
                                   std::ostream & os);
 
     /**
+     * read configuration of roto translational constraints
+     */
+    bool read_rottrans(topology::Topology &topo, 
+                       configuration::Configuration &conf, 
+                       simulation::Simulation & sim,
+                       std::ostream & os);
+    
+    /**
      * read replica information
      */
     bool read_replica_information
@@ -323,6 +331,12 @@ namespace io {
      */
     bool _read_nose_hoover_chain_variables(std::vector<std::string> &buffer,
             simulation::Multibath & multibath);
+    
+    /**
+     * read ROTOTRANSREF block
+     */
+    bool _read_rottrans(std::vector<std::string> &buffer, unsigned int last,
+            configuration::Configuration::special_struct::rottrans_constr_struct & rottrans);
     
   };
 

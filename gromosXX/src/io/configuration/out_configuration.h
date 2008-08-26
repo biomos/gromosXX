@@ -313,6 +313,10 @@ namespace io {
     void _print_nose_hoover_chain_variables(const simulation::Multibath & multibath,
             std::ostream & os);
     
+    void _print_rottrans(configuration::Configuration const &conf,
+		     simulation::Simulation const &sim,
+		     std::ostream &os);
+    
   protected:
     std::ostream *m_pos_traj;
     std::ostream *m_final_conf;

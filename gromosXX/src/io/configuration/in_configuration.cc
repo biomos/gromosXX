@@ -66,6 +66,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_perturbation(topo, sim, os);
   read_distance_restraint_averages(topo, conf, sim, os);
   read_nose_hoover_chains(topo, conf, sim, os);
+  read_rottrans(topo, conf, sim, os);
   read_position_restraints(topo, sim, os);
   
   // and set the boundary type!
@@ -190,6 +191,7 @@ void io::In_Configuration::read_replica
     read_perturbation(topo, sim, os);
     read_distance_restraint_averages(topo, conf[0], sim, os);
     read_nose_hoover_chains(topo, conf[0], sim, os);
+    read_rottrans(topo, conf[0], sim, os);
   
 	DEBUG(10, "setting boundary type");
     conf[0].boundary_type = param.boundary.boundary;
@@ -249,6 +251,7 @@ void io::In_Configuration::read_replica
       read_perturbation(topo, sim, os);
       read_distance_restraint_averages(topo, conf[i], sim, os);
       read_nose_hoover_chains(topo, conf[i], sim, os);
+      read_rottrans(topo, conf[i], sim, os);
       
       conf[i].boundary_type = param.boundary.boundary;
       
@@ -887,6 +890,39 @@ bool io::In_Configuration::read_nose_hoover_chains
     else{
       if (sim.param().start.read_nosehoover_chains)
         io::messages.add("no NHCVARIABLES block in configuration.",
+                         "in_configuration",
+                         io::message::error);
+    }
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_rottrans
+(
+ topology::Topology &topo, 
+ configuration::Configuration &conf, 
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().rottrans.rottrans){
+    
+    buffer = m_block["ROTOTRANSREF"];
+    if (buffer.size()){
+      block_read.insert("ROTOTRANSREF");
+      if (!quiet)
+	os << "\treading ROTOTRANSREF...\n";
+
+      if (sim.param().start.read_rottrans)
+        _read_rottrans(buffer, sim.param().rottrans.last, conf.special().rottrans_constr);
+      else
+        io::messages.add("Initial settings for roto-translational constraints found but not read.",
+                         "in_configuration",
+                         io::message::warning);
+    }
+    else{
+      if (sim.param().start.read_rottrans)
+        io::messages.add("no ROTOTRANSREF block in configuration.",
                          "in_configuration",
                          io::message::error);
     }
@@ -2209,5 +2245,85 @@ simulation::Multibath & multibath) {
   }
 
   return true;  
+}
+
+bool io::In_Configuration::_read_rottrans(
+std::vector<std::string> &buffer, unsigned int last,
+configuration::Configuration::special_struct::rottrans_constr_struct & rottrans) {
+  DEBUG(8, "read configuration for roto-translational constraints");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  unsigned int i;
+  for (i = 0; it != to && i < 3; ++it, ++i) {
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    for(unsigned int j = 0; j < 3; ++j)
+      _lineStream >> rottrans.theta_inv_trans(i,j);
+
+    if (_lineStream.fail()) {
+      io::messages.add("ROTOTRANSREF block: Could not read translation matrix.",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+  }
+  if (i != 3) {
+    io::messages.add("ROTOTRANSREF block: Could not read translation matrix.",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  
+  for (i = 0; it != to && i < 3; ++it, ++i) {
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    for(unsigned int j = 0; j < 3; ++j)
+      _lineStream >> rottrans.theta_inv_rot(i,j);
+
+    if (_lineStream.fail()) {
+      io::messages.add("ROTOTRANSREF block: Could not read rotation matrix.",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+  }
+  if (i != 3) {
+    io::messages.add("ROTOTRANSREF block: Could not read rotation matrix.",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  
+  // make sure there is enough space for the positions
+  rottrans.pos.resize(last);
+  
+  for (i = 0; it != to && i < last; ++it, ++i) {
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    for(unsigned int j = 0; j < 3; ++j)
+      _lineStream >> rottrans.pos(i)(j);
+
+    if (_lineStream.fail()) {
+      io::messages.add("ROTOTRANSREF block: Could not read reference positions.",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+  }  
+  
+  if (it != to) {
+    io::messages.add("ROTOTRANSREF block: Too many lines (reference positions)",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  
+  if (i != last) {
+    io::messages.add("ROTOTRANSREF block: Not enough lines (reference positions)",
+            "In_Configuration", io::message::error);
+    return false;
+  }  
+
+  return true;    
 }
 
