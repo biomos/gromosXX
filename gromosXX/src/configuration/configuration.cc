@@ -53,6 +53,8 @@ configuration::Configuration::Configuration() {
   for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
     special().eds.virial_tensor_endstates[k] = 0.0;
   }
+  
+  special().shake_failure_occurred = false;
 }
 
 /**
@@ -128,6 +130,8 @@ configuration::Configuration::Configuration
   
   special().lattice_shifts = conf.special().lattice_shifts;
   
+  special().shake_failure_occurred = conf.special().shake_failure_occurred;
+  
   boundary_type = conf.boundary_type;
 }
 
@@ -201,6 +205,8 @@ configuration::Configuration & configuration::Configuration::operator=
   special().eds = conf.special().eds;
   
   special().lattice_shifts = conf.special().lattice_shifts;
+  
+  special().shake_failure_occurred = conf.special().shake_failure_occurred;
   
   boundary_type = conf.boundary_type;
 

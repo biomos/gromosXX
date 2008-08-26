@@ -213,6 +213,10 @@ namespace io {
     void _print_position(configuration::Configuration const &conf,
 			 topology::Topology const &topo,
 			 std::ostream &os);
+    
+    void _print_shake_failure(configuration::Configuration const &conf,
+			      topology::Topology const &topo,
+			      std::ostream &os);
 
     void _print_velocity(configuration::Configuration const &conf,
 			 topology::Topology const &topo,

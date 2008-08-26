@@ -122,7 +122,6 @@ namespace configuration
        * resize the position / velocities and force arrays
        */
       void resize(unsigned int num_atoms);
-
     };
 
     /**
@@ -264,6 +263,11 @@ namespace configuration
        * lattice shifts
        */
       math::VArray lattice_shifts;
+      
+      /**
+       * there was a SHAKE failure
+       */
+      bool shake_failure_occurred;
 
     }; // special
 

@@ -492,6 +492,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_old_timestep(sim, *m_free_energy_traj);
       _print_free_energyred(conf, topo, *m_free_energy_traj);
     }
+    
+    if (conf.special().shake_failure_occurred) {
+      _print_shake_failure(conf, topo, *m_final_conf);
+    }
 
   }
   else{
@@ -567,6 +571,9 @@ void io::Out_Configuration::write_replica
       _print_velocity(conf[i], topo, *m_final_conf);
       _print_lattice_shifts(conf[i], topo, *m_final_conf);
       _print_box(conf[i], *m_final_conf);
+      if (conf[i].special().shake_failure_occurred) {
+        _print_shake_failure(conf[i], topo, *m_final_conf);
+      }
     }
     
     /*
@@ -763,10 +770,17 @@ void io::Out_Configuration
 template<math::boundary_enum b>
 void _print_g96_position_bound(configuration::Configuration const &conf,
 				      topology::Topology const &topo,
-				      std::ostream &os, int width)
+				      std::ostream &os, int width, 
+                                      bool old_conf = false)
 {
-  math::Periodicity<b> periodicity(conf.current().box);
-  math::VArray const &pos = conf.current().pos;
+  const configuration::Configuration::state_struct * state;
+  if (old_conf)
+    state = & conf.old();
+  else
+    state = & conf.current();
+  
+  math::Periodicity<b> periodicity(state->box);
+  math::VArray const &pos = state->pos;
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
 
@@ -916,6 +930,25 @@ void io::Out_Configuration
   SPLIT_BOUNDARY(_print_g96_position_bound,
 		 conf, topo, os, m_width);
   
+  os << "END\n";
+  
+}
+
+void io::Out_Configuration
+::_print_shake_failure(configuration::Configuration const &conf,
+		       topology::Topology const &topo, 
+		       std::ostream &os)
+{
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  
+  os << "SHAKEFAILPOSITION\n";
+  SPLIT_BOUNDARY(_print_g96_position_bound,
+		 conf, topo, os, m_width);
+  os << "END\n";
+  os << "SHAKEFAILPREVPOSITION\n";
+  SPLIT_BOUNDARY(_print_g96_position_bound,
+		 conf, topo, os, m_width, true /* old coords */);
   os << "END\n";
   
 }
