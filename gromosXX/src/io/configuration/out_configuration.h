@@ -358,6 +358,11 @@ namespace io {
     std::string m_title;
     
     bool m_compressed;
+    
+    /**
+     * minimum energy for NTWSE trajectory
+     */
+    double minimum_energy;
   };
   
 } // io

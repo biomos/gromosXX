@@ -26,6 +26,8 @@
 #include <util/template_split.h>
 #include <util/debug.h>
 
+#include <limits>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE io
@@ -79,7 +81,8 @@ io::Out_Configuration::Out_Configuration(std::string title,
     m_width(15),
     m_force_width(18),
     m_title(title),
-    m_compressed(false)
+    m_compressed(false),
+    minimum_energy(std::numeric_limits<double>::max())
 {
   _print_title(m_title, "output file", os);
 }
@@ -317,6 +320,18 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   bool constraint_force = sim.param().constraint.solute.algorithm == simulation::constr_shake &&
     sim.param().constraint.solvent.algorithm == simulation::constr_shake;
   
+  // check whether a new energy minimum was found
+  bool minimum_found = false;
+  if (sim.param().write.energy_index > 0) {
+    double current_energy = conf.old().energies.get_energy_by_index(sim.param().write.energy_index);
+    
+    // found a new minimum?
+    if (current_energy < minimum_energy) {
+      minimum_found = true;
+      minimum_energy = current_energy;
+    }
+  }
+  
   if (form == reduced){
     /**
      * set this to true when you print the timestep to the special traj.
@@ -324,7 +339,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
      */
     bool special_timestep_printed = false; 
 
-    if(m_every_pos && (sim.steps() % m_every_pos) == 0){
+    if(m_every_pos && ((sim.steps() % m_every_pos) == 0 || minimum_found)){
       // don't write starting configuration if analyzing a trajectory
       if (sim.steps() || !sim.param().analyze.analyze){
 	_print_timestep(sim, *m_pos_traj);
@@ -337,6 +352,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 	if (conf.boundary_type != math::vacuum)
 	  _print_box(conf, *m_pos_traj);
       }
+      // a new block begins. let's reset the minimum
+      minimum_energy = conf.old().energies.get_energy_by_index(sim.param().write.energy_index);
     }
     
     if (m_every_vel && (sim.steps() % m_every_vel) == 0){
@@ -365,7 +382,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
        _print_cos_position(conf, topo, *m_special_traj);
     }
     
-    if(m_every_energy && (sim.steps() % m_every_energy) == 0){
+    if(m_every_energy && ((sim.steps() % m_every_energy) == 0 || minimum_found)){
       if(sim.steps()){
 	_print_old_timestep(sim, *m_energy_traj);
 	_print_energyred(conf, *m_energy_traj);

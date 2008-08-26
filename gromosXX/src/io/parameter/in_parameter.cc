@@ -24,7 +24,7 @@
 
 #include <math/random.h>
 
-#include "gromosXX/simulation/parameter.h"
+#include <configuration/energy.h>
 
 #ifdef OMP
 #include <omp.h>
@@ -522,11 +522,9 @@ void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
 
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
-
-  int ntwse;
   
   _lineStream >> param.write.position
-	      >> ntwse
+	      >> param.write.energy_index
 	      >> param.write.velocity
         >> param.write.force
 	      >> param.write.energy
@@ -537,9 +535,33 @@ void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
     io::messages.add("bad line in WRITETRAJ block",
 		     "In_Parameter", io::message::error);
 
-  if(ntwse!=0)
-    io::messages.add("WRITETRAJ block: NTWSE != 0 not supported",
-		     "In_Parameter", io::message::error);
+  if(param.write.energy_index < 0 || 
+     param.write.energy_index > int(configuration::Energy::MAX_ENERGY_INDEX)) {
+    std::ostringstream msg;
+    msg << "WRITETRAJ block: NTWSE must be 0 to "
+        << configuration::Energy::MAX_ENERGY_INDEX;
+    io::messages.add(msg.str(), "In_Parameter", io::message::error);
+  }
+  
+  if (param.write.energy_index > 0) {
+    if (param.write.position == 0) {
+      io::messages.add("WRITETRAJ block: NTWX must be a block size >= 0 for "
+                       "minimum-energy trajectory.",
+		       "In_Parameter", io::message::error);
+    }
+    if (param.write.energy != 0 && param.write.energy != abs(param.write.position)) {
+      io::messages.add("WRITETRAJ block: NTWE must be 0 or abs(NTWX) for "
+                       "minimum-energy trajectory.",
+		       "In_Parameter", io::message::error);
+    }
+    // from the documentation all others needs to be zero
+    if (param.write.velocity != 0 || param.write.force != 0 ||
+        param.write.free_energy != 0 || param.write.block_average != 0) {
+      io::messages.add("WRITETRAJ block: NTWV, NTWF, NTWG and NTWB must be 0 for "
+                       "minimum-energy trajectory.",
+		       "In_Parameter", io::message::error);
+    }
+  }
 
   if(param.write.position < 0){
     param.write.position_solute_only = true;

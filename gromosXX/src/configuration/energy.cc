@@ -271,3 +271,36 @@ int configuration::Energy::calculate_totals()
 
   return 0;
 }
+
+double configuration::Energy::get_energy_by_index(const unsigned int & index) {
+  switch(index) {
+    case 1 : return total;
+    case 2 : return potential_total;
+    case 3 : return bond_total;
+    case 4 : return angle_total;
+    case 5 : return improper_total;
+    case 6 : return dihedral_total;
+    case 7 : return bonded_total;
+    case 8 : return nonbonded_total;
+    case 9 : return lj_total;
+    case 10 : return crf_total;
+    case 11 : return ls_total;
+    case 12 : return ls_pair_total;
+    case 13 : return ls_realspace_total;
+    case 14 : return ls_kspace_total;
+    case 15 : return ls_self_total;
+    case 16 : return ls_surface_total;
+    case 17 : return ls_a_term_total;
+    case 18 : return special_total;
+    case 19 : return posrest_total;
+    case 20 : return distanceres_total;
+    case 21 : return dihrest_total;
+    case 22 : return jvalue_total;
+    case 23 : return constraints_total;
+    case 24 : return entropy_term;
+    case 25 : return external_total;
+    case 26 : return self_total;
+    case 27 : return eds_vr;
+  }
+  return 0.0;
+}

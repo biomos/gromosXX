@@ -247,6 +247,13 @@ namespace configuration
      * set energy warning
      */
     void ewarn(double ew) { m_ewarn = ew; }
+    
+    /**
+     * gets the energy by an index
+     */
+    double get_energy_by_index(const unsigned int & index);
+    
+    static const unsigned int MAX_ENERGY_INDEX = 27;
 
   private:
     double m_ewarn;

@@ -291,7 +291,9 @@ WRITETRAJ
 #      <0: write solute coordinates every |NTWX| steps
 # NTWSE >= 0 selection criteria for coordinate trajectory writing
 #       0: write normal coordinate trajectory
-#      >0: (not implemented)
+#      >0: write minimum-energy coordinate and energy trajectory (based on the
+#          energy entry selected by NTWSE and as blocks of length NTWX)
+#          (see configuration/energy.cc or ene_ana library for indices)
 # NTWV       controls writing of velocity trajectory
 #       0: no velocity trajectory is written (default)
 #      >0: write solute and solvent velocities every NTWV steps

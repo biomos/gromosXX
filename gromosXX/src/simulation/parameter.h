@@ -691,10 +691,12 @@ namespace simulation
        * - position_solute_only false (write solute and solvent)
        * - velocity_solute_only false (write solute and solvent)
        * - force_solute_only false (write solute and solvent)
+       * - energy_index 0    (don't write minimum energy trajectory)
        */
       write_struct() : position(0), velocity(0), force(0), energy(0), free_energy(0), 
 		       block_average(0), position_solute_only(false),
-                       velocity_solute_only(false), force_solute_only(false) {}
+                       velocity_solute_only(false), force_solute_only(false),
+                       energy_index(0) {}
       
       /**
        * position.
@@ -732,6 +734,11 @@ namespace simulation
        * write solute only for force trajectory
        */
       bool force_solute_only;
+      /**
+       * index of the energy array taken to write minimum energy
+       * trajectory
+       */
+      int energy_index;
       
     } /** write out paramters (trajectories) */ write;
 
