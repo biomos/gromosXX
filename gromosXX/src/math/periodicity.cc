@@ -92,6 +92,10 @@ void math::Periodicity<b>
   math::VArray &pos = conf.current().pos;
   math::VArray &shift = conf.special().lattice_shifts;
   math::Vec v, v_box, trans;
+  
+  const math::Box & my_box = this->box();
+  math::Matrix L(my_box(0),my_box(1),my_box(2), true);
+  const math::Matrix & cartesian_to_oblique = math::inverse(L);
 
   DEBUG(10, "num cg = " << topo.num_chargegroups());
   DEBUG(10, "num atoms = " << topo.num_atoms());
@@ -110,6 +114,7 @@ void math::Periodicity<b>
     v_box = v;
     put_into_box(v_box);
     trans = v_box - v;
+    const math::Vec & trans_shift = math::product(cartesian_to_oblique, trans);
     
     // atoms in a chargegroup
     topology::Atom_Iterator at_it = cg_it.begin(),
@@ -117,7 +122,7 @@ void math::Periodicity<b>
     for( ; at_it != at_to; ++at_it){
       assert(pos.size() > *at_it && shift.size() > *at_it);
       pos(*at_it) += trans;
-      shift(*at_it) += trans;
+      shift(*at_it) += trans_shift;
     } // loop over atoms
   } // loop over solute cg's
 
@@ -128,6 +133,7 @@ void math::Periodicity<b>
     v_box = v;
     put_into_box(v_box);
     trans = v_box - v;
+    const math::Vec & trans_shift = math::product(cartesian_to_oblique, trans);
     
     // loop over the atoms
     topology::Atom_Iterator at_it = cg_it.begin(),
@@ -135,7 +141,7 @@ void math::Periodicity<b>
     for( ; at_it != at_to; ++at_it){
       assert(pos.size() > *at_it && shift.size() > *at_it);
       pos(*at_it) += trans;
-      shift(*at_it) += trans;
+      shift(*at_it) += trans_shift;
     } // atoms
   } // solvent cg's
 

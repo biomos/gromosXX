@@ -1302,8 +1302,6 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
    
     _lineStream.clear();
     _lineStream.str(*it);
-    // ignore first 4 fields
-    _lineStream >> n >> s1 >> s2 >> nr;
     _lineStream >> shift(i)(0) >> shift(i)(1) >> shift(i)(2);
     
     if(_lineStream.fail()){

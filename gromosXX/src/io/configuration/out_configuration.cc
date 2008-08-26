@@ -1136,46 +1136,15 @@ void io::Out_Configuration
 ::_print_lattice_shifts(configuration::Configuration const &conf,
 		  topology::Topology const &topo, 
 		  std::ostream &os)
-{
-  os.setf(std::ios::fixed, std::ios::floatfield);
-  os.precision(m_precision);
-  
+{  
   os << "LATTICESHIFTS\n";
   math::VArray const &shift = conf.special().lattice_shifts;
-  topology::Solute const &solute = topo.solute();
-  std::vector<std::string> const &residue_name = topo.residue_names();
-
-  os << "# first 24 chars ignored\n";
-  for(int i=0,to = topo.num_solute_atoms(); i<to; ++i){
-    os << std::setw(5)  << solute.atom(i).residue_nr+1 << " "
-       << std::setw(5)  << std::left << residue_name[solute.atom(i).residue_nr] << " "
-       << std::setw(6)  << std::left << solute.atom(i).name << std::right
-       << std::setw(6)  << i+1
-       << std::setw(m_width) << shift(i)(0)
-       << std::setw(m_width) << shift(i)(1)
-       << std::setw(m_width) << shift(i)(2)
+  for(int i=0,to = topo.num_atoms(); i < to; ++i){
+    os << std::setw(10) << int(rint(shift(i)(0)))
+       << std::setw(10) << int(rint(shift(i)(1)))
+       << std::setw(10) << int(rint(shift(i)(2)))
        << "\n";
   }
-  
-  int index = topo.num_solute_atoms();
-  int res_num = 1;
-  
-  for(unsigned int s=0; s < topo.num_solvents(); ++s){
-    for(unsigned int m=0; m < topo.num_solvent_molecules(s); ++m, ++res_num){
-      for(unsigned int a=0; a < topo.solvent(s).num_atoms(); ++a, ++index){
-	os << std::setw(5)  << res_num << " "
-	   << std::setw(5)  << std::left 
-	   << residue_name[topo.solvent(s).atom(a).residue_nr] << " "
-	   << std::setw(6)  << std::left << topo.solvent(s).atom(a).name << std::right
-	   << std::setw(6)  << index + 1
-	   << std::setw(m_width) << shift(index)(0)
-	   << std::setw(m_width) << shift(index)(1)
-	   << std::setw(m_width) << shift(index)(2)
-	   << "\n";
-      }
-    }
-  }
-
   os << "END\n";
 }
 
