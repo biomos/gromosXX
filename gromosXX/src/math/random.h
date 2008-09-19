@@ -115,13 +115,13 @@ namespace math {
     /**
      * create an instance with zero seed.
      */
-    RandomGeneratorG96() { 
+    RandomGeneratorG96() : stored(false), stored_gaussian(0.0) { 
       seed(0);
     }
     /**
      * crate an instance with given seed.
      */
-    RandomGeneratorG96(std::string s) { 
+    RandomGeneratorG96(std::string s) : stored(false), stored_gaussian(0.0) { 
       seed(s);
     }
     /**
