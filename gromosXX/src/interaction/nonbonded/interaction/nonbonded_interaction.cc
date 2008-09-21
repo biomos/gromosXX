@@ -440,7 +440,7 @@ int interaction::Nonbonded_Interaction::check_spc_loop
   }
     
   DEBUG(10, "happy to force spc loops");
-  sim.param().force.special_loop = simulation::special_loop_off;
+  sim.param().force.special_loop = simulation::special_loop_spc;
   if (!quiet)
     os << "\tusing spc solvent loops\n";
   
