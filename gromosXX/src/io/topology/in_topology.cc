@@ -1637,18 +1637,15 @@ void io::In_Topology
   }
   else if (m_block["BONDTYPE"].size()){
     buffer = m_block["BONDTYPE"];
-
-    /*
-      io::messages.add("converting bond force constants from quartic "
-      "to harmonic form", "InTopology::bondtype",
-      io::message::notice);
-    */
-    /*
-    if (buffer.size()==0)
-      io::messages.add("BONDTYPE block not found!",
-		       "In_Topology",
-		       io::message::error);
-    */
+    _lineStream.clear();
+    _lineStream.str(buffer[1]);
+    unsigned int num_types;
+    _lineStream >> num_types;
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in BONDSTRETCHTYPE block: number of types",
+          "In_Topology",  io::message::error);
+    }
+    
     // 1. BONDTYPE 2. number of types
     for (it = buffer.begin() + 2; 
 	 it != buffer.end() - 1; ++it) {
@@ -1677,10 +1674,24 @@ void io::In_Topology
       // and add...
       b.push_back(interaction::bond_type_struct(k, r));
     }
+    if (b.size() != num_types) {
+      io::messages.add("BONDTYPE block: number of types does not "
+          "correspond with number of lines",
+          "In_Topology",  io::message::error);
+    }
   }
   else if (m_block["BONDSTRETCHTYPE"].size()){
     // read in the new block
     buffer = m_block["BONDSTRETCHTYPE"];
+    _lineStream.clear();
+    _lineStream.str(buffer[1]);
+    unsigned int num_types;
+    _lineStream >> num_types;
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in BONDSTRETCHTYPE block: number of types",
+          "In_Topology",  io::message::error);
+    }
+    
     // we are reading into harmonic bond term, so only read the harmonic force constant (kh)
     // 1. BONDTYPE 2. number of types
     for (it = buffer.begin() + 2; 
@@ -1714,6 +1725,13 @@ void io::In_Topology
       // and add r and the harmonic force constant
       b.push_back(interaction::bond_type_struct(kh, r));
     }
+    
+    if (b.size() != num_types) {
+      io::messages.add("BONDSTRETCHTYPE block: number of types does not "
+          "correspond with number of lines",
+          "In_Topology",  io::message::error);
+    }
+      
   }
   else{
     io::messages.add("either BONDTYPE, BONDSTRETCHTYPE or HARMBONDTYPE block must be present!",
