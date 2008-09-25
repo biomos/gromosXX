@@ -94,6 +94,29 @@ namespace interaction
      );
     
     /**
+     * @struct solvent_pair_parameters
+     * cached solvent parameters
+     */
+    struct solvent_pair_parameter {
+      double c12, c6, q;
+    };
+    
+    /**
+     * innerloop for generic solvents
+     */
+    void solvent_innerloop
+    (
+     topology::Topology & topo,
+     solvent_pair_parameter * pair_parameter,
+     configuration::Configuration & conf,
+     const unsigned int num_solvent_atoms,
+     const int start,
+     const int end,
+     Storage & storage,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+    
+    /**
      * Calculation of the electric field (polarization)
      */
     void electric_field_innerloop
@@ -143,6 +166,13 @@ namespace interaction
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );
+    
+    /**
+     * accessor to the nonbonded parameters
+     */
+    Nonbonded_Parameter * param() {
+      return m_param;
+    }
     
   protected:
     Nonbonded_Parameter * m_param;

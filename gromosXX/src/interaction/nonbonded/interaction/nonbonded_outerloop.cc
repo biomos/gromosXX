@@ -123,6 +123,44 @@ void interaction::Nonbonded_Outerloop
         innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
       }
     }
+  } if (sim.param().force.special_loop == simulation::special_loop_generic) {
+    const unsigned int num_solvent_atoms = topo.solvent(0).num_atoms();
+    // prepare parameters
+    const unsigned int num_param = num_solvent_atoms * num_solvent_atoms;
+    typename interaction::Nonbonded_Innerloop<t_interaction_spec>::solvent_pair_parameter pair_parameter[num_param];
+
+    unsigned int param = 0;
+    for(unsigned int atom_i = 0; atom_i < num_solvent_atoms; ++atom_i) {
+      for(unsigned int atom_j = 0; atom_j < num_solvent_atoms; ++atom_j, ++param) {
+        assert(param < num_param);
+        DEBUG(10, "\tsolvent pair parameter: " << param);
+        
+        const lj_parameter_struct & lj = 
+	  innerloop.param()->lj_parameter(topo.solvent(0).atom(atom_i).iac, topo.solvent(0).atom(atom_j).iac);
+        pair_parameter[param].c12 = lj.c12;
+        pair_parameter[param].c6 = lj.c6;
+        
+        pair_parameter[param].q = math::four_pi_eps_i * 
+                topo.solvent(0).atom(atom_i).charge * 
+                topo.solvent(0).atom(atom_j).charge;
+        
+        DEBUG(10, "\t\tc12: " << pair_parameter[param].c12 << " c6: " << 
+                pair_parameter[param].c6 << " q: " << pair_parameter[param].q);
+      }
+    }
+
+    // use num_solvent_atoms-th atom (first of solvent molecule i)
+    for (; i < size_i; i += num_solvent_atoms) {
+      for (j_it = pairlist_solvent[i].begin(),
+              j_to = pairlist_solvent[i].end();
+              j_it != j_to;
+              j_it += num_solvent_atoms) { // use num_solvent_atoms-th atom (first of solvent molecule j)
+
+        DEBUG(10, "\tsolvent_nonbonded_interaction: i " << i << " j " << *j_it);
+
+        innerloop.solvent_innerloop(topo, pair_parameter, conf, num_solvent_atoms, i, *j_it, storage, periodicity);
+      }
+    }
   } else { // normal solvent loop
     for(; i < size_i; ++i){
       for(j_it = pairlist_solvent[i].begin(),

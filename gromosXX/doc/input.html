@@ -838,18 +838,20 @@ END
 <table cellpadding="2" cellspacing="2" border="0" width="600"
  bgcolor="lightgrey"><tbody><tr><td valign="top"><CODE><PRE>
 INNERLOOP
-# SPEC 0,1  
+# SOLV
 #       0: use standard solvent loops [default]
-#       1: use fast SPC solvent loops
+#       1: use fast generic solvent loops
 #          note that standard solvent loops will be used also if SPC == 1, if
+#          - solvent atoms are in more than one energy group
+#          - atomic cutoff is used.
+#       2: use fast SPC solvent loops
+#          note that standard solvent loops will be used also if SPC == 1, if 
+#          in addition
 #          - solvent parameters (LJ, charges) in topology do not match SPC model;
 #          - FPEPSI != 138.9354 in topology,
-#          - solvent atoms are in more than one energy group,
-#          - grid based pairlist is used,
-#          - atomic cutoff is used.
 #
-#   SPEC
-     1 
+#    SOLV
+        1
 END
 </PRE></CODE></td></tr></tbody>
 </TABLE>

@@ -1965,6 +1965,12 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
         break;
       }
       case 1: {
+        // fast solvent loops
+        param.force.special_loop = simulation::special_loop_generic;
+        break;
+      }
+      case 2:
+      {
         // fast spc loops
         param.force.special_loop = simulation::special_loop_spc_check;
         // special_loop will be set to 1 in check_spc_loop (if all tests are ok).

@@ -47,6 +47,10 @@ namespace simulation
      * spc loop
      */
     special_loop_spc = 1,
+    /**
+     * special solvent loop (generic)
+     */
+    special_loop_generic = 2
   };
   
   /**

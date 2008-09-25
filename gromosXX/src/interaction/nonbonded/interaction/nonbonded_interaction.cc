@@ -364,6 +364,14 @@ int interaction::Nonbonded_Interaction::check_spc_loop
     return 1;
   }
   
+  if (sim.param().force.special_loop ==  simulation::special_loop_generic){
+    DEBUG(8, "solvent loops, user request");
+    // sim.param().force.special_loop = 0;
+    if (!quiet)
+      os << "\tusing solvent loops (user request)\n";
+    return 0;
+  }
+  
   DEBUG(10, "checking charges...");
 
   // check charges
