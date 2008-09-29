@@ -40,11 +40,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::solvent_innerloop
   
   // loop over atom pairs
   for(unsigned int param = 0, atom_i = 0; atom_i < num_solvent_atoms; ++atom_i) {
+    const double xi = (*(pos_i+atom_i))(0) + tx;
+    const double yi = (*(pos_i+atom_i))(1) + ty;
+    const double zi = (*(pos_i+atom_i))(2) + tz;
     for(unsigned int atom_j = 0; atom_j < num_solvent_atoms; ++atom_j, ++param) {
       DEBUG(15, "\tatoms: i: " << atom_i << " j: " << atom_j);
-      const double x = (*(pos_i+atom_i))(0) - (*(pos_j+atom_j))(0) + tx;
-      const double y = (*(pos_i+atom_i))(1) - (*(pos_j+atom_j))(1) + ty;
-      const double z = (*(pos_i+atom_i))(2) - (*(pos_j+atom_j))(2) + tz;
+      const double x = xi - (*(pos_j+atom_j))(0);
+      const double y = yi - (*(pos_j+atom_j))(1);
+      const double z = zi - (*(pos_j+atom_j))(2);
       
       const double r2 = x * x + y * y + z * z;
       DEBUG(15, "\tr2: " << r2);
