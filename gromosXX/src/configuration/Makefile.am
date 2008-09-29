@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-INCLUDES = -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
 
 xxincludedir = $(includedir)/gromosXX/configuration
 xxinclude_HEADERS =		configuration_global.h \
