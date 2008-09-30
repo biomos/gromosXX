@@ -19,7 +19,7 @@
 #include <util/debug.h>
 
 // for memcpy
-#include <cstdlib>
+#include <cstring>
 
 #undef MODULE
 #undef SUBMODULE
@@ -91,7 +91,7 @@ GenericMesh<complex_number>::GenericMesh(const GenericMesh<complex_number> & mes
   // reserve memory for the new mesh
   m_mesh = (configuration::complex_number*) fftw_malloc(m_volume * sizeof(configuration::complex_number));
   // just copy the memory
-  std::memcpy(m_mesh, mesh.m_mesh, m_volume * sizeof(configuration::complex_number));
+  memcpy(m_mesh, mesh.m_mesh, m_volume * sizeof(configuration::complex_number));
 }
 
 template<typename complex_type>
