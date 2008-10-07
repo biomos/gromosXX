@@ -12,6 +12,7 @@
 #include <configuration/state_properties.h>
 
 #include <math/volume.h>
+#include <math/transformation.h>
 
 #include "pressure_calculation.h"
 

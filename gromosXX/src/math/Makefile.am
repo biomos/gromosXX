@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/math
 xxinclude_HEADERS = 		gmath.h \
@@ -8,13 +8,15 @@ xxinclude_HEADERS = 		gmath.h \
 				periodicity.h \
 				periodicity.cc \
 				volume.h \
-                                random.h
+                                random.h \
+                                transformation.h
 
 noinst_LTLIBRARIES = 		libgromath.la
 
 libgromath_la_SOURCES =		math.cc \
 				volume.cc \
-                                random.cc
+                                random.cc \
+                                transformation.cc
 
 libgromath_la_LIBADD =
 

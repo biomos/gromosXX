@@ -276,6 +276,13 @@ namespace math
       d_b[1] = v2;
       d_b[2] = v3;
     }
+   Box(const Matrixl &m)
+    {
+       for (unsigned int i = 0; i < 3; ++i) {
+        d_b[i]=(m(0,i),m(1,i),m(2,i));
+
+       }   
+    }
     Vec const & operator()(int i)const { return d_b[i]; }
     double operator()(int i, int j)const 
     {
@@ -313,6 +320,7 @@ namespace math
       m[i][1] = box(1)(i);
       m[i][2] = box(2)(i);
     }
+   
   }
 
   /**

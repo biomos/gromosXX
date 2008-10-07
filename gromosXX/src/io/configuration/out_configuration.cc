@@ -14,6 +14,7 @@
 
 #include <math/periodicity.h>
 #include <math/volume.h>
+#include <math/transformation.h>
 
 #include <io/print_block.h>
 #include <io/argument.h>
@@ -1500,64 +1501,9 @@ void io::Out_Configuration
      << std::setw(m_width) << gamma*180/math::Pi
      << "\n";
   
-  long double cosdelta=(cosl(alpha)-cosl(beta)*cosl(gamma))/(sinl(beta)*sinl(gamma)); 
-  
-  long double sindelta=sqrtl(1-cosdelta*cosdelta); 
-  long double cotdelta=cosdelta/sindelta;
-  
-  long double cotgamma, cotbeta;
-  //check for cot(gamma)
-  if(gamma==90){
-        cotgamma=0;
-  }
-  else{
-        cotgamma=1/(tanl(gamma));
-  }
-  //check for cot(beta)
-  if(beta==90){
-        cotbeta=0;
-  }
-  else{
-        cotbeta=1/(tanl(beta));
-  }
 
-  math::Vecl BSx(1/a,0.0,0.0);
-  math::Vecl BSy(-cotdelta/a,
-          1/(b*sinl(gamma)),0.0);
-  math::Vecl BSz((cotdelta*cotgamma-cotbeta/sindelta)/a, 
-          -cotdelta/(b*sinl(gamma)),
-          1/(c*sinl(beta)*sindelta));
-  
-  
-  math::Matrixl BSmat(BSx,BSy,BSz);
-  math::Matrix boxmat(box(0),box(1),box(2));
+  math::Matrixl Rmat = (math::rmat(box));
 
-  math::Matrixl Rmat=product(BSmat,boxmat);
- /* 
-  os <<"boxmat\n" ;
-  for (int i=0;i<3; i++){
-  os << std::setw(m_width) << box(0)(i)
-     << std::setw(m_width) << box(1)(i)
-     << std::setw(m_width) << box(2)(i)
-    << "\n";  
-  }
-
-    os <<"Bsmat\n" ;
-  for (int i=0;i<3; i++){
-  os << std::setw(m_width) << BSmat(0,i)
-     << std::setw(m_width) << BSmat(1,i)
-     << std::setw(m_width) << BSmat(2,i)
-     << "\n";  
-  }
-  
-  os <<"Rmat\n" ;
-  for (int i=0;i<3; i++){
-    os << std::setw(m_width) << Rmat(0,i)
-     << std::setw(m_width) << Rmat(1,i)
-     << std::setw(m_width) << Rmat(2,i)
-     << "\n";  
-  }
- */   
   long double R11R21 = sqrtl(Rmat(0,0)*Rmat(0,0)+Rmat(0,1)*Rmat(0,1));
   if(R11R21==0.0)
   {
