@@ -1022,16 +1022,25 @@ inline void interaction::Perturbed_Nonbonded_Term
     const double e_i = sqrt(e_i2);
     const double e_0_div_e_i = e_0 / e_i;
     const double p_minus_1 = p - 1;
+    const double p_times_p = p*p;
     const double p_plus_1 = p + 1;
     const double e_0_mul_d_alpha = e_0 * d_alpha;
     const double alpha_mul_d_e_0 = alpha * d_e_0;
     
-    self_e = 0.5 * alpha * e_02 / p_minus_1 *
-             (p_plus_1 - 2 * pow(e_0_div_e_i, p_minus_1));
-    self_de = 0.5 / p_minus_1 *(
-              p_plus_1 * e_0 * (e_0_mul_d_alpha + 2*alpha_mul_d_e_0) - 2.0 * e_i * 
-             pow(e_0_div_e_i, p) * (e_0_mul_d_alpha + p_plus_1 * alpha_mul_d_e_0)
-             );
+    self_e = 0.5 * alpha * e_02 +
+             0.5 * alpha * e_02 / (p * (p_minus_1)) *
+             (-p_times_p +
+             (e_i / e_0)*(p_times_p-1)+
+              pow(e_0_div_e_i,p_minus_1 )
+            );
+        self_de = e_0 * (d_alpha * e_0 / 2 + alpha * d_e_0 +
+                d_alpha * e_0 / (p * (p_minus_1))*
+                (-p_times_p + (e_i / e_0)*(p_times_p - 1) + pow(e_0 / e_i, p_minus_1))
+                - 2 * p * alpha * d_e_0 / p_minus_1
+                + alpha * d_e_0 * p_plus_1 / (p * p_minus_1)*
+                (p_minus_1 * e_i / e_0 + pow(e_0_div_e_i, p_minus_1)));
+           
+
   } 
 }
 

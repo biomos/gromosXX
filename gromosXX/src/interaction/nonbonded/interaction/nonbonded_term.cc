@@ -398,16 +398,20 @@ inline void interaction::Nonbonded_Term
  */
 inline void interaction::Nonbonded_Term
 ::self_energy_interaction(double alpha, double e_i2, double e_0, double p,
-                       double &self_e) {
+        double &self_e) {
 
-  DEBUG(14, "\t\tself energy - dipole-dipole interaction");
-  const double e_02 = e_0 * e_0; 
-  if (e_i2 <= e_02) {
-    self_e = 0.5 * alpha * e_i2;
-  } else {
-    self_e = 0.5 * alpha * e_02 / (p - 1) *
-             (p + 1 - 2 * pow(e_0 / sqrt(e_i2), p - 1));
-  } 
+    DEBUG(14, "\t\tself energy - dipole-dipole interaction");
+    const double e_02 = e_0 * e_0;
+    if (e_i2 <= e_02) {
+        self_e = 0.5 * alpha * e_i2;
+    } else {
+        const double e_i = sqrt(e_i2);
+        self_e = 0.5 * alpha * e_02 +
+                0.5 * alpha * e_02 / (p * (p - 1)) *
+                (-p * p +
+                (e_i / e_0)*(p * p - 1) +
+                pow(e_0 / e_i, p - 1));
+    }
 }
 
 inline void
