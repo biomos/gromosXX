@@ -1290,7 +1290,7 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
     to = buffer.end()-1;
   
   std::string s1, s2;
-  int i, n, nr;
+  int i;
 
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
