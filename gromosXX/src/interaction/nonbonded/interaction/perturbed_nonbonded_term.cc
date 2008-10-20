@@ -1033,11 +1033,11 @@ inline void interaction::Perturbed_Nonbonded_Term
              (e_i / e_0)*(p_times_p-1)+
               pow(e_0_div_e_i,p_minus_1 )
             );
-        self_de = e_0 * (d_alpha * e_0 / 2 + alpha * d_e_0 +
-                d_alpha * e_0 / (p * (p_minus_1))*
+    self_de = e_0 * (e_0_mul_d_alpha / 2 + alpha_mul_d_e_0 +
+                e_0_mul_d_alpha / (p * (p_minus_1))*
                 (-p_times_p + (e_i / e_0)*(p_times_p - 1) + pow(e_0 / e_i, p_minus_1))
-                - 2 * p * alpha * d_e_0 / p_minus_1
-                + alpha * d_e_0 * p_plus_1 / (p * p_minus_1)*
+                - 2 * p * alpha_mul_d_e_0/ p_minus_1
+                + alpha_mul_d_e_0* p_plus_1 / (p * p_minus_1)*
                 (p_minus_1 * e_i / e_0 + pow(e_0_div_e_i, p_minus_1)));
            
 
