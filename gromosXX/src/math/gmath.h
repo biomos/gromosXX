@@ -41,6 +41,9 @@ namespace math
     GenericVec<numeric_type> & operator*=(numeric_type_b d) { d_v[0] *= d; d_v[1] *= d; d_v[2] *= d; return *this; }
     template<typename numeric_type_b>
     GenericVec<numeric_type> & operator/=(numeric_type_b d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
+    
+    inline GenericVec<numeric_type> norm();
+    
     };
     
     /**
@@ -791,6 +794,15 @@ namespace math
   {
     return xi>=0.0 ? 1.0 : 0.0;
   }
+  
+  /**
+   * norm of a vector
+   */
+  template<typename numeric_type>
+  GenericVec<numeric_type> GenericVec<numeric_type>::norm() {
+    return *this / abs(*this);
+  }
+  
 } // math
 
 #endif
