@@ -293,9 +293,9 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (!quiet)
     os << "\n";
   
-  if (check_spc_loop(topo, conf, sim, os, quiet) != 0) {
-    io::messages.add("SPC loop was disabled", "Nonbonded_Interaction",
-            io::message::warning);
+  if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
+    io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
+            io::message::error);
   }
   DEBUG(9, "nonbonded init done");
   return 0;
@@ -306,7 +306,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 // helper functions 
 //***************************************************************************
 
-int interaction::Nonbonded_Interaction::check_spc_loop
+int interaction::Nonbonded_Interaction::check_special_loop
 (
  topology::Topology const & topo,
  configuration::Configuration const & conf,
@@ -317,16 +317,15 @@ int interaction::Nonbonded_Interaction::check_spc_loop
   DEBUG(7, "checking for spc interaction loops");
   DEBUG(10, " param: special_loop = " << sim.param().force.special_loop);
   
-  if (sim.param().force.special_loop ==  simulation::special_loop_off){
+  if (sim.param().innerloop.method == simulation::sla_off) {
+    sim.param().force.special_loop ==  simulation::special_loop_off;
     DEBUG(8, "standard loops, user request");
-    // sim.param().force.special_loop = 0;
     if (!quiet)
       os << "\tusing standard solvent loops (user request)\n";
     return 0;
   }
   
   if (sim.param().pairlist.atomic_cutoff){
-    sim.param().force.special_loop =  simulation::special_loop_off;
     if (!quiet)
       os << "\tusing standard solvent loops (atomic cutoff)\n";
     return 1;
@@ -336,124 +335,244 @@ int interaction::Nonbonded_Interaction::check_spc_loop
   DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
   DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
   
-  if (topo.num_solvents() != 1 ||
-      topo.num_solvent_molecules(0) < 1 ||
-      topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) != 3
-      ){
+  // check whether there is a solvent.
+  if (topo.num_solvents() != 1 || topo.num_solvent_molecules(0) < 1){
   
     DEBUG(10, "standard loops...");
     
-    sim.param().force.special_loop =  simulation::special_loop_off;
     if (!quiet)
       if (topo.num_solvents() > 0){
 	if (topo.num_solvent_molecules(0) == 0){
 	  os << "\tusing standard solvent loops (no solvent present!)\n\n";
 	}
-	else{
-	  os << "\tusing standard solvent loops (num solvents doesn't match)\n"
-	     << "\t\tnum solvents: " 
-	     << topo.num_solvents() << "\n"
-	     << "\t\tsolvent atoms: " 
-	     << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
-	     << "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
-	}
-      }
-      else{
+      } else{
 	os << "\tusing standard solvent loops (no solvent in topology!)\n\n";
       }
     return 1;
   }
   
-  if (sim.param().force.special_loop ==  simulation::special_loop_generic){
-    DEBUG(8, "solvent loops, user request");
-    // sim.param().force.special_loop = 0;
-    if (!quiet)
-      os << "\tusing solvent loops (user request)\n";
-    return 0;
-  }
-  
-  DEBUG(10, "checking charges...");
-
-  // check charges
-  if (topo.charge()(topo.num_solute_atoms()) != -0.82 ||
-      topo.charge()(topo.num_solute_atoms()+1) != 0.41 ||
-      topo.charge()(topo.num_solute_atoms()+2) != 0.41){
-    
-    DEBUG(10, "charges don't match, standard loops");
-    sim.param().force.special_loop =  simulation::special_loop_off;
-    if (!quiet)
-	os << "\tusing standard solvent loops (charges don't match)\n"
-		  << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
-		  << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms()+1) << "\n"
-		  << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms()+2) << "\n\n";
-	  
-    return 1;
-  }
-  
-  // check lj parameters
-  DEBUG(10, "checking LJ parameter...");
-  const lj_parameter_struct &lj_OO = 
-    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
-			     topo.iac(topo.num_solute_atoms()));
-  
-  const lj_parameter_struct &lj_OH1 = 
-    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
-			     topo.iac(topo.num_solute_atoms()+1));
-  
-  const lj_parameter_struct &lj_OH2 = 
-    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
-			     topo.iac(topo.num_solute_atoms()+2));
-  
-  const lj_parameter_struct &lj_H1H2 = 
-    m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()+1),
-			     topo.iac(topo.num_solute_atoms()+2));
-  
-  if (lj_OO.c6 != 2.617346E-3 ||
-      lj_OO.c12 != 2.634129E-6 ||
-      lj_OH1.c6 != 0.0 ||
-      lj_OH1.c12 != 0.0 ||
-      lj_OH2.c6 != 0.0 ||
-      lj_OH2.c12 != 0.0 ||
-      lj_H1H2.c6 != 0.0 ||
-      lj_H1H2.c12 != 0.0){
-    
-    DEBUG(10, "don't match, force standard loop");
-    sim.param().force.special_loop = simulation::special_loop_off;
-    if (!quiet)
-      os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
-    return 1;
-  }
-  
-  // check four_pi_eps_i
-  DEBUG(10, "checking (4 pi eps0)^-1 ...");
-  if(math::four_pi_eps_i!=138.9354){
-    DEBUG(10, " does not match, force standard loop");
-    sim.param().force.special_loop = simulation::special_loop_off;
-    if(!quiet)
-      os << "\tusing standard solvent loops ((4 pi eps0)^-1 does not match)\n";
-    return 1;
-  }
-   
   // check energy groups
   DEBUG(10, "checking energy groups ...");
 
   if(topo.atom_energy_group(topo.num_solute_atoms())!=
           topo.atom_energy_group(topo.num_atoms()-1)){
     DEBUG(10, "- incompatible.");
-    sim.param().force.special_loop = simulation::special_loop_off;
     if(!quiet)
       os << "\tusing standard solvent loops (energy group partitioning incompatible).\n"
               << "\tAll solvent atoms must be in one single energy group. ";
     return 1;
-  }
-    
-  DEBUG(10, "happy to force spc loops");
-  sim.param().force.special_loop = simulation::special_loop_spc;
-  if (!quiet)
-    os << "\tusing spc solvent loops\n";
+  }  
   
-  return 0;
-    
+  if (sim.param().innerloop.method == simulation::sla_generic) {
+    // the generic loop works for now.
+    DEBUG(8, "generic solvent loop, user request");
+    sim.param().force.special_loop = simulation::special_loop_generic;
+    if (!quiet)
+      os << "\tusing generic solvent loops (user request)\n";
+    return 0;
+  }
+  
+  // check whether the number of atoms match for other methods
+  switch (sim.param().innerloop.solvent) {
+    case simulation::sls_spc :
+    {
+      if (topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) != 3) {
+        os << "\tusing standard solvent loops (num solvents doesn't match)\n"
+                << "\t\tnum solvents: "
+                << topo.num_solvents() << "\n"
+                << "\t\tsolvent atoms: "
+                << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
+                << "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
+        return 1;
+      }
+      break;
+    }
+    default:
+      os << "\tusing standard solvent loops (unknown solvent)\n\n";
+      return 1;
+      break;
+  }
+  
+  // check the hardcoded parameters if the method applies
+  if (sim.param().innerloop.method == simulation::sla_hardcode) {
+    // check four_pi_eps_i
+    DEBUG(10, "checking (4 pi eps0)^-1 ...");
+    if (math::four_pi_eps_i != 138.9354) {
+      DEBUG(10, " does not match, force standard loop");
+      if (!quiet)
+        os << "\tusing standard solvent loops ((4 pi eps0)^-1 does not match)\n";
+      return 1;
+    }
+    // check solvent specific parameters
+    switch (sim.param().innerloop.solvent) {
+      case simulation::sls_spc :
+      {
+        DEBUG(10, "checking charges...");
+
+        // check charges
+        if (topo.charge()(topo.num_solute_atoms()) != -0.82 ||
+            topo.charge()(topo.num_solute_atoms() + 1) != 0.41 ||
+            topo.charge()(topo.num_solute_atoms() + 2) != 0.41) {
+
+          DEBUG(10, "charges don't match, standard loops");
+          if (!quiet)
+            os << "\tusing standard solvent loops (charges don't match)\n"
+                  << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
+            << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms() + 1) << "\n"
+            << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n\n";
+
+          return 1;
+        }
+
+        // check lj parameters
+        DEBUG(10, "checking LJ parameter...");
+        const lj_parameter_struct &lj_OO =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+                topo.iac(topo.num_solute_atoms()));
+
+        const lj_parameter_struct &lj_OH1 =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+                topo.iac(topo.num_solute_atoms() + 1));
+
+        const lj_parameter_struct &lj_OH2 =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+                topo.iac(topo.num_solute_atoms() + 2));
+
+        const lj_parameter_struct &lj_H1H2 =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms() + 1),
+                topo.iac(topo.num_solute_atoms() + 2));
+
+        if (lj_OO.c6 != 2.617346E-3 ||
+            lj_OO.c12 != 2.634129E-6 ||
+            lj_OH1.c6 != 0.0 ||
+            lj_OH1.c12 != 0.0 ||
+            lj_OH2.c6 != 0.0 ||
+            lj_OH2.c12 != 0.0 ||
+            lj_H1H2.c6 != 0.0 ||
+            lj_H1H2.c12 != 0.0) {
+
+          DEBUG(10, "don't match, force standard loop");
+          if (!quiet)
+            os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
+          return 1;
+        }
+
+        DEBUG(10, "happy to use spc loops");
+        sim.param().force.special_loop = simulation::special_loop_spc;
+        if (!quiet) {
+          os << "\tusing hardcoded spc solvent loops\n";
+        }
+        
+        break;
+      }
+      default:
+        os << "\tusing standard solvent loops (unknown solvent)\n\n";
+        return 1;
+        break;
+    } // solvents
+  } // hardcoded parameters
+
+  // check the tabulated parameters if the method applies
+  if (sim.param().innerloop.method == simulation::sla_table) {
+    // check solvent specific parameters
+    switch (sim.param().innerloop.solvent) {
+      case simulation::sls_spc :
+      {
+        // load the table (check section)
+#define CHECK_PARAM "check_param"
+#include <interaction/nonbonded/interaction/spc_table.h>
+#undef CHECK_PARAM
+        
+        // check four_pi_eps_i
+        DEBUG(10, "checking (4 pi eps0)^-1 ...");
+        if (math::four_pi_eps_i != four_pi_eps_i) {
+          DEBUG(10, " does not match, force standard loop");
+          if (!quiet)
+            os << "\tusing standard solvent loops ((4 pi eps0)^-1 does not match)\n";
+          return 1;
+        }
+        
+        DEBUG(10, "checking cutoffs and RF parameters...");
+        if (shortrange_cutoff != sim.param().pairlist.cutoff_short ||
+            longrange_cutoff != sim.param().pairlist.cutoff_long ||
+            longrange_cutoff != sim.param().nonbonded.rf_cutoff ||
+            solvent_permittivity != sim.param().nonbonded.rf_epsilon ||
+            solvent_kappa != sim.param().nonbonded.rf_kappa) {
+          DEBUG(10, " do not match, force standard loop");
+          if (!quiet)
+            os << "\tusing standard solvent loops (RF parameters or cutoffs do not match)\n";
+          return 1;         
+        }        
+        
+        DEBUG(10, "checking charges...");
+        // check charges
+        const double qO = topo.charge()(topo.num_solute_atoms());
+        const double qH1 = topo.charge()(topo.num_solute_atoms() + 1);
+        const double qH2 = topo.charge()(topo.num_solute_atoms() + 2);
+        if (qH2 - qH1 > math::epsilon || qH1*qO - qOH > math::epsilon ||
+            qO*qO - qOO > math::epsilon || qH1*qH1 - qHH > math::epsilon) {
+          DEBUG(10, "charges don't match, standard loops");
+          if (!quiet)
+            os << "\tusing standard solvent loops (charges don't match)\n"
+               << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
+               << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms() + 1) << "\n"
+               << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n\n";
+
+          return 1;
+        }
+
+        // check lj parameters
+        DEBUG(10, "checking LJ parameter...");
+        const lj_parameter_struct &lj_OO =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+                topo.iac(topo.num_solute_atoms()));
+
+        const lj_parameter_struct &lj_OH1 =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+                topo.iac(topo.num_solute_atoms() + 1));
+
+        const lj_parameter_struct &lj_OH2 =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms()),
+                topo.iac(topo.num_solute_atoms() + 2));
+
+        const lj_parameter_struct &lj_H1H2 =
+                m_parameter.lj_parameter(topo.iac(topo.num_solute_atoms() + 1),
+                topo.iac(topo.num_solute_atoms() + 2));
+
+        if (lj_OO.c6 - c6 > math::epsilon ||
+            lj_OO.c12 - c12 > math::epsilon ||
+            lj_OH1.c6 != 0.0 ||
+            lj_OH1.c12 != 0.0 ||
+            lj_OH2.c6 != 0.0 ||
+            lj_OH2.c12 != 0.0 ||
+            lj_H1H2.c6 != 0.0 ||
+            lj_H1H2.c12 != 0.0) {
+
+          DEBUG(10, "don't match, force standard loop");
+          if (!quiet)
+            os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
+          return 1;
+        }
+        
+        // maybe one want's to check the solvent diameter
+        DEBUG(10, "happy to use spc loops");
+        sim.param().force.special_loop = simulation::special_loop_spc_table;
+        if (!quiet) {
+          os << "\tusing tabulated spc solvent loops\n";
+          os << "\t\tshortrange table size: " << shortrange_table << "\n";
+          os << "\t\tlongrange table size:  " << longrange_table << "\n";
+        }
+        
+        break;
+      }
+      default:
+        os << "\tusing standard solvent loops (unknown solvent)\n\n";
+        return 1;
+        break;
+    } // solvents
+  } // tabulated forces
+  
+  return 0; 
 }
 
 /**

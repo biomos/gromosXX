@@ -108,10 +108,10 @@ namespace interaction
 
   protected:
     /**
-     * check whether "fast" spc loops
+     * check whether "fast" loops
      * should be used
      */
-    int check_spc_loop
+    int check_special_loop
     (
      topology::Topology const & topo,
      configuration::Configuration const & conf,

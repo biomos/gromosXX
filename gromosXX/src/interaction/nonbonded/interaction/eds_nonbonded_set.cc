@@ -103,7 +103,7 @@ int interaction::Eds_Nonbonded_Set
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
-                               m_longrange_storage);
+                               m_longrange_storage, true /*longrange!*/);
      
     if (topo.eds_perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\teds-perturbed long range");

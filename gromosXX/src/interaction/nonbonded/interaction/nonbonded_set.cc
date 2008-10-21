@@ -123,7 +123,7 @@ int interaction::Nonbonded_Set
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_long, m_pairlist.solvent_long,
-            m_longrange_storage);
+            m_longrange_storage, true /*longrange!*/);
     if (m_rank == 0)
       m_pairlist_alg.timer().stop("longrange");
   }

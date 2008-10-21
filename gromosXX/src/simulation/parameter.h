@@ -38,11 +38,7 @@ namespace simulation
     /**
      * no special loop
      */
-    special_loop_off = -1,
-    /**
-     * spc loop check
-     */
-    special_loop_spc_check = 0,
+    special_loop_off = 0,
     /**
      * spc loop
      */
@@ -50,7 +46,49 @@ namespace simulation
     /**
      * special solvent loop (generic)
      */
-    special_loop_generic = 2
+    special_loop_generic = 2,
+    /**
+     * spc loop table
+     */
+    special_loop_spc_table = 3
+  };
+  
+  /**
+   * @enum special_loop_solvent_enum
+   * holds the solvent used in a special loop
+   */
+  enum special_loop_solvent_enum {
+    /**
+     * not solvent specific. use topology
+     */
+    sls_topo,
+    /**
+     * special loop spc
+     */
+    sls_spc
+  };
+  
+  /**
+   * @enum special_loop_acceleration_enum
+   * holds the acceleration method
+   */
+  enum special_loop_acceleration_enum {
+    /**
+     * no acceleration. use standard loops
+     */
+    sla_off,
+    /**
+     * generic solvent properties
+     */
+    sla_generic,
+    /**
+     * hardcoded parameters
+     */
+    sla_hardcode,
+    /**
+     * tabulated forces and energies
+     */
+    sla_table
   };
   
   /**
@@ -848,7 +886,7 @@ namespace simulation
        */
       force_struct() : bond(1), angle(1), improper(1),
 		       dihedral(1), nonbonded_vdw(1),
-		       nonbonded_crf(1), special_loop(-1),
+		       nonbonded_crf(1), special_loop(special_loop_off),
 		       interaction_function(lj_crf_func),
 		       external_interaction(0)
       {}
@@ -1943,6 +1981,28 @@ namespace simulation
        */
       std::vector<double> eir;
     } /** enveloping distribution sampling*/ eds;
+    
+    /**
+     * @struct innerloop_struct
+     * Constructor:
+     * Default values:
+     * - solvent: from topology
+     * - method: off
+     */
+    struct innerloop_struct {
+      /**
+       * constructor
+       */
+      innerloop_struct() : solvent(sls_topo), method(sla_off) {}
+      /**
+       * the solvent
+       */
+      special_loop_solvent_enum solvent;
+      /**
+       * the acceleration method
+       */
+      special_loop_acceleration_enum method;
+    } /** special inner loops */ innerloop;
   };
 }
 

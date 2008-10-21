@@ -58,10 +58,11 @@ void interaction::Nonbonded_Outerloop
 		   simulation::Simulation & sim, 
                    Pairlist const & pairlist_solute,
                    Pairlist const & pairlist_solvent,
-		   Storage & storage)
+		   Storage & storage,
+                   bool longrange)
 {
   SPLIT_INNERLOOP(_lj_crf_outerloop, topo, conf, sim,
-                  pairlist_solute, pairlist_solvent, storage);
+                  pairlist_solute, pairlist_solvent, storage, longrange);
 }
 
 
@@ -77,7 +78,7 @@ void interaction::Nonbonded_Outerloop
 		    simulation::Simulation & sim, 
 	            Pairlist const & pairlist_solute,
                     Pairlist const & pairlist_solvent,
-		    Storage & storage)
+		    Storage & storage, bool longrange)
 {  
   DEBUG(7, "\tcalculate interactions");  
 
@@ -123,7 +124,35 @@ void interaction::Nonbonded_Outerloop
         innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
       }
     }
-  } if (sim.param().force.special_loop == simulation::special_loop_generic) {
+  } else if (sim.param().force.special_loop == simulation::special_loop_spc_table) { // special solvent loop
+    // solvent - solvent with tabulated spc innerloop...
+    if (longrange) { 
+      // here we call the longrange function that uses a smaller table
+      for (; i < size_i; i += 3) { // use every third pairlist (OW's)
+        for (j_it = pairlist_solvent[i].begin(),
+                j_to = pairlist_solvent[i].end();
+                j_it != j_to;
+                j_it += 3) { // use every third atom (OW) in pairlist i
+
+          DEBUG(10, "\tspc_nonbonded_interaction: i " << i << " j " << *j_it);
+          //innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
+          innerloop.longrange_spc_table_innerloop(topo, conf, i, *j_it, storage, periodicity);
+        }
+      }
+    } else { // shortrange
+      for (; i < size_i; i += 3) { // use every third pairlist (OW's)
+        for (j_it = pairlist_solvent[i].begin(),
+                j_to = pairlist_solvent[i].end();
+                j_it != j_to;
+                j_it += 3) { // use every third atom (OW) in pairlist i
+
+          DEBUG(10, "\tspc_nonbonded_interaction: i " << i << " j " << *j_it);
+          //innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
+          innerloop.shortrange_spc_table_innerloop(topo, conf, i, *j_it, storage, periodicity);
+        }
+      }     
+    }
+  } else if (sim.param().force.special_loop == simulation::special_loop_generic) {
     const unsigned int num_solvent_atoms = topo.solvent(0).num_atoms();
     // prepare parameters
     const unsigned int num_param = num_solvent_atoms * num_solvent_atoms;

@@ -1945,42 +1945,60 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
   buffer = m_block["INNERLOOP"];
 
   if (buffer.size()){
- 
     block_read.insert("INNERLOOP");
     
-    int spc;
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
  
-    _lineStream >> spc;
+    int method, solvent;
+    _lineStream >> method >> solvent;
  
     if (_lineStream.fail())
       io::messages.add("bad line in INNERLOOP block",
                        "In_Parameter", io::message::error);
  
-    switch(spc){
+    switch(method){
       case 0: {
         // standard solvent loops
-        param.force.special_loop = simulation::special_loop_off ;
+        param.innerloop.method = simulation::sla_off;
         break;
       }
       case 1: {
         // fast solvent loops
-        param.force.special_loop = simulation::special_loop_generic;
+        param.innerloop.method = simulation::sla_generic;
         break;
       }
-      case 2:
-      {
-        // fast spc loops
-        param.force.special_loop = simulation::special_loop_spc_check;
-        // special_loop will be set to 1 in check_spc_loop (if all tests are ok).
+      case 2: {
+        param.innerloop.method = simulation::sla_hardcode;
+        break;
+      }
+      case 3: {
+        // tabulated forces and energies
+        param.innerloop.method = simulation::sla_table;
         break;
       }
       default: {
-        param.force.special_loop = simulation::special_loop_off;
-        io::messages.add("INNERLOOP block: bad value for SPC, allowed : 1 (on), 0 (off)",
-                "In_Parameter",
-                io::message::error);
+        param.innerloop.method = simulation::sla_off;
+        io::messages.add("INNERLOOP block: bad value for NTILM (0..3)",
+                "In_Parameter", io::message::error);
+      }
+    }
+    
+    switch(solvent) {
+      case 0: {
+        // use topology
+        param.innerloop.solvent = simulation::sls_topo;
+        break;
+      }
+      case 1: {
+        // use SPC
+        param.innerloop.solvent = simulation::sls_spc;
+        break;
+      }
+      default: {
+        param.innerloop.solvent = simulation::sls_topo;
+        io::messages.add("INNERLOOP block: bad value for NTILS (0,1)",
+                "In_Parameter", io::message::error);
       }
     }
   }

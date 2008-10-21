@@ -53,7 +53,8 @@ namespace interaction
 			  simulation::Simulation & sim,
 			  Pairlist const & pairlist_solute,
                           Pairlist const & pairlist_solvent,
-			  Storage & storage);
+			  Storage & storage,
+                          bool longrange = false);
 
     void cg_exclusions_outerloop(topology::Topology & topo,
 				 configuration::Configuration & conf,
@@ -174,7 +175,8 @@ namespace interaction
 			   simulation::Simulation & sim,
 			   Pairlist const & pairlist_solute,
                            Pairlist const & pairlist_solvent,
-			   Storage & storage);
+			   Storage & storage,
+                           bool longrange);
 
     template<typename t_interaction_spec>
     void _one_four_outerloop(topology::Topology & topo,

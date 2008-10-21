@@ -76,9 +76,6 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "MPI_Nonbonded_Master::calculate_interactions");
   
-  assert((sim.param().force.special_loop <= 0) ||
-          (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
-  
   if (sim.param().multicell.multicell){
     io::messages.add("MPI code with multiple unit cell simulations not implemented",
             "mpi_nonbonded_interaction",
@@ -408,7 +405,10 @@ int interaction::MPI_Nonbonded_Master::init(topology::Topology & topo,
   resize(unsigned(conf.current().energies.bond_energy.size()),
           unsigned(conf.current().energies.kinetic_energy.size()));
   
-  check_spc_loop(topo, conf, sim, os, quiet);
+  if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
+    io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
+            io::message::error);
+  }
   return 0;
   
 #else

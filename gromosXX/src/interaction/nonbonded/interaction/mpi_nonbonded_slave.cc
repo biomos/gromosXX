@@ -78,9 +78,6 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 {
   DEBUG(4, "MPI_Nonbonded_Slave::calculate_interactions");
 
-  assert((sim.param().force.special_loop <= 0) || 
-	 (!sim.param().pairlist.grid && !sim.param().pairlist.atomic_cutoff));
-
   m_timer.start();
 
 #ifdef XXMPI
@@ -354,7 +351,10 @@ int interaction::MPI_Nonbonded_Slave::init
   else
     m_nonbonded_set[0]->init(topo, conf, sim, os, quiet);
   
-  check_spc_loop(topo, conf, sim, os, quiet);
+  if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
+    io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
+            io::message::error);
+  }
   return 0;
   
 #else

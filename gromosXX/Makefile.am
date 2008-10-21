@@ -19,6 +19,7 @@ doc-install:	doc
 EXTRA_DIST = VERSION \
     contrib/repana.cc \
 	contrib/rep_rewrite.cc \
+	contrib/tabulate_spc.cc \
 	doc/doxygen.conf.in \
 	doc/newinput.txt \
 	doc/arguments.doxy \

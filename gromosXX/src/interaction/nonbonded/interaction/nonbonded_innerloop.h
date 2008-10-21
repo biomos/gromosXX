@@ -94,6 +94,32 @@ namespace interaction
      );
     
     /**
+     * fast innerloop for SPC water model using tables (shortrange)
+     */
+    void shortrange_spc_table_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     int start,
+     int end,
+     Storage & storage,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+    
+    /**
+     * fast innerloop for SPC water model using tables (longrange)
+     */
+    void longrange_spc_table_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     int start,
+     int end,
+     Storage & storage,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+    
+    /**
      * @struct solvent_pair_parameters
      * cached solvent parameters
      */
