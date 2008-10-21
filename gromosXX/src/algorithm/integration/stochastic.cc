@@ -14,6 +14,9 @@
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
 
+#include <math/periodicity.h>
+#include <util/template_split.h>
+
 #include "stochastic.h"
 
 #undef MODULE
@@ -70,7 +73,7 @@ int algorithm::Stochastic_Dynamics_Pos
   // friction coefficients with cfric otherwise...
   // and also initialise the stochastic integrals
   // if necessary
-  calc_friction_coeff(topo, conf, sim);
+  SPLIT_BOUNDARY(calc_friction_coeff, topo, conf, sim);
   
 #ifndef NDEBUG
   for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
@@ -105,12 +108,6 @@ int algorithm::Stochastic_Dynamics_Pos
 		     io::message::error);
   }
   
-   if (conf.boundary_type != math::vacuum){
-    io::messages.add("SD only implemented for vacuum!",
-                     "Stochastic_Dynamics",
-		       io::message::error);
-  }
-  
   if (!quiet)
     os << "END\n";
 
@@ -119,11 +116,20 @@ int algorithm::Stochastic_Dynamics_Pos
   return 0;
 }
 
+int algorithm::Stochastic_Dynamics_Pos
+::apply(topology::Topology & topo,
+	configuration::Configuration & conf,
+        simulation::Simulation &sim) {
+  SPLIT_BOUNDARY(_apply, topo, conf, sim);
+  return 0;
+}
+
 /**
  * SD: calculate positions
  */
+template<math::boundary_enum B>
 int algorithm::Stochastic_Dynamics_Pos
-::apply(topology::Topology & topo,
+::_apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation &sim)
 {
@@ -134,7 +140,7 @@ int algorithm::Stochastic_Dynamics_Pos
   // calculate atomic friction oefficients?
   if (sim.param().stochastic.ntfr == 3){
     if ((sim.steps() % sim.param().stochastic.nsfr) == 0)
-      calc_friction_coeff(topo, conf, sim);
+      calc_friction_coeff<B>(topo, conf, sim);
   }
 
   conf.exchange_state();
@@ -240,17 +246,28 @@ int algorithm::Stochastic_Dynamics_Int
   return 0;
 }
 
+int algorithm::Stochastic_Dynamics_Int
+::apply(topology::Topology & topo,
+	configuration::Configuration & conf,
+        simulation::Simulation & sim) {
+  SPLIT_BOUNDARY(_apply, topo, conf, sim);
+  return 0;
+}
+
 /**
  * SD: add stochastic integrals
  */
+template<math::boundary_enum B>
 int algorithm::Stochastic_Dynamics_Int
-::apply(topology::Topology & topo,
+::_apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
   m_timer.start();
   //now comes the second part, after calling shake
   //as given by 2.11.2.24
+  
+  math::Periodicity<B> periodicity(conf.current().box);
 
   if (sim.param().constraint.solute.algorithm == simulation::constr_shake){ 
     // --- call SHAKE before ! ---
@@ -261,7 +278,9 @@ int algorithm::Stochastic_Dynamics_Int
     // this is 2.11.2.24
     for (unsigned int i=0; i < topo.num_atoms(); ++i) {
       double cinv = 1.0 / (topo.stochastic().c6(i) * sim.time_step_size());
-      conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) * cinv;
+      math::Vec r;
+      periodicity.nearest_image(conf.current().pos(i), conf.old().pos(i), r);
+      conf.current().vel(i) = r * cinv;
     }
   } // constraints
   else{
@@ -310,14 +329,17 @@ int algorithm::Stochastic_Dynamics_Int
  *   CC9(NATTOT) = delivered with D(+GDT/2)/(EXP(-GDT)-1)/GAM(J)
  *
  */
+template<math::boundary_enum B>
 int algorithm::Stochastic_Dynamics_Pos
 ::calc_friction_coeff(topology::Topology & topo,
 		      configuration::Configuration & conf,
 		      simulation::Simulation &sim)
 {
-  const int size = topo.num_atoms();
+  const unsigned int size = topo.num_atoms();
   math::Vec rij;
-  std::vector<int> neigh(size, 0);
+  std::vector<unsigned int> neigh(size, 0);
+  
+  math::Periodicity<B> periodicity(conf.current().box);
 
   double const cutoff2 = sim.param().stochastic.rcutf * sim.param().stochastic.rcutf;
   
@@ -326,10 +348,9 @@ int algorithm::Stochastic_Dynamics_Pos
   if (sim.param().stochastic.ntfr == 3) {
     
     // loop over all atoms and calculate neighbors
-    for (int i = 0; i < size; ++i){
-      for (int j = i+1; j < size; ++j){
-
-	rij = conf.current().pos(i) - conf.current().pos(j);
+    for (unsigned int i = 0; i < size; ++i){
+      for (unsigned int j = i+1; j < size; ++j){
+        periodicity.nearest_image(conf.current().pos(i), conf.current().pos(j), rij);
 	const double r2 = math::abs2(rij);
 
 	if (r2 < cutoff2){
@@ -341,7 +362,7 @@ int algorithm::Stochastic_Dynamics_Pos
   }
   //determine the gammas
   
-  for (int i = 0; i < size; ++i) {
+  for (unsigned int i = 0; i < size; ++i) {
     DEBUG(10, "neighbours(" << i << ") = " << neigh[i]);
     double xh = 0.0;
     switch(sim.param().stochastic.ntfr) {
@@ -367,7 +388,7 @@ int algorithm::Stochastic_Dynamics_Pos
 
   //we have the gammas...
   //...now generate SD coefficients
-  for (int i = 0; i < size; ++i){
+  for (unsigned int i = 0; i < size; ++i){
     DEBUG(12, "stochastic coefficient for atom i = " << i);
     const double gg = fabs(topo.stochastic().gamma(i));
     const double gdt = gg * sim.time_step_size();
@@ -403,8 +424,7 @@ int algorithm::Stochastic_Dynamics_Pos
 	conf.current().stochastic_integral(i) = m_rng->get_gaussian_vec();
       }
       
-    }
-    else {
+    } else {
       DEBUG(12, "\tdoing the power series");
       //this is a power series expansion for the coefficients used
       //in the SD algortihm. it should be used when gamdt < 0.05, otherwise
@@ -459,8 +479,7 @@ int algorithm::Stochastic_Dynamics_Pos
 	  conf.current().stochastic_integral(i) = m_rng->get_gaussian_vec();
 	}
       }
-    }
-      
+    }   
   }
   return 0;
 }

@@ -78,11 +78,18 @@ namespace algorithm
      */
     algorithm::Stochastic_Dynamics_Pos::RandomVectors& random_vectors()
     { return m_vrand; }
-
-  private:
+    
+    /**
+     * Stochastic Dynamics: calculate positions
+     */
+    template<math::boundary_enum B>
+    int _apply(topology::Topology &topo, 
+		      configuration::Configuration &conf,
+		      simulation::Simulation &sim);
     /**
      * calculate friction coefficients
      */
+    template<math::boundary_enum B>
     int calc_friction_coeff(topology::Topology &topo, 
 			    configuration::Configuration &conf,
 			    simulation::Simulation &sim);
@@ -134,7 +141,7 @@ namespace algorithm
 		     std::ostream &os = std::cout,
 		     bool quiet = false);
 
-  private:
+  protected:
     /**
      * pointer to the random number generator of the
      * Stochastic_Dynamics_Pos algorithm
@@ -144,6 +151,14 @@ namespace algorithm
      * pointer to the random vectors of the Stochastic_Dynamics_Pos algorithm
      */
     Stochastic_Dynamics_Pos::RandomVectors *m_vrand;
+    
+    /**
+     * Stochastic Dynamics: add stochastic integrals
+     */
+    template<math::boundary_enum B>
+    int _apply(topology::Topology &topo, 
+		      configuration::Configuration &conf,
+		      simulation::Simulation &sim);
   };
 
 } // algorithm
