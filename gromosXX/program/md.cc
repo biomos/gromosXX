@@ -30,7 +30,6 @@
  * <tr><td> \@anatraj</td><td>&lt;re-analyze trajectory&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@verb \<[module:][submodule:]level\> </td><td>&lt;control verbosity&gt; </td><td></td></tr>
  * <tr><td> \@version</td><td>&lt;print version information&gt; </td><td></td></tr>
- * <tr><td> \@gzip</td><td>&lt;write trajectories and the final configuration compressed (gzip)&gt; </td><td></td></tr>
  * </table>
 
 */
@@ -79,7 +78,7 @@ int main(int argc, char *argv[]){
 	 << "trj" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
 	 << "bae" << "bag" << "posres" <<"distrest" << "dihrest" << "jval"
 	 << "anatrj" << "print" << "friction"
-	 << "version" << "gzip";
+	 << "version";
   
   
   std::string usage;

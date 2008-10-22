@@ -179,12 +179,6 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# print version information\n";
     usage += "\t# @version\n\n";
   }
-  
-  if (knowns.count("gzip")){
-    usage += "\t# write trajectories and the final configuration compressed (gzip)\n";
-    usage += "\t# @gzip\n\n";
-  }
-  
   // usage += "#\n\n";
 
 }

@@ -56,27 +56,6 @@ namespace io {
      * initialise the files.
      */
     void init(io::Argument & args, simulation::Parameter const & param);
-    
-    /**
-     * accessor to compressed. Set it to true to use a gzip compressed stream
-     */
-    void compressed(const bool & compressed) {
-      m_compressed = compressed;
-    }
-    /**
-     * accessor to compressed
-     */
-    bool & compressed() {
-      return m_compressed;
-    }
-    /**
-     * const accessor to compressed
-     */
-    const bool & compressed() const {
-      return m_compressed;
-    }
-    
-    
     /**
      * write out a timestep.
      */
@@ -322,18 +301,18 @@ namespace io {
 		     std::ostream &os);
     
   protected:
-    std::ostream *m_pos_traj;
-    std::ostream *m_final_conf;
-    std::ostream *m_vel_traj;
-    std::ostream *m_force_traj;
-    std::ostream *m_energy_traj;
+    std::ofstream m_pos_traj;
+    std::ofstream m_final_conf;
+    std::ofstream m_vel_traj;
+    std::ofstream m_force_traj;
+    std::ofstream m_energy_traj;
     bool m_has_replica_traj;
-    std::ostream *m_replica_traj;
-    std::ostream *m_free_energy_traj;
-    std::ostream *m_blockaveraged_energy;
-    std::ostream *m_blockaveraged_free_energy;
-    std::ostream *m_ramd_traj;
-    std::ostream *m_special_traj;
+    std::ofstream m_replica_traj;
+    std::ofstream m_free_energy_traj;
+    std::ofstream m_blockaveraged_energy;
+    std::ofstream m_blockaveraged_free_energy;
+    std::ofstream m_ramd_traj;
+    std::ofstream m_special_traj;
     
     std::ostream & m_output;
     
@@ -360,9 +339,6 @@ namespace io {
     int m_force_width;
 
     std::string m_title;
-    
-    bool m_compressed;
-    
     /**
      * minimum energy for NTWSE trajectory
      */
