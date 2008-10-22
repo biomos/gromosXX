@@ -233,10 +233,7 @@ void algorithm::Perturbed_Shake
 
   DEBUG(8, "\tshaking perturbed SOLUTE");
   
-  const unsigned int num_atoms = topo.num_solute_atoms();
-  for (unsigned int i=0; i < num_atoms; ++i)
-    conf.old().constraint_force(i) = 0.0;
-  
+  const unsigned int num_atoms = topo.num_solute_atoms();  
   math::Periodicity<B> periodicity(conf.current().box);
   
   std::vector<bool> skip_now;
@@ -296,7 +293,7 @@ void algorithm::Perturbed_Shake
     
     // dihedral constraints
     bool dih_convergence = true, pert_dih_convergence = true;
-    if (sim.param().dihrest.dihrest == 3){
+    if (sim.param().dihrest.dihrest == 3) {
       
       DEBUG(7, "SHAKE: perturbed dihedral constraints iteration");
       if(perturbed_dih_constr_iteration<B, V>
@@ -370,8 +367,13 @@ int algorithm::Perturbed_Shake
   if (!sim.mpi || m_rank == 0)
     m_timer.start();
   
-  bool do_vel_solute = false;
-  bool do_vel_solvent = false;
+  // set the constraint force to zero
+  std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+            to = constrained_atoms().end();
+  for (; it != to; ++it) {
+    conf.old().constraint_force(*it) = 0.0;
+  }
+  
   int error = 0;
   
   if (m_rank == 0) {
@@ -383,7 +385,6 @@ int algorithm::Perturbed_Shake
             sim.param().dihrest.dihrest == 3) {
       
       DEBUG(8, "\twe need to shake perturbed SOLUTE");
-      do_vel_solute = true;
       
       SPLIT_VIRIAL_BOUNDARY(perturbed_solute,
               topo, conf, sim,
@@ -404,7 +405,6 @@ int algorithm::Perturbed_Shake
       sim.param().constraint.solvent.algorithm == simulation::constr_shake){
 
     DEBUG(8, "\twe need to shake SOLVENT");
-    do_vel_solvent = true;
     
     SPLIT_VIRIAL_BOUNDARY(solvent, 
 			  topo, conf, sim, sim.time_step_size(), 
@@ -421,25 +421,20 @@ int algorithm::Perturbed_Shake
   // shaken velocity:
   // stochastic dynamics, energy minimisation, analysis needs to shake without
   // velocity correction (once; it shakes twice...)
-  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem && 
-      !sim.param().analyze.analyze){
-    if (do_vel_solute){
-      for(unsigned int i=0; i<topo.num_solute_atoms(); ++i)
-	conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
-	  sim.time_step_size();
-    }
-    if (do_vel_solvent){
-      for(unsigned int i=topo.num_solute_atoms(); i < topo.num_atoms(); ++i)
-	conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
-	  sim.time_step_size();
+  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
+      !sim.param().analyze.analyze) {
+    std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+            to = constrained_atoms().end();
+    for (; it != to; ++it) {
+      conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) /
+              sim.time_step_size();
     }
   }
-
+  
   // return success!
   if (!sim.mpi || m_rank == 0)
     m_timer.stop();
-  return error;
-		   
+  return error;	   
 }
 
 //================================================================================
@@ -477,49 +472,111 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
   m_size = 1;
 #endif
   
-  if (sim.param().start.shake_pos){
+  if (sim.param().constraint.solute.algorithm == simulation::constr_shake) {
+    // loop over the constraints to find out which atoms are constrained
+    {
+      std::vector<topology::two_body_term_struct>::const_iterator
+      it = topo.solute().distance_constraints().begin(),
+              to = topo.solute().distance_constraints().end();
+      for (; it != to; ++it) {
+        constrained_atoms().insert(it->i);
+        constrained_atoms().insert(it->j);
+      }
+    }
+    // loop over the perturbed constraints
+    {
+      std::vector<topology::perturbed_two_body_term_struct>::const_iterator
+      it = topo.perturbed_solute().distance_constraints().begin(),
+              to = topo.perturbed_solute().distance_constraints().end();
+      for (; it != to; ++it) {
+        constrained_atoms().insert(it->i);
+        constrained_atoms().insert(it->j);
+      }
+    }   
+    // also add the dihedral constrained atoms
+    if (sim.param().dihrest.dihrest == 3) {
+      {
+        std::vector<topology::dihedral_restraint_struct>::const_iterator
+        it = topo.dihedral_restraints().begin(),
+                to = topo.dihedral_restraints().end();
+        for (; it != to; ++it) {
+          constrained_atoms().insert(it->i);
+          constrained_atoms().insert(it->j);
+          constrained_atoms().insert(it->k);
+          constrained_atoms().insert(it->l);
+        }
+      }
+      { // and perturbed dihedrals
+        std::vector<topology::perturbed_dihedral_restraint_struct>::const_iterator
+        it = topo.perturbed_dihedral_restraints().begin(),
+                to = topo.perturbed_dihedral_restraints().end();
+        for (; it != to; ++it) {
+          constrained_atoms().insert(it->i);
+          constrained_atoms().insert(it->j);
+          constrained_atoms().insert(it->k);
+          constrained_atoms().insert(it->l);
+        }
+      }
+    }
+  }
+  
+  if (sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
+    // this means that all solvent atoms are constrained. Add the to the list
+    for (unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
+      constrained_atoms().insert(i);
+    }
+  }
+  
+  if (sim.param().start.shake_pos) {
     if (!quiet)
-      os << "shaking perturbed initial positions\n";
+      os << "\n\tshaking initial positions\n";
 
-    // old and current pos and vel are the same...
-    conf.old().pos = conf.current().pos;
-    conf.old().vel = conf.current().vel;
-    
+    // old and current pos and vel are the same for constrained atoms...
+    std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+            to = constrained_atoms().end();
+    for (; it != to; ++it) {
+      conf.old().pos(*it) = conf.current().pos(*it);
+      conf.old().vel(*it) = conf.current().vel(*it);
+    }
+
     // shake the current ones
-    if(apply(topo, conf, sim))
+    if (apply(topo, conf, sim))
       return E_SHAKE_FAILURE;
 
-    // restore the velocities
-    conf.current().vel = conf.old().vel;
-    
-    // take a step back
-    conf.old().pos = conf.current().pos;
-    
-    if (sim.param().start.shake_vel){
-      if (!quiet)
-	os << "shaking initial velocities\n";
+    it = constrained_atoms().begin();
+    for (; it != to; ++it) {
+      // restore the velocities
+      conf.current().vel(*it) = conf.old().vel(*it);
+      // take a step back
+      conf.old().pos(*it) = conf.current().pos(*it);
+    }
 
-      for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().pos(i) = conf.old().pos(i) - 
-	  sim.time_step_size() * conf.old().vel(i);
-    
+    if (sim.param().start.shake_vel) {
+      if (!quiet)
+        os << "\tshaking initial velocities\n";
+
+      it = constrained_atoms().begin();
+      for (; it != to; ++it) {
+        conf.current().pos(*it) = conf.old().pos(*it) -
+                sim.time_step_size() * conf.old().vel(*it);
+      }
+
       // shake again
       if (apply(topo, conf, sim))
-	return E_SHAKE_FAILURE;
-    
-      // restore the positions
-      conf.current().pos = conf.old().pos;
-    
-      // velocities are in opposite direction (in time)
-      for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().vel(i) = -1.0 * conf.current().vel(i);
-      conf.old().vel = conf.current().vel;
-    }
-    
-  }
-  else if (sim.param().start.shake_vel){
+        return E_SHAKE_FAILURE;
+
+      it = constrained_atoms().begin();
+      for (; it != to; ++it) {
+        // restore the positions
+        conf.current().pos(*it) = conf.old().pos(*it);
+        // velocities are in opposite direction (in time)
+        conf.current().vel(*it) = -1.0 * conf.current().vel(*it);
+        conf.old().vel(*it) = conf.current().vel(*it);
+      }
+    } // if shake vel
+  } else if (sim.param().start.shake_vel) {
     io::messages.add("shaking velocities without shaking positions illegal.",
-		     "shake", io::message::error);
+            "shake", io::message::error);
   }
 
   if (!quiet) {

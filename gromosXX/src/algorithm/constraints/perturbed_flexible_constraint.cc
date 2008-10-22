@@ -60,7 +60,6 @@ int algorithm::Perturbed_Flexible_Constraint
 	simulation::Simulation & sim)
 {
   DEBUG(7, "applying perturbed flexible SHAKE");
-  bool do_vel = false;
   int error = 0;
   
   conf.special().flexible_constraint.flexible_ekin.assign
@@ -73,7 +72,6 @@ int algorithm::Perturbed_Flexible_Constraint
       sim.param().constraint.ntc > 1){
 
     DEBUG(8, "\twe need to flexible shake perturbed SOLUTE");
-    do_vel = true;
 
     calc_distance(topo, conf, sim);
 
@@ -88,16 +86,22 @@ int algorithm::Perturbed_Flexible_Constraint
 	      << "exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
 	      << "at step " << sim.steps()
 	      << std::endl;
-    // save old positions to final configuration... (even before free-flight!)
-    conf.current().pos = conf.old().pos;
+    conf.special().shake_failure_occurred = true;
     return E_SHAKE_FAILURE_SOLUTE;
   }
 
-  // shake velocity
-  unsigned int num_atoms = topo.num_solute_atoms();
-  for(unsigned int i=0; i<num_atoms; ++i)
-    conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
-      sim.time_step_size();
+  // shaken velocity:
+  // stochastic dynamics, energy minimisation, analysis needs to shake without
+  // velocity correction (once; it shakes twice...)
+  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
+      !sim.param().analyze.analyze) {
+    std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+            to = constrained_atoms().end();
+    for (; it != to; ++it) {
+      conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) /
+              sim.time_step_size();
+    }
+  }
 
   // return success!
   return 0;
@@ -624,44 +628,79 @@ int algorithm::Perturbed_Flexible_Constraint
   if (!quiet)
     os << "END\n";
 
-  if (sim.param().start.shake_pos){
-    if (!quiet)
-      os << "shaking perturbed initial positions\n";
-
-    // old and current pos and vel are the same...
-    // shake the current ones
-    apply(topo, conf, sim);
-
-    // restore the velocities
-    conf.current().vel = conf.old().vel;
-    
-    // take a step back
-    conf.old().pos = conf.current().pos;
-    
-    if (sim.param().start.shake_vel){
-      if (!quiet)
-	os << "shaking initial velocities\n";
-
-      for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().pos(i) = conf.old().pos(i) - 
-	  sim.time_step_size() * conf.old().vel(i);
-    
-      // shake again
-      apply(topo, conf, sim);
-    
-      // restore the positions
-      conf.current().pos = conf.old().pos;
-    
-      // velocities are in opposite direction (in time)
-      for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().vel(i) = -1.0 * conf.current().vel(i);
-      conf.old().vel = conf.current().vel;
+  if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake) {
+    // loop over the constraints to find out which atoms are constrained
+    {
+      std::vector<topology::two_body_term_struct>::const_iterator
+      it = topo.solute().distance_constraints().begin(),
+              to = topo.solute().distance_constraints().end();
+      for (; it != to; ++it) {
+        constrained_atoms().insert(it->i);
+        constrained_atoms().insert(it->j);
+      }
     }
-    
+    // loop over the perturbed constraints
+    {
+      std::vector<topology::perturbed_two_body_term_struct>::const_iterator
+      it = topo.perturbed_solute().distance_constraints().begin(),
+              to = topo.perturbed_solute().distance_constraints().end();
+      for (; it != to; ++it) {
+        constrained_atoms().insert(it->i);
+        constrained_atoms().insert(it->j);
+      }
+    }
   }
-  else if (sim.param().start.shake_vel){
+  
+  if (sim.param().start.shake_pos) {
+    if (!quiet)
+      os << "\n\tflexible shaking initial positions\n";
+
+    // old and current pos and vel are the same for constrained atoms...
+    std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+            to = constrained_atoms().end();
+    for (; it != to; ++it) {
+      conf.old().pos(*it) = conf.current().pos(*it);
+      conf.old().vel(*it) = conf.current().vel(*it);
+    }
+
+    // shake the current ones
+    if (apply(topo, conf, sim))
+      return E_SHAKE_FAILURE;
+
+    it = constrained_atoms().begin();
+    for (; it != to; ++it) {
+      // restore the velocities
+      conf.current().vel(*it) = conf.old().vel(*it);
+      // take a step back
+      conf.old().pos(*it) = conf.current().pos(*it);
+    }
+
+    if (sim.param().start.shake_vel) {
+      if (!quiet)
+        os << "\tshaking initial velocities\n";
+
+      it = constrained_atoms().begin();
+      for (; it != to; ++it) {
+        conf.current().pos(*it) = conf.old().pos(*it) -
+                sim.time_step_size() * conf.old().vel(*it);
+      }
+
+      // shake again
+      if (apply(topo, conf, sim))
+        return E_SHAKE_FAILURE;
+
+      it = constrained_atoms().begin();
+      for (; it != to; ++it) {
+        // restore the positions
+        conf.current().pos(*it) = conf.old().pos(*it);
+        // velocities are in opposite direction (in time)
+        conf.current().vel(*it) = -1.0 * conf.current().vel(*it);
+        conf.old().vel(*it) = conf.current().vel(*it);
+      }
+    } // if shake vel
+  } else if (sim.param().start.shake_vel) {
     io::messages.add("shaking velocities without shaking positions illegal.",
-		     "shake", io::message::error);
+            "shake", io::message::error);
   }
   
   if (!quiet)

@@ -525,17 +525,16 @@ io::In_Topology::read(topology::Topology& topo,
 	int num, n;
 	_lineStream >> num;
 	++it;
-      
-	if (!quiet){
-	  if (param.constraint.ntc == 2 || param.constraint.ntc == 3){
-	    os << "\n\t\t"
-		      << num
-		      << " bonds from BONDH block added to CONSTRAINT";
-	  }
-	  else
-	    os << "\n\t\tbonds containing hydrogens : "
-		      << num;
-	}
+
+        if (!quiet) {
+          if (param.constraint.ntc == 2 || param.constraint.ntc == 3) {
+            os << "\n\t\t"
+                    << num
+                    << " bonds from BONDH block added to CONSTRAINT";
+          } else
+            os << "\n\t\tbonds containing hydrogens : "
+                  << num;
+        }
       
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
 	  int i, j, t;

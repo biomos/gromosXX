@@ -65,6 +65,18 @@ namespace algorithm
     {
       return m_parameter;
     }
+    /**
+     * accessor to the constrained atoms
+     */
+    std::set<unsigned int> & constrained_atoms() {
+      return m_constrained_atoms;
+    }
+     /**
+     * accessor to the constrained atoms
+     */
+    const std::set<unsigned int> & constrained_atoms() const {
+      return m_constrained_atoms;
+    }
 
     /**
      * initialize startup positions and velocities
@@ -90,6 +102,10 @@ namespace algorithm
      * bond parameter
      */
     std::vector<interaction::bond_type_struct> m_parameter;
+    /**
+     * the atoms that are involved in the contraints
+     */
+    std::set<unsigned int> m_constrained_atoms;
     /** 
      * rank and size for parallelization
      */

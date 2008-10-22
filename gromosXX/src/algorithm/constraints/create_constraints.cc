@@ -66,20 +66,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
   // CONSTRAINTS
   DEBUG(7, "Constrain solute?");
 
-  if (sim.param().start.shake_pos || sim.param().start.shake_vel){
-    if (sim.param().constraint.solute.algorithm == simulation::constr_off)
-      io::messages.add("no shaking of initial solute positions / velocities "
-		       "without using constraints during the simulation.",
-		       "create md sequence",
-		       io::message::warning);
-
-    if (sim.param().constraint.solvent.algorithm == simulation::constr_off)
-      io::messages.add("no shaking of initial solvent positions / velocities "
-		       "without using constraints during the simulation.",
-		       "create md sequence",
-		       io::message::warning);
-  }
-
   // solute constraints have to be set to SHAKE, but NTC may be 1
   // for dihedral constraints to be used.
   switch(sim.param().constraint.solute.algorithm){

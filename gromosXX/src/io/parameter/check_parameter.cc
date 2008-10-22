@@ -58,6 +58,8 @@ int io::check_parameter(simulation::Simulation & sim)
           param.constraint.solvent.algorithm == simulation::constr_off);
   add("solvent_shake", "SHAKE for solvent", 
           param.constraint.solvent.algorithm == simulation::constr_shake);
+  add("solvent_lincs", "LINCS for solvent", 
+          param.constraint.solvent.algorithm == simulation::constr_lincs);
   // PRESSURESCALE block
   add("pressure_calculation", "pressure calculation", param.pcouple.calculate);
   add("pressure_scale_berendsen", "Berendsen barostat", param.pcouple.scale != math::pcouple_off);
@@ -540,8 +542,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_lincs", "pbc_r");
   fc.unlock("solute_lincs", "pbc_c");
   fc.unlock("solute_lincs", "pbc_t");
-  fc.unlock("solute_lincs", "perturbation");
-  fc.unlock("solute_lincs", "perturbation_scaling");
   fc.unlock("solute_lincs", "bond");
   fc.unlock("solute_lincs", "angle");
   fc.unlock("solute_lincs", "dihedral");
@@ -594,8 +594,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "pbc_r");
   fc.unlock("solute_flexshake", "pbc_c");
   fc.unlock("solute_flexshake", "pbc_t");
-  fc.unlock("solute_flexshake", "perturbation");
-  fc.unlock("solute_flexshake", "perturbation_scaling");
   fc.unlock("solute_flexshake", "bond");
   fc.unlock("solute_flexshake", "angle");
   fc.unlock("solute_flexshake", "dihedral");
@@ -2821,6 +2819,81 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_spc", "parallel_mpi");
   fc.unlock("innerloop_solvent_spc", "parallel_omp");
   fc.unlock("innerloop_solvent_spc", "mult_energy_groups");
+  
+  fc.unlock("solvent_lincs", "solute");
+  fc.unlock("solvent_lincs", "solvent");
+  fc.unlock("solvent_lincs", "solvent_only");
+  fc.unlock("solvent_lincs", "steepest_descent");
+  fc.unlock("solvent_lincs", "solute_constraint_off");
+  fc.unlock("solvent_lincs", "solute_shake");
+  fc.unlock("solvent_lincs", "solute_lincs");
+  fc.unlock("solvent_lincs", "solute_flexshake");
+  fc.unlock("solvent_lincs", "pressure_calculation");
+  fc.unlock("solvent_lincs", "pressure_scale_berendsen");
+  fc.unlock("solvent_lincs", "virial_off");
+  fc.unlock("solvent_lincs", "virial_atomic");
+  fc.unlock("solvent_lincs", "virial_molecular");
+  fc.unlock("solvent_lincs", "vacuum");
+  fc.unlock("solvent_lincs", "pbc_r");
+  fc.unlock("solvent_lincs", "pbc_c");
+  fc.unlock("solvent_lincs", "pbc_t");
+  fc.unlock("solvent_lincs", "perturbation");
+  fc.unlock("solvent_lincs", "perturbation_scaling");
+  fc.unlock("solvent_lincs", "slow_growth");
+  fc.unlock("solvent_lincs", "individual_lambdas");
+  fc.unlock("solvent_lincs", "bond");
+  fc.unlock("solvent_lincs", "angle");
+  fc.unlock("solvent_lincs", "dihedral");
+  fc.unlock("solvent_lincs", "improper");
+  fc.unlock("solvent_lincs", "crf");
+  fc.unlock("solvent_lincs", "lj");
+  fc.unlock("solvent_lincs", "com_removal");
+  fc.unlock("solvent_lincs", "rf_excluded");
+  fc.unlock("solvent_lincs", "pairlist_standard");
+  fc.unlock("solvent_lincs", "pairlist_grid");
+  fc.unlock("solvent_lincs", "pairlist_vgrid");
+  fc.unlock("solvent_lincs", "cutoff_atomic");
+  fc.unlock("solvent_lincs", "coarse_grain");
+  fc.unlock("solvent_lincs", "multi_grain");
+  fc.unlock("solvent_lincs", "temp_berendsen");
+  fc.unlock("solvent_lincs", "temp_nosehoover");
+  fc.unlock("solvent_lincs", "temp_nosehoover_chains");
+  fc.unlock("solvent_lincs", "position_rest");
+  fc.unlock("solvent_lincs", "position_const");
+  fc.unlock("solvent_lincs", "position_const_scaled");
+  fc.unlock("solvent_lincs", "distance_rest");
+  fc.unlock("solvent_lincs", "dihedral_rest");
+  fc.unlock("solvent_lincs", "dihedral_const");
+  fc.unlock("solvent_lincs", "jvalue_rest");
+  fc.unlock("solvent_lincs", "perscale");
+  fc.unlock("solvent_lincs", "rottrans");
+  fc.unlock("solvent_lincs", "innerloop_method_off");
+  fc.unlock("solvent_lincs", "innerloop_method_generic");
+  fc.unlock("solvent_lincs", "innerloop_method_hardcode");
+  fc.unlock("solvent_lincs", "innerloop_method_table");
+  fc.unlock("solvent_lincs", "innerloop_solvent_topology");
+  fc.unlock("solvent_lincs", "innerloop_solvent_spc");
+  fc.unlock("solvent_lincs", "repex_temp");
+  fc.unlock("solvent_lincs", "repex_lambda");
+  fc.unlock("solvent_lincs", "multicell");
+  fc.unlock("solvent_lincs", "analysis");
+  fc.unlock("solvent_lincs", "no_integration");
+  fc.unlock("solvent_lincs", "stochdyn");
+  fc.unlock("solvent_lincs", "multistep");
+  fc.unlock("solvent_lincs", "multistep_boost");
+  fc.unlock("solvent_lincs", "montecarlo");
+  fc.unlock("solvent_lincs", "ramd");
+  fc.unlock("solvent_lincs", "polarization_cos");
+  fc.unlock("solvent_lincs", "polarization_cos_damped");
+  fc.unlock("solvent_lincs", "random_gromos");
+  fc.unlock("solvent_lincs", "random_gsl");
+  fc.unlock("solvent_lincs", "eds");
+  fc.unlock("solvent_lincs", "parallel_mpi");
+  fc.unlock("solvent_lincs", "parallel_omp");
+  fc.unlock("solvent_lincs", "mult_energy_groups");
+  fc.unlock("solvent_lincs", "ewald");
+  fc.unlock("solvent_lincs", "p3m");
+
   
   if (fc.check()) 
     return 0;

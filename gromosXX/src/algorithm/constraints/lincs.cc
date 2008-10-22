@@ -225,19 +225,14 @@ int algorithm::Lincs::apply(topology::Topology & topo,
 			    simulation::Simulation & sim)
 {
   DEBUG(7, "applying LINCS");
-
-  
   m_timer.start();
-  bool do_vel = false;
   
-  // check whether we "shake" solute
+  // check whether we lincs solute
   if (topo.solute().distance_constraints().size() && 
       sim.param().constraint.solute.algorithm == simulation::constr_lincs &&
       sim.param().constraint.ntc > 1){
 
-    DEBUG(8, "\twe need to shake SOLUTE");
-    do_vel = true;
-
+    DEBUG(8, "\twe need to lincs SOLUTE");
     SPLIT_BOUNDARY(_lincs, topo, conf, sim, topo.solute().distance_constraints(),
 		   topo.solute().lincs(), parameter(),
 		   sim.param().constraint.solute.lincs_order, m_timer);
@@ -248,25 +243,29 @@ int algorithm::Lincs::apply(topology::Topology & topo,
   if (sim.param().system.nsm &&
       sim.param().constraint.solvent.algorithm == simulation::constr_lincs){
 
-    DEBUG(8, "\twe need to shake SOLVENT");
-    do_vel = true;
+    DEBUG(8, "\twe need to lincs SOLVENT");
     int error = 0;
-
     SPLIT_VIRIAL_BOUNDARY(_solvent,
 			  topo, conf, sim, parameter(), m_timer, error);
     
   }
   
-  // "shake" velocities
-  if (do_vel)
-    for(unsigned int i=0; i<topo.num_atoms(); ++i)
-      conf.current().vel(i) = (conf.current().pos(i) - conf.old().pos(i)) / 
+  // inclsed velocity:
+  // stochastic dynamics, energy minimisation, analysis needs to shake without
+  // velocity correction (once; it shakes twice...)
+  if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
+      !sim.param().analyze.analyze) {
+        std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+            to = constrained_atoms().end();
+    for (; it != to; ++it) {
+      conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) / 
 	sim.time_step_size();
+    }
+  }
 
   // return success!
   m_timer.stop();
-  return 0;
-		   
+  return 0;	   
 }
 
 static void _setup_lincs(topology::Topology const & topo,
@@ -324,8 +323,7 @@ static void _setup_lincs(topology::Topology const & topo,
 	DEBUG(8, "coef[" << i << "] = " << c);
 	
       }
-    }
-    
+    } 
   }
 }
 
@@ -352,7 +350,25 @@ int algorithm::Lincs::init(topology::Topology & topo,
     
     os << "\t\torder = " << sim.param().constraint.solvent.lincs_order << "\n";
   }
-  
+
+  if (sim.param().constraint.solute.algorithm == simulation::constr_lincs) {
+    // loop over the constraints to find out which atoms are constrained
+    std::vector<topology::two_body_term_struct>::const_iterator
+    it = topo.solute().distance_constraints().begin(),
+            to = topo.solute().distance_constraints().end();
+    for (; it != to; ++it) {
+      constrained_atoms().insert(it->i);
+      constrained_atoms().insert(it->j);
+    }
+  }
+
+  if (sim.param().constraint.solvent.algorithm == simulation::constr_lincs) {
+    // this means that all solvent atoms are constrained. Add the to the list
+    for (unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
+      constrained_atoms().insert(i);
+    }
+  }
+
   // setup lincs
   DEBUG(8, "setting up lincs");
   _setup_lincs(topo, topo.solute().lincs(),
@@ -379,45 +395,52 @@ int algorithm::Lincs::init(topology::Topology & topo,
     if (!quiet)
       os << "\n\tshaking (lincs) initial positions\n";
 
-    // old and current pos and vel are the same...
-    conf.old().pos = conf.current().pos;
-    conf.old().vel = conf.current().vel;
+    // old and current pos and vel are the same for constrained atoms...
+    std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
+            to = constrained_atoms().end();
+    for (; it != to; ++it) {
+      conf.old().pos(*it) = conf.current().pos(*it);
+      conf.old().vel(*it) = conf.current().vel(*it);
+    }
 
-    // shake the current ones
+    // lincs the current ones
     apply(topo, conf, sim);
 
-    // restore the velocities
-    conf.current().vel = conf.old().vel;
-    
-    // take a step back
-    conf.old().pos = conf.current().pos;
+    it = constrained_atoms().begin();
+    for (; it != to; ++it) {
+      // restore the velocities
+      conf.current().vel(*it) = conf.old().vel(*it);
+      // take a step back
+      conf.old().pos(*it) = conf.current().pos(*it);
+    }
     
     if (sim.param().start.shake_vel){
       if (!quiet)
-	os << "\tshaking(lincs) initial velocities\n";
+	os << "\tshaking (lincs) initial velocities\n";
 
-      for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().pos(i) = conf.old().pos(i) - 
-	  sim.time_step_size() * conf.old().vel(i);
+      it = constrained_atoms().begin();
+      for (; it != to; ++it) {
+        conf.current().pos(*it) = conf.old().pos(*it) -
+                sim.time_step_size() * conf.old().vel(*it);
+      }
     
-      // shake again
+      // lincs again
       apply(topo, conf, sim);
-    
-      // restore the positions
-      conf.current().pos = conf.old().pos;
-    
-      // velocities are in opposite direction (in time)
-      for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().vel(i) = -1.0 * conf.current().vel(i);
-      conf.old().vel = conf.current().vel;
-    }
-    
-  }
-  else if (sim.param().start.shake_vel){
+
+      it = constrained_atoms().begin();
+      for (; it != to; ++it) {
+        // restore the positions
+        conf.current().pos(*it) = conf.old().pos(*it);
+        // velocities are in opposite direction (in time)
+        conf.current().vel(*it) = -1.0 * conf.current().vel(*it);
+        conf.old().vel(*it) = conf.current().vel(*it);
+      }
+    } // lincs initial velocities
+  } else if (sim.param().start.shake_vel) {
     io::messages.add("shaking velocities without shaking positions illegal.",
-		     "lincs", io::message::error);
+            "lincs", io::message::error);
   }
-  
+
   if (!quiet)
     os << "END\n";
 
