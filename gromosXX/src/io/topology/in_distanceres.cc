@@ -389,16 +389,16 @@ io::In_Distanceres::read(topology::Topology& topo,
   }
   
   { // EDSDISTANCERES
-    DEBUG(10, "EDSDISRESSPEC block");
-    buffer = m_block["EDSDISRESSPEC"];
-    block_read.insert("EDSDISRESSPEC");
+    DEBUG(10, "MDISRESSPEC block");
+    buffer = m_block["MDISRESSPEC"];
+    block_read.insert("MDISRESSPEC");
     if (buffer.size()<=2){
-      io::messages.add("no or empty EDSDISRESSPEC block in distance restraints file",
+      io::messages.add("no or empty MDISRESSPEC block in distance restraints file",
 		       "in_distanceres", io::message::warning);
     }
     else{
       if (!sim.param().eds.eds){
-        io::messages.add("EDSDISRESSPEC block given but EDS not turned on!",
+        io::messages.add("MDISRESSPEC block given but EDS not turned on!",
                          "in_distanceres", io::message::error);
       }
       if(sim.param().distanceres.distanceres < 0){
@@ -411,7 +411,7 @@ io::In_Distanceres::read(topology::Topology& topo,
       double dish,disc;
       bool nr_atoms=true;
       
-      DEBUG(10, "reading in EDSDISRESSPEC data");
+      DEBUG(10, "reading in MDISRESSPEC data");
       
       if (!quiet){
 	
@@ -441,7 +441,7 @@ io::In_Distanceres::read(topology::Topology& topo,
       
       if(_lineStream.fail()){
 	std::ostringstream msg;
-	msg << "bad line in EDSDISRESSPEC block: failed to read in DISH and  DISC"  << std::endl;
+	msg << "bad line in MDISRESSPEC block: failed to read in DISH and  DISC"  << std::endl;
 	io::messages.add(msg.str(),
 			 "In_Distanceres",
 			 io::message::error);
@@ -541,7 +541,7 @@ io::In_Distanceres::read(topology::Topology& topo,
 	
 	if(_lineStream.fail()){
 	  std::ostringstream msg;
-	  msg << "bad line in EDSDISRESSPEC block: " << line_number << std::endl
+	  msg << "bad line in MDISRESSPEC block: " << line_number << std::endl
 	      << "          " << *it;
 	  io::messages.add(msg.str(),
 			   "In_Distanceres",

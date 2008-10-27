@@ -20,7 +20,7 @@
  * - @ref  pertproperdih
  * - @ref  pertproperdihh
  * - @ref  pertpolparam
- * - @ref  edsatomparam
+ * - @ref  mpertatom
 
 
  
@@ -100,7 +100,7 @@ PERTBONDSTRETCHH
 END
 @endverbatim
 
-@section pertbondangle PERTBONDANGLE 
+@section pertbondangle PERTBONDANGLE block
 Perturbed bond angles NOT involving H-atoms
 @verbatim
 PERTBONDANGLE
@@ -150,7 +150,7 @@ PERTIMPROPERDIHH
 END
 @endverbatim
 
-@section pertproperdih PERTPROPERDIH 
+@section pertproperdih PERTPROPERDIH block
 Perturbed (trigonometric) dihedrals NOT involving H-atoms
 @verbatim
 PERTPROPERDIH
@@ -162,7 +162,7 @@ PERTPROPERDIH
 END
 @endverbatim
 
-@section pertproperdihh PERTPROPERDIHH
+@section pertproperdihh PERTPROPERDIHH block
 Perturbed (trigonometric) dihedrals involving H-atoms
 @verbatim
 PERTPROPERDIHH
@@ -174,7 +174,7 @@ PERTPROPERDIHH
 END
 @endverbatim
 
-@section pertpolparam PERTPOLPARAM
+@section pertpolparam PERTPOLPARAM block
 Perturbed atomic polarisabilities
 @verbatim
 PERTPOLPARAM
@@ -186,23 +186,30 @@ PERTPOLPARAM
 END
 @endverbatim
 
-@section edsatomparam  EDSATOMPARAM
+@section mpertatom  MPERTATOM block
 Multiple perturbed atom information block
 @verbatim
-EDSATOMPARAM
-# number of eds-perturbed atoms 
-  6
-# NR res name mass iac 0...N charge 0...N
-# needed information is only: NR, IAC 0...N, charge 0...N
-# NR    RES  NAME  IAC[0...N]  CHARGE[0...N]
+MPERTATOM
+# NJLA:   number of perturbed atoms
+# NPTB:   number of listed perturbation (i.e. number of
+#         perturbation states)
+# NJLA    NPTB
+  6      2
+# JLA:    atom sequence number
+# ATNAME: atom name
+# IAC[i]: integer atom code in state i
+# CG[i]:  charge in state i
+# JLA  ATNAME   IAC[1] CG[1]   IAC[2] CG[2]
+# name to identify perturbation
+                stateA         stateB
 # first water
-  1      1    OW   4  19       -0.82  0     
-  2      1    HW1  18 19        0.41  0     
-  3      1    HW2  18 19        0.41  0    
+  1    OW       4     -0.82    19     0
+  2    HW1      18     0.41    19     0
+  3    HW2      18     0.41    19     0
 # second water
-  4      2    OW   19 4         0    -0.82  
-  5      2    HW1  19 18        0     0.41 
-  6      2    HW2  19 18        0     0.41 
+  4    OW       19     0      -0.82   4
+  5    HW1      19     0       0.41   18
+  6    HW2      19     0       0.41   18
 END
 @endverbatim
  */

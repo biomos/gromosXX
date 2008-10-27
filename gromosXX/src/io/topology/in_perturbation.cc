@@ -1120,83 +1120,107 @@ io::In_Perturbation::read(topology::Topology &topo,
       
     } // PERTPOLPARAM
   } // end of if(!param.eds.eds)
-  { // EDSATOMPARAM
-    DEBUG(10, "EDSATOMPARAM block");
-    
-    buffer = m_block["EDSATOMPARAM"];
-    if (buffer.size()){
-      block_read.insert("EDSATOMPARAM");
+  { // MPERTATOM
+    DEBUG(10, "MPERTATOM block");
+
+    buffer = m_block["MPERTATOM"];
+    if (buffer.size()) {
+      block_read.insert("MPERTATOM");
 
       if (!quiet)
-	std::cout << "\tEDSATOMPARAM\n";
-      DEBUG(7, "EDSATOMPARAM block");
-      
+        std::cout << "MPERTATOM\n";
+      DEBUG(7, "MPERTATOM block");
+
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
       unsigned int numstates, numatoms, n;
-      numstates = param.eds.numstates;
-     
-      _lineStream >> numatoms;
+      //numstates = param.eds.numstates;
+
+      _lineStream >> numatoms >> numstates;
       ++it;
       if (_lineStream.fail()){
-        io::messages.add("Bad line (numatoms) in EDSATOMPARAM block.",
+        io::messages.add("Bad line (numatoms, numstates) in MPERTATOM block.",
                          "In_Perturbation", io::message::error);
+        return;
       }
-      if (!quiet){
-        std::cout << "\t" << std::setw(5) << "seq"
-                          << std::setw(12) << "IAC[";
-        for(unsigned int i = 0; i < numstates; i++){
-          std::cout << std::setw(8) << i+1;
-        }
-        std::cout << std::setw(12) << "] charge["; 
-        for(unsigned int i = 0; i < numstates; i++){
-          std::cout << std::setw(10) << i+1;
-        }
-        std::cout << "]\n";
+
+      if (numstates != param.eds.numstates) {
+        std::ostringstream msg;
+        msg << "Number of perturbed states given in perturbation topology ("
+                << numstates << ") and input file (" << param.eds.numstates
+                << ") do not match.";
+        io::messages.add(msg.str(),
+                "In_Perturbation", io::message::error);
+        return;
       }
       
-      int seq, res;
+      // read in the name to identify the perturbation
+      std::vector<std::string> identifier(numstates);
+      _lineStream.clear();
+      _lineStream.str(*it);
+      for (unsigned int i = 0; i < identifier.size(); i++) {
+        _lineStream >> identifier[i];
+      }
+      ++it;
+      if (_lineStream.fail()) {
+        io::messages.add("Bad line (PTNAME i.e. perturbation identifier name) in MPERTATOM block.",
+                "In_Perturbation", io::message::error);
+        return;
+      }
+      if (!quiet) {
+        std::cout << "\t" << std::setw(5) << "name";
+        for (unsigned int i = 0; i < identifier.size(); i++) {
+          std::cout << std::setw(14) << identifier[i];
+        }
+        std::cout << "\n";
+        std::cout << "\t" << std::setw(5) << "seq";
+        for (unsigned int i = 0; i < numstates; i++) {
+          std::cout << std::setw(5) << "iac[" << std::setw(2) << i + 1 << "]";
+          std::cout << std::setw(3) << "q[" << std::setw(2) << i + 1 << "]";
+        }
+        std::cout << "\n";
+      }
+      int seq;
       std::string name;
       std::vector<unsigned int> m_iac(numstates);
       std::vector<double> m_charge(numstates);
       
       // prepare arrays
       topo.is_eds_perturbed().resize(topo.num_solute_atoms(), false);
-      
-      for(n = 0; it != buffer.end() - 1; ++it, ++n){
+
+      for (n = 0; it != buffer.end() - 1; ++it, ++n) {
         DEBUG(10, "\treading a line: " << n);
 
-	_lineStream.clear();
-	_lineStream.str(*it);
-	_lineStream >> seq >> res >> name;
-        for(unsigned int i = 0; i < numstates; i++){
-          _lineStream >> m_iac[i];
-        }
-        for(unsigned int i = 0; i < numstates; i++){
-          _lineStream >> m_charge[i];
-        }
- 
-	if (_lineStream.fail()){
-	  io::messages.add("Bad line in EDSATOMPARAM block.",
-			   "In_Perturbation", io::message::error);
-	}
-	
-	--seq;
-        for(unsigned int i = 0; i < numstates; i++){
-          --m_iac[i];
-          if(m_iac[i] < 0){
- 	  io::messages.add("Negative IAC in EDSATOMPARAM block.",
-			   "In_Perturbation", io::message::critical); 
-          return;
-          }        
+        _lineStream.clear();
+        _lineStream.str(*it);
+        _lineStream >> seq >> name;
+        for (unsigned int i = 0; i < numstates; i++) {
+          _lineStream >> m_iac[i] >> m_charge[i];
+          DEBUG(12,"\t iac = " << m_iac[i] << ", charge = " << m_charge[i]);
         }
         
-	if (seq < 0 || seq >= int(topo.num_solute_atoms())){
-	  io::messages.add("atom sequence number wrong in EDSATOMPARAM block",
-			   "In_Perturbation", io::message::error);
-	  return;
-	}
+        if (_lineStream.fail()) {
+          io::messages.add("Bad line in MPERTATOM block.",
+                  "In_Perturbation", io::message::error);
+          return;
+        }
+
+        --seq;
+        for (unsigned int i = 0; i < numstates; i++) {
+          --m_iac[i];
+          if (m_iac[i] < 0) {
+            io::messages.add("Negative IAC in MPERTATOM block.",
+                    "In_Perturbation", io::message::critical);
+            return;
+          }
+        }
+
+        if (seq < 0 || seq >= int(topo.num_solute_atoms())) {
+          io::messages.add("atom sequence number wrong in MPERTATOM block",
+                  "In_Perturbation", io::message::error);
+          return;
+        }
         
         // create an eds perturbed atom
         topology::EDS_Perturbed_Atom atom(seq,m_iac,m_charge);
@@ -1221,7 +1245,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         
         atom.one_four_pair() = topo.one_four_pair(seq);
         topo.one_four_pair(seq).clear();
-        DEBUG(10, "\treplaced the 14 interactions");
+        DEBUG(10, "\treplaced the 1,4 interactions");
         
         std::vector<std::set<int> > & ofp = topo.one_four_pair();
         seq2=0;
@@ -1233,33 +1257,30 @@ io::In_Perturbation::read(topology::Topology &topo,
             pit->erase(seq);
           }
         }
-        DEBUG(10, "\tadapted 14 interactions");
+        DEBUG(10, "\tadapted 1,4 interactions");
+        if (!quiet) {
+          std::cout << "\t" << std::setw(5) << seq + 1;
+                 
+          for (unsigned int i = 0; i < numstates; i++) {
+            std::cout << std::setw(8) << m_iac.at(i)+1;
+            std::cout << std::setw(6) << m_charge.at(i);
+          }
+          std::cout << "\n";
+        }
         
         topo.eds_perturbed_solute().atoms()[seq] = atom;
         assert(seq < int(topo.is_eds_perturbed().size()));
         topo.is_eds_perturbed()[seq] = true;
-	        
-         if (!quiet){
-           std::cout << "\t" << std::setw(5) << seq + 1
-           << std::setw(12) << "";
-           for(unsigned int i = 0; i < numstates; i++){
-             std::cout << std::setw(8) << m_iac[i];
-           }
-           std::cout << std::setw(12) << "";
-           for(unsigned int i = 0; i < numstates; i++){
-             std::cout << std::setw(10) << m_charge[i];
-           }
-           std::cout << "\n";
-         }
-        
       }
-      if (n != numatoms){
-        io::messages.add("Wrong number of perturbed atoms in EDSATOMPARAM block.",
+      if (n != numatoms) {
+        io::messages.add("Wrong number of perturbed atoms in MPERTATOM block.",
                          "In_Perturbation", io::message::error);
+        return;
       }
       else if (_lineStream.fail()){
-        io::messages.add("Bad line in EDSATOMPARAM block.",
+        io::messages.add("Bad line in MPERTATOM block.",
                          "In_Perturbation", io::message::error);
+        return;
       }
            
       if (!quiet)
@@ -1269,7 +1290,7 @@ io::In_Perturbation::read(topology::Topology &topo,
               << " eds perturbed atoms.");
     } // if block present
     
-  } // EDSATOMPARAM
+  } // MPERTATOM
 
   for(std::map<std::string, std::vector<std::string> >::const_iterator
 	it = m_block.begin(),
@@ -1281,12 +1302,12 @@ io::In_Perturbation::read(topology::Topology &topo,
       if(param.eds.eds){
         io::messages.add("block " + it->first + " not supported for eds!",
                 "In_Perturbation (Topology)",
-                io::message::warning);
+                io::message::error);
       }
       else{
         io::messages.add("block " + it->first + " not supported!",
                 "In_Perturbation (Topology)",
-                io::message::warning);
+                io::message::error);
       }
       
     }
