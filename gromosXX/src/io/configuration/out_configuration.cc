@@ -284,7 +284,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         _print_velocityred(conf, topo.num_atoms(), m_vel_traj);
     }
     
-    if(m_every_force && ((sim.steps()) % m_every_force) == 0){
+    if(m_every_force && ((sim.steps() + 1) % m_every_force) == 0){
       if(sim.steps()){
 	_print_old_timestep(sim, m_force_traj);
         if (sim.param().write.force_solute_only)
@@ -302,7 +302,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
        _print_cos_position(conf, topo, m_special_traj);
     }
     
-    if(m_every_energy && ((sim.steps() % m_every_energy) == 0 || minimum_found)){
+    if(m_every_energy && (((sim.steps() + 1) % m_every_energy) == 0 || minimum_found)){
       if(sim.steps()){
 	_print_old_timestep(sim, m_energy_traj);
 	_print_energyred(conf, m_energy_traj);
@@ -310,14 +310,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
     }
     
-    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
+    if(m_every_free_energy && ((sim.steps() + 1) % m_every_free_energy) == 0){
       if(sim.steps()){
 	_print_old_timestep(sim, m_free_energy_traj);
 	_print_free_energyred(conf, topo, m_free_energy_traj);
       }
     }
 
-    if (m_every_blockaverage && (sim.steps() % m_every_blockaverage) == 0){
+    if (m_every_blockaverage && ((sim.steps() + 1) % m_every_blockaverage) == 0){
       
       if(m_write_blockaverage_energy){
 	if(sim.steps()){
@@ -394,7 +394,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
     
     // forces and energies still go to their trajectories
-    if (m_every_force && ((sim.steps()) % m_every_force) == 0){
+    if (m_every_force && ((sim.steps() + 1) % m_every_force) == 0){
       _print_old_timestep(sim, m_force_traj);
       if (sim.param().write.force_solute_only)
 	_print_forcered(conf, topo.num_solute_atoms(), m_force_traj, constraint_force);
@@ -402,15 +402,35 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         _print_forcered(conf, topo.num_atoms(), m_force_traj, constraint_force);
     }
 
-    if(m_every_energy && (sim.steps() % m_every_energy) == 0){
+    if(m_every_energy && ((sim.steps() + 1) % m_every_energy) == 0){
       _print_old_timestep(sim, m_energy_traj);
       _print_energyred(conf, m_energy_traj);
       _print_volumepressurered(topo, conf, sim, m_energy_traj);
     }
 
-    if(m_every_free_energy && (sim.steps() % m_every_free_energy) == 0){
+    if(m_every_free_energy && ((sim.steps() + 1) % m_every_free_energy) == 0){
       _print_old_timestep(sim, m_free_energy_traj);
       _print_free_energyred(conf, topo, m_free_energy_traj);
+    }
+    
+    if (m_every_blockaverage && ((sim.steps() + 1) % m_every_blockaverage) == 0){
+      
+      if(m_write_blockaverage_energy){
+	if(sim.steps()){
+	  _print_old_timestep(sim, m_blockaveraged_energy);
+	  _print_blockaveraged_energyred(conf, m_blockaveraged_energy);
+	  _print_blockaveraged_volumepressurered(conf, sim, m_blockaveraged_energy);
+	}
+      }
+
+      if(m_write_blockaverage_free_energy){
+	if(sim.steps()){
+	  _print_old_timestep(sim, m_blockaveraged_free_energy);
+	  _print_blockaveraged_free_energyred(conf, sim.param().perturbation.dlamt,
+					      m_blockaveraged_free_energy);
+	}
+      }
+      conf.current().averages.block().zero();
     }
     
     if (conf.special().shake_failure_occurred) {

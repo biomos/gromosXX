@@ -135,8 +135,6 @@ int main(int argc, char *argv[]){
   // initialises all algorithms (and therefore also the forcefield)
   md.init(topo, conf, sim, *os, quiet);
 
-  double end_time = sim.time() + 
-    sim.time_step_size() * (sim.param().step.number_of_steps - 1);
   
   int error;
 
@@ -178,7 +176,7 @@ int main(int argc, char *argv[]){
 
     int next_step = 1;
 
-    while(sim.time() < end_time + math::epsilon){
+    while(sim.steps() < sim.param().step.number_of_steps){
       
       traj.write(conf, topo, sim, io::reduced);
       
@@ -211,8 +209,8 @@ int main(int argc, char *argv[]){
       
       traj.print(topo, conf, sim);
       
-      sim.time() += sim.time_step_size();
       ++sim.steps();
+      sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
       
       
       if ((sim.param().step.number_of_steps / 10 > 0) &&
@@ -332,7 +330,7 @@ int main(int argc, char *argv[]){
     const double init_time = util::now() - start;
     int next_step = 0 ;
 
-    while(sim.time() < end_time + math::epsilon){
+    while(sim.steps() < sim.param().step.number_of_steps){
       // run a step
       // (*os) << "waiting for master (nonbonded interaction)" << std::endl;
       // DEBUG(10, "slave " << rank << " waiting for master");
@@ -362,8 +360,8 @@ int main(int argc, char *argv[]){
         break;
       }
 
-      sim.time() += sim.time_step_size();
       ++sim.steps();
+      sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
     }
 
     (*os) << "\nMESSAGES FROM SIMULATION\n";

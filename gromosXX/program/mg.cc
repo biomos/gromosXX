@@ -150,10 +150,7 @@ int main(int argc, char *argv[]){
   int msteps = sim.param().multistep.steps;
   if (msteps < 1) msteps = 1;
   
-  const double end_time = sim.time() + 
-    sim.time_step_size() * 
-    (sim.param().step.number_of_steps * msteps - 1);
-
+  
   std::cout << "==================================================\n"
 	    << " MAIN MD LOOP\n"
 	    << "==================================================\n"
@@ -163,7 +160,7 @@ int main(int argc, char *argv[]){
   int percent = 0;
   const double init_time = util::now() - start;
     
-  while(sim.time() < end_time + math::epsilon){
+  while(sim.steps() < sim.param().step.number_of_steps){  
       
     traj.write(conf, topo, sim, io::reduced);
     cg_traj.write(cg_conf, cg_topo, cg_sim, io::reduced);
@@ -245,11 +242,11 @@ int main(int argc, char *argv[]){
 
     traj.print(topo, conf, sim);
 
-    sim.time() += sim.time_step_size();
     ++sim.steps();
+    sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
 
-    cg_sim.time() += cg_sim.time_step_size();
     ++cg_sim.steps();
+    cg_sim.time() = cg_sim.param().step.t0 + cg_sim.steps()*cg_sim.time_step_size();
 
     if ((sim.steps() % (sim.param().step.number_of_steps * msteps / 10)) == 0){
       ++percent;

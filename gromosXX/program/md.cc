@@ -142,8 +142,6 @@ int main(int argc, char *argv[]){
 
     
   int percent = 0;
-  double end_time = sim.time() + 
-    sim.time_step_size() * (sim.param().step.number_of_steps - 1);
     
   std::cout << "==================================================\n"
 	    << " MAIN MD LOOP\n"
@@ -153,8 +151,7 @@ int main(int argc, char *argv[]){
   int error;
 
   const double init_time = util::now() - start;
-    
-  while(sim.time() < end_time + math::epsilon){
+  while(sim.steps() < sim.param().step.number_of_steps){  
       
     traj.write(conf, topo, sim, io::reduced);
 
@@ -191,9 +188,8 @@ int main(int argc, char *argv[]){
 
     traj.print(topo, conf, sim);
 
-    sim.time() += sim.time_step_size();
     ++sim.steps();
-    
+    sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
     
     if ((sim.param().step.number_of_steps / 10 > 0) &&
 	(sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
@@ -216,7 +212,7 @@ int main(int argc, char *argv[]){
       std::cerr << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
       std::cout << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
     }
-  }
+  } // main md loop
     
   std::cout << "writing final configuration" << std::endl;
     
