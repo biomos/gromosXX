@@ -38,15 +38,15 @@ int interaction::Grid_Pairlist_Algorithm::init
  bool quiet)
 {
   if (!sim.param().pairlist.grid || !sim.param().pairlist.grid_size){
-    io::messages.add("Grid_Pairlist_Algorithm",
-		     "wrong input parameters",
+    io::messages.add("wrong input parameters",
+                     "Grid_Pairlist_Algorithm",
 		     io::message::error);
     return 1;
   }
   
   if (conf.boundary_type != math::rectangular){
-    io::messages.add("Grid Pairlist Algorithm",
-		     "only implemented for rectangular boundary conditions",
+    io::messages.add("only implemented for rectangular boundary conditions",
+                     "Grid_Pairlist_Algorithm",
 		     io::message::error);
     return 1;
   }
@@ -125,8 +125,8 @@ int interaction::Grid_Pairlist_Algorithm::init
     // just for fun, already try this
     if (prepare_grid(topo, conf, sim)){
       os << "\terror during grid preparation!\n";
-      io::messages.add("Grid_Pairlist_Algorithm",
-		       "error during grid preparation",
+      io::messages.add("error during grid preparation. Use standard pairlist instead.",
+                       "Grid_Pairlist_Algorithm",
 		       io::message::error);
       return 1;
     }
@@ -167,7 +167,7 @@ int interaction::Grid_Pairlist_Algorithm::prepare
  simulation::Simulation & sim
  )
 {
-  DEBUG(7, "standard pairlist algorithm : prepare");
+  DEBUG(7, "grid pairlist algorithm : prepare");
   
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
@@ -206,8 +206,8 @@ void interaction::Grid_Pairlist_Algorithm::update
   if (sim.param().pairlist.atomic_cutoff){
     // see standard_pairlist_algorithm_atomic.cc
     io::messages.add("Grid based pairlist with atomic cutoff not implemented",
-        "GridPairlistAlgorithm",
-        io::message::critical);
+                     "Grid_Pairlist_Algorithm",
+                     io::message::critical);
     assert(false);
   }
   else{
