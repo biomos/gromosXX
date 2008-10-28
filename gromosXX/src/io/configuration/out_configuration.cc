@@ -237,7 +237,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 { 
   // standard trajectories
   
-  bool constraint_force = sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+  bool constraint_force = sim.param().constraint.solute.algorithm == simulation::constr_shake ||
     sim.param().constraint.solvent.algorithm == simulation::constr_shake;
   
   // check whether a new energy minimum was found
