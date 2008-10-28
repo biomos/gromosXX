@@ -1,6 +1,16 @@
 /**
- * @file in_posres.h
- * read in a position restraining file.
+ * @file in_friction.h
+ * read in a friction specification file.
+ */
+
+/**
+ * @page friction friction specification format
+ * @date 28-10-2008
+ *
+ * A friction specifcation file may contain the following
+ * blocks:
+ * - @ref title
+ * - @ref frictionspec
  */
 
 #ifndef INCLUDED_IN_FRICTION_H

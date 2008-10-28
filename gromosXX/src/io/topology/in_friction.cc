@@ -22,7 +22,27 @@
 #define MODULE io
 #define SUBMODULE topology
 
-
+/**
+ * @section frictionspec FRICTIONSPEC block
+ * The FRICTIONSPEC block is read from the friction specification file.
+ *
+ * For every atom, one \c GAM0 friction coefficient is read.
+ *
+ * @verbatim
+FRICTIONSPEC
+# the first 24 characters are ignored
+# RESIDUE   ATOM           GAM0
+    1 HEXA  CH31       1   20.0
+    1 HEXA  CH22       2   15.0
+    1 HEXA  CH23       3   25.0
+    1 HEXA  CH24       4   10.0
+    2 HEXA  CH23       9   28.0
+    2 HEXA  CH24      10   24.0
+    2 HEXA  CH25      11   28.0
+    2 HEXA  CH36      12   30.0
+END
+@endverbatim
+ */
 void 
 io::In_Friction::read(topology::Topology& topo,
 		    simulation::Simulation & sim,
