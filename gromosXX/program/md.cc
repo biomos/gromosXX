@@ -151,7 +151,7 @@ int main(int argc, char *argv[]){
   int error;
 
   const double init_time = util::now() - start;
-  while(sim.steps() < sim.param().step.number_of_steps){  
+  while(int(sim.steps()) < sim.param().step.number_of_steps){  
       
     traj.write(conf, topo, sim, io::reduced);
 

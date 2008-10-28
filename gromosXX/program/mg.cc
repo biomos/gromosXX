@@ -160,7 +160,7 @@ int main(int argc, char *argv[]){
   int percent = 0;
   const double init_time = util::now() - start;
     
-  while(sim.steps() < sim.param().step.number_of_steps){  
+  while(int(sim.steps()) < sim.param().step.number_of_steps){  
       
     traj.write(conf, topo, sim, io::reduced);
     cg_traj.write(cg_conf, cg_topo, cg_sim, io::reduced);
