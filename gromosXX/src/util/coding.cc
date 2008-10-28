@@ -4,7 +4,7 @@
  */
 
 #include <stdheader.h>
-#include <gromosXX/util/coding.h>
+#include "coding.h"
 
 // this code was more or less completly taken from
 // http://www.adp-gmbh.ch/cpp/common/base64.html

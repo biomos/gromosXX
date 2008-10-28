@@ -7,7 +7,7 @@
 #ifndef INCLUDED_PAIRLIST_ALGORITHM_H
 #define INCLUDED_PAIRLIST_ALGORITHM_H
 
-#include <gromosXX/algorithm/algorithm.h>
+#include "../algorithm/algorithm.h"
 
 namespace interaction
 {

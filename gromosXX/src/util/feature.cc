@@ -4,7 +4,7 @@
  */
 
 #include <stdheader.h>
-#include <gromosXX/util/feature.h>
+#include "feature.h"
 
 void util::FeatureChecker::lock_all() {
   m_locked.clear();

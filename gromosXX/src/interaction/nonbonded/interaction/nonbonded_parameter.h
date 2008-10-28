@@ -6,7 +6,7 @@
 #ifndef INCLUDED_NONBONDED_PARAMETER_H
 #define INCLUDED_NONBONDED_PARAMETER_H
 
-#include <gromosXX/interaction/interaction_types.h>
+#include "../../interaction_types.h"
 
 namespace interaction
 {

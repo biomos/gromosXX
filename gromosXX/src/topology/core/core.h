@@ -17,6 +17,6 @@
 #include "molecule_iterator.h"
 #include "temperaturegroup_iterator.h"
 #include "pressuregroup_iterator.h"
-#include <gromosXX/util/virtual_atom.h>
+#include "../../util/virtual_atom.h"
 #include "body_term.h"
 #include "compound.h"

@@ -5,12 +5,12 @@
 
 #include <stdheader.h>
 #include <cstring>
-#include <gromosXX/math/random.h>
-#include <gromosXX/util/coding.h>
-#include <gromosXX/simulation/multibath.h>
-#include <gromosXX/simulation/parameter.h>
+#include <math/random.h>
+#include <util/coding.h>
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
 
-#include <gromosXX/util/debug.h>
+#include <util/debug.h>
 
 #undef MODULE
 #undef SUBMODULE

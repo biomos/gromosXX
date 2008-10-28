@@ -7,8 +7,8 @@
 #define INCLUDED_SIMULATION_H
 
 // necessary headers
-#include <gromosXX/simulation/multibath.h>
-#include <gromosXX/simulation/parameter.h>
+#include "multibath.h"
+#include "parameter.h"
 
 namespace simulation
 {

@@ -2,138 +2,138 @@ AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/algorithm
 
 
-xxincludedir = 			$(includedir)/gromosXX/interaction
-xxinclude_HEADERS =		interaction.h \
-				interaction_types.h \
-				molecular_virial_interaction.h
+xxincludedir = $(includedir)/gromosXX/interaction
+xxinclude_HEADERS =	interaction.h\
+	interaction_types.h\
+	molecular_virial_interaction.h
 
-xxintffdir =                    $(includedir)/gromosXX/interaction/forcefield
-xxintff_HEADERS =               forcefield/forcefield.h \
-				forcefield/create_forcefield.h
+xxintffdir = $(includedir)/gromosXX/interaction/forcefield
+xxintff_HEADERS = forcefield/forcefield.h\
+	forcefield/create_forcefield.h
 
-xxintbondeddir =                $(includedir)/gromosXX/interaction/bonded
-xxintbonded_HEADERS =           bonded/create_bonded.h \
-				bonded/quartic_bond_interaction.h \
-				bonded/harmonic_bond_interaction.h \
-				bonded/angle_interaction.h \
-				bonded/harm_angle_interaction.h \
-				bonded/improper_dihedral_interaction.h \
-				bonded/dihedral_interaction.h \
-				bonded/perturbed_quartic_bond_interaction.h \
-				bonded/perturbed_harmonic_bond_interaction.h \
-				bonded/perturbed_angle_interaction.h \
-				bonded/perturbed_improper_dihedral_interaction.h \
-				bonded/perturbed_dihedral_interaction.h
+xxintbondeddir = $(includedir)/gromosXX/interaction/bonded
+xxintbonded_HEADERS = bonded/create_bonded.h\
+	bonded/quartic_bond_interaction.h\
+	bonded/harmonic_bond_interaction.h\
+	bonded/angle_interaction.h\
+	bonded/harm_angle_interaction.h\
+	bonded/improper_dihedral_interaction.h\
+	bonded/dihedral_interaction.h\
+	bonded/perturbed_quartic_bond_interaction.h\
+	bonded/perturbed_harmonic_bond_interaction.h\
+	bonded/perturbed_angle_interaction.h\
+	bonded/perturbed_improper_dihedral_interaction.h\
+	bonded/perturbed_dihedral_interaction.h
 
-xxintnbdir =                    $(includedir)/gromosXX/interaction/nonbonded
-xxintnb_HEADERS =               nonbonded/create_nonbonded.h \
-				nonbonded/interaction_spec.h \
-				nonbonded/innerloop_template.h
+xxintnbdir = $(includedir)/gromosXX/interaction/nonbonded
+xxintnb_HEADERS = nonbonded/create_nonbonded.h\
+nonbonded/interaction_spec.h\
+nonbonded/innerloop_template.h
 
-xxintnbintdir =                 $(includedir)/gromosXX/interaction/nonbonded/interaction
-xxintnbint_HEADERS =            nonbonded/interaction/nonbonded_parameter.h \
-				nonbonded/interaction/nonbonded_term.h \
-				nonbonded/interaction/nonbonded_term.cc \
-				nonbonded/interaction/nonbonded_innerloop.h \
-				nonbonded/interaction/nonbonded_innerloop.cc \
-				nonbonded/interaction/solvent_innerloop.cc \
-				nonbonded/interaction/nonbonded_outerloop.h \
-				nonbonded/interaction/perturbed_nonbonded_term.h \
-				nonbonded/interaction/perturbed_nonbonded_term.cc \
-				nonbonded/interaction/perturbed_nonbonded_innerloop.h \
-				nonbonded/interaction/perturbed_nonbonded_innerloop.cc \
-				nonbonded/interaction/perturbed_nonbonded_outerloop.h \
-				nonbonded/interaction/perturbed_nonbonded_pair.h \
-				nonbonded/interaction/eds_nonbonded_term.h \
-				nonbonded/interaction/eds_nonbonded_term.cc \
-				nonbonded/interaction/eds_nonbonded_innerloop.h \
-				nonbonded/interaction/eds_nonbonded_innerloop.cc \
-				nonbonded/interaction/eds_nonbonded_outerloop.h \
-				nonbonded/interaction/nonbonded_set_interface.h \
-				nonbonded/interaction/nonbonded_set.h \
-				nonbonded/interaction/perturbed_nonbonded_set.h \
-				nonbonded/interaction/eds_nonbonded_set.h \
-				nonbonded/interaction/vgrid_nonbonded_set.h \
-				nonbonded/interaction/nonbonded_interaction.h \
-				nonbonded/interaction/omp_nonbonded_interaction.h \
-				nonbonded/interaction/mpi_nonbonded_master.h \
-				nonbonded/interaction/mpi_nonbonded_slave.h \
-				nonbonded/interaction/storage.h \
-				nonbonded/interaction/latticesum.h
+xxintnbintdir = $(includedir)/gromosXX/interaction/nonbonded/interaction
+xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
+	nonbonded/interaction/nonbonded_term.h\
+	nonbonded/interaction/nonbonded_term.cc\
+	nonbonded/interaction/nonbonded_innerloop.h\
+	nonbonded/interaction/nonbonded_innerloop.cc\
+	nonbonded/interaction/solvent_innerloop.cc\
+	nonbonded/interaction/nonbonded_outerloop.h\
+	nonbonded/interaction/perturbed_nonbonded_term.h\
+	nonbonded/interaction/perturbed_nonbonded_term.cc\
+	nonbonded/interaction/perturbed_nonbonded_innerloop.h\
+	nonbonded/interaction/perturbed_nonbonded_innerloop.cc\
+	nonbonded/interaction/perturbed_nonbonded_outerloop.h\
+	nonbonded/interaction/perturbed_nonbonded_pair.h\
+	nonbonded/interaction/eds_nonbonded_term.h\
+	nonbonded/interaction/eds_nonbonded_term.cc\
+	nonbonded/interaction/eds_nonbonded_innerloop.h\
+	nonbonded/interaction/eds_nonbonded_innerloop.cc\
+	nonbonded/interaction/eds_nonbonded_outerloop.h\
+	nonbonded/interaction/nonbonded_set_interface.h\
+	nonbonded/interaction/nonbonded_set.h\
+	nonbonded/interaction/perturbed_nonbonded_set.h\
+	nonbonded/interaction/eds_nonbonded_set.h\
+	nonbonded/interaction/vgrid_nonbonded_set.h\
+	nonbonded/interaction/nonbonded_interaction.h\
+	nonbonded/interaction/omp_nonbonded_interaction.h\
+	nonbonded/interaction/mpi_nonbonded_master.h\
+	nonbonded/interaction/mpi_nonbonded_slave.h\
+	nonbonded/interaction/storage.h\
+	nonbonded/interaction/latticesum.h
 
-xxintnbpairlistdir =            $(includedir)/gromosXX/interaction/nonbonded/pairlist
-xxintnbpairlist_HEADERS =       nonbonded/pairlist/pairlist.h \
-				nonbonded/pairlist/pairlist_algorithm.h \
-				nonbonded/pairlist/standard_pairlist_algorithm.h \
-				nonbonded/pairlist/grid_pairlist_algorithm.h \
-				nonbonded/pairlist/vgrid_pairlist_algorithm.h 
+xxintnbpairlistdir = $(includedir)/gromosXX/interaction/nonbonded/pairlist
+xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\
+	nonbonded/pairlist/pairlist_algorithm.h\
+	nonbonded/pairlist/standard_pairlist_algorithm.h\
+	nonbonded/pairlist/grid_pairlist_algorithm.h\
+	nonbonded/pairlist/vgrid_pairlist_algorithm.h 
 
-xxintnbspecialdir =             $(includedir)/gromosXX/interaction/nonbonded/special
-xxintnbspecial_HEADERS =        special/create_special.h \
-				special/position_restraint_interaction.h \
-				special/distance_restraint_interaction.h \
-				special/dihedral_restraint_interaction.h \
-				special/perturbed_distance_restraint_interaction.h \
-				special/eds_distance_restraint_interaction.h \
-				special/perturbed_dihedral_restraint_interaction.h \
-				special/jvalue_restraint_interaction.h \
-				special/pscale.h \
-				special/external_interaction.h \
-				special/ramd_interaction.h
+xxintnbspecialdir = $(includedir)/gromosXX/interaction/nonbonded/special
+xxintnbspecial_HEADERS = special/create_special.h\
+	special/position_restraint_interaction.h\
+	special/distance_restraint_interaction.h\
+	special/dihedral_restraint_interaction.h\
+	special/perturbed_distance_restraint_interaction.h\
+	special/eds_distance_restraint_interaction.h\
+	special/perturbed_dihedral_restraint_interaction.h\
+	special/jvalue_restraint_interaction.h\
+	special/pscale.h\
+	special/external_interaction.h\
+	special/ramd_interaction.h
 
-xxintnbvectordir =              $(includedir)/gromosXX/interaction/nonbonded/vector
-xxintnbvector_HEADERS =         nonbonded/vector/vgrid.h
+xxintnbvectordir = $(includedir)/gromosXX/interaction/nonbonded/vector
+xxintnbvector_HEADERS = nonbonded/vector/vgrid.h
 
-noinst_LTLIBRARIES =		libgrointeraction.la
+noinst_LTLIBRARIES = libgrointeraction.la
 
-libgrointeraction_la_SOURCES =	interaction.cc \
-				molecular_virial_interaction.cc \
-				forcefield/forcefield.cc \
-				forcefield/create_forcefield.cc \
-				nonbonded/create_nonbonded.cc \
-				nonbonded/pairlist/pairlist.cc \
-				nonbonded/pairlist/standard_pairlist_algorithm.cc \
-				nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc \
-				nonbonded/pairlist/grid.cc \
-				nonbonded/pairlist/grid_pairlist_algorithm.cc \
-				nonbonded/pairlist/vgrid_pairlist_algorithm.cc \
-				nonbonded/interaction/nonbonded_interaction.cc \
-				nonbonded/interaction/omp_nonbonded_interaction.cc \
-				nonbonded/interaction/mpi_nonbonded_master.cc \
-				nonbonded/interaction/mpi_nonbonded_slave.cc \
-				nonbonded/interaction/nonbonded_set.cc \
-				nonbonded/interaction/vgrid_nonbonded_set.cc \
-				nonbonded/interaction/nonbonded_outerloop.cc \
-				nonbonded/interaction/perturbed_nonbonded_set.cc \
-				nonbonded/interaction/perturbed_nonbonded_outerloop.cc \
-				nonbonded/interaction/perturbed_nonbonded_pair.cc \
-				nonbonded/interaction/latticesum.cc \
-				nonbonded/interaction/eds_nonbonded_set.cc \
-				nonbonded/interaction/eds_nonbonded_outerloop.cc \
-				bonded/create_bonded.cc \
-				bonded/quartic_bond_interaction.cc \
-				bonded/perturbed_quartic_bond_interaction.cc \
-				bonded/harmonic_bond_interaction.cc \
-				bonded/perturbed_harmonic_bond_interaction.cc \
-				bonded/angle_interaction.cc \
-				bonded/harm_angle_interaction.cc \
-				bonded/perturbed_angle_interaction.cc \
-				bonded/improper_dihedral_interaction.cc \
-				bonded/perturbed_improper_dihedral_interaction.cc \
-				bonded/dihedral_interaction.cc \
-				bonded/perturbed_dihedral_interaction.cc \
-				special/create_special.cc \
-				special/position_restraint_interaction.cc \
-				special/distance_restraint_interaction.cc \
-				special/dihedral_restraint_interaction.cc \
-				special/perturbed_distance_restraint_interaction.cc \
-				special/eds_distance_restraint_interaction.cc \
-				special/perturbed_dihedral_restraint_interaction.cc \
-				special/jvalue_restraint_interaction.cc \
-				special/pscale.cc \
-				special/external_interaction.cc \
-				special/ramd_interaction.cc \
-				nonbonded/vector/vgrid.cc
+libgrointeraction_la_SOURCES =interaction.cc\
+	molecular_virial_interaction.cc\
+	forcefield/forcefield.cc\
+	forcefield/create_forcefield.cc\
+	nonbonded/create_nonbonded.cc\
+	nonbonded/pairlist/pairlist.cc\
+	nonbonded/pairlist/standard_pairlist_algorithm.cc\
+	nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc\
+	nonbonded/pairlist/grid.cc\
+	nonbonded/pairlist/grid_pairlist_algorithm.cc\
+	nonbonded/pairlist/vgrid_pairlist_algorithm.cc\
+	nonbonded/interaction/nonbonded_interaction.cc\
+	nonbonded/interaction/omp_nonbonded_interaction.cc\
+	nonbonded/interaction/mpi_nonbonded_master.cc\
+	nonbonded/interaction/mpi_nonbonded_slave.cc\
+	nonbonded/interaction/nonbonded_set.cc\
+	nonbonded/interaction/vgrid_nonbonded_set.cc\
+	nonbonded/interaction/nonbonded_outerloop.cc\
+	nonbonded/interaction/perturbed_nonbonded_set.cc\
+	nonbonded/interaction/perturbed_nonbonded_outerloop.cc\
+	nonbonded/interaction/perturbed_nonbonded_pair.cc\
+	nonbonded/interaction/latticesum.cc\
+	nonbonded/interaction/eds_nonbonded_set.cc\
+	nonbonded/interaction/eds_nonbonded_outerloop.cc\
+	bonded/create_bonded.cc\
+	bonded/quartic_bond_interaction.cc\
+	bonded/perturbed_quartic_bond_interaction.cc\
+	bonded/harmonic_bond_interaction.cc\
+	bonded/perturbed_harmonic_bond_interaction.cc\
+	bonded/angle_interaction.cc\
+	bonded/harm_angle_interaction.cc\
+	bonded/perturbed_angle_interaction.cc\
+	bonded/improper_dihedral_interaction.cc\
+	bonded/perturbed_improper_dihedral_interaction.cc\
+	bonded/dihedral_interaction.cc\
+	bonded/perturbed_dihedral_interaction.cc\
+	special/create_special.cc\
+	special/position_restraint_interaction.cc\
+	special/distance_restraint_interaction.cc\
+	special/dihedral_restraint_interaction.cc\
+	special/perturbed_distance_restraint_interaction.cc\
+	special/eds_distance_restraint_interaction.cc\
+	special/perturbed_dihedral_restraint_interaction.cc\
+	special/jvalue_restraint_interaction.cc\
+	special/pscale.cc\
+	special/external_interaction.cc\
+	special/ramd_interaction.cc\
+	nonbonded/vector/vgrid.cc
 
 bin_PROGRAMS =			
 

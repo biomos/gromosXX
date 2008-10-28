@@ -3,8 +3,8 @@
 #ifndef INCLUDED_IN_IFP_H
 #define INCLUDED_IN_IFP_H
 
-#include <gromosXX/io/ifp.h>
-#include <gromosXX/io/instream.h>
+#include "../ifp.h"
+#include "../instream.h"
 
 namespace io{
 

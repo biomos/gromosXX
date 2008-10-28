@@ -6,7 +6,7 @@
 #ifndef INCLUDED_IN_FRICTION_H
 #define INCLUDED_IN_FRICTION_H
 
-#include <gromosXX/io/instream.h>
+#include "../instream.h"
 
 namespace io {
 

@@ -6,8 +6,9 @@
 #ifndef INCLUDED_IN_TOPOLOGY_H
 #define INCLUDED_IN_TOPOLOGY_H
 
-#include <gromosXX/io/ifp.h>
-#include <gromosXX/io/instream.h>
+
+#include "../ifp.h"
+#include "../instream.h"
 
 namespace io {
 

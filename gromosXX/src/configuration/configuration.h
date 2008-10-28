@@ -7,11 +7,11 @@
 #define INCLUDED_CONFIGURATION_H
 
 // headers needed for configuration
-#include <gromosXX/configuration/energy.h>
-#include <gromosXX/configuration/average.h>
-#include <gromosXX/configuration/mesh.h>
-#include <gromosXX/configuration/influence_function.h>
-#include <gromosXX/configuration/kspace.h>
+#include "energy.h"
+#include "average.h"
+#include "mesh.h"
+#include "influence_function.h"
+#include "kspace.h"
 
 namespace topology
 {

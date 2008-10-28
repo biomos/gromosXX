@@ -6,7 +6,7 @@
 #ifndef INCLUDED_IN_DIHREST_H
 #define INCLUDED_IN_DIHREST_H
 
-#include <gromosXX/io/instream.h>
+#include "../instream.h"
 
 namespace io {
 

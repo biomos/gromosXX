@@ -6,7 +6,7 @@
 #ifndef INCLUDED_IN_DISTANCERES_H
 #define INCLUDED_IN_DISTANCERES_H
 
-#include <gromosXX/io/instream.h>
+#include "../instream.h"
 
 namespace io {
 

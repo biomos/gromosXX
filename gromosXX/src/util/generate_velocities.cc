@@ -4,7 +4,7 @@
  */
 
 #include <stdheader.h>
-#include <gromosXX/math/random.h>
+#include <math/random.h>
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
 

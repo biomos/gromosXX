@@ -6,12 +6,12 @@
 #ifndef INCLUDED_TOPOLOGY_H
 #define INCLUDED_TOPOLOGY_H
 
-#include <gromosXX/topology/core/core.h>
-#include <gromosXX/topology/solute.h>
-#include <gromosXX/topology/solvent.h>
-#include <gromosXX/topology/perturbed_atom.h>
-#include <gromosXX/topology/perturbed_solute.h>
-#include <gromosXX/topology/sd.h>
+#include "core/core.h"
+#include "solute.h"
+#include "solvent.h"
+#include "perturbed_atom.h"
+#include "perturbed_solute.h"
+#include "sd.h"
 
 namespace simulation
 {
