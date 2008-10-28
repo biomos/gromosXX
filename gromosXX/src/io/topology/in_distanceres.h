@@ -2,6 +2,16 @@
  * @file in_distanceres.h
  * read in a distrance restraints file.
  */
+/**
+ * @page disres distance restraints format
+ * @date 28-10-2008
+ *
+ * A distance restraints specifcation file may contain the following blocks:
+ * - @ref title
+ * - @ref disresspec
+ * - @ref pertdisresspec
+ * - @ref mdisresspec
+ */
 
 #ifndef INCLUDED_IN_DISTANCERES_H
 #define INCLUDED_IN_DISTANCERES_H
@@ -26,7 +36,7 @@ namespace io {
      */
     In_Distanceres(std::istream& is) : GInStream(is) { readStream(); };
     /**
-     * Read in a position restraints file.
+     * Read in a distance restraints file.
      */
     void read(topology::Topology &topo,
 	      simulation::Simulation & sim,

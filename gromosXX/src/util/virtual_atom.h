@@ -18,16 +18,51 @@ namespace topology
 
 namespace util
 {
-  enum virtual_type { va_explicit = 0,
-		      va_CH1 = 1,
-		      va_aromatic = 2,
-		      va_CH2 = 3,
-		      va_stereo_CH2 = 4,
-		      va_stereo_CH3 = 5,
-		      va_CH3 = 6,
-		      va_3CH3 = 7,
-		      va_cog = -1,
-		      va_com = -2
+/**
+   * @enum virtual_type
+   * holds the virtual atom type
+   */
+  enum virtual_type {
+    /**
+     * 0: explicit atom
+     */
+    va_explicit = 0,
+    /**
+     * 1: aliphatic CH1
+     */
+    va_CH1 = 1,
+    /**
+     * 2: CH1 (aromatic)
+     */
+    va_aromatic = 2,
+    /**
+     * 3: CH2 (stereospecific)
+     */
+    va_CH2 = 3,
+    /**
+     * 4: CH2 (non-stereospecific)
+     */
+    va_stereo_CH2 = 4,
+    /**
+     * 5: CH3
+     */
+    va_stereo_CH3 = 5,
+    /**
+     * 6: CH3 (non-stereospecific, Val, Leu)
+     */
+    va_CH3 = 6,
+    /**
+     * 7: 3CH3 (non-stereospecific)
+     */
+    va_3CH3 = 7,
+    /**
+     * -1: centre of geometry
+     */
+    va_cog = -1,
+    /**
+     * -2: centre of mass
+     */
+    va_com = -2
   };
   
   /**

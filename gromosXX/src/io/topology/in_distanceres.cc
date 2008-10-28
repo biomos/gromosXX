@@ -24,6 +24,70 @@
 
 static std::set<std::string> block_read;
 
+/**
+ * @section disresspec DISRESSPEC block
+ * The DISRESSPEC block is read from the distance restraints specification
+ * file.
+ *
+ * \c DISH is the carbon-hydrogen, \c DISC the carbon-carbon distance.
+ * See @ref util::virtual_type for valid virtual atom types.
+ * \c r0 is the restraint distance, \c w0 a weight factor (multiplied by the force 
+ * constant specified in the input file, \c CDIR) and rah specifies the type of 
+ * restraint. Possible values for \c rah
+ * - -1: half harmonic repulsive 
+ * - 0: full harmonic
+ * - +1: half harmonic attractive
+ *
+ * @verbatim
+DISRESSPEC
+# DISH  DISC
+  0.1   0.153
+# i  j  k  l  type    i  j  k  l  type    r0    w0    rah
+  1  0  0  0  0       10 12 11 13 3       0.2   1.0   0
+END
+@endverbatim
+ * @sa util::virtual_type util::Virtual_Atom
+ *
+ * @section pertdisresspec PERTDISRESSPEC block
+ * The PERTDISRESSPEC block is read from the distance restraints specification
+ * file and used for perturbed distance restraints and hidden 
+ * restraints. 
+ *
+ * The format is very similar to the @ref disresspec with the difference that
+ * one may give values for the A and the B state. The two variables \c n and
+ * \c m are the parameters for the hidden restriants. 
+ *
+ * See:
+ * - M. Christen, A.-P.E. Kunz, W.F. van Gunsteren, Sampling of rare events
+ *   using hidden restraints, J. Phys. Chem. B 110 (2006) 8488-8498
+ *
+ * @verbatim
+PERTDISRESSPEC
+# DISH  DISC
+  0.1   0.153
+# i  j  k  l  type    i  j  k  l  type n m   A_r0  A_w0  B_r0   B_w0  rah
+  1  0  0  0  0       10 12 11 13 3    1 1    0.2   1.0   0.5    2.0   0
+END
+@endverbatim
+ *
+ * @section mdisresspec MDISRESSPEC block
+ * The MDISRESSPEC block is read from the distance restraints specification
+ * file and used for EDS restraints.
+ *
+ * The format is very similar to the @ref disresspec with the difference that
+ * one may give values for multipde states.
+ * @verbatim
+MDISRESSPEC
+# DISH  DISC
+  0.1   0.153
+# N: number of eds states (3 in this example)
+# i  j  k  l  type    i  j  k  l  type    r0[1 ... N]    w0[1 ... N]    rah
+  1  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  1.0  0.0 0.0    0
+  5  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  0.0  1.0 0.0    0
+  8  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  0.0  0.0 1.0    0
+END
+@endverbatim
+ */
 void 
 io::In_Distanceres::read(topology::Topology& topo,
 		      simulation::Simulation & sim,
