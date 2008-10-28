@@ -1556,11 +1556,10 @@ io::In_Topology::read(topology::Topology& topo,
   else if (param.force.energy_group.back() < topo.num_atoms()-1){
     param.force.energy_group.push_back(topo.num_atoms() -1);
     io::messages.add("FORCE block: "
-		     "added an additional energy group",
-		     "In_Topology", io::message::warning);
-    
+            "added an additional energy group",
+            "In_Topology", io::message::warning);
   }
-  
+
   // and add them
   DEBUG(10, "adding energy groups : " << param.force.energy_group.size());
   unsigned int atom = 0;
@@ -1572,6 +1571,19 @@ io::In_Topology::read(topology::Topology& topo,
       topo.atom_energy_group().push_back(i);
       // DEBUG(11, "atom " << atom << ": " << i);
     }
+  }
+
+  // Now that we have the energy groups, we initialize the 
+  // LAMBDAS parameters that depend on them. 
+  int maxnilg = param.force.energy_group.size();
+  std::vector< double > one(maxnilg, 1.0);
+  std::vector< double > zero(maxnilg, 0.0);
+  for (unsigned int i = 0; i < param.lambdas.a.size(); i++) {
+    param.lambdas.a[i].resize(maxnilg, zero);
+    param.lambdas.b[i].resize(maxnilg, zero);
+    param.lambdas.c[i].resize(maxnilg, zero);
+    param.lambdas.d[i].resize(maxnilg, one);
+    param.lambdas.e[i].resize(maxnilg, zero);
   }
 
   DEBUG(10, "multibath?");

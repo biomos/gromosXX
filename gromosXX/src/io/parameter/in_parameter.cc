@@ -920,23 +920,6 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
     old_e = e;
   }
 
-  // Now that we have the energy groups, we initialize the 
-  // LAMBDAS parameters that depend on them. 
-  // Is this very ugly to do it here?
-  // maybe it is nicer to do it in the topology::init function?
-
-  int maxnilg=param.force.energy_group.size();
-
-  std::vector< double > one(maxnilg, 1.0);
-  std::vector< double > zero(maxnilg, 0.0);
-  for(unsigned int i=0; i< param.lambdas.a.size(); i++){
-    param.lambdas.a[i].resize(maxnilg, zero);
-    param.lambdas.b[i].resize(maxnilg, zero);
-    param.lambdas.c[i].resize(maxnilg, zero);
-    param.lambdas.d[i].resize(maxnilg, one);
-    param.lambdas.e[i].resize(maxnilg, zero);
-  }
-  
   DEBUG(10, "number of energy groups: " << param.force.energy_group.size());
 
   if (_lineStream.fail())

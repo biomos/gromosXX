@@ -520,11 +520,18 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
 
       for(unsigned int n2=0; n2 < m_energy_group.size(); n2++){
 	std::pair<int, int> p(n1, n2);
-	m_individual_lambda_parameters.a[i][p] = sim.param().lambdas.a[i][n1][n2];
+        
+        assert(i < sim.param().lambdas.a.size());
+        assert(n1 < sim.param().lambdas.a[i].size());
+        assert(n2 < sim.param().lambdas.a[i][n1].size());
+        assert(i < m_individual_lambda_parameters.a.size());
+        
+        m_individual_lambda_parameters.a[i][p] = sim.param().lambdas.a[i][n1][n2];
 	m_individual_lambda_parameters.b[i][p] = sim.param().lambdas.b[i][n1][n2];
 	m_individual_lambda_parameters.c[i][p] = sim.param().lambdas.c[i][n1][n2];
 	m_individual_lambda_parameters.d[i][p] = sim.param().lambdas.d[i][n1][n2];
 	m_individual_lambda_parameters.e[i][p] = sim.param().lambdas.e[i][n1][n2];
+        
       }
     }
   }
