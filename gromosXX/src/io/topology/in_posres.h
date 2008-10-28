@@ -2,6 +2,17 @@
  * @file in_posres.h
  * read in a position restraining file.
  */
+/**
+ * @page posres position restraints format
+ * @date 28-10-2008
+ *
+ * A position restraints/constraints specifcation file may contain the following
+ * blocks:
+ * - @ref title
+ * - @ref posresspec
+ * - @ref refposition
+ * - @ref bfactor
+ */
 
 #ifndef INCLUDED_IN_POSRES_H
 #define INCLUDED_IN_POSRES_H

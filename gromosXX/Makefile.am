@@ -31,8 +31,6 @@ EXTRA_DIST = VERSION\
 	doc/main.doxy\
 	doc/output.doxy\
 	doc/output.html\
-	doc/posres.doxy\
-	doc/posres.html\
 	doc/release.doxy\
 	doc/release.html\
 	doc/tail.html\

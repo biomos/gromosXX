@@ -24,7 +24,69 @@
 #define MODULE io
 #define SUBMODULE topology
 
-
+/**
+ * @section posresspec POSRESSPEC block
+ * The POSRESSPEC specifies the atoms of which the position is to be restrained
+ * or constrained.
+ *
+ * The block is read from the position restraints specification file.
+ *
+ * @verbatim
+POSRESSPEC
+# RESIDUE   ATOM
+    1 HEXA  CH31       1
+    1 HEXA  CH22       2
+    1 HEXA  CH23       3
+    1 HEXA  CH24       4
+    2 HEXA  CH23       9
+    2 HEXA  CH24      10
+    2 HEXA  CH25      11
+    2 HEXA  CH36      12
+END
+@endverbatim
+ *
+ * @section refposition REFPOSITION block
+ * The REFPOSITION block has the same format as the POSITION block in the
+ * configuration file and can be read either from the position restraints
+ * specification file (NTPORB = 1) or the configuration file (NTPORB = 0, 
+ * default).
+ *
+ * @verbatim
+REFPOSITION
+# RESIDUE   ATOM            POSITION
+    1 HEXA  CH31       1    3.003183500    2.472059119    3.983607307
+    1 HEXA  CH22       2    2.944583705    2.441994145    4.121706839
+    1 HEXA  CH23       3    3.050801324    2.493790966    4.218887665
+    1 HEXA  CH24       4    3.012945845    2.500345433    4.366985611
+    2 HEXA  CH23       9    2.257723206    2.570648803    4.179681483
+    2 HEXA  CH24      10    2.111496670    2.612272713    4.162523150
+    2 HEXA  CH25      11    2.098679480    2.760542973    4.198030366
+    2 HEXA  CH36      12    1.953046837    2.805540373    4.211273000
+END
+@endverbatim
+ *
+ * @section bfactor BFACTOR block
+ * The BFACTOR block is optional. If not specified the atomic B-factors @f$b@f$
+ * are set to @f$1@f$. The force constant is given as
+ * @f[k = k_0 / b\mathrm{,}@f]
+ * where @f$k_0@f$ is specified in the input parameter file by CPOR.
+ *
+ * The block is read from the position restraints specification file.
+ *
+ * @verbatim
+BFACTOR
+# RESIDUE   ATOM           BFACTOR
+    1 HEXA  CH31       1   20.0
+    1 HEXA  CH22       2   15.0
+    1 HEXA  CH23       3   25.0
+    1 HEXA  CH24       4   10.0
+    2 HEXA  CH23       9   28.0
+    2 HEXA  CH24      10   24.0
+    2 HEXA  CH25      11   28.0
+    2 HEXA  CH36      12   30.0
+END
+@endverbatim
+ */
 void 
 io::In_Posres::read(topology::Topology& topo,
 		    simulation::Simulation & sim,
