@@ -33,9 +33,15 @@ namespace io {
     std::istream& stream() { return *_is; }
     void stream(std::istream& is) { _is = &is; readTitle(); }
 
-    /*
+    /**
      * Read a title block from the input stream,
      * concatenate and store it in title.
+     * @section title TITLE block
+ @verbatim
+ TITLE
+  your title
+ END
+ @endverbatim
      */
     void readTitle();
     std::string title;
