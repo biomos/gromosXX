@@ -3,21 +3,25 @@
  */
 
 /**
- * @mainpage GromosXX
- * <h1>Groningen Molecular Simulation : GromosXX</h1>
+ * @mainpage GROMOSXX MD++
+ * <h1>Groningen Molecular Simulation : GROMOSXX MD++</h1>
  * <h2>Documentation</h2>
  * <hr>
  * <h3>MD program</h3>
  * - Available programs
- *  - @ref md_usage "md"
- *  - @ref mg_usage "mg"
- *  - @ref repex_usage "repex"
- * - @ref formats "File formats"
- * - @ref features "Feature description"
- * - @ref pttopo "Perturbation topology"
- * - @ref arguments "md arguments"
- * - @ref input "input file"
- * - @ref output "output file"
+ *  - @ref md
+ *  - @ref md_mpi
+ *  - @ref repex
+ * - File formats:
+ *  - @ref input
+ *  - topological files
+ *   - @ref pttopo
+ *   - @ref friction
+ *  - restraint specifciation
+ *   - @ref dihrest
+ *   - @ref disres
+ *   - @ref jvalue
+ *   - @ref posres
  *
  * <h3>Modules</h3>
  * - @ref algorithmoverview "algorithm"

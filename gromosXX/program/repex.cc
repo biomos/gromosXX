@@ -2,7 +2,28 @@
  * @file repex.cc
  * the main md program for replica exchange simulations
  */
-
+/**
+ * @page programs Program Documentation
+ *
+ * @anchor repex
+ * @section repex replica exchange
+ * @date 28.10.2008
+ *
+ * Program repex is used to run replica exchange simulations.
+ *
+ * See @ref md for the documentation of the command line arguments.
+ * Addition command line arguments are:
+ * <table border=0 cellpadding=0>
+ * <tr><td> \@cg_topo</td><td>&lt;coarse grain topology data&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@cg_pttopo</td><td>&lt;coarse grain perturbation topology file&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@cg_conf</td><td>&lt;coarse grain coordinates and restart data&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@cg_input</td><td>&lt;coarse grain input parameters&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@cg_fin</td><td>&lt;coarse grain final configuration&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@cg_trj</td><td>&lt;coordinate trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@master</td><td>&lt;master process&gt; </td><td></td></tr>
+ * <tr><td> \@slave</td><td>&lt;slave process&gt; </td><td></td></tr>
+ * </table>
+ */
 #ifdef XXMPI
 #include <mpi.h>
 #endif
@@ -54,7 +75,7 @@ int main(int argc, char *argv[]){
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf"
      << "input" << "cg_input" << "verb" << "pttopo" << "cg_pttopo"
 	 << "trj" << "cg_trj" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "re" << "trg"
-	 << "bae" << "bag" << "posres" <<"distrest" << "jval" << "friction"
+	 << "bae" << "bag" << "posres" << "distrest" << "jval" << "friction"
 	 << "rep" << "master" << "slave" << "control"
 	 << "version";
   

@@ -2,6 +2,22 @@
  * @file md_mpi.cc
  * the main md program (MPI version)
  */
+/**
+ * @page programs Program Documentation
+ *
+ * @anchor md_mpi
+ * @section md_mpi parallel molecular dynamics with MPI
+ * @date 28.10.2008
+ *
+ * Program md_mpi is used to run parallel molecular dynamics simulations using 
+ * MPI. In order to use this program one has to compile GROMOS with MPI 
+ * support:
+ * @verbatim
+$ ../configure --enable-mpi CC=mpicc CXX=mpiCC
+@endverbatim
+ *
+ * See @ref md for the documentation of the command line arguments
+ */
 
 #ifdef XXMPI
 #include <mpi.h>

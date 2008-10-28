@@ -2,6 +2,8 @@
  * @file mg.cc
  * md using multi-graining
  * test program, later to be incorporated into repex
+ *
+ * @todo document it
  */
 
 #include <stdheader.h>

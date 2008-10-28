@@ -4,13 +4,22 @@
  */
 
 /**
- * @page md_usage md usage:
- * @b md arguments:
+ * @page programs Program Documentation
+ *
+ * @anchor md
+ * @section md molecular dynamics
+ * @date 28.10.2008
+ *
+ * Program md is used to run molecular dynamics simulations. The command line
+ * arguments are summarized in the following table:
+ *
  * <table border=0 cellpadding=0>
  * <tr><td> \@topo</td><td>&lt;molecular topology file&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@pttopo</td><td>&lt;molecular perturbation topology file&gt; </td><td style="color:#088A08">in</td></tr> 
+ * <tr><td> \@pttopo</td><td>&lt;molecular perturbation topology file&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td></td><td>See: @ref pttopo</td><td></td></tr> 
  * <tr><td> \@conf</td><td>&lt;coordinates and restart data&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@input</td><td>&lt;input parameters&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@input</td><td>&lt;input parameters&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td></td><td>See: @ref input</td><td></td></tr> 
  * <tr><td> \@fin</td><td>&lt;final configuration&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trj</td><td>&lt;coordinate trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trv</td><td>&lt;velocity trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
@@ -21,17 +30,24 @@
  * <tr><td> \@bae</td><td>&lt;block averaged energy trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trg</td><td>&lt;free energy trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@bag</td><td>&lt;block averaged free energy trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@posres</td><td>&lt;position restraints specification&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@distrest</td><td>&lt;distance restraints specification&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@posres</td><td>&lt;position restraints specification&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td></td><td>See: @ref posres</td><td></td></tr> 
+ * <tr><td> \@distrest</td><td>&lt;distance restraints specification&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td></td><td>See: @ref disres</td><td></td></tr> 
  * <tr><td> \@dihtrest</td><td>&lt;dihedral restraints specification&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@jval</td><td>&lt;J-value restraints specification&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@friction</td><td>&lt;atomic friction coefficients&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td></td><td>See: @ref dihrest</td><td></td></tr> 
+ * <tr><td> \@jval</td><td>&lt;J-value restraints specification&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td></td><td>See: @ref jvalue</td><td></td></tr> 
+ * <tr><td> \@friction</td><td>&lt;atomic friction coefficients&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td></td><td>See: @ref friction</td><td></td></tr> 
  * <tr><td> \@print</td><td>&lt;print additional information&gt; </td><td></td></tr>
  * <tr><td> \@anatraj</td><td>&lt;re-analyze trajectory&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@verb \<[module:][submodule:]level\> </td><td>&lt;control verbosity&gt; </td><td></td></tr>
+ * <tr><td> \@verb</td><td>&lt;control verbosity&gt;</td><td></td></tr>
+ * <tr><td></td><td>See: @ref debug</td><td></td></tr> 
  * <tr><td> \@version</td><td>&lt;print version information&gt; </td><td></td></tr>
  * </table>
-
+ * 
+ * @sa md_mpi
 */
 
 #include <stdheader.h>

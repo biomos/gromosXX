@@ -21,9 +21,6 @@ EXTRA_DIST = VERSION\
 	contrib/rep_rewrite.cc\
 	contrib/tabulate_spc.cc\
 	doc/doxygen.conf.in\
-	doc/newinput.txt\
-	doc/arguments.doxy\
-	doc/arguments.html\
 	doc/install.doxy\
 	doc/install.html\
 	doc/main.doxy\

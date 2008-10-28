@@ -3,7 +3,7 @@
  * read in a jvalue restraining specification file.
  */
 /**
- * @page jval J-value restraints specification format
+ * @page jvalue J-value restraints specification format
  * @date 28-10-2008
  *
  * A J-value restraints specifcation file may contain the following
