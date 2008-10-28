@@ -23,15 +23,6 @@
  * - @ref  mpertatom
 
 
- 
-@section title TITLE block
-@verbatim
-TITLE
-  Example Perturbation of Diethylstilbestrol (DES) into Estradiol (E2)
-  22-2-2000, Chris Oostenbrink
-END
-@endverbatim
-
 @section scaled SCALEDINTERACTIONS block
 Specific (nonbonded) interactions can be scaled dependent on lambda.
 @verbatim

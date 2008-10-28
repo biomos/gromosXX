@@ -1,7 +1,61 @@
 /**
  * @file in_parameter.h
- * read in a G96 input file.
+ * read in a md++ input file.
  */
+/**
+ * @page input input file format
+ * 
+ * @date 28-10-2008
+ *
+ * - @ref  title
+ * - @ref  system
+ * - @ref  initialise
+ * - @ref  step
+ * - @ref  stochdyn
+ * - @ref  energymin
+ * - @ref  boundcond
+ * - @ref  multicell
+ * - @ref  multibath
+ * - @ref  pressurescale
+ * - @ref  comtransrot
+ * - @ref  printout
+ * - @ref  writetraj
+ * - @ref  constraint
+ * - @ref  force
+ * - @ref  covalentform
+ * - @ref  pairlist
+ * - @ref  nonbonded
+ * - @ref  gromos96compat
+ * - @ref  positionres
+ *  - @ref posres
+ * - @ref  perturbation
+ *  - @ref pttopo
+ * - @ref  jval
+ *  - @ref jvalue
+ * - @ref  perscale
+ * - @ref  replica
+ * - @ref  readtraj
+ * - @ref  integrate
+ * - @ref  cgrain
+ * - @ref  rottrans
+ * - @ref  distanceres
+ *  - @ref disres
+ * - @ref  dihedralres
+ *  - @ref dihrest
+ * - @ref  multistep
+ * - @ref  ewarn
+ * - @ref  polarize
+ * - @ref  randomnumbers
+ * - @ref  spc_loops
+ * - @ref  EDS
+ * - @ref  LAMBDAS
+ * 
+ * 
+
+ 
+*/
+
+
 
 #ifndef INCLUDED_IN_PARAMETER_H
 #define INCLUDED_IN_PARAMETER_H

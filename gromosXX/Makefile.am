@@ -24,8 +24,6 @@ EXTRA_DIST = VERSION\
 	doc/newinput.txt\
 	doc/arguments.doxy\
 	doc/arguments.html\
-	doc/input.doxy\
-	doc/input.html\
 	doc/install.doxy\
 	doc/install.html\
 	doc/main.doxy\
