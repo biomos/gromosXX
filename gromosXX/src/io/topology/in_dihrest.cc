@@ -24,6 +24,48 @@
 
 static std::set<std::string> block_read;
 
+/**
+ * @section dihresspec DIHRESSPEC block
+ * This block is for unperturbed dihedrals restraints/constraints. It is read 
+ * from the dihedral restraint specifcation file.
+ *
+ * @verbatim
+DIHRESSPEC
+# IPLR, JPLR, KPLR, LPLR   atom sequence numbers of the atoms defining the
+#                          restrained dihedral i-j-k-l
+# WDLR                     individual dihedral restraint weight factor by which
+#                          the harmonic dihedral restraining term may be multiplied.
+# PDLR                     dihedral angle value (in degrees) at minimum energy of
+#                          of the harmonic dihedral restraining term.
+# DELTA                    deviation of the zero-energy dihedral angle value after
+#                          after which the restraint switches to the next periodic
+#                          value.
+#  IPLR  JPLR  KPLR  LPLR  WDLR  PDLR  DELTA
+    1     2     3     4    1.0   120.0  90.0
+END
+@endverbatim
+ *
+ * @section pertdihresspec PERTDIHRESTSPEC block
+ * This block is for perturbed dihedral restraints/constraints. It is read from
+ * the dihedral restraints specification file.
+ *
+ * @verbatim
+PERTDIHRESSPEC
+# APDLR    dihedral angle value (in degrees) at minimum energy of the harmonic
+#          dihedral restraining term in state A.
+# AWDLR    individual dihedral restraint weight factor by which the harmonic
+#          dihedral restraining term may be multiplied in state A.
+# BPDLR    as APDLR, but for state B.
+# BWDLR    as AWDLR, but for state B.
+# M        hidden restraint parameter m and
+# N        hidden restraint parameter n of
+#          hidden restraint prefactor l^n*(1-l)^m.
+#
+# IPLR  JPLR  KPLR  LPLR  M   N  DELTA  APDLR  AWDLR  BPDLR  BWDLR
+  1      2     3     4  2.0 2.0   90.0  120.0   1.0   160.0   1.0
+END
+@endverbatim
+ */
 void io::In_Dihrest::read(topology::Topology& topo,
 			  simulation::Simulation & sim,
 			  std::ostream & os){

@@ -2,7 +2,16 @@
  * @file in_dihrest.h
  * read in a dihedral restraints file.
  */
-
+/**
+ * @page dihrest dihedral restraints format
+ * @date 28-10-2008
+ *
+ * A dihedral restraints/constraints specifcation file may contain the following
+ * blocks:
+ * - @ref title
+ * - @ref dihresspec
+ * - @ref pertdihresspec
+ */
 #ifndef INCLUDED_IN_DIHREST_H
 #define INCLUDED_IN_DIHREST_H
 
