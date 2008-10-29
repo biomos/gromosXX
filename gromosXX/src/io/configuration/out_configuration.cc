@@ -1232,7 +1232,72 @@ void io::Out_Configuration
     os << "END\n";
   }
 }
-
+/**
+ * 
+ * @section energyredhelper ENERGY03
+ *
+@verbatim
+ENERGY03
+# totals
+   1.598443703e+02 # total
+   1.709320077e+02 # kinetic
+  -4.205278511e+01 # potential total
+   1.935607149e+01 # bonds total
+   1.267041319e+01 # angles total
+   1.485470503e+00 # impropers total
+   6.292623846e+00 # dihedrals total
+  -1.442773701e+00 # Lennard-Jones total
+  -8.041459043e+01 # Coulomb/Reaction-Field total
+   0.000000000e+00 # lattice sum real space total
+   0.000000000e+00 # lattice sum reciprocal space total
+   0.000000000e+00 # lattice sum A term total
+   0.000000000e+00 # lattice sum self total
+   0.000000000e+00 # lattice sum surface total
+   0.000000000e+00 # constraints total
+   0.000000000e+00 # position restraints total
+   0.000000000e+00 # distance restraints total
+   0.000000000e+00 # dihedral restraints total
+   0.000000000e+00 # J-value total
+   0.000000000e+00 # polarisation self total
+   3.096514777e+01 # enveloping distribution sampling, energy of reference state
+# baths
+# number of baths
+2
+#  kinetic total     centre of mass    internal/rotational
+   2.579417475e+01   8.149832229e-01   2.497919152e+01 # 1-st bath
+   1.451378329e+02   7.403204119e+01   7.110579174e+01 # 2-nd bath
+# bonded
+# number of energy groups
+2
+#  bond              angle             improper          dihedral 
+   1.935607149e+01   1.267041319e+01   1.485470503e+00   6.292623846e+00 # energy group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # energy group 2
+# nonbonded
+#  Lennard-Jones     Coulomb/RF        lattice sum real  lattice sum reciproc.
+  -4.896399521e-02  -6.781355366e+01   0.000000000e+00   0.000000000e+00  # 1 - 1
+  -6.774710271e-01   4.920740888e-01   0.000000000e+00   0.000000000e+00  # 1 - 2
+  -7.163386790e-01  -1.309311086e+01   0.000000000e+00   0.000000000e+00  # 2 - 2
+# special
+#  constraints       pos. restraints   dist. restraints  dihe. restr.      jvalue            local elevation   path integral
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
+# eds (enveloping distribution sampling)
+# numstates
+9
+           # total         nonbonded          special
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+   3.096514777e+01   3.096514777e+01   0.000000000e+00
+END
+@endverbatim
+ *
+ */
 void io::Out_Configuration
 ::_print_energyred(configuration::Configuration const &conf,
 		   std::ostream &os)
@@ -1284,7 +1349,45 @@ void io::Out_Configuration
   os << "END\n";
 
 }
-
+/**
+ * 
+ * @section volumepressurered VOLUMEPRESSURE03
+ *
+@verbatim
+VOLUMEPRESSURE03
+# mass
+   5.044822000e+02
+# temperature
+# number of temperature coupling baths
+2
+#  total             com               ir                scaling factor
+   1.723525431e+02   6.534704791e+01   1.820803154e+02   1.128031828e+00 # 1st bath
+   2.909363241e+02   2.968021431e+02   2.850705051e+02   1.002070048e+00 # 2nd bath
+# volume
+   5.345718909e+01
+# box
+   3.767055681e+00   0.000000000e+00   0.000000000e+00 # K
+   0.000000000e+00   3.767055681e+00   0.000000000e+00 # L
+   0.000000000e+00   0.000000000e+00   3.767055681e+00 # M
+# pressure
+   7.348382177e-01
+   5.261908890e+00
+   2.490310167e+01
+#  pressure tensor
+   3.260036299e-01  -3.892307215e-01   3.337546495e-01
+  -4.705767676e-02   8.540193624e-01   1.012276325e-01
+   1.604604267e-01   2.852680401e-01   1.024491661e+00
+#  virial tensor
+   1.508936821e+01   1.501353732e+01   1.232971839e+00
+   5.867732745e+00   4.634376722e+00   1.731944968e+00
+   5.864882856e+00  -3.187196467e+00  -3.938018259e+00
+#  molecular kinetic energy tensor
+   2.380298705e+01   4.609947183e+00   1.015376454e+01
+   4.609947183e+00   2.746111399e+01   4.437617314e+00
+   1.015376454e+01   4.437617314e+00   2.344520396e+01
+@endverbatim
+ *
+ */
 void io::Out_Configuration
 ::_print_volumepressurered(topology::Topology const & topo,
 			   configuration::Configuration const &conf,

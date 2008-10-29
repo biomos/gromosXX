@@ -1,3 +1,23 @@
+/**
+ * @file rep_rewrite.cc
+ * 
+ */
+
+/**
+ * @page programs Program Documentation
+ *
+ * @anchor rep_rewrite
+ * @section rep_rewrite re-sort replica exchange trajectories
+ * @date 29. 10. 2008
+ * 
+ * rep_rewrite re-sorts replica exchange trajectories according to lambda or 
+ * temperature.
+ * <table border=0 cellpadding=0>
+ * <tr><td> \@input</td><td>&lt;input file&gt; </td></tr>
+ * <tr><td> \@trj</td><td>&lt;cordinate trajectories&gt; </td></tr>
+ * <tr><td> \@name</td><td>&lt;prefix and postfix of output trajectories&gt; </td></tr>
+ * </table>
+ */
 #include <stdheader.h>
 
 #include <simulation/multibath.h>

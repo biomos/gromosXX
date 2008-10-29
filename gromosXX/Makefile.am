@@ -24,10 +24,6 @@ EXTRA_DIST = VERSION\
 	doc/install.doxy\
 	doc/install.html\
 	doc/main.doxy\
-	doc/output.doxy\
-	doc/output.html\
-	doc/release.doxy\
-	doc/release.html\
 	doc/tail.html\
 	packaging/solaris.depend\
 	packaging/debian.control \

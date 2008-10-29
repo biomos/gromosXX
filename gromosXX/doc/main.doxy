@@ -12,6 +12,12 @@
  *  - @ref md
  *  - @ref md_mpi
  *  - @ref repex
+ * - Available contrib programs 
+ *  - @ref repana
+ *  - @ref tabulate_spc
+ *  - @ref rep_rewrite
+ *  - @ref split_frame
+ *  - @ref rng_gsl
  * - File formats:
  *  - @ref input
  *  - topological files
@@ -35,7 +41,6 @@
  * - @ref check
  *
  * <h3>Installation</h3>
- * - @ref release "release notes" 
  * - @ref install "installation instructions"
  *
  *

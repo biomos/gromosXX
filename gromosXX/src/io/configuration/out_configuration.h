@@ -2,7 +2,21 @@
  * @file out_configuration.h
  * write a G96 trajectory file.
  */
-
+/**
+ * @page output output files
+ * @date 28-10-2008
+ * @section energy_trajectory energy trajectory
+ *  - @ref energyredhelper
+ *  - @ref volumepressurered
+ * @section free_energy_trajectory free energy trajectory
+ *  - see @ref energy_trajectory
+ * @section block_averaged_energy_trajectory block averaged energy trajectory
+ *  - see @ref energy_trajectory
+ * @section free_energy_trajectory free energy trajectory
+ *  - see @ref energy_trajectory
+ * @section block_averaged_free_energy_trajectory block averaged free energy trajectory
+ *  - see @ref energy_trajectory
+ */
 #ifndef INCLUDED_OUT_CONFIGURATION_H
 #define INCLUDED_OUT_CONFIGURATION_H
 

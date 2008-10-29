@@ -5,6 +5,17 @@
  * random number generator.
  */
 
+/**
+ * @page programs Program Documentation
+ *
+ * @anchor rng_gsl
+ * @section rng_gsl flag number for random number generator.
+ * @date 29. 10. 2008
+ *
+ * This programs helps to find the right flag number for the GSL
+ * random number generator.
+ * 
+ */
 #include <iostream>
 #include <iomanip>
 #include <string>

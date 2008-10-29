@@ -1,4 +1,16 @@
+/**
+ * @file split_frame.cc
+ * 
+ */
 
+/**
+ * @page programs Program Documentation
+ *
+ * @anchor split_frame
+ * @section split_frame 
+ * @date 29. 10. 2008
+ *
+ */
 #include <iostream>
 #include <string>
 #include <fstream>

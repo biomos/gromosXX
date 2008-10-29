@@ -26,24 +26,18 @@
  * <tr><td> \@trf</td><td>&lt;force trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trs</td><td>&lt;special trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@tramd</td><td>&lt;RAMD trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@tre</td><td>&lt;energy trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@bae</td><td>&lt;block averaged energy trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@trg</td><td>&lt;free energy trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@bag</td><td>&lt;block averaged free energy trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@posres</td><td>&lt;position restraints specification&gt;</td><td style="color:#088A08">in</td></tr>
- * <tr><td></td><td>See: @ref posres</td><td></td></tr> 
- * <tr><td> \@distrest</td><td>&lt;distance restraints specification&gt;</td><td style="color:#088A08">in</td></tr>
- * <tr><td></td><td>See: @ref disres</td><td></td></tr> 
- * <tr><td> \@dihtrest</td><td>&lt;dihedral restraints specification&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td></td><td>See: @ref dihrest</td><td></td></tr> 
- * <tr><td> \@jval</td><td>&lt;J-value restraints specification&gt;</td><td style="color:#088A08">in</td></tr>
- * <tr><td></td><td>See: @ref jvalue</td><td></td></tr> 
- * <tr><td> \@friction</td><td>&lt;atomic friction coefficients&gt;</td><td style="color:#088A08">in</td></tr>
- * <tr><td></td><td>See: @ref friction</td><td></td></tr> 
+ * <tr><td> \@tre</td><td>&lt;@ref energy_trajectory "energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@bae</td><td>&lt;@ref block_averaged_energy_trajectory "block averaged energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@trg</td><td>&lt;@ref free_energy_trajectory "free energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@bag</td><td>&lt;@ref block_averaged_free_energy_trajectory "block averaged free energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@posres</td><td>&lt;@ref posres "position restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@distrest</td><td>&lt;@ref disres "distance restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@dihtrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@jval</td><td>&lt;@ref jvalue "J-value restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@friction</td><td>&lt;@ref friction "atomic friction coefficients"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@print</td><td>&lt;print additional information&gt; </td><td></td></tr>
  * <tr><td> \@anatraj</td><td>&lt;re-analyze trajectory&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@verb</td><td>&lt;control verbosity&gt;</td><td></td></tr>
- * <tr><td></td><td>See: @ref debug</td><td></td></tr> 
+ * <tr><td> \@verb</td><td>&lt;@ref debug "control verbosity"&gt;</td><td></td></tr>
  * <tr><td> \@version</td><td>&lt;print version information&gt; </td><td></td></tr>
  * </table>
  * 
