@@ -15,11 +15,9 @@
  *
  * <table border=0 cellpadding=0>
  * <tr><td> \@topo</td><td>&lt;molecular topology file&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@pttopo</td><td>&lt;molecular perturbation topology file&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td></td><td>See: @ref pttopo</td><td></td></tr> 
+ * <tr><td> \@pttopo</td><td>&lt;@ref pttopo "molecular perturbation topology file"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@conf</td><td>&lt;coordinates and restart data&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@input</td><td>&lt;input parameters&gt;</td><td style="color:#088A08">in</td></tr>
- * <tr><td></td><td>See: @ref input</td><td></td></tr> 
+ * <tr><td> \@input</td><td>&lt;@ref input "input parameters"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@fin</td><td>&lt;final configuration&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trj</td><td>&lt;coordinate trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trv</td><td>&lt;velocity trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
