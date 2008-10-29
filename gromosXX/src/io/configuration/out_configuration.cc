@@ -1495,47 +1495,55 @@ void io::Out_Configuration
      << std::setw(m_width) << c
      << "\n";
   
-  alpha = acos(math::costest(dot(box(1),box(2))/(abs(box(1))*abs(box(2))))); 
-  beta  = acos(math::costest(dot(box(0),box(2))/(abs(box(0))*abs(box(2)))));
-  gamma = acos(math::costest(dot(box(0),box(1))/(abs(box(0))*abs(box(1)))));
   
-  os << std::setw(m_width) << alpha*180/math::Pi
-     << std::setw(m_width) << beta*180/math::Pi
-     << std::setw(m_width) << gamma*180/math::Pi
-     << "\n";
-  
+  if (a != 0.0 && b != 0.0 && c != 0.0) {
+    alpha = acos(math::costest(dot(box(1), box(2)) / (abs(box(1)) * abs(box(2)))));
+    beta = acos(math::costest(dot(box(0), box(2)) / (abs(box(0)) * abs(box(2)))));
+    gamma = acos(math::costest(dot(box(0), box(1)) / (abs(box(0)) * abs(box(1)))));
 
-  math::Matrixl Rmat = (math::rmat(box));
+    os << std::setw(m_width) << alpha * 180 / math::Pi
+            << std::setw(m_width) << beta * 180 / math::Pi
+            << std::setw(m_width) << gamma * 180 / math::Pi
+            << "\n";
 
-  long double R11R21 = sqrtl(Rmat(0,0)*Rmat(0,0)+Rmat(0,1)*Rmat(0,1));
-  if(R11R21==0.0)
-  {
-      theta = -math::sign(Rmat(0,2))*M_PI/2;
-      psi   = 0.0;
-      phi   =-math::sign(Rmat(1,0))*acosl(math::costest(Rmat(1,1)));
+
+    math::Matrixl Rmat = (math::rmat(box));
+
+    long double R11R21 = sqrtl(Rmat(0, 0) * Rmat(0, 0) + Rmat(0, 1) * Rmat(0, 1));
+    if (R11R21 == 0.0) {
+      theta = -math::sign(Rmat(0, 2)) * M_PI / 2;
+      psi = 0.0;
+      phi = -math::sign(Rmat(1, 0)) * acosl(math::costest(Rmat(1, 1)));
+    } else {
+      theta = -math::sign(Rmat(0, 2)) * acosl(math::costest(R11R21));
+      long double costheta = cosl(theta);
+      psi = math::sign(Rmat(1, 2) / costheta) * acosl(math::costest(Rmat(2, 2) / costheta));
+      phi = math::sign(Rmat(0, 1) / costheta) * acosl(math::costest(Rmat(0, 0) / costheta));
+
+    }
+
+
+
+    if (theta == -0) theta = 0;
+    if (psi == -0) psi = 0;
+    if (phi == -0) phi = 0;
+
+
+    os << std::setw(m_width) << phi * 180 / math::Pi
+            << std::setw(m_width) << theta * 180 / math::Pi
+            << std::setw(m_width) << psi * 180 / math::Pi
+            << "\n";
+  } else {
+    os << std::setw(m_width) << 0.0
+            << std::setw(m_width) << 0.0
+            << std::setw(m_width) << 0.0
+            << "\n";
+    os << std::setw(m_width) << 0.0
+            << std::setw(m_width) << 0.0
+            << std::setw(m_width) << 0.0
+            << "\n";
   }
-  else
-  {
-      theta = -math::sign(Rmat(0,2))*acosl(math::costest(R11R21));
-      long double costheta=cosl(theta);
-      psi   = math::sign(Rmat(1,2)/costheta)*acosl(math::costest(Rmat(2,2)/costheta));
-      phi   = math::sign(Rmat(0,1)/costheta)*acosl(math::costest(Rmat(0,0)/costheta));
-
-  }
-  
- 
-  
-  if(theta==-0) theta =0;
-  if(psi==-0)   psi=0;
-  if(phi==-0)   phi=0;
-          
-          
-  os << std::setw(m_width) << phi*180/math::Pi
-     << std::setw(m_width) << theta*180/math::Pi
-     << std::setw(m_width) << psi*180/math::Pi
-     << "\n";
-  
-  double origin=0.0;
+  double origin = 0.0;
   
   os << std::setw(m_width) << origin
      << std::setw(m_width) << origin

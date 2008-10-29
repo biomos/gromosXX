@@ -181,7 +181,7 @@ ENERGYMIN
 # DX0: > 0.0 initial step size
 # DXM: > 0.0 maximum step size
 # NMIN > 0 minimum number of minimisation steps
-# FLIM >= 0.0 limit force to maximum value
+# FLIM >= 0.0 limit force to maximum value (FLIM > 0.0 is not recommended).
 #     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM
          1       0     0.1   0.01    0.05       1       0
 END
@@ -259,6 +259,12 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     io::messages.add("ENERGYMIN: FLIM should be >= 0",
 		     "io::In_Parameter",
 		     io::message::error);
+  if(param.minimise.flim > 0)
+    io::messages.add("ENERGYMIN: FLIM > 0 may result in "
+                     "failure of the minimisation procedure.\n "
+                     " Only to be used in special cases.",
+		     "io::In_Parameter",
+		     io::message::warning);
 
 } 
 

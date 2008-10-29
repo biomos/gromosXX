@@ -96,8 +96,12 @@ int algorithm::Steepest_Descent
   // limit the maximum force!
   if (sim.param().minimise.flim != 0.0){
     for(unsigned int i=0; i<topo.num_atoms(); ++i){
-      const double fs = math::abs2(conf.current().force(i));
+      const double fs = math::abs(conf.current().force(i));
       if (fs > sim.param().minimise.flim)
+        DEBUG(15,"fs = " << fs 
+             << ", flim = " << sim.param().minimise.flim);
+        DEBUG(15,"force (" << i << ") = " << math::v2s(conf.current().force(i))
+             << ", factor = " << sim.param().minimise.flim / fs);
 	conf.current().force(i) *= sim.param().minimise.flim / fs;
     }
   }

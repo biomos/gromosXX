@@ -92,9 +92,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(rcom);
   }
   
-  // add the lattice shift tracking
-  md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
-  
+  // add the lattice shift tracking 
+  if (sim.param().boundary.boundary != math::vacuum)
+    md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
+
   // add the forcefield
   md_seq.push_back(ff);
 
