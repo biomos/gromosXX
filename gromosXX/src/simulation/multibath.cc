@@ -33,8 +33,8 @@ void simulation::Multibath
   }
   
   // check whether the last last is really the last_atom
-  if (m_bath_index.size() == 0 || 
-      (m_bath_index.end()-1)->last_atom != topo.num_atoms()-1){
+  if ( (!(m_bath_index.size() == 0))
+        && (m_bath_index.end()-1)->last_atom != topo.num_atoms()-1){
     io::messages.add("Last atom of last bath is not the last atom in the sytem!",
 		     "Multibath::calculate_degrees_of_freedom",
 		     io::message::error);
@@ -46,6 +46,13 @@ void simulation::Multibath
     add_bath_index(topo.num_atoms()-1, unsigned(topo.temperature_groups().size())-1, 
 		   unsigned(size())-1, unsigned(size())-1);
     */
+  }
+  if (m_bath_index.size() == 0) {
+    io::messages.add("Adding atoms to the last bath!",
+            "Multibath::calculate_degrees_of_freedom",
+            io::message::notice);
+    add_bath_index(topo.num_atoms() - 1, unsigned(topo.temperature_groups().size()) - 1,
+            unsigned(size()) - 1, unsigned(size()) - 1);
   }
 
   // loop over the ranges
