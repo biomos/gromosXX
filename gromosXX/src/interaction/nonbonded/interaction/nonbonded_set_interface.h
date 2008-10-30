@@ -103,9 +103,9 @@ namespace interaction
 
   protected:
     Pairlist_Algorithm & m_pairlist_alg;
-    
-    Storage m_storage;
 
+    Storage m_storage;
+    Storage m_storage_cuda;
     PairlistContainer m_pairlist;
 
     /**

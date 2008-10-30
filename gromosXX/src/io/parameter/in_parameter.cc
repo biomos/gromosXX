@@ -2336,6 +2336,7 @@ INNERLOOP
 #        1: use fast generic solvent loops
 #        2: use solvent loops with hardcoded parameters
 #        3: use solvent loops with tabulated forces and energies
+#        4: use solvent loops with CUDA library
 # NTILS: 0..1, solvent used
 #        0: use topology [default]
 #        1: use SPC
@@ -2388,9 +2389,21 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
         param.innerloop.method = simulation::sla_table;
         break;
       }
+      case 4: {
+#ifdef HAVE_LIBCUKERNEL
+        // cuda library
+        param.innerloop.method = simulation::sla_cuda;
+#else
+        param.innerloop.method = simulation::sla_off;
+        io::messages.add("INNERLOOP block: CUDA solvent loops are not available "
+                "in your compilation. Use --with-cukernel for compiling.",
+                "In_Parameter", io::message::error);
+#endif
+        break;
+      }
       default: {
         param.innerloop.method = simulation::sla_off;
-        io::messages.add("INNERLOOP block: bad value for NTILM (0..3)",
+        io::messages.add("INNERLOOP block: bad value for NTILM (0..4)",
                 "In_Parameter", io::message::error);
       }
     }

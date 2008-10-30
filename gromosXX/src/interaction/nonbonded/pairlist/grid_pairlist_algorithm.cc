@@ -240,6 +240,8 @@ void interaction::Grid_Pairlist_Algorithm::_update
   const int N = m_grid.Na * m_grid.Nb;
   const int num_solute_cg = topo.num_solute_chargegroups();
   const int num_solute_atoms = topo.num_solute_atoms();
+  
+  const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
 
   for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
 
@@ -325,10 +327,17 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		  a1 < a_to; ++a1){
 		for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
 		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
-		    a2 < a2_to; ++a2){
-                  if (a2 >= num_solute_atoms)
-		    pairlist.solvent_short[a2].push_back(a1);
-                  else
+		    a2 < a2_to; ++a2) {
+                  if (a2 >= num_solute_atoms) {
+#ifdef HAVE_LIBCUKERNEL
+                    // do only add the atoms to the pairlist if we are not doing
+                    // CUDA
+                    if (no_cuda)
+                      pairlist.solvent_short[a2].push_back(a1);
+#else
+                    pairlist.solvent_short[a2].push_back(a1);
+#endif
+                  } else
                     pairlist.solute_short[a2].push_back(a1);
 		}
 	      }
@@ -487,10 +496,15 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		    a1 < a_to; ++a1){
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
-		      a2 < a2_to; ++a2){
-                      if (a2 >= num_solute_atoms)
-		        pairlist.solvent_long[a2].push_back(a1);
-                      else
+		      a2 < a2_to; ++a2) {
+                    if (a2 >= num_solute_atoms) {
+#ifdef HAVE_LIBCUKERNEL
+                      if (no_cuda)
+                        pairlist.solvent_long[a2].push_back(a1);
+#else
+                      pairlist.solvent_long[a2].push_back(a1);
+#endif
+                    } else
                         pairlist.solute_long[a2].push_back(a1);
 		  }
 		}
@@ -501,10 +515,15 @@ void interaction::Grid_Pairlist_Algorithm::_update
 		    a1 < a_to; ++a1){
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
-		      a2 < a2_to; ++a2){
-                    if (a2 >= num_solute_atoms)
-		      pairlist.solvent_short[a2].push_back(a1);
-                    else
+		      a2 < a2_to; ++a2) {
+                    if (a2 >= num_solute_atoms) {
+#ifdef HAVE_LIBCUKERNEL
+                      if (no_cuda)
+                        pairlist.solvent_short[a2].push_back(a1);
+#else
+                      pairlist.solvent_short[a2].push_back(a1);
+#endif
+                    } else
                       pairlist.solute_short[a2].push_back(a1);
 		  }
 		}
@@ -560,8 +579,8 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
 {
   // check whether we do scaling && scaling only
   bool scaled_only = (sim.param().perturbation.scaling && sim.param().perturbation.scaled_only);
-  
-  // empty the pairlist
+ 
+// empty the pairlist
   assert(pairlist.size() == topo.num_atoms());
   assert(perturbed_pairlist.size() == topo.num_atoms());
 

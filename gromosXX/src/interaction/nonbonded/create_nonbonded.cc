@@ -34,6 +34,7 @@
 #include <interaction/nonbonded/interaction/omp_nonbonded_interaction.h>
 #include <interaction/nonbonded/interaction/mpi_nonbonded_master.h>
 #include <interaction/nonbonded/interaction/mpi_nonbonded_slave.h>
+#include <interaction/nonbonded/interaction/cuda_nonbonded.h>
 
 #include <io/ifp.h>
 
@@ -147,24 +148,25 @@ int interaction::create_g96_nonbonded
       os << "\t" << setw(20) << left << "cutoff" << setw(30) << left << "chargegroup" << right << "\n";
 
   }
-  
+
   Pairlist_Algorithm * pa;
-  if (sim.param().pairlist.grid == 0){
+  if (sim.param().pairlist.grid == 0) {
     pa = new Standard_Pairlist_Algorithm();
-  }
-  else if (sim.param().pairlist.grid == 1){
+  } else if (sim.param().pairlist.grid == 1) {
     pa = new Grid_Pairlist_Algorithm();
-  }
-  else if (sim.param().pairlist.grid == 2){
+  } else if (sim.param().pairlist.grid == 2) {
     pa = new VGrid_Pairlist_Algorithm();
   }
   
 #if defined(OMP)
-
   Nonbonded_Interaction * ni = new OMP_Nonbonded_Interaction(pa);
-
+#elif defined(HAVE_LIBCUKERNEL)
+  Nonbonded_Interaction * ni;
+  if (sim.param().innerloop.method == simulation::sla_cuda)
+    ni = new CUDA_Nonbonded(pa);
+  else
+    ni = new Nonbonded_Interaction(pa);
 #elif defined(XXMPI)
-
   Nonbonded_Interaction * ni;
 
   if (sim.mpi){
@@ -176,11 +178,8 @@ int interaction::create_g96_nonbonded
   }
   else
     ni = new Nonbonded_Interaction(pa);
-
 #else
-
   Nonbonded_Interaction * ni = new Nonbonded_Interaction(pa);
-
 #endif
 
   // standard LJ parameter

@@ -261,7 +261,7 @@ namespace io {
      */
     void read_RANDOMNUMBERS(simulation::Parameter &param, std::ostream & os = std::cout);
     
-    /*
+    /**
      * read LAMBDAS block.
      */
     void read_LAMBDAS(simulation::Parameter &param, std::ostream & os = std::cout);

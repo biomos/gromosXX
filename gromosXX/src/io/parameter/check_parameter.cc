@@ -131,6 +131,7 @@ int io::check_parameter(simulation::Simulation & sim)
   add("innerloop_method_generic", "generic fast solvent loop", param.innerloop.method == simulation::sla_generic);
   add("innerloop_method_hardcode", "hardcoded solvent loop", param.innerloop.method == simulation::sla_hardcode);
   add("innerloop_method_table", "tabulated solvent loop", param.innerloop.method == simulation::sla_table);
+  add("innerloop_method_cuda", "CUDA solvent loop", param.innerloop.method == simulation::sla_cuda);
   add("innerloop_solvent_topology", "topology solvent", param.innerloop.solvent == simulation::sls_topo);
   add("innerloop_solvent_spc", "SPC solvent", param.innerloop.solvent == simulation::sls_spc);
   // REPLICA block
@@ -2894,6 +2895,49 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_lincs", "ewald");
   fc.unlock("solvent_lincs", "p3m");
 
+  fc.unlock("innerloop_method_cuda", "solute");
+  fc.unlock("innerloop_method_cuda", "solvent");
+  fc.unlock("innerloop_method_cuda", "solvent_only");
+  fc.unlock("innerloop_method_cuda", "steepest_descent");
+  fc.unlock("innerloop_method_cuda", "solute_constraint_off");
+  fc.unlock("innerloop_method_cuda", "solute_shake");
+  fc.unlock("innerloop_method_cuda", "solute_lincs");
+  fc.unlock("innerloop_method_cuda", "solute_flexshake");
+  fc.unlock("innerloop_method_cuda", "solvent_constraint_off");
+  fc.unlock("innerloop_method_cuda", "solvent_shake");
+  fc.unlock("innerloop_method_cuda", "solvent_lincs");
+  fc.unlock("innerloop_method_cuda", "virial_off");
+  fc.unlock("innerloop_method_cuda", "pbc_r");
+  fc.unlock("innerloop_method_cuda", "bond");
+  fc.unlock("innerloop_method_cuda", "angle");
+  fc.unlock("innerloop_method_cuda", "dihedral");
+  fc.unlock("innerloop_method_cuda", "improper");
+  fc.unlock("innerloop_method_cuda", "crf");
+  fc.unlock("innerloop_method_cuda", "lj");
+  fc.unlock("innerloop_method_cuda", "com_removal");
+  fc.unlock("innerloop_method_cuda", "rf_excluded");
+  fc.unlock("innerloop_method_cuda", "pairlist_grid");
+  fc.unlock("innerloop_method_cuda", "temp_berendsen");
+  fc.unlock("innerloop_method_cuda", "temp_nosehoover");
+  fc.unlock("innerloop_method_cuda", "temp_nosehoover_chains");
+  fc.unlock("innerloop_method_cuda", "position_rest");
+  fc.unlock("innerloop_method_cuda", "position_const");
+  fc.unlock("innerloop_method_cuda", "position_const_scaled");
+  fc.unlock("innerloop_method_cuda", "distance_rest");
+  fc.unlock("innerloop_method_cuda", "dihedral_rest");
+  fc.unlock("innerloop_method_cuda", "dihedral_const");
+  fc.unlock("innerloop_method_cuda", "jvalue_rest");
+  fc.unlock("innerloop_method_cuda", "perscale");
+  fc.unlock("innerloop_method_cuda", "rottrans");
+  fc.unlock("innerloop_method_cuda", "innerloop_solvent_topology");
+  fc.unlock("innerloop_method_cuda", "repex_temp");
+  fc.unlock("innerloop_method_cuda", "repex_lambda");
+  fc.unlock("innerloop_method_cuda", "analysis");
+  fc.unlock("innerloop_method_cuda", "no_integration");
+  fc.unlock("innerloop_method_cuda", "stochdyn");
+  fc.unlock("innerloop_method_cuda", "ramd");
+  fc.unlock("innerloop_method_cuda", "random_gromos");
+  fc.unlock("innerloop_method_cuda", "random_gsl");
   
   if (fc.check()) 
     return 0;

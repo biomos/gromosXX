@@ -88,7 +88,11 @@ namespace simulation
     /**
      * tabulated forces and energies
      */
-    sla_table
+    sla_table,
+    /**
+     * CUDA library acceleration
+     */
+    sla_cuda
   };
   
   /**

@@ -360,3 +360,18 @@ AC_DEFUN([AM_PATH_FFTW3],[
   fi
 ])
 
+dnl check for lib CUKERNEL
+AC_DEFUN([AM_PATH_CUKERNEL],[
+  AC_ARG_WITH(cukernel,
+    [  --with-cukernel=DIR  CUDA kernel library directory to use],
+    [
+      [CXXFLAGS="$CXXFLAGS -I${withval} -L${withval}"]
+      [LDFLAGS="$LDFLAGS -L${withval}"]
+    ],
+    [
+      AC_MSG_WARN([cukernel path was not specified. Trying default paths...])
+    ]
+  )
+  dnl check for lib with these settings and add flags automatically
+  AC_CHECK_LIB([cukernel], [test],, AC_MSG_WARN([CUKERNEL library missing.]), [-lm -lcuda])
+])
