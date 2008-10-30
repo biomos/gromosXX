@@ -1579,11 +1579,31 @@ io::In_Topology::read(topology::Topology& topo,
   std::vector< double > one(maxnilg, 1.0);
   std::vector< double > zero(maxnilg, 0.0);
   for (unsigned int i = 0; i < param.lambdas.a.size(); i++) {
-    param.lambdas.a[i].resize(maxnilg, zero);
-    param.lambdas.b[i].resize(maxnilg, zero);
-    param.lambdas.c[i].resize(maxnilg, zero);
-    param.lambdas.d[i].resize(maxnilg, one);
-    param.lambdas.e[i].resize(maxnilg, zero);
+    // check whether we have to resize the lambdas arrays
+    int lam_size = param.lambdas.a[i].size();
+    if (lam_size < maxnilg) {
+      param.lambdas.a[i].insert(param.lambdas.a[i].end(), maxnilg - lam_size, zero);
+      lam_size = param.lambdas.b[i].size();
+      param.lambdas.b[i].insert(param.lambdas.b[i].end(), maxnilg - lam_size, zero);
+      lam_size = param.lambdas.c[i].size();
+      param.lambdas.c[i].insert(param.lambdas.c[i].end(), maxnilg - lam_size, zero);
+      lam_size = param.lambdas.d[i].size();
+      param.lambdas.d[i].insert(param.lambdas.d[i].end(), maxnilg - lam_size, one);
+      lam_size = param.lambdas.e[i].size();
+      param.lambdas.e[i].insert(param.lambdas.e[i].end(), maxnilg - lam_size, zero);
+      for (unsigned int j = 0; j < param.lambdas.a[i].size(); j++) {
+        lam_size = param.lambdas.a[i][j].size();
+        param.lambdas.a[i][j].insert(param.lambdas.a[i][j].end(),maxnilg - lam_size,0.0);
+        lam_size = param.lambdas.b[i][j].size();
+        param.lambdas.b[i][j].insert(param.lambdas.b[i][j].end(),maxnilg - lam_size,0.0);
+        lam_size = param.lambdas.c[i][j].size();
+        param.lambdas.c[i][j].insert(param.lambdas.c[i][j].end(),maxnilg - lam_size,0.0);
+        lam_size = param.lambdas.d[i][j].size();
+        param.lambdas.d[i][j].insert(param.lambdas.d[i][j].end(),maxnilg - lam_size,1.0);
+        lam_size = param.lambdas.e[i][j].size();
+        param.lambdas.e[i][j].insert(param.lambdas.e[i][j].end(),maxnilg - lam_size,0.0);
+      }
+    } // do resize lambdas arrays
   }
 
   DEBUG(10, "multibath?");

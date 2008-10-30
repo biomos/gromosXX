@@ -261,7 +261,7 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
 		     io::message::error);
   if(param.minimise.flim > 0)
     io::messages.add("ENERGYMIN: FLIM > 0 may result in "
-                     "failure of the minimisation procedure.\n "
+                     "failure of the minimisation procedure."
                      " Only to be used in special cases.",
 		     "io::In_Parameter",
 		     io::message::warning);
@@ -1097,6 +1097,24 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
       return;
     }
     old_e = e;
+  }
+  // Now that we have the energy groups, we initialize the  	 	 
+  // LAMBDAS parameters that depend on them.  	 	 
+  // NOTE: lambdas vectors may be resized again in in_topology.cc
+  // in case an extra energy group is added. This will be the case
+  // if the last atom of the last energy group in the force array 
+  // is not the last atom of the system.
+
+  int maxnilg = param.force.energy_group.size();
+
+  std::vector< double > one(maxnilg, 1.0);
+  std::vector< double > zero(maxnilg, 0.0);
+  for (unsigned int i = 0; i < param.lambdas.a.size(); i++) {
+    param.lambdas.a[i].resize(maxnilg, zero);
+    param.lambdas.b[i].resize(maxnilg, zero);
+    param.lambdas.c[i].resize(maxnilg, zero);
+    param.lambdas.d[i].resize(maxnilg, one);
+    param.lambdas.e[i].resize(maxnilg, zero);
   }
 
   DEBUG(10, "number of energy groups: " << param.force.energy_group.size());
