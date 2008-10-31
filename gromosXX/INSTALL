@@ -1,6 +1,172 @@
 Installation Instructions
 *************************
 
+GromosXX installation instructions
+==================================================
+
+to install the source tarball
+--------------------------------------------------
+
+1. tar zxvf gromosXX-x.y.z.tar.gz
+2. cd gromosXX-x.y.z
+3. mkdir ARCHITECTURE
+4. cd ARCHITECTURE
+5. ../configure
+6. make
+7. make install
+
+(this will install GromosXX in ARCHITECTURE/bin ARCHITECTURE/lib OBJ/include.
+you can change this by specifying the --prefix=PATH option to
+configure.)
+If you follow this setup, you can compile the same source tree on different
+architectures by repeating from step 2 with another directory name.
+
+you will probably want to add --disable-debug to ../configure to get a
+release build.
+
+If you do not type make install, the programs will be in
+ARCHITECTURE/program/.
+
+to install from svn:
+--------------------------------------------------
+
+create the configure script:
+2b. ./Config.sh
+
+./Config.sh is a wrapper of the following commands:
+1. mkdir -p config
+2. aclocal
+3. libtoolize --copy
+4. autoconf
+5. automake --add-missing --copy
+
+necessary libraries
+--------------------------------------------------
+
+GNU Scientific Library (tested with version 1.5)
+
+if the gsl installation directory is not in your standard search
+path for header files and libraries, you can use
+
+../configure --with-gsl=/usr/local
+
+FFTW Fast Fourier Transform Library (version > 3!)
+
+if the fftw3 installation directory is not in your standard search
+path for header files and libraries, you can use
+../configure --with-fftw=/usr/local
+
+for MPI you also need the fftw3-mpi library which you have to
+compile with the same MPI wrapper.
+
+optimization flags
+--------------------------------------------------
+
+most optimization flags for GNU C++ and Intel C++ compiler are
+set automatically. If you want to set additional flags you can
+set CXXFLAGS or LDFLAGS accordingly.
+
+
+Intel C++ Compiler
+--------------------------------------------------
+
+make sure the bin directory of the Intel C++
+compiler is added to your path and the
+lib directory to the library search path.
+
+export CC=icpc
+export CXX=icc
+export LD=xild
+export AR=xiar
+
+* OpenMP parallelization available:
+      --enable-openmp configure option
+
+* GSL has to be compiled with the same compiler
+
+
+WINDOWS (Visual Studio 2003 (NET)
+--------------------------------------------------
+
+1. copy config.h.windows to config.h
+
+2. open the solution in MS Visual Studio.net
+
+3. add project dependency to GSL
+   there is only commercial support to compile
+   GSL under windows (but this at least means
+   its possible)
+
+4. build the solution...
+
+
+building static-only executables
+--------------------------------------------------
+
+use the following configure options:
+configure --disable-shared --enable-static --enable-allstatic
+
+
+ARCHITECTURE DEPENDENT DETAILS
+******************************
+
+MacOS X (tested on V 10.3.3 Panther):
+------------------------------------
+
+Panther ships with the so-called developertools
+(http://www.apple.com/macosx/developertools/),
+which include a port of the gcc 3.3. The developertools 
+might not be installed by default though, so you should 
+make sure that this is the case (e.g. type: 'which gcc'; 
+if you dont get an answer it is not installed).
+
+Unfortunately, the MacOS version of the libtoolize program (and others) does
+sometimes not work with things you download from GNU and try to
+compile.
+
+Try first, whether there is a glibtoolize, gaclocal, gautomake,
+gautoconf. Use those if they are available.
+
+
+Therefore, do this:
+
+1. Download the GNU autoconf, automake and libtool packages
+   and install them. By default they will be put under /usr/local
+   which is just fine.
+(As an alternative you might just want to install the binary
+ packages from FINK (http://fink.sourceforge.net/), 
+ i.e. the port of the Debian APT package tools.
+ You will need to have FINK installed, though).
+2. Set the path to point to /usr/local/bin so that those versions
+   of automake/autoconf/libtool will be used.
+3. Build the distribution as written above.
+4. In case of linking errors when using the gcc port from Apple
+   build the distribution without support for shared libraries
+  (./configure --enable-shared=NO)
+   If you really need shared library support, it is possible to
+   first compile and install the regular GCC from the GNU tarball
+   and use that one to compile gromos++. This has been tested and
+   works.
+
+===========================================================================
+
+
+if it does not work
+--------------------------------------------------
+
+check the version number of the autotools:
+(in brackets the versions known to work)
+
+autoconf --version [autoconf (GNU Autoconf) 2.58]
+automake --version [automake (GNU automake) 1.7.9]
+libtoolize --version [libtoolize (GNU libtool) 1.5]
+GNU make --version [GNU Make version 3.79]
+
+write a ticket
+https://gromos.ethz.ch/svn/trac/gromosXXc++
+
+===========================================================================
+
 Copyright (C) 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005,
 2006, 2007 Free Software Foundation, Inc.
 
