@@ -1112,7 +1112,6 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   // is not the last atom of the system.
 
   int maxnilg = param.force.energy_group.size();
-
   std::vector< double > one(maxnilg, 1.0);
   std::vector< double > zero(maxnilg, 0.0);
   for (unsigned int i = 0; i < param.lambdas.a.size(); i++) {
@@ -3556,9 +3555,11 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
       param.lambdas.individual_lambdas=false;
       return;
     }
-    else 
+    else {
       io::messages.add("illegal value for NTIL in LAMBDAS block (on,off,1,0)",
 		       "In_Parameter", io::message::error);
+      return;
+    }
     
     if(param.perturbation.perturbation == false)
       io::messages.add("LAMBDAS block without perturbation is ignored",
@@ -3571,7 +3572,6 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     // energy groups
     
     int maxnilg=param.force.energy_group.size();
-
     for(int i=0; i< num; ++i){
       _lineStream >> nm >> n1 >> n2 >> a >> b >> c >> d >> e;
       DEBUG(10, "read : " << nm << n1 << n2 << a << b << c << d << e);
@@ -3581,15 +3581,21 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
                          "In_Parameter", io::message::error);
         return;
       }
-      if (n2 < n1)
+      if (n2 < n1){
 	io::messages.add("only give NILG2 >= NILG1 in LAMBDAS BLOCK",
 			 "In_Parameter", io::message::error);
-      if (n1 > maxnilg)
+        return;
+      }
+      if (n1 > maxnilg){
 	io::messages.add("NILG1 larger than number of energy groups in FORCE block",
 			 "In_Parameter", io::message::error);
-      if (n2 > maxnilg)
+        return;
+      }
+      if (n2 > maxnilg){
 	io::messages.add("NILG2 larger than number of energy groups in FORCE block",
 			 "In_Parameter", io::message::error);
+        return;
+      }
       n1--;
       n2--;
       
@@ -3615,9 +3621,11 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
 	j=simulation::dihres_lambda;
       else if(nm=="mass" || nm=="11")
 	j=simulation::mass_lambda;
-      else
+      else{
         io::messages.add("unknown lambda type in LAMBDAS block: " + nm,
                          "In_Parameter", io::message::error);
+        return;
+      }
     
       // and now replace the matrix with the numbers we just read in
       if(j != simulation::lj_lambda &&
@@ -3627,7 +3635,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
 	 n1 != n2)
 	io::messages.add("NILG1 != NILG2 in LAMBDAS block only allowed for nonbonded interactions",
 			 "In_Parameter", io::message::warning);
-      
+           
       param.lambdas.a[j][n1][n2] = a;
       param.lambdas.a[j][n2][n1] = a;
       param.lambdas.b[j][n1][n2] = b;
