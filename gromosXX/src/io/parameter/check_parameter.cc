@@ -559,7 +559,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_lincs", "position_const_scaled");
   fc.unlock("solute_lincs", "distance_rest");
   fc.unlock("solute_lincs", "dihedral_rest");
-  fc.unlock("solute_lincs", "dihedral_const");
   fc.unlock("solute_lincs", "jvalue_rest");
   fc.unlock("solute_lincs", "perscale");
   fc.unlock("solute_lincs", "rottrans");
@@ -608,7 +607,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "position_const_scaled");
   fc.unlock("solute_flexshake", "distance_rest");
   fc.unlock("solute_flexshake", "dihedral_rest");
-  fc.unlock("solute_flexshake", "dihedral_const");
   fc.unlock("solute_flexshake", "jvalue_rest");
   fc.unlock("solute_flexshake", "perscale");
   fc.unlock("solute_flexshake", "rottrans");
@@ -898,7 +896,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_atomic", "position_const_scaled");
   fc.unlock("virial_atomic", "distance_rest");
   fc.unlock("virial_atomic", "dihedral_rest");
-  fc.unlock("virial_atomic", "dihedral_const");
   fc.unlock("virial_atomic", "jvalue_rest");
   fc.unlock("virial_atomic", "perscale");
   fc.unlock("virial_atomic", "rottrans");

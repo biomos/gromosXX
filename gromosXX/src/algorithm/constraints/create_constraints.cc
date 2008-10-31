@@ -69,86 +69,90 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 
   // solute constraints have to be set to SHAKE, but NTC may be 1
   // for dihedral constraints to be used.
-  switch(sim.param().constraint.solute.algorithm){
-    case simulation::constr_shake:
-      {
-	if (!sim.param().perturbation.perturbation){
-	  
-	  // SHAKE
-	  algorithm::Shake * s = 
-	    new algorithm::Shake
-	    (sim.param().constraint.solute.shake_tolerance);
-	  it.read_harmonic_bonds(s->parameter());
-	  md_seq.push_back(s);
-	  
-	}
-	else{
-	  // perturbed shake also calls normal shake...
-	  algorithm::Perturbed_Shake * ps =
-	    new algorithm::Perturbed_Shake
-	    (sim.param().constraint.solute.shake_tolerance);
-	  it.read_harmonic_bonds(ps->parameter());
-	  md_seq.push_back(ps);
+  if (sim.param().dihrest.dihrest == 3 &&
+          sim.param().constraint.solute.algorithm != simulation::constr_shake) {
+    io::messages.add("dihedral constraints require SHAKE as solute algorithm.",
+            "create_constraints", io::message::error);
+    return 1;
+  }
+  
+  switch (sim.param().constraint.solute.algorithm) {
+    case simulation::constr_shake :
+    {
+      if (!sim.param().perturbation.perturbation) {
+        // SHAKE
+        algorithm::Shake * s =
+                new algorithm::Shake
+                (sim.param().constraint.solute.shake_tolerance);
+        it.read_harmonic_bonds(s->parameter());
+        md_seq.push_back(s);
 
-	}
-	break;
+      } else {
+        // perturbed shake also calls normal shake...
+        algorithm::Perturbed_Shake * ps =
+                new algorithm::Perturbed_Shake
+                (sim.param().constraint.solute.shake_tolerance);
+        it.read_harmonic_bonds(ps->parameter());
+        md_seq.push_back(ps);
+
       }
-    case simulation::constr_lincs:
-      {
-	algorithm::Lincs * s =
-	  new algorithm::Lincs;
-	it.read_harmonic_bonds(s->parameter());
-	md_seq.push_back(s);
+      break;
+    }
+    case simulation::constr_lincs :
+    {
+      algorithm::Lincs * s =
+              new algorithm::Lincs;
+      it.read_harmonic_bonds(s->parameter());
+      md_seq.push_back(s);
 
-	if (sim.param().perturbation.perturbation){
-	  io::messages.add("no free energy derivatives for LINCS, so you better don't "
-			   "change constrained bond lengths", "create_constraints",
-			   io::message::warning);
-	}
-	break;
+      if (sim.param().perturbation.perturbation) {
+        io::messages.add("no free energy derivatives for LINCS, so you better don't "
+                "change constrained bond lengths", "create_constraints",
+                io::message::warning);
       }
-    case simulation::constr_flexshake:
-      {
-	// let's try to get the forcefield
-	interaction::Forcefield * ff = NULL;
-	
-	for(size_t i=0; i < md_seq.size(); ++i){
-	  if (md_seq[i]->name == "Forcefield"){
-	    DEBUG(8, "flexible shake: forcefield found");
-	    ff = dynamic_cast<interaction::Forcefield *>(md_seq[i]);
-	    break;
-	  }
-	}
+      break;
+    }
+    case simulation::constr_flexshake :
+    {
+      // let's try to get the forcefield
+      interaction::Forcefield * ff = NULL;
 
-	if (!ff){
-	  io::messages.add("no forcefield found", "create_constraints",
-			   io::message::error);
-	}
-	
-	if (!sim.param().perturbation.perturbation){
+      for (size_t i = 0; i < md_seq.size(); ++i) {
+        if (md_seq[i]->name == "Forcefield") {
+          DEBUG(8, "flexible shake: forcefield found");
+          ff = dynamic_cast<interaction::Forcefield *> (md_seq[i]);
+          break;
+        }
+      }
 
-	  algorithm::Flexible_Constraint * fs = 
-	    new algorithm::Flexible_Constraint
-	    (sim.param().constraint.solute.shake_tolerance, 1000, ff);
+      if (!ff) {
+        io::messages.add("no forcefield found", "create_constraints",
+                io::message::error);
+      }
 
-	  it.read_harmonic_bonds(fs->parameter());
+      if (!sim.param().perturbation.perturbation) {
 
-	  md_seq.push_back(fs);
-	  
-	}
-	else{
+        algorithm::Flexible_Constraint * fs =
+                new algorithm::Flexible_Constraint
+                (sim.param().constraint.solute.shake_tolerance, 1000, ff);
 
-	  algorithm::Perturbed_Flexible_Constraint * pfc =
-	    new algorithm::Perturbed_Flexible_Constraint
-	    (sim.param().constraint.solute.shake_tolerance, 1000, ff);
+        it.read_harmonic_bonds(fs->parameter());
 
-	  it.read_harmonic_bonds(pfc->parameter());
+        md_seq.push_back(fs);
 
-	  md_seq.push_back(pfc);
+      } else {
 
-	}
+        algorithm::Perturbed_Flexible_Constraint * pfc =
+                new algorithm::Perturbed_Flexible_Constraint
+                (sim.param().constraint.solute.shake_tolerance, 1000, ff);
 
-	break;
+        it.read_harmonic_bonds(pfc->parameter());
+
+        md_seq.push_back(pfc);
+
+      }
+
+      break;
 
     }
     case simulation::constr_settle :
@@ -164,20 +168,20 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 
   // sovlent (if not the same as solute)
   if (topo.num_solvent_atoms() > 0 &&
-      sim.param().constraint.solute.algorithm != 
-      sim.param().constraint.solvent.algorithm){
+      sim.param().constraint.solute.algorithm !=
+      sim.param().constraint.solvent.algorithm) {
 
-    switch(sim.param().constraint.solvent.algorithm){
-      case simulation::constr_shake:
-	{
-	  // SHAKE
-	  algorithm::Shake * s = 
-	    new algorithm::Shake
-	    (sim.param().constraint.solvent.shake_tolerance);
-	  it.read_harmonic_bonds(s->parameter());
-	  md_seq.push_back(s);
-	  
-	  break;
+    switch (sim.param().constraint.solvent.algorithm) {
+      case simulation::constr_shake :
+      {
+        // SHAKE
+        algorithm::Shake * s =
+                new algorithm::Shake
+                (sim.param().constraint.solvent.shake_tolerance);
+        it.read_harmonic_bonds(s->parameter());
+        md_seq.push_back(s);
+
+        break;
       }
       case simulation::constr_lincs :
       {
@@ -204,19 +208,19 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         break;
       }
       default:
-	{
-	  // no constraints
-	  // should already be warned from In_Parameter
-	}
+      {
+        // no constraints
+        // should already be warned from In_Parameter
+      }
     }
   }
-  
+
   // roto-translational constraints
-  if (sim.param().rottrans.rottrans){
+  if (sim.param().rottrans.rottrans) {
     DEBUG(8, "creating roto-translational constraints");
-    
+
     algorithm::Rottrans_Constraints * rtc =
-      new algorithm::Rottrans_Constraints();
+            new algorithm::Rottrans_Constraints();
     md_seq.push_back(rtc);
   }
 
