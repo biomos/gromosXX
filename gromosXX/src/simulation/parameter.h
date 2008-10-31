@@ -28,7 +28,11 @@ namespace simulation
     /**
      * flexible shake
      */
-    constr_flexshake
+    constr_flexshake,
+    /**
+     * settle
+     */
+    constr_settle
   };
   /**
    * @enum special_loop_enum

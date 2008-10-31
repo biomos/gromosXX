@@ -37,6 +37,7 @@
 #include <algorithm/constraints/lincs.h>
 #include <algorithm/constraints/flexible_constraint.h>
 #include <algorithm/constraints/perturbed_flexible_constraint.h>
+#include <algorithm/constraints/settle.h>
 
 #include <algorithm/constraints/rottrans.h>
 
@@ -149,12 +150,16 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 
 	break;
 
-      }
+    }
+    case simulation::constr_settle :
+    {
+      io::messages.add("SETTLE is only available for solvent.", "create_constraints",
+              io::message::error);
+    }
     default:
-      {
-	// no constraints...
-      }
-      
+    {
+      // no constraints...
+    }
   }
 
   // sovlent (if not the same as solute)
@@ -173,22 +178,31 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 	  md_seq.push_back(s);
 	  
 	  break;
-	}
-      case simulation::constr_lincs:
-	{
-	  algorithm::Lincs * s =
-	    new algorithm::Lincs;
-	  it.read_harmonic_bonds(s->parameter());
-	  md_seq.push_back(s);
-	  
-	  break;
-	}
-      case simulation::constr_flexshake:
-	{
-	  io::messages.add("Flexible Shake not implemented for solvent",
-			   "create_constraints", io::message::error);
-	  break;
-	}
+      }
+      case simulation::constr_lincs :
+      {
+        algorithm::Lincs * s =
+                new algorithm::Lincs;
+        it.read_harmonic_bonds(s->parameter());
+        md_seq.push_back(s);
+
+        break;
+      }
+      case simulation::constr_flexshake :
+      {
+        io::messages.add("Flexible Shake not implemented for solvent",
+                "create_constraints", io::message::error);
+        break;
+      }
+      case simulation::constr_settle :
+      {
+        algorithm::Settle * s =
+                new algorithm::Settle;
+        it.read_harmonic_bonds(s->parameter());
+        md_seq.push_back(s);
+
+        break;
+      }
       default:
 	{
 	  // no constraints

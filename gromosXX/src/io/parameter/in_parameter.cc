@@ -341,11 +341,13 @@ CONSTRAINT
 #	NTCS: solvent algorithm
 #             - shake
 #             - lincs
+#             - settle
 #       NTCS
         shake
 #       NTCS0(1):  algorithm options
 #         - shake: tolerance
 #         - lincs: order
+#         - settle: no arguments
 #       NTCS0(1)
         0.0001
 END
@@ -507,7 +509,11 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
       io::messages.add("CONSTRAINT block: lincs order should be >1",
 		       "In_Parameter", io::message::error);
 
-  } else if (salg == "off") {
+  } else if (salg == "settle") {
+    DEBUG(9, "constraints solvent settle");
+
+    param.constraint.solvent.algorithm = simulation::constr_settle;
+  }  else if (salg == "off") {
     DEBUG(9, "constraints solvent off");
 
     param.constraint.solvent.algorithm = simulation::constr_off;
