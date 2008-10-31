@@ -53,7 +53,6 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/nonbonded_set.h\
 	nonbonded/interaction/perturbed_nonbonded_set.h\
 	nonbonded/interaction/eds_nonbonded_set.h\
-	nonbonded/interaction/vgrid_nonbonded_set.h\
 	nonbonded/interaction/nonbonded_interaction.h\
 	nonbonded/interaction/omp_nonbonded_interaction.h\
 	nonbonded/interaction/mpi_nonbonded_master.h\
@@ -67,8 +66,7 @@ xxintnbpairlistdir = $(includedir)/gromosXX/interaction/nonbonded/pairlist
 xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\
 	nonbonded/pairlist/pairlist_algorithm.h\
 	nonbonded/pairlist/standard_pairlist_algorithm.h\
-	nonbonded/pairlist/grid_pairlist_algorithm.h\
-	nonbonded/pairlist/vgrid_pairlist_algorithm.h 
+	nonbonded/pairlist/grid_pairlist_algorithm.h
 
 xxintnbspecialdir = $(includedir)/gromosXX/interaction/nonbonded/special
 xxintnbspecial_HEADERS = special/create_special.h\
@@ -83,9 +81,6 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/external_interaction.h\
 	special/ramd_interaction.h
 
-xxintnbvectordir = $(includedir)/gromosXX/interaction/nonbonded/vector
-xxintnbvector_HEADERS = nonbonded/vector/vgrid.h
-
 noinst_LTLIBRARIES = libgrointeraction.la
 
 libgrointeraction_la_SOURCES =interaction.cc\
@@ -98,13 +93,11 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc\
 	nonbonded/pairlist/grid.cc\
 	nonbonded/pairlist/grid_pairlist_algorithm.cc\
-	nonbonded/pairlist/vgrid_pairlist_algorithm.cc\
 	nonbonded/interaction/nonbonded_interaction.cc\
 	nonbonded/interaction/omp_nonbonded_interaction.cc\
 	nonbonded/interaction/mpi_nonbonded_master.cc\
 	nonbonded/interaction/mpi_nonbonded_slave.cc\
 	nonbonded/interaction/nonbonded_set.cc\
-	nonbonded/interaction/vgrid_nonbonded_set.cc\
 	nonbonded/interaction/nonbonded_outerloop.cc\
 	nonbonded/interaction/perturbed_nonbonded_set.cc\
 	nonbonded/interaction/perturbed_nonbonded_outerloop.cc\
@@ -136,8 +129,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/jvalue_restraint_interaction.cc\
 	special/pscale.cc\
 	special/external_interaction.cc\
-	special/ramd_interaction.cc\
-	nonbonded/vector/vgrid.cc
+	special/ramd_interaction.cc
 
 bin_PROGRAMS =			
 

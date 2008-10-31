@@ -97,7 +97,9 @@ int interaction::CUDA_Nonbonded_Set
   }
 
   if (pairlist_update) {
+#ifdef HAVE_LIBCUKERNEL
     const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
+#endif
     DEBUG(8, "doing longrange calculation");
 
     // in case of LS only LJ are calculated

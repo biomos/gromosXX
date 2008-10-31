@@ -24,7 +24,6 @@
 #include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
 #include <interaction/nonbonded/interaction/nonbonded_set_interface.h>
 #include <interaction/nonbonded/interaction/nonbonded_set.h>
-#include <interaction/nonbonded/interaction/vgrid_nonbonded_set.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_term.h>
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
@@ -259,20 +258,10 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
                                                       m_parameter, i, m_set_size));
       DEBUG(16, "pushed back EDS nonbonded set");
     }
-      
-  }
-  else{
-    for(int i=0; i<m_set_size; ++i){
-      if (sim.param().pairlist.grid == 2){
-	// std::cerr << "creating VGrid_Nonbonded_Set" << std::endl;
-	m_nonbonded_set.push_back(new VGrid_Nonbonded_Set(*m_pairlist_algorithm, 
-							  m_parameter, i, m_set_size));
-      }
-      else{
-	// std::cerr << "creating Nonbonded_Set" << std::endl;
-	m_nonbonded_set.push_back(new Nonbonded_Set(*m_pairlist_algorithm, 
-						    m_parameter, i, m_set_size));
-      }
+  } else {
+    for (int i = 0; i < m_set_size; ++i) {
+      m_nonbonded_set.push_back(new Nonbonded_Set(*m_pairlist_algorithm,
+              m_parameter, i, m_set_size));
     }
   }
 

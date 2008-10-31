@@ -1492,7 +1492,6 @@ void io::In_Parameter::read_COMTRANSROT(simulation::Parameter &param,
 PAIRLIST
 #       ALGORITHM: standard(0) (gromos96 like pairlist)
 #                  grid(1) (md++ grid pairlist)
-#                  vgrid(2) (md++ vector grid pairlist)
 #       SIZE:      grid cell size (or auto = 0.5 * RCUTP)
 #       TYPE:      chargegoup(0) (chargegroup based cutoff)
 #                  atomic(1) (atom based cutoff)
@@ -1536,9 +1535,8 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
     std::transform(s2.begin(), s2.end(), s2.begin(), tolower);
     std::transform(s3.begin(), s3.end(), s3.begin(), tolower);
 
-    if (s1 == "grid") param.pairlist.grid = 1;
-    else if (s1 == "vgrid") param.pairlist.grid = 2;
-    else if (s1 == "standard") param.pairlist.grid = 0;
+    if (s1 == "grid" || s1 == "1") param.pairlist.grid = 1;
+    else if (s1 == "standard" || s1 == "0") param.pairlist.grid = 0;
     else {
       std::istringstream css;
       css.str(s1);
@@ -1572,8 +1570,6 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
       std::istringstream css;
       css.str(s3);
       css >> param.pairlist.atomic_cutoff;
-
-      // param.pairlist.atomic_cutoff = (atoi(s3.c_str()) != 0);
       if (css.fail()) {
         io::messages.add("PAIRLIST block: wrong cutoff type chosen "
             "(allowed: atomic, chargegroup)",

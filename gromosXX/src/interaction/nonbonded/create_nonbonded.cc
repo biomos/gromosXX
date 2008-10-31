@@ -25,7 +25,6 @@
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/vgrid_pairlist_algorithm.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
 #include <interaction/nonbonded/interaction/nonbonded_set.h>
@@ -154,8 +153,10 @@ int interaction::create_g96_nonbonded
     pa = new Standard_Pairlist_Algorithm();
   } else if (sim.param().pairlist.grid == 1) {
     pa = new Grid_Pairlist_Algorithm();
-  } else if (sim.param().pairlist.grid == 2) {
-    pa = new VGrid_Pairlist_Algorithm();
+  } else {
+    io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
+            io::message::error);
+    return 1;
   }
   
 #if defined(OMP)

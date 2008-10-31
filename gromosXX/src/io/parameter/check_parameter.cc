@@ -97,7 +97,6 @@ int io::check_parameter(simulation::Simulation & sim)
   // PAIRLIST block
   add("pairlist_standard", "standard pairlist algorithm", param.pairlist.grid == 0);
   add("pairlist_grid", "grid-based pairlist algorithm", param.pairlist.grid == 1);
-  add("pairlist_vgrid", "vector grid-based pairlist algorithm", param.pairlist.grid == 2);
   add("cutoff_atomic", "atomic cutoff", param.pairlist.atomic_cutoff);
   // CGRAIN block
   add("coarse_grain", "coarse-grained simulation", param.cgrain.level == 1);
@@ -230,7 +229,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute", "rf_excluded");
   fc.unlock("solute", "pairlist_standard");
   fc.unlock("solute", "pairlist_grid");
-  fc.unlock("solute", "pairlist_vgrid");
   fc.unlock("solute", "cutoff_atomic");
   fc.unlock("solute", "coarse_grain");
   fc.unlock("solute", "multi_grain");
@@ -291,7 +289,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent", "rf_excluded");
   fc.unlock("solvent", "pairlist_standard");
   fc.unlock("solvent", "pairlist_grid");
-  fc.unlock("solvent", "pairlist_vgrid");
   fc.unlock("solvent", "cutoff_atomic");
   fc.unlock("solvent", "coarse_grain");
   fc.unlock("solvent", "multi_grain");
@@ -345,7 +342,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_only", "rf_excluded");
   fc.unlock("solvent_only", "pairlist_standard");
   fc.unlock("solvent_only", "pairlist_grid");
-  fc.unlock("solvent_only", "pairlist_vgrid");
   fc.unlock("solvent_only", "cutoff_atomic");
   fc.unlock("solvent_only", "temp_berendsen");
   fc.unlock("solvent_only", "temp_nosehoover");
@@ -395,7 +391,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "rf_excluded");
   fc.unlock("steepest_descent", "pairlist_standard");
   fc.unlock("steepest_descent", "pairlist_grid");
-  fc.unlock("steepest_descent", "pairlist_vgrid");
   fc.unlock("steepest_descent", "cutoff_atomic");
   fc.unlock("steepest_descent", "coarse_grain");
   fc.unlock("steepest_descent", "multi_grain");
@@ -447,7 +442,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_constraint_off", "rf_excluded");
   fc.unlock("solute_constraint_off", "pairlist_standard");
   fc.unlock("solute_constraint_off", "pairlist_grid");
-  fc.unlock("solute_constraint_off", "pairlist_vgrid");
   fc.unlock("solute_constraint_off", "cutoff_atomic");
   fc.unlock("solute_constraint_off", "coarse_grain");
   fc.unlock("solute_constraint_off", "multi_grain");
@@ -501,7 +495,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_shake", "rf_excluded");
   fc.unlock("solute_shake", "pairlist_standard");
   fc.unlock("solute_shake", "pairlist_grid");
-  fc.unlock("solute_shake", "pairlist_vgrid");
   fc.unlock("solute_shake", "cutoff_atomic");
   fc.unlock("solute_shake", "coarse_grain");
   fc.unlock("solute_shake", "multi_grain");
@@ -555,7 +548,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_lincs", "rf_excluded");
   fc.unlock("solute_lincs", "pairlist_standard");
   fc.unlock("solute_lincs", "pairlist_grid");
-  fc.unlock("solute_lincs", "pairlist_vgrid");
   fc.unlock("solute_lincs", "cutoff_atomic");
   fc.unlock("solute_lincs", "coarse_grain");
   fc.unlock("solute_lincs", "multi_grain");
@@ -607,7 +599,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "rf_excluded");
   fc.unlock("solute_flexshake", "pairlist_standard");
   fc.unlock("solute_flexshake", "pairlist_grid");
-  fc.unlock("solute_flexshake", "pairlist_vgrid");
   fc.unlock("solute_flexshake", "cutoff_atomic");
   fc.unlock("solute_flexshake", "temp_berendsen");
   fc.unlock("solute_flexshake", "temp_nosehoover");
@@ -653,7 +644,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_constraint_off", "rf_excluded");
   fc.unlock("solvent_constraint_off", "pairlist_standard");
   fc.unlock("solvent_constraint_off", "pairlist_grid");
-  fc.unlock("solvent_constraint_off", "pairlist_vgrid");
   fc.unlock("solvent_constraint_off", "cutoff_atomic");
   fc.unlock("solvent_constraint_off", "coarse_grain");
   fc.unlock("solvent_constraint_off", "multi_grain");
@@ -706,7 +696,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_shake", "rf_excluded");
   fc.unlock("solvent_shake", "pairlist_standard");
   fc.unlock("solvent_shake", "pairlist_grid");
-  fc.unlock("solvent_shake", "pairlist_vgrid");
   fc.unlock("solvent_shake", "cutoff_atomic");
   fc.unlock("solvent_shake", "coarse_grain");
   fc.unlock("solvent_shake", "multi_grain");
@@ -756,7 +745,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_calculation", "rf_excluded");
   fc.unlock("pressure_calculation", "pairlist_standard");
   fc.unlock("pressure_calculation", "pairlist_grid");
-  fc.unlock("pressure_calculation", "pairlist_vgrid");
   fc.unlock("pressure_calculation", "cutoff_atomic");
   fc.unlock("pressure_calculation", "coarse_grain");
   fc.unlock("pressure_calculation", "multi_grain");
@@ -805,7 +793,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_scale_berendsen", "rf_excluded");
   fc.unlock("pressure_scale_berendsen", "pairlist_standard");
   fc.unlock("pressure_scale_berendsen", "pairlist_grid");
-  fc.unlock("pressure_scale_berendsen", "pairlist_vgrid");
+
   fc.unlock("pressure_scale_berendsen", "cutoff_atomic");
   fc.unlock("pressure_scale_berendsen", "coarse_grain");
   fc.unlock("pressure_scale_berendsen", "multi_grain");
@@ -853,7 +841,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_off", "rf_excluded");
   fc.unlock("virial_off", "pairlist_standard");
   fc.unlock("virial_off", "pairlist_grid");
-  fc.unlock("virial_off", "pairlist_vgrid");
   fc.unlock("virial_off", "cutoff_atomic");
   fc.unlock("virial_off", "coarse_grain");
   fc.unlock("virial_off", "multi_grain");
@@ -900,7 +887,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_atomic", "rf_excluded");
   fc.unlock("virial_atomic", "pairlist_standard");
   fc.unlock("virial_atomic", "pairlist_grid");
-  fc.unlock("virial_atomic", "pairlist_vgrid");
   fc.unlock("virial_atomic", "cutoff_atomic");
   fc.unlock("virial_atomic", "coarse_grain");
   fc.unlock("virial_atomic", "multi_grain");
@@ -948,7 +934,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_molecular", "rf_excluded");
   fc.unlock("virial_molecular", "pairlist_standard");
   fc.unlock("virial_molecular", "pairlist_grid");
-  fc.unlock("virial_molecular", "pairlist_vgrid");
   fc.unlock("virial_molecular", "cutoff_atomic");
   fc.unlock("virial_molecular", "coarse_grain");
   fc.unlock("virial_molecular", "multi_grain");
@@ -1032,7 +1017,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_r", "rf_excluded");
   fc.unlock("pbc_r", "pairlist_standard");
   fc.unlock("pbc_r", "pairlist_grid");
-  fc.unlock("pbc_r", "pairlist_vgrid");
   fc.unlock("pbc_r", "cutoff_atomic");
   fc.unlock("pbc_r", "coarse_grain");
   fc.unlock("pbc_r", "multi_grain");
@@ -1199,7 +1183,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation_scaling", "rf_excluded");
   fc.unlock("perturbation_scaling", "pairlist_standard");
   fc.unlock("perturbation_scaling", "pairlist_grid");
-  fc.unlock("perturbation_scaling", "pairlist_vgrid");
   fc.unlock("perturbation_scaling", "cutoff_atomic");
   fc.unlock("perturbation_scaling", "temp_berendsen");
   fc.unlock("perturbation_scaling", "temp_nosehoover");
@@ -1260,7 +1243,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("individual_lambdas", "rf_excluded");
   fc.unlock("individual_lambdas", "pairlist_standard");
   fc.unlock("individual_lambdas", "pairlist_grid");
-  fc.unlock("individual_lambdas", "pairlist_vgrid");
   fc.unlock("individual_lambdas", "cutoff_atomic");
   fc.unlock("individual_lambdas", "coarse_grain");
   fc.unlock("individual_lambdas", "multi_grain");
@@ -1303,7 +1285,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bond", "rf_excluded");
   fc.unlock("bond", "pairlist_standard");
   fc.unlock("bond", "pairlist_grid");
-  fc.unlock("bond", "pairlist_vgrid");
   fc.unlock("bond", "cutoff_atomic");
   fc.unlock("bond", "coarse_grain");
   fc.unlock("bond", "multi_grain");
@@ -1343,7 +1324,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("angle", "rf_excluded");
   fc.unlock("angle", "pairlist_standard");
   fc.unlock("angle", "pairlist_grid");
-  fc.unlock("angle", "pairlist_vgrid");
   fc.unlock("angle", "cutoff_atomic");
   fc.unlock("angle", "coarse_grain");
   fc.unlock("angle", "multi_grain");
@@ -1382,7 +1362,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral", "rf_excluded");
   fc.unlock("dihedral", "pairlist_standard");
   fc.unlock("dihedral", "pairlist_grid");
-  fc.unlock("dihedral", "pairlist_vgrid");
   fc.unlock("dihedral", "cutoff_atomic");
   fc.unlock("dihedral", "coarse_grain");
   fc.unlock("dihedral", "multi_grain");
@@ -1420,7 +1399,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("improper", "rf_excluded");
   fc.unlock("improper", "pairlist_standard");
   fc.unlock("improper", "pairlist_grid");
-  fc.unlock("improper", "pairlist_vgrid");
   fc.unlock("improper", "cutoff_atomic");
   fc.unlock("improper", "coarse_grain");
   fc.unlock("improper", "multi_grain");
@@ -1457,7 +1435,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("crf", "rf_excluded");
   fc.unlock("crf", "pairlist_standard");
   fc.unlock("crf", "pairlist_grid");
-  fc.unlock("crf", "pairlist_vgrid");
   fc.unlock("crf", "cutoff_atomic");
   fc.unlock("crf", "coarse_grain");
   fc.unlock("crf", "multi_grain");
@@ -1493,7 +1470,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("lj", "rf_excluded");
   fc.unlock("lj", "pairlist_standard");
   fc.unlock("lj", "pairlist_grid");
-  fc.unlock("lj", "pairlist_vgrid");
   fc.unlock("lj", "cutoff_atomic");
   fc.unlock("lj", "coarse_grain");
   fc.unlock("lj", "multi_grain");
@@ -1528,7 +1504,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("com_removal", "rf_excluded");
   fc.unlock("com_removal", "pairlist_standard");
   fc.unlock("com_removal", "pairlist_grid");
-  fc.unlock("com_removal", "pairlist_vgrid");
   fc.unlock("com_removal", "cutoff_atomic");
   fc.unlock("com_removal", "coarse_grain");
   fc.unlock("com_removal", "multi_grain");
@@ -1562,7 +1537,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("com_removal", "parallel_omp");
   fc.unlock("rf_excluded", "pairlist_standard");
   fc.unlock("rf_excluded", "pairlist_grid");
-  fc.unlock("rf_excluded", "pairlist_vgrid");
   fc.unlock("rf_excluded", "cutoff_atomic");
   fc.unlock("rf_excluded", "coarse_grain");
   fc.unlock("rf_excluded", "multi_grain");
@@ -1655,26 +1629,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_grid", "random_gsl");
   fc.unlock("pairlist_grid", "parallel_mpi");
   fc.unlock("pairlist_grid", "parallel_omp");
-  fc.unlock("pairlist_vgrid", "temp_berendsen");
-  fc.unlock("pairlist_vgrid", "temp_nosehoover");
-  fc.unlock("pairlist_vgrid", "temp_nosehoover_chains");
-  fc.unlock("pairlist_vgrid", "position_rest");
-  fc.unlock("pairlist_vgrid", "position_const");
-  fc.unlock("pairlist_vgrid", "position_const_scaled");
-  fc.unlock("pairlist_vgrid", "distance_rest");
-  fc.unlock("pairlist_vgrid", "dihedral_rest");
-  fc.unlock("pairlist_vgrid", "dihedral_const");
-  fc.unlock("pairlist_vgrid", "jvalue_rest");
-  fc.unlock("pairlist_vgrid", "perscale");
-  fc.unlock("pairlist_vgrid", "rottrans");
-  fc.unlock("pairlist_vgrid", "repex_temp");
-  fc.unlock("pairlist_vgrid", "repex_lambda");
-  fc.unlock("pairlist_vgrid", "analysis");
-  fc.unlock("pairlist_vgrid", "no_integration");
-  fc.unlock("pairlist_vgrid", "stochdyn");
-  fc.unlock("pairlist_vgrid", "ramd");
-  fc.unlock("pairlist_vgrid", "random_gromos");
-  fc.unlock("pairlist_vgrid", "random_gsl");
   fc.unlock("cutoff_atomic", "coarse_grain");
   fc.unlock("cutoff_atomic", "multi_grain");
   fc.unlock("cutoff_atomic", "temp_berendsen");
@@ -2122,7 +2076,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("slow_growth", "rf_excluded");
   fc.unlock("slow_growth", "pairlist_standard");
   fc.unlock("slow_growth", "pairlist_grid");
-  fc.unlock("slow_growth", "pairlist_vgrid");
   fc.unlock("slow_growth", "cutoff_atomic");
   fc.unlock("slow_growth", "coarse_grain");
   fc.unlock("slow_growth", "multi_grain");
@@ -2183,7 +2136,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("eds", "rf_excluded"); // fix!
   fc.unlock("eds", "pairlist_standard");
   fc.unlock("eds", "pairlist_grid");
-  //fc.unlock("eds", "pairlist_vgrid");
   fc.unlock("eds", "cutoff_atomic");
   //fc.unlock("eds", "coarse_grain");
   //fc.unlock("eds", "multi_grain");
@@ -2249,7 +2201,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("mult_energy_groups", "rf_excluded");
   fc.unlock("mult_energy_groups", "pairlist_standard");
   fc.unlock("mult_energy_groups", "pairlist_grid");
-  fc.unlock("mult_energy_groups", "pairlist_vgrid");
   fc.unlock("mult_energy_groups", "cutoff_atomic");
   fc.unlock("mult_energy_groups", "coarse_grain");
   fc.unlock("mult_energy_groups", "multi_grain");
@@ -2317,7 +2268,6 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("ewald", "rf_excluded");
   fc.unlock("ewald", "pairlist_standard");
   fc.unlock("ewald", "pairlist_grid");
-  //fc.unlock("ewald", "pairlist_vgrid");
   fc.unlock("ewald", "cutoff_atomic");
   //fc.unlock("ewald", "coarse_grain");
   //fc.unlock("ewald", "multi_grain");
@@ -2388,7 +2338,6 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("p3m", "rf_excluded");
   fc.unlock("p3m", "pairlist_standard");
   fc.unlock("p3m", "pairlist_grid");
-  //fc.unlock("p3m", "pairlist_vgrid");
   fc.unlock("p3m", "cutoff_atomic");
   //fc.unlock("p3m", "coarse_grain");
   //fc.unlock("p3m", "multi_grain");
@@ -2458,7 +2407,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_off", "rf_excluded");
   fc.unlock("innerloop_method_off", "pairlist_standard");
   fc.unlock("innerloop_method_off", "pairlist_grid");
-  fc.unlock("innerloop_method_off", "pairlist_vgrid");
   fc.unlock("innerloop_method_off", "cutoff_atomic");
   fc.unlock("innerloop_method_off", "coarse_grain");
   fc.unlock("innerloop_method_off", "multi_grain");
@@ -2719,7 +2667,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_topology", "rf_excluded");
   fc.unlock("innerloop_solvent_topology", "pairlist_standard");
   fc.unlock("innerloop_solvent_topology", "pairlist_grid");
-  fc.unlock("innerloop_solvent_topology", "pairlist_vgrid");
   fc.unlock("innerloop_solvent_topology", "cutoff_atomic");
   fc.unlock("innerloop_solvent_topology", "coarse_grain");
   fc.unlock("innerloop_solvent_topology", "multi_grain");
@@ -2788,7 +2735,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_spc", "rf_excluded");
   fc.unlock("innerloop_solvent_spc", "pairlist_standard");
   fc.unlock("innerloop_solvent_spc", "pairlist_grid");
-  fc.unlock("innerloop_solvent_spc", "pairlist_vgrid");
   fc.unlock("innerloop_solvent_spc", "cutoff_atomic");
   fc.unlock("innerloop_solvent_spc", "coarse_grain");
   fc.unlock("innerloop_solvent_spc", "multi_grain");
@@ -2854,7 +2800,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_lincs", "rf_excluded");
   fc.unlock("solvent_lincs", "pairlist_standard");
   fc.unlock("solvent_lincs", "pairlist_grid");
-  fc.unlock("solvent_lincs", "pairlist_vgrid");
   fc.unlock("solvent_lincs", "cutoff_atomic");
   fc.unlock("solvent_lincs", "coarse_grain");
   fc.unlock("solvent_lincs", "multi_grain");
@@ -2928,7 +2873,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_settle", "rf_excluded");
   fc.unlock("solvent_settle", "pairlist_standard");
   fc.unlock("solvent_settle", "pairlist_grid");
-  fc.unlock("solvent_settle", "pairlist_vgrid");
   fc.unlock("solvent_settle", "cutoff_atomic");
   fc.unlock("solvent_settle", "coarse_grain");
   fc.unlock("solvent_settle", "multi_grain");
