@@ -189,8 +189,8 @@ void algorithm::Settle
   const double mass_H = topo.solvent(0).atom(1).mass;
   // distance constraints
   assert(topo.solvent(0).distance_constraints().size() == 3);
-  assert(parameter()[topo.solvent(0).distance_constraint(0).type].r0 ==
-      parameter()[topo.solvent(0).distance_constraint(1).type].r0);
+  assert(parameter()[topo.solvent(0).distance_constraints()[0].type].r0 ==
+      parameter()[topo.solvent(0).distance_constraints()[1].type].r0);
   const double dist_OH = parameter()[topo.solvent(0).distance_constraints()[0].type].r0;
   const double dist_HH = parameter()[topo.solvent(0).distance_constraints()[2].type].r0;
 
