@@ -26,86 +26,170 @@ namespace interaction {
      * @f$ \eta'(\xi) @f$ 
      * @param[in] shape the charge shape switch
      * @param[out] eta_xi the shaping switch function @f$ \eta(\xi) @f$
-     * @param[out] eta_xi_d_xi the derivative @f$ \eta'(\xi) @f$ 
+     * @param[out] eta_xi_d_xi the derivative @f$ \eta'(\xi) @f$
+     * @todo optimize for speed 
      */
     static inline void charge_shape_switch(const int &shape,
             const double &xi,
             double &eta_xi,
             double &d_eta_xi_d_xi) {
-      
-      // to do: optimize these functions for speed
       switch(shape) {
         case -1 :
           eta_xi = erfc(xi);
-          // - 2*exp(- xi^2) / sqrt(pi) 
           d_eta_xi_d_xi = exp(-xi * xi) * -2.0 / sqrt(math::Pi);
           break;
         case 0 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = 0.5 * pow(1.0 - xi,2.0)*(xi + 2.0) * h1mxi;
-          d_eta_xi_d_xi = 3.0 / 2.0 * (xi * xi - 1.0) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          eta_xi = 0.5 * onemxi*(xi + 2.0);
+          d_eta_xi_d_xi = 3.0 / 2.0 * (xi * xi - 1.0);
           break;
         }
         case 1 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = pow(1.0 - xi, 3.0) * (xi + 1) * h1mxi;
-          d_eta_xi_d_xi = -2.0 * pow(xi - 1.0, 2.0) * (1.0 + 2.0 * xi) * h1mxi;
+          const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi3 = onemxi2 * onemxi;
+          eta_xi = onemxi3 * (xi + 1.0) ;
+          d_eta_xi_d_xi = -2.0 * onemxi2 * (1.0 + 2.0 * xi);
           break;
         } 
         case 2 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = 1.0 / 2.0 * pow(1.0 - xi, 4.0) * (3.0 * xi + 2.0) * h1mxi;
-          d_eta_xi_d_xi = 5.0 / 2.0 * pow(xi - 1.0, 3.0) * (1.0 + 3.0 * xi) * h1mxi;
+          const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi3 = onemxi2 * onemxi;
+          const double onemxi4 = onemxi2 * onemxi2;
+          eta_xi = 1.0 / 2.0 * onemxi4 * (3.0 * xi + 2.0);
+          d_eta_xi_d_xi = -5.0 / 2.0 * onemxi3 * (1.0 + 3.0 * xi);
           break;
         }
         case 3 : {
-          const double xi2= xi*xi;
-          const double xim1 = xi - 1;
-          const double h1mxi = math::heaviside(1-xi);
-          eta_xi = 0.25*pow(xim1,4.0)*(4*xi2+7*xi+4)*h1mxi;
-          d_eta_xi_d_xi = pow(xim1,3.0)*(2.25+6.75*xi+6*xi2)*h1mxi;
+          const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi3 = onemxi2 * onemxi;
+          const double onemxi4 = onemxi2 * onemxi2;
+          eta_xi = 1.0 / 4.0 * onemxi4 * ((4.0 * xi + 7.0) * xi + 4.0);
+          d_eta_xi_d_xi = -3.0 / 4.0 * onemxi3 * ((8.0 * xi + 9.0) * xi + 3.0);
           break;
         }
         case 4 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = 1.0 / 8.0 * pow(1.0 - xi, 5.0) * (15.0 * xi * xi + 19.0 * xi + 8.0) * h1mxi;
-          d_eta_xi_d_xi = - 21.0 / 8.0 * pow(xi - 1.0, 4.0) * (1.0 + xi * ( 4.0 + 5.0 * xi)) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi4 = onemxi2 * onemxi2;
+          const double onemxi5 = onemxi4 * onemxi;
+          eta_xi = 1.0 / 8.0 * onemxi5 * ((15.0 * xi + 19.0) * xi + 8.0);
+          d_eta_xi_d_xi = - 21.0 / 8.0 * onemxi4 * (1.0 + xi * ( 4.0 + 5.0 * xi));
           break;
         }
         case 5 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = pow(1.0 - xi, 6.0) * (3.0 * xi * xi + 3.0 * xi + 1.0) * h1mxi;
-          d_eta_xi_d_xi = 3.0 * pow(xi - 1.0, 5.0) * (1.0 + xi * ( 5.0 + 8.0 * xi)) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi4 = onemxi2 * onemxi2;
+          const double onemxi5 = onemxi4 * onemxi;
+          const double onemxi6 = onemxi4 * onemxi2;
+          const double h1mxi = math::heaviside(onemxi);
+          eta_xi = onemxi6 * ((3.0 * xi + 3.0) * xi + 1.0);
+          d_eta_xi_d_xi = -3.0 * onemxi5 * (1.0 + xi * (5.0 + 8.0 * xi));
           break;
         }
         case 6 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = 1.0 / 16.0 * pow(1.0 - xi, 6.0) * (35.0 * pow(xi,3.0) + 66.0 * xi * xi + 51.0 * xi + 16.0) * h1mxi;
-          d_eta_xi_d_xi = 9.0 / 16.0 * pow(xi - 1.0, 5.0) * (5.0 + xi * ( 25.0 + xi * (47.0 + 35.0 * xi ))) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi5 = onemxi2 * onemxi2 * onemxi;
+          const double onemxi6 = onemxi5 * onemxi;
+          eta_xi = 1.0 / 16.0 * onemxi6 * (((35.0 * xi + 66.0) * xi + 51.0) * xi + 16.0);
+          d_eta_xi_d_xi = -9.0 / 16.0 * onemxi5 * (5.0 + xi * ( 25.0 + xi * (47.0 + 35.0 * xi )));
           break;
         }
         case 7 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = 1.0 / 8.0 * pow(1.0 - xi , 7.0) * (32.0 * pow(xi, 3.0) + 49.0 * xi * xi + 31.0 * xi + 8.0) * h1mxi;
-          d_eta_xi_d_xi = -5.0 / 8.0 * pow(xi - 1.0, 6.0) * (5.0 + xi * (30.0 + xi * (69.0 + 64.0 * xi))) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi6 = onemxi2 * onemxi2 * onemxi2;
+          const double onemxi7 = onemxi6 * onemxi;
+          eta_xi = 1.0 / 8.0 * onemxi7 * (((32.0 * xi + 49.0) * xi + 31.0) * xi + 8.0);
+          d_eta_xi_d_xi = -5.0 / 8.0 * onemxi6 * (5.0 + xi * (30.0 + xi * (69.0 + 64.0 * xi)));
           break;
         }
         case 8 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = 1.0 / 16.0 * pow(1.0 - xi, 8.0) * (105.0 * pow(xi,3.0) + 136.0 * xi * xi + 73.0 * xi + 16.0) * h1mxi;
-          d_eta_xi_d_xi = 55.0 / 16.0 * pow(xi - 1.0, 7.0) * (1.0 + 3.0 * xi) * (1.0 + xi  * (4.0 + 7.0 * xi )) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi3 = onemxi * onemxi * onemxi;
+          const double onemxi7 = onemxi3 * onemxi3 * onemxi;
+          const double onemxi8 = onemxi7 * onemxi;
+          eta_xi = 1.0 / 16.0 * onemxi8 * (((105.0 * xi + 136.0) * xi + 73.0) * xi + 16.0);
+          d_eta_xi_d_xi = -55.0 / 16.0 * onemxi7 * (1.0 + 3.0 * xi) * (1.0 + xi  * (4.0 + 7.0 * xi ));
           break;
         }
         case 9 : {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi = 1.0 / 32.0 * pow(1.0 - xi, 8.0) * (160.0 * pow(xi, 4.0) + 335.0 * pow(xi,3.0) + 312.0 * xi * xi + 151.0 * xi + 32.0) * h1mxi;
-          d_eta_xi_d_xi = 15.0 / 32.0 * pow(xi - 1.0, 7.0) * (7.0 + xi * (49.0 + xi * (141.0 + xi * (203.0 + 128.0*xi)))) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi3 = onemxi * onemxi * onemxi;
+          const double onemxi7 = onemxi3 * onemxi3 * onemxi;
+          const double onemxi8 = onemxi7 * onemxi;
+          eta_xi = 1.0 / 32.0 * onemxi8 * ((((160.0 * xi + 335.0) * xi + 312.0) * xi + 151.0) * xi + 32.0);
+          d_eta_xi_d_xi = -15.0 / 32.0 * onemxi7 * (7.0 + xi * (49.0 + xi * (141.0 + xi * (203.0 + 128.0*xi))));
           break;
         }
         case 10: {
-          const double h1mxi = math::heaviside(1.0-xi);
-          eta_xi =  1.0 / 128.0 * pow(1.0 - xi, 9.0) * (1155.0 * pow(xi,4.0) + 2075.0 * pow(xi,3.0) + 1665.0 * xi * xi + 697.0 * xi + 128.0) * h1mxi;               
-          d_eta_xi_d_xi = -65.0 / 128.0 * pow(xi - 1.0, 8.0) * (7.0 + xi * (56.0 + 3.0 * xi * (62.0 + xi * (104.0 + 77.0 * xi )))) * h1mxi;
+         const double onemxi = 1.0 - xi;
+          if (onemxi < 0.0) {
+            eta_xi = 0.0;
+            d_eta_xi_d_xi = 0.0;
+            break;         
+          }
+          const double onemxi2 = onemxi * onemxi;
+          const double onemxi4 = onemxi2 * onemxi2;
+          const double onemxi8 = onemxi4 * onemxi4;
+          const double onemxi9 = onemxi8 * onemxi;
+          eta_xi =  1.0 / 128.0 * onemxi9 * ((((1155.0 * xi + 2075.0) * xi + 1665.0) * xi + 697.0) * xi + 128.0);               
+          d_eta_xi_d_xi = -65.0 / 128.0 * onemxi8 * (7.0 + xi * (56.0 + 3.0 * xi * (62.0 + xi * (104.0 + 77.0 * xi ))));
           break;
         }
         default:
@@ -124,52 +208,79 @@ namespace interaction {
             const double &kappa,
             double &gamma_hat) {
       switch(shape) {
-        case -1 :
+        case -1 : {
           gamma_hat = exp(kappa * kappa * -0.25); 
           break;
-        case 0 :
-          gamma_hat = 3.0 * (sin(kappa) - kappa * cos(kappa))/pow(kappa,3.0);
+        }
+        case 0 : {
+          const double k3 = kappa * kappa * kappa;
+          gamma_hat = 3.0 * (sin(kappa) - kappa * cos(kappa))/k3;
           break;
-        case 1 :
-          gamma_hat = 12.0 * (2.0 - 2.0 * cos(kappa) - kappa * sin(kappa)) / pow(kappa,4.0);
+        }
+        case 1 : {
+          const double k2 = kappa * kappa;
+          const double k4 = k2*k2;
+          gamma_hat = 12.0 * (2.0 - 2.0 * cos(kappa) - kappa * sin(kappa)) / k4;
           break;
-        case 2 :
-          gamma_hat = 60.0 * (2.0 * kappa + kappa * cos(kappa) - 3.0 * sin(kappa)) / pow(kappa,5.0);
+        }
+        case 2 : {
+          const double k2 = kappa * kappa;
+          const double k5 = k2 * k2 * kappa;
+          gamma_hat = 60.0 * (2.0 * k2 * cos(kappa) - 3.0 * sin(kappa)) / k5;
           break;
-        case 3 : 
-          gamma_hat = 90.0*(8.0  + (kappa*kappa - 8.0)*cos(kappa) - 5.0 * kappa * sin(kappa))/pow(kappa,6.0);
-          break;        
-        case 4 :
-          gamma_hat = 630.0 * (8.0 * kappa + 7.0 * kappa * cos(kappa) + (kappa * kappa - 15.0) * sin(kappa)) / pow(kappa,7.0);
+        }
+        case 3 : {
+          const double k2 = kappa * kappa;
+          const double k6 = k2 * k2 * k2;
+          gamma_hat = 90.0*(8.0  + (k2 - 8.0)*cos(kappa) - 5.0 * kappa * sin(kappa))/k6;
+          break;  
+        }
+        case 4 : {
+          const double k2 = kappa;
+          const double k7 = k2 * k2 * k2 * kappa;
+          gamma_hat = 630.0 * (8.0 * kappa + 7.0 * kappa * cos(kappa) + (k2 - 15.0) * sin(kappa)) / k7;
           break;
+        }
         case 5: {
           const double k2 = kappa * kappa;
-          gamma_hat = 5040.0 * (4.0 * (k2 - 6.0) - (k2 - 24.0) * cos(kappa) + 9.0 * kappa * sin(kappa)) / pow(kappa, 8.0);
+          const double k4 = k2 * k2;
+          const double k8 = k4 * k4;
+          gamma_hat = 5040.0 * (4.0 * (k2 - 6.0) - (k2 - 24.0) * cos(kappa) + 9.0 * kappa * sin(kappa)) / k8;
           break;
         }
         case 6 : {
           const double k2 = kappa * kappa;
-          gamma_hat = 7560.0 * ( 48.0 * kappa - (k2 - 57.0) * kappa * cos(kappa) + 3.0 * (4.0 * k2 - 35.0) * sin(kappa)) / pow(kappa, 9.0);
+          const double k4 = k2 * k2;
+          const double k9 = k4 * k4 * kappa;
+          gamma_hat = 7560.0 * ( 48.0 * kappa - (k2 - 57.0) * kappa * cos(kappa) + 3.0 * (4.0 * k2 - 35.0) * sin(kappa)) / k9;
           break;
         }
         case 7 : {
           const double k2 = kappa * kappa;
-          gamma_hat = 75600.0 * (24.0 * (k2 - 8.0) - 3.0 * (5.0 * k2 - 64.0) * cos(kappa) - (k2 - 87.0) * kappa * sin(kappa)) / pow(kappa, 10.0);
+          const double k4 = k2 * k2;
+          const double k10 = k4 * k4 * k2;
+          gamma_hat = 75600.0 * (24.0 * (k2 - 8.0) - 3.0 * (5.0 * k2 - 64.0) * cos(kappa) - (k2 - 87.0) * kappa * sin(kappa)) / k10;
           break;
         }
         case 8 : {
           const double k2 = kappa * kappa;
-          gamma_hat = 831600.0 * (8.0 * kappa * (k2 - 24.0) + (k2 - 123.0)* kappa * cos(kappa) - (18.0*k2 - 315.0) * sin(kappa)) / pow(kappa, 11.0);
+          const double k4 = k2 * k2;
+          const double k11 = k4 * k4 * k2 * kappa;
+          gamma_hat = 831600.0 * (8.0 * kappa * (k2 - 24.0) + (k2 - 123.0)* kappa * cos(kappa) - (18.0*k2 - 315.0) * sin(kappa)) / k11;
           break;
         }
         case 9 : {
           const double k2 = kappa * kappa;
-          gamma_hat = 1247400.0 * (192.0 * (k2 - 10.0) + (k2*k2 - 207.0*k2 + 1920) * cos(kappa) - (22.0 * k2 - 975.0) * kappa * sin(kappa)) / pow(kappa, 12.0);
+          const double k4 = k2 * k2;
+          const double k12 = k4 * k4 * k4;
+          gamma_hat = 1247400.0 * (192.0 * (k2 - 10.0) + (k4 - 207.0*k2 + 1920) * cos(kappa) - (22.0 * k2 - 975.0) * kappa * sin(kappa)) / k12;
           break;
         }
         case 10 : {
           const double k2 = kappa * kappa;
-          gamma_hat = 16216200.0 * (64.0 * kappa * (k2 - 30.0) + (26.0 * k2 - 1545.0) * kappa * cos(kappa) + (k2*k2 - 285.0 * k2 + 3465.0) * sin(kappa)) / pow(kappa,13.0);
+          const double k4 = k2 * k2;
+          const double k13 = k4 * k4 * k4 * kappa;
+          gamma_hat = 16216200.0 * (64.0 * kappa * (k2 - 30.0) + (26.0 * k2 - 1545.0) * kappa * cos(kappa) + (k4 - 285.0 * k2 + 3465.0) * sin(kappa)) / k13;
           break;
         }
         default:
@@ -195,36 +306,46 @@ namespace interaction {
         }
         case 3:
         {
-          double result = 0.0;
-          if (absf < 0.5)
-            result = 0.75 - xi * xi;
-          else if (absf >= 0.5 && absf < 1.5)
-            result = 0.125 * pow(2.0 * absf - 3.0, 2.0);
-
-          return result;
+          if (absf < 0.5) {
+            return 0.75 - xi * xi;
+          } else if (absf >= 0.5 && absf < 1.5) {
+            const double term = 2.0 * absf - 3.0;
+            return 0.125 * term * term;
+          } else {
+            return 0.0;
+          }
         }
         case 4:
         {
-          double result = 0.0;
-          if (absf < 1.0)
-            result = 1.0 / 6.0 * (3.0 * pow(absf, 3.0) - 6.0 * pow(absf, 2.0) + 4.0);
-          else if (absf >= 1.0 && absf < 2.0)
-            result = -1.0 / 6.0 * pow(absf - 2.0, 3.0);
-
-          return result;
+          if (absf < 1.0) {
+            const double absf2 = absf * absf;
+            return 1.0 / 6.0 * (3.0 * absf2 * absf - 6.0 * absf2 + 4.0);
+          } else if (absf >= 1.0 && absf < 2.0) {
+            const double term = absf - 2.0;
+            return -1.0 / 6.0 * term * term * term;
+          } else {
+            return 0.0;
+          }
         }
         case 5:
         {
-          double result = 0.0;
-          if (absf < 0.5)
-            result = 1.0 / 192.0 * (48.0 * pow(xi, 4.0) - 120.0 * xi * xi + 115);
-          else if (absf >= 0.5 && absf < 1.5)
-            result = -1.0 / 96.0 * (16.0 * pow(xi, 4.0) - 80.0 * pow(absf, 3.0) +
-                  120.0 * xi * xi - 20.0 * absf - 55.0);
-          else if (absf >= 1.5 && absf < 2.5)
-            result = 1.0 / 384.0 * pow(2 * absf - 5.0, 4.0);
-
-          return result;
+          if (absf < 0.5) {
+            const double xi2 = xi * xi;
+            const double xi4 = xi2 * xi2;
+            return 1.0 / 192.0 * (48.0 * xi4 - 120.0 * xi2 + 115);
+          } else if (absf >= 0.5 && absf < 1.5) {
+            const double xi2 = xi * xi;
+            const double xi4 = xi2 * xi2;
+            const double absf3 = absf * absf * absf;
+            return -1.0 / 96.0 * (16.0 * xi4 - 80.0 * absf3 +
+                  120.0 * xi2 - 20.0 * absf - 55.0);
+          } else if (absf >= 1.5 && absf < 2.5) {
+            const double tmp = 2 * absf - 5.0;
+            const double tmp2 = tmp * tmp;
+            return 1.0 / 384.0 * tmp2 * tmp2;
+          } else {
+            return 0.0;
+          }
         }
         default:
           io::messages.add("assignment function not implemented", "Lattice Sum",
