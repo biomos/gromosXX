@@ -12,6 +12,8 @@ automake --add-missing --copy --force &&
 autoheader --force ||
 echo "setup failed. try doing it manually"
 
+svn revert INSTALL
+
 echo ""
 echo "configure next"
 echo ""
