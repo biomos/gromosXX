@@ -41,6 +41,7 @@
 // linux includes?
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <limits.h>
 // end linux includes
 #include <netdb.h>
 
