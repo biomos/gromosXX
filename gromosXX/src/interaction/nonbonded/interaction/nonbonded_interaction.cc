@@ -307,7 +307,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
   DEBUG(10, " param: special_loop = " << sim.param().force.special_loop);
   
   if (sim.param().innerloop.method == simulation::sla_off) {
-    sim.param().force.special_loop ==  simulation::special_loop_off;
+    sim.param().force.special_loop =  simulation::special_loop_off;
     DEBUG(8, "standard loops, user request");
     if (!quiet)
       os << "\tusing standard solvent loops (user request)\n";
@@ -328,15 +328,16 @@ int interaction::Nonbonded_Interaction::check_special_loop
   if (topo.num_solvents() != 1 || topo.num_solvent_molecules(0) < 1){
   
     DEBUG(10, "standard loops...");
-    
-    if (!quiet)
-      if (topo.num_solvents() > 0){
-	if (topo.num_solvent_molecules(0) == 0){
-	  os << "\tusing standard solvent loops (no solvent present!)\n\n";
-	}
-      } else{
-	os << "\tusing standard solvent loops (no solvent in topology!)\n\n";
+
+    if (!quiet) {
+      if (topo.num_solvents() > 0) {
+        if (topo.num_solvent_molecules(0) == 0) {
+          os << "\tusing standard solvent loops (no solvent present!)\n\n";
+        }
+      } else {
+        os << "\tusing standard solvent loops (no solvent in topology!)\n\n";
       }
+    }
     return 1;
   }
   
