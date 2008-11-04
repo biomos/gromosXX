@@ -46,7 +46,7 @@ namespace interaction {
             break;         
           }
           const double onemxi2 = onemxi * onemxi;
-          eta_xi = 0.5 * onemxi*(xi + 2.0);
+          eta_xi = 0.5 * onemxi2*(xi + 2.0);
           d_eta_xi_d_xi = 3.0 / 2.0 * (xi * xi - 1.0);
           break;
         }
@@ -116,7 +116,6 @@ namespace interaction {
           const double onemxi4 = onemxi2 * onemxi2;
           const double onemxi5 = onemxi4 * onemxi;
           const double onemxi6 = onemxi4 * onemxi2;
-          const double h1mxi = math::heaviside(onemxi);
           eta_xi = onemxi6 * ((3.0 * xi + 3.0) * xi + 1.0);
           d_eta_xi_d_xi = -3.0 * onemxi5 * (1.0 + xi * (5.0 + 8.0 * xi));
           break;
@@ -420,6 +419,90 @@ namespace interaction {
       return result;
     }
     
+    /**
+     * the @f$f_p@f$ function for the P3M self term evaluation
+     */
+    static inline double p3m_selfterm_fp(int p, int n, double s) {
+      switch (p) {
+        case 1:
+        {
+          return 1.0;
+        } // p = 1
+        case 2:
+        {
+          switch (abs(n)) {
+            case 0: return 1.0 / 2.0 * (1.0 + 4.0 * s * s);
+            case 1: return 1.0 / 4.0 * (1.0 - 4.0 * s * s);
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp", io::message::critical);
+              return 0.0;
+          }
+        } // p = 2
+        case 3:
+        {
+          const double s2 = s*s;
+          switch (abs(n)) {
+            case 0: return 1.0 / 32.0 * (19.0 + s2 * (-24.0 + s2 * 48.0));
+            case 1: return 1.0 / 16.0 * (3.0 + s2 * (8.0 - s2 * 16.0));
+            case 2:
+            {
+              const double term = 1.0 - 4.0 * s2;
+              return 1.0 / 64.0 * term *term;
+            }
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp", io::message::critical);
+              return 0.0;
+          }
+        }// p = 3
+        case 4:
+        {
+          const double s2 = s*s;
+          switch (abs(n)) {
+            case 0: return 1.0 / 576.0 * (265.0 + s2 * (204.0 + s2 *
+                      (-528.0 + s2 * 320.0)));
+            case 1: return 1.0 / 2304.0 * (575.0 + s2 * (-564.0 + s2 *
+                      (1488.0 + s2 * -960.0)));
+            case 2: return 1.0 / 1152.0 * (23.0 + s2 * (84.0 + s2 *
+                      (-240.0 + s2 * 192.0)));
+            case 3:
+            {
+              const double term = 1.0 - 4.0 * s2;
+              return 1.0 / 2304.0 * term * term *term;
+            }
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp", io::message::critical);
+              return 0.0;
+          }
+        } // p = 4
+        case 5:
+        {
+          const double s2 = s*s;
+          switch (abs(n)) {
+            case 0: return 1.0 / 73728.0 * (32227.0 + s2 * (-9520.0 + s2 *
+                      (28960.0 + s2 * (-29440.0 + s2 * 8960.0))));
+            case 1: return 1.0 / 18432.0 * (4389.0 + s2 * (1792.0 + s2 *
+                      (-5472.0 + s2 * (5632.0 + s2*-1792.0))));
+            case 2: return 1.0 / 36864.0 * (1559.0 + s2 * (-1456.0 + s2 *
+                      (4512.0 + s2 * (-4864.0 + s2 * 1792.0))));
+            case 3: return 1.0 / 18432.0 * (19.0 + s2 * (128.0 + s2 *
+                      (-416.0 + s2 * (512.0 + s2*-256.0))));
+            case 4:
+            {
+              const double term = 1.0 - 4.0 * s2;
+              const double term2 = term * term;
+              return 1.0 / 147456.0 * term2 * term2;
+            }
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp", io::message::critical);
+              return 0.0;
+          }
+        } // p = 5
+          io::messages.add("fp: p invalid.", "p3m_selfterm_fp", io::message::critical);
+          return 0.0;
+      }
+      return 0.0;
+    }
+
     /**
      * assign charges to grid
      *
