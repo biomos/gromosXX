@@ -186,7 +186,7 @@ _update_atomic(topology::Topology & topo,
 	// the distance
 	const double d = math::abs2(v);
 
-	DEBUG(1, "\t" << a1 << " - " << a2);
+	DEBUG(11, "\t" << a1 << " - " << a2);
 	
 	if (d > m_cutoff_long_2){        // OUTSIDE
 	  DEBUG(11, "\t\toutside");
