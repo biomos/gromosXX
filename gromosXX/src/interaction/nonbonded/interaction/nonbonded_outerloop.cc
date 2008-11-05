@@ -925,7 +925,7 @@ void interaction::Nonbonded_Outerloop
   const bool do_a2t = (
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
-          sim.param().nonbonded.ls_calculate_a2 == simulation::la_a2t_ave_a2_numerical) &&
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical) &&
     (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0);
 
   // calculate the A2~ self term via P3M.
@@ -934,7 +934,7 @@ void interaction::Nonbonded_Outerloop
     if (rank == 0)
       timer.start("P3M: self term");
 
-    if (sim.param().nonbonded.ls_calculate_a2 != simulation::la_a2t_ave_a2_numerical) {
+    if (sim.param().nonbonded.ls_calculate_a2 != simulation::ls_a2t_ave_a2_numerical) {
       // calculate the real A2~ term (not averaged)
       if (sim.mpi)
         interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::ParallelMesh >(topo, conf, sim, r);
@@ -1078,7 +1078,7 @@ void interaction::Nonbonded_Outerloop
   // do we have to do it numerically?
   if (sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2_numerical ||
       sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
-      sim.param().nonbonded.ls_calculate_a2 == simulation::la_a2t_ave_a2_numerical) {
+      sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical) {
     // calculate A2 numerically
     const double & required_precision = sim.param().nonbonded.ls_a2_tolerance;
     math::Matrix l_to_k = configuration::KSpace_Utils::l_to_k_matrix(
@@ -1149,7 +1149,7 @@ void interaction::Nonbonded_Outerloop
   if (sim.mpi && (
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
-          sim.param().nonbonded.ls_calculate_a2 == simulation::la_a2t_ave_a2_numerical)) {
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical)) {
     
     const double a2_part = conf.lattice_sum().a2_tilde;
 
@@ -1175,7 +1175,7 @@ void interaction::Nonbonded_Outerloop
       a2_tilde = a2;
       break;
     case simulation::ls_a2t_exact_a2_numerical :
-    case simulation::la_a2t_ave_a2_numerical :
+    case simulation::ls_a2t_ave_a2_numerical :
       // we already have A2t and A2 - do nothing
       break;
     default :

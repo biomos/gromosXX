@@ -456,7 +456,8 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
 
     const bool do_a2 = (
             param.nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
-            param.nonbonded.ls_calculate_a2 == simulation::la_a2t_ave_a2_numerical
+            param.nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical ||
+            param.nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact
             );
 
 #ifdef XXMPI

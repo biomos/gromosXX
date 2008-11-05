@@ -172,7 +172,7 @@ namespace simulation
     /** a2_tilde exact, a2=a2_tilde */ ls_a2t_exact,
     /** a2 numerical, a2_tilde = a2 */ ls_a2_numerical,
     /** a2_tilde exact (ewald or mesh+coords), a2 numerical */ ls_a2t_exact_a2_numerical,
-    /** a2_tilde averaged from mesh only, a2 numerical */ la_a2t_ave_a2_numerical
+    /** a2_tilde averaged from mesh only, a2 numerical */ ls_a2t_ave_a2_numerical
   };
   
   /**
