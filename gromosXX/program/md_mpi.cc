@@ -192,7 +192,7 @@ int main(int argc, char *argv[]){
 
     int next_step = 1;
 
-    while(sim.steps() < sim.param().step.number_of_steps){
+    while(int(sim.steps()) < sim.param().step.number_of_steps){
       
       traj.write(conf, topo, sim, io::reduced);
       
@@ -346,7 +346,7 @@ int main(int argc, char *argv[]){
     const double init_time = util::now() - start;
     int next_step = 0 ;
 
-    while(sim.steps() < sim.param().step.number_of_steps){
+    while(int(sim.steps()) < sim.param().step.number_of_steps){
       // run a step
       // (*os) << "waiting for master (nonbonded interaction)" << std::endl;
       // DEBUG(10, "slave " << rank << " waiting for master");
