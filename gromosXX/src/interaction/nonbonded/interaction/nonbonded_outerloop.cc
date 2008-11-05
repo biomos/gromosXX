@@ -918,8 +918,52 @@ void interaction::Nonbonded_Outerloop
                 "P3M", io::message::error);
         return;
       }
+    } // if force error
+  } // if update influence function
+
+  // check whether we need to claculate the A2~ term via P3M.
+  const bool do_a2t = (
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
+          sim.param().nonbonded.ls_calculate_a2 == simulation::la_a2t_ave_a2_numerical) &&
+    (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0);
+
+  // calculate the A2~ self term via P3M.
+  if (do_a2t) {
+    DEBUG(10, "\tstarting to assign squared charge to grid ... ");
+    if (rank == 0)
+      timer.start("P3M: self term");
+
+    if (sim.param().nonbonded.ls_calculate_a2 != simulation::la_a2t_ave_a2_numerical) {
+      // calculate the real A2~ term (not averaged)
+      if (sim.mpi)
+        interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::ParallelMesh >(topo, conf, sim, r);
+      else
+        interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::Mesh >(topo, conf, sim, r);
+    } else {
+      // calculate the averaged A2~ term
+      if (sim.mpi)
+        interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::ParallelMesh >(topo, conf, sim);
+      else
+        interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::Mesh >(topo, conf, sim);
     }
+    DEBUG(10, "\tstarting fft of the squared charge");
+    // FFT the charge density grid
+    configuration::Mesh & squared_charge = *conf.lattice_sum().squared_charge;
+    squared_charge.fft(configuration::Mesh::fft_forward);
+
+    DEBUG(10, "\tcalculation of self term via P3M.");
+    if (sim.mpi) {
+      interaction::Lattice_Sum::calculate_p3m_selfterm<configuration::ParallelMesh > (topo, conf, sim);
+    } else {
+      interaction::Lattice_Sum::calculate_p3m_selfterm<configuration::Mesh > (topo, conf, sim);
+    }
+
+    if (rank == 0)
+      timer.stop("P3M: self term");
   }
+
+  
   if (rank == 0)
     timer.start("P3M: energy & force");
   
@@ -929,6 +973,7 @@ void interaction::Nonbonded_Outerloop
   else
     interaction::Lattice_Sum::calculate_charge_density<configuration::Mesh >(topo, conf, sim, r);
 
+  
   DEBUG(10,"\t assigned charge density to grid, starting fft of charge density");
   // FFT the charge density grid
   configuration::Mesh & charge_density = *conf.lattice_sum().charge_density;
@@ -1064,7 +1109,8 @@ void interaction::Nonbonded_Outerloop
           l(coord) = sign * l_max;
 
           // loop over the plane excluding edges for some axes
-          for (int l_a = -boundary_a; l_a <= boundary_a; ++l_a) {
+          // here we can introduce parallelization by stride
+          for (int l_a = -boundary_a + rank; l_a <= boundary_a; l_a += size) {
             l(coord_a) = l_a;
             for (int l_b = -boundary_b; l_b <= boundary_b; ++l_b) {
               l(coord_b) = l_b;
@@ -1082,13 +1128,39 @@ void interaction::Nonbonded_Outerloop
       } // loop over coordinates
 
       // now calculate A2 and the relative tolerance
+#ifdef XXMPI
+      if (sim.mpi) {
+        const double my_term = term;
+        MPI::COMM_WORLD.Allreduce(&my_term, &term, 1, MPI::DOUBLE, MPI::SUM);
+      }
+#endif
       a2 += term;
+
       tolerance = fabs(term / a2);
       DEBUG(11, "\ttolerance: " << tolerance);
     } while (tolerance > required_precision);
 
     a2 *= 4.0 * math::Pi / volume;
   }
+
+#ifdef XXMPI
+  // for MPI we only have parts of the A2 sums. So we have to add them here
+  // but only if they were calculated.
+  if (sim.mpi && (
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
+          sim.param().nonbonded.ls_calculate_a2 == simulation::la_a2t_ave_a2_numerical)) {
+    
+    const double a2_part = conf.lattice_sum().a2_tilde;
+
+    if (rank) { // slave
+      MPI::COMM_WORLD.Reduce(&a2_part, NULL, 1, MPI::DOUBLE, MPI::SUM, 0);
+    } else { // master
+      MPI::COMM_WORLD.Reduce(&a2_part, &conf.lattice_sum().a2_tilde, 1,
+              MPI::DOUBLE, MPI::SUM, 0);
+    }
+  }
+#endif
   
   switch (sim.param().nonbonded.ls_calculate_a2) {
     case simulation::ls_a2_zero :
@@ -1113,19 +1185,28 @@ void interaction::Nonbonded_Outerloop
   
   // calculate box overall square charge (MD05.32 eq 41)
   const unsigned int num_atoms = topo.num_atoms();
-  double st2 = 0.0, s = 0;
+  double st2 = 0.0, s = 0.0;
   for(unsigned int i = 0; i < num_atoms; ++i) {
     const double qi = topo.charge(i);
     s += qi;
     st2 += qi * qi;
   }
-  DEBUG(10,"a1 = " << a1 << ", a2 = " << a2 << ", a3 = " << a3);
+  DEBUG(6,"a1 = " << a1 << ", a2 = " << a2 << ", ~a2 = " << a2_tilde << ", a3 = " << a3);
   // now combine everything (MD05.32 eq 54)
-  storage.energies.ls_self_total = (a1 + a2 + a3) * st2 * math::eps0_i / (8.0 * math::Pi);
+  if (rank == 0) {
+    storage.energies.ls_self_total = (a1 + a2 + a3) * st2 * math::eps0_i / (8.0 * math::Pi);
+  } else {
+    storage.energies.ls_self_total = 0.0;
+  }
+      
   DEBUG(8,"ls_self_total = " << storage.energies.ls_self_total);
   
   // now claculate the E_A term
-  storage.energies.ls_a_term_total = (a1 * s * s - (a1 + a2_tilde) * st2) * math::eps0_i / (8.0 * math::Pi);
+  if (rank == 0) {
+    storage.energies.ls_a_term_total = (a1 * s * s - (a1 + a2_tilde) * st2) * math::eps0_i / (8.0 * math::Pi);
+  } else {
+    storage.energies.ls_a_term_total = 0.0;
+  }
   DEBUG(8, "ls_a_term_total = " << storage.energies.ls_a_term_total);
 }
 

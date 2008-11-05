@@ -280,7 +280,7 @@ namespace configuration
        * constructor
        */
       lattice_sum_struct() : charge_density(NULL), potential(NULL),
-              a2_tilde(0.0)
+              a2_tilde(0.0), squared_charge(NULL)
       {}
       /**
        * destructor
@@ -333,6 +333,10 @@ namespace configuration
        * indices of domain decomposition
        */
       std::vector<int> domain;
+      /**
+       * the mesh with the squared charges
+       */
+      Mesh* squared_charge;
 
       /**
        * init lattice sum

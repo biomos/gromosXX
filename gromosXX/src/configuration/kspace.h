@@ -41,11 +41,14 @@ namespace configuration {
    * coordinate and @f$ l_{\mu} @f$ is given in the input file. From these @f$ \mathbf{l} @f$
    * vectors the @f$ \mathbf{k} @f$ vector is calculated and its values and fourier 
    * coefficient is stored if the absolute value of k is lower than a certain cutoff.
+   *
+   * If size is != 0, stride parallelization will be applied.
    */
   void calculate_k_space(
             const topology::Topology & topo,
             configuration::Configuration & conf,
-            const simulation::Simulation & sim);  
+            const simulation::Simulation & sim,
+            int rank, int size);  
   
   /**
    * @class KSpace_Utils

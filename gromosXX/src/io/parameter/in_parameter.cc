@@ -3808,20 +3808,20 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
         break;
       case 1 :
         param.nonbonded.ls_calculate_a2 = simulation::ls_a2t_exact;
-        if (param.nonbonded.method == simulation::el_p3m)
-          io::messages.add("NONBONDED block: A2 calculation method not implemented for P3M",
-                "In_Parameter", io::message::error);
         break;
       case 2:
         param.nonbonded.ls_calculate_a2 = simulation::ls_a2_numerical;
         break;
       case 3:
         param.nonbonded.ls_calculate_a2 = simulation::ls_a2t_exact_a2_numerical;
-        if (param.nonbonded.method == simulation::el_p3m)
-          io::messages.add("NONBONDED block: A2 calculation method not implemented for P3M",
-                "In_Parameter", io::message::error);
         break;
-      case 4: // not implemented -> default
+      case 4: 
+        param.nonbonded.ls_calculate_a2 = simulation::ls_a2t_exact_a2_numerical;
+        if (param.nonbonded.method != simulation::el_p3m) {
+          io::messages.add("NONBONDED block: averaged A2~ calculation needs P3M.",
+                         "In_Parameter", io::message::error);
+        }
+        break;
       default :
         io::messages.add("NONBONDED block: A2 calculation method not implemented",
                          "In_Parameter", io::message::error);

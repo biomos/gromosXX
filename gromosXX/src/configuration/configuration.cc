@@ -428,7 +428,7 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
 
 void configuration::Configuration::lattice_sum_struct::init(topology::Topology const & topo,
         simulation::Simulation & sim) {
-  DEBUG(1,"Lattice Sum initalitation.");
+  DEBUG(5,"Lattice Sum initalitation.");
   simulation::Parameter & param = sim.param();
 #ifdef OMP
   int tid, size;
@@ -454,6 +454,11 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
     const unsigned int Ny = param.nonbonded.p3m_grid_points_y;
     const unsigned int Nz = param.nonbonded.p3m_grid_points_z;
 
+    const bool do_a2 = (
+            param.nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
+            param.nonbonded.ls_calculate_a2 == simulation::la_a2t_ave_a2_numerical
+            );
+
 #ifdef XXMPI
     if (sim.mpi) {
       int rank = MPI::COMM_WORLD.Get_rank();
@@ -467,12 +472,22 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
       electric_field.x = new configuration::ParallelMesh(num_threads, rank, cache_size);
       electric_field.y = new configuration::ParallelMesh(num_threads, rank, cache_size);
       electric_field.z = new configuration::ParallelMesh(num_threads, rank, cache_size);
+
+      if (do_a2) {
+        // for the Rg grid we need a bigger cache as the squared charge is 
+        // assigned to (2p-1)^3 grid cells
+        const int cache_size = param.nonbonded.p3m_charge_assignment - 1;
+        squared_charge = new configuration::ParallelMesh(num_threads, rank, cache_size);
+      }
       
       ((configuration::ParallelMesh*)charge_density)->resize(Nx, Ny, Nz);
       ((configuration::ParallelMesh*)potential)->resize(Nx, Ny, Nz);
       ((configuration::ParallelMesh*)electric_field.x)->resize(Nx, Ny, Nz);
       ((configuration::ParallelMesh*)electric_field.y)->resize(Nx, Ny, Nz);
       ((configuration::ParallelMesh*)electric_field.z)->resize(Nx, Ny, Nz);
+      if (do_a2) {
+        ((configuration::ParallelMesh*)squared_charge)->resize(Nx, Ny, Nz);
+      }
     } else {
 #endif
       charge_density = new configuration::Mesh();
@@ -480,11 +495,20 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
       electric_field.x = new configuration::Mesh();
       electric_field.y = new configuration::Mesh();
       electric_field.z = new configuration::Mesh();
+      
+      if (do_a2) {
+        squared_charge = new configuration::Mesh();
+      }
+      
       charge_density->resize(Nx, Ny, Nz);
       potential->resize(Nx, Ny, Nz);
       electric_field.x->resize(Nx, Ny, Nz);
       electric_field.y->resize(Nx, Ny, Nz);
       electric_field.z->resize(Nx, Ny, Nz);
+      
+      if (do_a2) {
+        squared_charge->resize(Nx, Ny, Nz);
+      }
 #ifdef XXMPI
     }
 #endif
@@ -494,8 +518,6 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
 
   // reset the A term
   a2_tilde = 0.0;
-
-
 }
 namespace configuration
 {

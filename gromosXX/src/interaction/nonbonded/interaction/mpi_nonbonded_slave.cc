@@ -278,7 +278,8 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
       } // loop over states
     } // eds
     
-    if (sim.param().nonbonded.method == simulation::el_p3m) {
+    if (sim.param().nonbonded.method == simulation::el_p3m ||
+        sim.param().nonbonded.method == simulation::el_ewald) {
       MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().energies.ls_kspace_total,
             NULL, 1, MPI::DOUBLE, MPI::SUM, 0);
     }

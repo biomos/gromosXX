@@ -29,9 +29,11 @@ void
 configuration::calculate_k_space(
             const topology::Topology & topo,
             configuration::Configuration & conf,
-            const simulation::Simulation & sim) {
+            const simulation::Simulation & sim,
+            int rank, int size) {
   
   DEBUG(8, "\tcalculating k-space\n");
+  DEBUG(10, "\trank: " << rank << " size: " << size);
   std::vector<configuration::KSpace_Element> & kspace = conf.lattice_sum().kspace;
   kspace.clear();
  
@@ -53,7 +55,8 @@ configuration::calculate_k_space(
   
   // loop over k-space till cutoff is reached
   math::GenericVec<int> l;
-  for(int lx = -max_l[0]; lx <= max_l[0]; ++lx) {
+  // here we stride
+  for(int lx = -max_l[0] + rank; lx <= max_l[0]; lx += size) {
     l(0) = lx;
     for(int ly = -max_l[1]; ly <= max_l[1]; ++ly) {
       l(1) = ly;

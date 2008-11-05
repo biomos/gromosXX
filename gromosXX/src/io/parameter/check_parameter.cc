@@ -2296,7 +2296,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("ewald", "random_gromos");
   fc.unlock("ewald", "random_gsl");
   //fc.unlock("ewald", "eds");
-  //fc.unlock("ewald", "parallel_mpi");
+  fc.unlock("ewald", "parallel_mpi");
   //fc.unlock("ewald", "parallel_omp");
   //fc.unlock("ewald", "mult_energy_groups"); 
   //fc.unlock("ewald", "p3m");

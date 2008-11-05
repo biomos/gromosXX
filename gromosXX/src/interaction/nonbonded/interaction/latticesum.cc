@@ -3,9 +3,6 @@
  * implementation of lattice sum methods
  */
 
-#include <vector>
-
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -147,6 +144,184 @@ template void interaction::Lattice_Sum::calculate_charge_density<configuration::
         const math::VArray & r);
 
 template<class MeshType>
+void interaction::Lattice_Sum::calculate_squared_charge_grid(const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim,
+        const math::VArray & r) {
+  
+  MeshType & squared_charge = *reinterpret_cast<MeshType*>(conf.lattice_sum().squared_charge);
+  squared_charge.zero();
+  
+  const unsigned int Nx = squared_charge.x();
+  const unsigned int Ny = squared_charge.y();
+  const unsigned int Nz = squared_charge.z();
+  
+  // the H matrix to transform the grid into coordinates
+  const math::Box &box = conf.current().box;
+  math::Matrix H(box(0) / Nx, box(1) / Ny, box(2) / Nz);
+  // and coordinates into the grid
+  math::Matrix H_inv=math::inverse(H);
+  math::Matrix H_trans = math::transpose(H);
+  // the volume of a grid cell (Vg) MD05.32 eq. 61
+  const double cell_volume = math::det(H_trans); 
+  const double cell_volume_i = 1.0 / cell_volume;
+  DEBUG(11, "grid cell volume: " << cell_volume);
+  
+  const int assignment_function_order = sim.param().nonbonded.p3m_charge_assignment;
+  bool assignment_odd = assignment_function_order % 2 == 1;
+  
+  DEBUG(10,"\t starting to assign squared charge to grid ... ");
+  
+  // how far you have to go away from the first grid point
+  const int upper_bound = assignment_function_order - 1;
+  const int lower_bound = - upper_bound;
+  DEBUG(10, "Upper bound: " << upper_bound << " lower bound: " << lower_bound);
+  
+  // loop over all charges in the domain
+  std::vector<int>::const_iterator it = conf.lattice_sum().domain.begin(),
+          to = conf.lattice_sum().domain.end();
+  
+  for (;it != to; ++it) {
+    const unsigned int i = *it;
+    const double q2 = topo.charge(i) * topo.charge(i);
+    
+    DEBUG(10, "\tAssigning q2 " << i + 1 << " (" << q2 << ") to grid.");
+
+    // we have a charge so let's calculate were it is on the grid.
+    math::Vec grid_r = math::product(H_inv, r(i));
+    DEBUG(10, "\t\tcoordinates on grid: " << math::v2s(grid_r));
+    math::GenericVec<int> nearest_grid_point;
+    math::Vec point_to_charge;
+    
+    // getting the nearest grid point is dependend on the order of the
+    // charge assignment function
+    if (assignment_odd) { // assignment order is odd
+      // round to the nearest integer to get the nearest grid point
+      nearest_grid_point = math::GenericVec<int>(int(rint(grid_r(0))),
+               int(rint(grid_r(1))), int(rint(grid_r(2))));
+      point_to_charge = grid_r - nearest_grid_point;
+    } else { // assignment order is even
+      nearest_grid_point = math::GenericVec<int>(int(grid_r(0)),
+                                                 int(grid_r(1)), 
+                                                 int(grid_r(2)));
+      point_to_charge = grid_r - nearest_grid_point - math::Vec(0.5, 0.5, 0.5);
+    }
+    DEBUG(15, "\tnearest grid point: " << math::v2s(nearest_grid_point));
+    math::GenericVec<int> point;
+    DEBUG(15, "\ts: " << math::v2s(point_to_charge));
+    for (int dx = lower_bound; dx <= upper_bound; ++dx) {
+      point(0) = dx;
+      const double w_x = interaction::Lattice_Sum::p3m_selfterm_fp(assignment_function_order,
+              dx, point_to_charge(0));
+      for (int dy = lower_bound; dy <= upper_bound; ++dy) {
+        point(1) = dy;
+        const double w_y = interaction::Lattice_Sum::p3m_selfterm_fp(assignment_function_order,
+              dy, point_to_charge(1));
+        for (int dz = lower_bound; dz <= upper_bound; ++dz) {
+          point(2) = dz;
+          const double w_z = interaction::Lattice_Sum::p3m_selfterm_fp(assignment_function_order,
+              dz, point_to_charge(2));
+          
+          double assignment_function = w_x * w_y * w_z * cell_volume_i;
+          DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
+                  "] assignment function: " << assignment_function);
+          squared_charge(point) += assignment_function * q2;
+          DEBUG(15,"\t\tsquared_charge(p): " << assignment_function * q2);
+        }
+      }
+    } // loop over grid cells
+  } // loop over charges
+
+  
+  squared_charge.add_neighbors_caches();
+}
+// create instances for both mesh types
+template void interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::Mesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim,
+        const math::VArray & r);
+template void interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::ParallelMesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim,
+        const math::VArray & r);
+
+template<class MeshType>
+void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid(const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim) {
+  
+  MeshType & squared_charge = *reinterpret_cast<MeshType*>(conf.lattice_sum().squared_charge);
+  squared_charge.zero();
+  
+  const unsigned int Nx = squared_charge.x();
+  const unsigned int Ny = squared_charge.y();
+  const unsigned int Nz = squared_charge.z();
+  
+  // the H matrix to transform the grid into coordinates
+  const math::Box &box = conf.current().box;
+  math::Matrix H(box(0) / Nx, box(1) / Ny, box(2) / Nz);
+  // and coordinates into the grid
+  math::Matrix H_trans = math::transpose(H);
+  // the volume of a grid cell (Vg) MD05.32 eq. 61
+  const double cell_volume = math::det(H_trans); 
+  const double cell_volume_i = 1.0 / cell_volume;
+  DEBUG(11, "grid cell volume: " << cell_volume);
+  
+  const int assignment_function_order = sim.param().nonbonded.p3m_charge_assignment;
+  
+  DEBUG(10,"\t starting to assign squared charge to grid ... ");
+  
+  // how far you have to go away from the first grid point
+  const int upper_bound = assignment_function_order - 1;
+  const int lower_bound = - upper_bound;
+  DEBUG(10, "Upper bound: " << upper_bound << " lower bound: " << lower_bound);
+  
+  // loop over all charges in the domain
+  std::vector<int>::const_iterator it = conf.lattice_sum().domain.begin(),
+          to = conf.lattice_sum().domain.end();
+  
+  for (;it != to; ++it) {
+    const unsigned int i = *it;
+    const double q2 = topo.charge(i) * topo.charge(i);
+    
+    DEBUG(10, "\tAssigning q2 " << i + 1 << " (" << q2 << ") to grid.");
+
+    math::GenericVec<int> point;
+    for (int dx = lower_bound; dx <= upper_bound; ++dx) {
+      point(0) = dx;
+      const double w_x = interaction::Lattice_Sum::p3m_selfterm_fp_avg(assignment_function_order, dx);
+      for (int dy = lower_bound; dy <= upper_bound; ++dy) {
+        point(1) = dy;
+        const double w_y = interaction::Lattice_Sum::p3m_selfterm_fp_avg(assignment_function_order, dy);
+        for (int dz = lower_bound; dz <= upper_bound; ++dz) {
+          point(2) = dz;
+          const double w_z = interaction::Lattice_Sum::p3m_selfterm_fp_avg(assignment_function_order, dz);
+          
+          double assignment_function = w_x * w_y * w_z * cell_volume_i;
+          DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
+                  "] assignment function: " << assignment_function);
+          squared_charge(point) += assignment_function * q2;
+          DEBUG(15,"\t\tsquared_charge(p): " << assignment_function * q2);
+        }
+      }
+    } // loop over grid cells
+  } // loop over charges
+
+  squared_charge.add_neighbors_caches();
+}
+// create instances for both mesh types
+template void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::Mesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
+template void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::ParallelMesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
+
+template<class MeshType>
 void interaction::Lattice_Sum::calculate_potential_and_energy(
         const topology::Topology & topo,
         configuration::Configuration & conf,
@@ -212,6 +387,57 @@ template void interaction::Lattice_Sum::calculate_potential_and_energy<configura
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
         interaction::Storage & storage);
+
+template<class MeshType>
+void interaction::Lattice_Sum::calculate_p3m_selfterm(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim) {
+  
+  
+  MeshType & squared_charge = *reinterpret_cast<MeshType*>(conf.lattice_sum().squared_charge);
+  configuration::Influence_Function & influence_function = conf.lattice_sum().influence_function;
+    
+  const int Nx = squared_charge.x();
+  const int Ny = squared_charge.y();
+  const int Nz = squared_charge.z();
+  const int grid_volume = Nx * Ny * Nz;
+  
+  double sum = 0.0;
+  // loop over grid
+  const int to = squared_charge.right_boundary();
+  for (int x = squared_charge.left_boundary(); x < to; ++x) {
+    for (int y = 0; y < Ny; ++y) {
+      for (int z = 0; z < Nz; ++z) {
+        // calculate the potential by MD05.32 eq. 68
+        DEBUG(15, "x: " << x + 1 << " y: " << y + 1 << " z: " << z + 1);
+        DEBUG(15, "influence_function(hat): " << influence_function(x, y, z));
+        DEBUG(15, "squared charge (hat): " << squared_charge(x, y, z).real() / grid_volume);
+        
+        sum += (influence_function(x, y, z) * squared_charge(x,y,z)).real();
+      }
+    }
+  } // loop over grid
+  
+  double s2_tilda = 0.0;
+  for(unsigned int i = 0; i < topo.num_atoms(); ++i)
+    s2_tilda += topo.charge(i) * topo.charge(i);
+  
+  // 1/vol factor is obtained automatically via numerical FFT
+  conf.lattice_sum().a2_tilde = 4.0 * math::Pi * sum / grid_volume / s2_tilda;
+  DEBUG(8, "a2_tilde = " << conf.lattice_sum().a2_tilde);
+  DEBUG(8, "A2NUM: (promd style) " <<  conf.lattice_sum().a2_tilde * s2_tilda * math::four_pi_eps_i);
+
+}
+// create instances for both mesh types
+template void interaction::Lattice_Sum::calculate_p3m_selfterm<configuration::Mesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
+template void interaction::Lattice_Sum::calculate_p3m_selfterm<configuration::ParallelMesh>(
+        const topology::Topology & topo,
+        configuration::Configuration & conf,
+        const simulation::Simulation & sim);
 
 template<class MeshType>
 void interaction::Lattice_Sum::calculate_electric_field(const topology::Topology & topo,

@@ -430,9 +430,10 @@ namespace interaction {
         } // p = 1
         case 2:
         {
+          const double s2 = s*s;
           switch (abs(n)) {
-            case 0: return 1.0 / 2.0 * (1.0 + 4.0 * s * s);
-            case 1: return 1.0 / 4.0 * (1.0 - 4.0 * s * s);
+            case 0: return 1.0 / 2.0 * (1.0 + 4.0 * s2);
+            case 1: return 1.0 / 4.0 * (1.0 - 4.0 * s2);
             default:
               io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp", io::message::critical);
               return 0.0;
@@ -481,11 +482,11 @@ namespace interaction {
             case 0: return 1.0 / 73728.0 * (32227.0 + s2 * (-9520.0 + s2 *
                       (28960.0 + s2 * (-29440.0 + s2 * 8960.0))));
             case 1: return 1.0 / 18432.0 * (4389.0 + s2 * (1792.0 + s2 *
-                      (-5472.0 + s2 * (5632.0 + s2*-1792.0))));
+                      (-5472.0 + s2 * (5632.0 + s2 * -1792.0))));
             case 2: return 1.0 / 36864.0 * (1559.0 + s2 * (-1456.0 + s2 *
                       (4512.0 + s2 * (-4864.0 + s2 * 1792.0))));
             case 3: return 1.0 / 18432.0 * (19.0 + s2 * (128.0 + s2 *
-                      (-416.0 + s2 * (512.0 + s2*-256.0))));
+                      (-416.0 + s2 * (512.0 + s2 * -256.0))));
             case 4:
             {
               const double term = 1.0 - 4.0 * s2;
@@ -499,6 +500,65 @@ namespace interaction {
         } // p = 5
           io::messages.add("fp: p invalid.", "p3m_selfterm_fp", io::message::critical);
           return 0.0;
+      }
+      return 0.0;
+    }
+    
+     /**
+     * the averaged @f$f_p@f$ function for the P3M self term evaluation
+     */
+    static inline double p3m_selfterm_fp_avg(int p, int n) {
+      switch (p) {
+        case 1:
+        {
+          return 1.0;
+        } // p = 1
+        case 2:
+        {
+          switch (abs(n)) {
+            case 0: return 2.0 / 3.0;
+            case 1: return 1.0 / 6.0;
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp_avg", io::message::critical);
+              return 0.0;
+          }
+        } // p = 2
+        case 3:
+        {
+          switch (abs(n)) {
+            case 0: return 11.0 / 20.0;
+            case 1: return 13.0 / 60.0;
+            case 2: return 1.0 / 120.0;
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp_avg", io::message::critical);
+              return 0.0;
+          }
+        } // p = 3
+        case 4:
+        {
+          switch (abs(n)) {
+            case 0: return 151.0 / 315.0;
+            case 1: return 397.0 / 1680.0;
+            case 2: return 1.0 / 42.0;
+            case 3: return 1.0 / 5040.0;
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp_avg", io::message::critical);
+              return 0.0;
+          }
+        } // p = 4
+        case 5:
+        {
+          switch (abs(n)) {
+            case 0: return 15619.0 / 36288.0;
+            case 1: return 44117.0 / 181440.0;
+            case 2: return 913.0 / 22680.0;
+            case 3: return 251.0 / 181440.0;
+            case 4: return 1.0 / 362880.0;
+            default:
+              io::messages.add("fp: |n| invalid.", "p3m_selfterm_fp_avg", io::message::critical);
+              return 0.0;
+          }
+        } // p = 5
       }
       return 0.0;
     }
@@ -518,6 +578,35 @@ namespace interaction {
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
             const math::VArray & r);
+    
+    /**
+     * assign square charges to grid
+     *
+     * The squared charges are taken from the topology and assigned to the  
+     * @f$R_g@f$ grid in the configutation using a charge assignment function of 
+     * a given order.
+     *
+     * @param[in] r a VArray containing the positive, in-box atom positions
+     */
+    template<class MeshType>
+    static void calculate_squared_charge_grid(
+            const topology::Topology & topo,
+            configuration::Configuration & conf,
+            const simulation::Simulation & sim,
+            const math::VArray & r);
+    
+     /**
+     * assign square charges to grid
+     *
+     * The squared charges are taken from the topology and assigned to the  
+     * @f$R_g@f$ grid in the configutation using an averaged charge assignment
+     * function of a given order.
+     */
+    template<class MeshType>
+    static void calculate_averaged_squared_charge_grid(
+            const topology::Topology & topo,
+            configuration::Configuration & conf,
+            const simulation::Simulation & sim);
 
 
     /**
@@ -537,6 +626,17 @@ namespace interaction {
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
             Storage & storage);
+    
+    /**
+     * calculates the p3m ~A2 term
+     *
+     * @param[in] storage the storage is used to store the energy
+     */
+    template<class MeshType>
+    static void calculate_p3m_selfterm(
+            const topology::Topology & topo,
+            configuration::Configuration & conf,
+            const simulation::Simulation & sim);
     
     /**
      * calculate the electric field

@@ -156,7 +156,7 @@ int interaction::Nonbonded_Set
       DEBUG(6, "\tlong range electrostatics: Ewald");
       if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
         // the box may have changed. Recalculate the k space
-        configuration::calculate_k_space(topo, conf, sim);
+        configuration::calculate_k_space(topo, conf, sim, m_rank, m_num_threads);
       }
       // do the longrange calculation in k space
       m_outerloop.ls_ewald_kspace_outerloop(topo, conf, sim, m_storage,
@@ -180,36 +180,37 @@ int interaction::Nonbonded_Set
   }
   if (m_rank == 0)
     m_pairlist_alg.timer().stop("k-space");
+
+  // calculate lattice sum self energy and A term
+  // this has to be done after the k-space energy is calculated
+  // as this calculation will also deliver a methodology
+  // dependent A~_2 term if requested
+
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("ls self energy and A term");
+  switch (sim.param().nonbonded.method) {
+    case simulation::el_ewald :
+    case simulation::el_p3m :
+    {
+      //  NPT                                            ||  NVT
+      if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
+        m_outerloop.ls_self_outerloop(topo, conf, sim, m_storage,
+                m_rank, m_num_threads);
+      } else {
+        // copy from previous step
+        conf.current().energies.ls_self_total = conf.old().energies.ls_self_total;
+        conf.current().energies.ls_a_term_total = conf.old().energies.ls_a_term_total;
+      }
+    }
+    default:; // doing reaction field
+  }
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("ls self energy and A term");
+
   
   // single processor algorithms (1-4,...)
   if (m_rank == 0) {
-    // calculate lattice sum self energy and A term
-    // this has to be done after the k-space energy is calculated
-    // as this calculation will also deliver a methodology
-    // dependent A~_2 term if requested
-
-    m_pairlist_alg.timer().start("ls self energy and A term");
-    switch (sim.param().nonbonded.method) {
-      case simulation::el_ewald :
-      case simulation::el_p3m :
-      {
-        //  NPT                                            ||  NVT
-        if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
-          m_outerloop.ls_self_outerloop(topo, conf, sim, m_storage,
-                  m_rank, m_num_threads);
-        } else {
-          // copy from previous step
-          conf.current().energies.ls_self_total = conf.old().energies.ls_self_total;
-          conf.current().energies.ls_a_term_total = conf.old().energies.ls_a_term_total;
-        }
-      }
-      default:; // doing reaction field
-    }
-
-    m_pairlist_alg.timer().stop("ls self energy and A term");
-
     // calculate lattice sum surface energy and force
-
     m_pairlist_alg.timer().start("ls surface energy");
     switch (sim.param().nonbonded.method) {
       case simulation::el_ewald :
