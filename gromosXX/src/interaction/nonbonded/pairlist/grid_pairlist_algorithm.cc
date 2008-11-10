@@ -240,8 +240,10 @@ void interaction::Grid_Pairlist_Algorithm::_update
   const int N = m_grid.Na * m_grid.Nb;
   const int num_solute_cg = topo.num_solute_chargegroups();
   const int num_solute_atoms = topo.num_solute_atoms();
-  
+
+#ifdef HAVE_LIBCUKERNEL  
   const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
+#endif
 
   for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
 
