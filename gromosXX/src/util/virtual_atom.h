@@ -36,11 +36,11 @@ namespace util
      */
     va_aromatic = 2,
     /**
-     * 3: CH2 (stereospecific)
+     * 3: CH2 (non-stereospecific)
      */
     va_CH2 = 3,
     /**
-     * 4: CH2 (non-stereospecific)
+     * 4: CH2 (stereospecific)
      */
     va_stereo_CH2 = 4,
     /**
