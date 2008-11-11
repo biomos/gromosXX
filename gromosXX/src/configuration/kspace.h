@@ -24,13 +24,33 @@ namespace configuration {
      */
     double k2i;
     /**
+     * k squared;
+     */
+    double k2;
+    /**
+     * absolute value of k
+     */
+    double abs_k;
+    /**
+     * absolute value of k aplified by charge width
+     */
+    double ak;
+    /**
      * the fourier coefficient @f$ \hat{\gamma}(ak) @f$
      */
     double fourier_coefficient;
     /**
+     * the fourier coefficient derivative @f$ \hat{\gamma}'(ak) @f$
+     */
+    double fourier_coefficient_derivative;
+    /**
      * @f$ k^{-2}\hat{\gamma}(ak) @f$
      */
     double k2i_gammahat;
+    /**
+     * @f$ ak\hat{\gamma}'(ak) @f$
+     */
+    double ak_gammahat_prime;
   };
   
   /**

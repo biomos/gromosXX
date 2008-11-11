@@ -347,6 +347,8 @@ void interaction::Lattice_Sum::calculate_potential_and_energy(
   // now calculate the energy MD05.32 eq (72)
   double energy = 0.0;
   // and the potential MD05.32 eq. 68
+  const bool do_virial = sim.param().pcouple.virial != math::no_virial;
+  math::SymmetricMatrix virial(0.0);
   // loop over grid
   const int to = charge_density.right_boundary();
   for (int x = charge_density.left_boundary(); x < to; ++x) {
@@ -354,18 +356,27 @@ void interaction::Lattice_Sum::calculate_potential_and_energy(
       for (int z = 0; z < Nz; ++z) {
         // calculate the potential by MD05.32 eq. 68
         DEBUG(15, "x: " << x + 1 << " y: " << y + 1 << " z: " << z + 1);
-        DEBUG(15, "influence_function(hat): " << influence_function(x, y, z));
+        const double ghat = influence_function(x, y, z);
+        DEBUG(15, "influence_function(hat): " << ghat);
         DEBUG(15, "charge density(hat): " << charge_density(x, y, z)  / sqrt_grid_volume);
-        potential(x, y, z) = math::eps0_i * influence_function(x, y, z) * charge_density(x, y, z) / sqrt_grid_volume;
+        potential(x, y, z) = math::eps0_i * ghat * charge_density(x, y, z) / sqrt_grid_volume;
         // factors in DEBUG statements are for better comparison with promd
         DEBUG(15, "\tpotential (hat)(" << x << "," << y << "," << z << "): " << potential(x,y,z) / math::eps0_i * 11.78708615);
         
         // calculate the energy by MD05.32 eq. 72     
         const std::complex<double> density = charge_density(x, y, z);
-        const double abs2_charge_density = density.real() * density.real() + density.imag() * density.imag();
-        energy += influence_function(x, y, z) * abs2_charge_density / double(grid_volume);
+        const double abs2_charge_density = (density.real() * density.real() + 
+                density.imag() * density.imag()) / double(grid_volume);
+        energy += ghat * abs2_charge_density;
         DEBUG(15, "\t\t abs_charge_density = " << abs2_charge_density / sqrt_grid_volume
                 << ", energy = " << energy);
+        
+        // calculate the virial if required
+        if (do_virial) {
+          math::SymmetricMatrix tensor(influence_function.gammahat_0(x,y,z));
+          tensor.add_to_diagonal(ghat);
+          virial += tensor * abs2_charge_density;
+        }
       }
     }
   } // loop over grid
@@ -373,7 +384,12 @@ void interaction::Lattice_Sum::calculate_potential_and_energy(
   // See MD05.32 eq. 64, 65 and kpppm.F about this prefactor issue.
   // the 1/(total volume) prefactor is obtained by the FFT automtically
   storage.energies.ls_kspace_total = 0.5 * energy * cell_volume * math::eps0_i;
-  DEBUG(12,"ls_kspace_total = " << storage.energies.ls_kspace_total);
+  DEBUG(6,"ls_kspace_total = " << storage.energies.ls_kspace_total);
+  if (do_virial) {
+    virial *= -0.25 * math::eps0_i * cell_volume;
+    storage.virial_tensor += virial;
+    DEBUG(6, "k space virial: \n" << math::m2s(virial));
+  }
 
 }
 // create instances for both mesh types
@@ -404,6 +420,9 @@ void interaction::Lattice_Sum::calculate_p3m_selfterm(
   const int grid_volume = Nx * Ny * Nz;
   
   double sum = 0.0;
+  const bool do_virial = sim.param().pcouple.virial != math::no_virial;
+  math::SymmetricMatrix sum_derivative(0.0);
+  
   // loop over grid
   const int to = squared_charge.right_boundary();
   for (int x = squared_charge.left_boundary(); x < to; ++x) {
@@ -412,22 +431,29 @@ void interaction::Lattice_Sum::calculate_p3m_selfterm(
         // calculate the potential by MD05.32 eq. 68
         DEBUG(15, "x: " << x + 1 << " y: " << y + 1 << " z: " << z + 1);
         DEBUG(15, "influence_function(hat): " << influence_function(x, y, z));
+        DEBUG(15, "correction: " << influence_function(x, y, z) - influence_function.ghat_0(x,y,z));
         DEBUG(15, "squared charge (hat): " << squared_charge(x, y, z).real() / grid_volume);
-        
-        sum += (influence_function(x, y, z) * squared_charge(x,y,z)).real();
+        const double ghat = influence_function(x, y, z);
+        sum += ghat * squared_charge(x,y,z).real();
+        if(do_virial) {
+          math::SymmetricMatrix tensor = influence_function.gammahat_0(x,y,z);
+          tensor.add_to_diagonal(ghat);
+          sum_derivative += tensor * squared_charge(x,y,z).real();
+        } // virial
       }
     }
   } // loop over grid
   
-  double s2_tilda = 0.0;
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i)
-    s2_tilda += topo.charge(i) * topo.charge(i);
+  double s2_tilde = topo.sum_squared_charges();
   
   // 1/vol factor is obtained automatically via numerical FFT
-  conf.lattice_sum().a2_tilde = 4.0 * math::Pi * sum / grid_volume / s2_tilda;
+  conf.lattice_sum().a2_tilde = 4.0 * math::Pi * sum / grid_volume / s2_tilde;
   DEBUG(8, "a2_tilde = " << conf.lattice_sum().a2_tilde);
-  DEBUG(8, "A2NUM: (promd style) " <<  conf.lattice_sum().a2_tilde * s2_tilda * math::four_pi_eps_i);
-
+  if (do_virial) {
+    conf.lattice_sum().a2_tilde_derivative = (4.0 * math::Pi / grid_volume / s2_tilde) *
+            sum_derivative;
+    DEBUG(8, "a2_tilde deriv = " << math::m2s(conf.lattice_sum().a2_tilde_derivative));
+  }
 }
 // create instances for both mesh types
 template void interaction::Lattice_Sum::calculate_p3m_selfterm<configuration::Mesh>(

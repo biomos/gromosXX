@@ -23,12 +23,22 @@
 #include <util/error.h>
 #include <util/debug.h>
 
-#include "configuration.h"
+#include "influence_function.h"
 
-configuration::Influence_Function::Influence_Function() : hasDerivative(false) {}
+#undef MODULE
+#undef SUBMODULE
+#define MODULE configuration
+#define SUBMODULE configuration
+
+configuration::Influence_Function::Influence_Function() : do_virial(false),
+do_scale(false){}
 
 void configuration::Influence_Function::setBox(const math::Box & box) {
+  DEBUG(12, "setting to box" << math::m2s(math::Matrix(box)));
+  DEBUG(12, "initial transpose box: " << math::m2s(tL_0));
   tL = math::transpose(math::Matrix(box));
+  tbox_dev = tL - tL_0;
+  DEBUG(12, "box deviation: " << math::m2s(tbox_dev));
 }
 
 void configuration::Influence_Function::init(const simulation::Parameter & param) {
@@ -38,11 +48,12 @@ void configuration::Influence_Function::init(const simulation::Parameter & param
   ghat.resize(x, y, z);
   
   // we need the derivative to calculate the pressure!
-  hasDerivative = param.pcouple.calculate == true;
-  if (hasDerivative) {
+  do_virial = param.pcouple.virial != math::no_virial;
+  if (do_virial) {
     // reserve space for the derivative
     gammahat.resize(x, y, z);
   }
+  do_scale = param.pcouple.scale != math::pcouple_off;
 }
 
 template<class MeshType>
@@ -55,10 +66,12 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
   const unsigned int Nz = ghat.z();
   const unsigned int grid_volume = Nx * Ny * Nz;
   
+  const double st2 = topo.sum_squared_charges();
+  
   DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz << " volume: " << grid_volume);
   
   ghat.zero();
-  if (hasDerivative)
+  if (do_virial)
     gammahat.zero();
   
   const int shape = sim.param().nonbonded.ls_charge_shape;
@@ -110,7 +123,7 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
 
         if (l(0) == 0 && l(1) == 0 && l(2) == 0) {
           ghat(l) = 0.0;
-          if (hasDerivative)
+          if (do_virial)
             gammahat(l) = 0.0;
           continue;
         }
@@ -126,45 +139,11 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
         // storage for sums over m in eq. 90
         math::Vec sum_ghat_numerator(0.0);
         double sum_ghat_denominator = 0.0;
-        double sum_k2ifourier = 0.0;
+        double sum_k2ifourier2 = 0.0;
+        
+        // storage for tensor sums
+        math::SymmetricMatrix sum_gammahat_numerator(0.0);
 
-        for (int m1 = -mesh_alias; m1 <= mesh_alias; ++m1) {
-          m(0) = m1;
-          for (int m2 = -mesh_alias; m2 <= mesh_alias; ++m2) {
-            m(1) = m2;
-            for (int m3 = -mesh_alias; m3 <= mesh_alias; ++m3) {
-              m(2) = m3;
-              DEBUG(25, "\t\t m = " << math::v2s(m));
-              // MD.05.32 eq. 91
-              math::Vec k_lm = k_l + (2.0 * math::Pi * math::product(H_inv_trans, m));
-              const double k_2 = math::abs2(k_lm);
-              const double k_2i = 1.0 / k_2;
-              const double k = sqrt(k_2);
-              double fourier_coeff;
-              interaction::Lattice_Sum::charge_shape_fourier(shape, charge_width * k, fourier_coeff);
-              DEBUG(25, "\t\t k_lm " << math::v2s(k_lm) << ", fourier_coeff = " << fourier_coeff);
-              math::Vec tH_k = math::product(H_trans, k_lm);
-              const double P_hat =
-                      interaction::Lattice_Sum::fourier_charge_assignment_1d(assignment_function_order, tH_k(0)) *
-                      interaction::Lattice_Sum::fourier_charge_assignment_1d(assignment_function_order, tH_k(1)) *
-                      interaction::Lattice_Sum::fourier_charge_assignment_1d(assignment_function_order, tH_k(2));
-              const double P_hat_2 = P_hat * P_hat;
-              DEBUG(25, "\t\t P_hat = " << P_hat);
-              // add the terms
-              const double k2i_fourier = k_2i * fourier_coeff;
-              sum_ghat_numerator += k_lm * (k2i_fourier * P_hat_2);
-              sum_ghat_denominator += P_hat_2;
-              sum_k2ifourier += fourier_coeff * k2i_fourier;
-            }
-          }
-        } // loop over mesh alias
-
-        if (assignment_function_order == 1) {
-          sum_ghat_denominator = 1.0;
-        }
-
-        DEBUG(15, "sum ghat denom: " << sum_ghat_denominator);
-        DEBUG(15, "sum ghat num: " << math::v2s(sum_ghat_numerator));
         // get the finite difference operator MD05.32 eq. 87
         math::Vec D_hat_g(0.0);
         double abs2_D_hat_g = 0.0;
@@ -184,26 +163,101 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
           }
           D_hat_g = math::product(H_inv_trans, D_hat_g);
           abs2_D_hat_g = math::abs2(D_hat_g);
-
-          // if this is zero we have to set the influence function to zero. 
-          // Due to numerical problems!!!
-          if (abs2_D_hat_g < math::epsilon) {
-            ghat(l) = 0.0;
-            q += sum_k2ifourier;
-            DEBUG(15, "\t influence function" << math::v2s(l) << " ="
-                    "0.0 set to zero (numerics).");
-            continue;
-          }
         }
-        DEBUG(13, "\t D_hat_g = " << math::v2s(D_hat_g));
+        DEBUG(20, "\t D_hat_g = " << math::v2s(D_hat_g));        
+        
+        // loop over mesh aliases
+        for (int m1 = -mesh_alias; m1 <= mesh_alias; ++m1) {
+          m(0) = m1;
+          for (int m2 = -mesh_alias; m2 <= mesh_alias; ++m2) {
+            m(1) = m2;
+            for (int m3 = -mesh_alias; m3 <= mesh_alias; ++m3) {
+              m(2) = m3;
+              DEBUG(25, "\t\t m = " << math::v2s(m));
+              // MD.05.32 eq. 91
+              math::Vec k_lm = k_l + (2.0 * math::Pi * math::product(H_inv_trans, m));
+              const double k_2 = math::abs2(k_lm);
+              const double k_2i = 1.0 / k_2;
+              const double k = sqrt(k_2);
+              const double ak = charge_width * k;
+              
+              double fourier_coeff, fourier_coeff_deriv;
+              if (do_virial) // get the derivative as well
+                interaction::Lattice_Sum::charge_shape_fourier(shape, ak, fourier_coeff, &fourier_coeff_deriv);
+              else
+                interaction::Lattice_Sum::charge_shape_fourier(shape, ak, fourier_coeff);
+              
+              DEBUG(25, "\t\t k_lm " << math::v2s(k_lm) << ", fourier_coeff = " << fourier_coeff);
+              math::Vec tH_k = math::product(H_trans, k_lm);
+              const double P_hat =
+                      interaction::Lattice_Sum::fourier_charge_assignment_1d(assignment_function_order, tH_k(0)) *
+                      interaction::Lattice_Sum::fourier_charge_assignment_1d(assignment_function_order, tH_k(1)) *
+                      interaction::Lattice_Sum::fourier_charge_assignment_1d(assignment_function_order, tH_k(2));
+              const double P_hat_2 = P_hat * P_hat;
+              DEBUG(25, "\t\t P_hat = " << P_hat);
+              // add the terms
+              const double k2i_fourier = k_2i * fourier_coeff;
+              sum_ghat_numerator += k_lm * (k2i_fourier * P_hat_2);
+              sum_ghat_denominator += P_hat_2;
+              sum_k2ifourier2 += fourier_coeff * k2i_fourier;
+              
+              // let's calculate the terms needed for the derivative
+              // see GROMOS05 eq. 92
+              if (do_virial) {
+                const double k_dot_D = math::dot(k_lm, D_hat_g);
+                const math::SymmetricMatrix k_x_D = math::symmetric_tensor_product(k_lm, D_hat_g);
+                const math::SymmetricMatrix D_x_k = math::symmetric_tensor_product(D_hat_g, k_lm);
+                const math::SymmetricMatrix k_x_k = math::symmetric_tensor_product(k_lm, k_lm);
+                const math::SymmetricMatrix D_x_D = math::symmetric_tensor_product(D_hat_g, D_hat_g);
+                
+                const double D_2i = 1.0 / abs2_D_hat_g;
+                
+                sum_gammahat_numerator += (P_hat_2 * k_2i) * ((k_x_D + D_x_k -
+                        (2.0 * k_dot_D) * (k_2i * k_x_k + D_2i * D_x_D)) * fourier_coeff +
+                        (ak * fourier_coeff_deriv * k_2i * k_dot_D) * k_x_k);
+              } // do the virial
+            }
+          }
+        } // loop over mesh alias
+        DEBUG(15, "sum ghat denom: " << sum_ghat_denominator);
+        DEBUG(15, "sum ghat num: " << math::v2s(sum_ghat_numerator));
+        DEBUG(15, "sum gammahat num:\n\t" << math::m2s(sum_gammahat_numerator));
+        if (assignment_function_order == 1) {
+          sum_ghat_denominator = 1.0;
+        }
         // MD05.32 eq. 90
+
+        // if this is zero we have to set the influence function to zero. 
+        // Due to numerical problems!!!
+        if (abs2_D_hat_g < math::epsilon) {
+          ghat(l) = 0.0;
+          if (do_virial)
+            gammahat(l) = math::SymmetricMatrix(0.0);
+
+          my_q += sum_k2ifourier2;
+
+          DEBUG(15, "\t influence function" << math::v2s(l) << " ="
+                  "0.0 set to zero (numerics).");
+          continue;
+        }
+
         const double numerator = math::dot(D_hat_g, sum_ghat_numerator);
         const double denominator = abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
-        ghat(l) = numerator / denominator;
-        my_q += sum_k2ifourier - numerator * numerator / denominator;
+        DEBUG(15, "numerator: " << numerator << " denominator: " << denominator
+                << " sum_k2ifourier2: " << sum_k2ifourier2);
+        
+        const double ghat_l = numerator / denominator;
+        ghat(l) = ghat_l;
+        my_q += sum_k2ifourier2 - numerator * ghat_l;
 
         DEBUG(13, "\t influence function (0)" << math::v2s(l) << " ="
                 << ghat(l));
+        
+        if (do_virial) {
+          gammahat(l) = sum_gammahat_numerator / denominator;
+          DEBUG(13, "\t influence function derivative:\n\t" << math::m2s(gammahat(l)));
+        }
+        
       }
     }
   } // loop over reciprocal space grid
@@ -218,6 +272,7 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
 #ifdef XXMPI
   }
 #endif
+  force_error = math::four_pi_eps_i * st2 * sqrt(q / (volume * topo.num_atoms()));
   DEBUG(10, "q = " << q);
 
   // symmetrize the influence function
@@ -270,6 +325,8 @@ void configuration::Influence_Function::evaluate_quality(
   const unsigned int Ny = ghat.y();
   const unsigned int Nz = ghat.z();
   const unsigned int grid_volume = Nx * Ny * Nz;
+  
+  const double st2 = topo.sum_squared_charges();
   
   DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz << " volume: " << grid_volume);
   const int shape = sim.param().nonbonded.ls_charge_shape;
@@ -337,7 +394,7 @@ void configuration::Influence_Function::evaluate_quality(
         // storage for sums over m in eq. 90
         math::Vec sum_ghat_numerator(0.0);
         double sum_ghat_denominator = 0.0;
-        double sum_k2ifourier = 0.0;
+        double sum_k2ifourier2 = 0.0;
 
         for (int m1 = -mesh_alias; m1 <= mesh_alias; ++m1) {
           m(0) = m1;
@@ -365,7 +422,7 @@ void configuration::Influence_Function::evaluate_quality(
               const double k2i_fourier = k_2i * fourier_coeff;
               sum_ghat_numerator += k_lm * (k2i_fourier * P_hat_2);
               sum_ghat_denominator += P_hat_2;
-              sum_k2ifourier += fourier_coeff * k2i_fourier;
+              sum_k2ifourier2 += fourier_coeff * k2i_fourier;
             }
           }
         } // loop over mesh alias
@@ -399,7 +456,7 @@ void configuration::Influence_Function::evaluate_quality(
           // if this is zero we have to set the influence function terms to zero. 
           // Due to numerical problems!!!
           if (abs2_D_hat_g < math::epsilon) {
-            my_q += sum_k2ifourier;
+            my_q += sum_k2ifourier2;
             continue;
           } 
         }
@@ -407,7 +464,7 @@ void configuration::Influence_Function::evaluate_quality(
         // MD99.32 eq. 203
         double ghat = (*this)(l);
         my_q += ghat*ghat * abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
-        my_q += sum_k2ifourier - 2 * ghat* math::dot(D_hat_g, sum_ghat_numerator);
+        my_q += sum_k2ifourier2 - 2 * ghat* math::dot(D_hat_g, sum_ghat_numerator);
         DEBUG(20, "running q = " << q);
       }
     }
@@ -423,7 +480,10 @@ void configuration::Influence_Function::evaluate_quality(
 #ifdef XXMPI
   }
 #endif
-  DEBUG(10, "q = " << q);
+  
+  force_error = math::four_pi_eps_i * st2 * sqrt(q / (volume * topo.num_atoms()));
+  
+  DEBUG(8, "q = " << q);
 }
 template void configuration::Influence_Function::evaluate_quality<configuration::Mesh>(
         const topology::Topology & topo,
@@ -433,5 +493,4 @@ template void configuration::Influence_Function::evaluate_quality<configuration:
         const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim);
-
 

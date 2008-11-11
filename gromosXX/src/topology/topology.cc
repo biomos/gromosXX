@@ -956,6 +956,22 @@ topology::Topology::check_state()const
   return result;
 }
 
+double topology::Topology::squared_sum_charges() const {
+  double sum = 0.0;
+  const unsigned int natoms = num_atoms();
+  for(unsigned int i = 0; i < natoms; i++)
+    sum += charge(i);
+  return sum*sum;
+}
+
+double topology::Topology::sum_squared_charges() const {
+  double sum = 0.0;
+  const unsigned int natoms = num_atoms();
+  for(unsigned int i = 0; i < natoms; i++)
+    sum += charge(i) * charge(i);
+  return sum;
+}
+
 namespace topology
 {
   /**

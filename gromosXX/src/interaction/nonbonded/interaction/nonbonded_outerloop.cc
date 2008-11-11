@@ -34,6 +34,8 @@
 #include <util/debug.h>
 #include <interaction/nonbonded/innerloop_template.h>
 
+#include "storage.h"
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -776,6 +778,11 @@ void interaction::Nonbonded_Outerloop
   // on fly we can calculate the methodology dependent A2 term
   double a2_tilde = 0.0;
   
+  // virial stuff
+  const double do_virial = sim.param().pcouple.virial != math::no_virial;
+  math::SymmetricMatrix virial(0.0);
+  math::SymmetricMatrix sum_gammahat(0.0);
+  
   // loop over k space
   for(; it != to; ++it) {
     DEBUG(12, "k: " << math::v2s(it->k));
@@ -795,10 +802,21 @@ void interaction::Nonbonded_Outerloop
       f(i) += it->k * (it->k2i_gammahat * (C_k * sin_kr(i) - S_k * cos_kr(i)));
     }
     // and the energy component from k
-    energy += it->k2i_gammahat * (C_k * C_k + S_k * S_k);
+    const double ewald_factor = C_k * C_k + S_k * S_k;
+    energy += it->k2i_gammahat * ewald_factor;
     // add to the A2 term
     a2_tilde += it->k2i_gammahat;
-  }
+    // do the virial
+    if (do_virial) {
+      const double isotropic_factor =
+              (it->ak_gammahat_prime - 2.0 * it->fourier_coefficient) *
+              (it->k2i * it->k2i);
+      const math::SymmetricMatrix term(math::symmetric_tensor_product(isotropic_factor * it->k, it->k));
+      sum_gammahat += term;
+      virial += ewald_factor * term;
+      virial.add_to_diagonal(ewald_factor * it->k2i_gammahat);
+    } // if virial
+  } // for k space
  
   // loop again over atoms and store force
   for(unsigned int i = 0; i < num_atoms; ++i) {
@@ -813,10 +831,24 @@ void interaction::Nonbonded_Outerloop
   energy *= eps_volume_i * 0.5; 
   DEBUG(8, "Ewald k-space energy: " << energy);
   storage.energies.ls_kspace_total = energy;
+
+  // add the A2 sum before it is scaled
+  if (do_virial)
+    sum_gammahat.add_to_diagonal(a2_tilde);
   
   // scale the a2 term
   a2_tilde *= 4.0 * math::Pi / volume;
   conf.lattice_sum().a2_tilde = a2_tilde;
+  
+  // and the virial
+  if (do_virial) {
+    virial *= -0.25 * eps_volume_i;
+    DEBUG(6, "Ewald k-space virial:\n" << math::m2s(virial));
+    storage.virial_tensor += virial;
+
+    conf.lattice_sum().a2_tilde_derivative = (4.0 * math::Pi / volume) * sum_gammahat;
+  }
+
 }
 
 void interaction::Nonbonded_Outerloop
@@ -866,8 +898,9 @@ void interaction::Nonbonded_Outerloop
     else
       conf.lattice_sum().influence_function.template calculate< configuration::Mesh >(topo, conf, sim);
 
-    const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
-            / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
+    const double new_rms_force_error = conf.lattice_sum().influence_function.rms_force_error();
+    DEBUG(10, "\testimated force error: " << new_rms_force_error);
+
     if (rank == 0)
       timer.stop("P3M: influence function");
     
@@ -879,6 +912,10 @@ void interaction::Nonbonded_Outerloop
       return;
     }
   }
+  
+  // give the current box to the influence function for correctio
+  // this has to be done AFTER the influence function is calculated
+  conf.lattice_sum().influence_function.setBox(conf.current().box);
 
   // check whether we have to update the influence function
   if (sim.steps() && sim.param().nonbonded.accuracy_evaluation &&
@@ -891,8 +928,7 @@ void interaction::Nonbonded_Outerloop
       conf.lattice_sum().influence_function.template evaluate_quality<configuration::Mesh >(topo, conf, sim);
     // number of charges is set to number of atoms as in promd...
     // see MD02.10 eq. C7
-    const double rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
-            / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
+    const double rms_force_error = conf.lattice_sum().influence_function.rms_force_error();
     if (rank == 0)
       timer.stop("P3M: accuracy evaluation");
     
@@ -906,8 +942,7 @@ void interaction::Nonbonded_Outerloop
       else
         conf.lattice_sum().influence_function.template calculate<configuration::Mesh >(topo, conf, sim);
       
-      const double new_rms_force_error = sqrt(conf.lattice_sum().influence_function.quality()
-            / (math::volume(conf.current().box, conf.boundary_type) * topo.num_atoms()));
+      const double new_rms_force_error = conf.lattice_sum().influence_function.rms_force_error();
       if (rank == 0)
         timer.stop("P3M: influence function");
       
@@ -922,14 +957,18 @@ void interaction::Nonbonded_Outerloop
   } // if update influence function
 
   // check whether we need to claculate the A2~ term via P3M.
-  const bool do_a2t = (
+    // check whether we have to calculate it at all in this step
+  bool calculate_lattice_sum_corrections =
+          sim.param().pcouple.scale != math::pcouple_off || // NPT - every step
+          !sim.steps() || // at the beginning of the simulation
+          sim.steps() % abs(sim.param().write.energy) == 0; // energy output req.
+  const bool do_a2t = 
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
-          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical) &&
-    (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0);
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical;
 
   // calculate the A2~ self term via P3M.
-  if (do_a2t) {
+  if (do_a2t && calculate_lattice_sum_corrections) {
     DEBUG(10, "\tstarting to assign squared charge to grid ... ");
     if (rank == 0)
       timer.start("P3M: self term");
@@ -1008,10 +1047,15 @@ void interaction::Nonbonded_Outerloop
         configuration::Configuration & conf,
         simulation::Simulation & sim,
         Storage & storage, int rank, int size) {
-  DEBUG(8, "\telectrostatic self energy");
+  DEBUG(8, "\telectrostatic self energy and virial");
   double a1 = 0.0, a3 = 0.0;
   double & a2_tilde = conf.lattice_sum().a2_tilde;
   double a2;
+
+  const double st2 = topo.sum_squared_charges();
+  const double s2 = topo.squared_sum_charges();
+  
+  const bool do_virial = sim.param().pcouple.virial != math::no_virial;
 
   const int shape = sim.param().nonbonded.ls_charge_shape;
   // see MD05.32 Table 6
@@ -1073,40 +1117,95 @@ void interaction::Nonbonded_Outerloop
   // see MD05.32 Table 6
   a1 *= -math::Pi * width * width / volume;
   a3 *= -1.0 / width;
+  
+  math::SymmetricMatrix a1_self_term_virial(0.0);
+  math::SymmetricMatrix a1_constant_term_virial(0.0);
+  // calculate the virial contribution of the A1 term
+  
+  if (do_virial) {
+    // A1 virial
+    const double a1_isotropic_self_virial = -0.25 * math::four_pi_eps_i * a1 * st2;
+    DEBUG(10, "\ta1 self virial: " << a1_isotropic_self_virial);
+    a1_self_term_virial.add_to_diagonal(a1_isotropic_self_virial);
+    const double a1_isotopic_constant_virial = -0.25 * math::four_pi_eps_i * a1 * (s2 - st2);
+    DEBUG(10, "\ta1 constant virial: " << a1_isotopic_constant_virial);
+    a1_constant_term_virial.add_to_diagonal(a1_isotopic_constant_virial);
+  }
 
+  math::SymmetricMatrix a2_virial(0.0);
   // calculate the a2 term
   // do we have to do it numerically?
   if (sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2_numerical ||
       sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
       sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical) {
-    // calculate A2 numerically
-    const double & required_precision = sim.param().nonbonded.ls_a2_tolerance;
-    math::Matrix l_to_k = configuration::KSpace_Utils::l_to_k_matrix(
-            conf.current().box, conf.boundary_type);
+    
+    // check whether the box is a cube.
+    bool box_is_cube = sim.param().boundary.boundary == math::rectangular &&
+    conf.current().box(0)(0) == conf.current().box(1)(1) &&
+    conf.current().box(0)(0) == conf.current().box(2)(2);
+    
+    if (box_is_cube) {
+      // use precalculated values for A2 and the virial. The cubic case
+      DEBUG(10, "a2: using precalculated values for cube.");
+      const double wigner_cube = -2.83729748;
+      a2 = wigner_cube / conf.current().box(0)(0) - a1 - a3;
+      if (do_virial) {
+        math::SymmetricMatrix a2_derivative(0.0);
+        a2_derivative.add_to_diagonal(wigner_cube/(3.0*conf.current().box(0)(0)) - a1);
+        a2_virial = (-0.25 * st2 * math::four_pi_eps_i) * a2_derivative;
+      }
+    } else { 
+      // calculate A2 numerically. This is the rectangular - triclinc case.
+      const double & required_precision = sim.param().nonbonded.ls_a2_tolerance;
+      DEBUG(10, "\tA2 tolerance: " << required_precision)
+      math::Matrix l_to_k = configuration::KSpace_Utils::l_to_k_matrix(
+              conf.current().box, conf.boundary_type);
 
-    // Here, we loop over the surface of triclinic volumes of increasing
-    // size in l-space, and add the successive A2 contributions of these
-    // surfaces.
-    math::GenericVec<int> l(0);
-    math::Vec k;
-    int l_max = 0;
-    double tolerance;
-    a2 = 0.0;
-    do {
-      ++l_max;
-      double term = 0.0;
+      // Here, we loop over the surface of triclinic volumes of increasing
+      // size in l-space, and add the successive A2 contributions of these
+      // surfaces.
+      math::GenericVec<int> l(0);
+      math::Vec k;
+      math::SymmetricMatrix sum_gammahat(0.0);
+      int l_max = 0;
+      double tolerance;
+      a2 = 0.0;
+      do {
+        ++l_max;
+        double term = 0.0;
 
-      // the planes are located perpendicular to the axis (coord)
-      for (unsigned int coord = 0; coord < 3; ++coord) {
-        const unsigned int coord_a = (coord + 1) % 3;
-        const unsigned int coord_b = (coord + 2) % 3;
-        const int boundary_a = (coord > 0) ? l_max - 1 : l_max;
-        const int boundary_b = (coord > 1) ? l_max - 1 : l_max;
+        // the planes are located perpendicular to the axis (coord)
+        for (unsigned int coord = 0; coord < 3; ++coord) {
+          unsigned int coord_a, coord_b;
+          int boundary_a, boundary_b;
+          switch (coord) {
+            case 0: // plane perpendicular to x
+              coord_a = 1;
+              coord_b = 2;
+              boundary_a = l_max;
+              boundary_b = l_max;
+              break;
+            case 1: // plane perpendicular to y
+              coord_a = 0;
+              coord_b = 2;
+              // exclude ks in the x plane already considered
+              boundary_a = l_max - 1;
+              boundary_b = l_max;
+              break;
+            case 2: // plane perpendicular to z
+              coord_a = 0;
+              coord_b = 1;
+              // exclude ks in the x and y plane already consideres
+              boundary_a = l_max - 1;
+              boundary_b = l_max - 1;
+              break;
+          }
 
-        // the plane can be located at -l_max or +l_max
-        for (int sign = -1; sign <= 1; sign += 2) {
+          // the plane can be located at -l_max or +l_max but we restrict
+          // to summation to the planes localted on +l_max and multiply the resulting
+          // term and derivative by a factor of 2.0
           DEBUG(12, "\tnew plane");
-          l(coord) = sign * l_max;
+          l(coord) = l_max;
 
           // loop over the plane excluding edges for some axes
           // here we can introduce parallelization by stride
@@ -1114,37 +1213,82 @@ void interaction::Nonbonded_Outerloop
             l(coord_a) = l_a;
             for (int l_b = -boundary_b; l_b <= boundary_b; ++l_b) {
               l(coord_b) = l_b;
+
               DEBUG(13, "\t\tl: " << math::v2s(l));
               k = math::product(l_to_k, l);
-              double k2 = math::abs2(k);
-              double gamma_hat;
-              interaction::Lattice_Sum::charge_shape_fourier(shape,
-                      sqrt(k2) * width, gamma_hat);
+              const double k2 = math::abs2(k);
+              const double abs_k = sqrt(k2);
+              const double ak = abs_k * width;
+              
+              double gamma_hat, gamma_hat_prime;
+              if (do_virial) {
+                interaction::Lattice_Sum::charge_shape_fourier(shape,
+                        ak, gamma_hat, &gamma_hat_prime);
+              } else {
+                interaction::Lattice_Sum::charge_shape_fourier(shape,
+                        ak, gamma_hat);
+              }
+              
               term += gamma_hat / k2;
               DEBUG(13, "\t\t\tgamma_hat / k2: " << gamma_hat / k2);
+
+              if (do_virial) {
+                double gamma_hat_prime;
+                // factor 2.0 is due to symmetry
+                const double isotropic_factor = 2.0 * (ak * gamma_hat_prime - 2.0 * gamma_hat) / (k2 * k2);
+                sum_gammahat += math::symmetric_tensor_product(isotropic_factor * k, k);
+              } // virial?
             }
           } // loop over planes         
-        } // loop over signs
-      } // loop over coordinates
+        } // loop over coordinates
 
-      // now calculate A2 and the relative tolerance
+        // now calculate A2 and the relative tolerance
 #ifdef XXMPI
-      if (sim.mpi) {
-        const double my_term = term;
-        MPI::COMM_WORLD.Allreduce(&my_term, &term, 1, MPI::DOUBLE, MPI::SUM);
+        if (sim.mpi) {
+          const double my_term = term;
+          MPI::COMM_WORLD.Allreduce(&my_term, &term, 1, MPI::DOUBLE, MPI::SUM);
+        }
+#endif
+
+        // take symmetry into account
+        term *= 2.0;
+
+        a2 += term;
+
+        if (do_virial && rank == 0)
+          sum_gammahat.add_to_diagonal(term);
+
+        tolerance = fabs(term / a2);
+        DEBUG(12, "\ttolerance: " << tolerance);
+      } while (tolerance > required_precision);
+
+#ifdef XXMPI
+      // for MPI we only have parts of the A2 derivative sum. So we have to add them here
+      if (sim.mpi && do_virial) {
+        math::SymmetricMatrix sum_gammahat_part = sum_gammahat;
+
+        if (rank) { // slave
+          MPI::COMM_WORLD.Reduce(&sum_gammahat_part(0), NULL, 6, MPI::DOUBLE, MPI::SUM, 0);
+        } else { // master
+          MPI::COMM_WORLD.Reduce(&sum_gammahat_part(0), &sum_gammahat(0), 6,
+                  MPI::DOUBLE, MPI::SUM, 0);
+        }
       }
 #endif
-      a2 += term;
 
-      tolerance = fabs(term / a2);
-      DEBUG(11, "\ttolerance: " << tolerance);
-    } while (tolerance > required_precision);
-
-    a2 *= 4.0 * math::Pi / volume;
+      a2 *= 4.0 * math::Pi / volume;
+      if (do_virial) {
+        const math::SymmetricMatrix a2_derivative = sum_gammahat * (4.0 * math::Pi / volume);
+        DEBUG(10, "\tA2 derivative:\n\t" << math::m2s(a2_derivative));
+        a2_virial = (-0.25 * st2 * math::four_pi_eps_i) * a2_derivative;
+      }
+    } // if triclinic
+  
   }
-
+  DEBUG(8, "\tA2 virial:\n" << math::m2s(a2_virial));
+  
 #ifdef XXMPI
-  // for MPI we only have parts of the A2 sums. So we have to add them here
+  // for MPI we only have parts of the A2~ sums. So we have to add them here
   // but only if they were calculated.
   if (sim.mpi && (
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
@@ -1152,62 +1296,83 @@ void interaction::Nonbonded_Outerloop
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical)) {
     
     const double a2_part = conf.lattice_sum().a2_tilde;
+    math::SymmetricMatrix a2_deriv_part = conf.lattice_sum().a2_tilde_derivative;
 
     if (rank) { // slave
       MPI::COMM_WORLD.Reduce(&a2_part, NULL, 1, MPI::DOUBLE, MPI::SUM, 0);
+      MPI::COMM_WORLD.Reduce(&a2_deriv_part(0), NULL, 6, MPI::DOUBLE, MPI::SUM, 0);
     } else { // master
       MPI::COMM_WORLD.Reduce(&a2_part, &conf.lattice_sum().a2_tilde, 1,
+              MPI::DOUBLE, MPI::SUM, 0);
+      MPI::COMM_WORLD.Reduce(&a2_deriv_part(0), &conf.lattice_sum().a2_tilde_derivative(0), 6,
               MPI::DOUBLE, MPI::SUM, 0);
     }
   }
 #endif
+  math::SymmetricMatrix a2_tilde_virial(0.0);
+  if (do_virial && (
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
+          sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical)) {
+    // calculate the virial of the methodology depedent A2 term
+    a2_tilde_virial = (-0.25 * st2 * math::four_pi_eps_i) *
+            conf.lattice_sum().a2_tilde_derivative;
+    DEBUG(8, "A2 tilde virial: " << math::m2s(a2_tilde_virial));
+  }
   
   switch (sim.param().nonbonded.ls_calculate_a2) {
     case simulation::ls_a2_zero :
       // we just set both A2 to zero.
       a2 = a2_tilde = 0.0;
+      a2_virial = a2_tilde_virial = 0.0;
       break;
     case simulation::ls_a2t_exact :
       // A2t was calculated exactly by Ewald/P3M. A2 is set to A2t
       a2 = a2_tilde;
+      a2_virial = a2_tilde_virial;
     case simulation::ls_a2_numerical :
       // A2 was calculate numerically, A2t is set to A2
       a2_tilde = a2;
+      a2_tilde_virial = a2_virial;
       break;
     case simulation::ls_a2t_exact_a2_numerical :
     case simulation::ls_a2t_ave_a2_numerical :
-      // we already have A2t and A2 - do nothing
+      // we already have A2t and A2 and the virials
       break;
     default :
       io::messages.add("A2 calculation method not implemented", "Lattice Sum",
               io::message::critical);
   } // switch ls_calculate_a2
-  
-  // calculate box overall square charge (MD05.32 eq 41)
-  const unsigned int num_atoms = topo.num_atoms();
-  double st2 = 0.0, s = 0.0;
-  for(unsigned int i = 0; i < num_atoms; ++i) {
-    const double qi = topo.charge(i);
-    s += qi;
-    st2 += qi * qi;
-  }
-  DEBUG(6,"a1 = " << a1 << ", a2 = " << a2 << ", ~a2 = " << a2_tilde << ", a3 = " << a3);
+
+  DEBUG(8, "a1 = " << a1 << ", a2 = " << a2 << ", ~a2 = " << a2_tilde << ", a3 = " << a3);
   // now combine everything (MD05.32 eq 54)
   if (rank == 0) {
     storage.energies.ls_self_total = (a1 + a2 + a3) * st2 * math::eps0_i / (8.0 * math::Pi);
+    if (do_virial) {
+      // we have to remove the A2 virial from the self term virial
+      const math::SymmetricMatrix self_term_virial = a1_self_term_virial + a2_virial;
+      storage.virial_tensor += self_term_virial;
+      DEBUG(6, "\tself term virial:\n\t" << math::m2s(self_term_virial));
+    } // virial
   } else {
     storage.energies.ls_self_total = 0.0;
   }
       
-  DEBUG(8,"ls_self_total = " << storage.energies.ls_self_total);
+  DEBUG(6,"ls_self_total = " << storage.energies.ls_self_total);
   
   // now claculate the E_A term
   if (rank == 0) {
-    storage.energies.ls_a_term_total = (a1 * s * s - (a1 + a2_tilde) * st2) * math::eps0_i / (8.0 * math::Pi);
+    storage.energies.ls_a_term_total = (a1 * s2 - (a1 + a2_tilde) * st2) * math::eps0_i / (8.0 * math::Pi);
+    if (do_virial) {
+      // We have to add the A2~ virial to the constant term virial
+      const math::SymmetricMatrix constant_term_virial = a1_constant_term_virial - a2_tilde_virial;
+      storage.virial_tensor += constant_term_virial ;
+      DEBUG(6, "\tconstant term virial:\n\t" << math::m2s(constant_term_virial));
+    } // virial
   } else {
     storage.energies.ls_a_term_total = 0.0;
   }
-  DEBUG(8, "ls_a_term_total = " << storage.energies.ls_a_term_total);
+  DEBUG(6, "ls_a_term_total = " << storage.energies.ls_a_term_total);
 }
 
 void interaction::Nonbonded_Outerloop
@@ -1245,8 +1410,6 @@ void interaction::Nonbonded_Outerloop
   const unsigned int num_atoms = topo.num_atoms();
   for(unsigned int i = 0; i < num_atoms; i++) {
     math::Vec r = conf.current().pos(i);
-    //periodicity.put_into_positive_box(r);
-
     box_dipole_moment += topo.charge(i) * (r - box_centre);
   }
 
@@ -1255,11 +1418,24 @@ void interaction::Nonbonded_Outerloop
            ((sim.param().nonbonded.ls_epsilon * 2.0 + 1.0) *
             math::volume(conf.current().box, conf.boundary_type));
  
-  storage.energies.ls_surface_total = 0.5 * math::abs2(box_dipole_moment)*prefactor;
-  DEBUG(10, "\tsurface energy: " << storage.energies.ls_surface_total);
+  const double abs2_box_dipole_moment = math::abs2(box_dipole_moment);
+  storage.energies.ls_surface_total = 0.5 * abs2_box_dipole_moment * prefactor;
+  DEBUG(6, "\tsurface energy: " << storage.energies.ls_surface_total);
 
   for(unsigned int i = 0; i < num_atoms; i++) {
     storage.force(i) += - prefactor * topo.charge(i) * box_dipole_moment;
+  }
+  
+  // do the virial
+  if (sim.param().pcouple.virial != math::no_virial) {
+    math::Matrix virial(0.0);
+    const double isotropic_term = -0.25 * prefactor * abs2_box_dipole_moment;
+    for(unsigned int i = 0; i < 3; ++i) {
+      virial(i, i) = isotropic_term
+              + 0.5 * prefactor * box_dipole_moment(i) * box_dipole_moment(i);
+    }
+    storage.virial_tensor += virial;
+    DEBUG(6, "surface term virial: " << math::m2s(virial));
   }
 }
 

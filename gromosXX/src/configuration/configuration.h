@@ -280,7 +280,8 @@ namespace configuration
        * constructor
        */
       lattice_sum_struct() : charge_density(NULL), potential(NULL),
-              a2_tilde(0.0), squared_charge(NULL)
+      a2_tilde(0.0), a2_tilde_derivative(0.0), squared_charge(NULL)
+
       {}
       /**
        * destructor
@@ -328,6 +329,11 @@ namespace configuration
        * methodology dependent A2 term
        */
       double a2_tilde;
+      
+      /**
+       * derivative of the methodology dependent A2 term
+       */
+      math::SymmetricMatrix a2_tilde_derivative;
       
       /**
        * indices of domain decomposition

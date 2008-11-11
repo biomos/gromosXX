@@ -82,6 +82,20 @@ namespace topology
     double charge(int i)const { return m_charge(i); }
     
     /**
+     * calculates the square of the sum of the charges
+     *
+     * @f[S^2 = (\sum_{i=1}^{N_q}\,q_i)@f]
+     */
+    double squared_sum_charges() const;
+    
+    /**
+     * calculates the sum of the squared charges
+     *
+     * @f[\tilde{S}^2 = \sum_{i=1}^{N_q}\,q_i^2@f]
+     */
+    double sum_squared_charges() const;
+    
+    /**
      * polarization charge accessor
      */
     math::SArray &coscharge() {return m_coscharge;}

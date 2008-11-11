@@ -185,6 +185,12 @@ int interaction::Nonbonded_Set
   // this has to be done after the k-space energy is calculated
   // as this calculation will also deliver a methodology
   // dependent A~_2 term if requested
+  
+  // check whether we have to calculate it at all in this step
+  const bool calculate_lattice_sum_corrections =
+          sim.param().pcouple.scale != math::pcouple_off || // NPT - every step
+          !sim.steps() || // at the beginning of the simulation
+          sim.steps() % abs(sim.param().write.energy) == 0; // energy output req.
 
   if (m_rank == 0)
     m_pairlist_alg.timer().start("ls self energy and A term");
@@ -192,14 +198,9 @@ int interaction::Nonbonded_Set
     case simulation::el_ewald :
     case simulation::el_p3m :
     {
-      //  NPT                                            ||  NVT
-      if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
+      if (calculate_lattice_sum_corrections) {
         m_outerloop.ls_self_outerloop(topo, conf, sim, m_storage,
                 m_rank, m_num_threads);
-      } else {
-        // copy from previous step
-        conf.current().energies.ls_self_total = conf.old().energies.ls_self_total;
-        conf.current().energies.ls_a_term_total = conf.old().energies.ls_a_term_total;
       }
     }
     default:; // doing reaction field

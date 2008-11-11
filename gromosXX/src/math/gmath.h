@@ -131,6 +131,8 @@ namespace math
   // the box should be known to the Matrix
   class Box;
   
+  
+  template<typename numeric_type> class GenericSymmetricMatrix;
   /**
    * Matrix.
    */
@@ -170,6 +172,9 @@ namespace math
     }
     
     GenericMatrix(const Box & box);
+    
+    template<typename numeric_type_b>
+    inline GenericMatrix(const GenericSymmetricMatrix<numeric_type_b> & ma);
 
     template<typename numeric_type_b>
     inline GenericMatrix(
@@ -223,6 +228,9 @@ namespace math
           m[i][j] += mat(i, j);
       return *this;
     }
+    
+    template<typename numeric_type_b>
+    inline GenericMatrix<numeric_type> & operator+=(GenericSymmetricMatrix<numeric_type_b> const & mat);
 
     template<typename numeric_type_b>
     inline GenericMatrix<numeric_type> & operator-=(GenericMatrix<numeric_type_b> const & mat) {
@@ -231,6 +239,9 @@ namespace math
           m[i][j] -= mat(i, j);
       return *this;
     }
+    
+    template<typename numeric_type_b>
+    inline GenericMatrix<numeric_type> & operator-=(GenericSymmetricMatrix<numeric_type_b> const & mat);
     
     template<typename numeric_type_b>
     inline GenericMatrix<numeric_type> & operator*=(const numeric_type_b & d) {
@@ -248,6 +259,200 @@ namespace math
       return *this;
     }
   };
+
+  /**
+   * @class GenericSymmetricMatrix
+   * @ingroup math
+   *
+   * Matrix, a generic and symmetric version
+   * it looks like this:
+   * @verbatim
+  [[  m[0]  m[1]  m[2]  ]
+   [  m[1]  m[3]  m[4]  ]
+   [  m[2]  m[4]  m[5]  ]]
+     @endverbatim
+   */
+  template<typename numeric_type>
+  class GenericSymmetricMatrix
+  {
+  private:
+    /**
+     * the 6 values of the symmetric matrix. See @ref math::GenericSymmetricMatrix
+     * for details about the elements.
+     */
+    numeric_type m[6];
+  public:
+    /**
+     * constructor
+     */
+    GenericSymmetricMatrix() {}
+    
+    /**
+     * construct it from a numerical value
+     */
+    template<typename numeric_type_b>
+    explicit GenericSymmetricMatrix(numeric_type_b d) 
+    {
+      m[0] = m[1] = m[2] = m[3] = m[4] = m[5] = d;
+    }
+
+    /**
+     * construct it from 6 numerical values
+     */
+    template<typename numeric_type_b>
+    inline GenericSymmetricMatrix(
+            const numeric_type_b &d1, const numeric_type_b &d2, const numeric_type_b &d3,
+            const numeric_type_b &d4, const numeric_type_b &d5, const numeric_type_b &d6) {
+      m[0] = d1;
+      m[1] = d2;
+      m[2] = d3;
+      m[3] = d4;
+      m[4] = d5;
+      m[5] = d6;
+    }
+   
+    /**
+     * assignment operator for a single numerical value
+     */
+    template<typename numeric_type_b>
+    GenericSymmetricMatrix & operator=(numeric_type_b d)
+    {
+      m[0] = m[1] = m[2] = m[3] = m[4] = m[5] = d;
+      return *this;
+    }
+    
+    /**
+     * assignment operator for a @ref math::GenericMatrix
+     */
+    template<typename numeric_type_b>
+    GenericSymmetricMatrix & operator=(const GenericMatrix<numeric_type_b> & mat)
+    {
+      m[0] = mat(0,0);
+      m[1] = mat(0,1);
+      m[2] = mat(0,2);
+      m[3] = mat(1,1);
+      m[4] = mat(1,2);
+      m[5] = mat(2,2);
+      return *this;
+    }
+    
+    /**
+     * this operator is used to access a matrix element.
+     * It is slow and should be avoided. const version
+     */
+    numeric_type operator()(int i, int j)const 
+    {
+      assert( i>=0 && i<3 && j>=0 && j<3 );
+      if (j < i) { // swap the indices
+        int tmp = i;
+        i = j; j = tmp;
+      }
+      if (i == 0)
+        return m[j];
+      else if (i == 1)
+        return m[2+j];
+      else
+        return m[5];
+    }
+    
+    /**
+     * this operator is used to access a matrix element.
+     * It is slow and should be avoided. 
+     */
+    numeric_type & operator()(int i, int j)
+    {
+      assert( i>=0 && i<3 && j>=0 && j<3 );
+      if (j < i) { // swap the indices
+        int tmp = i;
+        i = j; j = tmp;
+      }
+      if (i == 0)
+        return m[j];
+      else if (i == 1)
+        return m[2+j];
+      else
+        return m[5];
+    }
+    
+    /**
+     * access one of the six matrix elements
+     * const version
+     */
+    numeric_type operator()(int i) const {
+      assert(i >= 0 && i < 6);
+      return m[i];
+    }
+    
+    /**
+     * access one of the six matrix elements
+     */
+    numeric_type & operator()(int i) {
+      assert(i >= 0 && i < 6);
+      return m[i];
+    }
+
+    /**
+     * add another symetric matrix
+     */
+    template<typename numeric_type_b>
+    inline GenericSymmetricMatrix<numeric_type> & operator+=(GenericSymmetricMatrix<numeric_type_b> const & mat) {
+      for (int i = 0; i < 6; ++i)
+        m[i] += mat(i);
+      return *this;
+    }
+
+    /**
+     * subtract another symmetric matrix
+     */
+    template<typename numeric_type_b>
+    inline GenericSymmetricMatrix<numeric_type> & operator-=(GenericSymmetricMatrix<numeric_type_b> const & mat) {
+      for (int i = 0; i < 6; ++i)
+        m[i] -= mat(i);
+      return *this;
+    }
+    
+    /**
+     * scale the matrix
+     */
+    template<typename numeric_type_b>
+    inline GenericSymmetricMatrix<numeric_type> & operator*=(const numeric_type_b & d) {
+      for (int i = 0; i < 6; ++i)
+        m[i] *= d;
+      return *this;
+    }
+    
+    /**
+     * scale the matrix (by division)
+     */
+    template<typename numeric_type_b>
+    inline GenericSymmetricMatrix<numeric_type> & operator/=(const numeric_type_b & d) {
+      for (int i = 0; i < 6; ++i)
+        m[i] /= d;
+      return *this;
+    }
+    
+    /**
+     * add elements to the diagonal of the matrix
+     */
+    template<typename numeric_type_b>
+    inline void add_to_diagonal(const numeric_type_b & d) {
+      m[0] += d; m[3] += d; m[5] += d;
+    }
+  };  
+  
+  /**
+   * convert the symmetric matrix into a normal matrix
+   */
+  template<typename numeric_type>
+  template<typename numeric_type_b>
+  GenericMatrix<numeric_type>::GenericMatrix(const GenericSymmetricMatrix<numeric_type_b> & ma) {
+    m[0][0] = ma(0);
+    m[0][1] = m[1][0] = ma(1);
+    m[0][2] = m[2][0] = ma(2);
+    m[1][1] = ma(3);
+    m[1][2] = m[2][1] = ma(4);
+    m[2][2] = ma(5);   
+  }
   
   /**
    * a double matrix
@@ -258,6 +463,37 @@ namespace math
    */
   typedef GenericMatrix<long double> Matrixl;
 
+  /**
+   * a double symmetric matrix
+   */
+  typedef GenericSymmetricMatrix<double> SymmetricMatrix;
+  
+  /**
+   * add a symmetric matrix to a normal matrix - slow
+   */
+  template<typename numeric_type>
+  template<typename numeric_type_b>
+  inline GenericMatrix<numeric_type> & GenericMatrix<numeric_type>::operator+=(GenericSymmetricMatrix<numeric_type_b> const & mat) {
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++)
+        m[i][j] += mat(i ,j);
+
+    return *this;
+  }
+  
+  /**
+   * subtract a symmetric matrix from a normal matrix - slow
+   */
+  template<typename numeric_type>
+  template<typename numeric_type_b>
+  inline GenericMatrix<numeric_type> & GenericMatrix<numeric_type>::operator-=(GenericSymmetricMatrix<numeric_type_b> const & mat) {
+    for(int i = 0; i < 3; i++)
+      for(int j = i; j < 3; j++)
+        m[i][j] -= mat(i ,j);
+
+    return *this;
+  }
+  
   /**
    * Box.
    */
@@ -554,6 +790,39 @@ namespace math
 	       );
   }
   
+  /**
+   * calculate the outer product of two vectors
+   */
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericMatrix<numeric_type_b> tensor_product(GenericVec<numeric_type_b> const &v1, GenericVec<numeric_type_a> const &v2)
+  {
+    GenericMatrix<numeric_type_b> result;
+    for (unsigned int a=0; a<3; ++a){            
+       for(unsigned int b=0; b<3; ++b)
+         result(b, a) = v1(b) * v2(a);
+    }
+    return result;
+  }
+  
+  /**
+   * calculate the ouer product of two vectors
+   *
+   * This version asumes that the resulting matrix is symmetrical without
+   * checking whether this is true!
+   */
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericSymmetricMatrix<numeric_type_b> symmetric_tensor_product(GenericVec<numeric_type_b> const &v1, GenericVec<numeric_type_a> const &v2)
+  {
+    GenericSymmetricMatrix<numeric_type_b> result;
+    result(0) = v1(0) * v2(0);
+    result(1) = v1(0) * v2(1);
+    result(2) = v1(0) * v2(2);
+    result(3) = v1(1) * v2(1);
+    result(4) = v1(1) * v2(2);
+    result(5) = v1(2) * v2(2);
+    return result;
+  }
+  
   inline Vec product(Box const &m, Vec const &v)
   {
     return Vec(
@@ -619,6 +888,28 @@ namespace math
     return s.str();
   }
   
+  inline std::string m2s(GenericSymmetricMatrix<double> const & m)
+  {
+    std::stringstream s;
+    s << "[[" 
+      << std::setprecision(9) << std::setw(20) << m(0,0)
+      << std::setprecision(9) << std::setw(20) << m(0,1)
+      << std::setprecision(9) << std::setw(20) << m(0,2)
+      << "]\n"
+      << "\t[" 
+      << std::setprecision(9) << std::setw(20) << m(1,0)
+      << std::setprecision(9) << std::setw(20) << m(1,1)
+      << std::setprecision(9) << std::setw(20) << m(1,2)
+      << "]\n"
+      << "\t[" 
+      << std::setprecision(9) << std::setw(20) << m(2,0)
+      << std::setprecision(9) << std::setw(20) << m(2,1)
+      << std::setprecision(9) << std::setw(20) << m(2,2)
+      << "]]";
+    
+    return s.str();
+  }
+  
   inline int sign (double signum ){
     if(signum<0)
         return -1;
@@ -644,6 +935,22 @@ namespace math
   }
   
   template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericMatrix<numeric_type_a> operator*(numeric_type_b d, GenericMatrix<numeric_type_a> const &ma)
+  {
+    return GenericMatrix<numeric_type_a>(ma(0,0) * d, ma(0,1) * d, ma(0,2) * d,
+            ma(1,0) * d, ma(1,1) * d, ma(1,2) * d,
+            ma(2,0) * d, ma(2,1) * d, ma(2,2) * d);
+  }  
+  
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericMatrix<numeric_type_a> operator/(GenericMatrix<numeric_type_a> const &ma, numeric_type_b d)
+  {
+    return GenericMatrix<numeric_type_a>(ma(0,0) / d, ma(0,1) / d, ma(0,2) / d,
+            ma(1,0) / d, ma(1,1) / d, ma(1,2) / d,
+            ma(2,0) / d, ma(2,1) / d, ma(2,2) / d);
+  }  
+  
+  template<typename numeric_type_a, typename numeric_type_b>
   inline GenericMatrix<numeric_type_a> operator+(GenericMatrix<numeric_type_a> const &ma, GenericMatrix<numeric_type_b> const &mb)
   {
     GenericMatrix<numeric_type_a> m;
@@ -664,7 +971,61 @@ namespace math
   }
   
   /**
-   * square a matric
+   * scale a symmetric matrix
+   */
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericSymmetricMatrix<numeric_type_a> operator*(GenericSymmetricMatrix<numeric_type_a> const &ma, numeric_type_b d)
+  {
+    return GenericSymmetricMatrix<numeric_type_a>(ma(0) * d, ma(1) * d, ma(2) * d,
+            ma(3) * d, ma(4) * d, ma(5) * d);
+  }
+  
+  /**
+   * scale a symmetric matrix
+   */
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericSymmetricMatrix<numeric_type_a> operator*(numeric_type_b d, GenericSymmetricMatrix<numeric_type_a> const &ma)
+  {
+    return GenericSymmetricMatrix<numeric_type_a>(ma(0) * d, ma(1) * d, ma(2) * d,
+            ma(3) * d, ma(4) * d, ma(5) * d);
+  }  
+  
+  /**
+   * scale a symmetric matrix
+   */
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericSymmetricMatrix<numeric_type_a> operator/(GenericSymmetricMatrix<numeric_type_a> const &ma, numeric_type_b d)
+  {
+    return GenericSymmetricMatrix<numeric_type_a>(ma(0) / d, ma(1) / d, ma(2) / d,
+            ma(3) / d, ma(4) / d, ma(5) / d);
+  }  
+  
+  /**
+   * add two symmetric matrices
+   */
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericSymmetricMatrix<numeric_type_a> operator+(GenericSymmetricMatrix<numeric_type_a> const &ma, GenericSymmetricMatrix<numeric_type_b> const &mb)
+  {
+    GenericSymmetricMatrix<numeric_type_a> m;
+    for(int i = 0; i < 6; ++i)
+      m(i) = ma(i) + mb(i);
+    return m;
+  }
+  
+  /**
+   * subtract two symmetric matrices
+   */
+  template<typename numeric_type_a, typename numeric_type_b>
+  inline GenericSymmetricMatrix<numeric_type_a> operator-(GenericSymmetricMatrix<numeric_type_a> const &ma, GenericSymmetricMatrix<numeric_type_b> const &mb)
+  {
+    GenericSymmetricMatrix<numeric_type_a> m;
+    for(int i = 0; i < 6; ++i)
+      m(i) = ma(i) - mb(i);
+    return m;
+  }
+  
+  /**
+   * square a matrix
    */
   template<typename numeric_type>
   inline GenericMatrix<numeric_type> square(GenericMatrix<numeric_type> const &ma)
@@ -741,7 +1102,7 @@ namespace math
    */
   template<typename numeric_type>
   inline numeric_type trace(GenericMatrix<numeric_type> const &ma) {
-    return ma(0,0) * ma(1,1) * ma(2,2);
+    return ma(0,0) + ma(1,1) + ma(2,2);
   }
   
   inline Box operator*(Box const &ba, double d)

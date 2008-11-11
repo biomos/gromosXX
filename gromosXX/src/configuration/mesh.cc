@@ -170,7 +170,7 @@ void GenericMesh<complex_type>::fft(GenericMesh<complex_type>::fft_type type) {
 // if you fail to do so, linking will fail.
 template class GenericMesh<double>;
 template class GenericMesh<complex_number>;
-template class GenericMesh<math::Matrix>;
+template class GenericMesh<math::SymmetricMatrix>;
 
 ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size) :
       GenericMesh<complex_number>(), mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),

@@ -53,6 +53,8 @@ configuration::calculate_k_space(
   DEBUG(12, "k space cutoff: " <<  k_cut2);
   const double a = sim.param().nonbonded.ls_charge_shape_width;
   
+  const double do_virial = sim.param().pcouple.virial != math::no_virial;
+  
   // loop over k-space till cutoff is reached
   math::GenericVec<int> l;
   // here we stride
@@ -70,12 +72,25 @@ configuration::calculate_k_space(
           DEBUG(10, "\t\tk: " << math::v2s(k));
           configuration::KSpace_Element k_elem;
           k_elem.k = k;
+          k_elem.k2 = k2;
+          k_elem.abs_k = sqrt(k2);
+          k_elem.ak = k_elem.abs_k * a;
           k_elem.k2i = 1.0 / k2;
           DEBUG(10, "\t\tk2i: " << k_elem.k2i);
-          interaction::Lattice_Sum::charge_shape_fourier(
-                  sim.param().nonbonded.ls_charge_shape,
-                  a * sqrt(k2), k_elem.fourier_coefficient
-                  );
+          
+          if (do_virial) {
+            interaction::Lattice_Sum::charge_shape_fourier(
+                    sim.param().nonbonded.ls_charge_shape,
+                    k_elem.ak, k_elem.fourier_coefficient,
+                    &k_elem.fourier_coefficient_derivative
+                    );
+            k_elem.ak_gammahat_prime = k_elem.ak * k_elem.fourier_coefficient_derivative;
+          } else {
+            interaction::Lattice_Sum::charge_shape_fourier(
+                    sim.param().nonbonded.ls_charge_shape,
+                    k_elem.ak, k_elem.fourier_coefficient
+                    );
+          }
           DEBUG(10, "\t\tfourier coefficient: " << k_elem.fourier_coefficient);
           k_elem.k2i_gammahat = k_elem.k2i * k_elem.fourier_coefficient;
           kspace.push_back(k_elem);

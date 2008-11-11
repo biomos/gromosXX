@@ -3872,11 +3872,15 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
             "In_Parameter", io::message::error);
 
     if (param.pcouple.scale != math::pcouple_off
-        && do_ls
+        && param.nonbonded.method == simulation::el_p3m
         && param.nonbonded.accuracy_evaluation == 0)
       io::messages.add("NONBONDED block: Pressure scaling but no quality evaluation of influence function."
-              " Set NQEVAL > 0.",
-            "In_Parameter", io::message::warning);
+              " Set NQEVAL > 0.", "In_Parameter", io::message::warning);
+    
+    if (param.pcouple.scale == math::pcouple_full_anisotropic && do_ls) {
+      io::messages.add("NONBONDED block: Full ansiotropic pressure scaling "
+              "could not be tested yet.", "In_Parameter", io::message::warning);
+    }
 
     if (param.nonbonded.influence_function_rms_force_error <= 0.0)
       io::messages.add("NONBONDED block: Illegal value for FACCUR (>0.0)",
