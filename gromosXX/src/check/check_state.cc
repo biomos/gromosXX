@@ -164,10 +164,10 @@ int check::check_state(topology::Topology & topo,
   finP=0;
   
   for(int i=0; i < 3; i++){
-    math::Vec s1(1);
+    math::Vec s1(1); 
     s1(i) += epsilon;
       
-    SPLIT_BOUNDARY(scale_positions, topo, conf, s1);
+    SPLIT_BOUNDARY(scale_positions, topo, conf, s1); //assign boundaries
     ff.apply(topo, conf, sim);
     conf.current().energies.calculate_totals();
     
@@ -177,7 +177,7 @@ int check::check_state(topology::Topology & topo,
     conf.current().box = conf.old().box;
 
     math::Vec s2(1);
-    s2(i) -= epsilon;
+    s2(i) -= epsilon; 
 
     SPLIT_BOUNDARY(scale_positions, topo, conf, s2);
     ff.apply(topo, conf, sim);
@@ -191,7 +191,7 @@ int check::check_state(topology::Topology & topo,
     finP(i,i) = -0.5 * conf.current().box(i)(i) * (e2-e1)/(2*epsilon) /
       conf.current().box(i)(i);
   }
-  
+  // conf.current().box(i) is box size
   // std::cout << "finit diff virial is\n"
   // << math::m2s(finP)
   // << "\n--------------------------------------------------\n" << std::endl;

@@ -57,11 +57,13 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["PerturbedDihedral"] = 13.314602;
   m["NonBonded_cg"] = -7.352312;
   m["NonBonded"] = -50.196817;
+  m["NonBonded_newRF"] = -84.092443;
   m["NonBonded_atomic"] =  -49.912;
   m["DistanceRestraint"] = 257.189539;
   m["PerturbedDistanceRestraint"] = 195.899012;
   m["DihedralRestraint"] = 2127.910749;
   m["PerturbedDihedralRestraint"] = 279.207857;
+  //m["LeapFrogPositions"] = ;
 }
 
 int main(int argc, char* argv[])

@@ -263,7 +263,8 @@ int check_interaction(topology::Topology & topo,
   if (term.name == "NonBonded"){
     if (sim.param().force.interaction_function == simulation::cgrain_func)
       name = "CG-" + name;
-    
+    if (sim.param().nonbonded.rf_excluded == 1)
+      name = "newRF-" + name ;
     if (sim.param().force.special_loop == simulation::special_loop_spc)
       if (sim.param().pairlist.grid)
 	name += " (grid, spc loop)";
@@ -277,12 +278,12 @@ int check_interaction(topology::Topology & topo,
   }
 
   CHECKING(name + " interaction energy", res);
-
+  
   conf.current().force = 0;
   conf.current().energies.zero();
 
   term.calculate_interactions(topo, conf, sim);
-      
+  
   conf.current().energies.calculate_totals();
   CHECK_APPROX_EQUAL(conf.current().energies.potential_total,
 		     energy, delta, res);
@@ -290,21 +291,22 @@ int check_interaction(topology::Topology & topo,
 
   // finite diff
   CHECKING(name + " interaction force (finite diff)", res);
-
+   
   for(size_t atom=0; atom < atoms; ++atom){
-
+ 
     conf.current().force = 0;
     conf.current().energies.zero();
 
     term.calculate_interactions(topo, conf, sim);
-      
+   
     math::Vec f = conf.current().force(atom);
-
+ //   cout << f(0) << " " << f(1) << " " << f(2) << endl;
     math::Vec finf;
-    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon); // 0 is coord x,y or z
-    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon);
-    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon);
-	
+    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon,true); // 0 is coord x,y or z
+    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon,true);
+    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon,true);
+  //  cout << finf(0) << " " << finf(1) << " " << finf(2) << endl;
+   
     CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
     CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
     CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
@@ -313,7 +315,8 @@ int check_interaction(topology::Topology & topo,
   RESULT(res, total);
   
   if (term.name == "NonBonded" && 
-      sim.param().force.interaction_function != simulation::cgrain_func){
+      sim.param().force.interaction_function != simulation::cgrain_func && 
+      sim.param().nonbonded.rf_excluded == 0){
     
     // std::cout << "num atoms : " << topo.num_atoms() << std::endl;
     // std::cout << "num solvents : " << topo.num_solvents() << std::endl;
@@ -537,10 +540,9 @@ int check::check_forcefield(topology::Topology & topo,
 				   ref["NonBonded"], 0.00000001, 0.001);
 	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 	sim.param().force.special_loop = simulation::special_loop_off;
-	total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), 
-				   ref["NonBonded"], 0.00000001, 0.001);
-	total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
-
+	//total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), 
+	//			   ref["NonBonded"], 0.00000001, 0.001);
+	//total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
 	if (! sim.param().pairlist.grid){ //if not 1, eg grid see in_parameter.cc
 	  // construct a "standard" pairlist algorithm 
 	  interaction::Pairlist_Algorithm * pa = new interaction::Standard_Pairlist_Algorithm;
@@ -553,15 +555,38 @@ int check::check_forcefield(topology::Topology & topo,
 	  sim.param().pairlist.grid = false;
 	  
 	  ni->init(topo, conf, sim, std::cout, true);
-	  
+          
 	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), 
 				     ref["NonBonded"], 0.00000001, 0.001);
 	  total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
 	  
+        //set RF calculation for excluded pairs on
+          sim.param().nonbonded.rf_excluded = 1;
+          total += check_interaction(topo, conf, sim, **it, topo.num_atoms(), 
+				   ref["NonBonded_newRF"], 0.00000001, 0.001);
 	  sim.param().pairlist.grid = true;
+          sim.param().nonbonded.rf_excluded = 0;
+          delete pa;
+          // construct a "grid" pairlist algorithm 
+       //   std::cout << "before new" << std::endl;
+	  pa = new interaction::Grid_Pairlist_Algorithm;
+       //   std::cout << "nre" << std::endl;
+	  pa->set_parameter(&ni->parameter());
+          sim.param().pairlist.grid = true;
+	  sim.param().pairlist.grid_size = 0.1;
+         // std::cout << "before init" << std::endl;
+          ni->pairlist_algorithm(pa);
+	  ni->init(topo, conf, sim, std::cout, true);
+	//  std::cout << "before check" << std::endl;
+	  total += check_interaction(topo, conf, sim, *ni, topo.num_atoms(), 
+				     ref["NonBonded"], 0.00000001, 0.001);
+	  total += check_lambda_derivative(topo, conf, sim, *ni, 0.001, 0.001);
+	//  std::cout << "after check" << std::endl;
+	  sim.param().pairlist.grid = false;
 	  ni->pairlist_algorithm(old_pa);
 	  ni->init(topo, conf, sim, std::cout, true);
 	  delete pa;
+          
 	}
 	else{
 	  // construct a "grid" pairlist algorithm 

@@ -1,9 +1,6 @@
-#$Id$
+#$Id: aladip.in 1059 2008-11-14 achoutko $
 TITLE
-	$Id$
-	FLA1, FLA2 waters
-	45a4 force field,
-	7-5-2001
+	cg16
 END
 #ENERGYMIN
 #     NTEM    NCYC    DELE    DX0     DXM
@@ -20,7 +17,7 @@ END
 #END
 SYSTEM
 #      NPM      NSM 
-         1     1244
+         1       0
 END
 INITIALISE
 # NTIVEL: 0,1 controls generation of initial velocities.
@@ -62,7 +59,7 @@ INITIALISE
 END
 STEP
 #   NSTLIM         T        DT
-        50       0.0     0.002
+         1       0.0     0.002
 END
 BOUNDCOND
 #      NTB    NDFMIN
@@ -76,24 +73,16 @@ MULTIBATH
 #               (where num is the number of chains to use)
     weak-coupling
 #   NBATHS: number of baths
-    2
+    1
 #   TEMP0  TAU
     298.15 0.010
-    298.15 0.010
 #   DOFSET: different couplings
-    2
+    1
 #   LAST   COM-BATH  IR-BATH
-    6      1         1
-    3738   2         2
+    4      1         1
 END
 PRESSURESCALE
-#       COUPLE: off, calc, scale
-#       SCALE:  off, iso, aniso, full
-#       VIRIAL: none, atomic, molecular
-#
-#   COUPLE  SCALE   COMP        TAUP    VIRIAL
-    scale   iso     4.575E-4    0.5     atomic
-#   reference pressure
+    scale   iso     4.575E-4    0.5     molecular
     0.06102     0.00000     0.00000
     0.00000     0.06102     0.00000
     0.00000     0.00000     0.06102
@@ -119,7 +108,7 @@ WRITETRAJ
 # =0: write normal trajectory
 # >0: chose min energy for writing configurations
 #     NTWX     NTWSE      NTWV      NTWF      NTWE      NTWG      NTWB
-       100         0         0         0         0         0         0
+       100         0         0         1         0         0         0
 END
 CONSTRAINT
 #       NTC
@@ -155,7 +144,7 @@ FORCE
 # H        H         H        H
   1  1     1  1      1  1     1  1     1  1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
-     2      6      3738
+     1     4
 END
 PAIRLIST
 #       ALGORITHM: standard (gromos96 like pairlist)
@@ -166,13 +155,12 @@ PAIRLIST
 #                  atomic (atom based cutoff)
 #
 #       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
-        standard        5       0.8     1.4     auto    chargegroup
+        standard        5       1.4     1.4     auto    chargegroup
 END
 #LONGRANGE
 # EPSRF     APPAK      RCRF
 #    62.0       0.0       1.4
 #END
-#
 NONBONDED
 #   NLRELE
          1
@@ -189,7 +177,8 @@ NONBONDED
 #    NLRLJ    SLVDNS
          0      33.3
 END
-POSITIONRES
+#
+#POSITIONRES
 #    NTPOR 0..3 controls atom positions re(con)straining.
 #          0: no position re(con)straints.
 #          1: restraining with force constant CPOR
@@ -208,16 +197,86 @@ POSITIONRES
 #     CPOR >= 0 position restraining force constant
 #
 #   NTPOR  NTPORB  NTPORS    CPOR
-        0       0       0   1.0E1
-END
+#        0       0       0   1.0E1
+#END
+#
+#PERTURBATION
+#    NTG: 0..3 controls use of free-energy calculation.
+#         0: no free-energy calculation (default)
+#  NRDGL: 0,1 controls reading of initial value for RLAM.
+#         0: use initial RLAM parameter from PERTURBATION block
+#         1: read from configuration
+#   RLAM: 0.0..1.0 initial value for lambda
+#  DLAMT: >= 0.0 rate of lambda increase in time.
+# ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter
+#  ALPHC: >= 0.0 Coulomb-RF soft-core parameter
+#   NLAM: > 0 power dependence of lambda coupling
+# NSCALE: 0..2 controls use of interaction scaling
+#         0: no interaction scaling
+#         1: interaction scaling
+#         2: perturbation for all atom pairs with scaled
+#            interactions. No perturbation for others.
+#
+#     NTG   NRDGL    RLAM   DLAMT
+#        1       0   0.125     0.0
+#  ALPHLJ   ALPHC    NLAM  NSCALE
+#      1.0     1.0       1       0
+#END
+#LAMBDAS 
+# NTIL
+#    off
+# NTLI      NILG1 NILG2   ALI   BLI   CLI   DLI   ELI
+#bond            1     1     0     0   1.0     0     0
+#vdw             1     1     1   0.0    0.0   0.0     0
+#vdw             1     2     1     0.0  0.0  -1.0    0
+#vdw_soft        1     1     0     0.0  1.0    0     0
+#vdw_soft        1     2     0     0     0     0     1
+#crf             1     1     1   0.0    0   0.0     0
+#crf             1     2     0     0.0  2.0  -1.0    0
+#crf_soft        1     1     1     0.0  0    0     0
+#crf_soft        1     2     0     0     0     0     1
+#END   
 
+#-------
+#PATHINT
+# restrictions for PI
+# topology must contain bead information
+# pathint in 4D is disabled
+# pathint and perturbation not allowed
+# a warning is written out if the temperature at discretization
+# is not the same as the MD run is performed at.
+#
+# values or NTPI
+#     0: no path integral calculation
+#     1: path integral calculation
+#---
+# NTPI
+#    0
+#END
+
+CGRAIN
+# NTCGRAN: coarse grain selection
+# #          0: no coarse graining
+# #          1: coarse grain simulation
+# #          2: multigrain simulation
+# # EPS    : dielectric constant for coarse grained coulombic interactions
+# # NTCGRAN   EPS
+        1  20.0
+END
+         
 GROMOS96COMPAT
-# NTR96 0,1 controls use of reaction field formula
-#    0 : new reaction field formula [default]
-#    1 : g96 reaction field formula
-# NTG96 0,1 controls use of soft-core formula (ignored)
-#    0 : new soft-core formula
-#    1 : g96 soft-core formula [default]
-# NTR96     NTG96
-    1         1
+# NTNB96 0,1 controls use of g96-like nonbonded routines (ignored)
+# #    0 : not used [default]
+# #    1 : g96-like double-loop routines are used
+# # NTR96 0,1 controls use of reaction field formula
+# #    0 : new reaction field formula [default]
+# #    1 : g96 reaction field formula
+# # NTP96 0,1 controls use of g96 pressure calculation (ignored)
+# #    0 : new formula using ekin a t 
+# #    1 : g96 formulat using ekin at t - dt / 2
+# # NTG96 0,1 controls use of soft-core formula (ignored)
+# #    0 : new soft-core formula
+# #    1 : g96 soft-core formula [default]
+# # NTNB96   NTR96     NTP96   NTG96
+     1         1       1        1
 END

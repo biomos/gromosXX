@@ -2326,7 +2326,7 @@ void io::In_Topology
     if (!buffer.size()){
       io::messages.add("No CGPARAMETERS block found in topology!",
 		       "In_Topology",
-		       io::message::notice);
+		       io::message::error);
       return;
     }
     

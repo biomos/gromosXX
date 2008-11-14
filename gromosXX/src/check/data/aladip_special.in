@@ -51,7 +51,7 @@ INITIALISE
 #  NTIVEL  NTISHK  NTINHC
         0       0       0
 #  NTISHI  NTIRTC  NTICOM
-        0       0       0
+        1       0       0
 #  NTISTI
         0
 #      IG   TEMPI
@@ -280,14 +280,20 @@ END
 #END
 
 
-
 GROMOS96COMPAT
+# NTNB96 0,1 controls use of g96-like nonbonded routines (ignored)
+#    0 : not used [default]
+#    1 : g96-like double-loop routines are used
 # NTR96 0,1 controls use of reaction field formula
 #    0 : new reaction field formula [default]
 #    1 : g96 reaction field formula
+# NTP96 0,1 controls use of g96 pressure calculation (ignored)
+#    0 : new formula using ekin a t
+#    1 : g96 formulat using ekin at t - dt / 2
 # NTG96 0,1 controls use of soft-core formula (ignored)
 #    0 : new soft-core formula
 #    1 : g96 soft-core formula [default]
-# NTR96     NTG96
-    1         1
+# NTNB96   NTR96     NTP96   NTG96
+    1         1       1        1
 END
+

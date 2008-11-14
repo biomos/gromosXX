@@ -30,19 +30,19 @@ if (x1 != x2){ \
             << "\n\t" << std::setw(60) << " "; \
   ++res; \
 }
-
+ /*   std::cout.precision(6); \
+    std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield); \
+    std::cout << "\n\t" << std::setw(15) << STR(x1) << " =\t" << x1 \
+              << "\n\t" << std::setw(15) << STR(x2) << " =\t" << x2 \
+              << "\n\t" << std::setw(15) << "rel error" << " =\t" << diff \
+              << "\n\t" << std::setw(60) << " "; \
+   */
 #define CHECK_APPROX_EQUAL(x1, x2, eps, res) \
 { \
   double diff; \
   if (x1 != 0) diff = fabs((x1 - x2) / x1); \
   else diff = x2; \
   if (diff > eps){ \
-    std::cout.precision(6); \
-    std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield); \
-    std::cout << "\n\t" << std::setw(15) << STR(x1) << " =\t" << x1 \
-              << "\n\t" << std::setw(15) << STR(x2) << " =\t" << x2 \
-              << "\n\t" << std::setw(15) << "rel error" << " =\t" << diff \
-              << "\n\t" << std::setw(60) << " "; \
     ++res; \
   } \
 }
