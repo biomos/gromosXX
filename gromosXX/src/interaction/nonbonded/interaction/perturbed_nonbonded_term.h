@@ -44,7 +44,7 @@ namespace interaction
 				 double & de_crf);
     
     /**
-     * calculate the force, energy and dh/dl of an atom pair. for polarization
+     * calculate the force, energy and dh/dl of an atom pair. for polarisation
      */
     void pol_lj_crf_soft_interaction(math::Vec const &r, math::Vec const &rp1,
                                      math::Vec const &rp2, math::Vec const &rpp,
@@ -85,7 +85,7 @@ namespace interaction
 			     bool selfterm_correction = false);
     /**
      * calculate the reaction field force and energy
-     * of a perturbed atom pair (with polarization)
+     * of a perturbed atom pair (with polarisation)
      */
     void pol_rf_soft_interaction(math::Vec const &r,
                              math::Vec const &rp1,
@@ -136,13 +136,13 @@ namespace interaction
 		       math::Vec &e_el);
     
     /**
-     * calculate the self energy - dipole-dipole interaction (polarization)
+     * calculate the self energy - dipole-dipole interaction (polarisation)
      */
     void self_energy_soft_interaction(double A_alpha, double B_alpha, 
                                       double e_i2, double &self_e, double &self_de);
     
     /**
-     * calculate the damped self energy - dipole-dipole interaction (polarization)
+     * calculate the damped self energy - dipole-dipole interaction (polarisation)
      */
     void self_energy_soft_interaction(double A_alpha, double B_alpha, double e_i2, 
                                       double A_e_0, double B_e_0, double p,

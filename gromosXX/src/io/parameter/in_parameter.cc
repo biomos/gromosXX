@@ -84,7 +84,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTISTEP(param);
   read_MONTECARLO(param);
   read_RAMD(param);
-  read_POLARIZE(param);
+  read_POLARISE(param);
   read_RANDOMNUMBERS(param);
   read_EDS(param);
   read_LAMBDAS(param); // needs to be called after FORCE
@@ -3169,19 +3169,19 @@ void io::In_Parameter::read_RAMD(simulation::Parameter & param,
   }
 }
 /**
- * @section polarize POLARIZE block
+ * @section polarise POLARISE block
  * @verbatim
-POLARIZE
-# COS      0,1 use polarization
-#          0: don't use polarization
-#          1: use charge-on-spring model for dipolar polarization
+POLARISE
+# COS      0,1 use polarisation
+#          0: don't use polarisation
+#          1: use charge-on-spring model for dipolar polarisation
 # EFIELD   0,1 controls evaluation site for electric field
 #          0: evaluate at atom position
 #          1: evaluate at cos position
 # MINFIELD >0.0 convergence criterium
-# DAMP     0,1 controls polarizability damping
-#          0: don't damp polarizability
-#          1: damp polarizability (with paramaters from topology)
+# DAMP     0,1 controls polarisability damping
+#          0: don't damp polarisability
+#          1: damp polarisability (with paramaters from topology)
 # WRITE    > 0 write COS positions to special trajectory
 #          0: don't write
 #         >0: write COS positions every WRITEth step
@@ -3191,84 +3191,84 @@ POLARIZE
 END
 @endverbatim
  */
-void io::In_Parameter::read_POLARIZE(simulation::Parameter & param,
+void io::In_Parameter::read_POLARISE(simulation::Parameter & param,
 				 std::ostream & os)
 {
-  DEBUG(8, "read POLARIZE");
+  DEBUG(8, "read POLARISE");
   
   std::vector<std::string> buffer;
   std::string s;
   
-  buffer = m_block["POLARIZE"];
+  buffer = m_block["POLARISE"];
   
   if (buffer.size()) {
-    block_read.insert("POLARIZE");
+    block_read.insert("POLARISE");
     
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
     
     int cos, damp, efield;
-    _lineStream >> cos >> efield >> param.polarize.minfield >> damp
-                >> param.polarize.write;
+    _lineStream >> cos >> efield >> param.polarise.minfield >> damp
+                >> param.polarise.write;
     
     if (_lineStream.fail()){
-      io::messages.add("bad line in POLARIZE block",
+      io::messages.add("bad line in POLARISE block",
 		       "In_Parameter", io::message::error);
       return;
     }
     
     switch(cos) {
       case 0 : {
-        param.polarize.cos = false;
-        param.polarize.write = 0;
+        param.polarise.cos = false;
+        param.polarise.write = 0;
         break;
       }
       case 1 : {
-        param.polarize.cos = true; 
+        param.polarise.cos = true; 
         param.force.interaction_function = simulation::pol_lj_crf_func;
         break;
       }
       default:
-        io::messages.add("POLARIZE block: COS must be 0 or 1.",
+        io::messages.add("POLARISE block: COS must be 0 or 1.",
                          "In_Parameter", io::message::error);
     }
     
     switch(efield) {
-      case 0 : param.polarize.efield_site = simulation::ef_atom; break;
-      case 1 : param.polarize.efield_site = simulation::ef_cos; break;
+      case 0 : param.polarise.efield_site = simulation::ef_atom; break;
+      case 1 : param.polarise.efield_site = simulation::ef_cos; break;
       default:
-        io::messages.add("POLARIZE block: EFIELD must be 0 or 1.",
+        io::messages.add("POLARISE block: EFIELD must be 0 or 1.",
                          "In_Parameter", io::message::error);
     }
     
-    if (param.polarize.minfield <= 0.0) {
-      io::messages.add("POLARIZE block: MINFIELD must be > 0.0",
+    if (param.polarise.minfield <= 0.0) {
+      io::messages.add("POLARISE block: MINFIELD must be > 0.0",
                          "In_Parameter", io::message::error); 
     }
     
     switch(damp) {
-      case 0 : param.polarize.damp = false; break;
-      case 1 : param.polarize.damp = true; break;
+      case 0 : param.polarise.damp = false; break;
+      case 1 : param.polarise.damp = true; break;
       default:
-        io::messages.add("POLARIZE block: DAMP must be 0 or 1.",
+        io::messages.add("POLARISE block: DAMP must be 0 or 1.",
                          "In_Parameter", io::message::error);
     }
     
-    if (!param.polarize.cos)
-      param.polarize.write = 0;
+    if (!param.polarise.cos)
+      param.polarise.write = 0;
     
-    if (param.polarize.write < 0) {
-      io::messages.add("POLARIZE block: WRITE must be >= 0",
+    if (param.polarise.write < 0) {
+      io::messages.add("POLARISE block: WRITE must be >= 0",
                          "In_Parameter", io::message::error);
     }
     
-    if (param.polarize.damp && !param.polarize.cos) {
-      io::messages.add("POLARIZE block: DAMP is ignored if no polarization is used",
+    if (param.polarise.damp && !param.polarise.cos) {
+      io::messages.add("POLARISE block: DAMP is ignored if no polarisation is used",
                        "In_Parameter", io::message::warning);
     } 
     
-    if (param.polarize.cos && param.multicell.multicell) {
-       io::messages.add("multiple unit cell simulation using polarization may "
+    if (param.polarise.cos && param.multicell.multicell) {
+       io::messages.add("multiple unit cell simulation using polarisation may "
                         "converge differently. Use a small MINFIELD parameter.",
                        "In_Parameter", io::message::warning);     
     }

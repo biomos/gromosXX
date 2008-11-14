@@ -161,7 +161,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     }
     if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
       io::messages.add("Nonbonded Innerloop",
-		       "scaling not implemented for COS polarization simulations!",
+		       "scaling not implemented for COS polarisation simulations!",
 		       io::message::critical);
       return;
     }
@@ -489,7 +489,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     double f1, f6, f12;
     if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
       io::messages.add("Nonbonded Innerloop",
-              "scaling not implemented for COS polarization simulations!",
+              "scaling not implemented for COS polarisation simulations!",
               io::message::critical);
       return;
     }
@@ -978,8 +978,8 @@ interaction::Perturbed_Nonbonded_Innerloop<
 
   double self_e, de_self;
   const double e_i2 = math::abs2(storage.electric_field(i));
-  const double alpha_A = topo.perturbed_solute().atom(i).A_polarizability(),
-               alpha_B = topo.perturbed_solute().atom(i).B_polarizability(),
+  const double alpha_A = topo.perturbed_solute().atom(i).A_polarisability(),
+               alpha_B = topo.perturbed_solute().atom(i).B_polarisability(),
                e0_A = topo.perturbed_solute().atom(i).A_damping_level(),
                e0_B = topo.perturbed_solute().atom(i).B_damping_level();
 

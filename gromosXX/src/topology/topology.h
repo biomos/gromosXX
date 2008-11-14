@@ -96,42 +96,42 @@ namespace topology
     double sum_squared_charges() const;
     
     /**
-     * polarization charge accessor
+     * polarisation charge accessor
      */
     math::SArray &coscharge() {return m_coscharge;}
 
     /**
-     * polarization charge const accessor
+     * polarisation charge const accessor
      */
     double coscharge(int i)const { return m_coscharge(i); }
 
     /**
-     * polarizability accessor
+     * polarisability accessor
      */
-    math::SArray &polarizability() {return m_polarizability;}
+    math::SArray &polarisability() {return m_polarisability;}
 
     /**
-     * polarizability const accessor
+     * polarisability const accessor
      */
-    double polarizability(int i)const {return m_polarizability(i);}
+    double polarisability(int i)const {return m_polarisability(i);}
     
     /**
-     * polarizability damping E0 accessor
+     * polarisability damping E0 accessor
      */
     math::SArray &damping_level() {return m_damping_level;}
 
     /**
-     * polarizability damping E0 const accessor
+     * polarisability damping E0 const accessor
      */
     double damping_level(int i)const {return m_damping_level(i);}
     
     /**
-     * polarizability damping p accessor
+     * polarisability damping p accessor
      */
     math::SArray &damping_power() {return m_damping_power;}
 
     /**
-     * polarizability damping p const accessor
+     * polarisability damping p const accessor
      */
     double damping_power(int i)const {return m_damping_power(i);}
     
@@ -559,17 +559,17 @@ namespace topology
     std::vector<bool> & is_eds_perturbed() { return m_is_eds_perturbed;}
     
     /**
-     * is the atom polarizable?
+     * is the atom polarisable?
      */
-    bool is_polarizable(unsigned int const i)const {
+    bool is_polarisable(unsigned int const i)const {
       
-      assert(i >= 0 && i < m_is_polarizable.size()); 
-      return m_is_polarizable[i];
+      assert(i >= 0 && i < m_is_polarisable.size()); 
+      return m_is_polarisable[i];
     }
     /**
-     * is the atom polarizable?
+     * is the atom polarisable?
      */
-    std::vector<bool> & is_polarizable() { return m_is_polarizable;}    
+    std::vector<bool> & is_polarisable() { return m_is_polarisable;}    
     
     /**
      * recalculate lambda dependent properties.
@@ -831,9 +831,9 @@ namespace topology
     std::vector<bool> m_is_eds_perturbed;   
     
     /**
-     * is the atom polarizable?
+     * is the atom polarisable?
      */
-    std::vector<bool> m_is_polarizable;
+    std::vector<bool> m_is_polarisable;
     
     /**
      * the number of solvent molecules.
@@ -1070,22 +1070,22 @@ namespace topology
     std::vector<virtual_grain_struct> m_virtual_grain;
     
     /**
-     * the atom polarizabilities
+     * the atom polarisabilities
      */
-     math::SArray m_polarizability;    
+     math::SArray m_polarisability;    
     
     /**
-     * the polarization cos-charge.
+     * the polarisation cos-charge.
      */
      math::SArray m_coscharge;
      
     /**
-     * the polarizability damping E0
+     * the polarisability damping electric field offsef @f$ E_0 @f$
      */
      math::SArray m_damping_level;
     
     /**
-     * the polarizabiliy damping p
+     * the polarisabiliy damping power @f$ p @f$
      */
      math::SArray m_damping_power;
     

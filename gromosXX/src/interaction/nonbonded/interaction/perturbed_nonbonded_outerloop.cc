@@ -221,7 +221,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
                   pairlist, perturbed_pairlist, storage, storage_lr, rank);
 }
 /**
- * helper function to calculate polarization, 
+ * helper function to calculate polarisation, 
  * stores them in the arrays pointed to by parameters
  * to make it usable for longrange calculations.
  */
@@ -236,7 +236,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
                     Storage & storage_lr,
                     int rank)
 {  
-  DEBUG(7, "\tcalculate polarization (electric field outerloop)");  
+  DEBUG(7, "\tcalculate polarisation (electric field outerloop)");  
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   // unperturbed innerloop
@@ -266,7 +266,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   math::VArray e_el_master(topo.num_atoms());
 #endif
 
-  double minfield = sim.param().polarize.minfield;
+  double minfield = sim.param().polarise.minfield;
   const double minfield_param = minfield;
   double maxfield;
   int turni = 0;
@@ -419,7 +419,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   
     if (rank == 0) {
       for (i=0; i<topo.num_atoms(); ++i) {
-        double alpha = topo.polarizability(i);
+        double alpha = topo.polarisability(i);
         double damp_lev =  topo.damping_level(i);
         const double damp_pow = topo.damping_power(i);
         
@@ -429,25 +429,25 @@ void interaction::Perturbed_Nonbonded_Outerloop
 	    [topo.atom_energy_group()[i]][topo.atom_energy_group()[i]];
 	  
           alpha = pow((1-lambda), topo.lambda_exp()) * 
-	    topo.perturbed_solute().atoms()[i].A_polarizability()
+	    topo.perturbed_solute().atoms()[i].A_polarisability()
 	    + pow(lambda, topo.lambda_exp()) * 
-	    topo.perturbed_solute().atoms()[i].B_polarizability();
+	    topo.perturbed_solute().atoms()[i].B_polarisability();
           damp_lev = pow((1-lambda), topo.lambda_exp()) * 
 	    topo.perturbed_solute().atoms()[i].A_damping_level()
 	    + pow(lambda, topo.lambda_exp()) * 
 	    topo.perturbed_solute().atoms()[i].B_damping_level();
         }
-        if(topo.is_polarizable(i)){
+        if(topo.is_polarisable(i)){
           e_el_new(i) += storage_lr.electric_field(i);
           
           //delta r
           math::Vec delta_r;
           
           //////////////////////////////////////////////////
-          // implementation of polarizability damping
+          // implementation of polarisability damping
           /////////////////////////////////////////////////
           
-          if (sim.param().polarize.damp) { // damp the polarizability
+          if (sim.param().polarise.damp) { // damp the polarisability
             const double e_i = sqrt(math::abs2(e_el_new(i))),
                     e_0 = damp_lev;
             if (e_i <= e_0)
@@ -523,7 +523,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // innerloop_p.set_lambda(topo.lambda(), topo.lambda_exp());
 
   for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-    if(topo.is_polarizable(i)){
+    if(topo.is_polarisable(i)){
       DEBUG (10, "\tperturbed self energy outerloop");
       if (topo.is_perturbed(i)) {
         innerloop_p.perturbed_self_energy_innerloop(topo, conf, i, 

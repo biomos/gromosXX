@@ -62,7 +62,7 @@ namespace interaction
 			double charge, double & force, double & e_ls);
     
     /**
-     * calculate the force and energy of an atom pair. (polarizable)
+     * calculate the force and energy of an atom pair. (polarisable)
      */
     void pol_lj_crf_interaction(math::Vec const &r,
                      math::Vec const &rp1,
@@ -81,7 +81,7 @@ namespace interaction
     /**
      * helper function to calculate the force and energy for
      * the reaction field contribution for a given pair
-     * with polarization
+     * with polarisation
      */
     inline void pol_rf_interaction(math::Vec const &r,
                  math::Vec const &rp1,
@@ -92,7 +92,7 @@ namespace interaction
 		 math::VArray &force, double &e_crf);
     
     /**
-     * calculate a term of the electric field for polarization
+     * calculate a term of the electric field for polarisation
      */
     void electric_field_interaction(math::Vec const &r,
 			      math::Vec const &rprime,
@@ -101,12 +101,12 @@ namespace interaction
 
 
     /**
-     * calculate the self energy - dipole-dipole interaction (polarization)
+     * calculate the self energy - dipole-dipole interaction (polarisation)
      */
     void self_energy_interaction(double alpha, double e_i2, double &self_e);
     
     /**
-     * calculate the damped self energy - dipole-dipole interaction (polarization)
+     * calculate the damped self energy - dipole-dipole interaction (polarisation)
      */
     void self_energy_interaction(double alpha, double e_i2, double e_0, double p,
                        double &self_e);

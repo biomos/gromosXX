@@ -9,7 +9,7 @@
 namespace util {
   /**
    * @class Feature
-   * holds a feature like polarization or parallelization
+   * holds a feature like polarisation or parallelization
    */
   class Feature {
   public:

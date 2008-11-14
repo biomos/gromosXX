@@ -457,14 +457,14 @@ io::In_Topology::read(topology::Topology& topo,
     
     // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
     
-    { // SOLUTEPOLARIZATION
-      DEBUG(10, "SOLUTEPOLARIZATION block");
+    { // SOLUTEPOLARISATION
+      DEBUG(10, "SOLUTEPOLARISATION block");
 
       if (!quiet)
-	os << "\tSOLUTEPOLARIZATION";
+	os << "\tSOLUTEPOLARISATION";
     
       buffer.clear();
-      buffer = m_block["SOLUTEPOLARIZATION"];
+      buffer = m_block["SOLUTEPOLARISATION"];
       if (buffer.size()){
 	it = buffer.begin() + 1;
       
@@ -477,36 +477,36 @@ io::In_Topology::read(topology::Topology& topo,
         
 	for(n=0; it != buffer.end() - 1; ++it, ++n){
 	  int i;
-          double polarizability, coscharge, damping_level, damping_power;
+          double polarisability, coscharge, damping_level, damping_power;
 	  _lineStream.clear();
 	  _lineStream.str(*it);
-	  _lineStream >> i >> polarizability >> coscharge >> damping_level
+	  _lineStream >> i >> polarisability >> coscharge >> damping_level
                       >> damping_power;
 	
 	  if (_lineStream.fail() || ! _lineStream.eof()){
-	    io::messages.add("Bad line in SOLUTEPOLARIZATION block",
+	    io::messages.add("Bad line in SOLUTEPOLARISATION block",
 			     "In_Topology", io::message::error);
 	  } 
           
           if (i > int(topo.num_solute_atoms()) || i < 1){
-	    io::messages.add("Atom number out of range in SOLUTEPOLARIZATION block",
+	    io::messages.add("Atom number out of range in SOLUTEPOLARISATION block",
 			     "In_Topology", io::message::error);
           } else {
-	    DEBUG(10, "\tpolarizable atom: " << i);
-	    topo.polarizability()[i-1] = polarizability / math::four_pi_eps_i;
+	    DEBUG(10, "\tpolarisable atom: " << i);
+	    topo.polarisability()[i-1] = polarisability / math::four_pi_eps_i;
             topo.coscharge()[i-1] = coscharge;
             topo.damping_level()[i-1] = damping_level;
             topo.damping_power()[i-1] = damping_power;
-            topo.is_polarizable()[i-1] = bool(polarizability > 0.0);
+            topo.is_polarisable()[i-1] = bool(polarisability > 0.0);
           }
 	}
       
 	if(n != num){
-	  io::messages.add("Wrong number of polarizable atoms in SOLUTEPOLARIZATION block",
+	  io::messages.add("Wrong number of polarisable atoms in SOLUTEPOLARISATION block",
 			   "In_Topology", io::message::error);
 	}
       }
-    } // SOLUTEPOLARIZATION
+    } // SOLUTEPOLARISATION
   
     { // BONDH
       DEBUG(10, "BONDH block");
@@ -1354,13 +1354,13 @@ io::In_Topology::read(topology::Topology& topo,
 
       // end SOLVENTATOM
       
-      DEBUG(10, "SOLVENTEPOLARIZATION block");
+      DEBUG(10, "SOLVENTEPOLARISATION block");
       
       if (!quiet)
-        os << "\tSOLVENTEPOLARIZATION";
+        os << "\tSOLVENTEPOLARISATION";
       
       buffer.clear();
-      buffer = m_block["SOLVENTPOLARIZATION"];
+      buffer = m_block["SOLVENTPOLARISATION"];
       if (buffer.size()){
         it = buffer.begin() + 1;
         
@@ -1373,24 +1373,24 @@ io::In_Topology::read(topology::Topology& topo,
         
         for(n=0; it != buffer.end() - 1; ++it, ++n){
           int i;
-          double polarizability, coscharge, damping_level, damping_power;
+          double polarisability, coscharge, damping_level, damping_power;
           _lineStream.clear();
           _lineStream.str(*it);
-          _lineStream >> i >> polarizability >> coscharge >> damping_level
+          _lineStream >> i >> polarisability >> coscharge >> damping_level
                   >> damping_power;
           
           if (_lineStream.fail() || ! _lineStream.eof()){
-            io::messages.add("Bad line in SOLVENTPOLARIZATION block",
+            io::messages.add("Bad line in SOLVENTPOLARISATION block",
                     "In_Topology", io::message::error);
           }
           
           if (i > int(s.num_atoms()) || i < 1){
-            io::messages.add("Atom number out of range in SOLVENTPOLARIZATION block",
+            io::messages.add("Atom number out of range in SOLVENTPOLARISATION block",
                     "In_Topology", io::message::error);
           } else {  
-            DEBUG(10, "\tpolarizable atom: " << i);
+            DEBUG(10, "\tpolarisable atom: " << i);
           
-            s.atoms()[i-1].polarizability = polarizability / math::four_pi_eps_i;
+            s.atoms()[i-1].polarisability = polarisability / math::four_pi_eps_i;
             s.atoms()[i-1].coscharge = coscharge;
             s.atoms()[i-1].damping_level = damping_level;
             s.atoms()[i-1].damping_power = damping_power;
@@ -1398,7 +1398,7 @@ io::In_Topology::read(topology::Topology& topo,
         }
         
         if(n != num){
-          io::messages.add("Wrong number of polarizable atoms in SOLVENTPOLARIZATION block",
+          io::messages.add("Wrong number of polarisable atoms in SOLVENTPOLARISATION block",
                   "In_Topology", io::message::error);
         }
       }

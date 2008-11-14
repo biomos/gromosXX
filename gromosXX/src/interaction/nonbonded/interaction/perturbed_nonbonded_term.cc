@@ -265,7 +265,7 @@ inline void interaction::Perturbed_Nonbonded_Term
 /**
  * helper function to calculate the force and energy for 
  * the reaction field contribution for a given pair
- * using the soft interaction (with polarization)
+ * using the soft interaction (with polarisation)
  */
 inline void interaction::Perturbed_Nonbonded_Term
 ::pol_rf_soft_interaction(math::Vec const &r, 
@@ -929,7 +929,7 @@ inline void interaction::Perturbed_Nonbonded_Term
 
 /**
  * helper function to calculate a term of the electric field 
- * at a given position for the polarization
+ * at a given position for the polarisation
  */
 inline void interaction::Perturbed_Nonbonded_Term
 ::electric_field_soft_interaction(math::Vec const &r, 
@@ -938,7 +938,7 @@ inline void interaction::Perturbed_Nonbonded_Term
                        double A_qj, double B_qj, double cgj, 
                        math::Vec &e_el) {
 
-  DEBUG(14, "\t\tenergy field term for polarization");
+  DEBUG(14, "\t\tenergy field term for polarisation");
 
   math::Vec A_el, B_el;
 

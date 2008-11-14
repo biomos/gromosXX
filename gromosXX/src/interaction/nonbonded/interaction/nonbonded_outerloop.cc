@@ -401,7 +401,7 @@ void interaction::Nonbonded_Outerloop
   innerloop.init(sim);
 
   for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-    if(topo.is_polarizable(i)){
+    if(topo.is_polarisable(i)){
     
       DEBUG(10, "\tself energy: i " << i);
       innerloop.self_energy_innerloop (
@@ -423,7 +423,7 @@ void interaction::Nonbonded_Outerloop
                   pairlist, storage, storage_lr, rank);
 }
 /**
- * helper function to calculate polarization, 
+ * helper function to calculate polarisation, 
  * stores them in the arrays pointed to by parameters
  * to make it usable for longrange calculations.
  */
@@ -437,7 +437,7 @@ void interaction::Nonbonded_Outerloop
                     Storage & storage_lr,
                     int rank)
 {  
-  DEBUG(7, "\tcalculate polarization (electric field outerloop)");  
+  DEBUG(7, "\tcalculate polarisation (electric field outerloop)");  
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
@@ -457,7 +457,7 @@ void interaction::Nonbonded_Outerloop
   math::VArray e_el_master(topo.num_atoms());
 #endif
 
-  double minfield = sim.param().polarize.minfield;
+  double minfield = sim.param().polarise.minfield;
   const double minfield_param = minfield;
   double maxfield;
   int turni = 0;
@@ -580,29 +580,29 @@ void interaction::Nonbonded_Outerloop
 
     if (rank == 0) {
       for (i=0; i<topo.num_atoms(); ++i) {
-        if(topo.is_polarizable(i)){
+        if(topo.is_polarisable(i)){
           e_el_new(i) += storage_lr.electric_field(i);
 
           //delta r
           math::Vec delta_r;
         
           //////////////////////////////////////////////////
-          // implementation of polarizability damping
+          // implementation of polarisability damping
           /////////////////////////////////////////////////
         
-          if (sim.param().polarize.damp) { // damp the polarizability
+          if (sim.param().polarise.damp) { // damp the polarisability
             const double e_i = sqrt(math::abs2(e_el_new(i))),
                          e_0 = topo.damping_level(i);
             if (e_i <= e_0) 
-              delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
+              delta_r = (topo.polarisability(i) / topo.coscharge(i)) * e_el_new(i);
             else {
               const double p = topo.damping_power(i);
-              delta_r = topo.polarizability(i) * e_0 / p * 
+              delta_r = topo.polarisability(i) * e_0 / p * 
                         (p + 1.0 - pow(e_0/e_i, p)) / 
                         (topo.coscharge(i) * e_i) * e_el_new(i);
             }
           } else { // no damping
-            delta_r = (topo.polarizability(i) / topo.coscharge(i)) * e_el_new(i);
+            delta_r = (topo.polarisability(i) / topo.coscharge(i)) * e_el_new(i);
           }
           // store the new position
           conf.current().posV(i) = delta_r;

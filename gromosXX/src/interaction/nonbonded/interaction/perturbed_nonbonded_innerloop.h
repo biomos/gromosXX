@@ -58,7 +58,7 @@ namespace interaction
       Periodicity_type const & periodicity);
     
     /**
-     * Calculation of the perturbed electric field (polarization)
+     * Calculation of the perturbed electric field (polarisation)
      */
     void perturbed_electric_field_innerloop
     (
@@ -69,7 +69,7 @@ namespace interaction
     );
     
     /**
-     * Calculation of the perturbed self energy (polarization)
+     * Calculation of the perturbed self energy (polarisation)
      */
     void perturbed_self_energy_innerloop
     (

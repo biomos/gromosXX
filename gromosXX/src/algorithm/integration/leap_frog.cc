@@ -35,7 +35,7 @@ int algorithm::Leap_Frog_Position
     conf.current().pos(i) =
       conf.old().pos(i) + conf.current().vel(i) * sim.time_step_size();
   
-  if (sim.param().polarize.cos) {
+  if (sim.param().polarise.cos) {
     DEBUG(8, "leap-frog: updating cos positions");
     for(int i=0; i < num_atoms; ++i)
       conf.current().posV(i) = conf.old().posV(i);

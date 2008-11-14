@@ -1889,23 +1889,23 @@ namespace simulation
     } /** ramd */ ramd;
     
     /**
-     * @struct polarize_struct
-     * polarization simulation
+     * @struct polarise_struct
+     * polarisation simulation
      */
-    struct polarize_struct {
+    struct polarise_struct {
       /**
        * Constructor
        * Default values:
-       * - cos, no charge-on-spring polarization
+       * - cos, no charge-on-spring polarisation
        * - minfield: 2.5
-       * - damp, no damping of polarizability
+       * - damp, no damping of polarisability
        * - output cospositions every 'write'th block to special trajectory
        */
-      polarize_struct() : cos(false), minfield(2.5), efield_site(ef_atom),
+      polarise_struct() : cos(false), minfield(2.5), efield_site(ef_atom),
                           damp(false), write(0)
       {}
       /**
-       * use charge-on-spring polarization
+       * use charge-on-spring polarisation
        */
       bool cos;
       /** 
@@ -1924,7 +1924,7 @@ namespace simulation
        * write cos positions every write-th step to special trajectory
        */
       int write;
-    } /** polarize */ polarize;
+    } /** polarise */ polarise;
     
     /**
      * @struct rng_struct

@@ -143,7 +143,8 @@ namespace interaction
      );
     
     /**
-     * Calculation of the electric field (polarization)
+     * Calculation of the electric field (polarisation)
+     * and repostion the COS till field is self consistent
      */
     void electric_field_innerloop
     (
@@ -154,7 +155,7 @@ namespace interaction
     );
     
     /**
-     * Calculation of the self energy (polarization)
+     * Calculation of the self energy (polarisation)
      */
     void self_energy_innerloop
     (

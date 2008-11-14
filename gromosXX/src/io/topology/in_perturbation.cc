@@ -829,9 +829,9 @@ io::In_Perturbation::read(topology::Topology &topo,
           }
           
           topology::Perturbed_Atom atom(seq, a_iac, a_mass, a_charge,
-                  topo.polarizability(seq), topo.damping_level(seq),
+                  topo.polarisability(seq), topo.damping_level(seq),
                   b_iac, b_mass, b_charge,
-                  topo.polarizability(seq), topo.damping_level(seq),
+                  topo.polarisability(seq), topo.damping_level(seq),
                   lj_soft, crf_soft);
           
           DEBUG(10, "\tcreated an atom");
@@ -1067,7 +1067,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           }
           
           if (a_pol < 0.0 || b_pol < 0.0){
-            io::messages.add("PERTPOLPARAM block: polarizability must be >= 0.0",
+            io::messages.add("PERTPOLPARAM block: polarisability must be >= 0.0",
                     "In_Perturbation", io::message::error);
             return;
           }
@@ -1078,28 +1078,28 @@ io::In_Perturbation::read(topology::Topology &topo,
             return;
           }
           
-          topo.perturbed_solute().atom(seq).A_polarizability(a_pol/ math::four_pi_eps_i);
-          topo.perturbed_solute().atom(seq).B_polarizability(b_pol/ math::four_pi_eps_i);
+          topo.perturbed_solute().atom(seq).A_polarisability(a_pol/ math::four_pi_eps_i);
+          topo.perturbed_solute().atom(seq).B_polarisability(b_pol/ math::four_pi_eps_i);
           
           topo.perturbed_solute().atom(seq).A_damping_level(a_lev);
           topo.perturbed_solute().atom(seq).B_damping_level(b_lev);
           
-          topo.is_polarizable()[seq] = true;
+          topo.is_polarisable()[seq] = true;
           
-          if (topo.polarizability(seq) !=
-                  topo.perturbed_solute().atom(seq).A_polarizability() ||
+          if (topo.polarisability(seq) !=
+                  topo.perturbed_solute().atom(seq).A_polarisability() ||
                   topo.damping_level(seq) !=
                   topo.perturbed_solute().atom(seq).A_damping_level())
             warn = true;
           
-          DEBUG(10, "\tassigned perturbed polarization parameters to atom");
+          DEBUG(10, "\tassigned perturbed polarisation parameters to atom");
           
           if (!quiet)
             std::cout << "\t"
             << std::setw(5) << seq + 1
-            << std::setw(12) << topo.perturbed_solute().atom(seq).A_polarizability()* math::four_pi_eps_i
+            << std::setw(12) << topo.perturbed_solute().atom(seq).A_polarisability()* math::four_pi_eps_i
             << std::setw(12) << topo.perturbed_solute().atom(seq).A_damping_level()
-            << std::setw(12) << topo.perturbed_solute().atom(seq).B_polarizability()* math::four_pi_eps_i
+            << std::setw(12) << topo.perturbed_solute().atom(seq).B_polarisability()* math::four_pi_eps_i
             << std::setw(12) << topo.perturbed_solute().atom(seq).B_damping_level()
             << "\n";
         }

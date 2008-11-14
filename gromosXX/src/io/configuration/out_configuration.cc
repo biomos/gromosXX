@@ -177,8 +177,8 @@ void io::Out_Configuration::init(io::Argument & args,
 		     io::message::error);
   
   if (args.count(argname_trs) > 0)
-    special_trajectory(args[argname_trs], param.polarize.write);
-  else if (param.polarize.write) // check for other that also go to this traj.
+    special_trajectory(args[argname_trs], param.polarise.write);
+  else if (param.polarise.write) // check for other that also go to this traj.
     io::messages.add("write special trajectory but no trs argument",
 		     "Out_Configuration",
 		     io::message::error);
@@ -348,7 +348,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     _print_position(conf, topo, m_final_conf);
     _print_lattice_shifts(conf, topo, m_final_conf);
     
-    if (sim.param().polarize.cos)
+    if (sim.param().polarise.cos)
       _print_cos_position(conf, topo, m_final_conf);
 
     if(sim.param().minimise.ntem == 0)
@@ -506,7 +506,7 @@ void io::Out_Configuration::write_replica
       }
       
       _print_position(conf[i], topo, m_final_conf);
-      if (sim.param().polarize.cos)
+      if (sim.param().polarise.cos)
         _print_cos_position(conf[i], topo, m_final_conf);
       _print_velocity(conf[i], topo, m_final_conf);
       _print_lattice_shifts(conf[i], topo, m_final_conf);
@@ -2162,7 +2162,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << e.distanceres_total << "\n"
      << std::setw(18) << e.dihrest_total << "\n"
      << std::setw(18) << e.jvalue_total << "\n"
-     << std::setw(18) << e.self_total << "\n" // self energy from polarization
+     << std::setw(18) << e.self_total << "\n" // self energy from polarisation
      //<< std::setw(18) << 0.0 << "\n" // local elevation
      << std::setw(18) << e.eds_vr << "\n"; // eds energy of reference state
      //<< std::setw(18) << 0.0 << "\n"; // path integral

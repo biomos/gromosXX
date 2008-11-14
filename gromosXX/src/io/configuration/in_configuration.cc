@@ -437,10 +437,10 @@ bool io::In_Configuration::read_cos_position
  simulation::Simulation & sim,
  std::ostream & os)
 {
-    // read virtual sites for polarization
+    // read virtual sites for polarisation
   std::vector<std::string> buffer;
 
-  if (sim.param().polarize.cos) {
+  if (sim.param().polarise.cos) {
     buffer = m_block["COSDISPLACEMENTS"];
     if (buffer.size()){
       

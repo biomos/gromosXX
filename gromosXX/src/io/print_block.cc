@@ -442,7 +442,7 @@ namespace io
     os << type << "El (A term)          : " << std::setw(57) << e.ls_a_term_total << "\n";
     os << type << "El (lattice sum self): " << std::setw(48) << e.ls_self_total << "\n";
     os << type << "El (surface term)    : " << std::setw(48) << e.ls_surface_total << "\n";
-    os << type << "Polarization self    : " << std::setw(39) << e.self_total << "\n";
+    os << type << "Polarisation self    : " << std::setw(39) << e.self_total << "\n";
     os << type << "Special              : " << std::setw(21) << e.special_total << "\n";
     os << type << "Constraints          : " << std::setw(30) << e.constraints_total << "\n";
     os << type << "Distanceres          : " << std::setw(30) << e.distanceres_total << "\n";

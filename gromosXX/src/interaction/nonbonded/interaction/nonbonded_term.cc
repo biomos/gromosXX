@@ -189,7 +189,7 @@ inline void interaction::Nonbonded_Term
 
 /**
  * helper function to calculate the force and energy for
- * a given atom pair (polarizable).
+ * a given atom pair (polarisable).
  */
 inline void interaction::Nonbonded_Term
 ::pol_lj_crf_interaction(math::Vec const &r,
@@ -268,7 +268,7 @@ inline void interaction::Nonbonded_Term
 /**
  * helper function to calculate the force and energy for
  * the reaction field contribution for a given pair
- * with polarization
+ * with polarisation
  */
 inline void interaction::Nonbonded_Term
 ::pol_rf_interaction(math::Vec const &r,
@@ -359,7 +359,7 @@ inline double interaction::Nonbonded_Term
 
 /**
  * helper function to calculate a term of the electric field 
- * at a given position for the polarization
+ * at a given position for the polarisation
  */
 inline void interaction::Nonbonded_Term
 ::electric_field_interaction(math::Vec const &r, 
@@ -367,7 +367,7 @@ inline void interaction::Nonbonded_Term
                        double qj, double charge, 
                        math::Vec &e_el) {
 
-  DEBUG(14, "\t\tenergy field term for polarization");
+  DEBUG(14, "\t\tenergy field term for polarisation");
 
   assert(abs2(r) != 0);
   assert(abs2(rprime) != 0);

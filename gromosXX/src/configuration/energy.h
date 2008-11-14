@@ -217,7 +217,7 @@ namespace configuration
      */
     std::vector<double> constraints_energy;
     /**
-     * self energy term (polarization)
+     * self energy term (polarisation)
      */
     std::vector<double> self_energy;
     /**

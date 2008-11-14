@@ -96,20 +96,20 @@ int interaction::Nonbonded_Set
     */
   }
 
-  if (sim.param().polarize.cos) {
+  if (sim.param().polarise.cos) {
     //===============
-    // polarization
+    // polarisation
     //===============
 
-    // calculate explicit polarization of the molecules
-    DEBUG(6, "\texplicit polarization");
+    // calculate explicit polarisation of the molecules
+    DEBUG(6, "\texplicit polarisation");
     if (m_rank == 0)
-      m_pairlist_alg.timer().start("explicit polarization");
+      m_pairlist_alg.timer().start("explicit polarisation");
     
     m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist,
 				       m_storage, m_longrange_storage, m_rank);
     if (m_rank == 0)
-      m_pairlist_alg.timer().stop("explicit polarization");
+      m_pairlist_alg.timer().stop("explicit polarisation");
   }
   
   //DEBUG(1, "field 1 [" << m_storage.electric_field(0)(0) << " " << m_storage.electric_field(0)(1) << " "  << m_storage.electric_field(0)(2) << "]");
@@ -242,11 +242,11 @@ int interaction::Nonbonded_Set
       m_pairlist_alg.timer().stop("RF excluded interaction");
     }
 
-    if (sim.param().polarize.cos) {
-      DEBUG(6, "\tself-energy of polarization");
-      m_pairlist_alg.timer().start("polarization self-energy");
+    if (sim.param().polarise.cos) {
+      DEBUG(6, "\tself-energy of polarisation");
+      m_pairlist_alg.timer().start("polarisation self-energy");
       m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
-      m_pairlist_alg.timer().stop("polarization self-energy");
+      m_pairlist_alg.timer().stop("polarisation self-energy");
     }
   }
 

@@ -78,7 +78,7 @@ namespace interaction
 			       Storage & storage);
     
     /**
-     * calculate the self energy (polarization).
+     * calculate the self energy (polarisation).
      */
     void self_energy_outerloop(topology::Topology & topo,
 		            configuration::Configuration & conf,
@@ -86,7 +86,8 @@ namespace interaction
 			    Storage & storage);
 
     /**
-     * calculate the electric field (polarization).
+     * calculate the electric field (polarisation)
+     * and reposition the COS till field is consistent
      */
     void electric_field_outerloop(topology::Topology & topo,
 		            configuration::Configuration & conf,

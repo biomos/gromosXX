@@ -85,10 +85,10 @@ int interaction::create_g96_nonbonded
 	   << left << "Vector Grid Pairlist Algorithm" << right << "\n";
     }
     
-    if (sim.param().polarize.cos) {
-      os << "\t" << setw(20) << left << "Polarization enabled" << right << "\n";
+    if (sim.param().polarise.cos) {
+      os << "\t" << setw(20) << left << "Polarisation enabled" << right << "\n";
       os << "\t" << setw(20) << left << "Eletric Field";
-      switch(sim.param().polarize.efield_site) {
+      switch(sim.param().polarise.efield_site) {
         case simulation::ef_atom :
           os << setw(30) << left << "calculated at atom position" << right << "\n";
           break;
@@ -98,9 +98,9 @@ int interaction::create_g96_nonbonded
         default :
           os << setw(30) << left << "calculated at unknown site" << right << "\n";
       }
-      if (sim.param().polarize.damp) {
+      if (sim.param().polarise.damp) {
         os << "\t" << setw(20) << left
-           << "Polarization is damped using parameters from topology" << right << "\n";
+           << "Polarisation is damped using parameters from topology" << right << "\n";
       }
         
     }

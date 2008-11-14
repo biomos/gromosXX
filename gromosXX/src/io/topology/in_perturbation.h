@@ -169,7 +169,7 @@ END
 Perturbed atomic polarisabilities
 @verbatim
 PERTPOLPARAM
-# number of perturbed polarizable atoms 
+# number of perturbed polarisable atoms 
 # (atoms must also appear in PERTATOMPARAM)
   1
 #   NR RES NAME   ALPHA(A) E_0(A)   ALPHA(B) E_0(B)

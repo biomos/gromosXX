@@ -605,10 +605,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::self_energy_innerloop
   const double e_i2 = math::abs2(storage.electric_field(i));
   
   if (t_nonbonded_spec::pol_damping)
-    self_energy_interaction(topo.polarizability(i), e_i2, 
+    self_energy_interaction(topo.polarisability(i), e_i2, 
                             topo.damping_level(i), topo.damping_power(i), self_e);  
   else 
-    self_energy_interaction(topo.polarizability(i), e_i2, self_e);
+    self_energy_interaction(topo.polarisability(i), e_i2, self_e);
 
     
 

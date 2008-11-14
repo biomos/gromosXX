@@ -44,7 +44,7 @@
  *  - @ref dihrest
  * - @ref  multistep
  * - @ref  ewarn
- * - @ref  polarize
+ * - @ref  polarise
  * - @ref  randomnumbers
  * - @ref  spc_loops
  * - @ref  EDS
@@ -252,9 +252,9 @@ namespace io {
     void read_RAMD(simulation::Parameter & param, std::ostream & os = std::cout);
     
     /**
-     * read POLARIZE block.
+     * read POLARISE block.
      */
-    void read_POLARIZE(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_POLARISE(simulation::Parameter &param, std::ostream & os = std::cout);
     
     /**
      * read RANDOMNUMBERS block.

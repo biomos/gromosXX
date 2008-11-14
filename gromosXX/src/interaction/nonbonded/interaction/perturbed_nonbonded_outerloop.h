@@ -48,7 +48,7 @@ namespace interaction
 					 simulation::Simulation & sim,
 					 Storage & storage);
     /**
-     * calculate the perturbed self energy (polarization).
+     * calculate the perturbed self energy (polarisation).
      */
     void perturbed_self_energy_outerloop(topology::Topology & topo,
 		            configuration::Configuration & conf,
@@ -56,7 +56,7 @@ namespace interaction
 			    Storage & storage);
 
     /**
-     * calculate the perturbed electric field (polarization).
+     * calculate the perturbed electric field (polarisation).
      */
     void perturbed_electric_field_outerloop(topology::Topology & topo,
 		            configuration::Configuration & conf,
