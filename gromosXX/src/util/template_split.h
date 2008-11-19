@@ -42,6 +42,13 @@ switch(conf.boundary_type){ \
       case math::atomic_virial : f<math::truncoct, math::atomic_virial>(__VA_ARGS__); break; \
       default: io::messages.add("wrong virial type", "template_split", io::message::error); \
     } \
+  case math::triclinic : \
+    switch(sim.param().pcouple.virial){ \
+      case math::no_virial : f<math::triclinic, math::no_virial>(__VA_ARGS__); break; \
+      case math::molecular_virial : f<math::triclinic, math::molecular_virial>(__VA_ARGS__); break; \
+      case math::atomic_virial : f<math::triclinic, math::atomic_virial>(__VA_ARGS__); break; \
+      default: io::messages.add("wrong virial type", "template_split", io::message::error); \
+    } \
     break; \
   default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
 } \

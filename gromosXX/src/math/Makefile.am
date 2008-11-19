@@ -9,14 +9,16 @@ xxinclude_HEADERS = gmath.h\
 	periodicity.cc\
 	volume.h\
 	random.h\
-	transformation.h
+	transformation.h\
+	boundary_checks.h
 
 noinst_LTLIBRARIES = libgromath.la
 
 libgromath_la_SOURCES =	math.cc\
 	volume.cc\
 	random.cc\
-	transformation.cc
+	transformation.cc\
+	boundary_checks.cc
 
 libgromath_la_LIBADD =
 

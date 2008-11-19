@@ -70,6 +70,9 @@
     case math::truncoct : \
       SPLIT_INTERACTION_FUNC(f, math::truncoct, __VA_ARGS__); \
       break; \
+    case math::triclinic : \
+      SPLIT_INTERACTION_FUNC(f, math::triclinic, __VA_ARGS__); \
+      break; \
     default: \
       io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
@@ -137,6 +140,9 @@
       break; \
     case math::truncoct : \
       PERT_SPLIT_INTERACTION_FUNC(f, pertspec, math::truncoct, __VA_ARGS__); \
+      break; \
+    case math::triclinic : \
+      PERT_SPLIT_INTERACTION_FUNC(f, pertspec, math::triclinic, __VA_ARGS__); \
       break; \
     default: \
       io::messages.add("wrong boundary type", "template_split", io::message::error); \
