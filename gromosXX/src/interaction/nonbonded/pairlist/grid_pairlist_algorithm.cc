@@ -24,12 +24,12 @@
 #define MODULE interaction
 #define SUBMODULE pairlist
 
-interaction::Grid_Pairlist_Algorithm::Grid_Pairlist_Algorithm()
+interaction::Extended_Grid_Pairlist_Algorithm::Extended_Grid_Pairlist_Algorithm()
   : interaction::Pairlist_Algorithm()
 {
 }
 
-int interaction::Grid_Pairlist_Algorithm::init
+int interaction::Extended_Grid_Pairlist_Algorithm::init
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -160,7 +160,7 @@ int interaction::Grid_Pairlist_Algorithm::init
  * put chargegroups on grid,
  * including the center of geometries
  */
-int interaction::Grid_Pairlist_Algorithm::prepare
+int interaction::Extended_Grid_Pairlist_Algorithm::prepare
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -192,7 +192,7 @@ int interaction::Grid_Pairlist_Algorithm::prepare
 ////////////////////////////////////////////////////////////////////////////////
 // pairlist update
 ////////////////////////////////////////////////////////////////////////////////
-void interaction::Grid_Pairlist_Algorithm::update
+void interaction::Extended_Grid_Pairlist_Algorithm::update
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -215,7 +215,7 @@ void interaction::Grid_Pairlist_Algorithm::update
   }    
 }
 
-void interaction::Grid_Pairlist_Algorithm::_update
+void interaction::Extended_Grid_Pairlist_Algorithm::_update
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -552,7 +552,7 @@ void interaction::Grid_Pairlist_Algorithm::_update
 // perturbed pairlist update
 ////////////////////////////////////////////////////////////////////////////////
 
-void interaction::Grid_Pairlist_Algorithm::update_perturbed
+void interaction::Extended_Grid_Pairlist_Algorithm::update_perturbed
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -567,7 +567,7 @@ void interaction::Grid_Pairlist_Algorithm::update_perturbed
   _update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
 }
 
-void interaction::Grid_Pairlist_Algorithm::_update_perturbed
+void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -960,7 +960,7 @@ void interaction::Grid_Pairlist_Algorithm::_update_perturbed
     timer().stop("perturbed pairlist");
 }
 
-inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
+inline bool interaction::Extended_Grid_Pairlist_Algorithm::insert_pair
 (
  topology::Topology & topo,
  interaction::Pairlist & pairlist,
@@ -990,7 +990,7 @@ inline bool interaction::Grid_Pairlist_Algorithm::insert_pair
   return false;
 }
 
-bool interaction::Grid_Pairlist_Algorithm
+bool interaction::Extended_Grid_Pairlist_Algorithm
 ::excluded_solute_pair(topology::Topology & topo,
 		       unsigned int i, unsigned int j)
 {

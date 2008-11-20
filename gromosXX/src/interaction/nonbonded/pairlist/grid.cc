@@ -32,7 +32,7 @@
 /**
  * put the chargegroups into the box and on the grid
  */
-int interaction::Grid_Pairlist_Algorithm::prepare_grid
+int interaction::Extended_Grid_Pairlist_Algorithm::prepare_grid
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -214,7 +214,7 @@ int interaction::Grid_Pairlist_Algorithm::prepare_grid
  * but it also extends it. ;-) Also generates a particle-index
  * to (extended) cell-index map.
  */
-void interaction::Grid_Pairlist_Algorithm::collapse_grid()
+void interaction::Extended_Grid_Pairlist_Algorithm::collapse_grid()
 {
   const int N = m_grid.Na * m_grid.Nb;
 
@@ -278,7 +278,7 @@ void interaction::Grid_Pairlist_Algorithm::collapse_grid()
   
 }
 
-void interaction::Grid_Pairlist_Algorithm::grid_properties
+void interaction::Extended_Grid_Pairlist_Algorithm::grid_properties
 (
  topology::Topology & topo,
  configuration::Configuration & conf,
@@ -343,7 +343,7 @@ void interaction::Grid_Pairlist_Algorithm::grid_properties
 /**
  * calculate the mask
  */
-void interaction::Grid_Pairlist_Algorithm::calculate_mask()
+void interaction::Extended_Grid_Pairlist_Algorithm::calculate_mask()
 {
   const double c2 = m_grid.c * m_grid.c;
   const double b2 = m_grid.b * m_grid.b;
@@ -418,7 +418,7 @@ void interaction::Grid_Pairlist_Algorithm::calculate_mask()
 ////////////////////////////////////////////////////////////////////////////////
 // prepare a plane
 ////////////////////////////////////////////////////////////////////////////////
-void interaction::Grid_Pairlist_Algorithm::prepare_plane
+void interaction::Extended_Grid_Pairlist_Algorithm::prepare_plane
 (
  int z,
  std::vector<Grid::Particle> & p_plane, 
@@ -590,7 +590,7 @@ void interaction::Grid_Pairlist_Algorithm::prepare_plane
 /**
  * check the grid and print it...
  */
-void interaction::Grid_Pairlist_Algorithm::print_grid()
+void interaction::Extended_Grid_Pairlist_Algorithm::print_grid()
 {
   std::cout << "THE GRID\n========\n";
 
@@ -667,7 +667,7 @@ void interaction::Grid_Pairlist_Algorithm::print_grid()
 }
 
 
-void interaction::Grid_Pairlist_Algorithm::print_mask()
+void interaction::Extended_Grid_Pairlist_Algorithm::print_mask()
 {
   std::cout << "\tmask\n";
   for(int z=0; z <= m_grid.mask_z; ++z){
@@ -692,7 +692,7 @@ void interaction::Grid_Pairlist_Algorithm::print_mask()
 /**
  * check the grid and print it...
  */
-void interaction::Grid_Pairlist_Algorithm::print_plane
+void interaction::Extended_Grid_Pairlist_Algorithm::print_plane
 (
  int z,
  std::vector<Grid::Particle> & p_plane, 

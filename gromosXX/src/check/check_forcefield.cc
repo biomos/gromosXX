@@ -569,7 +569,7 @@ int check::check_forcefield(topology::Topology & topo,
           delete pa;
           // construct a "grid" pairlist algorithm 
        //   std::cout << "before new" << std::endl;
-	  pa = new interaction::Grid_Pairlist_Algorithm;
+	  pa = new interaction::Extended_Grid_Pairlist_Algorithm;
        //   std::cout << "nre" << std::endl;
 	  pa->set_parameter(&ni->parameter());
           sim.param().pairlist.grid = true;
@@ -590,7 +590,7 @@ int check::check_forcefield(topology::Topology & topo,
 	}
 	else{
 	  // construct a "grid" pairlist algorithm 
-	  interaction::Pairlist_Algorithm * pa = new interaction::Grid_Pairlist_Algorithm;
+	  interaction::Pairlist_Algorithm * pa = new interaction::Extended_Grid_Pairlist_Algorithm;
 	  interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *>(*it);
 	  
 	  pa->set_parameter(&ni->parameter());

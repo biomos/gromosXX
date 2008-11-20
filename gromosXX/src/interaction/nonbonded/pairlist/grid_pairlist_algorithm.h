@@ -30,19 +30,19 @@ namespace interaction
    * Frist implementation only rectangular,
    * non-perturbed, chargegroup based
    */
-  class Grid_Pairlist_Algorithm : 
+  class Extended_Grid_Pairlist_Algorithm :
     public Pairlist_Algorithm
   {
   public:
     /**
      * Constructor.
      */
-    Grid_Pairlist_Algorithm();
+    Extended_Grid_Pairlist_Algorithm();
 
     /**
      * Destructor.
      */
-    virtual ~Grid_Pairlist_Algorithm() {}
+    virtual ~Extended_Grid_Pairlist_Algorithm() {}
 
     /**
      * init grid
