@@ -1,10 +1,10 @@
 /**
  * @file grid_pairlist_algorithm.h
- * grid pairlist algorithm (beautiful implementation)
+ * extended grid pairlist algorithm (beautiful implementation)
  */
 
-#ifndef INCLUDED_GRID_PAIRLIST_ALGORITHM_H
-#define INCLUDED_GRID_PAIRLIST_ALGORITHM_H
+#ifndef INCLUDED_EXTENDED_GRID_PAIRLIST_ALGORITHM_H
+#define INCLUDED_EXTENDED_GRID_PAIRLIST_ALGORITHM_H
 
 namespace math
 {
@@ -23,7 +23,7 @@ namespace interaction
   class Perturbed_Nonbonded_Innerloop;
   
   /**
-   * @class Grid_Pairlist_Algorithm
+   * @class Extended_Grid_Pairlist_Algorithm
    * create an atomic pairlist with a
    * chargegroup based or atom based
    * cut-off criterion.

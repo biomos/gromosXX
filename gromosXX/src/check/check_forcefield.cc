@@ -18,7 +18,7 @@
 
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
 
 #include <io/argument.h>
 #include <util/parse_verbosity.h>

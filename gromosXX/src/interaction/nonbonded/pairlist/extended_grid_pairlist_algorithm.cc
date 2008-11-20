@@ -1,6 +1,6 @@
 /**
- * @file grid_pairlist_algorithm.cc
- * grid pairlist algorithm
+ * @file extended_grid_pairlist_algorithm.cc
+ * extended grid pairlist algorithm
  */
 
 #include <stdheader.h>
@@ -15,7 +15,7 @@
 #include <interaction/nonbonded/pairlist/pairlist.h>
 
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
 
 #include <util/debug.h>
 

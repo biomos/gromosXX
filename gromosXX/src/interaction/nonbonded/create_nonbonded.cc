@@ -24,7 +24,7 @@
 #include <interaction/nonbonded/pairlist/pairlist.h>
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
 #include <interaction/nonbonded/interaction/nonbonded_set.h>

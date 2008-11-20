@@ -1,5 +1,5 @@
 /**
- * @file grid.cc
+ * @file extended_grid.cc
  * grid routines : prepare a grid for the Grid_Pairlist_Algorithm
  */
 
@@ -15,7 +15,7 @@
 #include <math/volume.h>
 
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/grid_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
 
 #include <util/debug.h>
 
