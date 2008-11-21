@@ -24,6 +24,7 @@
 #define SUBMODULE pressure
 
 #include <util/debug.h>
+#include <math/transformation.h>
 
 int algorithm::Berendsen_Barostat
 ::apply(topology::Topology & topo,
@@ -133,11 +134,15 @@ int algorithm::Berendsen_Barostat
 	}
 
 	// scale the box
-	box = math::product(mu, box);
-	
+        // decompose in rotation and boxlength/boxangle scaling       
+        math::Matrix Rmu(math::rmat(mu));
+        math::Matrix mu_new=math::product(math::transpose(Rmu),mu);
+        DEBUG(10, "mu_new: \n" << math::m2s(mu_new));
+	box = math::product(mu_new, box);
+	DEBUG(10, "new box: \n" << math::m2s(math::Matrix(box)));
 	// scale the positions
 	for(unsigned int i=0; i<pos.size(); ++i)
-	  pos(i) = math::product(mu, pos(i));
+	  pos(i) = math::product(mu_new, pos(i));
         
         // scale the reference positions
         if (sim.param().posrest.scale_reference_positions){
@@ -145,10 +150,25 @@ int algorithm::Berendsen_Barostat
               it = topo.position_restraints().begin(),
               to = topo.position_restraints().end();
           for(; it != to; ++it) 
-            it->pos = math::product(mu, it->pos);
-        }
+            it->pos = math::product(mu_new, it->pos);
+      }
+      // new Euleur angles
+      math::Matrixl Rmat(math::rmat(conf.current().phi, conf.current().theta, conf.current().psi));
+      math::Matrix RmatRmu(math::product(Rmu, Rmat));
+      long double R11R21 = sqrtl(Rmat(0, 0) * Rmat(0, 0) + Rmat(0, 1) * Rmat(0, 1));
+      if (R11R21 == 0.0) {
+        conf.current().theta = -math::sign(RmatRmu(0, 2)) * M_PI / 2;
+        conf.current().psi = 0.0;
+        conf.current().phi = -math::sign(RmatRmu(1, 0)) * acosl(math::costest(RmatRmu(1, 1)));
+      } else {
+        conf.current().theta = -math::sign(RmatRmu(0, 2)) * acosl(math::costest(R11R21));
+        long double costheta = cosl(conf.current().theta);
+        conf.current().psi = math::sign(RmatRmu(1, 2) / costheta) * acosl(math::costest(RmatRmu(2, 2) / costheta));
+        conf.current().phi = math::sign(RmatRmu(0, 1) / costheta) * acosl(math::costest(RmatRmu(0, 0) / costheta));
 
       }
+
+    }
     default:
       return 0;
   }

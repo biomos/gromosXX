@@ -89,6 +89,13 @@ namespace configuration
       math::Box box;
       
       /**
+       * the Euler angles 
+       */
+      double phi;   //yaw   (z   axis)
+      double theta; //pitch (y'  axis)
+      double psi;   //roll  (x'' axis)
+      
+      /**
        * virial tensor.
        */
       math::Matrix virial_tensor;

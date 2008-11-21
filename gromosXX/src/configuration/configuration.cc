@@ -300,7 +300,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
 	}
       case math::triclinic:
 	{
-	  // NO CUTOFF CHECK -- IMPLEMENT!!!
+
 	  math::Periodicity<math::triclinic> periodicity(current().box);
 	  // periodicity.gather_molecules_into_box(*this, topo);
 	  periodicity.gather_chargegroups(*this, topo);

@@ -57,6 +57,7 @@ _centre_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
     m = mass(*start);
     tot_mass += m;
     periodicity.nearest_image(pos(*start), prev, p);
+
     com_pos += m * (p + prev);
     v += m * vel(*start);
     prev += p;

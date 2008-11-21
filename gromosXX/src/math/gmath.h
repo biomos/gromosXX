@@ -845,8 +845,8 @@ namespace math
           m(i, j) += m1(i,k) * m2(k,j);
     return m;
   }
-  
-  inline Box product(Matrix const &m1, Box const &m2)
+  template<typename numeric_type>
+  inline Box product(GenericMatrix<numeric_type> const &m1, Box const &m2)
   {
     Box m(0.0);
     for(int i=0; i<3; ++i)
@@ -855,8 +855,8 @@ namespace math
 	  m(i)(j) += m1(i,k) * m2(k)(j);
     return m;
   }
-  
-  inline Matrix product(Box const &m1, Matrix const &m2)
+  template<typename numeric_type>
+  inline Matrix product(Box const &m1, GenericMatrix<numeric_type> const &m2)
   {
     Matrix m(0.0);   
     for(int i=0; i<3; ++i)
@@ -865,8 +865,8 @@ namespace math
 	  m(i,j) += m1(i)(k) * m2(k,j);
     return m;
   }
-  
-  inline std::string m2s(GenericMatrix<double> const & m)
+  template<typename numeric_type>
+  inline std::string m2s(GenericMatrix<numeric_type> const & m)
   {
     std::stringstream s;
     s << "[[" 

@@ -252,12 +252,14 @@ namespace io {
     /**
      * read TRICLINICBOX block.
      */
-    bool _read_box(math::Box &box, std::vector<std::string> &buffer,
+    bool _read_box(math::Box &box, double &phi, double &theta, double &psi, 
+                   std::vector<std::string> &buffer,
 		   math::boundary_enum const boundary);
     /**
      * read GENBOX block.
      */
-    bool _read_genbox(math::Box &box, std::vector<std::string> &buffer,
+    bool _read_genbox(math::Box &box, double &phi, double &theta, double &psi, 
+                   std::vector<std::string> &buffer,
 		   math::boundary_enum const boundary);
     /**
      * read BOX block.

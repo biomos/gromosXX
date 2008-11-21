@@ -13,15 +13,67 @@
 #define SUBMODULE math
 
 /**
- * calculate the rotation matrix R.
+ * calculate the rotation matrix R from the box
  */
 math::Matrixl math::rmat(math::Box const & box) {
-  math::Vecl Rx = box(0) / math::abs(box(0));
-  math::Vecl Ry_aux = box(1)
+  const math::Vecl Rx = box(0) / math::abs(box(0));
+  /* is this wrong???
+   * const math::Vecl Ry_aux = box(1)
           - math::dot(box(0), box(1)) * box(0)
-          / (math::abs(box(0)) * math::abs(box(1)));
-  math::Vecl Ry = Ry_aux / math::abs(Ry_aux);
-  math::Vecl Rz = math::cross(Rx, Ry);
+          / (math::abs(box(0)) * math::abs(box(1)));*/
+  const math::Vecl Ry_aux = box(1)
+          - math::dot(box(0), box(1)) * box(0)
+          / (math::abs(box(0))*math::abs(box(0)));
+  const math::Vecl Ry = Ry_aux / math::abs(Ry_aux);
+  const math::Vecl Rz = math::cross(Rx, Ry);
+  math::Matrixl R(Rx, Ry, Rz);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      if (fabs(R(i, j)) <= math::epsilon)
+        R(i, j) = 0.0;
+  return R;
+}
+math::Matrix math::rmat(math::Matrix const & box) {
+  math::Vec a, b, c;
+  for(int i=0; i<3; i++){
+    a(i)=box(i,0);
+    b(i)=box(i,1);
+    c(i)=box(i,2);
+  }
+        
+   const math::Vecl Rx = a / math::abs(a);
+  /* is this wrong???
+   * const math::Vecl Ry_aux = box(1)
+          - math::dot(box(0), box(1)) * box(0)
+          / (math::abs(box(0)) * math::abs(box(1)));*/
+  const math::Vecl Ry_aux = b
+          - math::dot(a, b) * a
+          / math::abs2(a);
+  const math::Vecl Ry = Ry_aux / math::abs(Ry_aux);
+  const math::Vecl Rz = math::cross(Rx, Ry);
+  math::Matrix R(Rx, Ry, Rz);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      if (fabs(R(i, j)) <= math::epsilon)
+        R(i, j) = 0.0;
+  return R;
+}
+/**
+ * calculate the rotation matrix R from the angles
+ */
+math::Matrixl math::rmat(double const & phi, double const & theta,
+        double const & psi) {
+  const math::Vecl Rx(cosl(theta) * cosl(phi),
+          cosl(theta) * sinl(phi),
+          -sinl(theta));
+  const math::Vecl Ry(sinl(psi) * sinl(theta) * cosl(phi) - cosl(psi) * sinl(phi),
+          sinl(psi) * sinl(theta) * sinl(phi) + cosl(psi) * cosl(phi),
+          sinl(psi) * cosl(theta));
+  const math::Vecl Rz(cosl(psi) * sinl(theta) * cosl(phi) + sinl(psi) * sinl(phi),
+          cosl(psi) * sinl(theta) * sinl(phi)+(-sinl(psi) * cosl(phi)),
+          cosl(psi) * cosl(theta));
+
+  //math::Matrixl R(Rx, Ry, Rz, true);
   math::Matrixl R(Rx, Ry, Rz);
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)

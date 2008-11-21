@@ -91,7 +91,7 @@ _update_atomic(topology::Topology & topo,
       
       // check exclusions and range
       periodicity.nearest_image(pos(a1), pos(a2), v);
-      
+
       // the distance
       const double d = math::abs2(v);
 
@@ -263,7 +263,6 @@ _update_pert_atomic(topology::Topology & topo,
       
       // check exclusions and range
       periodicity.nearest_image(pos(a1), pos(a2), v);
-      
       // the distance
       const double d = math::abs2(v);
 

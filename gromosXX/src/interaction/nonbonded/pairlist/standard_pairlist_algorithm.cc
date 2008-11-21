@@ -173,9 +173,10 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
       
       assert(m_cg_cog.size() > unsigned(cg1) &&
 	     m_cg_cog.size() > unsigned(cg2));
-    
+      DEBUG(10, "ni cog1"<< math::v2s(m_cg_cog(cg1)));
+      DEBUG(10, "ni cog2"<< math::v2s(m_cg_cog(cg2)));
       periodicity.nearest_image(m_cg_cog(cg1), m_cg_cog(cg2), r);
-      
+      DEBUG(10, "ni r"<< math::v2s(r));
       // the distance
       const double d = math::abs2(r);
       
@@ -467,7 +468,7 @@ _update_pert_cg(topology::Topology & topo,
 	     m_cg_cog.size() > unsigned(cg2));
     
       periodicity.nearest_image(m_cg_cog(cg1), m_cg_cog(cg2), r);
-    
+
       // the distance
       const double d = math::abs2(r);
     

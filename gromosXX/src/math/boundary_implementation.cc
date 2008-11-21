@@ -3,11 +3,11 @@
  * implementation of the periodic boundary condition functions.
  */
 
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE math
 
-#include "../util/debug.h"
 
 #ifdef WIN32
 // Converts a floating point value to an integer, very fast.
@@ -254,14 +254,28 @@ inline void math::Boundary_Implementation<math::triclinic>
 {
   // nim has to be out of the loop here!
   nim = v1 - v2;
-  for(int d=0; d<3; ++d){
+  //for(int d=0; d<3; ++d){
     // i think the if statement might be wrong for really 
-    // triclinic cases!
-    if (fabs(nim(d)) >= abs(m_box(d)) * 0.5)
-      nim += m_box(d) * rint(dot(m_cross_K_L_M(d), nim));
-  }
+    // triclinic cases! - > agree
+    // now we are in the rotated frame of the box: 
+    // a along x, b in the x-y plane, c arbitray
+    // - > triangular matrix - > trivially solvable set of equations
+    // only c has components along z direction
+    if(nim(2)*nim(2) >= 0.25*m_box(2,2)*m_box(2,2))
+      nim -= m_box(2) * rint(nim(2)/fabs(m_box(2,2)));  
+    //b is along x and y
+   double nim_y=nim(1)-m_box(2,1)/m_box(2,2)*nim(2);
+    if (nim_y*nim_y >= 0.25*m_box(1,1)*m_box(1,1))
+      nim -= m_box(1) * rint(nim_y/fabs(m_box(1,1)));
+    //a is along x
+   double nim_x=nim(0)- 
+            m_box(1,0)*(nim(1)-m_box(2,1)*nim(2)/m_box(2,2))/m_box(1,1)
+            - m_box(2,0)*nim(2)/m_box(2,2);
+    if (nim_x*nim_x >= 0.25*m_box(0,0)* m_box(0,0))
+      nim -= m_box(0) * rint(nim_x/fabs(m_box(0,0)));
+ // }
 }
-
+        
 /**
  * nearest image : truncated octahedron
  */
@@ -326,6 +340,7 @@ inline void math::Boundary_Implementation<math::triclinic>
   for(int d=0; d<3; ++d){
     n(d) = -dot(m_cross_K_L_M(d), v);
   }
+
 }
 
 /**

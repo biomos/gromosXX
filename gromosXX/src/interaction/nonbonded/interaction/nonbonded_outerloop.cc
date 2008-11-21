@@ -769,6 +769,7 @@ void interaction::Nonbonded_Outerloop
   // Do we have to gather here ?
   for(unsigned int i = 0; i < num_atoms; ++i) {
     periodicity.put_into_positive_box(r(i));
+
     DEBUG(11, "r(" << i <<") in box: " << math::v2s(r(i)));
   }
   
@@ -877,6 +878,7 @@ void interaction::Nonbonded_Outerloop
   const unsigned int num_atoms = topo.num_atoms();
   for (unsigned int i = 0; i < num_atoms; ++i) {
     periodicity.put_into_positive_box(r(i));
+
     DEBUG(11, "r(" << i << ") in box: " << math::v2s(r(i)));
   }
   
@@ -1477,7 +1479,13 @@ int interaction::Nonbonded_Outerloop
 			 topo.iac(atom_j));
   
   periodicity.nearest_image(conf.current().pos(atom_i), conf.current().pos(atom_j), r);
-
+  DEBUG(10, "\tni i " << conf.current().pos(atom_i)(0) << " / " 
+          <<  conf.current().pos(atom_i)(1) << " / " 
+          <<  conf.current().pos(atom_i)(2));
+    DEBUG(10, "\tni j " << conf.current().pos(atom_j)(0) << " / " 
+          <<  conf.current().pos(atom_j)(1) << " / " 
+          <<  conf.current().pos(atom_j)(2));
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
   double f;
   term.lj_crf_interaction(r, lj.c6, lj.c12,
 			  topo.charge()(atom_i) * topo.charge()(atom_j),
@@ -1550,7 +1558,6 @@ int interaction::Nonbonded_Outerloop
     periodicity.nearest_image(conf.current().pos(atom_i),
             conf.current().pos(atom_j),
             r);
-    
     const lj_parameter_struct &lj =
             m_param.lj_parameter(topo.iac(atom_i),
             topo.iac(atom_j));

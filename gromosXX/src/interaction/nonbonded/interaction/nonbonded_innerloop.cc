@@ -34,6 +34,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   
   periodicity.nearest_image(conf.current().pos(i), 
 			    conf.current().pos(j), r);
+  DEBUG(10, "\tni i " << conf.current().pos(i)(0) << " / " 
+          <<  conf.current().pos(i)(1) << " / " 
+          <<  conf.current().pos(i)(2));
+    DEBUG(10, "\tni j " << conf.current().pos(j)(0) << " / " 
+          <<  conf.current().pos(j)(1) << " / " 
+          <<  conf.current().pos(j)(2));
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
   
   switch(t_nonbonded_spec::interaction_func){
@@ -201,7 +207,13 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   
   periodicity.nearest_image(conf.current().pos(i), 
 			    conf.current().pos(j), r);
-
+  DEBUG(10, "\tni i " << conf.current().pos(i)(0) << " / " 
+          <<  conf.current().pos(i)(1) << " / " 
+          <<  conf.current().pos(i)(2));
+    DEBUG(10, "\tni j " << conf.current().pos(j)(0) << " / " 
+          <<  conf.current().pos(j)(1) << " / " 
+          <<  conf.current().pos(j)(2));
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
   switch(t_nonbonded_spec::interaction_func){
     case simulation::lj_crf_func :
       {
@@ -347,7 +359,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         DEBUG(11, "\texcluded pair " << i << " - " << *it);
         
         periodicity.nearest_image(pos(i), pos(*it), r);
-        
+          DEBUG(10, "\tni i " << pos(i)(0) << " / " 
+          <<  pos(i)(1) << " / " 
+          <<  pos(i)(2));
+    DEBUG(10, "\tni j " << pos(*it)(0) << " / " 
+          <<  pos(*it)(1) << " / " 
+          <<  pos(*it)(2));
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
         rf_interaction(r, topo.charge()(i) * topo.charge()(*it), f, e_crf);
         
         force(i) += f;
@@ -552,7 +570,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::electric_field_innerloop
 
   periodicity.nearest_image(conf.current().pos(i),
                             conf.current().pos(j), r);
-  
+    DEBUG(10, "\tni i " << conf.current().pos(i)(0) << " / " 
+          <<  conf.current().pos(i)(1) << " / " 
+          <<  conf.current().pos(i)(2));
+    DEBUG(10, "\tni j " << conf.current().pos(j)(0) << " / " 
+          <<  conf.current().pos(j)(1) << " / " 
+          <<  conf.current().pos(j)(2));
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
   switch(t_nonbonded_spec::efield_site) {
     case simulation::ef_atom : {
       rp1 = r - conf.current().posV(j);

@@ -22,12 +22,15 @@ void math::Periodicity<b>::put_into_box(math::Vec &v)const
 }
 
 template<math::boundary_enum b>
-void math::Periodicity<b>::put_into_positive_box(math::Vec &v)const
-{
-  Vec o(abs(this->m_box(0)), abs(this->m_box(1)), abs(this->m_box(2)));
+void math::Periodicity<b>::put_into_positive_box(math::Vec &v)const {
+  //this is not good in the triclinic case...  
+  //Vec o(abs(this->m_box(0)), abs(this->m_box(1)), abs(this->m_box(2)));
+  //o /= 2;
+  Vec o = this->m_box(0) + this->m_box(1) + this->m_box(2);
   o /= 2;
+ 
   this->nearest_image(v, o, v);
-  v += o;  
+  v += o;
 }
 
 template<math::boundary_enum b>

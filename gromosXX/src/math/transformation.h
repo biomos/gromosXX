@@ -8,9 +8,18 @@
 
 namespace math {
   /**
-   * calculate the rotation matrix R.
+   * calculate the rotation matrix R from the box
    */
   math::Matrixl rmat(math::Box const & box);
+    /**
+   * calculate the rotation matrix R from a matrix
+   */
+  math::Matrix rmat(math::Matrix const & box);
+   /**
+   * calculate the rotation matrix R from the angles.
+   */
+  math::Matrixl rmat(double const & phi, double const & theta,
+        double const & psi);
   /**
    * calculate the transformation matrix S.
    */

@@ -20,6 +20,7 @@
 #include <util/replica_data.h>
 
 #include <math/volume.h>
+#include <math/transformation.h>
 
 #include "in_configuration.h"
 
@@ -558,14 +559,19 @@ bool io::In_Configuration::read_box
 {
   // read box
   std::vector<std::string> buffer;
+  conf.current().phi = conf.current().theta = conf.current().psi = 0.0;
   if(sim.param().boundary.boundary != math::vacuum){
     //read in GENBOX
     buffer = m_block["GENBOX"];
     if(buffer.size()){
        if (!quiet)
            os <<"\treading GENBOX...";
-       _read_genbox(conf.current().box, buffer, sim.param().boundary.boundary);
+       _read_genbox(conf.current().box,conf.current().phi, conf.current().theta,
+              conf.current().psi, buffer, sim.param().boundary.boundary);
        conf.old().box = conf.current().box;
+       conf.old().phi = conf.current().phi;
+       conf.old().theta = conf.current().theta;
+       conf.old().psi = conf.current().psi;
        os <<"\nBOX:\n";
        block_read.insert("GENBOX");
 
@@ -575,8 +581,12 @@ bool io::In_Configuration::read_box
     if (buffer.size()){
       if (!quiet)
 	os << "\treading TRICLINICBOX...\n";
-      _read_box(conf.current().box, buffer, sim.param().boundary.boundary);
+      _read_box(conf.current().box,conf.current().phi, conf.current().theta,
+              conf.current().psi,buffer, sim.param().boundary.boundary);
       conf.old().box = conf.current().box;
+      conf.old().phi = conf.current().phi;
+      conf.old().theta = conf.current().theta;
+      conf.old().psi = conf.current().psi;
       block_read.insert("TRICLINICBOX");
       io::messages.add("TRICLINICBOX given"
 		     " - output will be GENBOX",
@@ -588,8 +598,12 @@ bool io::In_Configuration::read_box
 			    sim.param().boundary.boundary == math::truncoct)){
 	if (!quiet)
 	  os << "\treading BOX...\n";
-	_read_g96_box(conf.current().box, buffer);
-	conf.old().box = conf.current().box;
+          _read_g96_box(conf.current().box, buffer);
+          conf.old().box = conf.current().box;
+          conf.old().phi = conf.current().phi;
+          conf.old().theta = conf.current().theta;
+          conf.old().psi = conf.current().psi;
+
 	block_read.insert("BOX");
       }
       else{
@@ -601,8 +615,30 @@ bool io::In_Configuration::read_box
 	return false;
       }
     } 
-   }
+    }
   }
+  /* rotate the
+   *postion
+   *velocities
+   *cos position
+   *into the frame of the box
+   */
+ // math::Matrixl Rmat(math::transpose(math::rmat(conf.current().phi,
+ //         conf.current().theta, conf.current().psi)));
+  math::Matrixl Rmat((math::rmat(conf.current().phi,
+          conf.current().theta, conf.current().psi)));
+  DEBUG(10, "box \n " << math::m2s(math::Matrix(conf.current().box)));
+          
+  DEBUG(10, "Transformation Matrix \n" << math::m2s(Rmat))
+  for (int i = 0, to = topo.num_atoms(); i < to; ++i) {
+    DEBUG(10, "Position Cartesian: " << math::v2s(conf.current().pos(i)));
+    conf.current().pos(i) = math::Vec(math::product(math::transpose(Rmat), conf.current().pos(i)));
+    DEBUG(10, "Position Rotated  : " << math::v2s(conf.current().pos(i)));
+    conf.current().posV(i) = math::Vec(math::product(math::transpose(Rmat), conf.current().posV(i)));
+    conf.current().vel(i) = math::Vec(math::product(math::transpose(Rmat), conf.current().vel(i)));
+  }          
+  
+  
   return true;
 }
 
@@ -1322,7 +1358,9 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
   return true;
 }
 
-bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string> &buffer,
+bool io::In_Configuration::_read_genbox(math::Box &box, double &phi, 
+        double &theta, double &psi,
+        std::vector<std::string> &buffer,
 				     math::boundary_enum const boundary)
 {
   DEBUG(8, "read genbox");
@@ -1368,14 +1406,17 @@ bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string>
 		     "In_Configuration", io::message::warning);
   }
   //change from genbox to triclinicbox...
-  long double a, b, c, alpha, beta, gamma, phi, theta, psi;
+  long double a, b, c, alpha, beta, gamma;// phi, theta, psi;
   a = box(0)(0);
   b = box(1)(0);
   c = box(2)(0);
   alpha = math::Pi*box(0)(1)/180;
   beta  = math::Pi*box(1)(1)/180;
   gamma = math::Pi*box(2)(1)/180;
-  
+  if ( boundary == math::rectangular  &&(box(0)(1)!=90.0 || box(1)(1)!=90.0 ||box(2)(1)!=90.0) ){
+    io::messages.add("Rectangular box, but box angles != 90",
+		     "In_Configuration", io::message::error);
+  }
   long double cosdelta=(cosl(alpha)-cosl(beta)*cosl(gamma))/(sinl(beta)*sinl(gamma));
   long double sindelta=sqrtl(1-cosdelta*cosdelta);  
    
@@ -1387,8 +1428,15 @@ bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string>
           c*cosdelta*sinl(beta), 
           c*sindelta*sinl(beta));
   
+  phi   = math::Pi*box(0)(2)/180;
+  theta = math::Pi*box(1)(2)/180;
+  psi   = math::Pi*box(2)(2)/180;
 
+  box(0)=math::Vec(SBx);
+  box(1)=math::Vec(SBy);
+  box(2)=math::Vec(SBz);
   
+  /* stay in the frame of the box -> don't rotate
   phi   = math::Pi*box(0)(2)/180;
   theta = math::Pi*box(1)(2)/180;
   psi   = math::Pi*box(2)(2)/180;
@@ -1410,8 +1458,9 @@ bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string>
   box(1)=math::Vec(product(Rmat,SBy));
   box(2)=math::Vec(product(Rmat,SBz));
  
-  
+  */
 
+  
   // and check the boundary condition...
   if (math::boundary_enum(bound) != boundary){
     io::messages.add("Boundary condition from input file and from TRICLINICBOX do not match!"
@@ -1429,7 +1478,8 @@ bool io::In_Configuration::_read_genbox(math::Box &box, std::vector<std::string>
 }
 
 
-bool io::In_Configuration::_read_box(math::Box &box, std::vector<std::string> &buffer,
+bool io::In_Configuration::_read_box(math::Box &box, double &phi, double &theta,
+        double &psi,std::vector<std::string> &buffer,
 				     math::boundary_enum const boundary)
 {
   DEBUG(8, "read triclinic box");
@@ -1473,7 +1523,52 @@ bool io::In_Configuration::_read_box(math::Box &box, std::vector<std::string> &b
 		     " - using input file",
 		     "In_Configuration", io::message::warning);
   }
+  if ( boundary == math::rectangular  &&
+          ( math::dot(box(0),box(1))!=0.0 
+          || math::dot(box(0),box(2))!=0.0  
+          || math::dot(box(1),box(2))!=0.0 ) ){
+    io::messages.add("Rectangular box, but box angles != 90",
+		     "In_Configuration", io::message::error);
+  }
+  
+    //find phi, theta and psi
+    math::Matrixl Rmat = (math::rmat(box));
+    long double R11R21 = sqrtl(Rmat(0, 0) * Rmat(0, 0) + Rmat(0, 1) * Rmat(0, 1));
+    if (R11R21 == 0.0) {
+      theta = -math::sign(Rmat(0, 2)) * M_PI / 2;
+      psi = 0.0;
+      phi = -math::sign(Rmat(1, 0)) * acosl(math::costest(Rmat(1, 1)));
+    } else {
+      theta = -math::sign(Rmat(0, 2)) * acosl(math::costest(R11R21));
+      long double costheta = cosl(theta);
+      psi = math::sign(Rmat(1, 2) / costheta) * acosl(math::costest(Rmat(2, 2) / costheta));
+      phi = math::sign(Rmat(0, 1) / costheta) * acosl(math::costest(Rmat(0, 0) / costheta));
 
+  }
+
+  //rotate box to frame of box
+  DEBUG(10, "Rmat        : \n" << math::m2s(Rmat));
+  DEBUG(10, "Rmat,transpo: \n" << math::m2s(math::transpose(Rmat)));
+  DEBUG(10, "original box: \n" << math::m2s(math::Matrix(box)));
+  //box=math::product(math::transpose(Rmat),box);
+ // box=math::product((Rmat),box);
+  
+  math::Box m(0.0);
+  for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j)
+      for (int k = 0; k < 3; ++k)
+        m(j)(i) += Rmat(i, k) * box(j)(k);
+  box = m;
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j)
+         if (fabs(box(i)(j)) <= math::epsilon)
+              box(i)(j) = 0.0;
+  DEBUG(10, "box in frame of box: \n" << math::m2s(math::Matrix(box)));
+  DEBUG(10, "box(0): "<< math::v2s(box(0)));
+  DEBUG(10, "box(0,1): " << box(0)(1));
+  //box from scratch...
+  math::Matrixl Smat = (math::smat(box, boundary));
+  DEBUG(10, "Smat \n" << math::m2s(Smat));
   return true;
   
 }
