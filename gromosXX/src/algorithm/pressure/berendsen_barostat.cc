@@ -121,15 +121,20 @@ int algorithm::Berendsen_Barostat
       {
 	
 	math::Matrix mu;
-
+        double delta, mu_aux;
 	for(int i=0; i<3; ++i){
 	  for(int j=0; j<3; ++j){
-	  
-	    mu(i, j) = pow(1.0 - sim.param().pcouple.compressibility
-			   * sim.time_step_size() / sim.param().pcouple.tau
-			   * (sim.param().pcouple.pres0(i,j) -
-			      pressure(i,j)),
-			   1.0/3.0);
+            if(i==j)
+              delta=1;
+            else
+              delta=0;
+            mu_aux = delta - sim.param().pcouple.compressibility
+                            * sim.time_step_size() / sim.param().pcouple.tau
+                            * (sim.param().pcouple.pres0(i, j) -
+                            pressure(i, j));
+           mu(i, j) = math::sign(mu_aux) * pow(fabs(mu_aux),
+                            1.0 / 3.0);
+            
 	  }
 	}
 
@@ -137,8 +142,22 @@ int algorithm::Berendsen_Barostat
         // decompose in rotation and boxlength/boxangle scaling       
         math::Matrix Rmu(math::rmat(mu));
         math::Matrix mu_new=math::product(math::transpose(Rmu),mu);
+        DEBUG(10, "mu: \n" << math::m2s(mu));
+        DEBUG(10, "Rmu: \n" << math::m2s(Rmu));
         DEBUG(10, "mu_new: \n" << math::m2s(mu_new));
-	box = math::product(mu_new, box);
+
+        math::Box m(0.0);
+        for (int i = 0; i < 3; ++i)
+           for (int j = 0; j < 3; ++j)
+              for (int k = 0; k < 3; ++k)
+                m(j)(i) += mu_new(i, k) * box(j)(k);
+        box = m;
+        //we want a triangular matrix
+        for (int i = 0; i < 3; ++i)
+           for (int j = 0; j < 3; ++j)
+             if(fabs(box(j)(i))<math::epsilon)
+               box(j)(i)=0;
+           
 	DEBUG(10, "new box: \n" << math::m2s(math::Matrix(box)));
 	// scale the positions
 	for(unsigned int i=0; i<pos.size(); ++i)
@@ -153,9 +172,13 @@ int algorithm::Berendsen_Barostat
             it->pos = math::product(mu_new, it->pos);
       }
       // new Euleur angles
+    /* neglect the rotational contribution for now... (gives weird results at the moment :o)...)
+     * DEBUG(10, "old Euler angles: " << conf.current().phi 
+               << " " << conf.current().theta
+               << " " << conf.current().psi);
       math::Matrixl Rmat(math::rmat(conf.current().phi, conf.current().theta, conf.current().psi));
-      math::Matrix RmatRmu(math::product(Rmu, Rmat));
-      long double R11R21 = sqrtl(Rmat(0, 0) * Rmat(0, 0) + Rmat(0, 1) * Rmat(0, 1));
+      math::Matrixl RmatRmu(math::product(Rmat, Rmu));
+      long double R11R21 = sqrtl(RmatRmu(0, 0) * RmatRmu(0, 0) + RmatRmu(0, 1) * RmatRmu(0, 1));
       if (R11R21 == 0.0) {
         conf.current().theta = -math::sign(RmatRmu(0, 2)) * M_PI / 2;
         conf.current().psi = 0.0;
@@ -165,9 +188,12 @@ int algorithm::Berendsen_Barostat
         long double costheta = cosl(conf.current().theta);
         conf.current().psi = math::sign(RmatRmu(1, 2) / costheta) * acosl(math::costest(RmatRmu(2, 2) / costheta));
         conf.current().phi = math::sign(RmatRmu(0, 1) / costheta) * acosl(math::costest(RmatRmu(0, 0) / costheta));
-
       }
-
+       conf.old().phi=conf.current().phi;
+       DEBUG(10, "new Euler angles: " << conf.current().phi 
+               << " " << conf.current().theta
+               << " " << conf.current().psi);
+     */
     }
     default:
       return 0;

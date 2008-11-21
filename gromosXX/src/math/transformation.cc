@@ -36,9 +36,9 @@ math::Matrixl math::rmat(math::Box const & box) {
 math::Matrix math::rmat(math::Matrix const & box) {
   math::Vec a, b, c;
   for(int i=0; i<3; i++){
-    a(i)=box(i,0);
-    b(i)=box(i,1);
-    c(i)=box(i,2);
+    a(i)=box(0,i);
+    b(i)=box(1,i);
+    c(i)=box(2,i);
   }
         
    const math::Vecl Rx = a / math::abs(a);
@@ -51,7 +51,7 @@ math::Matrix math::rmat(math::Matrix const & box) {
           / math::abs2(a);
   const math::Vecl Ry = Ry_aux / math::abs(Ry_aux);
   const math::Vecl Rz = math::cross(Rx, Ry);
-  math::Matrix R(Rx, Ry, Rz);
+  math::Matrix R(Rx, Ry, Rz, true);
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)
       if (fabs(R(i, j)) <= math::epsilon)

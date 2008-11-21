@@ -1539,13 +1539,13 @@ void io::Out_Configuration
 
      */
   
-    if(abs(conf.current().phi)<math::epsilon)
+    if(fabs(conf.current().phi)<math::epsilon)
       phi=0.0;
     else phi=conf.current().phi;
-    if(abs(conf.current().theta)<math::epsilon)
+    if(fabs(conf.current().theta)<math::epsilon)
       theta=0.0;
     else theta=conf.current().theta;
-    if(abs(conf.current().psi)<math::epsilon)
+    if(fabs(conf.current().psi)<math::epsilon)
       psi=0.0;
     else psi=conf.current().psi;
     os << std::setw(m_width) << phi * 180 / math::Pi
