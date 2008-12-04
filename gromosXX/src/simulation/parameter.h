@@ -421,23 +421,24 @@ namespace simulation
       /**
        * Constructor.
        * Default values:
-       * - shake_pos              false  (no initial SHAKE of positions)
-       * - shake_vel              false  (no initial SHAKE of velocities)
-       * - remove_com_translation false  (no initial removal of COM translation)
-       * - remove_com_rotation    false  (no initial removal of COM rotation)
-       * - generate_velocities    false  (no generation of initial velocities)
-       * - read_nosehoover_chains true   (read them from configuration)
-       * - read_rottrans          true   (read initial setting of positions
-       *                                  and orientations for rot-trans constraints)
-       * - read_lattice_shifts    true   (read initial lattice shifts)
-       * - ig                     0      (random number seed)
-       * - tempi                  0.0    (temperature to generate initial velocities)
+       * - shake_pos                false  (no initial SHAKE of positions)
+       * - shake_vel                false  (no initial SHAKE of velocities)
+       * - remove_com_translation   false  (no initial removal of COM translation)
+       * - remove_com_rotation      false  (no initial removal of COM rotation)
+       * - generate_velocities      false  (no generation of initial velocities)
+       * - read_nosehoover_chains   true   (read them from configuration)
+       * - read_nosehoover_barostat true   (read them from configuration)
+       * - read_rottrans            true   (read initial setting of positions
+       *                                    and orientations for rot-trans constraints)
+       * - read_lattice_shifts      true   (read initial lattice shifts)
+       * - ig                       0      (random number seed)
+       * - tempi                    0.0    (temperature to generate initial velocities)
        */
       start_struct() : shake_pos(false), shake_vel(false), 
                        remove_com_translation(false), remove_com_rotation(false),
 		       generate_velocities(false), ig(0), tempi(0.0),
-                       read_nosehoover_chains(true), read_rottrans(true),
-                       read_lattice_shifts(true) {}
+                       read_nosehoover_chains(true), read_nosehoover_barostat(true),
+                       read_rottrans(true), read_lattice_shifts(true) {}
       
       /**
        * shake initial positions
@@ -471,6 +472,10 @@ namespace simulation
        * Read Nose-Hoover Chain variables from configuration or reset them
        */
       bool read_nosehoover_chains;
+      /**
+       * Read Nose-Hoover Chain barostat variables from configuration or reset them
+       */
+      bool read_nosehoover_barostat;
       /**
        * Read initial setting of positions and orientations for roto-translational
        * constraints from configuration or reset them

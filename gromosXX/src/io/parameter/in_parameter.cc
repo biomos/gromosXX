@@ -1286,6 +1286,10 @@ INITIALISE
 # NTINHT: 0,1 controls generation of initial Nose-Hoover chain variables
 #         0: read from configuration (default)
 #         1: reset variables to zero.
+# NTINHB: 0,1 controls generation of initial Nose-Hoover (chain) barostat
+#             variables
+#         0: read from strartup file (if applicable) (default)
+#         1: reset variables to zero
 # NTISHI: 0,1 controls initial setting for lattice shift vectors
 #         0: read from configuration (default)
 #         1: reset shifts to zero.
@@ -1303,8 +1307,8 @@ INITIALISE
 # IG:     random number generator seed
 # TEMPI:  initial temperature
 #
-#  NTIVEL  NTISHK  NTINHT
-        0       0       0
+#  NTIVEL  NTISHK  NTINHT  NTINHB
+        0       0       0       0
 #  NTISHI  NTIRTC  NTICOM
         0       0       0
 #  NTISTI
@@ -1334,11 +1338,11 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
   
   block_read.insert("INITIALISE");
 
-  int ntivel, ntishk, ntinhc, ntishi, ntirtc, nticom, ntisti;
-  _lineStream >> ntivel >> ntishk >> ntinhc 
-              >> ntishi >> ntirtc >> nticom >> ntisti
-	      >> param.start.ig 
-	      >> param.start.tempi;
+  int ntivel, ntishk, ntinht, ntinhb, ntishi, ntirtc, nticom, ntisti;
+  _lineStream >> ntivel >> ntishk >> ntinht >> ntinhb
+              >> ntishi >> ntirtc >> nticom 
+              >> ntisti
+	      >> param.start.ig >> param.start.tempi;
   
   if (_lineStream.fail())
     io::messages.add("bad line in INITIALISE block",
@@ -1374,11 +1378,19 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   }
   
-  // controls reading of Nose-Hoover chain variables: not implemented.
-  switch(ntinhc) {
+  // controls reading of Nose-Hoover chain variables.
+  switch(ntinht) {
     case 0 : param.start.read_nosehoover_chains = true; break;
     case 1 : param.start.read_nosehoover_chains = false; break; // reset them
-    default : io::messages.add("INITIALISE block: NTINHC must be 0 or 1",
+    default : io::messages.add("INITIALISE block: NTINHT must be 0 or 1",
+		     "In_Parameter", io::message::error);
+  }
+  
+  // controls reading of Nose-Hoover chain barostat variables: not implemented.
+  switch(ntinhb) {
+    case 0 : param.start.read_nosehoover_barostat = true; break;
+    case 1 : param.start.read_nosehoover_barostat = false; break; // reset them
+    default : io::messages.add("INITIALISE block: NTINHB must be 0 or 1",
 		     "In_Parameter", io::message::error);
   }
   
