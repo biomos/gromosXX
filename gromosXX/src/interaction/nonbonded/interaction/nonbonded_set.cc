@@ -190,7 +190,7 @@ int interaction::Nonbonded_Set
   const bool calculate_lattice_sum_corrections =
           sim.param().pcouple.scale != math::pcouple_off || // NPT - every step
           !sim.steps() || // at the beginning of the simulation
-          sim.steps() % abs(sim.param().write.energy) == 0; // energy output req.
+          (sim.param().write.energy && sim.steps() % abs(sim.param().write.energy)) == 0; // energy output req.
 
   if (m_rank == 0)
     m_pairlist_alg.timer().start("ls self energy and A term");
