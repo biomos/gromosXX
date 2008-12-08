@@ -120,8 +120,13 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @bag       filename\n\n";    
   }
   
-  if (knowns.count("posres")){
+  if (knowns.count("posresspec")){
     usage += "\t# position restraints specification\n";
+    usage += "\t# @posresspec    filename\n\n";
+  }
+  
+  if (knowns.count("posres")){
+    usage += "\t# position restraints\n";
     usage += "\t# @posres    filename\n\n";
   }
   

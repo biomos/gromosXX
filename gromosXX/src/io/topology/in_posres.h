@@ -22,6 +22,30 @@
 namespace io {
 
   /**
+   * @class In_Posresspec
+   * reads in a position restraining specification file
+   */
+  class In_Posresspec : public GInStream {
+
+  public:
+    /**
+     * Default constructor.
+     */
+    In_Posresspec() {}
+    /**
+     * Constructor.
+     */
+    In_Posresspec(std::istream& is) : GInStream(is) { readStream(); };
+    /**
+     * Read in a position restraining specification file.
+     */
+    void read(topology::Topology &topo,
+	      simulation::Simulation & sim,
+	      std::ostream & os = std::cout);
+
+  };
+  
+  /**
    * @class In_Posres
    * reads in a position restraining file
    */

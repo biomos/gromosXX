@@ -1,6 +1,6 @@
 /**
  * @file in_posres.cc
- * implements methods of In_Topology.
+ * implements methods of In_Posresspec and In_Posres.
  */
 
 
@@ -29,7 +29,8 @@
  * The POSRESSPEC specifies the atoms of which the position is to be restrained
  * or constrained.
  *
- * The block is read from the position restraints specification file.
+ * The block is read from the position restraints specification file 
+ * (\@posresspec).
  *
  * @verbatim
 POSRESSPEC
@@ -48,8 +49,7 @@ END
  * @section refposition REFPOSITION block
  * The REFPOSITION block has the same format as the POSITION block in the
  * configuration file and can be read either from the position restraints
- * specification file (NTPORB = 1) or the configuration file (NTPORB = 0, 
- * default).
+ * file (\@posres) (NTPORB = 1) or the configuration file (NTPORB = 0, default).
  *
  * @verbatim
 REFPOSITION
@@ -71,7 +71,7 @@ END
  * @f[k = k_0 / b\mathrm{,}@f]
  * where @f$k_0@f$ is specified in the input parameter file by CPOR.
  *
- * The block is read from the position restraints specification file.
+ * The block is read from the position restraints file (\@posres).
  *
  * @verbatim
 BFACTOR
@@ -88,7 +88,7 @@ END
 @endverbatim
  */
 void 
-io::In_Posres::read(topology::Topology& topo,
+io::In_Posresspec::read(topology::Topology& topo,
 		    simulation::Simulation & sim,
 		    std::ostream & os){
   
@@ -123,7 +123,7 @@ io::In_Posres::read(topology::Topology& topo,
       
       std::string line(*it);
       if (line.length() < 17) {
-        io::messages.add("line too short in POSRESSPEC block", "In_Posres",
+        io::messages.add("line too short in POSRESSPEC block", "In_Posresspec",
                 io::message::error);
       }
       
@@ -139,13 +139,13 @@ io::In_Posres::read(topology::Topology& topo,
       
       if(_lineStream.fail()){
         io::messages.add("bad line in POSRESSPEC block",
-                "In_Posres", io::message::error);
+                "In_Posresspec", io::message::error);
         return;
       }
       
       if (nr < 1 || nr > topo.num_atoms()){
         io::messages.add("illegal atom in POSRESSPEC block",
-                "In_Posres", io::message::error);
+                "In_Posresspec", io::message::error);
         return;
       }
       
@@ -154,6 +154,45 @@ io::In_Posres::read(topology::Topology& topo,
       
     }
   } // POSRESSPEC  
+  
+  if (!quiet){
+    switch(sim.param().posrest.posrest){
+      case simulation::posrest_off :
+	os << "\tPosition restraints OFF\n";
+	// how did you get here?
+	break;
+      case simulation::posrest_on:
+      case simulation::posrest_bfactor:
+	os << "\tPosition restraints ON\n"
+	   << "\t\trestraining to ";
+        if (sim.param().posrest.read) 
+          os <<  "the positions in the positions restraints file.\n";
+        else
+	  os << "their positions in the startup file.\n";
+	break;
+      case simulation::posrest_const:
+	os << "\tPosition constraints ON\n"
+	   << "\t\tconstraining following atoms to ";
+        if (sim.param().posrest.read) 
+          os <<  "the positions given in the positions restraints file.\n";
+        else
+	  os << "their positions in the startup file.\n";
+	break;
+    }
+    
+    if (sim.param().posrest.scale_reference_positions)
+      os << "\n\tReference positions are scaled upon pressure scaling.\n";
+    
+    os << "END\n";
+  }
+}
+
+void 
+io::In_Posres::read(topology::Topology& topo,
+		    simulation::Simulation & sim,
+		    std::ostream & os){
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
   
   // read the reference positions from this file
   { // REFPOSITION
@@ -194,58 +233,4 @@ io::In_Posres::read(topology::Topology& topo,
       }      
     }  
   } // BFACTOR
-
-  std::vector<topology::position_restraint_struct>::const_iterator
-    posres_it = topo.position_restraints().begin(),
-    posres_to = topo.position_restraints().end();
-  
-  if (!quiet){
-    switch(sim.param().posrest.posrest){
-      case simulation::posrest_off :
-	os << "\tPosition restraints OFF\n";
-	// how did you get here?
-	break;
-      case simulation::posrest_on:
-      case simulation::posrest_bfactor:
-	os << "\tPosition restraints ON\n"
-	   << "\t\trestraining to ";
-        if (sim.param().posrest.read) 
-          os <<  "the following positions:\n";
-        else
-	  os << "their positions in the startup file.\n";
-	break;
-      case simulation::posrest_const:
-	os << "\tPosition constraints ON\n"
-	   << "\t\tconstraining following atoms to ";
-        if (sim.param().posrest.read) 
-          os <<  "the following positions:\n";
-        else
-	  os << "their positions in the startup file.\n";
-	break;
-    }
-    
-    
-    if (sim.param().posrest.read) {
-      os << std::setw(10) << "SEQ"
-         << std::setw(20) << "POS(X)"
-         << std::setw(20) << "POS(Y)"
-         << std::setw(20) << "POS(Z)"
-         << std::setw(15) << "BFACTOR"
-         << "\n";
-      
-      for(;posres_it != posres_to; ++posres_it)
-        os << std::setw(10) << posres_it->seq
-           << std::setw(20) << posres_it->pos(0)
-           << std::setw(20) << posres_it->pos(1)
-           << std::setw(20) << posres_it->pos(2)
-           << std::setw(15) << posres_it->bfactor
-           << "\n";
-    }
-    
-    if (sim.param().posrest.scale_reference_positions)
-      os << "\n\tReference positions are scaled upon pressure scaling.\n";
-    
-    os << "END\n";
-  }
-  
 }

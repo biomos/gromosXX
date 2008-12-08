@@ -28,7 +28,8 @@
  * <tr><td> \@bae</td><td>&lt;@ref block_averaged_energy_trajectory "block averaged energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trg</td><td>&lt;@ref free_energy_trajectory "free energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@bag</td><td>&lt;@ref block_averaged_free_energy_trajectory "block averaged free energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@posres</td><td>&lt;@ref posres "position restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@posresspec</td><td>&lt;@ref posres "position restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@posres</td><td>&lt;@ref posres "position restraints"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@distrest</td><td>&lt;@ref disres "distance restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@dihtrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@jval</td><td>&lt;@ref jvalue "J-value restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
@@ -84,9 +85,8 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trj" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
-	 << "bae" << "bag" << "posres" <<"distrest" << "dihrest" << "jval"
-	 << "anatrj" << "print" << "friction"
-	 << "version";
+	 << "bae" << "bag" << "posresspec" << "posres" <<"distrest" << "dihrest"
+         << "jval" << "anatrj" << "print" << "friction" << "version";
   
   
   std::string usage;

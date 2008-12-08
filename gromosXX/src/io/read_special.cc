@@ -46,25 +46,53 @@ int io::read_special(io::Argument const & args,
 {
   // POSRES
   if (sim.param().posrest.posrest){
-    io::igzstream posres_file;
+    io::igzstream posresspec_file;
   
-    if (args.count("posres") != 1){
-      io::messages.add("position restraints: no data file specified (use @posres)",
+    if (args.count("posresspec") != 1){
+      io::messages.add("position restraints: no data file specified (use @posresspec)",
 		       "read special", io::message::error);
     } else {
-      posres_file.open(args["posres"].c_str());
-      if (!posres_file.is_open()){
-	io::messages.add("opening posres file failed!\n",
+      posresspec_file.open(args["posresspec"].c_str());
+      if (!posresspec_file.is_open()){
+	io::messages.add("opening posresspec file failed!\n",
 			 "read_special", 
 			 io::message::error);
       } else {
-        io::messages.add("position restraints read from " + args["posres"],
+        io::messages.add("position restraints specifciation read from " + args["posresspec"],
                 "read special", io::message::notice);
 
-        io::In_Posres ip(posres_file);
+        io::In_Posresspec ip(posresspec_file);
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
+      }
+    }
+    
+    io::igzstream posres_file;
+
+    // check whether we also need the position restraints file containing the
+    // positions and B-factors
+    if (sim.param().posrest.posrest == simulation::posrest_bfactor ||
+        sim.param().posrest.read) {
+
+      if (args.count("posres") != 1) {
+        io::messages.add("position restraints: no data file specified (use @posres)",
+                "read special", io::message::error);
+      } else {
+        posres_file.open(args["posres"].c_str());
+        if (!posres_file.is_open()) {
+          io::messages.add("opening posresspec file failed!\n",
+                  "read_special",
+                  io::message::error);
+        } else {
+          io::messages.add("position restraints specifciation read from " + args["posres"],
+                  "read special", io::message::notice);
+
+          io::In_Posres ip(posres_file);
+          ip.quiet = quiet;
+
+          ip.read(topo, sim, os);
+        }
       }
     }
   } // POSRES
