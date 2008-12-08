@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trj" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "posres" << "distrest" 
+	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest" 
          << "dihrest" << "jval" << "anatrj" << "print" << "friction" << "version";
   
   

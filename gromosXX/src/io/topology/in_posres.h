@@ -46,20 +46,20 @@ namespace io {
   };
   
   /**
-   * @class In_Posres
+   * @class In_Refpos
    * reads in a position restraining file
    */
-  class In_Posres : public GInStream {
+  class In_Refpos : public GInStream {
 
   public:
     /**
      * Default constructor.
      */
-    In_Posres() {}
+    In_Refpos() {}
     /**
      * Constructor.
      */
-    In_Posres(std::istream& is) : GInStream(is) { readStream(); };
+    In_Refpos(std::istream& is) : GInStream(is) { readStream(); };
     /**
      * Read in a position restraining file.
      */

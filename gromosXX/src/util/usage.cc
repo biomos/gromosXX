@@ -125,9 +125,9 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @posresspec    filename\n\n";
   }
   
-  if (knowns.count("posres")){
+  if (knowns.count("refpos")){
     usage += "\t# position restraints\n";
-    usage += "\t# @posres    filename\n\n";
+    usage += "\t# @refpos    filename\n\n";
   }
   
   if (knowns.count("distrest")){

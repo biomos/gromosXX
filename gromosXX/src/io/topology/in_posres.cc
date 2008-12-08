@@ -188,7 +188,7 @@ io::In_Posresspec::read(topology::Topology& topo,
 }
 
 void 
-io::In_Posres::read(topology::Topology& topo,
+io::In_Refpos::read(topology::Topology& topo,
 		    simulation::Simulation & sim,
 		    std::ostream & os){
   std::vector<std::string> buffer;
@@ -200,7 +200,7 @@ io::In_Posres::read(topology::Topology& topo,
     if (sim.param().posrest.read) {
       if (!buffer.size()) {
         io::messages.add("no REFPOSITION block in position restraints "
-                         "specification file", "In_Posres", io::message::error);
+                         "specification file", "In_Refpos", io::message::error);
         return;
       } else {
         io::In_Configuration::_read_refposition(topo.position_restraints(), 
@@ -209,7 +209,7 @@ io::In_Posres::read(topology::Topology& topo,
     } else {
       if (buffer.size()) {
         io::messages.add("REFPOSITION block ignored in position restraints "
-                         "specification file", "In_Posres", io::message::warning);
+                         "specification file", "In_Refpos", io::message::warning);
       }      
     }
   } // REFPOSITION
@@ -220,7 +220,7 @@ io::In_Posres::read(topology::Topology& topo,
         sim.param().posrest.posrest == simulation::posrest_bfactor) {
       if (!buffer.size()) {
         io::messages.add("no BFACTOR block in position restraints "
-                         "specification file", "In_Posres", io::message::error);
+                         "specification file", "In_Refpos", io::message::error);
         return;
       } else {
         io::In_Configuration::_read_bfactor(topo.position_restraints(),
@@ -229,7 +229,7 @@ io::In_Posres::read(topology::Topology& topo,
     } else {
       if (buffer.size()) {
         io::messages.add("BFACTOR block ignored in position restraints "
-                         "specification file", "In_Posres", io::message::warning);
+                         "specification file", "In_Refpos", io::message::warning);
       }      
     }  
   } // BFACTOR

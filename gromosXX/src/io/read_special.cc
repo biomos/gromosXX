@@ -68,27 +68,27 @@ int io::read_special(io::Argument const & args,
       }
     }
     
-    io::igzstream posres_file;
+    io::igzstream refpos_file;
 
     // check whether we also need the position restraints file containing the
     // positions and B-factors
     if (sim.param().posrest.posrest == simulation::posrest_bfactor ||
         sim.param().posrest.read) {
 
-      if (args.count("posres") != 1) {
-        io::messages.add("position restraints: no data file specified (use @posres)",
+      if (args.count("refpos") != 1) {
+        io::messages.add("position restraints: no data file specified (use @refpos)",
                 "read special", io::message::error);
       } else {
-        posres_file.open(args["posres"].c_str());
-        if (!posres_file.is_open()) {
-          io::messages.add("opening posresspec file failed!\n",
+        refpos_file.open(args["refpos"].c_str());
+        if (!refpos_file.is_open()) {
+          io::messages.add("opening refpos file failed!\n",
                   "read_special",
                   io::message::error);
         } else {
-          io::messages.add("position restraints specifciation read from " + args["posres"],
+          io::messages.add("position restraints specifciation read from " + args["refpos"],
                   "read special", io::message::notice);
 
-          io::In_Posres ip(posres_file);
+          io::In_Refpos ip(refpos_file);
           ip.quiet = quiet;
 
           ip.read(topo, sim, os);
