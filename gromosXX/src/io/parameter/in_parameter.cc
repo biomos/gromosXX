@@ -380,11 +380,11 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
   
   std::string sntc;
   _lineStream >> sntc;
-
-  if(sntc=="solvent") param.constraint.ntc=1;
-  else if(sntc=="hydrogen") param.constraint.ntc=2;
-  else if(sntc=="all") param.constraint.ntc=3;
-  else if(sntc=="specified") param.constraint.ntc=4;
+  if (sntc=="off" || sntc=="0") param.constraint.ntc=0;
+  if(sntc=="solvent" || sntc=="1") param.constraint.ntc=1;
+  else if(sntc=="hydrogen" || sntc=="2") param.constraint.ntc=2;
+  else if(sntc=="all" || sntc=="3") param.constraint.ntc=3;
+  else if(sntc=="specified" || sntc=="4") param.constraint.ntc=4;
   else {
     std::stringstream ss(sntc);
     if (!(ss >> param.constraint.ntc))
@@ -392,8 +392,8 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
 		       "In_Parameter", io::message::error);
   }
   
-  if(param.constraint.ntc<1 || param.constraint.ntc > 4){
-    io::messages.add("CONSTRAINT block: NTC out of rangek",
+  if(param.constraint.ntc < 0 || param.constraint.ntc > 4){
+    io::messages.add("CONSTRAINT block: NTC out of range",
 		     "In_Parameter", io::message::error);
     
     param.constraint.solute.algorithm = simulation::constr_off;
@@ -413,7 +413,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
 
   std::transform(salg.begin(), salg.end(), salg.begin(), tolower);
 
-  if (salg == "shake"){
+  if (salg == "shake" || salg == "1"){
     DEBUG(9, "constraints solute shake");
     
     if (param.constraint.ntc > 1)
@@ -425,7 +425,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     if(param.constraint.solute.shake_tolerance <= 0.0)
       io::messages.add("CONSTRAINT block: shake tolerance should be > 0",
 		       "In_Parameter", io::message::error);
-  } else if (salg == "flexshake"){
+  } else if (salg == "flexshake" || salg == "3"){
     DEBUG(9, "constraints solute flexshake");
     
     if (param.constraint.ntc > 1)
@@ -445,7 +445,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
       io::messages.add("CONSTRAINT block: flexshake mode should be >= 0 and <= 3",
 		       "In_Parameter", io::message::error);
     
-  } else if (salg == "lincs"){
+  } else if (salg == "lincs" || salg == "2"){
     DEBUG(9, "constraints solute lincs");
 
     if (param.constraint.ntc > 1)
@@ -459,7 +459,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
       io::messages.add("CONSTRAINT block: lincs order should be > 1",
 		       "In_Parameter", io::message::error);
 
-  } else if (salg == "off"){
+  } else if (salg == "off" || salg == "0"){
     DEBUG(9, "constraints solute off");
     param.constraint.solute.algorithm = simulation::constr_off;
   } else{
@@ -481,7 +481,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
 
   std::transform(salg.begin(), salg.end(), salg.begin(), tolower);
 
-  if (salg == "shake") {
+  if (salg == "shake" || salg == "1") {
     DEBUG(9, "constraints solvent shake");
 
     param.constraint.solvent.algorithm = simulation::constr_shake;
@@ -490,7 +490,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     if(param.constraint.solvent.shake_tolerance <= 0.0)
       io::messages.add("CONSTRAINT block: shake tolerance should be > 0.0",
 		       "In_Parameter", io::message::error);
-  } else if (salg == "flexshake"){
+  } else if (salg == "flexshake" || salg == "3"){
     DEBUG(9, "constraints solvent flexshake");
 
     param.constraint.solvent.algorithm = simulation::constr_flexshake;
@@ -499,7 +499,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     if(param.constraint.solvent.shake_tolerance <= 0.0)
       io::messages.add("CONSTRAINT block: shake tolerance should be > 0.0",
 		       "In_Parameter", io::message::error);
-  } else if (salg == "lincs"){
+  } else if (salg == "lincs" || salg == "2"){
     DEBUG(9, "constraints solvent lincs");
 
     param.constraint.solvent.algorithm = simulation::constr_lincs;
@@ -509,11 +509,11 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
       io::messages.add("CONSTRAINT block: lincs order should be >1",
 		       "In_Parameter", io::message::error);
 
-  } else if (salg == "settle") {
+  } else if (salg == "settle" || salg == "4") {
     DEBUG(9, "constraints solvent settle");
 
     param.constraint.solvent.algorithm = simulation::constr_settle;
-  }  else if (salg == "off") {
+  }  else if (salg == "off" || salg == "0") {
     DEBUG(9, "constraints solvent off");
 
     param.constraint.solvent.algorithm = simulation::constr_off;
