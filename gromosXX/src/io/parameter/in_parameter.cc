@@ -3,6 +3,9 @@
  * implements methods of In_Parameter
  */
 
+#include <ios>
+
+
 #include <stdheader.h>
 
 #include <topology/core/core.h>
@@ -2371,8 +2374,10 @@ INNERLOOP
 # NTILS: 0..1, solvent used
 #        0: use topology [default]
 #        1: use SPC
+# NTILP: addition parameters for the acceleration methods:
+#        CUDA: the GPU device number (default 0)
 #
-# NTILM NTILS
+# NTILM NTILS NTILP...
       0     0
 END
 @endverbatim
@@ -2454,6 +2459,15 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
         param.innerloop.solvent = simulation::sls_topo;
         io::messages.add("INNERLOOP block: bad value for NTILS (0,1)",
                 "In_Parameter", io::message::error);
+      }
+    }
+
+    if (param.innerloop.method == simulation::sla_cuda) {
+      _lineStream >> param.innerloop.cuda_device;
+      if (_lineStream.fail()) {
+        io::messages.add("INNERLOOP block: could not read the CUDA device "
+                "number. Assuming 0.", "In_Parameter", io::message::warning);
+        param.innerloop.cuda_device = 0;
       }
     }
   }

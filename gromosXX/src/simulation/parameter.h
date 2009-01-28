@@ -2006,7 +2006,7 @@ namespace simulation
       /**
        * constructor
        */
-      innerloop_struct() : solvent(sls_topo), method(sla_off) {}
+      innerloop_struct() : solvent(sls_topo), method(sla_off), cuda_device(0) {}
       /**
        * the solvent
        */
@@ -2015,6 +2015,10 @@ namespace simulation
        * the acceleration method
        */
       special_loop_acceleration_enum method;
+      /**
+       * the GPU CUDA device number to use
+       */
+      unsigned int cuda_device;
     } /** special inner loops */ innerloop;
   };
 }
