@@ -71,24 +71,25 @@ int interaction::CUDA_Nonbonded_Set
         simulation::Simulation & sim) {
   DEBUG(4, "Nonbonded_Set::calculate_interactions");
 
+  // this whole function is remove is the lib is not present.
+#ifdef HAVE_LIBCUKERNEL
+
   int error = 0;
 
   m_storage.zero();
   m_storage_cuda.zero();
   const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
 
-
+  cudakernel::cudaCopyPositions(&conf.current().pos(topo.num_solute_atoms())(0));
   if (pairlist_update) {
     DEBUG(6, "\tdoing longrange...");
 
     m_longrange_storage.zero();
     m_longrange_storage_cuda.zero();
-#ifdef HAVE_LIBCUKERNEL
     m_pairlist_alg.timer().start("pairlist cuda");
-    double * Pos = &conf.current().pos(topo.num_solute_atoms())(0);
-    cudakernel::cudaCalcPairlist(Pos);
+    cudakernel::cudaCalcPairlist();
     m_pairlist_alg.timer().stop("pairlist cuda");
-#endif
+
 
     m_pairlist_alg.update(topo, conf, sim,
             pairlist(),
@@ -97,9 +98,7 @@ int interaction::CUDA_Nonbonded_Set
   }
 
   if (pairlist_update) {
-#ifdef HAVE_LIBCUKERNEL
     const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
-#endif
     DEBUG(8, "doing longrange calculation");
 
     // in case of LS only LJ are calculated
@@ -111,15 +110,12 @@ int interaction::CUDA_Nonbonded_Set
 
     m_pairlist_alg.timer().stop("longrange");
 
-#ifdef HAVE_LIBCUKERNEL
     m_pairlist_alg.timer().start("longrange-cuda");
     double * For = &m_longrange_storage.force(topo.num_solute_atoms())(0);
     double * e_lj = &m_longrange_storage.energies.lj_energy[egroup][egroup];
     double * e_crf = &m_longrange_storage.energies.crf_energy[egroup][egroup];
-    double * Pos = &conf.current().pos(topo.num_solute_atoms())(0);
-    error += cudakernel::cudaCalcForces(Pos, For, e_lj, e_crf, true);
+    error += cudakernel::cudaCalcForces(For, e_lj, e_crf, true);
     m_pairlist_alg.timer().stop("longrange-cuda");
-#endif
   }
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
@@ -132,17 +128,13 @@ int interaction::CUDA_Nonbonded_Set
 
   m_pairlist_alg.timer().stop("shortrange");
 
-#ifdef HAVE_LIBCUKERNEL
-
   m_pairlist_alg.timer().start("shortrange-cuda");
-  double * Pos = &conf.current().pos(topo.num_solute_atoms())(0);
   double * For = &m_storage.force(topo.num_solute_atoms())(0);
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   double * e_lj = &m_storage.energies.lj_energy[egroup][egroup];
   double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
-  cudakernel::cudaCalcForces(Pos, For, e_lj, e_crf, false);
+  cudakernel::cudaCalcForces(For, e_lj, e_crf, false);
   m_pairlist_alg.timer().stop("shortrange-cuda");
-#endif
 
   if (m_rank == 0 && error > 0)
     return 1;
@@ -196,6 +188,8 @@ int interaction::CUDA_Nonbonded_Set
 
     m_storage.virial_tensor += m_longrange_storage.virial_tensor;
   }
+
+#endif
 
   return 0;
 }
