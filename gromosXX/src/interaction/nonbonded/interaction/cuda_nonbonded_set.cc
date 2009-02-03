@@ -112,9 +112,10 @@ int interaction::CUDA_Nonbonded_Set
 
     m_pairlist_alg.timer().start("longrange-cuda");
     double * For = &m_longrange_storage.force(topo.num_solute_atoms())(0);
+    double * Vir = &m_storage.virial_tensor(0,0);
     double * e_lj = &m_longrange_storage.energies.lj_energy[egroup][egroup];
     double * e_crf = &m_longrange_storage.energies.crf_energy[egroup][egroup];
-    error += cudakernel::cudaCalcForces(For, e_lj, e_crf, true);
+    error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, true);
     m_pairlist_alg.timer().stop("longrange-cuda");
   }
   // calculate forces / energies
@@ -130,10 +131,11 @@ int interaction::CUDA_Nonbonded_Set
 
   m_pairlist_alg.timer().start("shortrange-cuda");
   double * For = &m_storage.force(topo.num_solute_atoms())(0);
+  double * Vir = &m_storage.virial_tensor(0,0);
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   double * e_lj = &m_storage.energies.lj_energy[egroup][egroup];
   double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
-  cudakernel::cudaCalcForces(For, e_lj, e_crf, false);
+  cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf,  false);
   m_pairlist_alg.timer().stop("shortrange-cuda");
 
   if (m_rank == 0 && error > 0)
