@@ -61,10 +61,10 @@ void interaction::Nonbonded_Outerloop
                    Pairlist const & pairlist_solute,
                    Pairlist const & pairlist_solvent,
 		   Storage & storage,
-                   bool longrange)
+                   bool longrange, util::Algorithm_Timer & timer)
 {
   SPLIT_INNERLOOP(_lj_crf_outerloop, topo, conf, sim,
-                  pairlist_solute, pairlist_solvent, storage, longrange);
+                  pairlist_solute, pairlist_solvent, storage, longrange, timer);
 }
 
 
@@ -80,7 +80,8 @@ void interaction::Nonbonded_Outerloop
 		    simulation::Simulation & sim, 
 	            Pairlist const & pairlist_solute,
                     Pairlist const & pairlist_solvent,
-		    Storage & storage, bool longrange)
+		    Storage & storage, bool longrange,
+                    util::Algorithm_Timer & timer)
 {  
   DEBUG(7, "\tcalculate interactions");  
 
@@ -98,6 +99,8 @@ void interaction::Nonbonded_Outerloop
   DEBUG(10, "outerloop pairlist size " << size_i);
   
   const unsigned int end = topo.num_solute_atoms();
+
+  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
   
   unsigned int i;
   for(i=0; i < end; ++i){
@@ -112,7 +115,9 @@ void interaction::Nonbonded_Outerloop
       innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
   }
-  
+
+  // solvent-solvent
+  timer.start(timer_name);
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
     for(; i < size_i; i += 3){ // use every third pairlist (OW's)
@@ -205,6 +210,7 @@ void interaction::Nonbonded_Outerloop
       }
     }
   }
+  timer.stop(timer_name);
 }
 
 /**

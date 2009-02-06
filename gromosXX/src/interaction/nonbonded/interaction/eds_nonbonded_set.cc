@@ -103,14 +103,14 @@ int interaction::Eds_Nonbonded_Set
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
-                               m_longrange_storage, true /*longrange!*/);
+                               m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer());
      
     if (topo.eds_perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\teds-perturbed long range");
       
       m_eds_outerloop.eds_lj_crf_outerloop(topo, conf, sim,
                                                  m_perturbed_pairlist.solute_long,
-                                                 m_longrange_storage);      
+                                                 m_longrange_storage);
     }
     if (m_rank == 0)
       m_pairlist_alg.timer().stop("longrange");     
@@ -122,7 +122,7 @@ int interaction::Eds_Nonbonded_Set
     m_pairlist_alg.timer().start("shortrange");
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
-                               m_storage);
+                               m_storage, false, m_pairlist_alg.timer());
   
   if (topo.eds_perturbed_solute().atoms().size() > 0){
     DEBUG(6, "\tperturbed short range");

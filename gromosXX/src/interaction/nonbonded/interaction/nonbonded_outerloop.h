@@ -54,7 +54,8 @@ namespace interaction
 			  Pairlist const & pairlist_solute,
                           Pairlist const & pairlist_solvent,
 			  Storage & storage,
-                          bool longrange = false);
+                          bool longrange,
+                          util::Algorithm_Timer & timer);
 
     void cg_exclusions_outerloop(topology::Topology & topo,
 				 configuration::Configuration & conf,
@@ -299,7 +300,7 @@ namespace interaction
 			   Pairlist const & pairlist_solute,
                            Pairlist const & pairlist_solvent,
 			   Storage & storage,
-                           bool longrange);
+                           bool longrange, util::Algorithm_Timer & timer);
 
     template<typename t_interaction_spec>
     void _one_four_outerloop(topology::Topology & topo,

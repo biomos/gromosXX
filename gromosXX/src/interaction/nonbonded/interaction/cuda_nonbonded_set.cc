@@ -106,7 +106,7 @@ int interaction::CUDA_Nonbonded_Set
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_long, m_pairlist.solvent_long,
-            m_longrange_storage);
+            m_longrange_storage, true, m_pairlist_alg.timer());
 
     m_pairlist_alg.timer().stop("longrange");
 
@@ -125,7 +125,7 @@ int interaction::CUDA_Nonbonded_Set
 
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
           m_pairlist.solute_short, m_pairlist.solvent_short,
-          m_storage);
+          m_storage, true, m_pairlist_alg.timer());
 
   m_pairlist_alg.timer().stop("shortrange");
 

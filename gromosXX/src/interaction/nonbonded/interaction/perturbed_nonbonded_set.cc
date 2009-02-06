@@ -126,7 +126,7 @@ int interaction::Perturbed_Nonbonded_Set
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
-                               m_longrange_storage, true /*longrange!*/);
+                               m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer());
     if (topo.perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\tperturbed long range");
       m_perturbed_outerloop.perturbed_lj_crf_outerloop(topo, conf, sim,
@@ -144,7 +144,7 @@ int interaction::Perturbed_Nonbonded_Set
   
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
-                               m_storage);
+                               m_storage, false, m_pairlist_alg.timer());
   
   if (topo.perturbed_solute().atoms().size() > 0){
     DEBUG(6, "\tperturbed short range");
