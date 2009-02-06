@@ -2199,7 +2199,7 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
 			 "In_Parameter", io::message::error);
       }
     }
-    if (param.jvalue.read_av && (param.jvalue.mode != simulation::restr_av
+    if (param.jvalue.read_av && (param.jvalue.mode != simulation::restr_av && param.jvalue.mode != simulation::restr_biq
         && !param.jvalue.le)){
       io::messages.add("JVALUERES block: Continuation only needed "
                        "with averaging or LE.",
