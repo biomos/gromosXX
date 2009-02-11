@@ -320,7 +320,7 @@ void util::Virtual_Atom::_force
       calc3= math::Vec(-2*m_dish*s(2)*s(0),
 		       -2*m_dish*s(2)*s(1),
 		       2*m_dish*(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s)+math::Vec(0,0,1);     
-      force(m_atom[0])=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
+      force(m_atom[0])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
      
 
       calc1=m_dish*math::Vec(-(abs_s*abs_s - s(0)*s(0)),
