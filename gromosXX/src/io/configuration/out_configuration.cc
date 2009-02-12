@@ -2073,7 +2073,7 @@ void io::Out_Configuration::_print_distance_restraint_averages(
     if (i % 5 == 0)
       os << std::endl;
   }
-  if (i % 5 != 0)
+  if ((i-1) % 5 != 0)
     os << std::endl;
 
   os << "END" << std::endl;
