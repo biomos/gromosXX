@@ -69,7 +69,9 @@ static int _calculate_distance_restraint_interactions
     
     double dist = math::abs(v);
     DEBUG(9, "DISTANCERES dist : " << dist << " r0 : " << it->r0);
+    double force_scale = 1.0;
     if (sim.param().distanceres.distanceres < 0) {
+      force_scale = (1.0 - exponential_term);
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);
       dist = pow(*ave_it, -1.0 / 3.0);
@@ -100,6 +102,9 @@ static int _calculate_distance_restraint_interactions
     else 
       f = 0;
     
+
+    // scale the force according to 2.6.3.15
+    f *= force_scale;
     DEBUG(9, "Distanceres force : " << math::v2s(f));
 
     it->v1.force(conf, topo,  f);
