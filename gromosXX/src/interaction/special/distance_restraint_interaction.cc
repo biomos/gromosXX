@@ -71,7 +71,8 @@ static int _calculate_distance_restraint_interactions
     DEBUG(9, "DISTANCERES dist : " << dist << " r0 : " << it->r0);
     double force_scale = 1.0;
     if (sim.param().distanceres.distanceres < 0) {
-      force_scale = (1.0 - exponential_term);
+      //force_scale = (1.0 - exponential_term);
+      // this can cause large fluctuations and is omited.
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);
       dist = pow(*ave_it, -1.0 / 3.0);
