@@ -314,7 +314,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     }
 
     DEBUG(10, "\tperturbed solute: dihedrals");
-    for(unsigned int i=0; i<topo.solute().dihedrals().size(); ++i){
+    for(unsigned int i=0; i<topo.perturbed_solute().dihedrals().size(); ++i){
       perturbed_solute().dihedrals().push_back
               (perturbed_four_body_term_struct(topo.perturbed_solute().dihedrals()[i].i + m * num_solute,
               topo.perturbed_solute().dihedrals()[i].j + m * num_solute,
