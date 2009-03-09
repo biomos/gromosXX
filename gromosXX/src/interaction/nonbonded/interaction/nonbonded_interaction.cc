@@ -40,6 +40,9 @@
 
 #include <util/debug.h>
 
+#include <math/periodicity.h>
+#include <math/boundary_checks.h>
+
 #ifdef OMP
 #include <omp.h>
 #endif
@@ -232,6 +235,20 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 { 
   if (!quiet)
     os << "Nonbonded interaction\n";
+
+  // check the box size
+  math::Box box(conf.current().box);
+  if (sim.param().multicell.multicell) {
+    box(0) *= sim.param().multicell.x;
+    box(1) *= sim.param().multicell.y;
+    box(2) *= sim.param().multicell.z;
+  }
+  
+  if (!math::boundary_check_cutoff(box, conf.boundary_type,
+          sim.param().pairlist.cutoff_long)) {
+    io::messages.add("box is too small: not twice the cutoff!",
+            "configuration", io::message::error);
+  }
 
   // initialise the pairlist...
   m_pairlist_algorithm->init(topo, conf, sim, os, quiet);

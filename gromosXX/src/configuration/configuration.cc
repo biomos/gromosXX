@@ -321,12 +321,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
     }
   }
 
-  if (!math::boundary_check_cutoff(current().box, boundary_type,
-          param.pairlist.cutoff_long)) {
-    io::messages.add("box is too small: not twice the cutoff!",
-            "configuration", io::message::error);
-  }
-
   if (boundary_type != math::vacuum){
     if (param.centreofmass.remove_rot){
       io::messages.add("disabling removing of centre of mass rotation (PBC)",
