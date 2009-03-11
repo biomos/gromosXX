@@ -1855,7 +1855,7 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   double av;
   
   if (buffer.size() - 1 != jval_res.size()){
-    std::cout << "JVALRESPECAVE: " << buffer.size() - 1
+    std::cout << "JVALUERESEXPAVE: " << buffer.size() - 1
 	      << " but restraints: " << jval_res.size()
 	      << std::endl;
 
@@ -1872,7 +1872,7 @@ _read_jvalue_av(std::vector<std::string> &buffer,
 
     _lineStream >> av;
     if (_lineStream.fail()){
-      io::messages.add("Bad value in JVALAVERAGE block",
+      io::messages.add("Bad value in JVALUERESEXPAVE block",
 		       "In_Configuration", io::message::error);
       return false;
     }
@@ -1880,7 +1880,7 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   }
   
   if (jval_it != jval_to || it != to){
-    io::messages.add("Wrong number of J-Values in JVALAVERAGE block",
+    io::messages.add("Wrong number of J-Values in JVALUERESEXPAVE block",
 		     "In_Configuration",
 		     io::message::error);
     return false;
