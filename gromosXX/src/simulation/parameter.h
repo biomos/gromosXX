@@ -100,26 +100,34 @@ namespace simulation
   };
   
   /**
-   * @enum restr_enum
-   * restraints enumeration
+   * @enum jvalue_restr_enum
+   * J-value restraints enumeration
    */
-  enum restr_enum{
+  enum jvalue_restr_enum{
     /**
      * no restraints
      */
-    restr_off = 0,
+    jvalue_restr_off = 0,
     /**
      * instantaneous restraints
      */
-    restr_inst = 1,
+    jvalue_restr_inst = 1,
     /**
-     * time averaged restraints
+     * instantaneous restraints, weighted
      */
-    restr_av = 2,
+    jvalue_restr_inst_weighted = 2,
     /**
-     * biquadratic (time averaged & instantaneous) restraints
+     * time-averaged restraints
      */
-    restr_biq = 3,
+    jvalue_restr_av = -1,
+    /**
+     * time-averaged restraints, weighted
+     */
+    jvalue_restr_av_weighted = -2,
+    /**
+     * biquadratic (time averaged & instantaneous) restraints, weighted
+     */
+    jvalue_restr_biq_weighted = -3
   };
 
   /**
@@ -1353,21 +1361,23 @@ namespace simulation
        * - K 1.0
        * - delta 0.0
        * - read_av false
+       * - write 0
        */
       jvalue_struct()
-	: mode(restr_off),
+	: mode(jvalue_restr_off),
 	  le(0),
 	  tau(0.0),
 	  ngrid(1),
 	  K(1.0),
 	  delta(0.0),
-	  read_av(false)
+	  read_av(false),
+          write(0)
       {
       }
       /**
        * restraining mode.
        */
-      restr_enum mode;
+      jvalue_restr_enum mode;
       /**
        * local elevation restraining
        */
@@ -1393,6 +1403,10 @@ namespace simulation
        * read averages.
        */
       bool read_av;
+      /**
+       * write averages and LE grid to special trajectory avery n-th step
+       */
+      unsigned int write;
     } /** jvalue-parameters */ jvalue;
     
     /**

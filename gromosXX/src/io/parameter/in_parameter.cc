@@ -2,10 +2,6 @@
  * @file in_parameter.cc
  * implements methods of In_Parameter
  */
-
-#include <ios>
-
-
 #include <stdheader.h>
 
 #include <topology/core/core.h>
@@ -2102,9 +2098,9 @@ JVALUERES
 # NTJVR -3..2
 #       -3                    biquadratic using CJVR * WJVR
 #       -2                    time averaged using CJVR * WJVR
-#       -1                    time avaraged using CJVR (not implemented)
+#       -1                    time avaraged using CJVR
 #        0                    no J-Value restraints [default]
-#        1                    instantaneous using CJVR  (not implemented)
+#        1                    instantaneous using CJVR
 #        2                    instantaneous using CJVR * WJVR
 # NTJVRA 0,1                  controls reading of averages from startup file
 #        0:                   start from initial values J0
@@ -2112,14 +2108,17 @@ JVALUERES
 # CJVR   >= 0                 J-value restraining force constant 
 #                             (weighted by individual WJVR)
 # TAUJVR >= 0                 coupling time for time averaging
-# LE    0,1                   local elevation restraining
-#       0:                    local elevation off
-#       1:                    local elevation on
-# NGRID >0                    number of grid points in local elevation restraining
-# DELTA >= 0.0                no elevation of poetential if J is within DELTA to J0
+# LE     0,1                  local elevation restraining
+#        0:                   local elevation off
+#        1:                   local elevation on
+# NGRID  >0                   number of grid points in local elevation restraining
+# DELTA  >= 0.0               no elevation of poetential if J is within DELTA to J0
+# NTWJV  >= 0                 write averages and LE grid to special trajectory
+#        0:                   don't write
+#       >0:                   write every NTWJVth step.
 #
-#       NTJVR  NTJVRA  CJVR   TAUJVR   LE    NGRID   DELTA
-  biquadratic  0       10.0      5.0    1       16     0.2
+#       NTJVR  NTJVRA  CJVR   TAUJVR   LE    NGRID   DELTA  NTWJV
+           -3  0       10.0      5.0    1       16     0.2      0
 END
 @endverbatim
  */
@@ -2146,7 +2145,8 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
                 >> param.jvalue.tau // TAUJVR
                 >> param.jvalue.le // LE
                 >> param.jvalue.ngrid // NGRID
-                >> param.jvalue.delta; // DELTA
+                >> param.jvalue.delta // DELTA
+                >> param.jvalue.write; // NTJVW
       
     if (_lineStream.fail())
       io::messages.add("bad line in JVALUERES block",
@@ -2154,26 +2154,22 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
     
     switch (ntjvr) {
       case -3:
-        param.jvalue.mode = simulation::restr_biq;
+        param.jvalue.mode = simulation::jvalue_restr_biq_weighted;
         break;
       case -2:
-        param.jvalue.mode = simulation::restr_av;
+        param.jvalue.mode = simulation::jvalue_restr_av_weighted;
         break;
       case -1:
-        io::messages.add("JVALUERES block: NTJVR = -1 not implemented."
-                         " Use ntjvr = -2 and WJVR = 0.0 instead.",
-                         "In_Parameter", io::message::error);
+        param.jvalue.mode = simulation::jvalue_restr_av;
         break;
       case 0: 
-        param.jvalue.mode = simulation::restr_off;
+        param.jvalue.mode = simulation::jvalue_restr_off;
         break;
       case 1: 
-        io::messages.add("JVALUERES block: NTJVR = 1 not implemented."
-                         " Use ntjvr = 2 and WJVR = 0.0 instead.",
-                         "In_Parameter", io::message::error);
+        param.jvalue.mode = simulation::jvalue_restr_inst;
         break;
       case 2:
-        param.jvalue.mode = simulation::restr_inst;
+        param.jvalue.mode = simulation::jvalue_restr_inst_weighted;
         break;
       default: 
         io::messages.add("JVALUERES block: NTJVR must be -3..2.",
@@ -2181,25 +2177,27 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
     }
 
     if (param.jvalue.tau < 0 ||
-	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::restr_off ||
-				   param.jvalue.mode != simulation::restr_inst))){
+	(param.jvalue.tau == 0 && (param.jvalue.mode != simulation::jvalue_restr_off ||
+				   param.jvalue.mode != simulation::jvalue_restr_inst ||
+                                   param.jvalue.mode != simulation::jvalue_restr_inst_weighted))){
       io::messages.add("JVALUERES block: bad value for TAU, should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
-    if (param.jvalue.mode != simulation::restr_off && param.jvalue.K < 0.0){
+    if (param.jvalue.mode != simulation::jvalue_restr_off && param.jvalue.K < 0.0){
       io::messages.add("JVALUERES block: bad value for K in JVALUERES block,"
 		       "should be > 0.0",
 		       "In_Parameter", io::message::error);
     }
     if (param.jvalue.le > 0){
-      
       if (param.jvalue.ngrid < 1){
 	io::messages.add("JVALUERES block: bad value for NGRID in JVALUERES block, "
 			 "should be > 1",
 			 "In_Parameter", io::message::error);
       }
     }
-    if (param.jvalue.read_av && (param.jvalue.mode != simulation::restr_av && param.jvalue.mode != simulation::restr_biq
+    if (param.jvalue.read_av && (param.jvalue.mode != simulation::jvalue_restr_av &&
+            param.jvalue.mode != simulation::jvalue_restr_av_weighted
+            && param.jvalue.mode != simulation::jvalue_restr_biq_weighted
         && !param.jvalue.le)){
       io::messages.add("JVALUERES block: Continuation only needed "
                        "with averaging or LE.",

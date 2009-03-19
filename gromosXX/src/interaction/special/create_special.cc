@@ -120,18 +120,24 @@ int interaction::create_special(interaction::Forcefield & ff,
   }
 
   // J-Value restraints
-  if (param.jvalue.mode != simulation::restr_off){
+  if (param.jvalue.mode != simulation::jvalue_restr_off){
     if(!quiet){
       os << "\tJ-Value restraints (";
       switch(param.jvalue.mode){
-	case simulation::restr_inst :
+	case simulation::jvalue_restr_inst :
 	  os << "instantaneous";
 	  break;
-	case simulation::restr_av :
+	case simulation::jvalue_restr_av :
 	  os << "time averaged";
 	  break;
-	case simulation::restr_biq :
-	  os << "biquadratic";
+ 	case simulation::jvalue_restr_inst_weighted :
+	  os << "instantaneous, weighted";
+	  break;
+	case simulation::jvalue_restr_av_weighted :
+	  os << "time averaged, weighted";
+	  break;
+	case simulation::jvalue_restr_biq_weighted :
+	  os << "biquadratic, weighted";
 	  break;
 	default:
 	  os << "unknown mode!";

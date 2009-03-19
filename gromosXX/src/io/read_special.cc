@@ -146,7 +146,7 @@ int io::read_special(io::Argument const & args,
   } // DIHREST
 
   // J-Value restraints
-  if (sim.param().jvalue.mode != simulation::restr_off){
+  if (sim.param().jvalue.mode != simulation::jvalue_restr_off){
     io::igzstream jval_file;
     
     if (args.count("jval") != 1){

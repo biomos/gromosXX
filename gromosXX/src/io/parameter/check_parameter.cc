@@ -122,7 +122,7 @@ int io::check_parameter(simulation::Simulation & sim)
                                               param.dihrest.dihrest != 3);
   add("dihedral_const", "dihedral constraints", param.dihrest.dihrest == 3);
   // JVALUERES block
-  add("jvalue_rest", "J-value restraints", param.jvalue.mode != simulation::restr_off);
+  add("jvalue_rest", "J-value restraints", param.jvalue.mode != simulation::jvalue_restr_off);
   // PERSCALE block
   add("perscale", "peridoic scaling", param.pscale.jrest);
   // ROTTRANS block

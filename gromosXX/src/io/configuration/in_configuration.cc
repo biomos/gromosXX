@@ -651,15 +651,16 @@ bool io::In_Configuration::read_jvalue
 {
   std::vector<std::string> buffer;
 
-  if (sim.param().jvalue.mode != simulation::restr_off){
+  if (sim.param().jvalue.mode != simulation::jvalue_restr_off){
 
-    if (sim.param().jvalue.mode == simulation::restr_inst){
+    if (sim.param().jvalue.mode == simulation::jvalue_restr_inst ||
+        sim.param().jvalue.mode == simulation::jvalue_restr_inst_weighted){
       if (sim.param().jvalue.read_av)
 	io::messages.add("instantaneous J-value restraints, ignoring reading of averages",
 			 "in_configuration",
 			 io::message::warning);
     }
-    else if (!sim.param().jvalue.read_av && sim.param().jvalue.mode != simulation::restr_inst){
+    else if (!sim.param().jvalue.read_av){
 
       buffer = m_block["JVALUERESEXPAVE"];
       if (buffer.size()){

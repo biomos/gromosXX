@@ -2,7 +2,6 @@
  * @file jvalue_restraint_interaction.cc
  * template methods of Jvalue_Restraint_Interaction
  */
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -109,7 +108,8 @@ int _calculate_jvalue_restraint_interactions
     double memory_decay;
 
     //decide on time averaging
-    if (sim.param().jvalue.mode != simulation::restr_inst){
+    if (sim.param().jvalue.mode != simulation::jvalue_restr_inst ||
+            sim.param().jvalue.mode != simulation::jvalue_restr_inst_weighted){
  
       // time averaging 
       exp_term = exp(-sim.time_step_size() / sim.param().jvalue.tau);
@@ -127,12 +127,14 @@ int _calculate_jvalue_restraint_interactions
         
     // calculate J-value
     assert(conf.special().jvalue_av.size() > unsigned(n));
-    
+
+    // calculate current J-value using Karplus relation
     const double Jcurr =
       it->a * cos_phi_delta * cos_phi_delta +
       it->b * cos_phi_delta +
       it->c;
 
+    // calculate average from pervious average
     const double Jav =
       memory_decay * Jcurr +
       conf.special().jvalue_av[n] * exp_term;
@@ -187,11 +189,13 @@ int _calculate_jvalue_restraint_interactions
 	else delta_Jinst = 0.0;
       }
       
-      if (sim.param().jvalue.mode == simulation::restr_biq)
+      if (sim.param().jvalue.mode == simulation::jvalue_restr_biq_weighted)
 	delta_epsilon = delta_Jinst*delta_Jinst * delta_Jav * delta_Jav;
-      else if (sim.param().jvalue.mode == simulation::restr_inst)
+      else if (sim.param().jvalue.mode == simulation::jvalue_restr_inst ||
+              sim.param().jvalue.mode == simulation::jvalue_restr_inst_weighted)
 	delta_epsilon = delta_Jinst * delta_Jinst;	
-      else if (sim.param().jvalue.mode == simulation::restr_av)
+      else if (sim.param().jvalue.mode == simulation::jvalue_restr_av ||
+              sim.param().jvalue.mode == simulation::jvalue_restr_av_weighted)
 	delta_epsilon = delta_Jav * delta_Jav;
 
       conf.special().jvalue_epsilon[n][bin] += delta_epsilon;
@@ -276,16 +280,22 @@ int interaction::Jvalue_Restraint_Interaction::init
   if (!quiet){
     os << "J-value restraint interaction\n";
     switch(sim.param().jvalue.mode){
-      case simulation::restr_off:
+      case simulation::jvalue_restr_off:
 	os << "\trestraining off\n";
 	break;
-      case simulation::restr_inst:
+      case simulation::jvalue_restr_inst:
 	os << "\tinstantaneous restraining\n";
 	break;
-      case simulation::restr_av:
+      case simulation::jvalue_restr_inst_weighted:
+	os << "\tinstantaneous restraining, weighted\n";
+	break;
+      case simulation::jvalue_restr_av:
 	os << "\ttime averaged restraining\n";
 	break;
-      case simulation::restr_biq:
+      case simulation::jvalue_restr_av_weighted:
+	os << "\ttime averaged restraining, weighted\n";
+	break;
+      case simulation::jvalue_restr_biq_weighted:
 	os << "\tbiquadratic restraining\n";
 	break;
     }
@@ -363,8 +373,10 @@ double _calculate_derivative(topology::Topology & topo,
     // STANDARD RESTRAINIG
 
     // instantaneous / time averaged
-    if (param.jvalue.mode == simulation::restr_inst ||
-	param.jvalue.mode == simulation::restr_av){
+    if (param.jvalue.mode == simulation::jvalue_restr_inst ||
+        param.jvalue.mode == simulation::jvalue_restr_inst_weighted ||
+	param.jvalue.mode == simulation::jvalue_restr_av ||
+        param.jvalue.mode == simulation::jvalue_restr_av_weighted){
       
       // check for half - harmonic functional forms
       if ( (it->H == topology::repulsive && Jav - it->J0 > 0) || 
@@ -372,7 +384,10 @@ double _calculate_derivative(topology::Topology & topo,
 	return 0;
       }
       else{
-	const double K = it->K * param.jvalue.K;
+	double K = param.jvalue.K;
+        if (param.jvalue.mode == simulation::jvalue_restr_inst_weighted ||
+            param.jvalue.mode == simulation::jvalue_restr_av_weighted)
+          K *= it->K;
 	
 	// calculate derivatives + energy	
 	// Jav == Jcurr for instantaneous...
@@ -389,7 +404,7 @@ double _calculate_derivative(topology::Topology & topo,
 	return dV_dJ * dJ_dphi;
       }
     }
-    else if (param.jvalue.mode == simulation::restr_biq){
+    else if (param.jvalue.mode == simulation::jvalue_restr_biq_weighted){
       
       // check for half - harmonic functional forms
       if ( (it->H == topology::repulsive && (Jcurr - it->J0 > 0 || Jav - it->J0 > 0)) || 

@@ -63,6 +63,7 @@ m_every_free_energy(0),
 m_every_blockaverage(0),
 m_every_ramd(0),
 m_every_cos_pos(0),
+m_every_jvalue(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -129,7 +130,7 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos) { // add others if there are any
+  if (m_every_cos_pos || m_every_jvalue) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -174,8 +175,8 @@ void io::Out_Configuration::init(io::Argument & args,
           io::message::error);
 
   if (args.count(argname_trs) > 0)
-    special_trajectory(args[argname_trs], param.polarise.write);
-  else if (param.polarise.write) // check for other that also go to this traj.
+    special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write);
+  else if (param.polarise.write || param.jvalue.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -298,6 +299,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_cos_position(conf, topo, m_special_traj);
     }
 
+    if (m_every_jvalue && (sim.steps() % m_every_jvalue) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
+    }
+
     if (m_every_energy && (((sim.steps() + 1) % m_every_energy) == 0 || minimum_found)) {
       if (sim.steps()) {
         _print_old_timestep(sim, m_energy_traj);
@@ -372,8 +381,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_position_restraints(sim, topo, m_final_conf);
     }
 
-    if (sim.param().jvalue.mode != simulation::restr_off) {
-      _print_jvalue(sim.param(), conf, topo, m_final_conf);
+    if (sim.param().jvalue.mode != simulation::jvalue_restr_off) {
+      _print_jvalue(sim.param(), conf, topo, m_final_conf, false);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -557,11 +566,12 @@ void io::Out_Configuration
 }
 
 void io::Out_Configuration
-::special_trajectory(std::string name, int every_cos) {
+::special_trajectory(std::string name, int every_cos, int every_jvalue) {
 
   m_special_traj.open(name.c_str());
 
   m_every_cos_pos = every_cos;
+  m_every_jvalue = every_jvalue;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2022,30 +2032,53 @@ void io::Out_Configuration::write_replica_step
 void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
         configuration::Configuration const &conf,
         topology::Topology const &topo,
-        std::ostream &os) {
+        std::ostream &os, bool formated) {
   DEBUG(10, "JVALUE Averages and LE data");
 
-  if (param.jvalue.mode != simulation::restr_inst) {
+  if (param.jvalue.mode != simulation::jvalue_restr_inst &&
+      param.jvalue.mode != simulation::jvalue_restr_inst_weighted) {
     os << "JVALUERESEXPAVE\n";
+    if (formated) {
+      os << "# I J K L <J>\n";
+    }
     os.setf(std::ios::fixed, std::ios::floatfield);
     os.precision(7);
     std::vector<double>::const_iterator av_it = conf.special().jvalue_av.begin(),
             av_to = conf.special().jvalue_av.end();
-    for (; av_it != av_to; ++av_it) {
+    std::vector<topology::jvalue_restraint_struct>::const_iterator jv_it =
+            topo.jvalue_restraints().begin();
+    for (; av_it != av_to; ++av_it, ++jv_it) {
+      if (formated) {
+        os << std::setw(5) << jv_it->i
+           << std::setw(5) << jv_it->j
+           << std::setw(5) << jv_it->k
+           << std::setw(5) << jv_it->l;
+      }
       os << std::setw(15) << *av_it << "\n";
     }
     os << "END\n";
   }
 
-  if (param.jvalue.le) {
-    os << "JVALUERESEPS\n";
+  if (param.jvalue.le && param.jvalue.mode != simulation::jvalue_restr_off) {
+    os << "JVALUERESEPS\n#";
+    if (formated) {
+      os << "# I J K L GRID[1.." << param.jvalue.ngrid << "]\n";
+    }
     os.setf(std::ios::scientific, std::ios::floatfield);
     os.precision(7);
     std::vector<std::vector<double> >::const_iterator
     le_it = conf.special().jvalue_epsilon.begin(),
             le_to = conf.special().jvalue_epsilon.end();
+    std::vector<topology::jvalue_restraint_struct>::const_iterator jv_it =
+            topo.jvalue_restraints().begin();
 
-    for (; le_it != le_to; ++le_it) {
+    for (; le_it != le_to; ++le_it, ++jv_it) {
+      if (formated) {
+        os << std::setw(5) << jv_it->i
+           << std::setw(5) << jv_it->j
+           << std::setw(5) << jv_it->k
+           << std::setw(5) << jv_it->l;
+      }
       for (unsigned int i = 0; i < le_it->size(); ++i)
         os << std::setw(15) << (*le_it)[i];
       os << "\n";
