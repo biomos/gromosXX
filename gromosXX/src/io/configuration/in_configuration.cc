@@ -944,11 +944,11 @@ bool io::In_Configuration::read_rottrans
   std::vector<std::string> buffer;
   if (sim.param().rottrans.rottrans){
     
-    buffer = m_block["ROTOTRANSREF"];
+    buffer = m_block["ROTTRANSREFPOS"];
     if (buffer.size()){
-      block_read.insert("ROTOTRANSREF");
+      block_read.insert("ROTTRANSREFPOS");
       if (!quiet)
-	os << "\treading ROTOTRANSREF...\n";
+	os << "\treading ROTTRANSREFPOS...\n";
 
       if (sim.param().start.read_rottrans)
         _read_rottrans(buffer, sim.param().rottrans.last, conf.special().rottrans_constr);
@@ -959,7 +959,7 @@ bool io::In_Configuration::read_rottrans
     }
     else{
       if (sim.param().start.read_rottrans)
-        io::messages.add("no ROTOTRANSREF block in configuration.",
+        io::messages.add("no ROTTRANSREFPOS block in configuration.",
                          "in_configuration",
                          io::message::error);
     }
@@ -2345,13 +2345,13 @@ configuration::Configuration::special_struct::rottrans_constr_struct & rottrans)
       _lineStream >> rottrans.theta_inv_trans(i,j);
 
     if (_lineStream.fail()) {
-      io::messages.add("ROTOTRANSREF block: Could not read translation matrix.",
+      io::messages.add("ROTTRANSREFPOS block: Could not read translation matrix.",
               "In_Configuration", io::message::error);
       return false;
     }
   }
   if (i != 3) {
-    io::messages.add("ROTOTRANSREF block: Could not read translation matrix.",
+    io::messages.add("ROTTRANSREFPOS block: Could not read translation matrix.",
             "In_Configuration", io::message::error);
     return false;
   }
@@ -2364,13 +2364,13 @@ configuration::Configuration::special_struct::rottrans_constr_struct & rottrans)
       _lineStream >> rottrans.theta_inv_rot(i,j);
 
     if (_lineStream.fail()) {
-      io::messages.add("ROTOTRANSREF block: Could not read rotation matrix.",
+      io::messages.add("ROTTRANSREFPOS block: Could not read rotation matrix.",
               "In_Configuration", io::message::error);
       return false;
     }
   }
   if (i != 3) {
-    io::messages.add("ROTOTRANSREF block: Could not read rotation matrix.",
+    io::messages.add("ROTTRANSREFPOS block: Could not read rotation matrix.",
             "In_Configuration", io::message::error);
     return false;
   }
@@ -2386,20 +2386,20 @@ configuration::Configuration::special_struct::rottrans_constr_struct & rottrans)
       _lineStream >> rottrans.pos(i)(j);
 
     if (_lineStream.fail()) {
-      io::messages.add("ROTOTRANSREF block: Could not read reference positions.",
+      io::messages.add("ROTTRANSREFPOS block: Could not read reference positions.",
               "In_Configuration", io::message::error);
       return false;
     }
   }  
   
   if (it != to) {
-    io::messages.add("ROTOTRANSREF block: Too many lines (reference positions)",
+    io::messages.add("ROTTRANSREFPOS block: Too many lines (reference positions)",
             "In_Configuration", io::message::error);
     return false;
   }
   
   if (i != last) {
-    io::messages.add("ROTOTRANSREF block: Not enough lines (reference positions)",
+    io::messages.add("ROTTRANSREFPOS block: Not enough lines (reference positions)",
             "In_Configuration", io::message::error);
     return false;
   }  

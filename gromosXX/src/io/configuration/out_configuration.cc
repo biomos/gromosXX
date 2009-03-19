@@ -2423,7 +2423,7 @@ _print_rottrans(configuration::Configuration const &conf,
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
 
-  os << "ROTOTRANSREF\n";
+  os << "ROTTRANSREFPOS\n";
   os << "# translational matrix\n";
   for (unsigned int i = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j) {
