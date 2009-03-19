@@ -158,6 +158,9 @@ calculate_interactions(topology::Topology & topo,
   if (sim.param().multicell.multicell)  
     reduce_configuration(topo, conf, sim, *exp_conf);
 
+  if (exp_conf != NULL)
+    delete exp_conf;
+
   ////////////////////////////////////////////////////
   // printing pairlist
   ////////////////////////////////////////////////////
@@ -236,25 +239,41 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (!quiet)
     os << "Nonbonded interaction\n";
 
-  // check the box size
-  math::Box box(conf.current().box);
+  configuration::Configuration * exp_conf = NULL;
   if (sim.param().multicell.multicell) {
-    box(0) *= sim.param().multicell.x;
-    box(1) *= sim.param().multicell.y;
-    box(2) *= sim.param().multicell.z;
+    DEBUG(6, "nonbonded init: MULTICELL");
+    exp_conf = new configuration::Configuration();
+    expand_configuration(topo, conf, sim, *exp_conf);
+    DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf->current().pos.size());
   }
-  
-  if (!math::boundary_check_cutoff(box, conf.boundary_type,
-          sim.param().pairlist.cutoff_long)) {
+
+  bool cutoff_ok = false;
+  if (sim.param().multicell.multicell) {
+    cutoff_ok = math::boundary_check_cutoff(exp_conf->current().box, conf.boundary_type,
+          sim.param().pairlist.cutoff_long);
+  } else {
+    cutoff_ok = math::boundary_check_cutoff(conf.current().box, conf.boundary_type,
+          sim.param().pairlist.cutoff_long);
+  }
+
+  if (!cutoff_ok) {
     io::messages.add("box is too small: not twice the cutoff!",
             "configuration", io::message::error);
   }
 
   // initialise the pairlist...
-  m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
-  
+  if (sim.param().multicell.multicell){
+    m_pairlist_algorithm->init(topo.multicell_topo(), *exp_conf, sim, os, quiet);
+  } else {
+    m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
+  }
+
   if (sim.param().nonbonded.method != simulation::el_reaction_field) {
-    conf.lattice_sum().init(topo, sim);
+    if (sim.param().multicell.multicell) {
+      conf.lattice_sum().init(topo.multicell_topo(), sim);
+    } else {
+      conf.lattice_sum().init(topo, sim);
+    }
   }
 
   DEBUG(15, "nonbonded_interaction::initialize");
@@ -289,7 +308,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   bool q = quiet;
   for( ; it != to; ++it){
     if (sim.param().multicell.multicell)
-      (*it)->init(topo.multicell_topo(), conf, sim, os, quiet);
+      (*it)->init(topo.multicell_topo(), *exp_conf, sim, os, quiet);
     else
       (*it)->init(topo, conf, sim, os, q);
     // only print first time...
@@ -304,6 +323,9 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
             io::message::error);
   }
   DEBUG(9, "nonbonded init done");
+
+  if (exp_conf != NULL) delete exp_conf;
+  
   return 0;
 }
 
