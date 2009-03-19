@@ -2049,10 +2049,10 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
             topo.jvalue_restraints().begin();
     for (; av_it != av_to; ++av_it, ++jv_it) {
       if (formated) {
-        os << std::setw(5) << jv_it->i
-           << std::setw(5) << jv_it->j
-           << std::setw(5) << jv_it->k
-           << std::setw(5) << jv_it->l;
+        os << std::setw(5) << jv_it->i+1
+           << std::setw(5) << jv_it->j+1
+           << std::setw(5) << jv_it->k+1
+           << std::setw(5) << jv_it->l+1;
       }
       os << std::setw(15) << *av_it << "\n";
     }
@@ -2074,10 +2074,10 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
 
     for (; le_it != le_to; ++le_it, ++jv_it) {
       if (formated) {
-        os << std::setw(5) << jv_it->i
-           << std::setw(5) << jv_it->j
-           << std::setw(5) << jv_it->k
-           << std::setw(5) << jv_it->l;
+        os << std::setw(5) << jv_it->i+1
+           << std::setw(5) << jv_it->j+1
+           << std::setw(5) << jv_it->k+1
+           << std::setw(5) << jv_it->l+1;
       }
       for (unsigned int i = 0; i < le_it->size(); ++i)
         os << std::setw(15) << (*le_it)[i];
