@@ -2115,21 +2115,18 @@ void io::Out_Configuration::_print_distance_restraint_averages(
 void io::Out_Configuration::_print_pscale_jrest(configuration::Configuration const &conf,
         topology::Topology const &topo,
         std::ostream &os) {
-  DEBUG(10, "PSCALE JREST data");
+  DEBUG(10, "JVALUEPERSCALE data");
 
   std::vector<topology::jvalue_restraint_struct>::const_iterator
   jval_it = topo.jvalue_restraints().begin(),
           jval_to = topo.jvalue_restraints().end();
 
-  os << "PSCALEJREST\n";
+  os << "JVALUEPERSCALE\n";
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
 
   for (int i = 0; jval_it != jval_to; ++jval_it, ++i) {
-
-    os << std::setw(15) << jval_it->i + 1
-            << std::setw(10) << jval_it->j + 1
-            << std::setw(10) << jval_it->k + 1
-            << std::setw(10) << jval_it->l + 1
-            << std::setw(10) << conf.special().pscale.scaling[i]
+    os << std::setw(10) << conf.special().pscale.scaling[i]
             << std::setw(15) << conf.special().pscale.t[i]
             << "\n";
   }

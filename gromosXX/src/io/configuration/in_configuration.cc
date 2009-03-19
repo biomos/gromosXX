@@ -736,9 +736,9 @@ bool io::In_Configuration::read_pscale
   if (sim.param().pscale.jrest){
 
     if (!sim.param().pscale.read_data){
-      buffer = m_block["PSCALEJREST"];
+      buffer = m_block["JVALUEPERSCALE"];
       if (buffer.size()){
-	block_read.insert("PSCALEJREST");
+	block_read.insert("JVALUEPERSCALE");
 	io::messages.add("re-initialising J-restraints periodic scaling data, non-continuous simulation",
 			 "in_configuration",
 			 io::message::warning);
@@ -750,21 +750,21 @@ bool io::In_Configuration::read_pscale
       }
     }
     else {
-      buffer = m_block["PSCALEJREST"];
+      buffer = m_block["JVALUEPERSCALE"];
       if (buffer.size())
       {
-	block_read.insert("PSCALEJREST");
+	block_read.insert("JVALUEPERSCALE");
 	_read_pscale_jrest(buffer, conf.special().pscale, topo.jvalue_restraints());
       }
       else{
 	io::messages.add("reading in of J-restraints periodic scaling data requested "
-			 "but PSCALEJREST block not found",
+			 "but JVALUEPERSCALE block not found",
 			 "in_configuration",
 			 io::message::error);
 	return false;
       }
     }
-  } // PSCALE JREST
+  } // JVALUEPERSCALE
   return true;
 }
 
@@ -1962,36 +1962,27 @@ _read_pscale_jrest(std::vector<std::string> &buffer,
 
   if (buffer.size() - 1 != jval_res.size()){
     io::messages.add("number of J-restraints does not match with number of "
-		     "J-restraints for periodic scaling", "in_configuration",
+		     "periodic scaling data", "in_configuration",
 		     io::message::error);
     return false;
   }
   
   pscale.t.clear();
   pscale.scaling.clear();
-  
-  int i, j, k, l, s;
-  double t;
-  
-  for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
 
+  for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
     _lineStream.clear();
     _lineStream.str(*it);
+    int s;
+    double t;
+    _lineStream >> s >> t;
 
-    _lineStream >> i >> j >> k >> l >> s >> t;
-    
-    if (int(jval_it->i) != i-1 ||
-	int(jval_it->j) != j-1 ||
-	int(jval_it->k) != k-1 ||
-	int(jval_it->l) != l-1){
-
-      io::messages.add("Wrong J-Restraint in PSCALEJREST block",
-		       "In_Configuration",
-		       io::message::error);
-      DEBUG(8, "wrong J-Restraint in PSCALEJREST block!");
-      return false;
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in JVALUEPERSCALE block."
+		     "periodic scaling", "in_configuration",
+		     io::message::error);
+    return false;
     }
-    
     pscale.t.push_back(t);
     pscale.scaling.push_back(s);
 
@@ -1999,7 +1990,7 @@ _read_pscale_jrest(std::vector<std::string> &buffer,
   }
   
   if (jval_it != jval_to || it != to){
-    io::messages.add("Wrong number of J-Restraints in PSCALEJREST block",
+    io::messages.add("Wrong number of J-Restraints in JVALUEPERSCALE block",
 		     "In_Configuration",
 		     io::message::error);
     return false;
