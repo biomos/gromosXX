@@ -2141,16 +2141,12 @@ bool io::In_Configuration::check_coordinates
   if (sim.param().system.nsm > 0 &&
       topo.num_solvents() == 1){
     const unsigned int coords = num_coords - topo.num_solute_atoms();
-    const unsigned int mols = coords / topo.solvent(0).num_atoms();
     
-    if (mols * topo.solvent(0).num_atoms() != coords){
-      io::messages.add("wrong number of coordinates!",
-		       "in_configuration",
-		       io::message::warning);
-      os << "\twrong number of coordinates: " << mols * topo.solvent(0).num_atoms()
-	 << " != " << coords << "\n";
+    if (topo.num_solvent_atoms() != coords) {
+      // resolvating is very error prone. We disable it here
+      return false;
     }
-    if (topo.num_solvent_atoms() != coords){
+      /*
       std::ostringstream os;
       os << "[Frame " << sim.steps() << "] resolvating: " 
 	 << topo.num_solvent_atoms() / topo.solvent(0).num_atoms()
@@ -2176,9 +2172,8 @@ bool io::In_Configuration::check_coordinates
 	  = topo.num_atoms() - 1;
 	os << "\tadjusting temperature bath index\n";
       }
-    }
+       */
   }
-  
   return true;
 }
 
