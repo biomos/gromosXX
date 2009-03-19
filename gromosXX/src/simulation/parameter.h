@@ -131,6 +131,29 @@ namespace simulation
   };
 
   /**
+   * @enum dihedral_restr_enum
+   * Dihedral restraints enumeration
+   */
+  enum dihedral_restr_enum{
+    /**
+     * no restraints
+     */
+    dihedral_restr_off = 0,
+    /**
+     * instantaneous restraints
+     */
+    dihedral_restr_inst = 1,
+    /**
+     * instantaneous restraints, weighted
+     */
+    dihedral_restr_inst_weighted = 2,
+    /**
+     * dihedral constraints
+     */
+    dihedral_constr = 3
+  };
+
+  /**
    * @enum integrate_enum
    * integration method
    */
@@ -1259,7 +1282,7 @@ namespace simulation
        * - K 0
        */
       dihrest_struct()
-	: dihrest(0),
+	: dihrest(dihedral_restr_off),
 	  K(0.0),
 	  phi_lin(0.0) {}
       
@@ -1271,7 +1294,7 @@ namespace simulation
        * - 2: K * Ki (weight by Ki in dihedral restraint file)
        * - 3: constraints
        */
-      int dihrest;
+      dihedral_restr_enum dihrest;
       /**
        * force constant K
        */

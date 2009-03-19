@@ -293,7 +293,7 @@ void algorithm::Perturbed_Shake
     
     // dihedral constraints
     bool dih_convergence = true, pert_dih_convergence = true;
-    if (sim.param().dihrest.dihrest == 3) {
+    if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
       
       DEBUG(7, "SHAKE: perturbed dihedral constraints iteration");
       if(perturbed_dih_constr_iteration<B, V>
@@ -382,7 +382,7 @@ int algorithm::Perturbed_Shake
             topo.solute().distance_constraints().size()) &&
             sim.param().constraint.solute.algorithm == simulation::constr_shake &&
             sim.param().constraint.ntc > 1) ||
-            sim.param().dihrest.dihrest == 3) {
+            sim.param().dihrest.dihrest == simulation::dihedral_constr) {
       
       DEBUG(8, "\twe need to shake perturbed SOLUTE");
       
@@ -494,7 +494,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
       }
     }   
     // also add the dihedral constrained atoms
-    if (sim.param().dihrest.dihrest == 3) {
+    if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
       {
         std::vector<topology::dihedral_restraint_struct>::const_iterator
         it = topo.dihedral_restraints().begin(),

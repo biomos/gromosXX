@@ -118,9 +118,9 @@ int io::check_parameter(simulation::Simulation & sim)
   // DISTANCERES block
   add("distance_rest", "distance restraints", param.distanceres.distanceres != 0);
   // DIHEDRALRES block
-  add("dihedral_rest", "dihedral restraints", param.dihrest.dihrest != 0 && 
-                                              param.dihrest.dihrest != 3);
-  add("dihedral_const", "dihedral constraints", param.dihrest.dihrest == 3);
+  add("dihedral_rest", "dihedral restraints", param.dihrest.dihrest != simulation::dihedral_restr_off &&
+                                              param.dihrest.dihrest != simulation::dihedral_constr);
+  add("dihedral_const", "dihedral constraints", param.dihrest.dihrest == simulation::dihedral_constr);
   // JVALUERES block
   add("jvalue_rest", "J-value restraints", param.jvalue.mode != simulation::jvalue_restr_off);
   // PERSCALE block

@@ -97,8 +97,8 @@ int interaction::create_special(interaction::Forcefield & ff,
   }
   
   // Dihedral restraints 
-  if (param.dihrest.dihrest == 1 || 
-      param.dihrest.dihrest == 2){
+  if (param.dihrest.dihrest == simulation::dihedral_restr_inst ||
+      param.dihrest.dihrest == simulation::dihedral_restr_inst_weighted){
 
     if(!quiet)
       os <<"\tDihedral restraints\n";

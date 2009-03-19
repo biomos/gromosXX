@@ -2057,28 +2057,41 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
    #         2:    dihedral restraining using CDLR * WDLR
    #         3:    dihedral constraining
    */
-   
-  _lineStream >> param.dihrest.dihrest
+
+  int dihrest;
+  _lineStream >> dihrest
 	            >> param.dihrest.K
 	            >> phi_lin;
-
-  param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
   
   if (_lineStream.fail())
     io::messages.add("bad line in DIHEDRALRES block",
       "In_Parameter", io::message::error);
 
-  if (param.dihrest.dihrest > 3 ||
-      param.dihrest.dihrest < 0) {
-    io::messages.add("DIHEDRALRES block: NTDLR must be 0...3.",
+  switch (dihrest) {
+    case 0:
+      param.dihrest.dihrest = simulation::dihedral_restr_off;
+      break;
+    case 1:
+      param.dihrest.dihrest = simulation::dihedral_restr_inst;
+      break;
+    case 2:
+      param.dihrest.dihrest = simulation::dihedral_restr_inst_weighted;
+      break;
+    case 3:
+      param.dihrest.dihrest = simulation::dihedral_constr;
+      break;
+    default:
+      io::messages.add("DIHEDRALRES block: NTDLR must be 0...3.",
         "In_Parameter", io::message::error);
   }
+
+  param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
    
   if(param.dihrest.K < 0)
     io::messages.add("DIHEDRALRES block: Illegal value for force constant (>=0)",
 		     "In_Parameter", io::message::error);
 
-  if (param.dihrest.dihrest == 3){
+  if (param.dihrest.dihrest == simulation::dihedral_constr){
     if (param.constraint.ntc == 1 && param.constraint.solute.algorithm == simulation::constr_off)
       param.constraint.solute.algorithm = simulation::constr_shake;
 

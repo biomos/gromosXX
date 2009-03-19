@@ -100,19 +100,19 @@ void io::In_Dihrest::read(topology::Topology& topo,
 
     if (!quiet){
       switch(sim.param().dihrest.dihrest){
-	case 0:
+	case simulation::dihedral_restr_off:
 	  os << "\tDihedral restraints OFF\n";
 	  // how did you get here?
 	  break;
-	case 1:
+	case simulation::dihedral_restr_inst:
 	  os << "\tDihedral restraints ON\n"
 	     << "\t\t(uniform force constant K)\n";
 	  break;
-	case 2:
+	case simulation::dihedral_restr_inst_weighted:
 	  os << "\tDihedral restraints ON\n"
 	     << "\t\t(force constant K*w0)\n";
 	  break;
-	case 3:
+	case simulation::dihedral_constr:
 	  os << "\tDihedral constraints ON\n";
 	  break;
 	default:

@@ -69,7 +69,7 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 
   // solute constraints have to be set to SHAKE, but NTC may be 1
   // for dihedral constraints to be used.
-  if (sim.param().dihrest.dihrest == 3 &&
+  if (sim.param().dihrest.dihrest == simulation::dihedral_constr &&
           sim.param().constraint.solute.algorithm != simulation::constr_shake) {
     io::messages.add("dihedral constraints require SHAKE as solute algorithm.",
             "create_constraints", io::message::error);

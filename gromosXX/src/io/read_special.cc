@@ -122,7 +122,7 @@ int io::read_special(io::Argument const & args,
   } // DISTANCERES
 
   // DIHREST
-  if (sim.param().dihrest.dihrest){
+  if (sim.param().dihrest.dihrest != simulation::dihedral_restr_off){
     io::igzstream dihrest_file;
 
     if (args.count("dihrest") != 1){

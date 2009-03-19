@@ -122,7 +122,7 @@ static int _calculate_dihedral_restraint_interactions
     
     double phi_lin = sim.param().dihrest.phi_lin;
     double K = sim.param().dihrest.K;
-    if (sim.param().dihrest.dihrest == 2)
+    if (sim.param().dihrest.dihrest == simulation::dihedral_restr_inst_weighted)
       K *= it->w0;
 
     if (phi_lin >= 0.0 && fabs(delta_phi) > phi_lin){
