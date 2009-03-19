@@ -56,8 +56,6 @@ interaction::CUDA_Nonbonded_Set
 
   // these values should be fine for a cutoff of 0.8 / 1.4. They have
   // to be increased for larger cutoffs. 
-  // unfortunately there is no way to check these values at runtime so you
-  // have to make sure youself that they are big enough.
   estNeigh_long = 500;
   estNeigh_short = 400;
 }
@@ -245,6 +243,5 @@ int interaction::CUDA_Nonbonded_Set
 
     pairlist().reserve(pairs);
   }
-  std::cout << "CUDA_Nonbonded_set:init" << std::endl;
   return 0;
 }
