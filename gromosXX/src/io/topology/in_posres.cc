@@ -50,6 +50,7 @@ END
  * The REFPOSITION block has the same format as the POSITION block in the
  * configuration file and can be read either from the position restraints
  * file (\@posres) (NTPORB = 1) or the configuration file (NTPORB = 0, default).
+ * All atoms (and not just the restrained atoms) have to be given.
  *
  * @verbatim
 REFPOSITION
@@ -72,6 +73,7 @@ END
  * where @f$k_0@f$ is specified in the input parameter file by CPOR.
  *
  * The block is read from the position restraints file (\@posres).
+ * All atoms (and not just the restrained atoms) have to be given.
  *
  * @verbatim
 BFACTOR
@@ -149,8 +151,7 @@ io::In_Posresspec::read(topology::Topology& topo,
         return;
       }
       
-      topo.position_restraints().push_back
-      (topology::position_restraint_struct(nr-1, math::Vec(0.0)));
+      topo.position_restraints().push_back(topology::position_restraint_struct(nr-1));
       
     }
   } // POSRESSPEC  
@@ -187,13 +188,12 @@ io::In_Posresspec::read(topology::Topology& topo,
   }
 }
 
-void 
+void
 io::In_Refpos::read(topology::Topology& topo,
-		    simulation::Simulation & sim,
-		    std::ostream & os){
-  std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
-  
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        std::ostream & os) {
+  std::vector<std::string> buffer;  
   // read the reference positions from this file
   { // REFPOSITION
     buffer = m_block["REFPOSITION"];
@@ -203,8 +203,11 @@ io::In_Refpos::read(topology::Topology& topo,
                          "specification file", "In_Refpos", io::message::error);
         return;
       } else {
-        io::In_Configuration::_read_refposition(topo.position_restraints(), 
-                                                buffer, true);
+        // remove title line.
+        buffer.erase(buffer.begin(), buffer.begin()+1);
+        conf.special().reference_positions.resize(topo.num_atoms());
+        io::In_Configuration::_read_position(conf.special().reference_positions,
+                                                buffer, topo.num_atoms(), std::string("REFPOSITION"));
       }
     } else {
       if (buffer.size()) {
@@ -223,7 +226,8 @@ io::In_Refpos::read(topology::Topology& topo,
                          "specification file", "In_Refpos", io::message::error);
         return;
       } else {
-        io::In_Configuration::_read_bfactor(topo.position_restraints(),
+        conf.special().bfactors.resize(topo.num_atoms());
+        io::In_Configuration::_read_bfactor(conf.special().bfactors,
                                             buffer, true);
       }
     } else {

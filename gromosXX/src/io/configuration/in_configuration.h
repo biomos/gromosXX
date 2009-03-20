@@ -61,19 +61,18 @@ namespace io {
 		   std::ostream & os = std::cout);
     
     /**
-     * read reference positions for position restraining
-     * @param hasTitle the buffer has a title
-     */
-    static bool _read_refposition(
-            std::vector<topology::position_restraint_struct> &res,
-            std::vector<std::string> &buffer, bool hasTitle);
-    /**
      * read B-factors for position restraining
      * @param hasTitle the buffer has a title
      */
     static bool _read_bfactor(
-            std::vector<topology::position_restraint_struct> &res,
+            math::SArray & b,
             std::vector<std::string> &buffer, bool hasTitle);
+
+    /**
+     * read POSITION block.
+     */
+    static bool _read_position(math::VArray &pos, std::vector<std::string> &buffer,
+			int const num, std::string blockname = "POSITION");
 
   private:
     /**
@@ -194,7 +193,8 @@ namespace io {
     /**
      * read position restraint averages and bfactors
      */
-    bool read_position_restraints(topology::Topology &topo, 
+    bool read_position_restraints(topology::Topology &topo,
+                                  configuration::Configuration &conf, 
                                   simulation::Simulation & sim,
                                   std::ostream & os);
 
@@ -215,11 +215,6 @@ namespace io {
      std::ostream & os = std::cout
      );
 				  
-    /**
-     * read POSITION block.
-     */
-    bool _read_position(math::VArray &pos, std::vector<std::string> &buffer,
-			int const num);
     /**
      * read POSITIONRED block.
      */

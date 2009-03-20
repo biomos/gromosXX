@@ -378,7 +378,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
     if (sim.param().posrest.posrest != simulation::posrest_off) {
-      _print_position_restraints(sim, topo, m_final_conf);
+      _print_position_restraints(sim, topo, conf, m_final_conf);
     }
 
     if (sim.param().jvalue.mode != simulation::jvalue_restr_off) {
@@ -2333,36 +2333,40 @@ static void _print_volumepressurered_helper(std::ostream &os,
 void io::Out_Configuration
 ::_print_position_restraints(simulation::Simulation const & sim,
         topology::Topology const &topo,
+        configuration::Configuration const &conf,
         std::ostream &os) {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
 
   os << "REFPOSITION\n";
-  std::vector<topology::position_restraint_struct>::const_iterator it
-          = topo.position_restraints().begin(),
-          to = topo.position_restraints().end();
+
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
+  topology::Solvent const &solvent = topo.solvent(0);
 
-  for (; it != to; ++it) {
-    if (it->seq < topo.num_solute_atoms()) {
-      os << std::setw(5) << solute.atom(it->seq).residue_nr + 1 << " "
-              << std::setw(5) << std::left << residue_name[solute.atom(it->seq).residue_nr] << " "
-              << std::setw(6) << std::left << solute.atom(it->seq).name << std::right
-              << std::setw(6) << it->seq + 1
-              << std::setw(m_width) << it->pos(0)
-              << std::setw(m_width) << it->pos(1)
-              << std::setw(m_width) << it->pos(2)
+  const math::VArray & ref = conf.special().reference_positions;
+  const math::SArray & b = conf.special().bfactors;
+
+  for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
+    if (i < topo.num_solute_atoms()) {
+      os << std::setw(5) << solute.atom(i).residue_nr + 1 << " "
+              << std::setw(5) << std::left << residue_name[solute.atom(i).residue_nr] << " "
+              << std::setw(6) << std::left << solute.atom(i).name << std::right
+              << std::setw(6) << i + 1
+              << std::setw(m_width) << ref(i)(0)
+              << std::setw(m_width) << ref(i)(1)
+              << std::setw(m_width) << ref(i)(2)
               << "\n";
     } else { // just writing out dummy values for first 17 chars
       os << std::setw(5) << "0" << " "
               << std::setw(5) << std::left
               << "SOLV" << " "
-              << std::setw(6) << std::left << "AT" << std::right
-              << std::setw(6) << it->seq + 1
-              << std::setw(m_width) << it->pos(0)
-              << std::setw(m_width) << it->pos(1)
-              << std::setw(m_width) << it->pos(2)
+              << std::setw(6) << std::left << solvent.atom((i - topo.num_solute_atoms())
+              % solvent.atoms().size()).name << std::right
+              << std::setw(6) << i + 1
+              << std::setw(m_width) << ref(i)(0)
+              << std::setw(m_width) << ref(i)(1)
+              << std::setw(m_width) << ref(i)(2)
               << "\n";
     }
   }
@@ -2370,24 +2374,24 @@ void io::Out_Configuration
   os << "END\n";
 
   if (sim.param().posrest.posrest == simulation::posrest_bfactor) {
-    it = topo.position_restraints().begin();
     os << "BFACTOR\n";
 
-    for (; it != to; ++it) {
-      if (it->seq < topo.num_solute_atoms()) {
-        os << std::setw(5) << solute.atom(it->seq).residue_nr + 1 << " "
-                << std::setw(5) << std::left << residue_name[solute.atom(it->seq).residue_nr] << " "
-                << std::setw(6) << std::left << solute.atom(it->seq).name << std::right
-                << std::setw(6) << it->seq + 1
-                << std::setw(m_width) << it->bfactor
+    for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
+      if (i < topo.num_solute_atoms()) {
+        os << std::setw(5) << solute.atom(i).residue_nr + 1 << " "
+                << std::setw(5) << std::left << residue_name[solute.atom(i).residue_nr] << " "
+                << std::setw(6) << std::left << solute.atom(i).name << std::right
+                << std::setw(6) << i + 1
+                << std::setw(m_width) << b(i)
                 << "\n";
       } else {
         os << std::setw(5) << "0" << " "
                 << std::setw(5) << std::left
                 << "SOLV" << " "
-                << std::setw(6) << std::left << "AT" << std::right
-                << std::setw(6) << it->seq + 1
-                << std::setw(m_width) << it->bfactor
+                << std::setw(6) << std::left << solvent.atom((i - topo.num_solute_atoms())
+              % solvent.atoms().size()).name << std::right
+                << std::setw(6) << i + 1
+                << std::setw(m_width) << b(i)
                 << "\n";
       }
     }

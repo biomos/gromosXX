@@ -45,6 +45,11 @@ namespace topology
     std::vector<atom_struct> & atoms(){return m_atom;}
 
     /**
+     * const accessor to the solvent atom information.
+     */
+    const std::vector<atom_struct> & atoms() const {return m_atom;}
+
+    /**
      * accessor to a single atom of solvent atom struct.
      */
     atom_struct & atom(unsigned int i){assert(i < m_atom.size()); return m_atom[i];}

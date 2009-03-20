@@ -88,7 +88,7 @@ int algorithm::Position_Constraints
   math::VArray &pos   = conf.current().pos;
   
   for( ; it != to; ++it)
-    pos(it->seq) = it->pos;
+    pos(it->seq) = conf.special().reference_positions(it->seq);
   
   // Here, we have to check whether no atoms that are positionally
   // contrained are at the same time member of a distance constraint.

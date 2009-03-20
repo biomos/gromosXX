@@ -132,6 +132,9 @@ configuration::Configuration::Configuration
   special().lattice_shifts = conf.special().lattice_shifts;
   
   special().shake_failure_occurred = conf.special().shake_failure_occurred;
+
+  special().reference_positions = conf.special().reference_positions;
+  special().bfactors = conf.special().bfactors;
   
   boundary_type = conf.boundary_type;
 }
@@ -208,6 +211,10 @@ configuration::Configuration & configuration::Configuration::operator=
   special().lattice_shifts = conf.special().lattice_shifts;
   
   special().shake_failure_occurred = conf.special().shake_failure_occurred;
+
+  special().reference_positions = conf.special().reference_positions;
+
+  special().bfactors = conf.special().bfactors;
   
   boundary_type = conf.boundary_type;
 
@@ -273,7 +280,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
     special().ramd.ta_average = param.ramd.ta_min * exp(1);
     
   }
-  
   
   // resize the arrays
   // to make scripting easier...

@@ -2,7 +2,6 @@
  * @file in_configuration.cc
  * implements methods of In_Configuration.
  */
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -68,7 +67,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_distance_restraint_averages(topo, conf, sim, os);
   read_nose_hoover_chains(topo, conf, sim, os);
   read_rottrans(topo, conf, sim, os);
-  read_position_restraints(topo, sim, os);
+  read_position_restraints(topo, conf, sim, os);
   
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
@@ -969,7 +968,8 @@ bool io::In_Configuration::read_rottrans
 
 bool io::In_Configuration::read_position_restraints
 (
- topology::Topology &topo, 
+ topology::Topology &topo,
+ configuration::Configuration &conf, 
  simulation::Simulation & sim,
  std::ostream & os)
 {
@@ -985,9 +985,11 @@ bool io::In_Configuration::read_position_restraints
       block_read.insert("REFPOSITION");
       if (!quiet)
 	os << "\treading REFPOSITION...\n";
-      
+
+      conf.special().reference_positions.resize(topo.num_atoms());
       result = result && 
-              _read_refposition(topo.position_restraints(), buffer, false);
+              _read_position(conf.special().reference_positions, buffer,
+              topo.num_atoms(), "REFPOSITION");
     } else {
       io::messages.add("no REFPOSITION block in configuration.",
                        "in_configuration", io::message::error);
@@ -1000,9 +1002,10 @@ bool io::In_Configuration::read_position_restraints
         block_read.insert("BFACTOR");
         if (!quiet)
           os << "\treading BFACTOR...\n";
-        
+
+        conf.special().bfactors.resize(topo.num_atoms());
         result = result && 
-                _read_bfactor(topo.position_restraints(), buffer, false);
+                _read_bfactor(conf.special().bfactors, buffer, false);
       } else {
         io::messages.add("no BFACTOR block in configuration.",
                 "in_configuration", io::message::error);
@@ -1175,7 +1178,7 @@ bool io::In_Configuration::_read_cos_position(math::VArray &pos,
 }
 
 bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::string> &buffer,
-					  int const num)
+					  int const num, std::string blockname)
 {
   DEBUG(8, "read position");
 
@@ -1186,10 +1189,12 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
   std::string s1, s2;
   int i, n, nr;
 
+  std::istringstream _lineStream;
+
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
       io::messages.add("configuration file does not match topology: "
-		       "too many coordinates in POSITION block",
+		       "too many coordinates in "+blockname+" block",
 		       "In_Configuration",
 		       io::message::error);
       break;
@@ -1202,7 +1207,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
     _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
     
     if(_lineStream.fail()){
-      io::messages.add("bad line in POSITION block",
+      io::messages.add("bad line in "+blockname+" block",
 		       "In_Configuration",
 		       io::message::critical);
       return false;
@@ -1211,7 +1216,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
 
   if (i != num){
     io::messages.add("configuration file does not match topology: "
-		     "not enough coordinates in POSITION block",
+		     "not enough coordinates in "+blockname+" block",
 		     "In_Configuration",
 		     io::message::error);
     return false;
@@ -2168,83 +2173,21 @@ bool io::In_Configuration::check_coordinates
   return true;
 }
 
-bool io::In_Configuration::_read_refposition(
-std::vector<topology::position_restraint_struct> &res,
-std::vector<std::string> &buffer, bool hasTitle)
-{
-  DEBUG(8, "read reference position");
-
-  // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin() + (hasTitle ? 1 : 0),
-    to = buffer.end()-1;
-  std::vector<topology::position_restraint_struct>::iterator r_it =
-          res.begin();
-  
-  std::string s1, s2;
-  unsigned int i, n, nr;
-  unsigned int num = res.size();
-
-  std::istringstream _lineStream;
-  
-  for(i=0; it != to; ++i, ++it, ++r_it){
-    if (i >= num){
-      io::messages.add("configuration file does not match topology: "
-		       "too many coordinates in REFPOSITION block",
-		       "In_Configuration", io::message::error);
-      return false;
-    }
-
-    _lineStream.clear();
-    _lineStream.str(*it);
-    // ignore first 3 fields
-    _lineStream >> n >> s1 >> s2 >> nr;
-    _lineStream >> (r_it->pos)(0) >> (r_it->pos)(1) >> (r_it->pos)(2);
-    
-    if(_lineStream.fail()){
-      io::messages.add("bad line in REFPOSITION block",
-		       "In_Configuration",
-		       io::message::error);
-      return false;
-    }
-    
-    if (nr-1 != r_it->seq){
-      io::messages.add("Atom number out of range / wrong in REFPOSITION block",
-              "In_Posres", io::message::error);
-      return false;
-    }
-  }
-
-  if (i != num){
-    io::messages.add("configuration file does not match topology: "
-		     "not enough coordinates in REFPOSITION block",
-		     "In_Configuration",
-		     io::message::error);
-    return false;
-  }
-
-  return true;
-  
-}
-
 bool io::In_Configuration::_read_bfactor(
-std::vector<topology::position_restraint_struct> &res,
+math::SArray & b,
 std::vector<std::string> &buffer, bool hasTitle)
 {
   DEBUG(8, "read bfactor");
-
-  // no title in buffer!
+  // no title in buffer?
   std::vector<std::string>::const_iterator it = buffer.begin() + (hasTitle ? 1 : 0),
     to = buffer.end()-1;
-  std::vector<topology::position_restraint_struct>::iterator r_it =
-          res.begin();
-  
   std::string s1, s2;
-  unsigned int i, n, nr;
-  unsigned int num = res.size();
+  int i, n, nr;
+  int num = b.size();
 
   std::istringstream _lineStream;
-  
-  for(i=0; it != to; ++i, ++it, ++r_it){
+
+  for(i=0; it != to; ++i, ++it){
     if (i >= num){
       io::messages.add("configuration file does not match topology: "
 		       "too many B-factors in BFACTOR block",
@@ -2257,18 +2200,12 @@ std::vector<std::string> &buffer, bool hasTitle)
     _lineStream.str(*it);
     // ignore first 4 fields
     _lineStream >> n >> s1 >> s2 >> nr;
-    _lineStream >> r_it->bfactor;
-    
+    _lineStream >> b(i);
+
     if(_lineStream.fail()){
       io::messages.add("bad line in BFACTOR block",
 		       "In_Configuration",
-		       io::message::error);
-      return false;
-    }
-    
-    if (nr-1 != r_it->seq){
-      io::messages.add("Atom number out of range / wrong in BFACTOR block",
-              "In_Posres", io::message::error);
+		       io::message::critical);
       return false;
     }
   }
@@ -2280,7 +2217,6 @@ std::vector<std::string> &buffer, bool hasTitle)
 		     io::message::error);
     return false;
   }
-
   return true;
   
 }

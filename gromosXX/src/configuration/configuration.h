@@ -276,6 +276,16 @@ namespace configuration
        */
       bool shake_failure_occurred;
 
+      /**
+       * position restraints reference positions
+       */
+      math::VArray reference_positions;
+
+      /**
+       * position restraints bfactors
+       */
+      math::SArray bfactors;
+
     }; // special
 
     /**

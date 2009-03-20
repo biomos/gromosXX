@@ -279,23 +279,13 @@ namespace topology
     /**
      * Constructor.
      */
-    position_restraint_struct(unsigned int seq, math::Vec pos, 
-			       double bfactor = 1.0)
-      : seq(seq), pos(pos), bfactor(bfactor)
+    position_restraint_struct(unsigned int seq)
+      : seq(seq)
     {}
-    
     /**
      * sequence number.
      */
     unsigned int seq;
-    /**
-     * position.
-     */
-    math::Vec pos;
-    /**
-     * atomic b-factor.
-     */
-    double bfactor;
   };
 
   struct distance_restraint_struct

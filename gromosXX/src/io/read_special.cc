@@ -91,7 +91,7 @@ int io::read_special(io::Argument const & args,
           io::In_Refpos ip(refpos_file);
           ip.quiet = quiet;
 
-          ip.read(topo, sim, os);
+          ip.read(topo, conf, sim, os);
         }
       }
     }

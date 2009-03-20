@@ -2,7 +2,6 @@
  * @file position_restraint_interaction.cc
  * template methods of Position_Restraint_Interaction
  */
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -40,8 +39,10 @@ static int _calculate_position_restraint_interactions
     it = topo.position_restraints().begin(),
     to = topo.position_restraints().end();
 
-  math::VArray &pos   = conf.current().pos;
+  const math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
+  const math::VArray &ref = conf.special().reference_positions;
+  const math::SArray &bfactor = conf.special().bfactors;
   math::Vec v, f;
 
   double energy;
@@ -50,11 +51,15 @@ static int _calculate_position_restraint_interactions
 
   for( ; it != to; ++it){
 
-    periodicity.nearest_image(pos(it->seq), it->pos, v);
+    periodicity.nearest_image(pos(it->seq), ref(it->seq), v);
 
     // double dist = sqrt(abs2(v));
     
-    f = (- sim.param().posrest.force_constant / it->bfactor) * v;
+    double bf = 1.0;
+    if (sim.param().posrest.posrest == simulation::posrest_bfactor)
+      bf = bfactor(it->seq);
+
+    f = (- sim.param().posrest.force_constant / bf) * v;
 
     force(it->seq) += f;
   
@@ -71,7 +76,7 @@ static int _calculate_position_restraint_interactions
     }
      */
 
-    energy = 0.5 * sim.param().posrest.force_constant / it->bfactor * abs2(v);
+    energy = 0.5 * sim.param().posrest.force_constant / bf * abs2(v);
 
     conf.current().energies.posrest_energy[topo.atom_energy_group()
 					  [it->seq]] += energy;
