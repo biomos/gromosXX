@@ -2052,7 +2052,7 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
         os << std::setw(5) << jv_it->i+1
            << std::setw(5) << jv_it->j+1
            << std::setw(5) << jv_it->k+1
-           << std::setw(5) << jv_it->l+1 << "\n";
+           << std::setw(5) << jv_it->l+1;
       }
       os << std::setw(15) << *av_it << "\n";
     }
@@ -2062,7 +2062,7 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
   if (param.jvalue.le && param.jvalue.mode != simulation::jvalue_restr_off) {
     os << "JVALUERESEPS\n";
     if (formated) {
-      os << "# I J K L GRID[1.." << param.jvalue.ngrid << "]\n";
+      os << "# I J K L\n# GRID[1.." << param.jvalue.ngrid << "]\n";
     }
     os.setf(std::ios::scientific, std::ios::floatfield);
     os.precision(7);
