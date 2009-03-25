@@ -419,7 +419,6 @@ int interaction::Nonbonded_Interaction::check_special_loop
     default:
       os << "\tusing standard solvent loops (unknown solvent)\n\n";
       return 1;
-      break;
   }
   
   // check the hardcoded parameters if the method applies
@@ -497,7 +496,6 @@ int interaction::Nonbonded_Interaction::check_special_loop
       default:
         os << "\tusing standard solvent loops (unknown solvent)\n\n";
         return 1;
-        break;
     } // solvents
   } // hardcoded parameters
 
@@ -597,7 +595,6 @@ int interaction::Nonbonded_Interaction::check_special_loop
       default:
         os << "\tusing standard solvent loops (unknown solvent)\n\n";
         return 1;
-        break;
     } // solvents
   } // tabulated forces
   

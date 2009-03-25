@@ -152,67 +152,67 @@ namespace interaction
      * Perturbation:
      * lambda value for lj interaction for state A
      */
-    double const A_lj_lambda()const;
+    double const & A_lj_lambda()const;
     /**
      * Perturbation:
      * lambda value for crf interaction for state A
      */
-    double const A_crf_lambda()const;
+    double const & A_crf_lambda()const;
     /**
      * Perturbation:
      * lambda value for lj interaction for state B
      */
-    double const B_lj_lambda()const;
+    double const & B_lj_lambda()const;
     /**
      * Perturbation:
      * lambda value for crf interaction for state B
      */
-    double const B_crf_lambda()const;
+    double const & B_crf_lambda()const;
     /**
      * Perturbation:
      * lambda exponent:
      */
-    int const n()const;
+    int const & n()const;
     /**
      * Perturbation:
      * lambda value for lj interaction for state A to the power nlam
      */
-    double const A_lj_lambda_n()const;
+    double const & A_lj_lambda_n()const;
     /**
      * Perturbation:
      * lambda value for crf interaction for state A to the power nlam
      */
-    double const A_crf_lambda_n()const;
+    double const & A_crf_lambda_n()const;
     /**
      * Perturbation:
      * lambda value for lj interaction for state B to the power nlam
      */
-    double const B_lj_lambda_n()const;
+    double const & B_lj_lambda_n()const;
     /**
      * Perturbation:
      * lambda value for crf interaction for state B to the power nlam
      */
-    double const B_crf_lambda_n()const;
+    double const & B_crf_lambda_n()const;
     /**
      * Perturbation:
      * lambda value for lj interaction for state A to the power nlam-1
      */
-    double const A_lj_lambda_n_1()const;
+    double const & A_lj_lambda_n_1()const;
     /**
      * Perturbation:
      * lambda value for crf interaction for state A to the power nlam-1
      */
-    double const A_crf_lambda_n_1()const;   
+    double const & A_crf_lambda_n_1()const;   
     /**
      * Perturbation:
      * lambda value for lj interaction for state B to the power nlam-1
      */
-    double const B_lj_lambda_n_1()const;
+    double const & B_lj_lambda_n_1()const;
      /**
      * Perturbation:
      * lambda value for crf interaction for state B to the power nlam-1
      */
-    double const B_crf_lambda_n_1()const;
+    double const & B_crf_lambda_n_1()const;
     /**
      * Perturbation:
      * set the lambdas

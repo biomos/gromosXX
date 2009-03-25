@@ -96,7 +96,7 @@ static int _calculate_perturbed_distance_restraint_interactions
       DEBUG(9, "PERTDISTANCERES average dist : " << dist);
     }
 
-    double prefactor = pow(2, it->n + it->m) * pow(l, it->n) * pow(1-l, it->m);
+    double prefactor = pow(2.0, it->n + it->m) * pow(l, it->n) * pow(1.0-l, it->m);
     
     if(it->rah*dist < it->rah*(r0)){
 	
@@ -189,12 +189,12 @@ static int _calculate_perturbed_distance_restraint_interactions
     // division by zero precaution
     double dprefndl, dprefmdl;
     if (it->n==0) dprefndl = 0;
-    else dprefndl = it->n * pow(l, it->n-1) * pow(1 - l, it->m);
+    else dprefndl = it->n * pow(l, it->n-1) * pow(1.0 - l, it->m);
     
     if (it->m == 0) dprefmdl = 0;
-    else dprefmdl = it->m * pow(l, it->n) * pow(1 - l, it->m-1);
+    else dprefmdl = it->m * pow(l, it->n) * pow(1.0 - l, it->m-1);
 
-    double dprefdl = pow(2, it->m + it->n) * 
+    double dprefdl = pow(2.0, it->m + it->n) * 
       (dprefndl - dprefmdl) * en_term;
     
     double dpotdl = prefactor * dlam_term;

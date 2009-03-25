@@ -149,7 +149,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions
       B_K *= it->B_w0;
     }
 
-    double prefactor = pow(2, it->m + it->n) * pow(l, it->n) * pow(1-l, it->m);
+    double prefactor = pow(2.0, it->m + it->n) * pow(l, it->n) * pow(1.0-l, it->m);
 
     if (phi_lin >= 0.0 && fabs(delta_phi) > phi_lin){
       // LINEAR
@@ -217,12 +217,12 @@ static int _calculate_perturbed_dihedral_restraint_interactions
     // divide by zero measure
     double dprefndl, dprefmdl;
     if (it->n==0) dprefndl = 0;
-    else dprefndl = it->n * pow(l, it->n-1) * pow(1 - l, it->m);
+    else dprefndl = it->n * pow(l, it->n-1) * pow(1.0 - l, it->m);
     
     if (it->m == 0) dprefmdl = 0;
-    else dprefmdl = it->m * pow(l, it->n) * pow(1 - l, it->m-1);
+    else dprefmdl = it->m * pow(l, it->n) * pow(1.0 - l, it->m-1);
 
-    double dprefdl = pow(2, it->m + it->n) * 
+    double dprefdl = pow(2.0, it->m + it->n) * 
       (dprefndl - dprefmdl) * en_term;
     
     double dpotdl = prefactor * dlam_term;

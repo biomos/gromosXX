@@ -85,7 +85,6 @@ io::In_Jvalue::read(topology::Topology& topo,
   if (!quiet) os << "JVALUE RESTRAINTS\n";
   
   std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
   
   { // JVALUERES
     DEBUG(10, "JVALRESSPEC block");

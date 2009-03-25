@@ -418,7 +418,7 @@ namespace interaction {
           const double kappa_S = kappa * sin(kappa);
           gamma_hat = 1247400.0 * (192.0 * (k2 - 10.0) + (k4 - 207.0*k2 + 1920) * C - (22.0 * k2 - 975.0) * kappa_S) / k12;
           if (gamma_hat_prime != NULL) {
-            const double k13 = k12 * k13;
+            const double k13 = k12 * kappa;
             *gamma_hat_prime = 1247400.0 * (-1920.0 * (k2 - 12.0) - 15.0 * (2.0 * k4 - 203.0 * k2 + 1536.0) * C - (k4 - 405.0 * k2 + 12645.0) * kappa_S) / k13;
           }
           break;
@@ -707,8 +707,10 @@ namespace interaction {
               return 0.0;
           }
         } // p = 5
+        default :
+        {
           io::messages.add("fp: p invalid.", "p3m_selfterm_fp", io::message::critical);
-          return 0.0;
+        }
       }
       return 0.0;
     }

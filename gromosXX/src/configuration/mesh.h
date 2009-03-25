@@ -144,9 +144,10 @@ namespace configuration{
     }
     /**
      * get the boundaries. Only for parallelization
+     * We cannot just return "0" because this will cause a warning
      */
-    const unsigned int left_boundary() const {
-      return 0;
+    const unsigned int & left_boundary() const {
+      return zero_constant;
     }
     /**
      * get the boundaries. Only for parallelization
@@ -194,6 +195,10 @@ namespace configuration{
      * plan to do a backward fft
      */
     fftw_plan plan_backward;
+    /**
+     * a zero constant
+     */
+    unsigned int zero_constant;
   };
   
   typedef std::complex<double> complex_number;
@@ -244,7 +249,7 @@ namespace configuration{
       int l2 = (l <= m_x2) ? l + m_x : l - m_x;
       int r2 = (r <= m_x2) ? r + m_x : r - m_x;
       
-      int dist_l = std::min(abs(l-x), abs(l2-x));
+      int dist_l = std::min(abs(l-int(x)), abs(l2-int(x)));
       int dist_r = std::min(abs(int(x)-r), abs(int(x)-r2));
 
       if (dist_l + dist_r <= int(slice_width)) {

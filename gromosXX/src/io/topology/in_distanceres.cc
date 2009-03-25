@@ -99,7 +99,6 @@ io::In_Distanceres::read(topology::Topology& topo,
     os << "DISTRANCE RESTRAINTS\n";
   
   std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
 
   { // DISTANCERES
     DEBUG(10, "DISRESSPEC block");

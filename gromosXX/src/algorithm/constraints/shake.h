@@ -45,11 +45,11 @@ namespace algorithm
     /**
      * tolerance.
      */
-    double const tolerance()const {return m_tolerance;}
+    double const & tolerance()const {return m_tolerance;}
     /**
      * max iterations.
      */
-    int const max_iterations()const {return m_max_iterations;}
+    int const & max_iterations()const {return m_max_iterations;}
 
     /**
      * the const bond type parameter.

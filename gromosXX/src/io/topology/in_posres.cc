@@ -100,7 +100,6 @@ io::In_Posresspec::read(topology::Topology& topo,
     os << "POSITION RESTRAINTS\n";
   
   std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
 
   { // POSRESSPEC
 

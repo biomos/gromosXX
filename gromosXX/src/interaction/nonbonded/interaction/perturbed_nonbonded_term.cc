@@ -74,7 +74,7 @@ inline void interaction::Perturbed_Nonbonded_Term
  * Perturbation:
  * lambda value for lj interaction for state A
  */
-inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda()const
+inline double const & interaction::Perturbed_Nonbonded_Term::A_lj_lambda()const
 {
   return m_A_lj_lambda;
 }
@@ -83,7 +83,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda()const
  * Perturbation:
  * lambda value for crf interaction for state A
  */
-inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::A_crf_lambda()const{
   return m_A_crf_lambda;
 }
 
@@ -91,7 +91,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda()const{
  * Perturbation:
  * lambda value for lj interaction for state B
  */
-inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::B_lj_lambda()const{
   return m_B_lj_lambda;
 }
 
@@ -99,7 +99,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda()const{
  * Perturbation:
  * lambda value for crf interaction for state B
  */
-inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::B_crf_lambda()const{
   return m_B_crf_lambda;
 }
 
@@ -107,7 +107,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda()const{
  * Perturbation:
  * lambda value for lj interaction for state A to the power nlam
  */
-inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n()const{
   return m_A_lj_lambda_n;
 }
 
@@ -115,7 +115,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n()const{
  * Perturbation:
  * lambda value for crf interaction for state A to the power nlam
  */
-inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n()const{
   return m_A_crf_lambda_n;
 }
 
@@ -123,7 +123,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n()const
  * Perturbation:
  * lambda value for lj interaction for state B to the power nlam
  */
-inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n()const{
   return m_B_lj_lambda_n;
 }
 
@@ -131,7 +131,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n()const{
  * Perturbation:
  * lambda value for crf interaction for state B to the power nlam
  */
-inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda_n()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::B_crf_lambda_n()const{
   return m_B_crf_lambda_n;
 }
 
@@ -139,7 +139,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda_n()const
  * Perturbation:
  * lambda value for lj interaction for state A to the power nlam-1
  */
-inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n_1()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n_1()const{
   return m_A_lj_lambda_n_1;
 }
 
@@ -147,7 +147,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::A_lj_lambda_n_1()cons
  * Perturbation:
  * lambda value for crf interaction for state A to the power nlam-1
  */
-inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n_1()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n_1()const{
   return m_A_crf_lambda_n_1;
 }
 
@@ -155,7 +155,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::A_crf_lambda_n_1()con
  * Perturbation:
  * lambda value for lj interaction for state B to the power nlam-1
  */
-inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n_1()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n_1()const{
   return m_B_lj_lambda_n_1;
 }
 
@@ -163,7 +163,7 @@ inline double const interaction::Perturbed_Nonbonded_Term::B_lj_lambda_n_1()cons
  * Perturbation:
  * lambda value for crf interaction for state B to the power nlam-1
  */
-inline double const interaction::Perturbed_Nonbonded_Term::B_crf_lambda_n_1()const{
+inline double const & interaction::Perturbed_Nonbonded_Term::B_crf_lambda_n_1()const{
   return m_B_crf_lambda_n_1;
 }
 
@@ -207,7 +207,7 @@ set_lambda(double const lj_lambda, double const ljs_lambda,
  * Perturbation:
  * lambda exponent
  */
-inline int const interaction::Perturbed_Nonbonded_Term::n()const
+inline int const & interaction::Perturbed_Nonbonded_Term::n()const
 {
   return m_n;
 }

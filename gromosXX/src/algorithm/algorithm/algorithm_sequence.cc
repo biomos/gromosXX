@@ -43,9 +43,6 @@ int algorithm::Algorithm_Sequence
        bool quiet)
 {
   DEBUG(5, "Algorithm_Sequence: init");
-
-  int ret;
-  
   // centre of mass removal
   if(!(sim.param().centreofmass.remove_trans ||
        sim.param().centreofmass.remove_rot)){
@@ -60,8 +57,7 @@ int algorithm::Algorithm_Sequence
       it != to;
       ++it){
     DEBUG(7, "algorithm::init -> " << (*it)->name);
-    
-    if((ret = (*it)->init(topo, conf, sim, os, quiet))){
+    if((*it)->init(topo, conf, sim, os, quiet)){
       os << "Algorithm_Sequence: error during initialisation of " 
 	 << (*it)->name << "\n";
       
@@ -80,12 +76,11 @@ int algorithm::Algorithm_Sequence
 {
   DEBUG(5, "Algorithm_Sequence: apply algorithm");
 
-  int ret;
-  
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();
       it != to;
       ++it){
+    int ret;
     DEBUG(7, "algorithm: " << (*it)->name);
     if((ret = (*it)->apply(topo, conf, sim))){
       DEBUG(1, "ERROR in algorithm_sequence::run : bailing out!");

@@ -62,3 +62,4 @@ bool math::boundary_check_cutoff(math::Box const & box, math::boundary_enum cons
   // the box is fine
   return true;
 }
+

@@ -64,11 +64,10 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
   const unsigned int Nx = ghat.x();
   const unsigned int Ny = ghat.y();
   const unsigned int Nz = ghat.z();
-  const unsigned int grid_volume = Nx * Ny * Nz;
   
   const double st2 = topo.sum_squared_charges();
   
-  DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz << " volume: " << grid_volume);
+  DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz);
   
   ghat.zero();
   if (do_virial)
@@ -324,11 +323,10 @@ void configuration::Influence_Function::evaluate_quality(
   const unsigned int Nx = ghat.x();
   const unsigned int Ny = ghat.y();
   const unsigned int Nz = ghat.z();
-  const unsigned int grid_volume = Nx * Ny * Nz;
   
   const double st2 = topo.sum_squared_charges();
   
-  DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz << " volume: " << grid_volume);
+  DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz);
   const int shape = sim.param().nonbonded.ls_charge_shape;
   const double charge_width = sim.param().nonbonded.ls_charge_shape_width;
   

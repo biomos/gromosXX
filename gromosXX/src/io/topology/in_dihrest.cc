@@ -76,7 +76,6 @@ void io::In_Dihrest::read(topology::Topology& topo,
     os << "DIHEDRAL RESTRAINTS\n";
   
   std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
   
   { // DIHRESSPEC
     DEBUG(10, "DIHRESSPEC block");

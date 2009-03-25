@@ -94,6 +94,7 @@ if eval "test x$compiler = xnone"; then
   fi
 fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
+if eval "test x$compiler = xnone"; then AC_PROG_CXX_PGI     ; fi
 
 dnl set some defaults to CXXFLAGS and LDFLAGS
 extra_lib=""
@@ -260,6 +261,41 @@ case "$compiler" in
     fi
 
     AC_DEFINE_UNQUOTED(COMPILER_SUNCC, 1, [SUN C++ compiler])
+  ;;
+  pgicc*)             # PGI compilers
+    echo "Configuring for PGI"
+    CXX_PICKY_FLAGS="-Minform=warn"
+    CXX_OPTIMIZE_FLAGS="-fast -fastsse -DNDEBUG"
+    CXX_NDEBUG_FLAGS="-DNDEBUG"
+    CXX_DEBUG_FLAGS="-g"
+    CXXLD="$CXX"
+
+    if eval "test x$enable_openmp = xyes"; then
+      CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DOMP"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -DOMP"
+      CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DOMP"
+    else
+      CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -Mnoopenmp"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -Mnoopenmp"
+      CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -Mnoopenmp"
+    fi
+
+    if eval "test x$enable_mpi = xyes"; then
+      CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+      CXX_NDEBUG_FLAGS="$CXX_NDEBUG_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+      CXX_OPTIMIZE_FLAGS="$CXX_OPTIMIZE_FLAGS -DXXMPI -DMPICH_IGNORE_CXX_SEEK"
+    fi
+
+    if eval "test x$enable_debug = xyes"; then
+      CXX_DEBUG_FLAGS="$CXX_DEBUG_FLAGS $CXX_PICKY_FLAGS"
+      MY_CXXFLAGS="$CXX_DEBUG_FLAGS"
+      echo "configuring for debug build"
+    else
+      MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
+      echo "configuring for release build"
+    fi
+
+    AC_DEFINE_UNQUOTED(COMPILER_PGICC, 1, [PGI compiler])
   ;;
   *)
     CXXLD="$CXX"

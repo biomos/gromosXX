@@ -42,6 +42,21 @@ else
   INTEL_CXX=no
 fi])])
 
+dnl Portland Group Incorporated C++ compiler
+AC_DEFUN(AC_PROG_CXX_PGI,
+[AC_CACHE_CHECK(whether we are using PGI C++, PGI_CXX,
+ [cat > conftest.c <<EOF
+# if defined(__PGI)
+  yes;
+#endif
+EOF
+if AC_TRY_COMMAND(${CXX} -E conftest.c) | egrep yes >/dev/null 2>&1; then
+ PGI_CXX=yes
+ compiler=pgicc
+else
+  PGI_CXX=no
+fi])])
+
 dnl Determine a Fortran 77 compiler to use.  If `F77' is not already set
 dnl in the environment, check for `g77', `f77' and `f2c', in that order.
 dnl Set the output variable `F77' to the name of the compiler found.
@@ -356,7 +371,7 @@ AC_DEFUN([AM_PATH_FFTW3],[
   dnl check for lib with these settings and add flags automatically
   AC_CHECK_LIB([fftw3], [fftw_version],, AC_MSG_ERROR([FFTW3 library missing.]), [-lm])
   if eval "test x$enable_mpi = xyes"; then
-    AC_CHECK_LIB([fftw3_mpi], [fftw_mpi_init],, AC_MSG_ERROR([FFTW3 MPI library missing.]), [-lfftw3 -lm])
+    AC_CHECK_LIB([fftw3_mpi], [fftw_mpi_init],, AC_MSG_ERROR([FFTW3 MPI library missing.]), [])
   fi
 ])
 

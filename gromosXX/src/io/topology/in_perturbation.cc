@@ -1209,7 +1209,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         --seq;
         for (unsigned int i = 0; i < numstates; i++) {
           --m_iac[i];
-          if (m_iac[i] < 0) {
+          if (m_iac[i] < 0.0) {
             io::messages.add("Negative IAC in MPERTATOM block.",
                     "In_Perturbation", io::message::critical);
             return;
