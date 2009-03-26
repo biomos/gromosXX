@@ -333,17 +333,14 @@ calculate_interactions(topology::Topology & topo,
   store_set_data(topo, conf, sim);
   
   
-#else
-  std::cerr << "using MPI code without MPI defined..." << std::endl;
-  return E_ILLEGAL;
-#endif
-  
-  
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
   m_timer.stop();
   
   return 0;
-  
+#else
+  std::cerr << "using MPI code without MPI defined..." << std::endl;
+  return E_ILLEGAL;
+#endif
 }
 
 /**

@@ -179,15 +179,14 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
     {
       tid = omp_get_thread_num();
       if (tid == 0){
-	m_set_size = omp_get_num_threads();
+        m_set_size = omp_get_num_threads();
       }
     }
+    return Nonbonded_Interaction::init(topo, conf, sim, os, quiet);
 #else
     std::cerr << "OMP not defined, why are we here???" << std::endl;
     return E_ILLEGAL;
 #endif
-    
-    return Nonbonded_Interaction::init(topo, conf, sim, os, quiet);
 }
 
 

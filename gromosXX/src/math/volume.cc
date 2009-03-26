@@ -30,7 +30,6 @@ double math::volume(math::Box const & box, math::boundary_enum const b)
       return 0.5 *abs(box(0)) * abs(box(1)) * abs(box(2));
     default:
       DEBUG(9, "volume error....");
-      return 0;
   }
   return 0;
 }

@@ -10,6 +10,7 @@
 namespace configuration
 {
   char const id[] = MD_VERSION;
+  const char* get_id() { return id; }
 
 #ifndef NDEBUG
   int debug_level = 0;

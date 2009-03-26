@@ -11,6 +11,7 @@ double io_ver = 0.10;
 namespace io
 {
   char const id[] = MD_VERSION;
+  const char* get_id() { return id; }
 
 #ifndef NDEBUG
   int debug_level = 0;

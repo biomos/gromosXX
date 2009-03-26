@@ -1241,7 +1241,6 @@ void interaction::Nonbonded_Outerloop
               DEBUG(13, "\t\t\tgamma_hat / k2: " << gamma_hat / k2);
 
               if (do_virial) {
-                double gamma_hat_prime;
                 // factor 2.0 is due to symmetry
                 const double isotropic_factor = 2.0 * (ak * gamma_hat_prime - 2.0 * gamma_hat) / (k2 * k2);
                 sum_gammahat += math::symmetric_tensor_product(isotropic_factor * k, k);

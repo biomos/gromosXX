@@ -89,11 +89,11 @@
   switch(sim.param().force.interaction_function){ \
     case simulation::lj_crf_func : \
       f< Interaction_Spec<bound, simulation::lj_crf_func>, \
-         pertspec > (__VA_ARGS__); break; \
+         pertspec > (__VA_ARGS__); \
       break; \
     case simulation::cgrain_func : \
       f< Interaction_Spec<bound, simulation::cgrain_func>, \
-         pertspec > (__VA_ARGS__); break; \
+         pertspec > (__VA_ARGS__); \
       break; \
     case simulation::pol_lj_crf_func : \
       if (sim.param().polarise.damp) { \

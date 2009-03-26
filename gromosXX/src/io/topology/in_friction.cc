@@ -51,7 +51,6 @@ io::In_Friction::read(topology::Topology& topo,
   DEBUG(7, "reading in a friciton specification file");
   
   std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
   
   { // FRICTIONSPEC
 

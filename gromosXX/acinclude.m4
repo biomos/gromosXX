@@ -43,7 +43,7 @@ else
 fi])])
 
 dnl Portland Group Incorporated C++ compiler
-AC_DEFUN(AC_PROG_CXX_PGI,
+AC_DEFUN([AC_PROG_CXX_PGI],
 [AC_CACHE_CHECK(whether we are using PGI C++, PGI_CXX,
  [cat > conftest.c <<EOF
 # if defined(__PGI)

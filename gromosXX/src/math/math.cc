@@ -12,6 +12,7 @@ double math_ver = 0.10;
 namespace math
 {
   char const id[] = MD_VERSION;
+  const char * get_id() { return id; }
 
   double h_bar = 0.0635078;
 

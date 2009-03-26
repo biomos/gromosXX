@@ -10,7 +10,8 @@ double interaction_ver = 0.10;
 
 namespace interaction
 {
-  char const id[] = MD_VERSION;
+  extern char const id[] = MD_VERSION;
+  const char* get_id() { return id; }
 
 #ifndef NDEBUG
   int debug_level = 0;

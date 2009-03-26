@@ -292,16 +292,14 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     // std::cout << "MULTISTEP: no recalculation...\n";
   }
 
-#else
-  std::cerr << "using MPI code without MPI defined..." << std::endl;
-  return E_ILLEGAL;
-#endif
-  
   DEBUG(6, "MPI_Nonbonded_Slave::calculate_interactions done");
   m_timer.stop();
   
   return 0;
-  
+#else
+  std::cerr << "using MPI code without MPI defined..." << std::endl;
+  return E_ILLEGAL;
+#endif
 }
 
 /**
