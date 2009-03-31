@@ -5,8 +5,7 @@
 
 #ifndef INCLUDED_MESH_H
 #define	INCLUDED_MESH_H
-#include <complex>
-#include <fftw3.h>
+#include <math/fft.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -190,11 +189,11 @@ namespace configuration{
     /**
      * plan to do a forward fft
      */
-    fftw_plan plan_forward;
+    FFTW3(plan) plan_forward;
     /**
      * plan to do a backward fft
      */
-    fftw_plan plan_backward;
+    FFTW3(plan) plan_backward;
     /**
      * a zero constant
      */

@@ -21,8 +21,8 @@ $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
 
 #ifdef XXMPI
 #include <mpi.h>
-#include <fftw3-mpi.h>
 #endif
+#include <math/fft.h>
 
 #include <stdheader.h>
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]){
 
   // master or slave : that's the question
   MPI::Init(argc, argv);
-  fftw_mpi_init();
+  FFTW3(mpi_init());
   
   int rank, size;
   rank = MPI::COMM_WORLD.Get_rank();
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
   if (args.parse(argc, argv, knowns)){
     if (rank == 0)
       std::cerr << usage << std::endl;
-    fftw_mpi_cleanup();
+    FFTW3(mpi_cleanup());
     MPI::Finalize();
     return 1;
   }
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]){
     if (rank == 0)
       print_title(true, size);
     MPI::Finalize();
-    fftw_mpi_cleanup();
+    FFTW3(mpi_cleanup());
     return 0;
   }
   else print_title(false, size, *os);
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]){
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)){
     if (rank == 0) std::cerr << "could not parse verbosity argument" << std::endl;
-    fftw_mpi_cleanup();
+    FFTW3(mpi_cleanup());
     MPI::Finalize();
     return 1;
   }
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
   if (io::read_input(args, topo, conf, sim,  md, *os, quiet)){
     io::messages.display(std::cout);
     std::cout << "\nErrors during initialization!\n" << std::endl;
-    fftw_mpi_cleanup();
+    FFTW3(mpi_cleanup());
     MPI::Finalize();
     return 1;    
   }
@@ -411,7 +411,7 @@ int main(int argc, char *argv[]){
   ofs.close();
 
   // and exit...
-  fftw_mpi_cleanup();
+  FFTW3(mpi_cleanup());
   MPI::Finalize();
   return error;
 

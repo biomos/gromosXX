@@ -3,18 +3,8 @@
  * Mesh class
  */
 
-#ifdef XXMPI
-// include mpi and the mpi fftw3 library
-#include <mpi.h>
-#include <fftw3-mpi.h>
-#else
-#include <fftw3.h>
-#endif
-
 #include <stdheader.h>
-
 #include <configuration/mesh.h>
-
 #include <util/error.h>
 #include <util/debug.h>
 
@@ -44,13 +34,13 @@ m_x(x), m_y(y), m_z(z), m_volume(x*y*z), zero_constant(0) {
   // statarr[x][y][z] == dynarr[z + Nz * (y + Ny * x)]
   // for more details see 3.2 Multidimensional Array format in section
   
-  m_mesh = (complex_number*) fftw_malloc(m_volume * sizeof(fftw_complex));
-  plan_forward = fftw_plan_dft_3d(m_x, m_y, m_z,
-              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
-              FFTW_FORWARD, FFTW_ESTIMATE);
-  plan_backward = fftw_plan_dft_3d(m_x, m_y, m_z,
-              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
-              FFTW_BACKWARD, FFTW_ESTIMATE);
+  m_mesh = (complex_number*) FFTW3(malloc(m_volume * sizeof(FFTW3(complex))));
+  plan_forward = FFTW3(plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
+              FFTW_FORWARD, FFTW_ESTIMATE));
+  plan_backward = FFTW3(plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
+              FFTW_BACKWARD, FFTW_ESTIMATE));
 }
 
 // this function is used for all other types.
@@ -65,13 +55,13 @@ template<>
 GenericMesh<complex_number>::~GenericMesh() {
   // destory the plans
   if (plan_forward != NULL)
-    fftw_destroy_plan(plan_forward);
+    FFTW3(destroy_plan(plan_forward));
   if (plan_backward != NULL)
-    fftw_destroy_plan(plan_backward);
+    FFTW3(destroy_plan(plan_backward));
   
   if (m_mesh != NULL) {
     // make sure you free the mesh. It can be big.
-    fftw_free((configuration::complex_number*) m_mesh);
+    FFTW3(free((configuration::complex_number*) m_mesh));
   }
 }
 
@@ -89,7 +79,7 @@ GenericMesh<complex_number>::GenericMesh(const GenericMesh<complex_number> & mes
   m_z = mesh.z();
   m_volume = m_x * m_y * m_z;
   // reserve memory for the new mesh
-  m_mesh = (configuration::complex_number*) fftw_malloc(m_volume * sizeof(configuration::complex_number));
+  m_mesh = (configuration::complex_number*) FFTW3(malloc(m_volume * sizeof(configuration::complex_number)));
   // just copy the memory
   memcpy(m_mesh, mesh.m_mesh, m_volume * sizeof(configuration::complex_number));
   zero_constant = 0u;
@@ -119,20 +109,20 @@ void GenericMesh<complex_number>::resize(unsigned int x, unsigned int y, unsigne
   m_volume = m_x * m_y * m_z;
   
   if (plan_forward != NULL)
-    fftw_destroy_plan(plan_forward);
+    FFTW3(destroy_plan(plan_forward));
   if (plan_backward != NULL)
-    fftw_destroy_plan(plan_forward);  
+    FFTW3(destroy_plan(plan_forward));
   
   if (m_mesh != NULL)
-    fftw_free(m_mesh);
+    FFTW3(free(m_mesh));
   
-  m_mesh = (complex_number*) fftw_malloc(m_volume * sizeof(fftw_complex));
-  plan_forward = fftw_plan_dft_3d(m_x, m_y, m_z,
-              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
-              FFTW_FORWARD, FFTW_ESTIMATE);
-  plan_backward = fftw_plan_dft_3d(m_x, m_y, m_z,
-              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
-              FFTW_BACKWARD, FFTW_ESTIMATE);
+  m_mesh = (complex_number*) FFTW3(malloc(m_volume * sizeof(FFTW3(complex))));
+  plan_forward = FFTW3(plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
+              FFTW_FORWARD, FFTW_ESTIMATE));
+  plan_backward = FFTW3(plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
+              FFTW_BACKWARD, FFTW_ESTIMATE));
 }
 
 template<typename complex_type>
@@ -153,10 +143,10 @@ template<>
 void GenericMesh<complex_number>::fft(GenericMesh<complex_number>::fft_type type) {
   switch (type) {
     case GenericMesh<complex_number>::fft_forward :
-              fftw_execute(plan_forward);
+              FFTW3(execute(plan_forward));
       break;
     case GenericMesh<complex_number>::fft_backward :
-              fftw_execute(plan_backward);
+              FFTW3(execute(plan_backward));
       break;
     default:
       io::messages.add("fft type invalid", "Lattice Sum", io::message::critical);
@@ -193,20 +183,20 @@ ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int a
 ParallelMesh::~ParallelMesh() {
   // destory the plans
   if (plan_forward != NULL)
-    fftw_destroy_plan(plan_forward);
+    FFTW3(destroy_plan(plan_forward));
   if (plan_backward != NULL)
-    fftw_destroy_plan(plan_backward);
+    FFTW3(destroy_plan(plan_backward));
   
   if (m_mesh != NULL) {
     // make sure you free the mesh. It can be big.
-    fftw_free((configuration::complex_number*) m_mesh);
+    FFTW3(free((configuration::complex_number*) m_mesh));
   }
   if (mesh_left != NULL)
-    fftw_free(mesh_left);
+    FFTW3(free(mesh_left));
   if (mesh_right != NULL)
-    fftw_free(mesh_right);
+    FFTW3(free(mesh_right));
   if (mesh_tmp != NULL)
-    fftw_free(mesh_tmp);
+    FFTW3(free(mesh_tmp));
 }
       
 void ParallelMesh::resize(unsigned int x, unsigned int y, unsigned int z) {
@@ -218,22 +208,22 @@ void ParallelMesh::resize(unsigned int x, unsigned int y, unsigned int z) {
   const unsigned int cache_volume = cache_size * m_y *m_z;
   
   if (mesh_left != NULL)
-    fftw_free(mesh_left);
+    FFTW3(free(mesh_left));
   
   if (cache_size != 0)
-    mesh_left = (complex_number *) fftw_malloc(sizeof(fftw_complex) * cache_volume);
+    mesh_left = (complex_number *) FFTW3(malloc(sizeof(FFTW3(complex)) * cache_volume));
   
   if (mesh_right != NULL)
-    fftw_free(mesh_right);
+    FFTW3(free(mesh_right));
   
   if (cache_size != 0)
-    mesh_right = (complex_number *) fftw_malloc(sizeof(fftw_complex) * cache_volume);
+    mesh_right = (complex_number *) FFTW3(malloc(sizeof(FFTW3(complex)) * cache_volume));
   
   if (mesh_tmp != NULL)
-    fftw_free(mesh_tmp);
+    FFTW3(free(mesh_tmp));
   
   if (cache_size != 0)
-    mesh_tmp = (complex_number *) fftw_malloc(sizeof(fftw_complex) * cache_volume);
+    mesh_tmp = (complex_number *) FFTW3(malloc(sizeof(FFTW3(complex)) * cache_volume));
   
   
   // the parallel FFTW library takes care of all the ranges and returns
@@ -242,8 +232,8 @@ void ParallelMesh::resize(unsigned int x, unsigned int y, unsigned int z) {
   // local_n0: the width of the slice (along x)
   // local_0_start: the index (x) at which the slice starts
   ptrdiff_t local_alloc, local_n0, local_0_start;
-  local_alloc = fftw_mpi_local_size_3d(m_x, m_y, m_z, MPI::COMM_WORLD,
-                                              &local_n0, &local_0_start);
+  local_alloc = FFTW3(mpi_local_size_3d(m_x, m_y, m_z, MPI::COMM_WORLD,
+                                              &local_n0, &local_0_start));
   DEBUG(12,"local_n0: " << local_n0 << " local_0_start" << local_0_start);
   slice_width = local_n0;
   slice_start = local_0_start;
@@ -259,22 +249,22 @@ void ParallelMesh::resize(unsigned int x, unsigned int y, unsigned int z) {
   }
   
   if (m_mesh != NULL)
-    fftw_free(m_mesh);
+    FFTW3(free(m_mesh));
   
-  m_mesh = (complex_number *) fftw_malloc(sizeof(fftw_complex) * local_alloc);
+  m_mesh = (complex_number *) FFTW3(malloc(sizeof(FFTW3(complex)) * local_alloc));
   
   if (plan_forward != NULL)
-    fftw_destroy_plan(plan_forward);  
-  plan_forward = fftw_mpi_plan_dft_3d(m_x, m_y, m_z,
-              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
-              MPI::COMM_WORLD, FFTW_FORWARD, FFTW_ESTIMATE);
+    FFTW3(destroy_plan(plan_forward));
+  plan_forward = FFTW3(mpi_plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
+              MPI::COMM_WORLD, FFTW_FORWARD, FFTW_ESTIMATE));
   
   if (plan_backward != NULL)
-    fftw_destroy_plan(plan_backward);
+    FFTW3(destroy_plan(plan_backward));
   
-  plan_backward = fftw_mpi_plan_dft_3d(m_x, m_y, m_z,
-              reinterpret_cast<fftw_complex*> (m_mesh), reinterpret_cast<fftw_complex*> (m_mesh),
-              MPI::COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE);
+  plan_backward = FFTW3(mpi_plan_dft_3d(m_x, m_y, m_z,
+              reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
+              MPI::COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE));
 #endif
 }
 

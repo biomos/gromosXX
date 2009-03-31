@@ -358,6 +358,11 @@ dnl just add it...
 
 dnl check for lib FFTW3
 AC_DEFUN([AM_PATH_FFTW3],[
+  PREFIX='fftw_'
+  if eval "test x$have_clipper = xyes"; then
+    PREFIX='fftw3_'
+  fi
+  AC_DEFINE_UNQUOTED([FFTW_PREFIX], [${PREFIX}], [prefix for fftw3 library])
   AC_ARG_WITH(fftw,
     [  --with-fftw=DIR  fftw library directory to use],
     [
@@ -369,9 +374,9 @@ AC_DEFUN([AM_PATH_FFTW3],[
     ]
   )
   dnl check for lib with these settings and add flags automatically
-  AC_CHECK_LIB([fftw3], [fftw_version],, AC_MSG_ERROR([FFTW3 library missing.]), [-lm])
+  AC_CHECK_LIB([fftw3], [${PREFIX}version],, AC_MSG_ERROR([FFTW3 library missing.]), [-lm])
   if eval "test x$enable_mpi = xyes"; then
-    AC_CHECK_LIB([fftw3_mpi], [fftw_mpi_init],, AC_MSG_ERROR([FFTW3 MPI library missing.]), [])
+    AC_CHECK_LIB([fftw3_mpi], [${PREFIX}mpi_init],, AC_MSG_ERROR([FFTW3 MPI library missing.]), [])
   fi
 ])
 
