@@ -648,15 +648,19 @@ void interaction::Nonbonded_Interaction::expand_configuration
   // exp_conf.resize(topo.multicell_topo().num_atoms());
 
   exp_conf.boundary_type = conf.boundary_type;
-  exp_conf.current().box(0) = sim.param().multicell.x * conf.current().box(0);
-  exp_conf.current().box(1) = sim.param().multicell.y * conf.current().box(1);
-  exp_conf.current().box(2) = sim.param().multicell.z * conf.current().box(2);
+  exp_conf.current().box(0) = sim.param().multicell.x * math::Vec(conf.current().box(0));
+  exp_conf.current().box(1) = sim.param().multicell.y * math::Vec(conf.current().box(1));
+  exp_conf.current().box(2) = sim.param().multicell.z * math::Vec(conf.current().box(2));
   
   exp_conf.init(topo.multicell_topo(), sim.param(), false);
   DEBUG(10, "\texp_conf initialised");
   
   math::Vec shift(0.0);
   int exp_i=0;
+
+  DEBUG(10, "Multicell box:" << math::v2s(exp_conf.current().box(0)) << std::endl
+          << math::v2s(exp_conf.current().box(1)) << std::endl
+          << math::v2s(exp_conf.current().box(2)));
 
   // SOLUTE
   DEBUG(10, "\tsolute");
@@ -703,7 +707,8 @@ void interaction::Nonbonded_Interaction::expand_configuration
       }
     }
   }
-  
+ 
+  exp_conf.current().force = 0.0; 
   exp_conf.current().energies.zero();
   exp_conf.current().perturbed_energy_derivatives.zero();
   exp_conf.current().virial_tensor = 0.0;
@@ -728,15 +733,16 @@ void interaction::Nonbonded_Interaction::reduce_configuration
   
   // reduce the forces
   const unsigned int cells = (sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
-  unsigned int i = 0;
-  for(; i < topo.num_solute_atoms(); ++i) {
+  for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+    DEBUG(10, "i: " << i << " f: " << math::v2s(exp_conf.current().force(i)));
     conf.current().force(i) += exp_conf.current().force(i);
     conf.current().posV(i) += exp_conf.current().posV(i);
   }
   
   // one cell is is already contained in i!! -> cells - 1
   const unsigned int offset = topo.num_solute_atoms() * (cells - 1);
-  for(; i < topo.num_atoms(); ++i) {
+  for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
+    DEBUG(10, "i: " << i << " f: " << math::v2s(exp_conf.current().force(offset + i)));
     conf.current().force(i) += exp_conf.current().force(offset + i);
     conf.current().posV(i) += exp_conf.current().posV(offset + i);
   }
