@@ -1744,13 +1744,13 @@ void io::In_Topology
 	io::messages.add("eof not reached in BONDSTRETCHTYPE block",
 			 "InTopology", io::message::warning);
       }
-      // check for consistency
-      //if (fabs(kh-(k*2*r*r)) > math::epsilon){
-      if (fabs(kh-(k*2*r*r)) > 0.01){
+      // check for consistency, allow 0.01% error
+      double calc_kh = k*2.0*r*r;
+      if (fabs(kh-calc_kh) / kh > 1.0e-4){
         std::ostringstream msg;
         msg << "harmonic and quartic force constant do not match (CHB!=CB*2*B0*B0): " << std::endl
-            << "CHB = " << kh << ", CB*2*B0*B0 = " << k*2*r*r
-                << "CHB-CB*2*B0*B0 = " << kh-(k*2*r*r) << std::endl;
+            << "CHB = " << kh << ", CB*2*B0*B0 = " << calc_kh
+                << " |CHB-CB*2*B0*B0| = " << fabs(kh-calc_kh) << std::endl;
         io::messages.add(msg.str(), "InTopology", io::message::warning);
       }
       // and add r and the harmonic force constant
