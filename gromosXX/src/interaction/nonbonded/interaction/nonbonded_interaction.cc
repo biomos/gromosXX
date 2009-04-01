@@ -259,6 +259,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (!cutoff_ok) {
     io::messages.add("box is too small: not twice the cutoff!",
             "configuration", io::message::error);
+    return 1;
   }
 
   // initialise the pairlist...
@@ -321,6 +322,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
     io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
             io::message::error);
+    return 1;
   }
   DEBUG(9, "nonbonded init done");
 

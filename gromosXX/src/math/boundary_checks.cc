@@ -5,11 +5,19 @@
 
 #include <stdheader.h>
 #include "boundary_checks.h"
+#include "../util/debug.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE math
+#define SUBMODULE math
 
 bool math::boundary_check_cutoff(math::Box const & box, math::boundary_enum const b,
         double cutoff) {
   
   const double cutoff2 = 2.0 * cutoff;
+  DEBUG(3, "Checking cutoff: " << cutoff);
+  DEBUG(3, "Checking box: " << std::endl << math::v2s(box(0)) << std::endl << math::v2s(box(1)) << std::endl << math::v2s(box(2)));
   
   switch (b) {
     case math::vacuum :
