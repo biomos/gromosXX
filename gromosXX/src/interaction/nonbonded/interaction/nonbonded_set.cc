@@ -69,31 +69,9 @@ int interaction::Nonbonded_Set
     
     // zero the longrange forces, energies, virial
     m_longrange_storage.zero();
-
-    // parallelisation using STRIDE:
-    // chargegroup based pairlist can only use this one!!!!
-    // TODO:
-    // move decision to pairlist!!!
     m_pairlist_alg.update(topo, conf, sim, 
 			  pairlist(),
 			  m_rank, topo.num_atoms(), m_num_threads);
-    
-    /*
-    sleep(2*tid);
-    
-    std::cout << "PRINTING OUT THE PAIRLIST\n\n";
-    for(unsigned int i=0; i<100; ++i){
-      if (i >= pairlist().size()) break;
-
-      std::cout << "\n\n--------------------------------------------------";
-      std::cout << "\n" << i;
-      for(unsigned int j=0; j<pairlist()[i].size(); ++j){
-
-	if (j % 10 == 0) std::cout << "\n\t";
-	std::cout << std::setw(7) << pairlist()[i][j];
-      }
-    }
-    */
   }
 
   if (sim.param().polarise.cos) {
@@ -148,11 +126,11 @@ int interaction::Nonbonded_Set
     m_pairlist_alg.timer().stop("shortrange");
 
   // calculate k-space energy and forces
-  if (m_rank == 0)
-    m_pairlist_alg.timer().start("k-space");
   switch (sim.param().nonbonded.method) {
     case simulation::el_ewald :
     {
+      if (m_rank == 0)
+        m_pairlist_alg.timer().start("k-space Ewald");
       DEBUG(6, "\tlong range electrostatics: Ewald");
       if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
         // the box may have changed. Recalculate the k space
@@ -161,10 +139,14 @@ int interaction::Nonbonded_Set
       // do the longrange calculation in k space
       m_outerloop.ls_ewald_kspace_outerloop(topo, conf, sim, m_storage,
               m_rank, m_num_threads);
+      if (m_rank == 0)
+        m_pairlist_alg.timer().stop("k-space Ewald");
       break;
     }
     case simulation::el_p3m :
     {
+      if (m_rank == 0)
+        m_pairlist_alg.timer().start("k-space P3M");
       DEBUG(6, "\tlong range electrostatics: P3M");
       if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
         // check whether we have to recalculate the influence function
@@ -172,14 +154,14 @@ int interaction::Nonbonded_Set
       // do the longrange calculation in k space
       m_outerloop.ls_p3m_kspace_outerloop(topo, conf, sim, m_storage,
               m_rank, m_num_threads, m_pairlist_alg.timer());
+      if (m_rank == 0)
+        m_pairlist_alg.timer().stop("k-space P3M");
       break;
     }
     default:
     {
     } // doing reaction field
   }
-  if (m_rank == 0)
-    m_pairlist_alg.timer().stop("k-space");
 
   // calculate lattice sum self energy and A term
   // this has to be done after the k-space energy is calculated
@@ -192,21 +174,22 @@ int interaction::Nonbonded_Set
           !sim.steps() || // at the beginning of the simulation
           (sim.param().write.energy && sim.steps() % abs(sim.param().write.energy)) == 0; // energy output req.
 
-  if (m_rank == 0)
-    m_pairlist_alg.timer().start("ls self energy and A term");
   switch (sim.param().nonbonded.method) {
     case simulation::el_ewald :
     case simulation::el_p3m :
     {
       if (calculate_lattice_sum_corrections) {
+        if (m_rank == 0)
+          m_pairlist_alg.timer().start("ls self energy and A term");
         m_outerloop.ls_self_outerloop(topo, conf, sim, m_storage,
                 m_rank, m_num_threads);
+        if (m_rank == 0)
+          m_pairlist_alg.timer().stop("ls self energy and A term");
       }
     }
     default:; // doing reaction field
   }
-  if (m_rank == 0)
-    m_pairlist_alg.timer().stop("ls self energy and A term");
+  
 
   
   // single processor algorithms (1-4,...)
