@@ -97,7 +97,8 @@ calculate_interactions(topology::Topology & topo,
   if (steps == 0) steps = 1;
 
   // std::cerr << "Nonbonded: steps = " << steps << std::endl;
-  configuration::Configuration *exp_conf = NULL;
+  configuration::Configuration *p_conf = &conf;
+  topology::Topology *p_topo = &topo;
   if ((sim.steps() % steps) == 0) {
 
     // std::cerr << "\tMULTISTEP: full non-bonded calculation" << std::endl;
@@ -105,39 +106,21 @@ calculate_interactions(topology::Topology & topo,
     ////////////////////////////////////////////////////
     // multiple unit cell
     ////////////////////////////////////////////////////
-
     if (sim.param().multicell.multicell) {
-
       DEBUG(6, "nonbonded: MULTICELL");
-      exp_conf = new configuration::Configuration();
-      expand_configuration(topo, conf, sim, *exp_conf);
-      DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf->current().pos.size());
+      p_conf = new configuration::Configuration();
+      expand_configuration(topo, conf, sim, *p_conf);
+      DEBUG(7, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
+    }
 
-      // shared memory do this only once
-      if (m_pairlist_algorithm->prepare(topo.multicell_topo(), *exp_conf, sim))
-        return 1;
+    // shared memory do this only once
+    if (m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim))
+      return 1;
 
-      // have to do all from here (probably it's only one,
-      // but then maybe it's clearer like it is...)
-      for (int i = 0; i < m_set_size; ++i) {
-        m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
-                *exp_conf,
-                sim);
-      }
-    }      ////////////////////////////////////////////////////
-      // end of MULTICELL
-      ////////////////////////////////////////////////////
-    else {
-
-      // shared memory do this only once
-      if (m_pairlist_algorithm->prepare(topo, conf, sim))
-        return 1;
-
-      // have to do all from here (probably it's only one,
-      // but then maybe it's clearer like it is...)
-      for (int i = 0; i < m_set_size; ++i) {
-        m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
-      }
+    // have to do all from here (probably it's only one,
+    // but then maybe it's clearer like it is...)
+    for (int i = 0; i < m_set_size; ++i) {
+      m_nonbonded_set[i]->calculate_interactions(*p_topo, *p_conf, sim);
     }
 
     ////////////////////////////////////////////////////
@@ -148,15 +131,11 @@ calculate_interactions(topology::Topology & topo,
   }
 
   DEBUG(6, "sets are done, adding things up...");
-  if (sim.param().multicell.multicell) {
-    store_set_data(topo.multicell_topo(), *exp_conf, sim);
-    reduce_configuration(topo, conf, sim, *exp_conf);
-  } else {
-    store_set_data(topo, conf, sim);
-  }
+  store_set_data(*p_topo, *p_conf, sim);
 
-  if (exp_conf != NULL)
-    delete exp_conf;
+  if (sim.param().multicell.multicell) {
+    reduce_configuration(topo, conf, sim, *p_conf);
+  }
 
   ////////////////////////////////////////////////////
   // printing pairlist
@@ -165,9 +144,11 @@ calculate_interactions(topology::Topology & topo,
       (!(sim.steps() % sim.param().pairlist.skip_step))) {
     DEBUG(7, "print pairlist...");
     std::cerr << "printing pairlist!" << std::endl;
-    if (sim.param().pairlist.grid != 2)
-      print_pairlist(topo, conf, sim);
+    print_pairlist(*p_topo, *p_conf, sim);
   }
+
+  if (p_conf != &conf)
+    delete p_conf;
 
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
   m_timer.stop();
@@ -233,54 +214,38 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (!quiet)
     os << "Nonbonded interaction\n";
 
-  configuration::Configuration * exp_conf = NULL;
+  configuration::Configuration * p_conf = &conf;
+  topology::Topology * p_topo = &topo;
   if (sim.param().multicell.multicell) {
     DEBUG(6, "nonbonded init: MULTICELL");
-    exp_conf = new configuration::Configuration();
-    expand_configuration(topo, conf, sim, *exp_conf);
-    DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf->current().pos.size());
+    p_topo = &topo.multicell_topo();
+    p_conf = new configuration::Configuration();
+    expand_configuration(topo, conf, sim, *p_conf);
+    DEBUG(7, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
   }
 
-  bool cutoff_ok = false;
-  if (sim.param().multicell.multicell) {
-    cutoff_ok = math::boundary_check_cutoff(exp_conf->current().box, conf.boundary_type,
-            sim.param().pairlist.cutoff_long);
-  } else {
-    cutoff_ok = math::boundary_check_cutoff(conf.current().box, conf.boundary_type,
-            sim.param().pairlist.cutoff_long);
-  }
-
-  if (!cutoff_ok) {
+  if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
+            sim.param().pairlist.cutoff_long)) {
     io::messages.add("box is too small: not twice the cutoff!",
             "configuration", io::message::error);
     return 1;
   }
 
   // initialise the pairlist...
-  if (sim.param().multicell.multicell) {
-    m_pairlist_algorithm->init(topo.multicell_topo(), *exp_conf, sim, os, quiet);
-  } else {
-    m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
-  }
+  m_pairlist_algorithm->init(*p_topo, *p_conf, sim, os, quiet);
 
   if (sim.param().nonbonded.method != simulation::el_reaction_field) {
-    if (sim.param().multicell.multicell) {
-      conf.lattice_sum().init(topo.multicell_topo(), sim);
-    } else {
-      conf.lattice_sum().init(topo, sim);
-    }
+    conf.lattice_sum().init(*p_topo, sim);
   }
 
   DEBUG(15, "nonbonded_interaction::initialize");
   m_nonbonded_set.clear();
 
   if (sim.param().perturbation.perturbation) {
-
-    // std::cerr << "creating " << m_set_size << " Perturbed_Nonbonded_Sets" << std::endl;
-
-    for (int i = 0; i < m_set_size; ++i)
+    for (int i = 0; i < m_set_size; ++i) {
       m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
             m_parameter, i, m_set_size));
+    }
   } else if (sim.param().eds.eds) {
     DEBUG(16, "creating EDS nonbonded set");
     for (int i = 0; i < m_set_size; ++i) {
@@ -301,10 +266,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 
   bool q = quiet;
   for (; it != to; ++it) {
-    if (sim.param().multicell.multicell)
-      (*it)->init(topo.multicell_topo(), *exp_conf, sim, os, quiet);
-    else
-      (*it)->init(topo, conf, sim, os, q);
+      (*it)->init(*p_topo, *p_conf, sim, os, q);
     // only print first time...
     q = true;
   }
@@ -312,14 +274,14 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (!quiet)
     os << "\n";
 
-  if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
+  if (check_special_loop(*p_topo, *p_conf, sim, os, quiet) != 0) {
     io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
             io::message::error);
     return 1;
   }
   DEBUG(9, "nonbonded init done");
 
-  if (exp_conf != NULL) delete exp_conf;
+  if (p_conf != &conf) delete p_conf;
 
   return 0;
 }
