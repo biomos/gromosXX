@@ -127,6 +127,11 @@ int algorithm::Shake::shake_iteration
       periodicity.nearest_image(ref_i, ref_j, ref_r);
 
       double sp = dot(ref_r, r);
+
+      DEBUG(5, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
+      DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
+      DEBUG(5, "ref r " << math::v2s(ref_r));
+      DEBUG(5, "r " << math::v2s(r));
 	  
       if(sp < constr_length2 * math::epsilon){
 	/*
@@ -134,11 +139,6 @@ int algorithm::Shake::shake_iteration
 			 "Shake::???",
 			 io::message::critical);
 	*/
-	DEBUG(5, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
-	DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
-	DEBUG(5, "ref r " << math::v2s(ref_r));
-	DEBUG(5, "r " << math::v2s(r));
-
 	std::cout << "SHAKE ERROR\n"
 		  << "\tatom i    : " << atom_i + 1 << "\n"
 		  << "\tatom j    : " << atom_j + 1 << "\n"
