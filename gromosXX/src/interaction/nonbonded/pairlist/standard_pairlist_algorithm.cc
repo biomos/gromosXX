@@ -342,7 +342,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 	  for(int a2 = topo.chargegroup(cg2),
 		a2_to = topo.chargegroup(cg2+1);
 	      a2 != a2_to; ++a2){
-	    
+            DEBUG(15, "solvent-solvent longrange: " << a1 << "-" << a2);
 	    pairlist.solvent_long[a1].push_back(a2);
 	    
 	  } // loop over atom of cg2
@@ -358,7 +358,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 	for(int a2 = topo.chargegroup(cg2),
 	      a2_to = topo.chargegroup(cg2+1);
 	    a2 != a2_to; ++a2){
-	  
+	  DEBUG(15, "solvent-solvent shortrange: " << a1 << "-" << a2);
 	  pairlist.solvent_short[a1].push_back(a2);
 	  
 	} // loop over atom of cg2
