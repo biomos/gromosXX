@@ -127,7 +127,16 @@ namespace interaction
     void expand_configuration
     (
      topology::Topology const & topo,
-     configuration::Configuration const & conf,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     configuration::Configuration & exp_conf
+     );
+
+    template<math::boundary_enum b>
+    void _expand_configuration
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
      simulation::Simulation & sim,
      configuration::Configuration & exp_conf
      );
