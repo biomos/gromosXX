@@ -1549,13 +1549,8 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
     if (s1 == "grid" || s1 == "1") param.pairlist.grid = 1;
     else if (s1 == "standard" || s1 == "0") param.pairlist.grid = 0;
     else {
-      std::istringstream css;
-      css.str(s1);
-      css >> param.pairlist.grid;
-      if (css.fail()) {
-        io::messages.add("PAIRLIST block: wrong pairlist algorithm chosen",
-            "In_Parameter", io::message::error);
-      }
+      io::messages.add("PAIRLIST block: wrong pairlist algorithm chosen",
+          "In_Parameter", io::message::error);
       param.pairlist.grid = false;
     }
 
@@ -1566,6 +1561,8 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
         std::istringstream css;
         css.str(s2);
         css >> param.pairlist.grid_size;
+        if (!param.pairlist.grid_size)
+          param.pairlist.grid_size = 0.5 * param.pairlist.cutoff_short;
         // param.pairlist.grid_size = atof(s2.c_str());
         if (css.fail()) {
           io::messages.add("PAIRLIST block: wrong pairlist grid size chosen",
@@ -1575,18 +1572,13 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
       }
     } else param.pairlist.grid_size = 0;
 
-    if (s3 == "atomic") param.pairlist.atomic_cutoff = true;
-    else if (s3 == "chargegroup") param.pairlist.atomic_cutoff = false;
+    if (s3 == "atomic" || s3 == "1") param.pairlist.atomic_cutoff = true;
+    else if (s3 == "chargegroup" || s3 == "0") param.pairlist.atomic_cutoff = false;
     else {
-      std::istringstream css;
-      css.str(s3);
-      css >> param.pairlist.atomic_cutoff;
-      if (css.fail()) {
-        io::messages.add("PAIRLIST block: wrong cutoff type chosen "
-            "(allowed: atomic, chargegroup)",
-            "In_Parameter", io::message::error);
-        param.pairlist.atomic_cutoff = false;
-      }
+      io::messages.add("PAIRLIST block: wrong cutoff type chosen "
+          "(allowed: atomic(1), chargegroup(0)",
+          "In_Parameter", io::message::error);
+      param.pairlist.atomic_cutoff = false;
     }
   }
 
