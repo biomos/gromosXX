@@ -56,11 +56,10 @@
  * Constructor.
  */
 interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa)
-  : Interaction("NonBonded"),
-    m_pairlist_algorithm(pa),
-    m_parameter(),
-    m_set_size(1)
-{
+: Interaction("NonBonded"),
+m_pairlist_algorithm(pa),
+m_parameter(),
+m_set_size(1) {
   m_pairlist_algorithm->timer_pointer(&m_timer);
 }
 
@@ -68,13 +67,12 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
  * Destructor.
  * @bug change destruction of nonbonded set to be standard - conform!
  */
-interaction::Nonbonded_Interaction::~Nonbonded_Interaction()
-{
+interaction::Nonbonded_Interaction::~Nonbonded_Interaction() {
   DEBUG(7, "Nonbonded_Interaction::destructor");
   delete m_pairlist_algorithm;
   DEBUG(12, "pairlist algorithm destroyed");
 
-  for(unsigned int i=0; i < m_nonbonded_set.size(); ++i){
+  for (unsigned int i = 0; i < m_nonbonded_set.size(); ++i) {
     DEBUG(12, "deleting set " << i);
     delete m_nonbonded_set[i];
     m_nonbonded_set[i] = NULL;
@@ -86,9 +84,8 @@ interaction::Nonbonded_Interaction::~Nonbonded_Interaction()
  */
 int interaction::Nonbonded_Interaction::
 calculate_interactions(topology::Topology & topo,
-		       configuration::Configuration & conf,
-		       simulation::Simulation & sim)
-{
+        configuration::Configuration & conf,
+        simulation::Simulation & sim) {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
   m_timer.start();
@@ -98,68 +95,66 @@ calculate_interactions(topology::Topology & topo,
 
   int steps = sim.param().multistep.steps;
   if (steps == 0) steps = 1;
-  
+
   // std::cerr << "Nonbonded: steps = " << steps << std::endl;
   configuration::Configuration *exp_conf = NULL;
-  if ((sim.steps() % steps) == 0){
+  if ((sim.steps() % steps) == 0) {
 
     // std::cerr << "\tMULTISTEP: full non-bonded calculation" << std::endl;
-    
+
     ////////////////////////////////////////////////////
     // multiple unit cell
     ////////////////////////////////////////////////////
-    
-    if (sim.param().multicell.multicell){
-      
+
+    if (sim.param().multicell.multicell) {
+
       DEBUG(6, "nonbonded: MULTICELL");
       exp_conf = new configuration::Configuration();
       expand_configuration(topo, conf, sim, *exp_conf);
       DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf->current().pos.size());
 
       // shared memory do this only once
-      if(m_pairlist_algorithm->prepare(topo.multicell_topo(), *exp_conf, sim))
-	return 1;
-      
+      if (m_pairlist_algorithm->prepare(topo.multicell_topo(), *exp_conf, sim))
+        return 1;
+
       // have to do all from here (probably it's only one,
       // but then maybe it's clearer like it is...)
-      for(int i=0; i < m_set_size; ++i){
-	m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
-						   *exp_conf, 
-						   sim);
+      for (int i = 0; i < m_set_size; ++i) {
+        m_nonbonded_set[i]->calculate_interactions(topo.multicell_topo(),
+                *exp_conf,
+                sim);
       }
-    }
-    ////////////////////////////////////////////////////
-    // end of MULTICELL
-    ////////////////////////////////////////////////////
-    else{
-      
+    }      ////////////////////////////////////////////////////
+      // end of MULTICELL
+      ////////////////////////////////////////////////////
+    else {
+
       // shared memory do this only once
       if (m_pairlist_algorithm->prepare(topo, conf, sim))
-	return 1;
-      
+        return 1;
+
       // have to do all from here (probably it's only one,
       // but then maybe it's clearer like it is...)
-      for(int i=0; i < m_set_size; ++i){
-	m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
+      for (int i = 0; i < m_set_size; ++i) {
+        m_nonbonded_set[i]->calculate_interactions(topo, conf, sim);
       }
     }
 
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
     ////////////////////////////////////////////////////
-  }
-  else{
+  } else {
     // std::cerr << "\tMULTISTEP: no non-bonded calculation" << std::endl;
   }
-  
+
   DEBUG(6, "sets are done, adding things up...");
-  if (sim.param().multicell.multicell){
+  if (sim.param().multicell.multicell) {
     store_set_data(topo.multicell_topo(), *exp_conf, sim);
     reduce_configuration(topo, conf, sim, *exp_conf);
   } else {
     store_set_data(topo, conf, sim);
   }
-  
+
   if (exp_conf != NULL)
     delete exp_conf;
 
@@ -167,16 +162,16 @@ calculate_interactions(topology::Topology & topo,
   // printing pairlist
   ////////////////////////////////////////////////////
   if (sim.param().pairlist.print &&
-      (!(sim.steps() % sim.param().pairlist.skip_step))){
+      (!(sim.steps() % sim.param().pairlist.skip_step))) {
     DEBUG(7, "print pairlist...");
     std::cerr << "printing pairlist!" << std::endl;
     if (sim.param().pairlist.grid != 2)
       print_pairlist(topo, conf, sim);
   }
-  
+
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
   m_timer.stop();
-  
+
   return 0;
 }
 
@@ -186,18 +181,17 @@ calculate_interactions(topology::Topology & topo,
  */
 int interaction::Nonbonded_Interaction::calculate_interaction
 (
- topology::Topology & topo,
- configuration::Configuration & conf,
- simulation::Simulation & sim,
- unsigned int atom_i, unsigned int atom_j,
- math::Vec & force, 
- double &e_lj, double &e_crf
- )
-{
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        unsigned int atom_i, unsigned int atom_j,
+        math::Vec & force,
+        double &e_lj, double &e_crf
+        ) {
   assert(m_nonbonded_set.size() >= 1);
   return m_nonbonded_set[0]->calculate_interaction(topo, conf, sim,
-						   atom_i, atom_j,
-						   force, e_lj, e_crf);
+          atom_i, atom_j,
+          force, e_lj, e_crf);
 }
 
 /**
@@ -205,26 +199,25 @@ int interaction::Nonbonded_Interaction::calculate_interaction
  */
 int interaction::Nonbonded_Interaction::calculate_hessian
 (
- topology::Topology & topo,
- configuration::Configuration & conf,
- simulation::Simulation & sim,
- unsigned int atom_i, unsigned int atom_j,
- math::Matrix & hessian
- )
-{
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        unsigned int atom_i, unsigned int atom_j,
+        math::Matrix & hessian
+        ) {
   std::vector<Nonbonded_Set_Interface *>::iterator
-    it = m_nonbonded_set.begin(),
-    to = m_nonbonded_set.end();
+  it = m_nonbonded_set.begin(),
+          to = m_nonbonded_set.end();
 
   hessian = 0.0;
   math::Matrix h;
 
-  for( ; it != to; ++it){
+  for (; it != to; ++it) {
     (*it)->calculate_hessian(topo, conf, sim, atom_i, atom_j, h);
 
-    for(unsigned int d1=0; d1 < 3; ++d1)
-      for(unsigned int d2=0; d2 < 3; ++d2)
-	hessian(d1,d2) += h(d1,d2);
+    for (unsigned int d1 = 0; d1 < 3; ++d1)
+      for (unsigned int d2 = 0; d2 < 3; ++d2)
+        hessian(d1, d2) += h(d1, d2);
   }
   return 0;
 }
@@ -233,11 +226,10 @@ int interaction::Nonbonded_Interaction::calculate_hessian
  * initialize the arrays
  */
 int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
-					     configuration::Configuration & conf,
-					     simulation::Simulation & sim,
-					     std::ostream & os,
-					     bool quiet)
-{ 
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        std::ostream & os,
+        bool quiet) {
   if (!quiet)
     os << "Nonbonded interaction\n";
 
@@ -252,10 +244,10 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   bool cutoff_ok = false;
   if (sim.param().multicell.multicell) {
     cutoff_ok = math::boundary_check_cutoff(exp_conf->current().box, conf.boundary_type,
-          sim.param().pairlist.cutoff_long);
+            sim.param().pairlist.cutoff_long);
   } else {
     cutoff_ok = math::boundary_check_cutoff(conf.current().box, conf.boundary_type,
-          sim.param().pairlist.cutoff_long);
+            sim.param().pairlist.cutoff_long);
   }
 
   if (!cutoff_ok) {
@@ -265,7 +257,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   }
 
   // initialise the pairlist...
-  if (sim.param().multicell.multicell){
+  if (sim.param().multicell.multicell) {
     m_pairlist_algorithm->init(topo.multicell_topo(), *exp_conf, sim, os, quiet);
   } else {
     m_pairlist_algorithm->init(topo, conf, sim, os, quiet);
@@ -281,20 +273,19 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 
   DEBUG(15, "nonbonded_interaction::initialize");
   m_nonbonded_set.clear();
-  
-  if (sim.param().perturbation.perturbation){
-    
+
+  if (sim.param().perturbation.perturbation) {
+
     // std::cerr << "creating " << m_set_size << " Perturbed_Nonbonded_Sets" << std::endl;
 
-    for(int i=0; i<m_set_size; ++i)
+    for (int i = 0; i < m_set_size; ++i)
       m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
-							    m_parameter, i, m_set_size));
-  }
-  else if (sim.param().eds.eds){
+            m_parameter, i, m_set_size));
+  } else if (sim.param().eds.eds) {
     DEBUG(16, "creating EDS nonbonded set");
-    for(int i=0; i<m_set_size; ++i){
+    for (int i = 0; i < m_set_size; ++i) {
       m_nonbonded_set.push_back(new Eds_Nonbonded_Set(*m_pairlist_algorithm,
-                                                      m_parameter, i, m_set_size));
+              m_parameter, i, m_set_size));
       DEBUG(16, "pushed back EDS nonbonded set");
     }
   } else {
@@ -305,11 +296,11 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   }
 
   std::vector<Nonbonded_Set_Interface *>::iterator
-    it = m_nonbonded_set.begin(),
-    to = m_nonbonded_set.end();
+  it = m_nonbonded_set.begin(),
+          to = m_nonbonded_set.end();
 
   bool q = quiet;
-  for( ; it != to; ++it){
+  for (; it != to; ++it) {
     if (sim.param().multicell.multicell)
       (*it)->init(topo.multicell_topo(), *exp_conf, sim, os, quiet);
     else
@@ -320,7 +311,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 
   if (!quiet)
     os << "\n";
-  
+
   if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
     io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
             io::message::error);
@@ -329,7 +320,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   DEBUG(9, "nonbonded init done");
 
   if (exp_conf != NULL) delete exp_conf;
-  
+
   return 0;
 }
 
@@ -340,36 +331,35 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
 
 int interaction::Nonbonded_Interaction::check_special_loop
 (
- topology::Topology const & topo,
- configuration::Configuration const & conf,
- simulation::Simulation & sim,
- std::ostream & os,
- bool quiet)
-{
+        topology::Topology const & topo,
+        configuration::Configuration const & conf,
+        simulation::Simulation & sim,
+        std::ostream & os,
+        bool quiet) {
   DEBUG(7, "checking for spc interaction loops");
   DEBUG(10, " param: special_loop = " << sim.param().force.special_loop);
-  
+
   if (sim.param().innerloop.method == simulation::sla_off) {
-    sim.param().force.special_loop =  simulation::special_loop_off;
+    sim.param().force.special_loop = simulation::special_loop_off;
     DEBUG(8, "standard loops, user request");
     if (!quiet)
       os << "\tusing standard solvent loops (user request)\n";
     return 0;
   }
-  
-  if (sim.param().pairlist.atomic_cutoff){
+
+  if (sim.param().pairlist.atomic_cutoff) {
     if (!quiet)
       os << "\tusing standard solvent loops (atomic cutoff)\n";
     return 1;
   }
-  
+
   DEBUG(10, "num_solvents = " << topo.num_solvents());
   DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
   DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
-  
+
   // check whether there is a solvent.
-  if (topo.num_solvents() != 1 || topo.num_solvent_molecules(0) < 1){
-  
+  if (topo.num_solvents() != 1 || topo.num_solvent_molecules(0) < 1) {
+
     DEBUG(10, "standard loops...");
 
     if (!quiet) {
@@ -383,19 +373,19 @@ int interaction::Nonbonded_Interaction::check_special_loop
     }
     return 1;
   }
-  
+
   // check energy groups
   DEBUG(10, "checking energy groups ...");
 
-  if(topo.atom_energy_group(topo.num_solute_atoms())!=
-          topo.atom_energy_group(topo.num_atoms()-1)){
+  if (topo.atom_energy_group(topo.num_solute_atoms()) !=
+      topo.atom_energy_group(topo.num_atoms() - 1)) {
     DEBUG(10, "- incompatible.");
-    if(!quiet)
+    if (!quiet)
       os << "\tusing standard solvent loops (energy group partitioning incompatible).\n"
-              << "\tAll solvent atoms must be in one single energy group. ";
+            << "\tAll solvent atoms must be in one single energy group. ";
     return 1;
-  }  
-  
+  }
+
   if (sim.param().innerloop.method == simulation::sla_generic) {
     // the generic loop works for now.
     DEBUG(8, "generic solvent loop, user request");
@@ -404,7 +394,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
       os << "\tusing generic solvent loops (user request)\n";
     return 0;
   }
-  
+
   // check whether the number of atoms match for other methods
   switch (sim.param().innerloop.solvent) {
     case simulation::sls_spc :
@@ -424,7 +414,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
       os << "\tusing standard solvent loops (unknown solvent)\n\n";
       return 1;
   }
-  
+
   // check the hardcoded parameters if the method applies
   if (sim.param().innerloop.method == simulation::sla_hardcode) {
     // check four_pi_eps_i
@@ -494,7 +484,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
         if (!quiet) {
           os << "\tusing hardcoded spc solvent loops\n";
         }
-        
+
         break;
       }
       default:
@@ -513,7 +503,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
 #define CHECK_PARAM "check_param"
 #include <interaction/nonbonded/interaction/spc_table.h>
 #undef CHECK_PARAM
-        
+
         // check four_pi_eps_i
         DEBUG(10, "checking (4 pi eps0)^-1 ...");
         if (math::four_pi_eps_i != four_pi_eps_i) {
@@ -522,7 +512,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
             os << "\tusing standard solvent loops ((4 pi eps0)^-1 does not match)\n";
           return 1;
         }
-        
+
         DEBUG(10, "checking cutoffs and RF parameters...");
         if (shortrange_cutoff != sim.param().pairlist.cutoff_short ||
             longrange_cutoff != sim.param().pairlist.cutoff_long ||
@@ -532,22 +522,22 @@ int interaction::Nonbonded_Interaction::check_special_loop
           DEBUG(10, " do not match, force standard loop");
           if (!quiet)
             os << "\tusing standard solvent loops (RF parameters or cutoffs do not match)\n";
-          return 1;         
-        }        
-        
+          return 1;
+        }
+
         DEBUG(10, "checking charges...");
         // check charges
         const double qO = topo.charge()(topo.num_solute_atoms());
         const double qH1 = topo.charge()(topo.num_solute_atoms() + 1);
         const double qH2 = topo.charge()(topo.num_solute_atoms() + 2);
-        if (qH2 - qH1 > math::epsilon || qH1*qO - qOH > math::epsilon ||
-            qO*qO - qOO > math::epsilon || qH1*qH1 - qHH > math::epsilon) {
+        if (qH2 - qH1 > math::epsilon || qH1 * qO - qOH > math::epsilon ||
+            qO * qO - qOO > math::epsilon || qH1 * qH1 - qHH > math::epsilon) {
           DEBUG(10, "charges don't match, standard loops");
           if (!quiet)
             os << "\tusing standard solvent loops (charges don't match)\n"
-               << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
-               << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms() + 1) << "\n"
-               << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n\n";
+                  << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
+            << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms() + 1) << "\n"
+            << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n\n";
 
           return 1;
         }
@@ -584,7 +574,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
             os << "\tusing standard solvent loops (van der Waals parameter don't match)\n";
           return 1;
         }
-        
+
         // maybe one want's to check the solvent diameter
         DEBUG(10, "happy to use spc loops");
         sim.param().force.special_loop = simulation::special_loop_spc_table;
@@ -593,7 +583,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
           os << "\t\tshortrange table size: " << shortrange_table << "\n";
           os << "\t\tlongrange table size:  " << longrange_table << "\n";
         }
-        
+
         break;
       }
       default:
@@ -601,8 +591,8 @@ int interaction::Nonbonded_Interaction::check_special_loop
         return 1;
     } // solvents
   } // tabulated forces
-  
-  return 0; 
+
+  return 0;
 }
 
 /**
@@ -610,17 +600,16 @@ int interaction::Nonbonded_Interaction::check_special_loop
  */
 void interaction::Nonbonded_Interaction::store_set_data
 (
- topology::Topology const & topo,
- configuration::Configuration & conf,
- simulation::Simulation const & sim
- )
-{
+        topology::Topology const & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation const & sim
+        ) {
   std::vector<Nonbonded_Set_Interface *>::iterator
-    it = m_nonbonded_set.begin(),
-    to = m_nonbonded_set.end();
-  
+  it = m_nonbonded_set.begin(),
+          to = m_nonbonded_set.end();
+
   // add the forces, energies, virial...
-  for( ; it != to; ++it){
+  for (; it != to; ++it) {
     DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
     (*it)->update_configuration(topo, conf, sim);
   }
@@ -633,18 +622,17 @@ void interaction::Nonbonded_Interaction::store_set_data
  */
 void interaction::Nonbonded_Interaction::expand_configuration
 (
- topology::Topology const & topo,
- configuration::Configuration const & conf,
- simulation::Simulation & sim,
- configuration::Configuration & exp_conf
- )
-{
+        topology::Topology const & topo,
+        configuration::Configuration const & conf,
+        simulation::Simulation & sim,
+        configuration::Configuration & exp_conf
+        ) {
 
   DEBUG(7, "expanding configuration");
-  
+
   const int mul = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
   DEBUG(8, "\tmul=" << mul);
-  
+
   assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * mul);
   // resize the configuration
   exp_conf.resize(topo.multicell_topo().num_atoms());
@@ -653,11 +641,11 @@ void interaction::Nonbonded_Interaction::expand_configuration
   exp_conf.current().box(0) = sim.param().multicell.x * math::Vec(conf.current().box(0));
   exp_conf.current().box(1) = sim.param().multicell.y * math::Vec(conf.current().box(1));
   exp_conf.current().box(2) = sim.param().multicell.z * math::Vec(conf.current().box(2));
-  
+
   DEBUG(10, "\texp_conf initialised");
-  
+
   math::Vec shift(0.0);
-  int exp_i=0;
+  int exp_i = 0;
 
   DEBUG(10, "Multicell box:" << math::v2s(exp_conf.current().box(0)) << std::endl
           << math::v2s(exp_conf.current().box(1)) << std::endl
@@ -665,53 +653,53 @@ void interaction::Nonbonded_Interaction::expand_configuration
 
   // SOLUTE
   DEBUG(10, "\tsolute");
-  for(int z=0; z<sim.param().multicell.z; ++z){
-    for(int y=0; y<sim.param().multicell.y; ++y){
-      for(int x=0; x<sim.param().multicell.x; ++x){
+  for (int z = 0; z < sim.param().multicell.z; ++z) {
+    for (int y = 0; y < sim.param().multicell.y; ++y) {
+      for (int x = 0; x < sim.param().multicell.x; ++x) {
 
-	shift = x * conf.current().box(0) + 
-	  y * conf.current().box(1) + 
-	  z * conf.current().box(2);
+        shift = x * conf.current().box(0) +
+                y * conf.current().box(1) +
+                z * conf.current().box(2);
 
-	// this should be the NORMAL topo!
-	for(unsigned int i=0; i<topo.num_solute_atoms(); ++i, ++exp_i){
-	  
-	  assert(exp_conf.current().pos.size() > unsigned(exp_i));
-	  assert(conf.current().pos.size() > i);
-	  
-	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
+        // this should be the NORMAL topo!
+        for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i, ++exp_i) {
+
+          assert(exp_conf.current().pos.size() > unsigned(exp_i));
+          assert(conf.current().pos.size() > i);
+
+          exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
           exp_conf.current().posV(exp_i) = conf.current().posV(i);
           DEBUG(10, "i: " << exp_i << " pos: " << math::v2s(exp_conf.current().pos(exp_i)));
-	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
-	}
+          // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
+        }
       }
     }
   }
 
   // SOLVENT
-  for(int z=0; z<sim.param().multicell.z; ++z){
-    for(int y=0; y<sim.param().multicell.y; ++y){
-      for(int x=0; x<sim.param().multicell.x; ++x){
+  for (int z = 0; z < sim.param().multicell.z; ++z) {
+    for (int y = 0; y < sim.param().multicell.y; ++y) {
+      for (int x = 0; x < sim.param().multicell.x; ++x) {
 
-	shift = x * conf.current().box(0) + 
-	  y * conf.current().box(1) + 
-	  z * conf.current().box(2);
+        shift = x * conf.current().box(0) +
+                y * conf.current().box(1) +
+                z * conf.current().box(2);
 
-	for(unsigned int i=topo.num_solute_atoms(); i<topo.num_atoms(); ++i, ++exp_i){
-	  
-	  assert(exp_conf.current().pos.size() > unsigned(exp_i));
-	  assert(conf.current().pos.size() > i);
-	  
-	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
+        for (unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i, ++exp_i) {
+
+          assert(exp_conf.current().pos.size() > unsigned(exp_i));
+          assert(conf.current().pos.size() > i);
+
+          exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
           exp_conf.current().posV(exp_i) = conf.current().posV(i);
-	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
+          // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
           DEBUG(10, "i: " << exp_i << " pos: " << math::v2s(exp_conf.current().pos(exp_i)));
-	}
+        }
       }
     }
   }
- 
-  exp_conf.current().force = 0.0; 
+
+  exp_conf.current().force = 0.0;
   exp_conf.current().energies.zero();
   exp_conf.current().perturbed_energy_derivatives.zero();
   exp_conf.current().virial_tensor = 0.0;
@@ -726,33 +714,32 @@ void interaction::Nonbonded_Interaction::expand_configuration
  */
 void interaction::Nonbonded_Interaction::reduce_configuration
 (
- topology::Topology const & topo,
- configuration::Configuration & conf,
- simulation::Simulation & sim,
- configuration::Configuration & exp_conf
- )
- {
+        topology::Topology const & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        configuration::Configuration & exp_conf
+        ) {
   // add one-four, rf excluded etc... all those things that go directly into 
   // the configuration and not into storages of the sets
-  
+
   // reduce the forces
   const unsigned int cells = (sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
-  for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+  for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
     DEBUG(10, "i: " << i << " nb f: " << math::v2s(exp_conf.current().force(i)));
     conf.current().force(i) += exp_conf.current().force(i);
     DEBUG(10, "i: " << i << " f: " << math::v2s(conf.current().force(i)));
     conf.current().posV(i) = exp_conf.current().posV(i);
   }
-  
+
   // one cell is is already contained in i!! -> cells - 1
   const unsigned int offset = topo.num_solute_atoms() * (cells - 1);
-  for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
+  for (unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
     DEBUG(10, "i: " << i << " nb f: " << math::v2s(exp_conf.current().force(offset + i)));
     conf.current().force(i) += exp_conf.current().force(offset + i);
     DEBUG(10, "i: " << i << " f: " << math::v2s(conf.current().force(i)));
     conf.current().posV(i) = exp_conf.current().posV(offset + i);
   }
-  
+
   const int ljs = conf.current().energies.lj_energy.size();
   configuration::Energy & e = conf.current().energies;
   configuration::Energy & exp_e = exp_conf.current().energies;
@@ -760,10 +747,10 @@ void interaction::Nonbonded_Interaction::reduce_configuration
   configuration::Energy & exp_pe = exp_conf.current().perturbed_energy_derivatives;
 
   const double cells_i = 1.0 / cells;
-  
+
   // reduce the energies
-  for(int i = 0; i < ljs; ++i){
-    for(int j = 0; j < ljs; ++j){
+  for (int i = 0; i < ljs; ++i) {
+    for (int j = 0; j < ljs; ++j) {
       e.lj_energy[i][j] += exp_e.lj_energy[i][j] * cells_i;
       e.crf_energy[i][j] += exp_e.crf_energy[i][j] * cells_i;
       pe.lj_energy[i][j] += exp_pe.lj_energy[i][j] * cells_i;
@@ -771,73 +758,71 @@ void interaction::Nonbonded_Interaction::reduce_configuration
     }
   }
   // reduce the virial
-  if (sim.param().pcouple.virial){
+  if (sim.param().pcouple.virial) {
     DEBUG(7, "\tadd set virial");
-    
-    for(unsigned int i=0; i<3; ++i){
-      for(unsigned int j=0; j<3; ++j){
-        
+
+    for (unsigned int i = 0; i < 3; ++i) {
+      for (unsigned int j = 0; j < 3; ++j) {
+
         conf.current().virial_tensor(i, j) +=
-        exp_conf.current().virial_tensor(i, j) * cells_i;
+                exp_conf.current().virial_tensor(i, j) * cells_i;
       }
     }
   }
 }
-
 
 /**
  * print the pairlist
  */
 int interaction::Nonbonded_Interaction::print_pairlist
 (
- topology::Topology & topo,
- configuration::Configuration & conf,
- simulation::Simulation & sim,
- std::ostream & os
- )
-{
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        std::ostream & os
+        ) {
   DEBUG(4, "Nonbonded_Interaction::print_pairlist");
-  
+
   Pairlist temp_solute, temp_solvent;
   temp_solute.resize(topo.num_atoms());
   temp_solvent.resize(topo.num_atoms());
-  
-  for(unsigned int atom_i = 0; atom_i < topo.num_atoms(); ++atom_i){
-    
-    for(int i=0; i < m_set_size; ++i){
 
-      assert (m_nonbonded_set.size() > unsigned(i));
-      assert (m_nonbonded_set[i]->pairlist().solute_short.size() > atom_i);
-      assert (m_nonbonded_set[i]->pairlist().solvent_short.size() > atom_i);
-      
-      for(unsigned int atom_j = 0;
-	  atom_j < m_nonbonded_set[i]->pairlist().solute_short[atom_i].size();
-	  ++atom_j){
-	
-	assert(temp_solute.size() > atom_i);
-	assert(temp_solute.size() > m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]);
+  for (unsigned int atom_i = 0; atom_i < topo.num_atoms(); ++atom_i) {
 
-	if (m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j] < atom_i)
-	  temp_solute[m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]].push_back(atom_i);
-	else
-	  temp_solute[atom_i].push_back(m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]);
+    for (int i = 0; i < m_set_size; ++i) {
+
+      assert(m_nonbonded_set.size() > unsigned(i));
+      assert(m_nonbonded_set[i]->pairlist().solute_short.size() > atom_i);
+      assert(m_nonbonded_set[i]->pairlist().solvent_short.size() > atom_i);
+
+      for (unsigned int atom_j = 0;
+              atom_j < m_nonbonded_set[i]->pairlist().solute_short[atom_i].size();
+              ++atom_j) {
+
+        assert(temp_solute.size() > atom_i);
+        assert(temp_solute.size() > m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]);
+
+        if (m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j] < atom_i)
+          temp_solute[m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]].push_back(atom_i);
+        else
+          temp_solute[atom_i].push_back(m_nonbonded_set[i]->pairlist().solute_short[atom_i][atom_j]);
       }
-      for(unsigned int atom_j = 0;
-	  atom_j < m_nonbonded_set[i]->pairlist().solvent_short[atom_i].size();
-	  ++atom_j){
-	
-	assert(temp_solvent.size() > atom_i);
-	assert(temp_solvent.size() > m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]);
+      for (unsigned int atom_j = 0;
+              atom_j < m_nonbonded_set[i]->pairlist().solvent_short[atom_i].size();
+              ++atom_j) {
 
-	if (m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j] < atom_i)
-	  temp_solvent[m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]].push_back(atom_i);
-	else
-	  temp_solvent[atom_i].push_back(m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]);
+        assert(temp_solvent.size() > atom_i);
+        assert(temp_solvent.size() > m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]);
+
+        if (m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j] < atom_i)
+          temp_solvent[m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]].push_back(atom_i);
+        else
+          temp_solvent[atom_i].push_back(m_nonbonded_set[i]->pairlist().solvent_short[atom_i][atom_j]);
       }
     }
   }
-  
+
   os << temp_solute << std::endl
-     << temp_solvent << std::endl;
+          << temp_solvent << std::endl;
   return 0;
 }
