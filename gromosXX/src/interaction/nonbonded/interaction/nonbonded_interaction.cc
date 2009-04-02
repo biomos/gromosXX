@@ -153,11 +153,13 @@ calculate_interactions(topology::Topology & topo,
   }
   
   DEBUG(6, "sets are done, adding things up...");
-  store_set_data(topo, conf, sim);
-  
-  if (sim.param().multicell.multicell)  
+  if (sim.param().multicell.multicell){
+    store_set_data(topo.multicell_topo(), *exp_conf, sim);
     reduce_configuration(topo, conf, sim, *exp_conf);
-
+  } else {
+    store_set_data(topo, conf, sim);
+  }
+  
   if (exp_conf != NULL)
     delete exp_conf;
 
@@ -645,14 +647,13 @@ void interaction::Nonbonded_Interaction::expand_configuration
   
   assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * mul);
   // resize the configuration
-  // exp_conf.resize(topo.multicell_topo().num_atoms());
+  exp_conf.resize(topo.multicell_topo().num_atoms());
 
   exp_conf.boundary_type = conf.boundary_type;
   exp_conf.current().box(0) = sim.param().multicell.x * math::Vec(conf.current().box(0));
   exp_conf.current().box(1) = sim.param().multicell.y * math::Vec(conf.current().box(1));
   exp_conf.current().box(2) = sim.param().multicell.z * math::Vec(conf.current().box(2));
   
-  exp_conf.init(topo.multicell_topo(), sim.param(), false);
   DEBUG(10, "\texp_conf initialised");
   
   math::Vec shift(0.0);
@@ -680,6 +681,7 @@ void interaction::Nonbonded_Interaction::expand_configuration
 	  
 	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
           exp_conf.current().posV(exp_i) = conf.current().posV(i);
+          DEBUG(10, "i: " << exp_i << " pos: " << math::v2s(exp_conf.current().pos(exp_i)));
 	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
 	}
       }
@@ -703,6 +705,7 @@ void interaction::Nonbonded_Interaction::expand_configuration
 	  exp_conf.current().pos(exp_i) = conf.current().pos(i) + shift;
           exp_conf.current().posV(exp_i) = conf.current().posV(i);
 	  // exp_conf.old().pos(exp_i) = conf.old().pos(i) + shift;
+          DEBUG(10, "i: " << exp_i << " pos: " << math::v2s(exp_conf.current().pos(exp_i)));
 	}
       }
     }
@@ -713,6 +716,7 @@ void interaction::Nonbonded_Interaction::expand_configuration
   exp_conf.current().perturbed_energy_derivatives.zero();
   exp_conf.current().virial_tensor = 0.0;
 
+  exp_conf.init(topo.multicell_topo(), sim.param());
 }
 
 /**
@@ -734,17 +738,19 @@ void interaction::Nonbonded_Interaction::reduce_configuration
   // reduce the forces
   const unsigned int cells = (sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
   for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
-    DEBUG(10, "i: " << i << " f: " << math::v2s(exp_conf.current().force(i)));
+    DEBUG(10, "i: " << i << " nb f: " << math::v2s(exp_conf.current().force(i)));
     conf.current().force(i) += exp_conf.current().force(i);
-    conf.current().posV(i) += exp_conf.current().posV(i);
+    DEBUG(10, "i: " << i << " f: " << math::v2s(conf.current().force(i)));
+    conf.current().posV(i) = exp_conf.current().posV(i);
   }
   
   // one cell is is already contained in i!! -> cells - 1
   const unsigned int offset = topo.num_solute_atoms() * (cells - 1);
   for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
-    DEBUG(10, "i: " << i << " f: " << math::v2s(exp_conf.current().force(offset + i)));
+    DEBUG(10, "i: " << i << " nb f: " << math::v2s(exp_conf.current().force(offset + i)));
     conf.current().force(i) += exp_conf.current().force(offset + i);
-    conf.current().posV(i) += exp_conf.current().posV(offset + i);
+    DEBUG(10, "i: " << i << " f: " << math::v2s(conf.current().force(i)));
+    conf.current().posV(i) = exp_conf.current().posV(offset + i);
   }
   
   const int ljs = conf.current().energies.lj_energy.size();

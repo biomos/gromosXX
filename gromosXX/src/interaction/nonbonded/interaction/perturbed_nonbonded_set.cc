@@ -287,9 +287,6 @@ int interaction::Perturbed_Nonbonded_Set::update_configuration
 
   Nonbonded_Set::update_configuration(topo, conf, sim);
   
-  const unsigned int cells = (sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
-  const double cells_i = 1.0 / cells;
-	
   for(int i = 0; i < ljs; ++i){
     for(int j = 0; j < ljs; ++j){
       
@@ -303,12 +300,12 @@ int interaction::Perturbed_Nonbonded_Set::update_configuration
 	  
       pe.lj_energy[i][j] += 
 	m_storage.perturbed_energy_derivatives.
-	lj_energy[i][j] * cells_i;
+	lj_energy[i][j];
       pe.crf_energy[i][j] += 
 	m_storage.perturbed_energy_derivatives.
-	crf_energy[i][j] * cells_i;
+	crf_energy[i][j];
     }
-    pe.self_energy[i] += m_storage.perturbed_energy_derivatives.self_energy[i] * cells_i;
+    pe.self_energy[i] += m_storage.perturbed_energy_derivatives.self_energy[i];
   }
   
   return 0;
