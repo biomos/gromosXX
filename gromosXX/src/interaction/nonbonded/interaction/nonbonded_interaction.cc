@@ -226,13 +226,42 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
     expand_configuration(topo, conf, sim, *p_conf);
     DEBUG(7, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
 
-    // do some important multicell tests
+    // do some important multicell tests:
+    // No surface term!
     if (sim.param().nonbonded.ls_epsilon != 0.0) {
       io::messages.add("MULTICELL simulation does only work under tinfoil "
               "boundary conditions (LSEPS=0.0)", "mutlicell", io::message::error);
       return 1;
     }
-  }
+
+    // exclusions to other molecules can cause problems because they are only between
+    // single copies of the box. Because we gather by molecules this can in rare
+    // cases be a problem
+    for(topology::Molecule_Iterator m_it = topo.molecule_begin(); m_it != topo.molecule_end(); ++m_it) {
+      topology::Atom_Iterator a_it = m_it.begin(), a_start = m_it.begin(), a_end = m_it.end();
+      DEBUG(10, "molecule from " << *a_start << " to " << *a_end);
+      for(; a_it != a_end; ++a_it) {
+        std::set<int>::const_iterator ex_it = topo.exclusion(*a_it).begin(),
+                ex_to = topo.exclusion(*a_it).end();
+        for (; ex_it != ex_to; ++ex_it) {
+          if (*ex_it < *a_start || *ex_it >= *a_end) {
+            io::messages.add("Exclusions are not in same molecule. This is can cause errors in multicell simulations.",
+                    "multicell", io::message::error);
+            return 1;
+          }
+        } // for exclusions
+        std::set<int>::const_iterator of_it = topo.one_four_pair(*a_it).begin(),
+                of_to = topo.one_four_pair(*a_it).end();
+        for (; of_it != of_to; ++of_it) {
+          if (*of_it < *a_start || *of_it >= *a_end) {
+            io::messages.add("1-4 pairs are not in same molecule. This is can cause errors in multicell simulations.",
+                    "multicell", io::message::error);
+            return 1;
+          }
+        } // for 1-4 pairs
+      }// for atoms
+    } // for molecles
+  } // check multicell stuff
 
   if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
             sim.param().pairlist.cutoff_long)) {
