@@ -244,7 +244,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
         std::set<int>::const_iterator ex_it = topo.exclusion(*a_it).begin(),
                 ex_to = topo.exclusion(*a_it).end();
         for (; ex_it != ex_to; ++ex_it) {
-          if (*ex_it < *a_start || *ex_it >= *a_end) {
+          if (*ex_it < int(*a_start) || *ex_it >= int(*a_end)) {
             io::messages.add("Exclusions are not in same molecule. This is can cause errors in multicell simulations.",
                     "multicell", io::message::error);
             return 1;
@@ -253,7 +253,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
         std::set<int>::const_iterator of_it = topo.one_four_pair(*a_it).begin(),
                 of_to = topo.one_four_pair(*a_it).end();
         for (; of_it != of_to; ++of_it) {
-          if (*of_it < *a_start || *of_it >= *a_end) {
+          if (*of_it < int(*a_start) || *of_it >= int(*a_end)) {
             io::messages.add("1-4 pairs are not in same molecule. This is can cause errors in multicell simulations.",
                     "multicell", io::message::error);
             return 1;
