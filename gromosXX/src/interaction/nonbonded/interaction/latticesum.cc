@@ -661,8 +661,8 @@ void interaction::Lattice_Sum::calculate_force(
   MeshType & electric_field_z = *reinterpret_cast<MeshType*>(conf.lattice_sum().electric_field.z);
   
   assert(electric_field_x.x() == electric_field_y.x() && electric_field_x.x() == electric_field_z.x());
-  assert(electric_field_x.x() == electric_field_y.y() && electric_field_x.y() == electric_field_z.y());
-  assert(electric_field_x.x() == electric_field_y.z() && electric_field_x.z() == electric_field_z.z());
+  assert(electric_field_x.y() == electric_field_y.y() && electric_field_x.y() == electric_field_z.y());
+  assert(electric_field_x.z() == electric_field_y.z() && electric_field_x.z() == electric_field_z.z());
   
   const int Nx = electric_field_x.x();
   const int Ny = electric_field_x.y();
