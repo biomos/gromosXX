@@ -42,9 +42,16 @@ void configuration::Influence_Function::setBox(const math::Box & box) {
 }
 
 void configuration::Influence_Function::init(const simulation::Parameter & param) {
-  const unsigned int & x = param.nonbonded.p3m_grid_points_x;
-  const unsigned int & y = param.nonbonded.p3m_grid_points_y;
-  const unsigned int & z = param.nonbonded.p3m_grid_points_z;
+  unsigned int x = param.nonbonded.p3m_grid_points_x;
+  unsigned int y = param.nonbonded.p3m_grid_points_y;
+  unsigned int z = param.nonbonded.p3m_grid_points_z;
+
+  if (param.multicell.multicell) {
+    x *= param.multicell.x;
+    y *= param.multicell.y;
+    z *= param.multicell.z;
+  }
+
   ghat.resize(x, y, z);
   
   // we need the derivative to calculate the pressure!

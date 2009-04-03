@@ -2283,7 +2283,7 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("ewald", "innerloop_spc");
   //fc.unlock("ewald", "repex_temp"); --probably works
   //fc.unlock("ewald", "repex_lambda"); --probably works
-  //fc.unlock("ewald", "multicell"); --probably works
+  fc.unlock("ewald", "multicell");
   //fc.unlock("ewald", "analysis"); --works if box invariant (recalculation of infl. func. necessary otherwise)
   fc.unlock("ewald", "no_integration");
   //fc.unlock("ewald", "stochdyn");
@@ -2353,7 +2353,7 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("p3m", "innerloop_spc");
   //fc.unlock("p3m", "repex_temp"); --probably works
   //fc.unlock("p3m", "repex_lambda"); --probably works
-  //fc.unlock("p3m", "multicell"); --probably works
+  fc.unlock("p3m", "multicell");
   //fc.unlock("p3m", "analysis");  --works if box invariant (recalculation of infl. func. necessary otherwise)
   fc.unlock("p3m", "no_integration");
   //fc.unlock("p3m", "stochdyn");

@@ -272,8 +272,11 @@ int interaction::create_g96_nonbonded
       os << "\tP3M number of grid point along axes  : \n"
               << "\t" << std::setw(5) << sim.param().nonbonded.p3m_grid_points_x
               << std::setw(5) << sim.param().nonbonded.p3m_grid_points_y
-              << std::setw(5) << sim.param().nonbonded.p3m_grid_points_z << "\n"
-              << "\tP3M assignment function order   : "
+              << std::setw(5) << sim.param().nonbonded.p3m_grid_points_z << "\n";
+      if (sim.param().multicell.multicell) {
+        os << "\tgrid dimensions are going to be scaled according to MULTICELL information.\n";
+      }
+      os << "\tP3M assignment function order   : "
               << sim.param().nonbonded.p3m_charge_assignment << "\n"
               << "\tP3M finite differences order    : "
               << sim.param().nonbonded.p3m_finite_differences_operator << "\n"

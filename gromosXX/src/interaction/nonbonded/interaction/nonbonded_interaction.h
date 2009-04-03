@@ -120,6 +120,14 @@ namespace interaction
      bool quiet = false);
 
     /**
+     * initialize the expanded configuration
+     */
+    void init_expand_configuration(topology::Topology const & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation & sim,
+     configuration::Configuration & exp_conf);
+
+    /**
      * expand a configuration for
      * multiple unit cell
      * simulations
@@ -194,6 +202,11 @@ namespace interaction
      * number of sets to create
      */
     int m_set_size;
+
+    /**
+     * the expanded configuration;
+     */
+    configuration::Configuration * m_exp_conf;
 
   };
   

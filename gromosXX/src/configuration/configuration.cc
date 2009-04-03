@@ -397,9 +397,15 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
   }
   
   if (param.nonbonded.method == simulation::el_p3m) {
-    const unsigned int Nx = param.nonbonded.p3m_grid_points_x;
-    const unsigned int Ny = param.nonbonded.p3m_grid_points_y;
-    const unsigned int Nz = param.nonbonded.p3m_grid_points_z;
+    unsigned int Nx = param.nonbonded.p3m_grid_points_x;
+    unsigned int Ny = param.nonbonded.p3m_grid_points_y;
+    unsigned int Nz = param.nonbonded.p3m_grid_points_z;
+
+    if (param.multicell.multicell) {
+      Nx *= param.multicell.x;
+      Ny *= param.multicell.y;
+      Nz *= param.multicell.z;
+    }
 
     const bool do_a2 = (
             param.nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||

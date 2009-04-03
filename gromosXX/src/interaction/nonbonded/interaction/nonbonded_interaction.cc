@@ -59,7 +59,8 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
 : Interaction("NonBonded"),
 m_pairlist_algorithm(pa),
 m_parameter(),
-m_set_size(1) {
+m_set_size(1),
+m_exp_conf(NULL) {
   m_pairlist_algorithm->timer_pointer(&m_timer);
 }
 
@@ -77,6 +78,9 @@ interaction::Nonbonded_Interaction::~Nonbonded_Interaction() {
     delete m_nonbonded_set[i];
     m_nonbonded_set[i] = NULL;
   }
+
+  if (m_exp_conf != NULL)
+    delete m_exp_conf;
 }
 
 /**
@@ -108,7 +112,7 @@ calculate_interactions(topology::Topology & topo,
     ////////////////////////////////////////////////////
     if (sim.param().multicell.multicell) {
       DEBUG(6, "nonbonded: MULTICELL");
-      p_conf = new configuration::Configuration();
+      p_conf = m_exp_conf;
       p_topo = &topo.multicell_topo();
       expand_configuration(topo, conf, sim, *p_conf);
       DEBUG(6, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
@@ -147,9 +151,6 @@ calculate_interactions(topology::Topology & topo,
     std::cerr << "printing pairlist!" << std::endl;
     print_pairlist(*p_topo, *p_conf, sim);
   }
-
-  if (p_conf != &conf)
-    delete p_conf;
 
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
   m_timer.stop();
@@ -220,9 +221,17 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   if (sim.param().multicell.multicell) {
     DEBUG(6, "nonbonded init: MULTICELL");
     p_topo = &topo.multicell_topo();
-    p_conf = new configuration::Configuration();
+    m_exp_conf = p_conf = new configuration::Configuration();
+    init_expand_configuration(topo, conf, sim, *p_conf);
     expand_configuration(topo, conf, sim, *p_conf);
     DEBUG(7, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
+
+    // do some important multicell tests
+    if (sim.param().nonbonded.ls_epsilon != 0.0) {
+      io::messages.add("MULTICELL simulation does only work under tinfoil "
+              "boundary conditions (LSEPS=0.0)", "mutlicell", io::message::error);
+      return 1;
+    }
   }
 
   if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
@@ -236,7 +245,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   m_pairlist_algorithm->init(*p_topo, *p_conf, sim, os, quiet);
 
   if (sim.param().nonbonded.method != simulation::el_reaction_field) {
-    conf.lattice_sum().init(*p_topo, sim);
+    p_conf->lattice_sum().init(*p_topo, sim);
   }
 
   DEBUG(15, "nonbonded_interaction::initialize");
@@ -281,9 +290,6 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
     return 1;
   }
   DEBUG(9, "nonbonded init done");
-
-  if (p_conf != &conf) delete p_conf;
-
   return 0;
 }
 
@@ -578,6 +584,29 @@ void interaction::Nonbonded_Interaction::store_set_data
   }
 }
 
+void interaction::Nonbonded_Interaction::init_expand_configuration
+(
+        topology::Topology const & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        configuration::Configuration & exp_conf) {
+  const int mul = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
+  DEBUG(8, "\tmul=" << mul);
+
+  assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * mul);
+  // resize the configuration
+  exp_conf.resize(topo.multicell_topo().num_atoms());
+  
+  exp_conf.boundary_type = conf.boundary_type;
+  exp_conf.current().box(0) = sim.param().multicell.x * math::Vec(conf.current().box(0));
+  exp_conf.current().box(1) = sim.param().multicell.y * math::Vec(conf.current().box(1));
+  exp_conf.current().box(2) = sim.param().multicell.z * math::Vec(conf.current().box(2));
+
+  exp_conf.init(topo.multicell_topo(), sim.param(), false);
+
+  DEBUG(10, "\texp_conf initialised");
+}
+
 void interaction::Nonbonded_Interaction::expand_configuration
 (
         topology::Topology const & topo,
@@ -605,10 +634,6 @@ void interaction::Nonbonded_Interaction::_expand_configuration
 
   const int mul = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
   DEBUG(8, "\tmul=" << mul);
-
-  assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * mul);
-  // resize the configuration
-  exp_conf.resize(topo.multicell_topo().num_atoms());
   
   math::Periodicity<b> periodicity(conf.current().box);
   periodicity.gather_molecules_into_box(conf, topo);
@@ -682,9 +707,6 @@ void interaction::Nonbonded_Interaction::_expand_configuration
   exp_conf.current().energies.zero();
   exp_conf.current().perturbed_energy_derivatives.zero();
   exp_conf.current().virial_tensor = 0.0;
-
-  exp_conf.init(topo.multicell_topo(), sim.param(), false);
-  
 }
 
 /**
@@ -733,10 +755,20 @@ void interaction::Nonbonded_Interaction::reduce_configuration
     for (int j = 0; j < ljs; ++j) {
       e.lj_energy[i][j] += exp_e.lj_energy[i][j] * cells_i;
       e.crf_energy[i][j] += exp_e.crf_energy[i][j] * cells_i;
+      e.ls_real_energy[i][j] += exp_e.ls_real_energy[i][j] * cells_i;
       pe.lj_energy[i][j] += exp_pe.lj_energy[i][j] * cells_i;
       pe.crf_energy[i][j] += exp_pe.crf_energy[i][j] * cells_i;
     }
+    e.self_energy[i] += exp_e.self_energy[i] * cells_i;
+    pe.self_energy[i] += exp_pe.self_energy[i] * cells_i;
   }
+
+  e.ls_a_term_total += exp_e.ls_a_term_total;
+  e.ls_kspace_total += exp_e.ls_kspace_total * cells_i;
+  e.ls_pair_total += exp_e.ls_pair_total;
+  e.ls_self_total += exp_e.ls_self_total;
+  e.ls_surface_total += exp_e.ls_surface_total;
+
   // reduce the virial
   if (sim.param().pcouple.virial) {
     DEBUG(7, "\tadd set virial");
