@@ -13,32 +13,29 @@
 #include "influence_function.h"
 #include "kspace.h"
 
-namespace topology
-{
+namespace topology {
   class Topology;
 }
 
-namespace simulation
-{
+namespace simulation {
   class Parameter;
 }
 
-namespace configuration
-{
-   /**
+namespace configuration {
+
+  /**
    * @class Configuration
    * holds the state information of
    * the simulated system.
    */
-  class Configuration
-  {
+  class Configuration {
   public:
-    
+
     /**
      * Constructor
      */
     Configuration();
-    
+
     /**
      * copy constructor
      */
@@ -47,13 +44,12 @@ namespace configuration
      * assignment
      */
     Configuration & operator=(Configuration const & conf);
-    
+
     /**
      * @struct state_struct
      * holds state information.
      */
-    struct state_struct
-    {
+    struct state_struct {
       /**
        * position
        */
@@ -69,7 +65,7 @@ namespace configuration
       /**
        * force
        */
-      math::VArray force; 
+      math::VArray force;
       /**
        * the constraint force
        */
@@ -82,19 +78,19 @@ namespace configuration
        * stochastic dynamics random number seed
        */
       std::string stochastic_seed;
-      
+
       /**
        * the box.
        */
       math::Box box;
-      
+
       /**
        * the Euler angles 
        */
-      double phi;   //yaw   (z   axis)
+      double phi; //yaw   (z   axis)
       double theta; //pitch (y'  axis)
-      double psi;   //roll  (x'' axis)
-      
+      double psi; //roll  (x'' axis)
+
       /**
        * virial tensor.
        */
@@ -119,7 +115,7 @@ namespace configuration
        * averages.
        */
       configuration::Average averages;
-      
+
       /**
        * perturbed energy derivatives.
        */
@@ -135,35 +131,34 @@ namespace configuration
      * @struct special_struct
      * special information storage.
      */
-    struct special_struct
-    {
+    struct special_struct {
       /**
        * the dihedral angle minima for monitoring
        */
       std::vector<double> dihedral_angle_minimum;
 
       //////////////////////////////////////////////////
+
       /**
        * @struct flexible_constraint
        * flexible constraint data
        */
-      struct flexible_constraint_struct
-      {
-	/**
-	 * flexible constraints velocity.
-	 */
-	std::vector<double> flexible_vel;
-	/**
-	 * flexible constraints kinetic energy.
-	 */
-	std::vector<double> flexible_ekin;
-	/**
-	 * flexible constraint lengths
-	 */
-	std::vector<double> flex_len;
-	
+      struct flexible_constraint_struct {
+        /**
+         * flexible constraints velocity.
+         */
+        std::vector<double> flexible_vel;
+        /**
+         * flexible constraints kinetic energy.
+         */
+        std::vector<double> flexible_ekin;
+        /**
+         * flexible constraint lengths
+         */
+        std::vector<double> flex_len;
+
       } /** flexible constraint data */ flexible_constraint;
-      
+
       //////////////////////////////////////////////////
       /**
        * j value average
@@ -178,7 +173,36 @@ namespace configuration
        */
       std::vector<std::vector<double> > jvalue_epsilon;
       //////////////////////////////////////////////////
+
+      /**
+       * @struct xray_struct
+       * struct that holds the average and current structure factors and their
+       * phases.
+       */
+      struct xray_struct {
+        /**
+         * structure factor time averaged
+         */
+        double sf_av;
+        /**
+         * current structure factor
+         */
+        double sf_curr;
+        /**
+         * average phase of structure factor
+         */
+        double phase_av;
+        /**
+         * current pahse of structure factor
+         */
+        double phase_curr;
+      };
       
+      /**
+       * xray restraint averages
+       */
+      std::vector<xray_struct> xray_rest;
+
       /**
        * distance restraint average
        */
@@ -188,73 +212,72 @@ namespace configuration
        * @struct pscale_struct
        * stores periodic scaling information
        */
-      struct pscale_struct
-      {
-	/**
-	 * maps J-value restraints to dihedral angles.
-	 */
-	std::vector<int> JtoDihedral;
-	/**
-	 * stores original dihedral angle potential force constants
-	 */
-	std::vector<double> KDIH;
-	/**
-	 * stores original J-value restraint force constants.
-	 */
-	std::vector<double> KJ;
-	/**
-	 * scale time (no scaling if 0.0)
-	 */
-	std::vector<double> t;
-	/**
-	 * scaling right now?
-	 */
-	std::vector<int> scaling;
-	
+      struct pscale_struct {
+        /**
+         * maps J-value restraints to dihedral angles.
+         */
+        std::vector<int> JtoDihedral;
+        /**
+         * stores original dihedral angle potential force constants
+         */
+        std::vector<double> KDIH;
+        /**
+         * stores original J-value restraint force constants.
+         */
+        std::vector<double> KJ;
+        /**
+         * scale time (no scaling if 0.0)
+         */
+        std::vector<double> t;
+        /**
+         * scaling right now?
+         */
+        std::vector<int> scaling;
+
       } /** periodic scaling information */ pscale;
 
       //////////////////////////////////////////////////
+
       /**
        * roto-translational constraints
        * @struct rottrans_constr_struct
        */
-      struct rottrans_constr_struct
-      {
-	/**
-	 * inverse theta: translational part (diagonal)
-	 */
-	math::Matrix theta_inv_trans;
-	/**
-	 * inverse theta: rotational part
-	 */
-	math::Matrix theta_inv_rot;
-	/**
-	 * reference positions
-	 */
-	math::VArray pos;
+      struct rottrans_constr_struct {
+        /**
+         * inverse theta: translational part (diagonal)
+         */
+        math::Matrix theta_inv_trans;
+        /**
+         * inverse theta: rotational part
+         */
+        math::Matrix theta_inv_rot;
+        /**
+         * reference positions
+         */
+        math::VArray pos;
       } /** roto-translational constraints information */ rottrans_constr;
-      struct ramd_struct
-      {
-	/**
-	 * directionality of the force
-	 */
-	math::Vec force_direction;
-	/**
-	 * old center of mass of RAMD atoms
-	 */
-	math::Vec old_com;
-	/**
-	 * total mass of the RAMD atoms
-	 */
-	double total_mass;
-	/**
-	 * time averaged distance that we have travelled
-	 */
-	double ta_average;
-	
+
+      struct ramd_struct {
+        /**
+         * directionality of the force
+         */
+        math::Vec force_direction;
+        /**
+         * old center of mass of RAMD atoms
+         */
+        math::Vec old_com;
+        /**
+         * total mass of the RAMD atoms
+         */
+        double total_mass;
+        /**
+         * time averaged distance that we have travelled
+         */
+        double ta_average;
+
       } /** ramd information */ ramd;
-      struct eds_struct 
-      {
+
+      struct eds_struct {
         /**
          * (longrange) force storage (perturbed part of multiple states)
          */
@@ -270,7 +293,7 @@ namespace configuration
        * lattice shifts
        */
       math::VArray lattice_shifts;
-      
+
       /**
        * there was a SHAKE failure
        */
@@ -293,13 +316,13 @@ namespace configuration
      * lattice sum information
      */
     struct lattice_sum_struct {
+
       /**
        * constructor
        */
       lattice_sum_struct() : charge_density(NULL), potential(NULL),
-      a2_tilde(0.0), a2_tilde_derivative(0.0), squared_charge(NULL)
-
-      {}
+      a2_tilde(0.0), a2_tilde_derivative(0.0), squared_charge(NULL) {
+      }
       /**
        * destructor
        *
@@ -312,7 +335,7 @@ namespace configuration
        * (vectors, absolute values, fourier coefficients)
        */
       std::vector<KSpace_Element> kspace;
-      
+
       /**
        * influence function (real)
        */
@@ -330,7 +353,9 @@ namespace configuration
        * electric field
        */
       struct electric_field_mesh {
-        electric_field_mesh() : x(NULL), y(NULL), z(NULL) {}
+
+        electric_field_mesh() : x(NULL), y(NULL), z(NULL) {
+        }
         /*
         ~electric_field_mesh() {
           if (x!=NULL) delete x;
@@ -346,12 +371,12 @@ namespace configuration
        * methodology dependent A2 term
        */
       double a2_tilde;
-      
+
       /**
        * derivative of the methodology dependent A2 term
        */
       math::SymmetricMatrix a2_tilde_derivative;
-      
+
       /**
        * indices of domain decomposition
        */
@@ -369,58 +394,81 @@ namespace configuration
     //////////////////////////////////////////////////////////////////////
     // accessors
     //////////////////////////////////////////////////////////////////////
-    
+
     /**
      * get the current state
      */
-    state_struct & current() { return *m_current; }
+    state_struct & current() {
+      return *m_current;
+    }
+
     /**
      * get the old state
      */
-    state_struct & old() { return *m_old; }
+    state_struct & old() {
+      return *m_old;
+    }
+
     /**
      * get the current state (const)
      */
-    state_struct const & current()const { return *m_current; }
+    state_struct const & current()const {
+      return *m_current;
+    }
+
     /**
      * get the old state (const)
      */
-    state_struct const & old()const { return *m_old; }
+    state_struct const & old()const {
+      return *m_old;
+    }
 
     /**
      * exchange the old and the current state
      */
-    void exchange_state() { state_struct * dummy = m_current; m_current = m_old; m_old = dummy; }
-              
+    void exchange_state() {
+      state_struct * dummy = m_current;
+      m_current = m_old;
+      m_old = dummy;
+    }
+
     /**
      * special information accessor.
      */
-    special_struct & special() { return m_special; }
+    special_struct & special() {
+      return m_special;
+    }
 
     /**
      * special information accessor (const).
      */
-    special_struct const & special()const { return m_special; }
-    
+    special_struct const & special()const {
+      return m_special;
+    }
+
     /**
      * lattice sum information accessor.
      */
-    lattice_sum_struct & lattice_sum() { return m_lattice_sum; }
-    
+    lattice_sum_struct & lattice_sum() {
+      return m_lattice_sum;
+    }
+
     /**
      * lattice sum information accessor (const).
      */
-    lattice_sum_struct const & lattice_sum()const { return m_lattice_sum; }
+    lattice_sum_struct const & lattice_sum()const {
+      return m_lattice_sum;
+    }
     /**
      * set the number of atoms in the system.
      */
     void resize(unsigned int s);
-    
+
     /**
      * boundary type.
      */
     math::boundary_enum boundary_type;
-    
+
     /**
      * initialise.
      * should be called after a (initial) configuration has been read in or
@@ -433,10 +481,10 @@ namespace configuration
      * to keep chargegroups together.
      */
     void init(topology::Topology const & topo,
-	      simulation::Parameter & param,
-	      bool gather = true);
+            simulation::Parameter & param,
+            bool gather = true);
 
-     //////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////
     // data
     //////////////////////////////////////////////////////////////////////
 
@@ -463,17 +511,17 @@ namespace configuration
      * special information
      */
     special_struct m_special;
-    
+
     /**
      * lattice sum information
      */
     lattice_sum_struct m_lattice_sum;
-    
+
 
   }; // Configuration
-  
+
 } // configuration
 
 #endif
 
-  
+

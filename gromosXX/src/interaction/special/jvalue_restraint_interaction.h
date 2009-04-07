@@ -41,7 +41,7 @@ namespace interaction
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
-    
+
   };
   
 } // interaction

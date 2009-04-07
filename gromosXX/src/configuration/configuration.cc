@@ -22,7 +22,6 @@
 
 
 #include <math/periodicity.h>
-#include <math/boundary_checks.h>
 
 #ifdef OMP
 #include <omp.h>

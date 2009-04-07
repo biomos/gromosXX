@@ -299,6 +299,11 @@ namespace io {
             std::ostream &os,
             bool formated = false);
 
+       void _print_xray(simulation::Parameter const & param,
+		       configuration::Configuration const &conf,
+		       topology::Topology const &topo,
+		       std::ostream &os);
+
     void _print_pscale_jrest(configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);

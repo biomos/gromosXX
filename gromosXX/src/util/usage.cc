@@ -144,6 +144,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# J-value restraints specification\n";
     usage += "\t# @jval      filename\n\n";
   }
+
+  if (knowns.count("xray")){
+    usage += "\t# X-ray restraints specification\n";
+    usage += "\t# @xray      filename\n\n";
+  }
   
   if (knowns.count("friction")){
     usage += "\t# atomic friction coefficients\n";

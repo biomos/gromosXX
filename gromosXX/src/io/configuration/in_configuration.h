@@ -148,6 +148,14 @@ namespace io {
 		    std::ostream & os = std::cout);
 
     /**
+     * try to get xray average data
+     */
+    bool read_xray(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    std::ostream & os = std::cout);
+
+    /**
      * try to get pscale continuation data
      */
     bool read_pscale(topology::Topology & topo,
@@ -297,6 +305,13 @@ namespace io {
     bool _read_jvalue_av(std::vector<std::string> &buffer,
 			 std::vector<double> & jvalue_av,
 			 std::vector<topology::jvalue_restraint_struct> const & jval_res);
+
+    /**
+     * read XRAY averages.
+     */
+    bool _read_xray_av(std::vector<std::string> &buffer,
+			 std::vector<configuration::Configuration::special_struct::xray_struct> & xray_av,
+			 std::vector<topology::xray_restraint_struct> const & xray_res);
 
     /**
      * read JVALUE local elevation epsilons.

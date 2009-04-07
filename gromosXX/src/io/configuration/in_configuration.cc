@@ -60,6 +60,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_lattice_shifts(topo, conf, sim, os);
   read_box(topo, conf, sim, os);
   read_jvalue(topo, conf, sim, os);
+  read_xray(topo, conf, sim, os);
   read_pscale(topo, conf, sim, os);
   read_flexv(topo, conf, sim, os);
   read_stochastic_integral(topo, conf, sim, os);
@@ -721,6 +722,48 @@ bool io::In_Configuration::read_jvalue
       }
     }
   } // jvalue local elevation
+  return true;
+}
+bool io::In_Configuration::read_xray
+(
+        topology::Topology &topo,
+        configuration::Configuration &conf,
+        simulation::Simulation & sim,
+        std::ostream & os) {
+  std::vector<std::string> buffer;
+
+  if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
+
+    if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst) {
+      if (!sim.param().xrayrest.readavg)
+        io::messages.add("instantaneous Xray restraints, ignoring reading of averages",
+              "in_configuration",
+              io::message::warning);
+    } else if (!sim.param().xrayrest.readavg) {
+
+      io::messages.add("initialising Xray-restraint averages",
+              "in_configuration",
+              io::message::notice);
+
+    } else {
+
+      buffer = m_block["XRAYRESEXPAVE"];
+      if (buffer.size()) {
+        block_read.insert("XRAYRESEXPAVE");
+        io::messages.add("reading Xray-Restraint-Averages from last configuration file",
+                "in_configuration",
+                io::message::warning);
+        _read_xray_av(buffer, conf.special().xray_rest, topo.xray_restraints());
+      } else {
+        io::messages.add("reading in of Xray-restraints averages requested "
+                "but XRAYRESEXPAVE block not found",
+                "in_configuration",
+                io::message::error);
+        return false;
+      }
+    }
+  } // xray averages
+
   return true;
 }
 
@@ -2341,5 +2384,59 @@ configuration::Configuration::special_struct::rottrans_constr_struct & rottrans)
   }  
 
   return true;    
+}
+
+bool io::In_Configuration::
+_read_xray_av(std::vector<std::string> &buffer,
+        std::vector<configuration::Configuration::special_struct::xray_struct> & xray_av,
+        std::vector<topology::xray_restraint_struct> const & xray_res) {
+  DEBUG(8, "read xray averages");
+
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+          to = buffer.end() - 1;
+
+  std::vector<topology::xray_restraint_struct>::const_iterator
+  xray_it = xray_res.begin(),
+          xray_to = xray_res.end();
+
+  xray_av.clear();
+
+  double av;
+
+  if (buffer.size() - 1 != xray_res.size()) {
+    std::cout << "XRAYRESEXPAVE: " << buffer.size() - 1
+            << " but restraints: " << xray_res.size()
+            << std::endl;
+
+    io::messages.add("number of Xray-restraints does not match with number of "
+            "continuation data", "in_configuration",
+            io::message::error);
+    return false;
+  }
+
+  for (; (it != to) && (xray_it != xray_to); ++it, ++xray_it) {
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> av;
+    if (_lineStream.fail()) {
+      io::messages.add("Bad value in XRAYRESEXPAVE block",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+    configuration::Configuration::special_struct::xray_struct tempstruct = {av, 0.0, 0.0, 0.0};
+    xray_av.push_back(tempstruct);
+  }
+
+  if (xray_it != xray_to || it != to) {
+    io::messages.add("Wrong number of Xray-Av's in XRAYRESEXPAVE block",
+            "In_Configuration",
+            io::message::error);
+    return false;
+  }
+
+  return true;
 }
 

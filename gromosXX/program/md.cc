@@ -33,6 +33,7 @@
  * <tr><td> \@distrest</td><td>&lt;@ref disres "distance restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@dihtrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@jval</td><td>&lt;@ref jvalue "J-value restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@xray</td><td>&lt;@ref xrayresspec "Xray restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@friction</td><td>&lt;@ref friction "atomic friction coefficients"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@print</td><td>&lt;print additional information&gt; </td><td></td></tr>
  * <tr><td> \@anatraj</td><td>&lt;re-analyze trajectory&gt; </td><td style="color:#088A08">in</td></tr>
@@ -86,7 +87,7 @@ int main(int argc, char *argv[]){
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trj" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
-         << "jval" << "anatrj" << "print" << "friction" << "version";
+         << "jval" << "xray" << "anatrj" << "print" << "friction" << "version";
   
   
   std::string usage;

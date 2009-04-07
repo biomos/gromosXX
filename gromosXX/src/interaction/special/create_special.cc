@@ -24,6 +24,8 @@
 #include <interaction/special/jvalue_restraint_interaction.h>
 #include <interaction/special/external_interaction.h>
 #include <interaction/special/ramd_interaction.h>
+#include <interaction/special/xray_restraint_interaction.h>
+
 
 #include <interaction/bonded/dihedral_interaction.h>
 #include <interaction/special/pscale.h>
@@ -32,6 +34,7 @@
 #include <io/topology/in_topology.h>
 
 #include "create_special.h"
+#include "xray_restraint_interaction.h"
 
 int interaction::create_special(interaction::Forcefield & ff,
 				topology::Topology const & topo,
@@ -151,6 +154,34 @@ int interaction::create_special(interaction::Forcefield & ff,
     
     ff.push_back(jr);
   }
+
+  // Xray restraints
+  if (param.xrayrest.xrayrest != simulation::xrayrest_off) {
+    if (!quiet) {
+      os << "\tXray restraints \n";
+      /*switch (param.xry) {
+        case simulation::restr_inst :
+                  os << "instantaneous";
+          break;
+        case simulation::restr_av :
+                  os << "time averaged";
+          break;
+        case simulation::restr_biq :
+                  os << "biquadratic";
+          break;
+        default:
+          os << "unknown mode!";
+          break;
+      }*/
+    }
+
+    interaction::Xray_Restraint_Interaction *xr =
+            new interaction::Xray_Restraint_Interaction;
+
+    ff.push_back(xr);
+  }
+
+
 
   // Periodic Scaling
   // right now this only works if no dihedral angles with j-value restraints on are perturbed...

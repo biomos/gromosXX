@@ -18,4 +18,5 @@ libgroxx_la_LIBADD = algorithm/libgroalgorithm.la\
 	topology/libgrotopology.la\
 	util/libgroutil.la\
 	io/libgroio.la\
-	$(GSL_LIBS)
+	$(GSL_LIBS)\
+	$(CLIPPER_LIBS)

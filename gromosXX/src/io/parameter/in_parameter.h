@@ -167,6 +167,11 @@ namespace io {
     void read_POSITIONRES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
+     * read XRAYRES block.
+     */
+    void read_XRAYRES(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
      * read DISTANCERES block.
      */
     void read_DISTANCERES(simulation::Parameter &param, std::ostream & os = std::cout);

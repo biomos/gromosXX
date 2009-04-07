@@ -605,6 +605,70 @@ namespace topology
     functional_form H;
   };
 
+   /**
+   * Xray restraints.
+   */
+  struct xray_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    xray_restraint_struct(unsigned int h, unsigned int k, unsigned int l,
+			    double sf, double stddevsf)
+      : h(h), k(k), l(l),
+    sf(sf), stddev_sf(stddev_sf)
+    {
+    }
+
+    /**
+     * grid indices.
+     */
+    unsigned int h, k, l;
+    /**
+     * structure factor
+     */
+    double sf;
+    /**
+     * standard-deviation of structure factor
+     */
+    double stddev_sf;
+  };
+
+  /**
+   * Xray fitatom.
+   */
+  struct xray_fitatom_struct
+  {
+    /**
+     * Constructor.
+     */
+    xray_fitatom_struct(unsigned int i, const math::Vec &pos): i(i), pos(pos)
+    {
+    }
+
+    /**
+     * copy constructor
+     */
+    xray_fitatom_struct(const xray_fitatom_struct & x) : i(x.i), pos(x.pos) {}
+
+    /**
+     * assignment operator
+     */
+    xray_fitatom_struct & operator=(const xray_fitatom_struct & x) {
+      i = x.i; pos = x.pos;
+      return *this;
+    }
+
+    /**
+     * atom number.
+     */
+    unsigned int i;
+    /**
+     * position
+     */
+    math::Vec pos;
+  };
+
 }
 
 #endif

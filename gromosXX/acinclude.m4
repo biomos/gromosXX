@@ -395,3 +395,37 @@ AC_DEFUN([AM_PATH_CUKERNEL],[
   dnl check for lib with these settings and add flags automatically
   AC_CHECK_LIB([cukernel], [test],, AC_MSG_WARN([CUKERNEL library missing.]), [-lm -lcuda])
 ])
+
+dnl check for lib CCP4/Clipper
+AC_DEFUN([AM_PATH_CCP4_CLIPPER],[
+  dnl allow for ccp4 lib directory specification
+  AC_ARG_WITH(ccp4,
+    [  --with-ccp4=DIR     CCP4 library directory to use],
+    [
+      [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/lib"]
+      [LDFLAGS="$LDFLAGS -L${withval}/lib"]
+    ],
+    [
+      AC_MSG_WARN([Assuming default paths for CCP4])
+    ])
+  AC_ARG_WITH(clipper,
+    [  --with-clipper=DIR  clipper library directory to use],
+    [
+      [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/lib"]
+      [LDFLAGS="$LDFLAGS -L${withval}/lib"]
+      dnl check for lib with these settings and add flags automatically
+      AC_DEFINE_UNQUOTED([HAVE_CLIPPER],[],[Have clipper x-ray library])
+      [CLIPPER_LIBS="-lclipper-ccp4 -lccp4c -lclipper-contrib -lclipper-core -lrfftw -lfftw -lm"]
+      [have_clipper=yes]
+    ],
+    [
+      AC_MSG_WARN([clipper path was not specified. Disabling clipper support])
+      [CLIPPER_LIBS=""]
+      [have_clipper=no]
+    ]
+  )
+  dnl check for lib with these settings. To be implemented
+  AC_SUBST(CLIPPER_LIBS)
+])
+
+

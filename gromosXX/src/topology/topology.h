@@ -676,6 +676,53 @@ namespace topology
     }
 
     /**
+     * xray restraints accessor.
+     */
+    std::vector<xray_restraint_struct> & xray_restraints()
+    {
+      return m_xray_restraint;
+    }
+
+    /**
+     * const xray restraints accessor.
+     */
+    std::vector<xray_restraint_struct> const & xray_restraints()const
+    {
+      return m_xray_restraint;
+    }
+
+    /**
+     * xray element accessor.
+     */
+    std::vector<std::string> & xray_elements()
+    {
+      return m_xray_element;
+    }
+
+    /**
+     * xray constant element accessor.
+     */
+    std::vector<std::string> const & xray_elements()const
+    {
+      return m_xray_element;
+    }
+     /**
+     * xray solvent element accessor.
+     */
+    std::vector<std::string> & xray_solvelements()
+    {
+      return m_xray_solvelement;
+    }
+
+    /**
+     * xray constant solvent element accessor.
+     */
+    std::vector<std::string> const & xray_solvelements()const
+    {
+      return m_xray_solvelement;
+    }
+
+    /**
      * const distance restraints accessor.
      */
     std::vector<distance_restraint_struct> const & distance_restraints()const
@@ -1058,6 +1105,25 @@ namespace topology
      * jvalue restraints / constraints
      */
     std::vector<jvalue_restraint_struct> m_jvalue_restraint;
+
+    /**
+     * xray restraints
+     */
+    std::vector<xray_restraint_struct> m_xray_restraint;
+
+    /**
+     * xray element name
+     */
+    std::vector<std::string> m_xray_element;
+    /**
+     * xray element name for solvent
+     */
+    std::vector<std::string> m_xray_solvelement;
+
+     /**
+     * xray atomfit
+     */
+    std::vector<xray_fitatom_struct> m_xray_fitatom;
 
     /**
      * expanded topology for multiple unit cell simulations

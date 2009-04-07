@@ -72,6 +72,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
   read_PERTURBATION(param);
   read_JVALUERES(param);
+  read_XRAYRES(param);
   read_PERSCALE(param);
   read_ROTTRANS(param);
   read_INNERLOOP(param);
@@ -1923,6 +1924,103 @@ void io::In_Parameter::read_POSITIONRES(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
 
 } // POSITIONRES
+
+
+
+
+/**
+ * @section xrayres XRRAYRES block
+ * @verbatim
+XRAYRES
+#    NTXR    0..4 controls atom xray restraining.
+#            0: no xray restraints.
+#            1: instantaneous xray restraints
+#            2: time-averaged xray restraints
+#            3: biquadratic/timeaveraged xray restraints
+#            4: local elevation xray restraints
+#    CXR     >= 0 xray restraining force constant
+#    NTPXR   >= 0 print xray data to output file
+#            0: don't print xray data
+#            > 0 print every NTPXRth step
+#    NTPDE   0..3 print density-maps
+#            0: print nothing
+#            1: print electron densitiy map
+#            2: print asymmetric-unit-only electron densitiy map
+#            3: print both
+#    NTXMAP  > 0 print every NTXMAPth step electron density map(s) to external file
+#    CXTAU   >=0 xray time-average restraining memory-constant
+#    REAVG   0/1 reset sf-timeaverages (from job to job)
+#
+#   NTXR     CXR   NTPXR   NTPDE  NTXMAP   CXTAU   REAVG
+       0   2.5E4       0       0       0     0.0       0
+END
+@endverbatim
+ */
+void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
+				    std::ostream & os)
+{
+  DEBUG(8, "read XRAYRES");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  DEBUG(10, "xrayres block");
+  buffer = m_block["XRAYRES"];
+
+  if (!buffer.size()){
+    return;
+  }
+
+  block_read.insert("XRAYRES");
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+
+  int ntxr;
+  _lineStream >> ntxr
+              >> param.xrayrest.force_constant
+              >> param.xrayrest.print
+              >> param.xrayrest.printdensity
+              >> param.xrayrest.printxmap
+              >> param.xrayrest.tau
+              >> param.xrayrest.readavg;
+
+  if (_lineStream.fail())
+    io::messages.add("bad line in XRAYRES block",
+		     "In_Parameter", io::message::error);
+
+    switch(ntxr) {
+    case 0 :
+      param.xrayrest.xrayrest = simulation::xrayrest_off;
+      break;
+    case 1:
+      param.xrayrest.xrayrest = simulation::xrayrest_inst;
+      break;
+    case 2:
+      param.xrayrest.xrayrest = simulation::xrayrest_avg;
+      break;
+    case 3:
+      param.xrayrest.xrayrest = simulation::xrayrest_biq;
+      break;
+    case 4:
+      param.xrayrest.xrayrest = simulation::xrayrest_loel;
+      break;
+    default:
+      io::messages.add("XRAYRES block: NTXR must be 0 to 4.",
+		       "In_Parameter", io::message::error);
+  }
+
+  if (param.xrayrest.force_constant < 0.0)
+    io::messages.add("XRAYRES block: Illegal value for CXR.",
+          "In_Parameter", io::message::error);
+  if ((ntxr == 2 || ntxr == 3) && param.xrayrest.force_constant <= 0.0)
+    io::messages.add("XRAYRES block: Illegal value for CXTAU",
+          "In_Parameter", io::message::error);
+
+} // XRAYRES
+
+
+
 
 /**
  * @section distanceres DISTANCERES block

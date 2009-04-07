@@ -26,6 +26,7 @@
 #include <io/topology/in_dihrest.h>
 #include <io/topology/in_jvalue.h>
 #include <io/topology/in_friction.h>
+#include <io/topology/in_xray.h>
 
 #include "read_special.h"
 
@@ -168,7 +169,31 @@ int io::read_special(io::Argument const & args,
       }
     }
   } // JVALUE
-  
+
+    // Xray restraints
+  if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off){
+    io::igzstream xray_file;
+
+    if (args.count("xray") != 1){
+      io::messages.add("xray restraints: no data file specified (use @xray)",
+		       "read special", io::message::error);
+    } else {
+      xray_file.open(args["xray"].c_str());
+      if (!xray_file.is_open()){
+	io::messages.add("opening xray restraints file failed!\n",
+			 "read_special", io::message::error);
+      } else {
+        io::messages.add("xray restraints read from " + args["xray"],
+                "read special", io::message::notice);
+
+        io::In_Xrayresspec ij(xray_file);
+        ij.quiet = quiet;
+
+        ij.read(topo, sim, os);
+      }
+    }
+  } // XRAY
+
     // FRICTION
   if (sim.param().stochastic.sd && sim.param().stochastic.ntfr == 2){
     io::igzstream friction_file;

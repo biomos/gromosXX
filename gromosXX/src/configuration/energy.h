@@ -118,6 +118,10 @@ namespace configuration
      */
     double jvalue_total;
     /**
+     * total energy of the X-ray restaint interaction
+     */
+    double xray_total;
+    /**
      * total energy (=0.0) of the (distance) constraint interaction(s).
      */
     double constraints_total;

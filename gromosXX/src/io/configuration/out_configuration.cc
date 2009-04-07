@@ -28,9 +28,11 @@
 #include <util/debug.h>
 
 #include <limits>
+#include <vector>
 
 #undef MODULE
 #undef SUBMODULE
+
 #define MODULE io
 #define SUBMODULE configuration
 
@@ -383,6 +385,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (sim.param().jvalue.mode != simulation::jvalue_restr_off) {
       _print_jvalue(sim.param(), conf, topo, m_final_conf, false);
+    }
+
+    if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
+      _print_xray(sim.param(), conf, topo, m_final_conf);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -2087,6 +2093,23 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
   }
 }
 
+void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
+        configuration::Configuration const &conf,
+        topology::Topology const &topo,
+        std::ostream &os) {
+  DEBUG(10, "XRAY Averages and LE data");
+
+  if (param.xrayrest.xrayrest != simulation::xrayrest_inst) {
+    os << "XRAYRESEXPAVE\n";
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.precision(7);
+    for (unsigned int i=0; i<conf.special().xray_rest.size(); ++i) {
+      os << std::setw(15) << conf.special().xray_rest[i].sf_av << "\n";
+    }
+    os << "END\n";
+  }
+}
+
 void io::Out_Configuration::_print_distance_restraint_averages(
         configuration::Configuration const &conf,
         topology::Topology const &topo,
@@ -2193,6 +2216,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.distanceres_total << "\n"
           << std::setw(18) << e.dihrest_total << "\n"
           << std::setw(18) << e.jvalue_total << "\n"
+          << std::setw(18) << e.xray_total << "\n"
           << std::setw(18) << e.self_total << "\n" // self energy from polarization
           //<< std::setw(18) << 0.0 << "\n" // local elevation
           << std::setw(18) << e.eds_vr << "\n"; // eds energy of reference state

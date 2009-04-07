@@ -450,6 +450,7 @@ namespace io
     os << type << "Posrest              : " << std::setw(30) << e.posrest_total << "\n";
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
     os << type << "Jrest                : " << std::setw(30) << e.jvalue_total << "\n";
+    os << type << "X-ray restraints     : " << std::setw(30) << e.xray_total << "\n";
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
     os << "\n";
 
