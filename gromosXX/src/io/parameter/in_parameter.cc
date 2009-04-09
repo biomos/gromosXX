@@ -1939,19 +1939,19 @@ XRAYRES
 #            3: biquadratic/timeaveraged xray restraints
 #            4: local elevation xray restraints
 #    CXR     >= 0 xray restraining force constant
-#    NTPXR   >= 0 print xray data to output file
-#            0: don't print xray data
-#            > 0 print every NTPXRth step
-#    NTPDE   0..3 print density-maps
-#            0: print nothing
-#            1: print electron densitiy map
-#            2: print asymmetric-unit-only electron densitiy map
-#            3: print both
-#    NTXMAP  > 0 print every NTXMAPth step electron density map(s) to external file
+#    NTWXR   >= 0 write xray data to output file
+#            0: don't write xray data
+#            > 0 write every NTPXRth step
+#    NTWDE   0..3 write density-maps
+#            0: write nothing
+#            1: write electron densitiy map
+#            2: write asymmetric-unit-only electron densitiy map
+#            3: write both
+#    NTWXM   >= 0 write every NTWXMth step electron density map(s) to external file
 #    CXTAU   >=0 xray time-average restraining memory-constant
-#    REAVG   0/1 reset sf-timeaverages (from job to job)
+#    RDAVG   0/1 read sf-timeaverages (from job to job)
 #
-#   NTXR     CXR   NTPXR   NTPDE  NTXMAP   CXTAU   REAVG
+#   NTXR     CXR   NTWXR   NTWDE   NTWXM   CXTAU   RDAVG
        0   2.5E4       0       0       0     0.0       0
 END
 @endverbatim
@@ -1979,9 +1979,9 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
   int ntxr;
   _lineStream >> ntxr
               >> param.xrayrest.force_constant
-              >> param.xrayrest.print
-              >> param.xrayrest.printdensity
-              >> param.xrayrest.printxmap
+              >> param.xrayrest.write
+              >> param.xrayrest.writedensity
+              >> param.xrayrest.writexmap
               >> param.xrayrest.tau
               >> param.xrayrest.readavg;
 
@@ -2010,17 +2010,19 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
 		       "In_Parameter", io::message::error);
   }
 
-  if (param.xrayrest.force_constant < 0.0)
+  if (param.xrayrest.force_constant < 0.0) {
     io::messages.add("XRAYRES block: Illegal value for CXR.",
           "In_Parameter", io::message::error);
-  if ((ntxr == 2 || ntxr == 3) && param.xrayrest.force_constant <= 0.0)
+  }
+  if ((ntxr == 2 || ntxr == 3) && param.xrayrest.force_constant <= 0.0) {
     io::messages.add("XRAYRES block: Illegal value for CXTAU",
           "In_Parameter", io::message::error);
-
+  }
+  if (param.xrayrest.writedensity < 0 || param.xrayrest.writedensity > 3) {
+    io::messages.add("XRAYRES block: Illegal value for NTWDE (0..3)",
+          "In_Parameter", io::message::error);
+  }
 } // XRAYRES
-
-
-
 
 /**
  * @section distanceres DISTANCERES block

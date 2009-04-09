@@ -3,7 +3,6 @@
  * implements methods of In_xrayresspec and In_xrayres.
  */
 
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -107,7 +106,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
     DEBUG(10, "reading in XRAYRESSPEC data");
 
-    unsigned int i, h, k, l;
+    int i, h, k, l;
     double sf, stddev_sf;
     for(i=0; it != to; ++i, ++it){
 
@@ -232,62 +231,6 @@ io::In_Xrayresspec::read(topology::Topology& topo,
     }
 
   } // XRAYSOLVELEMENTSPEC
-
-  /* OBSOLETE
-  { // XRAYFITATOMS
-
-    buffer = m_block["XRAYFITATOMS"];
-    DEBUG(10, "XRAYFITATOMS block : " << buffer.size());
-
-    if (!buffer.size()){
-      io::messages.add("no XRAYFITATOMS block in position restraints file",
-		       "In_Xrayresspec", io::message::error);
-      return;
-    }
-
-    std::vector<std::string>::const_iterator it = buffer.begin()+1,
-      to = buffer.end()-1;
-
-    DEBUG(10, "reading in XRAYFITATOMS data");
-
-    unsigned int i, nr;
-    math::Vec pos;
-    for (i = 0; it != to; ++i, ++it) {
-
-      DEBUG(11, "\tnr " << i);
-
-      std::string line(*it);
-      if (line.length() < 17) {
-        io::messages.add("line too short in XRAYFITATOMS block", "In_Xrayresspec",
-                io::message::error);
-      }
-
-      // the first 17 chars are ignored
-      line.erase(line.begin(), line.begin() + 17);
-
-      _lineStream.clear();
-      _lineStream.str(line);
-
-      _lineStream >> nr >> pos(0) >> pos(1) >> pos(2);
-
-      if (_lineStream.fail()) {
-        io::messages.add("bad line in XRAYFITATOMS block",
-                "In_Xrayresspec", io::message::error);
-        return;
-      }
-
-      if (nr>topo.num_solute_atoms()) {
-        io::messages.add("bad line in XRAYFITATOMS block: atom number out of range",
-                "In_Xrayresspec", io::message::error);
-        return;
-      }
-
-      topo.xray_fitatoms().push_back(topology::xray_fitatom_struct(nr-1, pos));
-
-    }
-  } // XRAYFITATOMS
-  */
-
 
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {

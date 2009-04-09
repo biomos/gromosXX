@@ -1260,8 +1260,8 @@ namespace simulation
        * Default values:
        * - xrayrest 0 (no xray restraints)
        * - force_constant 10000
-       * - print 0
-       * - printxmap 0
+       * - write 0
+       * - writexmap 0
        * - tau 0
        * - spacegroup ""
        * - cell 0.0  0.0  0.0  90.00  90.00  90.00
@@ -1269,8 +1269,8 @@ namespace simulation
        * - bfactor 1.0
        * - readavg 0
        */
-      xrayrest_struct() : xrayrest(xrayrest_off), force_constant(1E4), tau(0)
-      , print(0), printxmap(0), spacegroup(""),
+      xrayrest_struct() : xrayrest(xrayrest_off), force_constant(1E4), tau(0),
+      write(0), writedensity(0), writexmap(0), spacegroup(""),
       cell_a(0.0), cell_b(0.0), cell_c(0.0),
       cell_alpha(90.0), cell_beta(90.0), cell_gamma(90.0),
       resolution(1.0), bfactor(1.0), readavg(0) {
@@ -1289,17 +1289,17 @@ namespace simulation
        */
       double tau;
       /**
-       * NTPXR
+       * NTWXR
        */
-      unsigned int print;
+      unsigned int write;
       /**
-       * NTPDE
+       * NTWDE
        */
-      unsigned int printdensity;
+      unsigned int writedensity;
       /**
        * NTXMAP
        */
-      unsigned int printxmap;
+      unsigned int writexmap;
       /**
        * spacegroup
        */

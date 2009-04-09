@@ -124,7 +124,7 @@ namespace io {
      * write a special trajectory.
      */
     void special_trajectory(std::string const name, int every_cos = 1,
-            int every_jvalue = 1);
+            int every_jvalue = 1, int every_xray = 1);
     /**
      * write an energy trajectory.
      */
@@ -299,10 +299,15 @@ namespace io {
             std::ostream &os,
             bool formated = false);
 
-       void _print_xray(simulation::Parameter const & param,
-		       configuration::Configuration const &conf,
-		       topology::Topology const &topo,
-		       std::ostream &os);
+    void _print_xray(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
+    void _print_xray_rvalue(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
+            std::ostream &os);
+
 
     void _print_pscale_jrest(configuration::Configuration const &conf,
             topology::Topology const &topo,
@@ -357,6 +362,7 @@ namespace io {
     int m_every_ramd;
     int m_every_cos_pos;
     int m_every_jvalue;
+    int m_every_xray;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;

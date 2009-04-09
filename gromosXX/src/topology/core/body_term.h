@@ -613,7 +613,7 @@ namespace topology
     /**
      * Constructor.
      */
-    xray_restraint_struct(unsigned int h, unsigned int k, unsigned int l,
+    xray_restraint_struct(int h, int k, int l,
 			    double sf, double stddevsf)
       : h(h), k(k), l(l),
     sf(sf), stddev_sf(stddev_sf)
@@ -623,7 +623,7 @@ namespace topology
     /**
      * grid indices.
      */
-    unsigned int h, k, l;
+    int h, k, l;
     /**
      * structure factor
      */

@@ -203,6 +203,29 @@ namespace configuration {
        */
       std::vector<xray_struct> xray_rest;
 
+            /**
+       * @struct xray_rvalue_struct
+       * holds some of the X-ray restraints configuration data
+       */
+      struct xray_rvalue_struct {
+        /**
+         * the instantaneous structure factor scaling constant
+         */
+        double k_inst;
+        /**
+         * the instantaneous R-value
+         */
+        double R_inst;
+        /**
+         * the time-averaged structure factor scaling constant
+         */
+        double k_avg;
+        /**
+         * the time-averaged R-value
+         */
+        double R_avg;
+      } /** xray informaton */ xray;
+
       /**
        * distance restraint average
        */
@@ -308,7 +331,6 @@ namespace configuration {
        * position restraints bfactors
        */
       math::SArray bfactors;
-
     }; // special
 
     /**

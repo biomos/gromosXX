@@ -2,7 +2,6 @@
  * @file out_configuration.cc
  * definition of the Out_Configuration methods.
  */
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -66,6 +65,7 @@ m_every_blockaverage(0),
 m_every_ramd(0),
 m_every_cos_pos(0),
 m_every_jvalue(0),
+m_every_xray(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -132,7 +132,7 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue) { // add others if there are any
+  if (m_every_cos_pos || m_every_jvalue || m_every_xray) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -177,8 +177,9 @@ void io::Out_Configuration::init(io::Argument & args,
           io::message::error);
 
   if (args.count(argname_trs) > 0)
-    special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write);
-  else if (param.polarise.write || param.jvalue.write)
+    special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write,
+            param.xrayrest.write);
+  else if (param.polarise.write || param.jvalue.write || param.xrayrest.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -307,6 +308,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
+    }
+
+    if (m_every_xray && (sim.steps() % m_every_xray) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_xray_rvalue(sim.param(), conf, m_special_traj);
     }
 
     if (m_every_energy && (((sim.steps() + 1) % m_every_energy) == 0 || minimum_found)) {
@@ -572,12 +581,13 @@ void io::Out_Configuration
 }
 
 void io::Out_Configuration
-::special_trajectory(std::string name, int every_cos, int every_jvalue) {
+::special_trajectory(std::string name, int every_cos, int every_jvalue, int every_xray) {
 
   m_special_traj.open(name.c_str());
 
   m_every_cos_pos = every_cos;
   m_every_jvalue = every_jvalue;
+  m_every_xray = every_xray;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2108,6 +2118,36 @@ void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
     }
     os << "END\n";
   }
+}
+
+void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & param,
+        configuration::Configuration const &conf,
+        std::ostream &os) {
+  DEBUG(10, "XRAY scaling constants and R-values");
+
+  double k_inst = conf.special().xray.k_inst;
+  double k_avg  = conf.special().xray.k_avg;
+  double R_inst = conf.special().xray.R_inst;
+  double R_avg  = conf.special().xray.R_avg;
+
+  // make sure no rubbish is written
+  switch(param.xrayrest.xrayrest) {
+    case simulation::xrayrest_off : return;
+    case simulation::xrayrest_inst :
+      k_avg = R_avg = 0.0; break;
+    case simulation::xrayrest_avg :
+      k_inst = R_inst = 0.0; break;
+    default: ;// value are OK. do nothing
+  }
+
+  os << "XRAYRVALUE\n";
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  os << std::setw(15) << k_inst << std::endl
+          << std::setw(15) << R_inst << std::endl
+          << std::setw(15) << k_avg << std::endl
+          << std::setw(15) << R_avg << std::endl;
+  os << "END\n";
 }
 
 void io::Out_Configuration::_print_distance_restraint_averages(

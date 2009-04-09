@@ -108,8 +108,10 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
 
 
   //calc k_inst and k_avg
-  const double k_inst = obs_calc / sqr_calc;
-  const double k_avg = obs_calcavg / sqr_calcavg;
+  double & k_inst = conf.special().xray.k_inst;
+  k_inst = obs_calc / sqr_calc;
+  double & k_avg = conf.special().xray.k_avg;
+  k_avg = obs_calcavg / sqr_calcavg;
   DEBUG(10, "k_inst value: " << k_inst);
   DEBUG(10, "k_avg  value: " << k_avg);
 
@@ -119,8 +121,10 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   }
 
   // calculate R_inst and R_avg
-  const double R_inst = obs_k_calc / obs;
-  const double R_avg = obs_k_calcavg / obs;
+  double & R_inst = conf.special().xray.R_inst;
+  R_inst = obs_k_calc / obs;
+  double & R_avg = conf.special().xray.R_avg;
+  R_avg = obs_k_calcavg / obs;
   DEBUG(10, "R_inst value: " << std::setw(15) << std::setprecision(8) << R_inst);
   DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
 
@@ -264,53 +268,8 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
 
   m_timer.stop();
 
-  // print some data to the output file
-  if (sim.param().xrayrest.print != 0 && sim.steps() % sim.param().xrayrest.print == 0) {
-    switch (sim.param().xrayrest.xrayrest) {
-      case simulation::xrayrest_off :
-      {
-        break;
-      }
-      case simulation::xrayrest_inst :
-      {
-        std::cout << "XRAYREST" << std::endl;
-        std::cout.precision(8);
-        std::cout << "R_inst value    : " << std::setw(15) << R_inst << std::endl;
-        std::cout << "k_inst value    : " << std::setw(15) << k_inst << std::endl;
-        std::cout << "Energy          : " << std::setw(15) << conf.current().energies.xray_total << std::endl;
-        std::cout << "END" << std::endl;
-        break;
-      }
-      case simulation::xrayrest_avg :
-      {
-        std::cout << "XRAYREST" << std::endl;
-        std::cout.precision(8);
-        std::cout << "R_avg value    : " << std::setw(15) << R_avg << std::endl;
-        std::cout << "k_avg value    : " << std::setw(15) << k_avg << std::endl;
-        std::cout << "Energy          : " << std::setw(15) << conf.current().energies.xray_total << std::endl;
-        std::cout << "END" << std::endl;
-        break;
-      }
-      case simulation::xrayrest_biq :
-      {
-        std::cout << "XRAYREST" << std::endl;
-        std::cout.precision(8);
-        std::cout << "R_inst value    : " << std::setw(15) << R_inst << std::endl;
-        std::cout << "k_inst value    : " << std::setw(15) << k_inst << std::endl;
-        std::cout << "R_avg value    : " << std::setw(15) << R_avg << std::endl;
-        std::cout << "k_avg value    : " << std::setw(15) << k_avg << std::endl;
-        std::cout << "Energy          : " << std::setw(15) << conf.current().energies.xray_total << std::endl;
-        std::cout << "END" << std::endl;
-        break;
-      }
-      case simulation::xrayrest_loel :
-      {
-        break;
-      }
-    }
-  }
-  // print xmap to external file
-  if (sim.param().xrayrest.printxmap != 0 && sim.steps() % sim.param().xrayrest.printxmap == 0) {
+  // write xmap to external file
+  if (sim.param().xrayrest.writexmap != 0 && sim.steps() % sim.param().xrayrest.writexmap == 0) {
     const clipper::Grid_sampling grid(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), fphi.base_hkl_info().resolution(), 1.5);
     clipper::Xmap<clipper::ftype32> density(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), grid);
     density.fft_from(fphi);
@@ -318,7 +277,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
     std::ostringstream file_name, asu_file_name;
     file_name << "density_frame_" << std::setw(int(log10(sim.param().step.number_of_steps)))
             << std::setfill('0') << sim.steps() << ".ccp4";
-    if (sim.param().xrayrest.printdensity == 1 || sim.param().xrayrest.printdensity == 3) {
+    if (sim.param().xrayrest.writedensity == 1 || sim.param().xrayrest.writedensity == 3) {
       mapfile.open_write(file_name.str());
       mapfile.export_xmap(density);
       mapfile.close_write();
@@ -327,7 +286,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
     clipper::NXmap<float> asu(density.grid_asu(), density.operator_orth_grid());
     asu_file_name << "density_asu_frame_" << std::setw(int(log10(sim.param().step.number_of_steps)))
             << std::setfill('0') << sim.steps() << ".ccp4";
-    if (sim.param().xrayrest.printdensity == 2 || sim.param().xrayrest.printdensity == 3) {
+    if (sim.param().xrayrest.writedensity == 2 || sim.param().xrayrest.writedensity == 3) {
       mapfile.open_write(asu_file_name.str());
       mapfile.export_nxmap(asu);
       mapfile.close_write();
@@ -475,7 +434,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     os << "Bfactor                     : " << sim.param().xrayrest.bfactor << std::endl;
     os << "Num experimental reflections: " << topo.xray_restraints().size() << std::endl;
     os << "Num expected reflections    : " << hkls.num_reflections() << std::endl;
-    os << "Printing electron density   : " << sim.param().xrayrest.printxmap << std::endl;
+    os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl;
     os << "END\n\n";
   }
   // Check if too low resolution
