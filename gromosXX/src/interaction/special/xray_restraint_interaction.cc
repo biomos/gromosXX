@@ -49,9 +49,11 @@ template<math::boundary_enum B, math::virial_enum V>
 void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interactions
 (topology::Topology & topo,
         configuration::Configuration & conf,
-        simulation::Simulation & sim) {
+        simulation::Simulation & sim,
+        int & error) {
 
   m_timer.start();
+  error = 0;
   // get number of atoms in simulation
   const unsigned int atoms_size = topo.num_atoms();
   //update clipper atomvec
@@ -85,6 +87,9 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
     //filter calculated sf's
     clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
     conf.special().xray_rest[i].sf_curr = fabs(fphi[hkl].f());
+    DEBUG(15,"HKL:" << hkl.h() << "," << hkl.k() << "," << hkl.l()); 
+    DEBUG(15,"\tSF: " << conf.special().xray_rest[i].sf_curr);
+
     if (!sim.param().xrayrest.readavg && sim.steps() == 0) {
       // reset the averages at the beginning if requested
       conf.special().xray_rest[i].sf_av = conf.special().xray_rest[i].sf_curr;
@@ -101,6 +106,16 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
     sqr_calcavg += conf.special().xray_rest[i].sf_av * conf.special().xray_rest[i].sf_av;
     calcavg += conf.special().xray_rest[i].sf_av;
   }
+
+  // check for possible resolution problems
+#ifdef HAVE_ISNAN
+  if (std::isnan(calc)){
+    io::messages.add("Structure factors were NaN. This can be due to numerical problems. "
+                     "Try to slighlty increase the resolution.", "X-Ray Restraints", io::message::error);
+    error = 1;
+  }
+#endif
+
 
 
   //calc k_inst and k_avg
@@ -294,10 +309,11 @@ int interaction::Xray_Restraint_Interaction
 ::calculate_interactions(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim) {
+  int error;
   SPLIT_VIRIAL_BOUNDARY(_calculate_xray_restraint_interactions,
-          topo, conf, sim);
+          topo, conf, sim, error);
 
-  return 0;
+  return error;
 }
 
 int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,

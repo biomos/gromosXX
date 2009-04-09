@@ -61,7 +61,8 @@ namespace interaction {
     void _calculate_xray_restraint_interactions
     (topology::Topology & topo,
             configuration::Configuration & conf,
-            simulation::Simulation & sim);
+            simulation::Simulation & sim,
+            int & error);
   };
 
 } // interaction

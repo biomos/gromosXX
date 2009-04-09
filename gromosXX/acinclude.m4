@@ -415,7 +415,7 @@ AC_DEFUN([AM_PATH_CCP4_CLIPPER],[
       [LDFLAGS="$LDFLAGS -L${withval}/lib"]
       dnl check for lib with these settings and add flags automatically
       AC_DEFINE_UNQUOTED([HAVE_CLIPPER],[],[Have clipper x-ray library])
-      [CLIPPER_LIBS="-lclipper-ccp4 -lccp4c -lclipper-contrib -lclipper-core -lrfftw -lfftw -lm"]
+      [CLIPPER_LIBS="-lclipper-ccp4 -lccp4c -lclipper-contrib -lclipper-core -lrfftw -lfftw -lm -lpthread"]
       [have_clipper=yes]
     ],
     [
