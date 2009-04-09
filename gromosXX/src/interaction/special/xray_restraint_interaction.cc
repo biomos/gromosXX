@@ -81,18 +81,14 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   // e-term for time-average
   const double eterm = exp(-sim.time_step_size() / sim.param().xrayrest.tau);
 
-  // Reseting average if readavg is false (only between jobs)
-  if (!readavg){
-    for (unsigned int i = 0; i < num_xray_rest; i++) {
-      conf.special().xray_rest[i].sf_av = conf.special().xray_rest[i].sf_curr;
-    }
-    readavg=true;
-  }
-
   for (unsigned int i = 0; i < num_xray_rest; i++) {
     //filter calculated sf's
     clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
     conf.special().xray_rest[i].sf_curr = fabs(fphi[hkl].f());
+    if (!sim.param().xrayrest.readavg && sim.steps() == 0) {
+      // reset the averages at the beginning if requested
+      conf.special().xray_rest[i].sf_av = conf.special().xray_rest[i].sf_curr;
+    }
     conf.special().xray_rest[i].phase_curr = fphi[hkl].phi();
     conf.special().xray_rest[i].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[i].sf_curr + eterm * conf.special().xray_rest[i].sf_av);
 
@@ -369,11 +365,6 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 
   conf.special().xray_rest.resize(topo.xray_restraints().size());
 
-  // check if averages get a reset
-  if (sim.param().xrayrest.xrayrest!=simulation::xrayrest_inst && sim.param().xrayrest.readavg){
-    readavg=true;
-  }
-
   // Scale Fobs (needed for constant force-constant) -> scaled to sfscale
   const double sfscale = 100.0;
   double maxsf = 0.0;
@@ -460,6 +451,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     io::messages.add("Xray_restraint_interaction", "Too little reflections. Set higher resolution!", io::message::error);
     return 1;
   }
+
   return 0;
 }
 

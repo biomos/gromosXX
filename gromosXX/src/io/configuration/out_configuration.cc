@@ -302,7 +302,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_cos_position(conf, topo, m_special_traj);
     }
 
-    if (m_every_jvalue && (sim.steps() % m_every_jvalue) == 0) {
+    if (m_every_jvalue && sim.steps() && (sim.steps() % m_every_jvalue) == 0) {
       if (!special_timestep_printed) {
         _print_timestep(sim, m_special_traj);
         special_timestep_printed = true;
@@ -310,7 +310,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
     }
 
-    if (m_every_xray && (sim.steps() % m_every_xray) == 0) {
+    if (m_every_xray && sim.steps() && (sim.steps() % m_every_xray) == 0) {
       if (!special_timestep_printed) {
         _print_timestep(sim, m_special_traj);
         special_timestep_printed = true;

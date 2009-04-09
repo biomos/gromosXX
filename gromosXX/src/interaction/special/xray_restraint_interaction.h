@@ -56,16 +56,12 @@ namespace interaction {
     /**
      * decision-boolean for reseting averages
      */
-    bool readavg;
 
     template<math::boundary_enum B, math::virial_enum V>
     void _calculate_xray_restraint_interactions
     (topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim);
-
-
-
   };
 
 } // interaction
