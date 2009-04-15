@@ -7,9 +7,11 @@
 #define INCLUDED_XRAY_RESTRAINT_INTERACTION_H
 
 // Additional Clipper Headers
+#ifdef HAVE_CLIPPER
 #include <clipper/clipper.h>
 #include <clipper/clipper-ccp4.h>
 #include <clipper/clipper-contrib.h>
+#endif
 
 namespace interaction {
 
@@ -45,17 +47,28 @@ namespace interaction {
             simulation::Simulation & sim);
 
   protected:
+#ifdef HAVE_CLIPPER
     /**
      * pointer to the atoms
      */
     clipper::Atom_list atoms;
-    clipper::HKL_info hkls;
-    clipper::HKL_data<clipper::data32::F_phi> fphi;
-    clipper::HKL_data<clipper::data32::F_phi> D_k;
-    clipper::Xmap<clipper::ftype32> d_r;
     /**
-     * decision-boolean for reseting averages
+     * the HKLs
      */
+    clipper::HKL_info hkls;
+    /**
+     * the structure factors
+     */
+    clipper::HKL_data<clipper::data32::F_phi> fphi;
+    /**
+     * the graditens
+     */
+    clipper::HKL_data<clipper::data32::F_phi> D_k;
+    /**
+     * the map for the gradient convolution
+     */
+    clipper::Xmap<clipper::ftype32> d_r;
+#endif
 
     template<math::boundary_enum B, math::virial_enum V>
     void _calculate_xray_restraint_interactions
@@ -66,5 +79,5 @@ namespace interaction {
   };
 
 } // interaction
-
 #endif
+

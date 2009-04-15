@@ -21,12 +21,6 @@
 #include <util/template_split.h>
 #include <util/debug.h>
 #include <vector>
-
-// gsl headers
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
 #include <string>
 #include <ios>
 
@@ -51,7 +45,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         configuration::Configuration & conf,
         simulation::Simulation & sim,
         int & error) {
-
+#ifdef HAVE_CLIPPER
   m_timer.start();
   error = 0;
   // get number of atoms in simulation
@@ -303,6 +297,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       mapfile.close_write();
     }
   }
+#endif
 }
 
 int interaction::Xray_Restraint_Interaction
@@ -321,8 +316,9 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
         simulation::Simulation &sim,
         std::ostream &os,
         bool quiet) {
+#ifdef HAVE_CLIPPER
   DEBUG(15, "Xray_Restraint_Interaction: init")
-          const float sqpi2 = (math::Pi * math::Pi * 8.0 / 3.0);
+  const float sqpi2 = (math::Pi * math::Pi * 8.0 / 3.0);
 
   // Redirect clipper errors
   clipper::Message message;
@@ -467,7 +463,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     io::messages.add("Xray_restraint_interaction", "Too little reflections. Set higher resolution!", io::message::error);
     return 1;
   }
-
+#endif
   return 0;
 }
 
