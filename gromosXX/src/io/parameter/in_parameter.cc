@@ -2200,30 +2200,30 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
  * @section jval JVALUERES block
  * @verbatim
 JVALUERES
-# NTJVR -3..2
-#       -3                    biquadratic using CJVR * WJVR
-#       -2                    time averaged using CJVR * WJVR
-#       -1                    time avaraged using CJVR
-#        0                    no J-Value restraints [default]
-#        1                    instantaneous using CJVR
-#        2                    instantaneous using CJVR * WJVR
-# NTJVRA 0,1                  controls reading of averages from startup file
-#        0:                   start from initial values J0
-#        1:                   read time averages from startup file (for continuation run)
-# CJVR   >= 0                 J-value restraining force constant 
-#                             (weighted by individual WJVR)
-# TAUJVR >= 0                 coupling time for time averaging
-# LE     0,1                  local elevation restraining
-#        0:                   local elevation off
-#        1:                   local elevation on
-# NGRID  >0                   number of grid points in local elevation restraining
-# DELTA  >= 0.0               no elevation of poetential if J is within DELTA to J0
-# NTWJV  >= 0                 write averages and LE grid to special trajectory
-#        0:                   don't write
-#       >0:                   write every NTWJVth step.
+# NTJVR    -3..2
+#          -3                biquadratic using CJVR * WJVR
+#          -2                time-averaged using CJVR * WJVR
+#          -1                time-avaraged using CJVR
+#           0                no J-value restraints [default]
+#           1                instantaneous using CJVR
+#           2                instantaneous using CJVR * WJVR
+# NTJVRA    0                controls reading of averages from startup file
+#           0                start from initial values of J0 [default]
+#           1                read time averages from startup file (for continuation time-averaged run)
+# CJVR   >= 0                J-value restraining force constant 
+#                            (weighted by individual WJVR)
+# TAUJVR >= 0                coupling time for time-averaging
+# LE        0,1              local elevation restraining
+#           0                local elevation off [default]
+#           1                local elevation on
+# NGRID   > 0                number of grid points in local elevation restraining
+# DELTA  >= 0.0              no elevation of potential if J is within DELTA of J0
+# NTWJV  >= 0                write J-value averages and LE grid to special trajectory
+#           0                don't write [default]
+#         > 0                write every NTWJVth step
 #
 #       NTJVR  NTJVRA  CJVR   TAUJVR   LE    NGRID   DELTA  NTWJV
-           -3  0       10.0      5.0    1       16     0.2      0
+           -3  0       10.0      5.0    1       16     0.5      0
 END
 @endverbatim
  */
@@ -2305,7 +2305,7 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
             && param.jvalue.mode != simulation::jvalue_restr_biq_weighted
         && !param.jvalue.le)){
       io::messages.add("JVALUERES block: Continuation only needed "
-                       "with averaging or LE.",
+                       "with time-averaging or LE.",
 		       "In_Parameter", io::message::error);
     }
   } // JVALUERES
