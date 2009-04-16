@@ -666,12 +666,12 @@ bool io::In_Configuration::read_jvalue
       if (buffer.size()){
 	block_read.insert("JVALUERESEXPAVE");
 
-	io::messages.add("re-initialising J-restraint averages, non-continuous simulation",
+	io::messages.add("re-initialising J-value averages, non-continuous simulation",
 			 "in_configuration",
 			 io::message::warning);
       }
       else{
-	io::messages.add("initialising J-restraint averages",
+	io::messages.add("initialising J-value averages",
 			 "in_configuration",
 			 io::message::notice);
       }
@@ -685,7 +685,7 @@ bool io::In_Configuration::read_jvalue
 	_read_jvalue_av(buffer, conf.special().jvalue_av, topo.jvalue_restraints());
       }
       else{
-	io::messages.add("reading in of J-restraints averages requested "
+	io::messages.add("reading in of J-value averages requested "
 			 "but JVALUERESEXPAVE block not found",
 			 "in_configuration",
 			 io::message::error);
@@ -699,11 +699,11 @@ bool io::In_Configuration::read_jvalue
     if (!sim.param().jvalue.read_av){
         if (buffer.size()){
 	block_read.insert("JVALUERESEPS");
-	io::messages.add("re-initialising J-restraint local elevation epsilons, non-continuous simulation",
+	io::messages.add("re-initialising J-value local elevation epsilons, non-continuous simulation",
 			 "in_configuration",
 			 io::message::warning);
       } else{
-	io::messages.add("initializing J-restraint local elevation epsilons",
+	io::messages.add("initializing J-value local elevation epsilons",
 			 "in_configuration",
 			 io::message::notice);
       }
@@ -714,7 +714,7 @@ bool io::In_Configuration::read_jvalue
                         topo.jvalue_restraints(), 
                         sim.param().jvalue.ngrid);
       } else{
-	io::messages.add("reading in of J-restraints local elevation epsilons "
+	io::messages.add("reading in of J-value local elevation epsilons "
                          "requested but JVALUERESEPS block not found",
                          "in_configuration",
                          io::message::error);

@@ -1,12 +1,12 @@
 /**
  * @file in_jvalue.h
- * read in a jvalue restraining specification file.
+ * read in a jvalue restraining specification file
  */
 /**
  * @page jvalue J-value restraints specification format
  * @date 28-10-2008
  *
- * A J-value restraints specifcation file may contain the following
+ * A J-value restraining specifcation file may contain the following
  * blocks:
  * - @ref title
  * - @ref jvalresspec
@@ -21,7 +21,7 @@ namespace io {
 
   /**
    * @class In_Jvalue
-   * reads in a J-Value restraining specification file.
+   * Reads in a @f$^3J@f$-value restraining specification file.
    */
   class In_Jvalue : public GInStream {
 
@@ -35,7 +35,7 @@ namespace io {
      */
     In_Jvalue(std::istream& is) : GInStream(is) { readStream(); };
     /**
-     * Read in a J-value restraining file.
+     * Read in a @f$^3J@f$-value restraining specification file.
      */
     void read(topology::Topology &topo,
 	      configuration::Configuration & conf,

@@ -437,7 +437,7 @@ double _calculate_derivative(topology::Topology & topo,
       }
     }
     
-    io::messages.add("JValue restrints: derivative not implemented!",
+    io::messages.add("JValue restraints: derivative not implemented!",
 		     "JValue_Restraint_Interaction",
 		     io::message::critical);
   }

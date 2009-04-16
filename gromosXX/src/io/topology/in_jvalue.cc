@@ -23,42 +23,45 @@
 
 /**
  * @section jvalresspec JVALRESSPEC block
- * The JVALRESSPEC block is read from the J-value restraint specification file.
+ * The JVALRESSPEC block is read from the @f$^3J@f$-value restraint specification file.
  *
- * - Variables \c IPJR, \c JPJR, \c KPJR and \c LPJR are atom sequence numbers 
- *   of the real atoms defining the dihedral angle @f$\phi@f$ that is related 
- *   to the restrained J-value.
- * - Variable \c WJVR is an individual J-value restraint weight factor by which
- *   the J-Value restraining term may be multiplied
- * - Variable \c PJR0 or @f$J_0 \geq 0@f$. In case of a full-harmonic J-value
- *   restraint (\c H = 0), \c PJR0 is the minimum-energy J-value; in case of an 
- *   attractive or repulsive half-harmonic J-value restraint (\c H = +- 1),
- *   \c PJR0 is the upper or lower bound, respectively, beyond which the 
+ * - \c IPJV, \c JPJV, \c KPJV and \c LPJV are atom sequence numbers 
+ *   of the real atoms present in the simulation that define the dihedral angle 
+ *   @f$\phi@f$ related to the restrained @f$^3J@f$-value @f$\phi@f$.
+ * - \c WJVR is an individual @f$^3J@f$-value restraint weight factor by which
+ *   the restraining term for each @f$^3J@f$-value may be multiplied
+ * - \c PJR0 is the experimental or reference @f$^3J@f$-value, @f$J_0@f$. In case of a 
+ *   full-harmonic @f$^3J@f$-value restraint (\c NHJV = 0), it is the minimum-energy @f$^3J@f$-value; 
+ *   in the case of an attractive or repulsive half-harmonic @f$^3J@f$-value restraint
+ *   (\c NHJV = @f$\pm@f$ 1), it is the upper or lower bound, respectively, beyond which the 
  *   restraining force becomes non-zero.
- * - Variable \c PSJR is the phase shift or difference between the dihedral
- *   angle @f$\theta@f$ formed by the possibly non-existing H-atoms defining the
- *   J-coupling and the dihedral angle i-j-k-l @f$\phi@f$ formed by the real 
- *   atoms that is related to the J-coupling (in degrees). Phase shift
- *   @f$\delta = \theta - \phi@f$.
- * - Variables \c A, \c B and \c C are Karplus parameters @f$a@f$, @f$b@f$ and
- *   @f$c@f$ for the J-coupling constant expressed as a function of
+ * - \c PSJR is the phase shift or difference @f$\delta = \theta - \phi@f$
+ *   between the dihedral angle @f$\theta@f$ formed by the possibly non-existant
+ *   atoms defining the experimental @f$^3J@f$-coupling and the dihedral angle @f$\phi(i-j-k-l)@f$ 
+ *   formed by the real atoms present in the simulation (in degrees).
+ * - \c AJV, \c BJV and \c CJV are the Karplus parameters @f$a@f$, @f$b@f$ and
+ *   @f$c@f$ for the @f$^3J@f$-coupling constant expressed as a function of the dihedral angle
  *   @f$\theta@f$.
- * - Variable \c H is the type of the J-Value restraint:
+ * - \c NHJV is the type of the @f$^3J@f$-value restraint:
  *  - -1: half-harmonic repulsive
- *  - 0: full harmonic
- *  - 1: half_harmonic attractive
+ *  -  0: full harmonic [recommended]
+ *  -  1: half-harmonic attractive
+ *
+ *   Note that the half-harmonic forms of the potential are only implemented in analogy to
+ *   distance restraining and make little sense for restraining @f$^3J@f$-values, which depend on
+ *   a periodic structural parameter. 
  *
  * @verbatim
 JVALRESSPEC
 # For each J-coupling constant restraint the following is to be specified:
-# IPJR, JPJR, KPJR, LPJR            atom sequence numbers
-# WJVR                              weight factor
-# PJR0                              >=0. zero value
+# IPJV, JPJV, KPJV, LPJV            atom sequence numbers
+# WJVR                              individual weight factor
+# PJR0                              (>=0) reference J-value
 # PSJR                              phase shift
-# A,B,C                             Karplus parameters
-# H                        -1,0,1   type of J-value restraint.
+# AJV,BJV,CJV                       Karplus parameters
+# NHJV                     -1,0,1   type of J-value restraint.
 #
-#IPJR JPJR KPJR LPJR       WJVR   PJR0 PSJR  A      B     C      H
+#IPJV JPJV KPJV LPJV       WJVR   PJR0 PSJR  AJV    BJV   CJV    NHJV
 # 1VAL
   109    1    3    7       10.0   7.3  -60   9.4    -1.1  0.4    0
 # 4ALA
@@ -153,7 +156,7 @@ io::In_Jvalue::read(topology::Topology& topo,
        repulsive = -1
        */
       if (H < -1 || H > 1){
-	io::messages.add("bad value for H in JVALRESSPEC block "
+	io::messages.add("bad value for NHJV in JVALRESSPEC block "
 			 "(harmonic: 0, attractive: 1, repulsive: -1)",
 			 "In_Jvalue",
 			 io::message::error);
