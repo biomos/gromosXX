@@ -2315,22 +2315,22 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
  * @section perscale PERSCALE block
  * @verbatim
 PERSCALE
-# RESTYPE special energy term to which periodic scaling should
-#         be applied.
-#         off: don't apply periodic scaling
-#         jrest: apply periodic scaling to J-value restraints
+# RESTYPE		special energy term to which periodic scaling should
+#         		be applied
+#	  off		don't apply periodic scaling
+#	jrest		apply periodic scaling to J-value restraints
 #
-# parameters for J-Value restraints periodic scaling
-#    KDIH >= 0 maximum scaling factor for dihedral angle potential
-#      KJ >= 0 maximum scaling factor for J-Value restraint potential
-#       T >= 0 period of cosine scaling function
-#    DIFF >= 0 minimum deviation from target value to start scaling
-#              period
-#   RATIO >= 0 minimum fraction of T that needs to be passed before
-#              starting a new scaling period
-#    READ 0,1 controls reading of scaling parameters
-#         0: reset scaling parameters
-#         1: read from configuration
+# parameters for periodic scaling of J-value restraints
+# KDIH	>= 0		maximum scaling factor for dihedral angle potential
+# KJ	>= 0		maximum scaling factor for J-Value restraint potential
+# T	>= 0		period of cosine scaling function
+# DIFF	>= 0		minimum deviation from target value at which to start
+#            		scaling period
+# RATIO	>= 0		minimum fraction of T that needs to be passed before
+#            		starting a new scaling period
+# READ	   0,1		controls reading of scaling parameters
+#          0		reset scaling parameters
+#          1		read from configuration
 #
 # RESTYPE
       off

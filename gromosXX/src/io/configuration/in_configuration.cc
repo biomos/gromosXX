@@ -781,12 +781,12 @@ bool io::In_Configuration::read_pscale
       buffer = m_block["JVALUEPERSCALE"];
       if (buffer.size()){
 	block_read.insert("JVALUEPERSCALE");
-	io::messages.add("re-initialising J-restraints periodic scaling data, non-continuous simulation",
+	io::messages.add("re-initialising J-value restraints periodic scaling data, non-continuous simulation",
 			 "in_configuration",
 			 io::message::warning);
       }
       else{
-	io::messages.add("initialising J-restraints periodic scaling data",
+	io::messages.add("initialising J-value restraints periodic scaling data",
 			 "in_configuration",
 			 io::message::notice);
       }
@@ -799,7 +799,7 @@ bool io::In_Configuration::read_pscale
 	_read_pscale_jrest(buffer, conf.special().pscale, topo.jvalue_restraints());
       }
       else{
-	io::messages.add("reading in of J-restraints periodic scaling data requested "
+	io::messages.add("reading in of J-value restraints periodic scaling data requested "
 			 "but JVALUEPERSCALE block not found",
 			 "in_configuration",
 			 io::message::error);

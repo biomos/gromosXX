@@ -27,11 +27,11 @@
  * - @ref  nonbonded
  * - @ref  gromos96compat
  * - @ref  positionres
- *  - @ref posres
+ * - @ref posres
  * - @ref  perturbation
- *  - @ref pttopo
+ * - @ref pttopo
  * - @ref  jval
- *  - @ref jvalue
+ * - @ref jvalue
  * - @ref  perscale
  * - @ref  replica
  * - @ref  readtraj
@@ -39,9 +39,9 @@
  * - @ref  cgrain
  * - @ref  rottrans
  * - @ref  distanceres
- *  - @ref disres
+ * - @ref disres
  * - @ref  dihedralres
- *  - @ref dihrest
+ * - @ref dihrest
  * - @ref  multistep
  * - @ref  ewarn
  * - @ref  polarise
