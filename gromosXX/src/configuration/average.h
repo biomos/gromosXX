@@ -177,6 +177,19 @@ namespace configuration
 		       std::vector<double> & scaling,
 		       std::vector<double> & scaling_fluctuations)const;
 
+      /**
+       * get the average surface areas and fluctuation
+       */
+      void sasa_average(std::vector<double> & sasa,
+                        std::vector<double> & sasa_fluctuations,
+                        double & sasatot, double & sasatot_fluct)const;
+      /**
+       * get the average volumes and fluctuation
+       */
+      void sasavol_average(std::vector<double> & sasavol,
+                           std::vector<double> & sasavol_fluctuations,
+                           double & sasavol_tot, double & sasavol_totfluct)const;
+
     private:
       /**
        * the time.
@@ -262,6 +275,38 @@ namespace configuration
        * lambda fluctutaitons.
        */
       double lambda_fluct;
+      /**
+       * the average total sasa.
+       */
+      double sasatot_avg;
+      /**
+       * the total sasa fluctuation.
+       */
+      double sasatot_fluct;
+      /**
+       * the average total volume.
+       */
+      double sasavoltot_avg;
+      /**
+       * the total volume fuctuation.
+       */
+      double sasavoltot_fluct;
+      /**
+       * the average sasa.
+       */
+      std::vector<double> sasa_avg;
+      /**
+       * the sasa fluctuations.
+       */
+      std::vector<double> sasa_fluct;
+      /**
+       * the average volume.
+       */
+      std::vector<double> sasavol_avg;
+      /**
+       * the volume fuctuations.
+       */
+      std::vector<double> sasavol_fluct;
 
       ////////////////////////////////////////////////////
 
@@ -281,6 +326,22 @@ namespace configuration
 				 configuration::Configuration const & conf,
 				 simulation::Simulation const & sim,
 				 Block_Average const & old);
+
+      /**
+       * update the sasa.
+       */
+      void update_sasa(topology::Topology const & topo,
+                       configuration::Configuration const & conf,
+                       simulation::Simulation const & sim,
+                       Block_Average const & old);
+
+      /**
+       * update the volume.
+       */
+      void update_sasavol(topology::Topology const & topo,
+                          configuration::Configuration const & conf,
+                          simulation::Simulation const & sim,
+                          Block_Average const & old);
       
       /**
        * calculate average energies and fluctuations.
