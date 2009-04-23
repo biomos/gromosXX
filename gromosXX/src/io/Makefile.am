@@ -10,7 +10,6 @@ xxinclude_HEADERS =	argument.h\
 	print_block.h\
 	read_input.h\
 	read_special.h\
-	ifp.h\
 	gzstream.h
 
 xxiotopodir = $(includedir)/gromosXX/io/topology
@@ -32,8 +31,6 @@ xxioparamdir = $(includedir)/gromosXX/io/parameter
 xxioparam_HEADERS = parameter/in_parameter.h\
   parameter/check_parameter.h
 
-xxioffdir = $(includedir)/gromosXX/io/forcefield
-xxioff_HEADERS = forcefield/in_ifp.h
 
 noinst_LTLIBRARIES =libgroio.la libgroiocheck.la
 
@@ -61,7 +58,6 @@ libgroio_la_SOURCES =	io.cc\
 	topology/in_jvalue.cc\
 	topology/in_friction.cc\
 	topology/in_xray.cc\
-	forcefield/in_ifp.cc
 
 libgroio_la_LIBADD = libgroiocheck.la
 

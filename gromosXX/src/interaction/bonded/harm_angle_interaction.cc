@@ -81,6 +81,8 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
  
     double K  = param[a_it->type].K;
     double theta0 = param[a_it->type].cos0;
+    //here theta0 is actually cos0, as the parameter cosO is read differently depending on harmonicity 
+    //see io::In_Topology::read_harm_angles
 
     DEBUG(10, "\tK=" << K << " theta0=" << theta0 << " dij=" << dij << " dkj=" << dkj);
 
@@ -88,7 +90,7 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
     // double kj;
 
     if (sint < math::epsilon){
-      
+      // if sint is close to 0, which means theta is pi (as theta cannot be zero or -pi)
       if ((theta0 > math::Pi + math::epsilon) ||
 	  (theta0 < math::Pi - math::epsilon)){
 	io::messages.add("theta -> 180 but theta0 != 180",
@@ -97,7 +99,7 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
 	// no force will be calculated
 	continue;
       }
-
+// to avoid numerical errors because (teta-teta0)/sinteta = 1 when teta=pi
       ki = -K / dij;
       // kj = -K;
       kk = -K / dkj;
