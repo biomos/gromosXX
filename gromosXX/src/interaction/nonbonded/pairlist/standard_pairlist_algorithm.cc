@@ -291,7 +291,9 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(10, "solvent - solvent");
 
   // solvent - solvent
-  _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity);
+  const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
+  if (no_cuda)
+    _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity);
 
   if (begin == 0)
     timer().stop("pairlist");
