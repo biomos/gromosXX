@@ -19,13 +19,16 @@
 #include <interaction/bonded/angle_interaction.h>
 #include <interaction/bonded/harm_angle_interaction.h>
 #include <interaction/bonded/dihedral_interaction.h>
+#include <interaction/bonded/dihedral_new_interaction.h>
 #include <interaction/bonded/improper_dihedral_interaction.h>
+
 // perturbed interactions
 #include <interaction/bonded/perturbed_quartic_bond_interaction.h>
 #include <interaction/bonded/perturbed_harmonic_bond_interaction.h>
 #include <interaction/bonded/perturbed_angle_interaction.h>
 #include <interaction/bonded/perturbed_improper_dihedral_interaction.h>
 #include <interaction/bonded/perturbed_dihedral_interaction.h>
+#include <interaction/bonded/perturbed_dihedral_new_interaction.h>
 
 // #include <io/instream.h>
 #include <io/ifp.h>
@@ -147,6 +150,23 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   }
 
   if (param.force.dihedral == 1){
+    if (!quiet)
+      os <<"\tdihedral interaction\n";
+    
+    interaction::Dihedral_new_Interaction * d =
+      new interaction::Dihedral_new_Interaction();
+    it.read_dihedrals(d->parameter());
+    ff.push_back(d);
+
+    if (param.perturbation.perturbation){
+      if(!quiet)
+	os <<"\tperurbed dihedral interaction\n";
+      interaction::Perturbed_Dihedral_new_Interaction * pd =
+	new interaction::Perturbed_Dihedral_new_Interaction(*d);
+      ff.push_back(pd);
+    }
+  }
+   if (param.force.dihedral == 2){
     if (!quiet)
       os <<"\tdihedral interaction\n";
     

@@ -1,6 +1,7 @@
 /**
- * @file dihedral_interaction.cc
- * template methods of Dihedral_interaction.
+ * @file dihedral_new_interaction.cc
+ * template methods of Dihedral_new_Interaction.
+ * calculates the dihedral forces for any m and any shift angle
  */
 
 #include <stdheader.h>
@@ -15,7 +16,7 @@
 
 // interactions
 #include <interaction/interaction_types.h>
-#include "dihedral_interaction.h"
+#include "dihedral_new_interaction.h"
 
 #include <util/template_split.h>
 #include <util/debug.h>
@@ -34,7 +35,7 @@ static double _calculate_nearest_minimum(double phi, int m, double cospd);
  * calculate dihedral forces and energies.
  */
 template<math::boundary_enum B, math::virial_enum V>
-static int _calculate_dihedral_interactions(topology::Topology & topo,
+static int _calculate_dihedral_new_interactions(topology::Topology & topo,
 					    configuration::Configuration & conf,
 					    simulation::Simulation & sim,
 					    std::vector<interaction::dihedral_type_struct> 
@@ -48,7 +49,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rim, rln, rmj, rnk, fi, fj, fk, fl;
-  double dkj2, dim, dln, ip;
+  double dkj2, dkj, dmj2, dnk2, dim, dln, ip;
   double energy;
   
   math::Periodicity<B> periodicity(conf.current().box);
@@ -57,14 +58,12 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     periodicity.nearest_image(pos(d_it->i), pos(d_it->j), rij);
     periodicity.nearest_image(pos(d_it->k), pos(d_it->j), rkj);
     periodicity.nearest_image(pos(d_it->k), pos(d_it->l), rkl);
-
-    double cosdelta = param[d_it->type].cospd;
-   
-    
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
-    
+    dmj2 = abs2(rmj);
+    dnk2 = abs2(rnk);
     dkj2 = abs2(rkj);
+    dkj = abs(rkj);
 
     double frim = dot(rij, rkj)/dkj2;
     double frln = dot(rkl, rkj)/dkj2;
@@ -76,58 +75,27 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     
     ip = dot(rim, rln);
     double cosphi = ip / (dim*dln);
-    
-    double cosphi2 = cosphi  * cosphi;
-    double cosphi3 = cosphi2 * cosphi;
-    double cosphi4 = cosphi3 * cosphi;
-
+    double phi = acos(cosphi);
+    double sign = dot(rij, rnk);
+    if(sign < 0) phi*=-1.0;
+   
     assert(unsigned(d_it->type) < param.size());
-    
-    double dcosmphi = 0;
-    double cosmphi = 0;
-    
-    switch(param[d_it->type].m){
-      case 0:
-	cosmphi = 0.0;
-	dcosmphi = 0.0;
-	break;
-      case 1:
-	cosmphi = cosphi;
-	dcosmphi = 1;
-	break;
-      case 2:
-	cosmphi =  2*cosphi2 -1;
-	dcosmphi = 4*cosphi;
-	break;
-      case 3:
-	cosmphi  = 4*cosphi3 - 3*cosphi;
-	dcosmphi = 12*cosphi2 - 3;
-	break;
-      case 4:
-	cosmphi  = 8*cosphi4 - 8*cosphi2 + 1;
-	dcosmphi = 32*cosphi3-16*cosphi;
-	break;
-      case 5:
-	cosmphi  = 16*cosphi4*cosphi - 20*cosphi3 + 5*cosphi;
-	dcosmphi = 80*cosphi4-60*cosphi2+5;
-	break;
-      case 6:
-	cosmphi  = 32*cosphi4*cosphi2 - 48*cosphi4 + 18*cosphi2 -1;
-	dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
-	break;
-    }
 
     double     K = param[d_it->type].K;
-  
-    DEBUG(10, "dihedral K=" << K << " cos(delta)=" << cosdelta << " dcos=" << dcosmphi);
+    double delta = param[d_it->type].pd;
+    double        m = param[d_it->type].m;
+    double cosdelta = param[d_it->type].cospd;
 
-    double ki = -K * cosdelta * dcosmphi / dim;
-    double kl = -K * cosdelta * dcosmphi / dln;
+    DEBUG(10, "dihedral K=" << K << " delta=" << delta);
+
+
     double kj1 = frim - 1.0;
     double kj2 = frln;
+    double ki = K * m * sin(m*phi - delta);
+    double kl =  -ki;
     
-    fi = ki * (rln / dln - rim / dim * cosphi);
-    fl = kl * (rim / dim - rln / dln * cosphi);
+    fi = ki * dkj/dmj2 * rmj;
+    fl = kl * dkj/dnk2 * rnk;
     fj = kj1 * fi - kj2 * fl;
     fk = -1.0 * (fi + fj + fl);
     
@@ -149,7 +117,7 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
       DEBUG(11, "\tatomic virial done");
       // }
 
-    energy = K * (1 + cosdelta * cosmphi);
+      energy = K * (1 + cos (m*phi - delta));
     conf.current().energies.dihedral_energy
       [topo.atom_energy_group()[d_it->i]] += energy;
     
@@ -157,9 +125,6 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     if(sim.param().print.monitor_dihedrals){
       DEBUG(8, "monitoring dihedrals");
       
-      double phi = acos(cosphi);
-      ip = dot(rij, rnk);
-      if(ip < 0) phi*=-1.0;
       DEBUG(11, "dihedral angle: " << phi
 	    << " previous minimum: " <<conf.special().dihedral_angle_minimum[n]);
       
@@ -195,22 +160,20 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
 	}
       }
     }
-  
-       
-    
   }
+  
   return 0;
   
 }
 
-int interaction::Dihedral_Interaction
+int interaction::Dihedral_new_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
   m_timer.start();
 
-  SPLIT_VIRIAL_BOUNDARY(_calculate_dihedral_interactions,
+  SPLIT_VIRIAL_BOUNDARY(_calculate_dihedral_new_interactions,
 			topo, conf, sim, m_parameter);
 
   m_timer.stop();
@@ -231,36 +194,4 @@ static inline double _calculate_nearest_minimum(double phi, int m, double cospd)
   
   return nearest_min;
 }
-   
-int interaction::Dihedral_Interaction::init(topology::Topology &topo, 
-		     configuration::Configuration &conf,
-		     simulation::Simulation &sim,
-		     std::ostream &os,
-                     bool quiet) {
-       
-    //std::vector<dihedral_type_struct> m_parameter;
-    //std::vector<interaction::dihedral_type_struct> const & param =m_parameter;
-    std::vector<interaction::dihedral_type_struct> const & param = Dihedral_Interaction::parameter();
-    std::vector<topology::four_body_term_struct>::iterator d_it =
-    topo.solute().dihedrals().begin(),
-    d_to = topo.solute().dihedrals().end();
-  
-    for(int n =0; d_it != d_to; ++d_it, ++n){
-        double cosdelta = param[d_it->type].cospd;
-        int m = param[d_it->type].m;
-  
-       if (((cosdelta > -1 - math::epsilon)  &&  (cosdelta < -1 + math::epsilon)) || ((cosdelta > 1 - math::epsilon)  &&  (cosdelta < 1 + math::epsilon))) {
-        //          
-       }
-       else {
-            io::messages.add("dihedral function (NTBDN=0) not implemented for phase shifts not equal to 0 or 180 degrees. Please use NTBDN=1 in COVALENTFORM block", "dihedral interaction", io::message::error);
-            return 1;
-            } 
-        if (m>6 || m<0) {
-            io::messages.add("dihedral function not implemented for m>6 or m<0. Please use NTBDN=1 in COVALENTFORM block", "dihedral_interaction", io::message::error);
-            return 1;
-        }
-        }
-    return 0;
 
- };

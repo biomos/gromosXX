@@ -28,6 +28,7 @@
 
 
 #include <interaction/bonded/dihedral_interaction.h>
+#include <interaction/bonded/dihedral_new_interaction.h>
 #include <interaction/special/pscale.h>
 
 #include <io/instream.h>

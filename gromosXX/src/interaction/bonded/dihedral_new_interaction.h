@@ -1,10 +1,10 @@
 /**
- * @file dihedral_interaction.h
+ * @file dihedral_new_interaction.h
  * dihedral interaction.
  */
 
-#ifndef INCLUDED_DIHEDRAL_INTERACTION_H
-#define INCLUDED_DIHEDRAL_INTERACTION_H
+#ifndef INCLUDED_DIHEDRAL_NEW_INTERACTION_H
+#define INCLUDED_DIHEDRAL_NEW_INTERACTION_H
 
 namespace configuration{
 	class Configuration;
@@ -19,30 +19,34 @@ namespace simulation{
 namespace interaction
 {
   /**
-   * @class Dihedral_Interaction
+   * @class Dihedral_new_Interaction
    * calculates the dihedral interactions.
    */
-  class Dihedral_Interaction : public Interaction
+  class Dihedral_new_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    Dihedral_Interaction() : Interaction("Dihedral") {}
+    Dihedral_new_Interaction() : Interaction("Dihedral") {}
     /**
      * Destructor.
      */
-    virtual ~Dihedral_Interaction() {}
+    virtual ~Dihedral_new_Interaction() {}
 
     /**
      * init
      */
- 
-   virtual int init(topology::Topology &topo, 
+    virtual int init(topology::Topology &topo, 
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-                     bool quiet = false);
+		     bool quiet = false) 
+    {
+      // if (!quiet)
+      // os << "Dihedral interaction\n";
+      return 0;
+    };
     /**
      * calculate the interactions.
      */

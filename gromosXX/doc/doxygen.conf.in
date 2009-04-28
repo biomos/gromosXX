@@ -538,7 +538,6 @@ INPUT                  = <SRCDIR> \
                          <SRCDIR>/src/io/parameter \
                          <SRCDIR>/src/io/topology \
                          <SRCDIR>/src/io/configuration \
-                         <SRCDIR>/src/io/forcefield \
                          <SRCDIR>/program \
                          <SRCDIR>/contrib \
                          <SRCDIR>/doc

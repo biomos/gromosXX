@@ -19,10 +19,12 @@ xxintbonded_HEADERS = bonded/create_bonded.h\
 	bonded/harm_angle_interaction.h\
 	bonded/improper_dihedral_interaction.h\
 	bonded/dihedral_interaction.h\
+	bonded/dihedral_new_interaction.h\
 	bonded/perturbed_quartic_bond_interaction.h\
 	bonded/perturbed_harmonic_bond_interaction.h\
 	bonded/perturbed_angle_interaction.h\
 	bonded/perturbed_improper_dihedral_interaction.h\
+	bonded/perturbed_dihedral_new_interaction.h\
 	bonded/perturbed_dihedral_interaction.h
 
 xxintnbdir = $(includedir)/gromosXX/interaction/nonbonded
@@ -119,7 +121,9 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	bonded/improper_dihedral_interaction.cc\
 	bonded/perturbed_improper_dihedral_interaction.cc\
 	bonded/dihedral_interaction.cc\
+	bonded/dihedral_new_interaction.cc\
 	bonded/perturbed_dihedral_interaction.cc\
+	bonded/perturbed_dihedral_new_interaction.cc\
 	special/create_special.cc\
 	special/position_restraint_interaction.cc\
 	special/distance_restraint_interaction.cc\

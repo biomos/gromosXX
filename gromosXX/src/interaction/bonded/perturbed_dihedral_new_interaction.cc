@@ -1,6 +1,6 @@
 /**
- * @file perturbed_dihedral_interaction.cc
- * template methods of Perturbed_Dihedral_Interaction
+ * @file perturbed_dihedral_new_interaction.cc
+ * template methods of Perturbed_Dihedral_new_Interaction
  */
 
 #include <stdheader.h>
@@ -15,8 +15,8 @@
 
 // interactions
 #include <interaction/interaction_types.h>
-#include "dihedral_interaction.h"
-#include "perturbed_dihedral_interaction.h"
+#include "dihedral_new_interaction.h"
+#include "perturbed_dihedral_new_interaction.h"
 
 #include <util/template_split.h>
 #include <util/error.h>
@@ -33,13 +33,13 @@
  * calculate angle forces and energies and lambda derivatives.
  */
 template<math::boundary_enum B, math::virial_enum V>
-static int _calculate_perturbed_dihedral_interactions
+static int _calculate_perturbed_dihedral_new_interactions
 (  topology::Topology & topo,
    configuration::Configuration & conf,
    simulation::Simulation & sim,
-   interaction::Dihedral_Interaction const & m_interaction)
+   interaction::Dihedral_new_Interaction const & m_interaction)
 {
-  // this is repeated code from Dihedral_Interaction !!!
+  // this is repeated code from Dihedral_new_Interaction !!!
 
   DEBUG(5, "perturbed dihedral interaction");
   DEBUG(7, "using the dihedral interaction: " 
@@ -56,7 +56,8 @@ static int _calculate_perturbed_dihedral_interactions
   math::Vec rij, rkj, rkl, rlj, rim, rln, rmj, rnk, fi, fj, fk, fl;
   math::Vec A_fi, A_fj, A_fk, A_fl, B_fi, B_fj, B_fk, B_fl;
 
-  double dkj2, dim, dln, ip;
+  double dkj2, dkj, dmj2, dnk2, dim, dln, ip;
+  
   double A_energy, B_energy, energy, e_lambda;
 
   math::Periodicity<B> periodicity(conf.current().box);
@@ -83,11 +84,14 @@ static int _calculate_perturbed_dihedral_interactions
     periodicity.nearest_image(pos(d_it->k), pos(d_it->j), rkj);
     periodicity.nearest_image(pos(d_it->i), pos(d_it->j), rij);
     periodicity.nearest_image(pos(d_it->k), pos(d_it->l), rkl);
-  
+
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
-    
+    dmj2 = abs2(rmj);
+    dnk2 = abs2(rnk);
     dkj2 = abs2(rkj);
+    dkj = abs(rkj);
+    
 
     double frim = dot(rij, rkj)/dkj2;
     double frln = dot(rkl, rkj)/dkj2;
@@ -100,114 +104,52 @@ static int _calculate_perturbed_dihedral_interactions
     ip = dot(rim, rln);
 
     double cosphi = ip / (dim*dln);
+    double phi = acos(cosphi);
+    double sign = dot(rij, rnk);
+    if(sign < 0) phi*=-1.0;
     
-    double cosphi2 = cosphi  * cosphi;
-    double cosphi3 = cosphi2 * cosphi;
-    double cosphi4 = cosphi3 * cosphi;
-
     assert(unsigned(d_it->A_type) < m_interaction.parameter().size());
     
-    double dcosmphi = 0;
-    double cosmphi = 0;
-
     // first state A 
-    switch(m_interaction.parameter()[d_it->A_type].m){
-      case 0:
-        cosmphi = 0.0;
-        dcosmphi = 0.0;
-        break;
-      case 1:
-        cosmphi = cosphi;
-        dcosmphi = 1;
-        break;
-      case 2:
-        cosmphi =  2*cosphi2 -1;
-        dcosmphi = 4*cosphi;
-        break;
-      case 3:
-        cosmphi  = 4*cosphi3 - 3*cosphi;
-        dcosmphi = 12*cosphi2 - 3;
-        break;
-      case 4:
-        cosmphi  = 8*cosphi4 - 8*cosphi2 + 1;
-        dcosmphi = 32*cosphi3-16*cosphi;
-        break;
-      case 5:
-        cosmphi  = 16*cosphi4*cosphi - 20*cosphi3 + 5*cosphi;
-        dcosmphi = 80*cosphi4-60*cosphi2+5;
-        break;
-      case 6:
-        cosmphi  = 32*cosphi4*cosphi2 - 48*cosphi4 + 18*cosphi2 -1;
-        dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
-        break;
-      
-    }
+   
     double     K = m_interaction.parameter()[d_it->A_type].K;
-    double     cosdelta = m_interaction.parameter()[d_it->A_type].cospd;
+    double cosdelta = m_interaction.parameter()[d_it->A_type].cospd;
+    double delta = m_interaction.parameter()[d_it->A_type].pd;
+    double m = m_interaction.parameter()[d_it->A_type].m;
     
     DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta << " dcos=" << dcosmphi);
 
-    double ki = -K * cosdelta * dcosmphi / dim;
-    double kl = -K * cosdelta * dcosmphi / dln;
+    double ki = K * m * sin(m*phi - delta);
+    double kl =  -ki;
     double kj1 = frim - 1.0;
     double kj2 = frln;
     
-    A_fi = ki * (rln / dln - rim / dim * cosphi);
-    A_fl = kl * (rim / dim - rln / dln * cosphi);
+    A_fi = ki * dkj/dmj2 * rmj;
+    A_fl = kl * dkj/dnk2 * rnk;
     A_fj = kj1 * A_fi - kj2 * A_fl;
     A_fk = -1.0 * (A_fi + A_fj + A_fl);
     
-
-    A_energy = K * (1 + cosdelta * cosmphi);
-
+    A_energy = K * (1 + cos (m*phi - delta));
+    
     // then state B 
-    switch(m_interaction.parameter()[d_it->B_type].m){
-      case 0:
-        cosmphi = 0.0;
-        dcosmphi = 0.0;
-        break;
-      case 1:
-        cosmphi = cosphi;
-        dcosmphi = 1;
-        break;
-      case 2:
-        cosmphi =  2*cosphi2 -1;
-        dcosmphi = 4*cosphi;
-        break;
-      case 3:
-        cosmphi  = 4*cosphi3 - 3*cosphi;
-        dcosmphi = 12*cosphi2 - 3;
-        break;
-      case 4:
-        cosmphi  = 8*cosphi4 - 8*cosphi2 + 1;
-        dcosmphi = 32*cosphi3-16*cosphi;
-        break;
-      case 5:
-        cosmphi  = 16*cosphi4*cosphi - 20*cosphi3 + 5*cosphi;
-        dcosmphi = 80*cosphi4-60*cosphi2+5;
-        break;
-      case 6:
-        cosmphi  = 32*cosphi4*cosphi2 - 48*cosphi4 + 18*cosphi2 -1;
-        dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
-        break;
-       }
-        K = m_interaction.parameter()[d_it->B_type].K;
+    K = m_interaction.parameter()[d_it->B_type].K;
+    delta = m_interaction.parameter()[d_it->B_type].pd;
     cosdelta = m_interaction.parameter()[d_it->B_type].cospd;
-
+    m = m_interaction.parameter()[d_it->B_type].m;
+    
     DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta << " dcos=" << dcosmphi);
 
-    ki = -K * cosdelta * dcosmphi / dim;
-    kl = -K * cosdelta * dcosmphi / dln;
+    ki = K * m * sin(m*phi - delta);
+    kl =  -ki;
     kj1 = frim - 1.0;
     kj2 = frln;
     
-    B_fi = ki * (rln / dln - rim / dim * cosphi);
-    B_fl = kl * (rim / dim - rln / dln * cosphi);
+    B_fi = ki * dkj/dmj2 * rmj;
+    B_fl = kl * dkj/dnk2 * rnk;
     B_fj = kj1 * B_fi - kj2 * B_fl;
     B_fk = -1.0 * (B_fi + B_fj + B_fl);
+    B_energy = K * (1 + cos (m*phi - delta));
     
-    B_energy = K * (1 + cosdelta * cosmphi);
-
     // now combine
     force(d_it->i) += (1.0 - lambda) * A_fi + lambda * B_fi;
     force(d_it->j) += (1.0 - lambda) * A_fj + lambda * B_fj;
@@ -245,51 +187,17 @@ static int _calculate_perturbed_dihedral_interactions
 
 }
 
-int interaction::Perturbed_Dihedral_Interaction
+int interaction::Perturbed_Dihedral_new_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation & sim)
 {
   m_timer.start();
   
-  SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_dihedral_interactions,
+  SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_dihedral_new_interactions,
 			topo, conf, sim, m_interaction);
 
   m_timer.stop();
 
   return 0;
 }
-
-int interaction::Perturbed_Dihedral_Interaction::init(topology::Topology &topo, 
-		     configuration::Configuration &conf,
-		     simulation::Simulation &sim,
-		     std::ostream &os,
-                     bool quiet) {
-       
-    //std::vector<dihedral_type_struct> m_parameter;
-    //std::vector<interaction::dihedral_type_struct> const & param =m_parameter;
-    //Dihedral_Interaction & m_interaction;
-    std::vector<interaction::dihedral_type_struct> const & param = m_interaction.parameter();
-    std::vector<topology::four_body_term_struct>::iterator d_it =
-    topo.solute().dihedrals().begin(),
-    d_to = topo.solute().dihedrals().end();
-  
-    for(int n =0; d_it != d_to; ++d_it, ++n){
-        double cosdelta = param[d_it->type].cospd;
-        int m = param[d_it->type].m;
-  
-       if (((cosdelta > -1 - math::epsilon)  &&  (cosdelta < -1 + math::epsilon)) || ((cosdelta > 1 - math::epsilon)  &&  (cosdelta < 1 + math::epsilon))) {
-        //          
-       }
-       else {
-            io::messages.add("perturbed dihedral function (NTBDN=0) not implemented for phase shifts not equal to 0 or 180 degrees. Please use NTBDN=1 in COVALENTFORM block", "perturbed_dihedral interaction", io::message::error);
-            return 1;
-            } 
-        if (m>6 || m<0) {
-            io::messages.add("perturbed dihedral function not implemented for m>6 or m<0. Please use NTBDN=1 in COVALENTFORM block", "perturbed_dihedral_interaction", io::message::error);
-            return 1;
-        }
-        }
-    return 0;
-
- };

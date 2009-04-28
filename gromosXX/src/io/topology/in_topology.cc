@@ -812,7 +812,7 @@ io::In_Topology::read(topology::Topology& topo,
 		       "In_Topology", io::message::error);
     }
 
-    { // IMPDIHEDRAL
+    { // IMPFAL
       DEBUG(10, "IMPDIHEDRAL block");
       buffer = m_block["IMPDIHEDRAL"];
   
@@ -2135,10 +2135,7 @@ void io::In_Topology
 {
   if (m_block["TORSDIHEDRALTYPE"].size()){
     DEBUG(10, "TORSDIHEDRALTYPE block");
-    
-    io::messages.add("parsing TORSDIHEDRALTYPE to DIHEDRALTYPE format i.e. PD=cos(PDL)", "In_Topology",
-                io::message::warning);
-    
+        
     DEBUG(10, "TORSDIHEDRALTYPE block");
     
     std::vector<std::string> buffer;
@@ -2176,8 +2173,9 @@ void io::In_Topology
       }
       
       // and add...
-      d.push_back(interaction::dihedral_type_struct(k, cos(pdl*math::Pi/180.0), m));
-    }
+      
+      d.push_back(interaction::dihedral_type_struct(k, cos(pdl*math::Pi/180.0), pdl*math::Pi/180.0, m));
+        }
   }
   else if(m_block["DIHEDRALTYPE"].size()){
     DEBUG(10, "DIHEDRALTYPE block");
@@ -2215,9 +2213,9 @@ void io::In_Topology
         io::messages.add("eof not reached in DIHEDRALTYPE block",
                 "InTopology", io::message::warning);
       }
-      
+
       // and add...
-      d.push_back(interaction::dihedral_type_struct(k, pd, m));
+      d.push_back(interaction::dihedral_type_struct(k, pd, acos(pd), m));
     }
   }
   else{

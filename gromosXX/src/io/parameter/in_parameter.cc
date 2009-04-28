@@ -1254,18 +1254,15 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
   }
   
   if (dihedral != 0 && dihedral != 1) {
-    io::messages.add("COVALENTFORM block: NTBDN must be 0 (arbitray "
+    io::messages.add("COVALENTFORM block: NTBDN must be 0 (arbitrary "
                      "phase shifts) or 1 (phase shifts limited).",
 		     "In_Parameter", io::message::error);
   } else {
-    if (dihedral != 0) {
+    if (param.force.dihedral != 0) {
       switch (dihedral) {
-        case 1: 
-         io::messages.add("COVALENTFORM block: NTBDN 1 not implemented.",
-		          "In_Parameter", io::message::error);
-          break;
+        case 1: param.force.dihedral = 2; break;
         case 0:
-        default: ;
+        default: param.force.dihedral = 1;
       }
     }
   }
