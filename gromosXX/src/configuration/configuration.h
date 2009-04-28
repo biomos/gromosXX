@@ -69,17 +69,7 @@ namespace configuration
       /**
        * force
        */
-      math::VArray force;
 
-      /**
-       * sasa and volume forces; only needed for testing force
-       */
-      //math::VArray fsasa;
-      /**
-       * sasa and volume forces; only needed for testing force
-       */
-      //math::VArray fvolume;
-      
       /**
        * the constraint force
        */
@@ -92,23 +82,6 @@ namespace configuration
        * stochastic dynamics random number seed
        */
       std::string stochastic_seed;
-      
-      /**
-       * sasa of atom i
-       */
-      std::vector<double> sasa_area;
-      /**
-       * the volume interior of a molecule
-       */
-      std::vector<double> sasa_vol;
-      /**
-       * total sasa
-       */
-      double sasa_tot;
-      /**
-       * total volume
-       */
-      double sasavol_tot;
       
       /**
        * the box.
