@@ -53,11 +53,6 @@ configuration::Configuration::Configuration() {
   current().pressure_tensor = 0.0;
   old().pressure_tensor = 0.0;
 
-  current().sasa_tot = 0.0;
-  old().sasa_tot = 0.0;
-  current().sasavol_tot = 0.0;
-  old().sasavol_tot = 0.0;
-
   for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
     special().eds.virial_tensor_endstates[k] = 0.0;
   }
@@ -118,20 +113,6 @@ configuration::Configuration::Configuration
     conf.current().perturbed_energy_derivatives;
   old().perturbed_energy_derivatives =
     conf.old().perturbed_energy_derivatives;
-
-  current().sasa_area = conf.current().sasa_area;
-  old().sasa_area = conf.old().sasa_area;
-  current().sasa_vol = conf.current().sasa_vol;
-  old().sasa_vol = conf.old().sasa_vol;
-
-  current().sasa_tot = conf.current().sasa_tot;
-  old().sasa_tot = conf.old().sasa_tot;
-  current().sasavol_tot = conf.current().sasavol_tot;
-  old().sasavol_tot = conf.old().sasavol_tot;
-  
-  // only needed for testing of sasa and volume term
-  //current().fsasa = conf.current().fsasa;
-  //current().fvolume = conf.current().fvolume;
 
   special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
   special().flexible_constraint = conf.special().flexible_constraint;
@@ -208,21 +189,7 @@ configuration::Configuration & configuration::Configuration::operator=
     conf.current().perturbed_energy_derivatives;
   old().perturbed_energy_derivatives =
     conf.old().perturbed_energy_derivatives;
-  
-  current().sasa_area = conf.current().sasa_area;
-  old().sasa_area = conf.old().sasa_area;
-  current().sasa_vol = conf.current().sasa_vol;
-  old().sasa_vol = conf.old().sasa_vol;
 
-  current().sasa_tot = conf.current().sasa_tot;
-  old().sasa_tot = conf.old().sasa_tot;
-  current().sasavol_tot = conf.current().sasavol_tot;
-  old().sasavol_tot = conf.old().sasavol_tot;
-  
-  // only needed for testing of sasa and volume term
-  //current().fsasa = conf.current().fsasa;
-  //current().fvolume = conf.current().fvolume;
-  
   special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
   special().flexible_constraint = conf.special().flexible_constraint;
   
@@ -263,16 +230,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
   current().energies.resize(num, numb);
   old().energies.resize(num, numb);
 
-  // resize sasa vectors
-  const unsigned int num_atoms = unsigned(topo.num_solute_atoms());
-
-  DEBUG(5, "number of solute atoms: " << num_atoms);
-
-  current().sasa_area.resize(num_atoms);
-  old().sasa_area.resize(num_atoms);
-  current().sasa_vol.resize(num_atoms);
-  old().sasa_vol.resize(num_atoms);
- 
   // check whether this can really stay here! see resize function below
   special().eds.force_endstates.resize(param.eds.numstates);
   for (unsigned int i = 0; i < special().eds.force_endstates.size(); i++){
@@ -468,8 +425,6 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
   posV.resize(s);
   vel.resize(s);
   force.resize(s);
-  //fsasa.resize(s); // only needed for testing
-  //fvolume.resize(s); // only needed for testing
   constraint_force.resize(s);
   stochastic_integral.resize(s);
 }

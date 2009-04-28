@@ -69,6 +69,7 @@ namespace configuration
       /**
        * force
        */
+      math::VArray force;
 
       /**
        * the constraint force
@@ -82,7 +83,7 @@ namespace configuration
        * stochastic dynamics random number seed
        */
       std::string stochastic_seed;
-      
+
       /**
        * the box.
        */

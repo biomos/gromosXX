@@ -134,7 +134,20 @@ namespace configuration
      * total energy of the dipole-dipole interaction (self energy)
      */
     double self_total;
-    
+
+    /**
+     * total energy of sasa interaction
+     */
+    double sasa_total;
+    /**
+     * total energy of volume term
+     */
+    double sasa_volume_total;
+
+    /**
+     * total energy of the dipole-dipole interaction (self energy)
+     */
+
     /**
      * energy of the reference state in eds
      */
@@ -233,6 +246,15 @@ namespace configuration
      * energy group names
      */
     std::vector<std::string> group_name;
+
+    /**
+     * sasa interaction energy term
+     */
+    std::vector<double> sasa_energy;
+    /**
+     * volume (sasa) interaction energy term
+     */
+    std::vector<double> sasa_volume_energy;
     
     /**
      * reset the energy terms to zero
