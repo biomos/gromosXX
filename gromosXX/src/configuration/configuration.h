@@ -66,6 +66,7 @@ namespace configuration {
        * force
        */
       math::VArray force;
+
       /**
        * the constraint force
        */
