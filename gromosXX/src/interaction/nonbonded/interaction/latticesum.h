@@ -883,12 +883,12 @@ namespace interaction {
              |\hat{s}_g(\mathbf{k}_{\mathbf{l}})|^2 @f]
      *
      * The fourier transform of the potential is calculated as
-     * @f[\hat{\Phi}_{\gamma,g}(\mathbf{k}_{\mathbf{l}}) = \epsilon_0^{-1}
+     * @f[ \hat{\Phi}_{\gamma,g}(\mathbf{k}_{\mathbf{l}}) = \epsilon_0^{-1}
              \hat{G}_g^{\dagger}(\mathbf{k}_{\mathbf{l}})
              \hat{s}_g(\mathbf{k}_{\mathbf{l}}) @f]
      *
      * The virial is calculated as
-     * @f[\underline{W}_\gamma = -(4\epsilon_0V)^{-1} \sum_{\mathbf{l} \in G, l\neq 0}
+     * @f[ \underline{W}_\gamma = -(4\epsilon_0V)^{-1} \sum_{\mathbf{l} \in G, l\neq 0}
              \left[\hat{\underline{\Gamma}}_g^0(\mathbf{k}_{\mathbf{l}}) + 
              \mathrm{diag}(\hat{G}_g^{\dagger}(\mathbf{k}_{\mathbf{l}}))\right] 
              |\hat{s}_g(\mathbf{k}_{\mathbf{l}})|^2 @f]   
