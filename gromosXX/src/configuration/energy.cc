@@ -49,6 +49,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     dihrest_total = 0.0;
     jvalue_total = 0.0;
     xray_total = 0.0;
+    leus_total = 0.0;
     constraints_total = 0.0;
     entropy_term = 0.0;
     external_total = 0.0;
@@ -254,6 +255,10 @@ int configuration::Energy::calculate_totals()
     std::cout << "EWARN: xray energy = " << xray_total << "\n";
   }
 
+  if (leus_total > m_ewarn) {
+    std::cout << "EWARN: local elevation energy = " << leus_total << "\n";
+  }
+
   ls_pair_total = ls_realspace_total + ls_kspace_total + ls_a_term_total;
   //        E(pair) + DeltaG(self) + DeltaG(surf)
   ls_total =ls_pair_total + ls_self_total + ls_surface_total;
@@ -266,8 +271,8 @@ int configuration::Energy::calculate_totals()
   potential_total = nonbonded_total + bonded_total;
   
   special_total = posrest_total + distanceres_total + dihrest_total
-    + constraints_total + jvalue_total + xray_total + external_total 
-    + eds_vr;
+    + constraints_total + jvalue_total + xray_total + leus_total
+    + external_total + eds_vr;
 
   total = potential_total + kinetic_total + special_total;
 
@@ -306,11 +311,12 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 21 : return dihrest_total;
     case 22 : return jvalue_total;
     case 23 : return xray_total;
-    case 24 : return constraints_total;
-    case 25 : return entropy_term;
-    case 26 : return external_total;
-    case 27 : return self_total;
-    case 28 : return eds_vr;
+    case 24 : return leus_total;
+    case 25 : return constraints_total;
+    case 26 : return entropy_term;
+    case 27 : return external_total;
+    case 28 : return self_total;
+    case 29 : return eds_vr;
   }
   return 0.0;
 }

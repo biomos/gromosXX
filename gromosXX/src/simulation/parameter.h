@@ -383,6 +383,21 @@ namespace simulation
   };
 
   /**
+   * @enum localelev_enum
+   * local elevation
+   */
+  enum localelev_enum {
+    /**
+     * don't use local elevation
+     */
+    localelev_off = 0,
+    /**
+     * use local elevation
+     */
+    localelev_on = 1
+  };
+
+  /**
    * @class Parameter
    * input parameters.
    */
@@ -2170,6 +2185,34 @@ namespace simulation
        */
       unsigned int cuda_device;
     } /** special inner loops */ innerloop;
+
+    /**
+     * @struct localelev_struct
+     * Constructor:
+     * Default values:
+     * - localelev: off
+     * - read: false
+     * - umbrellas: empty
+     */
+    struct localelev_struct {
+      /**
+       * constructor
+       */
+      localelev_struct() : localelev(localelev_off), read(false) {}
+      /**
+       * use the method or not
+       */
+      localelev_enum localelev;
+      /**
+       * read from external file
+       */
+      bool read;
+      /**
+       * ids of the umbrella potentials to apply
+       * true if building up
+       */
+      std::map<int, bool> umbrellas;
+    } localelev;
   };
 }
 

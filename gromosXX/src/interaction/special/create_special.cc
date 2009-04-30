@@ -25,6 +25,7 @@
 #include <interaction/special/external_interaction.h>
 #include <interaction/special/ramd_interaction.h>
 #include <interaction/special/xray_restraint_interaction.h>
+#include <interaction/special/local_elevation_interaction.h>
 
 
 #include <interaction/bonded/dihedral_interaction.h>
@@ -180,6 +181,15 @@ int interaction::create_special(interaction::Forcefield & ff,
             new interaction::Xray_Restraint_Interaction;
 
     ff.push_back(xr);
+  }
+
+  if (param.localelev.localelev != simulation::localelev_off) {
+    if (!quiet) {
+      os << "\tlocal elevation \n";
+    }
+    interaction::Local_Elevation_Interaction *le =
+            new interaction::Local_Elevation_Interaction();
+    ff.push_back(le);
   }
 
 

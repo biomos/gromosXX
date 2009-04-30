@@ -69,6 +69,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_nose_hoover_chains(topo, conf, sim, os);
   read_rottrans(topo, conf, sim, os);
   read_position_restraints(topo, conf, sim, os);
+  read_leusbias(topo, conf, sim, os);
   
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
@@ -565,18 +566,15 @@ bool io::In_Configuration::read_box
     buffer = m_block["GENBOX"];
     if(buffer.size()){
        if (!quiet)
-           os <<"\treading GENBOX...";
+           os <<"\treading GENBOX...\n";
        _read_genbox(conf.current().box,conf.current().phi, conf.current().theta,
               conf.current().psi, buffer, sim.param().boundary.boundary);
        conf.old().box = conf.current().box;
        conf.old().phi = conf.current().phi;
        conf.old().theta = conf.current().theta;
        conf.old().psi = conf.current().psi;
-       os <<"\nBOX:\n";
        block_read.insert("GENBOX");
-
-    }
-    else{
+    } else {
     buffer = m_block["TRICLINICBOX"];
     if (buffer.size()){
       if (!quiet)
@@ -603,7 +601,9 @@ bool io::In_Configuration::read_box
           conf.old().phi = conf.current().phi;
           conf.old().theta = conf.current().theta;
           conf.old().psi = conf.current().psi;
-
+          io::messages.add("BOX given"
+		     " - output will be GENBOX",
+		     "In_Configuration", io::message::notice);
 	block_read.insert("BOX");
       }
       else{
@@ -1058,6 +1058,47 @@ bool io::In_Configuration::read_position_restraints
   }
   
   return result;
+}
+
+bool io::In_Configuration::read_leusbias
+(
+ topology::Topology &topo,
+ configuration::Configuration &conf,
+ simulation::Simulation & sim,
+ std::ostream & os)
+{
+  if (sim.param().localelev.localelev == simulation::localelev_off)
+    return true;
+
+  std::vector<std::string> buffer;
+  if (!sim.param().localelev.read) { // read means from spec file!
+    buffer = m_block["LEUSBIAS"];
+    if (buffer.size()) {
+      block_read.insert("LEUSBIAS");
+      if (!quiet)
+	os << "\treading LEUSBIAS...\n";
+
+      bool result = _read_leusbias(conf.special().umbrellas, buffer, false);
+      if (!quiet) {
+        os << "\t\t" << conf.special().umbrellas.size() <<
+                " umbrellas found.\n";
+      }
+      return result;
+    } else {
+      io::messages.add("no LEUSBIAS block in configuration.",
+                       "in_configuration", io::message::error);
+      return false;
+    }
+  } else {
+    buffer = m_block["LEUSBIAS"];
+    if (buffer.size()) {
+      block_read.insert("LEUSBIAS");
+      io::messages.add("LEUSBIAS block in configuration is ignored",
+                       "in_configuration", io::message::warning);
+    }
+  }
+
+  return true;
 }
 
 
@@ -2262,6 +2303,97 @@ std::vector<std::string> &buffer, bool hasTitle)
   }
   return true;
   
+}
+
+bool io::In_Configuration::_read_leusbias(
+            std::vector<util::Umbrella> & umbrellas,
+            std::vector<std::string> &buffer, bool reset) {
+  DEBUG(8, "read LEUSBIAS");
+  std::istringstream _lineStream;
+  std::string s;
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
+
+  unsigned int num_umb;
+  _lineStream >> num_umb;
+  if (_lineStream.fail()) {
+    io::messages.add("bad line in LEUSBIAS block: NUMUMB",
+            "In_Configuration",
+            io::message::error);
+    return false;
+  }
+  for(unsigned int x = 0; x < num_umb; ++x) {
+    int id, dim;
+    _lineStream >> id >> dim;
+
+    if(_lineStream.fail()){
+      io::messages.add("bad line in LEUSBIAS block: NDIM",
+		       "In_Configuration",
+		       io::message::error);
+      return false;
+    }
+    // create the umbrella
+    util::Umbrella u(id, dim);
+
+    _lineStream >> u.force_constant;
+    if(_lineStream.fail()){
+      io::messages.add("bad line in LEUSBIAS block: CLES",
+		       "In_Configuration",
+		       io::message::error);
+      return false;
+    }
+
+    // loop over dimensions
+    for (unsigned int i = 0; i < u.dim(); ++i) {
+      int type, form;
+      _lineStream >> type >> form >> u.width[i] >> u.cutoff[i]
+              >> u.num_grid_points[i] >> u.grid_min[i] >> u.grid_max[i];
+      if (_lineStream.fail()) {
+        io::messages.add("LEUSBIAS block: Could not read umbrella definition",
+                "In_Configuration",
+                io::message::error);
+        return false;
+      }
+      u.variable_type[i] = util::Umbrella::variable_type_enum(type);
+      DEBUG(10, "variable type: " << u.variable_type[i]);
+      u.functional_form[i] = util::Umbrella::functional_form_enum(form);
+      DEBUG(10, "functional form: " << u.functional_form[i]);
+    } // for dimensions (grid properties)
+
+    if (reset) {
+      umbrellas.push_back(u);
+      continue;
+    }
+
+    unsigned int nconle;
+    _lineStream >> nconle;
+    if (_lineStream.fail()) {
+      io::messages.add("LEUSBIAS block: Could not read umbrella number of configurations",
+              "In_Configuration",
+              io::message::error);
+      return false;
+    }
+    // loop over sampled points
+    for (unsigned int n = 0; n < nconle; ++n) {
+      util::Umbrella::leus_conf cnf(dim);
+      unsigned int visit;
+      _lineStream >> visit;
+      for (unsigned int i = 0; i < u.dim(); ++i) {
+        _lineStream >> cnf.pos[i];
+        if (_lineStream.fail()) {
+          io::messages.add("LEUSBIAS block: Could not read stored configurations",
+                  "In_Configuration",
+                  io::message::error);
+          return false;
+        }
+        --cnf.pos[i]; // our arrays start at 0 and not 1 as in the format
+      }
+      u.configurations[cnf] = visit;
+
+    } // for configurations
+    umbrellas.push_back(u);
+  } // for umbrellas
+  return true;
 }
 
 bool io::In_Configuration::_read_nose_hoover_chain_variables(

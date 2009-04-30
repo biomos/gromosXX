@@ -149,6 +149,16 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# X-ray restraints specification\n";
     usage += "\t# @xray      filename\n\n";
   }
+
+  if (knowns.count("lud")){
+    usage += "\t# local elevation umbrella database file\n";
+    usage += "\t# @lud       filename\n\n";
+  }
+
+  if (knowns.count("led")){
+    usage += "\t# local elevation coordinate definition file\n";
+    usage += "\t# @led       filename\n\n";
+  }
   
   if (knowns.count("friction")){
     usage += "\t# atomic friction coefficients\n";

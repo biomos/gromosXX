@@ -334,6 +334,9 @@ namespace io {
             simulation::Simulation const &sim,
             std::ostream &os);
 
+    void _print_umbrellas(configuration::Configuration const & conf,
+            std::ostream & os);
+
   protected:
     std::ofstream m_pos_traj;
     std::ofstream m_final_conf;

@@ -20,7 +20,8 @@ xxiotopo_HEADERS = topology/in_jvalue.h\
 	topology/in_distanceres.h\
 	topology/in_dihrest.h\
 	topology/in_friction.h\
-	topology/in_xray.h
+	topology/in_xray.h\
+	topology/in_leus.h
 
 xxioconfdir = $(includedir)/gromosXX/io/configuration
 xxioconf_HEADERS = configuration/in_configuration.h\
@@ -58,6 +59,7 @@ libgroio_la_SOURCES =	io.cc\
 	topology/in_jvalue.cc\
 	topology/in_friction.cc\
 	topology/in_xray.cc\
+	topology/in_leus.cc
 
 libgroio_la_LIBADD = libgroiocheck.la
 

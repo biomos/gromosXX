@@ -122,6 +122,10 @@ namespace configuration
      */
     double xray_total;
     /**
+     * total energy of the local elevation interaction
+     */
+    double leus_total;
+    /**
      * total energy (=0.0) of the (distance) constraint interaction(s).
      */
     double constraints_total;

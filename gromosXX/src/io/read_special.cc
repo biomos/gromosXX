@@ -27,6 +27,7 @@
 #include <io/topology/in_jvalue.h>
 #include <io/topology/in_friction.h>
 #include <io/topology/in_xray.h>
+#include <io/topology/in_leus.h>
 
 #include "read_special.h"
 
@@ -218,6 +219,51 @@ int io::read_special(io::Argument const & args,
       }
     }
   } // FRICTION
+
+  // LEUS
+  if (sim.param().localelev.localelev != simulation::localelev_off) {
+    io::igzstream led_file;
+    if (args.count("led") != 1) {
+      io::messages.add("LEUS: no definition file specified (use @led)",
+              "read special", io::message::error);
+    } else {
+      led_file.open(args["led"].c_str());
+      if (!led_file.is_open()) {
+        io::messages.add("opening of LEUS definition file failed!\n",
+                "read_special", io::message::error);
+      } else {
+        io::messages.add("LEUS coordinate definition read from " + args["led"],
+                "read special", io::message::notice);
+
+        io::In_Localelevspec inled(led_file);
+        inled.quiet = quiet;
+
+        inled.read(topo, sim, os);
+      }
+    } // LED
+
+    if (sim.param().localelev.read) {
+      io::igzstream lud_file;
+      if (args.count("lud") != 1) {
+        io::messages.add("LEUS: no database file specified (use @lud)",
+                "read special", io::message::error);
+      } else {
+        lud_file.open(args["lud"].c_str());
+        if (!lud_file.is_open()) {
+          io::messages.add("opening of LEUS database file failed!\n",
+                  "read_special", io::message::error);
+        } else {
+          io::messages.add("LEUS umbrella database file read from " + args["lud"],
+                  "read special", io::message::notice);
+
+          io::In_LEUSBias inlud(lud_file);
+          inlud.quiet = quiet;
+
+          inlud.read(topo, conf, sim, os);
+        }
+      } // LUD
+    } // if external LUD
+  } // LEUS
 
   // check for errors and abort
   if (io::messages.contains(io::message::error) ||

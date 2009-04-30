@@ -28,6 +28,9 @@
  *   - @ref disres
  *   - @ref jvalue
  *   - @ref posres
+ *   - @ref xrayres
+ *   - @ref leus
+ *   - @ref leusdb
  *
  * <h3>Modules</h3>
  * - @ref algorithmoverview "algorithm"

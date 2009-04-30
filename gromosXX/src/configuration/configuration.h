@@ -12,6 +12,7 @@
 #include "mesh.h"
 #include "influence_function.h"
 #include "kspace.h"
+#include "../util/umbrella.h"
 
 namespace topology {
   class Topology;
@@ -138,6 +139,10 @@ namespace configuration {
        */
       std::vector<double> dihedral_angle_minimum;
 
+      /**
+       * the local elevation umbrellas
+       */
+      std::vector<util::Umbrella> umbrellas;
       //////////////////////////////////////////////////
 
       /**

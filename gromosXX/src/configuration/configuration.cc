@@ -20,7 +20,6 @@
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
 
-
 #include <math/periodicity.h>
 #include <vector>
 
@@ -115,6 +114,7 @@ configuration::Configuration::Configuration
     conf.old().perturbed_energy_derivatives;
 
   special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
+  special().umbrellas = conf.special().umbrellas;
   special().flexible_constraint = conf.special().flexible_constraint;
   
   special().jvalue_av = conf.special().jvalue_av;
@@ -191,6 +191,7 @@ configuration::Configuration & configuration::Configuration::operator=
     conf.old().perturbed_energy_derivatives;
 
   special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
+  special().umbrellas = conf.special().umbrellas;
   special().flexible_constraint = conf.special().flexible_constraint;
   
   special().jvalue_av = conf.special().jvalue_av;
@@ -212,6 +213,8 @@ configuration::Configuration & configuration::Configuration::operator=
   special().shake_failure_occurred = conf.special().shake_failure_occurred;
   
   boundary_type = conf.boundary_type;
+
+
 
   return *this;
 }

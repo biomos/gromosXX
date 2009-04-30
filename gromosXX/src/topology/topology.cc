@@ -26,6 +26,7 @@ namespace simulation
 #include <simulation/simulation.h>
 
 #include <interaction/interaction_types.h>
+#include <util/le_coordinate.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -58,6 +59,9 @@ topology::Topology::~Topology()
 {
   if (m_multicell_topo != NULL)
     delete m_multicell_topo;
+
+  for(unsigned int i = 0; i < m_le_coordinates.size(); ++i)
+    delete m_le_coordinates[i];
 }
 
 /**
@@ -345,6 +349,9 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   DEBUG(10, "\tspecial");
   m_position_restraint = topo.m_position_restraint;
   m_jvalue_restraint = topo.m_jvalue_restraint;
+  for(unsigned int i = 0; i < topo.m_le_coordinates.size(); ++i) {
+    m_le_coordinates.push_back(topo.m_le_coordinates[i]->clone());
+  }
 
   DEBUG(8, "\tnum_solute_atoms()=" << num_solute_atoms());
 

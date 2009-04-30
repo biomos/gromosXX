@@ -109,7 +109,6 @@ resize(topology::Topology const & topo,
 
   const unsigned int e_groups = unsigned(param.force.energy_group.size());
   const unsigned int baths = unsigned(param.multibath.multibath.size());
-  const unsigned int num_atoms = unsigned(topo.num_solute_atoms());
 
   energy_avg.resize(e_groups, baths);
   energy_fluct.resize(e_groups, baths);
@@ -342,6 +341,8 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(distanceres_total);
   ENERGY_AVG(dihrest_total);
   ENERGY_AVG(jvalue_total);
+  ENERGY_AVG(xray_total);
+  ENERGY_AVG(leus_total);
   ENERGY_AVG(constraints_total);
   ENERGY_AVG(external_total);
   ENERGY_AVG(self_total);

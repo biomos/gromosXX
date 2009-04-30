@@ -89,6 +89,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_EDS(param);
   read_LAMBDAS(param); // needs to be called after FORCE
   read_GROMOS96COMPAT(param);
+  read_LOCALELEV(param);
   read_known_unsupported_blocks();
   
   DEBUG(7, "input read...");
@@ -4080,6 +4081,116 @@ void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
   }
 }
 
+/**
+ * @section localelev LOCALELEV block
+ * @verbatim
+LOCALELEV
+# NTLES 0,1 controls the use of local elevation.
+#    0 : not used [default]
+#    1 : local elevation is applied
+# NLEPOT >= 0 number of umbrella potentials applied
+# NTLESA 0..2 controls the reading of the potential definition
+#    0 : read from input file (not supported)
+#    1 : read from startup file
+#    2 : read from special file (@lud)
+# NLEPID[1..NLEPOT] IDs of the umbrella potentials
+# NLEPFR[1..NLEPOT] 0,1 freeze the umbrella potential
+#    0 : build up
+#    1 : freeze
+# NTLES  NLEPOT  NTLESA
+      1       2       1
+# NLEPID NLEPFT
+       1      0
+       2      1
+END
+@endverbatim
+ */
+void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
+        std::ostream & os)
+{
+  DEBUG(8, "read LOCALELEV");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["LOCALELEV"];
+
+  if (buffer.size()) {
+    block_read.insert("LOCALELEV");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+    int onoff, num, read;
+    _lineStream >> onoff >> num >> read;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in LOCALELEV block",
+              "In_Parameter", io::message::error);
+    }
+
+    switch(onoff) {
+      case 0 :
+        param.localelev.localelev = simulation::localelev_off;
+        break;
+      case 1:
+        param.localelev.localelev = simulation::localelev_on;
+        break;
+      default:
+        param.localelev.localelev = simulation::localelev_off;
+        io::messages.add("LOCALELEV block: Bad value for NTLES (0,1)",
+              "In_Parameter", io::message::error);
+    }
+
+    if (num < 0) {
+      io::messages.add("LOCALELEV block: Bad value for NLEPOT (>=0)",
+              "In_Parameter", io::message::error);
+      return;
+    }
+
+    switch(read) {
+      case 1:
+        param.localelev.read = false;
+        break;
+      case 2:
+        param.localelev.read = true;
+        break;
+      default:
+        param.localelev.read = false;
+        io::messages.add("LOCALELEV block: Bad value for NTLESA (1,2)",
+              "In_Parameter", io::message::error);
+    }
+
+
+    // read the umbrellas
+    for (int i = 0; i < num; ++i) {
+      int id, f;
+      _lineStream >> id;
+      if (_lineStream.fail()) {
+        std::ostringstream msg;
+        msg << "LOCALELEV block: Bad value for NLEPID[" << i + 1 << "]";
+        io::messages.add(msg.str(), "In_Parameter", io::message::error);
+        return;
+      }
+      _lineStream >> f;
+      if (_lineStream.fail() || (f != 0 && f != 1)) {
+        std::ostringstream msg;
+        msg << "LOCALELEV block: Bad value for NLEPFR[" << i + 1 << "] (0,1)";
+        io::messages.add(msg.str(), "In_Parameter", io::message::error);
+        return;
+      }
+
+      bool freeze = (f == 1) ? true : false;
+      if (param.localelev.umbrellas.find(id) == param.localelev.umbrellas.end()) {
+        param.localelev.umbrellas[id] = !freeze;
+      } else {
+        std::ostringstream msg;
+        msg << "LOCALELEV block: duplicated umbrella potential ID (" << id << ")";
+        io::messages.add(msg.str(), "In_Parameter", io::message::error);
+        return;
+      }
+    } // for umbrellas
+  } // if block
+}
+
 // two helper data types to simply unsupported block handling
 enum unsupported_block_type { 
   ub_unknown, // I know it and know that I don't use it but I have no idea why
@@ -4140,8 +4251,7 @@ void io::In_Parameter::read_known_unsupported_blocks() {
   ub["DEBUG"] = unsupported_block("the @verb argument", ub_promd);
 #endif
   ub["FOURDIM"] = unsupported_block("", ub_g96);
-  ub["LOCALELEV"] = unsupported_block("", ub_promd);
-  ub["LOCALELEVATION"] = unsupported_block("LOCALELEV in PROMD", ub_g96);
+  ub["LOCALELEVATION"] = unsupported_block("LOCALELEV", ub_g96);
   ub["SUBMOLECULES"] = unsupported_block("SOLUTEMOLECULES and moved to "
                                          "the topology", ub_renamed);
   ub["FORCEFIELD"] = unsupported_block("COVALENTFORM", ub_renamed);

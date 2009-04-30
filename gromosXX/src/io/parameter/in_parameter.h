@@ -27,11 +27,11 @@
  * - @ref  nonbonded
  * - @ref  gromos96compat
  * - @ref  positionres
- * - @ref posres
+ * - @ref  posres
  * - @ref  perturbation
- * - @ref pttopo
+ * - @ref  pttopo
  * - @ref  jval
- * - @ref jvalue
+ * - @ref  jvalue
  * - @ref  perscale
  * - @ref  replica
  * - @ref  readtraj
@@ -49,11 +49,8 @@
  * - @ref  spc_loops
  * - @ref  EDS
  * - @ref  LAMBDAS
- * 
- * 
-
- 
-*/
+ * - @ref  localelev
+ */
 
 
 
@@ -287,6 +284,10 @@ namespace io {
      * read GROMOS96COMPAT block.
      */
     void read_GROMOS96COMPAT(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read LOCALELEV block.
+     */
+    void read_LOCALELEV(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io

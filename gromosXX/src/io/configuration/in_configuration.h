@@ -11,6 +11,7 @@
 namespace util
 {
   struct Replica_Data;
+  struct Umbrella;
 }
 
 namespace io {
@@ -69,10 +70,19 @@ namespace io {
             std::vector<std::string> &buffer, bool hasTitle);
 
     /**
+     * read local elevation umbrellas
+     * @param reset reset the bias
+     */
+    static bool _read_leusbias(
+            std::vector<util::Umbrella> & umbrellas,
+            std::vector<std::string> &buffer, bool reset);
+
+    /**
      * read POSITION block.
      */
     static bool _read_position(math::VArray &pos, std::vector<std::string> &buffer,
 			int const num, std::string blockname = "POSITION");
+
 
   private:
     /**
@@ -222,6 +232,14 @@ namespace io {
      std::vector<util::Replica_Data> & replica_data,
      std::ostream & os = std::cout
      );
+
+    /**
+     * read LE umbrella potentials
+     */
+    bool read_leusbias(topology::Topology &topo,
+                                  configuration::Configuration &conf,
+                                  simulation::Simulation & sim,
+                                  std::ostream & os);
 				  
     /**
      * read POSITIONRED block.

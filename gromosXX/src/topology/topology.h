@@ -20,6 +20,10 @@ namespace simulation
   class Parameter;
 }
 
+namespace util {
+  class LE_Coordinate;
+}
+
 namespace topology
 {
   /**
@@ -842,6 +846,21 @@ namespace topology
     {
       return m_virtual_grain;
     }
+
+    /**
+     * const accessor to local elevation coordinates
+     */
+    std::vector<util::LE_Coordinate*> const & le_coordinates()const
+    {
+      return m_le_coordinates;
+    }
+    /**
+     * accessor to local elevation coordinates
+     */
+    std::vector<util::LE_Coordinate*> & le_coordinates()
+    {
+      return m_le_coordinates;
+    }
     
     /**
      * initialise the topology.
@@ -1154,6 +1173,8 @@ namespace topology
      * the polarisabiliy damping power @f$ p @f$
      */
      math::SArray m_damping_power;
+
+     std::vector<util::LE_Coordinate*> m_le_coordinates;
     
   }; // topology
   

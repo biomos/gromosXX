@@ -18,16 +18,12 @@
 #include <io/print_block.h>
 #include <io/argument.h>
 
-#include <sstream>
-
 #include "out_configuration.h"
 
 #include <util/replica_data.h>
 #include <util/template_split.h>
 #include <util/debug.h>
-
 #include <limits>
-#include <vector>
 
 #undef MODULE
 #undef SUBMODULE
@@ -398,6 +394,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
       _print_xray(sim.param(), conf, topo, m_final_conf);
+    }
+
+    if (sim.param().localelev.localelev != simulation::localelev_off) {
+      _print_umbrellas(conf, m_final_conf);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -2257,6 +2257,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.dihrest_total << "\n"
           << std::setw(18) << e.jvalue_total << "\n"
           << std::setw(18) << e.xray_total << "\n"
+          << std::setw(18) << e.leus_total << "\n"
           << std::setw(18) << e.self_total << "\n" // self energy from polarization
           //<< std::setw(18) << 0.0 << "\n" // local elevation
           << std::setw(18) << e.eds_vr << "\n"; // eds energy of reference state
@@ -2513,6 +2514,46 @@ _print_rottrans(configuration::Configuration const &conf,
     os << std::setw(m_width) << refpos(i)(0)
             << std::setw(m_width) << refpos(i)(1)
             << std::setw(m_width) << refpos(i)(2) << "\n";
+  }
+  os << "END\n";
+}
+
+void io::Out_Configuration::
+_print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  const std::vector<util::Umbrella> & umb = conf.special().umbrellas;
+  os << "LEUSBIAS\n# NUMUMBRELLAS\n"
+     << umb.size()
+     << "\n";
+  for(unsigned int i = 0; i < umb.size(); ++i) {
+    os << "# NLEPID NDIM CLES\n";
+    os << std::setw(10) << umb[i].id << std::setw(10) << umb[i].dim() << std::setw(15)
+            << umb[i].force_constant << "\n";
+    os << "# VARTYPE(N) NTLEFU(N) WLES(N) RLES(N) NGRID(N) GRIDMIN(N) GRIDMAX(N)\n";
+    for(unsigned int j = 0; j < umb[i].dim(); ++j) {
+      os << std::setw(10) << umb[i].variable_type[j]
+              << std::setw(10) << umb[i].functional_form[j]
+              << std::setw(15) << umb[i].width[j]
+              << std::setw(15) << umb[i].cutoff[j]
+              << std::setw(10) << umb[i].num_grid_points[j]
+              << std::setw(15) << umb[i].grid_min[j]
+              << std::setw(15) << umb[i].grid_max[j] << "\n";
+    }
+    os << "# NCONLE\n";
+    os << std::setw(10) << umb[i].configurations.size() << "\n";
+    os << "# NVISLE ICONF(1..NDIM)\n";
+    std::map<util::Umbrella::leus_conf,unsigned int>::const_iterator conf_it =
+    umb[i].configurations.begin(), conf_to = umb[i].configurations.end();
+    for(; conf_it != conf_to; ++conf_it) {
+      os << std::setw(10) << conf_it->second;
+      for(unsigned int j = 0; j < umb[i].dim(); j++) {
+        // here we have to convert to fortran and add 1 because the grid
+        // goes form 1 to NDIM in the output format
+        os << std::setw(10) << conf_it->first.pos[j]+1;
+      }
+      os << "\n";
+    }
   }
   os << "END\n";
 }
