@@ -935,11 +935,11 @@ namespace interaction {
      * (which is itself calculated by a backward FFT) by finite differentiation
      * @f[ \mathbf{E}_g(\mathbf{r}_{\mathbf{n}}) =
                - \sum_{\mathbf{n}'\in G}\,i\,V_G\,
-               \mathbf{D}_g(\mathbf{r}_{\mathbf{n}}-\mathbf{r}_{\mathbf{n}'}) 
-               \Phi_{\gamma,g}(\mathbf{r}_{\mathbf{n}'}) @f]
+               \mathbf{D}_g(\mathbf{r}_{\mathbf{n}}-\mathbf{r}_{\mathbf{n}'})
+               \Phi_{\gamma,g}\left(\mathbf{r}_{\mathbf{n}'}\right) @f]
      * or by multiplication by @f$ -i\mathbf{k}_{\mathbf{l}} @f$ by application of
      * @f[ \mathbf{\hat{E}}_g(\mathbf{r}_{\mathbf{n}}) = -i\mathbf{k}_{\mathbf{l}}
-             \hat{\Phi}_{\gamma,g}(\mathbf{k}_{\mathbf{l}) @f]
+             \hat{\Phi}_{\gamma,g}\left(\mathbf{k}_{\mathbf{l}}\right) @f]
      * and application of three backards FFT to the components of the electrostatic
      * field.
      *
