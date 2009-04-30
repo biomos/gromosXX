@@ -117,7 +117,7 @@ static int _calculate_perturbed_dihedral_new_interactions
     double delta = m_interaction.parameter()[d_it->A_type].pd;
     double m = m_interaction.parameter()[d_it->A_type].m;
     
-    DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta << " dcos=" << dcosmphi);
+    DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta);
 
     double ki = K * m * sin(m*phi - delta);
     double kl =  -ki;
@@ -137,7 +137,7 @@ static int _calculate_perturbed_dihedral_new_interactions
     cosdelta = m_interaction.parameter()[d_it->B_type].cospd;
     m = m_interaction.parameter()[d_it->B_type].m;
     
-    DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta << " dcos=" << dcosmphi);
+    DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta);
 
     ki = K * m * sin(m*phi - delta);
     kl =  -ki;

@@ -55,7 +55,7 @@ namespace interaction
    */
   struct dihedral_type_struct : public interaction_type_struct
   {
-    dihedral_type_struct(double K, double cospd, double pd, int m) : K(K), cospd(cospd), pd(pd), m(m) {}
+    dihedral_type_struct(double K, double cospd, double pd, int m) : K(K), pd(pd), cospd(cospd), m(m) {}
     double K;
     double pd;
     double cospd;
