@@ -61,7 +61,11 @@ namespace interaction {
      */
     clipper::HKL_data<clipper::data32::F_phi> fphi;
     /**
-     * the graditens
+     * copy of fphi for print of electron-density maps
+     */
+    clipper::HKL_data<clipper::data32::F_phi> fphi_print;
+    /**
+     * the gradients
      */
     clipper::HKL_data<clipper::data32::F_phi> D_k;
     /**

@@ -157,6 +157,8 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
         D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
 
+        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_inst, conf.special().xray_rest[i].phase_curr));
+
         DEBUG(15, "SF inst: "
                 << std::setw(5) << topo.xray_restraints()[i].h
                 << std::setw(5) << topo.xray_restraints()[i].k
@@ -178,6 +180,9 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         const double dterm = (k_avg * conf.special().xray_rest[i].sf_av - topo.xray_restraints()[i].sf)*((1.0 - eterm)*(k_avg + conf.special().xray_rest[i].sf_av * k_d));
         clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
         D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
+
+        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_curr));
+
         DEBUG(15, "SF avg: "
                 << std::setw(5) << topo.xray_restraints()[i].h
                 << std::setw(5) << topo.xray_restraints()[i].k
@@ -204,6 +209,9 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
                 *(topo.xray_restraints()[i].sf - k_inst * conf.special().xray_rest[i].sf_curr)*((1.0 - eterm)*(k_avg + conf.special().xray_rest[i].sf_curr * k_d_avg)));
         clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
         D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
+
+        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_curr));
+
         /*DEBUG(15, "SF avg: "
                 << std::setw(5) << topo.xray_restraints()[i].h
                 << std::setw(5) << topo.xray_restraints()[i].k
@@ -277,7 +285,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   if (sim.param().xrayrest.writexmap != 0 && sim.steps() % sim.param().xrayrest.writexmap == 0) {
     const clipper::Grid_sampling grid(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), fphi.base_hkl_info().resolution(), 1.5);
     clipper::Xmap<clipper::ftype32> density(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), grid);
-    density.fft_from(fphi);
+    density.fft_from(fphi_print);
     clipper::CCP4MAPfile mapfile;
     std::ostringstream file_name, asu_file_name;
     file_name << "density_frame_" << std::setw(int(log10(sim.param().step.number_of_steps)))
@@ -346,6 +354,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 
   hkls.init(spacegr, cell, reso, true);
   fphi.init(hkls, hkls.cell());
+  fphi_print.init(hkls, hkls.cell());
   D_k.init(hkls, hkls.cell());
   // 1.5 is shannon-rate for oversampled FFT
   const clipper::Grid_sampling grid(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), fphi.base_hkl_info().resolution(), 1.5);
