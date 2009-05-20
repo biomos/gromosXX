@@ -2114,7 +2114,8 @@ void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
     os.setf(std::ios::fixed, std::ios::floatfield);
     os.precision(7);
     for (unsigned int i=0; i<conf.special().xray_rest.size(); ++i) {
-      os << std::setw(15) << conf.special().xray_rest[i].sf_av << "\n";
+      os << std::setw(15) << conf.special().xray_rest[i].sf_av
+         << std::setw(15) << conf.special().xray_rest[i].phase_av << "\n";
     }
     os << "END\n";
   }

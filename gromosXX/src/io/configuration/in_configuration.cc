@@ -2534,7 +2534,7 @@ _read_xray_av(std::vector<std::string> &buffer,
 
   xray_av.clear();
 
-  double av;
+  double av, phase_av;
 
   if (buffer.size() - 1 != xray_res.size()) {
     std::cout << "XRAYRESEXPAVE: " << buffer.size() - 1
@@ -2552,13 +2552,13 @@ _read_xray_av(std::vector<std::string> &buffer,
     _lineStream.clear();
     _lineStream.str(*it);
 
-    _lineStream >> av;
+    _lineStream >> av >> phase_av;
     if (_lineStream.fail()) {
       io::messages.add("Bad value in XRAYRESEXPAVE block",
               "In_Configuration", io::message::error);
       return false;
     }
-    configuration::Configuration::special_struct::xray_struct tempstruct = {av, 0.0, 0.0, 0.0};
+    configuration::Configuration::special_struct::xray_struct tempstruct = {av, 0.0, phase_av, 0.0};
     xray_av.push_back(tempstruct);
   }
 

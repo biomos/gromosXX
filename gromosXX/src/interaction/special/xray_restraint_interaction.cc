@@ -81,15 +81,17 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
     //filter calculated sf's
     clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
     conf.special().xray_rest[i].sf_curr = fabs(fphi[hkl].f());
+    conf.special().xray_rest[i].phase_curr = fphi[hkl].phi();
     DEBUG(15,"HKL:" << hkl.h() << "," << hkl.k() << "," << hkl.l()); 
     DEBUG(15,"\tSF: " << conf.special().xray_rest[i].sf_curr);
 
     if (!sim.param().xrayrest.readavg && sim.steps() == 0) {
       // reset the averages at the beginning if requested
       conf.special().xray_rest[i].sf_av = conf.special().xray_rest[i].sf_curr;
+      conf.special().xray_rest[i].phase_av = conf.special().xray_rest[i].phase_curr;
     }
-    conf.special().xray_rest[i].phase_curr = fphi[hkl].phi();
     conf.special().xray_rest[i].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[i].sf_curr + eterm * conf.special().xray_rest[i].sf_av);
+    conf.special().xray_rest[i].phase_av = (1.0 - eterm) * conf.special().xray_rest[i].phase_curr + eterm * conf.special().xray_rest[i].phase_av;
 
     // calc sums
     obs_calc += conf.special().xray_rest[i].sf_curr * topo.xray_restraints()[i].sf;
@@ -181,7 +183,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
         D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
 
-        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_curr));
+        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_av));
 
         DEBUG(15, "SF avg: "
                 << std::setw(5) << topo.xray_restraints()[i].h
@@ -210,7 +212,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
         D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
 
-        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_curr));
+        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_av));
 
         /*DEBUG(15, "SF avg: "
                 << std::setw(5) << topo.xray_restraints()[i].h
