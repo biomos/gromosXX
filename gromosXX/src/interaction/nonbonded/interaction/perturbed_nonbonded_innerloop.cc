@@ -629,8 +629,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
         
         for(int a=0; a<3; ++a)
           for(int b=0; b<3; ++b)
-            conf.current().virial_tensor(a, b) += r(a)*f(0)(b) +
-            rp1(a)*f(1)(b) + rp2(a)*f(2)(b) + rpp(a)*f(3)(b);
+            conf.current().virial_tensor(a, b) += r(a)*(f(0)(b) +
+            f(1)(b) + f(2)(b) + f(3)(b));
         
         DEBUG(7, "\tatomic virial done");
         break;
@@ -858,8 +858,8 @@ interaction::Perturbed_Nonbonded_Innerloop<
         for(int a=0; a<3; ++a)
           for(int b=0; b<3; ++b)
             conf.current().virial_tensor(a, b) +=
-            r(a)*f_rf[0]*r(b) + rp1(a)*f_rf[1]*rp1(b) +
-            rp2(a)*f_rf[2]*rp2(b) + rpp(a)*f_rf[3]*rpp(b);
+            r(a)*(f_rf[0]*r(b) + f_rf[1]*rp1(b) +
+            f_rf[2]*rp2(b) + f_rf[3]*rpp(b));
         
          break;
        }

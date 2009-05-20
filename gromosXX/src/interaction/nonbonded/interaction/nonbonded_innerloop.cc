@@ -278,7 +278,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
           conf.current().force(j)(a) -= term;
           
           for(int b=0; b<3; ++b)
-            conf.current().virial_tensor(b, a) += r(b)*r(a)*f_pol[0] + rp1(b)*f_pol[1]*rp1(a) + rp2(b)*f_pol[2]*rp2(a) + rpp(b)*f_pol[3]*rpp(a);
+            conf.current().virial_tensor(b, a) += r(b)*term;
         }
 
 	break;
@@ -428,7 +428,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         for(int a=0; a<3; ++a)
           for(int b=0; b<3; ++b)
             conf.current().virial_tensor(a, b) +=
-                    r(a)*f_pol(0)(b) + rp1(a)*f_pol(1)(b) + rp2(a)*f_pol(2)(b) + rpp(a)*f_pol(3)(b);
+                    r(a)*(f_pol(0)(b) + f_pol(1)(b) + f_pol(2)(b) + f_pol(3)(b));
         DEBUG(11, "\tatomic virial done");
      
         // energy

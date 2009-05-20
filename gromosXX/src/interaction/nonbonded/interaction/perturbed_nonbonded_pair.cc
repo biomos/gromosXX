@@ -846,10 +846,10 @@ void interaction::Perturbed_Nonbonded_Pair
   if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func) {
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
-        conf.current().virial_tensor(a, b) += r(a) * f_pol_vec(0)(b) + 
-                                              rp1(a) * f_pol_vec(1)(b) + 
-                                              rp2(a) * f_pol_vec(2)(b) +
-                                              rpp(a) * f_pol_vec(3)(b);
+        conf.current().virial_tensor(a, b) += r(a) *( f_pol_vec(0)(b) +
+                                               f_pol_vec(1)(b) + 
+                                               f_pol_vec(2)(b) +
+                                               f_pol_vec(3)(b));
   } else {
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
