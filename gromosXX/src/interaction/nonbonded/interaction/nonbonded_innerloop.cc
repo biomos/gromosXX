@@ -127,7 +127,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
           storage.force(j)(a) -= term;
           
           for(int b=0; b<3; ++b)
-            storage.virial_tensor(b, a) += r(b)*r(a)*f_pol[0] + rp1(b)*f_pol[1]*rp1(a) + rp2(b)*f_pol[2]*rp2(a) + rpp(b)*f_pol[3]*rpp(a);
+            //storage.virial_tensor(b, a) += r(b)*r(a)*f_pol[0] + rp1(b)*f_pol[1]*rp1(a) + rp2(b)*f_pol[2]*rp2(a) + rpp(b)*f_pol[3]*rpp(a);
+            storage.virial_tensor(b, a) += r(b)*term;
         }
 
 	break;
