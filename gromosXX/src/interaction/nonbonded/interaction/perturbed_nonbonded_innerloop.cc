@@ -340,7 +340,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
         for(int a=0; a<3; ++a)
           for(int b=0; b<3; ++b)
             storage.virial_tensor(a, b) += r(a)*(f(0)(b) +
-           f(1)(b) + f(2)(b) f(3)(b));
+           f(1)(b) + f(2)(b) + f(3)(b));
         
         DEBUG(7, "\tatomic virial done");
         break;
