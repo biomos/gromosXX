@@ -1191,6 +1191,7 @@ io::In_Perturbation::read(topology::Topology &topo,
 
       for (n = 0; it != buffer.end() - 1; ++it, ++n) {
         DEBUG(10, "\treading a line: " << n);
+        DEBUG(10, "\tline content: " << *it);
 
         _lineStream.clear();
         _lineStream.str(*it);

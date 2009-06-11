@@ -198,9 +198,9 @@ MPERTATOM
   2    HW1      18     0.41    19     0
   3    HW2      18     0.41    19     0
 # second water
-  4    OW       19     0      -0.82   4
-  5    HW1      19     0       0.41   18
-  6    HW2      19     0       0.41   18
+  4    OW       19     0       4     -0.82
+  5    HW1      19     0       18     0.41
+  6    HW2      19     0       18     0.41
 END
 @endverbatim
  */
