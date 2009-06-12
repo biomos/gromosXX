@@ -75,6 +75,8 @@ static int _calculate_dihedral_new_interactions(topology::Topology & topo,
     
     ip = dot(rim, rln);
     double cosphi = ip / (dim*dln);
+    if ( cosphi > 1) 	cosphi = 1;
+    if ( cosphi < -1 )	cosphi = -1;
     double phi = acos(cosphi);
     double sign = dot(rij, rnk);
     if(sign < 0) phi*=-1.0;
