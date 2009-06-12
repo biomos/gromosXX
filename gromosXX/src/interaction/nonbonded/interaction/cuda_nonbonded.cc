@@ -124,6 +124,20 @@ int interaction::CUDA_Nonbonded::init(topology::Topology & topo,
   m_crf_2cut3i = m_crf_cut3i / 2.0;
   m_crf_cut = (1 - m_crf / 2.0) / rf_cutoff;
 
+  // check pressure scaling
+  if (sim.param().pcouple.scale != math::pcouple_off &&
+      sim.param().pcouple.scale != math::pcouple_isotropic) {
+    io::messages.add("CUDA solvent doesn't support anisotropic pressure scaling.",
+            "CUDA_Nonbonded", io::message::error);
+    return 1;
+  }
+  if (conf.current().box(0)(0) != conf.current().box(1)(1) ||
+      conf.current().box(0)(0) != conf.current().box(2)(2)) {
+    io::messages.add("Box is not cubic!",
+            "CUDA_Nonbonded", io::message::error);
+    return 1;
+  }
+
   cudakernel::cudaInit
           (
           sim.param().innerloop.cuda_device,

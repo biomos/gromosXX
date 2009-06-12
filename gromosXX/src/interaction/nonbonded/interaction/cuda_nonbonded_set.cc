@@ -79,6 +79,11 @@ int interaction::CUDA_Nonbonded_Set
   const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
 
   cudakernel::cudaCopyPositions(&conf.current().pos(topo.num_solute_atoms())(0));
+  // copy the box if pressure is coupled
+  if (sim.param().pcouple.scale != math::pcouple_off) {
+    cudakernel::cudaCopyBox(conf.current().box(0)(0));
+  }
+
   if (pairlist_update) {
     DEBUG(6, "\tdoing longrange...");
 
