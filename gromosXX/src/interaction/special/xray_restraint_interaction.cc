@@ -29,7 +29,7 @@
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE special
-#define HAVE_CLIPPER
+
 interaction::Xray_Restraint_Interaction::Xray_Restraint_Interaction() : Interaction("XrayRestraint") {
 }
 
