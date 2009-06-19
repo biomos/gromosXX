@@ -1278,17 +1278,14 @@ namespace simulation
        * - write 0
        * - writexmap 0
        * - tau 0
-       * - spacegroup ""
-       * - cell 0.0  0.0  0.0  90.00  90.00  90.00
+       * - spacegroup "P 1"
        * - resolution 1.0
        * - bfactor 1.0
        * - readavg 0
        */
       xrayrest_struct() : xrayrest(xrayrest_off), force_constant(1E4), tau(0),
-      write(0), writedensity(0), writexmap(0), spacegroup(""),
-      cell_a(0.0), cell_b(0.0), cell_c(0.0),
-      cell_alpha(90.0), cell_beta(90.0), cell_gamma(90.0),
-      resolution(1.0), bfactor(1.0), readavg(0) {
+      write(0), writedensity(0), writexmap(0), spacegroup("P 1"),
+      resolution(1.0), readavg(0) {
       }
 
       /**
@@ -1320,30 +1317,14 @@ namespace simulation
        */
       std::string spacegroup;
       /**
-       * cell-properties
-       */
-      double cell_a;
-      double cell_b;
-      double cell_c;
-      double cell_alpha;
-      double cell_beta;
-      double cell_gamma;
-      /**
        * scattering resolution
        */
       double resolution;
-      /**
-       * standard bfactor
-       */
-      double bfactor;
       /**
        * decision-boolean for reading averages or not
        */
       bool readavg;
     } /** Xray restraint parameters */ xrayrest;
-
-
-
 
     /**
      * @struct distanceres_struct

@@ -702,7 +702,6 @@ namespace topology
     {
       return m_xray_element;
     }
-
     /**
      * xray constant element accessor.
      */
@@ -710,20 +709,77 @@ namespace topology
     {
       return m_xray_element;
     }
-     /**
+    /**
      * xray solvent element accessor.
      */
     std::vector<std::string> & xray_solvelements()
     {
       return m_xray_solvelement;
     }
-
     /**
      * xray constant solvent element accessor.
      */
     std::vector<std::string> const & xray_solvelements()const
     {
       return m_xray_solvelement;
+    }
+
+    /**
+     * xray B factor accessor.
+     */
+    std::vector<double> & xray_b_factors()
+    {
+      return m_xray_b_factor;
+    }
+    /**
+     * xray constant B factor accessor.
+     */
+    std::vector<double> const & xray_b_factors()const
+    {
+      return m_xray_b_factor;
+    }
+    /**
+     * xray solvent B factor accessor.
+     */
+    std::vector<double> & xray_solv_b_factors()
+    {
+      return m_xray_solv_b_factor;
+    }
+    /**
+     * xray constant B factor accessor.
+     */
+    std::vector<double> const & xray_solv_b_factors()const
+    {
+      return m_xray_solv_b_factor;
+    }
+
+    /**
+     * xray occupancy accessor.
+     */
+    std::vector<double> & xray_occupancies()
+    {
+      return m_xray_occupancy;
+    }
+    /**
+     * xray constant B factor accessor.
+     */
+    std::vector<double> const & xray_occupancies()const
+    {
+      return m_xray_occupancy;
+    }
+    /**
+     * xray solvent occupancy accessor.
+     */
+    std::vector<double> & xray_solv_occupancies()
+    {
+      return m_xray_solv_occupancy;
+    }
+    /**
+     * xray constant occupancy accessor.
+     */
+    std::vector<double> const & xray_solv_occupancies()const
+    {
+      return m_xray_solv_occupancy;
     }
 
     /**
@@ -1138,12 +1194,22 @@ namespace topology
      * xray element name for solvent
      */
     std::vector<std::string> m_xray_solvelement;
-
-     /**
-     * xray atomfit
+    /**
+     * xray B factor
      */
-    std::vector<xray_fitatom_struct> m_xray_fitatom;
-
+    std::vector<double> m_xray_b_factor;
+    /**
+     * xray solvent B factor
+     */
+    std::vector<double> m_xray_solv_b_factor;
+    /**
+     * xray occupancies
+     */
+    std::vector<double> m_xray_occupancy;
+    /**
+     * xray solvent occupancies
+     */
+    std::vector<double> m_xray_solv_occupancy;
     /**
      * expanded topology for multiple unit cell simulations
      */

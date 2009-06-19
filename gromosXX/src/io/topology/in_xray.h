@@ -12,6 +12,7 @@
  * - @ref xrayresspec
  * - @ref xrayrespara
  * - @ref elementmap
+ * - @ref xraybfoccspec
  */
 
 #ifndef INCLUDED_IN_XRAYRES_H

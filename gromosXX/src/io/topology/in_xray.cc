@@ -54,15 +54,36 @@ XRAYELEMENTSPEC
 N N N H H O N C Na Ca
 H O N C Na Ca H O N C
 END
+XRAYSOLVELEMENTSPEC
+#  ELEMENT[1..N]
+O H H
+END
+@endverbatim
+ *
+ * @section xraybfoccspec XRAYBFOCCSPEC block
+ * The XRAYBFOCCSPEC block contains the B-factors and occupancies of all atoms.
+ *
+ * The block is read from the xray restraints specification file (\@xray).
+ *
+ * @verbatim
+XRAYBFOCCSPEC
+#  BF[1..N]  OCC[1..N]
+   0.01      1.0
+   0.02      0.9
+END
+XRAYSOLVBFOCCSPEC
+#  BF[1..N]  OCC[1..N]
+   0.01      1.0
+   0.01      0.0
+   0.01      0.0
+END
 @endverbatim
  *
  * @section xrayrespara XRAYRESPARA block
  * The XRAYRESPARA specifies the parameters needed to calculate the structure
  * factors with clipper-library:
  *  - Spacegroup SPGR in Hermann-Mauguin-Form
- *  - Unitcell CELL in form: a b c alpha beta gamma
  *  - Scattering-Resolution RESO in nm
- *  - Standard-Bfactor STDBF used for all atoms
  *
  * The block is read from the xray restraints specification file
  * (\@xray).
@@ -71,8 +92,8 @@ END
 XRAYRESPARA
 #  SPGR
    P 21 21 21
-#  CELL                                            RESO    STDBF
-   5.9062  6.8451  3.0517  90.00  90.00  90.00     0.15      1.0
+#  RESO
+   0.15
 END
 @endverbatim
  */
@@ -161,12 +182,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
     _lineStream.clear();
     _lineStream.str(buffer[2]);
-    _lineStream >> sim.param().xrayrest.cell_a >> sim.param().xrayrest.cell_b
-            >> sim.param().xrayrest.cell_c >> sim.param().xrayrest.cell_alpha
-            >> sim.param().xrayrest.cell_beta
-            >> sim.param().xrayrest.cell_gamma
-            >> sim.param().xrayrest.resolution
-            >> sim.param().xrayrest.bfactor ;
+    _lineStream >> sim.param().xrayrest.resolution;
 
     if (_lineStream.fail()) {
       io::messages.add("bad second line in XRAYRESPARA block",
@@ -229,8 +245,63 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         return;
       }
     }
-
   } // XRAYSOLVELEMENTSPEC
+
+  { // XRAYBFOCCSPEC
+    buffer = m_block["XRAYBFOCCSPEC"];
+    DEBUG(10, "XRAYBFOCCSPEC block : " << buffer.size());
+
+    if (!buffer.size()){
+      io::messages.add("no XRAYBFOCCSPEC block in xray restraints file",
+		       "in_Xrayresspec", io::message::error);
+      return;
+    }
+    std::string s;
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+
+    topo.xray_b_factors().resize(topo.num_solute_atoms(), 0.01);
+    topo.xray_occupancies().resize(topo.num_solute_atoms(), 0.0);
+    for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {;
+      _lineStream >> topo.xray_b_factors()[i] >> topo.xray_occupancies()[i];
+
+      if (_lineStream.fail()) {
+        topo.xray_b_factors()[i] = 0.01;
+        topo.xray_occupancies()[i] = 0.0;
+        io::messages.add("bad line in XRAYBFOCCSPEC block",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+    }
+  } // XRAYBFOCCSPEC
+
+  { // XRAYSOLVBFOCCSPEC
+    buffer = m_block["XRAYSOLVBFOCCSPEC"];
+    DEBUG(10, "XRAYSOLVBFOCCSPEC block : " << buffer.size());
+
+    if (!buffer.size()){
+      io::messages.add("no XRAYSOLVBFOCCSPEC block in xray restraints file",
+		       "in_Xrayresspec", io::message::error);
+      return;
+    }
+    std::string s;
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+
+    topo.xray_solv_b_factors().resize(topo.solvent(0).num_atoms(), 0.01);
+    topo.xray_solv_occupancies().resize(topo.solvent(0).num_atoms(), 0.0);
+    for (unsigned int i = 0; i < topo.solvent(0).num_atoms(); ++i) {;
+      _lineStream >> topo.xray_solv_b_factors()[i] >> topo.xray_solv_occupancies()[i];
+
+      if (_lineStream.fail()) {
+        topo.xray_solv_b_factors()[i] = 0.01;
+        topo.xray_solv_occupancies()[i] = 0.0;
+        io::messages.add("bad line in XRAYSOLVBFOCCSPEC block",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+    }
+  } // XRAYSOLVBFOCCSPEC
 
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {

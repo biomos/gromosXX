@@ -29,7 +29,7 @@
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE special
-
+#define HAVE_CLIPPER
 interaction::Xray_Restraint_Interaction::Xray_Restraint_Interaction() : Interaction("XrayRestraint") {
 }
 
@@ -328,7 +328,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
         bool quiet) {
 #ifdef HAVE_CLIPPER
   DEBUG(15, "Xray_Restraint_Interaction: init")
-  const float sqpi2 = (math::Pi * math::Pi * 8.0 / 3.0);
+  const float sqpi2 = (math::Pi * math::Pi * 8.0);
 
   // Redirect clipper errors
   clipper::Message message;
@@ -344,12 +344,15 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     return 1;
   }
 
-  clipper::Cell_descr cellinit(float(sim.param().xrayrest.cell_a * 10.0),
-          float(sim.param().xrayrest.cell_b * 10.0),
-          float(sim.param().xrayrest.cell_c * 10.0),
-          float(sim.param().xrayrest.cell_alpha),
-          float(sim.param().xrayrest.cell_beta),
-          float(sim.param().xrayrest.cell_gamma));
+  math::Box & box = conf.current().box;
+  const double a = math::abs(box(0));
+  const double b = math::abs(box(1));
+  const double c = math::abs(box(2));
+  const float alpha = acos(math::costest(dot(box(1), box(2)) / (b * c)));
+  const float beta = acos(math::costest(dot(box(0), box(2)) / (a * c)));
+  const float gamma = acos(math::costest(dot(box(0), box(1)) / (a * b)));
+  clipper::Cell_descr cellinit(float(a * 10.0), float(b * 10.0), float(c * 10.0),
+          alpha, beta, gamma);
   clipper::Cell cell(cellinit);
 
   clipper::Resolution reso(float(sim.param().xrayrest.resolution * 10.0));
@@ -367,10 +370,12 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   // Fill solute
   for (unsigned int i = 0; i < topo.num_solute_atoms(); i++) {
     clipper::Atom atm;
+    assert(i < topo.xray_occupancies().size());
+    atm.set_occupancy(topo.xray_occupancies()[i]);
     atm.set_coord_orth(clipper::Coord_orth(0.0, 0.0, 0.0));
-    atm.set_occupancy(1.0);
-    atm.set_u_iso(sim.param().xrayrest.bfactor * 100 / sqpi2);
-    DEBUG(1, "i: " << i << " size: " <<  topo.xray_elements().size());
+    assert(i < topo.xray_b_factors().size());
+    atm.set_u_iso(topo.xray_b_factors()[i] * 100.0 / sqpi2);
+    DEBUG(1, "i: " << i << " size: " << topo.xray_elements().size());
     assert(i < topo.xray_elements().size());
     atm.set_element(topo.xray_elements()[i]);
     atomvec.push_back(atm);
@@ -378,10 +383,14 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   // Fill solvent
   for (unsigned int i = 0; i < topo.num_solvent_atoms(); i++) {
     clipper::Atom atm;
+    unsigned int index = i % topo.solvent(0).num_atoms();
+    assert(index < topo.xray_solv_occupancies().size());
+    atm.set_occupancy(topo.xray_solv_occupancies()[index]);
     atm.set_coord_orth(clipper::Coord_orth(0.0, 0.0, 0.0));
-    atm.set_occupancy(1.0);
-    atm.set_u_iso(sim.param().xrayrest.bfactor * 100 / sqpi2);
-    atm.set_element(topo.xray_solvelements()[i % topo.solvent(0).num_atoms()]);
+    assert(index < topo.xray_solv_b_factors().size());
+    atm.set_u_iso(topo.xray_solv_b_factors()[index] * 100 / sqpi2);
+    assert(index < topo.xray_solvelements().size());
+    atm.set_element(topo.xray_solvelements()[index]);
     atomvec.push_back(atm);
   }
   atoms = clipper::Atom_list(atomvec);
@@ -437,15 +446,8 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     }
     os << "Restraint force-constant    : " << sim.param().xrayrest.force_constant << std::endl;
     os << "Spacegroup                  : " << sim.param().xrayrest.spacegroup << std::endl;
-    os << "Cell                        : " << sim.param().xrayrest.cell_a
-            << std::setw(8) << sim.param().xrayrest.cell_b
-            << std::setw(8) << sim.param().xrayrest.cell_c
-            << std::setw(8) << sim.param().xrayrest.cell_alpha
-            << std::setw(8) << sim.param().xrayrest.cell_beta
-            << std::setw(8) << sim.param().xrayrest.cell_gamma << std::endl;
     os.precision(4);
     os << "Resolution                  : " << sim.param().xrayrest.resolution << std::endl;
-    os << "Bfactor                     : " << sim.param().xrayrest.bfactor << std::endl;
     os << "Num experimental reflections: " << topo.xray_restraints().size() << std::endl;
     os << "Num expected reflections    : " << hkls.num_reflections() << std::endl;
     os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl;
