@@ -327,63 +327,65 @@ void configuration::Configuration::init(topology::Topology const & topo,
   }
 
   // check periodicity
-  switch(boundary_type){
-    case math::vacuum:
-      break;
-    case math::rectangular:
+  if (!param.multicell.multicell) {
+    switch (boundary_type) {
+      case math::vacuum :
+        break;
+      case math::rectangular :
       {
-        
-	if (abs(current().box(0)) <= 2*param.pairlist.cutoff_long ||
-	    abs(current().box(1)) <= 2*param.pairlist.cutoff_long ||
-	    abs(current().box(2)) <= 2*param.pairlist.cutoff_long){
-	  io::messages.add("box is too small: not twice the cutoff!",
-			   "configuration",
-			   io::message::error);
-	}
-	
-	break;
+
+        if (abs(current().box(0)) <= 2 * param.pairlist.cutoff_long ||
+            abs(current().box(1)) <= 2 * param.pairlist.cutoff_long ||
+            abs(current().box(2)) <= 2 * param.pairlist.cutoff_long) {
+          io::messages.add("box is too small: not twice the cutoff!",
+                  "configuration",
+                  io::message::error);
+        }
+
+        break;
       }
-    case math::triclinic:
+      case math::triclinic :
       {
         double a, b, c, alpha, beta, gamma, triclinicvolume;
-        a=math::abs(current().box(0));
-        b=math::abs(current().box(1));
-        c=math::abs(current().box(2));
-  
-        alpha = acos(dot(current().box(1),current().box(2))
-                /(abs(current().box(1))*abs(current().box(2)))); 
-        beta  = acos(dot(current().box(0),current().box(2))
-                /(abs(current().box(0))*abs(current().box(2))));
-        gamma = acos(dot(current().box(0),current().box(1))
-                /(abs(current().box(0))*abs(current().box(1))));
-          
-        triclinicvolume = a*b*c*
-                (1-cos(alpha)*cos(alpha)-cos(beta)*cos(beta)-cos(gamma)*cos(gamma)
-                +2*cos(alpha)*cos(beta)*cos(gamma)); 
-        
-        if ( triclinicvolume/(a*b*sin(gamma)) <= 2*param.pairlist.cutoff_long ||
-	     triclinicvolume/(a*c*sin(beta))  <= 2*param.pairlist.cutoff_long ||
-	     triclinicvolume/(b*c*sin(alpha)) <= 2*param.pairlist.cutoff_long){
-	     io::messages.add("box is too small: not twice the cutoff!",
-			   "configuration",
-			   io::message::error);
-	}
-        
-	break;
+        a = math::abs(current().box(0));
+        b = math::abs(current().box(1));
+        c = math::abs(current().box(2));
+
+        alpha = acos(dot(current().box(1), current().box(2))
+                / (abs(current().box(1)) * abs(current().box(2))));
+        beta = acos(dot(current().box(0), current().box(2))
+                / (abs(current().box(0)) * abs(current().box(2))));
+        gamma = acos(dot(current().box(0), current().box(1))
+                / (abs(current().box(0)) * abs(current().box(1))));
+
+        triclinicvolume = a * b * c *
+                (1 - cos(alpha) * cos(alpha) - cos(beta) * cos(beta) - cos(gamma) * cos(gamma)
+                + 2 * cos(alpha) * cos(beta) * cos(gamma));
+
+        if (triclinicvolume / (a * b * sin(gamma)) <= 2 * param.pairlist.cutoff_long ||
+            triclinicvolume / (a * c * sin(beta)) <= 2 * param.pairlist.cutoff_long ||
+            triclinicvolume / (b * c * sin(alpha)) <= 2 * param.pairlist.cutoff_long) {
+          io::messages.add("box is too small: not twice the cutoff!",
+                  "configuration",
+                  io::message::error);
+        }
+
+        break;
       }
-    case math::truncoct:
+      case math::truncoct :
       {
-	if (0.5 * sqrt(3.0) * abs(current().box(0)) <= 2 * param.pairlist.cutoff_long){
-	  
-	  io::messages.add("box is too small: not 4 / sqrt(3) * cutoff!",
-			   "configuration",
-			   io::message::error);
-	}
-	break;
+        if (0.5 * sqrt(3.0) * abs(current().box(0)) <= 2 * param.pairlist.cutoff_long) {
+
+          io::messages.add("box is too small: not 4 / sqrt(3) * cutoff!",
+                  "configuration",
+                  io::message::error);
+        }
+        break;
       }
-    default:
-      std::cout << "wrong periodic boundary conditions!";
-      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+      default:
+        std::cout << "wrong periodic boundary conditions!";
+        io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+    }
   }
 
   if (boundary_type != math::vacuum){

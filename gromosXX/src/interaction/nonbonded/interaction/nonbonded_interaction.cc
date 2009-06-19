@@ -115,6 +115,12 @@ calculate_interactions(topology::Topology & topo,
       p_conf = m_exp_conf;
       p_topo = &topo.multicell_topo();
       expand_configuration(topo, conf, sim, *p_conf);
+      if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
+          sim.param().pairlist.cutoff_long)) {
+        io::messages.add("box is too small: not twice the cutoff!",
+                "configuration", io::message::error);
+        return 1;
+      }
       DEBUG(6, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
     }
 

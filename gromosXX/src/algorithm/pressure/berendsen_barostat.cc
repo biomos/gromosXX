@@ -183,7 +183,7 @@ int algorithm::Berendsen_Barostat
       return 0;
   }
 
-  if (!math::boundary_check_cutoff(conf.current().box,
+  if (!sim.param().multicell.multicell && !math::boundary_check_cutoff(conf.current().box,
       sim.param().boundary.boundary, sim.param().pairlist.cutoff_long)) {
     io::messages.add("box is too small: not twice the cutoff!",
             "Berendsen_Barostat", io::message::error);
