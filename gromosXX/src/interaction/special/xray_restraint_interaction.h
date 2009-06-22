@@ -59,19 +59,19 @@ namespace interaction {
     /**
      * the structure factors
      */
-    clipper::HKL_data<clipper::data64::F_phi> fphi;
+    clipper::HKL_data<clipper::data32::F_phi> fphi;
     /**
      * copy of fphi for print of electron-density maps
      */
-    clipper::HKL_data<clipper::data64::F_phi> fphi_print;
+    clipper::HKL_data<clipper::data32::F_phi> fphi_print;
     /**
      * the gradients
      */
-    clipper::HKL_data<clipper::data64::F_phi> D_k;
+    clipper::HKL_data<clipper::data32::F_phi> D_k;
     /**
      * the map for the gradient convolution
      */
-    clipper::Xmap<clipper::ftype64> d_r;
+    clipper::Xmap<clipper::ftype32> d_r;
 #endif
 
     template<math::boundary_enum B, math::virial_enum V>

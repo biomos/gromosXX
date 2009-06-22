@@ -23,7 +23,11 @@
 #include <vector>
 #include <string>
 #include <ios>
+#include <time.h>
 
+#ifdef OMP
+#include <omp.h>
+#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -50,16 +54,69 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   error = 0;
   // get number of atoms in simulation
   const unsigned int atoms_size = topo.num_atoms();
-  //update clipper atomvec
+  // update clipper atomvec: convert the position to Angstrom
   for (unsigned int i = 0; i < atoms_size; i++) {
     atoms[i].set_coord_orth(clipper::Coord_orth(conf.current().pos(i)(0)*10.0,
             conf.current().pos(i)(1)*10.0,
             conf.current().pos(i)(2)*10.0));
   }
   // Calculate structure factors
-  clipper::SFcalc_iso_fft<double> sfc;
-  // run it
-  sfc(fphi, atoms);
+  m_timer.start("structure factor");
+  {
+    // this code is basically copied from the clipper library but parallelised
+    // some hardcoded settings
+    const double shannon_rate = 1.5;
+    const double radius = 2.5;
+
+    // some shortcurs
+    const clipper::Cell& cell = fphi.base_cell();
+    const clipper::Spacegroup& spgr = hkls.spacegroup();
+    // create a grid and a crystalographic map
+    const clipper::Grid_sampling grid(spgr, cell, hkls.resolution(), shannon_rate);
+    clipper::Xmap<clipper::ftype32> xmap(spgr, cell, grid);
+    // create the range (size of atom)
+    clipper::Grid_range gd(cell, grid, radius);
+
+    // loop over atoms
+    #ifdef OMP
+    #pragma omp parallel for
+    #endif
+    for (int i = 0; i < atoms.size(); i++) {
+      if (!atoms[i].is_null()) {
+        clipper::AtomShapeFn sf(atoms[i].coord_orth(), atoms[i].element(),
+                atoms[i].u_iso(), atoms[i].occupancy());
+        // determine grad range of atom
+        clipper::Coord_frac uvw = atoms[i].coord_orth().coord_frac(cell);
+        clipper::Coord_grid g0 = uvw.coord_grid(grid) + gd.min();
+        clipper::Coord_grid g1 = uvw.coord_grid(grid) + gd.max();
+
+        // loop over atom's grid
+        clipper::Xmap<clipper::ftype32>::Map_reference_coord i0, iu, iv, iw;
+        i0 = clipper::Xmap<clipper::ftype32>::Map_reference_coord(xmap, g0);
+        for (iu = i0; iu.coord().u() <= g1.u(); iu.next_u()) {
+          for (iv = iu; iv.coord().v() <= g1.v(); iv.next_v()) {
+            for (iw = iv; iw.coord().w() <= g1.w(); iw.next_w()) {
+              // calculate the electron density and assign it to the gird point
+              const double density = sf.rho(iw.coord_orth());
+              #ifdef OMP
+              #pragma omp critical
+              #endif
+              xmap[iw] += density;
+            }
+          }
+        } // loop over grid
+      }
+    } // loop over atoms
+    // loop over the grid again an correct the multiplicity
+    for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = xmap.first();
+            !ix.last(); ix.next())
+      xmap[ix] *= xmap.multiplicity(ix.coord());
+
+    // FFT the electron density to obtain the structure factors
+    xmap.fft_to(fphi);
+  }
+
+  m_timer.stop("structure factor");
 
   // sqr_calc:       sum of squared Fcalc
   // obs:            sum of Fobs
@@ -70,6 +127,8 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   // obs_k_calc:     sum of Fobs-k*Fcalc
   // sqr_calcavg:    sum of squared time-averaged Fcalc
   // calcavg:        sum of time-averaged Fcalc
+   m_timer.start("energy");
+  // zero all the sums
   double sqr_calc = 0.0, obs = 0.0, calc = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
           sqr_calcavg = 0.0, calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0;
   // Number of reflections
@@ -77,19 +136,22 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   // e-term for time-average
   const double eterm = exp(-sim.time_step_size() / sim.param().xrayrest.tau);
 
+  // loop over structure factors
   for (unsigned int i = 0; i < num_xray_rest; i++) {
-    //filter calculated sf's
+    // filter calculated structure factors: save phases and amplitudes
     clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
     conf.special().xray_rest[i].sf_curr = fabs(fphi[hkl].f());
     conf.special().xray_rest[i].phase_curr = fphi[hkl].phi();
     DEBUG(15,"HKL:" << hkl.h() << "," << hkl.k() << "," << hkl.l()); 
     DEBUG(15,"\tSF: " << conf.special().xray_rest[i].sf_curr);
 
+    // reset the averages at the beginning if requested
     if (!sim.param().xrayrest.readavg && sim.steps() == 0) {
-      // reset the averages at the beginning if requested
       conf.special().xray_rest[i].sf_av = conf.special().xray_rest[i].sf_curr;
       conf.special().xray_rest[i].phase_av = conf.special().xray_rest[i].phase_curr;
     }
+
+    // calculate averages
     conf.special().xray_rest[i].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[i].sf_curr + eterm * conf.special().xray_rest[i].sf_av);
     conf.special().xray_rest[i].phase_av = (1.0 - eterm) * conf.special().xray_rest[i].phase_curr + eterm * conf.special().xray_rest[i].phase_av;
 
@@ -114,7 +176,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
 
 
 
-  //calc k_inst and k_avg
+  // calculate the scaling constants for inst and avg.
   double & k_inst = conf.special().xray.k_inst;
   k_inst = obs_calc / sqr_calc;
   double & k_avg = conf.special().xray.k_avg;
@@ -122,12 +184,13 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   DEBUG(10, "k_inst value: " << k_inst);
   DEBUG(10, "k_avg  value: " << k_avg);
 
+  // calculate sums needed for R factors
   for (unsigned int i = 0; i < num_xray_rest; i++) {
     obs_k_calc += fabs(topo.xray_restraints()[i].sf - k_inst * conf.special().xray_rest[i].sf_curr);
     obs_k_calcavg += fabs(topo.xray_restraints()[i].sf - k_avg * conf.special().xray_rest[i].sf_av);
   }
 
-  // calculate R_inst and R_avg
+  // calculate R factors: R_inst and R_avg
   double & R_inst = conf.special().xray.R_inst;
   R_inst = obs_k_calc / obs;
   double & R_avg = conf.special().xray.R_avg;
@@ -136,9 +199,11 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
 
   // calculate gradient
-  D_k = std::complex<double> (0.0f, 0.0f); // zero it
+  // zero the reciprocal space difference map
+  D_k = std::complex<float> (0.0f, 0.0f);
 
   double energy_sum = 0.0;
+  // loop over retraints and calculate energy and difference map
   for (unsigned int i = 0; i < num_xray_rest; i++) {
     const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
     clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
@@ -158,9 +223,10 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         energy_sum += term * term;
         // calculate derivatives of target function
         const double dterm = (k_inst * fcalc - fobs) * k_inst;
-        D_k.set_data(hkl, clipper::data64::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
+        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
 
-        fphi_print.set_data(hkl, clipper::data64::F_phi(fobs/k_inst, conf.special().xray_rest[i].phase_curr));
+        // save Fobs and PhiCalc for density maps
+        fphi_print.set_data(hkl, clipper::data32::F_phi(fobs/k_inst, conf.special().xray_rest[i].phase_curr));
         break;
       }
       case simulation::xrayrest_avg :
@@ -174,9 +240,9 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         // calculate derivatives of target function
         // here we omit the 1-exp(-dt/tau) term.
         const double dterm = (k_avg * fcalc - fobs) * k_avg;
-        D_k.set_data(hkl, clipper::data64::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
+        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
 
-        fphi_print.set_data(hkl, clipper::data64::F_phi(fobs/k_avg, conf.special().xray_rest[i].phase_av));
+        fphi_print.set_data(hkl, clipper::data32::F_phi(fobs/k_avg, conf.special().xray_rest[i].phase_av));
         break;
       }
       case simulation::xrayrest_biq :
@@ -193,9 +259,9 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         // here we omit the 1-exp(-dt/tau) term.
         const double dterm = (k_inst * finst - fobs)*(av_term * av_term) * k_inst
                 + (k_avg * favg - fobs)*(inst_term * inst_term) * k_avg;
-        D_k.set_data(hkl, clipper::data64::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
+        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
         
-        fphi_print.set_data(hkl, clipper::data64::F_phi(xrs.sf/k_avg, conf.special().xray_rest[i].phase_av));
+        fphi_print.set_data(hkl, clipper::data32::F_phi(xrs.sf/k_avg, conf.special().xray_rest[i].phase_av));
         break;
       }
       case simulation::xrayrest_loel :
@@ -204,36 +270,46 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       }
     }
   }
-  // finally calc energy
+
+  // finally calculate the energy
   conf.current().energies.xray_total = 0.5 * sim.param().xrayrest.force_constant * energy_sum;
   DEBUG(10, "energy: " << conf.current().energies.xray_total);
+  m_timer.stop("energy");
 
-  // perform FFT
+  // start to calculate the forces
+  m_timer.start("force");
+  // perform FFT of the difference map
   d_r.fft_from(D_k);
-  clipper::Coord_grid g0, g1;
 
   // 3.5 is hardcoded atom radius for grid sampling.
-  const double radius = 3.0;
+  const double radius = 3.5;
+  // determine the range of the atomic electron density gradient on the gird
   clipper::Grid_range gd(fphi.base_cell(), d_r.grid_sampling(), radius);
-
-  clipper::Xmap<clipper::ftype64>::Map_reference_coord i0, iu, iv, iw;
   const double volume = fphi.base_cell().volume();
+  // convert from Angstrom to nm and add very annyoing scaling constants
+  // to make the force volume AND resolution independent.
+  const double scale = 10.0 / 2.0 * volume * volume / (d_r.grid_sampling().size());
   
-  // calculate gradients of structure factors
-  for (unsigned int i = 0; i < atoms_size; i++) {
+  // loop over the atoms
+  #ifdef OMP
+  #pragma omp parallel for
+  #endif
+  for (int i = 0; i < int(atoms_size); i++) {
     if (!atoms[i].is_null()) {
       math::Vec gradient(0.0, 0.0, 0.0);
       clipper::AtomShapeFn sf(atoms[i].coord_orth(), atoms[i].element(),
               atoms[i].u_iso(), atoms[i].occupancy());
+      
+      // specify the derivatives we are interested in.
       sf.agarwal_params().resize(3);
-      // conversion for clipper coordinate enum
       sf.agarwal_params()[0] = clipper::AtomShapeFn::X;
       sf.agarwal_params()[1] = clipper::AtomShapeFn::Y;
       sf.agarwal_params()[2] = clipper::AtomShapeFn::Z;
-      // determine grid-ranges
+      // determine grid-ranges of this atom
       clipper::Coord_frac uvw = atoms[i].coord_orth().coord_frac(fphi.base_cell());
-      g0 = uvw.coord_grid(d_r.grid_sampling()) + gd.min();
-      g1 = uvw.coord_grid(d_r.grid_sampling()) + gd.max();
+      clipper::Coord_grid g0 = uvw.coord_grid(d_r.grid_sampling()) + gd.min();
+      clipper::Coord_grid g1 = uvw.coord_grid(d_r.grid_sampling()) + gd.max();
+      clipper::Xmap<clipper::ftype64>::Map_reference_coord i0, iu, iv, iw;
       i0 = clipper::Xmap<clipper::ftype64>::Map_reference_coord(d_r, g0);
       std::vector<clipper::ftype> rho_grad(3, 0.0f);
       clipper::ftype temp_rho = 0.0f;
@@ -242,7 +318,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       for (iu = i0; iu.coord().u() <= g1.u(); iu.next_u()) {
         for (iv = iu; iv.coord().v() <= g1.v(); iv.next_v()) {
           for (iw = iv; iw.coord().w() <= g1.w(); iw.next_w(), ++points) {
-            // get gradient from clipper
+            // get gradient of the atomic electron density
             sf.rho_grad(iw.coord_orth(), temp_rho, rho_grad);
             const double d_r_iw = d_r[iw];
             gradient(0) += d_r_iw * rho_grad[0];
@@ -253,13 +329,14 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       } // loop over map
       // convert from Angstrom to nm and add very annyoing scaling constants
       // to make the force volume AND resolution independent.
-      gradient *= 10.0 / 2.0 * volume * volume / (d_r.grid_sampling().size());
+      gradient *= scale;
       // add to force
       conf.current().force(i) -= gradient;
       DEBUG(10, "grad(" << i << "): " << math::v2s(gradient));
     } // if atom not null
   } // for atoms
 
+  m_timer.stop("force");
   m_timer.stop();
 
   // write xmap to external file
