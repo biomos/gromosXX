@@ -29,7 +29,7 @@
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE special
-
+//#define HAVE_CLIPPER
 interaction::Xray_Restraint_Interaction::Xray_Restraint_Interaction() : Interaction("XrayRestraint") {
 }
 
@@ -57,7 +57,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
             conf.current().pos(i)(2)*10.0));
   }
   // Calculate structure factors
-  clipper::SFcalc_iso_fft<float> sfc;
+  clipper::SFcalc_iso_fft<double> sfc;
   // run it
   sfc(fphi, atoms);
 
@@ -136,11 +136,12 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
 
   // calculate gradient
-  D_k = std::complex<float> (0.0f, 0.0f); // zero it
+  D_k = std::complex<double> (0.0f, 0.0f); // zero it
 
   double energy_sum = 0.0;
   for (unsigned int i = 0; i < num_xray_rest; i++) {
-
+    const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
+    clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
     // SWITCH FOR DIFFERENT METHODS
     switch (sim.param().xrayrest.xrayrest) {
       case simulation::xrayrest_off :
@@ -151,78 +152,50 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       {
         // INSTANTANEOUS
         // calculate energy-sum
-        const double term = topo.xray_restraints()[i].sf - k_inst * conf.special().xray_rest[i].sf_curr;
+        const double fobs = xrs.sf;
+        const double fcalc = conf.special().xray_rest[i].sf_curr;
+        const double term = fobs - k_inst * fcalc;
         energy_sum += term * term;
         // calculate derivatives of target function
-        const double k_d = (topo.xray_restraints()[i].sf * sqr_calc - 2.0 * conf.special().xray_rest[i].sf_curr * obs_calc) / (sqr_calc * sqr_calc);
-        const double dterm = (k_inst * conf.special().xray_rest[i].sf_curr - topo.xray_restraints()[i].sf)*(k_inst + conf.special().xray_rest[i].sf_curr * k_d);
-        clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
-        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
+        const double dterm = (k_inst * fcalc - fobs) * k_inst;
+        D_k.set_data(hkl, clipper::data64::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
 
-        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_inst, conf.special().xray_rest[i].phase_curr));
-
-        DEBUG(15, "SF inst: "
-                << std::setw(5) << topo.xray_restraints()[i].h
-                << std::setw(5) << topo.xray_restraints()[i].k
-                << std::setw(5) << topo.xray_restraints()[i].l
-                << std::setw(18) << topo.xray_restraints()[i].sf
-                << std::setw(18) << k_inst * conf.special().xray_rest[i].sf_curr
-                << std::setw(18) << conf.special().xray_rest[i].sf_curr
-                << std::setw(18) << D_k[hkl].f() << std::setw(13) << D_k[hkl].phi());
+        fphi_print.set_data(hkl, clipper::data64::F_phi(fobs/k_inst, conf.special().xray_rest[i].phase_curr));
         break;
       }
       case simulation::xrayrest_avg :
       {
         // TIMEAVERAGED
         // calculate energy-sum
-        const double term = topo.xray_restraints()[i].sf - k_avg * conf.special().xray_rest[i].sf_av;
+        const double fobs = xrs.sf;
+        const double fcalc = conf.special().xray_rest[i].sf_av;
+        const double term = fobs - k_avg * fcalc;
         energy_sum += term * term;
         // calculate derivatives of target function
-        const double k_d = (topo.xray_restraints()[i].sf * sqr_calcavg - 2.0 * conf.special().xray_rest[i].sf_av * obs_calcavg) / (sqr_calcavg * sqr_calcavg);
-        const double dterm = (k_avg * conf.special().xray_rest[i].sf_av - topo.xray_restraints()[i].sf)*((1.0 - eterm)*(k_avg + conf.special().xray_rest[i].sf_av * k_d));
-        clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
-        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
+        // here we omit the 1-exp(-dt/tau) term.
+        const double dterm = (k_avg * fcalc - fobs) * k_avg;
+        D_k.set_data(hkl, clipper::data64::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
 
-        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_av));
-
-        DEBUG(15, "SF avg: "
-                << std::setw(5) << topo.xray_restraints()[i].h
-                << std::setw(5) << topo.xray_restraints()[i].k
-                << std::setw(5) << topo.xray_restraints()[i].l
-                << std::setw(18) << topo.xray_restraints()[i].sf
-                << std::setw(18) << k_avg * conf.special().xray_rest[i].sf_av
-                << std::setw(18) << conf.special().xray_rest[i].sf_av
-                << std::setw(18) << D_k[hkl].f() << std::setw(13) << D_k[hkl].phi());
+        fphi_print.set_data(hkl, clipper::data64::F_phi(fobs/k_avg, conf.special().xray_rest[i].phase_av));
         break;
       }
       case simulation::xrayrest_biq :
       {
         // BIQUADRATIC TIME-AVERAGED/INSTANTANEOUS
         // calculate energy-sum
-        const double inst_term = topo.xray_restraints()[i].sf - k_inst * conf.special().xray_rest[i].sf_curr;
-        const double av_term = topo.xray_restraints()[i].sf - k_avg * conf.special().xray_rest[i].sf_av;
+        const double fobs = xrs.sf;
+        const double finst = conf.special().xray_rest[i].sf_curr;
+        const double favg = conf.special().xray_rest[i].sf_av;
+        const double inst_term = fobs - k_inst * finst;
+        const double av_term = fobs - k_avg * favg;
         energy_sum += (inst_term * inst_term)*(av_term * av_term);
         // calculate derivatives of target function
-        const double k_d_inst = (topo.xray_restraints()[i].sf * sqr_calc - 2.0 * conf.special().xray_rest[i].sf_curr * obs_calc) / (sqr_calc * sqr_calc);
-        const double k_d_avg = (topo.xray_restraints()[i].sf * sqr_calcavg - 2.0 * conf.special().xray_rest[i].sf_av * obs_calcavg) / (sqr_calcavg * sqr_calcavg);
-        const double dterm = ((k_inst * conf.special().xray_rest[i].sf_curr - topo.xray_restraints()[i].sf)*(topo.xray_restraints()[i].sf - k_avg * conf.special().xray_rest[i].sf_av)
-                *(topo.xray_restraints()[i].sf - k_avg * conf.special().xray_rest[i].sf_av)*(k_inst + conf.special().xray_rest[i].sf_curr * k_d_inst))
-                +((k_avg * conf.special().xray_rest[i].sf_av - topo.xray_restraints()[i].sf)*(topo.xray_restraints()[i].sf - k_inst * conf.special().xray_rest[i].sf_curr)
-                *(topo.xray_restraints()[i].sf - k_inst * conf.special().xray_rest[i].sf_curr)*((1.0 - eterm)*(k_avg + conf.special().xray_rest[i].sf_curr * k_d_avg)));
-        clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
-        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * (dterm), conf.special().xray_rest[i].phase_curr));
-
-        fphi_print.set_data(hkl, clipper::data32::F_phi(topo.xray_restraints()[i].sf/k_avg, conf.special().xray_rest[i].phase_av));
-
-        /*DEBUG(15, "SF avg: "
-                << std::setw(5) << topo.xray_restraints()[i].h
-                << std::setw(5) << topo.xray_restraints()[i].k
-                << std::setw(5) << topo.xray_restraints()[i].l
-                << std::setw(18) << topo.xray_restraints()[i].sf
-                << std::setw(18) << k_avg * conf.special().xray_rest[i].sf_av
-                << std::setw(18) << conf.special().xray_rest[i].sf_av
-                << std::setw(18) << D_k[hkl].f() << std::setw(13) << D_k[hkl].phi());
-         */
+        // here we omit the 1-exp(-dt/tau) term.
+        const double dterm = (k_inst * finst - fobs)*(av_term * av_term) * k_inst
+                + (k_avg * favg - fobs)*(inst_term * inst_term) * k_avg;
+        D_k.set_data(hkl, clipper::data64::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
+        
+        fphi_print.set_data(hkl, clipper::data64::F_phi(xrs.sf/k_avg, conf.special().xray_rest[i].phase_av));
         break;
       }
       case simulation::xrayrest_loel :
@@ -239,14 +212,17 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   d_r.fft_from(D_k);
   clipper::Coord_grid g0, g1;
 
-  // 2.5 is hardcoded atom radius for grid sampling.
-  clipper::Grid_range gd(fphi.base_cell(), d_r.grid_sampling(), 2.5);
-  clipper::Xmap<clipper::ftype32>::Map_reference_coord i0, iu, iv, iw;
-  math::Vec gradient(0.0, 0.0, 0.0);
+  // 3.5 is hardcoded atom radius for grid sampling.
+  const double radius = 3.0;
+  clipper::Grid_range gd(fphi.base_cell(), d_r.grid_sampling(), radius);
+
+  clipper::Xmap<clipper::ftype64>::Map_reference_coord i0, iu, iv, iw;
+  const double volume = fphi.base_cell().volume();
+  
   // calculate gradients of structure factors
   for (unsigned int i = 0; i < atoms_size; i++) {
     if (!atoms[i].is_null()) {
-      gradient = math::Vec(0.0, 0.0, 0.0);
+      math::Vec gradient(0.0, 0.0, 0.0);
       clipper::AtomShapeFn sf(atoms[i].coord_orth(), atoms[i].element(),
               atoms[i].u_iso(), atoms[i].occupancy());
       sf.agarwal_params().resize(3);
@@ -258,23 +234,26 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       clipper::Coord_frac uvw = atoms[i].coord_orth().coord_frac(fphi.base_cell());
       g0 = uvw.coord_grid(d_r.grid_sampling()) + gd.min();
       g1 = uvw.coord_grid(d_r.grid_sampling()) + gd.max();
-      i0 = clipper::Xmap<clipper::ftype32>::Map_reference_coord(d_r, g0);
+      i0 = clipper::Xmap<clipper::ftype64>::Map_reference_coord(d_r, g0);
       std::vector<clipper::ftype> rho_grad(3, 0.0f);
       clipper::ftype temp_rho = 0.0f;
-      // loop over grid
+      // loop over grid and convolve with the atomic density gradient
+      unsigned int points = 0;
       for (iu = i0; iu.coord().u() <= g1.u(); iu.next_u()) {
         for (iv = iu; iv.coord().v() <= g1.v(); iv.next_v()) {
-          for (iw = iv; iw.coord().w() <= g1.w(); iw.next_w()) {
+          for (iw = iv; iw.coord().w() <= g1.w(); iw.next_w(), ++points) {
             // get gradient from clipper
             sf.rho_grad(iw.coord_orth(), temp_rho, rho_grad);
-            gradient(0) += d_r[iw] * rho_grad[0];
-            gradient(1) += d_r[iw] * rho_grad[1];
-            gradient(2) += d_r[iw] * rho_grad[2];
+            const double d_r_iw = d_r[iw];
+            gradient(0) += d_r_iw * rho_grad[0];
+            gradient(1) += d_r_iw * rho_grad[1];
+            gradient(2) += d_r_iw * rho_grad[2];
           }
         }
       } // loop over map
-      // convert from Angstrom to nm
-      gradient *= 10.0;
+      // convert from Angstrom to nm and add very annyoing scaling constants
+      // to make the force volume AND resolution independent.
+      gradient *= 10.0 / 2.0 * volume * volume / (d_r.grid_sampling().size());
       // add to force
       conf.current().force(i) -= gradient;
       DEBUG(10, "grad(" << i << "): " << math::v2s(gradient));
@@ -286,7 +265,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   // write xmap to external file
   if (sim.param().xrayrest.writexmap != 0 && sim.steps() % sim.param().xrayrest.writexmap == 0) {
     const clipper::Grid_sampling grid(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), fphi.base_hkl_info().resolution(), 1.5);
-    clipper::Xmap<clipper::ftype32> density(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), grid);
+    clipper::Xmap<clipper::ftype64> density(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), grid);
     density.fft_from(fphi_print);
     clipper::CCP4MAPfile mapfile;
     std::ostringstream file_name, asu_file_name;
@@ -298,7 +277,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       mapfile.close_write();
     }
     // Non Cristallographic Map
-    clipper::NXmap<float> asu(density.grid_asu(), density.operator_orth_grid());
+    clipper::NXmap<double> asu(density.grid_asu(), density.operator_orth_grid());
     asu_file_name << "density_asu_frame_" << std::setw(int(log10(sim.param().step.number_of_steps)))
             << std::setfill('0') << sim.steps() << ".ccp4";
     if (sim.param().xrayrest.writedensity == 2 || sim.param().xrayrest.writedensity == 3) {
@@ -328,7 +307,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
         bool quiet) {
 #ifdef HAVE_CLIPPER
   DEBUG(15, "Xray_Restraint_Interaction: init")
-  const float sqpi2 = (math::Pi * math::Pi * 8.0);
+  const double sqpi2 = (math::Pi * math::Pi * 8.0);
 
   // Redirect clipper errors
   clipper::Message message;
@@ -348,14 +327,14 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   const double a = math::abs(box(0));
   const double b = math::abs(box(1));
   const double c = math::abs(box(2));
-  const float alpha = acos(math::costest(dot(box(1), box(2)) / (b * c)));
-  const float beta = acos(math::costest(dot(box(0), box(2)) / (a * c)));
-  const float gamma = acos(math::costest(dot(box(0), box(1)) / (a * b)));
-  clipper::Cell_descr cellinit(float(a * 10.0), float(b * 10.0), float(c * 10.0),
+  const double alpha = acos(math::costest(dot(box(1), box(2)) / (b * c)));
+  const double beta = acos(math::costest(dot(box(0), box(2)) / (a * c)));
+  const double gamma = acos(math::costest(dot(box(0), box(1)) / (a * b)));
+  clipper::Cell_descr cellinit(a * 10.0, b * 10.0, c * 10.0,
           alpha, beta, gamma);
   clipper::Cell cell(cellinit);
 
-  clipper::Resolution reso(float(sim.param().xrayrest.resolution * 10.0));
+  clipper::Resolution reso(sim.param().xrayrest.resolution * 10.0);
 
   hkls.init(spacegr, cell, reso, true);
   fphi.init(hkls, hkls.cell());
