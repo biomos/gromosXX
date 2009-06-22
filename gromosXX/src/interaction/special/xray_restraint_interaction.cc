@@ -107,7 +107,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         } // loop over grid
       }
     } // loop over atoms
-    // loop over the grid again an correct the multiplicity
+    // loop over the grid again and correct the multiplicity
     for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = xmap.first();
             !ix.last(); ix.next())
       xmap[ix] *= xmap.multiplicity(ix.coord());
@@ -280,6 +280,11 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   m_timer.start("force");
   // perform FFT of the difference map
   d_r.fft_from(D_k);
+
+  // loop over the grid and correct the multiplicity
+  for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = d_r.first();
+          !ix.last(); ix.next())
+    d_r[ix] /= d_r.multiplicity(ix.coord());
 
   // 3.5 is hardcoded atom radius for grid sampling.
   const double radius = 3.5;
