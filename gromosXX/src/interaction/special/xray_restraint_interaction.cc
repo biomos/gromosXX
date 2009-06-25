@@ -51,11 +51,24 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         int & error) {
 #ifdef HAVE_CLIPPER
   m_timer.start();
+
+  // these are just shortcuts to avoid many calls to the same functions
+  const clipper::Spacegroup & spgr = fphi.base_hkl_info().spacegroup();
+  const clipper::Cell & cell = fphi.base_cell();
+  const clipper::Grid_sampling & grid = d_r.grid_sampling();
+
+  // calculate the inverse symmetry operations of the spacegroup
+  std::vector<clipper::Isymop> isymop;
+  isymop.resize(spgr.num_symops());
+  for(int j = 0; j < spgr.num_symops(); j++) {
+    isymop[j] = clipper::Isymop(spgr.symop(j), grid);
+  }
+
   error = 0;
   // get number of atoms in simulation
-  const unsigned int atoms_size = topo.num_atoms();
+  const int atoms_size = topo.num_atoms();
   // update clipper atomvec: convert the position to Angstrom
-  for (unsigned int i = 0; i < atoms_size; i++) {
+  for (int i = 0; i < atoms_size; i++) {
     atoms[i].set_coord_orth(clipper::Coord_orth(conf.current().pos(i)(0)*10.0,
             conf.current().pos(i)(1)*10.0,
             conf.current().pos(i)(2)*10.0));
@@ -81,7 +94,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
     #ifdef OMP
     #pragma omp parallel for
     #endif
-    for (int i = 0; i < atoms.size(); i++) {
+    for (int i = 0; i < atoms_size; i++) {
       if (!atoms[i].is_null()) {
         clipper::AtomShapeFn sf(atoms[i].coord_orth(), atoms[i].element(),
                 atoms[i].u_iso(), atoms[i].occupancy());
@@ -174,8 +187,6 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   }
 #endif
 
-
-
   // calculate the scaling constants for inst and avg.
   double & k_inst = conf.special().xray.k_inst;
   k_inst = obs_calc / sqr_calc;
@@ -198,9 +209,9 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
   DEBUG(10, "R_inst value: " << std::setw(15) << std::setprecision(8) << R_inst);
   DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
 
-  // calculate gradient
+  // calculate gradients
   // zero the reciprocal space difference map
-  D_k = std::complex<float> (0.0f, 0.0f);
+  D_k.reset();
 
   double energy_sum = 0.0;
   // loop over retraints and calculate energy and difference map
@@ -223,9 +234,16 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         energy_sum += term * term;
         // calculate derivatives of target function
         const double dterm = (k_inst * fcalc - fobs) * k_inst;
-        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
+        // Here, I tried to apply symmetry operations for non P1 spacegroups
+        // but this had the effect the forces were not in agreement with
+        // the finite difference result anymore. So we just safe the relection
+        // given in the reflection list and not all symmetric copies. It's
+        // up to the user to decide whether he should provide also the symmetric
+        // copies for the refinement.
+        D_k.set_hkl(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
 
-        // save Fobs and PhiCalc for density maps
+        // save Fobs and PhiCalc for density maps. This will be corrected
+        // for symmetry in the FFT step.
         fphi_print.set_data(hkl, clipper::data32::F_phi(fobs/k_inst, conf.special().xray_rest[i].phase_curr));
         break;
       }
@@ -240,7 +258,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         // calculate derivatives of target function
         // here we omit the 1-exp(-dt/tau) term.
         const double dterm = (k_avg * fcalc - fobs) * k_avg;
-        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
+        D_k.set_hkl(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
 
         fphi_print.set_data(hkl, clipper::data32::F_phi(fobs/k_avg, conf.special().xray_rest[i].phase_av));
         break;
@@ -259,7 +277,7 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
         // here we omit the 1-exp(-dt/tau) term.
         const double dterm = (k_inst * finst - fobs)*(av_term * av_term) * k_inst
                 + (k_avg * favg - fobs)*(inst_term * inst_term) * k_avg;
-        D_k.set_data(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
+        D_k.set_hkl(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
         
         fphi_print.set_data(hkl, clipper::data32::F_phi(xrs.sf/k_avg, conf.special().xray_rest[i].phase_av));
         break;
@@ -278,28 +296,36 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
 
   // start to calculate the forces
   m_timer.start("force");
+  const double volume = fphi.base_cell().volume();
+  // convert from Angstrom to nm and add very annyoing scaling constants
+  // to make the force volume AND resolution independent.
+  const double scale = 10.0 / 2.0 * volume / (d_r.grid_sampling().size());
   // perform FFT of the difference map
-  d_r.fft_from(D_k);
-
-  // loop over the grid and correct the multiplicity
-  for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = d_r.first();
-          !ix.last(); ix.next())
-    d_r[ix] /= d_r.multiplicity(ix.coord());
+  D_k.fft_h_to_x(scale);
+  // loop over the (symmetry corrected map - even though this doesn't matter).
+  for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = d_r.first(); !ix.last(); ix.next()) {
+    // set initial data value
+    const clipper::Coord_grid & coord = ix.coord();
+    d_r[ix] = D_k.real_data(coord);
+    // loop over symmetric copies of the grid point and add the data from these points
+    for (int j = 1; j < spgr.num_symops(); j++) {
+      d_r[ix] += D_k.real_data(coord.transform(isymop[j]).unit(D_k.grid_real()));
+    }
+    // correct for points mapped on themselves
+    d_r[ix] /= d_r.multiplicity(coord);
+  }
 
   // 3.5 is hardcoded atom radius for grid sampling.
   const double radius = 3.5;
   // determine the range of the atomic electron density gradient on the gird
   clipper::Grid_range gd(fphi.base_cell(), d_r.grid_sampling(), radius);
-  const double volume = fphi.base_cell().volume();
-  // convert from Angstrom to nm and add very annyoing scaling constants
-  // to make the force volume AND resolution independent.
-  const double scale = 10.0 / 2.0 * volume * volume / (d_r.grid_sampling().size());
-  
-  // loop over the atoms
+
+  // loop over the atoms - has to be int and not unsigned due to
+  // stupid OpenMP rules
   #ifdef OMP
   #pragma omp parallel for
   #endif
-  for (int i = 0; i < int(atoms_size); i++) {
+  for (int i = 0; i < atoms_size; i++) {
     if (!atoms[i].is_null()) {
       math::Vec gradient(0.0, 0.0, 0.0);
       clipper::AtomShapeFn sf(atoms[i].coord_orth(), atoms[i].element(),
@@ -311,30 +337,28 @@ void interaction::Xray_Restraint_Interaction::_calculate_xray_restraint_interact
       sf.agarwal_params()[1] = clipper::AtomShapeFn::Y;
       sf.agarwal_params()[2] = clipper::AtomShapeFn::Z;
       // determine grid-ranges of this atom
-      clipper::Coord_frac uvw = atoms[i].coord_orth().coord_frac(fphi.base_cell());
-      clipper::Coord_grid g0 = uvw.coord_grid(d_r.grid_sampling()) + gd.min();
-      clipper::Coord_grid g1 = uvw.coord_grid(d_r.grid_sampling()) + gd.max();
+      clipper::Coord_frac uvw = atoms[i].coord_orth().coord_frac(cell);
+      clipper::Coord_grid g0 = uvw.coord_grid(grid) + gd.min();
+      clipper::Coord_grid g1 = uvw.coord_grid(grid) + gd.max();
       clipper::Xmap<clipper::ftype64>::Map_reference_coord i0, iu, iv, iw;
       i0 = clipper::Xmap<clipper::ftype64>::Map_reference_coord(d_r, g0);
       std::vector<clipper::ftype> rho_grad(3, 0.0f);
       clipper::ftype temp_rho = 0.0f;
       // loop over grid and convolve with the atomic density gradient
-      unsigned int points = 0;
       for (iu = i0; iu.coord().u() <= g1.u(); iu.next_u()) {
         for (iv = iu; iv.coord().v() <= g1.v(); iv.next_v()) {
-          for (iw = iv; iw.coord().w() <= g1.w(); iw.next_w(), ++points) {
+          for (iw = iv; iw.coord().w() <= g1.w(); iw.next_w()) {
             // get gradient of the atomic electron density
             sf.rho_grad(iw.coord_orth(), temp_rho, rho_grad);
+
+            // convolve it with difference map
             const double d_r_iw = d_r[iw];
             gradient(0) += d_r_iw * rho_grad[0];
             gradient(1) += d_r_iw * rho_grad[1];
-            gradient(2) += d_r_iw * rho_grad[2];
+            gradient(2) += d_r_iw * rho_grad[2]; 
           }
         }
       } // loop over map
-      // convert from Angstrom to nm and add very annyoing scaling constants
-      // to make the force volume AND resolution independent.
-      gradient *= scale;
       // add to force
       conf.current().force(i) -= gradient;
       DEBUG(10, "grad(" << i << "): " << math::v2s(gradient));
@@ -421,10 +445,23 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   hkls.init(spacegr, cell, reso, true);
   fphi.init(hkls, hkls.cell());
   fphi_print.init(hkls, hkls.cell());
-  D_k.init(hkls, hkls.cell());
+
+  // The difference map has to be a P 1 map in order to get agreement with
+  // the finite difference results. However, the reasons for this are
+  // not 100% clear. In principle (from theroy) a spacegroup depdendent
+  // Xmap should do the job.
+  clipper::Spgr_descr spgrinit(clipper::String("P 1"), clipper::Spgr_descr::HM);
+  clipper::Spacegroup p1_spacegr;
+  p1_spacegr.init(spgrinit);
+  // create a grid and a P1 FFT map. Here we can use the FFTmap_p1 which was
+  // designed for fast P1.
   // 1.5 is shannon-rate for oversampled FFT
-  const clipper::Grid_sampling grid(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), fphi.base_hkl_info().resolution(), 1.5);
-  d_r.init(fphi.base_hkl_info().spacegroup(), fphi.base_cell(), grid);
+  const clipper::Grid_sampling fftgrid(p1_spacegr, cell, reso, 1.5);
+  D_k.init(fftgrid);
+  // we still need an Xmap for convenient looping over the data in order
+  // to do the convolution.
+  const clipper::Grid_sampling grid(spacegr, cell, reso, 1.5);
+  d_r.init(spacegr, cell, grid);
 
   // Fill clipper atom-vector
   std::vector<clipper::Atom> atomvec;

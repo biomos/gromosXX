@@ -65,9 +65,9 @@ namespace interaction {
      */
     clipper::HKL_data<clipper::data32::F_phi> fphi_print;
     /**
-     * the gradients
+     * the gradient map
      */
-    clipper::HKL_data<clipper::data32::F_phi> D_k;
+    clipper::FFTmap_p1 D_k;
     /**
      * the map for the gradient convolution
      */
