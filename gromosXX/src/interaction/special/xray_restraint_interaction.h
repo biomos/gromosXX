@@ -49,11 +49,19 @@ namespace interaction {
   protected:
 #ifdef HAVE_CLIPPER
     /**
-     * pointer to the atoms
+     * the atoms
      */
     clipper::Atom_list atoms;
     /**
-     * the HKLs
+     * the calculated electron density
+     */
+    clipper::Xmap<clipper::ftype32> rho_calc;
+    /**
+     * the observed electron density
+     */
+    clipper::Xmap<clipper::ftype32> rho_obs;
+    /**
+     * the HKLs (reflections)
      */
     clipper::HKL_info hkls;
     /**
@@ -61,9 +69,10 @@ namespace interaction {
      */
     clipper::HKL_data<clipper::data32::F_phi> fphi;
     /**
-     * copy of fphi for print of electron-density maps
+     * structure factos built from the observed amplitudes and the
+     * calculated phases
      */
-    clipper::HKL_data<clipper::data32::F_phi> fphi_print;
+    clipper::HKL_data<clipper::data32::F_phi> fphi_obs;
     /**
      * the gradient map
      */
