@@ -259,11 +259,11 @@ namespace simulation
     posrest_const = 3,
   };
 
-    /**
+  /**
    * @enum xrayrest_enum
    * xray restraints enumeration
    */
-  enum xrayrest_enum{
+  enum xrayrest_enum {
     /**
      * no restraints
      */
@@ -272,18 +272,29 @@ namespace simulation
      *instantaneous xray restraints
      */
     xrayrest_inst = 1,
-        /**
+    /**
      *timeaveraged xray restraints
      */
     xrayrest_avg = 2,
-        /**
+    /**
      *biquadratic instantaneous/timeaveraged xray restraints
      */
-    xrayrest_biq = 3,
-        /**
-     *local elevation xray restraints
+    xrayrest_biq = 3
+  };
+
+  /**
+   * @enum xrayrestmode_enum
+   * xray restraints mode enumeration
+   */
+  enum xrayrestmode_enum {
+    /**
+     * restrain structure factors
      */
-    xrayrest_loel = 4,
+    xrayrest_mode_structure_factor = 0,
+    /**
+     * restrain electron density
+     */
+    xrayrest_mode_electron_density = 1
   };
 
   /**
@@ -1274,16 +1285,16 @@ namespace simulation
        * Constructor
        * Default values:
        * - xrayrest 0 (no xray restraints)
+       * - mode 0 (structure factor)
        * - force_constant 10000
        * - write 0
        * - writexmap 0
        * - tau 0
        * - spacegroup "P 1"
        * - resolution 1.0
-       * - bfactor 1.0
        * - readavg 0
        */
-      xrayrest_struct() : xrayrest(xrayrest_off), force_constant(1E4), tau(0),
+      xrayrest_struct() : xrayrest(xrayrest_off), mode(xrayrest_mode_structure_factor), force_constant(1E4), tau(0),
       write(0), writedensity(0), writexmap(0), spacegroup("P 1"),
       resolution(1.0), readavg(0) {
       }
@@ -1292,6 +1303,10 @@ namespace simulation
        * xrayrest
        */
       xrayrest_enum xrayrest;
+      /**
+       * restraining mode
+       */
+      xrayrestmode_enum mode;
       /**
        * CXR
        */

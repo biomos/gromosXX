@@ -2,7 +2,6 @@
  * @file xray_restraint_interaction.cc
  * template methods of Xray_Restraint_Interaction
  */
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -102,7 +101,7 @@ void calculate_electron_density(clipper::Xmap<clipper::ftype32> & rho_calc,
  * @param[in] atoms the list containing the atoms
  * @param[out] the force vector
  */
-void calculate_force(clipper::FFTmap_p1 & D_k,
+void calculate_force_sf(clipper::FFTmap_p1 & D_k,
         clipper::Xmap<clipper::ftype32> & d_r,
         const clipper::Atom_list & atoms,
         math::VArray & force) {
@@ -187,6 +186,175 @@ void calculate_force(clipper::FFTmap_p1 & D_k,
   } // for atoms
 }
 
+/**
+ * calculate the energy for structure factor restraining
+ * @param[in] refl the observed relefections
+ * @param[in] refl_curr the calculated reflections
+ * @param[in] averaging the averaging mode of the restraining
+ * @param[in] k_inst the inst. scaling factor
+ * @param[in] k_avg the avg. scaling factor
+ * @param[out] D_k the difference map for gradients
+ * @param[in] force_constant the force constant
+ * @param[out] energy the energy obtained
+ */
+void calculate_energy_sf(const std::vector<topology::xray_restraint_struct> & refl,
+        const std::vector<configuration::Configuration::special_struct::xray_struct> & refl_curr,
+        simulation::xrayrest_enum averaging,
+        const double k_inst, const double k_avg,
+        clipper::FFTmap_p1 & D_k, 
+        const double force_constant,
+        double & energy) {
+  // zero the reciprocal space difference map
+  D_k.reset();
+
+  double energy_sum = 0.0;
+  // loop over retraints and calculate energy and difference map
+  for (unsigned int i = 0; i < refl.size(); i++) {
+    const topology::xray_restraint_struct & xrs = refl[i];
+    clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
+    // SWITCH FOR DIFFERENT METHODS
+    switch (averaging) {
+      case simulation::xrayrest_inst :
+      {
+        // INSTANTANEOUS
+        // calculate energy-sum
+        const double fobs = xrs.sf;
+        const double fcalc = refl_curr[i].sf_curr;
+        const double term = fobs - k_inst * fcalc;
+        energy_sum += term * term;
+        // calculate derivatives of target function
+        const double dterm = (k_inst * fcalc - fobs) * k_inst;
+        // Here, I tried to apply symmetry operations for non P1 spacegroups
+        // but this had the effect the forces were not in agreement with
+        // the finite difference result anymore. So we just safe the relection
+        // given in the reflection list and not all symmetric copies. It's
+        // up to the user to decide whether he should provide also the symmetric
+        // copies for the refinement.
+        D_k.set_hkl(hkl, clipper::data32::F_phi(force_constant * dterm, refl_curr[i].phase_curr));
+        break;
+      }
+      case simulation::xrayrest_avg :
+      {
+        // TIMEAVERAGED
+        // calculate energy-sum
+        const double fobs = xrs.sf;
+        const double fcalc = refl_curr[i].sf_av;
+        const double term = fobs - k_avg * fcalc;
+        energy_sum += term * term;
+        // calculate derivatives of target function
+        // here we omit the 1-exp(-dt/tau) term.
+        const double dterm = (k_avg * fcalc - fobs) * k_avg;
+        D_k.set_hkl(hkl, clipper::data32::F_phi(force_constant * dterm, refl_curr[i].phase_curr));
+        break;
+      }
+      case simulation::xrayrest_biq :
+      {
+        // BIQUADRATIC TIME-AVERAGED/INSTANTANEOUS
+        // calculate energy-sum
+        const double fobs = xrs.sf;
+        const double finst = refl_curr[i].sf_curr;
+        const double favg = refl_curr[i].sf_av;
+        const double inst_term = fobs - k_inst * finst;
+        const double av_term = fobs - k_avg * favg;
+        energy_sum += (inst_term * inst_term)*(av_term * av_term);
+        // calculate derivatives of target function
+        // here we omit the 1-exp(-dt/tau) term.
+        const double dterm = (k_inst * finst - fobs)*(av_term * av_term) * k_inst
+                + (k_avg * favg - fobs)*(inst_term * inst_term) * k_avg;
+        D_k.set_hkl(hkl, clipper::data32::F_phi(force_constant * dterm, refl_curr[i].phase_curr));
+        break;
+      }
+      default: break;
+    }
+  }
+
+  // finally calculate the energy
+  energy = 0.5 * force_constant * energy_sum;
+}
+
+/**
+ * calculate energy of the electron density restraining
+ * @param[in] atoms the list of the atoms
+ * @param[in] rho_obs the "observed" electron density
+ * @param[in] force_constant the force constant
+ * @param[out] energy the energy obtained
+ * @param[out] force the forces are added to this vector
+ */
+void calculate_energy_rho(const clipper::Atom_list & atoms,
+        clipper::Xmap<clipper::ftype32> & rho_obs,
+        const clipper::Xmap<clipper::ftype32> & rho_calc,
+        const double force_constant,
+        double & energy,
+        math::VArray & force) {
+  const double radius = 3.5;
+  energy = 0.0;
+
+  // create the range (size of atom)
+  const clipper::Cell & cell = rho_calc.cell();
+  const clipper::Grid_sampling & grid = rho_calc.grid_sampling();
+  clipper::Grid_range gd(cell, grid, radius);
+
+  const int atoms_size = atoms.size();
+  const double volume = cell.volume();
+  // convert from Angstrom to nm and add very annyoing scaling constants
+  // to make the force volume AND resolution independent.
+  const double scale = volume / grid.size();
+
+  // energy
+  for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = rho_obs.first(),
+          ix_c = rho_calc.first(); !ix.last(); ix.next(), ix_c.next()) {
+    const double term = rho_obs[ix] - rho_calc[ix_c];
+    energy += term * term;
+  }
+  energy *= 0.5 * force_constant * scale;
+  // loop over atoms
+#ifdef OMP
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < atoms_size; i++) {
+    if (!atoms[i].is_null()) {
+      math::Vec gradient(0.0, 0.0, 0.0);
+      clipper::AtomShapeFn sf(atoms[i].coord_orth(), atoms[i].element(),
+              atoms[i].u_iso(), atoms[i].occupancy());
+      sf.agarwal_params().resize(3);
+      sf.agarwal_params()[0] = clipper::AtomShapeFn::X;
+      sf.agarwal_params()[1] = clipper::AtomShapeFn::Y;
+      sf.agarwal_params()[2] = clipper::AtomShapeFn::Z;
+
+      // determine grad range of atom
+      clipper::Coord_frac uvw = atoms[i].coord_orth().coord_frac(cell);
+      clipper::Coord_grid g0 = uvw.coord_grid(grid) + gd.min();
+      clipper::Coord_grid g1 = uvw.coord_grid(grid) + gd.max();
+
+      clipper::ftype rho;
+      std::vector<clipper::ftype> rho_grad(3, 0.0f);
+
+      // loop over atom's grid
+      clipper::Xmap<clipper::ftype32>::Map_reference_coord i0, iu, iv, iw;
+      i0 = clipper::Xmap<clipper::ftype32>::Map_reference_coord(rho_obs, g0);
+      clipper::Xmap<clipper::ftype32>::Map_reference_coord i0_c, iu_c, iv_c, iw_c;
+      i0_c = clipper::Xmap<clipper::ftype32>::Map_reference_coord(rho_calc, g0);
+      for (iu = i0, iu_c = i0_c; iu.coord().u() <= g1.u(); iu.next_u(), iu_c.next_u()) {
+        assert(iu.coord().u() == iu_c.coord().u());
+        for (iv = iu, iv_c = iu_c; iv.coord().v() <= g1.v(); iv.next_v(), iv_c.next_v()) {
+          assert(iv.coord().v() == iv_c.coord().v());
+          for (iw = iv, iw_c = iv_c; iw.coord().w() <= g1.w(); iw.next_w(), iw_c.next_w()) {
+            assert(iw.coord().w() == iw_c.coord().w());
+            // calculate electron density and gradient of it.
+            sf.rho_grad(iw.coord_orth(), rho, rho_grad);
+            const float term = rho_obs[iw] - rho_calc[iw_c];
+            gradient(0) += -term * rho_grad[0];
+            gradient(1) += -term * rho_grad[1];
+            gradient(2) += -term * rho_grad[2];
+          }
+        }
+      } // loop over grid
+      // Angstrom -> nm
+      gradient *= 10.0 * force_constant * scale;
+      force(i) -= gradient;
+    }
+  } // loop over atoms
+}
 
 #endif
 /**
@@ -211,7 +379,6 @@ int interaction::Xray_Restraint_Interaction
   calculate_electron_density(rho_calc, atoms);
   // FFT the electron density to obtain the structure factors
   rho_calc.fft_to(fphi);
-
   m_timer.stop("structure factor");
 
   // sqr_calc:       sum of squared Fcalc
@@ -223,7 +390,7 @@ int interaction::Xray_Restraint_Interaction
   // obs_k_calc:     sum of Fobs-k*Fcalc
   // sqr_calcavg:    sum of squared time-averaged Fcalc
   // calcavg:        sum of time-averaged Fcalc
-   m_timer.start("energy");
+   m_timer.start("scaling");
   // zero all the sums
   double sqr_calc = 0.0, obs = 0.0, calc = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
           sqr_calcavg = 0.0, calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0;
@@ -279,9 +446,19 @@ int interaction::Xray_Restraint_Interaction
   DEBUG(10, "k_avg  value: " << k_avg);
 
   // calculate sums needed for R factors
+  // and "observed" structure factors
   for (unsigned int i = 0; i < num_xray_rest; i++) {
-    obs_k_calc += fabs(topo.xray_restraints()[i].sf - k_inst * conf.special().xray_rest[i].sf_curr);
-    obs_k_calcavg += fabs(topo.xray_restraints()[i].sf - k_avg * conf.special().xray_rest[i].sf_av);
+    const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
+    obs_k_calc += fabs(xrs.sf - k_inst * conf.special().xray_rest[i].sf_curr);
+    obs_k_calcavg += fabs(xrs.sf - k_avg * conf.special().xray_rest[i].sf_av);
+    
+    clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
+    // save Fobs and PhiCalc for density maps. This will be corrected
+    // for symmetry in the FFT step.
+    if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst)
+      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_inst, conf.special().xray_rest[i].phase_curr));
+    else
+      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_avg, conf.special().xray_rest[i].phase_av));
   }
 
   // calculate R factors: R_inst and R_avg
@@ -290,113 +467,52 @@ int interaction::Xray_Restraint_Interaction
   double & R_avg = conf.special().xray.R_avg;
   R_avg = obs_k_calcavg / obs;
   DEBUG(10, "R_inst value: " << std::setw(15) << std::setprecision(8) << R_inst);
-  DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
+  DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);  
+  m_timer.stop("scaling");
 
-  // calculate gradients
-  // zero the reciprocal space difference map
-  D_k.reset();
+  if (sim.param().xrayrest.mode != simulation::xrayrest_mode_electron_density) {
+    ///////////////////////////////////////////////
+    // STRUCTURE FACTOR RESTRAINING
+    ///////////////////////////////////////////////
+    m_timer.start("energy");
+    calculate_energy_sf(topo.xray_restraints(), conf.special().xray_rest,
+            sim.param().xrayrest.xrayrest, k_inst, k_avg,
+            D_k, sim.param().xrayrest.force_constant, conf.current().energies.xray_total);
+    m_timer.stop("energy");
 
-  double energy_sum = 0.0;
-  // loop over retraints and calculate energy and difference map
-  for (unsigned int i = 0; i < num_xray_rest; i++) {
-    const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
-    clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
-    // SWITCH FOR DIFFERENT METHODS
-    switch (sim.param().xrayrest.xrayrest) {
-      case simulation::xrayrest_off :
-      {
-        break;
-      }
-      case simulation::xrayrest_inst :
-      {
-        // INSTANTANEOUS
-        // calculate energy-sum
-        const double fobs = xrs.sf;
-        const double fcalc = conf.special().xray_rest[i].sf_curr;
-        const double term = fobs - k_inst * fcalc;
-        energy_sum += term * term;
-        // calculate derivatives of target function
-        const double dterm = (k_inst * fcalc - fobs) * k_inst;
-        // Here, I tried to apply symmetry operations for non P1 spacegroups
-        // but this had the effect the forces were not in agreement with
-        // the finite difference result anymore. So we just safe the relection
-        // given in the reflection list and not all symmetric copies. It's
-        // up to the user to decide whether he should provide also the symmetric
-        // copies for the refinement.
-        D_k.set_hkl(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
-
-        // save Fobs and PhiCalc for density maps. This will be corrected
-        // for symmetry in the FFT step.
-        fphi_obs.set_data(hkl, clipper::data32::F_phi(fobs/k_inst, conf.special().xray_rest[i].phase_curr));
-        break;
-      }
-      case simulation::xrayrest_avg :
-      {
-        // TIMEAVERAGED
-        // calculate energy-sum
-        const double fobs = xrs.sf;
-        const double fcalc = conf.special().xray_rest[i].sf_av;
-        const double term = fobs - k_avg * fcalc;
-        energy_sum += term * term;
-        // calculate derivatives of target function
-        // here we omit the 1-exp(-dt/tau) term.
-        const double dterm = (k_avg * fcalc - fobs) * k_avg;
-        D_k.set_hkl(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
-
-        fphi_obs.set_data(hkl, clipper::data32::F_phi(fobs/k_avg, conf.special().xray_rest[i].phase_av));
-        break;
-      }
-      case simulation::xrayrest_biq :
-      {
-        // BIQUADRATIC TIME-AVERAGED/INSTANTANEOUS
-        // calculate energy-sum
-        const double fobs = xrs.sf;
-        const double finst = conf.special().xray_rest[i].sf_curr;
-        const double favg = conf.special().xray_rest[i].sf_av;
-        const double inst_term = fobs - k_inst * finst;
-        const double av_term = fobs - k_avg * favg;
-        energy_sum += (inst_term * inst_term)*(av_term * av_term);
-        // calculate derivatives of target function
-        // here we omit the 1-exp(-dt/tau) term.
-        const double dterm = (k_inst * finst - fobs)*(av_term * av_term) * k_inst
-                + (k_avg * favg - fobs)*(inst_term * inst_term) * k_avg;
-        D_k.set_hkl(hkl, clipper::data32::F_phi(sim.param().xrayrest.force_constant * dterm, conf.special().xray_rest[i].phase_curr));
-        
-        fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf/k_avg, conf.special().xray_rest[i].phase_av));
-        break;
-      }
-      case simulation::xrayrest_loel :
-      {
-        break;
-      }
-    }
+    // start to calculate the forces
+    m_timer.start("force");
+    calculate_force_sf(D_k, d_r, atoms, conf.current().force);
+    m_timer.stop("force");
+  } else {
+    ///////////////////////////////////////////////
+    // ELECTRON DENSITY RESTRAINING
+    ///////////////////////////////////////////////
+    m_timer.start("energy & force");
+    rho_obs.fft_from(fphi_obs);
+    calculate_energy_rho(atoms, rho_obs, rho_calc, sim.param().xrayrest.force_constant,
+            conf.current().energies.xray_total, conf.current().force);
+    m_timer.stop("energy & force");
   }
-
-  // finally calculate the energy
-  conf.current().energies.xray_total = 0.5 * sim.param().xrayrest.force_constant * energy_sum;
   DEBUG(10, "energy: " << conf.current().energies.xray_total);
-  m_timer.stop("energy");
 
-  // start to calculate the forces
-  m_timer.start("force");
-  calculate_force(D_k, d_r, atoms, conf.current().force);
-  m_timer.stop("force");
   m_timer.stop();
 
   // write xmap to external file
   if (sim.param().xrayrest.writexmap != 0 && sim.steps() % sim.param().xrayrest.writexmap == 0) {
-    rho_calc.fft_from(fphi_obs);
+    if (sim.param().xrayrest.mode != simulation::xrayrest_mode_electron_density)
+      rho_obs.fft_from(fphi_obs);
     clipper::CCP4MAPfile mapfile;
     std::ostringstream file_name, asu_file_name;
     file_name << "density_frame_" << std::setw(int(log10(sim.param().step.number_of_steps)))
             << std::setfill('0') << sim.steps() << ".ccp4";
     if (sim.param().xrayrest.writedensity == 1 || sim.param().xrayrest.writedensity == 3) {
       mapfile.open_write(file_name.str());
-      mapfile.export_xmap(rho_calc);
+      mapfile.export_xmap(rho_obs);
       mapfile.close_write();
     }
     // Non Cristallographic Map
-    clipper::NXmap<double> asu(rho_calc.grid_asu(), rho_calc.operator_orth_grid());
+    clipper::NXmap<double> asu(rho_obs.grid_asu(), rho_obs.operator_orth_grid());
     asu_file_name << "density_asu_frame_" << std::setw(int(log10(sim.param().step.number_of_steps)))
             << std::setfill('0') << sim.steps() << ".ccp4";
     if (sim.param().xrayrest.writedensity == 2 || sim.param().xrayrest.writedensity == 3) {
@@ -484,7 +600,6 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     atm.set_coord_orth(clipper::Coord_orth(0.0, 0.0, 0.0));
     assert(i < topo.xray_b_factors().size());
     atm.set_u_iso(topo.xray_b_factors()[i] * 100.0 / sqpi2);
-    DEBUG(1, "i: " << i << " size: " << topo.xray_elements().size());
     assert(i < topo.xray_elements().size());
     atm.set_element(topo.xray_elements()[i]);
     atomvec.push_back(atm);
@@ -522,37 +637,30 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 
   if (!quiet) {
     os.precision(2);
-    os << "\nXRAYRESTINIT\n";
+    os << "\nXRAYREST\n";
     os << "Restraint type              : ";
     switch (sim.param().xrayrest.xrayrest) {
       case simulation::xrayrest_off :
-      {
-        os << "No xray restraining\n";
+        os << "No xray restraining";
         break;
-      }
       case simulation::xrayrest_inst :
-      {
-        os << "Instantaneous xray restraining\n";
+        os << "Instantaneous restraining";
         break;
-      }
       case simulation::xrayrest_avg :
-      {
-        os << "Time-averaged xray restraining\n";
+        os << "Time-averaged restraining";
         break;
-      }
       case simulation::xrayrest_biq :
-      {
-        os << "Biquadratic time-averaged/instantaneous xray restraining\n";
+        os << "Biquadratic time-averaged/instantaneous restraining";
         break;
-      }
-      case simulation::xrayrest_loel :
-      {
-        os << "Local-elevation xray restraining\n";
-        break;
-      }
-      if (sim.param().xrayrest.readavg)
-      os << "\treading xray averages from file\n";
     }
+    if (sim.param().xrayrest.mode == simulation::xrayrest_mode_electron_density)
+      os << " on the electron density.\n";
+    else
+      os << " on the structure factors.\n";
+
+    if (sim.param().xrayrest.readavg)
+      os << "\treading xray averages from file\n";
+
     os << "Restraint force-constant    : " << sim.param().xrayrest.force_constant << std::endl;
     os << "Spacegroup                  : " << sim.param().xrayrest.spacegroup << std::endl;
     os.precision(4);

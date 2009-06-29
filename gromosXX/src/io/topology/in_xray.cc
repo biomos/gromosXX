@@ -305,28 +305,19 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {
-
       case simulation::xrayrest_off :
                 os << "\tXray restraints OFF\n";
         break;
-
       case simulation::xrayrest_inst :
                 os << "\tXray instantaneous restraints ON\n";
         break;
-
       case simulation::xrayrest_avg :
                 os << "\tXray time-averaged restraints ON\n";
         break;
-
       case simulation::xrayrest_biq :
                 os << "\tXray biquadratic instantaneous/time-averaged restraints ON\n";
         break;
-
-      case simulation::xrayrest_loel :
-                os << "\tXray local-elevation restraints ON\n";
-        break;
     }
-
     os << "END\n";
   }
 }

@@ -1930,12 +1930,12 @@ void io::In_Parameter::read_POSITIONRES(simulation::Parameter &param,
  * @section xrayres XRRAYRES block
  * @verbatim
 XRAYRES
-#    NTXR    0..4 controls atom xray restraining.
+#    NTXR   -2: time-averaged electron density restraints
+#           -1: instantaneous electron density restraints
 #            0: no xray restraints.
-#            1: instantaneous xray restraints
-#            2: time-averaged xray restraints
-#            3: biquadratic/timeaveraged xray restraints
-#            4: local elevation xray restraints
+#            1: instantaneous structure factor restraints
+#            2: time-averaged structure factor restraints
+#            3: biquadratic/timeaveraged structure factor restraints
 #    CXR     >= 0 xray restraining force constant
 #    NTWXR   >= 0 write xray data to output file
 #            0: don't write xray data
@@ -1987,7 +1987,12 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
     io::messages.add("bad line in XRAYRES block",
 		     "In_Parameter", io::message::error);
 
-    switch(ntxr) {
+  if (ntxr < 0)
+    param.xrayrest.mode = simulation::xrayrest_mode_electron_density;
+  else
+    param.xrayrest.mode = simulation::xrayrest_mode_structure_factor;
+
+  switch(abs(ntxr)) {
     case 0 :
       param.xrayrest.xrayrest = simulation::xrayrest_off;
       break;
@@ -2000,12 +2005,14 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
     case 3:
       param.xrayrest.xrayrest = simulation::xrayrest_biq;
       break;
-    case 4:
-      param.xrayrest.xrayrest = simulation::xrayrest_loel;
-      break;
     default:
-      io::messages.add("XRAYRES block: NTXR must be 0 to 4.",
+      io::messages.add("XRAYRES block: NTXR must be -2 to 3.",
 		       "In_Parameter", io::message::error);
+  }
+
+  if (ntxr == -3) {
+    io::messages.add("XRAYRES block: NTXR must be -2 to 3.",
+          "In_Parameter", io::message::error);
   }
 
   if (param.xrayrest.force_constant < 0.0) {
