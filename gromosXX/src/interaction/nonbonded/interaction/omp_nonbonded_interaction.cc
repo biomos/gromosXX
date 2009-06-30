@@ -35,6 +35,8 @@
 #include <util/debug.h>
 #include <util/error.h>
 
+#include <math/boundary_checks.h>
+
 #ifdef OMP
 #include <omp.h>
 #endif
@@ -81,6 +83,9 @@ calculate_interactions(topology::Topology & topo,
 
   int steps = sim.param().multistep.steps;
   if (steps == 0) steps = 1;
+
+  configuration::Configuration *p_conf = &conf;
+  topology::Topology *p_topo = &topo;
   
   if ((sim.steps() % steps) == 0){
     // std::cout << "MULTISTEP: full calculation\n";
@@ -88,60 +93,40 @@ calculate_interactions(topology::Topology & topo,
     ////////////////////////////////////////////////////
     // multiple unit cell
     ////////////////////////////////////////////////////
-    if (sim.param().multicell.multicell){
-      
+    if (sim.param().multicell.multicell) {
       DEBUG(6, "nonbonded: MULTICELL");
-      configuration::Configuration exp_conf;
-      expand_configuration(topo, conf, sim, exp_conf);
-      DEBUG(7, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
-      
-      // shared memory do this only once
-      m_pairlist_algorithm->prepare(topo.multicell_topo(), exp_conf, sim);
-      
-#ifdef OMP
-      int tid;
-#pragma omp parallel private(tid)
-      {
-	tid = omp_get_thread_num();
-	// calculate the corresponding interactions
-	assert(m_nonbonded_set.size() > tid);
-	DEBUG(8, "calculating nonbonded interactions (thread " 
-	      << tid << " of " << m_set_size << ")");
-	
-	m_nonbonded_set[tid]->calculate_interactions(topo.multicell_topo(), 
-						     exp_conf, sim);
+      p_conf = m_exp_conf;
+      p_topo = &topo.multicell_topo();
+      expand_configuration(topo, conf, sim, *p_conf);
+      if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
+          sim.param().pairlist.cutoff_long)) {
+        io::messages.add("box is too small: not twice the cutoff!",
+                "configuration", io::message::error);
+        return 1;
       }
-      
-#else
-    
-      std::cerr << "using OMP code without OMP defined..." << std::endl;
-      return E_ILLEGAL;
-      
-#endif
+      DEBUG(6, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
     }
-    else{ // no MULTICELL
-    
-      // shared memory do this only once
-      m_pairlist_algorithm->prepare(topo, conf, sim);
-      
+
+    // shared memory do this only once
+    m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim);
+
 #ifdef OMP
-      int tid;
+    int tid;
 #pragma omp parallel private(tid)
-      {
-	tid = omp_get_thread_num();
-	// calculate the corresponding interactions
-	assert(m_nonbonded_set.size() > tid);
-	DEBUG(8, "calculating nonbonded interactions (thread " 
-	      << tid << " of " << m_set_size << ")");
-	
-	m_nonbonded_set[tid]->calculate_interactions(topo, conf, sim);
-      }
-      
-#else
-      std::cerr << "using OMP code without OMP defined..." << std::endl;
-      return E_ILLEGAL;
-#endif
+    {
+      tid = omp_get_thread_num();
+      // calculate the corresponding interactions
+      assert(m_nonbonded_set.size() > tid);
+      DEBUG(8, "calculating nonbonded interactions (thread "
+              << tid << " of " << m_set_size << ")");
+
+      m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
     }
+
+#else
+    std::cerr << "using OMP code without OMP defined..." << std::endl;
+    return E_ILLEGAL;
+#endif
     
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
@@ -153,7 +138,11 @@ calculate_interactions(topology::Topology & topo,
   
   
   DEBUG(6, "sets are done, adding things up...");
-  store_set_data(topo, conf, sim);
+  store_set_data(*p_topo, *p_conf, sim);
+
+  if (sim.param().multicell.multicell) {
+    reduce_configuration(topo, conf, sim, *p_conf);
+  }
 
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
 
@@ -188,10 +177,5 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
     return E_ILLEGAL;
 #endif
 }
-
-
-//***************************************************************************
-// helper functions 
-//***************************************************************************
 
 

@@ -1980,6 +1980,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("multicell", "polarisation_cos");
   fc.unlock("multicell", "polarisation_cos_damped");
   fc.unlock("multicell", "analysis");
+  fc.unlock("multicell", "parallel_omp");
   fc.unlock("analysis", "no_integration");
   fc.unlock("analysis", "stochdyn");
   fc.unlock("analysis", "multistep");
