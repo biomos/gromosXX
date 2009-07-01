@@ -393,6 +393,8 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
 
       ENERGY_AVG(lj_energy[i][j]);
       ENERGY_AVG(crf_energy[i][j]);
+      ENERGY_AVG(ls_real_energy[i][j]);
+      ENERGY_AVG(ls_k_energy[i][j]);
     }
   
     // special energies
@@ -489,11 +491,21 @@ void configuration::Average::Block_Average
   ENERGY_RES(nonbonded_total);
   ENERGY_RES(lj_total);
   ENERGY_RES(crf_total);
+  ENERGY_RES(ls_total);
+  ENERGY_RES(ls_pair_total);
+  ENERGY_RES(ls_realspace_total);
+  ENERGY_RES(ls_kspace_total);
+  ENERGY_RES(ls_self_total);
+  ENERGY_RES(ls_surface_total);
+  ENERGY_RES(ls_a_term_total);
 
   ENERGY_RES(special_total);
   ENERGY_RES(posrest_total);
   ENERGY_RES(distanceres_total);
   ENERGY_RES(dihrest_total);
+  ENERGY_RES(jvalue_total);
+  ENERGY_RES(xray_total);
+  ENERGY_RES(leus_total);
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
   ENERGY_RES(external_total);
@@ -533,6 +545,8 @@ void configuration::Average::Block_Average
 
       ENERGY_RES(lj_energy[i][j]);
       ENERGY_RES(crf_energy[i][j]);
+      ENERGY_RES(ls_real_energy[i][j]);
+      ENERGY_RES(ls_k_energy[i][j]);
     }
   
     // special energies
