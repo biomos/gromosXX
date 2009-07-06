@@ -636,6 +636,11 @@ namespace math
   extern double h_bar;
 
   /**
+   * speed of light.
+   */
+  extern double spd_l;
+
+  /**
    * 1 / (4 Pi epsilon0).
    */
   extern double four_pi_eps_i;

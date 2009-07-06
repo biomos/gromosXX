@@ -14,6 +14,7 @@
 #include <util/parse_tcouple.h>
 
 #include <io/blockinput.h>
+#include <vector>
 
 #include "in_topology.h"
 
@@ -169,7 +170,7 @@ io::In_Topology::read(topology::Topology& topo,
               buffer.end()-1, s));
       double four_pi_eps0_i;
       
-      _lineStream >> four_pi_eps0_i >> math::h_bar >> math::k_Boltzmann;
+      _lineStream >> four_pi_eps0_i >> math::h_bar >> math::spd_l >> math::k_Boltzmann;
       math::eps0_i = four_pi_eps0_i * 4.0 * math::Pi;
       math::four_pi_eps_i = four_pi_eps0_i / param.nonbonded.epsilon;
       
@@ -1476,6 +1477,27 @@ io::In_Topology::read(topology::Topology& topo,
   if (!quiet)
     os << "\n\tEND\n";
 
+    {// SASAPARAMETER
+    if (param.sasa.switch_sasa == 1) { // if SASA is switched on
+
+      std::vector<interaction::sasa_parameter_struct> sasa_parameter;
+      read_sasa_parameter(sasa_parameter, os);
+
+      if (!quiet)
+        os << "\tSASAPARAMETERS\n";
+
+      if (!quiet) {
+        os << "\t\tSASA is switched on\n" << "\t\tp_12 :" << "\t\t" << param.sasa.p_12 << std::endl;
+        os << "\t\tp_13 :" << "\t\t" << param.sasa.p_13 << std::endl;
+        os << "\t\tp_1x :" << "\t\t" << param.sasa.p_1x << std::endl;
+        os << "\t\tR_solv :" << "\t" << param.sasa.r_solv << std::endl;
+      }
+      if (!quiet)
+        os << "\tEND\n";
+    }
+  // SASAPARAMETER
+  }
+
   // set lambda (new and old one, yes it looks strange...)
   topo.lambda(param.perturbation.lambda);
   topo.lambda(param.perturbation.lambda);
@@ -2391,4 +2413,64 @@ void io::In_Topology
    
   } // CGPARAMETER
 }
+
+void io::In_Topology::
+read_sasa_parameter(std::vector<interaction::sasa_parameter_struct>
+    & sasa_parameter, std::ostream & os) {
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  { // SASAPARAMETERS
+
+    buffer = m_block["SASAPARAMETERS"];
+    // if no SASA block is present
+    if (!buffer.size()) {
+      //io::messages.add("No SASAPARAMETES block found in topology!",
+      //                "In_Topology", io::message::error):
+      return;
+    }
+
+    int num, n; //num = number of atoms
+
+    it = buffer.begin() + 1;
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> num; // reads in number of atoms
+
+
+    sasa_parameter.resize(num);
+    ++it;
+
+    for (n = 0; it != buffer.end() - 1; ++it, ++n) {
+
+      interaction::sasa_parameter_struct s;
+      int i;
+
+      _lineStream.clear();
+      _lineStream.str(*it);
+
+      _lineStream >> i >> s.r_i >> s.p_i >> s.sigma_i;
+
+      --i;
+
+      if (_lineStream.fail() || !_lineStream.eof())
+        io::messages.add("bad line in SASAPARAMETERS block",
+          "In_Topology", io::message::error);
+
+      if (i >= int(num)) {
+        DEBUG(7, "wrong iac in SASAPARAMETERS: i=" << i);
+        io::messages.add("wrong integer atom code in SASAPARAMETERS block",
+            "In_Topology", io::message::error);
+      }
+
+      sasa_parameter[i] = s;
+
+    }
+
+    if (num != n) {
+      io::messages.add("Reading the SASAPARAMETERS failed (n != num)",
+          "InTopology", io::message::error);
+    }
+  } // SASAPARAMETERS
+}
+
 

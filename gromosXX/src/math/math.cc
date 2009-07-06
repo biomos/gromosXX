@@ -16,6 +16,8 @@ namespace math
 
   double h_bar = 0.0635078;
 
+  double spd_l = 299792.458;
+
   double k_Boltzmann = 0.00831441;
 
   double four_pi_eps_i = 138.9354;
