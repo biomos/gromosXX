@@ -125,6 +125,14 @@ int interaction::Nonbonded_Set
   if (m_rank == 0)
     m_pairlist_alg.timer().stop("shortrange");
 
+  // calculate sasa interaction
+  if (sim.param().sasa.switch_sasa) {
+    DEBUG(6, "\tsasa energy");
+    m_pairlist_alg.timer().start("sasa energy");
+    m_outerloop.sasa_outerloop(topo, conf, sim, m_storage);
+    m_pairlist_alg.timer().stop("sasa energy");
+  }
+
   // calculate k-space energy and forces
   switch (sim.param().nonbonded.method) {
     case simulation::el_ewald :

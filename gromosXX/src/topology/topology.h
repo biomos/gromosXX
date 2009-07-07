@@ -925,6 +925,55 @@ namespace topology
     void init(simulation::Simulation const & sim,
 	      std::ostream & os = std::cout, 
 	      bool quiet = false);
+
+    /**
+     * direct neighbour of atom i.
+     */
+    std::set<int> & sasa_first_neighbour(unsigned int const i){
+      assert(i < m_sasa_first_neighbour.size());
+      return m_sasa_first_neighbour[i];
+    }
+    /**
+     * direct neighbour of atom i.
+     */
+    std::vector<std::set<int> > & sasa_first_neighbour(){return m_sasa_first_neighbour;}
+
+    /**
+     * second neighbour of atom i.
+     */
+    std::set<int> & sasa_second_neighbour(unsigned int const i){
+      assert(i < m_sasa_second_neighbour.size());
+      return m_sasa_second_neighbour[i];
+    }
+    /**
+     * second neighbour of atom i.
+     */
+    std::vector<std::set<int> > & sasa_second_neighbour(){return m_sasa_first_neighbour;}
+
+    /**
+     * third neighbour of atom i.
+     */
+    std::set<int> & sasa_third_neighbour(unsigned int const i){
+      assert(i < m_sasa_third_neighbour.size());
+      return m_sasa_third_neighbour[i];
+    }
+    /**
+     * third neighbour of atom i.
+     */
+    std::vector<std::set<int> > & sasa_third_neighbour(){return m_sasa_third_neighbour;}
+
+    /**
+     * higher neighbour of atom i.
+     */
+    std::set<int> & sasa_higher_neighbour(unsigned int const i){
+      assert(i < m_sasa_higher_neighbour.size());
+      return m_sasa_higher_neighbour[i];
+    }
+    /**
+     * third neighbour of atom i.
+     */
+    std::vector<std::set<int> > & sasa_higher_neighbour(){return m_sasa_higher_neighbour;}
+
     
   private:
     /**
@@ -1240,7 +1289,15 @@ namespace topology
      */
      math::SArray m_damping_power;
 
-     std::vector<util::LE_Coordinate*> m_le_coordinates;
+    std::vector<util::LE_Coordinate*> m_le_coordinates;
+     
+    /**
+     * sasa pij parameter for neighbours
+     */
+    std::vector< std::set<int> > m_sasa_first_neighbour;
+    std::vector< std::set<int> > m_sasa_second_neighbour;
+    std::vector< std::set<int> > m_sasa_third_neighbour;
+    std::vector< std::set<int> > m_sasa_higher_neighbour;
     
   }; // topology
   

@@ -2155,6 +2155,53 @@ namespace simulation
        */
       std::vector<double> eir;
     } /** enveloping distribution sampling*/ eds;
+
+    /**
+     * @struct sasa
+     * parameters for calculating the sasa and volume term
+     */
+    struct sasa_struct {
+      /**
+       * SASA switch parameter
+       */
+      int switch_sasa;
+      /**
+       * volume switch parameter
+       */
+      int switch_volume;
+      /**
+       * p_ij for one bond interaction, first neighbours
+       */
+      double p_12;
+      /**
+       * p_ij for three and four bond interaction, second and third neighbours
+       */
+      double p_13;
+      /**
+       * pij for > 1,4
+       */
+      double p_1x;
+      /**
+       * sigma value for volume term, will be deleted and stored an topology?
+       */
+      double sigma_v;
+      /**
+       * solvent radius
+       */
+      double r_solv;
+      /**
+       * parameters for switching function, upper cut off
+       */
+      double max_cut;
+      /**
+       * parameters for switching function, lower cut off
+       */
+      double min_cut;
+      /**
+       * consider also higher neighbours
+       */
+      //int switch_1x;
+    } /** sasa */ sasa;
     
     /**
      * @struct innerloop_struct

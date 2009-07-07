@@ -99,6 +99,12 @@ namespace interaction
 			      double qj, double charge,
 			      math::Vec  &e_el);
 
+    /**
+     * calculate the force and energy of an atom pair (sasa).
+     */
+    void sasa_interaction(math::Vec const &r, double bij,
+                          double pij, double p_i, double surface,
+                          double & e_sasa);
 
     /**
      * calculate the self energy - dipole-dipole interaction (polarisation)

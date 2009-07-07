@@ -97,6 +97,14 @@ namespace io {
 				   <interaction::lj_parameter_struct> > 
 				   & cg_parameter,
 				   std::ostream & os = std::cout);
+
+    /**
+     * Read in the nonbonded interaction types (SASA).
+     */
+    virtual void read_sasa_parameter(std::vector
+                                    <interaction::sasa_parameter_struct>
+                                    & sasa_parameter,
+                                    std::ostream & os = std::cout);
     
     /**
      * length of strings allowed

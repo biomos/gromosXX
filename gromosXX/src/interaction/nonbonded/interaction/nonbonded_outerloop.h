@@ -63,6 +63,14 @@ namespace interaction
 				 Storage & storage);
 
     /**
+     * calculate the sasa interactions.
+     */
+    void sasa_outerloop(topology::Topology & topo,
+                        configuration::Configuration & conf,
+                        simulation::Simulation & sim,
+                        Storage & storage);
+
+    /**
      * calculate the 1,4-interactions.
      */
     void one_four_outerloop(topology::Topology & topo,
@@ -313,6 +321,12 @@ namespace interaction
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
 				  Storage & storage);
+
+    template<typename t_interaction_spec>
+    void _sasa_outerloop(topology::Topology & topo,
+                         configuration::Configuration & conf,
+                         simulation::Simulation & sim,
+                         Storage & storage);
 
     template<typename t_interaction_spec>
     void _RF_excluded_outerloop(topology::Topology & topo,

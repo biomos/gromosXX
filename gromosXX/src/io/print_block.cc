@@ -444,6 +444,8 @@ namespace io
     os << type << "El (surface term)    : " << std::setw(48) << e.ls_surface_total << "\n";
     os << type << "Polarisation self    : " << std::setw(39) << e.self_total << "\n";
     os << type << "Special              : " << std::setw(21) << e.special_total << "\n";
+    os << type << "SASA                 : " << std::setw(30) << e.sasa_total << "\n";
+    os << type << "Volume               : " << std::setw(30) << e.sasa_volume_total << "\n";
     os << type << "Constraints          : " << std::setw(30) << e.constraints_total << "\n";
     os << type << "Distanceres          : " << std::setw(30) << e.distanceres_total << "\n";
     os << type << "Dihrest              : " << std::setw(30) << e.dihrest_total << "\n";
@@ -536,6 +538,13 @@ namespace io
     os << std::setw(20) << type + "SPECIAL";
 
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+
+    os << "\n" << std::setw(20) << type + "SASA";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.sasa_energy[i];
+
+    os << "\n" << std::setw(20) << type + "Volume";
+    for (unsigned int i = 0; i < numenergygroups; i++) os << std::setw(12) << e.sasa_volume_energy[i];
+
     os << "\n" << std::setw(20) << type + "Constraints";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.constraints_energy[i];
 
@@ -655,6 +664,131 @@ namespace io
     os.precision(5);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
     
+  }
+
+
+  void print_sasa(std::ostream &os, topology::Topology const & topo,
+                    configuration::Configuration const & conf,
+                    simulation::Simulation const & sim,
+		    std::string const title)
+  {
+    os << "\n";
+    double sasa = 0, volume = 0;
+    os.precision(7);
+    if (sim.param().sasa.switch_volume) {
+      os << title << "\n";
+      os << "ATOM" << '\t' << "SASA" << "\t\t" << "VOLUME" << "\n";
+      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+        sasa += conf.old().sasa_area[i];
+        volume += conf.old().sasa_vol[i];
+        os << i + 1 << '\t' << conf.old().sasa_area[i] << '\t' << conf.old().sasa_vol[i] << "\n";
+      }
+      os << "\n";
+      os << "TOTAL SASA" << '\t' << "TOTAL VOLUME" << "\n";
+      os << sasa << '\t' << volume << "\n\n";
+    } else {
+      os << "SOLVENT ACCESSIBLE SURFACE AREAS" << "\n";
+      os << "ATOM" << '\t' << "SASA" << "\n";
+      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+        sasa += conf.old().sasa_area[i];
+        os << i + 1 << '\t' << conf.old().sasa_area[i] << "\n";
+      }
+      os << "\n";
+      os << "TOTAL SASA" << "\n";
+      os << sasa << "\n\n";
+    }
+  }
+
+  void print_sasa_avg(std::ostream &os, std::vector<double> const &s,
+		      std::vector<double> const &v, double & stot, double & vtot,
+                      std::string const title, int volume)
+  {
+    os.precision(7);
+    //os.setf(std::ios::scientific, std::ios::floatfield);
+
+    if (volume)
+      os << title << "\n";
+    else os << "SASA AVERAGE" << "\n";
+
+    if (volume) {
+      os << "ATOM" << '\t' << "<SASA>" << "\t\t" << "<VOLUME>" << "\n";
+      for (unsigned int i = 0; i < s.size(); ++i) {
+        os << i << '\t' << s[i] << '\t' << v[i] << "\n";
+      }
+    } else {
+      os << "ATOM" << '\t' << "<SASA>" << "\n";
+      for (unsigned int i = 0; i < s.size(); ++i) {
+        os << i << '\t' << s[i] << "\n";
+      }
+    }
+    if (volume){
+    os << "TOTAL SASA AVERAGE" << '\t' << "TOTAL VOLUME AVERAGE" << "\n";
+    os << stot << "\t\t" << vtot << "\n";
+    os << "END\n";
+    }
+    else {
+      os << "TOTAL SASA AVERAGE" << "\n";
+      os << stot << "\n";
+      os << "END\n";
+    }
+    os << "\n";
+    //os.setf(std::ios::fixed, std::ios::floatfield);
+}
+
+  void print_sasa_fluct(std::ostream &os, std::vector<double> const &s,
+		        std::vector<double> const &v, double & stot, double & vtot,
+                        std::string const title, int volume)
+  {
+    os.precision(7);
+    //os.setf(std::ios::scientific, std::ios::floatfield);
+
+    if (volume)
+      os << title << "\n";
+    else os << "SASA FLUCTUATION" << "\n";
+
+    if (volume) {
+      os << "ATOM" << '\t' << "<<SASA>>" << "\t" << "<<VOLUME>>" << "\n";
+      for (unsigned int i = 0; i < s.size(); ++i) {
+        os << i << '\t' << s[i] << '\t' << v[i] << "\n";
+      }
+    } else {
+      os << "ATOM" << '\t' << "<<SASA>>" << "\n";
+      for (unsigned int i = 0; i < s.size(); ++i) {
+        os << i << '\t' << s[i] << "\n";
+      }
+    }
+    if (volume){
+    os << "TOTAL SASA FLUCTUATION" << '\t' << "TOTAL VOLUME FLUCTUATION" << "\n";
+    os << stot << "\t\t" << vtot << "\n";
+    os << "END\n";
+    }
+    else {
+      os << "TOTAL SASA FLUCTUATION" << "\n";
+      os << stot << "\n";
+      os << "END\n";
+    }
+    os << "\n";
+    //os.setf(std::ios::fixed, std::ios::floatfield);
+}
+
+  // print forces for sasa and volume term; not needed after testing
+  void print_forces(std::ostream &os, topology::Topology const & topo,
+                    configuration::Configuration const & conf,
+                    simulation::Simulation const & sim)
+  {
+    if (sim.param().sasa.switch_sasa) {
+      os << "FORCES FOR SOLVENT ACCESSIBLE SURFACE AREAS AND VOLUME" << "\n";
+      os << "ATOM" << '\t' << "x_s" << '\t' << "y_s" << '\t' << "z_s" << '\t'
+      << '\t' << "x_v" << '\t' << "y_v" << '\t' << "z_v" << "\n";
+      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+      //  os << i + 1 << '\t' << std::setprecision(10) << conf.old().fsasa(i)(0) << '\t' << conf.old().fsasa(i)(1) << '\t' << conf.old().fsasa(i)(2) << '\t'
+      //  << conf.old().fvolume(i)(0) << '\t' << conf.old().fvolume(i)(1) << '\t' << conf.old().fvolume(i)(2) << "\n";
+      }
+      os << "\n\n";
+      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i)
+        os << i + 1 << '\t' << std::setprecision(10) << conf.old().force(i)(0) << '\t' << conf.old().force(i)(1) << '\t' << conf.old().force(i)(2) << "\n";
+      os <<  "\n\n";
+    }
   }
 
 } // io

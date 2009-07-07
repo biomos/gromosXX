@@ -471,3 +471,20 @@ interaction::Nonbonded_Term::lj_crf_hessian(math::Vec const &r,
   
 }
 
+/**
+ * calculate the force and energy of an atom pair (sasa).
+ */
+inline void interaction::Nonbonded_Term
+::sasa_interaction(math::Vec const &r, double bij,
+                   double pij, double p_i, double surface,
+                   double & e_sasa)
+{
+  DEBUG(14, "\t\tsasa term");
+
+  assert(math::abs(r) != 0);
+  assert(surface != 0);
+
+  e_sasa = (1 - (p_i * pij * bij / surface));
+
+}
+

@@ -90,6 +90,8 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LAMBDAS(param); // needs to be called after FORCE
   read_GROMOS96COMPAT(param);
   read_LOCALELEV(param);
+  read_SASA(param);
+
   read_known_unsupported_blocks();
   
   DEBUG(7, "input read...");
@@ -4085,6 +4087,40 @@ void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
     // NTR96 false means rf_excluded 
     param.nonbonded.rf_excluded = !ntr96;
 
+  }
+}
+
+void io::In_Parameter::read_SASA(simulation::Parameter & param, std::ostream & os) {
+  DEBUG(8, "read SASA");
+
+  std::vector<std::string> buffer;
+
+  buffer = m_block["SASA"];
+
+  // if there is no SASA term
+  if (!buffer.size()) {
+    return;
+  }
+
+  block_read.insert("SASA");
+
+  _lineStream.clear();
+  std::string s;
+  _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+  _lineStream >> param.sasa.switch_sasa
+              >> param.sasa.switch_volume
+              //>> param.sasa.switch_1x
+              >> param.sasa.p_12
+              >> param.sasa.p_13
+              >> param.sasa.p_1x
+              >> param.sasa.sigma_v
+              >> param.sasa.r_solv
+              >> param.sasa.max_cut
+              >> param.sasa.min_cut;
+
+  if (_lineStream.fail()) {
+    io::messages.add("bad line in SASA block", "In_Parameter", io::message::error);
   }
 }
 

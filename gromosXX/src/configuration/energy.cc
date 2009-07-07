@@ -54,6 +54,8 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     entropy_term = 0.0;
     external_total = 0.0;
     self_total = 0.0;
+    sasa_total = 0.0;
+    sasa_volume_total = 0.0;
     eds_vr = 0.0;
     eds_vi.assign(eds_vi.size(), 0.0);
     eds_vi_special.assign(eds_vi_special.size(), 0.0);
@@ -68,6 +70,8 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
     constraints_energy.assign(constraints_energy.size(), 0.0);
     self_energy.assign(self_energy.size(), 0.0);
+    sasa_energy.assign(sasa_energy.size(), 0.0);
+    sasa_volume_energy.assign(sasa_volume_energy.size(), 0.0);
 
     DEBUG(15, "energy groups: " << unsigned(lj_energy.size()) 
 			<< " - " << unsigned(crf_energy.size()));
@@ -125,6 +129,9 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     
     self_energy.resize(energy_groups);
 
+    sasa_energy.resize(energy_groups);
+    sasa_volume_energy.resize(energy_groups);
+    
     for(unsigned int i=0; i<energy_groups; ++i){
       lj_energy[i].resize(energy_groups);
       crf_energy[i].resize(energy_groups);
@@ -165,6 +172,8 @@ int configuration::Energy::calculate_totals()
   jvalue_total = 0.0; 
   constraints_total = 0.0;
   self_total = 0.0;
+  sasa_total = 0.0;
+  sasa_volume_total = 0.0;
   
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
@@ -249,6 +258,14 @@ int configuration::Energy::calculate_totals()
        std::cout << "EWARN: self energy " << i+1 << " = " << self_energy[i] << "\n";
     }
     self_total += self_energy[i];
+    if (sasa_energy[i] > m_ewarn){
+       std::cout << "EWARN: sasa energy " << i+1 << " = " << sasa_energy[i] << "\n";
+    }
+    sasa_total += sasa_energy[i];
+    if (sasa_volume_energy[i] > m_ewarn) {
+      std::cout << "EWARN: sasa volume energy " << i + 1 << " = " << sasa_volume_energy[i] << "\n";
+    }
+    sasa_volume_total += sasa_volume_energy[i];
   }
 
   if (xray_total > m_ewarn) {
@@ -271,8 +288,8 @@ int configuration::Energy::calculate_totals()
   potential_total = nonbonded_total + bonded_total;
   
   special_total = posrest_total + distanceres_total + dihrest_total
-    + constraints_total + jvalue_total + xray_total + leus_total
-    + external_total + eds_vr;
+    + constraints_total + jvalue_total + xray_total + external_total 
+    + eds_vr + leus_total + sasa_total + sasa_volume_total;
 
   total = potential_total + kinetic_total + special_total;
 
@@ -317,6 +334,8 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 27 : return external_total;
     case 28 : return self_total;
     case 29 : return eds_vr;
+    case 30 : return sasa_total;
+    case 31 : return sasa_volume_total;
   }
   return 0.0;
 }

@@ -3,6 +3,8 @@
  * methods definition
  */
 
+#include <set>
+
 #include <stdheader.h>
 
 double topology_ver = 0.30;
@@ -27,6 +29,8 @@ namespace simulation
 
 #include <interaction/interaction_types.h>
 #include <util/le_coordinate.h>
+
+#include <simulation/parameter.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -396,6 +400,10 @@ void topology::Topology::resize(unsigned int const atoms)
   m_exclusion.resize(atoms);
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);
+  m_sasa_first_neighbour.resize(atoms); // resize sasa neighbours vector
+  m_sasa_second_neighbour.resize(atoms); // resize sasa neighbours vector
+  m_sasa_third_neighbour.resize(atoms); // resize sasa neighbours vector
+  m_sasa_higher_neighbour.resize(atoms); // resize sasa neighbours vector
   
   m_stochastic.resize(atoms);
   
@@ -544,6 +552,73 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
   }
   // And calculate the values for all individual lambdas and their derivatives
   update_for_lambda();
+
+  // store information about sasa neighbours
+  if (sim.param().sasa.switch_sasa) {
+    // distinguish between first, second, third and higer neighbours
+    // consider bonds
+    std::vector<topology::two_body_term_struct>::const_iterator b_it, b_to;
+    DEBUG(6, "using  bonds");
+
+    b_it = solute().bonds().begin();
+    b_to = solute().bonds().end();
+
+    for (; b_it != b_to; ++b_it) {
+      DEBUG(6, "first neighbours " << b_it->i << "\t" << b_it->j);
+      m_sasa_first_neighbour[b_it->i].insert(b_it->j);
+      m_sasa_first_neighbour[b_it->j].insert(b_it->i);
+    }
+    // consider constraints
+    DEBUG(6, "using constraints");
+    b_it = solute().distance_constraints().begin();
+    b_to = solute().distance_constraints().end();
+
+    for (; b_it != b_to; ++b_it) {
+      DEBUG(6, "first neighbours " << b_it->i << "\t" << b_it->j);
+      m_sasa_first_neighbour[b_it->i].insert(b_it->j);
+      m_sasa_first_neighbour[b_it->j].insert(b_it->i);
+    }
+    // second neighbours
+    std::vector<topology::three_body_term_struct>::const_iterator a_it, a_to;
+    DEBUG(6, "second neighbours");
+    a_it = solute().angles().begin();
+    a_to = solute().angles().end();
+
+    for (; a_it != a_to; ++a_it) {
+      DEBUG(6, "second neighbours " << a_it->i << "\t" << a_it->k);
+      m_sasa_second_neighbour[a_it->i].insert(a_it->k);
+      m_sasa_second_neighbour[a_it->k].insert(a_it->i);
+    }
+    // third neighbours
+    DEBUG(6, "third neighbours");
+    for (unsigned int i = 0; i < num_solute_atoms(); ++i) {
+      std::set<int>::const_iterator it14, to14;
+      it14 = one_four_pair(i).begin();
+      to14 = one_four_pair(i).end();
+
+      for (; it14 != to14; ++it14) {
+        DEBUG(6, "third neighbours " << i << "\t" << *it14);
+        m_sasa_third_neighbour[i].insert(*it14);
+        m_sasa_third_neighbour[*it14].insert(i);
+      }
+    }
+
+    // store higher neighbours
+    //if (sim.param().sasa.switch_1x) {
+      for (unsigned int i = 0; i < num_solute_atoms(); ++i) {
+        for (unsigned int j = (i + 1); j < num_solute_atoms(); ++j) {
+          if (sasa_first_neighbour(i).count(j));
+          else if (sasa_second_neighbour(i).count(j));
+          else if (sasa_third_neighbour(i).count(j));
+          else {
+            DEBUG(6, "higher neighbours " << i << "\t" << j);
+            m_sasa_higher_neighbour[i].insert(j);
+            m_sasa_higher_neighbour[j].insert(i);
+          }
+        }
+      }
+    //}
+  }
   
 }
 

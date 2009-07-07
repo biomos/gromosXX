@@ -44,6 +44,95 @@ namespace interaction
      );
 
     /**
+     * sasa interaction
+     */
+    void sasa_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i,
+     Storage & storage,
+     simulation::Simulation & sim,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+
+    /**
+     * sasa force
+     */
+    void sasa_innerloop_force
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, double amax,
+     Storage & storage,
+     simulation::Simulation & sim,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+
+    /**
+     * sasa overlap reduction formula
+     */
+    double sasa_overlap
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, unsigned int j,
+     simulation::Simulation & sim,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+    );
+
+    /**
+     * derivative of sasa overlap reduction formula
+     */
+    double sasa_overlap_der
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, unsigned int j,
+     simulation::Simulation & sim,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+    );
+
+    /**
+     * volume term based on sasa expression
+     */
+    void sasa_volume_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, double amax,
+     Storage & storage,
+     simulation::Simulation & sim,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+
+    /**
+     * switching function for volume calculation
+     */
+    double sasa_switching_fct
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     double a, double amax, double amin,
+     Storage & storage,
+     simulation::Simulation & sim,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+
+    /**
+     * derivative of switching function for volume calculation
+     */
+    double sasa_switching_fct_der
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     double a, double amax, double amin,
+     Storage & storage,
+     simulation::Simulation & sim,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+
+    /**
      * 1-4 interaction
      * (always shortrange)
      */

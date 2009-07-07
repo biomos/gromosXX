@@ -71,8 +71,10 @@ int interaction::create_g96_nonbonded
     if (sim.param().force.nonbonded_crf)
       os << setw(30) << left << "Coulomb-reaction-field";      
     os << "\n";
+
+    if (sim.param().sasa.switch_sasa)
+      os << "\t" << "SASA Interaction" << "\n";
    
-    
     if (sim.param().pairlist.grid == 0)
       os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
 	   << left << "Standard Pairlist Algorithm" << right << "\n";
@@ -287,6 +289,11 @@ int interaction::create_g96_nonbonded
               << "\tP3M RMS force error threshold   : "
               << sim.param().nonbonded.influence_function_rms_force_error << "\n";
     }
+  }
+
+  // read sasa parameters
+  if(sim.param().sasa.switch_sasa == 1){
+    it.read_sasa_parameter(ni->parameter().sasa_parameter());
   }
   
   return 0;

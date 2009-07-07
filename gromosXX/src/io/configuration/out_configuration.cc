@@ -1635,6 +1635,9 @@ void io::Out_Configuration
 
     print_ENERGY(m_output, conf.old().energies, topo.energy_groups());
 
+    if (sim.param().sasa.switch_sasa)
+      print_sasa(m_output, topo, conf, sim, "SOLVENT ACCESSIBLE SURFACE AREAS AND VOLUME");
+
     if (sim.param().perturbation.perturbation) {
 
       m_output << "lambda: " << topo.old_lambda() << "\n";
@@ -1682,6 +1685,9 @@ void io::Out_Configuration
   configuration::Energy e, ef;
   math::Matrix p, pf, v, vf, et, etf;
 
+  std::vector<double> sasa_a, sasa_af, sasa_vol, sasa_volf;
+  double sasa_tot, sasa_totf, sasa_voltot, sasa_voltotf;
+
   if (sim.param().minimise.ntem) {
     print_ENERGY(m_output, conf.current().energies, topo.energy_groups(), "MINIMIZED ENERGY",
             "<EMIN>_");
@@ -1690,6 +1696,13 @@ void io::Out_Configuration
   // new averages
   conf.current().averages.simulation().energy_average(e, ef);
   conf.current().averages.simulation().pressure_average(p, pf, v, vf, et, etf);
+
+  // averages and fluctuation for sasa and volume calculation
+  if (sim.param().sasa.switch_sasa) {
+    conf.current().averages.simulation().sasa_average(sasa_a, sasa_af, sasa_tot, sasa_totf);
+    if (sim.param().sasa.switch_volume)
+      conf.current().averages.simulation().sasavol_average(sasa_vol, sasa_volf, sasa_voltot, sasa_voltotf);
+  }
 
   print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES", "<E>_");
   m_output << "\n";
@@ -1742,6 +1755,15 @@ void io::Out_Configuration
   }
   if (sim.param().ramd.fc != 0.0 && sim.param().ramd.every)
     print_RAMD(m_output, conf, topo.old_lambda());
+
+  // print sasa and volume averages, fluctuations
+  if (sim.param().sasa.switch_sasa){
+    int volume = sim.param().sasa.switch_volume;
+    print_sasa_avg(m_output, sasa_a, sasa_vol, sasa_tot, sasa_voltot, "SASA AND VOLUME AVERAGE", volume);
+    print_sasa_fluct(m_output, sasa_af, sasa_volf, sasa_totf, sasa_voltotf, "SASA AND VOLUME FLUCTUATION", volume);
+
+    //print_forces(m_output, topo, conf, sim);
+  }
 
 }
 
@@ -2301,6 +2323,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.posrest_energy[i]
             << std::setw(18) << e.distanceres_energy[i] // disres
             << std::setw(18) << e.dihrest_energy[i] // dihedral res
+            << std::setw(18) << e.sasa_energy[i]
+            << std::setw(18) << e.sasa_volume_energy[i]
             << std::setw(18) << 0.0 // jval
             << std::setw(18) << 0.0 // local elevation
             << std::setw(18) << 0.0 << "\n"; // path integral

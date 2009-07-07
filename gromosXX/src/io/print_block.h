@@ -83,6 +83,28 @@ namespace io
     */
    void print_RAMD(std::ostream &os, configuration::Configuration const & conf, double lambda);
 
+     /**
+   * Print the SASA block.
+   */
+  void print_sasa(std::ostream &os, topology::Topology const & topo,
+                    configuration::Configuration const & conf,
+                    simulation::Simulation const & sim,
+		    std::string const title);
+  /**
+   * Print sasa and volume averages and fluctuation.
+   */
+  void print_sasa_avg(std::ostream &os, std::vector<double> const &s,
+                      std::vector<double> const &v, double &stot, double &vtot,
+                      std::string const title, int volume);
+  void print_sasa_fluct(std::ostream &os, std::vector<double> const &s,
+                        std::vector<double> const &v, double &stot, double &vtot,
+                        std::string const title, int volume);
+
+  // delete after testing
+  void print_forces(std::ostream &os, topology::Topology const & topo,
+                    configuration::Configuration const & conf,
+                    simulation::Simulation const & sim);
+
 } // io
 
 #endif

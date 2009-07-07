@@ -34,6 +34,8 @@
 #include <util/debug.h>
 #include <interaction/nonbonded/innerloop_template.h>
 
+#include <simulation/parameter.h>
+
 #include "storage.h"
 
 #undef MODULE
@@ -211,6 +213,69 @@ void interaction::Nonbonded_Outerloop
     }
   }
   timer.stop(timer_name);
+}
+
+// calculate sasa and volume term
+void interaction::Nonbonded_Outerloop
+::sasa_outerloop(topology::Topology & topo,
+		   configuration::Configuration & conf,
+		   simulation::Simulation & sim,
+		   Storage & storage)
+{
+  SPLIT_INNERLOOP(_sasa_outerloop, topo, conf, sim,
+                  storage);
+}
+
+/**
+ * helper function to calculate forces and energies (sasa)
+ */
+
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_sasa_outerloop(topology::Topology & topo,
+		  configuration::Configuration & conf,
+                  simulation::Simulation & sim,
+                  Storage & storage)
+{
+
+  DEBUG(7, "\tcalculate interactions");
+
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+
+  unsigned int size_i = unsigned(topo.num_solute_atoms());
+  DEBUG(10, "outerloop solute atom size " << size_i);
+
+  const unsigned int end = topo.num_solute_atoms();
+
+  for (unsigned int i = 0; i < end; ++i) {
+    DEBUG(10, "\tnonbonded_interaction: i " << i);
+
+    // calculates the solvent-accessible surface area for atom i
+    innerloop.sasa_innerloop(topo, conf, i, storage, sim, periodicity);
+  }
+
+  // search for largest surface area to set an upper limit for volume calculation
+  double A_max = 0.0; // largest surface area
+  for (unsigned int i = 0; i < end; ++i) {
+    if (A_max < conf.current().sasa_area[i]) A_max = conf.current().sasa_area[i];
+    DEBUG(1, "\tlargest surface area: " << A_max);
+    }
+
+  // calculates volume contribution
+  if (sim.param().sasa.switch_volume) {
+    for (unsigned int i = 0; i < end; ++i) {
+      innerloop.sasa_volume_innerloop(topo, conf, i, A_max, storage, sim, periodicity);
+      DEBUG(1, "\tvolume of atom i: " << i << '\t' << conf.current().sasa_vol[i]);
+    }
+  }
+  //conf.current().fsasa = 0.0;
+  //conf.current().fvolume = 0.0;
+  // calculates the forces - sasa and volume - separately because all sasa-values are needed
+  for (unsigned int i = 0; i < end; ++i){
+    innerloop.sasa_innerloop_force(topo, conf, i, A_max, storage, sim, periodicity);
+  }
+
 }
 
 /**

@@ -288,6 +288,10 @@ namespace io {
      * read LOCALELEV block.
      */
     void read_LOCALELEV(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read SASA block.
+     */
+    void read_SASA(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io
