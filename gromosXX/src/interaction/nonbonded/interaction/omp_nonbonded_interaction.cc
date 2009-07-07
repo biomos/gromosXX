@@ -104,7 +104,7 @@ calculate_interactions(topology::Topology & topo,
                 "configuration", io::message::error);
         return 1;
       }
-      DEBUG(6, "\tmulticell conf: pos.size()=" << exp_conf.current().pos.size());
+      DEBUG(6, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
     }
 
     // shared memory do this only once
