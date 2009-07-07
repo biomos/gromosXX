@@ -2162,6 +2162,10 @@ namespace simulation
      */
     struct sasa_struct {
       /**
+       * Constructor: disable SASA
+       */
+      sasa_struct() : switch_sasa(0) {}
+      /**
        * SASA switch parameter
        */
       int switch_sasa;
