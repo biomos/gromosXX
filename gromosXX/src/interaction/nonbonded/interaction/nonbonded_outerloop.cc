@@ -38,6 +38,10 @@
 
 #include "storage.h"
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -101,6 +105,10 @@ void interaction::Nonbonded_Outerloop
   DEBUG(10, "outerloop pairlist size " << size_i);
   
   const unsigned int end = topo.num_solute_atoms();
+  bool master = true;
+  #ifdef OMP
+  master = (omp_get_thread_num() == 0);
+  #endif
 
   const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
   
@@ -119,7 +127,8 @@ void interaction::Nonbonded_Outerloop
   }
 
   // solvent-solvent
-  timer.start(timer_name);
+  if (master)
+    timer.start(timer_name);
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
     for(; i < size_i; i += 3){ // use every third pairlist (OW's)
@@ -212,7 +221,8 @@ void interaction::Nonbonded_Outerloop
       }
     }
   }
-  timer.stop(timer_name);
+  if (master)
+    timer.stop(timer_name);
 }
 
 // calculate sasa and volume term
@@ -941,7 +951,11 @@ void interaction::Nonbonded_Outerloop
         util::Algorithm_Timer & timer)
 {  
   DEBUG(7, "\tcalculate interactions in k-space (P3M)");  
-    
+
+#ifdef OMP
+  if (rank != 0) return;
+  size = 1;
+#endif
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   math::VArray r = conf.current().pos;
@@ -1112,7 +1126,7 @@ void interaction::Nonbonded_Outerloop
   
   if (rank == 0)
     timer.stop("P3M: energy & force");
-  DEBUG(7, "\tdone with calculating interactions in k-space (P3M)");  
+  DEBUG(7, "\tdone with calculating interactions in k-space (P3M)");
 }
 
 void interaction::Nonbonded_Outerloop
@@ -1121,6 +1135,11 @@ void interaction::Nonbonded_Outerloop
         simulation::Simulation & sim,
         Storage & storage, int rank, int size) {
   DEBUG(8, "\telectrostatic self energy and virial");
+#ifdef OMP
+  if (rank != 0) return;
+  size = 1;
+#endif
+  
   double a1 = 0.0, a3 = 0.0;
   double & a2_tilde = conf.lattice_sum().a2_tilde;
   double a2;
@@ -1237,8 +1256,6 @@ void interaction::Nonbonded_Outerloop
       // Here, we loop over the surface of triclinic volumes of increasing
       // size in l-space, and add the successive A2 contributions of these
       // surfaces.
-      math::GenericVec<int> l(0);
-      math::Vec k;
       math::SymmetricMatrix sum_gammahat(0.0);
       int l_max = 0;
       double tolerance;
@@ -1278,17 +1295,21 @@ void interaction::Nonbonded_Outerloop
           // to summation to the planes localted on +l_max and multiply the resulting
           // term and derivative by a factor of 2.0
           DEBUG(12, "\tnew plane");
-          l(coord) = l_max;
 
           // loop over the plane excluding edges for some axes
           // here we can introduce parallelization by stride
+          #ifdef OMP
+          #pragma omp parallel for
+          #endif
           for (int l_a = -boundary_a + rank; l_a <= boundary_a; l_a += size) {
+            math::GenericVec<int> l(0);
+            l(coord) = l_max;
             l(coord_a) = l_a;
             for (int l_b = -boundary_b; l_b <= boundary_b; ++l_b) {
               l(coord_b) = l_b;
 
               DEBUG(13, "\t\tl: " << math::v2s(l));
-              k = math::product(l_to_k, l);
+              const math::Vec & k = math::product(l_to_k, l);
               const double k2 = math::abs2(k);
               const double abs_k = sqrt(k2);
               const double ak = abs_k * width;
@@ -1301,13 +1322,19 @@ void interaction::Nonbonded_Outerloop
                 interaction::Lattice_Sum::charge_shape_fourier(shape,
                         ak, gamma_hat);
               }
-              
+
+              #ifdef OMP
+              #pragma omp critical
+              #endif
               term += gamma_hat / k2;
               DEBUG(13, "\t\t\tgamma_hat / k2: " << gamma_hat / k2);
 
               if (do_virial) {
                 // factor 2.0 is due to symmetry
                 const double isotropic_factor = 2.0 * (ak * gamma_hat_prime - 2.0 * gamma_hat) / (k2 * k2);
+                #ifdef OMP
+                #pragma omp critical
+                #endif
                 sum_gammahat += math::symmetric_tensor_product(isotropic_factor * k, k);
               } // virial?
             }

@@ -24,6 +24,9 @@
 #include <util/debug.h>
 
 #include "influence_function.h"
+#ifdef OMP
+#include <omp.h>
+#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -31,7 +34,8 @@
 #define SUBMODULE configuration
 
 configuration::Influence_Function::Influence_Function() : do_virial(false),
-do_scale(false){}
+do_scale(false) {
+}
 
 void configuration::Influence_Function::setBox(const math::Box & box) {
   DEBUG(12, "setting to box" << math::m2s(math::Matrix(box)));
@@ -53,7 +57,7 @@ void configuration::Influence_Function::init(const simulation::Parameter & param
   }
 
   ghat.resize(x, y, z);
-  
+
   // we need the derivative to calculate the pressure!
   do_virial = param.pcouple.virial != math::no_virial;
   if (do_virial) {
@@ -65,33 +69,33 @@ void configuration::Influence_Function::init(const simulation::Parameter & param
 
 template<class MeshType>
 void configuration::Influence_Function::calculate(const topology::Topology & topo,
-        configuration::Configuration & conf,
-        const simulation::Simulation & sim) {
+configuration::Configuration & conf,
+const simulation::Simulation & sim) {
   DEBUG(8, "\tUpdating influence function");
   const unsigned int Nx = ghat.x();
   const unsigned int Ny = ghat.y();
   const unsigned int Nz = ghat.z();
-  
+
   const double st2 = topo.sum_squared_charges();
-  
+
   DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz);
-  
+
   ghat.zero();
   if (do_virial)
     gammahat.zero();
-  
+
   const int shape = sim.param().nonbonded.ls_charge_shape;
   const double charge_width = sim.param().nonbonded.ls_charge_shape_width;
-  
+
   const math::Box &box = conf.current().box;
   // the H matrix to transform the grid into coordinates
   math::Matrix H(box(0) / Nx, box(1) / Ny, box(2) / Nz);
-  math::Matrix H_inv=math::inverse(H);
+  math::Matrix H_inv = math::inverse(H);
   math::Matrix H_trans = math::transpose(H);
   math::Matrix H_inv_trans = math::transpose(H_inv);
-  
+
   const int mesh_alias = sim.param().nonbonded.p3m_mesh_alias;
- 
+
   const int assignment_function_order = sim.param().nonbonded.p3m_charge_assignment;
   const int finite_difference_order = sim.param().nonbonded.p3m_finite_differences_operator;
   std::vector<double> finite_difference_constants = interaction::Lattice_Sum::finite_difference_constants(finite_difference_order);
@@ -105,18 +109,23 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
   tLi_0 = math::inverse(tL_0);
   math::Matrix tL_inv_2pi = tLi_0 * (2.0 * math::Pi);
 
-  MeshType & potential = *reinterpret_cast<MeshType*>(conf.lattice_sum().potential);
+  MeshType & potential = *reinterpret_cast<MeshType*> (conf.lattice_sum().potential);
 
   const int x_to = potential.right_boundary();
-  const int x_from = potential.left_boundary();  
-  
+  const int x_from = potential.left_boundary();
+
   // loop over reciprocal-space grid G
   DEBUG(10, "\tstarting loop over reciprocal-space grid");
-  math::GenericVec<int> l;
 
   // quality control: quantiy q to calculate the RMS force error
   double my_q = 0.0;
+#ifdef OMP
+  omp_set_nested(1);
+#pragma omp parallel for
+#endif
   for (int x = x_from; x < x_to; ++x) {
+    double q_thread = 0.0;
+    math::GenericVec<int> l;
     if (x > int(Nx_2))
       l(0) = x - Nx;
     else
@@ -146,7 +155,7 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
         math::Vec sum_ghat_numerator(0.0);
         double sum_ghat_denominator = 0.0;
         double sum_k2ifourier2 = 0.0;
-        
+
         // storage for tensor sums
         math::SymmetricMatrix sum_gammahat_numerator(0.0);
 
@@ -170,8 +179,8 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
           D_hat_g = math::product(H_inv_trans, D_hat_g);
           abs2_D_hat_g = math::abs2(D_hat_g);
         }
-        DEBUG(20, "\t D_hat_g = " << math::v2s(D_hat_g));        
-        
+        DEBUG(20, "\t D_hat_g = " << math::v2s(D_hat_g));
+
         // loop over mesh aliases
         for (int m1 = -mesh_alias; m1 <= mesh_alias; ++m1) {
           m(0) = m1;
@@ -186,13 +195,13 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
               const double k_2i = 1.0 / k_2;
               const double k = sqrt(k_2);
               const double ak = charge_width * k;
-              
+
               double fourier_coeff, fourier_coeff_deriv;
               if (do_virial) // get the derivative as well
                 interaction::Lattice_Sum::charge_shape_fourier(shape, ak, fourier_coeff, &fourier_coeff_deriv);
               else
                 interaction::Lattice_Sum::charge_shape_fourier(shape, ak, fourier_coeff);
-              
+
               DEBUG(25, "\t\t k_lm " << math::v2s(k_lm) << ", fourier_coeff = " << fourier_coeff);
               math::Vec tH_k = math::product(H_trans, k_lm);
               const double P_hat =
@@ -206,7 +215,7 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
               sum_ghat_numerator += k_lm * (k2i_fourier * P_hat_2);
               sum_ghat_denominator += P_hat_2;
               sum_k2ifourier2 += fourier_coeff * k2i_fourier;
-              
+
               // let's calculate the terms needed for the derivative
               // see GROMOS05 eq. 92
               if (do_virial) {
@@ -215,9 +224,9 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
                 const math::SymmetricMatrix D_x_k = math::symmetric_tensor_product(D_hat_g, k_lm);
                 const math::SymmetricMatrix k_x_k = math::symmetric_tensor_product(k_lm, k_lm);
                 const math::SymmetricMatrix D_x_D = math::symmetric_tensor_product(D_hat_g, D_hat_g);
-                
+
                 const double D_2i = 1.0 / abs2_D_hat_g;
-                
+
                 sum_gammahat_numerator += (P_hat_2 * k_2i) * ((k_x_D + D_x_k -
                         (2.0 * k_dot_D) * (k_2i * k_x_k + D_2i * D_x_D)) * fourier_coeff +
                         (ak * fourier_coeff_deriv * k_2i * k_dot_D) * k_x_k);
@@ -240,7 +249,7 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
           if (do_virial)
             gammahat(l) = math::SymmetricMatrix(0.0);
 
-          my_q += sum_k2ifourier2;
+          q_thread += sum_k2ifourier2;
 
           DEBUG(15, "\t influence function" << math::v2s(l) << " ="
                   "0.0 set to zero (numerics).");
@@ -251,24 +260,32 @@ void configuration::Influence_Function::calculate(const topology::Topology & top
         const double denominator = abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
         DEBUG(15, "numerator: " << numerator << " denominator: " << denominator
                 << " sum_k2ifourier2: " << sum_k2ifourier2);
-        
+
         const double ghat_l = numerator / denominator;
         ghat(l) = ghat_l;
-        my_q += sum_k2ifourier2 - numerator * ghat_l;
+
+        q_thread += sum_k2ifourier2 - numerator * ghat_l;
 
         DEBUG(13, "\t influence function (0)" << math::v2s(l) << " ="
                 << ghat(l));
-        
+
         if (do_virial) {
           gammahat(l) = sum_gammahat_numerator / denominator;
           DEBUG(13, "\t influence function derivative:\n\t" << math::m2s(gammahat(l)));
         }
-        
+
       }
     }
+#ifdef OMP
+#pragma omp critical
+#endif
+    my_q += q_thread;
   } // loop over reciprocal space grid
   my_q *= 16 * math::Pi * math::Pi / volume;
 
+#ifdef OMP
+  omp_set_nested(0);
+#endif
 #ifdef XXMPI
   if (sim.mpi) {
     MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
@@ -323,29 +340,29 @@ template void configuration::Influence_Function::calculate<configuration::Parall
 
 template<class MeshType>
 void configuration::Influence_Function::evaluate_quality(
-        const topology::Topology & topo,
-        configuration::Configuration & conf,
-        const simulation::Simulation & sim) {
+const topology::Topology & topo,
+configuration::Configuration & conf,
+const simulation::Simulation & sim) {
   DEBUG(8, "\tEvaluating the quality of the influence function");
   const unsigned int Nx = ghat.x();
   const unsigned int Ny = ghat.y();
   const unsigned int Nz = ghat.z();
-  
+
   const double st2 = topo.sum_squared_charges();
-  
+
   DEBUG(15, "\tgrid dimensions " << Nx << "x" << Ny << "x" << Nz);
   const int shape = sim.param().nonbonded.ls_charge_shape;
   const double charge_width = sim.param().nonbonded.ls_charge_shape_width;
-  
+
   const math::Box &box = conf.current().box;
   // the H matrix to transform the grid into coordinates
   math::Matrix H(box(0) / Nx, box(1) / Ny, box(2) / Nz);
-  math::Matrix H_inv=math::inverse(H);
+  math::Matrix H_inv = math::inverse(H);
   math::Matrix H_trans = math::transpose(H);
   math::Matrix H_inv_trans = math::transpose(H_inv);
-  
+
   const int mesh_alias = sim.param().nonbonded.p3m_mesh_alias;
- 
+
   const int assignment_function_order = sim.param().nonbonded.p3m_charge_assignment;
   const int finite_difference_order = sim.param().nonbonded.p3m_finite_differences_operator;
   std::vector<double> finite_difference_constants = interaction::Lattice_Sum::finite_difference_constants(finite_difference_order);
@@ -361,19 +378,24 @@ void configuration::Influence_Function::evaluate_quality(
           math::cross(box(1), box(2)) * volume_i_2pi,
           math::cross(box(2), box(0)) * volume_i_2pi,
           math::cross(box(0), box(1)) * volume_i_2pi, true /* column wise */);
-  
-  MeshType & potential = *reinterpret_cast<MeshType*>(conf.lattice_sum().potential);
+
+  MeshType & potential = *reinterpret_cast<MeshType*> (conf.lattice_sum().potential);
 
   const int x_to = potential.right_boundary();
-  const int x_from = potential.left_boundary();  
+  const int x_from = potential.left_boundary();
 
   // loop over reciprocal-space grid G
   DEBUG(10, "\tstarting loop over reciprocal-space grid");
   math::GenericVec<int> l;
-  
+
   // quality control: quantiy q to calculate the RMS force error
   double my_q = 0.0;
+#ifdef OMP
+  omp_set_nested(1);
+#pragma omp parallel for
+#endif
   for (int x = x_from; x < x_to; ++x) {
+    double q_thread = 0.0;
     if (x > int(Nx_2))
       l(0) = x - Nx;
     else
@@ -383,7 +405,7 @@ void configuration::Influence_Function::evaluate_quality(
       l(1) = l2;
       for (int l3 = 1 - Nz_2; l3 <= Nz_2; ++l3) {
         l(2) = l3;
-        
+
         if (l(0) == 0 && l2 == 0 && l3 == 0) {
           continue;
         }
@@ -461,21 +483,27 @@ void configuration::Influence_Function::evaluate_quality(
           // if this is zero we have to set the influence function terms to zero. 
           // Due to numerical problems!!!
           if (abs2_D_hat_g < math::epsilon) {
-            my_q += sum_k2ifourier2;
+            q_thread += sum_k2ifourier2;
             continue;
-          } 
+          }
         }
         DEBUG(13, "\t D_hat_g = " << math::v2s(D_hat_g));
         // MD99.32 eq. 203
         double ghat = (*this)(l);
-        my_q += ghat*ghat * abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
-        my_q += sum_k2ifourier2 - 2 * ghat* math::dot(D_hat_g, sum_ghat_numerator);
+        q_thread += ghat * ghat * abs2_D_hat_g * sum_ghat_denominator * sum_ghat_denominator;
+        q_thread += sum_k2ifourier2 - 2 * ghat * math::dot(D_hat_g, sum_ghat_numerator);
         DEBUG(20, "running q = " << q);
       }
     }
+#ifdef OMP
+#pragma omp critical
+#endif
+    my_q += q_thread;
   } // loop over reciprocal space grid
   my_q *= 16 * math::Pi * math::Pi / volume;
-
+#ifdef OMP
+  omp_set_nested(0);
+#endif
 #ifdef XXMPI
   if (sim.mpi) {
     MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
@@ -485,9 +513,9 @@ void configuration::Influence_Function::evaluate_quality(
 #ifdef XXMPI
   }
 #endif
-  
+
   force_error = math::four_pi_eps_i * st2 * sqrt(q / (volume * topo.num_atoms()));
-  
+
   DEBUG(8, "q = " << q);
 }
 template void configuration::Influence_Function::evaluate_quality<configuration::Mesh>(
