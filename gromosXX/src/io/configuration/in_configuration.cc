@@ -20,6 +20,7 @@
 
 #include <math/volume.h>
 #include <math/transformation.h>
+#include <util/umbrella_weight.h>
 
 #include "in_configuration.h"
 
@@ -2376,8 +2377,8 @@ bool io::In_Configuration::_read_leusbias(
     // loop over sampled points
     for (unsigned int n = 0; n < nconle; ++n) {
       util::Umbrella::leus_conf cnf(dim);
-      unsigned int visit;
-      _lineStream >> visit;
+      util::Umbrella_Weight * weight = u.umbrella_weight_factory->get_instance();
+      _lineStream >> (*weight);
       for (unsigned int i = 0; i < u.dim(); ++i) {
         _lineStream >> cnf.pos[i];
         if (_lineStream.fail()) {
@@ -2388,7 +2389,7 @@ bool io::In_Configuration::_read_leusbias(
         }
         --cnf.pos[i]; // our arrays start at 0 and not 1 as in the format
       }
-      u.configurations[cnf] = visit;
+      u.configurations.insert(std::pair<util::Umbrella::leus_conf, util::Umbrella_Weight*>(cnf, weight));
 
     } // for configurations
     umbrellas.push_back(u);

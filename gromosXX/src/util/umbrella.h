@@ -12,6 +12,8 @@ namespace configuration {
 
 namespace util {
   class LE_Coordinate;
+  class Umbrella_Weight;
+  class Umbrella_Weight_Factory;
 
   /**
    * @class Umbrella
@@ -27,15 +29,21 @@ namespace util {
     /**
      * constructor
      */
-    Umbrella(int id, unsigned int dim);
+    Umbrella(int id, unsigned int dim,
+            Umbrella_Weight_Factory * factory = NULL);
     /**
      * copy constructor
+     * this will pass the factory to the new instance
      */
     Umbrella(const Umbrella & u);
     /**
      * assignment operator
      */
     Umbrella & operator=(const Umbrella & u);
+    /**
+     * destructor
+     */
+    ~Umbrella();
     /**
      * the ID of the umbrella potential
      */
@@ -159,11 +167,11 @@ namespace util {
     /**
      * a map to hold the visited configurations and the number of times it
      * was visited. A @ref leus_conf is used as key type. This allows for
-     * efficient searching of the visited grid points. The value is the number
-     * of times a configuration has been visited. If the configuration element
+     * efficient searching of the visited grid points. The value is the weight of
+     * a configuration. If the configuration element
      * is not found in this map, the configuration wasn't visited so far.
      */
-    std::map<leus_conf, unsigned int> configurations;
+    std::map<leus_conf, Umbrella_Weight *> configurations;
     /**
      * is the umbrella still building up?
      */
@@ -172,6 +180,10 @@ namespace util {
      * is the umbrella enabled (i.e. applied, energy and forces are calculated)
      */
     bool enabled;
+    /**
+     * the factory for the umbrella weights
+     */
+    Umbrella_Weight_Factory * umbrella_weight_factory;
     /**
      * transform the units of the grid. This is carried out for user friendlyness
      * For example we calculate internally in radients but it is more convenient

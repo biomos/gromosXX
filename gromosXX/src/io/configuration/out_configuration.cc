@@ -24,6 +24,7 @@
 #include <util/template_split.h>
 #include <util/debug.h>
 #include <limits>
+#include <util/umbrella_weight.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -2568,10 +2569,10 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
     os << "# NCONLE\n";
     os << std::setw(10) << umb[i].configurations.size() << "\n";
     os << "# NVISLE ICONF(1..NDIM)\n";
-    std::map<util::Umbrella::leus_conf,unsigned int>::const_iterator conf_it =
+    std::map<util::Umbrella::leus_conf,util::Umbrella_Weight*>::const_iterator conf_it =
     umb[i].configurations.begin(), conf_to = umb[i].configurations.end();
     for(; conf_it != conf_to; ++conf_it) {
-      os << std::setw(10) << conf_it->second;
+      os << *(conf_it->second);
       for(unsigned int j = 0; j < umb[i].dim(); j++) {
         // here we have to convert to fortran and add 1 because the grid
         // goes form 1 to NDIM in the output format

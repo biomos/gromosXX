@@ -19,7 +19,8 @@ xxinclude_HEADERS = error.h\
 	coding.h\
 	feature.h\
 	le_coordinate.h\
-	umbrella.h
+	umbrella.h\
+	umbrella_weight.h
 
 noinst_LTLIBRARIES = libgroutil.la
 
@@ -40,7 +41,8 @@ libgroutil_la_SOURCES =	debug.cc\
 	coding.cc\
 	feature.cc\
 	le_coordinate.cc\
-	umbrella.cc
+	umbrella.cc\
+	umbrella_weight.cc
 
 libgroutil_la_LIBADD =
 

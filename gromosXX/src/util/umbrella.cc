@@ -11,6 +11,7 @@
 #include <math/periodicity.h>
 
 #include <util/le_coordinate.h>
+#include <util/umbrella_weight.h>
 #include <util/template_split.h>
 #include <util/debug.h>
 
@@ -21,7 +22,7 @@
 #define MODULE util
 #define SUBMODULE leus
 
-util::Umbrella::Umbrella(int id, unsigned int dim) {
+util::Umbrella::Umbrella(int id, unsigned int dim, Umbrella_Weight_Factory * factory) {
   this->id = id;
   // don't resize the coordinates. They'll get attached
   functional_form.resize(dim);
@@ -38,6 +39,10 @@ util::Umbrella::Umbrella(int id, unsigned int dim) {
   grid_spacing_rel.resize(dim);
   building = false;
   enabled = false;
+  umbrella_weight_factory = factory;
+  if (umbrella_weight_factory == NULL) {
+    umbrella_weight_factory = new Number_Of_Visits_Umbrella_Weight_Factory();
+  }
 }
 
 util::Umbrella::Umbrella(const Umbrella& u) {
@@ -63,9 +68,18 @@ util::Umbrella & util::Umbrella::operator=(const util::Umbrella& u) {
   configurations = u.configurations;
   building = u.building;
   enabled = u.enabled;
+  umbrella_weight_factory = u.umbrella_weight_factory;
 
   return *this;
 }
+
+util::Umbrella::~Umbrella() {
+/*
+  if (umbrella_weight_factory != NULL)
+    delete umbrella_weight_factory;
+*/
+}
+
 
 bool util::Umbrella::leus_conf::operator <(const leus_conf& c) const {
   assert(pos.size() == c.pos.size());
@@ -109,15 +123,17 @@ void util::Umbrella::build(
 
   const util::Umbrella::leus_conf grid_point(pos);
   // binary search this grid point
-  std::map<util::Umbrella::leus_conf, unsigned int>::iterator conf_it =
+  std::map<util::Umbrella::leus_conf, util::Umbrella_Weight*>::iterator conf_it =
           configurations.find(grid_point);
 
   if (conf_it != configurations.end()) {
     // found
-    conf_it->second++;
+    conf_it->second->increment_weight();
   } else {
     // not found so add the grid point to the visited points
-    configurations[grid_point] = 1;
+    configurations.insert(
+            std::pair<util::Umbrella::leus_conf, util::Umbrella_Weight* > (
+            grid_point, umbrella_weight_factory->get_instance()));
   }
 }
 
@@ -130,7 +146,7 @@ void util::Umbrella::apply(
   const unsigned int dim = coordinates.size();
 
   // loop over the stored configurations
-  std::map<util::Umbrella::leus_conf, unsigned int>::const_iterator conf_it =
+  std::map<util::Umbrella::leus_conf, util::Umbrella_Weight*>::const_iterator conf_it =
           configurations.begin(), conf_to = configurations.end();
 
   double energy = 1.0;
@@ -200,12 +216,12 @@ void util::Umbrella::apply(
       continue;
     }
 
-    energy *= force_constant * conf_it->second;
+    energy *= force_constant * conf_it->second->get_weight();
     DEBUG(1,"\tenergy: " << energy)
     // store the energy, apply the force
     local_elevation_energy += energy;
     for(unsigned int i = 0; i < dim; ++i) {
-      const double d = deriv[i] * force_constant * conf_it->second;
+      const double d = deriv[i] * force_constant * conf_it->second->get_weight();
       DEBUG(1,"\tderiv[" << i+i << "]: " << d);
       coordinates[i]->apply(d);
     }
