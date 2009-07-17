@@ -16,7 +16,7 @@ namespace configuration {
   class KSpace_Element {
   public:
     /**
-     * the k vector itself: @f$ \mathbf{k} $
+     * the k vector itself: @f$ \mathbf{k} @f$
      */
     math::Vec k;
     /**

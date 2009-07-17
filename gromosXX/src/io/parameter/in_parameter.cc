@@ -4122,6 +4122,14 @@ void io::In_Parameter::read_SASA(simulation::Parameter & param, std::ostream & o
   if (_lineStream.fail()) {
     io::messages.add("bad line in SASA block", "In_Parameter", io::message::error);
   }
+
+  // check that vol not used without sasa
+  if ((param.sasa.switch_sasa == 0) && (param.sasa.switch_volume == 1)) {
+    io::messages.add("SASA block: Cannot have SASA_VOL without SASA",
+            "In_Parameter", io::message::error);
+    //return;
+  }
+
 }
 
 /**

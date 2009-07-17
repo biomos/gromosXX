@@ -158,6 +158,11 @@ int io::check_parameter(simulation::Simulation & sim)
                                               !param.polarise.damp);
   add("polarisation_cos_damped", "COS polarisation", param.polarise.cos && 
                                                      param.polarise.damp);
+  // SASA block
+  add("sasa", "SASA implicit solvent model",  param.sasa.switch_sasa == 1 &&
+          param.sasa.switch_volume == 0);
+  add("sasavol", "SASA/VOL implicit solvent model", param.sasa.switch_volume == 1 &&
+          param.sasa.sigma_v != 0.0);
   // RANDOMNUMBERS block
   add("random_gromos", "GROMOS96 random numbers", 
           param.rng.rng == simulation::random_g96);
@@ -3122,6 +3127,110 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("xray", "ewald");
   fc.unlock("xray", "p3m");
   fc.unlock("xray", "leus");
+
+  fc.unlock("sasa", "solute");
+  fc.unlock("sasa", "steepest_descent");
+  fc.unlock("sasa", "solute_constraint_off");
+  fc.unlock("sasa", "solute_shake");
+  fc.unlock("sasa", "solute_lincs");
+  fc.unlock("sasa", "solute_flexshake");
+  fc.unlock("sasa", "solvent_constraint_off");
+  fc.unlock("sasa", "solvent_shake");
+  fc.unlock("sasa", "solvent_lincs");
+  fc.unlock("sasa", "solvent_settle");
+  fc.unlock("sasa", "virial_off");
+  fc.unlock("sasa", "virial_atomic");
+  fc.unlock("sasa", "virial_molecular");
+  fc.unlock("sasa", "vacuum");
+  fc.unlock("sasa", "bond");
+  fc.unlock("sasa", "angle");
+  fc.unlock("sasa", "dihedral");
+  fc.unlock("sasa", "improper");
+  fc.unlock("sasa", "crf");
+  fc.unlock("sasa", "lj");
+  fc.unlock("sasa", "com_removal");
+  fc.unlock("sasa", "rf_excluded");
+  fc.unlock("sasa", "pairlist_standard");
+  fc.unlock("sasa", "cutoff_atomic");
+  fc.unlock("sasa", "temp_berendsen");
+  fc.unlock("sasa", "temp_nosehoover");
+  fc.unlock("sasa", "temp_nosehoover_chains");
+  fc.unlock("sasa", "position_rest");
+  fc.unlock("sasa", "position_const");
+  fc.unlock("sasa", "position_const_scaled");
+  fc.unlock("sasa", "distance_rest");
+  fc.unlock("sasa", "dihedral_rest");
+  fc.unlock("sasa", "dihedral_const");
+  fc.unlock("sasa", "jvalue_rest");
+  fc.unlock("sasa", "perscale");
+  fc.unlock("sasa", "rottrans");
+  fc.unlock("sasa", "innerloop_method_off");
+  fc.unlock("sasa", "innerloop_solvent_topology");
+  fc.unlock("sasa", "repex_temp");
+  fc.unlock("sasa", "analysis");
+  fc.unlock("sasa", "no_integration");
+  fc.unlock("sasa", "stochdyn");
+  fc.unlock("sasa", "ramd");
+  //fc.unlock("sasa", "sasavol");
+  fc.unlock("sasa", "random_gromos");
+  fc.unlock("sasa", "random_gsl");
+  fc.unlock("sasa", "parallel_mpi");
+  fc.unlock("sasa", "parallel_omp");
+  fc.unlock("sasa", "mult_energy_groups");
+  fc.unlock("sasa", "leus");
+  fc.unlock("sasa", "xray");
+
+  fc.unlock("sasavol", "solute");
+  fc.unlock("sasavol", "steepest_descent");
+  fc.unlock("sasavol", "solute_constraint_off");
+  fc.unlock("sasavol", "solute_shake");
+  fc.unlock("sasavol", "solute_lincs");
+  fc.unlock("sasavol", "solute_flexshake");
+  fc.unlock("sasavol", "solvent_constraint_off");
+  fc.unlock("sasavol", "solvent_shake");
+  fc.unlock("sasavol", "solvent_lincs");
+  fc.unlock("sasavol", "solvent_settle");
+  fc.unlock("sasavol", "virial_off");
+  fc.unlock("sasavol", "virial_atomic");
+  fc.unlock("sasavol", "virial_molecular");
+  fc.unlock("sasavol", "vacuum");
+  fc.unlock("sasavol", "bond");
+  fc.unlock("sasavol", "angle");
+  fc.unlock("sasavol", "dihedral");
+  fc.unlock("sasavol", "improper");
+  fc.unlock("sasavol", "crf");
+  fc.unlock("sasavol", "lj");
+  fc.unlock("sasavol", "com_removal");
+  fc.unlock("sasavol", "rf_excluded");
+  fc.unlock("sasavol", "pairlist_standard");
+  fc.unlock("sasavol", "cutoff_atomic");
+  fc.unlock("sasavol", "temp_berendsen");
+  fc.unlock("sasavol", "temp_nosehoover");
+  fc.unlock("sasavol", "temp_nosehoover_chains");
+  fc.unlock("sasavol", "position_rest");
+  fc.unlock("sasavol", "position_const");
+  fc.unlock("sasavol", "position_const_scaled");
+  fc.unlock("sasavol", "distance_rest");
+  fc.unlock("sasavol", "dihedral_rest");
+  fc.unlock("sasavol", "dihedral_const");
+  fc.unlock("sasavol", "jvalue_rest");
+  fc.unlock("sasavol", "perscale");
+  fc.unlock("sasavol", "rottrans");
+  fc.unlock("sasavol", "innerloop_method_off");
+  fc.unlock("sasavol", "innerloop_solvent_topology");
+  fc.unlock("sasavol", "repex_temp");
+  fc.unlock("sasavol", "analysis");
+  fc.unlock("sasavol", "no_integration");
+  fc.unlock("sasavol", "stochdyn");
+  fc.unlock("sasavol", "ramd");
+  //fc.unlock("sasavol", "sasa");
+  fc.unlock("sasavol", "random_gromos");
+  fc.unlock("sasavol", "random_gsl");
+  fc.unlock("sasavol", "parallel_mpi");
+  fc.unlock("sasavol", "parallel_omp");
+  fc.unlock("sasavol", "mult_energy_groups");
+  fc.unlock("sasavol", "leus");
+  fc.unlock("sasavol", "xray");
 
   if (fc.check()) 
     return 0;
