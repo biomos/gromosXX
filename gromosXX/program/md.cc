@@ -74,6 +74,7 @@
 #endif
 
 #include <sys/utsname.h>
+#include <signal.h>
 
 #pragma hdrstop
 
@@ -81,9 +82,19 @@
 
 void print_title(bool color = false);
 
+bool exit_md;
+
+void signal_handler(int sig) {
+  std::cerr << "\nThe program will exit as soon as the MD step has finished. Press CTRL-C to force quit." << std::endl;
+  exit_md = true;
+  signal(SIGINT, SIG_DFL);
+}
+
 int main(int argc, char *argv[]){
 
   const double start = util::now();
+  exit_md = false;
+  signal(SIGINT, signal_handler);
 
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
@@ -163,7 +174,7 @@ int main(int argc, char *argv[]){
   int error;
 
   const double init_time = util::now() - start;
-  while(int(sim.steps()) < sim.param().step.number_of_steps){  
+  while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){
       
     traj.write(conf, topo, sim, io::reduced);
 
@@ -197,6 +208,9 @@ int main(int argc, char *argv[]){
       // try to save the final structures...
       break;
     }
+
+    if (exit_md)
+      std::cout << "\nMD run terminated by SIGINT (CTRL-C)." << std::endl;
 
     traj.print(topo, conf, sim);
 
