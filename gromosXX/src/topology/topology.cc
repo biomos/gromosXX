@@ -810,8 +810,25 @@ unsigned int topology::Topology::num_solvent_atoms()const
 void
 topology::Topology::
 calculate_constraint_dof(simulation::Multibath &multibath,
-			 bool rottrans_constraints)const
+			 bool rottrans_constraints, bool position_constraints)const
 {
+
+  // save the positionally constrained atom inidices for fast checking
+  // only make sure the distance constraints dof are not removed for
+  // positionally constrained atoms.
+  std::set<unsigned int> pos_cons_atom;
+  if (position_constraints) {
+    std::vector<topology::position_restraint_struct>::const_iterator
+    it = position_restraints().begin(),
+    to = position_restraints().end();
+
+    for(; it != to; ++it) {
+      pos_cons_atom.insert(it->seq);
+    }
+  }
+  DEBUG(6, "Number of pos. constraint atoms: " << pos_cons_atom.size());
+  DEBUG(6, "Number of non pos. constraint atoms: " << num_atoms() - pos_cons_atom.size());
+
   // substract constraints
   {
     std::vector<two_body_term_struct>::const_iterator 
@@ -823,6 +840,23 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     for( ; c_it != c_to; ++c_it){
       
       DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
+      if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end() &&
+          pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+        continue;
+      } else if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end()) {
+        multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
+        multibath[ir_bath_j].dof -= 1.0;
+        multibath[ir_bath_j].ir_dof -= 1.0;
+        multibath[ir_bath_j].solute_constr_dof += 1.0;
+        continue;
+      } else if (pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+        multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
+        multibath[ir_bath_i].dof -= 1.0;
+        multibath[ir_bath_i].ir_dof -= 1.0;
+        multibath[ir_bath_i].solute_constr_dof += 1.0;
+        continue;
+      }
+
       multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
       multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
       
@@ -850,8 +884,25 @@ calculate_constraint_dof(simulation::Multibath &multibath,
 	
 	c_it = solvent(s).distance_constraints().begin();
 	c_to = solvent(s).distance_constraints().end();
-	
-	for( ; c_it != c_to; ++c_it){
+
+        for (; c_it != c_to; ++c_it) {
+          if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end() &&
+              pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+            continue;
+          } else
+            if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end()) {
+            multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
+            multibath[ir_bath_j].dof -= 1.0;
+            multibath[ir_bath_j].ir_dof -= 1.0;
+            multibath[ir_bath_j].solvent_constr_dof += 1.0;
+            continue;
+          } else if (pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+            multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
+            multibath[ir_bath_i].dof -= 1.0;
+            multibath[ir_bath_i].ir_dof -= 1.0;
+            multibath[ir_bath_i].solvent_constr_dof += 1.0;
+            continue;
+          }
 	  
 	  multibath.in_bath(c_it->i + index, com_bath_i, ir_bath_i);
 	  multibath.in_bath(c_it->j + index, com_bath_j, ir_bath_j);
@@ -884,9 +935,26 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     
     unsigned int com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
     
-    for( ; c_it != c_to; ++c_it){
-      
+    for( ; c_it != c_to; ++c_it) {
+
       DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
+      if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end() &&
+          pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+        continue;
+      } else if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end()) {
+        multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
+        multibath[ir_bath_j].dof -= 1.0;
+        multibath[ir_bath_j].ir_dof -= 1.0;
+        multibath[ir_bath_j].solute_constr_dof += 1.0;
+        continue;
+      } else if (pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+        multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
+        multibath[ir_bath_i].dof -= 1.0;
+        multibath[ir_bath_i].ir_dof -= 1.0;
+        multibath[ir_bath_i].solute_constr_dof += 1.0;
+        continue;
+      }
+      
       multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
       multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
       
@@ -901,6 +969,55 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       
     }
   
+    for(unsigned int i=0; i<multibath.size(); ++i){
+      DEBUG(7, "dof           " << multibath[i].dof);
+      DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);
+    }
+  }
+
+  if (position_constraints) {
+    DEBUG(6, "position contraints dof");
+    std::vector<topology::position_restraint_struct>::const_iterator
+    it = position_restraints().begin(),
+    to = position_restraints().end();
+
+    topology::Temperaturegroup_Iterator tmpit = temperature_group_begin(),
+            tmpto = temperature_group_end();
+    for(; tmpit != tmpto; ++tmpit) {
+      unsigned int num_cons = 0;
+      topology::Atom_Iterator ait = tmpit.begin(), ato = tmpit.end();
+      unsigned int com_bath_i, ir_bath_i;
+      unsigned int first_atom = *ait;
+      multibath.in_bath(*ait, com_bath_i, ir_bath_i);
+
+      // loop over atoms in temperature group
+      for(; ait != ato; ++ait) {
+        if (pos_cons_atom.find(*ait) != pos_cons_atom.end()) {
+          ++num_cons;
+        }
+      }
+
+      if (num_cons >= 1) {
+        multibath[com_bath_i].com_dof -= 3.0;
+        multibath[com_bath_i].dof -= 3.0;
+
+        if (first_atom < num_solute_atoms())
+          multibath[com_bath_i].solute_constr_dof += 3.0;
+        else
+          multibath[com_bath_i].solvent_constr_dof += 3.0;
+
+        if (num_cons > 1) {
+          multibath[ir_bath_i].ir_dof -= (num_cons - 1) * 3.0;
+          multibath[ir_bath_i].dof -= (num_cons - 1) * 3.0;
+
+          if (first_atom < num_solute_atoms())
+            multibath[ir_bath_i].solute_constr_dof += (num_cons - 1) * 3.0;
+          else
+            multibath[ir_bath_i].solvent_constr_dof += (num_cons - 1) * 3.0;
+        }
+      }
+    }
+
     for(unsigned int i=0; i<multibath.size(); ++i){
       DEBUG(7, "dof           " << multibath[i].dof);
       DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);

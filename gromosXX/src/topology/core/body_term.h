@@ -7,13 +7,13 @@
 #ifndef INCLUDED_BODY_TERM_H
 #define INCLUDED_BODY_TERM_H
 
-namespace topology
-{
+namespace topology {
+
   /**
    * @enum functional_form
    * functional form
    */
-  enum functional_form{
+  enum functional_form {
     /**
      * full harmonic (attractive and repulsive)
      */
@@ -27,20 +27,21 @@ namespace topology
      */
     repulsive = -1
   };
-  
+
   /**
    * @struct one_body_term_struct
    * one body terms (topological information).
    */
-  struct one_body_term_struct
-  {
+  struct one_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
      * @param t interaction type.
      */
-    one_body_term_struct(unsigned int i, unsigned int t) : i(i), type(t) {};
-    
+    one_body_term_struct(unsigned int i, unsigned int t) : i(i), type(t) {
+    };
+
     /**
      * atom i.
      */
@@ -49,30 +50,32 @@ namespace topology
      * interaction type.
      */
     unsigned int type;
+
     /**
      * equal operator
      */
-    bool operator==(one_body_term_struct const & b){
-      return (b.i==i && b.type==type);
+    bool operator==(one_body_term_struct const & b) {
+      return (b.i == i && b.type == type);
     }
-    
+
   };
 
   /**
    * @struct perturbed_one_body_term_struct
    * perturbed one body terms (topological information).
    */
-  struct perturbed_one_body_term_struct
-  {
+  struct perturbed_one_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
      * @param t_A interaction type.
      * @param t_B interaction type.
      */
-    perturbed_one_body_term_struct(unsigned int i, unsigned int t_A, unsigned int t_B) 
-      : i(i), A_type(t_A), B_type(t_B) {};
-    
+    perturbed_one_body_term_struct(unsigned int i, unsigned int t_A, unsigned int t_B)
+    : i(i), A_type(t_A), B_type(t_B) {
+    };
+
     /**
      * atom i.
      */
@@ -86,39 +89,42 @@ namespace topology
      * interaction type for state B.
      */
     unsigned int B_type;
+
     /**
      * equal operator
      */
-    bool operator==(perturbed_one_body_term_struct const & b){
-      return (b.i==i && b.A_type==A_type && b.B_type==B_type);
+    bool operator==(perturbed_one_body_term_struct const & b) {
+      return (b.i == i && b.A_type == A_type && b.B_type == B_type);
     }
 
   };
-  
+
   /**
    * @struct two_body_term_struct
    * two body term interaction topological information.
    */
-  struct two_body_term_struct : public one_body_term_struct
-  {
+  struct two_body_term_struct : public one_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
      * @param j atom j.
      * @param t interaction type.
      */
-    two_body_term_struct(unsigned int i, unsigned int j, unsigned int t) 
-      : one_body_term_struct(i, t), j(j) {};
-    
+    two_body_term_struct(unsigned int i, unsigned int j, unsigned int t)
+    : one_body_term_struct(i, t), j(j) {
+    };
+
     /**
      * atom j.
      */
     unsigned int j;
+
     /**
      * equal operator
      */
-    bool operator==(two_body_term_struct const & b){
-      return (one_body_term_struct::operator==(b) && b.j==j);
+    bool operator==(two_body_term_struct const & b) {
+      return (one_body_term_struct::operator==(b) && b.j == j);
     }
 
   };
@@ -127,8 +133,8 @@ namespace topology
    * @struct perturbed_two_body_term_struct
    * perturbed two body term interaction topological information.
    */
-  struct perturbed_two_body_term_struct : public perturbed_one_body_term_struct
-  {
+  struct perturbed_two_body_term_struct : public perturbed_one_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
@@ -136,18 +142,20 @@ namespace topology
      * @param t_A interaction type for state A.
      * @param t_B interaction type for state B.
      */
-    perturbed_two_body_term_struct(unsigned int i, unsigned int j, unsigned int t_A, unsigned int t_B) 
-      : perturbed_one_body_term_struct(i, t_A, t_B), j(j) {};
-    
+    perturbed_two_body_term_struct(unsigned int i, unsigned int j, unsigned int t_A, unsigned int t_B)
+    : perturbed_one_body_term_struct(i, t_A, t_B), j(j) {
+    };
+
     /**
      * atom j.
      */
     unsigned int j;
+
     /**
      * equal operator
      */
-    bool operator==(perturbed_two_body_term_struct const & b){
-      return (perturbed_one_body_term_struct::operator==(b) && b.j==j);
+    bool operator==(perturbed_two_body_term_struct const & b) {
+      return (perturbed_one_body_term_struct::operator==(b) && b.j == j);
     }
   };
 
@@ -155,8 +163,8 @@ namespace topology
    * @struct three_body_term_struct
    * three body term interaction topological information.
    */
-  struct three_body_term_struct : public two_body_term_struct
-  {
+  struct three_body_term_struct : public two_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
@@ -164,18 +172,20 @@ namespace topology
      * @param k atom k.
      * @param t interaction type.
      */
-    three_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int t) 
-      : two_body_term_struct(i, j, t), k(k) {};
-    
+    three_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int t)
+    : two_body_term_struct(i, j, t), k(k) {
+    };
+
     /**
      * atom k.
      */
     unsigned int k;
+
     /**
      * equal operator
      */
-    bool operator==(three_body_term_struct const & b){
-      return (two_body_term_struct::operator==(b) && b.k==k);
+    bool operator==(three_body_term_struct const & b) {
+      return (two_body_term_struct::operator==(b) && b.k == k);
     }
 
   };
@@ -184,8 +194,8 @@ namespace topology
    * @struct perturbed_three_body_term_struct
    * perturbed three body term interaction topological information.
    */
-  struct perturbed_three_body_term_struct : public perturbed_two_body_term_struct
-  {
+  struct perturbed_three_body_term_struct : public perturbed_two_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
@@ -194,19 +204,21 @@ namespace topology
      * @param t_A interaction type for state A.
      * @param t_B interaction type for state B.
      */
-    perturbed_three_body_term_struct(unsigned int i, unsigned int j, unsigned int k, 
-				     unsigned int t_A, unsigned int t_B) 
-      : perturbed_two_body_term_struct(i, j, t_A, t_B), k(k) {};
-    
+    perturbed_three_body_term_struct(unsigned int i, unsigned int j, unsigned int k,
+            unsigned int t_A, unsigned int t_B)
+    : perturbed_two_body_term_struct(i, j, t_A, t_B), k(k) {
+    };
+
     /**
      * atom k.
      */
     unsigned int k;
+
     /**
      * equal operator
      */
-    bool operator==(perturbed_three_body_term_struct const & b){
-      return (perturbed_two_body_term_struct::operator==(b) && b.k==k);
+    bool operator==(perturbed_three_body_term_struct const & b) {
+      return (perturbed_two_body_term_struct::operator==(b) && b.k == k);
     }
   };
 
@@ -214,8 +226,8 @@ namespace topology
    * @struct four_body_term_struct
    * four body term interaction topological information.
    */
-  struct four_body_term_struct : public three_body_term_struct
-  {
+  struct four_body_term_struct : public three_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
@@ -224,18 +236,20 @@ namespace topology
      * @param l atom l.
      * @param t interaction type.
      */
-    four_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int l, unsigned int t) 
-      : three_body_term_struct(i, j, k, t), l(l) {};
-    
+    four_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int l, unsigned int t)
+    : three_body_term_struct(i, j, k, t), l(l) {
+    };
+
     /**
      * atom l.
      */
     unsigned int l;
+
     /**
      * equal operator
      */
-    bool operator==(four_body_term_struct const & b){
-      return (three_body_term_struct::operator==(b) && b.l==l);
+    bool operator==(four_body_term_struct const & b) {
+      return (three_body_term_struct::operator==(b) && b.l == l);
     }
 
   };
@@ -244,8 +258,8 @@ namespace topology
    * @struct perturbed_four_body_term_struct
    * perturbed four body term interaction topological information.
    */
-  struct perturbed_four_body_term_struct : public perturbed_three_body_term_struct
-  {
+  struct perturbed_four_body_term_struct : public perturbed_three_body_term_struct {
+
     /**
      * Constructor.
      * @param i atom i.
@@ -255,63 +269,65 @@ namespace topology
      * @param t_A interaction type for state A.
      * @param t_B interaction type for state B.
      */
-    perturbed_four_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int l, 
-				    unsigned int t_A, unsigned int t_B) 
-      : perturbed_three_body_term_struct(i, j, k, t_A, t_B), l(l) {};
-    
+    perturbed_four_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int l,
+            unsigned int t_A, unsigned int t_B)
+    : perturbed_three_body_term_struct(i, j, k, t_A, t_B), l(l) {
+    };
+
     /**
      * atom l.
      */
     unsigned int l;
+
     /**
      * equal operator
      */
-    bool operator==(perturbed_four_body_term_struct const & b){
-      return (perturbed_three_body_term_struct::operator==(b) && b.l==l);
+    bool operator==(perturbed_four_body_term_struct const & b) {
+      return (perturbed_three_body_term_struct::operator==(b) && b.l == l);
     }
   };
 
   /**
    * Position restraints information.
    */
-  struct position_restraint_struct
-  {
+  struct position_restraint_struct {
+
     /**
      * Constructor.
      */
     position_restraint_struct(unsigned int seq)
-      : seq(seq)
-    {}
+    : seq(seq) {
+    }
     /**
      * sequence number.
      */
     unsigned int seq;
   };
 
-  struct distance_restraint_struct
-  {
+  struct distance_restraint_struct {
+
     /**
      * Constructor.
      */
     distance_restraint_struct(util::Virtual_Atom v1,
-			      util::Virtual_Atom v2,
-			      double r0, double w0, int rah)
-      :v1(v1), v2(v2),
-       r0(r0),
-       w0(w0),
-       rah(rah)
-    {}
-    
+            util::Virtual_Atom v2,
+            double r0, double w0, int rah)
+    : v1(v1), v2(v2),
+    r0(r0),
+    w0(w0),
+    rah(rah) {
+    }
+
     /**
      * Virtual Atom 1.
      */
     util::Virtual_Atom v1;
-    
+
     /**
      * Virtual Atom 2.
      */
     util::Virtual_Atom v2;
-    
+
     /**
      * restraint distance.
      */
@@ -324,29 +340,29 @@ namespace topology
      *repulsiv, attractiv, harmonic
      */
     int rah;
-    
+
   };
-  
+
   /**
    *Perturbed distance restraints information.
    */
-  struct perturbed_distance_restraint_struct
-  {
+  struct perturbed_distance_restraint_struct {
+
     /**
      * Constructor.
      */
     perturbed_distance_restraint_struct(util::Virtual_Atom v1,
-					util::Virtual_Atom v2,
-					int n, int m,
-					double A_r0, double B_r0, 
-					double A_w0, double B_w0, int rah)
-      :v1(v1), v2(v2),
-       n(n), m(m),
-       A_r0(A_r0), B_r0(B_r0),
-       A_w0(A_w0), B_w0(B_w0),
-       rah(rah)
-    {}
-    
+            util::Virtual_Atom v2,
+            int n, int m,
+            double A_r0, double B_r0,
+            double A_w0, double B_w0, int rah)
+    : v1(v1), v2(v2),
+    n(n), m(m),
+    A_r0(A_r0), B_r0(B_r0),
+    A_w0(A_w0), B_w0(B_w0),
+    rah(rah) {
+    }
+
     /**
      * Virtual Atom 1.
      */
@@ -356,7 +372,7 @@ namespace topology
      * Virtual Atom 2.
      */
     util::Virtual_Atom v2;
-    
+
     /**
      * hidden restraint factor n
      */
@@ -366,7 +382,7 @@ namespace topology
      * hidden restraint factor m
      */
     int m;
-    
+
     /**
      * restraint distance A.
      */
@@ -382,39 +398,40 @@ namespace topology
     /**
      * weighting factor B.
      */
-    double B_w0; 
+    double B_w0;
     /**
      *repulsiv, attractiv, harmonic
      */
     int rah;
   };
+
   /**
    * eds distance restraints information.
    */
-  struct eds_distance_restraint_struct
-  {
+  struct eds_distance_restraint_struct {
+
     /**
      * Constructor.
      */
     eds_distance_restraint_struct(util::Virtual_Atom v1,
-                                 util::Virtual_Atom v2,
-			         std::vector<double> r0, std::vector<double> w0, int rah)
-      :v1(v1), v2(v2),
-       r0(r0),
-       w0(w0),
-       rah(rah)
-    {}
-    
+            util::Virtual_Atom v2,
+            std::vector<double> r0, std::vector<double> w0, int rah)
+    : v1(v1), v2(v2),
+    r0(r0),
+    w0(w0),
+    rah(rah) {
+    }
+
     /**
      * Virtual Atom 1.
      */
     util::Virtual_Atom v1;
-    
+
     /**
      * Virtual Atom 2.
      */
     util::Virtual_Atom v2;
-    
+
     /**
      * restraint distance in the different states.
      */
@@ -427,19 +444,19 @@ namespace topology
      *repulsive, attractiv, harmonic
      */
     int rah;
-    
+
   };
-   
-  struct dihedral_restraint_struct
-  {
+
+  struct dihedral_restraint_struct {
+
     /**
      * Constructor.
      */
     dihedral_restraint_struct(int i, int j, int k, int l, double delta, double phi, double w0)
-      : i(i), j(j), k(k), l(l),
-	delta(delta), phi(phi),
-	w0(w0)
-    {}
+    : i(i), j(j), k(k), l(l),
+    delta(delta), phi(phi),
+    w0(w0) {
+    }
 
     /**
      * atom i
@@ -473,19 +490,19 @@ namespace topology
     double w0;
   };
 
-  struct perturbed_dihedral_restraint_struct
-  {
+  struct perturbed_dihedral_restraint_struct {
+
     /**
      * Constructor.
      */
-    perturbed_dihedral_restraint_struct(int i, int j, int k, int l, int m, int n, double delta, 
-					double A_phi, double A_w0, double B_phi, double B_w0)
-      : i(i), j(j), k(k), l(l),
-	m(m), n(n),
-	delta(delta),
-	A_phi(A_phi), A_w0(A_w0),
-	B_phi(B_phi), B_w0(B_w0)
-    {}
+    perturbed_dihedral_restraint_struct(int i, int j, int k, int l, int m, int n, double delta,
+            double A_phi, double A_w0, double B_phi, double B_w0)
+    : i(i), j(j), k(k), l(l),
+    m(m), n(n),
+    delta(delta),
+    A_phi(A_phi), A_w0(A_w0),
+    B_phi(B_phi), B_w0(B_w0) {
+    }
 
     /**
      * atom i
@@ -533,18 +550,17 @@ namespace topology
      */
     double B_w0;
   };
-  
+
   /**
    * Virtual Grain
    */
-  struct virtual_grain_struct
-  {
+  struct virtual_grain_struct {
+
     /**
      * Constructor
      */
     virtual_grain_struct(int i, util::Virtual_Atom va)
-      : i(i), atom(va)
-    {
+    : i(i), atom(va) {
     }
     /**
      * virtual atom index
@@ -555,27 +571,26 @@ namespace topology
      */
     util::Virtual_Atom atom;
   };
-  
+
   /**
    * J-Value restraints.
    */
-  struct jvalue_restraint_struct
-  {
+  struct jvalue_restraint_struct {
+
     /**
      * Constructor.
      */
     jvalue_restraint_struct(int i, int j, int k, int l,
-			    double K, double J0,
-			    double a, double b, double c,
-			    double delta,
-			    functional_form H)
-      : i(i), j(j), k(k), l(l),
-	K(K), J0(J0),
-	a(a), b(b), c(c), delta(delta),
-	H(H)
-    {
+            double K, double J0,
+            double a, double b, double c,
+            double delta,
+            functional_form H)
+    : i(i), j(j), k(k), l(l),
+    K(K), J0(J0),
+    a(a), b(b), c(c), delta(delta),
+    H(H) {
     }
-    
+
     /**
      * atom sequence numbers.
      */
@@ -605,19 +620,18 @@ namespace topology
     functional_form H;
   };
 
-   /**
+  /**
    * Xray restraints.
    */
-  struct xray_restraint_struct
-  {
+  struct xray_restraint_struct {
+
     /**
      * Constructor.
      */
     xray_restraint_struct(int h, int k, int l,
-			    double sf, double stddevsf)
-      : h(h), k(k), l(l),
-    sf(sf), stddev_sf(stddev_sf)
-    {
+            double sf, double stddevsf)
+    : h(h), k(k), l(l),
+    sf(sf), stddev_sf(stddev_sf) {
     }
 
     /**
@@ -635,38 +649,32 @@ namespace topology
   };
 
   /**
-   * Xray fitatom.
+   * xray umbrella weights
    */
-  struct xray_fitatom_struct
-  {
+  struct xray_umbrella_weight_struct {
+
     /**
-     * Constructor.
+     * constructor
      */
-    xray_fitatom_struct(unsigned int i, const math::Vec &pos): i(i), pos(pos)
-    {
+    xray_umbrella_weight_struct(int id, double threshold, double cutoff, std::vector<unsigned int> atoms)
+    : id(id), threshold(threshold), cutoff(cutoff), atoms(atoms) {
     }
-
     /**
-     * copy constructor
+     * the ID of the umbrella
      */
-    xray_fitatom_struct(const xray_fitatom_struct & x) : i(x.i), pos(x.pos) {}
-
+    int id;
     /**
-     * assignment operator
+     * the threshold
      */
-    xray_fitatom_struct & operator=(const xray_fitatom_struct & x) {
-      i = x.i; pos = x.pos;
-      return *this;
-    }
-
+    double threshold;
     /**
-     * atom number.
+     * the cutoff
      */
-    unsigned int i;
+    double cutoff;
     /**
-     * position
+     * the atoms attched to the umbrella weigh
      */
-    math::Vec pos;
+    std::vector<unsigned int> atoms;
   };
 
 }

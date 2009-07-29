@@ -185,6 +185,10 @@ namespace util {
      */
     Umbrella_Weight_Factory * umbrella_weight_factory;
     /**
+     * a function to read the configuration after setting the umbrella weights
+     */
+    void read_configuration();
+    /**
      * transform the units of the grid. This is carried out for user friendlyness
      * For example we calculate internally in radients but it is more convenient
      * to have a input/output format in degree.
@@ -213,6 +217,14 @@ namespace util {
      * convert to a nice formated string
      */
     std::string str() const;
+    /**
+     * the block from the configuration file
+     */
+    std::string configuration_block;
+    /**
+     * the position of the stream in this block
+     */
+    std::istringstream::pos_type configuration_block_pos;
   };
 
 }

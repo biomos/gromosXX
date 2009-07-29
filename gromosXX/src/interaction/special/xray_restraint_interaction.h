@@ -91,6 +91,69 @@ namespace interaction {
             int & error);
   };
 
+  /**
+   * electron density umbrella weight
+   */
+  class Electron_Density_Umbrella_Weight : public util::Umbrella_Weight {
+  public:
+#ifdef HAVE_CLIPPER
+    Electron_Density_Umbrella_Weight(
+            std::vector<unsigned int> & variable_atoms,
+            double threshold, double cutoff,
+            configuration::Configuration & conf,
+            clipper::Atom_list & atoms,
+            clipper::Xmap<clipper::ftype32> & rho_calc,
+            clipper::Xmap<clipper::ftype32> & rho_obs) :
+            weight(0.0), variable_atoms(variable_atoms), threshold(threshold), cutoff(cutoff),
+                    conf(conf), atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs) {
+    }
+#endif
+    virtual double get_weight() const { return weight; }
+    virtual void increment_weight();
+    virtual void write(std::ostream & os) const;
+    virtual void read(std::istream & is) { is >> weight; }
+  protected:
+    double weight;
+    std::vector<unsigned int> & variable_atoms;
+    double threshold;
+    double cutoff;
+    configuration::Configuration & conf;
+#ifdef HAVE_CLIPPER
+    clipper::Atom_list & atoms;
+    clipper::Xmap<clipper::ftype32> & rho_calc;
+    clipper::Xmap<clipper::ftype32> & rho_obs;
+#endif
+  };
+
+/**
+   * electron density umbrella weight factory
+   */
+  class Electron_Density_Umbrella_Weight_Factory : public util::Umbrella_Weight_Factory {
+  public:
+#ifdef HAVE_CLIPPER
+    Electron_Density_Umbrella_Weight_Factory(std::vector<unsigned int> variable_atoms,
+            double threshold, double cutoff,
+            configuration::Configuration & conf,
+            clipper::Atom_list & atoms,
+            clipper::Xmap<clipper::ftype32> & rho_calc,
+            clipper::Xmap<clipper::ftype32> & rho_obs) :
+    variable_atoms(variable_atoms), threshold(threshold), cutoff(cutoff), conf(conf),
+    atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs) {
+    }
+#endif
+    virtual util::Umbrella_Weight * get_instance();
+  protected:
+    std::vector<unsigned int> variable_atoms;
+    double threshold;
+    double cutoff;
+    configuration::Configuration & conf;
+#ifdef HAVE_CLIPPER
+    clipper::Atom_list & atoms;
+    clipper::Xmap<clipper::ftype32> & rho_calc;
+    clipper::Xmap<clipper::ftype32> & rho_obs;
+#endif
+  };
+
 } // interaction
 #endif
 

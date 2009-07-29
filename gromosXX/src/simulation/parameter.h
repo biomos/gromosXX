@@ -1286,6 +1286,7 @@ namespace simulation
        * Default values:
        * - xrayrest 0 (no xray restraints)
        * - mode 0 (structure factor)
+       * - local_elevatin false
        * - force_constant 10000
        * - write 0
        * - writexmap 0
@@ -1294,7 +1295,7 @@ namespace simulation
        * - resolution 1.0
        * - readavg 0
        */
-      xrayrest_struct() : xrayrest(xrayrest_off), mode(xrayrest_mode_structure_factor), force_constant(1E4), tau(0),
+      xrayrest_struct() : xrayrest(xrayrest_off), mode(xrayrest_mode_structure_factor), local_elevation(false), force_constant(1E4), tau(0),
       write(0), writedensity(0), writexmap(0), spacegroup("P 1"),
       resolution(1.0), readavg(0) {
       }
@@ -1307,6 +1308,10 @@ namespace simulation
        * restraining mode
        */
       xrayrestmode_enum mode;
+      /**
+       * local elevation
+       */
+      bool local_elevation;
       /**
        * CXR
        */

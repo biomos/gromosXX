@@ -12,15 +12,12 @@
 
 // special interactions
 #include <interaction/interaction_types.h>
-
+#include <util/umbrella_weight.h>
 #include <interaction/special/xray_restraint_interaction.h>
 
+#include <math/periodicity.h>
 #include <util/template_split.h>
 #include <util/debug.h>
-#include <vector>
-#include <string>
-#include <ios>
-#include <time.h>
 
 #ifdef OMP
 #include <omp.h>
@@ -369,10 +366,13 @@ int interaction::Xray_Restraint_Interaction
   // get number of atoms in simulation
   const int atoms_size = topo.num_atoms();
   // update clipper atomvec: convert the position to Angstrom
+  math::Periodicity<math::triclinic> periodicity(conf.current().box);
   for (int i = 0; i < atoms_size; i++) {
-    atoms[i].set_coord_orth(clipper::Coord_orth(conf.current().pos(i)(0)*10.0,
-            conf.current().pos(i)(1)*10.0,
-            conf.current().pos(i)(2)*10.0));
+    math::Vec in_box = conf.current().pos(i);
+    periodicity.put_into_positive_box(in_box);
+    in_box *= 10;
+    atoms[i].set_coord_orth(clipper::Coord_orth(in_box(0),
+            in_box(1), in_box(2)));
   }
   // Calculate structure factors
   m_timer.start("structure factor");
@@ -470,7 +470,14 @@ int interaction::Xray_Restraint_Interaction
   DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);  
   m_timer.stop("scaling");
 
-  if (sim.param().xrayrest.mode != simulation::xrayrest_mode_electron_density) {
+  if (sim.param().xrayrest.local_elevation) {
+    ///////////////////////////////////////////////
+    // LOCAL ELEVATION
+    ///////////////////////////////////////////////
+    m_timer.start("obs. electron density");
+    rho_obs.fft_from(fphi_obs);
+    m_timer.stop("obs. electron density");
+  } else if (sim.param().xrayrest.mode != simulation::xrayrest_mode_electron_density) {
     ///////////////////////////////////////////////
     // STRUCTURE FACTOR RESTRAINING
     ///////////////////////////////////////////////
@@ -635,6 +642,31 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     topo.xray_restraints()[i].sf /= scalefactor;
   }
 
+  if (sim.param().xrayrest.local_elevation) {
+    std::vector<topology::xray_umbrella_weight_struct>::const_iterator it =
+            topo.xray_umbrella_weights().begin(), to =
+            topo.xray_umbrella_weights().end();
+    for (; it != to; ++it) {
+      std::vector<util::Umbrella>::iterator umb_it = conf.special().umbrellas.begin(),
+              umb_to = conf.special().umbrellas.end();
+      bool found = false;
+      for (; umb_it != umb_to; ++umb_it) {
+        if (umb_it->id == it->id) {
+          found = true;
+          umb_it->umbrella_weight_factory = new interaction::Electron_Density_Umbrella_Weight_Factory(it->atoms,
+                  it->threshold, it->cutoff, conf, atoms, rho_calc, rho_obs);
+        }
+
+      }
+      if (!found) {
+        std::ostringstream msg;
+        msg << "Cannot find umbrella " << it->id;
+        io::messages.add(msg.str(), "Xray_Restraint_Interaction", io::message::error);
+        return 1;
+      }
+    } // for weights
+  } // if local elev
+
   if (!quiet) {
     os.precision(2);
     os << "\nXRAYREST\n";
@@ -653,10 +685,14 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
         os << "Biquadratic time-averaged/instantaneous restraining";
         break;
     }
-    if (sim.param().xrayrest.mode == simulation::xrayrest_mode_electron_density)
-      os << " on the electron density.\n";
-    else
+    if (sim.param().xrayrest.mode == simulation::xrayrest_mode_electron_density) {
+      os << " on the electron density";
+      if (sim.param().xrayrest.local_elevation)
+        os << " using local elevation";
+      os << ".\n";
+    } else {
       os << " on the structure factors.\n";
+    }
 
     if (sim.param().xrayrest.readavg)
       os << "\treading xray averages from file\n";
@@ -667,7 +703,22 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     os << "Resolution                  : " << sim.param().xrayrest.resolution << std::endl;
     os << "Num experimental reflections: " << topo.xray_restraints().size() << std::endl;
     os << "Num expected reflections    : " << hkls.num_reflections() << std::endl;
-    os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl;
+    os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl << std::endl;
+    if (sim.param().xrayrest.local_elevation) {
+      os << "The following local elevation umbrellas are weighted by the electron density:" << std::endl;
+      std::vector<topology::xray_umbrella_weight_struct>::const_iterator it =
+              topo.xray_umbrella_weights().begin(), to =
+              topo.xray_umbrella_weights().end();
+      for (; it != to; ++it) {
+        os.precision(5);
+        os << "  - " << std::setw(5) << it->id << ": Threshold " << std::setw(15) << it->threshold << " atoms: ";
+        for (std::vector<unsigned int>::const_iterator a_it = it->atoms.begin(),
+                a_to = it->atoms.end(); a_it != a_to; ++a_it) {
+          os << std::setw(5) << (*a_it) + 1;
+        }
+        os << std::endl;
+      }
+    }
     os << "END\n\n";
   }
   // Check if too low resolution
@@ -695,5 +746,91 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   }
 #endif
   return 0;
+}
+
+void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
+#ifdef HAVE_CLIPPER
+  // convert to angstrom
+  const float cutoff2 = cutoff * cutoff * 100.0;
+  // create the range (size of atom)
+  const clipper::Cell & cell = rho_calc.cell();
+  const clipper::Grid_sampling & grid = rho_calc.grid_sampling();
+  clipper::Grid_range gd(cell, grid, cutoff * 10.0);
+
+  const int atoms_size = variable_atoms.size();
+  const double volume = cell.volume();
+
+  // loop over atoms to find covered grid points
+  std::set<int> grid_points;
+
+  for (int i = 0; i < atoms_size; i++) {
+    DEBUG(1, "Atom index: " << variable_atoms[i]);
+    const clipper::Coord_orth & atom_pos = atoms[variable_atoms[i]].coord_orth();
+
+    // determine grad range of atom
+    const clipper::Coord_frac uvw = atom_pos.coord_frac(cell);
+    const clipper::Coord_grid g0 = uvw.coord_grid(grid) + gd.min();
+    const clipper::Coord_grid g1 = uvw.coord_grid(grid) + gd.max();
+
+    // loop over atom's grid
+    clipper::Xmap<clipper::ftype32>::Map_reference_coord i0, iu, iv, iw;
+    i0 = clipper::Xmap<clipper::ftype32>::Map_reference_coord(rho_obs, g0);
+    for (iu = i0; iu.coord().u() <= g1.u(); iu.next_u()) {
+      for (iv = iu; iv.coord().v() <= g1.v(); iv.next_v()) {
+        for (iw = iv; iw.coord().w() <= g1.w(); iw.next_w()) {
+          // check if this cell is within the cutoff
+          if ((iw.coord_orth() - atom_pos).lengthsq() < cutoff2) {
+            grid_points.insert(iw.index());
+          } // if within cutoff
+        }
+      }
+    } // loop over grid
+  } // loop over atoms
+  // now we have a list of grid points without duplicates. Calculate density
+  // differences (weight)
+ 
+  const double scale = volume / grid.size();
+  const double threshold_scaled = threshold; // / sqrt(scale);
+  DEBUG(1, "threshold scaled: " << threshold_scaled);
+  double diff = 0.0;
+   // loop over grid points
+  for (std::set<int>::const_iterator it = grid_points.begin(), to = grid_points.end();
+          it != to; ++it) {
+    const double obs = rho_obs.get_data(*it);
+    const double calc = rho_calc.get_data(*it);
+    DEBUG(1, "rho_obs: " << obs << " rho_calc: " << calc << " diff: " << fabs(obs - calc));
+    // this is the implementation of the flat bottom potential
+    const double rhoobs_m_thres = obs - threshold_scaled;
+    const double rhoobs_p_thres = obs + threshold_scaled;
+
+    if (calc < rhoobs_m_thres) {
+      const double term = rhoobs_m_thres - calc;
+      diff += term * term;
+    } else if (calc > rhoobs_p_thres) {
+      const double term = rhoobs_p_thres - calc;
+      diff += term * term;
+    }
+  }
+  // correct for volume
+  weight += diff * scale;
+#endif
+}
+
+void interaction::Electron_Density_Umbrella_Weight::write(std::ostream& os) const {
+  os.precision(8);
+  os.flags(std::ios::scientific);
+  os << std::setw(15) << weight;
+}
+
+util::Umbrella_Weight * interaction::Electron_Density_Umbrella_Weight_Factory::get_instance() {
+#ifdef HAVE_CLIPPER
+  util::Umbrella_Weight * instance =
+          new interaction::Electron_Density_Umbrella_Weight(variable_atoms,
+            threshold, cutoff, conf, atoms, rho_calc, rho_obs);
+  // make sure the weight is increased as soon as the instance is created
+  instance->increment_weight();
+  instances.push_back(instance);
+  return instance;
+#endif
 }
 

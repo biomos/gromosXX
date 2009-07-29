@@ -22,6 +22,8 @@
 #include <vector>
 #include <map>
 
+#include "util/umbrella_weight.h"
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -105,6 +107,10 @@ int interaction::Local_Elevation_Interaction::init(topology::Topology &topo,
   std::vector<util::Umbrella>::iterator umb_it = conf.special().umbrellas.begin(),
           umb_to = conf.special().umbrellas.end();
   for (; umb_it != umb_to; ++umb_it) {
+    // attach weight to umbrella if this was not done yet
+    if (umb_it->umbrella_weight_factory == NULL)
+      umb_it->umbrella_weight_factory = new util::Number_Of_Visits_Umbrella_Weight_Factory();
+
     // dimensions
     if (umb_it->dim() != umb_it->variable_type.size()) {
       std::ostringstream msg;
@@ -129,6 +135,8 @@ int interaction::Local_Elevation_Interaction::init(topology::Topology &topo,
 
     // transform the units
     umb_it->transform_units();
+    // read the configurations
+    umb_it->read_configuration();
   }
 
   if (!quiet) {

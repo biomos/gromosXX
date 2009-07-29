@@ -78,19 +78,13 @@ static int _calculate_dihedral_restraint_interactions
     ip = dot(rmj, rnk);
    
     double acs = ip / (dmj*dnk);
-    if (acs > 1.0){
-      std::cout << "numerical error?? in : "
-		<< it->i << " - " << it->j
-		<< " - " << it->k << " - " << it->l
-		<< " : " << acs << std::endl;
-      
-      if (acs < 1.0 + math::epsilon){
-	acs = 1.0;
-      }
-      else{
-	io::messages.add("improper dihedral",
-			 "acs > 1.0",
-			 io::message::critical);
+    if (acs > 1.0) {
+      if (acs < 1.0 + math::epsilon) {
+        acs = 1.0;
+      } else {
+        io::messages.add("improper dihedral",
+                "acs > 1.0",
+                io::message::critical);
       }
     }
     

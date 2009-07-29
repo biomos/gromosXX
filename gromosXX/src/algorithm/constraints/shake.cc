@@ -25,6 +25,8 @@
 #include <util/error.h>
 #include <util/debug.h>
 
+#include <limits>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
@@ -496,6 +498,18 @@ int algorithm::Shake::apply(topology::Topology & topo,
   for (; it != to; ++it) {
     conf.old().constraint_force(*it) = 0.0;
   }
+
+  math::SArray masses;
+
+  if (sim.param().posrest.posrest == simulation::posrest_const) {
+    masses = topo.mass();
+    std::vector<topology::position_restraint_struct>::const_iterator
+          it = topo.position_restraints().begin(),
+          to = topo.position_restraints().end();
+    for(;it != to; ++it) {
+      topo.mass()[it->seq] = std::numeric_limits<double>::infinity();
+    }
+  }
   
   // check whether we shake
   if (m_rank == 0 && 
@@ -545,6 +559,15 @@ int algorithm::Shake::apply(topology::Topology & topo,
     for (; it != to; ++it) {
       conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) /
               sim.time_step_size();
+    }
+  }
+
+  if (sim.param().posrest.posrest == simulation::posrest_const) {
+    std::vector<topology::position_restraint_struct>::const_iterator
+          it = topo.position_restraints().begin(),
+          to = topo.position_restraints().end();
+    for(;it != to; ++it) {
+      topo.mass()[it->seq] = masses[it->seq];
     }
   }
   

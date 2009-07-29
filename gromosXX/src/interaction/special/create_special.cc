@@ -24,6 +24,7 @@
 #include <interaction/special/jvalue_restraint_interaction.h>
 #include <interaction/special/external_interaction.h>
 #include <interaction/special/ramd_interaction.h>
+#include <util/umbrella_weight.h>
 #include <interaction/special/xray_restraint_interaction.h>
 #include <interaction/special/local_elevation_interaction.h>
 

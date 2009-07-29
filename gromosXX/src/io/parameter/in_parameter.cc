@@ -1938,6 +1938,8 @@ XRAYRES
 #            1: instantaneous structure factor restraints
 #            2: time-averaged structure factor restraints
 #            3: biquadratic/timeaveraged structure factor restraints
+#    NTXLE   0: do not perform local elevation
+#            1: do perform local elevation
 #    CXR     >= 0 xray restraining force constant
 #    NTWXR   >= 0 write xray data to output file
 #            0: don't write xray data
@@ -1951,8 +1953,8 @@ XRAYRES
 #    CXTAU   >=0 xray time-average restraining memory-constant
 #    RDAVG   0/1 read sf-timeaverages (from job to job)
 #
-#   NTXR     CXR   NTWXR   NTWDE   NTWXM   CXTAU   RDAVG
-       0   2.5E4       0       0       0     0.0       0
+#   NTXR   NTXLE     CXR   NTWXR   NTWDE   NTWXM   CXTAU   RDAVG
+       0       0     0.0       0       0      0      0.0       0
 END
 @endverbatim
  */
@@ -1976,8 +1978,8 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
-  int ntxr;
-  _lineStream >> ntxr
+  int ntxr, ntxle;
+  _lineStream >> ntxr >> ntxle
               >> param.xrayrest.force_constant
               >> param.xrayrest.write
               >> param.xrayrest.writedensity
@@ -2015,6 +2017,32 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
   if (ntxr == -3) {
     io::messages.add("XRAYRES block: NTXR must be -2 to 3.",
           "In_Parameter", io::message::error);
+  }
+
+  if (param.xrayrest.xrayrest == simulation::xrayrest_off) {
+    // abort reading of rest
+    return;
+  }
+
+  switch (ntxle) {
+    case 0:
+      param.xrayrest.local_elevation = false;
+      break;
+    case 1:
+      param.xrayrest.local_elevation = true;
+      break;
+    default:
+      io::messages.add("XRAYRES block: NTXLE must be 0 or 1.",
+              "In_Parameter", io::message::error);
+
+  }
+
+  if (param.xrayrest.local_elevation) {
+    if (param.xrayrest.mode != simulation::xrayrest_mode_electron_density ||
+        param.xrayrest.xrayrest == simulation::xrayrest_biq) {
+      io::messages.add("XRAYRES block: NTXLE 1 requires NTXR -2 or -1.",
+              "In_Parameter", io::message::error);
+    }
   }
 
   if (param.xrayrest.force_constant < 0.0) {

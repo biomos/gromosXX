@@ -51,10 +51,14 @@ int io::read_input(io::Argument const & args,
 
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
   
-
   // read this before configuration, as it contains topological data...
-  // does this work???
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
+
+  sim.multibath().calculate_degrees_of_freedom
+          (topo, sim.param().rottrans.rottrans, sim.param().posrest.posrest == simulation::posrest_const, sim.param().boundary.dof_to_subtract);
+
+  // check the bath parameters
+  sim.multibath().check_state(topo.num_atoms());
 
   if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
   
@@ -76,12 +80,19 @@ int io::read_replica_input
 
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
 
-  if (read_replica_configuration(args, topo, conf, sim, replica_data, os, quiet) != 0)
-    return -1;
-  
-  for(unsigned int i=0; i<conf.size(); ++i){
+  for (unsigned int i = 0; i < conf.size(); ++i) {
     if (read_special(args, topo, conf[i], sim, os, quiet) != 0) return -1;
   }
+
+  sim.multibath().calculate_degrees_of_freedom
+          (topo, sim.param().rottrans.rottrans, sim.param().posrest.posrest == simulation::posrest_const, sim.param().boundary.dof_to_subtract);
+
+  // check the bath parameters
+  sim.multibath().check_state(topo.num_atoms());
+
+  if (read_replica_configuration(args, topo, conf, sim, replica_data, os, quiet) != 0)
+    return -1;
+
 
   return 0;
 }
@@ -198,13 +209,6 @@ int io::read_topology(io::Argument const & args,
   }
   
   topo.init(sim, os, quiet);
-  
-  // do this after reading in a perturbation topology
-  sim.multibath().calculate_degrees_of_freedom
-    (topo, sim.param().rottrans.rottrans, sim.param().boundary.dof_to_subtract);
-  
-  // check the bath parameters
-  sim.multibath().check_state(topo.num_atoms());
 
   // and create the algorithms
   // (among them the forcefield!)

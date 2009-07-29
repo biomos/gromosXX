@@ -497,7 +497,8 @@ namespace topology
      * calculate constraint degrees of freedom
      */
     void calculate_constraint_dof(simulation::Multibath & mb,
-				  bool rottrans_constraints)const;
+				  bool rottrans_constraints,
+                                  bool position_constraints)const;
     
     /**
      * check state
@@ -780,6 +781,20 @@ namespace topology
     std::vector<double> const & xray_solv_occupancies()const
     {
       return m_xray_solv_occupancy;
+    }
+    /**
+     * xray umbrella weight accessor.
+     */
+    std::vector<xray_umbrella_weight_struct> & xray_umbrella_weights()
+    {
+      return m_xray_umbrella_weights;
+    }
+    /**
+     * xray umbrella weight accessor.
+     */
+    std::vector<xray_umbrella_weight_struct> const & xray_umbrella_weights()const
+    {
+      return m_xray_umbrella_weights;
     }
 
     /**
@@ -1259,6 +1274,10 @@ namespace topology
      * xray solvent occupancies
      */
     std::vector<double> m_xray_solv_occupancy;
+    /**
+     * xray umbrella weights
+     */
+    std::vector<xray_umbrella_weight_struct> m_xray_umbrella_weights;
     /**
      * expanded topology for multiple unit cell simulations
      */

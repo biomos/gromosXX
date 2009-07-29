@@ -14,6 +14,7 @@
 #include <algorithm/constraints/position_constraints.h>
 
 #include <util/debug.h>
+#include <limits>
 
 #undef MODULE
 #undef SUBMODULE
@@ -52,14 +53,14 @@ int algorithm::Position_Constraints
     it = topo.position_restraints().begin(),
     to = topo.position_restraints().end();
 
+  math::VArray &pos   = conf.current().pos;
   math::VArray &vel   = conf.current().vel;
   math::VArray &force = conf.current().force;
   
   for( ; it != to; ++it){
-
+    pos(it->seq) = conf.special().reference_positions(it->seq);
     force(it->seq) = 0.0;
     vel(it->seq) = 0.0;
-
   }
   
   return 0;		   
@@ -86,35 +87,33 @@ int algorithm::Position_Constraints
           to = topo.position_restraints().end();
   
   math::VArray &pos   = conf.current().pos;
-  
-  for( ; it != to; ++it)
+  math::VArray &vel   = conf.current().vel;
+
+  std::set<unsigned int> constrained;
+  for( ; it != to; ++it) {
     pos(it->seq) = conf.special().reference_positions(it->seq);
+    vel(it->seq) = 0.0;
+    constrained.insert(it->seq);
+  }
   
   // Here, we have to check whether no atoms that are positionally
   // contrained are at the same time member of a distance constraint.
   
   // loop over distance constraints
+  std::vector<topology::two_body_term_struct> keep;
   for(std::vector<topology::two_body_term_struct>::const_iterator
       dist_it = topo.solute().distance_constraints().begin(),
       dist_to = topo.solute().distance_constraints().end();
       dist_it != dist_to; ++dist_it) {
     // search for positinally contrained atoms in distance constraint
-    for(std::vector<topology::position_restraint_struct>::const_iterator 
-       pos_it = topo.position_restraints().begin(),
-       pos_to = topo.position_restraints().end();
-       pos_it != pos_to; ++pos_it) {
-      
-      unsigned int atom = pos_it->seq;
-      if (dist_it->i == atom || dist_it->j == atom) {
-        std::ostringstream msg;
-        msg << "One of the atoms in bond " << dist_it->i+1 << "-" << dist_it->j+1
-            << " is positionally constrained. This SHAKEing of positionally "
-               "constraint atoms is not implemented.";
-        io::messages.add(msg.str(), "Position_Contraints", io::message::error);
-        return -1;
-      }
+    if (constrained.count(dist_it->i) && constrained.count(dist_it->j)) {
+      // remove
+    } else {
+      // keep
+      keep.push_back(*dist_it);
     }
   }
+  topo.solute().distance_constraints() = keep;
 
   return 0;
 }

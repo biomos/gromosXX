@@ -66,7 +66,10 @@ _calculate(configuration::Configuration & conf) {
   const double dln = sqrt(abs2(rln));
 
   const double ip = dot(rim, rln);
-  const double cosphi = ip / (dim * dln);
+  double cosphi = ip / (dim * dln);
+
+  if (cosphi < -1.0) cosphi = -1.0;
+  if (cosphi > 1.0) cosphi = 1.0;
 
   // get the value
   phi = acos(cosphi);

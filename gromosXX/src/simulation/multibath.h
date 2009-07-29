@@ -164,6 +164,7 @@ namespace simulation
      */
     void calculate_degrees_of_freedom(topology::Topology & topo,
 				      bool rottrans_constraints,
+                                      bool position_constraints,
                                       double dof_to_subtract);
     
     /**

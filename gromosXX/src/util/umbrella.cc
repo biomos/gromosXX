@@ -40,9 +40,9 @@ util::Umbrella::Umbrella(int id, unsigned int dim, Umbrella_Weight_Factory * fac
   building = false;
   enabled = false;
   umbrella_weight_factory = factory;
-  if (umbrella_weight_factory == NULL) {
-    umbrella_weight_factory = new Number_Of_Visits_Umbrella_Weight_Factory();
-  }
+  configuration_block = "";
+  configuration_block_pos = 0;
+
 }
 
 util::Umbrella::Umbrella(const Umbrella& u) {
@@ -69,6 +69,8 @@ util::Umbrella & util::Umbrella::operator=(const util::Umbrella& u) {
   building = u.building;
   enabled = u.enabled;
   umbrella_weight_factory = u.umbrella_weight_factory;
+  configuration_block = u.configuration_block;
+  configuration_block_pos = u.configuration_block_pos;
 
   return *this;
 }
@@ -140,19 +142,16 @@ void util::Umbrella::build(
 void util::Umbrella::apply(
         configuration::Configuration & conf) {
   DEBUG(6, "Applying umbrella " << id);
-
-  double & local_elevation_energy = conf.current().energies.leus_total;
-
   const unsigned int dim = coordinates.size();
 
   // loop over the stored configurations
   std::map<util::Umbrella::leus_conf, util::Umbrella_Weight*>::const_iterator conf_it =
           configurations.begin(), conf_to = configurations.end();
 
-  double energy = 1.0;
-  std::vector<double> deriv(dim, 1.0);
-  bool outside = false;
   for(; conf_it != conf_to; ++conf_it) {
+    bool outside = false;
+    double energy = 1.0;
+    std::vector<double> deriv(dim, 1.0);
     // loop over the coordinates attached to the umbrella
     for(unsigned int i = 0; i < dim; ++i) {
       DEBUG(8, "\tpos[" << i+1 << "]: " << conf_it->first.pos[i]);
@@ -219,13 +218,14 @@ void util::Umbrella::apply(
     energy *= force_constant * conf_it->second->get_weight();
     DEBUG(1,"\tenergy: " << energy)
     // store the energy, apply the force
-    local_elevation_energy += energy;
+    conf.current().energies.leus_total += energy;
     for(unsigned int i = 0; i < dim; ++i) {
       const double d = deriv[i] * force_constant * conf_it->second->get_weight();
       DEBUG(1,"\tderiv[" << i+i << "]: " << d);
       coordinates[i]->apply(d);
     }
-  }
+  } // for visited configurations
+  DEBUG(6,"\tLEUS energy: " << conf.current().energies.leus_total);
 }
 
 void util::Umbrella::transform_units() {
@@ -267,6 +267,36 @@ void util::Umbrella::calculate_coordinates(
   for (unsigned int i = 0; i < dim(); ++i) {
     coordinates[i]->calculate(conf);
   }
+}
+
+void util::Umbrella::read_configuration() {
+  DEBUG(1, "Converting read configurations of umbrella " << id);
+  std::istringstream _lineStream(configuration_block);
+  _lineStream.seekg(configuration_block_pos);
+
+  unsigned int nconle;
+  _lineStream >> nconle;
+  if (_lineStream.fail()) {
+    io::messages.add("LEUSBIAS block: Could not read umbrella number of configurations",
+            "Umbrella", io::message::error);
+    return;
+  }
+  // loop over sampled points
+  for (unsigned int n = 0; n < nconle; ++n) {
+    util::Umbrella::leus_conf cnf(dim());
+    util::Umbrella_Weight * weight = umbrella_weight_factory->get_instance();
+    _lineStream >> (*weight);
+    for (unsigned int i = 0; i < dim(); ++i) {
+      _lineStream >> cnf.pos[i];
+      if (_lineStream.fail()) {
+        io::messages.add("LEUSBIAS block: Could not read stored configurations",
+                "Umbrella", io::message::error);
+        return;
+      }
+      --cnf.pos[i]; // our arrays start at 0 and not 1 as in the format
+    }
+    configurations.insert(std::pair<util::Umbrella::leus_conf, util::Umbrella_Weight*>(cnf, weight));
+  } // for configurations
 }
 
 std::string util::Umbrella::str() const {

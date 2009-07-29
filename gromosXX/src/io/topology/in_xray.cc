@@ -96,6 +96,24 @@ XRAYRESPARA
    0.15
 END
 @endverbatim
+ *
+ * @section xrayumbrellaweight XRAYUMBRELLAWEIGHT block
+ * The XRAYUMBRELLAWEIGHT specified the atoms that are attached to a particular
+ * umbrella. The umbrella is than weighted by the electron density deviation instead
+ * of the number of visits.
+ *
+ * The block is read from the xray restraints specification file (\@xray)
+ * @verbatim
+XRAYUMBRELLAWEIGHT
+# UMBID      : ID of the umbrella
+# THRES      : Threshold for the flat bottom potatial
+# DENSCUT    : Cutoff for integration over atom volume
+# ATOMS[1..N]: The atoms used for weighting the umbrella
+1 0.23 0.5 23 24 24 26
+2 0.33 0.5 56 57 58 59 60
+END
+@endverbatim
+ *
  */
 void
 io::In_Xrayresspec::read(topology::Topology& topo,
@@ -109,7 +127,6 @@ io::In_Xrayresspec::read(topology::Topology& topo,
     os << "XRAY RESTRAINTS\n";
 
   std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
 
   { // XRAYRESSPEC
 
@@ -299,6 +316,69 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         io::messages.add("bad line in XRAYSOLVBFOCCSPEC block",
                 "In_Xrayresspec", io::message::error);
         return;
+      }
+    }
+  } // XRAYSOLVBFOCCSPEC
+
+  { // XRAYUMBRELLAWEIGHT
+    buffer = m_block["XRAYUMBRELLAWEIGHT"];
+    DEBUG(10, "XRAYUMBRELLAWEIGHT block : " << buffer.size());
+
+    if (sim.param().xrayrest.local_elevation) {
+      if (!buffer.size()) {
+        io::messages.add("no XRAYUMBRELLAWEIGHT block in xray restraints file",
+                "in_Xrayresspec", io::message::error);
+        return;
+      }
+      std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+              to = buffer.end() - 1;
+
+      for(; it != to; ++it) {
+        _lineStream.clear();
+        // trim whitespace from right end
+        std::string line(*it);
+        std::string::size_type right = line.find_last_not_of(" \n\r\t");
+        if (right != std::string::npos)
+          line.erase(right+1);
+        _lineStream.str(line);
+        int umbrella;
+        double thres, cut;
+        _lineStream >> umbrella >> thres >> cut;
+        if (_lineStream.fail()) {
+          io::messages.add("XRAYUMBRELLAWEIGHT block: Cannot read umbrella id and threshold",
+                  "in_Xrayresspec", io::message::error);
+          return;
+        }
+        if (thres < 0.0) {
+          io::messages.add("XRAYUMBRELLAWEIGHT block: Bad threshold (<0.0)",
+                  "in_Xrayresspec", io::message::error);
+          return;
+        }
+        std::vector<unsigned int> atoms;
+        int atom;
+        while(!_lineStream.eof()) {
+          _lineStream >> atom;
+          --atom;
+          if (_lineStream.fail() || atom < 0 || unsigned(atom) > topo.num_atoms()) {
+            io::messages.add("XRAYUMBRELLAWEIGHT block: Bad atom number",
+                  "in_Xrayresspec", io::message::error);
+            return;
+          }
+          atoms.push_back(atom);
+        } // while atoms
+        if (atoms.empty()) {
+          io::messages.add("XRAYUMBRELLAWEIGHT block: no atoms given",
+                  "in_Xrayresspec", io::message::error);
+          return;
+        }
+
+        topo.xray_umbrella_weights().push_back(topology::xray_umbrella_weight_struct(umbrella, thres, cut, atoms));
+
+      } //  for lines
+    } else {
+      if (buffer.size()) {
+        io::messages.add("XRAYUMBRELLAWEIGHT block in xray restraints file not read in",
+                "in_Xrayresspec", io::message::warning);
       }
     }
   } // XRAYSOLVBFOCCSPEC

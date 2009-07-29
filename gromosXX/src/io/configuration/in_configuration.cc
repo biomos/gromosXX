@@ -2366,32 +2366,12 @@ bool io::In_Configuration::_read_leusbias(
       continue;
     }
 
-    unsigned int nconle;
-    _lineStream >> nconle;
-    if (_lineStream.fail()) {
-      io::messages.add("LEUSBIAS block: Could not read umbrella number of configurations",
-              "In_Configuration",
-              io::message::error);
-      return false;
-    }
-    // loop over sampled points
-    for (unsigned int n = 0; n < nconle; ++n) {
-      util::Umbrella::leus_conf cnf(dim);
-      util::Umbrella_Weight * weight = u.umbrella_weight_factory->get_instance();
-      _lineStream >> (*weight);
-      for (unsigned int i = 0; i < u.dim(); ++i) {
-        _lineStream >> cnf.pos[i];
-        if (_lineStream.fail()) {
-          io::messages.add("LEUSBIAS block: Could not read stored configurations",
-                  "In_Configuration",
-                  io::message::error);
-          return false;
-        }
-        --cnf.pos[i]; // our arrays start at 0 and not 1 as in the format
-      }
-      u.configurations.insert(std::pair<util::Umbrella::leus_conf, util::Umbrella_Weight*>(cnf, weight));
-
-    } // for configurations
+    // the rest of this block is stored and read later. We have to save the
+    // stream position and the block.
+    // the rest ist read in util::Umbrella::read_configuration. This
+    // method must not be called before the weight factory is set!
+    u.configuration_block_pos = _lineStream.tellg();
+    u.configuration_block = _lineStream.str();
     umbrellas.push_back(u);
   } // for umbrellas
   return true;
