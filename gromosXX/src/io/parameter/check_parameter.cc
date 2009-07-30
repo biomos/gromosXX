@@ -563,8 +563,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_lincs", "temp_nosehoover");
   fc.unlock("solute_lincs", "temp_nosehoover_chains");
   fc.unlock("solute_lincs", "position_rest");
-  fc.unlock("solute_lincs", "position_const");
-  fc.unlock("solute_lincs", "position_const_scaled");
   fc.unlock("solute_lincs", "distance_rest");
   fc.unlock("solute_lincs", "dihedral_rest");
   fc.unlock("solute_lincs", "jvalue_rest");
@@ -611,8 +609,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "temp_nosehoover");
   fc.unlock("solute_flexshake", "temp_nosehoover_chains");
   fc.unlock("solute_flexshake", "position_rest");
-  fc.unlock("solute_flexshake", "position_const");
-  fc.unlock("solute_flexshake", "position_const_scaled");
   fc.unlock("solute_flexshake", "distance_rest");
   fc.unlock("solute_flexshake", "dihedral_rest");
   fc.unlock("solute_flexshake", "jvalue_rest");
@@ -1154,8 +1150,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation", "temp_nosehoover");
   fc.unlock("perturbation", "temp_nosehoover_chains");
   fc.unlock("perturbation", "position_rest");
-  fc.unlock("perturbation", "position_const");
-  fc.unlock("perturbation", "position_const_scaled");
   fc.unlock("perturbation", "distance_rest");
   fc.unlock("perturbation", "dihedral_rest");
   fc.unlock("perturbation", "dihedral_const");
@@ -1193,8 +1187,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation_scaling", "temp_nosehoover");
   fc.unlock("perturbation_scaling", "temp_nosehoover_chains");
   fc.unlock("perturbation_scaling", "position_rest");
-  fc.unlock("perturbation_scaling", "position_const");
-  fc.unlock("perturbation_scaling", "position_const_scaled");
   fc.unlock("perturbation_scaling", "distance_rest");
   fc.unlock("perturbation_scaling", "dihedral_rest");
   fc.unlock("perturbation_scaling", "dihedral_const");
@@ -1255,8 +1247,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("individual_lambdas", "temp_nosehoover");
   fc.unlock("individual_lambdas", "temp_nosehoover_chains");
   fc.unlock("individual_lambdas", "position_rest");
-  fc.unlock("individual_lambdas", "position_const");
-  fc.unlock("individual_lambdas", "position_const_scaled");
   fc.unlock("individual_lambdas", "distance_rest");
   fc.unlock("individual_lambdas", "dihedral_rest");
   fc.unlock("individual_lambdas", "dihedral_const");
@@ -1516,8 +1506,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("com_removal", "temp_nosehoover");
   fc.unlock("com_removal", "temp_nosehoover_chains");
   fc.unlock("com_removal", "position_rest");
-  fc.unlock("com_removal", "position_const");
-  fc.unlock("com_removal", "position_const_scaled");
   fc.unlock("com_removal", "distance_rest");
   fc.unlock("com_removal", "dihedral_rest");
   fc.unlock("com_removal", "dihedral_const");
@@ -1807,7 +1795,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_const", "dihedral_rest");
   fc.unlock("position_const", "jvalue_rest");
   fc.unlock("position_const", "perscale");
-  fc.unlock("position_const", "rottrans");
   fc.unlock("position_const", "repex_temp");
   fc.unlock("position_const", "repex_lambda");
   fc.unlock("position_const", "multicell");
@@ -2089,8 +2076,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("slow_growth", "temp_nosehoover");
   fc.unlock("slow_growth", "temp_nosehoover_chains");
   fc.unlock("slow_growth", "position_rest");
-  fc.unlock("slow_growth", "position_const");
-  fc.unlock("slow_growth", "position_const_scaled");
   fc.unlock("slow_growth", "distance_rest");
   fc.unlock("slow_growth", "dihedral_rest");
   fc.unlock("slow_growth", "dihedral_const");
@@ -2149,8 +2134,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("eds", "temp_nosehoover");
   fc.unlock("eds", "temp_nosehoover_chains");
   fc.unlock("eds", "position_rest"); 
-  fc.unlock("eds", "position_const"); 
-  fc.unlock("eds", "position_const_scaled"); 
   fc.unlock("eds", "distance_rest");
   fc.unlock("eds", "dihedral_rest");
   fc.unlock("eds", "dihedral_const");
@@ -2813,8 +2796,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_lincs", "temp_nosehoover");
   fc.unlock("solvent_lincs", "temp_nosehoover_chains");
   fc.unlock("solvent_lincs", "position_rest");
-  fc.unlock("solvent_lincs", "position_const");
-  fc.unlock("solvent_lincs", "position_const_scaled");
   fc.unlock("solvent_lincs", "distance_rest");
   fc.unlock("solvent_lincs", "dihedral_rest");
   fc.unlock("solvent_lincs", "dihedral_const");
@@ -2886,8 +2867,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_settle", "temp_nosehoover");
   fc.unlock("solvent_settle", "temp_nosehoover_chains");
   fc.unlock("solvent_settle", "position_rest");
-  fc.unlock("solvent_settle", "position_const");
-  fc.unlock("solvent_settle", "position_const_scaled");
   fc.unlock("solvent_settle", "distance_rest");
   fc.unlock("solvent_settle", "dihedral_rest");
   fc.unlock("solvent_settle", "dihedral_const");
