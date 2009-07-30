@@ -329,7 +329,8 @@ namespace io {
      */
     bool _read_xray_av(std::vector<std::string> &buffer,
 			 std::vector<configuration::Configuration::special_struct::xray_struct> & xray_av,
-			 std::vector<topology::xray_restraint_struct> const & xray_res);
+			 std::vector<topology::xray_restraint_struct> const & xray_res,
+                         std::vector<topology::xray_restraint_struct> const & xray_rfree);
 
     /**
      * read JVALUE local elevation epsilons.

@@ -247,7 +247,7 @@ namespace configuration {
         /**
          * the instantaneous R-value
          */
-        double R_inst;
+        double R_inst, R_free_inst;
         /**
          * the time-averaged structure factor scaling constant
          */
@@ -255,7 +255,7 @@ namespace configuration {
         /**
          * the time-averaged R-value
          */
-        double R_avg;
+        double R_avg, R_free_avg;
       } /** xray informaton */ xray;
 
       /**

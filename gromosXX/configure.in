@@ -115,7 +115,7 @@ case "$compiler" in
     dnl or maybe -ipo if your lucky...
     dnl CXX_OPTIMIZE_FLAGS="-O3 -ipo -restrict -align -DNDEBUG -vec_report"
     CXX_OPTIMIZE_FLAGS="-O3 -ip -restrict -align -DNDEBUG -vec_report"
-    CXX_NDEBUG_FLAGS="-DNDEBUG"
+    CXX_NDEBUG_FLAGS="-DNDEBUG -g"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="xild"
 
@@ -169,7 +169,7 @@ case "$compiler" in
     echo "Configuring for GNU C++"
     CXX_PICKY_FLAGS="-Wall"
     CXX_OPTIMIZE_FLAGS="-O3 -funroll-loops -fno-gcse -DNDEBUG"
-    CXX_NDEBUG_FLAGS="-DNDEBUG"
+    CXX_NDEBUG_FLAGS="-DNDEBUG -g"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"
 
@@ -235,7 +235,7 @@ case "$compiler" in
     dnl CXX_PICKY_FLAGS="+w2 -xcheck -xsb"
     CXX_PICKY_FLAGS="+w2"
     CXX_OPTIMIZE_FLAGS="-fast -xdepend -xvector -DNDEBUG"
-    CXX_NDEBUG_FLAGS="-DNDEBUG"
+    CXX_NDEBUG_FLAGS="-DNDEBUG -g"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"
 
@@ -266,7 +266,7 @@ case "$compiler" in
     echo "Configuring for PGI"
     CXX_PICKY_FLAGS="-Minform=warn"
     CXX_OPTIMIZE_FLAGS="-fast -fastsse -DNDEBUG"
-    CXX_NDEBUG_FLAGS="-DNDEBUG"
+    CXX_NDEBUG_FLAGS="-DNDEBUG -g"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"
 

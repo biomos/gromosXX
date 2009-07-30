@@ -754,7 +754,8 @@ bool io::In_Configuration::read_xray
         io::messages.add("reading Xray-Restraint-Averages from last configuration file",
                 "in_configuration",
                 io::message::warning);
-        _read_xray_av(buffer, conf.special().xray_rest, topo.xray_restraints());
+        _read_xray_av(buffer, conf.special().xray_rest, topo.xray_restraints(),
+                topo.xray_rfree());
       } else {
         io::messages.add("reading in of Xray-restraints averages requested "
                 "but XRAYRESEXPAVE block not found",
@@ -2502,7 +2503,8 @@ configuration::Configuration::special_struct::rottrans_constr_struct & rottrans)
 bool io::In_Configuration::
 _read_xray_av(std::vector<std::string> &buffer,
         std::vector<configuration::Configuration::special_struct::xray_struct> & xray_av,
-        std::vector<topology::xray_restraint_struct> const & xray_res) {
+        std::vector<topology::xray_restraint_struct> const & xray_res,
+        std::vector<topology::xray_restraint_struct> const & xray_rfree) {
   DEBUG(8, "read xray averages");
 
   // no title in buffer!
@@ -2512,17 +2514,20 @@ _read_xray_av(std::vector<std::string> &buffer,
   std::vector<topology::xray_restraint_struct>::const_iterator
   xray_it = xray_res.begin(),
           xray_to = xray_res.end();
+  std::vector<topology::xray_restraint_struct>::const_iterator
+  rfree_it = xray_rfree.begin(),
+          rfree_to = xray_rfree.end();
 
   xray_av.clear();
 
   double av, phase_av;
 
-  if (buffer.size() - 1 != xray_res.size()) {
+  if (buffer.size() - 1 != xray_res.size() + xray_rfree.size()) {
     std::cout << "XRAYRESEXPAVE: " << buffer.size() - 1
-            << " but restraints: " << xray_res.size()
+            << " but restraints and R free: " << xray_res.size() + xray_rfree.size()
             << std::endl;
 
-    io::messages.add("number of Xray-restraints does not match with number of "
+    io::messages.add("number of Xray-restraints and R-free hkls does not match with number of "
             "continuation data", "in_configuration",
             io::message::error);
     return false;
@@ -2543,7 +2548,29 @@ _read_xray_av(std::vector<std::string> &buffer,
     xray_av.push_back(tempstruct);
   }
 
-  if (xray_it != xray_to || it != to) {
+  if (xray_it != xray_to) {
+    io::messages.add("Wrong number of Xray-Av's in XRAYRESEXPAVE block",
+            "In_Configuration",
+            io::message::error);
+    return false;
+  }
+
+  for (; (it != to) && (rfree_it != rfree_to); ++it, ++rfree_it) {
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+
+    _lineStream >> av >> phase_av;
+    if (_lineStream.fail()) {
+      io::messages.add("Bad value in XRAYRESEXPAVE block",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+    configuration::Configuration::special_struct::xray_struct tempstruct = {av, 0.0, phase_av, 0.0};
+    xray_av.push_back(tempstruct);
+  }
+
+  if (rfree_it != rfree_to || it != to) {
     io::messages.add("Wrong number of Xray-Av's in XRAYRESEXPAVE block",
             "In_Configuration",
             io::message::error);

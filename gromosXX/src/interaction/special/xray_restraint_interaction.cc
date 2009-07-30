@@ -392,42 +392,66 @@ int interaction::Xray_Restraint_Interaction
   // calcavg:        sum of time-averaged Fcalc
    m_timer.start("scaling");
   // zero all the sums
-  double sqr_calc = 0.0, obs = 0.0, calc = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
-          sqr_calcavg = 0.0, calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0;
+  double sqr_calc = 0.0, obs = 0.0, obs_free = 0.0, calc = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
+          sqr_calcavg = 0.0, calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0,
+          obs_k_calc_free = 0.0, obs_k_calcavg_free = 0.0;;
   // Number of reflections
   const unsigned int num_xray_rest = topo.xray_restraints().size();
+  const unsigned int num_xray_rfree = topo.xray_rfree().size();
   // e-term for time-average
   const double eterm = exp(-sim.time_step_size() / sim.param().xrayrest.tau);
 
   // loop over structure factors
-  for (unsigned int i = 0; i < num_xray_rest; i++) {
+  unsigned int j = 0;
+  for (unsigned int i = 0; i < num_xray_rest; i++, j++) {
     // filter calculated structure factors: save phases and amplitudes
     clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
-    conf.special().xray_rest[i].sf_curr = fabs(fphi[hkl].f());
-    conf.special().xray_rest[i].phase_curr = fphi[hkl].phi();
+    conf.special().xray_rest[j].sf_curr = fabs(fphi[hkl].f());
+    conf.special().xray_rest[j].phase_curr = fphi[hkl].phi();
     DEBUG(15,"HKL:" << hkl.h() << "," << hkl.k() << "," << hkl.l()); 
-    DEBUG(15,"\tSF: " << conf.special().xray_rest[i].sf_curr);
+    DEBUG(15,"\tSF: " << conf.special().xray_rest[j].sf_curr);
 
     // reset the averages at the beginning if requested
     if (!sim.param().xrayrest.readavg && sim.steps() == 0) {
-      conf.special().xray_rest[i].sf_av = conf.special().xray_rest[i].sf_curr;
-      conf.special().xray_rest[i].phase_av = conf.special().xray_rest[i].phase_curr;
+      conf.special().xray_rest[j].sf_av = conf.special().xray_rest[j].sf_curr;
+      conf.special().xray_rest[j].phase_av = conf.special().xray_rest[j].phase_curr;
     }
 
     // calculate averages
-    conf.special().xray_rest[i].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[i].sf_curr + eterm * conf.special().xray_rest[i].sf_av);
-    conf.special().xray_rest[i].phase_av = (1.0 - eterm) * conf.special().xray_rest[i].phase_curr + eterm * conf.special().xray_rest[i].phase_av;
+    conf.special().xray_rest[j].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[j].sf_curr + eterm * conf.special().xray_rest[j].sf_av);
+    conf.special().xray_rest[j].phase_av = (1.0 - eterm) * conf.special().xray_rest[j].phase_curr + eterm * conf.special().xray_rest[j].phase_av;
 
     // calc sums
-    obs_calc += conf.special().xray_rest[i].sf_curr * topo.xray_restraints()[i].sf;
-    obs_calcavg += conf.special().xray_rest[i].sf_av * topo.xray_restraints()[i].sf;
-    sqr_calc += conf.special().xray_rest[i].sf_curr * conf.special().xray_rest[i].sf_curr;
+    obs_calc += conf.special().xray_rest[j].sf_curr * topo.xray_restraints()[i].sf;
+    obs_calcavg += conf.special().xray_rest[j].sf_av * topo.xray_restraints()[i].sf;
+    sqr_calc += conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[i].sf_curr;
     obs += topo.xray_restraints()[i].sf;
-    calc += conf.special().xray_rest[i].sf_curr;
-    sqr_calcavg += conf.special().xray_rest[i].sf_av * conf.special().xray_rest[i].sf_av;
-    calcavg += conf.special().xray_rest[i].sf_av;
+    calc += conf.special().xray_rest[j].sf_curr;
+    sqr_calcavg += conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
+    calcavg += conf.special().xray_rest[j].sf_av;
   }
+  // loop over structure factors in R free set
+  for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
+    // filter calculated structure factors: save phases and amplitudes for R free HKLs
+    clipper::HKL hkl(topo.xray_rfree()[i].h, topo.xray_rfree()[i].k, topo.xray_rfree()[i].l);
+    conf.special().xray_rest[j].sf_curr = fabs(fphi[hkl].f());
+    conf.special().xray_rest[j].phase_curr = fphi[hkl].phi();
+    DEBUG(15,"HKL:" << hkl.h() << "," << hkl.k() << "," << hkl.l());
+    DEBUG(15,"\tSF: " << conf.special().xray_rest[j].sf_curr);
 
+    // reset the averages at the beginning if requested
+    if (!sim.param().xrayrest.readavg && sim.steps() == 0) {
+      conf.special().xray_rest[j].sf_av = conf.special().xray_rest[j].sf_curr;
+      conf.special().xray_rest[j].phase_av = conf.special().xray_rest[j].phase_curr;
+    }
+
+    // calculate averages
+    conf.special().xray_rest[j].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[j].sf_curr + eterm * conf.special().xray_rest[j].sf_av);
+    conf.special().xray_rest[j].phase_av = (1.0 - eterm) * conf.special().xray_rest[j].phase_curr + eterm * conf.special().xray_rest[j].phase_av;
+
+    // calc sums
+    obs_free += topo.xray_rfree()[i].sf;
+  }
   // check for possible resolution problems
 #ifdef HAVE_ISNAN
   if (std::isnan(calc)){
@@ -447,18 +471,25 @@ int interaction::Xray_Restraint_Interaction
 
   // calculate sums needed for R factors
   // and "observed" structure factors
-  for (unsigned int i = 0; i < num_xray_rest; i++) {
+  j = 0;
+  for (unsigned int i = 0; i < num_xray_rest; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
-    obs_k_calc += fabs(xrs.sf - k_inst * conf.special().xray_rest[i].sf_curr);
-    obs_k_calcavg += fabs(xrs.sf - k_avg * conf.special().xray_rest[i].sf_av);
+    obs_k_calc += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
     
     clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
     // save Fobs and PhiCalc for density maps. This will be corrected
     // for symmetry in the FFT step.
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst)
-      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_inst, conf.special().xray_rest[i].phase_curr));
+      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_inst, conf.special().xray_rest[j].phase_curr));
     else
-      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_avg, conf.special().xray_rest[i].phase_av));
+      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_avg, conf.special().xray_rest[j].phase_av));
+  }
+  // and for R free
+  for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
+    const topology::xray_restraint_struct & xrs = topo.xray_rfree()[i];
+    obs_k_calc_free += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg_free += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
   }
 
   // calculate R factors: R_inst and R_avg
@@ -466,8 +497,14 @@ int interaction::Xray_Restraint_Interaction
   R_inst = obs_k_calc / obs;
   double & R_avg = conf.special().xray.R_avg;
   R_avg = obs_k_calcavg / obs;
+  double & R_free_inst = conf.special().xray.R_free_inst;
+  R_free_inst = obs_k_calc_free / obs;
+  double & R_free_avg = conf.special().xray.R_free_avg;
+  R_free_avg = obs_k_calcavg_free / obs;
   DEBUG(10, "R_inst value: " << std::setw(15) << std::setprecision(8) << R_inst);
-  DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);  
+  DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
+  DEBUG(10, "R_free_inst value: " << std::setw(15) << std::setprecision(8) << R_free_inst);
+  DEBUG(10, "R_free_avg  value: " << std::setw(15) << std::setprecision(8) << R_free_avg);
   m_timer.stop("scaling");
 
   if (sim.param().xrayrest.local_elevation) {
@@ -626,7 +663,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   }
   atoms = clipper::Atom_list(atomvec);
 
-  conf.special().xray_rest.resize(topo.xray_restraints().size());
+  conf.special().xray_rest.resize(topo.xray_restraints().size() + topo.xray_rfree().size());
 
   // Scale Fobs (needed for constant force-constant) -> scaled to sfscale
   const double sfscale = 100.0;
@@ -636,10 +673,17 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     if (maxsf < topo.xray_restraints()[i].sf)
       maxsf = topo.xray_restraints()[i].sf;
   }
+  for (unsigned int i = 0; i < topo.xray_rfree().size(); i++) {
+    if (maxsf < topo.xray_rfree()[i].sf)
+      maxsf = topo.xray_rfree()[i].sf;
+  }
   const double scalefactor = maxsf / sfscale;
   // scale
   for (unsigned int i = 0; i < topo.xray_restraints().size(); i++) {
     topo.xray_restraints()[i].sf /= scalefactor;
+  }
+  for (unsigned int i = 0; i < topo.xray_rfree().size(); i++) {
+    topo.xray_rfree()[i].sf /= scalefactor;
   }
 
   if (sim.param().xrayrest.local_elevation) {
@@ -702,6 +746,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     os.precision(4);
     os << "Resolution                  : " << sim.param().xrayrest.resolution << std::endl;
     os << "Num experimental reflections: " << topo.xray_restraints().size() << std::endl;
+    os << "Num R-free reflections      : " << topo.xray_rfree().size() << std::endl;
     os << "Num expected reflections    : " << hkls.num_reflections() << std::endl;
     os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl << std::endl;
     if (sim.param().xrayrest.local_elevation) {
@@ -728,6 +773,14 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     tempnorm = sqrt(double((topo.xray_restraints()[i].h * topo.xray_restraints()[i].h)+
             (topo.xray_restraints()[i].k * topo.xray_restraints()[i].k)+
             (topo.xray_restraints()[i].l * topo.xray_restraints()[i].l)));
+    if (tempnorm > expnorm)
+      expnorm = tempnorm;
+  }
+  for (unsigned int i = 0; i < topo.xray_rfree().size(); i++) {
+    // calc max. experimental-index norm
+    tempnorm = sqrt(double((topo.xray_rfree()[i].h * topo.xray_rfree()[i].h)+
+            (topo.xray_rfree()[i].k * topo.xray_rfree()[i].k)+
+            (topo.xray_rfree()[i].l * topo.xray_rfree()[i].l)));
     if (tempnorm > expnorm)
       expnorm = tempnorm;
   }

@@ -697,6 +697,22 @@ namespace topology
     }
 
     /**
+     * xray R-free HKLs accessor.
+     */
+    std::vector<xray_restraint_struct> & xray_rfree()
+    {
+      return m_xray_rfree;
+    }
+
+    /**
+     * const xray R-free accessor.
+     */
+    std::vector<xray_restraint_struct> const & xray_rfree()const
+    {
+      return m_xray_rfree;
+    }
+
+    /**
      * xray element accessor.
      */
     std::vector<std::string> & xray_elements()
@@ -1249,7 +1265,10 @@ namespace topology
      * xray restraints
      */
     std::vector<xray_restraint_struct> m_xray_restraint;
-
+    /**
+     * xray R-free hkls
+     */
+    std::vector<xray_restraint_struct> m_xray_rfree;
     /**
      * xray element name
      */

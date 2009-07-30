@@ -2153,14 +2153,16 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
   double k_avg  = conf.special().xray.k_avg;
   double R_inst = conf.special().xray.R_inst;
   double R_avg  = conf.special().xray.R_avg;
+  double R_free_inst = conf.special().xray.R_free_inst;
+  double R_free_avg  = conf.special().xray.R_free_avg;
 
   // make sure no rubbish is written
   switch(param.xrayrest.xrayrest) {
     case simulation::xrayrest_off : return;
     case simulation::xrayrest_inst :
-      k_avg = R_avg = 0.0; break;
+      k_avg = R_avg = R_free_avg = 0.0; break;
     case simulation::xrayrest_avg :
-      k_inst = R_inst = 0.0; break;
+      k_inst = R_inst = R_free_inst = 0.0; break;
     default: ;// value are OK. do nothing
   }
 
@@ -2169,8 +2171,10 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
   os.precision(m_precision);
   os << std::setw(15) << k_inst << std::endl
           << std::setw(15) << R_inst << std::endl
+          << std::setw(15) << R_free_inst << std::endl
           << std::setw(15) << k_avg << std::endl
-          << std::setw(15) << R_avg << std::endl;
+          << std::setw(15) << R_avg << std::endl
+          << std::setw(15) << R_free_avg << std::endl;
   os << "END\n";
 }
 

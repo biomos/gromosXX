@@ -25,14 +25,22 @@
 
 /**
  * @section xrayresspec XRAYRESSPEC block
- * The XRAYRESSPEC specifies the experimental structure factors on which we
- * restrain.
+ * The XRAYRESSPEC and XRAYRFREESPEC block specify the experimental structure factors on which we
+ * restrain or use the calculate R-free
  *
- * The block is read from the xray restraints specification file
+ * The blocks are read from the xray restraints specification file
  * (\@xray).
  *
  * @verbatim
 XRAYRESSPEC
+#  H   K   L          SF   STDDEV_SF
+   0   0   2       13.46        0.22
+   0   0   4      184.62        1.34
+   0   0   6       20.99        0.33
+   0   0   8      158.82        1.16
+   0   0  10       80.81        0.64
+END
+XRAYRFREESPEC
 #  H   K   L          SF   STDDEV_SF
    0   0   2       13.46        0.22
    0   0   4      184.62        1.34
@@ -170,7 +178,42 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
     }
   } // XRAYRESSPEC
+  { // XRAYRFREESPEC
+    buffer = m_block["XRAYRFREESPEC"];
+    DEBUG(10, "XRAYRFREESPEC block : " << buffer.size());
 
+    if (buffer.size()) {
+      std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+              to = buffer.end() - 1;
+
+      DEBUG(10, "reading in XRAYRFREESPEC data");
+
+      int i, h, k, l;
+      double sf, stddev_sf;
+      for (i = 0; it != to; ++i, ++it) {
+
+        DEBUG(11, "\tnr " << i);
+
+        std::string line(*it);
+
+        _lineStream.clear();
+        _lineStream.str(line);
+
+        _lineStream >> h >> k >> l >> sf >> stddev_sf;
+
+        DEBUG(11, "grid indices " << h << " " << k << " " << l << " St_Fac's "
+                << sf << " " << stddev_sf);
+
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in XRAYRFREESPEC block",
+                  "In_Xrayresspec", io::message::error);
+          return;
+        }
+
+        topo.xray_rfree().push_back(topology::xray_restraint_struct(h, k, l, sf, stddev_sf));
+      }
+    }
+  } // XRAYRFREESPEC
   { // XRAYRESPARA
 
     buffer = m_block["XRAYRESPARA"];
