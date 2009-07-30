@@ -112,6 +112,26 @@ void simulation::Multibath
       it != to; ++it) {
     it->dof -= dof_to_subtract;
   }
+
+    // check whether all temperature groups are attached to only one bath
+  for(topology::Temperaturegroup_Iterator tg_it = topo.temperature_group_begin(),
+	  tg_to = topo.temperature_group_end();	tg_it != tg_to; ++tg_it) {
+    unsigned int first_com, first_ir;
+    topology::Atom_Iterator a_it = tg_it.begin(),
+            a_to = tg_it.end();
+    in_bath(*a_it, first_com, first_ir);
+    ++a_it;
+    for(; a_it != a_to; ++a_it) {
+      unsigned int com_i, ir_i;
+      in_bath(*a_it, com_i, ir_i);
+      if (com_i != first_com || ir_i != first_ir) {
+        io::messages.add("Multibath: Temperature group distributed over multiple baths.",
+		       "Multibath::check_state",
+		       io::message::error);
+        return;
+      }
+    }
+  }
   
   
 }
