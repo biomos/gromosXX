@@ -2169,7 +2169,8 @@ namespace simulation
       /**
        * Constructor: disable SASA
        */
-      sasa_struct() : switch_sasa(0) {}
+      sasa_struct() : switch_sasa(0), switch_volume(0), p_12(0.0), p_13(0.0), p_1x(0.0),
+      sigma_v(0.0), r_solv(0.0), max_cut(0.0), min_cut(0.0) {}
       /**
        * SASA switch parameter
        */
