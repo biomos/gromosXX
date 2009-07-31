@@ -2162,9 +2162,9 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
   switch(param.xrayrest.xrayrest) {
     case simulation::xrayrest_off : return;
     case simulation::xrayrest_inst :
-      k_avg = R_avg = R_free_avg = 0.0; break;
+      k_avg = k_free_avg = R_avg = R_free_avg = 0.0; break;
     case simulation::xrayrest_avg :
-      k_inst = R_inst = R_free_inst = 0.0; break;
+      k_inst = k_free_inst = R_inst = R_free_inst = 0.0; break;
     default: ;// value are OK. do nothing
   }
 

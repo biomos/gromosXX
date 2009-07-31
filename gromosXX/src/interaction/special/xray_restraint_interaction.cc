@@ -472,9 +472,9 @@ int interaction::Xray_Restraint_Interaction
   double & k_avg = conf.special().xray.k_avg;
   k_avg = obs_calcavg / sqr_calcavg;
   double & k_free_inst = conf.special().xray.k_free_inst;
-  k_inst = obs_calc_free / sqr_calc_free;
+  k_free_inst = obs_calc_free / sqr_calc_free;
   double & k_free_avg = conf.special().xray.k_free_avg;
-  k_avg = obs_calcavg_free / sqr_calcavg_free;
+  k_free_avg = obs_calcavg_free / sqr_calcavg_free;
   DEBUG(10, "k_inst value: " << k_inst);
   DEBUG(10, "k_avg  value: " << k_avg);
   DEBUG(10, "k_free_inst value: " << k_free_inst);
@@ -499,8 +499,8 @@ int interaction::Xray_Restraint_Interaction
   // and for R free
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_rfree()[i];
-    obs_k_calc_free += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
-    obs_k_calcavg_free += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
+    obs_k_calc_free += fabs(xrs.sf - k_free_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg_free += fabs(xrs.sf - k_free_avg * conf.special().xray_rest[j].sf_av);
   }
 
   // calculate R factors: R_inst and R_avg
