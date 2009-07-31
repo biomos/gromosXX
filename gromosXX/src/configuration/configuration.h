@@ -243,7 +243,7 @@ namespace configuration {
         /**
          * the instantaneous structure factor scaling constant
          */
-        double k_inst;
+        double k_inst, k_free_inst;
         /**
          * the instantaneous R-value
          */
@@ -251,7 +251,7 @@ namespace configuration {
         /**
          * the time-averaged structure factor scaling constant
          */
-        double k_avg;
+        double k_avg, k_free_avg;
         /**
          * the time-averaged R-value
          */

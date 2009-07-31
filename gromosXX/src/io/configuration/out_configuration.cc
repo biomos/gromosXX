@@ -2150,7 +2150,9 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
   DEBUG(10, "XRAY scaling constants and R-values");
 
   double k_inst = conf.special().xray.k_inst;
+  double k_free_inst = conf.special().xray.k_free_inst;
   double k_avg  = conf.special().xray.k_avg;
+  double k_free_avg  = conf.special().xray.k_free_avg;
   double R_inst = conf.special().xray.R_inst;
   double R_avg  = conf.special().xray.R_avg;
   double R_free_inst = conf.special().xray.R_free_inst;
@@ -2171,9 +2173,11 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
   os.precision(m_precision);
   os << std::setw(15) << k_inst << std::endl
           << std::setw(15) << R_inst << std::endl
+          << std::setw(15) << k_free_inst << std::endl
           << std::setw(15) << R_free_inst << std::endl
           << std::setw(15) << k_avg << std::endl
           << std::setw(15) << R_avg << std::endl
+          << std::setw(15) << k_free_avg << std::endl
           << std::setw(15) << R_free_avg << std::endl;
   os << "END\n";
 }

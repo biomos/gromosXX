@@ -393,8 +393,9 @@ int interaction::Xray_Restraint_Interaction
    m_timer.start("scaling");
   // zero all the sums
   double sqr_calc = 0.0, obs = 0.0, obs_free = 0.0, calc = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
-          sqr_calcavg = 0.0, calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0,
-          obs_k_calc_free = 0.0, obs_k_calcavg_free = 0.0;;
+         sqr_calcavg = 0.0, calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0,
+         obs_k_calc_free = 0.0, obs_k_calcavg_free = 0.0, obs_calc_free = 0.0, obs_calcavg_free = 0.0,
+         sqr_calc_free = 0.0, sqr_calcavg_free = 0.0;
   // Number of reflections
   const unsigned int num_xray_rest = topo.xray_restraints().size();
   const unsigned int num_xray_rfree = topo.xray_rfree().size();
@@ -451,6 +452,10 @@ int interaction::Xray_Restraint_Interaction
 
     // calc sums
     obs_free += topo.xray_rfree()[i].sf;
+    obs_calc_free += conf.special().xray_rest[j].sf_curr * topo.xray_rfree()[i].sf;
+    obs_calcavg_free += conf.special().xray_rest[j].sf_av * topo.xray_rfree()[i].sf;
+    sqr_calc_free += conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[i].sf_curr;
+    sqr_calcavg_free += conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
   }
   // check for possible resolution problems
 #ifdef HAVE_ISNAN
@@ -466,8 +471,14 @@ int interaction::Xray_Restraint_Interaction
   k_inst = obs_calc / sqr_calc;
   double & k_avg = conf.special().xray.k_avg;
   k_avg = obs_calcavg / sqr_calcavg;
+  double & k_free_inst = conf.special().xray.k_free_inst;
+  k_inst = obs_calc_free / sqr_calc_free;
+  double & k_free_avg = conf.special().xray.k_free_avg;
+  k_avg = obs_calcavg_free / sqr_calcavg_free;
   DEBUG(10, "k_inst value: " << k_inst);
   DEBUG(10, "k_avg  value: " << k_avg);
+  DEBUG(10, "k_free_inst value: " << k_free_inst);
+  DEBUG(10, "k_free_avg  value: " << k_free_avg);
 
   // calculate sums needed for R factors
   // and "observed" structure factors
@@ -498,9 +509,9 @@ int interaction::Xray_Restraint_Interaction
   double & R_avg = conf.special().xray.R_avg;
   R_avg = obs_k_calcavg / obs;
   double & R_free_inst = conf.special().xray.R_free_inst;
-  R_free_inst = obs_k_calc_free / obs;
+  R_free_inst = obs_k_calc_free / obs_free;
   double & R_free_avg = conf.special().xray.R_free_avg;
-  R_free_avg = obs_k_calcavg_free / obs;
+  R_free_avg = obs_k_calcavg_free / obs_free;
   DEBUG(10, "R_inst value: " << std::setw(15) << std::setprecision(8) << R_inst);
   DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
   DEBUG(10, "R_free_inst value: " << std::setw(15) << std::setprecision(8) << R_free_inst);
