@@ -261,8 +261,10 @@ int main(int argc, char *argv[]){
   if (error){
     std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
     return 1;
-  }
-  else if(err_msg > io::message::notice){
+  } else if (exit_md) {
+     std::cout <<"\nGromosXX finished due to SIGINT. Returning non-zero value." <<std::endl;
+     return 2;
+  } else if(err_msg > io::message::notice){
     std::cout << "\nGromosXX finished. "
 	      << "Check the messages for possible problems during the run."
 	      << std::endl;
