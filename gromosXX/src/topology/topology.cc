@@ -376,6 +376,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   
     DEBUG(8, "\tnum_atoms()=" << num_atoms());
   }
+
+  m_atom_name = topo.m_atom_name;
 }
 
 /**
