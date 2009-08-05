@@ -178,7 +178,8 @@ void util::Umbrella::apply(
           const double term1 = dq_abs / (width_rel[i] * width_rel[i]);
           const double term2 = term1 * dq_abs / width_rel[i];
           g = 1.0 - 3.0 * term1 * dq_abs + 2.0 * term2 * dq_abs;
-          dgdQ = 6.0 * (-term1 + term2);
+          const double sign = dq < 0.0 ? -1.0 : 1.0;
+          dgdQ = sign * 6.0 * (-term1 + term2);
           break;
         }
         case util::Umbrella::ff_gaussian :
@@ -186,7 +187,7 @@ void util::Umbrella::apply(
           const double factor = -1.0 / (width_rel[i] * width_rel[i]);
           const double exp_term = exp(0.5 * dq * dq * factor);
           g = exp_term;
-          dgdQ = factor * exp_term * dq;
+          dgdQ =  factor * exp_term * dq;
           break;
         }
         default:
@@ -196,6 +197,7 @@ void util::Umbrella::apply(
       }
 
       DEBUG(1, "\tg function: " << g);
+      DEBUG(1, "\tdgdQ      : " << dgdQ);
       // multiply the g functions
       energy *= g;
 
@@ -221,7 +223,7 @@ void util::Umbrella::apply(
     conf.current().energies.leus_total += energy;
     for(unsigned int i = 0; i < dim; ++i) {
       const double d = deriv[i] * force_constant * conf_it->second->get_weight();
-      DEBUG(1,"\tderiv[" << i+i << "]: " << d);
+      DEBUG(1,"\tderiv[" << i << "]: " << d);
       coordinates[i]->apply(d);
     }
   } // for visited configurations
