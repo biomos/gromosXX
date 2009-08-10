@@ -472,9 +472,15 @@ int interaction::Xray_Restraint_Interaction
   double & k_avg = conf.special().xray.k_avg;
   k_avg = obs_calcavg / sqr_calcavg;
   double & k_free_inst = conf.special().xray.k_free_inst;
-  k_free_inst = obs_calc_free / sqr_calc_free;
+  if (num_xray_rfree)
+    k_free_inst = obs_calc_free / sqr_calc_free;
+  else
+    k_free_inst = 0.0;
   double & k_free_avg = conf.special().xray.k_free_avg;
-  k_free_avg = obs_calcavg_free / sqr_calcavg_free;
+  if (num_xray_rfree)
+    k_free_avg = obs_calcavg_free / sqr_calcavg_free;
+  else
+    k_free_avg = 0.0;
   DEBUG(10, "k_inst value: " << k_inst);
   DEBUG(10, "k_avg  value: " << k_avg);
   DEBUG(10, "k_free_inst value: " << k_free_inst);
@@ -509,9 +515,15 @@ int interaction::Xray_Restraint_Interaction
   double & R_avg = conf.special().xray.R_avg;
   R_avg = obs_k_calcavg / obs;
   double & R_free_inst = conf.special().xray.R_free_inst;
-  R_free_inst = obs_k_calc_free / obs_free;
+  if (num_xray_rfree)
+    R_free_inst = obs_k_calc_free / obs_free;
+  else
+    R_free_inst = 0.0;
   double & R_free_avg = conf.special().xray.R_free_avg;
-  R_free_avg = obs_k_calcavg_free / obs_free;
+  if (num_xray_rfree)
+    R_free_avg = obs_k_calcavg_free / obs_free;
+  else
+    R_free_avg = 0.0;
   DEBUG(10, "R_inst value: " << std::setw(15) << std::setprecision(8) << R_inst);
   DEBUG(10, "R_avg  value: " << std::setw(15) << std::setprecision(8) << R_avg);
   DEBUG(10, "R_free_inst value: " << std::setw(15) << std::setprecision(8) << R_free_inst);
