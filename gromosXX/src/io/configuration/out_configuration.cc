@@ -268,6 +268,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
         if (conf.boundary_type != math::vacuum)
           _print_box(conf, m_pos_traj);
+
+        m_pos_traj.flush();
       }
       // a new block begins. let's reset the minimum
       minimum_energy = conf.old().energies.get_energy_by_index(sim.param().write.energy_index);
@@ -279,6 +281,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         _print_velocityred(conf, topo.num_solute_atoms(), m_vel_traj);
       else
         _print_velocityred(conf, topo.num_atoms(), m_vel_traj);
+      m_vel_traj.flush();
     }
 
     if (m_every_force && ((sim.steps() + 1) % m_every_force) == 0) {
@@ -288,6 +291,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
           _print_forcered(conf, topo.num_solute_atoms(), m_force_traj, constraint_force);
         else
           _print_forcered(conf, topo.num_atoms(), m_force_traj, constraint_force);
+        m_force_traj.flush();
       }
     }
 
@@ -297,6 +301,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       _print_cos_position(conf, topo, m_special_traj);
+      m_special_traj.flush();
     }
 
     if (m_every_jvalue && sim.steps() && (sim.steps() % m_every_jvalue) == 0) {
@@ -305,6 +310,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
+      m_special_traj.flush();
     }
 
     if (m_every_xray && sim.steps() && (sim.steps() % m_every_xray) == 0) {
@@ -313,6 +319,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       _print_xray_rvalue(sim.param(), conf, m_special_traj);
+      _print_xray(sim.param(), conf, topo, m_special_traj);
+      m_special_traj.flush();
     }
 
     if (m_every_energy && (((sim.steps() + 1) % m_every_energy) == 0 || minimum_found)) {
@@ -320,6 +328,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         _print_old_timestep(sim, m_energy_traj);
         _print_energyred(conf, m_energy_traj);
         _print_volumepressurered(topo, conf, sim, m_energy_traj);
+        m_energy_traj.flush();
       }
     }
 
@@ -327,6 +336,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       if (sim.steps()) {
         _print_old_timestep(sim, m_free_energy_traj);
         _print_free_energyred(conf, topo, m_free_energy_traj);
+        m_free_energy_traj.flush();
       }
     }
 
@@ -337,6 +347,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
           _print_old_timestep(sim, m_blockaveraged_energy);
           _print_blockaveraged_energyred(conf, m_blockaveraged_energy);
           _print_blockaveraged_volumepressurered(conf, sim, m_blockaveraged_energy);
+          m_blockaveraged_energy.flush();
         }
       }
 
@@ -345,6 +356,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
           _print_old_timestep(sim, m_blockaveraged_free_energy);
           _print_blockaveraged_free_energyred(conf, sim.param().perturbation.dlamt,
                   m_blockaveraged_free_energy);
+          m_blockaveraged_free_energy.flush();
         }
       }
       conf.current().averages.block().zero();
@@ -353,6 +365,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_ramd && (sim.steps() % m_every_ramd) == 0) {
       _print_timestep(sim, m_ramd_traj);
       _print_ramd(topo, conf, sim, m_ramd_traj);
+      m_ramd_traj.flush();
     }
 
   } else if (form == final && m_final) {
