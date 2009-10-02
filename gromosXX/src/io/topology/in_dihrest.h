@@ -9,7 +9,7 @@
  * A dihedral restraints/constraints specifcation file may contain the following
  * blocks:
  * - @ref title
- * - @ref dihresspec
+ * - @ref dihedralresspec
  * - @ref pertdihresspec
  */
 #ifndef INCLUDED_IN_DIHREST_H

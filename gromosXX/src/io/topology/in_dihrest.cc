@@ -25,12 +25,12 @@
 static std::set<std::string> block_read;
 
 /**
- * @section dihresspec DIHRESSPEC block
+ * @section dihedralresspec DIHEDRALRESSPEC block
  * This block is for unperturbed dihedrals restraints/constraints. It is read 
  * from the dihedral restraint specifcation file.
  *
  * @verbatim
-DIHRESSPEC
+DIHEDRALRESSPEC
 # IPLR, JPLR, KPLR, LPLR   atom sequence numbers of the atoms defining the
 #                          restrained dihedral i-j-k-l
 # WDLR                     individual dihedral restraint weight factor by which
@@ -77,17 +77,17 @@ void io::In_Dihrest::read(topology::Topology& topo,
   
   std::vector<std::string> buffer;
   
-  { // DIHRESSPEC
-    DEBUG(10, "DIHRESSPEC block");
-    buffer = m_block["DIHRESSPEC"];
+  { // DIHEDRALRESSPEC
+    DEBUG(10, "DIHEDRALRESSPEC block");
+    buffer = m_block["DIHEDRALRESSPEC"];
     
     if (!buffer.size()){
-      io::messages.add("no DIHRESSPEC block in dihedral restraints file",
+      io::messages.add("no DIHEDRALRESSPEC block in dihedral restraints file",
 		       "in_dihrest", io::message::error);
       return;
     }
 
-    block_read.insert("DIHRESSPEC");
+    block_read.insert("DIHEDRALRESSPEC");
 
     std::vector<std::string>::const_iterator it = buffer.begin()+1,
       to = buffer.end()-1;
