@@ -8,7 +8,7 @@
  *
  * A distance restraints specifcation file may contain the following blocks:
  * - @ref title
- * - @ref disresspec
+ * - @ref distanceresspec
  * - @ref pertdisresspec
  * - @ref mdisresspec
  */

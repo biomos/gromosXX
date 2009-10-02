@@ -25,8 +25,8 @@
 static std::set<std::string> block_read;
 
 /**
- * @section disresspec DISRESSPEC block
- * The DISRESSPEC block is read from the distance restraints specification
+ * @section distanceresspec DISTANCERESSPEC block
+ * The DISTANCERESSPEC block is read from the distance restraints specification
  * file.
  *
  * \c DISH is the carbon-hydrogen, \c DISC the carbon-carbon distance.
@@ -39,7 +39,7 @@ static std::set<std::string> block_read;
  * - +1: half harmonic attractive
  *
  * @verbatim
-DISRESSPEC
+DISTANCERESSPEC
 # DISH  DISC
   0.1   0.153
 # i  j  k  l  type    i  j  k  l  type    r0    w0    rah
@@ -53,7 +53,7 @@ END
  * file and used for perturbed distance restraints and hidden 
  * restraints. 
  *
- * The format is very similar to the @ref disresspec with the difference that
+ * The format is very similar to the @ref distanceresspec with the difference that
  * one may give values for the A and the B state. The two variables \c n and
  * \c m are the parameters for the hidden restriants. 
  *
@@ -74,7 +74,7 @@ END
  * The MDISRESSPEC block is read from the distance restraints specification
  * file and used for EDS restraints.
  *
- * The format is very similar to the @ref disresspec with the difference that
+ * The format is very similar to the @ref distanceresspec with the difference that
  * one may give values for multipde states.
  * @verbatim
 MDISRESSPEC
@@ -101,11 +101,11 @@ io::In_Distanceres::read(topology::Topology& topo,
   std::vector<std::string> buffer;
 
   { // DISTANCERES
-    DEBUG(10, "DISRESSPEC block");
-    buffer = m_block["DISRESSPEC"];
-    block_read.insert("DISRESSPEC");
+    DEBUG(10, "DISTANCERESSPEC block");
+    buffer = m_block["DISTANCERESSPEC"];
+    block_read.insert("DISTANCERESSPEC");
     if (buffer.size()<=2){
-      io::messages.add("no or empty DISRESSPEC block in distance restraints file",
+      io::messages.add("no or empty DISTANCERESSPEC block in distance restraints file",
 		       "in_distanceres", io::message::warning);
     }
     else{      
@@ -146,7 +146,7 @@ io::In_Distanceres::read(topology::Topology& topo,
       
       if(_lineStream.fail()){
 	std::ostringstream msg;
-	msg << "bad line in DISRESSPEC block: failed to read in DISH and DISC"  << std::endl;
+	msg << "bad line in DISTANCERESSPEC block: failed to read in DISH and DISC"  << std::endl;
 	io::messages.add(msg.str(),
 			 "In_Distanceres",
 			 io::message::error);
@@ -230,7 +230,7 @@ io::In_Distanceres::read(topology::Topology& topo,
 	
 	if(_lineStream.fail()){
 	  std::ostringstream msg;
-	  msg << "bad line in DISRESSPEC block: " << line_number << std::endl
+	  msg << "bad line in DISTANCERESSPEC block: " << line_number << std::endl
 	      << "          " << *it;
 	  io::messages.add(msg.str(),
 			   "In_Distanceres",
@@ -293,7 +293,7 @@ io::In_Distanceres::read(topology::Topology& topo,
       double dish, disc;
       bool nr_atoms=true;
       
-      DEBUG(10, "reading in DISTANCERES (PERTDISRESSPEC data");
+      DEBUG(10, "reading in DISTANCERES (PERTDISRESSPEC) data");
       
       if (!quiet){
 	switch(sim.param().distanceres.distanceres){
