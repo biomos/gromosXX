@@ -80,6 +80,8 @@ static int _calculate_dihedral_new_interactions(topology::Topology & topo,
     double phi = acos(cosphi);
     double sign = dot(rij, rnk);
     if(sign < 0) phi*=-1.0;
+
+    //DEBUG(10, "dihedral angle phi= " << phi);
    
     assert(unsigned(d_it->type) < param.size());
 

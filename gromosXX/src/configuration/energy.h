@@ -54,6 +54,10 @@ namespace configuration
      */
     double dihedral_total;
     /**
+     * total crossdihedral torsional energy
+     */
+    double crossdihedral_total;
+    /**
      * total potential energy of the "bonded" interaction terms
      */
     double bonded_total;
@@ -197,6 +201,10 @@ namespace configuration
      * dihedral angle energy term
      */
     std::vector<double> dihedral_energy;
+    /**
+     * crossdihedral angle energy term
+     */
+    std::vector<double> crossdihedral_energy;
 
     /**
      * lennard-jones interaction energy term

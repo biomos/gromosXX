@@ -288,6 +288,156 @@ namespace topology {
   };
 
   /**
+   * @struct eight_body_term_struct
+   * eight body terms (topological information).
+   */
+  struct eight_body_term_struct {
+
+    /**
+     * Constructor.
+     * @param a atom a.
+     * @param b atom b.
+     * @param c atom c.
+     * @param d atom d.
+     * @param e atom g.
+     * @param f atom e.
+     * @param g atom f.
+     * @param h atom h.
+     * @param t interaction type.
+     */
+    eight_body_term_struct(unsigned int a, unsigned int b, unsigned int c,
+                           unsigned int d, unsigned int e, unsigned int f,
+                           unsigned int g, unsigned int h, unsigned int t) :
+                           a(a), b(b), c(c), d(d), e(e), f(f), g(g), h(h), type(t) {
+    };
+
+    /**
+     * atom a.
+     */
+    unsigned int a;
+    /**
+     * atom a.
+     */
+    unsigned int b;
+    /**
+     * atom a.
+     */
+    unsigned int c;
+    /**
+     * atom a.
+     */
+    unsigned int d;
+    /**
+     * atom a.
+     */
+    unsigned int e;
+    /**
+     * atom a.
+     */
+    unsigned int f;
+    /**
+     * atom a.
+     */
+    unsigned int g;
+    /**
+     * atom a.
+     */
+    unsigned int h;
+    /**
+     * interaction type.
+     */
+    unsigned int type;
+
+    /**
+     * equal operator
+     */
+    bool operator==(eight_body_term_struct const & i) {
+      return (i.a == a && i.b == b && i.c == c && i.d == d && i.e == e &&
+              i.f == f && i.g == g && i.h == h && i.type == type);
+    }
+
+  };
+
+  /**
+   * @struct perturbed_eight_body_term_struct
+   * perturbed eight body terms (topological information).
+   */
+  struct perturbed_eight_body_term_struct {
+
+    /**
+     * Constructor.
+     * @param a atom a.
+     * @param b atom b.
+     * @param c atom c.
+     * @param d atom d.
+     * @param e atom g.
+     * @param f atom e.
+     * @param g atom f.
+     * @param h atom h.
+     * @param t_A interaction A_type.
+     * @param t_B interaction B_type.
+     */
+    perturbed_eight_body_term_struct(unsigned int a, unsigned int b,
+                                     unsigned int c, unsigned int d,
+                                     unsigned int e, unsigned int f,
+                                     unsigned int g, unsigned int h,
+                                     unsigned int t_A, unsigned int t_B) :
+                                     a(a), b(b), c(c), d(d), e(e), f(f),
+                                     g(g), h(h), A_type(t_A), B_type(t_B) {
+    };
+
+    /**
+     * atom a.
+     */
+    unsigned int a;
+    /**
+     * atom a.
+     */
+    unsigned int b;
+    /**
+     * atom a.
+     */
+    unsigned int c;
+    /**
+     * atom a.
+     */
+    unsigned int d;
+    /**
+     * atom a.
+     */
+    unsigned int e;
+    /**
+     * atom a.
+     */
+    unsigned int f;
+    /**
+     * atom a.
+     */
+    unsigned int g;
+    /**
+     * atom a.
+     */
+    unsigned int h;
+    /**
+     * interaction type state A.
+     */
+    unsigned int A_type;
+    /**
+     * interaction type state B.
+     */
+    unsigned int B_type;
+    /**
+     * equal operator
+     */
+    bool operator==(perturbed_eight_body_term_struct const & i) {
+      return (i.a == a && i.b == b && i.c == c && i.d == d && i.e == e &&
+              i.f == f && i.g == g && i.h == h && i.A_type == A_type
+              && i.B_type == B_type);
+    }
+
+  };
+
+  /**
    * Position restraints information.
    */
   struct position_restraint_struct {

@@ -32,6 +32,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     angle_total = 0.0;
     improper_total = 0.0;
     dihedral_total = 0.0;
+    crossdihedral_total = 0.0;
     bonded_total = 0.0;
     nonbonded_total = 0.0;
     lj_total = 0.0;
@@ -64,6 +65,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     angle_energy.assign(angle_energy.size(), 0.0);
     improper_energy.assign(improper_energy.size(), 0.0);
     dihedral_energy.assign(dihedral_energy.size(), 0.0);
+    crossdihedral_energy.assign(crossdihedral_energy.size(), 0.0);
     posrest_energy.assign(posrest_energy.size(), 0.0);
     distanceres_energy.assign(distanceres_energy.size(), 0.0);
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
@@ -115,6 +117,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     angle_energy.resize(energy_groups);
     improper_energy.resize(energy_groups);
     dihedral_energy.resize(energy_groups);
+    crossdihedral_energy.resize(energy_groups);
   
     lj_energy.resize(energy_groups);
     crf_energy.resize(energy_groups);
@@ -161,6 +164,7 @@ int configuration::Energy::calculate_totals()
   angle_total = 0.0;
   improper_total = 0.0;
   dihedral_total = 0.0;
+  crossdihedral_total = 0.0;
   lj_total = 0.0;
   crf_total = 0.0;
   ls_total = 0.0;
@@ -234,6 +238,10 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: dihedral energy " << i+1 << " = " << dihedral_energy[i] << "\n";
     }
     dihedral_total     += dihedral_energy[i];
+    if (crossdihedral_energy[i] > m_ewarn){
+      std::cout << "EWARN: crossdihedral energy " << i+1 << " = " << crossdihedral_energy[i] << "\n";
+    }
+    crossdihedral_total     += crossdihedral_energy[i];
     if (posrest_energy[i] > m_ewarn){
       std::cout << "EWARN: posrest energy " << i+1 << " = " << posrest_energy[i] << "\n";
     }
@@ -283,8 +291,8 @@ int configuration::Energy::calculate_totals()
   nonbonded_total = lj_total + crf_total + self_total + 
           ls_realspace_total + ls_kspace_total + ls_self_total + ls_surface_total +
           ls_a_term_total;
-  bonded_total    = bond_total + angle_total + 
-    dihedral_total + improper_total;
+  bonded_total = bond_total + angle_total + dihedral_total + improper_total
+                 + crossdihedral_total;
   potential_total = nonbonded_total + bonded_total;
   
   special_total = posrest_total + distanceres_total + dihrest_total
@@ -311,31 +319,32 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 4 : return angle_total;
     case 5 : return improper_total;
     case 6 : return dihedral_total;
-    case 7 : return bonded_total;
-    case 8 : return nonbonded_total;
-    case 9 : return lj_total;
-    case 10 : return crf_total;
-    case 11 : return ls_total;
-    case 12 : return ls_pair_total;
-    case 13 : return ls_realspace_total;
-    case 14 : return ls_kspace_total;
-    case 15 : return ls_self_total;
-    case 16 : return ls_surface_total;
-    case 17 : return ls_a_term_total;
-    case 18 : return special_total;
-    case 19 : return posrest_total;
-    case 20 : return distanceres_total;
-    case 21 : return dihrest_total;
-    case 22 : return jvalue_total;
-    case 23 : return xray_total;
-    case 24 : return leus_total;
-    case 25 : return constraints_total;
-    case 26 : return entropy_term;
-    case 27 : return external_total;
-    case 28 : return self_total;
-    case 29 : return eds_vr;
-    case 30 : return sasa_total;
-    case 31 : return sasa_volume_total;
+    case 7 : return crossdihedral_total;
+    case 8 : return bonded_total;
+    case 9 : return nonbonded_total;
+    case 10 : return lj_total;
+    case 11 : return crf_total;
+    case 12 : return ls_total;
+    case 13 : return ls_pair_total;
+    case 14 : return ls_realspace_total;
+    case 15 : return ls_kspace_total;
+    case 16 : return ls_self_total;
+    case 17 : return ls_surface_total;
+    case 18 : return ls_a_term_total;
+    case 19 : return special_total;
+    case 20 : return posrest_total;
+    case 21 : return distanceres_total;
+    case 22 : return dihrest_total;
+    case 23 : return jvalue_total;
+    case 24 : return xray_total;
+    case 25 : return leus_total;
+    case 26 : return constraints_total;
+    case 27 : return entropy_term;
+    case 28 : return external_total;
+    case 29 : return self_total;
+    case 30 : return eds_vr;
+    case 31 : return sasa_total;
+    case 32 : return sasa_volume_total;
   }
   return 0.0;
 }

@@ -976,6 +976,7 @@ namespace simulation
        * - angle 1
        * - improper 1
        * - dihedral 1
+       * - crossdihedral 1
        * - nonbonded 1
        * - energy_group empty
        * - special_loop -1
@@ -983,7 +984,7 @@ namespace simulation
        * - external interaction 0
        */
       force_struct() : bond(1), angle(1), improper(1),
-		       dihedral(1), nonbonded_vdw(1),
+		       dihedral(1), crossdihedral(1), nonbonded_vdw(1),
 		       nonbonded_crf(1), special_loop(special_loop_off),
 		       interaction_function(lj_crf_func),
 		       external_interaction(0)
@@ -1005,6 +1006,10 @@ namespace simulation
        * dihedral?
        */
       int dihedral;
+      /**
+       * crossdihedral?
+       */
+      int crossdihedral;
       /**
        * nonbonded van der Waals?
        */

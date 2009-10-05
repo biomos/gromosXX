@@ -98,6 +98,17 @@ namespace topology
     std::vector<four_body_term_struct> const & dihedrals()const{
       return m_dihedral;}
 
+    /**
+     * crossdihedral accessor.
+     */
+    std::vector<eight_body_term_struct> & crossdihedrals(){
+      return m_crossdihedral;}
+    /**
+     * const crossdihedral accessor.
+     */
+    std::vector<eight_body_term_struct> const & crossdihedrals()const{
+      return m_crossdihedral;}
+
   private:
 
     /**
@@ -124,6 +135,11 @@ namespace topology
      * the dihedral
      */
     std::vector<four_body_term_struct> m_dihedral;
+
+    /**
+     * the crossdihedral
+     */
+    std::vector<eight_body_term_struct> m_crossdihedral;
     
   };
   

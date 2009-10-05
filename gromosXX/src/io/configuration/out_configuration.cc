@@ -1294,6 +1294,7 @@ ENERGY03
    1.267041319e+01 # angles total
    1.485470503e+00 # impropers total
    6.292623846e+00 # dihedrals total
+   0.000000000e+00 # crossdihedrals total
   -1.442773701e+00 # Lennard-Jones total
   -8.041459043e+01 # Coulomb/Reaction-Field total
    0.000000000e+00 # lattice sum real space total
@@ -1317,9 +1318,9 @@ ENERGY03
 # bonded
 # number of energy groups
 2
-#  bond              angle             improper          dihedral 
-   1.935607149e+01   1.267041319e+01   1.485470503e+00   6.292623846e+00 # energy group 1
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # energy group 2
+#  bond              angle             improper          dihedral        crossdihedral
+   1.935607149e+01   1.267041319e+01   1.485470503e+00   6.292623846e+00 0.0000000e+00  # energy group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 0.0000000e+00  # energy group 2
 # nonbonded
 #  Lennard-Jones     Coulomb/RF        lattice sum real  lattice sum reciproc.
   -4.896399521e-02  -6.781355366e+01   0.000000000e+00   0.000000000e+00  # 1 - 1
@@ -2289,6 +2290,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.angle_total << "\n"
           << std::setw(18) << e.improper_total << "\n"
           << std::setw(18) << e.dihedral_total << "\n"
+          << std::setw(18) << e.crossdihedral_total << "\n"
           << std::setw(18) << e.lj_total << "\n"
           << std::setw(18) << e.crf_total << "\n"
           << std::setw(18) << e.ls_realspace_total << "\n"
@@ -2326,7 +2328,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
     os << std::setw(18) << e.bond_energy[i]
             << std::setw(18) << e.angle_energy[i]
             << std::setw(18) << e.improper_energy[i]
-            << std::setw(18) << e.dihedral_energy[i] << "\n";
+            << std::setw(18) << e.dihedral_energy[i]
+            << std::setw(18) << e.crossdihedral_energy[i] << "\n";
   }
 
   os << "# nonbonded\n";

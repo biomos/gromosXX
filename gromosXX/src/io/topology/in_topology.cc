@@ -1033,6 +1033,125 @@ io::In_Topology::read(topology::Topology& topo,
 		       "In_Topology", io::message::error);
     }
 
+    { // CROSSDIHEDRAL
+      DEBUG(10, "CROSSDIHEDRAL block");
+      buffer = m_block["CROSSDIHEDRAL"];
+
+      if (!quiet)
+	os << "\tCROSSDIHEDRAL";
+
+      if(buffer.size()){
+
+	it = buffer.begin() + 1;
+	_lineStream.clear();
+	_lineStream.str(*it);
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  os << "\n\t\tcrossdihedrals not containing hydrogens : "
+		    << num;
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int a, b, c, d, e, f, g, h, t;
+
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> a >> b >> c >> d >> e >> f >> g >> h >> t;
+
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in CROSSDIHEDRAL block",
+			     "In_Topology", io::message::error);
+	  }
+
+	  if (a > int(topo.num_solute_atoms()) || b > int(topo.num_solute_atoms()) ||
+	      c > int(topo.num_solute_atoms()) || d > int(topo.num_solute_atoms()) ||
+          e > int(topo.num_solute_atoms()) || f > int(topo.num_solute_atoms()) ||
+          g > int(topo.num_solute_atoms()) || h > int(topo.num_solute_atoms()) ||
+	      a < 1 || b < 1 || c < 1 || d < 1 || e < 1 || f < 1 || g < 1 || h < 1){
+	    io::messages.add("Atom number out of range in CROSSDIHEDRAL block",
+			     "In_Topology", io::message::error);
+	  }
+
+	  topo.solute().crossdihedrals().
+	    push_back(topology::eight_body_term_struct(a-1, b-1, c-1, d-1, e-1,
+                                                   f-1, g-1, h-1, t-1));
+	}
+
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in CROSSDIHEDRAL block",
+			   "In_Topology", io::message::error);
+	}
+      }
+
+    } // CROSSDIHEDRAL
+
+    { // CROSSDIHEDRALH
+      DEBUG(10, "CROSSDIHEDRALH block");
+      buffer.clear();
+      buffer = m_block["CROSSDIHEDRALH"];
+      if(buffer.size()){
+
+	it = buffer.begin() + 1;
+
+	_lineStream.clear();
+	_lineStream.str(*it);
+
+	int num, n;
+	_lineStream >> num;
+	++it;
+
+	if (!quiet)
+	  os << "\n\t\tcrossdihedrals containing hydrogens : "
+		    << num;
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int a, b, c, d, e, f, g, h, t;
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> a >> b >> c >> d >> e >> f >> g >> h >> t;
+
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in CROSSDIHEDRALH block",
+			     "In_Topology", io::message::error);
+	  }
+
+	  if (a > int(topo.num_solute_atoms()) || b > int(topo.num_solute_atoms()) ||
+	      c > int(topo.num_solute_atoms()) || d > int(topo.num_solute_atoms()) ||
+          e > int(topo.num_solute_atoms()) || f > int(topo.num_solute_atoms()) ||
+          g > int(topo.num_solute_atoms()) || h > int(topo.num_solute_atoms()) ||
+	      a < 1 || b < 1 || c < 1 || d < 1 || e < 1 || f < 1 || g < 1 || h < 1){
+	    io::messages.add("Atom number out of range in CROSSDIHEDRALH block",
+			     "In_Topology", io::message::error);
+	  }
+
+	  topo.solute().crossdihedrals().
+	    push_back(topology::eight_body_term_struct(a-1, b-1, c-1, d-1, e-1,
+                                                   f-1, g-1, h-1, t-1));
+	}
+
+	if(n != num){
+	  io::messages.add("Wrong number of bonds in CROSSDIHEDRALH block",
+			   "In_Topology", io::message::error);
+	}
+      }
+
+      if (!quiet)
+	os << "\n\tEND\n";
+
+    } // CROSSDIHEDRALH
+
+    // check the dihedrals
+    if (dihedral_bname != "TORSDIHEDRALTYPE") {
+      io::messages.add("TORSDIHEDRALTYPE block must be specified to use crossdihedrals",
+		       "In_Topology", io::message::error);
+    }
+    if (!check_type(m_block[dihedral_bname], topo.solute().crossdihedrals())){
+      io::messages.add("Illegal crossdihedral type in CROSSDIHEDRAL(H) block",
+		       "In_Topology", io::message::error);
+    }
+
     { // VIRTUALGRAIN
       DEBUG(10, "VIRTUALGRAIN block");
       buffer.clear();

@@ -411,6 +411,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(angle_total);
   ENERGY_AVG(improper_total);
   ENERGY_AVG(dihedral_total);
+  ENERGY_AVG(crossdihedral_total);
   ENERGY_AVG(bonded_total);
   ENERGY_AVG(nonbonded_total);
   ENERGY_AVG(lj_total);
@@ -469,6 +470,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(angle_energy[i]);
     ENERGY_AVG(improper_energy[i]);
     ENERGY_AVG(dihedral_energy[i]);
+    ENERGY_AVG(crossdihedral_energy[i]);
 
     // and the nonbonded groups
     assert(energy_avg.lj_energy.size() > i);
@@ -618,6 +620,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(angle_total);
   ENERGY_RES(improper_total);
   ENERGY_RES(dihedral_total);
+  ENERGY_RES(crossdihedral_total);
 
   ENERGY_RES(nonbonded_total);
   ENERGY_RES(lj_total);
@@ -666,6 +669,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(angle_energy[i]);
     ENERGY_RES(improper_energy[i]);
     ENERGY_RES(dihedral_energy[i]);
+    ENERGY_RES(crossdihedral_energy[i]);
 
     // and the nonbonded groups
     assert(energy_avg.lj_energy.size() > i);

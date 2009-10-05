@@ -120,6 +120,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   solute().angles().clear();
   solute().improper_dihedrals().clear();
   solute().dihedrals().clear();
+  solute().crossdihedrals().clear();
 
   DEBUG(8, "\tmultiplying solute");
   
@@ -240,6 +241,19 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
 			       topo.solute().dihedrals()[i].k + m * num_solute,
 			       topo.solute().dihedrals()[i].l + m * num_solute,
 			       topo.solute().dihedrals()[i].type));
+    }
+    DEBUG(10, "\tcrossdihedrals");
+    for(unsigned int i=0; i<topo.solute().crossdihedrals().size(); ++i){
+      solute().crossdihedrals().push_back
+	(eight_body_term_struct(topo.solute().crossdihedrals()[i].a + m * num_solute,
+			       topo.solute().crossdihedrals()[i].b + m * num_solute,
+			       topo.solute().crossdihedrals()[i].c + m * num_solute,
+			       topo.solute().crossdihedrals()[i].d + m * num_solute,
+                   topo.solute().crossdihedrals()[i].e + m * num_solute,
+			       topo.solute().crossdihedrals()[i].f + m * num_solute,
+			       topo.solute().crossdihedrals()[i].g + m * num_solute,
+			       topo.solute().crossdihedrals()[i].h + m * num_solute,
+			       topo.solute().crossdihedrals()[i].type));
     }
 
     // perturbed solute

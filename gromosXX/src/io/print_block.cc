@@ -432,6 +432,7 @@ namespace io
     os << type << "Angles               : " << std::setw(39) << e.angle_total << "\n";
     os << type << "Improper             : " << std::setw(39) << e.improper_total << "\n";
     os << type << "Dihedral             : " << std::setw(39) << e.dihedral_total << "\n";
+    os << type << "Crossdihedral        : " << std::setw(39) << e.crossdihedral_total << "\n";
     os << type << "Non-bonded           : " << std::setw(30) << e.nonbonded_total  << "\n";
     os << type << "Vdw                  : " << std::setw(39) << e.lj_total << "\n";
     os << type << "El (RF)              : " << std::setw(39) << e.crf_total  << "\n";
@@ -468,6 +469,8 @@ namespace io
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.improper_energy[i];
     os << "\n" << std::setw(20) << type + "dihedrals";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihedral_energy[i];
+    os << "\n" << std::setw(20) << type + "crossdihedrals";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.crossdihedral_energy[i];
 
     os << "\n" << "\n";
     os << std::setw(20) << type + "VDW";

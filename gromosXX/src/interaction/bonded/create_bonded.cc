@@ -20,6 +20,7 @@
 #include <interaction/bonded/harm_angle_interaction.h>
 #include <interaction/bonded/dihedral_interaction.h>
 #include <interaction/bonded/dihedral_new_interaction.h>
+#include <interaction/bonded/crossdihedral_interaction.h>
 #include <interaction/bonded/improper_dihedral_interaction.h>
 
 // perturbed interactions
@@ -182,6 +183,23 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 	new interaction::Perturbed_Dihedral_Interaction(*d);
       ff.push_back(pd);
     }
+  }
+  if (param.force.crossdihedral == 1){
+    if (!quiet)
+      os <<"\tcrossdihedral interaction\n";
+
+    interaction::Crossdihedral_Interaction * c =
+      new interaction::Crossdihedral_Interaction();
+    it.read_dihedrals(c->parameter());
+    ff.push_back(c);
+
+    /*if (param.perturbation.perturbation){
+      if(!quiet)
+	os <<"\tperurbed crossdihedral interaction\n";
+      interaction::Perturbed_Crossdihedral_Interaction * pc =
+	new interaction::Perturbed_Crossdihedral_Interaction(*c);
+      ff.push_back(pc);
+    }*/
   }
   
   return 0;
