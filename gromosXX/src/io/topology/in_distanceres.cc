@@ -159,7 +159,7 @@ io::In_Distanceres::read(topology::Topology& topo,
 	os << std::setw(10) << "DISH"
 	   << std::setw(10) << "DISC"
 	   << "\n" 
-	   <<  std::setw(10)<< dish 
+	   <<  std::setw(10)<< dish
 	   <<  std::setw(10)<< disc
 	   << "\n";
 	
