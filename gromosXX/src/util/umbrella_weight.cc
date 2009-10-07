@@ -36,3 +36,4 @@ util::Umbrella_Weight_Factory::~Umbrella_Weight_Factory() {
           to = instances.end(); it != to; ++it)
     delete *it;
 }
+

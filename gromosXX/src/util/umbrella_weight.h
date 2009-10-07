@@ -88,3 +88,4 @@ std::ostream & operator<<(std::ostream & os, const util::Umbrella_Weight & w);
 std::istream & operator>>(std::istream & is, util::Umbrella_Weight & w);
 
 #endif
+

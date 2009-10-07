@@ -110,7 +110,7 @@ void util::Umbrella::build(
     const double qi = coordinates[i]->get_value(grid_min_rel[i], grid_max_rel[i]);
     DEBUG(1, "\tqi: " << qi);
     
-    pos[i] = floor((qi - grid_min_rel[i]) * grid_spacing_rel[i] + 0.5);
+    pos[i] = int(floor((qi - grid_min_rel[i]) * grid_spacing_rel[i] + 0.5));
     DEBUG(1, "\tpos: " << pos[i]);
     if (pos[i] < 0 || pos[i] >= int(num_grid_points[i])) {
       DEBUG(1,"\t\toutside the grid");
