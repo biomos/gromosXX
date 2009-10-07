@@ -1491,8 +1491,18 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
     }
   }
   
+  math::boundary_enum conf_bound;
+  switch(bound) {
+    case -1: conf_bound = math::truncoct; break;
+    case 0: conf_bound = math::vacuum; break;
+    case 1: conf_bound = math::rectangular; break;
+    case 2: conf_bound = math::truncoct; break;
+    default:
+      io::messages.add("Invalid boundary conditions.", "In_Configuration", io::message::error);
+  }
+  
   // and check the boundary condition...
-  if (math::boundary_enum(bound) != boundary){
+  if (conf_bound != boundary){
     io::messages.add("Boundary condition from input file and from GENBOX do not match!"
 		     " - using input file",
 		     "In_Configuration", io::message::warning);
