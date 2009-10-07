@@ -63,6 +63,7 @@ m_every_ramd(0),
 m_every_cos_pos(0),
 m_every_jvalue(0),
 m_every_xray(0),
+m_every_disres(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -129,7 +130,7 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue || m_every_xray) { // add others if there are any
+  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -175,8 +176,8 @@ void io::Out_Configuration::init(io::Argument & args,
 
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write,
-            param.xrayrest.write);
-  else if (param.polarise.write || param.jvalue.write || param.xrayrest.write)
+            param.xrayrest.write, param.distanceres.write);
+  else if (param.polarise.write || param.jvalue.write || param.xrayrest.write || param.distanceres.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -320,6 +321,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
       _print_xray_rvalue(sim.param(), conf, m_special_traj);
       _print_xray(sim.param(), conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+    if (m_every_disres && sim.steps() && (sim.steps() % m_every_disres) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_distance_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -595,13 +604,15 @@ void io::Out_Configuration
 }
 
 void io::Out_Configuration
-::special_trajectory(std::string name, int every_cos, int every_jvalue, int every_xray) {
+::special_trajectory(std::string name, int every_cos, int every_jvalue, 
+                     int every_xray, int every_disres) {
 
   m_special_traj.open(name.c_str());
 
   m_every_cos_pos = every_cos;
   m_every_jvalue = every_jvalue;
   m_every_xray = every_xray;
+  m_every_disres = every_disres;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2196,14 +2207,44 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
   os << "END\n";
 }
 
+void io::Out_Configuration::_print_distance_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const &topo,
+        std::ostream &os) {
+  DEBUG(10, "distance restraints");
+
+  std::vector<double>::const_iterator av_it = conf.special().distanceres.av.begin(),
+          av_to = conf.special().distanceres.av.end();
+  std::vector<double>::const_iterator ene_it = conf.special().distanceres.energy.begin();
+  std::vector<double>::const_iterator d_it = conf.special().distanceres.d.begin();
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_distance_restraint_precision);
+
+  os << "DISRESDATA" << std::endl;
+  int i;
+  for (i = 1; av_it != av_to; ++av_it, ++ene_it, ++d_it, ++i) {
+    os << std::setw(m_width) << *d_it
+       << std::setw(m_width) << *ene_it;
+       if (*av_it != 0) {
+         os << std::setw(m_width) << pow(*av_it, -1.0 / 3.0);
+       } else {
+         os << std::setw(m_width) << 0.0;
+       }
+       os << std::endl;
+  }
+
+  os << "END" << std::endl;
+}
+
 void io::Out_Configuration::_print_distance_restraint_averages(
         configuration::Configuration const &conf,
         topology::Topology const &topo,
         std::ostream &os) {
   DEBUG(10, "distance restraint averages");
 
-  std::vector<double>::const_iterator it = conf.special().distanceres_av.begin(),
-          to = conf.special().distanceres_av.end();
+  std::vector<double>::const_iterator it = conf.special().distanceres.av.begin(),
+          to = conf.special().distanceres.av.end();
 
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_distance_restraint_precision);

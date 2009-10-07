@@ -2075,9 +2075,9 @@ DISTANCERES
 #    CDIR >= 0.0 force constant for distance restraining
 #    DIR0 >= 0.0 distance offset in restraining function
 #  TAUDIR >= 0.0 coupling time for time averaging
-#
-#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR
-        0       0     0.0     0.0     0.0
+#  NTWDIR >= 0 write every NTWDIRth step dist. restr. information to external file
+#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  NTWDIR
+        0       0     0.0     0.0     0.0       0
 END
 @endverbatim
  */
@@ -2103,10 +2103,11 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
   
   int ntdira;
   _lineStream >> param.distanceres.distanceres
-  	      >> ntdira
-	      >> param.distanceres.K
-	      >> param.distanceres.r_linear
-	      >> param.distanceres.tau;
+  	          >> ntdira
+	          >> param.distanceres.K
+	          >> param.distanceres.r_linear
+	          >> param.distanceres.tau
+              >> param.distanceres.write;
   
   if (_lineStream.fail())
     io::messages.add("bad line in DISTANCERES block",
@@ -2131,9 +2132,19 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
                      "In_Parameter", io::message::error);
   }
 
-  if(param.distanceres.K <0) {
+  if(param.distanceres.K < 0) {
     io::messages.add("DISTANCERES block: CDIR must be >= 0.0.",
 		     "In_Parameter", io::message::error);
+  }
+
+  if(param.distanceres.write < 0) {
+    io::messages.add("DISTANCERES block: NTWDIR must be >= 0.",
+		     "In_Parameter", io::message::error);
+  }
+
+  if(param.distanceres.read > 0 && param.distanceres.distanceres > 0) {
+    io::messages.add("DISTANCERES block: NTDIRA > 0 but NTDIR > 0 - DISRESEXPAVE ignored",
+		     "In_Parameter", io::message::warning);
   }
 
 } // DISTANCERES

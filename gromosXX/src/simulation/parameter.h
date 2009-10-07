@@ -1365,6 +1365,7 @@ namespace simulation
        * - r_linear 0
        * - tau 10
        * - read 0
+       * - write 0
        */
 
       distanceres_struct()
@@ -1372,7 +1373,8 @@ namespace simulation
 	  K(0),
 	  r_linear(0),
 	  tau(10),
-	  read(0)
+	  read(0),
+          write(0)
       {
       }
       
@@ -1400,6 +1402,11 @@ namespace simulation
        * read on/off (not supported)
        */
       bool read;
+
+      /**
+       * write on/off
+       */
+      unsigned int write;
       
     }/** Distance restraints parameters */ distanceres;
 

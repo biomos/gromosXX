@@ -1142,8 +1142,8 @@ io::In_Topology::read(topology::Topology& topo,
 
     } // CROSSDIHEDRALH
 
-    // check the dihedrals
-    if (dihedral_bname != "TORSDIHEDRALTYPE") {
+    // check the crossdihedrals
+    if ((m_block["CROSSDIHEDRALH"]).size() && dihedral_bname != "TORSDIHEDRALTYPE") {
       io::messages.add("TORSDIHEDRALTYPE block must be specified to use crossdihedrals",
 		       "In_Topology", io::message::error);
     }

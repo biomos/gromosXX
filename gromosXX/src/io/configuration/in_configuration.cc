@@ -929,7 +929,7 @@ bool io::In_Configuration::read_distance_restraint_averages
 
       if (sim.param().distanceres.read)
         _read_distance_restraint_averages(buffer, topo.distance_restraints(),
-                                          conf.special().distanceres_av);
+                                          conf.special().distanceres.av);
       else
         io::messages.add("distance restraint averages found but not read.",
                          "in_configuration",

@@ -235,7 +235,7 @@ namespace configuration {
        */
       std::vector<xray_struct> xray_rest;
 
-            /**
+      /**
        * @struct xray_rvalue_struct
        * holds some of the X-ray restraints configuration data
        */
@@ -259,9 +259,23 @@ namespace configuration {
       } /** xray informaton */ xray;
 
       /**
-       * distance restraint average
+       * @struct disres_struct
+       * holds the distance restraints configuration data
        */
-      std::vector<double> distanceres_av;
+      struct disres_struct {
+        /**
+         * the distance
+         */
+        std::vector<double> d;
+        /**
+         * the energy
+         */
+        std::vector<double> energy;
+        /**
+         * the running average
+         */
+        std::vector<double> av;
+      } /** disres informaton */ distanceres;
 
       /**
        * @struct pscale_struct

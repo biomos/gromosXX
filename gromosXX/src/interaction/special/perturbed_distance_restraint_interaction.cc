@@ -41,7 +41,7 @@ static int _calculate_perturbed_distance_restraint_interactions
     it = topo.perturbed_distance_restraints().begin(),
     to = topo.perturbed_distance_restraints().end();
   
-  std::vector<double>::iterator ave_it = conf.special().distanceres_av.begin();
+  std::vector<double>::iterator ave_it = conf.special().distanceres.av.begin();
 
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
@@ -55,7 +55,7 @@ static int _calculate_perturbed_distance_restraint_interactions
   DEBUG(7, "perturbed distance restraint interactions : " 
 	<< topo.perturbed_distance_restraints().size());
 
-  for( ; it != to; ++it){
+  for( ; it != to; ++it, ++ave_it){
 
     periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
 #ifndef NDEBUG
@@ -226,7 +226,7 @@ static void _init_averages
         it = topo.perturbed_distance_restraints().begin(),
         to = topo.perturbed_distance_restraints().end(); it != to; ++it) {
     periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
-    conf.special().distanceres_av.push_back(pow(math::abs(v), -3.0));
+    conf.special().distanceres.av.push_back(pow(math::abs(v), -3.0));
   }
 }
 

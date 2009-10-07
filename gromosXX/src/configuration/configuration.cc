@@ -140,7 +140,9 @@ configuration::Configuration::Configuration
   special().jvalue_curr = conf.special().jvalue_curr;
   special().jvalue_epsilon = conf.special().jvalue_epsilon;
   
-  special().distanceres_av = conf.special().distanceres_av;
+  special().distanceres.av = conf.special().distanceres.av;
+  special().distanceres.energy = conf.special().distanceres.energy;
+  special().distanceres.d = conf.special().distanceres.d;
 
   special().pscale = conf.special().pscale;
  
@@ -231,7 +233,9 @@ configuration::Configuration & configuration::Configuration::operator=
   special().jvalue_curr = conf.special().jvalue_curr;
   special().jvalue_epsilon = conf.special().jvalue_epsilon;
   
-  special().distanceres_av = conf.special().distanceres_av;
+  special().distanceres.av = conf.special().distanceres.av;
+  special().distanceres.energy = conf.special().distanceres.energy;
+  special().distanceres.d = conf.special().distanceres.d;
 
   special().pscale = conf.special().pscale;
   

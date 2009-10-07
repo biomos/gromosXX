@@ -124,7 +124,7 @@ namespace io {
      * write a special trajectory.
      */
     void special_trajectory(std::string const name, int every_cos = 1,
-            int every_jvalue = 1, int every_xray = 1);
+            int every_jvalue = 1, int every_xray = 1, int every_disres = 1);
     /**
      * write an energy trajectory.
      */
@@ -283,6 +283,11 @@ namespace io {
     void _print_pertdata(topology::Topology const &topo,
             std::ostream &os);
 
+    void _print_distance_restraints(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
     void _print_distance_restraint_averages(
             configuration::Configuration const &conf,
             topology::Topology const &topo,
@@ -366,6 +371,7 @@ namespace io {
     int m_every_cos_pos;
     int m_every_jvalue;
     int m_every_xray;
+    int m_every_disres;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;

@@ -126,10 +126,18 @@ io::In_Distanceres::read(topology::Topology& topo,
 	    break;
 	  case 1:
 	    os << "\tDistance restraints ON\n";
-	    
+	    break;
+      case -1:
+	    os << "\tDistance restraints ON\n"
+           << "\ttime averaging ON\n";
 	    break;
 	  case 2:
 	    os << "\tDistance restraints ON\n"
+	       << "\t\t(using force constant K*w0)\n";
+	    break;
+      case -2:
+	    os << "\tDistance restraints ON\n"
+           << "\ttime averaging ON\n"
 	       << "\t\t(using force constant K*w0)\n";
 	    break;
 	  default:

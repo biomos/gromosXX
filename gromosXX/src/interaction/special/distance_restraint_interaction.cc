@@ -40,20 +40,21 @@ static int _calculate_distance_restraint_interactions
     it = topo.distance_restraints().begin(),
     to = topo.distance_restraints().end();
   
-  std::vector<double>::iterator ave_it = conf.special().distanceres_av.begin();
+ std::vector<double>::iterator ave_it = conf.special().distanceres.av.begin();
+ std::vector<double>::iterator ene_it = conf.special().distanceres.energy.begin();
+ std::vector<double>::iterator d_it = conf.special().distanceres.d.begin();
 
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
   math::Vec v, f;
-
   double energy;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
   // for(int i=0; it != to; ++it, ++i){
-  for(; it != to; ++it, ++ave_it){
-
+  for(; it != to; ++it, ++ave_it, ++ene_it, ++d_it) {
     periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
+
 #ifndef NDEBUG
     for(int i=0;i<it->v1.size();i++){
       DEBUG(10, "v1 (atom " << i+1 << "): " << it->v1.atom(i)+1);
@@ -66,8 +67,9 @@ static int _calculate_distance_restraint_interactions
     DEBUG(10, "pos(v2) = " << math::v2s(it->v2.pos(conf,topo)));
 
     DEBUG(9, "DISTANCERES v : " << math::v2s(v));
-    
+
     double dist = math::abs(v);
+    (*d_it) = dist;
     DEBUG(9, "DISTANCERES dist : " << dist << " r0 : " << it->r0);
     double force_scale = 1.0;
     if (sim.param().distanceres.distanceres < 0) {
@@ -75,10 +77,12 @@ static int _calculate_distance_restraint_interactions
       // this can cause large fluctuations and is omited.
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);
+
       dist = pow(*ave_it, -1.0 / 3.0);
       DEBUG(9, "DISTANCERES average dist : " << dist);
+    } else {
+      (*ave_it) = 0.0;
     }
-      
 
     if(it->rah*dist < it->rah * it->r0){
       DEBUG(9, "DISTANCERES  : restraint fulfilled");
@@ -102,7 +106,6 @@ static int _calculate_distance_restraint_interactions
       f *= it->w0;
     else 
       f = 0;
-    
 
     // scale the force according to 2.6.3.15
     f *= force_scale;
@@ -130,6 +133,8 @@ static int _calculate_distance_restraint_interactions
      energy *= it->w0;
     else
       energy=0;
+
+    (*ene_it) = energy;
 
     DEBUG(9, "Distanceres energy : " << energy);
 
@@ -159,7 +164,7 @@ int interaction::Distance_Restraint_Interaction
 }
 
 /**
- * calculate position restraint interactions
+ * initiate distance restraint interactions
  */
 template<math::boundary_enum B>
 static void _init_averages
@@ -173,7 +178,29 @@ static void _init_averages
         it = topo.distance_restraints().begin(),
         to = topo.distance_restraints().end(); it != to; ++it) {
     periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
-    conf.special().distanceres_av.push_back(pow(math::abs(v), -3.0));
+    conf.special().distanceres.d.push_back(math::abs(v));
+    conf.special().distanceres.energy.push_back(0.0);
+    conf.special().distanceres.av.push_back(pow(math::abs(v), -3.0));
+  }
+}
+
+/**
+ * initiate position restraint interactions
+ */
+template<math::boundary_enum B>
+static void _init_disres_data
+(topology::Topology & topo,
+ configuration::Configuration & conf)
+{
+  math::Periodicity<B> periodicity(conf.current().box);
+  math::Vec v;
+
+  for(std::vector<topology::distance_restraint_struct>::const_iterator
+        it = topo.distance_restraints().begin(),
+        to = topo.distance_restraints().end(); it != to; ++it) {
+    periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
+    conf.special().distanceres.d.push_back(math::abs(v));
+    conf.special().distanceres.energy.push_back(0.0);
   }
 }
 
@@ -190,13 +217,17 @@ int interaction::Distance_Restraint_Interaction::init(topology::Topology &topo,
     if (!sim.param().distanceres.read) {
       // reset averages to r_0
       SPLIT_BOUNDARY(_init_averages, topo, conf);
+    } else {
+      SPLIT_BOUNDARY(_init_disres_data, topo, conf);
     }
+  } else {
+    SPLIT_BOUNDARY(_init_averages, topo, conf);
   }
   
   if (!quiet) {
     os << "Distance restraint interaction";
     if (sim.param().distanceres.distanceres < 0)
-      os << "with time-averaging";
+      os << " with time-averaging";
     os << std::endl;
   }
   return 0;
