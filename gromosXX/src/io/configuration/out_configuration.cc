@@ -2324,33 +2324,30 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
 
   os << "# totals\n";
 
-  os << std::setw(18) << e.total << "\n"
-          << std::setw(18) << e.kinetic_total << "\n"
-          << std::setw(18) << e.potential_total << "\n"
-          << std::setw(18) << e.bond_total << "\n"
-          << std::setw(18) << e.angle_total << "\n"
-          << std::setw(18) << e.improper_total << "\n"
-          << std::setw(18) << e.dihedral_total << "\n"
-          << std::setw(18) << e.crossdihedral_total << "\n"
-          << std::setw(18) << e.lj_total << "\n"
-          << std::setw(18) << e.crf_total << "\n"
-          << std::setw(18) << e.ls_realspace_total << "\n"
-          << std::setw(18) << e.ls_kspace_total << "\n"
-          << std::setw(18) << e.ls_a_term_total << "\n"
-          << std::setw(18) << e.ls_self_total << "\n"
-          << std::setw(18) << e.ls_surface_total << "\n"
-          << std::setw(18) << e.constraints_total << "\n"
-          << std::setw(18) << e.posrest_total << "\n"
-          << std::setw(18) << e.distanceres_total << "\n"
-          << std::setw(18) << e.dihrest_total << "\n"
-          << std::setw(18) << e.jvalue_total << "\n"
-          << std::setw(18) << e.xray_total << "\n"
-          << std::setw(18) << e.leus_total << "\n"
-          << std::setw(18) << e.self_total << "\n" // self energy from polarization
-          //<< std::setw(18) << 0.0 << "\n" // local elevation
-          << std::setw(18) << e.eds_vr << "\n"; // eds energy of reference state
-  //<< std::setw(18) << 0.0 << "\n"; // path integral
-  // << std::setw(18) << e.entropy_term << "\n"; // dH/dl * H
+  os << std::setw(18) << e.total << "\n"// 1
+          << std::setw(18) << e.kinetic_total << "\n" // 2
+          << std::setw(18) << e.potential_total << "\n" // 3
+          << std::setw(18) << e.bond_total << "\n" // 4
+          << std::setw(18) << e.angle_total << "\n" // 5
+          << std::setw(18) << e.improper_total << "\n" // 6
+          << std::setw(18) << e.dihedral_total << "\n" // 7
+          << std::setw(18) << e.crossdihedral_total << "\n" // 8
+          << std::setw(18) << e.lj_total << "\n" // 9
+          << std::setw(18) << e.crf_total << "\n" // 10
+          << std::setw(18) << e.ls_realspace_total << "\n" // 11
+          << std::setw(18) << e.ls_kspace_total << "\n" // 12
+          << std::setw(18) << e.ls_a_term_total << "\n" // 13
+          << std::setw(18) << e.ls_self_total << "\n" // 14
+          << std::setw(18) << e.ls_surface_total << "\n" // 15
+          << std::setw(18) << e.constraints_total << "\n" // 16
+          << std::setw(18) << e.posrest_total << "\n" // 17
+          << std::setw(18) << e.distanceres_total << "\n" // 18
+          << std::setw(18) << e.dihrest_total << "\n" // 19
+          << std::setw(18) << e.jvalue_total << "\n" // 20
+          << std::setw(18) << e.xray_total << "\n" // 21
+          << std::setw(18) << e.leus_total << "\n" // 22
+          << std::setw(18) << e.self_total << "\n" // 23
+          << std::setw(18) << e.eds_vr << "\n"; // 24
 
   // put eds V_R energy here
 
