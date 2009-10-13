@@ -132,7 +132,14 @@ configuration::Configuration::Configuration
   //current().fsasa = conf.current().fsasa;
   //current().fvolume = conf.current().fvolume;
 
-  special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
+  special().dihangle_trans.dihedral_angle_minimum = conf.special().dihangle_trans.dihedral_angle_minimum;
+  special().dihangle_trans.old_minimum = conf.special().dihangle_trans.old_minimum;
+  special().dihangle_trans.resid = conf.special().dihangle_trans.resid;
+  special().dihangle_trans.i = conf.special().dihangle_trans.i;
+  special().dihangle_trans.j = conf.special().dihangle_trans.j;
+  special().dihangle_trans.k = conf.special().dihangle_trans.k;
+  special().dihangle_trans.l = conf.special().dihangle_trans.l;
+  
   special().umbrellas = conf.special().umbrellas;
   special().flexible_constraint = conf.special().flexible_constraint;
   
@@ -225,7 +232,14 @@ configuration::Configuration & configuration::Configuration::operator=
   //current().fsasa = conf.current().fsasa;
   //current().fvolume = conf.current().fvolume;
 
-  special().dihedral_angle_minimum = conf.special().dihedral_angle_minimum;
+  special().dihangle_trans.dihedral_angle_minimum = conf.special().dihangle_trans.dihedral_angle_minimum;
+  special().dihangle_trans.old_minimum = conf.special().dihangle_trans.old_minimum;
+  special().dihangle_trans.resid = conf.special().dihangle_trans.resid;
+  special().dihangle_trans.i = conf.special().dihangle_trans.i;
+  special().dihangle_trans.j = conf.special().dihangle_trans.j;
+  special().dihangle_trans.k = conf.special().dihangle_trans.k;
+  special().dihangle_trans.l = conf.special().dihangle_trans.l;
+  
   special().umbrellas = conf.special().umbrellas;
   special().flexible_constraint = conf.special().flexible_constraint;
   
@@ -306,8 +320,20 @@ void configuration::Configuration::init(topology::Topology const & topo,
   // which can be done only after reading of the coordinates. Would be a
   // nicer solution, but also requires the parameters...
   if(param.print.monitor_dihedrals){
-    special().dihedral_angle_minimum.resize
+    special().dihangle_trans.dihedral_angle_minimum.resize
       (topo.solute().dihedrals().size(), 4*math::Pi);
+    special().dihangle_trans.old_minimum.resize
+      (topo.solute().dihedrals().size(), 0.0);
+    special().dihangle_trans.resid.resize
+      (topo.solute().dihedrals().size(), 0);
+    special().dihangle_trans.i.resize
+      (topo.solute().dihedrals().size(), 0);
+    special().dihangle_trans.j.resize
+      (topo.solute().dihedrals().size(), 0);
+    special().dihangle_trans.k.resize
+      (topo.solute().dihedrals().size(), 0);
+    special().dihangle_trans.l.resize
+      (topo.solute().dihedrals().size(), 0);
   }
   
   if (param.constraint.solute.algorithm == simulation::constr_flexshake &&

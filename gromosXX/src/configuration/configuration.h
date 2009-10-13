@@ -161,10 +161,40 @@ namespace configuration {
      */
     struct special_struct {
       /**
+       * @struct dihangle_trans
+       * flexible constraint data
+       */
+      struct dihangle_trans_struct {
+      /**
+       * the residues for monitoring: number
+       */
+      std::vector<int> resid;
+      /**
+       * the atoms for monitoring
+       */
+      std::vector<int> i;
+      /**
+       * the atoms for monitoring
+       */
+      std::vector<int> j;
+      /**
+       * the atoms for monitoring
+       */
+      std::vector<int> k;
+      /**
+       * the atoms for monitoring
+       */
+      std::vector<int> l;
+      /**
+       * the old dihedral angle minima
+       */
+      std::vector<double> old_minimum;
+      /**
        * the dihedral angle minima for monitoring
        */
       std::vector<double> dihedral_angle_minimum;
-
+      } /** dihedral angle transition data */ dihangle_trans;
+      ///////////////////////////////////////////////////////////////
       /**
        * the local elevation umbrellas
        */

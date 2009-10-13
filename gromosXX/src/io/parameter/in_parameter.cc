@@ -565,7 +565,7 @@ void io::In_Parameter::read_PRINTOUT(simulation::Parameter &param,
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
   _lineStream >> param.print.stepblock
-	      >> ntpp;
+	      >> param.print.monitor_dihedrals;
   
   if (_lineStream.fail())
     io::messages.add("bad line in PRINTOUT block",
@@ -574,18 +574,11 @@ void io::In_Parameter::read_PRINTOUT(simulation::Parameter &param,
   if(param.print.stepblock < 0)
     io::messages.add("PRINTOUT block: NTPR should be >=0.",
 		     "In_Parameter", io::message::error);
-  
-  switch(ntpp) {
-    case 0 : 
-      param.print.monitor_dihedrals = false;
-      break;
-    case 1 :
-      param.print.monitor_dihedrals = true;
-      break;
-    default:
+
+  if(param.print.monitor_dihedrals < 0 || param.print.monitor_dihedrals > 1)
     io::messages.add("PRINTOUT block: NTPP should be 0 or 1.",
-		     "In_Parameter", io::message::error);      
-  }
+		     "In_Parameter", io::message::error);
+  
 }
 
 /**

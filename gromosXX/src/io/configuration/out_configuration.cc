@@ -64,6 +64,7 @@ m_every_cos_pos(0),
 m_every_jvalue(0),
 m_every_xray(0),
 m_every_disres(0),
+m_every_dat(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -130,7 +131,7 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres) { // add others if there are any
+  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_dat) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -176,8 +177,9 @@ void io::Out_Configuration::init(io::Argument & args,
 
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write,
-            param.xrayrest.write, param.distanceres.write);
-  else if (param.polarise.write || param.jvalue.write || param.xrayrest.write || param.distanceres.write)
+            param.xrayrest.write, param.distanceres.write, param.print.monitor_dihedrals);
+  else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
+        || param.distanceres.write || param.print.monitor_dihedrals)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -323,12 +325,22 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_xray(sim.param(), conf, topo, m_special_traj);
       m_special_traj.flush();
     }
+
     if (m_every_disres && sim.steps() && (sim.steps() % m_every_disres) == 0) {
       if (!special_timestep_printed) {
         _print_timestep(sim, m_special_traj);
         special_timestep_printed = true;
       }
       _print_distance_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+
+    if (m_every_dat) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_dihangle_trans(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -605,7 +617,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
-                     int every_xray, int every_disres) {
+                     int every_xray, int every_disres, int every_dat) {
 
   m_special_traj.open(name.c_str());
 
@@ -613,6 +625,7 @@ void io::Out_Configuration
   m_every_jvalue = every_jvalue;
   m_every_xray = every_xray;
   m_every_disres = every_disres;
+  m_every_dat = every_dat;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2258,6 +2271,44 @@ void io::Out_Configuration::_print_distance_restraint_averages(
   }
   if ((i-1) % 5 != 0)
     os << std::endl;
+
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_dihangle_trans(
+        configuration::Configuration const &conf,
+        topology::Topology const &topo,
+        std::ostream &os) {
+  DEBUG(10, "dihedral angle transitions");
+
+  std::vector<double>::const_iterator it = conf.special().dihangle_trans.dihedral_angle_minimum.begin(),
+          to = conf.special().dihangle_trans.dihedral_angle_minimum.end();
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(1);
+  unsigned int atom_i, atom_j, atom_k, atom_l;
+
+  os << "D-A-T" << std::endl;
+  os << "# Dih. No.    Resid  Atoms                                        Old min. -> New min." << std::endl;
+  int i;
+  for (i = 1; it != to; ++it, ++i) {
+    if (conf.special().dihangle_trans.old_minimum[i] > math::epsilon) {
+      atom_i = conf.special().dihangle_trans.i[i];
+      atom_j = conf.special().dihangle_trans.j[i];
+      atom_k = conf.special().dihangle_trans.k[i];
+      atom_l = conf.special().dihangle_trans.l[i];
+      os << i << std::setw(14) << conf.special().dihangle_trans.resid[i] + 1
+         << std::setw(4) << topo.residue_names()[topo.solute().atom(atom_i).residue_nr]
+         << std::setw(4) << topo.solute().atom(atom_i).name << " - "
+         << topo.solute().atom(atom_j).name << " - "
+         << topo.solute().atom(atom_k).name << " - " << topo.solute().atom(atom_l).name
+         << std::setw(4) << atom_i + 1 << " - " << atom_j + 1 << " - "
+         << atom_k + 1 << " - " << atom_l + 1
+         << std::setw(m_width) << 180.0 * conf.special().dihangle_trans.old_minimum[i] / math::Pi << " -> "
+         << 180.0 * conf.special().dihangle_trans.dihedral_angle_minimum[i] / math::Pi
+         << std::endl;
+    }
+  }
 
   os << "END" << std::endl;
 }

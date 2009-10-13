@@ -124,7 +124,8 @@ namespace io {
      * write a special trajectory.
      */
     void special_trajectory(std::string const name, int every_cos = 1,
-            int every_jvalue = 1, int every_xray = 1, int every_disres = 1);
+            int every_jvalue = 1, int every_xray = 1, int every_disres = 1,
+            int every_dat = 1);
     /**
      * write an energy trajectory.
      */
@@ -277,6 +278,10 @@ namespace io {
     void _print_stochastic_integral(configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);
+
+    void _print_dihangle_trans(configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
     /**
      * perturbation (slow groth) restart data
      */
@@ -372,6 +377,7 @@ namespace io {
     int m_every_jvalue;
     int m_every_xray;
     int m_every_disres;
+    int m_every_dat;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;
