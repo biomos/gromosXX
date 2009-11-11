@@ -727,6 +727,7 @@ namespace simulation
 	pres0(0,0) = pres0(1,1) = pres0(2,2) = 0.06102;
 	tau = 0.5;
 	compressibility = 0.000751;
+        x_semi = y_semi = z_semi = 1;
       }
       /**
        * calculate pressure?
@@ -752,6 +753,10 @@ namespace simulation
        * isothermal compressibility
        */
       double compressibility;
+      /**
+       * semianisotropic couplings
+       */
+      int x_semi, y_semi, z_semi;
     } /** pressure coupling parameters */ pcouple;
 
     /**
