@@ -179,6 +179,71 @@ int algorithm::Berendsen_Barostat
                  << " " << conf.current().psi);
        */
     }
+    case math::pcouple_semi_anisotropic :
+    {
+      math::Vec mu;
+
+      DEBUG(8, "semi anisotropic pressure scaling");
+
+      if (sim.param().pcouple.x_semi < 1)
+        mu(0) = 1;
+      else{
+        mu(0) = pow(1.0 - sim.param().pcouple.compressibility
+                * sim.time_step_size() / sim.param().pcouple.tau
+                * (sim.param().pcouple.pres0(0, 0) -
+                pressure(0, 0)),
+                1.0 / 3.0);
+      }
+
+      if (sim.param().pcouple.y_semi < 1)
+        mu(1) = 1;
+      if (sim.param().pcouple.y_semi > 0 && (sim.param().pcouple.y_semi == sim.param().pcouple.x_semi))
+        mu(1) = mu(0);
+      if (sim.param().pcouple.y_semi > 0 && (sim.param().pcouple.y_semi != sim.param().pcouple.x_semi)){
+        mu(1) = pow(1.0 - sim.param().pcouple.compressibility
+                * sim.time_step_size() / sim.param().pcouple.tau
+                * (sim.param().pcouple.pres0(1, 1) -
+                pressure(1, 1)),
+                1.0 / 3.0);
+      }
+
+      if(sim.param().pcouple.z_semi < 1)
+        mu(2) = 1;
+      if(sim.param().pcouple.z_semi > 0) {
+        if(sim.param().pcouple.z_semi == sim.param().pcouple.x_semi)
+          mu(2) = mu(0);
+        if(sim.param().pcouple.z_semi == sim.param().pcouple.y_semi)
+          mu(2) = mu(1);
+        if((sim.param().pcouple.z_semi != sim.param().pcouple.x_semi) && (sim.param().pcouple.z_semi != sim.param().pcouple.y_semi)) {
+          mu(2) = pow(1.0 - sim.param().pcouple.compressibility
+                  * sim.time_step_size() / sim.param().pcouple.tau
+                  * (sim.param().pcouple.pres0(2, 2) -
+                  pressure(2, 2)),
+                  1.0 / 3.0);
+        }
+      }
+
+      
+
+      DEBUG(10, "mu = " << math::v2s(mu));
+
+      // scale the box
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          box(i)(j) *= mu(j);
+
+      DEBUG(10, "and the positions...");
+
+      // scale the positions
+      for (unsigned int i = 0; i < pos.size(); ++i) {
+        for (int j = 0; j < 3; ++j) {
+          pos(i)(j) *= mu(j);
+          if (scale_ref)
+            ref(i)(j) *= mu(j);
+        }
+      }
+      break;
+    }
     default:
       return 0;
   }
