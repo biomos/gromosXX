@@ -192,7 +192,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 		      sim.param().pcouple.pres0,
 		      sim.param().pcouple.compressibility,
 		      sim.param().pcouple.tau,
-		      sim.param().pcouple.virial);
+		      sim.param().pcouple.virial,
+                      sim.param().pcouple.x_semi,
+                      sim.param().pcouple.y_semi,
+                      sim.param().pcouple.z_semi);
   }
   
   if (sim.param().pcouple.calculate){
