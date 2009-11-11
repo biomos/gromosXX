@@ -280,7 +280,8 @@ namespace io
   void print_PCOUPLE(std::ostream &os, bool calc, 
 		     math::pressure_scale_enum scale,
 		     math::Matrix pres0, double comp, 
-		     double tau, math::virial_enum vir)
+		     double tau, math::virial_enum vir,
+                     int x_semi, int y_semi, int z_semi)
   {
     os << "PCOUPLE\n";
     os.precision(5);
@@ -336,7 +337,22 @@ namespace io
       default:
 	os << std::setw(12) << "unknown";
     }
-    
+
+    if(scale == math::pcouple_semi_anisotropic){
+      os << "\n" << std::setw(39) << "SEMIANISOTROPIC COUPLINGS(X, Y, Z)" << "\n";
+      os << std::setw(12) << x_semi
+         << std::setw(12) << y_semi
+         << std::setw(12) << z_semi;
+    }
+    else{
+      os << "\n" << std::setw(39) << "SEMIANISOTROPIC COUPLINGS(X, Y, Z)" << "\n";
+      os << std::setw(6) << x_semi << " (ignored)"
+         << std::setw(6) << y_semi << " (ignored)"
+         << std::setw(6) << z_semi << " (ignored)";
+    }
+
+
+
     os << "\n" << std::setw(23) << "REFERENCE PRESSURE" << "\n";
     
     for(int i=0; i<3; ++i){
