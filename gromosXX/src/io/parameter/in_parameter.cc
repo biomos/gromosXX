@@ -345,12 +345,14 @@ CONSTRAINT
 #             - shake
 #             - lincs
 #             - settle
+#             - m_shake (only implemented for water and methanol!)
 #       NTCS
         shake
 #       NTCS0(1):  algorithm options
 #         - shake: tolerance
 #         - lincs: order
 #         - settle: no arguments
+#         - m_shake: tolerance
 #       NTCS0(1)
         0.0001
 END
@@ -516,6 +518,15 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     DEBUG(9, "constraints solvent settle");
 
     param.constraint.solvent.algorithm = simulation::constr_settle;
+  } else if (salg == "m_shake" || salg == "5") {
+    DEBUG(9, "constraints solvent m_shake");
+
+    param.constraint.solvent.algorithm = simulation::constr_m_shake;
+    _lineStream >> param.constraint.solvent.shake_tolerance;
+
+    if(param.constraint.solvent.shake_tolerance <= 0.0)
+      io::messages.add("CONSTRAINT block: m_shake tolerance should be > 0.0",
+		       "In_Parameter", io::message::error);
   }  else if (salg == "off" || salg == "0") {
     DEBUG(9, "constraints solvent off");
 

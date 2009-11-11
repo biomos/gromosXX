@@ -228,10 +228,14 @@ void algorithm::Settle
                           pos_new[1] * mass_H + pos_new[2] * mass_H) /
                          (mass_O + mass_H + mass_H);
 
+    DEBUG(3, "COM= " << math::v2s(d0));
+
     // move the origin to the centre of mass
     math::Vec a1 = pos_new[0] - d0;
     math::Vec b1 = pos_new[1] - d0;
     math::Vec c1 = pos_new[2] - d0;
+
+    DEBUG(3, "a1= " << math::v2s(a1) << " b1= " << math::v2s(b1) << " c1= " << math::v2s(c1));
 
     // vectors describing transformation from original coordinate system to
     // the centre of mass originated coordinate system
@@ -241,6 +245,9 @@ void algorithm::Settle
     n0 = n0 / math::abs(n0); // this can give a NaN but it is very unlikely.
     n1 = n1 / math::abs(n1);
     n2 = n2 / math::abs(n2);
+
+    DEBUG(3, "n0= " << math::v2s(n0) << " n1= " << math::v2s(n1) << " n2= " << math::v2s(n2));
+
     // generate new normal vectors from the transpose in order to undo
     // the transformation
     const math::Vec m1(n1(0), n2(0), n0(0));
@@ -256,6 +263,8 @@ void algorithm::Settle
     a1 = math::Vec(math::dot(n1, a1), math::dot(n2, a1), math::dot(n0, a1));
     b1 = math::Vec(math::dot(n1, b1), math::dot(n2, b1), math::dot(n0, b1));
     c1 = math::Vec(math::dot(n1, c1), math::dot(n2, c1), math::dot(n0, c1));
+
+    DEBUG(3, "rotated: a1= " << math::v2s(a1) << " b1= " << math::v2s(b1) << " c1= " << math::v2s(c1));
 
     // now we can compute positions of canonical water 
     // the cos is calculate from the square of the sin via sin^2 + cos^2 = 1
@@ -304,6 +313,8 @@ void algorithm::Settle
     const math::Vec b2(x_b2, y_b2, z_b2);
     const math::Vec c2(x_c2, y_c2, z_c2);
 
+    DEBUG(3, "a2= " << math::v2s(a2) << " b2= " << math::v2s(b2) << " c2= " << math::v2s(c2));
+
     // there are no a0 terms because we've already subtracted the term off 
     // when we first defined b0 and c0.
     // this is (A15) but the equation is not really numbered...
@@ -333,11 +344,15 @@ void algorithm::Settle
     const math::Vec c3(-b2(0) * costheta - c2(1) * sintheta,
             -b2(0) * sintheta + c2(1) * costheta,
             c1(2));
+
+    DEBUG(3, "a3= " << math::v2s(a3) << " b3= " << math::v2s(b3) << " c3= " << math::v2s(c3));
     
     // calculate the new positions
     const math::Vec pos_a = math::Vec(math::dot(a3, m1), math::dot(a3, m2), math::dot(a3, m0)) + d0;
     const math::Vec pos_b = math::Vec(math::dot(b3, m1), math::dot(b3, m2), math::dot(b3, m0)) + d0;
     const math::Vec pos_c = math::Vec(math::dot(c3, m1), math::dot(c3, m2), math::dot(c3, m0)) + d0;
+
+    DEBUG(3, "pos_a= " << math::v2s(pos_a) << " pos_b= " << math::v2s(pos_b) << " pos_c= " << math::v2s(pos_c));
 
     // calculate the displacement for velocity and virial calculation
     const math::Vec d_a = pos_a - pos_new[0];
@@ -356,6 +371,8 @@ void algorithm::Settle
     cons_force[0] = d_a * mass_O * dt2_i;
     cons_force[1] = d_b * mass_H * dt2_i;
     cons_force[2] = d_c * mass_H * dt2_i;
+
+    DEBUG(3, "constrained forces 0= " << math::v2s(cons_force[0]) << " 1= " << math::v2s(cons_force[1]) << " 2= " << math::v2s(cons_force[2]));
     
     if (do_velocity) {
       math::Vec * vel_new = &conf.current().vel(i);

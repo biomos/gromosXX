@@ -32,7 +32,12 @@ namespace simulation
     /**
      * settle
      */
-    constr_settle
+    constr_settle,
+    /**
+     * m_shake
+     */
+    constr_m_shake
+
   };
   /**
    * @enum special_loop_enum

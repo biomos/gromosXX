@@ -38,6 +38,7 @@
 #include <algorithm/constraints/flexible_constraint.h>
 #include <algorithm/constraints/perturbed_flexible_constraint.h>
 #include <algorithm/constraints/settle.h>
+#include <algorithm/constraints/m_shake.h>
 
 #include <algorithm/constraints/rottrans.h>
 
@@ -50,19 +51,17 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
-
 int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
-				  topology::Topology &topo,
-				  simulation::Simulation & sim,
-				  io::In_Topology &it,
-				  bool quiet)
-			       
-{
+        topology::Topology &topo,
+        simulation::Simulation & sim,
+        io::In_Topology &it,
+        bool quiet)
+ {
   DEBUG(7, "solute:  " << sim.param().constraint.solute.algorithm);
   DEBUG(7, "solvent: " << sim.param().constraint.solvent.algorithm);
   DEBUG(7, "\tNTC: " << sim.param().constraint.ntc);
   DEBUG(7, "rottrans: " << sim.param().rottrans.rottrans);
-  
+
 
   // CONSTRAINTS
   DEBUG(7, "Constrain solute?");
@@ -75,7 +74,7 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
             "create_constraints", io::message::error);
     return 1;
   }
-  
+
   switch (sim.param().constraint.solute.algorithm) {
     case simulation::constr_shake :
     {
@@ -160,16 +159,21 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       io::messages.add("SETTLE is only available for solvent.", "create_constraints",
               io::message::error);
     }
+    case simulation::constr_m_shake :
+    {
+      io::messages.add("M_SHAKE is only available for solvent.", "create_constraints",
+              io::message::error);
+    }
     default:
     {
       // no constraints...
     }
   }
 
-  // sovlent (if not the same as solute)
+  // solvent (if not the same as solute)
   if (topo.num_solvent_atoms() > 0 &&
-      sim.param().constraint.solute.algorithm !=
-      sim.param().constraint.solvent.algorithm) {
+          sim.param().constraint.solute.algorithm !=
+          sim.param().constraint.solvent.algorithm) {
 
     switch (sim.param().constraint.solvent.algorithm) {
       case simulation::constr_shake :
@@ -202,6 +206,21 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       {
         algorithm::Settle * s =
                 new algorithm::Settle;
+        it.read_harmonic_bonds(s->parameter());
+        md_seq.push_back(s);
+
+        break;
+      }
+      case simulation::constr_m_shake :
+      {
+        // first check that the solvent(s) has only three constraints!
+        for (unsigned int i = 0; i < topo.num_solvents(); ++i) {
+          if (topo.solvent(i).distance_constraints().size() != 3)
+            io::messages.add("M_Shake only implemented for solvents with three constraints",
+                "create_constraints", io::message::error);
+        }
+        algorithm::M_Shake * s =
+                new algorithm::M_Shake(sim.param().constraint.solvent.shake_tolerance);
         it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 
