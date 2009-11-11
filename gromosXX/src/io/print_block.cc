@@ -310,11 +310,14 @@ namespace io
       case math::pcouple_anisotropic:
 	os << std::setw(12) << "aniso";
 	break;
-      case math::pcouple_full_anisotropic:
-	os << std::setw(12) << "full";
-	break;
+      case math::pcouple_full_anisotropic :
+                os << std::setw(12) << "full";
+        break;
+      case math::pcouple_semi_anisotropic :
+                os << std::setw(12) << "semianiso";
+        break;
       default:
-	os << std::setw(12) << "unknown";
+        os << std::setw(12) << "unknown";
     }
     
     os << std::setw(12) << comp
