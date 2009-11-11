@@ -715,11 +715,15 @@ void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
  * @verbatim
 PRESSURESCALE
 #	COUPLE:	off(0), calc(1), scale(2)
-#	SCALE:  off(0), iso(1), aniso(2), full(3)
+#	SCALE:  off(0), iso(1), aniso(2), full(3), semianiso(4)
 #	VIRIAL: none(0), atomic(1), molecular(2)
 #
 #   COUPLE  SCALE   COMP        TAUP    VIRIAL
     calc    iso     4.575E-4    0.5     atomic
+#   SEMIANISOTROPIC COUPLINGS(X, Y, Z)
+#       e.g. 1 1 2: x and y jointly coupled and z separately coupled 
+#       e.g. 0 0 1: constant area (xy-plane) and z coupled to a bath
+    1 1 2
 #   reference pressure
     0.06102     0.00000     0.00000
     0.00000     0.06102     0.00000
@@ -746,11 +750,14 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
     std::string s1, s2, s3;
+    int xs, ys, zs;
 
     _lineStream >> s1 >> s2
         >> param.pcouple.compressibility
         >> param.pcouple.tau
         >> s3;
+
+    _lineStream >> xs >> ys >> zs;
 
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
@@ -788,6 +795,24 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
         param.pcouple.scale = math::pcouple_anisotropic;
       else if (s2 == "full" || s2 == "3")
         param.pcouple.scale = math::pcouple_full_anisotropic;
+      else if (s2 == "semianiso" || s2 == "4"){
+        param.pcouple.scale = math::pcouple_semi_anisotropic;
+        if (xs < 0 || xs > 2)
+          io::messages.add("PRESSURESCALE block: bad value for x component of COUPLINGS FOR SEMIANISOTROPIC"
+                     "(0,1,2)",
+		     "In_Parameter", io::message::error);
+        if (ys < 0 || ys > 2)
+          io::messages.add("PRESSURESCALE block: bad value for y component of COUPLINGS FOR SEMIANISOTROPIC"
+                     "(0,1,2)",
+		     "In_Parameter", io::message::error);
+        if (zs < 0 || zs > 2)
+          io::messages.add("PRESSURESCALE block: bad value for z component of COUPLINGS FOR SEMIANISOTROPIC"
+                     "(0,1,2)",
+		     "In_Parameter", io::message::error);
+        param.pcouple.x_semi = xs;
+        param.pcouple.y_semi = ys;
+        param.pcouple.z_semi = zs;
+      }
       else {
         io::messages.add("PRESSURESCALE block: bad value for SCALE switch "
             "(off,iso,aniso,full)",
