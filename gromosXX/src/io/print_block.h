@@ -36,7 +36,8 @@ namespace io
   void print_PCOUPLE(std::ostream &os, bool calc, 
 		     math::pressure_scale_enum scale,
 		     math::Matrix pres0, double comp, 
-		     double tau, math::virial_enum vir);
+		     double tau, math::virial_enum vir,
+                     int x_semi, int y_semi, int z_semi);
 
   /**
    * Print the PRESSURE block.
