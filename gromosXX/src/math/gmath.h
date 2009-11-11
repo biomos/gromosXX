@@ -612,7 +612,9 @@ namespace math
     /** anisotropic pressure scaling */
     pcouple_anisotropic = 2,
     /** full anisotropic pressure scaling */
-    pcouple_full_anisotropic = 3
+    pcouple_full_anisotropic = 3,
+    /** semianisotropic pressure scaling */
+    pcouple_semi_anisotropic = 4
   };
 
   /**
