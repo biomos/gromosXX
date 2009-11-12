@@ -40,7 +40,8 @@ xxalgconst_HEADERS = constraints/create_constraints.h\
 	constraints/perturbed_flexible_constraint.h\
 	constraints/remove_com_motion.h\
 	constraints/rottrans.h\
-	constraints/settle.h
+	constraints/settle.h\
+        constraints/m_shake.h
 
 noinst_LTLIBRARIES=	libgroalgorithm.la
 
@@ -65,6 +66,7 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	constraints/perturbed_flexible_constraint.cc\
 	constraints/lincs.cc\
 	constraints/settle.cc\
+        constraints/m_shake.cc\
 	integration/energy_calculation.cc\
 	integration/slow_growth.cc\
 	integration/steepest_descent.cc\
