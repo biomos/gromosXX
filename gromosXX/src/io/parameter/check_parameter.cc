@@ -2910,6 +2910,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "solute_flexshake");
   fc.unlock("innerloop_method_cuda", "solvent_constraint_off");
   fc.unlock("innerloop_method_cuda", "solvent_shake");
+  fc.unlock("innerloop_method_cuda", "solvent_settle");
   fc.unlock("innerloop_method_cuda", "solvent_lincs");
   fc.unlock("innerloop_method_cuda", "virial_off");
   fc.unlock("innerloop_method_cuda", "pbc_r");
