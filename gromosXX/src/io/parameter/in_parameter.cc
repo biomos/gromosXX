@@ -330,11 +330,11 @@ CONSTRAINT
 #		4	"specified"	solvent and constraints in the CONSTRAINTS block
 	3
 #       NTCP: solute algorithm
-#             - shake
-#             - lincs
-#             - flexshake
+#               1        shake
+#               2        lincs
+#               3        flexshake
 #       NTCP
-        shake
+        1
 #       NTCP0(1)..(3): algorithm options
 #         - shake: tolerance
 #         - lincs: order
@@ -342,15 +342,17 @@ CONSTRAINT
 #       NTCP0(1)   NTCP0(2)   NTCP0(3)
         0.0001
 #	NTCS: solvent algorithm
-#             - shake
-#             - lincs
-#             - settle
-#             - m_shake (only implemented for water and methanol!)
+#               1        shake
+#               2        lincs
+#               3        flexshake
+#               4        settle
+#               5        m_shake (only implemented for water and methanol!)
 #       NTCS
-        shake
+        1
 #       NTCS0(1):  algorithm options
 #         - shake: tolerance
 #         - lincs: order
+#         - flexshake: tolerance, readin, order
 #         - settle: no arguments
 #         - m_shake: tolerance
 #       NTCS0(1)
