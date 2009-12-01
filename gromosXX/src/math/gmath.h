@@ -582,11 +582,11 @@ namespace math
     /**
      * truncated octahedral box
      */
-    truncoct = 3,
+    truncoct = -1, // 01.12.2009, Andreas: set from 3 to -1
     /**
      * non-specialized version
      */
-    any = 4
+    any = 4 // 01.12.2009, Andreas: could also be set to 3 but I leave it at 4
   };
   /**
    * @enum virial_enum
