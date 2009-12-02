@@ -729,7 +729,7 @@ void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
 PRESSURESCALE
 #	COUPLE:	off(0), calc(1), scale(2)
 #	SCALE:  off(0), iso(1), aniso(2), full(3), semianiso(4)
-#	VIRIAL: none(0), atomic(1), molecular(2)
+#	VIRIAL: none(0), atomic(1), group(2)
 #
 #   COUPLE  SCALE   COMP        TAUP    VIRIAL
     calc    iso     4.575E-4    0.5     atomic
@@ -848,7 +848,7 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
         param.pcouple.virial = math::no_virial;
       } else if (s3 == "atomic" || s3 == "1")
         param.pcouple.virial = math::atomic_virial;
-      else if (s3 == "molecular" || s3 == "2")
+      else if (s3 == "molecular" ||s3 == "group" || s3 == "2")
         param.pcouple.virial = math::molecular_virial;
       else {
         io::messages.add("bad value for virial switch in PRESSURESCALE block\n"

@@ -595,10 +595,10 @@ namespace math
   enum virial_enum { 
     /** no virial */ 
     no_virial = 0, 
-    /** molecular virial */
-    molecular_virial = 1, 
+    /** molecular/group virial */
+    molecular_virial = 2, 
     /** atomic virial */
-    atomic_virial = 2 
+    atomic_virial = 1 
   };
   /**
    * @enum pressure_scale_enum
