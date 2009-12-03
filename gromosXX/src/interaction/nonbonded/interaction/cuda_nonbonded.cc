@@ -103,7 +103,7 @@ int interaction::CUDA_Nonbonded::init(topology::Topology & topo,
       const lj_parameter_struct & lj = m_parameter.lj_parameter(topo.iac(solvIdx + i), topo.iac(solvIdx + j));
       pLj_crf[i * nAtomsPerSolvMol + j].c12 = lj.c12;
       pLj_crf[i * nAtomsPerSolvMol + j].c6 = lj.c6;
-      pLj_crf[i * nAtomsPerSolvMol + j].q = topo.charge(solvIdx + i) * topo.charge(solvIdx + j);
+      pLj_crf[i * nAtomsPerSolvMol + j].q = math::four_pi_eps_i * topo.charge(solvIdx + i) * topo.charge(solvIdx + j);
 
     }
   }
@@ -146,9 +146,8 @@ int interaction::CUDA_Nonbonded::init(topology::Topology & topo,
           sim.param().pairlist.cutoff_long,
           conf.current().box(0)(0),
           topo.num_solvent_atoms() / topo.num_solvent_molecules(0),
-          topo.num_solute_atoms(),
-          cuda_nbs->estNeigh_long,
           cuda_nbs->estNeigh_short,
+          cuda_nbs->estNeigh_long,
           m_crf_2cut3i,
           m_crf_cut,
           m_crf_cut3i,

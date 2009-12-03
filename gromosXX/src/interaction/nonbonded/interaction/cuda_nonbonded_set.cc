@@ -77,12 +77,13 @@ int interaction::CUDA_Nonbonded_Set
   m_storage.zero();
   m_storage_cuda.zero();
   const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
-
+  m_pairlist_alg.timer().start("GPU data copy");
   cudakernel::cudaCopyPositions(&conf.current().pos(topo.num_solute_atoms())(0));
   // copy the box if pressure is coupled
   if (sim.param().pcouple.scale != math::pcouple_off) {
     cudakernel::cudaCopyBox(conf.current().box(0)(0));
   }
+  m_pairlist_alg.timer().stop("GPU data copy");
 
   if (pairlist_update) {
     DEBUG(6, "\tdoing longrange...");
