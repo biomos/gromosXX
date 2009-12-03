@@ -34,6 +34,7 @@ $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
 #include <algorithm/algorithm/algorithm_sequence.h>
 #include <math/periodicity.h>
 #include <algorithm/constraints/shake.h>
+#include <algorithm/constraints/m_shake.h>
 #include <algorithm/integration/monte_carlo.h>
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
@@ -326,6 +327,20 @@ int main(int argc, char *argv[]){
       MPI::Finalize();
       return 1;
     }
+
+    // get m_shake and check whether we do it for solvent
+    bool do_m_shake = sim.param().system.nsm &&
+      sim.param().constraint.solvent.algorithm == simulation::constr_m_shake;
+
+    algorithm::M_Shake * m_shake =
+      dynamic_cast<algorithm::M_Shake *>(md.algorithm("M_Shake"));
+    if (do_m_shake && m_shake == NULL) {
+        std::cerr << "MPI slave: could not get M_Shake algorithm from MD sequence."
+                << "\n\t(internal error)"
+                << std::endl;
+      MPI::Finalize();
+      return 1;
+    }
     
     // get chemical monte carlo
     bool do_cmc = sim.param().montecarlo.mc;
@@ -364,6 +379,10 @@ int main(int argc, char *argv[]){
 
       if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
         std::cout << "MPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
+      }
+
+      if (do_m_shake && (error = m_shake->apply(topo, conf, sim)) != 0) {
+        std::cout << "MPI slave " << rank << ": error in M-Shake algorithm!\n" << std::endl;
       }
  
 

@@ -3,9 +3,9 @@
  * contains the template methods for
  * the class M_Shake.
  */
-/*#ifdef XXMPI
+#ifdef XXMPI
 #include <mpi.h>
-#endif*/
+#endif
 
 #include <stdheader.h>
 
@@ -214,7 +214,7 @@ void algorithm::M_Shake
   const unsigned int num_atoms = topo.num_atoms();
   math::Periodicity<B> periodicity(conf.current().box);
 
-  /*#ifdef XXMPI
+  #ifdef XXMPI
     math::VArray & pos = conf.current().pos;
     if (sim.mpi) {
       // broadcast current and old coordinates and pos.
@@ -232,7 +232,7 @@ void algorithm::M_Shake
         }
       }
     }
-  #endif*/
+  #endif
 
   // for all solvents
   for (unsigned int i = 0; i < topo.num_solvents(); ++i) {
@@ -240,7 +240,7 @@ void algorithm::M_Shake
 
     math::GenericMatrix<double> factor;
     unsigned int k = 0;
-    unsigned int num_constr = topo.solvent(i).distance_constraints().size();
+    //unsigned int num_constr = topo.solvent(i).distance_constraints().size();
     math::GenericVec<double> constr_length2;
     math::GenericVec<math::Vec> dist_old;
 
@@ -275,7 +275,7 @@ void algorithm::M_Shake
     for (unsigned int nm = 0; nm < topo.num_solvent_molecules(i);
             ++nm, first += num_solvent_atoms) {
 
-      /*#ifdef XXMPI
+      #ifdef XXMPI
             if (sim.mpi) {
               int stride = nm + m_rank;
               DEBUG(12, "rank: " << m_rank << " nm: " << nm << " stride: " << stride);
@@ -288,7 +288,7 @@ void algorithm::M_Shake
                 continue;
               }
             }
-      #endif*/
+      #endif
 
       k = 0;
       for (typename std::vector<topology::two_body_term_struct>::const_iterator
@@ -337,7 +337,7 @@ void algorithm::M_Shake
   } // solvents
 
   // reduce everything
-  /*#ifdef XXMPI
+  #ifdef XXMPI
     if (sim.mpi) {
       if (m_rank == 0) {
         // Master
@@ -380,7 +380,7 @@ void algorithm::M_Shake
     }
   #else
     error = my_error;
-  #endif*/
+  #endif
   error = my_error;
 
   // constraint force
@@ -416,7 +416,7 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
 
   math::SArray masses;
 
-  /*if (sim.param().posrest.posrest == simulation::posrest_const) {
+  if (sim.param().posrest.posrest == simulation::posrest_const) {
     masses = topo.mass();
     std::vector<topology::position_restraint_struct>::const_iterator
     it = topo.position_restraints().begin(),
@@ -424,7 +424,7 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
     for (; it != to; ++it) {
       topo.mass()[it->seq] = std::numeric_limits<double>::infinity();
     }
-  }*/
+  }
 
   // check whether we shake
 
@@ -457,14 +457,14 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
     }
   }
 
-  /*if (sim.param().posrest.posrest == simulation::posrest_const) {
+  if (sim.param().posrest.posrest == simulation::posrest_const) {
     std::vector<topology::position_restraint_struct>::const_iterator
     it = topo.position_restraints().begin(),
             to = topo.position_restraints().end();
     for (; it != to; ++it) {
       topo.mass()[it->seq] = masses[it->seq];
     }
-  }*/
+  }
 
   if (!sim.mpi || m_rank == 0)
     m_timer.stop();
@@ -492,7 +492,7 @@ int algorithm::M_Shake::init(topology::Topology & topo,
     } else os << "OFF\n";
   }
 
-  /*#ifdef XXMPI
+  #ifdef XXMPI
     if (sim.mpi) {
       m_rank = MPI::COMM_WORLD.Get_rank();
       m_size = MPI::COMM_WORLD.Get_size();
@@ -503,7 +503,7 @@ int algorithm::M_Shake::init(topology::Topology & topo,
   #else
     m_rank = 0;
     m_size = 1;
-  #endif*/
+  #endif
 
   if (sim.param().constraint.solute.algorithm == simulation::constr_m_shake) {
     // loop over the constraints to find out which atoms are constrained
