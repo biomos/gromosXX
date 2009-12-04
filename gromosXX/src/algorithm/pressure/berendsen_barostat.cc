@@ -197,8 +197,14 @@ int algorithm::Berendsen_Barostat
 
       if (sim.param().pcouple.y_semi < 1)
         mu(1) = 1;
-      if (sim.param().pcouple.y_semi > 0 && (sim.param().pcouple.y_semi == sim.param().pcouple.x_semi))
+      if (sim.param().pcouple.y_semi > 0 && (sim.param().pcouple.y_semi == sim.param().pcouple.x_semi)){
+        mu(0) = pow(1.0 - sim.param().pcouple.compressibility
+                * sim.time_step_size() / sim.param().pcouple.tau
+                * ((sim.param().pcouple.pres0(0, 0) + sim.param().pcouple.pres0(1, 1) -
+                pressure(0, 0) - pressure(1, 1))/2),
+                1.0 / 3.0);
         mu(1) = mu(0);
+      }
       if (sim.param().pcouple.y_semi > 0 && (sim.param().pcouple.y_semi != sim.param().pcouple.x_semi)){
         mu(1) = pow(1.0 - sim.param().pcouple.compressibility
                 * sim.time_step_size() / sim.param().pcouple.tau
@@ -210,10 +216,22 @@ int algorithm::Berendsen_Barostat
       if(sim.param().pcouple.z_semi < 1)
         mu(2) = 1;
       if(sim.param().pcouple.z_semi > 0) {
-        if(sim.param().pcouple.z_semi == sim.param().pcouple.x_semi)
+        if(sim.param().pcouple.z_semi == sim.param().pcouple.x_semi){
+          mu(0) = pow(1.0 - sim.param().pcouple.compressibility
+                * sim.time_step_size() / sim.param().pcouple.tau
+                * ((sim.param().pcouple.pres0(0, 0) + sim.param().pcouple.pres0(2, 2) -
+                pressure(0, 0) - pressure(2, 2))/2),
+                1.0 / 3.0);
           mu(2) = mu(0);
-        if(sim.param().pcouple.z_semi == sim.param().pcouple.y_semi)
+        }
+        if(sim.param().pcouple.z_semi == sim.param().pcouple.y_semi){
+          mu(1) = pow(1.0 - sim.param().pcouple.compressibility
+                * sim.time_step_size() / sim.param().pcouple.tau
+                * ((sim.param().pcouple.pres0(1, 1) + sim.param().pcouple.pres0(2, 2) -
+                pressure(1, 1) - pressure(2, 2))/2),
+                1.0 / 3.0);
           mu(2) = mu(1);
+        }
         if((sim.param().pcouple.z_semi != sim.param().pcouple.x_semi) && (sim.param().pcouple.z_semi != sim.param().pcouple.y_semi)) {
           mu(2) = pow(1.0 - sim.param().pcouple.compressibility
                   * sim.time_step_size() / sim.param().pcouple.tau
