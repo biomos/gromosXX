@@ -733,7 +733,7 @@ PRESSURESCALE
 #
 #   COUPLE  SCALE   COMP        TAUP    VIRIAL
     calc    iso     4.575E-4    0.5     atomic
-#   SEMIANISOTROPIC COUPLINGS(X, Y, Z)
+#   SEMI (semianisotropic couplings: X, Y, Z)
 #       e.g. 1 1 2: x and y jointly coupled and z separately coupled 
 #       e.g. 0 0 1: constant area (xy-plane) and z coupled to a bath
     1 1 2
@@ -820,6 +820,10 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
         if (zs < 0 || zs > 2)
           io::messages.add("PRESSURESCALE block: bad value for z component of COUPLINGS FOR SEMIANISOTROPIC"
+                     "(0,1,2)",
+		     "In_Parameter", io::message::error);
+        if (xs == ys && ys == zs)
+          io::messages.add("PRESSURESCALE block: x_semi = y_semi = z_semi in SEMI, maybe you want isotropic pressure scaling?"
                      "(0,1,2)",
 		     "In_Parameter", io::message::error);
         param.pcouple.x_semi = xs;
