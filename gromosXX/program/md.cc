@@ -19,7 +19,7 @@
  * <tr><td> \@conf</td><td>&lt;coordinates and restart data&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@input</td><td>&lt;@ref input "input parameters"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@fin</td><td>&lt;final configuration&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@trj</td><td>&lt;coordinate trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@trc</td><td>&lt;coordinate trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trv</td><td>&lt;velocity trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trf</td><td>&lt;force trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trs</td><td>&lt;special trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]){
 
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
-	 << "trj" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
+	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
          << "jval" << "xray" << "lud" << "led" << "anatrj" << "print" << "friction"
          << "version";

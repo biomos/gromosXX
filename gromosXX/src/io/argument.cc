@@ -16,7 +16,7 @@ namespace io{
   std::string argname_pttopo     = "pttopo";
   std::string argname_conf       = "conf";
   std::string argname_input      = "input";
-  std::string argname_trj        = "trj";
+  std::string argname_trj        = "trc";
   std::string argname_fin        = "fin";
   std::string argname_tre        = "tre";
   std::string argname_trg        = "trg";

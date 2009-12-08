@@ -160,7 +160,7 @@ int util::Replica_Exchange_Master::run
     io::argname_topo = "cg_topo";
     io::argname_pttopo = "cg_pttopo";
     io::argname_input = "cg_input";
-    io::argname_trj = "cg_trj";
+    io::argname_trj = "cg_trc";
     io::argname_fin = "cg_fin";
     io::argname_tre = "cg_tre";
     

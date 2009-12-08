@@ -19,7 +19,7 @@
  * <tr><td> \@cg_conf</td><td>&lt;coarse grain coordinates and restart data&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@cg_input</td><td>&lt;coarse grain input parameters&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@cg_fin</td><td>&lt;coarse grain final configuration&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@cg_trj</td><td>&lt;coordinate trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
+ * <tr><td> \@cg_trc</td><td>&lt;coordinate trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@master</td><td>&lt;master process&gt; </td><td></td></tr>
  * <tr><td> \@slave</td><td>&lt;slave process&gt; </td><td></td></tr>
  * </table>
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf"
      << "input" << "cg_input" << "verb" << "pttopo" << "cg_pttopo"
-	 << "trj" << "cg_trj" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "re" << "trg"
+	 << "trc" << "cg_trc" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "re" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest" << "jval" << "xray" << "lud" << "led"
          << "friction" << "rep" << "master" << "slave" << "control" << "version";
   

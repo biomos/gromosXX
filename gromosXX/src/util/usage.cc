@@ -60,14 +60,14 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t@cg_fin      filename\n\n";
   }
   
-  if (knowns.count("trj")){
+  if (knowns.count("trc")){
     usage += "\t# output coordinates trajectory\n";
-    usage += "\t@trj         filename\n\n";
+    usage += "\t@trc         filename\n\n";
   }
 
-  if (knowns.count("cg_trj")){
+  if (knowns.count("cg_trc")){
     usage += "\t# coarse-grained output coordinates trajectory\n";
-    usage += "\t@cg_trj      filename\n\n";
+    usage += "\t@cg_trc      filename\n\n";
   }
   
   if (knowns.count("trv")){
