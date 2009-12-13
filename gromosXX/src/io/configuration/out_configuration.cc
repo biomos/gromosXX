@@ -1070,6 +1070,9 @@ inline void io::Out_Configuration
   //rotate back to original carthesian coordinates
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct) {
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+  }
   math::Vec posV_rot;
   for (unsigned int i = 0; i < posV.size(); ++i) {
     posV_rot = math::Vec(math::product(Rmat, posV(i)));

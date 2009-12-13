@@ -78,6 +78,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if (conf.boundary_type == math::truncoct) {
     // convert to triclinic system
     math::truncoct_triclinic(conf.current().box, conf.current().pos, true);
+    math::truncoct_triclinic(conf.current().box, conf.current().posV, true);
+    math::truncoct_triclinic(conf.current().box, conf.current().vel, true);
     conf.old().box = conf.current().box;
   }
 
@@ -209,6 +211,8 @@ void io::In_Configuration::read_replica
     if (conf[0].boundary_type == math::truncoct) {
       // convert to triclinic system
       math::truncoct_triclinic(conf[0].current().box, conf[0].current().pos, true);
+      math::truncoct_triclinic(conf[0].current().box, conf[0].current().posV, true);
+      math::truncoct_triclinic(conf[0].current().box, conf[0].current().vel, true);
       conf[0].old().box = conf[0].current().box;
     }
 
@@ -273,6 +277,8 @@ void io::In_Configuration::read_replica
       if (conf[i].boundary_type == math::truncoct) {
         // convert to triclinic system
         math::truncoct_triclinic(conf[i].current().box, conf[i].current().pos, true);
+        math::truncoct_triclinic(conf[i].current().box, conf[i].current().posV, true);
+        math::truncoct_triclinic(conf[i].current().box, conf[i].current().vel, true);
         conf[i].old().box = conf[i].current().box;
       }
       
