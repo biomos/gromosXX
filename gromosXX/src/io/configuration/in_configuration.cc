@@ -75,6 +75,12 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
 
+  if (conf.boundary_type == math::truncoct) {
+    // convert to triclinic system
+    math::truncoct_triclinic(conf.current().box, conf.current().pos, true);
+    conf.old().box = conf.current().box;
+  }
+
 
   // print some information
   if (!quiet){
@@ -195,9 +201,16 @@ void io::In_Configuration::read_replica
     read_distance_restraint_averages(topo, conf[0], sim, os);
     read_nose_hoover_chains(topo, conf[0], sim, os);
     read_rottrans(topo, conf[0], sim, os);
+
+
   
 	DEBUG(10, "setting boundary type");
     conf[0].boundary_type = param.boundary.boundary;
+    if (conf[0].boundary_type == math::truncoct) {
+      // convert to triclinic system
+      math::truncoct_triclinic(conf[0].current().box, conf[0].current().pos, true);
+      conf[0].old().box = conf[0].current().box;
+    }
 
 	DEBUG(10, "copying configurations");
     for(unsigned int i=1; i<conf.size(); ++i)
@@ -255,8 +268,13 @@ void io::In_Configuration::read_replica
       read_distance_restraint_averages(topo, conf[i], sim, os);
       read_nose_hoover_chains(topo, conf[i], sim, os);
       read_rottrans(topo, conf[i], sim, os);
-      
+
       conf[i].boundary_type = param.boundary.boundary;
+      if (conf[i].boundary_type == math::truncoct) {
+        // convert to triclinic system
+        math::truncoct_triclinic(conf[i].current().box, conf[i].current().pos, true);
+        conf[i].old().box = conf[i].current().box;
+      }
       
       // warn for unread input data
       for(std::map<std::string, std::vector<std::string> >::const_iterator
@@ -630,7 +648,7 @@ bool io::In_Configuration::read_box
           conf.current().theta, conf.current().psi)));
   DEBUG(10, "box \n " << math::m2s(math::Matrix(conf.current().box)));
           
-  DEBUG(10, "Transformation Matrix \n" << math::m2s(Rmat))
+  DEBUG(10, "Transformation Matrix \n" << math::m2s(Rmat));
   for (int i = 0, to = topo.num_atoms(); i < to; ++i) {
     DEBUG(10, "Position Cartesian: " << math::v2s(conf.current().pos(i)));
     conf.current().pos(i) = math::Vec(math::product(math::transpose(Rmat), conf.current().pos(i)));
@@ -1496,7 +1514,7 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
     case -1: conf_bound = math::truncoct; break;
     case 0: conf_bound = math::vacuum; break;
     case 1: conf_bound = math::rectangular; break;
-    case 2: conf_bound = math::truncoct; break;
+    case 2: conf_bound = math::triclinic; break;
     default:
       io::messages.add("Invalid boundary conditions.", "In_Configuration", io::message::error);
   }

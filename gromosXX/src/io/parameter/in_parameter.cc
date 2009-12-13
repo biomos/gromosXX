@@ -931,7 +931,7 @@ void io::In_Parameter::read_BOUNDCOND(simulation::Parameter &param,
   else if(ntb==2) param.boundary.boundary=math::triclinic;
   else if(ntb==-1)  {
     param.boundary.boundary=math::truncoct;
-    io::messages.add("Support for truncated octahedron is disabled in MD++. Use the unify_box GROMOS++ program to convert the truncated octahedral box into a triclinic box and simulate the latter.", "In_Parameter", io::message::error);
+    io::messages.add("The box is converted to triclinic boundary coniditons internally", "In_Parameter", io::message::notice);
   } else {
     std::ostringstream msg;
     msg << "BOUNDCOND block: wrong value for NTB "

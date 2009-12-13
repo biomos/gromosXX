@@ -737,6 +737,9 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct) {
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+  }
 
   os << "# first 24 chars ignored\n";
 
@@ -825,6 +828,9 @@ void _print_position_bound(configuration::Configuration const &conf,
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct) {
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+  }
 
   os << "# first 24 chars ignored\n";
 
@@ -915,12 +921,16 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
   DEBUG(10, "g96 positionred");
 
   math::Periodicity<b> periodicity(conf.current().box);
-  math::VArray const &pos = conf.current().pos;
+  math::VArray pos = conf.current().pos;
 
   math::Vec v, v_box, trans, r;
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+
+  if (conf.boundary_type == math::truncoct)
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+
   assert(num >= 0);
 
   // put chargegroups into the box (on the fly)
@@ -1008,6 +1018,10 @@ _print_positionred_bound(configuration::Configuration const &conf,
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+
+  if (conf.boundary_type == math::truncoct)
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+
   DEBUG(10, "writing POSITIONRED " << pos.size());
 
   for (int i = 0; i < num; ++i) {
@@ -1087,6 +1101,9 @@ void io::Out_Configuration
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct)
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+
   math::Vec vel_rot;
   for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
     //rotate back to original Carthesian coordinates
@@ -1153,6 +1170,8 @@ void io::Out_Configuration
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct)
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
   math::Vec vel_rot;
 
   assert(num <= int(vel.size()));
@@ -1184,6 +1203,8 @@ void io::Out_Configuration
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct)
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
   math::Vec force_rot;
   os << "# first 24 chars ignored\n";
   for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
@@ -1268,6 +1289,8 @@ void io::Out_Configuration
 //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct)
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
   math::Vec force_rot;
   
   assert(num <= int(force.size()));
@@ -1513,6 +1536,8 @@ void _print_ramd_bound(topology::Topology const & topo,
   //rotate to orignial Cartesian coordinates
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct)
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
   f = math::Vec(math::product(Rmat, f));
   com = math::Vec(math::product(Rmat, com));
   os << "# force\n";
@@ -1565,6 +1590,10 @@ void io::Out_Configuration
       for (int k = 0; k < 3; ++k)
         m(j)(i) += Rmat(k, i) * box(j)(k);
   box = m;
+
+  // convert it back to truncoct
+  if (conf.boundary_type == math::truncoct)
+    math::truncoct_triclinic_box(box, false);
   
   a = math::abs(box(0));
   b = math::abs(box(1));

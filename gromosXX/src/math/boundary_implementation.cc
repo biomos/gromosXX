@@ -61,17 +61,6 @@ inline math::Boundary_Implementation<math::triclinic>
   m_cross_K_L_M(2) = cross(m_box(K), m_box(L)) / -volume;
 }
 
-/**
- * Constructor : truncated octahedron
- */
-inline math::Boundary_Implementation<math::truncoct>
-::Boundary_Implementation(math::Box const & b)
- : m_box(b)
-{
-  for(int i=0; i<3; ++i)
-    m_half_box(i) = 0.5 * abs(m_box(i));
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // box / shift vector accessors
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,14 +90,6 @@ inline math::Box const & math::Boundary_Implementation<math::triclinic>::box()co
 }
 
 /**
- * const box accessor : truncated octahedron
- */
-inline math::Box const & math::Boundary_Implementation<math::truncoct>::box()const
-{
-  return m_box;
-}
-
-/**
  * box element accessor (d1,d2) : vacuum
  */
 inline double math::Boundary_Implementation<math::vacuum>
@@ -130,15 +111,6 @@ inline double math::Boundary_Implementation<math::rectangular>
  * box element accessor (d1,d2) : triclinic
  */
 inline double math::Boundary_Implementation<math::triclinic>
-::box(unsigned int d1, unsigned int d2)const
-{
-  return m_box(d1)(d2);
-}
-
-/**
- * box element accessor (d1,d2) : truncated octahedron
- */
-inline double math::Boundary_Implementation<math::truncoct>
 ::box(unsigned int d1, unsigned int d2)const
 {
   return m_box(d1)(d2);
@@ -276,33 +248,6 @@ inline void math::Boundary_Implementation<math::triclinic>
  // }
 }
         
-/**
- * nearest image : truncated octahedron
- */
-inline void math::Boundary_Implementation<math::truncoct>
-::nearest_image(Vec const &v1,
-		Vec const &v2,
-		Vec &nim)const
-{
-  for(int d=0; d<3; ++d){
-    nim(d) = v1(d) - v2(d);
-
-    if (fabs(nim(d)) >= m_half_box(0)){
-      nim(d) -= abs(m_box(0)) * rint(nim(d)/abs(m_box(0)));
-
-    }
-  }
-  if (fabs(nim(0)) + fabs(nim(1)) + fabs(nim(2)) > 0.75 *abs(m_box(0))){
-    for(int d=0; d<3; ++d){
-      if (nim(d) < 0)
-	nim(d) += m_half_box(0);
-      else
-	nim(d) -= m_half_box(0);
-    }
-  }
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // grid stuff
 ////////////////////////////////////////////////////////////////////////////////

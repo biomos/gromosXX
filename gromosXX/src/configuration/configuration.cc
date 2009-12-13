@@ -376,6 +376,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
 	  
 	  break;
 	}
+      case math::truncoct:
       case math::triclinic:
 	{
 	  // NO CUTOFF CHECK -- IMPLEMENT!!!
@@ -383,14 +384,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
 	  // periodicity.gather_molecules_into_box(*this, topo);
 	  periodicity.gather_chargegroups(*this, topo);
 	  
-	  break;
-	}
-      case math::truncoct:
-	{
-	  math::Periodicity<math::truncoct> periodicity(current().box);
-	  // periodicity.gather_molecules_into_box(*this, topo);
-	  periodicity.gather_chargegroups(*this, topo);
-
 	  break;
 	}
       default:
@@ -417,6 +410,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
 
         break;
       }
+      case math::truncoct :
       case math::triclinic :
       {
         double a, b, c, alpha, beta, gamma, triclinicvolume;
@@ -443,16 +437,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
                   io::message::error);
         }
 
-        break;
-      }
-      case math::truncoct :
-      {
-        if (0.5 * sqrt(3.0) * abs(current().box(0)) <= 2 * param.pairlist.cutoff_long) {
-
-          io::messages.add("box is too small: not 4 / sqrt(3) * cutoff!",
-                  "configuration",
-                  io::message::error);
-        }
         break;
       }
       default:

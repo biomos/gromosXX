@@ -4,8 +4,7 @@
  */
 
 #include <stdheader.h>
-#include "transformation.h"
-#include "gmath.h"
+#include <math/transformation.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -86,7 +85,7 @@ math::Matrixl math::rmat(double const & phi, double const & theta,
  * calculate the transformation matrix S.
  */
 math::Matrixl math::smat(math::Box const & box, math::boundary_enum const b) {
-  if (b == math::rectangular || b == math::truncoct) {
+  if (b == math::rectangular) {
     math::Vecl Sx(1.0, 0.0, 0.0);
     math::Vecl Sy(0.0, 1.0, 0.0);
     math::Vecl Sz(0.0, 0.0, 1.0);
@@ -120,7 +119,7 @@ math::Matrixl math::smat(math::Box const & box, math::boundary_enum const b) {
  * calculate the inverse of the transformation matrix S.
  */
 math::Matrixl math::sinvmat(math::Box const & box, math::boundary_enum const b) {
-  if (b == math::rectangular || b == math::truncoct) {
+  if (b == math::rectangular) {
     math::Vecl Sx(1.0, 0.0, 0.0);
     math::Vecl Sy(0.0, 1.0, 0.0);
     math::Vecl Sz(0.0, 0.0, 1.0);
@@ -162,4 +161,53 @@ math::Matrixl math::mmat(math::Box const & box, math::boundary_enum const b) {
  */
 math::Matrixl math::minvmat(math::Box const & box, math::boundary_enum const b) {
   return math::product(math::sinvmat(box, b), math::transpose(math::rmat(box)));
+}
+
+math::Matrix math::truncoct_triclinic_rotmat(bool forward) {
+  static const double sq3 = sqrt(3.0);
+  static const double sq3i = 1.0/sq3;
+  static const double sq2i = 1.0/sqrt(2.0);
+
+  math::Matrix rot(Vec(sq3i, -2*sq2i*sq3i, 0),
+	       Vec(sq3i, sq3i*sq2i, -sq2i),
+	       Vec(sq3i, sq2i*sq3i, sq2i));
+
+  if (!forward)
+    rot = math::transpose(rot);
+
+  return rot;
+}
+
+void math::truncoct_triclinic_box(math::Box & box, bool forward) {
+  static const double third = 1.0 / 3.0;
+  static const double sq3 = sqrt(3.0);
+  static const double sq3i = 1.0/sq3;
+
+  if(forward){
+    const double d = 0.5 *sq3 * box(0)(0);
+    const double sq2 = sqrt(2.0);
+
+    box(0) = math::Vec(d, 0.0, 0.0);
+    box(1) = math::Vec(third * d, 2.0 * third * sq2 * d, 0.0);
+    box(2) = math::Vec(-third * d, third * sq2 * d, third * sqrt(6.0) * d);
+  }  else {
+    const double d = 2.0 * box(0)(0) * sq3i;
+    box(0) = math::Vec(d, 0.0, 0.0);
+    box(1) = math::Vec(0.0, d, 0.0);
+    box(2) = math::Vec(0.0, 0.0, d);
+  }
+}
+
+void math::truncoct_triclinic(math::Box & box, math::VArray & pos, bool forward) {
+  DEBUG(6, (forward ? "truncated to triclinic" : "triclinic to truncated"));
+  DEBUG(8, "box:\n\t" << math::m2s(math::Matrix(box)));
+  math::truncoct_triclinic_box(box, forward);
+  DEBUG(8, "new box:\n\t" << math::m2s(math::Matrix(box)));
+  math::Matrix rot = math::truncoct_triclinic_rotmat(forward);
+  DEBUG(8, "rotation matrix:\n\t" << math::m2s(rot));
+
+  // apply transformation
+  for(unsigned int i = 0; i < pos.size(); ++i) {
+    pos(i) = math::product(rot, pos(i));
+  }
 }

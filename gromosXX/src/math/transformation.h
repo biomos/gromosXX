@@ -36,6 +36,23 @@ namespace math {
    * calculate the inverse of the transformation matrix M.
    */
   math::Matrixl minvmat(math::Box const & box, math::boundary_enum const b);
+  /**
+   * the rotation matrix for trunoct to triclinic 
+   * @param[in] forward true for truncoct to triclinic and false for vice versa
+   */
+  math::Matrix truncoct_triclinic_rotmat(bool forward);
+  /**
+   * the box for trunoct to triclinic
+   * @param[in] forward true for truncoct to triclinic and false for vice versa
+   */
+  void truncoct_triclinic_box(math::Box & box, bool forward);
+  /**
+   * transform a truncated octahedral box to a triclinic box and vice versa
+   * @param[inout] box the box to transform
+   * @param[inout] pos the positions to transform
+   * @param[in] forward true for truncoct to triclinic and false for vice versa
+   */
+  void truncoct_triclinic(math::Box & box, math::VArray & pos, bool forward);
 }
 
 #endif	/* INCLUDED_TRANSFORMATION_H */

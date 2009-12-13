@@ -33,6 +33,7 @@ bool math::boundary_check_cutoff(math::Box const & box, math::boundary_enum cons
 
       break;
     }
+    case math::truncoct :
     case math::triclinic :
     {
       double a, b, c, alpha, beta, gamma, triclinicvolume;
@@ -54,13 +55,6 @@ bool math::boundary_check_cutoff(math::Box const & box, math::boundary_enum cons
         return false; // too small
       }
 
-      break;
-    }
-    case math::truncoct :
-    {
-      if (0.5 * sqrt(3.0) * abs(box(0)) <= cutoff2) {
-        return false; // too small
-      }
       break;
     }
     default:

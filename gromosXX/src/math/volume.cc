@@ -20,14 +20,11 @@ double math::volume(math::Box const & box, math::boundary_enum const b)
       DEBUG(9, "rectangular: volume = "
 	    <<  abs(box(0)) * abs(box(1)) * abs(box(2)));
       return abs(box(0)) * abs(box(1)) * abs(box(2));
+    case math::truncoct:
     case math::triclinic:
       DEBUG(9, "triclinic: volume = "
 	    << math::dot(math::cross(box(0), box(1)), box(2)));
       return math::dot(math::cross(box(0), box(1)), box(2));
-    case math::truncoct:
-      DEBUG(9, "truncoct: volume = "
-	    <<  0.5 *abs(box(0)) * abs(box(1)) * abs(box(2)));
-      return 0.5 *abs(box(0)) * abs(box(1)) * abs(box(2));
     default:
       DEBUG(9, "volume error....");
   }
