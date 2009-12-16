@@ -7,7 +7,7 @@
 #ifndef INCLUDED_PAIRLIST_ALGORITHM_H
 #define INCLUDED_PAIRLIST_ALGORITHM_H
 
-#include "../algorithm/algorithm.h"
+#include <algorithm/algorithm.h>
 
 namespace interaction
 {

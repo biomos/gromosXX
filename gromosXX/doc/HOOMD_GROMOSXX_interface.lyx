@@ -1,0 +1,3069 @@
+#LyX 1.6.4 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass article
+\begin_preamble
+\usepackage[T1]{fontenc}
+\usepackage{ae,aecompl}
+\end_preamble
+\use_default_options true
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_title "CUDA Pairlist Algorithm in GROMOS XX"
+\pdf_author "Matthew J. M. Breeze"
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\leftmargin 1.5cm
+\topmargin 1.5cm
+\rightmargin 1.5cm
+\bottommargin 1.5cm
+\secnumdepth 3
+\tocdepth 2
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+CUDA Pairlist for GROMOS XX
+\end_layout
+
+\begin_layout Author
+Matthew Breeze (mbreeze@gmail.com)
+\end_layout
+
+\begin_layout Date
+November 2009
+\end_layout
+
+\begin_layout Section
+Outline
+\end_layout
+
+\begin_layout Standard
+GPU Acceleration has successfully been achieved both for the grid-based
+ neighbour-list algorithm and for nonbonded Lennard-Jones interactions in
+ the software HOOMD by Joshua A.
+ Anderson, Chris D.
+ Lorenz, and Alex Travesset (DOI: 10.1016/j.jcp.2008.01.047).
+ The source code for HOOMD is released under a licence that maintains the
+ Copyright, Disclaimer and Promotion rights of the HOOMD code with the original
+ authors.
+ See 
+\family typewriter
+hoomd-0.8.2/src/LICENSE
+\family default
+ for more details.
+ As such it can be used in GROMOS XX as long as the terms of the HOOMD license
+ are included in the GROMOS XX license.
+\end_layout
+
+\begin_layout Standard
+This document describes extracting the neighbour-list code from HOOMD and
+ inserting it into GROMOS to be used alongside the existing code as an alternati
+ve through a simple additional block in the 
+\family typewriter
+md
+\family default
+ program input file.
+\end_layout
+
+\begin_layout Section
+Extraction of Code from HOOMD
+\end_layout
+
+\begin_layout Standard
+The HOOMD source code may be downloaded from 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://codeblue.umich.edu/hoomd-blue/download.html"
+target "http://codeblue.umich.edu/hoomd-blue/download.html"
+
+\end_inset
+
+.
+ Extracted the source code is found in the directory 
+\family typewriter
+hoomd-0.8.2/src/
+\family default
+.
+ There are unit test programs in the subdirectory 
+\family typewriter
+unit_tests/
+\family default
+.
+ One of these (
+\family typewriter
+neighborlist_test
+\family default
+.cc) was extracted from the source code along with the required files and
+ compiled seperately from HOOMD.
+ The extracted files had the Python interface removed and a function declaration
+ put in the code occasionally of the style 
+\begin_inset Quotes eld
+\end_inset
+
+
+\family sans
+extern cudaError_t cuda...;
+\family default
+
+\begin_inset Quotes erd
+\end_inset
+
+ to avoid the compiler error 
+\begin_inset Quotes eld
+\end_inset
+
+
+\family sans
+no matching function for call to ‘bind(...)’
+\family default
+
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This formed the basis for the HOOMD code used in GROMOSXX.
+\end_layout
+
+\begin_layout Section
+Insertion of Code into GROMOS XX
+\end_layout
+
+\begin_layout Standard
+A directory called 
+\family typewriter
+HOOMD_CODE/
+\family default
+ was created inside 
+\family typewriter
+contrib/
+\family default
+ inside the GROMOS XX source directory.
+ Inside were put the files required by the unit test (but not the unit test
+ procedure itself, i.e.
+ not 
+\family typewriter
+neighborlist_test
+\family default
+.cc as it is not needed).
+ Two header files were also created inside the 
+\family typewriter
+HOOMD_CODE/
+\family default
+ directory, 
+\family typewriter
+HOOMD_GROMOSXX_processor.h
+\family default
+ and 
+\family typewriter
+HOOMD_GROMOSXX_interface.h,
+\family default
+ the primary one being
+\family typewriter
+ HOOMD_GROMOSXX_interface.h
+\family default
+, which defines a new class 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ that has the same interface as the existing GROMOS XX pairlist algorithm
+ classes but internally calls the HOOMD code.
+ The most recent version of the development version of GROMOS XX was used
+ (
+\begin_inset CommandInset href
+LatexCommand href
+name "https://gromos.ethz.ch/svn/repos/gromosXXc++"
+target "https://gromos.ethz.ch/svn/repos/gromosXXc++"
+
+\end_inset
+
+ revision 1329).
+\end_layout
+
+\begin_layout Subsection
+Classes
+\end_layout
+
+\begin_layout Subsubsection
+Class
+\family sans
+ processor::Processor
+\family default
+ in 
+\family typewriter
+HOOMD_GROMOSXX_processor.h
+\end_layout
+
+\begin_layout Standard
+
+\family sans
+processor::Processor
+\family default
+ is a class in a newly-created 
+\family sans
+processor
+\family default
+ namespace to represent the processor to use in the HOOMD code.
+ The 
+\family sans
+processor
+\family default
+ namespace additionally contains an new enumerated type named 
+\family sans
+which
+\family default
+ that contains a number of options (
+\family sans
+CPU
+\family default
+: CPU only; 
+\family sans
+GPUs
+\family default
+: all available CUDA-capable GPUs), to describe the processor to use.
+ The 
+\family sans
+processor::Processor
+\family default
+ constructor takes a single argument of type 
+\family sans
+which
+\family default
+ and is a simple wrapper for the HOOMD class 
+\family sans
+ExecutionConfiguration
+\family default
+, which is used to represent the processor type to use in HOOMD.
+\end_layout
+
+\begin_layout Subsubsection
+Class
+\family sans
+ interaction::HOOMD_Pairlist_Algorithm
+\family default
+ in 
+\family typewriter
+HOOMD_GROMOSXX_interface.h
+\end_layout
+
+\begin_layout Standard
+
+\family sans
+HOOMD_Pairlist_Algorithm 
+\family default
+is a child class of the GROMOS XX class 
+\family sans
+interaction::Pairlist_Algorithm
+\family default
+, and can be treated like a GROMOS XX pairlist algorithm.
+ However, currently only short-range solvent-solvent pairs are generated.
+ Internally, the class is a wrapper for four HOOMD classes, but only one
+ is used, the choice of which being based on two criteria:
+\end_layout
+
+\begin_layout Enumerate
+If the value of the 
+\family sans
+processor
+\family default
+ variable in the object 
+\family sans
+simulation::hoomd
+\family default
+ (set by 
+\family sans
+io::In_Parameter::read_HOOMD
+\family default
+) is 
+\family sans
+simulation::cpu
+\family default
+ then a CPU-only code is used, otherwise a CUDA code is used that uses all
+ the GPUs on the system.
+\end_layout
+
+\begin_layout Enumerate
+If the value of the 
+\family sans
+grid
+\family default
+ variable in the object 
+\family sans
+simulation::pairlist
+\family default
+ (set by 
+\family sans
+io::In_Parameter::read_PAIRLIST
+\family default
+) is 0, then the 
+\begin_inset Formula $O(n^{2})$
+\end_inset
+
+ algorithm option is used, otherwise the 
+\begin_inset Formula $O(n)$
+\end_inset
+
+ algorithm option is used.
+\end_layout
+
+\begin_layout Standard
+The four possible classes are as follows:
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+NeighborList
+\family default
+ the neighbour-list base class, with CPU-only 
+\begin_inset Formula $O(n^{2})$
+\end_inset
+
+ (double-loop) algorithm
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+BinnedNeighbourList
+\family default
+ a child of 
+\family sans
+NeighborList
+\family default
+, with CPU-only 
+\begin_inset Formula $O(n)$
+\end_inset
+
+ (grid-based) algorithm
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+NeighborListNsqGPU
+\family default
+ a child of 
+\family sans
+NeighborList
+\family default
+, with CUDA 
+\begin_inset Formula $O(n^{2})$
+\end_inset
+
+ (double-loop) algorithm
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+BinnedNeighbourListGPU
+\family default
+ a child of 
+\family sans
+NeighborList
+\family default
+, with CUDA 
+\begin_inset Formula $O(n)$
+\end_inset
+
+ (grid-based) algorithm
+\end_layout
+
+\begin_layout Standard
+The two 
+\family sans
+interaction::Pairlist_Algorithm 
+\family default
+functions
+\family sans
+ prepare 
+\family default
+and 
+\family sans
+update 
+\family default
+are called sequentially each time a pairlist is updated by GROMOS XX.
+ They are implemented in 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ as follows:
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+prepare
+\family default
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+If the system box dimensions have changed, create a new ParticleData object,
+ to specifiy the number of molecules and the box dimensions, then create
+ a new HOOMD pairlist algorithm object (e.g.
+ 
+\family sans
+BinnedNeighbourList
+\family default
+), setting the storage mode to half, if possible.
+\end_layout
+
+\begin_layout Enumerate
+Obtain access to the coordinates storage array, and copy the first atom
+ of each solvent molecule to the array, after centering each molecule so
+ the first atom is inside the box.
+\end_layout
+
+\begin_layout Enumerate
+Close access to the coordinates storage array.
+\end_layout
+
+\end_deeper
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+update
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+The HOOMD NeighborList function 
+\family sans
+compute
+\family default
+ is called to construct the pairlist.
+\end_layout
+
+\begin_layout Enumerate
+The HOOMD functions 
+\family sans
+getList
+\family default
+ is called to get access to the pairlist in a 2D vector format (same as
+ that used by GROMOS XX).
+ Internally this involves a transfer of the pairlist from Video RAM to RAM.
+\end_layout
+
+\begin_layout Enumerate
+The pairs are read and inserted into the GROMOS XX pairlist container, as
+ atomic pairs.
+ Prior to insertion, if a full pairlist was generated by HOOMD, half the
+ pairs are removed.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+The CUDA algorithms can only build a full pairlist (one where reverse pairs
+ are included), as this is the kind used on the GPU for the force calculations.
+ As GROMOS XX uses a half pairlist (
+\begin_inset Formula ${(i,j)|i<j}$
+\end_inset
+
+), all the pairs extracted from the CUDA algorithms had to be processed
+ by checking if the reverse pair was already in the pairlist.
+ 
+\end_layout
+
+\begin_layout Standard
+Because the HOOMD pairlist algorithms do not have any functions that allow
+ an efficient and reliable resizing of the system box, if the system box
+ size changes a new HOOMD neighbour list algorithm object must be created
+ each time (the ParticleData function setBox is not a reliable way to resize
+ the system box).
+ The box dimensions can change if pressure scaling is enabled in GROMOS
+ XX, so this is checked during the 
+\family sans
+prepare
+\family default
+ call.
+ 
+\end_layout
+
+\begin_layout Standard
+HOOMD has no knowledge of chargegroups but it can potentially allow up to
+ 16 exclusions per particle.
+ Currently, the 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ interface only generates short-range solvent-solvent pairs and assumes
+ a single solvent type.
+\end_layout
+
+\begin_layout Standard
+HOOMD internally represents a buffer zone around the short-range cut-off
+ that can be internally monitored to automatically rebuild the pairlist
+ if particles drift beyond the cut-off.
+ However this is unused and the buffer radius is set to 0.
+\end_layout
+
+\begin_layout Subsection
+Other Modifications
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Other-Modifications"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To access from GROMOS XX the code in 
+\family typewriter
+HOOMD_CODE/
+\family default
+, GROMOS XX was modified in a number of ways.
+ The modifications are only enabled if 
+\family sans
+HAVE_HOOMD
+\family default
+ is defined during compilation.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+simulation::proc
+\family default
+ the shared pointer named 
+\family sans
+proc
+\family default
+ that points to a 
+\family sans
+processor::Processor
+\family default
+ object was added to the 
+\family sans
+simulation
+\family default
+ namespace in 
+\family typewriter
+src/simulation/simulation.h
+\family default
+.
+ The advantage of using a shared pointer is that the object will be deleted
+ when the last reference to the shared pointer goes out of scope.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+simulation::hoomd
+\family default
+ the enumerated type 
+\family sans
+hoomd
+\family default
+ was added to the 
+\family sans
+simulation
+\family default
+ namespace in 
+\family typewriter
+src/simulation/parameter.h
+\family default
+ to contain possible options for using the HOOMD code.
+ Currently just the kind of processor to use is supported.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+simulation::hoomd
+\family default
+ the 
+\family sans
+hoomd_struct
+\family default
+ struct was added to the 
+\family sans
+simulation
+\family default
+ namespace in 
+\family typewriter
+src/simulation/parameter.h
+\family default
+ to store the chosen options for using the HOOMD code.
+ A single global object of this struct exists in the simulation namespace
+ named 
+\family sans
+hoomd
+\family default
+.
+ Currently just one variable of the enumerated type 
+\family sans
+hoomd
+\family default
+ is held in the struct.
+ The default choice for this variable is the 
+\family sans
+unknown
+\family default
+ processor type, which has the effect that HOOMD code is not used.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+io::In_Parameter::read_HOOMD
+\family default
+ the function 
+\family sans
+read_HOOMD
+\family default
+ was defined in 
+\family typewriter
+src/io/parameter/in_parameter.h
+\family default
+ and implemented in 
+\family typewriter
+src/io/parameter/in_parameter.cc
+\family default
+ to read a HOOMD block in the 
+\family typewriter
+md
+\family default
+ program input file and update the 
+\family sans
+hoomd_struct
+\family default
+ object with the user's setting if provided.
+ The expected format for a HOOMD block is as follows:
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{verbatim}
+\end_layout
+
+\begin_layout Plain Layout
+
+HOOMD
+\end_layout
+
+\begin_layout Plain Layout
+
+#       PROCESSOR: cpu gpus
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+# PROCESSOR
+\end_layout
+
+\begin_layout Plain Layout
+
+ gpus
+\end_layout
+
+\begin_layout Plain Layout
+
+END
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{verbatim}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This format currently only supports the kind of processor to use.
+\end_layout
+
+\end_deeper
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+io::In_Parameter::read
+\family default
+ the function 
+\family sans
+io::In_Parameter::read(...)
+\family default
+ in 
+\family typewriter
+src/io/parameter/in_parameter.cc
+\family default
+ contains a list of calls to read blocks in the 
+\family typewriter
+md
+\family default
+ program input file.
+ A call to 
+\family sans
+read_HOOMD
+\family default
+ was added to it.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+io::read_input
+\family default
+ the function 
+\family sans
+io::read_input
+\family default
+ in 
+\family typewriter
+src/io/read_input.cc
+\family default
+ makes calls to read all the specified input files such as the 
+\family typewriter
+md
+\family default
+ program input file and the configuration (coordinates file).
+ This indirectly calls 
+\family sans
+io::In_Parameter::read(...)
+\family default
+ described above.
+ A few lines to construct the object pointed to by 
+\family sans
+simulation::proc
+\family default
+ based on the settings of the 
+\family sans
+hoomd_struct
+\family default
+ struct 
+\family sans
+simulation::hoomd
+\family default
+ were added to the end of io::read_input to ensure that the GPU access is
+ only initiated after all the input files are successfully read.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family sans
+interaction::create_g96_nonbonded
+\family default
+ the function 
+\family sans
+interaction::create_g96_nonbonded
+\family default
+ in 
+\family typewriter
+src/interaction/nonbonded/create_nonbonded.cc
+\family default
+ builds and assembles the GROMOS XX Algorithm objects related to non-bonded
+ interactions, such as the 
+\family sans
+Pairlist_Algorithm
+\family default
+ objects, into a form used by the MD algorithm.
+ This function was modified to build a 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ object instead of a conventional 
+\family sans
+Pairlist
+\family default
+_
+\family sans
+Algorithm
+\family default
+ object if the processor variable of the 
+\family sans
+hoomd_struct simulation::hoomd 
+\family default
+was not 
+\family sans
+unknown
+\family default
+.
+ In addition checks are made to ensure MPI and OpenMP are not used.
+\end_layout
+
+\begin_layout Subsubsection
+Building
+\end_layout
+
+\begin_layout Standard
+A 
+\family typewriter
+Makefile
+\family default
+ is provided in the 
+\family typewriter
+HOOMD_CODE/
+\family default
+ directory that will compile and link the code within that directory into
+ a .so file (
+\family typewriter
+libhoomd.so
+\family default
+) if 
+\family sans
+make all
+\family default
+ is run within that directory.
+ This .so file and all the header files in 
+\family typewriter
+HOOMD_CODE/
+\family default
+ should be copied manually to the desired install directory.
+\end_layout
+
+\begin_layout Standard
+To build GROMOS XX in such a way as to link to these files, the 
+\family typewriter
+./configure
+\family default
+ script must be run with an additional argument 
+\family sans
+--with-hoomd=
+\family typewriter
+DIRECTORY
+\family default
+, where 
+\family typewriter
+DIRECTORY
+\family default
+ is the absolute path to the desired install directory.
+ The use of this option also defines 
+\family sans
+HAVE_HOOMD 
+\family default
+during compilation
+\family sans
+.
+ 
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+--with-hoomd
+\family default
+ option was made a possible option by the following modifications:
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+configure.in
+\family default
+ 
+\family sans
+AM_PATH_HOOMD
+\family default
+ was added after 
+\family sans
+AM_PATH_FFTW3 
+\family default
+so autoconf would also call that function in the 
+\family typewriter
+./configure
+\family default
+ script
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+
+\family typewriter
+acinclude.m4
+\family default
+ 
+\family sans
+AM_PATH_HOOMD
+\family default
+ was defined as in Algorithm 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "Flo:acinclude"
+
+\end_inset
+
+.
+ 
+\begin_inset Float algorithm
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+dnl check for lib HOOMD
+\end_layout
+
+\begin_layout Plain Layout
+AC_DEFUN([AM_PATH_HOOMD],[
+\end_layout
+
+\begin_layout Plain Layout
+AC_ARG_WITH(hoomd,
+\end_layout
+
+\begin_layout Plain Layout
+[  --with-hoomd=DIR  Enable HOOMD code and use the provided directory for
+ .h & .so files],
+\end_layout
+
+\begin_layout Plain Layout
+[
+\end_layout
+
+\begin_layout Plain Layout
+[CXXFLAGS="$CXXFLAGS -DHAVE_HOOMD=1 -I/usr/local/cuda/include -I${withval}"]
+\end_layout
+
+\begin_layout Plain Layout
+[LDFLAGS="$LDFLAGS -L${withval}"]
+\end_layout
+
+\begin_layout Plain Layout
+[LIBS="$LIBS -lhoomd"]
+\end_layout
+
+\begin_layout Plain Layout
+],
+\end_layout
+
+\begin_layout Plain Layout
+[
+\end_layout
+
+\begin_layout Plain Layout
+AC_MSG_WARN([hoomd path was not specified.])
+\end_layout
+
+\begin_layout Plain Layout
+]
+\end_layout
+
+\begin_layout Plain Layout
+)
+\end_layout
+
+\begin_layout Plain Layout
+])
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Addition to 
+\family typewriter
+acinclude.m4
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "Flo:acinclude"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family typewriter
+Makefile
+\family default
+ provided in the 
+\family typewriter
+HOOMD_CODE/
+\family default
+ directory can be modified to build in debug mode by replacing -O3 with
+ -g.
+\end_layout
+
+\begin_layout Standard
+The expected device architecture has CUDA Compute Capability 1.0, as represented
+ by the definition CUDA_ARCH=10 in both the 
+\family typewriter
+Makefile
+\family default
+ and in 
+\family typewriter
+HOOMD_GROMOSXX_processor.h
+\family default
+.
+ This can be optimised to 11, 12 or 13 if the hardware to be used has Compute
+ Capability 1.1, 1.2 or 1.3 respectively.
+\end_layout
+
+\begin_layout Section
+Usage
+\end_layout
+
+\begin_layout Standard
+To use the HOOMD code instead of the GromosXX code for whichever kind of
+ pairlist algorithm is requested in the PAIRLIST block (either 
+\family sans
+standard
+\family default
+ or 
+\family sans
+grid
+\family default
+), only an additional block 
+\begin_inset Quotes eld
+\end_inset
+
+HOOMD
+\begin_inset Quotes erd
+\end_inset
+
+, with the format described below needs to be added to the input file for
+ the 
+\family typewriter
+md
+\family default
+ program.
+ 
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{verbatim}
+\end_layout
+
+\begin_layout Plain Layout
+
+HOOMD
+\end_layout
+
+\begin_layout Plain Layout
+
+#       PROCESSOR: cpu gpus
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+# PROCESSOR
+\end_layout
+
+\begin_layout Plain Layout
+
+ gpus
+\end_layout
+
+\begin_layout Plain Layout
+
+END
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{verbatim}
+\end_layout
+
+\end_inset
+
+ The effect of the choice of the PROCESSOR argument of this block alongside
+ the choice of pairlist algorithm is shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "Flo:hoomd-choice"
+
+\end_inset
+
+.
+ The HOOMD block is optional; without it HOOMD code is not used.
+ 
+\begin_inset Float table
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="3">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+PAIRLIST.ALG
+\family default
+/
+\family sans
+HOOMD.PROCESSOR
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+cpu
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+gpus
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+standard
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CPU 
+\begin_inset Formula $O(n^{2})$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CUDA 
+\begin_inset Formula $O(n^{2})$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+grid
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CPU 
+\begin_inset Formula $O(n)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CUDA 
+\begin_inset Formula $O(n)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+HOOMD pairlist algorithm to use as determined by settings in 
+\family sans
+PAIRLIST
+\family default
+ and 
+\family sans
+HOOMD
+\family default
+ blocks in 
+\family typewriter
+md
+\family default
+ program input file
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "Flo:hoomd-choice"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Also, HOOMD may run more efficiently if the Compute Capability setting during
+ building corresponds to that of the GPUs available.
+\end_layout
+
+\begin_layout Section
+Testing
+\end_layout
+
+\begin_layout Subsection
+Systems
+\end_layout
+
+\begin_layout Standard
+Three water (SPC) boxes were tested as shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "Flo:waterbox"
+
+\end_inset
+
+.
+ The boxes were equilibrated at 300 K, 1 atm prior to testing.
+ 
+\begin_inset Float table
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="3">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Water box
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Water molecules
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Volume (nm
+\begin_inset Formula $^{3}$
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+A
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2145
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+65.74
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+B
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+33532
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1000
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+C
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+112776
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3375
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Test systems: Systems of SPC water of various sizes were tested
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "Flo:waterbox"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Subsection
+Tests
+\end_layout
+
+\begin_layout Standard
+The tests consisted of running short simulations and calculating the average
+ time required to build the pairlist.
+ Both NVT and NPT simulations were run.
+ The HOOMD 
+\family sans
+BinnedNeighbourListGPU
+\family default
+ pairlist algorithm via the 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ interface and the GROMOSXX extended grid-based pairlist algorithm (
+\family sans
+Extended_Grid_Pairlist_Algorithm
+\family default
+) running on a single CPU thread were compared.
+ As the HOOMD pairlist algorithm only generates a single-range pairlist,
+ the GROMOS XX pairlist algorithm long-range cutoff was made identical to
+ the short-range cutoff.
+ A cutoff of 0.9 nm was used in all simulations.
+ All code was compiled with -O3 optimisation.
+ A 2.4 GHz AMD Athlon X2 4600 CPU and 4 GB DDR2-667 SDRAM (CAS: 5-5-5-15)
+ and a NVIDIA GeForce 8800 GTS GPU (Compute Capability 1.0) with 320 MB GDDR3
+ VRAM connected over a 16x PCI-Express bus were used for the tests.
+ Linux 2.6.27.37, g++ 4.3.2 and the NVIDIA 190.29 driver (built for OpenCL and
+ CUDA) was the software environment used.
+\end_layout
+
+\begin_layout Subsection
+Results & Discussion
+\end_layout
+
+\begin_layout Standard
+The average timings are shown in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "Flo:timings"
+
+\end_inset
+
+.
+ Overall, the 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ class is slower than the 
+\family sans
+Extended_Grid_Pairlist_Algorithm
+\family default
+ class.
+ This is due to two factors that can easily be mitigated.
+ The largest loss of performance arises from the cost of retrieving the
+ pairlist from the GPU, extracting the half pairlist and converting it to
+ GROMOS XX format, as seen in the third time 
+\begin_inset Quotes eld
+\end_inset
+
+(3)
+\begin_inset Quotes erd
+\end_inset
+
+ for each HOOMD pairlist timing result.
+ The second largest loss of performance arises from the choice of ensemble:
+ running a NPT simulation is significantly slower than a NVT simulation
+ because 
+\family sans
+HOOMD_Pairlist_Algorithm::prepare
+\family default
+() function must rebuild all HOOMD classes every time the system box size
+ changes, as seen in the first and second times, 
+\begin_inset Quotes eld
+\end_inset
+
+(1)
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+(2)
+\begin_inset Quotes erd
+\end_inset
+
+, for each NPT HOOMD pairlist result.
+ These two drawbacks are easily overcome.
+ First, as the pairlist itself is only used for making the non-bonded interactio
+n calculations more efficient, if these calculations can also be performed
+ on the GPU, the pairlist does not need to be retrieved and can be access
+ directly by the force kernels.
+ Such routines are already available in HOOMD and from Nathan Schmid of
+ IGC.
+ Second, as the relative magnitude of box size changes during a typical
+ NPT simulation is around 1%, and the size of the grid cells used by HOOMD
+ is much larger, it should require only minor modifications to the algorithm
+ for it to work efficiently with box size changes.
+ If these additions are implemented, it is expected that the 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ class will be approximately 13x faster than the 
+\family sans
+Extended_Grid_Pairlist_Algorithm
+\family default
+ class for the test systems B & C.
+\end_layout
+
+\begin_layout Standard
+The pairlists that were generated were compared and found to be identical
+ between the 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ and 
+\family sans
+Extended_Grid_Pairlist_Algorithm
+\family default
+ classes in all cases.
+ 
+\begin_inset Float table
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="10" columns="13">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Code/Test system 
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+A (NVT Simulation)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+B (NVT Simulation)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+C (NVT Simulation)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(2)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(4)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(2)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(4)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(2)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(4)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+HOOMD
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0001
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0035
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0508
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0544
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.002
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.021
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.723
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.746
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.007
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.074
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.344
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.425
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(i)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(ii)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(iii)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(i)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(ii)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(iii)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(i)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(ii)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(iii)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+GROMOS XX
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0005
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0166
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0216
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.009
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.304
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.313
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.031
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.026
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.057
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+A (NPT Simulation)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+B (NPT Simulation)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+C (NPT Simulation)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(2)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(4)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(2)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(4)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(2)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(4)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+HOOMD
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.1017
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0906
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0551
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.2474
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.063
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.291
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.828
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.182
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.108
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.877
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.610
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.595
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(i)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(ii)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(iii)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(i)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(ii)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(iii)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(i)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(ii)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(iii)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+GROMOS XX
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0005
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0167
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.0217
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.009
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.308
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.317
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.031
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.034
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.065
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Average time to build pairlist for different test systems (seconds).
+ HOOMD results show four times: (1) Time required by 
+\family sans
+HOOMD_Pairlist_Algorithm::prepar
+\family default
+e() function, which includes passing the coordinates from GROMOS XX to HOOMD;
+ (2) Time required to build pairlist on the GPU; (3) Time required to transfer
+ full pairlist back to RAM, extract half pairlist and convert to GROMOS
+ XX format; (4) Sum of times (1)-(3).
+ GROMOS XX results show three times: (i) Time required by 
+\family sans
+Extended_Grid_Pairlist_Algorithm::prepare
+\family default
+() function; (ii) Time required by 
+\family sans
+Extended_Grid_Pairlist_Algorithm::update
+\family default
+() function; (iii) Sum of times (i) and (ii).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "Flo:timings"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Conclusion and Future Work
+\end_layout
+
+\begin_layout Standard
+GPUs are already a cost efficient HPC platform and can be used to accelerate
+ Molecular Dynamics simulations.
+ A number of tasks lie ahead and are given in order of importance:
+\end_layout
+
+\begin_layout Enumerate
+The pairlist generated by HOOMD in CUDA format must be accessed from Nathan
+ Schmid's SPC-SPC interaction code (
+\begin_inset CommandInset href
+LatexCommand href
+name "http://code.google.com/p/gpugromos/"
+target "http://code.google.com/p/gpugromos/"
+
+\end_inset
+
+).
+ As far as I am aware the format generated by HOOMD is a simple 1D 
+\family sans
+unsigned int
+\family default
+ array divided into sections, each section holding the pairlist for a given
+ molecule (see 
+\family typewriter
+HOOMD_CODE/NeighbourList.cuh
+\family default
+)
+\end_layout
+
+\begin_layout Enumerate
+If NPT simulations are the goal of this work, then the HOOMD pairlist algorithm
+ must be modified slightly to handle slight changes in the box size efficiently.
+\end_layout
+
+\begin_layout Enumerate
+The HOOMD pairlist algorithm may run more efficiently on the GPUs available
+ with a different CUDA block size.
+ This can be set in 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ by calling the HOOMD function 
+\family sans
+setBlockSize
+\family default
+() once prior to calling 
+\family sans
+compute
+\family default
+(), e.g.
+ 
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{verbatim}
+\end_layout
+
+\begin_layout Plain Layout
+
+nlist->setBlockSize(64); // in prepare() after constructing nlist
+\end_layout
+
+\begin_layout Plain Layout
+
+...
+\end_layout
+
+\begin_layout Plain Layout
+
+nlist->compute(++timestep); // in update()
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{verbatim}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+The HOOMD pairlist algorithm should be modified to return two pairlists,
+ both short and long range.
+\end_layout
+
+\begin_layout Enumerate
+The GROMOS XX code should be modified so that a solute-solute/solute-solvent
+ pairlist is generated efficiently on the CPU, and optionally to run simultaneou
+sly alongside the CUDA code.
+ Currently, the 
+\family sans
+HOOMD_Pairlist_Algorithm
+\family default
+ interface does not support MPI or OpenMP.
+ Note, HOOMD internally uses all available GPUs and only one CPU thread
+ should access HOOMD functions.
+\end_layout
+
+\begin_layout Enumerate
+The HOOMD pairlist algorithm should be modified to support non-rectangular
+ boxes.
+\end_layout
+
+\begin_layout Section
+Code & Documentation Accessibility
+\end_layout
+
+\begin_layout Standard
+The code is accessible from: 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://gromos.ethz.ch/svn/repos/gromosXXc++"
+target "https://gromos.ethz.ch/svn/repos/gromosXXc++"
+
+\end_inset
+
+ revision 1330 (see 
+\family typewriter
+trunk/gromosXX/contrib/HOOMD_CODE/
+\family default
+).
+ The test systems are available from: 
+\family sans
+lychee.md.smms.uq.edu.au
+\family default
+:
+\family typewriter
+/home/matt/HOOMD-Pairlist-waterboxes
+\family default
+.
+ This file and its PDF are in the same revision at 
+\family typewriter
+trunk/gromosXX/doc/
+\family default
+.
+\end_layout
+
+\end_body
+\end_document

@@ -23,6 +23,7 @@
  * - @ref  constraint
  * - @ref  force
  * - @ref  covalentform
+ * - @ref  hoomd
  * - @ref  pairlist
  * - @ref  nonbonded
  * - @ref  gromos96compat
@@ -154,6 +155,11 @@ namespace io {
     void read_COMTRANSROT(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
+     * read HOOMD block.
+     */
+    void read_HOOMD(simulation::Parameter &param, std::ostream & os = std::cout);
+    
+	/**
      * read PAIRLIST block.
      */
     void read_PAIRLIST(simulation::Parameter &param, std::ostream & os = std::cout);

@@ -9,6 +9,9 @@
 // necessary headers
 #include "multibath.h"
 #include "parameter.h"
+#ifdef HAVE_HOOMD
+#include <HOOMD_GROMOSXX_processor.h>
+#endif
 
 namespace simulation
 {
@@ -87,6 +90,13 @@ namespace simulation
      * enable mpi?
      */
     bool mpi;
+
+	/**
+	 * Processor(s) choice to use for HOOMD code (CPU/GPUs)
+	 */
+#ifdef HAVE_HOOMD
+	boost::shared_ptr<processor::Processor> proc;
+#endif
     
   private:
     /**

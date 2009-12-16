@@ -104,6 +104,18 @@ namespace simulation
     sla_cuda
   };
   
+#ifdef HAVE_HOOMD
+  /**
+   * @enum hoomd
+   * HOOMD code settings enumeration
+   */
+  enum hoomd {
+    unknown = -1,
+    cpu = 0,  // One CPU
+	gpus = 1  // All GPUs
+  };
+#endif
+
   /**
    * @enum jvalue_restr_enum
    * J-value restraints enumeration
@@ -1046,6 +1058,19 @@ namespace simulation
       int external_interaction;
       
     } /** Force(field) parameters */ force;
+
+#ifdef HAVE_HOOMD
+	/**
+	 * @strict hoomd_struct
+	 * HOOMD block
+	 */
+	struct hoomd_struct
+	{
+		hoomd_struct() : processor(unknown) {}
+	    ~hoomd_struct() {}
+		enum hoomd processor;
+	} /** Hoomd parameter */ hoomd;
+#endif
 
     /**
      * @struct plist_struct

@@ -43,6 +43,10 @@
 
 #include <simulation/parameter.h>
 
+#ifdef HAVE_HOOMD
+#include <HOOMD_GROMOSXX_interface.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -151,16 +155,31 @@ int interaction::create_g96_nonbonded
   }
 
   Pairlist_Algorithm * pa;
-  if (sim.param().pairlist.grid == 0) {
-    pa = new Standard_Pairlist_Algorithm();
-  } else if (sim.param().pairlist.grid == 1) {
-    pa = new Extended_Grid_Pairlist_Algorithm();
-  } else {
-    io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
-            io::message::error);
-    return 1;
+#ifdef HAVE_HOOMD
+  // some sanity checks
+  #ifdef OMP
+  #error "HOOMD yet not ready for OMP. Might break!"
+  #endif
+  #ifdef XXMPI
+  #error "HOOMD not yet ready for MPI. Might break!"
+  #endif
+  if (sim.param().hoomd.processor != simulation::unknown) { // hoomd pairlist
+    pa = new HOOMD_Pairlist_Algorithm(sim); 
+  } else { // gromosxx pairlist
+#endif
+    if (sim.param().pairlist.grid == 0) {
+      pa = new Standard_Pairlist_Algorithm();
+    } else if (sim.param().pairlist.grid == 1) {
+      pa = new Extended_Grid_Pairlist_Algorithm();
+    } else {
+      io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
+             io::message::error);
+      return 1;
+	}
+#ifdef HAVE_HOOMD
   }
-  
+#endif
+   
 #if defined(OMP)
   Nonbonded_Interaction * ni = new OMP_Nonbonded_Interaction(pa);
 #elif defined(HAVE_LIBCUKERNEL)

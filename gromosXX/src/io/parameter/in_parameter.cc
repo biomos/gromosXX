@@ -65,6 +65,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_FORCE(param); 
   read_COVALENTFORM(param);
   read_CGRAIN(param);
+  read_HOOMD(param);
   read_PAIRLIST(param);
   read_NONBONDED(param);
   read_POSITIONRES(param);
@@ -1533,6 +1534,56 @@ void io::In_Parameter::read_COMTRANSROT(simulation::Parameter &param,
     param.centreofmass.skip_step = 0;
     param.centreofmass.remove_rot = false;
     param.centreofmass.remove_trans = false;
+  }
+}
+/**
+ * @section HOOMD block (optional)
+ * @verbatim
+HOOMD
+#       PROCESSOR: cpu gpus
+#
+#       PROCESSOR  
+	gpus
+END
+@endverbatim
+ */
+void io::In_Parameter::read_HOOMD(simulation::Parameter &param,
+    std::ostream & os) {
+  DEBUG(8, "read HOOMD");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  DEBUG(10, "hoomd block");
+
+  // try a HOOMD
+  buffer = m_block["HOOMD"];
+  if (buffer.size()) {
+    block_read.insert("HOOMD");
+
+    std::string s1;
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    _lineStream >> s1;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in HOOMD block",
+          "In_Parameter", io::message::error);
+    }
+
+#ifndef HAVE_HOOMD
+	io::messages.add("HOOMD block not supported. Recompile with --with-hoomd=DIR", "In_Parameter", io::message::error);
+#else
+	if (s1 == "cpu") {
+		param.hoomd.processor = simulation::cpu;
+	} else if (s1 == "gpus") {
+		param.hoomd.processor = simulation::gpus;
+	} else {
+      io::messages.add("HOOMD block: wrong processor chosen",
+          "In_Parameter", io::message::error);
+    }
+#endif
   }
 }
 /**

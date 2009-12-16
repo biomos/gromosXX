@@ -29,6 +29,9 @@
 
 #include <util/replica_data.h>
 
+#ifdef HAVE_HOOMD
+#include <HOOMD_GROMOSXX_processor.h>
+#endif
 #include "read_input.h"
 #include "read_special.h"
 
@@ -61,7 +64,16 @@ int io::read_input(io::Argument const & args,
   sim.multibath().check_state(topo.num_atoms());
 
   if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
-  
+
+#ifdef HAVE_HOOMD 
+  // create HOOMD Processor after input files read in successfully
+  switch (sim.param().hoomd.processor) {
+    case simulation::cpu: sim.proc = boost::shared_ptr<processor::Processor>(new processor::Processor(processor::CPU)); break;
+	case simulation::gpus: sim.proc = boost::shared_ptr<processor::Processor>(new processor::Processor(processor::GPUs)); break;
+	default: break;
+  }
+#endif
+   
   return 0;
 }
 

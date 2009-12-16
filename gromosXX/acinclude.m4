@@ -380,6 +380,21 @@ AC_DEFUN([AM_PATH_FFTW3],[
   fi
 ])
 
+dnl check for lib HOOMD
+AC_DEFUN([AM_PATH_HOOMD],[
+  AC_ARG_WITH(hoomd,
+    [  --with-hoomd=DIR  Enable HOOMD code and use the provided library directory],
+    [
+	  [CXXFLAGS="$CXXFLAGS -DHAVE_HOOMD=1 -I/usr/local/cuda/include -I${withval}"]
+      [LDFLAGS="$LDFLAGS -L${withval}"]
+	  [LIBS="$LIBS -lhoomd"]
+    ],
+    [
+      AC_MSG_WARN([hoomd path was not specified.])
+	]
+  )
+])
+
 dnl check for lib CUKERNEL
 AC_DEFUN([AM_PATH_CUKERNEL],[
   AC_ARG_WITH(cukernel,
