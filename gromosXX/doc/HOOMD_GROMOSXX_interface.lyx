@@ -2952,6 +2952,11 @@ HOOMD_CODE/NeighbourList.cuh
 \begin_layout Enumerate
 If NPT simulations are the goal of this work, then the HOOMD pairlist algorithm
  must be modified slightly to handle slight changes in the box size efficiently.
+ A simple modification that works for isotropic pressure coupling is as
+ follows: rather than sending coordinates and box dimensions that are scaled
+ according to the pressure coupling algorithm, simply reduce or increase
+ the cut-off used by the HOOMD pairlist algorithm so that the pairlist generated
+ would be limited or increased proportionately.
 \end_layout
 
 \begin_layout Enumerate
