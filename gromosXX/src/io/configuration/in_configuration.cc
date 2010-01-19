@@ -2403,11 +2403,33 @@ bool io::In_Configuration::_read_leusbias(
 
     // the rest of this block is stored and read later. We have to save the
     // stream position and the block.
-    // the rest ist read in util::Umbrella::read_configuration. This
+    // the rest is read in util::Umbrella::read_configuration. This
     // method must not be called before the weight factory is set!
     u.configuration_block_pos = _lineStream.tellg();
     u.configuration_block = _lineStream.str();
     umbrellas.push_back(u);
+   
+    // skip the rest of the data - read it to dummies
+    unsigned int num_conf;
+    _lineStream  >> num_conf;
+    if (_lineStream.fail()) {
+      io::messages.add("LEUSBIAS block: Could not read number of configurations",
+                "In_Configuration", io::message::error);
+      return false;
+    }
+    for(unsigned int c = 0; c < num_conf; ++c) {
+      for(unsigned int dim = 0; dim < u.dim(); ++dim) {
+        int di;
+        _lineStream >> di;
+      }
+      std::string ds;
+      _lineStream >> ds;
+      if (_lineStream.fail()) {
+        std::ostringstream os; os << "LEUSBIAS block: Could not read configuration " << (c+1);
+        io::messages.add(os.str(), "In_Configuration", io::message::error);
+        return false;
+      }
+    }
   } // for umbrellas
   return true;
 }
