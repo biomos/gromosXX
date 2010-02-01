@@ -300,6 +300,7 @@ void calculate_energy_rho(const clipper::Atom_list & atoms,
   // energy
   for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = rho_obs.first(),
           ix_c = rho_calc.first(); !ix.last(); ix.next(), ix_c.next()) {
+    DEBUG(1, "rho_obs: " << rho_obs[ix] << " rho_calc: " << rho_calc[ix_c]);
     const double term = rho_obs[ix] - rho_calc[ix_c];
     energy += term * term;
   }
@@ -840,7 +841,7 @@ void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
   std::set<int> grid_points;
 
   for (int i = 0; i < atoms_size; i++) {
-    DEBUG(1, "Atom index: " << variable_atoms[i]);
+    DEBUG(10, "Atom index: " << variable_atoms[i]);
     const clipper::Coord_orth & atom_pos = atoms[variable_atoms[i]].coord_orth();
 
     // determine grad range of atom
@@ -867,28 +868,31 @@ void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
  
   const double scale = volume / grid.size();
   const double threshold_scaled = threshold; // / sqrt(scale);
-  DEBUG(1, "threshold scaled: " << threshold_scaled);
-  double diff = 0.0;
-   // loop over grid points
+  DEBUG(10, "threshold scaled: " << threshold_scaled);
+  double int_obs = 0.0, int_calc = 0.0;
+  // loop over grid points
   for (std::set<int>::const_iterator it = grid_points.begin(), to = grid_points.end();
           it != to; ++it) {
     const double obs = rho_obs.get_data(*it);
+    int_obs += std::max<double>(0.0, obs);
     const double calc = rho_calc.get_data(*it);
-    DEBUG(1, "rho_obs: " << obs << " rho_calc: " << calc << " diff: " << fabs(obs - calc));
-    // this is the implementation of the flat bottom potential
-    const double rhoobs_m_thres = obs - threshold_scaled;
-    const double rhoobs_p_thres = obs + threshold_scaled;
-
-    if (calc < rhoobs_m_thres) {
-      const double term = rhoobs_m_thres - calc;
-      diff += term * term;
-    } else if (calc > rhoobs_p_thres) {
-      const double term = rhoobs_p_thres - calc;
-      diff += term * term;
-    }
+    int_calc += calc;
   }
   // correct for volume
-  weight += diff * scale;
+  int_obs *= scale;
+  int_calc *= scale;
+  DEBUG(10, "int. rho_obs: " << int_obs << " int. rho_calc: " << int_calc << " diff: " << fabs(int_obs - int_calc));
+  // this is the implementation of the flat bottom potential
+  const double rhoobs_m_thres = int_obs - threshold_scaled;
+  const double rhoobs_p_thres = int_obs + threshold_scaled;
+
+  if (int_calc < rhoobs_m_thres) {
+    const double term = rhoobs_m_thres - int_calc;
+    weight += term * term;
+  } else if (int_calc > rhoobs_p_thres) {
+    const double term = rhoobs_p_thres - int_calc;
+    weight += term * term;
+  }
 #endif
 }
 
