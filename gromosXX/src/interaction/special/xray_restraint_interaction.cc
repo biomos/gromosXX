@@ -490,6 +490,8 @@ int interaction::Xray_Restraint_Interaction
   // calculate sums needed for R factors
   // and "observed" structure factors
   j = 0;
+  DEBUG(10, "origin peak: " << fphi[clipper::HKL(0,0,0)].f() << " phase: " << fphi[clipper::HKL(0,0,0)].phi());
+  fphi_obs.set_data(clipper::HKL(0,0,0), fphi[clipper::HKL(0,0,0)]);
   for (unsigned int i = 0; i < num_xray_rest; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
     obs_k_calc += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
@@ -874,8 +876,10 @@ void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
   for (std::set<int>::const_iterator it = grid_points.begin(), to = grid_points.end();
           it != to; ++it) {
     const double obs = rho_obs.get_data(*it);
-    int_obs += std::max<double>(0.0, obs);
+    DEBUG(12, "obs: " << obs);
+    int_obs += obs;
     const double calc = rho_calc.get_data(*it);
+    DEBUG(12, "calc: " << calc);
     int_calc += calc;
   }
   // correct for volume
