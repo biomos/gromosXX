@@ -455,7 +455,7 @@ int interaction::Xray_Restraint_Interaction
     obs_free += topo.xray_rfree()[i].sf;
     obs_calc_free += conf.special().xray_rest[j].sf_curr * topo.xray_rfree()[i].sf;
     obs_calcavg_free += conf.special().xray_rest[j].sf_av * topo.xray_rfree()[i].sf;
-    sqr_calc_free += conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[i].sf_curr;
+    sqr_calc_free += conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[j].sf_curr;
     sqr_calcavg_free += conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
   }
   // check for possible resolution problems

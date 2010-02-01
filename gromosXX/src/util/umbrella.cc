@@ -98,22 +98,22 @@ bool util::Umbrella::leus_conf::operator <(const leus_conf& c) const {
 
 void util::Umbrella::build(
         configuration::Configuration & conf) {
-  DEBUG(1, "Building umbrella " << id);
+  DEBUG(5, "Building umbrella " << id);
   const unsigned int dim = coordinates.size();
 
   bool outside = false;
   std::vector<int> pos(dim);
   for (unsigned int i = 0; i < dim; ++i) {
-    DEBUG(1, "\tLE coordinate: " << i);
+    DEBUG(6, "\tLE coordinate: " << i);
     
     // get the value and grid it
     const double qi = coordinates[i]->get_value(grid_min_rel[i], grid_max_rel[i]);
-    DEBUG(1, "\tqi: " << qi);
+    DEBUG(6, "\tqi: " << qi);
     
     pos[i] = int(floor((qi - grid_min_rel[i]) * grid_spacing_rel[i] + 0.5));
-    DEBUG(1, "\tpos: " << pos[i]);
+    DEBUG(6, "\tpos: " << pos[i]);
     if (pos[i] < 0 || pos[i] >= int(num_grid_points[i])) {
-      DEBUG(1,"\t\toutside the grid");
+      DEBUG(8,"\t\toutside the grid");
       outside = true;
       break;
     }
@@ -196,8 +196,8 @@ void util::Umbrella::apply(
 		     io::message::critical);
       }
 
-      DEBUG(1, "\tg function: " << g);
-      DEBUG(1, "\tdgdQ      : " << dgdQ);
+      DEBUG(5, "\tg function: " << g);
+      DEBUG(5, "\tdgdQ      : " << dgdQ);
       // multiply the g functions
       energy *= g;
 
@@ -218,12 +218,12 @@ void util::Umbrella::apply(
     }
 
     energy *= force_constant * conf_it->second->get_weight();
-    DEBUG(1,"\tenergy: " << energy)
+    DEBUG(4,"\tenergy: " << energy)
     // store the energy, apply the force
     conf.current().energies.leus_total += energy;
     for(unsigned int i = 0; i < dim; ++i) {
       const double d = deriv[i] * force_constant * conf_it->second->get_weight();
-      DEBUG(1,"\tderiv[" << i << "]: " << d);
+      DEBUG(7,"\tderiv[" << i << "]: " << d);
       coordinates[i]->apply(d);
     }
   } // for visited configurations
@@ -265,14 +265,14 @@ void util::Umbrella::transform_units() {
 
 void util::Umbrella::calculate_coordinates(
         configuration::Configuration & conf) {
-  DEBUG(1, "Calculating coordinates of umbrella " << id);
+  DEBUG(4, "Calculating coordinates of umbrella " << id);
   for (unsigned int i = 0; i < dim(); ++i) {
     coordinates[i]->calculate(conf);
   }
 }
 
 void util::Umbrella::read_configuration() {
-  DEBUG(1, "Converting read configurations of umbrella " << id);
+  DEBUG(4, "Converting read configurations of umbrella " << id);
   std::istringstream _lineStream(configuration_block);
   _lineStream.seekg(configuration_block_pos);
 
