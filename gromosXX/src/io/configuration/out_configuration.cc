@@ -2212,6 +2212,10 @@ void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
     }
     os << "END\n";
   }
+
+  if (param.xrayrest.local_elevation) {
+    _print_umbrellas(conf, os);
+  }
 }
 
 void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & param,
