@@ -312,7 +312,8 @@ namespace io {
     void _print_xray(simulation::Parameter const & param,
             configuration::Configuration const &conf,
             topology::Topology const &topo,
-            std::ostream &os);
+            std::ostream &os,
+            bool final = false);
 
     void _print_xray_rvalue(simulation::Parameter const & param,
             configuration::Configuration const &conf,

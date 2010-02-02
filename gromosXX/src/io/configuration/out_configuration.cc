@@ -428,7 +428,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
     if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
-      _print_xray(sim.param(), conf, topo, m_final_conf);
+      _print_xray(sim.param(), conf, topo, m_final_conf, /*final=*/ true);
     }
 
     if (sim.param().localelev.localelev != simulation::localelev_off) {
@@ -2199,7 +2199,7 @@ void io::Out_Configuration::_print_jvalue(simulation::Parameter const & param,
 void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
         configuration::Configuration const &conf,
         topology::Topology const &topo,
-        std::ostream &os) {
+        std::ostream &os, bool final) {
   DEBUG(10, "XRAY Averages and LE data");
 
   if (param.xrayrest.xrayrest != simulation::xrayrest_inst) {
@@ -2213,7 +2213,7 @@ void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
     os << "END\n";
   }
 
-  if (param.xrayrest.local_elevation) {
+  if (param.xrayrest.local_elevation && !final) {
     _print_umbrellas(conf, os);
   }
 }
