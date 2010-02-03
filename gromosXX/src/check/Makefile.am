@@ -67,9 +67,6 @@ EXTRA_DIST = data/aladip.topo\
 	data/aladip.in\
 	data/aladip_unperturbed.in\
         data/aladip_special.in\
-	data/c16_cg.in\
-        data/c16_cg.topo\
-        data/c16_cg.conf\
 	data/aladip.distrest\
 	data/aladip.dihrest\
 	data/aladip_atomic.in\

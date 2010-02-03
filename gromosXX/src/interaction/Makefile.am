@@ -63,7 +63,8 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/storage.h\
 	nonbonded/interaction/latticesum.h\
 	nonbonded/interaction/cuda_nonbonded.h\
-	nonbonded/interaction/cuda_nonbonded_set.h
+	nonbonded/interaction/cuda_nonbonded_set.h\
+	nonbonded/interaction/spc_table.h
 
 xxintnbpairlistdir = $(includedir)/gromosXX/interaction/nonbonded/pairlist
 xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\

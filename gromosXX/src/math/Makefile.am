@@ -10,7 +10,8 @@ xxinclude_HEADERS = gmath.h\
 	volume.h\
 	random.h\
 	transformation.h\
-	boundary_checks.h
+	boundary_checks.h\
+    fft.h
 
 noinst_LTLIBRARIES = libgromath.la
 

@@ -10,7 +10,8 @@ xxinclude_HEADERS =	argument.h\
 	print_block.h\
 	read_input.h\
 	read_special.h\
-	gzstream.h
+	gzstream.h \
+    ifp.h
 
 xxiotopodir = $(includedir)/gromosXX/io/topology
 xxiotopo_HEADERS = topology/in_jvalue.h\
