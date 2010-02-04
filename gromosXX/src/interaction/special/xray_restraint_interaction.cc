@@ -18,6 +18,7 @@
 #include <math/periodicity.h>
 #include <util/template_split.h>
 #include <util/debug.h>
+#include <set>
 
 #ifdef OMP
 #include <omp.h>
@@ -184,6 +185,53 @@ void calculate_force_sf(clipper::FFTmap_p1 & D_k,
 }
 
 /**
+ * fit two electron densities on top of each other. This is done using a
+ * linear regression such that
+ * @f[ \rho_1 = \alpha + \beta\rho_2 @f]
+ * 
+ * @param[in] rho1 the first electron density
+ * @param[in] rho2 the second electron density
+ * @param[in] points the set of grid point to consider
+ * @param[out] slope slope @f$\beta@f$ of the linear regression
+ * @param[out] intercept intercept @f$\alpha@f$  of the linrar regression
+ */
+void fit_rho(
+        const clipper::Xmap<clipper::ftype32> & rho1,
+        const clipper::Xmap<clipper::ftype32> & rho2,
+        std::set<int> & points,
+        double & slope, double & intercept) {
+  DEBUG(6, "fitting electron densities");
+  // if the set is empty just fill it with all grid points
+  if (points.empty()) {
+    DEBUG(10, "\tfitting whole grid.");
+    for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = rho1.first();
+          !ix.last(); ix.next()) {
+      points.insert(ix.index());
+    }
+  }
+
+  double sum_xy = 0.0, sum_x = 0.0, sum_y = 0.0, sum_xx = 0.0;
+  const double n = points.size();
+  for(std::set<int>::const_iterator it = points.begin(), to = points.end(); it != to; ++it) {
+    // get the data
+    const double & x = rho2.get_data(*it);
+    const double & y = rho1.get_data(*it);
+    // calculate the suns
+    sum_xy += x*y;
+    sum_x += x;
+    sum_y += y;
+    sum_xx += x*x;
+  }
+  const double mean_x = sum_x / n;
+  DEBUG(9, "mean rho2: " << mean_x);
+  const double mean_y = sum_y / n;
+  DEBUG(9, "mean rho1: " << mean_y);
+  slope = (sum_xy - sum_x*mean_y) / (sum_xx - sum_x*mean_x);
+  intercept = mean_y - slope * mean_x;
+  DEBUG(9, "slope = " << slope << " intercept = " << intercept);
+}
+
+/**
  * calculate the energy for structure factor restraining
  * @param[in] refl the observed relefections
  * @param[in] refl_curr the calculated reflections
@@ -297,11 +345,16 @@ void calculate_energy_rho(const clipper::Atom_list & atoms,
   // to make the force volume AND resolution independent.
   const double scale = volume / grid.size();
 
+  // the fitting parameters
+  double a, b;
+  std::set<int> points; // empty -> whole grid
+  fit_rho(rho_calc, rho_obs, points, a, b);
+
   // energy
   for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = rho_obs.first(),
           ix_c = rho_calc.first(); !ix.last(); ix.next(), ix_c.next()) {
     DEBUG(1, "rho_obs: " << rho_obs[ix] << " rho_calc: " << rho_calc[ix_c]);
-    const double term = rho_obs[ix] - rho_calc[ix_c];
+    const double term = a*rho_obs[ix]+b - rho_calc[ix_c];
     energy += term * term;
   }
   energy *= 0.5 * force_constant * scale;
@@ -340,7 +393,7 @@ void calculate_energy_rho(const clipper::Atom_list & atoms,
             assert(iw.coord().w() == iw_c.coord().w());
             // calculate electron density and gradient of it.
             sf.rho_grad(iw.coord_orth(), rho, rho_grad);
-            const float term = rho_obs[iw] - rho_calc[iw_c];
+            const float term = a*rho_obs[iw]+b - rho_calc[iw_c];
             gradient(0) += -term * rho_grad[0];
             gradient(1) += -term * rho_grad[1];
             gradient(2) += -term * rho_grad[2];
@@ -490,8 +543,6 @@ int interaction::Xray_Restraint_Interaction
   // calculate sums needed for R factors
   // and "observed" structure factors
   j = 0;
-  DEBUG(10, "origin peak: " << fphi[clipper::HKL(0,0,0)].f() << " phase: " << fphi[clipper::HKL(0,0,0)].phi());
-  fphi_obs.set_data(clipper::HKL(0,0,0), fphi[clipper::HKL(0,0,0)]);
   for (unsigned int i = 0; i < num_xray_rest; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
     obs_k_calc += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
@@ -501,9 +552,9 @@ int interaction::Xray_Restraint_Interaction
     // save Fobs and PhiCalc for density maps. This will be corrected
     // for symmetry in the FFT step.
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst)
-      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_inst, conf.special().xray_rest[j].phase_curr));
+      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf, conf.special().xray_rest[j].phase_curr));
     else
-      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf / k_avg, conf.special().xray_rest[j].phase_av));
+      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf, conf.special().xray_rest[j].phase_av));
   }
   // and for R free
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
@@ -867,36 +918,35 @@ void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
   } // loop over atoms
   // now we have a list of grid points without duplicates. Calculate density
   // differences (weight)
- 
-  const double scale = volume / grid.size();
-  const double threshold_scaled = threshold; // / sqrt(scale);
-  DEBUG(10, "threshold scaled: " << threshold_scaled);
-  double int_obs = 0.0, int_calc = 0.0;
+
+   // the fitting parameters
+  double a, b;
+  fit_rho(rho_calc, rho_obs, grid_points, a, b);
+  double sum_obs_m_calc = 0.0;
+  double sum_obs_p_calc = 0.0;
+  DEBUG(10, "old weight: " << weight);
   // loop over grid points
   for (std::set<int>::const_iterator it = grid_points.begin(), to = grid_points.end();
           it != to; ++it) {
-    const double obs = rho_obs.get_data(*it);
+    // bring obs on the same scale as calc
+    const double obs = a*rho_obs.get_data(*it)+b;
     DEBUG(12, "obs: " << obs);
-    int_obs += obs;
     const double calc = rho_calc.get_data(*it);
     DEBUG(12, "calc: " << calc);
-    int_calc += calc;
-  }
-  // correct for volume
-  int_obs *= scale;
-  int_calc *= scale;
-  DEBUG(10, "int. rho_obs: " << int_obs << " int. rho_calc: " << int_calc << " diff: " << fabs(int_obs - int_calc));
-  // this is the implementation of the flat bottom potential
-  const double rhoobs_m_thres = int_obs - threshold_scaled;
-  const double rhoobs_p_thres = int_obs + threshold_scaled;
 
-  if (int_calc < rhoobs_m_thres) {
-    const double term = rhoobs_m_thres - int_calc;
-    weight += term * term;
-  } else if (int_calc > rhoobs_p_thres) {
-    const double term = rhoobs_p_thres - int_calc;
-    weight += term * term;
+    // for R-real
+    sum_obs_m_calc += fabs(obs - calc);
+    sum_obs_p_calc += fabs(obs + calc);
   }
+  const double r_real = sum_obs_m_calc / sum_obs_p_calc;
+  DEBUG(10, "R real space: " << r_real);
+
+  if (r_real > threshold) {
+    const double term = r_real - threshold;
+    weight += 0.5 * term * term;
+  }
+
+  DEBUG(10, "new weight: " << weight);
 #endif
 }
 
