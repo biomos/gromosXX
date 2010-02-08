@@ -4,6 +4,7 @@
  * Lennard-Jones and Coulomb interactions.
  */
 #include "nonbonded_interaction.h"
+#define gpu_status void
 
 namespace interaction
 {
@@ -37,6 +38,8 @@ namespace interaction
 		     simulation::Simulation & sim,
 		     std::ostream & os = std::cout,
 		     bool quiet = false);
+  private:
+    gpu_status * gpu_stat;
 
   protected:
 

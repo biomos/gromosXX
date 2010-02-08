@@ -45,7 +45,7 @@
  */
 interaction::CUDA_Nonbonded_Set::~CUDA_Nonbonded_Set() {
 #ifdef HAVE_LIBCUKERNEL
-  cudakernel::CleanUp();
+  cudakernel::CleanUp(gpu_stat);
 #endif
 }
 interaction::CUDA_Nonbonded_Set
@@ -78,10 +78,10 @@ int interaction::CUDA_Nonbonded_Set
   m_storage_cuda.zero();
   const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
   m_pairlist_alg.timer().start("GPU data copy");
-  cudakernel::cudaCopyPositions(&conf.current().pos(topo.num_solute_atoms())(0));
+  cudakernel::cudaCopyPositions(&conf.current().pos(topo.num_solute_atoms())(0), gpu_stat);
   // copy the box if pressure is coupled
   if (sim.param().pcouple.scale != math::pcouple_off) {
-    cudakernel::cudaCopyBox(conf.current().box(0)(0));
+    cudakernel::cudaCopyBox(gpu_stat, conf.current().box(0)(0));
   }
   m_pairlist_alg.timer().stop("GPU data copy");
 
@@ -91,7 +91,7 @@ int interaction::CUDA_Nonbonded_Set
     m_longrange_storage.zero();
     m_longrange_storage_cuda.zero();
     m_pairlist_alg.timer().start("pairlist cuda");
-    cudakernel::cudaCalcPairlist();
+    cudakernel::cudaCalcPairlist(gpu_stat);
     m_pairlist_alg.timer().stop("pairlist cuda");
 
 
@@ -119,7 +119,7 @@ int interaction::CUDA_Nonbonded_Set
     double * Vir = &m_longrange_storage.virial_tensor(0,0);
     double * e_lj = &m_longrange_storage.energies.lj_energy[egroup][egroup];
     double * e_crf = &m_longrange_storage.energies.crf_energy[egroup][egroup];
-    error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, true);
+    error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, true, gpu_stat);
     m_pairlist_alg.timer().stop("longrange-cuda");
   }
   // calculate forces / energies
@@ -139,7 +139,7 @@ int interaction::CUDA_Nonbonded_Set
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   double * e_lj = &m_storage.energies.lj_energy[egroup][egroup];
   double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
-  cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf,  false);
+  cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf,  false, gpu_stat);
   m_pairlist_alg.timer().stop("shortrange-cuda");
 
   if (m_rank == 0 && error > 0)
@@ -250,4 +250,12 @@ int interaction::CUDA_Nonbonded_Set
     pairlist().reserve(pairs);
   }
   return 0;
+}
+
+/**
+ * Set the gpu_status pointer
+ */
+void interaction::CUDA_Nonbonded_Set
+::pre_init(gpu_status * gpu_s){
+    this->gpu_stat = gpu_s;
 }

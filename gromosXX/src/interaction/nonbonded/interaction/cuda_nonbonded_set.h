@@ -13,6 +13,7 @@
 #include "nonbonded_outerloop.h"
 #include "nonbonded_set_interface.h"
 #include "nonbonded_set.h"
+#define gpu_status void
 
 namespace interaction {
 
@@ -65,6 +66,13 @@ namespace interaction {
      * maximal number of neighbors per atom in longrange pairlist
      */
     unsigned int estNeigh_long;
+    /**
+     * Set the gpu_status pointer
+     */
+    void pre_init(gpu_status * gpu_s);
+
+  private:
+    gpu_status * gpu_stat;
 
   protected:
     Storage m_longrange_storage;

@@ -138,7 +138,7 @@ int interaction::CUDA_Nonbonded::init(topology::Topology & topo,
     return 1;
   }
 
-  cudakernel::cudaInit
+  gpu_stat = cudakernel::cudaInit
           (
           sim.param().innerloop.cuda_device,
           topo.num_solvent_atoms(),
@@ -161,6 +161,7 @@ int interaction::CUDA_Nonbonded::init(topology::Topology & topo,
 
   m_nonbonded_set.push_back(cuda_nbs);
 
+  dynamic_cast<CUDA_Nonbonded_Set*>(m_nonbonded_set[0])->pre_init(gpu_stat);
   m_nonbonded_set[0]->init(topo, conf, sim, os, quiet);
 #else
   io::messages.add("CUDA kernel initialized but no CUDA library.",
