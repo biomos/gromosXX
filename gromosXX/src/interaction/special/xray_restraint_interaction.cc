@@ -97,12 +97,14 @@ void calculate_electron_density(clipper::Xmap<clipper::ftype32> & rho_calc,
  * @param[inout] D_k the reciprocal space difference map
  * @param[out] d_r the real space difference map
  * @param[in] atoms the list containing the atoms
- * @param[out] the force vector
+ * @param[out] force the force vector
+ * @param[in] to_ang conversion factor for unit length
  */
 void calculate_force_sf(clipper::FFTmap_p1 & D_k,
         clipper::Xmap<clipper::ftype32> & d_r,
         const clipper::Atom_list & atoms,
-        math::VArray & force) {
+        math::VArray & force,
+        double to_ang) {
   // these are just shortcuts to avoid many calls to the same functions
   const clipper::Spacegroup & spgr = d_r.spacegroup();
 
@@ -115,7 +117,7 @@ void calculate_force_sf(clipper::FFTmap_p1 & D_k,
   const double volume = d_r.cell().volume();
   // convert from Angstrom to nm and add very annyoing scaling constants
   // to make the force volume AND resolution independent.
-  const double scale = 10.0 / 2.0 * volume / (d_r.grid_sampling().size());
+  const double scale = to_ang / 2.0 * volume / (d_r.grid_sampling().size());
   // perform FFT of the difference map
   D_k.fft_h_to_x(scale);
   // loop over the (symmetry corrected map - even though this doesn't matter).
@@ -324,13 +326,16 @@ void calculate_energy_sf(const std::vector<topology::xray_restraint_struct> & re
  * @param[in] force_constant the force constant
  * @param[out] energy the energy obtained
  * @param[out] force the forces are added to this vector
+ * @parma[in] to_ang converison factor for length unit
  */
 void calculate_energy_rho(const clipper::Atom_list & atoms,
         clipper::Xmap<clipper::ftype32> & rho_obs,
         const clipper::Xmap<clipper::ftype32> & rho_calc,
         const double force_constant,
         double & energy,
-        math::VArray & force) {
+        math::VArray & force,
+        double to_ang
+) {
   const double radius = 3.5;
   energy = 0.0;
 
@@ -401,7 +406,7 @@ void calculate_energy_rho(const clipper::Atom_list & atoms,
         }
       } // loop over grid
       // Angstrom -> nm
-      gradient *= 10.0 * force_constant * scale;
+      gradient *= to_ang * force_constant * scale;
       force(i) -= gradient;
     }
   } // loop over atoms
@@ -416,6 +421,7 @@ int interaction::Xray_Restraint_Interaction
         configuration::Configuration &conf,
         simulation::Simulation &sim) {
 #ifdef HAVE_CLIPPER
+  const double & to_ang = sim.param().xrayrest.to_angstrom;
   m_timer.start();
   // get number of atoms in simulation
   const int atoms_size = topo.num_atoms();
@@ -424,7 +430,7 @@ int interaction::Xray_Restraint_Interaction
   for (int i = 0; i < atoms_size; i++) {
     math::Vec in_box = conf.current().pos(i);
     periodicity.put_into_positive_box(in_box);
-    in_box *= 10;
+    in_box *= to_ang;
     atoms[i].set_coord_orth(clipper::Coord_orth(in_box(0),
             in_box(1), in_box(2)));
   }
@@ -603,7 +609,7 @@ int interaction::Xray_Restraint_Interaction
 
     // start to calculate the forces
     m_timer.start("force");
-    calculate_force_sf(D_k, d_r, atoms, conf.current().force);
+    calculate_force_sf(D_k, d_r, atoms, conf.current().force, to_ang);
     m_timer.stop("force");
   } else {
     ///////////////////////////////////////////////
@@ -612,7 +618,7 @@ int interaction::Xray_Restraint_Interaction
     m_timer.start("energy & force");
     rho_obs.fft_from(fphi_obs);
     calculate_energy_rho(atoms, rho_obs, rho_calc, sim.param().xrayrest.force_constant,
-            conf.current().energies.xray_total, conf.current().force);
+            conf.current().energies.xray_total, conf.current().force, to_ang);
     m_timer.stop("energy & force");
   }
   DEBUG(10, "energy: " << conf.current().energies.xray_total);
@@ -670,6 +676,8 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     return 1;
   }
 
+  const double & to_ang = sim.param().xrayrest.to_angstrom;
+
   math::Box & box = conf.current().box;
   const double a = math::abs(box(0));
   const double b = math::abs(box(1));
@@ -677,11 +685,11 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   const double alpha = acos(math::costest(dot(box(1), box(2)) / (b * c)));
   const double beta = acos(math::costest(dot(box(0), box(2)) / (a * c)));
   const double gamma = acos(math::costest(dot(box(0), box(1)) / (a * b)));
-  clipper::Cell_descr cellinit(a * 10.0, b * 10.0, c * 10.0,
+  clipper::Cell_descr cellinit(a * to_ang, b * to_ang, c * to_ang,
           alpha, beta, gamma);
   clipper::Cell cell(cellinit);
 
-  clipper::Resolution reso(sim.param().xrayrest.resolution * 10.0);
+  clipper::Resolution reso(sim.param().xrayrest.resolution * to_ang);
 
     // create a grid and a crystalographic map
   const double shannon_rate = 1.5;
@@ -720,7 +728,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     atm.set_occupancy(topo.xray_occupancies()[i]);
     atm.set_coord_orth(clipper::Coord_orth(0.0, 0.0, 0.0));
     assert(i < topo.xray_b_factors().size());
-    atm.set_u_iso(topo.xray_b_factors()[i] * 100.0 / sqpi2);
+    atm.set_u_iso(topo.xray_b_factors()[i] * to_ang * to_ang / sqpi2);
     assert(i < topo.xray_elements().size());
     atm.set_element(topo.xray_elements()[i]);
     atomvec.push_back(atm);
@@ -733,7 +741,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     atm.set_occupancy(topo.xray_solv_occupancies()[index]);
     atm.set_coord_orth(clipper::Coord_orth(0.0, 0.0, 0.0));
     assert(index < topo.xray_solv_b_factors().size());
-    atm.set_u_iso(topo.xray_solv_b_factors()[index] * 100 / sqpi2);
+    atm.set_u_iso(topo.xray_solv_b_factors()[index] * to_ang * to_ang / sqpi2);
     assert(index < topo.xray_solvelements().size());
     atm.set_element(topo.xray_solvelements()[index]);
     atomvec.push_back(atm);
@@ -775,7 +783,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
         if (umb_it->id == it->id) {
           found = true;
           umb_it->umbrella_weight_factory = new interaction::Electron_Density_Umbrella_Weight_Factory(it->atoms,
-                  it->threshold, it->cutoff, conf, atoms, rho_calc, rho_obs);
+                  it->threshold, it->cutoff, conf, atoms, rho_calc, rho_obs, to_ang);
         }
 
       }
@@ -881,11 +889,11 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
 #ifdef HAVE_CLIPPER
   // convert to angstrom
-  const float cutoff2 = cutoff * cutoff * 100.0;
+  const float cutoff2 = cutoff * cutoff * to_ang * to_ang;
   // create the range (size of atom)
   const clipper::Cell & cell = rho_calc.cell();
   const clipper::Grid_sampling & grid = rho_calc.grid_sampling();
-  clipper::Grid_range gd(cell, grid, cutoff * 10.0);
+  clipper::Grid_range gd(cell, grid, cutoff * to_ang);
 
   const int atoms_size = variable_atoms.size();
   const double volume = cell.volume();
@@ -960,7 +968,7 @@ util::Umbrella_Weight * interaction::Electron_Density_Umbrella_Weight_Factory::g
 #ifdef HAVE_CLIPPER
   util::Umbrella_Weight * instance =
           new interaction::Electron_Density_Umbrella_Weight(variable_atoms,
-            threshold, cutoff, conf, atoms, rho_calc, rho_obs);
+            threshold, cutoff, conf, atoms, rho_calc, rho_obs, to_ang);
   // make sure the weight is increased as soon as the instance is created
   instance->increment_weight();
   instances.push_back(instance);

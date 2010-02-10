@@ -92,6 +92,7 @@ END
  * factors with clipper-library:
  *  - Spacegroup SPGR in Hermann-Mauguin-Form
  *  - Scattering-Resolution RESO in nm
+ *  - Conversion factor for the length unit to Angstrom (TOANG)
  *
  * The block is read from the xray restraints specification file
  * (\@xray).
@@ -100,8 +101,8 @@ END
 XRAYRESPARA
 #  SPGR
    P 21 21 21
-#  RESO
-   0.15
+#  RESO  TOANG
+   0.15   10.0
 END
 @endverbatim
  *
@@ -249,6 +250,14 @@ io::In_Xrayresspec::read(topology::Topology& topo,
               "In_Xrayresspec", io::message::error);
       return;
     }
+
+    double to_ang;
+    _lineStream >> to_ang;
+    if (_lineStream.fail()) {
+      io::messages.add("XRAYRESPARA block: No conversion factor for the length unit to Angstrom given. Asuming 10.0",
+              "In_Xrayresspec", io::message::warning);
+    }
+
   } // XRAYRESPARA
 
 

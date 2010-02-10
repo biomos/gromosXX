@@ -1334,10 +1334,11 @@ namespace simulation
        * - spacegroup "P 1"
        * - resolution 1.0
        * - readavg 0
+       * - to_angstrom 10.0
        */
       xrayrest_struct() : xrayrest(xrayrest_off), mode(xrayrest_mode_structure_factor), local_elevation(false), force_constant(1E4), tau(0),
       write(0), writedensity(0), writexmap(0), spacegroup("P 1"),
-      resolution(1.0), readavg(0) {
+      resolution(1.0), readavg(0), to_angstrom(10.0) {
       }
 
       /**
@@ -1384,6 +1385,10 @@ namespace simulation
        * decision-boolean for reading averages or not
        */
       bool readavg;
+      /**
+       * converison factor for length unit to angstrom
+       */
+      double to_angstrom;
     } /** Xray restraint parameters */ xrayrest;
 
     /**

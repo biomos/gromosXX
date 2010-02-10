@@ -103,9 +103,10 @@ namespace interaction {
             configuration::Configuration & conf,
             clipper::Atom_list & atoms,
             clipper::Xmap<clipper::ftype32> & rho_calc,
-            clipper::Xmap<clipper::ftype32> & rho_obs) :
+            clipper::Xmap<clipper::ftype32> & rho_obs,
+            double to_ang) :
             weight(0.0), variable_atoms(variable_atoms), threshold(threshold), cutoff(cutoff),
-                    conf(conf), atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs) {
+                    conf(conf), atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs), to_ang(to_ang) {
     }
 #endif
     virtual double get_weight() const { return weight; }
@@ -118,11 +119,13 @@ namespace interaction {
     double threshold;
     double cutoff;
     configuration::Configuration & conf;
+
 #ifdef HAVE_CLIPPER
     clipper::Atom_list & atoms;
     clipper::Xmap<clipper::ftype32> & rho_calc;
     clipper::Xmap<clipper::ftype32> & rho_obs;
 #endif
+    double to_ang;
   };
 
 /**
@@ -136,9 +139,10 @@ namespace interaction {
             configuration::Configuration & conf,
             clipper::Atom_list & atoms,
             clipper::Xmap<clipper::ftype32> & rho_calc,
-            clipper::Xmap<clipper::ftype32> & rho_obs) :
+            clipper::Xmap<clipper::ftype32> & rho_obs,
+            double to_ang) :
     variable_atoms(variable_atoms), threshold(threshold), cutoff(cutoff), conf(conf),
-    atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs) {
+    atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs), to_ang(to_ang) {
     }
 #endif
     virtual util::Umbrella_Weight * get_instance();
@@ -152,6 +156,7 @@ namespace interaction {
     clipper::Xmap<clipper::ftype32> & rho_calc;
     clipper::Xmap<clipper::ftype32> & rho_obs;
 #endif
+    double to_ang;
   };
 
 } // interaction
