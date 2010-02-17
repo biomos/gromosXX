@@ -3,6 +3,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/gromosXX/util
 xxinclude_HEADERS = error.h\
+        cycle_thread.h\
 	debug.h\
 	timing.h\
 	usage.h\
@@ -20,11 +21,13 @@ xxinclude_HEADERS = error.h\
 	feature.h\
 	le_coordinate.h\
 	umbrella.h\
-	umbrella_weight.h
+	umbrella_weight.h\
+        thread.h
 
 noinst_LTLIBRARIES = libgroutil.la
 
-libgroutil_la_SOURCES =	debug.cc\
+libgroutil_la_SOURCES =	cycle_thread.cc\
+        debug.cc\
 	timing.cc\
 	usage.cc\
 	generate_velocities.cc\
@@ -42,7 +45,8 @@ libgroutil_la_SOURCES =	debug.cc\
 	feature.cc\
 	le_coordinate.cc\
 	umbrella.cc\
-	umbrella_weight.cc
+	umbrella_weight.cc\
+        thread.cc
 
 libgroutil_la_LIBADD =
 

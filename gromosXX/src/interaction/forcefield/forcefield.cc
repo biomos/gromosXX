@@ -92,7 +92,7 @@ int interaction::Forcefield
   DEBUG(15, "zero lambda energies");
   conf.current().perturbed_energy_derivatives.zero();
 
-  DEBUG(1, "zero sasa and sasavolume");
+  DEBUG(15, "zero sasa and sasavolume");
   conf.current().sasa_tot = 0.0;
   conf.current().sasavol_tot = 0.0;
 

@@ -33,7 +33,6 @@
 #include <interaction/nonbonded/interaction/omp_nonbonded_interaction.h>
 #include <interaction/nonbonded/interaction/mpi_nonbonded_master.h>
 #include <interaction/nonbonded/interaction/mpi_nonbonded_slave.h>
-#include <interaction/nonbonded/interaction/cuda_nonbonded.h>
 
 #include <io/ifp.h>
 
@@ -182,12 +181,6 @@ int interaction::create_g96_nonbonded
    
 #if defined(OMP)
   Nonbonded_Interaction * ni = new OMP_Nonbonded_Interaction(pa);
-#elif defined(HAVE_LIBCUKERNEL)
-  Nonbonded_Interaction * ni;
-  if (sim.param().innerloop.method == simulation::sla_cuda)
-    ni = new CUDA_Nonbonded(pa);
-  else
-    ni = new Nonbonded_Interaction(pa);
 #elif defined(XXMPI)
   Nonbonded_Interaction * ni;
 

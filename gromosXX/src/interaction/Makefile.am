@@ -62,7 +62,6 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/mpi_nonbonded_slave.h\
 	nonbonded/interaction/storage.h\
 	nonbonded/interaction/latticesum.h\
-	nonbonded/interaction/cuda_nonbonded.h\
 	nonbonded/interaction/cuda_nonbonded_set.h\
 	nonbonded/interaction/spc_table.h
 
@@ -111,7 +110,6 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	nonbonded/interaction/latticesum.cc\
 	nonbonded/interaction/eds_nonbonded_set.cc\
 	nonbonded/interaction/eds_nonbonded_outerloop.cc\
-	nonbonded/interaction/cuda_nonbonded.cc\
 	nonbonded/interaction/cuda_nonbonded_set.cc\
 	bonded/create_bonded.cc\
 	bonded/quartic_bond_interaction.cc\

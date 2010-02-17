@@ -28,12 +28,14 @@
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
 #include <interaction/nonbonded/interaction/perturbed_nonbonded_set.h>
+#include <interaction/nonbonded/interaction/cuda_nonbonded_set.h>
 
 #include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 #include <interaction/nonbonded/interaction/omp_nonbonded_interaction.h>
 
 #include <util/debug.h>
 #include <util/error.h>
+#include <util/thread.h>
 
 #include <math/boundary_checks.h>
 
@@ -41,10 +43,15 @@
 #include <omp.h>
 #endif
 
+#ifdef HAVE_LIBCUKERNEL
+#include <cudaKernel.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE nonbonded
+
 
 /**
  * Constructor.
@@ -86,8 +93,8 @@ calculate_interactions(topology::Topology & topo,
 
   configuration::Configuration *p_conf = &conf;
   topology::Topology *p_topo = &topo;
-  
-  if ((sim.steps() % steps) == 0){
+
+  if ((sim.steps() % steps) == 0) {
     // std::cout << "MULTISTEP: full calculation\n";
 
     ////////////////////////////////////////////////////
@@ -99,7 +106,7 @@ calculate_interactions(topology::Topology & topo,
       p_topo = &topo.multicell_topo();
       expand_configuration(topo, conf, sim, *p_conf);
       if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
-          sim.param().pairlist.cutoff_long)) {
+              sim.param().pairlist.cutoff_long)) {
         io::messages.add("box is too small: not twice the cutoff!",
                 "configuration", io::message::error);
         return 1;
@@ -111,16 +118,17 @@ calculate_interactions(topology::Topology & topo,
     m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim);
 
 #ifdef OMP
-    int tid;
-#pragma omp parallel private(tid)
+    omp_set_num_threads(m_nonbonded_set.size());
+#pragma omp parallel
     {
-      tid = omp_get_thread_num();
+      unsigned int tid = omp_get_thread_num();
       // calculate the corresponding interactions
       assert(m_nonbonded_set.size() > tid);
-      DEBUG(8, "calculating nonbonded interactions (thread "
+      DEBUG(4, "calculating nonbonded interactions (thread "
               << tid << " of " << m_set_size << ")");
 
       m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
+
     }
 
 #else
@@ -161,20 +169,55 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
 						 std::ostream & os,
 						 bool quiet)
 {
+
+ 
+
   // OpenMP parallelization
 #ifdef OMP
-  int tid;
-#pragma omp parallel private(tid)
+  unsigned int number_of_cpus;
+  int result = 0;
+  
+  #pragma omp parallel
+  {
+    number_of_cpus = omp_get_num_threads();
+    unsigned int tid = omp_get_thread_num();
+    if (tid == 0)
+      m_set_size = number_of_cpus;
+  }
+  result += Nonbonded_Interaction::init(topo, conf, sim, os, quiet);
+
+  // Increase the number of threads to include the GPUs if CUDA enabled
+  if (sim.param().innerloop.method == simulation::sla_cuda) {
+    omp_set_num_threads(number_of_cpus + sim.param().innerloop.number_gpus);
+
+#pragma omp parallel
     {
-      tid = omp_get_thread_num();
-      if (tid == 0){
-        m_set_size = omp_get_num_threads();
+      unsigned int tid = omp_get_thread_num();
+      DEBUG(10, "tid: " << tid);
+      // For the GPUs
+      if (tid >= number_of_cpus) {
+        unsigned int gpu_tid = tid - number_of_cpus;
+        DEBUG(9, "OMP: CUDA_set, gpu_tid: " << gpu_tid);
+
+        CUDA_Nonbonded_Set * cuda_nbs = new CUDA_Nonbonded_Set(*m_pairlist_algorithm, m_parameter, 0, 1, gpu_tid);
+
+        cuda_nbs->init(topo, conf, sim, os, quiet);
+
+        DEBUG(10, "CUDA_NonBonded::initialize");
+
+#pragma omp critical
+        {
+          m_nonbonded_set.push_back(cuda_nbs);
+        }
       }
-    }
-    return Nonbonded_Interaction::init(topo, conf, sim, os, quiet);
+    } // CUDA enabled
+  }
+  DEBUG(10, "OMP: result: " << result);
+
+  return result;
 #else
-    std::cerr << "OMP not defined, why are we here???" << std::endl;
-    return E_ILLEGAL;
+  std::cerr << "OMP not defined, why are we here???" << std::endl;
+  return E_ILLEGAL;
 #endif
 }
 

@@ -6,6 +6,7 @@
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
+
 namespace simulation
 {
   /**
@@ -2276,7 +2277,7 @@ namespace simulation
       /**
        * constructor
        */
-      innerloop_struct() : solvent(sls_topo), method(sla_off), cuda_device(0) {}
+      innerloop_struct() : solvent(sls_topo), method(sla_off), number_gpus(0)  {}
       /**
        * the solvent
        */
@@ -2286,9 +2287,13 @@ namespace simulation
        */
       special_loop_acceleration_enum method;
       /**
-       * the GPU CUDA device number to use
+       * The number of GPUs used for CUDA
        */
-      unsigned int cuda_device;
+      unsigned int number_gpus;
+      /**
+       * Which device number should be used for CUDA
+       */
+      std::vector<int> gpu_device_number;
     } /** special inner loops */ innerloop;
 
     /**

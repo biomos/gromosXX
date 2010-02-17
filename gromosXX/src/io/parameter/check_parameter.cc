@@ -2950,6 +2950,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "virial_off");
   fc.unlock("innerloop_method_cuda", "virial_atomic");
   fc.unlock("innerloop_method_cuda", "virial_molecular");
+  fc.unlock("innerloop_method_cuda", "parallel_omp");
 
   fc.unlock("leus", "solute");
   fc.unlock("leus", "solvent");

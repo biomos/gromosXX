@@ -574,7 +574,6 @@ void io::In_Parameter::read_PRINTOUT(simulation::Parameter &param,
 
   block_read.insert("PRINTOUT");
 
-  int ntpp;
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
 
@@ -2611,11 +2610,11 @@ INNERLOOP
 # NTILS: 0..1, solvent used
 #        0: use topology [default]
 #        1: use SPC
-# NTILP: addition parameters for the acceleration methods:
-#        CUDA: the GPU device number (default 0)
-#
-# NTILM NTILS NTILP...
-      0     0
+# NGPUS: number of GPUs to use
+# NDEVG: Which GPU device number to use
+
+# NTILM NTILS NGPUS NDEVG
+      4     0     2   0 1
 END
 @endverbatim
  */
@@ -2699,12 +2698,19 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
       }
     }
 
+    // Get the number of gpus and their device number
     if (param.innerloop.method == simulation::sla_cuda) {
-      _lineStream >> param.innerloop.cuda_device;
-      if (_lineStream.fail()) {
-        io::messages.add("INNERLOOP block: could not read the CUDA device "
-                "number. Assuming 0.", "In_Parameter", io::message::warning);
-        param.innerloop.cuda_device = 0;
+      _lineStream >> param.innerloop.number_gpus;
+      
+      if (_lineStream.fail() || param.innerloop.number_gpus == (unsigned int) 0)
+        io::messages.add("CUDA enabled, but number of GPUs is zero",
+                "In_Parameter", io::message::error);
+      else {
+        unsigned int temp;
+        for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
+          _lineStream >> temp;
+          param.innerloop.gpu_device_number.push_back(temp);
+        }
       }
     }
   }

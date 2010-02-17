@@ -399,6 +399,14 @@ int interaction::Nonbonded_Interaction::check_special_loop
     return 0;
   }
 
+  if (sim.param().innerloop.method == simulation::sla_cuda) {
+    // the generic loop works for now.
+    DEBUG(8, "CUDA GPU solvent loop, user request");
+    if (!quiet)
+      os << "\tusing CUDA GPU solvent loops (user request)\n";
+    return 0;
+  }
+
   // check whether the number of atoms match for other methods
   switch (sim.param().innerloop.solvent) {
     case simulation::sls_spc :
