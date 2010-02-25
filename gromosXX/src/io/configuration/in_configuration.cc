@@ -77,10 +77,11 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   if (conf.boundary_type == math::truncoct) {
     // convert to triclinic system
-    math::truncoct_triclinic(conf.current().box, conf.current().pos, true);
-    math::truncoct_triclinic(conf.current().box, conf.current().posV, true);
-    math::truncoct_triclinic(conf.current().box, conf.current().vel, true);
+    math::truncoct_triclinic_box(conf.current().box, true);
     conf.old().box = conf.current().box;
+    math::truncoct_triclinic(conf.current().pos, true);
+    math::truncoct_triclinic(conf.current().posV, true);
+    math::truncoct_triclinic(conf.current().vel, true);
   }
 
 
@@ -210,10 +211,11 @@ void io::In_Configuration::read_replica
     conf[0].boundary_type = param.boundary.boundary;
     if (conf[0].boundary_type == math::truncoct) {
       // convert to triclinic system
-      math::truncoct_triclinic(conf[0].current().box, conf[0].current().pos, true);
-      math::truncoct_triclinic(conf[0].current().box, conf[0].current().posV, true);
-      math::truncoct_triclinic(conf[0].current().box, conf[0].current().vel, true);
+      math::truncoct_triclinic_box(conf[0].current().box, true);
       conf[0].old().box = conf[0].current().box;
+      math::truncoct_triclinic(conf[0].current().pos, true);
+      math::truncoct_triclinic(conf[0].current().posV, true);
+      math::truncoct_triclinic(conf[0].current().vel, true);
     }
 
 	DEBUG(10, "copying configurations");
@@ -276,10 +278,11 @@ void io::In_Configuration::read_replica
       conf[i].boundary_type = param.boundary.boundary;
       if (conf[i].boundary_type == math::truncoct) {
         // convert to triclinic system
-        math::truncoct_triclinic(conf[i].current().box, conf[i].current().pos, true);
-        math::truncoct_triclinic(conf[i].current().box, conf[i].current().posV, true);
-        math::truncoct_triclinic(conf[i].current().box, conf[i].current().vel, true);
+        math::truncoct_triclinic_box(conf[i].current().box, true);
         conf[i].old().box = conf[i].current().box;
+        math::truncoct_triclinic(conf[i].current().pos, true);
+        math::truncoct_triclinic(conf[i].current().posV, true);
+        math::truncoct_triclinic(conf[i].current().vel, true);
       }
       
       // warn for unread input data

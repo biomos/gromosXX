@@ -198,11 +198,8 @@ void math::truncoct_triclinic_box(math::Box & box, bool forward) {
   }
 }
 
-void math::truncoct_triclinic(math::Box & box, math::VArray & pos, bool forward) {
+void math::truncoct_triclinic(math::VArray & pos, bool forward) {
   DEBUG(6, (forward ? "truncated to triclinic" : "triclinic to truncated"));
-  DEBUG(8, "box:\n\t" << math::m2s(math::Matrix(box)));
-  math::truncoct_triclinic_box(box, forward);
-  DEBUG(8, "new box:\n\t" << math::m2s(math::Matrix(box)));
   math::Matrix rot = math::truncoct_triclinic_rotmat(forward);
   DEBUG(8, "rotation matrix:\n\t" << math::m2s(rot));
 

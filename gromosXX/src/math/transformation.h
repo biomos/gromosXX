@@ -52,7 +52,7 @@ namespace math {
    * @param[inout] pos the positions to transform
    * @param[in] forward true for truncoct to triclinic and false for vice versa
    */
-  void truncoct_triclinic(math::Box & box, math::VArray & pos, bool forward);
+  void truncoct_triclinic(math::VArray & pos, bool forward);
 }
 
 #endif	/* INCLUDED_TRANSFORMATION_H */
