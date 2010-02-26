@@ -35,10 +35,6 @@
  * @verbatim
 POSRESSPEC
 # RESIDUE   ATOM
-    1 HEXA  CH31       1
-    1 HEXA  CH22       2
-    1 HEXA  CH23       3
-    1 HEXA  CH24       4
     2 HEXA  CH23       9
     2 HEXA  CH24      10
     2 HEXA  CH25      11
@@ -63,6 +59,7 @@ REFPOSITION
     2 HEXA  CH24      10    2.111496670    2.612272713    4.162523150
     2 HEXA  CH25      11    2.098679480    2.760542973    4.198030366
     2 HEXA  CH36      12    1.953046837    2.805540373    4.211273000
+    ...
 END
 @endverbatim
  *
