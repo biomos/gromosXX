@@ -117,34 +117,33 @@ io::In_Distanceres::read(topology::Topology& topo,
       
       DEBUG(10, "reading in DISTANCERES data");
       
-      if (!quiet){
-	
-	switch(sim.param().distanceres.distanceres){
-	  case 0:
-	    os << "\tDistance restraints OFF\n";
-	    // how did you get here?
-	    break;
-	  case 1:
-	    os << "\tDistance restraints ON\n";
-	    break;
-      case -1:
-	    os << "\tDistance restraints ON\n"
-           << "\ttime averaging ON\n";
-	    break;
-	  case 2:
-	    os << "\tDistance restraints ON\n"
-	       << "\t\t(using force constant K*w0)\n";
-	    break;
-      case -2:
-	    os << "\tDistance restraints ON\n"
-           << "\ttime averaging ON\n"
-	       << "\t\t(using force constant K*w0)\n";
-	    break;
-	  default:
-	    os << "\tDistance restraints ERROR\n";
-	}
+      if (!quiet) {
+        switch (sim.param().distanceres.distanceres) {
+          case 0:
+            os << "\tDistance restraints OFF\n";
+            // how did you get here?
+            break;
+          case 1:
+            os << "\tDistance restraints ON\n";
+            break;
+          case -1:
+            os << "\tDistance restraints ON\n"
+                    << "\ttime averaging ON\n";
+            break;
+          case 2:
+            os << "\tDistance restraints ON\n"
+                    << "\t\t(using force constant K*w0)\n";
+            break;
+          case -2:
+            os << "\tDistance restraints ON\n"
+                    << "\ttime averaging ON\n"
+                    << "\t\t(using force constant K*w0)\n";
+            break;
+          default:
+            os << "\tDistance restraints ERROR\n";
+        }
       }
-      
+
       
       _lineStream.clear();
       _lineStream.str(*it);
@@ -311,10 +310,18 @@ io::In_Distanceres::read(topology::Topology& topo,
 	    break;
 	  case 1:
 	    os << "\tPerturbed Distance restraints ON\n";
-	    
+	    break;
+          case -1:
+	    os << "\tPerturbed Distance restraints ON\n"
+               << "\t\ttime-averaging ON\n";
 	    break;
 	  case 2:
 	    os << "\tPerturbed Distance restraints ON\n"
+	       << "\t\t(using force constant K*w0)\n";
+	    break;
+          case -2:
+	    os << "\tPerturbed Distance restraints ON\n"
+               << "\t\ttime-averaging ON\n"
 	       << "\t\t(using force constant K*w0)\n";
 	    break;
 	  default:
