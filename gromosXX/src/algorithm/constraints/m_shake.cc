@@ -143,17 +143,17 @@ int algorithm::M_Shake::m_shake_iteration
     // inverse
     A = inverse(A);
 
-    double f0 = (A(0,0)*diff(0) + A(0,1)*diff(1) + A(0,2)*diff(2)) / 2.0;
-    double f1 = (A(1,0)*diff(0) + A(1,1)*diff(1) + A(1,2)*diff(2)) / 2.0;
-    double f2 = (A(2,0)*diff(0) + A(2,1)*diff(1) + A(2,2)*diff(2)) / 2.0;
+    const double f0 = (A(0,0)*diff(0) + A(0,1)*diff(1) + A(0,2)*diff(2)) / 2.0;
+    const double f1 = (A(1,0)*diff(0) + A(1,1)*diff(1) + A(1,2)*diff(2)) / 2.0;
+    const double f2 = (A(2,0)*diff(0) + A(2,1)*diff(1) + A(2,2)*diff(2)) / 2.0;
 
     DEBUG(10, "Lagrange multiplier of contraint 0: " << f0);
     DEBUG(10, "Lagrange multiplier of contraint 1: " << f1);
     DEBUG(10, "Lagrange multiplier of contraint 2: " << f2);
 
-    math::Vec f01 = f0*dist_old(0) + f1*dist_old(1);
-    math::Vec f02 = f2*dist_old(2) - f0*dist_old(0);
-    math::Vec f12 = f1*dist_old(1) + f2*dist_old(2);
+    const math::Vec f01 = f0*dist_old(0) + f1*dist_old(1);
+    const math::Vec f02 = f2*dist_old(2) - f0*dist_old(0);
+    const math::Vec f12 = f1*dist_old(1) + f2*dist_old(2);
 
     // add to the forces
     conf.old().constraint_force(first) += f01;
@@ -239,12 +239,11 @@ void algorithm::M_Shake
     const unsigned int num_solvent_atoms = topo.solvent(i).num_atoms();
 
     math::GenericMatrix<double> factor;
-    unsigned int k = 0;
     //unsigned int num_constr = topo.solvent(i).distance_constraints().size();
     math::GenericVec<double> constr_length2;
     math::GenericVec<math::Vec> dist_old;
 
-    
+    unsigned int k = 0;
     for (typename std::vector<topology::two_body_term_struct>::const_iterator
       it_k = topo.solvent(i).distance_constraints().begin(),
       to_k = topo.solvent(i).distance_constraints().end(); it_k != to_k; ++it_k, ++k) {
@@ -290,7 +289,7 @@ void algorithm::M_Shake
             }
       #endif
 
-      k = 0;
+      unsigned int k = 0;
       for (typename std::vector<topology::two_body_term_struct>::const_iterator
       it_k = topo.solvent(i).distance_constraints().begin(),
       to_k = topo.solvent(i).distance_constraints().end(); it_k != to_k; ++it_k, ++k) {
@@ -300,8 +299,8 @@ void algorithm::M_Shake
       int num_iterations = 0;
       bool convergence = false;
       while (!convergence) {
-        DEBUG(9, "\titeration" << std::setw(10) << num_iterations
-                << " ma_iterations" << std::setw(10) << max_iterations);
+        DEBUG(10, "\titeration" << std::setw(10) << num_iterations
+                << " max_iterations" << std::setw(10) << max_iterations);
 
         if (m_shake_iteration<B, V >
                 (topo, conf, convergence, first, dt,

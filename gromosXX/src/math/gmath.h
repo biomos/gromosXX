@@ -209,12 +209,15 @@ namespace math
 	  m[i][j] = mat(i,j);
       return *this;
     }
-    
+
+    inline
     numeric_type operator()(int i, int j)const 
     {
       assert( i>=0 && i<3 && j>=0 && j<3 );
       return m[i][j];
     }
+
+    inline
     numeric_type & operator()(int i, int j)
     {
       assert( i>=0 && i<3 && j>=0 && j<3 );
