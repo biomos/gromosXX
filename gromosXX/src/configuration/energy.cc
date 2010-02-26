@@ -19,6 +19,43 @@
 #include "energy.h"
 #include <vector>
 
+configuration::Energy::Energy() :
+total(0.0),
+kinetic_total(0.0),
+potential_total(0.0),
+bond_total(0.0),
+angle_total(0.0),
+improper_total(0.0),
+dihedral_total(0.0),
+crossdihedral_total(0.0),
+bonded_total(0.0),
+nonbonded_total(0.0),
+lj_total(0.0),
+crf_total(0.0),
+ls_total(0.0),
+ls_pair_total(0.0),
+ls_realspace_total(0.0),
+ls_kspace_total(0.0),
+ls_self_total(0.0),
+ls_surface_total(0.0),
+ls_a_term_total(0.0),
+special_total(0.0),
+posrest_total(0.0),
+distanceres_total(0.0),
+dihrest_total(0.0),
+jvalue_total(0.0),
+xray_total(0.0),
+leus_total(0.0),
+constraints_total(0.0),
+external_total(0.0),
+self_total(0.0),
+sasa_total(0.0),
+sasa_volume_total(0.0),
+eds_vr(0.0),
+entropy_term(0.0),
+m_ewarn(1E99) {
+}
+
 void configuration::Energy::zero(bool potential, bool kinetic)
 {
   DEBUG(10, "energy: zero");

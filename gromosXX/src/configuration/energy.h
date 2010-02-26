@@ -18,7 +18,7 @@ namespace configuration
     /**
      * Constructor
      */
-    Energy() : m_ewarn(1E99) {}
+    Energy();
     /**
      * Destructor
      */

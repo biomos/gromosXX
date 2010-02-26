@@ -3,7 +3,7 @@ Distance restraints, DIANA to GROMOS form
 Val-Tyr-Arg-Lys-Gln, PCL, WFVGN, October 1996
 $Id$
 END
-DISRESSPEC
+DISTANCERESSPEC
 # DISH: carbon-hydrogen distance
 # DISC: carbon-carbon distance
 # DISH,DISC

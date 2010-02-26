@@ -292,7 +292,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 
   // solvent - solvent
   const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
-  if (no_cuda)
+  if (no_cuda && topo.num_solute_chargegroups() > topo.num_chargegroups())
     _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity);
 
   if (begin == 0)

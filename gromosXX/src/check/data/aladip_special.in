@@ -90,6 +90,8 @@ PRESSURESCALE
 #
 #   COUPLE  SCALE   COMP        TAUP    VIRIAL
     scale   iso     4.575E-4    0.5     atomic
+#   aniso stuff
+    0 0 0
 #   reference pressure
     0.06102     0.00000     0.00000
     0.00000     0.06102     0.00000
@@ -187,8 +189,7 @@ NONBONDED
 #    NLRLJ    SLVDNS
          0      33.3
 END
-#
-POSITONRES
+POSITIONRES
 #    NTPOR 0..3 controls atom positions re(con)straining.
 #          0: no position re(con)straints.
 #          1: restraining with force constant CPOR
@@ -223,8 +224,8 @@ DISTANCERES
 #  TAUDIR >= 0.0 coupling time for time averaging
 #      != 0: not implemented
 #
-#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR
-        2       0  1000.0     0.3     0.0
+#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  NTWDIR
+        2       0  1000.0     0.3     0.0       0
 END
 DIHEDRALRES
 # NTDLR   0...3 controls dihedral-angle restraining and constraining 

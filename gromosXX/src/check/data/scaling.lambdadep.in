@@ -77,6 +77,8 @@ PRESSURESCALE
 #
 #   COUPLE  SCALE   COMP        TAUP    VIRIAL
     scale   iso     4.575E-4    0.5     atomic
+#   aniso stuff
+    0 0 0
 #   reference pressure
     0.06102     0.00000     0.00000
     0.00000     0.06102     0.00000

@@ -2,7 +2,7 @@ TITLE
 	GromosXX
 	dihedral restraints specification
 END
-DIHRESSPEC
+DIHEDRALRESSPEC
 # i  j  k  l   w0    phi  delta
   2  4  6  8  1.0  240.0   90.0
   6  8 10 12  2.0   90.0  120.0 

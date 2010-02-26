@@ -517,6 +517,12 @@ int check::check_forcefield(topology::Topology & topo,
 				 ref["Dihedral"],
 				 0.00000001, 0.001);    
     }
+    else if ((*it)->name == "Crossdihedral"){
+      total += check_interaction(topo, conf, sim, **it,
+				 topo.num_solute_atoms(),
+				 ref["Crossdihedral"],
+				 0.00000001, 0.001);
+    }
     else if ((*it)->name == "PerturbedDihedral"){
       total += check_interaction(topo, conf, sim, **it, 
 				 topo.num_solute_atoms(), 

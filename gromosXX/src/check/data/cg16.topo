@@ -8,6 +8,8 @@ PHYSICALCONSTANTS
 138.9354
 # HBAR: Planck's constant HBAR = H/(2* PI)
 0.0635078
+# SPDL: Speed of light (in nm/ps)
+  2.9979245800E05
 # BOLTZ: Boltzmann's constant kB
 0.00831441
 END
