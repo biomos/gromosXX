@@ -48,7 +48,7 @@ interaction::Periodic_Scaling
 	break;
     }
     if (i_it == i_to){
-      io::messages.add("Could not access a dihedral interaction.",
+      io::messages.add("Could not access a dihedral interaction. Use NTBDN=1 in COVALENTFORM block.",
 		       "Periodic Scaling",
 		       io::message::error);
     }
