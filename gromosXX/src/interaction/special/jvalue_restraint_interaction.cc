@@ -156,7 +156,10 @@ int _calculate_jvalue_restraint_interactions
 	phi -= 2 * math::Pi;
       
       // 0 .. ngrid-1
-      const int bin = int(phi * sim.param().jvalue.ngrid / (2 * math::Pi));
+      int bin = int(phi * sim.param().jvalue.ngrid / (2 * math::Pi));
+      // guard for numerical problems
+      if (bin < 0) bin = 0;
+      if (bin >= sim.param().jvalue.ngrid) bin = sim.param().jvalue.ngrid - 1;
       DEBUG(8, "jelevation: phi=" << 180 * phi / math::Pi 
 	    << " phi0=" << (bin + 0.5) * 360 / sim.param().jvalue.ngrid << " bin=" << bin);
       
