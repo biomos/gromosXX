@@ -57,7 +57,23 @@ path for header files and libraries, you can use
 ../configure --with-fftw=/usr/local
 
 for MPI you also need the fftw3-mpi library which you have to
-compile with the same MPI wrapper.
+compile with the same MPI wrapper. For the time begin this library 
+is only available in the 3.3alpha1 version.
+
+If you use the clipper and ccp4 libraries you have to used
+a patched version of FFTW3. The reason is that these libraries
+use an old version of FFTW and we're going to have name 
+clashed. The configure script will automatically assume that
+the FFTW3 library is pathed as soon as the ccp4 and clipper
+libraries are found or specified.
+In order to patch the FFTW3 library you have to unzip and
+untar fftw-3.3alpha1.tar.gz. This will yield a fftw-3.3alpha1.tar.gz
+directory.
+
+~/tmp> tar xfz fftw-3.3alpha1.tar.gz
+
+Then just run the path script available in the contrib directory.
+~/tmp> perl /path/to/gromosXX/contrib/patch-fftw.pl
 
 optimization flags
 --------------------------------------------------
