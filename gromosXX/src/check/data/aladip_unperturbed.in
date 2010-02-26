@@ -257,7 +257,6 @@ END
 #    0
 #END
 
-
 GROMOS96COMPAT
 # NTNB96 0,1 controls use of g96-like nonbonded routines (ignored)
 #    0 : not used [default]

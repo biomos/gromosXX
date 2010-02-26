@@ -292,21 +292,24 @@ int check_interaction(topology::Topology & topo,
   // finite diff
   CHECKING(name + " interaction force (finite diff)", res);
    
+  // let's do this restriction here because the forces vanish in theory but they
+  // do not in this finite difference check.
+  if (sim.param().nonbonded.rf_excluded == 1) atoms = topo.num_solute_atoms();
   for(size_t atom=0; atom < atoms; ++atom){
  
     conf.current().force = 0;
     conf.current().energies.zero();
 
     term.calculate_interactions(topo, conf, sim);
-   
+
     math::Vec f = conf.current().force(atom);
- //   cout << f(0) << " " << f(1) << " " << f(2) << endl;
+    //   cout << f(0) << " " << f(1) << " " << f(2) << endl;
     math::Vec finf;
-    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon,true); // 0 is coord x,y or z
-    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon,true);
-    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon,true);
-  //  cout << finf(0) << " " << finf(1) << " " << finf(2) << endl;
-   
+    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon, true); // 0 is coord x,y or z
+    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon, true);
+    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon, true);
+    //  cout << finf(0) << " " << finf(1) << " " << finf(2) << endl;
+
     CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
     CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
     CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
