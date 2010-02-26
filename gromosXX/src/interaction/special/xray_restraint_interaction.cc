@@ -974,5 +974,6 @@ util::Umbrella_Weight * interaction::Electron_Density_Umbrella_Weight_Factory::g
   instances.push_back(instance);
   return instance;
 #endif
+  return NULL;
 }
 
