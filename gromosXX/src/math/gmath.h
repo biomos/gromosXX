@@ -31,6 +31,8 @@ namespace math
 
     numeric_type operator()(int i)const { assert(i>=0 && i<3); return d_v[i]; }
     numeric_type & operator()(int i) { assert(i >= 0 && i < 3); return d_v[i]; }
+    numeric_type & operator[](unsigned int i) { assert(i < 3); return d_v[i]; }
+    const numeric_type & operator[](unsigned int i) const { assert(i < 3); return d_v[i]; }
     template<typename numeric_type_b>
     GenericVec<numeric_type> & operator=(numeric_type_b d) { d_v[0] = d_v[1] = d_v[2] = d; return *this; }
     template<typename numeric_type_b>
@@ -178,9 +180,9 @@ namespace math
 
     template<typename numeric_type_b>
     inline GenericMatrix(
-            const numeric_type_b &d1, const numeric_type_b &d2, const numeric_type_b &d3,
-            const numeric_type_b &d4, const numeric_type_b &d5, const numeric_type_b &d6,
-            const numeric_type_b &d7, const numeric_type_b &d8, const numeric_type_b &d9) {
+            numeric_type_b d1, numeric_type_b d2, numeric_type_b d3,
+            numeric_type_b d4, numeric_type_b d5, numeric_type_b d6,
+            numeric_type_b d7, numeric_type_b d8, numeric_type_b d9) {
       m[0][0] = d1;
       m[0][1] = d2;
       m[0][2] = d3;
@@ -202,7 +204,7 @@ namespace math
     }
     
     template<typename numeric_type_b>
-    GenericMatrix & operator=(GenericMatrix<numeric_type_b> mat)
+    GenericMatrix & operator=(const GenericMatrix<numeric_type_b> & mat)
     {
       for(int i=0; i<3; ++i)
 	for(int j=0; j<3; ++j)
@@ -1065,7 +1067,6 @@ namespace math
   template<typename numeric_type>
   inline numeric_type det(GenericMatrix<numeric_type> const &ma)
   {
-    
     return ma(0,1)*ma(1,2)*ma(2,0)
           -ma(0,2)*ma(1,1)*ma(2,0)
           +ma(0,2)*ma(1,0)*ma(2,1)
@@ -1079,18 +1080,17 @@ namespace math
    */
   template<typename numeric_type>
   inline GenericMatrix<numeric_type> inverse(GenericMatrix<numeric_type> const &ma){
-    GenericMatrix<numeric_type> inv;
-    const double det_ma = det(ma);
-    inv(0, 0) = (ma(1, 1) * ma(2, 2) - ma(1, 2) * ma(2, 1)) / det_ma;
-    inv(1, 0) = (ma(1, 2) * ma(2, 0) - ma(1, 0) * ma(2, 2)) / det_ma;
-    inv(2, 0) = (ma(1, 0) * ma(2, 1) - ma(1, 1) * ma(2, 0)) / det_ma;
-    inv(0, 1) = (ma(0, 2) * ma(2, 1) - ma(0, 1) * ma(2, 2)) / det_ma;
-    inv(1, 1) = (ma(0, 0) * ma(2, 2) - ma(0, 2) * ma(2, 0)) / det_ma;
-    inv(2, 1) = (ma(0, 1) * ma(2, 0) - ma(0, 0) * ma(2, 1)) / det_ma;
-    inv(0, 2) = (ma(0, 1) * ma(1, 2) - ma(0, 2) * ma(1, 1)) / det_ma;
-    inv(1, 2) = (ma(0, 2) * ma(1, 0) - ma(0, 0) * ma(1, 2)) / det_ma;
-    inv(2, 2) = (ma(0, 0) * ma(1, 1) - ma(0, 1) * ma(1, 0)) / det_ma;
-    return inv;
+    const double det_ma = 1.0 / det(ma);
+    return GenericMatrix<numeric_type > (
+            (ma(1, 1) * ma(2, 2) - ma(1, 2) * ma(2, 1)) * det_ma,
+            (ma(0, 2) * ma(2, 1) - ma(0, 1) * ma(2, 2)) * det_ma,
+            (ma(0, 1) * ma(1, 2) - ma(0, 2) * ma(1, 1)) * det_ma,
+            (ma(1, 2) * ma(2, 0) - ma(1, 0) * ma(2, 2)) * det_ma,
+            (ma(0, 0) * ma(2, 2) - ma(0, 2) * ma(2, 0)) * det_ma,
+            (ma(0, 2) * ma(1, 0) - ma(0, 0) * ma(1, 2)) * det_ma,
+            (ma(1, 0) * ma(2, 1) - ma(1, 1) * ma(2, 0)) * det_ma,
+            (ma(0, 1) * ma(2, 0) - ma(0, 0) * ma(2, 1)) * det_ma,
+            (ma(0, 0) * ma(1, 1) - ma(0, 1) * ma(1, 0)) * det_ma);
   }
   
   /**

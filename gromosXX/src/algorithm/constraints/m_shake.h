@@ -65,18 +65,6 @@ namespace algorithm
     {
       return m_parameter;
     }
-    /**
-     * accessor to the constrained atoms
-     */
-    std::set<unsigned int> & constrained_atoms() {
-      return m_constrained_atoms;
-    }
-     /**
-     * accessor to the constrained atoms
-     */
-    const std::set<unsigned int> & constrained_atoms() const {
-      return m_constrained_atoms;
-    }
 
     /**
      * initialize startup positions and velocities
@@ -102,30 +90,35 @@ namespace algorithm
      * bond parameter
      */
     std::vector<interaction::bond_type_struct> m_parameter;
-    /**
-     * the atoms that are involved in the contraints
-     */
-    std::set<unsigned int> m_constrained_atoms;
     /** 
      * rank and size for parallelization
      */
     int m_rank, m_size;
+    /**
+     * the factor matrix
+     */
+    math::Matrix factor;
+    /**
+     * the constraint lengths squared
+     */
+    math::Vec constr_length2;
+    /**
+     * inverted masses
+     */
+    math::Vec mass_i;
 
-    template<math::boundary_enum B, math::virial_enum V>
-    int m_shake_iteration
+    inline
+    int m_shake_molecule
     (
-     topology::Topology const &topo,
      configuration::Configuration & conf,
      bool & convergence,
      int first,
-     double dt,
-     std::vector<topology::two_body_term_struct> const & constr,
-     math::GenericMatrix<double> const & factor,
-     math::GenericVec<double> const & constr_length2,
-     math::GenericVec<math::Vec> const & dist_old
+     double dt2i,
+     const std::vector<topology::two_body_term_struct> & constr,
+     math::GenericVec<math::Vec> const & dist_old,
+     bool do_virial
      );
     
-    template<math::boundary_enum B, math::virial_enum V>
     void solvent
     (
      topology::Topology const & topo,
