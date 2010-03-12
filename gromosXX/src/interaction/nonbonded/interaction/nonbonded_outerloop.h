@@ -76,7 +76,8 @@ namespace interaction
     void one_four_outerloop(topology::Topology & topo,
 			    configuration::Configuration & conf,
 			    simulation::Simulation & sim,
-			    Storage & storage);
+			    Storage & storage,
+                            int rank, int size);
 
     /**
      * calculate the RF contributions for excluded atoms.
@@ -314,7 +315,8 @@ namespace interaction
     void _one_four_outerloop(topology::Topology & topo,
 			     configuration::Configuration & conf,
 			     simulation::Simulation & sim,
-			     Storage & storage);
+			     Storage & storage,
+                             int rank, int size);
 
     template<typename t_interaction_spec>
     void _cg_exclusions_outerloop(topology::Topology & topo,

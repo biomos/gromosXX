@@ -132,20 +132,23 @@ int interaction::Eds_Nonbonded_Set
   }
   if (m_rank == 0)
     m_pairlist_alg.timer().stop("shortrange");
-  
-  // add 1,4 - interactions
-  if (m_rank == 0){
-    
-    DEBUG(6, "\t1,4 - interactions");
+
+  DEBUG(6, "\t1,4 - interactions");
+  if (m_rank == 0)
     m_pairlist_alg.timer().start("1,4 interaction");
-    m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
-    
-    if (topo.eds_perturbed_solute().atoms().size() > 0){
-      DEBUG(6, "\teds-perturbed 1,4 - interactions");
-      m_eds_outerloop.eds_one_four_outerloop(topo, conf, sim, 
-							 m_storage);
-    }
+  m_outerloop.one_four_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
+  if (m_rank == 0)
     m_pairlist_alg.timer().stop("1,4 interaction");
+
+  // add 1,4 - interactions
+  if (m_rank == 0) {
+    if (topo.eds_perturbed_solute().atoms().size() > 0) {
+      m_pairlist_alg.timer().start("1,4 interaction");
+      DEBUG(6, "\teds-perturbed 1,4 - interactions");
+      m_eds_outerloop.eds_one_four_outerloop(topo, conf, sim, m_storage);
+      m_pairlist_alg.timer().stop("1,4 interaction");
+    }
+    
     
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().nonbonded.rf_excluded){

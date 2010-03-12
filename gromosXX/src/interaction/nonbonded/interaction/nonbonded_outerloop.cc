@@ -296,9 +296,10 @@ void interaction::Nonbonded_Outerloop
 ::one_four_outerloop(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     Storage & storage)
+		     Storage & storage,
+                     int rank, int size)
 {
-  SPLIT_INNERLOOP(_one_four_outerloop, topo, conf, sim, storage);
+  SPLIT_INNERLOOP(_one_four_outerloop, topo, conf, sim, storage, rank, size);
 }
 
 /**
@@ -310,7 +311,8 @@ void interaction::Nonbonded_Outerloop
 ::_one_four_outerloop(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     Storage & storage)
+		     Storage & storage,
+                     int rank, int size)
 {
   DEBUG(7, "\tcalculate 1,4-interactions");
 
@@ -320,15 +322,14 @@ void interaction::Nonbonded_Outerloop
   
   std::set<int>::const_iterator it, to;
   unsigned int const num_solute_atoms = topo.num_solute_atoms();
-  unsigned int i;
   
-  for(i=0; i < num_solute_atoms; ++i){
+  for(unsigned int i=rank; i < num_solute_atoms; i += size){
     it = topo.one_four_pair(i).begin();
     to = topo.one_four_pair(i).end();
     
     for( ; it != to; ++it){
 
-      innerloop.one_four_interaction_innerloop(topo, conf, i, *it, periodicity);
+      innerloop.one_four_interaction_innerloop(topo, conf, i, *it, storage, periodicity);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
@@ -384,7 +385,7 @@ void interaction::Nonbonded_Outerloop
 	  
 	  if (topo.one_four_pair(a1).find(a2) != topo.one_four_pair(a1).end()){
 	    // std::cout << "\t1,4" << std::endl;
-	    innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, periodicity);
+	    innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, storage, periodicity);
 	  }
 	  else{
 	    // std::cout << "\tstandard interaction" << std::endl;

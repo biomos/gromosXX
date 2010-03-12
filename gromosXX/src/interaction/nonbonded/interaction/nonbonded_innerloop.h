@@ -142,6 +142,7 @@ namespace interaction
      configuration::Configuration & conf,
      int i,
      int j,
+     Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );
     

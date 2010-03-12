@@ -729,6 +729,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
  configuration::Configuration & conf,
  int i,
  int j,
+ Storage & storage,
  math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
 {
   DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
@@ -763,11 +764,11 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         DEBUG(10, "\t\tatomic virial");
         for (int a=0; a<3; ++a){
           const double term = f * r(a);
-          conf.current().force(i)(a) += term;
-          conf.current().force(j)(a) -= term;
+          storage.force(i)(a) += term;
+          storage.force(j)(a) -= term;
             
           for(int b=0; b<3; ++b)
-            conf.current().virial_tensor(b, a) += r(b) * term;
+            storage.virial_tensor(b, a) += r(b) * term;
         }
 	break;
       }
@@ -804,11 +805,11 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         DEBUG(10, "\tatomic virial");
         for (int a=0; a<3; ++a){
           const double term = f_pol[0]*r(a) + f_pol[1]*rp1(a) + f_pol[2]*rp2(a) + f_pol[3]*rpp(a);
-          conf.current().force(i)(a) += term;
-          conf.current().force(j)(a) -= term;
+          storage.force(i)(a) += term;
+          storage.force(j)(a) -= term;
           
           for(int b=0; b<3; ++b)
-            conf.current().virial_tensor(b, a) += r(b)*term;
+            storage.virial_tensor(b, a) += r(b)*term;
         }
 
 	break;
@@ -825,11 +826,11 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       DEBUG(10, "\t\tatomic virial");
       for (int a=0; a<3; ++a){
         const double term = f * r(a);
-        conf.current().force(i)(a) += term;
-        conf.current().force(j)(a) -= term;
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
         
         for(int b=0; b<3; ++b)
-          conf.current().virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor(b, a) += r(b) * term;
       }
       break;
     }
@@ -840,13 +841,13 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   }
   
   // energy
-  conf.current().energies.lj_energy[topo.atom_energy_group(i)]
+  storage.energies.lj_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_lj;
     
-  conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+  storage.energies.crf_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_crf;
   
-  conf.current().energies.ls_real_energy[topo.atom_energy_group(i)]
+  storage.energies.ls_real_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_ls;
     
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)

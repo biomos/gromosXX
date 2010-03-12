@@ -33,6 +33,8 @@
 
 #include <util/debug.h>
 
+#include "nonbonded_set_interface.h"
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -155,12 +157,12 @@ int interaction::Perturbed_Nonbonded_Set
 
   if (m_rank == 0)
     m_pairlist_alg.timer().stop("shortrange");
-  
-  // DEBUG
-  // for(int i=0; i<topo.num_atoms(); ++i){
-  // std::cout << "force " << i << " = " << math::v2s(m_storage.force(i)) << "\n";
-  // }
-  // DEBUG
+
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("1,4 interaction");
+  m_outerloop.one_four_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("1,4 interaction");
   
   // add 1,4 - interactions
   if (m_rank == 0){
@@ -175,15 +177,17 @@ int interaction::Perturbed_Nonbonded_Set
     m_pairlist_alg.timer().stop("polarisation self-energy");
     
     DEBUG(6, "\t1,4 - interactions");
-    m_pairlist_alg.timer().start("1,4 interaction");
-    m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
+    
+    
 
     if (topo.perturbed_solute().atoms().size() > 0){
+      m_pairlist_alg.timer().start("1,4 interaction");
       DEBUG(6, "\tperturbed 1,4 - interactions");
       m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
 							 m_storage);
+      m_pairlist_alg.timer().stop("1,4 interaction");
     }
-    m_pairlist_alg.timer().stop("1,4 interaction");
+   
     
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().nonbonded.rf_excluded){

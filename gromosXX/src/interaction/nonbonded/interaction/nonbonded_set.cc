@@ -197,33 +197,32 @@ int interaction::Nonbonded_Set
     }
     default:; // doing reaction field
   }
-  
+
+  DEBUG(6, "\t1,4 - interactions");
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start("1,4 interaction");
+  m_outerloop.one_four_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop("1,4 interaction");
 
   
   // single processor algorithms (1-4,...)
   if (m_rank == 0) {
     // calculate lattice sum surface energy and force
-    m_pairlist_alg.timer().start("ls surface energy");
+    
     switch (sim.param().nonbonded.method) {
       case simulation::el_ewald :
       case simulation::el_p3m :
       {
+        m_pairlist_alg.timer().start("ls surface energy");
         m_outerloop.ls_surface_outerloop(topo, conf, sim, m_storage,
                 m_rank, m_num_threads);
+        m_pairlist_alg.timer().stop("ls surface energy");
       }
       default:
       {
       } // doing reaction field 
     }
-
-    m_pairlist_alg.timer().stop("ls surface energy");
-
-
-
-    DEBUG(6, "\t1,4 - interactions");
-    m_pairlist_alg.timer().start("1,4 interaction");
-    m_outerloop.one_four_outerloop(topo, conf, sim, m_storage);
-    m_pairlist_alg.timer().stop("1,4 interaction");
 
     // possibly do the RF contributions due to excluded atoms
     if (sim.param().nonbonded.rf_excluded) {
