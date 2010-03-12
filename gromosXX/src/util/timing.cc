@@ -78,27 +78,28 @@ void util::Algorithm_Timer::print(std::ostream &os) {
   
   if (m_total_subtimes.empty())
     return;
-  
-  os.precision(2);
   os.setf(std::ios::fixed, std::ios::floatfield);
   
   // get the totals to calculate 
   const double total = get_total();
-  
+
+  os.precision(6);
   os << std::left << std::setw(10) << " " << std::left << std::setw(30) << m_name 
-     << std::setw(10) << std::right << total << std::endl;
+     << std::setw(14) << std::right << total << std::endl;
   
   std::map<std::string, double>::const_iterator
       it = m_total_subtimes.begin(),
       to = m_total_subtimes.end();
   
   for(; it != to; ++it) {
+    os.precision(6);
     if (it->first == "total") continue;
     os << std::right << std::setw(15) << "             - " 
        << std::left << std::setw(25) << it->first
        // totals and percentage
-       << std::setw(10) << std::right << it->second 
-       << std::setw(8) << std::right
+       << std::setw(14) << std::right << it->second;
+    os.precision(2);
+    os << std::setw(10) << std::right
        << ((total != 0.0) ? (it->second * 100.0 / total) : 0.0) << "%"
        << std::endl;
   }
