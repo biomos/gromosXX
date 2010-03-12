@@ -862,13 +862,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
  topology::Topology & topo,
  configuration::Configuration & conf,
  int i,
+ Storage & storage,
  math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
 {
   math::Vec r, f;
   double e_crf;
   
   math::VArray &pos   = conf.current().pos;
-  math::VArray &force = conf.current().force;
+  math::VArray &force = storage.force;
 
   std::set<int>::const_iterator it, to;
   it = topo.exclusion(i).begin();
@@ -882,7 +883,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     {
       // this will only contribute in the energy, the force should be zero.
       rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf);
-      conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+      storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
       DEBUG(11, "\tcontribution " << 0.5*e_crf);
       
@@ -905,11 +906,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         
         for(int a=0; a<3; ++a)
           for(int b=0; b<3; ++b)
-            conf.current().virial_tensor(a, b) += r(a) * f(b);
+            storage.virial_tensor(a, b) += r(a) * f(b);
         DEBUG(11, "\tatomic virial done");
              
         // energy
-        conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+        storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
         
         DEBUG(11, "\tcontribution " << e_crf);
@@ -936,7 +937,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       // this will only contribute in the energy, the force should be zero.
       pol_rf_interaction(r, rp1, rp2, rpp, topo.charge(i), topo.charge(i),
               topo.coscharge(i), topo.coscharge(i), f_pol, e_crf);
-      conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+      storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
       DEBUG(11, "\tcontribution " << 0.5*e_crf);
       
@@ -958,12 +959,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         
         for(int a=0; a<3; ++a)
           for(int b=0; b<3; ++b)
-            conf.current().virial_tensor(a, b) +=
+            storage.virial_tensor(a, b) +=
                     r(a)*(f_pol(0)(b) + f_pol(1)(b) + f_pol(2)(b) + f_pol(3)(b));
         DEBUG(11, "\tatomic virial done");
      
         // energy
-        conf.current().energies.crf_energy[topo.atom_energy_group(i)]
+        storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
         
         DEBUG(11, "\tcontribution " << e_crf);
@@ -988,6 +989,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
  topology::Topology & topo,
  configuration::Configuration & conf,
  topology::Chargegroup_Iterator const & cg_it,
+ Storage & storage,
  math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
  )
 {
@@ -1024,7 +1026,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           DEBUG(15,"\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
           DEBUG(15,"\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
           // energy
-          conf.current().energies.crf_energy
+          storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
           DEBUG(11,"\tsolvent rf excluded contribution: " << e_crf);
@@ -1068,7 +1070,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           + qepsp2*crf_2cut3i()*abs2(rp2) + qepspp*crf_2cut3i()*abs2(rpp);
           
           // energy
-          conf.current().energies.crf_energy
+          storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
         } // loop over at2_it

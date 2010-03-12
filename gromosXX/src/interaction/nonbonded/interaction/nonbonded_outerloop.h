@@ -85,7 +85,8 @@ namespace interaction
     void RF_excluded_outerloop(topology::Topology & topo,
 			       configuration::Configuration & conf,
 			       simulation::Simulation & sim,
-			       Storage & storage);
+			       Storage & storage,
+                               int rank, int size);
     
     /**
      * calculate the self energy (polarisation).
@@ -334,7 +335,8 @@ namespace interaction
     void _RF_excluded_outerloop(topology::Topology & topo,
 				configuration::Configuration & conf,
 				simulation::Simulation & sim,
-				Storage & storage);
+				Storage & storage,
+                                int rank, int size);
     
     template<typename t_interaction_spec>
     void _self_energy_outerloop(topology::Topology & topo,

@@ -407,7 +407,8 @@ void interaction::Nonbonded_Outerloop
 ::RF_excluded_outerloop(topology::Topology & topo,
 			configuration::Configuration & conf,
 			simulation::Simulation & sim,
-			Storage & storage)
+			Storage & storage,
+                        int rank, int size)
 {
   /*
   if (sim.param().force.interaction_function !=
@@ -420,7 +421,7 @@ void interaction::Nonbonded_Outerloop
   }
    */
   
-  SPLIT_INNERLOOP(_RF_excluded_outerloop, topo, conf, sim, storage);  
+  SPLIT_INNERLOOP(_RF_excluded_outerloop, topo, conf, sim, storage, rank, size);
 }
 
 /**
@@ -432,7 +433,8 @@ void interaction::Nonbonded_Outerloop
 ::_RF_excluded_outerloop(topology::Topology & topo,
 			configuration::Configuration & conf,
 			simulation::Simulation & sim,
-			Storage & storage)
+			Storage & storage,
+                        int rank, int size)
 {
   
   DEBUG(7, "\tcalculate RF excluded interactions");
@@ -441,19 +443,19 @@ void interaction::Nonbonded_Outerloop
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
   
-  int i, num_solute_atoms = topo.num_solute_atoms();
+  const unsigned int num_solute_atoms = topo.num_solute_atoms();
   
-  for(i=0; i<num_solute_atoms; ++i){
-    innerloop.RF_excluded_interaction_innerloop(topo, conf, i, periodicity);
+  for(unsigned int i=rank; i<num_solute_atoms; i+=size){
+    innerloop.RF_excluded_interaction_innerloop(topo, conf, i, storage, periodicity);
   } // loop over solute atoms
 
   // Solvent
   topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
     cg_to = topo.chargegroup_end();
-  cg_it += topo.num_solute_chargegroups();
+  cg_it += topo.num_solute_chargegroups() + rank;
 
-  for(; cg_it != cg_to; ++cg_it){
-    innerloop.RF_solvent_interaction_innerloop(topo, conf, cg_it, periodicity);
+  for(; cg_it < cg_to; cg_it += size){
+    innerloop.RF_solvent_interaction_innerloop(topo, conf, cg_it, storage, periodicity);
   } // loop over solvent charge groups
 }  
 

@@ -11,9 +11,10 @@
 
 #include <interaction/interaction_types.h>
 #include <interaction/nonbonded/interaction/nonbonded_parameter.h>
-#include <interaction/nonbonded/interaction/cuda_nonbonded_set.h>
 #include <interaction/nonbonded/pairlist/pairlist.h>
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
+#include <interaction/nonbonded/interaction/cuda_nonbonded_set.h>
+
 
 #include <interaction/nonbonded/interaction/latticesum.h>
 

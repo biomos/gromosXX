@@ -98,8 +98,7 @@ int interaction::Eds_Nonbonded_Set
   }  
 
   if(pairlist_update){
-    if (m_rank == 0)
-      m_pairlist_alg.timer().start("longrange");
+    start_timer("longrange");
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
@@ -112,14 +111,12 @@ int interaction::Eds_Nonbonded_Set
                                                  m_perturbed_pairlist.solute_long,
                                                  m_longrange_storage);
     }
-    if (m_rank == 0)
-      m_pairlist_alg.timer().stop("longrange");     
+    stop_timer("longrange");
   }
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-  if (m_rank == 0)
-    m_pairlist_alg.timer().start("shortrange");
+  start_timer("shortrange");
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage, false, m_pairlist_alg.timer());
@@ -130,39 +127,40 @@ int interaction::Eds_Nonbonded_Set
 						     m_perturbed_pairlist.solute_short,
 						     m_storage);
   }
-  if (m_rank == 0)
-    m_pairlist_alg.timer().stop("shortrange");
+  stop_timer("shortrange");
 
   DEBUG(6, "\t1,4 - interactions");
-  if (m_rank == 0)
-    m_pairlist_alg.timer().start("1,4 interaction");
+  start_timer("1,4 interaction");
   m_outerloop.one_four_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
-  if (m_rank == 0)
-    m_pairlist_alg.timer().stop("1,4 interaction");
+  stop_timer("1,4 interaction");
+
+  if (sim.param().nonbonded.rf_excluded) {
+    start_timer("RF excluded");
+    DEBUG(6, "\tRF excluded interactions and self term");
+    m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
+    stop_timer("RF excluded");
+  }
 
   // add 1,4 - interactions
   if (m_rank == 0) {
     if (topo.eds_perturbed_solute().atoms().size() > 0) {
-      m_pairlist_alg.timer().start("1,4 interaction");
+      start_timer("1,4 interaction");
       DEBUG(6, "\teds-perturbed 1,4 - interactions");
       m_eds_outerloop.eds_one_four_outerloop(topo, conf, sim, m_storage);
-      m_pairlist_alg.timer().stop("1,4 interaction");
+      stop_timer("1,4 interaction");
     }
     
-    
-    // possibly do the RF contributions due to excluded atoms
-    if(sim.param().nonbonded.rf_excluded){
-      m_pairlist_alg.timer().start("RF excluded");
-      DEBUG(6, "\tRF excluded interactions and self term");
-      m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage);
 
-      if (topo.eds_perturbed_solute().atoms().size() > 0){
-	DEBUG(6, "\tperturbed RF excluded interactions and self term");
-	m_eds_outerloop.eds_RF_excluded_outerloop(topo, conf, sim,
- 							      m_storage);
-       
+    // possibly do the RF contributions due to excluded atoms
+    if (sim.param().nonbonded.rf_excluded) {
+      start_timer("RF excluded");
+      DEBUG(6, "\tRF excluded interactions and self term");
+      if (topo.eds_perturbed_solute().atoms().size() > 0) {
+        DEBUG(6, "\tperturbed RF excluded interactions and self term");
+        m_eds_outerloop.eds_RF_excluded_outerloop(topo, conf, sim, m_storage);
+
       }
-      m_pairlist_alg.timer().stop("RF excluded");
+      stop_timer("RF excluded");
     }
   }
   

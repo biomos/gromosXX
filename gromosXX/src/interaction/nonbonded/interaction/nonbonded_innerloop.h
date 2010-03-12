@@ -155,6 +155,7 @@ namespace interaction
      topology::Topology & topo,
      configuration::Configuration & conf,
      int i,
+     Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );
 
@@ -167,6 +168,7 @@ namespace interaction
      topology::Topology & topo,
      configuration::Configuration & conf,
      topology::Chargegroup_Iterator const & cg_it,
+     Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity
      );
 

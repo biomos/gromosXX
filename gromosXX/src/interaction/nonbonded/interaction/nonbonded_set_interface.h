@@ -101,6 +101,13 @@ namespace interaction
     PairlistContainer & pairlist() { return m_pairlist; }
     PairlistContainer const & pairlist()const { return m_pairlist; }
 
+    void start_timer(std::string t) {
+      if (m_rank == 0) m_pairlist_alg.timer().start(t);
+    }
+    void stop_timer(std::string t) {
+      if (m_rank == 0) m_pairlist_alg.timer().stop(t);
+    }
+
   protected:
     Pairlist_Algorithm & m_pairlist_alg;
 

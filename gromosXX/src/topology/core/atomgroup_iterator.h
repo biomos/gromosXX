@@ -32,6 +32,10 @@ namespace topology
     {
       return m_it == it.m_it;
     }
+    bool operator<(Atomgroup_Iterator const &it)const
+    {
+      return m_it < it.m_it;
+    }
     bool operator!=(Atomgroup_Iterator const &it)const
     {
       return !(*this == it);
