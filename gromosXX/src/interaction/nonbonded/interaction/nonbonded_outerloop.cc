@@ -67,10 +67,10 @@ void interaction::Nonbonded_Outerloop
                    Pairlist const & pairlist_solute,
                    Pairlist const & pairlist_solvent,
 		   Storage & storage,
-                   bool longrange, util::Algorithm_Timer & timer)
+                   bool longrange, util::Algorithm_Timer & timer, bool master)
 {
   SPLIT_INNERLOOP(_lj_crf_outerloop, topo, conf, sim,
-                  pairlist_solute, pairlist_solvent, storage, longrange, timer);
+                  pairlist_solute, pairlist_solvent, storage, longrange, timer, master);
 }
 
 
@@ -87,7 +87,7 @@ void interaction::Nonbonded_Outerloop
 	            Pairlist const & pairlist_solute,
                     Pairlist const & pairlist_solvent,
 		    Storage & storage, bool longrange,
-                    util::Algorithm_Timer & timer)
+                    util::Algorithm_Timer & timer, bool master)
 {  
   DEBUG(7, "\tcalculate interactions");  
 
@@ -105,11 +105,6 @@ void interaction::Nonbonded_Outerloop
   DEBUG(10, "outerloop pairlist size " << size_i);
   
   const unsigned int end = topo.num_solute_atoms();
-  bool master = true;
-  #ifdef OMP
-  master = (omp_get_thread_num() == 0);
-  #endif
-
   const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
   
   unsigned int i;

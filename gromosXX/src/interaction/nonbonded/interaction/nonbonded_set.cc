@@ -98,7 +98,8 @@ int interaction::Nonbonded_Set
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_long, m_pairlist.solvent_long,
-            m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer());
+            m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer(),
+            m_rank == 0);
     stop_timer("longrange");
   }
 
@@ -114,7 +115,8 @@ int interaction::Nonbonded_Set
   } else {
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_short, m_pairlist.solvent_short,
-            m_storage, false, m_pairlist_alg.timer());
+            m_storage, false, m_pairlist_alg.timer(),
+            m_rank == 0);
   }
 
   stop_timer("shortrange");
