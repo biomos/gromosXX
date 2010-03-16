@@ -41,7 +41,9 @@ xxalgconst_HEADERS = constraints/create_constraints.h\
 	constraints/remove_com_motion.h\
 	constraints/rottrans.h\
 	constraints/settle.h\
-        constraints/m_shake.h
+        constraints/m_shake.h\
+        constraints/gpu_shake.h\
+        constraints/gpu_shake_thread.h
 
 noinst_LTLIBRARIES=	libgroalgorithm.la
 
@@ -67,6 +69,8 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	constraints/lincs.cc\
 	constraints/settle.cc\
         constraints/m_shake.cc\
+        constraints/gpu_shake.cc\
+        constraints/gpu_shake_thread.cc\
 	integration/energy_calculation.cc\
 	integration/slow_growth.cc\
 	integration/steepest_descent.cc\

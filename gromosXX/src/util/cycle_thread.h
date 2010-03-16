@@ -46,10 +46,6 @@ namespace util {
      */
     void do_cycle();
 
-    /**
-     * For the first cycle
-     */
-    void do_first_cycle();
 
     /**
      * Called by the derrived class to terminate the thread
@@ -71,6 +67,10 @@ namespace util {
      * for the while loop in run()
      */
     bool keeprunning;
+    /**
+     * Is it the first cycle?
+     */
+    bool first;
   };
 
 }

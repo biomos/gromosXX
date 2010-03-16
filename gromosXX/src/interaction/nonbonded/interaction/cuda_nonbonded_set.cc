@@ -85,12 +85,8 @@ int interaction::CUDA_Nonbonded_Set
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
   DEBUG(8, "CUDA_Nonbonded_Set::calculate_interactions");
-
   DEBUG(15, "Start Cycle for GPU: " << mygpu_id);
-  if(sim.steps()==0)
-    do_first_cycle();
-  else
-    do_cycle();
+  do_cycle();
   DEBUG(15, "Finished Cycle for GPU: " << mygpu_id);
 
   return 0;

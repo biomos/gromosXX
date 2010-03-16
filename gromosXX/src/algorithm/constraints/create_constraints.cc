@@ -38,13 +38,16 @@
 #include <algorithm/constraints/flexible_constraint.h>
 #include <algorithm/constraints/perturbed_flexible_constraint.h>
 #include <algorithm/constraints/settle.h>
+//#include <algorithm/constraints/gpu_settle.h>
 #include <algorithm/constraints/m_shake.h>
+#include <algorithm/constraints/gpu_shake.h>
 
 #include <algorithm/constraints/rottrans.h>
 
 #include <io/print_block.h>
 
 #include "create_constraints.h"
+
 
 #undef MODULE
 #undef SUBMODULE
@@ -164,6 +167,16 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       io::messages.add("M_SHAKE is only available for solvent.", "create_constraints",
               io::message::error);
     }
+    case simulation::constr_gpu_settle:
+    {
+      io::messages.add("SETTLE is only available for solvent.", "create_constraints",
+              io::message::error);
+    }
+     case simulation::constr_gpu_shake :
+    {
+      io::messages.add("GPU_SHAKE is only available for solvent.", "create_constraints",
+              io::message::error);
+    }
     default:
     {
       // no constraints...
@@ -221,6 +234,29 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         }
         algorithm::M_Shake * s =
                 new algorithm::M_Shake(sim.param().constraint.solvent.shake_tolerance);
+        it.read_harmonic_bonds(s->parameter());
+        md_seq.push_back(s);
+
+        break;
+      }
+      case simulation::constr_gpu_settle :
+      {
+        /*algorithm::GPU_Settle * s = new algorithm::GPU_Settle;
+        it.read_harmonic_bonds(s->parameter());
+        md_seq.push_back(s); */
+
+        break;
+      }
+      case simulation::constr_gpu_shake :
+      {
+        // first check that the solvent(s) has only three constraints!
+        for (unsigned int i = 0; i < topo.num_solvents(); ++i) {
+          if (topo.solvent(i).distance_constraints().size() != 3)
+            io::messages.add("GPU_Shake only implemented for solvents with three constraints",
+                "create_constraints", io::message::error);
+        }
+        algorithm::GPU_Shake * s =
+                new algorithm::GPU_Shake(sim.param().constraint.solvent.shake_tolerance);
         it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 

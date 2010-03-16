@@ -37,7 +37,15 @@ namespace simulation
     /**
      * m_shake
      */
-    constr_m_shake
+    constr_m_shake,
+    /**
+     * gpu_settle
+     */
+    constr_gpu_settle,
+    /**
+     * gpu_shake
+     */
+    constr_gpu_shake
 
   };
   /**
@@ -974,6 +982,14 @@ namespace simulation
 	 * - 3: only potential energy, exact (conservative ???)
 	 */
 	int flexshake_mode;
+    /**
+     * Number of GPUs
+     */
+    unsigned int number_gpus;
+    /**
+     * GPU IDs
+     */
+    std::vector<unsigned int> gpu_device_number;
       };
       /**
        * parameter for solute.

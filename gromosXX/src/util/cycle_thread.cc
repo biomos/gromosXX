@@ -32,6 +32,8 @@ util::CycleThread::CycleThread() {
   // Needed to avoid spurious wakeup
   do_a_calc = false;
   do_a_cycle = false;
+  // The next cycle will be the first
+  first = true;
   DEBUG(15, "CycleThread: Initialized CycleThread variables")
 }
 
@@ -83,29 +85,27 @@ void util::CycleThread::run() {
  * Initiate a cycle
  */
 void util::CycleThread::do_cycle() {
-  //std::cerr << "do_cycle\n";
-  pthread_mutex_lock(&mutex_cycle);
-  do_a_cycle = false;
-  do_a_calc = true;
-  pthread_cond_signal(&cond_calc);
-  DEBUG(15, "CycleThread: Sent calculation signal, waiting for cycle signal")
-  while(!do_a_cycle){    // Needed to avoid "Spirious wakeup"
-    pthread_cond_wait(&cond_cycle, &mutex_cycle);
+  // Is it the first cycle?
+  if (first) {
+    pthread_mutex_lock(&mutex_cycle);
+    start();
+    DEBUG(15, "CycleThread: Just started, waiting for cycle signal");
+    do_a_cycle = false;
+    while (!do_a_cycle) { // Needed to avoid "Spirious wakeup"
+      pthread_cond_wait(&cond_cycle, &mutex_cycle);
+    }
+    pthread_mutex_unlock(&mutex_cycle);
+    first = false;
+  } else {
+    pthread_mutex_lock(&mutex_cycle);
+    do_a_cycle = false;
+    do_a_calc = true;
+    pthread_cond_signal(&cond_calc);
+    DEBUG(15, "CycleThread: Sent calculation signal, waiting for cycle signal")
+    while (!do_a_cycle) { // Needed to avoid "Spirious wakeup"
+      pthread_cond_wait(&cond_cycle, &mutex_cycle);
+    }
+    pthread_mutex_unlock(&mutex_cycle);
   }
-  pthread_mutex_unlock(&mutex_cycle);
-}
 
-/**
- * For the first cycle
- */
-void util::CycleThread::do_first_cycle() {
-
-  pthread_mutex_lock(&mutex_cycle);
-  start();
-  DEBUG(15, "CycleThread: Just started, waiting for cycle signal");
-  do_a_cycle = false;
-  while(!do_a_cycle){    // Needed to avoid "Spirious wakeup"
-    pthread_cond_wait(&cond_cycle, &mutex_cycle);
-  }
-  pthread_mutex_unlock(&mutex_cycle);
 }

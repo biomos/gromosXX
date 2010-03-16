@@ -62,6 +62,8 @@ int io::check_parameter(simulation::Simulation & sim)
           param.constraint.solvent.algorithm == simulation::constr_lincs);
   add("solvent_settle", "SETTLE for solvent", 
           param.constraint.solvent.algorithm == simulation::constr_settle);
+  //add("solvent_gpu_settle", "GPU_SETTLE for solvent",
+          //param.constraint.solvent.algorithm == simulation::constr_gpu_settle);
   // PRESSURESCALE block
   add("pressure_calculation", "pressure calculation", param.pcouple.calculate);
   add("pressure_scale_berendsen", "Berendsen barostat", param.pcouple.scale != math::pcouple_off);
@@ -207,7 +209,8 @@ int io::check_parameter(simulation::Simulation & sim)
 // unlock_features.pl in the contrib directory to unlock your feature against
 // all others and delete the lines you don't need. Make sure you don't unlock
 // features that you didn't test or you don't know whether day really work.
-  
+
+
   fc.unlock("solute", "solvent");
   fc.unlock("solute", "steepest_descent");
   fc.unlock("solute", "solute_constraint_off");
