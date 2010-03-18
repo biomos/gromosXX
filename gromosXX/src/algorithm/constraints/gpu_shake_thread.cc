@@ -16,7 +16,6 @@
 #include <math/periodicity.h>
 
 #include <algorithm/constraints/gpu_shake_thread.h>
-#include <cudaKernel.h>
 
 #include <util/template_split.h>
 #include <util/error.h>

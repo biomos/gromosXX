@@ -8,7 +8,11 @@
 #define	_GPU_SHAKE_THREAD_H
 
 #include <util/cycle_thread.h>
+#ifdef HAVE_CUKERNEL
 #include <cudaKernel.h>
+#else
+#define gpu_status void
+#endif
 #include <iostream>
 
 #include <math/gmath.h>
