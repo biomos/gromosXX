@@ -188,7 +188,7 @@ namespace interaction
      * <table border="0">
      * <tr><td>@f$ N_{\gamma} @f$</td><td>@f$ -V \pi^{-1} a^{-2} A_1 @f$</td><td>@f$ -a A_3 @f$</td></tr>
      * <tr><td>-1</td><td>@f$ 1 @f$</td><td>@f$ 2 \pi^{-1/2} @f$</td></tr>
-     * <tr><td>0</td><td>@f$ 2/5 @f$</td><td>@f$ $3/2 @f$</td></tr>
+     * <tr><td>0</td><td>@f$ 2/5 @f$</td><td>@f$ 3/2 @f$</td></tr>
      * <tr><td>1</td><td>@f$ 4/15 @f$</td><td>@f$ 2 @f$</td></tr>
      * <tr><td>2</td><td>@f$ 4/21 @f$</td><td>@f$ 5/2 @f$</td></tr>
      * <tr><td>3</td><td>@f$ 3/14 @f$</td><td>@f$ 9/4 @f$</td></tr>
