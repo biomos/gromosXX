@@ -112,6 +112,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
 
   // energy minimisation or MD?
+  algorithm::Stochastic_Dynamics_Vel1 * sd_vel = NULL;
   if (sim.param().minimise.ntem == 1){
     algorithm::Steepest_Descent * sd = new algorithm::Steepest_Descent;
     md_seq.push_back(sd);
@@ -120,10 +121,9 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(new algorithm::Analyze_Exchange);
   } else {    
     // SD ?
-    algorithm::Stochastic_Dynamics_Pos * sd_pos = NULL;
     if (sim.param().stochastic.sd){
-      sd_pos = new algorithm::Stochastic_Dynamics_Pos(sim.param());
-      md_seq.push_back(sd_pos);
+      sd_vel = new algorithm::Stochastic_Dynamics_Vel1(sim.param());
+      md_seq.push_back(sd_vel);
     }
     // MD ?
     else if(sim.param().integrate.method == simulation::integrate_leap_frog){
@@ -158,10 +158,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     }
     
     if (sim.param().stochastic.sd){
-      // do constraints twice...
-      create_constraints(md_seq, topo, sim, it);
-      md_seq.push_back(new algorithm::Stochastic_Dynamics_Int(sd_pos->rng(), 
-              &sd_pos->random_vectors()));
+      //calculating the new position without the contribution form the random velocity
+      md_seq.push_back(new algorithm::Stochastic_Dynamics_Pos1);
     }
     else if (sim.param().integrate.method == simulation::integrate_leap_frog){
       md_seq.push_back(new algorithm::Leap_Frog_Position);
@@ -174,6 +172,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   
   // CONSTRAINTS
   create_constraints(md_seq, topo, sim, it);
+  if (sim.param().stochastic.sd){
+      //getting the Velocities from the restraint conformation
+      md_seq.push_back(new algorithm::Stochastic_Dynamics_Vel2);
+    }
 
   // temperature calculation (always!)
   {
@@ -226,6 +228,15 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       new algorithm::Energy_Calculation();
     md_seq.push_back(ec);
   }
+  if (sim.param().stochastic.sd){
+      // getting the new positions including the contribution from the random velocity
+      md_seq.push_back(new algorithm::Stochastic_Dynamics_Pos2(sd_vel->rng(), 
+              &sd_vel->random_vectors()));
+      //do the constraints again without changing the velocities
+      create_constraints(md_seq, topo, sim, it);
+      
+  }
+
 
   return 0;
 

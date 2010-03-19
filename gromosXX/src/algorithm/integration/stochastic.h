@@ -14,31 +14,31 @@ namespace simulation {
 
 namespace algorithm
 {
-  /**
-   * @class Stochastic_Dynamics_Pos
+  
+   /**
+   * @class Stochastic_Dynamics_Vel1
    * implements stochastic dynamics (langevin equations)
-   * position calculation
+   * velocity calculation
    */
-  class Stochastic_Dynamics_Pos : public Algorithm
+  class Stochastic_Dynamics_Vel1 : public Algorithm
   {
   public:
     /**
      * Constructor.
      */
-    Stochastic_Dynamics_Pos(const simulation::Parameter& param);
+    Stochastic_Dynamics_Vel1(const simulation::Parameter& param);
 
     /**
      * Destructor.
      */
-    virtual ~Stochastic_Dynamics_Pos() { delete m_rng; }
+    virtual ~Stochastic_Dynamics_Vel1() { delete m_rng; }
     
     /**
-     * Stochastic Dynamics: calculate positions
+     * Stochastic Dynamics: calculate velocities
      */
     virtual int apply(topology::Topology &topo, 
 		      configuration::Configuration &conf,
 		      simulation::Simulation &sim);
-
     /**
      * init
      */
@@ -46,8 +46,7 @@ namespace algorithm
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false);
-    
+		     bool quiet = false);    
     /**
      * get random number generator
      */
@@ -61,8 +60,7 @@ namespace algorithm
       math::VArray vrand1;
       math::VArray vrand2;
       math::VArray vrand3;
-      math::VArray vrand4;
-      
+      math::VArray vrand4;    
       /**
        * resize the vectors
        */
@@ -76,11 +74,10 @@ namespace algorithm
     /**
      * accessor to the random vectos
      */
-    algorithm::Stochastic_Dynamics_Pos::RandomVectors& random_vectors()
-    { return m_vrand; }
-    
+    algorithm::Stochastic_Dynamics_Vel1::RandomVectors& random_vectors()
+    { return m_vrand; }    
     /**
-     * Stochastic Dynamics: calculate positions
+     * Stochastic Dynamics: calculate velocities
      */
     template<math::boundary_enum B>
     int _apply(topology::Topology &topo, 
@@ -92,8 +89,7 @@ namespace algorithm
     template<math::boundary_enum B>
     int calc_friction_coeff(topology::Topology &topo, 
 			    configuration::Configuration &conf,
-			    simulation::Simulation &sim);
-    
+			    simulation::Simulation &sim);   
     /**
      * random number generator
      */
@@ -103,30 +99,59 @@ namespace algorithm
      */
     RandomVectors m_vrand;
   };
-  
   /**
-   * @class Stochastic_Dynamics_Pos
+   * @class Stochastic_Dynamics_Pos1
    * implements stochastic dynamics (langevin equations)
-   * add stochastic integrals
+   * position calculation
    */
-  class Stochastic_Dynamics_Int : public Algorithm
+  class Stochastic_Dynamics_Pos1 : public Algorithm
   {
   public:
     /**
      * Constructor.
      */
-    Stochastic_Dynamics_Int(math::RandomGenerator * rng,
-                            Stochastic_Dynamics_Pos::RandomVectors *vrand) : 
-        Algorithm("Stochastic_Dynamics_Int"), m_rng(rng),
-        m_vrand(vrand) {}
+    Stochastic_Dynamics_Pos1(): Algorithm("Stochastic_Dynamics_Position1") {};
 
     /**
      * Destructor.
      */
-    virtual ~Stochastic_Dynamics_Int(){}
+    virtual ~Stochastic_Dynamics_Pos1() {}
     
     /**
-     * Stochastic Dynamics: add stochastic integrals
+     * Stochastic Dynamics: calculate positions
+     */
+    virtual int apply(topology::Topology &topo, 
+		      configuration::Configuration &conf,
+		      simulation::Simulation &sim);
+    /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false){return 0;};
+    };
+  /**
+   * @class Stochastic_Dynamics_Vel2
+   * implements stochastic dynamics (langevin equations)
+   * velocity calculation
+   */
+  class Stochastic_Dynamics_Vel2 : public Algorithm
+  {
+  public:
+    /**
+     * Constructor.
+     */
+    Stochastic_Dynamics_Vel2(): Algorithm("Stochastic_Dynamics_Velocities2") {};
+
+    /**
+     * Destructor.
+     */
+    virtual ~Stochastic_Dynamics_Vel2() {}
+    
+    /**
+     * Stochastic Dynamics: calculate velocities
      */
     virtual int apply(topology::Topology &topo, 
 		      configuration::Configuration &conf,
@@ -139,29 +164,67 @@ namespace algorithm
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false);
-
-  protected:
+		     bool quiet = false){return 0;};
+		  
+    template<math::boundary_enum B>
+    int _apply(topology::Topology &topo, 
+		      configuration::Configuration &conf,
+		      simulation::Simulation &sim);
+   
+    
+  };
+  /**
+   * @class Stochastic_Dynamics_Pos2
+   * implements stochastic dynamics (langevin equations)
+   * position calculation
+   */
+  class Stochastic_Dynamics_Pos2 : public Algorithm
+  {
+  public:
     /**
+     * Constructor.
+     */
+    Stochastic_Dynamics_Pos2(math::RandomGenerator * rng,
+                            Stochastic_Dynamics_Vel1::RandomVectors *vrand) : 
+        Algorithm("Stochastic_Dynamics_Int"), m_rng(rng),
+        m_vrand(vrand) {}
+    /**
+     * Destructor.
+     */
+    virtual ~Stochastic_Dynamics_Pos2() { delete m_rng; }
+    
+    /**
+     * Stochastic Dynamics: calculate positions
+     */
+    virtual int apply(topology::Topology &topo, 
+		      configuration::Configuration &conf,
+		      simulation::Simulation &sim);
+
+    /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false){return 0;};
+		     
+    protected:
+     /**
      * pointer to the random number generator of the
      * Stochastic_Dynamics_Pos algorithm
      */
     math::RandomGenerator * m_rng;
     /**
-     * pointer to the random vectors of the Stochastic_Dynamics_Pos algorithm
+     * pointer to the random vectors of the Stochastic_Dynamics_Vel1 algorithm
      */
-    Stochastic_Dynamics_Pos::RandomVectors *m_vrand;
-    
-    /**
-     * Stochastic Dynamics: add stochastic integrals
-     */
-    template<math::boundary_enum B>
-    int _apply(topology::Topology &topo, 
-		      configuration::Configuration &conf,
-		      simulation::Simulation &sim);
-  };
+    Stochastic_Dynamics_Vel1::RandomVectors *m_vrand;
+		     
+  }; 
+
 
 } // algorithm
+
 
 #endif
 
