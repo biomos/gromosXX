@@ -81,6 +81,10 @@ namespace interaction {
      * the map for the gradient convolution
      */
     clipper::Xmap<clipper::ftype32> d_r;
+    /**
+     * spacegroup for NCS restraints
+     */
+    clipper::Spacegroup ncs_spacegroup;
 #endif
 
     template<math::boundary_enum B, math::virial_enum V>

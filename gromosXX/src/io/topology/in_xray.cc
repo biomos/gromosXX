@@ -18,6 +18,12 @@
 
 #include "in_xray.h"
 
+#ifdef HAVE_CLIPPER
+#include <clipper/clipper.h>
+#include <clipper/clipper-ccp4.h>
+#include <clipper/clipper-contrib.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE io
@@ -120,6 +126,38 @@ XRAYUMBRELLAWEIGHT
 # ATOMS[1..N]: The atoms used for weighting the umbrella
 1 0.23 0.5 23 24 24 26
 2 0.33 0.5 56 57 58 59 60
+END
+@endverbatim
+ *
+ * @section xrayncsresspec XRAYNCSRESSPEC block
+ * The XRAYNCSRESSPEC block specifies firt parameters of the method. On two additional
+ * lines data about the spacegroup and asymmetric units have to be given. The rest is
+ * just specification of the atoms.
+ *
+ * @verbatim
+XRAYNCSRESSPEC
+# NTNCS      : use NCS restraints? (default 0)
+#              - 0: do not use NCS restraints
+#              - 1: restrain individual atoms of additional ASUs
+#                   to image of the first ASU.
+#              - 2: restrain averaged image of atoms of additional ASUs
+#                   to the first AUS
+# CNCS       : force constant for NCS restraints (default 0)
+# NCSSPGR    : spacegroup for NCS restraints (default 0)
+# ASUDEF     : pointer to first atom in every ASU
+# NCSATOMS   : the atoms to restrain
+#
+# NTNCS     CNCS
+      1     25.0
+# NCSSPGR
+  P 21 21 2
+# ASUDEF[1..NCSNUMSYM]
+  1  101  201  301
+# NCSATOMS
+    2 HEXA  CH23       9
+    2 HEXA  CH24      10
+    2 HEXA  CH25      11
+    2 HEXA  CH36      12
 END
 @endverbatim
  *
@@ -434,6 +472,149 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       }
     }
   } // XRAYSOLVBFOCCSPEC
+  { // XRAYNCSRESSPEC
+    buffer = m_block["XRAYNCSRESSPEC"];
+    DEBUG(10, "XRAYNCSRESSPEC block : " << buffer.size());
+
+    if (!buffer.empty()) {
+      if (buffer.size() < 6) {
+        io::messages.add("XRAYNCSRESSPEC block: not enough lines given",
+                "in_Xrayresspec", io::message::error);
+        return;
+      }
+
+      _lineStream.clear();
+      _lineStream.str(buffer[1]);
+      unsigned int ntncs;
+      _lineStream >> ntncs >> sim.param().xrayrest.ncs_force_constant;
+      if (_lineStream.fail()) {
+        io::messages.add("XRAYNCSRESSPEC block: Cannot read method and force constant from first line",
+                "in_Xrayresspec", io::message::error);
+        sim.param().xrayrest.ncs_force_constant = 0.0;
+        return;
+      }
+      switch (ntncs) {
+        case 0:
+          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_off;
+          break;
+        case 1:
+          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_ind;
+          break;
+        case 2:
+          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_avg;
+          break;
+        default:
+          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_off;
+          io::messages.add("XRAYNCSRESSPEC block: Invalid NTNCS",
+                  "in_Xrayresspec", io::message::error);
+          sim.param().xrayrest.ncs_force_constant = 0.0;
+          return;
+      }
+
+      std::string spacegroup = buffer[2];
+      const size_t startpos = spacegroup.find_first_not_of(" \t"); // start trim
+      const size_t endpos = spacegroup.find_last_not_of(" \t"); // end trim
+      spacegroup = spacegroup.substr(startpos, endpos - startpos + 1);
+      sim.param().xrayrest.ncs_spacegroup = spacegroup;
+#ifdef HAVE_CLIPPER
+      clipper::Spacegroup spacegr;
+      try {
+        clipper::Spgr_descr spgrinit(clipper::String(sim.param().xrayrest.ncs_spacegroup), clipper::Spgr_descr::HM);
+        spacegr.init(spgrinit);
+      } catch (const clipper::Message_fatal & msg) {
+        io::messages.add("In_Xrayresspec", "XRAYNCSRESSPEC block: "+msg.text(), io::message::error);
+        return;
+      }
+      _lineStream.clear();
+      _lineStream.str(buffer[3]);
+      DEBUG(8, "\tSpacegroup has " << spacegr.num_symops() << " symmetry operations.");
+      if (spacegr.num_symops() <= 1) {
+        std::ostringstream msg;
+          msg << "XRAYNCSRESSPEC block: Spacegroup " << spacegroup << " does not contain at least one symmetry operation which is not the identity.";
+          io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+          return;
+      }
+
+      for(int i = 0; i < spacegr.num_symops(); ++i) {
+        int atom_pointer;
+        _lineStream >> atom_pointer;
+        if (_lineStream.fail()) {
+          std::ostringstream msg;
+          msg << "XRAYNCSRESSPEC block: Cannot read ASU pointers " << (i+1) << ".";
+          io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+          return;
+        }
+        --atom_pointer;
+        if (atom_pointer < 0 || atom_pointer >= int(topo.num_atoms())) {
+          std::ostringstream msg;
+          msg << "XRAYNCSRESSPEC block: ASU pointer " << (i+1) << " is out of range.";
+          io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+          return;
+        }
+        DEBUG(9, "\t\tASU: " << atom_pointer);
+        topo.xray_asu().push_back(atom_pointer);
+      }
+#else
+      io::messages.add("In_Xrayresspec", "Compile with clipper support.", io::message::error);
+#endif
+
+      std::vector<std::string>::const_iterator it = buffer.begin() + 4,
+              to = buffer.end() - 1;
+      for(unsigned int line_nr = 6; it != to; ++it, ++line_nr) {
+        std::string line(*it);
+        if (line.length() < 17) {
+         std::ostringstream msg;
+          msg << "XRAYNCSRESSPEC block: Line " << line_nr << " is too short.";
+          io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+          return;
+        }
+
+        // the first 17 chars are ignored
+        line.erase(line.begin(), line.begin() + 17);
+
+        _lineStream.clear();
+        _lineStream.str(line);
+
+        int atom;
+        _lineStream >> atom;
+
+        DEBUG(11, "\t" << atom);
+
+        if (_lineStream.fail()) {
+          std::ostringstream msg;
+          msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": Cannot read atom.";
+          io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+          return;
+        }
+
+        --atom;
+        if (atom < 0 || int(atom >= topo.num_atoms())) {
+          std::ostringstream msg;
+          msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": Atom out of range.";
+          io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+          return;
+        }
+        if (atom < int(topo.xray_asu()[0])) {
+          std::ostringstream msg;
+          msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": Atom not in first ASU.";
+          io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+          return;
+        }
+        const unsigned int atom_p = atom - topo.xray_asu()[0];
+        for(unsigned int i = 1; i < topo.xray_asu().size(); ++i) {
+          const unsigned int atom_img = topo.xray_asu()[i] + atom_p;
+          if (atom_img >= topo.num_atoms()) {
+            std::ostringstream msg;
+            msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": The image nr. "
+                << i << " of atom " << (atom+1) << " is out of range.";
+            io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
+            return;
+          }
+        }
+        topo.xray_ncs_restraints().push_back(atom);
+      } // for atoms
+    } // if block present
+  } // XRAYNCSRESSPEC
 
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {
@@ -448,6 +629,18 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         break;
       case simulation::xrayrest_biq :
                 os << "\tXray biquadratic instantaneous/time-averaged restraints ON\n";
+        break;
+    }
+
+    switch (sim.param().xrayrest.ncsrest) {
+      case simulation::xray_ncsrest_off:
+        os << "\tNCS restraints OFF\n";
+        break;
+      case simulation::xray_ncsrest_ind:
+        os << "\tNCS restraints on individual atom positions\n";
+        break;
+      case simulation::xray_ncsrest_avg:
+        os << "\tNCS restraints on averaged atom positions\n";
         break;
     }
     os << "END\n";

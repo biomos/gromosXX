@@ -324,6 +324,25 @@ namespace simulation
   };
 
   /**
+   * @enum xray_ncsrest_enum
+   * Xray non-crystallographic symmetry restraints enum
+   */
+  enum xray_ncsrest_enum {
+    /**
+     * no NCS restraints
+     */
+    xray_ncsrest_off = 0,
+    /**
+     * use NCS restraints on the individual atoms
+     */
+    xray_ncsrest_ind = 1,
+    /**
+     * use NCS restraints on the average of the atoms
+     */
+    xray_ncsrest_avg = 2
+  };
+
+  /**
    * @enum eds_enum
    * eds functional form enumeration
    */
@@ -1338,7 +1357,7 @@ namespace simulation
      */
     struct xrayrest_struct {
 
-      /**
+/**
        * Constructor
        * Default values:
        * - xrayrest 0 (no xray restraints)
@@ -1352,10 +1371,25 @@ namespace simulation
        * - resolution 1.0
        * - readavg 0
        * - to_angstrom 10.0
+       * - ncsrest (off)
+       * - ncs_force_constant 0.0
+       * - ncs_spacegroup "P 1"
        */
-      xrayrest_struct() : xrayrest(xrayrest_off), mode(xrayrest_mode_structure_factor), local_elevation(false), force_constant(1E4), tau(0),
-      write(0), writedensity(0), writexmap(0), spacegroup("P 1"),
-      resolution(1.0), readavg(0), to_angstrom(10.0) {
+      xrayrest_struct() : xrayrest(xrayrest_off),
+      mode(xrayrest_mode_structure_factor),
+      local_elevation(false),
+      force_constant(1E4),
+      tau(0),
+      write(0),
+      writedensity(0),
+      writexmap(0),
+      spacegroup("P 1"),
+      resolution(1.0),
+      readavg(0),
+      to_angstrom(10.0),
+      ncsrest(xray_ncsrest_off),
+      ncs_force_constant(0.0),
+      ncs_spacegroup("P 1") {
       }
 
       /**
@@ -1406,6 +1440,18 @@ namespace simulation
        * converison factor for length unit to angstrom
        */
       double to_angstrom;
+      /**
+       * do NCS restraints?
+       */
+      xray_ncsrest_enum ncsrest;
+      /**
+       * force constant for NCS restraints
+       */
+      double ncs_force_constant;
+      /**
+       * NCS spacegroup
+       */
+      std::string ncs_spacegroup;
     } /** Xray restraint parameters */ xrayrest;
 
     /**

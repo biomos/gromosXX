@@ -799,6 +799,20 @@ namespace topology
       return m_xray_solv_occupancy;
     }
     /**
+     * definition of the asymetric unit. Pointer to the first atom in every ASU
+     */
+    std::vector<unsigned int> & xray_asu()
+    {
+      return m_xray_asu;
+    }
+    /**
+     * definition of the asymetric unit. Pointer to the first atom in every ASU. Const version
+     */
+    std::vector<unsigned int> const & xray_asu() const
+    {
+      return m_xray_asu;
+    }
+    /**
      * xray umbrella weight accessor.
      */
     std::vector<xray_umbrella_weight_struct> & xray_umbrella_weights()
@@ -811,6 +825,20 @@ namespace topology
     std::vector<xray_umbrella_weight_struct> const & xray_umbrella_weights()const
     {
       return m_xray_umbrella_weights;
+    }
+
+    /**
+     * atom numbers of the atoms to be NCS restraint.
+     */
+    std::vector<unsigned int> & xray_ncs_restraints() {
+      return m_xray_ncs_restraints;
+    }
+
+    /**
+     * atom numbers of the atoms to be NCS restraint.
+     */
+    std::vector<unsigned int> const & xray_ncs_restraints() const {
+      return m_xray_ncs_restraints;
     }
 
     /**
@@ -1294,9 +1322,18 @@ namespace topology
      */
     std::vector<double> m_xray_solv_occupancy;
     /**
+     * xray NCS periodic copy definition. i.e. pointer to the first atom in
+     * every ASU in the unit cell
+     */
+    std::vector<unsigned int> m_xray_asu;
+    /**
      * xray umbrella weights
      */
     std::vector<xray_umbrella_weight_struct> m_xray_umbrella_weights;
+    /**
+     * the atoms for NCS restrains
+     */
+    std::vector<unsigned int> m_xray_ncs_restraints;
     /**
      * expanded topology for multiple unit cell simulations
      */
