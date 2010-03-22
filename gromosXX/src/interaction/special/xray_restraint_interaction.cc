@@ -702,20 +702,22 @@ int interaction::Xray_Restraint_Interaction
 
           for (unsigned int i = 1; i < topo.xray_asu().size(); ++i) {
             const unsigned int atom_img = topo.xray_asu()[i] + atom_p;
-            const clipper::RTop_orth & Sinv = ncs_spacegroup.symop(i).inverse().rtop_orth(cell);
+            const clipper::Mat33<double> & Sinv = ncs_spacegroup.symop(i).inverse().rtop_orth(cell).rot();
+
 
             // create the transformation matrix.
-            const clipper::Coord_orth Sinv_ex_ang(Sinv * clipper::Coord_orth(1.0f, 0.0f, 0.0f));
-            const clipper::Coord_orth Sinv_ey_ang(Sinv * clipper::Coord_orth(0.0f, 1.0f, 0.0f));
-            const clipper::Coord_orth Sinv_ez_ang(Sinv * clipper::Coord_orth(0.0f, 0.0f, 1.0f));
+            const clipper::Coord_orth Sinv_ex_ang(Sinv * clipper::Vec3<double>(1.0, 0.0, 0.0));
+            const clipper::Coord_orth Sinv_ey_ang(Sinv * clipper::Vec3<double>(0.0, 1.0, 0.0));
+            const clipper::Coord_orth Sinv_ez_ang(Sinv * clipper::Vec3<double>(0.0, 0.0, 1.0));
 
             math::Matrix trans(
                     math::Vec(Sinv_ex_ang.x(), Sinv_ex_ang.y(), Sinv_ex_ang.z()),
                     math::Vec(Sinv_ey_ang.x(), Sinv_ey_ang.y(), Sinv_ey_ang.z()),
                     math::Vec(Sinv_ez_ang.x(), Sinv_ez_ang.y(), Sinv_ez_ang.z()));
             trans /= to_ang;
+            DEBUG(8, "trans  :\n\t" << math::m2s(trans));
 
-            const math::Vec & f = math::product(trans, (-sim.param().xrayrest.ncs_force_constant*inv_nsym_m_one) * r);
+            const math::Vec & f = math::product(trans, (sim.param().xrayrest.ncs_force_constant*inv_nsym_m_one) * r);
             DEBUG(7, "f      : " << math::v2s(f));
             conf.current().force(atom_img) += f;
           }
