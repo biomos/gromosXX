@@ -17,13 +17,19 @@ extern "C" void * util::launchThread(void * t) {
 }
 
 void util::Thread::start() {
+#ifdef OMP
   pthread_create(&id, NULL, launchThread, (void*) this);
+#endif
 }
 
 void util::Thread::kill() {
+#ifdef OMP
   pthread_kill(id, SIGTERM);
+#endif
 }
 
 void util::Thread::wait() {
+#ifdef OMP
   pthread_join(id, NULL);
+#endif
 };
