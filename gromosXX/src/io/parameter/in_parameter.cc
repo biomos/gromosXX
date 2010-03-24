@@ -552,11 +552,21 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
             "In_Parameter", io::message::error);
     else {
       unsigned int temp;
+      bool fail = false;
       for (unsigned int i = 0; i < param.constraint.solvent.number_gpus; i++) {
         _lineStream >> temp;
+        if (_lineStream.fail()) {
+          fail = true;
+          break;
+        }
         param.constraint.solvent.gpu_device_number.push_back(temp);
       }
-
+      if (fail) {
+        param.constraint.solvent.gpu_device_number.clear();
+        param.constraint.solvent.gpu_device_number.resize(param.constraint.solvent.number_gpus, -1);
+        io::messages.add("CUDA driver will determine devices for M-SHAKE",
+                "In_Parameter", io::message::notice);
+      }
     }
   } else if (salg == "off" || salg == "0") {
     DEBUG(9, "constraints solvent off");
@@ -2634,7 +2644,7 @@ INNERLOOP
 #        0: use topology [default]
 #        1: use SPC
 # NGPUS: number of GPUs to use
-# NDEVG: Which GPU device number to use
+# NDEVG: Which GPU device number to use. If not given driver will determine.
 
 # NTILM NTILS NGPUS NDEVG
       4     0     2   0 1
@@ -2738,9 +2748,20 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
               "In_Parameter", io::message::error);
       else {
         unsigned int temp;
+        bool fail = false;
         for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
           _lineStream >> temp;
+          if (_lineStream.fail()) {
+            fail = true;
+            break;
+          }
           param.innerloop.gpu_device_number.push_back(temp);
+        }
+        if (fail) {
+          param.innerloop.gpu_device_number.clear();
+          param.innerloop.gpu_device_number.resize(param.innerloop.number_gpus, -1);
+          io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
+              "In_Parameter", io::message::notice);
         }
       }
     }

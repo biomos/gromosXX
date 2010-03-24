@@ -78,17 +78,26 @@ int algorithm::GPU_Shake_Thread::apply(){
 /**
  * Initialize the GPU
  */
-void algorithm::GPU_Shake_Thread::init_run(){
+void algorithm::GPU_Shake_Thread::init_run() {
   DEBUG(10, "M_SHAKE : Init : Number of GPUs: " << mysim->param().constraint.solvent.number_gpus << " ID: " << mysim->param().constraint.solvent.gpu_device_number.at(gpu_id));
 #ifdef HAVE_LIBCUKERNEL
+  int dev = mysim->param().constraint.solvent.gpu_device_number[gpu_id];
+
+  if (mysim->param().innerloop.method == simulation::sla_cuda && dev == -1) {
+    if (gpu_id < mysim->param().innerloop.number_gpus) {
+      dev = mysim->param().innerloop.gpu_device_number[gpu_id];
+    }
+  }
   gpu_stat = cudakernel::cudaInitGPU_Shake(
+          dev,
           &constr_length2(0),
-          &factor(0,0), &mass(0),
+          &factor(0, 0), &mass(0),
           m_tolerance,
           mysim->param().constraint.solvent.number_gpus,
-          mysim->param().constraint.solvent.gpu_device_number.at(gpu_id),
+          gpu_id,
           mytopo->num_solvent_atoms(0),
           mytopo->num_solvent_molecules(0));
+  mysim->param().constraint.solvent.gpu_device_number[gpu_id] = dev;
 #endif
   return;
 }

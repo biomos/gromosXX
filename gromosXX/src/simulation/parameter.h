@@ -1008,7 +1008,7 @@ namespace simulation
     /**
      * GPU IDs
      */
-    std::vector<unsigned int> gpu_device_number;
+    std::vector<int> gpu_device_number;
       };
       /**
        * parameter for solute.
