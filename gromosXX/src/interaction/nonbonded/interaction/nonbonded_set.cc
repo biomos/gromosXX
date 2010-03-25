@@ -265,6 +265,8 @@ int interaction::Nonbonded_Set::update_configuration
   configuration::Energy & e = conf.current().energies;
   
   // use the IMPULSE method for multiple time stepping
+  const unsigned int num_atoms = topo.num_atoms();
+  math::VArray & f = conf.current().force;
   if (sim.param().multistep.steps > 1){
     int steps = sim.param().multistep.steps;
     if (sim.param().multistep.boost == 0)
@@ -275,16 +277,16 @@ int interaction::Nonbonded_Set::update_configuration
 
       // std::cerr << "\tadding boosted (" << steps << ") non-bonded forces" << std::endl;
 
-      for(unsigned int i=0; i<topo.num_atoms(); ++i)
-	conf.current().force(i) += steps * m_storage.force(i);
+      for(unsigned int i=0; i<num_atoms; ++i)
+	f(i) += steps * m_storage.force(i);
     }
     else{
       // std::cerr << "\tnot adding non-bonded forces" << std::endl;
     }
     
   } else{ // no multistep
-    for(unsigned int i=0; i<topo.num_atoms(); ++i)
-      conf.current().force(i) += m_storage.force(i);
+    for(unsigned int i=0; i<num_atoms; ++i)
+      f(i) += m_storage.force(i);
   }
   
   // (MULTISTEP: and keep energy constant)

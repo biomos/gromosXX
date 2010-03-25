@@ -616,6 +616,7 @@ void interaction::Nonbonded_Interaction::store_set_data
         configuration::Configuration & conf,
         simulation::Simulation const & sim
         ) {
+  m_timer.start("set data summation");
   std::vector<Nonbonded_Set_Interface *>::iterator
   it = m_nonbonded_set.begin(),
           to = m_nonbonded_set.end();
@@ -625,6 +626,7 @@ void interaction::Nonbonded_Interaction::store_set_data
     DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
     (*it)->update_configuration(topo, conf, sim);
   }
+  m_timer.stop("set data summation");
 }
 
 void interaction::Nonbonded_Interaction::init_expand_configuration
