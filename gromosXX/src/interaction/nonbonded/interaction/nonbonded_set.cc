@@ -230,6 +230,7 @@ int interaction::Nonbonded_Set
   // add long-range force
   DEBUG(6, "\t(set) add long range forces");
 
+  start_timer("longrange addition");
   m_storage.force += m_longrange_storage.force;
   
   // and long-range energies
@@ -251,6 +252,7 @@ int interaction::Nonbonded_Set
 
 	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
   }
+  stop_timer("longrange addition");
   
   return 0;
 }

@@ -168,6 +168,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
  )
 {
   DEBUG(7, "grid pairlist algorithm : prepare");
+  timer().start("pairlist prepare");
   
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
@@ -179,11 +180,13 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
 
   if (prepare_grid(topo, conf, sim)){
     return 1;
+    timer().stop("pairlist prepare");
   }
 
   collapse_grid();
 
   // print_grid();
+  timer().stop("pairlist prepare");
 
   return 0;
 }

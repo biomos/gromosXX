@@ -62,7 +62,8 @@ namespace interaction
       perturbed_energy_derivatives.zero();
       virial_tensor = 0.0;
       assert(force_endstates.size() == virial_tensor_endstates.size());
-      for(unsigned int i = 0; i< force_endstates.size(); i++){
+      const unsigned int size = force_endstates.size();
+      for(unsigned int i = 0; i< size; i++){
         force_endstates[i] = 0.0;
         virial_tensor_endstates[i] = 0.0;
       }
