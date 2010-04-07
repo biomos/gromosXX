@@ -105,7 +105,6 @@ void interaction::Nonbonded_Outerloop
   DEBUG(10, "outerloop pairlist size " << size_i);
   
   const unsigned int end = topo.num_solute_atoms();
-  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
   
   unsigned int i;
   for(i=0; i < end; ++i){
@@ -120,8 +119,10 @@ void interaction::Nonbonded_Outerloop
       innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
   }
-
+  // cuda doesn't do solvent-solvent here
+  if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
+  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
   if (master)
     timer.start(timer_name);
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop

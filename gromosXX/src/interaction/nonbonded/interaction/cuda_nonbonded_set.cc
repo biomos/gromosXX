@@ -86,7 +86,11 @@ int interaction::CUDA_Nonbonded_Set
         simulation::Simulation & sim) {
   DEBUG(8, "CUDA_Nonbonded_Set::calculate_interactions");
   DEBUG(15, "Start Cycle for GPU: " << mygpu_id);
+  if (mygpu_id == 0)
+    m_pairlist_alg.timer().start("cuda set");
   do_cycle();
+  if (mygpu_id == 0)
+    m_pairlist_alg.timer().stop("cuda set");
   DEBUG(15, "Finished Cycle for GPU: " << mygpu_id);
 
   return 0;

@@ -4338,12 +4338,13 @@ LOCALELEV
 #    0 : read from input file (not supported)
 #    1 : read from startup file
 #    2 : read from special file (@lud)
+# NTWS ignored in MD++
 # NLEPID[1..NLEPOT] IDs of the umbrella potentials
 # NLEPFR[1..NLEPOT] 0,1 freeze the umbrella potential
 #    0 : build up
 #    1 : freeze
-# NTLES  NLEPOT  NTLESA
-      1       2       1
+# NTLES  NLEPOT  NTLESA  NTWS
+      1       2       1     0
 # NLEPID NLEPFT
        1      0
        2      1
@@ -4363,8 +4364,8 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
     block_read.insert("LOCALELEV");
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-    int onoff, num, read;
-    _lineStream >> onoff >> num >> read;
+    int onoff, num, read, ntws;
+    _lineStream >> onoff >> num >> read >> ntws;
 
     if (_lineStream.fail()) {
       io::messages.add("bad line in LOCALELEV block",
@@ -4402,7 +4403,11 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
         io::messages.add("LOCALELEV block: Bad value for NTLESA (1,2)",
                 "In_Parameter", io::message::error);
     }
-
+ 
+    if (ntws) {
+        io::messages.add("LOCALELEV block: NTWS is ignored",
+                "In_Parameter", io::message::warning);
+    }
 
     // read the umbrellas
     for (int i = 0; i < num; ++i) {

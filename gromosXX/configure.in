@@ -168,7 +168,7 @@ case "$compiler" in
   gnu*)               # EGCS  http://egcs.cygnus.com/
     echo "Configuring for GNU C++"
     CXX_PICKY_FLAGS="-Wall"
-    CXX_OPTIMIZE_FLAGS="-O3 -funroll-loops -fno-gcse -DNDEBUG"
+    CXX_OPTIMIZE_FLAGS="-O2 -ffast-math -DNDEBUG"
     CXX_NDEBUG_FLAGS="-DNDEBUG -g"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"
