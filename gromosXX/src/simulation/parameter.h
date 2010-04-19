@@ -2370,7 +2370,7 @@ namespace simulation
       /**
        * constructor
        */
-      localelev_struct() : localelev(localelev_off), read(false) {}
+      localelev_struct() : localelev(localelev_off), read(false), write(0) {}
       /**
        * use the method or not
        */
@@ -2379,6 +2379,10 @@ namespace simulation
        * read from external file
        */
       bool read;
+      /**
+       * write to special traj
+       */
+      int write;
       /**
        * ids of the umbrella potentials to apply
        * true if building up

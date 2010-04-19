@@ -65,6 +65,7 @@ m_every_jvalue(0),
 m_every_xray(0),
 m_every_disres(0),
 m_every_dat(0),
+m_every_leus(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -131,7 +132,7 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_dat) { // add others if there are any
+  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_dat || m_every_leus) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -177,9 +178,10 @@ void io::Out_Configuration::init(io::Argument & args,
 
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write,
-            param.xrayrest.write, param.distanceres.write, param.print.monitor_dihedrals);
+            param.xrayrest.write, param.distanceres.write, param.print.monitor_dihedrals,
+            param.localelev.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
-        || param.distanceres.write || param.print.monitor_dihedrals)
+        || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -343,6 +345,15 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_dihangle_trans(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
+    if (m_every_leus && sim.steps() && (sim.steps() % m_every_leus) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_umbrellas(conf, m_special_traj);
+      m_special_traj.flush();
+    }
+
 
     if (m_every_energy && (((sim.steps() + 1) % m_every_energy) == 0 || minimum_found)) {
       if (sim.steps()) {
@@ -617,7 +628,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
-                     int every_xray, int every_disres, int every_dat) {
+                     int every_xray, int every_disres, int every_dat, int every_leus) {
 
   m_special_traj.open(name.c_str());
 
@@ -626,6 +637,7 @@ void io::Out_Configuration
   m_every_xray = every_xray;
   m_every_disres = every_disres;
   m_every_dat = every_dat;
+  m_every_leus = every_leus;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2211,10 +2223,6 @@ void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
          << std::setw(15) << conf.special().xray_rest[i].phase_av << "\n";
     }
     os << "END\n";
-  }
-
-  if (param.xrayrest.local_elevation && !final) {
-    _print_umbrellas(conf, os);
   }
 }
 

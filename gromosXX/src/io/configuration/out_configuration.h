@@ -125,7 +125,7 @@ namespace io {
      */
     void special_trajectory(std::string const name, int every_cos = 1,
             int every_jvalue = 1, int every_xray = 1, int every_disres = 1,
-            int every_dat = 1);
+            int every_dat = 1, int every_leus = 1);
     /**
      * write an energy trajectory.
      */
@@ -379,6 +379,7 @@ namespace io {
     int m_every_xray;
     int m_every_disres;
     int m_every_dat;
+    int m_every_leus;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;
