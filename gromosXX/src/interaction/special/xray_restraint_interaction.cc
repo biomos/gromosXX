@@ -755,6 +755,25 @@ int interaction::Xray_Restraint_Interaction
   }
 #endif
 
+  // increase the local elevation thresholds here if required
+  if (sim.steps() > 0) {
+    std::vector<topology::xray_umbrella_weight_struct>::iterator it =
+            topo.xray_umbrella_weights().begin(), to =
+            topo.xray_umbrella_weights().end();
+    for (; it != to; ++it) {
+      if (!it->threshold_freeze) {
+        it->threshold += it->threshold_growth_rate;
+        if (it->threshold < 0.0) {
+          it->threshold = 0.0;
+          it->threshold_freeze = true;
+          std::ostringstream msg;
+          msg << "Threshold of umbrella " << it->id << " was zero and thus frozen.";
+          io::messages.add(msg.str(), "Xray_Restraint_Interaction", io::message::warning);
+        }
+      }
+    } // for umbrellas
+  } // steps?
+
   return 0;
 }
 
@@ -877,7 +896,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   }
 
   if (sim.param().xrayrest.local_elevation) {
-    std::vector<topology::xray_umbrella_weight_struct>::const_iterator it =
+    std::vector<topology::xray_umbrella_weight_struct>::iterator it =
             topo.xray_umbrella_weights().begin(), to =
             topo.xray_umbrella_weights().end();
     for (; it != to; ++it) {
@@ -887,8 +906,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
       for (; umb_it != umb_to; ++umb_it) {
         if (umb_it->id == it->id) {
           found = true;
-          umb_it->umbrella_weight_factory = new interaction::Electron_Density_Umbrella_Weight_Factory(it->atoms,
-                  it->threshold, it->cutoff, conf, atoms, rho_calc, rho_obs, to_ang);
+          umb_it->umbrella_weight_factory = new interaction::Electron_Density_Umbrella_Weight_Factory(*it, conf, atoms, rho_calc, rho_obs, to_ang);
         }
 
       }
@@ -1029,20 +1047,20 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
 #ifdef HAVE_CLIPPER
   // convert to angstrom
-  const float cutoff2 = cutoff * cutoff * to_ang * to_ang;
+  const float cutoff2 = param.cutoff * param.cutoff * to_ang * to_ang;
   // create the range (size of atom)
   const clipper::Cell & cell = rho_calc.cell();
   const clipper::Grid_sampling & grid = rho_calc.grid_sampling();
-  clipper::Grid_range gd(cell, grid, cutoff * to_ang);
+  clipper::Grid_range gd(cell, grid, param.cutoff * to_ang);
 
-  const int atoms_size = variable_atoms.size();
+  const int atoms_size = param.atoms.size();
 
   // loop over atoms to find covered grid points
   std::set<int> grid_points;
 
   for (int i = 0; i < atoms_size; i++) {
-    DEBUG(10, "Atom index: " << variable_atoms[i]);
-    const clipper::Coord_orth & atom_pos = atoms[variable_atoms[i]].coord_orth();
+    DEBUG(10, "Atom index: " << param.atoms[i]);
+    const clipper::Coord_orth & atom_pos = atoms[param.atoms[i]].coord_orth();
 
     // determine grad range of atom
     const clipper::Coord_frac uvw = atom_pos.coord_frac(cell);
@@ -1088,9 +1106,11 @@ void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
   const double r_real = sum_obs_m_calc / sum_obs_p_calc;
   DEBUG(10, "R real space: " << r_real);
 
-  if (r_real > threshold) {
-    const double term = r_real - threshold;
+  if (r_real > param.threshold) {
+    const double term = r_real - param.threshold;
     weight += 0.5 * term * term;
+  } else {
+    param.threshold_freeze = true;
   }
 
   DEBUG(10, "new weight: " << weight);
@@ -1106,8 +1126,7 @@ void interaction::Electron_Density_Umbrella_Weight::write(std::ostream& os) cons
 util::Umbrella_Weight * interaction::Electron_Density_Umbrella_Weight_Factory::get_instance() {
 #ifdef HAVE_CLIPPER
   util::Umbrella_Weight * instance =
-          new interaction::Electron_Density_Umbrella_Weight(variable_atoms,
-            threshold, cutoff, conf, atoms, rho_calc, rho_obs, to_ang);
+          new interaction::Electron_Density_Umbrella_Weight(param, conf, atoms, rho_calc, rho_obs, to_ang);
   // make sure the weight is increased as soon as the instance is created
   instance->increment_weight();
   instances.push_back(instance);

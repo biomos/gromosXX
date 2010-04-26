@@ -324,7 +324,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       _print_xray_rvalue(sim.param(), conf, m_special_traj);
-      _print_xray(sim.param(), conf, topo, m_special_traj);
+      _print_xray_umbrellaweightthresholds(sim.param(), topo, m_special_traj);
+      //_print_xray(sim.param(), conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -440,6 +441,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
       _print_xray(sim.param(), conf, topo, m_final_conf, /*final=*/ true);
+      _print_xray_umbrellaweightthresholds(sim.param(), topo, m_final_conf);
     }
 
     if (sim.param().localelev.localelev != simulation::localelev_off) {
@@ -2212,7 +2214,7 @@ void io::Out_Configuration::_print_xray(simulation::Parameter const & param,
         configuration::Configuration const &conf,
         topology::Topology const &topo,
         std::ostream &os, bool final) {
-  DEBUG(10, "XRAY Averages and LE data");
+  DEBUG(10, "XRAY Averages");
 
   if (param.xrayrest.xrayrest != simulation::xrayrest_inst) {
     os << "XRAYRESEXPAVE\n";
@@ -2261,6 +2263,27 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
           << std::setw(15) << R_avg << std::endl
           << std::setw(15) << k_free_avg << std::endl
           << std::setw(15) << R_free_avg << std::endl;
+  os << "END\n";
+}
+
+void io::Out_Configuration::_print_xray_umbrellaweightthresholds(simulation::Parameter const & param,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "XRAY umbrella weight thresholds");
+
+  if (param.xrayrest.local_elevation == false) return;
+
+  os << "XRAYUMBRELLAWEIGHTTHRESHOLDS\n";
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  std::vector<topology::xray_umbrella_weight_struct>::const_iterator it =
+            topo.xray_umbrella_weights().begin(), to =
+            topo.xray_umbrella_weights().end();
+  for (; it != to; ++it) {
+    os << std::setw(15) << it->threshold
+            << std::setw(15) << it->threshold_growth_rate
+            << std::setw(3) << (it->threshold_freeze ? 1 : 0) << std::endl;
+  }
   os << "END\n";
 }
 

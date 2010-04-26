@@ -21,6 +21,8 @@
 #include <math/volume.h>
 #include <math/transformation.h>
 #include <util/umbrella_weight.h>
+#include <vector>
+#include <ios>
 
 #include "in_configuration.h"
 
@@ -764,34 +766,40 @@ bool io::In_Configuration::read_xray
 
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst) {
       if (!sim.param().xrayrest.readavg)
-        io::messages.add("instantaneous Xray restraints, ignoring reading of averages",
-              "in_configuration",
+        io::messages.add("instantaneous X-ray restraints, ignoring reading of averages",
+              "In_Configuration",
               io::message::warning);
     } else if (!sim.param().xrayrest.readavg) {
-
-      io::messages.add("initialising Xray-restraint averages",
-              "in_configuration",
+      io::messages.add("initialising X-ray restraint averages",
+              "In_Configuration",
               io::message::notice);
-
     } else {
-
       buffer = m_block["XRAYRESEXPAVE"];
       if (buffer.size()) {
         block_read.insert("XRAYRESEXPAVE");
-        io::messages.add("reading Xray-Restraint-Averages from last configuration file",
-                "in_configuration",
+        io::messages.add("reading X-ray restraint averages from configuration file",
+                "In_Configuration",
                 io::message::warning);
         _read_xray_av(buffer, conf.special().xray_rest, topo.xray_restraints(),
                 topo.xray_rfree());
       } else {
-        io::messages.add("reading in of Xray-restraints averages requested "
-                "but XRAYRESEXPAVE block not found",
-                "in_configuration",
+        io::messages.add("reading in of X-ray restraints averages requested "
+                "but XRAYRESEXPAVE block not found", "In_Configuration",
                 io::message::error);
         return false;
       }
     }
-  } // xray averages
+
+    if (sim.param().xrayrest.local_elevation) {
+      buffer = m_block["XRAYUMBRELLAWEIGHTTHRESHOLDS"];
+      if (buffer.size()) {
+        block_read.insert("XRAYUMBRELLAWEIGHTTHRESHOLDS");
+        io::messages.add("Reading X-ray umbrella weight thresholds from configuration",
+                "In_Configuration", io::message::notice);
+        _read_xray_umbrellaweightthesholds(buffer, topo.xray_umbrella_weights());
+      }
+    }
+  } // if xray averages
 
   return true;
 }
@@ -2582,10 +2590,6 @@ _read_xray_av(std::vector<std::string> &buffer,
   double av, phase_av;
 
   if (buffer.size() - 1 != xray_res.size() + xray_rfree.size()) {
-    std::cout << "XRAYRESEXPAVE: " << buffer.size() - 1
-            << " but restraints and R free: " << xray_res.size() + xray_rfree.size()
-            << std::endl;
-
     io::messages.add("number of Xray-restraints and R-free hkls does not match with number of "
             "continuation data", "in_configuration",
             io::message::error);
@@ -2639,3 +2643,29 @@ _read_xray_av(std::vector<std::string> &buffer,
   return true;
 }
 
+bool io::In_Configuration::
+_read_xray_umbrellaweightthesholds(std::vector<std::string> &buffer,
+        std::vector<topology::xray_umbrella_weight_struct> & umb_weight) {
+  if (buffer.size() - 1 != umb_weight.size()) {
+    io::messages.add("Number of X-ray umbrella weight thresholds does not "
+            "corresponds with X-ray restraints specification file.",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+
+  for(unsigned int i = 0; i < umb_weight.size(); ++i) {
+    std::istringstream line(buffer[i]);
+    line >> umb_weight[i].threshold >> umb_weight[i].threshold_growth_rate
+            >> umb_weight[i].threshold_freeze;
+    if (line.fail()) {
+      io::messages.add("Bad line in XRAYUMBRELLAWEIGHTTHRESHOLDS block.",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+    if (umb_weight[i].threshold < 0.0) {
+      io::messages.add("Xray umbrella weight threshold must be >=0.0",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+  }
+}

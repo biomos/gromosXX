@@ -333,6 +333,12 @@ namespace io {
                          std::vector<topology::xray_restraint_struct> const & xray_rfree);
 
     /**
+     * read X-ray umbrella weight threshold data
+     */
+    bool _read_xray_umbrellaweightthesholds(std::vector<std::string> &buffer,
+                                            std::vector<topology::xray_umbrella_weight_struct> & umb_weight);
+
+    /**
      * read JVALUE local elevation epsilons.
      */
     bool _read_jvalue_le(std::vector<std::string> &buffer,

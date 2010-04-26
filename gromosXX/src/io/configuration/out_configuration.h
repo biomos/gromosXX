@@ -319,6 +319,10 @@ namespace io {
             configuration::Configuration const &conf,
             std::ostream &os);
 
+    void _print_xray_umbrellaweightthresholds(simulation::Parameter const & param,
+        topology::Topology const & topo,
+        std::ostream &os);
+
 
     void _print_pscale_jrest(configuration::Configuration const &conf,
             topology::Topology const &topo,

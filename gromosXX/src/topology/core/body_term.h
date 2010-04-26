@@ -806,8 +806,8 @@ namespace topology {
     /**
      * constructor
      */
-    xray_umbrella_weight_struct(int id, double threshold, double cutoff, std::vector<unsigned int> atoms)
-    : id(id), threshold(threshold), cutoff(cutoff), atoms(atoms) {
+    xray_umbrella_weight_struct(int id, double threshold, double threshold_growth_rate, bool threshold_freeze, double cutoff, std::vector<unsigned int> atoms)
+    : id(id), threshold(threshold), threshold_growth_rate(threshold_growth_rate), threshold_freeze(threshold_freeze), cutoff(cutoff), atoms(atoms) {
     }
     /**
      * the ID of the umbrella
@@ -817,6 +817,14 @@ namespace topology {
      * the threshold
      */
     double threshold;
+    /**
+     * is the threshold still growing?
+     */
+    double threshold_growth_rate;
+    /**
+     * signal grow, freeze threshold
+     */
+    bool threshold_freeze;
     /**
      * the cutoff
      */

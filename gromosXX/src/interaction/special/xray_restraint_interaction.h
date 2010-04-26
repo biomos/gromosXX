@@ -102,14 +102,13 @@ namespace interaction {
   public:
 #ifdef HAVE_CLIPPER
     Electron_Density_Umbrella_Weight(
-            std::vector<unsigned int> & variable_atoms,
-            double threshold, double cutoff,
+            topology::xray_umbrella_weight_struct & param,
             configuration::Configuration & conf,
             clipper::Atom_list & atoms,
             clipper::Xmap<clipper::ftype32> & rho_calc,
             clipper::Xmap<clipper::ftype32> & rho_obs,
             double to_ang) :
-            weight(0.0), variable_atoms(variable_atoms), threshold(threshold), cutoff(cutoff),
+            weight(0.0), param(param),
                     conf(conf), atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs), to_ang(to_ang) {
     }
 #endif
@@ -119,9 +118,7 @@ namespace interaction {
     virtual void read(std::istream & is) { is >> weight; }
   protected:
     double weight;
-    std::vector<unsigned int> & variable_atoms;
-    double threshold;
-    double cutoff;
+    topology::xray_umbrella_weight_struct & param;
     configuration::Configuration & conf;
 
 #ifdef HAVE_CLIPPER
@@ -138,22 +135,20 @@ namespace interaction {
   class Electron_Density_Umbrella_Weight_Factory : public util::Umbrella_Weight_Factory {
   public:
 #ifdef HAVE_CLIPPER
-    Electron_Density_Umbrella_Weight_Factory(std::vector<unsigned int> variable_atoms,
-            double threshold, double cutoff,
+    Electron_Density_Umbrella_Weight_Factory(
+            topology::xray_umbrella_weight_struct & param,
             configuration::Configuration & conf,
             clipper::Atom_list & atoms,
             clipper::Xmap<clipper::ftype32> & rho_calc,
             clipper::Xmap<clipper::ftype32> & rho_obs,
             double to_ang) :
-    variable_atoms(variable_atoms), threshold(threshold), cutoff(cutoff), conf(conf),
+    param(param), conf(conf),
     atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs), to_ang(to_ang) {
     }
 #endif
     virtual util::Umbrella_Weight * get_instance();
-  protected:
-    std::vector<unsigned int> variable_atoms;
-    double threshold;
-    double cutoff;
+  private:
+    topology::xray_umbrella_weight_struct & param;
     configuration::Configuration & conf;
 #ifdef HAVE_CLIPPER
     clipper::Atom_list & atoms;
