@@ -191,7 +191,7 @@ namespace algorithm
     /**
      * Destructor.
      */
-    virtual ~Stochastic_Dynamics_Pos2() { delete m_rng; }
+    virtual ~Stochastic_Dynamics_Pos2() { }
     
     /**
      * Stochastic Dynamics: calculate positions
