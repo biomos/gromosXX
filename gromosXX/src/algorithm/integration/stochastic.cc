@@ -384,6 +384,9 @@ int algorithm::Stochastic_Dynamics_Vel1
     DEBUG(10, "vrand4=" << math::v2s(m_vrand.vrand4(i)));
     
   } // loop over atoms
+ 
+  // save the seed
+  conf.current().stochastic_seed = m_rng->seed();
 
   m_timer.stop();
   return 0;
