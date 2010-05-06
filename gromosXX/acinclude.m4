@@ -3,7 +3,7 @@ dnl on the STL. -> Does the C++ compiler
 dnl support the STL to the degree necessary?
 dnl 
 AC_DEFUN([AC_CV_CXX_VERSION_OK],
-  [AC_CACHE_CHECK(whether the compiler supports the STL,
+  [AC_CACHE_CHECK([whether the compiler supports the STL],[compiler_cv_version],
    ac_cv_cxx_version_ok,
      [AC_LANG_SAVE
       AC_LANG_CPLUSPLUS
@@ -15,7 +15,7 @@ AC_DEFUN([AC_CV_CXX_VERSION_OK],
 ])
 
 AC_DEFUN([AC_PROG_CXX_SUNCC],
-[AC_CACHE_CHECK(whether we are using Sun C++, SUN_CXX,
+[AC_CACHE_CHECK([whether we are using Sun C++], [compiler_cv_sun],
 [cat > conftest.c <<EOF
 # if defined(__SUNPRO_CC) 
   yes;
@@ -29,7 +29,7 @@ else
 fi])])
 
 AC_DEFUN([AC_PROG_CXX_INTELCC],
-[AC_CACHE_CHECK(whether we are using Intel C++, INTEL_CXX,
+[AC_CACHE_CHECK([whether we are using Intel C++], [compiler_cv_intel]
 [cat > conftest.c <<EOF
 # if defined(__ICC)
   yes;
@@ -44,7 +44,7 @@ fi])])
 
 dnl Portland Group Incorporated C++ compiler
 AC_DEFUN([AC_PROG_CXX_PGI],
-[AC_CACHE_CHECK(whether we are using PGI C++, PGI_CXX,
+[AC_CACHE_CHECK([whether we are using PGI C++], [compiler_cv_pgi]
  [cat > conftest.c <<EOF
 # if defined(__PGI)
   yes;
@@ -147,7 +147,7 @@ if test "$withval" != no ; then
 	fi
 	LIBS="-lgsl -lgslcblas"
 
-	AC_CACHE_CHECK([whether Gnu Scientific Library is installed],ac_cxx_lib_gsl,
+	AC_CACHE_CHECK([whether Gnu Scientific Library is installed],ac_cv_cxx_lib_gsl,
 	[AC_LANG_SAVE
 	AC_LANG_CPLUSPLUS
 	AC_RUN_IFELSE(
