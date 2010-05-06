@@ -4,7 +4,6 @@ dnl support the STL to the degree necessary?
 dnl 
 AC_DEFUN([AC_CV_CXX_VERSION_OK],
   [AC_CACHE_CHECK([whether the compiler supports the STL],[compiler_cv_version],
-   ac_cv_cxx_version_ok,
      [AC_LANG_SAVE
       AC_LANG_CPLUSPLUS
       AC_TRY_COMPILE([#include <vector>],[
