@@ -35,8 +35,6 @@
 #include <omp.h>
 #endif
 
-#pragma hdrstop
-
 #include "BUILD_NUMBER"
 
 void print_title(bool color = false);

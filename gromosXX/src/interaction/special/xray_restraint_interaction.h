@@ -112,21 +112,21 @@ namespace interaction {
                     conf(conf), atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs), to_ang(to_ang) {
     }
 #endif
+
     virtual double get_weight() const { return weight; }
     virtual void increment_weight();
     virtual void write(std::ostream & os) const;
     virtual void read(std::istream & is) { is >> weight; }
   protected:
     double weight;
+#ifdef HAVE_CLIPPER
     topology::xray_umbrella_weight_struct & param;
     configuration::Configuration & conf;
-
-#ifdef HAVE_CLIPPER
     clipper::Atom_list & atoms;
     clipper::Xmap<clipper::ftype32> & rho_calc;
     clipper::Xmap<clipper::ftype32> & rho_obs;
-#endif
     double to_ang;
+#endif
   };
 
 /**
@@ -143,19 +143,18 @@ namespace interaction {
             clipper::Xmap<clipper::ftype32> & rho_obs,
             double to_ang) :
     param(param), conf(conf),
-    atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs), to_ang(to_ang) {
-    }
+    atoms(atoms), rho_calc(rho_calc), rho_obs(rho_obs), to_ang(to_ang) {}
 #endif
     virtual util::Umbrella_Weight * get_instance();
+#ifdef HAVE_CLIPPER
   private:
     topology::xray_umbrella_weight_struct & param;
     configuration::Configuration & conf;
-#ifdef HAVE_CLIPPER
     clipper::Atom_list & atoms;
     clipper::Xmap<clipper::ftype32> & rho_calc;
     clipper::Xmap<clipper::ftype32> & rho_obs;
-#endif
     double to_ang;
+ #endif
   };
 
 } // interaction

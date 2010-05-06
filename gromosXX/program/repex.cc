@@ -61,8 +61,6 @@
 
 #include <sys/utsname.h>
 
-#pragma hdrstop
-
 #include "BUILD_NUMBER"
 
 void print_title(io::Argument &args, bool color = false);

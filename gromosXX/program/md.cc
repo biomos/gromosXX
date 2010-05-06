@@ -76,8 +76,6 @@
 #include <sys/utsname.h>
 #include <signal.h>
 
-#pragma hdrstop
-
 #include "BUILD_NUMBER"
 
 void print_title(bool color = false);

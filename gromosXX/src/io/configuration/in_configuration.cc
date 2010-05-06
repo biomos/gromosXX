@@ -2668,4 +2668,5 @@ _read_xray_umbrellaweightthesholds(std::vector<std::string> &buffer,
       return false;
     }
   }
+  return true;
 }

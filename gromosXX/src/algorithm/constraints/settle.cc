@@ -212,7 +212,6 @@ void algorithm::Settle
 
   const math::VArray & pos_old = conf.old().pos;
   math::VArray & pos_new = conf.current().pos;
-  math::VArray & cons_force = conf.old().constraint_force;
   math::VArray & vel_new = conf.current().vel;
 
   error = 0;

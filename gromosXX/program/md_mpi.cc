@@ -57,8 +57,6 @@ $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
 
 #include <sys/utsname.h>
 
-#pragma hdrstop
-
 #include "BUILD_NUMBER"
 
 void print_title(bool color = false, int size = 1, std::ostream & os = std::cout);

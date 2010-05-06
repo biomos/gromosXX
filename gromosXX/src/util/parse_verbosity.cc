@@ -4,7 +4,6 @@
  */
 
 #include <stdheader.h>
-#pragma hdrstop
 
 #include <util/error.h>
 #include <io/argument.h>

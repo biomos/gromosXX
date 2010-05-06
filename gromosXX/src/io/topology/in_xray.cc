@@ -589,7 +589,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         }
 
         --atom;
-        if (atom < 0 || int(atom >= topo.num_atoms())) {
+        if (atom < 0 || atom >= int(topo.num_atoms())) {
           std::ostringstream msg;
           msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": Atom out of range.";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);

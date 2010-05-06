@@ -4364,7 +4364,7 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
     block_read.insert("LOCALELEV");
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-    int onoff, num, read, ntws;
+    int onoff, num, read;
     _lineStream >> onoff >> num >> read >> param.localelev.write;
 
     if (_lineStream.fail()) {
