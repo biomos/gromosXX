@@ -170,12 +170,13 @@ int util::Replica_Exchange_Control::run
   double magic_buff[4];
   
   // magic cookie exchange
-  if (read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
+  int res;
+  if (res = read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
     std::cerr << "could not read magic cookie" << std::endl;
     close(cl_socket);
     return 1;
   }
-  if (write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
+  if (res = write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
     std::cerr << "could not write magic cookie" << std::endl;
     close(cl_socket);
     return 1;
@@ -190,8 +191,8 @@ int util::Replica_Exchange_Control::run
   
   // interactive
   char ch = 4;
-  write(cl_socket, &ch, 1);
-  read(cl_socket, &ch, 1);
+  res = write(cl_socket, &ch, 1);
+  res = read(cl_socket, &ch, 1);
   
   if(ch != 0){
     io::messages.add("master reported error",
@@ -203,7 +204,7 @@ int util::Replica_Exchange_Control::run
   
   if (cmd_quit){
     ch = 3;
-    write(cl_socket, &ch, 1);
+    res = write(cl_socket, &ch, 1);
     close(cl_socket);
     return 0;
   }
@@ -213,16 +214,16 @@ int util::Replica_Exchange_Control::run
   if (cmd_change) ch = 2;
   else ch = 1;
   
-  write(cl_socket, &ch, 1);
+  res = write(cl_socket, &ch, 1);
   
   DEBUG(8, "control: requesting replica information");
   int nr = 0;
-  read(cl_socket, (char *) &nr, sizeof(int));
+  res = read(cl_socket, (char *) &nr, sizeof(int));
   std::cerr << nr << " replicas." << std::endl;
 
   replica_data.resize(nr);
 
-  read(cl_socket,  (char *) &replica_data[0],
+  res = read(cl_socket,  (char *) &replica_data[0],
        nr * sizeof(Replica_Data));
 
   //////////////////////////////////////////////////////////////////////
@@ -344,13 +345,13 @@ int util::Replica_Exchange_Control::run
     if (nr >= 0 && nr < int(replica_data.size())){
 
       DEBUG(8, "control: sending change ID");
-      if (write(cl_socket, (char *) &nr, sizeof(int)) != sizeof(int)){
+      if (res = write(cl_socket, (char *) &nr, sizeof(int)) != sizeof(int)){
 	std::cerr << "could not write ID" << std::endl;
       }
       
       std::cerr << "and now replica data" << std::endl;
       
-      if (write(cl_socket, (char *) &replica_data[nr], sizeof(Replica_Data)) != sizeof(Replica_Data)){
+      if (res = write(cl_socket, (char *) &replica_data[nr], sizeof(Replica_Data)) != sizeof(Replica_Data)){
 	std::cerr << "could not write replica data" << std::endl;
       }
     }

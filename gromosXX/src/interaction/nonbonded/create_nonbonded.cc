@@ -88,7 +88,7 @@ int interaction::create_g96_nonbonded
     }
     else if (sim.param().pairlist.grid == 2){
       os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
-	   << left << "Vector Grid Pairlist Algorithm" << right << "\n";
+	   << left << "Grid-Cell Pairlist Algorithm" << right << "\n";
     }
     
     if (sim.param().polarise.cos) {
