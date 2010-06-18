@@ -103,6 +103,8 @@ int algorithm::Settle::init(topology::Topology & topo,
   for(unsigned int i = topo.num_solvent_atoms(); i < topo.num_atoms(); ++i) {
     constrained_atoms().insert(i);
   }
+  conf.current().constraint_force.resize(topo.num_atoms(), math::Vec(0.0));
+  conf.old().constraint_force.resize(topo.num_atoms(), math::Vec(0.0));
   
   // check whether we do an initial apply of the constraint algorithm
   if (sim.param().start.shake_pos || sim.param().start.shake_vel) {

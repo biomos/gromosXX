@@ -74,6 +74,14 @@ int interaction::Nonbonded_Set
 			  m_rank, topo.num_atoms(), m_num_threads);
   }
 
+  // Print pairlist
+//  if (sim.steps() ==5){
+//    std::cout << pairlist().solute_long << std::endl;
+//    std::cout << pairlist().solute_short << std::endl;
+//    std::cout << pairlist().solvent_long << std::endl;
+//    std::cout << pairlist().solvent_short << std::endl;
+//  }
+
   if (sim.param().polarise.cos) {
     //===============
     // polarisation

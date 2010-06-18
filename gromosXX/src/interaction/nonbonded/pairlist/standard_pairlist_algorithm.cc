@@ -68,8 +68,7 @@ prepare(topology::Topology & topo,
 
     // calculate solute center of geometries
     topology::Chargegroup_Iterator
-      cg1 =   topo.chargegroup_begin(),
-      cg_to = topo.chargegroup_end();
+      cg1 =   topo.chargegroup_begin();
     
     unsigned int i, num_cg = topo.num_solute_chargegroups();
     

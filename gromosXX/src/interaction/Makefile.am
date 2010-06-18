@@ -69,7 +69,8 @@ xxintnbpairlistdir = $(includedir)/gromosXX/interaction/nonbonded/pairlist
 xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\
 	nonbonded/pairlist/pairlist_algorithm.h\
 	nonbonded/pairlist/standard_pairlist_algorithm.h\
-	nonbonded/pairlist/extended_grid_pairlist_algorithm.h
+	nonbonded/pairlist/extended_grid_pairlist_algorithm.h\
+	nonbonded/pairlist/grid_cell_pairlist.h
 
 xxintnbspecialdir = $(includedir)/gromosXX/interaction/nonbonded/special
 xxintnbspecial_HEADERS = special/create_special.h\
@@ -98,6 +99,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc\
 	nonbonded/pairlist/extended_grid.cc\
 	nonbonded/pairlist/extended_grid_pairlist_algorithm.cc\
+	nonbonded/pairlist/grid_cell_pairlist.cc\
 	nonbonded/interaction/nonbonded_interaction.cc\
 	nonbonded/interaction/omp_nonbonded_interaction.cc\
 	nonbonded/interaction/mpi_nonbonded_master.cc\

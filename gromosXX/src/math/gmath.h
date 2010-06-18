@@ -44,7 +44,7 @@ namespace math
     template<typename numeric_type_b>
     GenericVec<numeric_type> & operator/=(numeric_type_b d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
     
-    inline GenericVec<numeric_type> norm();
+    inline GenericVec<numeric_type> norm() const;
     
     };
     
@@ -1170,7 +1170,7 @@ namespace math
    * norm of a vector
    */
   template<typename numeric_type>
-  GenericVec<numeric_type> GenericVec<numeric_type>::norm() {
+  GenericVec<numeric_type> GenericVec<numeric_type>::norm() const {
     return *this / abs(*this);
   }
   

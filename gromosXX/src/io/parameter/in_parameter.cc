@@ -1635,12 +1635,14 @@ void io::In_Parameter::read_HOOMD(simulation::Parameter &param,
 PAIRLIST
 #       ALGORITHM: standard(0) (gromos96 like pairlist)
 #                  grid(1) (md++ grid pairlist)
+#                  grid_cell(2) (creates a mask)
 #       SIZE:      grid cell size (or auto = 0.5 * RCUTP)
 #       TYPE:      chargegoup(0) (chargegroup based cutoff)
 #                  atomic(1) (atom based cutoff)
 #
 #       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
-    grid            5       0.8     1.4     auto    chargegroup
+        grid            5       0.8     1.4     auto    chargegroup
+#
 END
 @endverbatim
  */
@@ -1680,6 +1682,9 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
 
     if (s1 == "grid" || s1 == "1") param.pairlist.grid = 1;
     else if (s1 == "standard" || s1 == "0") param.pairlist.grid = 0;
+    else if (s1 == "grid_cell" || s1 == "2") {
+      param.pairlist.grid = 2;
+    }
     else {
       io::messages.add("PAIRLIST block: wrong pairlist algorithm chosen",
               "In_Parameter", io::message::error);

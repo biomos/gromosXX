@@ -34,8 +34,10 @@ void util::FeatureChecker::unlock(std::string key1, std::string key2, state s) {
   }
   
   // this should never happen! the program will crash at every start.
-  if (!(found1 && found2)) 
-    throw std::runtime_error("Attempt to unlock a nonexisting feature.");
+  if (!found1)
+    throw std::runtime_error("Attempt to unlock a nonexisting feature: " + key1);
+  if (!found2)
+    throw std::runtime_error("Attempt to unlock a nonexisting feature: " + key2);
   
   if (key1 < key2) {
     m_locked[key1][key2] = s;
