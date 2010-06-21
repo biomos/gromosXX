@@ -103,30 +103,39 @@ namespace interaction {
     int make_cell(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim);
+    class cg_cutoff {};
+    class atomic_cutoff {};
     /**
      * make the pairlist
      */
-    template<math::boundary_enum b>
+    template<math::boundary_enum b, class cutoff_trait>
     int _pairlist(interaction::PairlistContainer & pairlist,
-            unsigned int offset, unsigned int stride);
+            unsigned int offset, unsigned int stride, const cutoff_trait & cutoff);
     /**
      * put the  charge groups inside the cell into the pairlist
      */
-    struct cell_element;
-    template<math::boundary_enum b>
+    template<math::boundary_enum b, class cutoff_trait>
     int pair(unsigned int n1, unsigned int n2,
             interaction::PairlistContainer & pairlist,
-            const math::Periodicity<b> &periodicity);
+            const math::Periodicity<b> &periodicity,
+            const cutoff_trait & cutoff);
     /**
      * put the atoms of a chargegroupe into the pairlist (only for solvents!)
      */
+    /*
     inline int pair_solvent_atoms(const unsigned int first, const unsigned int second,
             interaction::Pairlist &pairlist);
+     */
     /**
      * put the atoms of a chargegroupe into the pairlist
      */
     inline int pair_atoms(const unsigned int first, const unsigned int second,
-            interaction::Pairlist &pairlist, bool solute_solute);
+            interaction::Pairlist &pairlist, bool solute_solute, const cg_cutoff & cutoff);
+    /**
+     * put the atoms into the pairlist
+     */
+    inline int pair_atoms(const unsigned int first, const unsigned int second,
+            interaction::Pairlist &pairlist, bool solute_solute, const atomic_cutoff & cutoff);
     /**
      * Check, if two atoms are exclude from the pairlist
      */
@@ -371,6 +380,16 @@ namespace interaction {
      * restore the original box
      */
     void restore_vacuum_box();
+
+    /**
+     * index of the first solvent atom or cg
+     */
+    unsigned int first_solvent;
+
+    /**
+     * the number of atoms per solvent molecule
+     */
+    unsigned int num_atoms_per_solvent;
 
   };
 }

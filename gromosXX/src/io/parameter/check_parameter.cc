@@ -3250,7 +3250,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_gridcell", "lj");
   fc.unlock("pairlist_gridcell", "com_removal");
   fc.unlock("pairlist_gridcell", "rf_excluded");
-  //fc.unlock("pairlist_gridcell", "cutoff_atomic");
+  fc.unlock("pairlist_gridcell", "cutoff_atomic");
   fc.unlock("pairlist_gridcell", "coarse_grain");
   fc.unlock("pairlist_gridcell", "multi_grain");
   fc.unlock("pairlist_gridcell", "temp_berendsen");

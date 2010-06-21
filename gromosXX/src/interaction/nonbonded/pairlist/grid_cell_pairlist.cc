@@ -35,7 +35,7 @@
  */
 interaction::Grid_Cell_Pairlist::Grid_Cell_Pairlist(const topology::Topology & topo,
             const simulation::Simulation &sim) :
-        Pairlist_Algorithm(){
+        Pairlist_Algorithm(), is_vacuum(false) {
   DEBUG(10, "Grid_Cell : Constructor");
 }
 
@@ -53,7 +53,6 @@ int interaction::Grid_Cell_Pairlist::init(topology::Topology & topo,
   mysim = &sim;
 
   math::boundary_enum b = conf.boundary_type;
-
   switch (b) {
     case math::vacuum: {
       is_vacuum = true;
@@ -180,14 +179,13 @@ prepare(topology::Topology & topo,
   }
 
   DEBUG(6, "grid cell pairlist algorithm : prepare");
+  // first put the chargegroups into the box. We also do this for atomic cutoffs
+  SPLIT_BOUNDARY(_prepare_cog, conf, topo);
+  math::VArray const &pos = conf.current().pos;
   if (!sim.param().pairlist.atomic_cutoff){
-    // first put the chargegroups into the box
-    SPLIT_BOUNDARY(_prepare_cog, conf, topo);
-
     // calculate cg cog's
     DEBUG(10, "calculating cg cog (" << topo.num_solute_chargegroups() << ")");
     m_cg_cog.resize(topo.num_chargegroups());
-    math::VArray const &pos = conf.current().pos;
     DEBUG(10, "pos.size() = " << pos.size());
 
     // calculate solute center of geometries
@@ -196,6 +194,7 @@ prepare(topology::Topology & topo,
 
     // Add solute charge groups
     unsigned int i, num_cg = topo.num_solute_chargegroups();
+    first_solvent = num_cg;
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, m_cg_cog(i));
     }
@@ -204,7 +203,11 @@ prepare(topology::Topology & topo,
     for(; i < num_cg; ++cg1, ++i){
       m_cg_cog(i) = pos(*(cg1.begin()));
     }
-  } // chargegroup based cutoff
+  } else { // atomic cutoff
+    first_solvent = topo.num_solute_atoms();
+    num_atoms_per_solvent = topo.solvent(0).num_atoms();
+    m_cg_cog = pos;
+  }
 
   // If pressure is constant, make mask again
   if (sim.param().pcouple.scale != math::pcouple_off) {
@@ -260,7 +263,11 @@ void interaction::Grid_Cell_Pairlist::update(
     #pragma omp barrier
   }
   // _pairlist(pairlist)
-  SPLIT_BOUNDARY(_pairlist, pairlist, begin, stride);
+  if (!sim.param().pairlist.atomic_cutoff) {
+    SPLIT_BOUNDARY(_pairlist, pairlist, begin, stride, cg_cutoff());
+  } else {
+    SPLIT_BOUNDARY(_pairlist, pairlist, begin, stride, atomic_cutoff());
+  }
 
   if (begin == 0) // master
     timer().stop("pairlist");
@@ -400,7 +407,7 @@ int interaction::Grid_Cell_Pairlist::make_mask_pointer(){
 
   mask_pointer.clear();
 
-  for (unsigned int m = 1; m < dim_m; m++) {
+  for (int m = 1; m < dim_m; m++) {
     if (make_mask(m, t)) {
       DEBUG(10, "Start of mask = " << m);
       mask_pointer.push_back(m);
@@ -428,14 +435,14 @@ inline bool interaction::Grid_Cell_Pairlist::make_mask(unsigned int delta_m,
   DEBUG(15, "Grid Cell : Make the mask for delta_m = " << delta_m);
 
   // A.7 - A.9
-  const unsigned int delta_m_x = delta_m % num_x;
-  const unsigned int delta_m_y = (delta_m % (num_x * num_y)) / num_x;
-  const unsigned int delta_m_z = delta_m / (num_x * num_y);
+  const int delta_m_x = delta_m % num_x;
+  const int delta_m_y = (delta_m % (num_x * num_y)) / num_x;
+  const int delta_m_z = delta_m / (num_x * num_y);
 
   // A.14
-  const unsigned int delta_n_x = abs(minIm(delta_m_x, num_x));
+  const int delta_n_x = abs(minIm(delta_m_x, num_x));
   // A.15
-  unsigned int delta_n_y;
+  int delta_n_y;
   if ((delta_m_x == 0) ||
           ((delta_m_y == num_y_minus_1) && (delta_m_z == num_z_minus_1)))
     delta_n_y = abs(minIm(delta_m_y, num_y));
@@ -443,7 +450,7 @@ inline bool interaction::Grid_Cell_Pairlist::make_mask(unsigned int delta_m,
     delta_n_y = std::min(abs(minIm(delta_m_y, num_y)),
           abs(minIm(delta_m_y + 1, num_y)));
   // A.16
-  unsigned int delta_n_z;
+  int delta_n_z;
   if ((delta_m_z == num_z_minus_1) || ((delta_m_x == 0) && (delta_m_y == 0)))
     delta_n_z = abs(minIm(delta_m_z, num_z));
   else
@@ -663,75 +670,29 @@ int interaction::Grid_Cell_Pairlist::make_cell(topology::Topology &topo,
   const double ny_p_ly = num_y / length_y;
   const double nz_p_lz = num_z / length_z;
 
-  const unsigned int num_cg = topo.num_chargegroups();
-  const unsigned int num_solute_cg = topo.num_solute_chargegroups();
-
   math::Periodicity<b> periodicity(conf.current().box);
-
-  math::VArray &pos = conf.current().pos;
   math::Vec v;
-
-  topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
-          cg_to = topo.chargegroup_end();
-
-  // for all the solutes
-  DEBUG(12, "Grid Cell : for the solutes")
-          unsigned int i;
-  for (i = 0; i < num_solute_cg; i++, ++cg_it) {
-
-    cell_element temp;
-    temp.i = i;
-
-    // Calculate the center of geometry (cog)
-    cg_it.cog(pos, v);
+  const unsigned int num_atoms = m_cg_cog.size();
+  cell_element ce;
+  for (ce.i = 0; ce.i < num_atoms; ++ce.i) {
+    v = m_cg_cog(ce.i);
     periodicity.put_into_positive_box(v);
-
     if (irregular_shape) {
       put_into_brickwall(v);
 
       // B.7 without "+1"
-      temp.m = nxnyp * int (nz_p_lz * v(2))
+      ce.m = nxnyp * int (nz_p_lz * v(2))
               + num_x * int (ny_p_ly * v(1))
               + int (nx_p_lx * v(0));
     } else {
       // Eq. (5) without "+1"
-      temp.m = nxny * int(nz_p_lz * v(2))
+      ce.m = nxny * int(nz_p_lz * v(2))
               + num_x * int(ny_p_ly * v(1))
               + int(nx_p_lx * v(0));
     }
 
-    cell.push_back(temp);
-  } // for all charge groups
-
-  // For all the solvents
-  DEBUG(12, "Grid Cell : for the solvents");
-  for ( ; cg_it != cg_to; ++cg_it, ++i){
-
-    cell_element temp;
-    temp.i = i;
-
-    // cog is first atom
-    v = pos(**cg_it);
-    periodicity.put_into_positive_box(v);
-
-    if (irregular_shape) {
-      put_into_brickwall(v);
-
-      // B.7 without "+1"
-      temp.m = nxnyp * int (nz_p_lz * v(2))
-              + num_x * int (ny_p_ly * v(1))
-              + int (nx_p_lx * v(0));
-    } else {
-      // Eq. (5) without "+1"
-      temp.m = nxny * int(nz_p_lz * v(2))
-              + num_x * int(ny_p_ly * v(1))
-              + int(nx_p_lx * v(0));
-    }
-
-    DEBUG(12,"m = " << temp.m << " index = " << i);
-    DEBUG(10, "Step: " << sim.steps() << " Cellelement : " << i);
-    cell.push_back(temp);
-  } // For all the solvents
+    cell.push_back(ce);
+  } // for all charge groups/atoms
 
   // sort the vector
   DEBUG(15, "Grid Cell : Sort cell")
@@ -773,10 +734,10 @@ int interaction::Grid_Cell_Pairlist::make_cell(topology::Topology &topo,
 
   cell_element end;
   end.m = dim_m; 
-  DEBUG(13, "num_cg = " << num_cg);
-  end.i = num_cg; 
+  DEBUG(13, "num_cg = " << num_atoms);
+  end.i = num_atoms;
   cell.push_back(end);
-  cell_pointer.insert(cell_pointer.end(), diff, num_cg);
+  cell_pointer.insert(cell_pointer.end(), diff, num_atoms);
   DEBUG(10, "Size cell = " << cell.size() << " Size cell pointer = " << cell_pointer.size());
 
   /*
@@ -800,10 +761,10 @@ int interaction::Grid_Cell_Pairlist::make_cell(topology::Topology &topo,
 /**
  * make the pairlist
  */
-template<math::boundary_enum b>
+template<math::boundary_enum b, class cutoff_trait>
 int interaction::Grid_Cell_Pairlist::_pairlist(
         interaction::PairlistContainer & pairlist,
-        unsigned int offset, unsigned int stride){
+        unsigned int offset, unsigned int stride, const cutoff_trait & cutoff){
 
   DEBUG(12, "Grid Cell : Go through the mask and pair the atoms")
   DEBUG(12, "Number of Charge groupes : " << mytopo->num_chargegroups())
@@ -812,28 +773,28 @@ int interaction::Grid_Cell_Pairlist::_pairlist(
   // for all cells
   DEBUG(12, "Size of the cell pointer : " << cell_pointer.size())
   DEBUG(12, "Size of the cell : " << cell.size());
-  for (unsigned int m = offset; m < dim_m; m += stride) {
+  for (int m = offset; m < dim_m; m += stride) {
     DEBUG(15, "m: " << m);
 
     // for the primary atoms in the cell
-    const unsigned int n1_start = cell_pointer[m];
-    const unsigned int n_stop = cell_pointer[m + 1];
+    const int n1_start = cell_pointer[m];
+    const int n_stop = cell_pointer[m + 1];
     DEBUG(15, "N start: " << n1_start << " end: " << n_stop);
-    for (unsigned int n1 = n1_start; n1 < n_stop; n1++) {
-      for (unsigned int n2 = n1; n2 < n_stop; n2++){
+    for (int n1 = n1_start; n1 < n_stop; n1++) {
+      for (int n2 = n1; n2 < n_stop; n2++){
         DEBUG(15, "\tFirst pairing")
         DEBUG(15, "f.p n1 = " << n1 << " n2 = " << n2)
-        pair<b>(n1, n2, pairlist, periodicity); // pair them
+        pair<b>(n1, n2, pairlist, periodicity, cutoff); // pair them
       }
       // for all stripes
       DEBUG(15, "Number of stripes = " << stripes);
-      for (unsigned int s = 0; s < stripes; s++) {
-        const unsigned int m1 = m + mask_pointer[2 * s];
+      for (int s = 0; s < stripes; s++) {
+        const int m1 = m + mask_pointer[2 * s];
         if (m1 < dim_m) {
-          unsigned int min = m + mask_pointer[2 * s + 1];
+          int min = m + mask_pointer[2 * s + 1];
           int m2 = min < dim_m ? (min + 1) : dim_m;
-          const unsigned int n2_start = cell_pointer[m1];
-          const unsigned int n2_end = cell_pointer[m2];
+          const int n2_start = cell_pointer[m1];
+          const int n2_end = cell_pointer[m2];
           DEBUG(15, "\tSecond Pairing");
           DEBUG(15, "m1 : " << m1);
           DEBUG(15, "m2 : " << m2);
@@ -845,10 +806,9 @@ int interaction::Grid_Cell_Pairlist::_pairlist(
           DEBUG(15, "size of cellpointer : " << cell_pointer.size())
           DEBUG(15, "cell_pointer[m2] : " << cell_pointer[m2]);
           DEBUG(15, "n2 end : " << n2_end);
-          for (unsigned int n2 = n2_start;
-                  n2 < n2_end; n2++) {
+          for (int n2 = n2_start; n2 < n2_end; n2++) {
             DEBUG(15, "s.p n1 = " << n1 << " n2 = " << n2);
-            pair<b>(n1, n2, pairlist, periodicity);
+            pair<b>(n1, n2, pairlist, periodicity, cutoff);
           }
         } // }
       } // for all stripes
@@ -861,11 +821,11 @@ int interaction::Grid_Cell_Pairlist::_pairlist(
 /**
  * put the  charge groups inside the cell into the pairlist
  */
-template<math::boundary_enum b>
+template<math::boundary_enum b, class cutoff_trait>
 int interaction::Grid_Cell_Pairlist::pair(
         unsigned int n1, unsigned int n2,
         interaction::PairlistContainer & pairlist,
-        const math::Periodicity<b> &periodicity) {
+        const math::Periodicity<b> &periodicity, const cutoff_trait & cutoff) {
 
 
   unsigned int first = cell[n1].i;
@@ -887,9 +847,8 @@ int interaction::Grid_Cell_Pairlist::pair(
           m_cg_cog(second), r);
   // the distance
   const double d = math::abs2(r);
-  const unsigned int num_cg = mytopo->num_solute_chargegroups();
   // Solvent - solvent
-  if (first >= num_cg) {
+  if (first >= first_solvent) {
     DEBUG(15, "Solvent - Solvent");
 #ifdef HAVE_LIBCUKERNEL
             if (cuda)
@@ -900,36 +859,33 @@ int interaction::Grid_Cell_Pairlist::pair(
       return 0;
 
     if (d <= cutoff_sr2)
-      //pair_solvent_atoms(first, second, pairlist.solvent_short);
-      pair_atoms(first, second, pairlist.solvent_short, false);
+      pair_atoms(first, second, pairlist.solvent_short, false, cutoff);
     else if (d <= cutoff_lr2)
-      //pair_solvent_atoms(first, second, pairlist.solvent_long);
-      pair_atoms(first, second, pairlist.solvent_long, false);
+      pair_atoms(first, second, pairlist.solvent_long, false, cutoff);
   }
   // Solvent - solute
-  else if (second >= num_cg) {
+  else if (second >= first_solvent) {
     DEBUG(15, "Solvent - Solute");
 
     if (d <= cutoff_sr2)
-      pair_atoms(first, second, pairlist.solute_short, false);
+      pair_atoms(first, second, pairlist.solute_short, false, cutoff);
     else if (d <= cutoff_lr2)
-      pair_atoms(first, second, pairlist.solute_long, false);
+      pair_atoms(first, second, pairlist.solute_long, false, cutoff);
   }
   // Solute - solute
   else {
     DEBUG(15, "Solute - Solute");
 
     if (d <= cutoff_sr2)
-      pair_atoms(first, second, pairlist.solute_short, true);
+      pair_atoms(first, second, pairlist.solute_short, true, cutoff);
     else if (d <= cutoff_lr2)
-      pair_atoms(first, second, pairlist.solute_long, true);
+      pair_atoms(first, second, pairlist.solute_long, true, cutoff);
   }
 
   return 0;
 }
-/**
- * put the atoms of a chargegroupe into the pairlist (only for solvents!)
- */
+/*
+
 inline int interaction::Grid_Cell_Pairlist::pair_solvent_atoms(const unsigned int first,
         const unsigned int second,
         interaction::Pairlist &pairlist) {
@@ -950,6 +906,7 @@ inline int interaction::Grid_Cell_Pairlist::pair_solvent_atoms(const unsigned in
 
   return 0;
 }
+*/
 
 /**
  * put the atoms of a chargegroupe into the pairlist
@@ -957,10 +914,10 @@ inline int interaction::Grid_Cell_Pairlist::pair_solvent_atoms(const unsigned in
 inline int interaction::Grid_Cell_Pairlist::pair_atoms(const unsigned int first,
         const unsigned int second,
         interaction::Pairlist &pairlist,
-        bool solute_solute) {
+        bool solute_solute, const cg_cutoff & cutoff) {
 
   assert(first <= second);
-  // If they are from the same charge groupe
+  // If they are from the same charge group
   if (first == second) {
     DEBUG(15, "Same charge group");
     for (int a1 = mytopo->chargegroup(first),
@@ -997,6 +954,34 @@ inline int interaction::Grid_Cell_Pairlist::pair_atoms(const unsigned int first,
   }
 
   return 0;
+}
+
+/**
+ * put the atoms of a chargegroupe into the pairlist
+ */
+inline int interaction::Grid_Cell_Pairlist::pair_atoms(const unsigned int first,
+        const unsigned int second,
+        interaction::Pairlist &pairlist,
+        bool solute_solute, const atomic_cutoff & cutoff) {
+
+  assert(first <= second);
+  if (first == second)
+    return 0;
+
+  if (solute_solute) {
+    // check if is not excluded
+    if (excluded_solute_pair(*mytopo, first, second))
+      return 0;
+  } else {
+    // smae solvent mol?
+    if ((first - first_solvent) / num_atoms_per_solvent == (second - first_solvent) / num_atoms_per_solvent)
+      return 0;
+  }
+
+  assert(pairlist.size() > first);
+  pairlist[first].push_back(second);
+
+  return 1;
 }
 
 /**
