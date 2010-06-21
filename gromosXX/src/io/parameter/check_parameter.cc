@@ -3238,7 +3238,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_gridcell", "pbc_r");
   fc.unlock("pairlist_gridcell", "pbc_c");
   fc.unlock("pairlist_gridcell", "pbc_t");
-  //fc.unlock("pairlist_gridcell", "perturbation");
+  fc.unlock("pairlist_gridcell", "perturbation");
   //fc.unlock("pairlist_gridcell", "perturbation_scaling");
   fc.unlock("pairlist_gridcell", "slow_growth");
   fc.unlock("pairlist_gridcell", "individual_lambdas");

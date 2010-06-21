@@ -65,15 +65,16 @@ namespace interaction {
             unsigned int stride);
 
     /**
-     * update the pairlist, separating perturbed and non-perturbed interactions
+     * update the pairlist, separating perturbed and nonperturbed interactions
      */
-    void update_perturbed(topology::Topology & topo,
+    virtual void update_perturbed(
+            topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim,
             interaction::PairlistContainer & pairlist,
             interaction::PairlistContainer & perturbed_pairlist,
             unsigned int begin, unsigned int end,
-            unsigned int stride){}
+            unsigned int stride);
 
   private:
     /**
@@ -83,11 +84,11 @@ namespace interaction {
     /**
      * Creates the mask for regular shapes (as described in the appendix A)
      */
-    inline bool make_mask(unsigned int delta_m, Reg_Mask &t);
+    bool make_mask(unsigned int delta_m, Reg_Mask &t);
     /**
      * creates the mask for irregular shapes (as described in the appendix B)
      */
-    inline bool make_mask(int delta_m, Irr_Mask &t);
+    bool make_mask(int delta_m, Irr_Mask &t);
     /**
      * Create the mask pointer
      */
@@ -103,45 +104,101 @@ namespace interaction {
     int make_cell(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim);
+    /**
+     * CG based cutoff trait
+     */
     class cg_cutoff {};
+    /**
+     * atomic based cutoff trait
+     */
     class atomic_cutoff {};
+    /**
+     * no perturbation trait
+     */
+    class no_perturbation {};
+    /**
+     * no perturbation trait
+     */
+    class do_perturbation {};
     /**
      * make the pairlist
      */
-    template<math::boundary_enum b, class cutoff_trait>
+    template<math::boundary_enum b, class cutoff_trait, class perturbation_trait>
     int _pairlist(interaction::PairlistContainer & pairlist,
-            unsigned int offset, unsigned int stride, const cutoff_trait & cutoff);
+            interaction::PairlistContainer & perturbed_pairlist,
+            unsigned int offset, unsigned int stride,
+            const cutoff_trait & cutoff,
+            const perturbation_trait & perturbation);
     /**
      * put the  charge groups inside the cell into the pairlist
      */
-    template<math::boundary_enum b, class cutoff_trait>
-    int pair(unsigned int n1, unsigned int n2,
+    template<math::boundary_enum b, class cutoff_trait, class perturbation_trait>
+    inline int pair(unsigned int n1, unsigned int n2,
             interaction::PairlistContainer & pairlist,
+            interaction::PairlistContainer & perturbed_pairlist,
             const math::Periodicity<b> &periodicity,
-            const cutoff_trait & cutoff);
+            const cutoff_trait & cutoff,
+            const perturbation_trait & perturbation);
     /**
-     * put the atoms of a chargegroupe into the pairlist (only for solvents!)
+     * pair two solvent molecules
      */
-    /*
-    inline int pair_solvent_atoms(const unsigned int first, const unsigned int second,
-            interaction::Pairlist &pairlist);
+    inline int pair_solvent(const unsigned int first, const unsigned int second,
+            interaction::Pairlist &pairlist, const cg_cutoff & cutoff);
+    /**
+     * pair two solvent atoms
      */
+    inline int pair_solvent(const unsigned int first, const unsigned int second,
+            interaction::Pairlist &pairlist, const atomic_cutoff & cutoff);
     /**
      * put the atoms of a chargegroupe into the pairlist
      */
-    inline int pair_atoms(const unsigned int first, const unsigned int second,
-            interaction::Pairlist &pairlist, bool solute_solute, const cg_cutoff & cutoff);
+    template<class perturbation_trait>
+    inline int pair_solute(const unsigned int first, const unsigned int second,
+            interaction::Pairlist &pairlist, interaction::Pairlist &perturbed_pairlist, const cg_cutoff & cutoff,
+            const perturbation_trait & perturbation);
     /**
      * put the atoms into the pairlist
      */
-    inline int pair_atoms(const unsigned int first, const unsigned int second,
-            interaction::Pairlist &pairlist, bool solute_solute, const atomic_cutoff & cutoff);
+    template<class perturbation_trait>
+    inline int pair_solute(const unsigned int first, const unsigned int second,
+            interaction::Pairlist &pairlist, interaction::Pairlist &perturbed_pairlist, const atomic_cutoff & cutoff,
+            const perturbation_trait & perturbation);
+    /**
+     * put the atoms of a chargegroupe into the pairlist
+     */
+    template<class perturbation_trait>
+    inline int pair_solute_solvent(const unsigned int first, const unsigned int second,
+            interaction::Pairlist &pairlist, interaction::Pairlist &perturbed_pairlist, const cg_cutoff & cutoff,
+            const perturbation_trait & perturbation);
+    /**
+     * put the atoms into the pairlist
+     */
+    template<class perturbation_trait>
+    inline int pair_solute_solvent(const unsigned int first, const unsigned int second,
+            interaction::Pairlist &pairlist, interaction::Pairlist &perturbed_pairlist, const atomic_cutoff & cutoff,
+            const perturbation_trait & perturbation);
     /**
      * Check, if two atoms are exclude from the pairlist
      */
-    bool excluded_solute_pair(
+    inline bool excluded_solute_pair(
             topology::Topology & topo,
             unsigned int i, unsigned int j);
+
+    /**
+     * insert a pair to the pairlist
+     */
+    inline void insert_pair(
+            interaction::Pairlist & pairlist,
+            interaction::Pairlist & perturbed_pairlist,
+            int first, int second, const no_perturbation & perturbation);
+    /**
+     * insert a pair to the pairlist (perturbation code)
+     */
+    inline void insert_pair(
+            interaction::Pairlist & pairlist,
+            interaction::Pairlist & perturbed_pairlist,
+            int first, int second, const do_perturbation & perturbation);
+
     /**
      * put the chargegroups into the box
      */
@@ -159,10 +216,6 @@ namespace interaction {
      * periodicity defined by its second argument.
      */
     inline int minIm(int n, int num);
-    /**
-     * returns the minimum image of a vector (B.2 - 4)
-     */
-    math::GenericVec<double> minIm(math::GenericVec<double> n);
     /**
      * Returns the sign
      */

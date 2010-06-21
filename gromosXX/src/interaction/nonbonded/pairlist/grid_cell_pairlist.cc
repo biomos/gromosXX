@@ -110,7 +110,7 @@ int interaction::Grid_Cell_Pairlist::init(topology::Topology & topo,
 
   const double grid_size = sim.param().pairlist.grid_size;
   // For having a reasonable amount of boxes
-  const unsigned int factor = 5;
+  const unsigned int factor = 1;
   num_x = int (length_x / grid_size) * factor;
   num_y = int (length_y / grid_size) * factor;
   num_z = int (length_z / grid_size) * factor;
@@ -173,6 +173,8 @@ prepare(topology::Topology & topo,
 	simulation::Simulation & sim)
 {
 
+  timer().start("pairlist prepare");
+
   is_vacuum = false;
   if (is_vacuum) {
     create_vacuum_box();
@@ -210,6 +212,7 @@ prepare(topology::Topology & topo,
   }
 
   // If pressure is constant, make mask again
+  timer().start("pairlist mask");
   if (sim.param().pcouple.scale != math::pcouple_off) {
     DEBUG(7, "Grid Cell : Pressure is constant");
     unsigned int err = calc_par();
@@ -226,9 +229,12 @@ prepare(topology::Topology & topo,
       return 1;
     }
   }
-
+  timer().stop("pairlist mask");
+  timer().start("pairlist cell");
   SPLIT_BOUNDARY(make_cell, topo, conf, sim);
+  timer().stop("pairlist cell");
 
+  timer().stop("pairlist prepare");
   return 0;
 }
 
@@ -264,13 +270,51 @@ void interaction::Grid_Cell_Pairlist::update(
   }
   // _pairlist(pairlist)
   if (!sim.param().pairlist.atomic_cutoff) {
-    SPLIT_BOUNDARY(_pairlist, pairlist, begin, stride, cg_cutoff());
+    SPLIT_BOUNDARY(_pairlist, pairlist, pairlist, begin, stride, cg_cutoff(), no_perturbation());
   } else {
-    SPLIT_BOUNDARY(_pairlist, pairlist, begin, stride, atomic_cutoff());
+    SPLIT_BOUNDARY(_pairlist, pairlist, pairlist, begin, stride, atomic_cutoff(), no_perturbation());
   }
 
   if (begin == 0) // master
     timer().stop("pairlist");
+
+  #pragma omp barrier
+
+  if (begin == 0 && is_vacuum) {
+    restore_vacuum_box();
+  }
+}
+
+/**
+ * update the (perturbed) pairlist
+ */
+void interaction::Grid_Cell_Pairlist::update_perturbed(
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation &sim,
+        interaction::PairlistContainer & pairlist,
+        interaction::PairlistContainer & perturbed_pairlist,
+        unsigned int begin, unsigned int end,
+        unsigned int stride) {
+
+  DEBUG(5, "Grid Cell : Update pairlist");
+  if (begin == 0) // master
+    timer().start("perturbed pairlist");
+
+  {
+    pairlist.clear();
+    perturbed_pairlist.clear();
+    #pragma omp barrier
+  }
+  // _pairlist(pairlist)
+  if (!sim.param().pairlist.atomic_cutoff) {
+    SPLIT_BOUNDARY(_pairlist, pairlist, perturbed_pairlist, begin, stride, cg_cutoff(), do_perturbation());
+  } else {
+    SPLIT_BOUNDARY(_pairlist, pairlist, perturbed_pairlist, begin, stride, atomic_cutoff(), do_perturbation());
+  }
+
+  if (begin == 0) // master
+    timer().stop("perturbed pairlist");
 
   #pragma omp barrier
 
@@ -287,8 +331,8 @@ int interaction::Grid_Cell_Pairlist::calc_par(){
   DEBUG(10, "Grid cell : Calculate parameters");
   if (irregular_shape) {
     math::Vec a = myconf->current().box(0);
-    const math::Vec b = myconf->current().box(1);
-    const math::Vec c = myconf->current().box(2);
+    const math::Vec & b = myconf->current().box(1);
+    const math::Vec & c = myconf->current().box(2);
 
     double BNX = math::abs(a);
     double BOXX = BNX;
@@ -408,7 +452,7 @@ int interaction::Grid_Cell_Pairlist::make_mask_pointer(){
   mask_pointer.clear();
 
   for (int m = 1; m < dim_m; m++) {
-    if (make_mask(m, t)) {
+    if (make_mask(m,t)) {
       DEBUG(10, "Start of mask = " << m);
       mask_pointer.push_back(m);
 
@@ -427,9 +471,9 @@ int interaction::Grid_Cell_Pairlist::make_mask_pointer(){
 }
 
 /**
- * Creates the mask for regular shapes (as described in the appendix A)
+ * Creates the mask for rectangular shapes (as described in the appendix A)
  */
-inline bool interaction::Grid_Cell_Pairlist::make_mask(unsigned int delta_m,
+bool interaction::Grid_Cell_Pairlist::make_mask(unsigned int delta_m,
         Reg_Mask &t) {
 
   DEBUG(15, "Grid Cell : Make the mask for delta_m = " << delta_m);
@@ -474,7 +518,7 @@ inline bool interaction::Grid_Cell_Pairlist::make_mask(unsigned int delta_m,
 /**
  * Creates the mask for irregular shapes (as described in the appendix B)
  */
-inline bool interaction::Grid_Cell_Pairlist::make_mask(int delta_m,
+bool interaction::Grid_Cell_Pairlist::make_mask(int delta_m,
         Irr_Mask &t) {
 
   DEBUG(15, "Grid Cell : Make the mask for delta_m = " << delta_m);
@@ -761,10 +805,13 @@ int interaction::Grid_Cell_Pairlist::make_cell(topology::Topology &topo,
 /**
  * make the pairlist
  */
-template<math::boundary_enum b, class cutoff_trait>
+template<math::boundary_enum b, class cutoff_trait, class perturbation_trait>
 int interaction::Grid_Cell_Pairlist::_pairlist(
         interaction::PairlistContainer & pairlist,
-        unsigned int offset, unsigned int stride, const cutoff_trait & cutoff){
+        interaction::PairlistContainer & perturbed_pairlist,
+        unsigned int offset, unsigned int stride,
+        const cutoff_trait & cutoff,
+        const perturbation_trait & perturbation){
 
   DEBUG(12, "Grid Cell : Go through the mask and pair the atoms")
   DEBUG(12, "Number of Charge groupes : " << mytopo->num_chargegroups())
@@ -784,7 +831,7 @@ int interaction::Grid_Cell_Pairlist::_pairlist(
       for (int n2 = n1; n2 < n_stop; n2++){
         DEBUG(15, "\tFirst pairing")
         DEBUG(15, "f.p n1 = " << n1 << " n2 = " << n2)
-        pair<b>(n1, n2, pairlist, periodicity, cutoff); // pair them
+        pair<b>(n1, n2, pairlist, perturbed_pairlist, periodicity, cutoff, perturbation); // pair them
       }
       // for all stripes
       DEBUG(15, "Number of stripes = " << stripes);
@@ -808,7 +855,7 @@ int interaction::Grid_Cell_Pairlist::_pairlist(
           DEBUG(15, "n2 end : " << n2_end);
           for (int n2 = n2_start; n2 < n2_end; n2++) {
             DEBUG(15, "s.p n1 = " << n1 << " n2 = " << n2);
-            pair<b>(n1, n2, pairlist, periodicity, cutoff);
+            pair<b>(n1, n2, pairlist, perturbed_pairlist, periodicity, cutoff, perturbation);
           }
         } // }
       } // for all stripes
@@ -821,13 +868,14 @@ int interaction::Grid_Cell_Pairlist::_pairlist(
 /**
  * put the  charge groups inside the cell into the pairlist
  */
-template<math::boundary_enum b, class cutoff_trait>
-int interaction::Grid_Cell_Pairlist::pair(
+template<math::boundary_enum b, class cutoff_trait, class perturbation_trait>
+inline int interaction::Grid_Cell_Pairlist::pair(
         unsigned int n1, unsigned int n2,
         interaction::PairlistContainer & pairlist,
-        const math::Periodicity<b> &periodicity, const cutoff_trait & cutoff) {
-
-
+        interaction::PairlistContainer & perturbed_pairlist,
+        const math::Periodicity<b> &periodicity, 
+        const cutoff_trait & cutoff,
+        const perturbation_trait & perturbation) {
   unsigned int first = cell[n1].i;
   unsigned int second = cell[n2].i;
   DEBUG(15, "First : " << first << " second : " << second);
@@ -843,56 +891,169 @@ int interaction::Grid_Cell_Pairlist::pair(
   DEBUG(15, "Size of m_cg_cog = " << m_cg_cog.size() << " Num CG : " <<
           mytopo->num_chargegroups());
 
-  periodicity.nearest_image(m_cg_cog(first),
-          m_cg_cog(second), r);
-  // the distance
-  const double d = math::abs2(r);
   // Solvent - solvent
   if (first >= first_solvent) {
     DEBUG(15, "Solvent - Solvent");
 #ifdef HAVE_LIBCUKERNEL
-            if (cuda)
+    if (cuda)
       return 0;
 #endif
-
-    if (first == second) // Only a problem for solvents
-      return 0;
-
+    periodicity.nearest_image(m_cg_cog(first), m_cg_cog(second), r);
+    const double d = math::abs2(r);
     if (d <= cutoff_sr2)
-      pair_atoms(first, second, pairlist.solvent_short, false, cutoff);
+      pair_solvent(first, second, pairlist.solvent_short, cutoff);
     else if (d <= cutoff_lr2)
-      pair_atoms(first, second, pairlist.solvent_long, false, cutoff);
-  }
-  // Solvent - solute
+      pair_solvent(first, second, pairlist.solvent_long, cutoff);
+  }// Solvent - solute
   else if (second >= first_solvent) {
-    DEBUG(15, "Solvent - Solute");
-
+    DEBUG(15, "Solute - Solvent");
+    periodicity.nearest_image(m_cg_cog(first), m_cg_cog(second), r);
+    const double d = math::abs2(r);
     if (d <= cutoff_sr2)
-      pair_atoms(first, second, pairlist.solute_short, false, cutoff);
+      pair_solute_solvent(first, second, pairlist.solute_short,
+            perturbed_pairlist.solute_short, cutoff, perturbation);
     else if (d <= cutoff_lr2)
-      pair_atoms(first, second, pairlist.solute_long, false, cutoff);
-  }
-  // Solute - solute
+      pair_solute_solvent(first, second, pairlist.solute_long,
+            perturbed_pairlist.solute_long, cutoff, perturbation);
+  }// Solute - solute
   else {
     DEBUG(15, "Solute - Solute");
-
+    periodicity.nearest_image(m_cg_cog(first), m_cg_cog(second), r);
+    // the distance
+    const double d = math::abs2(r);
     if (d <= cutoff_sr2)
-      pair_atoms(first, second, pairlist.solute_short, true, cutoff);
+      pair_solute(first, second, pairlist.solute_short,
+            perturbed_pairlist.solute_short, cutoff, perturbation);
     else if (d <= cutoff_lr2)
-      pair_atoms(first, second, pairlist.solute_long, true, cutoff);
+      pair_solute(first, second, pairlist.solute_long,
+            perturbed_pairlist.solute_long, cutoff, perturbation);
   }
 
   return 0;
 }
-/*
 
-inline int interaction::Grid_Cell_Pairlist::pair_solvent_atoms(const unsigned int first,
+/**
+ * put the atoms of a chargegroupe into the pairlist
+ */
+template<class perturbation_trait>
+inline int interaction::Grid_Cell_Pairlist::pair_solute_solvent(const unsigned int first,
         const unsigned int second,
-        interaction::Pairlist &pairlist) {
+        interaction::Pairlist & pairlist,
+        interaction::Pairlist & perturbed_pairlist,
+        const cg_cutoff & cutoff,
+        const perturbation_trait & perturbation) {
 
   assert(first <= second);
+  DEBUG(15, "Different charge group");
+  for (int a1 = mytopo->chargegroup(first),
+          a1_to = mytopo->chargegroup(first + 1);
+          a1 < a1_to; ++a1) {
+    for (int a2 = mytopo->chargegroup(second),
+            a2_to = mytopo->chargegroup(second + 1); a2 < a2_to; ++a2) {
 
-  DEBUG(15, "Solvent charge group");
+
+      assert(int(pairlist.size()) > a1);
+      insert_pair(pairlist, perturbed_pairlist, a1, a2, perturbation);
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * put the atoms into the pairlist
+ */
+template<class perturbation_trait>
+inline int interaction::Grid_Cell_Pairlist::pair_solute_solvent(const unsigned int first,
+        const unsigned int second,
+        interaction::Pairlist & pairlist,
+        interaction::Pairlist & perturbed_pairlist,
+        const atomic_cutoff & cutoff,
+        const perturbation_trait & perturbation) {
+  assert(first <= second);
+  assert(pairlist.size() > first);
+  insert_pair(pairlist, perturbed_pairlist, first, second, perturbation);
+  return 1;
+}
+
+/**
+ * put the atoms of a chargegroupe into the pairlist
+ */
+template<class perturbation_trait>
+inline int interaction::Grid_Cell_Pairlist::pair_solute(const unsigned int first,
+        const unsigned int second,
+        interaction::Pairlist & pairlist,
+        interaction::Pairlist & perturbed_pairlist,
+        const cg_cutoff & cutoff,
+        const perturbation_trait & perturbation) {
+
+  assert(first <= second);
+  // If they are from the same charge group
+  if (first == second) {
+    DEBUG(15, "Same charge group");
+    for (int a1 = mytopo->chargegroup(first),
+            a_to = mytopo->chargegroup(first + 1);
+            a1 < a_to; ++a1) {
+      for (int a2 = a1 + 1; a2 < a_to; ++a2) {
+          // check it is not excluded
+          if (excluded_solute_pair(*mytopo, a1, a2))
+            continue;
+        assert(int(pairlist.size()) > a1);
+        insert_pair(pairlist, perturbed_pairlist, a1, a2, perturbation);
+      }
+    }
+  } else { // different charge groups
+    DEBUG(15, "Different charge group");
+    for (int a1 = mytopo->chargegroup(first),
+            a1_to = mytopo->chargegroup(first + 1);
+            a1 < a1_to; ++a1) {
+      for (int a2 = mytopo->chargegroup(second),
+              a2_to = mytopo->chargegroup(second + 1); a2 < a2_to; ++a2) {
+          // check if is not excluded
+        if (excluded_solute_pair(*mytopo, a1, a2))
+          continue;
+
+        assert(int(pairlist.size()) > a1);
+        insert_pair(pairlist, perturbed_pairlist, a1, a2, perturbation);
+      }
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * put the atoms into the pairlist
+ */
+template<class perturbation_trait>
+inline int interaction::Grid_Cell_Pairlist::pair_solute(const unsigned int first,
+        const unsigned int second,
+        interaction::Pairlist & pairlist,
+        interaction::Pairlist & perturbed_pairlist,
+        const atomic_cutoff & cutoff,
+        const perturbation_trait & perturbation) {
+  assert(first <= second);
+  // check if is not excluded
+  if (first == second || excluded_solute_pair(*mytopo, first, second))
+    return 0;
+
+  assert(pairlist.size() > first);
+  insert_pair(pairlist, perturbed_pairlist, first, second, perturbation);
+
+  return 1;
+}
+
+inline int interaction::Grid_Cell_Pairlist::pair_solvent(const unsigned int first,
+        const unsigned int second,
+        interaction::Pairlist & pairlist,
+        const cg_cutoff & cutoff) {
+
+  assert(first <= second);
+  assert(first >= first_solvent);
+  // If they are from the same charge group
+  if (first == second)
+    return 0;
+  DEBUG(15, "Different charge group");
   for (int a1 = mytopo->chargegroup(first),
           a1_to = mytopo->chargegroup(first + 1);
           a1 < a1_to; ++a1) {
@@ -903,80 +1064,18 @@ inline int interaction::Grid_Cell_Pairlist::pair_solvent_atoms(const unsigned in
       pairlist[a1].push_back(a2);
     }
   }
-
-  return 0;
-}
-*/
-
-/**
- * put the atoms of a chargegroupe into the pairlist
- */
-inline int interaction::Grid_Cell_Pairlist::pair_atoms(const unsigned int first,
-        const unsigned int second,
-        interaction::Pairlist &pairlist,
-        bool solute_solute, const cg_cutoff & cutoff) {
-
-  assert(first <= second);
-  // If they are from the same charge group
-  if (first == second) {
-    DEBUG(15, "Same charge group");
-    for (int a1 = mytopo->chargegroup(first),
-            a_to = mytopo->chargegroup(first + 1);
-            a1 < a_to; ++a1) {
-      for (int a2 = a1 + 1; a2 < a_to; ++a2) {        
-          // check it is not excluded
-          if (excluded_solute_pair(*mytopo, a1, a2))
-            continue;
-        assert(int(pairlist.size()) > a1);
-        pairlist[a1].push_back(a2);
-      }
-    }
-  }
-  else {
-    DEBUG(15, "Different charge group");
-    for (int a1 = mytopo->chargegroup(first),
-            a1_to = mytopo->chargegroup(first + 1);
-            a1 < a1_to; ++a1) {
-      for (int a2 = mytopo->chargegroup(second),
-              a2_to = mytopo->chargegroup(second + 1); a2 < a2_to; ++a2) {
-
-        if (solute_solute) {
-          // check if is not excluded
-          if (excluded_solute_pair(*mytopo, a1, a2))
-            continue;
-        }
-
-        assert(int(pairlist.size()) > a1);
-        pairlist[a1].push_back(a2);
-
-      }
-    }
-  }
-
-  return 0;
+  return 1;
 }
 
-/**
- * put the atoms of a chargegroupe into the pairlist
- */
-inline int interaction::Grid_Cell_Pairlist::pair_atoms(const unsigned int first,
+inline int interaction::Grid_Cell_Pairlist::pair_solvent(const unsigned int first,
         const unsigned int second,
-        interaction::Pairlist &pairlist,
-        bool solute_solute, const atomic_cutoff & cutoff) {
+        interaction::Pairlist &pairlist, const atomic_cutoff & cutoff) {
 
   assert(first <= second);
-  if (first == second)
+  assert(first >= first_solvent);
+  // same solvent mol?
+  if ((first - first_solvent) / num_atoms_per_solvent == (second - first_solvent) / num_atoms_per_solvent)
     return 0;
-
-  if (solute_solute) {
-    // check if is not excluded
-    if (excluded_solute_pair(*mytopo, first, second))
-      return 0;
-  } else {
-    // smae solvent mol?
-    if ((first - first_solvent) / num_atoms_per_solvent == (second - first_solvent) / num_atoms_per_solvent)
-      return 0;
-  }
 
   assert(pairlist.size() > first);
   pairlist[first].push_back(second);
@@ -984,14 +1083,34 @@ inline int interaction::Grid_Cell_Pairlist::pair_atoms(const unsigned int first,
   return 1;
 }
 
+inline void interaction::Grid_Cell_Pairlist::insert_pair(
+            interaction::Pairlist & pairlist,
+            interaction::Pairlist & perturbed_pairlist,
+            int first, int second, const no_perturbation & perturbation) {
+  pairlist[first].push_back(second);
+}
+
+inline void interaction::Grid_Cell_Pairlist::insert_pair(
+            interaction::Pairlist & pairlist,
+            interaction::Pairlist & perturbed_pairlist,
+            int first, int second, const do_perturbation & perturbation) {
+  assert(first < second);
+  
+  if (mytopo->is_perturbed(first) || mytopo->is_eds_perturbed(first))
+    perturbed_pairlist[first].push_back(second);
+  else if (mytopo->is_perturbed(second) || mytopo->is_eds_perturbed(second))
+    perturbed_pairlist[second].push_back(first);
+  else
+    pairlist[first].push_back(second);
+}
+
 /**
  * Check, if two atoms are exclude from the pairlist
  */
-bool interaction::Grid_Cell_Pairlist::excluded_solute_pair(topology::Topology & topo,
+inline bool interaction::Grid_Cell_Pairlist::excluded_solute_pair(topology::Topology & topo,
 		       unsigned int i, unsigned int j)
 {
   assert(i<j);
-
   std::set<int>::reverse_iterator
     e = topo.all_exclusion(i).rbegin(),
     e_to = topo.all_exclusion(i).rend();
@@ -1060,30 +1179,6 @@ inline int interaction::Grid_Cell_Pairlist::minIm(int n, int num) {
      return n - num;
    else
      return n;
-}
-
-/**
- * returns the minimum image of a vector (B.2 - 4)
- */
-inline math::Vec
-interaction::Grid_Cell_Pairlist::minIm(math::Vec n){
-
-  // B.3
-  double n_z_prime = n(2) - num_z * signum(n(2)) *
-            (int(2 * (std::abs(n(2)) + num_z_half)) / (2 *num_z));
-  // B.4
-  double n_y_prime = n(1) + lambda_yz / num_z * (n_z_prime - n(2));
-  // B.3
-  n_y_prime = n_y_prime - num_y * signum(n_y_prime) *
-            (int(2 * (std::abs(n_y_prime)) + num_y_half) / (2 *num_y));
-  // B.4
-  double n_x_prime = n(0) + lambda_xz / num_z * (n_z_prime - n(2))
-            + lambda_xy / num_y * (n_y_prime - n(1));
-  // B.3
-  n_x_prime = n_x_prime - num_x * signum(n_x_prime) *
-            (int(2 * (std::abs(n_x_prime)) + num_x_half) / (2 *num_x));
-
-  return math::Vec(n_x_prime, n_y_prime, n_z_prime);
 }
 
 void interaction::Grid_Cell_Pairlist::put_into_brickwall(math::Vec &v) {

@@ -98,7 +98,18 @@ int interaction::Perturbed_Nonbonded_Set
 			    pairlist(),
 			    m_rank, topo.num_atoms(), m_num_threads);
     }
-    
+
+    // Print pairlist
+    /*
+    std::cout << pairlist().solute_long << std::endl;
+    std::cout << pairlist().solute_short << std::endl;
+    std::cout << pairlist().solvent_long << std::endl;
+    std::cout << pairlist().solvent_short << std::endl;
+    std::cout << perturbed_pairlist().solute_long << std::endl;
+    std::cout << perturbed_pairlist().solute_short << std::endl;
+    std::cout << perturbed_pairlist().solvent_long << std::endl;
+    std::cout << perturbed_pairlist().solvent_short << std::endl;
+     */
   }
 
   if (sim.param().polarise.cos) {
@@ -120,7 +131,7 @@ int interaction::Perturbed_Nonbonded_Set
     stop_timer("explicit polarisation");
   }  
 
-  if(pairlist_update){
+  if (pairlist_update){
     start_timer("longrange");
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_long, m_pairlist.solvent_long,
@@ -166,15 +177,15 @@ int interaction::Perturbed_Nonbonded_Set
   
   // add 1,4 - interactions
   if (m_rank == 0){
-    start_timer("polarisation self-energy");
     if (sim.param().polarise.cos) {
+      start_timer("polarisation self-energy");
       if (topo.perturbed_solute().atoms().size()) {
         m_perturbed_outerloop.perturbed_self_energy_outerloop(topo, conf, sim, m_storage);
       } else {
         m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
       }
+      stop_timer("polarisation self-energy");
     } 
-    stop_timer("polarisation self-energy");
     
     DEBUG(6, "\t1,4 - interactions");
     if (topo.perturbed_solute().atoms().size() > 0){
