@@ -806,8 +806,8 @@ namespace topology {
     /**
      * constructor
      */
-    xray_umbrella_weight_struct(int id, double threshold, double threshold_growth_rate, bool threshold_freeze, double cutoff, std::vector<unsigned int> atoms)
-    : id(id), threshold(threshold), threshold_growth_rate(threshold_growth_rate), threshold_freeze(threshold_freeze), cutoff(cutoff), atoms(atoms) {
+    xray_umbrella_weight_struct(int id, double threshold, double threshold_growth_rate, double threshold_overshoot, bool threshold_freeze, double cutoff, std::vector<unsigned int> atoms)
+    : id(id), threshold(threshold), threshold_growth_rate(threshold_growth_rate), threshold_overshoot(threshold_overshoot), threshold_freeze(threshold_freeze), cutoff(cutoff), atoms(atoms), signal(0) {
     }
     /**
      * the ID of the umbrella
@@ -822,7 +822,11 @@ namespace topology {
      */
     double threshold_growth_rate;
     /**
-     * signal grow, freeze threshold
+     *  how much to overshoot if the minimum is found?
+     */
+    double threshold_overshoot;
+    /**
+     * grow or freeze threshold
      */
     bool threshold_freeze;
     /**
@@ -833,6 +837,10 @@ namespace topology {
      * the atoms attched to the umbrella weigh
      */
     std::vector<unsigned int> atoms;
+    /**
+     * integer to signal events like minimuim found etc.
+     */
+     int signal;
   };
 
 }

@@ -2655,8 +2655,10 @@ _read_xray_umbrellaweightthesholds(std::vector<std::string> &buffer,
 
   for(unsigned int i = 0; i < umb_weight.size(); ++i) {
     std::istringstream line(buffer[i]);
-    line >> umb_weight[i].threshold >> umb_weight[i].threshold_growth_rate
-            >> umb_weight[i].threshold_freeze;
+    line >> umb_weight[i].threshold 
+         >> umb_weight[i].threshold_growth_rate
+         >> umb_weight[i].threshold_overshoot
+         >> umb_weight[i].threshold_freeze;
     if (line.fail()) {
       io::messages.add("Bad line in XRAYUMBRELLAWEIGHTTHRESHOLDS block.",
               "In_Configuration", io::message::error);

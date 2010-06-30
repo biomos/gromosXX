@@ -2282,6 +2282,7 @@ void io::Out_Configuration::_print_xray_umbrellaweightthresholds(simulation::Par
   for (; it != to; ++it) {
     os << std::setw(15) << it->threshold
             << std::setw(15) << it->threshold_growth_rate
+            << std::setw(15) << it->threshold_overshoot
             << std::setw(3) << (it->threshold_freeze ? 1 : 0) << std::endl;
   }
   os << "END\n";

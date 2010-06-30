@@ -432,9 +432,14 @@ io::In_Xrayresspec::read(topology::Topology& topo,
           line.erase(right+1);
         _lineStream.str(line);
         int umbrella;
-        double thres, thres_growth, cut;
+        double thres, thres_growth, thres_overshoot, cut;
         bool thres_freeze;
-        _lineStream >> umbrella >> thres >> thres_growth >> thres_freeze >> cut;
+        _lineStream >> umbrella 
+                    >> thres 
+                    >> thres_growth 
+                    >> thres_overshoot
+                    >> thres_freeze 
+                    >> cut;
         if (_lineStream.fail()) {
           io::messages.add("XRAYUMBRELLAWEIGHT block: Cannot read umbrella id and threshold data",
                   "in_Xrayresspec", io::message::error);
@@ -463,7 +468,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
           return;
         }
 
-        topo.xray_umbrella_weights().push_back(topology::xray_umbrella_weight_struct(umbrella, thres, thres_growth, thres_freeze, cut, atoms));
+        topo.xray_umbrella_weights().push_back(topology::xray_umbrella_weight_struct(umbrella, thres, thres_growth, thres_overshoot, thres_freeze, cut, atoms));
 
       } //  for lines
     } else {

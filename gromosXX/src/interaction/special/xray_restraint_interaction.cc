@@ -12,6 +12,7 @@
 
 // special interactions
 #include <interaction/interaction_types.h>
+#include <util/umbrella.h>
 #include <util/umbrella_weight.h>
 #include <interaction/special/xray_restraint_interaction.h>
 
@@ -568,8 +569,8 @@ int interaction::Xray_Restraint_Interaction
   // and for R free
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_rfree()[i];
-    obs_k_calc_free += fabs(xrs.sf - k_free_inst * conf.special().xray_rest[j].sf_curr);
-    obs_k_calcavg_free += fabs(xrs.sf - k_free_avg * conf.special().xray_rest[j].sf_av);
+    obs_k_calc_free += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg_free += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
   }
 
   // calculate R factors: R_inst and R_avg
@@ -762,6 +763,7 @@ int interaction::Xray_Restraint_Interaction
             topo.xray_umbrella_weights().end();
     for (; it != to; ++it) {
       if (!it->threshold_freeze) {
+        // increase it
         it->threshold += it->threshold_growth_rate;
         if (it->threshold < 0.0) {
           it->threshold = 0.0;
@@ -771,6 +773,29 @@ int interaction::Xray_Restraint_Interaction
           io::messages.add(msg.str(), "Xray_Restraint_Interaction", io::message::warning);
         }
       }
+
+      // now let's take care of signals
+      switch(it->signal) { 
+        case 1: 
+        {
+          // raise the threshold a little more and freeze
+          it->threshold += it->threshold_overshoot;
+          it->threshold_freeze = true;
+          // set all umbrella weights to zero again.
+          std::vector<util::Umbrella>::iterator umb_it = conf.special().umbrellas.begin(),
+             umb_to = conf.special().umbrellas.end();
+          for (; umb_it != umb_to; ++umb_it) {
+            if (umb_it->id == it->id) {
+              umb_it->configurations.clear();
+              break;
+            }
+          }
+          // reset signal
+          it->signal = 0;
+          break;
+        }
+        default: break;
+      } // switch signal
     } // for umbrellas
   } // steps?
 
@@ -1109,8 +1134,10 @@ void interaction::Electron_Density_Umbrella_Weight::increment_weight() {
   if (r_real > param.threshold) {
     const double term = r_real - param.threshold;
     weight += 0.5 * term * term;
-  } else {
-    param.threshold_freeze = true;
+  } 
+  if (!param.threshold_freeze && r_real <= param.threshold) {
+    // signal that the optimal value was found.
+    param.signal = 1;
   }
 
   DEBUG(10, "new weight: " << weight);
