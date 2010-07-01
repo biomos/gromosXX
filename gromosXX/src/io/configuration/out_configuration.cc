@@ -1401,9 +1401,9 @@ ENERGY03
   -6.774710271e-01   4.920740888e-01   0.000000000e+00   0.000000000e+00  # 1 - 2
   -7.163386790e-01  -1.309311086e+01   0.000000000e+00   0.000000000e+00  # 2 - 2
 # special
-#  constraints       pos. restraints   dist. restraints  dihe. restr.      jvalue            local elevation   path integral
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
+#  constraints       pos. restraints   dist. restraints  dihe. restr.      SASA              SASA volume       jvalue            local elevation   path integral
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
 # eds (enveloping distribution sampling)
 # numstates
 2
