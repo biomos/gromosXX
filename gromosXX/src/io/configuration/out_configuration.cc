@@ -1354,25 +1354,35 @@ ENERGY03
    1.598443703e+02 # total
    1.709320077e+02 # kinetic
   -4.205278511e+01 # potential total
+   3.980457903e+01 # covalent total
    1.935607149e+01 # bonds total
    1.267041319e+01 # angles total
    1.485470503e+00 # impropers total
    6.292623846e+00 # dihedrals total
    0.000000000e+00 # crossdihedrals total
+  -8.185736413e+01 # nonbonded total
   -1.442773701e+00 # Lennard-Jones total
   -8.041459043e+01 # Coulomb/Reaction-Field total
+   0.000000000e+00 # lattice total
+   0.000000000e+00 # lattice sum pair total
    0.000000000e+00 # lattice sum real space total
-   0.000000000e+00 # lattice sum reciprocal space total
+   0.000000000e+00 # lattice sum k (reciprocal) space total
    0.000000000e+00 # lattice sum A term total
    0.000000000e+00 # lattice sum self total
    0.000000000e+00 # lattice sum surface total
+   0.000000000e+00 # polarisation self total
+   0.000000000e+00 # special total
+   0.000000000e+00 # SASA total
+   0.000000000e+00 # SASA volume total
    0.000000000e+00 # constraints total
-   0.000000000e+00 # position restraints total
    0.000000000e+00 # distance restraints total
    0.000000000e+00 # dihedral restraints total
-   0.000000000e+00 # J-value total
-   0.000000000e+00 # polarisation self total
-   3.096514777e+01 # enveloping distribution sampling, energy of reference state
+   0.000000000e+00 # position restraints total
+   0.000000000e+00 # J-value restraints total
+   0.000000000e+00 # X-ray restraints total
+   0.000000000e+00 # Local elevation total
+   3.096514777e+01 # EDS: energy of reference state
+   0.000000000e+00 # Entropy
 # baths
 # number of baths
 2
@@ -1396,15 +1406,8 @@ ENERGY03
    0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
 # eds (enveloping distribution sampling)
 # numstates
-9
+2
            # total         nonbonded          special
-   3.096514777e+01   3.096514777e+01   0.000000000e+00
-   3.096514777e+01   3.096514777e+01   0.000000000e+00
-   3.096514777e+01   3.096514777e+01   0.000000000e+00
-   3.096514777e+01   3.096514777e+01   0.000000000e+00
-   3.096514777e+01   3.096514777e+01   0.000000000e+00
-   3.096514777e+01   3.096514777e+01   0.000000000e+00
-   3.096514777e+01   3.096514777e+01   0.000000000e+00
    3.096514777e+01   3.096514777e+01   0.000000000e+00
    3.096514777e+01   3.096514777e+01   0.000000000e+00
 END
@@ -2446,27 +2449,35 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << std::setw(18) << e.total << "\n"// 1
           << std::setw(18) << e.kinetic_total << "\n" // 2
           << std::setw(18) << e.potential_total << "\n" // 3
-          << std::setw(18) << e.bond_total << "\n" // 4
-          << std::setw(18) << e.angle_total << "\n" // 5
-          << std::setw(18) << e.improper_total << "\n" // 6
-          << std::setw(18) << e.dihedral_total << "\n" // 7
-          << std::setw(18) << e.crossdihedral_total << "\n" // 8
-          << std::setw(18) << e.lj_total << "\n" // 9
-          << std::setw(18) << e.crf_total << "\n" // 10
-          << std::setw(18) << e.ls_realspace_total << "\n" // 11
-          << std::setw(18) << e.ls_kspace_total << "\n" // 12
-          << std::setw(18) << e.ls_a_term_total << "\n" // 13
-          << std::setw(18) << e.ls_self_total << "\n" // 14
-          << std::setw(18) << e.ls_surface_total << "\n" // 15
-          << std::setw(18) << e.constraints_total << "\n" // 16
-          << std::setw(18) << e.posrest_total << "\n" // 17
-          << std::setw(18) << e.distanceres_total << "\n" // 18
-          << std::setw(18) << e.dihrest_total << "\n" // 19
-          << std::setw(18) << e.jvalue_total << "\n" // 20
-          << std::setw(18) << e.xray_total << "\n" // 21
-          << std::setw(18) << e.leus_total << "\n" // 22
-          << std::setw(18) << e.self_total << "\n" // 23
-          << std::setw(18) << e.eds_vr << "\n"; // 24
+          << std::setw(18) << e.bonded_total << "\n" // 4
+          << std::setw(18) << e.bond_total << "\n" // 5
+          << std::setw(18) << e.angle_total << "\n" // 6
+          << std::setw(18) << e.improper_total << "\n" // 7
+          << std::setw(18) << e.dihedral_total << "\n" // 8
+          << std::setw(18) << e.crossdihedral_total << "\n" // 9
+          << std::setw(18) << e.nonbonded_total << "\n" // 10
+          << std::setw(18) << e.lj_total << "\n" // 11
+          << std::setw(18) << e.crf_total << "\n" // 12
+          << std::setw(18) << e.ls_total << "\n" // 13
+          << std::setw(18) << e.ls_pair_total << "\n" // 14
+          << std::setw(18) << e.ls_realspace_total << "\n" // 15
+          << std::setw(18) << e.ls_kspace_total << "\n" // 16
+          << std::setw(18) << e.ls_a_term_total << "\n" // 17
+          << std::setw(18) << e.ls_self_total << "\n" // 18
+          << std::setw(18) << e.ls_surface_total << "\n" // 19
+          << std::setw(18) << e.self_total << "\n" // 20
+          << std::setw(18) << e.special_total << "\n" // 21
+          << std::setw(18) << e.sasa_total << "\n" // 22
+          << std::setw(18) << e.sasa_volume_total << "\n" // 23
+          << std::setw(18) << e.constraints_total << "\n" // 24
+          << std::setw(18) << e.distanceres_total << "\n" // 25
+          << std::setw(18) << e.dihrest_total << "\n" // 26
+          << std::setw(18) << e.posrest_total << "\n" // 27
+          << std::setw(18) << e.jvalue_total << "\n" // 28
+          << std::setw(18) << e.xray_total << "\n" // 29
+          << std::setw(18) << e.leus_total << "\n" // 30
+          << std::setw(18) << e.eds_vr << "\n" // 31
+          << std::setw(18) << e.entropy_term << "\n"; // 32
 
   // put eds V_R energy here
 
