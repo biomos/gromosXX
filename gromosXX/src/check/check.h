@@ -47,9 +47,19 @@ if (x1 != x2){ \
   } \
 }
 
+#define CHECK_APPROX_EQUAL_RMSFERR(x1, x2, eps, f, res) \
+{ \
+  double diff; \
+  if (x1 != 0) diff = fabs(max(fabs(x1 - x2) - f, 0.0) / x1); \
+  else diff = max(x2 - f, 0.0); \
+  if (diff > eps){ \
+    ++res; \
+  } \
+}
+
 #define CHECKING(name, res) \
 { \
-std::cout << "\033[34mchecking\033[0m " << std::setw(60) \
+std::cout << "\033[34mchecking\033[0m " << std::setw(70) \
           << std::left << name << std::flush; \
 res = 0; \
 }

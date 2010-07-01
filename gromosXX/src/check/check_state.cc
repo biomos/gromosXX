@@ -112,7 +112,7 @@ void scale_positions_atomic(topology::Topology & topo,
 // GENERAL STATE CHECKING (molecular virial)
 //================================================================================
 
-int check::check_state(topology::Topology & topo,
+int check::check_state(topology::Topology & mytopo,
 		       configuration::Configuration & conf,
 		       simulation::Simulation & sim,
 		       interaction::Forcefield & ff)
@@ -122,14 +122,13 @@ int check::check_state(topology::Topology & topo,
 
   CHECKING("molecular virial (finite diff)",res);
 
+  math::Box box_backup = conf.current().box;
+  math::VArray pos_backup = conf.current().pos;
+  topology::Topology topo(mytopo);
+
   conf.exchange_state();
   conf.current().pos = conf.old().pos;
   conf.current().box = conf.old().box;
-
-  // nach uns die sintflut
-  // na ons de zondvloed
-  // apres nous le deluge
-  // after us the  Flood (devil-may-care)
 
   for(size_t s = 0; s < topo.num_solute_atoms(); ++s){
     topo.one_four_pair(s).clear();
@@ -162,6 +161,10 @@ int check::check_state(topology::Topology & topo,
   
   math::Matrix finP;
   finP=0;
+
+  double rmsf = 0.0;
+  if (sim.param().force.interaction_function == simulation::lj_ls_func)
+    rmsf = sim.param().nonbonded.influence_function_rms_force_error;
   
   for(int i=0; i < 3; i++){
     math::Vec s1(1); 
@@ -191,17 +194,20 @@ int check::check_state(topology::Topology & topo,
     finP(i,i) = -0.5 * conf.current().box(i)(i) * (e2-e1)/(2*epsilon) /
       conf.current().box(i)(i);
   }
-  // conf.current().box(i) is box size
-  // std::cout << "finit diff virial is\n"
-  // << math::m2s(finP)
-  // << "\n--------------------------------------------------\n" << std::endl;
 
   for(int i=0; i < 3; i++){
 
-    CHECK_APPROX_EQUAL(realP(i,i), finP(i,i), 0.00001, res);
+    CHECK_APPROX_EQUAL_RMSFERR(realP(i,i), finP(i,i), 0.00001, rmsf, res);
+    if (res) {
+    std::cout << "is: " << std::setw(15) << realP(i,i)
+            << " should: " << setw(15) << finP(i,i) << std::endl;
+    }
   }
 
   RESULT(res,total);
+
+  conf.current().box = box_backup;
+  conf.current().pos = pos_backup;
 
   return total;
 }

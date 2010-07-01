@@ -3,8 +3,9 @@ INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/s
 
 check_PROGRAMS =  aladip.t\
 	aladip_unperturbed.t\
-        aladip_atomic.t\
+	aladip_atomic.t\
 	aladip_special.t\
+	aladip_ls.t\
 	c16_cg.t\
 	lambdas.t
 
@@ -14,7 +15,6 @@ aladip_t_SOURCES = aladip.t.cc\
 	check_forcefield.cc\
 	check_state.h\
 	check_state.cc
-
 aladip_t_LDADD = ../libgroxx.la $(extra_lib)
 
 aladip_unperturbed_t_SOURCES = aladip_unperturbed.t.cc\
@@ -23,15 +23,12 @@ aladip_unperturbed_t_SOURCES = aladip_unperturbed.t.cc\
         check_forcefield.cc\
         check_state.h\
         check_state.cc 
-
 aladip_unperturbed_t_LDADD = ../libgroxx.la $(extra_lib)
 
 aladip_special_t_SOURCES = aladip_special.t.cc\
 	check.h\
 	check_forcefield.h\
 	check_forcefield.cc
-
-
 aladip_special_t_LDADD = ../libgroxx.la $(extra_lib)
 
 aladip_atomic_t_SOURCES = aladip_atomic.t.cc\
@@ -40,8 +37,17 @@ aladip_atomic_t_SOURCES = aladip_atomic.t.cc\
 	check_forcefield.cc\
 	check_state.h\
 	check_state.cc
-
 aladip_atomic_t_LDADD = ../libgroxx.la $(extra_lib)
+
+aladip_ls_t_SOURCES = aladip_ls.t.cc\
+  check.h\
+  check_forcefield.h\
+  check_forcefield.cc\
+  check_state.h\
+  check_state.cc
+aladip_ls_t_LDADD = ../libgroxx.la $(extra_lib)
+
+
 
 c16_cg_t_SOURCES = c16_cg.t.cc\
 	check.h\
@@ -58,8 +64,7 @@ lambdas_t_SOURCES = lambdas.t.cc\
 	check_state.cc
 
 lambdas_t_LDADD = ../libgroxx.la $(extra_lib)
-
-TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t
+TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_ls.t aladip_special.t c16_cg.t lambdas.t
 
 EXTRA_DIST = data/aladip.topo\
 	data/aladip.pttopo\
