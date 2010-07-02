@@ -46,8 +46,16 @@
 #include "check_forcefield.h"
 #include "check_state.h"
 
+#ifdef OMP
+  #include <omp.h>
+#endif
+
 int main(int argc, char* argv[])
 {
+
+#ifdef OMP
+  omp_set_num_threads(1);
+#endif
 
   int total = 0;
 
