@@ -1,4 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
+ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src program contrib
 
 docdir = $(prefix)/doc/$(PACKAGE)-$(VERSION)

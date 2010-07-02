@@ -8,6 +8,7 @@ AC_INIT()
 dnl this is a safety check to see wheter --srcdir exists
 AC_CONFIG_SRCDIR(src/math/math.cc)
 AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR([m4])
 dnl get canonical target and host information
 AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
