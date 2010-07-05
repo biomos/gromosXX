@@ -61,8 +61,15 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["NonBonded_10"] = -129.247;
 }
 
-int main(int argc, char* argv[])
-{
+#ifdef OMP
+  #include <omp.h>
+#endif
+
+int main(int argc, char* argv[]) {
+
+#ifdef OMP
+  omp_set_num_threads(1);
+#endif
 
   int total = 0;
   
@@ -133,7 +140,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      "", "",
+			      "", "", "",
 			      quiet
 			      )
       != 0){
@@ -157,7 +164,7 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Checking Ewald. This can take some time...\n";
-    aladip_sim.sim.param().nonbonded.method == simulation::el_ewald;
+    aladip_sim.sim.param().nonbonded.method = simulation::el_ewald;
     aladip_sim.sim.param().nonbonded.ls_charge_shape = -1;
     ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
     // first check the forcefield
@@ -168,7 +175,7 @@ int main(int argc, char* argv[])
     total += check::check_state(aladip_sim.topo, aladip_sim.conf,
 				aladip_sim.sim, *ff);
 
-    aladip_sim.sim.param().nonbonded.method == simulation::el_p3m;
+    aladip_sim.sim.param().nonbonded.method = simulation::el_p3m;
     ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
 
     std::cout << "Checking P3M. This can take a long time...\n";

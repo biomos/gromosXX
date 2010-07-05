@@ -63,15 +63,23 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["PerturbedDistanceRestraint"] = 195.899012;
   m["DihedralRestraint"] = 2127.910749;
   m["PerturbedDihedralRestraint"] = 279.207857;
+  m["XrayRestraint"] = 5.9411e+03;
 }
 
-int main(int argc, char* argv[])
-{
+#ifdef OMP
+  #include <omp.h>
+#endif
+
+int main(int argc, char* argv[]) {
+
+#ifdef OMP
+  omp_set_num_threads(1);
+#endif
 
   int total = 0;
 
   util::Known knowns;
-  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "verb";
+  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "xray" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo      <topology>]\n";
@@ -80,6 +88,7 @@ int main(int argc, char* argv[])
   usage += "\t[@input     <input>]\n";
   usage += "\t[@distanceres  <distanceres>]\n";
   usage += "\t[@dihrest   <dihrest>]\n";
+  usage += "\t[@xray      <xray>]\n";
   usage += "\t[@verb     <[module:][submodule:]level>]\n";
 
   io::Argument args;
@@ -91,7 +100,7 @@ int main(int argc, char* argv[])
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest;
+  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest, sxray;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -125,6 +134,15 @@ int main(int argc, char* argv[])
     sdihrest = args["dihrest"];
   else
     GETFILEPATH(sdihrest, "aladip.dihrest", "src/check/data/");
+
+#ifdef HAVE_CLIPPER
+  if(args.count("xray") ==1)
+    sxray = args["xray"];
+  else
+    GETFILEPATH(sxray, "aladip.xrs", "src/check/data/");
+#else
+  sxray = "";
+#endif
   
   if (!quiet)
     std::cout << "\n\n"
@@ -133,6 +151,7 @@ int main(int argc, char* argv[])
 	      << "input :         " << sinput << "\n"
 	      << "distanceres :   " << sdistanceres << "\n"
 	      << "dihrest :       " << sdihrest << "\n"
+              << "xray :          " << sxray << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
@@ -153,12 +172,17 @@ int main(int argc, char* argv[])
 			      in_topo,
 			      sdistanceres,
 			      sdihrest,
+                              sxray,
 			      quiet
 			      )
       != 0){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+
+#ifndef HAVE_CLIPPER
+  aladip_sim.sim.param().xrayrest.xrayrest = simulation::xrayrest_off;
+#endif
       
 
   // create a forcefield
@@ -180,10 +204,6 @@ int main(int argc, char* argv[])
   // first check the forcefield
   total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, 
 				   aladip_sim.sim, *ff, ref_values);
-
-  // check virial, ...
-  // total += check::check_state(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
-  
 
   return total;
 }

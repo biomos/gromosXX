@@ -47,8 +47,15 @@
 #include "check_forcefield.h"
 #include "check_state.h"
 
-int main(int argc, char* argv[])
-{
+#ifdef OMP
+  #include <omp.h>
+#endif
+
+int main(int argc, char* argv[]) {
+
+#ifdef OMP
+  omp_set_num_threads(1);
+#endif
 
   int total = 0;
 
@@ -104,7 +111,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      "", "",
+			      "", "", "",
 			      quiet
 			      )
       != 0){
@@ -122,7 +129,7 @@ int main(int argc, char* argv[])
 			      slambdadepinput,
 			      aladip_lambdadep_sim,
 			      in_lambdadep_topo,
-			      "", "",
+			      "", "", "",
 			      quiet
 			      )
       != 0){

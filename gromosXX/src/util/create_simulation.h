@@ -49,6 +49,7 @@ namespace util
 			io::In_Topology & in_topo,
 			std::string distanceres = "",
 			std::string dihrest = "",
+                        std::string xray = "",
 			bool quiet = false);
 }
 

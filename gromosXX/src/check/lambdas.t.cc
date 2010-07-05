@@ -66,8 +66,15 @@ void hard_coded_values(std::map<std::string, double> & m){
 }
 
 
-int main(int argc, char* argv[])
-{
+#ifdef OMP
+  #include <omp.h>
+#endif
+
+int main(int argc, char* argv[]) {
+
+#ifdef OMP
+  omp_set_num_threads(1);
+#endif
 
   int total = 0;
   
@@ -147,7 +154,7 @@ int main(int argc, char* argv[])
 			      sinputon,
 			      aladip_sim_on,
 			      in_topo,
-			      "", "",
+			      "", "", "",
 			      quiet
 			      )
       != 0){
@@ -160,7 +167,7 @@ int main(int argc, char* argv[])
 			      sinputoff,
 			      aladip_sim_off,
 			      in_topo,
-			      "", "",
+			      "", "", "",
 			      quiet
 			      )
       != 0){

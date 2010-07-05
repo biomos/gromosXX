@@ -58,8 +58,7 @@ double finite_diff(topology::Topology & topo,
         simulation::Simulation & sim,
         interaction::Interaction &term,
         size_t atom, size_t coord,
-        double const epsilon,
-        bool physical = true) {
+        double const epsilon) {
   conf.current().pos(atom)(coord) += epsilon; //epsilon from end of file check::check_forcefield
   conf.current().force = 0;
   conf.current().energies.zero();
@@ -67,11 +66,7 @@ double finite_diff(topology::Topology & topo,
   term.calculate_interactions(topo, conf, sim); // from interaction/interaction.h set to 0?
   conf.current().energies.calculate_totals(); // from configuration/energy.cc
 
-  double e1;
-  if (physical)
-    e1 = conf.current().energies.potential_total;
-  else
-    e1 = conf.current().energies.special_total;
+  double e1 = conf.current().energies.potential_total + conf.current().energies.special_total;
 
   conf.current().pos(atom)(coord) -= 2 * epsilon;
   conf.current().force = 0;
@@ -80,16 +75,14 @@ double finite_diff(topology::Topology & topo,
   term.calculate_interactions(topo, conf, sim);
   conf.current().energies.calculate_totals();
 
-  double e2;
-  if (physical)
-    e2 = conf.current().energies.potential_total;
-  else
-    e2 = conf.current().energies.special_total;
+  double e2 = conf.current().energies.potential_total + conf.current().energies.special_total;
 
   conf.current().pos(atom)(coord) += epsilon;
 
-  // std::cout << "atom=" << atom << " e1=" << e1 
-  // << " e2=" << e2 << " epsilon=" << epsilon << std::endl;
+  /*
+  std::cout << "atom=" << atom << " e1=" << e1 
+  << " e2=" << e2 << " epsilon=" << epsilon << std::endl;
+  */
 
   return (e2 - e1) / 2.0 / epsilon;
 
@@ -294,8 +287,8 @@ int check_interaction(topology::Topology & topo,
   term.calculate_interactions(topo, conf, sim);
 
   conf.current().energies.calculate_totals();
-  CHECK_APPROX_EQUAL(conf.current().energies.potential_total,
-          energy, delta, res);
+  double tot_ene = conf.current().energies.potential_total + conf.current().energies.special_total;
+  CHECK_APPROX_EQUAL(tot_ene, energy, delta, res);
   RESULT(res, total);
   if (res) {
     std::cout << "is: " << std::setw(15) << conf.current().energies.potential_total
@@ -322,7 +315,7 @@ int check_interaction(topology::Topology & topo,
 
     int new_blocks = 76 * (atom + 1) / atoms;
     if (new_blocks != blocks) {
-      for(unsigned int i = 0; i < new_blocks - blocks; ++i )
+      for(int i = 0; i < new_blocks - blocks; ++i )
         std::cout << "=";
       std::cout.flush();
       blocks = new_blocks;
@@ -331,22 +324,24 @@ int check_interaction(topology::Topology & topo,
     math::Vec f = conf.current().force(atom);
     //   cout << f(0) << " " << f(1) << " " << f(2) << endl;
     math::Vec finf;
-    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon, true); // 0 is coord x,y or z
-    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon, true);
-    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon, true);
+    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon); // 0 is coord x,y or z
+    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon);
+    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon);
     //  cout << finf(0) << " " << finf(1) << " " << finf(2) << endl;
 
-    CHECK_APPROX_EQUAL_RMSFERR(f(0), finf(0), delta, rmsferr, res);
-    CHECK_APPROX_EQUAL_RMSFERR(f(1), finf(1), delta, rmsferr, res);
-    CHECK_APPROX_EQUAL_RMSFERR(f(2), finf(2), delta, rmsferr, res);
-    if (res) {
+    int cur_res = 0;
+    CHECK_APPROX_EQUAL_RMSFERR(f(0), finf(0), delta, rmsferr, cur_res);
+    CHECK_APPROX_EQUAL_RMSFERR(f(1), finf(1), delta, rmsferr, cur_res);
+    CHECK_APPROX_EQUAL_RMSFERR(f(2), finf(2), delta, rmsferr, cur_res);
+    if (cur_res) {
       std::cout << "\nis:     " << math::v2s(f) << "\n"
                 << "should: " << math::v2s(finf) << "\n";
     }
+    res += cur_res;
   }
 
   if (blocks < 76) {
-    for (unsigned int i = 0; i < 76 - blocks; ++i)
+    for (int i = 0; i < 76 - blocks; ++i)
       std::cout << "=";
     std::cout.flush();
   }
@@ -418,9 +413,9 @@ int check_distanceres_interaction(topology::Topology & topo,
     math::Vec f = conf.current().force(atom);
 
     math::Vec finf;
-    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon, false);
-    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon, false);
-    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon, false);
+    finf(0) = finite_diff(topo, conf, sim, term, atom, 0, epsilon);
+    finf(1) = finite_diff(topo, conf, sim, term, atom, 1, epsilon);
+    finf(2) = finite_diff(topo, conf, sim, term, atom, 2, epsilon);
     //finite_diff from upwards
     CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
     CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
@@ -479,9 +474,9 @@ int check_dihrest_interaction(topology::Topology & topo,
 
       math::Vec finf;
 
-      finf(0) = finite_diff(topo, conf, sim, term, atom[j], 0, epsilon, false);
-      finf(1) = finite_diff(topo, conf, sim, term, atom[j], 1, epsilon, false);
-      finf(2) = finite_diff(topo, conf, sim, term, atom[j], 2, epsilon, false);
+      finf(0) = finite_diff(topo, conf, sim, term, atom[j], 0, epsilon);
+      finf(1) = finite_diff(topo, conf, sim, term, atom[j], 1, epsilon);
+      finf(2) = finite_diff(topo, conf, sim, term, atom[j], 2, epsilon);
 
       CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
       CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
@@ -735,6 +730,18 @@ int check::check_forcefield(topology::Topology & topo,
               ref["PerturbedDihedralRestraint"],
               0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
+#ifdef HAVE_CLIPPER
+    } else if ((*it)->name == "XrayRestraint") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+
+      sim.param().xrayrest.xrayrest = simulation::xrayrest_inst;
+      sim.param().xrayrest.mode = simulation::xrayrest_mode_structure_factor;
+      total += check_interaction(topo, conf, sim, **it,
+              topo.num_atoms(),
+              ref["XrayRestraint"],
+              0.001, 0.1, 5, true);
+#endif
     } else if ((*it)->name == "MolecularVirial") {
       // no real interaction...
     } else {

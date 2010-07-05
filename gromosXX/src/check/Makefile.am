@@ -71,9 +71,10 @@ EXTRA_DIST = data/aladip.topo\
 	data/aladip.conf\
 	data/aladip.in\
 	data/aladip_unperturbed.in\
-        data/aladip_special.in\
+	data/aladip_special.in\
 	data/aladip.distrest\
 	data/aladip.dihrest\
+	data/aladip.xrs\
 	data/aladip_atomic.in\
 	data/lambdas.off.in\
 	data/lambdas.on.in\

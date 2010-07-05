@@ -24,6 +24,7 @@
 #include <io/topology/in_perturbation.h>
 #include <io/topology/in_distanceres.h>
 #include <io/topology/in_dihrest.h>
+#include <io/topology/in_xray.h>
 #include <io/parameter/in_parameter.h>
 
 #include <algorithm/algorithm/algorithm_sequence.h>
@@ -46,6 +47,7 @@ int util::create_simulation(std::string topo,
 			    io::In_Topology & in_topo,
 			    std::string distanceres,
 			    std::string dihrest,
+                            std::string xray,
 			    bool quiet)
 {
 
@@ -58,7 +60,7 @@ int util::create_simulation(std::string topo,
   }
 
   io::igzstream input_file, topo_file, pttopo_file, conf_file, 
-    distanceres_file, dihrest_file;
+    distanceres_file, dihrest_file, xray_file;
   
   // if we got a parameter file, try to read it...
   if (param != ""){
@@ -143,6 +145,19 @@ int util::create_simulation(std::string topo,
     io::In_Dihrest idr(dihrest_file);
     idr.quiet = quiet;
     idr.read(sim.topo, sim.sim);
+  }
+
+  if (xray != "") {
+    xray_file.open(xray.c_str());
+    if (!xray_file.is_open()) {
+      std::cout << "\n\ncould not open " << xray << "!\n" << std::endl;
+      io::messages.add("opening xray restraints failed", "read_input",
+              io::message::error);
+      return -1;
+    }
+    io::In_Xrayresspec ixr(xray_file);
+    ixr.quiet = true;
+    ixr.read(sim.topo, sim.sim);
   }
 
   // do this after reading in a perturbation topology

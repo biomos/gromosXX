@@ -64,8 +64,15 @@ void hard_coded_values(std::map<std::string, double> & m){
 //  m["PerturbedDihedralRestraint"] = 279.207857;
 }
 
-int main(int argc, char* argv[])
-{
+#ifdef OMP
+  #include <omp.h>
+#endif
+
+int main(int argc, char* argv[]) {
+
+#ifdef OMP
+  omp_set_num_threads(1);
+#endif
 
   int total = 0;
 
@@ -129,7 +136,7 @@ int main(int argc, char* argv[])
 			      sinput,
 			      c16_cg_sim,
 			      in_topo,
-			      "", "",
+			      "", "", "",
 			      quiet
 			      )
       != 0){

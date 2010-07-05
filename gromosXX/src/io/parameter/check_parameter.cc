@@ -62,8 +62,6 @@ int io::check_parameter(simulation::Simulation & sim)
           param.constraint.solvent.algorithm == simulation::constr_lincs);
   add("solvent_settle", "SETTLE for solvent", 
           param.constraint.solvent.algorithm == simulation::constr_settle);
-  //add("solvent_gpu_settle", "GPU_SETTLE for solvent",
-          //param.constraint.solvent.algorithm == simulation::constr_gpu_settle);
   // PRESSURESCALE block
   add("pressure_calculation", "pressure calculation", param.pcouple.calculate);
   add("pressure_scale_berendsen", "Berendsen barostat", param.pcouple.scale != math::pcouple_off);
@@ -3310,7 +3308,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_cg", "solvent_shake");
   fc.unlock("cutoff_cg", "solvent_lincs");
   fc.unlock("cutoff_cg", "solvent_settle");
-  fc.unlock("cutoff_cg", "solvent_gpu_settle");
   fc.unlock("cutoff_cg", "pressure_calculation");
   fc.unlock("cutoff_cg", "pressure_scale_berendsen");
   fc.unlock("cutoff_cg", "virial_off");
