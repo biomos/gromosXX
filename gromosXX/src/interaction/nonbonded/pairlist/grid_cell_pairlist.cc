@@ -272,7 +272,9 @@ void interaction::Grid_Cell_Pairlist::update(
 
   {
     pairlist.clear();
+#ifdef OMP
     #pragma omp barrier
+#endif
   }
   // _pairlist(pairlist)
   if (!sim.param().pairlist.atomic_cutoff) {
@@ -283,8 +285,9 @@ void interaction::Grid_Cell_Pairlist::update(
 
   if (begin == 0) // master
     timer().stop("pairlist");
-
+#ifdef OMP
   #pragma omp barrier
+#endif
 
   if (begin == 0 && is_vacuum) {
     restore_vacuum_box();
@@ -310,7 +313,9 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
   {
     pairlist.clear();
     perturbed_pairlist.clear();
+    #ifdef OMP
     #pragma omp barrier
+    #endif
   }
   // _pairlist(pairlist)
   if (!sim.param().pairlist.atomic_cutoff) {
@@ -322,7 +327,9 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
   if (begin == 0) // master
     timer().stop("perturbed pairlist");
 
+  #ifdef OMP
   #pragma omp barrier
+  #endif
 
   if (begin == 0 && is_vacuum) {
     restore_vacuum_box();
