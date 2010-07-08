@@ -28,7 +28,7 @@ else
 fi])])
 
 AC_DEFUN([AC_PROG_CXX_INTELCC],
-[AC_CACHE_CHECK([whether we are using Intel C++], [compiler_cv_intel]
+[AC_CACHE_CHECK([whether we are using Intel C++], [compiler_cv_intel],
 [cat > conftest.c <<EOF
 # if defined(__ICC)
   yes;
@@ -43,7 +43,7 @@ fi])])
 
 dnl Portland Group Incorporated C++ compiler
 AC_DEFUN([AC_PROG_CXX_PGI],
-[AC_CACHE_CHECK([whether we are using PGI C++], [compiler_cv_pgi]
+[AC_CACHE_CHECK([whether we are using PGI C++], [compiler_cv_pgi],
  [cat > conftest.c <<EOF
 # if defined(__PGI)
   yes;
