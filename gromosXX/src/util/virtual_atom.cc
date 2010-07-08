@@ -381,7 +381,7 @@ void util::Virtual_Atom::_force
      
       DEBUG(8, "FORCE REDISTRIBUTION: case 4!!!");
       
-      double m_c_2, abs_a, abs_b;
+      double m_c_2;
       
       s = 2.0 * posi - posj - posk;
       abs_s = math::abs(s);
@@ -392,11 +392,9 @@ void util::Virtual_Atom::_force
       DEBUG(10, "\tq = " << math::v2s(t));
       
       b = posk- posj;
-      abs_b = math::abs(b);
       DEBUG(10, "\tb = " << math::v2s(b));
       
       a = math::cross(t,b);
-      abs_a = math::abs(a) ;
       DEBUG(10, "\ta = " << math::v2s(a));
       
       m_c = TETHCO*m_dish;
@@ -480,9 +478,7 @@ void util::Virtual_Atom::_force
       DEBUG(10, "D = " << math::v2s(calc3));
       
       b = posi- posk;
-      abs_b =  math::abs(b);
       a = math::cross(t,b);
-      abs_a = math::abs(a) ;
       
       calch= -m_c_2*math::Vec(t(0)*a(0), 
 			      t(1)*a(0), 
@@ -535,9 +531,7 @@ void util::Virtual_Atom::_force
       DEBUG(10, "D = " << math::v2s(calc3));
       
       b = posj - posi;
-      abs_b = math::abs(b) ;
       a = math::cross(t,b );
-      abs_a = math::abs(a) ;
       
       calch= -m_c_2*math::Vec(t(0)*a(0), 
 			      t(1)*a(0), 
