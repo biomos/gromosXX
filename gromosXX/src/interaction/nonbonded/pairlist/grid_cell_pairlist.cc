@@ -1264,3 +1264,4 @@ void interaction::Grid_Cell_Pairlist::restore_vacuum_box() {
   myconf->current().box = box_backup;
   myconf->boundary_type = math::vacuum;
 }
+

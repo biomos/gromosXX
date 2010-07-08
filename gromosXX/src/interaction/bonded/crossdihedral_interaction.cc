@@ -33,8 +33,6 @@
 #include <util/debug.h>
 
 
-static double _calculate_nearest_minimum(double phi, int m, double cospd);
-
 /**
  * calculate crossdihedral forces and energies.
  */
@@ -233,18 +231,3 @@ int interaction::Crossdihedral_Interaction
 
   return 0;
 }
-
-/**
- * calculate nearest minimum
- */
-static inline double _calculate_nearest_minimum(double phi, int m, double cospd)
-{
-  // copy from gromos++ nearest_minimum function
-  double a_minimum = 0.5*math::Pi*(3.0 - cospd)/ m;
-  double delta_phi = 2*math::Pi / m;
-  double nearest_min = a_minimum - int(rint((a_minimum - phi)/delta_phi))*delta_phi;
-  if(nearest_min >= 2*math::Pi - math::epsilon) nearest_min -= 2*math::Pi;
-  
-  return nearest_min;
-}
-

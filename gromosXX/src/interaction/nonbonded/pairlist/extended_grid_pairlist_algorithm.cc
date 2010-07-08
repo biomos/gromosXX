@@ -163,8 +163,8 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
   grid_properties(topo, conf, sim);
 
   if (prepare_grid(topo, conf, sim)){
-    return 1;
     timer().stop("pairlist prepare");
+    return 1;
   }
 
   collapse_grid();

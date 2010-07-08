@@ -2182,7 +2182,7 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
     io::messages.add("XRAYRES block: Illegal value for CXTAU",
             "In_Parameter", io::message::error);
   }
-  if (param.xrayrest.writedensity < 0 || param.xrayrest.writedensity > 3) {
+  if (param.xrayrest.writedensity > 3) {
     io::messages.add("XRAYRES block: Illegal value for NTWDE (0..3)",
             "In_Parameter", io::message::error);
   }
@@ -2264,11 +2264,6 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
 
   if (param.distanceres.K < 0) {
     io::messages.add("DISTANCERES block: CDIR must be >= 0.0.",
-            "In_Parameter", io::message::error);
-  }
-
-  if (param.distanceres.write < 0) {
-    io::messages.add("DISTANCERES block: NTWDIR must be >= 0.",
             "In_Parameter", io::message::error);
   }
 

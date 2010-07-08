@@ -47,7 +47,6 @@ io::In_Localelevspec::read(topology::Topology& topo,
   DEBUG(7, "reading in a local elevation definition file");
 
   std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
 
   { // LOCALELEVSPEC
 

@@ -219,7 +219,7 @@ void math::Periodicity<b>
 	exit(1);
       }
 
-      nearest_image(conf.current().pos(a), conf.current().pos(a-1), trans);
+      this->nearest_image(conf.current().pos(a), conf.current().pos(a-1), trans);
       DEBUG(12, "atom " << a << " pos " << math::v2s(conf.current().pos(a)));
       DEBUG(12, "\tni = " << math::v2s(trans));
       

@@ -349,8 +349,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
   if(param.ramd.fc!=0.0){
     special().ramd.force_direction = math::Vec(0.0,0.0,0.0);
     // initialize the ta_average to the minimum distance.
-    special().ramd.ta_average = param.ramd.ta_min * exp(1);
-    
+    special().ramd.ta_average = param.ramd.ta_min * exp(1.0);
   }
   
   
