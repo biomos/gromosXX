@@ -52,8 +52,8 @@ namespace interaction
 		     std::ostream &os = std::cout,
 		     bool quiet = false) 
     {
-      // if (!quiet)
-      // os << "Standard pairlist algorithm\n";
+      if (!quiet)
+       os << "\tstandard pairlist algorithm\n";
       return 0;
     };
 

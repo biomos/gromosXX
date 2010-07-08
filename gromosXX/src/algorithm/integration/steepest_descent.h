@@ -18,9 +18,7 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Steepest_Descent() : Algorithm("SteepestDescent") {
-      std::cout << "Steepest descent energy minimisation\n";
-    }
+    Steepest_Descent() : Algorithm("SteepestDescent") {}
 
     /**
      * Destructor.

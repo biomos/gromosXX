@@ -5,6 +5,7 @@
 
 #include <stdheader.h>
 #include "usage.h"
+#include <sys/utsname.h>
 
 void util::get_usage(util::Known const &knowns, std::string &usage, std::string name)
 {
@@ -203,4 +204,79 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
 
 }
 
+#ifdef OMP
+#include <omp.h>
+#endif
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
+void util::print_title(bool mpi, std::ostream & os, bool repex, bool master )
+{
+  os << GROMOSXX << "\n" 
+     << "========\n";
+
+  os << "version    :     " << MD_VERSION << "\n"
+     << "build date :     " << MD_DATE << "\n\n";
+
+#ifdef NDEBUG
+  os << "Debugging is disabled.\n\n";
+#else
+  os << "This is a debug code. It will run much slower than the optimized code.\n"
+          << "Use --disable-debug in order to get a faster code.\n\n";
+#endif
+
+  // some omp stuff
+#ifdef OMP
+  int nthreads, tid;
+#pragma omp parallel private(nthreads, tid)
+  {
+    tid = omp_get_thread_num();
+    if (tid == 0){
+      nthreads = omp_get_num_threads();
+      os << "OpenMP code enabled\n"
+		<< "\tusing "
+		<< omp_get_num_threads() << " threads.\n"
+		<< "\tThis can be adjusted by setting the\n "
+		<< "\tOMP_NUM_THREADS environment variable.\n"
+		<< std::endl;
+    }
+  }
+#endif
+#ifdef XXMPI
+  if (mpi) {
+    os << "MPI code enabled\n";
+    int size = MPI::COMM_WORLD.Get_size();
+    if (size > 1)
+      os << "\trunning on " << size << " nodes.\n";
+    else
+      os << "\trunning on " << size << " node.\n";
+    int rank = MPI::COMM_WORLD.Get_rank();
+    os << "\tthis is node " << rank << ".\n\n";
+  }
+#endif
+
+  if (repex) {
+    os << "using the replica exchange method.\n\t";
+    if (master)
+      os << "master process\n";
+    else
+      os << "slave process\n";
+  }
+
+  os << "\nGruppe fuer Informatikgestuetzte Chemie\n"
+	    << "Professor W. F. van Gunsteren\n"
+	    << "ETH Swiss Federal Institute of Technology\n"
+	    << "Zuerich\n\n"
+	    << "Bugreports to https://gromos.ethz.ch/svn/trac/gromosXXc++\n\n";
+
+  struct utsname sysinf;
+  if (uname(&sysinf) != -1){
+    os << "Running on " << sysinf.nodename << " (" << sysinf.sysname
+	      << " " << sysinf.release
+	      << " " << sysinf.version
+	      << " " << sysinf.machine
+	      << ").\n\n";
+  }
+}
 

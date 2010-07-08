@@ -139,8 +139,8 @@ int util::Replica_Exchange_Master::run
     }
   }
 
-  io::Out_Configuration traj("GromosXX\n\treplica master\n\tfine-grained\n", std::cout);
-  traj.title("GromosXX\n\treplica master\n\tfine-grained\n" + sim.param().title);
+  io::Out_Configuration traj(GROMOSXX "\n\treplica master\n\tfine-grained\n", std::cout);
+  traj.title(GROMOSXX "\n\treplica master\n\tfine-grained\n" + sim.param().title);
   traj.init(args, sim.param());
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -149,8 +149,8 @@ int util::Replica_Exchange_Master::run
   topology::Topology cg_topo;
   simulation::Simulation cg_sim;
   algorithm::Algorithm_Sequence cg_md;
-  io::Out_Configuration cg_traj("GromosXX\n\treplica master\n\tcoarse-grained\n", std::cout);
-  cg_traj.title("GromosXX\n\treplica master\n\tcoarse-grained\n" + sim.param().title);
+  io::Out_Configuration cg_traj(GROMOSXX "\n\treplica master\n\tcoarse-grained\n", std::cout);
+  cg_traj.title(GROMOSXX "\n\treplica master\n\tcoarse-grained\n" + sim.param().title);
 
   if (multigraining){
     

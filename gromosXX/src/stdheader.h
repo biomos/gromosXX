@@ -31,6 +31,8 @@
 
 #include <util/timing.h>
 
+#define GROMOSXX "GROMOSXX"
+
 // #ifdef COMPILER_GCC
 // #include <cxxabi.h>
 // using namespace ranlib;

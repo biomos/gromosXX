@@ -161,6 +161,12 @@ int interaction::Grid_Cell_Pairlist::init(topology::Topology & topo,
   if (is_vacuum)
     restore_vacuum_box();
 
+  if (!quiet) {
+    os << "\tgrid cell pairlist algorithm\n"
+            << "\t\tcells           : " << num_x << "x"  << num_y << "x"  << num_z << "\n";
+    os << "\t\tusing mask routines for " << (irregular_shape ? "triclinic" : "rectangular") << " box shapes.\n";
+  }
+
   return 0;
 }
 

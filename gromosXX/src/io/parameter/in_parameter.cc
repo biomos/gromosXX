@@ -43,8 +43,8 @@ void io::In_Parameter::read(simulation::Parameter &param,
   DEBUG(7, "reading input");
 
   if (!quiet)
-    os << "\nINPUT\n"
-          << title << "\n";
+    os << "INPUT\n"
+          << title;
 
   // store the title...
   param.title = title;

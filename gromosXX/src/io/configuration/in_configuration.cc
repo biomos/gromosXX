@@ -44,7 +44,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   DEBUG(7, "read configuration");
   
   if (!quiet)
-    os << "\nCONFIGURATION\n";
+    os << "CONFIGURATION\n";
 
   simulation::Parameter const & param = sim.param();
   
@@ -89,7 +89,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   // print some information
   if (!quiet){
-    os << "\n\t";
+    os << "\t";
     switch(conf.boundary_type){
       case math::vacuum:
 	os << "PBC            = vacuum\n";
@@ -118,7 +118,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 	 << math::sum(topo.mass()) / math::volume(conf.current().box,
 							 conf.boundary_type);
     
-    os << "\n\n";
+    os << "\n";
   }
   
 
@@ -137,7 +137,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   }
   
   if (!quiet)
-    os << "\n\nEND\n\n";
+    os << "END\n\n";
   
   DEBUG(8, "configuration read");
 }
@@ -154,7 +154,7 @@ void io::In_Configuration::read_replica
  std::ostream & os)
 {
   if (!quiet)
-    os << "\nREPLICA CONFIGURATION\n";
+    os << "REPLICA CONFIGURATION\n";
   
   DEBUG(8, "read replica");
   simulation::Parameter const & param = sim.param();
@@ -308,7 +308,7 @@ void io::In_Configuration::read_replica
 
   // print some information
   if (!quiet){
-    os << "\n\t";
+    os << "\t";
     switch(conf[0].boundary_type){
       case math::vacuum:
 	os << "PBC            = vacuum\n";
@@ -328,7 +328,7 @@ void io::In_Configuration::read_replica
     }
   }
 
-  if (!quiet){
+  if (!quiet) {
     os << "\ttotal mass     = " << math::sum(topo.mass()) << "\n";
     
     if (conf[0].boundary_type != math::vacuum){
@@ -340,7 +340,7 @@ void io::In_Configuration::read_replica
 	 << std::setw(18) << math::sum(topo.mass()) / v;
     }
     
-    os << "\n\n";
+    os << "\n";
   }
 
   // warn for unread input data
@@ -358,7 +358,7 @@ void io::In_Configuration::read_replica
   }
   
   if (!quiet)
-    os << "\n\nEND\n\n";
+    os << "END\n";
 }
 
 /**

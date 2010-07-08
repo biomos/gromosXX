@@ -1793,22 +1793,14 @@ void io::Out_Configuration
   }
 
   print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES", "<E>_");
-  m_output << "\n";
   print_ENERGY(m_output, ef, topo.energy_groups(), "ENERGY FLUCTUATIONS", "<<E>>_");
-  m_output << "\n";
-
-  m_output << "\n";
   print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
-  m_output << "\n";
   print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
 
-  m_output << "\n\n";
   if (sim.param().pcouple.calculate) {
     print_MATRIX(m_output, p, "PRESSURE AVERAGE");
-    m_output << "\n";
     print_MATRIX(m_output, pf, "PRESSURE FLUCTUATION");
   }
-  m_output << "\n\n";
 
   if (sim.param().perturbation.perturbation) {
 
@@ -1819,7 +1811,6 @@ void io::Out_Configuration
     if (sim.param().perturbation.dlamt) {
 
       print_ENERGY(m_output, e, topo.energy_groups(), "CUMULATIVE DG", "DG_");
-      m_output << "\n";
 
       // what's that anyway...
       //print_ENERGY(m_output, ef, topo.energy_groups(), "DG FLUCTUATIONS", "<<DG>>_");
@@ -1833,12 +1824,10 @@ void io::Out_Configuration
       print_ENERGY(m_output, e, topo.energy_groups(),
               ss.str() + "AVERAGES", "<" + pre.str() + ">_");
 
-      m_output << "\n";
 
       print_ENERGY(m_output, ef, topo.energy_groups(),
               ss.str() + "FLUCTUATIONS", "<<" + pre.str() + ">>_");
 
-      m_output << "\n";
     }
   }
   if (sim.param().ramd.fc != 0.0 && sim.param().ramd.every)

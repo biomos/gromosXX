@@ -51,16 +51,6 @@ $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
 
 #include <io/configuration/out_configuration.h>
 
-#ifdef OMP
-#include <omp.h>
-#endif
-
-#include <sys/utsname.h>
-
-#include "BUILD_NUMBER"
-
-void print_title(bool color = false, int size = 1, std::ostream & os = std::cout);
-
 int main(int argc, char *argv[]){
 
 #ifdef XXMPI
@@ -112,15 +102,13 @@ int main(int argc, char *argv[]){
     MPI::Finalize();
     return 1;
   }
-    
+
+  util::print_title(true, *os);
   if (args.count("version") >= 0){
-    if (rank == 0)
-      print_title(true, size);
     MPI::Finalize();
     FFTW3(mpi_cleanup());
     return 0;
   }
-  else print_title(false, size, *os);
     
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)){
@@ -157,8 +145,8 @@ int main(int argc, char *argv[]){
     
     std::cout << "MPI master node (of " << size << " nodes)" << std::endl;
     
-    io::Out_Configuration traj("GromosXX\n");
-    traj.title("GromosXX\n" + sim.param().title);
+    io::Out_Configuration traj(GROMOSXX "\n");
+    traj.title(GROMOSXX "\n" + sim.param().title);
     
     // create output files...
     traj.init(args, sim.param());
@@ -272,12 +260,12 @@ int main(int argc, char *argv[]){
     if (error)
       std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
     else if(err_msg > io::message::notice){
-      std::cout << "\nGromosXX finished. "
+      std::cout << "\n" GROMOSXX " finished. "
 		<< "Check the messages for possible problems during the run."
 		<< std::endl;
     }
     else{
-      std::cout << "\nGromosXX finished successfully\n" << std::endl;
+      std::cout << "\n" GROMOSXX " finished successfully\n" << std::endl;
     }
     
   }
@@ -413,12 +401,12 @@ int main(int argc, char *argv[]){
     if (error)
       (*os) << "\nErrors encountered during run - check above!\n" << std::endl;
     else if(err_msg > io::message::notice){
-      (*os) << "\nGromosXX MPI slave " << rank << " finished. "
+      (*os) << "\n" GROMOSXX " MPI slave " << rank << " finished. "
 	    << "Check the messages for possible problems during the run."
 	    << std::endl;
     }
     else{
-      (*os) << "\nGromosXX MPI slave " << rank << " finished successfully\n" << std::endl;
+      (*os) << "\n" GROMOSXX " MPI slave " << rank << " finished successfully\n" << std::endl;
     }
     
   } // end of slave
@@ -434,89 +422,8 @@ int main(int argc, char *argv[]){
   return error;
 
 #else
-  std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure\n" << std::endl;
+  std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure and appropriate compilers\n" << std::endl;
   return 1;
 #endif
 
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// helper functions
-////////////////////////////////////////////////////////////////////////////////
-
-void print_title(bool color, int size, std::ostream & os)
-{
-  if (color){
-
-#ifdef NDEBUG
-#ifndef BZDEBUG
-    os << "\033[1;32m";
-#else
-    os << "\033[1;31m";
-#endif
-#else
-    os << "\033[1;31m";
-#endif
-    os << "\n\nGromosXX 0.3.0 development\033[22;0m\n\n"
-       << "12 February 2008\n";
-  }
-  else
-    os << "\n\nGromosXX 0.3.0 development\n\n"
-       << "12 February 2008\n";
-  
-  os << "build date    " << BUILD_DATE << "\n"
-     << "build number  " << BUILD_NUMBER << "\n\n";
-  
-#ifdef NDEBUG
-  os << "standard library debugging disabled.\n";
-#else
-  os << "standard library debugging enabled.\n";
-#endif
-
-  // some omp stuff
-#ifdef OMP
-  int nthreads, tid;
-#pragma omp parallel private(nthreads, tid)
-  {
-    tid = omp_get_thread_num();
-    if (tid == 0){
-      nthreads = omp_get_num_threads();
-      os << "OpenMP code enabled\n"
-	 << "\tshared memory parallelization\n"
-	 << "\twww.openmp.org\n\n"
-	 << "\tusing "
-	 << omp_get_num_threads() << " threads\n"
-	 << "\tthis can be adjusted by setting the\n"
-	 << "\tOMP_NUM_THREADS environment variable\n"
-	 << std::endl;
-    }
-    
-  }
-#endif
-  
-  os << "MPI code enabled\n"
-     << "\tdistributed memory parallelization\n"
-     << "\twww.mpi-forum.org\n\n";
-  if (size > 1)
-    os << "\trunning on " << size << " nodes\n";
-  else
-    os << "\trunning on " << size << " node\n";
-  
-  os << "\nGruppe fuer Informatikgestuetzte Chemie\n"
-     << "Professor W. F. van Gunsteren\n"
-     << "Swiss Federal Institute of Technology\n"
-     << "Zuerich\n\n"
-     << "Bugreports to https://gromos/svn/trac/gromosXXc++\n"
-     << std::endl;
-
-  struct utsname sysinf;
-  if (uname(&sysinf) != -1){
-    std::cout << "running on"
-	      << "\n\t" << sysinf.nodename
-	      << "\n\t" << sysinf.sysname
-	      << " " << sysinf.release
-	      << " " << sysinf.version
-	      << " " << sysinf.machine
-	      << "\n\n";
-  }
 }

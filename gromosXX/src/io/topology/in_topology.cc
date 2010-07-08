@@ -459,14 +459,15 @@ io::In_Topology::read(topology::Topology& topo,
     // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
     
     { // SOLUTEPOLARISATION
-      DEBUG(10, "SOLUTEPOLARISATION block");
-
-      if (!quiet)
-	os << "\tSOLUTEPOLARISATION";
-    
+      DEBUG(10, "SOLUTEPOLARISATION block");    
       buffer.clear();
       buffer = m_block["SOLUTEPOLARISATION"];
-      if (buffer.size()){
+      
+      if (buffer.size()) {
+        if (!quiet)
+	os << "\tSOLUTEPOLARISATION\n"
+                << "\t\tblock present\n"
+                << "\tEND\n";
 	it = buffer.begin() + 1;
       
 	_lineStream.clear();
@@ -1476,12 +1477,11 @@ io::In_Topology::read(topology::Topology& topo,
       
       DEBUG(10, "SOLVENTEPOLARISATION block");
       
-      if (!quiet)
-        os << "\tSOLVENTEPOLARISATION";
-      
       buffer.clear();
       buffer = m_block["SOLVENTPOLARISATION"];
       if (buffer.size()){
+        if (!quiet)
+	os << "\n\t\tpolarisation parameters present";
         it = buffer.begin() + 1;
         
         _lineStream.clear();
@@ -1666,20 +1666,20 @@ io::In_Topology::read(topology::Topology& topo,
   }
 
   if (!quiet)
-    os << "\n\tSOLUTE [sub]molecules: " 
+    os << "\tSOLUTE [sub]molecules: " 
 	      << unsigned(topo.molecules().size()) - param.system.nsm - 1 << "\n";
 
   DEBUG(10, "molecules().size: " << unsigned(topo.molecules().size())
 	<< " nsm : " << param.system.nsm);
   
   if (!quiet)
-    os << "\n\tSOLUTE temperature groups: " 
+    os << "\tSOLUTE temperature groups: " 
 	      << unsigned(topo.temperature_groups().size()) - param.system.nsm - 1 << "\n";
 
   DEBUG(10, "temperature_groups().size: " << unsigned(topo.temperature_groups().size()));
   
   if (!quiet)
-    os << "\n\tSOLUTE pressure groups: " 
+    os << "\tSOLUTE pressure groups: " 
 	      << unsigned(topo.pressure_groups().size()) - param.system.nsm - 1 << "\n";
 
   DEBUG(10, "pressure_groups().size: " << unsigned(topo.pressure_groups().size()));
@@ -2020,7 +2020,8 @@ void io::In_Topology
       }
       // check for consistency
       if (kh!=k*2*r*r){
-        os << *it << std::endl;
+        os << "\tWarning: harmonic and quartic force constant do not match\n"
+                << "\t" << *it << std::endl;
         io::messages.add("harmonic and quartic force constant do not match (CHB!=CB*2*B0*B0)",
 			 "InTopology", io::message::warning);
       }

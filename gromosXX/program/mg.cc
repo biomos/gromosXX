@@ -35,10 +35,6 @@
 #include <omp.h>
 #endif
 
-#include "BUILD_NUMBER"
-
-void print_title(bool color = false);
-
 int main(int argc, char *argv[]){
 
   const double start = util::now();
@@ -61,12 +57,11 @@ int main(int argc, char *argv[]){
     std::cerr << usage << std::endl;
     return 1;
   }
-    
+
+  util::print_title(false);
   if (args.count("version") >= 0){
-    print_title(true);
     return 0;
   }
-  else print_title();
     
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)){
@@ -85,8 +80,8 @@ int main(int argc, char *argv[]){
   algorithm::Algorithm_Sequence cg_md;
   simulation::Simulation cg_sim;
 
-  io::Out_Configuration traj("GromosXX\n\tfine grained\n");
-  io::Out_Configuration cg_traj("GromosXX\n\tcoarse grained\n");
+  io::Out_Configuration traj(GROMOSXX "\n\tfine grained\n");
+  io::Out_Configuration cg_traj(GROMOSXX "\n\tcoarse grained\n");
   
   // add an external interaction
   sim.param().force.external_interaction = 1;
@@ -107,7 +102,7 @@ int main(int argc, char *argv[]){
 
   ei->set_coarsegraining(cg_topo, cg_conf, cg_sim);
 
-  traj.title("GromosXX\n\tfine-grained\n" + sim.param().title);
+  traj.title(GROMOSXX "\n\tfine-grained\n" + sim.param().title);
   traj.init(args, sim.param());
 
   io::argname_conf = "cg_conf";
@@ -126,16 +121,16 @@ int main(int argc, char *argv[]){
     return 1;
   }
   
-  cg_traj.title("GromosXX\n\tcoarse-grained\n" + sim.param().title);
+  cg_traj.title(GROMOSXX "\n\tcoarse-grained\n" + sim.param().title);
   cg_traj.init(args, cg_sim.param());
 
   // initialises all algorithms (and therefore also the forcefield)
   md.init(topo, conf, sim);
   cg_md.init(cg_topo, cg_conf, cg_sim);
 
-  std::cout << "\nMESSAGES FROM INITIALIZATION\n";
+  std::cout << "\nMESSAGES FROM INITIALISATION\n";
   if (io::messages.display(std::cout) >= io::message::error){
-    std::cout << "\nErrors during initialization!\n" << std::endl;
+    std::cout << "\nErrors during initialisation!\n" << std::endl;
     return 1;
   }
     
@@ -231,15 +226,6 @@ int main(int argc, char *argv[]){
     }
     // std::cerr << "----- at md done ---------------" << std::endl;
 
-    // HACKHACKHACK
-    // lambda sweep...
-    // conf.old().energies = conf.current().energies;
-    // conf.old().perturbed_energy_derivatives = 
-    // conf.current().perturbed_energy_derivatives;
-    // conf.old().energies.calculate_totals();
-    // conf.old().perturbed_energy_derivatives.calculate_totals();
-    // KCAHKCAHKCAH
-
     traj.print(topo, conf, sim);
 
     ++sim.steps();
@@ -294,7 +280,7 @@ int main(int argc, char *argv[]){
   md.print_timing(std::cout);
 
   std::cout << "Overall time used:\t" << util::now() - start << "\n"
-	    << "(initialization took " << init_time << ")\n\n";
+	    << "(initialisation took " << init_time << ")\n\n";
 
   const time_t time_now = time_t(util::now());
   std::cout << ctime(&time_now) << "\n\n";
@@ -302,75 +288,12 @@ int main(int argc, char *argv[]){
   if (error)
     std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
   else if(err_msg > io::message::notice){
-    std::cout << "\nGromosXX finished. "
+    std::cout << "\n" GROMOSXX " finished. "
 	      << "Check the messages for possible problems during the run."
 	      << std::endl;
-  }
-  else{
-    std::cout << "\nGromosXX finished successfully\n" << std::endl;
+  } else {
+    std::cout << "\n" GROMOSXX "finished successfully\n" << std::endl;
   }
   
   return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// helper functions
-////////////////////////////////////////////////////////////////////////////////
-
-void print_title(bool color)
-{
-  if (color){
-
-#ifdef NDEBUG
-#ifndef BZDEBUG
-    std::cout << "\033[1;32m";
-#else
-    std::cout << "\033[1;31m";
-#endif
-#else
-    std::cout << "\033[1;31m";
-#endif
-    std::cout << "\n\nGromosXX 0.3.0 development\033[22;0m\n\n"
-	      << "12 February 2008\n";
-  }
-  else
-    std::cout << "\n\nGromosXX 0.3.0 development\n\n"
-	      << "12 February 2008\n";
-  
-  std::cout << "build date    " << BUILD_DATE << "\n"
-	    << "build number  " << BUILD_NUMBER << "\n\n";
-  
-#ifdef NDEBUG
-  std::cout << "standard library debugging disabled.\n";
-#else
-  std::cout << "standard library debugging enabled.\n";
-#endif
-
-  // some omp stuff
-#ifdef OMP
-  int nthreads, tid;
-#pragma omp parallel private(nthreads, tid)
-  {
-    tid = omp_get_thread_num();
-    if (tid == 0){
-      nthreads = omp_get_num_threads();
-      std::cout << "OpenMP code enabled\n"
-		<< "\tshared memory parallelization\n"
-		<< "\twww.openmp.org\n\n"
-		<< "\tusing "
-		<< omp_get_num_threads() << " threads\n"
-		<< "\tthis can be adjusted by setting the\n"
-		<< "\tOMP_NUM_THREADS environment variable\n"
-		<< std::endl;
-    }
-    
-  }
-#endif
-  
-  std::cout << "\nGruppe fuer Informatikgestuetzte Chemie\n"
-	    << "Professor W. F. van Gunsteren\n"
-	    << "Swiss Federal Institute of Technology\n"
-	    << "Zuerich\n\n"
-	    << "Bugreports to https://gromos/svn/trac/gromosXXc++\n\n";
-
 }

@@ -74,14 +74,14 @@ int util::Replica_Exchange_Slave::run
   simulation::Simulation sim;
   algorithm::Algorithm_Sequence md;
 
-  io::Out_Configuration traj("GromosXX\n\tfine-grained\n", std::cout);
+  io::Out_Configuration traj(GROMOSXX "\n\tfine-grained\n", std::cout);
 
   topology::Topology cg_topo;
   configuration::Configuration cg_conf;
   algorithm::Algorithm_Sequence cg_md;
   simulation::Simulation cg_sim;
 
-  io::Out_Configuration cg_traj("GromosXX\n\tcoarse-grained\n", std::cout);
+  io::Out_Configuration cg_traj(GROMOSXX "\n\tcoarse-grained\n", std::cout);
 
   init(args,
        topo, conf, sim, md, traj,
@@ -332,13 +332,13 @@ int util::Replica_Exchange_Slave::init
   io::read_input(args, topo, conf, sim,  md, std::cout);
   md.init(topo, conf, sim, std::cout);
 
-  traj.title("GromosXX\n\tfine-grained\n" + sim.param().title);
+  traj.title(GROMOSXX "\n\tfine-grained\n" + sim.param().title);
   traj.init(args, sim.param());
 
   ////////////////////////////////////////////////////////////////////////////////
   // MULTIGRAINING
   ////////////////////////////////////////////////////////////////////////////////
-  cg_traj.title("GromosXX\n\tcoarse-grained\n" + cg_sim.param().title);
+  cg_traj.title(GROMOSXX "\n\tcoarse-grained\n" + cg_sim.param().title);
 
   if (multigraining){
     

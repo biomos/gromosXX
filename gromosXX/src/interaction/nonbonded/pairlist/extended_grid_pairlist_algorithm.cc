@@ -51,22 +51,6 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     return 1;
   }
   
-  /*
-  if (sim.param().pcouple.virial != math::molecular_virial &&
-      sim.param().pcouple.virial != math::no_virial){
-    io::messages.add("Grid Pairlist Algorithm",
-		     "only implemented for molecular virial",
-		     io::message::error);
-    return 1;
-  }
-  */
-/*
-  if (sim.param().multicell.multicell){
-    io::messages.add("Grid Pairlist Algorithm",
-		     "not compatible with MULTICELL simulations",
-		     io::message::error);
-  }
-*/
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
 
@@ -77,16 +61,16 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     os.precision(4);
     os.setf(std::ios::fixed, std::ios::floatfield);
     
-    os << "GridPairlistAlgorithm\n"
-       << "\tcells             " 
+    os << "\textended grid pairlist algorithm\n"
+       << "\t\tcells             "
        << std::setw(10) << m_grid.Na
        << std::setw(10) << m_grid.Nb
        << std::setw(10) << m_grid.Nc << "\n"
-       << "\textenced cells    "
+       << "\t\textenced cells    "
        << std::setw(10) << m_grid.Na_ex
        << std::setw(10) << m_grid.Nb_ex
        << std::setw(10) << m_grid.Nc_ex << "\n"
-       << "\tcell size         "
+       << "\t\tcell size         "
        << std::setw(10) << m_grid.a
        << std::setw(10) << m_grid.b
        << std::setw(10) << m_grid.c << "\n";
@@ -104,8 +88,8 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     const double Pcell = P / Ncell;
     const double Player = P / m_grid.Nc;
     
-    os << "\tparticles / cell    " << std::setw(10) << Pcell << "\n"
-       << "\tparticles / layer   " << std::setw(10) << Player << "\n";
+    os << "\t\tparticles / cell    " << std::setw(10) << Pcell << "\n"
+       << "\t\tparticles / layer   " << std::setw(10) << Player << "\n";
 
     // mask size:
     int Nmask = 0;
@@ -117,14 +101,14 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
       }
     }
     
-    os << "\tcells in mask       " << std::setw(10) << Nmask << "\n"
-       << "\tpairs               " << std::setw(10) << 0.5 * P * P << "\n"
-       << "\tpairs (grid)        " << std::setw(10) << P * Nmask * Pcell << "\n"
-       << "\tpairs (cutoff)      " << std::setw(10) << 0.5 * P * Pcut << "\n";
+    os << "\t\tcells in mask       " << std::setw(10) << Nmask << "\n"
+       << "\t\tpairs               " << std::setw(10) << 0.5 * P * P << "\n"
+       << "\t\tpairs (grid)        " << std::setw(10) << P * Nmask * Pcell << "\n"
+       << "\t\tpairs (cutoff)      " << std::setw(10) << 0.5 * P * Pcut << "\n";
 
     // just for fun, already try this
     if (prepare_grid(topo, conf, sim)){
-      os << "\terror during grid preparation!\n";
+      os << "\t\terror during grid preparation!\n";
       io::messages.add("error during grid preparation. Use standard pairlist instead.",
                        "Grid_Pairlist_Algorithm",
 		       io::message::error);
@@ -143,8 +127,8 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     }
 
     if (!quiet){
-      os << "\toccupied            " << std::setw(10) << occupied << "\n"
-	 << "\tparticle / occ cell " << std::setw(10) << double(P) / occupied << "\n";
+      os << "\t\toccupied            " << std::setw(10) << occupied << "\n"
+	 << "\t\tparticle / occ cell " << std::setw(10) << double(P) / occupied << "\n";
       
       // print_mask();
 

@@ -6,7 +6,7 @@ noinst_HEADERS = stdheader.h
 
 lib_LTLIBRARIES = libgroxx.la
 
-libgroxx_la_LDFLAGS =	-no-undefined -version-info $(MD_MAJOR_VERSION):$(MD_MINOR_VERSION):0
+libgroxx_la_LDFLAGS =	-no-undefined -release $(MD_VERSION)
 
 libgroxx_la_SOURCES =	
 

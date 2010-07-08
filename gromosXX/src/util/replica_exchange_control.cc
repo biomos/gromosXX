@@ -171,12 +171,12 @@ int util::Replica_Exchange_Control::run
   
   // magic cookie exchange
   int res;
-  if (res = read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
+  if (read(cl_socket, magic_buff, 4 * sizeof(double)) != 4 * sizeof(double)){
     std::cerr << "could not read magic cookie" << std::endl;
     close(cl_socket);
     return 1;
   }
-  if (res = write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
+  if (write(cl_socket, &magic, 4 * sizeof(double)) != 4 * sizeof(double)){
     std::cerr << "could not write magic cookie" << std::endl;
     close(cl_socket);
     return 1;
@@ -345,13 +345,13 @@ int util::Replica_Exchange_Control::run
     if (nr >= 0 && nr < int(replica_data.size())){
 
       DEBUG(8, "control: sending change ID");
-      if (res = write(cl_socket, (char *) &nr, sizeof(int)) != sizeof(int)){
+      if (write(cl_socket, (char *) &nr, sizeof(int)) != sizeof(int)){
 	std::cerr << "could not write ID" << std::endl;
       }
       
       std::cerr << "and now replica data" << std::endl;
       
-      if (res = write(cl_socket, (char *) &replica_data[nr], sizeof(Replica_Data)) != sizeof(Replica_Data)){
+      if (write(cl_socket, (char *) &replica_data[nr], sizeof(Replica_Data)) != sizeof(Replica_Data)){
 	std::cerr << "could not write replica data" << std::endl;
       }
     }

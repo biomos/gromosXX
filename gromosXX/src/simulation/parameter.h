@@ -460,7 +460,7 @@ namespace simulation
   class Parameter
   {
   public:
-    Parameter() : title("GromosXX") {}
+    Parameter() : title(GROMOSXX) {}
     
     /**
      * title of the simulation (from the input file)

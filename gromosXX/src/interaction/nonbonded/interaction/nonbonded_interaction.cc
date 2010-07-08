@@ -220,12 +220,14 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
         std::ostream & os,
         bool quiet) {
   if (!quiet)
-    os << "Nonbonded interaction\n";
+    os << "NONBONDED INTERACTION\n";
 
   configuration::Configuration * p_conf = &conf;
   topology::Topology * p_topo = &topo;
   if (sim.param().multicell.multicell) {
     DEBUG(6, "nonbonded init: MULTICELL");
+    if (!quiet)
+      os << "\tperforming MULTICELL.\n";
     p_topo = &topo.multicell_topo();
     m_exp_conf = p_conf = new configuration::Configuration();
     init_expand_configuration(topo, conf, sim, *p_conf);
@@ -280,6 +282,8 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   m_pairlist_algorithm->init(*p_topo, *p_conf, sim, os, quiet);
 
   if (sim.param().nonbonded.method != simulation::el_reaction_field) {
+    if (!quiet)
+      os << "\tlattice-sum electrostatics\n";
     p_conf->lattice_sum().init(*p_topo, sim);
   }
 
@@ -309,6 +313,10 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   it = m_nonbonded_set.begin(),
           to = m_nonbonded_set.end();
 
+  if (!quiet)
+    os << "\tcreated " << m_nonbonded_set.size() << " set"
+        <<  (m_nonbonded_set.size() > 1 ? "s" : "")    << "\n";
+
   bool q = quiet;
   for (; it != to; ++it) {
       (*it)->init(*p_topo, *p_conf, sim, os, q);
@@ -316,14 +324,13 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
     q = true;
   }
 
-  if (!quiet)
-    os << "\n";
-
   if (check_special_loop(*p_topo, *p_conf, sim, os, quiet) != 0) {
     io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
             io::message::error);
     return 1;
   }
+  if (!quiet)
+    os << "END\n";
   DEBUG(9, "nonbonded init done");
   return 0;
 }
@@ -369,10 +376,10 @@ int interaction::Nonbonded_Interaction::check_special_loop
     if (!quiet) {
       if (topo.num_solvents() > 0) {
         if (topo.num_solvent_molecules(0) == 0) {
-          os << "\tusing standard solvent loops (no solvent present!)\n\n";
+          os << "\tusing standard solvent loops (no solvent present!)\n";
         }
       } else {
-        os << "\tusing standard solvent loops (no solvent in topology!)\n\n";
+        os << "\tusing standard solvent loops (no solvent in topology!)\n";
       }
     }
     return 1;
@@ -417,13 +424,13 @@ int interaction::Nonbonded_Interaction::check_special_loop
                 << topo.num_solvents() << "\n"
                 << "\t\tsolvent atoms: "
                 << topo.num_solvent_atoms(0) / topo.num_solvent_molecules(0) << "\n"
-                << "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n\n";
+                << "\t\tmolecules: " << topo.num_solvent_molecules(0) << "\n";
         return 1;
       }
       break;
     }
     default:
-      os << "\tusing standard solvent loops (unknown solvent)\n\n";
+      os << "\tusing standard solvent loops (unknown solvent)\n";
       return 1;
   }
 
@@ -453,7 +460,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
             os << "\tusing standard solvent loops (charges don't match)\n"
                   << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
             << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms() + 1) << "\n"
-            << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n\n";
+            << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n";
 
           return 1;
         }
@@ -500,7 +507,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
         break;
       }
       default:
-        os << "\tusing standard solvent loops (unknown solvent)\n\n";
+        os << "\tusing standard solvent loops (unknown solvent)\n";
         return 1;
     } // solvents
   } // hardcoded parameters
@@ -549,7 +556,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
             os << "\tusing standard solvent loops (charges don't match)\n"
                   << "\t\tO  : " << topo.charge()(topo.num_solute_atoms()) << "\n"
             << "\t\tH1 : " << topo.charge()(topo.num_solute_atoms() + 1) << "\n"
-            << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n\n";
+            << "\t\tH2 : " << topo.charge()(topo.num_solute_atoms() + 2) << "\n";
 
           return 1;
         }
@@ -599,7 +606,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
         break;
       }
       default:
-        os << "\tusing standard solvent loops (unknown solvent)\n\n";
+        os << "\tusing standard solvent loops (unknown solvent)\n";
         return 1;
     } // solvents
   } // tabulated forces

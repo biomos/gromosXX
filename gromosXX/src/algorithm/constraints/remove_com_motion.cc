@@ -62,7 +62,7 @@ int algorithm::Remove_COM_Motion::init
   if (sim.param().start.remove_com_rotation)
     os << "\n\tremoving initial centre of mass rotation\n";
   
-  os << "\nEND\n";
+  os << "END\n";
   
   return 0;
 };

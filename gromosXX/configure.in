@@ -27,7 +27,7 @@ CONF_DATE=`date`
 AC_DEFINE_UNQUOTED(MD_DATE, "$CONF_DATE", [MD date (configure)])
 
 echo ""
-echo "GromosXX molecular dynamics program"
+echo "GROMOSXX molecular dynamics program (MD++)"
 echo "version ${MD_MAJOR_VERSION}.${MD_MINOR_VERSION}.${MD_MICRO_VERSION}"
 echo "${CONF_DATE}, ETH Zuerich"
 echo ""

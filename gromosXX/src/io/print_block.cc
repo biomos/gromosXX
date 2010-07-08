@@ -283,7 +283,7 @@ namespace io
 		     double tau, math::virial_enum vir,
                      int x_semi, int y_semi, int z_semi)
   {
-    os << "PCOUPLE\n";
+    os << "PRESSURE SCALING\n";
     os.precision(5);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
