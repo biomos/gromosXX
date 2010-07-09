@@ -1,7 +1,7 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
 
-xxincludedir = $(includedir)/gromosXX/simulation
+xxincludedir = $(includedir)/md++/simulation
 xxinclude_HEADERS =	simulation.h\
 	multibath.h\
 	parameter.h

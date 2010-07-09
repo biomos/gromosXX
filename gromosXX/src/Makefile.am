@@ -4,13 +4,13 @@ SUBDIRS = util simulation math topology configuration algorithm interaction io c
 
 noinst_HEADERS = stdheader.h
 
-lib_LTLIBRARIES = libgroxx.la
+lib_LTLIBRARIES = libmdpp.la
 
-libgroxx_la_LDFLAGS =	-no-undefined -release $(MD_VERSION)
+libmdpp_la_LDFLAGS =	-no-undefined -release $(MD_VERSION)
 
-libgroxx_la_SOURCES =	
+libmdpp_la_SOURCES =	
 
-libgroxx_la_LIBADD = algorithm/libgroalgorithm.la\
+libmdpp_la_LIBADD = algorithm/libgroalgorithm.la\
 	configuration/libgroconfiguration.la\
 	interaction/libgrointeraction.la\
 	math/libgromath.la\

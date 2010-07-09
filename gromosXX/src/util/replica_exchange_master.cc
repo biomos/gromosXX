@@ -485,7 +485,7 @@ int util::Replica_Exchange_Master::select_job(simulation::Simulation & sim)
     std::cerr << "master: sending quit (9) signal..." << std::endl;
     // quit signal
     ch = 9;
-    write(cl_socket, &ch, 1);
+    int res = write(cl_socket, &ch, 1);
     return 1;
   }
 

@@ -189,9 +189,9 @@ fi
 dnl check for GSL
 AC_DEFUN([AM_PATH_GSL],
 [
-AC_ARG_WITH(gsl,[  --with-gsl=PFX   Prefix where GSL is installed (optional)],
+AC_ARG_WITH(gsl,[  --with-gsl=DIR          directory where GSL is installed (optional)],
             gsl_prefix="$withval", gsl_prefix="")
-AC_ARG_WITH(gsl-exec-prefix,[  --with-gsl-exec-prefix=PFX Exec prefix where GSL is installed (optional)],
+AC_ARG_WITH(gsl-exec-prefix,[  --with-gsl-exec-prefix=DIR Exec prefix where GSL is installed (optional)],
             gsl_exec_prefix="$withval", gsl_exec_prefix="")
 AC_ARG_ENABLE(gsltest, [  --disable-gsltest       Do not try to compile and run a test GSL program],
 		    , enable_gsltest=yes)
@@ -363,7 +363,7 @@ AC_DEFUN([AM_PATH_FFTW3],[
   fi
   AC_DEFINE_UNQUOTED([FFTW_PREFIX], [${PREFIX}], [prefix for fftw3 library])
   AC_ARG_WITH(fftw,
-    [  --with-fftw=DIR  fftw library directory to use],
+    [  --with-fftw=DIR         fftw library directory to use],
     [
       [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/lib"]
       [LDFLAGS="$LDFLAGS -L${withval}/lib"]
@@ -382,7 +382,7 @@ AC_DEFUN([AM_PATH_FFTW3],[
 dnl check for lib HOOMD
 AC_DEFUN([AM_PATH_HOOMD],[
   AC_ARG_WITH(hoomd,
-    [  --with-hoomd=DIR  Enable HOOMD code and use the provided library directory],
+    [  --with-hoomd=DIR        Enable HOOMD code and use the provided library directory],
     [
 	  [CXXFLAGS="$CXXFLAGS -DHAVE_HOOMD=1 -I/usr/local/cuda/include -I${withval}"]
       [LDFLAGS="$LDFLAGS -L${withval}"]
@@ -397,7 +397,7 @@ AC_DEFUN([AM_PATH_HOOMD],[
 dnl check for lib CUKERNEL
 AC_DEFUN([AM_PATH_CUKERNEL],[
   AC_ARG_WITH(cukernel,
-    [  --with-cukernel=DIR  CUDA kernel library directory to use],
+    [  --with-cukernel=DIR     CUDA kernel library directory to use],
     [
       [CXXFLAGS="$CXXFLAGS -I${withval} -L${withval}"]
       [LDFLAGS="$LDFLAGS -L${withval}"]
@@ -414,7 +414,7 @@ dnl check for lib CCP4/Clipper
 AC_DEFUN([AM_PATH_CCP4_CLIPPER],[
   dnl allow for ccp4 lib directory specification
   AC_ARG_WITH(ccp4,
-    [  --with-ccp4=DIR     CCP4 library directory to use],
+    [  --with-ccp4=DIR         CCP4 library directory to use],
     [
       [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/lib"]
       [LDFLAGS="$LDFLAGS -L${withval}/lib"]
@@ -423,7 +423,7 @@ AC_DEFUN([AM_PATH_CCP4_CLIPPER],[
       AC_MSG_WARN([Assuming default paths for CCP4])
     ])
   AC_ARG_WITH(clipper,
-    [  --with-clipper=DIR  clipper library directory to use],
+    [  --with-clipper=DIR      clipper library directory to use],
     [
       [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/lib"]
       [LDFLAGS="$LDFLAGS -L${withval}/lib"]

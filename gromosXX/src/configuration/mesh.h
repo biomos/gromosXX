@@ -5,7 +5,7 @@
 
 #ifndef INCLUDED_MESH_H
 #define	INCLUDED_MESH_H
-#include <math/fft.h>
+#include "../math/fft.h"
 
 #undef MODULE
 #undef SUBMODULE

@@ -10,7 +10,7 @@ md_mpi_SOURCES = md_mpi.cc
 repex_SOURCES = repex.cc
 mg_SOURCES =mg.cc
 
-LDADD = ../src/libgroxx.la $(extra_lib)
+LDADD = ../src/libmdpp.la $(extra_lib)
 
 EXTRA_DIST = BUILD_NUMBER
 

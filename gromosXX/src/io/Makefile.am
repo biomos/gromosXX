@@ -1,7 +1,7 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
 
-xxincludedir = $(includedir)/gromosXX/io
+xxincludedir = $(includedir)/md++/io
 
 xxinclude_HEADERS =	argument.h\
 	blockinput.h\
@@ -13,7 +13,7 @@ xxinclude_HEADERS =	argument.h\
 	gzstream.h \
     ifp.h
 
-xxiotopodir = $(includedir)/gromosXX/io/topology
+xxiotopodir = $(includedir)/md++/io/topology
 xxiotopo_HEADERS = topology/in_jvalue.h\
 	topology/in_posres.h\
 	topology/in_topology.h\
@@ -24,12 +24,12 @@ xxiotopo_HEADERS = topology/in_jvalue.h\
 	topology/in_xray.h\
 	topology/in_leus.h
 
-xxioconfdir = $(includedir)/gromosXX/io/configuration
+xxioconfdir = $(includedir)/md++/io/configuration
 xxioconf_HEADERS = configuration/in_configuration.h\
   configuration/out_configuration.h\
   configuration/inframe.h
 
-xxioparamdir = $(includedir)/gromosXX/io/parameter
+xxioparamdir = $(includedir)/md++/io/parameter
 xxioparam_HEADERS = parameter/in_parameter.h\
   parameter/check_parameter.h
 

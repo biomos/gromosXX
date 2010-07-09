@@ -1,6 +1,4 @@
 dnl configure.in for GromosXX
-dnl written by Markus Christen
-dnl september, 2004
 
 AC_PREREQ(2.58)
 
@@ -12,7 +10,7 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl get canonical target and host information
 AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
-AC_MSG_RESULT([Configure gromosXX for $target])
+AC_MSG_RESULT([Configure MD++ for $target])
 
 dnl set C++ as main language
 AC_LANG(C++)
@@ -33,40 +31,40 @@ echo "${CONF_DATE}, ETH Zuerich"
 echo ""
 echo ""
 
-AM_INIT_AUTOMAKE(gromosXX, $MD_VERSION, no-define)
+AM_INIT_AUTOMAKE(md++, $MD_VERSION, no-define)
 AM_CONFIG_HEADER(config.h)
 
 dnl option for production builds
 AC_ARG_ENABLE(debug,
-  [  --disable-debug      compile without debug options],
-  ,enable_debug=yes)    
+  [  --enable-debug          compile with debug options],
+  ,enable_debug=no)    
 
 AC_ARG_ENABLE(openmp,
-  [  --enable-openmp      compile with openMP support],
+  [  --enable-openmp         compile with openMP support],
   , enable_openmp=no)
 
 AC_ARG_ENABLE(mpi,
-  [  --enable-mpi         compile with MPI support],
+  [  --enable-mpi            compile with MPI support],
   , enable_mpi=no)
 
 AC_ARG_ENABLE(repex,
-  [  --disable-repex      compile without replica exchange support],
+  [  --disable-repex         compile without replica exchange support],
   , enable_repex=yes)
 
 AC_ARG_ENABLE(profile,
-  [  --enable-profile	  compile with profiling on],
+  [  --enable-profile        compile with profiling on],
   , enable_profile=no)
 
 AC_ARG_ENABLE(profileopt,
-  [  --enable-profileopt  use profile information],
+  [  --enable-profileopt     use profile information],
   , enable_profileopt=no)
 
 AC_ARG_ENABLE(gprof,
-  [  --enable-gprof       compile with profiling on],
+  [  --enable-gprof          compile with profiling on],
   , enable_gprof=no)
 
 AC_ARG_ENABLE(allstatic, 
-  [ --enable-allstatic    compile static-only],
+  [ --enable-allstatic       compile static-only],
   , enable_allstatic=no)
 
 if eval "test x$enable_allstatic = xyes"; then
@@ -79,9 +77,6 @@ AC_PROG_CXX
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
-
-dnl create a symlink from src to gromosXX
-AC_LINK_FILES(src, gromosXX)
 
 dnl detect the compiler
 compiler="none"

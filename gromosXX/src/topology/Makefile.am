@@ -1,8 +1,8 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
 
-xxincludedir = $(includedir)/gromosXX/topology
-xxcoreincludedir = $(includedir)/gromosXX/topology/core
+xxincludedir = $(includedir)/md++/topology
+xxcoreincludedir = $(includedir)/md++/topology/core
 
 xxcoreinclude_HEADERS =	core/atomgroup_iterator.h\
 	core/chargegroup_iterator.h\

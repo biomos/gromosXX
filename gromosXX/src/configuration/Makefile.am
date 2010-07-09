@@ -1,7 +1,7 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
 
-xxincludedir = $(includedir)/gromosXX/configuration
+xxincludedir = $(includedir)/md++/configuration
 xxinclude_HEADERS =	configuration_global.h\
 	configuration.h\
 	energy.h\

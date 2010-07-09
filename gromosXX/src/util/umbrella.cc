@@ -171,7 +171,7 @@ void util::Umbrella::apply(
       DEBUG(8, "\t\twithin cutoff.");
 
       // calculate g function and the derivative by Qi
-      double g, dgdQ;
+      double g = 0.0, dgdQ = 0.0;
       switch (functional_form[i]) {
         case util::Umbrella::ff_polynomial :
         {

@@ -2,16 +2,16 @@ AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/algorithm
 
 
-xxincludedir = $(includedir)/gromosXX/interaction
+xxincludedir = $(includedir)/md++/interaction
 xxinclude_HEADERS =	interaction.h\
 	interaction_types.h\
 	molecular_virial_interaction.h
 
-xxintffdir = $(includedir)/gromosXX/interaction/forcefield
+xxintffdir = $(includedir)/md++/interaction/forcefield
 xxintff_HEADERS = forcefield/forcefield.h\
 	forcefield/create_forcefield.h
 
-xxintbondeddir = $(includedir)/gromosXX/interaction/bonded
+xxintbondeddir = $(includedir)/md++/interaction/bonded
 xxintbonded_HEADERS = bonded/create_bonded.h\
 	bonded/quartic_bond_interaction.h\
 	bonded/harmonic_bond_interaction.h\
@@ -28,12 +28,12 @@ xxintbonded_HEADERS = bonded/create_bonded.h\
 	bonded/perturbed_dihedral_new_interaction.h\
 	bonded/perturbed_dihedral_interaction.h
 
-xxintnbdir = $(includedir)/gromosXX/interaction/nonbonded
+xxintnbdir = $(includedir)/md++/interaction/nonbonded
 xxintnb_HEADERS = nonbonded/create_nonbonded.h\
 nonbonded/interaction_spec.h\
 nonbonded/innerloop_template.h
 
-xxintnbintdir = $(includedir)/gromosXX/interaction/nonbonded/interaction
+xxintnbintdir = $(includedir)/md++/interaction/nonbonded/interaction
 xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/nonbonded_term.h\
 	nonbonded/interaction/nonbonded_term.cc\
@@ -65,14 +65,14 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/cuda_nonbonded_set.h\
 	nonbonded/interaction/spc_table.h
 
-xxintnbpairlistdir = $(includedir)/gromosXX/interaction/nonbonded/pairlist
+xxintnbpairlistdir = $(includedir)/md++/interaction/nonbonded/pairlist
 xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\
 	nonbonded/pairlist/pairlist_algorithm.h\
 	nonbonded/pairlist/standard_pairlist_algorithm.h\
 	nonbonded/pairlist/extended_grid_pairlist_algorithm.h\
 	nonbonded/pairlist/grid_cell_pairlist.h
 
-xxintnbspecialdir = $(includedir)/gromosXX/interaction/nonbonded/special
+xxintnbspecialdir = $(includedir)/md++/interaction/nonbonded/special
 xxintnbspecial_HEADERS = special/create_special.h\
 	special/position_restraint_interaction.h\
 	special/distance_restraint_interaction.h\

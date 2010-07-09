@@ -24,23 +24,4 @@ EXTRA_DIST = VERSION\
 	doc/doxygen.conf.in\
 	doc/install.doxy\
 	doc/install.html\
-	doc/main.doxy\
-	packaging/solaris.depend\
-	packaging/debian.control \
-	packaging/debian.depend\
-	packaging/copyright\
-	nightly/nightly.sh\
-	nightly/prepare.sh\
-	nightly/distcheck.sh\
-	nightly/options.gromos++\
-	nightly/options.gromosXX\
-	nightly/options.all\
-	nightly/options.SunOS_i86pc\
-	nightly/options.Linux_i686\
-	nightly/options.SunOS_sun4u\
-	nightly/pkg_solaris.sh\
-	nightly/pkg_solaris_fakeroot.sh\
-	nightly/pkg_debian.sh\
-	nightly/pkg_debian_fakeroot.sh
-
-
+	doc/main.doxy

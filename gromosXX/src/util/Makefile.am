@@ -1,7 +1,7 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
-xxincludedir = $(includedir)/gromosXX/util
+xxincludedir = $(includedir)/md++/util
 xxinclude_HEADERS = error.h\
         cycle_thread.h\
 	debug.h\

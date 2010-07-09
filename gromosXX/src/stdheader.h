@@ -31,7 +31,7 @@
 
 #include <util/timing.h>
 
-#define GROMOSXX "GROMOSXX"
+#define GROMOSXX "MD++"
 
 // #ifdef COMPILER_GCC
 // #include <cxxabi.h>
