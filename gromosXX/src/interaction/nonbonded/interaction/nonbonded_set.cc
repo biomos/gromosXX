@@ -201,6 +201,10 @@ int interaction::Nonbonded_Set
   m_outerloop.one_four_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
   stop_timer("1,4 interaction");
 
+  start_timer("LJ exceptions");
+  m_outerloop.lj_exception_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
+  stop_timer("LJ exceptions");
+
   // possibly do the RF contributions due to excluded atoms
   if (sim.param().nonbonded.rf_excluded) {
     DEBUG(7, "\tRF excluded interactions and self term");

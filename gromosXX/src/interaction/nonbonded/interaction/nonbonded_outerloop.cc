@@ -329,7 +329,47 @@ void interaction::Nonbonded_Outerloop
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
-}  
+}
+
+/**
+ * helper function to calculate the forces and energies from the
+ * Lennard-Jones exception interaction
+ */
+void interaction::Nonbonded_Outerloop
+::lj_exception_outerloop(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim,
+		     Storage & storage,
+                     int rank, int size)
+{
+  SPLIT_INNERLOOP(_lj_exception_outerloop, topo, conf, sim, storage, rank, size);
+}
+
+/**
+ * helper function to calculate the forces and energies from the
+ * Lennard-Jones exception interaction
+ */
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_lj_exception_outerloop(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim,
+		     Storage & storage,
+                     int rank, int size)
+{
+  DEBUG(7, "\tcalculate Lennard-Jones-exception-interactions");
+
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+  innerloop.init(sim);
+  unsigned int const num_lj_exceptions = topo.lj_exceptions().size();
+
+  for (unsigned int i = rank; i < num_lj_exceptions; i += size) {
+    const topology::lj_exception_struct & ljex = topo.lj_exceptions()[i];
+
+    innerloop.lj_exception_innerloop(topo, conf, ljex, storage, periodicity);
+  } // loop over LJ exceptions
+}
 
 /**
  * helper function to calculate the forces and energies from the

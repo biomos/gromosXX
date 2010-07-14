@@ -75,6 +75,7 @@ inline void interaction::Nonbonded_Term
 		     "interaction function not implemented",
 		     io::message::critical);
   }
+  m_cut2 = sim.param().pairlist.cutoff_long * sim.param().pairlist.cutoff_long;
 }
 
 /**

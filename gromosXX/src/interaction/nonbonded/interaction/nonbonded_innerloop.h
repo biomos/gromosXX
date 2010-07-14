@@ -145,7 +145,20 @@ namespace interaction
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );
-    
+
+    /**
+     * Lennard-Jones exception
+     * (always shortrange)
+     */
+    void lj_exception_innerloop
+    (
+            topology::Topology & topo,
+            configuration::Configuration & conf,
+            topology::lj_exception_struct const & ljex,
+            Storage & storage,
+            math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+            );
+
     /**
      * RF interaction (solute).
      * (always shortrange)

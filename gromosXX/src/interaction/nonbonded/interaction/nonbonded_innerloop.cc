@@ -856,6 +856,134 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
 }
 
 template<typename t_nonbonded_spec>
+void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
+(
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ topology::lj_exception_struct const & ljex,
+ Storage & storage,
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
+{
+  DEBUG(8, "\tLJ exception\t" << ljex.i << "\t" << ljex.j);
+
+  math::Vec r;
+  double f, e_lj, e_crf = 0.0, e_ls = 0.0;
+
+  unsigned int i = ljex.i, j = ljex.j;
+
+  periodicity.nearest_image(conf.current().pos(i),
+			    conf.current().pos(j), r);
+  DEBUG(10, "\tni i " << conf.current().pos(i)(0) << " / "
+          << conf.current().pos(i)(1) << " / "
+          << conf.current().pos(i)(2));
+  DEBUG(10, "\tni j " << conf.current().pos(j)(0) << " / "
+          << conf.current().pos(j)(1) << " / "
+          << conf.current().pos(j)(2));
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+
+  // do cutoff check
+  if (math::abs2(r) > m_cut2)
+    return;
+
+  switch(t_nonbonded_spec::interaction_func){
+    case simulation::lj_crf_func :
+      {
+	DEBUG(11, "\tlj-parameter cs6=" << ljex.c6 << " cs12=" << ljex.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+
+        lj_crf_interaction(r, ljex.c6, ljex.c12,
+			 topo.charge()(i) *
+			 topo.charge()(j),
+			 f, e_lj, e_crf);
+
+        DEBUG(10, "\t\tatomic virial");
+        for (int a=0; a<3; ++a){
+          const double term = f * r(a);
+          storage.force(i)(a) += term;
+          storage.force(j)(a) -= term;
+
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(b, a) += r(b) * term;
+        }
+	break;
+      }
+
+    case simulation::cgrain_func :
+      {
+        io::messages.add("Nonbonded_Innerloop",
+                         "LJ exceptions for coarse-grained simulations!",
+		         io::message::critical);
+        break;
+      }
+    case simulation::pol_lj_crf_func :
+      {
+        math::Vec rp1, rp2, rpp;
+        std::vector<double> f_pol(4, 0.0);
+
+        rp1 = r - conf.current().posV(j);
+        rp2 = r + conf.current().posV(i);
+        rpp = r + conf.current().posV(i) - conf.current().posV(j);
+
+        DEBUG(10, "\t rpp " << rpp(0) << " / " << rpp(1) << " / " << rpp(2));
+	DEBUG(11, "\tlj-parameter cs6=" << ljex.c6 << " cs12=" << ljex.c12);
+	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+        DEBUG(11, "\tcoscharge i=" << topo.coscharge()(i) << " j=" << topo.coscharge()(j));
+
+        pol_lj_crf_interaction(r, rp1, rp2, rpp, ljex.c6, ljex.c12,
+                               topo.charge(i), topo.charge(j),
+                               topo.coscharge(i), topo.coscharge(j),
+                               f_pol, e_lj, e_crf);
+
+        DEBUG(10, "\tatomic virial");
+        for (int a=0; a<3; ++a){
+          const double term = f_pol[0]*r(a) + f_pol[1]*rp1(a) + f_pol[2]*rp2(a) + f_pol[3]*rpp(a);
+          storage.force(i)(a) += term;
+          storage.force(j)(a) -= term;
+
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(b, a) += r(b)*term;
+        }
+
+	break;
+    }
+    case simulation::lj_ls_func : {
+      DEBUG(11, "\tlj-parameter c6=" << ljex.c6 << " c12=" << ljex.c12);
+      lj_interaction(r, ljex.c6, ljex.c12, f, e_lj);
+      e_crf = 0.0;
+
+      DEBUG(10, "\t\tatomic virial");
+      for (int a=0; a<3; ++a){
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+
+        for(int b=0; b<3; ++b)
+          storage.virial_tensor(b, a) += r(b) * term;
+      }
+      break;
+    }
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+		       "interaction function not implemented",
+		       io::message::critical);
+  }
+
+  // energy
+  storage.energies.lj_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_lj;
+
+  storage.energies.crf_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_crf;
+
+  storage.energies.ls_real_energy[topo.atom_energy_group(i)]
+    [topo.atom_energy_group(j)] += e_ls;
+
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+	<< " j " << topo.atom_energy_group(j));
+
+}
+
+template<typename t_nonbonded_spec>
 inline void 
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_innerloop
 (

@@ -184,6 +184,11 @@ namespace interaction
      */
     int charge_shape;
     double charge_width_i;
+
+    /**
+     * the cutoff squared
+     */
+    double m_cut2;
   };
   
 } // interaction

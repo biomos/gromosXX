@@ -134,6 +134,10 @@ int interaction::Eds_Nonbonded_Set
   m_outerloop.one_four_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
   stop_timer("1,4 interaction");
 
+  start_timer("LJ exceptions");
+  m_outerloop.lj_exception_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
+  stop_timer("LJ exceptions");
+
   if (sim.param().nonbonded.rf_excluded) {
     start_timer("RF excluded");
     DEBUG(6, "\tRF excluded interactions and self term");

@@ -509,6 +509,63 @@ io::In_Topology::read(topology::Topology& topo,
 	}
       }
     } // SOLUTEPOLARISATION
+
+    { // LJEXCEPTIONS
+      DEBUG(10, "LJEXCEPTIONS block");
+      buffer.clear();
+      buffer = m_block["LJEXCEPTIONS"];
+
+      if (buffer.size()) {
+        it = buffer.begin() + 1;
+
+        _lineStream.clear();
+        _lineStream.str(*it);
+
+        int num, n;
+        _lineStream >> num;
+        ++it;
+        if (_lineStream.fail() || !_lineStream.eof()) {
+          io::messages.add("Bad line in LJEXCEPTIONS block",
+                  "In_Topology", io::message::error);
+        } else {
+          if (!quiet) {
+            os << "\tLJEXCEPTIONS\n"
+                    << "\t\t" << num << " Lennard-Jones exceptions.\n"
+                    << "\tEND\n";
+          }
+        }
+
+	for(n=0; it != buffer.end() - 1; ++it, ++n){
+	  int i, j;
+          double c6, c12;
+	  _lineStream.clear();
+	  _lineStream.str(*it);
+	  _lineStream >> i >> j >> c12 >> c6;
+
+	  if (_lineStream.fail() || ! _lineStream.eof()){
+	    io::messages.add("Bad line in LJEXCEPTIONS block",
+			     "In_Topology", io::message::error);
+	  }
+
+          if (i > int(topo.num_solute_atoms()) || i < 1 ||
+              j > int(topo.num_solute_atoms()) || j < 1) {
+	    io::messages.add("Atom number out of range in LJEXCEPTIONS block",
+			     "In_Topology", io::message::error);
+          } else {
+            i--; j--;
+            if (i > j)
+              std::swap(i,j);
+            topo.lj_exceptions().push_back(topology::lj_exception_struct(i, j, c6, c12));
+            topo.all_exclusion(i).insert(j);
+          }
+	}
+
+	if(n != num){
+	  io::messages.add("Wrong number of lines in LJEXCEPTIONS block",
+			   "In_Topology", io::message::error);
+	}
+      }
+    } // LJEXCEPTION
   
     { // BONDH
       DEBUG(10, "BONDH block");

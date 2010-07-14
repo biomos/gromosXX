@@ -81,6 +81,15 @@ namespace interaction
                             int rank, int size);
 
     /**
+     * calculate the LJ exceptions
+     */
+    void lj_exception_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage,
+            int rank, int size);
+
+    /**
      * calculate the RF contributions for excluded atoms.
      */
     void RF_excluded_outerloop(topology::Topology & topo,
@@ -320,6 +329,13 @@ namespace interaction
 			     simulation::Simulation & sim,
 			     Storage & storage,
                              int rank, int size);
+
+    template<typename t_interaction_spec>
+    void _lj_exception_outerloop(topology::Topology & topo,
+            configuration::Configuration & conf,
+            simulation::Simulation & sim,
+            Storage & storage,
+            int rank, int size);
 
     template<typename t_interaction_spec>
     void _cg_exclusions_outerloop(topology::Topology & topo,

@@ -843,6 +843,39 @@ namespace topology {
      int signal;
   };
 
+  /**
+   * @struct lj_exception_struct Lennard Jones exception struct
+   */
+  struct lj_exception_struct {
+
+    /**
+     * constructor
+     * @param i index of first atom
+     * @param j index of second atom
+     * @param c6 new C6 parameter
+     * @param c12 new C12 parameter
+     */
+    lj_exception_struct(int i, int j, double c6, double c12) :
+    i(i), j(j), c6(c6), c12(c12) {
+    }
+    /**
+     * index of the first atom
+     */
+    int i;
+    /**
+     * index of the second atom
+     */
+    int j;
+    /**
+     * the new LJ C6 parameter
+     */
+    double c6;
+    /**
+     * the new LJ C12 parameter
+     */
+    double c12;
+  };
+
 }
 
 #endif

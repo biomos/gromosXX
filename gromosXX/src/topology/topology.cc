@@ -99,6 +99,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_chargegroup.clear();
   m_chargegroup.push_back(0);
   m_stochastic.clear();
+  m_lj_exceptions.clear();
   
   DEBUG(10, "solute chargegrous = " << topo.num_solute_chargegroups());
   
@@ -160,6 +161,15 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       for(; it != to; ++it)
         ex.insert(*it + num_solute * m);
       m_all_exclusion.push_back(ex);
+
+      std::vector<topology::lj_exception_struct>::const_iterator ljex_it =
+              topo.lj_exceptions().begin(), ljex_to =
+              topo.lj_exceptions().end();
+      for(; ljex_it != ljex_to; ++ljex_it) {
+        m_lj_exceptions.push_back(
+        topology::lj_exception_struct(ljex_it->i + num_solute * m, ljex_it->j + num_solute * m,
+                ljex_it->c6, ljex_it->c12));
+      }
 
       m_atom_energy_group.push_back(topo.m_atom_energy_group[i]);
       

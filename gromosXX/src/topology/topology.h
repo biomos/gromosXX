@@ -278,7 +278,7 @@ namespace topology
     std::map<std::string, int> const & atom_names()const {return m_atom_name;}
 
     /**
-     * all exclusions for atom i. Exclusions and 1,4 interactions.
+     * all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
      */
     std::set<int> & all_exclusion(unsigned int const i){
       assert(i < m_all_exclusion.size());
@@ -286,7 +286,7 @@ namespace topology
     }
 
     /**
-     * const all exclusions for atom i. Exclusions and 1,4 interactions.
+     * const all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
      */
     std::set<int> const & all_exclusion(unsigned int const i)const{
       assert(i < m_all_exclusion.size());
@@ -1033,7 +1033,14 @@ namespace topology
      */
     std::vector<std::set<int> > & sasa_higher_neighbour(){return m_sasa_higher_neighbour;}
 
-    
+    /**
+     * accessor to LJ exceptions
+     */
+    std::vector<lj_exception_struct> & lj_exceptions() { return m_lj_exceptions;}
+    /**
+     * const accessor to LJ exceptions
+     */
+    const std::vector<lj_exception_struct> & lj_exceptions() const { return m_lj_exceptions;}
   private:
     /**
      * the solute.
@@ -1373,6 +1380,8 @@ namespace topology
     std::vector< std::set<int> > m_sasa_second_neighbour;
     std::vector< std::set<int> > m_sasa_third_neighbour;
     std::vector< std::set<int> > m_sasa_higher_neighbour;
+
+    std::vector<lj_exception_struct> m_lj_exceptions;
     
   }; // topology
   
