@@ -100,42 +100,64 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
             storage.virial_tensor(b, a) += r(b) * term;
         }
 	break;
-      }
-    case simulation::pol_lj_crf_func :
-      {
-        math::Vec rp1, rp2, rpp;
-        std::vector<double> f_pol(4, 0.0);
-        
-        rp1 = r - conf.current().posV(j);
-        rp2 = r + conf.current().posV(i);
-        rpp = r + conf.current().posV(i) - conf.current().posV(j);
-        
-        DEBUG(10, "\t rpp " << rpp(0) << " / " << rpp(1) << " / " << rpp(2));
-        
-        const lj_parameter_struct & lj = m_param->lj_parameter(topo.iac(i), topo.iac(j));
-	
-	DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
-	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-        DEBUG(11, "\tcoscharge i=" << topo.coscharge()(i) << " j=" << topo.coscharge()(j));
-        
-        pol_lj_crf_interaction(r, rp1, rp2, rpp, lj.c6, lj.c12,
-                               topo.charge(i), topo.charge(j),
-                               topo.coscharge(i), topo.coscharge(j), 
-                               f_pol, e_lj, e_crf);
-                
-        DEBUG(10, "\tatomic virial");
-        for (int a=0; a<3; ++a){
-          const double term = f_pol[0]*r(a) + f_pol[1]*rp1(a) + f_pol[2]*rp2(a) + f_pol[3]*rpp(a);
+    }
+    case simulation::pol_lj_crf_func:
+    {
+      if (!topo.is_polarisable(i) && !topo.is_polarisable(j)) {
+        const lj_parameter_struct & lj =
+                m_param->lj_parameter(topo.iac(i),
+                topo.iac(j));
+
+        DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+
+        lj_crf_interaction(r, lj.c6, lj.c12,
+                topo.charge(i) *
+                topo.charge(j),
+                f, e_lj, e_crf);
+
+        DEBUG(10, "\t\tatomic virial");
+        for (int a = 0; a < 3; ++a) {
+          const double term = f * r(a);
           storage.force(i)(a) += term;
           storage.force(j)(a) -= term;
-          
-          for(int b=0; b<3; ++b)
-            //storage.virial_tensor(b, a) += r(b)*r(a)*f_pol[0] + rp1(b)*f_pol[1]*rp1(a) + rp2(b)*f_pol[2]*rp2(a) + rpp(b)*f_pol[3]*rpp(a);
-            storage.virial_tensor(b, a) += r(b)*term;
-        }
 
-	break;
+          for (int b = 0; b < 3; ++b)
+            storage.virial_tensor(b, a) += r(b) * term;
+        }
+      } else {
+        double f_pol[4];
+
+        const math::Vec rp1(r - conf.current().posV(j));
+        const math::Vec rp2(r + conf.current().posV(i));
+        const math::Vec rpp(rp2 - conf.current().posV(j));
+
+        DEBUG(10, "\t rpp " << rpp(0) << " / " << rpp(1) << " / " << rpp(2));
+
+        const lj_parameter_struct & lj = m_param->lj_parameter(topo.iac(i), topo.iac(j));
+
+        DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+        DEBUG(11, "\tcoscharge i=" << topo.coscharge()(i) << " j=" << topo.coscharge()(j));
+
+        pol_lj_crf_interaction(r, rp1, rp2, rpp, lj.c6, lj.c12,
+                topo.charge(i), topo.charge(j),
+                topo.coscharge(i), topo.coscharge(j),
+                f_pol, e_lj, e_crf);
+
+        DEBUG(10, "\tatomic virial");
+        for (int a = 0; a < 3; ++a) {
+          const double term = f_pol[0] * r(a) + f_pol[1] * rp1(a) + f_pol[2] * rp2(a) + f_pol[3] * rpp(a);
+          storage.force(i)(a) += term;
+          storage.force(j)(a) -= term;
+
+          for (int b = 0; b < 3; ++b)
+            //storage.virial_tensor(b, a) += r(b)*r(a)*f_pol[0] + rp1(b)*f_pol[1]*rp1(a) + rp2(b)*f_pol[2]*rp2(a) + rpp(b)*f_pol[3]*rpp(a);
+            storage.virial_tensor(b, a) += r(b) * term;
+        }
       }
+      break;
+    }
     case simulation::lj_ls_func : {
       const lj_parameter_struct & lj =
       m_param->lj_parameter(topo.iac(i),
@@ -782,12 +804,11 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       }
     case simulation::pol_lj_crf_func :
       {
-        math::Vec rp1, rp2, rpp;
-        std::vector<double> f_pol(4, 0.0);
+        double f_pol[4];
         
-        rp1 = r - conf.current().posV(j);
-        rp2 = r + conf.current().posV(i);
-        rpp = r + conf.current().posV(i) - conf.current().posV(j);
+        const math::Vec rp1(r - conf.current().posV(j));
+        const math::Vec rp2(r + conf.current().posV(i));
+        const math::Vec rpp(rp2 - conf.current().posV(j));
         
         DEBUG(10, "\t rpp " << rpp(0) << " / " << rpp(1) << " / " << rpp(2));
         
@@ -917,12 +938,11 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
       }
     case simulation::pol_lj_crf_func :
       {
-        math::Vec rp1, rp2, rpp;
-        std::vector<double> f_pol(4, 0.0);
 
-        rp1 = r - conf.current().posV(j);
-        rp2 = r + conf.current().posV(i);
-        rpp = r + conf.current().posV(i) - conf.current().posV(j);
+        double f_pol[4];
+        const math::Vec rp1(r - conf.current().posV(j));
+        const math::Vec rp2(r + conf.current().posV(i));
+        const math::Vec rpp(rp2 - conf.current().posV(j));
 
         DEBUG(10, "\t rpp " << rpp(0) << " / " << rpp(1) << " / " << rpp(2));
 	DEBUG(11, "\tlj-parameter cs6=" << ljex.c6 << " cs12=" << ljex.c12);
@@ -1076,21 +1096,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         periodicity.nearest_image(pos(i), pos(*it), r);
         rp1 = r - conf.current().posV(*it);
         rp2 = r + conf.current().posV(i);
-        rpp = r + conf.current().posV(i) - conf.current().posV(*it);
+        rpp = rp2 - conf.current().posV(*it);
         
         pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(i),
                 topo.charge()(*it), topo.coscharge(i),
                 topo.coscharge(*it), f_pol, e_crf);
-        
-        force(i) += f_pol(0) + f_pol(1) + f_pol(2) + f_pol(3);
-        force(*it) -= f_pol(0) + f_pol(1) + f_pol(2) + f_pol(3);
-        
-        for(int a=0; a<3; ++a)
-          for(int b=0; b<3; ++b)
-            storage.virial_tensor(a, b) +=
-                    r(a)*(f_pol(0)(b) + f_pol(1)(b) + f_pol(2)(b) + f_pol(3)(b));
+
+        for (int a = 0; a < 3; ++a) {
+          const double term = f_pol(0)(a) + f_pol(1)(a) + f_pol(2)(a) + f_pol(3)(a);
+          force(i)(a) += term;
+          force(*it)(a) -= term;
+          for (int b = 0; b < 3; ++b)
+            storage.virial_tensor(b, a) += r(b) * term;
+        }
         DEBUG(11, "\tatomic virial done");
-     
+
         // energy
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
@@ -1184,19 +1204,19 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
                   pos(*at2_it), r);
           rp1 = r - conf.current().posV(*at2_it);
           rp2 = r + conf.current().posV(*at_it);
-          rpp = r + conf.current().posV(*at_it) - conf.current().posV(*at2_it);
-          
+          rpp = rp2 - conf.current().posV(*at2_it);
+
           // for solvent, we don't calculate internal forces (rigid molecules)
           // and the distance independent parts should go to zero
           const double cqi = topo.coscharge(*at_it);
           const double cqj = topo.coscharge(*at2_it);
           const double qeps = -topo.charge()(*at_it) * topo.charge()(*at2_it) * math::four_pi_eps_i;
-          const double qepsp1 = -topo.charge()(*at_it)*(topo.charge()(*at2_it)-cqj)*math::four_pi_eps_i;
-          const double qepsp2 = (-topo.charge()(*at_it)-cqi)*topo.charge()(*at2_it)*math::four_pi_eps_i;
-          const double qepspp = cqi*cqj*math::four_pi_eps_i;
-          e_crf = qeps*crf_2cut3i()*abs2(r) + qepsp1*crf_2cut3i()*abs2(rp1)
-          + qepsp2*crf_2cut3i()*abs2(rp2) + qepspp*crf_2cut3i()*abs2(rpp);
-          
+          const double qepsp1 = -topo.charge()(*at_it)*(topo.charge()(*at2_it) - cqj) * math::four_pi_eps_i;
+          const double qepsp2 = (-topo.charge()(*at_it) - cqi) * topo.charge()(*at2_it) * math::four_pi_eps_i;
+          const double qepspp = cqi * cqj * math::four_pi_eps_i;
+          e_crf = qeps * crf_2cut3i() * abs2(r) + qepsp1 * crf_2cut3i() * abs2(rp1)
+                  + qepsp2 * crf_2cut3i() * abs2(rp2) + qepspp * crf_2cut3i() * abs2(rpp);
+
           // energy
           storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]

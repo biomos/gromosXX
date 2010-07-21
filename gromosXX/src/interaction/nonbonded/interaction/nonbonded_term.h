@@ -70,7 +70,7 @@ namespace interaction
                      math::Vec const &rpp,
 		     double c6, double c12,
 		     double qi, double qj, double cgi, double cgj,
-		     std::vector<double> &f, double &e_lj, double &e_crf);
+		     double f[], double &e_lj, double &e_crf);
 
     /**
      * calculate the reaction field force and energy of an atom pair.

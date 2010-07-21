@@ -199,7 +199,7 @@ inline void interaction::Nonbonded_Term
                      math::Vec const &rpp,
 		     double c6, double c12,
 		     double qi, double qj, double cgi, double cgj,
-		     std::vector<double> &f, double &e_lj, double &e_crf)
+		     double f[], double &e_lj, double &e_crf)
 {
   DEBUG(14, "\t\tnonbonded term");
   
@@ -222,11 +222,12 @@ inline void interaction::Nonbonded_Term
   const double distppi = sqrt(dist2ppi);
 
   const double c12_dist6i = c12 * dist6i;
-  const double eps = math::four_pi_eps_i;
-  const double q_eps = (qi-cgi)*(qj-cgj) * eps;
-  const double q_epsp1 = (qi-cgi)*cgj * eps;
-  const double q_epsp2 = cgi*(qj-cgj) * eps;
-  const double q_epspp = cgi*cgj * eps;
+  const double qi_m_cgi = qi - cgi;
+  const double qj_m_cgj = qj - cgj;
+  const double q_eps = (qi_m_cgi)*(qj_m_cgj) * math::four_pi_eps_i;
+  const double q_epsp1 = (qi_m_cgi)*cgj * math::four_pi_eps_i;
+  const double q_epsp2 = cgi*(qj_m_cgj) * math::four_pi_eps_i;
+  const double q_epspp = cgi*cgj * math::four_pi_eps_i;
   
   e_lj = (c12_dist6i - c6) * dist6i;
 
@@ -374,12 +375,12 @@ inline void interaction::Nonbonded_Term
   assert(abs2(rprime) != 0);
   const double distj = abs2(r);
   const double distp = abs2(rprime);
-  const double distji = 1/(distj*sqrt(distj));
-  const double distpi = 1/(distp*sqrt(distp));
+  const double distji = 1.0 / (distj*sqrt(distj));
+  const double distpi = 1.0 / (distp*sqrt(distp));
   const double q_eps = (qj-charge) * math::four_pi_eps_i;
   const double q_epsp = charge * math::four_pi_eps_i;
 
-  e_el = q_eps*(distji + m_crf_cut3i)*r + q_epsp*(distpi + m_crf_cut3i)*rprime;
+  e_el = (q_eps*(distji + m_crf_cut3i))*r + (q_epsp*(distpi + m_crf_cut3i))*rprime;
 }
 
 /**

@@ -600,7 +600,7 @@ void interaction::Nonbonded_Outerloop
               j_it = pairlist.solute_long[i].begin(),
               j_to = pairlist.solute_long[i].end();
               j_it != j_to; ++j_it){
-        
+        if (!topo.is_polarisable(i) && !topo.is_polarisable(*j_it)) continue;
         math::Vec e_eli_lr, e_elj_lr;
         
         innerloop.electric_field_innerloop(topo, conf, i, *j_it,
@@ -614,7 +614,7 @@ void interaction::Nonbonded_Outerloop
               j_it = pairlist.solvent_long[i].begin(),
               j_to = pairlist.solvent_long[i].end();
               j_it != j_to; ++j_it){
-        
+        if (!topo.is_polarisable(i) && !topo.is_polarisable(*j_it)) continue;
         math::Vec e_eli_lr, e_elj_lr;
         
         innerloop.electric_field_innerloop(topo, conf, i, *j_it,
@@ -660,7 +660,7 @@ void interaction::Nonbonded_Outerloop
               j_it = pairlist.solute_short[i].begin(),
 	      j_to = pairlist.solute_short[i].end();
               j_it != j_to; ++j_it){
-
+        if (!topo.is_polarisable(i) && !topo.is_polarisable(*j_it)) continue;
         math::Vec e_eli, e_elj;
 
         innerloop.electric_field_innerloop(topo, conf, 
@@ -674,7 +674,7 @@ void interaction::Nonbonded_Outerloop
               j_it = pairlist.solvent_short[i].begin(),
 	      j_to = pairlist.solvent_short[i].end();
               j_it != j_to; ++j_it){
-
+        if (!topo.is_polarisable(i) && !topo.is_polarisable(*j_it)) continue;
         math::Vec e_eli, e_elj;
 
         innerloop.electric_field_innerloop(topo, conf, 

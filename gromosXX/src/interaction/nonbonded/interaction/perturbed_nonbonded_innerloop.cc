@@ -302,9 +302,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
       }
       case simulation::pol_lj_crf_func : {
         math::Vec rp1, rp2, rpp;
-        std::vector<double> f1;
+        double f1[4];
         math::VArray f(4);
-        f1.resize(4, 0.0);
         f = 0.0;
         double f6, f12;
         
@@ -592,9 +591,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
       }
       case simulation::pol_lj_crf_func : {
         math::Vec rp1, rp2, rpp;
-        std::vector<double> f1;
+        double f1[4];
         math::VArray f(4);
-        f1.resize(4, 0.0);
         f = 0.0;
         double f6, f12;
         
@@ -718,7 +716,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
     }
     case simulation::pol_lj_crf_func:{
       math::Vec rp1, rp2, rpp;
-      std::vector<double> f_rf(4, 0.0);
+      double f_rf[4];
       r = 0.0;
       rp1 = -conf.current().posV(*it);
       rp2 = conf.current().posV(i);
@@ -835,7 +833,7 @@ interaction::Perturbed_Nonbonded_Innerloop<
       }
       case simulation::pol_lj_crf_func:{
         math::Vec rp1, rp2, rpp;
-        std::vector<double> f_rf(4, 0.0);
+        double f_rf[4];
         rp1 = r - conf.current().posV(*it);
         rp2 = r + conf.current().posV(i);
         rpp = r + conf.current().posV(i) - conf.current().posV(*it);

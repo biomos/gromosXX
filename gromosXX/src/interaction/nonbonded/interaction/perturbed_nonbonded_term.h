@@ -54,7 +54,7 @@ namespace interaction
                                      double const A_qj, double const B_qj,
                                      double const cqi, double const cqj,
                                      double const alpha_lj, double const alpha_crf,
-                                     std::vector<double> &force1,
+                                     double force1[],
                                      double &force6, double &force12,
                                      double &e_lj, double &e_crf,
                                      double &de_lj, double &de_crf);
@@ -95,7 +95,7 @@ namespace interaction
                              double const B_qi, double const B_qj,
                              double cqi, double cqj,
 			     double const alpha_crf,
-			     std::vector<double> & force, double & e_rf,
+			     double force[], double & e_rf,
 			     double & de_rf,
 			     bool selfterm_correction = false);
 
