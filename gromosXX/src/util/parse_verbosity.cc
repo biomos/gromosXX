@@ -105,7 +105,7 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
 	interaction::nonbonded_debug_level = level;
       else if (submodule == "pairlist") 
 	interaction::pairlist_debug_level = level;
-      else if (submodule == "forcefiled") 
+      else if (submodule == "forcefield")
 	interaction::forcefield_debug_level = level;
       else if (submodule == "filter") 
 	interaction::filter_debug_level = level;
