@@ -453,6 +453,16 @@ namespace simulation
     localelev_on = 1
   };
 
+  enum electric_enum {
+    /**
+     * don't apply electric field
+     */
+    electric_off = 0,
+    /**
+     * apply electric field
+     */
+    electric_on = 1
+  };
   /**
    * @class Parameter
    * input parameters.
@@ -2389,6 +2399,61 @@ namespace simulation
        */
       std::map<int, bool> umbrellas;
     } localelev;
+
+    /**
+     * @struct electric_struct
+     * Constructor:
+     * Default values:
+     * - field, dipole, current: off
+     */
+    struct electric_struct {
+      /**
+       * constructor
+       */
+      electric_struct() : electric(electric_off), Ef_x(0.0), Ef_y(0.0), Ef_z(0.0),
+                          dipole(false), dip_groups(0), dip_write(0),
+                          current(false), cur_groups(0), cur_write(0) {}
+      /**
+       * use the method or not
+       */
+      electric_enum electric;
+       /**
+       * external field components x, y and z
+       */
+      double Ef_x, Ef_y, Ef_z;
+      /**
+       * Dipole calc and write to special traj
+       */
+      bool dipole;
+      /**
+       * Calculate the box dipole considering the groups
+       * 0 : solute
+       * 1 : solvent
+       * 2 : all
+       */
+      unsigned int dip_groups;
+      /**
+       * Write dipole to special traj every dip_write steps
+       */
+      unsigned int dip_write;
+      /**
+       * Current calc and write to special traj
+       */
+      bool current;
+      /**
+       * Number of current groups
+       */
+      unsigned int cur_groups;
+      /**
+       * Vector including the last atom of each group
+       */
+      std::vector<unsigned int> current_group;
+      /**
+       * Write current to special traj every cur_write steps
+       */
+      unsigned int cur_write;
+
+    } electric;
   };
 }
 
