@@ -66,6 +66,8 @@ m_every_xray(0),
 m_every_disres(0),
 m_every_dat(0),
 m_every_leus(0),
+m_every_dipole(0),
+m_every_current(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -132,7 +134,7 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_dat || m_every_leus) { // add others if there are any
+  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_dat || m_every_leus || m_every_dipole || m_every_current) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -179,9 +181,10 @@ void io::Out_Configuration::init(io::Argument & args,
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write,
             param.xrayrest.write, param.distanceres.write, param.print.monitor_dihedrals,
-            param.localelev.write);
+            param.localelev.write, param.electric.dip_write, param.electric.cur_write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
-        || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write)
+        || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write
+        || param.electric.dip_write || param.electric.cur_write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -355,6 +358,24 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
+
+    if (m_every_dipole && sim.steps() && (sim.steps() % m_every_dipole) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      SPLIT_BOUNDARY(_print_dipole, sim, topo, conf, m_special_traj);
+      
+      m_special_traj.flush();
+    }
+    if (m_every_current && sim.steps() && (sim.steps() % m_every_current) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_current(sim, topo, conf, m_special_traj);
+      m_special_traj.flush();
+    }
 
     if (m_every_energy && (((sim.steps() - 1) % m_every_energy) == 0 || minimum_found)) {
       if (sim.steps()) {
@@ -630,7 +651,8 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
-                     int every_xray, int every_disres, int every_dat, int every_leus) {
+                     int every_xray, int every_disres, int every_dat, 
+                     int every_leus, int every_dipole, int every_current) {
 
   m_special_traj.open(name.c_str());
 
@@ -640,6 +662,8 @@ void io::Out_Configuration
   m_every_disres = every_disres;
   m_every_dat = every_dat;
   m_every_leus = every_leus;
+  m_every_dipole = every_dipole;
+  m_every_current = every_current;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2761,6 +2785,101 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
       }
       os << "\n";
     }
+  }
+  os << "END\n";
+}
+
+template<math::boundary_enum b>
+void io::Out_Configuration::
+_print_dipole(simulation::Simulation const & sim,
+              topology::Topology const &topo,
+              configuration::Configuration const & conf, std::ostream & os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+
+  //topology::Solute const &solute = conf.init(topology::Topology.solute());
+  //topology::Solvent const &solvent = conf.init(topology::Topology.solvent(0));
+
+
+
+  //Calculate dipole
+  
+
+  math::Vec box_dipole_moment(0.0);
+  math::Vec box_centre = conf.current().box(0) / 2.0 +
+                         conf.current().box(1) / 2.0 +
+                         conf.current().box(2) / 2.0;
+  math::Periodicity<b> periodicity(conf.current().box);
+  //double scale = math::four_pi_eps_i;
+  double scale = 1.0;
+
+  // Only solute
+  if(sim.param().electric.dip_groups == 0) {
+    os << "DIPOLE\n#Solute atoms\n";
+    for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+      math::Vec r = conf.current().pos(i);
+      box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
+
+    }
+  }
+
+  // Only solvent
+  if(sim.param().electric.dip_groups == 1) {
+    os << "DIPOLE\n#Solvent atoms\n";
+    for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
+      math::Vec r = conf.current().pos(i);
+      box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
+    }
+  }
+
+  // All atoms in the box
+  if(sim.param().electric.dip_groups == 2) {
+    "DIPOLE\n#All atoms\n";
+    for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
+      math::Vec r = conf.current().pos(i);
+      box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
+    }
+  }
+
+  // Print dipole to special topology
+
+
+  os << std::setw(15) << box_dipole_moment(0)
+     << std::setw(15) << box_dipole_moment(1)
+     << std::setw(15) << box_dipole_moment(2)
+     << "\n";
+  
+  os << "END\n";
+  
+}
+
+void io::Out_Configuration::
+_print_current(simulation::Simulation const & sim,
+              topology::Topology const &topo,
+              configuration::Configuration const & conf, std::ostream & os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+
+  int ngroups = sim.param().electric.cur_groups;
+  int first = 0;
+  math::Vec cur_current(0.0);
+  //double scale = math::four_pi_eps_i;
+  double scale = 1.0;
+
+  os << "CURRENT\n";
+  os << "#GROUP        COMPONENTS\n";
+
+  for (unsigned  int i = 0; i < ngroups; ++i){
+    
+    for (unsigned int j = first; j < sim.param().electric.current_group[i]; ++j){
+      math::Vec v = conf.current().vel(j);
+      cur_current += scale*topo.charge(j) * v;
+    }
+    int grp = i+1;
+    os << std::setw(10) << grp << std::setw(15) << cur_current(0)
+                               << std::setw(15) << cur_current(1)
+                               << std::setw(15) << cur_current(2) << "\n";
+    cur_current(0.0);
   }
   os << "END\n";
 }

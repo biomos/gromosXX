@@ -125,7 +125,7 @@ namespace io {
      */
     void special_trajectory(std::string const name, int every_cos = 1,
             int every_jvalue = 1, int every_xray = 1, int every_disres = 1,
-            int every_dat = 1, int every_leus = 1);
+            int every_dat = 1, int every_leus = 1, int every_dipole = 1, int every_current = 1);
     /**
      * write an energy trajectory.
      */
@@ -352,6 +352,17 @@ namespace io {
     void _print_umbrellas(configuration::Configuration const & conf,
             std::ostream & os);
 
+    template<math::boundary_enum b>
+    void _print_dipole(simulation::Simulation const & sim,
+                       topology::Topology const &topo,
+                       configuration::Configuration const & conf,
+                       std::ostream & os);
+
+    void _print_current(simulation::Simulation const & sim,
+                        topology::Topology const &topo,
+                        configuration::Configuration const & conf,
+                        std::ostream & os);
+
   protected:
     std::ofstream m_pos_traj;
     std::ofstream m_final_conf;
@@ -384,6 +395,8 @@ namespace io {
     int m_every_disres;
     int m_every_dat;
     int m_every_leus;
+    int m_every_dipole;
+    int m_every_current;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;
