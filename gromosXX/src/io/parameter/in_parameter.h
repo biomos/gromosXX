@@ -51,6 +51,7 @@
  * - @ref  EDS
  * - @ref  LAMBDAS
  * - @ref  localelev
+ * - @ref  electric
  */
 
 
@@ -294,6 +295,10 @@ namespace io {
      * read LOCALELEV block.
      */
     void read_LOCALELEV(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read ELECTRIC block.
+     */
+    void read_ELECTRIC(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
      * read SASA block.
      */

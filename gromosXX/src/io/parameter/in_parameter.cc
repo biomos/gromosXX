@@ -90,6 +90,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LAMBDAS(param); // needs to be called after FORCE
   read_GROMOS96COMPAT(param);
   read_LOCALELEV(param);
+  read_ELECTRIC(param);
   read_SASA(param);
 
   read_known_unsupported_blocks();
@@ -4440,6 +4441,172 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
     } // for umbrellas
   } // if block
 }
+
+/**
+ * @section electric ELECTRIC block
+ * @verbatim
+ ELECTRIC
+# FIELD 0,1 controls the use of applied electric field.
+#    0 : not used [default]
+#    1 : electric field is applied
+# DIPOLE 0,1 controls the calculation of box dipole.
+#    0 : not used [default]
+#    1 : box dipole is calculated and written to special trajectory
+# CURRENT 0,1 controls the calculation of electric currents.
+#    0 : not used [default]
+#    1 : electric current is calculated and written to special trajectory
+# ELECTRIC FIELD COMPONENTS (EF_x, EF_y, EF_z)
+# 0.0 0.0 0.0
+# DIPGRP 0..2 controls the groups considered for box dipole calculation
+#    0 : solute only
+#    1 : solvent only
+#    2 : all
+# NTWDIP >= 0 write dipole box every NTWDIPth step
+# NCURGRP >=0 number of current groups
+# CURGRP [1..NCURGRP] last atom of the group
+#  FIELD  DIPOLE CURRENT
+       1       1       1
+#   EF_x    EF_y    EF_z
+     0.0     0.0     0.0
+# DIPGRP  NTWDIP
+       0       1
+# NTWCUR  NCURGRP   CURGRP[1]   CURGRP[2]
+       1       2        100        1000
+END
+@endverbatim
+ */
+void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read ELECTRIC");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["ELECTRIC"];
+
+  if (buffer.size()) {
+    block_read.insert("ELECTRIC");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    int field, dipole, current, dipgrp, ncurgrp;
+
+    _lineStream >> field >> dipole >> current >> param.electric.Ef_x
+                >> param.electric.Ef_y >> param.electric.Ef_z
+                >> dipgrp >> param.electric.dip_write >> param.electric.cur_write
+                >> ncurgrp;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in ELECTRIC block",
+              "In_Parameter", io::message::error);
+      return;
+    }
+
+    
+
+    switch (field) {
+      case 0:
+        param.electric.electric = simulation::electric_off;
+        param.electric.Ef_x = 0.0;
+        param.electric.Ef_y = 0.0;
+        param.electric.Ef_z = 0.0;
+        break;
+      case 1:
+      {
+        param.electric.electric = simulation::electric_on;
+        if (param.electric.Ef_x == param.electric.Ef_y &&
+                param.electric.Ef_y == param.electric.Ef_z &&
+                param.electric.Ef_z == 0.0)
+          io::messages.add("Electric field enabled, but all components are zero",
+              "In_Parameter", io::message::error);
+        break;
+      }
+      default:
+        param.electric.electric = simulation::electric_off;
+        param.electric.Ef_x = 0.0;
+        param.electric.Ef_y = 0.0;
+        param.electric.Ef_z = 0.0;
+        io::messages.add("ELECTRIC block: Bad value for FIELD (0,1)",
+                "In_Parameter", io::message::error);
+    }
+    
+
+    switch (dipole){
+      case 0:
+      {
+        param.electric.dipole = false;
+        param.electric.dip_write = 0;
+        break;
+      }
+      case 1:
+      {
+        param.electric.dipole = true;
+        if (dipgrp < 0 || dipgrp > 2)
+          io::messages.add("ELECTRIC block: DIPGRP should be within 0..2",
+              "In_Parameter", io::message::error);
+        break;
+      }
+      default:
+      {
+        param.electric.dipole = false;
+        param.electric.dip_write = 0;
+        io::messages.add("ELECTRIC block: Bad value for DIPOLE (0,1)",
+                "In_Parameter", io::message::error);
+
+      }
+    }
+
+    switch (current){
+      case 0:
+      {
+        param.electric.current = false;
+        param.electric.cur_write = 0;
+        break;
+      }
+      case 1:
+      {
+        param.electric.current = true;
+        if (ncurgrp < 0)
+          io::messages.add("ELECTRIC block: CURGRP should be >0",
+              "In_Parameter", io::message::error);
+        param.electric.cur_groups = ncurgrp;
+        break;
+      }
+      default:
+      {
+        param.electric.current = false;
+        param.electric.cur_write = 0;
+        io::messages.add("ELECTRIC block: Bad value for CURRENT (0,1)",
+                "In_Parameter", io::message::error);
+
+      }
+    }
+
+    if (param.electric.current != false){
+    // TO READ THE ELECTRIC GROUPS
+        if (_lineStream.fail() || param.electric.cur_groups == (unsigned int) 0)
+        io::messages.add("CURRENT enabled, but number of CURRENT (NCURGRP) groups is zero",
+              "In_Parameter", io::message::error);
+      else {
+        unsigned int temp;
+        for (unsigned int i = 0; i < param.electric.cur_groups; i++) {
+          _lineStream >> temp;
+          if (_lineStream.fail()) {
+            io::messages.add("CURRENT enabled, but CURGRP[i] < or > NCURGRP",
+              "In_Parameter", io::message::error);
+            break;
+          }
+          param.electric.current_group.push_back(temp);
+        }
+      }
+    }
+
+
+     
+    
+  } // if block
+}
+
 
 // two helper data types to simply unsupported block handling
 
