@@ -85,7 +85,8 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/external_interaction.h\
 	special/ramd_interaction.h\
 	special/xray_restraint_interaction.h\
-	special/local_elevation_interaction.h
+	special/local_elevation_interaction.h\
+	special/electric_field_interaction.h
 
 noinst_LTLIBRARIES = libgrointeraction.la
 
@@ -140,7 +141,8 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/external_interaction.cc\
 	special/ramd_interaction.cc\
 	special/xray_restraint_interaction.cc\
-	special/local_elevation_interaction.cc
+	special/local_elevation_interaction.cc\
+	special/electric_field_interaction.cc
 
 bin_PROGRAMS =			
 
