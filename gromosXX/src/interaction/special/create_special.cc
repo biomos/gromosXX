@@ -27,6 +27,7 @@
 #include <util/umbrella_weight.h>
 #include <interaction/special/xray_restraint_interaction.h>
 #include <interaction/special/local_elevation_interaction.h>
+#include <interaction/special/electric_field_interaction.h>
 
 
 #include <interaction/bonded/dihedral_interaction.h>
@@ -191,6 +192,15 @@ int interaction::create_special(interaction::Forcefield & ff,
     interaction::Local_Elevation_Interaction *le =
             new interaction::Local_Elevation_Interaction();
     ff.push_back(le);
+  }
+
+  if (param.electric.electric != simulation::electric_off) {
+    if (!quiet) {
+      os << "\telectric field \n";
+    }
+    interaction::Electric_Field_Interaction *efield =
+            new interaction::Electric_Field_Interaction();
+    ff.push_back(efield);
   }
 
 
