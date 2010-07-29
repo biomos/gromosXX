@@ -699,9 +699,18 @@ void interaction::Nonbonded_Outerloop
 #endif
 
     if (rank == 0) {
+      // If the external electric field is activated
+      // then it will also act on the polarisable model
+      // as a perturbation to the COS electric field
+      math::Vec external_field(sim.param().electric.Ef_x,
+                               sim.param().electric.Ef_y,
+                               sim.param().electric.Ef_z);
+      external_field = external_field*math::four_pi_eps_i;
+      
       for (i=0; i<topo.num_atoms(); ++i) {
         if(topo.is_polarisable(i)){
-          e_el_new(i) += storage_lr.electric_field(i);
+          e_el_new(i) += storage_lr.electric_field(i) + (external_field);
+          
 
           //delta r
           math::Vec delta_r;
