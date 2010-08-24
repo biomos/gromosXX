@@ -4,10 +4,6 @@
  * the class Settle.
  */
 
-#ifdef XXMPI
-#include <mpi.h>
-#endif
-
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -34,27 +30,11 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
-#ifdef OMP
-#include <omp.h>
-#endif
-
 int algorithm::Settle::init(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
         std::ostream & os,
         bool quiet) {
-#ifdef XXMPI
-  if (sim.mpi) {
-    m_rank = MPI::COMM_WORLD.Get_rank();
-    m_size = MPI::COMM_WORLD.Get_size();
-  } else {
-    m_rank = 0;
-    m_size = 1;
-  }
-#else
-  m_rank = 0;
-  m_size = 1;
-#endif
 
   if (!quiet) {
     os << "SETTLE\n"
@@ -103,8 +83,6 @@ int algorithm::Settle::init(topology::Topology & topo,
   for(unsigned int i = topo.num_solvent_atoms(); i < topo.num_atoms(); ++i) {
     constrained_atoms().insert(i);
   }
-  conf.current().constraint_force.resize(topo.num_atoms(), math::Vec(0.0));
-  conf.old().constraint_force.resize(topo.num_atoms(), math::Vec(0.0));
   
   // check whether we do an initial apply of the constraint algorithm
   if (sim.param().start.shake_pos || sim.param().start.shake_vel) {
@@ -183,8 +161,10 @@ void algorithm::Settle
         configuration::Configuration & conf,
         simulation::Simulation & sim, int & error) {
   DEBUG(8, "\tSETTLE-ing SOLVENT");
-  
-  const unsigned int num_atoms = topo.num_atoms();
+
+  // assume everything is fine
+  error = 0;
+
   assert(topo.num_solvents() == 1);
   assert(topo.solvent(0).num_atoms() == 3);
   // masses
@@ -208,212 +188,209 @@ void algorithm::Settle
   // needed for constraint force, velocity correction and virial
   const double dt_i = 1.0 / sim.time_step_size();
   const double dt2_i = dt_i * dt_i;
-
+  
   const bool do_velocity = !sim.param().stochastic.sd && !sim.param().minimise.ntem &&
-          !sim.param().analyze.analyze;
+      !sim.param().analyze.analyze;
 
-  const math::VArray & pos_old = conf.old().pos;
-  math::VArray & pos_new = conf.current().pos;
-  math::VArray & vel_new = conf.current().vel;
+  const int num_atoms = topo.num_atoms();
 
-  error = 0;
-
+  // loop over all SPC molecules
 #ifdef OMP
-#pragma omp parallel
-  {
-    const unsigned int stride = omp_get_num_threads();
-    const unsigned int tid = omp_get_thread_num();
-#else
-  {
-    const unsigned int stride = 1;
-    const unsigned int tid = 0;
+#pragma omp parallel for
 #endif
-    const unsigned int offset = 3 * stride;
-    DEBUG(1, "tid : " << tid << " of " << stride << "\n\tStart will be " << topo.num_solute_atoms() + 3 * tid << ". Next: " << topo.num_solute_atoms() + 3 * tid + offset)
-    // loop over all SPC molecules
-    for (unsigned int i = topo.num_solute_atoms() + tid * 3; i < num_atoms; i += offset) {
-      // get the constraint force
-      math::Vec * cons_force = &conf.old().constraint_force(i);
+  for (int i = topo.num_solute_atoms(); i < num_atoms; i += 3) {
+    DEBUG(3, "Molecule: " << (i - topo.num_solute_atoms())/3);
+    // get the new positions
+    math::Vec * pos_new = &conf.current().pos(i);
+    // get the old positions
+    const math::Vec * const pos_old = &conf.old().pos(i);
+    // get the constraint force
+    math::Vec * cons_force = &conf.old().constraint_force(i);
 
-      // See the Figures 1 and 2 for a picture.
+    // See the Figures 1 and 2 for a picture.
+    
+    // vectors in the plane of the old positions
+    math::Vec b0 = pos_old[1] - pos_old[0];
+    math::Vec c0 = pos_old[2] - pos_old[0];
 
-      // vectors in the plane of the old positions
-      math::Vec b0(pos_old[i+1] - pos_old[i]);
-      math::Vec c0(pos_old[i+2] - pos_old[i]);
+    // centre of mass of new positions
+    const math::Vec d0 = (pos_new[0] * mass_O + 
+                          pos_new[1] * mass_H + pos_new[2] * mass_H) /
+                         (mass_O + mass_H + mass_H);
 
-      // centre of mass of new positions
-      const math::Vec d0 = (pos_new[i] * mass_O +
-              pos_new[i+1] * mass_H + pos_new[i+2] * mass_H) /
-              (mass_O + mass_H + mass_H);
+    DEBUG(3, "COM= " << math::v2s(d0));
 
-      DEBUG(3, "COM= " << math::v2s(d0));
+    // move the origin to the centre of mass
+    math::Vec a1 = pos_new[0] - d0;
+    math::Vec b1 = pos_new[1] - d0;
+    math::Vec c1 = pos_new[2] - d0;
 
-      // move the origin to the centre of mass
-      math::Vec a1(pos_new[i] - d0);
-      math::Vec b1(pos_new[i+1] - d0);
-      math::Vec c1(pos_new[i+2] - d0);
+    DEBUG(3, "a1= " << math::v2s(a1) << " b1= " << math::v2s(b1) << " c1= " << math::v2s(c1));
 
-      DEBUG(3, "a1= " << math::v2s(a1) << " b1= " << math::v2s(b1) << " c1= " << math::v2s(c1));
+    // vectors describing transformation from original coordinate system to
+    // the centre of mass originated coordinate system
+    math::Vec n0 = math::cross(b0, c0);
+    math::Vec n1 = math::cross(a1, n0);
+    math::Vec n2 = math::cross(n0, n1);
+    n0 = n0 / math::abs(n0); // this can give a NaN but it is very unlikely.
+    n1 = n1 / math::abs(n1);
+    n2 = n2 / math::abs(n2);
 
-      // vectors describing transformation from original coordinate system to
-      // the centre of mass originated coordinate system
-      math::Vec n0(math::cross(b0, c0));
-      math::Vec n1(math::cross(a1, n0));
-      math::Vec n2(math::cross(n0, n1));
-      n0 /= math::abs(n0); // this can give a NaN but it is very unlikely.
-      n1 /= math::abs(n1);
-      n2 /= math::abs(n2);
+    DEBUG(3, "n0= " << math::v2s(n0) << " n1= " << math::v2s(n1) << " n2= " << math::v2s(n2));
 
-      DEBUG(3, "n0= " << math::v2s(n0) << " n1= " << math::v2s(n1) << " n2= " << math::v2s(n2));
+    // generate new normal vectors from the transpose in order to undo
+    // the transformation
+    const math::Vec m1(n1(0), n2(0), n0(0));
+    const math::Vec m2(n1(1), n2(1), n0(1));
+    const math::Vec m0(n1(2), n2(2), n0(2));
 
-      // generate new normal vectors from the transpose in order to undo
-      // the transformation
-      const math::Vec m1(n1(0), n2(0), n0(0));
-      const math::Vec m2(n1(1), n2(1), n0(1));
-      const math::Vec m0(n1(2), n2(2), n0(2));
+    // do the transformation to the centre of mass originated coordinate system
+    // of the old positions
+    b0 = math::Vec(math::dot(n1, b0), math::dot(n2, b0), math::dot(n0, b0));
+    c0 = math::Vec(math::dot(n1, c0), math::dot(n2, c0), math::dot(n0, c0));
 
-      // do the transformation to the centre of mass originated coordinate system
-      // of the old positions
-      b0 = math::Vec(math::dot(n1, b0), math::dot(n2, b0), math::dot(n0, b0));
-      c0 = math::Vec(math::dot(n1, c0), math::dot(n2, c0), math::dot(n0, c0));
+    // and of the new positions
+    a1 = math::Vec(math::dot(n1, a1), math::dot(n2, a1), math::dot(n0, a1));
+    b1 = math::Vec(math::dot(n1, b1), math::dot(n2, b1), math::dot(n0, b1));
+    c1 = math::Vec(math::dot(n1, c1), math::dot(n2, c1), math::dot(n0, c1));
 
-      // and of the new positions
-      a1 = math::Vec(math::dot(n1, a1), math::dot(n2, a1), math::dot(n0, a1));
-      b1 = math::Vec(math::dot(n1, b1), math::dot(n2, b1), math::dot(n0, b1));
-      c1 = math::Vec(math::dot(n1, c1), math::dot(n2, c1), math::dot(n0, c1));
+    DEBUG(3, "rotated: a1= " << math::v2s(a1) << " b1= " << math::v2s(b1) << " c1= " << math::v2s(c1));
 
-      DEBUG(3, "rotated: a1= " << math::v2s(a1) << " b1= " << math::v2s(b1) << " c1= " << math::v2s(c1));
+    // now we can compute positions of canonical water 
+    // the cos is calculate from the square of the sin via sin^2 + cos^2 = 1
+    const double sinphi = a1(2) / ra; // this is (A8)
+    const double one_minus_sinphi2 = 1.0 - sinphi*sinphi;
+    if (one_minus_sinphi2 < 0.0) {
+      printError(topo, conf, sim, i, "sin(phi) > 1.0");
+      error = 1;
+      continue;
+    }
+    const double cosphi = sqrt(one_minus_sinphi2);
 
-      // now we can compute positions of canonical water
-      // the cos is calculate from the square of the sin via sin^2 + cos^2 = 1
-      const double sinphi = a1(2) / ra; // this is (A8)
-      const double one_minus_sinphi2 = 1.0 - sinphi*sinphi;
-      if (one_minus_sinphi2 < 0.0) {
-        printError(topo, conf, sim, i, "sin(phi) > 1.0");
-        error = 1;
-        break; //return;
-      }
-      const double cosphi = sqrt(one_minus_sinphi2);
+    const double sinpsi = (b1(2) - c1(2)) / (2.0 * rc * cosphi); // this is (A9)
+    const double one_minus_sinpsi2 = 1.0 - sinpsi*sinpsi;
+    if (one_minus_sinpsi2 < 0.0) {
+      printError(topo, conf, sim, i, "sin(psi) > 1.0");
+      error = 1;
+      continue;
+    }
+    const double cospsi = sqrt(one_minus_sinpsi2);
 
-      const double sinpsi = (b1(2) - c1(2)) / (2.0 * rc * cosphi); // this is (A9)
-      const double one_minus_sinpsi2 = 1.0 - sinpsi*sinpsi;
-      if (one_minus_sinpsi2 < 0.0) {
-        printError(topo, conf, sim, i, "sin(psi) > 1.0");
-        error = 1;
-        break; //return;
-      }
-      const double cospsi = sqrt(one_minus_sinpsi2);
+    // these are just to avoid recalculations
+    const double minus_rb_cosphi = -rb * cosphi;
+    const double rc_cospsi = rc * cospsi;
+    const double rc_sinpsi_sinphi = rc * sinpsi*sinphi;
+    const double rc_sinpsi_cosphi = rc * sinpsi*cosphi;
+    
+    // do the X. this is (A3)
+    const double x_a2 = 0.0;
+    const double x_b2 = - rc_cospsi;
+    const double x_c2 = rc_cospsi;
+    
+    // do the Y. this is (A3)
+    // I think there is an error in the paper. ra was confused with rc
+    const double y_a2 = ra * cosphi; 
+    const double y_b2 = minus_rb_cosphi - rc_sinpsi_sinphi;
+    const double y_c2 = minus_rb_cosphi + rc_sinpsi_sinphi;
+    
+    // do the Z components
+    const double z_a2 = ra * sinphi; // this is (A5)
+    const double z_b2 = -rb * sinphi + rc_sinpsi_cosphi; // this is (A6)
+    const double z_c2 = -rb * sinphi - rc_sinpsi_cosphi; // this is (A7)
+    
+    // now construct the a2, b2 and c2 vectors
+    const math::Vec a2(x_a2, y_a2, z_a2);
+    const math::Vec b2(x_b2, y_b2, z_b2);
+    const math::Vec c2(x_c2, y_c2, z_c2);
 
-      // these are just to avoid recalculations
-      const double minus_rb_cosphi = -rb * cosphi;
-      const double rc_cospsi = rc * cospsi;
-      const double rc_sinpsi_sinphi = rc * sinpsi*sinphi;
-      const double rc_sinpsi_cosphi = rc * sinpsi*cosphi;
+    DEBUG(3, "a2= " << math::v2s(a2) << " b2= " << math::v2s(b2) << " c2= " << math::v2s(c2));
 
-      // do the X. this is (A3)
-      const double x_a2 = 0.0;
-      const double x_b2 = -rc_cospsi;
-      const double x_c2 = rc_cospsi;
+    // there are no a0 terms because we've already subtracted the term off 
+    // when we first defined b0 and c0.
+    // this is (A15) but the equation is not really numbered...
+    const double alpha = b2(0) * (b0(0) - c0(0)) + b0(1) * b2(1) + c0(1) * c2(1);
+    const double beta = b2(0) * (c0(1) - b0(1)) + b0(0) * b2(1) + c0(0) * c2(1);
+    const double gamma = b0(0) * b1(1) - b1(0) * b0(1) + c0(0) * c1(1) - c1(0) * c0(1);
 
-      // do the Y. this is (A3)
-      // I think there is an error in the paper. ra was confused with rc
-      const double y_a2 = ra * cosphi;
-      const double y_b2 = minus_rb_cosphi - rc_sinpsi_sinphi;
-      const double y_c2 = minus_rb_cosphi + rc_sinpsi_sinphi;
+    const double alpha2_beta2 = alpha * alpha + beta * beta;
+    // this is (A17)
+    const double sintheta = (alpha * gamma -
+            beta * sqrt(alpha2_beta2 - gamma * gamma)) / alpha2_beta2; 
+    const double one_minus_sintheta2 = 1.0 - sintheta * sintheta;
+    if (one_minus_sintheta2 < 0.0) {
+      printError(topo, conf, sim, i, "sin(theta) > 1.0");
+      error = 1;
+      continue;
+    }
+    const double costheta = sqrt(one_minus_sintheta2);
 
-      // do the Z components
-      const double z_a2 = ra * sinphi; // this is (A5)
-      const double z_b2 = -rb * sinphi + rc_sinpsi_cosphi; // this is (A6)
-      const double z_c2 = -rb * sinphi - rc_sinpsi_cosphi; // this is (A7)
+    // new finally a3, b3 and c3. These are (A4)
+    const math::Vec a3(-a2(1) * sintheta,
+            a2(1) * costheta,
+            a1(2));
+    const math::Vec b3(b2(0) * costheta - b2(1) * sintheta,
+            b2(0) * sintheta + b2(1) * costheta,
+            b1(2));
+    const math::Vec c3(-b2(0) * costheta - c2(1) * sintheta,
+            -b2(0) * sintheta + c2(1) * costheta,
+            c1(2));
 
-      // now construct the a2, b2 and c2 vectors
-      const math::Vec a2(x_a2, y_a2, z_a2);
-      const math::Vec b2(x_b2, y_b2, z_b2);
-      const math::Vec c2(x_c2, y_c2, z_c2);
+    DEBUG(3, "a3= " << math::v2s(a3) << " b3= " << math::v2s(b3) << " c3= " << math::v2s(c3));
+    
+    // calculate the new positions
+    const math::Vec pos_a = math::Vec(math::dot(a3, m1), math::dot(a3, m2), math::dot(a3, m0)) + d0;
+    const math::Vec pos_b = math::Vec(math::dot(b3, m1), math::dot(b3, m2), math::dot(b3, m0)) + d0;
+    const math::Vec pos_c = math::Vec(math::dot(c3, m1), math::dot(c3, m2), math::dot(c3, m0)) + d0;
 
-      DEBUG(3, "a2= " << math::v2s(a2) << " b2= " << math::v2s(b2) << " c2= " << math::v2s(c2));
+    DEBUG(3, "pos_a= " << math::v2s(pos_a) << " pos_b= " << math::v2s(pos_b) << " pos_c= " << math::v2s(pos_c));
 
-      // there are no a0 terms because we've already subtracted the term off
-      // when we first defined b0 and c0.
-      // this is (A15) but the equation is not really numbered...
-      const double alpha = b2(0) * (b0(0) - c0(0)) + b0(1) * b2(1) + c0(1) * c2(1);
-      const double beta = b2(0) * (c0(1) - b0(1)) + b0(0) * b2(1) + c0(0) * c2(1);
-      const double gamma = b0(0) * b1(1) - b1(0) * b0(1) + c0(0) * c1(1) - c1(0) * c0(1);
+    // calculate the displacement for velocity and virial calculation
+    const math::Vec d_a = pos_a - pos_new[0];
+    const math::Vec d_b = pos_b - pos_new[1];
+    const math::Vec d_c = pos_c - pos_new[2];
+    
+    // undo the transformation for the a3, b3 and c3 vectors in order to get 
+    // the new positions
+    pos_new[0] = pos_a;
+    pos_new[1] = pos_b;
+    pos_new[2] = pos_c;
+    
+    // in any case calculate the constraint force - it is a very interetsing
+    // quantity 
+    // by finite difference
+    cons_force[0] = d_a * mass_O * dt2_i;
+    cons_force[1] = d_b * mass_H * dt2_i;
+    cons_force[2] = d_c * mass_H * dt2_i;
 
-      const double alpha2_beta2 = alpha * alpha + beta * beta;
-      // this is (A17)
-      const double sintheta = (alpha * gamma -
-              beta * sqrt(alpha2_beta2 - gamma * gamma)) / alpha2_beta2;
-      const double one_minus_sintheta2 = 1.0 - sintheta * sintheta;
-      if (one_minus_sintheta2 < 0.0) {
-        printError(topo, conf, sim, i, "sin(theta) > 1.0");
-        error = 1;
-        break; //return;
-      }
-      const double costheta = sqrt(one_minus_sintheta2);
+    DEBUG(3, "constrained forces 0= " << math::v2s(cons_force[0]) << " 1= " << math::v2s(cons_force[1]) << " 2= " << math::v2s(cons_force[2]));
+    
+    if (do_velocity) {
+      math::Vec * vel_new = &conf.current().vel(i);
+      
+      // let's reset the velocity
+      // recalculate velocity from displacement and timestep
+      vel_new[0] += d_a * dt_i;
+      vel_new[1] += d_b * dt_i;
+      vel_new[2] += d_c * dt_i;
+    } // do velocity
 
-      // new finally a3, b3 and c3. These are (A4)
-      const math::Vec a3(-a2(1) * sintheta,
-              a2(1) * costheta,
-              a1(2));
-      const math::Vec b3(b2(0) * costheta - b2(1) * sintheta,
-              b2(0) * sintheta + b2(1) * costheta,
-              b1(2));
-      const math::Vec c3(-b2(0) * costheta - c2(1) * sintheta,
-              -b2(0) * sintheta + c2(1) * costheta,
-              c1(2));
-
-      DEBUG(3, "a3= " << math::v2s(a3) << " b3= " << math::v2s(b3) << " c3= " << math::v2s(c3));
-
-      // calculate the new positions
-      const math::Vec pos_a(math::Vec(math::dot(a3, m1), math::dot(a3, m2), math::dot(a3, m0)) + d0);
-      const math::Vec pos_b(math::Vec(math::dot(b3, m1), math::dot(b3, m2), math::dot(b3, m0)) + d0);
-      const math::Vec pos_c(math::Vec(math::dot(c3, m1), math::dot(c3, m2), math::dot(c3, m0)) + d0);
-
-      DEBUG(3, "pos_a= " << math::v2s(pos_a) << " pos_b= " << math::v2s(pos_b) << " pos_c= " << math::v2s(pos_c));
-
-      // calculate the displacement for velocity and virial calculation
-      const math::Vec d_a(pos_a - pos_new[i]);
-      const math::Vec d_b(pos_b - pos_new[i+1]);
-      const math::Vec d_c(pos_c - pos_new[i+2]);
-
-      // undo the transformation for the a3, b3 and c3 vectors in order to get
-      // the new positions
-      pos_new[i] = pos_a;
-      pos_new[i+1] = pos_b;
-      pos_new[i+2] = pos_c;
-
-      // in any case calculate the constraint force - it is a very interetsing
-      // quantity
-      // by finite difference
-      cons_force[i] = d_a * mass_O * dt2_i;
-      cons_force[i+1] = d_b * mass_H * dt2_i;
-      cons_force[i+2] = d_c * mass_H * dt2_i;
-
-      DEBUG(3, "constrained forces 0= " << math::v2s(cons_force[i]) << " 1= " << math::v2s(cons_force[i+1]) << " 2= " << math::v2s(cons_force[i+2]));
-
-      if (do_velocity) {
-        // let's reset the velocity
-        // recalculate velocity from displacement and timestep
-        vel_new[i] += d_a * dt_i;
-        vel_new[i+1] += d_b * dt_i;
-        vel_new[i+2] += d_c * dt_i;
-      } // do velocity
-
-      if (sim.param().pcouple.virial == math::atomic_virial) {
-        // calculate the constraint virial
+    if (sim.param().pcouple.virial == math::atomic_virial) {
+      // calculate the constraint virial
+#ifdef OMP
+#pragma omp critical
+#endif
+      {
         for (int a = 0; a < 3; ++a) {
           for (int aa = 0; aa < 3; ++aa) {
             conf.old().virial_tensor(a, aa) +=
-                    pos_old[i](a) * cons_force[i](aa) +
-                    pos_old[i+1](a) * cons_force[i+1](aa) +
-                    pos_old[i+2](a) * cons_force[i+2](aa);
+                    pos_old[0](a) * cons_force[0](aa) +
+                    pos_old[1](a) * cons_force[1](aa) +
+                    pos_old[2](a) * cons_force[2](aa);
           }
         }
       } // do virial
-    } // for molecules
-  } // end OMP
+    }
+  } // for molecules
 
-  // everything is fine
   return;
 }
