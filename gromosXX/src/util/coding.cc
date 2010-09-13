@@ -106,3 +106,30 @@ std::string util::base64_decode(std::string const& str) {
 
   return ret;
 }
+
+std::string util::frame_text(const std::string & str, unsigned int indent, unsigned int boxwidth){
+  std::vector<std::string> lines;
+  std::istringstream iss(str);
+  // tokenize into lines
+  while(!iss.eof()) {
+    std::string tmp;
+    std::getline(iss, tmp);
+    lines.push_back(tmp);
+  }
+
+  std::ostringstream out;
+
+  out << std::setw(indent) << " " << ",";
+  for(unsigned int i = 0; i < boxwidth - 2; ++i)
+    out << "-";
+  out << "." << std::endl;
+  for(unsigned int i = 0; i < lines.size()-1; ++i) {
+    out << std::setw(indent) << " " << "| " << lines[i] << std::endl;
+  }
+  out << std::setw(indent) << " " << "`";
+  for(unsigned int i = 0; i < boxwidth - 2; ++i)
+    out << "-";
+  out << "'";
+  return out.str();
+}
+

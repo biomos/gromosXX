@@ -18,6 +18,14 @@ namespace util {
    * @return decoded string or "" if the parameter is not in the right format
    */
   std::string base64_decode(std::string const& s);
+  /**
+   * puts the text into a frame
+   * @param str the string to format
+   * @param indent the indent
+   * @param boxwidth the width of the box
+   * @return the formated text
+   */
+  std::string frame_text(const std::string & str, unsigned int indent = 8, unsigned int boxwidth = 50);
 }
 
 #endif

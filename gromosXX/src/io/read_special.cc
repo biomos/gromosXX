@@ -28,8 +28,10 @@
 #include <io/topology/in_friction.h>
 #include <io/topology/in_xray.h>
 #include <io/topology/in_leus.h>
+#include <util/coding.h>
 
 #include "read_special.h"
+
 
 #undef MODULE
 #undef SUBMODULE
@@ -60,13 +62,13 @@ int io::read_special(io::Argument const & args,
 			 "read_special", 
 			 io::message::error);
       } else {
-        io::messages.add("position restraints specifciation read from " + args["posresspec"],
-                "read special", io::message::notice);
-
         io::In_Posresspec ip(posresspec_file);
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
+        io::messages.add("position restraints specifciation read from " +
+                args["posresspec"] + "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
       }
     }
     
@@ -87,13 +89,13 @@ int io::read_special(io::Argument const & args,
                   "read_special",
                   io::message::error);
         } else {
-          io::messages.add("position restraints specifciation read from " + args["refpos"],
-                  "read special", io::message::notice);
-
           io::In_Refpos ip(refpos_file);
           ip.quiet = quiet;
 
           ip.read(topo, conf, sim, os);
+          io::messages.add("position restraints specifciation read from " +
+                  args["refpos"] + "\n" + util::frame_text(ip.title),
+                  "read special", io::message::notice);
         }
       }
     }
@@ -112,13 +114,13 @@ int io::read_special(io::Argument const & args,
 	io::messages.add("opening distanceres file failed!\n",
 			 "read_special", io::message::error);
       } else {
-        io::messages.add("distance restraints read from " + args["distrest"],
-                "read special", io::message::notice);
-
         io::In_Distanceres ip(distanceres_file);
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
+        io::messages.add("distance restraints read from " + args["distrest"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
       }
     }    
   } // DISTANCERES
@@ -136,13 +138,13 @@ int io::read_special(io::Argument const & args,
 	io::messages.add("opening dihrest file '" + args["dihrest"] + "'failed!\n",
 			 "read_special", io::message::error);
       } else {
-        io::messages.add("dihedral restraints read from " + args["dihrest"],
-                "read special", io::message::notice);
-
         io::In_Dihrest ip(dihrest_file);
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
+        io::messages.add("dihedral restraints read from " + args["dihrest"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
       }
     }    
   } // DIHREST
@@ -160,13 +162,13 @@ int io::read_special(io::Argument const & args,
 	io::messages.add("opening jvalue restraints file failed!\n",
 			 "read_special", io::message::error);
       } else {
-        io::messages.add("jvalue restraints read from " + args["jval"],
-                "read special", io::message::notice);
-
         io::In_Jvalue ij(jval_file);
         ij.quiet = quiet;
 
         ij.read(topo, conf, sim, os);
+        io::messages.add("jvalue restraints read from " + args["jval"] + "\n" +
+                util::frame_text(ij.title),
+                "read special", io::message::notice);
       }
     }
   } // JVALUE
@@ -184,13 +186,13 @@ int io::read_special(io::Argument const & args,
 	io::messages.add("opening xray restraints file failed!\n",
 			 "read_special", io::message::error);
       } else {
-        io::messages.add("xray restraints read from " + args["xray"],
+        io::In_Xrayresspec ix(xray_file);
+        ix.quiet = quiet;
+
+        ix.read(topo, sim, os);
+        io::messages.add("xray restraints read from " + args["xray"] + "\n" +
+                util::frame_text(ix.title),
                 "read special", io::message::notice);
-
-        io::In_Xrayresspec ij(xray_file);
-        ij.quiet = quiet;
-
-        ij.read(topo, sim, os);
       }
     }
   } // XRAY
@@ -209,13 +211,13 @@ int io::read_special(io::Argument const & args,
         io::messages.add("opening friction file failed!\n",
                 "read_special", io::message::error);
       } else {
-        io::messages.add("atomic friction coefficients read from " + args["friction"],
-                "read special", io::message::notice);
-
         io::In_Friction infr(friction_file);
         infr.quiet = quiet;
 
         infr.read(topo, sim, os);
+        io::messages.add("atomic friction coefficients read from " + args["friction"] +
+                "\n" + util::frame_text(infr.title),
+                "read special", io::message::notice);
       }
     }
   } // FRICTION
@@ -232,13 +234,12 @@ int io::read_special(io::Argument const & args,
         io::messages.add("opening of LEUS definition file failed!\n",
                 "read_special", io::message::error);
       } else {
-        io::messages.add("LEUS coordinate definition read from " + args["led"],
-                "read special", io::message::notice);
-
         io::In_Localelevspec inled(led_file);
         inled.quiet = quiet;
 
         inled.read(topo, sim, os);
+        io::messages.add("LEUS coordinate definition read from " + args["led"] + "\n" +
+                util::frame_text(inled.title), "read special", io::message::notice);
       }
     } // LED
 
@@ -253,13 +254,13 @@ int io::read_special(io::Argument const & args,
           io::messages.add("opening of LEUS database file failed!\n",
                   "read_special", io::message::error);
         } else {
-          io::messages.add("LEUS umbrella database file read from " + args["lud"],
-                  "read special", io::message::notice);
-
           io::In_LEUSBias inlud(lud_file);
           inlud.quiet = quiet;
 
           inlud.read(topo, conf, sim, os);
+          io::messages.add("LEUS umbrella database file read from " + args["lud"] +
+                  "\n" + util::frame_text(inlud.title),
+                  "read special", io::message::notice);
         }
       } // LUD
     } // if external LUD

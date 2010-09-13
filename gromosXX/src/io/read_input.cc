@@ -28,6 +28,7 @@
 #include <interaction/forcefield/forcefield.h>
 
 #include <util/replica_data.h>
+#include <util/coding.h>
 
 #ifdef HAVE_HOOMD
 #include <HOOMD_GROMOSXX_processor.h>
@@ -126,14 +127,15 @@ int io::read_parameter(io::Argument const & args,
     return -1;
   }
   
-  io::messages.add("parameter read from " + args[argname_input],
-		   "read input",
-		   io::message::notice);
-  
   io::In_Parameter ip(input_file);
   ip.quiet = quiet;
   
   ip.read(sim.param(), os);
+
+  io::messages.add("parameter read from " + args[argname_input] +
+          "\n" + util::frame_text(ip.title),
+          "read input", io::message::notice);
+
   sim.time_step_size() = sim.param().step.dt;
   sim.time() = sim.param().step.t0;
   
@@ -179,14 +181,13 @@ int io::read_topology(io::Argument const & args,
     return -1;
   }
 
-  io::messages.add("topology read from " + args[argname_topo],
-		   "read input",
-		   io::message::notice);
-  
   io::In_Topology it(topo_file);
   it.quiet = quiet;
   
   it.read(topo, sim.param(), os);
+
+  io::messages.add("topology read from " + args[argname_topo] + "\n" + util::frame_text(it.title),
+          "read input", io::message::notice);
 
   // check for errors and about before initialization
   if(io::messages.contains(io::message::error) ||
@@ -209,14 +210,12 @@ int io::read_topology(io::Argument const & args,
       return -1;
     }
     
-    io::messages.add("perturbation topology read from " + args[argname_pttopo],
-		     "read input",
-		     io::message::notice);
-    
     io::In_Perturbation ipt(pttopo_file);
     ipt.quiet = quiet;
     
     ipt.read(topo, sim.param());
+    io::messages.add("perturbation topology read from " + args[argname_pttopo] + "\n" + util::frame_text(ipt.title),
+		     "read input", io::message::notice);
     
   }
   
@@ -247,15 +246,14 @@ int io::read_configuration(io::Argument const & args,
 		     io::message::critical);
     return -1;
   }
-
-  io::messages.add("configuration read from " + args[argname_conf],
-		   "read input",
-		   io::message::notice);
   
   io::In_Configuration ic(conf_file);
   ic.quiet = quiet;
   
   ic.read(conf, topo, sim, os);
+
+  io::messages.add("configuration read from " + args[argname_conf] + "\n" + util::frame_text(ic.title),
+		   "read input", io::message::notice);
 
   conf.init(topo, sim.param());
 
@@ -292,14 +290,14 @@ int io::read_replica_configuration
 		     io::message::critical);
     return -1;
   }
-
-  io::messages.add("replica configurations read from " + args[argname_conf],
-		   "read input", io::message::notice);
   
   io::In_Configuration ic(conf_file);
   ic.quiet = quiet;
   
   ic.read_replica(conf, topo, sim, replica_data, os);
+
+  io::messages.add("replica configurations read from " + args[argname_conf] + "\n" + util::frame_text(ic.title),
+		   "read input", io::message::notice);
 
   for(unsigned int i=0; i<conf.size(); ++i)
     conf[i].init(topo, sim.param());
@@ -311,3 +309,4 @@ int io::read_replica_configuration
     
   return 0;
 }
+
