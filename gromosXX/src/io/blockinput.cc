@@ -5,6 +5,7 @@
 
 #include <stdheader.h>
 #include <io/message.h>
+#include <ios>
 #include "blockinput.h"
 
 template<class size_type>
@@ -35,18 +36,20 @@ io::getline(
 
   while (is.good()) {
     std::getline(is, s, sep);
+    std::string bak(s);
+    trim(bak);
     ii = s.find(comm, 0);
 
-    if(!s.size()) continue;                 // empty line
-    else if(ii == std::string::npos) break; // no comment
-    else if (!ii) continue;                 // comment on first position
+    if (!bak.size()) continue; // empty/whitespace only line
+    else if (ii == std::string::npos) break; // no comment
+    else if (!ii) continue; // comment on first position
     else {
       s.erase(s.begin() + ii, s.end());
-      if (!trim_right(s).size()) continue;  // line with comment only
+      if (!trim_right(s).size()) continue; // line with comment only
       break;
-    } 
+    }
   }
-  
+
   return is;
 }
 
@@ -121,7 +124,10 @@ io::trimblock(std::vector<std::string> &block)
   std::vector<std::string>::iterator it = block.begin();
   while(true){
     std::istringstream is(*it);
-    if (!(is >> s)){
+    is >> s;
+    trim(s);
+
+    if (is.fail() || s == ""){
       block.erase(it);
       it = block.begin();
       continue;

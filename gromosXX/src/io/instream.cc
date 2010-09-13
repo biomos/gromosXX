@@ -5,10 +5,13 @@
 
 #include <stdheader.h>
 #include <vector>
+#include <sstream>
 
 #include "blockinput.h"
 #include "instream.h"
 #include "message.h"
+
+#include <util/coding.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -22,8 +25,7 @@ void io::GInStream::readTitle() {
   io::getblock(*_is, _b);
   if (_b[0] != "TITLE")
     io::messages.add("title block expected: found " + _b[0],
-		     "instream",
-		     io::message::error);
+		     "GInStream", io::message::error);
   title = io::concatenate(_b.begin() + 1, _b.end() - 1, title);
 }
 
@@ -33,8 +35,9 @@ void io::GInStream::readStream() {
 
     if (!io::getblock(stream(), buffer)) {
       if (buffer.size() && buffer[0] != "") {
-        std::cerr << "invalid block " + buffer[0] << " in input file?"
-                << std::endl;
+        std::ostringstream oss;
+        oss << "Corrupted block " + buffer[0] << " in file\n" << util::frame_text(title);
+        io::messages.add(oss.str(), "GInStream", io::message::critical);
       }
       break;
     }
@@ -43,9 +46,9 @@ void io::GInStream::readStream() {
 
     // empty blocks may cause problems
     if (buffer.size() == 2) {
-      std::ostringstream out;
-      out << "empty block (" << buffer[0] << ")";
-      io::messages.add("GInStream", out.str(), io::message::error);
+      std::ostringstream oss;
+      oss << "Empty block " + buffer[0] << " in file\n" << util::frame_text(title);
+      io::messages.add(oss.str(), "GInStream", io::message::error);
     } else {
       std::string n = buffer[0];
       DEBUG(10, "reading block -" << buffer[0] << "- size " << buffer.size());
