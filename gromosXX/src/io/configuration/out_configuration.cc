@@ -2834,7 +2834,7 @@ _print_dipole(simulation::Simulation const & sim,
 
   // All atoms in the box
   if(sim.param().electric.dip_groups == 2) {
-    "DIPOLE\n#All atoms\n";
+    os << "DIPOLE\n#All atoms\n";
     for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
       math::Vec r = conf.current().pos(i);
       box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
@@ -2860,7 +2860,7 @@ _print_current(simulation::Simulation const & sim,
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
 
-  int ngroups = sim.param().electric.cur_groups;
+  unsigned int ngroups = sim.param().electric.cur_groups;
   int first = 0;
   math::Vec cur_current(0.0);
   //double scale = math::four_pi_eps_i;
