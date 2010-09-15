@@ -1096,7 +1096,8 @@ void interaction::Nonbonded_Outerloop
   bool calculate_lattice_sum_corrections =
           sim.param().pcouple.scale != math::pcouple_off || // NPT - every step
           !sim.steps() || // at the beginning of the simulation
-          sim.steps() % abs(sim.param().write.energy) == 0; // energy output req.
+          (sim.param().print.stepblock != 0 && sim.steps() % abs(sim.param().print.stepblock) == 0); // energy output req.
+          (sim.param().write.energy != 0 && sim.steps() % abs(sim.param().write.energy) == 0); // energy output req.
   const bool do_a2t = 
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
