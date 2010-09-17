@@ -4556,6 +4556,30 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
       }
     }
 
+    switch (dipgrp) {
+      case 0:
+      {
+        param.electric.dip_groups = 0;
+        break;
+      }
+      case 1:
+      {
+        param.electric.dip_groups = 1;
+        break;
+      }
+      case 2:
+      {
+        param.electric.dip_groups = 2;
+        break;
+      }
+      default:
+      {
+        io::messages.add("ELECTRIC block: DIPGRP should be within 0..2",
+                "In_Parameter", io::message::error);
+        break;
+      }
+    }
+
     switch (current){
       case 0:
       {

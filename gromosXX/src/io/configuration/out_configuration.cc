@@ -2819,7 +2819,9 @@ _print_dipole(simulation::Simulation const & sim,
     for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
       math::Vec r = conf.current().pos(i);
       box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
-
+      if (topo.is_polarisable(i)) {
+        box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
+      }
     }
   }
 
@@ -2829,6 +2831,9 @@ _print_dipole(simulation::Simulation const & sim,
     for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
       math::Vec r = conf.current().pos(i);
       box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
+      if (topo.is_polarisable(i)) {
+        box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
+      }
     }
   }
 
@@ -2838,6 +2843,9 @@ _print_dipole(simulation::Simulation const & sim,
     for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
       math::Vec r = conf.current().pos(i);
       box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
+      if (topo.is_polarisable(i)) {
+        box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
+      }
     }
   }
 
