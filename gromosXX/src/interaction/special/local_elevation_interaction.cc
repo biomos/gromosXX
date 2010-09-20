@@ -112,24 +112,28 @@ int interaction::Local_Elevation_Interaction::init(topology::Topology &topo,
       umb_it->umbrella_weight_factory = new util::Number_Of_Visits_Umbrella_Weight_Factory();
 
     // dimensions
-    if (umb_it->dim() != umb_it->variable_type.size()) {
+    const unsigned int num_crd = umb_it->coordinates.size() / umb_it->dim();
+    if (umb_it->coordinates.size() % umb_it->dim() != 0) {
       std::ostringstream msg;
       msg << "Umbrella (" << umb_it->id << ") has dimension "
           << umb_it->variable_type.size() << " but " << umb_it->dim()
-          << " variables attached to it.";
+          << " variables attached to it. The number of variables attached has to be a multiple of the dimension.";
       io::messages.add(msg.str(), "Local_Elevation_Interaction", io::message::error);
       return 1;
     }
 
     // types
-    for (unsigned int i = 0; i < umb_it->dim(); ++i) {
-      int vt = umb_it->variable_type[i];
-      int le_vt = umb_it->coordinates[i]->get_type();
-      if (vt != le_vt) {
-        std::ostringstream msg;
-        msg << "Umbrella (" << umb_it->id << ") LE coordinate " << (i+1)
-                << " variable types do not match: " << vt << " vs. " << le_vt << ".";
-        io::messages.add(msg.str(), "Local_Elevation_Interaction", io::message::error);
+    for (unsigned int crd = 0; crd < num_crd; ++crd) {
+      for (unsigned int i = 0; i < umb_it->dim(); ++i) {
+        int vt = umb_it->variable_type[i];
+        unsigned int crd_index = i + crd*umb_it->dim();
+        int le_vt = umb_it->coordinates[crd_index]->get_type();
+        if (vt != le_vt) {
+          std::ostringstream msg;
+          msg << "Umbrella (" << umb_it->id << ") LE coordinate " << (crd_index + 1)
+                  << " variable types do not match: " << vt << " vs. " << le_vt << ".";
+          io::messages.add(msg.str(), "Local_Elevation_Interaction", io::message::error);
+        }
       }
     }
 
@@ -141,8 +145,8 @@ int interaction::Local_Elevation_Interaction::init(topology::Topology &topo,
 
   if (!quiet) {
     os << "LOCALELEV\n"
-            << "\tLocal-elevation umbrella samping is on.\n" 
-            << "\tNumber of umbrellas: " << conf.special().umbrellas.size() << "\n\n";
+            << "Local-elevation umbrella samping is on.\n" 
+            << "Number of umbrellas: " << conf.special().umbrellas.size() << "\n\n";
     std::vector<util::Umbrella>::const_iterator umb_it = conf.special().umbrellas.begin(),
             umb_to = conf.special().umbrellas.end();
     for(; umb_it != umb_to; ++umb_it) {

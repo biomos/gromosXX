@@ -99,134 +99,143 @@ bool util::Umbrella::leus_conf::operator <(const leus_conf& c) const {
 void util::Umbrella::build(
         configuration::Configuration & conf) {
   DEBUG(5, "Building umbrella " << id);
-  const unsigned int dim = coordinates.size();
+  const unsigned int dim = this->dim();
+  const unsigned int num_crd = coordinates.size() / dim;
+  for (unsigned int crd = 0; crd < num_crd; ++crd) {
+    bool outside = false;
+    std::vector<int> pos(dim);
+    for (unsigned int i = 0; i < dim; ++i) {
+      DEBUG(6, "\tLE coordinate: " << i);
 
-  bool outside = false;
-  std::vector<int> pos(dim);
-  for (unsigned int i = 0; i < dim; ++i) {
-    DEBUG(6, "\tLE coordinate: " << i);
-    
-    // get the value and grid it
-    const double qi = coordinates[i]->get_value(grid_min_rel[i], grid_max_rel[i]);
-    DEBUG(6, "\tqi: " << qi);
-    
-    pos[i] = int(floor((qi - grid_min_rel[i]) * grid_spacing_rel[i] + 0.5));
-    DEBUG(6, "\tpos: " << pos[i]);
-    if (pos[i] < 0 || pos[i] >= int(num_grid_points[i])) {
-      DEBUG(8,"\t\toutside the grid");
-      outside = true;
-      break;
+      // get the value and grid it
+      const double qi = coordinates[crd * dim + i]->get_value(grid_min_rel[i], grid_max_rel[i]);
+      DEBUG(6, "\tqi: " << qi);
+
+      pos[i] = int(floor((qi - grid_min_rel[i]) * grid_spacing_rel[i] + 0.5));
+      DEBUG(6, "\tpos: " << pos[i]);
+      if (pos[i] < 0 || pos[i] >= int(num_grid_points[i])) {
+        DEBUG(8, "\t\toutside the grid");
+        outside = true;
+        break;
+      }
     }
-  }
 
-  // don't add it if it is not on the grid!
-  if (outside)
-    return;
+    // don't add it if it is not on the grid!
+    if (outside)
+      return;
 
-  const util::Umbrella::leus_conf grid_point(pos);
-  // binary search this grid point
-  std::map<util::Umbrella::leus_conf, util::Umbrella_Weight*>::iterator conf_it =
-          configurations.find(grid_point);
+    const util::Umbrella::leus_conf grid_point(pos);
+    // binary search this grid point
+    std::map<util::Umbrella::leus_conf, util::Umbrella_Weight*>::iterator conf_it =
+            configurations.find(grid_point);
 
-  if (conf_it != configurations.end()) {
-    // found
-    conf_it->second->increment_weight();
-  } else {
-    // not found so add the grid point to the visited points
-    configurations.insert(
-            std::pair<util::Umbrella::leus_conf, util::Umbrella_Weight* > (
-            grid_point, umbrella_weight_factory->get_instance()));
-  }
+    if (conf_it != configurations.end()) {
+      // found
+      conf_it->second->increment_weight();
+    } else {
+      // not found so add the grid point to the visited points
+      configurations.insert(
+              std::pair<util::Umbrella::leus_conf, util::Umbrella_Weight* > (
+              grid_point, umbrella_weight_factory->get_instance()));
+    }
+  } // coordinate sets
 }
 
 void util::Umbrella::apply(
         configuration::Configuration & conf) {
   DEBUG(6, "Applying umbrella " << id);
-  const unsigned int dim = coordinates.size();
+  const unsigned int dim = this->dim();
 
-  // loop over the stored configurations
-  std::map<util::Umbrella::leus_conf, util::Umbrella_Weight*>::const_iterator conf_it =
-          configurations.begin(), conf_to = configurations.end();
+  // loop over the coordinate sets
+  const unsigned int num_crd = coordinates.size() / dim;
+  DEBUG(6, "dimensionality of umbrella: " << dim);
+  DEBUG(6, "number of coordinate sets: " << num_crd);
+  DEBUG(6, "number of coordinates: " << coordinates.size());
+  for (unsigned int crd = 0; crd < num_crd; ++crd) {
+    // loop over the stored configurations
+    std::map<util::Umbrella::leus_conf, util::Umbrella_Weight*>::const_iterator conf_it =
+            configurations.begin(), conf_to = configurations.end();
 
-  for(; conf_it != conf_to; ++conf_it) {
-    bool outside = false;
-    double energy = 1.0;
-    std::vector<double> deriv(dim, 1.0);
-    // loop over the coordinates attached to the umbrella
-    for(unsigned int i = 0; i < dim; ++i) {
-      DEBUG(8, "\tpos[" << i+1 << "]: " << conf_it->first.pos[i]);
-      // get the value of the grid point
-      const double qi_0 = grid_min_rel[i] + conf_it->first.pos[i] / grid_spacing_rel[i];
-      // get the deviation from the value
-      const double dq = coordinates[i]->get_deviation(qi_0);
-      DEBUG(8, "\tqi_0: " << qi_0 << " deltaq: " << dq);
+    for (; conf_it != conf_to; ++conf_it) {
+      bool outside = false;
+      double energy = 1.0;
+      std::vector<double> deriv(dim, 1.0);
+      // loop over the coordinates attached to the umbrella
+      for (unsigned int i = 0; i < dim; ++i) {
+        DEBUG(8, "\tpos[" << i + 1 << "]: " << conf_it->first.pos[i]);
+        // get the value of the grid point
+        const double qi_0 = grid_min_rel[i] + conf_it->first.pos[i] / grid_spacing_rel[i];
+        // get the deviation from the value
+        const double dq = coordinates[crd * dim + i]->get_deviation(qi_0);
+        DEBUG(8, "\tqi_0: " << qi_0 << " deltaq: " << dq);
 
-      // check cutoff
-      const double dq_abs = fabs(dq);
-      if (dq_abs > cutoff_rel[i]) {
-        DEBUG(8, "\t\tout of cutoff.");
-        outside = true;
-        break;
-      }
-      DEBUG(8, "\t\twithin cutoff.");
-
-      // calculate g function and the derivative by Qi
-      double g = 0.0, dgdQ = 0.0;
-      switch (functional_form[i]) {
-        case util::Umbrella::ff_polynomial :
-        {
-          const double term1 = dq_abs / (width_rel[i] * width_rel[i]);
-          const double term2 = term1 * dq_abs / width_rel[i];
-          g = 1.0 - 3.0 * term1 * dq_abs + 2.0 * term2 * dq_abs;
-          const double sign = dq < 0.0 ? -1.0 : 1.0;
-          dgdQ = sign * 6.0 * (-term1 + term2);
+        // check cutoff
+        const double dq_abs = fabs(dq);
+        if (dq_abs > cutoff_rel[i]) {
+          DEBUG(8, "\t\tout of cutoff.");
+          outside = true;
           break;
         }
-        case util::Umbrella::ff_gaussian :
-        {
-          const double factor = -1.0 / (width_rel[i] * width_rel[i]);
-          const double exp_term = exp(0.5 * dq * dq * factor);
-          g = exp_term;
-          dgdQ =  factor * exp_term * dq;
-          break;
+        DEBUG(8, "\t\twithin cutoff.");
+
+        // calculate g function and the derivative by Qi
+        double g = 0.0, dgdQ = 0.0;
+        switch (functional_form[i]) {
+          case util::Umbrella::ff_polynomial:
+          {
+            const double term1 = dq_abs / (width_rel[i] * width_rel[i]);
+            const double term2 = term1 * dq_abs / width_rel[i];
+            g = 1.0 - 3.0 * term1 * dq_abs + 2.0 * term2 * dq_abs;
+            const double sign = dq < 0.0 ? -1.0 : 1.0;
+            dgdQ = sign * 6.0 * (-term1 + term2);
+            break;
+          }
+          case util::Umbrella::ff_gaussian:
+          {
+            const double factor = -1.0 / (width_rel[i] * width_rel[i]);
+            const double exp_term = exp(0.5 * dq * dq * factor);
+            g = exp_term;
+            dgdQ = factor * exp_term * dq;
+            break;
+          }
+          default:
+            io::messages.add("Functional form not implemented",
+                    "Umbrella",
+                    io::message::critical);
         }
-        default:
-          io::messages.add("Functional form not implemented",
-		     "Umbrella",
-		     io::message::critical);
+
+        DEBUG(5, "\tg function: " << g);
+        DEBUG(5, "\tdgdQ      : " << dgdQ);
+        // multiply the g functions
+        energy *= g;
+
+        // this is to take care of the product rule
+        // derivative is the product of all g functions except the one i=j
+        // where it is the derivative of g
+        for (unsigned int j = 0; j < dim; ++j) {
+          if (j == i)
+            deriv[j] *= dgdQ;
+          else
+            deriv[j] *= g;
+        }
       }
 
-      DEBUG(5, "\tg function: " << g);
-      DEBUG(5, "\tdgdQ      : " << dgdQ);
-      // multiply the g functions
-      energy *= g;
-
-      // this is to take care of the product rule
-      // derivative is the product of all g functions except the one i=j
-      // where it is the derivative of g
-      for(unsigned int j = 0; j < dim; ++j) {
-        if (j == i)
-          deriv[j] *= dgdQ;
-        else
-          deriv[j] *= g;
+      if (outside) {
+        DEBUG(8, "\tconf is out of cutoff.");
+        continue;
       }
-    }
 
-    if (outside) {
-      DEBUG(8, "\tconf is out of cutoff.");
-      continue;
-    }
-
-    energy *= force_constant * conf_it->second->get_weight();
-    DEBUG(4,"\tenergy: " << energy)
-    // store the energy, apply the force
-    conf.current().energies.leus_total += energy;
-    for(unsigned int i = 0; i < dim; ++i) {
-      const double d = deriv[i] * force_constant * conf_it->second->get_weight();
-      DEBUG(7,"\tderiv[" << i << "]: " << d);
-      coordinates[i]->apply(d);
-    }
-  } // for visited configurations
+      energy *= force_constant * conf_it->second->get_weight();
+      DEBUG(4, "\tenergy: " << energy)
+      // store the energy, apply the force
+      conf.current().energies.leus_total += energy;
+      for (unsigned int i = 0; i < dim; ++i) {
+        const double d = deriv[i] * force_constant * conf_it->second->get_weight();
+        DEBUG(7, "\tderiv[" << i << "]: " << d);
+        coordinates[crd * dim + i]->apply(d);
+      }
+    } // for visited configurations
+  } // for coordinate sets
   DEBUG(6,"\tLEUS energy: " << conf.current().energies.leus_total);
 }
 
@@ -266,7 +275,7 @@ void util::Umbrella::transform_units() {
 void util::Umbrella::calculate_coordinates(
         configuration::Configuration & conf) {
   DEBUG(4, "Calculating coordinates of umbrella " << id);
-  for (unsigned int i = 0; i < dim(); ++i) {
+  for (unsigned int i = 0; i < coordinates.size(); ++i) {
     coordinates[i]->calculate(conf);
   }
 }
@@ -303,35 +312,43 @@ void util::Umbrella::read_configuration() {
 
 std::string util::Umbrella::str() const {
   std::ostringstream os;
-  os << "\tUmbrella (" << id << "): ";
+  os << "  Umbrella (" << id << "): ";
   if (enabled) {
     os << "enabled, " << (building ? "building" : "frozen") << ".";
   } else {
     os << "disabled.";
   }
   os.precision(8);
-  os << "\n\tforce constant: " << std::setw(15) << force_constant;
-  os << "\n\tNumber of attached coordinates: " << dim() << "\n";
-  for(unsigned int i = 0; i < dim(); ++i) {
-    os << "\t\t- " << coordinates[i]->str() << "\n";
-    os << "\t\t    function    : ";
-    switch(functional_form[i]) {
-      case ff_gaussian :
+  os << "\n    force constant: " << std::setw(15) << force_constant;
+  os << "\n    " << configurations.size() << " configurations visited.\n";
+  os << "\n    dimensionality: " << dim();
+  os << "\n    functional form/grid properties:\n";
+  for (unsigned int i = 0; i < dim(); ++i) {
+    os << "    - function    : ";
+    switch (functional_form[i]) {
+      case ff_gaussian:
         os << "gaussian";
         break;
-      case ff_polynomial :
+      case ff_polynomial:
         os << "truncated polynomial";
         break;
       default:
         os << "unkown";
     }
     os << "\n";
-    os << "\t\t    width       : " << std::setw(15) << width[i] << "\n"
-       << "\t\t    cutoff      : " << std::setw(15) << cutoff[i] << "\n"
-       << "\t\t    grid points : " << num_grid_points[i] << "\n"
-       << "\t\t    grid min    : " << std::setw(15) << grid_min[i] << "\n"
-       << "\t\t    grid max    : " << std::setw(15) << grid_max[i] << "\n"
-       << "\t\t    " << configurations.size() << " configurations visited.\n";
+    os << "      width       : " << std::setw(15) << width[i] << "\n"
+       << "      cutoff      : " << std::setw(15) << cutoff[i] << "\n"
+       << "      grid points : " << num_grid_points[i] << "\n"
+       << "      grid min    : " << std::setw(15) << grid_min[i] << "\n"
+       << "      grid max    : " << std::setw(15) << grid_max[i] << "\n";
+  }
+  unsigned int num_crd = coordinates.size() / dim();
+  os << "    " << num_crd << " coordinate sets:\n";
+  for (unsigned int crd = 0; crd < num_crd; ++crd) {
+    os << "    Coordinate set: " << crd+1 << "\n";
+    for (unsigned int i = 0; i < dim(); ++i) {
+      os << "    - " << coordinates[crd*dim()+i]->str() << "\n";
+    }
   }
 
   return os.str();

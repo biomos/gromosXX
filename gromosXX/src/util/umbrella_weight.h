@@ -13,6 +13,7 @@ namespace util {
    */
   class Umbrella_Weight {
   public:
+    virtual ~Umbrella_Weight() {}
     /**
      * get the weight of this configuration
      */
@@ -60,6 +61,7 @@ namespace util {
    */
   class Number_Of_Visits_Umbrella_Weight : public Umbrella_Weight {
   public:
+    virtual ~Number_Of_Visits_Umbrella_Weight() {}
     Number_Of_Visits_Umbrella_Weight() { weight = 1; }
     virtual double get_weight() const { return double(weight); }
     virtual void increment_weight() { ++weight; }
