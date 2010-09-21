@@ -323,6 +323,9 @@ namespace io {
         topology::Topology const & topo,
         std::ostream &os);
 
+    void _print_xray_bfactors(simulation::Parameter const & param,
+        configuration::Configuration const &conf,
+        std::ostream &os);
 
     void _print_pscale_jrest(configuration::Configuration const &conf,
             topology::Topology const &topo,

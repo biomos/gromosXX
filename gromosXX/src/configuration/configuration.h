@@ -289,6 +289,30 @@ namespace configuration {
       } /** xray informaton */ xray;
 
       /**
+       * @struct xray_bfoc_struct
+       * the atomic parameters for X-ray
+       */
+      struct xray_bfoc_struct {
+        /**
+         * isotropic B factor
+         */
+        double b_factor;
+        /**
+         * gradient of isotropic B factor
+         */
+        double b_factor_gradient;
+        /**
+         * occupancy of isotropic B factor
+         */
+        double occupancy;
+      };
+
+      /**
+       * the atomic parameters
+       */
+      std::vector<xray_bfoc_struct> xray_bfoc;
+
+      /**
        * @struct disres_struct
        * holds the distance restraints configuration data
        */

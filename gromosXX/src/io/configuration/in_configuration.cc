@@ -799,6 +799,16 @@ bool io::In_Configuration::read_xray
         _read_xray_umbrellaweightthesholds(buffer, topo.xray_umbrella_weights());
       }
     }
+
+    buffer = m_block["XRAYBFOCCSPEC"];
+    if (buffer.size()) {
+      block_read.insert("XRAYBFOCCSPEC");
+      io::messages.add("Reading X-ray B factors from configuration",
+              "In_Configuration", io::message::notice);
+      sim.param().xrayrest.bfactor.init = false;
+      conf.special().xray_bfoc.resize(topo.num_atoms());
+      _read_xray_bfactors(buffer, conf.special().xray_bfoc);
+    }
   } // if xray averages
 
   return true;
@@ -2671,4 +2681,29 @@ _read_xray_umbrellaweightthesholds(std::vector<std::string> &buffer,
     }
   }
   return true;
+}
+
+bool io::In_Configuration::
+_read_xray_bfactors(std::vector<std::string> &buffer,
+        std::vector<configuration::Configuration::special_struct::xray_bfoc_struct> & bfoc) {
+  if (buffer.size() - 1 != bfoc.size()) {
+    io::messages.add("Number of X-ray B-factors in XRAYBFOCCSPEC block does not "
+            "corresponds with the number of atoms",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  for(unsigned int i = 0; i < bfoc.size(); ++i) {
+    std::istringstream line(buffer[i]);
+    line >> bfoc[i].b_factor >> bfoc[i].occupancy;
+    if (line.fail()) {
+      io::messages.add("Bad line in XRAYBFOCCSPEC block.",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+    if (bfoc[i].b_factor < 0.0 ||  bfoc[i].occupancy < 0.0 ||  bfoc[i].occupancy > 1.0) {
+      io::messages.add("Weird B-factor/occupancy in XRAYBFOCCSPEC block detected.",
+              "In_Configuration", io::message::warning);
+      return false;
+    }
+  }
 }

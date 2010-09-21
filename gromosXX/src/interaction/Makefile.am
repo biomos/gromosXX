@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/algorithm
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm
 
 
 xxincludedir = $(includedir)/md++/interaction
@@ -72,7 +72,7 @@ xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\
 	nonbonded/pairlist/extended_grid_pairlist_algorithm.h\
 	nonbonded/pairlist/grid_cell_pairlist.h
 
-xxintnbspecialdir = $(includedir)/md++/interaction/nonbonded/special
+xxintnbspecialdir = $(includedir)/md++/interaction/special
 xxintnbspecial_HEADERS = special/create_special.h\
 	special/position_restraint_interaction.h\
 	special/distance_restraint_interaction.h\
@@ -87,6 +87,11 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/xray_restraint_interaction.h\
 	special/local_elevation_interaction.h\
 	special/electric_field_interaction.h
+
+xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
+xxintspecialxray_HEADERS = special/xray/dens.h\
+	special/xray/sf.h\
+	special/xray/bfactor.h
 
 noinst_LTLIBRARIES = libgrointeraction.la
 
@@ -126,7 +131,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	bonded/perturbed_improper_dihedral_interaction.cc\
 	bonded/dihedral_interaction.cc\
 	bonded/dihedral_new_interaction.cc\
-        bonded/crossdihedral_interaction.cc\
+	bonded/crossdihedral_interaction.cc\
 	bonded/perturbed_dihedral_interaction.cc\
 	bonded/perturbed_dihedral_new_interaction.cc\
 	special/create_special.cc\
@@ -142,7 +147,10 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/ramd_interaction.cc\
 	special/xray_restraint_interaction.cc\
 	special/local_elevation_interaction.cc\
-	special/electric_field_interaction.cc
+	special/electric_field_interaction.cc\
+	special/xray/dens.cc\
+	special/xray/sf.cc\
+	special/xray/bfactor.cc
 
 bin_PROGRAMS =			
 

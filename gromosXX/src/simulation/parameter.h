@@ -1462,6 +1462,49 @@ namespace simulation
        * NCS spacegroup
        */
       std::string ncs_spacegroup;
+/**
+       * @struct bfactor_struct
+       * B factor settings structure
+       * default value:
+       * - step 0: don't fit B factors
+       * - terminate_iterations 10
+       * - terminate_gradient 0.1
+       * - max 1.0
+       * - min 0.001
+       */
+      struct bfactor_struct {
+        bfactor_struct() : init(true),
+        step(0),
+        terminate_iterations(10),
+        terminate_gradient(0.1),
+        max(1.0),
+        min(0.001) {
+        }
+        /**
+         * init them from topology
+         */
+        bool init;
+        /**
+         * fit B factors every step
+         */
+        int step;
+        /**
+         * terminate after the number of iterations
+         */
+        int terminate_iterations;
+        /**
+         * terminate after |gradient| &lt; value
+         */
+        double terminate_gradient;
+        /**
+         * maximum B-factor
+         */
+        double max;
+        /**
+         * minimum B-factor
+         */
+        double min;
+      } /** B factor settings */ bfactor;
     } /** Xray restraint parameters */ xrayrest;
 
     /**

@@ -161,6 +161,22 @@ XRAYNCSRESSPEC
 END
 @endverbatim
  *
+ * @section xraybfopt XRAYBFACTOROPTIMISATION block
+ * The XRAYBFACTOROPTIMISATION block is used to specify the settings for
+ * B factor optimisation. The optimisation is carried out by conjugate gradient
+ * minimisation of the SF restraint residual.
+ *
+ * @verbatim
+XRAYBFACTOROPTIMISATION
+# BFOPTS     : Optimise B-factors every BFOPTSth step
+# BFOPTTI    : Terminate after BFOPTTI iterations
+# BFOPTTG    : Terminate if gradient is smaller than BFOPTTG
+# BFOPTMN    : Minimum B-factor
+# BFOPTMX    : Maximum B-factor
+#
+# BFOPTS  BFOPTTI BFOPTTG BFOPTMN BFOPTMX
+     100      100    0.01   0.001     1.0
+END
  */
 void
 io::In_Xrayresspec::read(topology::Topology& topo,
@@ -621,6 +637,65 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       } // for atoms
     } // if block present
   } // XRAYNCSRESSPEC
+
+  { // XRAYBFACTOROPTIMISATION
+
+    buffer = m_block["XRAYBFACTOROPTIMISATION"];
+    DEBUG(10, "XRAYBFACTOROPTIMISATION block : " << buffer.size());
+
+    if (buffer.size()) {
+      std::string s;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+      int step, iter;
+      double grad, bmin, bmax;
+      // BFOPTS  BFOPTTI BFOPTTG BFOPTMN BFOPTMX
+      _lineStream >> step >> iter >> grad >> bmin >> bmax;
+
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in XRAYBFACTOROPTIMISATION block",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      if (step < 0) {
+        io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTS has to be >= 0",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      sim.param().xrayrest.bfactor.step = step;
+      if (iter < 1) {
+        io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTTI has to be >= 1",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      sim.param().xrayrest.bfactor.terminate_iterations = iter;
+      if (grad <= 0.0) {
+        io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTTG has to be > 0.0",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      sim.param().xrayrest.bfactor.terminate_gradient = grad;
+
+      if (bmin < 0.0) {
+        io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTMN has to be >= 0.0",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      if (bmax <= 0.0) {
+        io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTMX has to be > 0.0",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      if (bmin >= bmax) {
+        io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTMX has to be > BFOPTMN",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      sim.param().xrayrest.bfactor.min = bmin;
+      sim.param().xrayrest.bfactor.max = bmax;
+    }
+  } // XRAYBFACTOROPTIMISATION
 
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {

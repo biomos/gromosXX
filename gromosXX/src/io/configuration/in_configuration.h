@@ -339,6 +339,12 @@ namespace io {
                                             std::vector<topology::xray_umbrella_weight_struct> & umb_weight);
 
     /**
+     * read the B factors/occupancies from the configuration
+     */
+    bool _read_xray_bfactors(std::vector<std::string> &buffer,
+            std::vector<configuration::Configuration::special_struct::xray_bfoc_struct> & bfoc);
+
+    /**
      * read JVALUE local elevation epsilons.
      */
     bool _read_jvalue_le(std::vector<std::string> &buffer,

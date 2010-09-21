@@ -328,7 +328,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
       _print_xray_rvalue(sim.param(), conf, m_special_traj);
       _print_xray_umbrellaweightthresholds(sim.param(), topo, m_special_traj);
-      //_print_xray(sim.param(), conf, topo, m_special_traj);
+      _print_xray_bfactors(sim.param(), conf, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -463,6 +463,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
       _print_xray(sim.param(), conf, topo, m_final_conf, /*final=*/ true);
       _print_xray_umbrellaweightthresholds(sim.param(), topo, m_final_conf);
+      _print_xray_bfactors(sim.param(), conf, m_final_conf);
     }
 
     if (sim.param().localelev.localelev != simulation::localelev_off) {
@@ -2304,9 +2305,28 @@ void io::Out_Configuration::_print_xray_umbrellaweightthresholds(simulation::Par
   os << "END\n";
 }
 
+void io::Out_Configuration::_print_xray_bfactors(simulation::Parameter const & param,
+        configuration::Configuration const & conf,
+        std::ostream &os) {
+  DEBUG(10, "XRAY b factors");
+
+  if (param.xrayrest.bfactor.step == 0) return;
+
+  os << "XRAYBFOCCSPEC\n";
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  std::vector<configuration::Configuration::special_struct::xray_bfoc_struct>::const_iterator
+  it = conf.special().xray_bfoc.begin(), to = conf.special().xray_bfoc.end();
+  for (; it != to; ++it) {
+    os << std::setw(15) << it->b_factor
+            << std::setw(15) << it->occupancy << std::endl;
+  }
+  os << "END\n";
+}
+
 void io::Out_Configuration::_print_distance_restraints(
         configuration::Configuration const &conf,
-        topology::Topology const &topo,
+        topology::Topology const & topo,
         std::ostream &os) {
   DEBUG(10, "distance restraints");
 
