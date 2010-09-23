@@ -148,9 +148,13 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
     // save Fobs and PhiCalc for density maps. This will be corrected
     // for symmetry in the FFT step.
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst)
-      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf, conf.special().xray_rest[j].phase_curr));
+      fphi_obs.set_data(hkl, 
+              clipper::data32::F_phi(2.0 * xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr,
+              conf.special().xray_rest[j].phase_curr));
     else
-      fphi_obs.set_data(hkl, clipper::data32::F_phi(xrs.sf, conf.special().xray_rest[j].phase_av));
+      fphi_obs.set_data(hkl, 
+              clipper::data32::F_phi(2.0 * xrs.sf - k_avg * conf.special().xray_rest[j].sf_av,
+              conf.special().xray_rest[j].phase_av));
   }
   // and for R free
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
