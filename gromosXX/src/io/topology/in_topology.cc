@@ -455,8 +455,22 @@ io::In_Topology::read(topology::Topology& topo,
 	os << "\n\tEND\n";
     
     } // SOLUTEATOM
-    
     // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
+    { //scale mass for adiabatic decoupling
+      if(param.addecouple.adgr>0){
+       double sm=1;
+       int adc_index;
+       int num=topo.num_solute_atoms();
+       for(int n=0; n < num; ++n){ 
+        sm=1;
+        adc_index = param.addecouple.check_index_adc(n);
+        if(adc_index!=-1){
+            sm=param.addecouple.adc_index()[adc_index].sm;
+        }
+        topo.mass()(n)*=sm;
+       }
+      }
+    }//adiabatic decoupling
     
     { // SOLUTEPOLARISATION
       DEBUG(10, "SOLUTEPOLARISATION block");    
@@ -1503,12 +1517,22 @@ io::In_Topology::read(topology::Topology& topo,
       std::string name;
       int i, iac;
       double mass, charge;
-    
+      //adiabatic decoupling
+      int adc_index=0;
+      double sm=1;
+      int total_nr=topo.num_solute_atoms()-1;    
+
+ 
       for(n=0; it != buffer.end()-1; ++it, ++n){
 	_lineStream.clear();
 	_lineStream.str(*it);
-      
-	_lineStream >> i >> name >> iac >> mass >> charge;
+        sm=1; total_nr++;
+        adc_index = param.addecouple.check_index_adc(total_nr); 
+        if(adc_index!=-1){
+             sm=param.addecouple.adc_index()[adc_index].sm;
+        }
+        _lineStream >> i >> name >> iac >> mass >> charge;
+         mass*=sm; 
 
 	if (_lineStream.fail() || ! _lineStream.eof()){
 	  io::messages.add("Bad line in SOLVENTATOM block",

@@ -39,7 +39,8 @@ namespace util
   void centre_of_mass(topology::Topology const & topo,
 		      configuration::Configuration & conf,
 		      std::vector<math::Vec> & com_pos,
-		      std::vector<math::Matrix> & com_ekin);
+		      std::vector<math::Matrix> & com_ekin,
+          	      simulation::Simulation const & sim);
 
 } // util
 

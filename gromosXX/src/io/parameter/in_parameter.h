@@ -52,6 +52,7 @@
  * - @ref  LAMBDAS
  * - @ref  localelev
  * - @ref  electric
+ * - @ref  addecouple
  */
 
 
@@ -303,6 +304,10 @@ namespace io {
      * read SASA block.
      */
     void read_SASA(simulation::Parameter &param, std::ostream & os = std::cout);
+     /**
+     * read ADDECOUPLE block.
+     */
+    void read_ADDECOUPLE(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io

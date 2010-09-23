@@ -92,6 +92,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LOCALELEV(param);
   read_ELECTRIC(param);
   read_SASA(param);
+  read_ADDECOUPLE(param); // needs to be called after MULTIBATH and FORCE
 
   read_known_unsupported_blocks();
 
@@ -4630,6 +4631,161 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
     
   } // if block
 }
+
+/**
+ * @section addecouple ADDECOUPLE block
+ * @verbatim
+ADDECOUPLE
+# ADGR    >= 0 number of addiabatic decoupling groups
+# ADSTART first atom of the addiabatic decoupling group
+# ADEND   last atom of the addiabatic decoupling group
+# SM      scaling factor mass
+# SV      scaling factor potential energy function
+# ST      scaling factor temperature
+# TIR     which temperature bath to scale
+#  1      translational
+#  2      internal-rotatinal
+#  3      both
+# TMF     tau for calculating mean field
+# STAD    printing average to special trajectory # ADGR
+      2
+# ADSTART ADEND SM SV  ST TIR
+  1       1500 10   1  0  1
+  1501    3000  1  10  1  3 
+# TMF STAD
+  0.1 1000
+END
+@endverbatim
+ */
+void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read ADDECOUPLE");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["ADDECOUPLE"];
+
+  if (buffer.size()) {
+    block_read.insert("ADDECOUPLE");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+    int adgr, adstart, eg, tg=0, adend, write;
+    double sm, sv, st, tir, tmf;
+    _lineStream >> adgr;
+
+    param.addecouple.adgr = adgr;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in ADDECOUPLE block",
+              "In_Parameter", io::message::error);
+    }
+    for (int i = 0; i < adgr; ++i) {
+      _lineStream >> adstart >> adend >> sm >> sv >> st >> tir;
+      if (adstart < 0.0 || adend < adstart) {
+        io::messages.add("ADDECOUPLE block: illegal value for adstart or adend",
+                "In_Parameter", io::message::error);
+      }
+      if (tir != 1 && tir != 2 && tir != 3) {
+        io::messages.add("ADDECOUPLE block: illegal value for tir (not 1,2 or 3)",
+                "In_Parameter", io::message::error);
+      }
+      if (st != 1 && param.multibath.couple == false)
+        io::messages.add("ADDECOUPLE block: sT bigger 1, but no temperature scaling",
+              "In_Parameter", io::message::error);
+      //check whether the group is also a temperature group
+      if (param.multibath.couple) {
+        int addc_bath_index;
+        if (param.multibath.multibath.bath_index().size() < adgr && st != 1)
+          io::messages.add("ADDECOUPLE block: sT bigger 1, but temperature group and adiabatic decouling group not equivalent",
+                "In_Parameter", io::message::error);
+        else {
+          int check_group = -1;
+          for (int bath_i = 0; bath_i < param.multibath.multibath.bath_index().size(); ++bath_i) {
+            if (bath_i > 0
+                    && adend - 1 == param.multibath.multibath.bath_index()[bath_i].last_atom
+                    && adstart - 2 == param.multibath.multibath.bath_index()[bath_i - 1].last_atom) {
+              check_group = 1;
+              addc_bath_index = bath_i;
+              tg=bath_i;
+            } else if (bath_i == 0
+                    && adend - 1 == param.multibath.multibath.bath_index()[0].last_atom
+                    && adstart == 1) {
+              check_group = 1;
+              addc_bath_index = bath_i;
+              tg=bath_i;
+            }
+          }
+          if (st == 1)
+            check_group = 1;
+          if (check_group == -1)
+            io::messages.add("ADDECOUPLE block: sT bigger 1, but temperature group and adiabatic decouling group not equivalent",
+                  "In_Parameter", io::message::error);
+            //check whether com and ir are handled "correctly"
+          else {
+            if (param.multibath.multibath.bath_index()[addc_bath_index].com_bath
+                    == param.multibath.multibath.bath_index()[addc_bath_index].ir_bath
+                    && tir != 3)
+              io::messages.add("ADDECOUPLE block: seperate scaling for this temperature group not possible",
+                    "In_Parameter", io::message::error);
+            else if (st != 1) {
+              int com_bath = param.multibath.multibath.bath_index()[addc_bath_index].com_bath;
+              int ir_bath = param.multibath.multibath.bath_index()[addc_bath_index].ir_bath; //scale temperature
+              if (com_bath == ir_bath && tir == 3)
+                param.multibath.multibath[ir_bath].temperature *= st;
+              else if (tir == 1)
+                param.multibath.multibath[com_bath].temperature *= st;
+              else if (tir == 2)
+                param.multibath.multibath[ir_bath].temperature *= st;
+              else if (tir == 3) {
+                param.multibath.multibath[com_bath].temperature *= st;
+                param.multibath.multibath[ir_bath].temperature *= st;
+              }
+              else
+                io::messages.add("ADDECOUPLE block: scaling for this temperature group not possible",
+                      "In_Parameter", io::message::error);
+
+            }
+          }
+        }
+
+      }
+      //check whether group is also an energy group
+      int check_group = -1;
+      if (adstart == 1 && (param.force.energy_group[0] + 1) == adend){
+        check_group = 1;
+        eg=0;
+      }
+      else
+        for (int energy_i = 0; energy_i < param.force.energy_group.size() - 1; ++energy_i) {
+          if (param.force.energy_group[energy_i] + 2 == adstart 
+                  && param.force.energy_group[energy_i + 1] + 1 == adend){
+            check_group = 1;
+            eg=i;
+          }
+        }
+      if (check_group == -1)
+        io::messages.add("ADDECOUPLE block: energy and adiabatic groups are not identical", "In_Parameter", io::message::error);
+      param.addecouple.add_adc(adstart - 1, adend - 1, sm, sv, st, tir, eg, tg);
+    }
+    if (adgr > 0) {
+      _lineStream >> tmf >> write;
+      if (tmf < 0.0 || write < 0.0) {
+        io::messages.add("ADDECOUPLE block: illegal value for TMF or STAD",
+                "In_Parameter", io::message::error);
+      }
+
+      param.addecouple.tmf = tmf;
+      param.addecouple.write = write;
+    }
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in ADDECOUPLE block",
+              "In_Parameter", io::message::error);
+    }
+  }
+}
+
 
 
 // two helper data types to simply unsupported block handling

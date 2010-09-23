@@ -68,6 +68,7 @@ m_every_dat(0),
 m_every_leus(0),
 m_every_dipole(0),
 m_every_current(0),
+m_every_adde(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -134,7 +135,9 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_dat || m_every_leus || m_every_dipole || m_every_current) { // add others if there are any
+  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres 
+          || m_every_dat || m_every_leus || m_every_dipole || m_every_current
+          || m_every_adde) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -179,12 +182,13 @@ void io::Out_Configuration::init(io::Argument & args,
           io::message::error);
 
   if (args.count(argname_trs) > 0)
-    special_trajectory(args[argname_trs], param.polarise.write, param.jvalue.write,
-            param.xrayrest.write, param.distanceres.write, param.print.monitor_dihedrals,
-            param.localelev.write, param.electric.dip_write, param.electric.cur_write);
+    special_trajectory(args[argname_trs], param.polarise.write, 
+            param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
+            param.print.monitor_dihedrals,param.localelev.write, 
+            param.electric.dip_write, param.electric.cur_write, param.addecouple.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
         || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write
-        || param.electric.dip_write || param.electric.cur_write)
+        || param.electric.dip_write || param.electric.cur_write || param.addecouple.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -377,6 +381,15 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
+    if (m_every_adde && sim.steps() && (sim.steps() % m_every_adde) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_adde(sim, topo, conf, m_special_traj);
+      m_special_traj.flush();
+    }
+    
     if (m_every_energy && (((sim.steps() - 1) % m_every_energy) == 0 || minimum_found)) {
       if (sim.steps()) {
         _print_old_timestep(sim, m_energy_traj);
@@ -653,7 +666,8 @@ void io::Out_Configuration
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
                      int every_xray, int every_disres, int every_dat, 
-                     int every_leus, int every_dipole, int every_current) {
+                     int every_leus, int every_dipole, int every_current,
+                     int every_adde) {
 
   m_special_traj.open(name.c_str());
 
@@ -665,6 +679,7 @@ void io::Out_Configuration
   m_every_leus = every_leus;
   m_every_dipole = every_dipole;
   m_every_current = every_current;
+  m_every_adde = every_adde;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2910,4 +2925,39 @@ _print_current(simulation::Simulation const & sim,
     cur_current(0.0);
   }
   os << "END\n";
+}
+
+void io::Out_Configuration::
+_print_adde(simulation::Simulation const & sim,
+        topology::Topology const &topo,
+        configuration::Configuration const & conf, std::ostream & os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  int not_adde;
+  double vhh = conf.special().adde.vhh;
+
+  for (int i = 0; i < sim.param().multibath.multibath.size(); ++i) {
+    if (i != sim.param().addecouple.adc_index()[0].tg)
+      not_adde = i;
+  }
+  double betal = 1 /
+          (math::k_Boltzmann * sim.param().multibath.multibath[not_adde].temperature);
+  double betah = sim.param().addecouple.adc_index()[0].sv /
+          (math::k_Boltzmann *
+          sim.param().multibath.multibath[sim.param().addecouple.adc_index()[0].tg].temperature);
+  double lnevhl = conf.special().adde.evhl;
+  //if(conf.special().adde.evhl==0.0)
+  //  lnevhl = 0;
+  //else
+  //  lnevhl = std::log(conf.special().adde.evhl)+betal*conf.special().adde.vhl0;
+
+  //double scale = math::four_pi_eps_i;
+
+  os << "ADDEREWEIGHTING\n";
+  os << "#VHH LNEVHL BETAL BETAH  \n";
+
+  os << std::setw(15) << vhh << " " << std::setw(15) << lnevhl << " " 
+          << std::setw(15) << betal << std::setw(15) << betah << "\n";
+  os << "END\n";
+    
 }

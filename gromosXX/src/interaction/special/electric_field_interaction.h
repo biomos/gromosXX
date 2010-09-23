@@ -36,7 +36,7 @@ namespace interaction
     {
       os << "Electric field interaction\n";
       return 0;
-    };
+    }
     /**
      * calculate the interactions.
      */

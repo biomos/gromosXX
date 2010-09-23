@@ -286,8 +286,7 @@ namespace configuration {
          * the time-averaged R-value
          */
         double R_avg, R_free_avg;
-      } /** xray informaton */ xray;
-
+      } /** xray information */ xray;
       /**
        * @struct xray_bfoc_struct
        * the atomic parameters for X-ray
@@ -311,6 +310,25 @@ namespace configuration {
        * the atomic parameters
        */
       std::vector<xray_bfoc_struct> xray_bfoc;
+      /**
+       * @struct adde_struct
+       * struct that holds the average and current potential energies
+       * for reweighting when using adiabatic decoupling
+       */
+      struct adde_struct {
+        /**
+         * potential energy between heavy particles
+         */
+        double vhh;
+        /**
+         * mean potential of light paricles on heay particle
+         */
+        double evhl;
+         /**
+         *potential of light paricles on heay particle at time 0
+         */
+        double vhl0;
+      } /** adde information */ adde;
 
       /**
        * @struct disres_struct

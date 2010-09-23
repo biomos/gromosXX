@@ -21,6 +21,7 @@
 #include <algorithm/constraints/position_constraints.h>
 #include <algorithm/integration/energy_calculation.h>
 #include <algorithm/integration/leap_frog.h>
+#include <algorithm/integration/scaled_leap_frog.h>
 #include <algorithm/integration/monte_carlo.h>
 #include <algorithm/integration/stochastic.h>
 #include <algorithm/integration/lattice_shift.h>
@@ -127,7 +128,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     }
     // MD ?
     else if(sim.param().integrate.method == simulation::integrate_leap_frog){
-      md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+      if(sim.param().addecouple.adgr>0)
+       md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+      else
+       md_seq.push_back(new algorithm::Scaled_Leap_Frog_Velocity);
     }
     // ??
     else{
@@ -162,7 +166,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       md_seq.push_back(new algorithm::Stochastic_Dynamics_Pos1);
     }
     else if (sim.param().integrate.method == simulation::integrate_leap_frog){
-      md_seq.push_back(new algorithm::Leap_Frog_Position);
+       md_seq.push_back(new algorithm::Leap_Frog_Position);
     }
     else{
       if (!quiet)

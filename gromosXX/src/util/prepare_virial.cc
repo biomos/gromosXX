@@ -33,7 +33,8 @@ static void _centre_of_mass(topology::Atom_Iterator start,
 			    configuration::Configuration const & conf,
 			    math::Vec &com_pos, 
 			    math::Matrix &com_e_kin,
-			    math::Periodicity<b> const & periodicity)
+			    math::Periodicity<b> const & periodicity,
+                               simulation::Simulation const & sim)
 {
 
   com_pos = 0.0;
@@ -45,21 +46,28 @@ static void _centre_of_mass(topology::Atom_Iterator start,
   math::Vec v(0.0);
 
   prev = conf.current().pos(*start);
-
+  //scale the velocity for the adiabatic decoupling
+  double scale_vel=1;
+  int addc_index;
   for( ; start != end; ++start){
 
     assert(unsigned(topo.mass().size()) > *start &&
            unsigned(conf.current().pos.size()) > *start);
-
+    addc_index = sim.param().addecouple.check_index_adc(*start);
+    scale_vel=1;
+    if(addc_index!=-1)
+      scale_vel=sqrt(1/
+              sim.param().addecouple.adc_index()[addc_index].st);
+    
     m = topo.mass()(*start);
     tot_mass += m;
     periodicity.nearest_image(conf.current().pos(*start), prev, p);
     com_pos += m * (p + prev);
-    v += m * conf.current().vel(*start);
+    v += m * conf.current().vel(*start)*scale_vel;
     prev += p;
   }
 
-  com_pos /= tot_mass;
+  com_pos /= tot_mass;  
 
   for(int i=0; i<3; ++i)
     for(int j=0; j<3; ++j)
@@ -93,7 +101,7 @@ static void _prepare_virial(topology::Topology const & topo,
 		      pg_it.end(),
 		      topo, conf,
 		      com_pos, com_ekin,
-		      periodicity);
+		      periodicity, sim);
 
       conf.current().kinetic_energy_tensor += com_ekin;
 
@@ -109,14 +117,21 @@ static void _prepare_virial(topology::Topology const & topo,
   else if (sim.param().pcouple.virial == math::atomic_virial){
 
     conf.current().kinetic_energy_tensor = 0.0;
-
+    //scale the virial for adiabatic decoupling
+    double scale_vel;
+    int addc_index;
     for(unsigned int i=0; i < topo.num_atoms(); ++i){
+      addc_index = sim.param().addecouple.check_index_adc(i);
+      scale_vel=1;
+      if(addc_index!=-1)
+       scale_vel=1/sim.param().addecouple.adc_index()[addc_index].st;
+      
       for(int a=0; a<3; ++a){
 	for(int bb=0; bb<3; ++bb){
 	  conf.current().kinetic_energy_tensor(a, bb) +=
 	    0.5 * topo.mass()(i) *
 	    conf.current().vel(i)(a) * 
-	    conf.current().vel(i)(bb);
+	    conf.current().vel(i)(bb) * scale_vel;
 	}
       }
     }
@@ -175,7 +190,7 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
 		      pg_it.end(),
 		      topo, conf,
 		      com_pos, com_ekin,
-		      periodicity);
+		      periodicity, sim);
 
       topology::Atom_Iterator a_it = pg_it.begin(),
 	a_to = pg_it.end();
@@ -234,7 +249,8 @@ template<math::boundary_enum b>
 void _centre_of_mass_loop(topology::Topology const & topo,
 			  configuration::Configuration & conf,
 			  std::vector<math::Vec> & com_pos,
-			  std::vector<math::Matrix> & com_ekin)
+			  std::vector<math::Matrix> & com_ekin, 
+                             simulation::Simulation const & sim)
 {
   math::Periodicity<b> periodicity(conf.current().box);
   
@@ -250,14 +266,15 @@ void _centre_of_mass_loop(topology::Topology const & topo,
     _centre_of_mass(pg_it.begin(), pg_it.end(),
 		    topo, conf,
 		    com_pos[i], com_ekin[i],
-		    periodicity);
+		    periodicity, sim);
   }
 }
 
 void util::centre_of_mass(topology::Topology const & topo,
 			  configuration::Configuration & conf,
 			  std::vector<math::Vec> & com_pos,
-			  std::vector<math::Matrix> & com_ekin)
+			  std::vector<math::Matrix> & com_ekin, 
+                             simulation::Simulation const & sim)
 {
-  SPLIT_BOUNDARY(_centre_of_mass_loop, topo, conf, com_pos, com_ekin);
+  SPLIT_BOUNDARY(_centre_of_mass_loop, topo, conf, com_pos, com_ekin, sim);
 }
