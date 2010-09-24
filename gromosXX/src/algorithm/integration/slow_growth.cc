@@ -12,8 +12,6 @@
 
 #include "slow_growth.h"
 
-#include <stdheader.h>
-
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm

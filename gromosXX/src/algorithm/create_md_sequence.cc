@@ -25,6 +25,7 @@
 #include <algorithm/integration/monte_carlo.h>
 #include <algorithm/integration/stochastic.h>
 #include <algorithm/integration/lattice_shift.h>
+#include <algorithm/integration/multigradient.h>
 
 #include <io/blockinput.h>
 #include <io/instream.h>
@@ -82,6 +83,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   //==================================================
   // construct the md algorithm
   //==================================================
+
+  if (sim.param().multigradient.multigradient) {
+    md_seq.push_back(new algorithm::Multi_Gradient());
+  }
 
   // center of mass motion printing / removal
   if (sim.param().centreofmass.skip_step ||

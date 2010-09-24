@@ -93,6 +93,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_ELECTRIC(param);
   read_SASA(param);
   read_ADDECOUPLE(param); // needs to be called after MULTIBATH and FORCE
+  read_MULTIGRADIENT(param);
 
   read_known_unsupported_blocks();
 
@@ -4442,7 +4443,6 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
     } // for umbrellas
   } // if block
 }
-
 /**
  * @section electric ELECTRIC block
  * @verbatim
@@ -4493,9 +4493,9 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
     int field, dipole, current, dipgrp, ncurgrp;
 
     _lineStream >> field >> dipole >> current >> param.electric.Ef_x
-                >> param.electric.Ef_y >> param.electric.Ef_z
-                >> dipgrp >> param.electric.dip_write >> param.electric.cur_write
-                >> ncurgrp;
+            >> param.electric.Ef_y >> param.electric.Ef_z
+            >> dipgrp >> param.electric.dip_write >> param.electric.cur_write
+            >> ncurgrp;
 
     if (_lineStream.fail()) {
       io::messages.add("bad line in ELECTRIC block",
@@ -4503,7 +4503,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
       return;
     }
 
-    
+
 
     switch (field) {
       case 0:
@@ -4516,10 +4516,10 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
       {
         param.electric.electric = simulation::electric_on;
         if (param.electric.Ef_x == param.electric.Ef_y &&
-                param.electric.Ef_y == param.electric.Ef_z &&
-                param.electric.Ef_z == 0.0)
+            param.electric.Ef_y == param.electric.Ef_z &&
+            param.electric.Ef_z == 0.0)
           io::messages.add("Electric field enabled, but all components are zero",
-              "In_Parameter", io::message::error);
+                "In_Parameter", io::message::error);
         break;
       }
       default:
@@ -4530,9 +4530,9 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         io::messages.add("ELECTRIC block: Bad value for FIELD (0,1)",
                 "In_Parameter", io::message::error);
     }
-    
 
-    switch (dipole){
+
+    switch (dipole) {
       case 0:
       {
         param.electric.dipole = false;
@@ -4544,7 +4544,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         param.electric.dipole = true;
         if (dipgrp < 0 || dipgrp > 2)
           io::messages.add("ELECTRIC block: DIPGRP should be within 0..2",
-              "In_Parameter", io::message::error);
+                "In_Parameter", io::message::error);
         break;
       }
       default:
@@ -4581,7 +4581,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
       }
     }
 
-    switch (current){
+    switch (current) {
       case 0:
       {
         param.electric.current = false;
@@ -4593,7 +4593,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         param.electric.current = true;
         if (ncurgrp < 0)
           io::messages.add("ELECTRIC block: CURGRP should be >0",
-              "In_Parameter", io::message::error);
+                "In_Parameter", io::message::error);
         param.electric.cur_groups = ncurgrp;
         break;
       }
@@ -4607,9 +4607,9 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
       }
     }
 
-    if (param.electric.current != false){
-    // TO READ THE ELECTRIC GROUPS
-        if (_lineStream.fail() || param.electric.cur_groups == (unsigned int) 0)
+    if (param.electric.current != false) {
+      // TO READ THE ELECTRIC GROUPS
+      if (_lineStream.fail() || param.electric.cur_groups == (unsigned int) 0)
         io::messages.add("CURRENT enabled, but number of CURRENT (NCURGRP) groups is zero",
               "In_Parameter", io::message::error);
       else {
@@ -4618,17 +4618,157 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
           _lineStream >> temp;
           if (_lineStream.fail()) {
             io::messages.add("CURRENT enabled, but CURGRP[i] < or > NCURGRP",
-              "In_Parameter", io::message::error);
+                    "In_Parameter", io::message::error);
             break;
           }
           param.electric.current_group.push_back(temp);
         }
       }
     }
+  } // if block
+}
 
+/**
+ * @section multigradient MULTIGRADIENT block
+ * @verbatim
+MULTIGRADIENT
+# NTMGRE 0,1 enable multiple gradients
+#    0: disable gradients
+#    1: enable gradients
+# NTMGRP 0..3 print of curves
+#    0: don't print
+#    1: plot the Bezier curves
+#    2: print that values of the Bezier curves
+#    3: plot and print the Bezier curves
+# NTMGRN >= 0 number of gradients
+# MGRVAR: vairable name to affect
+# MGRNCP >= 2: number of control points
+# MGRCPT >= 0: time of the control point
+# MGRCPV: value of the control point
+#
+# NTMGRE NTMGRP
+       1      1
+# NTMGRN
+       2
+# MGRVAR MGRNCP
+  TEMP[0]     2
+# MGRCPT MGRCPV
+  0.0    60.0
+  80.0   300.0
+# MGRVAR MGRNCP
+  CPOR        4
+# MGRCPT MGRCPV
+  0.0    2.5E5
+  0.0    2.5E1
+ 20.0    0.0
+ 80.0    0.0
+END
+@endverbatim
+ */
+void io::In_Parameter::read_MULTIGRADIENT(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read MULTIGRADIENT");
 
-     
-    
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["MULTIGRADIENT"];
+
+  if (buffer.size()) {
+    block_read.insert("MULTIGRADIENT");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    int enable, plot, num;
+    _lineStream >> enable >> plot >> num;
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in MULTIGRADIENT block.",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    switch(enable) {
+      case 0:
+        param.multigradient.multigradient = false;
+        break;
+      case 1:
+        param.multigradient.multigradient = true;
+        break;
+      default:
+        param.multigradient.multigradient = false;
+        io::messages.add("MULTIGRADIENT block: NTMGRE must be 0 or 1.",
+                    "In_Parameter", io::message::error);
+        return;
+    }
+
+    switch(plot) {
+      case 0:
+        param.multigradient.print_graph = false;
+        param.multigradient.print_curve = false;
+        break;
+      case 1:
+        param.multigradient.print_graph = true;
+        param.multigradient.print_curve = false;
+        break;
+      case 2:
+        param.multigradient.print_graph = false;
+        param.multigradient.print_curve = true;
+        break;
+      case 3:
+        param.multigradient.print_graph = true;
+        param.multigradient.print_curve = true;
+        break;
+      default:
+        param.multigradient.print_graph = false;
+        param.multigradient.print_curve = false;
+        io::messages.add("MULTIGRADIENT block: NTMGRP must be 0..3.",
+                    "In_Parameter", io::message::error);
+        return;
+    }
+
+    if (num < 0) {
+      io::messages.add("MULTIGRADIENT block: NTMGRN must be >= 0",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    if (num == 0 && param.multigradient.multigradient) {
+      io::messages.add("MULTIGRADIENT block: NTMGRN must be > 0 for NTMGRE=1",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    // read the gradient
+    for(int i = 0; i < num; ++i) {
+      int num_p;
+      std::string var;
+      _lineStream >> var >> num_p;
+      if (_lineStream.fail()) {
+        io::messages.add("Bad line in MULTIGRADIENT block.",
+                "In_Parameter", io::message::error);
+        return;
+      }
+
+      if (num_p < 2) {
+        io::messages.add("MULTIGRADIENT block: MGRNCP must be >= 2.",
+                    "In_Parameter", io::message::error);
+        return;
+      }
+      std::vector<std::pair<double, double> > points;
+      for(int p = 0; p < num_p; ++p) {
+        double t, v;
+        _lineStream >> t >> v;
+        if (_lineStream.fail()) {
+          io::messages.add("Bad line in MULTIGRADIENT block.",
+                  "In_Parameter", io::message::error);
+          return;
+        }
+        points.push_back(std::pair<double, double>(t,v));
+      }
+
+      param.multigradient.variable.push_back(var);
+      param.multigradient.control_points.push_back(points);
+    } // for gradients
   } // if block
 }
 

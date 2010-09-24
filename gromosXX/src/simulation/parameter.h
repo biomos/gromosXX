@@ -2497,20 +2497,63 @@ namespace simulation
       unsigned int cur_write;
 
     } electric;
-   /**      * @struct addecouple_struct      * Constructor:      * Default values:      * - adgr = 0
-     */     struct addecouple_struct {       /**
+
+    struct multigradient_struct {
+      /**
+       * @struct multigradient_struct
+       * constructor
+       * default values: disable multigradient
+       */
+      multigradient_struct() : multigradient(false),
+      print_graph(true), print_curve(false)
+      {
+      }
+      /**
+       * enable the gradients
+       */
+      bool multigradient;
+      /**
+       * print the graphs to the output file
+       */
+      bool print_graph;
+      /**
+       * print the curve data to the output file
+       */
+      bool print_curve;
+      /**
+       * the variables to affect
+       */
+      std::vector<std::string> variable;
+      /**
+       * the control points
+       */
+      std::vector<std::vector<std::pair<double, double> > > control_points;
+    } multigradient;
+
+    /**
+     * @struct addecouple_struct
+     * Constructor:
+     * Default values:
+     * - adgr = 0
+     */
+    struct addecouple_struct {
+      /**
        * constructor: no addiabatic decoupling
        */
-      addecouple_struct() : adgr(0), tmf(0), write(0){}
+      addecouple_struct() : adgr(0), tmf(0), write(0) {
+      }
       /**
        * number of addiabatic decoupling groups
        */
       int adgr;
+
       struct adc_struct {
-        adc_struct(int adstart, int adend, double sm,double sv, 
-                double st, int tir, int eg , int tg)
-        : adstart(adstart), adend(adend), sm(sm),sv(sv), st(st), 
-                tir(tir), eg(eg), tg(tg) {}
+
+        adc_struct(int adstart, int adend, double sm, double sv,
+                double st, int tir, int eg, int tg)
+        : adstart(adstart), adend(adend), sm(sm), sv(sv), st(st),
+        tir(tir), eg(eg), tg(tg) {
+        }
         /**
          * first atom of addiabatic decoupling groups
          */
@@ -2521,13 +2564,13 @@ namespace simulation
         int adend;
         /**          
          * scaling factor mass          
-         */         
-        double sm;         
+         */
+        double sm;
         /**          
          * scaling factor potential energy function          
-         */         
-        double sv; 
-         /**
+         */
+        double sv;
+        /**
          * scaling factor temperature
          */
         double st;
@@ -2537,50 +2580,57 @@ namespace simulation
         int tir;
         /**          
          * energy group of decoupled group     
-         */         
+         */
         double eg;
-         /**          
+        /**
          * temperature group of decoupled group     
-         */         
+         */
         double tg;
       };
       std::vector<adc_struct> m_adc_index;
 
-      void add_adc(adc_struct adc){
+      void add_adc(adc_struct adc) {
         m_adc_index.push_back(adc);
       }
 
-      void add_adc(int adstart, int adend, double sm,double sv, 
-              double st, int tir, int eg, int tg){
+      void add_adc(int adstart, int adend, double sm, double sv,
+              double st, int tir, int eg, int tg) {
         m_adc_index.push_back(adc_struct(adstart, adend, sm, sv, st, tir, eg, tg));
       }
 
-      int const check_index_adc(int atom_number)const{
-        for(unsigned int i=0; i<m_adc_index.size();i++){
-          if (atom_number>=m_adc_index[i].adstart && atom_number<=m_adc_index[i].adend)
+      int const check_index_adc(int atom_number)const {
+        for (unsigned int i = 0; i < m_adc_index.size(); i++) {
+          if (atom_number >= m_adc_index[i].adstart && atom_number <= m_adc_index[i].adend)
             return i;
         }
         return -1;
       }
-      int check_index_adc(int atom_number){
-        for(unsigned int i=0; i<m_adc_index.size();i++){
-          if (atom_number>=m_adc_index[i].adstart && atom_number<=m_adc_index[i].adend)
-            return i;
-        }
-        return -1;
-      }
-      std::vector<adc_struct> & adc_index(){return m_adc_index;}
-      std::vector<adc_struct> const & adc_index()const{return m_adc_index;}
-        /**
-         * tau mean field
-         */
-        double tmf;
-        /**
-         * printing of the special trajectory
-         */
-        int write;
-    } /** addecouple */ addecouple;
 
+
+      int check_index_adc(int atom_number) {
+        for (unsigned int i = 0; i < m_adc_index.size(); i++) {
+          if (atom_number >= m_adc_index[i].adstart && atom_number <= m_adc_index[i].adend)
+            return i;
+        }
+        return -1;
+      }
+
+      std::vector<adc_struct> & adc_index() {
+        return m_adc_index;
+      }
+
+      std::vector<adc_struct> const & adc_index()const {
+        return m_adc_index;
+      }
+      /**
+       * tau mean field
+       */
+      double tmf;
+      /**
+       * printing of the special trajectory
+       */
+      int write;
+    } /** addecouple */ addecouple;
   };
 }
 

@@ -52,7 +52,11 @@
  * - @ref  LAMBDAS
  * - @ref  localelev
  * - @ref  electric
+<<<<<<< .mine
+ * - @ref  multigradient
+=======
  * - @ref  addecouple
+>>>>>>> .r1424
  */
 
 
@@ -304,6 +308,10 @@ namespace io {
      * read SASA block.
      */
     void read_SASA(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read MULTIGRADIENT block.
+     */
+    void read_MULTIGRADIENT(simulation::Parameter &param, std::ostream & os = std::cout);
      /**
      * read ADDECOUPLE block.
      */
