@@ -455,27 +455,6 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 
   conf.special().xray_rest.resize(topo.xray_restraints().size() + topo.xray_rfree().size());
 
-  // Scale Fobs (needed for constant force-constant) -> scaled to sfscale
-  const double sfscale = 100.0;
-  double maxsf = 0.0;
-  // Get max structure factor
-  for (unsigned int i = 0; i < topo.xray_restraints().size(); i++) {
-    if (maxsf < topo.xray_restraints()[i].sf)
-      maxsf = topo.xray_restraints()[i].sf;
-  }
-  for (unsigned int i = 0; i < topo.xray_rfree().size(); i++) {
-    if (maxsf < topo.xray_rfree()[i].sf)
-      maxsf = topo.xray_rfree()[i].sf;
-  }
-  const double scalefactor = maxsf / sfscale;
-  // scale
-  for (unsigned int i = 0; i < topo.xray_restraints().size(); i++) {
-    topo.xray_restraints()[i].sf /= scalefactor;
-  }
-  for (unsigned int i = 0; i < topo.xray_rfree().size(); i++) {
-    topo.xray_rfree()[i].sf /= scalefactor;
-  }
-
   if (sim.param().xrayrest.local_elevation) {
     std::vector<topology::xray_umbrella_weight_struct>::iterator it =
             topo.xray_umbrella_weights().begin(), to =
@@ -551,7 +530,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     os << "Num experimental reflections: " << topo.xray_restraints().size() << std::endl;
     os << "Num R-free reflections      : " << topo.xray_rfree().size() << std::endl;
     os << "Num expected reflections    : " << hkls.num_reflections() << std::endl;
-    os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl << std::endl;
+    os << "Writing electron density    : " << sim.param().xrayrest.writexmap << std::endl << std::endl;
     if (sim.param().xrayrest.local_elevation) {
       os << "The following local elevation umbrellas are weighted by the electron density:" << std::endl;
       std::vector<topology::xray_umbrella_weight_struct>::const_iterator it =
