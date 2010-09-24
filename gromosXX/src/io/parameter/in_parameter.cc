@@ -4670,7 +4670,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
     block_read.insert("ADDECOUPLE");
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-    int adgr, adstart, eg, tg=0, adend, write;
+    unsigned int adgr, adstart, eg, tg=0, adend, write;
     double sm, sv, st, tir, tmf;
     _lineStream >> adgr;
 
@@ -4680,7 +4680,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
       io::messages.add("bad line in ADDECOUPLE block",
               "In_Parameter", io::message::error);
     }
-    for (int i = 0; i < adgr; ++i) {
+    for (unsigned int i = 0; i < adgr; ++i) {
       _lineStream >> adstart >> adend >> sm >> sv >> st >> tir;
       if (adstart < 0.0 || adend < adstart) {
         io::messages.add("ADDECOUPLE block: illegal value for adstart or adend",
@@ -4701,7 +4701,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
                 "In_Parameter", io::message::error);
         else {
           int check_group = -1;
-          for (int bath_i = 0; bath_i < param.multibath.multibath.bath_index().size(); ++bath_i) {
+          for (unsigned int bath_i = 0; bath_i < param.multibath.multibath.bath_index().size(); ++bath_i) {
             if (bath_i > 0
                     && adend - 1 == param.multibath.multibath.bath_index()[bath_i].last_atom
                     && adstart - 2 == param.multibath.multibath.bath_index()[bath_i - 1].last_atom) {
@@ -4757,7 +4757,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
         eg=0;
       }
       else
-        for (int energy_i = 0; energy_i < param.force.energy_group.size() - 1; ++energy_i) {
+        for (unsigned int energy_i = 0; energy_i < param.force.energy_group.size() - 1; ++energy_i) {
           if (param.force.energy_group[energy_i] + 2 == adstart 
                   && param.force.energy_group[energy_i + 1] + 1 == adend){
             check_group = 1;

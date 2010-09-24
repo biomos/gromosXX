@@ -41,11 +41,11 @@ int interaction::Adde_Reweighting::calculate_interactions
   int not_adde;
   conf.special().adde.vhh=conf.current().energies.lj_energy[eg][eg]+
           conf.current().energies.crf_energy[eg][eg];
-  for(int i=0; i<sim.param().multibath.multibath.size(); ++i){
+  for(unsigned int i=0; i<sim.param().multibath.multibath.size(); ++i){
     if(i!=sim.param().addecouple.adc_index()[0].tg)
       not_adde=i;
   }
-  for(int i=0; i<topo.energy_groups().size(); ++i){
+  for(unsigned int i=0; i<topo.energy_groups().size(); ++i){
     if(i==eg)
       continue;
     vhl+= conf.current().energies.lj_energy[i][eg]+
@@ -55,8 +55,8 @@ int interaction::Adde_Reweighting::calculate_interactions
   }
   if (sim.steps()==0)
     conf.special().adde.evhl=vhl;
-  double betal=1/
-          (math::k_Boltzmann*sim.param().multibath.multibath[not_adde].temperature);
+  //double betal=1/
+  //        (math::k_Boltzmann*sim.param().multibath.multibath[not_adde].temperature);
  
   evhl=(1-std::exp(-sim.time_step_size()/sim.param().addecouple.tmf))*
           vhl+

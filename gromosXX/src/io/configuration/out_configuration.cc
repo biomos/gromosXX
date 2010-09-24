@@ -2936,7 +2936,7 @@ _print_adde(simulation::Simulation const & sim,
   int not_adde;
   double vhh = conf.special().adde.vhh;
 
-  for (int i = 0; i < sim.param().multibath.multibath.size(); ++i) {
+  for (unsigned int i = 0; i < sim.param().multibath.multibath.size(); ++i) {
     if (i != sim.param().addecouple.adc_index()[0].tg)
       not_adde = i;
   }
