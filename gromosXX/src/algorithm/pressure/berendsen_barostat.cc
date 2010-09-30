@@ -118,29 +118,62 @@ int algorithm::Berendsen_Barostat
           else
             delta = 0;
           mu_aux = delta - sim.param().pcouple.compressibility
-                  * sim.time_step_size() / sim.param().pcouple.tau
+                  * sim.time_step_size() / (3*sim.param().pcouple.tau)
                   * (sim.param().pcouple.pres0(i, j) -
                   pressure(i, j));
-          mu(i, j) = math::sign(mu_aux) * pow(fabs(mu_aux),
-                  1.0 / 3.0);
+          mu(i, j) = mu_aux;
+     //     mu(i, j) = math::sign(mu_aux) * pow(fabs(mu_aux),
+      //            1.0 / 3.0);
 
         }
       }
 
       // scale the box
       // decompose in rotation and boxlength/boxangle scaling
-      math::Matrix Rmu(math::rmat(mu));
+    /*  math::Matrix Rmu(math::rmat(mu));
       math::Matrix mu_new = math::product(math::transpose(Rmu), mu);
       DEBUG(10, "mu: \n" << math::m2s(mu));
       DEBUG(10, "Rmu: \n" << math::m2s(Rmu));
-      DEBUG(10, "mu_new: \n" << math::m2s(mu_new));
+      DEBUG(10, "mu_new: \n" << math::m2s(mu_new));*/
+      
+      
+      //Bruno & Pitschna: symmetrise as in GROMACS (29 Sep, 2010)
+      for (int i = 0; i < 3; ++i) 
+        for (int j = 0; j < 3; ++j) 
+          if (i<j)
+            mu(i, j) = mu(i, j) + mu(j, i);
+        
+      
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+          if (i>j)
+            mu(i, j) = 0;
+          //std::cout << "  " << mu(i, j) << "  ";
+          
+        }
+        //std::cout << "\n";
+      }
 
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+          //std::cout << "  " << box(i, j) << "  ";
+        }
+        //std::cout << "\n";
+      }
+
+
+        
+      
+      //Scale the box
       math::Box m(0.0);
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
           for (int k = 0; k < 3; ++k)
-            m(j)(i) += mu_new(i, k) * box(j)(k);
+            m(i)(j) += mu(k, i) * box(k)(j);
+            //m(j)(i) += mu(i, k) * box(j)(k);
       box = m;
+
+   
       //we want a triangular matrix
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
@@ -148,13 +181,15 @@ int algorithm::Berendsen_Barostat
             box(j)(i) = 0;
 
       DEBUG(10, "new box: \n" << math::m2s(math::Matrix(box)));
-      // scale the positions
+      //scale the positions
       for (unsigned int i = 0; i < pos.size(); ++i) {
-        pos(i) = math::product(mu_new, pos(i));
+        pos(i) = math::product(mu, pos(i));
         if (scale_ref) {
-          ref(i) = math::product(mu_new, ref(i));
+          ref(i) = math::product(mu, ref(i));
         }
       }
+
+
       // new Euleur angles
       /* neglect the rotational contribution for now... (gives weird results at the moment :o)...)
        * DEBUG(10, "old Euler angles: " << conf.current().phi
