@@ -984,7 +984,6 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
            // storage.virial_tensor(b,a ) += (term+f_pol[0]*r(a))*r(b);
             storage.virial_tensor(b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
         }
-    std::cout << "just a bit of debugging 2\n";
         break;
     }
     case simulation::lj_ls_func : {
@@ -1173,7 +1172,6 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
           // storage.virial_tensor(b,a ) += (term+f_pol[0]*r(a))*r(b);
            storage.virial_tensor(b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
         }
-   std::cout << "just a bit of debugging 3\n";
         break;
     }
     case simulation::lj_ls_func : {
