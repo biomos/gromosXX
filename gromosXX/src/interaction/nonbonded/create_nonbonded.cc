@@ -206,6 +206,8 @@ int interaction::create_g96_nonbonded
       sim.param().force.interaction_function ==
       simulation::pol_lj_crf_func ||
       sim.param().force.interaction_function ==
+      simulation::pol_off_lj_crf_func ||
+      sim.param().force.interaction_function ==
       simulation::lj_ls_func    )
     it.read_lj_parameter(ni->parameter().lj_parameter());
   // and coarse-grained parameter
@@ -218,7 +220,8 @@ int interaction::create_g96_nonbonded
   if ((!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
           simulation::lj_crf_func) ||
           (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
-          simulation::pol_lj_crf_func)) {
+          simulation::pol_lj_crf_func ) || (!sim.param().force.nonbonded_vdw
+          && sim.param().force.interaction_function == simulation::pol_off_lj_crf_func )) {
     unsigned int dum = topo.iac(0); // has been previously set to DUM.
 
     bool error = false;
@@ -252,7 +255,8 @@ int interaction::create_g96_nonbonded
     
     if (sim.param().force.interaction_function == simulation::lj_crf_func ||
         sim.param().force.interaction_function == simulation::cgrain_func || 
-        sim.param().force.interaction_function == simulation::pol_lj_crf_func) {
+        sim.param().force.interaction_function == simulation::pol_lj_crf_func ||
+        sim.param().force.interaction_function == simulation::pol_off_lj_crf_func) {
       os << "\tREACTION FIELD PARAMETERS\n"
               << "\treactionfield cutoff   : "
               << sim.param().nonbonded.rf_cutoff << "\n"

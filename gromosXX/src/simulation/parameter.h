@@ -206,6 +206,7 @@ namespace simulation
     /** lj_crf_function */ lj_crf_func,
     /** lj_ls_function */ lj_ls_func,
     /** pol_lj_crf_function */ pol_lj_crf_func,
+    /** pol_off_lj_crf_function */ pol_off_lj_crf_func,
     /** cgrain_function */ cgrain_func
   };
   
@@ -2240,13 +2241,13 @@ namespace simulation
        * - damp, no damping of polarisability
        * - output cospositions every 'write'th block to special trajectory
        */
-      polarise_struct() : cos(false), minfield(2.5), efield_site(ef_atom),
+      polarise_struct() : cos(0), minfield(2.5), efield_site(ef_atom),
                           damp(false), write(0)
       {}
       /**
        * use charge-on-spring polarisation
        */
-      bool cos;
+      int cos;
       /** 
        * minfield
        */

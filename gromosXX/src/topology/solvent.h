@@ -26,7 +26,8 @@ namespace topology
       atom_struct(std::string n, int r, int i, double m, double c)
 	: name(n), residue_nr(r), iac(i), mass(m), charge(c),
           polarisability(0.0), coscharge(0.0),
-          damping_level(0.0), damping_power(0.0) {};
+          damping_level(0.0), damping_power(0.0),
+          gamma(0.0), gamma_j(1), gamma_k(1) {};
       
       std::string name;
       int residue_nr;
@@ -37,6 +38,9 @@ namespace topology
       double coscharge;
       double damping_level;
       double damping_power;
+      double gamma;
+      int gamma_j;
+      int gamma_k;
     };
     
     /**

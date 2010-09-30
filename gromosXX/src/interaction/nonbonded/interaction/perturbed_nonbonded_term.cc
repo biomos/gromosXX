@@ -17,6 +17,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   switch(sim.param().force.interaction_function){
   case simulation::lj_crf_func :
   case simulation::pol_lj_crf_func :
+  case simulation::pol_off_lj_crf_func :
     // Force
     m_cut3i = 
       1.0 / ( sim.param().nonbonded.rf_cutoff
@@ -498,7 +499,153 @@ inline void interaction::Perturbed_Nonbonded_Term
   
 }
 inline void interaction::Perturbed_Nonbonded_Term
-::pol_lj_crf_soft_interaction(math::Vec const &r, math::Vec const &rp1, 
+::pol_lj_crf_soft_interaction(math::Vec const &r, math::Vec const &rp1,
+                          math::Vec const &rp2, math::Vec const &rpp,
+                          double const A_c6, double const A_c12,
+                          double const B_c6, double const B_c12,
+                          double const A_qi, double const B_qi,
+                          double const A_qj, double const B_qj,
+                          double const cqi, double const cqj,
+                          double const alpha_lj, double const alpha_crf,
+                          double force1[],
+                          double &force6, double &force12,
+                          double &e_lj, double &e_crf,
+                          double &de_lj, double & de_crf)
+{
+  double A_c126, B_c126;
+
+  if (A_c6 != 0) A_c126=A_c12/A_c6;
+  else A_c126 = 0.0;
+  if (B_c6 != 0) B_c126=B_c12/B_c6;
+  else B_c126 = 0.0;
+
+  const double A_qeps = (A_qi-cqi) * (A_qj-cqj) * math::four_pi_eps_i;
+  const double A_qepsp1 = (A_qi-cqi) * cqj * math::four_pi_eps_i;
+  const double A_qepsp2 = (A_qj-cqj) * cqi * math::four_pi_eps_i;
+  const double A_qepspp = cqi * cqj * math::four_pi_eps_i;
+
+  const double B_qeps = (B_qi-cqi) * (B_qj-cqj) * math::four_pi_eps_i;
+  const double B_qepsp1 = (B_qi-cqi) * cqj * math::four_pi_eps_i;
+  const double B_qepsp2 = (B_qj-cqj) * cqi * math::four_pi_eps_i;
+  const double B_qepspp = cqi * cqj * math::four_pi_eps_i;
+
+  const double dist2 = abs2(r);
+  const double dist2p1 = abs2(rp1);
+  const double dist2p2 = abs2(rp2);
+  const double dist2pp = abs2(rpp);
+  assert(dist2 != 0);
+
+  const double A_al2 = alpha_crf*m_B_crfs_lambda2;
+  const double B_al2 = alpha_crf*m_A_crfs_lambda2;
+  const double A_dist2soft = dist2 + A_al2;
+  const double A_dist2p1soft = dist2p1 + A_al2;
+  const double A_dist2p2soft = dist2p2 + A_al2;
+  const double A_dist2ppsoft = dist2pp + A_al2;
+  const double B_dist2soft = dist2 + B_al2;
+  const double B_dist2p1soft = dist2p1 + B_al2;
+  const double B_dist2p2soft = dist2p2 + B_al2;
+  const double B_dist2ppsoft = dist2pp + B_al2;
+
+  const double A_distisoft = 1.0 / sqrt(A_dist2soft);
+  const double A_distip1soft = 1.0 / sqrt(A_dist2p1soft);
+  const double A_distip2soft = 1.0 / sqrt(A_dist2p2soft);
+  const double A_distippsoft = 1.0 / sqrt(A_dist2ppsoft);
+  const double B_distisoft = 1.0 / sqrt(B_dist2soft);
+  const double B_distip1soft = 1.0 / sqrt(B_dist2p1soft);
+  const double B_distip2soft = 1.0 / sqrt(B_dist2p2soft);
+  const double B_distippsoft = 1.0 / sqrt(B_dist2ppsoft);
+
+  const double A_dist3isoft = A_distisoft / A_dist2soft;
+  const double A_dist3ip1soft = A_distip1soft / A_dist2p1soft;
+  const double A_dist3ip2soft = A_distip2soft / A_dist2p2soft;
+  const double A_dist3ippsoft = A_distippsoft / A_dist2ppsoft;
+  const double B_dist3isoft = B_distisoft / B_dist2soft;
+  const double B_dist3ip1soft = B_distip1soft / B_dist2p1soft;
+  const double B_dist3ip2soft = B_distip2soft / B_dist2p2soft;
+  const double B_dist3ippsoft = B_distippsoft / B_dist2ppsoft;
+
+  const double dist4 = dist2 * dist2;
+  const double dist6 = dist4 * dist2;
+
+  const double A_dist6soft = dist6 + alpha_lj*m_B_ljs_lambda2*A_c126;
+  const double B_dist6soft = dist6 + alpha_lj*m_A_ljs_lambda2*B_c126;
+
+  const double A_dist6isoft = 1.0 / A_dist6soft;
+  const double B_dist6isoft = 1.0 / B_dist6soft;
+
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
+
+  const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
+  const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
+
+  const double A_crf_2cut3i = m_crf_2 / sqrt(A_cut2soft3);
+  const double B_crf_2cut3i = m_crf_2 / sqrt(B_cut2soft3);
+
+  const double A_crf_cut3i = 2 * A_crf_2cut3i;
+  const double B_crf_cut3i = 2 * B_crf_2cut3i;
+
+  const double A_crf_pert = 3.0 * A_crf_2cut3i / A_cut2soft;
+  const double B_crf_pert = 3.0 * B_crf_2cut3i / B_cut2soft;
+
+   // substitute A_dist3isoft thing. just like here -- daniel
+  force1[0] = m_A_crf_lambda_n * A_qeps * (A_dist3isoft + A_crf_cut3i) +
+              m_B_crf_lambda_n * B_qeps * (B_dist3isoft + B_crf_cut3i);
+  force1[1] = m_A_crf_lambda_n * A_qepsp1 * (A_dist3ip1soft + A_crf_cut3i) +
+              m_B_crf_lambda_n * B_qepsp1 * (B_dist3ip1soft + B_crf_cut3i);
+  force1[2] = m_A_crf_lambda_n * A_qepsp2 * (A_dist3ip2soft + A_crf_cut3i) +
+              m_B_crf_lambda_n * B_qepsp2 * (B_dist3ip2soft + B_crf_cut3i);
+  force1[3] = m_A_crf_lambda_n * A_qepspp * (A_dist3ippsoft + A_crf_cut3i) +
+              m_B_crf_lambda_n * B_qepspp * (B_dist3ippsoft + B_crf_cut3i);
+
+  force6 = - 6.0 * (m_A_lj_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
+                    m_B_lj_lambda_n * B_c6 * B_dist6isoft * B_dist6isoft) * dist4;
+
+  force12 = 12 * (m_A_lj_lambda_n * A_c12 * A_dist6isoft * A_dist6isoft * A_dist6isoft +
+                  m_B_lj_lambda_n * B_c12 * B_dist6isoft * B_dist6isoft * B_dist6isoft) * dist4;
+
+  const double A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
+  const double B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
+
+  double A_ecrf0 = A_qeps * (A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut);
+  double A_ecrf1 = A_qepsp1 * (A_distip1soft - A_crf_2cut3i * dist2p1 - m_crf_cut);
+  double A_ecrf2 = A_qepsp2 * (A_distip2soft - A_crf_2cut3i * dist2p2 - m_crf_cut);
+  double A_ecrfp = A_qepspp * (A_distippsoft - A_crf_2cut3i * dist2pp - m_crf_cut);
+  double B_ecrf0 = B_qeps * (B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut);
+  double B_ecrf1 = B_qepsp1 * (B_distip1soft - B_crf_2cut3i * dist2p1 - m_crf_cut);
+  double B_ecrf2 = B_qepsp2 * (B_distip2soft - B_crf_2cut3i * dist2p2 - m_crf_cut);
+  double B_ecrfp = B_qepspp * (B_distippsoft - B_crf_2cut3i * dist2pp - m_crf_cut);
+
+  const double A_e_crf = A_ecrf0 + A_ecrf1 + A_ecrf2 + A_ecrfp;
+  const double B_e_crf = B_ecrf0 + B_ecrf1 + B_ecrf2 + B_ecrfp;
+
+  e_lj = m_A_lj_lambda_n * A_e_lj + m_B_lj_lambda_n * B_e_lj;
+
+  e_crf = (m_A_crf_lambda_n * A_e_crf + m_B_crf_lambda_n * B_e_crf);
+
+de_lj = -2.0 * alpha_lj * (m_A_lj_lambda_n * m_B_ljs_lambda * A_c126 * A_dist6isoft * A_dist6isoft *                             (2 * A_c12 * A_dist6isoft - A_c6) -
+                             m_B_lj_lambda_n * m_A_ljs_lambda * B_c126 * B_dist6isoft * B_dist6isoft *                             (2 * B_c12 * B_dist6isoft - B_c6))
+          + m_lambda_exp * (m_B_lj_lambda_n_1 * B_e_lj - m_A_lj_lambda_n_1 * A_e_lj);
+
+  de_crf = (-(m_A_crf_lambda_n * A_qeps * m_B_crfs_lambda * (A_dist3isoft - A_crf_pert * dist2) -
+             m_B_crf_lambda_n * B_qeps * m_A_crfs_lambda * (B_dist3isoft - B_crf_pert * dist2)) * alpha_crf
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrf0 - m_A_crf_lambda_n_1 * A_ecrf0)) +
+             (-(m_A_crf_lambda_n * A_qepsp1 * m_B_crfs_lambda * (A_dist3ip1soft
+             - A_crf_pert * dist2p1) - m_B_crf_lambda_n * B_qepsp1 * m_A_crfs_lambda *
+             (B_dist3ip1soft - B_crf_pert * dist2p1)) * alpha_crf
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrf1 - m_A_crf_lambda_n_1 * A_ecrf1)) +
+             (-(m_A_crf_lambda_n * A_qepsp2 * m_B_crfs_lambda * (A_dist3ip2soft
+             - A_crf_pert * dist2p2) - m_B_crf_lambda_n * B_qepsp2 * m_A_crfs_lambda *
+             (B_dist3ip2soft - B_crf_pert * dist2p2)) * alpha_crf
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrf2 - m_A_crf_lambda_n_1 * A_ecrf2)) +
+             (-(m_A_crf_lambda_n * A_qepspp * m_B_crfs_lambda * (A_dist3ippsoft
+             - A_crf_pert * dist2pp) - m_B_crf_lambda_n * B_qepspp * m_A_crfs_lambda *
+             (B_dist3ippsoft - B_crf_pert * dist2pp)) * alpha_crf
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrfp - m_A_crf_lambda_n_1 * A_ecrfp));
+}
+
+inline void interaction::Perturbed_Nonbonded_Term
+::pol_off_lj_crf_soft_interaction(math::Vec const &r, math::Vec const &rm, math::Vec const &rp1, 
                           math::Vec const &rp2, math::Vec const &rpp,
 			  double const A_c6, double const A_c12,
 			  double const B_c6, double const B_c12,
@@ -529,6 +676,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_qepspp = cqi * cqj * math::four_pi_eps_i;
 
   const double dist2 = abs2(r);
+  const double dist2m = abs2(rm);
   const double dist2p1 = abs2(rp1);
   const double dist2p2 = abs2(rp2);
   const double dist2pp = abs2(rpp);
@@ -536,11 +684,11 @@ inline void interaction::Perturbed_Nonbonded_Term
   
   const double A_al2 = alpha_crf*m_B_crfs_lambda2;
   const double B_al2 = alpha_crf*m_A_crfs_lambda2;
-  const double A_dist2soft = dist2 + A_al2;
+  const double A_dist2soft = dist2m + A_al2;
   const double A_dist2p1soft = dist2p1 + A_al2;
   const double A_dist2p2soft = dist2p2 + A_al2;
   const double A_dist2ppsoft = dist2pp + A_al2;
-  const double B_dist2soft = dist2 + B_al2;
+  const double B_dist2soft = dist2m + B_al2;
   const double B_dist2p1soft = dist2p1 + B_al2;
   const double B_dist2p2soft = dist2p2 + B_al2;
   const double B_dist2ppsoft = dist2pp + B_al2;
@@ -628,8 +776,8 @@ inline void interaction::Perturbed_Nonbonded_Term
 			     (2 * B_c12 * B_dist6isoft - B_c6))
           + m_lambda_exp * (m_B_lj_lambda_n_1 * B_e_lj - m_A_lj_lambda_n_1 * A_e_lj);
 
-  de_crf = (-(m_A_crf_lambda_n * A_qeps * m_B_crfs_lambda * (A_dist3isoft - A_crf_pert * dist2) -
-	     m_B_crf_lambda_n * B_qeps * m_A_crfs_lambda * (B_dist3isoft - B_crf_pert * dist2)) * alpha_crf
+  de_crf = (-(m_A_crf_lambda_n * A_qeps * m_B_crfs_lambda * (A_dist3isoft - A_crf_pert * dist2m) -
+	     m_B_crf_lambda_n * B_qeps * m_A_crfs_lambda * (B_dist3isoft - B_crf_pert * dist2m)) * alpha_crf
            + m_lambda_exp * (m_B_crf_lambda_n_1 * B_ecrf0 - m_A_crf_lambda_n_1 * A_ecrf0)) +
              (-(m_A_crf_lambda_n * A_qepsp1 * m_B_crfs_lambda * (A_dist3ip1soft 
              - A_crf_pert * dist2p1) - m_B_crf_lambda_n * B_qepsp1 * m_A_crfs_lambda * 

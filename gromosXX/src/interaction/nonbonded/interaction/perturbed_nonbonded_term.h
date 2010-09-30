@@ -58,6 +58,22 @@ namespace interaction
                                      double &force6, double &force12,
                                      double &e_lj, double &e_crf,
                                      double &de_lj, double &de_crf);
+    /**
+     * calculate the force, energy and dh/dl of an atom pair. for polarisation + off atom
+     */
+    void pol_off_lj_crf_soft_interaction(math::Vec const &r, math::Vec const &rm, math::Vec const &rp1,
+                                     math::Vec const &rp2, math::Vec const &rpp,
+                                     double const A_c6, double const A_c12,
+                                     double const B_c6, double const B_c12,
+                                     double const A_qi, double const B_qi,
+                                     double const A_qj, double const B_qj,
+                                     double const cqi, double const cqj,
+                                     double const alpha_lj, double const alpha_crf,
+                                     double force1[],
+                                     double &force6, double &force12,
+                                     double &e_lj, double &e_crf,
+                                     double &de_lj, double &de_crf);
+
 
     /**
      * calculate the force, energy and dh/dl of an atom pair for

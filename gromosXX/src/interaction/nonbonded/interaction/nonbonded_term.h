@@ -73,6 +73,18 @@ namespace interaction
 		     double f[], double &e_lj, double &e_crf);
 
     /**
+     * calculate the force and energy of an atom pair. (polarisable + off atom)
+     */
+    void pol_off_lj_crf_interaction(math::Vec const &r,
+                     math::Vec const &rm,
+                     math::Vec const &rp1,
+                     math::Vec const &rp2,
+                     math::Vec const &rpp,
+                     double c6, double c12,
+                     double qi, double qj, double cgi, double cgj,
+                     double f[], double &e_lj, double &e_crf);
+
+    /**
      * calculate the reaction field force and energy of an atom pair.
      */
     void rf_interaction(math::Vec const &r, double q,

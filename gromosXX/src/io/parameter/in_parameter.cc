@@ -3501,6 +3501,7 @@ POLARISE
 # COS      0,1 use polarisation
 #          0: don't use polarisation
 #          1: use charge-on-spring model for dipolar polarisation
+#          2: use charge-on-spring model for dipolar polarisation with off atom site
 # EFIELD   0,1 controls evaluation site for electric field
 #          0: evaluate at atom position
 #          1: evaluate at cos position
@@ -3545,18 +3546,25 @@ void io::In_Parameter::read_POLARISE(simulation::Parameter & param,
     switch (cos) {
       case 0:
       {
-        param.polarise.cos = false;
+        param.polarise.cos = 0;
         param.polarise.write = 0;
         break;
       }
       case 1:
       {
-        param.polarise.cos = true;
+        param.polarise.cos = 1;
         param.force.interaction_function = simulation::pol_lj_crf_func;
         break;
       }
+      case 2:
+      {
+        param.polarise.cos = 2;
+        param.force.interaction_function = simulation::pol_off_lj_crf_func;
+        break;
+      }
+
       default:
-        io::messages.add("POLARISE block: COS must be 0 or 1.",
+        io::messages.add("POLARISE block: COS must be 0, 1 or 2.",
                 "In_Parameter", io::message::error);
     }
 

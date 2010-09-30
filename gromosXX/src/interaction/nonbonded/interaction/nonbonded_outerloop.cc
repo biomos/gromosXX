@@ -726,9 +726,9 @@ void interaction::Nonbonded_Outerloop
               delta_r = (topo.polarisability(i) / topo.coscharge(i)) * e_el_new(i);
             else {
               const double p = topo.damping_power(i);
-              delta_r = topo.polarisability(i) * e_0 / p * 
+              delta_r = topo.polarisability(i) * e_0  * 
                         (p + 1.0 - pow(e_0/e_i, p)) / 
-                        (topo.coscharge(i) * e_i) * e_el_new(i);
+                        (p * topo.coscharge(i) * e_i) * e_el_new(i);
             }
           } else { // no damping
             delta_r = (topo.polarisability(i) / topo.coscharge(i)) * e_el_new(i);

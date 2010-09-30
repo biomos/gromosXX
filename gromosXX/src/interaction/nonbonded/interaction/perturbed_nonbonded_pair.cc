@@ -109,6 +109,7 @@ void interaction::Perturbed_Nonbonded_Pair
   // NO MOLECULAR VIRIAL CONTRIBUTION ??
  
   math::Vec r, f, A_f, B_f, rp1, rp2, rpp;
+  math::Vec rij, rik, rjj, rjk, rim, rjm, rm;
   double A_e_lj, A_e_crf, A_de_lj, A_de_crf, 
     B_e_lj, B_e_crf, B_de_lj, B_de_crf;
   double e_lj, e_crf, de_lj, de_crf;
@@ -135,7 +136,25 @@ void interaction::Perturbed_Nonbonded_Pair
     rp2 = r + conf.current().posV(it->i);
     rpp = r + conf.current().posV(it->i) - conf.current().posV(it->j);
   }
-  
+ if (t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
+    periodicity.nearest_image(conf.current().pos(it->i),
+            conf.current().pos(topo.gamma_j(it->i)), rij);
+    periodicity.nearest_image(conf.current().pos(it->i),
+            conf.current().pos(topo.gamma_k(it->i)), rik);
+    periodicity.nearest_image(conf.current().pos(it->j),
+            conf.current().pos(topo.gamma_j(it->j)), rjj);
+    periodicity.nearest_image(conf.current().pos(it->j),
+            conf.current().pos(topo.gamma_k(it->j)), rjk);
+
+    rim = topo.gamma(it->i)*(rij + rik) / 2;
+    rjm = topo.gamma(it->j)*(rjj + rjk) / 2;
+
+    rm = r + rjm - rim;
+    rp1 = rm - conf.current().posV(it->j);
+    rp2 = rm + conf.current().posV(it->i);
+    rpp = rm + conf.current().posV(it->i) - conf.current().posV(it->j);
+
+  } 
   // is i perturbed?
   if (topo.is_perturbed(it->i)){
     assert(topo.perturbed_solute().atoms().count(it->i) == 1);
@@ -309,6 +328,14 @@ void interaction::Perturbed_Nonbonded_Pair
                       alpha_crf, A_f_pol, A_e_crf, A_de_crf);
               break;
             }
+            case simulation::pol_off_lj_crf_func : {
+              m_perturbed_nonbonded_term.
+              pol_rf_soft_interaction(rm, rp1, rp2, rpp,
+                      A_qi, A_qj, B_qi, B_qj,
+                      topo.coscharge(it->i), topo.coscharge(it->j),
+                      alpha_crf, A_f_pol, A_e_crf, A_de_crf);
+              break;
+            }
             default: io::messages.add("Nonbonded_Innerloop",
                     "interaction function not implemented",
                     io::message::critical);
@@ -322,6 +349,13 @@ void interaction::Perturbed_Nonbonded_Pair
             case simulation::pol_lj_crf_func : {
               m_nonbonded_term.
               pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(it->i),
+                      topo.charge()(it->j), topo.coscharge(it->i),
+                      topo.coscharge(it->j), A_f_pol_vec, A_e_crf);
+              break;
+            }
+            case simulation::pol_off_lj_crf_func : {
+              m_nonbonded_term.
+              pol_rf_interaction(rm, rp1, rp2, rpp, topo.charge()(it->i),
                       topo.charge()(it->j), topo.coscharge(it->i),
                       topo.coscharge(it->j), A_f_pol_vec, A_e_crf);
               break;
@@ -376,6 +410,25 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
             break;
           }
+          case simulation::pol_off_lj_crf_func : {
+            double A_f6, A_f12;
+            m_perturbed_nonbonded_term.
+              pol_off_lj_crf_soft_interaction(r, rm, rp1, rp2, rpp,
+                                          A_lj->c6, A_lj->c12,
+                                          B_lj->c6, B_lj->c12,
+                                          A_qi, B_qi, A_qj, B_qj,
+                                          topo.coscharge(it->i),
+                                          topo.coscharge(it->j),
+                                          alpha_lj, alpha_crf,
+                                          A_f_pol, A_f6, A_f12,
+                                          A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+            // now combine everything
+            A_f_pol_vec(0) = A_f_pol[0] * rm + (A_f6 + A_f12) * r;
+            A_f_pol_vec(1) = A_f_pol[1] * rp1;
+            A_f_pol_vec(2) = A_f_pol[2] * rp2;
+            A_f_pol_vec(3) = A_f_pol[3] * rpp;
+            break;
+          }
           default: io::messages.add("Nonbonded_Innerloop",
                   "interaction function not implemented",
                   io::message::critical);
@@ -398,6 +451,18 @@ void interaction::Perturbed_Nonbonded_Pair
           case simulation::pol_lj_crf_func : {
             m_nonbonded_term.
             pol_lj_crf_interaction(r, rp1, rp2, rpp, A_lj->c6, A_lj->c12,
+                    topo.charge(it->i), topo.charge(it->j),
+                    topo.coscharge(it->i), topo.coscharge(it->j),
+                    A_f_pol, A_e_lj, A_e_crf);
+            A_f_pol_vec(0) = A_f_pol[0] * r;
+            A_f_pol_vec(1) = A_f_pol[1] * rp1;
+            A_f_pol_vec(2) = A_f_pol[2] * rp2;
+            A_f_pol_vec(3) = A_f_pol[3] * rpp;
+            break;
+          }
+          case simulation::pol_off_lj_crf_func : {
+            m_nonbonded_term.
+            pol_off_lj_crf_interaction(r, rm,  rp1, rp2, rpp, A_lj->c6, A_lj->c12,
                     topo.charge(it->i), topo.charge(it->j),
                     topo.coscharge(it->i), topo.coscharge(it->j),
                     A_f_pol, A_e_lj, A_e_crf);
@@ -460,6 +525,26 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
             break;
           }
+          case simulation::pol_off_lj_crf_func : {
+            double A_f6, A_f12;
+            m_perturbed_nonbonded_term.
+            pol_off_lj_crf_soft_interaction(r,rm, rp1, rp2, rpp,
+                                        A_lj->cs6, A_lj->cs12,
+                                        B_lj->cs6, B_lj->cs12,
+                                        A_qi, B_qi, A_qj, B_qj,
+                                        topo.coscharge(it->i),
+                                        topo.coscharge(it->j),
+                                        alpha_lj, alpha_crf,
+                                        A_f_pol, A_f6, A_f12,
+                                        A_e_lj, A_e_crf, A_de_lj, A_de_crf);
+
+
+            A_f_pol_vec(0) = A_f_pol[0] * rm + (A_f6 + A_f12) * r;
+            A_f_pol_vec(1) = A_f_pol[1] * rp1;
+            A_f_pol_vec(2) = A_f_pol[2] * rp2;
+            A_f_pol_vec(3) = A_f_pol[3] * rpp;
+            break;
+          }
           default: io::messages.add("Nonbonded_Innerloop",
                   "interaction function not implemented",
                   io::message::critical);
@@ -484,6 +569,18 @@ void interaction::Perturbed_Nonbonded_Pair
 				   topo.coscharge(it->i), topo.coscharge(it->j),
 				   A_f_pol, A_e_lj, A_e_crf);
             A_f_pol_vec(0) = A_f_pol[0] * r;
+            A_f_pol_vec(1) = A_f_pol[1] * rp1;
+            A_f_pol_vec(2) = A_f_pol[2] * rp2;
+            A_f_pol_vec(3) = A_f_pol[3] * rpp;
+            break;
+          }
+          case simulation::pol_off_lj_crf_func : {
+            m_nonbonded_term.
+            pol_off_lj_crf_interaction(r, rm,  rp1, rp2, rpp, A_lj->cs6, A_lj->cs12,
+                                   topo.charge(it->i), topo.charge(it->j),
+                                   topo.coscharge(it->i), topo.coscharge(it->j),
+                                   A_f_pol, A_e_lj, A_e_crf);
+            A_f_pol_vec(0) = A_f_pol[0] * rm;
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
@@ -522,7 +619,8 @@ void interaction::Perturbed_Nonbonded_Pair
 				  B_f, B_e_crf, B_de_crf);
               break;
             }
-            case simulation::pol_lj_crf_func : {
+            case simulation::pol_lj_crf_func : 
+            case simulation::pol_off_lj_crf_func : {
               m_perturbed_nonbonded_term.
               pol_rf_soft_interaction(r, rp1, rp2, rpp,
 				      A_qi, A_qj, B_qi, B_qj,
@@ -540,7 +638,8 @@ void interaction::Perturbed_Nonbonded_Pair
               m_nonbonded_term.rf_interaction(r, B_q, B_f, B_e_crf);
               break;
             }
-            case simulation::pol_lj_crf_func : {
+            case simulation::pol_lj_crf_func : 
+            case simulation::pol_off_lj_crf_func : {
               m_nonbonded_term.
               pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(it->i),
 				 topo.charge()(it->j), topo.coscharge(it->i),
@@ -597,6 +696,25 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
             break;
           }
+          case simulation::pol_off_lj_crf_func : {
+            double B_f6, B_f12;
+            m_perturbed_nonbonded_term.
+            pol_off_lj_crf_soft_interaction(r, rm, rp1, rp2, rpp,
+                                        A_lj->c6, A_lj->c12,
+                                        B_lj->c6, B_lj->c12,
+                                        A_qi, B_qi, A_qj, B_qj,
+                                        topo.coscharge(it->i),
+                                        topo.coscharge(it->j),
+                                        alpha_lj, alpha_crf,
+                                        B_f_pol, B_f6, B_f12,
+                                        B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+            // now combine everything
+            B_f_pol_vec(0) = B_f_pol[0] * rm + (B_f6 + B_f12) * r;
+            B_f_pol_vec(1) = B_f_pol[1] * rp1;
+            B_f_pol_vec(2) = B_f_pol[2] * rp2;
+            B_f_pol_vec(3) = B_f_pol[3] * rpp;
+            break;
+          }
           default: io::messages.add("Nonbonded_Innerloop",
                   "interaction function not implemented",
                   io::message::critical);
@@ -622,6 +740,18 @@ void interaction::Perturbed_Nonbonded_Pair
 				   topo.charge(it->i), topo.charge(it->j),
 				   topo.coscharge(it->i), topo.coscharge(it->j),
 				   B_f_pol, B_e_lj, B_e_crf);
+            B_f_pol_vec(0) = B_f_pol[0] * r;
+            B_f_pol_vec(1) = B_f_pol[1] * rp1;
+            B_f_pol_vec(2) = B_f_pol[2] * rp2;
+            B_f_pol_vec(3) = B_f_pol[3] * rpp;
+            break;
+          }
+          case simulation::pol_off_lj_crf_func : {
+            m_nonbonded_term.
+            pol_off_lj_crf_interaction(r, rm,  rp1, rp2, rpp, B_lj->c6, B_lj->c12,
+                                   topo.charge(it->i), topo.charge(it->j),
+                                   topo.coscharge(it->i), topo.coscharge(it->j),
+                                   B_f_pol, B_e_lj, B_e_crf);
             B_f_pol_vec(0) = B_f_pol[0] * r;
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
@@ -685,6 +815,30 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
             break;
           }
+          case simulation::pol_off_lj_crf_func : {
+            double B_f6, B_f12;
+            m_perturbed_nonbonded_term.
+            pol_off_lj_crf_soft_interaction(r, rm, rp1, rp2, rpp,
+                                        A_lj->cs6, A_lj->cs12,
+                                        B_lj->cs6, B_lj->cs12,
+                                        A_qi, B_qi, A_qj, B_qj,
+                                        topo.coscharge(it->i),
+                                        topo.coscharge(it->j),
+                                        alpha_lj, alpha_crf,
+                                        B_f_pol, B_f6, B_f12,
+                                        B_e_lj, B_e_crf, B_de_lj, B_de_crf);
+
+            //--------------------------------------------------
+            // interactions have been calculated
+            //--------------------------------------------------
+
+            // now combine everything
+            B_f_pol_vec(0) = B_f_pol[0] * rm + (B_f6 + B_f12) * r;
+            B_f_pol_vec(1) = B_f_pol[1] * rp1;
+            B_f_pol_vec(2) = B_f_pol[2] * rp2;
+            B_f_pol_vec(3) = B_f_pol[3] * rpp;
+            break;
+          }
           default: io::messages.add("Nonbonded_Innerloop",
                   "interaction function not implemented",
                   io::message::critical);
@@ -714,6 +868,18 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
             break;
           }
+          case simulation::pol_off_lj_crf_func : {
+            m_nonbonded_term.
+              pol_off_lj_crf_interaction(r, rm, rp1, rp2, rpp, B_lj->cs6, B_lj->cs12,
+                                     topo.charge(it->i), topo.charge(it->j),
+                                     topo.coscharge(it->i), topo.coscharge(it->j),
+                                     B_f_pol, B_e_lj, B_e_crf);
+            B_f_pol_vec(0) = B_f_pol[0] * rm;
+            B_f_pol_vec(1) = B_f_pol[1] * rp1;
+            B_f_pol_vec(2) = B_f_pol[2] * rp2;
+            B_f_pol_vec(3) = B_f_pol[3] * rpp;
+            break;
+          }
           default: io::messages.add("Nonbonded_Innerloop",
                   "interaction function not implemented",
                   io::message::critical);
@@ -738,6 +904,12 @@ void interaction::Perturbed_Nonbonded_Pair
       io::messages.add("Nonbonded_Innerloop",
 		       "interaction function not implemented",
 		       io::message::critical);
+      return;
+    }
+    if (t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
+      io::messages.add("Nonbonded_Innerloop",
+                       "interaction function not implemented",
+                       io::message::critical);
       return;
     }
     
@@ -814,7 +986,8 @@ void interaction::Perturbed_Nonbonded_Pair
   // now combine state A and B
   // for the forces we take A_lj_lambda_n and B_lj_lambda_n, because we checked that this is the
   // same as A_crf_lambda_n and B_crf_lambda_n before
-  if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func) {
+  if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
+      || t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
     for(unsigned int i = 0; i < 4; ++i) {
       f_pol_vec(i) = m_perturbed_nonbonded_term.B_lj_lambda_n() * B_f_pol_vec(i) +
 	m_perturbed_nonbonded_term.A_lj_lambda_n() * A_f_pol_vec(i);
@@ -843,7 +1016,8 @@ void interaction::Perturbed_Nonbonded_Pair
   conf.current().force(it->i) += f;
   conf.current().force(it->j) -= f;
   
-  if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func) {
+  if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
+     || t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
         conf.current().virial_tensor(a, b) += r(a) *( f_pol_vec(0)(b) +

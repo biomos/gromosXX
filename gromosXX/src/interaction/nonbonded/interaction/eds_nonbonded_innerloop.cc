@@ -133,6 +133,7 @@ void interaction::Eds_Nonbonded_Innerloop<
       break;
     }
     case simulation::pol_lj_crf_func :
+    case simulation::pol_off_lj_crf_func :
     case simulation::cgrain_func :
     default:
       io::messages.add("EDS-Nonbonded_Innerloop",
@@ -271,6 +272,7 @@ void interaction::Eds_Nonbonded_Innerloop<
       break;
     }
     case simulation::pol_lj_crf_func :
+    case simulation::pol_off_lj_crf_func :
     case simulation::cgrain_func :
     default:
       io::messages.add("EDS-Nonbonded_Innerloop",

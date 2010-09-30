@@ -138,7 +138,36 @@ namespace topology
      * polarisability damping p const accessor
      */
     double damping_power(int i)const {return m_damping_power(i);}
-    
+   /**
+     * polarisability gamma accessor
+     */
+    math::SArray &gamma() {return m_gamma;}
+
+    /**
+     * polarisability gamma const accessor
+     */
+    double gamma(int i)const {return m_gamma(i);}
+
+    /**
+     * polarisability gamma atm j accessor
+     */
+    std::vector<int> &gamma_j() {return m_gamma_j;}
+
+    /**
+     * polarisability gamma atom j const accessor
+     */
+    int gamma_j(int i)const {return m_gamma_j[i];}
+
+    /**
+     * polarisability gamma atm j accessor
+     */
+    std::vector<int> &gamma_k() {return m_gamma_k;}
+
+    /**
+     * polarisability gamma atom j const accessor
+     */
+    int gamma_k(int i)const {return m_gamma_k[i];}
+ 
     /**
      * stochastic dynamics const accessor
      */
@@ -1370,6 +1399,20 @@ namespace topology
      * the polarisabiliy damping power @f$ p @f$
      */
      math::SArray m_damping_power;
+    
+     /**
+     * the polarisability damping electric field offsef @f$ E_0 @f$
+     */
+     math::SArray m_gamma;
+
+    /**
+     * the polarisabiliy offsite atom j
+     */
+     std::vector<int> m_gamma_j;
+     /**
+     * the polarisabiliy offsite atom k
+     */
+     std::vector<int> m_gamma_k;
 
     std::vector<util::LE_Coordinate*> m_le_coordinates;
      

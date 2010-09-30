@@ -42,6 +42,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     switch(t_interaction_spec::interaction_func){
       case simulation::lj_crf_func :
       case simulation::pol_lj_crf_func : 
+      case simulation::pol_off_lj_crf_func : 
 	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
 				      topo.perturbed_solute().atoms()[j].A_IAC());
 	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
@@ -78,6 +79,7 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     switch(t_interaction_spec::interaction_func){
       case simulation::lj_crf_func :
       case simulation::pol_lj_crf_func : 
+      case simulation::pol_off_lj_crf_func : 
 	A_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].A_IAC(),
 				      topo.iac(j));
 	B_lj = &m_param->lj_parameter(topo.perturbed_solute().atoms()[i].B_IAC(),
@@ -159,7 +161,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
 		       io::message::critical);
       return;
     }
-    if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
+    if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func 
+	|| t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func){
       io::messages.add("Nonbonded Innerloop",
 		       "scaling not implemented for COS polarisation simulations!",
 		       io::message::critical);
@@ -344,6 +347,78 @@ void interaction::Perturbed_Nonbonded_Innerloop<
         DEBUG(7, "\tatomic virial done");
         break;
       }
+      case simulation::pol_off_lj_crf_func : {
+         math::Vec rm =r ;
+        if(topo.gamma_j(i)){
+         math::Vec rij, rik; 
+         periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_j(i)), rij);
+         periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_k(i)), rik);
+         rm-=topo.gamma(i)*(rij+rik)/2;
+        }
+        if(topo.gamma_k(i)){
+        math::Vec rjj, rjk; 
+        periodicity.nearest_image(conf.current().pos(j),
+                            conf.current().pos(topo.gamma_k(j)), rjk);
+         periodicity.nearest_image(conf.current().pos(j),
+                            conf.current().pos(topo.gamma_j(j)), rjj);
+
+        rm-=topo.gamma(j)*(rjj+rjk)/2;
+        }
+
+        math::Vec rp1, rp2, rpp;
+        double f1[4];
+        math::VArray f(4);
+        f = 0.0;
+        double f6, f12;
+
+        rp1 = rm - conf.current().posV(j);
+        rp2 = rm + conf.current().posV(i);
+        rpp = rm + conf.current().posV(i) - conf.current().posV(j);
+
+        pol_off_lj_crf_soft_interaction(r, rm,  rp1, rp2, rpp,
+                                    A_lj->c6, A_lj->c12,
+                                    B_lj->c6, B_lj->c12,
+                                    A_qi, B_qi, A_qj, B_qj,
+                                    topo.coscharge(i),
+                                    topo.coscharge(j),
+                                    alpha_lj, alpha_crf,
+                                    f1, f6, f12,
+                                    e_lj, e_crf, de_lj, de_crf);
+
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+
+        // now combine everything
+        f(0) = f1[0] * rm;
+        f(1) = f1[1] * rp1;
+        f(2) = f1[2] * rp2;
+        f(3) = f1[3] * rpp;
+        for (int a=0; a<3; ++a){
+          const double term = f(0)(a) + f(1)(a)
+            + f(2)(a) + f(3)(a);
+
+          storage.force(i)(a) +=(1-topo.gamma(i))*term + ( f6 + f12 ) * r(a);
+          storage.force(j)(a) -=(1-topo.gamma(j))*term + ( f6 + f12 ) * r(a);
+
+          storage.force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
+          storage.force(topo.gamma_j(j))(a) -=topo.gamma(j)/2*term;
+
+          storage.force(topo.gamma_k(i))(a) +=topo.gamma(i)/2*term;
+          storage.force(topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
+
+          DEBUG(7, "\tforces stored");
+  
+          for(int b=0; b<3; ++b)
+           storage.virial_tensor(b, a) += r(b)*term+ r(b)*( f6 + f12 ) * r(a);
+        }
+
+
+        DEBUG(7, "\tatomic virial done");
+        break;
+      }
       default:
         io::messages.add("Nonbonded_Innerloop",
 			 "interaction function not implemented",
@@ -486,7 +561,8 @@ void interaction::Perturbed_Nonbonded_Innerloop<
     // SCALING ON
     math::Vec f;
     double f1, f6, f12;
-    if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
+    if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
+        || t_interaction_spec::interaction_func == simulation::pol_lj_crf_func){
       io::messages.add("Nonbonded Innerloop",
               "scaling not implemented for COS polarisation simulations!",
               io::message::critical);
@@ -633,6 +709,87 @@ void interaction::Perturbed_Nonbonded_Innerloop<
         DEBUG(7, "\tatomic virial done");
         break;
       }
+      case simulation::pol_off_lj_crf_func : {
+        math::Vec rm =r ;
+        if(topo.gamma_j(i)){
+         math::Vec rij, rik;
+         periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_j(i)), rij);
+         periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_k(i)), rik);
+         rm-=topo.gamma(i)*(rij+rik)/2;
+        }
+        if(topo.gamma_k(i)){
+        math::Vec rjj, rjk;
+        periodicity.nearest_image(conf.current().pos(j),
+                            conf.current().pos(topo.gamma_k(j)), rjk);
+        periodicity.nearest_image(conf.current().pos(j),
+                            conf.current().pos(topo.gamma_j(j)), rjj);
+
+        rm-=topo.gamma(j)*(rjj+rjk)/2;
+        }
+
+        math::Vec rp1, rp2, rpp;
+        double f1[4];
+        math::VArray f(4);
+        f = 0.0;
+        double f6, f12;
+
+        rp1 = rm - conf.current().posV(j);
+        rp2 = rm + conf.current().posV(i);
+        rpp = rm + conf.current().posV(i) - conf.current().posV(j);
+
+        pol_off_lj_crf_soft_interaction(r, rm, rp1, rp2, rpp,
+                A_lj->cs6, A_lj->cs12,
+                B_lj->cs6, B_lj->cs12,
+                A_qi, B_qi, A_qj, B_qj,
+                topo.coscharge(i),
+                topo.coscharge(j),
+                alpha_lj, alpha_crf,
+                f1, f6, f12,
+                e_lj, e_crf, de_lj, de_crf);
+
+        //--------------------------------------------------
+        // interactions have been calculated
+        //--------------------------------------------------
+
+        // now combine everything
+        f(0) = f1[0] * rm;
+        f(1) = f1[1] * rp1;
+        f(2) = f1[2] * rp2;
+        f(3) = f1[3] * rpp;
+        for (int a=0; a<3; ++a){
+          const double term = f(0)(a) + f(1)(a)
+            + f(2)(a) + f(3)(a);
+
+          conf.current().force(i)(a) +=(1-topo.gamma(i))*term + (f6 + f12)*r(a);
+          conf.current().force(j)(a) -=(1-topo.gamma(j))*term+ (f6 + f12)*r(a);
+
+          conf.current().force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
+          conf.current().force(topo.gamma_j(j))(a) -=topo.gamma(j)/2*term;
+
+          conf.current().force(topo.gamma_k(i))(a) +=topo.gamma(i)/2*term;
+          conf.current().force(topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
+
+          for(int b=0; b<3; ++b)
+           conf.current().virial_tensor(b, a) += rm(b)*term+ (f6 + f12)*r(a)*r(b);
+        }
+        DEBUG(7, "\tforces stored");
+        DEBUG(7, "\tatomic virial done");
+
+        conf.current().force(i) += f(0) + f(1) + f(2) + f(3);
+        conf.current().force(j) -= f(0) + f(1) + f(2) + f(3);
+
+        DEBUG(7, "\tforces stored");
+
+        for(int a=0; a<3; ++a)
+          for(int b=0; b<3; ++b)
+            conf.current().virial_tensor(a, b) += r(a)*(f(0)(b) +
+            f(1)(b) + f(2)(b) + f(3)(b));
+
+        DEBUG(7, "\tatomic virial done");
+        break;
+      }
       default:
       io::messages.add("Nonbonded_Innerloop",
 			 "interaction function not implemented",
@@ -714,7 +871,8 @@ interaction::Perturbed_Nonbonded_Innerloop<
 			  f_rf, e_rf, de_rf, true);
       break;
     }
-    case simulation::pol_lj_crf_func:{
+    case simulation::pol_lj_crf_func:
+    case simulation::pol_off_lj_crf_func:{
       math::Vec rp1, rp2, rpp;
       double f_rf[4];
       r = 0.0;
@@ -861,7 +1019,63 @@ interaction::Perturbed_Nonbonded_Innerloop<
         
          break;
        }
-      default:
+      case simulation::pol_off_lj_crf_func:{
+        math::Vec rm =r ;
+        if(topo.gamma_j(i)){
+         math::Vec rij, rik;
+         periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_j(i)), rij);
+         periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_k(i)), rik);
+         rm-=topo.gamma(i)*(rij+rik)/2;
+        }
+        if(topo.gamma_k(i)){
+         math::Vec rjj, rjk;
+         periodicity.nearest_image(conf.current().pos(*it),
+                            conf.current().pos(topo.gamma_k(*it)), rjk);
+         periodicity.nearest_image(conf.current().pos(*it),
+                            conf.current().pos(topo.gamma_j(*it)), rjj);
+
+         rm-=topo.gamma(*it)*(rjj+rjk)/2;
+        }
+
+        math::Vec rp1, rp2, rpp;
+        double f_rf[4];
+        rp1 = rm - conf.current().posV(*it);
+        rp2 = rm + conf.current().posV(i);
+        rpp = rm + conf.current().posV(i) - conf.current().posV(*it);
+
+        pol_rf_soft_interaction(rm, rp1, rp2, rpp,
+                                q_i_a, q_j_a, q_i_b, q_j_b,
+                                topo.coscharge(i), topo.coscharge(*it),
+                                alpha_crf, f_rf, e_rf, de_rf);
+
+        // and add everything to the correct arrays
+        conf.current().energies.crf_energy
+          [topo.atom_energy_group(i)]
+          [topo.atom_energy_group(*it)] += e_rf;
+        conf.current().perturbed_energy_derivatives.crf_energy
+          [topo.atom_energy_group(i)]
+          [topo.atom_energy_group(*it)] += de_rf;
+        for (int a=0; a<3; ++a){
+          const double term = f_rf[0]*rm(a) + f_rf[1]*rp1(a)
+          + f_rf[2]*rp2(a) + f_rf[3]*rpp(a);
+
+          force(i)(a) +=(1-topo.gamma(i))*term;
+          force(*it)(a) -=(1-topo.gamma(*it))*term;
+
+          force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
+          force(topo.gamma_j(*it))(a) -=topo.gamma(*it)/2*term;
+
+          force(topo.gamma_k(i))(a) +=topo.gamma(i)/2*term;
+          force(topo.gamma_k(*it))(a) -=topo.gamma(*it)/2*term;
+
+          for(int b=0; b<3; ++b)
+           conf.current().virial_tensor(b, a) += r(b)*term;
+        }
+         break;
+       }
+       default:
         io::messages.add("Nonbonded_Innerloop",
                 "interaction function not implemented",
                 io::message::critical);

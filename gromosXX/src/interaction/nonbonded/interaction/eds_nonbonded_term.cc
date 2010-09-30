@@ -45,6 +45,7 @@ inline void interaction::Eds_Nonbonded_Term
       break;
       
     case simulation::pol_lj_crf_func :
+    case simulation::pol_off_lj_crf_func :
     case simulation::cgrain_func :
     default:
       io::messages.add("Nonbonded_Innerloop",

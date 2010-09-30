@@ -19,6 +19,7 @@ inline void interaction::Nonbonded_Term
   switch(sim.param().force.interaction_function){
   case simulation::lj_crf_func :
   case simulation::pol_lj_crf_func :
+  case simulation::pol_off_lj_crf_func :
     // Force
     m_cut3i = 
       1.0 / ( sim.param().nonbonded.rf_cutoff
@@ -246,6 +247,64 @@ inline void interaction::Nonbonded_Term
 	<< " crf_cut2i=" << m_crf_cut3i);
   
 }
+inline void interaction::Nonbonded_Term
+::pol_off_lj_crf_interaction(math::Vec const &r,
+                     math::Vec const &rm,
+                     math::Vec const &rp1,
+                     math::Vec const &rp2,
+                     math::Vec const &rpp,
+                     double c6, double c12,
+                     double qi, double qj, double cgi, double cgj,
+                     double f[], double &e_lj, double &e_crf)
+{
+  DEBUG(14, "\t\tnonbonded term");
+
+  assert(abs2(r) != 0);
+  assert(abs2(rm) != 0);
+
+
+  const double dist2 = abs2(r);
+  const double dist2m = abs2(rm);
+  const double dist2p1 = abs2(rp1);
+  const double dist2p2 = abs2(rp2);
+  const double dist2pp = abs2(rpp);
+  const double dist2i = 1.0 / dist2;
+  const double dist2mi = 1.0 / dist2m;
+  const double dist2p1i = 1.0 / dist2p1;
+  const double dist2p2i = 1.0 / dist2p2;
+  const double dist2ppi = 1.0 / dist2pp;
+
+  const double dist6i = dist2i * dist2i * dist2i;
+
+  //const double disti = sqrt(dist2i);
+  const double distmi = sqrt(dist2mi);
+  const double distp1i = sqrt(dist2p1i);
+  const double distp2i = sqrt(dist2p2i);
+  const double distppi = sqrt(dist2ppi);
+
+  const double c12_dist6i = c12 * dist6i;
+  const double q_eps =  (qi-cgi)*(qj-cgj) * math::four_pi_eps_i;
+  const double q_epsp1 = (qi-cgi)*cgj * math::four_pi_eps_i;
+  const double q_epsp2 = cgi*(qj-cgj) * math::four_pi_eps_i;
+  const double q_epspp = cgi*cgj * math::four_pi_eps_i;
+
+  e_lj = (c12_dist6i - c6) * dist6i;
+
+  e_crf = q_eps * (distmi - m_crf_2cut3i * dist2m - m_crf_cut)
+    + q_epsp1 * (distp1i - m_crf_2cut3i * dist2p1 - m_crf_cut)
+    + q_epsp2 * (distp2i - m_crf_2cut3i * dist2p2 - m_crf_cut)
+    + q_epspp * (distppi - m_crf_2cut3i * dist2pp - m_crf_cut);
+
+  f[0] = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i;
+  f[1] = q_eps * (distmi * dist2mi + m_crf_cut3i);
+  f[2] = q_epsp1 * (distp1i * dist2p1i + m_crf_cut3i);
+  f[3] = q_epsp2 * (distp2i * dist2p2i + m_crf_cut3i);
+  f[4] = q_epspp * (distppi * dist2ppi + m_crf_cut3i);
+
+  DEBUG(15, "\t\tq=" << qi*qj << " 4pie=" << math::four_pi_eps_i
+        << " crf_cut2i=" << m_crf_cut3i);
+
+}
 
 /**
  * helper function to calculate the force and energy for
@@ -401,18 +460,16 @@ inline void interaction::Nonbonded_Term
 inline void interaction::Nonbonded_Term
 ::self_energy_interaction(double alpha, double e_i2, double e_0, double p,
         double &self_e) {
-
-    DEBUG(14, "\t\tself energy - dipole-dipole interaction");
     const double e_02 = e_0 * e_0;
     if (e_i2 <= e_02) {
         self_e = 0.5 * alpha * e_i2;
     } else {
         const double e_i = sqrt(e_i2);
         self_e = 0.5 * alpha * e_02 +
-                0.5 * alpha * e_02 / (p * (p - 1)) *
-                (-p * p +
+                 alpha * e_02 * (-p * p +
                 (e_i / e_0)*(p * p - 1) +
-                pow(e_0 / e_i, p - 1));
+                pow(e_0 / e_i, p - 1))
+                / (p * (p - 1)); // * sqrt(math::eps0_i /(4.0 * math::Pi))) ;
     }
 }
 
