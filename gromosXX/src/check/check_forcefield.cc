@@ -150,7 +150,8 @@ int check_lambda_derivative(topology::Topology & topo,
 
   if (term.name == "NonBonded") {
 
-    if (sim.param().force.interaction_function == simulation::cgrain_func)
+    if (sim.param().force.interaction_function == simulation::cgrain_func ||
+           sim.param().force.interaction_function == simulation::cggromos_func )
       name = "CG-" + name;
 
     if (sim.param().force.special_loop == simulation::special_loop_spc) {
@@ -258,7 +259,8 @@ int check_interaction(topology::Topology & topo,
   std::string name = term.name;
 
   if (term.name == "NonBonded") {
-    if (sim.param().force.interaction_function == simulation::cgrain_func)
+    if (sim.param().force.interaction_function == simulation::cgrain_func ||
+           sim.param().force.interaction_function == simulation::cggromos_func )
       name = "CG-" + name;
     if (sim.param().nonbonded.rf_excluded == 1)
       name = "newRF-" + name;
@@ -571,8 +573,10 @@ int check::check_forcefield(topology::Topology & topo,
               ref["PerturbedDihedral"],
               0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
-    } else if ((*it)->name == "NonBonded") {
-      if (sim.param().force.interaction_function == simulation::cgrain_func) {
+    }
+    else if ((*it)->name == "NonBonded"){
+      if (sim.param().force.interaction_function == simulation::cgrain_func ||
+             sim.param().force.interaction_function == simulation::cggromos_func ){
 
         sim.param().force.special_loop = simulation::special_loop_off;
         total += check_interaction(topo, conf, sim, **it, topo.num_atoms(),

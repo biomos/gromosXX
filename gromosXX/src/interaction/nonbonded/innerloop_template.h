@@ -23,6 +23,9 @@
     case simulation::cgrain_func : \
       f<Interaction_Spec<bound, simulation::cgrain_func> >(__VA_ARGS__); \
       break; \
+    case simulation::cggromos_func : \
+      f<Interaction_Spec<bound, simulation::cggromos_func> >(__VA_ARGS__); \
+      break; \
     case simulation::pol_lj_crf_func : \
       if (sim.param().polarise.damp) { \
         switch(sim.param().polarise.efield_site) { \
@@ -114,6 +117,10 @@
       break; \
     case simulation::cgrain_func : \
       f< Interaction_Spec<bound, simulation::cgrain_func>, \
+         pertspec > (__VA_ARGS__); \
+      break; \
+    case simulation::cggromos_func : \
+      f< Interaction_Spec<bound, simulation::cggromos_func>, \
          pertspec > (__VA_ARGS__); \
       break; \
     case simulation::pol_lj_crf_func : \

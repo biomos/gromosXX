@@ -52,11 +52,8 @@
  * - @ref  LAMBDAS
  * - @ref  localelev
  * - @ref  electric
-<<<<<<< .mine
  * - @ref  multigradient
-=======
  * - @ref  addecouple
->>>>>>> .r1424
  */
 
 

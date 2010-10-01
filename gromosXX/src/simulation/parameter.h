@@ -207,7 +207,8 @@ namespace simulation
     /** lj_ls_function */ lj_ls_func,
     /** pol_lj_crf_function */ pol_lj_crf_func,
     /** pol_off_lj_crf_function */ pol_off_lj_crf_func,
-    /** cgrain_function */ cgrain_func
+    /** cgrain_function (MARTINI)*/ cgrain_func,
+    /** cgrain_function (GROMOS) */ cggromos_func
   };
   
   /**
@@ -454,6 +455,10 @@ namespace simulation
     localelev_on = 1
   };
 
+  /**
+   * @enum electric_enum
+   * electric field
+   */
   enum electric_enum {
     /**
      * don't apply electric field
@@ -464,6 +469,7 @@ namespace simulation
      */
     electric_on = 1
   };
+
   /**
    * @class Parameter
    * input parameters.
@@ -1885,16 +1891,19 @@ namespace simulation
        * Default values:
        * - level (0)
        * - EPS (20.0)
+       * - EPSM (20.0)
        */
       cgrain_struct()
-	: level(0), EPS(20.0)
+	: level(0), EPS(20.0), EPSM(20.0)
       {
       }
       /**
        * do coarse graining
        * - 0 atomistic (off)
-       * - 1 coarse-graining (on)
-       * - 2 multi-graining (mixed)
+       * - 1 coarse-graining using MARTINI model (on)
+       * - 2 multi-graining using MARTINI model (on)
+       * - 3 coarse-graining using GROMOS model (on)
+       * - 4 mixed-graining using GROMOS model (on)
        *
        * multigraining requires a set of topology,
        * configuration and input parameters for an
@@ -1907,9 +1916,13 @@ namespace simulation
        */
       int level;
       /**
-       * EPS for the CG coulomb
+       * EPS for the pure CG coulomb
        */
       double EPS;
+      /**
+       * EPS for the mixed FG-CG coulomb
+       */
+      double EPSM;
     } /** coarse grain parameters */ cgrain;
 
     /**

@@ -394,7 +394,7 @@ namespace interaction
     double B_cg12, B_cg6, B_cg1;
     double A_C_cg12, A_C_cg6, A_C_cg1;
     double B_C_cg12, B_C_cg6, B_C_cg1;
-    double cgrain_eps;
+    double cgrain_eps, cgrain_epsm;
     double rs_lj, rs_c;
     double nb_cutoff;
   };

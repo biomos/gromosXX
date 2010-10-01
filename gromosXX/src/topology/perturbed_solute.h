@@ -27,6 +27,16 @@ namespace topology
     std::vector<perturbed_two_body_term_struct> & bonds() {return m_bond;}
 
     /**
+     * const perturbed coarse grained bonds.
+     */
+    std::vector<perturbed_two_body_term_struct> const & cgbonds()const {return m_cgbond;}
+
+    /**
+     * perturbed coarse grained bonds.
+     */
+    std::vector<perturbed_two_body_term_struct> & cgbonds() {return m_cgbond;}
+
+    /**
      * const perturbed angles.
      */
     std::vector<perturbed_three_body_term_struct> const & angles()const {return m_angle;}
@@ -110,6 +120,11 @@ namespace topology
      * the perturbed bonds.
      */
     std::vector<perturbed_two_body_term_struct> m_bond;
+
+    /**
+     * the perturbed coarse grained bonds.
+     */
+    std::vector<perturbed_two_body_term_struct> m_cgbond;
 
     /**
      * the perturbed angles.

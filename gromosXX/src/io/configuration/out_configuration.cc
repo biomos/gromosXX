@@ -361,7 +361,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_umbrellas(conf, m_special_traj);
       m_special_traj.flush();
     }
-
+    
 
     if (m_every_dipole && sim.steps() && (sim.steps() % m_every_dipole) == 0) {
       if (!special_timestep_printed) {

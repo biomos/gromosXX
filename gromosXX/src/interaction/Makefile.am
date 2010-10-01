@@ -15,6 +15,7 @@ xxintbondeddir = $(includedir)/md++/interaction/bonded
 xxintbonded_HEADERS = bonded/create_bonded.h\
 	bonded/quartic_bond_interaction.h\
 	bonded/harmonic_bond_interaction.h\
+        bonded/cg_bond_interaction.h\
 	bonded/angle_interaction.h\
 	bonded/harm_angle_interaction.h\
 	bonded/improper_dihedral_interaction.h\
@@ -23,6 +24,7 @@ xxintbonded_HEADERS = bonded/create_bonded.h\
         bonded/crossdihedral_interaction.h\
 	bonded/perturbed_quartic_bond_interaction.h\
 	bonded/perturbed_harmonic_bond_interaction.h\
+        bonded/perturbed_cg_bond_interaction.h\
 	bonded/perturbed_angle_interaction.h\
 	bonded/perturbed_improper_dihedral_interaction.h\
 	bonded/perturbed_dihedral_new_interaction.h\
@@ -125,6 +127,8 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	bonded/perturbed_quartic_bond_interaction.cc\
 	bonded/harmonic_bond_interaction.cc\
 	bonded/perturbed_harmonic_bond_interaction.cc\
+        bonded/cg_bond_interaction.cc\
+        bonded/perturbed_cg_bond_interaction.cc\
 	bonded/angle_interaction.cc\
 	bonded/harm_angle_interaction.cc\
 	bonded/perturbed_angle_interaction.cc\

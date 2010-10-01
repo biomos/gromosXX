@@ -603,7 +603,20 @@ namespace topology
     /**
      * is the atom polarisable?
      */
-    std::vector<bool> & is_polarisable() { return m_is_polarisable;}    
+    std::vector<bool> & is_polarisable() { return m_is_polarisable;}
+
+    /**
+     * is the atom coarse-grained?
+     */
+    bool is_coarse_grained(unsigned int const i)const {
+
+      assert(i >= 0 && i < m_is_coarse_grained.size());
+      return m_is_coarse_grained[i];
+    }
+    /**
+     * is the atom coarse-grained?
+     */
+    std::vector<bool> & is_coarse_grained() { return m_is_coarse_grained;}
     
     /**
      * recalculate lambda dependent properties.
@@ -1100,6 +1113,11 @@ namespace topology
      * is the atom polarisable?
      */
     std::vector<bool> m_is_polarisable;
+
+    /**
+     * is the atom polarisable?
+     */
+    std::vector<bool> m_is_coarse_grained;
     
     /**
      * the number of solvent molecules.

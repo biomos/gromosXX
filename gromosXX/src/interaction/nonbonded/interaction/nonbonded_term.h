@@ -190,7 +190,8 @@ namespace interaction
     double B_cg12, B_cg6, B_cg1;
     double C_cg12, C_cg6, C_cg1;
     double cgrain_eps;
-    
+    double cgrain_epsm;
+
     /**
      * lattice sum variables
      */

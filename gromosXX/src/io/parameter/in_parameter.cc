@@ -533,7 +533,7 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
     if (param.constraint.solvent.shake_tolerance <= 0.0)
       io::messages.add("CONSTRAINT block: m_shake tolerance should be > 0.0",
             "In_Parameter", io::message::error);
-  } /*else if (salg == "gpu_settle" || salg == "6") {
+  }/*else if (salg == "gpu_settle" || salg == "6") {
     DEBUG(9, "constraints solvent settle on GPU");
 
     param.constraint.solvent.algorithm = simulation::constr_gpu_settle;
@@ -831,16 +831,14 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
     } else if (s1 == "calc" || s1 == "1") {
       param.pcouple.calculate = true;
       param.pcouple.scale = math::pcouple_off;
-    }
-    else if (s1 == "scale" || s1 == "2") {
+    } else if (s1 == "scale" || s1 == "2") {
       param.pcouple.calculate = true;
 
       if (s2 == "off" || s2 == "0") {
         io::messages.add("PRESSURESCALE block: requesting scaling but SCALE set to OFF",
                 "In_Parameter", io::message::error);
         param.pcouple.scale = math::pcouple_off;
-      }
-      else if (s2 == "iso" || s2 == "1")
+      } else if (s2 == "iso" || s2 == "1")
         param.pcouple.scale = math::pcouple_isotropic;
       else if (s2 == "aniso" || s2 == "2")
         param.pcouple.scale = math::pcouple_anisotropic;
@@ -1739,14 +1737,16 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
  * @section cgrain CGRAIN block
  * @verbatim
 CGRAIN
-# NTCGRAN 0..2 coarse grain selection
+# NTCGRAN 0..4 coarse grain selection
 #         0: atomistic (off)
-#         1: coarse-grained (on)
-#         2: multi-grained (mixed)
-#     EPS >= 0.0 dielectric constant for coarse grained coulombic
-#            interaction
-# NTCGRAN     EPS
-        1       0
+#         1: coarse-grained using MARTINI model (on)
+#         2: multi-grained using MARTINI model (on)
+#         3: coarse-grained using GROMOS model (on)
+#         4: mixed-grained using GROMOS model (on)
+#     EPS >= 0.0 dielectric constant for coarse grained coulombic interaction
+#    EPSM >= 0.0 dielectric constant for mixed CG-FG coulombic interaction
+# NTCGRAN     EPS     EPSM
+        1      20        1 
 END
 @endverbatim
  */
@@ -1767,7 +1767,7 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
     int ntcgran;
-    _lineStream >> ntcgran >> param.cgrain.EPS;
+    _lineStream >> ntcgran >> param.cgrain.EPS >> param.cgrain.EPSM;
 
     if (_lineStream.fail())
       io::messages.add("bad line in CGRAIN block",
@@ -1785,16 +1785,27 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
         param.cgrain.level = 2;
         param.force.interaction_function = simulation::cgrain_func;
         break;
+      case 3:
+        param.cgrain.level = 3;
+        param.force.interaction_function = simulation::cggromos_func;
+        break;
+      case 4:
+        param.cgrain.level = 4;
+        param.force.interaction_function = simulation::cggromos_func;
+        break;
       default:
         param.cgrain.level = 0;
-        io::messages.add("CGRAIN block: NTCGRAN must be 0 to 2.",
+        io::messages.add("CGRAIN block: NTCGRAN must be 0 to 4.",
                 "In_Parameter", io::message::error);
     }
+    DEBUG(6, "coarse graining level = " << param.cgrain.level);
 
     if (param.cgrain.EPS < 0)
       io::messages.add("CGRAIN block: EPS must be >= 0.0.",
             "In_Parameter", io::message::error);
-
+    if (param.cgrain.EPSM < 0)
+      io::messages.add("CGRAIN block: EPSM must be >= 0.0.",
+            "In_Parameter", io::message::error);
   }
 }
 
@@ -2764,7 +2775,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
           param.innerloop.gpu_device_number.clear();
           param.innerloop.gpu_device_number.resize(param.innerloop.number_gpus, -1);
           io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
-              "In_Parameter", io::message::notice);
+                  "In_Parameter", io::message::notice);
         }
       }
     }
@@ -4414,11 +4425,11 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
         io::messages.add("LOCALELEV block: Bad value for NTLESA (1,2)",
                 "In_Parameter", io::message::error);
     }
- 
+
     if (param.localelev.write < 0) {
-        io::messages.add("LOCALELEV block: Bad value for NTWLE (>=0)",
-                "In_Parameter", io::message::error);
-        param.localelev.write = 0;
+      io::messages.add("LOCALELEV block: Bad value for NTWLE (>=0)",
+              "In_Parameter", io::message::error);
+      param.localelev.write = 0;
     }
 
     // read the umbrellas

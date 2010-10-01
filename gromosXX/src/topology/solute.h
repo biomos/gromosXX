@@ -66,6 +66,19 @@ namespace topology
     {
       return m_bond;
     }
+
+    /**
+     * coarse grained bond accessor.
+     */
+    std::vector<two_body_term_struct> & cgbonds(){return m_cgbond;}
+
+    /**
+     * const coarse grained bond accessor.
+     */
+    std::vector<two_body_term_struct> const & cgbonds()const
+    {
+      return m_cgbond;
+    }
     
     /**
      * angle accessor.
@@ -120,7 +133,12 @@ namespace topology
      * the bonds.
      */
     std::vector<two_body_term_struct> m_bond;
-    
+
+    /**
+     * the coarse grained bonds.
+     */
+    std::vector<two_body_term_struct> m_cgbond;
+
     /**
      * the angles.
      */

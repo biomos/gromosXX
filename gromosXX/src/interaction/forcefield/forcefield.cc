@@ -120,7 +120,8 @@ int interaction::Forcefield
       return 1;
     DEBUG(5, "force old = " << math::v2s(conf.old().force(2)));
     DEBUG(5, "force current = " << math::v2s(conf.current().force(2)));
-    DEBUG(5, "force special = " << math::v2s(conf.special().eds.force_endstates[0](2)));
+    if (sim.param().eds.eds)
+      DEBUG(5, "force special = " << math::v2s(conf.special().eds.force_endstates[0](2)));
   }
 
   if (sim.param().eds.eds) {

@@ -202,7 +202,9 @@ int interaction::create_g96_nonbonded
 
   // standard LJ parameter
   if (sim.param().force.interaction_function ==
-      simulation::lj_crf_func || 
+      simulation::lj_crf_func ||
+      sim.param().force.interaction_function ==
+      simulation::cggromos_func ||
       sim.param().force.interaction_function ==
       simulation::pol_lj_crf_func ||
       sim.param().force.interaction_function ==
@@ -210,7 +212,7 @@ int interaction::create_g96_nonbonded
       sim.param().force.interaction_function ==
       simulation::lj_ls_func    )
     it.read_lj_parameter(ni->parameter().lj_parameter());
-  // and coarse-grained parameter
+  // and coarse-grained parameter (MARTINI model)
   if (sim.param().force.interaction_function ==
       simulation::cgrain_func)
     it.read_cg_parameter(ni->parameter().cg_parameter());
@@ -219,6 +221,8 @@ int interaction::create_g96_nonbonded
   pa->set_parameter(&ni->parameter());
   if ((!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
           simulation::lj_crf_func) ||
+          (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
+          simulation::cggromos_func) ||
           (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
           simulation::pol_lj_crf_func ) || (!sim.param().force.nonbonded_vdw
           && sim.param().force.interaction_function == simulation::pol_off_lj_crf_func )) {

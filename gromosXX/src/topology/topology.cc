@@ -88,6 +88,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_is_perturbed.clear();
   m_is_eds_perturbed.clear();
   m_is_polarisable.clear();
+  m_is_coarse_grained.clear();
   m_iac.clear();
   m_mass.clear();
   m_charge.clear();
@@ -137,6 +138,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     m_is_perturbed.insert(m_is_perturbed.end(), topo.m_is_perturbed.begin(), topo.m_is_perturbed.end());
     m_is_eds_perturbed.insert(m_is_eds_perturbed.end(), topo.m_is_eds_perturbed.begin(), topo.m_is_eds_perturbed.end());
     m_is_polarisable.insert(m_is_polarisable.end(), topo.m_is_polarisable.begin(), topo.m_is_polarisable.end());
+    m_is_coarse_grained.insert(m_is_coarse_grained.end(), topo.m_is_coarse_grained.begin(), topo.m_is_coarse_grained.end());
 
     for(int i=0; i<num_solute; ++i){
       m_iac.push_back(topo.m_iac[i]);
@@ -450,6 +452,7 @@ void topology::Topology::resize(unsigned int const atoms)
   m_is_perturbed.resize(atoms, false);
   m_is_eds_perturbed.resize(atoms, false);
   m_is_polarisable.resize(atoms, false);
+  m_is_coarse_grained.resize(atoms, false);
 }
 
 void topology::Topology::init(simulation::Simulation const & sim, std::ostream & os, bool quiet)

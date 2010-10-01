@@ -57,7 +57,7 @@ namespace io {
      */    
     virtual void read_g96_bonds(std::vector<interaction::bond_type_struct> &b,
 				std::ostream & os = std::cout);
-
+    
     /**
      * Read in the bond angle parameter.
      */    
