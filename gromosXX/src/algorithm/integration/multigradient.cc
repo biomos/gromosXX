@@ -200,6 +200,13 @@ bool check_variable(topology::Topology & topo,
       return false;
     }
     return true;
+  } else if (name == "CDIR") {
+    if (!sim.param().distanceres.distanceres) {
+      io::messages.add("Changing for CDIR without position restraining makes no sense",
+              "Multi_Gradient", io::message::error);
+      return false;
+    }
+    return true;
   }
 
   io::messages.add("Unkown variable " + var,
@@ -225,6 +232,8 @@ int algorithm::Multi_Gradient
       sim.multibath().bath(index-1).temperature = it->get_value(sim.time());
     } else if (name == "CPOR") {
       sim.param().posrest.force_constant = it->get_value(sim.time());
+    } else if (name == "CDIR") {
+      sim.param().distanceres.K = it->get_value(sim.time());
     }
   }
   m_timer.stop();
