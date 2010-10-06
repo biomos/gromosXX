@@ -90,9 +90,20 @@ int io::read_replica_input
  bool quiet)
 {
   if (read_parameter(args, sim, os, quiet) != 0) return -1;
+  if (check_parameter(sim) != 0) return -1;
 
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
 
+  // here the configuration has to be resized already because otherwise
+  // the special files are not read.
+  const int rep_num = sim.param().replica.num_T * sim.param().replica.num_l;
+  if (rep_num < 1){
+    io::messages.add("replica exchange with < 1 replica!",
+		     "in_configuration",
+		     io::message::error);
+    return -1;
+  }
+  conf.resize(rep_num);
   for (unsigned int i = 0; i < conf.size(); ++i) {
     if (read_special(args, topo, conf[i], sim, os, quiet) != 0) return -1;
   }

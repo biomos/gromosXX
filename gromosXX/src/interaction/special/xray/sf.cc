@@ -26,6 +26,11 @@
 #include <omp.h>
 #endif
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE special
+
 #ifdef HAVE_CLIPPER
 void interaction::xray::scale_sf(const topology::Topology & topo,
         configuration::Configuration & conf,
@@ -52,9 +57,14 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
   // e-term for time-average
   const double eterm = exp(-sim.time_step_size() / sim.param().xrayrest.tau);
 
+
   // loop over structure factors
   unsigned int j = 0;
   for (unsigned int i = 0; i < num_xray_rest; i++, j++) {
+    //calculate the inverse of the variance (weight factor)
+    double inv_var = 1.0;
+    if (topo.xray_restraints()[i].stddev_sf > math::epsilon) inv_var = 1.0 / (topo.xray_restraints()[i].stddev_sf * topo.xray_restraints()[i].stddev_sf);
+
     // filter calculated structure factors: save phases and amplitudes
     clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
     conf.special().xray_rest[j].sf_curr = fabs(fphi[hkl].f());
@@ -73,16 +83,21 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
     conf.special().xray_rest[j].phase_av = (1.0 - eterm) * conf.special().xray_rest[j].phase_curr + eterm * conf.special().xray_rest[j].phase_av;
 
     // calc sums
-    obs_calc += conf.special().xray_rest[j].sf_curr * topo.xray_restraints()[i].sf;
-    obs_calcavg += conf.special().xray_rest[j].sf_av * topo.xray_restraints()[i].sf;
-    sqr_calc += conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[i].sf_curr;
+    obs_calc += inv_var * conf.special().xray_rest[j].sf_curr * topo.xray_restraints()[i].sf;
+    obs_calcavg += inv_var * conf.special().xray_rest[j].sf_av * topo.xray_restraints()[i].sf;
+    sqr_calc += inv_var * conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[i].sf_curr;
     obs += topo.xray_restraints()[i].sf;
     calc += conf.special().xray_rest[j].sf_curr;
-    sqr_calcavg += conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
+    sqr_calcavg += inv_var * conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
     calcavg += conf.special().xray_rest[j].sf_av;
   }
   // loop over structure factors in R free set
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
+
+    //calculate the inverse of the variance (weight factor)
+    double inv_var = 1.0;
+    if (topo.xray_restraints()[i].stddev_sf > math::epsilon) inv_var = 1.0 / (topo.xray_restraints()[i].stddev_sf * topo.xray_restraints()[i].stddev_sf);
+
     // filter calculated structure factors: save phases and amplitudes for R free HKLs
     clipper::HKL hkl(topo.xray_rfree()[i].h, topo.xray_rfree()[i].k, topo.xray_rfree()[i].l);
     conf.special().xray_rest[j].sf_curr = fabs(fphi[hkl].f());
@@ -102,10 +117,10 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
 
     // calc sums
     obs_free += topo.xray_rfree()[i].sf;
-    obs_calc_free += conf.special().xray_rest[j].sf_curr * topo.xray_rfree()[i].sf;
-    obs_calcavg_free += conf.special().xray_rest[j].sf_av * topo.xray_rfree()[i].sf;
-    sqr_calc_free += conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[j].sf_curr;
-    sqr_calcavg_free += conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
+    obs_calc_free += inv_var * conf.special().xray_rest[j].sf_curr * topo.xray_rfree()[i].sf;
+    obs_calcavg_free += inv_var * conf.special().xray_rest[j].sf_av * topo.xray_rfree()[i].sf;
+    sqr_calc_free += inv_var * conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[j].sf_curr;
+    sqr_calcavg_free += inv_var * conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
   }
   // check for possible resolution problems
 #ifdef HAVE_ISNAN
@@ -191,10 +206,25 @@ void interaction::xray::calculate_energy_sf(const std::vector<topology::xray_res
         clipper::FFTmap_p1 & D_k,
         const double force_constant,
         double & energy) {
+  
+  
+  // calculate normalisation factor to get rid of resolution dependence.
+  double sum_xray_normalisation_factor = 0.0;
+  for (unsigned int i = 0; i < refl.size(); i++) {
+    const topology::xray_restraint_struct & xrs = refl[i];
+    double inv_var = 1.0;
+    if (xrs.stddev_sf > math::epsilon) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
+    sum_xray_normalisation_factor += inv_var * xrs.sf * xrs.sf;
+  }
+  double xray_normalisation_factor = 1.0;
+  if (sum_xray_normalisation_factor > math::epsilon) 
+    xray_normalisation_factor = 1.0 / sum_xray_normalisation_factor;
+
   // zero the reciprocal space difference map
   D_k.reset();
 
   double energy_sum = 0.0;
+
   // loop over retraints and calculate energy and difference map
   for (unsigned int i = 0; i < refl.size(); i++) {
     const topology::xray_restraint_struct & xrs = refl[i];
@@ -207,12 +237,13 @@ void interaction::xray::calculate_energy_sf(const std::vector<topology::xray_res
         // calculate energy-sum
         const double fobs = xrs.sf;
         double inv_var = 1.0;
-        if (xrs.stddev_sf != 0.0) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
+        if (xrs.stddev_sf > math::epsilon) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
         const double fcalc = refl_curr[i].sf_curr;
         const double term = fobs - k_inst * fcalc;
-        energy_sum += inv_var * term * term;
+        DEBUG(8, "\tterm: " << term << " inv_var: " << inv_var);
+        energy_sum += xray_normalisation_factor * inv_var * term * term;
         // calculate derivatives of target function
-        const double dterm = inv_var * (k_inst * fcalc - fobs) * k_inst;
+        const double dterm = xray_normalisation_factor * inv_var * (k_inst * fcalc - fobs) * k_inst;
         // Here, I tried to apply symmetry operations for non P1 spacegroups
         // but this had the effect the forces were not in agreement with
         // the finite difference result anymore. So we just safe the relection
@@ -228,13 +259,13 @@ void interaction::xray::calculate_energy_sf(const std::vector<topology::xray_res
         // calculate energy-sum
         const double fobs = xrs.sf;
         double inv_var = 1.0;
-        if (xrs.stddev_sf != 0.0) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
+        if (xrs.stddev_sf > math::epsilon) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
         const double fcalc = refl_curr[i].sf_av;
         const double term = fobs - k_avg * fcalc;
-        energy_sum += inv_var * term * term;
+        energy_sum += xray_normalisation_factor * inv_var * term * term;
         // calculate derivatives of target function
         // here we omit the 1-exp(-dt/tau) term.
-        const double dterm = inv_var * (k_avg * fcalc - fobs) * k_avg;
+        const double dterm = xray_normalisation_factor * inv_var * (k_avg * fcalc - fobs) * k_avg;
         D_k.set_hkl(hkl, clipper::data32::F_phi(force_constant * dterm, refl_curr[i].phase_curr));
         break;
       }
@@ -244,15 +275,15 @@ void interaction::xray::calculate_energy_sf(const std::vector<topology::xray_res
         // calculate energy-sum
         const double fobs = xrs.sf;
         double inv_var = 1.0;
-        if (xrs.stddev_sf != 0.0) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
+        if (xrs.stddev_sf > math::epsilon) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
         const double finst = refl_curr[i].sf_curr;
         const double favg = refl_curr[i].sf_av;
         const double inst_term = fobs - k_inst * finst;
         const double av_term = fobs - k_avg * favg;
-        energy_sum += inv_var * (inst_term * inst_term)*(av_term * av_term);
+        energy_sum += xray_normalisation_factor * inv_var * (inst_term * inst_term)*(av_term * av_term);
         // calculate derivatives of target function
         // here we omit the 1-exp(-dt/tau) term.
-        const double dterm = inv_var * ((k_inst * finst - fobs)*(av_term * av_term) * k_inst
+        const double dterm = xray_normalisation_factor * inv_var * ((k_inst * finst - fobs)*(av_term * av_term) * k_inst
                 + (k_avg * favg - fobs)*(inst_term * inst_term) * k_avg);
         D_k.set_hkl(hkl, clipper::data32::F_phi(force_constant * dterm, refl_curr[i].phase_curr));
         break;
@@ -263,6 +294,7 @@ void interaction::xray::calculate_energy_sf(const std::vector<topology::xray_res
 
   // finally calculate the energy
   energy = 0.5 * force_constant * energy_sum;
+  DEBUG(6, "energy: " << energy);
 }
 
 void interaction::xray::calculate_force_sf(clipper::FFTmap_p1 & D_k,

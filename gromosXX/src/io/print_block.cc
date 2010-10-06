@@ -445,6 +445,7 @@ namespace io
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
     os << type << "Total                : " << std::setw(12) << e.total << "\n";
     os << type << "Kinetic              : " << std::setw(21) << e.kinetic_total << "\n";
+    os << type << "Potential+Special    : " << std::setw(21) << e.potential_total + e.special_total << "\n";
     os << type << "Potential            : " << std::setw(21) << e.potential_total << "\n";
     os << type << "Covalent             : " << std::setw(30) << e.bonded_total << "\n";
     os << type << "Bonds                : " << std::setw(39) << e.bond_total << "\n";

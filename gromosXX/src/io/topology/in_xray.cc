@@ -387,7 +387,9 @@ io::In_Xrayresspec::read(topology::Topology& topo,
     topo.xray_occupancies().resize(topo.num_solute_atoms(), 0.0);
     for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {;
       _lineStream >> topo.xray_b_factors()[i] >> topo.xray_occupancies()[i];
+      //std::cerr << topo.xray_occupancies().size() << " xray size "<< std::endl;
 
+   //   std::cout << " i input " << i << std::endl;
       if (_lineStream.fail()) {
         topo.xray_b_factors()[i] = 0.01;
         topo.xray_occupancies()[i] = 0.0;
@@ -696,7 +698,71 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       sim.param().xrayrest.bfactor.max = bmax;
     }
   } // XRAYBFACTOROPTIMISATION
+  { // XRAYREPLICAEXCHANGE
+    buffer = m_block["XRAYREPLICAEXCHANGE"];
+    DEBUG(10, "XRAYREPLICAEXCHANGE block : " << buffer.size());
+    if(buffer.size()){
+      std::string s;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1,buffer.end() - 1,s));
 
+      int interruptor; //NTXRRE
+      double min_value, max_value; //CXREEMN CXREEMX
+      _lineStream >> interruptor >> min_value >> max_value;
+
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in XRAYREPLICAEXCHANGE block",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      switch (interruptor){
+        case 0: sim.param().xrayrest.replica_exchange_parameters.switcher = simulation::replica_exchange_off;
+        break;
+        case 1: sim.param().xrayrest.replica_exchange_parameters.switcher = simulation::replica_exchange_force;
+        break;
+        case 2: sim.param().xrayrest.replica_exchange_parameters.switcher = simulation::replica_exchange_resolution;
+        break;
+        //std::cout << "interruptor" << interruptor<< std::endl;
+        //std::cout << "switcher" << sim.param().xrayrest.replica_exchange_parameters.switcher << std::endl;
+        default: io::messages.add("Forbidden value for NTXRRE",
+                "In_Xrayresspec", io::message::error);
+                return;
+      }
+      if (min_value >= max_value || min_value < 0.0){
+        io::messages.add("Minimal and/or maximal force have/has absurd value(s)",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_min = min_value;
+      sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_max = max_value;
+    }
+  } //XRAYREPLICAEXCHANGE
+  { //SFCALC
+    buffer = m_block["SFCALC"];
+    if(buffer.size()){
+      std::string s;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1,buffer.end() - 1,s));
+
+      double sf_tolerance; //SFCTOL
+      unsigned int sf_constant; //SFCST
+      _lineStream >> sf_tolerance >> sf_constant;
+
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in SFCALC block",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+
+      if (sf_tolerance < 0.0){
+        io::messages.add("tolerance has negative value",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      sim.param().xrayrest.structure_factor_calculation.atom_move_tolerance = sf_tolerance;
+      sim.param().xrayrest.structure_factor_calculation.steps_nb_constant = sf_constant;
+    }
+  }//SFCALC
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {
       case simulation::xrayrest_off :

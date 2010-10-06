@@ -14,6 +14,13 @@
 #include "kspace.h"
 #include "../util/umbrella.h"
 
+// Additional Clipper Headers
+#ifdef HAVE_CLIPPER
+#include <clipper/clipper.h>
+#include <clipper/clipper-ccp4.h>
+#include <clipper/clipper-contrib.h>
+#endif
+
 namespace topology {
   class Topology;
 }
@@ -430,6 +437,53 @@ namespace configuration {
 
       } /** enveloping distribution sampling information */ eds;
 
+      struct xray_conf_struct {
+        #ifdef HAVE_CLIPPER
+            /**
+             * the atoms
+             */
+            clipper::Atom_list atoms;
+            /**
+             * the atoms used for structure factor calculation
+             */
+            clipper::Atom_list atoms_sf;
+            /**
+             * the calculated electron density
+             */
+            clipper::Xmap<clipper::ftype32> rho_calc;
+            /**
+             * the observed electron density
+             */
+            clipper::Xmap<clipper::ftype32> rho_obs;
+            /**
+             * the HKLs (reflections)
+             */
+            clipper::HKL_info hkls;
+            /**
+             * the structure factors
+             */
+            clipper::HKL_data<clipper::data32::F_phi> fphi;
+            /**
+             * structure factos built from the observed amplitudes and the
+             * calculated phases
+             */
+            clipper::HKL_data<clipper::data32::F_phi> fphi_obs;
+            /**
+             * the gradient map
+             */
+            clipper::FFTmap_p1 D_k;
+            /**
+             * the map for the gradient convolution
+             */
+            clipper::Xmap<clipper::ftype32> d_r;
+            /**
+             * spacegroup for NCS restraints
+             */
+            clipper::Spacegroup ncs_spacegroup;
+        #endif
+
+      }xray_conf;
+
       /**
        * lattice shifts
        */
@@ -659,7 +713,6 @@ namespace configuration {
 
 
   }; // Configuration
-
 } // configuration
 
 #endif

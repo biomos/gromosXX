@@ -48,6 +48,25 @@ namespace simulation
     constr_gpu_shake
 
   };
+   /**
+    * @enum replica_exchange_interruptor
+    * mode switcher
+    * of replica exchange
+    */
+  enum replica_exchange_interruptor_enum{
+      /**
+       * no replica exchange
+       */
+      replica_exchange_off = 0,
+      /**
+       * replica exchange with force constant
+       */
+      replica_exchange_force = 1,
+      /**
+       * replica exchange with resolution
+       */
+      replica_exchange_resolution = 2
+  };
   /**
    * @enum special_loop_enum
    * special solvent loop
@@ -1512,9 +1531,56 @@ namespace simulation
          */
         double min;
       } /** B factor settings */ bfactor;
+     /**
+     * @struct replica_exchange_parameters_struct
+     * default values:
+      * -no replica exchange
+      * -minimum value set to 0.0
+      * -maximum value set to 0.0
+     */
+      struct replica_exchange_parameters_struct
+    {
+        replica_exchange_parameters_struct() :
+        switcher(replica_exchange_off),
+        lambda_dependant_min(0.0),
+        lambda_dependant_max(0.0)
+        {
+        }
+        /**         
+         *replica exchange switcher
+         */
+        replica_exchange_interruptor_enum switcher;
+        /**
+         * minimal force constant
+         */
+        double lambda_dependant_min;
+        /**
+         * maximal force constant
+         */
+        double lambda_dependant_max;
+     }replica_exchange_parameters;
+     /**
+     * @struct structure_factor_calculation_struct
+     * default values:
+     */
+      struct structure_factor_calculation_struct
+    {
+        structure_factor_calculation_struct() :
+        atom_move_tolerance(0.0),
+        steps_nb_constant(1)
+        {
+        }
+        /**
+         * tolerance for atom move
+         */
+        double atom_move_tolerance;
+        /**
+         * every how many steps
+         */
+        unsigned int steps_nb_constant;
+     } structure_factor_calculation;
     } /** Xray restraint parameters */ xrayrest;
-
-    /**
+     /**
      * @struct distanceres_struct
      * DISTANCERES block
      */

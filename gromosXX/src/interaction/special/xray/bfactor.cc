@@ -89,7 +89,7 @@ void interaction::xray::fit_bfactor(topology::Topology & topo,
        gsl_multimin_fdfminimizer *s = gsl_multimin_fdfminimizer_alloc(T, atoms.size());
 
   gsl_multimin_fdfminimizer_set(s, &fit_func, B, 0.01, 1e-4);
-  unsigned int iter = 0;
+  int iter = 0;
   int status;
   do {
     iter++;

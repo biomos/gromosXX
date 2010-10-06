@@ -27,7 +27,12 @@
 #include <interaction/special/xray/sf.h>
 #include <interaction/special/xray/bfactor.h>
 using namespace interaction::xray;
+#include <clipper/clipper.h>
+#include <limits>
 #endif
+
+
+
 
 #ifdef OMP
 #include <omp.h>
@@ -52,15 +57,40 @@ int interaction::Xray_Restraint_Interaction
         configuration::Configuration &conf,
         simulation::Simulation &sim) {
 #ifdef HAVE_CLIPPER
-  const double & to_ang = sim.param().xrayrest.to_angstrom;
-
-  const clipper::Cell & cell = rho_calc.cell();
-
+    const double & to_ang = sim.param().xrayrest.to_angstrom;
+    clipper::Atom_list & atoms = conf.special().xray_conf.atoms;
+    clipper::Atom_list & atoms_sf = conf.special().xray_conf.atoms_sf;
+    clipper::Xmap<clipper::ftype32> & rho_calc = conf.special().xray_conf.rho_calc;
+    clipper::Xmap<clipper::ftype32> & rho_obs = conf.special().xray_conf.rho_obs;
+    clipper::HKL_data<clipper::data32::F_phi> & fphi = conf.special().xray_conf.fphi;
+    clipper::HKL_data<clipper::data32::F_phi> & fphi_obs = conf.special().xray_conf.fphi_obs;
+    clipper::FFTmap_p1 & D_k = conf.special().xray_conf.D_k;
+    clipper::Xmap<clipper::ftype32> & d_r = conf.special().xray_conf.d_r;
+    clipper::Spacegroup & ncs_spacegroup = conf.special().xray_conf.ncs_spacegroup;
+    const clipper::Cell & cell = rho_calc.cell();
   m_timer.start();
   // get number of atoms in simulation
   const int atoms_size = topo.num_atoms();
   // update clipper atomvec: convert the position to Angstrom
   math::Periodicity<math::triclinic> periodicity(conf.current().box);
+
+  bool update = false;
+  if (!sim.steps() ||
+          sim.steps() % sim.param().xrayrest.structure_factor_calculation.steps_nb_constant == 0)
+    update = true;
+  const double tol2 = sim.param().xrayrest.structure_factor_calculation.atom_move_tolerance *
+          sim.param().xrayrest.structure_factor_calculation.atom_move_tolerance;
+  for (int i = 0; i < atoms_size && update == false; i++) {
+    const math::Vec & new_pos = conf.current().pos(i);
+    const math::Vec old_pos(atoms_sf[i].coord_orth().x() / to_ang,
+            atoms_sf[i].coord_orth().y() / to_ang,
+            atoms_sf[i].coord_orth().z() / to_ang);
+    math::Vec ni;
+    periodicity.nearest_image(new_pos, old_pos, ni);
+    if (math::abs2(ni) > tol2)
+      update = true;
+  }
+
   for (int i = 0; i < atoms_size; i++) {
     math::Vec in_box = conf.current().pos(i);
     periodicity.put_into_positive_box(in_box);
@@ -69,19 +99,48 @@ int interaction::Xray_Restraint_Interaction
             in_box(1), in_box(2)));
   }
 
+  // compute the new force constant from the lambda value
+  if(sim.param().xrayrest.replica_exchange_parameters.switcher == simulation::replica_exchange_force){
+    double min = sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_min;
+    double max = sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_max;
+    sim.param().xrayrest.force_constant = topo.lambda() * (max - min) + min;
+  }
+
+  // compute the resolution from the lambda value
+  double data_resolution = sim.param().xrayrest.resolution;
+  if (sim.param().xrayrest.replica_exchange_parameters.switcher == simulation::replica_exchange_resolution){
+    double min = sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_min;
+    double max = sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_max;
+    data_resolution = topo.lambda() * (max - min) + min;
+  }
+
+  // filter HKLs for resolution
+  std::vector<topology::xray_restraint_struct> xray_restraints_backup = topo.xray_restraints();
+  topo.xray_restraints().clear();
+  for (unsigned int i = 0; i < xray_restraints_backup.size(); i++) {
+    const clipper::HKL hkl(xray_restraints_backup[i].h, xray_restraints_backup[i].k, xray_restraints_backup[i].l);
+    double hkl_resolution =sqrt(1.0 / hkl.invresolsq(cell)) / to_ang;
+    if (hkl_resolution > data_resolution) {
+      topo.xray_restraints().push_back(xray_restraints_backup[i]);
+    }
+  }
+  
   // fit the b factor
-  if (sim.param().xrayrest.bfactor.step && !sim.steps() || sim.steps() % sim.param().xrayrest.bfactor.step == 0) {
+  if (sim.param().xrayrest.bfactor.step && (!sim.steps() || sim.steps() % sim.param().xrayrest.bfactor.step == 0)) {
     m_timer.start("B factor fitting");
     fit_bfactor(topo, conf, sim, cell, atoms, fphi, fphi_obs, rho_calc, D_k, d_r);
     m_timer.stop("B factor fitting");
   }
 
-  // Calculate structure factors
-  m_timer.start("structure factor");
-  calculate_electron_density(rho_calc, atoms);
-  // FFT the electron density to obtain the structure factors
-  rho_calc.fft_to(fphi);
-  m_timer.stop("structure factor");
+  if (update) {
+    atoms_sf = atoms;
+    // Calculate structure factors
+    m_timer.start("structure factor");
+    calculate_electron_density(rho_calc, atoms);
+    // FFT the electron density to obtain the structure factors
+    rho_calc.fft_to(fphi);
+    m_timer.stop("structure factor");
+  }
   
   m_timer.start("scaling");
   scale_sf(topo, conf, sim, fphi, fphi_obs);
@@ -234,7 +293,7 @@ int interaction::Xray_Restraint_Interaction
   double sum_force_phys = 0.0, sum_force_xray = 0.0;
   double sum_force_phys2 = 0.0, sum_force_xray2 = 0.0;
 
-  for(unsigned int i = 0; i < atoms_size; ++i) {
+  for(int i = 0; i < atoms_size; ++i) {
     const double f_phys = math::abs(conf.current().force(i));
     sum_force_phys += f_phys;
     sum_force_phys2 += f_phys * f_phys;
@@ -250,10 +309,14 @@ int interaction::Xray_Restraint_Interaction
 
   if (sim.param().print.stepblock && sim.steps() % sim.param().print.stepblock == 0) {
     std::cout << "XRAY RESTRAINING\n"
-            << "R value (inst.)     : " << std::setw(4) << conf.special().xray.R_inst << std::endl
-            << "free R value (avg.) : " << std::setw(4) << conf.special().xray.R_free_inst << std::endl
-            << "R value (inst.)     : " << std::setw(4) << conf.special().xray.R_avg << std::endl
-            << "free R value (avg.) : " << std::setw(4) << conf.special().xray.R_free_avg << std::endl
+            << "Lambda               : " << std::setw(4) << topo.lambda() << std::endl
+            << "Resolution (in use)  : " << std::setw(4) << data_resolution << std::endl
+            << "Reflections (in use) : " << std::setw(4) << topo.xray_restraints().size() << std::endl
+            << "Energy               : " << std::setw(13) << conf.current().energies.xray_total << std::endl
+            << "R value (inst.)      : " << std::setw(4) << conf.special().xray.R_inst << std::endl
+            << "free R value (inst.) : " << std::setw(4) << conf.special().xray.R_free_inst << std::endl
+            << "R value (avg.)       : " << std::setw(4) << conf.special().xray.R_avg << std::endl
+            << "free R value (avg.)  : " << std::setw(4) << conf.special().xray.R_free_avg << std::endl
             << std::endl
             << "physical mean force   : " << std::setw(13) << mean_force_phys
             << " +/- " << std::setw(13) << stddev_force_phys << std::endl
@@ -333,6 +396,9 @@ int interaction::Xray_Restraint_Interaction
     } // for umbrellas
   } // steps?
 
+  // restore the restraints data in the topology from the backup
+  topo.xray_restraints() = xray_restraints_backup;
+
   return 0;
 }
 
@@ -341,9 +407,20 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
         simulation::Simulation &sim,
         std::ostream &os,
         bool quiet) {
+
 #ifdef HAVE_CLIPPER
   DEBUG(15, "Xray_Restraint_Interaction: init")
   const double sqpi2 = (math::Pi * math::Pi * 8.0);
+  clipper::Atom_list & atoms = conf.special().xray_conf.atoms;
+  clipper::Atom_list & atoms_sf = conf.special().xray_conf.atoms_sf;
+  clipper::Xmap<clipper::ftype32> & rho_calc = conf.special().xray_conf.rho_calc;
+  clipper::Xmap<clipper::ftype32> & rho_obs = conf.special().xray_conf.rho_obs;
+  clipper::HKL_info & hkls = conf.special().xray_conf.hkls;
+  clipper::HKL_data<clipper::data32::F_phi> & fphi = conf.special().xray_conf.fphi;
+  clipper::HKL_data<clipper::data32::F_phi> & fphi_obs = conf.special().xray_conf.fphi_obs;
+  clipper::FFTmap_p1 & D_k = conf.special().xray_conf.D_k;
+  clipper::Xmap<clipper::ftype32> & d_r = conf.special().xray_conf.d_r;
+  clipper::Spacegroup & ncs_spacegroup = conf.special().xray_conf.ncs_spacegroup;
 
   // Redirect clipper errors
   clipper::Message message;
@@ -368,11 +445,15 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   const double alpha = acos(math::costest(dot(box(1), box(2)) / (b * c)));
   const double beta = acos(math::costest(dot(box(0), box(2)) / (a * c)));
   const double gamma = acos(math::costest(dot(box(0), box(1)) / (a * b)));
+  DEBUG(6, "a: " << a << " b: " << b << " c: " << c << " al.: " << alpha <<
+          " be.: " << beta << " ga.: " << gamma);
   clipper::Cell_descr cellinit(a * to_ang, b * to_ang, c * to_ang,
           alpha, beta, gamma);
   clipper::Cell cell(cellinit);
 
   clipper::Resolution reso(sim.param().xrayrest.resolution * to_ang);
+  DEBUG(6, "resolution: " << sim.param().xrayrest.resolution );
+
 
     // create a grid and a crystalographic map
   const double shannon_rate = 1.5;
@@ -452,6 +533,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     atomvec.push_back(atm);
   }
   atoms = clipper::Atom_list(atomvec);
+  atoms_sf = atoms;
 
   conf.special().xray_rest.resize(topo.xray_restraints().size() + topo.xray_rfree().size());
 
@@ -493,6 +575,35 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     conf.special().xray_bfoc.resize(atoms.size());
   }
 
+  // Check if too low resolution
+  double min_reso = std::numeric_limits<double>::min();
+  double max_reso = std::numeric_limits<double>::max();
+  for (unsigned int i = 0; i < topo.xray_restraints().size(); i++) {
+    // calc max. experimental-index norm
+    const clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
+    double hkl_resolution = sqrt(1.0 / hkl.invresolsq(cell)) / to_ang;
+    min_reso = std::max(min_reso, hkl_resolution);
+    max_reso = std::min(max_reso, hkl_resolution);
+  }
+  for (unsigned int i = 0; i < topo.xray_rfree().size(); i++) {
+    // calc max. experimental-index norm
+    const clipper::HKL hkl(topo.xray_rfree()[i].h, topo.xray_rfree()[i].k, topo.xray_rfree()[i].l);
+    double hkl_resolution = sqrt(1.0 / hkl.invresolsq(cell)) / to_ang;
+    min_reso = std::max(min_reso, hkl_resolution);
+    max_reso = std::min(max_reso, hkl_resolution);
+  }
+  double calc_max_reso = std::numeric_limits<double>::max();
+  for (int i = 0; i < hkls.num_reflections(); i++) {
+    // calc max. calculation-index norm
+    double hkl_resolution = sqrt(1.0 / hkls.hkl_of(i).invresolsq(cell)) / to_ang;
+    calc_max_reso = std::min(calc_max_reso, hkl_resolution);
+  }
+
+  if (max_reso < calc_max_reso) {
+    io::messages.add("Xray_restraint_interaction", "Too little reflections. Set higher resolution!", io::message::error);
+    return 1;
+  }
+
   if (!quiet) {
     os.precision(2);
     os << "\nXRAYREST\n";
@@ -530,7 +641,9 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     os << "Num experimental reflections: " << topo.xray_restraints().size() << std::endl;
     os << "Num R-free reflections      : " << topo.xray_rfree().size() << std::endl;
     os << "Num expected reflections    : " << hkls.num_reflections() << std::endl;
-    os << "Writing electron density    : " << sim.param().xrayrest.writexmap << std::endl << std::endl;
+    os << "Max. resolution of data     : " << max_reso << std::endl;
+    os << "Min. resolution of data     : " << min_reso << std::endl;
+    os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl << std::endl;
     if (sim.param().xrayrest.local_elevation) {
       os << "The following local elevation umbrellas are weighted by the electron density:" << std::endl;
       std::vector<topology::xray_umbrella_weight_struct>::const_iterator it =
@@ -583,37 +696,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 
     os << "END" << std::endl;
   }
-  // Check if too low resolution
-  double expnorm = 0.0, calcnorm = 0.0, tempnorm = 0.0;
-  for (unsigned int i = 0; i < topo.xray_restraints().size(); i++) {
-    // calc max. experimental-index norm
-    tempnorm = sqrt(double((topo.xray_restraints()[i].h * topo.xray_restraints()[i].h)+
-            (topo.xray_restraints()[i].k * topo.xray_restraints()[i].k)+
-            (topo.xray_restraints()[i].l * topo.xray_restraints()[i].l)));
-    if (tempnorm > expnorm)
-      expnorm = tempnorm;
-  }
-  for (unsigned int i = 0; i < topo.xray_rfree().size(); i++) {
-    // calc max. experimental-index norm
-    tempnorm = sqrt(double((topo.xray_rfree()[i].h * topo.xray_rfree()[i].h)+
-            (topo.xray_rfree()[i].k * topo.xray_rfree()[i].k)+
-            (topo.xray_rfree()[i].l * topo.xray_rfree()[i].l)));
-    if (tempnorm > expnorm)
-      expnorm = tempnorm;
-  }
-  for (int i = 0; i < hkls.num_reflections(); i++) {
-    // calc max. calculation-index norm
-    tempnorm = sqrt(double((hkls.hkl_of(i).h() * hkls.hkl_of(i).h())+
-            (hkls.hkl_of(i).k() * hkls.hkl_of(i).k())+
-            (hkls.hkl_of(i).l() * hkls.hkl_of(i).l())));
-    if (tempnorm > calcnorm)
-      calcnorm = tempnorm;
-  }
 
-  if (expnorm > calcnorm) {
-    io::messages.add("Xray_restraint_interaction", "Too little reflections. Set higher resolution!", io::message::error);
-    return 1;
-  }
 #endif
   return 0;
 }

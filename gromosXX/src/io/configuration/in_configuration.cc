@@ -199,6 +199,7 @@ void io::In_Configuration::read_replica
     read_lattice_shifts(topo, conf[0], sim, os);
     read_box(topo, conf[0], sim, os);
     read_jvalue(topo, conf[0], sim, os);
+    //read_xray(topo, conf[0], sim, os);
     read_pscale(topo, conf[0], sim, os);
     read_flexv(topo, conf[0], sim, os);
     read_stochastic_integral(topo, conf[0], sim, os);
@@ -761,7 +762,6 @@ bool io::In_Configuration::read_xray
         simulation::Simulation & sim,
         std::ostream & os) {
   std::vector<std::string> buffer;
-
   if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
 
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst) {
@@ -799,7 +799,7 @@ bool io::In_Configuration::read_xray
         _read_xray_umbrellaweightthesholds(buffer, topo.xray_umbrella_weights());
       }
     }
-
+      
     buffer = m_block["XRAYBFOCCSPEC"];
     if (buffer.size()) {
       block_read.insert("XRAYBFOCCSPEC");
@@ -2706,4 +2706,6 @@ _read_xray_bfactors(std::vector<std::string> &buffer,
       return false;
     }
   }
+  return true;
 }
+

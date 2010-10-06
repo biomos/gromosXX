@@ -92,10 +92,8 @@ int main(int argc, char *argv[]){
 
     // the master
     util::Replica_Exchange_Master rep_master;
-
     std::cout << "starting master thread" << std::endl;
     error = rep_master.run(args);
-    
   }
   else if (args.count("slave") >= 0){
     

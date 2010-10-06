@@ -44,6 +44,7 @@
 
 #include "replica_exchange.h"
 
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
@@ -127,11 +128,12 @@ int util::Replica_Exchange_Master::run
     close(serv_socket);
     return 2;
   }
+
   // write whenever we want!
   sim.param().write.position = 1;
 
   // initialises everything
-  for(unsigned int i=0; i<m_conf.size(); ++i){
+  for(unsigned int i=0; i< m_conf.size(); ++i){
     if (md.init(topo, m_conf[i], sim, std::cout)){
       std::cerr << "md init failed!" << std::endl;
       close(serv_socket);
@@ -411,7 +413,7 @@ int util::Replica_Exchange_Master::run
 	  //////////////////////////////////////////////////////////////////////////////////////////////////////
 	  // client asks for job
 	  //////////////////////////////////////////////////////////////////////////////////////////////////////
-	  select_job(sim);
+      select_job(sim);
 
 	  close(cl_socket);
 	  break;
@@ -526,7 +528,7 @@ int util::Replica_Exchange_Master::select_job(simulation::Simulation & sim)
 
     // assign it!
     replica_data[select_replica].state = running;
-    
+
     // all ok, sending replica
     ch = 0;
     if (write(cl_socket, &ch, 1) != 1){
@@ -760,12 +762,11 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
   }
   
   if (j == i){ // no switch this time...
-    
     replica_data[i].probability = 0.0;
     replica_data[i].switched = false;
 
     if (!quiet)
-      print_replica(i, param, std::cout);
+    print_replica(i, param, std::cout);
     print_replica(i, param, rep_out);
 
     set_next_switch(i);
@@ -776,7 +777,7 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
 
   // try switch...
   double probability = switch_probability(i, j, param);
-
+ 
   // equilibrate starting structures w/o switching
   if (replica_data[i].run < param.replica.equilibrate)
     probability = 0.0;
@@ -859,19 +860,19 @@ double util::Replica_Exchange_Master::switch_probability
     delta =
       bi * (replica_data[j].epot_j - replica_data[i].epot_i) -
       bj * (replica_data[j].epot_i - replica_data[i].epot_j);
+    /*
+      std::cout << "i=" << i << " j=" << j << " bi=" << bi << "  bj=" << bj
+      << "  [i]epot_i=" << replica_data[i].epot_i
+      << "  [j]epot_i=" << replica_data[j].epot_i
+      << "  [i]epot_j=" << replica_data[i].epot_j
+      << "  [j]epot_j=" << replica_data[j].epot_j
+      << "\n";*/
   }
   else{
     // standard formula
     delta =
       (bi - bj) *
       (replica_data[j].epot_i - replica_data[i].epot_i);
-
-    /*
-      std::cout << "bi=" << bi << "  bj=" << bj 
-      << "  epot_i=" << replica_data[i].epot_i
-      << "  epot_j=" << replica_data[j].epot_i
-      << "\n";
-    */
   }
   
   // and pressure coupling
