@@ -134,9 +134,9 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     // MD ?
     else if(sim.param().integrate.method == simulation::integrate_leap_frog){
       if(sim.param().addecouple.adgr>0)
-       md_seq.push_back(new algorithm::Leap_Frog_Velocity);
-      else
        md_seq.push_back(new algorithm::Scaled_Leap_Frog_Velocity);
+      else
+       md_seq.push_back(new algorithm::Leap_Frog_Velocity);
     }
     // ??
     else{
