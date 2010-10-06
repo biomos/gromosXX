@@ -39,16 +39,14 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
         clipper::HKL_data<clipper::data32::F_phi> & fphi_obs) {
   // sqr_calc:       sum of squared Fcalc
   // obs:            sum of Fobs
-  // calc:           sum of Fcalc
   // obs_calc:       sum of Fobs*Fcalc
   // obs_calcavg:    sum of Fobs*Fcalc(averaged)
   // obs_k_calcavg:  sum of Fobs-k_avg*Fcalc(averaged)
   // obs_k_calc:     sum of Fobs-k*Fcalc
   // sqr_calcavg:    sum of squared time-averaged Fcalc
-  // calcavg:        sum of time-averaged Fcalc
   // zero all the sums
-  double sqr_calc = 0.0, obs = 0.0, obs_free = 0.0, calc = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
-         sqr_calcavg = 0.0, calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0,
+  double sqr_calc = 0.0, obs = 0.0, obs_free = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
+         sqr_calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0,
          obs_k_calc_free = 0.0, obs_k_calcavg_free = 0.0, obs_calc_free = 0.0, obs_calcavg_free = 0.0,
          sqr_calc_free = 0.0, sqr_calcavg_free = 0.0;
   // Number of reflections
@@ -61,10 +59,6 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
   // loop over structure factors
   unsigned int j = 0;
   for (unsigned int i = 0; i < num_xray_rest; i++, j++) {
-    //calculate the inverse of the variance (weight factor)
-    double inv_var = 1.0;
-    if (topo.xray_restraints()[i].stddev_sf > math::epsilon) inv_var = 1.0 / (topo.xray_restraints()[i].stddev_sf * topo.xray_restraints()[i].stddev_sf);
-
     // filter calculated structure factors: save phases and amplitudes
     clipper::HKL hkl(topo.xray_restraints()[i].h, topo.xray_restraints()[i].k, topo.xray_restraints()[i].l);
     conf.special().xray_rest[j].sf_curr = fabs(fphi[hkl].f());
@@ -82,22 +76,20 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
     conf.special().xray_rest[j].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[j].sf_curr + eterm * conf.special().xray_rest[j].sf_av);
     conf.special().xray_rest[j].phase_av = (1.0 - eterm) * conf.special().xray_rest[j].phase_curr + eterm * conf.special().xray_rest[j].phase_av;
 
+    // calculate the inverse of the variance (weight factor)
+    double inv_var = 1.0;
+    if (topo.xray_restraints()[i].stddev_sf > math::epsilon)
+      inv_var = 1.0 / (topo.xray_restraints()[i].stddev_sf * topo.xray_restraints()[i].stddev_sf);
+
     // calc sums
     obs_calc += inv_var * conf.special().xray_rest[j].sf_curr * topo.xray_restraints()[i].sf;
     obs_calcavg += inv_var * conf.special().xray_rest[j].sf_av * topo.xray_restraints()[i].sf;
     sqr_calc += inv_var * conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[i].sf_curr;
-    obs += topo.xray_restraints()[i].sf;
-    calc += conf.special().xray_rest[j].sf_curr;
+    obs += inv_var * topo.xray_restraints()[i].sf;
     sqr_calcavg += inv_var * conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
-    calcavg += conf.special().xray_rest[j].sf_av;
   }
   // loop over structure factors in R free set
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
-
-    //calculate the inverse of the variance (weight factor)
-    double inv_var = 1.0;
-    if (topo.xray_restraints()[i].stddev_sf > math::epsilon) inv_var = 1.0 / (topo.xray_restraints()[i].stddev_sf * topo.xray_restraints()[i].stddev_sf);
-
     // filter calculated structure factors: save phases and amplitudes for R free HKLs
     clipper::HKL hkl(topo.xray_rfree()[i].h, topo.xray_rfree()[i].k, topo.xray_rfree()[i].l);
     conf.special().xray_rest[j].sf_curr = fabs(fphi[hkl].f());
@@ -115,8 +107,13 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
     conf.special().xray_rest[j].sf_av = fabs((1.0 - eterm) * conf.special().xray_rest[j].sf_curr + eterm * conf.special().xray_rest[j].sf_av);
     conf.special().xray_rest[j].phase_av = (1.0 - eterm) * conf.special().xray_rest[j].phase_curr + eterm * conf.special().xray_rest[j].phase_av;
 
+    // calculate the inverse of the variance (weight factor)
+    double inv_var = 1.0;
+    if (topo.xray_rfree()[i].stddev_sf > math::epsilon)
+      inv_var = 1.0 / (topo.xray_rfree()[i].stddev_sf * topo.xray_rfree()[i].stddev_sf);
+
     // calc sums
-    obs_free += topo.xray_rfree()[i].sf;
+    obs_free += inv_var * topo.xray_rfree()[i].sf;
     obs_calc_free += inv_var * conf.special().xray_rest[j].sf_curr * topo.xray_rfree()[i].sf;
     obs_calcavg_free += inv_var * conf.special().xray_rest[j].sf_av * topo.xray_rfree()[i].sf;
     sqr_calc_free += inv_var * conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[j].sf_curr;
@@ -124,7 +121,7 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
   }
   // check for possible resolution problems
 #ifdef HAVE_ISNAN
-  if (std::isnan(calc)){
+  if (std::isnan(sqr_calc)){
     io::messages.add("Structure factors were NaN. This can be due to numerical problems. "
                      "Try to slighlty increase the resolution.", "X-Ray Restraints", io::message::error);
     return;
@@ -156,11 +153,15 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
   j = 0;
   for (unsigned int i = 0; i < num_xray_rest; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_restraints()[i];
-    obs_k_calc += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
-    obs_k_calcavg += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
+    double inv_var = 1.0;
+    if (xrs.stddev_sf > math::epsilon)
+      inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
+
+    obs_k_calc += inv_var* fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg += inv_var * fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
 
     clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
-    // save Fobs and PhiCalc for density maps. This will be corrected
+    // save Fobs and PhiCalc for 2Fobs-kFcalc maps. This will be corrected
     // for symmetry in the FFT step.
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_inst)
       fphi_obs.set_data(hkl, 
@@ -174,8 +175,13 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
   // and for R free
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_rfree()[i];
-    obs_k_calc_free += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
-    obs_k_calcavg_free += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
+    //calculate the inverse of the variance (weight factor)
+    double inv_var = 1.0;
+    if (xrs.stddev_sf > math::epsilon)
+      inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
+    
+    obs_k_calc_free += inv_var * fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg_free += inv_var * fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
   }
 
   // calculate R factors: R_inst and R_avg
