@@ -229,6 +229,12 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         return;
       }
 
+      if (sf < 0.0 || stddev_sf < 0.0) {
+        io::messages.add("bad line in XRAYRESSPEC block: negative SF/STDDEV",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+
       topo.xray_restraints().push_back(topology::xray_restraint_struct(h, k, l, sf, stddev_sf));
 
     }
@@ -261,6 +267,12 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
         if (_lineStream.fail()) {
           io::messages.add("bad line in XRAYRFREESPEC block",
+                  "In_Xrayresspec", io::message::error);
+          return;
+        }
+
+        if (sf < 0.0 || stddev_sf < 0.0) {
+          io::messages.add("bad line in XRAYRESSPEC block: negative SF/STDDEV",
                   "In_Xrayresspec", io::message::error);
           return;
         }
