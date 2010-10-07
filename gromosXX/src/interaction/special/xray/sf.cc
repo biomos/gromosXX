@@ -189,6 +189,11 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
   // and for R free
   for (unsigned int i = 0; i < num_xray_rfree; i++, j++) {
     const topology::xray_restraint_struct & xrs = topo.xray_rfree()[i];
+    const clipper::HKL hkl(xrs.h, xrs.k, xrs.l);
+    // skip them for sums if they are out of the requested resolution range
+    if (invresolsq < fphi.invresolsq(fphi.hkl_info().index_of(hkl)))
+      continue;
+
     
     //calculate the inverse of the variance (weight factor)
     double inv_var = 1.0;
