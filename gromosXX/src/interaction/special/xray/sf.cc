@@ -38,11 +38,11 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
         const clipper::HKL_data<clipper::data32::F_phi> & fphi,
         clipper::HKL_data<clipper::data32::F_phi> & fphi_obs) {
   // sqr_calc:       sum of w*Fcalc^2
-  // sqr_obs:        sum of w*Fobs^2
+  // obs:            sum of Fobs
   // obs_calc:       sum of w*Fobs*Fcalc
-  // obs_k_calc:     sum of w*(Fobs-k*Fcalc)^2
+  // obs_k_calc:     sum of |Fobs-k*Fcalc|
   // zero all the sums
-  double sqr_calc = 0.0, sqr_obs = 0.0, sqr_obs_free = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
+  double sqr_calc = 0.0, obs = 0.0, obs_free = 0.0, obs_calc = 0.0, obs_k_calc = 0.0,
          sqr_calcavg = 0.0, obs_calcavg = 0.0, obs_k_calcavg = 0.0,
          obs_k_calc_free = 0.0, obs_k_calcavg_free = 0.0, obs_calc_free = 0.0, obs_calcavg_free = 0.0,
          sqr_calc_free = 0.0, sqr_calcavg_free = 0.0;
@@ -90,7 +90,7 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
     obs_calc += inv_var * conf.special().xray_rest[j].sf_curr * topo.xray_restraints()[i].sf;
     obs_calcavg += inv_var * conf.special().xray_rest[j].sf_av * topo.xray_restraints()[i].sf;
     sqr_calc += inv_var * conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[i].sf_curr;
-    sqr_obs += inv_var * topo.xray_restraints()[i].sf * topo.xray_restraints()[i].sf;
+    obs += topo.xray_restraints()[i].sf;
     sqr_calcavg += inv_var * conf.special().xray_rest[j].sf_av * conf.special().xray_rest[j].sf_av;
   }
   // loop over structure factors in R free set
@@ -121,7 +121,7 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
       inv_var = 1.0 / (topo.xray_rfree()[i].stddev_sf * topo.xray_rfree()[i].stddev_sf);
 
     // calc sums
-    sqr_obs_free += inv_var * topo.xray_rfree()[i].sf * topo.xray_rfree()[i].sf;
+    obs_free += topo.xray_rfree()[i].sf;
     obs_calc_free += inv_var * conf.special().xray_rest[j].sf_curr * topo.xray_rfree()[i].sf;
     obs_calcavg_free += inv_var * conf.special().xray_rest[j].sf_av * topo.xray_rfree()[i].sf;
     sqr_calc_free += inv_var * conf.special().xray_rest[j].sf_curr * conf.special().xray_rest[j].sf_curr;
@@ -170,10 +170,8 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
     if (xrs.stddev_sf > math::epsilon)
       inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
 
-    double term = xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr;
-    obs_k_calc += inv_var * term * term;
-    term = xrs.sf - k_avg * conf.special().xray_rest[j].sf_av;
-    obs_k_calcavg += inv_var * term * term;
+    obs_k_calc += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
 
     // save Fobs and PhiCalc for 2Fobs-kFcalc maps. This will be corrected
     // for symmetry in the FFT step.
@@ -200,25 +198,23 @@ void interaction::xray::scale_sf(const topology::Topology & topo,
     if (xrs.stddev_sf > math::epsilon)
       inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
 
-    double term = xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr;
-    obs_k_calc_free += inv_var * term * term;
-    term = xrs.sf - k_avg * conf.special().xray_rest[j].sf_av;
-    obs_k_calcavg_free += inv_var * term * term;
+    obs_k_calc_free += fabs(xrs.sf - k_inst * conf.special().xray_rest[j].sf_curr);
+    obs_k_calcavg_free += fabs(xrs.sf - k_avg * conf.special().xray_rest[j].sf_av);
   }
 
   // calculate R factors: R_inst and R_avg
   double & R_inst = conf.special().xray.R_inst;
-  R_inst = sqrt(obs_k_calc / sqr_obs);
+  R_inst = obs_k_calc / obs;
   double & R_avg = conf.special().xray.R_avg;
-  R_avg = sqrt(obs_k_calcavg / sqr_obs);
+  R_avg = obs_k_calcavg / obs;
   double & R_free_inst = conf.special().xray.R_free_inst;
   if (num_xray_rfree)
-    R_free_inst = sqrt(obs_k_calc_free / sqr_obs_free);
+    R_free_inst = obs_k_calc_free / obs_free;
   else
     R_free_inst = 0.0;
   double & R_free_avg = conf.special().xray.R_free_avg;
   if (num_xray_rfree)
-    R_free_avg = sqrt(obs_k_calcavg_free / sqr_obs_free);
+    R_free_avg = obs_k_calcavg_free / obs_free;
   else
     R_free_avg = 0.0;
   DEBUG(10, "R_inst value: " << std::setw(15) << std::setprecision(8) << R_inst);
