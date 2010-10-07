@@ -24,6 +24,8 @@ namespace interaction {
 
     /**
      * calculate the energy for structure factor restraining
+     * @param[in] the simulation
+     * @param[in] the reflection list for hkl info
      * @param[in] refl the observed relefections
      * @param[in] refl_curr the calculated reflections
      * @param[in] averaging the averaging mode of the restraining
@@ -33,7 +35,9 @@ namespace interaction {
      * @param[in] force_constant the force constant
      * @param[out] energy the energy obtained
      */
-    void calculate_energy_sf(const std::vector<topology::xray_restraint_struct> & refl,
+    void calculate_energy_sf(const simulation::Simulation & sim,
+            const clipper::HKL_data<clipper::data32::F_phi> & fphi,
+            const std::vector<topology::xray_restraint_struct> & refl,
             const std::vector<configuration::Configuration::special_struct::xray_struct> & refl_curr,
             simulation::xrayrest_enum averaging,
             const double k_inst, const double k_avg,

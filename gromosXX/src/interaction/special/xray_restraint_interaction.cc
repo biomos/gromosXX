@@ -108,22 +108,10 @@ int interaction::Xray_Restraint_Interaction
   }
 
   // compute the resolution from the lambda value
-  double data_resolution = sim.param().xrayrest.resolution;
   if (sim.param().xrayrest.replica_exchange_parameters.switcher == simulation::replica_exchange_resolution){
     double min = sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_min;
     double max = sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_max;
-    data_resolution = topo.lambda() * (max - min) + min;
-  }
-
-  // filter HKLs for resolution
-  std::vector<topology::xray_restraint_struct> xray_restraints_backup = topo.xray_restraints();
-  topo.xray_restraints().clear();
-  for (unsigned int i = 0; i < xray_restraints_backup.size(); i++) {
-    const clipper::HKL hkl(xray_restraints_backup[i].h, xray_restraints_backup[i].k, xray_restraints_backup[i].l);
-    double hkl_resolution =sqrt(1.0 / hkl.invresolsq(cell)) / to_ang;
-    if (hkl_resolution > data_resolution) {
-      topo.xray_restraints().push_back(xray_restraints_backup[i]);
-    }
+    sim.param().xrayrest.resolution = topo.lambda() * (max - min) + min;
   }
   
   // fit the b factor
@@ -162,7 +150,8 @@ int interaction::Xray_Restraint_Interaction
     // STRUCTURE FACTOR RESTRAINING
     ///////////////////////////////////////////////
     m_timer.start("energy");
-    calculate_energy_sf(topo.xray_restraints(),
+    calculate_energy_sf(sim, fphi,
+            topo.xray_restraints(),
             conf.special().xray_rest,
             sim.param().xrayrest.xrayrest,
             conf.special().xray.k_inst, conf.special().xray.k_avg,
@@ -311,7 +300,7 @@ int interaction::Xray_Restraint_Interaction
   if (sim.param().print.stepblock && sim.steps() % sim.param().print.stepblock == 0) {
     std::cout << "XRAY RESTRAINING\n"
             << "Lambda               : " << std::setw(4) << topo.lambda() << std::endl
-            << "Resolution (in use)  : " << std::setw(4) << data_resolution << std::endl
+            << "Resolution (in use)  : " << std::setw(4) << sim.param().xrayrest.resolution << std::endl
             << "Reflections (in use) : " << std::setw(4) << topo.xray_restraints().size() << std::endl
             << "Energy               : " << std::setw(13) << conf.current().energies.xray_total << std::endl
             << "R value (inst.)      : " << std::setw(4) << conf.special().xray.R_inst << std::endl
@@ -397,7 +386,6 @@ int interaction::Xray_Restraint_Interaction
   } // steps?
 
   // restore the restraints data in the topology from the backup
-  topo.xray_restraints() = xray_restraints_backup;
 #endif
   return 0;
 }

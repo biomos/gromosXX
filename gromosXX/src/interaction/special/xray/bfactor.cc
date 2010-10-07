@@ -142,7 +142,7 @@ double bfactor_residual(const gsl_vector * B, void * param) {
 
   // get the energy
   double energy;
-  calculate_energy_sf(topo.xray_restraints(),
+  calculate_energy_sf(sim, fphi, topo.xray_restraints(),
             conf.special().xray_rest,
             sim.param().xrayrest.xrayrest,
             conf.special().xray.k_inst, conf.special().xray.k_avg,
