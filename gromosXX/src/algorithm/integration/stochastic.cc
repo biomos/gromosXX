@@ -206,7 +206,7 @@ int algorithm::Stochastic_Dynamics_Vel1
     os << "STOCHASTIC DYNAMICS\n";
   
   if (!quiet && sim.param().stochastic.generate_integral)
-    os << "\tgenerating initial stochastic integreals\n";
+    os << "\tgenerating initial stochastic integrals\n";
   
   if (sim.param().stochastic.ntfr == 2 && !quiet)
     os << "\tcalculating friction coefficients by GAM0 x CFRIC\n";
@@ -379,12 +379,15 @@ int algorithm::Stochastic_Dynamics_Vel1
     //and width rho1_sq (sd4)
     m_rng->stddev(sd4);
     m_vrand.vrand4(i) = m_rng->get_gaussian_vec();
-    
-    DEBUG(10, "vrand3=" <<  math::v2s(m_vrand.vrand3(i)));
+
+    DEBUG(10, "vrand3=" << math::v2s(m_vrand.vrand3(i)));
     DEBUG(10, "vrand4=" << math::v2s(m_vrand.vrand4(i)));
-    
+
   } // loop over atoms
  
+  // save the seed
+  conf.current().stochastic_seed = m_rng->seed();
+
   // save the seed
   conf.current().stochastic_seed = m_rng->seed();
 

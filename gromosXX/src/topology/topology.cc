@@ -31,6 +31,7 @@ namespace simulation
 #include <util/le_coordinate.h>
 
 #include <simulation/parameter.h>
+#include <limits>
 
 #undef MODULE
 #undef SUBMODULE
@@ -54,7 +55,14 @@ topology::Topology::Topology()
     m_damping_power(0),
     m_gamma(0.0),
     m_gamma_j(0),
-    m_gamma_k(0)
+    m_gamma_k(0),
+    m_le_coordinates(),
+    m_sasa_parameter(),
+    m_sasa_volume_tot(0.0),
+    m_sasa_first_neighbour(),
+    m_sasa_second_neighbour(),
+    m_sasa_third_neighbour(),
+    m_sasa_higher_neighbour()
 {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
@@ -439,12 +447,7 @@ void topology::Topology::resize(unsigned int const atoms)
   m_gamma_k.resize(atoms);
   m_exclusion.resize(atoms);
   m_one_four_pair.resize(atoms);
-  m_all_exclusion.resize(atoms);
-  m_sasa_first_neighbour.resize(atoms); // resize sasa neighbours vector
-  m_sasa_second_neighbour.resize(atoms); // resize sasa neighbours vector
-  m_sasa_third_neighbour.resize(atoms); // resize sasa neighbours vector
-  m_sasa_higher_neighbour.resize(atoms); // resize sasa neighbours vector
-  
+  m_all_exclusion.resize(atoms);  
   m_stochastic.resize(atoms);
   
   m_iac.resize(atoms);
@@ -455,9 +458,9 @@ void topology::Topology::resize(unsigned int const atoms)
   m_is_coarse_grained.resize(atoms, false);
 }
 
-void topology::Topology::init(simulation::Simulation const & sim, std::ostream & os, bool quiet)
-{
-  DEBUG(6, "Topologi INIT");
+void topology::Topology::init(simulation::Simulation const & sim,
+        std::ostream & os, bool quiet) {
+  DEBUG(6, "Topology INIT");
   
   if (!m_molecule.size()){
     m_molecule.push_back(0);
@@ -594,75 +597,158 @@ void topology::Topology::init(simulation::Simulation const & sim, std::ostream &
   // And calculate the values for all individual lambdas and their derivatives
   update_for_lambda();
 
-  // store information about sasa neighbours
+  // build neighbour lists for SASA implicit solvent model using POPS method
   if (sim.param().sasa.switch_sasa) {
-    // distinguish between first, second, third and higer neighbours
-    // consider bonds
+
+    const unsigned int num_sasa_atoms = m_sasa_parameter.size();
+
+    // resize sasa neighbours vectors
+    m_sasa_first_neighbour.resize(num_sasa_atoms); // resize sasa neighbours vector
+    m_sasa_second_neighbour.resize(num_sasa_atoms); // resize sasa neighbours vector
+    m_sasa_third_neighbour.resize(num_sasa_atoms); // resize sasa neighbours vector
+    m_sasa_higher_neighbour.resize(num_sasa_atoms); // resize sasa neighbours vector
+
+    // define a bondnumber storage list
+    std::vector<unsigned int> pathlength(num_sasa_atoms * num_sasa_atoms);
+    // and fill with large numbers ("infinity")
+    const unsigned int infinity = std::numeric_limits<unsigned int>::max();
+    for (unsigned int i = 0; i < pathlength.size(); ++i) {
+      pathlength[i] = infinity;
+    }
+
+    // loop over bonds
     std::vector<topology::two_body_term_struct>::const_iterator b_it, b_to;
-    DEBUG(6, "using  bonds");
+    DEBUG(6, "building SASA neighbour lists from bond list");
 
     b_it = solute().bonds().begin();
     b_to = solute().bonds().end();
-
     for (; b_it != b_to; ++b_it) {
-      DEBUG(6, "first neighbours " << b_it->i << "\t" << b_it->j);
-      m_sasa_first_neighbour[b_it->i].insert(b_it->j);
-      m_sasa_first_neighbour[b_it->j].insert(b_it->i);
-    }
-    // consider constraints
-    DEBUG(6, "using constraints");
-    b_it = solute().distance_constraints().begin();
-    b_to = solute().distance_constraints().end();
-
-    for (; b_it != b_to; ++b_it) {
-      DEBUG(6, "first neighbours " << b_it->i << "\t" << b_it->j);
-      m_sasa_first_neighbour[b_it->i].insert(b_it->j);
-      m_sasa_first_neighbour[b_it->j].insert(b_it->i);
-    }
-    // second neighbours
-    std::vector<topology::three_body_term_struct>::const_iterator a_it, a_to;
-    DEBUG(6, "second neighbours");
-    a_it = solute().angles().begin();
-    a_to = solute().angles().end();
-
-    for (; a_it != a_to; ++a_it) {
-      DEBUG(6, "second neighbours " << a_it->i << "\t" << a_it->k);
-      m_sasa_second_neighbour[a_it->i].insert(a_it->k);
-      m_sasa_second_neighbour[a_it->k].insert(a_it->i);
-    }
-    // third neighbours
-    DEBUG(6, "third neighbours");
-    for (unsigned int i = 0; i < num_solute_atoms(); ++i) {
-      std::set<int>::const_iterator it14, to14;
-      it14 = one_four_pair(i).begin();
-      to14 = one_four_pair(i).end();
-
-      for (; it14 != to14; ++it14) {
-        DEBUG(6, "third neighbours " << i << "\t" << *it14);
-        m_sasa_third_neighbour[i].insert(*it14);
-        m_sasa_third_neighbour[*it14].insert(i);
-      }
-    }
-
-    // store higher neighbours
-    //if (sim.param().sasa.switch_1x) {
-      for (unsigned int i = 0; i < num_solute_atoms(); ++i) {
-        for (unsigned int j = (i + 1); j < num_solute_atoms(); ++j) {
-          if (sasa_first_neighbour(i).count(j));
-          else if (sasa_second_neighbour(i).count(j));
-          else if (sasa_third_neighbour(i).count(j));
-          else {
-            DEBUG(6, "higher neighbours " << i << "\t" << j);
-            m_sasa_higher_neighbour[i].insert(j);
-            m_sasa_higher_neighbour[j].insert(i);
+      DEBUG(6, "bonded atoms " << b_it->i << "\t" << b_it->j);
+      // we have to do it this way because we want to store things by their
+      // index in the list of sasa atoms
+      for (unsigned int l = 0; l < num_sasa_atoms; ++l) {
+        if (b_it->i == m_sasa_parameter[l].atom) { // l is our index for atom i
+          for (unsigned int m = 0; m < num_sasa_atoms; ++m) {
+            if (b_it->j == m_sasa_parameter[m].atom) { // m is our index for atom j
+              // store first neighbour
+              m_sasa_first_neighbour[l].insert(m);
+              // store path between atoms i and j in both directions
+              pathlength[l * num_sasa_atoms + m] = 1;
+              pathlength[m * num_sasa_atoms + l] = 1;
+            }
           }
         }
       }
-    //}
-  }
-  
-}
+    } // end loop over bonds (empty)
 
+    // now consider constraints
+    DEBUG(6, "building SASA first neighbour list from constraints");
+    b_it = solute().distance_constraints().begin();
+    b_to = solute().distance_constraints().end();
+    for (; b_it != b_to; ++b_it) {
+      DEBUG(6, "constrained atoms " << b_it->i << "\t" << b_it->j);
+      // we have to do it this way because we want to store things by their
+      // index in the list of sasa atoms
+      for (unsigned int l = 0; l < num_sasa_atoms; ++l) {
+        if (b_it->i == m_sasa_parameter[l].atom) { // l is our index for atom i
+          for (unsigned int m = 0; m < num_sasa_atoms; ++m) {
+            if (b_it->j == m_sasa_parameter[m].atom) { // m is our index for atom j
+              // store first neighbour
+              m_sasa_first_neighbour[l].insert(m);
+              // store path between atoms i and j in both directions
+              pathlength[l * num_sasa_atoms + m] = 1;
+              pathlength[m * num_sasa_atoms + l] = 1;
+            }
+          }
+        }
+      }
+    } // end loop over constraints
+
+    // new loop over num_sasa_atoms (Floyds algorithm)
+    for (unsigned int k = 0; k < num_sasa_atoms; ++k) {
+      for (unsigned int i = 0; i < num_sasa_atoms - 1; ++i) {
+        // stored path between i and k
+        const unsigned int pathlength_ik = pathlength[i * num_sasa_atoms + k];
+        if (pathlength_ik < infinity) {
+          // stored path between k and j
+          for (unsigned int j = i + 1; j < num_sasa_atoms; ++j) {
+            const unsigned int pathlength_kj = pathlength[k * num_sasa_atoms + j];
+            if (pathlength_kj < infinity) {
+              // path between i and j via k
+              const unsigned int complength = pathlength_ik + pathlength_kj;
+              // compare to stored path between i and j
+              if (complength < pathlength[i * num_sasa_atoms + j]) {
+                pathlength[i * num_sasa_atoms + j] = complength;
+              }
+            }
+          }
+        }
+      }
+    } // end floyd's
+
+    // now directly make the third and higher lists
+    // c.f. POPS which makes exclusion and 1-4 lists and then neighbour lists
+    for (unsigned int i = 0; i < num_sasa_atoms - 1; ++i) {
+      for (unsigned int j = i + 1; j < num_sasa_atoms; ++j) {
+        const unsigned int pathlength_ij = pathlength[i * num_sasa_atoms + j];
+        if (pathlength_ij < infinity) {
+           if (pathlength_ij == 3) {
+            // store in 3rd neighbours
+            // note we are storing the indexes not the actual atom numbers
+            m_sasa_third_neighbour[i].insert(j);
+          } else if (pathlength_ij > 3) {
+            // store in higher neighbours
+            // POPS takes only those closer than nonbonded cutoff but I do not
+            // have access to the coords and thus inter-atomic distances here
+            // also, the distances could change during the simulation
+            // note we are storing the indexes not the actual atom numbers
+            m_sasa_higher_neighbour[i].insert(j);
+          }
+        }
+      }
+    } // end third and higher
+
+    // second neighbours
+    std::vector<topology::three_body_term_struct>::const_iterator a_it, a_to;
+    DEBUG(6, "building sasa second neighbour list from angles");
+    a_it = solute().angles().begin();
+    a_to = solute().angles().end();
+    for (; a_it != a_to; ++a_it) {
+      DEBUG(6, "second neighbours " << a_it->i << "\t" << a_it->k);
+      for (unsigned int l = 0; l < num_sasa_atoms; ++l) {
+         if (a_it->i == m_sasa_parameter[l].atom) { // l is our index for atom i
+          for (unsigned int m = 0; m < num_sasa_atoms; ++m) {
+            if (a_it->k == m_sasa_parameter[m].atom) { // m is our index for atom k
+              m_sasa_second_neighbour[l].insert(m);
+            }
+          }
+        }
+      }
+    } // end angles
+
+    // initialise (total) surface areas, ri+rh2o and, if needed, volumes
+    m_sasa_volume_tot = 0.0;
+    for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
+      // total surface area
+      const double surface = 4.0 * math::Pi * (m_sasa_parameter[i].r + sim.param().sasa.r_solv) *
+              (m_sasa_parameter[i].r + sim.param().sasa.r_solv);
+      DEBUG(15, "\tTotal surface of atom " << m_sasa_parameter[i].atom << " is " << surface);
+      m_sasa_parameter[i].surface = surface;
+      // ri+rh2o
+      const double ri_rh2o = m_sasa_parameter[i].r + sim.param().sasa.r_solv;
+      m_sasa_parameter[i].r_rh2o = ri_rh2o;
+      // volumes
+      if (sim.param().sasa.switch_volume) {
+        const double volume = (4.0 / 3.0) * math::Pi * m_sasa_parameter[i].r *
+                m_sasa_parameter[i].r * m_sasa_parameter[i].r;
+        DEBUG(15, "\tTotal volume of atom " << m_sasa_parameter[i].atom << " is " << volume);
+        m_sasa_parameter[i].vol = volume;
+        m_sasa_volume_tot += volume;
+      } // end volume
+    } // end sasa atom loop
+  } // end sasa
+} // end init
+ 
 /**
  * add a solute atom to the topology.
  * if the arrays are too small they will be increased.

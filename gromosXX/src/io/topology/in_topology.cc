@@ -1783,22 +1783,21 @@ io::In_Topology::read(topology::Topology& topo,
     os << "\n\tEND\n";
 
   {// SASAPARAMETER
-    if (param.sasa.switch_sasa == 1) { // if SASA is switched on
+    if (param.sasa.switch_sasa) { // if SASA is switched on
 
-      std::vector<interaction::sasa_parameter_struct> sasa_parameter;
-      read_sasa_parameter(sasa_parameter, os);
-
-      if (!quiet)
-        os << "\tSASAPARAMETERS\n";
+      read_sasa_parameter(topo, topo.sasa_parameter());
 
       if (!quiet) {
-        os << "\t\tSASA is switched on\n" << "\t\tp_12 :" << "\t\t" << param.sasa.p_12 << std::endl;
-        os << "\t\tp_13 :" << "\t\t" << param.sasa.p_13 << std::endl;
-        os << "\t\tp_1x :" << "\t\t" << param.sasa.p_1x << std::endl;
-        os << "\t\tR_solv :" << "\t" << param.sasa.r_solv << std::endl;
-      }
-      if (!quiet)
+        os << "\tSASAPARAMETERS\n\t\tSASA is switched on\n\t\tN_sasa_atoms :\t"
+        << topo.sasa_parameter().size() << "\n\t\tp_12 :\t\t" << param.sasa.p_12
+        << "\n\t\tp_13 :\t\t" << param.sasa.p_13 << "\n\t\tp_1x :\t\t" << param.sasa.p_1x
+        << "\n\t\tR_solv :\t" << param.sasa.r_solv << std::endl;
+
+        if (param.sasa.switch_volume) {
+          os << "\t\tVOL is switched on\n\t\tsigma_vol :\t" << param.sasa.sigma_v << std::endl;
+        }
         os << "\tEND\n";
+      }
     }
     // SASAPARAMETER
   }
@@ -2700,8 +2699,8 @@ void io::In_Topology
 }
 
 void io::In_Topology::
-read_sasa_parameter(std::vector<interaction::sasa_parameter_struct>
-        & sasa_parameter, std::ostream & os) {
+read_sasa_parameter(topology::Topology & topo, std::vector<topology::sasa_parameter_struct>
+    & sasa_parameter) {
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
   { // SASAPARAMETERS
@@ -2709,50 +2708,56 @@ read_sasa_parameter(std::vector<interaction::sasa_parameter_struct>
     buffer = m_block["SASAPARAMETERS"];
     // if no SASA block is present
     if (!buffer.size()) {
-      //io::messages.add("No SASAPARAMETES block found in topology!",
-      //                "In_Topology", io::message::error):
+      io::messages.add("No SASAPARAMETERS block found in topology!",
+                      "In_Topology", io::message::error);
       return;
     }
 
-    int num, n; //num = number of atoms
+    unsigned int num; // number of sasa atoms;
 
     it = buffer.begin() + 1;
     _lineStream.clear();
     _lineStream.str(*it);
-    _lineStream >> num; // reads in number of atoms
-
-
-    sasa_parameter.resize(num);
+    _lineStream >> num; // reads in number of sasa atoms
     ++it;
+    DEBUG(1, "Number of sasa atoms : " << num);
 
-    for (n = 0; it != buffer.end() - 1; ++it, ++n) {
+    for (; it != buffer.end() - 1; ++it) {
 
-      interaction::sasa_parameter_struct s;
-      int i;
+      topology::sasa_parameter_struct s;
 
       _lineStream.clear();
       _lineStream.str(*it);
 
-      _lineStream >> i >> s.r_i >> s.p_i >> s.sigma_i;
-
-      --i;
+      int atom;
+      _lineStream >> atom >> s.r >> s.p >> s.sigma;
 
       if (_lineStream.fail() || !_lineStream.eof())
         io::messages.add("bad line in SASAPARAMETERS block",
               "In_Topology", io::message::error);
+      
+      if (atom < 0 || atom > int(topo.num_solute_atoms()))
+        io::messages.add("atom out of range in SASAPARAMETERS block",
+          "In_Topology", io::message::error);
+      s.atom = atom - 1; // convert human atom numbers to internal atom numbers
 
-      if (i >= int(num)) {
-        DEBUG(7, "wrong iac in SASAPARAMETERS: i=" << i);
-        io::messages.add("wrong integer atom code in SASAPARAMETERS block",
+      if (s.r < 0) {
+        DEBUG(7, "negative radius in SASAPARAMETERS: r = " << s.r);
+        io::messages.add("negative radius in SASAPARAMETERS block",
                 "In_Topology", io::message::error);
       }
 
-      sasa_parameter[i] = s;
+      if (s.p < 0) {
+        DEBUG(7, "negative probability in SASAPARAMETERS: r = " << s.p);
+        io::messages.add("negative probability in SASAPARAMETERS block",
+                "In_Topology", io::message::error);
+      }
 
+      sasa_parameter.push_back(s);
     }
 
-    if (num != n) {
-      io::messages.add("Reading the SASAPARAMETERS failed (n != num)",
+    if (num != sasa_parameter.size()) {
+      io::messages.add("Number of SASAPARAMETERS not equal to number of sasa atoms",
               "InTopology", io::message::error);
     }
   } // SASAPARAMETERS

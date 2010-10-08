@@ -101,10 +101,9 @@ namespace io {
     /**
      * Read in the nonbonded interaction types (SASA).
      */
-    virtual void read_sasa_parameter(std::vector
-                                    <interaction::sasa_parameter_struct>
-                                    & sasa_parameter,
-                                    std::ostream & os = std::cout);
+    virtual void read_sasa_parameter(topology::Topology & topo, std::vector
+                                    <topology::sasa_parameter_struct>
+                                    & sasa_parameter);
     
     /**
      * length of strings allowed

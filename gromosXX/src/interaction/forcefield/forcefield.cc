@@ -94,7 +94,7 @@ int interaction::Forcefield
 
   DEBUG(15, "zero sasa and sasavolume");
   conf.current().sasa_tot = 0.0;
-  conf.current().sasavol_tot = 0.0;
+  conf.current().sasa_buriedvol_tot = 0.0;
 
   conf.current().virial_tensor = 0.0;
 

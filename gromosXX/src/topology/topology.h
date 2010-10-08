@@ -884,6 +884,42 @@ namespace topology
     }
 
     /**
+     * sasa parameter accessor.
+     */
+    std::vector<sasa_parameter_struct> & sasa_parameter()
+    {
+      return m_sasa_parameter;
+    }
+    /**
+     * const sasa parameter accessor.
+     */
+    std::vector<sasa_parameter_struct> const & sasa_parameter()const
+    {
+      return m_sasa_parameter;
+    }
+    /**
+     * get the sasa parameters for atom i.
+     */
+    sasa_parameter_struct const & sasa_parameter(unsigned int i)const
+    {
+      assert(i < m_sasa_parameter.size());
+      return m_sasa_parameter[i];
+    }
+    /**
+     * the total volume of all atoms
+     */
+    double & sasa_volume_tot()
+    {
+        return m_sasa_volume_tot;
+    }
+    /**
+     * the total volume of all atoms
+     */
+    double const & sasa_volume_tot() const
+    {
+        return m_sasa_volume_tot;
+    }
+    /**
      * const distance restraints accessor.
      */
     std::vector<distance_restraint_struct> const & distance_restraints()const
@@ -1028,52 +1064,52 @@ namespace topology
 	      bool quiet = false);
 
     /**
-     * direct neighbour of atom i.
+     * direct neighbours of atom i.
      */
-    std::set<int> & sasa_first_neighbour(unsigned int const i){
+    std::set<unsigned int> & sasa_first_neighbour(unsigned int const i){
       assert(i < m_sasa_first_neighbour.size());
       return m_sasa_first_neighbour[i];
     }
     /**
-     * direct neighbour of atom i.
+     * direct neighbours list.
      */
-    std::vector<std::set<int> > & sasa_first_neighbour(){return m_sasa_first_neighbour;}
+    std::vector<std::set<unsigned int> > & sasa_first_neighbour(){return m_sasa_first_neighbour;}
 
     /**
-     * second neighbour of atom i.
+     * second neighbours of atom i.
      */
-    std::set<int> & sasa_second_neighbour(unsigned int const i){
+    std::set<unsigned int> & sasa_second_neighbour(unsigned int const i){
       assert(i < m_sasa_second_neighbour.size());
       return m_sasa_second_neighbour[i];
     }
     /**
-     * second neighbour of atom i.
+     * second neighbours list.
      */
-    std::vector<std::set<int> > & sasa_second_neighbour(){return m_sasa_first_neighbour;}
+    std::vector<std::set<unsigned int> > & sasa_second_neighbour(){return m_sasa_first_neighbour;}
 
     /**
-     * third neighbour of atom i.
+     * third neighbours of atom i.
      */
-    std::set<int> & sasa_third_neighbour(unsigned int const i){
+    std::set<unsigned int> & sasa_third_neighbour(unsigned int const i){
       assert(i < m_sasa_third_neighbour.size());
       return m_sasa_third_neighbour[i];
     }
     /**
-     * third neighbour of atom i.
+     * third neighbours list.
      */
-    std::vector<std::set<int> > & sasa_third_neighbour(){return m_sasa_third_neighbour;}
+    std::vector<std::set<unsigned int> > & sasa_third_neighbour(){return m_sasa_third_neighbour;}
 
     /**
-     * higher neighbour of atom i.
+     * higher neighbours of atom i.
      */
-    std::set<int> & sasa_higher_neighbour(unsigned int const i){
+    std::set<unsigned int> & sasa_higher_neighbour(unsigned int const i){
       assert(i < m_sasa_higher_neighbour.size());
       return m_sasa_higher_neighbour[i];
     }
     /**
-     * third neighbour of atom i.
+     * higher neighbours list.
      */
-    std::vector<std::set<int> > & sasa_higher_neighbour(){return m_sasa_higher_neighbour;}
+    std::vector<std::set<unsigned int> > & sasa_higher_neighbour(){return m_sasa_higher_neighbour;}
 
     /**
      * accessor to LJ exceptions
@@ -1214,7 +1250,7 @@ namespace topology
      * the number of solute pressure groups
      */
     unsigned int m_num_solute_pressure_groups;
-    
+   
     /**
      * residue names (solute and solvent).
      */
@@ -1418,7 +1454,7 @@ namespace topology
      */
      math::SArray m_damping_power;
     
-     /**
+    /**
      * the polarisability damping electric field offsef @f$ E_0 @f$
      */
      math::SArray m_gamma;
@@ -1432,16 +1468,32 @@ namespace topology
      */
      std::vector<int> m_gamma_k;
 
-    std::vector<util::LE_Coordinate*> m_le_coordinates;
-     
     /**
-     * sasa pij parameter for neighbours
+     * local elevation coordinates
      */
-    std::vector< std::set<int> > m_sasa_first_neighbour;
-    std::vector< std::set<int> > m_sasa_second_neighbour;
-    std::vector< std::set<int> > m_sasa_third_neighbour;
-    std::vector< std::set<int> > m_sasa_higher_neighbour;
+     std::vector<util::LE_Coordinate*> m_le_coordinates;
 
+    /**
+     * sasa parameters
+     */
+    std::vector<sasa_parameter_struct> m_sasa_parameter;
+
+    /**
+     * total volume of all atoms
+     */
+    double m_sasa_volume_tot;
+
+    /**
+     * sasa neighbour lists
+     */
+    std::vector< std::set<unsigned int> > m_sasa_first_neighbour;
+    std::vector< std::set<unsigned int> > m_sasa_second_neighbour;
+    std::vector< std::set<unsigned int> > m_sasa_third_neighbour;
+    std::vector< std::set<unsigned int> > m_sasa_higher_neighbour;
+
+    /**
+     * LJ exceptions
+     */
     std::vector<lj_exception_struct> m_lj_exceptions;
     
   }; // topology

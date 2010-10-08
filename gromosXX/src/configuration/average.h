@@ -286,11 +286,11 @@ namespace configuration
       /**
        * the average total volume.
        */
-      double sasavoltot_avg;
+      double sasa_buriedvol_tot_avg;
       /**
        * the total volume fuctuation.
        */
-      double sasavoltot_fluct;
+      double sasa_buriedvol_tot_fluct;
       /**
        * the average sasa.
        */
@@ -302,11 +302,11 @@ namespace configuration
       /**
        * the average volume.
        */
-      std::vector<double> sasavol_avg;
+      std::vector<double> sasa_buriedvol_avg;
       /**
        * the volume fuctuations.
        */
-      std::vector<double> sasavol_fluct;
+      std::vector<double> sasa_buriedvol_fluct;
 
       ////////////////////////////////////////////////////
 

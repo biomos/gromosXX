@@ -4306,6 +4306,29 @@ void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
   }
 }
 
+/**
+ * @section gromos96compat GROMOS96COMPAT block
+ * @verbatim
+ SASA
+ # NTSASA, NTSASAVOL
+ # SASASW
+ # 0 : not used (default)
+ # 1 : use SASA implicit solvent model
+ # VOLS
+ # 0 : not used (default)
+ # 1 : use VOLUME correction to SASA implicit solvent model (requires SASASW = 1)
+ # P_12 > 0, < 1 probability parameter for first neighbours
+ # P_13 > 0, < 1 probability parameter for second neighbours
+ # P_1x > 0, < 1 probability parameter for third and higher neighbours
+ # SIGMAV scaling parameter for volume energy term
+ # RSOLV > 0 radius of solvent for SASA calculation
+ # AMAXSC > 0 maximum SASA of solute atom (for volume term switching function)
+ # AMINSC > 0 minimum SASA of solute atom (for volume term switching function)
+ #   SASASW      VOLS       P_12      P_13     P_1x   SIGMAV  RSOlV   AMAXSC  AMINSC
+          1         1     0.8875    0.3516   0.3516    -100   0.14     0.02    0.01
+ END
+ @endverbatim
+ */
 void io::In_Parameter::read_SASA(simulation::Parameter & param, std::ostream & os) {
   DEBUG(8, "read SASA");
 
@@ -4324,26 +4347,70 @@ void io::In_Parameter::read_SASA(simulation::Parameter & param, std::ostream & o
   std::string s;
   _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-  _lineStream >> param.sasa.switch_sasa
-          >> param.sasa.switch_volume
-          //>> param.sasa.switch_1x
-          >> param.sasa.p_12
-          >> param.sasa.p_13
-          >> param.sasa.p_1x
-          >> param.sasa.sigma_v
-          >> param.sasa.r_solv
-          >> param.sasa.max_cut
-          >> param.sasa.min_cut;
+  int switch_sasa, switch_volume;
+  _lineStream >> switch_sasa
+              >> switch_volume
+              >> param.sasa.p_12
+              >> param.sasa.p_13
+              >> param.sasa.p_1x
+              >> param.sasa.sigma_v
+              >> param.sasa.r_solv
+              >> param.sasa.max_cut
+              >> param.sasa.min_cut;
 
   if (_lineStream.fail()) {
     io::messages.add("bad line in SASA block", "In_Parameter", io::message::error);
   }
 
+  switch(switch_sasa) {
+    case 0:
+      param.sasa.switch_sasa = false;
+      break;
+    case 1:
+      param.sasa.switch_sasa = true;
+      break;
+    default:
+      io::messages.add("SASA block: NTSASA has to be 0,1","In_Parameter", io::message::error);
+      param.sasa.switch_sasa = false;
+  }
+
+  switch(switch_volume) {
+    case 0:
+      param.sasa.switch_volume = false;
+      break;
+    case 1:
+      param.sasa.switch_volume = true;
+      break;
+    default:
+      io::messages.add("SASA block: NTSASAVOL has to be 0,1","In_Parameter", io::message::error);
+      param.sasa.switch_volume = false;
+  }
+
   // check that vol not used without sasa
-  if ((param.sasa.switch_sasa == 0) && (param.sasa.switch_volume == 1)) {
-    io::messages.add("SASA block: Cannot have SASA_VOL without SASA",
+  if (!param.sasa.switch_sasa && param.sasa.switch_volume) {
+    io::messages.add("SASA block: Cannot have NTSASAVOL without NTSASA",
             "In_Parameter", io::message::error);
-    //return;
+  }
+
+  if (param.sasa.p_12 < 0.0 || param.sasa.p_12 > 1.0 ||
+          param.sasa.p_13 < 0.0 || param.sasa.p_13 > 1.0 ||
+          param.sasa.p_1x < 0.0 || param.sasa.p_1x > 1.0) {
+    io::messages.add("SASA block: Probabilities have to be 0.0..1.0",
+            "In_Parameter", io::message::error);
+  }
+
+  if (param.sasa.r_solv <= 0.0) {
+    io::messages.add("SASA block: RSOLV has to be >0.0",
+            "In_Parameter", io::message::error);
+  }
+
+  // compute and store upper - lower cutoffs
+  param.sasa.cut_diff = param.sasa.max_cut - param.sasa.min_cut;
+  if (param.sasa.cut_diff < 0.0 ||
+          param.sasa.max_cut < 0.0 ||
+          param.sasa.min_cut < 0.0) {
+    io::messages.add("SASA block: Cutoffs are negative or min. is larger than max.",
+            "In_Parameter", io::message::error);
   }
 
 }

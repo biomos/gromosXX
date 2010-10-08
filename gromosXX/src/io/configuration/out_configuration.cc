@@ -1764,7 +1764,8 @@ void io::Out_Configuration
     print_ENERGY(m_output, conf.old().energies, topo.energy_groups());
 
     if (sim.param().sasa.switch_sasa)
-      print_sasa(m_output, topo, conf, sim, "SOLVENT ACCESSIBLE SURFACE AREAS AND VOLUME");
+      print_sasa(m_output, topo, conf, sim,
+              "SOLVENT ACCESSIBLE SURFACE AREAS AND VOLUMES OF BURIED ATOMS");
 
     if (sim.param().perturbation.perturbation) {
 
@@ -1829,7 +1830,8 @@ void io::Out_Configuration
   if (sim.param().sasa.switch_sasa) {
     conf.current().averages.simulation().sasa_average(sasa_a, sasa_af, sasa_tot, sasa_totf);
     if (sim.param().sasa.switch_volume)
-      conf.current().averages.simulation().sasavol_average(sasa_vol, sasa_volf, sasa_voltot, sasa_voltotf);
+      conf.current().averages.simulation().sasavol_average(sasa_vol, sasa_volf, sasa_voltot,
+              sasa_voltotf);
   }
 
   print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES", "<E>_");
@@ -1876,10 +1878,10 @@ void io::Out_Configuration
   // print sasa and volume averages, fluctuations
   if (sim.param().sasa.switch_sasa){
     int volume = sim.param().sasa.switch_volume;
-    print_sasa_avg(m_output, sasa_a, sasa_vol, sasa_tot, sasa_voltot, "SASA AND VOLUME AVERAGE", volume);
-    print_sasa_fluct(m_output, sasa_af, sasa_volf, sasa_totf, sasa_voltotf, "SASA AND VOLUME FLUCTUATION", volume);
-
-    //print_forces(m_output, topo, conf, sim);
+    print_sasa_avg(m_output, topo, sasa_a, sasa_vol, sasa_tot, sasa_voltot, 
+            "SASA AND BURIED VOLUME AVERAGES", volume);
+    print_sasa_fluct(m_output, topo, sasa_af, sasa_volf, sasa_totf, sasa_voltotf, 
+            "SASA AND BURIED VOLUME FLUCTUATIONS", volume);
   }
 
 }
@@ -2493,7 +2495,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   // const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
 
   os << "# totals\n";
-
+  
   os << std::setw(18) << e.total << "\n"// 1
           << std::setw(18) << e.kinetic_total << "\n" // 2
           << std::setw(18) << e.potential_total << "\n" // 3

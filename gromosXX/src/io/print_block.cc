@@ -696,122 +696,105 @@ namespace io
 		    std::string const title)
   {
     os << "\n";
-    double sasa = 0, volume = 0;
     os.precision(7);
+    //std::setw(13) << std::setprecision(4) << std::scientific
     if (sim.param().sasa.switch_volume) {
       os << title << "\n";
-      os << "ATOM" << '\t' << "SASA" << "\t\t" << "VOLUME" << "\n";
-      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
-        sasa += conf.old().sasa_area[i];
-        volume += conf.old().sasa_vol[i];
-        os << i + 1 << '\t' << conf.old().sasa_area[i] << '\t' << conf.old().sasa_vol[i] << "\n";
+      os << "ATOM" << "\t" << "SASA" << "\t\t" << "VOLUME" << "\n";
+      for (unsigned int i = 0; i < topo.sasa_parameter().size(); ++i) {
+        os << topo.sasa_parameter(i).atom + 1 << "\t"
+         << std::scientific << conf.old().sasa_area[i]
+        << "\t" << conf.old().sasa_buriedvol[i] << "\n";
       }
       os << "\n";
-      os << "TOTAL SASA" << '\t' << "TOTAL VOLUME" << "\n";
-      os << sasa << '\t' << volume << "\n\n";
+      os << "TOTAL SASA\tTOTAL BURIED VOLUME\tTOTAL VOLUME\n";
+      os << conf.old().sasa_tot << "\t" << conf.old().sasa_buriedvol_tot <<
+      "\t\t" << topo.sasa_volume_tot() << "\n\n";
     } else {
       os << "SOLVENT ACCESSIBLE SURFACE AREAS" << "\n";
-      os << "ATOM" << '\t' << "SASA" << "\n";
-      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
-        sasa += conf.old().sasa_area[i];
-        os << i + 1 << '\t' << conf.old().sasa_area[i] << "\n";
+      os << "ATOM" << "\t" << "SASA" << "\n";
+      for (unsigned int i = 0; i < topo.sasa_parameter().size(); ++i) {
+        os << topo.sasa_parameter(i).atom + 1  << "\t"
+        << std::scientific << conf.old().sasa_area[i] << "\n";
       }
       os << "\n";
       os << "TOTAL SASA" << "\n";
-      os << sasa << "\n\n";
+      os << conf.old().sasa_tot << "\n\n";
     }
   }
 
-  void print_sasa_avg(std::ostream &os, std::vector<double> const &s,
+  void print_sasa_avg(std::ostream &os, topology::Topology const & topo,
+                      std::vector<double> const &s,
 		      std::vector<double> const &v, double & stot, double & vtot,
-                      std::string const title, int volume)
-  {
+                      std::string const title, int volume) {
     os.precision(7);
-    //os.setf(std::ios::scientific, std::ios::floatfield);
 
     if (volume)
       os << title << "\n";
-    else os << "SASA AVERAGE" << "\n";
+    else os << "SASA AVERAGES" << "\n";
 
     if (volume) {
-      os << "ATOM" << '\t' << "<SASA>" << "\t\t" << "<VOLUME>" << "\n";
+      os << "ATOM" << "\t" << "<SASA>" << "\t\t" << "<BURIED VOLUME>" << "\n";
       for (unsigned int i = 0; i < s.size(); ++i) {
-        os << i << '\t' << s[i] << '\t' << v[i] << "\n";
+        os << topo.sasa_parameter(i).atom + 1 << "\t"
+        << std::scientific << s[i] << "\t" << v[i] << "\n";
       }
     } else {
-      os << "ATOM" << '\t' << "<SASA>" << "\n";
+      os << "ATOM" << "\t" << "<SASA>" << "\n";
       for (unsigned int i = 0; i < s.size(); ++i) {
-        os << i << '\t' << s[i] << "\n";
+        os << topo.sasa_parameter(i).atom + 1 << "\t"
+        << std::scientific << s[i] << "\n";
       }
     }
     if (volume){
-    os << "TOTAL SASA AVERAGE" << '\t' << "TOTAL VOLUME AVERAGE" << "\n";
+    os << "TOTAL AVERAGE SASA\tTOTAL AVERAGE BURIED VOLUME\n";
     os << stot << "\t\t" << vtot << "\n";
     os << "END\n";
     }
     else {
-      os << "TOTAL SASA AVERAGE" << "\n";
+      os << "TOTAL AVERAGE SASA\n";
       os << stot << "\n";
       os << "END\n";
     }
     os << "\n";
-    //os.setf(std::ios::fixed, std::ios::floatfield);
 }
 
-  void print_sasa_fluct(std::ostream &os, std::vector<double> const &s,
+  void print_sasa_fluct(std::ostream &os, topology::Topology const & topo,
+                        std::vector<double> const &s,
 		        std::vector<double> const &v, double & stot, double & vtot,
                         std::string const title, int volume)
-  {
+{
     os.precision(7);
-    //os.setf(std::ios::scientific, std::ios::floatfield);
 
     if (volume)
       os << title << "\n";
-    else os << "SASA FLUCTUATION" << "\n";
+    else os << "SASA FLUCTUATIONS" << "\n";
 
     if (volume) {
-      os << "ATOM" << '\t' << "<<SASA>>" << "\t" << "<<VOLUME>>" << "\n";
+      os << "ATOM" << "\t" << "<<SASA>>" << "\t" << "<<BURIED VOLUME>>" << "\n";
       for (unsigned int i = 0; i < s.size(); ++i) {
-        os << i << '\t' << s[i] << '\t' << v[i] << "\n";
+        os << topo.sasa_parameter(i).atom + 1 << "\t"
+        << std::scientific << s[i] << "\t" << v[i] << "\n";
       }
     } else {
-      os << "ATOM" << '\t' << "<<SASA>>" << "\n";
+      os << "ATOM" << "\t" << "<<SASA>>" << "\n";
       for (unsigned int i = 0; i < s.size(); ++i) {
-        os << i << '\t' << s[i] << "\n";
+        os << topo.sasa_parameter(i).atom + 1 << "\t"
+        << std::scientific << s[i] << "\n";
       }
     }
     if (volume){
-    os << "TOTAL SASA FLUCTUATION" << '\t' << "TOTAL VOLUME FLUCTUATION" << "\n";
+    os << "TOTAL SASA FLUCTUATIONS" << "\t" << "TOTAL BURIED VOLUME FLUCTUATIONS" << "\n";
     os << stot << "\t\t" << vtot << "\n";
     os << "END\n";
     }
     else {
-      os << "TOTAL SASA FLUCTUATION" << "\n";
+      os << "TOTAL SASA FLUCTUATIONS" << "\n";
       os << stot << "\n";
       os << "END\n";
     }
     os << "\n";
-    //os.setf(std::ios::fixed, std::ios::floatfield);
 }
 
-  // print forces for sasa and volume term; not needed after testing
-  void print_forces(std::ostream &os, topology::Topology const & topo,
-                    configuration::Configuration const & conf,
-                    simulation::Simulation const & sim)
-  {
-    if (sim.param().sasa.switch_sasa) {
-      os << "FORCES FOR SOLVENT ACCESSIBLE SURFACE AREAS AND VOLUME" << "\n";
-      os << "ATOM" << '\t' << "x_s" << '\t' << "y_s" << '\t' << "z_s" << '\t'
-      << '\t' << "x_v" << '\t' << "y_v" << '\t' << "z_v" << "\n";
-      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
-      //  os << i + 1 << '\t' << std::setprecision(10) << conf.old().fsasa(i)(0) << '\t' << conf.old().fsasa(i)(1) << '\t' << conf.old().fsasa(i)(2) << '\t'
-      //  << conf.old().fvolume(i)(0) << '\t' << conf.old().fvolume(i)(1) << '\t' << conf.old().fvolume(i)(2) << "\n";
-      }
-      os << "\n\n";
-      for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i)
-        os << i + 1 << '\t' << std::setprecision(10) << conf.old().force(i)(0) << '\t' << conf.old().force(i)(1) << '\t' << conf.old().force(i)(2) << "\n";
-      os <<  "\n\n";
-    }
-  }
 
 } // io

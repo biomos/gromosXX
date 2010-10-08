@@ -2421,16 +2421,16 @@ namespace simulation
       /**
        * Constructor: disable SASA
        */
-      sasa_struct() : switch_sasa(0), switch_volume(0), p_12(0.0), p_13(0.0), p_1x(0.0),
+      sasa_struct() : switch_sasa(false), switch_volume(false), p_12(0.0), p_13(0.0), p_1x(0.0),
       sigma_v(0.0), r_solv(0.0), max_cut(0.0), min_cut(0.0) {}
       /**
        * SASA switch parameter
        */
-      int switch_sasa;
+      bool switch_sasa;
       /**
        * volume switch parameter
        */
-      int switch_volume;
+      bool switch_volume;
       /**
        * p_ij for one bond interaction, first neighbours
        */
@@ -2452,17 +2452,18 @@ namespace simulation
        */
       double r_solv;
       /**
-       * parameters for switching function, upper cut off
+       * parameters for switching function, upper cutoff
        */
       double max_cut;
       /**
-       * parameters for switching function, lower cut off
+       * parameters for switching function, lower cutoff
        */
       double min_cut;
       /**
-       * consider also higher neighbours
+       * difference between upper and lower cutoff
        */
-      //int switch_1x;
+      double cut_diff;
+
     } /** sasa */ sasa;
     
     /**

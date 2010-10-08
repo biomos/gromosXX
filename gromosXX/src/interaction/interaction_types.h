@@ -89,48 +89,6 @@ namespace interaction
     double cs12;
   };
 
-  /**
-   * @struct sasa_parameter_struct
-   * parameters for SASA
-   */
-  struct sasa_parameter_struct : public interaction_type_struct
-{
-
-    /**
-     * constructor
-     */
-    sasa_parameter_struct(double r_i, double p_i, double sigma_i)
-        : r_i(r_i), p_i(p_i), sigma_i(sigma_i) { }
-    /**
-     * default constructor
-     */
-    sasa_parameter_struct()
-      : r_i(0), p_i(0), sigma_i(0) {}
-
-    ~sasa_parameter_struct() {}
-
-    /**
-     * type of atom i
-     */
-    // std::string atom_i;
-
-    /**
-     * Radius of atom i
-     */
-    double r_i;
-
-    /**
-     * Parameter p_i
-     */
-    double p_i;
-
-    /**
-     * sigma value of atom i
-     */
-    double sigma_i;
-  };
-
-
 }
 
 #endif

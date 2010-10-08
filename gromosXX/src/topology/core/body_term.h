@@ -834,13 +834,70 @@ namespace topology {
      */
     double cutoff;
     /**
-     * the atoms attched to the umbrella weigh
+     * the atoms attched to the umbrella weight
      */
     std::vector<unsigned int> atoms;
     /**
      * integer to signal events like minimuim found etc.
      */
      int signal;
+  };
+
+  /**
+   * @struct sasa_parameter_struct
+   * parameters for SASA
+   */
+  struct sasa_parameter_struct
+{
+
+    /**
+     * constructor
+     */
+    sasa_parameter_struct(unsigned int atom, double r, double p, double sigma,
+            double surface, double vol, double r_rh2o)
+        : atom(atom), r(r), p(p), sigma(sigma), surface(surface), vol(vol),
+          r_rh2o(r_rh2o) { }
+    /**
+     * default constructor: not in other structs in this file
+     */
+    sasa_parameter_struct()
+      : atom(0), r(0), p(0), sigma(0), surface(0), vol(0), r_rh2o(0) {}
+
+    ~sasa_parameter_struct() {}
+
+    /**
+     * number of nonH atom i in topology
+     */
+    unsigned int atom;
+
+    /**
+     * Radius of atom i
+     */
+    double r;
+
+    /**
+     * Probability parameter p_i
+     */
+    double p;
+
+    /**
+     * sigma parameter of atom i
+     */
+    double sigma;
+
+    /**
+     * surface of atom i
+     */
+    double surface;
+    
+    /**
+     * volume of atom i
+     */
+    double vol;
+    /**
+     * radius of this atom plus radius of water
+     */
+    double r_rh2o;
   };
 
   /**

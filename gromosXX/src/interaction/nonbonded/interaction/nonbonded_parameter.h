@@ -22,8 +22,7 @@ namespace interaction
      */
     Nonbonded_Parameter(Nonbonded_Parameter const & nbp)
       : m_lj_parameter(nbp.m_lj_parameter),
-	m_cg_parameter(nbp.m_cg_parameter),
-        m_sasa_parameter(nbp.m_sasa_parameter)
+	m_cg_parameter(nbp.m_cg_parameter)
     {
     }
 
@@ -61,13 +60,6 @@ namespace interaction
     }
 
     /**
-     * resize the sasa_parameter vector.
-     */
-    void sasa_resize(unsigned int i) {
-      m_sasa_parameter.resize(i);
-    }
-
-    /**
      * the lj parameter.
      */
     std::vector<std::vector<lj_parameter_struct> > & lj_parameter()
@@ -81,14 +73,6 @@ namespace interaction
     std::vector<std::vector<lj_parameter_struct> > & cg_parameter()
     {
       return m_cg_parameter;
-    }
-
-    /**
-     * the sasa parameter
-     */
-    std::vector<sasa_parameter_struct> & sasa_parameter()
-    {
-      return m_sasa_parameter;
     }
 
     /**
@@ -107,14 +91,6 @@ namespace interaction
       assert(iac_i < m_cg_parameter.size());
       assert(iac_j < m_cg_parameter[iac_i].size());      
       return m_cg_parameter[iac_i][iac_j];
-    }
-
-    /**
-     * get the sasa parameters for atom type i.
-     */
-    sasa_parameter_struct const & sasa_parameter(unsigned int iac_i) {
-      assert(iac_i < m_sasa_parameter.size());
-      return m_sasa_parameter[iac_i];
     }
     
     /**
@@ -157,11 +133,6 @@ namespace interaction
      * the cg parameter.
      */
     std::vector< std::vector<lj_parameter_struct> > m_cg_parameter;
-
-    /**
-     * the sasa parameter.
-     */
-    std::vector<sasa_parameter_struct> m_sasa_parameter;
 
   };
   

@@ -100,15 +100,15 @@ void configuration::Average::Block_Average::zero()
   // set all sasa and volume values to zero
   sasatot_avg = 0.0;
   sasatot_fluct = 0.0;
-  
-  sasavoltot_avg = 0.0;
-  sasavoltot_fluct = 0.0;
+
+  sasa_buriedvol_tot_avg = 0.0;
+  sasa_buriedvol_tot_fluct = 0.0;
   
   sasa_avg.assign(sasa_avg.size(), 0.0);
   sasa_fluct.assign(sasa_avg.size(), 0.0);
   
-  sasavol_avg.assign(sasavol_avg.size(), 0.0);
-  sasavol_fluct.assign(sasavol_avg.size(), 0.0);
+  sasa_buriedvol_avg.assign(sasa_buriedvol_avg.size(), 0.0);
+  sasa_buriedvol_fluct.assign(sasa_buriedvol_avg.size(), 0.0);
   
 }
 
@@ -121,7 +121,7 @@ resize(topology::Topology const & topo,
 
   const unsigned int e_groups = unsigned(param.force.energy_group.size());
   const unsigned int baths = unsigned(param.multibath.multibath.size());
-  const unsigned int num_atoms = unsigned(topo.num_solute_atoms());
+  const unsigned int num_sasa_atoms = unsigned(topo.sasa_parameter().size());
 
   energy_avg.resize(e_groups, baths);
   energy_fluct.resize(e_groups, baths);
@@ -136,11 +136,11 @@ resize(topology::Topology const & topo,
 
   // resize sasa and volume vectors
   if (param.sasa.switch_sasa) {
-    sasa_avg.resize(num_atoms);
-    sasa_fluct.resize(num_atoms);
+    sasa_avg.resize(num_sasa_atoms);
+    sasa_fluct.resize(num_sasa_atoms);
 
-    sasavol_avg.resize(num_atoms);
-    sasavol_fluct.resize(num_atoms);
+    sasa_buriedvol_avg.resize(num_sasa_atoms);
+    sasa_buriedvol_fluct.resize(num_sasa_atoms);
   }
 }
 
@@ -330,21 +330,21 @@ void configuration::Average::Block_Average
   sasa.resize(sasa_avg.size());
   sasa_fluctuations.resize(sasa_avg.size());
   
-  double diff;
   for (unsigned int i = 0; i < sasa_avg.size(); ++i){
     sasa[i] = sasa_avg[i] / time;
-    diff = sasa_fluct[i] - sasa_avg[i] * sasa_avg[i] / time;
+    const double diff = sasa_fluct[i] - sasa_avg[i] * sasa_avg[i] / time;
 
     if (diff > 0.0)
       sasa_fluctuations[i] = sqrt(diff / time);
     else
       sasa_fluctuations[i] = 0.0;
-    DEBUG(1, "sasa average of atom i: " << i << "\ttotal = " << sasa[i] << "\tfluct = " << sasa_fluctuations[i]);
+    DEBUG(10, "Average SASA of sasa atom " << i << " = " << sasa[i] << ",\tfluct = "
+            << sasa_fluctuations[i]);
 
   }
 
   sasatot = sasatot_avg / time;
-  diff = sasatot_fluct - sasatot_avg * sasatot_avg / time;
+  const double diff = sasatot_fluct - sasatot_avg * sasatot_avg / time;
   if (diff > 0.0)
     sasatot_fluct = sqrt(diff / time);
   else
@@ -352,32 +352,32 @@ void configuration::Average::Block_Average
 }
 
 void configuration::Average::Block_Average
-::sasavol_average(std::vector<double> & sasavol,
-                  std::vector<double> & sasavol_fluctuations,
-                  double & sasavol_tot, double & sasavol_totfluct)const 
+::sasavol_average(std::vector<double> & sasa_buriedvol,
+                  std::vector<double> & sasa_buriedvol_fluctuations,
+                  double & sasa_buriedvol_tot, double & sasa_buriedvol_totfluct)const
 {
-  sasavol.resize(sasavol_avg.size());
-  sasavol_fluctuations.resize(sasavol_avg.size());
+  sasa_buriedvol.resize(sasa_buriedvol_avg.size());
+  sasa_buriedvol_fluctuations.resize(sasa_buriedvol_avg.size());
   
-  double diff;
-  for (unsigned int i = 0; i < sasavol_avg.size(); ++i){
-    sasavol[i] = sasavol_avg[i] / time;
-    diff = sasavol_fluct[i] - sasavol_avg[i] * sasavol_avg[i] / time;
+  for (unsigned int i = 0; i < sasa_buriedvol_avg.size(); ++i){
+    sasa_buriedvol[i] = sasa_buriedvol_avg[i] / time;
+    const double diff = sasa_buriedvol_fluct[i] - sasa_buriedvol_avg[i] * sasa_buriedvol_avg[i] / time;
 
     if (diff > 0.0)
-      sasavol_fluctuations[i] = sqrt(diff / time);
+      sasa_buriedvol_fluctuations[i] = sqrt(diff / time);
     else
-      sasavol_fluctuations[i] = 0.0;
-    DEBUG(1, "sasa vol average of atom i: " << i << "\ttotal = " << sasavol[i] << "\tfluct = " << sasavol_fluctuations[i]);
+      sasa_buriedvol_fluctuations[i] = 0.0;
+    DEBUG(10, "Average volume of sasa atom " << i << " = " << sasa_buriedvol[i] <<
+            "\t, fluct = " << sasa_buriedvol_fluctuations[i]);
 
   }
 
-  sasavol_tot = sasavoltot_avg / time;
-  diff = sasavol_totfluct - sasavoltot_avg * sasavoltot_avg / time;
+  sasa_buriedvol_tot = sasa_buriedvol_tot_avg / time;
+  const double diff = sasa_buriedvol_totfluct - sasa_buriedvol_tot_avg * sasa_buriedvol_tot_avg / time;
   if (diff > 0.0)
-    sasavol_totfluct = sqrt(diff / time);
+    sasa_buriedvol_totfluct = sqrt(diff / time);
   else
-    sasavol_totfluct = 0.0;
+    sasa_buriedvol_totfluct = 0.0;
 }
 
 ////////////////////////////////////////////////////
@@ -551,8 +551,8 @@ void configuration::Average::Block_Average
   const double dt = sim.time_step_size();
 
   // average sasa and fluctuation for each atom i
-  const unsigned int tot_atoms = topo.num_solute_atoms();
-  for (unsigned int i = 0; i < tot_atoms; ++i){
+  const unsigned int num_sasa_atoms = topo.sasa_parameter().size();
+  for (unsigned int i = 0; i < num_sasa_atoms; ++i){
     sasa_avg[i] = old.sasa_avg[i] + dt * conf.old().sasa_area[i];
     sasa_fluct[i] = old.sasa_fluct[i] + conf.old().sasa_area[i] * conf.old().sasa_area[i] * dt;
   }
@@ -560,7 +560,8 @@ void configuration::Average::Block_Average
   sasatot_avg = old.sasatot_avg + conf.old().sasa_tot * dt;
   sasatot_fluct = old.sasatot_fluct + conf.old().sasa_tot * conf.old().sasa_tot * dt;
   
-  DEBUG(1, "new average total: " << sasatot_avg << "\told average total: " << old.sasatot_avg << "\ttime: " << time);
+  DEBUG(10, "Updated average total SASA: " << sasatot_avg <<
+          "\tand old average total SASA: " << old.sasatot_avg << "\tat time: " << time);
 }
 
 void configuration::Average::Block_Average
@@ -572,16 +573,17 @@ void configuration::Average::Block_Average
   const double dt = sim.time_step_size();
 
   // average volume and fluctuation for atom i 
-  const unsigned int tot_atoms = topo.num_solute_atoms();
-  for (unsigned int i = 0; i < tot_atoms; ++i){
-    sasavol_avg[i] = old.sasavol_avg[i] + dt * conf.old().sasa_vol[i];
-    sasavol_fluct[i] = old.sasavol_fluct[i] + conf.old().sasa_vol[i] * conf.old().sasa_vol[i] * dt;
+  const unsigned int num_sasa_atoms = topo.sasa_parameter().size();
+  for (unsigned int i = 0; i < num_sasa_atoms; ++i){
+    sasa_buriedvol_avg[i] = old.sasa_buriedvol_avg[i] + dt * conf.old().sasa_buriedvol[i];
+    sasa_buriedvol_fluct[i] = old.sasa_buriedvol_fluct[i] + conf.old().sasa_buriedvol[i] * conf.old().sasa_buriedvol[i] * dt;
   }
   // average total volume and fluctuation
-  sasavoltot_avg = old.sasavoltot_avg + conf.old().sasavol_tot * dt;
-  sasavoltot_fluct = old.sasavoltot_fluct + conf.old().sasavol_tot * conf.old().sasavol_tot * dt;
+  sasa_buriedvol_tot_avg = old.sasa_buriedvol_tot_avg + conf.old().sasa_buriedvol_tot * dt;
+  sasa_buriedvol_tot_fluct = old.sasa_buriedvol_tot_fluct + conf.old().sasa_buriedvol_tot * conf.old().sasa_buriedvol_tot * dt;
 
-  DEBUG(1, "new vol average total: " << sasavoltot_avg << "\told vol average total: " << old.sasavoltot_avg << "\ttime: " << time);
+  DEBUG(10, "Updated average total volume: " << sasa_buriedvol_tot_avg <<
+          "\tand old average total volume: " << old.sasa_buriedvol_tot_avg << "\tat time: " << time);
 }
 
 void configuration::Average::Block_Average

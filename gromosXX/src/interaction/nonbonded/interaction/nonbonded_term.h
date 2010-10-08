@@ -112,13 +112,6 @@ namespace interaction
 			      math::Vec  &e_el);
 
     /**
-     * calculate the force and energy of an atom pair (sasa).
-     */
-    void sasa_interaction(math::Vec const &r, double bij,
-                          double pij, double p_i, double surface,
-                          double & e_sasa);
-
-    /**
      * calculate the self energy - dipole-dipole interaction (polarisation)
      */
     void self_energy_interaction(double alpha, double e_i2, double &self_e);
@@ -149,6 +142,14 @@ namespace interaction
      * a constant.
      */
     double crf_2cut3i()const;
+
+
+    /**
+     * calculate the force and energy of an atom pair (sasa).
+     */
+    inline void sasa_interaction(math::Vec const &r, double bij,
+                                 double pij, double p_i, 
+                                 double surface, double & e_sasa);
 
   protected:
     /**
@@ -203,7 +204,9 @@ namespace interaction
      */
     double m_cut2;
   };
-  
+
+
+
 } // interaction
 
 // inline methods

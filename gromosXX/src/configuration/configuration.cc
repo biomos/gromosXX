@@ -55,8 +55,8 @@ configuration::Configuration::Configuration() {
 
   current().sasa_tot = 0.0;
   old().sasa_tot = 0.0;
-  current().sasavol_tot = 0.0;
-  old().sasavol_tot = 0.0;
+  current().sasa_buriedvol_tot = 0.0;
+  old().sasa_buriedvol_tot = 0.0;
 
   for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
     special().eds.virial_tensor_endstates[k] = 0.0;
@@ -121,17 +121,17 @@ configuration::Configuration::Configuration
 
   current().sasa_area = conf.current().sasa_area;
   old().sasa_area = conf.old().sasa_area;
-  current().sasa_vol = conf.current().sasa_vol;
-  old().sasa_vol = conf.old().sasa_vol;
+  current().sasa_buriedvol = conf.current().sasa_buriedvol;
+  old().sasa_buriedvol = conf.old().sasa_buriedvol;
+  current().gvol = conf.current().gvol;
+  old().gvol = conf.old().gvol;
+  current().dgvol = conf.current().dgvol;
+  old().dgvol = conf.old().dgvol;
 
   current().sasa_tot = conf.current().sasa_tot;
   old().sasa_tot = conf.old().sasa_tot;
-  current().sasavol_tot = conf.current().sasavol_tot;
-  old().sasavol_tot = conf.old().sasavol_tot;
-
-  // only needed for testing of sasa and volume term
-  //current().fsasa = conf.current().fsasa;
-  //current().fvolume = conf.current().fvolume;
+  current().sasa_buriedvol_tot = conf.current().sasa_buriedvol_tot;
+  old().sasa_buriedvol_tot = conf.old().sasa_buriedvol_tot;
 
   special().dihangle_trans.dihedral_angle_minimum = conf.special().dihangle_trans.dihedral_angle_minimum;
   special().dihangle_trans.old_minimum = conf.special().dihangle_trans.old_minimum;
@@ -221,17 +221,17 @@ configuration::Configuration & configuration::Configuration::operator=
 
   current().sasa_area = conf.current().sasa_area;
   old().sasa_area = conf.old().sasa_area;
-  current().sasa_vol = conf.current().sasa_vol;
-  old().sasa_vol = conf.old().sasa_vol;
+  current().sasa_buriedvol = conf.current().sasa_buriedvol;
+  old().sasa_buriedvol = conf.old().sasa_buriedvol;
+  current().gvol = conf.current().gvol;
+  old().gvol = conf.old().gvol;
+  current().dgvol = conf.current().dgvol;
+  old().dgvol = conf.old().dgvol;
 
   current().sasa_tot = conf.current().sasa_tot;
   old().sasa_tot = conf.old().sasa_tot;
-  current().sasavol_tot = conf.current().sasavol_tot;
-  old().sasavol_tot = conf.old().sasavol_tot;
-
-  // only needed for testing of sasa and volume term
-  //current().fsasa = conf.current().fsasa;
-  //current().fvolume = conf.current().fvolume;
+  current().sasa_buriedvol_tot = conf.current().sasa_buriedvol_tot;
+  old().sasa_buriedvol_tot = conf.old().sasa_buriedvol_tot;
 
   special().dihangle_trans.dihedral_angle_minimum = conf.special().dihangle_trans.dihedral_angle_minimum;
   special().dihangle_trans.old_minimum = conf.special().dihangle_trans.old_minimum;
@@ -286,14 +286,17 @@ void configuration::Configuration::init(topology::Topology const & topo,
   old().energies.resize(num, numb);
 
   // resize sasa vectors
-  const unsigned int num_atoms = unsigned(topo.num_solute_atoms());
+  const unsigned int num_sasa_atoms = topo.sasa_parameter().size();
+  DEBUG(5, "Number of sasa atoms: " << num_sasa_atoms);
 
-  DEBUG(5, "number of solute atoms: " << num_atoms);
-
-  current().sasa_area.resize(num_atoms);
-  old().sasa_area.resize(num_atoms);
-  current().sasa_vol.resize(num_atoms);
-  old().sasa_vol.resize(num_atoms);
+  current().sasa_area.resize(num_sasa_atoms, 0.0);
+  old().sasa_area.resize(num_sasa_atoms, 0.0);
+  current().sasa_buriedvol.resize(num_sasa_atoms, 0.0);
+  old().sasa_buriedvol.resize(num_sasa_atoms, 0.0);
+  current().gvol.resize(num_sasa_atoms, 0.0);
+  old().gvol.resize(num_sasa_atoms, 0.0);
+  current().dgvol.resize(num_sasa_atoms, 0.0);
+  old().dgvol.resize(num_sasa_atoms, 0.0);
 
   // check whether this can really stay here! see resize function below
   special().eds.force_endstates.resize(param.eds.numstates);
@@ -443,8 +446,6 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
   posV.resize(s);
   vel.resize(s);
   force.resize(s);
-  //fsasa.resize(s); // only needed for testing
-  //fvolume.resize(s); // only needed for testing
   constraint_force.resize(s);
   stochastic_integral.resize(s);
 }

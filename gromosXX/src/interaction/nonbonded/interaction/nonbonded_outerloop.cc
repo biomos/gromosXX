@@ -229,7 +229,7 @@ void interaction::Nonbonded_Outerloop
 }
 
 /**
- * helper function to calculate forces and energies (sasa)
+ * helper function to calculate sasa forces and energies
  */
 
 template<typename t_interaction_spec>
@@ -239,42 +239,85 @@ void interaction::Nonbonded_Outerloop
         simulation::Simulation & sim,
         Storage & storage) {
 
-  DEBUG(7, "\tcalculate interactions");
+  DEBUG(7, "\tCalculating SASA/VOL interaction term");
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
 
-  unsigned int size_i = unsigned(topo.num_solute_atoms());
-  DEBUG(10, "outerloop solute atom size " << size_i);
+  // these are the same for every atom, but I only want them if it's volume...
+  const double amin = sim.param().sasa.min_cut;
+  const double amax = sim.param().sasa.max_cut;
+  const double adiff = sim.param().sasa.cut_diff;
 
-  const unsigned int end = topo.num_solute_atoms();
+  // first put surface and area into conf.current
+  const unsigned int num_sasa_atoms = topo.sasa_parameter().size();
+  DEBUG(15, "\tNumber of non-H (\"sasa\") atoms: " << num_sasa_atoms);
 
-  for (unsigned int i = 0; i < end; ++i) {
-    DEBUG(10, "\tnonbonded_interaction: i " << i);
+  for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
 
-    // calculates the solvent-accessible surface area for atom i
-    innerloop.sasa_innerloop(topo, conf, i, storage, sim, periodicity);
-  }
+    // note that i counts non-H ("sasa") atoms
+    DEBUG(10, "\tInitialising surface, area and volume for sasa atom " << i);
+    // get sasa parameters for atom i
+    const topology::sasa_parameter_struct & sasa_param_i = topo.sasa_parameter(i);
+    // initialise actual sasa array (size = num_sasa_atoms)
+    conf.current().sasa_area[i] = sasa_param_i.surface;
 
-  // search for largest surface area to set an upper limit for volume calculation
-  double A_max = 0.0; // largest surface area
-  for (unsigned int i = 0; i < end; ++i) {
-    if (A_max < conf.current().sasa_area[i]) A_max = conf.current().sasa_area[i];
-    DEBUG(1, "\tlargest surface area: " << A_max);
-  }
+  } // end initialize surface areas
 
-  // calculates volume contribution
-  if (sim.param().sasa.switch_volume) {
-    for (unsigned int i = 0; i < end; ++i) {
-      innerloop.sasa_volume_innerloop(topo, conf, i, A_max, storage, sim, periodicity);
-      DEBUG(1, "\tvolume of atom i: " << i << '\t' << conf.current().sasa_vol[i]);
-    }
-  }
-  //conf.current().fsasa = 0.0;
-  //conf.current().fvolume = 0.0;
-  // calculates the forces - sasa and volume - separately because all sasa-values are needed
-  for (unsigned int i = 0; i < end; ++i) {
-    innerloop.sasa_innerloop_force(topo, conf, i, A_max, storage, sim, periodicity);
+  // now compute actual sasa (reduction due to overlap)
+  for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
+
+    DEBUG(10, "\tCalculating true SASA for sasa atom " << i);
+    innerloop.sasa_calc_innerloop(topo, conf, i, sim, periodicity);
+
+  } // end compute sasa
+
+  // store final and total sasas and their energy contribution,
+  // compute volume term and compute forces
+  for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
+
+    // check for negative SASA
+    DEBUG(10, "\tChecking for negative true SASA for sasa atom " << i);
+    if (conf.current().sasa_area[i] < 0) {
+      io::messages.add("Nonbonded_Outerloop",
+              "negative SASA", io::message::critical);
+    } else {
+      DEBUG(10, "\tStoring true SASA and energies for sasa atom " << i);
+
+      // get sasa parameters for atom i
+      const topology::sasa_parameter_struct & sasa_param_i = topo.sasa_parameter(i);
+      // add sasa to total
+      conf.current().sasa_tot += conf.current().sasa_area[i];
+
+      DEBUG(15, "\tSASA of atom " << sasa_param_i.atom << " is " << conf.current().sasa_area[i]
+              << "\tand current total SASA of molecule is " << conf.current().sasa_tot);
+
+      double e_sasa = conf.current().sasa_area[i] * sasa_param_i.sigma;
+      conf.current().energies.sasa_energy[topo.atom_energy_group(sasa_param_i.atom)] += e_sasa;
+
+      DEBUG(15, "\tSASA energy of atom " << sasa_param_i.atom << " is " << e_sasa
+              << "\tand current total SASA energy is " <<
+              conf.current().energies.sasa_energy[topo.atom_energy_group(sasa_param_i.atom)]);
+
+      // if using volume too, compute volume term for atom i
+      // has to go here because the switching function needs the true area
+      if (sim.param().sasa.switch_volume) {
+        DEBUG(10, "\tComputing volume term for sasa atom " << i);
+        // first compute switching function and its derivative (for later)
+        innerloop.sasa_switching_fct(conf, i, amin, amax, adiff);
+        // compute volume contribution to energy
+        innerloop.sasa_volume_innerloop(topo, conf, i, sim);
+      }
+    } // end else
+  } // end atoms i
+
+  // finally calculate the forces (for sasa and, if used, vol)
+  // has to be in a separate loop because we need the switching function derivative
+  // for all atoms to have been computed
+  for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
+    DEBUG(10, "\tCalculating SASA/VOL forces for sasa atom " << i);
+    innerloop.sasa_force_innerloop(topo, conf, i, sim, periodicity);
+
   }
 
 }

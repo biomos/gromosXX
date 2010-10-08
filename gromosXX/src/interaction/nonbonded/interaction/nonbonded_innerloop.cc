@@ -8,6 +8,7 @@
 
 #include "storage.h"
 #include "nonbonded_innerloop.h"
+#include "topology/topology.h"
 
 
 #undef MODULE
@@ -348,517 +349,453 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
 template<typename t_nonbonded_spec>
 inline void
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_innerloop
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_calc_innerloop
 (
         topology::Topology & topo,
         configuration::Configuration & conf,
         unsigned int i,
-        Storage & storage,
         simulation::Simulation & sim,
         math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
-  math::Vec rij;
-  double e_sasa, e_sasa_temp;
-  math::VArray &pos = conf.current().pos;
 
-  const sasa_parameter_struct & sasa_i = m_param->sasa_parameter(i);
+  bool higher = false;
+  const double p12 = sim.param().sasa.p_12;
+  const double p13 = sim.param().sasa.p_13;
+  const double p1x = sim.param().sasa.p_1x;
+  std::set< unsigned int >::const_iterator it, to;
 
-  DEBUG(1, "\tsasa-parameters: p_i=" << sasa_i.p_i << " r_i=" << sasa_i.r_i << " sigma_i=" << sasa_i.sigma_i);
+  // get sasa parameters for atom i
+  const topology::sasa_parameter_struct & sasa_param_i = topo.sasa_parameter(i);
+  DEBUG(15, "\tSASA parameters for atom(i) " << sasa_param_i.atom << ": p = " <<
+          sasa_param_i.p << " r = " << sasa_param_i.r <<
+          " sigma = " << sasa_param_i.sigma);
 
-  double surface = 4 * math::Pi * (sasa_i.r_i + sim.param().sasa.r_solv) *
-          (sasa_i.r_i + sim.param().sasa.r_solv);
+  // reduce total sasa by overlap from each type of neighbour in turn
 
-  // set initial energy to surface of atom i to avoid multiplication by zero
-  e_sasa = surface;
-
-  if (sasa_i.p_i != 0.0 && surface != 0.0) {
-    // direct neighbours
-    std::set< int >::const_iterator it, to;
-    it = topo.sasa_first_neighbour(i).begin();
-    to = topo.sasa_first_neighbour(i).end();
-    for (; it != to; ++it) {
-      DEBUG(11, "\tdirect neighbours " << i << " - " << *it);
-
-      periodicity.nearest_image(pos(i), pos(*it), rij);
-
-      DEBUG(11, "\tni r " << rij(0) << " / " << rij(1) << " / " << rij(2));
-
-      double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-      double pij = sim.param().sasa.p_12;
-
-      if (bij != 0.0) {
-        sasa_interaction(rij, bij, pij, sasa_i.p_i, surface, e_sasa_temp);
-        e_sasa = e_sasa * e_sasa_temp;
-      }
-    }
-
-    // second neighbours, 1,3
-    it = topo.sasa_second_neighbour(i).begin();
-    to = topo.sasa_second_neighbour(i).end();
-    for (; it != to; ++it) {
-      DEBUG(11, "\tsecond neighbours " << i << " - " << *it);
-
-      periodicity.nearest_image(pos(i), pos(*it), rij);
-
-      DEBUG(11, "\tni r " << rij(0) << " / " << rij(1) << " / " << rij(2));
-
-      double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-      double pij = sim.param().sasa.p_13;
-
-      if (bij != 0.0) {
-        sasa_interaction(rij, bij, pij, sasa_i.p_i, surface, e_sasa_temp);
-        e_sasa = e_sasa * e_sasa_temp;
-      }
-    }
-
-    // third neighbours, 1,4
-    it = topo.sasa_third_neighbour(i).begin();
-    to = topo.sasa_third_neighbour(i).end();
-    for (; it != to; ++it) {
-      DEBUG(11, "\tthird neighbours " << i << " - " << *it);
-
-      periodicity.nearest_image(pos(i), pos(*it), rij);
-
-      DEBUG(11, "\tni r " << rij(0) << " / " << rij(1) << " / " << rij(2));
-
-      double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-      double pij = sim.param().sasa.p_13; // same as for second neighbours
-
-      if (bij != 0.0) {
-        sasa_interaction(rij, bij, pij, sasa_i.p_i, surface, e_sasa_temp);
-        e_sasa = e_sasa * e_sasa_temp;
-      }
-    }
-
-    // higher neighbours, > 1,4, this will be excluded...
-    //if (sim.param().sasa.switch_1x) {
-    it = topo.sasa_higher_neighbour(i).begin();
-    to = topo.sasa_higher_neighbour(i).end();
-    for (; it != to; ++it) {
-      DEBUG(11, "\thigher neighbours " << i << " - " << *it);
-
-      periodicity.nearest_image(pos(i), pos(*it), rij);
-
-      DEBUG(10, "\tni r " << rij(0) << " / " << rij(1) << " / " << rij(2));
-
-      double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-      double pij = sim.param().sasa.p_1x;
-
-      if (bij != 0.0) {
-        sasa_interaction(rij, bij, pij, sasa_i.p_i, surface, e_sasa_temp);
-        e_sasa = e_sasa * e_sasa_temp;
-      }
-    }
-    //}
-    // sasa
-    conf.current().sasa_area[i] = e_sasa;
-    conf.current().sasa_tot += e_sasa;
-    DEBUG(1, "\tcurrent total sasa: " << conf.current().sasa_tot <<
-            "\tsasa of atom i: " << conf.current().sasa_area[i] << " - step:" << i);
-
-    // now calculate the sasa energy
-    e_sasa *= sasa_i.sigma_i;
-
-    conf.current().energies.sasa_energy[topo.atom_energy_group(i)] += e_sasa;
-  }
-}
-
-template<typename t_nonbonded_spec>
-inline void
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_innerloop_force
-(
-        topology::Topology & topo,
-        configuration::Configuration & conf,
-        unsigned int i, double amax,
-        Storage & storage,
-        simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
-  math::Vec rij;
-  double fsasa, fvolume, ai;
-  math::VArray &pos = conf.current().pos;
-  math::VArray &force = conf.current().force;
-  //math::VArray &fs = conf.current().fsasa; // only needed for testing
-  //math::VArray &volume = conf.current().fvolume;// only needed for testing
-
-  double const a_max = amax * sim.param().sasa.max_cut;
-  double const a_min = a_max - sim.param().sasa.min_cut;
-  ai = conf.current().sasa_area[i];
-
-  const unsigned int end = topo.num_solute_atoms();
-
-  for (unsigned int j = 0; j < end; ++j) {
-    if (i != j) {
-      const sasa_parameter_struct & sasa_j = m_param->sasa_parameter(j);
-      DEBUG(11, "\tsasa-parameter p_j=" << sasa_j.p_i);
-
-      double surface = 4 * math::Pi * (sasa_j.r_i + sim.param().sasa.r_solv) *
-              (sasa_j.r_i + sim.param().sasa.r_solv);
-      double a, aj;
-      a = conf.current().sasa_area[j];
-
-      double pji;
-      double bji = sasa_overlap(topo, conf, j, i, sim, periodicity);
-      double dbji = sasa_overlap_der(topo, conf, j, i, sim, periodicity);
-
-      if (dbji != 0.0 && sasa_j.p_i != 0.0 && surface != 0.0) {
-
-        DEBUG(11, "\tatom pair " << i << " - " << j);
-
-        periodicity.nearest_image(pos(j), pos(i), rij);
-
-        if (topo.sasa_first_neighbour(j).count(i)) pji = sim.param().sasa.p_12;
-        else if (topo.sasa_second_neighbour(j).count(i)) pji = sim.param().sasa.p_13;
-        else if (topo.sasa_third_neighbour(j).count(i)) pji = sim.param().sasa.p_13;
-        else if (topo.sasa_higher_neighbour(j).count(i)) pji = sim.param().sasa.p_1x;
-
-        aj = a / (1 - sasa_j.p_i * pji * bji / surface);
-
-        // force for sasa interaction
-        fsasa = -sasa_j.p_i * pji * dbji * aj / surface;
-
-        // force for volume interaction
-        if (sim.param().sasa.switch_volume) {
-          double dg = sasa_switching_fct_der(topo, conf, a, a_max, a_min, storage, sim, periodicity);
-          fvolume = 4 / 3 * math::Pi * dg * fsasa * sasa_j.r_i * sasa_j.r_i * sasa_j.r_i;
-        }
-
-        for (int a = 0; a < 3; ++a) {
-          // stores each component of sasa contribution
-          const double term_s = sasa_j.sigma_i * fsasa * rij(a) / math::abs(rij);
-          force(i)(a) += term_s;
-          //fs(i)(a) += term_s;
-
-          // stores each component of volume contribution
-          if (sim.param().sasa.switch_volume) {
-            const double term_v = sim.param().sasa.sigma_v * fvolume * rij(a) / math::abs(rij);
-            force(i)(a) += term_v;
-            //volume(i)(a) += term_v;
-          }
-        }
-      } // store forces
-    } // for i != j
-  } // loop over all atoms
-
-  // forces for j = i
-  const sasa_parameter_struct & sasa_i = m_param->sasa_parameter(i);
-  DEBUG(11, "\tsasa-parameter p_i=" << sasa_i.p_i);
-
-  double surface_i = 4 * math::Pi * (sasa_i.r_i + sim.param().sasa.r_solv) *
-          (sasa_i.r_i + sim.param().sasa.r_solv);
-
-  // first neighbours
-  std::set< int >::const_iterator it, to;
+  // first (1-2) neighbours
   it = topo.sasa_first_neighbour(i).begin();
   to = topo.sasa_first_neighbour(i).end();
   for (; it != to; ++it) {
-    DEBUG(11, "\tdirect neighbours " << i << " - " << *it);
+    DEBUG(12, "\tFirst neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa(topo, conf, higher, p12, i, *it, sasa_param_i, periodicity);
+  } // end first neighbours
 
-    double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-    double dbij = sasa_overlap_der(topo, conf, i, *it, sim, periodicity);
-    double pij = sim.param().sasa.p_12;
-
-    if (dbij != 0.0 && sasa_i.p_i != 0.0 && surface_i != 0.0) {
-
-      DEBUG(11, "\tatom pair " << i << " - " << *it);
-
-      periodicity.nearest_image(pos(i), pos(*it), rij);
-
-      double aij = ai / (1 - sasa_i.p_i * pij * bij / surface_i);
-
-      // sasa contribution for i=j
-      fsasa = -(sasa_i.p_i * pij * dbij * aij / surface_i);
-      if (sim.param().sasa.switch_volume) {
-        double dg = sasa_switching_fct_der(topo, conf, ai, a_max, a_min, storage, sim, periodicity);
-        fvolume = 4 / 3 * math::Pi * dg * sasa_i.r_i * sasa_i.r_i * sasa_i.r_i * fsasa;
-      }
-
-      for (int a = 0; a < 3; ++a) {
-        // sasa contribution for i=j
-        const double term_s = sasa_i.sigma_i * fsasa * rij(a) / math::abs(rij);
-        force(i)(a) -= term_s;
-        //fs(i)(a) -= term_s;
-
-        // volume contribution for i=j
-        if (sim.param().sasa.switch_volume) {
-          const double term_v = sim.param().sasa.sigma_v * fvolume * rij(a) / math::abs(rij);
-          force(i)(a) -= term_v;
-          //volume(i)(a) -= term_v;
-        }
-      }
-    }
-  }
-
-  // second neighbours, 1,3
+  // second (1-3) neighbours
   it = topo.sasa_second_neighbour(i).begin();
   to = topo.sasa_second_neighbour(i).end();
   for (; it != to; ++it) {
-    DEBUG(11, "\tsecond neighbours " << i << " - " << *it);
+    DEBUG(12, "\tSecond neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa(topo, conf, higher, p13, i, *it, sasa_param_i, periodicity);
+  } // end second neighbours
 
-    double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-    double dbij = sasa_overlap_der(topo, conf, i, *it, sim, periodicity);
-    double pij = sim.param().sasa.p_13;
+  // reset higher
+  higher = true;
 
-    if (dbij != 0.0 && sasa_i.p_i != 0.0 && surface_i != 0.0) {
-
-      DEBUG(11, "\tatom pair " << i << " - " << *it);
-
-      periodicity.nearest_image(pos(i), pos(*it), rij);
-
-      double aij = ai / (1 - sasa_i.p_i * pij * bij / surface_i);
-
-      // sasa contribution for i=j
-      fsasa = -(sasa_i.p_i * pij * dbij * aij / surface_i);
-      if (sim.param().sasa.switch_volume) {
-        double dg = sasa_switching_fct_der(topo, conf, ai, a_max, a_min, storage, sim, periodicity);
-        fvolume = 4 / 3 * math::Pi * dg * sasa_i.r_i * sasa_i.r_i * sasa_i.r_i * fsasa;
-      }
-
-      for (int a = 0; a < 3; ++a) {
-        // sasa contribution for i=j
-        const double term_s = sasa_i.sigma_i * fsasa * rij(a) / math::abs(rij);
-        force(i)(a) -= term_s;
-        //fs(i)(a) -= term_s;
-
-        // volume contribution for i=j
-        if (sim.param().sasa.switch_volume) {
-          const double term_v = sim.param().sasa.sigma_v * fvolume * rij(a) / math::abs(rij);
-          force(i)(a) -= term_v;
-          //volume(i)(a) -= term_v;
-        }
-      }
-    }
-  }
-
-  // third neighbours, 1,4
+  // third (1-4) neighbours
   it = topo.sasa_third_neighbour(i).begin();
   to = topo.sasa_third_neighbour(i).end();
   for (; it != to; ++it) {
-    DEBUG(11, "\tthird neighbours " << i << " - " << *it);
+    DEBUG(12, "\tThird neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa(topo, conf, higher, p1x, i, *it, sasa_param_i, periodicity);
+  } // end third neighbours
 
-    double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-    double dbij = sasa_overlap_der(topo, conf, i, *it, sim, periodicity);
-    double pij = sim.param().sasa.p_13;
-
-    if (dbij != 0.0 && sasa_i.p_i != 0.0 && surface_i != 0.0) {
-
-      DEBUG(11, "\tatom pair " << i << " - " << *it);
-
-      periodicity.nearest_image(pos(i), pos(*it), rij);
-
-      double aij = ai / (1 - sasa_i.p_i * pij * bij / surface_i);
-
-      // sasa contribution for i=j
-      fsasa = -(sasa_i.p_i * pij * dbij * aij / surface_i);
-
-      if (sim.param().sasa.switch_volume) {
-        double dg = sasa_switching_fct_der(topo, conf, ai, a_max, a_min, storage, sim, periodicity);
-        fvolume = 4 / 3 * math::Pi * dg * sasa_i.r_i * sasa_i.r_i * sasa_i.r_i * fsasa;
-      }
-
-      for (int a = 0; a < 3; ++a) {
-        // sasa contribution for i=j
-        const double term_s = sasa_i.sigma_i * fsasa * rij(a) / math::abs(rij);
-        force(i)(a) -= term_s;
-        //fs(i)(a) -= term_s;
-
-        // volume contribution for i=j
-        if (sim.param().sasa.switch_volume) {
-          const double term_v = sim.param().sasa.sigma_v * fvolume * rij(a) / math::abs(rij);
-          force(i)(a) -= term_v;
-          //volume(i)(a) -= term_v;
-        }
-      }
-    }
-  }
-
-  // higher neighbours, > 1,4
-  //if (sim.param().sasa.switch_1x) {
+  // higher (> 1-4) neighbours
   it = topo.sasa_higher_neighbour(i).begin();
   to = topo.sasa_higher_neighbour(i).end();
   for (; it != to; ++it) {
-    DEBUG(11, "\thigher neighbours " << i << " - " << *it);
+    DEBUG(12, "\tHigher neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa(topo, conf, higher, p1x, i, *it, sasa_param_i, periodicity);
+  } // end 1-4 and higher neighbours
 
-    double bij = sasa_overlap(topo, conf, i, *it, sim, periodicity);
-    double dbij = sasa_overlap_der(topo, conf, i, *it, sim, periodicity);
-    double pij = sim.param().sasa.p_1x;
+} // end sasa_calc_innerloop
 
-    if (dbij != 0.0 && sasa_i.p_i != 0.0 && surface_i != 0.0) {
+template<typename t_nonbonded_spec>
+inline void
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::calculate_sasa
+(
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        bool higher,
+        const double & pij,
+        unsigned int i, unsigned int j,
+        const topology::sasa_parameter_struct & sasa_param_i,
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
 
-      DEBUG(11, "\tatom pair " << i << " - " << *it);
+  // get sasa parameters for atom j
+  const topology::sasa_parameter_struct & sasa_param_j = topo.sasa_parameter(j);
+  DEBUG(15, "\tSASA parameters for atom(j) " << sasa_param_j.atom << ": p = "
+          << sasa_param_j.p << " r = " << sasa_param_j.r <<
+          " sigma = " << sasa_param_j.sigma);
 
-      periodicity.nearest_image(pos(i), pos(*it), rij);
+  // assign/compute sums of radii
+  const double ri_rh2o = sasa_param_i.r_rh2o;
+  const double rj_rh2o = sasa_param_j.r_rh2o;
+  const double sum_of_radii = ri_rh2o +  rj_rh2o;
 
-      double aij = ai / (1 - sasa_i.p_i * pij * bij / surface_i);
-      fsasa = -(sasa_i.p_i * pij * dbij * aij / surface_i);
+  // compute distance between atoms i and j
+  math::Vec rij;
+  math::VArray &pos = conf.current().pos;
+  periodicity.nearest_image(pos(sasa_param_i.atom), pos(sasa_param_j.atom), rij);
+  const double rdist = math::abs(rij);
 
-      // sasa contribution for i=j
-      if (sim.param().sasa.switch_volume) {
-        double dg = sasa_switching_fct_der(topo, conf, ai, a_max, a_min, storage, sim, periodicity);
-        fvolume = 4 / 3 * math::Pi * dg * sasa_i.r_i * sasa_i.r_i * sasa_i.r_i * fsasa;
-      }
+  DEBUG(15, "\tRi + Rh2o = " << ri_rh2o << "\tRj + Rh2o = " << rj_rh2o <<
+          "\tSum of radii = " << sum_of_radii << "\trdist = " << rdist);
 
-      for (int a = 0; a < 3; ++a) {
-        // sasa contribution for i=j
-        const double term_s = sasa_i.sigma_i * fsasa * rij(a) / math::abs(rij);
-        force(i)(a) -= term_s;
-        //fs(i)(a) -= term_s;
+  // if 1st or 2nd neighbours we don't need to check the inter-atomic distance
+  if (!higher) {
 
-        // volume contribution for i=j
-        if (sim.param().sasa.switch_volume) {
-          const double term_v = sim.param().sasa.sigma_v * fvolume * rij(a) / math::abs(rij);
-          force(i)(a) -= term_v;
-          //volume(i)(a) -= term_v;
-        }
-      }
-    }
+    // compute components of area function
+    const double c1 = (sum_of_radii - rdist) * math::Pi;
+    const double c2 = (rj_rh2o - ri_rh2o) / rdist;
+    // note that "bij", "bji" are actually pi*pij*bij/Si
+    const double bij = (c1 * ri_rh2o * (1.0 + c2) * pij * sasa_param_i.p) /
+            sasa_param_i.surface;
+    const double bji = (c1 * rj_rh2o * (1.0 - c2) * pij * sasa_param_j.p) /
+            sasa_param_j.surface;
+
+    DEBUG(15, "\tc1 = " << c1 << "\tc2 = " << c2 << "\tbij = " << bij << "\tbji = "
+            << bji);
+
+    // modify areas
+    conf.current().sasa_area[i] *= (1.0 - bij);
+    conf.current().sasa_area[j] *= (1.0 - bji);
+    DEBUG(15, "\tCurrent actual SASA of atom " << sasa_param_i.atom << " is " <<
+            conf.current().sasa_area[i] << " and of atom " << sasa_param_j.atom
+            << " is " << conf.current().sasa_area[j]);
+
+  } // end not higher
+
+  // for third and higher neighbours, we only adjust the SASA if the two atoms
+  // are closer than two waters
+  if (higher) {
+    if (rdist <= sum_of_radii) {
+
+      // compute components of area function
+      const double c1 = (sum_of_radii - rdist) * math::Pi;
+      const double c2 = (rj_rh2o - ri_rh2o) / rdist;
+      // note that "bij", "bji" are are actually pi*pij*bij/Si
+      const double bij = (c1 * ri_rh2o * (1.0 + c2) * pij * sasa_param_i.p) /
+              sasa_param_i.surface;
+      const double bji = (c1 * rj_rh2o * (1.0 - c2) * pij * sasa_param_j.p) /
+              sasa_param_j.surface;
+
+      DEBUG(15, "\tc1 = " << c1 << "\tc2 = " << c2 << "\tbij = " << bij << "\tbji = "
+              << bji);
+
+      // modify areas
+      conf.current().sasa_area[i] *= (1.0 - bij);
+      conf.current().sasa_area[j] *= (1.0 - bji);
+      DEBUG(15, "\tCurrent actual SASA of atom " << sasa_param_i.atom << " is " <<
+              conf.current().sasa_area[i] << " and of atom " << sasa_param_j.atom
+              << " is " << conf.current().sasa_area[j]);
+
+    } // end cutoff check
+  } // end higher
+
+} // end sasa_calculation
+
+template<typename t_nonbonded_spec>
+inline void
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_force_innerloop
+(
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        unsigned int i,
+        simulation::Simulation & sim,
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
+
+  double dg_i = 0.0;
+  bool higher = false;
+  math::Vec force_i(0.0);
+  math::VArray & force = conf.current().force;
+  std::set< unsigned int >::const_iterator it, to;
+  const double p12 = sim.param().sasa.p_12;
+  const double p13 = sim.param().sasa.p_13;
+  const double p1x = sim.param().sasa.p_1x;
+
+
+  // get sasa parameters for atom i and sum of radii
+  const topology::sasa_parameter_struct & sasa_param_i = topo.sasa_parameter(i);
+  const double ri_rh2o = sasa_param_i.r_rh2o;
+  DEBUG(15, "\n\tSASA parameters for atom " << sasa_param_i.atom << " : p = "
+          << sasa_param_i.p << " r = " << sasa_param_i.r << " sigma = "
+          << sasa_param_i.sigma);
+
+  // and if using volume term, get derivative switching function for atom i
+  if (sim.param().sasa.switch_volume) {
+    dg_i = conf.current().dgvol[i];
+    DEBUG(15, "\tVolume switching function derivative for atom(i) " << sasa_param_i.atom <<
+            " with SASA = " << conf.current().sasa_area[i] << " is = " << dg_i);
   }
-  //}
-}
+
+  // to ignore forces for bonded atoms (as in POPS), comment this loop out
+  // first neighbours
+  it = topo.sasa_first_neighbour(i).begin();
+  to = topo.sasa_first_neighbour(i).end();
+  for (; it != to; ++it) {
+    DEBUG(12, "\tFirst neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa_forces(topo, conf, higher, p12, i, *it, force_i,
+            ri_rh2o, dg_i, sasa_param_i, sim, periodicity);
+  } // end first neighbours
+  
+
+  // second neighbours
+  it = topo.sasa_second_neighbour(i).begin();
+  to = topo.sasa_second_neighbour(i).end();
+  for (; it != to; ++it) {
+    DEBUG(12, "\tSecond neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa_forces(topo, conf, higher, p13, i, *it, force_i, ri_rh2o,
+            dg_i, sasa_param_i, sim, periodicity);
+  } // end second neighbours of i
+
+  // third (1-4) neighbours
+  higher = true;
+  it = topo.sasa_third_neighbour(i).begin();
+  to = topo.sasa_third_neighbour(i).end();
+  for (; it != to; ++it) {
+    DEBUG(12, "\tThird neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa_forces(topo, conf, higher, p1x, i, *it, force_i, ri_rh2o,
+            dg_i, sasa_param_i, sim, periodicity);
+  } // end second neighbours of i
+
+  // higher (>1-4) neighbours
+  it = topo.sasa_higher_neighbour(i).begin();
+  to = topo.sasa_higher_neighbour(i).end();
+  for (; it != to; ++it) {
+    DEBUG(12, "\tHigher neighbours: sasa atoms " << i << " and " << *it);
+    calculate_sasa_forces(topo, conf, higher, p1x, i, *it, force_i, ri_rh2o,
+            dg_i, sasa_param_i, sim, periodicity);
+  } // higher (>1-4) neighbours of i
+
+  DEBUG(12, "\tSASA/VOL forces for atom(i) " << sasa_param_i.atom << " :" << math::v2s(force_i));
+
+  // then adjust overall forces for atom i
+  force(sasa_param_i.atom) += force_i;
+  
+} // end sasa force
+
+// calculate the sasa contribution to the forces
+template<typename t_nonbonded_spec>
+inline void
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::calculate_sasa_forces
+(
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        bool higher,
+        const double pij,
+        unsigned int i,
+        unsigned int j,
+        math::Vec & force_i,
+        const double ri_rh2o,
+        double dg_i,
+        const topology::sasa_parameter_struct & sasa_param_i,
+        simulation::Simulation & sim,
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
+
+  math::VArray & pos = conf.current().pos;
+  math::VArray & force = conf.current().force;
+  math::Vec rij(0.0);
+  double ddf_vol;
+
+  // get sasa parameters for atom j
+  const topology::sasa_parameter_struct & sasa_param_j = topo.sasa_parameter(j);
+  DEBUG(15, "\tSASA parameters for atom(j) " << sasa_param_j.atom << " : p = "
+          << sasa_param_j.p << " r = " << sasa_param_j.r << " sigma = "
+          << sasa_param_j.sigma);
+
+  // assign/compute sums and diffs of radii
+  const double rj_rh2o = sasa_param_j.r_rh2o;
+  const double rdiff = sasa_param_j.r - sasa_param_i.r;
+  const double sum_of_radii = ri_rh2o + rj_rh2o;
+
+  // get diff in coords and compute dist_rij2 and dist_rij
+  periodicity.nearest_image(pos(sasa_param_i.atom), pos(sasa_param_j.atom), rij);
+  const double dist_rij2 = math::abs2(rij);
+  const double dist_rij = sqrt(dist_rij2);
+
+  DEBUG(15, "\tRi + Rh2o = " << ri_rh2o << "\tRj + Rh2o = " << rj_rh2o <<
+          "\n\tsum of radii = " << sum_of_radii << "\tdiff of radii = " << rdiff <<
+          "\trdist2 = " << dist_rij2 << "\trdist = " << dist_rij <<
+          "\n\tSASA(j) = " << conf.current().sasa_area[j] <<
+          "\tinitial force(j): " << math::v2s(force(sasa_param_j.atom)));
+
+  if (!higher) {
+    // compute components of force contribution
+    const double c1 = math::Pi * (sum_of_radii - dist_rij);
+    const double c2 = rdiff / dist_rij;
+    const double bij = c1 * ri_rh2o * (1.0 + c2);
+    const double bji = c1 * rj_rh2o * (1.0 - c2);
+    const double cc1 = conf.current().sasa_area[i] / ((sasa_param_i.surface /
+            (pij * sasa_param_i.p)) - bij);
+    const double cc2 = conf.current().sasa_area[j] / ((sasa_param_j.surface /
+            (pij * sasa_param_j.p)) - bji);
+    const double termij = sum_of_radii * rdiff / dist_rij2;
+    const double cc3 = math::Pi * ri_rh2o * (1.0 + termij);
+    const double cc4 = math::Pi * rj_rh2o * (1.0 - termij);
+
+    const double ddf = (sasa_param_i.sigma * cc1 * cc3 + sasa_param_j.sigma * cc2 * cc4)
+            / dist_rij;
+
+    // compute the force
+    math::Vec f = ddf * rij;
+
+    DEBUG(15, "\tContributions to SASA forces:\n\tc1 = " << c1 << "\tc2 = " << c2
+            << "\tbij = " << bij << "\tbji = " << bji
+            << "\tcc1 = " << cc1 << "\tcc2 = " << cc2 << "\n\ttermij = " << termij <<
+            "\tcc3 = " << cc3 << "\tcc4 = " << cc4 << "\tterm_sasa = " << ddf);
+
+    // volume contributions
+    if (sim.param().sasa.switch_volume) {
+      // switching function for atom j
+      const double dg_j = conf.current().dgvol[j];
+      DEBUG(15, "\tVolume switching function derivative for atom(j) " << sasa_param_j.atom <<
+              " with SASA of " << conf.current().sasa_area[j] << " is " << dg_j);
+
+      // extracting the dA/dr part in each direction
+      // sasa_vol is zero if this atom doesn't contribute to the volume term
+      const double part_i = sim.param().sasa.sigma_v * cc1 * cc3 * conf.current().sasa_buriedvol[i] * dg_i;
+      const double part_j = sim.param().sasa.sigma_v * cc2 * cc4 * conf.current().sasa_buriedvol[j] * dg_j;
+      ddf_vol = (part_i + part_j) / dist_rij;
+      DEBUG(15, "\tVolume on, ddf_vol = " << ddf_vol);
+
+      // update the force with volume contribution
+      f += ddf_vol * rij;
+
+    } // end volume
+
+    // update the forces on j and store temporarily the forces on i
+    force(sasa_param_j.atom) += f;
+    force_i -= f;
+    DEBUG(12, "\tUpdated force for atom(j) " << sasa_param_j.atom << ": " <<
+            math::v2s(force(sasa_param_j.atom)));
+
+  }// end not higher
+  
+  else {
+
+    // check we are within cutoff
+    if (dist_rij <= sum_of_radii) {
+
+      // compute components of force contribution
+      const double c1 = math::Pi * (sum_of_radii - dist_rij);
+      const double c2 = rdiff / dist_rij;
+      const double bij = c1 * ri_rh2o * (1.0 + c2);
+      const double bji = c1 * rj_rh2o * (1.0 - c2);
+      const double cc1 = conf.current().sasa_area[i] / ((sasa_param_i.surface /
+              (pij * sasa_param_i.p)) - bij);
+      const double cc2 = conf.current().sasa_area[j] / ((sasa_param_j.surface /
+              (pij * sasa_param_j.p)) - bji);
+      const double termij = sum_of_radii * rdiff / dist_rij2;
+      const double cc3 = math::Pi * ri_rh2o * (1.0 + termij);
+      const double cc4 = math::Pi * rj_rh2o * (1.0 - termij);
+
+      const double ddf = (sasa_param_i.sigma * cc1 * cc3 + sasa_param_j.sigma * cc2 * cc4)
+              / dist_rij;
+
+      // compute the force
+      math::Vec f = ddf * rij;
+
+      DEBUG(15, "\tContributions to SASA forces:\n\tc1 = " << c1 << "\tc2 = " << c2
+              << "\tbij = " << bij << "\tbji = " << bji
+              << "\tcc1 = " << cc1 << "\tcc2 = " << cc2 << "\n\ttermij = " << termij <<
+              "\tcc3 = " << cc3 << "\tcc4 = " << cc4 << "\tterm_sasa = " << ddf);
+
+      // volume contributions
+      if (sim.param().sasa.switch_volume) {
+        // switching function for atom j
+        const double dg_j = conf.current().dgvol[j];
+        DEBUG(15, "\tVolume switching function deriv. for atom(j) " << sasa_param_j.atom <<
+                " with SASA of " << conf.current().sasa_area[j] << " is " << dg_j);
+
+        // extracting the dA/dr part in each direction
+        const double part_i = sim.param().sasa.sigma_v * cc1 * cc3 * conf.current().sasa_buriedvol[i] * dg_i;
+        const double part_j = sim.param().sasa.sigma_v * cc2 * cc4 * conf.current().sasa_buriedvol[j] * dg_j;
+        ddf_vol = (part_i + part_j) / dist_rij;
+        DEBUG(15, "\tVolume on, ddf_vol = " << ddf_vol);
+
+        // update the force with volume contribution
+        f += ddf_vol * rij;
+
+      } // end volume
+
+      // update forces on atoms
+      force(sasa_param_j.atom) += f;
+      force_i -= f;
+      DEBUG(12, "\tUpdated force for atom(j) " << sasa_param_j.atom << ": " <<
+              math::v2s(force(sasa_param_j.atom))); 
+    } // end cutoff
+  } // end higher
+
+} // end calculate_sasa_forces
 
 template<typename t_nonbonded_spec>
 inline void
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_volume_innerloop
 (
-        topology::Topology & topo,
-        configuration::Configuration & conf,
-        unsigned int i, double amax,
-        Storage & storage,
-        simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
-  const sasa_parameter_struct & sasa_i =
-          m_param->sasa_parameter(i);
-  double a_min, a_max, a, r, evolume, volume;
+ topology::Topology & topo,
+ configuration::Configuration & conf,
+ unsigned int i,
+ simulation::Simulation & sim)
+{
+  // get sasa parameters for atom i
+  const topology::sasa_parameter_struct & sasa_param_i = topo.sasa_parameter(i);
+  // get switching function for atom i
+  const double g = conf.current().gvol[i];
 
-  a_max = amax * sim.param().sasa.max_cut;
-  a_min = a_max - sim.param().sasa.min_cut;
-  assert(a_min <= a_max);
-
-  a = conf.current().sasa_area[i];
-  r = sasa_i.r_i;
-
-  double g = sasa_switching_fct(topo, conf, a, a_max, a_min, storage, sim, periodicity);
-  // radius of hydrogen atoms is set to -r_solv, hydrogen must be excluded to avoid negative values
-  // for the ineterior of a protein...
-  if (r > 0) {
-    volume = 4 / 3 * g * math::Pi * r * r * r;
-    evolume = sim.param().sasa.sigma_v * volume;
-
-    conf.current().sasa_vol[i] = volume;
-    conf.current().sasavol_tot += volume;
-    conf.current().energies.sasa_volume_energy[topo.atom_energy_group(i)] += evolume;
+  // only store the volume of buried atoms
+  // (those that will contribute to the VOL, not SASA, energy term)
+  if (g != 0.0) {
+    conf.current().sasa_buriedvol[i] = sasa_param_i.vol;
+    conf.current().sasa_buriedvol_tot += sasa_param_i.vol;
+    // compute volume energy term for atom i
+    const double evolume = sim.param().sasa.sigma_v * g * conf.current().sasa_buriedvol[i];
+    DEBUG(15, "\tvol. energy of atom " << sasa_param_i.atom << " is " << evolume);
+    // add volume energy to energy group of atom i (this is zeroed at start)
+    conf.current().energies.sasa_volume_energy[topo.atom_energy_group(sasa_param_i.atom)] += evolume;
+  } else {
+    // make sure vol is zero
+    conf.current().sasa_buriedvol[i] = 0.0;
   }
+
+  DEBUG(15, "\tVolume of atom " << sasa_param_i.atom << " is " << conf.current().sasa_buriedvol[i]
+          << " and current sum of volume energy for this energy group is " <<
+          conf.current().energies.sasa_volume_energy[topo.atom_energy_group(sasa_param_i.atom)]);
 }
 
 template<typename t_nonbonded_spec>
-inline double
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_overlap
+void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_switching_fct
 (
-        topology::Topology & topo,
         configuration::Configuration & conf,
-        unsigned int i, unsigned int j,
-        simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
-  double b;
-  math::Vec r;
-  const sasa_parameter_struct & sasa_i = m_param->sasa_parameter(i);
-  const sasa_parameter_struct & sasa_j = m_param->sasa_parameter(j);
+        unsigned int i,
+        const double amin,
+        const double amax,
+        const double adiff) {
 
-  periodicity.nearest_image(conf.current().pos(i),
-          conf.current().pos(j), r);
-  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+  // get sasa of atom i
+  const double a = conf.current().sasa_area[i];
 
-  double absr = math::abs(r);
-  double term = sasa_i.r_i + sasa_j.r_i + 2 * sim.param().sasa.r_solv;
-  double diff = sasa_j.r_i - sasa_i.r_i;
-
-  if (sasa_j.r_i == (-sim.param().sasa.r_solv)) {
-    DEBUG(1, "\texcluded atom " << j << " - radius " << sasa_j.r_i);
-    return 0.0;
-  } else if (absr < term) {
-    b = math::Pi * (sasa_i.r_i + sim.param().sasa.r_solv) * (term - absr) * (1 + diff / absr);
-    return b;
+  // sasa is less than lowest cutoff: it contributes to the volume term
+  if (a <= amin) { //return 1.0;
+    conf.current().gvol[i] = 1.0;
+    conf.current().dgvol[i] = 0.0; // not strictly necessary
   }
-  return 0.0;
-}
-
-template<typename t_nonbonded_spec>
-inline double
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_overlap_der
-(
-        topology::Topology & topo,
-        configuration::Configuration & conf,
-        unsigned int i, unsigned int j,
-        simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
-  double b;
-  math::Vec r;
-  const sasa_parameter_struct & sasa_i = m_param->sasa_parameter(i);
-  const sasa_parameter_struct & sasa_j = m_param->sasa_parameter(j);
-
-  periodicity.nearest_image(conf.current().pos(i),
-          conf.current().pos(j), r);
-  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-
-  double absr = math::abs(r);
-  double absr2 = absr * absr;
-  double term = sasa_i.r_i + sasa_j.r_i + 2 * sim.param().sasa.r_solv;
-  double diff = sasa_j.r_i - sasa_i.r_i;
-
-  if (sasa_j.r_i == (-sim.param().sasa.r_solv)) {
-    DEBUG(1, "\texcluded atom " << j << " - radius " << sasa_j.r_i);
-    return 0.0;
-  } else if (absr < term && absr > 0.0) {
-    b = (-1) * math::Pi * (sasa_i.r_i + sim.param().sasa.r_solv) * (1 + diff / absr) +
-            math::Pi * (sasa_i.r_i + sim.param().sasa.r_solv) * (term - absr) * (-diff / absr2);
-    return b;
+  // sasa is between the lower and upper cutoffs: use switching function
+  else if (a <= amax) {
+    const double da = a - amin;
+    const double da2 = da * da;
+    const double adiff2 = adiff * adiff;
+    const double adiff3 = adiff2 * adiff;
+    const double g = ((2.0 * da * da2) / (adiff3)) - ((3.0 * da2) / (adiff2)) + 1.0;
+    DEBUG(15, "\tSwitching function is " << g);
+    conf.current().gvol[i] = g;
+    const double dg = ((6.0 * da2) / (adiff3)) - ((6.0 * da) / (adiff2));
+    DEBUG(15, "\tDerivative of switching function is " << dg);
+    conf.current().dgvol[i] = dg;
   }
-  return 0.0;
-}
-
-template<typename t_nonbonded_spec>
-inline double
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_switching_fct
-(
-        topology::Topology & topo,
-        configuration::Configuration & conf,
-        double a, double amax, double amin,
-        Storage & storage,
-        simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
-  DEBUG(1, "sasa surface of atom i: " << a << "\tmax sasa: " << amax << "\tmin sasa: " << amin);
-  double g, diff, da;
-  assert(a >= 0);
-  assert(amax >= 0);
-  assert(amin >= 0);
-  if (a <= amin && a >= 0) return 1.0;
-  else if (a <= amax && a > amin) {
-    diff = amax - amin;
-    da = a - amin;
-    g = 2 * (da * da * da) / (diff * diff * diff) - 3 * (da * da) / (diff * diff) + 1;
-    return g;
-  } else return 0.0;
-}
-
-template<typename t_nonbonded_spec>
-inline double
-interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_switching_fct_der
-(
-        topology::Topology & topo,
-        configuration::Configuration & conf,
-        double a, double amax, double amin,
-        Storage & storage,
-        simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
-  double g, diff, da;
-  assert(a >= 0);
-  assert(amax >= 0);
-  assert(amin >= 0);
-  if (a <= amin && a >= 0) return 0.0;
-  else if (a <= amax && a > amin) {
-    diff = amax - amin;
-    da = a - amin;
-    g = 6 * (da * da) / (diff * diff * diff) - 6 * (da) / (diff * diff);
-    return g;
-  } else return 0.0;
+  else {
+  // sasa is greater than highest cutoff: it contributes to the sasa term instead
+  conf.current().gvol[i] = 0.0; // already zero
+  conf.current().dgvol[i] = 0.0; // already zero
+  }
 }
 
 template<typename t_nonbonded_spec>
