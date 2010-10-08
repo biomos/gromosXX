@@ -166,7 +166,7 @@ void bfactor_residual_and_deriv(const gsl_vector * B, void * param,
   // get the gradients of the bfactors
   math::VArray fdummy(topo.num_atoms());
   math::SArray b_deriv(topo.num_atoms());
-  calculate_force_sf(D_k, d_r, atoms, fdummy, b_deriv, to_ang);
+  calculate_force_sf(true, D_k, d_r, atoms, fdummy, b_deriv, to_ang);
   for(unsigned int i = 0; i < b_deriv.size(); ++i) {
     gsl_vector_set(gradient, i, b_deriv(i));
   }

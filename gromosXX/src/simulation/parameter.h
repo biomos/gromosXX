@@ -360,7 +360,11 @@ namespace simulation
     /**
      * use NCS restraints on the average of the atoms
      */
-    xray_ncsrest_avg = 2
+    xray_ncsrest_avg = 2,
+    /*
+     * use NCS contraints
+     */
+    xray_ncsrest_constr = 3,
   };
 
   /**

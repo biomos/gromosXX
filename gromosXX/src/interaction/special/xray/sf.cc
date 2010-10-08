@@ -335,39 +335,42 @@ void interaction::xray::calculate_energy_sf(
   DEBUG(6, "energy: " << energy);
 }
 
-void interaction::xray::calculate_force_sf(clipper::FFTmap_p1 & D_k,
+void interaction::xray::calculate_force_sf(bool update, clipper::FFTmap_p1 & D_k,
         clipper::Xmap<clipper::ftype32> & d_r,
         const clipper::Atom_list & atoms,
         math::VArray & force,
         math::SArray & b_deriv,
         double to_ang) {
   const double sqpi2 = math::Pi * math::Pi * 8.0;
-  // these are just shortcuts to avoid many calls to the same functions
-  const clipper::Spacegroup & spgr = d_r.spacegroup();
 
-  // calculate the inverse symmetry operations of the spacegroup
-  std::vector<clipper::Isymop> isymop;
-  isymop.resize(spgr.num_symops());
-  for(int j = 0; j < spgr.num_symops(); j++) {
-    isymop[j] = clipper::Isymop(spgr.symop(j), d_r.grid_sampling());
-  }
-  const double volume = d_r.cell().volume();
-  // convert from Angstrom to nm and add very annyoing scaling constants
-  // to make the force volume AND resolution independent.
-  const double scale = to_ang / 2.0 * volume / (d_r.grid_sampling().size());
-  // perform FFT of the difference map
-  D_k.fft_h_to_x(scale);
-  // loop over the (symmetry corrected map - even though this doesn't matter).
-  for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = d_r.first(); !ix.last(); ix.next()) {
-    // set initial data value
-    const clipper::Coord_grid & coord = ix.coord();
-    d_r[ix] = D_k.real_data(coord);
-    // loop over symmetric copies of the grid point and add the data from these points
-    for (int j = 1; j < spgr.num_symops(); j++) {
-      d_r[ix] += D_k.real_data(coord.transform(isymop[j]).unit(D_k.grid_real()));
+  if (update) {
+    // these are just shortcuts to avoid many calls to the same functions
+    const clipper::Spacegroup & spgr = d_r.spacegroup();
+
+    // calculate the inverse symmetry operations of the spacegroup
+    std::vector<clipper::Isymop> isymop;
+    isymop.resize(spgr.num_symops());
+    for (int j = 0; j < spgr.num_symops(); j++) {
+      isymop[j] = clipper::Isymop(spgr.symop(j), d_r.grid_sampling());
     }
-    // correct for points mapped on themselves
-    d_r[ix] /= d_r.multiplicity(coord);
+    const double volume = d_r.cell().volume();
+    // convert from Angstrom to nm and add very annyoing scaling constants
+    // to make the force volume AND resolution independent.
+    const double scale = to_ang / 2.0 * volume / (d_r.grid_sampling().size());
+    // perform FFT of the difference map
+    D_k.fft_h_to_x(scale);
+    // loop over the (symmetry corrected map - even though this doesn't matter).
+    for (clipper::Xmap<clipper::ftype32>::Map_reference_index ix = d_r.first(); !ix.last(); ix.next()) {
+      // set initial data value
+      const clipper::Coord_grid & coord = ix.coord();
+      d_r[ix] = D_k.real_data(coord);
+      // loop over symmetric copies of the grid point and add the data from these points
+      for (int j = 1; j < spgr.num_symops(); j++) {
+        d_r[ix] += D_k.real_data(coord.transform(isymop[j]).unit(D_k.grid_real()));
+      }
+      // correct for points mapped on themselves
+      d_r[ix] /= d_r.multiplicity(coord);
+    }
   }
 
   // 3.5 is hardcoded atom radius for grid sampling.

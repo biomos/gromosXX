@@ -113,72 +113,8 @@ int interaction::Xray_Restraint_Interaction
     double max = sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_max;
     sim.param().xrayrest.resolution = topo.lambda() * (max - min) + min;
   }
-  
-  // fit the b factor
-  if (sim.param().xrayrest.bfactor.step && (!sim.steps() || sim.steps() % sim.param().xrayrest.bfactor.step == 0)) {
-    m_timer.start("B factor fitting");
-    fit_bfactor(topo, conf, sim, cell, atoms, fphi, fphi_obs, rho_calc, D_k, d_r);
-    m_timer.stop("B factor fitting");
-  }
 
-  if (update) {
-    atoms_sf = atoms;
-    // Calculate structure factors
-    m_timer.start("structure factor");
-    calculate_electron_density(rho_calc, atoms);
-    // FFT the electron density to obtain the structure factors
-    rho_calc.fft_to(fphi);
-    m_timer.stop("structure factor");
-  }
-  
-  m_timer.start("scaling");
-  scale_sf(topo, conf, sim, fphi, fphi_obs);
-  m_timer.stop("scaling");
-
-  math::VArray force(atoms_size);
-  force = 0.0;
-
-  if (sim.param().xrayrest.local_elevation) {
-    ///////////////////////////////////////////////
-    // LOCAL ELEVATION
-    ///////////////////////////////////////////////
-    m_timer.start("obs. electron density");
-    rho_obs.fft_from(fphi_obs);
-    m_timer.stop("obs. electron density");
-  } else if (sim.param().xrayrest.mode != simulation::xrayrest_mode_electron_density) {
-    ///////////////////////////////////////////////
-    // STRUCTURE FACTOR RESTRAINING
-    ///////////////////////////////////////////////
-    m_timer.start("energy");
-    calculate_energy_sf(sim, fphi,
-            topo.xray_restraints(),
-            conf.special().xray_rest,
-            sim.param().xrayrest.xrayrest,
-            conf.special().xray.k_inst, conf.special().xray.k_avg,
-            D_k, sim.param().xrayrest.force_constant,
-            conf.current().energies.xray_total);
-    m_timer.stop("energy");
-
-    // start to calculate the forces
-    m_timer.start("force");
-    math::SArray b_deriv(atoms.size());
-    calculate_force_sf(D_k, d_r, atoms, force, b_deriv, to_ang);
-    for(unsigned int i = 0; i < atoms.size(); ++i) {
-      conf.special().xray_bfoc[i].b_factor_gradient = b_deriv(i);
-    }
-    m_timer.stop("force");
-  } else {
-    ///////////////////////////////////////////////
-    // ELECTRON DENSITY RESTRAINING
-    ///////////////////////////////////////////////
-    m_timer.start("energy & force");
-    rho_obs.fft_from(fphi_obs);
-    calculate_energy_rho(atoms, rho_obs, rho_calc, sim.param().xrayrest.force_constant,
-            conf.current().energies.xray_total, force, to_ang);
-    m_timer.stop("energy & force");
-  }
-  DEBUG(10, "energy: " << conf.current().energies.xray_total);
-
+  // lets start with NCS stuff.
   if (sim.param().xrayrest.ncsrest != simulation::xray_ncsrest_off) {
     DEBUG(6, "NCS restraints");
     m_timer.start("NCS restraints");
@@ -274,10 +210,103 @@ int interaction::Xray_Restraint_Interaction
           }
           break;
         }
+        case simulation::xray_ncsrest_constr :
+        {
+          DEBUG(6, "NCS constrain atoms");
+          // loop over images
+          for (unsigned int i = 1; i < topo.xray_asu().size(); ++i) {
+            const unsigned int atom_img = topo.xray_asu()[i] + atom_p;
+            // optain the image position
+            const clipper::Coord_orth pos_img_ang(ncs_spacegroup.symop(i).rtop_orth(cell) * atoms[*atom_it].coord_orth());
+            math::Vec pos_img(pos_img_ang.x(), pos_img_ang.y(), pos_img_ang.z());
+            pos_img /= to_ang;
+            DEBUG(8, "pos     : " << math::v2s(conf.current().pos(atom_img)));
+            periodicity.put_into_positive_box(pos_img);
+            DEBUG(8, "new pos : " << math::v2s(pos_img));
+            conf.current().pos(atom_img) = pos_img;
+            pos_img *= to_ang;
+            atoms[atom_img].set_coord_orth(clipper::Coord_orth(pos_img(0),
+                    pos_img(1), pos_img(2)));
+          } // loop over images
+          break;
+        }
       } // method switch
     } // loop over restrained atoms
     m_timer.stop("NCS restraints");
   }
+  
+  // fit the b factor
+  if (sim.param().xrayrest.bfactor.step && (!sim.steps() || sim.steps() % sim.param().xrayrest.bfactor.step == 0)) {
+    m_timer.start("B factor fitting");
+    fit_bfactor(topo, conf, sim, cell, atoms, fphi, fphi_obs, rho_calc, D_k, d_r);
+    update = true;
+    m_timer.stop("B factor fitting");
+  }
+
+  if (update) {
+    atoms_sf = atoms;
+    // Calculate structure factors
+    m_timer.start("structure factor");
+    calculate_electron_density(rho_calc, atoms);
+    // FFT the electron density to obtain the structure factors
+    rho_calc.fft_to(fphi);
+    m_timer.stop("structure factor");
+
+    m_timer.start("scaling");
+    scale_sf(topo, conf, sim, fphi, fphi_obs);
+    m_timer.stop("scaling");
+  }
+
+  math::VArray force(atoms_size);
+  force = 0.0;
+
+  if (sim.param().xrayrest.local_elevation) {
+    ///////////////////////////////////////////////
+    // LOCAL ELEVATION
+    ///////////////////////////////////////////////
+    if (update) {
+      m_timer.start("obs. electron density");
+      rho_obs.fft_from(fphi_obs);
+      m_timer.stop("obs. electron density");
+    }
+  } else if (sim.param().xrayrest.mode != simulation::xrayrest_mode_electron_density) {
+    ///////////////////////////////////////////////
+    // STRUCTURE FACTOR RESTRAINING
+    ///////////////////////////////////////////////
+    if (update) {
+      m_timer.start("energy");
+      calculate_energy_sf(sim, fphi,
+              topo.xray_restraints(),
+              conf.special().xray_rest,
+              sim.param().xrayrest.xrayrest,
+              conf.special().xray.k_inst, conf.special().xray.k_avg,
+              D_k, sim.param().xrayrest.force_constant,
+              conf.current().energies.xray_total);
+      m_timer.stop("energy");
+    } else {
+      conf.current().energies.xray_total = conf.old().energies.xray_total;
+    }
+
+    // start to calculate the forces
+    m_timer.start("force");
+    math::SArray b_deriv(atoms.size());
+    calculate_force_sf(update, D_k, d_r, atoms, force, b_deriv, to_ang);
+    for(unsigned int i = 0; i < atoms.size(); ++i) {
+      conf.special().xray_bfoc[i].b_factor_gradient = b_deriv(i);
+    }
+    m_timer.stop("force");
+  } else {
+    ///////////////////////////////////////////////
+    // ELECTRON DENSITY RESTRAINING
+    ///////////////////////////////////////////////
+    m_timer.start("energy & force");
+    if (update)
+      rho_obs.fft_from(fphi_obs);
+    calculate_energy_rho(atoms, rho_obs, rho_calc, sim.param().xrayrest.force_constant,
+            conf.current().energies.xray_total, force, to_ang);
+    m_timer.stop("energy & force");
+  }
+  DEBUG(10, "energy: " << conf.current().energies.xray_total);
 
   // add the force and calculate some statistics
   double sum_force_phys = 0.0, sum_force_xray = 0.0;
@@ -674,6 +703,9 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
           break;
         case simulation::xray_ncsrest_avg:
           os << "NCS restraints on averaged atom positions" << std::endl;
+          break;
+        case simulation::xray_ncsrest_constr:
+          os << "NCS constraints on individual atom positions" << std::endl;
           break;
       }
       os << " - force constant : " << sim.param().xrayrest.ncs_force_constant << std::endl;

@@ -47,13 +47,16 @@ namespace interaction {
 
     /**
      * calculates the force from a reciprocal space difference map
+     * @param[in] update this is set to true if the SF were updated. It means
+     * that the difference map has to be updated too.
      * @param[inout] D_k the reciprocal space difference map
      * @param[out] d_r the real space difference map
      * @param[in] atoms the list containing the atoms
      * @param[out] force the force vector
      * @param[in] to_ang conversion factor for unit length
      */
-    void calculate_force_sf(clipper::FFTmap_p1 & D_k,
+    void calculate_force_sf(bool update,
+            clipper::FFTmap_p1 & D_k,
             clipper::Xmap<clipper::ftype32> & d_r,
             const clipper::Atom_list & atoms,
             math::VArray & force,

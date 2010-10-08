@@ -142,6 +142,7 @@ XRAYNCSRESSPEC
 #                   to image of the first ASU.
 #              - 2: restrain averaged image of atoms of additional ASUs
 #                   to the first AUS
+#              - 3: constain atoms of additional ASUs to image of first ASU
 # CNCS       : force constant for NCS restraints (default 0)
 # NCSSPGR    : spacegroup for NCS restraints (default 0)
 # ASUDEF     : pointer to first atom in every ASU
@@ -177,6 +178,19 @@ XRAYBFACTOROPTIMISATION
 # BFOPTS  BFOPTTI BFOPTTG BFOPTMN BFOPTMX
      100      100    0.01   0.001     1.0
 END
+ *
+ * @section xraysfcalc XRAYSFCALC block
+ * The XRAYSFCALC block is used to tune the structure factor computation.
+ *
+ * @verbtaim
+XRAYSFCALC
+#SFCTOL: tolerance (atom move)
+#SFCST: every n step
+#
+# SFCTOL   SFCST
+     0.1       5
+END
+@endverbatim
  */
 void
 io::In_Xrayresspec::read(topology::Topology& topo,
@@ -539,6 +553,9 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         case 2:
           sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_avg;
           break;
+        case 3:
+          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_constr;
+          break;
         default:
           sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_off;
           io::messages.add("XRAYNCSRESSPEC block: Invalid NTNCS",
@@ -749,8 +766,8 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_max = max_value;
     }
   } //XRAYREPLICAEXCHANGE
-  { //SFCALC
-    buffer = m_block["SFCALC"];
+  { //XRAYSFCALC
+    buffer = m_block["XRAYSFCALC"];
     if(buffer.size()){
       std::string s;
       _lineStream.clear();
@@ -761,20 +778,20 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       _lineStream >> sf_tolerance >> sf_constant;
 
       if (_lineStream.fail()) {
-        io::messages.add("bad line in SFCALC block",
+        io::messages.add("bad line in XRAYSFCALC block",
                 "In_Xrayresspec", io::message::error);
         return;
       }
 
       if (sf_tolerance < 0.0){
-        io::messages.add("tolerance has negative value",
+        io::messages.add("XRAYSFCALC block: tolerance has negative value",
                 "In_Xrayresspec", io::message::error);
         return;
       }
       sim.param().xrayrest.structure_factor_calculation.atom_move_tolerance = sf_tolerance;
       sim.param().xrayrest.structure_factor_calculation.steps_nb_constant = sf_constant;
     }
-  }//SFCALC
+  }//XRAYSFCALC
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {
       case simulation::xrayrest_off :
@@ -800,6 +817,9 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         break;
       case simulation::xray_ncsrest_avg:
         os << "\tNCS restraints on averaged atom positions\n";
+        break;
+      case simulation::xray_ncsrest_constr:
+        os << "\tNCS constraints on individual atom positions\n";
         break;
     }
     os << "END\n";
