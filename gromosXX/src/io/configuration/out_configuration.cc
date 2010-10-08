@@ -2890,6 +2890,7 @@ _print_dipole(simulation::Simulation const & sim,
   os << std::setw(15) << box_dipole_moment(0)
      << std::setw(15) << box_dipole_moment(1)
      << std::setw(15) << box_dipole_moment(2)
+     << std::setw(15) << math::volume(conf.current().box, conf.boundary_type)
      << "\n";
   
   os << "END\n";
