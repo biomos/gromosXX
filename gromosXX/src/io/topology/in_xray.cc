@@ -138,11 +138,8 @@ END
 XRAYNCSRESSPEC
 # NTNCS      : use NCS restraints? (default 0)
 #              - 0: do not use NCS restraints
-#              - 1: restrain individual atoms of additional ASUs
-#                   to image of the first ASU.
-#              - 2: restrain averaged image of atoms of additional ASUs
-#                   to the first AUS
-#              - 3: constain atoms of additional ASUs to image of first ASU
+#              - 1: restrain ASUs pairwisely
+#              - 2: constain atoms of additional ASUs to image of first ASU
 # CNCS       : force constant for NCS restraints (default 0)
 # NCSSPGR    : spacegroup for NCS restraints (default 0)
 # ASUDEF     : pointer to first atom in every ASU
@@ -551,9 +548,6 @@ io::In_Xrayresspec::read(topology::Topology& topo,
           sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_ind;
           break;
         case 2:
-          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_avg;
-          break;
-        case 3:
           sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_constr;
           break;
         default:
@@ -814,9 +808,6 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         break;
       case simulation::xray_ncsrest_ind:
         os << "\tNCS restraints on individual atom positions\n";
-        break;
-      case simulation::xray_ncsrest_avg:
-        os << "\tNCS restraints on averaged atom positions\n";
         break;
       case simulation::xray_ncsrest_constr:
         os << "\tNCS constraints on individual atom positions\n";
