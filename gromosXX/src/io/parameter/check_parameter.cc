@@ -2457,8 +2457,8 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("p3m", "perscale");
   fc.unlock("p3m", "rottrans");
   //fc.unlock("p3m", "innerloop_spc");
-  //fc.unlock("p3m", "repex_temp"); --probably works
-  //fc.unlock("p3m", "repex_lambda"); --probably works
+  fc.unlock("p3m", "repex_temp"); 
+  fc.unlock("p3m", "repex_lambda"); 
   fc.unlock("p3m", "multicell");
   //fc.unlock("p3m", "analysis");  --works if box invariant (recalculation of infl. func. necessary otherwise)
   fc.unlock("p3m", "no_integration");
