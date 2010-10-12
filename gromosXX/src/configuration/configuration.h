@@ -492,6 +492,8 @@ namespace configuration {
        */
       bool shake_failure_occurred;
 
+      unsigned int change_on_slave;
+
       /**
        * position restraints reference positions
        */

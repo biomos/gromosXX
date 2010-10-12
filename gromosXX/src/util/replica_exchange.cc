@@ -124,6 +124,9 @@ int util::Replica_Exchange::get_configuration
  )
 {
   const ssize_t num = 3 * conf.current().pos.size() * sizeof(double);
+  const ssize_t num_xray = sizeof(configuration::Configuration::special_struct::xray_rvalue_struct);
+  const ssize_t num_xray_bfoc = conf.special().xray_bfoc.size() * sizeof(configuration::Configuration::special_struct::xray_bfoc_struct);
+  const ssize_t num_xray_rest = conf.special().xray_rest.size() * sizeof(configuration::Configuration::special_struct::xray_struct);
   DEBUG(10, "receiving " << num / sizeof(double) << " coords");
 
   if (num >= SSIZE_MAX){
@@ -136,19 +139,23 @@ int util::Replica_Exchange::get_configuration
     // current pos
     readblock((char *) &conf.current().pos(0)(0), num);
     // current vel
-    readblock((char *) &conf.current().vel(0)(0), num);   
+    readblock((char *) &conf.current().vel(0)(0), num);
     // box
     if (read(cl_socket, (char *) &conf.current().box(0)(0),
 		      9 * sizeof(double))
 	!= 9 * sizeof(double))
-      throw std::runtime_error("could not read box");      
+      throw std::runtime_error("could not read box");
+    // xray data
+    readblock((char *) &conf.special().xray,num_xray);
+    readblock((char *) &conf.special().xray_bfoc[0],num_xray_bfoc);
+    readblock((char *) &conf.special().xray_rest[0],num_xray_rest);
   }
   catch (std::runtime_error e){
     std::cerr << "Exception: " << e.what() << std::endl;
     std::cout << "Exception: " << e.what() << std::endl;
     return 1;
   }
-
+  //std::cout << "xray_num_rest: " << num_xray_rest << " got  xray.R_inst= " << conf.special().xray.R_inst << " got  xray_bfoc = " << conf.special().xray_bfoc[2].b_factor << std::endl;
   return 0;
 }
 
@@ -160,6 +167,9 @@ int util::Replica_Exchange::put_configuration
   // positions
   DEBUG(9, "sending " << 3 * conf.current().pos.size() << " coords");
   const ssize_t num = 3 * conf.current().pos.size() * sizeof(double);
+  const ssize_t num_xray = sizeof(configuration::Configuration::special_struct::xray_rvalue_struct);
+  const ssize_t num_xray_bfoc = conf.special().xray_bfoc.size() * sizeof(configuration::Configuration::special_struct::xray_bfoc_struct);
+  const ssize_t num_xray_rest = conf.special().xray_rest.size() * sizeof(configuration::Configuration::special_struct::xray_struct);
   
   if (num >= SSIZE_MAX){
     std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
@@ -168,17 +178,22 @@ int util::Replica_Exchange::put_configuration
 
   try{
     writeblock((char *) &conf.current().pos(0)(0), num);
-    writeblock((char *) &conf.current().vel(0)(0), num);  
+    writeblock((char *) &conf.current().vel(0)(0), num);
     if (write(cl_socket, (char *) &conf.current().box(0)(0),
 	      9 * sizeof(double)) != 9 * sizeof(double))
       throw std::runtime_error("could not write box");
+    
+    writeblock((char *) &conf.special().xray,num_xray);
+    writeblock((char *) &conf.special().xray_bfoc[0],num_xray_bfoc);
+    writeblock((char *) &conf.special().xray_rest[0],num_xray_rest);
+    
   }
   catch(std::runtime_error e){
     std::cout << "Exception: " << e.what() << std::endl;
     std::cerr << "Exception: " << e.what() << std::endl;
     return 1;
   }
-
+  //std::cout << "xray_num_rest: " << num_xray_rest <<" put  xray.R_inst = " << conf.special().xray.R_inst << " put  xray_bfoc = " << conf.special().xray_bfoc[2].b_factor << std::endl;
   return 0;
 }
 

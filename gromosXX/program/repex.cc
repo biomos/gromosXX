@@ -53,7 +53,6 @@
 #include <util/replica_exchange.h>
 
 int main(int argc, char *argv[]){
-
 #ifdef REPEX
 
   util::Known knowns;

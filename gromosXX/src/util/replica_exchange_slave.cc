@@ -90,6 +90,9 @@ int util::Replica_Exchange_Slave::run
   std::vector<double> const & l = sim.param().replica.lambda;
   std::vector<double> const & dt = sim.param().replica.dt;
 
+  double former_energy = 0;
+  double former_lambda = 0;
+  conf.special().change_on_slave = 0;
   struct addrinfo *addrinfo_p;
   struct addrinfo hints;
   std::string server_name;
@@ -186,6 +189,7 @@ int util::Replica_Exchange_Slave::run
       // SLAVE: run the MD
       ////////////////////////////////////////////////////////////////////////////////
 
+      conf.special().change_on_slave = 1;      
       if (!quiet)
         std::cerr << "running md" << std::endl;
       int error = run_md(topo, conf, sim, md, traj,
@@ -199,9 +203,11 @@ int util::Replica_Exchange_Slave::run
 
       if (!error) {
 
+        conf.special().change_on_slave = 2;
         recalc_energy(topo, conf, sim, md, traj,
                 cg_topo, cg_conf, cg_sim, cg_md, cg_traj);
 
+                  
         ++replica_data.run;
         replica_data.time = sim.time();
         replica_data.steps = sim.steps();

@@ -78,7 +78,17 @@ int interaction::Xray_Restraint_Interaction
   unsigned int update_step = sim.param().xrayrest.structure_factor_calculation.steps_nb_constant;
   if (!sim.steps() || (update_step != 0 && sim.steps() % update_step == 0))
     update = true;
-  
+
+  if (conf.special().change_on_slave == 1){
+    update = true;
+    conf.special().change_on_slave = 0;
+    std::cout << "lambda value changed on slave" << std::endl;
+  }
+  if (conf.special().change_on_slave == 2){
+    update = true;
+    conf.special().change_on_slave = 0;
+    std::cout << "energy recalculated on slave" << std::endl;
+  }
   const double tol2 = sim.param().xrayrest.structure_factor_calculation.atom_move_tolerance *
           sim.param().xrayrest.structure_factor_calculation.atom_move_tolerance;
   for (int i = 0; i < atoms_size && update == false; i++) {

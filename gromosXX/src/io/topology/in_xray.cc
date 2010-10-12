@@ -231,6 +231,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
     int i, h, k, l;
     double sf, stddev_sf;
+    topo.xray_restraints().clear();
     for(i=0; it != to; ++i, ++it){
 
       DEBUG(11, "\tnr " << i);
@@ -273,6 +274,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
       int i, h, k, l;
       double sf, stddev_sf;
+      topo.xray_rfree().clear();
       for (i = 0; it != to; ++i, ++it) {
 
         DEBUG(11, "\tnr " << i);
@@ -475,6 +477,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin() + 1,
               to = buffer.end() - 1;
 
+      topo.xray_umbrella_weights().clear();
       for(; it != to; ++it) {
         _lineStream.clear();
         // trim whitespace from right end
@@ -593,6 +596,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
           return;
       }
 
+      topo.xray_asu().clear();
       for(int i = 0; i < spacegr.num_symops(); ++i) {
         int atom_pointer;
         _lineStream >> atom_pointer;
@@ -616,6 +620,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       io::messages.add("In_Xrayresspec", "Compile with clipper support.", io::message::error);
 #endif
 
+      topo.xray_ncs_restraints().clear();
       std::vector<std::string>::const_iterator it = buffer.begin() + 4,
               to = buffer.end() - 1;
       for(unsigned int line_nr = 6; it != to; ++it, ++line_nr) {
