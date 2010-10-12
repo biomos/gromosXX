@@ -684,7 +684,20 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
               << "  - terminate after  " << sim.param().xrayrest.bfactor.terminate_iterations
               << " iterations or if |dR/dB| < " << sim.param().xrayrest.bfactor.terminate_gradient << std::endl
               << "  - boundaries for B factor: [" << sim.param().xrayrest.bfactor.min << " - "
-              << sim.param().xrayrest.bfactor.max << "]" << std::endl;
+              << sim.param().xrayrest.bfactor.max << "]" << std::endl
+              << "  - number of groups: " << sim.param().xrayrest.bfactor.groups.size() << std::endl;
+      for(unsigned int i = 0; i < sim.param().xrayrest.bfactor.groups.size(); ++i) {
+        std::set<unsigned int>::const_iterator it = sim.param().xrayrest.bfactor.groups[i].begin(),
+                to = sim.param().xrayrest.bfactor.groups[i].end();
+        os << "        - ";
+        unsigned int size = sim.param().xrayrest.bfactor.groups[i].size();
+        for(unsigned int num = 1; it != to; ++it, ++num) {
+          os << std::setw(6) << *it+1;
+          if (num % 10 == 0 && num != size)
+            os << std::endl << "          ";
+        }
+        os << std::endl;
+      }
     }
 
     os << "END" << std::endl;

@@ -164,6 +164,9 @@ END
  * B factor optimisation. The optimisation is carried out by conjugate gradient
  * minimisation of the SF restraint residual.
  *
+ * Groups can be defined for which the B factor is identical. If no groups
+ * are given every atom is but into an individual group.
+ *
  * @verbatim
 XRAYBFACTOROPTIMISATION
 # BFOPTS     : Optimise B-factors every BFOPTSth step
@@ -171,9 +174,17 @@ XRAYBFACTOROPTIMISATION
 # BFOPTTG    : Terminate if gradient is smaller than BFOPTTG
 # BFOPTMN    : Minimum B-factor
 # BFOPTMX    : Maximum B-factor
+# BFOPTNG    : The number of B factor groups.
+# BFOPTGS    : Size of a group
+# BFOPTGM[]  : Members of the group
 #
 # BFOPTS  BFOPTTI BFOPTTG BFOPTMN BFOPTMX
      100      100    0.01   0.001     1.0
+# BFOPTNG
+        2
+# BFOPTGS  BFOPTGM[1] ...
+        4    1    11    21    31
+        2    2     3
 END
  *
  * @section xraysfcalc XRAYSFCALC block
@@ -719,7 +730,61 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       }
       sim.param().xrayrest.bfactor.min = bmin;
       sim.param().xrayrest.bfactor.max = bmax;
-    }
+
+      int num_group;
+      _lineStream >> num_group;
+      if (_lineStream.fail() || num_group < 0) {
+        io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTNG has to be >= 0",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+
+      if (num_group == 0) {
+        sim.param().xrayrest.bfactor.groups.resize(topo.num_atoms());
+        for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
+          sim.param().xrayrest.bfactor.groups[i].insert(i);
+        }
+      } else {
+        sim.param().xrayrest.bfactor.groups.resize(num_group);
+        for(unsigned int i = 0; i < num_group; ++i) {
+          int size;
+          _lineStream >> size;
+          if (_lineStream.fail() || size <= 0) {
+            io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTGS has to be > 0",
+                    "In_Xrayresspec", io::message::error);
+            return;
+          }
+          for (int j = 0; j < size; ++j) {
+            int atom;
+            _lineStream >> atom;
+            atom--;
+            if (_lineStream.fail() || atom < 0 || atom >= topo.num_atoms()) {
+              io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTGM, atom out of range.",
+                      "In_Xrayresspec", io::message::error);
+              return;
+            }
+            sim.param().xrayrest.bfactor.groups[i].insert(atom);
+          }
+        }
+        // check for overlap
+        for(unsigned int i = 0; i < num_group; ++i) {
+          std::set<unsigned int>::const_iterator it = sim.param().xrayrest.bfactor.groups[i].begin(),
+                  to = sim.param().xrayrest.bfactor.groups[i].end();
+          for(; it != to; ++it) {
+            for(unsigned int j = i+1; j < num_group; ++j) {
+              if (sim.param().xrayrest.bfactor.groups[j].find(*it) !=
+                  sim.param().xrayrest.bfactor.groups[j].end()) {
+                std::ostringstream os;
+                os << "XRAYBFACTOROPTIMISATION block: BFOPTGM, groups show overlap. "
+                        << "Atom " << (*it)+1 << " is contained in group " << i+1
+                        << " and " << j+1 << ".";
+                io::messages.add(os.str(), "In_Xrayresspec", io::message::error);
+              }
+            } // for groups
+          } // for members
+        } // for groups
+      } // if groups
+    } // if buffer size
   } // XRAYBFACTOROPTIMISATION
   { // XRAYREPLICAEXCHANGE
     buffer = m_block["XRAYREPLICAEXCHANGE"];

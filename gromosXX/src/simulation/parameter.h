@@ -1530,6 +1530,10 @@ namespace simulation
          * minimum B-factor
          */
         double min;
+        /**
+         * B factor groups
+         */
+        std::vector<std::set<unsigned int> > groups;
       } /** B factor settings */ bfactor;
      /**
      * @struct replica_exchange_parameters_struct

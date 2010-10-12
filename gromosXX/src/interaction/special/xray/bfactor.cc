@@ -73,22 +73,23 @@ void interaction::xray::fit_bfactor(topology::Topology & topo,
   const double to_ang = sim.param().xrayrest.to_angstrom;
   const double sqpi2 = math::Pi * math::Pi * 8.0;
 
+  unsigned int num_group = sim.param().xrayrest.bfactor.groups.size();
   gsl_multimin_function_fdf fit_func;
-  fit_func.n = atoms.size();
+  fit_func.n = num_group;
   fit_func.f = &bfactor_residual;
   fit_func.df = &bfactor_deriv;
   fit_func.fdf = &bfactor_residual_and_deriv;
   fit_func.params = (void *) &fp;
 
-  gsl_vector * B = gsl_vector_alloc(atoms.size());
-  for(unsigned int i = 0; i < atoms.size(); ++i) {
-    gsl_vector_set(B, i, atoms[i].u_iso() * sqpi2 / (to_ang * to_ang));
+  gsl_vector * B = gsl_vector_alloc(num_group);
+  for(unsigned int i = 0; i < num_group; ++i) {
+    gsl_vector_set(B, i, atoms[*(sim.param().xrayrest.bfactor.groups[i].begin())].u_iso() * sqpi2 / (to_ang * to_ang));
   }
 
   const gsl_multimin_fdfminimizer_type *T = gsl_multimin_fdfminimizer_conjugate_fr;
-       gsl_multimin_fdfminimizer *s = gsl_multimin_fdfminimizer_alloc(T, atoms.size());
+       gsl_multimin_fdfminimizer *s = gsl_multimin_fdfminimizer_alloc(T, num_group);
 
-  gsl_multimin_fdfminimizer_set(s, &fit_func, B, 0.01, 1e-4);
+  gsl_multimin_fdfminimizer_set(s, &fit_func, B, sim.param().xrayrest.bfactor.min, sim.param().xrayrest.bfactor.terminate_gradient);
   int iter = 0;
   int status;
   do {
@@ -103,12 +104,17 @@ void interaction::xray::fit_bfactor(topology::Topology & topo,
 
   std::cout << "R after " << iter << " iterations: " << conf.special().xray.R_inst << std::endl;
 
-  for(unsigned int i = 0; i < atoms.size(); ++i) {
+  for(unsigned int i = 0; i < num_group; ++i) {
     double B_i = gsl_vector_get(s->x, i);
     if (B_i < sim.param().xrayrest.bfactor.min) B_i = sim.param().xrayrest.bfactor.min;
     if (B_i > sim.param().xrayrest.bfactor.max) B_i = sim.param().xrayrest.bfactor.max;
-    atoms[i].set_u_iso(B_i * to_ang * to_ang / sqpi2);
-    conf.special().xray_bfoc[i].b_factor = B_i;
+
+    std::set<unsigned int>::const_iterator it = sim.param().xrayrest.bfactor.groups[i].begin(),
+            to = sim.param().xrayrest.bfactor.groups[i].end();
+    for (; it != to; ++it) {
+      atoms[*it].set_u_iso(B_i * to_ang * to_ang / sqpi2);
+      conf.special().xray_bfoc[*it].b_factor = B_i;
+    }
   }
   gsl_multimin_fdfminimizer_free(s);
   gsl_vector_free(B);
@@ -131,8 +137,11 @@ double bfactor_residual(const gsl_vector * B, void * param) {
   const double sqpi2 = math::Pi * math::Pi * 8.0;
 
   // adjust the B factors of the atoms
-  for(unsigned int i = 0; i < atoms.size(); ++i) {
-    atoms[i].set_u_iso(gsl_vector_get(B, i) * to_ang * to_ang / sqpi2);
+  for(unsigned int i = 0; i < sim.param().xrayrest.bfactor.groups.size(); ++i) {
+    std::set<unsigned int>::const_iterator it = sim.param().xrayrest.bfactor.groups[i].begin(),
+            to = sim.param().xrayrest.bfactor.groups[i].end();
+    for(; it != to; ++it)
+      atoms[*it].set_u_iso(gsl_vector_get(B, i) * to_ang * to_ang / sqpi2);
   }
 
   calculate_electron_density(rho_calc, atoms);
@@ -167,8 +176,14 @@ void bfactor_residual_and_deriv(const gsl_vector * B, void * param,
   math::VArray fdummy(topo.num_atoms());
   math::SArray b_deriv(topo.num_atoms());
   calculate_force_sf(true, D_k, d_r, atoms, fdummy, b_deriv, to_ang);
-  for(unsigned int i = 0; i < b_deriv.size(); ++i) {
-    gsl_vector_set(gradient, i, b_deriv(i));
+  for(unsigned int i = 0; i < sim.param().xrayrest.bfactor.groups.size(); ++i) {
+    double grad_sum = 0.0;
+    std::set<unsigned int>::const_iterator it = sim.param().xrayrest.bfactor.groups[i].begin(),
+            to = sim.param().xrayrest.bfactor.groups[i].end();
+    for(; it != to; ++it) {
+      grad_sum += b_deriv(*it);
+    }
+    gsl_vector_set(gradient, i, grad_sum);
   }
 }
 
