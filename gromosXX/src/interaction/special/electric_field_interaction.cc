@@ -39,12 +39,13 @@ calculate_interactions(topology::Topology& topo,
   // loop over the atoms
   // unit E = e . nm^-2
   math::Vec E(sim.param().electric.Ef_x, sim.param().electric.Ef_y, sim.param().electric.Ef_z);
-  double scale = math::four_pi_eps_i;
-  
+  // electric field in a spherical cavity is higher!
+  E *= 3*sim.param().nonbonded.rf_epsilon / (2*sim.param().nonbonded.rf_epsilon
+          + sim.param().nonbonded.epsilon);
 
   for (unsigned int i = 0; i < topo.num_atoms(); ++i){
-    double q = scale * topo.charge(i);
-    conf.current().force(i) += q*E;
+    // math::four_pi_eps_i contains already epsilon of cutoff-sphere (param().nonbonded.epsilon)
+    conf.current().force(i) += (math::four_pi_eps_i*sim.param().nonbonded.epsilon) * topo.charge(i) * E;
   }
 
   //The electric energies were not added to the total energy
