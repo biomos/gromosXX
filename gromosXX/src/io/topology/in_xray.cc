@@ -802,7 +802,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       int interruptor; //NTXRRE
       double min_value, max_value; //CXREEMN CXREEMX
       int energy_interruptor;
-      _lineStream >> interruptor >> min_value >> max_value;
+      _lineStream >> interruptor >> min_value >> max_value >> energy_interruptor;
 
       if (_lineStream.fail()) {
         io::messages.add("bad line in XRAYREPLICAEXCHANGE block",
