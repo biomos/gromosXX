@@ -67,6 +67,25 @@ namespace simulation
        */
       replica_exchange_resolution = 2
   };
+     /**
+    * @enum rep_ex_energy_interruptor
+    * mode switcher
+    * of the energy
+    */
+  enum rep_ex_energy_interruptor_enum{
+      /**
+       * total energy
+       */
+      energy_tot = 0,
+      /**
+       * physical energy
+       */
+      energy_phys = 1,
+      /**
+       * special energy
+       */
+      energy_special = 2
+  };
   /**
    * @enum special_loop_enum
    * special solvent loop
@@ -1547,7 +1566,8 @@ namespace simulation
         replica_exchange_parameters_struct() :
         switcher(replica_exchange_off),
         lambda_dependant_min(0.0),
-        lambda_dependant_max(0.0)
+        lambda_dependant_max(0.0),
+        energy_switcher(energy_tot)
         {
         }
         /**         
@@ -1562,6 +1582,10 @@ namespace simulation
          * maximal force constant
          */
         double lambda_dependant_max;
+        /**
+         *switcher for the energy
+         */
+        rep_ex_energy_interruptor_enum energy_switcher;
      }replica_exchange_parameters;
      /**
      * @struct structure_factor_calculation_struct

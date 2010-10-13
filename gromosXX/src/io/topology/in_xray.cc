@@ -801,6 +801,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
       int interruptor; //NTXRRE
       double min_value, max_value; //CXREEMN CXREEMX
+      int energy_interruptor;
       _lineStream >> interruptor >> min_value >> max_value;
 
       if (_lineStream.fail()) {
@@ -818,6 +819,17 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         //std::cout << "interruptor" << interruptor<< std::endl;
         //std::cout << "switcher" << sim.param().xrayrest.replica_exchange_parameters.switcher << std::endl;
         default: io::messages.add("Forbidden value for NTXRRE",
+                "In_Xrayresspec", io::message::error);
+                return;
+      }
+      switch (energy_interruptor) {
+        case 0: sim.param().xrayrest.replica_exchange_parameters.energy_switcher = simulation::energy_tot;
+        break;
+        case 1: sim.param().xrayrest.replica_exchange_parameters.energy_switcher = simulation::energy_phys;
+        break;
+        case 2: sim.param().xrayrest.replica_exchange_parameters.energy_switcher = simulation::energy_special;
+        break;
+        default: io::messages.add("Forbidden value for the energy interruptor",
                 "In_Xrayresspec", io::message::error);
                 return;
       }
