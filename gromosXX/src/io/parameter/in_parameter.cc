@@ -4589,8 +4589,6 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
       return;
     }
 
-
-
     switch (field) {
       case 0:
         param.electric.electric = simulation::electric_off;
@@ -4606,6 +4604,10 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
             param.electric.Ef_z == 0.0)
           io::messages.add("Electric field enabled, but all components are zero",
                 "In_Parameter", io::message::error);
+        if (param.nonbonded.method != simulation::el_reaction_field &&
+                param.nonbonded.rf_epsilon != 1.0)
+          io::messages.add("To use electric field together with Ewald or P3M, eps_rf must be 1.0",
+                "In_Parameter", io::message::error);
         break;
       }
       default:
@@ -4616,7 +4618,6 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         io::messages.add("ELECTRIC block: Bad value for FIELD (0,1)",
                 "In_Parameter", io::message::error);
     }
-
 
     switch (dipole) {
       case 0:
@@ -4639,7 +4640,6 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         param.electric.dip_write = 0;
         io::messages.add("ELECTRIC block: Bad value for DIPOLE (0,1)",
                 "In_Parameter", io::message::error);
-
       }
     }
 
@@ -4689,7 +4689,6 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         param.electric.cur_write = 0;
         io::messages.add("ELECTRIC block: Bad value for CURRENT (0,1)",
                 "In_Parameter", io::message::error);
-
       }
     }
 
