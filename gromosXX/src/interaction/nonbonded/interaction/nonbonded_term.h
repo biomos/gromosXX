@@ -25,7 +25,7 @@ namespace interaction
     /**
      * get the coulomb constant
      */
-    double crf()const {return m_crf;}
+    double crf()const {return m_crf[0];}
     
     /**
      * initialize constants
@@ -39,14 +39,15 @@ namespace interaction
 			    double c6, double c12,
 			    double q,
 			    double & force, double & e_lj,
-			    double & e_crf);
+			    double & e_crf,
+                            unsigned int eps);
 
      /**
      * calculate the force and energy of an atom pair.
      */
     void lj_interaction(math::Vec const &r,
 			    double c6, double c12,
-			    double & force, double & e_lj);   
+			    double & force, double & e_lj);
     
     /**
      * calculate the force and energy of an atom pair. (lattice sum)
@@ -70,7 +71,8 @@ namespace interaction
                      math::Vec const &rpp,
 		     double c6, double c12,
 		     double qi, double qj, double cgi, double cgj,
-		     double f[], double &e_lj, double &e_crf);
+		     double f[], double &e_lj, double &e_crf,
+                     unsigned int eps);
 
     /**
      * calculate the force and energy of an atom pair. (polarisable + off atom)
@@ -82,13 +84,14 @@ namespace interaction
                      math::Vec const &rpp,
                      double c6, double c12,
                      double qi, double qj, double cgi, double cgj,
-                     double f[], double &e_lj, double &e_crf);
+                     double f[], double &e_lj, double &e_crf,
+                     unsigned int eps);
 
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
     void rf_interaction(math::Vec const &r, double q,
-			math::Vec & force, double & e_rf);
+			math::Vec & force, double & e_rf, unsigned int eps);
     
     /**
      * helper function to calculate the force and energy for
@@ -101,7 +104,7 @@ namespace interaction
                  math::Vec const &rpp,
                  double qi, double qj, 
                  double cgi, double cgj,
-		 math::VArray &force, double &e_crf);
+		 math::VArray &force, double &e_crf, unsigned int eps);
     
     /**
      * calculate a term of the electric field for polarisation
@@ -109,7 +112,7 @@ namespace interaction
     void electric_field_interaction(math::Vec const &r,
 			      math::Vec const &rprime,
 			      double qj, double charge,
-			      math::Vec  &e_el);
+			      math::Vec &e_el, unsigned int eps);
 
     /**
      * calculate the self energy - dipole-dipole interaction (polarisation)
@@ -136,7 +139,7 @@ namespace interaction
     void lj_crf_hessian(math::Vec const &r,
 			double c6, double c12,
 			double  q,
-			math::Matrix &hess);
+			math::Matrix &hess, unsigned int eps);
     
     /**
      * a constant.
@@ -156,33 +159,33 @@ namespace interaction
      * Force:
      * reaction field constant.
      */
-    double m_crf;
+    std::vector<double> m_crf;
  
    /**
      * Force:
      * inverse reaction field cutoff to the power of 3.
      */
-    double m_cut3i;
+    std::vector<double> m_cut3i;
      
     /**
      * Force:
      * coulomb reaction field constant divided
      * by the reaction field cutoff to the power of 3.
      */
-    double m_crf_cut3i;
+    std::vector<double> m_crf_cut3i;
     
     /**
      * Energy:
      * reaction field constant / twice reaction field cutoff ^ 3
      */
-    double m_crf_2cut3i;
+    std::vector<double> m_crf_2cut3i;
     
     /**
      * Energy:
      * (1-coulomb reaction field constant / 2 and
      * divided by reaction field cutoff.
      */
-    double m_crf_cut;
+    std::vector<double> m_crf_cut;
     
     /**
      * Coarse grain variables
@@ -190,8 +193,7 @@ namespace interaction
     double A_cg12, A_cg6, A_cg1;
     double B_cg12, B_cg6, B_cg1;
     double C_cg12, C_cg6, C_cg1;
-    double cgrain_eps;
-    double cgrain_epsm;
+    std::vector<double> cgrain_eps;
 
     /**
      * lattice sum variables

@@ -14,8 +14,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::solvent_innerloop
  const int i,
  const int j,
  Storage & storage,
- math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
- )
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+ unsigned int eps = 0)
 {
   math::Vec r;
   
@@ -58,10 +58,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::solvent_innerloop
       const double dist6i_c12 = pair_parameter[param].c12 * dist6i;
 
       e_lj += (dist6i_c12 - pair_parameter[param].c6) * dist6i;
-      e_crf += pair_parameter[param].q * (ri - m_crf_2cut3i * r2 - m_crf_cut);
+      e_crf += pair_parameter[param].q * (ri - m_crf_2cut3i[eps] * r2 - m_crf_cut[eps]);
 
-      const double f = (dist6i_c12 + dist6i_c12 - pair_parameter[param].c6) * 6.0 * dist6i * r2i +
-              pair_parameter[param].q * (ri * r2i + m_crf_cut3i);
+      const double f = (dist6i_c12 + dist6i_c12 - pair_parameter[param].c6) * 6.0 
+              * dist6i * r2i + pair_parameter[param].q * (ri * r2i + m_crf_cut3i[eps]);
 
       const double fx = f * x;
       const double fy = f * y;
@@ -99,8 +99,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
  int i,
  int j,
  Storage & storage,
- math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
- )
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+ unsigned int eps = 0)
 {
   math::Vec r;
   double x[4], y[4], z[4], r2[4], r2i[4], ri[4], ff[4], tx, ty, tz, fx, fy, fz;
@@ -136,10 +136,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   ri[0] = sqrt(r2i[0]);
       
   e_lj = (2.634129E-6 * dist6i - 2.617346E-3) * dist6i;
-  e_crf = 0.82 * 0.82 * 138.9354 * (ri[0] - m_crf_2cut3i * r2[0] - m_crf_cut);
+  e_crf = 0.82 * 0.82 * 138.9354 * (ri[0] - m_crf_2cut3i[eps] * r2[0] - m_crf_cut[eps]);
       
   f = (12 * 2.634129E-6 * dist6i - 6 * 2.617346E-3) * dist6i * r2i[0] +
-    0.82 * 0.82 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i);
+    0.82 * 0.82 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i[eps]);
   
   DEBUG(10, "r: " << sqrt(r2[0]) << " r2: " << r2[0]);
   DEBUG(10, "e_lj: " << e_lj << " c_crf: " << e_crf << " f: " << f);
@@ -213,14 +213,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   ri[3] = sqrt(r2i[3]);
       
   e_crf -= 0.82 * 0.41 * 138.9354 * (ri[0] + ri[1] + ri[2] + ri[3] -
-				    m_crf_2cut3i * (r2[0] + r2[1] + r2[2] + r2[3]) - 4 * m_crf_cut);
+				    m_crf_2cut3i[eps] * (r2[0] + r2[1] + r2[2] + r2[3]) - 4 * m_crf_cut[eps]);
   
   DEBUG(10, "e_crf: " << e_crf);
       
-  ff[0] = -0.82 * 0.41 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i);
-  ff[1] = -0.82 * 0.41 * 138.9354 * (ri[1] * r2i[1] + m_crf_cut3i);
-  ff[2] = -0.82 * 0.41 * 138.9354 * (ri[2] * r2i[2] + m_crf_cut3i);
-  ff[3] = -0.82 * 0.41 * 138.9354 * (ri[3] * r2i[3] + m_crf_cut3i);
+  ff[0] = -0.82 * 0.41 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i[eps]);
+  ff[1] = -0.82 * 0.41 * 138.9354 * (ri[1] * r2i[1] + m_crf_cut3i[eps]);
+  ff[2] = -0.82 * 0.41 * 138.9354 * (ri[2] * r2i[2] + m_crf_cut3i[eps]);
+  ff[3] = -0.82 * 0.41 * 138.9354 * (ri[3] * r2i[3] + m_crf_cut3i[eps]);
   
   DEBUG(10, "f: " << ff[0]);
   DEBUG(10, "f: " << ff[1]);
@@ -393,14 +393,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
   ri[3] = sqrt(r2i[3]);
 
   e_crf += 0.41 * 0.41 * 138.9354 * (ri[0] + ri[1] + ri[2] + ri[3] -
-				    m_crf_2cut3i * (r2[0] + r2[1] + r2[2] + r2[3]) - 4 * m_crf_cut);
+				    m_crf_2cut3i[eps] * (r2[0] + r2[1] + r2[2] + r2[3]) - 4 * m_crf_cut[eps]);
   
   DEBUG(10, "e_crf: " << e_crf);
 
-  ff[0] = 0.41 * 0.41 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i);
-  ff[1] = 0.41 * 0.41 * 138.9354 * (ri[1] * r2i[1] + m_crf_cut3i);
-  ff[2] = 0.41 * 0.41 * 138.9354 * (ri[2] * r2i[2] + m_crf_cut3i);
-  ff[3] = 0.41 * 0.41 * 138.9354 * (ri[3] * r2i[3] + m_crf_cut3i);
+  ff[0] = 0.41 * 0.41 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i[eps]);
+  ff[1] = 0.41 * 0.41 * 138.9354 * (ri[1] * r2i[1] + m_crf_cut3i[eps]);
+  ff[2] = 0.41 * 0.41 * 138.9354 * (ri[2] * r2i[2] + m_crf_cut3i[eps]);
+  ff[3] = 0.41 * 0.41 * 138.9354 * (ri[3] * r2i[3] + m_crf_cut3i[eps]);
   
   DEBUG(10, "f: " << ff[0]);
   DEBUG(10, "f: " << ff[1]);

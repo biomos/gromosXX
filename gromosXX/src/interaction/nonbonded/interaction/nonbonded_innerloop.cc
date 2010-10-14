@@ -109,25 +109,25 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-      DEBUG(11, "\tCG-CG epsilon = " << cgrain_eps << " , FG-CG epsilon = " << cgrain_epsm);
+      DEBUG(11, "\tCG-CG epsilon = " << cgrain_eps[0] << " , FG-CG epsilon = " << cgrain_eps[1]);
       DEBUG(11, "\ti = " << i << " , j = " << j);
 
       // check if...
       if (topo.is_coarse_grained(i) && topo.is_coarse_grained(j)) {  // CG-CG interaction
         DEBUG(11, "CG-CG pair");
         lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.charge(i) * topo.charge(j) / cgrain_eps,
-              f, e_lj, e_crf);
+              topo.charge(i) * topo.charge(j) / cgrain_eps[0],
+              f, e_lj, e_crf, 0);
       } else if (topo.is_coarse_grained(i) || topo.is_coarse_grained(j)) {  // FG-CG interaction
         //DEBUG(1, "i = " << i << " , j = " << j);
         lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.charge(i) * topo.charge(j) / cgrain_epsm,
-              f, e_lj, e_crf);
+              topo.charge(i) * topo.charge(j) / cgrain_eps[1],
+              f, e_lj, e_crf, 1);
       } else {     // FG-FG interaction
         //DEBUG(1, "FG: i = " << i << " , j = " << j);
         lj_crf_interaction(r, lj.c6, lj.c12,
               topo.charge(i) * topo.charge(j),
-              f, e_lj, e_crf);
+              f, e_lj, e_crf, 2);
         DEBUG(10, "\t\tatomic virial");
       }
       for (int a = 0; a < 3; ++a) {
@@ -1248,10 +1248,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       // this will only contribute in the energy, the force should be zero.
       // check if...
       if (topo.is_coarse_grained(i)) {  // CG particle
-        rf_interaction(r, topo.charge()(i) * topo.charge()(i) / cgrain_eps,
-                f, e_crf);
+        rf_interaction(r, topo.charge()(i) * topo.charge()(i) / cgrain_eps[0],
+                f, e_crf, 0);
       } else {     // FG particle
-        rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf);
+        rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf, 1);
       }
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
@@ -1272,13 +1272,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
 
         // check if...
         if (topo.is_coarse_grained(i) && topo.is_coarse_grained(*it)) { // CG-CG interaction
-          rf_interaction(r, topo.charge()(i) * topo.charge()(*it) / cgrain_eps,
-                  f, e_crf);
+          rf_interaction(r, topo.charge()(i) * topo.charge()(*it) / cgrain_eps[0],
+                  f, e_crf, 0);
         } else if (topo.is_coarse_grained(i) || topo.is_coarse_grained(*it)) { // FG-CG interaction
-          rf_interaction(r, topo.charge()(i) * topo.charge()(*it) / cgrain_epsm,
-                  f, e_crf);
+          rf_interaction(r, topo.charge()(i) * topo.charge()(*it) / cgrain_eps[1],
+                  f, e_crf, 1);
         } else { // FG-FG interaction
-          rf_interaction(r, topo.charge()(i) * topo.charge()(*it), f, e_crf);
+          rf_interaction(r, topo.charge()(i) * topo.charge()(*it), f, e_crf, 2);
         }
 
         force(i) += f;
