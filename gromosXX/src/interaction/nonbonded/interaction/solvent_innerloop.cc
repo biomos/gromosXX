@@ -15,7 +15,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::solvent_innerloop
  const int j,
  Storage & storage,
  math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
- unsigned int eps = 0)
+ unsigned int eps)
 {
   math::Vec r;
   
@@ -100,7 +100,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
  int j,
  Storage & storage,
  math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
- unsigned int eps = 0)
+ unsigned int eps)
 {
   math::Vec r;
   double x[4], y[4], z[4], r2[4], r2i[4], ri[4], ff[4], tx, ty, tz, fx, fy, fz;

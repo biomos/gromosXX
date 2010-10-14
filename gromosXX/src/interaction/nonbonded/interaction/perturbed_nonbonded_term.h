@@ -23,7 +23,7 @@ namespace interaction
     /**
      * get the coulomb constant
      */
-    double crf()const {return m_crf;}
+    double crf()const {return m_crf[0];}
     
     /**
      * initialize constants
@@ -41,7 +41,8 @@ namespace interaction
 				 double const alpha_crf,
 				 double & force1, double & force6, double & force12,
 				 double &e_lj, double & e_crf, double &de_lj, 
-				 double & de_crf);
+				 double & de_crf,
+                                 unsigned int eps = 0);
     
     /**
      * calculate the force, energy and dh/dl of an atom pair. for polarisation
@@ -57,7 +58,8 @@ namespace interaction
                                      double force1[],
                                      double &force6, double &force12,
                                      double &e_lj, double &e_crf,
-                                     double &de_lj, double &de_crf);
+                                     double &de_lj, double &de_crf,
+                                     unsigned int eps = 0);
     /**
      * calculate the force, energy and dh/dl of an atom pair. for polarisation + off atom
      */
@@ -72,7 +74,8 @@ namespace interaction
                                      double force1[],
                                      double &force6, double &force12,
                                      double &e_lj, double &e_crf,
-                                     double &de_lj, double &de_crf);
+                                     double &de_lj, double &de_crf,
+                                     unsigned int eps = 0);
 
 
     /**
@@ -87,7 +90,8 @@ namespace interaction
 				   double const A_scale, double const B_scale,
 				   double & force1, double & force6, double & force12,
 				   double &e_lj, double & e_crf, double &de_lj, 
-				   double & de_crf);
+				   double & de_crf,
+                                   unsigned int eps = 0);
 
     /**
      * calculate the reaction field force and energy
@@ -98,7 +102,8 @@ namespace interaction
 			     double const alpha_crf,
 			     math::Vec & force, double & e_rf,
 			     double & de_rf,
-			     bool selfterm_correction = false);
+			     bool selfterm_correction = false,
+                             unsigned int eps = 0);
     /**
      * calculate the reaction field force and energy
      * of a perturbed atom pair (with polarisation)
@@ -113,7 +118,8 @@ namespace interaction
 			     double const alpha_crf,
 			     double force[], double & e_rf,
 			     double & de_rf,
-			     bool selfterm_correction = false);
+			     bool selfterm_correction = false,
+                             unsigned int eps = 0);
 
     /**
      * calculate the reaction field force and energy
@@ -127,7 +133,8 @@ namespace interaction
 			       double const A_scale, double const B_scale,
 			       math::Vec & force, double & e_rf,
 			       double & de_rf,
-			       bool selfterm_correction = false);
+			       bool selfterm_correction = false,
+                               unsigned int eps = 0);
 
     /**
      * calculate the force, energy and dh/dl of an atom pair (coarse grain)
@@ -149,7 +156,8 @@ namespace interaction
                        math::Vec const &rprime, 
 		       double const alpha_crf,
                        double A_qj, double B_qj, double cgj, 
-		       math::Vec &e_el);
+		       math::Vec &e_el,
+                       unsigned int eps = 0);
     
     /**
      * calculate the self energy - dipole-dipole interaction (polarisation)
@@ -240,38 +248,42 @@ namespace interaction
                     int const n);
     
   protected:
-
     /**
      * Force:
      * reaction field constant.
      */
-    double m_crf;
- 
+    std::vector<double> m_crf;
+
    /**
      * Force:
      * inverse reaction field cutoff to the power of 3.
      */
-    double m_cut3i;
-     
+    std::vector<double> m_cut3i;
+
     /**
      * Force:
      * coulomb reaction field constant divided
      * by the reaction field cutoff to the power of 3.
      */
-    double m_crf_cut3i;
-    
+    std::vector<double> m_crf_cut3i;
+
+    /**
+     * Energy:
+     * reaction field constant / twice reaction field cutoff ^ 3
+     */
+    std::vector<double> m_crf_2cut3i;
+
     /**
      * Energy:
      * (1-coulomb reaction field constant / 2 and
      * divided by reaction field cutoff.
      */
-    double m_crf_cut;
-
+    std::vector<double> m_crf_cut;
     /**
-     * Perturbation:
+     * Energy:
      * reaction field constant / 2
      */
-    double m_crf_2;
+    std::vector<double> m_crf_2;
     /**
      * Perturbation:
      * reaction field cutoff ^2
@@ -394,7 +406,7 @@ namespace interaction
     double B_cg12, B_cg6, B_cg1;
     double A_C_cg12, A_C_cg6, A_C_cg1;
     double B_C_cg12, B_C_cg6, B_C_cg1;
-    double cgrain_eps, cgrain_epsm;
+    std::vector<double> cgrain_eps;
     double rs_lj, rs_c;
     double nb_cutoff;
   };

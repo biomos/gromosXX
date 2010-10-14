@@ -141,7 +141,7 @@ inline void interaction::Nonbonded_Term
 ::lj_crf_interaction(math::Vec const &r,
         double c6, double c12,
         double q,
-        double &force, double &e_lj, double &e_crf, unsigned int eps = 0) {
+        double &force, double &e_lj, double &e_crf, unsigned int eps) {
   DEBUG(14, "\t\tnonbonded term");
 
   assert(abs2(r) != 0);
@@ -253,7 +253,7 @@ inline void interaction::Nonbonded_Term
         math::Vec const &rpp,
         double c6, double c12,
         double qi, double qj, double cgi, double cgj,
-        double f[], double &e_lj, double &e_crf, unsigned int eps = 0) {
+        double f[], double &e_lj, double &e_crf, unsigned int eps) {
   DEBUG(14, "\t\tnonbonded term");
 
   assert(abs2(r) != 0);
@@ -308,7 +308,7 @@ inline void interaction::Nonbonded_Term
         math::Vec const &rpp,
         double c6, double c12,
         double qi, double qj, double cgi, double cgj,
-        double f[], double &e_lj, double &e_crf, unsigned int eps = 0) {
+        double f[], double &e_lj, double &e_crf, unsigned int eps) {
   DEBUG(14, "\t\tnonbonded term");
 
   assert(abs2(r) != 0);
@@ -364,7 +364,7 @@ inline void interaction::Nonbonded_Term
  */
 inline void interaction::Nonbonded_Term
 ::rf_interaction(math::Vec const &r, double q,
-        math::Vec &force, double &e_crf, unsigned int eps = 0) {
+        math::Vec &force, double &e_crf, unsigned int eps) {
   const double dist2 = abs2(r);
 
   force = q * math::four_pi_eps_i * m_crf_cut3i[eps] * r;
@@ -389,7 +389,7 @@ inline void interaction::Nonbonded_Term
         math::Vec const &rpp,
         double qi, double qj,
         double cgi, double cgj,
-        math::VArray &force, double &e_crf, unsigned int eps = 0) {
+        math::VArray &force, double &e_crf, unsigned int eps) {
   const double dist2 = abs2(r);
   const double dist2p1 = abs2(rp1);
   const double dist2p2 = abs2(rp2);
@@ -473,7 +473,7 @@ inline void interaction::Nonbonded_Term
 ::electric_field_interaction(math::Vec const &r,
         math::Vec const &rprime,
         double qj, double charge,
-        math::Vec &e_el, unsigned int eps = 0) {
+        math::Vec &e_el, unsigned int eps) {
 
   DEBUG(14, "\t\tenergy field term for polarisation");
 
@@ -524,7 +524,7 @@ inline void
 interaction::Nonbonded_Term::lj_crf_hessian(math::Vec const &r,
         double c6, double c12,
         double q,
-        math::Matrix &hess, unsigned int eps = 0) {
+        math::Matrix &hess, unsigned int eps) {
   const double r2 = math::abs2(r);
 
   const double r4 = r2*r2;

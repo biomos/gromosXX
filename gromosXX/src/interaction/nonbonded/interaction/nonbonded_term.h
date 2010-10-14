@@ -40,7 +40,7 @@ namespace interaction
 			    double q,
 			    double & force, double & e_lj,
 			    double & e_crf,
-                            unsigned int eps);
+                            unsigned int eps = 0);
 
      /**
      * calculate the force and energy of an atom pair.
@@ -72,7 +72,7 @@ namespace interaction
 		     double c6, double c12,
 		     double qi, double qj, double cgi, double cgj,
 		     double f[], double &e_lj, double &e_crf,
-                     unsigned int eps);
+                     unsigned int eps = 0);
 
     /**
      * calculate the force and energy of an atom pair. (polarisable + off atom)
@@ -85,13 +85,13 @@ namespace interaction
                      double c6, double c12,
                      double qi, double qj, double cgi, double cgj,
                      double f[], double &e_lj, double &e_crf,
-                     unsigned int eps);
+                     unsigned int eps = 0);
 
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
     void rf_interaction(math::Vec const &r, double q,
-			math::Vec & force, double & e_rf, unsigned int eps);
+			math::Vec & force, double & e_rf, unsigned int eps = 0);
     
     /**
      * helper function to calculate the force and energy for
@@ -104,7 +104,7 @@ namespace interaction
                  math::Vec const &rpp,
                  double qi, double qj, 
                  double cgi, double cgj,
-		 math::VArray &force, double &e_crf, unsigned int eps);
+		 math::VArray &force, double &e_crf, unsigned int eps = 0);
     
     /**
      * calculate a term of the electric field for polarisation
@@ -112,7 +112,7 @@ namespace interaction
     void electric_field_interaction(math::Vec const &r,
 			      math::Vec const &rprime,
 			      double qj, double charge,
-			      math::Vec &e_el, unsigned int eps);
+			      math::Vec &e_el, unsigned int eps = 0);
 
     /**
      * calculate the self energy - dipole-dipole interaction (polarisation)
@@ -139,7 +139,7 @@ namespace interaction
     void lj_crf_hessian(math::Vec const &r,
 			double c6, double c12,
 			double  q,
-			math::Matrix &hess, unsigned int eps);
+			math::Matrix &hess, unsigned int eps = 0);
     
     /**
      * a constant.

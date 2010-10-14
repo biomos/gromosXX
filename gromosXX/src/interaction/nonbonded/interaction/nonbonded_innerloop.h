@@ -187,7 +187,7 @@ namespace interaction
      int end,
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
-     unsigned int eps
+     unsigned int eps = 0
      );
     
     /**
@@ -237,7 +237,7 @@ namespace interaction
      const int end,
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
-     unsigned int eps
+     unsigned int eps = 0
      );
     
     /**

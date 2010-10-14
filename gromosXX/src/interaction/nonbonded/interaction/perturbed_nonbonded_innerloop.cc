@@ -313,24 +313,24 @@ t_interaction_spec, t_perturbation_details>
         if (topo.is_coarse_grained(i) && topo.is_coarse_grained(j)) { // CG-CG interaction
           lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
                   B_lj->c6, B_lj->c12,
-                  A_q / cgrain_eps, B_q / cgrain_eps,
+                  A_q / cgrain_eps[0], B_q / cgrain_eps[0],
                   alpha_lj, alpha_crf,
                   f1, f6, f12,
-                  e_lj, e_crf, de_lj, de_crf);
+                  e_lj, e_crf, de_lj, de_crf, 0);
         } else if (topo.is_coarse_grained(i) || topo.is_coarse_grained(j)) { // FG-CG interaction
           lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
                   B_lj->c6, B_lj->c12,
-                  A_q / cgrain_epsm, B_q / cgrain_epsm,
+                  A_q / cgrain_eps[1], B_q / cgrain_eps[1],
                   alpha_lj, alpha_crf,
                   f1, f6, f12,
-                  e_lj, e_crf, de_lj, de_crf);
+                  e_lj, e_crf, de_lj, de_crf, 1);
         } else { // FG-FG interaction
           lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
                   B_lj->c6, B_lj->c12,
                   A_q, B_q,
                   alpha_lj, alpha_crf,
                   f1, f6, f12,
-                  e_lj, e_crf, de_lj, de_crf);
+                  e_lj, e_crf, de_lj, de_crf, 2);
         }
 
         //--------------------------------------------------
@@ -933,14 +933,14 @@ t_interaction_spec, t_perturbation_details>
       math::Vec f_rf;
       // check if...
       if (topo.is_coarse_grained(i)) { // CG-CG interaction
-        rf_soft_interaction(r, q_i_a * q_i_a / cgrain_eps,
-                q_i_b * q_i_b / cgrain_eps,
+        rf_soft_interaction(r, q_i_a * q_i_a / cgrain_eps[0],
+                q_i_b * q_i_b / cgrain_eps[0],
                 mit->second.CRF_softcore(),
-                f_rf, e_rf, de_rf, true);
+                f_rf, e_rf, de_rf, true, 0);
       } else { // FG-FG interaction
         rf_soft_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
                 mit->second.CRF_softcore(),
-                f_rf, e_rf, de_rf, true);
+                f_rf, e_rf, de_rf, true, 2);
       }
       break;
     }
