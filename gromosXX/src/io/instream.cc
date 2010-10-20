@@ -12,6 +12,7 @@
 #include "message.h"
 
 #include <util/coding.h>
+#include <fstream>
 
 #undef MODULE
 #undef SUBMODULE
@@ -23,10 +24,25 @@ void io::GInStream::readTitle() {
   std::vector<std::string> _b;
 
   io::getblock(*_is, _b);
-  if (_b[0] != "TITLE")
-    io::messages.add("title block expected: found " + _b[0],
-		     "GInStream", io::message::error);
-  title = io::concatenate(_b.begin() + 1, _b.end() - 1, title);
+
+  if (_b.empty()) {
+    io::messages.add("GInStream", "An input file was empty!", io::message::critical);
+    return;
+  }
+
+  if (_b[0] != "TITLE") {
+    if (_b[0] == "") {
+      std::ostringstream msg;
+      msg << "Empty input file detected.";
+      io::messages.add(msg.str(), "GInStream", io::message::critical);
+    } else {
+      io::messages.add("title block expected: found " + _b[0],
+              "GInStream", io::message::error);
+    }
+    title = "no title";
+  } else {
+    title = io::concatenate(_b.begin() + 1, _b.end() - 1, title);
+  }
 }
 
 void io::GInStream::readStream() {
