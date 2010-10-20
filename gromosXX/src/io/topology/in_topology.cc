@@ -544,10 +544,10 @@ io::In_Topology::read(topology::Topology& topo,
         ++it;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int cg_begin, cg_end;
+          int cg_begin, cg_end, cg_fac;
           _lineStream.clear();
           _lineStream.str(*it);
-          _lineStream >> cg_begin >> cg_end;
+          _lineStream >> cg_begin >> cg_end >> cg_fac;
 
           if (_lineStream.fail() || !_lineStream.eof()) {
             io::messages.add("Bad line in CGSOLUTE block",
@@ -557,12 +557,17 @@ io::In_Topology::read(topology::Topology& topo,
           if ((cg_begin > int(topo.num_solute_atoms()) || cg_begin < 1)
                   || (cg_end > int(topo.num_solute_atoms()) || cg_end < 1)
                   || (cg_begin > cg_end)) {
-            io::messages.add("Atom number out of range in CGSOLUTE block",
+            io::messages.add("Sequence number out of range in CGSOLUTE block",
+                    "In_Topology", io::message::error);
+          } else if (cg_fac < 1) {
+            io::messages.add("CG factor out of range in CGSOLUTE block",
                     "In_Topology", io::message::error);
           } else {
             DEBUG(10, "\tcoarse grained range: " << cg_begin << " " << cg_end);
+            DEBUG(10, "\tcoarse grained factor: " << cg_fac);
             for (unsigned int i = (cg_begin - 1); i < cg_end; ++i) {
               topo.is_coarse_grained()[i] = true;
+              topo.cg_factor()[i] = cg_fac;
             }
           }
         }

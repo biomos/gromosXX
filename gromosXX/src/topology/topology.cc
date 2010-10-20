@@ -56,6 +56,8 @@ topology::Topology::Topology()
     m_gamma(0.0),
     m_gamma_j(0),
     m_gamma_k(0),
+    m_cg_factor(1),
+    m_tot_cg_factor(1.0),
     m_le_coordinates(),
     m_sasa_parameter(),
     m_sasa_volume_tot(0.0),
@@ -107,6 +109,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_gamma.clear();
   m_gamma_j.clear();
   m_gamma_k.clear();
+  m_cg_factor.clear();
   m_exclusion.clear();
   m_one_four_pair.clear();
   m_all_exclusion.clear();
@@ -159,6 +162,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_gamma.push_back(topo.m_gamma[i]);
       m_gamma_j.push_back(topo.m_gamma_j[i]);
       m_gamma_k.push_back(topo.m_gamma_k[i]);
+      m_cg_factor.push_back(topo.m_cg_factor[i]);
     
       std::set<int> ex;
       std::set<int>::const_iterator it = topo.m_exclusion[i].begin(),
@@ -421,6 +425,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   }
 
   m_atom_name = topo.m_atom_name;
+
+  m_tot_cg_factor = topo.m_tot_cg_factor;
 }
 
 /**
@@ -445,6 +451,7 @@ void topology::Topology::resize(unsigned int const atoms)
   m_gamma.resize(atoms);
   m_gamma_j.resize(atoms);
   m_gamma_k.resize(atoms);
+  m_cg_factor.resize(atoms, 1);
   m_exclusion.resize(atoms);
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);  
@@ -773,6 +780,7 @@ void topology::Topology
   Topology::coscharge()(num_solute_atoms()) = 0.0;
   Topology::damping_level()(num_solute_atoms()) = 0.0;
   Topology::damping_power()(num_solute_atoms()) = 0.0;
+  Topology::cg_factor()[num_solute_atoms()] = 1;
 
   if (chargegroup){
     m_chargegroup.push_back(num_solute_atoms()+1);
@@ -834,6 +842,7 @@ void topology::Topology::solvate(unsigned int solv, unsigned int num_molecules)
       m_gamma[n]=m_solvent[solv].atom(j).gamma;
       m_gamma_j[n]=m_solvent[solv].atom(j).gamma_j;
       m_gamma_k[n]=m_solvent[solv].atom(j).gamma_k;
+      m_cg_factor[n]=1;
       // no exclusions or 1-4 interactions for solvent ?!
     }
 
@@ -907,6 +916,7 @@ void topology::Topology::resolvate(unsigned int solv, unsigned int num_molecules
       m_gamma(n)=m_solvent[solv].atom(j).gamma;
       m_gamma_j[n]=m_solvent[solv].atom(j).gamma_j;
       m_gamma_k[n]=m_solvent[solv].atom(j).gamma_k;
+      m_cg_factor[n]=1;
  
       // no exclusions or 1-4 interactions for solvent
     }

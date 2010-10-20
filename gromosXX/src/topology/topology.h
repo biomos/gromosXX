@@ -167,6 +167,21 @@ namespace topology
      * polarisability gamma atom j const accessor
      */
     int gamma_k(int i)const {return m_gamma_k[i];}
+
+    /**
+     * coarse grain factor accessor
+     */
+    std::vector<int> &cg_factor() {return m_cg_factor;}
+
+    /**
+     * coarse grain factor const accessor
+     */
+    int cg_factor(int i)const {return m_cg_factor[i];}
+
+    /**
+     * total coarse grain factor
+     */
+    double & tot_cg_factor() {return m_tot_cg_factor;}
  
     /**
      * stochastic dynamics const accessor
@@ -1467,6 +1482,15 @@ namespace topology
      * the polarisabiliy offsite atom k
      */
      std::vector<int> m_gamma_k;
+
+     /**
+     * the coarse grain factor
+     */
+     std::vector<int> m_cg_factor;
+     /**
+     * the total coarse grain factor
+     */
+     double m_tot_cg_factor;
 
     /**
      * local elevation coordinates

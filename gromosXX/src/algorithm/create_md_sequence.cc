@@ -213,6 +213,14 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     algorithm::Pressure_Calculation * pcalc =
       new algorithm::Pressure_Calculation;
     md_seq.push_back(pcalc);
+    
+    // coarse grain factor for pressure correction
+    double tot_factor = 0.0;
+    for (unsigned int i = 0; i < topo.num_atoms(); ++i)
+      tot_factor += topo.cg_factor(i);
+    topo.tot_cg_factor() = double(tot_factor) / double(topo.num_atoms());
+    DEBUG(10, "atoms = " << topo.num_atoms());
+    DEBUG(10, "coarse grain correction factor = " << topo.tot_cg_factor());
   }
 
   //  pressure scaling
