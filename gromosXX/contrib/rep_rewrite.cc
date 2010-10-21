@@ -100,7 +100,12 @@ int main(int argc, char *argv[])
       return -1;
     }
     io::In_Parameter ip(input_file);
+    ip.quiet = true;
     ip.read(param, std::cout);
+    if (io::messages.contains(io::message::error) || io::messages.contains(io::message::critical)) {
+      io::messages.display(cout);
+      return 1;
+    }
   }
   
   std::string prefix, suffix;
@@ -144,6 +149,11 @@ int main(int argc, char *argv[])
       
       ifile.push_back(ifp);
     }
+  }
+
+  if (ifile.empty()) {
+    cerr << "No trajectory given." << endl;
+    return 1;
   }
 
   vector<repframe> stream_state(ifile.size());
