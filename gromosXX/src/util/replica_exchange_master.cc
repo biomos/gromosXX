@@ -76,7 +76,6 @@ int util::Replica_Exchange_Master::run
   // socket
   sockaddr_in server_address;
   sockaddr_in client_address;
-
   serv_socket = socket(AF_INET, SOCK_STREAM, 0);
 
   server_address.sin_family = AF_INET;
@@ -332,11 +331,11 @@ int util::Replica_Exchange_Master::run
       
       // write recovery trajectory
       if (sim.param().replica.write &&
-	  ((trials % sim.param().replica.write) == 0)){
-	std::cout << "writing trajectory..." << std::endl;
-	traj.write_replica(replica_data, m_conf, topo, sim);
-	if (multigraining)
-	  cg_traj.write_replica(replica_data, m_cg_conf, cg_topo, cg_sim);
+	           ((trials % sim.param().replica.write) == 0)){
+        std::cout << "writing trajectory..." << std::endl;
+        traj.write_replica(replica_data, m_conf, topo, sim);
+        if (multigraining)
+          cg_traj.write_replica(replica_data, m_cg_conf, cg_topo, cg_sim);
       }
       
       ++trials;
@@ -446,7 +445,6 @@ int util::Replica_Exchange_Master::run
 	
 	if (interactive(sim) == 2)
 	  quit = true;
-	
 	close(cl_socket);
 	break;
 

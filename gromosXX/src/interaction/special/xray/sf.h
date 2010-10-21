@@ -13,14 +13,17 @@ namespace interaction {
      * @param[in] topo the topology
      * @param[inout] conf the configuration
      * @param[in] sim the simulation
-     * @param[in] fphi the unscaled structure factors
+     * @param[in] fphi_calc the unscaled structure factors
+     * @param[out] fphi the scaled structure factors
      * @param[out] fphi_obs the observed structure factors
      */
     void scale_sf(const topology::Topology & topo,
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
-            const clipper::HKL_data<clipper::data32::F_phi> & fphi,
-            clipper::HKL_data<clipper::data32::F_phi> & fphi_obs);
+            const clipper::HKL_data<clipper::data32::F_phi> & fphi_calc,
+            clipper::HKL_data<clipper::data32::F_phi> & fphi,
+            clipper::HKL_data<clipper::data32::F_phi> & fphi_obs
+            );
 
     /**
      * calculate the energy for structure factor restraining

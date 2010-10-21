@@ -62,6 +62,7 @@ int interaction::Xray_Restraint_Interaction
     clipper::Atom_list & atoms_sf = conf.special().xray_conf.atoms_sf;
     clipper::Xmap<clipper::ftype32> & rho_calc = conf.special().xray_conf.rho_calc;
     clipper::Xmap<clipper::ftype32> & rho_obs = conf.special().xray_conf.rho_obs;
+    clipper::HKL_data<clipper::data32::F_phi> & fphi_calc = conf.special().xray_conf.fphi_calc;
     clipper::HKL_data<clipper::data32::F_phi> & fphi = conf.special().xray_conf.fphi;
     clipper::HKL_data<clipper::data32::F_phi> & fphi_obs = conf.special().xray_conf.fphi_obs;
     clipper::FFTmap_p1 & D_k = conf.special().xray_conf.D_k;
@@ -207,7 +208,7 @@ int interaction::Xray_Restraint_Interaction
   // fit the b factor
   if (sim.param().xrayrest.bfactor.step && (!sim.steps() || sim.steps() % sim.param().xrayrest.bfactor.step == 0)) {
     m_timer.start("B factor fitting");
-    fit_bfactor(topo, conf, sim, cell, atoms, fphi, fphi_obs, rho_calc, D_k, d_r);
+    fit_bfactor(topo, conf, sim, cell, atoms, fphi_calc, fphi, fphi_obs, rho_calc, D_k, d_r);
     update = true;
     m_timer.stop("B factor fitting");
   }
@@ -218,11 +219,17 @@ int interaction::Xray_Restraint_Interaction
     m_timer.start("structure factor");
     calculate_electron_density(rho_calc, atoms);
     // FFT the electron density to obtain the structure factors
-    rho_calc.fft_to(fphi);
+    rho_calc.fft_to(fphi_calc);
     m_timer.stop("structure factor");
 
+    if (sim.param().xrayrest.overall_bfactor.B_overall_switcher == simulation::B_overall_on) {
+      m_timer.start("overall B factor fitting");
+      fit_overall_bfactor(topo, conf, sim, cell, atoms, fphi_calc, fphi, fphi_obs, rho_calc, D_k, d_r);
+      m_timer.stop("overall B factor fitting");
+    }
+
     m_timer.start("scaling");
-    scale_sf(topo, conf, sim, fphi, fphi_obs);
+    scale_sf(topo, conf, sim, fphi_calc, fphi, fphi_obs);
     m_timer.stop("scaling");
   }
 
@@ -403,6 +410,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   clipper::Xmap<clipper::ftype32> & rho_obs = conf.special().xray_conf.rho_obs;
   clipper::HKL_info & hkls = conf.special().xray_conf.hkls;
   clipper::HKL_data<clipper::data32::F_phi> & fphi = conf.special().xray_conf.fphi;
+  clipper::HKL_data<clipper::data32::F_phi> & fphi_calc = conf.special().xray_conf.fphi_calc;
   clipper::HKL_data<clipper::data32::F_phi> & fphi_obs = conf.special().xray_conf.fphi_obs;
   clipper::FFTmap_p1 & D_k = conf.special().xray_conf.D_k;
   clipper::Xmap<clipper::ftype32> & d_r = conf.special().xray_conf.d_r;
@@ -450,6 +458,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 
   hkls.init(spacegr, cell, reso, true);
   fphi.init(hkls, hkls.cell());
+  fphi_calc.init(hkls, hkls.cell());
   fphi_obs.init(hkls, hkls.cell());
 
   // The difference map has to be a P 1 map in order to get agreement with
@@ -603,6 +612,8 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
 
   conf.special().xray_rest.resize(topo.xray_restraints().size() + topo.xray_rfree().size());
 
+  conf.special().xray.B_overall = sim.param().xrayrest.overall_bfactor.init;
+
   if (!quiet) {
     os.precision(2);
     os << "\nXRAYREST\n";
@@ -646,6 +657,10 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     os << "Max. resolution of data     : " << max_reso << std::endl;
     os << "Min. resolution of data     : " << min_reso << std::endl;
     os << "Max. resolution calculated  : " << calc_max_reso << std::endl;
+    if (sim.param().xrayrest.overall_bfactor.B_overall_switcher == simulation::B_overall_on)
+      os << "Overall B factor            : " << conf.special().xray.B_overall << std::endl;
+    else
+      os << "Overall B factor            : not used." << std::endl;
     os << "Writeing electron density   : " << sim.param().xrayrest.writexmap << std::endl << std::endl;
     if (sim.param().xrayrest.local_elevation) {
       os << "The following local elevation umbrellas are weighted by the electron density:" << std::endl;

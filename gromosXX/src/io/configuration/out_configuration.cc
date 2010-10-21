@@ -577,12 +577,19 @@ void io::Out_Configuration::write_replica
         topology::Topology const & topo,
         simulation::Simulation const &sim,
         output_format const form) {
+  //std::cout << "form: " << form <<std::endl;
   // standard trajectories
   if (form == reduced) {
 
     if (m_every_pos && (sim.steps() % m_every_pos) == 0) {
       _print_timestep(sim, m_pos_traj);
       _print_replica_information(replica_data, m_pos_traj);
+
+      /*for (unsigned int j = 0; j < sim.param().replica.num_l; j++){
+        std::ofstream out("replica_i.out");
+        _print_xray_rvalue(sim.param(), conf[i], m_special_traj);
+        out.close();
+      }*/
 
       for (unsigned int i = 0; i < conf.size(); ++i) {
         _print_positionred(conf[i], topo, topo.num_atoms(), m_pos_traj);
@@ -594,7 +601,6 @@ void io::Out_Configuration::write_replica
     }
   } else if (form == final && m_final) {
     for (unsigned int i = 0; i < conf.size(); ++i) {
-
       m_final_conf << "REPLICAFRAME\n"
               << std::setw(12) << i + 1
               << "\nEND\n";
@@ -2151,6 +2157,51 @@ void io::Out_Configuration::write_replica_step
           print_REMD(m_blockaveraged_free_energy, replica_data, sim.param());
       }
     }
+
+    bool special_remd_printed = false;
+    if (m_every_cos_pos && (sim.steps() % m_every_cos_pos) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_jvalue && sim.steps() && (sim.steps() % m_every_jvalue) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_xray && sim.steps() && (sim.steps() % m_every_xray) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_disres && sim.steps() && (sim.steps() % m_every_disres) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_dat && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+    if (m_every_leus && sim.steps() && (sim.steps() % m_every_leus && !special_remd_printed) == 0) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+
+    if (m_every_dipole && sim.steps() && (sim.steps() % m_every_dipole) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+    if (m_every_current && sim.steps() && (sim.steps() % m_every_current) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_adde && sim.steps() && (sim.steps() % m_every_adde) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
   }// reduced
 
   else if (form == final && m_final) {
@@ -2166,6 +2217,51 @@ void io::Out_Configuration::write_replica_step
 
     if (m_every_free_energy && (sim.steps() % m_every_free_energy) == 0)
       print_REMD(m_free_energy_traj, replica_data, sim.param());
+
+        bool special_remd_printed = false;
+    if (m_every_cos_pos && (sim.steps() % m_every_cos_pos) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_jvalue && sim.steps() && (sim.steps() % m_every_jvalue) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_xray && sim.steps() && (sim.steps() % m_every_xray) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_disres && sim.steps() && (sim.steps() % m_every_disres) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_dat && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+    if (m_every_leus && sim.steps() && (sim.steps() % m_every_leus && !special_remd_printed) == 0) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+
+    if (m_every_dipole && sim.steps() && (sim.steps() % m_every_dipole) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+    if (m_every_current && sim.steps() && (sim.steps() % m_every_current) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_adde && sim.steps() && (sim.steps() % m_every_adde) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
   }// final
 
   else {
@@ -2181,6 +2277,51 @@ void io::Out_Configuration::write_replica_step
     if (m_every_force && (sim.steps() % m_every_force) == 0) {
       if (sim.steps())
         print_REMD(m_force_traj, replica_data, sim.param());
+    }
+
+    bool special_remd_printed = false;
+    if (m_every_cos_pos && (sim.steps() % m_every_cos_pos) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_jvalue && sim.steps() && (sim.steps() % m_every_jvalue) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_xray && sim.steps() && (sim.steps() % m_every_xray) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_disres && sim.steps() && (sim.steps() % m_every_disres) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_dat && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+    if (m_every_leus && sim.steps() && (sim.steps() % m_every_leus && !special_remd_printed) == 0) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+
+    if (m_every_dipole && sim.steps() && (sim.steps() % m_every_dipole) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+    if (m_every_current && sim.steps() && (sim.steps() % m_every_current) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
+    }
+
+    if (m_every_adde && sim.steps() && (sim.steps() % m_every_adde) == 0 && !special_remd_printed) {
+      print_REMD(m_special_traj, replica_data, sim.param());
+      special_remd_printed = true;
     }
   } // decorated
 
@@ -2285,7 +2426,6 @@ void io::Out_Configuration::_print_xray_rvalue(simulation::Parameter const & par
       k_inst = k_free_inst = R_inst = R_free_inst = 0.0; break;
     default: ;// value are OK. do nothing
   }
-
   os << "XRAYRVALUE\n";
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);

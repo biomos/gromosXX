@@ -191,12 +191,30 @@ END
  * The XRAYSFCALC block is used to tune the structure factor computation.
  *
  * @verbtaim
+XRAYREPLICAEXCHANGE
+# NTXRRE: use X-ray replica exchange 0..2
+#                   0 don't use replica exchange
+#                   1 replica exchange on force constant
+#                   2 replica exchange on resolution
+# CXRREMN: minimal force constant / resolution
+# CXRREMX: maximal force constant / resolution
+#
+# NTXRRE  CXREEMN CXREEMX
+     1  0.0  1000.0
+END
 XRAYSFCALC
 #SFCTOL: tolerance (atom move)
 #SFCST: every n step
 #
 # SFCTOL   SFCST
      0.1       5
+END
+XRAYOVERALLBFACTOR
+# XROB >= 0.0 the overall B factor used.
+# XROBF 0,1 fit the overall B factor using least-squares
+#
+# XROB  XROBF
+          0.5            1
 END
 @endverbatim
  */
@@ -842,6 +860,35 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       sim.param().xrayrest.replica_exchange_parameters.lambda_dependant_max = max_value;
     }
   } //XRAYREPLICAEXCHANGE
+  { // XRAYOVERALLBFACTOR
+    buffer = m_block["XRAYOVERALLBFACTOR"];
+    DEBUG(10, "XRAYOVERALLBFACTOR block : " << buffer.size());
+    if(buffer.size()){
+      std::string s;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1,buffer.end() - 1,s));
+
+      double overall_Bfac;
+      int overall_Bfac_interruptor;
+      _lineStream >> overall_Bfac >> overall_Bfac_interruptor;
+
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in XRAYOVERALLBFACTOR block",
+                "In_Xrayresspec", io::message::error);
+        return;
+      }
+      switch (overall_Bfac_interruptor){
+        case 0: sim.param().xrayrest.overall_bfactor.B_overall_switcher = simulation::B_overall_off;
+        break;
+        case 1: sim.param().xrayrest.overall_bfactor.B_overall_switcher = simulation::B_overall_on;
+        break;
+        default: io::messages.add("Forbidden value for XROBF",
+                "In_Xrayresspec", io::message::error);
+                return;
+      }
+      sim.param().xrayrest.overall_bfactor.init = overall_Bfac;
+    }
+  } //XRAYOVERALLBFACTOR
   { //XRAYSFCALC
     buffer = m_block["XRAYSFCALC"];
     if(buffer.size()){

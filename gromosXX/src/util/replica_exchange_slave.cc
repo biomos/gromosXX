@@ -799,6 +799,21 @@ int util::Replica_Exchange_Slave::recalc_energy
     conf.current().energies.calculate_totals();
     replica_data.epot_j = conf.current().energies.potential_total +
             conf.current().energies.special_total;
+    switch (sim.param().xrayrest.replica_exchange_parameters.energy_switcher) {
+      case simulation::energy_tot:{
+        replica_data.epot_j = conf.current().energies.potential_total +
+            conf.current().energies.special_total;
+      }
+      break;
+      case simulation::energy_phys:{
+        replica_data.epot_j = conf.current().energies.potential_total;
+      }
+      break;
+      case simulation::energy_special:{
+        replica_data.epot_j = conf.current().energies.special_total;
+      }
+      break;
+    }
 
     if (!quiet) {
       io::print_ENERGY(traj.output(), conf.current().energies,

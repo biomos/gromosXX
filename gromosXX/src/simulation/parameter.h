@@ -86,6 +86,20 @@ namespace simulation
        */
       energy_special = 2
   };
+   /**
+    * @enum B_overall_enum
+    * interruptor of the overall B factor
+    */
+  enum B_overall_enum{
+      /**
+       * B_overall on
+       */
+      B_overall_off = 0,
+      /**
+       * B_overall off
+       */
+      B_overall_on = 1,
+  };
   /**
    * @enum special_loop_enum
    * special solvent loop
@@ -1587,6 +1601,33 @@ namespace simulation
          */
         rep_ex_energy_interruptor_enum energy_switcher;
      }replica_exchange_parameters;
+      /**
+     * @struct overall_bfactor_struct
+     * default values: 0
+     */
+     struct overall_bfactor_struct
+    {
+        overall_bfactor_struct() :
+        B_overall_switcher(B_overall_off), init(0.0)
+        {
+        }
+        /**         
+         * overall B factor switching
+         */
+        B_overall_enum B_overall_switcher;
+        /**
+         * initial value (read from specification file)
+         */
+        double init;
+        /**
+         * terminate after the number of iterations
+         */
+        int terminate_iterations;
+        /**
+         * terminate after |gradient| &lt; value
+         */
+        double terminate_gradient;
+     }overall_bfactor;
      /**
      * @struct structure_factor_calculation_struct
      * default values:

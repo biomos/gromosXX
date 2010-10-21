@@ -260,7 +260,7 @@ namespace configuration {
          */
         double phase_av;
         /**
-         * current pahse of structure factor
+         * current phase of structure factor
          */
         double phase_curr;
       };
@@ -291,6 +291,10 @@ namespace configuration {
          * the time-averaged R-value
          */
         double R_avg, R_free_avg;
+        /**
+         *overall B factor XROB
+         */
+        double B_overall;
       } /** xray information */ xray;
       /**
        * @struct xray_bfoc_struct
@@ -457,6 +461,10 @@ namespace configuration {
              * the HKLs (reflections)
              */
             clipper::HKL_info hkls;
+            /**
+             * structure factos built from electron density. Unmodified, unscaled.
+             */
+            clipper::HKL_data<clipper::data32::F_phi> fphi_calc;
             /**
              * the structure factors
              */

@@ -20,6 +20,8 @@
 #include <clipper/clipper-ccp4.h>
 #include <clipper/clipper-contrib.h>
 #include <interaction/special/xray/sf.h>
+
+#include "dens.h"
 #endif
 
 #ifdef OMP
@@ -35,8 +37,25 @@
 void interaction::xray::scale_sf(const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
-        const clipper::HKL_data<clipper::data32::F_phi> & fphi,
+        const clipper::HKL_data<clipper::data32::F_phi> & fphi_calc,
+        clipper::HKL_data<clipper::data32::F_phi> & fphi,
         clipper::HKL_data<clipper::data32::F_phi> & fphi_obs) {
+
+  // scale here with overall B
+  if (sim.param().xrayrest.overall_bfactor.B_overall_switcher == simulation::B_overall_on){
+    /*clipper::HKL_data<clipper::data32::F_phi> * fphi_calc;
+    interaction::xray::calculate_electron_density(conf.special().xray_conf.rho_calc, conf.special().xray_conf.atoms);
+    // calculate structure factors and scale them
+    conf.special().xray_conf.rho_calc.fft_to(fphi);*/
+    clipper::HKL_data<clipper::data32::F_phi>::HKL_reference_index ix = fphi.first();
+    clipper::HKL_data<clipper::data32::F_phi>::HKL_reference_index ix_calc = fphi_calc.first();
+    for(; !ix.last(); ix.next(), ix_calc.next()) {
+      std::complex<clipper::ftype32> exp_term(exp(-conf.special().xray.B_overall * ix.invresolsq()), 0.0f);
+      fphi[ix] = exp_term * std::complex<clipper::ftype32>(fphi_calc[ix_calc]);
+    }
+  } else {
+    fphi = fphi_calc;
+  }
   // sqr_calc:       sum of w*Fcalc^2
   // obs:            sum of Fobs
   // obs_calc:       sum of w*Fobs*Fcalc
