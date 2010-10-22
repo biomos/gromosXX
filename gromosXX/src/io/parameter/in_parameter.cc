@@ -4307,25 +4307,25 @@ void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
 }
 
 /**
- * @section gromos96compat GROMOS96COMPAT block
+ * @section sasa SASA block
  * @verbatim
  SASA
- # NTSASA, NTSASAVOL
- # SASASW
+ # NTSASA
  # 0 : not used (default)
  # 1 : use SASA implicit solvent model
- # VOLS
+ # NTVOL
  # 0 : not used (default)
- # 1 : use VOLUME correction to SASA implicit solvent model (requires SASASW = 1)
- # P_12 > 0, < 1 probability parameter for first neighbours
- # P_13 > 0, < 1 probability parameter for second neighbours
- # P_1x > 0, < 1 probability parameter for third and higher neighbours
- # SIGMAV scaling parameter for volume energy term
- # RSOLV > 0 radius of solvent for SASA calculation
- # AMAXSC > 0 maximum SASA of solute atom (for volume term switching function)
- # AMINSC > 0 minimum SASA of solute atom (for volume term switching function)
- #   SASASW      VOLS       P_12      P_13     P_1x   SIGMAV  RSOlV   AMAXSC  AMINSC
-          1         1     0.8875    0.3516   0.3516    -100   0.14     0.02    0.01
+ # 1 : use VOLUME correction to SASA implicit solvent model (requires NTSASA = 1)
+ # P_12 > 0, < 1 pair parameter for SASA reduction for first neighbours
+ # P_13 > 0, < 1 pair parameter for SASA reduction for second neighbours
+ # P_1X > 0, < 1 pair parameter for SASA reduction for third and higher neighbours
+ # SIGMAV scaling parameter for volume energy term (kJ.mol^-1.nm^-3)
+ # RSOLV > 0 radius of solvent molecule for SASA calculation (nm)
+ # AS1 > 0 an atom with SASA below this contributes to the VOLUME correction (nm^2)
+ # AS2 > 0 an atom with SASA above this is not considered for the VOLUME correction (nm^2)
+ # atoms with AS1 < SASA < AS2 have a partial contribution determined by a switching function
+ #   NTSASA      NTVOL       P_12      P_13     P_1X   SIGMAV  RSOlV    AS1    AS2
+          1          1     0.8875    0.3516   0.3516     -100   0.14   0.01   0.02
  END
  @endverbatim
  */

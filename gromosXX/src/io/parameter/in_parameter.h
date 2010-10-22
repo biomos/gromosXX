@@ -52,6 +52,7 @@
  * - @ref  LAMBDAS
  * - @ref  localelev
  * - @ref  electric
+ * - @ref  sasa
  * - @ref  multigradient
  * - @ref  addecouple
  */
