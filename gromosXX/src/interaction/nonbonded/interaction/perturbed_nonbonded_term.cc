@@ -13,14 +13,19 @@
  */
 inline void interaction::Perturbed_Nonbonded_Term
 ::init(simulation::Simulation const &sim) {
-  double cut3i, crf, crf_cut3i, crf_2cut3i, crf_cut, crf_2;
+  double cut3i = 0.0, crf = 0.0, crf_cut3i = 0.0, crf_cut = 0.0, crf_2 = 0.0;
+  m_cut3i.clear();
+  m_crf.clear();
+  m_crf_cut3i.clear();
+  m_crf_cut.clear();
+  m_crf_2.clear();
+  cgrain_eps.clear();
   switch (sim.param().force.interaction_function) {
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:
     case simulation::pol_off_lj_crf_func:
       // Force
-      cut3i =
-              1.0 / (sim.param().nonbonded.rf_cutoff
+      cut3i = 1.0 / (sim.param().nonbonded.rf_cutoff
               * sim.param().nonbonded.rf_cutoff
               * sim.param().nonbonded.rf_cutoff);
 
@@ -46,18 +51,10 @@ inline void interaction::Perturbed_Nonbonded_Term
       m_cut3i.push_back(cut3i);
       m_crf.push_back(crf);
       m_crf_cut3i.push_back(crf_cut3i);
-      m_crf_2cut3i.push_back(crf_2cut3i);
       m_crf_cut.push_back(crf_cut);
       m_crf_2.push_back(crf_2);
-      m_cut2 = sim.param().nonbonded.rf_cutoff * sim.param().nonbonded.rf_cutoff;
-
-      m_lambda_exp = sim.param().perturbation.lambda_exponent;
       break;
-
     case simulation::cgrain_func:
-      m_lambda_exp = sim.param().perturbation.lambda_exponent;
-
-      // cgrain
       A_cg12 = -(12 * (12 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 3));
       A_cg6 = -(6 * (6 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 6 + 3));
       A_cg1 = -(1 * (1 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 1 + 3));
@@ -101,19 +98,17 @@ inline void interaction::Perturbed_Nonbonded_Term
         m_cut3i.push_back(cut3i);
         m_crf.push_back(crf);
         m_crf_cut3i.push_back(crf_cut3i);
-        m_crf_2cut3i.push_back(crf_2cut3i);
         m_crf_cut.push_back(crf_cut);
         m_crf_2.push_back(crf_2);
       }
-      m_cut2 = sim.param().nonbonded.rf_cutoff * sim.param().nonbonded.rf_cutoff;
-
-      m_lambda_exp = sim.param().perturbation.lambda_exponent;
       break;
     default:
       io::messages.add("Nonbonded_Innerloop",
               "interaction function not implemented",
               io::message::critical);
   }
+  m_cut2 = sim.param().nonbonded.rf_cutoff * sim.param().nonbonded.rf_cutoff;
+  m_lambda_exp = sim.param().perturbation.lambda_exponent;
 }
 
 /**

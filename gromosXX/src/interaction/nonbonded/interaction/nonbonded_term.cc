@@ -18,6 +18,12 @@
 inline void interaction::Nonbonded_Term
 ::init(simulation::Simulation const &sim) {
   double cut3i, crf, crf_cut3i, crf_2cut3i, crf_cut;
+  m_cut3i.clear();
+  m_crf.clear();
+  m_crf_cut3i.clear();
+  m_crf_cut.clear();
+  m_crf_2cut3i.clear();
+  cgrain_eps.clear();
   switch (sim.param().force.interaction_function) {
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:

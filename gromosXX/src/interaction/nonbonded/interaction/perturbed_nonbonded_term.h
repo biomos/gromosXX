@@ -269,12 +269,6 @@ namespace interaction
 
     /**
      * Energy:
-     * reaction field constant / twice reaction field cutoff ^ 3
-     */
-    std::vector<double> m_crf_2cut3i;
-
-    /**
-     * Energy:
      * (1-coulomb reaction field constant / 2 and
      * divided by reaction field cutoff.
      */

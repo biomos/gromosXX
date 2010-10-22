@@ -35,8 +35,7 @@ t_interaction_spec, t_perturbation_details>
 
   // const double l = topo.lambda();
 
-  if (j < topo.num_solute_atoms() &&
-          topo.is_perturbed(j) == true) {
+  if (j < topo.num_solute_atoms() && topo.is_perturbed(j) == true) {
 
     switch (t_interaction_spec::interaction_func) {
       case simulation::lj_crf_func:
@@ -1068,11 +1067,13 @@ t_interaction_spec, t_perturbation_details>
         math::Vec f_rf;
         // check if...
         if (topo.is_coarse_grained(i) && topo.is_coarse_grained(*it)) { // CG-CG interaction
-          rf_soft_interaction(r, q_ij_a, q_ij_b, alpha_crf, f_rf, e_rf, de_rf);
+          rf_soft_interaction(r, q_ij_a / cgrain_eps[0], q_ij_b / cgrain_eps[0],
+                  alpha_crf, f_rf, e_rf, de_rf, 0);
         } else if (topo.is_coarse_grained(i) || topo.is_coarse_grained(*it)) { // FG-CG interaction
-          rf_soft_interaction(r, q_ij_a, q_ij_b, alpha_crf, f_rf, e_rf, de_rf);
+          rf_soft_interaction(r, q_ij_a / cgrain_eps[1], q_ij_b / cgrain_eps[1],
+                  alpha_crf, f_rf, e_rf, de_rf, 1);
         } else { // FG-FG interaction
-          rf_soft_interaction(r, q_ij_a, q_ij_b, alpha_crf, f_rf, e_rf, de_rf);
+          rf_soft_interaction(r, q_ij_a, q_ij_b, alpha_crf, f_rf, e_rf, de_rf, 2);
         }
 
         DEBUG(8, "alpha_crf : " << alpha_crf);

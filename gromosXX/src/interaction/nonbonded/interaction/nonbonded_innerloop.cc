@@ -1251,7 +1251,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         rf_interaction(r, topo.charge()(i) * topo.charge()(i) / cgrain_eps[0],
                 f, e_crf, 0);
       } else {     // FG particle
-        rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf, 1);
+        rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf, 2);
       }
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
@@ -1465,10 +1465,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
 
           // for solvent, we don't calculate internal forces (rigid molecules)
           // and the distance independent parts should go to zero
-          e_crf = -topo.charge()(*at_it) *
-                  topo.charge()(*at2_it) *
-                  math::four_pi_eps_i *
-                  crf_2cut3i() * abs2(r);
+          e_crf = -topo.charge()(*at_it) * topo.charge()(*at2_it) *
+                  math::four_pi_eps_i * crf_2cut3i() * abs2(r);
           DEBUG(15, "\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
           DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
           // energy
