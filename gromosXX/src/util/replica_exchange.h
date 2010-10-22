@@ -45,7 +45,7 @@ namespace util
     /**
      * Constructor
      */
-    Replica_Exchange() : serv_socket(-1), cl_socket(-1), retry(5), timeout(60) {}
+    Replica_Exchange() : serv_socket(-1), cl_socket(-1), retry(5), timeout(5) {}
     /**
      * Destructor
      */

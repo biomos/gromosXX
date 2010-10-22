@@ -613,11 +613,17 @@ void io::Out_Configuration::write_replica
       _print_position(conf[i], topo, m_final_conf);
       if (sim.param().polarise.cos)
         _print_cos_position(conf[i], topo, m_final_conf);
+
       _print_velocity(conf[i], topo, m_final_conf);
       _print_lattice_shifts(conf[i], topo, m_final_conf);
       _print_box(conf[i], m_final_conf);
       if (conf[i].special().shake_failure_occurred) {
         _print_shake_failure(conf[i], topo, m_final_conf);
+      }
+
+      if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off) {
+        _print_xray(sim.param(), conf[i], topo, m_final_conf, /*final=*/ true);
+        _print_xray_bfactors(sim.param(), conf[i], m_final_conf);
       }
     }
 

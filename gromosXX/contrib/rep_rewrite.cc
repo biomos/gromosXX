@@ -53,17 +53,17 @@ struct repframe
 
 std::string get_name(std::string prefix, std::string suffix, repframe const & rep, simulation::Parameter const & param);
 
-int read_repframe(ifstream & traj, repframe & stream_state);
+int read_repframe(io::igzstream & traj, repframe & stream_state);
 
-int init(vector<ifstream*> & traj,
+int init(vector<io::igzstream*> & traj,
 	 vector<repframe> & stream_state);
 
-int write_frame(ifstream & ifile, 
+int write_frame(io::igzstream & ifile,
 		ofstream & ofile,
 		repframe & stream_state,
 		simulation::Parameter const & param);
 
-void finish(vector<ifstream * > & ifile,
+void finish(vector<io::igzstream * > & ifile,
 	    map<string, ofstream *> & ofile);
 
 int find_ind(vector<string> const &v, string s);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
   
   simulation::Parameter param;
   {
-    std::ifstream input_file;
+    io::igzstream input_file;
     input_file.open(args["input"].c_str());
     
     if (!input_file.is_open()){
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     }
   }
   
-  vector<ifstream*> ifile;
+  vector<io::igzstream*> ifile;
   map<string, ofstream *> ofile;
   
   {
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
     io::Argument::const_iterator to=args.upper_bound("trj");
     
     for( ; iter != to; ++iter){
-      ifstream * ifp = new ifstream(iter->second.c_str());
+      io::igzstream * ifp = new io::igzstream(iter->second.c_str());
       if (!(ifp->is_open())){
 	cerr << "could not open trajectory " + iter->second << endl;
 	return 1;
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-int read_repframe(ifstream & traj, repframe & stream_state)
+int read_repframe(io::igzstream & traj, repframe & stream_state)
 {
   std::string line;
   { // ID RUN T l
@@ -286,7 +286,7 @@ int read_repframe(ifstream & traj, repframe & stream_state)
   return 0;
 }
 
-int init(vector<ifstream*> &traj, vector<repframe> &stream_state)
+int init(vector<io::igzstream*> &traj, vector<repframe> &stream_state)
 {
   string line;
   for(unsigned int i=0; i<traj.size(); ++i){
@@ -311,10 +311,10 @@ int init(vector<ifstream*> &traj, vector<repframe> &stream_state)
   
 int read_conf(string fn,
 	      vector<string> & T, vector<string> & l,
-	      vector<ifstream *> & ifile,
+	      vector<io::igzstream *> & ifile,
 	      vector<vector<ofstream *> > & ofile)
 {
-  ifstream conf(fn.c_str());
+  io::igzstream conf(fn.c_str());
   string line;
   
   do{
@@ -388,14 +388,14 @@ int read_conf(string fn,
     is >> fn;
     if (is.fail()) break;
     
-    ifile.push_back(new ifstream(fn.c_str()));
+    ifile.push_back(new io::igzstream(fn.c_str()));
     cout << "input file " << fn << " opened" << endl;
   }
   
   return 0;
 }
 
-void finish(vector<ifstream * > & ifile,
+void finish(vector<io::igzstream * > & ifile,
 	    map<string, ofstream *> & ofile)
 {
   for(unsigned int i=0; i<ifile.size(); ++i){
@@ -414,7 +414,7 @@ void finish(vector<ifstream * > & ifile,
 }
 
 
-int write_frame(ifstream & ifile, 
+int write_frame(io::igzstream & ifile,
 		ofstream & ofile,
 		repframe & stream_state,
 		simulation::Parameter const & param)
