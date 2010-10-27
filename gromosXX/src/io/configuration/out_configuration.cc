@@ -582,21 +582,38 @@ void io::Out_Configuration::write_replica
   if (form == reduced) {
 
     if (m_every_pos && (sim.steps() % m_every_pos) == 0) {
+
       _print_timestep(sim, m_pos_traj);
       _print_replica_information(replica_data, m_pos_traj);
 
-      /*for (unsigned int j = 0; j < sim.param().replica.num_l; j++){
-        std::ofstream out("replica_i.out");
-        _print_xray_rvalue(sim.param(), conf[i], m_special_traj);
-        out.close();
-      }*/
+      for (unsigned int i = 0; i < conf.size(); ++i) {
+        m_pos_traj << "REPLICAFRAME\n"
+              << std::setw(12) << i + 1
+              << "\nEND\n";
+        _print_positionred(conf[i], topo, topo.num_atoms(), m_pos_traj);
+        _print_box(conf[i], m_pos_traj);
+      }
+    }
+    if (m_every_vel && (sim.steps() % m_every_vel) == 0) {
+      _print_timestep(sim, m_vel_traj);
+      _print_replica_information(replica_data, m_vel_traj);
 
       for (unsigned int i = 0; i < conf.size(); ++i) {
-        _print_positionred(conf[i], topo, topo.num_atoms(), m_pos_traj);
-        _print_velocityred(conf[0], topo.num_atoms(), m_vel_traj);
-
-        if (conf[i].boundary_type != math::vacuum)
-          _print_box(conf[i], m_pos_traj);
+        m_vel_traj << "REPLICAFRAME\n"
+              << std::setw(12) << i + 1
+              << "\nEND\n";
+        
+        _print_velocityred(conf[i], topo.num_atoms(), m_vel_traj);
+      }
+    }
+    if (sim.param().xrayrest.write && (sim.steps() % sim.param().xrayrest.write) == 0) {
+      _print_timestep(sim, m_special_traj);
+      _print_replica_information(replica_data, m_special_traj);
+      for (unsigned int i = 0; i < conf.size(); ++i) {
+        m_special_traj << "REPLICAFRAME\n"
+              << std::setw(12) << i + 1
+              << "\nEND\n";
+        _print_xray_rvalue(sim.param(), conf[i], m_special_traj);
       }
     }
   } else if (form == final && m_final) {

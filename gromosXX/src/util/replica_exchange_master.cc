@@ -130,6 +130,12 @@ int util::Replica_Exchange_Master::run
 
   // write whenever we want!
   sim.param().write.position = 1;
+  if (sim.param().xrayrest.xrayrest != simulation::xrayrest_off &&
+      sim.param().xrayrest.write != 0) {
+    sim.param().xrayrest.write = 1;
+  } else {
+    sim.param().xrayrest.write = 0;
+  }
 
   // initialises everything
   for(unsigned int i=0; i< m_conf.size(); ++i){
