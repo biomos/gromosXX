@@ -39,6 +39,7 @@ calculate_interactions(topology::Topology& topo,
   // loop over the atoms
   // unit E = e . nm^-2
   math::Vec E(sim.param().electric.Ef_x, sim.param().electric.Ef_y, sim.param().electric.Ef_z);
+  double four_pi_eps0_epsCS_i = math::four_pi_eps_i;
   switch (sim.param().force.interaction_function) {
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:
@@ -51,6 +52,7 @@ calculate_interactions(topology::Topology& topo,
     }
     case simulation::cggromos_func:
     {
+      four_pi_eps0_epsCS_i *= sim.param().nonbonded.epsilon / sim.param().cgrain.EPS;
       E *= 3 * sim.param().nonbonded.rf_epsilon / (2 * sim.param().nonbonded.rf_epsilon
               + sim.param().cgrain.EPS);
       break;
@@ -61,7 +63,7 @@ calculate_interactions(topology::Topology& topo,
 
   for (unsigned int i = 0; i < topo.num_atoms(); ++i){
     // math::four_pi_eps_i contains already epsilon of cutoff-sphere (param().nonbonded.epsilon)
-    conf.current().force(i) += (math::four_pi_eps_i*sim.param().nonbonded.epsilon) * topo.charge(i) * E;
+    conf.current().force(i) += four_pi_eps0_epsCS_i * topo.charge(i) * E;
   }
 
   //The electric energies were not added to the total energy
