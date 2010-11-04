@@ -529,7 +529,7 @@ io::In_Topology::read(topology::Topology& topo,
       DEBUG(10, "CGSOLUTE block");
 
       if (!quiet)
-        os << "\tCGSOLUTE";
+        os << "\tCGSOLUTE\n";
 
       buffer.clear();
       buffer = m_block["CGSOLUTE"];
@@ -542,6 +542,7 @@ io::In_Topology::read(topology::Topology& topo,
         int num, n;
         _lineStream >> num;
         ++it;
+        os << "\t\tnumber of ranges: " << num << "\n";
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
           int cg_begin, cg_end, cg_fac;
@@ -565,12 +566,15 @@ io::In_Topology::read(topology::Topology& topo,
           } else {
             DEBUG(10, "\tcoarse grained range: " << cg_begin << " " << cg_end);
             DEBUG(10, "\tcoarse grained factor: " << cg_fac);
+            os << "\t\trange: " << cg_begin << " " << cg_end << "\n"
+               << "\t\tcoarse grained factor: " << cg_fac << "\n";
             for (unsigned int i = (cg_begin - 1); i < cg_end; ++i) {
               topo.is_coarse_grained()[i] = true;
               topo.cg_factor()[i] = cg_fac;
             }
           }
         }
+        os << "\tEND\n";
 
         if (n != num) {
           io::messages.add("Wrong number of ranges in CGSOLUTE block",
