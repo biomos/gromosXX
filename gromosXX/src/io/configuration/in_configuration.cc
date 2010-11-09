@@ -188,7 +188,7 @@ void io::In_Configuration::read_replica
   std::vector<std::string> buffer = m_block["REPLICAFRAME"];
   
   if(!buffer.size()){
-	DEBUG(8, "no REPLICAFRAME block. reading all into first configuration");
+    DEBUG(8, "no REPLICAFRAME block. reading all into first configuration");
     assert(conf.size() > 0);
     conf[0].resize(topo.num_atoms());
 
@@ -255,12 +255,13 @@ void io::In_Configuration::read_replica
     }
   }
   else{
-	DEBUG(8, "got REPLICAFRAME, it's a replica exchange configuration file!");
+    DEBUG(8, "got REPLICAFRAME, it's a replica exchange configuration file!");
     read_replica_information(replica_data, os);
 
-	DEBUG(8, "REPLICAFRAME block. reading " << conf.size() << " configurations");
+    DEBUG(8, "REPLICAFRAME block. reading " << conf.size() << " configurations");
     for(unsigned int i=0; i<conf.size(); ++i){
-	  DEBUG(9, "topo contains " << topo.num_atoms() << " atoms");
+      block_read.insert("REPLICAFRAME");
+      DEBUG(9, "topo contains " << topo.num_atoms() << " atoms");
       conf[i].resize(topo.num_atoms());
       
       read_time(topo, conf[i], sim, os);
