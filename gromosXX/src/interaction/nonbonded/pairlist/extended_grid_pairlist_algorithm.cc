@@ -16,6 +16,7 @@
 
 #include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 #include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 
 #include <util/debug.h>
 
@@ -25,8 +26,14 @@
 #define SUBMODULE pairlist
 
 interaction::Extended_Grid_Pairlist_Algorithm::Extended_Grid_Pairlist_Algorithm()
-  : interaction::Pairlist_Algorithm()
+  : interaction::Failing_Pairlist_Algorithm()
 {
+}
+
+interaction::Extended_Grid_Pairlist_Algorithm::~Extended_Grid_Pairlist_Algorithm()
+{
+  if (fallback_algorithm != NULL)
+    delete fallback_algorithm;
 }
 
 int interaction::Extended_Grid_Pairlist_Algorithm::init
@@ -136,6 +143,9 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     }
   }
 
+  fallback_algorithm = new Standard_Pairlist_Algorithm();
+  fallback_algorithm->init(topo, conf, sim, os, true);
+
   return 0;
 }
 
@@ -162,9 +172,16 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
 
   grid_properties(topo, conf, sim);
 
+  failed = false;
+
   if (prepare_grid(topo, conf, sim)){
     timer().stop("pairlist prepare");
-    return 1;
+    std::ostringstream msg;
+    msg << "At step " << sim.steps() << ": Could not prepare grid. "
+            "Falling back to standard algoritm for this step.";
+    io::messages.add(msg.str(), "Extended_Grid_Pairlist", io::message::notice);
+    failed = true;
+    return fallback_algorithm->prepare(topo, conf, sim);
   }
 
   collapse_grid();
@@ -190,6 +207,11 @@ void interaction::Extended_Grid_Pairlist_Algorithm::update
  unsigned int stride
  )
 {
+  if (failed) {
+    fallback_algorithm->update(topo, conf, sim, pairlist, begin, end, stride);
+    return;
+  }
+
   if (sim.param().pairlist.atomic_cutoff){
     // see standard_pairlist_algorithm_atomic.cc
     io::messages.add("Grid based pairlist with atomic cutoff not implemented",
@@ -549,8 +571,11 @@ void interaction::Extended_Grid_Pairlist_Algorithm::update_perturbed
  unsigned int begin,
  unsigned int end, 
  unsigned int stride
- )
-{
+ ) {
+  if (failed) {
+    fallback_algorithm->update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
+    return;
+  }
   _update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
 }
 

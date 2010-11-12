@@ -31,7 +31,7 @@ namespace interaction
    * non-perturbed, chargegroup based
    */
   class Extended_Grid_Pairlist_Algorithm :
-    public Pairlist_Algorithm
+    public Failing_Pairlist_Algorithm
   {
   public:
     /**
@@ -42,7 +42,7 @@ namespace interaction
     /**
      * Destructor.
      */
-    virtual ~Extended_Grid_Pairlist_Algorithm() {}
+    virtual ~Extended_Grid_Pairlist_Algorithm();
 
     /**
      * init grid

@@ -29,7 +29,7 @@ namespace interaction {
    * algorithm for molecular simulations under periodic boundary conditions.
    * J Comput Chem 25: 1474-1486, 2004
    */
-  class Grid_Cell_Pairlist : public Pairlist_Algorithm {
+  class Grid_Cell_Pairlist : public Failing_Pairlist_Algorithm {
   public:
     /**
      * Constructor
@@ -39,7 +39,7 @@ namespace interaction {
     /**
      * Default Destructor
      */
-    virtual ~Grid_Cell_Pairlist(){}
+    virtual ~Grid_Cell_Pairlist();
     /**
      * Initialize the pairlist
      */

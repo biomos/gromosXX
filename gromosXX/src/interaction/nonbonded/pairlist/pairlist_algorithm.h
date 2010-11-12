@@ -125,6 +125,15 @@ namespace interaction
     util::Algorithm_Timer * p_timer;
 
   };
+
+  class Failing_Pairlist_Algorithm : public Pairlist_Algorithm {
+  public:
+    Failing_Pairlist_Algorithm() : Pairlist_Algorithm(),
+            failed(false), fallback_algorithm(NULL) {}
+  protected:
+    bool failed;
+    Pairlist_Algorithm * fallback_algorithm;
+  };
 } // interaction
 
 #endif

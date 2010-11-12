@@ -14,7 +14,7 @@
 
 #include <interaction/nonbonded/pairlist/pairlist.h>
 #include <interaction/nonbonded/pairlist/grid_cell_pairlist.h>
-
+#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 #include <algorithm>
 
 
@@ -35,8 +35,17 @@
  */
 interaction::Grid_Cell_Pairlist::Grid_Cell_Pairlist(const topology::Topology & topo,
             const simulation::Simulation &sim) :
-        Pairlist_Algorithm(), is_vacuum(false) {
+        Failing_Pairlist_Algorithm(), is_vacuum(false) {
   DEBUG(10, "Grid_Cell : Constructor");
+}
+
+/**
+ * Destructor
+ */
+interaction::Grid_Cell_Pairlist::~Grid_Cell_Pairlist() {
+  DEBUG(10, "Grid_Cell : Destructor");
+  if (fallback_algorithm != NULL)
+    delete fallback_algorithm;
 }
 
 /**
@@ -167,6 +176,9 @@ int interaction::Grid_Cell_Pairlist::init(topology::Topology & topo,
     os << "\t\tusing mask routines for " << (irregular_shape ? "triclinic" : "rectangular") << " box shapes.\n";
   }
 
+  fallback_algorithm = new Standard_Pairlist_Algorithm();
+  fallback_algorithm->init(topo, conf, sim, os, true);
+
   return 0;
 }
 
@@ -217,11 +229,13 @@ prepare(topology::Topology & topo,
     m_cg_cog = pos;
   }
 
+  failed = false;
   // If pressure is constant, make mask again
   timer().start("pairlist mask");
+  unsigned int err = 0;
   if (sim.param().pcouple.scale != math::pcouple_off) {
     DEBUG(7, "Grid Cell : Pressure is constant");
-    unsigned int err = calc_par();
+    err += calc_par();
 
     if (irregular_shape) {
       err += make_mask_pointer<Irr_Mask > ();
@@ -236,6 +250,15 @@ prepare(topology::Topology & topo,
     }
   }
   timer().stop("pairlist mask");
+  if (err) {
+    std::ostringstream msg;
+    msg << "At step " << sim.steps() << ": Could not prepare grid. "
+            "Falling back to standard algoritm for this step.";
+    io::messages.add(msg.str(), "Grid_Cell_Pairlist", io::message::notice);
+    failed = true;
+    return fallback_algorithm->prepare(topo, conf, sim);
+  }
+
   timer().start("pairlist cell");
   SPLIT_BOUNDARY(make_cell, topo, conf, sim);
   timer().stop("pairlist cell");
@@ -267,6 +290,11 @@ void interaction::Grid_Cell_Pairlist::update(
         unsigned int stride) {
 
   DEBUG(5, "Grid Cell : Update pairlist");
+  if (failed) {
+    fallback_algorithm->update(topo, conf, sim, pairlist, begin, end, stride);
+    return;
+  }
+
   if (begin == 0) // master
     timer().start("pairlist");
 
@@ -305,8 +333,12 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
         interaction::PairlistContainer & perturbed_pairlist,
         unsigned int begin, unsigned int end,
         unsigned int stride) {
-
   DEBUG(5, "Grid Cell : Update pairlist");
+  if (failed) {
+    fallback_algorithm->update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
+    return;
+  }
+
   if (begin == 0) // master
     timer().start("perturbed pairlist");
 
