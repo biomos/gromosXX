@@ -4356,8 +4356,8 @@ void io::In_Parameter::read_SASA(simulation::Parameter & param, std::ostream & o
               >> param.sasa.p_1x
               >> param.sasa.sigma_v
               >> param.sasa.r_solv
-              >> param.sasa.max_cut
-              >> param.sasa.min_cut;
+              >> param.sasa.min_cut
+              >> param.sasa.max_cut;
 
   if (_lineStream.fail()) {
     io::messages.add("bad line in SASA block", "In_Parameter", io::message::error);
