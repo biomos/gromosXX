@@ -134,7 +134,7 @@ int interaction::Nonbonded_Set
     DEBUG(6, "\tsasa energy");
     start_timer("SASA energy");
     m_outerloop.sasa_outerloop(topo, conf, sim, m_storage);
-    start_timer("SASA energy");
+    stop_timer("SASA energy");
   }
 
   // calculate k-space energy and forces
