@@ -2597,7 +2597,7 @@ void io::In_Topology
       --i;
       --j;
 
-      if (_lineStream.fail() || !_lineStream.eof())
+      if (_lineStream.fail() )
         io::messages.add("bad line in LJPARAMETERS block", "In_Topology",
               io::message::error);
 
