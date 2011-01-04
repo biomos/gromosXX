@@ -223,6 +223,10 @@ namespace util
      * information of all replicas
      */
     std::vector<Replica_Data> replica_data;
+    /**
+     * run information
+     */
+    std::vector<int> init_run;
     
     /**
      * random number generator

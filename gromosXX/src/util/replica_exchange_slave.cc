@@ -111,6 +111,7 @@ int util::Replica_Exchange_Slave::run
   ////////////////////////////////////////////////////////////////////////////////
 
 
+  int connect_try = 0;
   for (int run = 0; run < sim.param().replica.slave_runs; ++run) {
 
     cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
@@ -122,12 +123,18 @@ int util::Replica_Exchange_Slave::run
 
     DEBUG(8, "slave: connecting..");
     int result = connect(cl_socket, s_addr_p, len);
-
     if (result == -1) {
-      std::cout << "could not connect to master. master finished?"
-              << std::endl;
-      return 1;
+      ++connect_try;
+      std::cout << "could not connect to master in " << connect_try << ". try. ";
+      if (connect_try > 40) {
+        std::cout << "Giving up after " << connect_try <<  "connect trials" << std::endl;
+        return 1;
+      }
+      std::cout << "Sleeping and trying again." << std::endl;
+      sleep(timeout);
+      continue;
     }
+    connect_try = 0;
 
     if (!magic_cookie(false)) {
       close(cl_socket);
