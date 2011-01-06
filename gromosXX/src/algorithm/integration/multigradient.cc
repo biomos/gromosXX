@@ -50,7 +50,7 @@ double algorithm::Multi_Gradient::LinearInterpolation::get_value(double time) co
 
   for(unsigned int i = 0; i < control_points().size()-1; ++i) {
     if (control_points()[i].time <= time && control_points()[i + 1].time > time) {
-      double t = control_points()[i].time - time;
+      double t = time - control_points()[i].time;
       double dt =  control_points()[i + 1].time - control_points()[i].time;
       double dv = control_points()[i + 1].value - control_points()[i].value;
       return control_points()[i].value + t*dv/dt;
