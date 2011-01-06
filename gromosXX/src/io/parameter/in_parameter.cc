@@ -4723,11 +4723,17 @@ MULTIGRADIENT
 #    1: enable gradients
 # NTMGRP 0..3 print of curves
 #    0: don't print
-#    1: plot the Bezier curves
-#    2: print that values of the Bezier curves
-#    3: plot and print the Bezier curves
+#    1: plot the curves
+#    2: print that values of the curves
+#    3: plot and print the curves
 # NTMGRN >= 0 number of gradients
 # MGRVAR: vairable name to affect
+# MGRFRM: functional form of the curve
+#    0: linear interpolation between control points
+#    1: cubic spline interpolation between control points
+#    2: Bezier curve
+#    3: Oscillation: A sin[2Pi/T (t - dt)] + b
+#       Note: MGRNCP is 2. A = MGRCPT[1] T = MGRCPV[1] dt = MGRCPT[2] b = MGRCPV[2]
 # MGRNCP >= 2: number of control points
 # MGRCPT >= 0: time of the control point
 # MGRCPV: value of the control point
@@ -4736,13 +4742,13 @@ MULTIGRADIENT
        1      1
 # NTMGRN
        2
-# MGRVAR MGRNCP
-  TEMP[0]     2
+# MGRVAR MGRFRM MGRNCP
+  TEMP[0]     0      2
 # MGRCPT MGRCPV
   0.0    60.0
   80.0   300.0
-# MGRVAR MGRNCP
-  CPOR        4
+# MGRVAR MGRFRM MGRNCP
+  CPOR        2      4
 # MGRCPT MGRCPV
   0.0    2.5E5
   0.0    2.5E1
@@ -4826,14 +4832,15 @@ void io::In_Parameter::read_MULTIGRADIENT(simulation::Parameter & param,
 
     // read the gradient
     for(int i = 0; i < num; ++i) {
-      int num_p;
+      int funct_form, num_p;
       std::string var;
-      _lineStream >> var >> num_p;
+      _lineStream >> var >> funct_form >> num_p;
       if (_lineStream.fail()) {
         io::messages.add("Bad line in MULTIGRADIENT block.",
                 "In_Parameter", io::message::error);
         return;
       }
+
 
       if (num_p < 2) {
         io::messages.add("MULTIGRADIENT block: MGRNCP must be >= 2.",
@@ -4853,6 +4860,7 @@ void io::In_Parameter::read_MULTIGRADIENT(simulation::Parameter & param,
       }
 
       param.multigradient.variable.push_back(var);
+      param.multigradient.functional_form.push_back(funct_form);
       param.multigradient.control_points.push_back(points);
     } // for gradients
   } // if block

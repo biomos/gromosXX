@@ -10,6 +10,7 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
+
 #include "multigradient.h"
 
 
@@ -19,28 +20,89 @@
 #define MODULE algorithm
 #define SUBMODULE integration
 
-
-
-algorithm::BezierPoint operator+(const algorithm::BezierPoint & lhs, const algorithm::BezierPoint & rhs) {
-  return algorithm::BezierPoint(lhs.time + rhs.time, lhs.value + rhs.value);
-}
-algorithm::BezierPoint operator*(const algorithm::BezierPoint & lhs, double rhs) {
-  return algorithm::BezierPoint(lhs.time * rhs, lhs.value * rhs);
+algorithm::Multi_Gradient::ControlPoint operator+(
+        const algorithm::Multi_Gradient::ControlPoint & lhs,
+        const algorithm::Multi_Gradient::ControlPoint & rhs) {
+  return algorithm::Multi_Gradient::ControlPoint(lhs.time + rhs.time, lhs.value + rhs.value);
 }
 
-double algorithm::Bezier::get_value(double time) const {
+algorithm::Multi_Gradient::ControlPoint operator*(
+        const algorithm::Multi_Gradient::ControlPoint & lhs, double rhs) {
+  return algorithm::Multi_Gradient::ControlPoint(lhs.time * rhs, lhs.value * rhs);
+}
 
-  if (time < control_points[0].time)
-    return control_points[0].value;
+void algorithm::Multi_Gradient::LinearInterpolation::echo(std::ostream & os) const {
+  os << "    Linear interpolation using " << control_points().size() << " control points: " << std::endl;
+  for (unsigned int j = 0; j < control_points().size(); ++j) {
+    os.precision(4);
+    os << "    - " << std::setw(8) << control_points()[j].time << ": "
+            << std::setw(8) << control_points()[j].value << std::endl;
+  }
+}
 
-  if (time > control_points[control_points.size()-1].time)
-    return control_points[control_points.size()-1].value;
+double algorithm::Multi_Gradient::LinearInterpolation::get_value(double time) const {
 
+  if (time < control_points()[0].time)
+    return control_points()[0].value;
 
-  double t = (time - control_points[0].time) / (control_points[control_points.size()-1].time - control_points[0].time);
+  if (time >= control_points()[control_points().size()-1].time)
+    return control_points()[control_points().size()-1].value;
+
+  for(unsigned int i = 0; i < control_points().size()-1; ++i) {
+    if (control_points()[i].time <= time && control_points()[i + 1].time > time) {
+      double t = control_points()[i].time - time;
+      double dt =  control_points()[i + 1].time - control_points()[i].time;
+      double dv = control_points()[i + 1].value - control_points()[i].value;
+      return control_points()[i].value + t*dv/dt;
+    }
+  }
+  return control_points()[control_points().size()-1].value;;
+}
+
+void algorithm::Multi_Gradient::SplineInterpolation::init() {
+  // get arrays for x/y values
+  for (unsigned int j = 0; j < control_points().size(); ++j) {
+    times.push_back(control_points()[j].time);
+    values.push_back(control_points()[j].value);
+  }
+  // allocate and initalize the splines
+  spline = gsl_spline_alloc(gsl_interp_cspline, control_points().size());
+  gsl_spline_init(spline, &times[0], &values[0], control_points().size());
+}
+
+void algorithm::Multi_Gradient::SplineInterpolation::echo(std::ostream & os) const {
+  os << "    Cubic spline interpolation using " << control_points().size() << " control points: " << std::endl;
+  for (unsigned int j = 0; j < control_points().size(); ++j) {
+    os.precision(4);
+    os << "    - " << std::setw(8) << control_points()[j].time << ": "
+            << std::setw(8) << control_points()[j].value << std::endl;
+  }
+}
+
+double algorithm::Multi_Gradient::SplineInterpolation::get_value(double time) const {
+
+  if (time < control_points()[0].time)
+    return control_points()[0].value;
+
+  if (time >= control_points()[control_points().size()-1].time)
+    return control_points()[control_points().size()-1].value;
+
+  return gsl_spline_eval(spline, time, acc);
+}
+
+double algorithm::Multi_Gradient::Bezier::get_value(double time) const {
+
+  if (time < control_points()[0].time)
+    return control_points()[0].value;
+
+  if (time > control_points()[control_points().size()-1].time)
+    return control_points()[control_points().size()-1].value;
+
+  // de Casteljau algorithm
+  double t = (time - control_points()[0].time) / (control_points()[control_points().size()-1].time - control_points()[0].time);
   double one_minus_t = 1.0 - t;
 
-  std::vector<algorithm::BezierPoint> q = control_points;
+  std::vector<algorithm::Multi_Gradient::ControlPoint> q = control_points();
   for(unsigned int k = 1; k < q.size(); ++k) {
     for(unsigned int i = 0; i < q.size() - k; ++i) {
       q[i] = q[i]*one_minus_t + q[i+1] * t;
@@ -49,7 +111,32 @@ double algorithm::Bezier::get_value(double time) const {
   return q[0].value;
 }
 
-std::string algorithm::Bezier::plot_ascii(double start_time, double end_time,
+void algorithm::Multi_Gradient::Bezier::echo(std::ostream & os) const {
+  os << "    Bezier using " << control_points().size() << " control points: " << std::endl;
+  for (unsigned int j = 0; j < control_points().size(); ++j) {
+    os.precision(4);
+    os << "    - " << std::setw(8) << control_points()[j].time << ": "
+            << std::setw(8) << control_points()[j].value << std::endl;
+  }
+}
+
+double algorithm::Multi_Gradient::Oscillation::get_value(double time) const {
+  const double & A =  control_points()[0].time;
+  const double & T = control_points()[0].value;
+  const double & DeltaT = control_points()[1].time;
+  const double & b = control_points()[1].value;
+  return A * sin(2.0 * math::Pi * (time - DeltaT) / T) + b;
+}
+
+void algorithm::Multi_Gradient::Oscillation::echo(std::ostream & os) const {
+  os << "    Oscillation A sin[2Pi/T (t - dt)] + b" << std::endl;
+  os << "    - A:  " << std::setw(8) << control_points()[0].time << std::endl;
+  os << "    - T:  " << std::setw(8) << control_points()[0].value << std::endl;
+  os << "    - dt:  " << std::setw(8) << control_points()[1].time << std::endl;
+  os << "    - b:  " << std::setw(8) << control_points()[1].value << std::endl;
+}
+
+std::string algorithm::Multi_Gradient::Curve::plot_ascii(double start_time, double end_time,
         unsigned int width, unsigned int height,
         std::string x_label, std::string y_label, const std::string & indent) const {
   char matrix[width][height];
@@ -236,22 +323,22 @@ int algorithm::Multi_Gradient
 
   m_timer.start();
   // loop over curves
-  for(std::vector<algorithm::Bezier>::const_iterator it = curves.begin(),
+  for(std::vector<algorithm::Multi_Gradient::Curve*>::const_iterator it = curves.begin(),
             to = curves.end(); it != to; ++it) {
     std::string name;
     int index;
-    parse_var(it->variable, name, index);
+    parse_var((*it)->variable, name, index);
 
     if (name == "TEMP0") {
-      sim.multibath().bath(index-1).temperature = it->get_value(sim.time());
+      sim.multibath().bath(index-1).temperature = (*it)->get_value(sim.time());
     } else if (name == "CPOR") {
-      sim.param().posrest.force_constant = it->get_value(sim.time());
+      sim.param().posrest.force_constant = (*it)->get_value(sim.time());
     } else if (name == "CDIR") {
-      sim.param().distanceres.K = it->get_value(sim.time());
+      sim.param().distanceres.K = (*it)->get_value(sim.time());
     } else if (name == "RESO") {
-      sim.param().xrayrest.resolution = it->get_value(sim.time());
+      sim.param().xrayrest.resolution = (*it)->get_value(sim.time());
     } else if (name == "CXR") {
-      sim.param().xrayrest.force_constant = it->get_value(sim.time());
+      sim.param().xrayrest.force_constant = (*it)->get_value(sim.time());
     }
   }
   m_timer.stop();
@@ -268,33 +355,62 @@ int algorithm::Multi_Gradient
 {
 
   for(unsigned int i = 0; i < sim.param().multigradient.variable.size(); ++i) {
-    algorithm::Bezier b;
-    b.variable = sim.param().multigradient.variable[i];
+    algorithm::Multi_Gradient::Curve * c;
+    
     // check
-
-    if (!check_variable(topo, conf, sim, b.variable)) {
+    if (!check_variable(topo, conf, sim, sim.param().multigradient.variable[i])) {
         return 1;
     }
 
-
-    for(unsigned int j = 0; j < sim.param().multigradient.control_points[i].size(); ++j) {
-      algorithm::BezierPoint p(sim.param().multigradient.control_points[i][j].first, sim.param().multigradient.control_points[i][j].second);
-      b.control_points.push_back(p);
-    }
-
-    // check
-    double time = b.control_points[0].time;
-    for (unsigned int j = 1; j < b.control_points.size(); ++j) {
-      if (b.control_points[j].time < time) {
-        io::messages.add("Control points have to be successive in time.",
+    switch(sim.param().multigradient.functional_form[i]) {
+      case 0:
+        c = new algorithm::Multi_Gradient::LinearInterpolation;
+        break;
+      case 1:
+        c = new algorithm::Multi_Gradient::SplineInterpolation;
+        break;
+      case 2:
+        c = new algorithm::Multi_Gradient::Bezier;
+        break;
+      case 3:
+        c = new algorithm::Multi_Gradient::Oscillation;
+        break;
+      default:
+        io::messages.add("Unkown functional form",
                 "Multi_Gradient", io::message::error);
         return 1;
-      }
-      time = b.control_points[j].time;
     }
-    curves.push_back(b);
-  }
 
+    c->variable = sim.param().multigradient.variable[i];
+
+    for(unsigned int j = 0; j < sim.param().multigradient.control_points[i].size(); ++j) {
+      algorithm::Multi_Gradient::ControlPoint p(sim.param().multigradient.control_points[i][j].first,
+              sim.param().multigradient.control_points[i][j].second);
+      c->add_control_point(p);
+    }
+
+    // do not check for oscillation
+    if (sim.param().multigradient.functional_form[i] <= 2) {
+      double time = c->control_points()[0].time;
+      for (unsigned int j = 1; j < c->control_points().size(); ++j) {
+        if (c->control_points()[j].time < time) {
+          io::messages.add("Control points have to be successive in time.",
+                  "Multi_Gradient", io::message::error);
+          return 1;
+        }
+        time = c->control_points()[j].time;
+      }
+    } else {
+      if (c->control_points().size() != 2) {
+        io::messages.add("An osicillation takes 4 parameters (i.e. 2 control points!)",
+                  "Multi_Gradient", io::message::error);
+          return 1;
+      }
+    }
+    // init the curve
+    c->init();
+    curves.push_back(c);
+  }
 
   if (!quiet) {
     os << "MULTIGRADIENT" << std::endl;
@@ -302,20 +418,16 @@ int algorithm::Multi_Gradient
             (sim.param().multigradient.multigradient ? "enabled" : "disabled") << "." << std::endl;
     os << "Number of curves: " << curves.size() << std::endl;
     unsigned int i = 1;
-    for(std::vector<algorithm::Bezier>::const_iterator it = curves.begin(),
+    for(std::vector<algorithm::Multi_Gradient::Curve*>::const_iterator it = curves.begin(),
             to = curves.end(); it != to; ++it, ++i) {
-      os << "Curve " << i << " affecting " << it->variable << std::endl;
-      os << "    " << it->control_points.size() << " control points: " << std::endl;
-      for(unsigned int j = 0; j < it->control_points.size(); ++j) {
-        os.precision(4);
-        os << "    - " << std::setw(8) << it->control_points[j].time << ": " << std::setw(8) << it->control_points[j].value << std::endl;
-      }
+      os << "Curve " << i << " affecting variable " << (*it)->variable << std::endl;
+      (*it)->echo(os);
 
       double start_time = sim.time();
       double end_time = start_time + sim.param().step.number_of_steps * sim.time_step_size();
       if (sim.param().multigradient.print_graph) {
         os << std::endl;
-        os << it->plot_ascii(start_time, end_time, 50, 10, "TIME", it->variable, "        ");
+        os << (*it)->plot_ascii(start_time, end_time, 50, 10, "TIME", (*it)->variable, "        ");
       }
 
       if (sim.param().multigradient.print_curve) {
@@ -324,7 +436,7 @@ int algorithm::Multi_Gradient
         os << std::scientific;
         for(unsigned int i = 0; i < 100; ++i) {
           double time = start_time + i * (end_time - start_time) / 100;
-          os << "      " << std::setw(15) << time << std::setw(15) << it->get_value(time) << std::endl;
+          os << "      " << std::setw(15) << time << std::setw(15) << (*it)->get_value(time) << std::endl;
         }
       }
 
@@ -335,3 +447,8 @@ int algorithm::Multi_Gradient
   return 0;
 }
 
+algorithm::Multi_Gradient::~Multi_Gradient() {
+  for(std::vector<algorithm::Multi_Gradient::Curve*>::const_iterator it = curves.begin(),
+            to = curves.end(); it != to; ++it)
+    delete *it;
+}

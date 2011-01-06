@@ -2675,6 +2675,10 @@ namespace simulation
        */
       std::vector<std::string> variable;
       /**
+       * the functional form
+       */
+      std::vector<int> functional_form;
+      /**
        * the control points
        */
       std::vector<std::vector<std::pair<double, double> > > control_points;

@@ -582,7 +582,6 @@ void io::Out_Configuration::write_replica
   if (form == reduced) {
 
     if (m_every_pos && (sim.steps() % m_every_pos) == 0) {
-
       _print_timestep(sim, m_pos_traj);
       _print_replica_information(replica_data, m_pos_traj);
 
