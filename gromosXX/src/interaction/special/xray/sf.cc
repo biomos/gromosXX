@@ -268,7 +268,10 @@ void interaction::xray::calculate_energy_sf(
 
     double inv_var = 1.0;
     if (xrs.stddev_sf > math::epsilon) inv_var = 1.0 / (xrs.stddev_sf * xrs.stddev_sf);
-    sum_xray_normalisation_factor += inv_var * xrs.sf * xrs.sf;
+    if (averaging == simulation::xrayrest_biq)
+      sum_xray_normalisation_factor += inv_var * xrs.sf * xrs.sf * xrs.sf * xrs.sf;
+    else
+      sum_xray_normalisation_factor += inv_var * xrs.sf * xrs.sf;
   }
   double xray_normalisation_factor = 1.0;
   if (sum_xray_normalisation_factor > math::epsilon) 
