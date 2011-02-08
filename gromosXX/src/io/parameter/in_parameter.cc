@@ -2220,7 +2220,7 @@ DISTANCERES
 #  TAUDIR >= 0.0 coupling time for time averaging
 #  NTWDIR >= 0 write every NTWDIRth step dist. restr. information to external file
 #   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  NTWDIR
-        0       0     0.0     0.0     0.0       0
+        0       0     0.0     1.0     0.0       0
 END
 @endverbatim
  */
