@@ -578,11 +578,6 @@ namespace configuration {
        * derivative of the methodology dependent A2 term
        */
       math::SymmetricMatrix a2_tilde_derivative;
-
-      /**
-       * indices of domain decomposition
-       */
-      std::vector<int> domain;
       /**
        * the mesh with the squared charges
        */

@@ -465,6 +465,7 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
   }
   FFTW3(init_threads());
   FFTW3(plan_with_nthreads(size));
+  sim.openmp = true;
 #endif
   // get the k space
   if (param.nonbonded.method == simulation::el_ewald) {

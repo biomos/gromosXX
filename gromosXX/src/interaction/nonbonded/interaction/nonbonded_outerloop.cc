@@ -1025,11 +1025,6 @@ void interaction::Nonbonded_Outerloop
         util::Algorithm_Timer & timer) {
   DEBUG(7, "\tcalculate interactions in k-space (P3M)");
 
-#ifdef OMP
-  if (rank != 0) return;
-  size = 1;
-#endif
-
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   math::VArray r = conf.current().pos;
   // Do we have to gather here ?
@@ -1042,11 +1037,11 @@ void interaction::Nonbonded_Outerloop
 
   // decompose into domains
   if (sim.mpi)
-    interaction::Lattice_Sum::decompose_into_domains<configuration::ParallelMesh > (topo, conf, sim, r, size);
+    interaction::Lattice_Sum::decompose_into_domains<configuration::ParallelMesh > (topo, conf, sim, storage.domain, r, size);
   else
-    interaction::Lattice_Sum::decompose_into_domains<configuration::Mesh > (topo, conf, sim, r, size);
+    interaction::Lattice_Sum::decompose_into_domains<configuration::Mesh > (topo, conf, sim, storage.domain, r, size);
 
-  DEBUG(10, "size domain(" << rank << "): " << conf.lattice_sum().domain.size());
+  DEBUG(10, "size domain(" << rank << "): " << storage.domain.size());
 
   // always calculate at the beginning or read it from file.
   if (sim.steps() == 0 && !sim.param().nonbonded.influence_function_read) {
@@ -1137,15 +1132,15 @@ void interaction::Nonbonded_Outerloop
     if (sim.param().nonbonded.ls_calculate_a2 != simulation::ls_a2t_ave_a2_numerical) {
       // calculate the real A2~ term (not averaged)
       if (sim.mpi)
-        interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::ParallelMesh > (topo, conf, sim, r);
+        interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::ParallelMesh > (topo, conf, sim, storage.domain, r);
       else
-        interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::Mesh > (topo, conf, sim, r);
+        interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::Mesh > (topo, conf, sim, storage.domain, r);
     } else {
       // calculate the averaged A2~ term
       if (sim.mpi)
-        interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::ParallelMesh > (topo, conf, sim);
+        interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::ParallelMesh > (topo, conf, sim, storage.domain);
       else
-        interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::Mesh > (topo, conf, sim);
+        interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::Mesh > (topo, conf, sim, storage.domain);
     }
     DEBUG(10, "\tstarting fft of the squared charge");
     // FFT the charge density grid
@@ -1169,9 +1164,9 @@ void interaction::Nonbonded_Outerloop
 
   DEBUG(10, "\t done with influence function, starting to assign charge density to grid ... ");
   if (sim.mpi)
-    interaction::Lattice_Sum::calculate_charge_density<configuration::ParallelMesh > (topo, conf, sim, r);
+    interaction::Lattice_Sum::calculate_charge_density<configuration::ParallelMesh > (topo, conf, sim, storage.domain, r);
   else
-    interaction::Lattice_Sum::calculate_charge_density<configuration::Mesh > (topo, conf, sim, r);
+    interaction::Lattice_Sum::calculate_charge_density<configuration::Mesh > (topo, conf, sim, storage.domain, r);
 
 
   DEBUG(10, "\t assigned charge density to grid, starting fft of charge density");

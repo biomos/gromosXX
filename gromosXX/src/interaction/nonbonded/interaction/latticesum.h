@@ -807,6 +807,7 @@ namespace interaction {
      * where @f$ P(\mathbf{r}) @f$ is the @ref interaction::Lattice_Sum::charge_assignment 
      * "assignment function"
      *
+     * @param[in] domain the indices of the atoms to use.
      * @param[in] r a VArray containing the positive, in-box atom positions
      */
     template<class MeshType>
@@ -814,6 +815,7 @@ namespace interaction {
             const topology::Topology & topo,
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
+            const std::vector<int> & domain,
             const math::VArray & r);
     
     /**
@@ -834,6 +836,7 @@ namespace interaction {
      * For the function @f$ f_p(n; s) @f$ see 
      * @ref interaction::Lattice_Sum::p3m_selfterm_fp "here" .
      *
+     * @param[in] domain the indices of the atoms to use
      * @param[in] r a VArray containing the positive, in-box atom positions
      * @sa interaction::Lattice_Sum::p3m_selfterm_fp 
      * @sa interaction::Lattice_Sum::calculate_averaged_squared_charge_grid
@@ -843,6 +846,7 @@ namespace interaction {
             const topology::Topology & topo,
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
+            const std::vector<int> & domain,
             const math::VArray & r);
     
     /**
@@ -856,6 +860,7 @@ namespace interaction {
      * details. The difference is, that @f$ \overline{f}_p(n) @f$ is used
      * as assignment function.
      *
+     * @param[in] domain the indices of thea toms to use
      * @sa interaction::Lattice_Sum::calculate_squared_charge_grid
      * @sa interaction::Lattice_Sum::p3m_selfterm_fp_avg
      */
@@ -863,7 +868,8 @@ namespace interaction {
     static void calculate_averaged_squared_charge_grid(
             const topology::Topology & topo,
             configuration::Configuration & conf,
-            const simulation::Simulation & sim);
+            const simulation::Simulation & sim,
+            const std::vector<int> & domain);
 
 
     /**
@@ -992,6 +998,7 @@ namespace interaction {
             const topology::Topology & topo,
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
+            std::vector<int> & domain,
             const math::VArray & r,
             const unsigned int size);
   };

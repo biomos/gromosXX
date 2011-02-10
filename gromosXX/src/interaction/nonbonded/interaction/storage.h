@@ -50,6 +50,10 @@ namespace interaction
       * (longrange) electric field storage.
       */
     math::VArray electric_field;
+    /**
+     * indices of domain decomposition
+     */
+    std::vector<int> domain;
 
     /**
      * zero all entities
@@ -67,6 +71,7 @@ namespace interaction
         force_endstates[i] = 0.0;
         virial_tensor_endstates[i] = 0.0;
       }
+      domain.clear();
     }
 
   };

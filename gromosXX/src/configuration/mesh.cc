@@ -18,7 +18,7 @@
 
 template<typename complex_type>
 configuration::GenericMesh<complex_type>::GenericMesh() : m_x(0), m_y(0), m_z(0), m_volume(0), 
-        m_mesh(NULL), plan_forward(NULL), plan_backward(NULL), zero_constant(0) {
+        m_mesh(NULL), plan_forward(NULL), plan_backward(NULL) {
 }
 
 // this function is only used for complex numbers which has to be aligned
@@ -26,7 +26,7 @@ configuration::GenericMesh<complex_type>::GenericMesh() : m_x(0), m_y(0), m_z(0)
 namespace configuration {
 template<>
 GenericMesh<complex_number>::GenericMesh(unsigned int x, unsigned int y, unsigned int z) :
-m_x(x), m_y(y), m_z(z), m_volume(x*y*z), zero_constant(0) {
+m_x(x), m_y(y), m_z(z), m_volume(x*y*z) {
   // allocate the grid arrays. Here we have to use a dynamic array
   // because static arrays would lie on the stack and are not aligned
   // in the SIMD way. 
@@ -46,7 +46,7 @@ m_x(x), m_y(y), m_z(z), m_volume(x*y*z), zero_constant(0) {
 // this function is used for all other types.
 template<typename complex_type>
 GenericMesh<complex_type>::GenericMesh(unsigned int x, unsigned int y, unsigned int z) :
-m_x(x), m_y(y), m_z(z), m_volume(x*y*z), zero_constant(0) {
+m_x(x), m_y(y), m_z(z), m_volume(x*y*z) {
   m_mesh = new complex_type[m_volume];
 }
 
@@ -82,7 +82,6 @@ GenericMesh<complex_number>::GenericMesh(const GenericMesh<complex_number> & mes
   m_mesh = (configuration::complex_number*) FFTW3(malloc(m_volume * sizeof(configuration::complex_number)));
   // just copy the memory
   memcpy(m_mesh, mesh.m_mesh, m_volume * sizeof(configuration::complex_number));
-  zero_constant = 0u;
 }
 
 template<typename complex_type>
@@ -96,8 +95,6 @@ GenericMesh<complex_type>::GenericMesh(const GenericMesh<complex_type> & mesh) {
   const complex_type* old_mesh = mesh.mesh();
   for(unsigned int i = 0; i < m_volume; ++i)
     m_mesh[i] = old_mesh[i]; // use the assignment operator
-
-  zero_constant = 0u;
 }
 
 // for the complex number we have to align
@@ -141,6 +138,12 @@ void GenericMesh<complex_type>::resize(unsigned int x, unsigned int y, unsigned 
 // this function is only for the complex number
 template<>
 void GenericMesh<complex_number>::fft(GenericMesh<complex_number>::fft_type type) {
+#ifdef OMP
+#pragma omp barrier
+  if (omp_get_thread_num() != 0)
+    return;
+#endif
+
   switch (type) {
     case GenericMesh<complex_number>::fft_forward :
               FFTW3(execute(plan_forward));

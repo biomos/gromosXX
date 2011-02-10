@@ -12,6 +12,10 @@
 #define MODULE configuration
 #define SUBMODULE configuration
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
 
 namespace configuration{
   /**
@@ -143,16 +147,27 @@ namespace configuration{
     }
     /**
      * get the boundaries. Only for parallelization
-     * We cannot just return "0" because this will cause a warning
      */
-    const unsigned int & left_boundary() const {
-      return zero_constant;
+    unsigned int left_boundary() const {
+#ifdef OMP
+      unsigned int size = omp_get_num_threads();
+      unsigned int rank = omp_get_thread_num();
+      return m_x * rank / size;
+#else
+      return 0;
+#endif
     }
     /**
      * get the boundaries. Only for parallelization
      */
-    const unsigned int & right_boundary() const {
-      return m_x;
+    unsigned int right_boundary() const {
+#ifdef OMP
+      unsigned int size = omp_get_num_threads();
+      unsigned int rank = omp_get_thread_num();
+      return m_x * (rank+1) / size;
+#else
+      return 0;
+#endif
     }
     /**
      * get the data from the other processors and fill the caches. Only
@@ -163,7 +178,12 @@ namespace configuration{
      * get the caches from the other processors and add them
      * to the real data. Only for compatibility.
      */
-    void add_neighbors_caches() { return; }
+    void add_neighbors_caches() {
+#ifdef OMP
+#pragma omp barrier
+#endif
+      return;
+    }
     
   protected:
     /**
@@ -194,10 +214,6 @@ namespace configuration{
      * plan to do a backward fft
      */
     FFTW3(plan) plan_backward;
-    /**
-     * a zero constant
-     */
-    unsigned int zero_constant;
   };
   
   typedef std::complex<double> complex_number;
@@ -288,13 +304,13 @@ namespace configuration{
     /**
      * accessor to the left slice boundary
      */
-    const unsigned int & left_boundary() const {
+    unsigned int left_boundary() const {
       return slice_start;
     }
     /**
      * accessor to the left slice boundary
      */
-    const unsigned int & right_boundary() const {
+    unsigned int right_boundary() const {
       return slice_end;
     }
   protected :
@@ -327,15 +343,15 @@ namespace configuration{
      */
     unsigned int slice_width;
     /**
-     * integer where slice starts
+     * integer where slice starts (inclusive)
      */
-    unsigned int slice_start;
+    int slice_start;
     /**
      * integer where slice ends (exclusive)
      */
-    unsigned int slice_end;
+    int slice_end;
     /**
-     * inetger where slice ends (inclusive)
+     * integer where slice ends (inclusive)
      */
     int slice_end_inclusive;
     /**

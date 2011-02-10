@@ -21,12 +21,13 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE nonbonded
+#define SUBMODULE latticesum
 
 template<class MeshType>
 void interaction::Lattice_Sum::calculate_charge_density(const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
+        const std::vector<int> & domain,
         const math::VArray & r) {
   
   MeshType & charge_density = *reinterpret_cast<MeshType*>(conf.lattice_sum().charge_density);
@@ -57,8 +58,8 @@ void interaction::Lattice_Sum::calculate_charge_density(const topology::Topology
   DEBUG(10, "Upper bound: " << upper_bound << " lower bound: " << lower_bound);
   
   // loop over all charges in the domain
-  std::vector<int>::const_iterator it = conf.lattice_sum().domain.begin(),
-          to = conf.lattice_sum().domain.end();
+  std::vector<int>::const_iterator it = domain.begin(),
+          to = domain.end();
   
   for (;it != to; ++it) {
     const unsigned int i = *it;
@@ -104,6 +105,9 @@ void interaction::Lattice_Sum::calculate_charge_density(const topology::Topology
           double assignment_function = w_x * w_y * w_z / cell_volume;
           DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
                   "] assignment function: " << assignment_function);
+#ifdef OMP
+#pragma omp critical
+#endif
           charge_density(point) += assignment_function * charge;
           
           // output multiplied by 11.78708615 for comparison with promd
@@ -136,17 +140,20 @@ template void interaction::Lattice_Sum::calculate_charge_density<configuration::
         const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
+        const std::vector<int> & domain,
         const math::VArray & r);
 template void interaction::Lattice_Sum::calculate_charge_density<configuration::ParallelMesh>(
         const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
+        const std::vector<int> & domain,
         const math::VArray & r);
 
 template<class MeshType>
 void interaction::Lattice_Sum::calculate_squared_charge_grid(const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
+        const std::vector<int> & domain,
         const math::VArray & r) {
   
   MeshType & squared_charge = *reinterpret_cast<MeshType*>(conf.lattice_sum().squared_charge);
@@ -178,8 +185,8 @@ void interaction::Lattice_Sum::calculate_squared_charge_grid(const topology::Top
   DEBUG(10, "Upper bound: " << upper_bound << " lower bound: " << lower_bound);
   
   // loop over all charges in the domain
-  std::vector<int>::const_iterator it = conf.lattice_sum().domain.begin(),
-          to = conf.lattice_sum().domain.end();
+  std::vector<int>::const_iterator it = domain.begin(),
+          to = domain.end();
   
   for (;it != to; ++it) {
     const unsigned int i = *it;
@@ -225,6 +232,9 @@ void interaction::Lattice_Sum::calculate_squared_charge_grid(const topology::Top
           double assignment_function = w_x * w_y * w_z * cell_volume_i;
           DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
                   "] assignment function: " << assignment_function);
+#ifdef OMP
+#pragma omp critical
+#endif
           squared_charge(point) += assignment_function * q2;
           DEBUG(15,"\t\tsquared_charge(p): " << assignment_function * q2);
         }
@@ -240,17 +250,20 @@ template void interaction::Lattice_Sum::calculate_squared_charge_grid<configurat
         const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
+        const std::vector<int> & domain,
         const math::VArray & r);
 template void interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::ParallelMesh>(
         const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
+        const std::vector<int> & domain,
         const math::VArray & r);
 
 template<class MeshType>
 void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid(const topology::Topology & topo,
         configuration::Configuration & conf,
-        const simulation::Simulation & sim) {
+        const simulation::Simulation & sim,
+        const std::vector<int> & domain) {
   
   MeshType & squared_charge = *reinterpret_cast<MeshType*>(conf.lattice_sum().squared_charge);
   squared_charge.zero();
@@ -279,8 +292,8 @@ void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid(const topo
   DEBUG(10, "Upper bound: " << upper_bound << " lower bound: " << lower_bound);
   
   // loop over all charges in the domain
-  std::vector<int>::const_iterator it = conf.lattice_sum().domain.begin(),
-          to = conf.lattice_sum().domain.end();
+  std::vector<int>::const_iterator it = domain.begin(),
+          to = domain.end();
   
   for (;it != to; ++it) {
     const unsigned int i = *it;
@@ -302,6 +315,9 @@ void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid(const topo
           double assignment_function = w_x * w_y * w_z * cell_volume_i;
           DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
                   "] assignment function: " << assignment_function);
+#ifdef OMP
+#pragma omp critical
+#endif
           squared_charge(point) += assignment_function * q2;
           DEBUG(15,"\t\tsquared_charge(p): " << assignment_function * q2);
         }
@@ -315,11 +331,13 @@ void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid(const topo
 template void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::Mesh>(
         const topology::Topology & topo,
         configuration::Configuration & conf,
-        const simulation::Simulation & sim);
+        const simulation::Simulation & sim,
+        const std::vector<int> & domain);
 template void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::ParallelMesh>(
         const topology::Topology & topo,
         configuration::Configuration & conf,
-        const simulation::Simulation & sim);
+        const simulation::Simulation & sim,
+        const std::vector<int> & domain);
 
 template<class MeshType>
 void interaction::Lattice_Sum::calculate_potential_and_energy(
@@ -350,6 +368,7 @@ void interaction::Lattice_Sum::calculate_potential_and_energy(
   const bool do_virial = sim.param().pcouple.virial != math::no_virial;
   math::SymmetricMatrix virial(0.0);
   // loop over grid
+  DEBUG(8, "bounds: " << charge_density.left_boundary() << "-" << charge_density.right_boundary());
   const int to = charge_density.right_boundary();
   for (int x = charge_density.left_boundary(); x < to; ++x) {
     for (int y = 0; y < Ny; ++y) {
@@ -682,8 +701,8 @@ void interaction::Lattice_Sum::calculate_force(
   DEBUG(10, "Calculate the force");
   
   // loop over all charges in the domain
-  std::vector<int>::const_iterator it = conf.lattice_sum().domain.begin(),
-          to = conf.lattice_sum().domain.end();
+  std::vector<int>::const_iterator it = storage.domain.begin(),
+          to = storage.domain.end();
   
   for (;it != to; ++it) {
     const unsigned int i = *it;
@@ -765,10 +784,11 @@ template<class MeshType>
 void interaction::Lattice_Sum::decompose_into_domains(const topology::Topology & topo,
         configuration::Configuration & conf,
         const simulation::Simulation & sim,
+        std::vector<int> & domain,
         const math::VArray & r,
         const unsigned int size) {
   DEBUG(8, "Starting domain decomposition for P3M.");
-  if (sim.mpi) {
+  if (sim.mpi || sim.openmp) {
     MeshType & charge_density = *((MeshType*) conf.lattice_sum().charge_density);
 
     const unsigned int Nx = charge_density.x();
@@ -799,8 +819,6 @@ void interaction::Lattice_Sum::decompose_into_domains(const topology::Topology &
     bool assignment_odd = sim.param().nonbonded.p3m_charge_assignment % 2 == 1;
 
     DEBUG(10, "\t starting to decompose into domain");
-
-    std::vector<int> & domain = conf.lattice_sum().domain;
     domain.clear();
     domain.reserve(num_atoms / size);
 
@@ -833,10 +851,9 @@ void interaction::Lattice_Sum::decompose_into_domains(const topology::Topology &
       if (nearest_grid_point >= left_bound && nearest_grid_point < right_bound)
         domain.push_back(i);
     }
-  } else { // no mpi
+  } else { // no mpi or openmp
     // we simply add all atoms to the domain.
     const unsigned int num_atoms = topo.num_atoms();
-    std::vector<int> & domain = conf.lattice_sum().domain;
     domain.resize(num_atoms);
     
     for(unsigned int i = 0; i < num_atoms; ++i)
@@ -848,11 +865,13 @@ template void interaction::Lattice_Sum::decompose_into_domains<configuration::Me
             const topology::Topology & topo,
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
+            std::vector<int> & domain,
             const math::VArray & r,
             const unsigned int size);
 template void interaction::Lattice_Sum::decompose_into_domains<configuration::ParallelMesh>(
             const topology::Topology & topo,
             configuration::Configuration & conf,
             const simulation::Simulation & sim,
+            std::vector<int> & domain,
             const math::VArray & r,
             const unsigned int size);

@@ -103,6 +103,8 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
 	interaction::bonded_debug_level = level;
       else if (submodule == "nonbonded") 
 	interaction::nonbonded_debug_level = level;
+      else if (submodule == "latticesum")
+	interaction::latticesum_debug_level = level;
       else if (submodule == "pairlist") 
 	interaction::pairlist_debug_level = level;
       else if (submodule == "forcefield")

@@ -26,7 +26,7 @@ namespace simulation
     /**
      * Constructor.
      */
-    Simulation() : mpi(false),
+    Simulation() : mpi(false), openmp(false),
 		   m_time_step_size(0),
 		   m_steps(0), 
 		   m_time(0) {}
@@ -90,6 +90,10 @@ namespace simulation
      * enable mpi?
      */
     bool mpi;
+    /**
+     * enable openmp?
+     */
+    bool openmp;
 
 	/**
 	 * Processor(s) choice to use for HOOMD code (CPU/GPUs)

@@ -119,10 +119,6 @@ const simulation::Simulation & sim) {
 
   // quality control: quantiy q to calculate the RMS force error
   double my_q = 0.0;
-#ifdef OMP
-  omp_set_nested(1);
-#pragma omp parallel for
-#endif
   for (int x = x_from; x < x_to; ++x) {
     double q_thread = 0.0;
     math::GenericVec<int> l;
@@ -283,9 +279,6 @@ const simulation::Simulation & sim) {
   } // loop over reciprocal space grid
   my_q *= 16 * math::Pi * math::Pi / volume;
 
-#ifdef OMP
-  omp_set_nested(0);
-#endif
 #ifdef XXMPI
   if (sim.mpi) {
     MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
@@ -390,10 +383,6 @@ const simulation::Simulation & sim) {
 
   // quality control: quantiy q to calculate the RMS force error
   double my_q = 0.0;
-#ifdef OMP
-  omp_set_nested(1);
-#pragma omp parallel for
-#endif
   for (int x = x_from; x < x_to; ++x) {
     double q_thread = 0.0;
     if (x > int(Nx_2))
@@ -501,9 +490,6 @@ const simulation::Simulation & sim) {
     my_q += q_thread;
   } // loop over reciprocal space grid
   my_q *= 16 * math::Pi * math::Pi / volume;
-#ifdef OMP
-  omp_set_nested(0);
-#endif
 #ifdef XXMPI
   if (sim.mpi) {
     MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
