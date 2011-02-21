@@ -4904,8 +4904,8 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
     block_read.insert("ADDECOUPLE");
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-    unsigned int adgr, adstart, eg, tg=0, adend, write;
-    double sm, sv, st, tir, tmf;
+    unsigned int adgr, adstart, eg, tg=0, adend, write, tir;
+    double sm, sv, st, tmf;
     _lineStream >> adgr;
 
     param.addecouple.adgr = adgr;

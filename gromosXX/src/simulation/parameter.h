@@ -2735,11 +2735,11 @@ namespace simulation
         /**          
          * energy group of decoupled group     
          */
-        double eg;
+        int eg;
         /**
          * temperature group of decoupled group     
          */
-        double tg;
+        unsigned int tg;
       };
       std::vector<adc_struct> m_adc_index;
 
