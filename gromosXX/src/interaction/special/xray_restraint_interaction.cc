@@ -142,7 +142,7 @@ int interaction::Xray_Restraint_Interaction
         case simulation::xray_ncsrest_ind :
         {
           DEBUG(6, "NCS individual atoms");
-          for (unsigned int i = 0; i < topo.xray_asu().size(); ++i) {
+          for (unsigned int i = 0; i < topo.xray_asu().size()-1; ++i) {
             const unsigned int atom_i = topo.xray_asu()[i] + atom_p;
             const clipper::Coord_orth pos_i_ang(ncs_spacegroup.symop(i).inverse().rtop_orth(cell) * atoms[atom_i].coord_orth());
             math::Vec pos_i(pos_i_ang.x(), pos_i_ang.y(), pos_i_ang.z());
