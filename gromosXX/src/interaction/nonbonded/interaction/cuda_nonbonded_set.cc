@@ -176,12 +176,36 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
             "CUDA_Nonbonded", io::message::error);
     return;
   }
-  if (myconf->current().box(0)(0) != myconf->current().box(1)(1) ||
-          myconf->current().box(0)(0) != myconf->current().box(2)(2)) {
-    io::messages.add("Box is not cubic!",
+  //the box can be rectangular
+ // if (myconf->current().box(0)(0) != myconf->current().box(1)(1) ||
+ //         myconf->current().box(0)(0) != myconf->current().box(2)(2)) {
+ //   DEBUG(9, "BOX IS NOT CUBIC!!!")
+ //   io::messages.add("Box is not cubic!",
+ //           "CUDA_Nonbonded", io::message::error);
+ //  exit(1);
+//    return;
+//  }
+
+  if (myconf->boundary_type !=  math::rectangular) { 
+      DEBUG(9, "BOX IS NOT RECTANGULAR!!!")
+      io::messages.add("Box is not rectangular!",
             "CUDA_Nonbonded", io::message::error);
-    return;
-  }
+   exit(1);
+}
+
+//check if we have more than one solvent energy group
+//  const unsigned int egroup_first_solvent_atom = mytopo->atom_energy_group(mytopo->num_solute_atoms());
+//  for(unsigned int i = 1; i < mytopo->num_solvent_atoms(); i++) {
+//     DEBUG(9, "i=" << i <<" ; Current solvent atom: " << mytopo->num_solute_atoms()+i << " ; Current solvent energy group: " << mytopo->atom_energy_group(mytopo->num_solute_atoms()+i))
+//     if (egroup_first_solvent_atom != mytopo->atom_energy_group(mytopo->num_solute_atoms()+i)) {
+//       DEBUG(9, "MORE THAN ONE SOLVENT ENERGY GROUP!!!")
+//       io::messages.add("Only one solvent energy group allowed!",
+//            "CUDA_Nonbonded", io::message::error);
+//    exit(1);
+//    }
+//}  
+//
+
   //
   // calculation end here
   /////////////////////////////////////
@@ -196,6 +220,8 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
           mysim->param().pairlist.cutoff_short,
           mysim->param().pairlist.cutoff_long,
           myconf->current().box(0)(0),
+          myconf->current().box(1)(1),
+          myconf->current().box(2)(2),
           mytopo->num_solvent_atoms() / mytopo->num_solvent_molecules(0),
           //cuda_nbs->estNeigh_short,
           //cuda_nbs->estNeigh_long,
@@ -228,15 +254,19 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
 
   m_storage.zero();
   const bool pairlist_update = !(mysim->steps() % mysim->param().pairlist.skip_step);
-  if (mygpu_id == 0)
+  if (mygpu_id == 0)  
     m_pairlist_alg.timer().start("GPU data copy");
+  
   cudakernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
+  
+
   // copy the box if pressure is coupled
   if (mysim->param().pcouple.scale != math::pcouple_off) {
-    cudakernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0));
+    cudakernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0), myconf->current().box(1)(1), myconf->current().box(2)(2));
   }
-  if (mygpu_id == 0)
+  if (mygpu_id == 0)  
     m_pairlist_alg.timer().stop("GPU data copy");
+  
 
   if (pairlist_update) {
     DEBUG(6, "\tdoing longrange...");

@@ -3075,6 +3075,9 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "virial_atomic");
   fc.unlock("innerloop_method_cuda", "virial_molecular");
   fc.unlock("innerloop_method_cuda", "parallel_omp");
+  //allow multiple energy groups
+  fc.unlock("innerloop_method_cuda", "mult_energy_groups");  
+
 
   fc.unlock("leus", "solute");
   fc.unlock("leus", "solvent");
