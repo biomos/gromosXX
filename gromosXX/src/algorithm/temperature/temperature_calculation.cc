@@ -52,7 +52,7 @@ int algorithm::Temperature_Calculation
 
   for( ; tg_it != tg_to; ++tg_it){
     state_props.
-      molecular_translational_ekin(tg_it.begin(), tg_it.end(),
+      molecular_translational_ekin(sim, tg_it.begin(), tg_it.end(),
 				   topo.mass(),
 				   com_v, com_ekin, ekin,
 				   new_com_v, new_com_ekin, new_ekin);

@@ -55,7 +55,8 @@ namespace configuration
      * @param new_com_e_kin delivered with molecular center of mass kinetic energy (+dt/2).
      * @param new_e_kin the kinetic energy at (+dt/2).
      */
-    void molecular_translational_ekin(topology::Atom_Iterator start, 
+    void molecular_translational_ekin(simulation::Simulation &sim,
+                                          topology::Atom_Iterator start, 
 				      topology::Atom_Iterator end,
 				      math::SArray const &mass, 
 				      math::Vec &mol_v, 

@@ -55,6 +55,7 @@
  * - @ref  sasa
  * - @ref  multigradient
  * - @ref  addecouple
+ * - @ref  g96compat
  */
 
 

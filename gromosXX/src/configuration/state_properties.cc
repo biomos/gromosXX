@@ -10,6 +10,7 @@
 #include <algorithm/algorithm.h>
 #include <configuration/configuration.h>
 #include <topology/topology.h>
+#include <simulation/simulation.h>
 
 #include <math/periodicity.h>
 
@@ -102,7 +103,8 @@ center_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
 }
 
 void configuration::State_Properties::
-molecular_translational_ekin(topology::Atom_Iterator start, 
+molecular_translational_ekin(simulation::Simulation &sim,
+                                topology::Atom_Iterator start, 
 			     topology::Atom_Iterator end,
 			     math::SArray const &mass, 
 			     math::Vec &com_v, double &com_e_kin,
@@ -119,7 +121,7 @@ molecular_translational_ekin(topology::Atom_Iterator start,
   
   double m;
   double tot_mass = 0.0;
-  math::Vec v, new_v;
+  math::Vec v, new_v, old_v;
 
   DEBUG(9, "mol trans ekin: first atom: " << *start << " till last atom: " << *end);  
 
@@ -139,11 +141,15 @@ molecular_translational_ekin(topology::Atom_Iterator start,
 
     DEBUG(11, "old v=" << math::v2s(old_vel(*start)) << "\n    v=" << math::v2s(vel(*start)));
     
-    v = 0.5 * (vel(*start) + old_vel(*start));
     new_v = vel(*start);
+    old_v = old_vel(*start);
+    v = 0.5 * (new_v + old_v);
     
     com_v += m * v;
-    e_kin += m * abs2(v);
+    if(sim.param().gromos96compat.ntt96!=0)
+      e_kin += m * abs2(v);
+    else
+      e_kin += m * (abs2(new_v)+abs2(old_v));
     DEBUG(11, "scaling ekin mass=" << m << " v=" << math::v2s(new_v));
     DEBUG(11, "av v=" << math::v2s(v));
     DEBUG(11, "old_v=" << math::v2s(old_vel(*start)));
@@ -157,7 +163,7 @@ molecular_translational_ekin(topology::Atom_Iterator start,
   new_com_v /= tot_mass;
   
   com_e_kin = 0.5 * tot_mass * abs2(com_v);
-  e_kin *= 0.5;
+  e_kin *= 0.25;
   
   new_com_e_kin = 0.5 * tot_mass * math::abs2(new_com_v);
   new_e_kin *= 0.5;
