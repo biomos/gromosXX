@@ -149,7 +149,7 @@ molecular_translational_ekin(simulation::Simulation &sim,
     if(sim.param().gromos96compat.ntt96!=0)
       e_kin += m * abs2(v);
     else
-      e_kin += m * (abs2(new_v)+abs2(old_v));
+      e_kin += m * (abs2(new_v)+abs2(old_v)) /2 ;
     DEBUG(11, "scaling ekin mass=" << m << " v=" << math::v2s(new_v));
     DEBUG(11, "av v=" << math::v2s(v));
     DEBUG(11, "old_v=" << math::v2s(old_vel(*start)));
@@ -163,7 +163,7 @@ molecular_translational_ekin(simulation::Simulation &sim,
   new_com_v /= tot_mass;
   
   com_e_kin = 0.5 * tot_mass * abs2(com_v);
-  e_kin *= 0.25;
+  e_kin *= 0.5;
   
   new_com_e_kin = 0.5 * tot_mass * math::abs2(new_com_v);
   new_e_kin *= 0.5;
