@@ -59,10 +59,22 @@ calculate_interactions(topology::Topology& topo,
       break;
   }
 
-  for (unsigned int i = 0; i < topo.num_atoms(); ++i){
+  if (simulation::pol_off_lj_crf_func)
+    for (unsigned int i = 0; i < topo.num_atoms(); ++i){
     // math::four_pi_eps_i contains already epsilon of cutoff-sphere (param().nonbonded.epsilon)
-    conf.current().force(i) += (math::four_pi_eps_i*sim.param().nonbonded.epsilon) * topo.charge(i) * E;
-  }
+     math::Vec force = (math::four_pi_eps_i*sim.param().nonbonded.epsilon) * topo.charge(i) * E;
+     conf.current().force(i) +=(1-topo.gamma(i))*force;
+
+     if(topo.gamma(i)!=0.0){
+         conf.current().force(topo.gamma_j(i)) +=topo.gamma(i)/2*force;
+         conf.current().force(topo.gamma_k(i)) +=topo.gamma(i)/2*force;
+     }
+  } 
+  else
+    for (unsigned int i = 0; i < topo.num_atoms(); ++i){
+    // math::four_pi_eps_i contains already epsilon of cutoff-sphere (param().nonbonded.epsilon)
+      conf.current().force(i) += (math::four_pi_eps_i*sim.param().nonbonded.epsilon) * topo.charge(i) * E;
+    }
 
   //The electric energies were not added to the total energy
   /* F = qE
