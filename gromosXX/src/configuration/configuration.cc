@@ -355,6 +355,20 @@ void configuration::Configuration::init(topology::Topology const & topo,
     special().ramd.ta_average = param.ramd.ta_min * exp(1.0);
   }
   
+  if(param.nemd.nemd != simulation::nemd_off){
+    special().nemd_conf.Px = 0.0; //To accumulate the momemtum
+    special().nemd_conf.counter = 0; 
+    int num_grid = 2 * param.nemd.slabnum;
+    special().nemd_conf.stored_data_per_bin.clear();
+    for(unsigned int i = 0; i < num_grid; ++i) {
+      special().nemd_conf.stored_data_per_bin.push_back(0.0);
+    }
+    for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
+      special().nemd_conf.vel_per_atom.push_back(0.0);
+      special().nemd_conf.dvx_per_atom.push_back(0.0);
+    }
+  }
+  
   
   // resize the arrays
   // to make scripting easier...

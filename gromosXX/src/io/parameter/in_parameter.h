@@ -53,6 +53,7 @@
  * - @ref  localelev
  * - @ref  electric
  * - @ref  sasa
+ * - @ref  nemd
  * - @ref  multigradient
  * - @ref  addecouple
  * - @ref  g96compat
@@ -307,6 +308,10 @@ namespace io {
      * read SASA block.
      */
     void read_SASA(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read NEMD block.
+     */
+    void read_NEMD(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
      * read MULTIGRADIENT block.
      */

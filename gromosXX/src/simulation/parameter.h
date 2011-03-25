@@ -491,6 +491,21 @@ namespace simulation
      */
     last_interaction_lambda=11
   };
+  
+  /**
+   * @enum nemd_enum
+   * non-equilibrium molecular dynamics
+   */
+  enum nemd_enum {
+    /**
+     * don't use nemd
+     */
+    nemd_off = 0,
+    /**
+     * use nemd
+     */
+    nemd_on = 1
+  };
 
   /**
    * @enum localelev_enum
@@ -2647,6 +2662,60 @@ namespace simulation
       unsigned int cur_write;
 
     } electric;
+    
+    struct nemd_struct {
+      /**
+       * constructor
+       * Default values
+       * nemd (nemd_off): do not performd nemd
+       * method
+       * 0: velocity exchange
+       * For now only velocity exchange is implemented
+       */
+      nemd_struct() : nemd(nemd_off),  property(0), method(0),
+                      slabnum(1), pertfrq(1), reftemp(0),
+                      ampbath(0), stdyaft(0), write(0) {}
+      /**
+       * use the method or not
+       */
+      nemd_enum nemd;
+      /**
+       * define method
+       */
+      unsigned int property;
+       /**
+       * define method
+       */
+      unsigned int method;
+      /**
+       * number of slabs used in grid based methods (discretized in z-direction)
+       */
+      unsigned int slabnum;
+      /**
+       * pertfrq (frequency of applied perturbation)
+       */
+      unsigned int pertfrq;
+      /**
+       * reference temperature
+       */
+      double reftemp;
+      /**
+       * amplitude of external bath
+       */
+      double ampbath;
+      /**
+       * after this point a steady state is assumed and data is accumulated
+       */
+      unsigned int stdyaft;
+      /**
+       * write every nth timesteps (write the velocities and flux)
+       */
+      unsigned int write;
+      
+      
+
+
+    } nemd;
 
     struct multigradient_struct {
       /**

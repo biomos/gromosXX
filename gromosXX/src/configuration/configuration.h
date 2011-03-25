@@ -438,6 +438,29 @@ namespace configuration {
         std::vector<math::Matrix> virial_tensor_endstates;
 
       } /** enveloping distribution sampling information */ eds;
+      
+      struct nemd_conf_struct {
+        /**
+         * Variable to accumulate the momentum
+         */
+        double Px;
+        /**
+         * Vector to accumulate the data per slab
+         */
+        std::vector<double> stored_data_per_bin;
+        /**
+         * Vector to accumulate velocities per atom
+         */
+        std::vector<double> vel_per_atom;
+        /**
+         * Vector to accumulate Dvx per atom
+         */
+        std::vector<double> dvx_per_atom;
+        /**
+         * Counter
+         */
+        unsigned int counter;
+      } nemd_conf;
 
       struct xray_conf_struct {
         #ifdef HAVE_CLIPPER

@@ -4726,6 +4726,142 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
 }
 
 /**
+ * @section nemd NEMD block
+ * @verbatim
+ NEMD
+# NEMD 0,1 controls the use of non-equilibrium molecular dynamics.
+#    0 : not used [default]
+#    1 : nemd is used
+# PROPERTY 0- select property to calculate
+#    0 : viscosity
+#    1 : thermal conductivity
+# METHOD 0- select method of NEMD.
+#    0 : internal reservoir method 
+#    1 : weak-coupling method 
+#    2 : periodic perturbation method
+# SLABNUM >=1 number of slabs used in the discretization along z-direction.
+#             the effective number is 2xSLABNUM due to periodicity
+# PERTFRQ >=1 perturbation frequency: apply perturbation every PERTFRQth timestep
+# REFTEMP >=0 reference temperature for thermal conductivity calculation
+# AMPBATH >=0 bath amplitude for weak-coupling method
+# STDYAFT >=0 first STDYAFTth steps do not contribute for accumulated avarages
+# WRITE >=1 write flux and average velocites to special trajectory every WRITEth timestep
+# NEMD     PROPERTY  METHOD
+       1         0        0
+# SLABNUM  PERTFRQ  REFTEMP  AMPBATH   STDYAFT   WRITE
+       10       20   298.15       10      1000     200
+END
+@endverbatim
+ */
+void io::In_Parameter::read_NEMD(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read NEMD");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["NEMD"];
+
+  if (buffer.size()) {
+    block_read.insert("NEMD");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    int nemd, property, method, slabnum, pertfrq, stdyaft, write;
+    double reftemp, ampbath;
+
+    _lineStream >> nemd >> property >> method >> slabnum >> pertfrq >> reftemp >> ampbath >> stdyaft >> write;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in NEMD block",
+              "In_Parameter", io::message::error);
+      return;
+    }
+
+
+
+    switch (nemd) {
+      case 0:
+        param.nemd.nemd = simulation::nemd_off;
+        break;
+      case 1:
+      {
+        param.nemd.nemd = simulation::nemd_on;
+        break;
+      }
+      default:
+        param.nemd.nemd = simulation::nemd_off;
+        io::messages.add("NEMD block: Bad value for NEMD (0,1)",
+                "In_Parameter", io::message::error);
+    }
+
+    switch (property){
+      case 0:
+        param.nemd.property = 0;
+        break;
+      case 1:
+        param.nemd.property = 1;
+        break;
+      default:
+        io::messages.add("NEMD block: Bad value for PROPERTY (0,1)",
+                "In_Parameter", io::message::error);
+    }
+
+
+    switch (method) {
+      case 0:
+      {
+        param.nemd.method = 0;
+        if (slabnum <=0 || pertfrq <=0)
+          io::messages.add("NEMD block: Exchange method used, but found invalid values for SLABNUM and PERTFRQ",
+                "In_Parameter", io::message::error);
+        break;
+      }
+      case 1:
+      {
+        param.nemd.method = 1;
+        if (slabnum <=0 || pertfrq <=0 || ampbath <=0)
+          io::messages.add("NEMD block: Exchange method used, but found invalid values for SLABNUM, PERTFRQ and AMPBATH",
+                "In_Parameter", io::message::error);
+        break;
+      }
+      case 2:
+      {
+        param.nemd.method = 2;
+        if (slabnum <=0 || pertfrq <=0 || ampbath <=0)
+          io::messages.add("NEMD block: Exchange method used, but found invalid values for SLABNUM, PERTFRQ and AMPBATH",
+                "In_Parameter", io::message::error);
+        break;
+      }
+      default:
+      {
+        io::messages.add("NEMD block: Not a valid method(0)",
+                "In_Parameter", io::message::error);
+
+      }
+    }
+
+    param.nemd.slabnum = slabnum;
+    param.nemd.pertfrq = pertfrq;
+    param.nemd.reftemp = reftemp;
+    param.nemd.ampbath = ampbath;
+    param.nemd.stdyaft = stdyaft;
+    param.nemd.write = write;
+    
+
+    if (param.nemd.write <0)
+      io::messages.add("NEMD block: invalid value for WRITE (>=0)",
+                "In_Parameter", io::message::error);
+    
+
+    
+
+ 
+  } // if block
+}
+
+
+/**
  * @section multigradient MULTIGRADIENT block
  * @verbatim
 MULTIGRADIENT

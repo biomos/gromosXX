@@ -89,7 +89,8 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/xray_restraint_interaction.h\
 	special/local_elevation_interaction.h\
 	special/electric_field_interaction.h\
-	special/adde_reweighting.h
+	special/adde_reweighting.h\
+	special/nemd.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
@@ -154,6 +155,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/local_elevation_interaction.cc\
 	special/electric_field_interaction.cc\
 	special/adde_reweighting.cc\
+	special/nemd.cc\
 	special/xray/dens.cc\
 	special/xray/sf.cc\
 	special/xray/bfactor.cc

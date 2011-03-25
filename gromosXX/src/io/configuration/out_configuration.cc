@@ -69,6 +69,7 @@ m_every_leus(0),
 m_every_dipole(0),
 m_every_current(0),
 m_every_adde(0),
+m_every_nemd(0),        
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -137,7 +138,7 @@ io::Out_Configuration::~Out_Configuration()
 
   if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres 
           || m_every_dat || m_every_leus || m_every_dipole || m_every_current
-          || m_every_adde) { // add others if there are any
+          || m_every_adde || m_every_nemd) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -185,10 +186,12 @@ void io::Out_Configuration::init(io::Argument & args,
     special_trajectory(args[argname_trs], param.polarise.write, 
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
             param.print.monitor_dihedrals,param.localelev.write, 
-            param.electric.dip_write, param.electric.cur_write, param.addecouple.write);
+            param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
+            param.nemd.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
         || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write
-        || param.electric.dip_write || param.electric.cur_write || param.addecouple.write)
+        || param.electric.dip_write || param.electric.cur_write || param.addecouple.write
+        || param.nemd.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -387,6 +390,15 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       _print_adde(sim, topo, conf, m_special_traj);
+      m_special_traj.flush();
+    }
+    
+    if (m_every_nemd && sim.steps() && (sim.steps() % m_every_nemd) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_nemd(sim, topo, conf, m_special_traj);
       m_special_traj.flush();
     }
     
@@ -695,7 +707,7 @@ void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
                      int every_xray, int every_disres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
-                     int every_adde) {
+                     int every_adde, int every_nemd) {
 
   m_special_traj.open(name.c_str());
 
@@ -708,6 +720,7 @@ void io::Out_Configuration
   m_every_dipole = every_dipole;
   m_every_current = every_current;
   m_every_adde = every_adde;
+  m_every_nemd = every_nemd;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -3125,4 +3138,277 @@ _print_adde(simulation::Simulation const & sim,
           << std::setw(15) << betal << std::setw(15) << betah << "\n";
   os << "END\n";
     
+}
+
+void io::Out_Configuration::
+_print_nemd(simulation::Simulation const & sim,
+        topology::Topology const &topo,
+        configuration::Configuration const & conf, std::ostream & os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+
+  /* This is kind of dirty hacking to select property vs. method
+   * However it is good in a sense of cronological implementation
+   *
+   */
+  int prop_vs_method;
+  if (sim.param().nemd.property == 0){
+    if (sim.param().nemd.method == 0)
+      prop_vs_method = 0;
+    if (sim.param().nemd.method == 2)
+      prop_vs_method = 2;
+  }
+  if (sim.param().nemd.property == 1){
+    if (sim.param().nemd.method == 1)
+      prop_vs_method = 1;
+    if (sim.param().nemd.method == 2)
+        prop_vs_method = 3;
+  }
+
+  switch (prop_vs_method){
+    case 0:
+    {
+      os << "NEMD\n";
+      //math::Periodicity<math::rectangular> periodicity(conf.current().box);
+      double flux = conf.special().nemd_conf.Px/(2*conf.current().box(0)(0)
+                    *conf.current().box(1)(1) * sim.steps() * sim.time_step_size());
+      os << "#MOMENTUM Px     FLUX\n" << std::setw(15) << conf.special().nemd_conf.Px
+              << std::setw(15) << flux;
+      //conf.special().remd_conf.Px = 0;
+      os << "\n#AVERAGE X-COMPONENT OF VELOCITY PER SLAB\n";
+
+      //int nslab = 2*sim.param().nemd.slabnum;
+
+      //std::vector<std::vector<unsigned int> > grid(nslab);
+
+        /*for(unsigned int i = 0; i < grid.size(); ++i) {
+          grid[i].clear();
+        }*/
+        
+        //Put atom indexes into grid
+        /*for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
+          math::Vec pos = conf.current().pos(i);
+          periodicity.put_into_positive_box(pos);
+          double z = pos(2);
+          int bin = z / conf.current().box(2)(2) * nslab;
+          grid[bin].push_back(i);
+        }*/
+
+        /*
+        for(unsigned int slice = 0; slice < nslab; ++slice) {
+          double vel_i = 0.0;
+          int counter = 0;
+          for(unsigned int i = 0; i < grid[slice].size(); ++i){
+            vel_i += conf.current().vel(grid[slice][i])(0);
+            counter++;
+          }
+          double av_vel=vel_i/counter;
+          os <<  std::setw(15) << slice+1 << std::setw(15) << av_vel << "\n";
+
+        }*/
+      // CHANGE THIS!!!! This is not considering the relaxation process
+      if(sim.steps() > sim.param().nemd.stdyaft) {
+      for (unsigned int  i=0; i<conf.special().nemd_conf.stored_data_per_bin.size(); ++i){
+        //per steps
+        double averaged = conf.special().nemd_conf.stored_data_per_bin[i]/(sim.steps()-sim.param().nemd.stdyaft);
+        //not averaged, but using the variable name
+        //double averaged = conf.special().nemd_conf.stored_data_per_bin[i];
+        os <<  std::setw(15) << i+1 << std::setw(15) << averaged << "\n";
+      }
+      }
+
+      os << "END\n";
+      break;
+    }
+    case 1:
+    {
+      os << "NEMD\n";
+
+      // Calculate k^2, tau, rho (mass density)
+      double k = 2 * math::Pi / conf.current().box(2)(2);
+      double k2 = k*k;
+      double lzdiv2pi2 = 1/k2;
+      double tau = sim.param().nemd.pertfrq * sim.time_step_size();
+      
+
+      
+
+      double volume = conf.current().box(0)(0)*conf.current().box(1)(1)*conf.current().box(2)(2);
+
+      double rho = topo.num_atoms()/volume;
+      double alpha = rho*3.0*math::k_Boltzmann*(1.0/tau)/2.0;
+
+      os << "# (Lz/2pi)^2:                   " << std::setw(15) << lzdiv2pi2 << "\n";
+      os << "# tau:                          " << std::setw(15) << tau << "\n";
+      os << "# number density (rho):         " << std::setw(15) << rho << "\n";
+      os << "# alpha ((1/tau)*rho*3KbT/2:    " << std::setw(15) << alpha;
+
+
+       // print amplitudes
+      double av_temp=conf.current().energies.kinetic_total*2/(3*topo.num_atoms()*math::k_Boltzmann);
+      double temp = 0.0;
+      math::Periodicity<math::rectangular> periodicity(conf.current().box);
+      double vel_i2_mass;
+      for (unsigned int i=0; i<topo.num_atoms(); ++i){
+        math::Vec pos = conf.current().pos(i);
+        periodicity.put_into_positive_box(pos);
+        double zbath = pos(2);
+        vel_i2_mass = math::abs2(conf.current().vel(i))*topo.mass(i);
+        double temp_i = (vel_i2_mass/(3*math::k_Boltzmann)) - av_temp;
+        double a = temp_i * cos(zbath*k);
+        temp += a;
+      }
+      temp *= 2;
+      temp /= topo.num_atoms();
+      //temp /= (3*math::k_Boltzmann);
+
+      // vel = 2/N * sum_i_N(v_ix * cos(2*pi/L_z))
+
+      os << "\nTEMPERATURE AMPLITUDE" << std::setw(15) << temp << "\n";
+
+
+      if(sim.steps() > sim.param().nemd.stdyaft) {
+      os << "#AVERAGE TEMPERATURE PER SLAB\n";
+      for (unsigned int  i=0; i<conf.special().nemd_conf.stored_data_per_bin.size(); ++i){
+        //per steps
+        double averaged = conf.special().nemd_conf.stored_data_per_bin[i]/(sim.steps()-sim.param().nemd.stdyaft);
+        //not averaged, but using the variable name
+        //double averaged = conf.special().nemd_conf.stored_data_per_bin[i];
+        os <<  std::setw(15) << i+1 << std::setw(15) << averaged << "\n";
+      }
+      }
+      os << "END\n";
+      break;
+    }
+    case 2:
+    {
+      double k = 2 * math::Pi / conf.current().box(2)(2);
+      double k2 = k*k;
+      double lzdiv2pisq = 1/k2;
+      //double tau = sim.param().nemd.pertfrq * sim.time_step_size();
+      double rho=0.0;
+
+      for (unsigned int i=0; i<topo.num_atoms(); ++i)
+        rho += topo.mass(i);
+
+      double volume = conf.current().box(0)(0)*conf.current().box(1)(1)*conf.current().box(2)(2);
+
+      rho /= volume;
+      os << "NEMD\n";
+      os << "# Amplitude of applied perturbation: " << std::setw(15) << sim.param().nemd.ampbath <<"\n";
+      os << "# (Lz/2*pi)^2                      : " << std::setw(15) << lzdiv2pisq << "\n";
+      //os << "# tau:             " << std::setw(15) << tau << "\n";
+      os << "# rho (mass density)               : " << std::setw(15) << rho << "\n";
+      //os << "# k^2 * tau / rho: " << std::setw(15) << k2*tau/rho;
+
+      // print amplitudes
+      double vel = 0.0;
+      math::Periodicity<math::rectangular> periodicity(conf.current().box);
+
+      for (unsigned int i=0; i<topo.num_atoms(); ++i){
+        math::Vec pos = conf.current().pos(i);
+        periodicity.put_into_positive_box(pos);
+        double zbath = pos(2);
+        double a = conf.current().vel(i)(0) * cos(zbath*k);
+        vel += a;
+      }
+      vel *= 2;
+      vel /= topo.num_atoms();
+
+      // vel = 2/N * sum_i_N(v_ix * cos(2*pi/L_z))
+
+      os << "\nVELOCITY AMPLITUDE" << std::setw(15) << vel << "\n";
+
+
+      /*
+       * Only printing the grids after stdyaft steps
+       *
+       */
+      if(sim.steps() > sim.param().nemd.stdyaft) {
+        os << "#AVERAGE X-COMPONENT OF VELOCITY PER SLAB\n";
+        for(unsigned int i = 0; i < conf.special().nemd_conf.stored_data_per_bin.size(); ++i) {
+          //per steps
+          double averaged = conf.special().nemd_conf.stored_data_per_bin[i] / (sim.steps() - sim.param().nemd.stdyaft);
+          //not averaged, but using the variable name
+          //double averaged = conf.special().nemd_conf.stored_data_per_bin[i];
+          os << std::setw(15) << i + 1 << std::setw(15) << averaged << "\n";
+        }
+      }
+      
+      os << "END\n";
+      break;
+    }
+    case 3:
+    {
+      double k = 2 * math::Pi / conf.current().box(2)(2);
+      double k2 = k*k;
+      double lzdiv2pisq = 1/k2;
+      double volume = conf.current().box(0)(0)*conf.current().box(1)(1)*conf.current().box(2)(2);
+      double rho=topo.num_atoms()/volume;
+
+      
+      
+
+      
+      os << "NEMD\n";
+      os << "# Amplitude of applied perturbation: " << std::setw(15) << sim.param().nemd.ampbath <<"\n";
+      os << "# (Lz/2*pi)^2                      : " << std::setw(15) << lzdiv2pisq << "\n";
+      //os << "# tau:             " << std::setw(15) << tau << "\n";
+      os << "# rho (number density)             : " << std::setw(15) << rho << "\n";
+      //os << "# k^2 * tau / rho: " << std::setw(15) << k2*tau/rho;
+
+
+
+      // print amplitudes
+      double av_temp=conf.current().energies.kinetic_total*2/(3*topo.num_atoms()*math::k_Boltzmann);
+      double temp = 0.0;
+      double u_x=0;
+      double u_y=0;
+      double u_z=0;
+      math::Periodicity<math::rectangular> periodicity(conf.current().box);
+      double vel_i2_mass;
+      for (unsigned int i=0; i<topo.num_atoms(); ++i){
+        math::Vec pos = conf.current().pos(i);
+        periodicity.put_into_positive_box(pos);
+        double zbath = pos(2);
+        vel_i2_mass = math::abs2(conf.current().vel(i))*topo.mass(i);
+        double temp_i = (vel_i2_mass/(3*math::k_Boltzmann)) - av_temp;
+        double a = temp_i * cos(zbath*k);
+        temp += a;
+        u_x += conf.current().vel(i)(0);
+        u_y += conf.current().vel(i)(1);
+        u_z += conf.current().vel(i)(2);
+      }
+      temp *= 2;
+      temp /= topo.num_atoms();
+      u_x /= topo.num_atoms();
+      u_y /= topo.num_atoms();
+      u_z /= topo.num_atoms();
+      //temp /= (3*math::k_Boltzmann);
+
+      // vel = 2/N * sum_i_N(v_ix * cos(2*pi/L_z))
+
+      os << "\nTEMPERATURE AMPLITUDE" << std::setw(15) << temp << "\n";
+      os << "SUM ABS VEL COMP" << std::setw(15) << u_x
+                               << std::setw(15) << u_y
+                               << std::setw(15) << u_z << "\n";
+
+
+      if(sim.steps() > sim.param().nemd.stdyaft) {
+      os << "#AVERAGE TEMPERATURE PER SLAB\n";
+      for (unsigned int  i=0; i<conf.special().nemd_conf.stored_data_per_bin.size(); ++i){
+        //per steps
+        double averaged = conf.special().nemd_conf.stored_data_per_bin[i]/(sim.steps()-sim.param().nemd.stdyaft);
+        //not averaged, but using the variable name
+        //double averaged = conf.special().nemd_conf.stored_data_per_bin[i];
+        os <<  std::setw(15) << i+1 << std::setw(15) << averaged << "\n";
+      }
+      }
+      os << "END\n";
+
+
+      break;
+    }
+    default: break;
+  }
 }

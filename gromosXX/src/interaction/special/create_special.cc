@@ -27,6 +27,7 @@
 #include <util/umbrella_weight.h>
 #include <interaction/special/xray_restraint_interaction.h>
 #include <interaction/special/adde_reweighting.h>
+#include <interaction/special/nemd.h>
 #include <interaction/special/local_elevation_interaction.h>
 #include <interaction/special/electric_field_interaction.h>
 
@@ -245,6 +246,15 @@ int interaction::create_special(interaction::Forcefield & ff,
     interaction::Adde_Reweighting * ad =
             new interaction::Adde_Reweighting();
     ff.push_back(ad);
+  }
+  
+  if (param.nemd.nemd != simulation::nemd_off) {
+    if (!quiet) {
+      os << "\tnemd \n";
+    }
+    interaction::NEMD_Interaction *nemd =
+            new interaction::NEMD_Interaction();
+    ff.push_back(nemd);
   }
   
   return 0;
