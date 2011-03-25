@@ -2673,7 +2673,7 @@ namespace simulation
        * For now only velocity exchange is implemented
        */
       nemd_struct() : nemd(nemd_off),  property(0), method(0),
-                      slabnum(1), pertfrq(1), reftemp(0),
+                      slabnum(1), pertfrq(1),
                       ampbath(0), stdyaft(0), write(0) {}
       /**
        * use the method or not
@@ -2696,11 +2696,8 @@ namespace simulation
        */
       unsigned int pertfrq;
       /**
-       * reference temperature
-       */
-      double reftemp;
-      /**
-       * amplitude of external bath
+       * amplitude of external bath (for possible implementation of weak-coupling method)
+       * or amplitude of perturbation (for the PPM method)
        */
       double ampbath;
       /**
@@ -2711,10 +2708,7 @@ namespace simulation
        * write every nth timesteps (write the velocities and flux)
        */
       unsigned int write;
-      
-      
-
-
+     
     } nemd;
 
     struct multigradient_struct {

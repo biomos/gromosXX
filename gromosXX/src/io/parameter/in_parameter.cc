@@ -93,6 +93,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_ELECTRIC(param);
   read_SASA(param);
   read_ADDECOUPLE(param); // needs to be called after MULTIBATH and FORCE
+  read_NEMD(param);
   read_MULTIGRADIENT(param);
 
   read_known_unsupported_blocks();
@@ -4733,23 +4734,22 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
 #    0 : not used [default]
 #    1 : nemd is used
 # PROPERTY 0- select property to calculate
-#    0 : viscosity
-#    1 : thermal conductivity
+#    0 : viscosity      
 # METHOD 0- select method of NEMD.
-#    0 : internal reservoir method 
-#    1 : weak-coupling method 
-#    2 : periodic perturbation method
+#    0 : periodic perturbation method (PPM)
+#    1 : internal reservoir method (IRM)
 # SLABNUM >=1 number of slabs used in the discretization along z-direction.
 #             the effective number is 2xSLABNUM due to periodicity
 # PERTFRQ >=1 perturbation frequency: apply perturbation every PERTFRQth timestep
-# REFTEMP >=0 reference temperature for thermal conductivity calculation
-# AMPBATH >=0 bath amplitude for weak-coupling method
-# STDYAFT >=0 first STDYAFTth steps do not contribute for accumulated avarages
-# WRITE >=1 write flux and average velocites to special trajectory every WRITEth timestep
+#             [this flag is ignored by the PPM method, but a value must be provided]
+# AMPLI   >=0 amplitude of applied field
+#             [this flag is ignored by the IRM method, but a value must be provided]
+# STDYAFT >=0 first STDYAFTth steps do not contribute for accumulated averages
+# WRITE >=1 write flux and average velocities to special trajectory every WRITEth timestep
 # NEMD     PROPERTY  METHOD
-       1         0        0
-# SLABNUM  PERTFRQ  REFTEMP  AMPBATH   STDYAFT   WRITE
-       10       20   298.15       10      1000     200
+    1         0        0
+# SLABNUM  PERTFRQ    AMPLI   STDYAFT   WRITE
+     10       20       10      1000     200
 END
 @endverbatim
  */
@@ -4768,9 +4768,9 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
     int nemd, property, method, slabnum, pertfrq, stdyaft, write;
-    double reftemp, ampbath;
+    double ampli;
 
-    _lineStream >> nemd >> property >> method >> slabnum >> pertfrq >> reftemp >> ampbath >> stdyaft >> write;
+    _lineStream >> nemd >> property >> method >> slabnum >> pertfrq >> ampli >> stdyaft >> write;
 
     if (_lineStream.fail()) {
       io::messages.add("bad line in NEMD block",
@@ -4799,11 +4799,8 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
       case 0:
         param.nemd.property = 0;
         break;
-      case 1:
-        param.nemd.property = 1;
-        break;
       default:
-        io::messages.add("NEMD block: Bad value for PROPERTY (0,1)",
+        io::messages.add("NEMD block: Bad value for PROPERTY, for now only viscosity (0) is available",
                 "In_Parameter", io::message::error);
     }
 
@@ -4812,24 +4809,16 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
       case 0:
       {
         param.nemd.method = 0;
-        if (slabnum <=0 || pertfrq <=0)
-          io::messages.add("NEMD block: Exchange method used, but found invalid values for SLABNUM and PERTFRQ",
+        if (slabnum <=0 || ampli <=0)
+          io::messages.add("NEMD block: PPM method used, but found invalid values for SLABNUM and AMPLI",
                 "In_Parameter", io::message::error);
         break;
       }
       case 1:
       {
         param.nemd.method = 1;
-        if (slabnum <=0 || pertfrq <=0 || ampbath <=0)
-          io::messages.add("NEMD block: Exchange method used, but found invalid values for SLABNUM, PERTFRQ and AMPBATH",
-                "In_Parameter", io::message::error);
-        break;
-      }
-      case 2:
-      {
-        param.nemd.method = 2;
-        if (slabnum <=0 || pertfrq <=0 || ampbath <=0)
-          io::messages.add("NEMD block: Exchange method used, but found invalid values for SLABNUM, PERTFRQ and AMPBATH",
+        if (slabnum <=0 || pertfrq <=0)
+          io::messages.add("NEMD block: IRM method used, but found invalid values for SLABNUM and PERTFRQ",
                 "In_Parameter", io::message::error);
         break;
       }
@@ -4843,8 +4832,7 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
 
     param.nemd.slabnum = slabnum;
     param.nemd.pertfrq = pertfrq;
-    param.nemd.reftemp = reftemp;
-    param.nemd.ampbath = ampbath;
+    param.nemd.ampbath = ampli;
     param.nemd.stdyaft = stdyaft;
     param.nemd.write = write;
     

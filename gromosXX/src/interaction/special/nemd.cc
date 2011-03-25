@@ -119,7 +119,7 @@ calculate_interactions(topology::Topology& topo,
     
     
     /*
-     * METHOD SELESCTION 
+     * METHOD SELECTION 
      * 
      */
     
@@ -127,20 +127,121 @@ calculate_interactions(topology::Topology& topo,
     if (sim.param().nemd.property == 0){
       if (sim.param().nemd.method == 0)
         prop_vs_method = 0;
-      if (sim.param().nemd.method == 2)
-        prop_vs_method = 2;
-    }
-    if (sim.param().nemd.property == 1){
       if (sim.param().nemd.method == 1)
         prop_vs_method = 1;
-      if (sim.param().nemd.method == 2)
-        prop_vs_method = 3;
+      //enter selection for other methods for this property here
     }
+    //enter selection for other properties with respective methods here
+    
 
     switch(prop_vs_method) {
+      
+      
       case 0:
       {
-        //Entering velocity exchange algorithm
+        /*
+         *
+         * This method consists of an applied periodic acceleration field
+         * as described in JCC 20, 786 (1999), which gives a periodic velocity
+         * profile corresponding to the velocity profile obtained directly by
+         * scaling the velocities as described in reference "Berendsen in
+         * M. Meyer and V. Pontikis, Computer simulation in Material Science
+         * 139-155 (1991).
+         *
+         *
+         */
+        int nslab = 2 * sim.param().nemd.slabnum;
+        double ampbath = sim.param().nemd.ampbath; // AAF: applied acceleration field
+        double k = 2 * math::Pi / conf.current().box(2)(2); // k = 2*pi*L_z
+        
+        
+        
+
+        // In this case ampbath is an acceleration amplitude
+
+        for(unsigned int i = 0; i < topo.num_atoms(); ++i){
+            math::Vec pos = conf.current().pos(i);
+            periodicity.put_into_positive_box(pos);
+            double zbath = pos(2);
+            double xforce = ampbath * cos(k*zbath) * topo.mass(i); //F_i = A0 cos(2pi*z_i/L_z) * mass
+            math::Vec shearforce(xforce, 0.0, 0.0);
+            
+            
+            conf.current().force(i) += shearforce;
+        
+        }
+        
+        /*
+         * This grid will just store the velocities in such a way
+         * that we can easily avarage over frames (after stdyaft steps)
+         * and over the molecules of the grid.
+         * That is not really necessary to calculate the amplitudes
+         * but can be useful to visualize the effect of the periodic perturbation.
+         * 
+         */
+
+        std::vector<std::vector<unsigned int> > grid(nslab);
+        for(unsigned int i = 0; i < grid.size(); ++i) {
+          grid[i].clear();
+        }
+        
+           
+        //DEBUG
+        /*double vel =0.0;
+        for(unsigned int i=0; i<topo.num_atoms(); ++i){
+        math::Vec pos = conf.current().pos(i);
+        periodicity.put_into_positive_box(pos);
+        double zbath = pos(2);
+        double a = conf.current().vel(i)(0) * cos(zbath*k);
+        std::cout << "CHECK   " << a << "   " <<conf.current().vel(i)(0)<< "   " << zbath << "\n";
+        vel += a;
+        }
+        vel /= topo.num_atoms();
+        std::cout << vel << "   "  << k << "   " << "\n";
+        */
+        //ENDDEBUG
+
+
+      // Accumulate after stdyaft steps
+        if(sim.steps() > sim.param().nemd.stdyaft) {
+          //Put atom indexes into grid
+
+          for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
+            math::Vec pos = conf.current().pos(i);
+            periodicity.put_into_positive_box(pos);
+            double z = pos(2);
+            int bin = z / conf.current().box(2)(2) * nslab;
+            grid[bin].push_back(i);
+          }
+
+          for(unsigned int slice = 0; slice < nslab; ++slice) {
+            double vel_i = 0.0;
+            int counter = 0;
+            for(unsigned int i = 0; i < grid[slice].size(); ++i) {
+              vel_i += conf.current().vel(grid[slice][i])(0);
+              counter++;
+            }
+            double av_vel = vel_i / counter;
+            conf.special().nemd_conf.stored_data_per_bin[slice] += av_vel;
+            //vx_per_slab.push_back(av_vel);
+          }
+        }
+
+
+        break;
+      }
+      
+      case 1:
+      {
+        /*
+         * Internal reservoir method: not applicable to molecules in the 
+         * current stage. Viscosity of LJ fluids can be accurately calculated
+         * using NVT ensemble. The details of the method can be found in reference
+         * Muller-Plathe, F. Phys. Rev. E, volume 59, number 5, 1999.
+         * Although not implemented here, an extension of the present method
+         * for the treatment of molecular fluids can be found in ref.
+         * Bordat, P. and Muller-Plathe, F. J. Chem. Phys. 116, 3362.  
+         */
         //number of grid points
         int nslab = 2 * sim.param().nemd.slabnum;
         //double zlength = conf.current().box(2)(2);
@@ -256,332 +357,13 @@ calculate_interactions(topology::Topology& topo,
         }
          */
 
-
-
-
-
-
         break;
       }
-      case 1:
-      {
-        /*
-         *
-         * Method to calculate the thermal conductivity using a linear
-         * response through weak coupling to a periodic temperature bath
-         * as described in reference "Berendsen in M. Meyer and V. Pontikis,
-         * Computer simulation in Material Science 139-155 (1991).
-         *
-         * Instantaneous coupling case: T_i_z ("temperature" of individual particle
-         * at a given position z)
-         *
-         *
-         */
-        int nslab = 2 * sim.param().nemd.slabnum;
-        double ampbath = sim.param().nemd.ampbath;
-        double k = 2 * math::Pi / conf.current().box(2)(2);
-        double T0 = sim.param().nemd.reftemp;
-
-        std::vector<std::vector<unsigned int> > grid(nslab);
-
-        // This is the total kinetic energy
-        //double kin = conf.current().energies.kinetic_total;
-        //double systemp = 2*math::k_Boltzmann*kin/(3*topo.num_atoms());
-
-        //DEBUG
-        //std::cout << "TEMP :" << system << "\n";
-
-        // Accumulate atoms velocity
-        for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-          conf.special().nemd_conf.vel_per_atom[i]+=abs(conf.current().vel(i));
-          conf.special().nemd_conf.dvx_per_atom[i]=1;
-        }
-
-        //DEBUG
-        //for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-        //  std::cout << "DEBUG :" << conf.special().nemd_conf.vel_per_atom[i]<< "\n";
-        //}
-
-
-        conf.special().nemd_conf.counter++;
-        //DEBUG
-        //std::cout << "COUNTER   : "<<conf.special().nemd_conf.counter <<"\n";
-        if((sim.steps() % sim.param().nemd.pertfrq) == 0) {
-          for(unsigned int i = 0; i < topo.num_atoms(); ++i){
-            math::Vec pos = conf.current().pos(i);
-            periodicity.put_into_positive_box(pos);
-            double zbath = pos(2);
-            double tempbath = T0+ampbath*cos(k*zbath);
-            double vel_i_z = conf.special().nemd_conf.vel_per_atom[i]/conf.special().nemd_conf.counter;
-            double vel_i_z2 = vel_i_z*vel_i_z;
-            double temp_i_z = vel_i_z2*topo.mass(i)/(math::k_Boltzmann*3);
-            //double scale2 = 1+((1/sim.param().nemd.pertfrq)*(tempbath/temp_i_z -1));
-            //double scale = sqrt(1.0 + sim.time_step_size() /(sim.time_step_size()*conf.special().nemd_conf.counter)  *
-	//		   (tempbath /temp_i_z  - 1));
-            double scale = sqrt(1.0 + 1.0 / conf.special().nemd_conf.counter  *
-			   (tempbath /temp_i_z  - 1));
-            //double scale2 = 1+(tempbath/temp_i_z -1);
-            //double scale = sqrt(scale2)/sim.param().nemd.pertfrq;
-            conf.special().nemd_conf.dvx_per_atom[i]=scale;
-            conf.special().nemd_conf.vel_per_atom[i]=0.0;
-
-            /*DEBUG
-            
-            std::cout << "topo.mass(i) " << topo.mass(i) <<"\n";
-            std::cout << "Boltzmann    " << math::k_Boltzmann<< "\n";
-            std::cout << "vel_i_z:     "<< vel_i_z << "\n";
-            std::cout << "temp_i_z:    "<< temp_i_z << "\n";
-            std::cout << "tempbath:    "<< tempbath << "\n";
-            //std::cout << "scale2:      "<< std::setw(15)<< scale2 << "\n";
-            std::cout << "scale:       "<< std::setw(15)<< scale << "\n";
-            */
-          }
-          conf.special().nemd_conf.counter=0;
-        }
-        
-
-        // Scale velocities
-        for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-          conf.current().vel(i) *= conf.special().nemd_conf.dvx_per_atom[i];
-        }
-
-
-
-        if(sim.steps() > sim.param().nemd.stdyaft) {
-          for(unsigned int i = 0; i < grid.size(); ++i) {
-            grid[i].clear();
-          }
-
-        //Put atom indexes into grid
-          for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-            math::Vec pos = conf.current().pos(i);
-            periodicity.put_into_positive_box(pos);
-            double z = pos(2);
-            int bin = z / conf.current().box(2)(2) * nslab;
-            grid[bin].push_back(i);
-          }
-
-        // calculate temperature per slab
-        
-
-          for(unsigned int slice = 0; slice < nslab; ++slice) {
-            double vel_i2_mass = 0.0;
-            int counter = 0;
-            for(unsigned int i = 0; i < grid[slice].size(); ++i){
-              vel_i2_mass += math::abs2(conf.current().vel(grid[slice][i]))*topo.mass(grid[slice][i]);
-              counter++;
-            }
-            double temp_slice= vel_i2_mass/(3*math::k_Boltzmann*counter);
-            conf.special().nemd_conf.stored_data_per_bin[slice]+=temp_slice;
-            //vx_per_slab.push_back(av_vel);
-          }
-        }
-
-        /*
-        for(unsigned int slice = 0; slice < nslab; ++slice) {
-          double zbath = conf.current().box(2)(2) / (nslab - slice);
-          double vbath = ampbath * cos(k*zbath);
-          double Dvx = (vbath - vx_per_slab[slice]) / sim.param().nemd.pertfrq;
-          for(unsigned int i = 0; i < grid[slice].size(); ++i){
-            conf.current().vel(grid[slice][i])(0)+=Dvx;
-          }
-        }
-         */
-        
-
-        break;
-      }
-      case 2:
-      {
-        /*
-         *
-         * This method consists of an applied periodic acceleration field
-         * as described in JCC 20, 786 (1999), which gives a periodic velocity
-         * profile corresponding to the velocity profile obtained directly by
-         * scaling the velocities as described in reference "Berendsen in
-         * M. Meyer and V. Pontikis, Computer simulation in Material Science
-         * 139-155 (1991).
-         *
-         *
-         */
-        int nslab = 2 * sim.param().nemd.slabnum;
-        double ampbath = sim.param().nemd.ampbath; // AAF: applied acceleration field
-        double k = 2 * math::Pi / conf.current().box(2)(2); // k = 2*pi*L_z
-        
-        
-        
-
-        // In this case ampbath is an acceleration amplitude
-
-        for(unsigned int i = 0; i < topo.num_atoms(); ++i){
-            math::Vec pos = conf.current().pos(i);
-            periodicity.put_into_positive_box(pos);
-            double zbath = pos(2);
-            double xforce = ampbath * cos(k*zbath) * topo.mass(i); //F_i = A0 cos(2pi*z_i/L_z) * mass
-            math::Vec shearforce(xforce, 0.0, 0.0);
-            
-            
-            conf.current().force(i) += shearforce;
-        
-        }
-
-
-
-
-        /*
-         * This grid will just store the velocities in such a way
-         * that we can easily avarage over frames (after stdyaft steps)
-         * and over the molecules of the grid.
-         * That is not really necessary to calculate the amplitudes
-         * bu can be useful to visualize the periodic perturbation and
-         * response.
-         */
-
-        std::vector<std::vector<unsigned int> > grid(nslab);
-        for(unsigned int i = 0; i < grid.size(); ++i) {
-          grid[i].clear();
-        }
-        
-        
-        
-        //DEBUG
-        /*double vel =0.0;
-        for(unsigned int i=0; i<topo.num_atoms(); ++i){
-        math::Vec pos = conf.current().pos(i);
-        periodicity.put_into_positive_box(pos);
-        double zbath = pos(2);
-        double a = conf.current().vel(i)(0) * cos(zbath*k);
-        std::cout << "CHECK   " << a << "   " <<conf.current().vel(i)(0)<< "   " << zbath << "\n";
-        vel += a;
-        }
-        vel /= topo.num_atoms();
-        std::cout << vel << "   "  << k << "   " << "\n";
-        */
-        //ENDDEBUG
-
-
-      // Accumulate after stdyaft steps
-        if(sim.steps() > sim.param().nemd.stdyaft) {
-          //Put atom indexes into grid
-
-          for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-            math::Vec pos = conf.current().pos(i);
-            periodicity.put_into_positive_box(pos);
-            double z = pos(2);
-            int bin = z / conf.current().box(2)(2) * nslab;
-            grid[bin].push_back(i);
-          }
-
-          for(unsigned int slice = 0; slice < nslab; ++slice) {
-            double vel_i = 0.0;
-            int counter = 0;
-            for(unsigned int i = 0; i < grid[slice].size(); ++i) {
-              vel_i += conf.current().vel(grid[slice][i])(0);
-              counter++;
-            }
-            double av_vel = vel_i / counter;
-            conf.special().nemd_conf.stored_data_per_bin[slice] += av_vel;
-            //vx_per_slab.push_back(av_vel);
-          }
-        }
-
-
-        break;
-      }
-      case 3:
-      {
-        /*
-         *
-         * This is a try method to calculate thermal conductivities from
-         * TC = (dT/dt)*rho*cv/(T_sys*k^2)
-         *
-         *
-         */
-        int nslab = 2 * sim.param().nemd.slabnum;
-        double ampbath = sim.param().nemd.ampbath;
-        double k = 2 * math::Pi / conf.current().box(2)(2);
-        //double T0 = sim.param().nemd.reftemp;
-
-        double A = ampbath * 3 * math::k_Boltzmann / 2;
-
-
-
-        for(unsigned int i = 0; i < topo.num_atoms(); ++i){
-            math::Vec pos = conf.current().pos(i);
-            periodicity.put_into_positive_box(pos);
-            double zbath = pos(2);
-            double aforce = A * cos(k*zbath) * topo.mass(i); //F_i = A0 cos(2pi*z_i/L_z) * mass
-            math::Vec force = aforce * conf.current().vel(i)/abs(conf.current().vel(i));
-
-
-            conf.current().force(i) += force;
-
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        std::vector<std::vector<unsigned int> > grid(nslab);
-
-
-        if(sim.steps() > sim.param().nemd.stdyaft) {
-          for(unsigned int i = 0; i < grid.size(); ++i) {
-            grid[i].clear();
-          }
-
-        //Put atom indexes into grid
-          for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-            math::Vec pos = conf.current().pos(i);
-            periodicity.put_into_positive_box(pos);
-            double z = pos(2);
-            int bin = z / conf.current().box(2)(2) * nslab;
-            grid[bin].push_back(i);
-          }
-
-        // calculate temperature per slab
-
-          for(unsigned int slice = 0; slice < nslab; ++slice) {
-            double vel_i2_mass = 0.0;
-            int counter = 0;
-            for(unsigned int i = 0; i < grid[slice].size(); ++i){
-              vel_i2_mass += math::abs2(conf.current().vel(grid[slice][i]))*topo.mass(grid[slice][i]);
-              counter++;
-            }
-            double temp_slice= vel_i2_mass/(3*math::k_Boltzmann*counter);
-            conf.special().nemd_conf.stored_data_per_bin[slice]+=temp_slice;
-            //vx_per_slab.push_back(av_vel);
-          }
-        }
-
-
-
-
-        break;
-      }
-        //Enter future algorithms here
+      
+      //Enter future algorithms here
       default: break;
 
-
     }
-
-  
-
-
-
-
-
-  
-
   return 0;
 }
 
