@@ -388,9 +388,6 @@ int algorithm::Stochastic_Dynamics_Vel1
   // save the seed
   conf.current().stochastic_seed = m_rng->seed();
 
-  // save the seed
-  conf.current().stochastic_seed = m_rng->seed();
-
   m_timer.stop();
   return 0;
 }
