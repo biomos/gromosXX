@@ -936,10 +936,10 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
 
           if(topo.gamma(i)!=0.0){
            storage.force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
-           storage.force(topo.gamma_k(i))(a) -=topo.gamma(j)/2*term;
+           storage.force(topo.gamma_k(i))(a) -=topo.gamma(i)/2*term;
           }
           if(topo.gamma(j)!=0.0){
-           storage.force(topo.gamma_j(j))(a) +=topo.gamma(i)/2*term;
+           storage.force(topo.gamma_j(j))(a) +=topo.gamma(j)/2*term;
            storage.force(topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
           }
           for(int b=0; b<3; ++b)
@@ -1125,10 +1125,10 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
 
           if(topo.gamma(i)!=0.0){
            storage.force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
-           storage.force(topo.gamma_k(i))(a) -=topo.gamma(j)/2*term;
+           storage.force(topo.gamma_k(i))(a) -=topo.gamma(i)/2*term;
           }
           if(topo.gamma(j)!=0.0){
-           storage.force(topo.gamma_j(j))(a) +=topo.gamma(i)/2*term;
+           storage.force(topo.gamma_j(j))(a) +=topo.gamma(j)/2*term;
            storage.force(topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
           }
           for(int b=0; b<3; ++b)
