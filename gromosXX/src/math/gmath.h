@@ -1174,6 +1174,13 @@ namespace math
     return *this / abs(*this);
   }
   
+  /**
+   * isnan function 
+   */
+  inline bool isnan(double x) {
+      return (x) != (x);
+  }
+  
 } // math
 
 #endif

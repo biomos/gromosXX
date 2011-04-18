@@ -31,21 +31,25 @@ int algorithm::Steepest_Descent
        std::ostream & os,
        bool quiet)
 {
-  if (!quiet)
+  if (!quiet) {
     os << "ENERGY MINIMISATION\n"
        << "\tsteepest descent\n"
        << "\tminimum energy criterion : " << sim.param().minimise.dele << "\n"
        << "\tstarting step size       : " << sim.param().minimise.dx0 << "\n"
        << "\tmaximum step size        : " << sim.param().minimise.dxm << "\n"
        << "\tminimum steps            : " << sim.param().minimise.nmin << "\n";
+  }
   
-  if (sim.param().minimise.flim != 0)
-    if (!quiet)
+  if (sim.param().minimise.flim != 0) {
+    if (!quiet) {
       os << "\tlimiting the force to    : "
 	 << sim.param().minimise.flim << "\n";
+    }
+  }
   
-  if (!quiet)
+  if (!quiet) {
     os << "END\n";
+  }
   
   conf.old().vel = 0.0;
   conf.current().vel = 0.0;
@@ -62,7 +66,7 @@ int algorithm::Steepest_Descent
 	simulation::Simulation &sim)
 {
   // only if it's not the first step
-  if (sim.steps() > unsigned(sim.param().minimise.nmin)){
+  if (sim.steps() > unsigned(sim.param().minimise.nmin)) {
     // check whether minimum reached...
     conf.current().energies.calculate_totals();
 
@@ -76,59 +80,71 @@ int algorithm::Steepest_Descent
 	  << "\tdiff: " << fabs(ecur - eold)
 	  << "\tdele: " << sim.param().minimise.dele);
     
-    if (fabs(ecur - eold) < sim.param().minimise.dele)
-    {
+    if (fabs(ecur - eold) < sim.param().minimise.dele) {
       std::cout << "STEEPEST DESCENT:\tMINIMUM REACHED\n";
       return E_MINIMUM_REACHED;
     }
     
-    if (ecur < eold){
+    if (ecur < eold) {
       sim.minimisation_step_size() *= 1.2;
-      if (sim.minimisation_step_size() > sim.param().minimise.dxm)
-	sim.minimisation_step_size() = sim.param().minimise.dxm;
+      if (sim.minimisation_step_size() > sim.param().minimise.dxm) {
+        sim.minimisation_step_size() = sim.param().minimise.dxm;
+      }
     }
-    else
+    else {
       sim.minimisation_step_size() *= 0.5;
+    }
   }
-  else
+  else {
     sim.minimisation_step_size() = sim.param().minimise.dx0;
+  }
 
   // limit the maximum force!
-  if (sim.param().minimise.flim != 0.0){
-    for(unsigned int i=0; i<topo.num_atoms(); ++i){
+  if (sim.param().minimise.flim != 0.0) {
+    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       const double fs = math::abs(conf.current().force(i));
-      if (fs > sim.param().minimise.flim)
+      if (fs > sim.param().minimise.flim) {
         DEBUG(15,"fs = " << fs 
              << ", flim = " << sim.param().minimise.flim);
         DEBUG(15,"force (" << i << ") = " << math::v2s(conf.current().force(i))
              << ", factor = " << sim.param().minimise.flim / fs);
-	conf.current().force(i) *= sim.param().minimise.flim / fs;
+        conf.current().force(i) *= sim.param().minimise.flim / fs;
+      }
     }
   }
 
   // <f|f>^-0.5
   // double f = math::sum(math::abs2(conf.current().force));
   double f = 0.0;
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
+  for(unsigned int i=0; i<topo.num_atoms(); ++i) {
     f += math::abs2(conf.current().force(i));
+  }
   
-  if (f < math::epsilon)
+  if (f < math::epsilon) {
     f = 1.0;
-  else
+  }
+  else {
     f = 1.0 / sqrt(f);
+  }
 
+/*
 #ifdef HAVE_ISNAN
   if (std::isnan(f)){
     io::messages.add("force is NaN", "Steepest_Descent", io::message::error);
     return E_NAN;
   }
 #endif
-
+*/
+  if(math::isnan(f)) {
+    DEBUG(15, "force is NaN in Steepest Descent");
+    return E_NAN;
+  }
+  
   conf.exchange_state();
 
-  for(unsigned int i=0; i<topo.num_atoms(); ++i)
-    conf.current().pos(i) = conf.old().pos(i) + sim.minimisation_step_size() * f *
-      conf.old().force(i);
+  for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+    conf.current().pos(i) = conf.old().pos(i) + sim.minimisation_step_size() * f * conf.old().force(i);
+  }
 
   conf.old().vel = 0.0;
   conf.current().vel = 0.0;
