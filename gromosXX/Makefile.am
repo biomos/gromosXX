@@ -18,8 +18,6 @@ doc-install:	doc
 	cp -r doc/html $(docdir)
 
 EXTRA_DIST = VERSION\
-	contrib/repana.cc\
-	contrib/rep_rewrite.cc\
 	contrib/tabulate_spc.cc\
 	doc/doxygen.conf.in\
 	doc/install.doxy\
