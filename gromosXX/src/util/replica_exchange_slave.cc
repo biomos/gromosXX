@@ -565,12 +565,12 @@ int util::Replica_Exchange_Slave::init_replica
   for (unsigned int i = 0; i < sim.multibath().size(); ++i) {
     sim.multibath()[i].temperature = T[replica_data.Ti];
     // temperature constraining
-    sim.multibath()[i].tau = sim.param().replica.dt[replica_data.li];
+    // sim.multibath()[i].tau = sim.param().replica.dt[replica_data.li];
 
     if (multigraining) {
       cg_sim.multibath()[i].temperature = T[replica_data.Ti];
       // temperature constraining
-      cg_sim.multibath()[i].tau = sim.param().replica.dt[replica_data.li];
+      // cg_sim.multibath()[i].tau = sim.param().replica.dt[replica_data.li];
     }
   }
   sim.param().stochastic.temp = T[replica_data.Ti];
