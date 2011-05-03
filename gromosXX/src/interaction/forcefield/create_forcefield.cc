@@ -18,6 +18,8 @@
 #include <io/ifp.h>
 
 #include "create_forcefield.h"
+#include <interaction/special/qmmm/qm_storage.h>
+#include <interaction/special/qmmm_interaction.h>
 
 #include <interaction/bonded/create_bonded.h>
 #include <interaction/nonbonded/create_nonbonded.h>
@@ -62,6 +64,11 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   DEBUG(8, "creating the special terms");
   if(create_special(ff, topo, sim.param(), os, quiet))
     return 1;
+  
+  DEBUG(8, "creating the QM/MM terms");
+  if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
+    ff.push_back(new interaction::QMMM_Interaction);
+  }
 
   if (!quiet){
   

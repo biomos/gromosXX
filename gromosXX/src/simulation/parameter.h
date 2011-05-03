@@ -538,6 +538,32 @@ namespace simulation
   };
 
   /**
+   * @enum qmmm_enum
+   * do QM/MM, or not
+   */
+  enum qmmm_enum {
+    /**
+     * don't apply QM/MM
+     */
+    qmmm_off = 0,
+    /**
+     * apply QM/MM
+     */
+    qmmm_on = 1
+  };
+
+  /**
+   * @enum qmmm_software_enum
+   * which QM software to use
+   */
+  enum qmmm_software_enum {
+    /**
+     * use MNDO
+     */
+    qmmm_software_mndo = 0
+  };
+
+  /**
    * @class Parameter
    * input parameters.
    */
@@ -2865,6 +2891,75 @@ namespace simulation
        */
       int write;
     } /** addecouple */ addecouple;
+
+    struct qmmm_struct {
+      /**
+       * Constructor
+       * defaults:
+       * - no QM/MM
+       * - software: MNDO
+       * - length factor: 0.1 (i.e. Angstrom -> nm)
+       * - energy factor: 4.184 (i.e. kcal -> kJ)
+       * - charge factor: 1.0 (i.e. e -> e)
+       * - write: 0
+       */
+      qmmm_struct() :
+      qmmm(qmmm_off),
+      software(qmmm_software_mndo),
+      unit_factor_length(0.1),
+      unit_factor_energy(4.184),
+      unit_factor_charge(1.0),
+      write(0) {}
+      /**
+       * apply QM/MM or not
+       */
+      qmmm_enum qmmm;
+      /**
+       * the QM software to use
+       */
+      qmmm_software_enum software;
+      /**
+       * factor to convert the QM length unit to the GROMOS one
+       */
+      double unit_factor_length;
+      /**
+       * factor to convert the QM energy unit to the GROMOS one
+       */
+      double unit_factor_energy;
+      /**
+       * factor to convert the QM charge unit to the GROMOS one
+       */
+      double unit_factor_charge;
+      /**
+       * write QM/MM related stuff to special trajectory
+       */
+      unsigned int write;
+      /**
+       * parameters for the MNDO software
+       */
+      struct mndo_param_struct {
+        /**
+         * path for the MNDO binary
+         */
+        std::string binary;
+        /**
+         * path for the input file. Empty for a temporary file
+         */
+        std::string input_file;
+        /**
+         * path for the output file. Empty for a temporary file
+         */
+        std::string output_file;
+        /**
+         * path for the gradient output file. Empty for a temporary file
+         */
+        std::string output_gradient_file;
+        /**
+         * header of the MNDO input file
+         */
+        std::string input_header;
+      } mndo;
+    } qmmm;
   };
 
   

@@ -3,7 +3,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/md++/util
 xxinclude_HEADERS = error.h\
-        cycle_thread.h\
+	cycle_thread.h\
 	debug.h\
 	timing.h\
 	usage.h\
@@ -22,12 +22,13 @@ xxinclude_HEADERS = error.h\
 	le_coordinate.h\
 	umbrella.h\
 	umbrella_weight.h\
-        thread.h
+	thread.h\
+	system_call.h
 
 noinst_LTLIBRARIES = libgroutil.la
 
 libgroutil_la_SOURCES =	cycle_thread.cc\
-        debug.cc\
+	debug.cc\
 	timing.cc\
 	usage.cc\
 	generate_velocities.cc\
@@ -46,7 +47,8 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	le_coordinate.cc\
 	umbrella.cc\
 	umbrella_weight.cc\
-        thread.cc
+	thread.cc\
+	system_call.cc
 
 libgroutil_la_LIBADD =
 

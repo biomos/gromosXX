@@ -11,7 +11,7 @@ xxinclude_HEADERS =	argument.h\
 	read_input.h\
 	read_special.h\
 	gzstream.h \
-    ifp.h
+	ifp.h
 
 xxiotopodir = $(includedir)/md++/io/topology
 xxiotopo_HEADERS = topology/in_jvalue.h\
@@ -22,7 +22,8 @@ xxiotopo_HEADERS = topology/in_jvalue.h\
 	topology/in_dihrest.h\
 	topology/in_friction.h\
 	topology/in_xray.h\
-	topology/in_leus.h
+	topology/in_leus.h\
+	topology/in_qmmm.h
 
 xxioconfdir = $(includedir)/md++/io/configuration
 xxioconf_HEADERS = configuration/in_configuration.h\
@@ -60,7 +61,8 @@ libgroio_la_SOURCES =	io.cc\
 	topology/in_jvalue.cc\
 	topology/in_friction.cc\
 	topology/in_xray.cc\
-	topology/in_leus.cc
+	topology/in_leus.cc\
+	topology/in_qmmm.cc
 
 libgroio_la_LIBADD = libgroiocheck.la
 

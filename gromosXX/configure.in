@@ -329,6 +329,10 @@ AC_CHECK_FUNCS(expm1)
 AC_CHECK_FUNCS(acosh)
 AC_CHECK_FUNCS(asinh)
 AC_CHECK_FUNCS(atanh)
+AC_CHECK_FUNCS(system)
+AC_CHECK_FUNCS(tmpnam)
+AC_CHECK_FUNCS(symlink)
+AC_CHECK_FUNCS(unlink)
 
 AC_MSG_CHECKING([for isinf with <cmath>])
 AC_TRY_LINK([#include <cmath>], [float f = 0.0; std::isinf(f)],[

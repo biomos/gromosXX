@@ -151,6 +151,10 @@ namespace configuration
      * total energy of volume term
      */
     double sasa_volume_total;
+    /**
+     * total QM energy
+     */
+    double qm_total;
 
     /**
      * total energy of the dipole-dipole interaction (self energy)

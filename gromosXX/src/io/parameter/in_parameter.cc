@@ -95,6 +95,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_ADDECOUPLE(param); // needs to be called after MULTIBATH and FORCE
   read_NEMD(param);
   read_MULTIGRADIENT(param);
+  read_QMMM(param);
 
   read_known_unsupported_blocks();
 
@@ -5266,5 +5267,79 @@ void io::In_Parameter::read_known_unsupported_blocks() {
   }
 }
 
+/**
+ * @section qmmmb QMMM block
+ * @verbatim
+QMMM
+# NTQMMM 0,1 apply QM/MM
+#    0: do not apply QM/MM
+#    1: apply QM/MM
+# NTQMSW 0 QM software package to use
+#    0: MNDO
+# NTWQMMM >= 0 write QM/MM related data to special trajectory
+#    0: do not write
+#   >0: write every NTWQMMMth step
+#
+# NTQMMM  NTQMSW  NTWQMMM
+       0       0        0
+END
+@endverbatim
+ */
+void io::In_Parameter::read_QMMM(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read QMMM");
 
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["QMMM"];
+
+  if (buffer.size()) {
+    block_read.insert("QMMM");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    int enable, software, write;
+    _lineStream >> enable >> write;
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in QMMM block.",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    switch(enable) {
+      case 0:
+        param.qmmm.qmmm = simulation::qmmm_off;
+        break;
+      case 1:
+        param.qmmm.qmmm = simulation::qmmm_on;
+        break;
+      default:
+        param.qmmm.qmmm = simulation::qmmm_off;
+        io::messages.add("QMMM block: NTQMMM must be 0 or 1.",
+                    "In_Parameter", io::message::error);
+        return;
+    }
+
+    switch(software) {
+      default:
+        param.qmmm.software = simulation::qmmm_software_mndo;
+        break;
+        /*
+      default:
+        param.qmmm.software = simulation::qmmm_software_mndo;
+        io::messages.add("QMMM block: NTQMSW invalid choice of software",
+                    "In_Parameter", io::message::error);
+        return;
+         */
+    }
+
+    if (write < 0) {
+      io::messages.add("QMMM block: NTWQMMM must be >= 0",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+    param.qmmm.write = write;
+  } // if block
+}
 

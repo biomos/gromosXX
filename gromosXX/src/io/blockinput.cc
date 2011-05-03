@@ -136,3 +136,16 @@ io::trimblock(std::vector<std::string> &block)
   }  
 }
 
+std::string io::replace_string(std::string str, const std::string &search,
+const std::string &replace) {
+  std::string::size_type pos = str.find(search, 0);
+  std::string::size_type length = search.length();
+
+  while(pos != std::string::npos) {
+    str.replace(pos, length, replace);
+    pos = str.find(search, 0);
+  }
+  return str;
+}
+
+

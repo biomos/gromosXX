@@ -49,6 +49,17 @@ namespace io {
 			   );
 
   /**
+   * do replacements in a string
+   * @param str the string
+   * @param search the search string
+   * @param replace the replace string
+   * @return the string with "search" beging replace with "replace"
+   */
+  std::string replace_string(std::string str, const std::string &search,
+          const std::string &replace);
+
+
+  /**
    * trim away leading empty lines (only whitespace)
    */
   void

@@ -37,6 +37,7 @@
  * <tr><td> \@lud</td><td>&lt;@ref leusdb "local elevation umbrella database"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@led</td><td>&lt;@ref leus "local elevation coordinate specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@friction</td><td>&lt;@ref friction "atomic friction coefficients"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@qmmm</td><td>&lt;@ref qmmm "QM/MM specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@print</td><td>&lt;print additional information&gt; </td><td></td></tr>
  * <tr><td> \@anatraj</td><td>&lt;re-analyze trajectory&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@verb</td><td>&lt;@ref debug "control verbosity"&gt;</td><td></td></tr>
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]){
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
          << "jval" << "xray" << "lud" << "led" << "anatrj" << "print" << "friction"
-         << "version";
+         << "qmmm" << "version";
   
   
   std::string usage;

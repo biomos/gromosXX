@@ -128,6 +128,12 @@ namespace math
       assert(i >= 0 && i < int(size()));
       return operator[](i);
     }
+    SArray & operator=(double d)
+    {
+      for(std::vector<double>::iterator it=begin(), to=end(); it!=to; ++it)
+	*it = d;
+      return *this;
+    }
   };
   
   // the box should be known to the Matrix

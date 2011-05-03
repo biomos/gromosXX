@@ -426,6 +426,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(special_total);
   ENERGY_AVG(sasa_total);
   ENERGY_AVG(sasa_volume_total);
+  ENERGY_AVG(qm_total);
   ENERGY_AVG(posrest_total);
   ENERGY_AVG(distanceres_total);
   ENERGY_AVG(dihrest_total);
@@ -638,6 +639,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(special_total);
   ENERGY_RES(sasa_total);
   ENERGY_RES(sasa_volume_total);  
+  ENERGY_RES(qm_total);
   ENERGY_RES(posrest_total);
   ENERGY_RES(distanceres_total);
   ENERGY_RES(dihrest_total);

@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
 	 << "verb" << "pttopo" << "cg_pttopo"
 	 << "trc" << "cg_trc" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "cg_tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "jval" << "xray" << "lud" << "led"
-	 << "anatrj" << "print" << "friction"
+	 << "anatrj" << "print" << "friction" << "qmmm"
 	 << "version";
   
   

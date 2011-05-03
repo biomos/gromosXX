@@ -28,6 +28,7 @@
 #include <io/topology/in_friction.h>
 #include <io/topology/in_xray.h>
 #include <io/topology/in_leus.h>
+#include <io/topology/in_qmmm.h>
 #include <util/coding.h>
 
 #include "read_special.h"
@@ -265,6 +266,30 @@ int io::read_special(io::Argument const & args,
       } // LUD
     } // if external LUD
   } // LEUS
+
+  // QMMM
+  if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
+    io::igzstream qmmm_file;
+
+    if (args.count("qmmm") != 1) {
+      io::messages.add("QM/MM: no specification file specified (use @qmmm)",
+              "read special", io::message::error);
+    } else {
+      qmmm_file.open(args["qmmm"].c_str());
+      if (!qmmm_file.is_open()) {
+        io::messages.add("opening QM/MM specification file failed!\n",
+                "read_special", io::message::error);
+      } else {
+        io::In_QMMM iq(qmmm_file);
+        iq.quiet = quiet;
+
+        iq.read(topo, sim, os);
+        io::messages.add("QM/MM specifciation read from " +
+                args["qmmm"] + "\n" + util::frame_text(iq.title),
+                "read special", io::message::notice);
+      }
+    }
+  }
 
   // check for errors and abort
   if (io::messages.contains(io::message::error) ||

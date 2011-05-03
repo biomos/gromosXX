@@ -1134,6 +1134,22 @@ namespace topology
      * const accessor to LJ exceptions
      */
     const std::vector<lj_exception_struct> & lj_exceptions() const { return m_lj_exceptions;}
+    /**
+     * accessor to QM zone
+     */
+    std::set<qm_atom_struct> & qm_zone() { return m_qm_zone; }
+    /**
+     * const accessor to QM zone
+     */
+    const std::set<qm_atom_struct> & qm_zone() const { return m_qm_zone; }
+    /**
+     * check whether an atom is in the QM zone
+     * @param i index of the atom to check
+     * @return true if in QM zone, false otherwise
+     */
+    bool in_qm_zone(unsigned int i) const {
+      return m_qm_zone.count(i);
+    }
   private:
     /**
      * the solute.
@@ -1519,6 +1535,10 @@ namespace topology
      * LJ exceptions
      */
     std::vector<lj_exception_struct> m_lj_exceptions;
+    /**
+     * the QM zone
+     */
+    std::set<qm_atom_struct> m_qm_zone;
     
   }; // topology
   

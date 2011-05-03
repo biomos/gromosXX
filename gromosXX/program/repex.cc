@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
      << "input" << "cg_input" << "verb" << "pttopo" << "cg_pttopo"
 	 << "trc" << "cg_trc" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "re" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest" << "jval" << "xray" << "lud" << "led"
-         << "friction" << "rep" << "master" << "slave" << "control" << "version";
+         << "friction" << "rep" << "master" << "slave" << "control" << "qmmm" << "version";
   
   
   std::string usage;

@@ -51,6 +51,7 @@ external_total(0.0),
 self_total(0.0),
 sasa_total(0.0),
 sasa_volume_total(0.0),
+qm_total(0.0),
 eds_vr(0.0),
 entropy_term(0.0),
 m_ewarn(1E99) {
@@ -94,6 +95,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     self_total = 0.0;
     sasa_total = 0.0;
     sasa_volume_total = 0.0;
+    qm_total = 0.0;
     eds_vr = 0.0;
     eds_vi.assign(eds_vi.size(), 0.0);
     eds_vi_special.assign(eds_vi_special.size(), 0.0);

@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/interaction/special/qmmm -I$(top_srcdir)/src/algorithm 
 
 
 xxincludedir = $(includedir)/md++/interaction
@@ -90,12 +90,18 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/local_elevation_interaction.h\
 	special/electric_field_interaction.h\
 	special/adde_reweighting.h\
-	special/nemd.h
+	special/nemd.h\
+	special/qmmm_interaction.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
 	special/xray/sf.h\
 	special/xray/bfactor.h
+
+xxintspecialqmmmdir = $(includedir)/md++/interaction/special/qmmm
+xxintspecialqmmm_HEADERS = special/qmmm/qm_storage.h\
+	special/qmmm/qm_worker.h\
+	special/qmmm/mndo_worker.h
 
 noinst_LTLIBRARIES = libgrointeraction.la
 
@@ -158,7 +164,10 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/nemd.cc\
 	special/xray/dens.cc\
 	special/xray/sf.cc\
-	special/xray/bfactor.cc
+	special/xray/bfactor.cc\
+	special/qmmm/qm_worker.cc\
+	special/qmmm/mndo_worker.cc\
+	special/qmmm_interaction.cc
 
 bin_PROGRAMS =			
 

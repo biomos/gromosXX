@@ -57,6 +57,7 @@
  * - @ref  multigradient
  * - @ref  addecouple
  * - @ref  g96compat
+ * - @ref  qmmmb
  */
 
 
@@ -320,6 +321,10 @@ namespace io {
      * read ADDECOUPLE block.
      */
     void read_ADDECOUPLE(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read QMMM block
+     */
+    void read_QMMM(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io

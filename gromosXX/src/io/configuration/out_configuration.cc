@@ -2702,7 +2702,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.xray_total << "\n" // 29
           << std::setw(18) << e.leus_total << "\n" // 30
           << std::setw(18) << e.eds_vr << "\n" // 31
-          << std::setw(18) << e.entropy_term << "\n"; // 32
+          << std::setw(18) << e.entropy_term << "\n" // 32
+          << std::setw(18) << e.qm_total << "\n"; // 33
 
   // put eds V_R energy here
 
