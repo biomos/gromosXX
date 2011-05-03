@@ -99,9 +99,11 @@ xxintspecialxray_HEADERS = special/xray/dens.h\
 	special/xray/bfactor.h
 
 xxintspecialqmmmdir = $(includedir)/md++/interaction/special/qmmm
-xxintspecialqmmm_HEADERS = special/qmmm/qm_storage.h\
+xxintspecialqmmm_HEADERS = special/qmmm/mm_atom.h\
+	special/qmmm/qm_storage.h\
 	special/qmmm/qm_worker.h\
-	special/qmmm/mndo_worker.h
+	special/qmmm/mndo_worker.h\
+	special/qmmm/gathering.h
 
 noinst_LTLIBRARIES = libgrointeraction.la
 
@@ -165,8 +167,10 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/xray/dens.cc\
 	special/xray/sf.cc\
 	special/xray/bfactor.cc\
+	special/qmmm/mm_atom.cc\
 	special/qmmm/qm_worker.cc\
 	special/qmmm/mndo_worker.cc\
+	special/qmmm/gathering.cc\
 	special/qmmm_interaction.cc
 
 bin_PROGRAMS =			

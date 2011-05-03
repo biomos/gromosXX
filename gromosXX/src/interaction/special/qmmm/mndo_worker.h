@@ -30,12 +30,16 @@ namespace interaction {
             simulation::Simulation & sim);
     /**
      * run a QM job in MNDO
+     * @param qm_pos a vector containing the QM atom positions
+     * @param mm_atoms the MM atoms to include
      * @param storage the energies, forces, charges obtained
      * @return 0 if successful, non-zero if not.
      */
     virtual int run_QM(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim,
+            const math::VArray & qm_pos,
+            const std::vector<MM_Atom> & mm_atoms,
             interaction::QM_Storage & storage);
   private:
     /**

@@ -2901,6 +2901,7 @@ namespace simulation
        * - length factor: 0.1 (i.e. Angstrom -> nm)
        * - energy factor: 4.184 (i.e. kcal -> kJ)
        * - charge factor: 1.0 (i.e. e -> e)
+       * - cutoff: 0.0 (no cutoff applied)
        * - write: 0
        */
       qmmm_struct() :
@@ -2909,6 +2910,7 @@ namespace simulation
       unit_factor_length(0.1),
       unit_factor_energy(4.184),
       unit_factor_charge(1.0),
+      cutoff(0.0),
       write(0) {}
       /**
        * apply QM/MM or not
@@ -2930,6 +2932,10 @@ namespace simulation
        * factor to convert the QM charge unit to the GROMOS one
        */
       double unit_factor_charge;
+      /**
+       * cutoff to determine atoms included in QM computation as point charges.
+       */
+      double cutoff;
       /**
        * write QM/MM related stuff to special trajectory
        */

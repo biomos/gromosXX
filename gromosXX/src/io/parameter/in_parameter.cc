@@ -5276,13 +5276,18 @@ QMMM
 #    1: apply QM/MM
 # NTQMSW 0 QM software package to use
 #    0: MNDO
+# RCUTQ >= 0.0 cutoff for inclusion of MM charge groups
+#     0.0: include all atoms
+#    >0.0: include atoms of charge groups closer than RCUTQ
+#          to QM zone.
 # NTWQMMM >= 0 write QM/MM related data to special trajectory
 #    0: do not write
 #   >0: write every NTWQMMMth step
 #
-# NTQMMM  NTQMSW  NTWQMMM
-       0       0        0
+# NTQMMM  NTQMSW  RCUTQ  NTWQMMM
+       1       0    0.0        0
 END
+
 @endverbatim
  */
 void io::In_Parameter::read_QMMM(simulation::Parameter & param,
@@ -5300,7 +5305,8 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
     int enable, software, write;
-    _lineStream >> enable >> write;
+    double cutoff;
+    _lineStream >> enable >> software >> cutoff >> write;
     if (_lineStream.fail()) {
       io::messages.add("Bad line in QMMM block.",
                     "In_Parameter", io::message::error);
@@ -5333,6 +5339,13 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         return;
          */
     }
+    
+    if (cutoff < 0.0) {
+      io::messages.add("QMMM block: RCUTQ must be >= 0.0",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+    param.qmmm.cutoff = cutoff;
 
     if (write < 0) {
       io::messages.add("QMMM block: NTWQMMM must be >= 0",

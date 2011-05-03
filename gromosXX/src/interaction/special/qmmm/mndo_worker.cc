@@ -10,7 +10,6 @@
 #include <simulation/simulation.h>
 #include <configuration/configuration.h>
 
-#include "io/blockinput.h"
 #include <interaction/interaction.h>
 #include <util/timing.h>
 
@@ -18,9 +17,11 @@
 
 // special interactions
 #include "qm_storage.h"
+#include "mm_atom.h"
 #include "qm_worker.h"
 #include "mndo_worker.h"
-#include "util/system_call.h"
+#include <util/system_call.h>
+#include <io/blockinput.h>
 #include <util/debug.h>
 
 #undef MODULE
@@ -31,7 +32,16 @@
 int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         configuration::Configuration& conf,
         simulation::Simulation& sim,
+        const math::VArray & qm_pos,
+        const std::vector<interaction::MM_Atom> & mm_atoms,
         interaction::QM_Storage& storage) {
+  
+  if (mm_atoms.empty()) {
+    io::messages.add("Cannot deal with zero MM atoms yet.", "MNDO_Worker", 
+            io::message::error);
+    return 1;
+  }
+  
   std::ofstream inp(input_file.c_str());
   if (!inp.is_open()) {
     io::messages.add("Could not create input file for MNDO at the location "
@@ -41,7 +51,7 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
 
   std::string header(sim.param().qmmm.mndo.input_header);
   // get the number of point charges
-  unsigned int num_charge = topo.num_atoms() - topo.qm_zone().size();
+  unsigned int num_charge = mm_atoms.size();
   std::ostringstream oss; oss << num_charge;
   header = io::replace_string(header, "@@NUM_ATOMS@@", oss.str());
 
@@ -64,16 +74,17 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
 
   // write QM zone
   double len_to_qm = 1.0 / sim.param().qmmm.unit_factor_length;
+  unsigned int pi = 0;
   for (std::set<topology::qm_atom_struct>::const_iterator
-    it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
-    const math::Vec & pos = conf.current().pos(it->index);
+    it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it, ++pi) {
+    
 
     inp.setf(std::ios::fixed, std::ios::floatfield);
     inp.precision(8);
 
     inp << std::setw(2) << std::left << it->atomic_number;
     for (unsigned int i = 0; i < 3; ++i) {
-      inp << std::setw(14) << std::right << pos(i) * len_to_qm << " 0";
+      inp << std::setw(14) << std::right << qm_pos(pi)(i) * len_to_qm << " 0";
     }
     inp << std::endl;
   }
@@ -92,15 +103,13 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   }
   // write point charges
   double chg_to_qm = 1.0 / sim.param().qmmm.unit_factor_charge;
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-    if (topo.in_qm_zone(i)) continue;
-    const math::Vec & pos = conf.current().pos(i);
+  for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
     inp.setf(std::ios::fixed, std::ios::floatfield);
     inp.precision(8);
     for (unsigned int j = 0; j < 3; ++j) {
-      inp << std::setw(14)<< std::right << pos(j) * len_to_qm;
+      inp << std::setw(14)<< std::right << mm_atoms[i].pos(j) * len_to_qm;
     }
-    inp << std::setw(14) << std::right << topo.charge(i) * chg_to_qm << std::endl;
+    inp << std::setw(14) << std::right << mm_atoms[i].charge * chg_to_qm << std::endl;
   }
   inp.close();
   
@@ -214,9 +223,7 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
     } /* force MM atoms */ else if (line.find("CARTESIAN GRADIENT") != std::string::npos &&
                            line.find("OF MM ATOMS") != std::string::npos) {
       // read atoms
-      for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
-        if (topo.in_qm_zone(i)) continue;
-        
+      for (unsigned int i = 0; i < mm_atoms.size(); ++i) {        
         std::getline(output, line);
         if (output.fail()) {
           std::ostringstream msg;
@@ -236,7 +243,7 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
           io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
           return 1;
         }
-        storage.force(i) = gradient * (-(sim.param().qmmm.unit_factor_energy) / 
+        storage.force(mm_atoms[i].index) = gradient * (-(sim.param().qmmm.unit_factor_energy) / 
                 sim.param().qmmm.unit_factor_length);
         
       } // for MM atoms 

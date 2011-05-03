@@ -11,6 +11,7 @@ namespace util {
 
 namespace interaction {
   class QM_Storage;
+  class MM_Atom;
   /**
    * @class QM_Worker
    * interface for a class implementing a call to an external QM software
@@ -38,12 +39,16 @@ namespace interaction {
 
     /**
      * run the QM worker
+     * @param[in] qm_pos a vector containing the QM atom positions
+     * @param[in] mm_atoms a vector containing the MM atoms to include
      * @param[out] storage the storage for energies, forces etc...
      * @return 0 if successful, non-zero on failure
      */
     virtual int run_QM(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim,
+            const math::VArray & qm_pos,
+            const std::vector<MM_Atom> & mm_atoms,
             interaction::QM_Storage & storage) = 0;
 
     /**
