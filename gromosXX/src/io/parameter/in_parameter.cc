@@ -5276,6 +5276,7 @@ QMMM
 #    1: apply QM/MM
 # NTQMSW 0 QM software package to use
 #    0: MNDO
+#    1: Turbomole
 # RCUTQ >= 0.0 cutoff for inclusion of MM charge groups
 #     0.0: include all atoms
 #    >0.0: include atoms of charge groups closer than RCUTQ
@@ -5327,17 +5328,18 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         return;
     }
 
-    switch(software) {
-      default:
+    switch (software) {
+      case 0:
         param.qmmm.software = simulation::qmmm_software_mndo;
         break;
-        /*
+      case 1:
+        param.qmmm.software = simulation::qmmm_software_turbomole;
+        break;
       default:
         param.qmmm.software = simulation::qmmm_software_mndo;
         io::messages.add("QMMM block: NTQMSW invalid choice of software",
                     "In_Parameter", io::message::error);
         return;
-         */
     }
     
     if (cutoff < 0.0) {

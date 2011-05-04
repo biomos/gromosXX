@@ -16,12 +16,15 @@
 #include "qm_storage.h"
 #include "qm_worker.h"
 #include "mndo_worker.h"
+#include "turbomole_worker.h"
 
 
 interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation & sim) {
   switch(sim.param().qmmm.software) {
     case simulation::qmmm_software_mndo :
       return new MNDO_Worker;
+    case simulation::qmmm_software_turbomole :
+      return new Turbomole_Worker;
     default:
       io::messages.add("QM worker not implemented", "QM_Worker", io::message::critical);
       break;

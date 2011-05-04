@@ -560,7 +560,11 @@ namespace simulation
     /**
      * use MNDO
      */
-    qmmm_software_mndo = 0
+    qmmm_software_mndo = 0,
+    /**
+     * use Turbomole
+     */
+    qmmm_software_turbomole = 1
   };
 
   /**
@@ -2965,6 +2969,47 @@ namespace simulation
          */
         std::string input_header;
       } mndo;
+/**
+       * parameter for the Turbomole software
+       */
+      struct tubromole_param_struct {
+        /**
+         * the directory containing the turbomole binaries
+         */
+        std::string binary_directory;
+        /**
+         * the tools to run in the working directory
+         */
+        std::vector<std::string> toolchain;
+        /**
+         * the working directory containing the control file
+         */
+        std::string working_directory;
+        /**
+         * the input file containing the atomic coordinates
+         */
+        std::string input_coordinate_file;
+        /**
+         * the input file containing the positions of the MM atoms
+         */
+        std::string input_mm_coordinate_file;
+        /**
+         * the output file containing the energy
+         */
+        std::string output_energy_file;
+        /**
+         * the output file containing the cartesian gradients
+         */
+        std::string output_gradient_file;
+        /**
+         * the output file containing the cartesion gradients of the MM atoms
+         */
+        std::string output_mm_gradient_file;
+        /**
+         * maps atomic number to elements name
+         */
+        std::map<unsigned int, std::string> elements;
+      } turbomole;
     } qmmm;
   };
 

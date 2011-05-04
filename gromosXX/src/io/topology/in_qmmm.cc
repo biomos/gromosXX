@@ -92,6 +92,48 @@ mminp=2 mmcoup=2 mmlink=2 nlink=@@NUM_LINK@@ numatm=@@NUM_ATOMS@@
 Title line
 END
 @endverbatim
+ * 
+ * @section Turbomole blocks for the Turbomole worker
+ * The TURBOMOLEFILES blocks specifies where Turbomole writes the input and output files.
+ * The first line contains the directory which contains the Turbomole binaries.
+ * The second line is the turbomole working directory containing the control file.
+ * In this control file the relative paths for the coordinate, point charges coordinates,
+ * energy, gradients and point charges gradients are defined. The next lines contains
+ * these file names for GROMOS.
+ *
+ * @verbatim
+TURBOMOLEFILES
+/path/to/turbomole/binary/directory
+/path/to/working/directory/containing/control/file
+coordinate.in
+mm_coordinate.in
+energy.out
+gradient.out
+mm_gradient.out
+END
+@endverbatim
+ * 
+ * The TURBOMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
+ * Each line contains one program that is called.
+ * 
+ * @verbatim
+ TURBOMOLETOOLCHAIN
+ ridft
+ rdgrad
+ END
+ @endverbatim
+ *
+ * The TURBOMOLEELEMENTS block specifies the element name used in Turbomole.
+ * It is determined by the atomic number given in the QMZONE block.
+ * 
+@verbatim
+TURBOMOLEELEMENTS
+1 h
+6 c
+7 n
+8 o
+END
+@endverbatim
  */
 void
 io::In_QMMM::read(topology::Topology& topo,
@@ -217,6 +259,84 @@ io::In_QMMM::read(topology::Topology& topo,
       concatenate(buffer.begin() + 1, buffer.end() - 1,
               sim.param().qmmm.mndo.input_header);
     } // MNDOHEADER
+  } else if (sim.param().qmmm.software == simulation::qmmm_software_turbomole) {
+    { // TURBOMOLEELEMENTS
+      buffer = m_block["TURBOMOLEELEMENTS"];
+      DEBUG(10, "TURBOMOLEELEMENTS block : " << buffer.size());
+
+      if (!buffer.size()) {
+        io::messages.add("no TURBOMOLEELEMENTS block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      std::string s;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+      unsigned int Z;
+      std::string element;
+      while(_lineStream >> Z >> element) 
+        sim.param().qmmm.turbomole.elements[Z] = element;
+      
+      // check whether all elements have been provided
+      bool error = false;
+      for (std::set<topology::qm_atom_struct>::const_iterator
+        it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
+        if (sim.param().qmmm.turbomole.elements.find(it->atomic_number) == 
+                sim.param().qmmm.turbomole.elements.end()) {
+          std::ostringstream msg;
+          msg << "Please provide element name for atomic number " << it->atomic_number
+                  << " in TURBOMOLEELEMENTS block.";
+          io::messages.add(msg.str(), "In_QMMM", io::message::error);
+        }
+      }
+      if (error) 
+        return;
+    } // TURBOMOLEELEMENTS
+    { // TURBOMOLEFILES
+      buffer = m_block["TURBOMOLEFILES"];
+      DEBUG(10, "TURBOMOLEFILES block : " << buffer.size());
+
+      if (!buffer.size()) {
+        io::messages.add("TURBOMOLEFILES block missing",
+                "In_QMMM", io::message::error);
+        return;
+      } else {
+        if (buffer.size() != 9) {
+          io::messages.add("TURBOMOLEFILES block corrupt. Provide 7 lines.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.turbomole.binary_directory = buffer[1];
+        sim.param().qmmm.turbomole.working_directory = buffer[2];
+        sim.param().qmmm.turbomole.input_coordinate_file = buffer[3];
+        sim.param().qmmm.turbomole.input_mm_coordinate_file = buffer[4];
+        sim.param().qmmm.turbomole.output_energy_file = buffer[5];
+        sim.param().qmmm.turbomole.output_gradient_file = buffer[6];
+        sim.param().qmmm.turbomole.output_mm_gradient_file = buffer[7];
+      }
+    } // TURBOMOLEFILES
+    { // TURBOMOLETOOLCHAIN
+      buffer = m_block["TURBOMOLETOOLCHAIN"];
+      DEBUG(10, "TURBOMOLETOOLCHAIN block : " << buffer.size());
+
+      if (!buffer.size()) {
+        io::messages.add("TURBOMOLETOOLCHAIN block missing",
+                "In_QMMM", io::message::error);
+        return;
+      } 
+      for(unsigned int i = 1; i < buffer.size()-1; ++i) {
+        _lineStream.clear();
+        _lineStream.str(buffer[i]);
+        std::string tool;
+        _lineStream >> tool;
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in TURBOMOLETOOLCHAIN block",
+                "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.turbomole.toolchain.push_back(tool);
+      }
+    } // TURBOMOLETOOLCHAIN  
   }
 }
 

@@ -333,6 +333,9 @@ AC_CHECK_FUNCS(system)
 AC_CHECK_FUNCS(tmpnam)
 AC_CHECK_FUNCS(symlink)
 AC_CHECK_FUNCS(unlink)
+AC_CHECK_FUNCS(chdir)
+AC_CHECK_FUNCS(getcwd)
+AC_CHECK_FUNCS(remove)
 
 AC_MSG_CHECKING([for isinf with <cmath>])
 AC_TRY_LINK([#include <cmath>], [float f = 0.0; std::isinf(f)],[

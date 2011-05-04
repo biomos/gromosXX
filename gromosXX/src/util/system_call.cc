@@ -27,7 +27,7 @@ int util::system_call(const std::string & command,
             "the name for temporary file to system_call")
 #endif
   }
-  command_to_launch << " > " << output_file;
+  command_to_launch << " 1> " << output_file << " 2>&1 ";
 
 #ifdef HAVE_SYSTEM
   return system(command_to_launch.str().c_str());
