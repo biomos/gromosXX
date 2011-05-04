@@ -272,8 +272,8 @@ void util::print_title(bool mpi, std::ostream & os, bool repex, bool master )
   os << "\nGruppe fuer Informatikgestuetzte Chemie\n"
 	    << "Professor W. F. van Gunsteren\n"
 	    << "ETH Swiss Federal Institute of Technology\n"
-	    << "Zuerich\n\n"
-	    << "Bugreports to https://gromos.ethz.ch/svn/trac/gromosXXc++\n\n";
+	    << "Zurich, Switzerland\n\n"
+	    << "Bugreports to http://www.gromos.net\n\n";
 
   struct utsname sysinf;
   if (uname(&sysinf) != -1){
