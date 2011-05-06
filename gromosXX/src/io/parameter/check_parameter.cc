@@ -412,8 +412,8 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "cutoff_atomic");
   fc.unlock("steepest_descent", "cg_martini");
   fc.unlock("steepest_descent", "multi_grain");
-  fc.unlock("steepest_descent", "cg_gromos");
-  fc.unlock("steepest_descent", "mixed_grain");
+//  fc.unlock("steepest_descent", "cg_gromos");
+//  fc.unlock("steepest_descent", "mixed_grain");
   fc.unlock("steepest_descent", "temp_berendsen");
   fc.unlock("steepest_descent", "temp_nosehoover");
   fc.unlock("steepest_descent", "temp_nosehoover_chains");
