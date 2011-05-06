@@ -1183,7 +1183,7 @@ namespace math
   /**
    * isnan function 
    */
-  inline bool isnan(double x) {
+  inline bool gisnan(double x) {
       return (x) != (x);
   }
   

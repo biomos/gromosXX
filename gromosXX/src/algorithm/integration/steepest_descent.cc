@@ -135,7 +135,7 @@ int algorithm::Steepest_Descent
   }
 #endif
 */
-  if(math::isnan(f)) {
+  if(math::gisnan(f)) {
     io::messages.add("force is NaN", "Steepest_Descent", io::message::error);
     return E_NAN;
   }

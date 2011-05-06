@@ -348,7 +348,7 @@ int configuration::Energy::calculate_totals()
    }
 #endif
 */
-  if (math::isnan(total)) {
+  if (math::gisnan(total)) {
     io::messages.add("total energy is NaN", "energy", io::message::error);
     return E_NAN;    
   }
