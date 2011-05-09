@@ -12,7 +12,8 @@ xxcoreinclude_HEADERS =	core/atomgroup_iterator.h\
 	core/molecule_iterator.h\
 	core/temperaturegroup_iterator.h\
 	core/pressuregroup_iterator.h\
-	core/core.h
+	core/core.h\
+	core/qm_atom.h
 
 xxinclude_HEADERS =	solute.h\
 	solvent.h\

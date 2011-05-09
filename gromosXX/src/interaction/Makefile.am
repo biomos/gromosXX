@@ -103,7 +103,7 @@ xxintspecialqmmm_HEADERS = special/qmmm/mm_atom.h\
 	special/qmmm/qm_storage.h\
 	special/qmmm/qm_worker.h\
 	special/qmmm/mndo_worker.h\
-	special/qmmm/turbomole_worker.h
+	special/qmmm/turbomole_worker.h\
 	special/qmmm/gathering.h
 
 noinst_LTLIBRARIES = libgrointeraction.la
