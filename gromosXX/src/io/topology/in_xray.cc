@@ -781,7 +781,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
             int atom;
             _lineStream >> atom;
             atom--;
-            if (_lineStream.fail() || atom < 0 || atom >= topo.num_atoms()) {
+            if (_lineStream.fail() || atom < 0 || atom >= int(topo.num_atoms())) {
               io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTGM, atom out of range.",
                       "In_Xrayresspec", io::message::error);
               return;
