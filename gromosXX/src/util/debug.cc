@@ -2,7 +2,7 @@
  * @file debug.cc
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
 #ifndef NDEBUG
 

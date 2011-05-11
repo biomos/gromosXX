@@ -3,19 +3,19 @@
  * methods of the berendsen barostat.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <configuration/state_properties.h>
+#include "../../configuration/state_properties.h"
 
-#include <util/error.h>
+#include "../../util/error.h"
 
 #include "berendsen_barostat.h"
-#include <math/boundary_checks.h>
+#include "../../math/boundary_checks.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -23,8 +23,8 @@
 #define MODULE algorithm
 #define SUBMODULE pressure
 
-#include <util/debug.h>
-#include <math/transformation.h>
+#include "../../util/debug.h"
+#include "../../math/transformation.h"
 
 int algorithm::Berendsen_Barostat
 ::apply(topology::Topology & topo,

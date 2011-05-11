@@ -5,7 +5,7 @@
 
 #include <set>
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
 double topology_ver = 0.30;
 
@@ -15,22 +15,22 @@ namespace simulation
 }
 
 
-#include <util/debug.h>
-#include <topology/core/core.h>
+#include "../util/debug.h"
+#include "../topology/core/core.h"
 
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
+#include "../topology/solute.h"
+#include "../topology/solvent.h"
+#include "../topology/perturbed_atom.h"
+#include "../topology/perturbed_solute.h"
 
-#include <topology/topology.h>
-#include <simulation/multibath.h>
-#include <simulation/simulation.h>
+#include "../topology/topology.h"
+#include "../simulation/multibath.h"
+#include "../simulation/simulation.h"
 
-#include <interaction/interaction_types.h>
-#include <util/le_coordinate.h>
+#include "../interaction/interaction_types.h"
+#include "../util/le_coordinate.h"
 
-#include <simulation/parameter.h>
+#include "../simulation/parameter.h"
 #include <limits>
 
 #undef MODULE

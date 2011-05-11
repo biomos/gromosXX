@@ -2,32 +2,32 @@
  * @file nonbonded_set.cc
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
 
-#include <interaction/interaction_types.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include "../../../interaction/interaction_types.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_parameter.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
+#include "../../../interaction/nonbonded/pairlist/pairlist_algorithm.h"
 
-#include <interaction/nonbonded/interaction/latticesum.h>
+#include "../../../interaction/nonbonded/interaction/latticesum.h"
 
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include "../../../interaction/nonbonded/interaction/storage.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
 
-#include <math/periodicity.h>
-#include <math/volume.h>
+#include "../../../math/periodicity.h"
+#include "../../../math/volume.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_set.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_set.h"
 
-#include <util/debug.h>
+#include "../../../util/debug.h"
 
-#include <configuration/energy.h>
+#include "../../../configuration/energy.h"
 
 #undef MODULE
 #undef SUBMODULE

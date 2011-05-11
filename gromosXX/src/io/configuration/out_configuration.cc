@@ -2,29 +2,29 @@
  * @file out_configuration.cc
  * definition of the Out_Configuration methods.
  */
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <simulation/parameter.h>
-#include <configuration/configuration.h>
-#include <configuration/energy.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../simulation/parameter.h"
+#include "../../configuration/configuration.h"
+#include "../../configuration/energy.h"
 
-#include <math/periodicity.h>
-#include <math/volume.h>
-#include <math/transformation.h>
+#include "../../math/periodicity.h"
+#include "../../math/volume.h"
+#include "../../math/transformation.h"
 
-#include <io/print_block.h>
-#include <io/argument.h>
+#include "../../io/print_block.h"
+#include "../../io/argument.h"
 
 #include "out_configuration.h"
 
-#include <util/replica_data.h>
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "../../util/replica_data.h"
+#include "../../util/template_split.h"
+#include "../../util/debug.h"
 #include <limits>
-#include <util/umbrella_weight.h>
+#include "../../util/umbrella_weight.h"
 
 #undef MODULE
 #undef SUBMODULE

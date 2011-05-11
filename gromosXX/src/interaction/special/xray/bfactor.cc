@@ -2,26 +2,26 @@
  * @file bfactor.cc
  * bfactorbusiness
  */
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
+#include "../../../interaction/interaction.h"
 
 // special interactions
-#include <interaction/interaction_types.h>
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "../../../interaction/interaction_types.h"
+#include "../../../util/template_split.h"
+#include "../../../util/debug.h"
 
 #ifdef HAVE_CLIPPER
 #include <clipper/clipper.h>
 #include <clipper/clipper-ccp4.h>
 #include <clipper/clipper-contrib.h>
-#include <interaction/special/xray/dens.h>
-#include <interaction/special/xray/sf.h>
-#include <interaction/special/xray/bfactor.h>
+#include "../../../interaction/special/xray/dens.h"
+#include "../../../interaction/special/xray/sf.h"
+#include "../../../interaction/special/xray/bfactor.h"
 #endif
 
 #include <gsl/gsl_vector.h>

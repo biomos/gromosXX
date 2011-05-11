@@ -3,23 +3,23 @@
  * standard pairlist algorithm (atomic implementation)
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
 
-#include <interaction/interaction_types.h>
-#include <math/periodicity.h>
+#include "../../../interaction/interaction_types.h"
+#include "../../../math/periodicity.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
 
-#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist_algorithm.h"
+#include "../../../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
 
-#include <util/debug.h>
-#include <util/template_split.h>
+#include "../../../util/debug.h"
+#include "../../../util/template_split.h"
 
 #undef MODULE
 #undef SUBMODULE

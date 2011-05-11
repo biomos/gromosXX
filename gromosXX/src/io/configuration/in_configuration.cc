@@ -2,27 +2,25 @@
  * @file in_configuration.cc
  * implements methods of In_Configuration.
  */
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/multibath.h"
+#include "../../simulation/parameter.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <io/blockinput.h>
-#include <io/instream.h>
-#include <io/configuration/inframe.h>
+#include "../../io/blockinput.h"
+#include "../../io/instream.h"
+#include "../../io/configuration/inframe.h"
 
-#include <util/generate_velocities.h>
-#include <util/replica_data.h>
+#include "../../util/generate_velocities.h"
+#include "../../util/replica_data.h"
 
-#include <math/volume.h>
-#include <math/transformation.h>
-#include <util/umbrella_weight.h>
-#include <vector>
-#include <ios>
+#include "../../math/volume.h"
+#include "../../math/transformation.h"
+#include "../../util/umbrella_weight.h"
 
 #include "in_configuration.h"
 

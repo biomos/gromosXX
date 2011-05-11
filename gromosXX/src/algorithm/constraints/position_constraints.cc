@@ -4,16 +4,16 @@
  * the Position_Constraints class.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <algorithm/constraints/position_constraints.h>
+#include "../../algorithm/constraints/position_constraints.h"
 
-#include <util/debug.h>
+#include "../../util/debug.h"
 #include <limits>
 
 #undef MODULE

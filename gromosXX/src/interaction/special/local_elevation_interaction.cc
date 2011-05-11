@@ -3,22 +3,22 @@
  * apply LEUS
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
 
-#include <math/periodicity.h>
+#include "../../math/periodicity.h"
 
 // special interactions
-#include <interaction/special/local_elevation_interaction.h>
-#include <util/le_coordinate.h>
+#include "../../interaction/special/local_elevation_interaction.h"
+#include "../../util/le_coordinate.h"
 
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "../../util/template_split.h"
+#include "../../util/debug.h"
 #include <vector>
 #include <map>
 

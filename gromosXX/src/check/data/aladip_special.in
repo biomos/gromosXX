@@ -295,7 +295,7 @@ GROMOS96COMPAT
 #    0 : new soft-core formula
 #    1 : g96 soft-core formula [default]
 # NTNB96   NTR96     NTP96   NTG96
-    1         1       1        1
+    1         1       1        1 1
 END
 XRAYRES
 #    NTXR   -2: time-averaged electron density restraints

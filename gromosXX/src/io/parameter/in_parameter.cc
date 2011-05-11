@@ -2,27 +2,27 @@
  * @file in_parameter.cc
  * implements methods of In_Parameter
  */
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <topology/core/core.h>
+#include "../../topology/core/core.h"
 
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
+#include "../../topology/solute.h"
+#include "../../topology/solvent.h"
+#include "../../topology/perturbed_atom.h"
+#include "../../topology/perturbed_solute.h"
 
-#include <topology/topology.h>
+#include "../../topology/topology.h"
 
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
+#include "../../simulation/multibath.h"
+#include "../../simulation/parameter.h"
 
-#include <io/instream.h>
-#include <io/blockinput.h>
-#include <io/parameter/in_parameter.h>
+#include "../../io/instream.h"
+#include "../../io/blockinput.h"
+#include "../../io/parameter/in_parameter.h"
 
-#include <math/random.h>
+#include "../../math/random.h"
 
-#include <configuration/energy.h>
+#include "../../configuration/energy.h"
 
 #ifdef OMP
 #include <omp.h>

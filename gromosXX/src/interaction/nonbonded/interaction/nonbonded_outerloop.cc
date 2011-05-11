@@ -7,34 +7,34 @@
 #include <mpi.h>
 #endif
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
 
-#include <interaction/interaction_types.h>
-#include <math/periodicity.h>
-#include <math/volume.h>
+#include "../../../interaction/interaction_types.h"
+#include "../../../math/periodicity.h"
+#include "../../../math/volume.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
+#include "../../../interaction/nonbonded/interaction/storage.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_parameter.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/latticesum.h>
-#include <configuration/mesh.h>
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/latticesum.h"
+#include "../../../configuration/mesh.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_innerloop.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
 
-#include <interaction/nonbonded/interaction_spec.h>
+#include "../../../interaction/nonbonded/interaction_spec.h"
 
-#include <util/debug.h>
-#include <interaction/nonbonded/innerloop_template.h>
+#include "../../../util/debug.h"
+#include "../../../interaction/nonbonded/innerloop_template.h"
 
-#include <simulation/parameter.h>
+#include "../../../simulation/parameter.h"
 
 #include "storage.h"
 

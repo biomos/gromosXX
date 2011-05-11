@@ -7,21 +7,21 @@
 #include <mpi.h>
 #endif
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <configuration/configuration_global.h>
+#include "../configuration/configuration_global.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <configuration/configuration.h>
-#include <configuration/mesh.h>
-#include <configuration/influence_function.h>
-#include <simulation/simulation.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../configuration/configuration.h"
+#include "../configuration/mesh.h"
+#include "../configuration/influence_function.h"
+#include "../simulation/simulation.h"
+#include "../simulation/multibath.h"
+#include "../simulation/parameter.h"
 
-#include <math/periodicity.h>
-#include <math/boundary_checks.h>
+#include "../math/periodicity.h"
+#include "../math/boundary_checks.h"
 #include <vector>
 
 #include "configuration.h"

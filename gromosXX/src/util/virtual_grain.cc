@@ -3,12 +3,12 @@
  * update positions / forces of virtual atoms (grains)
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <configuration/configuration.h>
-#include <simulation/simulation.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../configuration/configuration.h"
+#include "../simulation/simulation.h"
 
 #include "virtual_grain.h"
 

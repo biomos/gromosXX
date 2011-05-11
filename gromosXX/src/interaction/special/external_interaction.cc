@@ -3,17 +3,17 @@
  * methods of External_Interaction
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
-#include <util/virtual_grain.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
+#include "../../util/virtual_grain.h"
 
-#include <interaction/special/external_interaction.h>
-#include <util/debug.h>
+#include "../../interaction/special/external_interaction.h"
+#include "../../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

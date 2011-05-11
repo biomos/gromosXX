@@ -3,19 +3,19 @@
  * parse TCOUPLE into multibath
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <topology/core/core.h>
+#include "../topology/core/core.h"
 
-#include <topology/solute.h>
-#include <topology/solvent.h>
-#include <topology/perturbed_atom.h>
-#include <topology/perturbed_solute.h>
+#include "../topology/solute.h"
+#include "../topology/solvent.h"
+#include "../topology/perturbed_atom.h"
+#include "../topology/perturbed_solute.h"
 
-#include <topology/topology.h>
+#include "../topology/topology.h"
 
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
+#include "../simulation/multibath.h"
+#include "../simulation/parameter.h"
 
 #include "parse_tcouple.h"
 

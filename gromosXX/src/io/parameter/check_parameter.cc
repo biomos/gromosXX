@@ -3,16 +3,16 @@
  * check those parameters
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <simulation/parameter.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../simulation/parameter.h"
 
-#include <io/parameter/check_parameter.h>
-#include <util/feature.h>
+#include "../../io/parameter/check_parameter.h"
+#include "../../util/feature.h"
 
 #ifdef OMP
 #include <omp.h>

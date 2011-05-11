@@ -3,47 +3,45 @@
  */
 
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../algorithm/algorithm/algorithm_sequence.h"
+#include "../interaction/interaction.h"
+#include "../interaction/forcefield/forcefield.h"
 
-#include <io/argument.h>
-#include <util/parse_verbosity.h>
-#include <util/error.h>
+#include "../io/argument.h"
+#include "../util/parse_verbosity.h"
+#include "../util/error.h"
 
-#include <interaction/interaction_types.h>
-#include <io/instream.h>
-#include <util/parse_tcouple.h>
-#include <io/blockinput.h>
-#include <io/topology/in_topology.h>
+#include "../interaction/interaction_types.h"
+#include "../io/instream.h"
+#include "../util/parse_tcouple.h"
+#include "../io/blockinput.h"
+#include "../io/topology/in_topology.h"
 
-#include <algorithm/integration/leap_frog.h>
-#include <algorithm/temperature/temperature_calculation.h>
-#include <algorithm/temperature/berendsen_thermostat.h>
-#include <algorithm/pressure/pressure_calculation.h>
-#include <algorithm/pressure/berendsen_barostat.h>
+#include "../algorithm/integration/leap_frog.h"
+#include "../algorithm/temperature/temperature_calculation.h"
+#include "../algorithm/temperature/berendsen_thermostat.h"
+#include "../algorithm/pressure/pressure_calculation.h"
+#include "../algorithm/pressure/berendsen_barostat.h"
 
-#include <interaction/forcefield/create_forcefield.h>
+#include "../interaction/forcefield/create_forcefield.h"
 
-#include <util/create_simulation.h>
-#include <algorithm/create_md_sequence.h>
+#include "../util/create_simulation.h"
+#include "../algorithm/create_md_sequence.h"
 
-#include <math/periodicity.h>
-#include <math/volume.h>
+#include "../math/periodicity.h"
+#include "../math/volume.h"
 
-#include <util/template_split.h>
-#include <util/prepare_virial.h>
+#include "../util/template_split.h"
+#include "../util/prepare_virial.h"
 
 #include <time.h>
-
-#include <config.h>
 
 #include "check.h"
 #include "check_state.h"
@@ -53,6 +51,7 @@ using namespace std;
 template<math::boundary_enum b>
 void scale_positions(topology::Topology & topo,
 		     configuration::Configuration & conf,
+                     simulation::Simulation & sim,
 		     math::Vec const scale)
 {
   // calculate rel_mol_com_pos ;-)
@@ -61,7 +60,7 @@ void scale_positions(topology::Topology & topo,
   std::vector<math::Vec> com_pos; //center of mass position
   std::vector<math::Matrix> com_ekin;
   
-  util::centre_of_mass(topo, conf, com_pos, com_ekin);
+  util::centre_of_mass(topo, conf, com_pos, com_ekin, sim);
 
   topology::Pressuregroup_Iterator
     pg_it = topo.pressure_group_begin(),
@@ -170,7 +169,7 @@ int check::check_state(topology::Topology & mytopo,
     math::Vec s1(1); 
     s1(i) += epsilon;
       
-    SPLIT_BOUNDARY(scale_positions, topo, conf, s1); //assign boundaries
+    SPLIT_BOUNDARY(scale_positions, topo, conf, sim, s1); //assign boundaries
     ff.apply(topo, conf, sim);
     conf.current().energies.calculate_totals();
     
@@ -182,7 +181,7 @@ int check::check_state(topology::Topology & mytopo,
     math::Vec s2(1);
     s2(i) -= epsilon; 
 
-    SPLIT_BOUNDARY(scale_positions, topo, conf, s2);
+    SPLIT_BOUNDARY(scale_positions, topo, conf, sim, s2);
     ff.apply(topo, conf, sim);
     conf.current().energies.calculate_totals();
 

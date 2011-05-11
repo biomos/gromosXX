@@ -2,7 +2,7 @@
  * @file timing.cc
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
 #include <stddef.h> /* defines NULL */
 #ifdef WIN32

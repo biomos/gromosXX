@@ -3,19 +3,19 @@
  * dealing with k space
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <math/periodicity.h>
-#include <math/volume.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../math/periodicity.h"
+#include "../math/volume.h"
 
-#include <interaction/nonbonded/interaction/latticesum.h>
+#include "../interaction/nonbonded/interaction/latticesum.h"
 
-#include <util/error.h>
-#include <util/debug.h>
+#include "../util/error.h"
+#include "../util/debug.h"
 
 #include "kspace.h"
 #include "configuration.h"

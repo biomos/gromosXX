@@ -4,15 +4,15 @@
  * forcefield.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
 
-#include <util/prepare_virial.h>
+#include "../../util/prepare_virial.h"
 
 #include "forcefield.h"
 

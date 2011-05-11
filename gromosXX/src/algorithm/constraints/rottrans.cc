@@ -4,23 +4,23 @@
  * the class Rottrans_Constraints.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <simulation/parameter.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../simulation/parameter.h"
+#include "../../configuration/configuration.h"
 
-#include <configuration/state_properties.h>
-#include <math/periodicity.h>
+#include "../../configuration/state_properties.h"
+#include "../../math/periodicity.h"
 
-#include <math/volume.h>
+#include "../../math/volume.h"
 
-#include <algorithm/constraints/rottrans.h>
+#include "../../algorithm/constraints/rottrans.h"
 
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "../../util/template_split.h"
+#include "../../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

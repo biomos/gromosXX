@@ -2,13 +2,13 @@
  * @file umbrella_weight.cc
  * implementation of umbrella weighting
  */
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <util/debug.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../util/debug.h"
 
 #include "umbrella_weight.h"
 

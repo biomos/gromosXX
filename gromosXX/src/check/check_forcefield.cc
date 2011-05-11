@@ -3,48 +3,47 @@
  */
 
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <simulation/parameter.h>
-#include <configuration/configuration.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../simulation/parameter.h"
+#include "../configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../algorithm/algorithm/algorithm_sequence.h"
+#include "../interaction/interaction.h"
+#include "../interaction/nonbonded/interaction/nonbonded_interaction.h"
+#include "../interaction/forcefield/forcefield.h"
 
-#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/grid_cell_pairlist.h>
+#include "../interaction/nonbonded/pairlist/pairlist_algorithm.h"
+#include "../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
+#include "../interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h"
+#include "../interaction/nonbonded/pairlist/grid_cell_pairlist.h"
 
-#include <io/argument.h>
-#include <util/parse_verbosity.h>
-#include <util/error.h>
+#include "../io/argument.h"
+#include "../util/parse_verbosity.h"
+#include "../util/error.h"
 
-#include <interaction/interaction_types.h>
-#include <io/instream.h>
-#include <util/parse_tcouple.h>
-#include <io/blockinput.h>
-#include <io/topology/in_topology.h>
+#include "../interaction/interaction_types.h"
+#include "../io/instream.h"
+#include "../util/parse_tcouple.h"
+#include "../io/blockinput.h"
+#include "../io/topology/in_topology.h"
 
-#include <algorithm/integration/leap_frog.h>
-#include <algorithm/temperature/temperature_calculation.h>
-#include <algorithm/temperature/berendsen_thermostat.h>
-#include <algorithm/pressure/pressure_calculation.h>
-#include <algorithm/pressure/berendsen_barostat.h>
+#include "../algorithm/integration/leap_frog.h"
+#include "../algorithm/temperature/temperature_calculation.h"
+#include "../algorithm/temperature/berendsen_thermostat.h"
+#include "../algorithm/pressure/pressure_calculation.h"
+#include "../algorithm/pressure/berendsen_barostat.h"
 
-#include <interaction/forcefield/create_forcefield.h>
+#include "../interaction/forcefield/create_forcefield.h"
 
-#include <util/create_simulation.h>
-#include <algorithm/create_md_sequence.h>
+#include "../util/create_simulation.h"
+#include "../algorithm/create_md_sequence.h"
 
 #include <time.h>
 
-#include <config.h>
 #include <map>
 #include <sstream>
 
@@ -577,6 +576,8 @@ int check::check_forcefield(topology::Topology & topo,
     else if ((*it)->name == "NonBonded"){
       if (sim.param().force.interaction_function == simulation::cgrain_func ||
              sim.param().force.interaction_function == simulation::cggromos_func ){
+        if (ref.find("NonBonded_cg") == ref.end())
+          continue;
 
         sim.param().force.special_loop = simulation::special_loop_off;
         total += check_interaction(topo, conf, sim, **it, topo.num_atoms(),
@@ -588,6 +589,8 @@ int check::check_forcefield(topology::Topology & topo,
         sim.param().force.special_loop = simulation::special_loop_off;
         std::ostringstream estring;
         estring << "NonBonded_" << sim.param().nonbonded.ls_charge_shape;
+        if (ref.find(estring.str()) == ref.end())
+          continue;
         double eref = ref[estring.str()];
         if (sim.param().nonbonded.method == simulation::el_p3m)
           total += check_interaction(topo, conf, sim, **it, topo.num_atoms(),
@@ -596,6 +599,8 @@ int check::check_forcefield(topology::Topology & topo,
           total += check_interaction(topo, conf, sim, **it, topo.num_atoms(),
                 eref, 0.0000000001, 0.01, 0.0, true);
       } else {
+        if (ref.find("NonBonded") == ref.end())
+          continue;
         sim.param().force.special_loop = simulation::special_loop_spc;
         total += check_interaction(topo, conf, sim, **it, topo.num_atoms(),
                 ref["NonBonded"], 0.00000001, 0.001);

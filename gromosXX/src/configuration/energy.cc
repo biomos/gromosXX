@@ -3,18 +3,17 @@
  * implements the energy methods.
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE configuration
 #define SUBMODULE energy
 
-#include <configuration/configuration_global.h>
-#include <configuration/energy.h>
+#include "../configuration/configuration_global.h"
+#include "../configuration/energy.h"
 
-#include <util/error.h>
-#include <config.h>
+#include "../util/error.h"
 
 #include "energy.h"
 #include <vector>

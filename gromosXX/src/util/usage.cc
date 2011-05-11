@@ -3,7 +3,7 @@
  * get usage string
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include "usage.h"
 #include <sys/utsname.h>
 

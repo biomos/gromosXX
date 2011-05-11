@@ -3,7 +3,7 @@
  * implemenation of binary data enocding
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include "coding.h"
 
 // this code was more or less completly taken from

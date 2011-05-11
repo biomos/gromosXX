@@ -3,31 +3,31 @@
  * template methods of Perturbed_Dihedral_new_Interaction
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
 
-#include <math/periodicity.h>
+#include "../../math/periodicity.h"
 
 // interactions
-#include <interaction/interaction_types.h>
+#include "../../interaction/interaction_types.h"
 #include "dihedral_new_interaction.h"
 #include "perturbed_dihedral_new_interaction.h"
 
-#include <util/template_split.h>
-#include <util/error.h>
-#include <util/debug.h>
+#include "../../util/template_split.h"
+#include "../../util/error.h"
+#include "../../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE bonded
 
-#include <util/debug.h>
+#include "../../util/debug.h"
 
 /**
  * calculate angle forces and energies and lambda derivatives.

@@ -6,42 +6,42 @@
 #include <mpi.h>
 #endif
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
 
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include "../../interaction/interaction.h"
+#include "../../interaction/interaction_types.h"
+#include "../../interaction/nonbonded/interaction/nonbonded_parameter.h"
 
-#include <interaction/forcefield/forcefield.h>
+#include "../../interaction/forcefield/forcefield.h"
 
-#include <configuration/energy.h>
-#include <interaction/nonbonded/interaction/storage.h>
+#include "../../configuration/energy.h"
+#include "../../interaction/nonbonded/interaction/storage.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/grid_cell_pairlist.h>
+#include "../../interaction/nonbonded/pairlist/pairlist.h"
+#include "../../interaction/nonbonded/pairlist/pairlist_algorithm.h"
+#include "../../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
+#include "../../interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h"
+#include "../../interaction/nonbonded/pairlist/grid_cell_pairlist.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
-#include <interaction/nonbonded/interaction/nonbonded_set.h>
+#include "../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
+#include "../../interaction/nonbonded/interaction/nonbonded_set.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
-#include <interaction/nonbonded/interaction/omp_nonbonded_interaction.h>
-#include <interaction/nonbonded/interaction/mpi_nonbonded_master.h>
-#include <interaction/nonbonded/interaction/mpi_nonbonded_slave.h>
+#include "../../interaction/nonbonded/interaction/nonbonded_interaction.h"
+#include "../../interaction/nonbonded/interaction/omp_nonbonded_interaction.h"
+#include "../../interaction/nonbonded/interaction/mpi_nonbonded_master.h"
+#include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
-#include <io/ifp.h>
+#include "../../io/ifp.h"
 
-#include <interaction/nonbonded/create_nonbonded.h>
+#include "../../interaction/nonbonded/create_nonbonded.h"
 
-#include <util/debug.h>
+#include "../../util/debug.h"
 
-#include <simulation/parameter.h>
+#include "../../simulation/parameter.h"
 
 #ifdef HAVE_HOOMD
 #include <HOOMD_GROMOSXX_interface.h>

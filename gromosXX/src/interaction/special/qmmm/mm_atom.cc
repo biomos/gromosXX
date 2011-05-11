@@ -2,19 +2,19 @@
  * @file mm_atom.cc implements inclusion of MM atoms
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
+#include "../../../interaction/interaction.h"
 
-#include <math/periodicity.h>
-#include <util/template_split.h>
+#include "../../../math/periodicity.h"
+#include "../../../util/template_split.h"
 
 // special interactions
-#include <interaction/special/qmmm/mm_atom.h>
+#include "../../../interaction/special/qmmm/mm_atom.h"
 
 template<math::boundary_enum b>
 void determine_mm_atoms_by_cutoff(topology::Topology& topo, 

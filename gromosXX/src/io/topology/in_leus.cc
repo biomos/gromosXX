@@ -2,20 +2,20 @@
  * @file in_leus.cc
  * implements methods of In_Localelevspec
  */
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <simulation/parameter.h>
-#include <interaction/interaction_types.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../simulation/parameter.h"
+#include "../../interaction/interaction_types.h"
+#include "../../configuration/configuration.h"
 
-#include <io/instream.h>
-#include <io/blockinput.h>
-#include <io/topology/in_leus.h>
-#include <io/configuration/in_configuration.h>
-#include <util/le_coordinate.h>
+#include "../../io/instream.h"
+#include "../../io/blockinput.h"
+#include "../../io/topology/in_leus.h"
+#include "../../io/configuration/in_configuration.h"
+#include "../../util/le_coordinate.h"
 
 #undef MODULE
 #undef SUBMODULE

@@ -8,23 +8,23 @@
 #include <mpi.h>
 #endif
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
+#include "../../interaction/interaction.h"
+#include "../../interaction/interaction_types.h"
 
-#include <math/periodicity.h>
+#include "../../math/periodicity.h"
 
-#include <algorithm/constraints/shake.h>
-#include <algorithm/constraints/perturbed_shake.h>
+#include "../../algorithm/constraints/shake.h"
+#include "../../algorithm/constraints/perturbed_shake.h"
 
-#include <util/template_split.h>
-#include <util/error.h>
+#include "../../util/template_split.h"
+#include "../../util/error.h"
 
 #undef MODULE
 #undef SUBMODULE

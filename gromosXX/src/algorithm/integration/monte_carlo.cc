@@ -11,15 +11,15 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../../interaction/interaction.h"
+#include "../../interaction/forcefield/forcefield.h"
 
 #include "monte_carlo.h"
 

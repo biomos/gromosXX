@@ -4,42 +4,41 @@
  */
 
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../algorithm/algorithm/algorithm_sequence.h"
+#include "../interaction/interaction.h"
+#include "../interaction/forcefield/forcefield.h"
 
-#include <io/argument.h>
-#include <util/parse_verbosity.h>
-#include <util/usage.h>
-#include <util/error.h>
+#include "../io/argument.h"
+#include "../util/parse_verbosity.h"
+#include "../util/usage.h"
+#include "../util/error.h"
 
-#include <interaction/interaction_types.h>
-#include <io/instream.h>
-#include <util/parse_tcouple.h>
-#include <io/blockinput.h>
-#include <io/topology/in_topology.h>
+#include "../interaction/interaction_types.h"
+#include "../io/instream.h"
+#include "../util/parse_tcouple.h"
+#include "../io/blockinput.h"
+#include "../io/topology/in_topology.h"
 
-#include <algorithm/integration/leap_frog.h>
-#include <algorithm/temperature/temperature_calculation.h>
-#include <algorithm/temperature/berendsen_thermostat.h>
-#include <algorithm/pressure/pressure_calculation.h>
-#include <algorithm/pressure/berendsen_barostat.h>
+#include "../algorithm/integration/leap_frog.h"
+#include "../algorithm/temperature/temperature_calculation.h"
+#include "../algorithm/temperature/berendsen_thermostat.h"
+#include "../algorithm/pressure/pressure_calculation.h"
+#include "../algorithm/pressure/berendsen_barostat.h"
 
-#include <interaction/forcefield/create_forcefield.h>
+#include "../interaction/forcefield/create_forcefield.h"
 
-#include <util/create_simulation.h>
-#include <algorithm/create_md_sequence.h>
+#include "../util/create_simulation.h"
+#include "../algorithm/create_md_sequence.h"
 
 #include <time.h>
 
-#include <config.h>
 
 #include "check.h"
 
@@ -47,18 +46,6 @@
 #include "check_state.h"
 
 void hard_coded_values(std::map<std::string, double> & m){
-  m["QuarticBond"] = 18.055276;
-  m["PerturbedQuarticBond"] = 1.149568;
-  m["Angle"] = 12.170290;
-  m["PerturbedAngle"] = 0.714818;
-  m["ImproperDihedral"] = 0.965060;
-  m["PerturbedImproperDihedral"] = 2.642780;
-  m["Dihedral"] = 2.255206;
-  m["PerturbedDihedral"] = 13.314602;
-  m["NonBonded_cg"] = -7.352312;
-  m["NonBonded"] = -50.196817;
-  m["NonBonded_newRF"] = -84.092443;
-  m["NonBonded_atomic"] =  -49.912;
   m["DistanceRestraint"] = 257.189539;
   m["PerturbedDistanceRestraint"] = 195.899012;
   m["DihedralRestraint"] = 2127.910749;

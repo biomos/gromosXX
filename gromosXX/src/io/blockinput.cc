@@ -3,9 +3,9 @@
  * defines blockinput functions.
  */
 
-#include <stdheader.h>
-#include <io/message.h>
-#include <ios>
+#include "../stdheader.h"
+#include "../io/message.h"
+#include "../ios"
 #include "blockinput.h"
 
 template<class size_type>

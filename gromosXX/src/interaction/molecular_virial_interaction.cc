@@ -3,19 +3,19 @@
  * recover molecular virial from atomic virial
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../interaction/interaction.h"
 
 #include "molecular_virial_interaction.h"
 
-#include <util/prepare_virial.h>
+#include "../util/prepare_virial.h"
 
-#include <util/debug.h>
+#include "../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

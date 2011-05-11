@@ -4,42 +4,40 @@
  */
 
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../algorithm/algorithm/algorithm_sequence.h"
+#include "../interaction/interaction.h"
+#include "../interaction/forcefield/forcefield.h"
 
-#include <io/argument.h>
-#include <util/parse_verbosity.h>
-#include <util/usage.h>
-#include <util/error.h>
+#include "../io/argument.h"
+#include "../util/parse_verbosity.h"
+#include "../util/usage.h"
+#include "../util/error.h"
 
-#include <interaction/interaction_types.h>
-#include <io/instream.h>
-#include <util/parse_tcouple.h>
-#include <io/blockinput.h>
-#include <io/topology/in_topology.h>
+#include "../interaction/interaction_types.h"
+#include "../io/instream.h"
+#include "../util/parse_tcouple.h"
+#include "../io/blockinput.h"
+#include "../io/topology/in_topology.h"
 
-#include <algorithm/integration/leap_frog.h>
-#include <algorithm/temperature/temperature_calculation.h>
-#include <algorithm/temperature/berendsen_thermostat.h>
-#include <algorithm/pressure/pressure_calculation.h>
-#include <algorithm/pressure/berendsen_barostat.h>
+#include "../algorithm/integration/leap_frog.h"
+#include "../algorithm/temperature/temperature_calculation.h"
+#include "../algorithm/temperature/berendsen_thermostat.h"
+#include "../algorithm/pressure/pressure_calculation.h"
+#include "../algorithm/pressure/berendsen_barostat.h"
 
-#include <interaction/forcefield/create_forcefield.h>
+#include "../interaction/forcefield/create_forcefield.h"
 
-#include <util/create_simulation.h>
-#include <algorithm/create_md_sequence.h>
+#include "../util/create_simulation.h"
+#include "../algorithm/create_md_sequence.h"
 
 #include <time.h>
-
-#include <config.h>
 
 #include "check.h"
 
@@ -47,18 +45,18 @@
 #include "check_state.h"
 
 void hard_coded_values(std::map<std::string, double> & m){
-  m["NonBonded_-1"] = -107.79;
-  m["NonBonded_0"]  = -116.524;
-  m["NonBonded_1"]  = -120.437;
-  m["NonBonded_2"]  = -124.734;
-  m["NonBonded_3"]  = -120.842;
-  m["NonBonded_4"]  = -122.368;
-  m["NonBonded_5"]  = -125.134;
-  m["NonBonded_6"]  = -122.669;
-  m["NonBonded_7"]  = -124.867;
-  m["NonBonded_8"]  = -128.517;
-  m["NonBonded_9"]  = -125.781;
-  m["NonBonded_10"] = -129.247;
+  m["NonBonded_-1"] = -168.832;
+  m["NonBonded_0"]  = -129.245;
+  m["NonBonded_1"]  = -125.946;
+  m["NonBonded_2"]  = -129.641;
+  m["NonBonded_3"]  = -123.305;
+  m["NonBonded_4"]  = -124.849;
+  m["NonBonded_5"]  = -130.201;
+  m["NonBonded_6"]  = -125.314;
+  m["NonBonded_7"]  = -130.103;
+  m["NonBonded_8"]  = -137.76;
+  m["NonBonded_9"]  = -132.338;
+  m["NonBonded_10"] = -139.645;
 }
 
 #ifdef OMP
@@ -170,10 +168,6 @@ int main(int argc, char* argv[]) {
     // first check the forcefield
     total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
 				     aladip_sim.sim, *ff, ref_values);
-
-    // check virial, ...
-    total += check::check_state(aladip_sim.topo, aladip_sim.conf,
-				aladip_sim.sim, *ff);
 
     aladip_sim.sim.param().nonbonded.method = simulation::el_p3m;
     ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);

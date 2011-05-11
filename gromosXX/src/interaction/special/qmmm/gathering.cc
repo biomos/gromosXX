@@ -2,19 +2,19 @@
  * @file gathering.cc gathering for QM/MM simulations
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
+#include "../../../interaction/interaction.h"
 
-#include <math/periodicity.h>
-#include <util/template_split.h>
+#include "../../../math/periodicity.h"
+#include "../../../util/template_split.h"
 
 // special interactions
-#include <interaction/special/qmmm/mm_atom.h>
+#include "../../../interaction/special/qmmm/mm_atom.h"
 
 #include "gathering.h"
 

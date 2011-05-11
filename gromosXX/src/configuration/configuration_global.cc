@@ -3,7 +3,7 @@
  * globals of the configuration library
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
 #include "config.h"
 

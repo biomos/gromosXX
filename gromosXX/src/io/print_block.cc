@@ -3,33 +3,33 @@
  * routines to print out the various blocks.
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include <fstream>
 
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../interaction/interaction.h"
+#include "../interaction/interaction_types.h"
 
-#include <io/argument.h>
-#include <io/blockinput.h>
-#include <io/instream.h>
-#include <io/configuration/inframe.h>
-#include <io/configuration/in_configuration.h>
-#include <io/topology/in_topology.h>
-#include <io/topology/in_perturbation.h>
-#include <io/parameter/in_parameter.h>
+#include "../io/argument.h"
+#include "../io/blockinput.h"
+#include "../io/instream.h"
+#include "../io/configuration/inframe.h"
+#include "../io/configuration/in_configuration.h"
+#include "../io/topology/in_topology.h"
+#include "../io/topology/in_perturbation.h"
+#include "../io/parameter/in_parameter.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <algorithm/create_md_sequence.h>
+#include "../algorithm/algorithm/algorithm_sequence.h"
+#include "../algorithm/create_md_sequence.h"
 
-#include <interaction/forcefield/forcefield.h>
+#include "../interaction/forcefield/forcefield.h"
 
-#include <math/volume.h>
-#include <util/replica_data.h>
+#include "../math/volume.h"
+#include "../util/replica_data.h"
 
 #include "print_block.h"
 

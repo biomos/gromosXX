@@ -3,16 +3,16 @@
  * the multibath parameter class.
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <simulation/multibath.h>
-#include <simulation/simulation.h>
+#include "../simulation/multibath.h"
+#include "../simulation/simulation.h"
 
-#include <configuration/energy.h>
-#include <topology/topology.h>
+#include "../configuration/energy.h"
+#include "../topology/topology.h"
 
-#include <util/error.h>
-#include <util/debug.h>
+#include "../util/error.h"
+#include "../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

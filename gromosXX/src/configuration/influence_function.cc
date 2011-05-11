@@ -5,23 +5,23 @@
 #ifdef XXMPI
 #include <mpi.h>
 #endif
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <configuration/mesh.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
-#include <configuration/influence_function.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../configuration/mesh.h"
+#include "../simulation/multibath.h"
+#include "../simulation/parameter.h"
+#include "../configuration/influence_function.h"
 
-#include <interaction/nonbonded/interaction/latticesum.h>
+#include "../interaction/nonbonded/interaction/latticesum.h"
 
-#include <math/volume.h>
+#include "../math/volume.h"
 
-#include <util/error.h>
-#include <util/debug.h>
+#include "../util/error.h"
+#include "../util/debug.h"
 
 #include "influence_function.h"
 #ifdef OMP

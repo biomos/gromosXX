@@ -3,7 +3,7 @@
  * globals of the math library
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
 #include "config.h"
 

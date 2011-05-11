@@ -3,27 +3,27 @@
  * apply LEUS
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
 
-#include <math/periodicity.h>
+#include "../../math/periodicity.h"
 
 // special interactions
-#include <interaction/special/qmmm/qm_storage.h>
-#include <interaction/special/qmmm/mm_atom.h>
-#include <interaction/special/qmmm/qm_worker.h>
-#include <interaction/special/qmmm/mndo_worker.h>
-#include <interaction/special/qmmm_interaction.h>
-#include <interaction/special/qmmm/gathering.h>
+#include "../../interaction/special/qmmm/qm_storage.h"
+#include "../../interaction/special/qmmm/mm_atom.h"
+#include "../../interaction/special/qmmm/qm_worker.h"
+#include "../../interaction/special/qmmm/mndo_worker.h"
+#include "../../interaction/special/qmmm_interaction.h"
+#include "../../interaction/special/qmmm/gathering.h"
 
-#include <util/template_split.h>
-#include <util/debug.h>
-#include <math/boundary_checks.h>
+#include "../../util/template_split.h"
+#include "../../util/debug.h"
+#include "../../math/boundary_checks.h"
 
 #undef MODULE
 #undef SUBMODULE

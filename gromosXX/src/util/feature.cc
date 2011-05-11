@@ -3,7 +3,7 @@
  * features and their cross checks
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include "feature.h"
 
 void util::FeatureChecker::lock_all() {

@@ -2,57 +2,57 @@
  * @file create_md_sequence.cc
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include <fstream>
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../interaction/interaction.h"
+#include "../interaction/interaction_types.h"
 
-#include <io/argument.h>
-#include <io/blockinput.h>
-#include <io/instream.h>
-#include <io/topology/in_topology.h>
+#include "../io/argument.h"
+#include "../io/blockinput.h"
+#include "../io/instream.h"
+#include "../io/topology/in_topology.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <algorithm/constraints/position_constraints.h>
-#include <algorithm/integration/energy_calculation.h>
-#include <algorithm/integration/leap_frog.h>
-#include <algorithm/integration/scaled_leap_frog.h>
-#include <algorithm/integration/monte_carlo.h>
-#include <algorithm/integration/stochastic.h>
-#include <algorithm/integration/lattice_shift.h>
-#include <algorithm/integration/multigradient.h>
+#include "../algorithm/algorithm/algorithm_sequence.h"
+#include "../algorithm/constraints/position_constraints.h"
+#include "../algorithm/integration/energy_calculation.h"
+#include "../algorithm/integration/leap_frog.h"
+#include "../algorithm/integration/scaled_leap_frog.h"
+#include "../algorithm/integration/monte_carlo.h"
+#include "../algorithm/integration/stochastic.h"
+#include "../algorithm/integration/lattice_shift.h"
+#include "../algorithm/integration/multigradient.h"
 
-#include <io/blockinput.h>
-#include <io/instream.h>
-#include <io/configuration/inframe.h>
-#include <io/configuration/in_configuration.h>
+#include "../io/blockinput.h"
+#include "../io/instream.h"
+#include "../io/configuration/inframe.h"
+#include "../io/configuration/in_configuration.h"
 
-#include <algorithm/integration/analyze.h>
-#include <algorithm/temperature/temperature_calculation.h>
-#include <algorithm/temperature/nosehoover_thermostat.h>
-#include <algorithm/temperature/berendsen_thermostat.h>
-#include <algorithm/pressure/pressure_calculation.h>
-#include <algorithm/pressure/berendsen_barostat.h>
+#include "../algorithm/integration/analyze.h"
+#include "../algorithm/temperature/temperature_calculation.h"
+#include "../algorithm/temperature/nosehoover_thermostat.h"
+#include "../algorithm/temperature/berendsen_thermostat.h"
+#include "../algorithm/pressure/pressure_calculation.h"
+#include "../algorithm/pressure/berendsen_barostat.h"
 
-#include <interaction/forcefield/forcefield.h>
-#include <interaction/forcefield/create_forcefield.h>
+#include "../interaction/forcefield/forcefield.h"
+#include "../interaction/forcefield/create_forcefield.h"
 
-#include <math/periodicity.h>
+#include "../math/periodicity.h"
 
-#include <algorithm/constraints/create_constraints.h>
-#include <algorithm/constraints/remove_com_motion.h>
+#include "../algorithm/constraints/create_constraints.h"
+#include "../algorithm/constraints/remove_com_motion.h"
 
-#include <algorithm/integration/slow_growth.h>
-#include <algorithm/integration/steepest_descent.h>
+#include "../algorithm/integration/slow_growth.h"
+#include "../algorithm/integration/steepest_descent.h"
 
-#include <io/print_block.h>
+#include "../io/print_block.h"
 
-#include <algorithm/create_md_sequence.h>
+#include "../algorithm/create_md_sequence.h"
 
 
 #undef MODULE

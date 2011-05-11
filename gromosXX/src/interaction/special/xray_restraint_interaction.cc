@@ -2,30 +2,30 @@
  * @file xray_restraint_interaction.cc
  * template methods of Xray_Restraint_Interaction
  */
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
 
 // special interactions
-#include <interaction/interaction_types.h>
-#include <util/umbrella.h>
-#include <util/umbrella_weight.h>
-#include <interaction/special/xray_restraint_interaction.h>
+#include "../../interaction/interaction_types.h"
+#include "../../util/umbrella.h"
+#include "../../util/umbrella_weight.h"
+#include "../../interaction/special/xray_restraint_interaction.h"
 
-#include <math/periodicity.h>
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "../../math/periodicity.h"
+#include "../../util/template_split.h"
+#include "../../util/debug.h"
 #include <set>
 #include <vector>
 
 #ifdef HAVE_CLIPPER
-#include <interaction/special/xray/dens.h>
-#include <interaction/special/xray/sf.h>
-#include <interaction/special/xray/bfactor.h>
+#include "../../interaction/special/xray/dens.h"
+#include "../../interaction/special/xray/sf.h"
+#include "../../interaction/special/xray/bfactor.h"
 using namespace interaction::xray;
 #include <clipper/clipper.h>
 #include <limits>

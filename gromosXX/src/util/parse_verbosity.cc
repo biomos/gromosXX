@@ -3,11 +3,11 @@
  * implementation of the parse verbosity function
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <util/error.h>
-#include <io/argument.h>
-#include <io/message.h>
+#include "../util/error.h"
+#include "../io/argument.h"
+#include "../io/message.h"
 
 #include "parse_verbosity.h"
 

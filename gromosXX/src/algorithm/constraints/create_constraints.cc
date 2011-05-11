@@ -5,46 +5,46 @@
  * and enabling or disabling perturbation
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 #include <fstream>
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <configuration/state_properties.h>
+#include "../../configuration/state_properties.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
+#include "../../algorithm/algorithm/algorithm_sequence.h"
 
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
+#include "../../interaction/interaction.h"
+#include "../../interaction/interaction_types.h"
 
-#include <interaction/forcefield/forcefield.h>
+#include "../../interaction/forcefield/forcefield.h"
 
-#include <math/periodicity.h>
-#include <math/volume.h>
+#include "../../math/periodicity.h"
+#include "../../math/volume.h"
 
-#include <io/argument.h>
-#include <io/blockinput.h>
-#include <io/instream.h>
-#include <io/topology/in_topology.h>
+#include "../../io/argument.h"
+#include "../../io/blockinput.h"
+#include "../../io/instream.h"
+#include "../../io/topology/in_topology.h"
 
-#include <util/error.h>
+#include "../../util/error.h"
 
-#include <algorithm/constraints/shake.h>
-#include <algorithm/constraints/perturbed_shake.h>
-#include <algorithm/constraints/lincs.h>
-#include <algorithm/constraints/flexible_constraint.h>
-#include <algorithm/constraints/perturbed_flexible_constraint.h>
-#include <algorithm/constraints/settle.h>
-//#include <algorithm/constraints/gpu_settle.h>
-#include <algorithm/constraints/m_shake.h>
-#include <algorithm/constraints/gpu_shake.h>
+#include "../../algorithm/constraints/shake.h"
+#include "../../algorithm/constraints/perturbed_shake.h"
+#include "../../algorithm/constraints/lincs.h"
+#include "../../algorithm/constraints/flexible_constraint.h"
+#include "../../algorithm/constraints/perturbed_flexible_constraint.h"
+#include "../../algorithm/constraints/settle.h"
+//#include "../../algorithm/constraints/gpu_settle.h"
+#include "../../algorithm/constraints/m_shake.h"
+#include "../../algorithm/constraints/gpu_shake.h"
 
-#include <algorithm/constraints/rottrans.h>
+#include "../../algorithm/constraints/rottrans.h"
 
-#include <io/print_block.h>
+#include "../../io/print_block.h"
 
 #include "create_constraints.h"
 

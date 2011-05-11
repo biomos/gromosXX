@@ -3,16 +3,16 @@
  * calculates the pressure.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <configuration/state_properties.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../configuration/state_properties.h"
 
-#include <math/volume.h>
-#include <math/transformation.h>
+#include "../../math/volume.h"
+#include "../../math/transformation.h"
 
 #include "pressure_calculation.h"
 
@@ -22,7 +22,7 @@
 #define MODULE algorithm
 #define SUBMODULE temperature
 
-#include <util/debug.h>
+#include "../../util/debug.h"
 
 int algorithm::Pressure_Calculation
 ::apply(topology::Topology & topo,

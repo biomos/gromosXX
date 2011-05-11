@@ -4,16 +4,16 @@
  * algorithm_sequence.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <algorithm/constraints/remove_com_motion.h>
+#include "../../algorithm/constraints/remove_com_motion.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
+#include "../../algorithm/algorithm/algorithm_sequence.h"
 
 #undef MODULE
 #undef SUBMODULE

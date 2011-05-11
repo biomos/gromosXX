@@ -7,27 +7,27 @@
 #include <mpi.h>
 #endif
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
+#include "../../interaction/interaction.h"
+#include "../../interaction/interaction_types.h"
 
-#include <math/periodicity.h>
+#include "../../math/periodicity.h"
 
-#include <algorithm/constraints/gpu_shake.h>
-#include <algorithm/constraints/gpu_shake_thread.h>
+#include "../../algorithm/constraints/gpu_shake.h"
+#include "../../algorithm/constraints/gpu_shake_thread.h"
 #ifdef HAVE_LIBCUKERNEL
 #include <cudaKernel.h>
 #endif
 
-#include <util/template_split.h>
-#include <util/error.h>
-#include <util/debug.h>
+#include "../../util/template_split.h"
+#include "../../util/error.h"
+#include "../../util/debug.h"
 #include <cassert>
 
 #include <limits>

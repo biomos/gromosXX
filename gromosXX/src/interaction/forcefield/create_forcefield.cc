@@ -2,28 +2,28 @@
  * @file create_forcefield.cc
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../../interaction/interaction.h"
+#include "../../interaction/interaction_types.h"
+#include "../../interaction/forcefield/forcefield.h"
 
-#include <interaction/molecular_virial_interaction.h>
+#include "../../interaction/molecular_virial_interaction.h"
 
-#include <io/ifp.h>
+#include "../../io/ifp.h"
 
 #include "create_forcefield.h"
-#include <interaction/special/qmmm/qm_storage.h>
-#include <interaction/special/qmmm_interaction.h>
+#include "../../interaction/special/qmmm/qm_storage.h"
+#include "../../interaction/special/qmmm_interaction.h"
 
-#include <interaction/bonded/create_bonded.h>
-#include <interaction/nonbonded/create_nonbonded.h>
-#include <interaction/special/create_special.h>
+#include "../../interaction/bonded/create_bonded.h"
+#include "../../interaction/nonbonded/create_nonbonded.h"
+#include "../../interaction/special/create_special.h"
 
 #undef MODULE
 #undef SUBMODULE

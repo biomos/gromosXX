@@ -3,16 +3,16 @@
  * remove com motion.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
 
 #include "remove_com_motion.h"
 
-#include <io/print_block.h>
+#include "../../io/print_block.h"
 
 #undef MODULE
 #undef SUBMODULE

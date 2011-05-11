@@ -2,46 +2,46 @@
  * @file nonbonded_interaction.cc
  * template methods of Nonbonded_Interaction.
  */
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
 
-#include <simulation/parameter.h>
+#include "../../../simulation/parameter.h"
 
-#include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include "../../../interaction/interaction.h"
+#include "../../../interaction/interaction_types.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_parameter.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
+#include "../../../interaction/nonbonded/pairlist/pairlist_algorithm.h"
 
-#include <interaction/nonbonded/interaction/storage.h>
+#include "../../../interaction/nonbonded/interaction/storage.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
-#include <interaction/nonbonded/interaction/nonbonded_set_interface.h>
-#include <interaction/nonbonded/interaction/nonbonded_set.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_set_interface.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_set.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
-#include <interaction/nonbonded/interaction/eds_nonbonded_term.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_term.h"
 
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h>
-#include <interaction/nonbonded/interaction/eds_nonbonded_outerloop.h>
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_outerloop.h"
 
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_set.h>
-#include <interaction/nonbonded/interaction/eds_nonbonded_set.h>
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_set.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_set.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_interaction.h"
 
-#include <util/debug.h>
+#include "../../../util/debug.h"
 
-#include <math/periodicity.h>
-#include <math/boundary_checks.h>
-#include <util/template_split.h>
+#include "../../../math/periodicity.h"
+#include "../../../math/boundary_checks.h"
+#include "../../../util/template_split.h"
 
 #ifdef OMP
 #include <omp.h>
@@ -520,7 +520,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
       {
         // load the table (check section)
 #define CHECK_PARAM "check_param"
-#include <interaction/nonbonded/interaction/spc_table.h>
+#include "../../../interaction/nonbonded/interaction/spc_table.h"
 #undef CHECK_PARAM
 
         // check four_pi_eps_i

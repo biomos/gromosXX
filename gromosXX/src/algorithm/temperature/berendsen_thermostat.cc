@@ -3,13 +3,13 @@
  * methods of the berendsen thermostat
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <configuration/state_properties.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../configuration/state_properties.h"
 
 #include "berendsen_thermostat.h"
 
@@ -19,7 +19,7 @@
 #define MODULE algorithm
 #define SUBMODULE temperature
 
-#include <util/debug.h>
+#include "../../util/debug.h"
 
 int algorithm::Berendsen_Thermostat::init
 (

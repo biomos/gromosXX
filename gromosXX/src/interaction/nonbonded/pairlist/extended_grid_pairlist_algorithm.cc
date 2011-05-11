@@ -3,22 +3,22 @@
  * extended grid pairlist algorithm
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
 
-#include <math/volume.h>
+#include "../../../math/volume.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
 
-#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
-#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist_algorithm.h"
+#include "../../../interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h"
+#include "../../../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
 
-#include <util/debug.h>
+#include "../../../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

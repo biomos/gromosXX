@@ -3,19 +3,19 @@
  * virtual atoms
  */
 
-#include <stdheader.h>
-#include <util/debug.h>
+#include "../stdheader.h"
+#include "../util/debug.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../interaction/interaction.h"
 
 #include "virtual_atom.h"
 
-#include <math/periodicity.h>
-#include <util/template_split.h>
+#include "../math/periodicity.h"
+#include "../util/template_split.h"
 
 #undef MODULE
 #undef SUBMODULE

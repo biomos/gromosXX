@@ -3,38 +3,38 @@
  * replica exchange
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
 #ifdef REPEX
 
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
 
-#include <algorithm/algorithm/algorithm_sequence.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../algorithm/algorithm/algorithm_sequence.h"
+#include "../interaction/interaction.h"
+#include "../interaction/forcefield/forcefield.h"
 
-#include <algorithm/temperature/temperature_calculation.h>
-#include <algorithm/temperature/berendsen_thermostat.h>
+#include "../algorithm/temperature/temperature_calculation.h"
+#include "../algorithm/temperature/berendsen_thermostat.h"
 
-#include <io/argument.h>
-#include <util/parse_verbosity.h>
-#include <util/error.h>
+#include "../io/argument.h"
+#include "../util/parse_verbosity.h"
+#include "../util/error.h"
 
-#include <io/read_input.h>
-#include <io/print_block.h>
+#include "../io/read_input.h"
+#include "../io/print_block.h"
 
 #include <time.h>
 #include <unistd.h>
 
-#include <io/configuration/out_configuration.h>
+#include "../io/configuration/out_configuration.h"
 
-#include <math/volume.h>
+#include "../math/volume.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

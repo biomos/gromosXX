@@ -17,26 +17,20 @@
 #include <stdexcept>
 #include <cassert>
 #include <cmath>
-
 #include <algorithm>
 #include <typeinfo>
 
-#include <config.h>
+#include "config.h"
 
-#include <math/gmath.h>
-#include <util/debug.h>
+#include "math/gmath.h"
+#include "util/debug.h"
 
-#include <io/message.h>
-#include <io/gzstream.h>
+#include "io/message.h"
+#include "io/gzstream.h"
 
-#include <util/timing.h>
+#include "util/timing.h"
 
 #define GROMOSXX "MD++"
-
-// #ifdef COMPILER_GCC
-// #include <cxxabi.h>
-// using namespace ranlib;
-// #endif
 
 #endif
 

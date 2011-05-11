@@ -3,21 +3,21 @@
  * functions to calculate state properties.
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <configuration/configuration_global.h>
+#include "../configuration/configuration_global.h"
 
-#include <algorithm/algorithm.h>
-#include <configuration/configuration.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
+#include "../algorithm/algorithm.h"
+#include "../configuration/configuration.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
 
-#include <math/periodicity.h>
+#include "../math/periodicity.h"
 
-#include <configuration/state_properties.h>
+#include "../configuration/state_properties.h"
 
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "../util/template_split.h"
+#include "../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

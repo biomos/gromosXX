@@ -3,14 +3,14 @@
  * implementation of random number generator
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include <cstring>
-#include <math/random.h>
-#include <util/coding.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
+#include "../math/random.h"
+#include "../util/coding.h"
+#include "../simulation/multibath.h"
+#include "../simulation/parameter.h"
 
-#include <util/debug.h>
+#include "../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE

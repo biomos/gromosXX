@@ -8,7 +8,7 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
-#include <interaction/nonbonded/interaction/latticesum.h>
+#include "../../../interaction/nonbonded/interaction/latticesum.h"
 
 #include "simulation/parameter.h"
 

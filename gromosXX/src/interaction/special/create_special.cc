@@ -3,41 +3,41 @@
  * create the special terms.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
+#include "../../interaction/forcefield/forcefield.h"
 
 // special interactions
-#include <interaction/interaction_types.h>
+#include "../../interaction/interaction_types.h"
 
-#include <interaction/special/position_restraint_interaction.h>
-#include <interaction/special/distance_restraint_interaction.h>
-#include <interaction/special/dihedral_restraint_interaction.h>
-#include <interaction/special/perturbed_distance_restraint_interaction.h>
-#include <interaction/special/eds_distance_restraint_interaction.h>
-#include <interaction/special/perturbed_dihedral_restraint_interaction.h>
-#include <interaction/special/jvalue_restraint_interaction.h>
-#include <interaction/special/external_interaction.h>
-#include <interaction/special/ramd_interaction.h>
-#include <util/umbrella_weight.h>
-#include <interaction/special/xray_restraint_interaction.h>
-#include <interaction/special/adde_reweighting.h>
-#include <interaction/special/nemd.h>
-#include <interaction/special/local_elevation_interaction.h>
-#include <interaction/special/electric_field_interaction.h>
+#include "../../interaction/special/position_restraint_interaction.h"
+#include "../../interaction/special/distance_restraint_interaction.h"
+#include "../../interaction/special/dihedral_restraint_interaction.h"
+#include "../../interaction/special/perturbed_distance_restraint_interaction.h"
+#include "../../interaction/special/eds_distance_restraint_interaction.h"
+#include "../../interaction/special/perturbed_dihedral_restraint_interaction.h"
+#include "../../interaction/special/jvalue_restraint_interaction.h"
+#include "../../interaction/special/external_interaction.h"
+#include "../../interaction/special/ramd_interaction.h"
+#include "../../util/umbrella_weight.h"
+#include "../../interaction/special/xray_restraint_interaction.h"
+#include "../../interaction/special/adde_reweighting.h"
+#include "../../interaction/special/nemd.h"
+#include "../../interaction/special/local_elevation_interaction.h"
+#include "../../interaction/special/electric_field_interaction.h"
 
 
-#include <interaction/bonded/dihedral_interaction.h>
-#include <interaction/bonded/dihedral_new_interaction.h>
-#include <interaction/special/pscale.h>
+#include "../../interaction/bonded/dihedral_interaction.h"
+#include "../../interaction/bonded/dihedral_new_interaction.h"
+#include "../../interaction/special/pscale.h"
 
-#include <io/instream.h>
-#include <io/topology/in_topology.h>
+#include "../../io/instream.h"
+#include "../../io/topology/in_topology.h"
 
 #include "create_special.h"
 #include "xray_restraint_interaction.h"

@@ -2,18 +2,18 @@
  * @file umbrella.cc
  * umbrella potentials for LEUS
  */
-#include <stdheader.h>
+#include "../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <math/periodicity.h>
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
+#include "../math/periodicity.h"
 
-#include <util/le_coordinate.h>
-#include <util/umbrella_weight.h>
-#include <util/template_split.h>
-#include <util/debug.h>
+#include "../util/le_coordinate.h"
+#include "../util/umbrella_weight.h"
+#include "../util/template_split.h"
+#include "../util/debug.h"
 
 #include "umbrella.h"
 

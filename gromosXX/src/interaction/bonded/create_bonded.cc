@@ -3,38 +3,38 @@
  * create the bonded terms.
  */
 
-#include <stdheader.h>
+#include "../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
-#include <interaction/forcefield/forcefield.h>
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
+#include "../../interaction/forcefield/forcefield.h"
 
 // interactions
-#include <interaction/interaction_types.h>
-#include <interaction/bonded/quartic_bond_interaction.h>
-#include <interaction/bonded/harmonic_bond_interaction.h>
-#include <interaction/bonded/cg_bond_interaction.h>
-#include <interaction/bonded/angle_interaction.h>
-#include <interaction/bonded/harm_angle_interaction.h>
-#include <interaction/bonded/dihedral_interaction.h>
-#include <interaction/bonded/dihedral_new_interaction.h>
-#include <interaction/bonded/crossdihedral_interaction.h>
-#include <interaction/bonded/improper_dihedral_interaction.h>
+#include "../../interaction/interaction_types.h"
+#include "../../interaction/bonded/quartic_bond_interaction.h"
+#include "../../interaction/bonded/harmonic_bond_interaction.h"
+#include "../../interaction/bonded/cg_bond_interaction.h"
+#include "../../interaction/bonded/angle_interaction.h"
+#include "../../interaction/bonded/harm_angle_interaction.h"
+#include "../../interaction/bonded/dihedral_interaction.h"
+#include "../../interaction/bonded/dihedral_new_interaction.h"
+#include "../../interaction/bonded/crossdihedral_interaction.h"
+#include "../../interaction/bonded/improper_dihedral_interaction.h"
 
 // perturbed interactions
-#include <interaction/bonded/perturbed_quartic_bond_interaction.h>
-#include <interaction/bonded/perturbed_harmonic_bond_interaction.h>
-#include <interaction/bonded/perturbed_cg_bond_interaction.h>
-#include <interaction/bonded/perturbed_angle_interaction.h>
-#include <interaction/bonded/perturbed_improper_dihedral_interaction.h>
-#include <interaction/bonded/perturbed_dihedral_interaction.h>
-#include <interaction/bonded/perturbed_dihedral_new_interaction.h>
+#include "../../interaction/bonded/perturbed_quartic_bond_interaction.h"
+#include "../../interaction/bonded/perturbed_harmonic_bond_interaction.h"
+#include "../../interaction/bonded/perturbed_cg_bond_interaction.h"
+#include "../../interaction/bonded/perturbed_angle_interaction.h"
+#include "../../interaction/bonded/perturbed_improper_dihedral_interaction.h"
+#include "../../interaction/bonded/perturbed_dihedral_interaction.h"
+#include "../../interaction/bonded/perturbed_dihedral_new_interaction.h"
 
-// #include <io/instream.h>
-#include <io/ifp.h>
+// #include "../../io/instream.h"
+#include "../../io/ifp.h"
 
 #include "create_bonded.h"
 

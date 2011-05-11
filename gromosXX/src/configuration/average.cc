@@ -3,13 +3,13 @@
  * implements Average member methods.
  */
 
-#include <stdheader.h>
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../stdheader.h"
+#include "../algorithm/algorithm.h"
+#include "../topology/topology.h"
+#include "../simulation/simulation.h"
+#include "../configuration/configuration.h"
 
-#include <math/volume.h>
+#include "../math/volume.h"
 
 #include "average.h"
 

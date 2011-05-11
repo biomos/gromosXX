@@ -3,7 +3,7 @@
  * checks for boxes and boundary conditions (implementation)
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include "boundary_checks.h"
 #include "../util/debug.h"
 

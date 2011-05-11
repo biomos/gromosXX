@@ -3,7 +3,7 @@
  * basic input stream class definition.
  */
 
-#include <stdheader.h>
+#include "../stdheader.h"
 #include <vector>
 #include <sstream>
 
@@ -11,7 +11,7 @@
 #include "instream.h"
 #include "message.h"
 
-#include <util/coding.h>
+#include "../util/coding.h"
 #include <fstream>
 
 #undef MODULE

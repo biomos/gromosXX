@@ -7,8 +7,8 @@
 #include <sched.h>
 #include <unistd.h>
 #include <signal.h>
-#include <stdheader.h>
-#include <util/debug.h>
+#include "../stdheader.h"
+#include "../util/debug.h"
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util

@@ -3,31 +3,31 @@
  * template methods of Perturbed_Nonbonded_Pair
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
 
-#include <interaction/interaction_types.h>
-#include <interaction/nonbonded/interaction_spec.h>
+#include "../../../interaction/interaction_types.h"
+#include "../../../interaction/nonbonded/interaction_spec.h"
 
-#include <math/periodicity.h>
+#include "../../../math/periodicity.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
-#include <interaction/nonbonded/interaction/storage.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_parameter.h"
+#include "../../../interaction/nonbonded/interaction/storage.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.h>
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h"
 
-#include <interaction/nonbonded/interaction/perturbed_nonbonded_pair.h>
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
 
-#include <interaction/nonbonded/interaction_spec.h>
+#include "../../../interaction/nonbonded/interaction_spec.h"
 
-#include <util/debug.h>
-#include <interaction/nonbonded/innerloop_template.h>
+#include "../../../util/debug.h"
+#include "../../../interaction/nonbonded/innerloop_template.h"
 
 #undef MODULE
 #undef SUBMODULE

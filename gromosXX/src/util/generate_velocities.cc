@@ -3,10 +3,10 @@
  * generate velocities from Maxwell distribution.
  */
 
-#include <stdheader.h>
-#include <math/random.h>
-#include <simulation/multibath.h>
-#include <simulation/parameter.h>
+#include "../stdheader.h"
+#include "../math/random.h"
+#include "../simulation/multibath.h"
+#include "../simulation/parameter.h"
 
 #include "generate_velocities.h"
 
