@@ -378,6 +378,7 @@ dnl Checks for libraries.
 AC_CHECK_LIB(m, sqrt)
 AC_CHECK_LIB(socket, listen)
 AC_CHECK_LIB(nsl, uname)
+AC_CHECK_HEADER([zlib.h],[],AC_MSG_ERROR([zlib.h header file missing.]))
 AC_CHECK_LIB(z, zlibVersion)
 
 if eval "test x$enable_openmp = xyes"; then
