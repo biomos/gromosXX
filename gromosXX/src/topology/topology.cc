@@ -53,7 +53,7 @@ topology::Topology::Topology()
     m_coscharge(0),
     m_damping_level(0),
     m_damping_power(0),
-    m_gamma(0.0),
+    m_gamma(0),
     m_gamma_j(0),
     m_gamma_k(0),
     m_cg_factor(1),

@@ -612,7 +612,7 @@ namespace topology
      */
     bool is_polarisable(unsigned int const i)const {
       
-      assert(i >= 0 && i < m_is_polarisable.size()); 
+      assert(i < m_is_polarisable.size()); 
       return m_is_polarisable[i];
     }
     /**
@@ -625,7 +625,7 @@ namespace topology
      */
     bool is_coarse_grained(unsigned int const i)const {
 
-      assert(i >= 0 && i < m_is_coarse_grained.size());
+      assert(i < m_is_coarse_grained.size());
       return m_is_coarse_grained[i];
     }
     /**
