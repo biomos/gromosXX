@@ -2862,7 +2862,7 @@ namespace simulation
         m_adc_index.push_back(adc_struct(adstart, adend, sm, sv, st, tir, eg, tg));
       }
 
-      int const check_index_adc(int atom_number)const {
+      int check_index_adc(int atom_number)const {
         for (unsigned int i = 0; i < m_adc_index.size(); i++) {
           if (atom_number >= m_adc_index[i].adstart && atom_number <= m_adc_index[i].adend)
             return i;

@@ -358,7 +358,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
   if(param.nemd.nemd != simulation::nemd_off){
     special().nemd_conf.Px = 0.0; //To accumulate the momemtum
     special().nemd_conf.counter = 0; 
-    int num_grid = 2 * param.nemd.slabnum;
+    unsigned int num_grid = 2 * param.nemd.slabnum;
     special().nemd_conf.stored_data_per_bin.clear();
     for(unsigned int i = 0; i < num_grid; ++i) {
       special().nemd_conf.stored_data_per_bin.push_back(0.0);

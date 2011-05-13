@@ -15,11 +15,12 @@ namespace interaction {
    * this class is abstract and you should not create instances of it.
    */
   class Lattice_Sum {
+      Lattice_Sum();
   public:     
     /**
      * the virtual function to ensure the class is not instantiated.
      */
-    virtual void dummy() = 0;
+    //virtual void dummy() = 0;
     
     /**
      * calculates charge shaping switch function @f$ \eta(\xi) @f$ and its derivative

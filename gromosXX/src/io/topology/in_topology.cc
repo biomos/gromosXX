@@ -549,7 +549,7 @@ io::In_Topology::read(topology::Topology& topo,
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> cg_begin >> cg_end >> cg_fac;
-
+          
           if (_lineStream.fail() || !_lineStream.eof()) {
             io::messages.add("Bad line in CGSOLUTE block",
                     "In_Topology", io::message::error);
@@ -568,7 +568,7 @@ io::In_Topology::read(topology::Topology& topo,
             DEBUG(10, "\tcoarse grained factor: " << cg_fac);
             os << "\t\trange: " << cg_begin << " " << cg_end << "\n"
                << "\t\tcoarse grained factor: " << cg_fac << "\n";
-            for (unsigned int i = (cg_begin - 1); i < cg_end; ++i) {
+            for (unsigned int i = (cg_begin - 1); i < unsigned(cg_end); ++i) {
               topo.is_coarse_grained()[i] = true;
               topo.cg_factor()[i] = cg_fac;
             }

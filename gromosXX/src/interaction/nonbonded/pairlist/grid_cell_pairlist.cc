@@ -134,7 +134,7 @@ int interaction::Grid_Cell_Pairlist::init(topology::Topology & topo,
   DEBUG(15, "cutoff_lr2 = " << cutoff_lr2);
 
   // Guess Number of stripes;  eq.(4)
-  int num_s =  cutoff_lr * cutoff_lr * num_y * num_z / (length_y * length_z);
+  int num_s =  int(cutoff_lr * cutoff_lr * num_y * num_z / (length_y * length_z));
 
   // Reserve some space for the mask pointer
   DEBUG(15, "Grid Cell : Reserve Space for the mask pointer")

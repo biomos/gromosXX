@@ -165,7 +165,7 @@ std::string algorithm::Multi_Gradient::Curve::plot_ascii(double start_time, doub
   for(unsigned int x = 0; x < width; ++x) {
     int y;
     if (spread)
-      y = height * (values[x] - min_val) / spread;
+      y = int(height * (values[x] - min_val) / spread);
     else
       y = 0;
 

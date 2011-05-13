@@ -157,7 +157,8 @@ io::In_QMMM::read(topology::Topology& topo,
 
     DEBUG(10, "reading in QMZONE data");
 
-    unsigned int i, nr, z, link;
+    unsigned int i, nr, z;
+    int link;
     for (i = 0; it != to; ++i, ++it) {
 
       DEBUG(11, "\tnr " << i);

@@ -4830,7 +4830,10 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
 
       }
     }
-
+ if (write <0)
+      io::messages.add("NEMD block: invalid value for WRITE (>=0)",
+                "In_Parameter", io::message::error);
+    
     param.nemd.slabnum = slabnum;
     param.nemd.pertfrq = pertfrq;
     param.nemd.ampbath = ampli;
@@ -4838,10 +4841,7 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
     param.nemd.write = write;
     
 
-    if (param.nemd.write <0)
-      io::messages.add("NEMD block: invalid value for WRITE (>=0)",
-                "In_Parameter", io::message::error);
-    
+   
 
     
 

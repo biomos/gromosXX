@@ -150,7 +150,7 @@ calculate_interactions(topology::Topology& topo,
          *
          *
          */
-        int nslab = 2 * sim.param().nemd.slabnum;
+        unsigned int nslab = 2 * sim.param().nemd.slabnum;
         double ampbath = sim.param().nemd.ampbath; // AAF: applied acceleration field
         double k = 2 * math::Pi / conf.current().box(2)(2); // k = 2*pi*L_z
         
@@ -210,7 +210,7 @@ calculate_interactions(topology::Topology& topo,
             math::Vec pos = conf.current().pos(i);
             periodicity.put_into_positive_box(pos);
             double z = pos(2);
-            int bin = z / conf.current().box(2)(2) * nslab;
+            int bin = int(z / conf.current().box(2)(2) * nslab);
             grid[bin].push_back(i);
           }
 
@@ -243,7 +243,7 @@ calculate_interactions(topology::Topology& topo,
          * Bordat, P. and Muller-Plathe, F. J. Chem. Phys. 116, 3362.  
          */
         //number of grid points
-        int nslab = 2 * sim.param().nemd.slabnum;
+        unsigned int nslab = 2 * sim.param().nemd.slabnum;
         //double zlength = conf.current().box(2)(2);
         //double width = zlength/nslab;
 
@@ -259,7 +259,7 @@ calculate_interactions(topology::Topology& topo,
           math::Vec pos = conf.current().pos(i);
           periodicity.put_into_positive_box(pos);
           double z = pos(2);
-          int bin = z / conf.current().box(2)(2) * nslab;
+          int bin = int(z / conf.current().box(2)(2) * nslab);
           grid[bin].push_back(i);
         }
 
@@ -275,7 +275,7 @@ calculate_interactions(topology::Topology& topo,
         // loop over member of 1st slice (grid[0])
         // and get the atom/molecule with most negative x-component
         double min_vel = 1E9; // Big positive number
-        unsigned min_index = -1; // Sentinel
+        int min_index = -1; // Sentinel
         for(unsigned int i = 0; i < grid[0].size(); ++i) {
           //double vel_i = math::abs(conf.current().vel(grid[0][i]);
           double vel_i = conf.current().vel(grid[0][i])(0);
@@ -288,7 +288,7 @@ calculate_interactions(topology::Topology& topo,
         // loop over member of Lz/2 slice (grid[nslab/2])
         // and get the atom/molecule with most positive x-component
         double max_vel = -1E9; // Big negative number
-        unsigned max_index = -1; // Sentinel
+        int max_index = -1; // Sentinel
         for(unsigned int i = 0; i < grid[nslab / 2].size(); ++i) {
           double vel_i = conf.current().vel(grid[nslab / 2][i])(0);
           if(max_vel < vel_i) {

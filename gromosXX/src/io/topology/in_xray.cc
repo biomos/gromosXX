@@ -769,7 +769,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         }
       } else {
         sim.param().xrayrest.bfactor.groups.resize(num_group);
-        for(unsigned int i = 0; i < num_group; ++i) {
+        for(unsigned int i = 0; i < unsigned(num_group); ++i) {
           int size;
           _lineStream >> size;
           if (_lineStream.fail() || size <= 0) {
@@ -790,11 +790,11 @@ io::In_Xrayresspec::read(topology::Topology& topo,
           }
         }
         // check for overlap
-        for(unsigned int i = 0; i < num_group; ++i) {
+        for(unsigned int i = 0; i < unsigned(num_group); ++i) {
           std::set<unsigned int>::const_iterator it = sim.param().xrayrest.bfactor.groups[i].begin(),
                   to = sim.param().xrayrest.bfactor.groups[i].end();
           for(; it != to; ++it) {
-            for(unsigned int j = i+1; j < num_group; ++j) {
+            for(unsigned int j = i+1; j < unsigned(num_group); ++j) {
               if (sim.param().xrayrest.bfactor.groups[j].find(*it) !=
                   sim.param().xrayrest.bfactor.groups[j].end()) {
                 std::ostringstream os;
