@@ -93,6 +93,7 @@ int algorithm::Position_Constraints
   for( ; it != to; ++it) {
     pos(it->seq) = conf.special().reference_positions(it->seq);
     vel(it->seq) = 0.0;
+    topo.inverse_mass()(it->seq) = 0.0;
     constrained.insert(it->seq);
   }
   

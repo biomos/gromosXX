@@ -69,6 +69,20 @@ namespace topology
      * mass of atom i
      */
     double mass(int i)const { return m_mass(i); }
+    /**
+     * masses accessor
+     */
+    math::SArray &inverse_mass() {return m_inverse_mass;}
+
+    /**
+     * masses const accessor
+     */
+    math::SArray const & inverse_mass()const {return m_inverse_mass;}
+
+    /**
+     * mass of atom i
+     */
+    double inverse_mass(int i)const { return m_inverse_mass(i); }
     
     /**
      * charge accessor
@@ -1211,11 +1225,15 @@ namespace topology
      * the atom masses.
      */
     math::SArray m_mass;
+    /**
+     * the inverse of the atomic masses.
+     */
+    math::SArray m_inverse_mass;
     
     /**
      * the atom charges.
      */
-     math::SArray m_charge;
+    math::SArray m_charge;
 
     /**
      * stochastic dynamics variables

@@ -40,23 +40,21 @@
  */
 algorithm::Shake
 ::Shake(double const tolerance, int const max_iterations,
-	std::string const name)
-  : Algorithm(name),
-    m_tolerance(tolerance),
-    m_max_iterations(max_iterations)
-{}
+        std::string const name)
+: Algorithm(name),
+m_tolerance(tolerance),
+m_max_iterations(max_iterations) {
+}
 
 /**
  * Destructor.
  */
 algorithm::Shake
-::~Shake()
-{
+::~Shake() {
 }
 
 void algorithm::Shake
-::tolerance(double const tol)
-{
+::tolerance(double const tol) {
   m_tolerance = tol;
 }
 
@@ -66,65 +64,66 @@ void algorithm::Shake
 template<math::boundary_enum B, math::virial_enum V>
 int algorithm::Shake::shake_iteration
 (
- topology::Topology const &topo,
- configuration::Configuration & conf,
- bool & convergence,
- int first,
- std::vector<bool> &skip_now,
- std::vector<bool> &skip_next,
- std::vector<topology::two_body_term_struct> const & constr,
- double dt,
- math::Periodicity<B> const & periodicity
- )
-
-{
+        topology::Topology const &topo,
+        configuration::Configuration & conf,
+        bool & convergence,
+        int first,
+        std::vector<bool> &skip_now,
+        std::vector<bool> &skip_next,
+        std::vector<topology::two_body_term_struct> const & constr,
+        double dt,
+        math::Periodicity<B> const & periodicity
+        )
+ {
   convergence = true;
 
   // index for constraint_force...
   unsigned int k = 0;
   double const dt2 = dt * dt;
-  
+
   // and constraints
-  for(typename std::vector<topology::two_body_term_struct>
-	::const_iterator
-	it = constr.begin(),
-	to = constr.end();
-      it != to;
-      ++it, ++k ){
-	
+  for (typename std::vector<topology::two_body_term_struct>
+          ::const_iterator
+          it = constr.begin(),
+          to = constr.end();
+          it != to;
+          ++it, ++k) {
+
     // check whether we can skip this constraint
     if (skip_now[it->i] && skip_now[it->j]) continue;
+    if (topo.inverse_mass(first + it->i) == 0 &&
+            topo.inverse_mass(first + it->j) == 0) continue;
 
     DEBUG(10, "i: " << it->i << " j: " << it->j << " first: " << first);
 
     // the position
-    math::Vec &pos_i = conf.current().pos(first+it->i);
-    math::Vec &pos_j = conf.current().pos(first+it->j);
+    math::Vec &pos_i = conf.current().pos(first + it->i);
+    math::Vec &pos_j = conf.current().pos(first + it->j);
 
     DEBUG(10, "\ni: " << math::v2s(pos_i) << "\nj: " << math::v2s(pos_j));
-	
+
     math::Vec r;
     periodicity.nearest_image(pos_i, pos_j, r);
     DEBUG(12, "ni:  " << math::v2s(r));
-    
+
     double dist2 = abs2(r);
-	
+
     assert(parameter().size() > it->type);
     double constr_length2 = parameter()[it->type].r0 * parameter()[it->type].r0;
     double diff = constr_length2 - dist2;
 
     DEBUG(13, "constr: " << constr_length2 << " dist2: " << dist2);
-	  
-    if(fabs(diff) >= constr_length2 * tolerance() * 2.0){
+
+    if (fabs(diff) >= constr_length2 * tolerance() * 2.0) {
       // we have to shake
       DEBUG(10, "shaking");
-      
+
       // the reference position
-      const unsigned int atom_i = first+it->i;
-      const unsigned int atom_j = first+it->j;
+      const unsigned int atom_i = first + it->i;
+      const unsigned int atom_j = first + it->j;
       const math::Vec &ref_i = conf.old().pos(atom_i);
       const math::Vec &ref_j = conf.old().pos(atom_j);
-      
+
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
 
@@ -134,40 +133,40 @@ int algorithm::Shake::shake_iteration
       DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
       DEBUG(5, "ref r " << math::v2s(ref_r));
       DEBUG(5, "r " << math::v2s(r));
-	  
-      if(sp < constr_length2 * math::epsilon){
-	/*
-	io::messages.add("SHAKE error. vectors orthogonal",
-			 "Shake::???",
-			 io::message::critical);
-	*/
-	std::cout << "SHAKE ERROR\n"
-		  << "\tatom i    : " << atom_i + 1 << "\n"
-		  << "\tatom j    : " << atom_j + 1 << "\n"
-	  // << "\tfirst     : " << first << "\n"
-		  << "\tref i     : " << math::v2s(ref_i) << "\n"
-		  << "\tref j     : " << math::v2s(ref_j) << "\n"
-		  << "\tfree i    : " << math::v2s(pos_i) << "\n"
-		  << "\tfree j    : " << math::v2s(pos_j) << "\n"
-		  << "\tref r     : " << math::v2s(ref_r) << "\n"
-		  << "\tr         : " << math::v2s(r) << "\n"
-		  << "\tsp        : " << sp << "\n"
-		  << "\tconstr    : " << constr_length2 << "\n"
-		  << "\tdiff      : " << diff << "\n"
-		  << "\tforce i   : " << math::v2s(conf.old().force(atom_i)) << "\n"
-		  << "\tforce j   : " << math::v2s(conf.old().force(atom_j)) << "\n"
-		  << "\tvel i     : " << math::v2s(conf.current().vel(atom_i)) << "\n"
-		  << "\tvel j     : " << math::v2s(conf.current().vel(atom_j)) << "\n"
-		  << "\told vel i : " << math::v2s(conf.old().vel(atom_i)) << "\n"
-		  << "\told vel j : " << math::v2s(conf.old().vel(atom_j)) << "\n\n";
-	
-	return E_SHAKE_FAILURE;
+
+      if (sp < constr_length2 * math::epsilon) {
+        /*
+        io::messages.add("SHAKE error. vectors orthogonal",
+             "Shake::???",
+             io::message::critical);
+         */
+        std::cout << "SHAKE ERROR\n"
+                << "\tatom i    : " << atom_i + 1 << "\n"
+                << "\tatom j    : " << atom_j + 1 << "\n"
+                // << "\tfirst     : " << first << "\n"
+                << "\tref i     : " << math::v2s(ref_i) << "\n"
+                << "\tref j     : " << math::v2s(ref_j) << "\n"
+                << "\tfree i    : " << math::v2s(pos_i) << "\n"
+                << "\tfree j    : " << math::v2s(pos_j) << "\n"
+                << "\tref r     : " << math::v2s(ref_r) << "\n"
+                << "\tr         : " << math::v2s(r) << "\n"
+                << "\tsp        : " << sp << "\n"
+                << "\tconstr    : " << constr_length2 << "\n"
+                << "\tdiff      : " << diff << "\n"
+                << "\tforce i   : " << math::v2s(conf.old().force(atom_i)) << "\n"
+                << "\tforce j   : " << math::v2s(conf.old().force(atom_j)) << "\n"
+                << "\tvel i     : " << math::v2s(conf.current().vel(atom_i)) << "\n"
+                << "\tvel j     : " << math::v2s(conf.current().vel(atom_j)) << "\n"
+                << "\told vel i : " << math::v2s(conf.old().vel(atom_i)) << "\n"
+                << "\told vel j : " << math::v2s(conf.old().vel(atom_j)) << "\n\n";
+
+        return E_SHAKE_FAILURE;
       }
-	  
+
       // lagrange multiplier
       double lambda = diff / (sp * 2.0 *
-			      (1.0 / topo.mass()(atom_i) +
-			       1.0 / topo.mass()(atom_j) ));      
+              (topo.inverse_mass()(atom_i) +
+               topo.inverse_mass()(atom_j)));
 
       DEBUG(10, "lagrange multiplier " << lambda);
 
@@ -182,27 +181,27 @@ int algorithm::Shake::shake_iteration
                     ref_r(a) * ref_r(aa) * lambda / dt2;
           }
         }
-	DEBUG(12, "\tatomic virial done");
+        DEBUG(12, "\tatomic virial done");
       }
-      
+
       // update positions
       ref_r *= lambda;
-      pos_i += ref_r / topo.mass()(first+it->i);
-      pos_j -= ref_r / topo.mass()(first+it->j);
-	  
+      pos_i += ref_r * topo.inverse_mass()(first + it->i);
+      pos_j -= ref_r * topo.inverse_mass()(first + it->j);
+
       convergence = false;
 
       // consider atoms in the next step
       skip_next[it->i] = false;
       skip_next[it->j] = false;
-      
+
     } // we have to shake
   } // constraints
-      
-  
+
+
   return 0;
 
-}    
+}
 
 /**
  * shake solute
@@ -210,11 +209,10 @@ int algorithm::Shake::shake_iteration
 template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Shake::
 solute(topology::Topology const & topo,
-       configuration::Configuration & conf,
-       simulation::Simulation const & sim,
-       int const max_iterations,
-       int & error)
-{
+        configuration::Configuration & conf,
+        simulation::Simulation const & sim,
+        int const max_iterations,
+        int & error) {
   // for now shake the whole solute in one go,
   // not bothering about submolecules...
 
@@ -222,7 +220,7 @@ solute(topology::Topology const & topo,
   math::Periodicity<B> periodicity(conf.current().box);
 
   m_timer.start("solute");
-  
+
   const unsigned int num_atoms = topo.num_solute_atoms();
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
@@ -232,58 +230,58 @@ solute(topology::Topology const & topo,
 
   skip_now.assign(topo.solute().num_atoms(), false);
   skip_next.assign(topo.solute().num_atoms(), true);
-  
+
   bool convergence = false;
-  while(!convergence){
+  while (!convergence) {
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
     // distance constraints
     bool dist_convergence = true;
 
-    if (topo.solute().distance_constraints().size() && 
-	sim.param().constraint.solute.algorithm == simulation::constr_shake &&
-	sim.param().constraint.ntc > 1){
+    if (topo.solute().distance_constraints().size() &&
+            sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+            sim.param().constraint.ntc > 1) {
 
       DEBUG(7, "SHAKE: distance constraints iteration");
 
-      if(shake_iteration<B, V>
-	 (topo, conf, dist_convergence, first, skip_now, skip_next,
-	  topo.solute().distance_constraints(), sim.time_step_size(),
-	  periodicity)
-	 ){
-	io::messages.add("SHAKE error. vectors orthogonal",
-			 "Shake::solute",
-			 io::message::error);
-	std::cout << "SHAKE failure in solute!" << std::endl;
-	error = E_SHAKE_FAILURE_SOLUTE;
-	return;
+      if (shake_iteration<B, V >
+              (topo, conf, dist_convergence, first, skip_now, skip_next,
+              topo.solute().distance_constraints(), sim.time_step_size(),
+              periodicity)
+              ) {
+        io::messages.add("SHAKE error. vectors orthogonal",
+                "Shake::solute",
+                io::message::error);
+        std::cout << "SHAKE failure in solute!" << std::endl;
+        error = E_SHAKE_FAILURE_SOLUTE;
+        return;
       }
     }
 
     // dihedral constraints
     bool dih_convergence = true;
-    if (sim.param().dihrest.dihrest == simulation::dihedral_constr){
+    if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
 
       DEBUG(7, "SHAKE: dihedral constraints iteration");
-      
-      if(dih_constr_iteration<B, V>
-	 (topo, conf, sim, dih_convergence, skip_now, skip_next, periodicity)
-	 ){
-	io::messages.add("SHAKE error: dihedral constraints",
-			 "Shake::solute",
-			 io::message::error);
-	std::cout << "SHAKE failure in solute dihedral constraints!" << std::endl;
-	error = E_SHAKE_FAILURE_SOLUTE;
-	return;
+
+      if (dih_constr_iteration<B, V >
+              (topo, conf, sim, dih_convergence, skip_now, skip_next, periodicity)
+              ) {
+        io::messages.add("SHAKE error: dihedral constraints",
+                "Shake::solute",
+                io::message::error);
+        std::cout << "SHAKE failure in solute dihedral constraints!" << std::endl;
+        error = E_SHAKE_FAILURE_SOLUTE;
+        return;
       }
     }
 
     convergence = dist_convergence && dih_convergence;
-    
-    if(++num_iterations > max_iterations){
+
+    if (++num_iterations > max_iterations) {
       io::messages.add("SHAKE error. too many iterations",
-		       "Shake::solute",
-		       io::message::error);
+              "Shake::solute",
+              io::message::error);
       error = E_SHAKE_FAILURE_SOLUTE;
       return;
     }
@@ -295,16 +293,15 @@ solute(topology::Topology const & topo,
 
   // constraint force
   const double dt2 = sim.time_step_size() * sim.time_step_size();
-  for (unsigned int i=0; i < num_atoms; ++i){
+  for (unsigned int i = 0; i < num_atoms; ++i) {
     conf.old().constraint_force(i) *= 1 / dt2;
     DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
   }
   error = 0;
 
   m_timer.stop("solute");
-  
-} // solute
 
+} // solute
 
 /**
  * shake solvent.
@@ -312,14 +309,13 @@ solute(topology::Topology const & topo,
 template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Shake
 ::solvent(topology::Topology const & topo,
-	  configuration::Configuration & conf,
-          simulation::Simulation & sim,
-	  double dt, int const max_iterations,
-	  int & error)
-{
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        double dt, int const max_iterations,
+        int & error) {
 
   DEBUG(8, "\tshaking SOLVENT");
-  
+
   if (!sim.mpi || m_rank == 0)
     m_timer.start("solvent");
 
@@ -332,7 +328,7 @@ void algorithm::Shake
 
   error = 0;
   int my_error = error;
-  
+
   const unsigned int num_atoms = topo.num_atoms();
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -349,19 +345,19 @@ void algorithm::Shake
     if (m_rank) { // slave
       conf.old().virial_tensor = 0.0;
       conf.old().constraint_force = 0.0;
-      for(unsigned int i = 0; i < first; ++i) {
+      for (unsigned int i = 0; i < first; ++i) {
         pos(i) = 0.0;
       }
-    } 
+    }
   }
 #endif
 
   // for all solvents
-  for(unsigned int i=0; i<topo.num_solvents(); ++i){
+  for (unsigned int i = 0; i < topo.num_solvents(); ++i) {
     const unsigned int num_solvent_atoms = topo.solvent(i).num_atoms();
     // loop over the molecules
-    for(unsigned int nm=0; nm<topo.num_solvent_molecules(i);
-	++nm, first+=num_solvent_atoms){
+    for (unsigned int nm = 0; nm < topo.num_solvent_molecules(i);
+            ++nm, first += num_solvent_atoms) {
 
 #ifdef XXMPI
       if (sim.mpi) {
@@ -369,7 +365,7 @@ void algorithm::Shake
         DEBUG(12, "rank: " << m_rank << " nm: " << nm << " stride: " << stride);
         if (stride % m_size != 0) {
           // set current coordinates to zero.
-          for(unsigned int a = 0; a < num_solvent_atoms; ++a) {
+          for (unsigned int a = 0; a < num_solvent_atoms; ++a) {
             pos(a + first) = 0.0;
           }
           // do next molecule
@@ -383,42 +379,42 @@ void algorithm::Shake
 
       int num_iterations = 0;
       bool convergence = false;
-      while(!convergence){
-	DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
+      while (!convergence) {
+        DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
-	if(shake_iteration<B, V>
-	   (topo, conf, convergence, first, skip_now, skip_next,
-	    topo.solvent(i).distance_constraints(), dt,
-	    periodicity)){
-	  
-	  io::messages.add("SHAKE error. vectors orthogonal",
-			   "Shake::solvent", io::message::error);
-	  
-	  std::cout << "SHAKE failure in solvent!" << std::endl;
-	  my_error = E_SHAKE_FAILURE_SOLVENT;
-	  break;
-	}
-	
-	// std::cout << num_iterations+1 << std::endl;
-	if(++num_iterations > max_iterations){
-	  io::messages.add("SHAKE error. too many iterations",
-			   "Shake::solvent",
-			   io::message::critical);
-	  my_error = E_SHAKE_FAILURE_SOLVENT;
-	  break;
-	}
+        if (shake_iteration<B, V >
+                (topo, conf, convergence, first, skip_now, skip_next,
+                topo.solvent(i).distance_constraints(), dt,
+                periodicity)) {
 
-	skip_now = skip_next;
-	skip_next.assign(skip_next.size(), true);
+          io::messages.add("SHAKE error. vectors orthogonal",
+                  "Shake::solvent", io::message::error);
+
+          std::cout << "SHAKE failure in solvent!" << std::endl;
+          my_error = E_SHAKE_FAILURE_SOLVENT;
+          break;
+        }
+
+        // std::cout << num_iterations+1 << std::endl;
+        if (++num_iterations > max_iterations) {
+          io::messages.add("SHAKE error. too many iterations",
+                  "Shake::solvent",
+                  io::message::critical);
+          my_error = E_SHAKE_FAILURE_SOLVENT;
+          break;
+        }
+
+        skip_now = skip_next;
+        skip_next.assign(skip_next.size(), true);
 
       } // while(!convergence)
       if (my_error != error) break;
-      
+
       tot_iterations += num_iterations;
-      
+
     } // molecules
     if (my_error != error) break;
-    
+
   } // solvents
 
   // reduce everything
@@ -432,21 +428,21 @@ void algorithm::Shake
       // reduce current positions, store them in new_pos and assign them to current positions
       math::VArray new_pos(topo.num_atoms(), math::Vec(0.0));
       MPI::COMM_WORLD.Reduce(&pos(0)(0), &new_pos(0)(0),
-                             pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
-      pos = new_pos;     
+              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      pos = new_pos;
 
       // reduce current virial tensor, store it in virial_new and reduce it to current tensor
       math::Matrix virial_new(0.0);
-      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0,0), &virial_new(0,0),
-                             9, MPI::DOUBLE, MPI::SUM, 0);
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
+              9, MPI::DOUBLE, MPI::SUM, 0);
       conf.old().virial_tensor = virial_new;
-      
+
       // reduce current contraint force, store it in cons_force_new and reduce
       //it to the current constraint force
       math::VArray cons_force_new(topo.num_atoms(), math::Vec(0.0));
       MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
-                             conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
-      conf.old().constraint_force = cons_force_new;     
+              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      conf.old().constraint_force = cons_force_new;
     } else {
       // reduce the error to all processors
       MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
@@ -454,22 +450,22 @@ void algorithm::Shake
       // slave
       // reduce pos
       MPI::COMM_WORLD.Reduce(&pos(0)(0), NULL,
-                             pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
       // reduce virial
-      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0,0), NULL,
-                             9, MPI::DOUBLE, MPI::SUM, 0);
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), NULL,
+              9, MPI::DOUBLE, MPI::SUM, 0);
       // reduce constraint force
       MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), NULL,
-                             conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
     }
   }
 #else
   error = my_error;
 #endif
-  
+
   // constraint force
   const double dt2 = sim.time_step_size() * sim.time_step_size();
-  for (unsigned int i=topo.num_solute_atoms(); i < num_atoms; ++i) {
+  for (unsigned int i = topo.num_solute_atoms(); i < num_atoms; ++i) {
     conf.old().constraint_force(i) *= 1 / dt2;
     DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
   }
@@ -483,66 +479,53 @@ void algorithm::Shake
  * apply the SHAKE algorithm
  */
 int algorithm::Shake::apply(topology::Topology & topo,
-			    configuration::Configuration & conf,
-			    simulation::Simulation & sim)
-{
+        configuration::Configuration & conf,
+        simulation::Simulation & sim) {
   DEBUG(7, "applying SHAKE");
   if (!sim.mpi || m_rank == 0)
     m_timer.start();
-  
+
   int error = 0;
-  
+
   // set the constraint force to zero
   std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
-            to = constrained_atoms().end();
+          to = constrained_atoms().end();
   for (; it != to; ++it) {
     conf.old().constraint_force(*it) = 0.0;
   }
 
-  math::SArray masses;
-
-  if (sim.param().posrest.posrest == simulation::posrest_const) {
-    masses = topo.mass();
-    std::vector<topology::position_restraint_struct>::const_iterator
-          it = topo.position_restraints().begin(),
-          to = topo.position_restraints().end();
-    for(;it != to; ++it) {
-      topo.mass()[it->seq] = std::numeric_limits<double>::infinity();
-    }
-  }
-  
   // check whether we shake
-  if (m_rank == 0 && 
-      ((topo.solute().distance_constraints().size() && 
-       sim.param().constraint.solute.algorithm == simulation::constr_shake &&
-       sim.param().constraint.ntc > 1) ||
-      sim.param().dihrest.dihrest == simulation::dihedral_constr)) {
-    
+  if (m_rank == 0 &&
+          ((topo.solute().distance_constraints().size() &&
+          sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+          sim.param().constraint.ntc > 1) ||
+          sim.param().dihrest.dihrest == simulation::dihedral_constr)) {
+
     DEBUG(8, "\twe need to shake SOLUTE");
 
     SPLIT_VIRIAL_BOUNDARY(solute,
-			  topo, conf, sim, 
-			  m_max_iterations, error);
+            topo, conf, sim,
+            m_max_iterations, error);
 
-    if (error){
+    if (error) {
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
-		<< "at step " << sim.steps() << std::endl;
+              << "at step " << sim.steps() << std::endl;
       conf.special().shake_failure_occurred = true;
       m_timer.stop();
       return E_SHAKE_FAILURE_SOLUTE;
     }
   }
-  
+
   if (sim.param().system.nsm &&
-      sim.param().constraint.solvent.algorithm == simulation::constr_shake){
+          sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
 
     DEBUG(8, "\twe need to shake SOLVENT");
-    SPLIT_VIRIAL_BOUNDARY(solvent, 
-			  topo, conf, sim, sim.time_step_size(), 
-			  m_max_iterations, error);
-    if (error){
+    SPLIT_VIRIAL_BOUNDARY(solvent,
+            topo, conf, sim, sim.time_step_size(),
+            m_max_iterations, error);
+    if (error) {
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
-		<< "at step " << sim.steps() << std::endl;
+              << "at step " << sim.steps() << std::endl;
       conf.special().shake_failure_occurred = true;
       m_timer.stop();
       return E_SHAKE_FAILURE_SOLVENT;
@@ -553,7 +536,7 @@ int algorithm::Shake::apply(topology::Topology & topo,
   // stochastic dynamics, energy minimisation, analysis needs to shake without
   // velocity correction (once; it shakes twice...)
   if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
-      !sim.param().analyze.analyze) {
+          !sim.param().analyze.analyze) {
     std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
             to = constrained_atoms().end();
     for (; it != to; ++it) {
@@ -562,27 +545,18 @@ int algorithm::Shake::apply(topology::Topology & topo,
     }
   }
 
-  if (sim.param().posrest.posrest == simulation::posrest_const) {
-    std::vector<topology::position_restraint_struct>::const_iterator
-          it = topo.position_restraints().begin(),
-          to = topo.position_restraints().end();
-    for(;it != to; ++it) {
-      topo.mass()[it->seq] = masses[it->seq];
-    }
-  }
-  
   if (!sim.mpi || m_rank == 0)
     m_timer.stop();
   // return success!
   return 0;
-		   
+
 }
 
 int algorithm::Shake::init(topology::Topology & topo,
-			   configuration::Configuration & conf,
-			   simulation::Simulation & sim,
-			   std::ostream & os,
-			   bool quiet) {
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        std::ostream & os,
+        bool quiet) {
   if (!quiet) {
     os << "SHAKE\n"
             << "\tsolute\t";
@@ -603,7 +577,7 @@ int algorithm::Shake::init(topology::Topology & topo,
               << sim.param().constraint.solvent.shake_tolerance << "\n";
     } else os << "OFF\n";
   }
-  
+
 #ifdef XXMPI
   if (sim.mpi) {
     m_rank = MPI::COMM_WORLD.Get_rank();
@@ -684,7 +658,7 @@ int algorithm::Shake::init(topology::Topology & topo,
       }
 
       // shake again
-      if (apply(topo, conf, sim)) 
+      if (apply(topo, conf, sim))
         return E_SHAKE_FAILURE;
 
       it = constrained_atoms().begin();
@@ -703,6 +677,6 @@ int algorithm::Shake::init(topology::Topology & topo,
 
   if (!quiet)
     os << "END\n";
-  
+
   return 0;
 }
