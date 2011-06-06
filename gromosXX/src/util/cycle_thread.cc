@@ -21,19 +21,12 @@
  * Consttuctor
  */
 util::CycleThread::CycleThread() {
-
   // For the while loop in run()
   keeprunning = true;
-  // Initialize all the mutex and conditons
-  pthread_mutex_init(&mutex_cycle, NULL);
-  pthread_mutex_init(&mutex_calc, NULL);
-  pthread_cond_init(&cond_cycle, NULL);
-  pthread_cond_init(&cond_calc, NULL);
-  // Needed to avoid spurious wakeup
-  do_a_calc = false;
-  do_a_cycle = false;
+  // Initialize all the barriers
+  pthread_barrier_init(&barrier_start, NULL, 2);
+  pthread_barrier_init(&barrier_end, NULL, 2);
   // The next cycle will be the first
-  first = true;
   DEBUG(15, "CycleThread: Initialized CycleThread variables")
 }
 
@@ -44,15 +37,11 @@ void util::CycleThread::terminate_cycle() {
   // Terminate while loop in run()
   keeprunning = false;
   // Make sure it terminates by doing one more cycle
-  do_a_calc = true;
-  pthread_cond_signal(&cond_calc);
+  do_cycle();
   // wait for thread to finish
   wait();
-  pthread_mutex_destroy(&mutex_cycle);
-  pthread_mutex_destroy(&mutex_calc);
-  pthread_cond_destroy(&cond_cycle);
-  pthread_cond_destroy(&cond_calc);
-  //pthread_cond_destroy(&cond_wait);
+  pthread_barrier_destroy(&barrier_start);
+  pthread_barrier_destroy(&barrier_end);
   DEBUG(15, "CycleThread: Destroyed all CycleThread variables")
 }
 
@@ -60,24 +49,14 @@ void util::CycleThread::terminate_cycle() {
  * Where the cycle (while loop) is placed
  */
 void util::CycleThread::run() {
-
   init_run();
   while (keeprunning) {
-
+    // wait till told to start
+    pthread_barrier_wait(&barrier_start);
     cycle();
-    DEBUG(15, "CycleThread: Will send cycle signal")
-    pthread_mutex_lock(&mutex_calc);
-    DEBUG(15, "CycleThread: Waiting for the signal to calculate")
-    do_a_cycle = true;
-    pthread_cond_signal(&cond_cycle);
-    do_a_calc = false;
-    while(!do_a_calc){    // Needed to avoid "Spirious wakeup"
-      pthread_cond_wait(&cond_calc, &mutex_calc);
-    }
-    pthread_mutex_unlock(&mutex_calc);
+    // wait till finished
+    pthread_barrier_wait(&barrier_end);
   }
-  do_a_cycle = true;
-  pthread_cond_signal(&cond_cycle);
   end_run();
 }
 
@@ -85,28 +64,8 @@ void util::CycleThread::run() {
  * Initiate a cycle
  */
 void util::CycleThread::do_cycle() {
-  // Is it the first cycle?
-  if (first) {
-    pthread_mutex_lock(&mutex_cycle);
-    start();
-    DEBUG(15, "CycleThread: Just started, waiting for cycle signal");
-    do_a_cycle = false;
-    while (!do_a_cycle) { // Needed to avoid "Spirious wakeup"
-      pthread_cond_wait(&cond_cycle, &mutex_cycle);
-    }
-    pthread_mutex_unlock(&mutex_cycle);
-    first = false;
-  } else {
-    pthread_mutex_lock(&mutex_cycle);
-    do_a_cycle = false;
-    do_a_calc = true;
-    pthread_cond_signal(&cond_calc);
-    DEBUG(15, "CycleThread: Sent calculation signal, waiting for cycle signal")
-    while (!do_a_cycle) { // Needed to avoid "Spirious wakeup"
-      pthread_cond_wait(&cond_cycle, &mutex_cycle);
-    }
-    pthread_mutex_unlock(&mutex_cycle);
-  }
-
+  // start the cycle 
+  pthread_barrier_wait(&barrier_start);
+  // wait for the cycle to finish
+  pthread_barrier_wait(&barrier_end);
 }
-

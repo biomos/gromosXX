@@ -124,6 +124,7 @@ int interaction::CUDA_Nonbonded_Set
           resize(unsigned(conf.current().energies.bond_energy.size()),
           unsigned(conf.current().energies.kinetic_energy.size()));
 
+  start();
   return 0;
 }
 
@@ -176,35 +177,13 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
             "CUDA_Nonbonded", io::message::error);
     return;
   }
-  //the box can be rectangular
- // if (myconf->current().box(0)(0) != myconf->current().box(1)(1) ||
- //         myconf->current().box(0)(0) != myconf->current().box(2)(2)) {
- //   DEBUG(9, "BOX IS NOT CUBIC!!!")
- //   io::messages.add("Box is not cubic!",
- //           "CUDA_Nonbonded", io::message::error);
- //  exit(1);
-//    return;
-//  }
 
   if (myconf->boundary_type !=  math::rectangular) { 
       DEBUG(9, "BOX IS NOT RECTANGULAR!!!")
       io::messages.add("Box is not rectangular!",
             "CUDA_Nonbonded", io::message::error);
-   exit(1);
-}
-
-//check if we have more than one solvent energy group
-//  const unsigned int egroup_first_solvent_atom = mytopo->atom_energy_group(mytopo->num_solute_atoms());
-//  for(unsigned int i = 1; i < mytopo->num_solvent_atoms(); i++) {
-//     DEBUG(9, "i=" << i <<" ; Current solvent atom: " << mytopo->num_solute_atoms()+i << " ; Current solvent energy group: " << mytopo->atom_energy_group(mytopo->num_solute_atoms()+i))
-//     if (egroup_first_solvent_atom != mytopo->atom_energy_group(mytopo->num_solute_atoms()+i)) {
-//       DEBUG(9, "MORE THAN ONE SOLVENT ENERGY GROUP!!!")
-//       io::messages.add("Only one solvent energy group allowed!",
-//            "CUDA_Nonbonded", io::message::error);
-//    exit(1);
-//    }
-//}  
-//
+    return;
+  }
 
   //
   // calculation end here

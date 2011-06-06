@@ -7,7 +7,7 @@
 #include <sched.h>
 #include <unistd.h>
 #include <signal.h>
-
+#include "../../config.h"
 #include "thread.h"
 
 extern "C" void * util::launchThread(void * t) {
