@@ -18,11 +18,11 @@ aladip_t_SOURCES = aladip.t.cc\
 aladip_t_LDADD = ../libmdpp.la $(extra_lib)
 
 aladip_unperturbed_t_SOURCES = aladip_unperturbed.t.cc\
-        check.h\
-        check_forcefield.h\
-        check_forcefield.cc\
-        check_state.h\
-        check_state.cc 
+	check.h\
+	check_forcefield.h\
+	check_forcefield.cc\
+	check_state.h\
+	check_state.cc 
 aladip_unperturbed_t_LDADD = ../libmdpp.la $(extra_lib)
 
 aladip_special_t_SOURCES = aladip_special.t.cc\
@@ -79,5 +79,12 @@ EXTRA_DIST = data/aladip.topo\
 	data/aladip_ls.in\
 	data/lambdas.off.in\
 	data/lambdas.on.in\
-	data/lambdas.pttopo
+	data/lambdas.pttopo\
+	data/cg16.conf\
+	data/cg16.in\
+	data/cg16.topo\
+	data/scaling.in\
+	data/scaling.lambdadep.in\
+	data/scaling.lambdadep.pttopo\
+	data/scaling.pttopo
 
