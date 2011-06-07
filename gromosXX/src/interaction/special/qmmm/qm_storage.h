@@ -26,6 +26,10 @@ namespace interaction {
      */
     math::VArray force;
     /**
+     * the force acting on every charge-on-spring
+     */
+    math::VArray cos_force;
+    /**
      * the charge of every atom
      */
     math::SArray charge;
@@ -33,7 +37,7 @@ namespace interaction {
      * zero the storage
      */
     void zero() {
-      energy = 0.0; force = 0.0; charge = 0.0;
+      energy = 0.0; force = 0.0; cos_force = 0.0; charge = 0.0; 
     }
     /**
      * resize the storage
@@ -42,6 +46,7 @@ namespace interaction {
      */
     void resize(unsigned int num_atoms, unsigned int num_qm_atoms) {
       force.resize(num_atoms, math::Vec(0.0, 0.0, 0.0));
+      cos_force.resize(num_atoms, math::Vec(0.0, 0.0, 0.0));
       charge.resize(num_qm_atoms, 0.0);
     }
   };

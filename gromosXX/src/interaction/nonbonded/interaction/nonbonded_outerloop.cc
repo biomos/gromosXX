@@ -38,6 +38,11 @@
 
 #include "storage.h"
 
+#include "../../special/qmmm/mm_atom.h"
+#include "../../special/qmmm/qm_storage.h"
+#include "../../interaction.h"
+#include "../../special/qmmm_interaction.h"
+
 #ifdef OMP
 #include <omp.h>
 #endif
@@ -596,6 +601,12 @@ void interaction::Nonbonded_Outerloop
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
 
+  if (rank == 0) {
+    // compute the QM part, gather etc...
+    if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
+      sim.param().qmmm.interaction->prepare(topo, conf, sim);
+    }
+  }
 
   math::VArray e_el_new(topo.num_atoms());
 #ifdef XXMPI
@@ -726,6 +737,12 @@ void interaction::Nonbonded_Outerloop
 #endif
 
     if (rank == 0) {
+      // get the contributions from the QM part.
+      if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
+        sim.param().qmmm.interaction->
+                add_electric_field_contribution(topo, conf, sim, e_el_new);
+      }
+      
       // If the external electric field is activated
       // then it will also act on the polarisable model
       // as a perturbation to the COS electric field

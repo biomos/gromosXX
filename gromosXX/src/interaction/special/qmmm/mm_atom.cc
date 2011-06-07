@@ -26,6 +26,7 @@ void interaction::determine_mm_atoms(topology::Topology& topo,
         configuration::Configuration& conf, 
         simulation::Simulation& sim, 
         std::vector<MM_Atom>& mm_atoms) {
+  mm_atoms.clear();
   if (sim.param().qmmm.cutoff == 0.0) {
     // include all atoms
     for(unsigned int i = 0; i < topo.num_atoms(); ++i) {

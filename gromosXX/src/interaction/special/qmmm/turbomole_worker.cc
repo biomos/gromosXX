@@ -117,15 +117,38 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
   }
   
   input_mm_coord << "$point_charges" << std::endl;
-  for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
-    input_mm_coord.setf(std::ios::fixed, std::ios::floatfield);
-    input_mm_coord.precision(14);
-    for (unsigned int j = 0; j < 3; ++j) {
-      input_mm_coord << std::setw(20) << std::right << mm_atoms[i].pos(j) * len_to_qm;
+  double chg_to_qm = 1.0 / sim.param().qmmm.unit_factor_charge;
+  for (unsigned int i = 0; i < mm_atoms.size(); ++i) {
+    if (topo.is_polarisable(mm_atoms[i].index)) {
+      input_mm_coord.setf(std::ios::fixed, std::ios::floatfield);
+      input_mm_coord.precision(14);
+      for (unsigned int j = 0; j < 3; ++j) {
+        input_mm_coord << std::setw(20) << std::right << mm_atoms[i].pos(j) * len_to_qm;
+      }
+      input_mm_coord.precision(8);
+      input_mm_coord << std::setw(15) << std::right <<
+              (mm_atoms[i].charge - topo.coscharge(mm_atoms[i].index)) * chg_to_qm;
+      input_mm_coord << std::endl;
+      input_mm_coord.setf(std::ios::fixed, std::ios::floatfield);
+      input_mm_coord.precision(14);
+      const math::Vec pos_cos(mm_atoms[i].pos + conf.current().posV(mm_atoms[i].index));
+      for (unsigned int j = 0; j < 3; ++j) {
+        input_mm_coord << std::setw(20) << std::right << pos_cos(j) * len_to_qm;
+      }
+      input_mm_coord.precision(8);
+      input_mm_coord << std::setw(15) << std::right <<
+              topo.coscharge(mm_atoms[i].index) * chg_to_qm;
+      input_mm_coord << std::endl;
+    } else {
+      input_mm_coord.setf(std::ios::fixed, std::ios::floatfield);
+      input_mm_coord.precision(14);
+      for (unsigned int j = 0; j < 3; ++j) {
+        input_mm_coord << std::setw(20) << std::right << mm_atoms[i].pos(j) * len_to_qm;
+      }
+      input_mm_coord.precision(8);
+      input_mm_coord << std::setw(15) << std::right << mm_atoms[i].charge;
+      input_mm_coord << std::endl;
     }
-    input_mm_coord.precision(8);
-    input_mm_coord << std::setw(15) << std::right << mm_atoms[i].charge;
-    input_mm_coord << std::endl;
   }
   
   input_mm_coord << "$end" << std::endl;
@@ -158,7 +181,8 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
       if (output.fail()) {
         break;
       }
-      if (line.find(" ended normally") != std::string::npos) {
+      if (line.find(" ended normally") != std::string::npos ||
+          line.find(" : all done") != std::string::npos) {
         success = true;
         break;
       }
@@ -276,7 +300,7 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
         std::getline(output, line);
         if (output.fail()) {
           std::ostringstream msg;
-          msg << "Failed to read gradient line of MM atom " << it->index+1 << " atom.";
+          msg << "Failed to read gradient line of MM atom " << it->index+1 << ".";
           io::messages.add(msg.str(), "Turbomole_Worker", io::message::error);
           return 1;
         }
@@ -288,13 +312,37 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
         is >> gradient(0) >> gradient(1) >> gradient(2);
         if (is.fail()) {
           std::ostringstream msg;
-          msg << "Failed to parse gradient line of MM atom " << it->index+1 << " atom.";
+          msg << "Failed to parse gradient line of MM atom " << it->index+1 << ".";
           io::messages.add(msg.str(), "Turbomole_Worker", io::message::error);
           return 1;
         }
-        storage.force(it->index) = gradient * (-(sim.param().qmmm.unit_factor_energy) / 
+        storage.force(it->index) = gradient * (-(sim.param().qmmm.unit_factor_energy) /
                 sim.param().qmmm.unit_factor_length);
-      }
+        
+        // get the gradient on the charge-on-spring
+        if (topo.is_polarisable(it->index)) {
+          std::getline(output, line);
+          if (output.fail()) {
+            std::ostringstream msg;
+            msg << "Failed to read gradient line of COS of MM atom " << it->index + 1 << ".";
+            io::messages.add(msg.str(), "Turbomole_Worker", io::message::error);
+            return 1;
+          }
+
+          defortranize(line);
+          std::istringstream is(line);
+          // skip atom number, Z 
+          is >> gradient(0) >> gradient(1) >> gradient(2);
+          if (is.fail()) {
+            std::ostringstream msg;
+            msg << "Failed to parse gradient line of COS of MM atom " << it->index + 1 << ".";
+            io::messages.add(msg.str(), "Turbomole_Worker", io::message::error);
+            return 1;
+          }
+          storage.cos_force(it->index) = gradient * (-(sim.param().qmmm.unit_factor_energy) /
+                  sim.param().qmmm.unit_factor_length);
+        } 
+      } // for mm atoms
     }
   }
   output.close();

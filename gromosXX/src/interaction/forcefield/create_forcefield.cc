@@ -19,11 +19,16 @@
 
 #include "create_forcefield.h"
 #include "../../interaction/special/qmmm/qm_storage.h"
+#include "../../interaction/special/qmmm/mm_atom.h"
 #include "../../interaction/special/qmmm_interaction.h"
 
 #include "../../interaction/bonded/create_bonded.h"
 #include "../../interaction/nonbonded/create_nonbonded.h"
 #include "../../interaction/special/create_special.h"
+
+#ifdef XXMPI
+#include <mpi.h>
+#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -35,7 +40,7 @@
  */
 int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 				       topology::Topology const & topo,
-				       simulation::Simulation const & sim,
+				       simulation::Simulation & sim,
 				       io::IFP & it,
 				       std::ostream & os,
 				       bool quiet)
@@ -66,8 +71,16 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
     return 1;
   
   DEBUG(8, "creating the QM/MM terms");
-  if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-    ff.push_back(new interaction::QMMM_Interaction);
+  bool add_qmmm = true;
+#ifdef XXMPI
+  if (sim.mpi && MPI::COMM_WORLD.Get_rank() != 0) {
+    add_qmmm = false;
+  }
+#endif  
+  if (sim.param().qmmm.qmmm != simulation::qmmm_off && add_qmmm) {
+    interaction::QMMM_Interaction * qmmm = new interaction::QMMM_Interaction;
+    ff.push_back(qmmm);
+    sim.param().qmmm.interaction = qmmm;
   }
 
   if (!quiet){

@@ -27,7 +27,7 @@ namespace interaction
    */
   int create_g96_forcefield(interaction::Forcefield & ff,
 			    topology::Topology const & topo,
-			    simulation::Simulation const & sim,
+			    simulation::Simulation & sim,
 			    io::IFP & it,
 			    std::ostream & os = std::cout,
 			    bool quiet = false);

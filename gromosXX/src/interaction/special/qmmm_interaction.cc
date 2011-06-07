@@ -35,22 +35,16 @@ interaction::QMMM_Interaction::~QMMM_Interaction() {
     delete worker;
 }
 
-int interaction::QMMM_Interaction::
-calculate_interactions(topology::Topology& topo,
+int interaction::QMMM_Interaction::prepare(topology::Topology& topo,
         configuration::Configuration& conf,
         simulation::Simulation& sim) {
-  m_timer.start();
-  storage.zero();
-  
   // determine which MM atoms to include as point charges
   m_timer.start("MM atoms determination");
-  std::vector<interaction::MM_Atom> mm_atoms;
   interaction::determine_mm_atoms(topo, conf, sim, mm_atoms);
   m_timer.stop("MM atoms determination");
 
   // get the position of the QM atoms and gather
   m_timer.start("gathering");
-  math::VArray qm_pos;
   {
     qm_pos.resize(topo.qm_zone().size());
     unsigned int i = 0;
@@ -62,6 +56,20 @@ calculate_interactions(topology::Topology& topo,
   interaction::gather_qmzone(topo, conf, sim, qm_pos);
   interaction::gather_mm_atoms(topo, conf, sim, qm_pos, mm_atoms);
   m_timer.stop("gathering");
+  
+  return 0;
+}
+
+int interaction::QMMM_Interaction::
+calculate_interactions(topology::Topology& topo,
+        configuration::Configuration& conf,
+        simulation::Simulation& sim) {
+  m_timer.start();
+  storage.zero();
+  
+  // if polarisation is in use this was already called.
+  if (!sim.param().polarise.cos) 
+    prepare(topo, conf, sim);
 
   // this might fail due to user input!
   m_timer.start("QM worker");
@@ -74,6 +82,9 @@ calculate_interactions(topology::Topology& topo,
   // add QM forces
   for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
     conf.current().force(i) += storage.force(i);
+    if (topo.is_polarisable(i)) {
+      conf.current().force(i) += storage.cos_force(i);
+    }
   }
   
   conf.current().energies.qm_total = storage.energy;
@@ -82,11 +93,49 @@ calculate_interactions(topology::Topology& topo,
   return 0;
 }
 
+int interaction::QMMM_Interaction::add_electric_field_contribution(topology::Topology& topo,
+        configuration::Configuration& conf, simulation::Simulation& sim, 
+        math::VArray & electric_field) {
+  
+  m_timer.start();
+  m_timer.start("polarisation");
+  
+  storage.zero();
+  if (worker->run_QM(topo, conf, sim, qm_pos, mm_atoms, storage)) {
+    return 1;
+  }
+  for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
+    if (!topo.is_polarisable(i))
+      continue;
+
+    // get electric field at either the charge or the COS site.
+    math::Vec e;
+    switch (sim.param().polarise.efield_site) {
+      case simulation::ef_atom:
+        e = storage.force(i) / (topo.charge(i) - topo.coscharge(i));
+        break;
+      case simulation::ef_cos:
+        e = storage.cos_force(i) / topo.coscharge(i);
+        break;
+      default:
+        io::messages.add("Electric field site not implemented.",
+                "QMMM_Interaction", io::message::critical);
+        return 1;
+    }
+    // add the electric field contribution
+    electric_field(i) += e;
+  }
+  
+  m_timer.stop("polarisation");
+  m_timer.stop();
+  return 0;
+}
+
 int interaction::QMMM_Interaction::init(topology::Topology &topo,
             configuration::Configuration &conf,
             simulation::Simulation &sim,
             std::ostream &os,
-            bool quiet) {
+            bool quiet) { 
   if (topo.qm_zone().empty()) {
     io::messages.add("No QM zone defined", "QMMM_Interaction", io::message::error);
     return 1;

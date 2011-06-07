@@ -6,6 +6,10 @@
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
+// forward declarations
+namespace interaction {
+  class QMMM_Interaction;
+}
 
 namespace simulation
 {
@@ -2915,7 +2919,8 @@ namespace simulation
       unit_factor_energy(4.184),
       unit_factor_charge(1.0),
       cutoff(0.0),
-      write(0) {}
+      write(0),
+      interaction(NULL) {}
       /**
        * apply QM/MM or not
        */
@@ -3010,6 +3015,11 @@ namespace simulation
          */
         std::map<unsigned int, std::string> elements;
       } turbomole;
+      /**
+       * pointer to the interaction class such the the QM/MM interaction
+       * can be easily passed to other algorithms
+       */
+      interaction::QMMM_Interaction * interaction;
     } qmmm;
   };
 

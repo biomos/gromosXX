@@ -52,6 +52,11 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   std::string header(sim.param().qmmm.mndo.input_header);
   // get the number of point charges
   unsigned int num_charge = mm_atoms.size();
+  for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
+    if (topo.is_polarisable(mm_atoms[i].index)) {
+      ++num_charge;
+    }
+  }
   std::ostringstream oss; oss << num_charge;
   header = io::replace_string(header, "@@NUM_ATOMS@@", oss.str());
 
@@ -103,13 +108,28 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   }
   // write point charges
   double chg_to_qm = 1.0 / sim.param().qmmm.unit_factor_charge;
-  for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
-    inp.setf(std::ios::fixed, std::ios::floatfield);
-    inp.precision(8);
-    for (unsigned int j = 0; j < 3; ++j) {
-      inp << std::setw(14)<< std::right << mm_atoms[i].pos(j) * len_to_qm;
+  for (unsigned int i = 0; i < mm_atoms.size(); ++i) {
+    if (topo.is_polarisable(mm_atoms[i].index)) {
+      inp.setf(std::ios::fixed, std::ios::floatfield);
+      inp.precision(8);
+      for (unsigned int j = 0; j < 3; ++j) {
+        inp << std::setw(14) << std::right << mm_atoms[i].pos(j) * len_to_qm;
+      }
+      inp << std::setw(14) << std::right <<
+              (mm_atoms[i].charge - topo.coscharge(mm_atoms[i].index)) * chg_to_qm << std::endl;
+      const math::Vec pos_cos(mm_atoms[i].pos + conf.current().posV(mm_atoms[i].index));
+      for (unsigned int j = 0; j < 3; ++j) {
+        inp << std::setw(14) << std::right << pos_cos(j) * len_to_qm;
+      }
+      inp << std::setw(14) << std::right << topo.coscharge(mm_atoms[i].index) * chg_to_qm << std::endl;
+    } else {
+      inp.setf(std::ios::fixed, std::ios::floatfield);
+      inp.precision(8);
+      for (unsigned int j = 0; j < 3; ++j) {
+        inp << std::setw(14) << std::right << mm_atoms[i].pos(j) * len_to_qm;
+      }
+      inp << std::setw(14) << std::right << mm_atoms[i].charge * chg_to_qm << std::endl;
     }
-    inp << std::setw(14) << std::right << mm_atoms[i].charge * chg_to_qm << std::endl;
   }
   inp.close();
   
@@ -227,7 +247,7 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         std::getline(output, line);
         if (output.fail()) {
           std::ostringstream msg;
-          msg << "Failed to read gradient line of MM atom " << i+1 << " atom.";
+          msg << "Failed to read gradient line of MM atom " << i+1 << ".";
           io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
           return 1;
         }
@@ -239,13 +259,35 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         is >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
         if (is.fail()) {
           std::ostringstream msg;
-          msg << "Failed to parse gradient line of MM atom " << i+1 << " atom.";
+          msg << "Failed to parse gradient line of MM atom " << i+1 << ".";
           io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
           return 1;
         }
         storage.force(mm_atoms[i].index) = gradient * (-(sim.param().qmmm.unit_factor_energy) / 
                 sim.param().qmmm.unit_factor_length);
-        
+
+        // get force on the charge-on-spring
+        if (topo.is_polarisable(mm_atoms[i].index)) {
+          std::getline(output, line);
+          if (output.fail()) {
+            std::ostringstream msg;
+            msg << "Failed to read gradient line of COS on MM atom " << i + 1 << ".";
+            io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+            return 1;
+          }
+
+          std::istringstream is(line);
+          // skip atom number, Z 
+          is >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
+          if (is.fail()) {
+            std::ostringstream msg;
+            msg << "Failed to parse gradient line of COS MM atom " << i + 1 << ".";
+            io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+            return 1;
+          }
+          storage.cos_force(mm_atoms[i].index) = gradient * (-(sim.param().qmmm.unit_factor_energy) /
+                  sim.param().qmmm.unit_factor_length);
+        }
       } // for MM atoms 
     }
   }
