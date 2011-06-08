@@ -170,10 +170,15 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   m_crf_2cut3i = m_crf_cut3i / 2.0;
   m_crf_cut = (1 - m_crf / 2.0) / rf_cutoff;
 
-  // check pressure scaling
+  // check pressure coupling
+  // anisotropic is ok now, because we can now handle different box edges
+  // (only for a rectangular box; below we exit if the box is not rectangular)
+  // so, only complain here if the pressure coupling is fully-anisotropic
   if (mysim->param().pcouple.scale != math::pcouple_off &&
-          mysim->param().pcouple.scale != math::pcouple_isotropic) {
-    io::messages.add("CUDA solvent doesn't support anisotropic pressure scaling.",
+          mysim->param().pcouple.scale == math::pcouple_full_anisotropic) {
+//          mysim->param().pcouple.scale != math::pcouple_isotropic) {
+//    io::messages.add("CUDA solvent doesn't support anisotropic pressure scaling.",
+    io::messages.add("CUDA solvent doesn't support fully-anisotropic pressure scaling.",
             "CUDA_Nonbonded", io::message::error);
     return;
   }
