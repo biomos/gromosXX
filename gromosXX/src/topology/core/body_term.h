@@ -933,6 +933,45 @@ namespace topology {
     double c12;
   };
 
+  struct order_parameter_restraint_struct {
+
+    /**
+     * Constructor.
+     */
+    order_parameter_restraint_struct(util::Virtual_Atom v1,
+            util::Virtual_Atom v2, double normalisation_distance,
+            double S0, double dS0, double w)
+    : v1(v1), v2(v2), normalisation_distance(normalisation_distance),
+    S0(S0), dS0(dS0), w(w) {
+    }
+
+    /**
+     * virtual atom 1.
+     */
+    util::Virtual_Atom v1;
+
+    /**
+     * virtual atom 2.
+     */
+    util::Virtual_Atom v2;
+    /**
+     * normalisation distance
+     */
+    double normalisation_distance;
+    /**
+     * restraint order parameter.
+     */
+    double S0;
+    /**
+     * allowed deviation from restraint order parameter.
+     */
+    double dS0;
+    /**
+     * weighting factor.
+     */
+    double w;
+  };
+
 }
 
 #endif

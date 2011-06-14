@@ -303,7 +303,14 @@ bool check_variable(topology::Topology & topo,
     return true;
   } else if (name == "CXR") {
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_off) {
-      io::messages.add("Changing for CXR without position restraining makes no sense",
+      io::messages.add("Changing for CXR without X-ray restraining makes no sense",
+              "Multi_Gradient", io::message::error);
+      return false;
+    }
+    return true;
+  } else if (name == "COPR") {
+    if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_off) {
+      io::messages.add("Changing for COPR without order-parameter restraining makes no sense",
               "Multi_Gradient", io::message::error);
       return false;
     }
@@ -339,6 +346,8 @@ int algorithm::Multi_Gradient
       sim.param().xrayrest.resolution = (*it)->get_value(sim.time());
     } else if (name == "CXR") {
       sim.param().xrayrest.force_constant = (*it)->get_value(sim.time());
+    } else if (name == "COPR") {
+      sim.param().orderparamrest.K = (*it)->get_value(sim.time());
     }
   }
   m_timer.stop();

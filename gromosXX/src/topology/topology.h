@@ -1037,6 +1037,21 @@ namespace topology
     }
 
     /**
+     * const order parameter restraints accessor.
+     */
+    std::vector<order_parameter_restraint_struct> const & order_parameter_restraints()const
+    {
+      return m_order_parameter_restraint;
+    }
+    /**
+     * order parameter restraints accessor.
+     */
+    std::vector<order_parameter_restraint_struct> & order_parameter_restraints()
+    {
+      return m_order_parameter_restraint;
+    }
+
+    /**
      * multi cell topology accessor
      */
     Topology & multicell_topo()
@@ -1473,6 +1488,10 @@ namespace topology
      * the atoms for NCS restrains
      */
     std::vector<unsigned int> m_xray_ncs_restraints;
+    /**
+     * order parameter restraints
+     */
+    std::vector<order_parameter_restraint_struct> m_order_parameter_restraint;
     /**
      * expanded topology for multiple unit cell simulations
      */

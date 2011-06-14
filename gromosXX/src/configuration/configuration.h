@@ -511,7 +511,31 @@ namespace configuration {
             clipper::Spacegroup ncs_spacegroup;
         #endif
 
-      }xray_conf;
+      } xray_conf;
+
+      /**
+       * @struct oparam_struct
+       * holds the order parameter restraints configuration data
+       */
+      struct oparam_struct {
+        /**
+         * the averaged order parameter
+         */
+        std::vector<double> S2_avg;
+        /**
+         * the energy
+         */
+        std::vector<double> energy;
+        /**
+         * the running average of Q
+         */
+        std::vector<math::Matrix> Q_avg;
+        /**
+         * the running average of D
+         */
+        std::vector<double> D_avg;
+        
+      } /** disres informaton */ orderparamres;
 
       /**
        * lattice shifts

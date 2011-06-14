@@ -40,9 +40,9 @@
  * - @ref  cgrain
  * - @ref  rottrans
  * - @ref  distanceres
- * - @ref disres
+ * - @ref  disres
  * - @ref  dihedralres
- * - @ref dihrest
+ * - @ref  dihrest
  * - @ref  multistep
  * - @ref  ewarn
  * - @ref  polarise
@@ -57,6 +57,7 @@
  * - @ref  multigradient
  * - @ref  addecouple
  * - @ref  g96compat
+ * - @ref  orderparamres
  * - @ref  qmmmb
  */
 
@@ -200,6 +201,10 @@ namespace io {
      * read JVALUERES block.
      */
     void read_JVALUERES(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read ORDERPARAMRES block.
+     */
+    void read_ORDERPARAMRES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read PERSCALE block.

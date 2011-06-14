@@ -223,6 +223,14 @@ namespace io {
                        configuration::Configuration &conf, 
                        simulation::Simulation & sim,
                        std::ostream & os);
+
+    /**
+     * read order parameter restraint averages
+     */
+    bool read_order_parameter_restraint_averages(topology::Topology &topo,
+            configuration::Configuration &conf,
+            simulation::Simulation & sim,
+            std::ostream & os);
     
     /**
      * read replica information
@@ -358,6 +366,15 @@ namespace io {
     bool _read_pscale_jrest(std::vector<std::string> &buffer,
 			    configuration::Configuration::special_struct::pscale_struct &pscale,
 			    std::vector<topology::jvalue_restraint_struct> const & jval_res);
+
+    /**
+     * read ORDERPARAMRESEXPAVE block
+     */
+    bool _read_order_parameter_restraint_averages(
+                 std::vector<std::string> & buffer,
+                 const std::vector<topology::order_parameter_restraint_struct> & oparamres,
+                 std::vector<math::Matrix> & Q_avg,
+                 std::vector<double> & D_avg);
 
     /**
      * read time information.

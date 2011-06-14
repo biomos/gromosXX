@@ -71,6 +71,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_rottrans(topo, conf, sim, os);
   read_position_restraints(topo, conf, sim, os);
   read_leusbias(topo, conf, sim, os);
+  read_order_parameter_restraint_averages(topo, conf, sim, os);
   
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
@@ -203,6 +204,7 @@ void io::In_Configuration::read_replica
     read_stochastic_integral(topo, conf[0], sim, os);
     read_perturbation(topo, sim, os);
     read_distance_restraint_averages(topo, conf[0], sim, os);
+    read_order_parameter_restraint_averages(topo, conf[0], sim, os);
     read_nose_hoover_chains(topo, conf[0], sim, os);
     read_rottrans(topo, conf[0], sim, os);
 
@@ -220,7 +222,7 @@ void io::In_Configuration::read_replica
     }
 
 	DEBUG(10, "copying configurations");
-    for(unsigned int i=1; i<conf.size(); ++i)
+    for(unsigned int i=1; i < conf.size(); ++i)
       conf[i] = conf[0];
 
 	DEBUG(10, "setting up replica information");
@@ -274,6 +276,7 @@ void io::In_Configuration::read_replica
       read_stochastic_integral(topo, conf[i], sim, os);
       read_perturbation(topo, sim, os);
       read_distance_restraint_averages(topo, conf[i], sim, os);
+      read_order_parameter_restraint_averages(topo, conf[i], sim, os);
       read_nose_hoover_chains(topo, conf[i], sim, os);
       read_rottrans(topo, conf[i], sim, os);
 
@@ -984,6 +987,37 @@ bool io::In_Configuration::read_distance_restraint_averages
         io::messages.add("no DISRESEXPAVE block in configuration.",
                          "in_configuration",
                          io::message::error);
+    }
+  }
+  return true;
+}
+
+bool io::In_Configuration::read_order_parameter_restraint_averages
+(
+        topology::Topology &topo,
+        configuration::Configuration &conf,
+        simulation::Simulation & sim,
+        std::ostream & os) {
+  std::vector<std::string> buffer;
+  if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av ||
+      sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted) {
+
+    buffer = m_block["ORDERPARAMRESEXPAVE"];
+    if (buffer.size()) {
+      block_read.insert("ORDERPARAMRESEXPAVE");
+      if (!quiet)
+        os << "\treading ORDERPARAMRESEXPAVE...\n";
+
+      if (sim.param().orderparamrest.read)
+        _read_order_parameter_restraint_averages(buffer, topo.order_parameter_restraints(),
+              conf.special().orderparamres.Q_avg, conf.special().orderparamres.D_avg);
+      else
+        io::messages.add("Order-parameter restraint averages found but not read.",
+              "In_Configuration", io::message::warning);
+    } else {
+      if (sim.param().orderparamrest.read)
+        io::messages.add("No ORDERPARAMRESEXPAVE block in configuration.",
+              "In_Configuration", io::message::error);
     }
   }
   return true;
@@ -2090,6 +2124,48 @@ _read_jvalue_le(std::vector<std::string> &buffer,
   return true;
 }
 
+bool io::In_Configuration::_read_order_parameter_restraint_averages(
+        std::vector<std::string> &buffer,
+        const std::vector<topology::order_parameter_restraint_struct> & oparamres,
+        std::vector<math::Matrix> & Q_avg,
+        std::vector<double> & D_avg) {
+  DEBUG(8, "read order parameter restaint averages");
+
+  std::vector<topology::order_parameter_restraint_struct>::const_iterator
+  oparamres_it = oparamres.begin(), oparamres_to = oparamres.end();
+
+  std::string s;
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
+
+  Q_avg.clear();
+  D_avg.clear();
+
+  for (; oparamres_it != oparamres_to; ++oparamres_it) {
+    math::Matrix ave;
+    for (unsigned int i = 0; i < 3; ++i) {
+      for (unsigned int j = 0; j < 3; ++j) {
+        _lineStream >> ave(i, j);
+      }
+    }
+    
+    double D;
+    _lineStream >> D;
+
+    if (_lineStream.fail()) {
+      io::messages.add("Could not read averages from ORDERPARAMRESEXPAVE block",
+              "In_Configuration", io::message::error);
+      return false;
+    }
+
+    Q_avg.push_back(ave);
+    D_avg.push_back(D);
+  }
+
+  return true;
+}
+
 bool io::In_Configuration::
 _read_pscale_jrest(std::vector<std::string> &buffer,
 		   configuration::Configuration::special_struct::pscale_struct &pscale,
@@ -2699,7 +2775,7 @@ _read_xray_bfactors(std::vector<std::string> &buffer,
               "In_Configuration", io::message::error);
       return false;
     }
-    if (bfoc[i].b_factor < 0.0 ||  bfoc[i].occupancy < 0.0 ||  bfoc[i].occupancy > 1.0) {
+    if (bfoc[i].b_factor < 0.0 || bfoc[i].occupancy < 0.0 ||  bfoc[i].occupancy > 1.0) {
       io::messages.add("Weird B-factor/occupancy in XRAYBFOCCSPEC block detected.",
               "In_Configuration", io::message::warning);
       return false;

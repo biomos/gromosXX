@@ -15,16 +15,16 @@ xxintbondeddir = $(includedir)/md++/interaction/bonded
 xxintbonded_HEADERS = bonded/create_bonded.h\
 	bonded/quartic_bond_interaction.h\
 	bonded/harmonic_bond_interaction.h\
-        bonded/cg_bond_interaction.h\
+	bonded/cg_bond_interaction.h\
 	bonded/angle_interaction.h\
 	bonded/harm_angle_interaction.h\
 	bonded/improper_dihedral_interaction.h\
 	bonded/dihedral_interaction.h\
 	bonded/dihedral_new_interaction.h\
-        bonded/crossdihedral_interaction.h\
+	bonded/crossdihedral_interaction.h\
 	bonded/perturbed_quartic_bond_interaction.h\
 	bonded/perturbed_harmonic_bond_interaction.h\
-        bonded/perturbed_cg_bond_interaction.h\
+	bonded/perturbed_cg_bond_interaction.h\
 	bonded/perturbed_angle_interaction.h\
 	bonded/perturbed_improper_dihedral_interaction.h\
 	bonded/perturbed_dihedral_new_interaction.h\
@@ -32,8 +32,8 @@ xxintbonded_HEADERS = bonded/create_bonded.h\
 
 xxintnbdir = $(includedir)/md++/interaction/nonbonded
 xxintnb_HEADERS = nonbonded/create_nonbonded.h\
-nonbonded/interaction_spec.h\
-nonbonded/innerloop_template.h
+	nonbonded/interaction_spec.h\
+	nonbonded/innerloop_template.h
 
 xxintnbintdir = $(includedir)/md++/interaction/nonbonded/interaction
 xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
@@ -91,6 +91,7 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/electric_field_interaction.h\
 	special/adde_reweighting.h\
 	special/nemd.h\
+	special/order_parameter_restraint_interaction.h\
 	special/qmmm_interaction.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
@@ -137,8 +138,8 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	bonded/perturbed_quartic_bond_interaction.cc\
 	bonded/harmonic_bond_interaction.cc\
 	bonded/perturbed_harmonic_bond_interaction.cc\
-        bonded/cg_bond_interaction.cc\
-        bonded/perturbed_cg_bond_interaction.cc\
+	bonded/cg_bond_interaction.cc\
+	bonded/perturbed_cg_bond_interaction.cc\
 	bonded/angle_interaction.cc\
 	bonded/harm_angle_interaction.cc\
 	bonded/perturbed_angle_interaction.cc\
@@ -168,6 +169,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/xray/dens.cc\
 	special/xray/sf.cc\
 	special/xray/bfactor.cc\
+	special/order_parameter_restraint_interaction.cc\
 	special/qmmm/mm_atom.cc\
 	special/qmmm/qm_worker.cc\
 	special/qmmm/mndo_worker.cc\

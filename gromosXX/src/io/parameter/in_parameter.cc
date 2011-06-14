@@ -72,6 +72,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
   read_PERTURBATION(param);
   read_JVALUERES(param);
+  read_ORDERPARAMRES(param);
   read_XRAYRES(param);
   read_PERSCALE(param);
   read_ROTTRANS(param);
@@ -2495,6 +2496,81 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
     }
   } // JVALUERES
 } // JVALUE
+
+/**
+ * @section orderparamres ORDERPARAMRES block
+ * @verbatim
+ORDERPARAMRES
+# NTOPR    -2..0
+#          -2                time-averaged using COPR * WOPR
+#          -1                time-avaraged using COPR
+#           0                no order-parameter restraints [default]
+# NTOPRA    0                controls reading of averages from startup file
+#           0                start from initial values of S0 [default]
+#           1                read time averages from startup file (for continuation time-averaged run)
+# COPR   >= 0.0              order-parameter restraining force constant
+#                            (weighted by individual WOPR)
+# TAUOPR >= 0.0              coupling time for time-averaging
+# NTWOP  >= 0                write order-parameter to special trajectory
+#           0                don't write [default]
+#         > 0                write every NTWOP step
+#
+#       NTOPR  NTOPRA  COPR   TAUOPR    NTWOP
+           -2  0       10.0      5.0    0
+END
+@endverbatim
+ */
+void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
+        std::ostream & os) {
+  DEBUG(8, "read ORDERPARAMRES");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["ORDERPARAMRES"];
+  if (buffer.size()) {
+
+    block_read.insert("ORDERPARAMRES");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    int ntopr;
+    _lineStream >> ntopr // NTJVR
+            >> param.orderparamrest.read // NTOPRA
+            >> param.orderparamrest.K // COPR
+            >> param.orderparamrest.tau // TAUOPR
+            >> param.orderparamrest.write; // NTOPR
+
+    if (_lineStream.fail())
+      io::messages.add("bad line in ORDERPARAMRES block",
+            "In_Parameter", io::message::error);
+
+    switch (ntopr) {
+      case -2:
+        param.orderparamrest.orderparamrest = simulation::oparam_restr_av_weighted;
+        break;
+      case -1:
+        param.orderparamrest.orderparamrest = simulation::oparam_restr_av;
+        break;
+      case 0:
+        param.orderparamrest.orderparamrest = simulation::oparam_restr_off;
+        break;
+      default:
+        io::messages.add("ORDERPARAMRES block: NTOPR must be -2..0.",
+                "In_Parameter", io::message::error);
+    }
+
+    if (param.orderparamrest.orderparamrest != simulation::oparam_restr_off && param.orderparamrest.tau < 0.0) {
+      io::messages.add("ORDERPARAMRES block: bad value for TAUOPR, should be >= 0.0",
+              "In_Parameter", io::message::error);
+    }
+    if (param.orderparamrest.orderparamrest != simulation::oparam_restr_off && param.orderparamrest.K < 0.0) {
+      io::messages.add("ORDERPARAMRES block: bad value for COPR, should be > 0.0",
+              "In_Parameter", io::message::error);
+    }
+  } // ORDERPARAMRES
+} // ORDERPARAMRES
 
 /**
  * @section perscale PERSCALE block

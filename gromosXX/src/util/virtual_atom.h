@@ -106,6 +106,10 @@ namespace util
      * number of atoms that define virtual atom
      */
     int size()const { return m_atom.size(); }
+    /**
+     * accessor to the type
+     */
+    virtual_type type() const { return m_type; }
     
   private:
     /**

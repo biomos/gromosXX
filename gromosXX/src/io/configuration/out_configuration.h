@@ -126,7 +126,8 @@ namespace io {
     void special_trajectory(std::string const name, int every_cos = 1,
             int every_jvalue = 1, int every_xray = 1, int every_disres = 1,
             int every_dat = 1, int every_leus = 1, int every_dipole = 1, 
-            int every_current = 1, int every_adde = 1, int every_nemd = 1);
+            int every_current = 1, int every_adde = 1, int every_nemd = 1,
+            int every_oparam = 1);
     /**
      * write an energy trajectory.
      */
@@ -332,6 +333,16 @@ namespace io {
             topology::Topology const &topo,
             std::ostream &os);
 
+    void _print_order_parameter_restraints(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
+    void _print_order_parameter_restraint_averages (
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
     void _print_blockaveraged_energyred(configuration::Configuration const & conf,
             std::ostream & os);
 
@@ -414,6 +425,7 @@ namespace io {
     int m_every_current;
     int m_every_adde;
     int m_every_nemd;
+    int m_every_oparam;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;

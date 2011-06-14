@@ -29,6 +29,7 @@
 #include "../io/topology/in_xray.h"
 #include "../io/topology/in_leus.h"
 #include "../io/topology/in_qmmm.h"
+#include "../io/topology/in_order.h"
 #include "../util/coding.h"
 
 #include "read_special.h"
@@ -197,6 +198,30 @@ int io::read_special(io::Argument const & args,
       }
     }
   } // XRAY
+
+  // ORDERPARAMRES
+  if (sim.param().orderparamrest.orderparamrest != simulation::oparam_restr_off){
+    io::igzstream oparamres_file;
+
+    if (args.count("order") != 1){
+      io::messages.add("order parameter restraints: no data file specified (use @order)",
+		       "read special", io::message::error);
+    } else {
+      oparamres_file.open(args["order"].c_str());
+      if (!oparamres_file.is_open()){
+	io::messages.add("opening order-parameter restraints file failed!\n",
+			 "read_special", io::message::error);
+      } else {
+        io::In_Orderparamresspec ip(oparamres_file);
+        ip.quiet = quiet;
+
+        ip.read(topo, sim, os);
+        io::messages.add("order-parameter restraints read from " + args["order"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
+      }
+    }
+  } // ORDERPARAMRES
 
     // FRICTION
   if (sim.param().stochastic.sd && sim.param().stochastic.ntfr == 2){

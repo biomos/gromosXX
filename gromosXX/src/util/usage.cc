@@ -160,6 +160,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# local elevation coordinate definition file\n";
     usage += "\t# @led       filename\n\n";
   }
+
+  if (knowns.count("order")){
+    usage += "\t# order parameter restraints specification\n";
+    usage += "\t# @order     filename\n\n";
+  }
   
   if (knowns.count("friction")){
     usage += "\t# atomic friction coefficients\n";

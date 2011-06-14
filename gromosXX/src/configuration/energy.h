@@ -130,6 +130,10 @@ namespace configuration
      */
     double leus_total;
     /**
+     * total energy of the order parameter restraint interaction
+     */
+    double oparam_total;
+    /**
      * total energy (=0.0) of the (distance) constraint interaction(s).
      */
     double constraints_total;

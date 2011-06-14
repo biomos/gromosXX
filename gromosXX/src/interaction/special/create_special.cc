@@ -30,7 +30,7 @@
 #include "../../interaction/special/nemd.h"
 #include "../../interaction/special/local_elevation_interaction.h"
 #include "../../interaction/special/electric_field_interaction.h"
-
+#include "../../interaction/special/order_parameter_restraint_interaction.h"
 
 #include "../../interaction/bonded/dihedral_interaction.h"
 #include "../../interaction/bonded/dihedral_new_interaction.h"
@@ -185,6 +185,30 @@ int interaction::create_special(interaction::Forcefield & ff,
             new interaction::Xray_Restraint_Interaction;
 
     ff.push_back(xr);
+  }
+
+  // order parameter restraints
+  if (param.orderparamrest.orderparamrest != simulation::oparam_restr_off){
+    if(!quiet){
+      os << "\tOrder-parameter restraints (";
+      switch(param.orderparamrest.orderparamrest){
+	case simulation::oparam_restr_av :
+	  os << "time averaged";
+	  break;
+	case simulation::oparam_restr_av_weighted :
+	  os << "time averaged, weighted";
+	  break;
+	default:
+	  os << "unknown mode!";
+	  break;
+      }
+      os << ")\n";
+    }
+
+    interaction::Order_Parameter_Restraint_Interaction *opr =
+      new interaction::Order_Parameter_Restraint_Interaction;
+
+    ff.push_back(opr);
   }
 
   if (param.localelev.localelev != simulation::localelev_off) {

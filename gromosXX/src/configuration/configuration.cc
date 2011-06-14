@@ -153,6 +153,10 @@ configuration::Configuration::Configuration
   special().distanceres.d = conf.special().distanceres.d;
 
   special().pscale = conf.special().pscale;
+
+  special().orderparamres.S2_avg = conf.special().orderparamres.S2_avg;
+  special().orderparamres.energy = conf.special().orderparamres.energy;
+  special().orderparamres.Q_avg = conf.special().orderparamres.Q_avg;
  
   special().rottrans_constr = conf.special().rottrans_constr;
 

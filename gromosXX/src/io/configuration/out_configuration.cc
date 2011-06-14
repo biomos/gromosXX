@@ -69,7 +69,8 @@ m_every_leus(0),
 m_every_dipole(0),
 m_every_current(0),
 m_every_adde(0),
-m_every_nemd(0),        
+m_every_nemd(0),
+m_every_oparam(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -187,11 +188,11 @@ void io::Out_Configuration::init(io::Argument & args,
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
             param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
-            param.nemd.write);
+            param.nemd.write, param.orderparamrest.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
         || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write
         || param.electric.dip_write || param.electric.cur_write || param.addecouple.write
-        || param.nemd.write)
+        || param.nemd.write || param.orderparamrest.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -364,7 +365,15 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_umbrellas(conf, m_special_traj);
       m_special_traj.flush();
     }
-    
+
+    if (m_every_oparam && sim.steps() && (sim.steps() % m_every_oparam) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_order_parameter_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
 
     if (m_every_dipole && sim.steps() && (sim.steps() % m_every_dipole) == 0) {
       if (!special_timestep_printed) {
@@ -493,6 +502,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (sim.param().localelev.localelev != simulation::localelev_off) {
       _print_umbrellas(conf, m_final_conf);
+    }
+
+    if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av ||
+        sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted) {
+      _print_order_parameter_restraint_averages(conf, topo, m_final_conf);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -707,7 +721,7 @@ void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
                      int every_xray, int every_disres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
-                     int every_adde, int every_nemd) {
+                     int every_adde, int every_nemd, int every_oparam) {
 
   m_special_traj.open(name.c_str());
 
@@ -721,6 +735,7 @@ void io::Out_Configuration
   m_every_current = every_current;
   m_every_adde = every_adde;
   m_every_nemd = every_nemd;
+  m_every_oparam = every_oparam;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2571,6 +2586,60 @@ void io::Out_Configuration::_print_distance_restraint_averages(
   os << "END" << std::endl;
 }
 
+void io::Out_Configuration::_print_order_parameter_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "order parameter restraints");
+
+  std::vector<double>::const_iterator S2_avg_it = conf.special().orderparamres.S2_avg.begin(),
+          S2_avg_to = conf.special().orderparamres.S2_avg.end();
+  std::vector<double>::const_iterator e_it = conf.special().orderparamres.energy.begin();
+
+  os << "OPARAMRESDATA" << std::endl;
+  for (int i = 1; S2_avg_it != S2_avg_to; ++S2_avg_it, ++e_it, ++i) {
+    os << std::setw(6) << i;
+    os.precision(m_precision);
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os << std::setw(m_width) << *S2_avg_it;
+    os.setf(std::ios::scientific, std::ios::floatfield);
+    os.precision(m_distance_restraint_precision);
+    os << std::setw(m_width) << *e_it << std::endl;
+  }
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_order_parameter_restraint_averages(
+        configuration::Configuration const & conf,
+        topology::Topology const & topo,
+        std::ostream & os) {
+  DEBUG(10, "order parameter restraint averages");
+
+  std::vector<math::Matrix>::const_iterator it = conf.special().orderparamres.Q_avg.begin(),
+          to = conf.special().orderparamres.Q_avg.end();
+  std::vector<double>::const_iterator d_it = conf.special().orderparamres.D_avg.begin();
+
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
+
+  os << "ORDERPARAMRESEXPAVE" << std::endl;
+  int l;
+  for (l = 0; it != to; ++it, ++d_it) {
+    for(unsigned int i = 0; i < 3; ++i) {
+      for(unsigned int j = 0; j < 3; ++j) {
+        os << std::setw(m_width) << std::right << (*it)(i,j);
+        if (++l % 5 == 0)
+          os << std::endl;
+      } 
+    }
+    os << std::setw(m_width) << std::right << *d_it;
+    if (++l % 5 == 0)
+      os << std::endl;
+  }
+
+  os << "END" << std::endl;
+}
+
 void io::Out_Configuration::_print_dihangle_trans(
         configuration::Configuration const &conf,
         topology::Topology const &topo,
@@ -2701,11 +2770,10 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.jvalue_total << "\n" // 28
           << std::setw(18) << e.xray_total << "\n" // 29
           << std::setw(18) << e.leus_total << "\n" // 30
-          << std::setw(18) << e.eds_vr << "\n" // 31
-          << std::setw(18) << e.entropy_term << "\n" // 32
-          << std::setw(18) << e.qm_total << "\n"; // 33
-
-  // put eds V_R energy here
+          << std::setw(18) << e.oparam_total << "\n" // 31
+          << std::setw(18) << e.eds_vr << "\n" // 32
+          << std::setw(18) << e.entropy_term << "\n" // 33
+          << std::setw(18) << e.qm_total << "\n"; // 34
 
   os << "# baths\n";
   os << numbaths << "\n";

@@ -212,6 +212,25 @@ namespace simulation
     jvalue_restr_biq_weighted = -3
   };
 
+    /**
+   * @enum oparam_restr_enum
+   * order parameter restraints enumeration
+   */
+  enum oparam_restr_enum {
+    /**
+     * no restraints
+     */
+    oparam_restr_off = 0,
+    /**
+     * time-averaged restraints
+     */
+    oparam_restr_av = -1,
+    /**
+     * time-averaged restraints, weighted
+     */
+    oparam_restr_av_weighted = -2,
+  };
+
   /**
    * @enum dihedral_restr_enum
    * Dihedral restraints enumeration
@@ -2900,6 +2919,55 @@ namespace simulation
       int write;
     } /** addecouple */ addecouple;
 
+    /**
+     * @struct orderparamres_struct
+     * ORDERPARAMRES block
+     */
+    struct orderparamrest_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - orderparamrest 0 (no order parameter restraints)
+       * - K 0.0
+       * - tau 10.0
+       * - read false
+       * - write 0
+       */
+
+      orderparamrest_struct()
+	: orderparamrest(oparam_restr_off),
+	  K(0.0),
+	  tau(10.0),
+	  read(false),
+          write(0)
+      {
+      }
+
+      /**
+       * order parameter restraing method
+       */
+      oparam_restr_enum orderparamrest;
+
+      /**
+       * force constant K
+       */
+      double K;
+      /**
+       * memory time for time averaging
+       */
+      double tau;
+
+      /**
+       * read on/off
+       */
+      bool read;
+      /**
+       * write on/off, every n-th step
+       */
+      unsigned int write;
+    }/** order parameter restraints parameters */ orderparamrest;
+
     struct qmmm_struct {
       /**
        * Constructor
@@ -2974,7 +3042,7 @@ namespace simulation
          */
         std::string input_header;
       } mndo;
-/**
+      /**
        * parameter for the Turbomole software
        */
       struct tubromole_param_struct {
