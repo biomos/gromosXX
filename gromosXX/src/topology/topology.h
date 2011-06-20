@@ -1488,6 +1488,10 @@ namespace topology
      * the atoms for NCS restrains
      */
     std::vector<unsigned int> m_xray_ncs_restraints;
+     /**
+     * the last atom of roto-translational constraints
+     */
+    int m_rottrans_last_atom;
     /**
      * order parameter restraints
      */

@@ -64,7 +64,8 @@ m_sasa_volume_tot(0.0),
 m_sasa_first_neighbour(),
 m_sasa_second_neighbour(),
 m_sasa_third_neighbour(),
-m_sasa_higher_neighbour() {
+m_sasa_higher_neighbour(),
+m_rottrans_last_atom(0) {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
   m_temperature_group.push_back(0);
@@ -399,6 +400,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   DEBUG(10, "\tspecial");
   m_position_restraint = topo.m_position_restraint;
   m_jvalue_restraint = topo.m_jvalue_restraint;
+  m_rottrans_last_atom = topo.m_rottrans_last_atom;
   for (unsigned int i = 0; i < topo.m_le_coordinates.size(); ++i) {
     m_le_coordinates.push_back(topo.m_le_coordinates[i]->clone());
   }
@@ -669,6 +671,7 @@ void topology::Topology::init(simulation::Simulation const & sim,
       }
     } // end loop over constraints
 
+
     // new loop over num_sasa_atoms (Floyds algorithm)
     for (unsigned int k = 0; k < num_sasa_atoms; ++k) {
       for (unsigned int i = 0; i < num_sasa_atoms - 1; ++i) {
@@ -752,6 +755,14 @@ void topology::Topology::init(simulation::Simulation const & sim,
       } // end volume
     } // end sasa atom loop
   } // end sasa
+
+    // initialize the roto-translational constraints
+    //std::cout << "@@ sim.param().rottrans.rottrans " << sim.param().rottrans.rottrans << "\n";
+    if ( sim.param().rottrans.rottrans ) {
+    //std::cout << "@@ sim.param().rottrans.last " << sim.param().rottrans.last << "\n";
+    m_rottrans_last_atom = sim.param().rottrans.last;
+    }
+
 } // end init
 
 /**
@@ -1173,10 +1184,15 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       bool ok = true;
 
       multibath.in_bath(0, com_bath_0, ir_bath_0);
-      for (unsigned int i = 1; i < num_solute_atoms(); ++i) {
+// only loop over the roto-translationally-constrained solute part
+//      for (unsigned int i = 1; i < num_solute_atoms(); ++i) {
+       // std::cout << "@@ m_rottrans_last_atom " << m_rottrans_last_atom << "\n";
+      for (unsigned int i = 1; i < m_rottrans_last_atom; ++i) {
         multibath.in_bath(i, com_bath, ir_bath);
+       // std::cout << "@@ now i " << i << " com_bath " << com_bath << " ir_bath " << ir_bath << "\n";
         if (com_bath != com_bath_0 || ir_bath != ir_bath_0) {
-          io::messages.add("roto-translational constraints: all solute has to be coupled "
+//          io::messages.add("roto-translational constraints: all solute has to be coupled "
+          io::messages.add("roto-translational constraints: roto-translationally-constrained solute part has to be coupled "
                   "to one ir and one com bath", "calc_dof",
                   io::message::error);
           ok = false;
