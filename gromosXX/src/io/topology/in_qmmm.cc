@@ -94,6 +94,7 @@ END
 @endverbatim
  * 
  * @section Turbomole blocks for the Turbomole worker
+ * 
  * The TURBOMOLEFILES blocks specifies where Turbomole writes the input and output files.
  * The first line contains the directory which contains the Turbomole binaries.
  * The second line is the turbomole working directory containing the control file.
@@ -114,7 +115,13 @@ END
 @endverbatim
  * 
  * The TURBOMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
- * Each line contains one program that is called.
+ * Each line contains one program that is called. By default, it is assumed that
+ * the control file is static, i.e. that the number of QM atoms cannot change. To 
+ * modify the control file during the simulation the TURBOMOLE program define is 
+ * to be used. The input for this program has to be given as a file named "define.inp" 
+ * which is in the same directory as the "control" file. 
+ * Note: You still have to provide an initial control file as at the time the 
+ * program define is only cannot include the $point_charges directives. 
  * 
  * @verbatim
  TURBOMOLETOOLCHAIN

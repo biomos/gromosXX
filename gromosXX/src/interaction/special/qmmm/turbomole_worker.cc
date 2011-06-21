@@ -156,9 +156,14 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
   
   for(std::vector<std::string>::const_iterator it = sim.param().qmmm.turbomole.toolchain.begin(),
           to = sim.param().qmmm.turbomole.toolchain.end(); it != to; ++it) {
-    std::string output_file(*it + ".out"), dummy("");
+    std::string output_file(*it + ".out"), input_file("");
+    
+    if (*it == "define") {
+      input_file = "define.inp";
+    }
+    
     if (util::system_call(sim.param().qmmm.turbomole.binary_directory + "/" + *it,
-            dummy, output_file) != 0) {
+            input_file, output_file) != 0) {
       std::ostringstream msg;
       msg << "Turbomole program " << *it << " failed. See " 
               << sim.param().qmmm.turbomole.working_directory << "/" << output_file
