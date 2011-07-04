@@ -54,6 +54,10 @@ namespace interaction
      * indices of domain decomposition
      */
     std::vector<int> domain;
+    /**
+     * group wise forces
+     */
+    std::vector<std::vector<math::VArray> > force_groups;
 
     /**
      * zero all entities
@@ -66,12 +70,18 @@ namespace interaction
       perturbed_energy_derivatives.zero();
       virial_tensor = 0.0;
       assert(force_endstates.size() == virial_tensor_endstates.size());
-      const unsigned int size = force_endstates.size();
+      unsigned int size = force_endstates.size();
       for(unsigned int i = 0; i< size; i++){
         force_endstates[i] = 0.0;
         virial_tensor_endstates[i] = 0.0;
       }
       domain.clear();
+      size = energies.lj_energy.size();
+      for(unsigned int i = 0; i < size; ++i) {
+        for(unsigned int j = 0; j < size; ++j) {
+          force_groups[i][j] = 0.0;
+        }
+      }
     }
 
   };

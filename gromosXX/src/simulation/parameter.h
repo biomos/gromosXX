@@ -1177,12 +1177,13 @@ namespace simulation
        * - special_loop -1
        * - interaction function lj_crf_func
        * - external interaction 0
+       * - force_groups false
        */
       force_struct() : bond(1), angle(1), improper(1),
 		       dihedral(1), crossdihedral(1), nonbonded_vdw(1),
 		       nonbonded_crf(1), special_loop(special_loop_off),
 		       interaction_function(lj_crf_func),
-		       external_interaction(0)
+		       external_interaction(0), force_groups(false)
       {}
       
       /**
@@ -1229,6 +1230,10 @@ namespace simulation
        * add an external interaction
        */
       int external_interaction;
+      /**
+       * use energy groups also for forces
+       */
+      bool force_groups;
       
     } /** Force(field) parameters */ force;
 

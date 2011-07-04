@@ -139,6 +139,17 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 			   0);
     
     const unsigned int ljs = conf.current().energies.lj_energy.size();
+    if (sim.param().force.force_groups) {
+      for (unsigned int i = 0; i < ljs; ++i) {
+        for (unsigned int j = 0; j < ljs; ++j) {
+          MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().force_groups[i][j](0)(0),
+                  NULL, m_nonbonded_set[0]->storage().force_groups[i][j].size() * 3,
+                  MPI::DOUBLE, MPI::SUM,
+                  0);
+        }
+      }
+    }
+    
     std::vector<double> lj_scratch(ljs*ljs);
     std::vector<double> crf_scratch(ljs*ljs);
     std::vector<double> ls_real_scratch(ljs*ljs);

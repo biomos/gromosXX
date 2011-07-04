@@ -149,7 +149,21 @@ calculate_interactions(topology::Topology & topo,
             MPI::SUM,
             0);
     
+
     const unsigned int ljs = conf.current().energies.lj_energy.size();
+    if (sim.param().force.force_groups) {
+      for (unsigned int i = 0; i < ljs; ++i) {
+        for (unsigned int j = 0; j < ljs; ++j) {
+          m_storage.force_groups[i][j] = m_nonbonded_set[0]->storage().force_groups[i][j];
+          MPI::COMM_WORLD.Reduce(&m_storage.force_groups[i][j](0)(0),
+            &m_nonbonded_set[0]->storage().force_groups[i][j](0),
+            m_nonbonded_set[0]->storage().force_groups[i][j].size() * 3,
+            MPI::DOUBLE,
+            MPI::SUM,
+            0);
+        }
+      }
+    }
     std::vector<double> lj_scratch(ljs*ljs), rlj_scratch(ljs*ljs);
     std::vector<double> crf_scratch(ljs*ljs), rcrf_scratch(ljs*ljs);
     std::vector<double> ls_real_scratch(ljs*ljs), rls_real_scratch(ljs*ljs);
@@ -402,6 +416,12 @@ int interaction::MPI_Nonbonded_Master::init(topology::Topology & topo,
   m_storage.energies.
   resize(unsigned(conf.current().energies.bond_energy.size()),
           unsigned(conf.current().energies.kinetic_energy.size()));
+  
+  if (sim.param().force.force_groups) {
+    m_storage.force_groups.resize(unsigned(conf.current().energies.bond_energy.size()),
+            std::vector<math::VArray>(unsigned(conf.current().energies.bond_energy.size()), 
+            math::VArray(topo.num_atoms(), math::Vec(0.0, 0.0, 0.0))));
+  }
   
   if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
     io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",

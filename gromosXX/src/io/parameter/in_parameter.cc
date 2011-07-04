@@ -1122,7 +1122,9 @@ FORCE
 # NTF(1..10): 0,1 determines terms used in force calculation
 #             0: do not include terms
 #             1: include terms
-# NEGR: >= 0 number of energy groups
+# NEGR: ABS(NEGR): number of energy groups
+#             > 0: use energy groups
+#             < 0: use energy and force groups
 # NRE(1..NEGR): >= 1.0 last atom in each energy group
 # NTF(1..2) NTF(3..4) NTF(5..6) NTF(7..8) NTF(9)        NTF(10)
 # bonds     angles    improper  dihedral  electrostatic vdW
@@ -1153,17 +1155,29 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-  int bondH, angleH, impH, dihedralH;
+  int bondH, angleH, impH, dihedralH, snum;
   unsigned int num, e, old_e = 0;
 
   _lineStream >> bondH >> param.force.bond >> angleH >> param.force.angle
           >> impH >> param.force.improper >> dihedralH >> param.force.dihedral
           >> param.force.nonbonded_crf >> param.force.nonbonded_vdw;
-  _lineStream >> num;
-  if (num <= 0) {
-    DEBUG(10, "number of energy group < 0?");
-    io::messages.add("FORCE block: number of energy groups should be > 0",
-            "In_Parameter", io::message::error);
+  _lineStream >> snum;
+  
+  if (snum < 0) {
+#ifdef XXFORCEGROUPS
+    param.force.force_groups = true;
+    num = abs(snum);
+#else
+    io::messages.add("Force groups requested but not compiled with support for them."
+    "Use --enable-forcegroups for configure.", "In_Parameter",
+            io::message::error);
+    return;
+#endif
+  }
+  num = abs(snum);
+  if (!num) {
+    io::messages.add("number of energy groups must not be zero.", "In_Parameter",
+            io::message::error);
     return;
   }
 

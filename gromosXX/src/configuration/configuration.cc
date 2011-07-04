@@ -168,6 +168,8 @@ configuration::Configuration::Configuration
   
   special().shake_failure_occurred = conf.special().shake_failure_occurred;
   
+  special().force_groups = conf.special().force_groups;
+  
   boundary_type = conf.boundary_type;
 }
 
@@ -268,6 +270,8 @@ configuration::Configuration & configuration::Configuration::operator=
   
   special().shake_failure_occurred = conf.special().shake_failure_occurred;
   
+  special().force_groups = conf.special().force_groups;
+  
   boundary_type = conf.boundary_type;
 
 
@@ -288,6 +292,11 @@ void configuration::Configuration::init(topology::Topology const & topo,
 
   current().energies.resize(num, numb);
   old().energies.resize(num, numb);
+  if (param.force.force_groups) {
+    special().force_groups.resize(num, 
+            std::vector<math::VArray>(num, math::VArray(
+            topo.num_atoms(), math::Vec(0.0, 0.0, 0.0))));
+  }
 
   // resize sasa vectors
   const unsigned int num_sasa_atoms = topo.sasa_parameter().size();

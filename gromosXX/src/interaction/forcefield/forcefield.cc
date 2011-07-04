@@ -86,6 +86,14 @@ int interaction::Forcefield
 
   conf.current().force = 0.0;
   
+  if (sim.param().force.force_groups) {
+    for(unsigned int i = 0; i < conf.special().force_groups.size(); ++i) {
+      for(unsigned int j = 0; j < conf.special().force_groups.size(); ++j) {
+        conf.special().force_groups[i][j] = 0.0;
+      }
+    }
+  }
+  
   DEBUG(15, "zero energies");
   conf.current().energies.zero();
 

@@ -558,6 +558,11 @@ namespace configuration {
        * position restraints bfactors
        */
       math::SArray bfactors;
+      
+      /**
+       * group-wise forces
+       */
+      std::vector<std::vector<math::VArray > > force_groups;
     }; // special
 
     /**

@@ -31,7 +31,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
         ) {
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
-  math::Vec r;
+  math::Vec r, force;
   double f;
   double e_lj, e_crf;
 
@@ -62,12 +62,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
       DEBUG(10, "\t\tatomic virial");
       for (int a = 0; a < 3; ++a) {
-        const double term = f * r(a);
-        storage.force(i)(a) += term;
-        storage.force(j)(a) -= term;
+        force(a) = f * r(a);
+        storage.force(i)(a) += force(a);
+        storage.force(j)(a) -= force(a);
 
         for (int b = 0; b < 3; ++b)
-          storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor(b, a) += r(b) * force(a);
       }
       break;
     }
@@ -92,12 +92,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
       DEBUG(10, "\t\tatomic virial");
       for (int a = 0; a < 3; ++a) {
-        const double term = f * r(a);
-        storage.force(i)(a) += term;
-        storage.force(j)(a) -= term;
+        force(a) = f * r(a);
+        storage.force(i)(a) += force(a);
+        storage.force(j)(a) -= force(a);
 
         for (int b = 0; b < 3; ++b)
-          storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor(b, a) += r(b) * force(a);
       }
       break;
     }
@@ -131,12 +131,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
         DEBUG(10, "\t\tatomic virial");
       }
       for (int a = 0; a < 3; ++a) {
-        const double term = f * r(a);
-        storage.force(i)(a) += term;
-        storage.force(j)(a) -= term;
+        force(a) = f * r(a);
+        storage.force(i)(a) += force(a);
+        storage.force(j)(a) -= force(a);
 
         for (int b = 0; b < 3; ++b)
-          storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor(b, a) += r(b) * force(a);
       }
       break;
     }
@@ -158,12 +158,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
         DEBUG(10, "\t\tatomic virial");
         for (int a = 0; a < 3; ++a) {
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
+          force(a) = f * r(a);
+          storage.force(i)(a) += force(a);
+          storage.force(j)(a) -= force(a);
 
           for (int b = 0; b < 3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+            storage.virial_tensor(b, a) += r(b) * force(a);
         }
       } else {
         double f_pol[4];
@@ -187,12 +187,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
         DEBUG(10, "\tatomic virial");
         for (int a = 0; a < 3; ++a) {
-          const double term = f_pol[0] * r(a) + f_pol[1] * rp1(a) + f_pol[2] * rp2(a) + f_pol[3] * rpp(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
+          force(a) = f_pol[0] * r(a) + f_pol[1] * rp1(a) + f_pol[2] * rp2(a) + f_pol[3] * rpp(a);
+          storage.force(i)(a) += force(a);
+          storage.force(j)(a) -= force(a);
 
           for (int b = 0; b < 3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+            storage.virial_tensor(b, a) += r(b) * force(a);
         }
       }
       break;
@@ -214,12 +214,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
         DEBUG(10, "\t\tatomic virial");
         for (int a = 0; a < 3; ++a) {
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
+          force(a) = f * r(a);
+          storage.force(i)(a) += force(a);
+          storage.force(j)(a) -= force(a);
 
           for (int b = 0; b < 3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+            storage.virial_tensor(b, a) += r(b) * force(a);
         }
       } else {
         math::Vec rm=r;
@@ -300,12 +300,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
       DEBUG(10, "\t\tatomic virial");
       for (int a = 0; a < 3; ++a) {
-        const double term = f * r(a);
-        storage.force(i)(a) += term;
-        storage.force(j)(a) -= term;
+        force(a) = f * r(a);
+        storage.force(i)(a) += force(a);
+        storage.force(j)(a) -= force(a);
 
         for (int b = 0; b < 3; ++b)
-          storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor(b, a) += r(b) * force(a);
       }
       break;
     }
@@ -340,11 +340,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
           << " j " << topo.atom_energy_group(j));
 
-  storage.energies.lj_energy[topo.atom_energy_group(i)]
-          [topo.atom_energy_group(j)] += e_lj;
+  const unsigned int eg_i = topo.atom_energy_group(i);
+  const unsigned int eg_j = topo.atom_energy_group(j);
+  storage.energies.lj_energy[eg_i][eg_j] += e_lj;
 
-  storage.energies.crf_energy[topo.atom_energy_group(i)]
-          [topo.atom_energy_group(j)] += e_crf;
+  storage.energies.crf_energy[eg_i][eg_j] += e_crf;
+#ifdef XXFORCEGROUPS
+  if (storage.force_groups.size()) {
+    storage.force_groups[eg_i][eg_j][i] += force;
+    storage.force_groups[eg_i][eg_j][j] -= force;
+  }
+#endif
 }
 
 template<typename t_nonbonded_spec>

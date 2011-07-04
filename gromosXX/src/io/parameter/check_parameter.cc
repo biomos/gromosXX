@@ -202,6 +202,9 @@ int io::check_parameter(simulation::Simulation & sim)
 
   add("leus", "local elevation umbrella sampling", param.localelev.localelev != simulation::localelev_off);
   add("xray", "X-ray restraints", param.xrayrest.xrayrest != simulation::xrayrest_off);
+  
+  // force groups
+  add("force_groups", "force groups", param.force.force_groups);
 
 // we don't need the add function anymore.
 #undef add
@@ -3567,7 +3570,72 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_cg", "leus");
   fc.unlock("cutoff_cg", "xray");
 
-
+  fc.unlock("force_groups", "solute");
+  fc.unlock("force_groups", "solvent");
+  fc.unlock("force_groups", "solvent_only");
+  fc.unlock("force_groups", "steepest_descent");
+  fc.unlock("force_groups", "solute_constraint_off");
+  fc.unlock("force_groups", "solute_shake");
+  fc.unlock("force_groups", "solute_lincs");
+  fc.unlock("force_groups", "solute_flexshake");
+  fc.unlock("force_groups", "solvent_constraint_off");
+  fc.unlock("force_groups", "solvent_shake");
+  fc.unlock("force_groups", "solvent_lincs");
+  fc.unlock("force_groups", "solvent_settle");
+  fc.unlock("force_groups", "pressure_calculation");
+  fc.unlock("force_groups", "pressure_scale_berendsen");
+  fc.unlock("force_groups", "virial_off");
+  fc.unlock("force_groups", "virial_atomic");
+  fc.unlock("force_groups", "virial_molecular");
+  fc.unlock("force_groups", "vacuum");
+  fc.unlock("force_groups", "pbc_r");
+  fc.unlock("force_groups", "pbc_c");
+  fc.unlock("force_groups", "pbc_t");
+  fc.unlock("force_groups", "bond");
+  fc.unlock("force_groups", "angle");
+  fc.unlock("force_groups", "dihedral");
+  fc.unlock("force_groups", "improper");
+  fc.unlock("force_groups", "crf");
+  fc.unlock("force_groups", "lj");
+  fc.unlock("force_groups", "com_removal");
+  fc.unlock("force_groups", "rf_excluded");
+  fc.unlock("force_groups", "pairlist_standard");
+  fc.unlock("force_groups", "pairlist_grid");
+  fc.unlock("force_groups", "pairlist_gridcell");
+  fc.unlock("force_groups", "cutoff_atomic");
+  fc.unlock("force_groups", "cutoff_cg");
+  fc.unlock("force_groups", "cg_martini");
+  fc.unlock("force_groups", "multi_grain");
+  fc.unlock("force_groups", "cg_gromos");
+  fc.unlock("force_groups", "mixed_grain");
+  fc.unlock("force_groups", "temp_berendsen");
+  fc.unlock("force_groups", "temp_nosehoover");
+  fc.unlock("force_groups", "temp_nosehoover_chains");
+  fc.unlock("force_groups", "position_rest");
+  fc.unlock("force_groups", "position_const");
+  fc.unlock("force_groups", "position_const_scaled");
+  fc.unlock("force_groups", "distance_rest");
+  fc.unlock("force_groups", "dihedral_rest");
+  fc.unlock("force_groups", "dihedral_const");
+  fc.unlock("force_groups", "jvalue_rest");
+  fc.unlock("force_groups", "perscale");
+  fc.unlock("force_groups", "rottrans");
+  fc.unlock("force_groups", "innerloop_method_off");
+  fc.unlock("force_groups", "innerloop_solvent_topology");
+  fc.unlock("force_groups", "repex_temp");
+  fc.unlock("force_groups", "repex_lambda");
+  fc.unlock("force_groups", "analysis");
+  fc.unlock("force_groups", "no_integration");
+  fc.unlock("force_groups", "stochdyn");
+  fc.unlock("force_groups", "ramd");
+  fc.unlock("force_groups", "random_gromos");
+  fc.unlock("force_groups", "random_gsl");
+  fc.unlock("force_groups", "parallel_mpi");
+  fc.unlock("force_groups", "parallel_omp");
+  fc.unlock("force_groups", "mult_energy_groups");
+  fc.unlock("force_groups", "leus");
+  fc.unlock("force_groups", "xray");
+  
   if (fc.check()) 
     return 0;
   

@@ -1419,6 +1419,25 @@ void io::Out_Configuration
   }
 
   os << "END\n";
+  // group wise forces
+  if (conf.special().force_groups.size()) {
+    os << "FREEFORCEGROUPRED\n";
+    for(unsigned int i = 0; i < conf.special().force_groups.size(); ++i) {
+      for (unsigned int j = i; j < conf.special().force_groups.size(); ++j) {
+        os << "# group " << i+1 << "-" << j+1 << "\n";
+        for (int k = 0; k < num; ++k) {
+          force_rot = math::Vec(math::product(Rmat, conf.special().force_groups[j][i](k)));
+          os << std::setw(m_force_width) << force_rot(0)
+                  << std::setw(m_force_width) << force_rot(1)
+                  << std::setw(m_force_width) << force_rot(2)
+                  << "\n";
+
+          if ((k + 1) % 10 == 0) os << '#' << std::setw(10) << k + 1 << "\n";
+        }
+      }
+    }
+    os << "END\n";
+  }
 
   if (constraint_force) {
     os << "CONSFORCERED\n";

@@ -248,13 +248,20 @@ int interaction::Nonbonded_Set
   // and long-range energies
   DEBUG(6, "\t(set) add long range energies");
   const unsigned int lj_e_size = unsigned(m_storage.energies.lj_energy.size());
-  
-  for(unsigned int i = 0; i < lj_e_size; ++i){
-    for(unsigned int j = 0; j < lj_e_size; ++j){
-      m_storage.energies.lj_energy[i][j] += 
-	m_longrange_storage.energies.lj_energy[i][j];
-      m_storage.energies.crf_energy[i][j] += 
-	m_longrange_storage.energies.crf_energy[i][j];
+  const unsigned int num_atoms = topo.num_atoms();
+
+  for (unsigned int i = 0; i < lj_e_size; ++i) {
+    for (unsigned int j = 0; j < lj_e_size; ++j) {
+      m_storage.energies.lj_energy[i][j] +=
+              m_longrange_storage.energies.lj_energy[i][j];
+      m_storage.energies.crf_energy[i][j] +=
+              m_longrange_storage.energies.crf_energy[i][j];
+      if (sim.param().force.force_groups) {
+        for (unsigned int k = 0; k < num_atoms; ++k) {
+          m_storage.force_groups[i][j][k] +=
+                  m_longrange_storage.force_groups[i][j][k];
+        } // atoms
+      } // if force groups
     }
   }
 
@@ -304,19 +311,24 @@ int interaction::Nonbonded_Set::update_configuration
   }
   
   // (MULTISTEP: and keep energy constant)
-  for(int i = 0; i < ljs; ++i){
-    for(int j = 0; j < ljs; ++j){
-      
-      e.lj_energy[i][j] += 
-	m_storage.energies.lj_energy[i][j];
-      e.crf_energy[i][j] += 
-	m_storage.energies.crf_energy[i][j];
-      e.ls_real_energy[i][j] += 
-	m_storage.energies.ls_real_energy[i][j];
-      e.ls_k_energy[i][j] += 
-	m_storage.energies.ls_k_energy[i][j];
+  for (int i = 0; i < ljs; ++i) {
+    for (int j = 0; j < ljs; ++j) {
+      e.lj_energy[i][j] +=
+              m_storage.energies.lj_energy[i][j];
+      e.crf_energy[i][j] +=
+              m_storage.energies.crf_energy[i][j];
+      e.ls_real_energy[i][j] +=
+              m_storage.energies.ls_real_energy[i][j];
+      e.ls_k_energy[i][j] +=
+              m_storage.energies.ls_k_energy[i][j];
+      if (sim.param().force.force_groups) {
+        for(unsigned int k = 0; k < num_atoms; ++k) {
+          conf.special().force_groups[i][j][k] +=
+                  m_storage.force_groups[i][j][k];
+        }
+      }
     }
-    e.self_energy[i] +=  m_storage.energies.self_energy[i];
+    e.self_energy[i] += m_storage.energies.self_energy[i];
   }
   // no components in lattice sum methods!
   
@@ -395,6 +407,15 @@ int interaction::Nonbonded_Set
   m_longrange_storage.energies.
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()));
+  
+  if (sim.param().force.force_groups) {
+    m_storage.force_groups.resize(unsigned(conf.current().energies.bond_energy.size()),
+            std::vector<math::VArray>(unsigned(conf.current().energies.bond_energy.size()), 
+            math::VArray(num_atoms, math::Vec(0.0, 0.0, 0.0))));
+    m_longrange_storage.force_groups.resize(unsigned(conf.current().energies.bond_energy.size()),
+            std::vector<math::VArray>(unsigned(conf.current().energies.bond_energy.size()), 
+            math::VArray(num_atoms, math::Vec(0.0, 0.0, 0.0))));
+  }
   
   m_storage.electric_field.resize(num_atoms);
   m_longrange_storage.electric_field.resize(num_atoms);

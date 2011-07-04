@@ -71,6 +71,21 @@ int algorithm::Energy_Calculation::apply
   }
 
   conf.current().averages.apply(topo, conf, sim);
+  
+  if (sim.param().force.force_groups) {
+    const unsigned int size = conf.special().force_groups.size();
+    const unsigned int num_atoms = topo.num_atoms();
+    for(unsigned int i = 0; i < size; ++i) {
+      for(unsigned int j = i; j < size; ++j) {
+        if (i == j) continue;
+        for(unsigned int k = 0; k < num_atoms; ++k) {
+          conf.special().force_groups[j][i][k] += 
+                  conf.special().force_groups[i][j][k];
+        }
+        conf.special().force_groups[i][j] = 0.0;
+      }
+    }
+  }
 
   return 0;
 }
