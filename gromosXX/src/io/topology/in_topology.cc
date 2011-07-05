@@ -2362,7 +2362,8 @@ void io::In_Topology
       }
 
       // and add (force constant based on a potential harmonic in the angle cosine)
-      b.push_back(interaction::angle_type_struct(kh, cos0 * 2 * math::Pi / 360.0));
+      b.push_back(interaction::angle_type_struct(kh * (180.0 * 180.0 / (math::Pi * math::Pi)),
+              cos0 * 2 * math::Pi / 360.0));
     }
   } else if (m_block["HARMBONDANGLETYPE"].size()) {
     DEBUG(10, "HARMBONDANGLETYPE block");
@@ -2397,7 +2398,8 @@ void io::In_Topology
       }
 
       // and add...
-      b.push_back(interaction::angle_type_struct(k, theta * 2 * math::Pi / 360.0));
+      b.push_back(interaction::angle_type_struct(k * (180.0 * 180.0 / (math::Pi * math::Pi)),
+             theta *  math::Pi / 180.0));
     }
   } else {
     io::messages.add("either BONDANGLEBENDTYPE or HARMBONDANGLETYPE block must be present",
