@@ -139,6 +139,14 @@ inline void interaction::Nonbonded_Term
   m_cut2 = sim.param().pairlist.cutoff_long * sim.param().pairlist.cutoff_long;
 }
 
+#ifdef XXHEAVISIDE
+#define HEAVISIDETRUNC(rlen, vars) \
+if (rlen > m_cut2) { vars = 0.0; \
+  return; }
+#else
+#define HEAVISIDETRUNC(rlen, vars)
+#endif
+
 /**
  * helper function to calculate the force and energy for
  * a given atom pair.
@@ -152,6 +160,7 @@ inline void interaction::Nonbonded_Term
 
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
   const double dist2i = 1.0 / dist2;
   const double q_eps = q * math::four_pi_eps_i;
   const double dist6i = dist2i * dist2i * dist2i;
@@ -186,6 +195,7 @@ inline void interaction::Nonbonded_Term
 
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force = e_lj)
   const double dist2i = 1.0 / dist2;
   const double dist6i = dist2i * dist2i * dist2i;
   const double c12_dist6i = c12 * dist6i;
@@ -203,6 +213,7 @@ inline void interaction::Nonbonded_Term
 
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force = e_lj = e_ls)
   const double dist = sqrt(dist2);
   const double dist2i = 1.0 / dist2;
   const double dist6i = dist2i * dist2i * dist2i;
@@ -234,6 +245,7 @@ inline void interaction::Nonbonded_Term
 
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force = e_ls)
   const double dist = sqrt(dist2);
   const double dist2i = 1.0 / dist2;
   const double q_eps = q * math::four_pi_eps_i;
@@ -265,6 +277,7 @@ inline void interaction::Nonbonded_Term
   assert(abs2(r) != 0);
 
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, f[0] = f[1] = f[2] = f[3] = e_lj = e_crf)
   const double dist2p1 = abs2(rp1);
   const double dist2p2 = abs2(rp2);
   const double dist2pp = abs2(rpp);
@@ -322,6 +335,7 @@ inline void interaction::Nonbonded_Term
 
 
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, f[0] = f[1] = f[2] = f[3] = e_lj = e_crf)
   const double dist2m = abs2(rm);
   const double dist2p1 = abs2(rp1);
   const double dist2p2 = abs2(rp2);
@@ -372,6 +386,7 @@ inline void interaction::Nonbonded_Term
 ::rf_interaction(math::Vec const &r, double q,
         math::Vec &force, double &e_crf, unsigned int eps) {
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force = e_crf)
 
   force = q * math::four_pi_eps_i * m_crf_cut3i[eps] * r;
 
@@ -397,6 +412,7 @@ inline void interaction::Nonbonded_Term
         double cgi, double cgj,
         math::VArray &force, double &e_crf, unsigned int eps) {
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force(0) = force(1) = force(2) = force(3) = e_crf)
   const double dist2p1 = abs2(rp1);
   const double dist2p2 = abs2(rp2);
   const double dist2pp = abs2(rpp);
@@ -429,6 +445,7 @@ inline void interaction::Nonbonded_Term
         double &force, double &e_lj, double &e_crf) {
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
   const double dist2i = 1.0 / dist2;
   const double disti = sqrt(dist2i);
   const double dist6i = dist2i * dist2i * dist2i;
@@ -486,6 +503,7 @@ inline void interaction::Nonbonded_Term
   assert(abs2(r) != 0);
   assert(abs2(rprime) != 0);
   const double distj = abs2(r);
+  HEAVISIDETRUNC(distj, e_el)
   const double distp = abs2(rprime);
   const double distji = 1.0 / (distj * sqrt(distj));
   const double distpi = 1.0 / (distp * sqrt(distp));
