@@ -899,17 +899,17 @@ namespace topology
     }
 
     /**
-     * atom numbers of the atoms to be NCS restraint.
+     * atom numbers of the atoms to be symmetry restraint.
      */
-    std::vector<unsigned int> & xray_ncs_restraints() {
-      return m_xray_ncs_restraints;
+    std::vector<unsigned int> & xray_sym_restraints() {
+      return m_xray_sym_restraints;
     }
 
     /**
-     * atom numbers of the atoms to be NCS restraint.
+     * atom numbers of the atoms to be symmetry restraint.
      */
-    std::vector<unsigned int> const & xray_ncs_restraints() const {
-      return m_xray_ncs_restraints;
+    std::vector<unsigned int> const & xray_sym_restraints() const {
+      return m_xray_sym_restraints;
     }
 
     /**
@@ -1476,7 +1476,7 @@ namespace topology
      */
     std::vector<double> m_xray_solv_occupancy;
     /**
-     * xray NCS periodic copy definition. i.e. pointer to the first atom in
+     * xray symmetry periodic copy definition. i.e. pointer to the first atom in
      * every ASU in the unit cell
      */
     std::vector<unsigned int> m_xray_asu;
@@ -1485,9 +1485,9 @@ namespace topology
      */
     std::vector<xray_umbrella_weight_struct> m_xray_umbrella_weights;
     /**
-     * the atoms for NCS restrains
+     * the atoms for symmetry restrains
      */
-    std::vector<unsigned int> m_xray_ncs_restraints;
+    std::vector<unsigned int> m_xray_sym_restraints;
      /**
      * the last atom of roto-translational constraints
      */

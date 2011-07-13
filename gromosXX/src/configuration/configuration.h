@@ -506,9 +506,9 @@ namespace configuration {
              */
             clipper::Xmap<clipper::ftype32> d_r;
             /**
-             * spacegroup for NCS restraints
+             * spacegroup for symmetry restraints
              */
-            clipper::Spacegroup ncs_spacegroup;
+            clipper::Spacegroup sym_spacegroup;
         #endif
 
       } xray_conf;

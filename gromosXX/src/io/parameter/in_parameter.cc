@@ -2090,7 +2090,7 @@ void io::In_Parameter::read_POSITIONRES(simulation::Parameter &param,
 } // POSITIONRES
 
 /**
- * @section xrayres XRRAYRES block
+ * @section xrayres XRAYRES block
  * @verbatim
 XRAYRES
 #    NTXR   -2: time-averaged electron density restraints

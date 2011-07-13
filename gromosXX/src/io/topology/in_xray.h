@@ -1,18 +1,27 @@
 /**
  * @file in_xray.h
- * read in a xray restraining file.
+ * read in a x-ray restraining file.
  */
 /**
- * @page xrayres xray restraints format
- * @date 03-02-2009
+ * @page xrayresfile X-ray restraints format
+ * @date 12-07-2011
  *
- * A xray restraints specifcation file may contain the following
+ * A x-ray restraints specification file may contain the following
  * blocks:
  * - @ref title
  * - @ref xrayresspec
- * - @ref xrayrespara
+ * - @ref xrayresspec "XRAYRFREESPEC block"
  * - @ref elementmap
+ * - @ref elementmap "XRAYSOLVELEMENTSPEC block"
  * - @ref xraybfoccspec
+ * - @ref xraybfoccspec "XRAYSOLVBFOCCSPEC block"
+ * - @ref xrayrespara
+ * - @ref xrayumbrellaweight
+ * - @ref xraysymresspec
+ * - @ref xraybfopt
+ * - @ref xraysfcalc
+ * - @ref xrayreplicaexchange
+ * - @ref xrayoverallbfactor
  */
 
 #ifndef INCLUDED_IN_XRAYRES_H

@@ -129,29 +129,29 @@ XRAYUMBRELLAWEIGHT
 END
 @endverbatim
  *
- * @section xrayncsresspec XRAYNCSRESSPEC block
- * The XRAYNCSRESSPEC block specifies firt parameters of the method. On two additional
+ * @section xraysymresspec XRAYSYMRESSPEC block
+ * The XRAYSYMRESSPEC block specifies parameters of the method. On two additional
  * lines data about the spacegroup and asymmetric units have to be given. The rest is
  * just specification of the atoms.
  *
  * @verbatim
-XRAYNCSRESSPEC
-# NTNCS      : use NCS restraints? (default 0)
-#              - 0: do not use NCS restraints
-#              - 1: restrain ASUs pairwisely
-#              - 2: constain atoms of additional ASUs to image of first ASU
-# CNCS       : force constant for NCS restraints (default 0)
-# NCSSPGR    : spacegroup for NCS restraints (default 0)
+XRAYSYMRESSPEC
+# NTSYM      : use symmetry restraints? (default 0)
+#              - 0: do not use symmetry restraints
+#              - 1: restrain ASUs in a pairwise way
+#              - 2: constrain atoms of additional ASUs to image of first ASU
+# CSYM       : force constant for symmetry restraints (default 0)
+# SYMSPGR    : spacegroup for symmetry restraints (default 0)
 # ASUDEF     : pointer to first atom in every ASU
-# NCSATOMS   : the atoms to restrain
+# SYMATOMS   : the atoms to restrain
 #
-# NTNCS     CNCS
+# NTSYM     CSYM
       1     25.0
-# NCSSPGR
+# SYMSPGR
   P 21 21 2
-# ASUDEF[1..NCSNUMSYM]
+# ASUDEF[1..SYMNUMSYM]
   1  101  201  301
-# NCSATOMS
+# SYMATOMS
     2 HEXA  CH23       9
     2 HEXA  CH24      10
     2 HEXA  CH25      11
@@ -186,10 +186,23 @@ XRAYBFACTOROPTIMISATION
         4    1    11    21    31
         2    2     3
 END
+@endverbatim
  *
  * @section xraysfcalc XRAYSFCALC block
  * The XRAYSFCALC block is used to tune the structure factor computation.
+ * 
+ * @verbatim
+XRAYSFCALC
+# SFCTOL: recalculate structure factors if an atoms has moved by SFCTOL
+# SFCST: recalculate structure factors every SFCSTth step
+#
+# SFCTOL   SFCST
+     0.1       5
+END
+@endverbatim
  *
+ * @section xrayreplicaexchange XRAYREPLICAEXCHANGE block
+ * Make resolution or force constant lambda dependent
  * @verbtaim
 XRAYREPLICAEXCHANGE
 # NTXRRE: use X-ray replica exchange 0..2
@@ -200,15 +213,13 @@ XRAYREPLICAEXCHANGE
 # CXRREMX: maximal force constant / resolution
 #
 # NTXRRE  CXREEMN CXREEMX
-     1  0.0  1000.0
+     1        0.0  1000.0
 END
-XRAYSFCALC
-#SFCTOL: tolerance (atom move)
-#SFCST: every n step
-#
-# SFCTOL   SFCST
-     0.1       5
-END
+@endverbatim
+ * 
+ * @section xrayoverallbfactor XRAYOVERALLBFACTOR block
+ * Controls the usage of an overall B-factor
+ * 
 XRAYOVERALLBFACTOR
 # XROB >= 0.0 the overall B factor used.
 # XROBF 0,1 fit the overall B factor using least-squares
@@ -551,42 +562,42 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       }
     }
   } // XRAYSOLVBFOCCSPEC
-  { // XRAYNCSRESSPEC
-    buffer = m_block["XRAYNCSRESSPEC"];
-    DEBUG(10, "XRAYNCSRESSPEC block : " << buffer.size());
+  { // XRAYSYMRESSPEC
+    buffer = m_block["XRAYSYMRESSPEC"];
+    DEBUG(10, "XRAYSYMRESSPEC block : " << buffer.size());
 
     if (!buffer.empty()) {
       if (buffer.size() < 6) {
-        io::messages.add("XRAYNCSRESSPEC block: not enough lines given",
+        io::messages.add("XRAYSYMRESSPEC block: not enough lines given",
                 "in_Xrayresspec", io::message::error);
         return;
       }
 
       _lineStream.clear();
       _lineStream.str(buffer[1]);
-      unsigned int ntncs;
-      _lineStream >> ntncs >> sim.param().xrayrest.ncs_force_constant;
+      unsigned int ntsym;
+      _lineStream >> ntsym >> sim.param().xrayrest.sym_force_constant;
       if (_lineStream.fail()) {
-        io::messages.add("XRAYNCSRESSPEC block: Cannot read method and force constant from first line",
+        io::messages.add("XRAYSYMRESSPEC block: Cannot read method and force constant from first line",
                 "in_Xrayresspec", io::message::error);
-        sim.param().xrayrest.ncs_force_constant = 0.0;
+        sim.param().xrayrest.sym_force_constant = 0.0;
         return;
       }
-      switch (ntncs) {
+      switch (ntsym) {
         case 0:
-          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_off;
+          sim.param().xrayrest.symrest = simulation::xray_symrest_off;
           break;
         case 1:
-          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_ind;
+          sim.param().xrayrest.symrest = simulation::xray_symrest_ind;
           break;
         case 2:
-          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_constr;
+          sim.param().xrayrest.symrest = simulation::xray_symrest_constr;
           break;
         default:
-          sim.param().xrayrest.ncsrest = simulation::xray_ncsrest_off;
-          io::messages.add("XRAYNCSRESSPEC block: Invalid NTNCS",
+          sim.param().xrayrest.symrest = simulation::xray_symrest_off;
+          io::messages.add("XRAYSYMRESSPEC block: Invalid NTSYM",
                   "in_Xrayresspec", io::message::error);
-          sim.param().xrayrest.ncs_force_constant = 0.0;
+          sim.param().xrayrest.sym_force_constant = 0.0;
           return;
       }
 
@@ -594,14 +605,14 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       const size_t startpos = spacegroup.find_first_not_of(" \t"); // start trim
       const size_t endpos = spacegroup.find_last_not_of(" \t"); // end trim
       spacegroup = spacegroup.substr(startpos, endpos - startpos + 1);
-      sim.param().xrayrest.ncs_spacegroup = spacegroup;
+      sim.param().xrayrest.sym_spacegroup = spacegroup;
 #ifdef HAVE_CLIPPER
       clipper::Spacegroup spacegr;
       try {
-        clipper::Spgr_descr spgrinit(clipper::String(sim.param().xrayrest.ncs_spacegroup), clipper::Spgr_descr::HM);
+        clipper::Spgr_descr spgrinit(clipper::String(sim.param().xrayrest.sym_spacegroup), clipper::Spgr_descr::HM);
         spacegr.init(spgrinit);
       } catch (const clipper::Message_fatal & msg) {
-        io::messages.add("In_Xrayresspec", "XRAYNCSRESSPEC block: "+msg.text(), io::message::error);
+        io::messages.add("In_Xrayresspec", "XRAYSYMRESSPEC block: "+msg.text(), io::message::error);
         return;
       }
       _lineStream.clear();
@@ -609,7 +620,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       DEBUG(8, "\tSpacegroup has " << spacegr.num_symops() << " symmetry operations.");
       if (spacegr.num_symops() <= 1) {
         std::ostringstream msg;
-          msg << "XRAYNCSRESSPEC block: Spacegroup " << spacegroup << " does not contain at least one symmetry operation which is not the identity.";
+          msg << "XRAYSYMRESSPEC block: Spacegroup " << spacegroup << " does not contain at least one symmetry operation which is not the identity.";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
           return;
       }
@@ -620,14 +631,14 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         _lineStream >> atom_pointer;
         if (_lineStream.fail()) {
           std::ostringstream msg;
-          msg << "XRAYNCSRESSPEC block: Cannot read ASU pointers " << (i+1) << ".";
+          msg << "XRAYSYMRESSPEC block: Cannot read ASU pointers " << (i+1) << ".";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
           return;
         }
         --atom_pointer;
         if (atom_pointer < 0 || atom_pointer >= int(topo.num_atoms())) {
           std::ostringstream msg;
-          msg << "XRAYNCSRESSPEC block: ASU pointer " << (i+1) << " is out of range.";
+          msg << "XRAYSYMRESSPEC block: ASU pointer " << (i+1) << " is out of range.";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
           return;
         }
@@ -638,14 +649,14 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       io::messages.add("In_Xrayresspec", "Compile with clipper support.", io::message::error);
 #endif
 
-      topo.xray_ncs_restraints().clear();
+      topo.xray_sym_restraints().clear();
       std::vector<std::string>::const_iterator it = buffer.begin() + 4,
               to = buffer.end() - 1;
       for(unsigned int line_nr = 6; it != to; ++it, ++line_nr) {
         std::string line(*it);
         if (line.length() < 17) {
          std::ostringstream msg;
-          msg << "XRAYNCSRESSPEC block: Line " << line_nr << " is too short.";
+          msg << "XRAYSYMRESSPEC block: Line " << line_nr << " is too short.";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
           return;
         }
@@ -663,7 +674,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
         if (_lineStream.fail()) {
           std::ostringstream msg;
-          msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": Cannot read atom.";
+          msg << "XRAYSYMRESSPEC block: Line " << line_nr << ": Cannot read atom.";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
           return;
         }
@@ -671,13 +682,13 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         --atom;
         if (atom < 0 || atom >= int(topo.num_atoms())) {
           std::ostringstream msg;
-          msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": Atom out of range.";
+          msg << "XRAYSYMRESSPEC block: Line " << line_nr << ": Atom out of range.";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
           return;
         }
         if (atom < int(topo.xray_asu()[0])) {
           std::ostringstream msg;
-          msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": Atom not in first ASU.";
+          msg << "XRAYSYMRESSPEC block: Line " << line_nr << ": Atom not in first ASU.";
           io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
           return;
         }
@@ -686,16 +697,16 @@ io::In_Xrayresspec::read(topology::Topology& topo,
           const unsigned int atom_img = topo.xray_asu()[i] + atom_p;
           if (atom_img >= topo.num_atoms()) {
             std::ostringstream msg;
-            msg << "XRAYNCSRESSPEC block: Line " << line_nr << ": The image nr. "
+            msg << "XRAYSYMRESSPEC block: Line " << line_nr << ": The image nr. "
                 << i << " of atom " << (atom+1) << " is out of range.";
             io::messages.add("In_Xrayresspec", msg.str(), io::message::error);
             return;
           }
         }
-        topo.xray_ncs_restraints().push_back(atom);
+        topo.xray_sym_restraints().push_back(atom);
       } // for atoms
     } // if block present
-  } // XRAYNCSRESSPEC
+  } // XRAYSYMRESSPEC
 
   { // XRAYBFACTOROPTIMISATION
 
@@ -918,28 +929,28 @@ io::In_Xrayresspec::read(topology::Topology& topo,
   if (!quiet) {
     switch (sim.param().xrayrest.xrayrest) {
       case simulation::xrayrest_off :
-                os << "\tXray restraints OFF\n";
+                os << "\tx-ray restraints OFF\n";
         break;
       case simulation::xrayrest_inst :
-                os << "\tXray instantaneous restraints ON\n";
+                os << "\tx-ray instantaneous restraints ON\n";
         break;
       case simulation::xrayrest_avg :
-                os << "\tXray time-averaged restraints ON\n";
+                os << "\tx-ray time-averaged restraints ON\n";
         break;
       case simulation::xrayrest_biq :
-                os << "\tXray biquadratic instantaneous/time-averaged restraints ON\n";
+                os << "\tx-ray biquadratic instantaneous/time-averaged restraints ON\n";
         break;
     }
 
-    switch (sim.param().xrayrest.ncsrest) {
-      case simulation::xray_ncsrest_off:
-        os << "\tNCS restraints OFF\n";
+    switch (sim.param().xrayrest.symrest) {
+      case simulation::xray_symrest_off:
+        os << "\tsymmetry restraints OFF\n";
         break;
-      case simulation::xray_ncsrest_ind:
-        os << "\tNCS restraints on individual atom positions\n";
+      case simulation::xray_symrest_ind:
+        os << "\tsymmetry restraints on individual atom positions\n";
         break;
-      case simulation::xray_ncsrest_constr:
-        os << "\tNCS constraints on individual atom positions\n";
+      case simulation::xray_symrest_constr:
+        os << "\tsymmetry constraints on individual atom positions\n";
         break;
     }
     os << "END\n";

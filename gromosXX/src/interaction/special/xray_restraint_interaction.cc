@@ -67,7 +67,7 @@ int interaction::Xray_Restraint_Interaction
     clipper::HKL_data<clipper::data32::F_phi> & fphi_obs = conf.special().xray_conf.fphi_obs;
     clipper::FFTmap_p1 & D_k = conf.special().xray_conf.D_k;
     clipper::Xmap<clipper::ftype32> & d_r = conf.special().xray_conf.d_r;
-    clipper::Spacegroup & ncs_spacegroup = conf.special().xray_conf.ncs_spacegroup;
+    clipper::Spacegroup & sym_spacegroup = conf.special().xray_conf.sym_spacegroup;
     const clipper::Cell & cell = rho_calc.cell();
   m_timer.start();
   // get number of atoms in simulation
@@ -125,31 +125,31 @@ int interaction::Xray_Restraint_Interaction
     sim.param().xrayrest.resolution = topo.lambda() * (max - min) + min;
   }
 
-  // lets start with NCS stuff.
-  if (sim.param().xrayrest.ncsrest != simulation::xray_ncsrest_off) {
-    DEBUG(6, "NCS restraints");
-    m_timer.start("NCS restraints");
+  // lets start with sym stuff.
+  if (sim.param().xrayrest.symrest != simulation::xray_symrest_off) {
+    DEBUG(6, "symmetry restraints");
+    m_timer.start("symmetry restraints");
     std::vector<unsigned int>::const_iterator
-            atom_it = topo.xray_ncs_restraints().begin(),
-            atom_to = topo.xray_ncs_restraints().end();
+            atom_it = topo.xray_sym_restraints().begin(),
+            atom_to = topo.xray_sym_restraints().end();
 
     for (; atom_it != atom_to; ++atom_it) {
       const unsigned int atom_p = *atom_it - topo.xray_asu()[0];
       DEBUG(6, "atom: " << *atom_it);
 
-      switch (sim.param().xrayrest.ncsrest) {
-        case simulation::xray_ncsrest_off : break;
-        case simulation::xray_ncsrest_ind :
+      switch (sim.param().xrayrest.symrest) {
+        case simulation::xray_symrest_off : break;
+        case simulation::xray_symrest_ind :
         {
-          DEBUG(6, "NCS individual atoms");
+          DEBUG(6, "symmetry individual atoms");
           for (unsigned int i = 0; i < topo.xray_asu().size()-1; ++i) {
             const unsigned int atom_i = topo.xray_asu()[i] + atom_p;
-            const clipper::Coord_orth pos_i_ang(ncs_spacegroup.symop(i).inverse().rtop_orth(cell) * atoms[atom_i].coord_orth());
+            const clipper::Coord_orth pos_i_ang(sym_spacegroup.symop(i).inverse().rtop_orth(cell) * atoms[atom_i].coord_orth());
             math::Vec pos_i(pos_i_ang.x(), pos_i_ang.y(), pos_i_ang.z());
             pos_i /= to_ang;
             for (unsigned int j = i + 1; j < topo.xray_asu().size(); ++j) {
               const unsigned int atom_j = topo.xray_asu()[j] + atom_p;
-              const clipper::Coord_orth pos_j_ang(ncs_spacegroup.symop(j).inverse().rtop_orth(cell) * atoms[atom_j].coord_orth());
+              const clipper::Coord_orth pos_j_ang(sym_spacegroup.symop(j).inverse().rtop_orth(cell) * atoms[atom_j].coord_orth());
               math::Vec pos_j(pos_j_ang.x(), pos_j_ang.y(), pos_j_ang.z());
               pos_j /= to_ang;
 
@@ -162,32 +162,32 @@ int interaction::Xray_Restraint_Interaction
               DEBUG(9, "dist    : " << math::v2s(dist));
               const clipper::Coord_orth dist_cl(dist(0), dist(1), dist(2));
               // do the rotation
-              const clipper::Coord_orth r_i(ncs_spacegroup.symop(i).rtop_orth(cell).rot() * dist_cl);
-              const clipper::Coord_orth r_j(ncs_spacegroup.symop(j).rtop_orth(cell).rot() * dist_cl);
+              const clipper::Coord_orth r_i(sym_spacegroup.symop(i).rtop_orth(cell).rot() * dist_cl);
+              const clipper::Coord_orth r_j(sym_spacegroup.symop(j).rtop_orth(cell).rot() * dist_cl);
 
-              const math::Vec f_i(-sim.param().xrayrest.ncs_force_constant * math::Vec(r_i.x(), r_i.y(), r_i.z()));
-              const math::Vec f_j(sim.param().xrayrest.ncs_force_constant * math::Vec(r_j.x(), r_j.y(), r_j.z()));
+              const math::Vec f_i(-sim.param().xrayrest.sym_force_constant * math::Vec(r_i.x(), r_i.y(), r_i.z()));
+              const math::Vec f_j(sim.param().xrayrest.sym_force_constant * math::Vec(r_j.x(), r_j.y(), r_j.z()));
               
               DEBUG(8, "f i     : " << math::v2s(f_i));
               DEBUG(8, "f j     : " << math::v2s(f_j));
 
               conf.current().force(atom_i) += f_i;
               conf.current().force(atom_j) += f_j;
-              const double V = 0.5 * sim.param().xrayrest.ncs_force_constant * math::abs2(dist);
+              const double V = 0.5 * sim.param().xrayrest.sym_force_constant * math::abs2(dist);
               conf.current().energies.xray_total += V;
               DEBUG(7, "energy : " << V);
             }
           } // loop over images
           break;
         }
-        case simulation::xray_ncsrest_constr :
+        case simulation::xray_symrest_constr :
         {
-          DEBUG(6, "NCS constrain atoms");
+          DEBUG(6, "symmetry constrain atoms");
           // loop over images
           for (unsigned int i = 1; i < topo.xray_asu().size(); ++i) {
             const unsigned int atom_img = topo.xray_asu()[i] + atom_p;
             // optain the image position
-            const clipper::Coord_orth pos_img_ang(ncs_spacegroup.symop(i).rtop_orth(cell) * atoms[*atom_it].coord_orth());
+            const clipper::Coord_orth pos_img_ang(sym_spacegroup.symop(i).rtop_orth(cell) * atoms[*atom_it].coord_orth());
             math::Vec pos_img(pos_img_ang.x(), pos_img_ang.y(), pos_img_ang.z());
             pos_img /= to_ang;
             DEBUG(8, "pos     : " << math::v2s(conf.current().pos(atom_img)));
@@ -202,7 +202,7 @@ int interaction::Xray_Restraint_Interaction
         }
       } // method switch
     } // loop over restrained atoms
-    m_timer.stop("NCS restraints");
+    m_timer.stop("symmetry restraints");
   }
   
   // fit the b factor
@@ -414,7 +414,7 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
   clipper::HKL_data<clipper::data32::F_phi> & fphi_obs = conf.special().xray_conf.fphi_obs;
   clipper::FFTmap_p1 & D_k = conf.special().xray_conf.D_k;
   clipper::Xmap<clipper::ftype32> & d_r = conf.special().xray_conf.d_r;
-  clipper::Spacegroup & ncs_spacegroup = conf.special().xray_conf.ncs_spacegroup;
+  clipper::Spacegroup & sym_spacegroup = conf.special().xray_conf.sym_spacegroup;
 
   // Redirect clipper errors
   clipper::Message message;
@@ -554,15 +554,15 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
     } // for weights
   } // if local elev
 
-  if (sim.param().xrayrest.ncsrest != simulation::xray_ncsrest_off) {
+  if (sim.param().xrayrest.symrest != simulation::xray_symrest_off) {
     try {
-      clipper::Spgr_descr spgrinit(clipper::String(sim.param().xrayrest.ncs_spacegroup), clipper::Spgr_descr::HM);
-      ncs_spacegroup.init(spgrinit);
+      clipper::Spgr_descr spgrinit(clipper::String(sim.param().xrayrest.sym_spacegroup), clipper::Spgr_descr::HM);
+      sym_spacegroup.init(spgrinit);
     } catch (const clipper::Message_fatal & msg) {
-      io::messages.add("Xray_Restraint_Interaction", "NCS spacegroup: " + msg.text(), io::message::error);
+      io::messages.add("Xray_Restraint_Interaction", "symmetry spacegroup: " + msg.text(), io::message::error);
       return 1;
     }
-  } // if NCS rest
+  } // if symmetry rest
 
   if (sim.param().xrayrest.bfactor.step) {
     conf.special().xray_bfoc.resize(atoms.size());
@@ -678,26 +678,26 @@ int interaction::Xray_Restraint_Interaction::init(topology::Topology &topo,
       }
     }
 
-    if (sim.param().xrayrest.ncsrest != simulation::xray_ncsrest_off) {
+    if (sim.param().xrayrest.symrest != simulation::xray_symrest_off) {
       os << std::endl;
-      switch (sim.param().xrayrest.ncsrest) {
-        case simulation::xray_ncsrest_off : break;
-        case simulation::xray_ncsrest_ind:
-          os << "NCS restraints on individual atom positions" << std::endl;
+      switch (sim.param().xrayrest.symrest) {
+        case simulation::xray_symrest_off : break;
+        case simulation::xray_symrest_ind:
+          os << "symmetry restraints on individual atom positions" << std::endl;
           break;
-        case simulation::xray_ncsrest_constr:
-          os << "NCS constraints on individual atom positions" << std::endl;
+        case simulation::xray_symrest_constr:
+          os << "symmetry constraints on individual atom positions" << std::endl;
           break;
       }
-      os << " - force constant : " << sim.param().xrayrest.ncs_force_constant << std::endl;
-      os << " - Spacegroup     : " << sim.param().xrayrest.ncs_spacegroup << std::endl;
+      os << " - force constant : " << sim.param().xrayrest.sym_force_constant << std::endl;
+      os << " - Spacegroup     : " << sim.param().xrayrest.sym_spacegroup << std::endl;
       os << " - " << topo.xray_asu().size() << " asymmetric units. First atoms: " << std::endl;
       for (unsigned int i = 0; i < topo.xray_asu().size(); ++i) {
         os << "       - " << topo.xray_asu()[i]+1 << std::endl;
       }
       os << " - the restraint atoms: " << std::endl;
-      for(unsigned int i = 0; i < topo.xray_ncs_restraints().size(); ++i) {
-        os << std::setw(6) << (topo.xray_ncs_restraints()[i]+1);
+      for(unsigned int i = 0; i < topo.xray_sym_restraints().size(); ++i) {
+        os << std::setw(6) << (topo.xray_sym_restraints()[i]+1);
         if ((i+1) % 10 == 0) os << std::endl;
       }
       os << std::endl;

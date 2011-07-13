@@ -59,6 +59,7 @@
  * - @ref  g96compat
  * - @ref  orderparamres
  * - @ref  qmmmb
+ * - @ref  xrayres
  */
 
 

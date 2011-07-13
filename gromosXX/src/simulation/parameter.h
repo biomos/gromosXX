@@ -401,22 +401,22 @@ namespace simulation
   };
 
   /**
-   * @enum xray_ncsrest_enum
-   * Xray non-crystallographic symmetry restraints enum
+   * @enum xray_symrest_enum
+   * x-ray symmetry restraints enum
    */
-  enum xray_ncsrest_enum {
+  enum xray_symrest_enum {
     /**
-     * no NCS restraints
+     * no symmetry restraints
      */
-    xray_ncsrest_off = 0,
+    xray_symrest_off = 0,
     /**
-     * use NCS restraints on the individual atoms
+     * use symmetry restraints on the individual atoms
      */
-    xray_ncsrest_ind = 1,
+    xray_symrest_ind = 1,
     /*
-     * use NCS contraints
+     * use symmetry contraints
      */
-    xray_ncsrest_constr = 2,
+    xray_symrest_constr = 2,
   };
 
   /**
@@ -1513,9 +1513,9 @@ namespace simulation
        * - resolution 1.0
        * - readavg 0
        * - to_angstrom 10.0
-       * - ncsrest (off)
-       * - ncs_force_constant 0.0
-       * - ncs_spacegroup "P 1"
+       * - symrest (off)
+       * - sym_force_constant 0.0
+       * - sym_spacegroup "P 1"
        */
       xrayrest_struct() : xrayrest(xrayrest_off),
       mode(xrayrest_mode_structure_factor),
@@ -1529,9 +1529,9 @@ namespace simulation
       resolution(1.0),
       readavg(0),
       to_angstrom(10.0),
-      ncsrest(xray_ncsrest_off),
-      ncs_force_constant(0.0),
-      ncs_spacegroup("P 1") {
+      symrest(xray_symrest_off),
+      sym_force_constant(0.0),
+      sym_spacegroup("P 1") {
       }
 
       /**
@@ -1583,17 +1583,17 @@ namespace simulation
        */
       double to_angstrom;
       /**
-       * do NCS restraints?
+       * do symmetry restraints?
        */
-      xray_ncsrest_enum ncsrest;
+      xray_symrest_enum symrest;
       /**
-       * force constant for NCS restraints
+       * force constant for symmetry restraints
        */
-      double ncs_force_constant;
+      double sym_force_constant;
       /**
-       * NCS spacegroup
+       * symmetry spacegroup
        */
-      std::string ncs_spacegroup;
+      std::string sym_spacegroup;
 /**
        * @struct bfactor_struct
        * B factor settings structure
