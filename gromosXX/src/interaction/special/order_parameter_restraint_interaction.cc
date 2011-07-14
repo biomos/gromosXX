@@ -22,6 +22,7 @@
 #include <util/debug.h>
 
 #include <io/topology/in_order.h>
+#include <list>
 
 #undef MODULE
 #undef SUBMODULE
@@ -106,14 +107,45 @@ int _calculate_order_parameter_restraint_interactions
     DEBUG(10, "dDdr: " << math::v2s(dDdr));
 
     // time-averaging
-    // initalise average?
-    if (sim.steps() == 0 && !sim.param().orderparamrest.read) {
-      Q_avg = Q;
-      D_avg = D;
+    if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av ||
+        sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted) {
+      // initalise average?
+      if (sim.steps() == 0 && !sim.param().orderparamrest.read) {
+        Q_avg = Q;
+        D_avg = D;
+      }
+      // apply time averaging
+      Q_avg = (1.0 - exptau) * Q + exptau * Q_avg;
+      D_avg = (1.0 - exptau) * D + exptau * D_avg;
+    } else if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav ||
+        sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav_weighted) {
+      unsigned int window_size = int(sim.param().orderparamrest.tau / sim.time_step_size());
+      DEBUG(8, "window size: " << window_size);
+      if (sim.steps() == 0 && !sim.param().orderparamrest.read) {
+        for(unsigned int i = 0; i < window_size; ++i) {
+          conf.special().orderparamres.Q_winavg[l].push_back(Q);
+          conf.special().orderparamres.D_winavg[l].push_back(D);
+        }
+      }
+      
+      Q_avg = 0.0;
+      conf.special().orderparamres.Q_winavg[l].pop_front();
+      conf.special().orderparamres.Q_winavg[l].push_back(Q);
+      for(std::list<math::Matrix>::const_iterator it = conf.special().orderparamres.Q_winavg[l].begin(),
+              to = conf.special().orderparamres.Q_winavg[l].end(); it != to; ++it) {
+        Q_avg += *it;
+      }
+      Q_avg *= (1.0 / window_size);
+      
+      D_avg = 0.0;
+      conf.special().orderparamres.D_winavg[l].pop_front();
+      conf.special().orderparamres.D_winavg[l].push_back(D);
+      for(std::list<double>::const_iterator it = conf.special().orderparamres.D_winavg[l].begin(),
+              to = conf.special().orderparamres.D_winavg[l].end(); it != to; ++it) {
+        D_avg += *it;
+      }
+      D_avg *= (1.0 / window_size);
     }
-    // apply time averaging
-    Q_avg = (1.0 - exptau) * Q + exptau * Q_avg;
-    D_avg = (1.0 - exptau) * D + exptau * D_avg;
     
 
     // compute order parameter
@@ -141,6 +173,8 @@ int _calculate_order_parameter_restraint_interactions
         break;
       case simulation::oparam_restr_av:
       case simulation::oparam_restr_av_weighted:
+      case simulation::oparam_restr_winav:
+      case simulation::oparam_restr_winav_weighted:
       {
         double term = 0.0;
         if (S2_avg > it->S0 + it->dS0) {
@@ -206,6 +240,8 @@ int interaction::Order_Parameter_Restraint_Interaction::init
   const unsigned int & num_res = topo.order_parameter_restraints().size();
   conf.special().orderparamres.Q_avg.resize(num_res);
   conf.special().orderparamres.D_avg.resize(num_res);
+  conf.special().orderparamres.Q_winavg.resize(num_res);
+  conf.special().orderparamres.D_winavg.resize(num_res);
   conf.special().orderparamres.S2_avg.resize(num_res);
   conf.special().orderparamres.energy.resize(num_res);
 
@@ -216,10 +252,16 @@ int interaction::Order_Parameter_Restraint_Interaction::init
         os << "\trestraining off";
         break;
       case simulation::oparam_restr_av:
-        os << "\ttime averaged restraining";
+        os << "\ttime-averaged restraining using exponential-decay memory function";
         break;
       case simulation::oparam_restr_av_weighted:
-        os << "\ttime averaged restraining, weighted";
+        os << "\ttime-averaged restraining, weighted, using exponential-decay memory function";
+        break;
+      case simulation::oparam_restr_winav:
+        os << "\ttime-averaged restraining using window averaging";
+        break;
+      case simulation::oparam_restr_winav_weighted:
+        os << "\ttime-averaged restraining, weighted, using window averaging";
         break;
     }
     os << std::endl;

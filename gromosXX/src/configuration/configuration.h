@@ -534,6 +534,14 @@ namespace configuration {
          * the running average of D
          */
         std::vector<double> D_avg;
+        /**
+         * the averaging window of Q
+         */
+        std::vector<std::list<math::Matrix> > Q_winavg;
+        /**
+         * the averaging window of D
+         */
+        std::vector<std::list<double> > D_winavg;
         
       } /** disres informaton */ orderparamres;
 

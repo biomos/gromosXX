@@ -2570,6 +2570,12 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
       case 0:
         param.orderparamrest.orderparamrest = simulation::oparam_restr_off;
         break;
+      case 1:
+        param.orderparamrest.orderparamrest = simulation::oparam_restr_winav;
+        break;
+      case 2:
+        param.orderparamrest.orderparamrest = simulation::oparam_restr_winav_weighted;
+        break;
       default:
         io::messages.add("ORDERPARAMRES block: NTOPR must be -2..0.",
                 "In_Parameter", io::message::error);

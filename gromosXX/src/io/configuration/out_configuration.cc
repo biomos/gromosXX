@@ -507,6 +507,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av ||
         sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted) {
       _print_order_parameter_restraint_averages(conf, topo, m_final_conf);
+    } else if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav ||
+        sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav_weighted) {
+      _print_order_parameter_restraint_average_window(conf, topo, m_final_conf);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -2654,6 +2657,43 @@ void io::Out_Configuration::_print_order_parameter_restraint_averages(
     os << std::setw(m_width) << std::right << *d_it;
     if (++l % 5 == 0)
       os << std::endl;
+  }
+
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_order_parameter_restraint_average_window(
+        configuration::Configuration const & conf,
+        topology::Topology const & topo,
+        std::ostream & os) {
+  DEBUG(10, "order parameter restraint averages");
+
+  std::vector<std::list<math::Matrix> >::const_iterator Qwin_it = conf.special().orderparamres.Q_winavg.begin(),
+          Qwin_to = conf.special().orderparamres.Q_winavg.end();
+  std::vector<std::list<double> >::const_iterator Dwin_it = conf.special().orderparamres.D_winavg.begin();
+
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
+
+  os << "ORDERPARAMRESWINAVE" << std::endl;
+
+  for (unsigned int l = 0; Qwin_it != Qwin_to; ++Qwin_it, ++Dwin_it) {
+    std::list<math::Matrix>::const_iterator it = Qwin_it->begin(),
+      to = Qwin_it->end();
+    std::list<double>::const_iterator D_it = Dwin_it->begin();
+    // loop over window
+    for(; it != to; ++it, ++D_it) {
+      for(unsigned int i = 0; i < 3; ++i) {
+        for(unsigned int j = 0; j < 3; ++j) {
+          os << std::setw(m_width) << std::right << (*it)(i,j);
+          if (++l % 5 == 0)
+            os << std::endl;
+        } 
+      }
+      os << std::setw(m_width) << std::right << *D_it;
+      if (++l % 5 == 0)
+        os << std::endl;
+    }
   }
 
   os << "END" << std::endl;

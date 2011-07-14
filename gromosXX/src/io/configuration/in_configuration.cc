@@ -1019,6 +1019,27 @@ bool io::In_Configuration::read_order_parameter_restraint_averages
         io::messages.add("No ORDERPARAMRESEXPAVE block in configuration.",
               "In_Configuration", io::message::error);
     }
+  } else if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav ||
+      sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav_weighted) {
+
+    buffer = m_block["ORDERPARAMRESWINAVE"];
+    if (buffer.size()) {
+      block_read.insert("ORDERPARAMRESWINAVE");
+      if (!quiet)
+        os << "\treading ORDERPARAMRESWINAVE...\n";
+      unsigned int window_size = int(sim.param().orderparamrest.tau / sim.time_step_size());
+
+      if (sim.param().orderparamrest.read)
+        _read_order_parameter_restraint_average_window(buffer, window_size, topo.order_parameter_restraints(),
+              conf.special().orderparamres.Q_winavg, conf.special().orderparamres.D_winavg);
+      else
+        io::messages.add("Order-parameter restraint averages found but not read.",
+              "In_Configuration", io::message::warning);
+    } else {
+      if (sim.param().orderparamrest.read)
+        io::messages.add("No ORDERPARAMRESWINAVE block in configuration.",
+              "In_Configuration", io::message::error);
+    }
   }
   return true;
 }
@@ -2161,6 +2182,55 @@ bool io::In_Configuration::_read_order_parameter_restraint_averages(
 
     Q_avg.push_back(ave);
     D_avg.push_back(D);
+  }
+
+  return true;
+}
+
+bool io::In_Configuration::_read_order_parameter_restraint_average_window(
+        std::vector<std::string> &buffer,
+        unsigned int window_size,
+        const std::vector<topology::order_parameter_restraint_struct> & oparamres,
+        std::vector<std::list<math::Matrix> > & Q_avg,
+        std::vector<std::list<double> > & D_avg) {
+  DEBUG(8, "read order parameter restaint averages");
+
+  std::vector<topology::order_parameter_restraint_struct>::const_iterator
+  oparamres_it = oparamres.begin(), oparamres_to = oparamres.end();
+
+  std::string s;
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
+
+  Q_avg.clear();
+  D_avg.clear();
+
+  for (; oparamres_it != oparamres_to; ++oparamres_it) {
+    std::list<math::Matrix> ave_win;
+    std::list<double> D_win;
+    for(unsigned int w = 0; w < window_size; ++w) {
+      math::Matrix ave;
+      for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int j = 0; j < 3; ++j) {
+          _lineStream >> ave(i, j);
+        }
+      }
+    
+      double D;
+      _lineStream >> D;
+
+      if (_lineStream.fail()) {
+        io::messages.add("Could not read averages from ORDERPARAMRESWINAVE block",
+                "In_Configuration", io::message::error);
+        return false;
+      }
+      ave_win.push_back(ave);
+      D_win.push_back(D);
+    }
+
+    Q_avg.push_back(ave_win);
+    D_avg.push_back(D_win);
   }
 
   return true;

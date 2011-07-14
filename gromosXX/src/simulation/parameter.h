@@ -229,6 +229,14 @@ namespace simulation
      * time-averaged restraints, weighted
      */
     oparam_restr_av_weighted = -2,
+    /**
+     * time-averaged restraints (window)
+     */
+    oparam_restr_winav = 1,
+    /**
+     * time-averaged restraints (window), weighted
+     */
+    oparam_restr_winav_weighted = 2
   };
 
   /**

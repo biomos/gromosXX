@@ -338,7 +338,12 @@ namespace io {
             topology::Topology const &topo,
             std::ostream &os);
 
-    void _print_order_parameter_restraint_averages (
+    void _print_order_parameter_restraint_averages(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
+    void _print_order_parameter_restraint_average_window(
             configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);

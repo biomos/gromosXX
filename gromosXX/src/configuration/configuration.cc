@@ -157,6 +157,9 @@ configuration::Configuration::Configuration
   special().orderparamres.S2_avg = conf.special().orderparamres.S2_avg;
   special().orderparamres.energy = conf.special().orderparamres.energy;
   special().orderparamres.Q_avg = conf.special().orderparamres.Q_avg;
+  special().orderparamres.D_avg = conf.special().orderparamres.D_avg;
+  special().orderparamres.Q_winavg = conf.special().orderparamres.Q_winavg;
+  special().orderparamres.D_winavg = conf.special().orderparamres.D_winavg;
  
   special().rottrans_constr = conf.special().rottrans_constr;
 

@@ -19,6 +19,7 @@
 #include <cmath>
 #include <algorithm>
 #include <typeinfo>
+#include <list>
 
 #include "config.h"
 

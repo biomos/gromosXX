@@ -375,6 +375,15 @@ namespace io {
                  const std::vector<topology::order_parameter_restraint_struct> & oparamres,
                  std::vector<math::Matrix> & Q_avg,
                  std::vector<double> & D_avg);
+    /**
+     * read ORDERPARAMRESWINAVE block
+     */
+    bool _read_order_parameter_restraint_average_window(
+                 std::vector<std::string> & buffer,
+                 unsigned int window_size,
+                 const std::vector<topology::order_parameter_restraint_struct> & oparamres,
+                 std::vector<std::list<math::Matrix> > & Q_avg,
+                 std::vector<std::list<double> > & D_avg);
 
     /**
      * read time information.
