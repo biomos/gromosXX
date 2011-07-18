@@ -2204,20 +2204,18 @@ bool io::In_Configuration::_read_order_parameter_restraint_average_window(
   _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
 
   Q_avg.clear();
+  Q_avg.resize(oparamres.size());
   D_avg.clear();
-
-  for (; oparamres_it != oparamres_to; ++oparamres_it) {
-    std::list<math::Matrix> ave_win;
-    std::list<double> D_win;
+  D_avg.resize(oparamres.size());
+  math::Matrix Q;
+  double D;
+  for (unsigned int o = 0; oparamres_it != oparamres_to; ++oparamres_it, ++o) {
     for(unsigned int w = 0; w < window_size; ++w) {
-      math::Matrix ave;
       for (unsigned int i = 0; i < 3; ++i) {
         for (unsigned int j = 0; j < 3; ++j) {
-          _lineStream >> ave(i, j);
+          _lineStream >> Q(i, j);
         }
       }
-    
-      double D;
       _lineStream >> D;
 
       if (_lineStream.fail()) {
@@ -2225,12 +2223,9 @@ bool io::In_Configuration::_read_order_parameter_restraint_average_window(
                 "In_Configuration", io::message::error);
         return false;
       }
-      ave_win.push_back(ave);
-      D_win.push_back(D);
+      Q_avg[o].push_back(Q);
+      D_avg[o].push_back(D);
     }
-
-    Q_avg.push_back(ave_win);
-    D_avg.push_back(D_win);
   }
 
   return true;
