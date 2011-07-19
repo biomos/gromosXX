@@ -18,6 +18,7 @@
 #include "../../io/configuration/out_configuration.h"
 
 #include "in_posres.h"
+#include "../../math/transformation.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -204,6 +205,10 @@ io::In_Refpos::read(topology::Topology& topo,
         conf.special().reference_positions.resize(topo.num_atoms());
         io::In_Configuration::_read_position(conf.special().reference_positions,
                                                 buffer, topo.num_atoms(), std::string("REFPOSITION"));
+        if (conf.boundary_type == math::truncoct) {
+          // convert to triclinic system
+          math::truncoct_triclinic(conf.special().reference_positions, true);
+        }
       }
     } else {
       if (buffer.size()) {

@@ -2981,17 +2981,23 @@ void io::Out_Configuration
   topology::Solvent const &solvent = topo.solvent(0);
 
   const math::VArray & ref = conf.special().reference_positions;
+  math::Matrixl Rmat(math::rmat(conf.current().phi,
+          conf.current().theta, conf.current().psi));
+  if (conf.boundary_type == math::truncoct) {
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+  }
   const math::SArray & b = conf.special().bfactors;
 
   for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
+    math::Vec r(math::product(Rmat, ref(i)));
     if (i < topo.num_solute_atoms()) {
       os << std::setw(5) << solute.atom(i).residue_nr + 1 << " "
               << std::setw(5) << std::left << residue_name[solute.atom(i).residue_nr] << " "
               << std::setw(6) << std::left << solute.atom(i).name << std::right
               << std::setw(6) << i + 1
-              << std::setw(m_width) << ref(i)(0)
-              << std::setw(m_width) << ref(i)(1)
-              << std::setw(m_width) << ref(i)(2)
+              << std::setw(m_width) << r(0)
+              << std::setw(m_width) << r(1)
+              << std::setw(m_width) << r(2)
               << "\n";
     } else { // just writing out dummy values for first 17 chars
       os << std::setw(5) << "0" << " "
@@ -3000,9 +3006,9 @@ void io::Out_Configuration
               << std::setw(6) << std::left << solvent.atom((i - topo.num_solute_atoms())
               % solvent.atoms().size()).name << std::right
               << std::setw(6) << i + 1
-              << std::setw(m_width) << ref(i)(0)
-              << std::setw(m_width) << ref(i)(1)
-              << std::setw(m_width) << ref(i)(2)
+              << std::setw(m_width) << r(0)
+              << std::setw(m_width) << r(1)
+              << std::setw(m_width) << r(2)
               << "\n";
     }
   }

@@ -83,6 +83,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
     math::truncoct_triclinic(conf.current().pos, true);
     math::truncoct_triclinic(conf.current().posV, true);
     math::truncoct_triclinic(conf.current().vel, true);
+    math::truncoct_triclinic(conf.special().reference_positions, true);
   }
 
 
@@ -219,6 +220,7 @@ void io::In_Configuration::read_replica
       math::truncoct_triclinic(conf[0].current().pos, true);
       math::truncoct_triclinic(conf[0].current().posV, true);
       math::truncoct_triclinic(conf[0].current().vel, true);
+      math::truncoct_triclinic(conf[0].special().reference_positions, true);
     }
 
 	DEBUG(10, "copying configurations");
