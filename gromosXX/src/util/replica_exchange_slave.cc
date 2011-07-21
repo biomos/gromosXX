@@ -99,7 +99,7 @@ int util::Replica_Exchange_Slave::run
     addrinfo_p = get_server(args, hints, server_name);
   }  catch (std::runtime_error e) {
     std::cout << "Exception: " << e.what() << std::endl;
-    std::cerr << "Exception: " << e.what() << std::endl;
+    std::cout << "Exception: " << e.what() << std::endl;
     return 1;
   }
 
@@ -117,7 +117,7 @@ int util::Replica_Exchange_Slave::run
     cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
             addrinfo_p->ai_protocol);
     if (cl_socket < 0) {
-      std::cerr << "could not create client socket" << std::endl;
+      std::cout << "could not create client socket" << std::endl;
       return 1;
     }
 
@@ -147,7 +147,7 @@ int util::Replica_Exchange_Slave::run
     DEBUG(8, "slave: requesting job");
     char ch = 1;
     if (write(cl_socket, &ch, 1) != 1) {
-      std::cerr << "could not write to socket" << std::endl;
+      std::cout << "could not write to socket" << std::endl;
       close(cl_socket);
       return 1;
     }
@@ -155,7 +155,7 @@ int util::Replica_Exchange_Slave::run
     char server_response;
 
     if (read(cl_socket, &server_response, 1) != 1) {
-      std::cerr << "could not read" << std::endl;
+      std::cout << "could not read" << std::endl;
       close(cl_socket);
       return 1;
     }
@@ -181,8 +181,8 @@ int util::Replica_Exchange_Slave::run
 
       // init replica parameters (t, conf, T, lambda)
       if (init_replica(topo, conf, sim, cg_topo, cg_conf, cg_sim)) {
-        std::cerr << "init_replica returned error!" << std::endl;
-        std::cerr << "slave: disconnecting..." << std::endl;
+        std::cout << "init_replica returned error!" << std::endl;
+        std::cout << "slave: disconnecting..." << std::endl;
         close(cl_socket);
         return 1;
       }
@@ -196,11 +196,11 @@ int util::Replica_Exchange_Slave::run
 
       conf.special().change_on_slave = 1;      
       if (!quiet)
-        std::cerr << "running md" << std::endl;
+        std::cout << "running md" << std::endl;
       int error = run_md(topo, conf, sim, md, traj,
               cg_topo, cg_conf, cg_sim, cg_md, cg_traj);
       if (!quiet)
-        std::cerr << "run finished" << std::endl;
+        std::cout << "run finished" << std::endl;
 
       ////////////////////////////////////////////////////////////////////////////////
       // POSTPROCESSING
@@ -242,14 +242,14 @@ int util::Replica_Exchange_Slave::run
       DEBUG(8, "slave: finished job " << replica_data.ID);
       char ch = 2;
       if (write(cl_socket, &ch, 1) != 1) {
-        std::cerr << "could not write to socket" << std::endl;
+        std::cout << "could not write to socket" << std::endl;
         close(cl_socket);
         return 1;
       }
 
       // get ACK
       if (read(cl_socket, &ch, 1) != 1) {
-        std::cerr << "could not read" << std::endl;
+        std::cout << "could not read" << std::endl;
         close(cl_socket);
         return 1;
       }
@@ -290,10 +290,10 @@ int util::Replica_Exchange_Slave::run
               << "exiting...\n"
               << std::endl;
 
-      std::cerr << "slave: disconnecting..." << std::endl;
+      std::cout << "slave: disconnecting..." << std::endl;
       close(cl_socket);
 
-      return 0;
+      break;
     } else {
       close(cl_socket);
       if (!quiet)
@@ -303,8 +303,12 @@ int util::Replica_Exchange_Slave::run
     }
   } // for slave_runs
 
-  std::cerr << "slave: finished runs. terminating..." << std::endl;
+  std::cout << "slave: finished runs. terminating..." << std::endl;
 
+  traj.print_final(topo, conf, sim);
+  if (multigraining)
+    cg_traj.print_final(cg_topo, cg_conf, cg_sim);
+  
   freeaddrinfo(addrinfo_p);
 
   return 0;
@@ -547,13 +551,13 @@ int util::Replica_Exchange_Slave::init_replica
         ) {
   // get configuration from master
   if (get_configuration(conf)) {
-    std::cerr << "get configuration failed" << std::endl;
+    std::cout << "get configuration failed" << std::endl;
     return 1;
   }
 
   if (multigraining) {
     if (get_configuration(cg_conf)) {
-      std::cerr << "get configuration failed" << std::endl;
+      std::cout << "get configuration failed" << std::endl;
       return 1;
     }
   }
@@ -660,7 +664,7 @@ int util::Replica_Exchange_Slave::recalc_energy
 
     cg_ff = cg_md.algorithm("Forcefield");
     if (cg_ff == NULL) {
-      std::cerr << "forcefield not found in MD algorithm sequence"
+      std::cout << "forcefield not found in MD algorithm sequence"
               << std::endl;
       return 1;
     }
@@ -693,7 +697,7 @@ int util::Replica_Exchange_Slave::recalc_energy
   algorithm::Algorithm * ff = md.algorithm("Forcefield");
 
   if (ff == NULL) {
-    std::cerr << "forcefield not found in MD algorithm sequence"
+    std::cout << "forcefield not found in MD algorithm sequence"
             << std::endl;
     return 1;
   }

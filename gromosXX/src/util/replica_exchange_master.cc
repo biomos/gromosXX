@@ -118,7 +118,7 @@ int util::Replica_Exchange_Master::run
   // read the files
   if (io::read_replica_input(args, topo, m_conf, sim,
           md, replica_data, std::cout)) {
-    std::cerr << "could not read input!!!" << std::endl;
+    std::cout << "could not read input!!!" << std::endl;
     io::messages.add("replica exchange: could not read input!",
             "replica exchange",
             io::message::critical);
@@ -145,7 +145,7 @@ int util::Replica_Exchange_Master::run
   // initialises everything
   for (unsigned int i = 0; i < m_conf.size(); ++i) {
     if (md.init(topo, m_conf[i], sim, std::cout)) {
-      std::cerr << "md init failed!" << std::endl;
+      std::cout << "md init failed!" << std::endl;
       close(serv_socket);
       return 3;
     }
@@ -181,7 +181,7 @@ int util::Replica_Exchange_Master::run
     std::vector<Replica_Data> rep_data;
     if (io::read_replica_input(args, cg_topo, m_cg_conf, cg_sim, cg_md,
             rep_data, std::cout)) {
-      std::cerr << "could not read coarse-grained input!!!" << std::endl;
+      std::cout << "could not read coarse-grained input!!!" << std::endl;
       io::messages.add("replica exchange: could not read coarse-grained input!",
               "replica exchange",
               io::message::critical);
@@ -192,7 +192,7 @@ int util::Replica_Exchange_Master::run
 
     for (unsigned int i = 0; i < m_cg_conf.size(); ++i) {
       if (cg_md.init(cg_topo, m_cg_conf[i], cg_sim, std::cout)) {
-        std::cerr << "md init failed (coarse-grained)!" << std::endl;
+        std::cout << "md init failed (coarse-grained)!" << std::endl;
         close(serv_socket);
         return 3;
       }
@@ -213,7 +213,7 @@ int util::Replica_Exchange_Master::run
     io::messages.add("replica exchange with no replicas?!",
             "Replica_Exchange",
             io::message::error);
-    std::cerr << "RE: not enough replicas" << std::endl;
+    std::cout << "RE: not enough replicas" << std::endl;
     close(serv_socket);
     return 4;
   }
@@ -232,7 +232,7 @@ int util::Replica_Exchange_Master::run
   std::cout << "\nMESSAGES FROM (MASTER) INITIALIZATION\n";
   if (io::messages.display(std::cout) >= io::message::error) {
     std::cout << "\nErrors during initialization!\n" << std::endl;
-    std::cerr << "RE: not enough trials" << std::endl;
+    std::cout << "RE: not enough trials" << std::endl;
     return 4;
   }
 
@@ -404,7 +404,7 @@ int util::Replica_Exchange_Master::run
 
     char ch;
     if (read(cl_socket, &ch, 1) != 1) {
-      std::cerr << "could not read from socket!" << std::endl;
+      std::cout << "could not read from socket!" << std::endl;
       close(cl_socket);
       continue;
     }
@@ -445,7 +445,7 @@ int util::Replica_Exchange_Master::run
       {
         ch = 0;
         if (write(cl_socket, &ch, 1) != 1) {
-          std::cerr << "could not write to socket" << std::endl;
+          std::cout << "could not write to socket" << std::endl;
           close(cl_socket);
           return 1;
         }
@@ -530,7 +530,7 @@ int util::Replica_Exchange_Master::select_job(simulation::Simulation & sim) {
     std::cout << "could not select replica!!!" << std::endl;
     ch = 1;
     if (write(cl_socket, &ch, 1) != 1) {
-      std::cerr << "could not set job to waiting" << std::endl;
+      std::cout << "could not set job to waiting" << std::endl;
       return 1;
     }
   } else {
@@ -541,17 +541,17 @@ int util::Replica_Exchange_Master::select_job(simulation::Simulation & sim) {
     // all ok, sending replica
     ch = 0;
     if (write(cl_socket, &ch, 1) != 1) {
-      std::cerr << "could not write to socket" << std::endl;
+      std::cout << "could not write to socket" << std::endl;
       return 1;
     }
 
     if (put_replica_data(replica_data[select_replica])) {
-      std::cerr << "could not write replica information" << std::endl;
+      std::cout << "could not write replica information" << std::endl;
       return 1;
     }
 
     if (put_configuration(m_conf[select_replica])) {
-      std::cerr << "could not write configuration" << std::endl;
+      std::cout << "could not write configuration" << std::endl;
       // try again
       replica_data[select_replica].state = ready;
       return 1;
@@ -560,7 +560,7 @@ int util::Replica_Exchange_Master::select_job(simulation::Simulation & sim) {
     if (multigraining) {
 
       if (put_configuration(m_cg_conf[select_replica])) {
-        std::cerr << "could not write configuration" << std::endl;
+        std::cout << "could not write configuration" << std::endl;
         // try again
         replica_data[select_replica].state = ready;
         return 1;
@@ -575,7 +575,7 @@ int util::Replica_Exchange_Master::finish_job(simulation::Simulation & sim) {
   char ch = 0;
 
   if (write(cl_socket, &ch, 1) != 1) {
-    std::cerr << "could not wirte to socket" << std::endl;
+    std::cout << "could not wirte to socket" << std::endl;
     return 1;
   }
 
@@ -587,7 +587,7 @@ int util::Replica_Exchange_Master::finish_job(simulation::Simulation & sim) {
   try {
     get_replica_data(replica_data, i);
   }  catch (std::runtime_error e) {
-    std::cerr << "Exception: " << e.what() << std::endl;
+    std::cout << "Exception: " << e.what() << std::endl;
     std::cout << "Exception: " << e.what() << std::endl;
     replica_data = tmp_rep;
     if (i >= 0) replica_data[i].state = ready;
@@ -664,13 +664,13 @@ int util::Replica_Exchange_Master::interactive(simulation::Simulation & sim) {
   char ch = 0;
 
   if (write(cl_socket, &ch, 1) != 1) {
-    std::cerr << "could not write to socket" << std::endl;
+    std::cout << "could not write to socket" << std::endl;
     close(cl_socket);
     return 1;
   }
 
   if (read(cl_socket, &ch, 1) != 1) {
-    std::cerr << "could not read from socket" << std::endl;
+    std::cout << "could not read from socket" << std::endl;
     close(cl_socket);
     return 1;
   }
@@ -680,13 +680,13 @@ int util::Replica_Exchange_Master::interactive(simulation::Simulation & sim) {
     {
       int sz = replica_data.size();
       if (write(cl_socket, (char *) &sz, sizeof (int)) != sizeof (int)) {
-        std::cerr << "could not write replica id" << std::endl;
+        std::cout << "could not write replica id" << std::endl;
         return 1;
       }
 
       if (write(cl_socket, (char *) &replica_data[0],
               sz * sizeof (Replica_Data)) != sz * int(sizeof (Replica_Data))) {
-        std::cerr << "could not write replica data" << std::endl;
+        std::cout << "could not write replica data" << std::endl;
         return 1;
       }
       return 0;
@@ -695,21 +695,21 @@ int util::Replica_Exchange_Master::interactive(simulation::Simulation & sim) {
     {
       int sz = replica_data.size();
       if (write(cl_socket, (char *) &sz, sizeof (int)) != sizeof (int)) {
-        std::cerr << "could not write replica ID" << std::endl;
+        std::cout << "could not write replica ID" << std::endl;
         return 1;
       }
 
-      // std::cerr << "sending data" << std::endl;
+      // std::cout << "sending data" << std::endl;
       if (write(cl_socket, (char *) &replica_data[0],
               sz * sizeof (Replica_Data)) != sz * int(sizeof (Replica_Data))) {
-        std::cerr << "could not write replica data" << std::endl;
+        std::cout << "could not write replica data" << std::endl;
         return 1;
       }
 
       int r;
-      // std::cerr << "reading ID" << std::endl;
+      // std::cout << "reading ID" << std::endl;
       if (read(cl_socket, (char *) &r, sizeof (int)) != sizeof (int)) {
-        std::cerr << "could not read replica ID" << std::endl;
+        std::cout << "could not read replica ID" << std::endl;
         return 1;
       }
 
@@ -722,7 +722,7 @@ int util::Replica_Exchange_Master::interactive(simulation::Simulation & sim) {
 
       if (read(cl_socket, (char *) &replica_data[r], sizeof (Replica_Data))
               != sizeof (Replica_Data)) {
-        std::cerr << "could not read replica data!" << std::endl;
+        std::cout << "could not read replica data!" << std::endl;
       }
       return 0;
     }
@@ -742,7 +742,7 @@ int util::Replica_Exchange_Master::interactive(simulation::Simulation & sim) {
 
 int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter const & param) {
   if (i < 0 || unsigned(i) >= replica_data.size()) {
-    std::cerr << "trying to switch replica: index out of range (" << i << ")" << std::endl;
+    std::cout << "trying to switch replica: index out of range (" << i << ")" << std::endl;
     return 0;
   }
 
@@ -764,7 +764,7 @@ int util::Replica_Exchange_Master::switch_replica(int i, simulation::Parameter c
     return 0;
   }
   if (j < 0 || unsigned(j) >= replica_data.size()) {
-    std::cerr << "trying to switch replica: index j out of range (" << j << ")" << std::endl;
+    std::cout << "trying to switch replica: index j out of range (" << j << ")" << std::endl;
     return 0;
   }
 
