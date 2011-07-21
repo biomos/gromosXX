@@ -320,8 +320,11 @@ int util::Replica_Exchange_Slave::run
   std::cout << "slave: finished runs. terminating..." << std::endl;
 
   traj.print_final(topo, conf, sim);
-  if (multigraining)
+  traj.write(conf, topo, sim, io::final);
+  if (multigraining) {
     cg_traj.print_final(cg_topo, cg_conf, cg_sim);
+    cg_traj.write(cg_conf, cg_topo, cg_sim, io::final);
+  }
   
   freeaddrinfo(addrinfo_p);
 
