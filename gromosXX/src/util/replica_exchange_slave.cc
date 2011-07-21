@@ -112,13 +112,15 @@ int util::Replica_Exchange_Slave::run
 
 
   int connect_try = 0;
+  int result = 0;
   for (int run = 0; run < sim.param().replica.slave_runs; ++run) {
 
     cl_socket = socket(addrinfo_p->ai_family, addrinfo_p->ai_socktype,
             addrinfo_p->ai_protocol);
     if (cl_socket < 0) {
       std::cout << "could not create client socket" << std::endl;
-      return 1;
+      result = 1;
+      break;
     }
 
     DEBUG(8, "slave: connecting..");
@@ -128,7 +130,8 @@ int util::Replica_Exchange_Slave::run
       std::cout << "could not connect to master in " << connect_try << ". try. ";
       if (connect_try > 40) {
         std::cout << "Giving up after " << connect_try <<  "connect trials" << std::endl;
-        return 1;
+        result = 1;
+        break;
       }
       std::cout << "Sleeping and trying again." << std::endl;
       sleep(timeout);
@@ -149,7 +152,8 @@ int util::Replica_Exchange_Slave::run
     if (write(cl_socket, &ch, 1) != 1) {
       std::cout << "could not write to socket" << std::endl;
       close(cl_socket);
-      return 1;
+      result = 1;
+      break;
     }
 
     char server_response;
@@ -157,14 +161,16 @@ int util::Replica_Exchange_Slave::run
     if (read(cl_socket, &server_response, 1) != 1) {
       std::cout << "could not read" << std::endl;
       close(cl_socket);
-      return 1;
+      result = 1;
+      break;  
     }
 
     if (server_response == 0) {
       int ID;
       if (get_replica_data(replica_data, ID)) {
         close(cl_socket);
-        return 1;
+        result = 1;
+        break;
       }
 
       if (!quiet) {
@@ -184,7 +190,8 @@ int util::Replica_Exchange_Slave::run
         std::cout << "init_replica returned error!" << std::endl;
         std::cout << "slave: disconnecting..." << std::endl;
         close(cl_socket);
-        return 1;
+        result = 1;
+        break;
       }
 
       // close connection
@@ -229,7 +236,8 @@ int util::Replica_Exchange_Slave::run
       if (result == -1) {
         std::cout << "could not (re-)connect to master. master finished?"
                 << std::endl;
-        return 1;
+        result = 1;
+        break;
       }
 
       DEBUG(9, "slave: connected");
@@ -244,21 +252,24 @@ int util::Replica_Exchange_Slave::run
       if (write(cl_socket, &ch, 1) != 1) {
         std::cout << "could not write to socket" << std::endl;
         close(cl_socket);
-        return 1;
+        result = 1;
+        break;
       }
 
       // get ACK
       if (read(cl_socket, &ch, 1) != 1) {
         std::cout << "could not read" << std::endl;
         close(cl_socket);
-        return 1;
+        result = 1;
+        break;
       }
       if (ch != 0) {
         io::messages.add("server reported error",
                 "replica_exchange",
                 io::message::error);
         close(cl_socket);
-        return 1;
+        result = 1;
+        break;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -267,17 +278,20 @@ int util::Replica_Exchange_Slave::run
 
       if (put_replica_data(replica_data)) {
         close(cl_socket);
-        return 1;
+        result = 1;
+        break;
       }
 
       if (put_configuration(conf)) {
         std::cout << "could not update configuration!" << std::endl;
-        return 1;
+        result = 1;
+        break;
       }
       if (multigraining) {
         if (put_configuration(cg_conf)) {
           std::cout << "could not update coarse-grained configuration!" << std::endl;
-          return 1;
+          result = 1;
+          break;
         }
       }
 
@@ -311,7 +325,7 @@ int util::Replica_Exchange_Slave::run
   
   freeaddrinfo(addrinfo_p);
 
-  return 0;
+  return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
