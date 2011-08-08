@@ -8,107 +8,142 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
+#include "simulation/parameter.h"
+
 /**
  * helper function to initialize the constants.
  */
 inline void interaction::Perturbed_Nonbonded_Term
 ::init(simulation::Simulation const &sim) {
-  double cut3i = 0.0, crf = 0.0, crf_cut3i = 0.0, crf_cut = 0.0, crf_2 = 0.0;
-  m_cut3i.clear();
-  m_crf.clear();
-  m_crf_cut3i.clear();
-  m_crf_cut.clear();
-  m_crf_2.clear();
-  cgrain_eps.clear();
-  switch (sim.param().force.interaction_function) {
-    case simulation::lj_crf_func:
-    case simulation::pol_lj_crf_func:
-    case simulation::pol_off_lj_crf_func:
-      // Force
-      cut3i = 1.0 / (sim.param().nonbonded.rf_cutoff
-              * sim.param().nonbonded.rf_cutoff
-              * sim.param().nonbonded.rf_cutoff);
+    double cut3i = 0.0, crf = 0.0, crf_cut3i = 0.0, crf_cut = 0.0, crf_2 = 0.0;
+    m_cut3i.clear();
+    m_crf.clear();
+    m_crf_cut3i.clear();
+    m_crf_cut.clear();
+    m_crf_2.clear();
+    cgrain_eps.clear();
+    switch (sim.param().force.interaction_function) {
+        case simulation::lj_crf_func:
+        case simulation::pol_lj_crf_func:
+        case simulation::pol_off_lj_crf_func:
 
-      crf = 2 * (sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) *
-              (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
-              sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
-              sim.param().nonbonded.rf_cutoff *
-              sim.param().nonbonded.rf_kappa *
-              sim.param().nonbonded.rf_cutoff);
+            // Force
+            if (sim.param().nonbonded.rf_cutoff > 0.0) {
+                if (sim.param().nonbonded.rf_epsilon == 0.0) {
+                    cut3i = 1.0 / (sim.param().nonbonded.rf_cutoff
+                            * sim.param().nonbonded.rf_cutoff
+                            * sim.param().nonbonded.rf_cutoff);
+                    DEBUG(15, "nonbonded term init: m_cut3i: " << cut3i);
 
-      crf /= (sim.param().nonbonded.epsilon + 2 * sim.param().nonbonded.rf_epsilon) *
-              (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
-              sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
-              sim.param().nonbonded.rf_cutoff *
-              sim.param().nonbonded.rf_kappa *
-              sim.param().nonbonded.rf_cutoff);
-      crf_cut3i = crf * cut3i;
+                    crf = -1;
+                    DEBUG(15, "nonbonded term init: m_crf: " << crf);
+                    crf_cut3i = crf * cut3i;
 
-      crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
+                    // Energy
+                    crf_cut = (1 - crf / 2.0)
+                            / sim.param().nonbonded.rf_cutoff;
+                } else {
+                    cut3i = 1.0 / (sim.param().nonbonded.rf_cutoff
+                            * sim.param().nonbonded.rf_cutoff
+                            * sim.param().nonbonded.rf_cutoff);
 
-      // Perturbation
-      crf_2 = crf / 2.0;
-      m_cut3i.push_back(cut3i);
-      m_crf.push_back(crf);
-      m_crf_cut3i.push_back(crf_cut3i);
-      m_crf_cut.push_back(crf_cut);
-      m_crf_2.push_back(crf_2);
-      break;
-    case simulation::cgrain_func:
-      A_cg12 = -(12 * (12 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 3));
-      A_cg6 = -(6 * (6 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 6 + 3));
-      A_cg1 = -(1 * (1 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 1 + 3));
+                    crf = 2 * (sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) *
+                            (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
+                            sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
+                            sim.param().nonbonded.rf_cutoff *
+                            sim.param().nonbonded.rf_kappa *
+                            sim.param().nonbonded.rf_cutoff);
 
-      B_cg12 = (12 * (12 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 4));
-      B_cg6 = (6 * (6 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 6 + 4));
-      B_cg1 = (1 * (1 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 1 + 4));
+                    crf /= (sim.param().nonbonded.epsilon + 2 * sim.param().nonbonded.rf_epsilon) *
+                            (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
+                            sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
+                            sim.param().nonbonded.rf_cutoff *
+                            sim.param().nonbonded.rf_kappa *
+                            sim.param().nonbonded.rf_cutoff);
+                    crf_cut3i = crf * cut3i;
 
-      cgrain_eps.push_back(sim.param().cgrain.EPS);
-      nb_cutoff = sim.param().nonbonded.rf_cutoff;
-      break;
-    case simulation::cggromos_func:
-      cgrain_eps.push_back(sim.param().cgrain.EPS); // CG-CG
-      cgrain_eps.push_back(sim.param().cgrain.EPSM); // FG-CG
-      cgrain_eps.push_back(sim.param().nonbonded.epsilon); // FG-FG
+                    crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
 
-      cut3i = 1.0 / (sim.param().nonbonded.rf_cutoff
-              * sim.param().nonbonded.rf_cutoff
-              * sim.param().nonbonded.rf_cutoff);
-      for (unsigned int i = 0; i < cgrain_eps.size(); ++i) {
-        crf = 2 * (cgrain_eps[i] - sim.param().nonbonded.rf_epsilon) *
-                (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
-                sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
-                sim.param().nonbonded.rf_cutoff *
-                sim.param().nonbonded.rf_kappa *
-                sim.param().nonbonded.rf_cutoff);
+                    // Perturbation
+                }
+                crf_2 = crf / 2.0;
+                m_cut3i.push_back(cut3i);
+                m_crf.push_back(crf);
+                m_crf_cut3i.push_back(crf_cut3i);
+                m_crf_cut.push_back(crf_cut);
+                m_crf_2.push_back(crf_2);
+            } else {
+                m_cut3i.push_back(0.0);
+                m_crf.push_back(0.0);
+                m_crf_cut3i.push_back(0.0);
+                m_crf_cut.push_back(0.0);
+                m_crf_2.push_back(0.0);
+            }
+            break;
+        case simulation::cgrain_func:
+            A_cg12 = -(12 * (12 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 3));
+            A_cg6 = -(6 * (6 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 6 + 3));
+            A_cg1 = -(1 * (1 + 4)) / (pow(sim.param().nonbonded.rf_cutoff, 1 + 3));
 
-        crf /= (cgrain_eps[i] + 2 * sim.param().nonbonded.rf_epsilon) *
-                (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
-                sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
-                sim.param().nonbonded.rf_cutoff *
-                sim.param().nonbonded.rf_kappa *
-                sim.param().nonbonded.rf_cutoff);
-        crf_cut3i = crf * cut3i;
+            B_cg12 = (12 * (12 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 12 + 4));
+            B_cg6 = (6 * (6 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 6 + 4));
+            B_cg1 = (1 * (1 + 3)) / (pow(sim.param().nonbonded.rf_cutoff, 1 + 4));
 
-        crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
+            cgrain_eps.push_back(sim.param().cgrain.EPS);
+            nb_cutoff = sim.param().nonbonded.rf_cutoff;
+            break;
+        case simulation::cggromos_func:
+            cgrain_eps.push_back(sim.param().cgrain.EPS); // CG-CG
+            cgrain_eps.push_back(sim.param().cgrain.EPSM); // FG-CG
+            cgrain_eps.push_back(sim.param().nonbonded.epsilon); // FG-FG
 
-        // Perturbation
-        crf_2 = crf / 2.0;
+            if (sim.param().nonbonded.rf_cutoff > 0.0) {
 
-        m_cut3i.push_back(cut3i);
-        m_crf.push_back(crf);
-        m_crf_cut3i.push_back(crf_cut3i);
-        m_crf_cut.push_back(crf_cut);
-        m_crf_2.push_back(crf_2);
-      }
-      break;
-    default:
-      io::messages.add("Nonbonded_Innerloop",
-              "interaction function not implemented",
-              io::message::critical);
-  }
-  m_cut2 = sim.param().nonbonded.rf_cutoff * sim.param().nonbonded.rf_cutoff;
-  m_lambda_exp = sim.param().perturbation.lambda_exponent;
+                cut3i = 1.0 / (sim.param().nonbonded.rf_cutoff
+                        * sim.param().nonbonded.rf_cutoff
+                        * sim.param().nonbonded.rf_cutoff);
+                for (unsigned int i = 0; i < cgrain_eps.size(); ++i) {
+                        crf = 2 * (cgrain_eps[i] - sim.param().nonbonded.rf_epsilon) *
+                                (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) -
+                                sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
+                                sim.param().nonbonded.rf_cutoff *
+                                sim.param().nonbonded.rf_kappa *
+                                sim.param().nonbonded.rf_cutoff);
+
+                        crf /= (cgrain_eps[i] + 2 * sim.param().nonbonded.rf_epsilon) *
+                                (1.0 + sim.param().nonbonded.rf_kappa * sim.param().nonbonded.rf_cutoff) +
+                                sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
+                                sim.param().nonbonded.rf_cutoff *
+                                sim.param().nonbonded.rf_kappa *
+                                sim.param().nonbonded.rf_cutoff);
+                        crf_cut3i = crf * cut3i;
+
+                        crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
+                    // Perturbation
+                        crf_2 = crf / 2.0;
+                m_cut3i.push_back(0.0);
+                m_crf.push_back(0.0);
+                m_crf_cut3i.push_back(0.0);
+                m_crf_cut.push_back(0.0);
+                m_crf_2.push_back(crf_2);
+                }
+            } else {
+                crf_2 = crf / 2.0;
+                m_cut3i.push_back(0.0);
+                m_crf.push_back(0.0);
+                m_crf_cut3i.push_back(0.0);
+                m_crf_cut.push_back(0.0);
+                m_crf_2.push_back(crf_2);
+            }
+            
+            break;
+        default:
+            io::messages.add("Nonbonded_Innerloop",
+                    "interaction function not implemented",
+                    io::message::critical);
+    }
+    m_cut2 = sim.param().nonbonded.rf_cutoff * sim.param().nonbonded.rf_cutoff;
+    m_lambda_exp = sim.param().perturbation.lambda_exponent;
 }
 
 /**

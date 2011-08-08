@@ -230,7 +230,7 @@ inline void math::Boundary_Implementation<math::triclinic>
     // i think the if statement might be wrong for really 
     // triclinic cases! - > agree
     // now we are in the rotated frame of the box: 
-    // a along x, b in the x-y plane, c arbitray
+    // a along x, b in the x-y plane, c arbitrary
     // - > triangular matrix - > trivially solvable set of equations
     // only c has components along z direction
     if(nim(2)*nim(2) >= 0.25*m_box(2,2)*m_box(2,2))
