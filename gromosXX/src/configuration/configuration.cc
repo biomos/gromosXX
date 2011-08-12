@@ -22,7 +22,7 @@
 
 #include "../math/periodicity.h"
 #include "../math/boundary_checks.h"
-#include <vector>
+#include "../util/template_split.h"
 
 #include "configuration.h"
 
@@ -575,3 +575,33 @@ namespace configuration
   }
 }
 
+
+bool configuration::Configuration::check(topology::Topology const & topo, simulation::Simulation & sim) const {
+  int error = 0;
+  
+  // check the positions if nonbonded forces are computed
+  if (sim.param().force.nonbonded_crf || sim.param().force.nonbonded_vdw) {
+    SPLIT_MY_BOUNDARY(boundary_type, check_positions, error);
+  }
+  
+  return error == 0;
+}
+
+template<math::boundary_enum B> 
+void configuration::Configuration::check_positions(int & error) const {  
+  math::Periodicity<B> periodicity(current().box);
+  const unsigned int num_pos = current().pos.size();
+  const math::VArray & pos = current().pos;
+  math::Vec r;
+  for(unsigned int i = 0; i < num_pos; ++i) {
+    for(unsigned int j = i + 1; j < num_pos; ++j) {
+      periodicity.nearest_image(pos(i), pos(j), r);
+      if (math::abs2(r) < math::epsilon) {
+        ++error;
+        std::ostringstream msg;
+        msg << "Singularity: Atoms " << i+1 << " and " << j+1 << " at same position.";
+        io::messages.add(msg.str(), "Configuration", io::message::error);
+      }
+    }
+  }
+}

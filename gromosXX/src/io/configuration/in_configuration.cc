@@ -139,6 +139,8 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   if (!quiet)
     os << "END\n\n";
   
+  conf.check(topo, sim);
+  
   DEBUG(8, "configuration read");
 }
 
@@ -222,6 +224,8 @@ void io::In_Configuration::read_replica
       math::truncoct_triclinic(conf[0].current().vel, true);
       math::truncoct_triclinic(conf[0].special().reference_positions, true);
     }
+    
+    conf[0].check(topo, sim);
 
 	DEBUG(10, "copying configurations");
     for(unsigned int i=1; i < conf.size(); ++i)
@@ -291,6 +295,8 @@ void io::In_Configuration::read_replica
         math::truncoct_triclinic(conf[i].current().posV, true);
         math::truncoct_triclinic(conf[i].current().vel, true);
       }
+      
+      conf[i].check(topo, sim);
       
       // warn for unread input data
       for(std::map<std::string, std::vector<std::string> >::const_iterator

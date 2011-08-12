@@ -740,6 +740,10 @@ namespace configuration {
     void init(topology::Topology const & topo,
             simulation::Parameter & param,
             bool gather = true);
+    /**
+     * check configuration
+     */
+    bool check(topology::Topology const & topo, simulation::Simulation & sim) const;
 
     //////////////////////////////////////////////////////////////////////
     // data
@@ -773,6 +777,13 @@ namespace configuration {
      * lattice sum information
      */
     lattice_sum_struct m_lattice_sum;
+    
+    /**
+     * check the positions for overlapping atoms.
+     * @param error zero if fine, non-zero if not
+     */
+    template<math::boundary_enum B> 
+    void check_positions(int & error) const;
 
 
   }; // Configuration

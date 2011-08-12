@@ -18,6 +18,20 @@ switch(conf.boundary_type){ \
 } \
 
 ////////////////////////////////////////////////////////////////////////////////
+/**
+ * @define SPLIT_MY_BOUNDARY
+ * call a function with the appropriate boundary as template parameter
+ */
+#define SPLIT_MY_BOUNDARY(bound, f, ...) \
+switch(bound){ \
+  case math::vacuum : f<math::vacuum>(__VA_ARGS__); break; \
+  case math::rectangular : f<math::rectangular>(__VA_ARGS__); break; \
+  case math::truncoct : \
+  case math::triclinic : f<math::triclinic>(__VA_ARGS__); break; \
+  default: io::messages.add("wrong boundary type", "template_split", io::message::error); \
+} \
+
+////////////////////////////////////////////////////////////////////////////////
 
 /**
  * @define SPLIT_VIRIAL_BOUNDARY
