@@ -2525,12 +2525,13 @@ ORDERPARAMRES
 # COPR   >= 0.0              order-parameter restraining force constant
 #                            (weighted by individual WOPR)
 # TAUOPR >= 0.0              coupling time for time-averaging
+# UPDOPR  > 0                update average every UPDOPRth step
 # NTWOP  >= 0                write order-parameter to special trajectory
 #           0                don't write [default]
 #         > 0                write every NTWOP step
 #
-#       NTOPR  NTOPRA  COPR   TAUOPR    NTWOP
-           -2  0       10.0      5.0    0
+#       NTOPR  NTOPRA  COPR   TAUOPR   UPDOPR  NTWOP
+           -2  0       10.0      5.0        1      0
 END
 @endverbatim
  */
@@ -2554,6 +2555,7 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
             >> param.orderparamrest.read // NTOPRA
             >> param.orderparamrest.K // COPR
             >> param.orderparamrest.tau // TAUOPR
+            >> param.orderparamrest.update_step // UPDOPR
             >> param.orderparamrest.write; // NTOPR
 
     if (_lineStream.fail())
@@ -2589,6 +2591,30 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
       io::messages.add("ORDERPARAMRES block: bad value for COPR, should be > 0.0",
               "In_Parameter", io::message::error);
     }
+    
+    if (param.orderparamrest.orderparamrest != simulation::oparam_restr_off && 
+        param.orderparamrest.update_step == 0) {
+      io::messages.add("ORDERPARAMRES block: bad value for UPDOPR, should be > 0",
+              "In_Parameter", io::message::error);
+    }
+
+    if ((param.orderparamrest.orderparamrest == simulation::oparam_restr_av ||
+        param.orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted) &&
+        param.orderparamrest.update_step != 1) {
+      io::messages.add("ORDERPARAMRES block: bad value for UPDOPR, should be 1 for exponential averaging",
+              "In_Parameter", io::message::error);
+    }
+    
+    if (param.orderparamrest.orderparamrest == simulation::oparam_restr_winav ||
+        param.orderparamrest.orderparamrest == simulation::oparam_restr_winav_weighted) {
+      unsigned int window = int(param.orderparamrest.tau / param.step.dt);
+      if (window / param.orderparamrest.update_step == 0) {
+        io::messages.add("ORDERPARAMRES block: bad value for UPDOPR smaller than TAUOPR / DT.",
+                "In_Parameter", io::message::error);
+      }
+    }
+    
+    
   } // ORDERPARAMRES
 } // ORDERPARAMRES
 

@@ -1029,7 +1029,8 @@ bool io::In_Configuration::read_order_parameter_restraint_averages
       block_read.insert("ORDERPARAMRESWINAVE");
       if (!quiet)
         os << "\treading ORDERPARAMRESWINAVE...\n";
-      unsigned int window_size = int(sim.param().orderparamrest.tau / sim.time_step_size());
+      unsigned int window_size = int(sim.param().orderparamrest.tau / sim.time_step_size()) /
+              sim.param().orderparamrest.update_step;
 
       if (sim.param().orderparamrest.read)
         _read_order_parameter_restraint_average_window(buffer, window_size, topo.order_parameter_restraints(),

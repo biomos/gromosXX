@@ -2952,6 +2952,7 @@ namespace simulation
 	: orderparamrest(oparam_restr_off),
 	  K(0.0),
 	  tau(10.0),
+          update_step(1),
 	  read(false),
           write(0)
       {
@@ -2970,6 +2971,10 @@ namespace simulation
        * memory time for time averaging
        */
       double tau;
+      /**
+       * update order parameter step
+       */
+      unsigned int update_step;
 
       /**
        * read on/off

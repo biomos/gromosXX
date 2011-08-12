@@ -119,7 +119,8 @@ int _calculate_order_parameter_restraint_interactions
       D_avg = (1.0 - exptau) * D + exptau * D_avg;
     } else if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav ||
         sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_winav_weighted) {
-      unsigned int window_size = int(sim.param().orderparamrest.tau / sim.time_step_size());
+      unsigned int window_size = int(sim.param().orderparamrest.tau / sim.time_step_size()) /
+              sim.param().orderparamrest.update_step;
       DEBUG(8, "window size: " << window_size);
       if (sim.steps() == 0 && !sim.param().orderparamrest.read) {
         for(unsigned int i = 0; i < window_size; ++i) {
@@ -127,24 +128,26 @@ int _calculate_order_parameter_restraint_interactions
           conf.special().orderparamres.D_winavg[l].push_back(D);
         }
       }
-      
-      Q_avg = 0.0;
-      conf.special().orderparamres.Q_winavg[l].pop_front();
-      conf.special().orderparamres.Q_winavg[l].push_back(Q);
-      for(std::list<math::Matrix>::const_iterator it = conf.special().orderparamres.Q_winavg[l].begin(),
-              to = conf.special().orderparamres.Q_winavg[l].end(); it != to; ++it) {
-        Q_avg += *it;
+
+      if (sim.steps() && sim.steps() % sim.param().orderparamrest.update_step == 0) {
+        Q_avg = 0.0;
+        conf.special().orderparamres.Q_winavg[l].pop_front();
+        conf.special().orderparamres.Q_winavg[l].push_back(Q);
+        for (std::list<math::Matrix>::const_iterator it = conf.special().orderparamres.Q_winavg[l].begin(),
+                to = conf.special().orderparamres.Q_winavg[l].end(); it != to; ++it) {
+          Q_avg += *it;
+        }
+        Q_avg *= (1.0 / window_size);
+
+        D_avg = 0.0;
+        conf.special().orderparamres.D_winavg[l].pop_front();
+        conf.special().orderparamres.D_winavg[l].push_back(D);
+        for (std::list<double>::const_iterator it = conf.special().orderparamres.D_winavg[l].begin(),
+                to = conf.special().orderparamres.D_winavg[l].end(); it != to; ++it) {
+          D_avg += *it;
+        }
+        D_avg *= (1.0 / window_size);
       }
-      Q_avg *= (1.0 / window_size);
-      
-      D_avg = 0.0;
-      conf.special().orderparamres.D_winavg[l].pop_front();
-      conf.special().orderparamres.D_winavg[l].push_back(D);
-      for(std::list<double>::const_iterator it = conf.special().orderparamres.D_winavg[l].begin(),
-              to = conf.special().orderparamres.D_winavg[l].end(); it != to; ++it) {
-        D_avg += *it;
-      }
-      D_avg *= (1.0 / window_size);
     }
     
 
@@ -272,6 +275,7 @@ int interaction::Order_Parameter_Restraint_Interaction::init
     os << "  - Number of restraints: " << num_res << std::endl
             << "  - force constant: " << std::setw(15) << sim.param().orderparamrest.K << std::endl;
     os << "  - time-averaging memory relaxation time: " << std::setw(15) << sim.param().orderparamrest.tau << std::endl;
+    os << "  - updating average every  " << sim.param().orderparamrest.update_step << " step." << std::endl;
     if (sim.param().orderparamrest.read)
       os << "  - reading initial averages from configuration." << std::endl;
     else
