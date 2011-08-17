@@ -134,6 +134,10 @@ namespace configuration
      */
     double oparam_total;
     /**
+     * symmetry restraints energy
+     */
+    double symrest_total;
+    /**
      * total energy (=0.0) of the (distance) constraint interaction(s).
      */
     double constraints_total;

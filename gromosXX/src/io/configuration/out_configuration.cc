@@ -1499,8 +1499,11 @@ ENERGY03
    0.000000000e+00 # J-value restraints total
    0.000000000e+00 # X-ray restraints total
    0.000000000e+00 # Local elevation total
+   0.000000000e+00 # order parameter restraints total
+   0.000000000e+00 # symmetry restraints total
    3.096514777e+01 # EDS: energy of reference state
    0.000000000e+00 # Entropy
+   0.000000000e+00 # QM/MM total
 # baths
 # number of baths
 2
@@ -2830,9 +2833,10 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.xray_total << "\n" // 29
           << std::setw(18) << e.leus_total << "\n" // 30
           << std::setw(18) << e.oparam_total << "\n" // 31
-          << std::setw(18) << e.eds_vr << "\n" // 32
-          << std::setw(18) << e.entropy_term << "\n" // 33
-          << std::setw(18) << e.qm_total << "\n"; // 34
+          << std::setw(18) << e.symrest_total << "\n" // 32
+          << std::setw(18) << e.eds_vr << "\n" // 33
+          << std::setw(18) << e.entropy_term << "\n" // 34
+          << std::setw(18) << e.qm_total << "\n"; // 35
 
   os << "# baths\n";
   os << numbaths << "\n";

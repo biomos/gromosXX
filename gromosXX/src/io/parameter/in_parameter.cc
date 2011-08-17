@@ -97,6 +97,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_NEMD(param);
   read_MULTIGRADIENT(param);
   read_QMMM(param);
+  read_SYMRES(param);
 
   read_known_unsupported_blocks();
 
@@ -5477,6 +5478,73 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
       return;
     }
     param.qmmm.write = write;
+  } // if block
+}
+
+/**
+ * @section symres SYMRES block
+ * @verbatim
+SYMRES
+# NTSYM 0..2 apply symmetry restraints
+#    0: do not apply symmetry restraints
+#    1: apply symmetry restraints
+#    2: apply symmetry constraints
+# CSYM >= 0.0 force constants
+#
+# NTSYM     CSYM  
+       1     0.0 
+END
+
+@endverbatim
+ */
+void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read SYMRES");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["SYMRES"];
+
+  if (buffer.size()) {
+    block_read.insert("SYMRES");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    int enable;
+    double fc;
+    _lineStream >> enable >> fc;
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in SYMRES block.",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    switch(enable) {
+      case 0:
+        param.symrest.symrest = simulation::xray_symrest_off;
+        break;
+      case 1:
+        param.symrest.symrest = simulation::xray_symrest_ind;
+        break;
+      case 2:
+        param.symrest.symrest = simulation::xray_symrest_constr;
+        break;
+      default:
+        param.symrest.symrest = simulation::xray_symrest_off;
+        io::messages.add("SYMRES block: NTSYM must be 0..2.",
+                    "In_Parameter", io::message::error);
+        return;
+    }
+
+    
+    if (fc < 0.0) {
+      io::messages.add("SYMRES block: CSYM must be >= 0.0",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+    param.symrest.force_constant = fc;
+
   } // if block
 }
 

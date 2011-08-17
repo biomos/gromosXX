@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
   knowns << "topo" << "cg_topo" << "conf" << "cg_conf" << "input" << "cg_input" 
 	 << "verb" << "pttopo" << "cg_pttopo"
 	 << "trc" << "cg_trc" << "fin" << "cg_fin" << "trv" << "trf" << "trs" << "tre" << "cg_tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "jval" << "xray" << "order" << "lud" << "led"
+	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "jval" << "xray" << "sym" << "order" << "lud" << "led"
 	 << "anatrj" << "print" << "friction" << "qmmm"
 	 << "version";
   

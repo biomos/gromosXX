@@ -884,6 +884,20 @@ namespace topology
       return m_xray_asu;
     }
     /**
+     * definition of the asymetric unit. Pointer to the first atom in every ASU
+     */
+    std::vector<unsigned int> & sym_asu()
+    {
+      return m_sym_asu;
+    }
+    /**
+     * definition of the asymetric unit. Pointer to the first atom in every ASU. Const version
+     */
+    std::vector<unsigned int> const & sym_asu() const
+    {
+      return m_sym_asu;
+    }
+    /**
      * xray umbrella weight accessor.
      */
     std::vector<xray_umbrella_weight_struct> & xray_umbrella_weights()
@@ -910,6 +924,20 @@ namespace topology
      */
     std::vector<unsigned int> const & xray_sym_restraints() const {
       return m_xray_sym_restraints;
+    }
+    
+    /**
+     * atom numbers of the atoms to be symmetry restraint.
+     */
+    std::vector<unsigned int> & sym_restraints() {
+      return m_sym_restraints;
+    }
+
+    /**
+     * atom numbers of the atoms to be symmetry restraint.
+     */
+    std::vector<unsigned int> const & sym_restraints() const {
+      return m_sym_restraints;
     }
 
     /**
@@ -1481,6 +1509,11 @@ namespace topology
      */
     std::vector<unsigned int> m_xray_asu;
     /**
+     * symmetry periodic copy definition. i.e. pointer to the first atom in
+     * every ASU in the unit cell
+     */
+    std::vector<unsigned int> m_sym_asu;
+    /**
      * xray umbrella weights
      */
     std::vector<xray_umbrella_weight_struct> m_xray_umbrella_weights;
@@ -1488,6 +1521,10 @@ namespace topology
      * the atoms for symmetry restrains
      */
     std::vector<unsigned int> m_xray_sym_restraints;
+    /**
+     * the atoms for symmetry restrains
+     */
+    std::vector<unsigned int> m_sym_restraints;
      /**
      * the last atom of roto-translational constraints
      */

@@ -30,6 +30,7 @@
 #include "../io/topology/in_leus.h"
 #include "../io/topology/in_qmmm.h"
 #include "../io/topology/in_order.h"
+#include "../io/topology/in_symrest.h"
 #include "../util/coding.h"
 
 #include "read_special.h"
@@ -309,8 +310,32 @@ int io::read_special(io::Argument const & args,
         iq.quiet = quiet;
 
         iq.read(topo, sim, os);
-        io::messages.add("QM/MM specifciation read from " +
+        io::messages.add("QM/MM specification read from " +
                 args["qmmm"] + "\n" + util::frame_text(iq.title),
+                "read special", io::message::notice);
+      }
+    }
+  }
+  
+  // Symmetry restraints
+  if (sim.param().symrest.symrest != simulation::xray_symrest_off) {
+    io::igzstream symrest_file;
+
+    if (args.count("sym") != 1) {
+      io::messages.add("Symmetry restraints: no specification file specified (use @sym)",
+              "read special", io::message::error);
+    } else {
+      symrest_file.open(args["sym"].c_str());
+      if (!symrest_file.is_open()) {
+        io::messages.add("opening of symmetry restraints specification file failed!\n",
+                "read_special", io::message::error);
+      } else {
+        io::In_Symrest is(symrest_file);
+        is.quiet = quiet;
+
+        is.read(topo, sim, os);
+        io::messages.add("symmetry restraints specification read from " +
+                args["sym"] + "\n" + util::frame_text(is.title),
                 "read special", io::message::notice);
       }
     }

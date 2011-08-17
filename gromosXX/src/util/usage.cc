@@ -150,6 +150,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# X-ray restraints specification\n";
     usage += "\t# @xray      filename\n\n";
   }
+  
+  if (knowns.count("sym")){
+    usage += "\t# symmetry restraints specification\n";
+    usage += "\t# @sym       filename\n\n";
+  }
 
   if (knowns.count("lud")){
     usage += "\t# local elevation umbrella database file\n";

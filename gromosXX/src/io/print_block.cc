@@ -475,6 +475,7 @@ namespace io
     os << type << "X-ray restraints     : " << std::setw(30) << e.xray_total << "\n";
     os << type << "Local elevation      : " << std::setw(30) << e.leus_total << "\n";
     os << type << "Order-parameter rest.: " << std::setw(30) << e.oparam_total << "\n";
+    os << type << "Symmetry restraints  : " << std::setw(30) << e.symrest_total << "\n";
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
     os << type << "QM                   : " << std::setw(30) << e.qm_total << "\n";

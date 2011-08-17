@@ -3107,6 +3107,29 @@ namespace simulation
        */
       interaction::QMMM_Interaction * interaction;
     } qmmm;
+    
+    struct symrest_struct {
+      /**
+       * Constructor
+       * - no symmetry restraints
+       * - zero force constant
+       */
+      symrest_struct():
+      symrest(xray_symrest_off),
+      force_constant(0.0) {}
+      /**
+       * symmetry restraints
+       */
+      xray_symrest_enum symrest;
+      /**
+       * force constant
+       */
+      double force_constant;
+      /**
+       * symmetry operations
+       */
+      std::vector<std::pair<math::Matrix, math::Vec> > symmetry_operations;
+    } /* symmetry restraints */symrest;
   };
 
   

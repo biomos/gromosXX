@@ -46,6 +46,7 @@ jvalue_total(0.0),
 xray_total(0.0),
 leus_total(0.0),
 oparam_total(0.0),
+symrest_total(0.0),
 constraints_total(0.0),
 external_total(0.0),
 self_total(0.0),
@@ -90,6 +91,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     xray_total = 0.0;
     leus_total = 0.0;
     oparam_total = 0.0;
+    symrest_total = 0.0;
     constraints_total = 0.0;
     entropy_term = 0.0;
     external_total = 0.0;
@@ -337,7 +339,8 @@ int configuration::Energy::calculate_totals()
   
   special_total = posrest_total + distanceres_total + dihrest_total
     + constraints_total + jvalue_total + xray_total + external_total 
-    + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total;
+    + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
+    + symrest_total;
 
   total = potential_total + kinetic_total + special_total;
 
@@ -385,13 +388,14 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 24 : return xray_total;
     case 25 : return leus_total;
     case 26 : return oparam_total;
-    case 27 : return constraints_total;
-    case 28 : return entropy_term;
-    case 29 : return external_total;
-    case 30 : return self_total;
-    case 31 : return eds_vr;
-    case 32 : return sasa_total;
-    case 33 : return sasa_volume_total;
+    case 27 : return symrest_total;
+    case 28 : return constraints_total;
+    case 29 : return entropy_term;
+    case 30 : return external_total;
+    case 31 : return self_total;
+    case 32 : return eds_vr;
+    case 33 : return sasa_total;
+    case 34 : return sasa_volume_total;
   }
   return 0.0;
 }

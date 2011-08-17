@@ -53,6 +53,7 @@
  * - @ref  localelev
  * - @ref  electric
  * - @ref  sasa
+ * - @ref  symref
  * - @ref  nemd
  * - @ref  multigradient
  * - @ref  addecouple
@@ -331,6 +332,10 @@ namespace io {
      * read QMMM block
      */
     void read_QMMM(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read SYMRES block
+     */
+    void read_SYMRES(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io

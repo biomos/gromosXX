@@ -92,7 +92,8 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/adde_reweighting.h\
 	special/nemd.h\
 	special/order_parameter_restraint_interaction.h\
-	special/qmmm_interaction.h
+	special/qmmm_interaction.h\
+	special/symmetry_restraint_interaction.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
@@ -175,7 +176,8 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/qmmm/mndo_worker.cc\
 	special/qmmm/turbomole_worker.cc\
 	special/qmmm/gathering.cc\
-	special/qmmm_interaction.cc
+	special/qmmm_interaction.cc\
+	special/symmetry_restraint_interaction.cc
 
 bin_PROGRAMS =			
 

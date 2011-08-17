@@ -31,6 +31,7 @@
 #include "../../interaction/special/local_elevation_interaction.h"
 #include "../../interaction/special/electric_field_interaction.h"
 #include "../../interaction/special/order_parameter_restraint_interaction.h"
+#include "../../interaction/special/symmetry_restraint_interaction.h"
 
 #include "../../interaction/bonded/dihedral_interaction.h"
 #include "../../interaction/bonded/dihedral_new_interaction.h"
@@ -40,7 +41,6 @@
 #include "../../io/topology/in_topology.h"
 
 #include "create_special.h"
-#include "xray_restraint_interaction.h"
 
 int interaction::create_special(interaction::Forcefield & ff,
 				topology::Topology const & topo,
@@ -209,6 +209,30 @@ int interaction::create_special(interaction::Forcefield & ff,
       new interaction::Order_Parameter_Restraint_Interaction;
 
     ff.push_back(opr);
+  }
+  
+  // symmetry restraints
+  if (param.symrest.symrest != simulation::xray_symrest_off){
+    if(!quiet){
+      os << "\tSymmetry restraints (";
+      switch(param.symrest.symrest){
+	case simulation::xray_symrest_ind :
+	  os << "harmonic";
+	  break;
+	case simulation::xray_symrest_constr :
+	  os << "constrained";
+	  break;
+	default:
+	  os << "unknown mode!";
+	  break;
+      }
+      os << ")\n";
+    }
+
+    interaction::Symmetry_Restraint_Interaction *symri =
+      new interaction::Symmetry_Restraint_Interaction;
+
+    ff.push_back(symri);
   }
 
   if (param.localelev.localelev != simulation::localelev_off) {
