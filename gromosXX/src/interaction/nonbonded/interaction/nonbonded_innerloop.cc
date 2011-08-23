@@ -59,6 +59,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
               topo.charge(i) *
               topo.charge(j),
               f, e_lj, e_crf);
+      DEBUG(12, "f: " << f);
+      DEBUG(12, "e_lj: " << e_lj);
+      DEBUG(12, "e_crf: " << e_crf);
 
       DEBUG(10, "\t\tatomic virial");
       for (int a = 0; a < 3; ++a) {

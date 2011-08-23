@@ -160,7 +160,9 @@ inline void interaction::Nonbonded_Term
 
 #ifdef XXHEAVISIDE
 #define HEAVISIDETRUNC(rlen, vars) \
-if (rlen > m_cut2) { vars = 0.0; \
+if (rlen > m_cut2) { \
+  DEBUG(15, "Heaviside case");\
+  vars = 0.0; \
   return; }
 #else
 #define HEAVISIDETRUNC(rlen, vars)
