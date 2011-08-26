@@ -77,20 +77,6 @@ namespace io {
             output_format const form = reduced);
 
     /**
-     * write out replicas
-     */
-    void write_replica(std::vector<util::Replica_Data> & replica_data,
-            std::vector<configuration::Configuration> & conf,
-            topology::Topology const & topo,
-            simulation::Simulation const &sim,
-            output_format const form = reduced);
-
-    void write_replica_energy(util::Replica_Data const & replica_data,
-            simulation::Simulation const & sim,
-            configuration::Energy const & energy,
-            int reeval = 0);
-
-    /**
      * print out data (per time step).
      */
     void print(topology::Topology const & topo,
@@ -132,10 +118,6 @@ namespace io {
      * write an energy trajectory.
      */
     void energy_trajectory(std::string const name, int every = 1);
-    /**
-     * write a replica trajectory.
-     */
-    void replica_trajectory(std::string const name);
     /**
      * write a free energy trajectory
      */
@@ -197,12 +179,6 @@ namespace io {
             std::ostream &os) {
       _print_timestep(sim, os);
     }
-    /**
-     * write replica information to the output streams as necessary
-     */
-    void write_replica_step(simulation::Simulation const &sim,
-            util::Replica_Data const & replica_data,
-            output_format const form = reduced);
 
     // make them available for scripting!
     void _print_title(std::string title, std::string name,
@@ -357,9 +333,6 @@ namespace io {
 
     void _print_blockaveraged_free_energyred(configuration::Configuration const & conf,
             double dlamt,
-            std::ostream & os);
-
-    void _print_replica_information(std::vector<util::Replica_Data> const & replica_data,
             std::ostream & os);
 
     void _print_nose_hoover_chain_variables(const simulation::Multibath & multibath,

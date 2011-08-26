@@ -2,25 +2,24 @@
  * @file in_configuration.cc
  * implements methods of In_Configuration.
  */
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/multibath.h"
-#include "../../simulation/parameter.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "../../io/blockinput.h"
-#include "../../io/instream.h"
-#include "../../io/configuration/inframe.h"
+#include <io/blockinput.h>
+#include <io/instream.h>
+#include <io/configuration/inframe.h>
 
-#include "../../util/generate_velocities.h"
-#include "../../util/replica_data.h"
+#include <util/generate_velocities.h>
 
-#include "../../math/volume.h"
-#include "../../math/transformation.h"
-#include "../../util/umbrella_weight.h"
+#include <math/volume.h>
+#include <math/transformation.h>
+#include <util/umbrella_weight.h>
 
 #include "in_configuration.h"
 
@@ -142,234 +141,6 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   conf.check(topo, sim);
   
   DEBUG(8, "configuration read");
-}
-
-/**
- * read in a trajectory.
- */
-void io::In_Configuration::read_replica
-(
- std::vector<configuration::Configuration> & conf, 
- topology::Topology &topo, 
- simulation::Simulation & sim,
- std::vector<util::Replica_Data> & replica_data,
- std::ostream & os)
-{
-  if (!quiet)
-    os << "REPLICA CONFIGURATION\n";
-  
-  DEBUG(8, "read replica");
-  simulation::Parameter const & param = sim.param();
-
-  const int switch_T = sim.param().replica.num_T;
-  const int switch_l = sim.param().replica.num_l;
-	
-  DEBUG(9, "switch_T = " << switch_T << " switch_l = " << switch_l);
-
-  const int rep_num = switch_T * switch_l;
-  DEBUG(9, "=> " << rep_num << " replicas");
-
-  if (rep_num < 1){
-    io::messages.add("replica exchange with < 1 replica!",
-		     "in_configuration",
-		     io::message::error);
-    return;
-  }
-
-  DEBUG(9, "resizing conf: " << rep_num);
-  conf.resize(rep_num);
-  DEBUG(9, "resizing replica data: " << rep_num);
-  replica_data.resize(rep_num);
-
-  block_read.clear();
-  
-  DEBUG(8, "reading in a frame");
-  read_frame();
-
-  // is it a multi-configuration (replica) file?
-  std::vector<std::string> buffer = m_block["REPLICAFRAME"];
-  
-  if(!buffer.size()){
-    DEBUG(8, "no REPLICAFRAME block. reading all into first configuration");
-    assert(conf.size() > 0);
-    conf[0].resize(topo.num_atoms());
-
-    read_time(topo, conf[0], sim, os);
-    read_position(topo, conf[0], sim, os);
-    read_cos_position(topo, conf[0], sim, os);
-    read_velocity(topo, conf[0], sim, os);
-    read_lattice_shifts(topo, conf[0], sim, os);
-    read_box(topo, conf[0], sim, os);
-    read_jvalue(topo, conf[0], sim, os);
-    //read_xray(topo, conf[0], sim, os);
-    read_pscale(topo, conf[0], sim, os);
-    read_flexv(topo, conf[0], sim, os);
-    read_stochastic_integral(topo, conf[0], sim, os);
-    read_perturbation(topo, sim, os);
-    read_distance_restraint_averages(topo, conf[0], sim, os);
-    read_order_parameter_restraint_averages(topo, conf[0], sim, os);
-    read_nose_hoover_chains(topo, conf[0], sim, os);
-    read_rottrans(topo, conf[0], sim, os);
-
-
-  
-	DEBUG(10, "setting boundary type");
-    conf[0].boundary_type = param.boundary.boundary;
-    if (conf[0].boundary_type == math::truncoct) {
-      // convert to triclinic system
-      math::truncoct_triclinic_box(conf[0].current().box, true);
-      conf[0].old().box = conf[0].current().box;
-      math::truncoct_triclinic(conf[0].current().pos, true);
-      math::truncoct_triclinic(conf[0].current().posV, true);
-      math::truncoct_triclinic(conf[0].current().vel, true);
-      math::truncoct_triclinic(conf[0].special().reference_positions, true);
-    }
-    
-    conf[0].check(topo, sim);
-
-	DEBUG(10, "copying configurations");
-    for(unsigned int i=1; i < conf.size(); ++i)
-      conf[i] = conf[0];
-
-	DEBUG(10, "setting up replica information");
-    // setup replica information
-    {
-      int i=0;
-      for(int l=0; l < switch_l; ++l){
-	for(int t=0; t < switch_T; ++t, ++i){
-	  
-	  assert(replica_data.size() > unsigned(i));
-	  replica_data[i].ID = i;
-	  replica_data[i].run = 0;
-	  
-	  replica_data[i].Ti = t;
-	  replica_data[i].Tj = t;
-	  
-	  replica_data[i].li = l;
-	  replica_data[i].lj = l;
-	  
-	  replica_data[i].epot_i = 0.0;
-	  replica_data[i].epot_j = 0.0;
-	  
-	  replica_data[i].state = util::waiting;
-	  replica_data[i].probability = 0.0;
-	  replica_data[i].switched = false;
-	  
-	  replica_data[i].time = param.step.t0;
-	}
-      }
-    }
-  }
-  else{
-    DEBUG(8, "got REPLICAFRAME, it's a replica exchange configuration file!");
-    read_replica_information(replica_data, os);
-
-    DEBUG(8, "REPLICAFRAME block. reading " << conf.size() << " configurations");
-    for(unsigned int i=0; i<conf.size(); ++i){
-      block_read.insert("REPLICAFRAME");
-      DEBUG(9, "topo contains " << topo.num_atoms() << " atoms");
-      conf[i].resize(topo.num_atoms());
-      
-      read_time(topo, conf[i], sim, os);
-      read_position(topo, conf[i], sim, os);
-      read_cos_position(topo, conf[i], sim, os);
-      read_velocity(topo, conf[i], sim, os);
-      read_lattice_shifts(topo, conf[i], sim, os);
-      read_box(topo, conf[i], sim, os);
-      read_jvalue(topo, conf[i], sim, os);
-      read_pscale(topo, conf[i], sim, os);
-      read_flexv(topo, conf[i], sim, os);
-      read_stochastic_integral(topo, conf[i], sim, os);
-      read_perturbation(topo, sim, os);
-      read_distance_restraint_averages(topo, conf[i], sim, os);
-      read_order_parameter_restraint_averages(topo, conf[i], sim, os);
-      read_nose_hoover_chains(topo, conf[i], sim, os);
-      read_rottrans(topo, conf[i], sim, os);
-
-      conf[i].boundary_type = param.boundary.boundary;
-      if (conf[i].boundary_type == math::truncoct) {
-        // convert to triclinic system
-        math::truncoct_triclinic_box(conf[i].current().box, true);
-        conf[i].old().box = conf[i].current().box;
-        math::truncoct_triclinic(conf[i].current().pos, true);
-        math::truncoct_triclinic(conf[i].current().posV, true);
-        math::truncoct_triclinic(conf[i].current().vel, true);
-      }
-      
-      conf[i].check(topo, sim);
-      
-      // warn for unread input data
-      for(std::map<std::string, std::vector<std::string> >::const_iterator
-	    it = m_block.begin(),
-	    to = m_block.end();
-	  it != to;
-	  ++it){
-	
-	if (block_read.count(it->first) == 0 && it->second.size()){
-	  io::messages.add("block " + it->first + " not read in!",
-			   "In_Configuration",
-			   io::message::warning);
-	}
-      }
-      
-      block_read.clear();
-      read_frame();
-    }
-  }
-
-  // print some information
-  if (!quiet){
-    os << "\t";
-    switch(conf[0].boundary_type){
-      case math::vacuum:
-	os << "PBC            = vacuum\n";
-	break;
-      case math::rectangular:
-	os << "PBC            = rectangular\n";
-	break;
-      case math::triclinic:
-	os << "PBC            = triclinic\n";
-	break;
-      case math::truncoct:
-	os << "PBC            = truncoct\n";
-	break;
-      default:
-	os << "wrong periodic boundary conditions!";
-	io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
-    }
-  }
-
-  if (!quiet) {
-    os << "\ttotal mass     = " << math::sum(topo.mass()) << "\n";
-    
-    if (conf[0].boundary_type != math::vacuum){
-      const double v = math::volume(conf[0].current().box, 
-				    conf[0].boundary_type);
-      os << "\tvolume         = " 
-	 << std::setw(18) << v
-	 << "\n\tdensity        = " 
-	 << std::setw(18) << math::sum(topo.mass()) / v;
-    }
-    
-    os << "\n";
-  }
-
-  // warn for unread input data
-  for(std::map<std::string, std::vector<std::string> >::const_iterator
-	it = m_block.begin(),
-	to = m_block.end();
-      it != to;
-      ++it){
-
-    if (block_read.count(it->first) == 0 && it->second.size()){
-      io::messages.add("block " + it->first + " not read in!",
-		       "In_Configuration",
-		       io::message::warning);
-    }
-  }
-  
-  if (!quiet)
-    os << "END\n";
 }
 
 /**
@@ -554,7 +325,7 @@ bool io::In_Configuration::read_velocity
 			      conf.current().vel,
 			      conf.old().vel,
 			      sim.param().start.ig,
-			      os);
+			      os, quiet);
   }
   return true;
 }
@@ -2346,64 +2117,6 @@ _read_time_step(std::vector<std::string> &buffer,
   sim.steps() = i;
   sim.time() = t;
   
-  return true;
-}
-
-bool io::In_Configuration::read_replica_information
-(
- std::vector<util::Replica_Data> & replica_data,
- std::ostream & os
- )
-{
-  DEBUG(8, "read replica information");
-  std::vector<std::string> buffer;
-  buffer = m_block["REPDATA"];
-  if (!m_block.size()){
-    io::messages.add("no REPDATA block in first REPLICAFRAME!",
-		     "In_Configuration",
-		     io::message::error);
-    return false;
-  }
-  
-  block_read.insert("REPDATA");
-  
-  if (!quiet)
-    os << "\treading REPDATA...\n";
-
-  // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end()-1;
-  
-  for(int i=0; it!=to; ++it, ++i){
-    _lineStream.clear();
-    _lineStream.str(*it);
-  
-    assert(unsigned(i) < replica_data.size());
-
-    int st;
-    
-    _lineStream >> replica_data[i].ID 
-		>> replica_data[i].run
-		>> replica_data[i].Ti
-		>> replica_data[i].li
-		>> replica_data[i].epot_i
-		>> replica_data[i].Tj
-		>> replica_data[i].lj
-		>> replica_data[i].epot_j
-		>> replica_data[i].probability
-		>> replica_data[i].switched
-		>> replica_data[i].time
-		>> st;
-
-    replica_data[i].state = (util::state_enum)st;
-
-    if (_lineStream.fail()){
-      io::messages.add("Could not read replica information (REPDATA)",
-		       "In_Configuration", io::message::error);
-      return false;
-    }
-  }
-
   return true;
 }
 

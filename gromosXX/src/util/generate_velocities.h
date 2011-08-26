@@ -19,7 +19,8 @@ namespace util
                            double const temp, math::SArray const &mass,
 			   math::VArray &vel, math::VArray &old_vel,
 			   unsigned int const seed,
-			   std::ostream & os = std::cout);
+			   std::ostream & os = std::cout, 
+                           bool quiet = false);
   
 }
 

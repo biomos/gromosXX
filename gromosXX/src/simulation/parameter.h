@@ -2046,11 +2046,10 @@ namespace simulation
        * - dt <empty>
        * - trials 0
        * - equilibrate 0
-       * - slave_runs 0
-       * - write 0
+       * - cont 0
        */
       replica_struct() : num_T(0), num_l(0), scale(false), trials(0),
-			 equilibrate(0), slave_runs(0), write(0)
+                         equilibrate(0), cont(0)
       {
       }
       /**
@@ -2062,7 +2061,7 @@ namespace simulation
        */
       int num_l;
       /**
-       * tempeartures
+       * temperatures
        */
       std::vector<double> temperature;
       /**
@@ -2086,14 +2085,10 @@ namespace simulation
        */
       int equilibrate;
       /**
-       * runs per slave
+       * do continuation run
        */
-      int slave_runs;
-      /**
-       * write replicas (to master trajectory) every n steps
-       */
-      int write;
-      
+      int cont;
+
     } /** replica exchange parameters */ replica;
 
     /**

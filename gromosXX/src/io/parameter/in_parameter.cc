@@ -2,27 +2,27 @@
  * @file in_parameter.cc
  * implements methods of In_Parameter
  */
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../topology/core/core.h"
+#include <topology/core/core.h>
 
-#include "../../topology/solute.h"
-#include "../../topology/solvent.h"
-#include "../../topology/perturbed_atom.h"
-#include "../../topology/perturbed_solute.h"
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
 
-#include "../../topology/topology.h"
+#include <topology/topology.h>
 
-#include "../../simulation/multibath.h"
-#include "../../simulation/parameter.h"
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
 
-#include "../../io/instream.h"
-#include "../../io/blockinput.h"
-#include "../../io/parameter/in_parameter.h"
+#include <io/instream.h>
+#include <io/blockinput.h>
+#include <io/parameter/in_parameter.h>
 
-#include "../../math/random.h"
+#include <math/random.h>
 
-#include "../../configuration/energy.h"
+#include <configuration/energy.h>
 
 #ifdef OMP
 #include <omp.h>
@@ -2922,9 +2922,9 @@ REPLICA
 # NRETRIAL >= 0 number of overall exchange trials
 #  NREQUIL >= 0 number of exchange periods to equilibrate
 #               (disallow switches)
-#   NREJOB >= 0 number of simulations to run per slave job
-#   NREWRT >= 0 write trajectory of replica exchange master
-#               every NREWRT trials
+#     CONT >= 0 continuation run
+#             0 start from one configuration file
+#             1 start from multiple configuration files
 #   
 # NRET
   10
@@ -2945,8 +2945,8 @@ REPLICA
   100
 # NREQUIL
   10
-# NREJOB  NREWRT
-  1000    10
+# CONT
+  0
 END
 @endverbatim
  */
@@ -3066,21 +3066,16 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
               "In_Parameter", io::message::error);
       error = true;
     }
-    _lineStream >> param.replica.slave_runs;
-    if (_lineStream.fail() || param.replica.slave_runs < 0) {
-      io::messages.add("REPLICA block: NREJOB must be >= 0.",
-              "In_Parameter", io::message::error);
-      error = true;
-    }
-    _lineStream >> param.replica.write;
-    if (_lineStream.fail() || param.replica.write < 0) {
-      io::messages.add("REPLICA block: NREWRT must be >= 0.",
+    // do continuation run
+    _lineStream >> param.replica.cont;
+    if (_lineStream.fail() || param.replica.cont < 0 || param.replica.cont > 1 ) {
+      io::messages.add("REPLICA block: CONT must be 0 or 1",
               "In_Parameter", io::message::error);
       error = true;
     }
 
     if (_lineStream.fail() || error) {
-      io::messages.add("bad line in REPLICA block (trials, equi, slave or write)",
+      io::messages.add("bad line in REPLICA block",
               "In_Parameter", io::message::error);
 
       param.replica.num_T = 0;

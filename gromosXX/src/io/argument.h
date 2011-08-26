@@ -90,15 +90,18 @@ namespace io{
    */
 
   class Argument: public std::multimap<std::string,std::string>{
-    // not implemented
-    Argument(const Argument &);
-    Argument &operator=(const Argument &);
+    
   public:
     /**
      * Argument constructor.
      * Details.
      */
     Argument();
+    
+    // not implemented
+    //Argument(const Argument &);
+    //Argument &operator=(const Argument &);
+    
     /**
      * parse the command line arguments.
      */

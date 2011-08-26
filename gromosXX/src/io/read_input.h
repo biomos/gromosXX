@@ -31,20 +31,24 @@ namespace io
    std::ostream & os = std::cout,
    bool quiet = false
    );
-
+  
   /**
-   * read replica information
+   * read the rest of the input files necessary for the repex simulation.
+   * calls
+   * - read_topology
+   * - read_special
+   * - read_configuration
    */
-  int read_replica_input
+  int read_input_repex
   (
-   io::Argument const & args,
-   topology::Topology & topo,
-   std::vector<configuration::Configuration> & conf,
+   io::Argument const &args,
+   topology::Topology &topo,
+   configuration::Configuration &conf,
    simulation::Simulation & sim,
-   algorithm::Algorithm_Sequence & md_seq,
-   std::vector<util::Replica_Data> & replica_data,
-   std::ostream & os,
-   bool quiet = false);
+   algorithm::Algorithm_Sequence &md_seq,
+   std::ostream & os = std::cout,
+   bool quiet = false
+   );
 
   /**
    * read in simulation parameter
@@ -82,21 +86,6 @@ namespace io
    std::ostream & os = std::cout,
    bool quiet = false
    );
-
-  /**
-   * read in a configuration
-   */
-  int read_replica_configuration
-  (
-   io::Argument const &args,
-   topology::Topology &topo,
-   std::vector<configuration::Configuration> & conf,
-   simulation::Simulation & sim,
-   std::vector<util::Replica_Data> & replica_data,
-   std::ostream & os = std::cout,
-   bool quiet = false
-   );
-  
 }
 
 #endif

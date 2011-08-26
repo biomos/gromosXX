@@ -12,8 +12,12 @@ xxinclude_HEADERS = error.h\
 	parse_verbosity.h\
 	prepare_virial.h\
 	create_simulation.h\
-	replica_data.h\
-	replica_exchange.h\
+	repex_mpi.h\
+        replica_data.h
+	replica.h\
+	replica_exchange_base.h\
+	replica_exchange_master.h\
+	replica_exchange_slave.h\
 	template_split.h\
 	virtual_atom.h\
 	virtual_grain.h\
@@ -35,10 +39,10 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	parse_tcouple.cc\
 	parse_verbosity.cc\
 	prepare_virial.cc\
-	replica_exchange.cc\
+	replica.cc\
+	replica_exchange_base.cc\
 	replica_exchange_master.cc\
 	replica_exchange_slave.cc\
-	replica_exchange_control.cc\
 	create_simulation.cc\
 	virtual_atom.cc\
 	virtual_grain.cc\

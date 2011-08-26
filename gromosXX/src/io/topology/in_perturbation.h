@@ -228,7 +228,8 @@ namespace io
     /**
      * parse the topology.
      */
-    void read(topology::Topology &topo, simulation::Parameter &param);
+    void read(topology::Topology &topo, simulation::Parameter &param, 
+              std::ostream & os = std::cout);
     
   };
   
