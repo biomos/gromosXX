@@ -57,6 +57,8 @@
 #include <util/error.h>
 
 int main(int argc, char *argv[]) {
+  
+#ifdef XXMPI
 
   //initializing MPI
   MPI_Init(&argc, &argv);
@@ -87,7 +89,6 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  //util::print_title(false);
   if (args.count("version") >= 0) {
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     return 0;
@@ -235,5 +236,10 @@ int main(int argc, char *argv[]) {
 
   MPI_Finalize();
   return 0;
+  
+#else
+  std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure and appropriate compilers\n" << std::endl;
+  return 1;
+#endif
 }
 

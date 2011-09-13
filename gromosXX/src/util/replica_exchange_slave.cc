@@ -43,7 +43,7 @@ util::replica_exchange_slave::~replica_exchange_slave() {
 }
 
 void util::replica_exchange_slave::send_to_master() const {
-
+#ifdef XXMPI
   for (std::vector<util::replica *>::const_iterator it = replicas.begin(); it < replicas.end(); ++it) {
     util::repInfo info;
     info.run = (*it)->run;
@@ -53,5 +53,5 @@ void util::replica_exchange_slave::send_to_master() const {
     info.switched = int((*it)->switched);
     MPI_Send(&info, 1, MPI_REPINFO, 0, REPINFO, MPI_COMM_WORLD);
   }
-
+#endif
 }

@@ -22,10 +22,12 @@
  * define some MPI datatypes
  */
 //  EXTERN MPI_Datatype MPI_INITVAL;
+#ifdef XXMPI
 EXTERN MPI_Datatype MPI_VARRAY;
 EXTERN MPI_Datatype MPI_CONFINFO;
 EXTERN MPI_Datatype MPI_BOX;
 EXTERN MPI_Datatype MPI_REPINFO;
+#endif
 
 /*
  * define message tags for MPI communication

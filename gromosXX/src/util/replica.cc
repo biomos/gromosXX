@@ -35,6 +35,8 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   size_t pos = (*it).second.find_last_of(".");
   (*it).second.insert(pos, tmp.str());
   os = new std::ofstream((*it).second.c_str());
+  
+  util::print_title(true, *os, true);
 
   // set trajectory
   std::stringstream trajstr;
@@ -46,13 +48,17 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   if (io::read_input(args, topo, conf, sim, md, *os)) {
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;
+#ifdef XXMPI
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+#endif
   }
 
   *os << "\nMESSAGES FROM INITIALISATION\n";
   if (io::messages.display(*os) >= io::message::error) {
     *os << "\nErrors during initialization!\n" << std::endl;
+#ifdef XXMPI
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+#endif
   }
   
   // set some variables
@@ -132,27 +138,37 @@ void util::replica::run_MD() {
         case E_SHAKE_FAILURE:
           std::cerr << "SHAKE FAILURE in Replica " << ID << " on node " << rank << std::endl;
           print_info("Info:");
+#ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
+#endif
           break;
         case E_SHAKE_FAILURE_SOLUTE:
           std::cerr << "SHAKE FAILURE SOLUTE in Replica " << ID << " on node " << rank << std::endl;
           print_info("Info:");
+#ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
+#endif
           break;
         case E_SHAKE_FAILURE_SOLVENT:
           std::cerr << "SHAKE FAILURE SOLVENT in Replica " << ID << " on node " << rank << std::endl;
           print_info("Info:");
+#ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
+#endif
           break;
         case E_NAN:
           std::cerr << "NAN error in Replica " << ID << " on node " << rank << std::endl;
           print_info("Info:");
+#ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
+#endif
           break;
         default:
           std::cerr << "Unknown error in Replica " << ID << " on node " << rank << std::endl;
           print_info("Info:");
+#ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
+#endif
           break;
       }
       error = 0; // clear error condition
@@ -199,7 +215,9 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
       prob[0] = probability;
       prob[1] = randNum;
 
+#ifdef XXMPI
       MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerRank, SENDCOORDS, MPI_COMM_WORLD);
+#endif
 
       if (randNum < probability) {
         switched = true;
@@ -215,12 +233,18 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
         // send E21 and E22
         double energies[2] = {E22, E21};
         //this send operation is matched in calc_probability()
+#ifdef XXMPI
         MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD);
+#endif
       }
+#ifdef XXMPI
       MPI_Status status;
+#endif
       std::vector<double> prob;
       prob.resize(2);
+#ifdef XXMPI
       MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerRank, SENDCOORDS, MPI_COMM_WORLD, &status);
+#endif
 
       probability = prob[0];
       double randNum = prob[1];
@@ -356,8 +380,10 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
      * E22 and E12 needed from partner
      */
     double energies[2] = {0.0, 0.0};
+#ifdef XXMPI
     MPI_Status status;
     MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD, &status);
+#endif
     const double E22 = energies[0];
     const double E12 = energies[1];
 
@@ -382,7 +408,9 @@ double util::replica::calculate_energy(const int partner) {
 
   if (ff->apply(topo, conf, sim)) {
     print_info("Error in energy calculation!");
+ #ifdef XXMPI
     MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+#endif
     return 1;
   }
 
@@ -401,7 +429,9 @@ double util::replica::calculate_energy(const int partner) {
     default:
       std::cerr << "Something is wrong in energy calculation" << std::endl;
       print_info("Error in energy calculation!");
+#ifdef XXMPI
       MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+#endif
       return 1;
   }
 
@@ -425,12 +455,15 @@ double util::replica::calculate_energy() {
       break;
     default:
       print_info("Error in energy switching!");
+#ifdef XXMPI
       MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+#endif
   }
   return energy;
 }
 
 void util::replica::send_coord(const int receiverID, const int receiverRank) {
+#ifdef XXMPI
   MPI_Send(&conf.current().pos[0][0], 1, MPI_VARRAY, receiverRank, POS, MPI_COMM_WORLD);
   MPI_Send(&conf.current().posV[0][0], 1, MPI_VARRAY, receiverRank, POSV, MPI_COMM_WORLD);
   MPI_Send(&conf.current().vel[0][0], 1, MPI_VARRAY, receiverRank, VEL, MPI_COMM_WORLD);
@@ -457,10 +490,11 @@ void util::replica::send_coord(const int receiverID, const int receiverRank) {
   MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverRank, ANGLES, MPI_COMM_WORLD);
   if ((int) ID > receiverID)
     conf.exchange_state();
-
+#endif
 }
 
 void util::replica::receive_new_coord(const int senderID, const int senderRank) {
+#ifdef XXMPI
   MPI_Status status;
   conf.exchange_state();
   MPI_Recv(&conf.current().pos[0][0], 1, MPI_VARRAY, senderRank, POS, MPI_COMM_WORLD, &status);
@@ -485,6 +519,7 @@ void util::replica::receive_new_coord(const int senderID, const int senderRank) 
   conf.current().theta = angles[2];
   if ((int) ID > senderID)
     conf.exchange_state();
+#endif
 }
 
 void util::replica::set_lambda() {

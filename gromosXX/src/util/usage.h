@@ -24,7 +24,7 @@ namespace util
   void get_usage(Known const &knowns, std::string &s, std::string name);
 
   void print_title(bool mpi, std::ostream & os = std::cout,
-          bool repex = false, bool master = false);
+          bool repex = false);
   
 }
 

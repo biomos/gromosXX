@@ -181,14 +181,14 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @qmmm       filename\n\n";
   }
   
-  if (knowns.count("master")){
-    usage += "\t# replica exchange: master process\n";
-    usage += "\t# @master    name\n\n";
+  if (knowns.count("repout")){
+    usage += "\t# output file for replica exchange\n";
+    usage += "\t# @repout    filename\n\n";
   }
 
-  if (knowns.count("slave")){
-    usage += "\t# replica exchange: slave process\n";
-    usage += "\t# @slave     name\n\n";
+  if (knowns.count("repdat")){
+    usage += "\t# data file for replica exchange\n";
+    usage += "\t# @repdat     filename\n\n";
   }
   
   if (knowns.count("print")){
@@ -226,7 +226,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
 #include <mpi.h>
 #endif
 
-void util::print_title(bool mpi, std::ostream & os, bool repex, bool master )
+void util::print_title(bool mpi, std::ostream & os, bool repex)
 {
   os << GROMOSXX << "\n" 
      << "========\n";
@@ -273,10 +273,6 @@ void util::print_title(bool mpi, std::ostream & os, bool repex, bool master )
 
   if (repex) {
     os << "using the replica exchange method.\n\t";
-    if (master)
-      os << "master process\n";
-    else
-      os << "slave process\n";
   }
 
   os << "\nGruppe fuer Informatikgestuetzte Chemie\n"
