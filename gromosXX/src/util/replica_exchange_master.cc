@@ -94,9 +94,9 @@ numReplicas(_numReplicas) {
           << std::setw(14) << "Epoti"
           << std::setw(13) << "lj"
           << std::setw(13) << "Tj"
-          << std::setw(14) << "Epotj"
-          << std::setw(13) << "p"
-          << std::setw(4) << "s"
+          << std::setw(15) << "Epotj"
+          << std::setw(15) << "p"
+          << std::setw(8) << "s"
           << "\n";
 }
 

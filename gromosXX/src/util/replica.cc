@@ -23,13 +23,13 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
     std::multimap< std::string, std::string >::iterator it = args.lower_bound(("conf"));
     size_t pos = (*it).second.find_last_of(".");
     std::stringstream tmp;
-    tmp << "_" << ID;
+    tmp << "_" << (ID+1);
     (*it).second.insert(pos, tmp.str());
   }
 
   // set output file
   std::stringstream tmp;
-  tmp << "_" << ID;
+  tmp << "_" << (ID+1);
   std::string out;
   std::multimap< std::string, std::string >::iterator it = args.lower_bound(("repout"));
   size_t pos = (*it).second.find_last_of(".");
@@ -40,7 +40,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   // set trajectory
   std::stringstream trajstr;
-  trajstr << GROMOSXX << "\nReplica Exchange with Replica ID " << ID << std::endl;
+  trajstr << GROMOSXX << "\nReplica Exchange with Replica ID " << (ID+1) << std::endl;
   std::string trajname = trajstr.str();
 
   traj = new io::Out_Configuration(trajname, *os);
@@ -100,7 +100,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   traj->init(args, sim.param());
   std::stringstream trajtitle;
-  trajtitle << GROMOSXX << "\n" << sim.param().title << "\nReplica " << ID << "on Node " << rank;
+  trajtitle << GROMOSXX << "\n" << sim.param().title << "\nReplica " << (ID+1) << "on Node " << rank;
   traj->title(trajtitle.str());
 
   // random generator
@@ -136,35 +136,35 @@ void util::replica::run_MD() {
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
-          std::cerr << "SHAKE FAILURE in Replica " << ID << " on node " << rank << std::endl;
+          std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << rank << std::endl;
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_SHAKE_FAILURE_SOLUTE:
-          std::cerr << "SHAKE FAILURE SOLUTE in Replica " << ID << " on node " << rank << std::endl;
+          std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << rank << std::endl;
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_SHAKE_FAILURE_SOLVENT:
-          std::cerr << "SHAKE FAILURE SOLVENT in Replica " << ID << " on node " << rank << std::endl;
+          std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << rank << std::endl;
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_NAN:
-          std::cerr << "NAN error in Replica " << ID << " on node " << rank << std::endl;
+          std::cerr << "NAN error in Replica " << (ID+1) << " on node " << rank << std::endl;
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         default:
-          std::cerr << "Unknown error in Replica " << ID << " on node " << rank << std::endl;
+          std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << rank << std::endl;
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -595,7 +595,7 @@ void util::replica::print_info(std::string bla) const {
           << std::setw(4) << "s"
           << "\n";
 
-  std::cout << std::setw(6) << ID
+  std::cout << std::setw(6) << (ID+1)
           << " "
           << std::setw(6) << partner
           << std::setw(6) << run

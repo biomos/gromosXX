@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
       std::multimap< std::string, std::string >::iterator it = args2.lower_bound(("conf"));
       size_t pos = (*it).second.find_last_of(".");
       std::stringstream tmp;
-      tmp << "_" << 0;
+      tmp << "_" << 1;
       (*it).second.insert(pos, tmp.str());
     }
     
