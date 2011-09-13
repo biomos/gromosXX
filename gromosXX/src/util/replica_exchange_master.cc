@@ -142,9 +142,9 @@ void util::replica_exchange_master::receive_from_all_slaves() {
 void util::replica_exchange_master::write() {
   for (unsigned int r = 0; r < numReplicas; ++r) {
 
-    repOut << std::setw(6) << replicaData[r].ID
+    repOut << std::setw(6) << (replicaData[r].ID + 1)
             << " "
-            << std::setw(6) << replicaData[r].partner
+            << std::setw(6) << (replicaData[r].partner + 1)
             << std::setw(6) << replicaData[r].run
             << std::setw(13) << replicaData[r].l
             << std::setw(13) << replicaData[r].T
