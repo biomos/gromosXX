@@ -67,8 +67,8 @@ numReplicas(_numReplicas) {
   // set output file
   std::string repdatName = args["repdat"];
   repOut.open(repdatName.c_str());
-  repOut << "num_T\t" << repParams.num_T << "\n"
-          << "num_l\t" << repParams.num_l << "\n";
+  repOut << "Number of temperatures:\t" << repParams.num_T << "\n"
+          << "Number of lambda values:\t" << repParams.num_l << "\n";
 
   repOut.precision(4);
   repOut.setf(std::ios::fixed, std::ios::floatfield);
@@ -77,7 +77,7 @@ numReplicas(_numReplicas) {
   for (int t = 0; t < repParams.num_T; ++t)
     repOut << std::setw(12) << repParams.temperature[t];
 
-  repOut << "\nl    \t";
+  repOut << "\nlambda    \t";
   for (int l = 0; l < repParams.num_l; ++l)
     repOut << std::setw(12) << repParams.lambda[l];
 
@@ -92,8 +92,8 @@ numReplicas(_numReplicas) {
           << std::setw(13) << "li"
           << std::setw(13) << "Ti"
           << std::setw(14) << "Epoti"
-          << std::setw(13) << "Tj"
           << std::setw(13) << "lj"
+          << std::setw(13) << "Tj"
           << std::setw(14) << "Epotj"
           << std::setw(13) << "p"
           << std::setw(4) << "s"
@@ -150,8 +150,8 @@ void util::replica_exchange_master::write() {
             << std::setw(13) << replicaData[r].T
             << " "
             << std::setw(18) << replicaData[r].epot
-            << std::setw(13) << replicaData[replicaData[r].partner].T
             << std::setw(13) << replicaData[replicaData[r].partner].l
+            << std::setw(13) << replicaData[replicaData[r].partner].T
             << " "
             << std::setw(18) << replicaData[replicaData[r].partner].epot
             << std::setw(13) << replicaData[r].probability
