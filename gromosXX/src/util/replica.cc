@@ -97,6 +97,18 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   it = args.lower_bound("trg");
   pos = (*it).second.find_last_of(".");
   (*it).second.insert(pos, tmp.str());
+ 
+  it = args.lower_bound("trv");
+  pos = (*it).second.find_last_of(".");
+  (*it).second.insert(pos, tmp.str());
+  
+  it = args.lower_bound("trs");
+  pos = (*it).second.find_last_of(".");
+  (*it).second.insert(pos, tmp.str());
+
+  it = args.lower_bound("trf");
+  pos = (*it).second.find_last_of(".");
+  (*it).second.insert(pos, tmp.str());
 
   traj->init(args, sim.param());
   std::stringstream trajtitle;
