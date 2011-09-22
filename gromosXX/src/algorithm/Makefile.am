@@ -18,7 +18,8 @@ xxalgintegration_HEADERS = integration/energy_calculation.h\
 	integration/steepest_descent.h\
 	integration/analyze.h\
 	integration/lattice_shift.h\
-	integration/multigradient.h
+	integration/multigradient.h\
+        integration/eds.h
 
 xxalgtempdir = $(includedir)/md++/algorithm/temperature
 xxalgtemp_HEADERS = temperature/temperature_calculation.h\
@@ -80,7 +81,8 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	integration/analyze.cc\
 	constraints/rottrans.cc\
 	integration/lattice_shift.cc\
-	integration/multigradient.cc
+	integration/multigradient.cc\
+        integration/eds.cc
 
 bin_PROGRAMS =			
 

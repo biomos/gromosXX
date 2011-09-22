@@ -20,13 +20,15 @@
 #define MODULE algorithm
 #define SUBMODULE algorithm
 
-algorithm::Algorithm_Sequence::Algorithm_Sequence()
-  : std::vector<Algorithm *>()
+algorithm::Algorithm_Sequence::Algorithm_Sequence(bool clean)
+  : std::vector<Algorithm *>(), clean(clean)
 {
 }
 
 algorithm::Algorithm_Sequence::~Algorithm_Sequence()
 {
+  if (!clean) return;
+  
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();
       it != to;

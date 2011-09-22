@@ -26,6 +26,7 @@
 #include "../algorithm/integration/stochastic.h"
 #include "../algorithm/integration/lattice_shift.h"
 #include "../algorithm/integration/multigradient.h"
+#include "../algorithm/integration/eds.h"
 
 #include "../io/blockinput.h"
 #include "../io/instream.h"
@@ -104,7 +105,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // add the forcefield
   md_seq.push_back(ff);
-
+  
+  //add EDS
+  if (sim.param().eds.eds) {
+    md_seq.push_back(new algorithm::EDS());
+  }  
+              
   // position constraints?
   if (sim.param().posrest.posrest == 3){
     algorithm::Position_Constraints * pc = new algorithm::Position_Constraints;

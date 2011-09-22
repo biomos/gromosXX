@@ -143,6 +143,13 @@ namespace io{
      * Details.
      */
     const std::string &operator[](const std::string &str)const;
+    
+    /**
+     * add some elements
+     * @param key
+     * @param values
+     */
+    void put(const std::string & key, const std::vector<std::string> & values);
 
   private:
     std::string d_usage;

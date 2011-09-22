@@ -160,6 +160,13 @@ namespace io{
   
     else return find(str)->second;
   }
+  
+  void Argument::put(const std::string & key, const std::vector<std::string> & values) {
+    for(std::vector<std::string>::const_iterator it = values.begin(),
+            to = values.end(); it != to; ++it) {
+      this->insert(std::pair<std::string, std::string>(key, *it));
+    }
+  }
 
   int Argument::check(const std::string &str, int num_args)const
   {

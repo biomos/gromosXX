@@ -3,12 +3,14 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
 include_HEADERS =
 
-bin_PROGRAMS = md md_mpi repex_mpi mg
+bin_PROGRAMS = md md_mpi repex_mpi mg eds_2box eds_2box_mpi
 
 md_SOURCES = md.cc
 md_mpi_SOURCES = md_mpi.cc
 repex_mpi_SOURCES = repex_mpi.cc
 mg_SOURCES =mg.cc
+eds_2box_SOURCES = eds_2box.cc
+eds_2box_mpi_SOURCES = eds_2box_mpi.cc
 
 LDADD = ../src/libmdpp.la $(extra_lib)
 

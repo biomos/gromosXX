@@ -19,7 +19,7 @@ namespace algorithm
     /**
      * Constructor
      */
-    Algorithm_Sequence();
+    Algorithm_Sequence(bool clean = true);
 
     /**
      * Destructor
@@ -53,6 +53,7 @@ namespace algorithm
     Algorithm * algorithm(std::string name);
     
   protected:
+    bool clean;
 
   };
   
