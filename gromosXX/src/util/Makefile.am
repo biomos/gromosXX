@@ -13,7 +13,7 @@ xxinclude_HEADERS = error.h\
 	prepare_virial.h\
 	create_simulation.h\
 	repex_mpi.h\
-        replica_data.h
+        replica_data.h\
 	replica.h\
 	replica_exchange_base.h\
 	replica_exchange_master.h\
