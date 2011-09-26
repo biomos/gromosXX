@@ -720,6 +720,52 @@ t_interaction_spec, t_perturbation_details>
 
         break;
       }
+      case simulation::cgrain_func:
+      {
+        io::messages.add("Nonbonded_Innerloop",
+                "no perturbed 1,4 interactions for Martini coarse-grained simulations!",
+                io::message::critical);
+        break;
+      }
+      case simulation::cggromos_func:
+      {
+        // check if...
+        if (topo.is_coarse_grained(i)) { // CG-CG or CG-FG interaction
+          io::messages.add("Nonbonded_Innerloop",
+                "no perturbed 1,4 interactions for Gromos coarse-grained simulations!",
+                io::message::critical);
+        } else { // FG-FG interaction
+          math::Vec f;
+          double f1, f6, f12;
+          lj_crf_soft_interaction
+                  (r, A_lj->cs6, A_lj->cs12,
+                  B_lj->cs6, B_lj->cs12,
+                  A_q, B_q,
+                  alpha_lj, alpha_crf,
+                  f1, f6, f12,
+                  e_lj, e_crf, de_lj, de_crf
+                  );
+
+          DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
+                  << f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj
+                  << " e_crf: " << e_crf
+                  << " de_lj: " << de_lj << " de_crf: " << de_crf);
+
+          // now combine everything
+          f = (f1 + f6 + f12) * r;
+
+          conf.current().force(i) += f;
+          conf.current().force(j) -= f;
+
+          DEBUG(7, "\tforces stored");
+
+          for (int a = 0; a < 3; ++a)
+            for (int b = 0; b < 3; ++b)
+              conf.current().virial_tensor(a, b) += r(a) * f(b);
+
+          DEBUG(7, "\tatomic virial done");
+        }
+      }
       case simulation::pol_lj_crf_func:
       {
         math::Vec rp1, rp2, rpp;

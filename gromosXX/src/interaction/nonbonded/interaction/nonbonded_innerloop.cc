@@ -856,13 +856,50 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       }
       break;
     }
-    case simulation::cgrain_func :
-    case simulation::cggromos_func :
+    case simulation::cgrain_func:
     {
       io::messages.add("Nonbonded_Innerloop",
-              "no 1,4 interactions for coarse-grained simulations!",
+              "no 1,4 interactions for Martini coarse-grained simulations!",
               io::message::critical);
       break;
+    }
+    case simulation::cggromos_func :
+    {
+      // check if...
+      if (topo.is_coarse_grained(i)) { // CG-CG or CG-FG interaction
+        io::messages.add("Nonbonded_Innerloop",
+                "no 1,4 interactions for Gromos coarse-grained simulations!",
+                io::message::critical);
+      } else { // FG-FG interaction
+        const lj_parameter_struct & lj =
+                m_param->lj_parameter(topo.iac(i),
+                topo.iac(j));
+
+        DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+
+        lj_crf_interaction(r, lj.cs6, lj.cs12,
+                topo.charge()(i) *
+                topo.charge()(j),
+                f, e_lj, e_crf);
+
+        DEBUG(10, "\t\tatomic virial");
+        for (int a = 0; a < 3; ++a) {
+          const double term = f * r(a);
+          storage.force(i)(a) += term;
+          storage.force(j)(a) -= term;
+
+          for (int b = 0; b < 3; ++b)
+            storage.virial_tensor(b, a) += r(b) * term;
+        }
+        //DEBUG(1, "FG: i = " << i << " , j = " << j);
+        lj_crf_interaction(r, lj.c6, lj.c12,
+                topo.charge(i) * topo.charge(j),
+                f, e_lj, e_crf, 2);
+        DEBUG(10, "\t\tatomic virial");
+      }
+      break;
+    
     }
     case simulation::pol_lj_crf_func :
       {
@@ -1248,7 +1285,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     case simulation::cgrain_func:
     {
       io::messages.add("Nonbonded_Innerloop",
-              "no RF excluded interactions for coarse-grained simulations!",
+              "no RF excluded interactions for Martini coarse-grained simulations!",
               io::message::critical);
       break;
     }
