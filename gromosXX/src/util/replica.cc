@@ -8,6 +8,7 @@
 
 #include <io/argument.h>
 #include <util/error.h>
+#include <math/volume.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -85,27 +86,52 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   it = args.lower_bound(("fin"));
   pos = (*it).second.find_last_of(".");
   (*it).second.insert(pos, tmp.str());
-
-  it = args.lower_bound("trc");
-  pos = (*it).second.find_last_of(".");
-  (*it).second.insert(pos, tmp.str());
-
-  it = args.lower_bound("tre");
-  pos = (*it).second.find_last_of(".");
-  (*it).second.insert(pos, tmp.str());
-
-  it = args.lower_bound("trg");
-  pos = (*it).second.find_last_of(".");
-  (*it).second.insert(pos, tmp.str());
- 
-  it = args.lower_bound("trv");
-  pos = (*it).second.find_last_of(".");
-  (*it).second.insert(pos, tmp.str());
   
-  it = args.lower_bound("trs");
-  pos = (*it).second.find_last_of(".");
-  (*it).second.insert(pos, tmp.str());
-
+  if (sim.param().write.position) {
+    it = args.lower_bound("trc");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  if (sim.param().write.energy) {
+    it = args.lower_bound("tre");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  if (sim.param().write.free_energy) {
+    it = args.lower_bound("trg");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  if (sim.param().write.velocity) {
+    it = args.lower_bound("trv");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  if (sim.param().polarise.write || sim.param().jvalue.write || sim.param().xrayrest.write
+          || sim.param().distanceres.write || sim.param().localelev.write
+          || sim.param().electric.dip_write || sim.param().electric.cur_write
+          || sim.param().addecouple.write || sim.param().nemd.write
+          || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals) {
+    it = args.lower_bound("trs");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  if (sim.param().write.force) {
+    it = args.lower_bound("trf");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  if (sim.param().write.block_average && sim.param().write.energy) {
+    it = args.lower_bound("bae");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  if (sim.param().write.block_average && sim.param().write.free_energy) {
+    it = args.lower_bound("bag");
+    pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+  }
+  
   it = args.lower_bound("trf");
   pos = (*it).second.find_last_of(".");
   (*it).second.insert(pos, tmp.str());
@@ -379,10 +405,12 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
   bool sameLambda = (l == sim.param().replica.lambda[partner / sim.param().replica.num_T]);
   const double b1 = 1.0 / (math::k_Boltzmann * T);
   const double b2 = 1.0 / (math::k_Boltzmann * sim.param().replica.temperature[partner % sim.param().replica.num_T]);
-
+  double V1 = math::volume(conf.current().box, conf.boundary_type);
+  double V2 = V1;
+  
   if (sameLambda) {
     // use simple formula
-    const double ePartner = calculate_energy(partner);
+    const double ePartner = calculate_energy(partner, V2);
     delta = (b1 - b2)*(ePartner - epot); //*  (E21 - E11=
   } else {
     // 2D formula
@@ -400,15 +428,64 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
     const double E12 = energies[1];
 
     const double E11 = epot;
-    const double E21 = calculate_energy(partner);
+    const double E21 = calculate_energy(partner, V2);
     delta = b1 * (E22 - E11) - b2 * (E21 - E12);
-
+  }
+  
+  // NPT? add PV term
+  if (sim.param().pcouple.scale != math::pcouple_off) {
+    // isotropic!
+    double pressure = (sim.param().pcouple.pres0(0,0)
+              + sim.param().pcouple.pres0(1,1)
+              + sim.param().pcouple.pres0(2,2)) / 3.0;
+    delta += pressure * (b1 - b2) * (V2 - V1);
   }
 
   if (delta < 0.0)
     return 1.0;
   else
     return exp(-delta);
+}
+
+double util::replica::calculate_energy(const int partner, double & volume) {
+  change_lambda(partner);
+
+  double energy = 0.0;
+
+  algorithm::Algorithm * ff = md.algorithm("Forcefield");
+
+  if (ff->apply(topo, conf, sim)) {
+    print_info("Error in energy calculation!");
+ #ifdef XXMPI
+    MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+#endif
+    return 1;
+  }
+
+  conf.current().energies.calculate_totals();
+  volume = math::volume(conf.current().box, conf.boundary_type);
+  switch (sim.param().xrayrest.replica_exchange_parameters.energy_switcher) {
+    case simulation::energy_tot:
+      energy = conf.current().energies.potential_total + conf.current().energies.special_total;
+      break;
+
+    case simulation::energy_phys:
+      energy = conf.current().energies.potential_total;
+      break;
+    case simulation::energy_special:
+      energy = conf.current().energies.special_total;
+      break;
+    default:
+      std::cerr << "Something is wrong in energy calculation" << std::endl;
+      print_info("Error in energy calculation!");
+#ifdef XXMPI
+      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+#endif
+      return 1;
+  }
+
+  set_lambda();
+  return energy;
 }
 
 double util::replica::calculate_energy(const int partner) {

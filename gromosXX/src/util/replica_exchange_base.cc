@@ -30,6 +30,7 @@
 
 #include <io/configuration/out_configuration.h>
 #include <math/random.h>
+#include <math/volume.h>
 #include <string>
 
 #ifdef XXMPI
@@ -157,6 +158,19 @@ double util::replica_exchange_base::calc_probability(replica * rep1, replica * r
     const double E11 = rep1->epot;
     const double E21 = rep1->calculate_energy(rep2->ID);
     delta = b1 * (E22 - E11) - b2 * (E21 - E12);
+  }
+  
+  // NPT? add PV term
+  if (rep1->sim.param().pcouple.scale != math::pcouple_off) {
+    // isotropic! p0 is the same for rep1 and rep2
+    double pressure = (rep1->sim.param().pcouple.pres0(0,0)
+              + rep1->sim.param().pcouple.pres0(1,1)
+              + rep1->sim.param().pcouple.pres0(2,2)) / 3.0;
+    // get the volume
+    double V1 = math::volume(rep1->conf.current().box, rep1->conf.boundary_type);
+    double V2 = math::volume(rep2->conf.current().box, rep2->conf.boundary_type);
+    // add the PV term to delta
+    delta += pressure * (b1 - b2) * (V2 - V1);
   }
 
   if (delta < 0.0)
