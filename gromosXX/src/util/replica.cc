@@ -131,10 +131,6 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  
-  it = args.lower_bound("trf");
-  pos = (*it).second.find_last_of(".");
-  (*it).second.insert(pos, tmp.str());
 
   traj->init(args, sim.param());
   std::stringstream trajtitle;
@@ -677,8 +673,8 @@ void util::replica::print_info(std::string bla) const {
           << std::setw(13) << "li"
           << std::setw(13) << "Ti"
           << std::setw(14) << "Epoti"
-          << std::setw(13) << "Tj"
           << std::setw(13) << "lj"
+          << std::setw(13) << "Tj"
           << std::setw(14) << "Epotj"
           << std::setw(13) << "p"
           << std::setw(4) << "s"
@@ -692,8 +688,8 @@ void util::replica::print_info(std::string bla) const {
           << std::setw(13) << T
           << " "
           << std::setw(18) << epot
-          << std::setw(13) << T
           << std::setw(13) << l
+          << std::setw(13) << T
           << " "
           << std::setw(18) << epot
           << std::setw(13) << probability
