@@ -33,22 +33,19 @@ namespace interaction
     /**
      * calculate the force and energy of an atom pair.
      */
-    void eds_lj_crf_interaction(const double dist2, const double dist2i, 
-                                const double dist6i, const double disti,
+    void eds_lj_crf_interaction(const double dist2, const double dist6, 
 			        const double &c6, const double &c12,
 			        const double &q,
+                                double const alpha_lj,
+			        double const alpha_crf,
 			        double & force, double & e_nb);
 
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
-    void eds_rf_interaction(math::Vec const &r, double q,
+    void eds_rf_interaction(math::Vec const &r, double q, double const alpha_crf,
 			    math::Vec & force, double & e_rf);
-    
-    /**
-     * a constant.
-     */
-    double crf_2cut3i()const;
+   
 
   protected:
     /**
@@ -56,25 +53,13 @@ namespace interaction
      * reaction field constant.
      */
     double m_crf;
- 
-   /**
-     * Force:
-     * inverse reaction field cutoff to the power of 3.
-     */
-    double m_cut3i;
-     
-    /**
-     * Force:
-     * coulomb reaction field constant divided
-     * by the reaction field cutoff to the power of 3.
-     */
-    double m_crf_cut3i;
     
     /**
-     * Energy:
-     * reaction field constant / twice reaction field cutoff ^ 3
+     * Force:
+     * reaction field cutoff.
      */
-    double m_crf_2cut3i;
+    double m_rrf;
+ 
     
     /**
      * Energy:

@@ -1092,7 +1092,7 @@ void io::In_Parameter::read_PERTURBATION(simulation::Parameter &param,
             "In_Parameter", io::message::error);
   }
 
-  if (param.perturbation.soft_vdw < 0.0) {
+  if (param.perturbation.soft_crf < 0.0) {
     io::messages.add("PERTURBATION block: ALPHC must be >= 0.",
             "In_Parameter", io::message::error);
   }
@@ -3808,6 +3808,8 @@ EDS
 # EDS        0,1  
 #              0: no enveloping distribution sampling (EDS) [default]
 #              1: enveloping distribution sampling
+# ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter
+#  ALPHC: >= 0.0 Coulomb-RF soft-core parameter
 # FORM       1-3
 #              1: Single s Hamiltonian
 #              2: Hamiltonian with NUMSTATES*(NUMSTATES-1)/2 (pairwise) s parameters
@@ -3820,7 +3822,10 @@ EDS
 # EIR           : energy offsets for states
 #
 # EDS          
-  1    
+  1
+# SOFT CORE
+# ALPHLJ  ALPHC
+  0.5     0.5
 # FUNCTIONAL FORM
   3
 # NUMSTATES
@@ -3833,6 +3838,9 @@ END
 # example for FORM = 3
 EDS
   1    
+# SOFT CORE
+# ALPHLJ  ALPHC
+  0.5     0.5
 # FUNCTIONAL FORM
   3
 # NUMSTATES
@@ -3852,6 +3860,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
   std::vector<std::string> buffer;
   std::string s;
   int form;
+  double soft_lj, soft_crf;
 
   buffer = m_block["EDS"];
 
@@ -3862,8 +3871,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
     int eds;
-    _lineStream >> eds >> form >> param.eds.numstates;
-    //std::cerr << "eds = " <<  eds << ", form = " << form << ", numstates=" << param.eds.numstates;
+    _lineStream >> eds >> soft_lj >> soft_crf >> form >> param.eds.numstates;
     if (_lineStream.fail()) {
       io::messages.add("bad line in EDS block",
               "In_Parameter", io::message::error);
@@ -3884,9 +3892,20 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
                 "or 1 (EDS)", "In_Parameter", io::message::error);
     }
     if (param.eds.eds) {
+      if (param.eds.soft_vdw < 0.0) {
+        io::messages.add("EDS block: ALPHLJ must be >= 0.",
+                "In_Parameter", io::message::error);
+      }
+
+      if (param.eds.soft_crf < 0.0) {
+        io::messages.add("EDS block: ALPHC must be >= 0.",
+                "In_Parameter", io::message::error);
+      }
+      param.eds.soft_vdw = soft_lj;
+      param.eds.soft_crf = soft_crf;
+      
       switch (form) {
-        case 1:
-        {
+        case 1: {
           param.eds.form = simulation::single_s;
           // read in 1 s value
           param.eds.s.resize(1, 1.0);
@@ -3898,8 +3917,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
           }
           break;
         }
-        case 2:
-        {
+        case 2: {
           param.eds.form = simulation::multi_s;
           const unsigned int n = param.eds.numstates;
           param.eds.s.resize((n * (n - 1)) / 2, 1.0);
@@ -3912,8 +3930,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
           }
           break;
         }
-        case 3:
-        {
+        case 3: {
           param.eds.form = simulation::pair_s;
           const unsigned int n = param.eds.numstates;
           param.eds.s.resize(n - 1, 1.0);
@@ -3938,6 +3955,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
                 "In_Parameter", io::message::error);
         return;
       }
+   
       param.eds.eir.resize(param.eds.numstates, 0.0);
       for (unsigned int i = 0; i < param.eds.numstates; i++) {
         _lineStream >> param.eds.eir[i];

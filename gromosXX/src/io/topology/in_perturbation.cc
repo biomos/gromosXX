@@ -1175,20 +1175,27 @@ io::In_Perturbation::read(topology::Topology &topo,
           os << std::setw(14) << identifier[i];
         }
         os << "\n";
-        os << "\t" << std::setw(5) << "seq";
-        for (unsigned int i = 0; i < numstates; i++) {
-          os << std::setw(5) << "iac[" << std::setw(2) << i + 1 << "]";
-          os << std::setw(3) << "q[" << std::setw(2) << i + 1 << "]";
-        }
-        os << "\n";
       }
       int seq;
       std::string name;
       std::vector<unsigned int> m_iac(numstates);
       std::vector<double> m_charge(numstates);
+      double lj_soft = 0.0, crf_soft = 0.0;
       
       // prepare arrays
       topo.is_eds_perturbed().resize(topo.num_solute_atoms(), false);
+      
+      if (!quiet) {
+        os << "\t"
+                << std::setw(5) << "seq";
+        for (unsigned int i = 0; i < numstates; i++) {
+          os << std::setw(8) << "IAC(" << i << ")"
+                  << std::setw(10) << "charge(" << i << ")";
+        }
+        os << std::setw(10) << "LJ(soft)"
+                << std::setw(10) << "CRF(soft)"
+                << "\n";
+      }
 
       for (n = 0; it != buffer.end() - 1; ++it, ++n) {
         DEBUG(10, "\treading a line: " << n);
@@ -1201,12 +1208,17 @@ io::In_Perturbation::read(topology::Topology &topo,
           _lineStream >> m_iac[i] >> m_charge[i];
           DEBUG(12,"\t iac = " << m_iac[i] << ", charge = " << m_charge[i]);
         }
+        _lineStream >> lj_soft >> crf_soft;
         
         if (_lineStream.fail()) {
           io::messages.add("Bad line in MPERTATOM block.",
                   "In_Perturbation", io::message::error);
           return;
         }
+        
+        // weight by input
+        lj_soft *= param.eds.soft_vdw;
+        crf_soft *= param.eds.soft_crf;
 
         --seq;
         for (unsigned int i = 0; i < numstates; i++) {
@@ -1223,9 +1235,21 @@ io::In_Perturbation::read(topology::Topology &topo,
                   "In_Perturbation", io::message::error);
           return;
         }
-        
+
+        if (!quiet) {
+          os << "\t"
+                  << std::setw(5) << seq + 1;
+          for (unsigned int i = 0; i < numstates; i++) {
+            os << std::setw(8) << m_iac[i] + 1
+                    << std::setw(10) << m_charge[i];
+          }
+          os << std::setw(10) << lj_soft
+                  << std::setw(10) << crf_soft
+                  << "\n";
+        }
+
         // create an eds perturbed atom
-        topology::EDS_Perturbed_Atom atom(seq,m_iac,m_charge);
+        topology::EDS_Perturbed_Atom atom(seq, m_iac, m_charge, lj_soft, crf_soft);
         DEBUG(10, "\tcreated an atom");
               
         
@@ -1260,15 +1284,6 @@ io::In_Perturbation::read(topology::Topology &topo,
           }
         }
         DEBUG(10, "\tadapted 1,4 interactions");
-        if (!quiet) {
-          os << "\t" << std::setw(5) << seq + 1;
-                 
-          for (unsigned int i = 0; i < numstates; i++) {
-            os << std::setw(8) << m_iac.at(i)+1;
-            os << std::setw(6) << m_charge.at(i);
-          }
-          os << "\n";
-        }
         
         topo.eds_perturbed_solute().atoms()[seq] = atom;
         assert(seq < int(topo.is_eds_perturbed().size()));
