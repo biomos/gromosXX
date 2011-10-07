@@ -48,6 +48,7 @@ void util::replica_exchange_slave::send_to_master() const {
     util::repInfo info;
     info.run = (*it)->run;
     info.epot = (*it)->epot;
+    info.epot_partner = (*it)->epot_partner;
     info.partner = (*it)->partner;
     info.probability = (*it)->probability;
     info.switched = int((*it)->switched);

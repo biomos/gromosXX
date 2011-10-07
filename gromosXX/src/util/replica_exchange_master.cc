@@ -118,6 +118,7 @@ void util::replica_exchange_master::receive_from_all_slaves() {
       MPI_Recv(&info, 1, MPI_REPINFO, rank, REPINFO, MPI_COMM_WORLD, &status);
       replicaData[rep].run = info.run;
       replicaData[rep].epot = info.epot;
+      replicaData[rep].epot_partner = info.epot_partner;
       replicaData[rep].probability = info.probability;
       replicaData[rep].switched = info.switched;
       replicaData[rep].partner = info.partner;
@@ -130,6 +131,7 @@ void util::replica_exchange_master::receive_from_all_slaves() {
     replicaData[ID].run = (*it)->run;
     replicaData[ID].partner = (*it)->partner;
     replicaData[ID].epot = (*it)->epot;
+    replicaData[ID].epot_partner = (*it)->epot_partner;
     replicaData[ID].probability = (*it)->probability;
     replicaData[ID].switched = (*it)->switched;
   }
@@ -153,7 +155,7 @@ void util::replica_exchange_master::write() {
             << std::setw(13) << replicaData[replicaData[r].partner].l
             << std::setw(13) << replicaData[replicaData[r].partner].T
             << " "
-            << std::setw(18) << replicaData[replicaData[r].partner].epot
+            << std::setw(18) << replicaData[r].epot_partner
             << std::setw(13) << replicaData[r].probability
             << std::setw(4) << replicaData[r].switched
             << std::endl;

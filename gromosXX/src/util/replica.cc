@@ -262,6 +262,8 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
       if(!sameLambda){
         // E21: Energy with configuration 2 and lambda 1(of partner)
         const double E21 = calculate_energy(partner);
+        // this we can store as the partner energy of the current replica
+        epot_partner = E21;
         // E22: Energy with configuration 2 and lambda 2(own one)
         const double E22 = epot;
         // send E21 and E22
@@ -425,7 +427,16 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
 
     const double E11 = epot;
     const double E21 = calculate_energy(partner, V2);
-    delta = b1 * (E22 - E11) - b2 * (E21 - E12);
+    // store this as the partner energy 
+    epot_partner = E21;
+
+    // Chris: I think this is wrong
+    // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
+    std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
+    std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
+    std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
+
+    delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }
   
   // NPT? add PV term
@@ -526,6 +537,18 @@ double util::replica::calculate_energy(const int partner) {
 
 double util::replica::calculate_energy() {
   double energy = 0.0;
+  //chris: you do need to re-evaluate the energy, otherwise you get the energy of before the previous step
+  algorithm::Algorithm * ff = md.algorithm("Forcefield");
+
+  if (ff->apply(topo, conf, sim)) {
+    print_info("Error in energy calculation!");
+ #ifdef XXMPI
+    MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+#endif
+    return 1;
+  }
+
+
   conf.current().energies.calculate_totals();
   switch (sim.param().xrayrest.replica_exchange_parameters.energy_switcher) {
     case simulation::energy_tot:

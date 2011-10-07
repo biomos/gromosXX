@@ -157,7 +157,13 @@ double util::replica_exchange_base::calc_probability(replica * rep1, replica * r
 
     const double E11 = rep1->epot;
     const double E21 = rep1->calculate_energy(rep2->ID);
-    delta = b1 * (E22 - E11) - b2 * (E21 - E12);
+    // Chris: I think this was wrong
+    // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
+    std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
+    std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
+    std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
+
+    delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }
   
   // NPT? add PV term

@@ -22,6 +22,7 @@ namespace util
         unsigned int        run;
         unsigned int         partner;
         double     epot;
+        double     epot_partner;
         double     probability;
     };
 }
