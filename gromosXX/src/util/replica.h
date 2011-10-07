@@ -192,6 +192,10 @@ namespace util {
      */
     double epot;
     /**
+     * potential energy of the partner Hamiltonian (for bookkeeping)
+     */
+    double epot_partner;
+    /**
      * ID of partner
      */
     unsigned int partner;

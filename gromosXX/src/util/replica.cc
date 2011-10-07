@@ -714,7 +714,7 @@ void util::replica::print_info(std::string bla) const {
           << std::setw(13) << l
           << std::setw(13) << T
           << " "
-          << std::setw(18) << epot
+          << std::setw(18) << epot_partner
           << std::setw(13) << probability
           << std::setw(4) << switched
           << std::endl;

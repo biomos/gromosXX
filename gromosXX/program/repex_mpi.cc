@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
   MPI_Type_commit(&MPI_VARRAY);
 
   // defining struct with non static replica information
-  int blocklen[] = {3, 2};
+  int blocklen[] = {3, 3};
   MPI_Datatype typ[] = {MPI_INT, MPI_DOUBLE};
   MPI_Aint intext;
   MPI_Type_extent(MPI_INT, &intext);

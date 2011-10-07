@@ -47,6 +47,7 @@ namespace util {
     int run;
     int partner;
     double epot;
+    double epot_partner;
     double probability;
   };
 }
