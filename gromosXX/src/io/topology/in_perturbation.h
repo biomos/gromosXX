@@ -190,17 +190,19 @@ MPERTATOM
 # ATNAME: atom name
 # IAC[i]: integer atom code in state i
 # CG[i]:  charge in state i
-# JLA  ATNAME   IAC[1] CG[1]   IAC[2] CG[2]
+# ALJ: soft core van der Waals parameter
+# ACRF: soft core electrostatic parameter
+# JLA  ATNAME   IAC[1] CG[1]   IAC[2] CG[2]    ALJ   ACRF
 # name to identify perturbation
                 stateA         stateB
 # first water
-  1    OW       4     -0.82    19     0
-  2    HW1      18     0.41    19     0
-  3    HW2      18     0.41    19     0
+  1    OW       4     -0.82    19     0         1.0   1.0
+  2    HW1      18     0.41    19     0         1.0   1.0
+  3    HW2      18     0.41    19     0         1.0   1.0
 # second water
-  4    OW       19     0       4     -0.82
-  5    HW1      19     0       18     0.41
-  6    HW2      19     0       18     0.41
+  4    OW       19     0       4     -0.82      1.0   1.0
+  5    HW1      19     0       18     0.41      1.0   1.0
+  6    HW2      19     0       18     0.41      1.0   1.0
 END
 @endverbatim
  */
