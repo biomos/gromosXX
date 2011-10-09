@@ -408,8 +408,9 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
   
   if (sameLambda) {
     // use simple formula
-    const double ePartner = calculate_energy(partner, V2);
-    delta = (b1 - b2)*(ePartner - epot); //*  (E21 - E11=
+    epot_partner = calculate_energy(partner, V2);
+    
+    delta = (b1 - b2)*(epot_partner - epot); //*  (E21 - E11=
   } else {
     // 2D formula
     /*
