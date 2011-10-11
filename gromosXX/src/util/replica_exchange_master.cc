@@ -154,9 +154,16 @@ void util::replica_exchange_master::write() {
             << std::setw(18) << replicaData[r].epot
             << std::setw(13) << replicaData[replicaData[r].partner].l
             << std::setw(13) << replicaData[replicaData[r].partner].T
-            << " "
-            << std::setw(18) << replicaData[r].epot_partner
-            << std::setw(13) << replicaData[r].probability
+            << " ";
+    // the following is a little bit clumsy. Because for temperature REMD, we did not have to recalculate
+    // any energies using different potentials, we could not properly store the epot_partner value (only
+    // for the first of the switching pair. Therefor we just print the epot of the partner (which is exactly
+    // what epot_partner would have been if we had taken the effort to send it back to the partner.
+    if(replicaData[r].l == replicaData[replicaData[r].partner].l)
+	repOut << std::setw(18) << replicaData[replicaData[r].partner].epot;
+    else
+        repOut << std::setw(18) << replicaData[r].epot_partner;
+    repOut  << std::setw(13) << replicaData[r].probability
             << std::setw(4) << replicaData[r].switched
             << std::endl;
   }

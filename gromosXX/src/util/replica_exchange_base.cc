@@ -143,8 +143,9 @@ double util::replica_exchange_base::calc_probability(replica * rep1, replica * r
 
   if (sameLambda) {
     // use simple formula
-    const double ePartner = rep1->calculate_energy(rep2->ID);
-    delta = (b1 - b2)*(ePartner - rep1->epot); //*  (E21 - E11=
+    rep1->epot_partner = rep2->epot;
+    rep2->epot_partner = rep1->epot;
+    delta = (b1 - b2)*(rep2->epot - rep1->epot); //*  (E21 - E11=
   } else {
     // 2D formula
     /*
@@ -159,9 +160,9 @@ double util::replica_exchange_base::calc_probability(replica * rep1, replica * r
     const double E21 = rep1->calculate_energy(rep2->ID);
     // Chris: I think this was wrong
     // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
-    std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
-    std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
-    std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
+    //std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
+    //std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
+    //std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
 
     delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }

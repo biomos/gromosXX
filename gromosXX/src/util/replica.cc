@@ -272,7 +272,12 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
 #ifdef XXMPI
         MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD);
 #endif
-      }
+      } else {
+        double energies[2] = {epot, 0.0};
+#ifdef XXMPI
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD);
+#endif
+     }
 #ifdef XXMPI
       MPI_Status status;
 #endif
@@ -408,7 +413,14 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
   
   if (sameLambda) {
     // use simple formula
-    epot_partner = calculate_energy(partner, V2);
+    // get energy from the other partner
+    double energies[2] = {0.0, 0.0};
+#ifdef XXMPI
+    MPI_Status status;
+    MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD, &status);
+#endif
+
+    epot_partner = energies[0];
     
     delta = (b1 - b2)*(epot_partner - epot); //*  (E21 - E11=
   } else {
@@ -433,9 +445,9 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
 
     // Chris: I think this is wrong
     // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
-    std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
-    std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
-    std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
+    //std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
+    //std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
+    //std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
 
     delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }
