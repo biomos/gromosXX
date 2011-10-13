@@ -272,12 +272,19 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
 #ifdef XXMPI
         MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD);
 #endif
-      } else {
+      } else { // sameLambda
         double energies[2] = {epot, 0.0};
 #ifdef XXMPI
         MPI_Send(&energies[0],2,MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD);
 #endif
      }
+      if (sim.param().pcouple.scale != math::pcouple_off) {
+        math::Box box_replica = conf.current().box;
+#ifdef XXMPI
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerRank, BOX, MPI_COMM_WORLD);
+#endif
+      }
+      
 #ifdef XXMPI
       MPI_Status status;
 #endif
@@ -408,8 +415,6 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
   bool sameLambda = (l == sim.param().replica.lambda[partner / sim.param().replica.num_T]);
   const double b1 = 1.0 / (math::k_Boltzmann * T);
   const double b2 = 1.0 / (math::k_Boltzmann * sim.param().replica.temperature[partner % sim.param().replica.num_T]);
-  double V1 = math::volume(conf.current().box, conf.boundary_type);
-  double V2 = V1;
   
   if (sameLambda) {
     // use simple formula
@@ -439,7 +444,8 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
     const double E12 = energies[1];
 
     const double E11 = epot;
-    const double E21 = calculate_energy(partner, V2);
+    const double E21 = calculate_energy(partner);
+    
     // store this as the partner energy 
     epot_partner = E21;
 
@@ -454,6 +460,15 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
   
   // NPT? add PV term
   if (sim.param().pcouple.scale != math::pcouple_off) {
+    math::Box box_partner = conf.current().box;
+#ifdef XXMPI
+    MPI_Status status;
+    MPI_Recv(&box_partner(0)[0], 1, MPI_BOX, partnerRank, BOX, MPI_COMM_WORLD, &status);
+#endif
+    double V1 = math::volume(conf.current().box, conf.boundary_type);
+    double V2 = math::volume(box_partner, conf.boundary_type);
+    //std::cerr << "volumes: " << V1 << " " << V2 << std::endl;
+    
     // isotropic!
     double pressure = (sim.param().pcouple.pres0(0,0)
               + sim.param().pcouple.pres0(1,1)
@@ -465,47 +480,6 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
     return 1.0;
   else
     return exp(-delta);
-}
-
-double util::replica::calculate_energy(const int partner, double & volume) {
-  change_lambda(partner);
-
-  double energy = 0.0;
-
-  algorithm::Algorithm * ff = md.algorithm("Forcefield");
-
-  if (ff->apply(topo, conf, sim)) {
-    print_info("Error in energy calculation!");
- #ifdef XXMPI
-    MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-#endif
-    return 1;
-  }
-
-  conf.current().energies.calculate_totals();
-  volume = math::volume(conf.current().box, conf.boundary_type);
-  switch (sim.param().xrayrest.replica_exchange_parameters.energy_switcher) {
-    case simulation::energy_tot:
-      energy = conf.current().energies.potential_total + conf.current().energies.special_total;
-      break;
-
-    case simulation::energy_phys:
-      energy = conf.current().energies.potential_total;
-      break;
-    case simulation::energy_special:
-      energy = conf.current().energies.special_total;
-      break;
-    default:
-      std::cerr << "Something is wrong in energy calculation" << std::endl;
-      print_info("Error in energy calculation!");
-#ifdef XXMPI
-      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-#endif
-      return 1;
-  }
-
-  set_lambda();
-  return energy;
 }
 
 double util::replica::calculate_energy(const int partner) {

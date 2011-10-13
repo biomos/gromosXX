@@ -73,12 +73,6 @@ namespace util {
     /**
      * calculates potential energy of current configuration with lambda(Hamiltonian) of partner
      * @param partner ID of partner
-     * @return potential energy and volume of configuration with lambda(Hamiltonian) of partner
-     */
-    double calculate_energy(const int partner, double & volume);
-    /**
-     * calculates potential energy of current configuration with lambda(Hamiltonian) of partner
-     * @param partner ID of partner
      * @return potential energy of configuration with lambda(Hamiltonian) of partner
      */
     double calculate_energy(const int partner);
