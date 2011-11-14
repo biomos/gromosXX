@@ -166,7 +166,7 @@ namespace configuration{
       unsigned int rank = omp_get_thread_num();
       return m_x * (rank+1) / size;
 #else
-      return 0;
+      return m_x;
 #endif
     }
     /**
