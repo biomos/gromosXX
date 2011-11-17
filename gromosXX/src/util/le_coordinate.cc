@@ -139,3 +139,80 @@ str() const {
   return os.str();
 }
 
+//-------------------------------------
+// LE_Distance_coordinate
+//-------------------------------------
+
+util::LE_Coordinate * util::LE_Distance_Coordinate::
+clone() const {
+  return new LE_Distance_Coordinate(umbrella_id(), i,j);
+}
+
+void util::LE_Distance_Coordinate::
+calculate(configuration::Configuration & conf) {
+  SPLIT_BOUNDARY(_calculate, conf);
+}
+
+template<math::boundary_enum B>
+void util::LE_Distance_Coordinate::
+_calculate(configuration::Configuration & conf) {
+  // create the periodicity
+  // this is maybe slow but may be improved later if required
+  math::Periodicity<B> periodicity(conf.current().box);
+
+  // save the configuration pointer
+  m_conf = &conf;
+  // calculate the distance and it's derivative by the coordinates
+  math::VArray & pos = conf.current().pos;
+  math::Vec rij;
+
+  periodicity.nearest_image(pos(i), pos(j), rij);
+
+  // get the value
+  dist = abs(rij);
+//  dist = rij.abs();
+
+
+  // save the derivates
+  fi = math::Vec(1.0);
+  fj = math::Vec(-1.0);
+}
+
+double util::LE_Distance_Coordinate::
+get_value(double grid_min, double grid_max) const {
+  double d = dist;
+  DEBUG(10, "distance: " << dist << " grid: " << grid_min << "-" << grid_max);
+  // map it on the grid
+  // while (angle < grid_min) angle += 2.0 * math::Pi;
+  // while (angle >= grid_max) angle -= 2.0 * math::Pi;
+  // what to do for a distance that is beyond the grid?
+  return d;
+}
+
+double util::LE_Distance_Coordinate::
+get_deviation(const double & grid_value) const {
+  double diff = dist - grid_value;
+  // map it on the grid
+  // check if it is outside the grid??
+  return diff;
+}
+
+void util::LE_Distance_Coordinate::
+apply(double deriv) {
+  // just multiply the derivative with the negative derivative of the
+  // distance by the atom positions to get the force.
+  const math::Vec & force_i = deriv * fi;
+  DEBUG(10, "force(" << i+1 << "): " << math::v2s(force_i));
+  m_conf->current().force(i) += force_i;
+  const math::Vec & force_j = deriv * fj;
+  DEBUG(10, "force(" << j+1 << "): " << math::v2s(force_j));
+  m_conf->current().force(j) += force_j;
+}
+
+std::string util::LE_Distance_Coordinate::
+str() const {
+  std::ostringstream os;
+  os << "LE Distance (" << i+1 << "-" << j+1 << ")";
+  return os.str();
+}
+
