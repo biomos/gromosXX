@@ -1,21 +1,21 @@
 Installation Instructions
 *************************
 
-GromosXX installation instructions
+md++ installation instructions
 ==================================================
 
 to install the source tarball
 --------------------------------------------------
 
-1. tar zxvf gromosXX-x.y.z.tar.gz
-2. cd gromosXX-x.y.z
+1. tar zxvf md++-x.y.z.tar.gz
+2. cd md++-x.y.z
 3. mkdir ARCHITECTURE
 4. cd ARCHITECTURE
 5. ../configure
 6. make
 7. make install
 
-(this will install GromosXX in ARCHITECTURE/bin ARCHITECTURE/lib OBJ/include.
+(this will install md++ in ARCHITECTURE/bin ARCHITECTURE/lib OBJ/include.
 you can change this by specifying the --prefix=PATH option to
 configure.)
 If you follow this setup, you can compile the same source tree on different
@@ -73,7 +73,7 @@ directory.
 ~/tmp> tar xfz fftw-3.3alpha1.tar.gz
 
 Then just run the path script available in the contrib directory.
-~/tmp> perl /path/to/gromosXX/contrib/patch-fftw.pl
+~/tmp> perl /path/to/md++/contrib/patch-fftw.pl
 
 optimization flags
 --------------------------------------------------
