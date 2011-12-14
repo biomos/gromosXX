@@ -201,6 +201,9 @@ int io::check_parameter(simulation::Simulation & sim)
   add("p3m", "P3M electrostatics", param.nonbonded.method == simulation::el_p3m);
 
   add("leus", "local elevation umbrella sampling", param.localelev.localelev != simulation::localelev_off);
+  // BSLEUS block
+  add("bsleus", "Balls and Sticks local elevation umbrella sampling",
+          param.bsleus.bsleus != simulation::bsleus_off);
   add("xray", "X-ray restraints", param.xrayrest.xrayrest != simulation::xrayrest_off);
   
   // force groups
@@ -3162,6 +3165,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("leus", "ewald");
   fc.unlock("leus", "p3m");
 
+
   fc.unlock("xray", "solute");
   fc.unlock("xray", "solvent");
   fc.unlock("xray", "solvent_only");
@@ -3635,10 +3639,94 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("force_groups", "mult_energy_groups");
   fc.unlock("force_groups", "leus");
   fc.unlock("force_groups", "xray");
+
+  fc.unlock("bsleus", "solute");
+  fc.unlock("bsleus", "solvent");
+  fc.unlock("bsleus", "solvent_only");
+  fc.unlock("bsleus", "steepest_descent");
+  fc.unlock("bsleus", "solute_constraint_off");
+  fc.unlock("bsleus", "solute_shake");
+  fc.unlock("bsleus", "solute_lincs");
+  fc.unlock("bsleus", "solute_flexshake");
+  fc.unlock("bsleus", "solvent_constraint_off");
+  fc.unlock("bsleus", "solvent_shake");
+  fc.unlock("bsleus", "solvent_lincs");
+  fc.unlock("bsleus", "solvent_settle");
+  fc.unlock("bsleus", "pressure_calculation");
+  fc.unlock("bsleus", "pressure_scale_berendsen");
+  fc.unlock("bsleus", "virial_off");
+  fc.unlock("bsleus", "virial_atomic");
+  fc.unlock("bsleus", "virial_molecular");
+  fc.unlock("bsleus", "vacuum");
+  fc.unlock("bsleus", "pbc_r");
+  fc.unlock("bsleus", "pbc_c");
+  fc.unlock("bsleus", "pbc_t");
+  fc.unlock("bsleus", "perturbation");
+  fc.unlock("bsleus", "perturbation_scaling");
+  fc.unlock("bsleus", "slow_growth");
+  fc.unlock("bsleus", "individual_lambdas");
+  fc.unlock("bsleus", "bond");
+  fc.unlock("bsleus", "angle");
+  fc.unlock("bsleus", "dihedral");
+  fc.unlock("bsleus", "improper");
+  fc.unlock("bsleus", "crf");
+  fc.unlock("bsleus", "lj");
+  fc.unlock("bsleus", "com_removal");
+  fc.unlock("bsleus", "rf_excluded");
+  fc.unlock("bsleus", "pairlist_standard");
+  fc.unlock("bsleus", "pairlist_grid");
+  fc.unlock("bsleus", "pairlist_gridcell");
+  fc.unlock("bsleus", "cutoff_atomic");
+  fc.unlock("bsleus", "cutoff_cg");
+  fc.unlock("bsleus", "cg_martini");
+  fc.unlock("bsleus", "multi_grain");
+  fc.unlock("bsleus", "cg_gromos");
+  fc.unlock("bsleus", "mixed_grain");
+  fc.unlock("bsleus", "temp_berendsen");
+  fc.unlock("bsleus", "temp_nosehoover");
+  fc.unlock("bsleus", "temp_nosehoover_chains");
+  fc.unlock("bsleus", "position_rest");
+  fc.unlock("bsleus", "position_const");
+  fc.unlock("bsleus", "position_const_scaled");
+  fc.unlock("bsleus", "distance_rest");
+  fc.unlock("bsleus", "dihedral_rest");
+  fc.unlock("bsleus", "dihedral_const");
+  fc.unlock("bsleus", "jvalue_rest");
+  fc.unlock("bsleus", "perscale");
+  fc.unlock("bsleus", "rottrans");
+  fc.unlock("bsleus", "innerloop_method_off");
+  fc.unlock("bsleus", "innerloop_method_generic");
+  fc.unlock("bsleus", "innerloop_method_hardcode");
+  fc.unlock("bsleus", "innerloop_method_table");
+  fc.unlock("bsleus", "innerloop_method_cuda");
+  fc.unlock("bsleus", "innerloop_solvent_topology");
+  fc.unlock("bsleus", "innerloop_solvent_spc");
+  fc.unlock("bsleus", "repex_temp");
+  fc.unlock("bsleus", "repex_lambda");
+  fc.unlock("bsleus", "multicell");
+  fc.unlock("bsleus", "analysis");
+  fc.unlock("bsleus", "no_integration");
+  fc.unlock("bsleus", "stochdyn");
+  fc.unlock("bsleus", "multistep");
+  fc.unlock("bsleus", "multistep_boost");
+  fc.unlock("bsleus", "ramd");
+  fc.unlock("bsleus", "polarisation_cos");
+  fc.unlock("bsleus", "polarisation_cos_damped");
+  fc.unlock("bsleus", "sasa");
+  fc.unlock("bsleus", "sasavol");
+  fc.unlock("bsleus", "random_gromos");
+  fc.unlock("bsleus", "random_gsl");
+  fc.unlock("bsleus", "eds");
+  fc.unlock("bsleus", "parallel_mpi");
+  fc.unlock("bsleus", "parallel_omp");
+  fc.unlock("bsleus", "mult_energy_groups");
+  fc.unlock("bsleus", "ewald");
+  fc.unlock("bsleus", "p3m");
+  fc.unlock("bsleus", "xray");
+  fc.unlock("bsleus", "force_groups");
   
   if (fc.check()) 
     return 0;
   
   return -1;
 }
-

@@ -24,6 +24,7 @@
 #include <util/debug.h>
 #include <limits>
 #include <util/umbrella_weight.h>
+#include <util/bs_potentials.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -65,6 +66,7 @@ m_every_xray(0),
 m_every_disres(0),
 m_every_dat(0),
 m_every_leus(0),
+m_every_bsleus(0),
 m_every_dipole(0),
 m_every_current(0),
 m_every_adde(0),
@@ -138,7 +140,7 @@ io::Out_Configuration::~Out_Configuration()
 
   if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres 
           || m_every_dat || m_every_leus || m_every_dipole || m_every_current
-          || m_every_adde || m_every_nemd) { // add others if there are any
+          || m_every_adde || m_every_nemd || m_every_bsleus) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -187,11 +189,11 @@ void io::Out_Configuration::init(io::Argument & args,
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
             param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
-            param.nemd.write, param.orderparamrest.write);
+            param.nemd.write, param.orderparamrest.write, param.bsleus.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
         || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write
         || param.electric.dip_write || param.electric.cur_write || param.addecouple.write
-        || param.nemd.write || param.orderparamrest.write)
+        || param.nemd.write || param.orderparamrest.write || param.bsleus.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -361,6 +363,16 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_umbrellas(conf, m_special_traj);
       m_special_traj.flush();
     }
+    if (m_every_bsleus && ((sim.steps() - 1) % m_every_bsleus) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_bsleus_energies(conf, m_special_traj);
+      _print_bsleus_forces(conf, m_special_traj);
+      _print_bsleus_potentials(conf, m_special_traj);
+      m_special_traj.flush();
+    }
 
     if (m_every_oparam && sim.steps() && (sim.steps() % m_every_oparam) == 0) {
       if (!special_timestep_printed) {
@@ -499,6 +511,21 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().localelev.localelev != simulation::localelev_off) {
       _print_umbrellas(conf, m_final_conf);
     }
+    
+    if (sim.param().bsleus.bsleus != simulation::bsleus_off){
+      _print_bsleus(conf, m_final_conf);
+
+      if (m_every_bsleus && (sim.steps() % m_every_bsleus) == 0) {
+        //if (!special_timestep_printed) {
+          _print_timestep(sim, m_special_traj);
+          //special_timestep_printed = true;
+        //}
+        _print_bsleus_energies(conf, m_special_traj);
+        _print_bsleus_forces(conf, m_special_traj);
+        m_special_traj.flush();
+      }
+    }
+    
 
     if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av ||
         sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted) {
@@ -628,7 +655,8 @@ void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
                      int every_xray, int every_disres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
-                     int every_adde, int every_nemd, int every_oparam) {
+                     int every_adde, int every_nemd, int every_oparam,
+                     int every_bsleus) {
 
   m_special_traj.open(name.c_str());
 
@@ -643,6 +671,7 @@ void io::Out_Configuration
   m_every_adde = every_adde;
   m_every_nemd = every_nemd;
   m_every_oparam = every_oparam;
+  m_every_bsleus = every_bsleus;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
 
@@ -2468,7 +2497,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.symrest_total << "\n" // 32
           << std::setw(18) << e.eds_vr << "\n" // 33
           << std::setw(18) << e.entropy_term << "\n" // 34
-          << std::setw(18) << e.qm_total << "\n"; // 35
+          << std::setw(18) << e.qm_total << "\n" // 35
+          << std::setw(18) << e.bsleus_total << "\n"; // 36
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -2769,6 +2799,112 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
     }
   }
   os << "END\n";
+}
+
+void io::Out_Configuration::_print_bsleus(const configuration::Configuration &conf, 
+                                          std::ostream& os)
+{
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  const util::BS_Umbrella *umb = &conf.special().bs_umbrella;
+  if (umb == 0){
+    io::messages.add("There seems to be no umbrella!", "Out_Configuration",
+            io::message::error);
+  }
+  os << "BSLEUSMEM\n"
+     << "#\n"
+     << "# The current state of the Memory in the BS&LEUS algorithm.\n"
+     << "# NUMSPH:   The Number of Spheres\n"
+     << "# NUMSTK:   The Number of Sticks\n"
+     << "#\n"
+     << "# NUMSPH    NUMSTK\n";
+  int numSpheres, numSticks;
+  umb->getNumPotentials(numSpheres, numSticks);
+  os << std::setw(3) << numSpheres << std::setw(10) << numSticks << "\n";
+  if (numSpheres){
+    os << "#\n"
+       << "# SPHID:    The ID of the Sphere\n"
+       << "# NUMGP:    The number of Grid Points\n"
+       << "# MEM:      The Memory\n"
+       << "#\n"
+       << "# SPHID NUMGP   MEM[1..NUMGP]\n";
+    for (int i = 0; i < numSpheres; i++){
+      std::vector<double> memory;
+      if(!umb->getMemory(i + 1, util::BS_Potential::bs_sphere, memory)){
+        std::ostringstream msg;
+        msg << "Could not find the memory of sphere " << i + 1 << "!\n";
+        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+        return;
+      }
+      int num_gp = memory.size();
+      os << std::setw(3) << (i + 1) << std::setw(6) << num_gp;
+      std::vector<double>::iterator it  = memory.begin(),
+              to = memory.end();
+      for (; it != to; it++){
+        os << " " << *it;
+      }
+      os << "\n";
+    }
+  }
+  if (numSticks){
+    os << "#\n"
+       << "#\n"
+       << "# STKID:    The ID of the Stick\n"
+       << "# NUMGP:    The Number of Grid Points\n"
+       << "# MEM:      The Memory\n"
+       << "#\n"
+       << "# STKID NUMGP   MEM[1..NUMGP]\n";
+
+    for (int i = 0; i < numSticks; i++){
+      std::vector<double> memory;
+      if (!umb->getMemory(i + 1, util::BS_Potential::bs_stick, memory)){
+        std::ostringstream msg;
+        msg << "Could not find the memory of stick " << i + 1 << "!\n";
+        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+        return;
+      }
+      int num_gp = memory.size();
+      os << std::setw(3) << (i + 1) << std::setw(6) << num_gp;
+      std::vector<double>::iterator it  = memory.begin(),
+              to = memory.end();
+      for (; it != to; it++){
+        os << " " << *it;
+      }
+      os << "\n";
+    }
+  }
+  os << "END\n";
+}
+
+void io::Out_Configuration::
+_print_bsleus_energies(const configuration::Configuration &conf, 
+                                          std::ostream& os)
+{
+  os << "BSLEUS_ENERGY\n";
+  os << "\t" << conf.special().bs_umbrella.getTotalPotential() << "\n";
+  os << "END\n";
+}
+
+void io::Out_Configuration::
+_print_bsleus_forces(const configuration::Configuration &conf, std::ostream& os)
+{
+  std::vector<double> force;
+  conf.special().bs_umbrella.getForce(force);
+  os << "BSLEUS_FORCES\n\t";
+  std::vector<double>::iterator it = force.begin(),
+          to = force.end();
+  for (; it != to; it++){
+    os << " " << *it;
+  }
+  os << "\nEND\n"; 
+}
+
+void io::Out_Configuration::
+_print_bsleus_potentials(const configuration::Configuration &conf, std::ostream& os)
+{
+  os << "BSLEUS_POTENTIALS\n" 
+          << conf.special().bs_umbrella.traj_str() 
+          << "END\n";
 }
 
 template<math::boundary_enum b>

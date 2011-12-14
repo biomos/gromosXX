@@ -552,6 +552,21 @@ namespace simulation
      */
     localelev_on = 1
   };
+  
+  /**
+   * @enum bsleus_enum
+   * do B&S-LEUS or not
+   */
+  enum bsleus_enum {
+    /**
+     * Don't use the B&S-LEUS method
+     */
+    bsleus_off = 0,
+    /**
+     * Use B&S-LEUS
+     */
+    bsleus_on = 1
+  };
 
   /**
    * @enum electric_enum
@@ -2675,6 +2690,35 @@ namespace simulation
        */
       std::map<int, bool> umbrellas;
     } localelev;
+    
+    /**
+     * @struct bsleus_struct
+     * Constructor:
+     * Default values:
+     * - bslues: off
+     */
+    struct bsleus_struct {
+      /**
+       * constructor
+       */
+      bsleus_struct() : bsleus(bsleus_off), building(0), write(0) {}
+      /**
+       * Use B&S-LEUS or not
+       */
+      bsleus_enum bsleus;
+      /**
+       * Are we building the potential?
+       */
+      bool building;
+      /**
+       * How the memory is incremented (k_LE)
+       */
+      double forceConstantIncrement;
+      /**
+       * Do we write the bsleus potential?
+       */
+      int write;
+    } bsleus;
 
     /**
      * @struct electric_struct

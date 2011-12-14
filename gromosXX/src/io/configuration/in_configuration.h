@@ -11,6 +11,7 @@
 namespace util
 {
   struct Umbrella;
+  class BS_Umbrella;
 }
 
 namespace io {
@@ -227,7 +228,22 @@ namespace io {
                                   configuration::Configuration &conf,
                                   simulation::Simulation & sim,
                                   std::ostream & os);
+    /**
+     * Read the memory from the configuration file
+     */
+    bool read_bsleus(topology::Topology &topo,
+                                  configuration::Configuration &conf,
+                                  simulation::Simulation & sim,
+                                  std::ostream & os);
 				  
+    /**
+     * Read in the memory function of the umbrellas (BSLEUSMEM block)
+     * @param bs_umbrella
+     * @param buffer
+     * @return wheter successfull or not.
+     */
+    bool _read_bsleus(util::BS_Umbrella &bs_umbrella, 
+                      std::vector<std::string> buffer);
     /**
      * read POSITIONRED block.
      */

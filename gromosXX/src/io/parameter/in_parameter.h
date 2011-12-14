@@ -309,6 +309,10 @@ namespace io {
      */
     void read_LOCALELEV(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
+     * read the BSLEUS block
+     */
+    void read_BSLEUS(simulation::Parameter &param, std::ostream &os = std::cout);
+    /**
      * read ELECTRIC block.
      */
     void read_ELECTRIC(simulation::Parameter &param, std::ostream & os = std::cout);

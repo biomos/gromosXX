@@ -28,6 +28,7 @@
 #include "../io/topology/in_friction.h"
 #include "../io/topology/in_xray.h"
 #include "../io/topology/in_leus.h"
+#include "../io/topology/in_bsleus.h"
 #include "../io/topology/in_qmmm.h"
 #include "../io/topology/in_order.h"
 #include "../io/topology/in_symrest.h"
@@ -292,6 +293,27 @@ int io::read_special(io::Argument const & args,
       } // LUD
     } // if external LUD
   } // LEUS
+  
+  // B&S-LEUS
+  if (sim.param().bsleus.bsleus == simulation::bsleus_on) {
+    io::igzstream bsleus_file;
+    if (args.count("bsleus") != 1) {
+      io::messages.add("BSLEUS: No definition file specified! (use @bsleus)!\n",
+              "read_special", io::message::error);
+    } else {
+      bsleus_file.open(args["bsleus"].c_str());
+      if(!bsleus_file.is_open()){
+        io::messages.add("BSLEUS: Could not open the definition file!\n",
+              "read_special", io::message::error);
+      } else {
+        io::In_BSLEUS in_bsleus(bsleus_file);
+        in_bsleus.read(topo, conf, sim, os);
+        io::messages.add("B&S-LEUS Definitions read from " + args["bsleus"] +
+                  "\n", "read special", io::message::notice);
+      }
+    }
+  }
+
 
   // QMMM
   if (sim.param().qmmm.qmmm != simulation::qmmm_off) {

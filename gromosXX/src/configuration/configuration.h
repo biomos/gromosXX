@@ -13,6 +13,7 @@
 #include "influence_function.h"
 #include "kspace.h"
 #include "../util/umbrella.h"
+#include "../util/bs_umbrella.h"
 
 // Additional Clipper Headers
 #ifdef HAVE_CLIPPER
@@ -205,7 +206,11 @@ namespace configuration {
        */
       std::vector<util::Umbrella> umbrellas;
       //////////////////////////////////////////////////
-
+      /**
+       * The Umbrella for the BS&LEUS algorithm. Contains all the B&S 
+       * potentials.
+       */
+      util::BS_Umbrella bs_umbrella;
       /**
        * @struct flexible_constraint
        * flexible constraint data

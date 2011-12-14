@@ -81,6 +81,7 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/dihedral_restraint_interaction.h\
 	special/perturbed_distance_restraint_interaction.h\
 	special/eds_distance_restraint_interaction.h\
+	special/bs_interaction.h\
 	special/perturbed_dihedral_restraint_interaction.h\
 	special/jvalue_restraint_interaction.h\
 	special/pscale.h\
@@ -157,6 +158,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/dihedral_restraint_interaction.cc\
 	special/perturbed_distance_restraint_interaction.cc\
 	special/eds_distance_restraint_interaction.cc\
+	special/bs_interaction.cc\
 	special/perturbed_dihedral_restraint_interaction.cc\
 	special/jvalue_restraint_interaction.cc\
 	special/pscale.cc\

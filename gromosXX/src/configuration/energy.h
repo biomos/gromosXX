@@ -130,6 +130,10 @@ namespace configuration
      */
     double leus_total;
     /**
+     * total energy of the bsleus interaction
+     */
+    double bsleus_total;
+    /**
      * total energy of the order parameter restraint interaction
      */
     double oparam_total;

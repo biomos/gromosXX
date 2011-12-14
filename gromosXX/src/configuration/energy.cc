@@ -45,6 +45,7 @@ dihrest_total(0.0),
 jvalue_total(0.0),
 xray_total(0.0),
 leus_total(0.0),
+bsleus_total(0.0),
 oparam_total(0.0),
 symrest_total(0.0),
 constraints_total(0.0),
@@ -90,6 +91,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     jvalue_total = 0.0;
     xray_total = 0.0;
     leus_total = 0.0;
+    bsleus_total = 0.0,
     oparam_total = 0.0;
     symrest_total = 0.0;
     constraints_total = 0.0;
@@ -326,6 +328,10 @@ int configuration::Energy::calculate_totals()
     std::cout << "EWARN: local elevation energy = " << leus_total << "\n";
   }
 
+  if (bsleus_total > m_ewarn) {
+    std::cout << "EWARN: B&S-LEUS energy = " << bsleus_total << "\n";
+  }
+
   ls_pair_total = ls_realspace_total + ls_kspace_total + ls_a_term_total;
   //        E(pair) + DeltaG(self) + DeltaG(surf)
   ls_total =ls_pair_total + ls_self_total + ls_surface_total;
@@ -340,8 +346,8 @@ int configuration::Energy::calculate_totals()
   special_total = posrest_total + distanceres_total + dihrest_total
     + constraints_total + jvalue_total + xray_total + external_total 
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total;
-
+    + symrest_total + bsleus_total;
+  
   total = potential_total + kinetic_total + special_total;
 
 /*

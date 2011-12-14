@@ -41,6 +41,7 @@
 #include "../../io/topology/in_topology.h"
 
 #include "create_special.h"
+#include "bs_interaction.h"
 
 int interaction::create_special(interaction::Forcefield & ff,
 				topology::Topology const & topo,
@@ -242,6 +243,15 @@ int interaction::create_special(interaction::Forcefield & ff,
     interaction::Local_Elevation_Interaction *le =
             new interaction::Local_Elevation_Interaction();
     ff.push_back(le);
+  }
+  
+  if (param.bsleus.bsleus != simulation::bsleus_off){
+    if (!quiet) {
+      os << "\tB&S-LEUS\n";
+    }
+    interaction::BS_Interaction *bsleus_ia =
+            new interaction::BS_Interaction();
+    ff.push_back(bsleus_ia);
   }
 
   if (param.electric.electric != simulation::electric_off) {

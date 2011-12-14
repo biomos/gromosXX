@@ -70,6 +70,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_rottrans(topo, conf, sim, os);
   read_position_restraints(topo, conf, sim, os);
   read_leusbias(topo, conf, sim, os);
+  read_bsleus(topo, conf, sim, os);
   read_order_parameter_restraint_averages(topo, conf, sim, os);
   
   // and set the boundary type!
@@ -982,6 +983,30 @@ bool io::In_Configuration::read_leusbias
   return true;
 }
 
+bool io::In_Configuration::read_bsleus(topology::Topology& topo, 
+        configuration::Configuration& conf, 
+        simulation::Simulation& sim, 
+        std::ostream& os)
+{
+  if (sim.param().bsleus.bsleus == simulation::bsleus_off)
+    return true;
+  
+  std::vector<std::string> buffer;
+  buffer = m_block["BSLEUSMEM"];
+  if (!buffer.size()){
+    io::messages.add("No BSLEUSMEM block in configuration file!\n"  
+        "\tWill set memory to zero", "in_configuration", io::message::warning);
+    conf.special().bs_umbrella.setMemoryToZero();
+    return false;
+  }
+  else {
+    block_read.insert("BSLEUSMEM");
+    if (!quiet)
+      os << "\tReading in BSLEUSMEM...\n";
+    bool result = _read_bsleus(conf.special().bs_umbrella, buffer);
+    return result;
+  }
+}
 
 bool io::In_Configuration::read_time
 (
@@ -2315,6 +2340,83 @@ bool io::In_Configuration::_read_leusbias(
     }
   } // for umbrellas
   return true;
+}
+
+bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella, 
+        std::vector<std::string> buffer)
+{
+  DEBUG(8, "read BSLEUSMEM");
+  std::istringstream _lineStream;
+  std::string s;
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
+  
+  int numSpheres, numSticks, num_gp, id;
+  _lineStream >> numSpheres >> numSticks;
+  if (_lineStream.fail()){
+    io::messages.add("BSLEUSMEM block: Could not read the number of Potentials!",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  DEBUG(5, "Reading " << numSpheres << " Spheres and " << numSticks << " Sticks.");
+  int topoSpheres, topoSticks;
+  bs_umbrella.getNumPotentials(topoSpheres, topoSticks);
+  if (numSpheres != topoSpheres){
+    io::messages.add("BSLEUSMEM block: Not the same number of spheres in topology and configuration!",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  if (numSticks != topoSticks){
+    io::messages.add("BSLEUSMEM block: Not the same number of sticks in topology and configuration!",
+            "In_Configuration", io::message::error);
+    return false;
+  }
+  
+  for (int i = 0; i < numSpheres; i++){
+    _lineStream >> id >> num_gp;
+    if (_lineStream.fail()) {
+      std::ostringstream os;
+      os << "BSLEUSMEM block: Could not read memory of sphere " << (i+1);
+      io::messages.add(os.str(), "In_Configuration", io::message::error);
+      return false;
+    }
+    double mem;
+    std::vector<double> memVector;
+    for (int j = 0; j < num_gp; j++){
+      _lineStream >> mem;
+      memVector.push_back(mem);
+    }
+    if (_lineStream.fail()) {
+      std::ostringstream os;
+      os << "BSLEUSMEM block: Could not read memory of sphere " << (i+1);
+      io::messages.add(os.str(), "In_Configuration", io::message::error);
+      return false;
+    }
+    bs_umbrella.setMemory(id, util::BS_Potential::bs_sphere, memVector);
+  }
+  
+  for (int i = 0; i < numSticks; i++){
+    _lineStream >> id >> num_gp;
+    if (_lineStream.fail()) {
+      std::ostringstream os;
+      os << "BSLEUSMEM block: Could not read memory of stick " << (i+1);
+      io::messages.add(os.str(), "In_Configuration", io::message::error);
+      return false;
+    }
+    double mem;
+    std::vector<double> memVector;
+    for (int j = 0; j < num_gp; j++){
+      _lineStream >> mem;
+      memVector.push_back(mem);
+    }
+    if (_lineStream.fail()) {
+      std::ostringstream os;
+      os << "BSLEUSMEM block: Could not read memory of stick " << (i+1);
+      io::messages.add(os.str(), "In_Configuration", io::message::error);
+      return false;
+    }
+    bs_umbrella.setMemory(id, util::BS_Potential::bs_stick, memVector);
+  }
 }
 
 bool io::In_Configuration::_read_nose_hoover_chain_variables(

@@ -113,7 +113,7 @@ namespace io {
             int every_jvalue = 1, int every_xray = 1, int every_disres = 1,
             int every_dat = 1, int every_leus = 1, int every_dipole = 1, 
             int every_current = 1, int every_adde = 1, int every_nemd = 1,
-            int every_oparam = 1);
+            int every_oparam = 1, int every_bsleus = 1);
     /**
      * write an energy trajectory.
      */
@@ -344,6 +344,17 @@ namespace io {
 
     void _print_umbrellas(configuration::Configuration const & conf,
             std::ostream & os);
+    
+    void _print_bsleus(configuration::Configuration const &conf,
+            std::ostream &os);
+    
+    void _print_bsleus_energies(configuration::Configuration const &conf,
+            std::ostream &os);
+    
+    void _print_bsleus_forces(configuration::Configuration const &conf,
+            std::ostream &os);
+    void _print_bsleus_potentials(configuration::Configuration const &conf,
+            std::ostream &os);
 
     template<math::boundary_enum b>
     void _print_dipole(simulation::Simulation const & sim,
@@ -399,6 +410,7 @@ namespace io {
     int m_every_disres;
     int m_every_dat;
     int m_every_leus;
+    int m_every_bsleus;
     int m_every_dipole;
     int m_every_current;
     int m_every_adde;

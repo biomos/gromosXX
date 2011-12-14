@@ -91,6 +91,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_LAMBDAS(param); // needs to be called after FORCE
   read_GROMOS96COMPAT(param);
   read_LOCALELEV(param);
+  read_BSLEUS(param);
   read_ELECTRIC(param);
   read_SASA(param);
   read_ADDECOUPLE(param); // needs to be called after MULTIBATH and FORCE
@@ -4678,6 +4679,83 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
       }
     } // for umbrellas
   } // if block
+}
+/**
+ * @section B&S-LEUS BSLEUS block
+ * @verbatim
+BSLEUS
+#
+# The general settings for the B&S-LEUS algorithm
+# BSLEUS:   Dow we use B&S-LEUS?
+#   0:          Don'use it
+#   1:          Use it
+# BUILD:    Are we building?
+#   0:          Yes
+#   1:          No
+# MEMKLE:   Basis Force constant increment K_LE
+# WRITE:    >= 0 Do we write the energies and forces of the Umbrella?
+#   == 0:          No
+#   > 0:           Every nth step
+# 
+# BSLEUS    BUILD   MEMKLE  WRITE
+  1         1       0.0002  1
+END
+@endverbatim
+ */
+void io::In_Parameter::read_BSLEUS(simulation::Parameter& param, std::ostream& os)
+{
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["BSLEUS"];
+
+  if (buffer.size()) {
+    block_read.insert("BSLEUS");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+    
+    int use_bsleus, build, write;
+    double forceConstIncr;
+    _lineStream >> use_bsleus >> build >> forceConstIncr >> write;
+    if (_lineStream.fail()){
+      io::messages.add("Bad BSLEUS block!", "In_Parameter", io::message::error);
+      return;
+    }
+    
+    if (use_bsleus == 0 || use_bsleus == 1){
+      param.bsleus.bsleus = use_bsleus ? simulation::bsleus_on : 
+                                         simulation::bsleus_off;
+    }
+    else {
+      io::messages.add("BSLEUS: Bad value for BSLEUS", "In_Parameter", 
+              io::message::error);
+      return;
+    }
+    if (build == 0 || build == 1){
+      param.bsleus.building = build ? true : false;
+    }
+    else {
+      io::messages.add("BSLEUS: Bad value for BUILD", "In_Parameter", 
+              io::message::error);
+      return;
+    }
+    if (forceConstIncr > 0.0){
+      param.bsleus.forceConstantIncrement = forceConstIncr;
+    }
+    else {
+      io::messages.add("BSLEUS: Bad value for MEMKLE", "In_Parameter", 
+              io::message::error);
+      return;
+    }
+    if (write >= 0){
+      param.bsleus.write = write;
+    }
+    else {
+      io::messages.add("BSLEUS: Bad value for WRITE", "In_Parameter", 
+              io::message::error);
+      return;
+    }
+  }
 }
 /**
  * @section electric ELECTRIC block
