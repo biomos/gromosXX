@@ -42,8 +42,8 @@ void util::BS_Umbrella::apply(configuration::Configuration& conf,
     (*it)->addForces(conf, totalPartitionFct);
   }
   
-  const double beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
-  m_bsleus_total = - beta * log(totalPartitionFct);
+  const double beta_inv = (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+  m_bsleus_total = - beta_inv * log(totalPartitionFct);
   conf.current().energies.bsleus_total = m_bsleus_total;
   
   if(sim.param().bsleus.building){
