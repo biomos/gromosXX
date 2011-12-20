@@ -822,8 +822,9 @@ io::In_Perturbation::read(topology::Topology &topo,
             return;
           }
           
-          if (a_iac < 0 || b_iac < 0){
-            os << "n=" << n << "a_iac=" << a_iac << " b_iac=" << b_iac << std::endl;
+          if (a_iac < 0 || b_iac < 0 || 
+                  a_iac >= topo.atom_names().size() || b_iac >= topo.atom_names().size()){
+            os << "Problematic line: n=" << n+1 << " a_iac=" << a_iac+1 << " b_iac=" << b_iac+1 << std::endl;
             io::messages.add("integer atom code wrong in PERTATOMPARAM block",
                     "In_Perturbation", io::message::critical);
             return;
