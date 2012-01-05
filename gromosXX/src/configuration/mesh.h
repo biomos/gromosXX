@@ -12,11 +12,6 @@
 #define MODULE configuration
 #define SUBMODULE configuration
 
-#ifdef OMP
-#include <omp.h>
-#endif
-
-
 namespace configuration{
   /**
    * @class GenericMesh 
@@ -149,25 +144,13 @@ namespace configuration{
      * get the boundaries. Only for parallelization
      */
     unsigned int left_boundary() const {
-#ifdef OMP
-      unsigned int size = omp_get_num_threads();
-      unsigned int rank = omp_get_thread_num();
-      return m_x * rank / size;
-#else
       return 0;
-#endif
     }
     /**
      * get the boundaries. Only for parallelization
      */
     unsigned int right_boundary() const {
-#ifdef OMP
-      unsigned int size = omp_get_num_threads();
-      unsigned int rank = omp_get_thread_num();
-      return m_x * (rank+1) / size;
-#else
       return m_x;
-#endif
     }
     /**
      * get the data from the other processors and fill the caches. Only
@@ -179,9 +162,6 @@ namespace configuration{
      * to the real data. Only for compatibility.
      */
     void add_neighbors_caches() {
-#ifdef OMP
-#pragma omp barrier
-#endif
       return;
     }
     

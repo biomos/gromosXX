@@ -1053,6 +1053,11 @@ void interaction::Nonbonded_Outerloop
     DEBUG(11, "r(" << i << ") in box: " << math::v2s(r(i)));
   }
 
+  if (sim.openmp && rank != 0) {
+    // for openmp this is single threaded
+    return;
+  }
+  
   // decompose into domains
   if (sim.mpi)
     interaction::Lattice_Sum::decompose_into_domains<configuration::ParallelMesh > (topo, conf, sim, storage.domain, r, size);
