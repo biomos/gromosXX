@@ -997,6 +997,7 @@ bool io::In_Configuration::read_bsleus(topology::Topology& topo,
     io::messages.add("No BSLEUSMEM block in configuration file!\n"  
         "\tWill set memory to zero", "in_configuration", io::message::warning);
     conf.special().bs_umbrella.setMemoryToZero();
+    conf.special().bs_umbrella.setAuxMemoryToZero();
     return false;
   }
   else {
@@ -2351,8 +2352,8 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
   
-  int numSpheres, numSticks, num_gp, id;
-  _lineStream >> numSpheres >> numSticks;
+  int numSpheres, numSticks, num_gp, id, have_aux;
+  _lineStream >> numSpheres >> numSticks >> have_aux;
   if (_lineStream.fail()){
     io::messages.add("BSLEUSMEM block: Could not read the number of Potentials!",
             "In_Configuration", io::message::error);
@@ -2417,6 +2418,66 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
     }
     bs_umbrella.setMemory(id, util::BS_Potential::bs_stick, memVector);
   }
+  
+  // Auxiliary Memory
+  if (have_aux == 0){
+    io::messages.add("No auxiliary Memory given. Will set it to zero!",
+            "In_Configuration", io::message::notice);
+    bs_umbrella.setAuxMemoryToZero();
+  } else {
+    int redCounter, auxCounter;
+    for (int i = 0; i < numSpheres; i++) {
+      _lineStream >> id >> auxCounter >> redCounter >> num_gp;
+      if (_lineStream.fail()) {
+        std::ostringstream os;
+        os << "BSLEUSMEM block: Could not read auxiliary memory of sphere " 
+           << (i + 1);
+        io::messages.add(os.str(), "In_Configuration", io::message::error);
+        return false;
+      }
+      double mem;
+      std::vector<double> memVector;
+      for (int j = 0; j < num_gp; j++) {
+        _lineStream >> mem;
+        memVector.push_back(mem);
+      }
+      if (_lineStream.fail()) {
+        std::ostringstream os;
+        os << "BSLEUSMEM block: Could not read auxiliary memory of sphere " 
+           << (i + 1);
+        io::messages.add(os.str(), "In_Configuration", io::message::error);
+        return false;
+      }
+      bs_umbrella.setAuxMemory(id, util::BS_Potential::bs_sphere, memVector, 
+                               auxCounter, redCounter);
+    }
+
+    for (int i = 0; i < numSticks; i++) {
+      _lineStream >> id >> auxCounter >> redCounter >> num_gp;
+      if (_lineStream.fail()) {
+        std::ostringstream os;
+        os << "BSLEUSMEM block: Could not read auxiliary memory of stick " 
+           << (i + 1);
+        io::messages.add(os.str(), "In_Configuration", io::message::error);
+        return false;
+      }
+      double mem;
+      std::vector<double> memVector;
+      for (int j = 0; j < num_gp; j++) {
+        _lineStream >> mem;
+        memVector.push_back(mem);
+      }
+      if (_lineStream.fail()) {
+        std::ostringstream os;
+        os << "BSLEUSMEM block: Could not read auxiliary memory of stick " 
+           << (i + 1);
+        io::messages.add(os.str(), "In_Configuration", io::message::error);
+        return false;
+      }
+      bs_umbrella.setAuxMemory(id, util::BS_Potential::bs_stick, memVector, 
+                               auxCounter, redCounter);
+    }
+  } // end auxiliary memory
 }
 
 bool io::In_Configuration::_read_nose_hoover_chain_variables(

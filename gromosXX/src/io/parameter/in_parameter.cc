@@ -4692,13 +4692,12 @@ BSLEUS
 # BUILD:    Are we building?
 #   0:          Yes
 #   1:          No
-# MEMKLE:   Basis Force constant increment K_LE
 # WRITE:    >= 0 Do we write the energies and forces of the Umbrella?
 #   == 0:          No
 #   > 0:           Every nth step
 # 
-# BSLEUS    BUILD   MEMKLE  WRITE
-  1         1       0.0002  1
+# BSLEUS    BUILD   WRITE
+  1         1       1
 END
 @endverbatim
  */
@@ -4715,8 +4714,9 @@ void io::In_Parameter::read_BSLEUS(simulation::Parameter& param, std::ostream& o
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
     
     int use_bsleus, build, write;
-    double forceConstIncr;
-    _lineStream >> use_bsleus >> build >> forceConstIncr >> write;
+    //double forceConstIncr;
+    //_lineStream >> use_bsleus >> build >> forceConstIncr >> write;
+    _lineStream >> use_bsleus >> build >> write;
     if (_lineStream.fail()){
       io::messages.add("Bad BSLEUS block!", "In_Parameter", io::message::error);
       return;
@@ -4739,14 +4739,14 @@ void io::In_Parameter::read_BSLEUS(simulation::Parameter& param, std::ostream& o
               io::message::error);
       return;
     }
-    if (forceConstIncr > 0.0){
+    /*if (forceConstIncr > 0.0){
       param.bsleus.forceConstantIncrement = forceConstIncr;
     }
     else {
       io::messages.add("BSLEUS: Bad value for MEMKLE", "In_Parameter", 
               io::message::error);
       return;
-    }
+    }*/
     if (write >= 0){
       param.bsleus.write = write;
     }

@@ -12,90 +12,8 @@ namespace configuration {
 
 namespace util{
   
-  /**
-   * @class BS_Dimension needed for BS_Vector to hold the value
-   */
-  class BS_Dimension {
-  public:
-    /**
-     * The value of the coordinate
-     */
-    double value;
-    /**
-     * The periodicity of the variable. A periodicity of 0 means none.
-     */
-    double periodicity;
-  };
-    
-  /**
-   * @class Implementation for an n-dimensional vector holding the coordinates
-   * of the subspace
-   */
-  class BS_Vector : public std::vector<BS_Dimension> {
-  public:
-    /**
-     * return the length squared
-     * @return squared length
-     */
-    double abs2();
-    /**
-     * this - subtrahend = result
-     * @param[in]    subtrahend
-     * @param[inout] result
-     */
-    void minus(const BS_Vector &subtrahend, BS_Vector &result);
-    /**
-     * scale the vector by scalar
-     * @param[in] scalar
-     */
-    void scale(const double scalar);
-    /**
-     * Normalize the vector to length 1
-     * @return the original length
-     */
-    double normalize();
-    /**
-     * Set every entry to zero.
-     */
-    void nullify();
-    /**
-     * Multiply the vector by scalar
-     * @param[in] scalar
-     * @return the scaled vector
-     */
-    BS_Vector operator*(const double scalar);
-    /**
-     * Add two vectors together
-     * @param[in] summand
-     * @return the sum
-     */
-    BS_Vector operator +(const BS_Vector &summand);
-    /**
-     * Add summand to a vector
-     * @param summand
-     */
-    void operator +=(const BS_Vector &summand);
-    /**
-     * The dot product with other:
-     *      dot(self, other)
-     * @param other vector
-     * @return the dot product
-     */
-    double dot(const BS_Vector &other);
-    /**
-     * Create a BS_Vector from two <double> vectors; one containing the values,
-     * the other the periodicities.
-     * @param values
-     * @param periodicities
-     */
-    void create(std::vector<double> &values, std::vector<double> &periodicities);
-    /**
-     * Creates an output for the Vector.
-     * @return the output
-     */
-    std::string str();
-  };
-  
+  class BS_Vector;
+  class BS_Dimension;
   /**
    * @class BS_Coordinate
    * 
@@ -105,6 +23,7 @@ namespace util{
   class BS_Coordinate {
   public:
     BS_Coordinate(){
+      m_type = unknown;
     }
     virtual ~BS_Coordinate(){}
     /**
@@ -128,20 +47,10 @@ namespace util{
      */
     double red_fac() {return m_red_fac;}
     /**
-     * create a copy of the LE coordinate
-     * @return a pointer to the copy
-     */
-    //virtual BS_Coordinate* clone() const = 0;
-    /**
      * get type identifier
      * @return and integer describing the type
      */
-    virtual int getType() const = 0;
-    /**
-     * Return the periodicity (0.0 if none)
-     * @return the periodicity
-     */
-    virtual double getPeriodicity() = 0;
+    int getType() {return m_type;}
     /**
      * @return returns the dimensionality of the coordinate
      */
@@ -155,7 +64,8 @@ namespace util{
     /**
      * Obtain the Internal Coordinates
      */
-    virtual void getInternalCoordinates(std::vector<BS_Dimension> &coord) const = 0;
+    virtual void getInternalCoordinates(BS_Vector &coord) const = 0;
+    //virtual void getInternalCoordinates(std::vector<BS_Dimension> &coord) const = 0;
     /**
      * Add the forces expressed in internal Coordinates 
      * to the particles in conf.
@@ -171,6 +81,7 @@ namespace util{
     enum Coord_type {
         unknown = 0,
         dihedral,
+        distance,
         lambda,
     };
     Coord_type m_type;
@@ -189,7 +100,11 @@ namespace util{
      * The dimension of the internal Coordinates
      */
     int m_dimension;
-  };
+    /**
+     * The periodicity of the coordinate
+     */
+    //double m_periodicity;
+ };
   
   /**
    * The BS_LE_Coordinate for dihedral angle. The internal coordinates are 
@@ -217,16 +132,12 @@ namespace util{
                              m_red_pi = math::Pi / m_red_fac;
                              m_red_2pi = 2 * m_red_pi;
                              m_rad2degree = 180 / math::Pi;
-                             //m_periodicity = m_red_2pi * m_rad2degree;
-                             m_periodicity = 0;
-                             closeToZero = closeToPeriode = false;
+                             m_counter = 0;
+                             old_phi = math::Pi;
     }
     virtual ~BS_Dihedral() {}
-    //virtual BS_Dihedral* clone() const;
-    virtual int getType() const { return m_type; /*dihedral*/ }
-    virtual double getPeriodicity() {return m_periodicity;}
     virtual void calculateInternalCoord(configuration::Configuration & conf);
-    virtual void getInternalCoordinates(std::vector<BS_Dimension> &coord) const;
+    virtual void getInternalCoordinates(BS_Vector &coord) const;
     virtual void addForces(configuration::Configuration &conf, 
                       BS_Vector &derivatives);
     virtual std::string str() const;
@@ -239,12 +150,47 @@ namespace util{
     double m_red_pi;
     double m_red_2pi;
     double m_rad2degree;
-    double m_periodicity;
     math::Vec fi, fj, fk, fl;
     // Used for undoing the refolding
-    bool closeToZero, closeToPeriode;
+    double old_phi;
+    int m_counter;
   };
 
+  /**
+   * @class BS_Distance
+   * A internal Coordinate defined as distance between two atoms.
+   */
+  class BS_Distance : public BS_Coordinate {
+  public:
+    /**
+     * Construct a new distance coordinate between atoma i and j.
+     * @param id        The ID
+     * @param i         The first atom
+     * @param j         The second atom
+     * @param red_fac   The reduction factor sigma
+     */
+    BS_Distance(int id, unsigned int i, unsigned j, double red_fac) :
+    i(i), j(j) {
+      umbrella_id(id);
+      m_type = distance;
+      m_red_fac = red_fac;
+      m_dimension = 1;
+    }
+    virtual ~BS_Distance() {}
+    virtual void calculateInternalCoord(configuration::Configuration & conf);
+    virtual void getInternalCoordinates(BS_Vector &coord) const;
+    virtual void addForces(configuration::Configuration &conf, 
+                      BS_Vector &derivatives);
+    virtual std::string str() const;
+  protected:
+    template<math::boundary_enum B>
+    void _calculate(configuration::Configuration & conf);
+    unsigned int i, j;
+    double m_distance;
+    double m_reducedDistance;
+    math::Vec fi, fj;
+    
+  };
 }
 #endif	/* BS_LE_COORD_H */
 

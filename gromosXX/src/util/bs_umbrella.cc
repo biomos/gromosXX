@@ -43,6 +43,7 @@ void util::BS_Umbrella::apply(configuration::Configuration& conf,
   }
   
   const double beta_inv = (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+  DEBUG(5, "BS_Umbrella: Inverse beta: " << beta_inv)
   m_bsleus_total = - beta_inv * log(totalPartitionFct);
   conf.current().energies.bsleus_total = m_bsleus_total;
   
@@ -54,11 +55,13 @@ void util::BS_Umbrella::apply(configuration::Configuration& conf,
   }
 }
 
-void util::BS_Umbrella::addSubspace(BS_Subspace  *subspace){
-  DEBUG(5, "Added a subspace");
-  m_subspaces.push_back(subspace);
+//------------------------------------------
+void util::BS_Umbrella::addSubspace(std::vector<BS_Subspace  *> &subspaces){
+  DEBUG(5, "Added the subspaces");
+  m_subspaces = subspaces;
 }
 
+// Memories
 void util::BS_Umbrella::setMemory(int id, BS_Potential::potential_enum type, 
                                   std::vector<double>& memory)
 {
@@ -71,24 +74,46 @@ bool util::BS_Umbrella::getMemory(int id, BS_Potential::potential_enum type,
   return m_subspaces[0]->getMemory(id, type, memory);  
 }
 
+void util::BS_Umbrella::setMemoryToZero(){
+  m_subspaces[0]->setMemoryToZero();
+}
+
+// Auxiliary Memories
+void util::BS_Umbrella::setAuxMemory(int id, BS_Potential::potential_enum type, 
+                                     std::vector<double>& memory, int auxCounter, 
+                                     int redCounter)
+{
+  m_subspaces[0]->setAuxMemory(id, type, memory, auxCounter, redCounter);
+}
+
+bool util::BS_Umbrella::getAuxMemory(int id, BS_Potential::potential_enum type, 
+                                     std::vector<double>& memory, int &auxCounter, 
+                                     int &redCounter) const
+{
+  return m_subspaces[0]->getAuxMemory(id, type, memory, auxCounter, redCounter);  
+}
+
+void util::BS_Umbrella::setAuxMemoryToZero(){
+  m_subspaces[0]->setAuxMemoryToZero();
+}
+
+
+//------------------------------------------
+double util::BS_Umbrella::getTotalPotential() const {
+  return m_bsleus_total;
+}
+
 void util::BS_Umbrella::getNumPotentials(int& numSpheres, int& numSticks) const
 {
   numSticks = m_subspaces[0]->getNumSticks(); 
   numSpheres = m_subspaces[0]->getNumSpheres();
 }
 
-void util::BS_Umbrella::setMemoryToZero(){
-  m_subspaces[0]->setMemoryToZero();
-}
-
-double util::BS_Umbrella::getTotalPotential() const {
-  return m_bsleus_total;
-}
-
 void util::BS_Umbrella::getForce(std::vector<double>& force) const {
   m_subspaces[0]->getForce(force);
 }
 
+//------------------------------------------
 std::string util::BS_Umbrella::traj_str() const{
   std::ostringstream os;
   os << m_subspaces[0]->traj_str();

@@ -2713,7 +2713,7 @@ namespace simulation
       /**
        * How the memory is incremented (k_LE)
        */
-      double forceConstantIncrement;
+      //double forceConstantIncrement;
       /**
        * Do we write the bsleus potential?
        */

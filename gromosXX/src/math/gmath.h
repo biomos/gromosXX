@@ -100,6 +100,34 @@ namespace math
 	*it += *it2;
       return *this;
     }
+
+    /**
+     * Subtract from every Vector in VArray a vector
+     */
+    VArray & operator-=(Vec const &v)
+    {
+      VArray::iterator it = this->begin(),
+                       to = this->end();
+      for (; it != to; it++){
+        *it -= v;
+      }
+      return *this;
+    }
+
+    /**
+     * Return the center of geometry
+     */
+    Vec cog() const
+    {
+      Vec cog(0);
+      VArray::const_iterator it = this->begin(),
+                             to = this->end();
+      for (; it != to; it++){
+        cog += *it;
+      }
+      cog /= this->size();
+      return cog;
+    }
   };
   
   /**

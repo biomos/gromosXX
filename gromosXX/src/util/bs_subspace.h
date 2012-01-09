@@ -14,10 +14,12 @@ namespace util {
   
   class BS_Subspace {
   public:
-    BS_Subspace(){
-      m_numSpheres = 0;
-      m_numSticks = 0;
-    }
+    BS_Subspace(int id, double forceIncrement, double reductionFactor, 
+                int localCutoff, int globalCutoff) :
+            id(id), m_numSpheres(0), m_numSticks(0),
+            m_forceIncrement(forceIncrement), m_reductionFactor(reductionFactor), 
+            m_localCutoff(localCutoff), m_globalCutoff(globalCutoff){}
+
     ~BS_Subspace(){}
     /**
      * Free the potentials and coordinates from the memory.
@@ -79,6 +81,31 @@ namespace util {
      */
     void setMemoryToZero();
     /**
+     * Set the auxiliary memory of Potential
+     * @param[in] id    The id of the potential
+     * @param[in] type  The Type (Sphere / Stick)
+     * @param[in] memory    The memory
+     * @param[in] auxCounter    The auxiliary memory Counter
+     * @param[in] redCounter    The reduction Counter
+     */
+    void setAuxMemory(int id, BS_Potential::potential_enum type, 
+            std::vector<double> &memory, int auxCounter, int redCounter);
+    /**
+     * Get the auxiliary memory of Potential
+     * @param[in] id    The id of the potential
+     * @param[in] type  The Type (Sphere / Stick)
+     * @param[out] memory    The auxiliary memory
+     * @param[out] auxCounter    The auxiliary memory Counter
+     * @param[out] redCounter    The reduction Counter
+     * @return whether Potential was found
+     */
+    bool getAuxMemory (int id, BS_Potential::potential_enum type,
+            std::vector<double> &memory, int &auxCounter, int &redCounter) const;
+    /**
+     * Set all the auxiliary memories to zero.
+     */
+    void setAuxMemoryToZero();
+    /**
      * Return the number of spheres
      */
     int getNumSpheres() const {return m_numSpheres;}
@@ -108,11 +135,6 @@ namespace util {
      */
     BS_Vector getCenter(int id);
     /**
-     * Return the periodicities of the definition
-     * @return  the periodicities
-     */
-    void getPeriodicities(std::vector<double> &periodicities);
-    /**
      * A string describing the subspace
      * @return 
      */
@@ -123,6 +145,10 @@ namespace util {
      * @return string with the potentials
      */
     std::string traj_str();
+    /**
+     * The id of the subspace
+     */
+    int id;
   private:
     /**
      * The definition of the subspace
@@ -144,7 +170,27 @@ namespace util {
      * The number of Sticks
      */
     int m_numSticks;
+    /**
+     * The force in the subspace
+     */
     BS_Vector m_force;
+    /**
+     * Basis force constant increment: k_LE
+     */
+    double m_forceIncrement;
+    /**
+     * The force constant reduction factor: f_LE
+     */
+    double m_reductionFactor;
+    /**
+     * The local visiting cutoff: gamma_LE
+     */
+    int m_localCutoff;
+    /**
+     * The global visiting cutoff: n_LE
+     */
+    int m_globalCutoff;
+    
     /** 
      * Returns a string with informations of state of the subspace
      */

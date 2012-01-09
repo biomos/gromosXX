@@ -24,9 +24,9 @@ namespace util {
     ~BS_Umbrella();
     /**
      * Add a subspace to the umbrella
-     * @param subspace
+     * @param[in] subspaces Add the subspaces to the umbrella
      */
-    void addSubspace(BS_Subspace *subspace);
+    void addSubspace(std::vector<BS_Subspace  *> &subspaces);
     /**
      * Apply the potentials and the forces to the configuration.
      * @param conf
@@ -35,16 +35,30 @@ namespace util {
             simulation::Simulation &sim);
     /**
      * Set the memory of Potential
-     * @param id    The id of the potential
-     * @param type  The Type (Sphere / Stick)
-     * @param memory    The memory
+     * @param[in] id    The id of the potential
+     * @param[in] type  The Type (Sphere / Stick)
+     * @param[in] memory    The memory
      */
     void setMemory(int id, BS_Potential::potential_enum type, 
             std::vector<double> &memory);
     /**
+     * Set the auxiliary memory of Potential
+     * @param[in] id    The id of the potential
+     * @param[in] type  The Type (Sphere / Stick)
+     * @param[in] memory    The auxiliary memory
+     * @param[in] auxCounter    The auxiliary memory Counter
+     * @param[in] redCounter    The reduction Counter
+     */
+    void setAuxMemory(int id, BS_Potential::potential_enum type, 
+            std::vector<double> &memory, int auxCounter, int redCounter);
+    /**
      * Set all memories to zero
      */
     void setMemoryToZero();
+    /**
+     * Set all auxiliary memories to zero
+     */
+    void setAuxMemoryToZero();
     /**
      * Get the Memory of a sphere or stick
      * @param[in] id
@@ -54,6 +68,17 @@ namespace util {
      */
     bool getMemory(int id, BS_Potential::potential_enum type, 
             std::vector<double> &memory) const;
+    /**
+     * Get the Auxiliary Memory of a sphere or stick
+     * @param[in] id
+     * @param[in] type
+     * @param[out] memory
+     * @param[out] auxCounter    The auxiliary memory Counter
+     * @param[out] redCounter    The reduction Counter
+     * @return whether memory with specified id was found or not
+     */
+    bool getAuxMemory(int id, BS_Potential::potential_enum type, 
+            std::vector<double> &memory, int &auxCounter, int &redCounter) const;
     /**
      * Get Number of Spheres and Sticks
      * @param[out] numSpheres
@@ -88,6 +113,18 @@ namespace util {
      * Total bsleus energy
      */
     double m_bsleus_total;
+    /**
+     * The force constant reduction factor: f_LE
+     */
+    double m_reductionFactor;
+    /**
+     * The local visiting cutoff: gamma_LE
+     */
+    int m_localCutoff;
+    /**
+     * The global visting cutoff: n_LE
+     */
+    int m_globalCutoff;
   };
 }
 

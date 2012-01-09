@@ -370,6 +370,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
       _print_bsleus_energies(conf, m_special_traj);
       _print_bsleus_forces(conf, m_special_traj);
+      _print_bsleus(conf, m_special_traj);
       _print_bsleus_potentials(conf, m_special_traj);
       m_special_traj.flush();
     }
@@ -2816,11 +2817,13 @@ void io::Out_Configuration::_print_bsleus(const configuration::Configuration &co
      << "# The current state of the Memory in the BS&LEUS algorithm.\n"
      << "# NUMSPH:   The Number of Spheres\n"
      << "# NUMSTK:   The Number of Sticks\n"
+     << "# AUXMEM:   Is the auxiliary memory set? (0: No; 1: Yes)\n"
      << "#\n"
      << "# NUMSPH    NUMSTK\n";
   int numSpheres, numSticks;
   umb->getNumPotentials(numSpheres, numSticks);
-  os << std::setw(3) << numSpheres << std::setw(10) << numSticks << "\n";
+  os << std::setw(3) << numSpheres << std::setw(10) << numSticks 
+     << std::setw(7) << 1 << "\n";
   if (numSpheres){
     os << "#\n"
        << "# SPHID:    The ID of the Sphere\n"
@@ -2865,6 +2868,65 @@ void io::Out_Configuration::_print_bsleus(const configuration::Configuration &co
       }
       int num_gp = memory.size();
       os << std::setw(3) << (i + 1) << std::setw(6) << num_gp;
+      std::vector<double>::iterator it  = memory.begin(),
+              to = memory.end();
+      for (; it != to; it++){
+        os << " " << *it;
+      }
+      os << "\n";
+    }
+  }
+  if (numSticks || numSpheres){
+    os << "#\n"
+       << "# The Auxiliary Memory\n"
+       << "#\n"
+            << "# AUXC:     The Auxiliary Counter\n"
+            << "# REDC:     The Reduction Counter\n"
+            << "# AUXMEM:   The Auxiliary Memory\n";
+  }
+  if (numSpheres){
+    os << "#\n"
+       << "# SPHID AUXC    REDC    NUMGP   MEM[1..NUMGP]\n";
+    for (int i = 0; i < numSpheres; i++){
+      std::vector<double> memory;
+      int auxCounter, redCounter;
+      if(!umb->getAuxMemory(i + 1, util::BS_Potential::bs_sphere, memory, auxCounter, redCounter)){
+        std::ostringstream msg;
+        msg << "Could not find the memory of sphere " << i + 1 << "!\n";
+        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+        return;
+      }
+      int num_gp = memory.size();
+      os << std::setw(3) << (i + 1)
+         << std::setw(6) << auxCounter
+         << std::setw(8) << redCounter
+         << std::setw(8) << num_gp;
+      std::vector<double>::iterator it  = memory.begin(),
+              to = memory.end();
+      for (; it != to; it++){
+        os << " " << *it;
+      }
+      os << "\n";
+    }
+  }
+  if (numSticks){
+    os << "#\n"
+       << "# STKID AUXC    REDC    NUMGP   MEM[1..NUMGP]\n";
+
+    for (int i = 0; i < numSticks; i++){
+      std::vector<double> memory;
+      int auxCounter, redCounter;
+      if (!umb->getAuxMemory(i + 1, util::BS_Potential::bs_stick, memory, auxCounter, redCounter)){
+        std::ostringstream msg;
+        msg << "Could not find the memory of stick " << i + 1 << "!\n";
+        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+        return;
+      }
+      int num_gp = memory.size();
+      os << std::setw(3) << (i + 1)
+         << std::setw(6) << auxCounter
+         << std::setw(8) << redCounter
+         << std::setw(8) << num_gp;
       std::vector<double>::iterator it  = memory.begin(),
               to = memory.end();
       for (; it != to; it++){

@@ -20,6 +20,7 @@
 #include "../../util/bs_potentials.h"
 #include "../../util/bs_subspace.h"
 #include "../../util/bs_umbrella.h"
+#include "../../util/bs_vector.h"
 #include "in_bsleus.h"
 
 #undef MODULE
@@ -32,6 +33,26 @@
  * 
  * The input is define in a separate file (@bsleus).
  * 
+ * The BSLEUSSUB specifies the subspaces, especially the memory settings
+ * @verbatim
+BSLEUSSUB
+#
+# Define the subspaces here. Especially the memory updating
+# NUMSPC:   The number of subspaces (currently only one allowed).
+# SUBID:    The id of the subspace
+# FRCINC:   Basis Force constant increment K_LE
+# FRED:     force-constant reduction factor
+# LVCO:     The local visiting cutoff
+# GVCO:     The global visiting cutoff
+#
+# NUMSPC
+  1
+# SUBID FRCINC  FRED  LVCO    GVCO
+  1     0.0002  0.5     1       2
+END
+
+ @endverbatim
+ * 
  * The BSLEUSCOORD specifies the (internal) coordinates defining the active subspace
  * @verbatim
 BSLEUSCOORD
@@ -39,8 +60,10 @@ BSLEUSCOORD
 # Define the possible coordinates for the B&S-LEUS algorithm
 # NCDIM:    Number of coordinate dimensions
 # CID:      ID of the coordinate dimension
+# SUBSP:    Which subspace
 # CTYPE:    Type of the coordinate
 #   1:  Dihedral angles (i, j, k, l)
+#   2:  Distance (i, j)
 #   ...
 # CREF:     The reference value of the coordinate (sigma_n)
 #           Only important for the radius and the width,
@@ -49,9 +72,9 @@ BSLEUSCOORD
 #
 # NCDIM
   2
-# CID   CTYPE   CREF    DEF
-  1     1       1       2 4 6 8
-  2     1       1       4 6 8 10
+# CID   SUBSP   CTYPE   CREF    DEF
+  1     1       1       1       2 4 6 8
+  2     1       1       1       4 6 8 10
 END
 @endverbatim
  * 
@@ -69,11 +92,11 @@ BSLEUSSPH
 #
 # NSPH
   4
-# SPHID SPHCEN      SPHRAD  SPHCLE  SPHNGP
-  1     60   300    45      0.5     10
-  2     300  300    45      0.5     10
-  3     300  60     45      0.5     10
-  4     60   60     45      0.5     10
+# SPHID SUBSP   SPHCEN      SPHRAD  SPHCLE  SPHNGP
+  1     1       60   300    45      0.5     10
+  2     1       300  300    45      0.5     10
+  3     1       300  60     45      0.5     10
+  4     1       60   60     45      0.5     10
 END
 @endverbatim
  * 
@@ -96,11 +119,11 @@ BSLEUSSTK
 #
 # NSTK
   2
-# STKID PRSTYP  STKSTART    STKEND      STKWD   STKCLE  STKNGP
+# STKID SUBSP   PRSTYP  STKSTART    STKEND      STKWD   STKCLE  STKNGP
 # or
-# STKID PRSTYP  [SRTCOORD]  [ENDCOORD]  STKEND  STKWD   STKCLE  STKNGP
-  1     0       1           3           10      0.5     20
-  2     0       2           4           10      0.5     20
+# STKID SUBSP   PRSTYP  [SRTCOORD]  [ENDCOORD]  STKEND  STKWD   STKCLE  STKNGP
+  1     1       0       1           3           10      0.5     20
+  2     1       0       2           4           10      0.5     20
 END
 @endverbatim
  */
@@ -110,10 +133,66 @@ void io::In_BSLEUS::read(topology::Topology &topo,
 	      std::ostream & os)
 {
   std::vector<std::string> buffer;
-  util::BS_Subspace *bs_subspace = new util::BS_Subspace();
-  std::vector<double> periodicities;
+  std::vector<util::BS_Subspace *> bs_subspaces;
+  int num_subspaces;
+  
+  { // BSLEUSSUB
+    buffer = m_block["BSLEUSSUB"];
+    DEBUG(10, "BSLEUSSUB block : " << buffer.size());
+
+    if (!buffer.size()) {
+      io::messages.add("no BSLEUSSUB block in B&S-LEUS definition file",
+              "In_BSLEUS", io::message::error);
+      return;
+    }
+
+    std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+            to = buffer.end() - 1;
+    DEBUG(10, "reading in BSLEUSSUB data");
+    _lineStream.clear();
+    _lineStream.str(*it++);
+
+    _lineStream >> num_subspaces;
+    if (_lineStream.fail()) {
+      io::messages.add("Couldn't get the number of Subspaces in BSLEUSSUB!",
+              "In_BSLEUS", io::message::error);
+      return;
+    }
+    if (num_subspaces != 1){
+      io::messages.add("We currently don't support more than one subspace!",
+              "In_BSLEUS", io::message::error);
+      return;
+    }
+    
+    double forceIncrement, reductionFactor;
+    int id, localCutoff, globalCutoff;
+    int last_id = 0;
+    for (int i = 0; i < num_subspaces; i++) {
+      _lineStream.clear();
+      _lineStream.str(*it++);
+      _lineStream >> id >> forceIncrement >> reductionFactor
+                  >> localCutoff >> globalCutoff;
+      if (_lineStream.fail()) {
+        io::messages.add("Bad Block in BSLEUSSUB!",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+      util::BS_Subspace *bs_subspace = new util::BS_Subspace(id, forceIncrement, 
+              reductionFactor, localCutoff, globalCutoff);
+      bs_subspaces.push_back(bs_subspace);
+      if (last_id != (id - 1)) {
+        io::messages.add("The IDs of the subspaces are not given in a consecutive order!",
+                "In_BSLEUS", io::message::error);
+        io::messages.add("The Subspace has not been added!",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+    }  
+  } // BSLEUSSUB
+  // ==============================================================
   // Number of coordinates
   int numCoords;
+  std::vector<double> references;
 
   { // BSLEUSCOORD
     buffer = m_block["BSLEUSCOORD"];
@@ -139,7 +218,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
 
-    int id, type, i, j, k, l, numCoordRead = 0;
+    int id, subspace, type, i, j, k, l, numCoordRead = 0;
     double reference;
 
 
@@ -148,23 +227,25 @@ void io::In_BSLEUS::read(topology::Topology &topo,
 
       _lineStream.clear();
       _lineStream.str(*it);
-      _lineStream >> id >> type >> reference;
+      _lineStream >> id >> subspace >> type >> reference;
       if (_lineStream.fail()) {
         io::messages.add("bad line in BSLEUSCOORD block",
                 "In_BSLEUS", io::message::error);
         return;
       }
+      references.push_back(reference);
 
       switch (type) {
         case util::BS_Coordinate::dihedral: {
           _lineStream >> i >> j >> k >> l;
           if (_lineStream.fail()) {
-            io::messages.add("bad line in BSLEUSCOORD block",
+            io::messages.add("bad line in BSLEUSCOORD block (Dihedral angle)",
                     "In_BSLEUS", io::message::error);
             return;
           }
           // Convert to gromos
           i--, j--, k--, l--;
+          subspace--;
           if (i > topo.num_atoms() ||
                   j > topo.num_atoms() ||
                   k > topo.num_atoms() ||
@@ -177,9 +258,31 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           }
 
           util::BS_Dihedral *dih = new util::BS_Dihedral(id, i, j, k, l, reference);
-          periodicities.push_back(dih->getPeriodicity());
           DEBUG(10, dih->str());
-          bs_subspace->addCoordinate(dih);
+          bs_subspaces[subspace]->addCoordinate(dih);
+          numCoordRead++;
+          break;
+        }
+        case util::BS_Coordinate::distance: {
+          _lineStream >> i >> j;
+          if (_lineStream.fail()) {
+            io::messages.add("bad line in BSLEUSCOORD block (Distance)",
+                    "In_BSLEUS", io::message::error);
+            return;
+          }
+          // Convert to gromos
+          i--, j--;
+          subspace--;
+          if (i > topo.num_atoms() || j > topo.num_atoms()) {
+            std::ostringstream msg;
+            msg << "Distance (" << i + 1 << "-" << j + 1 
+                << ") atom indices out of range.";
+            io::messages.add(msg.str(), "In_BSLEUS", io::message::error);
+            return;
+          }
+          util::BS_Distance *dst = new util::BS_Distance(id, i, j, reference);
+          DEBUG(10, dst->str());
+          bs_subspaces[subspace]->addCoordinate(dst);
           numCoordRead++;
           break;
         }
@@ -196,7 +299,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
   } // BSLEUSCOORD
-  
+  // ==============================================================
   { // BSLEUSSPH
     buffer = m_block["BSLEUSSPH"];
     DEBUG(10, "BSLEUSSPH block : " << buffer.size());
@@ -214,7 +317,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     _lineStream.clear();
     _lineStream.str(*it++);
     
-    int numSpheres, numSpheresRead = 0;
+    int subspace, numSpheres, numSpheresRead = 0;
     _lineStream >> numSpheres;
     if (_lineStream.fail()) {
       io::messages.add("Couldn't get the number of Coordinates in BSLEUSSPH",
@@ -222,17 +325,22 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
     
-    int id = 0, sumID = 0, num_gp;
+    int id = 0, last_id = 0, num_gp;
     double radius, forceConst, coord;
     std::vector<double> centerValues;
     util::BS_Vector center;
     for (; it != to; it++){
       _lineStream.clear();
       _lineStream.str(*it);
-      _lineStream >> id;
+      _lineStream >> id >> subspace;
       for (int i = 0; i < numCoords; i++){
         _lineStream >> coord;
-        centerValues.push_back(coord);
+        if (_lineStream.fail()) {
+          io::messages.add("bad center in BSLEUSSPH block",
+                  "In_BSLEUS", io::message::error);
+          return;
+        }
+        centerValues.push_back(coord / references[i]);
       }
       _lineStream >> radius >> forceConst >> num_gp;
       if (_lineStream.fail()) {
@@ -240,15 +348,23 @@ void io::In_BSLEUS::read(topology::Topology &topo,
                 "In_BSLEUS", io::message::error);
         return;
       }
-      center.create(centerValues, periodicities);
-      DEBUG(10, "Center: " + center.str())
+      center.create(centerValues);
+      DEBUG(10, "Center: " + center.str());
+      // Convert to GROMOS
+      subspace--;
       util::BS_Sphere *bs_sphere = new util::BS_Sphere(id, num_gp, forceConst, 
-                                    sim.param().bsleus.forceConstantIncrement,
                                                         center, radius);
-      bs_subspace->addPotential(bs_sphere);
+      bs_subspaces[subspace]->addPotential(bs_sphere);
       numSpheresRead++;
-      sumID += id;
       centerValues.clear();
+      if (id != (last_id + 1)) {
+        io::messages.add("The IDs of the spheres are not given in a consecutive order!",
+                "In_BSLEUS", io::message::error);
+        io::messages.add("The Subspace has not been added!",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+      last_id = id;
     }
     DEBUG(10, "Finished Reading in Spheres");
     if (numSpheres != numSpheresRead) {
@@ -256,15 +372,9 @@ void io::In_BSLEUS::read(topology::Topology &topo,
               "In_BSLEUS", io::message::error);
       return;
     }    
-    if (sumID != (id * (id + 1) / 2)){
-      io::messages.add("The IDs of the spheres are not given in a consecutive order!",
-              "In_BSLEUS", io::message::error);
-      io::messages.add("The Subspace has not been added!",
-              "In_BSLEUS", io::message::error);
-      return;
-    }
+    
   } // BSLEUSSPH
-  
+  // ==============================================================
   { // BSLEUSSTK
     buffer = m_block["BSLEUSSTK"];
     DEBUG(10, "BSLEUSSTK block : " << buffer.size());
@@ -282,7 +392,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     _lineStream.clear();
     _lineStream.str(*it++);
     
-    int numSticks, numSticksRead = 0;
+    int subspace, numSticks, numSticksRead = 0;
     _lineStream >> numSticks;
     if (_lineStream.fail()) {
       io::messages.add("Couldn't get the number of Coordinates in BSLEUSSTK",
@@ -290,18 +400,20 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
     
-    int id = 0, sumID = 0, num_gp, defType, startSphere, endSphere;
+    int id = 0, last_id = 0, num_gp, defType, startSphere, endSphere;
     double width, forceConst;
     util::BS_Vector start, end;
     for (; it != to; it++){
       _lineStream.clear();
       _lineStream.str(*it);
-      _lineStream >> id >> defType;
+      _lineStream >> id >> subspace >> defType;
       if (_lineStream.fail()) {
         io::messages.add("bad line in BSLEUSSTK block",
                 "In_BSLEUS", io::message::error);
         return;
       }
+      // Convert to GROMOS
+      subspace--;
       switch (defType) {
         case 0: {// define start and end points in terms of sphere ids
           _lineStream >> startSphere >> endSphere;
@@ -310,14 +422,13 @@ void io::In_BSLEUS::read(topology::Topology &topo,
                     "In_BSLEUS", io::message::error);
             return;
           }
-          start = bs_subspace->getCenter(startSphere);
-          end = bs_subspace->getCenter(endSphere);
+          start = bs_subspaces[subspace]->getCenter(startSphere);
+          end = bs_subspaces[subspace]->getCenter(endSphere);
           break;
         }
         case 1: {// define end and start points with coordinates
-          std::vector<double> coords, periodicities;
-          bs_subspace->getPeriodicities(periodicities);
-          for (int j = 0; j < 2; j++) {
+          std::vector<double> coords;//, periodicities;
+          for (int j = 0; j < 2; j++) { // loop over start and end coordinates
             coords.clear();
             for (int i = 0; i < numCoords; i++) {
               double value;
@@ -327,12 +438,12 @@ void io::In_BSLEUS::read(topology::Topology &topo,
                         "In_BSLEUS", io::message::error);
                 return;
               }
-              coords.push_back(value);
+              coords.push_back(value / references[i]);
             }
             if (j == 0){
-              start.create(coords, periodicities);
+              start.create(coords);
             } else {
-              end.create(coords, periodicities);
+              end.create(coords);
             }
           }
           break;
@@ -355,11 +466,17 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       }
       
       util::BS_Stick *bs_stick = new util::BS_Stick(id, num_gp, forceConst,
-                                    sim.param().bsleus.forceConstantIncrement,
                                                         start, end, width);
-      bs_subspace->addPotential(bs_stick);
+      bs_subspaces[subspace]->addPotential(bs_stick);
       numSticksRead++;
-      sumID += id;
+      if (last_id != (id - 1)) {
+        io::messages.add("The IDs of the sticks are not given in a consecutive order!",
+                "In_BSLEUS", io::message::warning);
+        io::messages.add("The Subspace has not been added!",
+                "In_BSLEUS", io::message::warning);
+        return;
+      }
+      last_id = id;
     }
     DEBUG(5, "The number of sticks according to file: " << numSticks << "; actually read: " << numSticksRead);
     if (numSticks != numSticksRead) {
@@ -367,13 +484,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
               "In_BSLEUS", io::message::warning);
       return;
     }
-    if (sumID != (id * (id + 1) / 2)){
-      io::messages.add("The IDs of the sticks are not given in a consecutive order!",
-              "In_BSLEUS", io::message::warning);
-      io::messages.add("The Subspace has not been added!",
-              "In_BSLEUS", io::message::warning);
-      return;
-    }
+    
   } // BSLEUSSTK
-  conf.special().bs_umbrella.addSubspace(bs_subspace);
+  conf.special().bs_umbrella.addSubspace(bs_subspaces);
 }
