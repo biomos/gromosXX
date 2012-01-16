@@ -32,10 +32,10 @@
  *
  * @verbatim
 LOCALELEVSPEC
-#  NLEPID  IPLE  JPLE  KPLE  LPLE
-        1     1     2     3     4
-        1     2     3     4     5
-        2     1     2     3     4
+#  NLEPID  TYPE  IPLE  JPLE  KPLE  LPLE
+        1     1   1     2     3     4
+        1     1   2     3     4     5
+        2     1   1     2     3     4
 END
 @endverbatim
  */
@@ -65,36 +65,62 @@ io::In_Localelevspec::read(topology::Topology& topo,
     DEBUG(10, "reading in LOCALELEVSPEC data");
 
     int id;
-    unsigned int n, i, j, k, l;
+    unsigned int n, i, j, k, l, t;
     for(n=0; it != to; ++n, ++it){
       DEBUG(11, "\tnr " << n);
 
       _lineStream.clear();
       _lineStream.str(*it);
 
-      _lineStream >> id >> i >> j >> k >> l;
+      _lineStream >> id >> t >> i >> j >> k >> l;
       if (_lineStream.fail()){
-        io::messages.add("bad line in LOCALELEVSPEC block",
-                "In_Localelevspec", io::message::error);
+        io::messages.add("bad line in LOCALELEVSPEC block; expected format:\nLOCALELEVSPEC\n#  NLEPID  TYPE  IPLE  JPLE  KPLE  LPLE\nEND\n",
+                         "In_Localelevspec", io::message::error);
         return;
       }
 
       // convert to gromos
       --i; --j; --k; --l;
 
-      if (i > topo.num_atoms() ||
-          j > topo.num_atoms() ||
-          k > topo.num_atoms() ||
-          l > topo.num_atoms()) {
-        std::ostringstream msg;
-        msg << "Dihedral (" << i+1 << "-" << j+1 << "-" << k+1 << "-" << l+1
+      switch(t){
+	case util::Umbrella::vt_distance:
+        {
+          if (i > topo.num_atoms() || i < 0 ||
+              j > topo.num_atoms() || j < 0){
+            std::ostringstream msg;
+            msg << "Distance (" << i+1 << "-" << j+1 
                 << ") atom indices out of range.";
-        io::messages.add(msg.str(), "In_Localelevspec", io::message::error);
-        return;
+            io::messages.add(msg.str(), "In_Localelevspec", io::message::error);
+            return;
+          }
+	  util::LE_Distance_Coordinate * dist = new util::LE_Distance_Coordinate(id, i,j);
+          topo.le_coordinates().push_back(dist);
+          break;
+        }
+        case util::Umbrella::vt_dihedral:
+        {
+          if (i > topo.num_atoms() || i < 0 ||
+              j > topo.num_atoms() || j < 0 ||
+              k > topo.num_atoms() || k < 0 ||
+              l > topo.num_atoms() || l < 0){
+            std::ostringstream msg;
+            msg << "Dihedral (" << i+1 << "-" << j+1 << "-" << k+1 << "-" << l+1
+                 << ") atom indices out of range.";
+            io::messages.add(msg.str(), "In_Localelevspec", io::message::error);
+            return;
+          }
+          util::LE_Dihedral_Coordinate * dih = new util::LE_Dihedral_Coordinate(id, i, j, k, l);
+          topo.le_coordinates().push_back(dih);
+          break;
+        }
+        default:
+        {
+          std::ostringstream msg;
+          msg << "LE Coordinate type " << t << " unknown";
+          io::messages.add(msg.str(), "In_Localelevspec", io::message::error);
+          return;
+        }
       }
-
-      util::LE_Dihedral_Coordinate * dih = new util::LE_Dihedral_Coordinate(id, i, j, k, l);
-      topo.le_coordinates().push_back(dih);
     }
   } // LOCALELEVSPEC
 }

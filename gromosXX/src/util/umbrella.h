@@ -83,7 +83,8 @@ namespace util {
      */
     enum variable_type_enum {
       /** unkown */ vt_unkown = 0,
-      /** dihedral */ vt_dihedral = 1
+      /** dihedral */ vt_dihedral = 1,
+      /** distance */ vt_distance = 2
     };
     /**
      * type of the variables

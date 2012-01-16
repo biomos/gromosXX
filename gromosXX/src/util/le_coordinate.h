@@ -128,6 +128,42 @@ namespace util {
     double phi;
     math::Vec fi, fj, fk, fl;
   };
+  /**
+   * @class LE_Distance_Coordinate
+   * @ingroup util
+   * implementation of the LE distance coordinate. In addition to
+   * the ID it is constructed from 2 atom indices defining the distance
+   * For detailed documentation see @ref util::LE_Coordinate
+   *
+   * @sa util::LE_Coordinate
+   */
+  class LE_Distance_Coordinate : public LE_Coordinate {
+  public:
+    /**
+     * construct a new distance coordinate from atom indices
+     * @param[in] id the umbrella ID
+     * @param[in] i index of atom i
+     * @param[in] j index of atom j
+     */
+    LE_Distance_Coordinate(int id, unsigned int i, unsigned int j) :
+    i(i), j(j) { umbrella_id(id); }
+    ~LE_Distance_Coordinate() {}
+    virtual LE_Coordinate* clone() const;
+    virtual int get_type() const { return 2; /*distance*/ }
+//    virtual int get_type() const { return util::umbrella::vt_distance; /*distance*/ }
+    virtual void calculate(configuration::Configuration & conf);
+    virtual double get_value(double grid_min, double grid_max) const;
+    virtual double get_deviation(const double & grid_value) const;
+    virtual void apply(double deriv);
+    virtual std::string str() const;
+  protected:
+    template<math::boundary_enum B>
+    void _calculate(configuration::Configuration & conf);
+    unsigned int i, j;
+    configuration::Configuration * m_conf;
+    double dist;
+    math::Vec fi, fj;
+  };
 }
 #endif	/* INCLUDED_LE_COORDINATE_H */
 
