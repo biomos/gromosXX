@@ -105,9 +105,6 @@ void interaction::Lattice_Sum::calculate_charge_density(const topology::Topology
           double assignment_function = w_x * w_y * w_z / cell_volume;
           DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
                   "] assignment function: " << assignment_function);
-#ifdef OMP
-#pragma omp critical
-#endif
           charge_density(point) += assignment_function * charge;
           
           // output multiplied by 11.78708615 for comparison with promd
@@ -232,9 +229,6 @@ void interaction::Lattice_Sum::calculate_squared_charge_grid(const topology::Top
           double assignment_function = w_x * w_y * w_z * cell_volume_i;
           DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
                   "] assignment function: " << assignment_function);
-#ifdef OMP
-#pragma omp critical
-#endif
           squared_charge(point) += assignment_function * q2;
           DEBUG(15,"\t\tsquared_charge(p): " << assignment_function * q2);
         }
@@ -315,9 +309,6 @@ void interaction::Lattice_Sum::calculate_averaged_squared_charge_grid(const topo
           double assignment_function = w_x * w_y * w_z * cell_volume_i;
           DEBUG(15, "\t\tgrid point: [" << point(0) << "," << point(1) << "," << point(2) << 
                   "] assignment function: " << assignment_function);
-#ifdef OMP
-#pragma omp critical
-#endif
           squared_charge(point) += assignment_function * q2;
           DEBUG(15,"\t\tsquared_charge(p): " << assignment_function * q2);
         }
@@ -788,7 +779,7 @@ void interaction::Lattice_Sum::decompose_into_domains(const topology::Topology &
         const math::VArray & r,
         const unsigned int size) {
   DEBUG(8, "Starting domain decomposition for P3M.");
-  if (sim.mpi || sim.openmp) {
+  if (sim.mpi) {
     MeshType & charge_density = *((MeshType*) conf.lattice_sum().charge_density);
 
     const unsigned int Nx = charge_density.x();
@@ -851,7 +842,7 @@ void interaction::Lattice_Sum::decompose_into_domains(const topology::Topology &
       if (nearest_grid_point >= left_bound && nearest_grid_point < right_bound)
         domain.push_back(i);
     }
-  } else { // no mpi or openmp
+  } else { // no mpi
     // we simply add all atoms to the domain.
     const unsigned int num_atoms = topo.num_atoms();
     domain.resize(num_atoms);

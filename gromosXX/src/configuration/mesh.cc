@@ -138,12 +138,6 @@ void GenericMesh<complex_type>::resize(unsigned int x, unsigned int y, unsigned 
 // this function is only for the complex number
 template<>
 void GenericMesh<complex_number>::fft(GenericMesh<complex_number>::fft_type type) {
-#ifdef OMP
-#pragma omp barrier
-  if (omp_get_thread_num() != 0)
-    return;
-#endif
-
   switch (type) {
     case GenericMesh<complex_number>::fft_forward :
               FFTW3(execute(plan_forward));
