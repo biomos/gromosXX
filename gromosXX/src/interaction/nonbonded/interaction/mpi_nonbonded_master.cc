@@ -112,7 +112,15 @@ calculate_interactions(topology::Topology & topo,
             conf.current().pos.size() * 3,
             MPI::DOUBLE,
             0);
-    
+   
+	 // bcast charges (for QM/MM)
+	                    MPI::COMM_WORLD.Bcast(&topo.charge()[0],
+	                                           topo.num_atoms(),
+	                                              MPI::DOUBLE,
+	                                         0);
+
+
+
     // don't forget the box (or are you stupid or what????)
     // std::cerr << "master: bcast box" << std::endl;
     MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
