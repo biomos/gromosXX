@@ -104,7 +104,14 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 			  MPI::DOUBLE,
 			  0);
     
-    // std::cerr << "slave: receiving box" << std::endl;
+    // bcast charges (for QM/MM)
+	            MPI::COMM_WORLD.Bcast(&topo.charge()[0],
+			                        topo.num_atoms(),
+			                       MPI::DOUBLE,
+			          0);
+
+
+	// std::cerr << "slave: receiving box" << std::endl;
     MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0),
 	                  9,
                           MPI::DOUBLE,
