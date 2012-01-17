@@ -129,7 +129,7 @@ int _calculate_order_parameter_restraint_interactions
         }
       }
 
-      if (sim.steps() && sim.steps() % sim.param().orderparamrest.update_step == 0) {
+      if (sim.steps() == 0 || (sim.steps() && sim.steps() % sim.param().orderparamrest.update_step == 0)) {
         Q_avg = 0.0;
         conf.special().orderparamres.Q_winavg[l].pop_front();
         conf.special().orderparamres.Q_winavg[l].push_back(Q);
