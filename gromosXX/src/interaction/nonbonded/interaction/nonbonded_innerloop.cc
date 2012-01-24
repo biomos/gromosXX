@@ -892,11 +892,6 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
           for (int b = 0; b < 3; ++b)
             storage.virial_tensor(b, a) += r(b) * term;
         }
-        //DEBUG(1, "FG: i = " << i << " , j = " << j);
-        lj_crf_interaction(r, lj.c6, lj.c12,
-                topo.charge(i) * topo.charge(j),
-                f, e_lj, e_crf, 2);
-        DEBUG(10, "\t\tatomic virial");
       }
       break;
     
