@@ -765,6 +765,7 @@ t_interaction_spec, t_perturbation_details>
 
           DEBUG(7, "\tatomic virial done");
         }
+        break;
       }
       case simulation::pol_lj_crf_func:
       {
