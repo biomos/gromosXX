@@ -1176,6 +1176,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_t", "parallel_omp");
   fc.unlock("pbc_c", "stochdyn");
   fc.unlock("perturbation", "perturbation_scaling");
+  fc.unlock("perturbation", "slow_growth");
   fc.unlock("perturbation", "bond");
   fc.unlock("perturbation", "angle");
   fc.unlock("perturbation", "dihedral");
