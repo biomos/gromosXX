@@ -532,15 +532,6 @@ t_interaction_spec, t_perturbation_details>
         Periodicity_type const & periodicity) {
   DEBUG(7, "\tone four pair\t" << i << "\t" << j);
 
-  if (t_interaction_spec::interaction_func == simulation::cgrain_func ||
-          t_interaction_spec::interaction_func == simulation::cggromos_func) {
-    // if this is removed, make sure to get correct LJ parameters (CG)
-    io::messages.add("nonbonded_interaction",
-            "no one-four pairs in coarse grained simulations!",
-            io::message::critical);
-    return;
-  }
-
   math::Vec r;
   double e_lj, e_crf, de_lj, de_crf;
 
