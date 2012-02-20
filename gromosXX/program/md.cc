@@ -92,7 +92,7 @@ int main(int argc, char *argv[]){
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
          << "jval" << "xray" << "sym" << "order" << "lud" << "led" << "anatrj" << "print" << "friction"
-         << "qmmm" << "version";
+         << "qmmm" << "version" << "develop";
   
   
   std::string usage;
@@ -131,6 +131,11 @@ int main(int argc, char *argv[]){
     return 1;
   }
 
+  // check for development
+  if (sim.param().develop.develop==true && args.count("develop") < 0) {
+    io::messages.add(sim.param().develop.msg, io::message::develop);
+  }
+  
   traj.title(GROMOSXX "\n" + sim.param().title);
 
   // create output files...
@@ -140,9 +145,15 @@ int main(int argc, char *argv[]){
   md.init(topo, conf, sim);
 
   std::cout << "\nMESSAGES FROM INITIALISATION\n";
-  if (io::messages.display(std::cout) >= io::message::error){
-    std::cout << "\nErrors during initialisation!\n" << std::endl;
-    return 1;
+  {
+    int iom = io::messages.display(std::cout);
+    if (iom >= io::message::error) {
+      std::cout << "\nErrors during initialisation!\n" << std::endl;
+      return 1;
+    } else if (iom == io::message::develop) {
+      std::cout << "\nUse @develop to run untested code.\n" << std::endl;
+      return 1;
+    }
   }
     
   io::messages.clear();

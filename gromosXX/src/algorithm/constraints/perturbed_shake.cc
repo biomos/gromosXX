@@ -32,6 +32,7 @@
 #define SUBMODULE constraints
 
 #include "perturbed_dihedral_constraint.cc"
+#include "shake.cc"
 
 /**
  * Constructor.

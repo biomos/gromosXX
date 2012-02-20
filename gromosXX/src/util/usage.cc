@@ -215,6 +215,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# print version information\n";
     usage += "\t# @version\n\n";
   }
+  
+  if (knowns.count("develop")){
+    usage += "\t# run untested code under development\n";
+    usage += "\t# @develop\n\n";
+  }
   // usage += "#\n\n";
 
 }

@@ -25,6 +25,12 @@ void io::message::add(std::string msg, std::string source,
   m_message.insert(message_type(severity, s));
 }
 
+void io::message::add(std::string msg, severity_enum severity)
+{
+  std::string s = msg;
+  m_message.insert(message_type(severity, s));
+}
+
 /**
  * display the messages.
  */
@@ -61,6 +67,13 @@ io::message::severity_enum io::message::display(std::ostream &os)
   if(it != it_to && notice > r) r = notice;
   for( ; it != it_to; ++it)
     os << std::setw(10) << "NOTICE " << it->second << std::endl;
+  
+  it = m_message.lower_bound(develop);
+  it_to = m_message.upper_bound(develop);
+  
+  if(it != it_to && develop > r) r = develop;
+  for( ; it != it_to; ++it)
+    os << std::setw(10) << "DEVELOP " << it->second << std::endl;
     
   return r;
   

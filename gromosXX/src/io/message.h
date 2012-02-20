@@ -34,19 +34,24 @@ namespace io
        */
       warning, 
       /**
+       * informative message for code under development -> program exits
+       */
+      develop, 
+      /**
        * an error. stop at the next
        * critical point.
        */
       error, 
       /**
-       * a critical error. stop immidiately.
+       * a critical error. stop immediately.
        */
-      critical 
+        critical
     };
     /**
      * add a message.
      */
     void add(std::string msg, std::string source, severity_enum severity);
+    void add(std::string msg, severity_enum severity);
     /**
      * display the message, return
      * the highest severity of the messages
