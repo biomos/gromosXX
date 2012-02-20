@@ -2374,6 +2374,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
       break;
     case 3:
       param.dihrest.dihrest = simulation::dihedral_constr;
+      param.setDevelop("Dihedral constraining is under development."); 
       break;
     default:
       io::messages.add("DIHEDRALRES block: NTDLR must be 0...3.",
@@ -2547,6 +2548,8 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
   buffer = m_block["ORDERPARAMRES"];
   if (buffer.size()) {
 
+    param.setDevelop("Order parameter restraining is under development.");
+    
     block_read.insert("ORDERPARAMRES");
 
     _lineStream.clear();

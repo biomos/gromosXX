@@ -187,7 +187,7 @@ int _calculate_order_parameter_restraint_interactions
         }
         
         energy = 0.5 * K * term * term;
-        double force_term = 0.5 * K * term; // why not -K * term
+        double force_term = 0.5 * K * term; // why not -K * term  
         f_i = (force_term * r_eff_6) * (3.0 * sum_force - D_avg * dDdr);
         f_j = -f_i;
         break;
@@ -211,8 +211,8 @@ int _calculate_order_parameter_restraint_interactions
     
     // apply energy and force
     conf.current().energies.oparam_total += energy;
-    it->v1.force(conf, topo, f_i);
-    it->v2.force(conf, topo, f_j);
+    it->v1.force(conf, topo, f_i); 
+    it->v2.force(conf, topo, f_j); 
   }
 
   return 0;

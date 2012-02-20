@@ -620,7 +620,7 @@ namespace simulation
   class Parameter
   {
   public:
-    Parameter() : title(GROMOSXX) {}
+    Parameter() : title(GROMOSXX) {develop.develop = false;}
     
     /**
      * title of the simulation (from the input file)
@@ -3176,6 +3176,24 @@ namespace simulation
        */
       std::vector<std::pair<math::Matrix, math::Vec> > symmetry_operations;
     } /* symmetry restraints */symrest;
+    
+    /**
+     A struct to mark parts of the code as "under development"
+     */
+    struct develop_struct {
+    public:
+      bool develop;
+      std::string msg;
+    } develop;
+    
+    /**
+     set the development flag as true and specify the error message
+     */
+    void setDevelop(std::string s) {
+      develop.develop = true;
+      develop.msg = s;
+    }    
+    
   };
 
   
