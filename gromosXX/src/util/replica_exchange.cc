@@ -18,7 +18,6 @@
 #include "../algorithm/algorithm/algorithm_sequence.h"
 #include "../interaction/interaction.h"
 #include "../interaction/forcefield/forcefield.h"
-#include "../interaction/special/external_interaction.h"
 
 #include "../algorithm/temperature/temperature_calculation.h"
 #include "../algorithm/temperature/berendsen_thermostat.h"

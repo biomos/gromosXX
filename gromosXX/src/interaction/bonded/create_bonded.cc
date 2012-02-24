@@ -59,12 +59,12 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     interaction::CG_Bond_Interaction * bcg =
               new interaction::CG_Bond_Interaction();
 
-    if (param.cgrain.level > 2) {  // CG
+    if (param.cgrain.level > 1) {  // CG
       if (!quiet)
         os <<"\tcoarse grained bond interaction\n";
       it.read_g96_bonds(bcg->parameter());
       ff.push_back(bcg);
-      if (param.cgrain.level == 4) {  // CG-FG
+      if (param.cgrain.level == 3) {  // CG-FG
         if (!quiet)
           os << "\tquartic bond interaction\n";
         ff.push_back(b);
@@ -79,13 +79,13 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation) {
 
-      if (param.cgrain.level > 2) {
+      if (param.cgrain.level > 1) {
         if (!quiet)
           os << "\tperturbed coarse grained bond interaction\n";
         interaction::Perturbed_CG_Bond_Interaction * pbcg =
                 new interaction::Perturbed_CG_Bond_Interaction(*bcg);
         ff.push_back(pbcg);
-        if (param.cgrain.level == 4) {
+        if (param.cgrain.level == 3) {
           if (!quiet)
             os << "\tperturbed quartic bond interaction\n";
           interaction::Perturbed_Quartic_Bond_Interaction * pb =
@@ -108,12 +108,12 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     interaction::CG_Bond_Interaction * bcg =
               new interaction::CG_Bond_Interaction();
 
-    if (param.cgrain.level > 2) {  // CG
+    if (param.cgrain.level > 1) {  // CG
       if (!quiet)
         os <<"\tcoarse grained bond interaction\n";
       it.read_g96_bonds(bcg->parameter());
       ff.push_back(bcg);
-      if (param.cgrain.level == 4) {  // CG-FG
+      if (param.cgrain.level == 3) {  // CG-FG
         if (!quiet)
           os << "\tharmonic bond interaction\n";
         ff.push_back(b);
@@ -128,13 +128,13 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     if (param.perturbation.perturbation) {
 
-      if (param.cgrain.level > 2) {
+      if (param.cgrain.level > 1) {
         if (!quiet)
           os << "\tperturbed coarse grained bond interaction\n";
         interaction::Perturbed_CG_Bond_Interaction * pbcg =
                 new interaction::Perturbed_CG_Bond_Interaction(*bcg);
         ff.push_back(pbcg);
-        if (param.cgrain.level == 4) {
+        if (param.cgrain.level == 3) {
           if (!quiet)
             os << "\tperturbed harmonic bond interaction\n";
           interaction::Perturbed_Harmonic_Bond_Interaction * pb =
@@ -149,7 +149,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
         ff.push_back(pb);
       }
     }
-  } else if (param.force.bond == 0 && param.cgrain.level > 2) {
+  } else if (param.force.bond == 0 && param.cgrain.level > 1) {
     interaction::CG_Bond_Interaction * bcg =
               new interaction::CG_Bond_Interaction();
     if (!quiet)

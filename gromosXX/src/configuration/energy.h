@@ -145,10 +145,6 @@ namespace configuration
      * total energy (=0.0) of the (distance) constraint interaction(s).
      */
     double constraints_total;
-    /**
-     * total energy of an external interaction
-     */
-    double external_total;
     
     /**
      * total energy of the dipole-dipole interaction (self energy)

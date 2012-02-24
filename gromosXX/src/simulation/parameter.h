@@ -1199,14 +1199,13 @@ namespace simulation
        * - energy_group empty
        * - special_loop -1
        * - interaction function lj_crf_func
-       * - external interaction 0
        * - force_groups false
        */
       force_struct() : bond(1), angle(1), improper(1),
 		       dihedral(1), crossdihedral(1), nonbonded_vdw(1),
 		       nonbonded_crf(1), special_loop(special_loop_off),
 		       interaction_function(lj_crf_func),
-		       external_interaction(0), force_groups(false)
+		       force_groups(false)
       {}
       
       /**
@@ -1249,10 +1248,6 @@ namespace simulation
        * nonbonded interaction function
        */
       interaction_func_enum interaction_function;
-      /**
-       * add an external interaction
-       */
-      int external_interaction;
       /**
        * use energy groups also for forces
        */
@@ -2127,18 +2122,8 @@ namespace simulation
        * do coarse graining
        * - 0 atomistic (off)
        * - 1 coarse-graining using MARTINI model (on)
-       * - 2 multi-graining using MARTINI model (on)
-       * - 3 coarse-graining using GROMOS model (on)
-       * - 4 mixed-graining using GROMOS model (on)
-       *
-       * multigraining requires a set of topology,
-       * configuration and input parameters for an
-       * atomistic and for a coarse-grained simulation.
-       * The coarse-grained files are indicated by
-       * cg_topo, cg_conf and cg_input.
-       * the coarse-grained topology should contain an
-       * additional block VIRTUALGRAINS that specifies
-       * the virtual atoms from "real" atomistic atoms.
+       * - 2 coarse-graining using GROMOS model (on)
+       * - 3 mixed-graining using GROMOS model (on)
        */
       int level;
       /**
@@ -2380,8 +2365,7 @@ namespace simulation
       }
       /**
        * number of steps to boost the
-       * nonbonded (and external; multigraining ;-)
-       * terms
+       * nonbonded terms
        */
       int steps;
       /**

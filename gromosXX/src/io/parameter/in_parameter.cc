@@ -1759,9 +1759,8 @@ CGRAIN
 # NTCGRAN 0..4 coarse grain selection
 #         0: atomistic (off)
 #         1: coarse-grained using MARTINI model (on)
-#         2: multi-grained using MARTINI model (on)
-#         3: coarse-grained using GROMOS model (on)
-#         4: mixed-grained using GROMOS model (on)
+#         2: coarse-grained using GROMOS model (on)
+#         3: mixed-grained using GROMOS model (on)
 #     EPS >= 0.0 dielectric constant for coarse grained coulombic interaction
 #    EPSM >= 0.0 dielectric constant for mixed CG-FG coulombic interaction
 # NTCGRAN     EPS     EPSM
@@ -1802,14 +1801,10 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
         break;
       case 2:
         param.cgrain.level = 2;
-        param.force.interaction_function = simulation::cgrain_func;
+        param.force.interaction_function = simulation::cggromos_func;
         break;
       case 3:
         param.cgrain.level = 3;
-        param.force.interaction_function = simulation::cggromos_func;
-        break;
-      case 4:
-        param.cgrain.level = 4;
         param.force.interaction_function = simulation::cggromos_func;
         break;
       default:

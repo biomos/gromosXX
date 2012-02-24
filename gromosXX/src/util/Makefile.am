@@ -25,7 +25,6 @@ xxinclude_HEADERS = error.h\
 	replica_exchange_slave.h\
 	template_split.h\
 	virtual_atom.h\
-	virtual_grain.h\
 	coding.h\
 	feature.h\
 	le_coordinate.h\
@@ -55,7 +54,6 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	replica_exchange_slave.cc\
 	create_simulation.cc\
 	virtual_atom.cc\
-	virtual_grain.cc\
 	coding.cc\
 	feature.cc\
 	le_coordinate.cc\
