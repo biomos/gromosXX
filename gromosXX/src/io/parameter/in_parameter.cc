@@ -1756,7 +1756,7 @@ void io::In_Parameter::read_PAIRLIST(simulation::Parameter &param,
  * @section cgrain CGRAIN block
  * @verbatim
 CGRAIN
-# NTCGRAN 0..4 coarse grain selection
+# NTCGRAN 0..3 coarse grain selection
 #         0: atomistic (off)
 #         1: coarse-grained using MARTINI model (on)
 #         2: coarse-grained using GROMOS model (on)
