@@ -3828,7 +3828,7 @@ EDS
   1
 # SOFT CORE
 # ALPHLJ  ALPHC
-  0.5     0.5
+  0.0     0.0
 # FUNCTIONAL FORM
   3
 # NUMSTATES
@@ -3843,7 +3843,7 @@ EDS
   1    
 # SOFT CORE
 # ALPHLJ  ALPHC
-  0.5     0.5
+  0.0     0.0
 # FUNCTIONAL FORM
   3
 # NUMSTATES
@@ -3906,6 +3906,8 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
       }
       param.eds.soft_vdw = soft_lj;
       param.eds.soft_crf = soft_crf;
+      if (soft_lj > 0.0 || soft_crf > 0.0)
+        param.setDevelop("Soft-core EDS is under development.");
       
       switch (form) {
         case 1: {
