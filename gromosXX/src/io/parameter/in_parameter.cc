@@ -4681,7 +4681,7 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
   } // if block
 }
 /**
- * @section B&S-LEUS BSLEUS block
+ * @section bsleusparam BSLEUS block
  * @verbatim
 BSLEUS
 #
@@ -4697,7 +4697,7 @@ BSLEUS
 #   > 0:           Every nth step
 # 
 # BSLEUS    BUILD   WRITE
-  1         1       1
+  1         1       0
 END
 @endverbatim
  */
@@ -4714,8 +4714,6 @@ void io::In_Parameter::read_BSLEUS(simulation::Parameter& param, std::ostream& o
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
     
     int use_bsleus, build, write;
-    //double forceConstIncr;
-    //_lineStream >> use_bsleus >> build >> forceConstIncr >> write;
     _lineStream >> use_bsleus >> build >> write;
     if (_lineStream.fail()){
       io::messages.add("Bad BSLEUS block!", "In_Parameter", io::message::error);

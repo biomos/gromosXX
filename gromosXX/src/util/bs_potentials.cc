@@ -6,15 +6,10 @@
 #include "../configuration/configuration.h"
 #include "../interaction/interaction.h"
 
-//#include "../math/periodicity.h"
-//#include "../io/message.h"
-
-//#include "../util/template_split.h"
 #include "../util/debug.h"
 
 #include "bs_potentials.h"
 #include "bs_vector.h"
-//#include "bs_coordinate.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -32,55 +27,45 @@ void util::BS_Potential::calcPotAndForce(double gridPointCoordinate,
   double x3 = x * x2;
   potential = m_memory[gridPointIndex1] * (1 - 3 * x2 + 2 * x3);
   potential += m_memory[gridPointIndex2] * (3 * x2 - 2 * x3);
-  // potential = M[i] (1 - 3x^2 + 2x^3) + M[i+1] (1 - 3(x-1)^2 - 2(x-1)^3)
   force = (m_memory[gridPointIndex1] - m_memory[gridPointIndex2]) * 6 * (x2 - x); 
   DEBUG(10, "Grid Point Coordinate: " << gridPointCoordinate << "; active Grid Point " << m_activeGridPoint);
   DEBUG(10, "index1: " << gridPointIndex1 << "; index2: " << gridPointIndex2);
   DEBUG(10, "Potential: " << potential << "; force: " << force);
 }  
 
-double util::BS_Potential::calcBoltzmann(const double beta){
-  m_BoltzmannFactor = exp(-beta * m_potential);
-  DEBUG(10, "Boltzmann: " << m_BoltzmannFactor << " from Pot = " << m_potential << " (beta = " << beta << ")");
-  return m_BoltzmannFactor;
-}
-
-double util::BS_Potential::calcWeight(double totalPartitionFct){
-  m_weight = m_BoltzmannFactor / totalPartitionFct;
-  // If the weight is too small, make it zero
-  if (m_weight < math::epsilon) {
-    m_weight = 0;
+double util::BS_Potential::calcWeight(std::vector<double> &potentials, double beta)
+{
+  double sum = 0;
+  std::vector<double>::iterator it = potentials.begin(),
+          to = potentials.end();
+  for (; it != to; it++){
+    sum += exp(-beta * (*it - m_potential));
   }
-  DEBUG(10, "Weight: " << m_weight << "; Boltzmann: " << m_BoltzmannFactor);
+  m_weight = 1.0 / sum;
   return m_weight;
 }
 
-void util::BS_Potential::updateMemory(){
+bool util::BS_Potential::updateMemory(bool updateAuxMem){
+  DEBUG(12, "I will " << updateAuxMem << " update auxmem");
   DEBUG(10, "I update the memory by " << m_weight << " * " << m_forceIncrement);
   m_memory[m_activeGridPoint] += m_weight * m_forceIncrement;
   
-  if (m_reductionFactor < 1.0){
+  if (updateAuxMem){
+    DEBUG(10, "Update auxiliary memory by " << m_weight);
     m_auxiliaryMemory[m_activeGridPoint] += m_weight;
     
-    bool bigger = true; // are all memory points bigger than local visiting cutoff?
+    // are all memory points bigger than local visiting cutoff?
+    bool bigger = true; 
     std::vector<double>::iterator it = m_auxiliaryMemory.begin(),
             to = m_auxiliaryMemory.end();
     for (; it != to; it++){
-      bigger = bigger && (*it > m_localCutoff);
+      bigger = bigger && (*it >= m_localCutoff);
       if (!bigger)
-        return;
+        return false;
     }
-    
-    if (bigger){
-      m_auxiliaryMemory.assign(num_gp, 0);
-      m_auxiliaryCounter++;
-      if (m_auxiliaryCounter > m_globalCutoff){
-        m_auxiliaryCounter = 0;
-        m_reductionCounter++;
-        m_forceIncrement *= m_reductionFactor;
-      }
-    }
+    return bigger; // should be true
   }
+  return false;
 }
 
 void util::BS_Potential::setMemoryToZero(){
@@ -103,8 +88,7 @@ void util::BS_Potential::setMemory(std::vector<double>& newMemory){
   m_memory = newMemory;
 }
 
-void util::BS_Potential::setAuxMemory(std::vector<double>& newMemory, 
-                                      int auxCounter, int redCounter){
+void util::BS_Potential::setAuxMemory(std::vector<double>& newMemory){
   if (newMemory.size() != num_gp){
     std::ostringstream os;
     os << "Cannot set memory to new memory. Size of new Memory (" 
@@ -114,54 +98,39 @@ void util::BS_Potential::setAuxMemory(std::vector<double>& newMemory,
     return;
   }
   m_auxiliaryMemory = newMemory;
-  m_reductionCounter = redCounter;
-  m_auxiliaryCounter = auxCounter;
-  m_forceIncrement *= pow(m_reductionFactor, m_reductionCounter);
 }
 
-void util::BS_Potential::getAuxMemory(std::vector<double>& newMemory, 
-                                      int& auxCounter, int& redCounter){
+void util::BS_Potential::getAuxMemory(std::vector<double>& newMemory){
   newMemory = m_auxiliaryMemory;
-  redCounter = m_reductionCounter;
-  auxCounter = m_auxiliaryCounter;
 }
 
 void 
-util::BS_Potential::setMemoryParameters(double forceIncrement, double reductionFactor, 
-                                        int localCutoff, int globalCutoff)
+util::BS_Potential::setMemoryParameters(double forceIncrement, int localCutoff)
 {
   m_forceIncrement = forceIncrement;
-  m_reductionFactor = reductionFactor;
   m_localCutoff = localCutoff;
-  m_globalCutoff = globalCutoff;
 }
 
 std::string util::BS_Potential::traj_str(){
   std::ostringstream os;
   os << std::setw(3) << id << " "
-          << std::setw(10) << m_potential << " "
-          << std::setw(10) << m_weight << " "
-          << std::setw(3) << m_memory.size() << " ";
+          << std::setw(3) << (m_potentialType == BS_Potential::bs_sphere ? 1 : 0) << " "
+          << std::setw(12) << m_potential << " "
+          << std::setw(8) << m_weight;;
   
-  std::vector<double>::iterator it = m_memory.begin(),
-          to = m_memory.end();
-  
-  for (; it != to; it++){
-    os << std::setw(10) << *it << " ";
-  }
   return os.str();
 }
 
 /********************************************************
   THE SPHERE
  */
-bool util::BS_Sphere::calcPotential(BS_Vector & bs_pos){
+double util::BS_Sphere::calcPotential(BS_Vector & bs_pos){
   // vec(r_k)
   DEBUG(8, "\nSphere " << id << " Center: " << m_center.str() << " Position: " << bs_pos.str());
   BS_Vector radialVector; 
   bs_pos.minus(m_center, radialVector);
   double radialDistance = radialVector.normalize();
-  DEBUG(8, "; RadialVector |" << radialVector.str() << "| = " << radialDistance);
+  DEBUG(6, "; RadialVector |" << radialVector.str() << "| = " << radialDistance);
   
   if (radialDistance >= m_radius){
     double diff2 = radialDistance - m_radius;
@@ -173,26 +142,28 @@ bool util::BS_Sphere::calcPotential(BS_Vector & bs_pos){
     m_activeGridPoint = (num_gp - 1);
     DEBUG(8, "Outside: Potential = " << m_potential << "; acitveGridPoint = " << m_activeGridPoint);
     DEBUG(8, "Sphere " << id << " Derivatives = " << m_potDerivatives.str()); 
-    return false;
   }
   else {
     double gridPointCoordinate = m_gridPointScaling * radialDistance;
-    DEBUG(10, "GridPointCoordinate = " << gridPointCoordinate);
+    //double gridPointCoordinate = (num_gp - 1) * pow((radialDistance / m_radius), radialVector.size());
+    DEBUG(6, "GridPointCoordinate = " << gridPointCoordinate);
     double force;
     calcPotAndForce(gridPointCoordinate, m_potential, force);
     DEBUG(10, "Force = " << force);
     m_potDerivatives = radialVector * (m_gridPointScaling * force);
-    DEBUG(8, "Potential = " << m_potential << "; acitveGridPoint = " << m_activeGridPoint);
+    //m_potDerivatives = radialVector * (gridPointCoordinate * radialVector.size() / radialDistance * force);
+    DEBUG(6, "Potential = " << m_potential << "; acitveGridPoint = " << m_activeGridPoint);
     DEBUG(8, "Sphere " << id << " Derivatives = " << m_potDerivatives.str());
-    return true;
   }
-  return false;
+  return m_potential;
 }
 
 std::string util::BS_Sphere::str(){
   std::ostringstream os;
-  os << "Sphere " << id << "\n";
-  os << "\tCenter: " << m_center.str() << "\n";
+  os << std::setw(3) << id
+          << std::setw(10) << m_force_const << " "
+          << std::setw(6) << m_radius << " "
+          << m_center.str();
   return os.str();
 }
 
@@ -200,7 +171,7 @@ std::string util::BS_Sphere::str(){
 /*************************************************
  THE STICK
  */
-bool util::BS_Stick::calcPotential(BS_Vector& bs_pos){
+double util::BS_Stick::calcPotential(BS_Vector& bs_pos){
   BS_Vector relativePosition;
   bs_pos.minus(m_startPoint, relativePosition);
   double longitudinalDistance = relativePosition.dot(m_unitLongitudinal);
@@ -222,7 +193,7 @@ bool util::BS_Stick::calcPotential(BS_Vector& bs_pos){
     }
     DEBUG(8, "Potential = " << m_potential << "; acitveGridPoint = " << m_activeGridPoint);
     DEBUG(8, "Stick " << id << " Derivatives = " << m_potDerivatives.str());
-    return false;
+    //return false;
   }
   // At the end of the stick
   else if (longitudinalDistance >= m_length){
@@ -241,7 +212,6 @@ bool util::BS_Stick::calcPotential(BS_Vector& bs_pos){
     }
     DEBUG(8, "Potential = " << m_potential << "; acitveGridPoint = " << m_activeGridPoint);
     DEBUG(8, "Stick " << id << " Derivatives = " << m_potDerivatives.str());
-    return false;
   } 
   // aside of the stick
   else{
@@ -251,16 +221,10 @@ bool util::BS_Stick::calcPotential(BS_Vector& bs_pos){
     m_potDerivatives = m_unitLongitudinal * (force * m_gridPointScaling);
     BS_Vector transversalVector;
     double transversalDistance;
-    if (relativePosition.size() > 1) {
-      relativePosition.minus(m_unitLongitudinal * longitudinalDistance,
-              transversalVector);
-      transversalDistance = transversalVector.normalize();
-      DEBUG(8, "Transversal distance: " << transversalDistance << "; from : " << transversalVector.str());
-    } 
-    else {
-      transversalDistance = 0;
-      DEBUG(8, "Transversal distance: " << transversalDistance);
-    }
+    relativePosition.minus(m_unitLongitudinal * longitudinalDistance,
+                           transversalVector);
+    transversalDistance = transversalVector.normalize();
+    DEBUG(8, "Transversal distance: " << transversalDistance << "; from : " << transversalVector.str());
     double offset = transversalDistance - m_half_width;
     if (offset > 0){
       m_potential += m_half_force_const * offset * offset;
@@ -268,14 +232,16 @@ bool util::BS_Stick::calcPotential(BS_Vector& bs_pos){
     }
     DEBUG(8, "Potential = " << m_potential << "; acitveGridPoint = " << m_activeGridPoint);
     DEBUG(8, "Stick " << id << " Derivatives = " << m_potDerivatives.str());
-    return true;
   }   
+  return m_potential;
 }
 
 std::string util::BS_Stick::str(){
   std::ostringstream os;
-  os << "Stick " << id << "\n";
-  os << "\tStart: " << m_startPoint.str() << "\n";
-  os << "\tEnd: " << m_endPoint.str() << "\n";
+  os << std::setw(3) << id
+          << std::setw(10) << m_force_const << " "
+          << std::setw(6) << m_half_width << " "
+          << m_startPoint.str() << " "
+          << m_endPoint.str();
   return os.str();
 }

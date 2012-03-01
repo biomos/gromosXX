@@ -29,74 +29,122 @@ util::BS_Umbrella::~BS_Umbrella(){
 void util::BS_Umbrella::apply(configuration::Configuration& conf,
         simulation::Simulation &sim){
   DEBUG(5, "BS_Umbrella: Apply BSLEUS");
-  double totalPartitionFct = 0; // sum[ exp (-beta *b_m) ]
+  std::vector<double> potentials;
   std::vector<BS_Subspace *>::iterator it = m_subspaces.begin(),
           to = m_subspaces.end();
   for (; it !=  to; it++){
     DEBUG(5, "BS_Umbrella: Calculate Potentials from Subspace");
-    totalPartitionFct += (*it)->calculatePotential(conf, sim);
+    (*it)->calculatePotential(conf, potentials);
   }
+  
+  const double beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+  DEBUG(5, "BS_Umbrella: beta: " << beta);
+  double sum = 0;
+  for (unsigned int i = 0; i < potentials.size(); i++){
+    sum += exp(-beta * potentials[i]);
+    DEBUG(8, "Potential[" << i << "] = " << potentials[i]);
+  }
+  m_bsleus_total = - 1.0 / beta * log(sum);// + min;
+  DEBUG(6, "Total Potential = " << m_bsleus_total);
+          
+  conf.current().energies.bsleus_total = m_bsleus_total;
   
   for (it = m_subspaces.begin(); it != to; it++){
     DEBUG(5, "BS_Umbrella: Add the forces from the subspace");
-    (*it)->addForces(conf, totalPartitionFct);
+    (*it)->addForces(conf, potentials, beta);
   }
   
-  const double beta_inv = (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
-  DEBUG(5, "BS_Umbrella: Inverse beta: " << beta_inv)
-  m_bsleus_total = - beta_inv * log(totalPartitionFct);
-  conf.current().energies.bsleus_total = m_bsleus_total;
-  
   if(sim.param().bsleus.building){
+  DEBUG(5, "BS_Umbrella: Building, therefore: update the memory");
     for (it = m_subspaces.begin(); it != to; it++){
-     DEBUG(5, "BS_Umbrella: Building, therefore: update the memory");
      (*it)->updateMemory();
     }
   }
 }
 
 //------------------------------------------
-void util::BS_Umbrella::addSubspace(std::vector<BS_Subspace  *> &subspaces){
+void util::BS_Umbrella::addSubspaces(std::vector<BS_Subspace  *> &subspaces){
   DEBUG(5, "Added the subspaces");
   m_subspaces = subspaces;
 }
 
-// Memories
-void util::BS_Umbrella::setMemory(int id, BS_Potential::potential_enum type, 
-                                  std::vector<double>& memory)
+void util::BS_Umbrella::setCounter(int subid, int auxCounter, int redCounter)
 {
-  m_subspaces[0]->setMemory(id, type, memory);
+  m_subspaces[subid]->setCounter(auxCounter, redCounter);
 }
 
-bool util::BS_Umbrella::getMemory(int id, BS_Potential::potential_enum type, 
+void util::BS_Umbrella::getCounter(int subid, 
+                                   unsigned int& auxCounter, 
+                                   unsigned int& redCounter) const
+{
+  m_subspaces[subid]->getCounter(auxCounter, redCounter);
+}
+
+// Memories
+void util::BS_Umbrella::setMemory(int id, int subid, 
+                                  BS_Potential::potential_enum type, 
+                                  std::vector<double>& memory)
+{
+  m_subspaces[subid]->setMemory(id, type, memory);
+}
+
+bool util::BS_Umbrella::getMemory(int id, unsigned int &subid, 
+                                  BS_Potential::potential_enum type, 
                                   std::vector<double>& memory) const
 {
-  return m_subspaces[0]->getMemory(id, type, memory);  
+  for (unsigned int i = 0; i < m_subspaces.size(); i++){
+    if (m_subspaces[i]->getMemory(id, type, memory)){
+      subid = i;
+      return true;
+    }
+  }
+  return false;
 }
 
 void util::BS_Umbrella::setMemoryToZero(){
-  m_subspaces[0]->setMemoryToZero();
+  for (unsigned int i = 0; i < m_subspaces.size(); i++)
+    m_subspaces[i]->setMemoryToZero();
 }
 
 // Auxiliary Memories
-void util::BS_Umbrella::setAuxMemory(int id, BS_Potential::potential_enum type, 
-                                     std::vector<double>& memory, int auxCounter, 
-                                     int redCounter)
+void util::BS_Umbrella::setAuxMemory(int id, int subid, 
+                                     BS_Potential::potential_enum type, 
+                                     std::vector<double>& memory)
 {
-  m_subspaces[0]->setAuxMemory(id, type, memory, auxCounter, redCounter);
+  m_subspaces[subid]->setAuxMemory(id, type, memory);
 }
 
-bool util::BS_Umbrella::getAuxMemory(int id, BS_Potential::potential_enum type, 
-                                     std::vector<double>& memory, int &auxCounter, 
-                                     int &redCounter) const
+bool util::BS_Umbrella::getAuxMemory(int id, unsigned int &subid, 
+                                     BS_Potential::potential_enum type, 
+                                     std::vector<double>& memory) const
 {
-  return m_subspaces[0]->getAuxMemory(id, type, memory, auxCounter, redCounter);  
+  for (unsigned int i = 0; i < m_subspaces.size(); i++){
+    if (m_subspaces[i]->getAuxMemory(id, type, memory)){
+      subid = i;
+      return true;
+    }  
+  }
+  return false;
 }
 
 void util::BS_Umbrella::setAuxMemoryToZero(){
-  m_subspaces[0]->setAuxMemoryToZero();
+  for (unsigned int i = 0; i < m_subspaces.size(); i++)
+    m_subspaces[i]->setAuxMemoryToZero();
 }
 
+
+//------------------------------------------
+void util::BS_Umbrella::getPosition(unsigned int subid, std::vector<double> &position) const
+{
+  assert(subid < m_subspaces.size());
+  m_subspaces[subid]->getPosition(position);
+}
+
+void util::BS_Umbrella::setPosition(unsigned int subid, std::vector<double> &position)
+{
+  assert(subid < m_subspaces.size());
+  m_subspaces[subid]->setPosition(position);
+}
 
 //------------------------------------------
 double util::BS_Umbrella::getTotalPotential() const {
@@ -113,9 +161,52 @@ void util::BS_Umbrella::getForce(std::vector<double>& force) const {
   m_subspaces[0]->getForce(force);
 }
 
+bool util::BS_Umbrella::printAuxMem() const {
+  bool printIt = true;
+  for (unsigned int i = 0; i < m_subspaces.size(); i++)
+    printIt = m_subspaces[i]->printAuxMem() && printIt;
+  return printIt;
+}
+
 //------------------------------------------
 std::string util::BS_Umbrella::traj_str() const{
   std::ostringstream os;
-  os << m_subspaces[0]->traj_str();
+  os << "# BS_UMBRELLA\n"
+          << "# TOT_ENERGY NUM_SUBSPACES\n"
+          << std::setw(10) << m_bsleus_total << " "
+          << std::setw(10) << m_subspaces.size() << "\n";
+  
+  os << "# BS_SUBSPACES\n";
+  
+  std::vector<BS_Subspace*>::const_iterator it = m_subspaces.begin(),
+          to = m_subspaces.end();
+  
+  int i = 1;
+  for (; it != to; it++, i++){
+    os << "# BS_SUBSPACE " << i << "\n"
+       << "# SUBID TOTDIM NUMSPH NUMSTK AUXCOUNT REDCOUNT\n";
+    os << (*it)->traj_str();
+  }
+  return os.str();
+}
+
+std::string util::BS_Umbrella::str(){
+  std::ostringstream os;
+  os << "# BS_UMBRELLA\n"
+          << "# NUM_SUBSPACES SMOOTHING\n"
+          << std::setw(10) << m_subspaces.size() << " "
+          << std::setw(10) << m_smoothing << "\n";
+  
+  os << "# BS_SUBSPACES\n";
+  
+  std::vector<BS_Subspace*>::iterator it = m_subspaces.begin(),
+          to = m_subspaces.end();
+  
+  int i = 1;
+  for (; it != to; it++, i++){
+    os << "# BS_SUBSPACE " << i << "\n"
+       << "# SUBID NUMCOORD NUMSPH NUMSTK FORCEINCR FORCERED LOCCUTOFF GLOBCUTOFF\n";
+    os << (*it)->str();
+  }
   return os.str();
 }

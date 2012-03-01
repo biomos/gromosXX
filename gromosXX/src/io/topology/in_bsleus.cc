@@ -22,6 +22,7 @@
 #include "../../util/bs_umbrella.h"
 #include "../../util/bs_vector.h"
 #include "in_bsleus.h"
+#include "in_reference.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -29,9 +30,9 @@
 #define SUBMODULE topology
 
 /**
- * @section BSLEUS input
+ * @section bsleussub BSLEUSSUB block
  * 
- * The input is define in a separate file (@bsleus).
+ * The parmater input is define elsewhere (@ref bsleus).
  * 
  * The BSLEUSSUB specifies the subspaces, especially the memory settings
  * @verbatim
@@ -53,6 +54,8 @@ END
 
  @endverbatim
  * 
+ * @section bsleuscoord BSLEUSCOORD block
+ * 
  * The BSLEUSCOORD specifies the (internal) coordinates defining the active subspace
  * @verbatim
 BSLEUSCOORD
@@ -64,6 +67,7 @@ BSLEUSCOORD
 # CTYPE:    Type of the coordinate
 #   1:  Dihedral angles (i, j, k, l)
 #   2:  Distance (i, j)
+#   3:  Sum of two dihedral angles ({i,j,k,l}_1, {i,j,k,l}_2)
 #   ...
 # CREF:     The reference value of the coordinate (sigma_n)
 #           Only important for the radius and the width,
@@ -75,8 +79,12 @@ BSLEUSCOORD
 # CID   SUBSP   CTYPE   CREF    DEF
   1     1       1       1       2 4 6 8
   2     1       1       1       4 6 8 10
+#  3     1       2       0.1     1 10
+#  4     1       3       1       4 6 8 10 6 8 10 12
 END
 @endverbatim
+ * 
+ * @section bsleussph BSLEUSSPH block
  * 
  * The BSLEUSSPH block defines the spheres
  * @verbatim
@@ -99,6 +107,8 @@ BSLEUSSPH
   4     1       60   60     45      0.5     10
 END
 @endverbatim
+ * 
+ * @section bsleusstk BSLEUSSTK block
  * 
  * The BSLEUSSTK block defines the sticks
  * @verbatim
@@ -192,7 +202,10 @@ void io::In_BSLEUS::read(topology::Topology &topo,
   // ==============================================================
   // Number of coordinates
   int numCoords;
-  std::vector<double> references;
+  std::vector<unsigned int> numCoordsPerSubspace(num_subspaces, 0);
+  std::vector<std::vector<double> > references(num_subspaces, std::vector<double>());
+  std::map<unsigned int, std::string> refFiles;
+  std::vector<unsigned int> cartAtoms;
 
   { // BSLEUSCOORD
     buffer = m_block["BSLEUSCOORD"];
@@ -218,7 +231,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
 
-    int id, subspace, type, i, j, k, l, numCoordRead = 0;
+    int id, subspace, type, numCoordRead = 0;
     double reference;
 
 
@@ -233,10 +246,15 @@ void io::In_BSLEUS::read(topology::Topology &topo,
                 "In_BSLEUS", io::message::error);
         return;
       }
-      references.push_back(reference);
-
+      DEBUG(10, "ID: " << id << " SUBSP: " << subspace << " TYPE: " << type << " REF: " << reference);
+      // Convert to GROMOS
+      subspace--;
+      util::BS_Coordinate *coord;
+      
+      // The Type of the coordinate
       switch (type) {
         case util::BS_Coordinate::dihedral: {
+          unsigned int i, j, k, l;
           _lineStream >> i >> j >> k >> l;
           if (_lineStream.fail()) {
             io::messages.add("bad line in BSLEUSCOORD block (Dihedral angle)",
@@ -245,7 +263,6 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           }
           // Convert to gromos
           i--, j--, k--, l--;
-          subspace--;
           if (i > topo.num_atoms() ||
                   j > topo.num_atoms() ||
                   k > topo.num_atoms() ||
@@ -257,13 +274,11 @@ void io::In_BSLEUS::read(topology::Topology &topo,
             return;
           }
 
-          util::BS_Dihedral *dih = new util::BS_Dihedral(id, i, j, k, l, reference);
-          DEBUG(10, dih->str());
-          bs_subspaces[subspace]->addCoordinate(dih);
-          numCoordRead++;
+          coord = new util::BS_Dihedral(id, i, j, k, l, reference);
           break;
         }
         case util::BS_Coordinate::distance: {
+          unsigned int i, j;
           _lineStream >> i >> j;
           if (_lineStream.fail()) {
             io::messages.add("bad line in BSLEUSCOORD block (Distance)",
@@ -272,7 +287,6 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           }
           // Convert to gromos
           i--, j--;
-          subspace--;
           if (i > topo.num_atoms() || j > topo.num_atoms()) {
             std::ostringstream msg;
             msg << "Distance (" << i + 1 << "-" << j + 1 
@@ -280,26 +294,111 @@ void io::In_BSLEUS::read(topology::Topology &topo,
             io::messages.add(msg.str(), "In_BSLEUS", io::message::error);
             return;
           }
-          util::BS_Distance *dst = new util::BS_Distance(id, i, j, reference);
-          DEBUG(10, dst->str());
-          bs_subspaces[subspace]->addCoordinate(dst);
-          numCoordRead++;
+          coord = new util::BS_Distance(id, i, j, reference);
           break;
         }
-        default:
+        case util::BS_Coordinate::cartesian: {
+          unsigned int num_atoms;
+          _lineStream >> num_atoms;
+          if (_lineStream.fail()) {
+            io::messages.add("bad line in BSLEUSCOORD block (Cartesian)",
+                    "In_BSLEUS", io::message::error);
+            return;
+          }
+          if (num_atoms < 0){
+            io::messages.add("Cartesian: Number of Atoms is negative!",
+                    "In_BSLEUS", io::message::error);
+            return;
+          }
+          bool allAtoms = true; // num_atoms == 0
+          std::vector<unsigned int> atom_list;
+          if (num_atoms){
+            allAtoms = false;
+            unsigned int atom;
+            DEBUG(10, "We will add in total " << num_atoms << " atoms.")
+            for (unsigned int i = 0; i < num_atoms; i++){
+              _lineStream >> atom;
+              if (_lineStream.fail()) {
+                io::messages.add("bad atoms in BSLEUSCOORD block (Cartesian)",
+                        "In_BSLEUS", io::message::error);
+                return;
+              }
+              atom--;
+              if (atom >= topo.num_atoms()) {
+                std::ostringstream msg;
+                msg << "Cartesian: atom indices (" << atom + 1
+                    << ") out of range.";
+                io::messages.add(msg.str(), "In_BSLEUS", io::message::error);
+                return;
+              }
+              DEBUG(8, "Cartesian: Adding atom " << atom + 1);
+              atom_list.push_back(atom);
+              cartAtoms.push_back(atom);
+            }
+          }
+          coord = new util::BS_Cartesian(id,atom_list, allAtoms, reference);
+          break;
+        }
+        case util::BS_Coordinate::dihedralSum: {
+          unsigned int i, j, k, l, ii, jj, kk, ll;
+          _lineStream >> i >> j >> k >> l >> ii >> jj >> kk >> ll;
+          if (_lineStream.fail()) {
+            io::messages.add("bad line in BSLEUSCOORD block (Dihedral angle)",
+                    "In_BSLEUS", io::message::error);
+            return;
+          }
+          // Convert to gromos
+          i--, j--, k--, l--, ii--, jj--, kk--, ll--;
+          if (i > topo.num_atoms() ||
+                  j > topo.num_atoms() ||
+                  k > topo.num_atoms() ||
+                  l > topo.num_atoms() || 
+                  ii > topo.num_atoms() ||
+                  jj > topo.num_atoms() ||
+                  kk > topo.num_atoms() ||
+                  ll > topo.num_atoms()) {
+            std::ostringstream msg;
+            msg << "Dihedral (" << i + 1 << "-" << j + 1 << "-" << k + 1 << "-"
+                    << l + 1 << ") or (" 
+                    << ii + 1 << "-" << jj + 1 << "-" << kk + 1 << "-"
+                    << ll + 1 << ") atom indices out of range.";
+            io::messages.add(msg.str(), "In_BSLEUS", io::message::error);
+            return;
+          }
+
+          coord = new util::BS_DihedralSum(id, i, j, k, l, ii, jj, kk, ll, reference);
+          break;
+        }
+        default: {
           io::messages.add("Unknown Type in BSLEUSCOORD Block!",
                   "In_BSLEUS", io::message::error);
           return;
-      }
+        }
+      } // end switch
+      bs_subspaces[subspace]->addCoordinate(coord);
+      DEBUG(10, coord->str() << " added to subspace " << subspace + 1);
+      numCoordRead++;
+      numCoordsPerSubspace[subspace]++;
+      references[subspace].push_back(reference);
     }
 
     if (numCoords != numCoordRead) {
-      io::messages.add("The numbers of coordinates in BSLEUSCOORD seems wrong!",
-              "In_BSLEUS", io::message::warning);
+      std::ostringstream os;
+      os << "The numbers of coordinates in BSLEUSCOORD seems wrong! "
+         << "Expected " << numCoords <<", but read " << numCoordRead << " in!";
+      io::messages.add(os.str(), "In_BSLEUS", io::message::error);
       return;
     }
+    DEBUG(5, "Read in " << numCoordRead << " different definitions of coordinates.");
   } // BSLEUSCOORD
-  // ==============================================================
+  
+  // ==============================================================  
+  std::vector<std::vector<int> > num_dimensions; // [subspace][coordinate]
+  for (int i = 0; i < num_subspaces; i++){
+    num_dimensions.push_back(bs_subspaces[i]->getDimensionality());
+    //DEBUG(5, "BS_Subspace(" << i+1 << ") has " << num_dimensions.back() << " dimensions");
+  }
+  
   { // BSLEUSSPH
     buffer = m_block["BSLEUSSPH"];
     DEBUG(10, "BSLEUSSPH block : " << buffer.size());
@@ -326,32 +425,50 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     }
     
     int id = 0, last_id = 0, num_gp;
-    double radius, forceConst, coord;
+    double radius, forceConst;
     std::vector<double> centerValues;
     util::BS_Vector center;
     for (; it != to; it++){
       _lineStream.clear();
       _lineStream.str(*it);
       _lineStream >> id >> subspace;
-      for (int i = 0; i < numCoords; i++){
-        _lineStream >> coord;
-        if (_lineStream.fail()) {
-          io::messages.add("bad center in BSLEUSSPH block",
-                  "In_BSLEUS", io::message::error);
-          return;
+      // Convert to GROMOS
+      subspace--;
+      
+      // Get the center
+      for (unsigned int i = 0; i < numCoordsPerSubspace[subspace]; i++) {
+        for (int j = 0; j < num_dimensions[subspace][i];) {
+          std::string coordStr;
+          DEBUG(10, "Reading in Dimension no. " << j + 1 << " of " << num_dimensions[subspace][i]);
+          _lineStream >> coordStr;
+          if (_lineStream.fail()) {
+            io::messages.add("bad center in BSLEUSSPH block",
+                    "In_BSLEUS", io::message::error);
+            return;
+          }
+          std::vector<double> coords;
+          parseSpecifier(topo, sim, conf, 
+                         coordStr, refFiles, cartAtoms, 
+                         coords, os);
+          for (unsigned int k = 0; k < coords.size(); k++, j++)
+            centerValues.push_back(coords[k] / references[subspace][i]);
         }
-        centerValues.push_back(coord / references[i]);
       }
+      
+      // The rest of the constants
       _lineStream >> radius >> forceConst >> num_gp;
       if (_lineStream.fail()) {
         io::messages.add("bad line in BSLEUSSPH block",
                 "In_BSLEUS", io::message::error);
         return;
       }
+      if (num_gp < 1){
+        io::messages.add("BSLEUSSPH: number of grid points must be at least 1!",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
       center.create(centerValues);
       DEBUG(10, "Center: " + center.str());
-      // Convert to GROMOS
-      subspace--;
       util::BS_Sphere *bs_sphere = new util::BS_Sphere(id, num_gp, forceConst, 
                                                         center, radius);
       bs_subspaces[subspace]->addPotential(bs_sphere);
@@ -374,6 +491,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     }    
     
   } // BSLEUSSPH
+  
+  
   // ==============================================================
   { // BSLEUSSTK
     buffer = m_block["BSLEUSSTK"];
@@ -414,6 +533,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       }
       // Convert to GROMOS
       subspace--;
+      
+      // Start and End Points of the Sticks
       switch (defType) {
         case 0: {// define start and end points in terms of sphere ids
           _lineStream >> startSphere >> endSphere;
@@ -425,31 +546,40 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           start = bs_subspaces[subspace]->getCenter(startSphere);
           end = bs_subspaces[subspace]->getCenter(endSphere);
           break;
-        }
+        } // case 0: start & end spheres
         case 1: {// define end and start points with coordinates
           std::vector<double> coords;//, periodicities;
-          for (int j = 0; j < 2; j++) { // loop over start and end coordinates
+          for (int m = 0; m < 2; m++) { // loop over start and end coordinates
             coords.clear();
-            for (int i = 0; i < numCoords; i++) {
-              double value;
-              _lineStream >> value;
-              if (_lineStream.fail()) {
-                io::messages.add("bad line in BSLEUSSTK block",
-                        "In_BSLEUS", io::message::error);
-                return;
+            for (unsigned int i = 0; i < numCoordsPerSubspace[subspace]; i++) {
+              for (int j = 0; j < num_dimensions[subspace][i];) {
+                std::string coordStr;
+                _lineStream >> coordStr;
+                if (_lineStream.fail()) {
+                  io::messages.add("bad line in BSLEUSSTK block",
+                          "In_BSLEUS", io::message::error);
+                  return;
+                }
+                std::vector<double> new_coords;
+                parseSpecifier(topo, sim, conf, 
+                               coordStr, refFiles, cartAtoms, 
+                               new_coords, os);
+                for (unsigned int k = 0; k < new_coords.size(); k++, j++) {
+                  DEBUG(10, "(" << i << ", " << j << ", " << k << ") Push in " << new_coords[k] << " / " << references[subspace][i])
+                  coords.push_back(new_coords[k] / references[subspace][i]);
+                }
               }
-              coords.push_back(value / references[i]);
             }
-            if (j == 0){
+            if (m == 0){
               start.create(coords);
             } else {
               end.create(coords);
             }
           }
           break;
-        }
+        } // case 1: coordinates
         default: {
-          io::messages.add("Unkown specifier for coordinate definition of sticks!",
+          io::messages.add("Unknown specifier for coordinate definition of sticks!",
                 "In_BSLEUS", io::message::error);
           return;
         }
@@ -458,9 +588,15 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       DEBUG(10, start.str());
       DEBUG(10,end.str());
       
+      // Specifications of the stick
       _lineStream >> width >> forceConst >> num_gp;
       if (_lineStream.fail()) {
         io::messages.add("bad line in BSLEUSSTK block",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+      if (num_gp < 1){
+        io::messages.add("BSLEUSSTK: number of grid points must be at least 1!",
                 "In_BSLEUS", io::message::error);
         return;
       }
@@ -486,5 +622,59 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     }
     
   } // BSLEUSSTK
-  conf.special().bs_umbrella.addSubspace(bs_subspaces);
+  conf.special().bs_umbrella.addSubspaces(bs_subspaces);
+}
+
+void
+io::In_BSLEUS::findError(size_t pos){
+  if (pos == std::string::npos){
+    io::messages.add("Something in wrong with reference position specifier",
+            "In_BSLEUS", io::message::error);
+  }
+}
+
+void
+io::In_BSLEUS::parseSpecifier(topology::Topology &topo,
+                              simulation::Simulation &sim,
+                              configuration::Configuration& conf, 
+                              std::string& coordStr, 
+                              std::map<unsigned int,std::string>& refFiles, 
+                              std::vector<unsigned int> &cartAtoms,
+                              std::vector<double>& coords,
+                              std::ostream & os)
+{
+  size_t found;;
+  if ((found = coordStr.find("{") )!= std::string::npos) {
+    size_t to = coordStr.find("}");
+    std::string refFileName(coordStr, found + 1, --to);
+    io::igzstream refFile;
+    refFile.open(refFileName.c_str());
+    if (!refFile.is_open()) {
+      io::messages.add("opening reference structure file failed!\n",
+              "In_BSLEUS", io::message::error);
+      return;
+    }
+    In_Reference in_ref(refFile);
+    in_ref.read(topo, sim, conf, os);
+    math::VArray refpos = in_ref.refpos();
+    DEBUG(8, "Refpos.size() = " << refpos.size());
+    
+    if (cartAtoms.size() == 0) { // all atoms
+      for (unsigned int i = 0; i < refpos.size(); i++){
+        for (int j = 0; j < 3; j++)
+          coords.push_back(refpos[i][j]);
+      }
+    }
+    else {
+      for (unsigned int i = 0; i < cartAtoms.size(); i++){
+        for (int j = 0; j < 3; j++){
+          DEBUG(8, "Get Position of atom " << cartAtoms[i] + 1)
+          coords.push_back(refpos[cartAtoms[i]][j]);
+        }
+      }
+    }
+  }
+  else {
+    coords.push_back(atof(coordStr.c_str()));
+  }
 }

@@ -29,7 +29,7 @@ int interaction::BS_Interaction::init(topology::Topology& topo,
   DEBUG(4, "Initialze the B&S-LEUS interaction.");
   if(!quiet){
     os << "BSLEUS\n";
-    os << conf.special().bs_umbrella.traj_str();
+    os << conf.special().bs_umbrella.str();
     os << "END\n";
   }
   return 0;

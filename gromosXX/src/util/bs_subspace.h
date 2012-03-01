@@ -12,13 +12,30 @@ namespace util {
   class BS_Coordinate;
   class BS_Vector;
   
+  /**
+   * @class BS_Subspace
+   * @ingroup util
+   * 
+   * Holds its definition via BS_Coordinates and the Potentials.
+   */
   class BS_Subspace {
   public:
+    /**
+     * The constructor of a subspace
+     * 
+     * @param id                The ID of the subspace
+     * @param forceIncrement    The force increment factor for the subspace
+     * @param reductionFactor   Reduce forceIncrement by this factor, when the
+     *                          auxiliary counter is larger than the global cutoff
+     * @param localCutoff       The local cutoff
+     * @param globalCutoff      The global cutoff
+     */
     BS_Subspace(int id, double forceIncrement, double reductionFactor, 
                 int localCutoff, int globalCutoff) :
             id(id), m_numSpheres(0), m_numSticks(0),
             m_forceIncrement(forceIncrement), m_reductionFactor(reductionFactor), 
-            m_localCutoff(localCutoff), m_globalCutoff(globalCutoff){}
+            m_localCutoff(localCutoff), m_globalCutoff(globalCutoff),
+            m_auxilliaryCounter(0), m_reductionCounter(0) {}
 
     ~BS_Subspace(){}
     /**
@@ -44,17 +61,21 @@ namespace util {
      * @param[inout] conf               The current configuration
      * @param[in]    totalPartitionFct  The total Partition Function for
      *                                  calculating the weight
+     * @param[in]    potentials         A vector with all the potentials
+     * @param[in]    beta               1 / kB T
      */
     void addForces(configuration::Configuration &conf,
-            double totalPartitionFct);
+            //double totalPartitionFct,
+            std::vector<double> &potentials,
+            double beta);
     /**
      * Calculate the potentials and update the current position in the active
      * subspace and return the total Partition Function of the potentials.
      * @param conf The current configuration
      * @return The total Partition Function of all the potentials
      */
-    double calculatePotential(configuration::Configuration &conf,
-            simulation::Simulation &sim);
+    void calculatePotential(configuration::Configuration &conf,
+            std::vector<double> &potentials);
     /**
      * Update the memory of the potentials
      */
@@ -64,8 +85,9 @@ namespace util {
      * @param[in] id    The id of the potential
      * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The memory
+     * @return whether Potential was found
      */
-    void setMemory(int id, BS_Potential::potential_enum type, 
+    bool setMemory(int id, BS_Potential::potential_enum type, 
             std::vector<double> &memory);
     /**
      * Get the memory of Potential
@@ -85,26 +107,45 @@ namespace util {
      * @param[in] id    The id of the potential
      * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The memory
-     * @param[in] auxCounter    The auxiliary memory Counter
-     * @param[in] redCounter    The reduction Counter
+     * @return whether Potential was found
      */
-    void setAuxMemory(int id, BS_Potential::potential_enum type, 
-            std::vector<double> &memory, int auxCounter, int redCounter);
+    bool setAuxMemory(int id, BS_Potential::potential_enum type, 
+            std::vector<double> &memory);
     /**
      * Get the auxiliary memory of Potential
      * @param[in] id    The id of the potential
      * @param[in] type  The Type (Sphere / Stick)
      * @param[out] memory    The auxiliary memory
-     * @param[out] auxCounter    The auxiliary memory Counter
-     * @param[out] redCounter    The reduction Counter
      * @return whether Potential was found
      */
     bool getAuxMemory (int id, BS_Potential::potential_enum type,
-            std::vector<double> &memory, int &auxCounter, int &redCounter) const;
+            std::vector<double> &memory) const;
     /**
      * Set all the auxiliary memories to zero.
      */
     void setAuxMemoryToZero();
+    /**
+     * Set the auxilliary and reduction counter
+     * @param auxillaryCounter
+     * @param reductionCounter
+     */
+    void setCounter(unsigned int auxilliaryCounter, 
+                     unsigned int reductionCounter);
+    /**
+     * Set the auxilliary and reduction counter
+     * @param[inout] auxillaryCounter
+     * @param[inout] reductionCounter
+     */
+    void getCounter(unsigned int &auxilliaryCounter, 
+                     unsigned int &reductionCounter);
+    /**
+     * Set the position in the subspace.
+     */
+    void setPosition(std::vector<double> &position);
+    /**
+     * Get the position in the subspace.
+     */
+    void getPosition(std::vector<double> &position);
     /**
      * Return the number of spheres
      */
@@ -135,10 +176,27 @@ namespace util {
      */
     BS_Vector getCenter(int id);
     /**
+     * Return the number of dimensions of each coordinate  in the subspace.
+     */
+    std::vector<int> getDimensionality();
+    /**
+     * Return the Total Number of Dimensions of the subspace
+     * (sum of all elements in getDimensionality)
+     */
+    int getNumDimensions();
+    /**
+     * Test wheter coordinate "id" has type "type".
+     */
+    bool testType(int id, BS_Coordinate::Coord_type type);
+    /**
+     * Do we need to print the auxiliary memory for this subspace?
+     */
+    bool printAuxMem(){ return !(m_reductionFactor == 1.0);}
+    /**
      * A string describing the subspace
      * @return 
      */
-    std::string str() {return debug_str();}
+    std::string str();
     /**
      * Return a string with all informations of the potential for the
      * trajectory
@@ -161,7 +219,7 @@ namespace util {
     /**
      * The potentials of this subspace and the ones with a weight > 0
      */
-    std::vector<BS_Potential *> potentials;
+    std::vector<BS_Potential *> m_potentials;
     /**
      * The number of Spheres
      */
@@ -189,8 +247,15 @@ namespace util {
     /**
      * The global visiting cutoff: n_LE
      */
-    int m_globalCutoff;
-    
+    unsigned int m_globalCutoff;
+    /**
+     * Auxilliary Counter: N_c(t)
+     */
+    unsigned int m_auxilliaryCounter;
+    /**
+     * The reduction Counter: I_R 
+     */
+    unsigned int m_reductionCounter;
     /** 
      * Returns a string with informations of state of the subspace
      */

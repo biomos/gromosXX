@@ -23,6 +23,7 @@
  *  - topological files
  *   - @ref pttopo
  *   - @ref friction
+ *   - @ref bsleus
  *  - restraint specifciation
  *   - @ref dihrest
  *   - @ref disres

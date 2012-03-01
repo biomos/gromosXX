@@ -245,6 +245,14 @@ namespace io {
     bool _read_bsleus(util::BS_Umbrella &bs_umbrella, 
                       std::vector<std::string> buffer);
     /**
+     * Read in position in the BSLEUS subspace (BSLEUSPOS block)
+     * @param bs_umbrella
+     * @param buffer
+     * @return wheter successfull or not.
+     */
+    bool _read_bsleuspos(util::BS_Umbrella &bs_umbrella, 
+                      std::vector<std::string> buffer);
+    /**
      * read POSITIONRED block.
      */
     bool _read_positionred(math::VArray &pos, std::vector<std::string> &buffer,

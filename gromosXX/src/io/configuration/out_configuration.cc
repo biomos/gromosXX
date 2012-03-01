@@ -368,10 +368,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         _print_timestep(sim, m_special_traj);
         special_timestep_printed = true;
       }
-      _print_bsleus_energies(conf, m_special_traj);
-      _print_bsleus_forces(conf, m_special_traj);
+      //_print_bsleus_energies(conf, m_special_traj);
+      //_print_bsleus_forces(conf, m_special_traj);
+      _print_bsleusmem(conf, m_special_traj);
       _print_bsleus(conf, m_special_traj);
-      _print_bsleus_potentials(conf, m_special_traj);
+      //_print_bsleus_potentials(conf, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -514,15 +515,15 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
     
     if (sim.param().bsleus.bsleus != simulation::bsleus_off){
-      _print_bsleus(conf, m_final_conf);
+      _print_bsleusmem(conf, m_final_conf);
+      _print_bsleuspos(conf, m_final_conf);
 
       if (m_every_bsleus && (sim.steps() % m_every_bsleus) == 0) {
         //if (!special_timestep_printed) {
           _print_timestep(sim, m_special_traj);
           //special_timestep_printed = true;
         //}
-        _print_bsleus_energies(conf, m_special_traj);
-        _print_bsleus_forces(conf, m_special_traj);
+        _print_bsleus(conf, m_special_traj);
         m_special_traj.flush();
       }
     }
@@ -1430,6 +1431,7 @@ ENERGY03
    3.096514777e+01 # EDS: energy of reference state
    0.000000000e+00 # Entropy
    0.000000000e+00 # QM/MM total
+   0.000000000e+00 # B&S-LEUS energy
 # baths
 # number of baths
 2
@@ -2540,7 +2542,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.sasa_volume_energy[i]
             << std::setw(18) << 0.0 // jval
             << std::setw(18) << 0.0 // local elevation
-            << std::setw(18) << 0.0 << "\n"; // path integral
+            << std::setw(18) << 0.0 << "\n"; //path integral
   }
 
   // eds energy of end states
@@ -2802,7 +2804,77 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
   os << "END\n";
 }
 
-void io::Out_Configuration::_print_bsleus(const configuration::Configuration &conf, 
+/**
+ * @section bsleusmem BSLEUSMEM block
+ * 
+ * Defines the state of the memory and the auxiliary memory as well as the 
+ * auxiliary and the reduction counter of the B&S-LEUS scheme.
+ * 
+ * @verbatim
+ BSMEM
+#
+# The current state of the Memory in the BS&LEUS algorithm.
+# NUMSPH:   The Number of Spheres
+# NUMSTK:   The Number of Sticks
+# AUXMEM:   Is the auxiliary memory in use (BSLEUS:FRED != 1)?
+#   0:          no auxiliary memory; set to zero, if needed.
+#   1:          yes, there is auxiliary memory
+#
+# NUMSPH    NUMSTK  AUXMEM
+  4         2       1
+#
+# SPHID:    The ID of the Sphere
+# SUBSP:    In which subspace the Sphere/Stick is
+# NUMGP:    The number of Grid Points
+# MEM:      The Memory
+#
+# SPHID SUBSP   NUMGP   MEM[1..NUMGP]
+  1     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  2     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  3     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  4     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#
+# STKID:    The ID of the Stick
+# SUBSP:    In which subspace the Sphere/Stick is
+# NUMGP:    The Number of Grid Points
+# MEM:      The Memory
+#
+# STKID SUBSP   NUMGP   MEM[1..NUMGP]
+  1     1       20      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  2     1       20      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+#
+# The Auxiliary Memory & the subspace
+#
+# NUMSUB:   The number of subspaces
+# SUBID:    The ID of the subspace
+# AUXC:     The Auxiliary Counter
+# REDC:     The Reduction Counter
+#
+# NUMSUB
+  1
+# SUBID AUXC    REDC
+  1     0       0
+#
+# SPHID:    The ID of the Sphere
+# STKID:    The ID of the Stick
+# SUBSP:    In which subspace the Sphere/Stick is
+# NUMGP:    The Number of Grid Points
+# AUXMEM:   The Memory
+#
+# SPHID SUBSP   NUMGP   AUXMEM[1..NUMGP]
+  1     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  2     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  3     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  4     1       10      0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#
+# STKID SUBSP   NUMGP   AUXMEM[1..NUMGP]
+  1     1       20      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  2     1       20      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+END
+@endverbatim
+ * 
+ */
+void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration &conf, 
                                           std::ostream& os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -2819,31 +2891,35 @@ void io::Out_Configuration::_print_bsleus(const configuration::Configuration &co
      << "# NUMSTK:   The Number of Sticks\n"
      << "# AUXMEM:   Is the auxiliary memory set? (0: No; 1: Yes)\n"
      << "#\n"
-     << "# NUMSPH    NUMSTK\n";
+     << "# NUMSPH    NUMSTK AUXMEM\n";
   int numSpheres, numSticks;
   umb->getNumPotentials(numSpheres, numSticks);
   os << std::setw(3) << numSpheres << std::setw(10) << numSticks 
-     << std::setw(7) << 1 << "\n";
+     << std::setw(7) << umb->printAuxMem() << "\n";
   if (numSpheres){
     os << "#\n"
        << "# SPHID:    The ID of the Sphere\n"
+       << "# SUBID:    The ID of the Subspace\n"
        << "# NUMGP:    The number of Grid Points\n"
        << "# MEM:      The Memory\n"
        << "#\n"
-       << "# SPHID NUMGP   MEM[1..NUMGP]\n";
-    for (int i = 0; i < numSpheres; i++){
+       << "# SPHID SUBSP   NUMGP   MEM[1..NUMGP]\n";
+    for (int i = 0; i < numSpheres; i++) {
       std::vector<double> memory;
-      if(!umb->getMemory(i + 1, util::BS_Potential::bs_sphere, memory)){
+      unsigned int subid;
+      if (!umb->getMemory(i + 1, subid, util::BS_Potential::bs_sphere, memory)) {
         std::ostringstream msg;
         msg << "Could not find the memory of sphere " << i + 1 << "!\n";
         io::messages.add(msg.str(), "Out_Configuration", io::message::error);
         return;
       }
       int num_gp = memory.size();
-      os << std::setw(3) << (i + 1) << std::setw(6) << num_gp;
-      std::vector<double>::iterator it  = memory.begin(),
+      os << std::setw(3) << (i + 1)
+              << std::setw(6) << subid + 1
+              << std::setw(8) << num_gp;
+      std::vector<double>::iterator it = memory.begin(),
               to = memory.end();
-      for (; it != to; it++){
+      for (; it != to; it++) {
         os << " " << *it;
       }
       os << "\n";
@@ -2853,70 +2929,16 @@ void io::Out_Configuration::_print_bsleus(const configuration::Configuration &co
     os << "#\n"
        << "#\n"
        << "# STKID:    The ID of the Stick\n"
+       << "# SUBID:    The ID of the Subspace\n"
        << "# NUMGP:    The Number of Grid Points\n"
        << "# MEM:      The Memory\n"
        << "#\n"
-       << "# STKID NUMGP   MEM[1..NUMGP]\n";
+       << "# STKID SUBSP   NUMGP   MEM[1..NUMGP]\n";
 
-    for (int i = 0; i < numSticks; i++){
+    for (int i = 0; i < numSticks; i++) {
       std::vector<double> memory;
-      if (!umb->getMemory(i + 1, util::BS_Potential::bs_stick, memory)){
-        std::ostringstream msg;
-        msg << "Could not find the memory of stick " << i + 1 << "!\n";
-        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
-        return;
-      }
-      int num_gp = memory.size();
-      os << std::setw(3) << (i + 1) << std::setw(6) << num_gp;
-      std::vector<double>::iterator it  = memory.begin(),
-              to = memory.end();
-      for (; it != to; it++){
-        os << " " << *it;
-      }
-      os << "\n";
-    }
-  }
-  if (numSticks || numSpheres){
-    os << "#\n"
-       << "# The Auxiliary Memory\n"
-       << "#\n"
-            << "# AUXC:     The Auxiliary Counter\n"
-            << "# REDC:     The Reduction Counter\n"
-            << "# AUXMEM:   The Auxiliary Memory\n";
-  }
-  if (numSpheres){
-    os << "#\n"
-       << "# SPHID AUXC    REDC    NUMGP   MEM[1..NUMGP]\n";
-    for (int i = 0; i < numSpheres; i++){
-      std::vector<double> memory;
-      int auxCounter, redCounter;
-      if(!umb->getAuxMemory(i + 1, util::BS_Potential::bs_sphere, memory, auxCounter, redCounter)){
-        std::ostringstream msg;
-        msg << "Could not find the memory of sphere " << i + 1 << "!\n";
-        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
-        return;
-      }
-      int num_gp = memory.size();
-      os << std::setw(3) << (i + 1)
-         << std::setw(6) << auxCounter
-         << std::setw(8) << redCounter
-         << std::setw(8) << num_gp;
-      std::vector<double>::iterator it  = memory.begin(),
-              to = memory.end();
-      for (; it != to; it++){
-        os << " " << *it;
-      }
-      os << "\n";
-    }
-  }
-  if (numSticks){
-    os << "#\n"
-       << "# STKID AUXC    REDC    NUMGP   MEM[1..NUMGP]\n";
-
-    for (int i = 0; i < numSticks; i++){
-      std::vector<double> memory;
-      int auxCounter, redCounter;
-      if (!umb->getAuxMemory(i + 1, util::BS_Potential::bs_stick, memory, auxCounter, redCounter)){
+      unsigned int subid;
+      if (!umb->getMemory(i + 1, subid, util::BS_Potential::bs_stick, memory)) {
         std::ostringstream msg;
         msg << "Could not find the memory of stick " << i + 1 << "!\n";
         io::messages.add(msg.str(), "Out_Configuration", io::message::error);
@@ -2924,47 +2946,156 @@ void io::Out_Configuration::_print_bsleus(const configuration::Configuration &co
       }
       int num_gp = memory.size();
       os << std::setw(3) << (i + 1)
-         << std::setw(6) << auxCounter
-         << std::setw(8) << redCounter
-         << std::setw(8) << num_gp;
-      std::vector<double>::iterator it  = memory.begin(),
+              << std::setw(6) << subid + 1
+              << std::setw(8) << num_gp;
+      std::vector<double>::iterator it = memory.begin(),
               to = memory.end();
-      for (; it != to; it++){
+      for (; it != to; it++) {
         os << " " << *it;
       }
       os << "\n";
+    }
+  }
+  
+  if (umb->printAuxMem()){
+    if (numSticks || numSpheres){
+      os << "#\n"
+         << "# The Auxiliary Memory & the subspaces\n"
+         << "#\n"
+              << "# NUMSUB:   The number of subspaces\n"
+              << "# SUBID:    The ID of the subspace\n"
+              << "# AUXC:     The Auxiliary Counter\n"
+              << "# REDC:     The Reduction Counter\n"
+              << "# AUXMEM:   The Auxiliary Memory\n"
+              << "#\n"
+              << "# NUMSUB\n  "
+              << umb->getNumSubspaces() << "\n"
+              << "# SUBID AUXC    REDC\n";
+      for (unsigned int i = 0; i < umb->getNumSubspaces(); i++){
+        unsigned int auxc, redc;
+        umb->getCounter(i, auxc, redc);
+        os << std::setw(3) << i + 1
+           << std::setw(6) << auxc
+           << std::setw(8) << redc << "\n";
+      }
+    }
+    if (numSpheres){
+      os << "#\n"
+         << "# SPHID SUBSP   NUMGP   AUXMEM[1..NUMGP]\n";
+      for (int i = 0; i < numSpheres; i++){
+        std::vector<double> memory;
+        unsigned int subid;
+        if(!umb->getAuxMemory(i + 1, subid, util::BS_Potential::bs_sphere, memory)){
+          std::ostringstream msg;
+          msg << "Could not find the memory of sphere " << i + 1 << "!\n";
+          io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+          return;
+        }
+        int num_gp = memory.size();
+        os << std::setw(3) << (i + 1)
+           << std::setw(6) << subid + 1
+           << std::setw(8) << num_gp;
+        std::vector<double>::iterator it  = memory.begin(),
+                to = memory.end();
+        for (; it != to; it++){
+          os << " " << *it;
+        }
+        os << "\n";
+      }
+    }
+    if (numSticks){
+      os << "#\n"
+         << "# STKID SUBSP   NUMGP   AUXMEM[1..NUMGP]\n";
+
+      for (int i = 0; i < numSticks; i++){
+        std::vector<double> memory;
+        unsigned int subid;
+        if (!umb->getAuxMemory(i + 1, subid, util::BS_Potential::bs_stick, memory)){
+          std::ostringstream msg;
+          msg << "Could not find the memory of stick " << i + 1 << "!\n";
+          io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+          return;
+        }
+        int num_gp = memory.size();
+        os << std::setw(3) << (i + 1)
+           << std::setw(6) << subid + 1
+           << std::setw(8) << num_gp;
+        std::vector<double>::iterator it  = memory.begin(),
+                to = memory.end();
+        for (; it != to; it++){
+          os << " " << *it;
+        }
+        os << "\n";
+      }
     }
   }
   os << "END\n";
 }
 
-void io::Out_Configuration::
-_print_bsleus_energies(const configuration::Configuration &conf, 
+/**
+ * @section bsleuspos BSLEUSPOS block
+ * 
+ * Defines the position in the B&S-LEUS subspaces.
+ * 
+ * @verbatim
+BLEUSPOS
+#
+# The current position in the BSLEUS subspaces
+#
+# NUMSUB:   The Number of Subspaces
+# SUBID:    The Number of the Subspace
+# NUMDIM:   The number of dimensions of the subspace
+# POS:      The position
+#
+# NUMSUB
+  1
+#
+# SUBID NUMDIM  POS[1..NUMDIM]
+  1     2       300 379
+END
+@endverbatim
+ * 
+ */
+void io::Out_Configuration::_print_bsleuspos(const configuration::Configuration &conf, 
                                           std::ostream& os)
 {
-  os << "BSLEUS_ENERGY\n";
-  os << "\t" << conf.special().bs_umbrella.getTotalPotential() << "\n";
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  const util::BS_Umbrella *umb = &conf.special().bs_umbrella;
+  if (umb == 0){
+    io::messages.add("There seems to be no umbrella!", "Out_Configuration",
+            io::message::error);
+  }
+  os << "BSLEUSPOS\n"
+      << "#\n"
+      << "# The current position in the BSLEUS subspaces\n"
+      << "#\n"
+      << "# NUMSUB:   The Number of Subspaces\n"
+      << "# SUBID:    The Number of the Subspace\n"
+      << "# NUMDIM:   The number of dimensions of the subspace\n"
+      << "# POS:      The position\n"
+      << "#\n"
+      << "# NUMSUB\n"
+      << std::setw(3) << umb->getNumSubspaces() << "\n"
+      << "#\n"
+      << "# SUBID NUMDIM  POS[1..NUMDIM]\n";
+  for (unsigned int i = 0; i < umb->getNumSubspaces(); i++){
+      os << std::setw(3) << i + 1;
+      std::vector<double> position;
+      umb->getPosition(i, position);
+      os << std::setw(5) << position.size();
+      for (unsigned int j = 0; j < position.size(); j++){
+          os << " " << position[j];
+      }
+      os << "\n";
+  }
   os << "END\n";
 }
 
 void io::Out_Configuration::
-_print_bsleus_forces(const configuration::Configuration &conf, std::ostream& os)
+_print_bsleus(const configuration::Configuration &conf, std::ostream& os)
 {
-  std::vector<double> force;
-  conf.special().bs_umbrella.getForce(force);
-  os << "BSLEUS_FORCES\n\t";
-  std::vector<double>::iterator it = force.begin(),
-          to = force.end();
-  for (; it != to; it++){
-    os << " " << *it;
-  }
-  os << "\nEND\n"; 
-}
-
-void io::Out_Configuration::
-_print_bsleus_potentials(const configuration::Configuration &conf, std::ostream& os)
-{
-  os << "BSLEUS_POTENTIALS\n" 
+  os << "BSLEUS\n" 
           << conf.special().bs_umbrella.traj_str() 
           << "END\n";
 }

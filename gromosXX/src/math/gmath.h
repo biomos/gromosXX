@@ -113,21 +113,6 @@ namespace math
       }
       return *this;
     }
-
-    /**
-     * Return the center of geometry
-     */
-    Vec cog() const
-    {
-      Vec cog(0);
-      VArray::const_iterator it = this->begin(),
-                             to = this->end();
-      for (; it != to; it++){
-        cog += *it;
-      }
-      cog /= this->size();
-      return cog;
-    }
   };
   
   /**
@@ -296,6 +281,16 @@ namespace math
         for (int j = 0; j < 3; ++j)
           m[i][j] /= d;
       return *this;
+    }
+    
+    inline Vec operator*(const Vec v){
+      Vec product = Vec(0);
+      for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 3; j++){
+          product[i] += m[i][j] * v[j];
+        }
+      }
+      return product;
     }
   };
 

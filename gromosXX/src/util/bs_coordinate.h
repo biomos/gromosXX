@@ -10,12 +10,13 @@ namespace configuration {
   class Configuration;
 }
 
+#include "bs_vector.h"
+
 namespace util{
   
-  class BS_Vector;
-  class BS_Dimension;
   /**
    * @class BS_Coordinate
+   * @ingroup util
    * 
    * Reimplements the LE_Coordinate class, but with reduced coordinates,
    * so that different LE_Coordinates can be mixed.
@@ -27,15 +28,15 @@ namespace util{
     }
     virtual ~BS_Coordinate(){}
     /**
-     * get the umbrella ID
-     * @return the umbrella ID of the LE Coordinate
+     * get the coordinate ID
+     * @return the coordinate ID of the LE Coordinate
      */
-    int umbrella_id() const { return m_umbrella_id; }
+    int cid() const { return m_id; }
     /**
-     * set the umbrella ID
-     * @param[in] id the umbrella ID to set
+     * set the coordinate ID
+     * @param[in] id the coordinate ID to set
      */
-    void umbrella_id(int id) { m_umbrella_id = id; }
+    void cid(int id) { m_id = id; }
     /**
      * set the reduction factor for this coordinate
      * @param[in] rf The reduction factor
@@ -54,7 +55,7 @@ namespace util{
     /**
      * @return returns the dimensionality of the coordinate
      */
-    int getDimension() {return m_dimension;};
+    unsigned int getDimension() {return m_dimension;};
     /**
      * calculate the internal Coordinate and the derivatives
      * @param[inout] conf the configuration for which the value is calculated.
@@ -65,9 +66,10 @@ namespace util{
      * Obtain the Internal Coordinates
      */
     virtual void getInternalCoordinates(BS_Vector &coord) const = 0;
-    //virtual void getInternalCoordinates(std::vector<BS_Dimension> &coord) const = 0;
+    virtual void setOldPos(BS_Vector::iterator it, BS_Vector::iterator to) = 0;
     /**
-     * Add the forces expressed in internal Coordinates 
+     * Add the forces expressed in internal Coordinates.
+     * The derivatives are dB / dQ.
      * to the particles in conf.
      * @param [inout] conf the configuration to which the forces should be added
      * @param [inout] icForces the forces expressed in the particular internal
@@ -82,6 +84,8 @@ namespace util{
         unknown = 0,
         dihedral,
         distance,
+        cartesian,
+        dihedralSum,
         lambda,
     };
     Coord_type m_type;
@@ -89,9 +93,13 @@ namespace util{
      * convert to string
      */
     virtual std::string str() const { return "BS_LE_Coordinate"; }
+    /**
+     * String, which is shown in the ouput file upon initialization
+     */
+    std::string init_str();
 
   protected:
-    int m_umbrella_id;
+    int m_id;
     /**
      * The reduction factor for the coordinates
      */
@@ -99,18 +107,14 @@ namespace util{
     /**
      * The dimension of the internal Coordinates
      */
-    int m_dimension;
-    /**
-     * The periodicity of the coordinate
-     */
-    //double m_periodicity;
+    unsigned int m_dimension;
  };
   
   /**
+   * @class BS_LE_Dihedral
+   * 
    * The BS_LE_Coordinate for dihedral angle. The internal coordinates are 
    * handled in degrees.
-   * @class BS_LE_Dihedral
-   *
    */
   class BS_Dihedral : public BS_Coordinate {
   public:
@@ -124,23 +128,17 @@ namespace util{
      * @param[in] red_fac reduction factor of this coordinate
      */
     BS_Dihedral(int id, unsigned int i, unsigned int j,
-            unsigned int k, unsigned int l, double red_fac) :
-    i(i), j(j), k(k), l(l) { umbrella_id(id); 
-                             m_type = dihedral;
-                             m_dimension = 1;
-                             m_red_fac = red_fac;
-                             m_red_pi = math::Pi / m_red_fac;
-                             m_red_2pi = 2 * m_red_pi;
-                             m_rad2degree = 180 / math::Pi;
-                             m_counter = 0;
-                             old_phi = math::Pi;
-    }
+            unsigned int k, unsigned int l, double red_fac);
     virtual ~BS_Dihedral() {}
     virtual void calculateInternalCoord(configuration::Configuration & conf);
     virtual void getInternalCoordinates(BS_Vector &coord) const;
+    virtual void setOldPos(BS_Vector::iterator it, BS_Vector::iterator to);
     virtual void addForces(configuration::Configuration &conf, 
                       BS_Vector &derivatives);
     virtual std::string str() const;
+    double getPhi() const {return red_phi * m_rad2degree;}
+    void incrCounter() {m_counter++;};
+    void decrCounter() {m_counter--;};
   protected:
     template<math::boundary_enum B>
     void _calculate(configuration::Configuration & conf);
@@ -169,9 +167,9 @@ namespace util{
      * @param j         The second atom
      * @param red_fac   The reduction factor sigma
      */
-    BS_Distance(int id, unsigned int i, unsigned j, double red_fac) :
+    BS_Distance(int id, unsigned int i, unsigned int j, double red_fac) :
     i(i), j(j) {
-      umbrella_id(id);
+      cid(id);
       m_type = distance;
       m_red_fac = red_fac;
       m_dimension = 1;
@@ -179,6 +177,7 @@ namespace util{
     virtual ~BS_Distance() {}
     virtual void calculateInternalCoord(configuration::Configuration & conf);
     virtual void getInternalCoordinates(BS_Vector &coord) const;
+    virtual void setOldPos(BS_Vector::iterator it, BS_Vector::iterator to){}
     virtual void addForces(configuration::Configuration &conf, 
                       BS_Vector &derivatives);
     virtual std::string str() const;
@@ -190,6 +189,68 @@ namespace util{
     double m_reducedDistance;
     math::Vec fi, fj;
     
+  };
+  
+  /**
+   * @class BS_DihedralSum
+   * 
+   * The sum of two dihedral angles
+   */
+  class BS_DihedralSum : public BS_Coordinate {
+  public:
+    /**
+     * The Sum of two dihedral angles
+     * @param id    The ID
+     * @param i     atom i of the first dihedral angle
+     * @param j     atom j of the first dihedral angle
+     * @param k     atom k of the first dihedral angle
+     * @param l     atom l of the first dihedral angle
+     * @param ii    atom i of the second dihedral angle
+     * @param jj    atom j of the second dihedral angle
+     * @param kk    atom k of the second dihedral angle
+     * @param ll    atom l of the second dihedral angle
+     * @param red_fac   The reduction factor
+     */
+    BS_DihedralSum(int id, unsigned int i, unsigned int j, unsigned int k,
+            unsigned int l, unsigned int ii, unsigned int jj, unsigned int kk,
+            unsigned int ll, double red_fac);
+    virtual ~BS_DihedralSum() {};
+    virtual void calculateInternalCoord(configuration::Configuration & conf);
+    virtual void getInternalCoordinates(BS_Vector &coord) const;
+    virtual void setOldPos(BS_Vector::iterator it, BS_Vector::iterator to);
+    virtual void addForces(configuration::Configuration &conf, 
+                      BS_Vector &derivatives);
+    virtual std::string str() const;
+    
+  protected:
+    unsigned int i, j, k, l, ii, jj, kk, ll;
+    BS_Dihedral m_phi, m_psi;
+    double m_sum;
+    double m_old_sum;
+    bool m_first;
+  };
+  
+  class BS_Cartesian : public BS_Coordinate {
+  public:
+    BS_Cartesian(int id, std::vector<unsigned int> &atoms, 
+                 bool allAtoms, double red_fac) {
+      m_id = id;
+      m_dimension = 3 * atoms.size();
+      m_atoms = atoms;
+      m_allAtoms = allAtoms;
+      m_red_fac = red_fac;
+    }
+    virtual ~BS_Cartesian() {}
+    virtual void calculateInternalCoord(configuration::Configuration & conf);
+    virtual void getInternalCoordinates(BS_Vector &coord) const;
+    virtual void setOldPos(BS_Vector::iterator it, BS_Vector::iterator to){}
+    virtual void addForces(configuration::Configuration &conf, 
+                      BS_Vector &derivatives);
+    virtual std::string str() const;
+  private:
+    std::vector<unsigned int> m_atoms;
+    BS_Vector m_coordinates;
+    bool m_allAtoms;
   };
 }
 #endif	/* BS_LE_COORD_H */

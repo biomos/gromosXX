@@ -345,15 +345,13 @@ namespace io {
     void _print_umbrellas(configuration::Configuration const & conf,
             std::ostream & os);
     
+    void _print_bsleusmem(configuration::Configuration const &conf,
+            std::ostream &os);
+    
+    void _print_bsleuspos(configuration::Configuration const &conf,
+            std::ostream &os);
+    
     void _print_bsleus(configuration::Configuration const &conf,
-            std::ostream &os);
-    
-    void _print_bsleus_energies(configuration::Configuration const &conf,
-            std::ostream &os);
-    
-    void _print_bsleus_forces(configuration::Configuration const &conf,
-            std::ostream &os);
-    void _print_bsleus_potentials(configuration::Configuration const &conf,
             std::ostream &os);
 
     template<math::boundary_enum b>

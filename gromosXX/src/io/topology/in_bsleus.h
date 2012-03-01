@@ -2,6 +2,23 @@
  * @file   in_bsleus.h
  * Read in the file defining the B&S-LEUS Umbrella
  */
+/**
+ * @page bsleus B&S-LEUS format
+ * 
+ * A B&S-LEUS topology file may have the following blocks:
+ *  - @ref title
+ *  - @ref bsleussub
+ *  - @ref bsleuscoord
+ *  - @ref bsleussph
+ *  - @ref bsleusstk
+ * 
+ * @sa @ref bsleusparam
+ * @sa @ref bsleusmem
+ * @sa @ref bsleuspos
+ * @sa @ref refconf
+ * 
+ * 
+ */
 
 #ifndef IN_BSLEUS_H
 #define	IN_BSLEUS_H
@@ -30,6 +47,27 @@ namespace io {
           configuration::Configuration &conf,
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
+  private:
+    /**
+     * Find out, wheter there was an error in getting the tokens
+     * @param pos
+     */
+    void findError(size_t pos);
+    /**
+     * Parse the Atomspecifier in coordStr
+     * @param      conf
+     * @param[in]  coordStr The atom specifier (or a simple number)
+     * @param[in]  refFiles The reference Files
+     * @param[out] coords   The coordinates
+     */
+    void parseSpecifier(topology::Topology &topo,
+                        simulation::Simulation &sim,
+                        configuration::Configuration &conf,
+                        std::string &coordStr,
+                        std::map<unsigned int, std::string> &refFiles,
+                        std::vector<unsigned int> &cartAtoms,
+                        std::vector<double> &coords,
+                        std::ostream & os);
   };
 }
 #endif	/* IN_BSLEUS_H */

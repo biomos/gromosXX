@@ -51,6 +51,7 @@
  * - @ref  EDS
  * - @ref  LAMBDAS
  * - @ref  localelev
+ * - @ref  bsleusparam
  * - @ref  electric
  * - @ref  sasa
  * - @ref  symref

@@ -1,5 +1,5 @@
 /**
- * @file bs_umbrella.h
+ * @file bs_potentials.h
  * Implements the B&S-LEUS algorithm of Halvor Hansen et al.
  * Hansen et al., JCTC (2010), 6, 2622-2646. DOI: 10.1021/ct1003065
  */
@@ -20,7 +20,7 @@ namespace util{
     /**
      Constructor
      */
-    BS_Potential(int id, int num_gp, double force_const):
+    BS_Potential(int id, unsigned int num_gp, double force_const):
             id(id), num_gp(num_gp), m_force_const(force_const) {
       m_potential = 0;
       m_weight = 0;
@@ -28,8 +28,6 @@ namespace util{
       m_memory.assign(num_gp, 0);
       m_auxiliaryMemory.assign(num_gp, 0);
       m_half_force_const = 0.5 * m_force_const;
-      m_auxiliaryCounter = 0;
-      m_reductionCounter = 0;
     }
     /**
      * Destructor
@@ -44,7 +42,7 @@ namespace util{
     /**
      * The number of grid points
      */
-    int num_gp;
+    unsigned int num_gp;
     /**
      * An intelligent version of eq. (1) & (2) for calculating the potential
      * inside the sphere / stick
@@ -58,8 +56,10 @@ namespace util{
                          double &force);
     /**
      * Update the memory
+     * @param updateAuxMem  Should we update the Auxiliary Memory aswell?
+     * @return  Are all auxillary memory points bigger than the local cutoff?
      */
-    void updateMemory();
+    bool updateMemory(bool updateAuxMem);
     /**
      * Set the memory to newMemory
      * @param newMemory the new Memory
@@ -80,14 +80,14 @@ namespace util{
      * @param[in] auxCounter    The auxiliary memory Counter
      * @param[in] redCounter    The reduction Counter
      */
-    void setAuxMemory(std::vector<double> &newMemory, int auxCounter, int redCounter); 
+    void setAuxMemory(std::vector<double> &newMemory); 
     /**
      * Get the auxiliary memory of the potential
      * @param[out] newMemory
      * @param[out] auxCounter    The auxiliary memory Counter
      * @param[out] redCounter    The reduction Counter
      */
-    void getAuxMemory(std::vector<double> &newMemory, int &auxCounter, int &redCounter);
+    void getAuxMemory(std::vector<double> &newMemory);
     /**
      * set the auxiliary memory to zero
      */
@@ -95,18 +95,14 @@ namespace util{
     /**
      * Set the paramter for the memory update scheme
      * @param[in] forceIncrement    basis force constant increment k_LE
-     * @param[in] reductionFactor   reduction factor f_LE
      * @param[in] localCutoff       local visiting cutoff gamma_LE
-     * @param[in] globalCutoff      global visiting cutoff n_LE
      */
-    void setMemoryParameters(double forceIncrement, double reductionFactor,
-                             int localCutoff, int globalCutoff);
+    void setMemoryParameters(double forceIncrement, int localCutoff);
     /**
      * Calculate the potential and the derivatives
-     * @return are we inside of the boundaries and do therefore have to update
-     *         the memory?
+     * @return The Potential
      */
-    virtual bool calcPotential(BS_Vector &bs_pos) = 0;
+    virtual double calcPotential(BS_Vector &bs_pos) = 0;
     /**
      * Return the potential (B_m)
      */
@@ -117,26 +113,14 @@ namespace util{
      */
     void getDerivatives(BS_Vector &target) {target = m_potDerivatives;}
     /**
-     * Calculate the Boltzmann Factor and return  it
-     * @param[in] beta the current value of beta = 1/k_B * T
-     * @return The Boltzmann Factor
-     */
-    double calcBoltzmann(const double beta);
-    /**
      * Calculate the weight:
      * w_m = BoltzmannFactor / totalPartitionFct
-     * w_m = exp[ -beta B_m] / sum( exp[-beta * B_m])
-     * @param[in] totalPartitionFct
+     * w_m = exp[ -beta B_m] / sum_n( exp[-beta * (B_n - B_m)])
+     * @param[in] {B_n}
+     * @param[in] beta
      * @return the weight w_m
      */
-    double calcWeight(double totalPartitionFct);
-    /**
-     * Assign the current position the a current position and report 
-     * back, wheter sucessfull or not.
-     * @param bs_pos
-     * @return 
-     */
-    //virtual bool assignGridPoint(BS_Vector &bs_pos) = 0;
+    double calcWeight(std::vector<double> &potentials, double beta);
     /**
      * Set the wight of the potential
      * @param weight
@@ -146,7 +130,7 @@ namespace util{
      * Return the weight
      * @return  the weight
      */
-    double getWeight(){return m_weight;}
+    //double getWeight(){return m_weight;}
     /**
      * The Type of the Potential (Sphere / Stick)
      */
@@ -190,25 +174,9 @@ namespace util{
      */
     std::vector<double> m_auxiliaryMemory;
     /**
-     * The force constant reduction factor. f_LE
-     */
-    double m_reductionFactor;
-    /**
-     * The auxiliary counter: N_C
-     */
-    unsigned int m_auxiliaryCounter;
-    /**
-     * the reduction counter: I_R
-     */
-    unsigned int m_reductionCounter;
-    /**
      * local cutoff: gamma_LE
      */
     double m_localCutoff;
-    /**
-     * global cutoff: n_LE
-     */
-    double m_globalCutoff;
     /**
      * The force constant of the potential c_LE
      */
@@ -236,7 +204,7 @@ namespace util{
    */
   class BS_Sphere : public BS_Potential {
   public:
-    BS_Sphere(int id, int num_gp, double force_const, //double forceConstIncr,
+    BS_Sphere(int id, int num_gp, double force_const,
               BS_Vector center, double radius) : 
                 BS_Potential(id, num_gp, force_const),
                 m_center(center), m_radius(radius)
@@ -245,7 +213,7 @@ namespace util{
                   m_potentialType = bs_sphere;
                 }
     virtual ~BS_Sphere(){}
-    virtual bool calcPotential(BS_Vector &bs_pos);
+    virtual double calcPotential(BS_Vector &bs_pos);
     virtual std::string str();
     BS_Vector getCenter() {return m_center;}
   private:
@@ -266,7 +234,7 @@ namespace util{
    */
   class BS_Stick : public util::BS_Potential {
   public:
-    BS_Stick(int id, int num_gp, double force_const, //double forceConstIncr, 
+    BS_Stick(int id, int num_gp, double force_const, 
              BS_Vector startPoint, BS_Vector endPoint, 
              double half_width) :
               BS_Potential(id, num_gp, force_const), 
@@ -279,7 +247,7 @@ namespace util{
                 m_potentialType = bs_stick;
               }
     virtual ~BS_Stick(){}
-    virtual bool calcPotential(BS_Vector &bs_pos);
+    virtual double calcPotential(BS_Vector &bs_pos);
     virtual std::string str();
   private:
     /**

@@ -27,8 +27,10 @@ double util::BS_Vector::abs2(){
 
 double util::BS_Vector::normalize(){
   double length = sqrt(this->abs2());
-  double inverseLength = 1 / length;
-  this->scale(inverseLength);
+  if (length > 0){
+    double inverseLength = 1 / length;
+    this->scale(inverseLength);
+  }
   return length;
 }
 
@@ -51,6 +53,7 @@ void util::BS_Vector::scale(const double scalar){
 }
 
 void util::BS_Vector::minus(const BS_Vector& subtrahend, BS_Vector& result){
+  assert(this->size() == subtrahend.size());
   if (this->size() != subtrahend.size()){
     io::messages.add("Two BS_Vectors with different sizes (minus)!", "BS_Vector",
             io::message::critical);
@@ -82,6 +85,7 @@ util::BS_Vector util::BS_Vector::operator *(const double scalar){
 }
 
 util::BS_Vector util::BS_Vector::operator +(const BS_Vector& summand) {
+  assert(this->size() == summand.size());
   if (this->size() != summand.size()){
     io::messages.add("Two BS_Vectors with different sizes (plus)!", "BS_Vector",
             io::message::critical);
@@ -98,6 +102,7 @@ util::BS_Vector util::BS_Vector::operator +(const BS_Vector& summand) {
 }
 
 void util::BS_Vector::operator +=(const BS_Vector& summand) {
+  assert(this->size() == summand.size());
   if (this->size() != summand.size()){
     io::messages.add("Two BS_Vectors with different sizes (+=)!", "BS_Vector",
             io::message::critical);
@@ -112,6 +117,7 @@ void util::BS_Vector::operator +=(const BS_Vector& summand) {
 }
 
 double util::BS_Vector::dot(const BS_Vector &other){
+  assert(this->size() == other.size());
   if (this->size() != other.size()){
     io::messages.add("Two BS_Vectors with different sizes (dot)!", "BS_Vector",
             io::message::critical);
@@ -139,7 +145,7 @@ void util::BS_Vector::create(std::vector<double>& values)
 
 std::string util::BS_Vector::str(){
   std::ostringstream os;
-  os << "(";
+  os << "[ ";
   BS_Vector::const_iterator vec_i = this->begin(),
           vec_end = this->end();
   
@@ -153,6 +159,6 @@ std::string util::BS_Vector::str(){
   for (; vec_i != vec_end; vec_i++){
     os << ", " << *vec_i;
   }
-  os << ")";
+  os << " ]";
   return os.str();
 }

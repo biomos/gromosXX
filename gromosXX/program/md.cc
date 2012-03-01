@@ -38,6 +38,7 @@
  * <tr><td> \@order</td><td>&lt;@ref orderparamresspec "Order-parameter restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@lud</td><td>&lt;@ref leusdb "local elevation umbrella database"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@led</td><td>&lt;@ref leus "local elevation coordinate specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@bsleus</td><td>&lt;@ref bsleus "Ball & Stick Local Elevation topology"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@friction</td><td>&lt;@ref friction "atomic friction coefficients"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@qmmm</td><td>&lt;@ref qmmm "QM/MM specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@print</td><td>&lt;print additional information&gt; </td><td></td></tr>

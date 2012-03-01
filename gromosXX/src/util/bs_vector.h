@@ -11,7 +11,9 @@
 namespace util {
     
   /**
-   * @class Implementation for an n-dimensional vector holding the coordinates
+   * @class BS_Vector
+   * 
+   * Implementation for an n-dimensional vector holding the coordinates
    * of the subspace
    */
   class BS_Vector : public std::vector<double> {
@@ -66,11 +68,11 @@ namespace util {
      */
     double dot(const BS_Vector &other);
     /**
-     * Create a BS_Vector from two <double> vectors; one containing the values,
-     * the other the periodicities.
+     * Create a BS_Vector from a <double> vector     
      * @param values
      */
     void create(std::vector<double> &values);
+    BS_Vector operator=(std::vector<double> &values){create(values); return *this;}
    /**
      * Creates an output for the Vector.
      * @return the output
