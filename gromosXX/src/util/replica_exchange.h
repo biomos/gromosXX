@@ -157,15 +157,6 @@ namespace util
       assert(i>=0 && unsigned(i) < m_conf.size());
       return m_conf[i];
     }
-
-    /**
-     * coarse-grained configuration accessor
-     */
-    configuration::Configuration & cg_conf(int i)
-    {
-      assert(i>=0 && unsigned(i) < m_cg_conf.size());
-      return m_cg_conf[i];
-    }
     
   private:
     /**
@@ -215,11 +206,6 @@ namespace util
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * do multigraining ?
-     */
-    bool multigraining;
-
-    /**
      * information of all replicas
      */
     std::vector<Replica_Data> replica_data;
@@ -237,12 +223,6 @@ namespace util
      * (current) (fine-grained) configuration of all replicas
      */
     std::vector<configuration::Configuration> m_conf;
-
-    /**
-     * (current) (coarse-grained) configuration of all replicas
-     * (only used for multigraining)
-     */
-    std::vector<configuration::Configuration> m_cg_conf;
 
     /**
      * switch temperatures?
@@ -302,11 +282,6 @@ namespace util
     Replica_Data replica_data;
 
     /**
-     * do multigraining
-     */
-    bool multigraining;
-
-    /**
      * initialise slave
      */
     int init
@@ -317,11 +292,6 @@ namespace util
      simulation::Simulation & sim,
      algorithm::Algorithm_Sequence & md,
      io::Out_Configuration & traj,
-     topology::Topology & cg_topo,
-     configuration::Configuration & cg_conf,
-     simulation::Simulation & cg_sim,
-     algorithm::Algorithm_Sequence & cg_md,
-     io::Out_Configuration & cg_traj
      );
 
     /**
@@ -332,9 +302,6 @@ namespace util
      topology::Topology & topo,
      configuration::Configuration & conf,
      simulation::Simulation & sim,
-     topology::Topology & cg_topo,
-     configuration::Configuration & cg_conf,
-     simulation::Simulation & cg_sim
      );
     /**
      * run the replica
@@ -346,11 +313,6 @@ namespace util
      simulation::Simulation & sim,
      algorithm::Algorithm_Sequence & md,
      io::Out_Configuration & traj,
-     topology::Topology & cg_topo,
-     configuration::Configuration & cg_conf,
-     simulation::Simulation & cg_sim,
-     algorithm::Algorithm_Sequence & cg_md,
-     io::Out_Configuration & cg_traj
      );
 
     /**
@@ -363,11 +325,6 @@ namespace util
      simulation::Simulation & sim,
      algorithm::Algorithm_Sequence & md,
      io::Out_Configuration & traj,
-     topology::Topology & cg_topo,
-     configuration::Configuration & cg_conf,
-     simulation::Simulation & cg_sim,
-     algorithm::Algorithm_Sequence & cg_md,
-     io::Out_Configuration & cg_traj
      );
 
   };

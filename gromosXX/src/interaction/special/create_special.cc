@@ -22,7 +22,6 @@
 #include "../../interaction/special/eds_distance_restraint_interaction.h"
 #include "../../interaction/special/perturbed_dihedral_restraint_interaction.h"
 #include "../../interaction/special/jvalue_restraint_interaction.h"
-#include "../../interaction/special/external_interaction.h"
 #include "../../interaction/special/ramd_interaction.h"
 #include "../../util/umbrella_weight.h"
 #include "../../interaction/special/xray_restraint_interaction.h"
@@ -267,15 +266,6 @@ int interaction::create_special(interaction::Forcefield & ff,
       new interaction::Periodic_Scaling(ff, param);
 
     ff.push_back(ps);
-  }
-
-  if (param.force.external_interaction){
-    if (!quiet){
-      os << "\tadding external interaction\n";
-    }
-    interaction::External_Interaction * ei =
-      new interaction::External_Interaction;
-    ff.push_back(ei);
   }
 
   if (param.ramd.fc!=0.0){

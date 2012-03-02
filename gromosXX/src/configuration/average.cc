@@ -436,7 +436,6 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(oparam_total);
   ENERGY_AVG(symrest_total);
   ENERGY_AVG(constraints_total);
-  ENERGY_AVG(external_total);
   ENERGY_AVG(self_total);
   ENERGY_AVG(eds_vr);
   ENERGY_AVG(entropy_term);
@@ -652,7 +651,6 @@ void configuration::Average::Block_Average
   ENERGY_RES(symrest_total);
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
-  ENERGY_RES(external_total);
   
   ENERGY_RES(self_total);
 
