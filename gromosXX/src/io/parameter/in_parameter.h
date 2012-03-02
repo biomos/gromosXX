@@ -26,7 +26,6 @@
  * - @ref  hoomd
  * - @ref  pairlist
  * - @ref  nonbonded
- * - @ref  gromos96compat
  * - @ref  positionres
  * - @ref  posres
  * - @ref  perturbation
@@ -57,7 +56,6 @@
  * - @ref  nemd
  * - @ref  multigradient
  * - @ref  addecouple
- * - @ref  g96compat
  * - @ref  orderparamres
  * - @ref  qmmmb
  * - @ref  xrayres
@@ -300,10 +298,6 @@ namespace io {
      * read NONBONDED block.
      */
     void read_NONBONDED(simulation::Parameter &param, std::ostream & os = std::cout);
-    /**
-     * read GROMOS96COMPAT block.
-     */
-    void read_GROMOS96COMPAT(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
      * read LOCALELEV block.
      */

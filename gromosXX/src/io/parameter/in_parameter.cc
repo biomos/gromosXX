@@ -89,7 +89,6 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_RANDOMNUMBERS(param);
   read_EDS(param);
   read_LAMBDAS(param); // needs to be called after FORCE
-  read_GROMOS96COMPAT(param);
   read_LOCALELEV(param);
   read_ELECTRIC(param);
   read_SASA(param);
@@ -4395,64 +4394,6 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
   } else {
     io::messages.add("no NONBONDED block", "In_Parameter", io::message::error);
     return;
-  }
-}
-
-/**
- * @section gromos96compat GROMOS96COMPAT block
- * @verbatim
-GROMOS96COMPAT
-# NTNB96 0,1 controls use of g96-like nonbonded routines (ignored)
-#    0 : not used [default]
-#    1 : g96-like double-loop routines are used
-# NTR96 0,1 controls use of reaction field formula
-#    0 : new reaction field formula [default]
-#    1 : g96 reaction field formula
-# NTP96 0,1 controls use of g96 pressure calculation (ignored)
-#    0 : new formula using ekin a t 
-#    1 : g96 formulat using ekin at t - dt / 2
-# NTG96 0,1 controls use of soft-core formula (ignored)
-#    0 : new soft-core formula
-#    1 : g96 soft-core formula [default]
-# NTT96 0,1 controls calculation of ekin at t
-#    0 : formula recomended by MD07.27 (average of velocity squares) [default]
-#    1 : old formula (square of average velocity)
-# NTNB96   NTR96     NTP96   NTG96   NTT96
-    1         1       1        1       1
-END
-@endverbatim
- */
-void io::In_Parameter::read_GROMOS96COMPAT(simulation::Parameter & param,
-        std::ostream & os) {
-  DEBUG(8, "read GROMOS96COMPAT");
-
-  std::vector<std::string> buffer;
-  std::string s;
-
-  buffer = m_block["GROMOS96COMPAT"];
-
-  if (buffer.size()) {
-    block_read.insert("GROMOS96COMPAT");
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-    bool ntnb96, ntr96, ntp96, ntg96;
-    _lineStream >> ntnb96 >> ntr96 >> ntp96 >> ntg96 ;
-
-    if (_lineStream.fail()) {
-      io::messages.add("bad line in GROMOS96COMPAT block",
-              "In_Parameter", io::message::error);
-    }
-    // NTR96 false means rf_excluded 
-    param.nonbonded.rf_excluded = !ntr96;
-    
-    //accept block with ntt96 missing, simply set it to 0
-    _lineStream >> param.gromos96compat.ntt96;
-    if (_lineStream.fail()) {
-      io::messages.add("bad line in GROMOS96COMPAT block, NTT96 set to 0",
-              "In_Parameter", io::message::warning);
-      param.gromos96compat.ntt96=0;
-    }
-  
   }
 }
 
