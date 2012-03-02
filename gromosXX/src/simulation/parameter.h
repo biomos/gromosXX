@@ -2842,23 +2842,6 @@ namespace simulation
        */
       std::vector<std::vector<std::pair<double, double> > > control_points;
     } multigradient;
-
-     
-  struct gromos96compat_struct {
-    /**
-     * @struct gromos96compat_struct
-     * Constructor:
-     * Default values:
-     * - ntt96=0
-     */
-        gromos96compat_struct(): ntt96(0) 
-        {
-        }
-        /**
-         * how to calculate the temperature at full step
-         */
-        bool ntt96;        
-    } /** gromos96compat_stuct */ gromos96compat;
     
     /**
      * @struct addecouple_struct
