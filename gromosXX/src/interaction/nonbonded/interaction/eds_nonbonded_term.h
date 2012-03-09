@@ -23,7 +23,7 @@ namespace interaction
     /**
      * get the coulomb constant
      */
-    double crf()const {return m_crf;}
+    double crf()const {return m_crf[0];}
     
     /**
      * initialize constants
@@ -38,13 +38,14 @@ namespace interaction
 			        const double &q,
                                 double const alpha_lj,
 			        double const alpha_crf,
-			        double & force, double & e_nb);
+			        double & force, double & e_nb,
+                                unsigned int eps = 0);
 
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
     void eds_rf_interaction(math::Vec const &r, double q, double const alpha_crf,
-			    math::Vec & force, double & e_rf);
+			    math::Vec & force, double & e_rf, unsigned int eps = 0);
    
 
   protected:
@@ -52,7 +53,7 @@ namespace interaction
      * Force:
      * reaction field constant.
      */
-    double m_crf;
+    std::vector<double> m_crf;
     
     /**
      * Force:
@@ -66,7 +67,11 @@ namespace interaction
      * (1-coulomb reaction field constant / 2 and
      * divided by reaction field cutoff.
      */
-    double m_crf_cut;
+    std::vector<double> m_crf_cut;
+    
+    /*
+     Coarse grained dielectric permittivities*/
+    std::vector<double> cgrain_eps;
     
   };
   

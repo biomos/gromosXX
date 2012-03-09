@@ -23,11 +23,6 @@ namespace interaction
     Nonbonded_Term(){};
     
     /**
-     * get the coulomb constant
-     */
-    double crf()const {return m_crf[0];}
-    
-    /**
      * initialize constants
      */
     void init(simulation::Simulation const &sim);
@@ -145,6 +140,11 @@ namespace interaction
      * a constant.
      */
     double crf_2cut3i()const;
+    
+    /**
+     * get the coulomb constant
+     */
+    double crf() const;
 
 
     /**

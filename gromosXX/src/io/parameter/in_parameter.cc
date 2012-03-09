@@ -1808,7 +1808,7 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
         break;
       default:
         param.cgrain.level = 0;
-        io::messages.add("CGRAIN block: NTCGRAN must be 0 to 4.",
+        io::messages.add("CGRAIN block: NTCGRAN must be 0 to 3.",
                 "In_Parameter", io::message::error);
     }
     DEBUG(6, "coarse graining level = " << param.cgrain.level);

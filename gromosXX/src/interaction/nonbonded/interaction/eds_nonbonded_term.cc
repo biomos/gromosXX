@@ -15,32 +15,63 @@
  */
 inline void interaction::Eds_Nonbonded_Term
 ::init(simulation::Simulation const &sim) {
+  double crf, crf_cut;
+  m_crf_cut.clear();
+  m_crf.clear();
+  cgrain_eps.clear();
   switch (sim.param().force.interaction_function) {
     case simulation::lj_crf_func:
       // Force
       if (sim.param().nonbonded.rf_cutoff > 0.0) {
         m_rrf = sim.param().nonbonded.rf_cutoff;
-        m_crf = 2 * (sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) *
+        crf = 2 * (sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) *
                 (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) -
                 sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
                 m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
 
-        m_crf /= (sim.param().nonbonded.epsilon + 2 * sim.param().nonbonded.rf_epsilon) *
+        crf /= (sim.param().nonbonded.epsilon + 2 * sim.param().nonbonded.rf_epsilon) *
                 (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) +
                 sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
                 m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
 
-        m_crf_cut = (1 - m_crf / 2.0) / m_rrf;
+        crf_cut = (1 - crf / 2.0) / m_rrf;
       } else { // infinity case: rf_cutoff == 0
-        m_crf = -1;
-        DEBUG(15, "nonbonded term init: m_crf: " << m_crf);
+        crf = -1;
+        DEBUG(15, "nonbonded term init: m_crf: " << crf);
         m_rrf = 0.0;
+        crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
+      }
+      m_crf_cut.push_back(crf_cut);
+      m_crf.push_back(crf);
+      break;
+    case simulation::cggromos_func:
+      cgrain_eps.push_back(sim.param().cgrain.EPS);
+      cgrain_eps.push_back(sim.param().cgrain.EPSM);
+      cgrain_eps.push_back(sim.param().nonbonded.epsilon);
+      
+      for (unsigned int i = 0; i < cgrain_eps.size(); i++) {
+        if (sim.param().nonbonded.rf_cutoff > 0.0) {
+          m_rrf = sim.param().nonbonded.rf_cutoff;
 
-        m_crf_cut = (1 - m_crf / 2.0)
-                / sim.param().nonbonded.rf_cutoff;
+          crf = 2 * (cgrain_eps[i] - sim.param().nonbonded.rf_epsilon) *
+                  (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) -
+                  sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
+                  m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
+          crf /= (cgrain_eps[i] + 2 * sim.param().nonbonded.rf_epsilon) *
+                  (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) +
+                  sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
+                  m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
+
+          crf_cut = (1 - crf / 2.0) / m_rrf;
+        } else { // infinity case: rf_cutoff == 0
+          crf = -1;
+          m_rrf = 0.0;
+          crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
+        }
+        m_crf.push_back(crf);
+        m_crf_cut.push_back(crf_cut);
       }
       break;
-
     case simulation::pol_lj_crf_func:
     case simulation::pol_off_lj_crf_func:
     case simulation::cgrain_func:
@@ -60,7 +91,7 @@ inline void interaction::Eds_Nonbonded_Term
         const double &c6, const double &c12,
         const double &q,
         double const alpha_lj, double const alpha_crf,
-        double & force, double & e_nb) {
+        double & force, double & e_nb, unsigned int eps) {
     DEBUG(14, "\t\tnonbonded term");
 
     double c126 = 0.0;
@@ -74,12 +105,12 @@ inline void interaction::Eds_Nonbonded_Term
     const double ac_rrfi = 1.0 / ((alpha_crf + m_rrf*m_rrf)* sqrt(alpha_crf + m_rrf*m_rrf));
     
     double elj = dist6i_alj_c126 * (c12_dist6i - c6);
-    double ecrf = q_eps * (ac_disti - (0.5 * m_crf * ac_rrfi * dist2) - m_crf_cut);
+    double ecrf = q_eps * (ac_disti - (0.5 * m_crf[eps] * ac_rrfi * dist2) - m_crf_cut[eps]);
     e_nb = elj + ecrf;
 
     double flj = 6.0 * dist2 * dist2 * dist6i_alj_c126 * dist6i_alj_c126 
                  * (2.0 * c12_dist6i - c6);
-    double fcrf = q_eps * (ac_disti * ac_disti * ac_disti + m_crf * ac_rrfi);
+    double fcrf = q_eps * (ac_disti * ac_disti * ac_disti + m_crf[eps] * ac_rrfi);
     force = flj + fcrf;
     
     DEBUG(15, "nonbonded energy = " << (elj + ecrf) << ", force = " << (flj + fcrf));
@@ -91,14 +122,14 @@ inline void interaction::Eds_Nonbonded_Term
  */
 inline void interaction::Eds_Nonbonded_Term
 ::eds_rf_interaction(math::Vec const &r,double q, double const alpha_crf,
-		     math::Vec &force, double &e_crf)
+		     math::Vec &force, double &e_crf, unsigned int eps)
 {
   const double dist2 = abs2(r);
   const double ac_rrfi = 1.0 / ((alpha_crf + m_rrf*m_rrf)* sqrt(alpha_crf + m_rrf*m_rrf));
   
-  force = q * math::four_pi_eps_i *  m_crf * ac_rrfi * r;
+  force = q * math::four_pi_eps_i *  m_crf[eps] * ac_rrfi * r;
 
-  e_crf = q * math::four_pi_eps_i * ( -(0.5 * m_crf * ac_rrfi * dist2) - m_crf_cut);
+  e_crf = q * math::four_pi_eps_i * ( -(0.5 * m_crf[eps] * ac_rrfi * dist2) - m_crf_cut[eps]);
   DEBUG(15, "dist2 " << dist2 );
   DEBUG(15, "q*q   " << q );
   DEBUG(15, "rf energy = " << e_crf);

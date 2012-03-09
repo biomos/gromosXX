@@ -734,8 +734,7 @@ t_interaction_spec, t_perturbation_details>
                   A_q, B_q,
                   alpha_lj, alpha_crf,
                   f1, f6, f12,
-                  e_lj, e_crf, de_lj, de_crf
-                  );
+                  e_lj, e_crf, de_lj, de_crf, 2);
 
           DEBUG(7, "\tcalculated interaction state A:\n\t\tf: "
                   << f1 << " " << f6 << " " << f12 << " e_lj: " << e_lj

@@ -2197,7 +2197,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("eds", "cutoff_atomic");
   //fc.unlock("eds", "cg_martini");
   //fc.unlock("eds", "cg_gromos");
-  //fc.unlock("eds", "mixed_grain");
+  fc.unlock("eds", "mixed_grain");
   fc.unlock("eds", "temp_berendsen");
   fc.unlock("eds", "temp_nosehoover");
   fc.unlock("eds", "temp_nosehoover_chains");
