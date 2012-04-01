@@ -749,7 +749,7 @@ void interaction::Nonbonded_Outerloop
       math::Vec external_field(sim.param().electric.Ef_x,
                                sim.param().electric.Ef_y,
                                sim.param().electric.Ef_z);
-      external_field *= 3 * sim.param().nonbonded.rf_epsilon / (2 * sim.param().nonbonded.rf_epsilon
+      external_field *= math::four_pi_eps_i * 3 * sim.param().nonbonded.rf_epsilon / (2 * sim.param().nonbonded.rf_epsilon
               + sim.param().nonbonded.epsilon);
       
       for (i=0; i<topo.num_atoms(); ++i) {
