@@ -2521,13 +2521,17 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.dihedral_energy[i]
             << std::setw(18) << e.crossdihedral_energy[i] << "\n";
   }
-
+  
   os << "# nonbonded\n";
   for (int i = 0; i < numenergygroups; i++) {
     for (int j = i; j < numenergygroups; j++) {
       os << std::setw(18) << e.lj_energy[j][i]
               << std::setw(18) << e.crf_energy[j][i]
-              << std::setw(18) << e.ls_real_energy[j][i]
+      //      << std::setw(18) << e.ls_real_energy[j][i]
+      // currently only one energy group is permitted for LS calculations. 
+      // Therefore the total LS energy is written out.        
+      // As soon as multiple energy groups are possible this has to be revised      
+              << std::setw(18) << e.ls_total
               << std::setw(18) << e.ls_k_energy[j][i] << "\n";
     }
   }
