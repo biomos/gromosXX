@@ -37,14 +37,19 @@ void util::BS_Umbrella::apply(configuration::Configuration& conf,
     (*it)->calculatePotential(conf, potentials);
   }
   
+  double pmin = potentials[0];
+  for (unsigned int i = 1; i < potentials.size(); i++){
+    if (potentials[i] < pmin)
+      pmin = potentials[i];
+  }
   const double beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
   DEBUG(5, "BS_Umbrella: beta: " << beta);
   double sum = 0;
   for (unsigned int i = 0; i < potentials.size(); i++){
-    sum += exp(-beta * potentials[i]);
+    sum += exp(-beta * (potentials[i] - pmin));
     DEBUG(8, "Potential[" << i << "] = " << potentials[i]);
   }
-  m_bsleus_total = - 1.0 / beta * log(sum);// + min;
+  m_bsleus_total = - 1.0 / beta * log(sum) + pmin;
   DEBUG(6, "Total Potential = " << m_bsleus_total);
           
   conf.current().energies.bsleus_total = m_bsleus_total;
