@@ -247,7 +247,9 @@ namespace util{
     virtual void addForces(configuration::Configuration &conf, 
                       BS_Vector &derivatives);
     virtual std::string str() const;
-  private:
+  protected:
+    template<math::boundary_enum B>
+    void _calculate(configuration::Configuration & conf);
     std::vector<unsigned int> m_atoms;
     BS_Vector m_coordinates;
     bool m_allAtoms;

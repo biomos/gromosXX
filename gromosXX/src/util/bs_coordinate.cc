@@ -322,19 +322,32 @@ std::string util::BS_DihedralSum::str() const
 void util::BS_Cartesian::
 calculateInternalCoord(configuration::Configuration & conf) {
   DEBUG(8, "Calculate Internal Coordinates according to pbc");
+  SPLIT_BOUNDARY(_calculate, conf);
+}
+template<math::boundary_enum B>
+void util::BS_Cartesian::
+_calculate(configuration::Configuration & conf) {
+  DEBUG(8, "Calculate the Internal Coordinates of Cartesian");
+  math::Periodicity<B> periodicity(conf.current().box);
   math::VArray & pos = conf.current().pos;
+  math::Vec vec;
+
   
   m_coordinates.clear();
   if (m_allAtoms){
     for (unsigned int i = 0; i < pos.size(); i++){
+      vec = pos(i);
+      periodicity.put_into_positive_box(vec);
       for (unsigned int j = 0; j < 3; j++)
-        m_coordinates.push_back(pos(i)[j]);
+        m_coordinates.push_back(vec[j]);
     }
   }
   else {
     for (unsigned int i = 0; i < m_atoms.size(); i++) {
+      vec = pos(m_atoms[i]);
+      periodicity.put_into_positive_box(vec);
       for (unsigned int j = 0; j < 3; j++)
-        m_coordinates.push_back(pos(m_atoms[i])[j]);
+        m_coordinates.push_back(vec[j]);
     }
   }
 }
