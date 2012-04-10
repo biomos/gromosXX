@@ -133,7 +133,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
   
   if (knowns.count("bsleus")) {
     usage += "\t# B&S-LEUS definition file\n";
-    usage += "\t# @led       filename\n\n";
+    usage += "\t# @bsleus  filename\n\n";
   }
 
   if (knowns.count("order")){
