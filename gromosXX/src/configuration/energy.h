@@ -315,7 +315,7 @@ namespace configuration
 
   private:
     double m_ewarn;
-    //double ls_self_total_nvt;
+    
   };
 
 } // configuration
