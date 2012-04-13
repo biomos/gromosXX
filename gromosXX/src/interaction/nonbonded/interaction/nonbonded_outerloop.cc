@@ -1091,7 +1091,7 @@ void interaction::Nonbonded_Outerloop
     }
   }
 
-  // give the current box to the influence function for correctio
+  // give the current box to the influence function for correction
   // this has to be done AFTER the influence function is calculated
   conf.lattice_sum().influence_function.setBox(conf.current().box);
 
@@ -1134,7 +1134,7 @@ void interaction::Nonbonded_Outerloop
     } // if force error
   } // if update influence function
 
-  // check whether we need to claculate the A2~ term via P3M.
+  // check whether we need to calculate the A2~ term via P3M.
   // check whether we have to calculate it at all in this step
   bool calculate_lattice_sum_corrections =
           sim.param().pcouple.scale != math::pcouple_off || // NPT - every step
@@ -1180,8 +1180,8 @@ void interaction::Nonbonded_Outerloop
     if (rank == 0)
       timer.stop("P3M: self term");
   }
-
-
+  
+  
   if (rank == 0)
     timer.start("P3M: energy & force");
 
@@ -1505,7 +1505,7 @@ void interaction::Nonbonded_Outerloop
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical)) {
-    // calculate the virial of the methodology depedent A2 term
+    // calculate the virial of the methodology dependent A2 term
     a2_tilde_virial = (-0.25 * st2 * math::four_pi_eps_i) *
             conf.lattice_sum().a2_tilde_derivative;
     DEBUG(8, "A2 tilde virial: " << math::m2s(a2_tilde_virial));
@@ -1551,7 +1551,7 @@ void interaction::Nonbonded_Outerloop
 
   DEBUG(6, "ls_self_total = " << storage.energies.ls_self_total);
 
-  // now claculate the E_A term
+  // now calculate the E_A term
   if (rank == 0) {
     storage.energies.ls_a_term_total = (a1 * s2 - (a1 + a2_tilde) * st2) * math::eps0_i / (8.0 * math::Pi);
     if (do_virial) {
@@ -1564,6 +1564,13 @@ void interaction::Nonbonded_Outerloop
     storage.energies.ls_a_term_total = 0.0;
   }
   DEBUG(6, "ls_a_term_total = " << storage.energies.ls_a_term_total);
+
+  if (sim.param().pcouple.scale == math::pcouple_off && !sim.steps()){ // NVT and first step
+    conf.current().energies.ls_self_total_nvt = storage.energies.ls_self_total;
+    conf.old().energies.ls_self_total_nvt = storage.energies.ls_self_total;
+    conf.current().energies.ls_a_term_total_nvt = storage.energies.ls_a_term_total;
+    conf.old().energies.ls_a_term_total_nvt = storage.energies.ls_a_term_total;
+  }
 }
 
 void interaction::Nonbonded_Outerloop

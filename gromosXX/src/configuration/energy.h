@@ -66,7 +66,7 @@ namespace configuration
      */
     double nonbonded_total;
     /**
-     * total energy of the lennard-jones interaction
+     * total energy of the Lennard-Jones interaction
      */
     double lj_total;
     /**
@@ -94,6 +94,10 @@ namespace configuration
      */
     double ls_self_total;
     /**
+     * total electrostatic self energy for constant volume simulations (LS)
+     */
+    double ls_self_total_nvt;
+    /**
      * total surface energy
      */
     double ls_surface_total;
@@ -101,6 +105,10 @@ namespace configuration
      * total A term energy
      */
     double ls_a_term_total;
+    /**
+     * total A term energy for constant volume simulations
+     */
+    double ls_a_term_total_nvt;    
     /**
      * total energy of the "special" interactions
      */
@@ -307,7 +315,7 @@ namespace configuration
 
   private:
     double m_ewarn;
-    
+    //double ls_self_total_nvt;
   };
 
 } // configuration

@@ -466,7 +466,7 @@ void configuration::Configuration::resize(unsigned int s)
  * while keeping all existing positions/velocities/...
  * a faster version would be just resize, but then
  * the arrays contain garbage...
- * the energies have to be sized seperately!
+ * the energies have to be sized separately!
  */
 void configuration::Configuration::state_struct::resize(unsigned int s)
 {
@@ -482,7 +482,7 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
 
 void configuration::Configuration::lattice_sum_struct::init(topology::Topology const & topo,
         simulation::Simulation & sim) {
-  DEBUG(1,"Lattice Sum initalitation.");
+  DEBUG(1,"Lattice Sum initialization.");
   simulation::Parameter & param = sim.param();
 #ifdef OMP
   int tid, size;

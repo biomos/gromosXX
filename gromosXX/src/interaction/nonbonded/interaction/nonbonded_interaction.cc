@@ -820,7 +820,7 @@ void interaction::Nonbonded_Interaction::reduce_configuration
   e.ls_pair_total += exp_e.ls_pair_total;
   e.ls_self_total += exp_e.ls_self_total;
   e.ls_surface_total += exp_e.ls_surface_total;
-
+  
   // reduce the virial
   if (sim.param().pcouple.virial) {
     DEBUG(7, "\tadd set virial");
