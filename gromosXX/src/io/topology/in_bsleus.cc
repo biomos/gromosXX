@@ -21,8 +21,10 @@
 #include "../../util/bs_subspace.h"
 #include "../../util/bs_umbrella.h"
 #include "../../util/bs_vector.h"
+#include "../../util/template_split.h"
+#include "../../math/periodicity.h"
+
 #include "in_bsleus.h"
-#include "in_reference.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -137,6 +139,7 @@ BSLEUSSTK
 END
 @endverbatim
  */
+ 
 void io::In_BSLEUS::read(topology::Topology &topo,
           configuration::Configuration &conf,
 	      simulation::Simulation & sim,
@@ -654,10 +657,14 @@ io::In_BSLEUS::parseSpecifier(topology::Topology &topo,
               "In_BSLEUS", io::message::error);
       return;
     }
-    In_Reference in_ref(refFile);
-    in_ref.read(topo, sim, conf, os);
-    math::VArray refpos = in_ref.refpos();
-    DEBUG(8, "Refpos.size() = " << refpos.size());
+    configuration::Configuration myConf;
+    simulation::Simulation mySim = sim;
+    mySim.param().bsleus.bsleus = simulation::bsleus_off;
+    io::In_Configuration in_conf(refFile);
+    in_conf.read(myConf, topo, mySim, os);
+    math::VArray &refpos = myConf.current().pos;
+    
+    put_into_box(myConf, refpos);
     
     if (cartAtoms.size() == 0) { // all atoms
       for (unsigned int i = 0; i < refpos.size(); i++){
@@ -676,5 +683,23 @@ io::In_BSLEUS::parseSpecifier(topology::Topology &topo,
   }
   else {
     coords.push_back(atof(coordStr.c_str()));
+  }
+}
+void io::In_BSLEUS::
+put_into_box(configuration::Configuration &conf, math::VArray& pos){
+  SPLIT_BOUNDARY(_put_into_box, conf, pos);
+}
+
+template<math::boundary_enum B>
+void io::In_BSLEUS::
+_put_into_box(configuration::Configuration& conf, math::VArray& pos){
+  DEBUG(4, "Put the coordinates into the GROMOS box");
+  math::Periodicity<B> periodicity(conf.current().box);
+  
+  math::VArray::iterator it = pos.begin(),
+          to = pos.end();
+  for (; it != to; it++){
+    periodicity.put_into_box(*it);
+    DEBUG(5, v2s(*it));
   }
 }

@@ -15,7 +15,6 @@
  * @sa @ref bsleusparam
  * @sa @ref bsleusmem
  * @sa @ref bsleuspos
- * @sa @ref refconf
  * 
  * 
  */
@@ -68,6 +67,15 @@ namespace io {
                         std::vector<unsigned int> &cartAtoms,
                         std::vector<double> &coords,
                         std::ostream & os);
+    /**
+     * Put the positions into a box centered at zero
+     * @param conf
+     * @param pos
+     */
+    void put_into_box(configuration::Configuration &conf, math::VArray& pos);
+
+    template<math::boundary_enum B>
+    void _put_into_box(configuration::Configuration& conf, math::VArray& pos);
   };
 }
 #endif	/* IN_BSLEUS_H */
