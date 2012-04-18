@@ -194,10 +194,16 @@ int io::check_parameter(simulation::Simulation & sim)
   add("mult_energy_groups", "multiple energy groups", param.force.energy_group.size() > 1);
   
   // lattice sum: Ewald
-  add("ewald", "Ewald sum electrostatics", param.nonbonded.method == simulation::el_ewald);
+  add("ewald", "Ewald sum electrostatics.\n"
+      "    If this is changed in the future, line 2501 in\n"
+      "    out_configuration.cc needs to be adapted", 
+      param.nonbonded.method == simulation::el_ewald);
   
   // lattice sum: P3M
-  add("p3m", "P3M electrostatics", param.nonbonded.method == simulation::el_p3m);
+  add("p3m", "P3M electrostatics.\n"
+      "    If this is changed in the future, line 2501 in\n"
+      "    out_configuration.cc needs to be adapted", 
+      param.nonbonded.method == simulation::el_p3m);
 
   add("leus", "local elevation umbrella sampling", param.localelev.localelev != simulation::localelev_off);
   add("xray", "X-ray restraints", param.xrayrest.xrayrest != simulation::xrayrest_off);
