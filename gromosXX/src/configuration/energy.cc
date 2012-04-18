@@ -54,7 +54,9 @@ sasa_volume_total(0.0),
 qm_total(0.0),
 eds_vr(0.0),
 entropy_term(0.0),
-m_ewarn(1E99) {
+m_ewarn(1E99),
+ls_self_total_nvt(0.0),
+ls_a_term_total_nvt(0.0){
 }
 
 void configuration::Energy::zero(bool potential, bool kinetic)
@@ -328,6 +330,12 @@ int configuration::Energy::calculate_totals()
     std::cout << "EWARN: local elevation energy = " << leus_total << "\n";
   }
 
+  if(ls_self_total_nvt < 0){ 
+  // is only possible for constant volume simulation, otherwise it is zero. 
+     ls_self_total = ls_self_total_nvt;
+     ls_a_term_total = ls_a_term_total_nvt;
+  }  
+  
   ls_pair_total = ls_realspace_total + ls_kspace_total + ls_a_term_total;
   //        E(pair) + DeltaG(self) + DeltaG(surf)
   ls_total =ls_pair_total + ls_self_total + ls_surface_total;
