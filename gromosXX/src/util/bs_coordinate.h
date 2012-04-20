@@ -82,11 +82,11 @@ namespace util{
      */
     enum Coord_type {
         unknown = 0,
-        dihedral,
-        distance,
-        cartesian,
-        dihedralSum,
-        lambda,
+        dihedral = 1,
+        distance = 2,
+        cartesian = 3,
+        dihedralSum = 4,
+        lambda = 5,
     };
     Coord_type m_type;
     /**
@@ -239,6 +239,7 @@ namespace util{
       m_atoms = atoms;
       m_allAtoms = allAtoms;
       m_red_fac = red_fac;
+      m_type = cartesian;
     }
     virtual ~BS_Cartesian() {}
     virtual void calculateInternalCoord(configuration::Configuration & conf);
@@ -253,6 +254,27 @@ namespace util{
     std::vector<unsigned int> m_atoms;
     BS_Vector m_coordinates;
     bool m_allAtoms;
+  };
+  
+  class BS_Lambda : public BS_Coordinate {
+  public:
+    BS_Lambda(int id, double red_fac) {
+      m_id = id;
+      m_dimension = 1;
+      m_red_fac = red_fac;
+      m_type = lambda;
+    }
+    virtual ~BS_Lambda() {}
+    virtual void calculateInternalCoord(configuration::Configuration & conf);
+    virtual void getInternalCoordinates(BS_Vector &coord) const;
+    virtual void setOldPos(BS_Vector::iterator it, BS_Vector::iterator to){}
+    virtual void addForces(configuration::Configuration &conf, 
+                      BS_Vector &derivatives);
+    virtual std::string str() const;
+  protected:
+    template<math::boundary_enum B>
+    void _calculate(configuration::Configuration & conf);
+    double m_lambda;
   };
 }
 #endif	/* BS_LE_COORD_H */

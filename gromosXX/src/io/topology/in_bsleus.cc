@@ -69,7 +69,9 @@ BSLEUSCOORD
 # CTYPE:    Type of the coordinate
 #   1:  Dihedral angles (i, j, k, l)
 #   2:  Distance (i, j)
-#   3:  Sum of two dihedral angles ({i,j,k,l}_1, {i,j,k,l}_2)
+#   3:  Cartesian Coordinate (numAtoms, Atoms[1..numAtoms])
+#   4:  Sum of two dihedral angles ({i,j,k,l}_1, {i,j,k,l}_2)
+#   5:  Lambda Variable
 #   ...
 # CREF:     The reference value of the coordinate (sigma_n)
 #           Only important for the radius and the width,
@@ -82,7 +84,9 @@ BSLEUSCOORD
   1     1       1       1       2 4 6 8
   2     1       1       1       4 6 8 10
 #  3     1       2       0.1     1 10
-#  4     1       3       1       4 6 8 10 6 8 10 12
+#  4     1       3       1       4  2 4 6 8
+#  5     1       4       1       4 6 8 10 6 8 10 12
+#  6     1       5       1       
 END
 @endverbatim
  * 
@@ -370,6 +374,10 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           }
 
           coord = new util::BS_DihedralSum(id, i, j, k, l, ii, jj, kk, ll, reference);
+          break;
+        }
+        case util::BS_Coordinate::lambda: {
+          coord = new util::BS_Lambda(id, reference);
           break;
         }
         default: {

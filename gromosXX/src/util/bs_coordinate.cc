@@ -225,8 +225,6 @@ void util::BS_Distance::addForces(configuration::Configuration& conf,
   DEBUG(10, "Derivative: " << derivatives.str());
   double deriv = derivatives[0];
   DEBUG(10, "addForce: derivative: " << deriv);
-  // just multiply the derivative with the negative derivative of the
-  // angle by the atom positions to get the force.
   const math::Vec & force_i = deriv * fi;
   DEBUG(10, "force(" << i+1 << "): " << math::v2s(force_i));
   conf.current().force(i) += force_i;
@@ -399,5 +397,35 @@ void util::BS_Cartesian::addForces(configuration::Configuration& conf,
 std::string util::BS_Cartesian::str() const {
   std::ostringstream os;
   os << "Cartesian\n";
+  return os.str();
+}
+
+// ================ BS_Lambda ==============================
+void util::BS_Lambda::
+calculateInternalCoord(configuration::Configuration & conf) {
+  DEBUG(8, "Calculate lambda.");
+  
+  // TODO: Get the lambda
+  // m_lambda  = ... / m_red_fac;
+}
+
+void util::BS_Lambda::addForces(configuration::Configuration& conf, 
+        BS_Vector& derivatives){
+  assert(derivatives.size() == m_dimension);
+  DEBUG(10, "Derivative: " << derivatives.str());
+  double deriv = derivatives[0];
+  
+  // TODO: Add biasing force
+  // conf.current().lambda_force += - deriv / m_red_fac;
+}
+
+void util::BS_Lambda::getInternalCoordinates(BS_Vector& coord) const {
+  coord.clear();
+  coord.push_back(m_lambda);
+}
+
+std::string util::BS_Lambda::str() const {
+  std::ostringstream os;
+  os << "Lambda\n";
   return os.str();
 }
