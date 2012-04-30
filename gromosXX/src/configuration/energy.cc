@@ -324,6 +324,10 @@ int configuration::Energy::calculate_totals()
     std::cout << "EWARN: xray energy = " << xray_total << "\n";
   }
 
+  if (qm_total > m_ewarn) {
+	    std::cout << "EWARN: qm energy = " << qm_total << "\n";
+		  }
+
   if (leus_total > m_ewarn) {
     std::cout << "EWARN: local elevation energy = " << leus_total << "\n";
   }
@@ -352,7 +356,7 @@ int configuration::Energy::calculate_totals()
   special_total = posrest_total + distanceres_total + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total;
+    + symrest_total + bsleus_total + qm_total;
   
   total = potential_total + kinetic_total + special_total;
 
@@ -407,6 +411,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 31 : return eds_vr;
     case 32 : return sasa_total;
     case 33 : return sasa_volume_total;
+	case 34 : return qm_total;
   }
   return 0.0;
 }
