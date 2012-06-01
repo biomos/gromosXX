@@ -4631,8 +4631,8 @@ BSLEUS
 #   0:          Don'use it
 #   1:          Use it
 # BUILD:    Are we building?
-#   0:          Yes
-#   1:          No
+#   0:          No
+#   1:          Yes
 # WRITE:    >= 0 Do we write the energies and forces of the Umbrella?
 #   == 0:          No
 #   > 0:           Every nth step

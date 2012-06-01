@@ -158,6 +158,7 @@ double util::BS_Umbrella::getTotalPotential() const {
 
 void util::BS_Umbrella::getNumPotentials(int& numSpheres, int& numSticks) const
 {
+  assert(m_subspaces.size() > 0);
   numSticks = m_subspaces[0]->getNumSticks(); 
   numSpheres = m_subspaces[0]->getNumSpheres();
 }

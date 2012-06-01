@@ -363,16 +363,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_umbrellas(conf, m_special_traj);
       m_special_traj.flush();
     }
-    if (m_every_bsleus && ((sim.steps() - 1) % m_every_bsleus) == 0) {
+    if ((sim.param().bsleus.bsleus == simulation::bsleus_on) && 
+            m_every_bsleus && ((sim.steps() - 1) % m_every_bsleus) == 0) {
       if (!special_timestep_printed) {
         _print_timestep(sim, m_special_traj);
         special_timestep_printed = true;
       }
-      //_print_bsleus_energies(conf, m_special_traj);
-      //_print_bsleus_forces(conf, m_special_traj);
       _print_bsleusmem(conf, m_special_traj);
       _print_bsleus(conf, m_special_traj);
-      //_print_bsleus_potentials(conf, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -518,7 +516,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_bsleusmem(conf, m_final_conf);
       _print_bsleuspos(conf, m_final_conf);
 
-      if (m_every_bsleus && (sim.steps() % m_every_bsleus) == 0) {
+      if ((sim.param().bsleus.bsleus == simulation::bsleus_on) &&
+              m_every_bsleus && (sim.steps() % m_every_bsleus) == 0) {
         //if (!special_timestep_printed) {
           _print_timestep(sim, m_special_traj);
           //special_timestep_printed = true;
