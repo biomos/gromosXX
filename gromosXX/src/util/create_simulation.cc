@@ -25,6 +25,7 @@
 #include "../io/topology/in_distanceres.h"
 #include "../io/topology/in_dihrest.h"
 #include "../io/topology/in_xray.h"
+#include "../io/topology/in_leus.h"
 #include "../io/parameter/in_parameter.h"
 
 #include "../algorithm/algorithm/algorithm_sequence.h"
@@ -48,6 +49,8 @@ int util::create_simulation(std::string topo,
 			    std::string distanceres,
 			    std::string dihrest,
                             std::string xray,
+			    std::string led,
+			    std::string lud,
 			    bool quiet)
 {
 
@@ -60,7 +63,7 @@ int util::create_simulation(std::string topo,
   }
 
   io::igzstream input_file, topo_file, pttopo_file, conf_file, 
-    distanceres_file, dihrest_file, xray_file;
+    distanceres_file, dihrest_file, xray_file, led_file, lud_file;
   
   // if we got a parameter file, try to read it...
   if (param != ""){
@@ -147,6 +150,7 @@ int util::create_simulation(std::string topo,
     idr.read(sim.topo, sim.sim);
   }
 
+  
   if (xray != "") {
     xray_file.open(xray.c_str());
     if (!xray_file.is_open()) {
@@ -182,6 +186,36 @@ int util::create_simulation(std::string topo,
     ic.read(sim.conf, sim.topo, sim.sim);
     sim.conf.init(sim.topo, sim.sim.param());
     
+  }
+
+  if (lud != "" && led != "") {
+    
+    lud_file.open(lud.c_str());
+    
+    if(!lud_file.is_open()){
+      std::cout << "\n\ncould not open " << lud << "!\n" << std::endl;
+      io::messages.add("opening local elevation umbrella file (lud) failed", "read_input",
+		       io::message::error);
+      return -1;
+    }      
+    
+    io::In_LEUSBias ilud(lud_file);
+    ilud.quiet = quiet;
+    ilud.read(sim.topo, sim.conf, sim.sim);
+
+
+    led_file.open(led.c_str());
+    
+    if(!led_file.is_open()){
+      std::cout << "\n\ncould not open " << led << "!\n" << std::endl;
+      io::messages.add("opening local elevation definition file (led) failed", "read_input",
+		       io::message::error);
+      return -1;
+    }
+
+    io::In_Localelevspec iled(led_file);
+    iled.quiet = quiet;
+    iled.read(sim.topo, sim.sim);
   }
 
 

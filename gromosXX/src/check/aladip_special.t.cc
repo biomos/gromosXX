@@ -51,6 +51,7 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["DihedralRestraint"] = 2127.910749;
   m["PerturbedDihedralRestraint"] = 279.207857;
   m["XrayRestraint"] = 5.9411e+03;
+  m["Local Elevation"] = 3.5284e+01;
 }
 
 #ifdef OMP
@@ -66,7 +67,7 @@ int main(int argc, char* argv[]) {
   int total = 0;
 
   util::Known knowns;
-  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "xray" << "verb";
+  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "xray" << "led" << "lud" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo      <topology>]\n";
@@ -76,6 +77,8 @@ int main(int argc, char* argv[]) {
   usage += "\t[@distanceres  <distanceres>]\n";
   usage += "\t[@dihrest   <dihrest>]\n";
   usage += "\t[@xray      <xray>]\n";
+  usage += "\t[@led       <le definition file>]\n";
+  usage += "\t[@lud       <le umbrella file>]\n";
   usage += "\t[@verb     <[module:][submodule:]level>]\n";
 
   io::Argument args;
@@ -87,7 +90,7 @@ int main(int argc, char* argv[]) {
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest, sxray;
+  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest, sxray, sled, slud;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -122,6 +125,18 @@ int main(int argc, char* argv[]) {
   else
     GETFILEPATH(sdihrest, "aladip.dihrest", "src/check/data/");
 
+  if(args.count("led") ==1)
+    sled = args["led"];
+  else
+    GETFILEPATH(sled, "aladip.led", "src/check/data/");
+  //sled="";
+  
+  if(args.count("lud") ==1)
+    slud = args["lud"];
+  else
+    GETFILEPATH(slud, "aladip.lud", "src/check/data/");
+  //slud="";
+  
 #ifdef HAVE_CLIPPER
   if(args.count("xray") ==1)
     sxray = args["xray"];
@@ -139,6 +154,8 @@ int main(int argc, char* argv[]) {
 	      << "distanceres :   " << sdistanceres << "\n"
 	      << "dihrest :       " << sdihrest << "\n"
               << "xray :          " << sxray << "\n"
+	      << "led :           " << sled << "\n"
+	      << "lud :           " << slud << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
@@ -150,7 +167,7 @@ int main(int argc, char* argv[]) {
   io::In_Topology in_topo;
 
   in_topo.quiet = quiet;
-      
+
   if (util::create_simulation(stopo,
 			      spttopo,
 			      sconf,
@@ -160,6 +177,8 @@ int main(int argc, char* argv[]) {
 			      sdistanceres,
 			      sdihrest,
                               sxray,
+			      sled,
+			      slud,
 			      quiet
 			      )
       != 0){
@@ -174,7 +193,7 @@ int main(int argc, char* argv[]) {
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
-	
+
   if (interaction::create_g96_forcefield(*ff, 
 					 aladip_sim.topo,
 					 aladip_sim.sim,

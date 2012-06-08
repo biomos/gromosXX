@@ -322,4 +322,21 @@ XRAYRES
 #   NTXR   NTXLE     CXR   NTWXR   NTWDE   NTWXM   CXTAU   RDAVG
        1       0   0.500       0       0       0     1.0       0
 END
-
+LOCALELEV
+# NTLES 0,1 controls the use of local elevation.
+#    0 : not used [default]
+#    1 : local elevation is applied
+# NLEPOT >= 0 number of umbrella potentials applied
+# NTLESA 0..2 controls the reading of the potential definition
+#    0 : read from input file (not supported)
+#    1 : read from startup file
+#    2 : read from special file (@lud)
+# NLEPID[1..NLEPOT] IDs of the umbrella potentials
+# NLEPFR[1..NLEPOT] 0,1 freeze the umbrella potential
+#    0 : build up
+#    1 : freeze
+# NTLES  NLEPOT  NTLESA   NTWS
+      1       1       2   100  
+# NLEPID NLEPFT
+       1      1
+END

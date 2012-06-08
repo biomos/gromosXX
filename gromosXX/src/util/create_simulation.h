@@ -50,6 +50,8 @@ namespace util
 			std::string distanceres = "",
 			std::string dihrest = "",
                         std::string xray = "",
+			std::string lud = "",
+			std::string led = "",
 			bool quiet = false);
 }
 
