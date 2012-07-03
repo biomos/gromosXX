@@ -390,7 +390,7 @@ std::string util::BS_Subspace::traj_str(){
      << bs_pos.str() << "\n";
    
   os << "# Potentials\n";
-  os << "# ID SPH/STK POTENTIAL WEIGHT\n";
+  os << "# ID SPH/STK POTENTIAL WEIGHT      ACT_GRID_POINT\n";
   std::vector<BS_Potential *>::iterator it = m_potentials.begin(),
             to = m_potentials.end();
   for (; it != to; it++) {

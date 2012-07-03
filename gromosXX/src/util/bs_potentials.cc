@@ -114,9 +114,10 @@ util::BS_Potential::setMemoryParameters(double forceIncrement, int localCutoff)
 std::string util::BS_Potential::traj_str(){
   std::ostringstream os;
   os << std::setw(3) << id << " "
-          << std::setw(3) << (m_potentialType == BS_Potential::bs_sphere ? 1 : 0) << " "
+          << std::setw(3)  << (m_potentialType == BS_Potential::bs_sphere ? 1 : 0) << " "
           << std::setw(12) << m_potential << " "
-          << std::setw(8) << m_weight;;
+          << std::setw(10) << m_weight << " "
+          << std::setw(4)  << m_activeGridPoint;
   
   return os.str();
 }
