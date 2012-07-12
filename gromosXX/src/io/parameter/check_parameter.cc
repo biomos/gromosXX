@@ -3380,7 +3380,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_gridcell", "virial_off");
   fc.unlock("pairlist_gridcell", "virial_atomic");
   fc.unlock("pairlist_gridcell", "virial_molecular");
-  fc.unlock("pairlist_gridcell", "vacuum");
+  //fc.unlock("pairlist_gridcell", "vacuum");
   fc.unlock("pairlist_gridcell", "pbc_r");
   fc.unlock("pairlist_gridcell", "pbc_c");
   fc.unlock("pairlist_gridcell", "pbc_t");

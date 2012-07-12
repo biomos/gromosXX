@@ -246,6 +246,8 @@ io::In_Topology::read(topology::Topology& topo,
       _lineStream.str(*it);
       _lineStream >> num;
       ++it;
+      
+      topo.set_num_atomtype(num);
 
       if (!quiet)
         os << "\t" << num << " atom types\n";
@@ -339,6 +341,11 @@ io::In_Topology::read(topology::Topology& topo,
 
         if (t < 1) {
           io::messages.add("Error in SOLUTEATOM block: iac < 1.",
+                  "InTopology", io::message::error);
+        }
+        
+        if (t > topo.num_atomtype()) {
+          io::messages.add("Error in SOLUTEATOM block: iac > number of atom types.",
                   "InTopology", io::message::error);
         }
 
@@ -685,6 +692,11 @@ io::In_Topology::read(topology::Topology& topo,
             io::messages.add("Atom number out of range in BONDH block",
                     "In_Topology", io::message::error);
           }
+          
+          if (t < 1) {
+            io::messages.add("Error in BONDH block: bond type < 1",
+                    "In_Topology", io::message::error);
+          }
 
           if (param.constraint.ntc == 2 || param.constraint.ntc == 3) {
             topo.solute().distance_constraints().
@@ -743,6 +755,11 @@ io::In_Topology::read(topology::Topology& topo,
             io::messages.add("Atom number out of range in BOND block",
                     "In_Topology", io::message::error);
           }
+          
+          if (t < 1) {
+            io::messages.add("Error in BOND block: bond type < 1",
+                    "In_Topology", io::message::error);
+          }
 
           if (param.constraint.ntc == 3) {
             topo.solute().distance_constraints().
@@ -795,6 +812,11 @@ io::In_Topology::read(topology::Topology& topo,
           if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
                   i < 1 || j < 1) {
             io::messages.add("Atom number out of range in CGBOND block",
+                    "In_Topology", io::message::error);
+          }
+          
+          if (t < 1) {
+            io::messages.add("Error in CGBOND block: bond type < 1",
                     "In_Topology", io::message::error);
           }
 
@@ -860,6 +882,11 @@ io::In_Topology::read(topology::Topology& topo,
             io::messages.add("Atom number out of range in CONSTRAINT block",
                     "In_Topology", io::message::error);
           }
+          
+          if (t < 1) {
+            io::messages.add("Error in CONSTRAINT block: bond type < 1",
+                    "In_Topology", io::message::error);
+          }
 
           topo.solute().distance_constraints().
                   push_back(topology::two_body_term_struct(i - 1, j - 1, t - 1));
@@ -919,6 +946,11 @@ io::In_Topology::read(topology::Topology& topo,
             io::messages.add("Atom number out of range in BONDANGLEH block",
                     "In_Topology", io::message::error);
           }
+          
+          if (t < 1) {
+            io::messages.add("Error in BONDANGLE block: bond angle type < 1",
+                    "In_Topology", io::message::error);
+          }
 
           topo.solute().angles().
                   push_back(topology::three_body_term_struct(i - 1, j - 1, k - 1, t - 1));
@@ -964,6 +996,11 @@ io::In_Topology::read(topology::Topology& topo,
                   k > int(topo.num_solute_atoms()) ||
                   i < 1 || j < 1 || k < 1) {
             io::messages.add("Atom number out of range in BONDANGLE block",
+                    "In_Topology", io::message::error);
+          }
+          
+          if (t < 1) {
+            io::messages.add("Error in BONDANGLEH block: bond angle type < 1",
                     "In_Topology", io::message::error);
           }
 
@@ -1028,6 +1065,11 @@ io::In_Topology::read(topology::Topology& topo,
             io::messages.add("Atom number out of range in IMPDIHEDRAL block",
                     "In_Topology", io::message::error);
           }
+          
+          if (t < 1) {
+            io::messages.add("Error in IMPDIHEDRAL block: improper dihedral type < 1",
+                    "In_Topology", io::message::error);
+          }
 
           topo.solute().improper_dihedrals().
                   push_back(topology::four_body_term_struct(i - 1, j - 1, k - 1, l - 1, t - 1));
@@ -1077,6 +1119,11 @@ io::In_Topology::read(topology::Topology& topo,
                   k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
                   i < 1 || j < 1 || k < 1 || l < 1) {
             io::messages.add("Atom number out of range in IMPDIHEDRALH block",
+                    "In_Topology", io::message::error);
+          }
+          
+          if (t < 1) {
+            io::messages.add("Error in IMPDIHEDRALH block: improper dihedral type < 1",
                     "In_Topology", io::message::error);
           }
 
@@ -1139,6 +1186,11 @@ io::In_Topology::read(topology::Topology& topo,
             io::messages.add("Atom number out of range in DIHEDRAL block",
                     "In_Topology", io::message::error);
           }
+          
+          if (t < 1) {
+            io::messages.add("Error in DIHEDRAL block: dihedral type < 1",
+                    "In_Topology", io::message::error);
+          }
 
           topo.solute().dihedrals().
                   push_back(topology::four_body_term_struct(i - 1, j - 1, k - 1, l - 1, t - 1));
@@ -1186,6 +1238,11 @@ io::In_Topology::read(topology::Topology& topo,
                   k > int(topo.num_solute_atoms()) || l > int(topo.num_solute_atoms()) ||
                   i < 1 || j < 1 || k < 1 || l < 1) {
             io::messages.add("Atom number out of range in DIHEDRALH block",
+                    "In_Topology", io::message::error);
+          }
+          
+          if (t < 1) {
+            io::messages.add("Error in DIHEDRALH block: dihedral type < 1",
                     "In_Topology", io::message::error);
           }
 
@@ -1250,6 +1307,11 @@ io::In_Topology::read(topology::Topology& topo,
             io::messages.add("Atom number out of range in CROSSDIHEDRAL block",
                     "In_Topology", io::message::error);
           }
+          
+          if (t < 1) {
+            io::messages.add("Error in CROSSDIHEDRAL block: cross dihedral type < 1",
+                    "In_Topology", io::message::error);
+          }
 
           topo.solute().crossdihedrals().
                   push_back(topology::eight_body_term_struct(a - 1, b - 1, c - 1, d - 1, e - 1,
@@ -1300,6 +1362,11 @@ io::In_Topology::read(topology::Topology& topo,
                   g > int(topo.num_solute_atoms()) || h > int(topo.num_solute_atoms()) ||
                   a < 1 || b < 1 || c < 1 || d < 1 || e < 1 || f < 1 || g < 1 || h < 1) {
             io::messages.add("Atom number out of range in CROSSDIHEDRALH block",
+                    "In_Topology", io::message::error);
+          }
+          
+          if (t < 1) {
+            io::messages.add("Error in CROSSDIHEDRALH block: cross dihedral type < 1",
                     "In_Topology", io::message::error);
           }
 
@@ -1975,7 +2042,7 @@ void io::In_Topology
     _lineStream.clear();
     _lineStream.str(*it);
     _lineStream >> num;
-    ++it;
+    ++it;    
     for (; it != buffer.end() - 1; ++it, ++n) {
       double k, r;
       _lineStream.clear();
