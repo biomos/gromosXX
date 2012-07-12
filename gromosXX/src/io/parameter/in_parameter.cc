@@ -4267,6 +4267,10 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
                 "In_Parameter", io::message::error);
     }
     
+    if (param.nonbonded.selfterm_excluded_atoms < 0 || param.nonbonded.selfterm_excluded_atoms > 1)
+      io::messages.add("NONBONDED block: Illegal value for NSLFEXCL (1,0)",
+            "In_Parameter", io::message::error);
+    
     // switch to turn of the contribution of the excluded atoms to the reaction field
     if (param.nonbonded.method == simulation::el_reaction_field 
             && param.nonbonded.selfterm_excluded_atoms == 0) {
