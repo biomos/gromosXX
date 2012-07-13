@@ -301,6 +301,11 @@ int check::check_atomic_virial(topology::Topology & topo,
 			       simulation::Simulation & sim,
 			       interaction::Forcefield & ff)
 {
+
+  //set RF calculation for excluded pairs off 
+  //(became necessary after removal of GROMOS96COMPAT block)
+  sim.param().nonbonded.rf_excluded = 0; 
+
   const double epsilon = 0.0000001;
   const double accuracy = 0.00001;
   

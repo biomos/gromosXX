@@ -229,15 +229,15 @@ LAMBDAS
 # NTIL
     off
 # NTLI      NILG1 NILG2   ALI   BLI   CLI   DLI   ELI
-#bond            1     1     0     0   1.0     0     0
-vdw             1     1     1   0.0    0.0   0.0     0
-vdw             1     2     1     0.0  0.0  -1.0    0
-vdw_soft        1     1     0     0.0  1.0    0     0
-vdw_soft        1     2     0     0     0     0     1
-crf             1     1     1   0.0    0   0.0     0
-crf             1     2     0     0.0  2.0  -1.0    0
+#bond            1     1     0     0   1.0  0     0
+vdw             1     1     1     0.0  0.0  0.0   0
+vdw             1     2     1     0.0  0.0 -1.0   0
+vdw_soft        1     1     0     0.0  1.0  0     0
+vdw_soft        1     2     0     0    0    0     1
+crf             1     1     1     0.0  0    0.0   0
+crf             1     2     0     0.0  2.0 -1.0   0
 crf_soft        1     1     1     0.0  0    0     0
-crf_soft        1     2     0     0     0     0     1
+crf_soft        1     2     0     0    0    0     1
 END   
 
 #-------

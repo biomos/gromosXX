@@ -143,7 +143,6 @@ int main(int argc, char* argv[])
   }
 
   ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout, quiet);
-      
   total += check::check_atomic_virial(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
     
   return total;

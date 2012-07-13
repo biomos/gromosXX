@@ -580,6 +580,10 @@ int check::check_forcefield(topology::Topology & topo,
         std::map<std::string, double> & ref) {
   int res = 0, total = 0;
 
+  //set RF calculation for excluded pairs off
+  //(became necessary after removal of GROMOS96COMPAT block)
+  sim.param().nonbonded.rf_excluded = 0;
+
   for (vector<interaction::Interaction *>::iterator
     it = ff.begin(), //pointer to begin of a c++ vector
           to = ff.end();
