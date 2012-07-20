@@ -2691,7 +2691,7 @@ namespace simulation
       /**
        * constructor
        */
-      bsleus_struct() : bsleus(bsleus_off), building(0), write(0) {}
+      bsleus_struct() : bsleus(bsleus_off), building(0), write(0), transition_conf(false) {}
       /**
        * Use B&S-LEUS or not
        */
@@ -2708,6 +2708,11 @@ namespace simulation
        * Do we write the bsleus potential?
        */
       int write;
+      /** 
+       * Is this just the configuration along the transition path, which doesn't
+       * need a velocity?
+       */
+      bool transition_conf;
     } bsleus;
 
     /**

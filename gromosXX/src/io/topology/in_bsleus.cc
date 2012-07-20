@@ -668,6 +668,7 @@ io::In_BSLEUS::parseSpecifier(topology::Topology &topo,
     configuration::Configuration myConf;
     simulation::Simulation mySim = sim;
     mySim.param().bsleus.bsleus = simulation::bsleus_off;
+    mySim.param().bsleus.transition_conf = true;
     io::In_Configuration in_conf(refFile);
     in_conf.read(myConf, topo, mySim, os);
     math::VArray &refpos = myConf.current().pos;

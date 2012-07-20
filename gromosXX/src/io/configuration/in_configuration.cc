@@ -292,7 +292,10 @@ bool io::In_Configuration::read_velocity
 {
   // read velocities
   std::vector<std::string> buffer;
-  if(!sim.param().start.generate_velocities && !sim.param().minimise.ntem){
+  if (sim.param().bsleus.transition_conf){
+    return true;
+  }
+  else if(!sim.param().start.generate_velocities && !sim.param().minimise.ntem){
     buffer = m_block["VELOCITY"];
     if (buffer.size()){
       if (!quiet)
@@ -319,7 +322,7 @@ bool io::In_Configuration::read_velocity
     // store also in old velocities (for initial temperature calculation)
     conf.old().vel = conf.current().vel;
   }
-  else{
+  else {
     // generate initial velocities
     util::generate_velocities(sim.param(), sim.param().start.tempi, 
 			      topo.mass(),
