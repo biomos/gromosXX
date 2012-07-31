@@ -1317,6 +1317,7 @@ namespace simulation
        * - rf_epsilon 66 (spc water)
        * - rf_kappa    0
        * - rf_cutoff 1.4
+       * - selfterm_excluded_atoms 1 (selfterm considered)
        * - rf_excluded true (new standard)
        * - epsilon     1
        */
@@ -1326,6 +1327,7 @@ namespace simulation
         rf_kappa(0.0),
         rf_cutoff(1.4),
         rf_epsilon(66.0),
+        selfterm_excluded_atoms(1),
         ls_charge_shape(-1),
         ls_charge_shape_width(0.27),
         ls_calculate_a2(ls_a2_zero),
@@ -1371,6 +1373,10 @@ namespace simulation
        *reaction field permittivity
        */
       double rf_epsilon;
+      /**
+       * self term of the excluded atoms for reaction field
+       */
+      int selfterm_excluded_atoms;
       /**
        * lattice-sum charge shaping function
        */

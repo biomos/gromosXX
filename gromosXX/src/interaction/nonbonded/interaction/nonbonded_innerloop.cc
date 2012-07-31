@@ -346,8 +346,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   const unsigned int eg_i = topo.atom_energy_group(i);
   const unsigned int eg_j = topo.atom_energy_group(j);
   storage.energies.lj_energy[eg_i][eg_j] += e_lj;
-
   storage.energies.crf_energy[eg_i][eg_j] += e_crf;
+
 #ifdef XXFORCEGROUPS
   if (storage.force_groups.size()) {
     storage.force_groups[eg_i][eg_j][i] += force;
@@ -881,7 +881,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         lj_crf_interaction(r, lj.cs6, lj.cs12,
                 topo.charge()(i) *
                 topo.charge()(j),
-                f, e_lj, e_crf);
+                f, e_lj, e_crf, 2);
 
         DEBUG(10, "\t\tatomic virial");
         for (int a = 0; a < 3; ++a) {
@@ -1084,6 +1084,29 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
       }
 
     case simulation::cggromos_func :
+    {
+      if (topo.is_coarse_grained(i) || topo.is_coarse_grained(j)) { // CG-CG or CG-FG
+        io::messages.add("Nonbonded_Innerloop",
+                         "No LJ exceptions for coarse-grained simulations!",
+		         io::message::critical);
+      } else {
+        lj_crf_interaction(r, ljex.c6, ljex.c12,
+			 topo.charge()(i) *
+			 topo.charge()(j),
+			 f, e_lj, e_crf, 2);
+
+        DEBUG(10, "\t\tatomic virial");
+        for (int a=0; a<3; ++a){
+          const double term = f * r(a);
+          storage.force(i)(a) += term;
+          storage.force(j)(a) -= term;
+
+          for(int b=0; b<3; ++b)
+            storage.virial_tensor(b, a) += r(b) * term;
+        }
+      }
+      break;
+    }
     case simulation::cgrain_func :
       {
         io::messages.add("Nonbonded_Innerloop",
@@ -1519,8 +1542,42 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
       } // loop over at_it
       break;
     }
-    case simulation::cgrain_func :
     case simulation::cggromos_func :
+    {
+      if (topo.is_coarse_grained(*at_it)) { // CG-CG or CG-FG
+        io::messages.add("Nonbonded_Innerloop",
+              "no RF solvent interaction innerloop for coarse-grained simulations!",
+              io::message::critical);
+      } else { // FG-FG
+        for (; at_it != at_to; ++at_it) {
+          DEBUG(11, "\tsolvent self term " << *at_it);
+          // no solvent self term. The distance dependent part and the forces
+          // are zero. The distance independent part should add up to zero
+          // for the energies and is left out.
+
+          for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
+
+            DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
+            periodicity.nearest_image(pos(*at_it),
+                    pos(*at2_it), r);
+
+            // for solvent, we don't calculate internal forces (rigid molecules)
+            // and the distance independent parts should go to zero
+            e_crf = -topo.charge()(*at_it) * topo.charge()(*at2_it) *
+                    math::four_pi_eps_i * crf_2cut3i() * abs2(r);
+            DEBUG(15, "\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
+            DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
+            // energy
+            storage.energies.crf_energy
+                    [topo.atom_energy_group(*at_it) ]
+                    [topo.atom_energy_group(*at2_it)] += e_crf;
+            DEBUG(11, "\tsolvent rf excluded contribution: " << e_crf);
+          } // loop over at2_it
+        } // loop over at_it
+      }
+      break;
+    }
+    case simulation::cgrain_func :
     {
       io::messages.add("Nonbonded_Innerloop",
               "no RF solvent interaction innerloop for coarse-grained simulations!",

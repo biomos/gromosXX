@@ -238,6 +238,16 @@ namespace topology
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
     
     /**
+     * number of atom types.
+     */
+    int num_atomtype()const {return m_num_atomtype;}
+    
+    /**
+     * set number of atom types.
+     */
+    void set_num_atomtype(int num) {m_num_atomtype = num;}
+    
+    /**
      * number of solvents.
      */
     unsigned int num_solvents()const {return unsigned(m_num_solvent_molecules.size());}
@@ -1208,6 +1218,11 @@ namespace topology
       return m_qm_zone.count(i);
     }
   private:
+    /**
+     * the number of atom types
+     */
+    int m_num_atomtype;
+    
     /**
      * the solute.
      */

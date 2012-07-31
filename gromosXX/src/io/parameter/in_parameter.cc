@@ -1807,7 +1807,7 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
         break;
       default:
         param.cgrain.level = 0;
-        io::messages.add("CGRAIN block: NTCGRAN must be 0 to 4.",
+        io::messages.add("CGRAIN block: NTCGRAN must be 0 to 3.",
                 "In_Parameter", io::message::error);
     }
     DEBUG(6, "coarse graining level = " << param.cgrain.level);
@@ -4148,6 +4148,9 @@ NONBONDED
 #   0.0 : set to infinity
 # EPSRF     = 0.0 || > 1.0 reaction-field permittivity
 #   0.0 : set to infinity 
+# NSLFEXCL  0,1 contribution of excluded atoms to reaction field
+      0 : contribution turned off
+      1 : contribution considered (default)
 # NSHAPE    -1..10 lattice sum charge-shaping function
 #    -1 : gaussian
 # 0..10 : polynomial 
@@ -4183,10 +4186,10 @@ NONBONDED
 # 
 #   NLRELE
          1
-#    APPAK      RCRF     EPSRF
-       0.0       1.4      61.0
-#   NSHAPE    ASHAPE    NA2CLC     TOLA2    EPSLS
-        -1       1.4         2    0.1E-9      0.0
+#    APPAK      RCRF     EPSRF   NSLFEXCL
+       0.0       1.4      61.0          1
+#   NSHAPE    ASHAPE    NA2CLC      TOLA2    EPSLS
+        -1       1.4         2     0.1E-9      0.0
 #      NKX       NKY       NKZ       KCUT
         10        10        10      100.0
 #      NGX       NGY       NGZ    NASORD    NFDORD    NALIAS    NSPORD
@@ -4215,6 +4218,7 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
     int ls_calculate_a2;
     _lineStream >> method >>
             param.nonbonded.rf_kappa >> param.nonbonded.rf_cutoff >> param.nonbonded.rf_epsilon >>
+            param.nonbonded.selfterm_excluded_atoms >>
             param.nonbonded.ls_charge_shape >> param.nonbonded.ls_charge_shape_width >>
             ls_calculate_a2 >> param.nonbonded.ls_a2_tolerance >>
             param.nonbonded.ls_epsilon >>
@@ -4260,6 +4264,18 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
       default:
         io::messages.add("NONBONDED block: electrostatic method not implemented",
                 "In_Parameter", io::message::error);
+    }
+    
+    if (param.nonbonded.selfterm_excluded_atoms < 0 || param.nonbonded.selfterm_excluded_atoms > 1)
+      io::messages.add("NONBONDED block: Illegal value for NSLFEXCL (1,0)",
+            "In_Parameter", io::message::error);
+    
+    // switch to turn of the contribution of the excluded atoms to the reaction field
+    if (param.nonbonded.method == simulation::el_reaction_field 
+            && param.nonbonded.selfterm_excluded_atoms == 0) {
+      param.nonbonded.rf_excluded = false;
+      io::messages.add("NONBONDED block: contribution of excluded atoms to the reaction field turned off!",
+                "In_Parameter", io::message::warning);
     }
 
     if (param.nonbonded.method != simulation::el_reaction_field)

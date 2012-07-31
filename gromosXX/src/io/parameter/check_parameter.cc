@@ -3230,7 +3230,9 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasa", "pairlist_standard");
   fc.unlock("sasa", "pairlist_grid");
   fc.unlock("sasa", "cutoff_atomic");
-  //fc.unlock("sasa", "coarse_grain");
+  //fc.unlock("sasa", "cg_martini");
+  //fc.unlock("sasa", "cg_gromos");
+  //fc.unlock("sasa", "mixed_grain");
   fc.unlock("sasa", "temp_berendsen");
   fc.unlock("sasa", "temp_nosehoover");
   fc.unlock("sasa", "temp_nosehoover_chains");
@@ -3311,7 +3313,9 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasavol", "pairlist_standard");
   fc.unlock("sasavol", "pairlist_grid");
   fc.unlock("sasavol", "cutoff_atomic");
-  //fc.unlock("sasavol", "coarse_grain");
+  //fc.unlock("sasavol", "cg_martini");
+  //fc.unlock("sasavol", "cg_gromos");
+  //fc.unlock("sasavol", "mixed_grain");
   fc.unlock("sasavol", "temp_berendsen");
   fc.unlock("sasavol", "temp_nosehoover");
   fc.unlock("sasavol", "temp_nosehoover_chains");
@@ -3372,7 +3376,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_gridcell", "virial_off");
   fc.unlock("pairlist_gridcell", "virial_atomic");
   fc.unlock("pairlist_gridcell", "virial_molecular");
-  fc.unlock("pairlist_gridcell", "vacuum");
+  //fc.unlock("pairlist_gridcell", "vacuum");
   fc.unlock("pairlist_gridcell", "pbc_r");
   fc.unlock("pairlist_gridcell", "pbc_c");
   fc.unlock("pairlist_gridcell", "pbc_t");
