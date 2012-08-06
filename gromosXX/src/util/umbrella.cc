@@ -249,6 +249,7 @@ void util::Umbrella::transform_units() {
         conversion_factor_grid = math::Pi * 2.0 / num_grid_points[i];
         break;
       default:
+        conversion_factor_grid = (grid_max[i] - grid_min[i])/num_grid_points[i];
         break;
     }
     cutoff_rel[i] = conversion_factor_grid * cutoff[i];
