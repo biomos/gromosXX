@@ -3656,6 +3656,9 @@ void io::In_Parameter::read_POLARISE(simulation::Parameter & param,
   buffer = m_block["POLARISE"];
 
   if (buffer.size()) {
+    
+    param.setDevelop("Polarisation is under development.");
+    
     block_read.insert("POLARISE");
 
     _lineStream.clear();
