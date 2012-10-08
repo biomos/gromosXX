@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest" 
          << "dihrest" << "jval" << "xray" << "sym" << "order" << "lud" << "led" << "anatrj"
-         << "print" << "friction" << "qmmm" << "version";
+         << "print" << "friction" << "qmmm" << "version" << "develop";
   
   
   std::string usage;
@@ -135,6 +135,11 @@ int main(int argc, char *argv[]){
     return 1;    
   }
   
+  // check for development 
+  if (sim.param().develop.develop==true && args.count("develop") < 0) { 
+    io::messages.add(sim.param().develop.msg, io::message::develop); 
+  } 
+  
   // initialises all algorithms (and therefore also the forcefield)
   md.init(topo, conf, sim, *os, quiet);
 
@@ -152,13 +157,19 @@ int main(int argc, char *argv[]){
     traj.init(args, sim.param());
     
     std::cout << "\nMESSAGES FROM INITIALIZATION\n";
-    if (io::messages.display(std::cout) >= io::message::error){
-      // exit
-      std::cout << "\nErrors during initialization!\n" << std::endl;
-      MPI::Finalize();
-      return 1;
+    {
+      int iom = io::messages.display(std::cout);
+      if (iom >= io::message::error) {
+        std::cout << "\nErrors during initialisation!\n" << std::endl;
+        MPI::Finalize();
+        return 1;
+      } else if (iom == io::message::develop) {
+        std::cout << "\nUse @develop to run untested code.\n" << std::endl;
+        MPI::Finalize();
+        return 1;
+      }
     }
-    
+
     io::messages.clear();
 
     std::cout.precision(5);
