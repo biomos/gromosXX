@@ -183,17 +183,17 @@ void algorithm::NoseHoover_Thermostat
 
       assert(nhc > 1);
       
-      b_it->zeta[nhc-1] += (tau[nhc-2] * b_it->zeta[nhc-2] * b_it->zeta[nhc - 2] - 1.0 / b_it->dof)
-	/ tau[nhc-1] * dt;
+      b_it->zeta[nhc-1] += (tau[nhc-2] * tau[nhc-2] * b_it->zeta[nhc-2] * b_it->zeta[nhc-2]
+                         - 1.0 / b_it->dof) / (tau[nhc-1] * tau[nhc-1]) * dt;
 	
       for (int i = nhc - 2; i >= 1; i--){
 
-	b_it->zeta[i] += ((tau[i-1] * b_it->zeta[i-1] * b_it->zeta[i-1] - 1.0 / b_it->dof)
-			  / tau[i] - b_it->zeta[i] * b_it->zeta[i+1]) * dt;
+	b_it->zeta[i] += ((tau[i-1] * tau[i-1] * b_it->zeta[i-1] * b_it->zeta[i-1] - 1.0 / b_it->dof)
+			 / (tau[i] * tau[i]) - b_it->zeta[i] * b_it->zeta[i+1]) * dt;
       }
 
-      b_it->zeta[0] += ((free_temp / b_it->temperature - 1.0) / tau[0] - b_it->zeta[1] * b_it->zeta[0] )
-	* dt;
+      b_it->zeta[0] += ((free_temp / b_it->temperature - 1.0) / (tau[0] * tau[0])
+                         - b_it->zeta[1] * b_it->zeta[0] ) * dt;
 
       b_it->scale = 1.0 - b_it->zeta[0] * dt;
       
