@@ -1835,8 +1835,8 @@ MULTIBATH
 #   NBATHS: number of baths
     2
 #   TEMP0  TAU
-    300    0.010
-    300    0.010
+    300    0.10
+    300    0.10
 #   DOFSET: number of different couplings
     1
 #   LAST   COM-BATH  IR-BATH
