@@ -100,6 +100,14 @@ util::BS_Vector util::BS_Vector::operator +(const BS_Vector& summand) {
   }
   return result;
 }
+util::BS_Vector util::BS_Vector::operator -(const BS_Vector &subtrahend){
+  assert(this->size() == subtrahend.size());
+  BS_Vector result;
+  for (int i = 0; i < this->size(); i++){
+    result.push_back((*this)[i] - subtrahend[i]);
+  }
+  return result;
+}
 
 void util::BS_Vector::operator +=(const BS_Vector& summand) {
   assert(this->size() == summand.size());

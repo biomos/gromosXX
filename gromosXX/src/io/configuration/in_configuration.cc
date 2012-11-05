@@ -204,6 +204,66 @@ bool io::In_Configuration::read_next
 
   return true;
 }
+bool io::In_Configuration::read_position_plain(topology::Topology &topo,
+        configuration::Configuration &conf,
+        simulation::Simulation & sim,
+        std::ostream & os)
+{
+  conf.resize(topo.num_atoms());
+  DEBUG(8, "Reading in a plain Configuration for at most " << topo.num_atoms() << " atoms.");
+  read_frame();
+  block_read.clear();
+  
+  //read_position(topo, conf, sim, os);
+  std::vector<std::string> buffer;
+  buffer = m_block["POSITION"];
+  
+  if (!buffer.size()){
+    io::messages.add("Could not find POSITION block",
+		       "In_Configuration",
+		       io::message::error);
+    return false;
+  }
+  
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+    to = buffer.end()-1;
+  
+  math::VArray &pos = conf.current().pos;
+  
+  std::string s1, s2;
+  int i, n, nr;
+
+  for(i=0; it != to; ++i, ++it){
+    DEBUG(8, "line: " << *it);
+    
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> n >> s1 >> s2 >> nr;
+    _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
+    DEBUG(8, "atom " << i << ": " << v2s(pos(i)));
+    
+    if(_lineStream.fail()){
+      io::messages.add("bad line in POSITION block",
+		       "In_Configuration",
+		       io::message::error);      
+      return false;
+    }
+  }
+  
+  read_box(topo, conf, sim, os);
+
+  conf.boundary_type = sim.param().boundary.boundary;
+  if (conf.boundary_type == math::truncoct) {
+    // convert to triclinic system
+    math::truncoct_triclinic_box(conf.current().box, true);
+    conf.old().box = conf.current().box;
+    math::truncoct_triclinic(conf.current().pos, true);
+    math::truncoct_triclinic(conf.current().posV, true);
+    math::truncoct_triclinic(conf.current().vel, true);
+    math::truncoct_triclinic(conf.special().reference_positions, true);
+  }
+  return true;
+}
 
 bool io::In_Configuration::read_position
 (
@@ -2366,33 +2426,28 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
   
-  int numSpheres, numSticks, num_gp, id, have_aux;
-  _lineStream >> numSpheres >> numSticks >> have_aux;
+  int numPotentials, num_gp, id, have_aux;
+  _lineStream >> numPotentials >> have_aux;
   if (_lineStream.fail()){
     io::messages.add("BSLEUSMEM block: Could not read the number of Potentials!",
             "In_Configuration", io::message::error);
     return false;
   }
-  DEBUG(5, "Reading " << numSpheres << " Spheres and " << numSticks << " Sticks.");
-  int topoSpheres, topoSticks;
-  bs_umbrella.getNumPotentials(topoSpheres, topoSticks);
-  if (numSpheres != topoSpheres){
-    io::messages.add("BSLEUSMEM block: Not the same number of spheres in topology and configuration!",
-            "In_Configuration", io::message::error);
-    return false;
-  }
-  if (numSticks != topoSticks){
-    io::messages.add("BSLEUSMEM block: Not the same number of sticks in topology and configuration!",
+  DEBUG(5, "Reading " << numPotentials << "Potentials.");
+  int topoPotentials;
+  bs_umbrella.getNumPotentials(topoPotentials);
+  if (numPotentials != topoPotentials){
+    io::messages.add("BSLEUSMEM block: Not the same number of potentials in topology and configuration!",
             "In_Configuration", io::message::error);
     return false;
   }
   
-  for (int i = 0; i < numSpheres; i++){
+  for (int i = 0; i < numPotentials; i++){
     int subid;
     _lineStream >> id >> subid >> num_gp;
     if (_lineStream.fail()) {
       std::ostringstream os;
-      os << "BSLEUSMEM block: Could not read memory of sphere " << (i+1);
+      os << "BSLEUSMEM block: Could not read memory of potential " << (i+1);
       io::messages.add(os.str(), "In_Configuration", io::message::error);
       return false;
     }
@@ -2403,38 +2458,13 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
       _lineStream >> mem;
       if (_lineStream.fail()) {
         std::ostringstream os;
-        os << "BSLEUSMEM block: Could not read memory of sphere " << (i+1);
+        os << "BSLEUSMEM block: Could not read memory of potential " << (i+1);
         io::messages.add(os.str(), "In_Configuration", io::message::error);
         return false;
       }
       memVector.push_back(mem);
     }
-    bs_umbrella.setMemory(id, subid, util::BS_Potential::bs_sphere, memVector);
-  }
-  
-  for (int i = 0; i < numSticks; i++){
-    int subid;
-    _lineStream >> id >> subid >> num_gp;
-    if (_lineStream.fail()) {
-      std::ostringstream os;
-      os << "BSLEUSMEM block: Could not read memory of stick " << (i+1);
-      io::messages.add(os.str(), "In_Configuration", io::message::error);
-      return false;
-    }
-    subid--; // Convert to GROMOS
-    double mem;
-    std::vector<double> memVector;
-    for (int j = 0; j < num_gp; j++){
-      _lineStream >> mem;
-      if (_lineStream.fail()) {
-        std::ostringstream os;
-        os << "BSLEUSMEM block: Could not read memory of stick " << (i+1);
-        io::messages.add(os.str(), "In_Configuration", io::message::error);
-        return false;
-      }
-      memVector.push_back(mem);
-    }
-    bs_umbrella.setMemory(id, subid, util::BS_Potential::bs_stick, memVector);
+    bs_umbrella.setMemory(id, subid, memVector);
   }
   
   // Auxiliary Memory
@@ -2473,9 +2503,9 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
       bs_umbrella.setCounter(subid, auxc, redc);
     }
     
-    // Read in spheres
+    // Read in potentials
     int subid;
-    for (int i = 0; i < numSpheres; i++) {
+    for (int i = 0; i < numPotentials; i++) {
       _lineStream >> id >> subid >> num_gp;
       if (_lineStream.fail()) {
         std::ostringstream os;
@@ -2498,34 +2528,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
         }
         memVector.push_back(mem);
       }
-      bs_umbrella.setAuxMemory(id, subid, util::BS_Potential::bs_sphere, memVector);
-    }
-
-    // read in sticks
-    for (int i = 0; i < numSticks; i++) {
-      _lineStream >> id >> subid >> num_gp;
-      if (_lineStream.fail()) {
-        std::ostringstream os;
-        os << "BSLEUSMEM block: Could not read auxiliary memory of stick " 
-           << (i + 1);
-        io::messages.add(os.str(), "In_Configuration", io::message::error);
-        return false;
-      }
-      subid--; // Convert to GROMOS
-      double mem;
-      std::vector<double> memVector;
-      for (int j = 0; j < num_gp; j++) {
-        _lineStream >> mem;
-        if (_lineStream.fail()) {
-          std::ostringstream os;
-          os << "BSLEUSMEM block: Could not read auxiliary memory of stick " 
-             << (i + 1);
-          io::messages.add(os.str(), "In_Configuration", io::message::error);
-          return false;
-        }
-        memVector.push_back(mem);
-      }
-      bs_umbrella.setAuxMemory(id, subid, util::BS_Potential::bs_stick, memVector);
+      bs_umbrella.setAuxMemory(id, subid, memVector);
     }
   } // end auxiliary memory
   return true;

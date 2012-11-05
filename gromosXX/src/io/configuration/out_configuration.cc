@@ -2890,146 +2890,84 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
   os << "BSLEUSMEM\n"
      << "#\n"
      << "# The current state of the Memory in the BS&LEUS algorithm.\n"
-     << "# NUMSPH:   The Number of Spheres\n"
-     << "# NUMSTK:   The Number of Sticks\n"
+     << "# NUMPOT:   The Number of Potentials\n"
      << "# AUXMEM:   Is the auxiliary memory set? (0: No; 1: Yes)\n"
      << "#\n"
-     << "# NUMSPH    NUMSTK AUXMEM\n";
-  int numSpheres, numSticks;
-  umb->getNumPotentials(numSpheres, numSticks);
-  os << std::setw(3) << numSpheres << std::setw(10) << numSticks 
-     << std::setw(7) << umb->printAuxMem() << "\n";
-  if (numSpheres){
-    os << "#\n"
-       << "# SPHID:    The ID of the Sphere\n"
-       << "# SUBID:    The ID of the Subspace\n"
-       << "# NUMGP:    The number of Grid Points\n"
-       << "# MEM:      The Memory\n"
-       << "#\n"
-       << "# SPHID SUBSP   NUMGP   MEM[1..NUMGP]\n";
-    for (int i = 0; i < numSpheres; i++) {
-      std::vector<double> memory;
-      unsigned int subid;
-      if (!umb->getMemory(i + 1, subid, util::BS_Potential::bs_sphere, memory)) {
-        std::ostringstream msg;
-        msg << "Could not find the memory of sphere " << i + 1 << "!\n";
-        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
-        return;
-      }
-      int num_gp = memory.size();
-      os << std::setw(3) << (i + 1)
-              << std::setw(6) << subid + 1
-              << std::setw(8) << num_gp;
-      std::vector<double>::iterator it = memory.begin(),
-              to = memory.end();
-      for (; it != to; it++) {
-        os << " " << *it;
-      }
-      os << "\n";
+     << "# NUMPOT AUXMEM\n";
+  int numPotentials;
+  umb->getNumPotentials(numPotentials);
+  os << std::setw(3) << numPotentials << std::setw(7) << umb->printAuxMem() << "\n";
+  os << "#\n"
+          << "# ID:       The ID of the Sphere\n"
+          << "# SUBID:    The ID of the Subspace\n"
+          << "# NUMGP:    The number of Grid Points\n"
+          << "# MEM:      The Memory\n"
+          << "#\n"
+          << "# ID    SUBSP   NUMGP   MEM[1..NUMGP]\n";
+  for (int i = 0; i < numPotentials; i++) {
+    std::vector<double> memory;
+    unsigned int subid;
+    if (!umb->getMemory(i + 1, subid, memory)) {
+      std::ostringstream msg;
+      msg << "Could not find the memory of potential " << i + 1 << "!\n";
+      io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+      return;
     }
-  }
-  if (numSticks){
-    os << "#\n"
-       << "#\n"
-       << "# STKID:    The ID of the Stick\n"
-       << "# SUBID:    The ID of the Subspace\n"
-       << "# NUMGP:    The Number of Grid Points\n"
-       << "# MEM:      The Memory\n"
-       << "#\n"
-       << "# STKID SUBSP   NUMGP   MEM[1..NUMGP]\n";
-
-    for (int i = 0; i < numSticks; i++) {
-      std::vector<double> memory;
-      unsigned int subid;
-      if (!umb->getMemory(i + 1, subid, util::BS_Potential::bs_stick, memory)) {
-        std::ostringstream msg;
-        msg << "Could not find the memory of stick " << i + 1 << "!\n";
-        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
-        return;
-      }
-      int num_gp = memory.size();
-      os << std::setw(3) << (i + 1)
-              << std::setw(6) << subid + 1
-              << std::setw(8) << num_gp;
-      std::vector<double>::iterator it = memory.begin(),
-              to = memory.end();
-      for (; it != to; it++) {
-        os << " " << *it;
-      }
-      os << "\n";
+    int num_gp = memory.size();
+    os << std::setw(3) << (i + 1)
+            << std::setw(6) << subid + 1
+            << std::setw(8) << num_gp;
+    std::vector<double>::iterator it = memory.begin(),
+            to = memory.end();
+    for (; it != to; it++) {
+      os << " " << *it;
     }
+    os << "\n";
   }
   
-  if (umb->printAuxMem()){
-    if (numSticks || numSpheres){
-      os << "#\n"
-         << "# The Auxiliary Memory & the subspaces\n"
-         << "#\n"
-              << "# NUMSUB:   The number of subspaces\n"
-              << "# SUBID:    The ID of the subspace\n"
-              << "# AUXC:     The Auxiliary Counter\n"
-              << "# REDC:     The Reduction Counter\n"
-              << "# AUXMEM:   The Auxiliary Memory\n"
-              << "#\n"
-              << "# NUMSUB\n  "
-              << umb->getNumSubspaces() << "\n"
-              << "# SUBID AUXC    REDC\n";
-      for (unsigned int i = 0; i < umb->getNumSubspaces(); i++){
-        unsigned int auxc, redc;
-        umb->getCounter(i, auxc, redc);
-        os << std::setw(3) << i + 1
-           << std::setw(6) << auxc
-           << std::setw(8) << redc << "\n";
-      }
+  if (umb->printAuxMem()) {
+    unsigned int numSubspaces = umb->getNumSubspaces();
+    os << "#\n"
+            << "# The Auxiliary Memory & the subspaces\n"
+            << "#\n"
+            << "# NUMSUB:   The number of subspaces\n"
+            << "# SUBID:    The ID of the subspace\n"
+            << "# AUXC:     The Auxiliary Counter\n"
+            << "# REDC:     The Reduction Counter\n"
+            << "# AUXMEM:   The Auxiliary Memory\n"
+            << "#\n"
+            << "# NUMSUB\n  "
+            << numSubspaces << "\n"
+            << "# SUBID AUXC    REDC\n";
+    for (unsigned int i = 0; i < numSubspaces; i++) {
+      unsigned int auxc, redc;
+      umb->getCounter(i, auxc, redc);
+      os << std::setw(3) << i + 1
+              << std::setw(6) << auxc
+              << std::setw(8) << redc << "\n";
     }
-    if (numSpheres){
-      os << "#\n"
-         << "# SPHID SUBSP   NUMGP   AUXMEM[1..NUMGP]\n";
-      for (int i = 0; i < numSpheres; i++){
-        std::vector<double> memory;
-        unsigned int subid;
-        if(!umb->getAuxMemory(i + 1, subid, util::BS_Potential::bs_sphere, memory)){
-          std::ostringstream msg;
-          msg << "Could not find the memory of sphere " << i + 1 << "!\n";
-          io::messages.add(msg.str(), "Out_Configuration", io::message::error);
-          return;
-        }
-        int num_gp = memory.size();
-        os << std::setw(3) << (i + 1)
-           << std::setw(6) << subid + 1
-           << std::setw(8) << num_gp;
-        std::vector<double>::iterator it  = memory.begin(),
-                to = memory.end();
-        for (; it != to; it++){
-          os << " " << *it;
-        }
-        os << "\n";
-      }
-    }
-    if (numSticks){
-      os << "#\n"
-         << "# STKID SUBSP   NUMGP   AUXMEM[1..NUMGP]\n";
 
-      for (int i = 0; i < numSticks; i++){
-        std::vector<double> memory;
-        unsigned int subid;
-        if (!umb->getAuxMemory(i + 1, subid, util::BS_Potential::bs_stick, memory)){
-          std::ostringstream msg;
-          msg << "Could not find the memory of stick " << i + 1 << "!\n";
-          io::messages.add(msg.str(), "Out_Configuration", io::message::error);
-          return;
-        }
-        int num_gp = memory.size();
-        os << std::setw(3) << (i + 1)
-           << std::setw(6) << subid + 1
-           << std::setw(8) << num_gp;
-        std::vector<double>::iterator it  = memory.begin(),
-                to = memory.end();
-        for (; it != to; it++){
-          os << " " << *it;
-        }
-        os << "\n";
+    os << "#\n"
+       << "# ID    SUBSP   NUMGP   AUXMEM[1..NUMGP]\n";
+    for (int i = 0; i < numPotentials; i++) {
+      std::vector<double> memory;
+      unsigned int subid;
+      if (!umb->getAuxMemory(i + 1, subid, memory)) {
+        std::ostringstream msg;
+        msg << "Could not find the memory of potential " << i + 1 << "!\n";
+        io::messages.add(msg.str(), "Out_Configuration", io::message::error);
+        return;
       }
+      int num_gp = memory.size();
+      os << std::setw(3) << (i + 1)
+              << std::setw(6) << subid + 1
+              << std::setw(8) << num_gp;
+      std::vector<double>::iterator it = memory.begin(),
+              to = memory.end();
+      for (; it != to; it++) {
+        os << " " << *it;
+      }
+      os << "\n";
     }
   }
   os << "END\n";

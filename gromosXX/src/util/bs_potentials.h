@@ -25,6 +25,7 @@ namespace util{
       m_potential = 0;
       m_weight = 0;
       m_BoltzmannFactor = 0;
+      m_activeGridPoint = -1;
       m_memory.assign(num_gp, 0);
       m_auxiliaryMemory.assign(num_gp, 0);
       m_half_force_const = 0.5 * m_force_const;
@@ -131,13 +132,21 @@ namespace util{
      * @return  the weight
      */
     //double getWeight(){return m_weight;}
+    int getActiveGridPoint(){return m_activeGridPoint;}
     /**
      * The Type of the Potential (Sphere / Stick)
      */
     enum potential_enum {
       bs_sphere,
-      bs_stick
+      bs_stick,
+      bs_snake,
+      bs_pipe
     } m_potentialType;
+    // Return a string for the type. Maybe not the nicest solution....
+    static const char* potentialType(int i){
+      const char *type[] = {"Sphere", "Stick", "Snake", "Pipe"};
+      return type[i];
+    }
     /**
      * Returns a string with informations about the potential
      * @return 
@@ -249,7 +258,8 @@ namespace util{
     virtual ~BS_Stick(){}
     virtual double calcPotential(BS_Vector &bs_pos);
     virtual std::string str();
-  private:
+    double distance() {return m_distance;}
+  protected:
     /**
      * The start point  of the stick in reduced coordinates
      */
@@ -270,6 +280,113 @@ namespace util{
      * The half width of the line
      */
     double m_half_width;
+    double m_distance;
+  };
+  
+  class BS_Distorted_Stick : public util::BS_Stick {
+  public:
+    BS_Distorted_Stick (int id, int num_gp, double force_const, 
+             BS_Vector startPoint, BS_Vector endPoint, 
+             double half_width, int is_where);
+    BS_Vector direction() { return m_unitLongitudinal; }
+    /**
+     * Initilaize all vectors
+     */
+    void init_vectors(BS_Vector prev_dir, BS_Vector next_dir);
+    /**
+     * Is there a possibility for the Distorted stick to interact with the system?
+     * Calculates already the distance.
+     */
+    bool interacts(BS_Vector &bs_pos);
+    /**
+     * Calculate the potential
+     */
+    virtual double calcPotential(BS_Vector &bs_pos);
+    virtual std::string str();
+    
+    enum {
+      in_between = 0,
+      start,
+      end
+    } where;
+  protected:
+    //BS_Vector m_start_norm;
+    //BS_Vector m_end_norm;
+    
+    // $\vec{r}$ or $\vec{\rho}$
+    BS_Vector radialVec;
+    
+    // $\vec{\tilde{p}}$
+    //BS_Vector m_unit_tilted_perp;
+    //BS_Vector m_tilted_perp_deriv;
+    //double m_tilted_perp_dist;
+    BS_Vector m_unit_perp;
+    double m_perp_dist;
+    
+    BS_Vector m_h_base;
+    BS_Vector m_H_base;
+    
+    BS_Vector m_deriv_h_over_H;
+    double m_h;
+    double m_H;
+    double m_h_over_H;
+    bool m_at_end;
+  };
+
+  /**
+   * 
+   * @class BS_Snake
+   * 
+   * A snake like potential that behave a bit like connected sticks.
+   */
+  class BS_Snake : public util::BS_Potential {
+  public:
+    BS_Snake(int id, int num_gp, double force_const,
+            std::vector<BS_Vector> points, double halfwidth);
+    virtual double calcPotential(BS_Vector &bs_pos);
+    virtual std::string str();
+  private:
+    //std::vector<BS_Vector> m_points;
+    std::vector<util::BS_Distorted_Stick> m_sticks;
+  };
+  
+  struct BS_Pipe_Param {
+    BS_Pipe_Param(BS_Vector point, double innter_width, double outer_width) :
+    point(point), inner_width(inner_width), outer_width(outer_width) {}
+    BS_Pipe_Param() :
+    point(), inner_width(-1), outer_width(-1) {}
+    BS_Vector point;
+    double inner_width;
+    double outer_width;
+  };
+  
+  class BS_Pipe : public util::BS_Potential {
+  public:
+    BS_Pipe(int id, int num_gp_long, int num_gp_perp, double force_const,
+            util::BS_Pipe_Param start, util::BS_Pipe_Param end);
+    virtual double calcPotential(BS_Vector &bs_pos);
+    virtual std::string str();
+  protected:
+    BS_Pipe_Param m_start;
+    BS_Pipe_Param m_end;
+    
+    BS_Vector m_unitLongitudinal;
+    
+    double m_long_conversion;
+    double m_length;
+    double m_inner_slope;
+    double m_outer_slope;
+    
+    const int m_num_long_gp;
+    const int m_num_perp_gp;
+    int m_long_gp;
+    int m_perp_gp;
+    
+    enum where_in_potential {
+      inside = 0,
+      below_lower,
+      above_upper
+    };
   };
 
 }

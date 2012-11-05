@@ -32,7 +32,7 @@ namespace util {
      */
     BS_Subspace(int id, double forceIncrement, double reductionFactor, 
                 int localCutoff, int globalCutoff) :
-            id(id), m_numSpheres(0), m_numSticks(0),
+            id(id), m_numSpheres(0), m_numSticks(0), m_numSnakes(0), m_numPipes(0),
             m_forceIncrement(forceIncrement), m_reductionFactor(reductionFactor), 
             m_localCutoff(localCutoff), m_globalCutoff(globalCutoff),
             m_auxilliaryCounter(0), m_reductionCounter(0) {}
@@ -87,8 +87,7 @@ namespace util {
      * @param[in] memory    The memory
      * @return whether Potential was found
      */
-    bool setMemory(int id, BS_Potential::potential_enum type, 
-            std::vector<double> &memory);
+    bool setMemory(int id, std::vector<double> &memory);
     /**
      * Get the memory of Potential
      * @param[in] id    The id of the potential
@@ -96,8 +95,7 @@ namespace util {
      * @param[out] memory    The memory
      * @return whether Potential was found
      */
-    bool getMemory (int id, BS_Potential::potential_enum type,
-            std::vector<double> &memory) const;
+    bool getMemory (int id, std::vector<double> &memory) const;
     /**
      * Set all the memories to zero.
      */
@@ -109,8 +107,7 @@ namespace util {
      * @param[in] memory    The memory
      * @return whether Potential was found
      */
-    bool setAuxMemory(int id, BS_Potential::potential_enum type, 
-            std::vector<double> &memory);
+    bool setAuxMemory(int id, std::vector<double> &memory);
     /**
      * Get the auxiliary memory of Potential
      * @param[in] id    The id of the potential
@@ -118,8 +115,7 @@ namespace util {
      * @param[out] memory    The auxiliary memory
      * @return whether Potential was found
      */
-    bool getAuxMemory (int id, BS_Potential::potential_enum type,
-            std::vector<double> &memory) const;
+    bool getAuxMemory (int id, std::vector<double> &memory) const;
     /**
      * Set all the auxiliary memories to zero.
      */
@@ -155,6 +151,20 @@ namespace util {
      */
     int getNumSticks() const {return m_numSticks;}
     /**
+     * Return the number of snakes.
+     */
+    int getNumSnakes() const {return m_numSnakes;}
+    /**
+     * Return the number of snakes.
+     */
+    int getNumPipes() const {return m_numPipes;}
+    /**
+     * Return the number of potentials.
+     */
+    int getNumPotentials() const {
+      return m_numSnakes + m_numSticks + m_numSpheres + m_numPipes;
+    }
+    /**
      * Add a new coordinate to the definition of the subspace
      * @param newCoordinate
      */
@@ -183,7 +193,7 @@ namespace util {
      * Return the Total Number of Dimensions of the subspace
      * (sum of all elements in getDimensionality)
      */
-    int getNumDimensions();
+    unsigned int getNumDimensions();
     /**
      * Test wheter coordinate "id" has type "type".
      */
@@ -228,6 +238,14 @@ namespace util {
      * The number of Sticks
      */
     int m_numSticks;
+    /**
+     * The number of Snakes
+     */
+    int m_numSnakes;
+    /**
+     * The number of Pipes
+     */
+    int m_numPipes;
     /**
      * The force in the subspace
      */

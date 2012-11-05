@@ -48,8 +48,7 @@ namespace util {
      * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The memory
      */
-    void setMemory(int id, int subid, BS_Potential::potential_enum type, 
-            std::vector<double> &memory);
+    void setMemory(int id, int subid, std::vector<double> &memory);
     /**
      * Set the auxiliary memory of Potential
      * @param[in] id    The id of the potential
@@ -57,8 +56,7 @@ namespace util {
      * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The auxiliary memory
      */
-    void setAuxMemory(int id, int subid, BS_Potential::potential_enum type, 
-            std::vector<double> &memory);
+    void setAuxMemory(int id, int subid, std::vector<double> &memory);
     /**
      * Set the counters for a subspace
      * @param subid         The id of the subspace
@@ -81,8 +79,7 @@ namespace util {
      * @param[out] memory
      * @return wheter memory with specified id was found or not
      */
-    bool getMemory(int id, unsigned int &subid, BS_Potential::potential_enum type, 
-            std::vector<double> &memory) const;
+    bool getMemory(int id, unsigned int &subid, std::vector<double> &memory) const;
     /**
      * Get the Auxiliary Memory of a sphere or stick
      * @param[in] id
@@ -90,8 +87,7 @@ namespace util {
      * @param[out] memory
      * @return whether memory with specified id was found or not
      */
-    bool getAuxMemory(int id, unsigned int &subid, BS_Potential::potential_enum type, 
-            std::vector<double> &memory) const;
+    bool getAuxMemory(int id, unsigned int &subid, std::vector<double> &memory) const;
     /**
      * Get the counters for a subspace
      * @param[in]  subid         The id of the subspace
@@ -113,7 +109,7 @@ namespace util {
      * @param[out] numSpheres
      * @param[out] numSticks
      */
-    void getNumPotentials(int &numSpheres, int &numSticks) const;
+    void getNumPotentials(int &numPotentials) const;
     /**
      * return the number of subspaces
      */

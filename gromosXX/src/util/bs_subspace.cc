@@ -122,14 +122,13 @@ void util::BS_Subspace::updateMemory(){
   }
 }
 
-bool util::BS_Subspace::setMemory(int id, BS_Potential::potential_enum type, 
-        std::vector<double> &memory)
+bool util::BS_Subspace::setMemory(int id, std::vector<double> &memory)
 {
   DEBUG(8, "Set the memory");
   std::vector<BS_Potential *>::iterator pot_i = m_potentials.begin(),
                                         pot_end = m_potentials.end();
   for (; pot_i != pot_end; pot_i++){
-    if ((*pot_i)->m_potentialType == type && (*pot_i)->id == id) {
+    if ((*pot_i)->id == id) {
       (*pot_i)->setMemory(memory);
       return true;
     }
@@ -137,13 +136,12 @@ bool util::BS_Subspace::setMemory(int id, BS_Potential::potential_enum type,
   return false;
 }
 
-bool util::BS_Subspace::getMemory(int id, BS_Potential::potential_enum type, 
-        std::vector<double>& memory) const
+bool util::BS_Subspace::getMemory(int id, std::vector<double>& memory) const
 {
   std::vector<BS_Potential *>::const_iterator pot_i = m_potentials.begin(),
                                               pot_end = m_potentials.end();
   for (; pot_i != pot_end; pot_i++){
-    if ((*pot_i)->m_potentialType == type && (*pot_i)->id == id) {
+    if ((*pot_i)->id == id) {
       DEBUG(8, "Found Memory");
       (*pot_i)->getMemory(memory);
       return true;
@@ -163,14 +161,13 @@ void util::BS_Subspace::setMemoryToZero(){
 }
 
 // ===== Auxiliary Memory =====
-bool util::BS_Subspace::setAuxMemory(int id, BS_Potential::potential_enum type, 
-        std::vector<double> &memory)
+bool util::BS_Subspace::setAuxMemory(int id, std::vector<double> &memory)
 {
   DEBUG(8, "Set the auxiliary memory");
   std::vector<BS_Potential *>::iterator pot_i = m_potentials.begin(),
                                         pot_end = m_potentials.end();
   for (; pot_i != pot_end; pot_i++){
-    if ((*pot_i)->m_potentialType == type && (*pot_i)->id == id) {
+    if ((*pot_i)->id == id) {
       (*pot_i)->setAuxMemory(memory);
       (*pot_i)->setMemoryParameters(m_forceIncrement, m_localCutoff);
       return true;
@@ -179,13 +176,12 @@ bool util::BS_Subspace::setAuxMemory(int id, BS_Potential::potential_enum type,
   return false;
 }
 
-bool util::BS_Subspace::getAuxMemory(int id, BS_Potential::potential_enum type, 
-        std::vector<double>& memory) const
+bool util::BS_Subspace::getAuxMemory(int id, std::vector<double>& memory) const
 {
   std::vector<BS_Potential *>::const_iterator pot_i = m_potentials.begin(),
                                               pot_end = m_potentials.end();
   for (; pot_i != pot_end; pot_i++){
-    if ((*pot_i)->m_potentialType == type && (*pot_i)->id == id) {
+    if ((*pot_i)->id == id) {
       DEBUG(8, "Found auxiliary Memory");
       (*pot_i)->getAuxMemory(memory);
       return true;
@@ -257,19 +253,39 @@ void util::BS_Subspace::addCoordinate(BS_Coordinate* newCoordinate){
 
 void util::BS_Subspace::addPotential(BS_Potential* newPotential){
   newPotential->setMemoryParameters(m_forceIncrement, m_localCutoff);
+  for (unsigned int i = 0; i < m_potentials.size(); i++){
+    if (newPotential->id == m_potentials[i]->id){
+      std::stringstream msg;
+      msg << "Two Potentials of type " 
+              << BS_Potential::potentialType(newPotential->m_potentialType) << " and " 
+              << BS_Potential::potentialType(m_potentials[i]->m_potentialType)
+              << " have the same ID (" << newPotential->id << ")!";
+      io::messages.add(msg.str(), "BS_Subspace", io::message::error);
+    }
+  }
   m_potentials.push_back(newPotential);
   if (newPotential->m_potentialType == BS_Potential::bs_sphere){
-    DEBUG(8, "Subspace: Added new Sphere");
+    //DEBUG(8, "Subspace: Added new Sphere");
     m_numSpheres++;
   }
   else if (newPotential->m_potentialType == BS_Potential::bs_stick){
-    DEBUG(8, "Subspace: Added new Stick");
+    //DEBUG(8, "Subspace: Added new Stick");
     m_numSticks++;
+  }
+  else if (newPotential->m_potentialType == BS_Potential::bs_snake){
+    //DEBUG(8, "Subspace: Added new Snake");
+    m_numSnakes++;
+  }
+  else if (newPotential->m_potentialType == BS_Potential::bs_pipe){
+    //DEBUG(8, "Subspace: Added new Snake");
+    m_numPipes++;
   }
   else {
     io::messages.add("Added unknown type of potential to Subspace",
             "BS_Subspace", io::message::error);
   }
+  DEBUG(8, "Subspace: Added new " 
+          << BS_Potential::potentialType(newPotential->m_potentialType));
 }
 
 util::BS_Vector util::BS_Subspace::getCenter(int id){
@@ -282,7 +298,7 @@ util::BS_Vector util::BS_Subspace::getCenter(int id){
     }
   }
   std::ostringstream msg;
-  msg << "Could not obtain the center of sphere " << id << "!\n";
+  msg << "Could not obtain the center of potential " << id << "!\n";
   io::messages.add(msg.str(), "BS_Subspace", io::message::error);
   return BS_Vector();
 }
@@ -312,8 +328,8 @@ std::vector<int> util::BS_Subspace::getDimensionality() {
   return dimensionality;
 }
 
-int util::BS_Subspace::getNumDimensions() {
-  int dimensionality = 0;
+unsigned int util::BS_Subspace::getNumDimensions() {
+  unsigned int dimensionality = 0;
   std::vector<BS_Coordinate *>::iterator def_i = m_definition.begin(),
                                          def_end = m_definition.end();
   
@@ -378,8 +394,7 @@ std::string util::BS_Subspace::traj_str(){
   
   os << std::setw(3) << id << " "
      << this->getNumDimensions() << " "
-     << m_numSpheres << " "
-     << m_numSticks << " "
+     << m_potentials.size() << " "
      << m_auxilliaryCounter << " "
      << m_reductionCounter << "\n";
   
@@ -390,7 +405,7 @@ std::string util::BS_Subspace::traj_str(){
      << bs_pos.str() << "\n";
    
   os << "# Potentials\n";
-  os << "# ID SPH/STK POTENTIAL WEIGHT      ACT_GRID_POINT\n";
+  os << "# ID TYPE   POTENTIAL     WEIGHT  ACT_GRID_POINT\n";
   std::vector<BS_Potential *>::iterator it = m_potentials.begin(),
             to = m_potentials.end();
   for (; it != to; it++) {
@@ -408,6 +423,8 @@ util::BS_Subspace::str()
      << std::setw(6) << m_definition.size() << " "
      << std::setw(9) << m_numSpheres << " "
      << std::setw(7) << m_numSticks << " "
+     << std::setw(7) << m_numSnakes << " "
+     << std::setw(7) << m_numPipes << " "
      << std::setw(7) << m_forceIncrement << " "
      << std::setw(10) << m_reductionFactor << " "
      << std::setw(9) << m_localCutoff << " "
@@ -442,6 +459,29 @@ util::BS_Subspace::str()
             pot_end = m_potentials.end();
     for (; pot_i != pot_end; pot_i++) {
       if ((*pot_i)->m_potentialType == BS_Potential::bs_stick)
+        os << (*pot_i)->str() << "\n";
+    }
+  }
+  
+  if (m_numSnakes) {
+    os << "# BS_SNAKE\n";
+
+    std::vector<BS_Potential*>::iterator pot_i = m_potentials.begin(), 
+            pot_end = m_potentials.end();
+    for (; pot_i != pot_end; pot_i++) {
+      if ((*pot_i)->m_potentialType == BS_Potential::bs_snake)
+        os << (*pot_i)->str() << "\n";
+    }
+  }
+  
+  if (m_numPipes) {
+    os << "# BS_Pipe\n";
+    os << "# ID     CLE IHW_s  OHW_s   IHW_e  OHW_e   START   END\n";
+
+    std::vector<BS_Potential*>::iterator pot_i = m_potentials.begin(), 
+            pot_end = m_potentials.end();
+    for (; pot_i != pot_end; pot_i++) {
+      if ((*pot_i)->m_potentialType == BS_Potential::bs_pipe)
         os << (*pot_i)->str() << "\n";
     }
   }

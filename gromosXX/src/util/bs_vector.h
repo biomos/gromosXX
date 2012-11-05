@@ -56,6 +56,12 @@ namespace util {
      */
     BS_Vector operator +(const BS_Vector &summand);
     /**
+     * Subtract two vectors from each other
+     * @param[in] summand
+     * @return the sum
+     */
+    BS_Vector operator -(const BS_Vector &subtrahend);
+    /**
      * Add summand to a vector
      * @param summand
      */

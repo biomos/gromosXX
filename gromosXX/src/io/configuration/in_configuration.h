@@ -72,6 +72,13 @@ namespace io {
     static bool _read_position(math::VArray &pos, std::vector<std::string> &buffer,
 			int const num, std::string blockname = "POSITION");
 
+    /**
+     * Just try to read the positions without any checks.
+     */
+    bool read_position_plain(topology::Topology & topo,
+		       configuration::Configuration & conf,
+		       simulation::Simulation & sim,
+		       std::ostream & os = std::cout);
 
   private:
     /**

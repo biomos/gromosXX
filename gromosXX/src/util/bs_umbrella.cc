@@ -87,18 +87,16 @@ void util::BS_Umbrella::getCounter(int subid,
 
 // Memories
 void util::BS_Umbrella::setMemory(int id, int subid, 
-                                  BS_Potential::potential_enum type, 
                                   std::vector<double>& memory)
 {
-  m_subspaces[subid]->setMemory(id, type, memory);
+  m_subspaces[subid]->setMemory(id, memory);
 }
 
 bool util::BS_Umbrella::getMemory(int id, unsigned int &subid, 
-                                  BS_Potential::potential_enum type, 
                                   std::vector<double>& memory) const
 {
   for (unsigned int i = 0; i < m_subspaces.size(); i++){
-    if (m_subspaces[i]->getMemory(id, type, memory)){
+    if (m_subspaces[i]->getMemory(id, memory)){
       subid = i;
       return true;
     }
@@ -113,18 +111,16 @@ void util::BS_Umbrella::setMemoryToZero(){
 
 // Auxiliary Memories
 void util::BS_Umbrella::setAuxMemory(int id, int subid, 
-                                     BS_Potential::potential_enum type, 
                                      std::vector<double>& memory)
 {
-  m_subspaces[subid]->setAuxMemory(id, type, memory);
+  m_subspaces[subid]->setAuxMemory(id, memory);
 }
 
 bool util::BS_Umbrella::getAuxMemory(int id, unsigned int &subid, 
-                                     BS_Potential::potential_enum type, 
                                      std::vector<double>& memory) const
 {
   for (unsigned int i = 0; i < m_subspaces.size(); i++){
-    if (m_subspaces[i]->getAuxMemory(id, type, memory)){
+    if (m_subspaces[i]->getAuxMemory(id, memory)){
       subid = i;
       return true;
     }  
@@ -156,11 +152,10 @@ double util::BS_Umbrella::getTotalPotential() const {
   return m_bsleus_total;
 }
 
-void util::BS_Umbrella::getNumPotentials(int& numSpheres, int& numSticks) const
+void util::BS_Umbrella::getNumPotentials(int& numPotentials) const
 {
   assert(m_subspaces.size() > 0);
-  numSticks = m_subspaces[0]->getNumSticks(); 
-  numSpheres = m_subspaces[0]->getNumSpheres();
+  numPotentials = m_subspaces[0]->getNumPotentials(); 
 }
 
 void util::BS_Umbrella::getForce(std::vector<double>& force) const {
@@ -190,7 +185,7 @@ std::string util::BS_Umbrella::traj_str() const{
   int i = 1;
   for (; it != to; it++, i++){
     os << "# BS_SUBSPACE " << i << "\n"
-       << "# SUBID TOTDIM NUMSPH NUMSTK AUXCOUNT REDCOUNT\n";
+       << "# SUBID TOTDIM NUMPOTS AUXCOUNT REDCOUNT\n";
     os << (*it)->traj_str();
   }
   return os.str();
@@ -211,7 +206,7 @@ std::string util::BS_Umbrella::str(){
   int i = 1;
   for (; it != to; it++, i++){
     os << "# BS_SUBSPACE " << i << "\n"
-       << "# SUBID NUMCOORD NUMSPH NUMSTK FORCEINCR FORCERED LOCCUTOFF GLOBCUTOFF\n";
+       << "# SUBID NUMCOORD NUMSPH NUMSTK NUMSNK NUMPPS FORCEINCR FORCERED LOCCUTOFF GLOBCUTOFF\n";
     os << (*it)->str();
   }
   return os.str();

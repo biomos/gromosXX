@@ -142,6 +142,56 @@ BSLEUSSTK
   2     1       0       2           4           10      0.5     20
 END
 @endverbatim
+ * @section bsleussnake BSLEUSSNAKE block
+ * 
+ * The BSLEUSSNAKE block defines the snake-like potentials
+ * @verbatim
+BSLEUSSNAKE
+#
+# A snake-like potential
+# NSNK:     The number of snake potentials
+# SNKID:    The ID
+# SUBSP:    The subspace
+# NPNTS:    The number of points
+# POINTS:   The Points
+# STKHWD:   The halfwidth
+# SNKCLE:   The halfharmonic force constant
+# SNKNGP:   The number of grid points between two points (every point is one)
+#
+# NSNK
+  1
+# SNKID SUBSP   NPNTS   POINTS[1..NPNTS]                    STKHWD  SNKCLE  SNKNGP
+  1     1       3       {tp_1.cnf} {tp_2.cnf} {tp_3.cnf}    10      0.5     2
+END
+@endverbatim
+ * 
+ * @section bsleuspipe BSLEUSPIPE block
+ * 
+ * The BSLEUSSNAKE block defines the snake-like potentials
+ * @verbatim
+BSLEUSPIPE
+# A pipe like potential (active subspace only in the shell of a cylinder)
+# NPIPES:   The number of pipe-like potentials
+# ID:       The id of the potential
+# SUBSP:    The subspace
+# SPECTYP:  Use either spheres (0) or coordinates (1) to define the end points.
+# START:    All the values for the start point
+# END:      All the values for the end point
+#   The included values are:
+#   POINT:      The point of the start/end
+#   IHW:        The inner half width
+#   OHW:        The outer half width
+# CLE:      The half-harmonic restraint potential
+# NGPL:     The number of grid points in the longitudinal direction
+# NGPP:     The number of grid points in the perpendicular direction
+#
+# NPIPES
+  1
+#                           START               END
+# ID    SUBSP   SPECTYPE    POINT   IHW   OHW   POINT   IHW   OHW   CLE     NGPL NGPP
+  2     1       1           1 1     0.5   1.0   2 2     0.6   1.1   0.05    10   2
+END
+@endverbatim
  */
  
 void io::In_BSLEUS::read(topology::Topology &topo,
@@ -430,12 +480,12 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     int subspace, numSpheres, numSpheresRead = 0;
     _lineStream >> numSpheres;
     if (_lineStream.fail()) {
-      io::messages.add("Couldn't get the number of Coordinates in BSLEUSSPH",
+      io::messages.add("Couldn't get the number of Spheres in BSLEUSSPH",
               "In_BSLEUS", io::message::error);
       return;
     }
     
-    int id = 0, last_id = 0, num_gp;
+    int id = 0, num_gp;
     double radius, forceConst;
     std::vector<double> centerValues;
     util::BS_Vector center;
@@ -485,14 +535,6 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       bs_subspaces[subspace]->addPotential(bs_sphere);
       numSpheresRead++;
       centerValues.clear();
-      if (id != (last_id + 1)) {
-        io::messages.add("The IDs of the spheres are not given in a consecutive order!",
-                "In_BSLEUS", io::message::error);
-        io::messages.add("The Subspace has not been added!",
-                "In_BSLEUS", io::message::error);
-        return;
-      }
-      last_id = id;
     }
     DEBUG(10, "Finished Reading in Spheres");
     if (numSpheres != numSpheresRead) {
@@ -525,12 +567,12 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     int subspace, numSticks, numSticksRead = 0;
     _lineStream >> numSticks;
     if (_lineStream.fail()) {
-      io::messages.add("Couldn't get the number of Coordinates in BSLEUSSTK",
+      io::messages.add("Couldn't get the number of Sticks in BSLEUSSTK",
               "In_BSLEUS", io::message::error);
       return;
     }
     
-    int id = 0, last_id = 0, num_gp, defType, startSphere, endSphere;
+    int id = 0, num_gp, defType, startSphere, endSphere;
     double width, forceConst;
     util::BS_Vector start, end;
     for (; it != to; it++){
@@ -616,14 +658,6 @@ void io::In_BSLEUS::read(topology::Topology &topo,
                                                         start, end, width);
       bs_subspaces[subspace]->addPotential(bs_stick);
       numSticksRead++;
-      if (last_id != (id - 1)) {
-        io::messages.add("The IDs of the sticks are not given in a consecutive order!",
-                "In_BSLEUS", io::message::warning);
-        io::messages.add("The Subspace has not been added!",
-                "In_BSLEUS", io::message::warning);
-        return;
-      }
-      last_id = id;
     }
     DEBUG(5, "The number of sticks according to file: " << numSticks << "; actually read: " << numSticksRead);
     if (numSticks != numSticksRead) {
@@ -633,15 +667,215 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     }
     
   } // BSLEUSSTK
-  conf.special().bs_umbrella.addSubspaces(bs_subspaces);
-}
 
-void
-io::In_BSLEUS::findError(size_t pos){
-  if (pos == std::string::npos){
-    io::messages.add("Something in wrong with reference position specifier",
-            "In_BSLEUS", io::message::error);
-  }
+  // ==============================================================
+  // BSSNAKE
+  buffer = m_block["BSLEUSSNAKE"];
+  DEBUG(10, "BSSNAKE block : " << buffer.size());
+
+  if (!buffer.size()) {
+    io::messages.add("no BSLEUSSNAKE block in B&S-LEUS definition file",
+            "In_BSLEUS", io::message::notice);
+  } else {
+
+    std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+            to = buffer.end() - 1;
+
+    DEBUG(10, "reading in BSLEUSSNAKE data");
+    _lineStream.clear();
+    _lineStream.str(*it++);
+
+    int subspace, numSnakes, numSnakesRead = 0;
+    _lineStream >> numSnakes;
+    if (_lineStream.fail()) {
+      io::messages.add("Couldn't get the number of Snakes in BSLEUSSNAKE",
+              "In_BSLEUS", io::message::error);
+      return;
+    }
+
+    int id = 0, num_gp, numPoints;
+    double half_width, forceConst;
+    for (; it != to; it++) {
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> id >> subspace >> numPoints;
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in BSLEUSSNAKE block",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+      // Convert to GROMOS
+      subspace--;
+
+      std::vector<double> coords;
+      std::vector<util::BS_Vector> points;
+      util::BS_Vector point;
+
+      for (int m = 0; m < numPoints; m++) {
+        coords.clear();
+        for (unsigned int i = 0; i < numCoordsPerSubspace[subspace]; i++) {
+          for (int j = 0; j < num_dimensions[subspace][i];) {
+            std::string coordStr;
+            _lineStream >> coordStr;
+            if (_lineStream.fail()) {
+              io::messages.add("bad line in BSLEUSSNAKE block",
+                      "In_BSLEUS", io::message::error);
+              return;
+            }
+            std::vector<double> new_coords;
+            parseSpecifier(topo, sim, conf,
+                    coordStr, refFiles, cartAtoms,
+                    new_coords, os);
+            for (unsigned int k = 0; k < new_coords.size(); k++, j++) {
+              DEBUG(10, "(" << i << ", " << j << ", " << k << ") Push in " << new_coords[k] << " / " << references[subspace][i])
+              coords.push_back(new_coords[k] / references[subspace][i]);
+            }
+          }
+        }
+
+        point.create(coords);
+        points.push_back(point);
+        DEBUG(10, "Point [" << m << "]: " << point.str());
+      }
+
+      // Specifications of the stick
+      _lineStream >> half_width >> forceConst >> num_gp;
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in BSLEUSSNAKE block",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+      if (num_gp < 0) {
+        io::messages.add("BSLEUSSNAKE: number of grid points must be at least 0!",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+
+      util::BS_Snake *bs_snake = new util::BS_Snake(id, num_gp, forceConst,
+              points, half_width);
+      bs_subspaces[subspace]->addPotential(bs_snake);
+      numSnakesRead++;
+    }
+    DEBUG(5, "The number of snake according to file: " << numSnakes << "; actually read: " << numSnakesRead);
+    if (numSnakes != numSnakesRead) {
+      io::messages.add("The numbers of Snakes in BSLEUSSNAKE seems wrong!",
+              "In_BSLEUS", io::message::warning);
+      return;
+    }
+
+  } // BSSNAKE
+  // ==============================================================
+  // BSLEUSPIPE
+  buffer = m_block["BSLEUSPIPE"];
+  DEBUG(10, "BSPIPE block : " << buffer.size());
+
+  if (!buffer.size()) {
+    io::messages.add("no BSLEUSPIPE block in B&S-LEUS definition file",
+            "In_BSLEUS", io::message::notice);
+  } else {
+
+    std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+            to = buffer.end() - 1;
+
+    DEBUG(10, "reading in BSLEUSPIPE data");
+    _lineStream.clear();
+    _lineStream.str(*it++);
+
+    int subspace, numPipes, numPipesRead = 0;
+    _lineStream >> numPipes;
+    if (_lineStream.fail()) {
+      io::messages.add("Couldn't get the number of Pipes in BSLEUSPIPE",
+              "In_BSLEUS", io::message::error);
+      return;
+    }
+
+    int id = 0, num_gp_l, num_gp_p, spec_type;
+    double forceConst;
+    for (; it != to; it++) {
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> id >> subspace >> spec_type;
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in BSLEUSPIPE block",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+      // Convert to GROMOS
+      subspace--;
+
+      util::BS_Vector point;
+      util::BS_Pipe_Param params[2];
+
+      for (int m = 0; m < 2; m++) { // start, end point
+        if (spec_type == 0) {
+          int sph_id;
+          _lineStream >> sph_id;
+          if (_lineStream.fail()) {
+            io::messages.add("Could not read the sphere id in BSLEUSPIPE block",
+                    "In_BSLEUS", io::message::error);
+            return;
+          }
+          point = bs_subspaces[subspace]->getCenter(sph_id);
+        } else {
+          std::vector<double> coords;
+          for (unsigned int i = 0; i < numCoordsPerSubspace[subspace]; i++) {
+            for (int j = 0; j < num_dimensions[subspace][i];) {
+              std::string coordStr;
+              _lineStream >> coordStr;
+              if (_lineStream.fail()) {
+                io::messages.add("bad line in BSLEUSPIPE block",
+                        "In_BSLEUS", io::message::error);
+                return;
+              }
+              std::vector<double> new_coords;
+              parseSpecifier(topo, sim, conf,
+                      coordStr, refFiles, cartAtoms,
+                      new_coords, os);
+              for (unsigned int k = 0; k < new_coords.size(); k++, j++) {
+                DEBUG(10, "(" << i << ", " << j << ", " << k << ") Push in " << new_coords[k] << " / " << references[subspace][i])
+                coords.push_back(new_coords[k] / references[subspace][i]);
+              }
+            }
+          }
+          point.create(coords);
+        }
+        DEBUG(10, "Point [" << m << "]: " << point.str());
+        params[m].point = point;
+
+        _lineStream >> params[m].inner_width >> params[m].outer_width;
+        if (_lineStream.fail()) {
+          io::messages.add("Could not read the half widths in BSLEUSPIPE block",
+                  "In_BSLEUS", io::message::error);
+          return;
+        }
+      }
+
+      _lineStream >> forceConst >> num_gp_l >> num_gp_p;
+      if (_lineStream.fail()) {
+        io::messages.add("bad line in BSLEUSPIPE block",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+      if (num_gp_l < 0 || num_gp_p < 0) {
+        io::messages.add("BSLEUSPIPE: number of grid points must be at least 0!",
+                "In_BSLEUS", io::message::error);
+        return;
+      }
+
+      util::BS_Pipe *bs_pipe = new util::BS_Pipe(id, num_gp_l, num_gp_p,
+              forceConst, params[0], params[1]);
+      bs_subspaces[subspace]->addPotential(bs_pipe);
+      numPipesRead++;
+    }
+    DEBUG(5, "The number of snake according to file: " << numPipes << "; actually read: " << numPipesRead);
+    if (numPipes != numPipesRead) {
+      io::messages.add("The numbers of Pipes in BSLEUSPIPE seems wrong!",
+              "In_BSLEUS", io::message::warning);
+      return;
+    }
+  } // BSPIPE
+  
+  conf.special().bs_umbrella.addSubspaces(bs_subspaces);
 }
 
 void
@@ -667,28 +901,28 @@ io::In_BSLEUS::parseSpecifier(topology::Topology &topo,
     }
     configuration::Configuration myConf;
     simulation::Simulation mySim = sim;
-    mySim.param().bsleus.bsleus = simulation::bsleus_off;
-    mySim.param().bsleus.transition_conf = true;
-    mySim.param().start.read_lattice_shifts = false;
-    mySim.param().boundary.boundary != math::vacuum;
+    mySim.param().boundary.boundary = sim.param().boundary.boundary;
     io::In_Configuration in_conf(refFile);
-    in_conf.read(myConf, topo, mySim, os);
+    in_conf.read_position_plain(topo, myConf, mySim, os);
     math::VArray &refpos = myConf.current().pos;
     
     put_into_box(myConf, refpos);
     
     if (cartAtoms.size() == 0) { // all atoms
       for (unsigned int i = 0; i < refpos.size(); i++){
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < 3; j++){
           coords.push_back(refpos[i][j]);
-      }
+        }
+        DEBUG(8, "Using atom " << i << " with the position " << v2s(refpos[i]));
+      }          
     }
     else {
       for (unsigned int i = 0; i < cartAtoms.size(); i++){
         for (int j = 0; j < 3; j++){
-          DEBUG(8, "Get Position of atom " << cartAtoms[i] + 1)
           coords.push_back(refpos[cartAtoms[i]][j]);
         }
+        //DEBUG(8, "Get Position of atom " << cartAtoms[i] + 1)
+        DEBUG(8, "Using atom " << i << " with the position " << v2s(refpos[i]));
       }
     }
   }
