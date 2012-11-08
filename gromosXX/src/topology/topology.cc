@@ -849,8 +849,8 @@ void topology::Topology::solvate(unsigned int solv, unsigned int num_molecules) 
       m_damping_power(n) = m_solvent[solv].atom(j).damping_power;
       m_is_polarisable[n] = bool(m_solvent[solv].atom(j).polarisability > 0.0);
       m_gamma[n] = m_solvent[solv].atom(j).gamma;
-      m_gamma_j[n] = m_solvent[solv].atom(j).gamma_j;
-      m_gamma_k[n] = m_solvent[solv].atom(j).gamma_k;
+      m_gamma_j[n] = n + m_solvent[solv].atom(j).gamma_j;
+      m_gamma_k[n] = n + m_solvent[solv].atom(j).gamma_k;
       m_cg_factor[n] = 1;
       // no exclusions or 1-4 interactions for solvent ?!
     }
