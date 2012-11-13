@@ -1761,9 +1761,9 @@ io::In_Topology::read(topology::Topology& topo,
           if (i > int(s.num_atoms()) || i < 1) {
             io::messages.add("Atom number out of range in SOLVENTPOLARISATION block",
                     "In_Topology", io::message::error);
-          } else if (gamma != 0.0 && (j < 1 || k < 1 || j > int(topo.num_solute_atoms())
-                  || k > int(topo.num_solute_atoms()) || i == k || i == j || k == j)) {
-            io::messages.add("Atom number for off atom out of range in SOLUTEPOLARISATION block",
+          } else if (gamma != 0.0 && (j < 1 || k < 1 || j > int(s.num_atoms())
+                  || k > int(s.num_atoms()) || i == k || i == j || k == j)) {
+            io::messages.add("Atom number for off atom out of range in SOLVENTPOLARISATION block",
                     "In_Topology", io::message::error);
           } else {
             DEBUG(10, "\tpolarisable atom: " << i);
