@@ -522,6 +522,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
           _print_timestep(sim, m_special_traj);
           //special_timestep_printed = true;
         //}
+        _print_bsleusmem(conf, m_special_traj);
         _print_bsleus(conf, m_special_traj);
         m_special_traj.flush();
       }

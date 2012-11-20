@@ -944,7 +944,7 @@ _put_into_box(configuration::Configuration& conf, math::VArray& pos){
   math::VArray::iterator it = pos.begin(),
           to = pos.end();
   for (; it != to; it++){
-    periodicity.put_into_box(*it);
+    periodicity.put_into_positive_box(*it);
     DEBUG(5, v2s(*it));
   }
 }

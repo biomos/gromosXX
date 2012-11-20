@@ -94,7 +94,7 @@ namespace util{
      */
     virtual std::string str() const { return "BS_LE_Coordinate"; }
     /**
-     * String, which is shown in the ouput file upon initialization
+     * String, which is shown in the output file upon initialization
      */
     std::string init_str();
 

@@ -320,9 +320,9 @@ std::string util::BS_DihedralSum::str() const
 void util::BS_Cartesian::
 calculateInternalCoord(configuration::Configuration & conf) {
   DEBUG(8, "Calculate Internal Coordinates according to pbc");
-  //PLIT_BOUNDARY(_calculate, conf);
+  SPLIT_BOUNDARY(_calculate, conf);
   
-  m_coordinates.clear();
+  /*m_coordinates.clear();
   if (m_allAtoms){
     for (unsigned int i = 0; i < conf.current().pos.size(); i++){
       for (unsigned int j = 0; j < 3; j++)
@@ -334,7 +334,7 @@ calculateInternalCoord(configuration::Configuration & conf) {
       for (unsigned int j = 0; j < 3; j++)
         m_coordinates.push_back(conf.current().pos(m_atoms[i])[j]);
     }
-  }
+  }*/
 }
 
 template<math::boundary_enum B>
