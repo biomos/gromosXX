@@ -60,14 +60,16 @@ int _calculate_order_parameter_restraint_interactions
     const math::Vec & r_i = it->v1.pos(conf, topo);
     math::Vec r_ij;
     periodicity.nearest_image(r_i, it->v2.pos(conf, topo), r_ij);
-    const math::Vec r_j(r_i + r_ij);
+    //const math::Vec r_j(r_i + r_ij);
+    const math::Vec r_j(r_i - r_ij);  // vector r_ij points from j to i !!!
 
     DEBUG(9, "r_i  :" << math::v2s(r_i));
     DEBUG(9, "r_j  :" << math::v2s(r_j));
     DEBUG(9, "r_ij :" << math::v2s(r_ij));
 
     const double d_r_ij = math::abs(r_ij);
-    const double d_r_ij_2 = d_r_ij_2 * d_r_ij_2;
+    //const double d_r_ij_2 = d_r_ij_2 * d_r_ij_2; // THIS WAS THE ACTUAL BUG IN THE CODE
+    const double d_r_ij_2 = d_r_ij * d_r_ij;   
     DEBUG(9, "d_r_ij : " << d_r_ij);
     const double inv_r_ij = 1.0 / d_r_ij;
     const double inv_r_ij_2 = inv_r_ij * inv_r_ij;
@@ -187,7 +189,8 @@ int _calculate_order_parameter_restraint_interactions
         }
         
         energy = 0.5 * K * term * term;
-        double force_term = 0.5 * K * term; // why not -K * term  
+        //double force_term = 0.5 * K * term; // why not -K * term 
+	double force_term = -0.5 * K * term; // for the minus sign we have to use the correct definition of r_ij
         f_i = (force_term * r_eff_6) * (3.0 * sum_force - D_avg * dDdr);
         f_j = -f_i;
         break;
