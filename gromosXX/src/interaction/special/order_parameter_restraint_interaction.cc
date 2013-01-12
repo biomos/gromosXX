@@ -189,8 +189,8 @@ int _calculate_order_parameter_restraint_interactions
         }
         
         energy = 0.5 * K * term * term;
-        //double force_term = 0.5 * K * term; // why not -K * term 
-	double force_term = -0.5 * K * term; // for the minus sign we have to use the correct definition of r_ij
+        //double force_term = 0.5 * K * term; // why not -K * term
+        double force_term = -K * term;  // for the minus sign we have to use the correct definition of r_ij, the 0.5 was wrong, see eq. (55)
         f_i = (force_term * r_eff_6) * (3.0 * sum_force - D_avg * dDdr);
         f_j = -f_i;
         break;
@@ -207,7 +207,7 @@ int _calculate_order_parameter_restraint_interactions
       f_i *= it->w;
       f_j *= it->w;
     }
-
+    std::cout.precision(15); // useful for debugging
     DEBUG(7, "energy: " << energy);
     DEBUG(7, "f_i: " << math::v2s(f_i));
     DEBUG(7, "f_j: " << math::v2s(f_j));
