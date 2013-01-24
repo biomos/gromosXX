@@ -340,3 +340,23 @@ LOCALELEV
 # NLEPID NLEPFT
        1      1
 END
+ORDERPARAMRES
+# NTOPR    -2..0
+#          -2                time-averaged using COPR * WOPR
+#          -1                time-avaraged using COPR
+#           1                window-averaged using COPR
+#           2                window-averaged using COPR * WOPR
+# NTOPRA    0,1              controls reading of averages from startup file
+#           0                start from initial values of S0 [default]
+#           1                read time averages from startup file (for continuation time-averaged run)
+# COPR   >= 0.0              order-parameter restraining force constant
+#                            (weighted by individual WOPR)
+# TAUOPR >= 0.0              coupling time for time-averaging
+# UPDOPR  > 0                update the order param only every UPDOPR step
+# NTWOP  >= 0                write order-parameter to special trajectory
+#           0                don't write [default]
+#         > 0                write every NTWOP step
+#
+#       NTOPR  NTOPRA  COPR   TAUOPR     UPDOPR     NTWOP
+           -1  0       200    1.0        1          1
+END

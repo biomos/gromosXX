@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
 			      sinputon,
 			      aladip_sim_on,
 			      in_topo,
-			      "", "", "", "", "", 
+			      "", "", "", "", "", "", 
 			      quiet
 			      )
       != 0){
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
 			      sinputoff,
 			      aladip_sim_off,
 			      in_topo,
-			      "", "", "", "", "", 
+			      "", "", "", "", "", "", 
 			      quiet
 			      )
       != 0){

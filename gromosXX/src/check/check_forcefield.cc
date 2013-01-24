@@ -572,6 +572,64 @@ int check_le_interaction(topology::Topology & topo,
   return total;
 
 }
+int check_oparam_interaction(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        interaction::Interaction &term,
+        size_t atoms,
+        double const energy,
+        double const epsilon,
+        double const delta) {
+  int res, total = 0;
+
+  std::string name = term.name;
+
+  CHECKING(name + " interaction energy", res);
+
+  conf.current().force = 0;
+  conf.current().energies.zero();
+
+  term.calculate_interactions(topo, conf, sim);
+
+  conf.current().energies.calculate_totals();
+  CHECK_APPROX_EQUAL(conf.current().energies.special_total,
+          energy, delta, res);
+  RESULT(res, total);
+  
+  // finite diff
+  CHECKING(name + " interaction force (finite diff)", res);
+
+  for (size_t i = 0; i < topo.order_parameter_restraints().size(); ++i) {
+
+    std::vector<int> atom;
+    atom.push_back(topo.order_parameter_restraints()[i].v1.atom(0)+1);
+
+    conf.current().force = 0;
+    conf.current().energies.zero();
+
+    term.calculate_interactions(topo, conf, sim);
+
+    for (size_t j = 0; j < atom.size(); ++j) {
+
+      math::Vec f = conf.current().force(atom[j]);
+      
+      math::Vec finf;
+
+      finf(0) = finite_diff(topo, conf, sim, term, atom[j], 0, epsilon);
+      finf(1) = finite_diff(topo, conf, sim, term, atom[j], 1, epsilon);
+      finf(2) = finite_diff(topo, conf, sim, term, atom[j], 2, epsilon);
+      
+      CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
+      CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
+      CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
+    }
+  }
+
+  RESULT(res, total);
+
+  return total;
+
+}
 
 int check::check_forcefield(topology::Topology & topo,
         configuration::Configuration & conf,
@@ -843,6 +901,14 @@ int check::check_forcefield(topology::Topology & topo,
 				    topo.num_solute_atoms(),
 				    ref["Local Elevation"],
 				    0.0000000001, 0.001);
+    } else if ((*it)->name == "OrderParameterRestraint") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+      total += check_oparam_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(),
+              ref["OrderParameterRestraint"],
+              0.0000000001, 0.001);   
+      
     } else if ((*it)->name == "MolecularVirial") {
       // no real interaction...
     } else {

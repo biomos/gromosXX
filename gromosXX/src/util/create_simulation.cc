@@ -26,6 +26,7 @@
 #include "../io/topology/in_dihrest.h"
 #include "../io/topology/in_xray.h"
 #include "../io/topology/in_leus.h"
+#include "../io/topology/in_order.h"
 #include "../io/parameter/in_parameter.h"
 
 #include "../algorithm/algorithm/algorithm_sequence.h"
@@ -51,6 +52,7 @@ int util::create_simulation(std::string topo,
                             std::string xray,
 			    std::string led,
 			    std::string lud,
+                            std::string order,
 			    bool quiet)
 {
 
@@ -63,7 +65,7 @@ int util::create_simulation(std::string topo,
   }
 
   io::igzstream input_file, topo_file, pttopo_file, conf_file, 
-    distanceres_file, dihrest_file, xray_file, led_file, lud_file;
+    distanceres_file, dihrest_file, xray_file, led_file, lud_file, order_file;
   
   // if we got a parameter file, try to read it...
   if (param != ""){
@@ -216,6 +218,23 @@ int util::create_simulation(std::string topo,
     io::In_Localelevspec iled(led_file);
     iled.quiet = quiet;
     iled.read(sim.topo, sim.sim);
+  }
+  
+    if (order != "") {
+    order_file.open(order.c_str());
+    if (!order_file.is_open()) {
+      std::cout << "\n\ncould not open " << order << "!\n" << std::endl;
+      io::messages.add("opening order parameter specification file failed", "read_input",
+              io::message::error);
+      return -1;
+    }
+    io::In_Orderparamresspec iorder(order_file);
+    iorder.quiet = true;
+    iorder.read(sim.topo, sim.sim);
+    
+    //io::In_Configuration::read_order_parameter_restraint_averages  order_res(sim.conf);
+    //io::In_Configuration::read_order_parameter_restraint_averages(sim.topo, sim.conf, sim.sim, std::cout);
+    
   }
 
 

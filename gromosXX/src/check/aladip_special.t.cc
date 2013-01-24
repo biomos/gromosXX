@@ -52,6 +52,7 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["PerturbedDihedralRestraint"] = 279.207857;
   m["XrayRestraint"] = 5.9411e+03;
   m["Local Elevation"] = 3.5284e+01;
+  m["OrderParameterRestraint"] = 3.316416e-02;
 }
 
 #ifdef OMP
@@ -67,7 +68,7 @@ int main(int argc, char* argv[]) {
   int total = 0;
 
   util::Known knowns;
-  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "xray" << "led" << "lud" << "verb";
+  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "xray" << "led" << "lud" << "order" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo      <topology>]\n";
@@ -79,6 +80,7 @@ int main(int argc, char* argv[]) {
   usage += "\t[@xray      <xray>]\n";
   usage += "\t[@led       <le definition file>]\n";
   usage += "\t[@lud       <le umbrella file>]\n";
+  usage += "\t[@order     <order parameter specification file]\n";
   usage += "\t[@verb     <[module:][submodule:]level>]\n";
 
   io::Argument args;
@@ -90,7 +92,7 @@ int main(int argc, char* argv[]) {
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest, sxray, sled, slud;
+  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest, sxray, sled, slud, sorder;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -137,6 +139,12 @@ int main(int argc, char* argv[]) {
     GETFILEPATH(slud, "aladip.lud", "src/check/data/");
   //slud="";
   
+  if(args.count("order") ==1)
+    sorder = args["order"];
+  else
+    GETFILEPATH(sorder, "aladip.order", "src/check/data/");
+  //sorder="";
+    
 #ifdef HAVE_CLIPPER
   if(args.count("xray") ==1)
     sxray = args["xray"];
@@ -156,6 +164,7 @@ int main(int argc, char* argv[]) {
               << "xray :          " << sxray << "\n"
 	      << "led :           " << sled << "\n"
 	      << "lud :           " << slud << "\n"
+              << "order :         " << sorder << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
@@ -179,6 +188,7 @@ int main(int argc, char* argv[]) {
                               sxray,
 			      sled,
 			      slud,
+                              sorder,  
 			      quiet
 			      )
       != 0){
