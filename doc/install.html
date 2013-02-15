@@ -1,0 +1,219 @@
+
+<h2>Installation</h2>
+
+<a name="requirements">
+<h3>requirements</h3></a>
+
+<p>
+Packages compiled to use shared libraries and source packages need the
+<a href="www.gnu.org/software/gsl">Gnu Scientific Library</a>. All code
+is tested against version 1.5.
+</p>
+<hr>
+<br>
+
+<a name="binary">
+<h3>installation from a binary package</h3></a>
+
+<p>
+A debian (sarge) binary package and a linux x86 statically linked
+package are provided. They were compiled with the 
+<a href="www.intel.com">Intel C++ compiler</a><br> using the following
+<tt>configure</tt> options:
+<tt>--disable-debug --disable-shared --enable-static --enable-allstatic
+--enable-openmp --prefix=/usr/local/gromos/gromosXX</tt><br>
+The packages are fully relocatable.
+</p>
+<p>
+For best performance a compilation specific to the target system is recommended.
+</p>
+<hr>
+<br>
+
+<a name="tarball">
+<h3>installation from source (tarball)</h3></a>
+
+It is recommended to build the package in a subdirectory.
+<ol>
+  <li> tar zxvf gromosXX-x.y.z.tar.gz </li>
+  <li> cd gromosXX-x.y.z </li>
+  <li> mkdir BUILD </li>
+  <li> cd BUILD </li>
+  <li> ../configure </li>
+  <li> make </li>
+  <li> make install </li>
+  <li> make doc </li>
+  <li> make doc-install </li>
+</ol>
+
+<p>
+To build the documentation (optional), <a
+href="www.doxygen.org">doxygen</a> is required.
+The default installation path is ".". The <b>md</b> program will be
+installed to <tt>gromosXX-x.y.z/BUILD/bin</tt>.
+</p>
+
+<p>
+The following <tt>configure</tt> options are supported (For a full list
+type <tt>../configure --help</tt>):<br><br>
+
+<table style="background:lightgrey">
+  <tr>
+    <th>option</th>
+    <th>explanation</th>
+    <th>default</th>
+  <tr>
+    <td>--prefix=path</td>
+    <td>installation target directory</td>
+    <td>.</td>
+  </tr>
+  <tr>
+    <td>--disable-debug</td>
+    <td>don't allow debug output (slow!)</td>
+    <td>enabled</td>
+  </tr>
+  <tr>
+    <td>--disable-shared</td>
+    <td>don't build shared libraries</td>
+    <td>enabled</td>
+  </tr>
+  <tr>
+    <td>--disable-static</td>
+    <td>don't build static libraries</td>
+    <td>enabled</td>
+  </tr>
+  <tr>
+    <td>--enable-allstatic</td>
+    <td>don't use any shared libraries</td>
+    <td>disabled</td>
+  </tr>
+  <tr>
+    <td>--enable-openmp</td>
+    <td>build openmp enabled code<br>(on supported compilers)</td>
+    <td>disabled</td>
+  </tr>
+  <tr>
+    <td>--with-gsl-prefix=path</td>
+    <td>specify <a href="www.gnu.org/software/gsl">Gnu Scientific
+    Library</a> location</td>
+  </tr>
+</table>
+</p>
+<br>
+<hr>
+<br>
+
+<a name="svn">
+<h3>installing from SVN</h3></a>
+
+<p>
+If the source is obtained from <a href="release.html#svn">SVN</a> the
+<tt>configure</tt> script has to be generated first.</br>
+<ol>
+  <li> mkdir -p config </li>
+  <li> aclocal </li>
+  <li> libtoolize --copy </li>
+  <li> autoconf </li>
+  <li> automake --add-missing --copy </li>
+  <li> autoheader </li>
+</ol>
+<br>
+For convenience these tasks are automated by the <tt>Config.sh</tt> script.
+</p>
+<p>
+The rest of the installation is the same as if starting from a <a href="#tarball">source
+tarball</a>.
+</p>
+<p>
+If it does not work, check for the required autotools versions:
+<pre>
+autoconf --version [autoconf (GNU Autoconf) 2.59]
+automake --version [automake (GNU automake) 1.8.5]
+libtoolize --version [libtoolize (GNU libtool) 1.5.2]
+make --version [GNU Make version 3.80]
+</pre>
+<hr>
+<br>
+
+<h3>supported compilers</h3>
+<p>
+Due to extensive usage of templates only relatively up-to-date compilers
+are able to compile the code. Please use at least the versions mentioned below.
+</p>
+<p>
+<b><a href="www.intel.com">Intel C++ compiler</a></b> (8.1)<br>
+Set the following environment variables to compile with the Intel C++
+compiler:
+<span style="background:lightgrey">
+<pre>
+CC=icc
+CXX=icpc
+LD=xild
+AR=xiar
+</pre>
+</span>
+<a href="www.openmp.org">OpenMP</a> code generation is supported.
+</p>
+<br>
+<p>
+<b><a href="www.gnu.org/software/gcc">Gnu C++ compiler</a></b> (3.4)<br>
+This is the default compiler. No special settings are necessary.
+</p>
+<br>
+<hr>
+<br>
+
+<h3>package builders notes</h3>
+
+<b>from svn</b><br>
+<p>
+You have to create a tarball first:<br>
+<ol>
+  <li> ./Config.sh </li>
+  <li> mkdir BUILD </li>
+  <li> cd BUILD </li>
+  <li> ../configure </li>
+  <li> make dist </li>
+</ol>
+<br>
+You can also do a <tt>make distcheck</tt> to check whether everything
+compiles and installs correctly.<br>
+</p>
+
+<b>from tarball</b><br>
+<p>
+Take care to start from a clean environment (especially if you want to
+link against shared libraries). Check your <tt>$PATH</tt> and
+<tt>$LD_LIBRARY_PATH</tt> environment variables.<br>
+Build the package using the correct <tt>--prefix</tt>.<br>
+Install the package to a temporary directory using<br>
+<tt>make DESTDIR=/tmp/gromosXX</tt><br>
+If you want build the documentation and install<br>
+<tt>make docdir=/tmp/gromosXX/doc/gromosXX-x.y.z doc-install</tt><br>
+Or possibly change to a more suitable location.<br>
+</p>
+
+<b>binary package</b><br>
+<p>
+Just tar the directory (maybe seperate for the documentation).
+</p>
+
+<b>Debian package</b><br>
+<p>
+check required libraries (ldd md)<br>
+check Debian package names of required libraries (<tt>apt-cache search
+pattern</tt> and <tt>dpkg -S filename</tt>)<br>
+create a <tt>DEBIAN</tt> subdirectory.<br>
+copy the <tt>control.debian</tt> file to <tt>DEBIAN/control</tt>.<br>
+edit the dependencies<br>
+build the package <tt>dpkg --build gromosXX</tt> (from outside the <tt>DESTDIR</tt>).<br>
+</p>
+
+<b>compiling statically</b><br>
+<p>
+To create a completely statically linked binary use the following
+<tt>configure</tt> options:
+<tt>--disable-debug --disable-shared --enable-static
+--enable-allstatic</tt><br>
+This has only been tested with the Intel C++ compiler.
+</p>
