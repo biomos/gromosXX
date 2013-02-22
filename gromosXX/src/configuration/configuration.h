@@ -364,6 +364,34 @@ namespace configuration {
       } /** disres informaton */ distanceres;
 
       /**
+       * @struct disfield_struct
+       * holds the distance field restraints grid
+       */
+      struct disfield_struct {
+	/**
+	 * the number of gridpoints
+	 */
+	std::vector<int> ngrid;
+	/**
+	 * the distance for the gridpoints
+	 */
+	std::vector<double> distance;
+	/**
+	 * the actual distance
+	 */
+	double dist;
+	/**
+	 * energy
+	 */
+	double energy;
+	/**
+	 * energy derivative
+	 */
+	double energy_deriv;
+      }  /** disfield information */ distancefield;
+      
+	
+      /**
        * @struct pscale_struct
        * stores periodic scaling information
        */

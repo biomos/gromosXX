@@ -64,6 +64,7 @@ m_every_cos_pos(0),
 m_every_jvalue(0),
 m_every_xray(0),
 m_every_disres(0),
+m_every_disfieldres(0),
 m_every_dat(0),
 m_every_leus(0),
 m_every_bsleus(0),
@@ -77,6 +78,7 @@ m_write_blockaverage_free_energy(false),
 m_precision(9),
 m_force_precision(9),
 m_distance_restraint_precision(7),
+m_disfield_restraint_precision(7),
 m_width(15),
 m_force_width(18),
 m_title(title),
@@ -138,7 +140,7 @@ io::Out_Configuration::~Out_Configuration()
     m_ramd_traj.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres 
+  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_disfieldres
           || m_every_dat || m_every_leus || m_every_dipole || m_every_current
           || m_every_adde || m_every_nemd || m_every_bsleus) { // add others if there are any
     m_special_traj.flush();
@@ -187,13 +189,13 @@ void io::Out_Configuration::init(io::Argument & args,
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
-            param.print.monitor_dihedrals,param.localelev.write, 
+            param.distancefield.write, param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.bsleus.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
-        || param.distanceres.write || param.print.monitor_dihedrals || param.localelev.write
-        || param.electric.dip_write || param.electric.cur_write || param.addecouple.write
-        || param.nemd.write || param.orderparamrest.write || param.bsleus.write)
+        || param.distanceres.write || param.distancefield.write || param.print.monitor_dihedrals 
+        || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
+        || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.bsleus.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -344,6 +346,15 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       _print_distance_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+
+    if (m_every_disfieldres && sim.steps() && (sim.steps() % m_every_disfieldres) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_disfield_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -655,7 +666,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
-                     int every_xray, int every_disres, int every_dat, 
+                     int every_xray, int every_disres, int every_disfieldres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
                      int every_adde, int every_nemd, int every_oparam,
                      int every_bsleus) {
@@ -666,6 +677,7 @@ void io::Out_Configuration
   m_every_jvalue = every_jvalue;
   m_every_xray = every_xray;
   m_every_disres = every_disres;
+  m_every_disfieldres = every_disfieldres;
   m_every_dat = every_dat;
   m_every_leus = every_leus;
   m_every_dipole = every_dipole;
@@ -1421,6 +1433,7 @@ ENERGY03
    0.000000000e+00 # SASA volume total
    0.000000000e+00 # constraints total
    0.000000000e+00 # distance restraints total
+   0.000000000e+00 # distancefield restraints total
    0.000000000e+00 # dihedral restraints total
    0.000000000e+00 # position restraints total
    0.000000000e+00 # J-value restraints total
@@ -1450,9 +1463,9 @@ ENERGY03
   -6.774710271e-01   4.920740888e-01   0.000000000e+00   0.000000000e+00  # 1 - 2
   -7.163386790e-01  -1.309311086e+01   0.000000000e+00   0.000000000e+00  # 2 - 2
 # special
-#  constraints       pos. restraints   dist. restraints  dihe. restr.      SASA              SASA volume       jvalue            local elevation   path integral
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
+#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            local elevation   path integral
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
 # eds (enveloping distribution sampling)
 # numstates
 2
@@ -2283,6 +2296,23 @@ void io::Out_Configuration::_print_distance_restraints(
   os << "END" << std::endl;
 }
 
+void io::Out_Configuration::_print_disfield_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "disfield restraints");
+
+  double distance = conf.special().distancefield.dist;
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_disfield_restraint_precision);
+
+  os << "DISFIELDRESDATA" << std::endl;
+  os << std::setw(m_width) << distance
+     << std::endl;
+  os << "END" << std::endl;
+}
+
 void io::Out_Configuration::_print_distance_restraint_averages(
         configuration::Configuration const &conf,
         topology::Topology const &topo,
@@ -2491,17 +2521,18 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.sasa_volume_total << "\n" // 23
           << std::setw(18) << e.constraints_total << "\n" // 24
           << std::setw(18) << e.distanceres_total << "\n" // 25
-          << std::setw(18) << e.dihrest_total << "\n" // 26
-          << std::setw(18) << e.posrest_total << "\n" // 27
-          << std::setw(18) << e.jvalue_total << "\n" // 28
-          << std::setw(18) << e.xray_total << "\n" // 29
-          << std::setw(18) << e.leus_total << "\n" // 30
-          << std::setw(18) << e.oparam_total << "\n" // 31
-          << std::setw(18) << e.symrest_total << "\n" // 32
-          << std::setw(18) << e.eds_vr << "\n" // 33
-          << std::setw(18) << e.entropy_term << "\n" // 34
-          << std::setw(18) << e.qm_total << "\n" // 35
-          << std::setw(18) << e.bsleus_total << "\n"; // 36
+          << std::setw(18) << e.disfieldres_total << "\n" // 26
+          << std::setw(18) << e.dihrest_total << "\n" // 27
+          << std::setw(18) << e.posrest_total << "\n" // 28
+          << std::setw(18) << e.jvalue_total << "\n" // 29
+          << std::setw(18) << e.xray_total << "\n" // 30
+          << std::setw(18) << e.leus_total << "\n" // 31
+          << std::setw(18) << e.oparam_total << "\n" // 32
+          << std::setw(18) << e.symrest_total << "\n" // 33
+          << std::setw(18) << e.eds_vr << "\n" // 34
+          << std::setw(18) << e.entropy_term << "\n" // 35
+          << std::setw(18) << e.qm_total << "\n" // 36
+          << std::setw(18) << e.bsleus_total << "\n"; // 37
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -2541,6 +2572,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
     os << std::setw(18) << e.constraints_energy[i]
             << std::setw(18) << e.posrest_energy[i]
             << std::setw(18) << e.distanceres_energy[i] // disres
+            << std::setw(18) << e.disfieldres_energy[i] // disfieldres
             << std::setw(18) << e.dihrest_energy[i] // dihedral res
             << std::setw(18) << e.sasa_energy[i]
             << std::setw(18) << e.sasa_volume_energy[i]

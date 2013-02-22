@@ -1015,6 +1015,34 @@ namespace topology
       return m_perturbed_distance_restraint;
     }
     /**
+     * const distancefield restraints accessor.
+     */
+    disfield_restraint_struct const & disfield_restraints()const
+    {
+      return m_disfield_restraint;
+    }
+    /**
+     *  distancefield restraints accessor.
+     */
+    disfield_restraint_struct  & disfield_restraints()
+    {
+      return m_disfield_restraint;
+    } 
+    /**
+     * const perturbed distancefield restraints accessor.
+     */
+    perturbed_disfield_restraint_struct const & perturbed_disfield_restraints()const
+    {
+      return m_perturbed_disfield_restraint;
+    }
+    /**
+     * perturbed distancefield restraints accessor.
+     */
+    perturbed_disfield_restraint_struct  & perturbed_disfield_restraints()
+    {
+      return m_perturbed_disfield_restraint;
+    }
+    /**
      * const eds distance restraints accessor.
      */
     std::vector<eds_distance_restraint_struct> const & eds_distance_restraints()const
@@ -1469,6 +1497,14 @@ namespace topology
      * perturbed distance restraints 
      */
     std::vector<perturbed_distance_restraint_struct> m_perturbed_distance_restraint;
+    /**
+     * distancefield restraints 
+     */
+    disfield_restraint_struct m_disfield_restraint;
+    /**
+     * perturbed distancefield restraints 
+     */
+    perturbed_disfield_restraint_struct m_perturbed_disfield_restraint;
     /**
      * eds distance restraints 
      */

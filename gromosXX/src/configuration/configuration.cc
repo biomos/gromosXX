@@ -151,7 +151,13 @@ configuration::Configuration::Configuration
   special().distanceres.av = conf.special().distanceres.av;
   special().distanceres.energy = conf.special().distanceres.energy;
   special().distanceres.d = conf.special().distanceres.d;
-
+  
+  special().distancefield.ngrid = conf.special().distancefield.ngrid;
+  special().distancefield.distance = conf.special().distancefield.distance;
+  special().distancefield.dist = conf.special().distancefield.dist;
+  special().distancefield.energy = conf.special().distancefield.energy;
+  special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
+  
   special().pscale = conf.special().pscale;
 
   special().orderparamres.S2_avg = conf.special().orderparamres.S2_avg;
@@ -260,7 +266,13 @@ configuration::Configuration & configuration::Configuration::operator=
   special().distanceres.av = conf.special().distanceres.av;
   special().distanceres.energy = conf.special().distanceres.energy;
   special().distanceres.d = conf.special().distanceres.d;
-
+ 
+  special().distancefield.ngrid = conf.special().distancefield.ngrid;
+  special().distancefield.distance = conf.special().distancefield.distance;
+  special().distancefield.dist = conf.special().distancefield.dist;
+  special().distancefield.energy = conf.special().distancefield.energy;
+  special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
+ 
   special().pscale = conf.special().pscale;
   
   special().rottrans_constr = conf.special().rottrans_constr;

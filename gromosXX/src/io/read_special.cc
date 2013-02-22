@@ -97,7 +97,7 @@ int io::read_special(io::Argument const & args,
           ip.quiet = quiet;
 
           ip.read(topo, conf, sim, os);
-          io::messages.add("position restraints specifciation read from " +
+          io::messages.add("position restraints specification read from " +
                   args["refpos"] + "\n" + util::frame_text(ip.title),
                   "read special", io::message::notice);
         }
@@ -105,12 +105,12 @@ int io::read_special(io::Argument const & args,
     }
   } // POSRES
 
-  // DISTANCERES
-  if (sim.param().distanceres.distanceres){
+  // DISTANCERES and DISTANCEFIELD
+  if (sim.param().distanceres.distanceres || sim.param().distancefield.distancefield){
     io::igzstream distanceres_file;
 
     if (args.count("distrest") != 1){
-      io::messages.add("distance restraints: no data file specified (use @distrest)",
+      io::messages.add("distance(field) restraints: no data file specified (use @distrest)",
 		       "read special", io::message::error);
     } else {
       distanceres_file.open(args["distrest"].c_str());
@@ -122,7 +122,7 @@ int io::read_special(io::Argument const & args,
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
-        io::messages.add("distance restraints read from " + args["distrest"] +
+        io::messages.add("distance(field) restraints read from " + args["distrest"] +
                 "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }

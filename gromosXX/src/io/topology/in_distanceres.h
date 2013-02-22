@@ -11,6 +11,8 @@
  * - @ref distanceresspec
  * - @ref pertdisresspec
  * - @ref mdisresspec
+ * - @ref dfresspec
+ * - @ref pertdfresspec
  */
 
 #ifndef INCLUDED_IN_DISTANCERES_H

@@ -554,7 +554,104 @@ namespace topology {
      */
     int rah;
   };
+  /**
+   * distance field restraint information
+   */
+  struct disfield_restraint_struct {
+    /**
+     * Constructor.
+     */
+    disfield_restraint_struct() {on=false;};
+    disfield_restraint_struct(bool on, util::Virtual_Atom v1,
+            util::Virtual_Atom v2, 
+            double r0, double K,
+            int proteinatoms)
+      : on(on), v1(v1), v2(v2), r0(r0), K(K),
+    proteinatoms(proteinatoms) {
+    }
+    /**
+     * is a restraint specified
+     */
+    bool on;
+    /**
+     * Virtual Atom 1.
+     */
+    util::Virtual_Atom v1;
+    /**
+     * Virtual Atom 2.
+     */
+    util::Virtual_Atom v2;
+    /**
+     * Reference distance
+     */
+    double r0;
+    /**
+     * force constant K
+     */
+    double K;
+    /**
+     * last atom of the protein atoms
+     */
+    int proteinatoms;
 
+  };
+  /**
+   * perturbed distance field restraint information
+   */
+  struct perturbed_disfield_restraint_struct {
+    /**
+     * Constructor.
+     */
+    perturbed_disfield_restraint_struct() {on=false;}
+    perturbed_disfield_restraint_struct(bool on, util::Virtual_Atom v1,
+            util::Virtual_Atom v2, int proteinatoms, 
+            double A_r0, double B_r0, double K_A, double K_B, 
+            int n, int m)
+      : on(on), v1(v1), v2(v2), proteinatoms(proteinatoms),
+    A_r0(A_r0), B_r0(B_r0), K_A(K_A), K_B(K_B), n(n), m(m)  {
+    }
+    /**
+     * is a perturbed restraint specified
+     */
+    bool on;
+    /**
+     * Virtual Atom 1.
+     */
+    util::Virtual_Atom v1;
+    /**
+     * Virtual Atom 2.
+     */
+    util::Virtual_Atom v2;
+    /**
+     * last atom of the protein atoms
+     */
+    int proteinatoms;
+    /**
+     * restraint distance A.
+     */
+    double A_r0;
+    /**
+     * restraint distance B.
+     */
+    double B_r0;
+    /**
+     * force constant A.
+     */
+    double K_A;
+    /**
+     * force constant B.
+     */
+    double K_B;
+    /**
+     * hidden restraint factor n
+     */
+    int n;
+    /**
+     * hidden restraint factor m
+     */
+    int m;
+  };
+ 
   /**
    * eds distance restraints information.
    */

@@ -39,6 +39,7 @@
  * - @ref  cgrain
  * - @ref  rottrans
  * - @ref  distanceres
+ * - @ref  distancefield
  * - @ref  disres
  * - @ref  dihedralres
  * - @ref  dihrest
@@ -188,6 +189,11 @@ namespace io {
      */
     void read_DISTANCERES(simulation::Parameter &param, std::ostream & os = std::cout);
 
+    /**
+     * read DISTANCEFIELD block.
+     */
+    void read_DISTANCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
+    
     /**
      * read DIHEDRALRES block.
      */

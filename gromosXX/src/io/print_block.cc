@@ -468,6 +468,7 @@ namespace io
     os << type << "SASA Volume          : " << std::setw(30) << e.sasa_volume_total << "\n";
     os << type << "Constraints          : " << std::setw(30) << e.constraints_total << "\n";
     os << type << "Distanceres          : " << std::setw(30) << e.distanceres_total << "\n";
+    os << type << "Disfieldres          : " << std::setw(30) << e.disfieldres_total << "\n";
     os << type << "Dihrest              : " << std::setw(30) << e.dihrest_total << "\n";
     os << type << "Posrest              : " << std::setw(30) << e.posrest_total << "\n";
     os << type << "Jrest                : " << std::setw(30) << e.jvalue_total << "\n";
@@ -578,6 +579,9 @@ namespace io
 
     os << "\n" << std::setw(20) << type + "Distanceres";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.distanceres_energy[i];
+
+    os << "\n" << std::setw(20) << type + "Disfieldres";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.disfieldres_energy[i];
 
     os << "\n" << std::setw(20) << type + "Dihrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihrest_energy[i];

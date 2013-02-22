@@ -17,8 +17,10 @@
 
 #include "../../interaction/special/position_restraint_interaction.h"
 #include "../../interaction/special/distance_restraint_interaction.h"
+#include "../../interaction/special/distance_field_interaction.h"
 #include "../../interaction/special/dihedral_restraint_interaction.h"
 #include "../../interaction/special/perturbed_distance_restraint_interaction.h"
+#include "../../interaction/special/perturbed_distance_field_interaction.h"
 #include "../../interaction/special/eds_distance_restraint_interaction.h"
 #include "../../interaction/special/perturbed_dihedral_restraint_interaction.h"
 #include "../../interaction/special/jvalue_restraint_interaction.h"
@@ -102,6 +104,30 @@ int interaction::create_special(interaction::Forcefield & ff,
         new interaction::Eds_Distance_Restraint_Interaction;
       
       ff.push_back(edr);
+    }
+  }
+  
+  // Distance field restraint
+  // as this function is called before read_special, we do not know if we 
+  // really need the (perturbed) interactions
+  // so we generate them, but need to check inside if we really do something
+  if (param.distancefield.distancefield == 1){
+    if(!quiet)
+      os << "\tDistancefield restraint\n";
+    interaction::Distance_Field_Interaction *df = 
+      new interaction::Distance_Field_Interaction();
+    
+    ff.push_back(df);
+    DEBUG(10, "Distancefield interaction pushed back");
+    
+    if (param.perturbation.perturbation){
+      if(!quiet)
+	os <<"\tPerturbed distancefield restraints \n";
+      
+      interaction::Perturbed_Distance_Field_Interaction *pdf =
+	new interaction::Perturbed_Distance_Field_Interaction;
+      
+      ff.push_back(pdf);
     }
   }
   

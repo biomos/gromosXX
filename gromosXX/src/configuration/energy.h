@@ -122,7 +122,11 @@ namespace configuration
      */
     double distanceres_total;
     /**
-     *  total energy of the distance restraint interaction
+     *  total energy of the distancefield restraint interaction
+     */
+    double disfieldres_total;
+    /**
+     *  total energy of the dihedral restraint interaction
      */
     double dihrest_total;
     /**
@@ -253,6 +257,10 @@ namespace configuration
      */
     std::vector<double> distanceres_energy;
     /**
+     * distancefield restraint energy term
+     */
+    std::vector<double> disfieldres_energy;
+    /**
      * dihedral restraint energy term
      */
     std::vector<double> dihrest_energy;
@@ -311,7 +319,7 @@ namespace configuration
      */
     double get_energy_by_index(const unsigned int & index);
     
-    static const unsigned int MAX_ENERGY_INDEX = 31;
+    static const unsigned int MAX_ENERGY_INDEX = 37;
 
   private:
     double m_ewarn;

@@ -55,7 +55,7 @@ END
  *
  * The format is very similar to the @ref distanceresspec with the difference that
  * one may give values for the A and the B state. The two variables \c n and
- * \c m are the parameters for the hidden restriants. 
+ * \c m are the parameters for the hidden restraints. 
  *
  * See:
  * - M. Christen, A.-P.E. Kunz, W.F. van Gunsteren, Sampling of rare events
@@ -87,6 +87,76 @@ MDISRESSPEC
   8  0  0  0  0       10 12 11 13 3       0.2  0.2  0.2  0.0  0.0 1.0    0
 END
 @endverbatim
+ *
+ * @section dfresspec DFRESSPEC block
+ * The DFRESSPEC block is read from the distance restraints specification
+ * file and used for distancefield restraints.
+ *
+ * See:
+ * - A. de Ruiter and C. Oostenbrink, Protein-ligand binding from distancefield
+ *   distances and Hamiltonian replica exchange simulations, J. Chem. Theory 
+ *   Comp. 9 (2013) 883 - 892, doi: 10.1021/ct300967a
+ *
+ *@verbatim
+DFRESSPEC
+#   DISH H-C bond length for virtual atoms
+#   DISC C-C bond length for virtual atoms
+#   PROTEINATOMS > 0 last atom of the host
+#   K >= 0.0 Force constant
+#   r0 >=0 zero energy distance 
+#   TYPE_I Virtual atom type for interaction site I
+#   NUM_I  Number of atoms defining interaction site I
+#   ATOM_I[0..NUM_I] Index numbers of atoms defining interaction site I
+#   TYPE_J Virtual atom type for interaction site J
+#   NUM_J  Number of atoms defining interaction site J
+#   ATOM_J[0..NUM_J] Index numbers of atoms defining interaction site J
+# DISH  DISC
+  0.1   0.153
+# PROTEINATOMS  K    r0 
+  1190          500  0.0 
+# TYPE_I  NUM_I  ATOM_I[0] .. ATOM_I[NUM_I]
+  -1      7        16  190  249  312  486  632 1208
+# TYPE_J  NUM_J  ATOM_J[0] .. ATOM_J[NUM_J]
+  -1      2      1194 1203
+END
+@endverbatim
+ *
+ * @section pertdfresspec PERTDFRESSPEC block
+ * The PERTDFRESSPEC block is read from the distance restraints specification
+ * file and used for perturbed distancefield restraints.
+ *
+ * See:
+ * - A. de Ruiter and C. Oostenbrink, Protein-ligand binding from distancefield
+ *   distances and Hamiltonian replica exchange simulations, J. Chem. Theory 
+ *   Comp. 9 (2013) 883 - 892, doi: 10.1021/ct300967a
+ *
+ *@verbatim
+PERTDFRESSPEC
+#   DISH H-C bond length for virtual atoms
+#   DISC C-C bond length for virtual atoms
+#   PROTEINATOMS > 0 last atom of the host
+#   A_r0 >=0 reference distance for state A
+#   B_r0 >=0 reference distance for state B
+#   K_A >= 0 force constant state A
+#   K_B >= 0 force constant state B
+#   n >= 0 hidden restraint parameter n 
+#   m >= 0 hidden restraint parameter m 
+#   TYPE_I Virtual atom type for interaction site I
+#   NUM_I  Number of atoms defining interaction site I
+#   ATOM_I[0..NUM_I] Index numbers of atoms defining interaction site I
+#   TYPE_J Virtual atom type for interaction site J
+#   NUM_J  Number of atoms defining interaction site J
+#   ATOM_J[0..NUM_J] Index numbers of atoms defining interaction site J
+# DISH  DISC
+  0.1   0.153
+# PROTEINATOMS  A_r0  K_A  B_r0  K_B  n  m
+  1190          4.5   500  0.0   500  0  0
+# TYPE_I  NUM_I  ATOM_I[0] .. ATOM_I[NUM_I]
+  -1      7        16  190  249  312  486  632 1208
+# TYPE_J  NUM_J  ATOM_J[0] .. ATOM_J[NUM_J]
+  -1      2      1194 1203
+END
+@endverbatim
  */
 void 
 io::In_Distanceres::read(topology::Topology& topo,
@@ -96,7 +166,7 @@ io::In_Distanceres::read(topology::Topology& topo,
   DEBUG(7, "reading in a distance restraints file");
 
   if (!quiet)
-    os << "DISTRANCE RESTRAINTS\n";
+    os << "DISTANCE RESTRAINTS\n";
   
   std::vector<std::string> buffer;
 
@@ -465,6 +535,274 @@ io::In_Distanceres::read(topology::Topology& topo,
     //if (!quiet) os << "END\n";
     
   }
+
+  { // DISTANCEFIELD RES
+    DEBUG(10, "DFRESSPEC block");
+
+    std::vector<std::string> buffer;
+    std::string s;
+
+    buffer = m_block["DFRESSPEC"];
+    block_read.insert("DFRESSPEC");
+    if(!buffer.size()){
+      if(sim.param().distancefield.distancefield &&
+	 !sim.param().perturbation.perturbation)
+	// only need to warn if it was expected
+	io::messages.add("no DFRESSPEC block in distance restraints file",
+			 "in_distanceres", io::message::warning);
+    }
+    else if (buffer.size()<=2){
+      io::messages.add("empty DFRESSPEC block in distance restraints file",
+		       "in_distanceres", io::message::warning);
+    }
+    else{      
+      
+      DEBUG(10, "reading in DFRES data");
+      
+      if (!quiet) {
+	switch (sim.param().distancefield.distancefield) {
+	  case 0:
+	    os << "\tDistancefield restraints OFF\n";
+	    // how did you get here?
+	    break;
+	  case 1:
+	    os << "\tDistancefield restraints ON\n";
+	    break;
+	  default:
+	    os << "\tDistancefield restraints ERROR\n";
+	}
+      }
+      
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+      
+      double dish,disc;
+      _lineStream >> dish >> disc;
+      
+      if(_lineStream.fail()){
+	std::ostringstream msg;
+	msg << "bad line in DFRESSPEC block: failed to read in DISH and DISC"  << std::endl;
+	io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);
+      }
+      
+      /*      if (!quiet){
+	      os << std::setw(10) << "DISH"
+	      << std::setw(10) << "DISC"
+	      << "\n" 
+	      <<  std::setw(10)<< dish
+	      <<  std::setw(10)<< disc
+	      << "\n";
+	      }
+      */
+      int vtype_i, vtype_j, num, atom;
+      std::vector<int> atomi, atomj;
+      
+      topo.disfield_restraints().on = true;
+      
+      _lineStream >> topo.disfield_restraints().proteinatoms; 
+      topo.disfield_restraints().proteinatoms--;
+      
+      _lineStream >> topo.disfield_restraints().K
+		  >> topo.disfield_restraints().r0;
+      
+      if (topo.disfield_restraints().proteinatoms < 0) {
+	io::messages.add("DFRESSPEC block: PROTEINATOMS must be >= 0.",
+			 "In_Distanceres", io::message::error);
+      }
+      if (topo.disfield_restraints().K < 0.0) {
+	io::messages.add("DFRESSPEC block: K must be >= 0.0.",
+			 "In_Distanceres", io::message::error);
+      }
+      if (topo.disfield_restraints().r0 < 0.0) {
+	io::messages.add("DFRESSPEC block: r0 must be >= 0.0.",
+			 "In_Distanceres", io::message::error);
+      }
+      
+      _lineStream >> vtype_i
+		  >> num;
+      
+      for(int i=0; i< num; i++){
+	_lineStream >> atom;
+	if (atom <  0 ) {
+	  io::messages.add("DFRESSPEC block: ATOM_I must be >= 0.",
+			   "In_Distanceres", io::message::error);
+	}
+	atomi.push_back(atom-1);
+      }
+      _lineStream >> vtype_j
+		  >> num;
+      
+      for(int i=0; i< num; i++){
+	_lineStream >> atom;
+	if (atom <  0 ) {
+	  io::messages.add("DFRESSPEC block: ATOM_J must be >= 0.",
+			   "In_Distancres", io::message::error);
+	}
+	atomj.push_back(atom-1);
+      }
+      
+      if(_lineStream.fail()){
+	std::ostringstream msg;
+	msg << "bad line in DFRESSPEC block: " << std::endl;
+	io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);
+      }
+      
+      util::virtual_type t1 = util::virtual_type(vtype_i);
+      util::virtual_type t2 = util::virtual_type(vtype_j);
+      
+      util::Virtual_Atom v1(t1, atomi, dish, disc);
+      util::Virtual_Atom v2(t2, atomj, dish, disc);
+      
+      topo.disfield_restraints().v1 = v1;    
+      topo.disfield_restraints().v2 = v2;     
+      
+    }
+    
+  } // DISTANCEFIELD
+    
+  { // PERTDFRESPEC DISTANCERES
+    DEBUG(10, "PERTDFRESSPEC block");
+
+    std::vector<std::string> buffer;
+    std::string s;
+
+    buffer = m_block["PERTDFRESSPEC"];
+    block_read.insert("PERTDFRESSPEC");
+
+    // check whether there is s.th. in the block
+    if(!buffer.size()){
+     // this is only bad if no DFRESSPEC block was specified either
+      // you may be doing a perturbation but not a perturbed disfield
+      if(sim.param().distancefield.distancefield && 
+	 sim.param().perturbation.perturbation &&
+	 !topo.disfield_restraints().on){
+	io::messages.add("no (PERT)DFRESSPEC block in distance restraints file",
+			 "in_distanceres", io::message::warning);
+      }
+    }
+    else if (buffer.size()<=2){
+      io::messages.add("empty PERTDFRESSPEC block in distance restraints file",
+		       "in_distanceres", io::message::warning);
+    }
+    else{
+      
+      DEBUG(10, "reading in DISTANCERES (PERTDFRESSPEC) data");
+      
+      if (!quiet){
+	switch(sim.param().distancefield.distancefield * sim.param().perturbation.perturbation){
+	  case 0:
+	    os << "\tPerturbed Distancefield restraints OFF\n";
+	    // how did you get here?
+	    break;
+	  case 1:
+	    os << "\tPerturbed Distancefield restraints ON\n";
+	    break;
+	  default:
+	    os << "\tPerturbed Distancefield restraints ERROR\n";
+	}
+      }
+      
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+      
+      double dish,disc;
+      _lineStream >> dish >> disc;
+      
+      if(_lineStream.fail()){
+	std::ostringstream msg;
+	msg << "bad line in PERTDFRESSPEC block: failed to read in DISH and DISC"  << std::endl;
+	io::messages.add(msg.str(),
+			 "In_Distanceres",
+			 io::message::error);
+      }
+  
+/*      if (!quiet){
+	os << std::setw(10) << "DISH"
+	   << std::setw(10) << "DISC"
+	   << "\n" 
+	   <<  std::setw(10)<< dish 
+	   <<  std::setw(10)<< disc
+	   << "\n";
+      }
+*/      
+      int vtype_i, vtype_j, num, atom;
+      std::vector<int> atomi, atomj;
+
+      topo.perturbed_disfield_restraints().on = true;
+      
+      _lineStream >> topo.perturbed_disfield_restraints().proteinatoms;
+      topo.perturbed_disfield_restraints().proteinatoms--;
+
+      _lineStream >> topo.perturbed_disfield_restraints().A_r0 
+                  >> topo.perturbed_disfield_restraints().K_A 
+                  >> topo.perturbed_disfield_restraints().B_r0 
+                  >> topo.perturbed_disfield_restraints().K_B 
+                  >> topo.perturbed_disfield_restraints().n 
+                  >> topo.perturbed_disfield_restraints().m;
+
+      if (topo.perturbed_disfield_restraints().proteinatoms < 0) {
+        io::messages.add("PERTDFRESSPEC block: PROTEINATOMS must be >= 0.",
+                     "In_Distanceres", io::message::error);
+      }
+      if (topo.perturbed_disfield_restraints().K_A < 0.0 || 
+          topo.perturbed_disfield_restraints().K_B < 0.0) {
+        io::messages.add("PERTDFRESSPEC block: K must be >= 0.0.",
+                     "In_Distanceres", io::message::error);
+      }
+      if (topo.perturbed_disfield_restraints().A_r0 < 0.0 || 
+          topo.perturbed_disfield_restraints().B_r0 < 0.0) {
+        io::messages.add("PERTDFRESSPEC block: r0 must be >= 0.0.",
+                     "In_Distanceres", io::message::error);
+      } 
+
+
+      _lineStream >> vtype_i
+                  >> num;
+
+      for(int i=0; i< num; i++){
+        _lineStream >> atom;
+        if (atom <  0 ) {
+        io::messages.add("PERTDFRESSPEC block: ATOM_I must be >= 0.",
+                         "In_Distanceres", io::message::error);
+        }
+        atomi.push_back(atom-1);
+      }
+      _lineStream >> vtype_j
+                  >> num;
+
+      for(int i=0; i< num; i++){
+        _lineStream >> atom;
+        if (atom <  0 ) {
+          io::messages.add("PERTDFRESSPEC block: ATOM_J must be >= 0.",
+                           "In_Distancres", io::message::error);
+        }
+        atomj.push_back(atom-1);
+      }
+	
+      if(_lineStream.fail()){
+        std::ostringstream msg;
+        msg << "bad line in PERTDFRESSPEC block: " << std::endl;
+        io::messages.add(msg.str(), "In_Distanceres",
+	 		io::message::error);
+      }
+
+      util::virtual_type t1 = util::virtual_type(vtype_i);
+      util::virtual_type t2 = util::virtual_type(vtype_j);
+	
+      util::Virtual_Atom v1(t1, atomi, dish, disc);
+      util::Virtual_Atom v2(t2, atomj, dish, disc);
+	
+      topo.perturbed_disfield_restraints().v1 = v1;
+      topo.perturbed_disfield_restraints().v2 = v2;
+	
+    }
+      
+  }//PERTDFRESPEC DISTANCERES
+    
   
   { // EDSDISTANCERES
     DEBUG(10, "MDISRESSPEC block");

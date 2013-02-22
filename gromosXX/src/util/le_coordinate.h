@@ -140,7 +140,7 @@ namespace util {
   class LE_Distance_Coordinate : public LE_Coordinate {
   public:
     /**
-     * construct a new dihedral coordinate from atom indices
+     * construct a new distance coordinate from atom indices
      * @param[in] id the umbrella ID
      * @param[in] i index of atom i
      * @param[in] j index of atom j
@@ -161,6 +161,42 @@ namespace util {
     void _calculate(configuration::Configuration & conf);
     unsigned int i, j;
     configuration::Configuration * m_conf;
+    double dist;
+    math::Vec fi, fj;
+  };
+  /**
+   * @class LE_DistanceField_Coordinate
+   * @ingroup util
+   * implementation of the LE distance field coordinate. In addition to
+   * the ID it is constructed according to the input in the DISTANCEFIELD block
+   * For detailed documentation see @ref util::LE_Coordinate
+   *
+   * @sa util::LE_Coordinate
+   */
+  class LE_DistanceField_Coordinate : public LE_Coordinate {
+  public:
+    /**
+     * construct a new distance field coordinate
+     * @param[in] id the umbrella ID
+     */
+    LE_DistanceField_Coordinate(int id, topology::Topology &topo, simulation::Simulation &sim);
+    ~LE_DistanceField_Coordinate() {}
+    virtual LE_Coordinate* clone() const;
+    virtual int get_type() const { return 6; /*distance field*/ }
+//    virtual int get_type() const { return util::umbrella::vt_distance; /*distance*/ }
+    virtual void calculate(configuration::Configuration & conf);
+    virtual double get_value(double grid_min, double grid_max) const;
+    virtual double get_deviation(const double & grid_value) const;
+    virtual void apply(double deriv);
+    virtual std::string str() const;
+  protected:
+    template<math::boundary_enum B>
+    void _calculate(configuration::Configuration & conf);
+    util::Virtual_Atom va_i, va_j;
+    topology::Topology * m_topo;
+    simulation::Simulation * m_sim;
+    configuration::Configuration * m_conf;
+    
     double dist;
     math::Vec fi, fj;
   };

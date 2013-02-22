@@ -113,6 +113,25 @@ io::In_Localelevspec::read(topology::Topology& topo,
           topo.le_coordinates().push_back(dih);
           break;
         }
+	case util::Umbrella::vt_distancefield:
+	{
+	  io::messages.add("Distancefield definition according to DISTANCEFIELD block in input file. Atom numbers ignored.",
+			   "In_Localelevspec", io::message::notice);
+	  if(sim.param().distancefield.distancefield!=1){
+	    io::messages.add("When using local elevation with type 6 (distance field), the DISTANCEFIELD block should be switched on", 
+			     "In_Localelevspec", io::message::error);
+	    return;
+	  }
+	  if(topo.disfield_restraints().K!=0.0){
+	    io::messages.add("Force constant in DISTANCEFIELD block != 0.0. This means that the distance field restraint is applied on top of the local elevation potential", 
+			     "In_Localelevspec", io::message::warning);
+	  }
+	  
+	  // the above message means that it needs to know about the parameters and about the topology
+	  util::LE_DistanceField_Coordinate * df = new util::LE_DistanceField_Coordinate(id, topo, sim);
+	  topo.le_coordinates().push_back(df);
+	  break;
+	}
         default:
         {
           std::ostringstream msg;

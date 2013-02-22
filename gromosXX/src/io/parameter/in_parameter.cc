@@ -69,6 +69,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_NONBONDED(param);
   read_POSITIONRES(param);
   read_DISTANCERES(param);
+  read_DISTANCEFIELD(param); 
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
   read_PERTURBATION(param);
   read_JVALUERES(param);
@@ -2302,6 +2303,92 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
 } // DISTANCERES
 
 /**
+ * @section distancefield DISTANCEFIELD block
+ * @verbatim
+DISTANCEFIELD
+#   NTDFR 0,1 controls distance field restraining
+#         0: no distance field restraining
+#         1: apply distance field restraining
+#   GRID  > 0.0 Grid size for distance field
+#   PROTEINOFFSET > 0 penalty for distances through the host
+#   PROTEINCUTOFF > 0 distance to protein atoms to be considered inside
+#   UPDATE > 0 update frequency for grid
+#   RL >= 0 linearize forces for distances larger than RL
+#   SMOOTH >= 0 smoothen the protein boundary after grid construction
+#               by SMOOTH layers
+#   NTWDF >= 0 write every NTWDF step disfield information to external file 
+#
+#   NTDFR  
+        1
+#    GRID   PROTEINOFFSET  PROTEINCUTOFF
+      0.2   15             0.2         
+#  UPDATE   SMOOTH   RL    NTWDF
+      100   1        1.0      50
+END  
+@endverbatim
+ */
+void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
+        std::ostream & os) {
+  DEBUG(8, "read DISTANCEFIELD");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  DEBUG(10, "distancefield block");
+  buffer = m_block["DISTANCEFIELD"];
+
+  if (!buffer.size()) {
+    return;
+  }
+
+  block_read.insert("DISTANCEFIELD");
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+  int num, atom;
+  _lineStream >> param.distancefield.distancefield
+	      >> param.distancefield.grid
+	      >> param.distancefield.proteinoffset
+	      >> param.distancefield.proteincutoff
+	      >> param.distancefield.update
+	      >> param.distancefield.smooth
+              >> param.distancefield.r_l
+	      >> param.distancefield.write;
+
+  if (_lineStream.fail())
+    io::messages.add("bad line in DISTANCEFIELD block",
+          "In_Parameter", io::message::error);
+
+
+  if (param.distancefield.distancefield != 0 && 
+      param.distancefield.distancefield != 1) {
+    io::messages.add("DISTANCEFIELD block: NTDRF must be 0,1.",
+		     "In_Parameter", io::message::error);
+  }
+  if (param.distancefield.grid <= 0.0) {
+    io::messages.add("DISTANCEFIELD block: GRID must be >= 0.0.",
+		     "In_Parameter", io::message::error);
+  }
+  if (param.distancefield.proteinoffset < 0.0) {
+    io::messages.add("DISTANCEFIELD block: PROTEINOFFSET must be >= 0.0.",
+		     "In_Parameter", io::message::error);
+  }
+  if (param.distancefield.proteincutoff < 0.0) {
+    io::messages.add("DISTANCEFIELD block: PROTEINCUTOFFmust be >= 0.0.",
+		     "In_Parameter", io::message::error);
+  }
+  if (param.distancefield.update < 0) {
+    io::messages.add("DISTANCEFIELD block: UPDATE must be > 0.",
+		     "In_Parameter", io::message::error);
+  }
+  if (param.distancefield.smooth < 0) {
+    io::messages.add("DISTANCEFIELD block: SMOOTH must be >= 0.",
+		     "In_Parameter", io::message::error);
+  }
+} // DISTANCEFIELD
+
+/**
  * @section dihedralres DIHEDRALRES block
  * @verbatim
 DIHEDRALRES
@@ -4001,7 +4088,8 @@ LAMBDAS
 #         1: interactions are treated with special individual lambda-values
 # NTLI(1..)  interaction type to treat with individual lambda: 
 #            bond(1), angle(2), dihedral(3), improper(4), vdw(5), vdw_soft(6),
-#            crf(7), crf_soft(8), distanceres(9), dihedralres(10), mass(11)
+#            crf(7), crf_soft(8), distanceres(9), distancefield(10), 
+#            dihedralres(11), mass(12)
 # NILG1, NILG2 energy groups of interactions that are treated with individual 
 #              lambda values
 # ALI, BLI, CLI, DLI, ELI polynomial coefficients linking the individual lambda-
@@ -4106,9 +4194,11 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
         j = simulation::crf_softness_lambda;
       else if (nm == "distanceres" || nm == "9")
         j = simulation::disres_lambda;
-      else if (nm == "dihedralres" || nm == "10")
+      else if (nm == "distancefield" || nm == "10")
+	j = simulation::disfield_lambda;
+      else if (nm == "dihedralres" || nm == "11")
         j = simulation::dihres_lambda;
-      else if (nm == "mass" || nm == "11")
+      else if (nm == "mass" || nm == "12")
         j = simulation::mass_lambda;
       else {
         io::messages.add("unknown lambda type in LAMBDAS block: " + nm,
@@ -4545,7 +4635,7 @@ LOCALELEV
 #    1 : freeze
 # NTLES  NLEPOT  NTLESA  NTWLE
       1       2       1      0
-# NLEPID NLEPFT
+# NLEPID NLEPFR
        1      0
        2      1
 END

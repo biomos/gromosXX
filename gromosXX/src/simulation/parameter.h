@@ -506,21 +506,25 @@ namespace simulation
      */
     crf_softness_lambda = 7,
     /**
-     * position restraint interaction
+     * distance restraint interaction
      */
     disres_lambda = 8,
     /**
+     * distancefield restraint interaction
+     */
+    disfield_lambda = 9, 
+    /**
      * dihedral restraint interaction
      */
-    dihres_lambda = 9,
+    dihres_lambda = 10,
     /**
      * mass-scaling value
      */
-    mass_lambda = 10,
+    mass_lambda = 11,
     /**
      * one extra interaction for looping
      */
-    last_interaction_lambda=11
+    last_interaction_lambda=12
   };
   
   /**
@@ -1804,6 +1808,70 @@ namespace simulation
       unsigned int write;
       
     }/** Distance restraints parameters */ distanceres;
+     /**
+     * @struct distancefield_struct
+     * DISTANCEFIELD block
+     */
+    struct distancefield_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - distancefield 0 (no distance restraints)
+       * - grid 0
+       * - proteinoffset 0
+       * - proteincutoff 0
+       * - smooth 0
+       * - r_l 0
+       * - write 0
+       * - update 1
+       */
+
+      distancefield_struct()
+	: distancefield(0),
+	  grid(0),
+	  proteinoffset(0),
+	  proteincutoff(0),
+	  smooth(0),
+          r_l(0),
+          write(0),
+	  update(1)
+      {
+      }
+      
+      /** 
+       * distance field restraints on/off
+       */
+      int distancefield;
+      /**
+       * grid length
+       */
+      double grid;
+      /**
+       * protein offset as penalty
+       */
+      double proteinoffset;
+      /**
+       * cutoff to determine gridpoints within the protein
+       */
+      double proteincutoff;
+      /**
+       * flag to smoothen the forces
+       */
+      int smooth;
+      /**
+       * distance where potential gets linear
+       */
+      double r_l;
+      /**
+       * write on/off
+       */
+      unsigned int write;
+      /**
+       * update frequency
+       */
+      int update;
+    }/** Distancefield restraints parameters */ distancefield;
 
     /**
      * @struct dihrest_struct
