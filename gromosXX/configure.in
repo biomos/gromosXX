@@ -132,8 +132,8 @@ case "$compiler" in
     dnl consider adding -xP, -xN or -xW for Intel processors
     dnl maybe some inline control: -Qoption,c,-ip_ninl_max_stats=2000
     dnl or maybe -ipo if your lucky...
-    dnl CXX_OPTIMIZE_FLAGS="-O3 -ipo -restrict -align -DNDEBUG -vec_report"
-    CXX_OPTIMIZE_FLAGS="-O3 -ip -restrict -align -DNDEBUG -vec_report"
+    dnl CXX_OPTIMIZE_FLAGS="-O2 -ipo -restrict -align -DNDEBUG -vec_report"
+    CXX_OPTIMIZE_FLAGS="-O2 -ip -restrict -align -DNDEBUG -vec_report"
     CXX_NDEBUG_FLAGS="-DNDEBUG -g"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="xild"
@@ -187,7 +187,7 @@ case "$compiler" in
   gnu*)               # EGCS  http://egcs.cygnus.com/
     echo "Configuring for GNU C++"
     CXX_PICKY_FLAGS="-Wall"
-    CXX_OPTIMIZE_FLAGS="-O3 -DNDEBUG"
+    CXX_OPTIMIZE_FLAGS="-O2 -DNDEBUG"
     CXX_NDEBUG_FLAGS="-DNDEBUG -g"
     CXX_DEBUG_FLAGS="-g"
     CXXLD="$CXX"

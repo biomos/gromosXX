@@ -820,11 +820,11 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
   const double B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
 
-  double A_ecrf0 = A_qeps * (A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut[eps]);
+  double A_ecrf0 = A_qeps * (A_distisoft - A_crf_2cut3i * dist2m - m_crf_cut[eps]);
   double A_ecrf1 = A_qepsp1 * (A_distip1soft - A_crf_2cut3i * dist2p1 - m_crf_cut[eps]);
   double A_ecrf2 = A_qepsp2 * (A_distip2soft - A_crf_2cut3i * dist2p2 - m_crf_cut[eps]);
   double A_ecrfp = A_qepspp * (A_distippsoft - A_crf_2cut3i * dist2pp - m_crf_cut[eps]);
-  double B_ecrf0 = B_qeps * (B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut[eps]);
+  double B_ecrf0 = B_qeps * (B_distisoft - B_crf_2cut3i * dist2m - m_crf_cut[eps]);
   double B_ecrf1 = B_qepsp1 * (B_distip1soft - B_crf_2cut3i * dist2p1 - m_crf_cut[eps]);
   double B_ecrf2 = B_qepsp2 * (B_distip2soft - B_crf_2cut3i * dist2p2 - m_crf_cut[eps]);
   double B_ecrfp = B_qepspp * (B_distippsoft - B_crf_2cut3i * dist2pp - m_crf_cut[eps]);
