@@ -397,7 +397,9 @@ void interaction::Lattice_Sum::calculate_potential_and_energy(
   DEBUG(6,"ls_kspace_total = " << storage.energies.ls_kspace_total);
   if (do_virial) {
     virial *= -0.25 * math::eps0_i * cell_volume;
-    storage.virial_tensor += virial;
+// !!! since multiplication with -0.5 in pressure calc, multiply with -2 here
+  //  storage.virial_tensor += virial;
+    storage.virial_tensor +=  ( -2.0 * virial );
     DEBUG(6, "k space virial: \n" << math::m2s(virial));
   }
 

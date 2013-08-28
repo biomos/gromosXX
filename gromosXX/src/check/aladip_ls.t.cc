@@ -45,18 +45,19 @@
 #include "check_state.h"
 
 void hard_coded_values(std::map<std::string, double> & m){
-  m["NonBonded_-1"] = -168.832;
-  m["NonBonded_0"]  = -129.245;
-  m["NonBonded_1"]  = -125.946;
-  m["NonBonded_2"]  = -129.641;
-  m["NonBonded_3"]  = -123.305;
-  m["NonBonded_4"]  = -124.849;
-  m["NonBonded_5"]  = -130.201;
-  m["NonBonded_6"]  = -125.314;
-  m["NonBonded_7"]  = -130.103;
-  m["NonBonded_8"]  = -137.76;
-  m["NonBonded_9"]  = -132.338;
-  m["NonBonded_10"] = -139.645;
+    m["NonBonded_-1"] = -0.66493E+02; // This number was not verified against the fortran code!!!
+    m["NonBonded_0"]  = -0.65880E+02;
+    m["NonBonded_1"]  = -0.66016E+02;
+    m["NonBonded_2"]  = -0.65843E+02;
+    m["NonBonded_3"]  = -0.66068E+02;
+    m["NonBonded_4"]  = -0.66018E+02;
+    m["NonBonded_5"]  = -0.65900E+02;
+    m["NonBonded_6"]  = -0.66028E+02;
+    m["NonBonded_7"]  = -0.65972E+02;
+    m["NonBonded_8"]  = -0.65862E+02;
+    m["NonBonded_9"]  = -0.65964E+02;
+    m["NonBonded_10"] = -0.65880E+02;
+
 }
 
 #ifdef OMP

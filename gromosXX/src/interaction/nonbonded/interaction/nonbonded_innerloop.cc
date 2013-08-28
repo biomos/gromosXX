@@ -995,7 +995,15 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
               topo.iac(j));
 
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
-      lj_interaction(r, lj.cs6, lj.cs12, f, e_lj);
+ //     lj_interaction(r, lj.cs6, lj.cs12, f, e_lj);
+
+//  call lj_ls!!!
+       lj_ls_interaction(r, lj.cs6, lj.cs12,
+              topo.charge(i) * topo.charge(j),
+              f, e_lj, e_ls);
+
+
+
       e_crf = 0.0;
 
       DEBUG(10, "\t\tatomic virial");

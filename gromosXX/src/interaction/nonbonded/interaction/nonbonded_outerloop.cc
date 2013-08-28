@@ -1017,7 +1017,9 @@ void interaction::Nonbonded_Outerloop
   if (do_virial) {
     virial *= -0.25 * eps_volume_i;
     DEBUG(6, "Ewald k-space virial:\n" << math::m2s(virial));
-    storage.virial_tensor += virial;
+// !!! multiply by -2 because of multiplication with -0.5 in pressure calculation
+   // storage.virial_tensor += virial;
+    storage.virial_tensor += (-2.0 * virial);
 
     conf.lattice_sum().a2_tilde_derivative = (4.0 * math::Pi / volume) * sum_gammahat;
   }
@@ -1029,9 +1031,10 @@ void interaction::Nonbonded_Outerloop
         configuration::Configuration & conf,
         simulation::Simulation & sim,
         Storage & storage, int rank, int size,
-        util::Algorithm_Timer & timer) {
+        util::Algorithm_Timer & timer,
+        bool & is_ok) {
   SPLIT_INNERLOOP(_ls_p3m_kspace_outerloop, topo, conf, sim,
-          storage, rank, size, timer);
+          storage, rank, size, timer, is_ok);
 }
 
 template<typename t_interaction_spec>
@@ -1040,7 +1043,8 @@ void interaction::Nonbonded_Outerloop
         configuration::Configuration & conf,
         simulation::Simulation & sim,
         Storage & storage, int rank, int size,
-        util::Algorithm_Timer & timer) {
+        util::Algorithm_Timer & timer,
+        bool & is_ok) {
   DEBUG(7, "\tcalculate interactions in k-space (P3M)");
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
@@ -1087,6 +1091,9 @@ void interaction::Nonbonded_Outerloop
               "of the influence function. Increase the number of grid points, "
               "the rms force error threshold, or the charge width parameter.",
               "P3M", io::message::error);
+// !!! this does not lead to a crash of the simulation, but it should crash
+// set a bool which is checked in nonbonded_set 
+     is_ok = false;
       return;
     }
   }
@@ -1129,6 +1136,9 @@ void interaction::Nonbonded_Outerloop
                 "of the influence function. Increase the number of grid points, "
                 "the rms force error threshold, or the charge width parameter.",
                 "P3M", io::message::error);
+// !!! this does not lead to a crash of the simulation, but it should crash
+// set a bool which is checked in nonbonded_set 
+     is_ok = false;
         return;
       }
     } // if force error
@@ -1139,8 +1149,8 @@ void interaction::Nonbonded_Outerloop
   bool calculate_lattice_sum_corrections =
           sim.param().pcouple.scale != math::pcouple_off || // NPT - every step
           !sim.steps() || // at the beginning of the simulation
-          (sim.param().print.stepblock != 0 && sim.steps() % abs(sim.param().print.stepblock) == 0); // energy output req.
-          (sim.param().write.energy != 0 && sim.steps() % abs(sim.param().write.energy) == 0); // energy output req.
+          (sim.param().print.stepblock != 0 && sim.steps() % abs(sim.param().print.stepblock) == 0) ||   // energy output req.
+          (sim.param().write.energy != 0 && sim.steps() % abs(sim.param().write.energy) == 0); // energy output req. !!!
   const bool do_a2t =
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
@@ -1542,7 +1552,9 @@ void interaction::Nonbonded_Outerloop
     if (do_virial) {
       // we have to remove the A2 virial from the self term virial
       const math::SymmetricMatrix self_term_virial = a1_self_term_virial + a2_virial;
-      storage.virial_tensor += self_term_virial;
+// !!! since multiplication with -0.5 in pressure calc, multiply with -2 here
+     // storage.virial_tensor += self_term_virial;
+      storage.virial_tensor +=  ( -2.0 * self_term_virial );
       DEBUG(6, "\tself term virial:\n\t" << math::m2s(self_term_virial));
     } // virial
   } else {
@@ -1557,7 +1569,9 @@ void interaction::Nonbonded_Outerloop
     if (do_virial) {
       // We have to add the A2~ virial to the constant term virial
       const math::SymmetricMatrix constant_term_virial = a1_constant_term_virial - a2_tilde_virial;
-      storage.virial_tensor += constant_term_virial;
+// !!! since multiplication with -0.5 in pressure calc, multiply with -2 here
+     // storage.virial_tensor += constant_term_virial;
+      storage.virial_tensor += ( -2.0 *  constant_term_virial );
       DEBUG(6, "\tconstant term virial:\n\t" << math::m2s(constant_term_virial));
     } // virial
   } else {

@@ -328,7 +328,8 @@ namespace interaction {
           const double k5 = k2 * k2 * kappa;
           const double C = cos(kappa);
           const double S = sin(kappa);
-          gamma_hat = 60.0 * (2.0 * k2 * C - 3.0 * S) / k5;
+    //   wrong!!!   gamma_hat = 60.0 * (2.0 * k2 * C - 3.0 * S) / k5;
+          gamma_hat = 60.0 * (2.0 * kappa + kappa * C - 3.0 * S) / k5;
           if (gamma_hat_prime != NULL) {
             const double k6 = k5 * kappa;
             *gamma_hat_prime = 60.0 * (-8.0 * kappa - 7.0 * kappa * C - (k2 - 15.0)*S) / k6;
@@ -348,14 +349,16 @@ namespace interaction {
           break;  
         }
         case 4 : {
-          const double k2 = kappa;
+         // wrong!!! const double k2 = kappa ;
+          const double k2 = kappa * kappa ;
           const double k7 = k2 * k2 * k2 * kappa;
           const double kappa_C = kappa * cos(kappa);
           const double S = sin(kappa);
           gamma_hat = 630.0 * (8.0 * kappa + 7.0 * kappa_C + (k2 - 15.0) * S) / k7;
           if (gamma_hat_prime != NULL) {
             const double k8 = k7 * kappa;
-            *gamma_hat_prime = 630.0 * (-48.0*kappa + (k2 - 57.0)*kappa_C - 3.0 * (4.0*k2 - 35.0)*kappa*S)/k8;
+           // wrong!!! *gamma_hat_prime = 630.0 * (-48.0*kappa + (k2 - 57.0)*kappa_C - 3.0 * (4.0*k2 - 35.0)*kappa*S)/k8;
+            *gamma_hat_prime = 630.0 * (-48.0*kappa + (k2 - 57.0)*kappa_C - 3.0 * (4.0*k2 - 35.0)*S)/k8;
           }
           break;
         }

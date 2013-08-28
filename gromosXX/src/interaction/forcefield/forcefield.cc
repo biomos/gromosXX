@@ -124,8 +124,11 @@ int interaction::Forcefield
       it != to;
       ++it){
     DEBUG(5, "interaction: " << (*it)->name);
-    if ((*it)->calculate_interactions(topo, conf, sim))
+// !!! crash if error
+    int error=(*it)->calculate_interactions(topo, conf, sim);
+    if (error){
       return 1;
+    }
     DEBUG(5, "force old = " << math::v2s(conf.old().force(2)));
     DEBUG(5, "force current = " << math::v2s(conf.current().force(2)));
     if (sim.param().eds.eds)
