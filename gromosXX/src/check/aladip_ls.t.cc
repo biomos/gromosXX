@@ -45,7 +45,7 @@
 #include "check_state.h"
 
 void hard_coded_values(std::map<std::string, double> & m){
-    m["NonBonded_-1"] = -0.66493E+02; // This number was not verified against the fortran code!!!
+    m["NonBonded_-1"] = -0.65647E+02; // This number is slightly different in the fortran code, -0.65652E+02, probably due to the use of a numerical approximation to the error function there
     m["NonBonded_0"]  = -0.65880E+02;
     m["NonBonded_1"]  = -0.66016E+02;
     m["NonBonded_2"]  = -0.65843E+02;
@@ -162,9 +162,17 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
+    // store backup value for width of the charge shaping function
+    double ashape = aladip_sim.sim.param().nonbonded.ls_charge_shape_width;
+
     std::cout << "Checking Ewald. This can take some time...\n";
     aladip_sim.sim.param().nonbonded.method = simulation::el_ewald;
     aladip_sim.sim.param().nonbonded.ls_charge_shape = -1;
+
+    // !!! if charge shape == -1 (Gaussian), we need to decrease the width
+    aladip_sim.sim.param().nonbonded.ls_charge_shape_width = 0.4; // this is suitable for the RCUT = 1.4 nm in the input file
+    std::cout << "Charge-shape width: " <<  aladip_sim.sim.param().nonbonded.ls_charge_shape_width << std::endl;
+
     ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
     // first check the forcefield
     total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
@@ -177,6 +185,15 @@ int main(int argc, char* argv[]) {
     // first check the forcefield
     for (int shape = -1; shape < 11; ++shape) {
       std::cout << "Charge shape type: " << shape << "\n";
+
+      // !!! if charge shape == -1 (Gaussian), we need to decrease the width
+      if ( shape == -1 ) {
+        aladip_sim.sim.param().nonbonded.ls_charge_shape_width = 0.4; // this is suitable for the RCUT = 1.4 nm in the input file
+      } else {
+        aladip_sim.sim.param().nonbonded.ls_charge_shape_width = ashape;
+      }     
+      std::cout << "Charge-shape width: " <<  aladip_sim.sim.param().nonbonded.ls_charge_shape_width << std::endl;
+     
       aladip_sim.sim.param().nonbonded.ls_charge_shape = shape;
       total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
               aladip_sim.sim, *ff, ref_values);
