@@ -3095,17 +3095,42 @@ _print_dipole(simulation::Simulation const & sim,
                          conf.current().box(1) / 2.0 +
                          conf.current().box(2) / 2.0;
   math::Periodicity<b> periodicity(conf.current().box);
-  //double scale = math::four_pi_eps_i;
-  double scale = 1.0;
+ 
 
   // Only solute
-  if(sim.param().electric.dip_groups == 0) {
+  if(sim.param().electric.dip_groups == 0) 
+  {
     os << "DIPOLE\n#Solute atoms\n";
-    for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+    for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) 
+    {
       math::Vec r = conf.current().pos(i);
-      box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
-      if (topo.is_polarisable(i)) {
+      if (topo.is_polarisable(i)) 
+      {
+        //offset position
+	math::Vec rm=r;
+        
+	//cos dipol contribution
         box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
+        
+	if(sim.param().polarise.cos == 2 && topo.gamma(i)!=0.0)
+        {
+            math::Vec rij, rik, rim;
+            periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_j(i)), rij);
+            periodicity.nearest_image(conf.current().pos(i),
+                            conf.current().pos(topo.gamma_k(i)), rik);
+            rim=topo.gamma(i)*(rij+rik)/2;
+            rm-=rim;
+            box_dipole_moment += topo.charge(i) * (rm- box_centre);
+        }
+        else
+        {
+            box_dipole_moment += topo.charge(i) * (r - box_centre);
+        }
+      }
+      else
+      {
+          box_dipole_moment += topo.charge(i) * (r - box_centre);
       }
     }
   }
@@ -3113,29 +3138,80 @@ _print_dipole(simulation::Simulation const & sim,
   // Only solvent
   if(sim.param().electric.dip_groups == 1) {
     os << "DIPOLE\n#Solvent atoms\n";
-    for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) {
-      math::Vec r = conf.current().pos(i);
-      box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
-      if (topo.is_polarisable(i)) {
-        box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
-      }
+    for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) 
+    {
+     math::Vec r = conf.current().pos(i);
+     if (topo.is_polarisable(i)) 
+     {
+       //offset position
+       math::Vec rm=r;
+        
+       //cos dipol contribution
+       box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
+        
+       if(sim.param().polarise.cos == 2 && topo.gamma(i)!=0.0)
+       {
+	 math::Vec rij, rik, rim;
+	 periodicity.nearest_image(conf.current().pos(i),
+				   conf.current().pos(topo.gamma_j(i)), rij);
+	 periodicity.nearest_image(conf.current().pos(i),
+				   conf.current().pos(topo.gamma_k(i)), rik);
+	 rim=topo.gamma(i)*(rij+rik)/2;
+	 rm-=rim;
+	 box_dipole_moment += topo.charge(i) * (rm- box_centre);
+       }
+       else
+       {
+	 box_dipole_moment += topo.charge(i) * (r - box_centre);
+       }
+     }
+     else
+     {
+       box_dipole_moment += topo.charge(i) * (r - box_centre);
+     }
     }
   }
 
   // All atoms in the box
   if(sim.param().electric.dip_groups == 2) {
     os << "DIPOLE\n#All atoms\n";
-    for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
+    for(unsigned int i = 0; i < topo.num_atoms(); ++i) 
+    {
       math::Vec r = conf.current().pos(i);
-      box_dipole_moment += scale*topo.charge(i) * (r - box_centre);
-      if (topo.is_polarisable(i)) {
-        box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
+      if (topo.is_polarisable(i)) 
+      {	
+	//offset position
+	math::Vec rm=r;
+        
+	//cos dipol contribution
+	box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
+        
+	if(sim.param().polarise.cos == 2 && topo.gamma(i)!=0.0)
+	{
+	  math::Vec rij, rik, rim;
+	  periodicity.nearest_image(conf.current().pos(i),
+				    conf.current().pos(topo.gamma_j(i)), rij);
+	  periodicity.nearest_image(conf.current().pos(i),
+				    conf.current().pos(topo.gamma_k(i)), rik);
+	  rim=topo.gamma(i)*(rij+rik)/2;
+	  rm-=rim;
+          box_dipole_moment += topo.charge(i) * (rm- box_centre);
+	}
+	else
+        {
+	  box_dipole_moment += topo.charge(i) * (r - box_centre);
+	}
+      }
+      else
+      {
+	box_dipole_moment += topo.charge(i) * (r - box_centre);
       }
     }
   }
 
   // Print dipole to special topology
 
+  //os << sim.param().polarise.cos <<"\t" << topo.gamma(0) << "\n";
 
   os << std::setw(15) << box_dipole_moment(0)
      << std::setw(15) << box_dipole_moment(1)
