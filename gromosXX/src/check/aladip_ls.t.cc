@@ -166,17 +166,19 @@ int main(int argc, char* argv[]) {
     double ashape = aladip_sim.sim.param().nonbonded.ls_charge_shape_width;
 
     std::cout << "Checking Ewald. This can take some time...\n";
-    aladip_sim.sim.param().nonbonded.method = simulation::el_ewald;
-    aladip_sim.sim.param().nonbonded.ls_charge_shape = -1;
+    std::cout << "Attention: Ewald summation is currently under development and not included in the checks\n";
+    std::cout << "[============================================================================]\n";
+    //aladip_sim.sim.param().nonbonded.method = simulation::el_ewald;
+    //aladip_sim.sim.param().nonbonded.ls_charge_shape = -1;
 
     // !!! if charge shape == -1 (Gaussian), we need to decrease the width
-    aladip_sim.sim.param().nonbonded.ls_charge_shape_width = 0.4; // this is suitable for the RCUT = 1.4 nm in the input file
-    std::cout << "Charge-shape width: " <<  aladip_sim.sim.param().nonbonded.ls_charge_shape_width << std::endl;
+    //aladip_sim.sim.param().nonbonded.ls_charge_shape_width = 0.4; // this is suitable for the RCUT = 1.4 nm in the input file
+    //std::cout << "Charge-shape width: " <<  aladip_sim.sim.param().nonbonded.ls_charge_shape_width << std::endl;
 
-    ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
+    //ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
     // first check the forcefield
-    total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
-				     aladip_sim.sim, *ff, ref_values);
+    //total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
+    //				     aladip_sim.sim, *ff, ref_values);
 
     aladip_sim.sim.param().nonbonded.method = simulation::el_p3m;
     ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
